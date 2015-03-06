@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.218 2015/03/04 09:49:16 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.219 2015/03/06 21:46:40 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -17509,4 +17509,589 @@ sys/arch/shark/conf/Makefile.shark.inc		1.24
 	version caused DEFCOPTS to not be propagated into COPTS, which
 	meant there was no optimization for the kernel.
 	[martin, ticket #556]
+
+doc/3RDPARTY					1.1168
+external/bsd/flex/dist/po/Makefile              up to 1.1.1.1
+external/bsd/flex/dist/po/Makefile.in           up to 1.1.1.1
+external/bsd/flex/dist/po/POTFILES              up to 1.1.1.1
+external/bsd/flex/dist/po/en@boldquot.gmo       up to 1.1.1.1
+external/bsd/flex/dist/po/en@boldquot.po        up to 1.1.1.1
+external/bsd/flex/dist/po/en@quot.gmo           up to 1.1.1.1
+external/bsd/flex/dist/po/en@quot.po            up to 1.1.1.1
+external/bsd/flex/dist/po/eo.gmo                up to 1.1.1.1
+external/bsd/flex/dist/po/eo.po                 up to 1.1.1.1
+external/bsd/flex/dist/po/hr.gmo                up to 1.1.1.1
+external/bsd/flex/dist/po/hr.po                 up to 1.1.1.1
+external/bsd/flex/dist/po/sr.gmo                up to 1.1.1.1
+external/bsd/flex/dist/po/sr.po                 up to 1.1.1.1
+external/bsd/flex/dist/po/zh_TW.gmo             up to 1.1.1.1
+external/bsd/flex/dist/po/zh_TW.po              up to 1.1.1.1
+external/bsd/flex/dist/tests/test-include-by-buffer/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/TEMPLATE/Makefile  up to 1.1.1.1
+external/bsd/flex/dist/tests/test-alloc-extra/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-array-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-array-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-basic-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-basic-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-bison-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-bison-yylloc/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-bison-yylval/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-c++-basic/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-c++-multiple-scanners/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-c++-yywrap/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-c-cpp-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-c-cpp-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-ccl/Makefile  up to 1.1.1.1
+external/bsd/flex/dist/tests/test-concatenated-options/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-debug-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-top/Makefile  up to 1.1.1.1
+external/bsd/flex/dist/tests/test-debug-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-yyextra/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-extended/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-header-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-header-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-include-by-push/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-include-by-reentrant/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-mem-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-mem-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-multiple-scanners-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-multiple-scanners-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-noansi-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-noansi-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-posix/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-posixly-correct/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-prefix-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-prefix-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-pthread/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-quotes/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-reject/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-rescan-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-rescan-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-string-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-string-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-table-opts/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-linedir-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/Makefile           up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-trailing/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-trailing/Makefile.am up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-trailing/Makefile.in up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-trailing/scanner.l up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-trailing/test.input up to 1.1.1.1
+external/bsd/flex/dist/m4/intlmacosx.m4         up to 1.1.1.1
+external/bsd/flex/dist/m4/libtool.m4            up to 1.1.1.1
+external/bsd/flex/dist/m4/ltoptions.m4          up to 1.1.1.1
+external/bsd/flex/dist/m4/ltsugar.m4            up to 1.1.1.1
+external/bsd/flex/dist/m4/ltversion.m4          up to 1.1.1.1
+external/bsd/flex/dist/m4/lt~obsolete.m4        up to 1.1.1.1
+external/bsd/flex/dist/doc/Makefile             up to 1.1.1.1
+external/bsd/flex/dist/examples/fastwc/Makefile up to 1.1.1.1
+external/bsd/flex/dist/examples/manual/Makefile up to 1.1.1.1
+external/bsd/flex/dist/examples/Makefile        up to 1.1.1.1
+external/bsd/flex/dist/libtool                  up to 1.1.1.1
+external/bsd/flex/dist/stamp-h1                 up to 1.1.1.1
+external/bsd/flex/dist/ltmain.sh                up to 1.1.1.1
+external/bsd/flex/dist/lib/.deps/lib.Plo        up to 1.1.1.1
+external/bsd/flex/dist/lib/.deps/malloc.Po      up to 1.1.1.1
+external/bsd/flex/dist/lib/.deps/realloc.Po     up to 1.1.1.1
+external/bsd/flex/dist/lib/Makefile             up to 1.1.1.1
+external/bsd/flex/dist/configure.ac             up to 1.1.1.1
+external/bsd/flex/dist/.indent.pro              up to 1.1.1.1
+external/bsd/flex/dist/Makefile                 up to 1.1.1.1
+external/bsd/flex/dist/README-alpha             delete
+external/bsd/flex/dist/README.cvs               delete
+external/bsd/flex/dist/configure.in             delete
+external/bsd/flex/dist/mkinstalldirs            delete
+external/bsd/flex/dist/tools/Makefile.am        delete
+external/bsd/flex/dist/tools/Makefile.in        delete
+external/bsd/flex/dist/tools/git2cl             delete
+external/bsd/flex/flex2netbsd                   up to 1.3
+external/bsd/flex/dist/.indent.pro              up to 1.1.1.1
+external/bsd/flex/dist/ABOUT-NLS                up to 1.1.1.2
+external/bsd/flex/dist/ChangeLog                up to 1.1.1.3
+external/bsd/flex/dist/INSTALL                  up to 1.1.1.3
+external/bsd/flex/dist/Makefile                 up to 1.1.1.1
+external/bsd/flex/dist/Makefile.am              up to 1.1.1.3
+external/bsd/flex/dist/Makefile.in              up to 1.1.1.3
+external/bsd/flex/dist/NEWS                     up to 1.1.1.3
+external/bsd/flex/dist/README                   up to 1.1.1.2
+external/bsd/flex/dist/TODO                     up to 1.1.1.2
+external/bsd/flex/dist/aclocal.m4               up to 1.1.1.3
+external/bsd/flex/dist/autogen.sh               up to 1.1.1.2
+external/bsd/flex/dist/buf.c                    up to 1.4
+external/bsd/flex/dist/ccl.c                    up to 1.3
+external/bsd/flex/dist/compile                  up to 1.1.1.3
+external/bsd/flex/dist/conf.in                  up to 1.1.1.3
+external/bsd/flex/dist/config.guess             up to 1.1.1.3
+external/bsd/flex/dist/config.rpath             up to 1.1.1.2
+external/bsd/flex/dist/config.sub               up to 1.1.1.3
+external/bsd/flex/dist/configure                up to 1.1.1.3
+external/bsd/flex/dist/configure.ac             up to 1.1.1.1
+external/bsd/flex/dist/depcomp                  up to 1.1.1.3
+external/bsd/flex/dist/dfa.c                    up to 1.3
+external/bsd/flex/dist/ecs.c                    up to 1.3
+external/bsd/flex/dist/filter.c                 up to 1.5
+external/bsd/flex/dist/flex.skl                 up to 1.11
+external/bsd/flex/dist/flexdef.h                up to 1.7
+external/bsd/flex/dist/gen.c                    up to 1.11
+external/bsd/flex/dist/initparse.c              up to 1.5
+external/bsd/flex/dist/install-sh               up to 1.1.1.3
+external/bsd/flex/dist/libmain.c                up to 1.5
+external/bsd/flex/dist/libtool                  up to 1.1.1.1
+external/bsd/flex/dist/libyywrap.c              up to 1.5
+external/bsd/flex/dist/ltmain.sh                up to 1.1.1.1
+external/bsd/flex/dist/main.c                   up to 1.6
+external/bsd/flex/dist/misc.c                   up to 1.5
+external/bsd/flex/dist/missing                  up to 1.1.1.3
+external/bsd/flex/dist/nfa.c                    up to 1.3
+external/bsd/flex/dist/options.c                up to 1.3
+external/bsd/flex/dist/parse.y                  up to 1.5
+external/bsd/flex/dist/regex.c                  up to 1.3
+external/bsd/flex/dist/scan.l                   up to 1.6
+external/bsd/flex/dist/scanflags.c              up to 1.3
+external/bsd/flex/dist/scanopt.c                up to 1.6
+external/bsd/flex/dist/stamp-h1                 up to 1.1.1.1
+external/bsd/flex/dist/sym.c                    up to 1.3
+external/bsd/flex/dist/tables.c                 up to 1.5
+external/bsd/flex/dist/tables_shared.c          up to 1.1.1.2
+external/bsd/flex/dist/tables_shared.h          up to 1.1.1.2
+external/bsd/flex/dist/tblcmp.c                 up to 1.3
+external/bsd/flex/dist/version.h                up to 1.1.1.2
+external/bsd/flex/dist/ylwrap                   up to 1.1.1.2
+external/bsd/flex/dist/yylex.c                  up to 1.4
+external/bsd/flex/dist/doc/Makefile             up to 1.1.1.1
+external/bsd/flex/dist/doc/Makefile.am          up to 1.1.1.3
+external/bsd/flex/dist/doc/Makefile.in          up to 1.1.1.3
+external/bsd/flex/dist/doc/flex.1               up to 1.1.1.3
+external/bsd/flex/dist/doc/flex.info            up to 1.1.1.3
+external/bsd/flex/dist/doc/flex.info-1          up to 1.1.1.3
+external/bsd/flex/dist/doc/flex.pdf             up to 1.1.1.3
+external/bsd/flex/dist/doc/flex.texi            up to 1.1.1.3
+external/bsd/flex/dist/doc/mdate-sh             up to 1.1.1.3
+external/bsd/flex/dist/doc/stamp-vti            up to 1.1.1.3
+external/bsd/flex/dist/doc/texinfo.tex          up to 1.1.1.3
+external/bsd/flex/dist/doc/version.texi         up to 1.1.1.3
+external/bsd/flex/dist/examples/Makefile        up to 1.1.1.1
+external/bsd/flex/dist/examples/Makefile.in     up to 1.1.1.3
+external/bsd/flex/dist/examples/testxxLexer.l   up to 1.1.1.2
+external/bsd/flex/dist/examples/fastwc/Makefile up to 1.1.1.1
+external/bsd/flex/dist/examples/fastwc/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/examples/fastwc/mywc.c   up to 1.1.1.2
+external/bsd/flex/dist/examples/fastwc/wc1.l    up to 1.1.1.2
+external/bsd/flex/dist/examples/fastwc/wc2.l    up to 1.1.1.2
+external/bsd/flex/dist/examples/fastwc/wc3.l    up to 1.1.1.2
+external/bsd/flex/dist/examples/fastwc/wc4.l    up to 1.1.1.2
+external/bsd/flex/dist/examples/fastwc/wc5.l    up to 1.1.1.2
+external/bsd/flex/dist/examples/manual/Makefile up to 1.1.1.1
+external/bsd/flex/dist/examples/manual/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/examples/manual/expr.y   up to 1.1.1.2
+external/bsd/flex/dist/examples/manual/front.y  up to 1.1.1.2
+external/bsd/flex/dist/lib/Makefile             up to 1.1.1.1
+external/bsd/flex/dist/lib/Makefile.am          up to 1.1.1.2
+external/bsd/flex/dist/lib/Makefile.in          up to 1.1.1.2
+external/bsd/flex/dist/lib/lib.c                up to 1.1.1.2
+external/bsd/flex/dist/lib/malloc.c             up to 1.1.1.2
+external/bsd/flex/dist/lib/realloc.c            up to 1.1.1.2
+external/bsd/flex/dist/lib/.deps/lib.Plo        up to 1.1.1.1
+external/bsd/flex/dist/lib/.deps/malloc.Po      up to 1.1.1.1
+external/bsd/flex/dist/lib/.deps/realloc.Po     up to 1.1.1.1
+external/bsd/flex/dist/m4/gettext.m4            up to 1.1.1.2
+external/bsd/flex/dist/m4/iconv.m4              up to 1.1.1.2
+external/bsd/flex/dist/m4/intlmacosx.m4         up to 1.1.1.1
+external/bsd/flex/dist/m4/lib-ld.m4             up to 1.1.1.2
+external/bsd/flex/dist/m4/lib-link.m4           up to 1.1.1.2
+external/bsd/flex/dist/m4/lib-prefix.m4         up to 1.1.1.2
+external/bsd/flex/dist/m4/libtool.m4            up to 1.1.1.1
+external/bsd/flex/dist/m4/ltoptions.m4          up to 1.1.1.1
+external/bsd/flex/dist/m4/ltsugar.m4            up to 1.1.1.1
+external/bsd/flex/dist/m4/ltversion.m4          up to 1.1.1.1
+external/bsd/flex/dist/m4/lt~obsolete.m4        up to 1.1.1.1
+external/bsd/flex/dist/m4/nls.m4                up to 1.1.1.2
+external/bsd/flex/dist/m4/po.m4                 up to 1.1.1.2
+external/bsd/flex/dist/m4/progtest.m4           up to 1.1.1.2
+external/bsd/flex/dist/po/LINGUAS               up to 1.1.1.3
+external/bsd/flex/dist/po/Makefile              up to 1.1.1.1
+external/bsd/flex/dist/po/Makefile.in           up to 1.1.1.1
+external/bsd/flex/dist/po/Makefile.in.in        up to 1.1.1.2
+external/bsd/flex/dist/po/POTFILES              up to 1.1.1.1
+external/bsd/flex/dist/po/Rules-quot            up to 1.1.1.2
+external/bsd/flex/dist/po/ca.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/da.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/de.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/en@boldquot.gmo       up to 1.1.1.1
+external/bsd/flex/dist/po/en@boldquot.po        up to 1.1.1.1
+external/bsd/flex/dist/po/en@quot.gmo           up to 1.1.1.1
+external/bsd/flex/dist/po/en@quot.po            up to 1.1.1.1
+external/bsd/flex/dist/po/eo.gmo                up to 1.1.1.1
+external/bsd/flex/dist/po/eo.po                 up to 1.1.1.1
+external/bsd/flex/dist/po/es.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/fi.gmo                up to 1.1.1.2
+external/bsd/flex/dist/po/fi.po                 up to 1.1.1.2
+external/bsd/flex/dist/po/flex.pot              up to 1.1.1.3
+external/bsd/flex/dist/po/fr.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/ga.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/hr.gmo                up to 1.1.1.1
+external/bsd/flex/dist/po/hr.po                 up to 1.1.1.1
+external/bsd/flex/dist/po/ko.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/nl.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/pl.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/pt_BR.po              up to 1.1.1.3
+external/bsd/flex/dist/po/ro.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/ru.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/sr.gmo                up to 1.1.1.1
+external/bsd/flex/dist/po/sr.po                 up to 1.1.1.1
+external/bsd/flex/dist/po/sv.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/tr.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/vi.po                 up to 1.1.1.3
+external/bsd/flex/dist/po/zh_CN.po              up to 1.1.1.3
+external/bsd/flex/dist/po/zh_TW.gmo             up to 1.1.1.1
+external/bsd/flex/dist/po/zh_TW.po              up to 1.1.1.1
+external/bsd/flex/dist/tests/Makefile           up to 1.1.1.1
+external/bsd/flex/dist/tests/Makefile.am        up to 1.1.1.2
+external/bsd/flex/dist/tests/Makefile.in        up to 1.1.1.3
+external/bsd/flex/dist/tests/TEMPLATE/Makefile  up to 1.1.1.1
+external/bsd/flex/dist/tests/TEMPLATE/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/TEMPLATE/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/TEMPLATE/parser.y  up to 1.1.1.2
+external/bsd/flex/dist/tests/TEMPLATE/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-alloc-extra/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-alloc-extra/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-alloc-extra/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-alloc-extra/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-array-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-array-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-array-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-array-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-array-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-array-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-array-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-array-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-basic-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-basic-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-basic-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-basic-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-basic-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-basic-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-basic-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-basic-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-bison-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-bison-nr/Makefile.am up to 1.1.1.3
+external/bsd/flex/dist/tests/test-bison-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-bison-nr/main.c up to 1.1.1.2
+external/bsd/flex/dist/tests/test-bison-nr/parser.y up to 1.1.1.2
+external/bsd/flex/dist/tests/test-bison-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-bison-yylloc/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-bison-yylloc/Makefile.am up to 1.1.1.3
+external/bsd/flex/dist/tests/test-bison-yylloc/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-bison-yylloc/main.c up to 1.1.1.2
+external/bsd/flex/dist/tests/test-bison-yylloc/parser.y up to 1.1.1.2
+external/bsd/flex/dist/tests/test-bison-yylloc/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-bison-yylval/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-bison-yylval/Makefile.am up to 1.1.1.3
+external/bsd/flex/dist/tests/test-bison-yylval/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-bison-yylval/main.c up to 1.1.1.2
+external/bsd/flex/dist/tests/test-bison-yylval/parser.y up to 1.1.1.2
+external/bsd/flex/dist/tests/test-bison-yylval/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c++-basic/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-c++-basic/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c++-basic/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-c++-basic/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c++-multiple-scanners/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-c++-multiple-scanners/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c++-multiple-scanners/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-c++-multiple-scanners/scanner-1.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c++-multiple-scanners/scanner-2.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c++-yywrap/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-c++-yywrap/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c++-yywrap/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-c++-yywrap/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c-cpp-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-c-cpp-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c-cpp-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-c-cpp-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c-cpp-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-c-cpp-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-c-cpp-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-c-cpp-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-ccl/Makefile  up to 1.1.1.1
+external/bsd/flex/dist/tests/test-ccl/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-ccl/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-ccl/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-concatenated-options/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-concatenated-options/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-debug-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-debug-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-debug-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-debug-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-debug-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-debug-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-debug-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-debug-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-extended/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-extended/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-extended/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-extended/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-header-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-header-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-header-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-header-nr/main.c up to 1.1.1.2
+external/bsd/flex/dist/tests/test-header-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-header-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-header-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-header-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-header-r/main.c up to 1.1.1.2
+external/bsd/flex/dist/tests/test-header-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-include-by-buffer/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-include-by-buffer/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-include-by-buffer/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-include-by-buffer/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-include-by-push/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-include-by-push/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-include-by-push/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-include-by-push/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-include-by-reentrant/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-include-by-reentrant/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-include-by-reentrant/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-include-by-reentrant/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-linedir-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-linedir-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-linedir-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-linedir-r/main.c up to 1.1.1.2
+external/bsd/flex/dist/tests/test-linedir-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-lineno-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-lineno-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-lineno-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-lineno-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-lineno-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-lineno-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-lineno-trailing/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-trailing/Makefile.am up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-trailing/Makefile.in up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-trailing/scanner.l up to 1.1.1.1
+external/bsd/flex/dist/tests/test-lineno-trailing/test.input up to 1.1.1.1
+external/bsd/flex/dist/tests/test-mem-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-mem-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-mem-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-mem-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-mem-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-mem-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-mem-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-mem-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-multiple-scanners-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-multiple-scanners-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-multiple-scanners-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-multiple-scanners-nr/main.c up to 1.1.1.2
+external/bsd/flex/dist/tests/test-multiple-scanners-nr/scanner-1.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-multiple-scanners-nr/scanner-2.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-multiple-scanners-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-multiple-scanners-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-multiple-scanners-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-multiple-scanners-r/main.c up to 1.1.1.2
+external/bsd/flex/dist/tests/test-multiple-scanners-r/scanner-1.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-multiple-scanners-r/scanner-2.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-noansi-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-noansi-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-noansi-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-noansi-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-noansi-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-noansi-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-noansi-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-noansi-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-posix/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-posix/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-posix/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-posix/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-posixly-correct/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-posixly-correct/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-posixly-correct/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-posixly-correct/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-prefix-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-prefix-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-prefix-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-prefix-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-prefix-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-prefix-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-prefix-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-prefix-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-pthread/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-pthread/Makefile.am up to 1.1.1.3
+external/bsd/flex/dist/tests/test-pthread/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-pthread/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-quotes/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-quotes/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-quotes/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-quotes/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-reject/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-reject/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-reject/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-reject/scanner.l up to 1.1.1.3
+external/bsd/flex/dist/tests/test-rescan-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-rescan-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-rescan-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-rescan-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-rescan-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-rescan-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-rescan-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-rescan-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-string-nr/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-string-nr/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-string-nr/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-string-nr/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-string-r/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-string-r/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-string-r/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-string-r/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-table-opts/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-table-opts/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-table-opts/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-table-opts/scanner.l up to 1.1.1.3
+external/bsd/flex/dist/tests/test-top/Makefile  up to 1.1.1.1
+external/bsd/flex/dist/tests/test-top/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-top/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-top/main.c    up to 1.1.1.2
+external/bsd/flex/dist/tests/test-top/scanner.l up to 1.1.1.2
+external/bsd/flex/dist/tests/test-yyextra/Makefile up to 1.1.1.1
+external/bsd/flex/dist/tests/test-yyextra/Makefile.am up to 1.1.1.2
+external/bsd/flex/dist/tests/test-yyextra/Makefile.in up to 1.1.1.3
+external/bsd/flex/dist/tests/test-yyextra/scanner.l up to 1.1.1.2
+external/bsd/flex/include/config.h              up to 1.5
+
+	Update flex to 2.5.39.
+	[mrg, ticket #571]
+
+usr.bin/cksum/crc.c				1.19
+usr.bin/config/Makefile                         up to 1.10
+usr.bin/config/TODO                             up to 1.14
+usr.bin/config/config.1                         up to 1.17
+usr.bin/config/config.5                         up to 1.25
+usr.bin/config/defs.h                           up to 1.64
+usr.bin/config/files.c                          up to 1.18
+usr.bin/config/gram.y                           up to 1.46
+usr.bin/config/hash.c                           up to 1.11
+usr.bin/config/lint.c                           up to 1.15
+usr.bin/config/main.c                           up to 1.74
+usr.bin/config/mkdevsw.c                        up to 1.12
+usr.bin/config/mkheaders.c                      up to 1.26
+usr.bin/config/mkioconf.c                       up to 1.28
+usr.bin/config/mkmakefile.c                     up to 1.37
+usr.bin/config/mkswap.c                         up to 1.8
+usr.bin/config/pack.c                           up to 1.9
+usr.bin/config/scan.l                           up to 1.22
+usr.bin/config/sem.c                            up to 1.71
+usr.bin/config/sem.h                            up to 1.19
+usr.bin/config/util.c                           up to 1.19
+
+	sync config(1) with HEAD.
+	[mrg, ticket #572]
+
+sys/external/bsd/common/include/linux/kernel.h	1.5, 1.6
+sys/external/bsd/drm2/dist/drm/drm_ioctl.c	1.4
+sys/external/bsd/drm2/dist/drm/drm_irq.c	1.6-1.8
+sys/external/bsd/drm2/dist/drm/i915/i915_dma.c	1.13-1.15
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.23-1.27
+sys/external/bsd/drm2/dist/drm/i915/i915_gem_execbuffer.c 1.5
+sys/external/bsd/drm2/dist/drm/i915/intel_display.c 1.14, 1.15
+sys/external/bsd/drm2/dist/drm/i915/intel_dp.c	1.10
+sys/external/bsd/drm2/dist/drm/i915/intel_drv.h	1.8
+sys/external/bsd/drm2/dist/drm/i915/intel_i2c.c	1.8-1.13
+sys/external/bsd/drm2/dist/drm/i915/intel_pm.c	1.6
+sys/external/bsd/drm2/dist/drm/i915/intel_ringbuffer.c 1.5, 1.6
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/device/nouveau_engine_device_base.c 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nvc0.c 1.3, 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nve0.c 1.3, 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/core/device.h 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/subdev/mc.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/subdev/pwr.h 1.3, 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/core/os.h 1.4, 1.5
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/bios/nouveau_subdev_bios_base.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/bios/nouveau_subdev_bios_pll.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/clock/nouveau_subdev_clock_base.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/clock/nouveau_subdev_clock_nv50.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/devinit/fbmem.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/devinit/nouveau_subdev_devinit_nv04.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_nv50.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_nvc0.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nv50.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nvc0.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/mc/nouveau_subdev_mc_base.c 1.2, 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/mxm/nouveau_subdev_mxm_nv50.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/pwr/nouveau_subdev_pwr_base.c 1.3, 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/therm/nouveau_subdev_therm_ic.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/timer/nouveau_subdev_timer_nv04.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/vm/nouveau_subdev_vm_base.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/vm/nouveau_subdev_vm_nv04.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/vm/nouveau_subdev_vm_nv44.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/vm/nv04.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_bo.h 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drm.c 1.4, 1.5
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_fbcon.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_nv50_display.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_nv84_fence.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_ttm.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_ttm.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_vga.h 1.2
+sys/external/bsd/drm2/dist/drm/radeon/radeon_fence.c 1.6-1.8
+sys/external/bsd/drm2/dist/drm/radeon/radeon_pm.c 1.3
+sys/external/bsd/drm2/dist/drm/radeon/rs400.c	1.3
+sys/external/bsd/drm2/dist/drm/via/via_dmablit.c 1.3, 1.4
+sys/external/bsd/drm2/dist/drm/via/via_drv.h	1.3
+sys/external/bsd/drm2/dist/drm/via/via_irq.c	1.3, 1.4
+sys/external/bsd/drm2/dist/drm/via/via_video.c	1.3, 1.4
+sys/external/bsd/drm2/dist/include/drm/drmP.h	1.10
+sys/external/bsd/drm2/dist/include/drm/drm_crtc.h 1.4
+sys/external/bsd/drm2/dist/include/drm/drm_modes.h 1.3
+sys/external/bsd/drm2/dist/uapi/drm/i915_drm.h	1.2
+sys/external/bsd/drm2/drm/drm_cache.c		1.4-1.6
+sys/external/bsd/drm2/drm/drm_drv.c		1.14
+sys/external/bsd/drm2/drm/drm_module.c		1.10
+sys/external/bsd/drm2/drm/drm_sysctl.c		1.5
+sys/external/bsd/drm2/drm/drm_vma_manager.c	1.2
+sys/external/bsd/drm2/drm/drmfb.c		1.1
+sys/external/bsd/drm2/drm/files.drmkms		1.10, 1.11
+sys/external/bsd/drm2/i2c/drm_encoder_slave.c	1.1
+sys/external/bsd/drm2/i915drm/files.i915drmkms	1.7, 1.10
+sys/external/bsd/drm2/i915drm/intelfb.c		1.11, 1.12
+sys/external/bsd/drm2/include/asm/io.h		1.4
+sys/external/bsd/drm2/include/asm/unaligned.h	1.2, 1.3
+sys/external/bsd/drm2/include/drm/drm_encoder_slave.h 1.1
+sys/external/bsd/drm2/include/drm/drm_wait_netbsd.h 1.7-1.11
+sys/external/bsd/drm2/include/drm/drmfb.h	1.1
+sys/external/bsd/drm2/include/drm/drmfb_pci.h	1.1, 1.2
+sys/external/bsd/drm2/include/linux/bitops.h	1.9
+sys/external/bsd/drm2/include/linux/i2c.h	1.7, 1.8
+sys/external/bsd/drm2/include/linux/io-mapping.h 1.5
+sys/external/bsd/drm2/include/linux/moduleparam.h 1.5
+sys/external/bsd/drm2/include/linux/pci.h	1.12-1.15
+sys/external/bsd/drm2/include/linux/pm.h	1.4
+sys/external/bsd/drm2/include/linux/reboot.h	1.2
+sys/external/bsd/drm2/include/linux/slab.h	1.5
+sys/external/bsd/drm2/include/linux/string.h	1.4
+sys/external/bsd/drm2/include/linux/vgaarb.h	1.3
+sys/external/bsd/drm2/include/linux/ww_mutex.h	1.10
+sys/external/bsd/drm2/linux/files.drmkms_linux	1.8
+sys/external/bsd/drm2/linux/linux_i2c.c		1.3
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.1
+sys/external/bsd/drm2/nouveau/files.nouveau	1.5-1.8
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.1-1.3
+sys/external/bsd/drm2/nouveau/nouveau_pci.h	1.1
+sys/external/bsd/drm2/nouveau/nouveau_sysfs.c	1.1
+sys/external/bsd/drm2/nouveau/nouveau_vga.c	1.1
+sys/external/bsd/drm2/nouveau/nouveaufb.c	1.1
+sys/external/bsd/drm2/nouveau/nouveaufb.h	1.1
+sys/external/bsd/drm2/pci/drm_pci.c		1.10-1.12
+sys/external/bsd/drm2/pci/drm_pci_module.c	1.4
+sys/external/bsd/drm2/pci/drmfb_pci.c		1.1-1.3
+sys/external/bsd/drm2/pci/files.drmkms_pci	1.5
+sys/external/bsd/drm2/radeon/radeon_pci.c	1.5-1.7
+sys/modules/drmkms/Makefile			1.8, 1.9
+sys/modules/drmkms_linux/Makefile		1.6
+sys/modules/drmkms_pci/Makefile			1.5
+
+	sync drm2 with HEAD.  This brings fixes for machines that
+	previously didn't boot, mode setting improvements, and a
+	reduction in rendering glitches.
+	[mrg, ticket #573]
 
