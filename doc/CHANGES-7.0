@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.220 2015/03/07 05:18:38 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.221 2015/03/07 05:20:26 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -16085,6 +16085,7 @@ sys/kern/init_sysent.c				(regen)
 sys/kern/syscalls.c				(regen)
 sys/kern/syscalls.master			1.272
 sys/rump/include/rump/rump_syscalls.h		(regen)
+sys/rump/librump/rumpkern/rump_syscalls.c	(regen)
 sys/sys/syscall.h				(regen)
 sys/sys/syscallargs.h				(regen)
 
