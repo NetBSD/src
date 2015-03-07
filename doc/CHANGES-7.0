@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.219 2015/03/06 21:46:40 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.220 2015/03/07 05:18:38 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18094,4 +18094,14 @@ sys/modules/drmkms_pci/Makefile			1.5
 	previously didn't boot, mode setting improvements, and a
 	reduction in rendering glitches.
 	[mrg, ticket #573]
+
+sys/arch/arm/cortex/gic.c			1.13, 1.14
+
+	sc_gic_lines is the total number of valid lines but pic_sources[]
+	is sparse; when initializing mpsafe targets make sure to go all
+	the way to the end (sc_pic.pic_maxsources) instead
+	--
+	in armgic_establish_irq, make sure to write the new value to
+	GICD_ICFGRn when setting irq type (IST_LEVEL/IST_EDGE)
+	[jmcneill, ticket #567]
 
