@@ -1,4 +1,4 @@
-/* $NetBSD: xc5k.c,v 1.5 2015/01/07 07:05:48 ozaki-r Exp $ */
+/* $NetBSD: xc5k.c,v 1.6 2015/03/07 14:16:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.5 2015/01/07 07:05:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.6 2015/03/07 14:16:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,7 +434,7 @@ xc5k_get_status(struct xc5k *xc)
 	return festatus;
 }
 
-MODULE(MODULE_CLASS_DRIVER, xc5k, "iic");
+MODULE(MODULE_CLASS_DRIVER, xc5k, "i2cexec");
 
 static int
 xc5k_modcmd(modcmd_t cmd, void *opaque)
