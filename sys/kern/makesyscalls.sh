@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.146 2015/03/07 16:38:07 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.147 2015/03/07 20:39:11 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -66,6 +66,9 @@ rumpcalls="/dev/null"
 rumpcallshdr="/dev/null"
 rumpsysmap="/dev/null"
 rumpsysent="rumpsysent.tmp"
+rumpnoflags="\n\t\t.sy_flags = SYCALL_NOSYS,"
+rumpnosys="(sy_call_t *)rumpns_enosys"
+rumpnomodule="(sy_call_t *)rumpns_sys_nomodule"
 . ./$1
 
 # tmp files:
@@ -191,7 +194,7 @@ BEGIN {
 
 	printf "\n#define\ts(type)\tsizeof(type)\n" > sysent
 	printf "#define\tn(type)\t(sizeof(type)/sizeof (%s))\n", registertype > sysent
-	printf "#define\tns(type)\tn(type), s(type)\n\n", registertype > sysent
+	printf "#define\tns(type)\t.sy_narg = n(type), .sy_argsize = s(type)\n\n", registertype > sysent
 	printf "struct sysent %s[] = {\n",switchname > sysent
 
 	printf "/* %s */\n\n", tag > sysnames
@@ -420,6 +423,10 @@ function parserr(was, wanted) {
 	printf "line is:\n"
 	print
 	exit 1
+}
+function fillerpsysent(syscall, flags, name, comment) {
+	return sprintf("\t{%s\n\t\t.sy_call = %s,\n\t},\t\t/* %d = filler */\n",\
+	    flags, name, syscall, comment);
 }
 function parseline() {
 	f=3			# toss number and type
@@ -666,33 +673,26 @@ function printproto(wrap) {
 }
 
 function printrumpsysent(insysent, compatwrap) {
+	if (modular) {
+		fn = rumpnomodule
+		flags = rumpnoflags
+	} else {
+		fn = rumpnosys
+		flags = ""
+	}
 	if (!insysent) {
-		eno[0] = "rumpns_enosys"
-		eno[1] = "rumpns_sys_nomodule"
-		flags[0] = "SYCALL_NOSYS"
-		flags[1] = "0"
-		printf("\t{ 0, 0, %s,\n\t    (sy_call_t *)%s, 0, 0 }, \t"	\
-		    "/* %d = %s */\n",					\
-		    flags[modular], eno[modular], syscall, funcalias)	\
-		    > rumpsysent
+		printf("\t{%s\n\t\t.sy_call = %s,\n},\t\t/* %d = %s */\n", \
+		    flags, fn, syscall, funcalias) > rumpsysent
 		return
 	}
 
-	printf("\t{ ") > rumpsysent
-	if (argc == 0) {
-		printf("0, 0, ") > rumpsysent
-	} else {
-		printf("ns(struct %ssys_%s_args), ", compatwrap_, funcalias) > rumpsysent
+	printf("\t{") > rumpsysent
+	if (argc != 0) {
+		printf("\n\t\tns(struct %ssys_%s_args),", compatwrap_, funcalias) > rumpsysent
 	}
 
-	if (modular)
-		fn="(sy_call_t *)rumpns_sys_nomodule"
-	else
-		fn="(sy_call_t *)rumpns_enosys"
-	printf("0,\n\t   %s, 0, 0 },", fn) > rumpsysent
-	for (i = 0; i < (33 - length(fn)) / 8; i++)
-		printf("\t") > rumpsysent
-	printf("/* %d = %s%s */\n", syscall, compatwrap_, funcalias) > rumpsysent
+	printf("\n\t\t.sy_call = %s,\n\t},", fn) > rumpsysent
+	printf("\t\t/* %d = %s%s */\n", syscall, compatwrap_, funcalias) > rumpsysent
 }
 
 function iscompattype(type) {
@@ -780,11 +780,9 @@ function putent(type, compatwrap) {
 	}
 
 	# output syscall switch entry
-	printf("\t{ ") > sysent
-	if (argc == 0) {
-		printf("0, 0, ") > sysent
-	} else {
-		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > sysent
+	printf("\t{\n\t\t") > sysent
+	if (argc != 0) {
+		printf("ns(struct %s%s_args),", compatwrap_, funcname) > sysent
 	}
 	if (modular) 
 		wfn = "sys_nomodule";
@@ -793,10 +791,12 @@ function putent(type, compatwrap) {
 	else
 		wfn = compatwrap "(" funcname ")";
 	wfn_cast="(sy_call_t *)" wfn
-	printf("%s,\n\t    %s, 0, 0 },", sycall_flags, wfn_cast) > sysent
-	for (i = 0; i < (33 - length(wfn_cast)) / 8; i++)
-		printf("\t") > sysent
-	printf("/* %d = %s%s */\n", syscall, compatwrap_, funcalias) > sysent
+	if (sycall_flags != "0")
+		flags = "\n\t\t.sy_flags = " sycall_flags ","
+	else
+		flags = ""
+	printf("%s\n\t\t.sy_call = %s\n\t},", flags, wfn_cast) > sysent
+	printf("\t\t/* %d = %s%s */\n", syscall, compatwrap_, funcalias) > sysent
 
 	# output syscall name for names table
 	printf("\t/* %3d */\t\"%s%s\",\n", syscall, compatwrap_, funcalias) \
@@ -986,10 +986,8 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 	else
 		sys_stub = sys_nosys;
 
-	printf("\t{ 0, 0, 0,\n\t    %s, 0, 0 },\t\t\t/* %d = %s */\n", \
-	    sys_stub, syscall, comment) > sysent
-	printf("\t{ 0, 0, SYCALL_NOSYS,\n\t    %s, 0, 0 },\t\t/* %d = %s */\n", \
-	    "(sy_call_t *)rumpns_enosys", syscall, comment) > rumpsysent
+	fillerpsysent(syscall, "", sys_stub, comment) > sysent
+	fillerpsysent(syscall, rumpnoflags, rumpnosys, comment) > rumpsysent
 	printf("\t/* %3d */\t\"#%d (%s)\",\n", syscall, syscall, comment) \
 	    > sysnamesbottom
 	if ($2 != "UNIMPL")
@@ -1053,10 +1051,8 @@ END {
 			exit 1
 		}
 		while (syscall < nsysent) {
-			printf("\t{ 0, 0, 0,\n\t    %s, 0, 0 },\t\t\t/* %d = filler */\n", \
-			    sys_nosys, syscall) > sysent
-			printf("\t{ 0, 0, SYCALL_NOSYS,\n\t    %s, 0, 0 },\t\t/* %d = filler */\n", \
-			    "(sy_call_t *)rumpns_enosys", syscall) > rumpsysent
+			fillerpsysent(syscall, "", sys_nosys, "filler") > sysent
+			fillerpsysent(syscall, rumpnoflags, rumpnosys, "filler") > rumpsysent
 			printf("\t/* %3d */\t\"# filler\",\n", syscall) \
 			    > sysnamesbottom
 			syscall++
