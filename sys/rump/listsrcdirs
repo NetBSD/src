@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.28 2015/02/13 00:31:42 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.29 2015/03/07 22:00:07 justin Exp $
 #
 
 #
@@ -63,7 +63,7 @@ lsrc ()
 	iswanted ${what} && for arg in $* ; do echo src${pfx}${arg} ; done
 }
 
-ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips aarch64 evbarm64"
+ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips aarch64 evbarm64 riscv"
 ARCHS_EXTRA="arm/arm32 Makefile"
 
 # sources necessary for building rump kernel components.  This list
