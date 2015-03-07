@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.331 2015/03/07 21:53:33 skrll Exp $ */
+/* $NetBSD: com.c,v 1.332 2015/03/07 22:13:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.331 2015/03/07 21:53:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.332 2015/03/07 22:13:16 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -472,7 +472,7 @@ com_attach_subr(struct com_softc *sc)
 
 	sc->sc_fifolen = 1;
 	/* look for a NS 16550AF UART with FIFOs */
-	if(sc->sc_type == COM_TYPE_INGENIC) {
+	if (sc->sc_type == COM_TYPE_INGENIC) {
 		CSR_WRITE_1(regsp, COM_REG_FIFO,
 		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | 
 		    FIFO_TRIGGER_14 | FIFO_UART_ON);
@@ -527,7 +527,7 @@ com_attach_subr(struct com_softc *sc)
 			uint8_t iir1, iir2;
 			uint8_t fcr = FIFO_ENABLE | FIFO_TRIGGER_14;
 
-			if(sc->sc_type == COM_TYPE_INGENIC)
+			if (sc->sc_type == COM_TYPE_INGENIC)
 				fcr |= FIFO_UART_ON;
 
 			lcr = CSR_READ_1(regsp, COM_REG_LCR);
@@ -568,7 +568,7 @@ com_attach_subr(struct com_softc *sc)
 			fifo_msg = "ns16550, broken fifo";
 	else
 		fifo_msg = "ns8250 or ns16450, no fifo";
-	if(sc->sc_type == COM_TYPE_INGENIC) {
+	if (sc->sc_type == COM_TYPE_INGENIC) {
 		CSR_WRITE_1(regsp, COM_REG_FIFO, FIFO_UART_ON);
 	} else
 		CSR_WRITE_1(regsp, COM_REG_FIFO, 0);
@@ -1479,7 +1479,7 @@ comparam(struct tty *tp, struct termios *t)
 	} else
 		sc->sc_fifo = 0;
 
-	if(sc->sc_type == COM_TYPE_INGENIC)
+	if (sc->sc_type == COM_TYPE_INGENIC)
 		sc->sc_fifo |= FIFO_UART_ON;
 
 	/* And copy to tty. */
