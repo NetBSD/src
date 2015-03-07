@@ -569,7 +569,8 @@ int hostapd_set_freq(struct hostapd_data *hapd, int mode, int freq,
 {
 	struct hostapd_freq_params data;
 
-	if (hostapd_set_freq_params(&data, mode, freq, channel, ht_enabled,
+	if (hapd->iface->current_mode &&
+	    hostapd_set_freq_params(&data, mode, freq, channel, ht_enabled,
 				    vht_enabled, sec_channel_offset,
 				    vht_oper_chwidth,
 				    center_segment0, center_segment1,
@@ -765,7 +766,8 @@ int hostapd_start_dfs_cac(struct hostapd_iface *iface, int mode, int freq,
 		return -1;
 	}
 
-	if (hostapd_set_freq_params(&data, mode, freq, channel, ht_enabled,
+	if (iface->current_mode &&
+	    hostapd_set_freq_params(&data, mode, freq, channel, ht_enabled,
 				    vht_enabled, sec_channel_offset,
 				    vht_oper_chwidth, center_segment0,
 				    center_segment1,
