@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.54 2015/02/21 07:47:41 ozaki-r Exp $
+# $NetBSD: md.i386,v 1.55 2015/03/07 14:16:51 jmcneill Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -364,6 +364,8 @@
 ./stand/i386-xen/@OSRELEASE@/modules/hpqlb/hpqlb.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hythygtemp				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hythygtemp/hythygtemp.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/i2cexec				base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/i2cexec/i2cexec.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/i915drm				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/i915drm/i915drm.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/i915drmkms				base-kernel-modules	kmod,compatmodules
@@ -763,6 +765,8 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/hpqlb/hpqlb.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hythygtemp			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hythygtemp/hythygtemp.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/i2cexec				base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/i2cexec/i2cexec.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/i915drm				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/i915drm/i915drm.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/i915drmkms			base-kernel-modules	kmod,compatmodules
