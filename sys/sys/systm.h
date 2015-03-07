@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.266 2014/08/03 12:49:32 wiz Exp $	*/
+/*	$NetBSD: systm.h,v 1.267 2015/03/07 16:34:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -57,6 +57,7 @@
 struct clockframe;
 struct lwp;
 struct proc;
+struct sysent;
 struct timeval;
 struct tty;
 struct uio;
@@ -120,6 +121,8 @@ extern struct sysent {		/* system call table */
 	short	sy_argsize;	/* total size of arguments */
 	int	sy_flags;	/* flags. see below */
 	sy_call_t *sy_call;     /* implementing function */
+	uint32_t sy_entry;	/* DTrace entry ID for systrace. */
+	uint32_t sy_return;	/* DTrace return ID for systrace. */
 } sysent[];
 extern int nsysent;
 #if	BYTE_ORDER == BIG_ENDIAN
@@ -388,8 +391,9 @@ void	doforkhooks(struct proc *, struct proc *);
  */
 #ifdef _KERNEL
 bool	trace_is_enabled(struct proc *);
-int	trace_enter(register_t, const register_t *, int);
-void	trace_exit(register_t, register_t [], int);
+int	trace_enter(register_t, const struct sysent *, const void *);
+void	trace_exit(register_t, const struct sysent *, const void *,
+    register_t [], int);
 #endif
 
 int	uiomove(void *, size_t, struct uio *);
