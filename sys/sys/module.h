@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.35 2014/04/23 23:25:45 pooka Exp $	*/
+/*	$NetBSD: module.h,v 1.36 2015/03/07 03:19:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -114,11 +114,11 @@ struct modinfo_chain {
 };
 LIST_HEAD(modinfo_boot_chain, modinfo_chain);
 #define _MODULE_REGISTER(name)						\
-static void modctor_##name(void) __attribute__((constructor));		\
-static void modctor_##name(void)					\
+static void __CONCAT(modctor_,name)(void) __attribute__((__constructor__));\
+static void __CONCAT(modctor_,name)(void)				\
 {									\
 	static struct modinfo_chain mc = {				\
-		.mc_info = &name##_modinfo,				\
+		.mc_info = &__CONCAT(name,_modinfo),			\
 	};								\
 	extern struct modinfo_boot_chain modinfo_boot_chain;		\
 	LIST_INSERT_HEAD(&modinfo_boot_chain, &mc, mc_entries);		\
@@ -126,17 +126,17 @@ static void modctor_##name(void)					\
 
 #else /* RUMP_USE_CTOR */
 
-#define _MODULE_REGISTER(name) __link_set_add_rodata(modules, name##_modinfo);
+#define _MODULE_REGISTER(name) __link_set_add_rodata(modules, __CONCAT(name,_modinfo));
 
 #endif /* RUMP_USE_CTOR */
 
 #define	MODULE(class, name, required)				\
-static int name##_modcmd(modcmd_t, void *);			\
-static const modinfo_t name##_modinfo = {			\
+static int __CONCAT(name,_modcmd)(modcmd_t, void *);		\
+static const modinfo_t __CONCAT(name,_modinfo) = {		\
 	.mi_version = __NetBSD_Version__,			\
 	.mi_class = (class),					\
-	.mi_modcmd = name##_modcmd,				\
-	.mi_name = #name,					\
+	.mi_modcmd = __CONCAT(name,_modcmd),			\
+	.mi_name = __STRING(name),				\
 	.mi_required = (required)				\
 }; 								\
 _MODULE_REGISTER(name)
