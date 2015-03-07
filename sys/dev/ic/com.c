@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.330 2015/03/07 15:49:20 macallan Exp $ */
+/* $NetBSD: com.c,v 1.331 2015/03/07 21:53:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.330 2015/03/07 15:49:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.331 2015/03/07 21:53:33 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -525,7 +525,7 @@ com_attach_subr(struct com_softc *sc)
 			 * should become effective.
 			 */
 			uint8_t iir1, iir2;
-			const uint8_t fcr = FIFO_ENABLE | FIFO_TRIGGER_14;
+			uint8_t fcr = FIFO_ENABLE | FIFO_TRIGGER_14;
 
 			if(sc->sc_type == COM_TYPE_INGENIC)
 				fcr |= FIFO_UART_ON;
