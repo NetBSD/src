@@ -2055,8 +2055,8 @@ extern int dtrace_register(const char *, const dtrace_pattr_t *, uint32_t,
 extern int dtrace_unregister(dtrace_provider_id_t);
 extern int dtrace_condense(dtrace_provider_id_t);
 extern void dtrace_invalidate(dtrace_provider_id_t);
-extern dtrace_id_t dtrace_probe_lookup(dtrace_provider_id_t, char *,
-    char *, char *);
+extern dtrace_id_t dtrace_probe_lookup(dtrace_provider_id_t, const char *,
+    const char *, const char *);
 extern dtrace_id_t dtrace_probe_create(dtrace_provider_id_t, const char *,
     const char *, const char *, int, void *);
 extern void *dtrace_probe_arg(dtrace_provider_id_t, dtrace_id_t);

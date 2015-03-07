@@ -7892,8 +7892,8 @@ dtrace_probe_lookup_match(dtrace_probe_t *probe, void *arg)
  * name and probe name.
  */
 dtrace_id_t
-dtrace_probe_lookup(dtrace_provider_id_t prid, char *mod,
-    char *func, char *name)
+dtrace_probe_lookup(dtrace_provider_id_t prid, const char *mod,
+    const char *func, const char *name)
 {
 	dtrace_probekey_t pkey;
 	dtrace_id_t id;
@@ -7901,11 +7901,11 @@ dtrace_probe_lookup(dtrace_provider_id_t prid, char *mod,
 
 	pkey.dtpk_prov = ((dtrace_provider_t *)prid)->dtpv_name;
 	pkey.dtpk_pmatch = &dtrace_match_string;
-	pkey.dtpk_mod = mod;
+	pkey.dtpk_mod = __UNCONST(mod);
 	pkey.dtpk_mmatch = mod ? &dtrace_match_string : &dtrace_match_nul;
-	pkey.dtpk_func = func;
+	pkey.dtpk_func = __UNCONST(func);
 	pkey.dtpk_fmatch = func ? &dtrace_match_string : &dtrace_match_nul;
-	pkey.dtpk_name = name;
+	pkey.dtpk_name = __UNCONST(name);
 	pkey.dtpk_nmatch = name ? &dtrace_match_string : &dtrace_match_nul;
 	pkey.dtpk_id = DTRACE_IDNONE;
 
