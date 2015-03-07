@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2051 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2052 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -135,3 +135,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	network: introduce RTF_LOCAL for local address routes. [roy 20150226]
 	evbarm: Add support for RPI2. [skrll 20150304]
 	evbarm: Add support for ODROID-C1. [jmcneill 20150304]
+	dtrace: Add syscall support [christos 20150307]
