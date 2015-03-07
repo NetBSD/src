@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1119 2015/02/13 18:57:47 nonaka Exp $
+# $NetBSD: GENERIC,v 1.1120 2015/03/07 07:28:37 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1119 $"
+#ident 		"GENERIC-$Revision: 1.1120 $"
 
 maxusers	64		# estimated number of users
 
@@ -537,14 +537,15 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
-vga0		at isa?
+# vga@isa and pcdisplay@isa are disabled; see PR#49290
+#vga0		at isa?
 vga*		at pci? dev ? function ?
-pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+#pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 genfb*		at pci? dev ? function ?
 options 	VCONS_DRAW_INTR
 #machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 wsdisplay*	at vga? console ?
-wsdisplay*	at pcdisplay? console ?
+#wsdisplay*	at pcdisplay? console ?
 wsdisplay*	at wsemuldisplaydev?
 #wsdisplay*	at machfb? console ?
 wskbd*		at pckbd? console ?
