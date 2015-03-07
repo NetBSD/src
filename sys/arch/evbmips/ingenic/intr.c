@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5 2015/03/05 17:42:29 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.6 2015/03/07 15:37:46 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2015/03/05 17:42:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2015/03/07 15:37:46 macallan Exp $");
 
 #define __INTR_PRIVATE
 
@@ -234,13 +234,13 @@ ingenic_irq(int ipl)
 	while (bit != 0) {
 		idx = bit - 1;
 		mask = 1 << idx;
+		intrs[idx].ih_count.ev_count++;
 		if (intrs[idx].ih_func != NULL) {
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_LOCK(1, NULL);
 			intrs[idx].ih_func(intrs[idx].ih_arg);	
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_UNLOCK_ONE(NULL);
-			intrs[idx].ih_count.ev_count++;
 		} else {
 			/* spurious interrupt, mask it */
 			writereg(JZ_ICMSR0, mask);
@@ -262,13 +262,13 @@ ingenic_irq(int ipl)
 		idx = bit - 1;
 		mask = 1 << idx;
 		idx += 32;
+		intrs[idx].ih_count.ev_count++;
 		if (intrs[idx].ih_func != NULL) {
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_LOCK(1, NULL);
 			intrs[idx].ih_func(intrs[idx].ih_arg);	
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_UNLOCK_ONE(NULL);
-			intrs[idx].ih_count.ev_count++;
 		} else {
 			/* spurious interrupt, mask it */
 			writereg(JZ_ICMSR1, mask);
