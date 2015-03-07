@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.16 2012/01/17 08:22:09 wiz Exp $ */
+/* $NetBSD: drvctl.c,v 1.16.18.1 2015/03/07 06:06:24 snj Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -226,20 +226,36 @@ extract_property(prop_dictionary_t dict, const char *prop, bool nflag)
 {
 	char *s, *p, *cur, *ep = NULL;
 	prop_object_t obj;
+	unsigned long ind;
 
+	obj = dict;
+	cur = NULL;
 	s = strdup(prop);
 	p = strtok_r(s, "/", &ep);
 	while (p) {
 		cur = p;
 		p = strtok_r(NULL, "/", &ep);
-		if (p) {
-			if (prop_dictionary_get_dict(dict, cur, &dict) == false)
+
+		switch (prop_object_type(obj)) {
+		case PROP_TYPE_DICTIONARY:
+			obj = prop_dictionary_get(obj, cur);
+			if (obj == NULL)
 				exit(EXIT_FAILURE);
-		} else {
-			obj = prop_dictionary_get(dict, cur);
-			display_object(obj, nflag);
+			break;
+		case PROP_TYPE_ARRAY:
+			ind = strtoul(cur, NULL, 0);
+			obj = prop_array_get(obj, ind);
+			if (obj == NULL)
+				exit(EXIT_FAILURE);
+			break;
+		default:
+			fprintf(stderr, "select neither dict nor array with '%s'\n", cur);
+			exit(EXIT_FAILURE);
 		}
 	}
+
+	if (obj != NULL && cur != NULL)
+		display_object(obj, nflag);
 
 	free(s);
 }
