@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_syscall.h,v 1.28 2013/11/07 19:39:58 njoly Exp $ */
+/* $NetBSD: sunos32_syscall.h,v 1.29 2015/03/07 16:41:54 christos Exp $ */
 
 /*
  * System call numbers.
