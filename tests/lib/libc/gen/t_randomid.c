@@ -1,4 +1,4 @@
-/* $NetBSD: t_randomid.c,v 1.4 2015/02/14 08:46:02 isaki Exp $ */
+/* $NetBSD: t_randomid.c,v 1.5 2015/03/07 09:59:15 isaki Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ ATF_TC_BODY(randomid_basic, tc)
 
 	lowest = UINT32_MAX;
 
-	for (n = 0; n < 1000000; n++) {
+	for (n = 0; n < 100000; n++) {
 		id = randomid(ctx);
 
 		if (last[id] > 0) {
