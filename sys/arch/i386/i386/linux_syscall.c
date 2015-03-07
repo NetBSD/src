@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.51 2011/09/28 17:27:21 christos Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.52 2015/03/07 18:50:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.51 2011/09/28 17:27:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.52 2015/03/07 18:50:01 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -99,12 +99,10 @@ linux_syscall(struct trapframe *frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	if (__predict_false(l->l_proc->p_trace_enabled)) {
-		error = trace_enter(code, args, callp->sy_narg);
-		if (__predict_true(error == 0)) {
+	if (__predict_false(l->l_proc->p_trace_enabled || KDTRACE_ENTRY(callp->sy_entry))) {
+		error = trace_enter(code, callp, args);
+		if (__predict_true(error == 0))
 			error = sy_call(callp, l, args, rval);
-			trace_exit(code, rval, error);
-		}
 	} else
 		error = sy_call(callp, l, args, rval);
 
@@ -137,6 +135,8 @@ linux_syscall(struct trapframe *frame)
 			break;
 		}
 	}
+	if (__predict_false(l->l_proc->p_trace_enabled || KDTRACE_ENTRY(callp->sy_return)))
+		trace_exit(code, callp, args, rval, error);
 
 	userret(l);
 }
