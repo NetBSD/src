@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.26 2014/04/03 16:22:20 rjs Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.27 2015/03/07 18:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.26 2014/04/03 16:22:20 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.27 2015/03/07 18:52:46 christos Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -182,7 +182,7 @@ linux_syscall_fancy(trapframe_t *frame, struct lwp *l, uint32_t insn)
 	args = &frame->tf_r0;
 	callp = p->p_emul->e_sysent + code;
 
-	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
+	if ((error = trace_enter(code, callp, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -209,7 +209,7 @@ out:
 		break;
 	}
 
-	trace_exit(code, rval, error);
+	trace_exit(code, callp, args, rval, error);
 
 	userret(l);
 }
