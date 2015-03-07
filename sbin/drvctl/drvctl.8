@@ -1,4 +1,4 @@
-.\" $NetBSD: drvctl.8,v 1.13 2012/01/16 19:43:50 pgoyette Exp $
+.\" $NetBSD: drvctl.8,v 1.13.18.1 2015/03/07 06:06:24 snj Exp $
 .\"
 .\" Copyright (c) 2004
 .\" 	Matthias Drochner.  All rights reserved.
@@ -114,7 +114,9 @@ argument.
 If
 .Ar property
 is specified, the value of that property is printed, otherwise
-the properties are displayed as an XML property list.
+the properties are displayed as an XML property list. The
+property can be given as a path of dictionary keys and numeric
+array indexes separated by slashes.
 .It Fl Q
 Resume the ancestors of
 .Ar device ,
