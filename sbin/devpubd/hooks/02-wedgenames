@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: 02-wedgenames,v 1.1.12.1 2015/02/17 14:45:31 martin Exp $
+# $NetBSD: 02-wedgenames,v 1.1.12.2 2015/03/07 06:00:01 snj Exp $
 #
 # Try to maintain symlinks to wedge devices
 #
@@ -52,7 +52,14 @@ add_wedge() {
 		test -d $wedgedir || mkdir -m 755 $wedgedir
 		basedir=$(dirname "$wedgedir/$n")
 		test -d "$basedir" || mkdir -p -m 755 "$basedir"
-		ln -s "/dev/$1" "$wedgedir/$n"
+		if oldlink=$(readlink "$wedgedir/$n"); then
+			if [ x"$oldlink" != "/dev/$1" ]; then
+				rm -f "$wedgedir/$n"
+				ln -s "/dev/$1" "$wedgedir/$n"
+			fi
+		else
+			ln -s "/dev/$1" "$wedgedir/$n"
+		fi
 		;;
 	esac
 }
