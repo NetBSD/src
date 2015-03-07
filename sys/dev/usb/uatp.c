@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.10 2014/07/17 17:11:12 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.11 2015/03/07 20:20:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10 2014/07/17 17:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.11 2015/03/07 20:20:55 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1350,8 +1350,7 @@ geyser34_initialize(struct uatp_softc *sc)
 
 	DPRINTF(sc, UATP_DEBUG_MISC, ("initializing\n"));
 	geyser34_enable_raw_mode(sc);
-	usb_init_task(&sc->sc_reset_task, &geyser34_reset_task, sc,
-	    USB_TASKQ_MPSAFE);
+	usb_init_task(&sc->sc_reset_task, &geyser34_reset_task, sc, 0);
 }
 
 static int
@@ -2012,7 +2011,7 @@ tap_debug(struct uatp_softc *sc, const char *caller, const char *prefix)
 static void
 tap_initialize(struct uatp_softc *sc)
 {
-	callout_init(&sc->sc_untap_callout, CALLOUT_MPSAFE);
+	callout_init(&sc->sc_untap_callout, 0);
 	callout_setfunc(&sc->sc_untap_callout, untap_callout, sc);
 	mutex_init(&sc->sc_tap_mutex, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_tap_cv, "uatptap");

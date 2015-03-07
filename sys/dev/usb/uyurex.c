@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.9 2013/01/05 23:34:21 christos Exp $ */
+/*	$NetBSD: uyurex.c,v 1.10 2015/03/07 20:20:55 mrg Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9 2013/01/05 23:34:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.10 2015/03/07 20:20:55 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -150,6 +150,10 @@ uyurex_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
+	/*
+	 * XXX uhidev_open enables the interrupt, so we should do it as
+	 * one of the final things here.
+	 */
 	err = uhidev_open(&sc->sc_hdev);
 	if (err) {
 		aprint_error_dev(self, "uyurex_open: uhidev_open %d\n", err);

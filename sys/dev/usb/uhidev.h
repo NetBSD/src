@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.16 2015/02/08 19:22:45 jmcneill Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.17 2015/03/07 20:20:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ struct uhidev_attach_arg {
 
 void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);
 int uhidev_open(struct uhidev *);
+void uhidev_stop(struct uhidev *);
 void uhidev_close(struct uhidev *);
 usbd_status uhidev_set_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_get_report(struct uhidev *, int, void *, int);
