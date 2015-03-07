@@ -1,4 +1,4 @@
-/* $NetBSD: cx24227.c,v 1.6 2012/03/15 16:20:36 bouyer Exp $ */
+/* $NetBSD: cx24227.c,v 1.7 2015/03/07 14:16:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.6 2012/03/15 16:20:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.7 2015/03/07 14:16:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ cx24227_init(struct cx24227 *sc)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, cx24227, "iic");
+MODULE(MODULE_CLASS_DRIVER, cx24227, "i2cexec");
 
 static int
 cx24227_modcmd(modcmd_t cmd, void *priv)
