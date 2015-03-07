@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.5 2015/03/07 15:14:09 christos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.6 2015/03/07 17:47:09 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -139,17 +139,18 @@ systrace_probe(uint32_t id, register_t sysnum, const struct sysent *se,
     const void *params, const register_t *ret, int error)
 {
 	size_t		n_args	= 0;
-	uintptr_t	uargs[SYS_MAXSYSARGS];
+	uintptr_t	uargs[SYS_MAXSYSARGS + 3];
 
 	memset(uargs, 0, sizeof(uargs));
-	if (params) {
+	if (ret) {
 		/* entry syscall, convert params */
 		systrace_args(sysnum, params, uargs, &n_args);
 	} else {
-		/* return syscall, set values (XXX: errno?) */
+		/* return syscall, set values and params: */
 		uargs[0] = ret[0];
 		uargs[1] = ret[1];
 		uargs[2] = error;
+		systrace_args(sysnum, params, uargs + 3, &n_args);
 	}
 	/* Process the probe using the converted argments. */
 	/* XXX: fix for more arguments! */
