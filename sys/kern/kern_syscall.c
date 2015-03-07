@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.9 2013/12/14 06:27:57 pgoyette Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.10 2015/03/07 16:38:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.9 2013/12/14 06:27:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.10 2015/03/07 16:38:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
+#include "opt_dtrace.h"
 #endif
 
 /* XXX To get syscall prototypes. */
@@ -370,15 +371,22 @@ trace_is_enabled(struct proc *p)
  * a system call is actually executed.
  */
 int
-trace_enter(register_t code, const register_t *args, int narg)
+trace_enter(register_t code, const struct sysent *sy, const void *args)
 {
 	int error = 0;
+
+#ifdef KDTRACE_HOOKS
+	if (sy->sy_entry) {
+		struct emul *e = curlwp->l_proc->p_emul;
+		(*e->e_dtrace_syscall)(sy->sy_entry, code, sy, args, NULL, 0);
+	}
+#endif
 
 #ifdef SYSCALL_DEBUG
 	scdebug_call(code, args);
 #endif /* SYSCALL_DEBUG */
 
-	ktrsyscall(code, args, narg);
+	ktrsyscall(code, args, sy->sy_narg);
 
 #ifdef PTRACE
 	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
@@ -401,10 +409,18 @@ trace_enter(register_t code, const register_t *args, int narg)
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(register_t code, register_t rval[], int error)
+trace_exit(register_t code, const struct sysent *sy, const void *args,
+    register_t rval[], int error)
 {
-#ifdef PTRACE
+#if defined(PTRACE) || defined(KDTRACE_HOOKS)
 	struct proc *p = curlwp->l_proc;
+#endif
+
+#ifdef KDTRACE_HOOKS
+	if (sy->sy_return) {
+		(*p->p_emul->e_dtrace_syscall)(sy->sy_return, code, sy, args,
+		    rval, error);
+	}
 #endif
 
 #ifdef SYSCALL_DEBUG
