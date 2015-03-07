@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.7 2015/03/04 12:36:12 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.8 2015/03/07 21:32:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.7 2015/03/04 12:36:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.8 2015/03/07 21:32:47 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -60,6 +60,10 @@ struct arm32_bus_dma_tag amlogic_dma_tag = {
 #define CBUS_WRITE(x, v)	\
 	bus_space_write_4(&amlogic_bs_tag, amlogic_core_bsh, \
 			  AMLOGIC_CBUS_OFFSET + (x), (v))
+
+#define CBUS_SET_CLEAR(x, s, c)	\
+	amlogic_reg_set_clear(&amlogic_bs_tag, amlogic_core_bsh, \
+			      AMLOGIC_CBUS_OFFSET + (x), (s), (c))
 
 void
 amlogic_bootstrap(void)
@@ -96,6 +100,26 @@ amlogic_get_rate_sys(void)
 	mul = __SHIFTOUT(cntl, HHI_SYS_PLL_CNTL_MUL);
 	div = __SHIFTOUT(cntl, HHI_SYS_PLL_CNTL_DIV);
 	od = __SHIFTOUT(cntl, HHI_SYS_PLL_CNTL_OD);
+
+	clk *= mul;
+	clk /= div;
+	clk >>= od;
+
+	return (uint32_t)clk;
+}
+
+uint32_t
+amlogic_get_rate_fixed(void)
+{
+	uint32_t cntl;
+	uint64_t clk;
+	u_int mul, div, od;
+
+	clk = amlogic_get_rate_xtal();
+	cntl = CBUS_READ(HHI_MPLL_CNTL_REG);
+	mul = __SHIFTOUT(cntl, HHI_MPLL_CNTL_MUL);
+	div = __SHIFTOUT(cntl, HHI_MPLL_CNTL_DIV);
+	od = __SHIFTOUT(cntl, HHI_MPLL_CNTL_OD);
 
 	clk *= mul;
 	clk /= div;
@@ -162,6 +186,50 @@ amlogic_eth_init(void)
 {
 	CBUS_WRITE(EE_CLK_GATING1_REG,
 	    CBUS_READ(EE_CLK_GATING1_REG) | EE_CLK_GATING1_ETHERNET);
+}
+
+void
+amlogic_rng_init(void)
+{
+	printf("%s: GATING0 = %#x, GATING3 = %#x\n", __func__,
+	    CBUS_READ(EE_CLK_GATING0_REG), CBUS_READ(EE_CLK_GATING3_REG));
+
+	CBUS_WRITE(EE_CLK_GATING0_REG,
+	    CBUS_READ(EE_CLK_GATING0_REG) | EE_CLK_GATING0_RNG);
+	CBUS_WRITE(EE_CLK_GATING3_REG,
+	    CBUS_READ(EE_CLK_GATING3_REG) | EE_CLK_GATING3_RNG);
+
+	printf("%s: GATING0 = %#x, GATING3 = %#x\n", __func__,
+	    CBUS_READ(EE_CLK_GATING0_REG), CBUS_READ(EE_CLK_GATING3_REG));
+}
+
+void
+amlogic_sdhc_init(void)
+{
+	/* CARD -> SDHC pin mux settings */
+	CBUS_SET_CLEAR(PERIPHS_PIN_MUX_5_REG, 0, 0x00007c00);
+	CBUS_SET_CLEAR(PERIPHS_PIN_MUX_4_REG, 0, 0x7c000000);
+	CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0, 0x0000fc00);
+	CBUS_SET_CLEAR(PERIPHS_PIN_MUX_8_REG, 0, 0x00000600);
+	CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0x000000f0, 0);
+
+	const uint32_t pupd_mask = __BITS(25,20);	/* CARD_0-CARD_5 */
+	CBUS_SET_CLEAR(CBUS_REG(0x203c), pupd_mask, 0);	/* PU/PD */
+	CBUS_SET_CLEAR(CBUS_REG(0x204a), pupd_mask, 0);	/* PU/PD-EN */
+
+	const uint32_t io_mask = __BITS(27,22);		/* CARD_0-CARD_5 */
+	CBUS_SET_CLEAR(CBUS_REG(0x200c), io_mask, 0);	/* OEN */
+
+	/* XXX ODROID-C1 specific */
+	const uint32_t pwr_mask = __BIT(31);		/* CARD_8 */
+	CBUS_SET_CLEAR(CBUS_REG(0x201c), 0, pwr_mask);	/* O */
+	CBUS_SET_CLEAR(CBUS_REG(0x201b), 0, pwr_mask);	/* OEN */
+	const uint32_t cd_mask = __BIT(29);
+	CBUS_SET_CLEAR(CBUS_REG(0x201b), cd_mask, 0);	/* OEN */
+
+	/* enable SDHC clk */
+	CBUS_WRITE(EE_CLK_GATING0_REG,
+	    CBUS_READ(EE_CLK_GATING0_REG) | EE_CLK_GATING0_SDHC);
 }
 
 static void
