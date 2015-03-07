@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.129 2013/09/26 07:25:31 skrll Exp $        */
+/*      $NetBSD: ukbd.c,v 1.130 2015/03/07 20:20:55 mrg Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129 2013/09/26 07:25:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.130 2015/03/07 20:20:55 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
@@ -478,8 +478,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&sc->sc_delay, 0);
 
-	usb_init_task(&sc->sc_ledtask, ukbd_set_leds_task, sc,
-	    USB_TASKQ_MPSAFE);
+	usb_init_task(&sc->sc_ledtask, ukbd_set_leds_task, sc, 0);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS
