@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.147 2015/03/07 20:39:11 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.148 2015/03/07 21:49:56 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -425,7 +425,7 @@ function parserr(was, wanted) {
 	exit 1
 }
 function fillerpsysent(syscall, flags, name, comment) {
-	return sprintf("\t{%s\n\t\t.sy_call = %s,\n\t},\t\t/* %d = filler */\n",\
+	return sprintf("\t{%s\n\t\t.sy_call = %s,\n\t},\t\t/* %d = filler */",\
 	    flags, name, syscall, comment);
 }
 function parseline() {
@@ -986,8 +986,8 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 	else
 		sys_stub = sys_nosys;
 
-	fillerpsysent(syscall, "", sys_stub, comment) > sysent
-	fillerpsysent(syscall, rumpnoflags, rumpnosys, comment) > rumpsysent
+	print fillerpsysent(syscall, "", sys_stub, comment) > sysent
+	print fillerpsysent(syscall, rumpnoflags, rumpnosys, comment) > rumpsysent
 	printf("\t/* %3d */\t\"#%d (%s)\",\n", syscall, syscall, comment) \
 	    > sysnamesbottom
 	if ($2 != "UNIMPL")
@@ -1051,8 +1051,8 @@ END {
 			exit 1
 		}
 		while (syscall < nsysent) {
-			fillerpsysent(syscall, "", sys_nosys, "filler") > sysent
-			fillerpsysent(syscall, rumpnoflags, rumpnosys, "filler") > rumpsysent
+			print fillerpsysent(syscall, "", sys_nosys, "filler") > sysent
+			print fillerpsysent(syscall, rumpnoflags, rumpnosys, "filler") > rumpsysent
 			printf("\t/* %3d */\t\"# filler\",\n", syscall) \
 			    > sysnamesbottom
 			syscall++
