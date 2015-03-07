@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.26 2015/03/04 16:55:11 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.27 2015/03/07 11:52:53 khorben Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.35 2015/03/04 15:18:12 jsg Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.26 2015/03/04 16:55:11 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.27 2015/03/07 11:52:53 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -804,7 +804,7 @@ iwm_read_firmware(struct iwm_softc *sc)
 		fw->fw_status = IWM_FW_STATUS_DONE;
 	wakeup(&sc->sc_fw);
 
-	if (error) {
+	if (error && fw->fw_rawdata != NULL) {
 		kmem_free(fw->fw_rawdata, fw->fw_rawsize);
 		fw->fw_rawdata = NULL;
 	}
