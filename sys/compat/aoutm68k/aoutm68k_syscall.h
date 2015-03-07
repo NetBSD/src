@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscall.h,v 1.43 2014/01/25 16:43:03 christos Exp $ */
+/* $NetBSD: aoutm68k_syscall.h,v 1.44 2015/03/07 16:41:52 christos Exp $ */
 
 /*
  * System call numbers.
