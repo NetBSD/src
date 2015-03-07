@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.291 2015/03/07 20:40:00 christos Exp $ */
+/* $NetBSD: init_sysent.c,v 1.292 2015/03/07 21:50:30 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.291 2015/03/07 20:40:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.292 2015/03/07 21:50:30 christos Exp $");
 
 #include "opt_modular.h"
 #include "opt_ntp.h"
@@ -168,6 +168,9 @@ struct sysent sysent[] = {
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_unlink
 	},		/* 10 = unlink */
+	{
+		.sy_call = sys_nosys,
+	},		/* 11 = filler */
 	{
 		ns(struct sys_chdir_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -424,6 +427,12 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_vfork
 	},		/* 66 = vfork */
 	{
+		.sy_call = sys_nosys,
+	},		/* 67 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 68 = filler */
+	{
 		ns(struct sys_sbrk_args),
 		.sy_call = (sy_call_t *)sys_sbrk
 	},		/* 69 = sbrk */
@@ -455,6 +464,12 @@ struct sysent sysent[] = {
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_madvise
 	},		/* 75 = madvise */
+	{
+		.sy_call = sys_nosys,
+	},		/* 76 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 77 = filler */
 	{
 		ns(struct sys_mincore_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -516,6 +531,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_dup2
 	},		/* 90 = dup2 */
 	{
+		.sy_call = sys_nosys,
+	},		/* 91 = filler */
+	{
 		ns(struct sys_fcntl_args),
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_fcntl
@@ -525,6 +543,9 @@ struct sysent sysent[] = {
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 93 = compat_50_select */
+	{
+		.sy_call = sys_nosys,
+	},		/* 94 = filler */
 	{
 		ns(struct sys_fsync_args),
 		.sy_call = (sy_call_t *)sys_fsync
@@ -581,6 +602,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_listen
 	},		/* 106 = listen */
 	{
+		.sy_call = sys_nosys,
+	},		/* 107 = filler */
+	{
 		ns(struct compat_43_sys_sigvec_args),
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_nomodule
@@ -613,6 +637,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 114 = compat_43_osendmsg */
 	{
+		.sy_call = sys_nosys,
+	},		/* 115 = filler */
+	{
 		ns(struct compat_50_sys_gettimeofday_args),
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_nomodule
@@ -627,6 +654,9 @@ struct sysent sysent[] = {
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_getsockopt
 	},		/* 118 = getsockopt */
+	{
+		.sy_call = sys_nosys,
+	},		/* 119 = filler */
 	{
 		ns(struct sys_readv_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -716,6 +746,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 138 = compat_50_utimes */
 	{
+		.sy_call = sys_nosys,
+	},		/* 139 = filler */
+	{
 		ns(struct compat_50_sys_adjtime_args),
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_nomodule
@@ -766,6 +799,18 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 150 = compat_43_ogetsockname */
 	{
+		.sy_call = sys_nosys,
+	},		/* 151 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 152 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 153 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 154 = filler */
+	{
 		ns(struct sys_nfssvc_args),
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_nomodule
@@ -785,6 +830,12 @@ struct sysent sysent[] = {
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 158 = compat_20_fstatfs */
+	{
+		.sy_call = sys_nosys,
+	},		/* 159 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 160 = filler */
 	{
 		ns(struct compat_30_sys_getfh_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -810,12 +861,24 @@ struct sysent sysent[] = {
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_sysarch
 	},		/* 165 = sysarch */
+	{
+		.sy_call = sys_nosys,
+	},		/* 166 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 167 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 168 = filler */
 #if (defined(SYSVSEM) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 	{
 		ns(struct compat_10_sys_semsys_args),
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 169 = compat_10_osemsys */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 169 = filler */
 #endif
 #if (defined(SYSVMSG) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 	{
@@ -823,6 +886,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 170 = compat_10_omsgsys */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 170 = filler */
 #endif
 #if (defined(SYSVSHM) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 	{
@@ -830,7 +896,13 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 171 = compat_10_oshmsys */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 171 = filler */
 #endif
+	{
+		.sy_call = sys_nosys,
+	},		/* 172 = filler */
 	{
 		ns(struct sys_pread_args),
 		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64 | SYCALL_ARG_PTR,
@@ -853,7 +925,22 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_ntp_adjtime
 	},		/* 176 = ntp_adjtime */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 176 = filler */
 #endif
+	{
+		.sy_call = sys_nosys,
+	},		/* 177 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 178 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 179 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 180 = filler */
 	{
 		ns(struct sys_setgid_args),
 		.sy_call = (sy_call_t *)sys_setgid
@@ -910,6 +997,9 @@ struct sysent sysent[] = {
 		ns(struct sys_fpathconf_args),
 		.sy_call = (sy_call_t *)sys_fpathconf
 	},		/* 192 = fpathconf */
+	{
+		.sy_call = sys_nosys,
+	},		/* 193 = filler */
 	{
 		ns(struct sys_getrlimit_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -993,6 +1083,33 @@ struct sysent sysent[] = {
 		ns(struct sys_afssys_args),
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 210 = afssys */
+	{
+		.sy_call = sys_nosys,
+	},		/* 211 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 212 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 213 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 214 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 215 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 216 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 217 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 218 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 219 = filler */
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 	{
 		ns(struct compat_14_sys___semctl_args),
@@ -1013,6 +1130,18 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_semconfig
 	},		/* 223 = semconfig */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 220 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 221 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 222 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 223 = filler */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 	{
@@ -1035,6 +1164,18 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_msgrcv
 	},		/* 227 = msgrcv */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 224 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 225 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 226 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 227 = filler */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	{
@@ -1057,6 +1198,18 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_shmget
 	},		/* 231 = shmget */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 228 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 229 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 230 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 231 = filler */
 #endif
 	{
 		ns(struct compat_50_sys_clock_gettime_args),
@@ -1223,6 +1376,15 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 266 = compat_50_mq_timedreceive */
 	{
+		.sy_call = sys_nosys,
+	},		/* 267 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 268 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 269 = filler */
+	{
 		ns(struct sys___posix_rename_args),
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys___posix_rename
@@ -1379,6 +1541,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 301 = compat_50_____semctl13 */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 301 = filler */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 	{
@@ -1387,6 +1552,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 302 = compat_50___msgctl13 */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 302 = filler */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	{
@@ -1395,6 +1563,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 303 = compat_50___shmctl13 */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 303 = filler */
 #endif
 	{
 		ns(struct sys_lchflags_args),
@@ -1498,6 +1669,18 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys__lwp_ctl
 	},		/* 325 = _lwp_ctl */
 	{
+		.sy_call = sys_nosys,
+	},		/* 326 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 327 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 328 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 329 = filler */
+	{
 		ns(struct compat_60_sys_sa_register_args),
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)compat_60(sys_sa_register)
@@ -1523,6 +1706,18 @@ struct sysent sysent[] = {
 		ns(struct compat_60_sys_sa_preempt_args),
 		.sy_call = (sy_call_t *)compat_60(sys_sa_preempt)
 	},		/* 335 = compat_60_sa_preempt */
+	{
+		.sy_call = sys_nosys,
+	},		/* 336 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 337 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 338 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 339 = filler */
 	{
 		ns(struct sys___sigaction_sigtramp_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -1576,6 +1771,15 @@ struct sysent sysent[] = {
 		
 		.sy_call = (sy_call_t *)sys_sched_yield
 	},		/* 350 = sched_yield */
+	{
+		.sy_call = sys_nosys,
+	},		/* 351 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 352 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 353 = filler */
 	{
 		ns(struct sys_fsync_range_args),
 		.sy_flags = SYCALL_NARGS64_VAL(2) | SYCALL_ARG3_64 | SYCALL_ARG2_64,
@@ -1762,6 +1966,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys___getdents30
 	},		/* 390 = __getdents30 */
 	{
+		.sy_call = (sy_call_t *)nullop,
+	},		/* 391 = filler */
+	{
 		ns(struct compat_30_sys___fhstat30_args),
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_nomodule
@@ -1835,6 +2042,15 @@ struct sysent sysent[] = {
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 406 = lio_listio */
+	{
+		.sy_call = sys_nosys,
+	},		/* 407 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 408 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 409 = filler */
 	{
 		ns(struct sys___mount50_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -2001,6 +2217,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_____semctl50
 	},		/* 442 = ____semctl50 */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 442 = filler */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	{
@@ -2009,6 +2228,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys___shmctl50
 	},		/* 443 = __shmctl50 */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 443 = filler */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 	{
@@ -2017,6 +2239,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys___msgctl50
 	},		/* 444 = __msgctl50 */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 444 = filler */
 #endif
 	{
 		ns(struct sys___getrusage50_args),
@@ -2040,6 +2265,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys___ntp_gettime50
 	},		/* 448 = __ntp_gettime50 */
 #else
+	{
+		.sy_call = sys_nosys,
+	},		/* 448 = filler */
 #endif
 	{
 		ns(struct sys___wait450_args),
@@ -2056,6 +2284,9 @@ struct sysent sysent[] = {
 		.sy_flags = SYCALL_ARG_PTR,
 		.sy_call = (sy_call_t *)sys___fhstat50
 	},		/* 451 = __fhstat50 */
+	{
+		.sy_call = sys_nosys,
+	},		/* 452 = filler */
 	{
 		ns(struct sys_pipe2_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -2194,4 +2425,97 @@ struct sysent sysent[] = {
 		.sy_flags = SYCALL_NARGS64_VAL(2) | SYCALL_ARG3_64 | SYCALL_ARG2_64,
 		.sy_call = (sy_call_t *)sys_fdiscard
 	},		/* 480 = fdiscard */
+	{
+		.sy_call = sys_nosys,
+	},		/* 481 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 482 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 483 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 484 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 485 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 486 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 487 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 488 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 489 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 490 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 491 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 492 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 493 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 494 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 495 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 496 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 497 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 498 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 499 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 500 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 501 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 502 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 503 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 504 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 505 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 506 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 507 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 508 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 509 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 510 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 511 = filler */
 };
