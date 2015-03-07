@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.39 2015/03/05 20:57:07 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.40 2015/03/07 22:15:50 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.39 2015/03/05 20:57:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.40 2015/03/07 22:15:50 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4049,9 +4049,13 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 Static usbd_status
 ehci_device_fs_isoc_transfer(usbd_xfer_handle xfer)
 {
+	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
 	usbd_status err;
 
+	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
+	mutex_exit(&sc->sc_lock);
+
 	if (err && err != USBD_IN_PROGRESS)
 		return err;
 
