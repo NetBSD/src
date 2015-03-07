@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.6 2014/12/25 05:10:00 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.7 2015/03/07 15:36:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -248,5 +248,12 @@ MFC0(uint32_t r, uint32_t s)
 #define JZ_DSR1		0x10001040	/* source for PDMA */
 #define JZ_DMR1		0x10001044	/* mask for PDMA */
 #define JZ_DPR1		0x10001048	/* pending for PDMA */
+
+/* memory controller */
+#define JZ_DMMAP0	0x13010024
+#define JZ_DMMAP1	0x13010028
+	#define	DMMAP_BASE	0x0000ff00	/* base PADDR of memory chunk */
+	#define DMMAP_MASK	0x000000ff	/* mask which bits of PADDR are
+						 * constant */
 
 #endif /* INGENIC_REGS_H */
