@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.10.14.2 2014/12/23 11:24:32 skrll Exp $   */
+/*	$NetBSD: uthum.c,v 1.10.14.3 2015/03/08 13:34:44 skrll Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.2 2014/12/23 11:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.3 2015/03/08 13:34:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -263,19 +263,19 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 		return 0;
 
 	/* issue query */
-	bzero(cmdbuf, sizeof(cmdbuf));
+	memset(cmdbuf, 0, sizeof(cmdbuf));
 	memcpy(cmdbuf, cmd_start, sizeof(cmd_start));
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
 	    cmdbuf, sc->sc_olen))
 		return EIO;
 
-	bzero(cmdbuf, sizeof(cmdbuf));
+	memset(cmdbuf, 0, sizeof(cmdbuf));
 	cmdbuf[0] = target_cmd;
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
 	    cmdbuf, sc->sc_olen))
 		return EIO;
 
-	bzero(cmdbuf, sizeof(cmdbuf));
+	memset(cmdbuf, 0, sizeof(cmdbuf));
 	for (i = 0; i < 7; i++) {
 		if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
 		    cmdbuf, sc->sc_olen))
