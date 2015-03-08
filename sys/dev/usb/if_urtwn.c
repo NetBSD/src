@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.37 2015/03/08 02:19:04 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.38 2015/03/08 14:56:06 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.37 2015/03/08 02:19:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.38 2015/03/08 14:56:06 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -97,9 +97,9 @@ u_int urtwn_debug = 0;
 #define DPRINTFN(n, s)
 #endif
 
-#define URTWN_DEV(v,p)	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, 0 } 
+#define URTWN_DEV(v,p)	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, 0 }
 #define URTWN_RTL8188E_DEV(v,p) \
-	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, FLAG_RTL8188E } 
+	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, FLAG_RTL8188E }
 static const struct urtwn_dev {
 	struct usb_devno	dev;
 	uint32_t		flags;
