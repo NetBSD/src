@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.14 2015/03/05 23:44:30 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.15 2015/03/08 11:22:05 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.14 2015/03/05 23:44:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.15 2015/03/08 11:22:05 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -485,7 +485,7 @@ amlogic_reset(void)
 	bus_size_t off = AMLOGIC_CBUS_OFFSET;
 
 	bus_space_write_4(bst, bsh, off + WATCHDOG_TC_REG,
-	    WATCHDOG_TC_CPUS | WATCHDOG_TC_ENABLE | 1);
+	    WATCHDOG_TC_CPUS | WATCHDOG_TC_ENABLE | 0xfff);
 	bus_space_write_4(bst, bsh, off + WATCHDOG_RESET_REG, 0);
 
 	for (;;) {
