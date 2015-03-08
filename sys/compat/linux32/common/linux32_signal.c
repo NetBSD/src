@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.17 2013/11/18 01:32:52 chs Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.18 2015/03/08 17:10:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.17 2013/11/18 01:32:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.18 2015/03/08 17:10:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -501,7 +501,7 @@ linux32_sys_signal(struct lwp *l, const struct linux32_sys_signal_args *uap, reg
 {
 	/* {
 		syscallarg(int) signum;
-		syscallarg(linux32_handler_t) handler;
+		syscallarg(linux32_handlerp_t) handler;
 	} */
         struct sigaction nbsa, obsa;
         int error, sig;
