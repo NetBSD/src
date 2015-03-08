@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.150 2015/03/08 17:49:08 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.151 2015/03/08 20:31:53 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -172,6 +172,9 @@ BEGIN {
 	rumptypes = \"$rumptypes\"
 	sys_nosys = \"$sys_nosys\"
 	maxsysargs = \"$maxsysargs\"
+	rumpnoflags=\"$rumpnoflags\"
+	rumpnosys=\"$rumpnosys\"
+	rumpnomodule=\"$rumpnomodule\"
 	infile = \"$2\"
 
 	compatopts = \"$compatopts\"
