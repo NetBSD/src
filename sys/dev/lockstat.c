@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.19 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.20 2015/03/08 22:45:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.19 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.20 2015/03/08 22:45:16 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,6 +109,20 @@ lsbuf_t		*lockstat_baseb;
 size_t		lockstat_sizeb;
 int		lockstat_busy;
 struct timespec	lockstat_stime;
+
+#ifdef KDTRACE_HOOKS
+CTASSERT(LB_NEVENT <= 3);
+CTASSERT(LB_NLOCK <= (7 << LB_LOCK_SHIFT));
+void
+lockstat_probe_stub(uint32_t id, uintptr_t lock, uintptr_t callsite,
+    uintptr_t flags, uintptr_t count, uintptr_t cycles)
+{
+}
+
+uint32_t	lockstat_probemap[LS_NPROBES];
+void		(*lockstat_probe_func)(uint32_t, uintptr_t, uintptr_t,
+		    uintptr_t, uintptr_t, uintptr_t) = &lockstat_probe_stub;
+#endif
 
 const struct cdevsw lockstat_cdevsw = {
 	.d_open = lockstat_open,
@@ -343,6 +357,14 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 	lsbuf_t *lb;
 	u_int event;
 	int s;
+
+#ifdef KDTRACE_HOOKS
+	uint32_t id;
+	CTASSERT((LS_NPROBES & (LS_NPROBES - 1)) == 0);
+	if ((id = lockstat_probemap[LS_COMPRESS(flags)]) != 0)
+		(*lockstat_probe_func)(id, lock, callsite, flags, count,
+		    cycles);
+#endif
 
 	if ((flags & lockstat_enabled) != flags || count == 0)
 		return;

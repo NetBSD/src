@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.10 2009/01/20 14:49:00 yamt Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.11 2015/03/08 22:45:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _SYS_LOCKSTAT_H_
 
 #ifdef _KERNEL_OPT
+#include "opt_dtrace.h"
 #include <lockstat.h>
 #endif
 
@@ -193,6 +194,19 @@ extern volatile u_int	lockstat_enabled;
 #define	LOCKSTAT_STOP_TIMER(flag, void)				/* nothing */
 #define	LOCKSTAT_COUNT(name, int)				/* nothing */
 
+#endif
+
+#ifdef KDTRACE_HOOKS
+#define LS_COMPRESS(f) \
+    ((((f) & 3) | (((f) & 7) >> 6)) & (LS_NPROBES - 1))
+#define	LS_NPROBES	0x20	/* 5 bits */
+
+extern uint32_t	lockstat_probemap[];
+extern void	(*lockstat_probe_func)(uint32_t, uintptr_t, uintptr_t,
+    uintptr_t, uintptr_t, uintptr_t);
+
+void		lockstat_probe_stub(uint32_t, uintptr_t, uintptr_t,
+    uintptr_t, uintptr_t, uintptr_t);
 #endif
 
 #endif	/* _SYS_LOCKSTAT_H_ */
