@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.108 2014/02/14 20:43:34 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.109 2015/03/08 06:46:51 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.108 2014/02/14 20:43:34 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.109 2015/03/08 06:46:51 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,10 +165,10 @@ static const char   *layer_filestat(struct vnode *, struct filestat *);
 static int	msdosfs_filestat(struct vnode *, struct filestat *);
 static int	nfs_filestat(struct vnode *, struct filestat *);
 static const char *inet_addrstr(char *, size_t, const struct in_addr *,
-    uint16_t);
+    uint16_t, bool);
 #ifdef INET6
 static const char *inet6_addrstr(char *, size_t, const struct in6_addr *,
-    uint16_t);
+    uint16_t, bool);
 #endif
 static const char *at_addrstr(char *, size_t, const struct sockaddr_at *);
 static void	socktrans(struct socket *, int);
@@ -877,11 +877,14 @@ getmnton(struct mount *m)
 }
 
 static const char *
-inet_addrstr(char *buf, size_t len, const struct in_addr *a, uint16_t p)
+inet_addrstr(char *buf, size_t len, const struct in_addr *a, uint16_t p, bool isdg)
 {
 	char addr[256], serv[256];
 	struct sockaddr_in sin;
-	const int niflags = nflg ? (NI_NUMERICHOST|NI_NUMERICSERV) : 0;
+	const int niflags =
+		(nflg ? (NI_NUMERICHOST|NI_NUMERICSERV) : 0) |
+		(isdg ? NI_DGRAM : 0);
+
 
 	(void)memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
@@ -914,11 +917,13 @@ inet_addrstr(char *buf, size_t len, const struct in_addr *a, uint16_t p)
 
 #ifdef INET6
 static const char *
-inet6_addrstr(char *buf, size_t len, const struct in6_addr *a, uint16_t p)
+inet6_addrstr(char *buf, size_t len, const struct in6_addr *a, uint16_t p, bool isdg)
 {
 	char addr[256], serv[256];
 	struct sockaddr_in6 sin6;
-	const int niflags = nflg ? (NI_NUMERICHOST|NI_NUMERICSERV) : 0;
+	const int niflags =
+		(nflg ? (NI_NUMERICHOST|NI_NUMERICSERV) : 0) |
+		(isdg ? NI_DGRAM : 0);
 
 	(void)memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = AF_INET6;
@@ -1010,6 +1015,7 @@ socktrans(struct socket *sock, int i)
 	int len;
 	char dname[32];
 	char lbuf[512], fbuf[512], pbuf[24];
+	bool isdgram;
 
 	pbuf[0] = '\0';
 	/* fill in socket */
@@ -1054,12 +1060,14 @@ socktrans(struct socket *sock, int i)
 	 */
 	fbuf[0] = '\0';
 	lbuf[0] = '\0';
+	isdgram = false;
 	switch(dom.dom_family) {
 	case AF_INET:
 		getinetproto(pbuf, sizeof(pbuf), proto.pr_protocol);
 		switch (proto.pr_protocol) {
-		case IPPROTO_TCP:
 		case IPPROTO_UDP:
+			isdgram = true;
+		case IPPROTO_TCP:
 			if (so.so_pcb == NULL)
 				break;
 			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
@@ -1068,9 +1076,9 @@ socktrans(struct socket *sock, int i)
 				goto bad;
 			}
 			inet_addrstr(lbuf, sizeof(lbuf), &inpcb.inp_laddr,
-			    ntohs(inpcb.inp_lport));
+			    ntohs(inpcb.inp_lport), isdgram);
 			inet_addrstr(fbuf, sizeof(fbuf), &inpcb.inp_faddr,
-			    ntohs(inpcb.inp_fport));
+			    ntohs(inpcb.inp_fport), isdgram);
 			break;
 		default:
 			break;
@@ -1080,8 +1088,9 @@ socktrans(struct socket *sock, int i)
 	case AF_INET6:
 		getinetproto(pbuf, sizeof(pbuf), proto.pr_protocol);
 		switch (proto.pr_protocol) {
-		case IPPROTO_TCP:
 		case IPPROTO_UDP:
+			isdgram = true;
+		case IPPROTO_TCP:
 			if (so.so_pcb == NULL)
 				break;
 			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&in6pcb,
@@ -1090,9 +1099,9 @@ socktrans(struct socket *sock, int i)
 				goto bad;
 			}
 			inet6_addrstr(lbuf, sizeof(lbuf), &in6pcb.in6p_laddr,
-			    ntohs(in6pcb.in6p_lport));
+			    ntohs(in6pcb.in6p_lport), isdgram);
 			inet6_addrstr(fbuf, sizeof(fbuf), &in6pcb.in6p_faddr,
-			    ntohs(in6pcb.in6p_fport));
+			    ntohs(in6pcb.in6p_fport), isdgram);
 			break;
 		default:
 			break;
