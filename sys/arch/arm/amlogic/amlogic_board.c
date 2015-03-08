@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.8 2015/03/07 21:32:47 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.9 2015/03/08 12:44:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.8 2015/03/07 21:32:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.9 2015/03/08 12:44:55 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -191,45 +191,45 @@ amlogic_eth_init(void)
 void
 amlogic_rng_init(void)
 {
-	printf("%s: GATING0 = %#x, GATING3 = %#x\n", __func__,
-	    CBUS_READ(EE_CLK_GATING0_REG), CBUS_READ(EE_CLK_GATING3_REG));
-
 	CBUS_WRITE(EE_CLK_GATING0_REG,
 	    CBUS_READ(EE_CLK_GATING0_REG) | EE_CLK_GATING0_RNG);
 	CBUS_WRITE(EE_CLK_GATING3_REG,
 	    CBUS_READ(EE_CLK_GATING3_REG) | EE_CLK_GATING3_RNG);
-
-	printf("%s: GATING0 = %#x, GATING3 = %#x\n", __func__,
-	    CBUS_READ(EE_CLK_GATING0_REG), CBUS_READ(EE_CLK_GATING3_REG));
 }
 
 void
 amlogic_sdhc_init(void)
 {
-	/* CARD -> SDHC pin mux settings */
-	CBUS_SET_CLEAR(PERIPHS_PIN_MUX_5_REG, 0, 0x00007c00);
-	CBUS_SET_CLEAR(PERIPHS_PIN_MUX_4_REG, 0, 0x7c000000);
-	CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0, 0x0000fc00);
-	CBUS_SET_CLEAR(PERIPHS_PIN_MUX_8_REG, 0, 0x00000600);
-	CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0x000000f0, 0);
-
-	const uint32_t pupd_mask = __BITS(25,20);	/* CARD_0-CARD_5 */
-	CBUS_SET_CLEAR(CBUS_REG(0x203c), pupd_mask, 0);	/* PU/PD */
-	CBUS_SET_CLEAR(CBUS_REG(0x204a), pupd_mask, 0);	/* PU/PD-EN */
-
-	const uint32_t io_mask = __BITS(27,22);		/* CARD_0-CARD_5 */
-	CBUS_SET_CLEAR(CBUS_REG(0x200c), io_mask, 0);	/* OEN */
-
-	/* XXX ODROID-C1 specific */
-	const uint32_t pwr_mask = __BIT(31);		/* CARD_8 */
-	CBUS_SET_CLEAR(CBUS_REG(0x201c), 0, pwr_mask);	/* O */
-	CBUS_SET_CLEAR(CBUS_REG(0x201b), 0, pwr_mask);	/* OEN */
-	const uint32_t cd_mask = __BIT(29);
-	CBUS_SET_CLEAR(CBUS_REG(0x201b), cd_mask, 0);	/* OEN */
-
 	/* enable SDHC clk */
 	CBUS_WRITE(EE_CLK_GATING0_REG,
 	    CBUS_READ(EE_CLK_GATING0_REG) | EE_CLK_GATING0_SDHC);
+}
+
+int
+amlogic_sdhc_select_port(int port)
+{
+	switch (port) {
+	case AMLOGIC_SDHC_PORT_B:
+		/* CARD -> SDHC pin mux settings */
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_5_REG, 0, 0x00007c00);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_4_REG, 0, 0x7c000000);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0, 0x0000fc00);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_8_REG, 0, 0x00000600);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0x000000f0, 0);
+		break;
+	case AMLOGIC_SDHC_PORT_C:
+		/* BOOT -> SDHC pin mux settings */
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0, 0x04c000f0);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_5_REG, 0, 0x00007c00);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_6_REG, 0, 0xff000000);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_4_REG, 0x70000000, 0);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_7_REG, 0x000c0000, 0);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
 }
 
 static void

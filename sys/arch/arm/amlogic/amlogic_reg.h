@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_reg.h,v 1.7 2015/03/07 21:32:47 jmcneill Exp $ */
+/* $NetBSD: amlogic_reg.h,v 1.8 2015/03/08 12:44:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -55,6 +55,7 @@
 
 #define AMLOGIC_AOBUS_OFFSET	0x08100000
 
+#define AMLOGIC_AO_RTI_PIN_MUX_OFFSET 0x08100014
 #define AMLOGIC_GPIOAO_OFFSET	0x08100024
 
 #define AMLOGIC_UART0AO_OFFSET	0x081004c0

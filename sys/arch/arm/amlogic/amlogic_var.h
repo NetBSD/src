@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_var.h,v 1.5 2015/03/07 21:32:47 jmcneill Exp $ */
+/* $NetBSD: amlogic_var.h,v 1.6 2015/03/08 12:44:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -60,8 +60,12 @@ void	amlogic_cpufreq_init(void);
 
 void	amlogic_usbphy_init(int);
 void	amlogic_eth_init(void);
-void	amlogic_sdhc_init(void);
 void	amlogic_rng_init(void);
+void	amlogic_sdhc_init(void);
+
+int	amlogic_sdhc_select_port(int);
+#define AMLOGIC_SDHC_PORT_B	1
+#define AMLOGIC_SDHC_PORT_C	2
 
 uint32_t amlogic_get_rate_xtal(void);
 uint32_t amlogic_get_rate_sys(void);
