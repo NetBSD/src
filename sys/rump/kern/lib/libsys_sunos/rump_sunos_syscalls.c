@@ -1,4 +1,4 @@
-/* $NetBSD: rump_sunos_syscalls.c,v 1.2 2013/05/15 21:41:25 pooka Exp $ */
+/* $NetBSD: rump_sunos_syscalls.c,v 1.3 2015/03/08 15:21:20 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_sunos_syscalls.c,v 1.2 2013/05/15 21:41:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_sunos_syscalls.c,v 1.3 2015/03/08 15:21:20 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
