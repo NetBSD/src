@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.1 2015/03/08 12:44:55 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.2 2015/03/08 15:38:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.1 2015/03/08 12:44:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.2 2015/03/08 15:38:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -499,7 +499,7 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 	if (cmd->c_datalen > 0) {
 		KASSERT(cmd->c_dmamap->dm_nsegs == 1);
-		KASSERT(cmd->c_dmamap->dm_segs[0].ds_len == cmd->c_datalen);
+		KASSERT(cmd->c_dmamap->dm_segs[0].ds_len >= cmd->c_datalen);
 		SDHC_WRITE(sc, SD_ADDR_REG, cmd->c_dmamap->dm_segs[0].ds_addr);
 	}
 
