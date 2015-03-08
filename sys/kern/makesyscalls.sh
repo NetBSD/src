@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.148 2015/03/07 21:49:56 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.149 2015/03/08 15:07:05 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -69,7 +69,11 @@ rumpsysent="rumpsysent.tmp"
 rumpnoflags="\n\t\t.sy_flags = SYCALL_NOSYS,"
 rumpnosys="(sy_call_t *)rumpns_enosys"
 rumpnomodule="(sy_call_t *)rumpns_sys_nomodule"
-. ./$1
+
+case $1 in
+/*)	. $1;;
+*)	. ./$1;;
+esac
 
 # tmp files:
 sysdcl="sysent.dcl"
