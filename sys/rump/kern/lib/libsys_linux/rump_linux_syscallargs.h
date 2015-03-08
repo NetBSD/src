@@ -1,4 +1,4 @@
-/* $NetBSD: rump_linux_syscallargs.h,v 1.17 2014/05/29 10:42:23 njoly Exp $ */
+/* $NetBSD: rump_linux_syscallargs.h,v 1.18 2015/03/08 15:07:33 christos Exp $ */
 
 /*
  * System call argument lists.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/03/13 02:03:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2015/03/08 15:07:33 christos Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../compat/linux/common
@@ -20,3 +20,11 @@ CPPFLAGS+= -DINET6
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
+
+SYS_P=rump_linux_sys
+SYS_MKSYSCALLS=${.CURDIR}/../../../../kern/makesyscalls.sh
+SYS_DST=${SYS_P}calls.c ${SYS_P}ent.c ${SYS_P}callargs.h ${SYS_P}call.h: 
+SYS_SRC=${SYS_MKSYSCALLS} syscalls.conf syscalls.master
+
+${SYS_DST}: ${SYS_SRC}
+	${HOST_SH} ${.ALLSRC}
