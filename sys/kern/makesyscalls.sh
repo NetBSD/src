@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.149 2015/03/08 15:07:05 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.150 2015/03/08 17:49:08 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -784,9 +784,9 @@ function putent(type, compatwrap) {
 	}
 
 	# output syscall switch entry
-	printf("\t{\n\t\t") > sysent
+	printf("\t{") > sysent
 	if (argc != 0) {
-		printf("ns(struct %s%s_args),", compatwrap_, funcname) > sysent
+		printf("\n\t\tns(struct %s%s_args),", compatwrap_, funcname) > sysent
 	}
 	if (modular) 
 		wfn = "sys_nomodule";
