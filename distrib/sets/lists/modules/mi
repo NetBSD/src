@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.71 2015/03/07 14:16:51 jmcneill Exp $
+# $NetBSD: mi,v 1.72 2015/03/08 22:47:22 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -60,6 +60,8 @@
 ./@MODULEDIR@/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_fbt				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_fbt/dtrace_fbt.kmod		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_lockstat				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_lockstat/dtrace_lockstat.kmod	base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_profile				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_profile/dtrace_profile.kmod	base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_sdt				base-kernel-modules	kmod,dtrace
