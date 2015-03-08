@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.53 2015/03/08 04:21:41 christos Exp $
+# $NetBSD: md.amd64,v 1.54 2015/03/08 17:13:22 christos Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -278,6 +278,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace_syscall/dtrace_syscall.kmod	base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace_syscall_linux		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace_syscall_linux/dtrace_syscall_linux.kmod	base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/dtrace_syscall_linux32		base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/dtrace_syscall_linux32/dtrace_syscall_linux32.kmod	base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace_syscall_netbsd32		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace_syscall_netbsd32/dtrace_syscall_netbsd32.kmod	base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtv				base-kernel-modules	kmod,compatmodules
