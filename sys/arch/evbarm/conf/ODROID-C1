@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.7 2015/03/07 21:35:10 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.8 2015/03/08 12:45:35 jmcneill Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -192,6 +192,12 @@ options 	CONSADDR=0xc81004c0, CONSPEED=115200
 
 # Hardware random number generator
 amlogicrng0	at amlogicio0
+
+# SDHC controller
+amlogicsdhc0	at amlogicio0 port 1	# SD card
+#amlogicsdhc0	at amlogicio0 port 2	# EMMC
+sdmmc*		at amlogicsdhc?
+ld*		at sdmmc?
 
 # Gigabit ethernet
 awge0		at amlogicio0
