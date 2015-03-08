@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_io.c,v 1.5 2015/03/07 21:34:25 jmcneill Exp $ */
+/* $NetBSD: amlogic_io.c,v 1.6 2015/03/08 12:44:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.5 2015/03/07 21:34:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.6 2015/03/08 12:44:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,10 @@ static const struct amlogic_locators amlogic_locators[] = {
     AMLOGIC_USB1_OFFSET, AMLOGIC_USB_SIZE, 1, AMLOGIC_INTR_USB1 },
   { "awge",
     AMLOGIC_GMAC_OFFSET, AMLOGIC_GMAC_SIZE, NOPORT, AMLOGIC_INTR_GMAC },
-#if notyet
   { "amlogicsdhc",
-    AMLOGIC_SDHC_OFFSET, AMLOGIC_SDHC_SIZE, 0, AMLOGIC_INTR_SDHC },
-#endif
+    AMLOGIC_SDHC_OFFSET, AMLOGIC_SDHC_SIZE, 1, AMLOGIC_INTR_SDHC },
+  { "amlogicsdhc",
+    AMLOGIC_SDHC_OFFSET, AMLOGIC_SDHC_SIZE, 2, AMLOGIC_INTR_SDHC },
 };
 
 int
