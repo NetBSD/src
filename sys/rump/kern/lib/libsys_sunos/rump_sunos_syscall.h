@@ -1,4 +1,4 @@
-/* $NetBSD: rump_sunos_syscall.h,v 1.2 2013/05/15 21:41:25 pooka Exp $ */
+/* $NetBSD: rump_sunos_syscall.h,v 1.3 2015/03/08 15:21:20 christos Exp $ */
 
 /*
  * System call numbers.
