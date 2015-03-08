@@ -1,0 +1,8 @@
+# $NetBSD: Makefile.sys,v 1.1 2015/03/08 15:22:02 christos Exp $
+
+SYS_MKSYSCALLS=${.CURDIR}/../../../../kern/makesyscalls.sh
+SYS_DST=${SYS_P}calls.c ${SYS_P}ent.c ${SYS_P}callargs.h ${SYS_P}call.h: 
+SYS_SRC=${SYS_MKSYSCALLS} syscalls.conf syscalls.master
+
+${SYS_DST}: ${SYS_SRC}
+	cd ${.CURDIR} && ${HOST_SH} ${.ALLSRC}
