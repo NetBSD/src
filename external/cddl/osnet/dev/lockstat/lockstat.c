@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.3 2013/06/21 19:16:00 christos Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.4 2015/03/08 04:13:46 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -31,8 +31,6 @@
  * Use is subject to license terms.
  */
 
-#include "opt_kdtrace.h"
-
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +41,21 @@
 #include <sys/linker.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
+#ifdef __NetBSD__
+#include <sys/atomic.h>
+#include <sys/xcall.h>
+#endif
 
 #include <sys/dtrace.h>
+#ifdef __NetBSD__
+#include <dev/lockstat.h>
+#else
 #include <sys/lockstat.h>
+#endif
+
+#ifdef __NetBSD__
+#define	ASSERT	KASSERT
+#endif
 
 #if defined(__i386__) || defined(__amd64__) || defined(__arm__)
 #define LOCKSTAT_AFRAMES 1
@@ -53,18 +63,22 @@
 #error "architecture not supported"
 #endif
 
+#if defined(__FreeBSD__)
 static d_open_t lockstat_open;
-static void     lockstat_provide(void *, dtrace_probedesc_t *);
-static void     lockstat_destroy(void *, dtrace_id_t, void *);
-static void     lockstat_enable(void *, dtrace_id_t, void *);
-static void     lockstat_disable(void *, dtrace_id_t, void *);
-static void     lockstat_load(void *);
-static int     	lockstat_unload(void);
+#elif defined(__NetBSD__) && 0
+static dev_type_open(lockstat_open);
+#endif
+static void	lockstat_provide(void *, const dtrace_probedesc_t *);
+static void	lockstat_destroy(void *, dtrace_id_t, void *);
+static int	lockstat_enable(void *, dtrace_id_t, void *);
+static void	lockstat_disable(void *, dtrace_id_t, void *);
+static void	lockstat_load(void *);
+static int	lockstat_unload(void);
 
 
 typedef struct lockstat_probe {
-	char		*lsp_func;
-	char		*lsp_name;
+	const char	*lsp_func;
+	const char	*lsp_name;
 	int		lsp_probe;
 	dtrace_id_t	lsp_id;
 #ifdef __FreeBSD__
@@ -72,7 +86,7 @@ typedef struct lockstat_probe {
 #endif
 } lockstat_probe_t;
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)
 lockstat_probe_t lockstat_probes[] =
 {
   /* Spin Locks */
@@ -140,11 +154,23 @@ lockstat_probe_t lockstat_probes[] =
 	  DTRACE_IDNONE, LOCKSTAT_AFRAMES },
   { NULL }
 };
+#elif defined(__NetBSD__)
+lockstat_probe_t lockstat_probes[] = {
+	{ "mutex_spin", "spin",		LB_SPIN_MUTEX	| LB_SPIN,	0 },
+	{ "mutex_adaptive", "sleep",	LB_SPIN_MUTEX	| LB_SLEEP1,	0 },
+	{ "mutex_adaptive", "spin",	LB_SPIN_MUTEX	| LB_SPIN,	0 },
+	{ "rwlock", "sleep_writer",	LB_RWLOCK	| LB_SLEEP1,	0 },
+	{ "rwlock", "sleep_reader",	LB_RWLOCK	| LB_SLEEP2,	0 },
+	{ "rwlock", "spin",		LB_RWLOCK	| LB_SPIN,	0 },
+	{ "kernel", "spin",		LB_KERNEL_LOCK	| LB_SPIN,	0 },
+	{ "lwp", "spin",		LB_NOPREEMPT	| LB_SPIN,	0 },
+};
 #else
 #error "OS not supported"
 #endif
 
 
+#if defined(__FreeBSD__)
 static struct cdevsw lockstat_cdevsw = {
 	.d_version	= D_VERSION,
 	.d_open		= lockstat_open,
@@ -152,28 +178,41 @@ static struct cdevsw lockstat_cdevsw = {
 };
 
 static struct cdev		*lockstat_cdev; 
+#elif defined(__NetBSD__) && 0
+static struct cdevsw lockstat_cdevsw = {
+	.d_open = lockstat_open,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER,
+};
+#endif
+
 static dtrace_provider_id_t 	lockstat_id;
 
 /*ARGSUSED*/
-static void
+static int
 lockstat_enable(void *arg, dtrace_id_t id, void *parg)
 {
 	lockstat_probe_t *probe = parg;
 
 	ASSERT(!lockstat_probemap[probe->lsp_probe]);
-
+	if (lockstat_probe_func == lockstat_probe_stub) {
+		lockstat_probe_func = dtrace_probe;
+		membar_producer();
+	} else {
+		ASSERT(lockstat_probe_func == dtrace_probe);
+	}
 	lockstat_probemap[probe->lsp_probe] = id;
-#ifdef DOODAD
-	membar_producer();
-#endif
 
-	lockstat_probe_func = dtrace_probe;
-#ifdef DOODAD
-	membar_producer();
-
-	lockstat_hot_patch();
-	membar_producer();
-#endif
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -183,13 +222,10 @@ lockstat_disable(void *arg, dtrace_id_t id, void *parg)
 	lockstat_probe_t *probe = parg;
 	int i;
 
+	ASSERT(lockstat_probe_func == dtrace_probe);
 	ASSERT(lockstat_probemap[probe->lsp_probe]);
-
 	lockstat_probemap[probe->lsp_probe] = 0;
-#ifdef DOODAD
-	lockstat_hot_patch();
 	membar_producer();
-#endif
 
 	/*
 	 * See if we have any probes left enabled.
@@ -205,8 +241,16 @@ lockstat_disable(void *arg, dtrace_id_t id, void *parg)
 		}
 	}
 
+	lockstat_probe_func = lockstat_probe_stub;
+
+	/*
+	 * Trigger some activity on all CPUs to make sure they're not
+	 * in lockstat any more.
+	 */
+	xc_wait(xc_broadcast(0, (void *)nullop, NULL, NULL));
 }
 
+#if defined(__FreeBSD__)
 /*ARGSUSED*/
 static int
 lockstat_open(struct cdev *dev __unused, int oflags __unused, 
@@ -214,18 +258,28 @@ lockstat_open(struct cdev *dev __unused, int oflags __unused,
 {
 	return (0);
 }
+#elif defined(__NetBSD__) && 0
+static int
+lockstat_open(dev_t dev __unused, int flags __unused, int mode __unused,
+    struct lwp *l __unused)
+{
+
+	return 0;
+}
+#endif
 
 /*ARGSUSED*/
 static void
-lockstat_provide(void *arg, dtrace_probedesc_t *desc)
+lockstat_provide(void *arg, const dtrace_probedesc_t *desc)
 {
 	int i = 0;
 
 	for (i = 0; lockstat_probes[i].lsp_func != NULL; i++) {
 		lockstat_probe_t *probe = &lockstat_probes[i];
 
-		if (dtrace_probe_lookup(lockstat_id, "kernel",
-		    probe->lsp_func, probe->lsp_name) != 0)
+		if (dtrace_probe_lookup(lockstat_id, __UNCONST("kernel"),
+			__UNCONST(probe->lsp_func), __UNCONST(probe->lsp_name))
+		    != 0)
 			continue;
 
 		ASSERT(!probe->lsp_id);
@@ -235,8 +289,8 @@ lockstat_provide(void *arg, dtrace_probedesc_t *desc)
 		    probe->lsp_frame, probe);
 #else
 		probe->lsp_id = dtrace_probe_create(lockstat_id,
-		    "kernel", probe->lsp_func, probe->lsp_name,
-		    LOCKSTAT_AFRAMES, probe);
+		    __UNCONST("kernel"), __UNCONST(probe->lsp_func),
+		    __UNCONST(probe->lsp_name), LOCKSTAT_AFRAMES, probe);
 #endif
 	}
 }
@@ -275,9 +329,11 @@ static dtrace_pops_t lockstat_pops = {
 static void
 lockstat_load(void *dummy)
 {
+#ifdef __FreeBSD__
 	/* Create the /dev/dtrace/lockstat entry. */
 	lockstat_cdev = make_dev(&lockstat_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
 	    "dtrace/lockstat");
+#endif
 
 	if (dtrace_register("lockstat", &lockstat_attr, DTRACE_PRIV_USER,
 	    NULL, &lockstat_pops, NULL, &lockstat_id) != 0)
@@ -285,17 +341,21 @@ lockstat_load(void *dummy)
 }
 
 static int
-lockstat_unload()
+lockstat_unload(void)
 {
 	int error = 0;
 
 	if ((error = dtrace_unregister(lockstat_id)) != 0)
 	    return (error);
 
+#ifdef __FreeBSD__
 	destroy_dev(lockstat_cdev);
+#endif
 
 	return (error);
 }
+
+#if defined(__FreeBSD__)
 
 /* ARGSUSED */
 static int
@@ -327,3 +387,25 @@ DEV_MODULE(lockstat, lockstat_modevent, NULL);
 MODULE_VERSION(lockstat, 1);
 MODULE_DEPEND(lockstat, dtrace, 1, 1, 1);
 MODULE_DEPEND(lockstat, opensolaris, 1, 1, 1);
+
+#elif defined(__NetBSD__)
+
+static int
+dtrace_lockstat_modcmd(modcmd_t cmd, void *data)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		lockstat_load(NULL);
+		return 0;
+	case MODULE_CMD_FINI:
+		return lockstat_unload();
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
+	default:
+		return ENOTTY;
+	}
+}
+
+MODULE(MODULE_CLASS_MISC, dtrace_lockstat, "dtrace");
+
+#endif
