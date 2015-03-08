@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.56 2015/03/07 16:48:29 christos Exp $
+# $NetBSD: md.i386,v 1.57 2015/03/08 04:21:41 christos Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -300,14 +300,14 @@
 ./stand/i386-xen/@OSRELEASE@/modules/dtrace/dtrace.kmod			base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtrace_fbt				base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtrace_fbt/dtrace_fbt.kmod		base-kernel-modules	kmod,dtrace,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/dtrace_linux_syscall		base-kernel-modules	kmod,dtrace,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/dtrace_linux_syscall/dtrace_linux_syscall.kmod	base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtrace_profile			base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtrace_profile/dtrace_profile.kmod	base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtrace_sdt				base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtrace_sdt/dtrace_sdt.kmod		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtrace_syscall			base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtrace_syscall/dtrace_syscall.kmod	base-kernel-modules	kmod,dtrace,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/dtrace_syscall_linux		base-kernel-modules	kmod,dtrace,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/dtrace_syscall_linux/dtrace_syscall_linux.kmod	base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtv				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtv				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtv/dtv.kmod			base-kernel-modules	kmod,compatmodules
@@ -710,6 +710,10 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/dtrace_profile/dtrace_profile.kmod	base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/dtrace_sdt			base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/dtrace_sdt/dtrace_sdt.kmod	base-kernel-modules	kmod,dtrace,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/dtrace_syscall			base-kernel-modules	kmod,dtrace,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/dtrace_syscall/dtrace_syscall.kmod	base-kernel-modules	kmod,dtrace,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/dtrace_syscall_linux			base-kernel-modules	kmod,dtrace,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/dtrace_syscall_linux/dtrace_syscall_linux.kmod	base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/dtv				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/dtv/dtv.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/dtv_math			base-kernel-modules	kmod,compatmodules
