@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.8.14.3 2014/12/23 11:24:32 skrll Exp $	*/
+/*	$NetBSD: moscom.c,v 1.8.14.4 2015/03/08 13:34:44 skrll Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.3 2014/12/23 11:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.4 2015/03/08 13:34:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ moscom_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	bzero(&uca, sizeof(uca));
+	memset(&uca, 0, sizeof(uca));
 	sc->sc_udev = uaa->device;
 
 	if (usbd_set_config_index(sc->sc_udev, MOSCOM_CONFIG_NO, 1) != 0) {

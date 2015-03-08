@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6.6.5 2014/12/23 11:24:32 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.6.6 2015/03/08 13:34:44 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.5 2014/12/23 11:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.6 2015/03/08 13:34:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2627,7 +2627,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 	data = &sc->sc_tx_data[sc->sc_txidx];
 	sc->sc_txidx = (sc->sc_txidx + 1) % URTW_TX_DATA_LIST_COUNT;
 
-	bzero(data->buf, URTW_TX_MAXSIZE);
+	memset(data->buf, 0, URTW_TX_MAXSIZE);
 	data->buf[0] = m0->m_pkthdr.len & 0xff;
 	data->buf[1] = (m0->m_pkthdr.len & 0x0f00) >> 8;
 	data->buf[1] |= (1 << 7);

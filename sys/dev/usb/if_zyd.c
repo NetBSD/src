@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36.14.2 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36.14.3 2015/03/08 13:34:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.2 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.3 2015/03/08 13:34:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -807,7 +807,7 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 		return ENOMEM;
 
 	cmd.code = htole16(code);
-	bcopy(idata, cmd.data, ilen);
+	memcpy(cmd.data, idata, ilen);
 
 	xferflags = USBD_FORCE_SHORT_XFER;
 	if (!(flags & ZYD_CMD_FLAG_READ))
@@ -1893,7 +1893,7 @@ zyd_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 				continue;
 
 			/* copy answer into caller-supplied buffer */
-			bcopy(cmd->data, rqp->odata,
+			memcpy(rqp->odata, cmd->data, 
 			    sizeof(struct zyd_pair) * rqp->len);
 			wakeup(rqp->odata);	/* wakeup caller */
 
@@ -1960,7 +1960,7 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 	}
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = rlen;
-	bcopy((const uint8_t *)(plcp + 1), mtod(m, uint8_t *), rlen);
+	memcpy(mtod(m, uint8_t *), (const uint8_t *)(plcp + 1), rlen);
 
 	s = splnet();
 
