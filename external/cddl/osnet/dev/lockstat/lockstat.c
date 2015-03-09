@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.7 2015/03/09 01:07:27 riastradh Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.8 2015/03/09 01:42:26 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.7 2015/03/09 01:07:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8 2015/03/09 01:42:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.7 2015/03/09 01:07:27 riastradh Exp $
 #include <sys/xcall.h>
 #include <sys/atomic.h>
 
+#define NLOCKSTAT 1
 #include <dev/lockstat.h>
 
 #define	ASSERT	KASSERT
@@ -62,6 +63,7 @@ lockstat_probe_t lockstat_probes[] = {
 };
 
 static dtrace_provider_id_t lockstat_id;
+static size_t lockstat_dtrace_count;
 
 /*ARGSUSED*/
 static int
@@ -72,6 +74,10 @@ lockstat_enable(void *arg, dtrace_id_t id, void *parg)
 	ASSERT(!lockstat_probemap[LS_COMPRESS(probe->lsp_probe)]);
 
 	lockstat_probemap[LS_COMPRESS(probe->lsp_probe)] = id;
+	if (lockstat_dtrace_count++ == 0) {
+		lockstat_dtrace_enabled = LB_DTRACE;
+		LOCKSTAT_ENABLED_UPDATE();
+	}
 
 	return 0;
 }
@@ -83,6 +89,11 @@ lockstat_disable(void *arg, dtrace_id_t id __unused, void *parg)
 	lockstat_probe_t *probe = parg;
 
 	ASSERT(lockstat_probemap[LS_COMPRESS(probe->lsp_probe)]);
+
+	if (--lockstat_dtrace_count == 0) {
+		lockstat_dtrace_enabled = 0;
+		LOCKSTAT_ENABLED_UPDATE();
+	}
 
 	lockstat_probemap[LS_COMPRESS(probe->lsp_probe)] = 0;
 }
