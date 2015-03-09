@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.31.4.1 2015/02/16 21:25:34 martin Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.31.4.2 2015/03/09 17:45:57 snj Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.31.4.1 2015/02/16 21:25:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.31.4.2 2015/03/09 17:45:57 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -87,10 +87,14 @@ static int sdmmc_mem_single_read_block(struct sdmmc_function *, uint32_t,
     u_char *, size_t);
 static int sdmmc_mem_single_write_block(struct sdmmc_function *, uint32_t,
     u_char *, size_t);
-static int sdmmc_mem_read_block_subr(struct sdmmc_function *, uint32_t,
-    u_char *, size_t);
-static int sdmmc_mem_write_block_subr(struct sdmmc_function *, uint32_t,
-    u_char *, size_t);
+static int sdmmc_mem_single_segment_dma_read_block(struct sdmmc_function *,
+    uint32_t, u_char *, size_t);
+static int sdmmc_mem_single_segment_dma_write_block(struct sdmmc_function *,
+    uint32_t, u_char *, size_t);
+static int sdmmc_mem_read_block_subr(struct sdmmc_function *, bus_dmamap_t,
+    uint32_t, u_char *, size_t);
+static int sdmmc_mem_write_block_subr(struct sdmmc_function *, bus_dmamap_t,
+    uint32_t, u_char *, size_t);
 
 /*
  * Initialize SD/MMC memory cards and memory in SDIO "combo" cards.
@@ -1242,7 +1246,7 @@ static int
 sdmmc_mem_single_read_block(struct sdmmc_function *sf, uint32_t blkno,
     u_char *data, size_t datalen)
 {
-	struct sdmmc_softc *sc __diagused = sf->sc;
+	struct sdmmc_softc *sc = sf->sc;
 	int error = 0;
 	int i;
 
@@ -1250,7 +1254,7 @@ sdmmc_mem_single_read_block(struct sdmmc_function *sf, uint32_t blkno,
 	KASSERT(!ISSET(sc->sc_caps, SMC_CAPS_DMA));
 
 	for (i = 0; i < datalen / SDMMC_SECTOR_SIZE; i++) {
-		error = sdmmc_mem_read_block_subr(sf, blkno + i,
+		error = sdmmc_mem_read_block_subr(sf, sc->sc_dmap, blkno + i,
 		    data + i * SDMMC_SECTOR_SIZE, SDMMC_SECTOR_SIZE);
 		if (error)
 			break;
@@ -1258,13 +1262,81 @@ sdmmc_mem_single_read_block(struct sdmmc_function *sf, uint32_t blkno,
 	return error;
 }
 
+/*
+ * Simulate multi-segment dma transfer.
+ */
 static int
-sdmmc_mem_read_block_subr(struct sdmmc_function *sf, uint32_t blkno,
-    u_char *data, size_t datalen)
+sdmmc_mem_single_segment_dma_read_block(struct sdmmc_function *sf,
+    uint32_t blkno, u_char *data, size_t datalen)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	bool use_bbuf = false;
+	int error = 0;
+	int i;
+
+	for (i = 0; i < sc->sc_dmap->dm_nsegs; i++) {
+		size_t len = sc->sc_dmap->dm_segs[i].ds_len;
+		if ((len % SDMMC_SECTOR_SIZE) != 0) {
+			use_bbuf = true;
+			break;
+		}
+	}
+	if (use_bbuf) {
+		bus_dmamap_sync(sc->sc_dmat, sf->bbuf_dmap, 0, datalen,
+		    BUS_DMASYNC_PREREAD);
+
+		error = sdmmc_mem_read_block_subr(sf, sf->bbuf_dmap,
+		    blkno, data, datalen);
+		if (error) {
+			bus_dmamap_unload(sc->sc_dmat, sf->bbuf_dmap);
+			return error;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, sf->bbuf_dmap, 0, datalen,
+		    BUS_DMASYNC_POSTREAD);
+
+		/* Copy from bounce buffer */
+		memcpy(data, sf->bbuf, datalen);
+
+		return 0;
+	}
+
+	for (i = 0; i < sc->sc_dmap->dm_nsegs; i++) {
+		size_t len = sc->sc_dmap->dm_segs[i].ds_len;
+
+		error = bus_dmamap_load(sc->sc_dmat, sf->sseg_dmap,
+		    data, len, NULL, BUS_DMA_NOWAIT|BUS_DMA_READ);
+		if (error)
+			return error;
+
+		bus_dmamap_sync(sc->sc_dmat, sf->sseg_dmap, 0, len,
+		    BUS_DMASYNC_PREREAD);
+
+		error = sdmmc_mem_read_block_subr(sf, sf->sseg_dmap,
+		    blkno, data, len);
+		if (error) {
+			bus_dmamap_unload(sc->sc_dmat, sf->sseg_dmap);
+			return error;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, sf->sseg_dmap, 0, len,
+		    BUS_DMASYNC_POSTREAD);
+
+		bus_dmamap_unload(sc->sc_dmat, sf->sseg_dmap);
+
+		blkno += len / SDMMC_SECTOR_SIZE;
+		data += len;
+	}
+	return 0;
+}
+
+static int
+sdmmc_mem_read_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
+    uint32_t blkno, u_char *data, size_t datalen)
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
-	int error, bbuf, seg, off, len, num;
+	int error;
 
 	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		error = sdmmc_select_card(sc, sf);
@@ -1272,10 +1344,6 @@ sdmmc_mem_read_block_subr(struct sdmmc_function *sf, uint32_t blkno,
 			goto out;
 	}
 
-	bbuf = 0;
-	num = 0;
-	seg = off = len = 0;
-retry:
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_data = data;
 	cmd.c_datalen = datalen;
@@ -1286,30 +1354,8 @@ retry:
 	if (!ISSET(sf->flags, SFF_SDHC))
 		cmd.c_arg <<= SDMMC_SECTOR_SIZE_SB;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1 | SCF_RSP_SPI_R1;
-	if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
-		cmd.c_dmamap = sc->sc_dmap;
-		if (!ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
-			len = sc->sc_dmap->dm_segs[seg].ds_len - off;
-			len &= ~(SDMMC_SECTOR_SIZE - 1);
-			cmd.c_datalen = len;
-			cmd.c_dmaseg = seg;
-			cmd.c_dmaoff = off;
-			bbuf = 0;
-			if (len == 0) {
-				/* Use bounce buffer */
-				bus_dmamap_sync(sc->sc_dmat, sf->bbuf_dmap,
-				    0, SDMMC_SECTOR_SIZE, BUS_DMASYNC_PREREAD);
-				cmd.c_datalen = SDMMC_SECTOR_SIZE;
-				cmd.c_dmamap = sf->bbuf_dmap;
-				cmd.c_dmaseg = 0;
-				cmd.c_dmaoff = 0;
-				bbuf = 1;
-				len = SDMMC_SECTOR_SIZE;
-			}
-			cmd.c_opcode = (cmd.c_datalen / cmd.c_blklen) > 1 ?
-			    MMC_READ_BLOCK_MULTIPLE : MMC_READ_BLOCK_SINGLE;
-		}
-	}
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
+		cmd.c_dmamap = dmap;
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error)
@@ -1341,34 +1387,6 @@ retry:
 		} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
 	}
 
-	if (ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
-	    !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
-		bus_dma_segment_t *dm_segs = sc->sc_dmap->dm_segs;
-
-		if (bbuf) {
-			bus_dmamap_sync(sc->sc_dmat, sf->bbuf_dmap,
-			    0, SDMMC_SECTOR_SIZE, BUS_DMASYNC_POSTREAD);
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, num,
-			    SDMMC_SECTOR_SIZE, BUS_DMASYNC_POSTREAD);
-			memcpy(data, sf->bbuf, SDMMC_SECTOR_SIZE);
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, num,
-			    SDMMC_SECTOR_SIZE, BUS_DMASYNC_PREREAD);
-		}
-		num += len;
-		data += len;
-		datalen -= len;
-		blkno += (len / SDMMC_SECTOR_SIZE);
-
-		while (off + len >= dm_segs[seg].ds_len) {
-			len -= dm_segs[seg++].ds_len;
-			off = 0;
-		}
-		off += len;
-
-		if (seg < sc->sc_dmap->dm_nsegs)
-			goto retry;
-	}
-
 out:
 	return error;
 }
@@ -1388,7 +1406,8 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 	}
 
 	if (!ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
-		error = sdmmc_mem_read_block_subr(sf, blkno, data, datalen);
+		error = sdmmc_mem_read_block_subr(sf, sc->sc_dmap, blkno, data,
+		    datalen);
 		goto out;
 	}
 
@@ -1399,6 +1418,7 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 		goto out;
 
 #ifdef SDMMC_DEBUG
+	printf("data=%p, datalen=%zu\n", data, datalen);
 	for (int i = 0; i < sc->sc_dmap->dm_nsegs; i++) {
 		printf("seg#%d: addr=%#lx, size=%#lx\n", i,
 		    (u_long)sc->sc_dmap->dm_segs[i].ds_addr,
@@ -1406,10 +1426,18 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 	}
 #endif
 
+	if (sc->sc_dmap->dm_nsegs > 1
+	    && !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
+		error = sdmmc_mem_single_segment_dma_read_block(sf, blkno,
+		    data, datalen);
+		goto unload;
+	}
+
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
 	    BUS_DMASYNC_PREREAD);
 
-	error = sdmmc_mem_read_block_subr(sf, blkno, data, datalen);
+	error = sdmmc_mem_read_block_subr(sf, sc->sc_dmap, blkno, data,
+	    datalen);
 	if (error)
 		goto unload;
 
@@ -1429,7 +1457,7 @@ static int
 sdmmc_mem_single_write_block(struct sdmmc_function *sf, uint32_t blkno,
     u_char *data, size_t datalen)
 {
-	struct sdmmc_softc *sc __diagused = sf->sc;
+	struct sdmmc_softc *sc = sf->sc;
 	int error = 0;
 	int i;
 
@@ -1437,7 +1465,7 @@ sdmmc_mem_single_write_block(struct sdmmc_function *sf, uint32_t blkno,
 	KASSERT(!ISSET(sc->sc_caps, SMC_CAPS_DMA));
 
 	for (i = 0; i < datalen / SDMMC_SECTOR_SIZE; i++) {
-		error = sdmmc_mem_write_block_subr(sf, blkno + i,
+		error = sdmmc_mem_write_block_subr(sf, sc->sc_dmap, blkno + i,
 		    data + i * SDMMC_SECTOR_SIZE, SDMMC_SECTOR_SIZE);
 		if (error)
 			break;
@@ -1445,13 +1473,82 @@ sdmmc_mem_single_write_block(struct sdmmc_function *sf, uint32_t blkno,
 	return error;
 }
 
+/*
+ * Simulate multi-segment dma transfer.
+ */
 static int
-sdmmc_mem_write_block_subr(struct sdmmc_function *sf, uint32_t blkno,
-    u_char *data, size_t datalen)
+sdmmc_mem_single_segment_dma_write_block(struct sdmmc_function *sf,
+    uint32_t blkno, u_char *data, size_t datalen)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	bool use_bbuf = false;
+	int error = 0;
+	int i;
+
+	for (i = 0; i < sc->sc_dmap->dm_nsegs; i++) {
+		size_t len = sc->sc_dmap->dm_segs[i].ds_len;
+		if ((len % SDMMC_SECTOR_SIZE) != 0) {
+			use_bbuf = true;
+			break;
+		}
+	}
+	if (use_bbuf) {
+		/* Copy to bounce buffer */
+		memcpy(sf->bbuf, data, datalen);
+
+		bus_dmamap_sync(sc->sc_dmat, sf->bbuf_dmap, 0, datalen,
+		    BUS_DMASYNC_PREWRITE);
+
+		error = sdmmc_mem_write_block_subr(sf, sf->bbuf_dmap,
+		    blkno, data, datalen);
+		if (error) {
+			bus_dmamap_unload(sc->sc_dmat, sf->bbuf_dmap);
+			return error;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, sf->bbuf_dmap, 0, datalen,
+		    BUS_DMASYNC_POSTWRITE);
+
+		return 0;
+	}
+
+	for (i = 0; i < sc->sc_dmap->dm_nsegs; i++) {
+		size_t len = sc->sc_dmap->dm_segs[i].ds_len;
+
+		error = bus_dmamap_load(sc->sc_dmat, sf->sseg_dmap,
+		    data, len, NULL, BUS_DMA_NOWAIT|BUS_DMA_WRITE);
+		if (error)
+			return error;
+
+		bus_dmamap_sync(sc->sc_dmat, sf->sseg_dmap, 0, len,
+		    BUS_DMASYNC_PREWRITE);
+
+		error = sdmmc_mem_write_block_subr(sf, sf->sseg_dmap,
+		    blkno, data, len);
+		if (error) {
+			bus_dmamap_unload(sc->sc_dmat, sf->sseg_dmap);
+			return error;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, sf->sseg_dmap, 0, len,
+		    BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, sf->sseg_dmap);
+
+		blkno += len / SDMMC_SECTOR_SIZE;
+		data += len;
+	}
+
+	return error;
+}
+
+static int
+sdmmc_mem_write_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
+    uint32_t blkno, u_char *data, size_t datalen)
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
-	int error, bbuf, seg, off, len, num;
+	int error;
 
 	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		error = sdmmc_select_card(sc, sf);
@@ -1459,10 +1556,6 @@ sdmmc_mem_write_block_subr(struct sdmmc_function *sf, uint32_t blkno,
 			goto out;
 	}
 
-	bbuf = 0;
-	num = 0;
-	seg = off = len = 0;
-retry:
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_data = data;
 	cmd.c_datalen = datalen;
@@ -1473,35 +1566,8 @@ retry:
 	if (!ISSET(sf->flags, SFF_SDHC))
 		cmd.c_arg <<= SDMMC_SECTOR_SIZE_SB;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R1;
-	if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
-		cmd.c_dmamap = sc->sc_dmap;
-		if (!ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
-			len = sc->sc_dmap->dm_segs[seg].ds_len - off;
-			len &= ~(SDMMC_SECTOR_SIZE - 1);
-			cmd.c_datalen = len;
-			cmd.c_dmaseg = seg;
-			cmd.c_dmaoff = off;
-			bbuf = 0;
-			if (len == 0) {
-				/* Use bounce buffer */
-				bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, num,
-				    SDMMC_SECTOR_SIZE, BUS_DMASYNC_POSTWRITE);
-				memcpy(sf->bbuf, data, SDMMC_SECTOR_SIZE);
-				bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, num,
-				    SDMMC_SECTOR_SIZE, BUS_DMASYNC_PREWRITE);
-				bus_dmamap_sync(sc->sc_dmat, sf->bbuf_dmap, 0,
-				    SDMMC_SECTOR_SIZE, BUS_DMASYNC_PREWRITE);
-				cmd.c_datalen = SDMMC_SECTOR_SIZE;
-				cmd.c_dmamap = sf->bbuf_dmap;
-				cmd.c_dmaseg = 0;
-				cmd.c_dmaoff = 0;
-				bbuf = 1;
-				len = SDMMC_SECTOR_SIZE;
-			}
-			cmd.c_opcode = (cmd.c_datalen / cmd.c_blklen) > 1 ?
-			    MMC_WRITE_BLOCK_MULTIPLE : MMC_WRITE_BLOCK_SINGLE;
-		}
-	}
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
+		cmd.c_dmamap = dmap;
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error)
@@ -1532,28 +1598,6 @@ retry:
 		} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
 	}
 
-	if (ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
-	    !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
-		bus_dma_segment_t *dm_segs = sc->sc_dmap->dm_segs;
-
-		if (bbuf)
-			bus_dmamap_sync(sc->sc_dmat, sf->bbuf_dmap,
-			    0, SDMMC_SECTOR_SIZE, BUS_DMASYNC_POSTWRITE);
-		num += len;
-		data += len;
-		datalen -= len;
-		blkno += (len / SDMMC_SECTOR_SIZE);
-
-		while (off + len >= dm_segs[seg].ds_len) {
-			len -= dm_segs[seg++].ds_len;
-			off = 0;
-		}
-		off += len;
-
-		if (seg < sc->sc_dmap->dm_nsegs)
-			goto retry;
-	}
-
 out:
 	return error;
 }
@@ -1579,7 +1623,8 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 	}
 
 	if (!ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
-		error = sdmmc_mem_write_block_subr(sf, blkno, data, datalen);
+		error = sdmmc_mem_write_block_subr(sf, sc->sc_dmap, blkno, data,
+		    datalen);
 		goto out;
 	}
 
@@ -1590,17 +1635,28 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 		goto out;
 
 #ifdef SDMMC_DEBUG
+	aprint_normal_dev(sc->sc_dev, "%s: data=%p, datalen=%zu\n",
+	    __func__, data, datalen);
 	for (int i = 0; i < sc->sc_dmap->dm_nsegs; i++) {
-		printf("seg#%d: addr=%#lx, size=%#lx\n", i,
+		aprint_normal_dev(sc->sc_dev,
+		    "%s: seg#%d: addr=%#lx, size=%#lx\n", __func__, i,
 		    (u_long)sc->sc_dmap->dm_segs[i].ds_addr,
 		    (u_long)sc->sc_dmap->dm_segs[i].ds_len);
 	}
 #endif
 
+	if (sc->sc_dmap->dm_nsegs > 1
+	    && !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
+		error = sdmmc_mem_single_segment_dma_write_block(sf, blkno,
+		    data, datalen);
+		goto unload;
+	}
+
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
 	    BUS_DMASYNC_PREWRITE);
 
-	error = sdmmc_mem_write_block_subr(sf, blkno, data, datalen);
+	error = sdmmc_mem_write_block_subr(sf, sc->sc_dmap, blkno, data,
+	    datalen);
 	if (error)
 		goto unload;
 
