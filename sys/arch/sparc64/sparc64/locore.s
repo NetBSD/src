@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.369.2.1 2014/08/14 06:50:37 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.369.2.2 2015/03/09 07:54:12 snj Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -2126,9 +2126,7 @@ winfixspill:
 	wrpr	%g0, 0, %otherwin
 	or	%lo(2f), %o0, %o0
 	wrpr	%g0, WSTATE_KERN, %wstate
-	sethi	%hi(PANICSTACK), %sp
-	LDPTR	[%sp + %lo(PANICSTACK)], %sp
-	add	%sp, -CC64FSZ-STKB, %sp
+	set	PANICSTACK-CC64FSZ-STKB, %sp
 	ta	1; nop					! This helps out traptrace.
 	call	_C_LABEL(panic)				! This needs to be fixed properly but we should panic here
 	 mov	%g1, %o1
@@ -2908,9 +2906,7 @@ slowtrap:
 	cmp	%g7, WSTATE_KERN
 	bnz,pt	%icc, 1f		! User stack -- we'll blow it away
 	 nop
-	sethi	%hi(PANICSTACK), %sp
-	LDPTR	[%sp + %lo(PANICSTACK)], %sp
-	add	%sp, -CC64FSZ-STKB, %sp	
+	set	PANICSTACK-CC64FSZ-STKB, %sp
 1:
 #endif
 	rdpr	%tt, %g4
@@ -3528,7 +3524,8 @@ ret_from_intr_vector:
 	 nop
 #endif
 #if 1
-	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	set	PANICSTACK-STKB, %g1	! Use panic stack temporarily
+	save	%g1, -CC64FSZ, %sp	! Get a clean register window
 	LOAD_ASCIZ(%o0, "interrupt_vector: spurious vector %lx at pil %d\r\n")
 	mov	%g7, %o1
 	GLOBTOLOC
