@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dwctwo.c,v 1.5 2014/12/27 17:22:15 macallan Exp $ */
+/*	$NetBSD: ingenic_dwctwo.c,v 1.6 2015/03/09 13:23:57 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.5 2014/12/27 17:22:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.6 2015/03/09 13:23:57 macallan Exp $");
 
 /*
  * adapted from bcm2835_dwctwo.c
@@ -124,7 +124,7 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dwc2.sc_params = &ingenic_dwc2_params;
 
 	if (aa->aa_addr == 0)
-		aa->aa_addr = 0x13500000;
+		aa->aa_addr = JZ_DWC2_BASE;
 
 	error = bus_space_map(aa->aa_bst, aa->aa_addr, 0x20000, 0,
 	    &sc->sc_dwc2.sc_ioh);
