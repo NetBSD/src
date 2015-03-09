@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.2.8.2 2014/12/03 12:52:05 skrll Exp $ */
+/* $NetBSD: tiotg.c,v 1.2.8.3 2015/03/09 14:26:31 skrll Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.2 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.3 2015/03/09 14:26:31 skrll Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -56,14 +56,19 @@ __KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.2 2014/12/03 12:52:05 skrll Exp $");
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/motgreg.h>
 #include <dev/usb/motgvar.h>
+#include <dev/usb/usbhist.h>
 
-#define MOTG_DEBUG
-#ifdef MOTG_DEBUG
-extern int motgdebug;
-#define DPRINTF(x) if (motgdebug) printf x
+#ifdef USB_DEBUG
+#ifndef MOTG_DEBUG
+#define motgdebug 0
 #else
-#define DPRINTF(x)
-#endif
+extern int motgdebug;
+#endif /* MOTG_DEBUG */
+#endif /* USB_DEBUG */
+
+#define	DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(motgdebug,1,FMT,A,B,C,D)
+#define	MOTGHIST_FUNC()		USBHIST_FUNC()
+#define	MOTGHIST_CALLED(name)	USBHIST_CALLED(motgdebug)
 
 struct tiotg_softc {
 	device_t		sc_dev;
@@ -283,6 +288,7 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	const char *mode;
 	u_int state;
 #endif
+	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	sc->sc_motg.sc_dev = self;
 	sc->sc_ctrliot = aa->aa_iot;
@@ -317,14 +323,14 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	}
 	/* turn clock on */
 	sitara_cm_reg_read_4(tiotg_port_control[sc->sc_ctrlport].scm_reg, &val);
-	DPRINTF((" power val 0x%x", val));
+	DPRINTF("power val 0x%x", val, 0, 0, 0);
 	/* Enable power */
 	val &= ~(OMAP2SCM_USB_CTLx_OTGPHY_PWD | OMAP2SCM_USB_CTLx_CMPHY_PWD);
 	/* enable vbus detect and session end */
 	val |= (OMAP2SCM_USB_CTLx_VBUSDET | OMAP2SCM_USB_CTLx_SESSIONEND);
 	sitara_cm_reg_write_4(tiotg_port_control[sc->sc_ctrlport].scm_reg, val);
 	sitara_cm_reg_read_4(tiotg_port_control[sc->sc_ctrlport].scm_reg, &val);
-	DPRINTF(("now val 0x%x ", val));
+	DPRINTF("now val 0x%x", val, 0, 0, 0);
 #endif
 	/* XXX configure mode */
 	if (sc->sc_ctrlport == 0)
@@ -380,12 +386,13 @@ ti_motg_intr(void *v)
 	int rv = 0;
 	int i;
 
+	MOTGHIST_FUNC(); MOTGHIST_CALLED();
+
 	mutex_spin_enter(&sc->sc_motg.sc_intr_lock);
 	stat = TIOTG_USBC_READ4(sc, USBCTRL_STAT);
 	stat0 = TIOTG_USBC_READ4(sc, USBCTRL_IRQ_STAT0);
 	stat1 = TIOTG_USBC_READ4(sc, USBCTRL_IRQ_STAT1);
-	DPRINTF(("USB %d 0x%x 0x%x stat %d\n",
-	    sc->sc_ctrlport, stat0, stat1, stat));
+	DPRINTF("USB %d 0x%x 0x%x stat %d", sc->sc_ctrlport, stat0, stat1, stat);
 	/* try to deal with vbus errors */
 	if (stat1 & MUSB2_MASK_IVBUSERR ) {
 		stat1 &= ~MUSB2_MASK_IVBUSERR;
