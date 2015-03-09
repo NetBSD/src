@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.223 2015/03/09 09:23:36 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.224 2015/03/09 17:46:33 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18291,6 +18291,8 @@ sys/sys/device.h				1.147
 sys/arch/powerpc/booke/dev/pq3sdhc.c		1.6
 sys/dev/sdmmc/sdhc.c				1.54
 sys/dev/sdmmc/sdmmc.c				1.24
+sys/dev/sdmmc/sdmmc_mem.c			1.34
+sys/dev/sdmmc/sdmmcvar.h			1.16
 
 	eSDHC has no DMA_BOUNDARY in BLOCK_SIZE register.
 	So clear multi segment DMA transfer support bit.
