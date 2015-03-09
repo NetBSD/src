@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.44.2.6 2015/01/27 08:17:09 martin Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.44.2.7 2015/03/09 09:29:33 snj Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.44.2.6 2015/01/27 08:17:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.44.2.7 2015/03/09 09:29:33 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -425,7 +425,9 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
 		saa.saa_caps |= SMC_CAPS_SD_HIGHSPEED;
 	if (ISSET(hp->flags, SHF_USE_DMA)) {
-		saa.saa_caps |= SMC_CAPS_DMA | SMC_CAPS_MULTI_SEG_DMA;
+		saa.saa_caps |= SMC_CAPS_DMA;
+		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED))
+			saa.saa_caps |= SMC_CAPS_MULTI_SEG_DMA;
 	}
 	if (ISSET(sc->sc_flags, SDHC_FLAG_SINGLE_ONLY))
 		saa.saa_caps |= SMC_CAPS_SINGLE_ONLY;
