@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.32 2015/01/08 12:06:50 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.33 2015/03/09 15:35:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.32 2015/01/08 12:06:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.33 2015/03/09 15:35:11 pooka Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -96,9 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.32 2015/01/08 12:06:50 hannken Exp $
 #include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
 
-/* Root filesystem and device. */
+/* Root filesystem. */
 vnode_t *			rootvnode;
-device_t			root_device;
 
 /* Mounted filesystem list. */
 struct mntlist			mountlist;
