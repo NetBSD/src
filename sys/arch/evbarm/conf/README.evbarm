@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.8 2014/07/25 11:22:50 hkenken Exp $
+$NetBSD: README.evbarm,v 1.9 2015/03/09 22:05:06 skrll Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -46,6 +46,7 @@ SHEEVAPLUG	2010/10/02	Marvell SheevaPlug
 SMDK2410	2003/07/31	Samsung SMDK2410 S3C2410 eval board
 SMDK2800	2002/11/20	Samsung SMDK2800 S3C2800 eval board
 RPI		2012/07/26	Raspberry Pi
+RPI2		2015/03/04	Raspberry Pi 2
 TEAMASA_NPWR	2002/02/07	Team ASA Npwr IOP310 based server appliance
 TEAMASA_NPWR_FC	2003/12/24	Team ASA NPWR-FC i80321 server appliance
 TISDP2420	2008/04/27	TI OMAP 2420 eval board
