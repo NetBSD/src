@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.173 2014/03/18 16:05:34 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.173.4.1 2015/03/09 07:56:43 snj Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.173 2014/03/18 16:05:34 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.173.4.1 2015/03/09 07:56:43 snj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1420,6 +1420,9 @@ _rtld_error(const char *fmt,...)
 void
 _rtld_debug_state(void)
 {
+#if defined(__hppa__)
+	__asm volatile("nop" ::: "memory");
+#endif
 
 	/* Prevent optimizer from removing calls to this function */
 	__insn_barrier();
