@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhist.h,v 1.1 2014/09/12 16:40:38 skrll Exp $	*/
+/*	$NetBSD: usbhist.h,v 1.1.2.1 2015/03/09 13:55:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Matthew R. Green
@@ -54,6 +54,11 @@ extern int usbdebug;
 #define USBHIST_INIT_STATIC(NAME,BUF)	KERNHIST_INIT_STATIC(NAME,BUF)
 #define USBHIST_LOGN(NAME,N,FMT,A,B,C,D)	do {		\
 	if ((NAME) >= (N)) {					\
+		KERNHIST_LOG(usbhist,FMT,A,B,C,D);		\
+	}							\
+} while (0)
+#define USBHIST_LOGM(NAME,N,FMT,A,B,C,D)	do {		\
+	if ((NAME) & (N)) {					\
 		KERNHIST_LOG(usbhist,FMT,A,B,C,D);		\
 	}							\
 } while (0)
