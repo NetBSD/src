@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.335 2014/08/05 15:25:20 apb Exp $
+#	$NetBSD: bsd.README,v 1.335.2.1 2015/03/09 08:45:26 snj Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -411,6 +411,11 @@ MKX11MOTIF:	If "yes" and ${X11FLAVOUR} is "Xorg", build the native X11
 		default location /usr/pkg, the location can be specified
 		using the X11MOTIFPATH variable.
 		Default: no
+
+MKX11RADEONKMS	If "no", build the xf86-video-ati 6.x driver (the last one
+		with user-mode switching support), otherwise build the
+		kernek-mode switching (KMS) requiring driver.
+		Default: yes on i386 and amd64, yes elsewhere.
 
 MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
