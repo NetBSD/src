@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.6 2015/03/09 00:53:39 christos Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.7 2015/03/09 01:07:27 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.6 2015/03/09 00:53:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.7 2015/03/09 01:07:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,7 +71,6 @@ lockstat_enable(void *arg, dtrace_id_t id, void *parg)
 
 	ASSERT(!lockstat_probemap[LS_COMPRESS(probe->lsp_probe)]);
 
-printf("%s: %x %jd\n", __func__, LS_COMPRESS(probe->lsp_probe), (intmax_t)id);
 	lockstat_probemap[LS_COMPRESS(probe->lsp_probe)] = id;
 
 	return 0;
@@ -85,7 +84,6 @@ lockstat_disable(void *arg, dtrace_id_t id __unused, void *parg)
 
 	ASSERT(lockstat_probemap[LS_COMPRESS(probe->lsp_probe)]);
 
-printf("%s: %x %jd\n", __func__, LS_COMPRESS(probe->lsp_probe), (intmax_t)id);
 	lockstat_probemap[LS_COMPRESS(probe->lsp_probe)] = 0;
 }
 
@@ -204,19 +202,12 @@ lockstat_fini(void)
 	int error;
 	bool ok __diagused;
 
-	/*
-	 * If we haven't previously tried to detach and failed,
-	 * unregister the dtrace provider.
-	 */
-	if (lockstat_id != 0) {
-		error = dtrace_unregister(lockstat_id);
-		if (error) {
-			printf("dtrace_lockstat"
-			    ": failed to unregister dtrace provider: %d\n",
-			    error);
-			return error;
-		}
-		lockstat_id = 0;
+	error = dtrace_unregister(lockstat_id);
+	if (error) {
+		printf("dtrace_lockstat: failed to unregister dtrace provider"
+		    ": %d\n",
+		    error);
+		return error;
 	}
 
 	/* Unhook the probe.  */
