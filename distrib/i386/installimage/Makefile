@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 2014/11/15 12:33:04 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.7 2015/03/09 18:12:47 christos Exp $
 
 .include <bsd.own.mk>
 
 INSTIMGBASE=	NetBSD-${DISTRIBVER}-i386-install	# gives ${IMGBASE}.img
 
 BOOTDISK=	sd0			# for USB flash etc.
-INSTIMAGEMB?=	520			# for all installation binaries
+INSTIMAGEMB?=	550			# for all installation binaries
 
 PRIMARY_BOOT=		bootxx_ffsv1
 SECONDARY_BOOT=		boot
