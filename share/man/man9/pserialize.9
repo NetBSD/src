@@ -1,4 +1,4 @@
-.\"	$NetBSD: pserialize.9,v 1.9 2014/11/21 20:53:35 riastradh Exp $
+.\"	$NetBSD: pserialize.9,v 1.10 2015/03/09 01:55:09 riastradh Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,7 +113,7 @@ Find a frotz, as a reader:
 	s = pserialize_read_enter();
 	for (f = frobbotzim; f != NULL; f = f->f_next) {
 		/* Fetch f before we fetch anything f points to.  */
-		membar_consumer();
+		membar_datadep_consumer();
 		if (f->f_... == key) {
 			*resultp = f->f_...;
 			error = 0;
