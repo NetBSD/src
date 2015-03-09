@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63.10.1 2015/03/09 08:45:26 snj Exp $
+#	$NetBSD: Makefile,v 1.63.10.2 2015/03/09 08:47:19 snj Exp $
 
 # xf86-input drivers
 
@@ -19,14 +19,15 @@ SUBDIR+= \
 
 .endif
 
-
 # xf86-video drivers
 
+.include <bsd.own.mk>
+
 # Set this to "no" to build the UMS-happy 6.x driver, vs KMS 7.x
-.if ${MKX11RADEONKMS:U} != "no"
-RADEON_SUBDIR=radeon
-.else
+.if ${MKX11RADEONKMS} != "no"
 RADEON_SUBDIR=radeon-kms
+.else
+RADEON_SUBDIR=radeon
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
