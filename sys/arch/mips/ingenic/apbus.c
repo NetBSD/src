@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.6 2014/12/27 17:22:15 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.7 2015/03/09 13:24:21 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.6 2014/12/27 17:22:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.7 2015/03/09 13:24:21 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -64,6 +64,9 @@ struct mips_bus_dma_tag	apbus_dmat = {
 
 static const char *apbus_devs[] = {
 	"dwctwo",
+	"ohci",
+	"ehci",
+	"dme",
 	"jzgpio",
 	"jzfb",
 	NULL
