@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.15 2014/03/19 15:26:42 nonaka Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.15.4.1 2015/03/09 17:45:57 snj Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -189,6 +189,7 @@ struct sdmmc_function {
 
 	void *bbuf;			/* bounce buffer */
 	bus_dmamap_t bbuf_dmap;		/* DMA map for bounce buffer */
+	bus_dmamap_t sseg_dmap;		/* DMA map for single segment */
 };
 
 /*
