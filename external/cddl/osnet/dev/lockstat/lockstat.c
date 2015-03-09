@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.5 2015/03/08 23:56:59 riastradh Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.6 2015/03/09 00:53:39 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.5 2015/03/08 23:56:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.6 2015/03/09 00:53:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.5 2015/03/08 23:56:59 riastradh Exp $
 #include <sys/mutex.h>
 #include <sys/systm.h>
 #include <sys/xcall.h>
+#include <sys/atomic.h>
 
 #include <dev/lockstat.h>
 
@@ -57,6 +58,7 @@ lockstat_probe_t lockstat_probes[] = {
 	{ "rwlock", "spin",		LB_RWLOCK	| LB_SPIN,	0 },
 	{ "kernel", "spin",		LB_KERNEL_LOCK	| LB_SPIN,	0 },
 	{ "lwp", "spin",		LB_NOPREEMPT	| LB_SPIN,	0 },
+	{ NULL, NULL,			0,				0 },
 };
 
 static dtrace_provider_id_t lockstat_id;
@@ -67,9 +69,10 @@ lockstat_enable(void *arg, dtrace_id_t id, void *parg)
 {
 	lockstat_probe_t *probe = parg;
 
-	ASSERT(!lockstat_probemap[probe->lsp_probe]);
+	ASSERT(!lockstat_probemap[LS_COMPRESS(probe->lsp_probe)]);
 
-	lockstat_probemap[probe->lsp_probe] = id;
+printf("%s: %x %jd\n", __func__, LS_COMPRESS(probe->lsp_probe), (intmax_t)id);
+	lockstat_probemap[LS_COMPRESS(probe->lsp_probe)] = id;
 
 	return 0;
 }
@@ -80,33 +83,11 @@ lockstat_disable(void *arg, dtrace_id_t id __unused, void *parg)
 {
 	lockstat_probe_t *probe = parg;
 
-	ASSERT(lockstat_probemap[probe->lsp_probe]);
+	ASSERT(lockstat_probemap[LS_COMPRESS(probe->lsp_probe)]);
 
-	lockstat_probemap[probe->lsp_probe] = 0;
+printf("%s: %x %jd\n", __func__, LS_COMPRESS(probe->lsp_probe), (intmax_t)id);
+	lockstat_probemap[LS_COMPRESS(probe->lsp_probe)] = 0;
 }
-
-static int
-lockstat_open(dev_t dev __unused, int flags __unused, int mode __unused,
-    struct lwp *l __unused)
-{
-
-	return 0;
-}
-
-static const struct cdevsw lockstat_cdevsw = {
-	.d_open = lockstat_open,
-	.d_close = noclose,
-	.d_read = noread,
-	.d_write = nowrite,
-	.d_ioctl = noioctl,
-	.d_stop = nostop,
-	.d_tty = notty,
-	.d_poll = nopoll,
-	.d_mmap = nommap,
-	.d_kqfilter = nokqfilter,
-	.d_discard = nodiscard,
-	.d_flag = D_OTHER,
-};
 
 /*ARGSUSED*/
 static void
@@ -188,7 +169,6 @@ lockstat_cas_probe(dtrace_probe_func_t old, dtrace_probe_func_t new)
 static int
 lockstat_init(void)
 {
-	int bmaj = -1, cmaj = -1;
 	int error;
 	bool ok;
 
@@ -200,13 +180,6 @@ lockstat_init(void)
 		goto fail0;
 	}
 
-	/* Create a character device.  */
-	error = devsw_attach("lockstat", NULL, &bmaj, &lockstat_cdevsw, &cmaj);
-	if (error) {
-		printf("dtrace_lockstat: failed to attach devsw: %d\n", error);
-		goto fail1;
-	}
-
 	/* Everything is in place.  Register a dtrace provider.  */
 	ASSERT(lockstat_id == 0);
 	error = dtrace_register("lockstat", &lockstat_attr, DTRACE_PRIV_USER,
@@ -214,14 +187,11 @@ lockstat_init(void)
 	if (error) {
 		printf("dtrace_lockstat: failed to register dtrace provider"
 		    ": %d\n", error);
-		goto fail2;
+		goto fail1;
 	}
-	ASSERT(lockstat_id != 0);
-
 	/* Success!  */
 	return 0;
 
-fail2:	devsw_detach(NULL, &lockstat_cdevsw);
 fail1:	ok = lockstat_cas_probe(dtrace_probe, lockstat_probe_stub);
 	ASSERT(ok);
 fail0:	ASSERT(error);
@@ -247,14 +217,6 @@ lockstat_fini(void)
 			return error;
 		}
 		lockstat_id = 0;
-	}
-
-	/* Detach the device.  */
-	error = devsw_detach(NULL, &lockstat_cdevsw);
-	if (error) {
-		printf("dtrace_lockstat: failed to detach device: %d\n",
-		    error);
-		return error;
 	}
 
 	/* Unhook the probe.  */
