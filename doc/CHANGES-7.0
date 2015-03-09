@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.222 2015/03/07 06:36:37 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.223 2015/03/09 09:23:36 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18131,4 +18131,187 @@ usr.sbin/makemandb/makemandb.c			1.26
 
 	Explicitly deal with end of lists. PR 49708.
 	[skrll, ticket #564]
+
+crypto/external/bsd/openssh/Makefile.inc	patch
+
+	Add -DHAVE_HEADER_AD, to signal a DNSSEC-signed response, so
+	that DNSSEC_signed SSHFPs can be correctly detected.
+	[he, ticket #563]
+	
+sys/arch/sparc64/sparc64/locore.s		1.379, 1.380
+
+	Use panic stack temporarily for calling prom_printf in a trap
+	handler.
+	It seems that openfirmware cannot handle over 4GB pointers, and
+	stack pointers may point to over 4GB since VA layout was
+	rearranged by rev 1.33 of vmparam.h.  Therefore, use panic stack
+	to avoid panicking in OF_write used by prom_printf.
+	[nakayama, ticket #568]
+
+libexec/ld.elf_so/rtld.c			1.175
+
+	HPPA hack for a problem where gdb doesn't see _rtld_debug_state
+	when it's a single bv,n %r0(%rp) instruction.
+	[skrll, ticket #569]
+
+usr.sbin/cpuctl/arch/i386-asm.S			1.4
+usr.sbin/cpuctl/arch/x86_64-asm.S		1.5
+
+	Avoid segfault when running 'cpuctl identify' on newer Intel CPUs.
+	[tnn, ticket #570]
+
+sys/dev/cons.c					1.74
+
+	Fix strange kernel output sequence "\n\r" observed in serial
+	consoles.  Output '\r' before '\n' in conversion.  PR 36306.
+	[nakayama, ticket #574]
+
+xsrc/external/mit/xf86-video-ati-kms/dist/COPYING    up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/ChangeLog  up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/INSTALL    up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/Makefile.am up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/Makefile.in up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/README     up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/aclocal.m4 up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/compile    up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/config.guess up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/config.h.in up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/config.sub up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/configure  up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/configure.ac up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/depcomp    up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/install-sh up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/ltmain.sh  up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/man/Makefile.am up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/man/Makefile.in up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/man/ati.man up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/man/radeon.man up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/missing    up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/Makefile.am up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/Makefile.in up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/ati.c  up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/ati.h  up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/ati_pciids_gen.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/atimodule.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/atipciids.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/atipcirename.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/ativersion.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/bicubic_table.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/bicubic_table.py up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/cayman_accel.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/cayman_reg.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/cayman_reg_auto.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/cayman_shader.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/cayman_shader.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/compat-api.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/drmmode_display.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/drmmode_display.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/evergreen_accel.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/evergreen_exa.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/evergreen_reg.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/evergreen_reg_auto.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/evergreen_shader.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/evergreen_shader.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/evergreen_state.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/evergreen_textured_videofuncs.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/pcidb/ati_pciids.csv up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/pcidb/parse_pci_ids.pl up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/r600_exa.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/r600_reg.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/r600_reg_auto_r6xx.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/r600_reg_r6xx.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/r600_reg_r7xx.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/r600_shader.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/r600_shader.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/r600_state.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/r600_textured_videofuncs.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/r6xx_accel.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_accel.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_bo_helper.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_bo_helper.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_chipinfo_gen.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_chipset_gen.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_dri2.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_dri2.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_exa.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_exa_funcs.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_exa_render.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_exa_shared.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_exa_shared.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_glamor.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_glamor.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_kms.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_misc.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_pci_chipset_gen.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_pci_device_match_gen.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_probe.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_probe.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_reg.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_textured_video.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_textured_videofuncs.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_vbo.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_vbo.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_version.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_video.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_video.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/radeon_xvmc.c up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/dist/src/simple_list.h up to 1.1.1.1
+xsrc/external/mit/xf86-video-ati-kms/include/config.h up to 1.1
+distrib/sets/lists/xdebug/md.amd64		1.11
+distrib/sets/lists/xdebug/md.i386		1.12
+distrib/sets/lists/xserver/md.amd64		1.76
+distrib/sets/lists/xserver/md.i386		1.95
+distrib/sets/mkvars.mk				1.16
+distrib/sets/sets.subr				1.163
+external/mit/xorg-server/dist/exa/exa_unaccel.c	1.3
+external/mit/xorg-server/dist/glx/glxdri.c	1.6
+external/mit/xorg-server/dist/include/regionstr.h 1.5
+external/mit/xorg/server/drivers/Makefile	1.64, 1.65
+external/mit/xorg/server/drivers/xf86-video-radeon-kms/Makefile 1.1
+share/mk/bsd.README				1.338
+share/mk/bsd.own.mk				1.844
+
+	Add xf86-video-ati-7.5.0, which requires KMS.  By default,
+	this newer version of the driver is only built on i386 and
+	amd64.  Use MKX11RADEONKMS to choose between the old (6.x)
+	and new drivers.
+	[mrg, ticket #575]
+
+sys/kern/init_main.c				1.462
+sys/kern/subr_autoconf.c			1.234
+sys/sys/device.h				1.147
+
+	wait for config_mountroot threads to complete before we tell
+	init it can start up.  this solves the problem where a console
+	device needs mountroot to complete attaching, and must create
+	wsdisplay0 before init tries to open /dev/console.  PR#49709.
+	[mrg, ticket #576] 
+        
+sys/arch/powerpc/booke/dev/pq3sdhc.c		1.6
+sys/dev/sdmmc/sdhc.c				1.54
+sys/dev/sdmmc/sdmmc.c				1.24
+
+	eSDHC has no DMA_BOUNDARY in BLOCK_SIZE register.
+	So clear multi segment DMA transfer support bit.
+	--
+	pq3sdhc: Enable DMA transfer.
+	[nonaka, ticket #577]
+
+distrib/notes/i386/contents			1.28
+etc/etc.i386/Makefile.inc			1.68
+sys/arch/i386/conf/GENERIC			1.1120
+sys/arch/i386/conf/LEGACY			1.1
+
+	remove vga@isa and pcdisplay@isa from i386 GENERIC, and create
+	a new LEGACY kernel that includes them instead.  now radeon@pci
+	is able to properly claim wsdisplay0 on i386 systems, and
+	radeondrmkms has a good chance of working.  PR#49290.
+	[mrg, ticket #578]
+
+sys/arch/i386/stand/Makefile.booters		1.90
+
+	Compile the bootlocks for i386 CPUs, even when the main target
+	architecture is amd64.  Fixes PR port-i386/49725.
+	[martin, ticket #579]
 
