@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.8 2014/08/02 15:50:16 skrll Exp $
+$NetBSD: TODO.usbmp,v 1.8.4.1 2015/03/09 09:21:54 skrll Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -8,6 +8,15 @@ flesh out most of usbdi(9).
 
 usb_event_thread() startup should use something to sync companions
 
+
+KERNEL_LOCK
+  - auvitek.c
+  - auvitek_dtv.c
+  - emdtv.c
+  - emdtv_dtv.c
+  - ubt.c
+  - uhub.c
+  - usscanner.c
 
 usb_detach_{waitold,wakeup} to usb_detach_{wait,broadcast} conversion:
   - drivers:
@@ -53,6 +62,32 @@ convert uhidev users to MPSAFE:
   uyurex(4)
   - sysmon -- hm?
 
+splusb drivers:
+  - auvitek_dtv.c
+  - auvitek_video.c
+  - emdtv_dtv.c
+  - if_athn_usb.c
+  - if_aue.c
+  - if_axe.c
+  - if_axen.c
+  - if_cdce.c
+  - if_cue.c
+  - if_kue.c
+  - if_otus.c
+  - if_rum.c
+  - if_run.c
+  - if_smsc.c
+  - if_udav.c
+  - if_upl.c
+  - if_ural.c
+  - if_url.c
+  - if_urndis.c
+  - if_urtw.c
+  - if_urtwn.c
+  - if_zyd.c
+  - ubt.c
+  - ucycom.c
+  - udsir.c
 
 wakeup/tsleep drivers:
   - if_athn_usb.c
