@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.12 2015/03/09 00:40:35 christos Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.13 2015/03/09 01:41:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -119,6 +119,8 @@ typedef struct lsdisable {
 #define	LB_LOCK_MASK		0x0000ff00
 #define	LB_LOCK_SHIFT		8
 
+#define	LB_DTRACE		0x00010000
+
 typedef struct lsbuf {
 	union {
 		LIST_ENTRY(lsbuf) list;
@@ -180,6 +182,7 @@ do {									\
 void	lockstat_event(uintptr_t, uintptr_t, u_int, u_int, uint64_t);
 
 extern volatile u_int	lockstat_enabled;
+extern volatile u_int	lockstat_dev_enabled;
 
 #else
 
@@ -197,6 +200,8 @@ extern volatile u_int	lockstat_enabled;
 #endif
 
 #ifdef KDTRACE_HOOKS
+extern volatile u_int lockstat_dtrace_enabled;
+#define KDTRACE_LOCKSTAT_ENABLED lockstat_dtrace_enabled
 #define LS_COMPRESS(f) \
     ((((f) & 0x3) | (((f) & 0x700) >> 6)) & (LS_NPROBES - 1))
 #define	LS_NPROBES	0x20	/* 5 bits */
@@ -207,6 +212,13 @@ extern void	(*lockstat_probe_func)(uint32_t, uintptr_t, uintptr_t,
 
 void		lockstat_probe_stub(uint32_t, uintptr_t, uintptr_t,
     uintptr_t, uintptr_t, uintptr_t);
+#else
+#define KDTRACE_LOCKSTAT_ENABLED 0
 #endif
+
+#define LOCKSTAT_ENABLED_UPDATE() do { \
+	lockstat_enabled = lockstat_dev_enabled | KDTRACE_LOCKSTAT_ENABLED; \
+	membar_producer(); \
+    } while (/*CONSTCOND*/0)
 
 #endif	/* _SYS_LOCKSTAT_H_ */
