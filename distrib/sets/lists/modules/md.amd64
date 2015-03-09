@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.54 2015/03/08 17:13:22 christos Exp $
+# $NetBSD: md.amd64,v 1.55 2015/03/09 12:32:11 riastradh Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -67,6 +67,10 @@
 ./@MODULEDIR@/drmkms_linux/drmkms_linux.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/drmkms_pci			base-kernel-modules	kmod
 ./@MODULEDIR@/drmkms_pci/drmkms_pci.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/dtrace_syscall_linux32		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_syscall_linux32/dtrace_syscall_linux32.kmod	base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_syscall_netbsd32		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_syscall_netbsd32/dtrace_syscall_netbsd32.kmod	base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/emdtv				base-kernel-modules	kmod
 ./@MODULEDIR@/emdtv/emdtv.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/est				base-kernel-modules	kmod
@@ -270,6 +274,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace_fbt			base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace_fbt/dtrace_fbt.kmod	base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/dtrace_lockstat			base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/dtrace_lockstat/dtrace_lockstat.kmod	base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace_profile				base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace_profile/dtrace_profile.kmod	base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtrace_sdt			base-kernel-modules	kmod,dtrace,compatmodules
