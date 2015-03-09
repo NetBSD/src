@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.2 2010/01/31 15:10:12 pooka Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.3 2015/03/09 15:35:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,11 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.2 2010/01/31 15:10:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.3 2015/03/09 15:35:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+
+/* Root device. */
+device_t			root_device;
 
 /*
  * Accessor functions for the device_t type.
