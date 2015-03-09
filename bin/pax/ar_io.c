@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.55 2014/08/08 14:48:55 joerg Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.56 2015/03/09 23:38:08 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.55 2014/08/08 14:48:55 joerg Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.56 2015/03/09 23:38:08 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,7 @@ ar_open(const char *name)
 	}
 
 	/*
-	 * make sure we beyond any doubt that we only can unlink regular files
+	 * make sure beyond any doubt that we can unlink only regular files
 	 * we created
 	 */
 	if (artyp != ISREG)
