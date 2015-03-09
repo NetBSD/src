@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.11 2015/03/08 22:45:16 christos Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.12 2015/03/09 00:40:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@ extern volatile u_int	lockstat_enabled;
 
 #ifdef KDTRACE_HOOKS
 #define LS_COMPRESS(f) \
-    ((((f) & 3) | (((f) & 7) >> 6)) & (LS_NPROBES - 1))
+    ((((f) & 0x3) | (((f) & 0x700) >> 6)) & (LS_NPROBES - 1))
 #define	LS_NPROBES	0x20	/* 5 bits */
 
 extern uint32_t	lockstat_probemap[];
