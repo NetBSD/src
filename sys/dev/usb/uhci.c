@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.23 2015/03/10 05:57:15 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.24 2015/03/10 05:59:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.23 2015/03/10 05:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.24 2015/03/10 05:59:10 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -502,7 +502,7 @@ uhci_init(uhci_softc_t *sc)
 	 * queue heads and the interrupt queue heads at the control
 	 * queue head and point the physical frame list to the virtual.
 	 */
-	for(i = 0; i < UHCI_VFRAMELIST_COUNT; i++) {
+	for (i = 0; i < UHCI_VFRAMELIST_COUNT; i++) {
 		std = uhci_alloc_std(sc);
 		sqh = uhci_alloc_sqh(sc);
 		if (std == NULL || sqh == NULL)
@@ -554,7 +554,7 @@ uhci_init(uhci_softc_t *sc)
 
 	DPRINTFN(1, "Enabling...", 0, 0, 0, 0);
 
-	err =  uhci_run(sc, 1, 0);		/* and here we go... */
+	err = uhci_run(sc, 1, 0);		/* and here we go... */
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE |
 		UHCI_INTR_IOCE | UHCI_INTR_SPIE);	/* enable interrupts */
 	return err;
@@ -871,7 +871,7 @@ uhci_dump_tds(uhci_soft_td_t *std)
 	uhci_soft_td_t *td;
 	int stop;
 
-	for(td = std; td != NULL; td = td->link.std) {
+	for (td = std; td != NULL; td = td->link.std) {
 		uhci_dump_td(td);
 
 		/*
