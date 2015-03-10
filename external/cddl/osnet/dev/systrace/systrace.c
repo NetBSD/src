@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.6 2015/03/07 17:47:09 christos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.7 2015/03/10 12:17:50 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -142,7 +142,7 @@ systrace_probe(uint32_t id, register_t sysnum, const struct sysent *se,
 	uintptr_t	uargs[SYS_MAXSYSARGS + 3];
 
 	memset(uargs, 0, sizeof(uargs));
-	if (ret) {
+	if (ret == NULL) {
 		/* entry syscall, convert params */
 		systrace_args(sysnum, params, uargs, &n_args);
 	} else {
