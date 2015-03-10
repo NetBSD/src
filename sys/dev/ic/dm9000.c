@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.5 2014/11/26 22:50:22 skrll Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.6 2015/03/10 18:01:04 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -200,7 +200,9 @@ int	dme_set_media(struct dme_softc *sc, int media);
 /* Read/write packet data from/to DM9000 IC in various transfer sizes */
 int	dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf);
 int	dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain);
-/* TODO: Implement 8 and 32 bit read/write functions */
+int	dme_pkt_read_1(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf);
+int	dme_pkt_write_1(struct dme_softc *sc, struct mbuf *bufChain);
+/* TODO: Implement 32 bit read/write functions */
 
 uint16_t
 dme_phy_read(struct dme_softc *sc, int reg)
@@ -494,8 +496,6 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 
 	io_mode = (dme_read(sc, DM9000_ISR) &
 	    DM9000_IOMODE_MASK) >> DM9000_IOMODE_SHIFT;
-	if (io_mode != DM9000_MODE_16BIT )
-		panic("DM9000: Only 16-bit mode is supported!\n");
 
 	DPRINTF(("DM9000 Operation Mode: "));
 	switch( io_mode) {
@@ -508,10 +508,13 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 	case DM9000_MODE_32BIT:
 		DPRINTF(("32-bit mode"));
 		sc->sc_data_width = 4;
+		panic("32bit mode is unsupported\n");
 		break;
 	case DM9000_MODE_8BIT:
 		DPRINTF(("8-bit mode"));
 		sc->sc_data_width = 1;
+		sc->sc_pkt_write = dme_pkt_write_1;
+		sc->sc_pkt_read = dme_pkt_read_1;
 		break;
 	default:
 		DPRINTF(("Invalid mode"));
@@ -1096,6 +1099,80 @@ dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 		buf++;
 		RX_DATA_DPRINTF(("%02X %02X ", data & 0xff,
 				 (data>>8) & 0xff));
+	}
+
+	RX_DATA_DPRINTF(("\n"));
+	RX_DPRINTF(("Read %d bytes\n", i));
+
+	*outBuf = m;
+	return rx_status;
+}
+
+int
+dme_pkt_write_1(struct dme_softc *sc, struct mbuf *bufChain)
+{
+	int length = 0, i;
+	struct mbuf *buf;
+	uint8_t *write_ptr;
+
+	/* We expect that the DM9000 has been setup to accept writes before
+	   this function is called. */
+
+	for (buf = bufChain; buf != NULL; buf = buf->m_next) {
+		int to_write = buf->m_len;
+
+		length += to_write;
+
+		write_ptr = buf->m_data;
+		for(i = 0; i < to_write; i++) {
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    sc->dme_data, *write_ptr);
+			write_ptr++;
+		}
+	} /* for(...) */
+
+	return length;
+}
+
+int
+dme_pkt_read_1(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
+{
+	uint8_t rx_status;
+	struct mbuf *m;
+	uint8_t *buf;
+	uint16_t frame_length;
+	uint16_t i, reg;
+	uint8_t data;
+
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data);
+	reg |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data) << 8;
+	rx_status = reg & 0xFF;
+
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data);
+	reg |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data) << 8;
+	frame_length = reg;
+	if (frame_length > ETHER_MAX_LEN) {
+		printf("Got frame of length: %d\n", frame_length);
+		printf("ETHER_MAX_LEN is: %d\n", ETHER_MAX_LEN);
+		panic("Something is rotten");
+	}
+	RX_DPRINTF(("dme_receive: "
+		    "rx_statux: 0x%x, frame_length: %d\n",
+		    rx_status, frame_length));
+
+
+	m = dme_alloc_receive_buffer(ifp, frame_length);
+
+	buf = mtod(m, uint8_t*);
+
+	RX_DPRINTF(("dme_receive: "));
+
+	for(i=0; i< frame_length; i+=1 ) {
+		data = bus_space_read_1(sc->sc_iot,
+					sc->sc_ioh, sc->dme_data);
+		*buf = data;
+		buf++;
+		RX_DATA_DPRINTF(("%02X ", data));
 	}
 
 	RX_DATA_DPRINTF(("\n"));
