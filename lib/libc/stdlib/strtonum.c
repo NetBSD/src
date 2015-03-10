@@ -1,4 +1,4 @@
-/*	$NetBSD: strtonum.c,v 1.3 2015/02/05 16:01:38 christos Exp $	*/
+/*	$NetBSD: strtonum.c,v 1.4 2015/03/10 12:57:56 christos Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtonum.c,v 1.3 2015/02/05 16:01:38 christos Exp $");
+__RCSID("$NetBSD: strtonum.c,v 1.4 2015/03/10 12:57:56 christos Exp $");
 
 #define _OPENBSD_SOURCE
 #include <stdio.h>
@@ -48,7 +48,7 @@ strtonum(const char *nptr, long long minval, long long maxval,
 	if (errstr == NULL)
 		errstr = &resp;
 
-	rv = (long long)strtoi(nptr, NULL, 0, minval, maxval, &e);
+	rv = (long long)strtoi(nptr, NULL, 10, minval, maxval, &e);
 
 	if (e == 0) {
 		*errstr = NULL;
