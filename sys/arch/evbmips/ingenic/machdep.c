@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2015/03/07 15:38:32 macallan Exp $ */
+/*	$NetBSD: machdep.c,v 1.5 2015/03/10 22:39:38 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2015/03/07 15:38:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2015/03/10 22:39:38 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,7 +149,7 @@ mach_init(void)
 	 * Note: Reserve the first page!  That's where the trap
 	 * vectors are located.
 	 */
-	memsize = 0x10000000;
+	memsize = 0x40000000;
 
 	printf("Memory size: 0x%08x\n", memsize);
 	physmem = btoc(memsize);
@@ -159,7 +159,7 @@ mach_init(void)
 	mem_clusters[0].size = 0x10000000 - PAGE_SIZE;
 	mem_clusters[1].start = 0x30000000;
 	mem_clusters[1].size = 0x30000000;
-	mem_cluster_cnt = 1;
+	mem_cluster_cnt = 2;
 
 	/*
 	 * Load the available pages into the VM system.
