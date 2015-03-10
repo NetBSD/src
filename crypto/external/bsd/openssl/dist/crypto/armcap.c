@@ -18,14 +18,18 @@ static void ill_handler (int sig) { siglongjmp(ill_jmp,sig); }
  * Following subroutines could have been inlined, but it's not all
  * ARM compilers support inline assembler...
  */
+#if __ARM_MAX_ARCH__>=7
 void _armv7_neon_probe(void);
 unsigned int _armv7_tick(void);
+#endif
 
 unsigned int OPENSSL_rdtsc(void)
 	{
+#if __ARM_MAX_ARCH__>=7
 	if (OPENSSL_armcap_P & ARMV7_TICK)
 		return _armv7_tick();
 	else
+#endif
 		return 0;
 	}
 
@@ -64,6 +68,7 @@ void OPENSSL_cpuid_setup(void)
 	sigprocmask(SIG_SETMASK,&ill_act.sa_mask,&oset);
 	sigaction(SIGILL,&ill_act,&ill_oact);
 
+#if __ARM_MAX_ARCH__>=7
 	if (sigsetjmp(ill_jmp,1) == 0)
 		{
 		_armv7_neon_probe();
@@ -74,6 +79,7 @@ void OPENSSL_cpuid_setup(void)
 		_armv7_tick();
 		OPENSSL_armcap_P |= ARMV7_TICK;
 		}
+#endif
 
 	sigaction (SIGILL,&ill_oact,NULL);
 	sigprocmask(SIG_SETMASK,&oset,NULL);
