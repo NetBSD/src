@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.6 2015/03/01 08:10:12 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.7 2015/03/10 06:40:56 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.6 2015/03/01 08:10:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.7 2015/03/10 06:40:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -420,7 +420,7 @@ usbd_fill_iface_data(usbd_device_handle dev, int ifaceidx, int altidx)
 	end = (char *)dev->ud_cdesc + UGETW(dev->ud_cdesc->wTotalLength);
 #define ed ((usb_endpoint_descriptor_t *)p)
 	for (endpt = 0; endpt < nendpt; endpt++) {
-		DPRINTFN(10, "endpt=%d\n", endpt, 0, 0, 0);
+		DPRINTFN(10, "endpt=%d", endpt, 0, 0, 0);
 		for (; p < end; p += ed->bLength) {
 			DPRINTFN(10, "p=%p end=%p len=%d type=%d",
 			    p, end, ed->bLength, ed->bDescriptorType);
