@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.8 2015/03/09 13:22:37 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.9 2015/03/10 18:02:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -232,7 +232,7 @@ MFC0(uint32_t r, uint32_t s)
 #define JZ_ICSR0	0x10001000	/* raw IRQ line status */
 #define JZ_ICMR0	0x10001004	/* IRQ mask, 1 masks IRQ */
 #define JZ_ICMSR0	0x10001008	/* sets bits in mask register */
-#define JZ_ICMCR0	0x1000100c	/* clears bits in maks register */
+#define JZ_ICMCR0	0x1000100c	/* clears bits in mask register */
 #define JZ_ICPR0	0x10001010	/* line status after masking */
 
 #define JZ_ICSR1	0x10001020	/* raw IRQ line status */
@@ -262,7 +262,114 @@ MFC0(uint32_t r, uint32_t s)
 
 /* Ethernet */
 #define JZ_DME_BASE	0x16000000
-#define JZ_DME_IO	JZ_DME_BASE
-#define JZ_DME_ADDR	(JZ_DME_BASE + 2)
+#define JZ_DME_IO	0
+#define JZ_DME_DATA	2
 
+/* GPIO */
+#define JZ_GPIO_A_BASE	0x10010000
+#define JZ_GPIO_B_BASE	0x10010100
+#define JZ_GPIO_C_BASE	0x10010200
+#define JZ_GPIO_D_BASE	0x10010300
+#define JZ_GPIO_E_BASE	0x10010400
+#define JZ_GPIO_F_BASE	0x10010500
+
+/* GPIO registers per port */
+#define JZ_GPIO_PIN	0x00000000	/* pin level register */
+/* 0 - normal gpio, 1 - interrupt */
+#define JZ_GPIO_INT	0x00000010	/* interrupt register */
+#define JZ_GPIO_INTS	0x00000014	/* interrupt set register */
+#define JZ_GPIO_INTC	0x00000018	/* interrupt clear register */
+/*
+ * INT == 1: 1 disables interrupt
+ * INT == 0: device select, see below
+ */
+#define JZ_GPIO_MASK	0x00000020	/* port mask register */
+#define JZ_GPIO_MASKS	0x00000024	/* port mask set register */
+#define JZ_GPIO_MASKC	0x00000028	/* port mask clear register */
+/*
+ * INT == 1: 0 - level triggered, 1 - edge triggered
+ * INT == 0: 0 - device select, see below
+ */ 
+#define JZ_GPIO_PAT1	0x00000030	/* pattern 1 register */
+#define JZ_GPIO_PAT1S	0x00000034	/* pattern 1 set register */
+#define JZ_GPIO_PAT1C	0x00000038	/* pattern 1 clear register */
+/*
+ * INT == 1:
+ *   PAT1 == 0: 0 - trigger on low, 1 - trigger on high
+ *   PAT1 == 1: 0 - trigger on falling edge, 1 - trigger on rising edge
+ * INT == 0:
+ *   MASK == 0:
+ *     PAT1 == 0: 0 - device 0, 1 - device 1
+ *     PAT1 == 1: 0 - device 2, 1 - device 3
+ *   MASK == 1:
+ *     PAT1 == 0: set gpio output
+ *     PAT1 == 1: pin is input
+ */
+#define JZ_GPIO_PAT0	0x00000040	/* pattern 0 register */
+#define JZ_GPIO_PAT0S	0x00000044	/* pattern 0 set register */
+#define JZ_GPIO_PAT0C	0x00000048	/* pattern 0 clear register */
+/* 1 - interrupt happened */
+#define JZ_GPIO_FLAG	0x00000050	/* flag register */
+#define JZ_GPIO_FLAGC	0x00000058	/* flag clear register */
+/* 1 - disable pull up/down resistors */
+#define JZ_GPIO_DPULL	0x00000070	/* pull disable register */
+#define JZ_GPIO_DPULLS	0x00000074	/* pull disable set register */
+#define JZ_GPIO_DPULLC	0x00000078	/* pull disable clear register */
+/* the following are uncommented in the manual */
+#define JZ_GPIO_DRVL	0x00000080	/* drive low register */
+#define JZ_GPIO_DRVLS	0x00000084	/* drive low set register */
+#define JZ_GPIO_DRVLC	0x00000088	/* drive low clear register */
+#define JZ_GPIO_DIR	0x00000090	/* direction register */
+#define JZ_GPIO_DIRS	0x00000094	/* direction register */
+#define JZ_GPIO_DIRC	0x00000098	/* direction register */
+#define JZ_GPIO_DRVH	0x000000a0	/* drive high register */
+#define JZ_GPIO_DRVHS	0x000000a4	/* drive high set register */
+#define JZ_GPIO_DRVHC	0x000000a8	/* drive high clear register */
+
+static inline void
+gpio_as_output(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	writereg(reg + JZ_GPIO_INTC, mask);	/* use as gpio */
+	writereg(reg + JZ_GPIO_MASKS, mask);
+	writereg(reg + JZ_GPIO_PAT1C, mask);	/* make output */
+}
+
+static inline void
+gpio_set(uint32_t g, int pin, int level)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	reg += (level == 0) ? JZ_GPIO_PAT0C : JZ_GPIO_PAT0S;
+	writereg(reg, mask);
+}
+
+static inline void
+gpio_as_dev0(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	writereg(reg + JZ_GPIO_INTC, mask);	/* use as gpio */
+	writereg(reg + JZ_GPIO_MASKC, mask);	/* device mode */
+	writereg(reg + JZ_GPIO_PAT1C, mask);	/* select 0 */
+	writereg(reg + JZ_GPIO_PAT0C, mask);
+}
+	
+static inline void
+gpio_as_intr_level(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	writereg(reg + JZ_GPIO_MASKS, mask);	/* mask it */
+	writereg(reg + JZ_GPIO_INTS, mask);	/* use as interrupt */
+	writereg(reg + JZ_GPIO_PAT1C, mask);	/* level trigger */
+	writereg(reg + JZ_GPIO_PAT0S, mask);	/* trigger on high */
+	writereg(reg + JZ_GPIO_FLAGC, mask);	/* clear it */
+	writereg(reg + JZ_GPIO_MASKC, mask);	/* enable it */
+}
 #endif /* INGENIC_REGS_H */
