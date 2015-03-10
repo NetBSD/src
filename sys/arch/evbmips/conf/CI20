@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.9 2015/03/08 17:15:58 macallan Exp $
+#	$NetBSD: CI20,v 1.10 2015/03/10 18:20:20 macallan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.9 $"
+#ident 		"CI20-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -153,12 +153,17 @@ usb* 		at ohci?
 #ehci*		at apbus? addr 0x13490000
 #usb* 		at ehci?
 
-uhub*		at usb?
-uhub*		at uhub? port ?
+# onboard ethernet
+dme*		at apbus? addr 0x16000000
+
 #jzgpio* 	at apbus? addr ?
 #gpio*		at jzgpio?
 
 # no RTC!  so fake with a stub (required to prevent evbmips panic)
+
+# USB stuff
+uhub*		at usb?
+uhub*		at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
