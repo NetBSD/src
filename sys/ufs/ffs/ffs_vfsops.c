@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.321 2015/03/03 17:56:51 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.322 2015/03/10 12:59:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.321 2015/03/03 17:56:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.322 2015/03/10 12:59:32 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -919,6 +919,7 @@ static int
 ffs_superblock_validate(struct fs *fs)
 {
 	int32_t i, fs_bshift = 0, fs_fshift = 0, fs_fragshift = 0, fs_frag;
+	int32_t fs_inopb;
 
 	/* Check the superblock size */
 	if (fs->fs_sbsize > SBLOCKSIZE || fs->fs_sbsize < sizeof(struct fs))
@@ -939,6 +940,14 @@ ffs_superblock_validate(struct fs *fs)
 	if (fs->fs_size == 0)
 		return 0;
 	if (fs->fs_cssize == 0)
+		return 0;
+
+	/* Check the number of inodes per block */
+	if (fs->fs_magic == FS_UFS1_MAGIC)
+		fs_inopb = fs->fs_bsize / sizeof(struct ufs1_dinode);
+	else /* fs->fs_magic == FS_UFS2_MAGIC */
+		fs_inopb = fs->fs_bsize / sizeof(struct ufs2_dinode);
+	if (fs->fs_inopb != fs_inopb)
 		return 0;
 
 	/* Block size cannot be smaller than fragment size */
