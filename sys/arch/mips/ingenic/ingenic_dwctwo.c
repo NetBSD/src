@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dwctwo.c,v 1.6 2015/03/09 13:23:57 macallan Exp $ */
+/*	$NetBSD: ingenic_dwctwo.c,v 1.7 2015/03/10 18:03:17 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.6 2015/03/09 13:23:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.7 2015/03/10 18:03:17 macallan Exp $");
 
 /*
  * adapted from bcm2835_dwctwo.c
@@ -137,6 +137,10 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": USB controller\n");
 	aprint_normal(": USB controller\n");
 
+	gpio_set(5, 15, 0);
+	delay(250000);
+	gpio_set(5, 15, 1);
+	
 	reg = readreg(JZ_USBPCR);
 	reg |= PCR_VBUSVLDEXTSEL;
 	reg |= PCR_VBUSVLDEXT;
