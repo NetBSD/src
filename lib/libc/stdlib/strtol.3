@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.29 2015/01/18 18:01:41 christos Exp $
+.\"	$NetBSD: strtol.3,v 1.30 2015/03/10 13:00:58 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strtol.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 27, 2014
+.Dd Match 10, 2015
 .Dt STRTOL 3
 .Os
 .Sh NAME
@@ -243,7 +243,7 @@ function is the simplest to use:
 int e;
 intmax_t lval = strtoi(buf, NULL, 0, 1, 99, &e);
 if (e)
-	warn("conversion of `%s' to a number failed, using %jd",
+	warnc(e, "conversion of `%s' to a number failed, using %jd",
 	    buf, lval);
 .Ed
 .Pp
