@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixv.h,v 1.3 2011/01/07 23:39:41 jfv Exp $*/
-/*$NetBSD: ixv.h,v 1.2 2012/10/27 17:18:36 chs Exp $*/
+/*$NetBSD: ixv.h,v 1.3 2015/03/10 09:26:49 msaitoh Exp $*/
 
 
 #ifndef _IXV_H_
@@ -39,6 +39,7 @@
 
 
 #include <sys/param.h>
+#include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
@@ -57,6 +58,7 @@
 
 #include <net/bpf.h>
 #include <net/if_types.h>
+#include <net/if_vlanvar.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -72,6 +74,7 @@
 #include <sys/sysctl.h>
 #include <sys/endian.h>
 
+#include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"
 #include "ixgbe_vf.h"
 
@@ -161,11 +164,8 @@
 #define VFTA_SIZE			128
 
 /* Offload bits in mbuf flag */
-#if __FreeBSD_version >= 800000
-#define CSUM_OFFLOAD		(CSUM_IP|CSUM_TCP|CSUM_UDP|CSUM_SCTP)
-#else
-#define CSUM_OFFLOAD		(CSUM_IP|CSUM_TCP|CSUM_UDP)
-#endif
+#define	M_CSUM_OFFLOAD	\
+    (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4|M_CSUM_UDPv6|M_CSUM_TCPv6)
 
 /*
  *****************************************************************************
@@ -205,7 +205,7 @@ struct ixv_rx_buf {
 struct ixv_dma_alloc {
 	bus_addr_t		dma_paddr;
 	void			*dma_vaddr;
-	bus_dma_tag_t		dma_tag;
+	ixgbe_dma_tag_t		*dma_tag; /* XXX s/ixgbe/ixv/ --msaitoh */
 	bus_dmamap_t		dma_map;
 	bus_dma_segment_t	dma_seg;
 	bus_size_t		dma_size;
@@ -226,10 +226,7 @@ struct ix_queue {
 	void			*tag;
 	struct tx_ring		*txr;
 	struct rx_ring		*rxr;
-#if 0
-	struct task		que_task;
-	struct taskqueue	*tq;
-#endif
+	void			*que_si;
 	u64			irqs;
 };
 
@@ -241,7 +238,7 @@ struct tx_ring {
 	kmutex_t		tx_mtx;
 	u32			me;
 	bool			watchdog_check;
-	int			watchdog_time;
+	struct timeval		watchdog_time;
 	union ixgbe_adv_tx_desc	*tx_base;
 	struct ixv_dma_alloc	txdma;
 	u32			next_avail_desc;
@@ -249,14 +246,14 @@ struct tx_ring {
 	struct ixv_tx_buf	*tx_buffers;
 	volatile u16		tx_avail;
 	u32			txd_cmd;
-	bus_dma_tag_t		txtag;
+	ixgbe_dma_tag_t		*txtag;
 	char			mtx_name[16];
 	struct buf_ring		*br;
 	/* Soft Stats */
 	u32			bytes;
 	u32			packets;
-	u64			no_desc_avail;
-	u64			total_packets;
+	struct evcnt		no_desc_avail;
+	struct evcnt		total_packets;
 };
 
 
@@ -269,7 +266,9 @@ struct rx_ring {
 	u32			me;
 	union ixgbe_adv_rx_desc	*rx_base;
 	struct ixv_dma_alloc	rxdma;
+#ifdef LRO
 	struct lro_ctrl		lro;
+#endif /* LRO */
 	bool			lro_enabled;
 	bool			hdr_split;
 	bool			discard;
@@ -277,18 +276,19 @@ struct rx_ring {
         u32 			next_to_check;
 	char			mtx_name[16];
 	struct ixv_rx_buf	*rx_buffers;
-	bus_dma_tag_t		htag;
-	bus_dma_tag_t		ptag;
+	ixgbe_dma_tag_t		*htag;
+	ixgbe_dma_tag_t		*ptag;
 
 	u32			bytes; /* Used for AIM calc */
 	u32			packets;
 
 	/* Soft stats */
-	u64			rx_irq;
-	u64			rx_split_packets;
-	u64			rx_packets;
-	u64 			rx_bytes;
-	u64 			rx_discarded;
+	struct evcnt		rx_irq;
+	struct evcnt		rx_split_packets;
+	struct evcnt		rx_packets;
+	struct evcnt		rx_bytes;
+	struct evcnt		rx_discarded;
+	struct evcnt 		no_jmbuf;
 };
 
 /* Our adapter structure */
@@ -336,10 +336,7 @@ struct adapter {
 	u32			rx_mbuf_sz;
 
 	/* Support for pluggable optics */
-#if 0
-	struct task     	mbx_task;  /* Mailbox tasklet */
-	struct taskqueue	*tq;
-#endif
+	void     		*mbx_si;  /* Mailbox tasklet */
 
 	/*
 	** Queues: 
@@ -366,34 +363,46 @@ struct adapter {
 	u32			rx_process_limit;
 
 	/* Misc stats maintained by the driver */
-	unsigned long   	dropped_pkts;
-	unsigned long   	mbuf_defrag_failed;
-	unsigned long   	mbuf_header_failed;
-	unsigned long   	mbuf_packet_failed;
-	unsigned long   	no_tx_map_avail;
-	unsigned long   	no_tx_dma_setup;
-	unsigned long   	watchdog_events;
-	unsigned long   	tso_tx;
-	unsigned long		mbx_irq;
+	struct evcnt	   	dropped_pkts;
+	struct evcnt   		mbuf_defrag_failed;
+	struct evcnt   		mbuf_header_failed;
+	struct evcnt   		mbuf_packet_failed;
+	struct evcnt   		no_tx_map_avail;
+	struct evcnt   		no_tx_dma_setup;
+
+	struct evcnt	   	efbig_tx_dma_setup;
+	struct evcnt	   	efbig2_tx_dma_setup;
+	struct evcnt	   	m_defrag_failed;
+	struct evcnt	   	einval_tx_dma_setup;
+	struct evcnt	   	other_tx_dma_setup;
+	struct evcnt	   	eagain_tx_dma_setup;
+	struct evcnt	   	enomem_tx_dma_setup;
+	struct evcnt   		watchdog_events;
+	struct evcnt	   	tso_err;
+	struct evcnt   		tso_tx;
+	struct evcnt		mbx_irq;
+	struct evcnt		req;
 
 	struct ixgbevf_hw_stats	stats;
+	struct sysctllog	*sysctllog;
+	ixgbe_extmem_head_t jcl_head;
 };
 
 
 #define IXV_CORE_LOCK_INIT(_sc, _name) \
-        mtx_init(&(_sc)->core_mtx, _name, "IXV Core Lock", MTX_DEF)
-#define IXV_CORE_LOCK_DESTROY(_sc)      mtx_destroy(&(_sc)->core_mtx)
-#define IXV_TX_LOCK_DESTROY(_sc)        mtx_destroy(&(_sc)->tx_mtx)
-#define IXV_RX_LOCK_DESTROY(_sc)        mtx_destroy(&(_sc)->rx_mtx)
-#define IXV_CORE_LOCK(_sc)              mtx_lock(&(_sc)->core_mtx)
-#define IXV_TX_LOCK(_sc)                mtx_lock(&(_sc)->tx_mtx)
-#define IXV_TX_TRYLOCK(_sc)             mtx_trylock(&(_sc)->tx_mtx)
-#define IXV_RX_LOCK(_sc)                mtx_lock(&(_sc)->rx_mtx)
-#define IXV_CORE_UNLOCK(_sc)            mtx_unlock(&(_sc)->core_mtx)
-#define IXV_TX_UNLOCK(_sc)              mtx_unlock(&(_sc)->tx_mtx)
-#define IXV_RX_UNLOCK(_sc)              mtx_unlock(&(_sc)->rx_mtx)
-#define IXV_CORE_LOCK_ASSERT(_sc)       mtx_assert(&(_sc)->core_mtx, MA_OWNED)
-#define IXV_TX_LOCK_ASSERT(_sc)         mtx_assert(&(_sc)->tx_mtx, MA_OWNED)
+        mutex_init(&(_sc)->core_mtx, MUTEX_DEFAULT, IPL_SOFTNET)
+#define IXV_CORE_LOCK_DESTROY(_sc)      mutex_destroy(&(_sc)->core_mtx)
+#define IXV_TX_LOCK_DESTROY(_sc)        mutex_destroy(&(_sc)->tx_mtx)
+#define IXV_RX_LOCK_DESTROY(_sc)        mutex_destroy(&(_sc)->rx_mtx)
+#define IXV_CORE_LOCK(_sc)              mutex_enter(&(_sc)->core_mtx)
+#define IXV_TX_LOCK(_sc)                mutex_enter(&(_sc)->tx_mtx)
+#define IXV_TX_TRYLOCK(_sc)             mutex_tryenter(&(_sc)->tx_mtx)
+#define IXV_RX_LOCK(_sc)                mutex_enter(&(_sc)->rx_mtx)
+#define IXV_CORE_UNLOCK(_sc)            mutex_exit(&(_sc)->core_mtx)
+#define IXV_TX_UNLOCK(_sc)              mutex_exit(&(_sc)->tx_mtx)
+#define IXV_RX_UNLOCK(_sc)              mutex_exit(&(_sc)->rx_mtx)
+#define IXV_CORE_LOCK_ASSERT(_sc)       KASSERT(mutex_owned(&(_sc)->core_mtx))
+#define IXV_TX_LOCK_ASSERT(_sc)         KASSERT(mutex_owned(&(_sc)->tx_mtx))
 
 /* Workaround to make 8.0 buildable */
 #if __FreeBSD_version >= 800000 && __FreeBSD_version < 800504

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.410 2015/03/06 15:09:50 riastradh Exp $
+# $NetBSD: GENERIC,v 1.411 2015/03/10 09:26:50 msaitoh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.410 $"
+#ident 		"GENERIC-$Revision: 1.411 $"
 
 maxusers	64		# estimated number of users
 
@@ -736,6 +736,7 @@ iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 iwm*	at pci? dev ? function ?	# Intel Centrino 7260
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
+#ixv*	at pci? dev ? function ?	# Intel 8259x 10G virtual function
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
