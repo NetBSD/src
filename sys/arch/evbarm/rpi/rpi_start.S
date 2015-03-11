@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.12 2014/07/27 09:04:09 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.12.2.1 2015/03/11 20:22:56 snj Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -81,6 +81,12 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_bcm283x.h"
+
+#if defined(BCM2836)
+#include <evbarm/rpi/rpi2_start.S>
+#else
+
 #include "opt_cputypes.h"
 #include "opt_cpuoptions.h"
 
@@ -88,7 +94,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.12 2014/07/27 09:04:09 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.12.2.1 2015/03/11 20:22:56 snj Exp $")
 
 /*
  * Workaround Erratum 411920
@@ -347,6 +353,8 @@ mmu_init_table:
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
+#endif
+
 
 	.globl	_C_LABEL(rpi_boot_regs)
 rpi_boot_regs:

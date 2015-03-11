@@ -1,0 +1,14 @@
+#	$NetBSD: RPI2_INSTALL,v 1.1.2.2 2015/03/11 20:22:56 snj Exp $
+#
+#	RPI2_INSTALL -- RPI2 kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/RPI2"
+include "arch/evbarm/conf/INSTALL"
+
+no options	MEMORY_DISK_ROOT_SIZE
+options 	MEMORY_DISK_ROOT_SIZE=29696
+
+makeoptions	RAMDISKNAME=sshramdisk
+no makeoptions	DEBUG
