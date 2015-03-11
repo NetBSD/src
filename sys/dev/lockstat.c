@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.21 2015/03/09 01:41:41 christos Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.22 2015/03/11 16:00:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.21 2015/03/09 01:41:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.22 2015/03/11 16:00:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,6 +166,7 @@ lockstat_init_tables(lsenable_t *le)
 	lscpu_t *lc;
 	lsbuf_t *lb;
 
+	/* coverity[assert_side_effect] */
 	KASSERT(!lockstat_dev_enabled);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
@@ -211,6 +212,7 @@ void
 lockstat_start(lsenable_t *le)
 {
 
+	/* coverity[assert_side_effect] */
 	KASSERT(!lockstat_dev_enabled);
 
 	lockstat_init_tables(le);
@@ -249,6 +251,7 @@ lockstat_stop(lsdisable_t *ld)
 	int error;
 	lwp_t *l;
 
+	/* coverity[assert_side_effect] */
 	KASSERT(lockstat_dev_enabled);
 
 	/*
@@ -315,6 +318,7 @@ lockstat_alloc(lsenable_t *le)
 	lsbuf_t *lb;
 	size_t sz;
 
+	/* coverity[assert_side_effect] */
 	KASSERT(!lockstat_dev_enabled);
 	lockstat_free();
 
@@ -324,6 +328,7 @@ lockstat_alloc(lsenable_t *le)
 	if (lb == NULL)
 		return (ENOMEM);
 
+	/* coverity[assert_side_effect] */
 	KASSERT(!lockstat_dev_enabled);
 	KASSERT(lockstat_baseb == NULL);
 	lockstat_sizeb = sz;
@@ -339,6 +344,7 @@ void
 lockstat_free(void)
 {
 
+	/* coverity[assert_side_effect] */
 	KASSERT(!lockstat_dev_enabled);
 
 	if (lockstat_baseb != NULL) {
