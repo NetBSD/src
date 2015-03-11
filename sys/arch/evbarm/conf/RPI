@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.46.2.5 2014/11/25 15:51:47 martin Exp $
+#	$NetBSD: RPI,v 1.46.2.6 2015/03/11 20:22:56 snj Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -18,9 +18,10 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # CPU options
 
 options 	CPU_ARM1176
-options 	BCM2835
 options 	PMAPCOUNTERS
-options 	FPU_VFP
+options 	TPIDRPRW_IS_CURLWP
+options 	__HAVE_MM_MD_CACHE_ALIASING
+makeoptions 	CPUFLAGS="-march=armv6z -mtune=arm1176jzf-s -mfpu=vfp"
 
 # Architecture options
 
@@ -166,8 +167,8 @@ config		netbsd		root on ? type ?
 # The main bus device
 mainbus0	at root
 
-# The cpu
-cpu0		at mainbus?
+# The CPU(s)
+cpu*		at mainbus?
 
 # OBIO
 obio0		at mainbus?

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.43.2.3 2015/01/21 11:37:04 martin Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.43.2.4 2015/03/11 20:22:56 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,12 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.3 2015/01/21 11:37:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.4 2015/03/11 20:22:56 snj Exp $");
 
-#include "opt_evbarm_boardtype.h"
-#include "opt_ddb.h"
-#include "opt_kgdb.h"
 #include "opt_arm_debug.h"
+#include "opt_bcm283x.h"
+#include "opt_cpuoptions.h"
+#include "opt_ddb.h"
+#include "opt_evbarm_boardtype.h"
+#include "opt_kgdb.h"
 #include "opt_vcprop.h"
 
 #include "sdhc.h"
@@ -78,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.3 2015/01/21 11:37:04 martin 
 
 #include <evbarm/rpi/rpi.h>
 
+#include <arm/cortex/gtmr_var.h>
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -115,9 +119,9 @@ static void rpi_device_register(device_t, void *);
  * kernel address space.  *Not* for general use.
  */
 
-#define	KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
-#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va + KERN_VTOPDIFF))
-#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa - KERN_VTOPDIFF))
+#define KERN_VTOPDIFF	KERNEL_BASE_VOFFSET
+#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va - KERN_VTOPDIFF))
+#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa + KERN_VTOPDIFF))
 
 #ifndef RPI_FB_WIDTH
 #define RPI_FB_WIDTH	1280
@@ -126,7 +130,15 @@ static void rpi_device_register(device_t, void *);
 #define RPI_FB_HEIGHT	720
 #endif
 
+#if 0
+#define	PLCONADDR BCM2835_UART0_BASE
+#endif
+
+#ifdef BCM2836
+#define	PLCONADDR 0x3f201000
+#else
 #define	PLCONADDR 0x20201000
+#endif
 
 #ifndef CONSDEVNAME
 #define CONSDEVNAME "plcom"
@@ -461,6 +473,59 @@ rpi_bootparams(void)
 #endif
 }
 
+
+static void
+rpi_bootstrap(void)
+{
+#if defined(BCM2836)
+	arm_cpu_max = 4;
+	extern int cortex_mmuinfo;
+	bus_space_tag_t iot = &bcm2835_bs_tag;
+	bus_space_handle_t ioh = BCM2836_ARM_LOCAL_VBASE;
+
+#ifdef VERBOSE_INIT_ARM
+	printf("%s: %d cpus present\n", __func__, arm_cpu_max);
+#endif
+
+	extern void cortex_mpstart(void);
+	cortex_mmuinfo = armreg_ttbr_read();
+
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		bus_space_write_4(iot, ioh,
+		    BCM2836_LOCAL_MAILBOX3_SETN(i),
+		    (uint32_t)cortex_mpstart);
+
+		int timeout = 20;
+		while (timeout-- > 0) {
+			uint32_t val;
+
+			val = bus_space_read_4(iot, ioh,
+			    BCM2836_LOCAL_MAILBOX3_CLRN(i));
+			if (val == 0)
+				break;
+		}
+	}
+
+	for (int loop = 0; loop < 16; loop++) {
+		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
+			break;
+		gtmr_delay(10000);
+	}
+
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		if ((arm_cpu_hatched & (1 << i)) == 0) {
+			printf("%s: warning: cpu%zu failed to hatch\n",
+			    __func__, i);
+		}
+	}
+
+	/*
+	 * XXXNH: Disable non-boot CPUs for now
+	 */
+	arm_cpu_hatched = 0;
+#endif
+}
+
 /*
  * Static device mappings. These peripheral registers are mapped at
  * fixed virtual addresses very early in initarm() so that we can use
@@ -481,12 +546,21 @@ rpi_bootparams(void)
 
 static const struct pmap_devmap rpi_devmap[] = {
 	{
-		_A(RPI_KERNEL_IO_VBASE),	/* 0xf2000000 */
-		_A(RPI_KERNEL_IO_PBASE),	/* 0x20000000 */
+		_A(RPI_KERNEL_IO_VBASE),
+		_A(RPI_KERNEL_IO_PBASE),
 		_S(RPI_KERNEL_IO_VSIZE),	/* 16Mb */
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
 	},
+#if defined(BCM2836)
+	{
+		_A(RPI_KERNEL_LOCAL_VBASE),
+		_A(RPI_KERNEL_LOCAL_PBASE),
+		_S(RPI_KERNEL_LOCAL_VSIZE),
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+#endif
 	{ 0, 0, 0, 0, 0 }
 };
 
@@ -528,7 +602,13 @@ initarm(void *arg)
 #define _BDSTR(s)	#s
 	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
+#ifdef CORTEX_PMC
+	cortex_pmc_ccnt_init();
+#endif
+
 	rpi_bootparams();
+
+	rpi_bootstrap();
 
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag)) {
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
@@ -822,6 +902,17 @@ static void
 rpi_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
+
+#if defined(BCM2836)
+	if (device_is_a(dev, "armgtmr")) {
+		/*
+		 * The frequency of the generic timer is the reference
+		 * frequency.
+		 */
+		prop_dictionary_set_uint32(dict, "frequency", RPI_REF_FREQ);
+		return;
+	}
+#endif
 
 	if (device_is_a(dev, "bcmdmac") &&
 	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {

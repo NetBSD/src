@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.4 2013/06/20 05:30:21 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.4.10.1 2015/03/11 20:22:55 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.4 2013/06/20 05:30:21 matt Exp $");
 
 #include <arm/mainbus/mainbus.h>
 #include <arm/cortex/mpcore_var.h>
+#include <arm/cortex/gtmr_intr.h>
 
 static int armperiph_match(device_t, cfdata_t, void *);
 static void armperiph_attach(device_t, device_t, void *);
@@ -198,6 +199,11 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 			.mpcaa_off1 = cfg->cfg_devices[i].pi_off1,
 			.mpcaa_off2 = cfg->cfg_devices[i].pi_off2,
 		};
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
+		if (strcmp(mpcaa.mpcaa_name, "armgtmr") == 0) {
+			mpcaa.mpcaa_irq = IRQ_GTMR_PPI_VTIMER;
+		}
+#endif
 
 		config_found(self, &mpcaa, NULL);
 	}
