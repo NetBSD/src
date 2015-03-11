@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.224 2015/03/09 17:46:33 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.225 2015/03/11 07:26:20 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18316,4 +18316,163 @@ sys/arch/i386/stand/Makefile.booters		1.90
 	Compile the bootlocks for i386 CPUs, even when the main target
 	architecture is amd64.  Fixes PR port-i386/49725.
 	[martin, ticket #579]
+
+xsrc/external/mit/xsm/dist/auth.c		1.2, 1.3
+xsrc/external/mit/xsm/dist/choose.c		1.2, 1.3
+xsrc/external/mit/xsm/dist/lock.c		1.2, 1.3
+xsrc/external/mit/xsm/dist/remote.c		1.2, 1.3
+xsrc/external/mit/xsm/dist/restart.c		1.2, 1.3
+xsrc/external/mit/xsm/dist/saveutil.c		1.2, 1.3
+
+	Set close-on-exec for all fds opened.
+	[mrg, ticket #583]
+
+xsrc/external/mit/libdrm/dist/include/drm/i915_drm.h 1.2
+
+	Fix cut-n-paste error in DRM_IOCTL_I915_GET_SPRITE_COLORKEY.
+	[mrg, ticket #584]
+
+distrib/sets/lists/xcomp/mi			1.157
+external/mit/xorg/include/xtrans/Makefile	1.4
+external/mit/xorg/lib/libXfont/Makefile		1.10
+xsrc/external/mit/xtrans/dist/ChangeLog		up to 1.1.1.9
+xsrc/external/mit/xtrans/dist/Xtrans.c		up to 1.1.1.8
+xsrc/external/mit/xtrans/dist/Xtrans.h		up to 1.1.1.5
+xsrc/external/mit/xtrans/dist/Xtransdnet.c	delete
+xsrc/external/mit/xtrans/dist/Xtransint.h	up to 1.1.1.7
+xsrc/external/mit/xtrans/dist/Xtranslcl.c	up to 1.1.1.7
+xsrc/external/mit/xtrans/dist/Xtransos2.c	delete
+xsrc/external/mit/xtrans/dist/Xtranssock.c	up to 1.1.1.9
+xsrc/external/mit/xtrans/dist/aclocal.m4	up to 1.1.1.9
+xsrc/external/mit/xtrans/dist/config.guess	up to 1.1.1.4
+xsrc/external/mit/xtrans/dist/config.sub	up to 1.1.1.4
+xsrc/external/mit/xtrans/dist/configure		up to 1.1.1.9
+xsrc/external/mit/xtrans/dist/configure.ac	up to 1.1.1.9
+xsrc/external/mit/xtrans/dist/doc/xtrans.xml	up to 1.1.1.4
+xsrc/external/mit/fontsproto/dist/ChangeLog	up to 1.1.1.6
+xsrc/external/mit/fontsproto/dist/Makefile.in	up to 1.1.1.6
+xsrc/external/mit/fontsproto/dist/aclocal.m4	up to 1.1.1.6
+xsrc/external/mit/fontsproto/dist/autogen.sh	delete
+xsrc/external/mit/fontsproto/dist/compile	up to 1.3
+xsrc/external/mit/fontsproto/dist/config.guess	up to 1.1.1.4
+xsrc/external/mit/fontsproto/dist/config.sub	up to 1.1.1.4
+xsrc/external/mit/fontsproto/dist/configure	up to 1.1.1.6
+xsrc/external/mit/fontsproto/dist/configure.ac	up to 1.1.1.6
+xsrc/external/mit/fontsproto/dist/docbook.am	up to 1.3
+xsrc/external/mit/fontsproto/dist/font.h	up to 1.1.1.5
+xsrc/external/mit/fontsproto/dist/fontproto.h	up to 1.1.1.5
+xsrc/external/mit/fontsproto/dist/fontstruct.h	up to 1.1.1.5
+xsrc/external/mit/fontsproto/dist/install-sh	up to 1.1.1.6
+xsrc/external/mit/fontsproto/dist/missing	up to 1.1.1.6
+xsrc/external/mit/fontsproto/dist/mkinstalldirs	delete
+xsrc/external/mit/fontsproto/dist/specs/Makefile.am up to 1.1.1.4
+xsrc/external/mit/fontsproto/dist/specs/Makefile.in up to 1.1.1.4
+xsrc/external/mit/fontsproto/dist/specs/fsproto.xml up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/ChangeLog	up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/Makefile.in	up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/README		up to 1.1.1.3
+xsrc/external/mit/libXfont/dist/aclocal.m4	up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/config.guess	up to 1.1.1.6
+xsrc/external/mit/libXfont/dist/config.sub	up to 1.1.1.6
+xsrc/external/mit/libXfont/dist/configure	up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/configure.ac	up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/doc/Makefile.in	up to 1.1.1.3
+xsrc/external/mit/libXfont/dist/include/X11/fonts/fntfil.h up to 1.1.1.3
+xsrc/external/mit/libXfont/dist/include/X11/fonts/fontmisc.h up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/missing		up to 1.1.1.6
+xsrc/external/mit/libXfont/dist/src/FreeType/Makefile.in up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/src/FreeType/ftfuncs.c up to 1.6
+xsrc/external/mit/libXfont/dist/src/Makefile.am	up to 1.1.1.5
+xsrc/external/mit/libXfont/dist/src/Makefile.in	up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/src/bitmap/Makefile.am up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/src/bitmap/Makefile.in up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/src/bitmap/bitmap.c up to 1.1.1.3
+xsrc/external/mit/libXfont/dist/src/bitmap/bitmapfunc.c up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/src/bitmap/bitscale.c up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/src/builtins/Makefile.in up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/src/builtins/builtin.h up to 1.1.1.3
+xsrc/external/mit/libXfont/dist/src/builtins/dir.c up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/src/builtins/file.c up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/src/builtins/fpe.c up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/src/fc/Makefile.in up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/src/fc/fsconvert.c up to 1.4
+xsrc/external/mit/libXfont/dist/src/fc/fserve.c	up to 1.4
+xsrc/external/mit/libXfont/dist/src/fc/fserve.h	up to 1.1.1.3
+xsrc/external/mit/libXfont/dist/src/fontfile/Makefile.in up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/src/fontfile/catalogue.c up to 1.1.1.6
+xsrc/external/mit/libXfont/dist/src/fontfile/dirfile.c up to 1.4
+xsrc/external/mit/libXfont/dist/src/fontfile/fileio.c up to 1.2
+xsrc/external/mit/libXfont/dist/src/fontfile/filewr.c up to 1.2
+xsrc/external/mit/libXfont/dist/src/fontfile/fontfile.c up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/src/fontfile/renderers.c up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/src/stubs/Makefile.am up to 1.1.1.5
+xsrc/external/mit/libXfont/dist/src/stubs/Makefile.in up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/src/stubs/cauthgen.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/csignal.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/delfntcid.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/errorf.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/fatalerror.c delete
+xsrc/external/mit/libXfont/dist/src/stubs/findoldfnt.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/getcres.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/getdefptsize.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/getnewfntcid.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/gettime.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/initfshdl.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/regfpefunc.c up to 1.1.1.3
+xsrc/external/mit/libXfont/dist/src/stubs/rmfshdl.c up to 1.1.1.3
+xsrc/external/mit/libXfont/dist/src/stubs/servclient.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/setfntauth.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/stfntcfnt.c up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/src/stubs/stubs.h up to 1.1.1.3
+xsrc/external/mit/libXfont/dist/src/stubs/stubsinit.c up to 1.1.1.1
+xsrc/external/mit/libXfont/dist/src/util/Makefile.in up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/src/util/atom.c	up to 1.1.1.5
+xsrc/external/mit/libXfont/dist/src/util/miscutil.c up to 1.1.1.6
+xsrc/external/mit/libXfont/dist/src/util/patcache.c up to 1.1.1.4
+xsrc/external/mit/libXfont/include/config.h	up to 1.6
+xsrc/external/mit/xfs/dist/ChangeLog		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/INSTALL		up to 1.1.1.3
+xsrc/external/mit/xfs/dist/Makefile.am		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/Makefile.in		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/aclocal.m4		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/compile		up to 1.1.1.1
+xsrc/external/mit/xfs/dist/config.guess		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/config.h.in		up to 1.1.1.2
+xsrc/external/mit/xfs/dist/config.sub		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/config/Makefile.in	up to 1.1.1.3
+xsrc/external/mit/xfs/dist/configure		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/configure.ac		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/depcomp		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/difs/difsutils.c	up to 1.1.1.5
+xsrc/external/mit/xfs/dist/difs/dispatch.c	up to 1.1.1.4
+xsrc/external/mit/xfs/dist/difs/extensions.c	up to 1.1.1.4
+xsrc/external/mit/xfs/dist/difs/fonts.c		up to 1.1.1.4
+xsrc/external/mit/xfs/dist/difs/initfonts.c	up to 1.1.1.5
+xsrc/external/mit/xfs/dist/difs/main.c		up to 1.1.1.4
+xsrc/external/mit/xfs/dist/difs/resource.c	up to 1.1.1.4
+xsrc/external/mit/xfs/dist/doc/Makefile.in	up to 1.1.1.3
+xsrc/external/mit/xfs/dist/include/assert.h	up to 1.1.1.3
+xsrc/external/mit/xfs/dist/include/difs.h	up to 1.1.1.4
+xsrc/external/mit/xfs/dist/include/difsutils.h	up to 1.1.1.4
+xsrc/external/mit/xfs/dist/include/extentst.h	up to 1.1.1.3
+xsrc/external/mit/xfs/dist/include/fsresource.h	up to 1.1.1.3
+xsrc/external/mit/xfs/dist/include/misc.h	up to 1.1.1.3
+xsrc/external/mit/xfs/dist/install-sh		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/man/Makefile.in	up to 1.1.1.3
+xsrc/external/mit/xfs/dist/man/xfs.man		up to 1.1.1.2
+xsrc/external/mit/xfs/dist/missing		up to 1.1.1.4
+xsrc/external/mit/xfs/dist/os/config.c		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/os/connection.c	up to 1.1.1.5
+xsrc/external/mit/xfs/dist/os/error.c		up to 1.1.1.4
+xsrc/external/mit/xfs/dist/os/io.c		up to 1.1.1.5
+xsrc/external/mit/xfs/dist/os/osglue.c		up to 1.1.1.4
+xsrc/external/mit/xfs/dist/os/utils.c		up to 1.1.1.4
+xsrc/external/mit/xfs/dist/os/xfstrans.c	up to 1.1.1.4
+xsrc/external/mit/xfs/include/config.h		up to 1.2
+
+	- Update xtrans to 1.3.5
+	- Update fontsproto to 2.1.3
+	- Update libXfont to 1.5.0
+	- Update xfs to 1.1.4
+	[mrg, ticket #585]
 
