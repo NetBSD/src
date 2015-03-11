@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.17 2013/10/19 17:16:25 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.18 2015/03/11 15:57:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -360,6 +360,7 @@ network_init()
 			if (debugging)
 				perror("setsockopt v6 multicast");
 	}
+	freeifaddrs(ifp);
 #endif
 
 	/* close(s); */
