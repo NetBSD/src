@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.259 2014/10/27 11:21:28 msaitoh Exp $
+$NetBSD: UPDATING,v 1.260 2015/03/11 08:50:32 skrll Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20150310:
+	Improvements to openssl for arm mean that update builds of
+	the openssl libraries will fail. A make cleandir in
+	external/bsd/openssl/lib is needed
 
 20141026:
 	A mishap during the import of pppd may cause your corruption
