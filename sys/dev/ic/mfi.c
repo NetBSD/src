@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.55 2014/08/21 15:43:35 christos Exp $ */
+/* $NetBSD: mfi.c,v 1.56 2015/03/12 15:33:10 christos Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.55 2014/08/21 15:43:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.56 2015/03/12 15:33:10 christos Exp $");
 
 #include "bio.h"
 
@@ -2638,31 +2638,9 @@ mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	splx(s);
 	KERNEL_UNLOCK_ONE(curlwp);
 	if (error)
-		return;
+		bv.bv_status = BIOC_SVINVALID;
 
-	switch(bv.bv_status) {
-	case BIOC_SVOFFLINE:
-		edata->value_cur = ENVSYS_DRIVE_FAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-
-	case BIOC_SVDEGRADED:
-		edata->value_cur = ENVSYS_DRIVE_PFAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-
-	case BIOC_SVSCRUB:
-	case BIOC_SVONLINE:
-		edata->value_cur = ENVSYS_DRIVE_ONLINE;
-		edata->state = ENVSYS_SVALID;
-		break;
-
-	case BIOC_SVINVALID:
-		/* FALLTRHOUGH */
-	default:
-		edata->value_cur = 0; /* unknown */
-		edata->state = ENVSYS_SINVALID;
-	}
+	bio_vol_to_envsys(edata, &bv);
 }
 
 #endif /* NBIO > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.32 2013/10/17 21:24:24 christos Exp $	*/
+/*	$NetBSD: ciss.c,v 1.33 2015/03/12 15:33:10 christos Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.32 2013/10/17 21:24:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.33 2015/03/12 15:33:10 christos Exp $");
 
 #include "bio.h"
 
@@ -1541,38 +1541,9 @@ ciss_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	memset(&bv, 0, sizeof(bv));
 	bv.bv_volid = edata->sensor;
-	if (ciss_ioctl_vol(sc, &bv)) {
-		return;
-	}
+	if (ciss_ioctl_vol(sc, &bv))
+		bv.bv_status = BIOC_SVINVALID;
 
-	switch(bv.bv_status) {
-	case BIOC_SVOFFLINE:
-		edata->value_cur = ENVSYS_DRIVE_FAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-
-	case BIOC_SVDEGRADED:
-		edata->value_cur = ENVSYS_DRIVE_PFAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-
-	case BIOC_SVSCRUB:
-	case BIOC_SVONLINE:
-		edata->value_cur = ENVSYS_DRIVE_ONLINE;
-		edata->state = ENVSYS_SVALID;
-		break;
-
-	case BIOC_SVREBUILD:
-	case BIOC_SVBUILDING:
-		edata->value_cur = ENVSYS_DRIVE_REBUILD;
-		edata->state = ENVSYS_SVALID;
-		break;
-
-	case BIOC_SVINVALID:
-		/* FALLTRHOUGH */
-	default:
-		edata->value_cur = 0; /* unknown */
-		edata->state = ENVSYS_SINVALID;
-	}
+	bio_vol_to_envsys(edata, &bv);
 }
 #endif /* NBIO > 0 */
