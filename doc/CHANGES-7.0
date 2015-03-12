@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.226 2015/03/11 20:27:04 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.227 2015/03/12 19:20:58 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18512,4 +18512,9 @@ sys/arch/evbarm/rpi/rpi_start.S			1.13
 
 	Add support for RPI2.  On
 	[skrll, ticket #582]
+
+distrib/i386/installimage/Makefile		1.7
+
+	Bump i386 install iamge size limit.
+	[bouyer, ticket #588]
 
