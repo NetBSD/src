@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.14 2015/03/03 21:53:12 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.15 2015/03/12 21:05:07 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.14 2015/03/03 21:53:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.15 2015/03/12 21:05:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -181,8 +181,6 @@ armgic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	gicd_write(sc, GICD_ICENABLERn(group), irq_mask);
 }
 
-static uint32_t armgic_last_priority;
-
 static void
 armgic_set_priority(struct pic_softc *pic, int ipl)
 {
@@ -190,7 +188,6 @@ armgic_set_priority(struct pic_softc *pic, int ipl)
 
 	const uint32_t priority = armgic_ipl_to_priority(ipl);
 	gicc_write(sc, GICC_PMR, priority);
-	armgic_last_priority = priority;
 }
 
 #ifdef __HAVE_PIC_FAST_SOFTINTS
