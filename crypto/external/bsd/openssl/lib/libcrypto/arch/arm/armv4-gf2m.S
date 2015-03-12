@@ -143,8 +143,8 @@ bn_GF2m_mul_2x2:
 .align	5
 .LNEON:
 	ldr		r12, [sp]		@ 5th argument
-	vmov.32		d26, r2, r1
-	vmov.32		d27, r12, r3
+	vmov		d26, r2, r1
+	vmov		d27, r12, r3
 	vmov.i64	d28, #0x0000ffffffffffff
 	vmov.i64	d29, #0x00000000ffffffff
 	vmov.i64	d30, #0x000000000000ffff
