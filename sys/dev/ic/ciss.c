@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.34 2015/03/12 18:53:22 christos Exp $	*/
+/*	$NetBSD: ciss.c,v 1.35 2015/03/12 19:56:51 christos Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.34 2015/03/12 18:53:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.35 2015/03/12 19:56:51 christos Exp $");
 
 #include "bio.h"
 
@@ -505,7 +505,7 @@ ciss_wait(struct ciss_softc *sc, struct ciss_ccb *ccb, int ms)
 	tohz = mstohz(ms);
 	if (tohz == 0)
 		tohz = 1;
-	etick = tick + tohz;
+	etick = hardclock_ticks + tohz;
 
 	for (;;) {
 		ccb->ccb_state = CISS_CCB_POLL;
@@ -521,7 +521,7 @@ ciss_wait(struct ciss_softc *sc, struct ciss_ccb *ccb, int ms)
 			ciss_done(ccb);
 			return 0;
 		}
-		tohz = etick - tick;
+		tohz = etick - hardclock_ticks;
 		if (tohz <= 0)
 			return EWOULDBLOCK;
 		CISS_DPRINTF(CISS_D_CMD, ("T"));
