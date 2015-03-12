@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.45 2015/03/01 00:51:08 asau Exp $	*/
+/*	$NetBSD: compile.c,v 1.46 2015/03/12 12:40:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.45 2015/03/01 00:51:08 asau Exp $");
+__RCSID("$NetBSD: compile.c,v 1.46 2015/03/12 12:40:41 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/compile.c 259132 2013-12-09 18:57:20Z eadler $");
 #endif
@@ -73,8 +73,6 @@ static struct labhash {
 	int	lh_ref;
 } *labels[LHSZ];
 
-static char	 *cu_fgets(char *, int, int *);
-
 static char	 *compile_addr(char *, struct s_addr *);
 static char	 *compile_ccl(char **, char *);
 static char	 *compile_delimited(char *, char *, int);
@@ -91,14 +89,6 @@ static struct s_command
 		 *findlabel(char *);
 static void	  fixuplabel(struct s_command *, struct s_command *);
 static void	  uselabel(void);
-
-/*
- * Current file and line number; line numbers restart across compilation
- * units, but span across input files.  The latter is optional if editing
- * in place.
- */
-static const char *fname;	/* File name. */
-static u_long linenum;
 
 /*
  * Command specification.  This is used to drive the command parser.
@@ -154,6 +144,9 @@ compile(void)
 	*compile_stream(&prog) = NULL;
 	fixuplabel(prog, NULL);
 	uselabel();
+	if (appendnum > 0)
+		appends = xmalloc(sizeof(struct s_appends) * appendnum);
+	match = xmalloc((maxnsub + 1) * sizeof(regmatch_t));
 }
 
 #define EATSPACE() do {							\
@@ -951,100 +944,4 @@ uselabel(void)
 			free(lh);
 		}
 	}
-}
-
-/*
- * Like fgets, but go through the chain of compilation units chaining them
- * together.  Empty strings and files are ignored.
- */
-char *
-cu_fgets(char *buf, int n, int *more)
-{
-	static enum {ST_EOF, ST_FILE, ST_STRING} state = ST_EOF;
-	static FILE *f;		/* Current open file */
-	static char *s;		/* Current pointer inside string */
-	static char string_ident[30];
-	char *p;
-
-again:
-	switch (state) {
-	case ST_EOF:
-		if (script == NULL) {
-			if (more != NULL)
-				*more = 0;
-			return (NULL);
-		}
-		linenum = 0;
-		switch (script->type) {
-		case CU_FILE:
-			if ((f = fopen(script->s, "r")) == NULL)
-				err(1, "%s", script->s);
-			fname = script->s;
-			state = ST_FILE;
-			goto again;
-		case CU_STRING:
-			if (((size_t)snprintf(string_ident,
-			    sizeof(string_ident), "\"%s\"", script->s)) >=
-			    sizeof(string_ident) - 1)
-				(void)strcpy(string_ident +
-				    sizeof(string_ident) - 6, " ...\"");
-			fname = string_ident;
-			s = script->s;
-			state = ST_STRING;
-			goto again;
-		}
-	case ST_FILE:
-		if ((p = fgets(buf, n, f)) != NULL) {
-			linenum++;
-			if (linenum == 1 && buf[0] == '#' && buf[1] == 'n')
-				nflag = 1;
-			if (more != NULL)
-				*more = !feof(f);
-			return (p);
-		}
-		script = script->next;
-		(void)fclose(f);
-		state = ST_EOF;
-		goto again;
-	case ST_STRING:
-		if (linenum == 0 && s[0] == '#' && s[1] == 'n')
-			nflag = 1;
-		p = buf;
-		for (;;) {
-			if (n-- <= 1) {
-				*p = '\0';
-				linenum++;
-				if (more != NULL)
-					*more = 1;
-				return (buf);
-			}
-			switch (*s) {
-			case '\0':
-				state = ST_EOF;
-				if (s == script->s) {
-					script = script->next;
-					goto again;
-				} else {
-					script = script->next;
-					*p = '\0';
-					linenum++;
-					if (more != NULL)
-						*more = 0;
-					return (buf);
-				}
-			case '\n':
-				*p++ = '\n';
-				*p = '\0';
-				s++;
-				linenum++;
-				if (more != NULL)
-					*more = 0;
-				return (buf);
-			default:
-				*p++ = *s++;
-			}
-		}
-	}
-	/* NOTREACHED */
-	return (NULL);
 }

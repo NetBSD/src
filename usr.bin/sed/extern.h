@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 2015/03/01 01:07:46 asau Exp $	*/
+/*	$NetBSD: extern.h,v 1.20 2015/03/12 12:40:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -36,34 +36,25 @@
  * $FreeBSD: head/usr.bin/sed/extern.h 170608 2007-06-12 12:05:24Z yar $
  */
 
-/*
- * Linked list of units (strings and files) to be compiled
- */
-struct s_compunit {
-	struct s_compunit *next;
-	enum e_cut {CU_FILE, CU_STRING} type;
-	char *s;			/* Pointer to string or fname */
-};
-
-/*
- * Linked list of files to be processed
- */
-struct s_flist {
-	char *fname;
-	struct s_flist *next;
-};
-
-extern struct s_compunit *script;
-extern struct s_flist *files;
 extern struct s_command *prog;
+extern struct s_appends *appends;
+extern regmatch_t *match;
 extern size_t maxnsub;
+extern u_long linenum;
 extern size_t appendnum;
-extern int aflag, nflag;
-extern int ispan;
+extern int aflag, eflag, nflag;
+extern const char *fname, *outfname;
+extern FILE *infile, *outfile;
 extern int rflags;	/* regex flags to use */
 
+void	 cfclose(struct s_command *, struct s_command *);
 void	 compile(void);
-int	 process(void);
+void	 cspace(SPACE *, const char *, size_t, enum e_spflag);
+char	*cu_fgets(char *, int, int *);
+int	 mf_fgets(SPACE *, enum e_spflag);
+int	 lastline(void);
+void	 process(void);
+void	 resetstate(void);
 char	*strregerror(int, regex_t *);
 void	*xmalloc(size_t);
 void	*xrealloc(void *, size_t);
