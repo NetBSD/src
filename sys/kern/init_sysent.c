@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.292 2015/03/07 21:50:30 christos Exp $ */
+/* $NetBSD: init_sysent.c,v 1.293 2015/03/12 15:06:28 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.292 2015/03/07 21:50:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.293 2015/03/12 15:06:28 christos Exp $");
 
 #include "opt_modular.h"
 #include "opt_ntp.h"
@@ -126,7 +126,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_exit
 	},		/* 1 = exit */
 	{
-		
 		.sy_call = (sy_call_t *)sys_fork
 	},		/* 2 = fork */
 	{
@@ -210,7 +209,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 19 = compat_43_olseek */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getpid_with_ppid
 	},		/* 20 = getpid */
 	{
@@ -228,11 +226,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_setuid
 	},		/* 23 = setuid */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getuid_with_euid
 	},		/* 24 = getuid */
 	{
-		
 		.sy_call = (sy_call_t *)sys_geteuid
 	},		/* 25 = geteuid */
 	{
@@ -285,7 +281,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_fchflags
 	},		/* 35 = fchflags */
 	{
-		
 		.sy_call = (sy_call_t *)sys_sync
 	},		/* 36 = sync */
 	{
@@ -298,7 +293,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 38 = compat_43_stat43 */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getppid
 	},		/* 39 = getppid */
 	{
@@ -311,11 +305,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_dup
 	},		/* 41 = dup */
 	{
-		
 		.sy_call = (sy_call_t *)sys_pipe
 	},		/* 42 = pipe */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getegid
 	},		/* 43 = getegid */
 	{
@@ -334,7 +326,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 46 = compat_13_sigaction13 */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getgid_with_egid
 	},		/* 47 = getgid */
 	{
@@ -357,7 +348,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_acct
 	},		/* 51 = acct */
 	{
-		
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 52 = compat_13_sigpending13 */
 	{
@@ -414,7 +404,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 63 = compat_43_ogetkerninfo */
 	{
-		
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 64 = compat_43_ogetpagesize */
 	{
@@ -423,7 +412,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 65 = compat_12_msync */
 	{
-		
 		.sy_call = (sy_call_t *)sys_vfork
 	},		/* 66 = vfork */
 	{
@@ -486,7 +474,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_setgroups
 	},		/* 80 = setgroups */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getpgrp
 	},		/* 81 = getpgrp */
 	{
@@ -499,7 +486,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 83 = compat_50_setitimer */
 	{
-		
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 84 = compat_43_owait */
 	{
@@ -523,7 +509,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 88 = compat_43_osethostname */
 	{
-		
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 89 = compat_43_ogetdtablesize */
 	{
@@ -759,7 +744,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 141 = compat_43_ogetpeername */
 	{
-		
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 142 = compat_43_ogethostid */
 	{
@@ -781,7 +765,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 146 = compat_43_okillpg */
 	{
-		
 		.sy_call = (sy_call_t *)sys_setsid
 	},		/* 147 = setsid */
 	{
@@ -790,7 +773,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 148 = compat_50_quotactl */
 	{
-		
 		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 149 = compat_43_oquota */
 	{
@@ -1263,7 +1245,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_mlockall
 	},		/* 242 = mlockall */
 	{
-		
 		.sy_call = (sy_call_t *)sys_munlockall
 	},		/* 243 = munlockall */
 	{
@@ -1445,7 +1426,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys___sigaltstack14
 	},		/* 281 = __sigaltstack14 */
 	{
-		
 		.sy_call = (sy_call_t *)sys___vfork14
 	},		/* 282 = __vfork14 */
 	{
@@ -1573,7 +1553,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_lchflags
 	},		/* 304 = lchflags */
 	{
-		
 		.sy_call = (sy_call_t *)sys_issetugid
 	},		/* 305 = issetugid */
 	{
@@ -1597,11 +1576,9 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys__lwp_create
 	},		/* 309 = _lwp_create */
 	{
-		
 		.sy_call = (sy_call_t *)sys__lwp_exit
 	},		/* 310 = _lwp_exit */
 	{
-		
 		.sy_call = (sy_call_t *)sys__lwp_self
 	},		/* 311 = _lwp_self */
 	{
@@ -1622,7 +1599,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys__lwp_wakeup
 	},		/* 315 = _lwp_wakeup */
 	{
-		
 		.sy_call = (sy_call_t *)sys__lwp_getprivate
 	},		/* 316 = _lwp_getprivate */
 	{
@@ -1691,7 +1667,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)compat_60(sys_sa_stacks)
 	},		/* 331 = compat_60_sa_stacks */
 	{
-		
 		.sy_call = (sy_call_t *)compat_60(sys_sa_enable)
 	},		/* 332 = compat_60_sa_enable */
 	{
@@ -1699,7 +1674,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)compat_60(sys_sa_setconcurrency)
 	},		/* 333 = compat_60_sa_setconcurrency */
 	{
-		
 		.sy_call = (sy_call_t *)compat_60(sys_sa_yield)
 	},		/* 334 = compat_60_sa_yield */
 	{
@@ -1739,7 +1713,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys_rasctl
 	},		/* 343 = rasctl */
 	{
-		
 		.sy_call = (sy_call_t *)sys_kqueue
 	},		/* 344 = kqueue */
 	{
@@ -1768,7 +1741,6 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys__sched_getaffinity
 	},		/* 349 = _sched_getaffinity */
 	{
-		
 		.sy_call = (sy_call_t *)sys_sched_yield
 	},		/* 350 = sched_yield */
 	{
