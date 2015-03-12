@@ -74,7 +74,7 @@ gcm_ghash_4bit:
 	eor	r5,r5,r6,lsl#28
 	ldrh	r8,[sp,r12]		@ rem_4bit[rem]
 	eor	r6,r10,r6,lsr#4
-	ldrplb	r12,[r2,r3]
+	ldrbpl	r12,[r2,r3]
 	eor	r6,r6,r7,lsl#28
 	eor	r7,r11,r7,lsr#4
 
@@ -84,7 +84,7 @@ gcm_ghash_4bit:
 	add	r14,r14,r14
 	ldmia	r11,{r8-r11}	@ load Htbl[nhi]
 	eor	r4,r8,r4,lsr#4
-	ldrplb	r8,[r0,r3]
+	ldrbpl	r8,[r0,r3]
 	eor	r4,r4,r5,lsl#28
 	eor	r5,r9,r5,lsr#4
 	ldrh	r9,[sp,r14]
@@ -130,7 +130,7 @@ gcm_ghash_4bit:
 	strb	r10,[r0,#8+1]
 	strb	r11,[r0,#8]
 #endif
-	ldrneb	r12,[r2,#15]
+	ldrbne	r12,[r2,#15]
 #if __ARM_ARCH__>=7 && defined(__ARMEL__)
 	rev	r6,r6
 	str	r6,[r0,#4]
@@ -217,7 +217,7 @@ gcm_gmult_4bit:
 	eor	r5,r5,r6,lsl#28
 	ldrh	r8,[r2,r12]	@ rem_4bit[rem]
 	eor	r6,r10,r6,lsr#4
-	ldrplb	r12,[r0,r3]
+	ldrbpl	r12,[r0,r3]
 	eor	r6,r6,r7,lsl#28
 	eor	r7,r11,r7,lsr#4
 
