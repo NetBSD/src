@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.51 2015/03/01 01:07:46 asau Exp $	*/
+/*	$NetBSD: process.c,v 1.52 2015/03/12 12:40:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: process.c,v 1.51 2015/03/01 01:07:46 asau Exp $");
+__RCSID("$NetBSD: process.c,v 1.52 2015/03/12 12:40:41 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/process.c 192732 2009-05-25 06:45:33Z brian $");
 #endif
@@ -56,7 +56,6 @@ static const char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <libgen.h>
 #include <limits.h>
 #include <regex.h>
 #include <stdio.h>
@@ -76,38 +75,15 @@ static SPACE HS, PS, SS, YS;
 #define	hs		HS.space
 #define	hsl		HS.len
 
-static int mf_fgets(SPACE *, enum e_spflag);
-static int lastline(void);
-
 static __inline int	 applies(struct s_command *);
-static void		 cfclose(struct s_command *, struct s_command *);
-static void		 cspace(SPACE *, const char *, size_t, enum e_spflag);
 static void		 do_tr(struct s_tr *);
 static void		 flush_appends(void);
 static void		 lputs(char *, size_t);
 static __inline int	 regexec_e(regex_t *, const char *, int, int, size_t);
 static void		 regsub(SPACE *, char *, char *);
-static void		 resetstate(void);
 static int		 substitute(struct s_command *);
 
-static FILE *infile;		/* Current input file */
-static FILE *outfile;		/* Current output file */
-
-/*
- * Current file and line number; line numbers restart across compilation
- * units, but span across input files.  The latter is optional if editing
- * in place.
- */
-static const char *fname;	/* File name. */
-static const char *outfname;	/* Output file name */
-static char oldfname[PATH_MAX];	/* Old file name (for in-place editing) */
-static char tmpfname[PATH_MAX];	/* Temporary file name (for in-place editing) */
-static const char *inplace;	/* Inplace edit file extension. */
-static u_long linenum;
-
-static int rval;		/* Exit status */
-
-static struct s_appends *appends;	/* Array of pointers to strings to append. */
+struct s_appends *appends;	/* Array of pointers to strings to append. */
 static size_t appendx;		/* Index into appends array. */
 size_t appendnum;			/* Size of appends array. */
 
@@ -116,21 +92,17 @@ static int sdone;		/* If any substitutes since last line input. */
 				/* Iov structure for 'w' commands. */
 static regex_t *defpreg;
 size_t maxnsub;
-static regmatch_t *match;
+regmatch_t *match;
 
 #define OUT() do {fwrite(ps, 1, psl, outfile); fputc('\n', outfile);} while (0)
 
-int
+void
 process(void)
 {
 	struct s_command *cp;
 	SPACE tspace;
 	size_t oldpsl = 0;
 	char *p;
-
-	if (appendnum > 0)
-		appends = xmalloc(sizeof(struct s_appends) * appendnum);
-	match = xmalloc((maxnsub + 1) * sizeof(regmatch_t));
 
 	p = NULL;
 
@@ -299,8 +271,6 @@ new:		if (!nflag && !pd)
 			OUT();
 		flush_appends();
 	} /* for all lines */
-	cfclose(prog, NULL);
-	return rval;
 }
 
 /*
@@ -377,7 +347,7 @@ applies(struct s_command *cp)
 /*
  * Reset the sed processor to its initial state.
  */
-static void
+void
 resetstate(void)
 {
 	struct s_command *cp;
@@ -776,7 +746,7 @@ regsub(SPACE *sp, char *string, char *src)
  *	Concatenate space: append the source space to the destination space,
  *	allocating new space as necessary.
  */
-static void
+void
 cspace(SPACE *sp, const char *p, size_t len, enum e_spflag spflag)
 {
 	size_t tlen;
@@ -799,7 +769,7 @@ cspace(SPACE *sp, const char *p, size_t len, enum e_spflag spflag)
 /*
  * Close all cached opened files and report any errors
  */
-static void
+void
 cfclose(struct s_command *cp, struct s_command *end)
 {
 
@@ -819,164 +789,4 @@ cfclose(struct s_command *cp, struct s_command *end)
 			cfclose(cp->u.c, cp->next);
 			break;
 		}
-}
-
-/*
- * Like fgets, but go through the list of files chaining them together.
- * Set len to the length of the line.
- */
-int
-mf_fgets(SPACE *sp, enum e_spflag spflag)
-{
-	struct stat sb;
-	size_t len;
-	static char *p = NULL;
-	static size_t plen = 0;
-	int c;
-	static int firstfile;
-
-	if (infile == NULL) {
-		/* stdin? */
-		if (files->fname == NULL) {
-			if (inplace != NULL)
-				errx(1, "-I or -i may not be used with stdin");
-			infile = stdin;
-			fname = "stdin";
-			outfile = stdout;
-			outfname = "stdout";
-		}
-		firstfile = 1;
-	}
-
-	for (;;) {
-		if (infile != NULL && (c = getc(infile)) != EOF) {
-			(void)ungetc(c, infile);
-			break;
-		}
-		/* If we are here then either eof or no files are open yet */
-		if (infile == stdin) {
-			sp->len = 0;
-			return (0);
-		}
-		if (infile != NULL) {
-			fclose(infile);
-			if (*oldfname != '\0') {
-				/* if there was a backup file, remove it */
-				unlink(oldfname);
-				/*
-				 * Backup the original.  Note that hard links
-				 * are not supported on all filesystems.
-				 */
-				if ((link(fname, oldfname) != 0) &&
-				   (rename(fname, oldfname) != 0)) {
-					warn("rename()");
-					if (*tmpfname)
-						unlink(tmpfname);
-					exit(1);
-				}
-				*oldfname = '\0';
-			}
-			if (*tmpfname != '\0') {
-				if (outfile != NULL && outfile != stdout)
-					if (fclose(outfile) != 0) {
-						warn("fclose()");
-						unlink(tmpfname);
-						exit(1);
-					}
-				outfile = NULL;
-				if (rename(tmpfname, fname) != 0) {
-					/* this should not happen really! */
-					warn("rename()");
-					unlink(tmpfname);
-					exit(1);
-				}
-				*tmpfname = '\0';
-			}
-			outfname = NULL;
-		}
-		if (firstfile == 0)
-			files = files->next;
-		else
-			firstfile = 0;
-		if (files == NULL) {
-			sp->len = 0;
-			return (0);
-		}
-		fname = files->fname;
-		if (inplace != NULL) {
-			if (lstat(fname, &sb) != 0)
-				err(1, "%s", fname);
-			if (!(sb.st_mode & S_IFREG))
-				errx(1, "%s: %s %s", fname,
-				    "in-place editing only",
-				    "works for regular files");
-			if (*inplace != '\0') {
-				strlcpy(oldfname, fname,
-				    sizeof(oldfname));
-				len = strlcat(oldfname, inplace,
-				    sizeof(oldfname));
-				if (len > sizeof(oldfname))
-					errx(1, "%s: name too long", fname);
-			}
-			char d_name[PATH_MAX], f_name[PATH_MAX];
-			(void)strlcpy(d_name, fname, sizeof(d_name));
-			(void)strlcpy(f_name, fname, sizeof(f_name));
-			len = (size_t)snprintf(tmpfname, sizeof(tmpfname),
-			    "%s/.!%ld!%s", dirname(d_name), (long)getpid(),
-			    basename(f_name));
-			if (len >= sizeof(tmpfname))
-				errx(1, "%s: name too long", fname);
-			unlink(tmpfname);
-			if (outfile != NULL && outfile != stdout)
-				fclose(outfile);
-			if ((outfile = fopen(tmpfname, "w")) == NULL)
-				err(1, "%s", fname);
-			fchown(fileno(outfile), sb.st_uid, sb.st_gid);
-			fchmod(fileno(outfile), sb.st_mode & ALLPERMS);
-			outfname = tmpfname;
-			if (!ispan) {
-				linenum = 0;
-				resetstate();
-			}
-		} else {
-			outfile = stdout;
-			outfname = "stdout";
-		}
-		if ((infile = fopen(fname, "r")) == NULL) {
-			warn("%s", fname);
-			rval = 1;
-			continue;
-		}
-	}
-	/*
-	 * We are here only when infile is open and we still have something
-	 * to read from it.
-	 *
-	 * Use getline() so that we can handle essentially infinite input
-	 * data.  The p and plen are static so each invocation gives
-	 * getline() the same buffer which is expanded as needed.
-	 */
-	ssize_t slen = getline(&p, &plen, infile);
-	if (slen == -1)
-		err(1, "%s", fname);
-	if (slen != 0 && p[slen - 1] == '\n')
-		slen--;
-	cspace(sp, p, (size_t)slen, spflag);
-
-	linenum++;
-
-	return (1);
-}
-
-static int
-lastline(void)
-{
-	int ch;
-
-	if (files->next != NULL && (inplace == NULL || ispan))
-		return (0);
-	if ((ch = getc(infile)) == EOF)
-		return (1);
-	ungetc(ch, infile);
-	return (0);
 }
