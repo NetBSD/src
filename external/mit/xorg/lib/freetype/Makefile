@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2015/02/09 16:27:29 ryoon Exp $
+#	$NetBSD: Makefile,v 1.15 2015/03/12 07:58:04 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -96,7 +96,7 @@ LIBDPLIBS= \
 
 PKGCONFIG=	freetype2
 PKGDIST.freetype2=	${.CURDIR}
-PKGCONFIG_VERSION.freetype2=	17.2.11
+PKGCONFIG_VERSION.freetype2=	17.4.11
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
