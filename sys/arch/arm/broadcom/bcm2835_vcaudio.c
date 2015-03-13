@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.7 2014/10/06 06:59:20 skrll Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.8 2015/03/13 22:48:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.7 2014/10/06 06:59:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.8 2015/03/13 22:48:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.7 2014/10/06 06:59:20 skrll Ex
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
+#include <dev/auvolconv.h>
 
 #include <interface/compat/vchi_bsd.h>
 #include <interface/vchiq_arm/vchiq_netbsd.h>
@@ -58,6 +59,8 @@ enum {
 	VCAUDIO_INPUT_CLASS,
 	VCAUDIO_OUTPUT_MASTER_VOLUME,
 	VCAUDIO_INPUT_DAC_VOLUME,
+	VCAUDIO_OUTPUT_HEADPHONE_VOLUME,
+	VCAUDIO_OUTPUT_SELECT,
 	VCAUDIO_ENUM_LAST,
 };
 
@@ -122,8 +125,10 @@ struct vcaudio_softc {
 
 	short				sc_peer_version;
 
-	int				sc_volume;
+	int				sc_hpvol;
 	enum vcaudio_dest		sc_dest;
+
+	uint8_t				sc_swvol;
 };
 
 static int	vcaudio_match(device_t, cfdata_t, void *);
@@ -162,6 +167,10 @@ static int	vcaudio_trigger_input(void *, void *, void *, int,
     void (*)(void *), void *, const audio_params_t *);
 
 static void	vcaudio_get_locks(void *, kmutex_t **, kmutex_t **);
+
+static stream_filter_t *vcaudio_swvol_filter(struct audio_softc *,
+    const audio_params_t *, const audio_params_t *);
+static void	vcaudio_swvol_dtor(stream_filter_t *);
 
 static const struct audio_hw_if vcaudio_hw_if = {
 	.open = vcaudio_open,
@@ -257,7 +266,8 @@ vcaudio_init(struct vcaudio_softc *sc)
 	VC_AUDIO_MSG_T msg;
 	int error;
 
-	sc->sc_volume = 128;
+	sc->sc_swvol = 255;
+	sc->sc_hpvol = 128;
 	sc->sc_dest = VCAUDIO_DEST_AUTO;
 
 	sc->sc_format.mode = AUMODE_PLAY|AUMODE_RECORD;
@@ -342,8 +352,8 @@ vcaudio_init(struct vcaudio_softc *sc)
 
 	memset(&msg, 0, sizeof(msg));
 	msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
-	msg.u.control.volume = vol2pct(sc->sc_volume);
-	msg.u.control.dest = VCAUDIO_DEST_AUTO;
+	msg.u.control.volume = vol2pct(sc->sc_hpvol);
+	msg.u.control.dest = sc->sc_dest;
 	error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
@@ -585,6 +595,9 @@ vcaudio_set_params(void *priv, int setmode, int usemode,
 		    AUMODE_PLAY, play, true, pfil);
 		if (index < 0)
 			return EINVAL;
+		if (pfil->req_size > 0)
+			play = &pfil->filters[0].param;
+		pfil->prepend(pfil, vcaudio_swvol_filter, play);
 	}
 
 	return 0;
@@ -638,14 +651,39 @@ vcaudio_set_port(void *priv, mixer_ctrl_t *mc)
 	switch (mc->dev) {
 	case VCAUDIO_OUTPUT_MASTER_VOLUME:
 	case VCAUDIO_INPUT_DAC_VOLUME:
-		sc->sc_volume = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+		sc->sc_swvol = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+		return 0;
+	case VCAUDIO_OUTPUT_HEADPHONE_VOLUME:
+		sc->sc_hpvol = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
 
 		vchi_service_use(sc->sc_service);
 
 		memset(&msg, 0, sizeof(msg));
 		msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
-		msg.u.control.volume = vol2pct(sc->sc_volume);
-		msg.u.control.dest = VCAUDIO_DEST_AUTO;
+		msg.u.control.volume = vol2pct(sc->sc_hpvol);
+		msg.u.control.dest = sc->sc_dest;
+
+		error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
+		if (error) {
+			device_printf(sc->sc_dev,
+			    "couldn't send CONTROL message (%d)\n", error);
+		}
+
+		vchi_service_release(sc->sc_service);
+
+		return error;
+	case VCAUDIO_OUTPUT_SELECT:
+		if (mc->un.ord < 0 || mc->un.ord > 2)
+			return EINVAL;
+
+		sc->sc_dest = mc->un.ord;
+
+		vchi_service_use(sc->sc_service);
+
+		memset(&msg, 0, sizeof(msg));
+		msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
+		msg.u.control.volume = vol2pct(sc->sc_hpvol);
+		msg.u.control.dest = sc->sc_dest;
 
 		error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
 		if (error) {
@@ -664,13 +702,21 @@ static int
 vcaudio_get_port(void *priv, mixer_ctrl_t *mc)
 {
 	struct vcaudio_softc *sc = priv;
+	uint8_t vol = sc->sc_swvol;
 
 	switch (mc->dev) {
 	case VCAUDIO_OUTPUT_MASTER_VOLUME:
 	case VCAUDIO_INPUT_DAC_VOLUME:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = vol;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = vol;
+		return 0;
+	case VCAUDIO_OUTPUT_HEADPHONE_VOLUME:
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
 		    mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-		    sc->sc_volume;
+		    sc->sc_hpvol;
+		return 0;
+	case VCAUDIO_OUTPUT_SELECT:
+		mc->un.ord = sc->sc_dest;
 		return 0;
 	}
 	return ENXIO;
@@ -700,6 +746,14 @@ vcaudio_query_devinfo(void *priv, mixer_devinfo_t *di)
 		di->un.v.num_channels = 2;
 		strcpy(di->un.v.units.name, AudioNvolume);
 		return 0;
+	case VCAUDIO_OUTPUT_HEADPHONE_VOLUME:
+		di->mixer_class = VCAUDIO_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNheadphone);
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.v.num_channels = 2;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
 	case VCAUDIO_INPUT_DAC_VOLUME:
 		di->mixer_class = VCAUDIO_INPUT_CLASS;
 		strcpy(di->label.name, AudioNdac);
@@ -707,6 +761,19 @@ vcaudio_query_devinfo(void *priv, mixer_devinfo_t *di)
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		di->un.v.num_channels = 2;
 		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+	case VCAUDIO_OUTPUT_SELECT:
+		di->mixer_class = VCAUDIO_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNselect);
+		di->type = AUDIO_MIXER_ENUM;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.e.num_mem = 3;
+		di->un.e.member[0].ord = 0;
+		strcpy(di->un.e.member[0].label.name, "auto");
+		di->un.e.member[1].ord = 1;
+		strcpy(di->un.e.member[1].label.name, AudioNheadphone);
+		di->un.e.member[2].ord = 2;
+		strcpy(di->un.e.member[2].label.name, "hdmi");
 		return 0;
 	}
 
@@ -785,4 +852,29 @@ vcaudio_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 
 	*intr = &sc->sc_intr_lock;
 	*thread = &sc->sc_lock;
+}
+
+static stream_filter_t *
+vcaudio_swvol_filter(struct audio_softc *asc,
+    const audio_params_t *from, const audio_params_t *to)
+{
+	auvolconv_filter_t *this;
+	device_t dev = audio_get_device(asc);
+	struct vcaudio_softc *sc = device_private(dev);
+
+	this = kmem_alloc(sizeof(auvolconv_filter_t), KM_SLEEP);
+	this->base.base.fetch_to = auvolconv_slinear16_le_fetch_to;
+	this->base.dtor = vcaudio_swvol_dtor;
+	this->base.set_fetcher = stream_filter_set_fetcher;
+	this->base.set_inputbuffer = stream_filter_set_inputbuffer;
+	this->vol = &sc->sc_swvol;
+
+	return (stream_filter_t *)this;
+}
+
+static void
+vcaudio_swvol_dtor(stream_filter_t *this)
+{
+	if (this)
+		kmem_free(this, sizeof(auvolconv_filter_t));
 }
