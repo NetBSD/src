@@ -1,6 +1,7 @@
 #include "arm_arch.h"
 #include "arm_asm.h"
 
+.syntax	unified
 .text
 .code	32
 
