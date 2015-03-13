@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.8 2015/03/13 07:57:08 skrll Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.9 2015/03/13 08:05:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.8 2015/03/13 07:57:08 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.9 2015/03/13 08:05:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -542,7 +542,8 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	    ether_mediastatus);
 
 	/* Initialize MDIO */
-	cpsw_write_4(sc, MDIOCONTROL, MDIOCTL_ENABLE | MDIOCTL_FAULTENB | MDIOCTL_CLKDIV(0xff));
+	cpsw_write_4(sc, MDIOCONTROL,
+	    MDIOCTL_ENABLE | MDIOCTL_FAULTENB | MDIOCTL_CLKDIV(0xff));
 	/* Clear ALE */
 	cpsw_write_4(sc, CPSW_ALE_CONTROL, ALECTL_CLEAR_TABLE);
 
@@ -556,10 +557,15 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	} else {
 		sc->sc_phy_has_1000t = cpsw_phy_has_1000t(sc);
 		if (sc->sc_phy_has_1000t) {
-			aprint_normal_dev(sc->sc_dev, "1000baseT PHY found. setting RGMII Mode\n");
-			/* Select the Interface RGMII Mode in the Control Module */
+			aprint_normal_dev(sc->sc_dev, "1000baseT PHY found. "
+			    "Setting RGMII Mode\n");
+			/*
+			 * Select the Interface RGMII Mode in the Control
+			 * Module
+			 */
 			sitara_cm_reg_write_4(CPSW_GMII_SEL,
-			    GMIISEL_GMII2_SEL(RGMII_MODE) | GMIISEL_GMII1_SEL(RGMII_MODE));
+			    GMIISEL_GMII2_SEL(RGMII_MODE) |
+			    GMIISEL_GMII1_SEL(RGMII_MODE));
 		}
 
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
@@ -1113,7 +1119,8 @@ cpsw_rxintr(void *arg)
 		KASSERT(sc->sc_rxhead < CPSW_NRXDESCS);
 
 		i = sc->sc_rxhead;
-		KERNHIST_LOG(cpswhist, "rxhead %x CP %x\n", i, cpsw_read_4(sc, CPSW_CPDMA_RX_CP(0)), 0, 0);
+		KERNHIST_LOG(cpswhist, "rxhead %x CP %x\n", i,
+		    cpsw_read_4(sc, CPSW_CPDMA_RX_CP(0)), 0, 0);
 		dm = rdp->rx_dm[i];
 		m = rdp->rx_mb[i];
 
@@ -1231,7 +1238,8 @@ cpsw_txintr(void *arg)
 			goto next;
 
 		if (ISSET(dw[3], CPDMA_BD_OWNER)) {
-			printf("pwned %x %x %x\n", cpi, sc->sc_txhead, sc->sc_txnext);
+			printf("pwned %x %x %x\n", cpi, sc->sc_txhead,
+			    sc->sc_txnext);
 			break;
 		}
 
