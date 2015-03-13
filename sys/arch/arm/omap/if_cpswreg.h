@@ -132,7 +132,7 @@ struct cpsw_cpdma_bd {
 
 /* Interrupt offsets */
 #define CPSW_INTROFF_RXTH	0
-#define CPSW_INTROFF_RX		1 
+#define CPSW_INTROFF_RX		1
 #define CPSW_INTROFF_TX		2
 #define CPSW_INTROFF_MISC	3
 
@@ -166,7 +166,7 @@ struct cpsw_cpdma_bd {
 #define GMIISEL_RGMII2_IDMODE	__BIT32(5)
 #define GMIISEL_RGMII1_IDMODE	__BIT32(4)
 #define GMIISEL_GMII2_SEL(val)	((0x3 & (val)) << 2)
-#define GMIISEL_GMII1_SEL(val)	((0x3 & (val)) << 0)	
+#define GMIISEL_GMII1_SEL(val)	((0x3 & (val)) << 0)
 #define GMII_MODE	0
 #define RMII_MODE	1
 #define RGMII_MODE	2
