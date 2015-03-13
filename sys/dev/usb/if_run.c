@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.10 2014/01/28 13:08:13 martin Exp $	*/
+/*	$NetBSD: if_run.c,v 1.11 2015/03/13 15:33:04 nonaka Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10 2014/01/28 13:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.11 2015/03/13 15:33:04 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -662,6 +662,9 @@ run_attach(device_t parent, device_t self, void *aux)
 	ieee80211_announce(ic);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -674,6 +677,8 @@ run_detach(device_t self, int flags)
 
 	if (ifp->if_softc == NULL)
 		return (0);
+
+	pmf_device_deregister(self);
 
 	s = splnet();
 
