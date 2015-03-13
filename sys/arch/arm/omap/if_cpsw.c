@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.7 2015/02/01 19:32:59 christos Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.8 2015/03/13 07:57:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.7 2015/02/01 19:32:59 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.8 2015/03/13 07:57:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1460,7 +1460,7 @@ cpsw_ale_mc_entry_set(struct cpsw_softc *sc, uint8_t portmask, uint8_t *mac)
 	for (i = 0; i < CPSW_MAX_ALE_ENTRIES; i++) {
 		cpsw_ale_read_entry(sc, i, ale_entry);
 
-		/* Entry Type[61:60] is 0 for free entry */ 
+		/* Entry Type[61:60] is 0 for free entry */
 		if (free_index < 0 && ((ale_entry[1] >> 28) & 3) == 0) {
 			free_index = i;
 		}
