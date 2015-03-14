@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.16 2012/12/07 02:28:19 christos Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.17 2015/03/14 07:23:46 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.16 2012/12/07 02:28:19 christos Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.17 2015/03/14 07:23:46 isaki Exp $");
 
 #include <atf-c.h>
 
@@ -228,7 +228,7 @@ ATF_TC_BODY(ilog2_log2, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-        ATF_TP_ADD_TC(tp, bitmap_basic);
+	ATF_TP_ADD_TC(tp, bitmap_basic);
 	ATF_TP_ADD_TC(tp, fast_divide32);
 	ATF_TP_ADD_TC(tp, ffsfls);
 	ATF_TP_ADD_TC(tp, ilog2_basic);
