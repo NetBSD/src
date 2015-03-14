@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.128 2014/11/23 10:00:20 ozaki-r Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.129 2015/03/14 09:52:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.128 2014/11/23 10:00:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.129 2015/03/14 09:52:49 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -485,6 +485,7 @@ sysmon_envsys_create(void)
 	TAILQ_INIT(&sme->sme_sensors_list);
 	LIST_INIT(&sme->sme_events_list);
 	mutex_init(&sme->sme_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sme->sme_work_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sme->sme_condvar, "sme_wait");
 
 	return sme;
@@ -508,6 +509,7 @@ sysmon_envsys_destroy(struct sysmon_envsys *sme)
 		TAILQ_REMOVE(&sme->sme_sensors_list, edata, sensors_head);
 	}
 	mutex_destroy(&sme->sme_mtx);
+	mutex_destroy(&sme->sme_work_mtx);
 	cv_destroy(&sme->sme_condvar);
 	kmem_free(sme, sizeof(*sme));
 }
