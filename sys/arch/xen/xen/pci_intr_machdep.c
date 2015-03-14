@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.16 2014/03/29 19:28:30 christos Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.17 2015/03/14 10:49:36 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.16 2014/03/29 19:28:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.17 2015/03/14 10:49:36 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -221,4 +221,5 @@ pci_intr_establish(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh,
 void
 pci_intr_disestablish(pci_chipset_tag_t pcitag, void *cookie)
 {
+	pirq_disestablish(cookie);
 }
