@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.322 2015/03/10 12:59:32 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.323 2015/03/14 19:52:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.322 2015/03/10 12:59:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.323 2015/03/14 19:52:54 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -937,9 +937,17 @@ ffs_superblock_validate(struct fs *fs)
 	if (fs->fs_fsize == 0)
 		return 0;
 
+	/*
+	 * XXX: these values are just zero-checked to prevent obvious
+	 * bugs. We need more strict checks.
+	 */
 	if (fs->fs_size == 0)
 		return 0;
 	if (fs->fs_cssize == 0)
+		return 0;
+	if (fs->fs_ipg == 0)
+		return 0;
+	if (fs->fs_fpg == 0)
 		return 0;
 
 	/* Check the number of inodes per block */
