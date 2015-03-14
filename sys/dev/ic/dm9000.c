@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.6 2015/03/10 18:01:04 macallan Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.7 2015/03/14 13:45:43 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -161,47 +161,47 @@
 #endif
 
 /*** Internal PHY functions ***/
-uint16_t dme_phy_read(struct dme_softc *sc, int reg);
-void	dme_phy_write(struct dme_softc *sc, int reg, uint16_t value);
-void	dme_phy_init(struct dme_softc *sc);
-void	dme_phy_reset(struct dme_softc *sc);
-void	dme_phy_update_media(struct dme_softc *sc);
-void	dme_phy_check_link(void *arg);
+uint16_t dme_phy_read(struct dme_softc *, int );
+void	dme_phy_write(struct dme_softc *, int, uint16_t);
+void	dme_phy_init(struct dme_softc *);
+void	dme_phy_reset(struct dme_softc *);
+void	dme_phy_update_media(struct dme_softc *);
+void	dme_phy_check_link(void *);
 
 /*** Methods registered in struct ifnet ***/
-void	dme_start_output(struct ifnet *ifp);
-int	dme_init(struct ifnet *ifp);
-int	dme_ioctl(struct ifnet *ifp, u_long cmd, void *data);
-void	dme_stop(struct ifnet *ifp, int disable);
+void	dme_start_output(struct ifnet *);
+int	dme_init(struct ifnet *);
+int	dme_ioctl(struct ifnet *, u_long, void *);
+void	dme_stop(struct ifnet *, int);
 
-int	dme_mediachange(struct ifnet *ifp);
-void	dme_mediastatus(struct ifnet *ufp, struct ifmediareq *ifmr);
+int	dme_mediachange(struct ifnet *);
+void	dme_mediastatus(struct ifnet *, struct ifmediareq *);
 
 /*** Internal methods ***/
 
 /* Prepare data to be transmitted (i.e. dequeue and load it into the DM9000) */
-void    dme_prepare(struct dme_softc *sc, struct ifnet *ifp);
+void    dme_prepare(struct dme_softc *, struct ifnet *);
 
 /* Transmit prepared data */
-void    dme_transmit(struct dme_softc *sc);
+void    dme_transmit(struct dme_softc *);
 
 /* Receive data */
-void    dme_receive(struct dme_softc *sc, struct ifnet *ifp);
+void    dme_receive(struct dme_softc *, struct ifnet *);
 
 /* Software Initialize/Reset of the DM9000 */
-void    dme_reset(struct dme_softc *sc);
+void    dme_reset(struct dme_softc *);
 
 /* Configure multicast filter */
-void	dme_set_addr_filter(struct dme_softc *sc);
+void	dme_set_addr_filter(struct dme_softc *);
 
 /* Set media */
-int	dme_set_media(struct dme_softc *sc, int media);
+int	dme_set_media(struct dme_softc *, int );
 
 /* Read/write packet data from/to DM9000 IC in various transfer sizes */
-int	dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf);
-int	dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain);
-int	dme_pkt_read_1(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf);
-int	dme_pkt_write_1(struct dme_softc *sc, struct mbuf *bufChain);
+int	dme_pkt_read_2(struct dme_softc *, struct ifnet *, struct mbuf **);
+int	dme_pkt_write_2(struct dme_softc *, struct mbuf *);
+int	dme_pkt_read_1(struct dme_softc *, struct ifnet *, struct mbuf **);
+int	dme_pkt_write_1(struct dme_softc *, struct mbuf *);
 /* TODO: Implement 32 bit read/write functions */
 
 uint16_t
@@ -792,7 +792,8 @@ dme_receive(struct dme_softc *sc, struct ifnet *ifp)
 	while (ready == 0x01) {
 		/* Packet received, retrieve it */
 
-		/* Read without address increment to get the ready byte without moving past it. */
+		/* Read without address increment to get the ready byte without
+		   moving past it. */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 		    sc->dme_io, DM9000_MRCMDX);
 		/* Dummy ready */
@@ -1014,21 +1015,21 @@ dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 				to_write--;
 			} else {
 				int i;
-				uint16_t *dptr = (uint16_t*)write_ptr;
+				uint16_t *dptr = (uint16_t *)write_ptr;
 
 				/* A block of aligned data. */
-				for(i = 0; i < to_write/2; i++) {
+				for(i = 0; i < to_write / 2; i++) {
 					/* buf will be half-word aligned
 					 * all the time
 					 */
 					bus_space_write_2(sc->sc_iot,
-							  sc->sc_ioh, sc->dme_data, *dptr);
+					    sc->sc_ioh, sc->dme_data, *dptr);
 					TX_DATA_DPRINTF(("%02X %02X ",
-							 *dptr & 0xFF, (*dptr>>8) & 0xFF));
+					    *dptr & 0xFF, (*dptr >> 8) & 0xFF));
 					dptr++;
 				}
 
-				write_ptr += i*2;
+				write_ptr += i * 2;
 				if (to_write % 2 != 0) {
 					DPRINTF(("dme_pkt_write_16: "
 						 "to_write %% 2: %d\n",
@@ -1044,10 +1045,10 @@ dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 					DPRINTF(("dme_pkt_write_16: "
 						 "to_write (after): %d\n",
 						 to_write));
-					DPRINTF(("dme_pkt_write_16: i*2: %d\n",
+					DPRINTF(("dme_pkt_write_16: i * 2: %d\n",
 						 i*2));
 				}
-				to_write -= i*2;
+				to_write -= i * 2;
 			}
 		} /* while(...) */
 	} /* for(...) */
@@ -1065,8 +1066,7 @@ dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 	uint16_t i;
 	uint16_t *buf;
 
-	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-				sc->dme_data);
+	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh, sc->dme_data);
 
 	rx_status = data & 0xFF;
 	frame_length = bus_space_read_2(sc->sc_iot,
@@ -1087,18 +1087,18 @@ dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 
 	RX_DPRINTF(("dme_receive: "));
 
-	for(i=0; i< frame_length; i+=2 ) {
+	for (i = 0; i < frame_length; i += 2 ) {
 		data = bus_space_read_2(sc->sc_iot,
 					sc->sc_ioh, sc->dme_data);
 		if ( (frame_length % 2 != 0) &&
-		     (i == frame_length-1) ) {
+		     (i == frame_length - 1) ) {
 			data = data & 0xff;
 			RX_DPRINTF((" L "));
 		}
 		*buf = data;
 		buf++;
 		RX_DATA_DPRINTF(("%02X %02X ", data & 0xff,
-				 (data>>8) & 0xff));
+				 (data >> 8) & 0xff));
 	}
 
 	RX_DATA_DPRINTF(("\n"));
@@ -1124,7 +1124,7 @@ dme_pkt_write_1(struct dme_softc *sc, struct mbuf *bufChain)
 		length += to_write;
 
 		write_ptr = buf->m_data;
-		for(i = 0; i < to_write; i++) {
+		for (i = 0; i < to_write; i++) {
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			    sc->dme_data, *write_ptr);
 			write_ptr++;
@@ -1151,6 +1151,7 @@ dme_pkt_read_1(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data);
 	reg |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data) << 8;
 	frame_length = reg;
+
 	if (frame_length > ETHER_MAX_LEN) {
 		printf("Got frame of length: %d\n", frame_length);
 		printf("ETHER_MAX_LEN is: %d\n", ETHER_MAX_LEN);
@@ -1163,13 +1164,12 @@ dme_pkt_read_1(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 
 	m = dme_alloc_receive_buffer(ifp, frame_length);
 
-	buf = mtod(m, uint8_t*);
+	buf = mtod(m, uint8_t *);
 
 	RX_DPRINTF(("dme_receive: "));
 
-	for(i=0; i< frame_length; i+=1 ) {
-		data = bus_space_read_1(sc->sc_iot,
-					sc->sc_ioh, sc->dme_data);
+	for (i = 0; i< frame_length; i += 1 ) {
+		data = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data);
 		*buf = data;
 		buf++;
 		RX_DATA_DPRINTF(("%02X ", data));
