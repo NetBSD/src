@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.230 2014/11/22 13:18:45 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.231 2015/03/14 08:32:08 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.230 2014/11/22 13:18:45 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.231 2015/03/14 08:32:08 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,6 +465,7 @@ linux_to_bsd_mmap_args(struct sys_mmap_args *cma, const struct linux_sys_mmap_ar
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_PRIVATE, MAP_PRIVATE);
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_FIXED, MAP_FIXED);
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_ANON, MAP_ANON);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_LOCKED, MAP_WIRED);
 	/* XXX XAX ERH: Any other flags here?  There are more defined... */
 
 	SCARG(cma, addr) = (void *)SCARG(uap, addr);
