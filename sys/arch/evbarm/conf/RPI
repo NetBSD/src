@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.60 2015/02/28 09:34:34 skrll Exp $
+#	$NetBSD: RPI,v 1.61 2015/03/14 14:59:43 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -20,6 +20,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	CPU_ARM1176
 options 	PMAPCOUNTERS
 options 	TPIDRPRW_IS_CURLWP
+options 	ARM11_COMPAT_MMU
 options 	__HAVE_MM_MD_CACHE_ALIASING
 makeoptions 	CPUFLAGS="-march=armv6z -mtune=arm1176jzf-s -mfpu=vfp"
 
