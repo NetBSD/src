@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.323 2015/03/14 19:52:54 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.324 2015/03/15 09:21:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.323 2015/03/14 19:52:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.324 2015/03/15 09:21:01 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -727,16 +727,16 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 
 #ifdef FFS_EI
 	if (ump->um_flags & UFS_NEEDSWAP) {
-		ffs_sb_swap((struct fs*)bp->b_data, newfs);
-		fs->fs_flags |= FS_SWAPPED;
+		ffs_sb_swap((struct fs *)bp->b_data, newfs);
+		newfs->fs_flags |= FS_SWAPPED;
 	} else
 #endif
-		fs->fs_flags &= ~FS_SWAPPED;
+		newfs->fs_flags &= ~FS_SWAPPED;
 
 	brelse(bp, 0);
 
-	if ((newfs->fs_magic != FS_UFS1_MAGIC &&
-	     newfs->fs_magic != FS_UFS2_MAGIC)) {
+	if ((newfs->fs_magic != FS_UFS1_MAGIC) &&
+	    (newfs->fs_magic != FS_UFS2_MAGIC)) {
 		kmem_free(newfs, fs_sbsize);
 		return (EIO);		/* XXX needs translation */
 	}
@@ -756,7 +756,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		kmem_free(newfs, fs_sbsize);
 		return (EINVAL);
 	}
-
 
 	/* Store off old fs_sblockloc for fs_oldfscompat_read. */
 	sblockloc = fs->fs_sblockloc;
