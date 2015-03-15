@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.16 2014/12/07 18:32:13 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.17 2015/03/15 13:15:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -254,8 +254,8 @@ CFATTACH_DECL_NEW(awin_gpio, sizeof(struct awin_gpio_softc),
 static int
 awin_gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct awinio_attach_args * const aio = aux;
-	const struct awin_locators * const loc = &aio->aio_loc;
+	struct awinio_attach_args * const aio __diagused = aux;
+	const struct awin_locators * const loc __diagused = &aio->aio_loc;
 
 	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
 	KASSERT(loc->loc_port == AWINIOCF_PORT_DEFAULT);
