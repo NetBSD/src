@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.58 2015/03/04 17:02:17 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.59 2015/03/15 22:54:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.58 2015/03/04 17:02:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.59 2015/03/15 22:54:03 joerg Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -431,13 +431,7 @@ rpi_bootparams(void)
 
 	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
 
-	/*
-	 * No need to invalid the cache as the memory has never been referenced
-	 * by the ARM.
-	 *
-	 * cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
-	 *
-	 */
+	cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
 
 	if (!vcprop_buffer_success_p(&vb.vb_hdr)) {
 		bootconfig.dramblocks = 1;
