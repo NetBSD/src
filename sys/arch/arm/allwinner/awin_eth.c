@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.5.2.1 2014/11/09 14:42:33 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.5.2.2 2015/03/15 22:59:39 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -141,10 +141,8 @@ awin_eth_clear_set(struct awin_eth_softc *sc, bus_size_t o, uint32_t c,
 static int
 awin_eth_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct awinio_attach_args * const aio = aux;
-#ifdef DIAGNOSTIC
-	const struct awin_locators * const loc = &aio->aio_loc;
-#endif
+	struct awinio_attach_args * const aio __diagused = aux;
+	const struct awin_locators * const loc __diagused = &aio->aio_loc;
 	const struct awin_gpio_pinset * const pinset =
 	    &awin_eth_pinsets[cf->cf_flags & 1];
 

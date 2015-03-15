@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.12.2.2 2014/11/20 10:05:06 snj Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.12.2.3 2015/03/15 22:59:39 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -354,8 +354,8 @@ static const uint32_t awinusb_usb_ahb_reset_a31[2] = {
 int
 awinusb_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct awinio_attach_args * const aio = aux;
-	const struct awin_locators * const loc = &aio->aio_loc;
+	struct awinio_attach_args * const aio __diagused = aux;
+	const struct awin_locators * const loc __diagused = &aio->aio_loc;
 
 	KASSERT(loc->loc_port != AWINIOCF_PORT_DEFAULT);
 	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
