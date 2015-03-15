@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.40 2015/03/07 22:15:50 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.41 2015/03/15 11:52:47 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.40 2015/03/07 22:15:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.41 2015/03/15 11:52:47 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1036,11 +1036,6 @@ ehci_idone(struct ehci_xfer *ex)
 	}
 
 	USBHIST_LOG(ehcidebug, "xfer=%p, pipe=%p ready", xfer, epipe, 0, 0);
-#ifdef EHCI_DEBUG
-	USBHIST_LOGN(ehcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
-	ehci_dump_sqtds(ex->ex_sqtdstart);
-	USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
-#endif
 
 	/* The transfer is done, compute actual length and status. */
 
@@ -1144,6 +1139,12 @@ ehci_idone(struct ehci_xfer *ex)
 	KASSERT(xfertype != UE_ISOCHRONOUS);
 
 	/* Continue processing xfers using queue heads */
+
+#ifdef EHCI_DEBUG
+	USBHIST_LOGN(ehcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
+	ehci_dump_sqtds(ex->ex_sqtdstart);
+	USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
+#endif
 
 	lsqtd = ex->ex_sqtdend;
 	actlen = 0;
