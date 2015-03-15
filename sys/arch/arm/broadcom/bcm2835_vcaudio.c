@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.8 2015/03/13 22:48:41 jmcneill Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.9 2015/03/15 18:31:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.8 2015/03/13 22:48:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.9 2015/03/15 18:31:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,14 +52,25 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.8 2015/03/13 22:48:41 jmcneill
 
 #include "bcm2835_vcaudioreg.h"
 
-#define vol2pct(vol)	(((vol) * 100) / 255)
+/* levels with 5% volume step */
+static int vcaudio_levels[] = {
+	-10239, -4605, -3794, -3218, -2772,
+	-2407, -2099, -1832, -1597, -1386,
+	-1195, -1021, -861, -713, -575,
+	-446, -325, -210, -102, 0,
+};
+
+#define vol2db(vol)	vcaudio_levels[((vol) * 20) >> 8]
+#define vol2vc(vol)	((uint32_t)(-(vol2db((vol)) << 8) / 100))
 
 enum {
 	VCAUDIO_OUTPUT_CLASS,
 	VCAUDIO_INPUT_CLASS,
 	VCAUDIO_OUTPUT_MASTER_VOLUME,
 	VCAUDIO_INPUT_DAC_VOLUME,
+	VCAUDIO_OUTPUT_AUTO_VOLUME,
 	VCAUDIO_OUTPUT_HEADPHONE_VOLUME,
+	VCAUDIO_OUTPUT_HDMI_VOLUME,
 	VCAUDIO_OUTPUT_SELECT,
 	VCAUDIO_ENUM_LAST,
 };
@@ -125,7 +136,7 @@ struct vcaudio_softc {
 
 	short				sc_peer_version;
 
-	int				sc_hpvol;
+	int				sc_hwvol[3];
 	enum vcaudio_dest		sc_dest;
 
 	uint8_t				sc_swvol;
@@ -267,7 +278,9 @@ vcaudio_init(struct vcaudio_softc *sc)
 	int error;
 
 	sc->sc_swvol = 255;
-	sc->sc_hpvol = 128;
+	sc->sc_hwvol[VCAUDIO_DEST_AUTO] = 255;
+	sc->sc_hwvol[VCAUDIO_DEST_HP] = 255;
+	sc->sc_hwvol[VCAUDIO_DEST_HDMI] = 255;
 	sc->sc_dest = VCAUDIO_DEST_AUTO;
 
 	sc->sc_format.mode = AUMODE_PLAY|AUMODE_RECORD;
@@ -352,7 +365,7 @@ vcaudio_init(struct vcaudio_softc *sc)
 
 	memset(&msg, 0, sizeof(msg));
 	msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
-	msg.u.control.volume = vol2pct(sc->sc_hpvol);
+	msg.u.control.volume = vol2vc(sc->sc_hwvol[sc->sc_dest]);
 	msg.u.control.dest = sc->sc_dest;
 	error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
 	if (error) {
@@ -642,58 +655,59 @@ vcaudio_halt_input(void *priv)
 }
 
 static int
+vcaudio_set_volume(struct vcaudio_softc *sc, enum vcaudio_dest dest,
+    int hwvol)
+{
+	VC_AUDIO_MSG_T msg;
+	int error;
+
+	sc->sc_hwvol[dest] = hwvol;
+	if (dest != sc->sc_dest)
+		return 0;
+
+	vchi_service_use(sc->sc_service);
+
+	memset(&msg, 0, sizeof(msg));
+	msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
+	msg.u.control.volume = vol2vc(hwvol);
+	msg.u.control.dest = dest;
+
+	error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
+	if (error) {
+		device_printf(sc->sc_dev,
+		    "couldn't send CONTROL message (%d)\n", error);
+	}
+
+	vchi_service_release(sc->sc_service);
+
+	return error;
+}
+
+static int
 vcaudio_set_port(void *priv, mixer_ctrl_t *mc)
 {
 	struct vcaudio_softc *sc = priv;
-	VC_AUDIO_MSG_T msg;
-	int error;
 
 	switch (mc->dev) {
 	case VCAUDIO_OUTPUT_MASTER_VOLUME:
 	case VCAUDIO_INPUT_DAC_VOLUME:
 		sc->sc_swvol = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
 		return 0;
+	case VCAUDIO_OUTPUT_AUTO_VOLUME:
+		return vcaudio_set_volume(sc, VCAUDIO_DEST_AUTO,
+		    mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT]);
 	case VCAUDIO_OUTPUT_HEADPHONE_VOLUME:
-		sc->sc_hpvol = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-
-		vchi_service_use(sc->sc_service);
-
-		memset(&msg, 0, sizeof(msg));
-		msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
-		msg.u.control.volume = vol2pct(sc->sc_hpvol);
-		msg.u.control.dest = sc->sc_dest;
-
-		error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
-		if (error) {
-			device_printf(sc->sc_dev,
-			    "couldn't send CONTROL message (%d)\n", error);
-		}
-
-		vchi_service_release(sc->sc_service);
-
-		return error;
+		return vcaudio_set_volume(sc, VCAUDIO_DEST_HP,
+		    mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT]);
+	case VCAUDIO_OUTPUT_HDMI_VOLUME:
+		return vcaudio_set_volume(sc, VCAUDIO_DEST_HDMI,
+		    mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT]);
 	case VCAUDIO_OUTPUT_SELECT:
 		if (mc->un.ord < 0 || mc->un.ord > 2)
 			return EINVAL;
-
 		sc->sc_dest = mc->un.ord;
-
-		vchi_service_use(sc->sc_service);
-
-		memset(&msg, 0, sizeof(msg));
-		msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
-		msg.u.control.volume = vol2pct(sc->sc_hpvol);
-		msg.u.control.dest = sc->sc_dest;
-
-		error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
-		if (error) {
-			device_printf(sc->sc_dev,
-			    "couldn't send CONTROL message (%d)\n", error);
-		}
-
-		vchi_service_release(sc->sc_service);
-
-		return error;
+		return vcaudio_set_volume(sc, mc->un.ord,
+		    sc->sc_hwvol[mc->un.ord]);
 	}
 	return ENXIO;
 }
@@ -702,18 +716,28 @@ static int
 vcaudio_get_port(void *priv, mixer_ctrl_t *mc)
 {
 	struct vcaudio_softc *sc = priv;
-	uint8_t vol = sc->sc_swvol;
 
 	switch (mc->dev) {
 	case VCAUDIO_OUTPUT_MASTER_VOLUME:
 	case VCAUDIO_INPUT_DAC_VOLUME:
-		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = vol;
-		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = vol;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+		    mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+		    sc->sc_swvol;
+		return 0;
+	case VCAUDIO_OUTPUT_AUTO_VOLUME:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+		    mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+		    sc->sc_hwvol[VCAUDIO_DEST_AUTO];
 		return 0;
 	case VCAUDIO_OUTPUT_HEADPHONE_VOLUME:
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
 		    mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-		    sc->sc_hpvol;
+		    sc->sc_hwvol[VCAUDIO_DEST_HP];
+		return 0;
+	case VCAUDIO_OUTPUT_HDMI_VOLUME:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+		    mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+		    sc->sc_hwvol[VCAUDIO_DEST_HDMI];
 		return 0;
 	case VCAUDIO_OUTPUT_SELECT:
 		mc->un.ord = sc->sc_dest;
@@ -746,12 +770,31 @@ vcaudio_query_devinfo(void *priv, mixer_devinfo_t *di)
 		di->un.v.num_channels = 2;
 		strcpy(di->un.v.units.name, AudioNvolume);
 		return 0;
+	case VCAUDIO_OUTPUT_AUTO_VOLUME:
+		di->mixer_class = VCAUDIO_OUTPUT_CLASS;
+		strcpy(di->label.name, "auto");
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.v.num_channels = 2;
+		di->un.v.delta = 13;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
 	case VCAUDIO_OUTPUT_HEADPHONE_VOLUME:
 		di->mixer_class = VCAUDIO_OUTPUT_CLASS;
 		strcpy(di->label.name, AudioNheadphone);
 		di->type = AUDIO_MIXER_VALUE;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		di->un.v.num_channels = 2;
+		di->un.v.delta = 13;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+	case VCAUDIO_OUTPUT_HDMI_VOLUME:
+		di->mixer_class = VCAUDIO_OUTPUT_CLASS;
+		strcpy(di->label.name, "hdmi");
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->un.v.num_channels = 2;
+		di->un.v.delta = 13;
 		strcpy(di->un.v.units.name, AudioNvolume);
 		return 0;
 	case VCAUDIO_INPUT_DAC_VOLUME:
