@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.113.2.3 2015/02/27 19:39:56 martin Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.113.2.4 2015/03/15 22:43:02 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.113.2.3 2015/02/27 19:39:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.113.2.4 2015/03/15 22:43:02 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -124,7 +124,6 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 		goto out;
 	}
 
-printf("args->pa_flags = 0x%x\n", args->pa_flags);
 	if ((args->pa_flags & ~PUFFS_KFLAG_MASK) != 0) {
 		printf("puffs_mount: invalid KFLAGs 0x%x\n", args->pa_flags);
 		error = EINVAL;
