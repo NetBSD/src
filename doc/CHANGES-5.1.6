@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.6,v 1.1.2.17 2015/02/23 09:42:23 msaitoh Exp $
+# $NetBSD: CHANGES-5.1.6,v 1.1.2.18 2015/03/15 21:17:44 snj Exp $
 
 A complete list of changes from the NetBSD 5.1.5 release to the NetBSD 5.1.6
 release:
@@ -2546,3 +2546,12 @@ dist/bind/lib/dns/zone.c			patch
 	an untrusted replacement could cause named to crash with an assertion
 	failure.
 	[spz, ticket #1950]
+
+usr.bin/gzip/Makefile				patch
+usr.bin/gzip/gzip.1				1.20-1.24
+usr.bin/gzip/gzip.c				1.98-1.107
+usr.bin/gzip/zuncompress.c			1.7-1.8
+
+	Sync gzip core with HEAD.
+	[mrg, ticket #1951]
+
