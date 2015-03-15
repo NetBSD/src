@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.227 2015/03/12 19:20:58 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.228 2015/03/15 23:04:54 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18517,4 +18517,63 @@ distrib/i386/installimage/Makefile		1.7
 
 	Bump i386 install iamge size limit.
 	[bouyer, ticket #588]
+
+sys/external/bsd/compiler_rt/dist/lib/builtins/gcc_personality_v0.c 1.2
+
+	Don't use __gcc_personality_sj0 on ARM.
+	[joerg, ticket #580]
+
+sys/net/npf/npf_conn.c				1.16
+
+	Avoid reference leak in npf_conn_establish.
+	[rmind, ticket #586]
+
+sys/fs/puffs/puffs_vfsops.c			1.117
+
+	Remove a debug message.
+	[tron, ticket #587]
+
+usr.sbin/makemandb/makemandb.c			1.28
+
+	MDOC_MAX is a valid token if the type is text. Adjust.
+	PR bin/49742.
+	[joerg, ticket #589]
+
+sys/arch/arm/cortex/gic.c			1.15
+
+	G/C armgic_last_priority
+	[skrll, ticket #591]
+
+sys/dev/usb/if_run.c				1.11
+
+	Add pmf hooks.
+	[nonakap, ticket #592]
+
+sys/arch/evbarm/conf/RPI			1.61
+sys/arch/evbarm/conf/RPI2			1.3
+
+	Add ARM11_COMPAT_MMU to RPI, and explicitly disable it on RPI2.
+	[jmcneill, ticket #593]
+
+sys/arch/arm/broadcom/bcm2835_vcaudio.c		1.8, 1.9
+sys/arch/arm/broadcom/files.bcm2835		1.25
+
+	Fix Raspberry Pi audio volume control.  PR port-arm/49057.
+	[jmcneill, ticket #594]
+
+sys/arch/arm/allwinner/awin_eth.c		1.8
+sys/arch/arm/allwinner/awin_gige.c		1.22
+sys/arch/arm/allwinner/awin_gpio.c		1.17
+sys/arch/arm/allwinner/awin_usb.c		1.20
+
+	Fix "no options DIAGNOSTIC" build for allwinner kernels.
+	[jmcneill, ticket #595]
+
+distrib/sets/lists/tests/mi			1.604
+tests/usr.bin/config/support/conf/Makefile	1.2
+tests/usr.bin/config/support/conf/Makefile.kern.inc 1.1
+
+	Now config(1) checks the content of $S/conf/Makefile.kern.inc.
+	Install it into config(1) test directory to fix tests.
+	[bouyer, ticket #596]
 
