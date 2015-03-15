@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.12.12.1 2015/03/15 21:15:11 snj Exp $
 
 USE_FORT?= yes	# data-driven bugs?
 
@@ -30,3 +30,6 @@ LINKS+=		${BINDIR}/gzip ${BINDIR}/gunzip \
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.gzip.c+=	-Wno-pointer-sign
 .endif
+
+# NetBSD-5 has no -lzma
+CPPFLAGS+=	-DNO_XZ_SUPPORT
