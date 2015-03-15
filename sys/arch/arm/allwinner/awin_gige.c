@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.4.10.2 2014/11/25 08:03:06 snj Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.4.10.3 2015/03/15 22:59:39 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,13 +76,11 @@ CFATTACH_DECL_NEW(awin_gige, sizeof(struct awin_gige_softc),
 static int
 awin_gige_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct awinio_attach_args * const aio = aux;
 	const struct awin_gpio_pinset *pinset =
 	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
 	    &awin_gige_gpio_pinset_a31 : &awin_gige_gpio_pinset;
-#ifdef DIAGNOSTIC
-	const struct awin_locators * const loc = &aio->aio_loc;
-#endif
+	struct awinio_attach_args * const aio __diagused = aux;
+	const struct awin_locators * const loc __diagused = &aio->aio_loc;
 	if (cf->cf_flags & 1)
 		return 0;
 
