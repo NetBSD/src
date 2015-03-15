@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.24.2.1 2015/03/07 06:21:08 snj Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.24.2.2 2015/03/15 22:44:28 snj Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.24.2.1 2015/03/07 06:21:08 snj Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.24.2.2 2015/03/15 22:44:28 snj Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -981,7 +981,7 @@ pmdoc_Nd(const struct mdoc_node *n, mandb_rec *rec)
 	char *temp;
 	char *nd_text;
 
-	if (n == NULL || n->tok == MDOC_MAX)
+	if (n == NULL || (n->type != MDOC_TEXT && n->tok == MDOC_MAX))
 		return;
 
 	if (n->type == MDOC_TEXT) {
@@ -1104,7 +1104,7 @@ pmdoc_Pp(const struct mdoc_node *n, mandb_rec *rec)
 static void
 pmdoc_Sh(const struct mdoc_node *n, mandb_rec *rec)
 {
-	if (n == NULL || n->tok == MDOC_MAX)
+	if (n == NULL || (n->type != MDOC_TEXT && n->tok == MDOC_MAX))
 		return;
 	int xr_found = 0;
 
