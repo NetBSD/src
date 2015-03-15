@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.101 2015/02/27 02:55:45 snj Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.102 2015/03/15 21:18:04 snj Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3749,4 +3749,12 @@ include/wchar.h					patch
 	Properly expose wcsto{f,ld,ll,ull} and v{fw,sw,ws}scanf when
 	_POSIX_C_SOURCE >= 200112L and _XOPEN_SOURCE >= 600.
 	[christos, ticket #1943]
+
+usr.bin/gzip/Makefile				patch
+usr.bin/gzip/gzip.1				1.20-1.24
+usr.bin/gzip/gzip.c				1.98-1.107
+usr.bin/gzip/zuncompress.c			1.7-1.8
+
+	Sync gzip core with HEAD.
+	[mrg, ticket #1951]
 
