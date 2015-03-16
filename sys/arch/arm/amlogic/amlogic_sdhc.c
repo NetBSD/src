@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.2 2015/03/08 15:38:25 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.3 2015/03/16 21:37:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.2 2015/03/08 15:38:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.3 2015/03/16 21:37:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -430,7 +430,7 @@ static void
 amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct amlogic_sdhc_softc *sc = sch;
-	uint32_t cmdval = 0, cntl, srst, pdma;
+	uint32_t cmdval = 0, cntl, srst, pdma, ictl;
 	int i;
 
 	KASSERT(cmd->c_blklen <= 512);
@@ -446,9 +446,6 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		goto done;
 	}
 
-	while (SDHC_READ(sc, SD_STAT_REG) & __BIT(24))
-		delay(10);
-
 	if (cmd->c_opcode == MMC_STOP_TRANSMISSION)
 		cmdval |= SD_SEND_DATA_STOP;
 	if (cmd->c_flags & SCF_RSP_PRESENT)
@@ -459,6 +456,12 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 	if ((cmd->c_flags & SCF_RSP_CRC) == 0)
 		cmdval |= SD_SEND_RESPONSE_NO_CRC;
+
+	SDHC_WRITE(sc, SD_ICTL_REG, 0);
+	SDHC_WRITE(sc, SD_ISTA_REG, SD_INT_CLEAR);
+	sc->sc_intr_ista = 0;
+
+	ictl = SD_INT_ERROR;
 
 	cntl = SDHC_READ(sc, SD_CNTL_REG);
 	cntl &= ~SD_CNTL_PACK_LEN;
@@ -477,17 +480,26 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		cntl |= __SHIFTIN(cmd->c_blklen & 0x1ff, SD_CNTL_PACK_LEN);
 				    
 		cmdval |= __SHIFTIN(nblks - 1, SD_SEND_TOTAL_PACK);
+
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			ictl |= SD_INT_DATA_COMPLETE;
+		} else {
+			ictl |= SD_INT_DMA_DONE;
+		}
+	} else {
+		ictl |= SD_INT_RESP_COMPLETE;
 	}
+
+	SDHC_WRITE(sc, SD_ICTL_REG, ictl);
+
 	SDHC_WRITE(sc, SD_CNTL_REG, cntl);
 
-	SDHC_WRITE(sc, SD_ISTA_REG, SD_INT_CLEAR);
-	sc->sc_intr_ista = 0;
-	SDHC_WRITE(sc, SD_ICTL_REG,
-	    SD_INT_ERROR | SD_INT_DATA_COMPLETE | SD_INT_RESP_COMPLETE |
-	    SD_INT_DMA_DONE);
-
 	pdma = SDHC_READ(sc, SD_PDMA_REG);
-	pdma |= SD_PDMA_DMA_MODE;
+	if (cmd->c_datalen > 0) {
+		pdma |= SD_PDMA_DMA_MODE;
+	} else {
+		pdma &= ~SD_PDMA_DMA_MODE;
+	}
 	SDHC_WRITE(sc, SD_PDMA_REG, pdma);
 
 	SDHC_WRITE(sc, SD_ARGU_REG, cmd->c_arg);
@@ -506,7 +518,19 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	cmd->c_resid = cmd->c_datalen;
 	SDHC_WRITE(sc, SD_SEND_REG, cmdval | cmd->c_opcode);
 
-	if (cmd->c_flags & SCF_RSP_PRESENT) {
+	if (cmd->c_datalen > 0) {
+		uint32_t wbit = ISSET(cmd->c_flags, SCF_CMD_READ) ?
+		    SD_INT_DATA_COMPLETE : SD_INT_DMA_DONE;
+		cmd->c_error = amlogic_sdhc_wait_ista(sc,
+		    SD_INT_ERROR | wbit, hz * 10);
+		if (cmd->c_error == 0 &&
+		    (sc->sc_intr_ista & SD_INT_ERROR)) {
+			cmd->c_error = ETIMEDOUT;
+		}
+		if (cmd->c_error) {
+			goto done;
+		}
+	} else {
 		cmd->c_error = amlogic_sdhc_wait_ista(sc,
 		    SD_INT_ERROR | SD_INT_RESP_COMPLETE, hz * 10);
 		if (cmd->c_error == 0 && (sc->sc_intr_ista & SD_INT_ERROR)) {
@@ -521,17 +545,7 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		}
 	}
 
-	if (cmd->c_datalen > 0) {
-		cmd->c_error = amlogic_sdhc_wait_ista(sc,
-		    SD_INT_ERROR | SD_INT_DMA_DONE, hz * 10);
-		if (cmd->c_error == 0 &&
-		    (sc->sc_intr_ista & SD_INT_ERROR)) {
-			cmd->c_error = ETIMEDOUT;
-		}
-		if (cmd->c_error) {
-			goto done;
-		}
-	}
+	SDHC_WRITE(sc, SD_ISTA_REG, sc->sc_intr_ista);
 
 	if (cmd->c_flags & SCF_RSP_PRESENT) {
 		pdma = SDHC_READ(sc, SD_PDMA_REG);
