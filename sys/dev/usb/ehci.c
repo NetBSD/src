@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.41 2015/03/15 11:52:47 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.42 2015/03/16 21:21:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.41 2015/03/15 11:52:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.42 2015/03/16 21:21:46 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -950,6 +950,9 @@ ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 		goto done; /* All 8 descriptors inactive, it's done */
 	}
 
+	usb_syncmem(&itd->dma, itd->offs + offsetof(ehci_itd_t, itd_ctl),
+	    sizeof(itd->itd.itd_ctl), BUS_DMASYNC_PREREAD);
+
 	USBHIST_LOGN(ehcidebug, 10, "ex %p itd %p still active", ex,
 	    ex->ex_itdstart, 0, 0);
 	return;
@@ -988,12 +991,15 @@ ehci_check_sitd_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 	 * check no active transfers in last sitd, meaning we're finished
 	 */
 
-	usb_syncmem(&sitd->dma, sitd->offs + offsetof(ehci_sitd_t, sitd_buffer),
-		    sizeof(sitd->sitd.sitd_buffer), BUS_DMASYNC_POSTWRITE |
+	usb_syncmem(&sitd->dma, sitd->offs + offsetof(ehci_sitd_t, sitd_trans),
+	    sizeof(sitd->sitd.sitd_trans), BUS_DMASYNC_POSTWRITE |
 		    BUS_DMASYNC_POSTREAD);
 
 	if (le32toh(sitd->sitd.sitd_trans) & EHCI_SITD_ACTIVE)
 		return;
+
+	usb_syncmem(&sitd->dma, sitd->offs + offsetof(ehci_sitd_t, sitd_trans),
+	    sizeof(sitd->sitd.sitd_trans), BUS_DMASYNC_PREREAD);
 
 	USBHIST_LOGN(ehcidebug, 10, "ex=%p done", ex, 0, 0, 0);
 	callout_stop(&(ex->ex_xfer.ux_callout));
@@ -1079,6 +1085,8 @@ ehci_idone(struct ehci_xfer *ex)
 				xfer->ux_frlengths[nframes++] = len;
 				actlen += len;
 			}
+			usb_syncmem(&itd->dma,itd->offs + offsetof(ehci_itd_t,itd_ctl),
+			    sizeof(itd->itd.itd_ctl), BUS_DMASYNC_PREREAD);
 
 			if (nframes >= xfer->ux_nframes)
 				break;
@@ -1098,8 +1106,8 @@ ehci_idone(struct ehci_xfer *ex)
 		actlen = 0;
 
 		for (sitd = ex->ex_sitdstart; sitd != NULL; sitd = sitd->xfer_next) {
-			usb_syncmem(&sitd->dma,sitd->offs + offsetof(ehci_sitd_t, sitd_buffer),
-			    sizeof(sitd->sitd.sitd_buffer), BUS_DMASYNC_POSTWRITE |
+			usb_syncmem(&sitd->dma, sitd->offs + offsetof(ehci_sitd_t, sitd_trans),
+			    sizeof(sitd->sitd.sitd_trans), BUS_DMASYNC_POSTWRITE |
 			    BUS_DMASYNC_POSTREAD);
 
 			/*
@@ -1113,6 +1121,9 @@ ehci_idone(struct ehci_xfer *ex)
 				break;
 
 			status = le32toh(sitd->sitd.sitd_trans);
+			usb_syncmem(&sitd->dma, sitd->offs + offsetof(ehci_sitd_t, sitd_trans),
+			    sizeof(sitd->sitd.sitd_trans), BUS_DMASYNC_PREREAD);
+
 			len = EHCI_SITD_GET_LEN(status);
 			if (status & (EHCI_SITD_ERR|EHCI_SITD_BUFERR|
 			    EHCI_SITD_BABBLE|EHCI_SITD_XACTERR|EHCI_SITD_MISS)) {
@@ -1153,6 +1164,8 @@ ehci_idone(struct ehci_xfer *ex)
 		usb_syncmem(&sqtd->dma, sqtd->offs, sizeof(sqtd->qtd),
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 		nstatus = le32toh(sqtd->qtd.qtd_status);
+		usb_syncmem(&sqtd->dma, sqtd->offs, sizeof(sqtd->qtd),
+		    BUS_DMASYNC_PREREAD);
 		if (nstatus & EHCI_QTD_ACTIVE)
 			break;
 
@@ -3227,6 +3240,10 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	} else {
 		USBHIST_LOG(ehcidebug, "no hit", 0, 0, 0, 0);
+		usb_syncmem(&sqh->dma,
+		    sqh->offs + offsetof(ehci_qh_t, qh_curqtd),
+		    sizeof(sqh->qh.qh_curqtd),
+		    BUS_DMASYNC_PREREAD);
 	}
 
 	/*
@@ -4233,10 +4250,17 @@ ehci_device_fs_isoc_start(usbd_xfer_handle xfer)
 		sitd->sitd.sitd_sched = htole32(EHCI_SITD_SET_SMASK(sa) |
 		    EHCI_SITD_SET_CMASK(sb));
 
+		usb_syncmem(&sitd->dma, sitd->offs, sizeof(ehci_sitd_t),
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
 		prev = sitd;
 	} /* End of frame */
 
 	sitd->sitd.sitd_trans |= htole32(EHCI_SITD_IOC);
+
+	usb_syncmem(&sitd->dma, sitd->offs + offsetof(ehci_sitd_t, sitd_trans),
+	    sizeof(sitd->sitd.sitd_trans),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	stop = sitd;
 	stop->xfer_next = NULL;
@@ -4272,6 +4296,11 @@ ehci_device_fs_isoc_start(usbd_xfer_handle xfer)
 	for (j = 0; j < frames; j++) {
 		if (sitd == NULL)
 			panic("ehci: unexpectedly ran out of isoc sitds\n");
+
+		usb_syncmem(&sc->sc_fldma,
+		    sizeof(ehci_link_t) * frindex,
+		    sizeof(ehci_link_t),
+		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 		sitd->sitd.sitd_next = sc->sc_flist[frindex];
 		if (sitd->sitd.sitd_next == 0)
@@ -4470,9 +4499,10 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		if (prev != NULL) {
 			prev->itd.itd_next =
 			    htole32(itd->physaddr | EHCI_LINK_ITD);
-			usb_syncmem(&itd->dma,
-			    itd->offs + offsetof(ehci_itd_t, itd_next),
-			    sizeof(itd->itd.itd_next), BUS_DMASYNC_POSTWRITE);
+			usb_syncmem(&prev->dma,
+			    prev->offs + offsetof(ehci_itd_t, itd_next),
+			    sizeof(prev->itd.itd_next),
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 			prev->xfer_next = itd;
 	    	} else {
@@ -4553,9 +4583,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		itd->itd.itd_bufr[2] |=
 		    htole32(EHCI_ITD_SET_MULTI(UE_GET_TRANS(j)+1));
 
-		usb_syncmem(&itd->dma,
-		    itd->offs + offsetof(ehci_itd_t, itd_next),
-		    sizeof(ehci_itd_t),
+		usb_syncmem(&itd->dma, itd->offs, sizeof(ehci_itd_t),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 		prev = itd;
@@ -4599,6 +4627,11 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	for (j = 0; j < frames; j++) {
 		if (itd == NULL)
 			panic("ehci: unexpectedly ran out of isoc itds, isoc_start\n");
+
+		usb_syncmem(&sc->sc_fldma,
+		    sizeof(ehci_link_t) * frindex,
+		    sizeof(ehci_link_t),
+		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 		itd->itd.itd_next = sc->sc_flist[frindex];
 		if (itd->itd.itd_next == 0)
