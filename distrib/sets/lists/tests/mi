@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.584 2014/08/09 07:04:03 gson Exp $
+# $NetBSD: mi,v 1.584.2.1 2015/03/16 18:59:54 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3373,6 +3373,7 @@
 ./usr/tests/usr.bin/config/support/arch/regress/conf/files.regress		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/support/arch/regress/conf/std.regress		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/support/conf		tests-usr.bin-tests
+./usr/tests/usr.bin/config/support/conf/Makefile.kern.inc	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/support/conf/files	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/t_config		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/cut				tests-usr.bin-tests
