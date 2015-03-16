@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.4 2014/01/18 15:15:16 pgoyette Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.5 2015/03/16 16:42:27 prlw1 Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -98,7 +98,7 @@ camellia_cleanup() {
 
 atf_test_case cbcdes cleanup
 cbcdes_head() {
-	common_head "Test ARC4 crypto"
+	common_head "Test DES_CBC crypto"
 }
 
 cbcdes_body() {
