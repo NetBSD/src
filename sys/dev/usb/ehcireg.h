@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.34.14.6 2015/03/03 10:06:01 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.34.14.7 2015/03/16 16:38:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -236,8 +236,8 @@ typedef struct {
 #define EHCI_ITD_SET_OFFS(x)	__SHIFTIN((x), EHCI_ITD_OFFSET_MASK)
 	volatile ehci_isoc_bufr_ptr_t	itd_bufr[EHCI_ITD_NBUFFERS];
 #define EHCI_ITD_BPTR_MASK	__BITS(31,12)
-#define EHCI_ITD_GET_BPTR(x)	__SHIFTOUT((x), EHCI_ITD_BPTR_MASK)
-#define EHCI_ITD_SET_BPTR(x)	__SHIFTIN((x), EHCI_ITD_BPTR_MASK)
+#define EHCI_ITD_GET_BPTR(x)	((x) & EHCI_ITD_BPTR_MASK)
+#define EHCI_ITD_SET_BPTR(x)	((x) & EHCI_ITD_BPTR_MASK)
 #define EHCI_ITD_EP_MASK	__BITS(11,8)
 #define EHCI_ITD_GET_EP(x)	__SHIFTOUT((x), EHCI_ITD_EP_MASK)
 #define EHCI_ITD_SET_EP(x)	__SHIFTIN((x), EHCI_ITD_EP_MASK)
