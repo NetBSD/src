@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.20 2013/10/18 20:47:06 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.21 2015/03/16 19:10:48 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.20 2013/10/18 20:47:06 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.21 2015/03/16 19:10:48 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -106,6 +106,7 @@ static void print_supported_formats(sdp_data_t *);
 static void print_hid_version(sdp_data_t *);
 static void print_hid_device_subclass(sdp_data_t *);
 static void print_hid_descriptor_list(sdp_data_t *);
+static void print_hid_langid_base_list(sdp_data_t *);
 static void print_security_description(sdp_data_t *);
 static void print_hf_features(sdp_data_t *);
 static void print_hfag_network(sdp_data_t *);
@@ -297,7 +298,7 @@ attr_t hid_attrs[] = {	/* Human Interface Device */
 	{ 0x0204, "HIDVirtualCable",			print_bool },
 	{ 0x0205, "HIDReconnectInitiate",		print_bool },
 	{ 0x0206, "HIDDescriptorList",			print_hid_descriptor_list },
-	{ 0x0207, "HIDLANGIDBaseList",			NULL },
+	{ 0x0207, "HIDLANGIDBaseList",			print_hid_langid_base_list },
 	{ 0x0208, "HIDSDPDisable",			print_bool },
 	{ 0x0209, "HIDBatteryPower",			print_bool },
 	{ 0x020a, "HIDRemoteWake",			print_bool },
@@ -1275,7 +1276,6 @@ print_hid_descriptor_list(sdp_data_t *data)
 	char *str;
 	size_t len;
 
-
 	if (!sdp_get_seq(data, &list))
 		return;
 
@@ -1297,6 +1297,38 @@ print_hid_descriptor_list(sdp_data_t *data)
 
 		if (seq.next != seq.end)
 			printf("    [additional data]\n");
+	}
+}
+
+static void
+print_hid_langid_base_list(sdp_data_t *data)
+{
+	sdp_data_t list, seq;
+	uint16_t lang, base;
+
+	if (!sdp_get_seq(data, &list))
+		return;
+
+	while (list.next < list.end) {
+		if (!sdp_get_seq(&list, &seq)
+		    || !sdp_get_uint16(&seq, &lang)
+		    || !sdp_get_uint16(&seq, &base))
+			return;
+
+		printf("\n    ");
+		/*
+		 * The language is encoded according to the
+		 *   "Universal Serial Bus Language Identifiers (LANGIDs)"
+		 * specification. It does not seem worth listing them all
+		 * here, but feel free to add if you notice any being used.
+		 */
+		switch (lang) {
+		case 0x0409:	printf("English (US)");		break;
+		case 0x0809:	printf("English (UK)");		break;
+		default:	printf("0x%04x", lang);		break;
+		}
+
+		printf(" base 0x%04x\n", base);
 	}
 }
 
