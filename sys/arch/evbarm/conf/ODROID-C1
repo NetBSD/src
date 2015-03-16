@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.8 2015/03/08 12:45:35 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.9 2015/03/16 22:16:42 jmcneill Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -194,8 +194,7 @@ options 	CONSADDR=0xc81004c0, CONSPEED=115200
 amlogicrng0	at amlogicio0
 
 # SDHC controller
-amlogicsdhc0	at amlogicio0 port 1	# SD card
-#amlogicsdhc0	at amlogicio0 port 2	# EMMC
+amlogicsdhc0	at amlogicio0
 sdmmc*		at amlogicsdhc?
 ld*		at sdmmc?
 
@@ -221,7 +220,7 @@ midi*		at midibus?
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md			# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	drvctl			# driver control
