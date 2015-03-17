@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dwctwo.c,v 1.7 2015/03/10 18:03:17 macallan Exp $ */
+/*	$NetBSD: ingenic_dwctwo.c,v 1.8 2015/03/17 07:25:07 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.7 2015/03/10 18:03:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.8 2015/03/17 07:25:07 macallan Exp $");
 
 /*
  * adapted from bcm2835_dwctwo.c
@@ -176,11 +176,11 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 
 	delay(10000);
 
-	sc->sc_ih = evbmips_intr_establish(21, dwc2_intr, &sc->sc_dwc2);
+	sc->sc_ih = evbmips_intr_establish(aa->aa_irq, dwc2_intr, &sc->sc_dwc2);
 
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		     21);
+		     aa->aa_irq);
 		goto fail;
 	}
 
