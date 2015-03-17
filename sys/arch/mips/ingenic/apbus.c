@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.7 2015/03/09 13:24:21 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.8 2015/03/17 07:25:07 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.7 2015/03/09 13:24:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.8 2015/03/17 07:25:07 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -62,14 +62,30 @@ struct mips_bus_dma_tag	apbus_dmat = {
 	._dmatag_ops = _BUS_DMATAG_OPS_INITIALIZER,
 };
 
-static const char *apbus_devs[] = {
-	"dwctwo",
-	"ohci",
-	"ehci",
-	"dme",
-	"jzgpio",
-	"jzfb",
-	NULL
+typedef struct apbus_dev {
+	const char *name;
+	bus_addr_t addr;
+	uint32_t irq;
+} apbus_dev_t;
+
+static const apbus_dev_t apbus_devs[] = {
+	{ "dwctwo",	JZ_DWC2_BASE,   21},
+	{ "ohci",	JZ_OHCI_BASE,    5 },
+	{ "ehci",	JZ_EHCI_BASE,   20},
+	{ "dme",	JZ_DME_BASE,    -1},	/* irq via gpio abuse */
+	{ "jzgpio",	JZ_GPIO_A_BASE, 17},
+	{ "jzgpio",	JZ_GPIO_B_BASE, 16},
+	{ "jzgpio",	JZ_GPIO_C_BASE, 15},
+	{ "jzgpio",	JZ_GPIO_D_BASE, 14},
+	{ "jzgpio",	JZ_GPIO_E_BASE, 13},
+	{ "jzgpio",	JZ_GPIO_F_BASE, 12},
+	{ "jziic",	JZ_SMB0_BASE,   60},
+	{ "jziic",	JZ_SMB1_BASE,   59},
+	{ "jziic",	JZ_SMB2_BASE,   58},
+	{ "jziic",	JZ_SMB3_BASE,   57},
+	{ "jziic",	JZ_SMB4_BASE,   56},
+	{ "jzfb",	-1,           -1},
+	{ NULL,		-1,           -1}
 };
 
 void
@@ -135,10 +151,11 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	printf("JZ_UHCCDR %08x\n", readreg(JZ_UHCCDR));
 #endif
 
-	for (const char **adv = apbus_devs; *adv != NULL; adv++) {
+	for (const apbus_dev_t *adv = apbus_devs; adv->name != NULL; adv++) {
 		struct apbus_attach_args aa;
-		aa.aa_name = *adv;
-		aa.aa_addr = 0;
+		aa.aa_name = adv->name;
+		aa.aa_addr = adv->addr;
+		aa.aa_irq  = adv->irq;
 		aa.aa_dmat = &apbus_dmat;
 		aa.aa_bst = apbus_memt;
 
@@ -151,12 +168,13 @@ apbus_print(void *aux, const char *pnp)
 {
 	struct apbus_attach_args *aa = aux;
 
-	if (pnp)
+	if (pnp) {
 		aprint_normal("%s at %s", aa->aa_name, pnp);
-
-	if (aa->aa_addr)
-		aprint_normal(" addr 0x%" PRIxBUSADDR, aa->aa_addr);
-
+		if (aa->aa_addr != -1)
+			aprint_normal(" addr 0x%" PRIxBUSADDR, aa->aa_addr);
+		if (aa->aa_irq != -1)
+			aprint_normal(" irq %d", aa->aa_irq);
+	}
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_var.h,v 1.1 2014/12/06 14:34:56 macallan Exp $ */
+/*	$NetBSD: ingenic_var.h,v 1.2 2015/03/17 07:25:07 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -36,6 +36,7 @@ struct apbus_attach_args {
 	bus_space_tag_t	aa_bst;
 	bus_dma_tag_t	aa_dmat;
 	bus_addr_t	aa_addr;
+	uint32_t	aa_irq;
 };
 
 extern bus_space_tag_t ingenic_memt;
