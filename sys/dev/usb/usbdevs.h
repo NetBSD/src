@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.h,v 1.684 2015/03/15 01:42:27 nonaka Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.685 2015/03/17 08:15:48 macallan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -584,6 +584,7 @@
 #define	USB_VENDOR_SWEEX	0x5173		/* Sweex */
 #define	USB_VENDOR_ONSPEC2	0x55aa		/* OnSpec Electronic Inc. */
 #define	USB_VENDOR_ZINWELL	0x5a57		/* Zinwell */
+#define	USB_VENDOR_INGENIC	0x601a		/* Ingenic Semiconductor Ltd. */
 #define	USB_VENDOR_SITECOM	0x6189		/* Sitecom */
 #define	USB_VENDOR_SPRINGERDESIGN	0x6400		/* Springer Design, Inc. */
 #define	USB_VENDOR_ARKMICROCHIPS	0x6547		/* ArkMicroChips */
