@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_cpufreq.c,v 1.1 2015/03/05 23:43:53 jmcneill Exp $ */
+/* $NetBSD: amlogic_cpufreq.c,v 1.2 2015/03/17 22:29:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,8 +28,10 @@
 
 #include "locators.h"
 
+#include "opt_amlogic.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.1 2015/03/05 23:43:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.2 2015/03/17 22:29:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,16 +75,26 @@ static size_t	meson8b_cpu_get_available(u_int *, size_t);
 			  AMLOGIC_CBUS_OFFSET + (x), (v))
 
 void
+amlogic_cpufreq_bootstrap(void)
+{
+	cpufreq_set_rate = &meson8b_cpu_set_rate;
+	cpufreq_get_rate = &meson8b_cpu_get_rate;
+	cpufreq_get_available = &meson8b_cpu_get_available;
+
+#ifdef CPUFREQ
+	if (cpufreq_set_rate(CPUFREQ) == 0) {
+		amlogic_cpufreq_cb(NULL, NULL);
+	}
+#endif
+}
+
+void
 amlogic_cpufreq_init(void)
 {
 	const struct sysctlnode *node, *cpunode, *freqnode;
 	u_int availfreq[AMLOGIC_CPUFREQ_MAX];
 	size_t nfreq;
 	int error;
-
-	cpufreq_set_rate = &meson8b_cpu_set_rate;
-	cpufreq_get_rate = &meson8b_cpu_get_rate;
-	cpufreq_get_available = &meson8b_cpu_get_available;
 
 	nfreq = cpufreq_get_available(availfreq, AMLOGIC_CPUFREQ_MAX);
 	if (nfreq == 0)
@@ -259,7 +271,9 @@ meson8b_cpu_set_rate(u_int rate)
 
 	CBUS_WRITE(HHI_SYS_PLL_CNTL_REG, cntl);
 
-	a9tmr_update_freq(amlogic_get_rate_a9periph());
+	if (!cold) {
+		a9tmr_update_freq(amlogic_get_rate_a9periph());
+	}
 
 	return 0;
 }

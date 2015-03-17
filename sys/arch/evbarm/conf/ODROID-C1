@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.9 2015/03/16 22:16:42 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.10 2015/03/17 22:29:40 jmcneill Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -18,6 +18,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # CPU options
 
 options 	CPU_CORTEXA5
+options 	CPUFREQ=1512
 options 	PMAPCOUNTERS
 
 # Architecture options

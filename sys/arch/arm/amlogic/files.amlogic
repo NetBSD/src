@@ -1,4 +1,4 @@
-#	$NetBSD: files.amlogic,v 1.6 2015/03/07 21:34:25 jmcneill Exp $
+#	$NetBSD: files.amlogic,v 1.7 2015/03/17 22:29:40 jmcneill Exp $
 #
 # Configuration info for Amlogic ARM Peripherals
 #
@@ -51,3 +51,6 @@ defparam opt_amlogic.h			CONMODE
 
 # Memory parameters
 defparam opt_amlogic.h			MEMSIZE
+
+# CPU parameters
+defparam opt_amlogic.h			CPUFREQ
