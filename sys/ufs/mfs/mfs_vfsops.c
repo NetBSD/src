@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.109 2015/01/14 11:21:31 hannken Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.110 2015/03/17 09:39:29 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.109 2015/01/14 11:21:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.110 2015/03/17 09:39:29 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -101,6 +101,7 @@ struct vfsops mfs_vfsops = {
 	.vfs_sync = ffs_sync,
 	.vfs_vget = ufs_vget,
 	.vfs_loadvnode = ffs_loadvnode,
+	.vfs_newvnode = ffs_newvnode,
 	.vfs_fhtovp = ffs_fhtovp,
 	.vfs_vptofh = ffs_vptofh,
 	.vfs_init = mfs_init,
