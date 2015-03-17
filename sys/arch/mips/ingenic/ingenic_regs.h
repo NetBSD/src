@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.9 2015/03/10 18:02:16 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.10 2015/03/17 07:22:40 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -372,4 +372,12 @@ gpio_as_intr_level(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_FLAGC, mask);	/* clear it */
 	writereg(reg + JZ_GPIO_MASKC, mask);	/* enable it */
 }
+
+/* I2C / SMBus */
+#define JZ_SMB0_BASE	0x10050000
+#define JZ_SMB1_BASE	0x10051000
+#define JZ_SMB2_BASE	0x10052000
+#define JZ_SMB3_BASE	0x10053000
+#define JZ_SMB4_BASE	0x10054000
+
 #endif /* INGENIC_REGS_H */
