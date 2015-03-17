@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.4,v 1.1.2.20 2015/03/16 21:21:50 bouyer Exp $
+# $NetBSD: CHANGES-5.2.4,v 1.1.2.21 2015/03/17 18:44:37 snj Exp $
 
 A complete list of changes from the NetBSD 5.2.3 release to the NetBSD 5.2.4
 release:
@@ -2555,4 +2555,13 @@ distrib/utils/x_gzip/Makefile			patch
 
 	Sync gzip core with HEAD.
 	[mrg, ticket #1951]
+
+xsrc/external/mit/libXfont/dist/src/bitmap/bdfread.c patch
+xsrc/xfree/xc/lib/font/bitmap/bdfread.c 	patch
+
+	Fix CVE-2015-1802 (bdfReadProperties: property count needs
+	range check), CVE-2015-1803 (bdfReadCharacters: bailout if a
+	char's bitmap cannot be read), and CVE-2015-1804
+	(bdfReadCharacters: ensure metrics fit into xCharInfo struct)
+	[mrg, ticket #1953]
 
