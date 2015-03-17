@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.42 2015/03/16 21:21:46 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.43 2015/03/17 20:56:39 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.42 2015/03/16 21:21:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.43 2015/03/17 20:56:39 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4304,8 +4304,10 @@ ehci_device_fs_isoc_start(usbd_xfer_handle xfer)
 
 		sitd->sitd.sitd_next = sc->sc_flist[frindex];
 		if (sitd->sitd.sitd_next == 0)
-			/* FIXME: frindex table gets initialized to NULL
-			 * or EHCI_NULL? */
+			/*
+			 * FIXME: frindex table gets initialized to NULL
+			 * or EHCI_NULL?
+			 */
 			sitd->sitd.sitd_next = EHCI_NULL;
 
 		usb_syncmem(&sitd->dma,
