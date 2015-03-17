@@ -77,11 +77,11 @@ gcm_ghash_v8:
 	veor		q9,q9,q10		@ q9 is rotated inp^Xi
 
 .Lgmult_v8:
-	.byte	0x86,0x0e,0xa8,0xf2	@ pmull q0,q12,q3		@ H.lo·Xi.lo
+	.inst	0xf2a80e86	@ pmull q0,q12,q3		@ H.lo·Xi.lo
 	veor		q9,q9,q3		@ Karatsuba pre-processing
-	.byte	0x87,0x4e,0xa9,0xf2	@ pmull2 q2,q12,q3		@ H.hi·Xi.hi
+	.inst	0xf2a94e87	@ pmull2 q2,q12,q3		@ H.hi·Xi.hi
 	subs		r3,r3,#16
-	.byte	0xa2,0x2e,0xaa,0xf2	@ pmull q1,q13,q9		@ (H.lo+H.hi)·(Xi.lo+Xi.hi)
+	.inst	0xf2aa2ea2	@ pmull q1,q13,q9		@ (H.lo+H.hi)·(Xi.lo+Xi.hi)
 	moveq	r12,#0
 
 	vext.8		q9,q0,q2,#8		@ Karatsuba post-processing
@@ -89,7 +89,7 @@ gcm_ghash_v8:
 	veor		q1,q1,q9
 	 vld1.64	{q9},[r2],r12	@ load [rotated] inp
 	veor		q1,q1,q10
-	.byte	0x26,0x4e,0xe0,0xf2	@ pmull q10,q0,q11		@ 1st phase
+	.inst	0xf2e04e26	@ pmull q10,q0,q11		@ 1st phase
 
 	vmov		d4,d3		@ Xh|Xm - 256-bit result
 	vmov		d3,d0		@ Xm is rotated Xl
@@ -100,7 +100,7 @@ gcm_ghash_v8:
 	 vext.8		q3,q9,q9,#8
 
 	vext.8		q10,q0,q0,#8		@ 2nd phase
-	.byte	0x26,0x0e,0xa0,0xf2	@ pmull q0,q0,q11
+	.inst	0xf2a00e26	@ pmull q0,q0,q11
 	veor		q10,q10,q2
 	veor		q0,q0,q10
 	bhs		.Loop_v8

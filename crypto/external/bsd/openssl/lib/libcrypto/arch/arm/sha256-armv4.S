@@ -2574,111 +2574,111 @@ sha256_block_data_order_armv8:
 	teq		r1,r2
 	vld1.32		{q13},[r3]!
 	vadd.i32	q12,q12,q8
-	.byte	0xe2,0x03,0xfa,0xf3	@ sha256su0 q8,q9
+	.inst	0xf3fa03e2	@ sha256su0 q8,q9
 	vmov		q2,q0
-	.byte	0x68,0x0c,0x02,0xf3	@ sha256h q0,q1,q12
-	.byte	0x68,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q12
-	.byte	0xe6,0x0c,0x64,0xf3	@ sha256su1 q8,q10,q11
+	.inst	0xf3020c68	@ sha256h q0,q1,q12
+	.inst	0xf3142c68	@ sha256h2 q1,q2,q12
+	.inst	0xf3640ce6	@ sha256su1 q8,q10,q11
 	vld1.32		{q12},[r3]!
 	vadd.i32	q13,q13,q9
-	.byte	0xe4,0x23,0xfa,0xf3	@ sha256su0 q9,q10
+	.inst	0xf3fa23e4	@ sha256su0 q9,q10
 	vmov		q2,q0
-	.byte	0x6a,0x0c,0x02,0xf3	@ sha256h q0,q1,q13
-	.byte	0x6a,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q13
-	.byte	0xe0,0x2c,0x66,0xf3	@ sha256su1 q9,q11,q8
+	.inst	0xf3020c6a	@ sha256h q0,q1,q13
+	.inst	0xf3142c6a	@ sha256h2 q1,q2,q13
+	.inst	0xf3662ce0	@ sha256su1 q9,q11,q8
 	vld1.32		{q13},[r3]!
 	vadd.i32	q12,q12,q10
-	.byte	0xe6,0x43,0xfa,0xf3	@ sha256su0 q10,q11
+	.inst	0xf3fa43e6	@ sha256su0 q10,q11
 	vmov		q2,q0
-	.byte	0x68,0x0c,0x02,0xf3	@ sha256h q0,q1,q12
-	.byte	0x68,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q12
-	.byte	0xe2,0x4c,0x60,0xf3	@ sha256su1 q10,q8,q9
+	.inst	0xf3020c68	@ sha256h q0,q1,q12
+	.inst	0xf3142c68	@ sha256h2 q1,q2,q12
+	.inst	0xf3604ce2	@ sha256su1 q10,q8,q9
 	vld1.32		{q12},[r3]!
 	vadd.i32	q13,q13,q11
-	.byte	0xe0,0x63,0xfa,0xf3	@ sha256su0 q11,q8
+	.inst	0xf3fa63e0	@ sha256su0 q11,q8
 	vmov		q2,q0
-	.byte	0x6a,0x0c,0x02,0xf3	@ sha256h q0,q1,q13
-	.byte	0x6a,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q13
-	.byte	0xe4,0x6c,0x62,0xf3	@ sha256su1 q11,q9,q10
+	.inst	0xf3020c6a	@ sha256h q0,q1,q13
+	.inst	0xf3142c6a	@ sha256h2 q1,q2,q13
+	.inst	0xf3626ce4	@ sha256su1 q11,q9,q10
 	vld1.32		{q13},[r3]!
 	vadd.i32	q12,q12,q8
-	.byte	0xe2,0x03,0xfa,0xf3	@ sha256su0 q8,q9
+	.inst	0xf3fa03e2	@ sha256su0 q8,q9
 	vmov		q2,q0
-	.byte	0x68,0x0c,0x02,0xf3	@ sha256h q0,q1,q12
-	.byte	0x68,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q12
-	.byte	0xe6,0x0c,0x64,0xf3	@ sha256su1 q8,q10,q11
+	.inst	0xf3020c68	@ sha256h q0,q1,q12
+	.inst	0xf3142c68	@ sha256h2 q1,q2,q12
+	.inst	0xf3640ce6	@ sha256su1 q8,q10,q11
 	vld1.32		{q12},[r3]!
 	vadd.i32	q13,q13,q9
-	.byte	0xe4,0x23,0xfa,0xf3	@ sha256su0 q9,q10
+	.inst	0xf3fa23e4	@ sha256su0 q9,q10
 	vmov		q2,q0
-	.byte	0x6a,0x0c,0x02,0xf3	@ sha256h q0,q1,q13
-	.byte	0x6a,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q13
-	.byte	0xe0,0x2c,0x66,0xf3	@ sha256su1 q9,q11,q8
+	.inst	0xf3020c6a	@ sha256h q0,q1,q13
+	.inst	0xf3142c6a	@ sha256h2 q1,q2,q13
+	.inst	0xf3662ce0	@ sha256su1 q9,q11,q8
 	vld1.32		{q13},[r3]!
 	vadd.i32	q12,q12,q10
-	.byte	0xe6,0x43,0xfa,0xf3	@ sha256su0 q10,q11
+	.inst	0xf3fa43e6	@ sha256su0 q10,q11
 	vmov		q2,q0
-	.byte	0x68,0x0c,0x02,0xf3	@ sha256h q0,q1,q12
-	.byte	0x68,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q12
-	.byte	0xe2,0x4c,0x60,0xf3	@ sha256su1 q10,q8,q9
+	.inst	0xf3020c68	@ sha256h q0,q1,q12
+	.inst	0xf3142c68	@ sha256h2 q1,q2,q12
+	.inst	0xf3604ce2	@ sha256su1 q10,q8,q9
 	vld1.32		{q12},[r3]!
 	vadd.i32	q13,q13,q11
-	.byte	0xe0,0x63,0xfa,0xf3	@ sha256su0 q11,q8
+	.inst	0xf3fa63e0	@ sha256su0 q11,q8
 	vmov		q2,q0
-	.byte	0x6a,0x0c,0x02,0xf3	@ sha256h q0,q1,q13
-	.byte	0x6a,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q13
-	.byte	0xe4,0x6c,0x62,0xf3	@ sha256su1 q11,q9,q10
+	.inst	0xf3020c6a	@ sha256h q0,q1,q13
+	.inst	0xf3142c6a	@ sha256h2 q1,q2,q13
+	.inst	0xf3626ce4	@ sha256su1 q11,q9,q10
 	vld1.32		{q13},[r3]!
 	vadd.i32	q12,q12,q8
-	.byte	0xe2,0x03,0xfa,0xf3	@ sha256su0 q8,q9
+	.inst	0xf3fa03e2	@ sha256su0 q8,q9
 	vmov		q2,q0
-	.byte	0x68,0x0c,0x02,0xf3	@ sha256h q0,q1,q12
-	.byte	0x68,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q12
-	.byte	0xe6,0x0c,0x64,0xf3	@ sha256su1 q8,q10,q11
+	.inst	0xf3020c68	@ sha256h q0,q1,q12
+	.inst	0xf3142c68	@ sha256h2 q1,q2,q12
+	.inst	0xf3640ce6	@ sha256su1 q8,q10,q11
 	vld1.32		{q12},[r3]!
 	vadd.i32	q13,q13,q9
-	.byte	0xe4,0x23,0xfa,0xf3	@ sha256su0 q9,q10
+	.inst	0xf3fa23e4	@ sha256su0 q9,q10
 	vmov		q2,q0
-	.byte	0x6a,0x0c,0x02,0xf3	@ sha256h q0,q1,q13
-	.byte	0x6a,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q13
-	.byte	0xe0,0x2c,0x66,0xf3	@ sha256su1 q9,q11,q8
+	.inst	0xf3020c6a	@ sha256h q0,q1,q13
+	.inst	0xf3142c6a	@ sha256h2 q1,q2,q13
+	.inst	0xf3662ce0	@ sha256su1 q9,q11,q8
 	vld1.32		{q13},[r3]!
 	vadd.i32	q12,q12,q10
-	.byte	0xe6,0x43,0xfa,0xf3	@ sha256su0 q10,q11
+	.inst	0xf3fa43e6	@ sha256su0 q10,q11
 	vmov		q2,q0
-	.byte	0x68,0x0c,0x02,0xf3	@ sha256h q0,q1,q12
-	.byte	0x68,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q12
-	.byte	0xe2,0x4c,0x60,0xf3	@ sha256su1 q10,q8,q9
+	.inst	0xf3020c68	@ sha256h q0,q1,q12
+	.inst	0xf3142c68	@ sha256h2 q1,q2,q12
+	.inst	0xf3604ce2	@ sha256su1 q10,q8,q9
 	vld1.32		{q12},[r3]!
 	vadd.i32	q13,q13,q11
-	.byte	0xe0,0x63,0xfa,0xf3	@ sha256su0 q11,q8
+	.inst	0xf3fa63e0	@ sha256su0 q11,q8
 	vmov		q2,q0
-	.byte	0x6a,0x0c,0x02,0xf3	@ sha256h q0,q1,q13
-	.byte	0x6a,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q13
-	.byte	0xe4,0x6c,0x62,0xf3	@ sha256su1 q11,q9,q10
+	.inst	0xf3020c6a	@ sha256h q0,q1,q13
+	.inst	0xf3142c6a	@ sha256h2 q1,q2,q13
+	.inst	0xf3626ce4	@ sha256su1 q11,q9,q10
 	vld1.32		{q13},[r3]!
 	vadd.i32	q12,q12,q8
 	vmov		q2,q0
-	.byte	0x68,0x0c,0x02,0xf3	@ sha256h q0,q1,q12
-	.byte	0x68,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q12
+	.inst	0xf3020c68	@ sha256h q0,q1,q12
+	.inst	0xf3142c68	@ sha256h2 q1,q2,q12
 
 	vld1.32		{q12},[r3]!
 	vadd.i32	q13,q13,q9
 	vmov		q2,q0
-	.byte	0x6a,0x0c,0x02,0xf3	@ sha256h q0,q1,q13
-	.byte	0x6a,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q13
+	.inst	0xf3020c6a	@ sha256h q0,q1,q13
+	.inst	0xf3142c6a	@ sha256h2 q1,q2,q13
 
 	vld1.32		{q13},[r3]
 	vadd.i32	q12,q12,q10
 	sub		r3,r3,#256-16	@ rewind
 	vmov		q2,q0
-	.byte	0x68,0x0c,0x02,0xf3	@ sha256h q0,q1,q12
-	.byte	0x68,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q12
+	.inst	0xf3020c68	@ sha256h q0,q1,q12
+	.inst	0xf3142c68	@ sha256h2 q1,q2,q12
 
 	vadd.i32	q13,q13,q11
 	vmov		q2,q0
-	.byte	0x6a,0x0c,0x02,0xf3	@ sha256h q0,q1,q13
-	.byte	0x6a,0x2c,0x14,0xf3	@ sha256h2 q1,q2,q13
+	.inst	0xf3020c6a	@ sha256h q0,q1,q13
+	.inst	0xf3142c6a	@ sha256h2 q1,q2,q13
 
 	vadd.i32	q0,q0,q14
 	vadd.i32	q1,q1,q15

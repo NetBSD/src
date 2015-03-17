@@ -99,27 +99,27 @@ _armv7_tick:
 .global	_armv8_aes_probe
 .type	_armv8_aes_probe,%function
 _armv8_aes_probe:
-	.byte	0x00,0x03,0xb0,0xf3	@ aese.8	q0,q0
+	.inst	0xf3b00300	@ aese.8	q0,q0
 	RET
 .size	_armv8_aes_probe,.-_armv8_aes_probe
 
 .global	_armv8_sha1_probe
 .type	_armv8_sha1_probe,%function
 _armv8_sha1_probe:
-	.byte	0x40,0x0c,0x00,0xf2	@ sha1c.32	q0,q0,q0
+	.inst	0xf2000c40	@ sha1c.32	q0,q0,q0
 	RET
 .size	_armv8_sha1_probe,.-_armv8_sha1_probe
 
 .global	_armv8_sha256_probe
 .type	_armv8_sha256_probe,%function
 _armv8_sha256_probe:
-	.byte	0x40,0x0c,0x00,0xf3	@ sha256h.32	q0,q0,q0
+	.inst	0xf3000c40	@ sha256h.32	q0,q0,q0
 	RET
 .size	_armv8_sha256_probe,.-_armv8_sha256_probe
 .global	_armv8_pmull_probe
 .type	_armv8_pmull_probe,%function
 _armv8_pmull_probe:
-	.byte	0x00,0x0e,0xa0,0xf2	@ vmull.p64	q0,d0,d0
+	.inst	0xf2a00e00	@ vmull.p64	q0,d0,d0
 	RET
 .size	_armv8_pmull_probe,.-_armv8_pmull_probe
 #endif
