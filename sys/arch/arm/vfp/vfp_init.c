@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.42 2015/02/09 07:55:52 slp Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.43 2015/03/17 17:20:55 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -376,7 +376,8 @@ vfp_attach(struct cpu_info *ci)
 	install_coproc_handler(VFP_COPROC, vfp_handler);
 	install_coproc_handler(VFP_COPROC2, vfp_handler);
 #ifdef CPU_CORTEX
-	install_coproc_handler(CORE_UNKNOWN_HANDLER, neon_handler);
+	if (cpu_neon_present)
+		install_coproc_handler(CORE_UNKNOWN_HANDLER, neon_handler);
 #endif
 }
 
@@ -399,7 +400,7 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	 * If we are just changing/fetching FPSCR, don't bother loading it.
 	 */
 	if (!vfp_fpscr_handler(address, insn, frame, fault_code))
-		return 0;
+		return 1;
 
 	/*
 	 * Make sure we own the FP.
@@ -467,6 +468,10 @@ neon_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	/* This shouldn't ever happen.  */
 	if (fault_code != FAULT_USER)
 		panic("NEON fault in non-user mode");
+
+	/* if we already own the FPU, raise SIGILL */
+	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp)
+		return 0;
 
 	pcu_load(&arm_vfp_ops);
 
