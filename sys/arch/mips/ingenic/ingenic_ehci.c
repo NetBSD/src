@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_ehci.c,v 1.1 2015/03/08 17:14:27 macallan Exp $ */
+/*	$NetBSD: ingenic_ehci.c,v 1.2 2015/03/17 07:25:07 macallan Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_ehci.c,v 1.1 2015/03/08 17:14:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_ehci.c,v 1.2 2015/03/17 07:25:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,11 +114,11 @@ ingenic_ehci_attach(device_t parent, device_t self, void *aux)
 	/* Disable EHCI interrupts */
 	bus_space_write_4(sc->iot, sc->ioh, EHCI_USBINTR, 0);
 
-	ih = evbmips_intr_establish(20, ehci_intr, sc);
+	ih = evbmips_intr_establish(aa->aa_irq, ehci_intr, sc);
 		
 	if (ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		     20);
+		     aa->aa_irq);
 		goto fail;
 	}
 
