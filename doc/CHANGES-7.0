@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.229 2015/03/17 17:53:36 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.230 2015/03/17 19:00:42 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18588,4 +18588,35 @@ sys/external/bsd/drm2/include/drm/intel-gtt.h	1.5
 
 	Additional DRM fixes.
 	[snj, ticket #590]
+
+xsrc/external/mit/libXfont/dist/ChangeLog	up to 1.1.1.9
+xsrc/external/mit/libXfont/dist/Makefile.in	up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/aclocal.m4	up to 1.1.1.9
+xsrc/external/mit/libXfont/dist/compile		up to 1.1.1.2
+xsrc/external/mit/libXfont/dist/config.guess	up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/config.sub	up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/configure	up to 1.1.1.9
+xsrc/external/mit/libXfont/dist/configure.ac	up to 1.1.1.9
+xsrc/external/mit/libXfont/dist/depcomp		up to 1.1.1.6
+xsrc/external/mit/libXfont/dist/doc/Makefile.in	up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/install-sh	up to 1.1.1.6
+xsrc/external/mit/libXfont/dist/missing		up to 1.1.1.7
+xsrc/external/mit/libXfont/dist/src/FreeType/Makefile.in up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/src/Makefile.in	up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/src/bitmap/Makefile.in up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/src/bitmap/bdfread.c up to 1.4
+xsrc/external/mit/libXfont/dist/src/builtins/Makefile.in up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/src/fc/Makefile.in up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/src/fc/fslibos.h up to 1.1.1.4
+xsrc/external/mit/libXfont/dist/src/fontfile/Makefile.in up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/src/stubs/Makefile.in up to 1.1.1.8
+xsrc/external/mit/libXfont/dist/src/util/Makefile.in up to 1.1.1.8
+xsrc/external/mit/libXfont/include/config.h	1.7
+xsrc/xfree/xc/lib/font/bitmap/bdfread.c		1.5
+
+	Fix CVE-2015-1802 (bdfReadProperties: property count needs
+	range check), CVE-2015-1803 (bdfReadCharacters: bailout if a
+	char's bitmap cannot be read), and CVE-2015-1804
+	(bdfReadCharacters: ensure metrics fit into xCharInfo struct)
+	[mrg, ticket #620]
 
