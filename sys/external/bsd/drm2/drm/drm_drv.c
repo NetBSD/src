@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.9.2.3 2015/03/06 21:39:10 snj Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.9.2.4 2015/03/17 17:52:49 riz Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.9.2.3 2015/03/06 21:39:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.9.2.4 2015/03/17 17:52:49 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -469,6 +469,8 @@ drm_dequeue_event(struct drm_file *file, size_t max_length,
 	event = list_first_entry(&file->event_list, struct drm_pending_event,
 	    link);
 	if (event->event->length > max_length) {
+		/* Event is too large, can't return it.  */
+		event = NULL;
 		ret = 0;
 		goto out;
 	}
