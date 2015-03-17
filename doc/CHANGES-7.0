@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.228 2015/03/15 23:04:54 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.229 2015/03/17 17:53:36 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18576,4 +18576,16 @@ tests/usr.bin/config/support/conf/Makefile.kern.inc 1.1
 	Now config(1) checks the content of $S/conf/Makefile.kern.inc.
 	Install it into config(1) test directory to fix tests.
 	[bouyer, ticket #596]
+
+sys/dev/pci/agp_i810.c				1.115-1.117
+sys/dev/pci/agp_i810var.h			1.6
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.28
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/clock/nouveau_subdev_clock_nv50.c 1.3
+sys/external/bsd/drm2/drm/drm_drv.c		1.15
+sys/external/bsd/drm2/drm/drm_gem_vm.c		1.6
+sys/external/bsd/drm2/i915drm/intel_gtt.c	1.5
+sys/external/bsd/drm2/include/drm/intel-gtt.h	1.5
+
+	Additional DRM fixes.
+	[snj, ticket #590]
 
