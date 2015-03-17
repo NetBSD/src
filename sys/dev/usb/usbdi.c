@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.19 2015/03/11 07:48:42 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.20 2015/03/17 19:02:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.19 2015/03/11 07:48:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.20 2015/03/17 19:02:44 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1208,7 +1208,7 @@ usbd_get_endpoint_descriptor(usbd_interface_handle iface, uint8_t address)
 /*
  * usbd_ratecheck() can limit the number of error messages that occurs.
  * When a device is unplugged it may take up to 0.25s for the hub driver
- * to notice it.  If the driver continuosly tries to do I/O operations
+ * to notice it.  If the driver continuously tries to do I/O operations
  * this can generate a large number of messages.
  */
 int
