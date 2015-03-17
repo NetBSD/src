@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.8 2015/03/17 07:25:07 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.9 2015/03/17 09:26:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.8 2015/03/17 07:25:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.9 2015/03/17 09:26:31 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -170,11 +170,11 @@ apbus_print(void *aux, const char *pnp)
 
 	if (pnp) {
 		aprint_normal("%s at %s", aa->aa_name, pnp);
-		if (aa->aa_addr != -1)
-			aprint_normal(" addr 0x%" PRIxBUSADDR, aa->aa_addr);
-		if (aa->aa_irq != -1)
-			aprint_normal(" irq %d", aa->aa_irq);
 	}
+	if (aa->aa_addr != -1)
+		aprint_normal(" addr 0x%" PRIxBUSADDR, aa->aa_addr);
+	if ((pnp == NULL) && (aa->aa_irq != -1))
+		aprint_normal(" irq %d", aa->aa_irq);
 	return (UNCONF);
 }
 
