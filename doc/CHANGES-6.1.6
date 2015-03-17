@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.32 2015/03/05 22:26:20 riz Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.33 2015/03/17 18:38:59 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -4121,4 +4121,13 @@ distrib/sets/lists/text/mi			1.43
 	Move mandoc and makemandb to the base set, making it possible to read
 	man pages on a system that doesn't have the text set.  Fixes PR 49230.
 	[snj, ticket #1263]
+
+xsrc/external/mit/libXfont/dist/src/bitmap/bdfread.c patch
+xsrc/xfree/xc/lib/font/bitmap/bdfread.c 	patch
+
+	Fix CVE-2015-1802 (bdfReadProperties: property count needs
+	range check), CVE-2015-1803 (bdfReadCharacters: bailout if a
+	char's bitmap cannot be read), and CVE-2015-1804
+	(bdfReadCharacters: ensure metrics fit into xCharInfo struct)
+	[mrg, ticket #1280]
 
