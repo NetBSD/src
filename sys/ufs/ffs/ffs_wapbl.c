@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.28 2014/07/11 16:17:29 christos Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.29 2015/03/17 09:39:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.28 2014/07/11 16:17:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.29 2015/03/17 09:39:29 hannken Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -610,31 +610,34 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
     daddr_t *startp, size_t *countp, uint64_t *extradatap)
 {
 	struct vnode *vp, *rvp;
+	struct vattr va;
 	struct inode *ip;
 	int error;
 
 	if ((error = VFS_ROOT(mp, &rvp)) != 0)
 		return error;
 
-	error = UFS_VALLOC(rvp, 0 | S_IFREG, NOCRED, &vp);
-	if (mp->mnt_flag & MNT_UPDATE) {
-		vput(rvp);
-	} else {
-		VOP_UNLOCK(rvp);
-		vgone(rvp);
-	}
-	if (error != 0)
+	vattr_null(&va);
+	va.va_type = VREG;
+	va.va_mode = 0;
+
+	error = vcache_new(mp, rvp, &va, NOCRED, &vp);
+	vput(rvp);
+	if (error)
 		return error;
 
-	vp->v_type = VREG;
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(vp);
+		return error;
+	}
+
 	ip = VTOI(vp);
-	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	ip->i_mode = 0 | IFREG;
-	DIP_ASSIGN(ip, mode, ip->i_mode);
 	ip->i_flags = SF_LOG;
 	DIP_ASSIGN(ip, flags, ip->i_flags);
 	ip->i_nlink = 1;
 	DIP_ASSIGN(ip, nlink, 1);
+	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 
 	if ((error = wapbl_allocate_log_file(mp, vp,

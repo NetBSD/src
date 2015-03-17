@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.324 2015/03/15 09:21:01 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.325 2015/03/17 09:39:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.324 2015/03/15 09:21:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.325 2015/03/17 09:39:29 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -114,6 +114,9 @@ MODULE(MODULE_CLASS_VFS, ffs, NULL);
 static int ffs_vfs_fsync(vnode_t *, int);
 static int ffs_superblock_validate(struct fs *);
 
+static int ffs_init_vnode(struct ufsmount *, struct vnode *, ino_t);
+static void ffs_deinit_vnode(struct ufsmount *, struct vnode *);
+
 static struct sysctllog *ffs_sysctl_log;
 
 static kauth_listener_t ffs_snapshot_listener;
@@ -150,6 +153,7 @@ struct vfsops ffs_vfsops = {
 	.vfs_sync = ffs_sync,
 	.vfs_vget = ufs_vget,
 	.vfs_loadvnode = ffs_loadvnode,
+	.vfs_newvnode = ffs_newvnode,
 	.vfs_fhtovp = ffs_fhtovp,
 	.vfs_vptofh = ffs_vptofh,
 	.vfs_init = ffs_init,
@@ -176,8 +180,6 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_itimes = ffs_itimes,
 	.uo_update = ffs_update,
 	.uo_truncate = ffs_truncate,
-	.uo_valloc = ffs_valloc,
-	.uo_vfree = ffs_vfree,
 	.uo_balloc = ffs_balloc,
 	.uo_snapgone = ffs_snapgone,
 };
@@ -1927,25 +1929,16 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 }
 
 /*
- * Read an inode from disk and initialize this vnode / inode pair.
- * Caller assures no other thread will try to load this inode.
+ * Load inode from disk and initialize vnode.
  */
-int
-ffs_loadvnode(struct mount *mp, struct vnode *vp,
-    const void *key, size_t key_len, const void **new_key)
+static int
+ffs_init_vnode(struct ufsmount *ump, struct vnode *vp, ino_t ino)
 {
-	ino_t ino;
 	struct fs *fs;
 	struct inode *ip;
-	struct ufsmount *ump;
 	struct buf *bp;
-	dev_t dev;
 	int error;
 
-	KASSERT(key_len == sizeof(ino));
-	memcpy(&ino, key, key_len);
-	ump = VFSTOUFS(mp);
-	dev = ump->um_dev;
 	fs = ump->um_fs;
 
 	/* Read in the disk contents for the inode. */
@@ -1957,23 +1950,11 @@ ffs_loadvnode(struct mount *mp, struct vnode *vp,
 	/* Allocate and initialize inode. */
 	ip = pool_cache_get(ffs_inode_cache, PR_WAITOK);
 	memset(ip, 0, sizeof(struct inode));
-	vp->v_tag = VT_UFS;
-	vp->v_op = ffs_vnodeop_p;
-	vp->v_vflag |= VV_LOCKSWORK;
-	vp->v_data = ip;
-	ip->i_vnode = vp;
 	ip->i_ump = ump;
 	ip->i_fs = fs;
-	ip->i_dev = dev;
+	ip->i_dev = ump->um_dev;
 	ip->i_number = ino;
-#if defined(QUOTA) || defined(QUOTA2)
-	ufsquota_init(ip);
-#endif
-
-	/* Initialize genfs node. */
-	genfs_node_init(vp, &ffs_genfsops);
-
-	if (ip->i_ump->um_fstype == UFS1)
+	if (ump->um_fstype == UFS1)
 		ip->i_din.ffs1_din = pool_cache_get(ffs_dinode1_cache,
 		    PR_WAITOK);
 	else
@@ -1981,6 +1962,70 @@ ffs_loadvnode(struct mount *mp, struct vnode *vp,
 		    PR_WAITOK);
 	ffs_load_inode(bp, ip, fs, ino);
 	brelse(bp, 0);
+	ip->i_vnode = vp;
+#if defined(QUOTA) || defined(QUOTA2)
+	ufsquota_init(ip);
+#endif
+
+	/* Initialise vnode with this inode. */
+	vp->v_tag = VT_UFS;
+	vp->v_op = ffs_vnodeop_p;
+	vp->v_vflag |= VV_LOCKSWORK;
+	vp->v_data = ip;
+
+	/* Initialize genfs node. */
+	genfs_node_init(vp, &ffs_genfsops);
+
+	return 0;
+}
+
+/*
+ * Undo ffs_init_vnode().
+ */
+static void
+ffs_deinit_vnode(struct ufsmount *ump, struct vnode *vp)
+{
+	struct inode *ip = VTOI(vp);
+
+	if (ump->um_fstype == UFS1)
+		pool_cache_put(ffs_dinode1_cache, ip->i_din.ffs1_din);
+	else
+		pool_cache_put(ffs_dinode2_cache, ip->i_din.ffs2_din);
+	pool_cache_put(ffs_inode_cache, ip);
+
+	genfs_node_destroy(vp);
+	vp->v_data = NULL;
+}
+
+/*
+ * Read an inode from disk and initialize this vnode / inode pair.
+ * Caller assures no other thread will try to load this inode.
+ */
+int
+ffs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	ino_t ino;
+	struct fs *fs;
+	struct inode *ip;
+	struct ufsmount *ump;
+	int error;
+
+	KASSERT(key_len == sizeof(ino));
+	memcpy(&ino, key, key_len);
+	ump = VFSTOUFS(mp);
+	fs = ump->um_fs;
+
+	error = ffs_init_vnode(ump, vp, ino);
+	if (error)
+		return error;
+
+	ip = VTOI(vp);
+	if (ip->i_mode == 0) {
+		ffs_deinit_vnode(ump, vp);
+
+		return ENOENT;
+	}
 
 	/* Initialize the vnode from the inode. */
 	ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
@@ -1998,6 +2043,119 @@ ffs_loadvnode(struct mount *mp, struct vnode *vp,
 		ip->i_uid = ip->i_ffs1_ouid;			/* XXX */
 		ip->i_gid = ip->i_ffs1_ogid;			/* XXX */
 	}							/* XXX */
+	uvm_vnp_setsize(vp, ip->i_size);
+	*new_key = &ip->i_number;
+	return 0;
+}
+
+/*
+ * Create a new inode on disk and initialize this vnode / inode pair.
+ */
+int
+ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
+    struct vattr *vap, kauth_cred_t cred,
+    size_t *key_len, const void **new_key)
+{
+	ino_t ino;
+	struct fs *fs;
+	struct inode *ip;
+	struct timespec ts;
+	struct ufsmount *ump;
+	int error, mode;
+
+	KASSERT(dvp->v_mount == mp);
+	KASSERT(vap->va_type != VNON);
+
+	*key_len = sizeof(ino);
+	ump = VFSTOUFS(mp);
+	fs = ump->um_fs;
+	mode = MAKEIMODE(vap->va_type, vap->va_mode);
+
+	/* Allocate fresh inode. */
+	error = ffs_valloc(dvp, mode, cred, &ino);
+	if (error)
+		return error;
+
+	/* Attach inode to vnode. */
+	error = ffs_init_vnode(ump, vp, ino);
+	if (error) {
+		if (UFS_WAPBL_BEGIN(mp) == 0) {
+			ffs_vfree(dvp, ino, mode);
+			UFS_WAPBL_END(mp);
+		}
+		return error;
+	}
+
+	ip = VTOI(vp);
+	if (ip->i_mode || DIP(ip, size) || DIP(ip, blocks)) {
+		printf("free ino %" PRId64 " on %s:\n", ino, fs->fs_fsmnt);
+		printf("dmode %x mode %x dgen %x gen %x\n",
+		    DIP(ip, mode), ip->i_mode,
+		    DIP(ip, gen), ip->i_gen);
+		printf("size %" PRIx64 " blocks %" PRIx64 "\n",
+		    DIP(ip, size), DIP(ip, blocks));
+		panic("ffs_init_vnode: dup alloc");
+	}
+
+	/* Set uid / gid. */
+	if (cred == NOCRED || cred == FSCRED) {
+		ip->i_gid = 0;
+		ip->i_uid = 0;
+	} else {
+		ip->i_gid = VTOI(dvp)->i_gid;
+		ip->i_uid = kauth_cred_geteuid(cred);
+	}
+	DIP_ASSIGN(ip, gid, ip->i_gid);
+	DIP_ASSIGN(ip, uid, ip->i_uid);
+
+#if defined(QUOTA) || defined(QUOTA2)
+	error = UFS_WAPBL_BEGIN(mp);
+	if (error) {
+		ffs_deinit_vnode(ump, vp);
+
+		return error;
+	}
+	error = chkiq(ip, 1, cred, 0);
+	if (error) {
+		ffs_vfree(dvp, ino, mode);
+		UFS_WAPBL_END(mp);
+		ffs_deinit_vnode(ump, vp);
+
+		return error;
+	}
+	UFS_WAPBL_END(mp);
+#endif
+
+	/* Set type and finalize. */
+	ip->i_flags = 0;
+	DIP_ASSIGN(ip, flags, 0);
+	ip->i_mode = mode;
+	DIP_ASSIGN(ip, mode, mode);
+	if (vap->va_rdev != VNOVAL) {
+		/*
+		 * Want to be able to use this to make badblock
+		 * inodes, so don't truncate the dev number.
+		 */
+		if (ump->um_fstype == UFS1)
+			ip->i_ffs1_rdev = ufs_rw32(vap->va_rdev,
+			    UFS_MPNEEDSWAP(ump));
+		else
+			ip->i_ffs2_rdev = ufs_rw64(vap->va_rdev,
+			    UFS_MPNEEDSWAP(ump));
+	}
+	ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
+	ip->i_devvp = ump->um_devvp;
+	vref(ip->i_devvp);
+
+	/* Set up a new generation number for this inode.  */
+	ip->i_gen++;
+	DIP_ASSIGN(ip, gen, ip->i_gen);
+	if (fs->fs_magic == FS_UFS2_MAGIC) {
+		vfs_timestamp(&ts);
+		ip->i_ffs2_birthtime = ts.tv_sec;
+		ip->i_ffs2_birthnsec = ts.tv_nsec;
+	}
+
 	uvm_vnp_setsize(vp, ip->i_size);
 	*new_key = &ip->i_number;
 	return 0;

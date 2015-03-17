@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.147 2014/09/08 20:52:37 joerg Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.148 2015/03/17 09:39:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.147 2014/09/08 20:52:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.148 2015/03/17 09:39:29 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -555,20 +555,16 @@ nospace:
  * => um_lock not held upon entry or return
  */
 int
-ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
-    struct vnode **vpp)
+ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred, ino_t *inop)
 {
 	struct ufsmount *ump;
 	struct inode *pip;
 	struct fs *fs;
-	struct inode *ip;
-	struct timespec ts;
 	ino_t ino, ipref;
 	int cg, error;
 
 	UFS_WAPBL_JUNLOCK_ASSERT(pvp->v_mount);
 
-	*vpp = NULL;
 	pip = VTOI(pvp);
 	fs = pip->i_fs;
 	ump = pip->i_ump;
@@ -603,63 +599,15 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	if (ino == 0)
 		goto noinodes;
 	UFS_WAPBL_END(pvp->v_mount);
-	error = VFS_VGET(pvp->v_mount, ino, vpp);
-	if (error) {
-		int err;
-		err = UFS_WAPBL_BEGIN(pvp->v_mount);
-		if (err == 0)
-			ffs_vfree(pvp, ino, mode);
-		if (err == 0)
-			UFS_WAPBL_END(pvp->v_mount);
-		return (error);
-	}
-	KASSERT((*vpp)->v_type == VNON);
-	ip = VTOI(*vpp);
-	if (ip->i_mode) {
-#if 0
-		printf("mode = 0%o, inum = %d, fs = %s\n",
-		    ip->i_mode, ip->i_number, fs->fs_fsmnt);
-#else
-		printf("dmode %x mode %x dgen %x gen %x\n",
-		    DIP(ip, mode), ip->i_mode,
-		    DIP(ip, gen), ip->i_gen);
-		printf("size %llx blocks %llx\n",
-		    (long long)DIP(ip, size), (long long)DIP(ip, blocks));
-		printf("ino %llu ipref %llu\n", (unsigned long long)ino,
-		    (unsigned long long)ipref);
-#if 0
-		error = bread(ump->um_devvp, FFS_FSBTODB(fs, ino_to_fsba(fs, ino)),
-		    (int)fs->fs_bsize, NOCRED, 0, &bp);
-#endif
+	*inop = ino;
+	return 0;
 
-#endif
-		panic("ffs_valloc: dup alloc");
-	}
-	if (DIP(ip, blocks)) {				/* XXX */
-		printf("free inode %llu on %s had %" PRId64 " blocks\n",
-		    (unsigned long long)ino, fs->fs_fsmnt, DIP(ip, blocks));
-		DIP_ASSIGN(ip, blocks, 0);
-	}
-	ip->i_flag &= ~IN_SPACECOUNTED;
-	ip->i_flags = 0;
-	DIP_ASSIGN(ip, flags, 0);
-	/*
-	 * Set up a new generation number for this inode.
-	 */
-	ip->i_gen++;
-	DIP_ASSIGN(ip, gen, ip->i_gen);
-	if (fs->fs_magic == FS_UFS2_MAGIC) {
-		vfs_timestamp(&ts);
-		ip->i_ffs2_birthtime = ts.tv_sec;
-		ip->i_ffs2_birthnsec = ts.tv_nsec;
-	}
-	return (0);
 noinodes:
 	mutex_exit(&ump->um_lock);
 	UFS_WAPBL_END(pvp->v_mount);
 	ffs_fserr(fs, kauth_cred_geteuid(cred), "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->fs_fsmnt);
-	return (ENOSPC);
+	return ENOSPC;
 }
 
 /*

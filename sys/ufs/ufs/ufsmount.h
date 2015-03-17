@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.41 2013/08/11 04:36:17 dholland Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.42 2015/03/17 09:39:29 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -134,8 +134,6 @@ struct ufs_ops {
 	int (*uo_update)(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
 	int (*uo_truncate)(struct vnode *, off_t, int, kauth_cred_t);
-	int (*uo_valloc)(struct vnode *, int, kauth_cred_t, struct vnode **);
-	int (*uo_vfree)(struct vnode *, ino_t, int);
 	int (*uo_balloc)(struct vnode *, off_t, int, kauth_cred_t, int,
 	    struct buf **);
         void (*uo_snapgone)(struct vnode *);
@@ -149,10 +147,6 @@ struct ufs_ops {
 	(*UFS_OPS(vp)->uo_update)((vp), (acc), (mod), (flags))
 #define	UFS_TRUNCATE(vp, off, flags, cr) \
 	(*UFS_OPS(vp)->uo_truncate)((vp), (off), (flags), (cr))
-#define	UFS_VALLOC(vp, mode, cr, vpp) \
-	(*UFS_OPS(vp)->uo_valloc)((vp), (mode), (cr), (vpp))
-#define	UFS_VFREE(vp, ino, mode) \
-	(*UFS_OPS(vp)->uo_vfree)((vp), (ino), (mode))
 #define	UFS_BALLOC(vp, off, size, cr, flags, bpp) \
 	(*UFS_OPS(vp)->uo_balloc)((vp), (off), (size), (cr), (flags), (bpp))
 #define	UFS_SNAPGONE(vp) \
