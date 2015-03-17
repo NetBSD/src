@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.5 2015/02/01 12:08:15 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.6 2015/03/17 19:10:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.5 2015/02/01 12:08:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.6 2015/03/17 19:10:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -257,6 +257,7 @@ usb_block_freemem(usb_dma_block_t *b)
 usbd_status
 usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 {
+
 	return usb_allocmem_flags(bus, size, align, p, 0);
 }
 
@@ -387,10 +388,12 @@ usb_dmaaddr(usb_dma_t *dma, unsigned int offset)
 		return dma->udma_block->map->dm_segs[0].ds_addr + offset;
 	}
 
-	/* Search for a bus_segment_t corresponding to this offset. With no
+	/*
+	 * Search for a bus_segment_t corresponding to this offset. With no
 	 * record of the offset in the map to a particular dma_segment_t, we
 	 * have to iterate from the start of the list each time. Could be
-	 * improved */
+	 * improved
+	 */
 	seg_offs = 0;
 	for (i = 0; i < dma->udma_block->nsegs; i++) {
 		if (seg_offs + dma->udma_block->map->dm_segs[i].ds_len > offset)
@@ -407,6 +410,7 @@ usb_dmaaddr(usb_dma_t *dma, unsigned int offset)
 void
 usb_syncmem(usb_dma_t *p, bus_addr_t offset, bus_size_t len, int ops)
 {
+
 	bus_dmamap_sync(p->udma_block->tag, p->udma_block->map, p->udma_offs + offset,
 	    len, ops);
 }
