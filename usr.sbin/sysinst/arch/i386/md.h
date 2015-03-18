@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.4.1 2014/12/04 19:18:09 snj Exp $	*/
+/*	$NetBSD: md.h,v 1.1.4.2 2015/03/18 03:57:16 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -75,10 +75,8 @@
  */
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
-#define SET_KERNEL_DRMKMS	SET_KERNEL_2
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-#define SET_KERNEL_2_NAME	"kern-DRMKMS"
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.

@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.380.2.1 2014/11/18 19:05:30 snj Exp $
+# $NetBSD: ALL,v 1.380.2.2 2015/03/18 03:57:15 snj Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.380.2.1 $"
+#ident 		"ALL-$Revision: 1.380.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -588,17 +588,26 @@ voodoofb*	at pci? dev ? function ?
 wcfb*	at pci? dev ? function ?
 wsdisplay*	at wsemuldisplaydev?
 
-# DRI driver
-i915drm*	at drm?		# Intel i915, i945 DRM driver
-mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
-mgadrm* 	at drm?		# Matrox G[24]00, G[45]50 DRM driver
-r128drm*	at drm?		# ATI Rage 128 DRM driver
-radeondrm*	at drm?		# ATI Radeon DRM driver
-savagedrm*	at drm?		# S3 Savage DRM driver
-sisdrm* 	at drm?		# SiS DRM driver
-tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
-vboxdrm*	at drm?		# VirtualBox DRM driver
-viadrm* 	at drm?		# VIA UniChrome DRM driver
+# DRI legacy drivers
+#i915drm*	at drm?		# Intel i915, i945 DRM driver
+#mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
+#mgadrm* 	at drm?		# Matrox G[24]00, G[45]50 DRM driver
+#r128drm*	at drm?		# ATI Rage 128 DRM driver
+#radeondrm*	at drm?		# ATI Radeon DRM driver
+#savagedrm*	at drm?		# S3 Savage DRM driver
+#sisdrm* 	at drm?		# SiS DRM driver
+#tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
+#vboxdrm*	at drm?		# VirtualBox DRM driver
+#viadrm* 	at drm?		# VIA UniChrome DRM driver
+
+i915drmkms* 	at pci? dev ? function ?
+intelfb* 	at intelfbbus?
+
+radeon* 	at pci? dev ? function ?
+radeondrmkmsfb* at radeonfbbus?
+
+#nouveau*	at pci? dev ? function ?
+#nouveaufb*	at nouveaufbbus
 
 attimer0	at isa?
 pcppi0		at isa?
@@ -2236,7 +2245,6 @@ options NOTDEF_DEBUG
 options NOT_DEBUG
 options NSIODEBUG
 options NTFS_DEBUG
-options NV_DEBUG
 options OBOE_DEBUG
 options OFW_DEBUG
 options OHCI_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.1.4.1 2014/12/04 19:18:09 snj Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.1.4.2 2015/03/18 03:57:16 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,4 +157,3 @@ message updatembr
 avec la dernière version du code d'amorçage de NetBSD ?}
 
 message set_kernel_1	{Kernel (GENERIC)}
-message set_kernel_2	{Kernel (DRMKMS)}

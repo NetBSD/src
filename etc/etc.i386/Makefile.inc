@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.67.12.2 2015/03/09 09:06:04 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.67.12.3 2015/03/18 03:57:15 snj Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -8,7 +8,6 @@
 
 KERNEL_SETS=	GENERIC
 KERNEL_SETS+=	MONOLITHIC
-KERNEL_SETS+=	DRMKMS
 KERNEL_SETS+=	LEGACY
 KERNEL_SETS+=	XEN3_DOM0
 KERNEL_SETS+=	XEN3_DOMU
