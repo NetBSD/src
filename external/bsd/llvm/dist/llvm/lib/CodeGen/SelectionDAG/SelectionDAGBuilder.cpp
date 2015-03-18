@@ -2071,14 +2071,10 @@ void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &LP) {
   // Get the two live-in registers as SDValues. The physregs have already been
   // copied into virtual registers.
   SDValue Ops[2];
-  if (FuncInfo.ExceptionPointerVirtReg) {
-    Ops[0] = DAG.getZExtOrTrunc(
-        DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(),
-                           FuncInfo.ExceptionPointerVirtReg, TLI.getPointerTy()),
-        getCurSDLoc(), ValueVTs[0]);
-  } else {
-    Ops[0] = DAG.getConstant(0, TLI.getPointerTy());
-  }
+  Ops[0] = DAG.getZExtOrTrunc(
+      DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(),
+                         FuncInfo.ExceptionPointerVirtReg, TLI.getPointerTy()),
+      getCurSDLoc(), ValueVTs[0]);
   Ops[1] = DAG.getZExtOrTrunc(
       DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(),
                          FuncInfo.ExceptionSelectorVirtReg, TLI.getPointerTy()),
@@ -2088,27 +2084,6 @@ void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &LP) {
   SDValue Res = DAG.getNode(ISD::MERGE_VALUES, getCurSDLoc(),
                             DAG.getVTList(ValueVTs), Ops);
   setValue(&LP, Res);
-}
-
-unsigned
-SelectionDAGBuilder::visitLandingPadClauseBB(GlobalValue *ClauseGV,
-                                             MachineBasicBlock *LPadBB) {
-  SDValue Chain = getControlRoot();
-
-  // Get the typeid that we will dispatch on later.
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  const TargetRegisterClass *RC = TLI.getRegClassFor(TLI.getPointerTy());
-  unsigned VReg = FuncInfo.MF->getRegInfo().createVirtualRegister(RC);
-  unsigned TypeID = DAG.getMachineFunction().getMMI().getTypeIDFor(ClauseGV);
-  SDValue Sel = DAG.getConstant(TypeID, TLI.getPointerTy());
-  Chain = DAG.getCopyToReg(Chain, getCurSDLoc(), VReg, Sel);
-
-  // Branch to the main landing pad block.
-  MachineBasicBlock *ClauseMBB = FuncInfo.MBB;
-  ClauseMBB->addSuccessor(LPadBB);
-  DAG.setRoot(DAG.getNode(ISD::BR, getCurSDLoc(), MVT::Other, Chain,
-                          DAG.getBasicBlock(LPadBB)));
-  return VReg;
 }
 
 /// handleSmallSwitchCaseRange - Emit a series of specific tests (suitable for
@@ -3692,7 +3667,8 @@ void SelectionDAGBuilder::visitMaskedStore(const CallInst &I) {
     getMachineMemOperand(MachinePointerInfo(PtrOperand),
                           MachineMemOperand::MOStore,  VT.getStoreSize(),
                           Alignment, AAInfo);
-  SDValue StoreNode = DAG.getMaskedStore(getRoot(), sdl, Src0, Ptr, Mask, MMO);
+  SDValue StoreNode = DAG.getMaskedStore(getRoot(), sdl, Src0, Ptr, Mask, VT,
+                                         MMO, false);
   DAG.setRoot(StoreNode);
   setValue(&I, StoreNode);
 }
@@ -3731,7 +3707,8 @@ void SelectionDAGBuilder::visitMaskedLoad(const CallInst &I) {
                           MachineMemOperand::MOLoad,  VT.getStoreSize(),
                           Alignment, AAInfo, Ranges);
 
-  SDValue Load = DAG.getMaskedLoad(VT, sdl, InChain, Ptr, Mask, Src0, MMO);
+  SDValue Load = DAG.getMaskedLoad(VT, sdl, InChain, Ptr, Mask, Src0, VT, MMO,
+                                   ISD::NON_EXTLOAD);
   SDValue OutChain = Load.getValue(1);
   DAG.setRoot(OutChain);
   setValue(&I, Load);
