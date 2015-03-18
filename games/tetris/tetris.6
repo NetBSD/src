@@ -1,4 +1,4 @@
-.\"	$NetBSD: tetris.6,v 1.14 2014/07/15 16:17:15 wiz Exp $
+.\"	$NetBSD: tetris.6,v 1.14.2.1 2015/03/18 08:14:17 snj Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)tetris.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd July 13, 2014
+.Dd February 18, 2015
 .Dt TETRIS 6
 .Os
 .Sh NAME
@@ -69,6 +69,8 @@ drop
 pause
 .It q
 quit
+.It n
+down
 .El
 .Pp
 The options are as follows:
@@ -84,11 +86,11 @@ The default control keys can be changed using the
 option.
 The
 .Ar keys
-argument must have the six keys in order, and, remember to quote any
+argument must have the seven keys in order, and, remember to quote any
 space or tab characters from the shell.
 For example:
 .sp
-.Dl "tetris -l 2 -k 'jkl pq'"
+.Dl "tetris -l 2 -k 'jkl pqn'"
 .sp
 will play the default games, i.e. level 2 and with the default
 control keys.
