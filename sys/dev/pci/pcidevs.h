@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1210 2015/03/04 11:35:59 knakahara Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1211 2015/03/18 05:44:13 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1215 2015/02/15 21:27:57 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1217 2015/03/18 05:43:49 msaitoh Exp
  */
 
 /*
@@ -3892,8 +3892,34 @@
 #define	PCI_PRODUCT_INTEL_C224_LPC	0x8c54		/* C224 LPC */
 #define	PCI_PRODUCT_INTEL_C226_LPC	0x8c56		/* C226 LPC */
 #define	PCI_PRODUCT_INTEL_H81_LPC	0x8c5c		/* H81 LPC */
+#define	PCI_PRODUCT_INTEL_9SERIES_SATA	0x8c80		/* 9 Series SATA Controller */
+#define	PCI_PRODUCT_INTEL_9SERIES_SATA_AHCI	0x8c82		/* 9 Series SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_9SERIES_SATA_RAID	0x8c84		/* 9 Series SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_9SERIES_SATA_RAID_SR	0x8c86		/* 9 Series SATA Controller (RAID) + Smart Response */
+#define	PCI_PRODUCT_INTEL_9SERIES_SATA_2	0x8c88		/* 9 Series SATA Controller */
+#define	PCI_PRODUCT_INTEL_9SERIES_SATA_RAID1	0x8c8e		/* 9 Series SATA Controller (RAID1) */
+#define	PCI_PRODUCT_INTEL_9SERIES_PCIE_1	0x8c90		/* 9 Series PCIE */
+#define	PCI_PRODUCT_INTEL_9SERIES_PCIE_2	0x8c92		/* 9 Series PCIE */
+#define	PCI_PRODUCT_INTEL_9SERIES_PCIE_3	0x8c94		/* 9 Series PCIE */
+#define	PCI_PRODUCT_INTEL_9SERIES_PCIE_4	0x8c96		/* 9 Series PCIE */
+#define	PCI_PRODUCT_INTEL_9SERIES_PCIE_5	0x8c98		/* 9 Series PCIE */
+#define	PCI_PRODUCT_INTEL_9SERIES_PCIE_6	0x8c9a		/* 9 Series PCIE */
+#define	PCI_PRODUCT_INTEL_9SERIES_PCIE_7	0x8c9c		/* 9 Series PCIE */
+#define	PCI_PRODUCT_INTEL_9SERIES_PCIE_8	0x8c9e		/* 9 Series PCIE */
+#define	PCI_PRODUCT_INTEL_9SERIES_HDA	0x8ca0		/* 9 Series HD Audio */
+#define	PCI_PRODUCT_INTEL_9SERIES_SMB	0x8ca2		/* 9 Series SMBus Controller */
+#define	PCI_PRODUCT_INTEL_9SERIES_THERM	0x8ca4		/* 9 Series Thermal */
+#define	PCI_PRODUCT_INTEL_9SERIES_EHCI_1	0x8ca6		/* 9 Series USB EHCI */
+#define	PCI_PRODUCT_INTEL_9SERIES_EHCI_2	0x8cad		/* 9 Series USB EHCI */
 #define	PCI_PRODUCT_INTEL_9SERIES_XHCI	0x8cb1		/* 9 Series USB xHCI */
+#define	PCI_PRODUCT_INTEL_9SERIES_LAN	0x8cb3		/* 9 Series LAN */
 #define	PCI_PRODUCT_INTEL_9SERIES_MEI_1	0x8cba		/* 9 Series MEI Controller */
+#define	PCI_PRODUCT_INTEL_9SERIES_MEI_2	0x8cbb		/* 9 Series MEI Controller */
+#define	PCI_PRODUCT_INTEL_9SERIES_IDE_R	0x8cbc		/* 9 Series IDE-R */
+#define	PCI_PRODUCT_INTEL_9SERIES_KT	0x8cbd		/* 9 Series KT */
+#define	PCI_PRODUCT_INTEL_9SERIES_LPC_ES	0x8cc2		/* 9 Series Full Featured ES LPC */
+#define	PCI_PRODUCT_INTEL_Z97_LPC	0x8cc4		/* Z97 LPC */
+#define	PCI_PRODUCT_INTEL_H97_LPC	0x8cc6		/* H97 LPC */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_AHCI	0x9c03		/* Core 4G (mobile) SATA Controller (AHCI) */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_RAID_1	0x9c05		/* Core 4G (mobile) SATA Controller (RAID) */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_RAID_2	0x9c07		/* Core 4G (mobile) SATA Controller (RAID) Premium */
