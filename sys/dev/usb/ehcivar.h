@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.10 2015/03/02 21:52:02 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.11 2015/03/18 07:37:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -166,7 +166,8 @@ typedef struct ehci_softc {
 
 	struct ehci_soft_islot sc_islots[EHCI_INTRQHS];
 
-	/* jcmm - an array matching sc_flist, but with software pointers,
+	/*
+	 * an array matching sc_flist, but with software pointers,
 	 * not hardware address pointers
 	 */
 	struct ehci_soft_itd **sc_softitds;
