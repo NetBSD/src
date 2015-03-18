@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.231 2015/03/18 04:43:41 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.232 2015/03/18 08:52:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18664,4 +18664,106 @@ sys/arch/xen/xen/pci_intr_machdep.c		1.17
 	handlers stop being called when the device has been detached.
 	PR port-xen/47720.
 	[bouyer, ticket #618]
+
+lib/libc/gen/arc4random.3			1.10-1.19
+lib/libc/gen/arc4random.c			1.26-1.28
+
+	arc4random(3): use ChaCha20 instead of RC4.  Rewrite man page.
+	[riastradh, ticket #597]
+
+share/man/man9/pci_intr.9			1.18
+
+	Fix type of pc argument in pci_intr(9) man page.
+	[riastradh, ticket #599]
+
+common/lib/libc/arch/alpha/atomic/membar_ops.S	1.7
+lib/libc/atomic/membar_ops.3			1.4
+sys/arch/alpha/include/types.h			1.50
+sys/sys/atomic.h				1.13
+
+	Add membar_datadep_consumer.  Same as membar_consumer,
+	but limited to loads of addresses dependent on prior loads, or
+	"data-dependent" loads.
+	[riastradh, ticket #600]
+
+share/man/man2/siginfo.2			1.7
+
+	Fix some typos and make style more consistent.
+	[riastradh, ticket #601]
+
+lib/libc/stdio/fopen.3				1.30
+
+	Use Pq to avoid space before O_EXCL.
+	[riastradh, ticket #602]
+
+share/man/man4/rnd.4				1.21
+
+	Rewrite /dev/random man page.
+	[riastradh, ticket #603]
+
+usr.bin/ktrace/ktrace.1				1.43
+
+	Omit no longer existing l, m from default trace points.
+	[riastradh, ticket #604]
+
+share/man/man9/cprng.9				1.10
+
+	Clarify advice about when to use what parts of cprng(9).
+	Add security model to specify the difference between
+	cprng_strong and cprng_fast.  Fix code references.
+	cprng_fast now uses ChaCha8, not RC4.
+	[riastradh, ticket #605]
+
+share/mk/bsd.README				1.339
+
+	Fix the description of MKX11RADEONKMS.  PR 49753.
+	[mrg, ticket #615]
+
+games/tetris/tetris.6				1.15
+games/tetris/tetris.c				1.28
+
+	Add a 'down' key to tetris, defaulting to 'n'.  It moves the
+	block down a line, if it fits.
+	[mrg, ticket #622]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/os-support/bsd/bsd_init.c 1.7
+
+	Remove \n\n that confuses the Xorg log file.
+	[mrg, ticket #623]
+
+usr.bin/vndcompress/Makefile			1.14
+usr.bin/vndcompress/vndcompress.c		1.25
+
+	Fix vndcompress restart failure fallback when input is a pipe.
+	[riastradh, ticket #609]
+
+lib/libc/string/consttime_memequal.3		1.3, 1.4
+
+	Commit to returning 1, not any nonzero value.
+	[riastradh, ticket #610]
+
+doc/BUILDING.mdoc				1.111
+
+	Use `It Sy', not just `It', for live-image, to match other targets.
+	[riastradh, ticket #611]
+
+sys/arch/amd64/include/pmap.h			1.35
+
+	Bump amd64 module map size to 64 MB.
+	[riastradh, ticket #612]
+
+share/man/man9/uvm_km.9				1.4
+
+	Clarify uvm_km_alloc is contiguous and zero result means fail.
+	[riastradh, ticket #613]
+
+sys/arch/arm/include/fenv.h			1.3
+
+	#include <sys/cdefs.h> for __BEGIN_DECLS and __END_DECLS.
+	[joerg, ticket #616]
+
+share/man/man9/pserialize.9			1.4-1.8
+
+	Expand and clarify the pserialize(9) man page.
+	[riastradh, ticket #607]
 
