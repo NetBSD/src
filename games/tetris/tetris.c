@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.27 2014/07/13 17:38:38 pgoyette Exp $	*/
+/*	$NetBSD: tetris.c,v 1.27.2.1 2015/03/18 08:14:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -130,7 +130,8 @@ main(int argc, char *argv[])
 	int pos, c;
 	const char *keys;
 	int level = 2;
-	char key_write[6][10];
+#define NUMKEYS 7
+	char key_write[NUMKEYS][10];
 	int ch, i, j;
 	int fd;
 
@@ -143,7 +144,7 @@ main(int argc, char *argv[])
 		exit(1);
 	close(fd);
 
-	keys = "jkl pq";
+	keys = "jkl pqn";
 
 	while ((ch = getopt(argc, argv, "bk:l:ps")) != -1)
 		switch(ch) {
@@ -151,7 +152,7 @@ main(int argc, char *argv[])
 			nocolor = 1;
 			break;
 		case 'k':
-			if (strlen(keys = optarg) != 6)
+			if (strlen(keys = optarg) != NUMKEYS)
 				usage();
 			break;
 		case 'l':
@@ -180,8 +181,8 @@ main(int argc, char *argv[])
 
 	fallrate = 1000000 / level;
 
-	for (i = 0; i <= 5; i++) {
-		for (j = i+1; j <= 5; j++) {
+	for (i = 0; i <= (NUMKEYS-1); i++) {
+		for (j = i+1; j <= (NUMKEYS-1); j++) {
 			if (keys[i] == keys[j]) {
 				errx(1, "duplicate command keys specified.");
 			}
@@ -195,9 +196,9 @@ main(int argc, char *argv[])
 	}
 
 	snprintf(key_msg, sizeof(key_msg),
-"%s - left   %s - rotate   %s - right   %s - drop   %s - pause   %s - quit",
+"%s - left   %s - rotate   %s - right   %s - drop   %s - pause   %s - quit   %s - down",
 		key_write[0], key_write[1], key_write[2], key_write[3],
-		key_write[4], key_write[5]);
+		key_write[4], key_write[5], key_write[6]);
 
 	(void)signal(SIGINT, onintr);
 	scr_init();
@@ -292,6 +293,14 @@ main(int argc, char *argv[])
 		if (c == keys[3]) {
 			/* move to bottom */
 			while (fits_in(curshape, pos + B_COLS)) {
+				pos += B_COLS;
+				score++;
+			}
+			continue;
+		}
+		if (c == keys[6]) {
+			/* move down */
+			if (fits_in(curshape, pos + B_COLS)) {
 				pos += B_COLS;
 				score++;
 			}
