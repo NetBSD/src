@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.60.2.1 2014/11/07 21:34:56 snj Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.60.2.2 2015/03/18 04:39:15 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -315,6 +315,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_SPD_BYPS	(1U << 15) /* speed select bypass */
 #define	CTRL_EXT_IPS1		(1U << 16) /* invert power state bit 1 */
 #define	CTRL_EXT_RO_DIS		(1U << 17) /* relaxed ordering disabled */
+#define	CTRL_EXT_DMA_DYN_CLK	(1U << 19) /* DMA Dymamic Gating Enable */
 #define	CTRL_EXT_LINK_MODE_MASK		0x00C00000
 #define	CTRL_EXT_LINK_MODE_GMII		0x00000000
 #define	CTRL_EXT_LINK_MODE_KMRN		0x00000000
@@ -756,11 +757,14 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_TDFTS	0x3428	/* Transmit Data FIFO Tail Saved */
 #define	WMREG_TDFPC	0x3430	/* Transmit Data FIFO Packet Count */
 
-#define	WMREG_TXDCTL	0x3828	/* Trandmit Descriptor Control */
+#define	WMREG_TXDCTL(n)		/* Trandmit Descriptor Control */ \
+	(((n) < 4) ? (0x3828 + ((n) * 0x100)) : (0xe028 + ((n) * 0x40)))
 #define	TXDCTL_PTHRESH(x) ((x) << 0)	/* prefetch threshold */
 #define	TXDCTL_HTHRESH(x) ((x) << 8)	/* host threshold */
 #define	TXDCTL_WTHRESH(x) ((x) << 16)	/* write back threshold */
 /* flags used starting with 82575 ... */
+#define TXDCTL_COUNT_DESC	__BIT(22) /* Enable the counting of desc.
+					   still to be processed. */
 #define TXDCTL_QUEUE_ENABLE  0x02000000 /* Enable specific Tx Queue */
 #define TXDCTL_SWFLSH        0x04000000 /* Tx Desc. write-back flushing */
 #define TXDCTL_PRIORITY      0x08000000
@@ -768,10 +772,11 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_TADV	0x382c	/* Transmit Absolute Interrupt Delay Timer */
 #define	WMREG_TSPMT	0x3830	/* TCP Segmentation Pad and Minimum
 				   Threshold (Cordova) */
-#define	WMREG_TARC0	0x3840	/* Tx arbitration count */
-
 #define	TSPMT_TSMT(x)	(x)		/* TCP seg min transfer */
 #define	TSPMT_TSPBP(x)	((x) << 16)	/* TCP seg pkt buf padding */
+
+#define	WMREG_TARC0	0x3840	/* Tx arbitration count (0) */
+#define	WMREG_TARC1	0x3940	/* Tx arbitration count (1) */
 
 #define	WMREG_CRCERRS	0x4000	/* CRC Error Count */
 #define	WMREG_ALGNERRC	0x4004	/* Alignment Error Count */
@@ -798,6 +803,13 @@ struct livengood_tcpip_ctxdesc {
 #define	RXCSUM_IPV6OFL	(1U << 10)	/* IPv6 checksum offload */
 
 #define WMREG_RLPML	0x5004	/* Rx Long Packet Max Length */
+
+#define WMREG_RFCTL	0x5008	/* Receive Filter Control */
+#define WMREG_RFCTL_NFSWDIS	__BIT(6)  /* NFS Write Disable */
+#define WMREG_RFCTL_NFSRDIS	__BIT(7)  /* NFS Read Disable */
+#define WMREG_RFCTL_ACKDIS	__BIT(13) /* ACK Accelerate Disable */
+#define WMREG_RFCTL_IPV6EXDIS	__BIT(16) /* IPv6 Extension Header Disable */
+#define WMREG_RFCTL_NEWIPV6EXDIS __BIT(17) /* New IPv6 Extension Header */
 
 #define	WMREG_WUC	0x5800	/* Wakeup Control */
 #define	WUC_APME		0x00000001 /* APM Enable */
@@ -873,6 +885,8 @@ struct livengood_tcpip_ctxdesc {
 #define	SWFW_PHY3_SM		0x0040 /* first ctrl phy access */
 #define	SWFW_SOFT_SHIFT		0	/* software semaphores */
 #define	SWFW_FIRM_SHIFT		16	/* firmware semaphores */
+
+#define WMREG_GCR2	0x5b64	/* 3GPIO Control Register 2 */
 
 #define WMREG_CRC_OFFSET 0x5f50
 
