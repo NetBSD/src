@@ -1,6 +1,6 @@
-.\"	$NetBSD: cprng.9,v 1.9 2014/03/18 18:20:40 riastradh Exp $
+.\"	$NetBSD: cprng.9,v 1.9.4.1 2015/03/18 08:03:27 snj Exp $
 .\"
-.\" Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2011-2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 18, 2013
+.Dd February 19, 2015
 .Dt CPRNG 9
 .Os
 .Sh NAME
@@ -67,41 +67,22 @@ The
 .Nm
 family of functions provide cryptographic pseudorandom number
 generators automatically seeded from the kernel entropy pool.
-They replace the
-.Xr arc4random 9
-and
-.Xr rnd_extract_data 9
-functions for this purpose.
-The
-.Nx
-kernel no longer supports direct reading from the kernel entropy pool; all
-access is mediated by the
-.Nm
-functions.
+All applications in the kernel requiring random data or random choices
+should use the
+.Nm cprng_strong
+family of functions, unless performance constraints demand otherwise.
 .Pp
 The
-.Dq strong
-family of functions use cryptographically strong pseudorandom number
-generators suitable for keying crypto systems and similar purposes.
-Calls to
-.Xr rnd_extract_data 9
-should be replaced by calls to
-.Fn cprng_strong .
-.Pp
-The
-.Dq fast
-family of functions use cryptographically weaker pseudorandom number
-generators suitable for initialization vectors, nonces in certain
-protocols, and other similar purposes, using a faster but less secure
-stream-cipher-based generator.
-Calls to
-.Xr arc4random 9
-should be replaced by calls to
-.Fn cprng_fast32 ,
-and calls to
-.Xr arc4randbytes 9
-should be replaced by calls to
-.Fn cprng_fast .
+.Nm cprng_fast
+family of functions may be used in applications that can tolerate
+exposure of past random data, such as initialization vectors or
+transaction ids that are sent over the internet anyway, if the
+applications require higher throughput or lower per-request latency
+than the
+.Nm cprng_strong
+family of functions provide.
+If in doubt, choose
+.Nm cprng_strong .
 .Pp
 A single instance of the fast generator serves the entire kernel.
 A well-known instance of the strong generator,
@@ -109,12 +90,34 @@ A well-known instance of the strong generator,
 may be used by any in-kernel caller, but separately seeded instances of
 the strong generator can also be created by calling
 .Fn cprng_strong_create .
+.Pp
+The
+.Nm
+functions may be used at interrupt priority level
+.Dv IPL_VM
+or below,
+except for
+.Fn cprng_strong_create
+and
+.Fn cprng_strong_destroy
+which are allowed only at
+.Dv IPL_NONE ;
+see
+.Xr spl 9 .
+.Pp
+The
+.Nm
+functions replace the legacy
+.Xr arc4random 9
+and
+.Xr rnd_extract_data 9
+functions.
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn cprng_strong_create "name" "ipl" "flags"
 Create an instance of the cprng_strong generator.
-This generator implements the NIST SP 800-90 CTR_DRBG with AES128 as
-the block transform.
+This generator currently implements the NIST SP 800-90A CTR_DRBG with
+AES-128 as the block transform.
 .Pp
 The
 .Fa name
@@ -257,19 +260,49 @@ Generate 64 bits using the fast generator.
 .Fn cprng_fast64
 does not sleep.
 .El
-.Sh CODE REFERENCES
-The cprng API is implemented by
-.Pa sys/kern/subr_cprng.c
-and
-.Pa sys/sys/cprng.h .
+.Sh SECURITY MODEL
 The
-.Dq strong
-generator uses the CTR_DRBG implementation in
+.Nm
+family of functions provide the following security properties:
+.Bl -bullet -offset abcd
+.It
+An attacker who has seen some outputs of any of the
+.Nm
+functions cannot predict past or future unseen outputs.
+.It
+An attacker who has compromised kernel memory cannot predict past
+outputs of the
+.Nm cprng_strong
+functions.
+However, such an attacker may be able to predict past outputs of the
+.Nm cprng_fast
+functions.
+.El
+.Pp
+The second property is sometimes called
+.Dq backtracking resistance ,
+.Dq forward secrecy ,
+or
+.Dq key erasure
+in the cryptography literature.
+The
+.Nm cprng_strong
+functions provide backtracking resistance;
+the
+.Nm cprng_fast
+functions do not.
+.Sh CODE REFERENCES
+The
+.Nm cprng_strong
+functions are implemented in
+.Pa sys/kern/subr_cprng.c ,
+and use the NIST SP 800-90A CTR_DRBG implementation in
 .Pa sys/crypto/nist_ctr_drbg .
 The
-.Dq fast
-generator uses the arc4random implementation in
-.Pa sys/lib/libkern/arc4random.c .
+.Nm cprng_fast
+functions are implemented in
+.Pa sys/crypto/cprng_fast/cprng_fast.c ,
+and use the ChaCha8 stream cipher.
 .Sh SEE ALSO
 .Xr condvar 9 ,
 .Xr rnd 9 ,
@@ -281,6 +314,13 @@ generator uses the arc4random implementation in
 .%I National Institute of Standards and Technology
 .%D 2011
 .%O NIST Special Publication 800-90A, Rev 1
+.Re
+.Rs
+.%A Daniel J. Bernstein
+.%T ChaCha, a variant of Salsa20
+.%D 2008-01-28
+.%O Document ID: 4027b5256e17b9796842e6d0f68b0b5e
+.%U http://cr.yp.to/papers.html#chacha
 .Re
 .Sh HISTORY
 The cprng family of functions first appeared in
