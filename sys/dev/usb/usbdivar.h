@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.14 2015/03/05 09:06:20 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.15 2015/03/18 15:45:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -328,6 +328,16 @@ usbd_status	usbd_get_initial_ddesc(usbd_device_handle,
 void		usb_needs_explore(usbd_device_handle);
 void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
+
+static inline int
+usbd_xfer_isread(usbd_xfer_handle xfer)
+{
+	if (xfer->ux_rqflags & URQ_REQUEST)
+		return xfer->ux_request.bmRequestType & UT_READ;
+
+	return xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress &
+	   UE_DIR_IN;
+}
 
 /*
  * These macros reflect the current locking scheme.  They might change.
