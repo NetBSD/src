@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.12 2014/02/21 15:52:53 martin Exp $	*/
+/*	$NetBSD: atomic.h,v 1.12.4.1 2015/03/18 07:47:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -155,6 +155,12 @@ void		membar_exit(void);
 void		membar_producer(void);
 void		membar_consumer(void);
 void		membar_sync(void);
+
+#ifdef	__HAVE_MEMBAR_DATADEP_CONSUMER
+void		membar_datadep_consumer(void);
+#else
+#define	membar_datadep_consumer()	((void)0)
+#endif
 
 __END_DECLS
 
