@@ -2788,9 +2788,13 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
                SplatBitSize = SplatBitSize * 2)
             SplatValue |= SplatValue.shl(SplatBitSize);
 
-        Constant = APInt::getAllOnesValue(BitWidth);
-        for (unsigned i = 0, n = SplatBitSize/BitWidth; i < n; ++i)
-          Constant &= SplatValue.lshr(i*BitWidth).zextOrTrunc(BitWidth);
+        // Make sure that variable 'Constant' is only set if 'SplatBitSize' is a
+        // multiple of 'BitWidth'. Otherwise, we could propagate a wrong value.
+        if (SplatBitSize % BitWidth == 0) {
+          Constant = APInt::getAllOnesValue(BitWidth);
+          for (unsigned i = 0, n = SplatBitSize/BitWidth; i < n; ++i)
+            Constant &= SplatValue.lshr(i*BitWidth).zextOrTrunc(BitWidth);
+        }
       }
     }
 
@@ -4842,7 +4846,7 @@ SDValue DAGCombiner::visitMSTORE(SDNode *N) {
 
   MaskedStoreSDNode *MST = dyn_cast<MaskedStoreSDNode>(N);
   SDValue Mask = MST->getMask();
-  SDValue Data  = MST->getData();
+  SDValue Data  = MST->getValue();
   SDLoc DL(N);
 
   // If the MSTORE data type requires splitting and the mask is provided by a
@@ -4885,7 +4889,8 @@ SDValue DAGCombiner::visitMSTORE(SDNode *N) {
                            MachineMemOperand::MOStore,  LoMemVT.getStoreSize(),
                            Alignment, MST->getAAInfo(), MST->getRanges());
 
-    Lo = DAG.getMaskedStore(Chain, DL, DataLo, Ptr, MaskLo, MMO);
+    Lo = DAG.getMaskedStore(Chain, DL, DataLo, Ptr, MaskLo, LoMemVT, MMO,
+                            MST->isTruncatingStore());
 
     unsigned IncrementSize = LoMemVT.getSizeInBits()/8;
     Ptr = DAG.getNode(ISD::ADD, DL, Ptr.getValueType(), Ptr,
@@ -4897,7 +4902,8 @@ SDValue DAGCombiner::visitMSTORE(SDNode *N) {
                            SecondHalfAlignment, MST->getAAInfo(),
                            MST->getRanges());
 
-    Hi = DAG.getMaskedStore(Chain, DL, DataHi, Ptr, MaskHi, MMO);
+    Hi = DAG.getMaskedStore(Chain, DL, DataHi, Ptr, MaskHi, HiMemVT, MMO,
+                            MST->isTruncatingStore());
 
     AddToWorklist(Lo.getNode());
     AddToWorklist(Hi.getNode());
@@ -4958,7 +4964,8 @@ SDValue DAGCombiner::visitMLOAD(SDNode *N) {
                          MachineMemOperand::MOLoad,  LoMemVT.getStoreSize(),
                          Alignment, MLD->getAAInfo(), MLD->getRanges());
 
-    Lo = DAG.getMaskedLoad(LoVT, DL, Chain, Ptr, MaskLo, Src0Lo, MMO);
+    Lo = DAG.getMaskedLoad(LoVT, DL, Chain, Ptr, MaskLo, Src0Lo, LoMemVT, MMO,
+                           ISD::NON_EXTLOAD);
 
     unsigned IncrementSize = LoMemVT.getSizeInBits()/8;
     Ptr = DAG.getNode(ISD::ADD, DL, Ptr.getValueType(), Ptr,
@@ -4969,7 +4976,8 @@ SDValue DAGCombiner::visitMLOAD(SDNode *N) {
                          MachineMemOperand::MOLoad,  HiMemVT.getStoreSize(),
                          SecondHalfAlignment, MLD->getAAInfo(), MLD->getRanges());
 
-    Hi = DAG.getMaskedLoad(HiVT, DL, Chain, Ptr, MaskHi, Src0Hi, MMO);
+    Hi = DAG.getMaskedLoad(HiVT, DL, Chain, Ptr, MaskHi, Src0Hi, HiMemVT, MMO,
+                           ISD::NON_EXTLOAD);
 
     AddToWorklist(Lo.getNode());
     AddToWorklist(Hi.getNode());
@@ -6544,19 +6552,15 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
 
   // If the input is a constant, let getNode fold it.
   if (isa<ConstantSDNode>(N0) || isa<ConstantFPSDNode>(N0)) {
-    SDValue Res = DAG.getNode(ISD::BITCAST, SDLoc(N), VT, N0);
-    if (Res.getNode() != N) {
-      if (!LegalOperations ||
-          TLI.isOperationLegal(Res.getNode()->getOpcode(), VT))
-        return Res;
-
-      // Folding it resulted in an illegal node, and it's too late to
-      // do that. Clean up the old node and forego the transformation.
-      // Ideally this won't happen very often, because instcombine
-      // and the earlier dagcombine runs (where illegal nodes are
-      // permitted) should have folded most of them already.
-      deleteAndRecombine(Res.getNode());
-    }
+    // If we can't allow illegal operations, we need to check that this is just
+    // a fp -> int or int -> conversion and that the resulting operation will
+    // be legal.
+    if (!LegalOperations ||
+        (isa<ConstantSDNode>(N0) && VT.isFloatingPoint() && !VT.isVector() &&
+         TLI.isOperationLegal(ISD::ConstantFP, VT)) ||
+        (isa<ConstantFPSDNode>(N0) && VT.isInteger() && !VT.isVector() &&
+         TLI.isOperationLegal(ISD::Constant, VT)))
+      return DAG.getNode(ISD::BITCAST, SDLoc(N), VT, N0);
   }
 
   // (conv (conv x, t1), t2) -> (conv x, t2)
@@ -9486,6 +9490,8 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
     unsigned MSB = BitWidth - Imm.countLeadingZeros() - 1;
     unsigned NewBW = NextPowerOf2(MSB - ShAmt);
     EVT NewVT = EVT::getIntegerVT(*DAG.getContext(), NewBW);
+    // The narrowing should be profitable, the load/store operation should be
+    // legal (or custom) and the store size should be equal to the NewVT width.
     while (NewBW < BitWidth &&
            !(TLI.isOperationLegalOrCustom(Opc, NewVT) &&
              TLI.isNarrowingProfitable(VT, NewVT))) {

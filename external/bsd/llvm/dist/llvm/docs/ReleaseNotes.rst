@@ -5,11 +5,6 @@ LLVM 3.6 Release Notes
 .. contents::
     :local:
 
-.. warning::
-   These are in-progress notes for the upcoming LLVM 3.6 release.  You may
-   prefer the `LLVM 3.5 Release Notes <http://llvm.org/releases/3.5.0/docs
-   /ReleaseNotes.html>`_.
-
 
 Introduction
 ============
@@ -26,10 +21,6 @@ have questions or comments, the `LLVM Developer's Mailing List
 <http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev>`_ is a good place to send
 them.
 
-Note that if you are reading this file from a Subversion checkout or the main
-LLVM web page, this document applies to the *next* release, not the current
-one.  To see the release notes for a specific release, please see the `releases
-page <http://llvm.org/releases/>`_.
 
 Non-comprehensive list of changes in this release
 =================================================
@@ -46,7 +37,8 @@ Non-comprehensive list of changes in this release
 * Added support for a `native object file-based bitcode wrapper format
   <BitCodeFormat.html#native-object-file>`_.
 
-* ... next change ...
+* Added support for MSVC's ``__vectorcall`` calling convention as
+  ``x86_vectorcallcc``.
 
 .. NOTE
    If you would like to document a larger change, then you can add a
@@ -302,11 +294,12 @@ The old JIT has been removed
 All users should transition to MCJIT.
 
 
-object::Binary doesn't owns the file buffer
+object::Binary doesn't own the file buffer
 -------------------------------------------
 
 It is now just a wrapper, which simplifies using object::Binary with other
 users of the underlying file.
+
 
 IR in object files is now supported
 -----------------------------------
@@ -327,7 +320,7 @@ The new implementation is also lazier and has a ``save-temps`` option.
 Change in the representation of lazy loaded funcs
 -------------------------------------------------
 
-Lazy loaded functions are now represented is a way that ``isDeclaration``
+Lazy loaded functions are now represented in a way that ``isDeclaration``
 returns the correct answer even before reading the body.
 
 
@@ -342,10 +335,11 @@ Python 2.7 is now required
 
 This was done to simplify compatibility with python 3.
 
+
 The leak detector has been removed
 ----------------------------------
 
-In practice tools like asan and valgrind were finding way more bugs than
+In practice, tools like asan and valgrind were finding way more bugs than
 the old leak detector, so it was removed.
 
 
@@ -360,12 +354,25 @@ The syntax of comdats was changed to
     @g = global i32 0, comdat($c)
     @c = global i32 0, comdat
 
-The version without the parentheses is a syntatic sugar for a comdat with
+The version without the parentheses is a syntactic sugar for a comdat with
 the same name as the global.
 
 
-Diagnotic infrastructure used by lib/Linker and lib/Bitcode
------------------------------------------------------------
+Added support for Win64 unwind information
+------------------------------------------
+
+LLVM now obeys the `Win64 prologue and epilogue conventions
+<https://msdn.microsoft.com/en-us/library/tawsa7cb.aspx>`_ documented by
+Microsoft. Unwind information is also emitted into the .xdata section.
+
+As a result of the ABI-required prologue changes, it is now no longer possible
+to unwind the stack using a standard frame pointer walk on Win64. Instead,
+users should call ``CaptureStackBackTrace``, or implement equivalent
+functionality by consulting the unwind tables present in the binary.
+
+
+Diagnostic infrastructure used by lib/Linker and lib/Bitcode
+------------------------------------------------------------
 
 These libraries now use the diagnostic handler to print errors and warnings.
 This provides better error messages and simpler error handling.
@@ -376,12 +383,27 @@ The PreserveSource linker mode was removed
 
 It was fairly broken and was removed.
 
+The mode is currently still available in the C API for source
+compatibility, but it doesn't have any effect.
 
 
-Changes to the ARM Backend
---------------------------
+Garbage Collection
+------------------
+A new experimental mechanism for describing a garbage collection safepoint was
+added to LLVM.  The new mechanism was not complete at the point this release
+was branched so it is recommended that anyone interested in using this
+mechanism track the ongoing development work on tip of tree.  The hope is that
+these intrinsics will be ready for general use by 3.7.  Documentation can be
+found `here <http://llvm.org/docs/Statepoints.html>`_.
 
- During this release ...
+The existing gc.root implementation is still supported and as fully featured
+as it ever was.  However, two features from GCStrategy will likely be removed
+in the 3.7 release (performCustomLowering and findCustomSafePoints).  If you
+have a use case for either, please mention it on llvm-dev so that it can be
+considered for future development.
+
+We are expecting to migrate away from gc.root in the 3.8 time frame,
+but both mechanisms will be supported in 3.7.
 
 
 Changes to the MIPS Target
@@ -391,7 +413,9 @@ During this release the MIPS target has reached a few major milestones. The
 compiler has gained support for MIPS-II and MIPS-III; become ABI-compatible
 with GCC for big and little endian O32, N32, and N64; and is now able to
 compile the Linux kernel for 32-bit targets. Additionally, LLD now supports
-microMIPS for the O32 ABI on little endian targets.
+microMIPS for the O32 ABI on little endian targets, and code generation for
+microMIPS is almost completely passing the test-suite.
+
 
 ABI
 ^^^
@@ -425,6 +449,7 @@ few notable ones:
   has been fixed when the fastcc calling convention is used with 64-bit FPU's
   and -mno-odd-spreg.
 
+
 LLVMLinux
 ^^^^^^^^^
 
@@ -440,6 +465,7 @@ number of kernel patches. See the `LLVMLinux project
 
 * Added support for a number of directives used by Linux to the Integrated
   Assembler.
+
 
 Miscellaneous
 ^^^^^^^^^^^^^
@@ -457,6 +483,7 @@ Miscellaneous
   is in use and will be removed in LLVM 3.7. These names have never been
   supported by the GNU Assembler for these ABI's.
 
+
 Changes to the PowerPC Target
 -----------------------------
 
@@ -467,7 +494,7 @@ There are numerous improvements to the PowerPC target in this release:
 
 * LLVM now has a POWER8 instruction scheduling description.
 
-* Address Sanitizer (ASAN) support is now fully functional.
+* AddressSanitizer (ASan) support is now fully functional.
 
 * Performance of simple atomic accesses has been greatly improved.
 
@@ -478,7 +505,10 @@ There are numerous improvements to the PowerPC target in this release:
 
 * PPC32 SVR4 now supports small-model PIC.
 
+* Experimental support for the stackmap/patchpoint intrinsics has been added.
+
 * There have been many smaller bug fixes and performance improvements.
+
 
 Changes to the OCaml bindings
 -----------------------------
@@ -506,12 +536,21 @@ Changes to the OCaml bindings
 
 * As usual, many more functions have been exposed to OCaml.
 
+
+Go bindings
+-----------
+
+* A set of Go bindings based on `gollvm <https://github.com/go-llvm/llvm>`_
+  was introduced in this release.
+
+
 External Open Source Projects Using LLVM 3.6
 ============================================
 
 An exciting aspect of LLVM is that it is used as an enabling technology for
 a lot of other language and tools projects. This section lists some of the
 projects that have already been updated to work with LLVM 3.6.
+
 
 Portable Computing Language (pocl)
 ----------------------------------
@@ -524,6 +563,7 @@ optimizations. An important part of pocl is a set of LLVM passes used to
 statically parallelize multiple work-items with the kernel compiler, even in
 the presence of work-group barriers. This enables static parallelization of
 the fine-grained static concurrency in the work groups in multiple ways. 
+
 
 TTA-based Co-design Environment (TCE)
 -------------------------------------
@@ -542,6 +582,54 @@ optimizations and also for parts of code generation. It generates
 new LLVM-based code generators "on the fly" for the designed processors and
 loads them in to the compiler backend as runtime libraries to avoid
 per-target recompilation of larger parts of the compiler chain. 
+
+
+Likely
+------
+
+`Likely <http://www.liblikely.org>`_ is an embeddable just-in-time Lisp for
+image recognition and heterogeneous computing. Algorithms are just-in-time
+compiled using LLVM's MCJIT infrastructure to execute on single or
+multi-threaded CPUs and potentially OpenCL SPIR or CUDA enabled GPUs.
+Likely seeks to explore new optimizations for statistical learning 
+algorithms by moving them from an offline model generation step to the 
+compile-time evaluation of a function (the learning algorithm) with constant
+arguments (the training data).
+
+
+LDC - the LLVM-based D compiler
+-------------------------------
+
+`D <http://dlang.org>`_ is a language with C-like syntax and static typing. It
+pragmatically combines efficiency, control, and modeling power, with safety and
+programmer productivity. D supports powerful concepts like Compile-Time Function
+Execution (CTFE) and Template Meta-Programming, provides an innovative approach
+to concurrency and offers many classical paradigms.
+
+`LDC <http://wiki.dlang.org/LDC>`_ uses the frontend from the reference compiler
+combined with LLVM as backend to produce efficient native code. LDC targets
+x86/x86_64 systems like Linux, OS X, FreeBSD and Windows and also Linux on
+PowerPC (32/64 bit). Ports to other architectures like ARM, AArch64 and MIPS64
+are underway.
+
+
+LLVMSharp & ClangSharp
+----------------------
+
+`LLVMSharp <http://www.llvmsharp.org>`_ and
+`ClangSharp <http://www.clangsharp.org>`_ are type-safe C# bindings for
+Microsoft.NET and Mono that Platform Invoke into the native libraries.
+ClangSharp is self-hosted and is used to generated LLVMSharp using the
+LLVM-C API.
+
+`LLVMSharp Kaleidoscope Tutorials <http://www.llvmsharp.org/Kaleidoscope/>`_
+are instructive examples of writing a compiler in C#, with certain improvements
+like using the visitor pattern to generate LLVM IR.
+
+`ClangSharp PInvoke Generator <http://www.clangsharp.org/PInvoke/>`_ is the
+self-hosting mechanism for LLVM/ClangSharp and is demonstrative of using
+LibClang to generate Platform Invoke (PInvoke) signatures for C APIs.
+
 
 Additional Information
 ======================

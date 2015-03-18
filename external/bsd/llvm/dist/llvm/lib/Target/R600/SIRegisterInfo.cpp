@@ -23,7 +23,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
 
-#include "llvm/Support/Debug.h"
 using namespace llvm;
 
 SIRegisterInfo::SIRegisterInfo(const AMDGPUSubtarget &st)
@@ -51,9 +50,32 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-unsigned SIRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
-                                             MachineFunction &MF) const {
-  return RC->getNumRegs();
+unsigned SIRegisterInfo::getRegPressureSetLimit(unsigned Idx) const {
+
+  // FIXME: We should adjust the max number of waves based on LDS size.
+  unsigned SGPRLimit = getNumSGPRsAllowed(ST.getMaxWavesPerCU());
+  unsigned VGPRLimit = getNumVGPRsAllowed(ST.getMaxWavesPerCU());
+
+  for (regclass_iterator I = regclass_begin(), E = regclass_end();
+       I != E; ++I) {
+
+    unsigned NumSubRegs = std::max((int)(*I)->getSize() / 4, 1);
+    unsigned Limit;
+
+    if (isSGPRClass(*I)) {
+      Limit = SGPRLimit / NumSubRegs;
+    } else {
+      Limit = VGPRLimit / NumSubRegs;
+    }
+
+    const int *Sets = getRegClassPressureSets(*I);
+    assert(Sets);
+    for (unsigned i = 0; Sets[i] != -1; ++i) {
+	    if (Sets[i] == (int)Idx)
+        return Limit;
+    }
+  }
+  return 256;
 }
 
 bool SIRegisterInfo::requiresRegisterScavenging(const MachineFunction &Fn) const {
@@ -117,7 +139,6 @@ void SIRegisterInfo::buildScratchLoadStore(MachineBasicBlock::iterator MI,
   unsigned Size = NumSubRegs * 4;
 
   if (!isUInt<12>(Offset + Size)) {
-    dbgs() << "Offset scavenge\n";
     SOffset = RS->scavengeRegister(&AMDGPU::SGPR_32RegClass, MI, 0);
     if (SOffset == AMDGPU::NoRegister) {
       RanOutOfSGPRs = true;
@@ -212,10 +233,8 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
            Ctx.emitError("Ran out of VGPRs for spilling SGPR");
         }
 
-        if (isM0) {
-          dbgs() << "Scavenge M0\n";
+        if (isM0)
           SubReg = RS->scavengeRegister(&AMDGPU::SGPR_32RegClass, MI, 0);
-        }
 
         BuildMI(*MBB, MI, DL, TII->get(AMDGPU::V_READLANE_B32), SubReg)
                 .addReg(Spill.VGPR)
@@ -247,6 +266,7 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
       break;
     case AMDGPU::SI_SPILL_V32_RESTORE:
     case AMDGPU::SI_SPILL_V64_RESTORE:
+    case AMDGPU::SI_SPILL_V96_RESTORE:
     case AMDGPU::SI_SPILL_V128_RESTORE:
     case AMDGPU::SI_SPILL_V256_RESTORE:
     case AMDGPU::SI_SPILL_V512_RESTORE: {
@@ -455,3 +475,29 @@ unsigned SIRegisterInfo::findUnusedRegister(const MachineRegisterInfo &MRI,
   return AMDGPU::NoRegister;
 }
 
+unsigned SIRegisterInfo::getNumVGPRsAllowed(unsigned WaveCount) const {
+  switch(WaveCount) {
+    case 10: return 24;
+    case 9:  return 28;
+    case 8:  return 32;
+    case 7:  return 36;
+    case 6:  return 40;
+    case 5:  return 48;
+    case 4:  return 64;
+    case 3:  return 84;
+    case 2:  return 128;
+    default: return 256;
+  }
+}
+
+unsigned SIRegisterInfo::getNumSGPRsAllowed(unsigned WaveCount) const {
+  switch(WaveCount) {
+    case 10: return 48;
+    case 9:  return 56;
+    case 8:  return 64;
+    case 7:  return 72;
+    case 6:  return 80;
+    case 5:  return 96;
+    default: return 103;
+  }
+}
