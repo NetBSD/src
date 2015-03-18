@@ -1,7 +1,10 @@
-.\"	$NetBSD: rnd.4,v 1.20 2012/04/17 08:28:20 wiz Exp $
+.\"	$NetBSD: rnd.4,v 1.20.10.1 2015/03/18 07:54:26 snj Exp $
 .\"
-.\" Copyright (c) 1997 Michael Graff
+.\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Taylor R. Campbell.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -11,340 +14,596 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 17, 2012
+.Dd November 16, 2014
 .Dt RND 4
 .Os
 .Sh NAME
 .Nm rnd
-.Nd in kernel entropy collection and random number generation
-.Sh SYNOPSIS
-.Cd pseudo-device rnd
+.Nd random number generator
 .Sh DESCRIPTION
 The
+.Pa /dev/random
+and
+.Pa /dev/urandom
+devices generate bytes randomly with uniform distribution.
+Every read from them is independent.
+.Bl -tag -width /dev/urandom
+.It Pa /dev/urandom
+Never blocks.
+.It Pa /dev/random
+Sometimes blocks.
+Will block early at boot if the system's state is known to be
+predictable.
+.El
+.Pp
+Applications should read from
+.Pa /dev/urandom
+when they need randomly generated data, e.g. key material for
+cryptography or seeds for simulations.
+.Pp
+Systems should be engineered to judiciously read at least once from
+.Pa /dev/random
+at boot before running any services that talk to the internet or
+otherwise require cryptography, in order to avoid generating keys
+predictably.
+.Pp
+.Pa /dev/random
+may block at any time, so programs that read from it must be prepared
+to handle blocking.
+Interactive programs that block due to reads from
+.Pa /dev/random
+can be especially frustrating.
+.Pp
+If interrupted by a signal, reads from either
+.Pa /dev/random
+or
+.Pa /dev/urandom
+may return short, so programs that handle signals must be prepared to
+retry reads.
+.Pp
+Writing to either
+.Pa /dev/random
+or
+.Pa /dev/urandom
+influences subsequent output of both devices, guaranteed to take
+effect at next open.
+.Pp
+If you have a coin in your pocket, you can flip it 256 times and feed
+the outputs to
+.Pa /dev/random
+to guarantee your system is in a state that nobody but you and the
+bored security guard watching the surveillance camera in your office
+can guess:
+.Bd -literal -offset abcd
+% echo tthhhhhthhhththtthhhhthtththttth... > /dev/random
+.Ed
+.Pp
+(Sequence generated from a genuine US quarter dollar, guaranteed
+random.)
+.Sh SECURITY MODEL
+The
 .Nm
-pseudo-device has three purposes.
-On read, it returns cryptographically
-strong random data from a generator keyed from the kernel entropy pool.
-On write, data may be added to the entropy pool.
-By ioctl, the behavior of the entropy pool (which sources are used;
-how their entropy is estimated, etc.) may be controlled.
+subsystem provides the following security properties against two
+different classes of attackers, provided that there is enough entropy
+from entropy sources not seen by attackers:
+.Bl -bullet -offset abcd
+.It
+An attacker who has seen some outputs and can supply some entropy
+sources' inputs to the operating system cannot predict past or future
+unseen outputs.
+.It
+An attacker who has seen the entire state of the machine cannot predict
+past outputs.
+.El
 .Pp
-The kernel uses event timing information collected from many
-devices, and mixes this into an entropy pool.
-This pool is used to
-key a stream generator (the CTR_DRBG generator specified by NIST
-SP 800-90) which is used to generate values returned to userspace when
-the pseudo-device is read.
+One
+.Sq output
+means a single read, no matter how short it is.
 .Pp
-The pseudodevice is cloning, which means that each time it is opened,
-a new instance of the stream generator may be created.
-Interposing a stream
-generator between the entropy pool and readers in this manner protects
-readers from each other (each reader's random stream is generated from a
-unique key) and protects all users of the entropy pool from any attack
-which might correlate its successive outputs to each other, such as
-iterative guessing attacks.
-.Pp
-Certain programs make very short reads from
-.Pa /dev/urandom
-each time they begin execution.
-One program with this behavior is
-.Xr perl 1 .
-If such a program is run repeatedly (for example from a network
-service or shell script), the resulting repeated keying of the stream
-generator can quickly drain the entropy pool dry.
-As an optimization for such cases, a separate per-CPU instance of
-the stream generator is used to handle reads from
-.Pa /dev/urandom
-which are smaller than the key length of the underlying cipher.
-Any read of a larger size causes an immediate allocation of a
-private instance of the stream generator for the reader.
-Since all stream
-generators are automatically rekeyed upon use when sufficient entropy
-is available, the shared short-request generators do still offer
-some protection against other consumers of
-.Pa /dev/urandom ,
-though less than is provided for consumers making larger requests.
-.Sh USER ACCESS
-User code can obtain random values from the kernel in two ways.
-.Pp
-Reading from
+.Sq Cannot predict
+means it is conjectured of the cryptography in
+.Fa /dev/random
+that any computationally bounded attacker who tries to distinguish
+outputs from uniform random cannot do more than negligibly better than
+uniform random guessing.
+.Sh ENTROPY
+The operating system contiuously makes observations of hardware
+devices, such as network packet timings, disk seek delays, and
+keystrokes.
+The observations are combined into a seed for a cryptographic
+pseudorandom number generator (PRNG) which is used to generate the
+outputs of both
 .Pa /dev/random
-provides information-theoretic properties desirable for some callers:
-it will guarantee that the stream generator never outputs more bits
-than the length of its key, which may in some sense mean that all the
-entropy provided to it by the entropy pool is "preserved" in its output.
+and
+.Pa /dev/urandom .
 .Pp
-Reading from
-.Pa /dev/random
-may return
-.Er EAGAIN
-(for non-blocking reads), block, or return less data than requested, if
-the pool does not have sufficient entropy
-to provide a new key for the stream generator when sufficient bits have
-been read to require rekeying.
+An attacker may be able to guess with nonnegligible chance of success
+what your last keystroke was, but guessing every observation the
+operating system may have made is more difficult.
+The difficulty of the best strategy at guessing a random variable is
+analyzed as the -log_2 of the highest probability of any outcome,
+measured in bits, and called its
+.Em min-entropy ,
+or
+.Em entropy
+for short in cryptography.
+For example:
+.Bl -bullet -offset abcd -compact
+.It
+A fair coin toss has one bit of entropy.
+.It
+A fair (six-sided) die roll has a little over 2.5 bits of entropy.
+.It
+A string of two independent fair coin tosses has two bits of entropy.
+.It
+The toss of a pair of fair coins that are glued together has one bit of
+entropy.
+.It
+A uniform random distribution with
+.Fa n
+possibilities has log_2
+.Fa n
+bits of entropy.
+.It
+An utterance from an accounting troll who always says
+.Sq nine
+has zero bits of entropy.
+.El
 .Pp
-Reading from
+Note that entropy is a property of an observable physical process, not
+of a particular sample obtained by observing it.
+There are also kinds of entropy in information theory other than
+min-entropy, including the more well-known Shannon entropy, but they
+are not relevant here.
+.Pp
+Hardware devices that the operating system monitors for observations
+are called
+.Em "entropy sources" ,
+and the observations are combined into an
+.Em "entropy pool" .
+The
+.Xr rndctl 8
+command queries information about entropy sources and the entropy pool,
+and can control which entropy sources the operating system uses or
+ignores.
+.Pp
+256 bits of entropy is typically considered intractible to guess with
+classical computers and with current models of the capabilities of
+quantum computers.
+.Pp
+Systems with nonvolatile storage should store a secret from
 .Pa /dev/urandom
-will return as many values as requested.
-The stream generator may be
-initially keyed from the entropy pool even if the pool's estimate of
-its own entropy is less than the number of bits in the stream generator's
-key.
-If this occurs, the generator will be rekeyed with fresh entropy
-from the pool as soon as sufficient entropy becomes available.
-The generator will also be rekeyed whenever the pool's entropy estimate
-exceeds the size of the pool's internal state (when the pool "is full").
+on disk during installation or shutdown, and feed it back during boot,
+so that the work the operating system has done to gather entropy --
+including the work its operator may have done to flip a coin! -- can be
+saved from one boot to the next, and so that newly installed systems
+are not vulnerable to generating cryptographic keys predictably.
 .Pp
-In some sense, this data is not as good as reading from
-.Pa /dev/random ,
-for at least two reasons.
-First, the generator may initially be keyed
-from a pool that has never had as many bits of entropy mixed into it as
-there are bits in the generator's key.
-Second, the generator may produce
-many more bits of output than are contained in its own key, though it
-will never produce more output on one key than is allowed by the
-CTR_DRBG specification.
+The boot loaders in some
+.Nx
+ports support a command to load a seed from disk before the
+kernel has started.
+For those that don't, the
+.Xr rndctl 8
+command can do it once userland has started, for example by setting
+.Dq Va rndctl=YES
+in
+.Pa /etc/rc.conf ;
+see
+.Xr rc.conf 5 .
+.Sh LIMITATIONS
+Some people worry about recovery from state compromise -- that is,
+ensuring that even if an attacker sees the entire state of the
+operating system, then the attacker will be unable to predict any new
+future outputs as long as the operating system gathers fresh entropy
+quickly enough.
 .Pp
-However, reading large amounts of data from a single opened instance of
-.Pa /dev/urandom
-will
+But if an attacker has seen the entire state of your machine,
+refreshing entropy is probably the least of your worries, so we do not
+address that threat model here.
+.Pp
+The
+.Nm
+subsystem does
 .Em not
-deplete the kernel entropy pool, as it would with some other
-implementations.
-This preserves entropy for other callers and will
-produce a more fair distribution of the available entropy over many
-potential readers on the same system.
+automatically defend against hardware colluding with an attacker to
+influence entropy sources based on the state of the operating system.
 .Pp
-Users of these interfaces must carefully consider their application's
-actual security requirements and the characteristics of the system
-on which they are reading from the pseudodevice.
-For many applications, the depletion of the entropy pool caused by the
-.Pa /dev/random
-pseudodevice's continual rekeying of the stream generator will cause
-application behavior (or, perhaps more precisely, nonbehavior) which
-is less secure than relying on the
+For example, a PCI device or CPU instruction for random number
+generation which has no side channel to an attacker other than the
 .Pa /dev/urandom
-interface, which is guaranteed to rekey the stream generator as often
-as it can.
-.Pp
-Excessive use of
-.Pa /dev/random
-can deplete the entropy pool (or, at least, its estimate of how many
-bits of entropy it "contains") and reduce security for other consumers
-of randomness both in userspace
-.Em and within the kernel .
-Some system administrators may wish therefore to remove the
-.Pa /dev/random
-device node and replace it with a second copy of the node for the nonblocking
+device could be bugged to observe all other entropy sources, and to
+carefully craft
+.Sq observations
+that cause a certain number of bits of
 .Pa /dev/urandom
-device.
+output to be ciphertext that either is predictable to an attacker or
+conveys a message to an attacker.
 .Pp
-In any event, as the Linux manual page notes, one should
-be very suspicious of any application which attempts to read more than
-32 bytes (256 bits) from the blocking
-.Pa /dev/random
-pseudodevice, since no practical cryptographic algorithm in current
-use is believed to have a security strength greater than 256 bits.
-.Pp
-Writing to either device node will mix the data written into the
-entropy pool, but will have no effect on the pool's entropy estimate.
+No amount of scrutiny by the system's operator could detect this.
+The only way to prevent this attack would be for the operator to
+disable all entropy sources that may be colluding with an attacker.
+If you're not sure which ones are not, you can always disable all of
+them and fall back to the coin in your pocket.
+.Sh IOCTLS
 The
-.Xr ioctl 2
-interface to the device may be used -- once only, and only when the
-system is in insecure mode at security level 0 or lower -- to add
-data with an explicit entropy estimate.
-.Sh IOCTL INTERFACE
-Various
-.Xr ioctl 2
-functions are available to control device behavior, gather statistics,
-and add data to the entropy pool.
-These are all defined in the
+.Pa /dev/random
+and
+.Pa /dev/urandom
+devices support a number of ioctls, defined in the
 .In sys/rnd.h
-file, along with the data types and constants.
-The structures and ioctl functions are also listed below.
-.Sh DATA TYPES
-Each source has a state structure which summarizes the kernel's state
-for that entropy source.
-.Bd -literal -offset indent
+header file, for querying and controlling the entropy pool.
+.Pp
+Since timing between hardware events contributes to the entropy pool,
+statistics about the entropy pool over time may serve as a side channel
+for the state of the pool, so access to such statistics is restricted
+to the super-user and should be used with caution.
+.Pp
+Several ioctls are concerned with particular entropy sources, described
+by the following structure:
+.Bd -literal
 typedef struct {
-        char            name[16];
-        uint32_t	total;
-        uint32_t	type;
-	uint32_t	flags;
+	char		name[16];	/* symbolic name */
+	uint32_t	total;		/* estimate of entropy provided */
+	uint32_t	type;		/* RND_TYPE_* value */
+	uint32_t	flags;		/* RND_FLAG_* mask */
 } rndsource_t;
-.Ed
-The
-.Va name
-field holds the device name, as known to the kernel.
-The
-.Va type
-field holds the device type.
-.Pp
-Currently, these types are defined:
-.Bl -tag -width RND_TYPE_DISK
-.It Dv RND_TYPE_DISK
-The device is a physical hard drive.
-.It Dv RND_TYPE_ENV
-The device is an environmental sensor such as a temperature sensor or
-a fan speed sensor.
-.It Dv RND_TYPE_NET
-The device is a network interface.
-By default, timing information is
-collected from this source type, but entropy is not estimated.
-.It Dv RND_TYPE_POWER
-The device is a sensor returning changes in the power state of the
-system, such as battery charge state or A/C adapter state.
-.It Dv RND_TYPE_RNG
-The device is a random number generator.
-.It Dv RND_TYPE_SKEW
-The "device" is a measurement of the skew between two clocks, such as a
-periodic device interrupt and the system timecounter, a timecounter and
-an audio codec, or some other source of pairs of events where each
-member of each pair is derived from a different instance of some
-recurring physical process.
-.It Dv RND_TYPE_TAPE
-The device is a tape device.
-.It Dv RND_TYPE_TTY
-The device is a terminal, mouse, or other user input device.
-.It Dv RND_TYPE_VM
-The "device" consists of timings of virtual memory system events.
-.El
-.Pp
-.Va flags
-is a bitfield.
-.Bl -tag -width RND_FLAG_NO_ESTIMATE
-.It Dv RND_FLAG_NO_COLLECT
-Do not even add timing information to the pool.
-.It Dv RND_FLAG_NO_ESTIMATE
-Do not assume any entropy is in the timing information.
-.El
-.Pp
-.Bl -tag -width RNDADDTOENTCNT
-.It Dv RNDGETENTCNT
-.Pq Li "uint32_t"
-Return the current entropy count (in bits).
-.It Dv RNDGETPOOLSTAT
-.Pq Li "rndpoolstat_t"
-.Bd -literal -offset indent
-typedef struct
-{
-	uint32_t	poolsize;
-	uint32_t 	threshold;
-	uint32_t	maxentropy;
 
-	uint32_t	added;
-	uint32_t	curentropy;
-	uint32_t	removed;
-	uint32_t	discarded;
-	uint32_t	generated;
-} rndpoolstat_t;
+#define	RND_TYPE_UNKNOWN
+#define	RND_TYPE_DISK		/* disk device */
+#define	RND_TYPE_ENV		/* environment sensor (temp, fan, &c.) */
+#define	RND_TYPE_NET		/* network device */
+#define	RND_TYPE_POWER		/* power events */
+#define	RND_TYPE_RNG		/* hardware RNG */
+#define	RND_TYPE_SKEW		/* clock skew */
+#define	RND_TYPE_TAPE		/* tape drive */
+#define	RND_TYPE_TTY		/* tty device */
+#define	RND_TYPE_VM		/* virtual memory faults */
+
+#define	RND_TYPE_MAX		/* value of highest-numbered type */
+
+#define	RND_FLAG_COLLECT_TIME		/* use timings of samples */
+#define	RND_FLAG_COLLECT_VALUE		/* use values of samples */
+#define	RND_FLAG_ESTIMATE_TIME		/* estimate entropy of timings */
+#define	RND_FLAG_ESTIMATE_VALUE		/* estimate entropy of values */
+#define	RND_FLAG_NO_COLLECT		/* ignore samples from this */
+#define	RND_FLAG_NO_ESTIMATE		/* do not estimate entropy */
 .Ed
 .Pp
-Return statistics on the current state of the random collection pool.
-.It Dv RNDGETSRCNUM
-.Pq Li "rndstat_t"
-.Bd -literal -offset indent
+The following ioctls are supported:
+.Bl -tag -width abcd
+.It Dv RNDGETENTCNT Pq Vt uint32_t
+Return the number of bits of entropy the system is estimated to have.
+.It Dv RNDGETSRCNUM Pq Vt rndstat_t
+.Bd -literal
 typedef struct {
-        uint32_t       start;
-        uint32_t       count;
-        rndsource_t     source[RND_MAXSTATCOUNT];
+	uint32_t	start;
+	uint32_t	count;
+	rndsource_t	source[RND_MAXSTATCOUNT];
 } rndstat_t;
 .Ed
 .Pp
-Return data for sources, starting at
-.Va start
-and returning at most
-.Va count
-sources.
-.Pp
-The values returned are actual in-kernel snapshots of the entropy
-status for devices.
-Leaking the internal timing information will weaken security.
-.It Dv RNDGETSRCNAME
-.Pq Li "rndstat_name_t"
-.Bd -literal -offset indent
+Fill the
+.Fa sources
+array with information about up to
+.Fa count
+entropy sources, starting at
+.Fa start .
+The actual number of sources described is returned in
+.Fa count .
+At most
+.Dv RND_MAXSTATCOUNT
+sources may be requested at once.
+.It Dv RNDGETSRCNAME Pq Vt rndstat_name_t
+.Bd -literal
 typedef struct {
-        char            name[16];
-        rndsource_t     source;
+	char		name[16];
+	rndsource_t	source;
 } rndstat_name_t;
 .Ed
 .Pp
-Return the device state for a named device.
-.It Dv RNDCTL
-.Pq Li "rndctl_t"
-.Bd -literal -offset indent
+Fill
+.Fa source
+with information about the entropy source named
+.Fa name ,
+or fail with
+.Dv ENOENT
+if there is none.
+.It Dv RNDCTL Pq Vt rndctl_t
+.Bd -literal
 typedef struct {
-        char            name[16];
-        uint32_t       type;
-        uint32_t       flags;
-        uint32_t       mask;
+	char		name[16];
+	uint32_t	type;
+	uint32_t	flags;
+	uint32_t	mask;
 } rndctl_t;
 .Ed
 .Pp
-Change bits in the device state information.
-If
-.Va type
-is 0xff, only the device name stored in
-.Va name
-is used.
-If it is any other value, all devices of type
-.Va type
-are altered.
-This allows all network interfaces to be disabled for
-entropy collection with one call, for example.
-The
-.Va flags
-and
-.Va mask
-work together to change flag bits.
-The
-.Va mask
-field specifies which bits in
-.Va flags
-are to be set or cleared.
-.It Dv RNDADDDATA
-.Pq Li "rnddata_t"
-.Bd -literal -offset indent
+For each entropy source of the type
+.Fa type ,
+or if
+.Fa type
+is
+.Li 0xff
+then for the entropy source named
+.Fa name ,
+replace the flags in
+.Fa mask
+by
+.Fa flags .
+.It Dv RNDADDDATA Pq Vt rnddata_t
+.Bd -literal
 typedef struct {
-        uint32_t	len;
-        uint32_t	entropy;
-        u_char		data[RND_SAVEWORDS * sizeof(uint32_t)];
+	uint32_t	len;
+	uint32_t	entropy;
+	unsigned char	data[RND_SAVEWORDS * sizeof(uint32_t)];
 } rnddata_t;
 .Ed
+.Pp
+Feed
+.Fa len
+bytes of data to the entropy pool.
+The sample is expected to have been drawn with at least
+.Fa entropy
+bits of entropy.
+.Pp
+This ioctl can be used only once per boot.
+It is intended for a system that saves entropy to disk on shutdown and
+restores it on boot, so that the system can immediately be
+unpredictable without having to wait to gather entropy.
+.Pp
+This ioctl is the only way for userland to directly change the system's
+entropy estimate.
+.It Dv RNDGETPOOLSTAT Pq Vt rndpoolstat_t
+.Bd -literal
+typedef struct {
+	uint32_t poolsize;	/* size of each LFSR in pool */
+	uint32_t threshold;	/* no. bytes of pool hash returned */
+	uint32_t maxentropy;	/* total size of pool in bits */
+	uint32_t added;		/* no. bits of entropy ever added */
+	uint32_t curentropy;	/* current entropy `balance' */
+	uint32_t discarded;	/* no. bits dropped when pool full */
+	uint32_t generated;	/* no. bits yielded by pool while
+				   curentropy is zero */
+} rndpoolstat_t;
+.Ed
+.Pp
+Return various statistics about entropy.
 .El
+.Sh IMPLEMENTATION NOTES
+(This section describes the current implementation of the
+.Nm
+subsystem at the time of writing.
+It may be out-of-date by the time you read it, and nothing in here
+should be construed as a guarantee about the behaviour of the
+.Pa /dev/random
+and
+.Pa /dev/urandom
+devices.)
+.Pp
+Samples from entropy sources are fed 32 bits at a time into the entropy
+pool, which is an array of 4096 bits, or 128 32-bit words, representing
+32 linear feedback shift registers each 128 bits long.
+.\" XXX Finish this description so it is implementable.
+.Pp
+When a user process opens
+.Pa /dev/random
+or
+.Pa /dev/urandom
+and first reads from it, the kernel draws from the entropy pool to seed
+a cryptographic pseudorandom number generator, the NIST CTR_DRBG
+(counter-mode deterministic random bit generator) with AES-128 as the
+block cipher, and uses that to generate data.
+.Pp
+To draw a seed from the entropy pool, the kernel
+.Bl -bullet -offset abcd -compact
+.It
+computes the SHA-1 hash of the entropy pool,
+.It
+feeds the SHA-1 hash word-by-word back into the entropy pool like an
+entropy source, and
+.It
+yields the xor of bytes
+.Pf 0.. Fa n
+with bytes
+.Fa n Ns +0.. Ns Fa n Ns Pf + Fa n
+of the hash, where
+.Fa n
+is
+.Dv RND_ENTROPY_THRESHOLD
+(currently 10).
+.El
+The kernel repeats the process, concatenating the results, until it has
+filled the seed.
+.Pp
+For each entropy source, the kernel estimates based on the previous
+samples how much entropy the source is providing in each new sample.
+The kernel maintains a count of the
+.Sq amount of entropy
+or
+.Sq number of bits of entropy
+in the pool.
+Each sample
+.Sq credits
+to the amount of entropy.
+Every time the kernel draws a PRNG seed from the entropy pool, it
+.Sq debits
+from the amount of entropy.
+.Pp
+Every open from
+.Pa /dev/urandom
+seeds an independent PRNG which is reseeded at the convenience of the
+kernel after a billion requests for output.
+Reads from
+.Pa /dev/urandom
+never block, even if the kernel estimates its state to be totally
+predictable.
+.Pp
+Every open from
+.Pa /dev/random
+seeds an independent PRNG which is reseeded after every 16 bytes of
+output.
+Reads from
+.Pa /dev/random
+block if the PRNG needs to be (re)seeded and the kernel's entropy
+estimate is too low.
+.Pp
+It is possible to fool the kernel's entropy estimator, in which case
+reads from
+.Pa /dev/random
+may return immediately even if the kernel is in a totally predictable
+state.
+.Pp
+Writes to
+.Pa /dev/random
+and
+.Pa /dev/urandom
+devices do not change the kernel's entropy estimate.
 .Sh FILES
-.Bl -tag -width /dev/urandomx -compact
+.Bl -tag -width /dev/urandom -compact
 .It Pa /dev/random
-Returns ``good'' values only
+Uniform random byte source.
+May block.
 .It Pa /dev/urandom
-Always returns data.
+Uniform random byte source.
+Never blocks.
 .El
 .Sh SEE ALSO
+.Xr arc4random 3 ,
 .Xr rndctl 8 ,
-.Xr rnd 9
+.Xr cprng 9
+.Rs
+.%A Elaine Barker
+.%A John Kelsey
+.%T Recommendation for Random Number Generation Using Deterministic Random Bit Generators
+.%D January 2012
+.%I National Institute of Standards and Technology
+.%O NIST Special Publication 800-90A
+.%U http://csrc.nist.gov/publications/nistpubs/800-90A/SP800-90A.pdf
+.Re
+.Rs
+.%A Daniel J. Bernstein
+.%T Entropy Attacks!
+.%D 2014-02-05
+.%U http://blog.cr.yp.to/20140205-entropy.html
+.Re
+.Rs
+.%A Nadia Heninger
+.%A Zakir Durumeric
+.%A Eric Wustrow
+.%A J. Alex Halderman
+.%T Mining Your Ps and Qs: Detection of Widespread Weak Keys in Network Devices
+.%B Proceedings of the 21st USENIX Security Symposium
+.%I USENIX
+.%D August 2012
+.%P 205-220
+.%U https://www.usenix.org/conference/usenixsecurity12/technical-sessions/presentation/heninger
+.%U https://factorable.net/
+.Re
 .Sh HISTORY
-The random device was first made available in
+The
+.Pa /dev/random
+and
+.Pa /dev/urandom
+devices first appeared in
 .Nx 1.3 .
 .Sh AUTHORS
-This implementation was written by Thor Lancelot Simon.
-It retains
-some code (particularly for the ioctl interface) from the earlier
-implementation by Michael Graff
-.Aq explorer@flame.org .
+The
+.Nm
+subsystem was first implemented by
+.An Michael Graff Aq Mt explorer@flame.org ,
+and was then largely rewritten by
+.An Thor Lancelot Simon Aq Mt tls@NetBSD.org
+with later contributions by
+.An Taylor R. Campbell Aq Mt riastradh@NetBSD.org .
+.Sh BUGS
+There is no way to disable all entropy sources, in this and subsequent
+boots and no matter what USB devices you plug in against your mother's
+sage advice, in order to defend against the colluding hardware attack.
+.Pp
+The implementation confuses the number of bits in the entropy pool's
+physical representation, as a set of 32 128-bit LFSRs, with the number
+of bits of entropy that a system needs in order to be unpredictable, so
+even if entropy estimates were accurate and high, it takes unreasonably
+long for
+.Pa /dev/random
+to stop blocking.
+.Pp
+Many people are confused about what
+.Pa /dev/random
+and
+.Pa /dev/urandom
+mean.
+Unfortunately, no amount of software engineering can fix that.
+.Sh ENTROPY ACCOUNTING
+The entropy accounting described here is not grounded in any
+cryptography theory.
+It is done because it was always done, and because it gives people a
+warm fuzzy feeling about information theory.
+.Pp
+The folklore is that every
+.Fa n Ns -bit
+output of
+.Fa /dev/random
+is not merely indistinguishable from uniform random to a
+computationally bounded attacker, but information-theoretically is
+independent and has
+.Fa n
+bits of entropy even to a computationally
+.Em unbounded
+attacker -- that is, an attacker who can recover AES keys, compute
+SHA-1 preimages, etc.
+This property is not provided, nor was it ever provided in any
+implementation of
+.Fa /dev/random
+known to the author.
+.Pp
+This property would require that, after each read, the system discard
+all measurements from hardware in the entropy pool and begin anew.
+All work done to make the system unpredictable would be thrown out, and
+the system would immediately become predictable again.
+Reverting the system to being predictable every time a process reads
+from
+.Fa /dev/random
+would give attackers a tremendous advantage in predicting future
+outputs, especially if they can fool the entropy estimator, e.g. by
+sending carefully timed network packets.
+.Pp
+If you filled your entropy pool by flipping a coin 256 times, you would
+have to flip it again 256 times for the next output, and so on.
+In that case, if you really want information-theoretic guarantees, you
+might as well take
+.Fa /dev/random
+out of the picture and use your coin flips verbatim.
+.Pp
+On the other hand, every cryptographic protocol in practice, including
+HTTPS, SSH, PGP, etc., expands short secrets deterministically into
+long streams of bits, and their security relies on conjectures that a
+computationally bounded attacker cannot distinguish the long streams
+from uniform random.
+If we couldn't do that for
+.Fa /dev/random ,
+it would be hopeless to assume we could for HTTPS, SSH, PGP, etc.
+.Pp
+History is littered with examples of broken entropy sources and failed
+system engineering for random number generators.
+Nobody has ever reported distinguishing AES ciphertext from uniform
+random without side channels, nor reported computing SHA-1 preimages
+faster than brute force.
+The folklore information-theoretic defence against computationally
+unbounded attackers replaces system engineering that successfully
+defends against realistic threat models by imaginary theory that
+defends only against fantasy threat models.
