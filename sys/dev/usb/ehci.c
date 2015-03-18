@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.43 2015/03/17 20:56:39 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.44 2015/03/18 06:42:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.43 2015/03/17 20:56:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.44 2015/03/18 06:42:02 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4345,7 +4345,6 @@ ehci_device_fs_isoc_start(usbd_xfer_handle xfer)
 
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	xfer->ux_done = 0;
 
 	mutex_exit(&sc->sc_lock);
 
@@ -4675,7 +4674,6 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	xfer->ux_done = 0;
 	mutex_exit(&sc->sc_lock);
 
 	if (sc->sc_bus.ub_usepolling) {
