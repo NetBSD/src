@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1120 2015/03/07 07:28:37 mrg Exp $
+# $NetBSD: GENERIC,v 1.1121 2015/03/18 02:05:05 snj Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1120 $"
+#ident 		"GENERIC-$Revision: 1.1121 $"
 
 maxusers	64		# estimated number of users
 
@@ -577,7 +577,7 @@ radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
 #nouveau*	at pci? dev ? function ?
-#nouveaufb*	at nouveaufbbus
+#nouveaufb*	at nouveaufbbus?
 
 # Serial Devices
 
