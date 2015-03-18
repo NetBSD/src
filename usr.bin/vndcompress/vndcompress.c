@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.24 2014/01/25 15:31:06 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.24.4.1 2015/03/18 08:21:47 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.24 2014/01/25 15:31:06 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.24.4.1 2015/03/18 08:21:47 snj Exp $");
 
 #include <sys/endian.h>
 
@@ -513,8 +513,13 @@ compress_init(int argc, char **argv, const struct options *O,
 				err(1, "truncate failed");
 			if (lseek(S->cloop2_fd, 0, SEEK_SET) == -1)
 				err(1, "lseek to cloop2 beginning failed");
-			if (lseek(S->image_fd, 0, SEEK_SET) == -1)
-				err(1, "lseek to image beginning failed");
+
+			/* If we seeked in the input, rewind.  */
+			if (S->blkno != 0) {
+				if (lseek(S->image_fd, 0, SEEK_SET) == -1)
+					err(1,
+					    "lseek to image beginning failed");
+			}
 		}
 	}
 
@@ -672,7 +677,23 @@ compress_restart(struct compress_state *S)
 	assert(1 <= blkno);
 	blkno -= 1;
 
-	/* Seek to the input position.  */
+	/* Seek to the output position.  */
+	assert(last_offset <= OFF_MAX);
+	if (lseek(S->cloop2_fd, last_offset, SEEK_SET) == -1) {
+		warn("lseek output cloop2 to %"PRIx64" failed", last_offset);
+		return false;
+	}
+
+	/* Switch from reading to writing the offset table.  */
+	if (!offtab_transmogrify_read_to_write(&S->offtab, blkno))
+		return false;
+
+	/*
+	 * Seek to the input position last, after all other possible
+	 * failures, because if the input is a pipe, we can't change
+	 * our mind, rewind, and start at the beginning instead of
+	 * restarting.
+	 */
 	assert(S->size <= OFF_MAX);
 	assert(blkno <= (S->size / S->blocksize));
 	const off_t restart_position = ((off_t)blkno * (off_t)S->blocksize);
@@ -709,17 +730,6 @@ compress_restart(struct compress_state *S)
 		}
 		free(buffer);
 	}
-
-	/* Seek to the output position.  */
-	assert(last_offset <= OFF_MAX);
-	if (lseek(S->cloop2_fd, last_offset, SEEK_SET) == -1) {
-		warn("lseek output cloop2 to %"PRIx64" failed", last_offset);
-		return false;
-	}
-
-	/* Switch from reading to writing the offset table.  */
-	if (!offtab_transmogrify_read_to_write(&S->offtab, blkno))
-		return false;
 
 	/* Start where we left off.  */
 	S->blkno = blkno;
