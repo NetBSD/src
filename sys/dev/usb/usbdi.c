@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.20 2015/03/17 19:02:44 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.21 2015/03/18 15:45:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.20 2015/03/17 19:02:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.21 2015/03/18 15:45:45 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -66,16 +66,6 @@ Static usbd_status usbd_ar_pipe(usbd_pipe_handle);
 Static void usbd_start_next(usbd_pipe_handle);
 Static usbd_status usbd_open_pipe_ival
 	(usbd_interface_handle, uint8_t, uint8_t, usbd_pipe_handle *, int);
-
-static inline int
-usbd_xfer_isread(usbd_xfer_handle xfer)
-{
-	if (xfer->ux_rqflags & URQ_REQUEST)
-		return xfer->ux_request.bmRequestType & UT_READ;
-	else
-		return (xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress &
-			UE_DIR_IN);
-}
 
 #if defined(USB_DEBUG)
 void
