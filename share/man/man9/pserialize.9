@@ -1,4 +1,4 @@
-.\"	$NetBSD: pserialize.9,v 1.3 2011/08/07 12:29:24 rmind Exp $
+.\"	$NetBSD: pserialize.9,v 1.3.20.1 2015/03/18 08:46:32 snj Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 30, 2011
+.Dd November 21, 2014
 .Dt PSERIALIZE 9
 .Os
 .Sh NAME
@@ -74,18 +74,85 @@ Operation blocks and it may only be performed from thread context.
 .El
 .\" -----
 .Sh EXAMPLES
-Typical code fragment in the writer side:
+Given a global database of frotz records:
 .Bd -literal
-	mutex_enter(\*[Am]writer_psz_lock);
-	/*
-	 * Perform the updates (e.g. remove data items from a list).
-	 */
+	struct frotz {
+		...
+		struct frotz	*f_next;
+	};
+
+	kmutex_t frobbotzim_lock;
+	struct frotz *frobbotzim;
+	pserialize_t frobbotzim_psz;
+.Ed
+.Pp
+Create a frotz and publish it, as a writer:
+.Bd -literal
+	struct frotz *f = pool_get(\*[Am]frotz_pool, PR_WAITOK);
+
+	/* Initialize f.  */
 	...
-	pserialize_perform(object-\*[Gt]psz);
+
+	mutex_enter(\*[Am]frobbotzim_lock);
+	f->f_next = frobbotzim;
 	/*
-	 * At this point it is safe to destroy old data items.
+	 * Publish the contents of f->f_next before we publish the
+	 * pointer to f in frobbotzim.
 	 */
-	mutex_exit(\*[Am]writer_psz_lock);
+	membar_producer();
+	frobbotzim = f;
+	mutex_exit(\*[Am]frobbotzim_lock);
+.Ed
+.Pp
+Find a frotz, as a reader:
+.Bd -literal
+	struct frotz *f;
+	int error = ENOENT;
+	int s;
+
+	s = pserialize_read_enter();
+	for (f = frobbotzim; f != NULL; f = f->f_next) {
+		/* Fetch f before we fetch anything f points to.  */
+		membar_consumer();
+		if (f->f_... = key) {
+			*resultp = f->f_...;
+			error = 0;
+			break;
+		}
+	}
+	pserialize_read_exit(s);
+
+	return error;
+.Ed
+.Pp
+Remove a frotz, as a writer, and free it once there are no more
+readers:
+.Bd -literal
+	struct frotz **fp, *f;
+
+	mutex_enter(\*[Am]frobbotzim_lock);
+	for (fp = \*[Am]frobbotzim; (f = *fp) != NULL; fp = &f->f_next) {
+		if (f->f_... == key) {
+			/*
+			 * Unhook it from the list.  Readers may still
+			 * be traversing the list at this point, so
+			 * the next pointer must remain valid and
+			 * memory must remain allocated.
+			 */
+			*fp = f->f_next;
+			break;
+		}
+	}
+	/*
+	 * Wait for all existing readers to complete.  New readers will
+	 * not see f because the list no longer points to it.
+	 */
+	pserialize_perform(frobbotzim_psz);
+	/* Now nobody else can be touching f, so it is safe to free.  */
+	mutex_exit(\*[Am]frobbotzim_lock);
+
+	if (f != NULL)
+		pool_put(\*[Am]frotz_pool, f);
 .Ed
 .\" -----
 .Sh CODE REFERENCES
