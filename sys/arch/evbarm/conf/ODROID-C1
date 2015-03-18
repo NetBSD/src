@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.10 2015/03/17 22:29:40 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.11 2015/03/18 23:03:06 jmcneill Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -135,11 +135,11 @@ options 	BUFQ_PRIOCSCAN
 
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
-options 	LOCKDEBUG
+#options 	DEBUG
+#options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
