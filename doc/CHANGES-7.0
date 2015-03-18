@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.230 2015/03/17 19:00:42 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.231 2015/03/18 04:43:41 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18619,4 +18619,49 @@ xsrc/xfree/xc/lib/font/bitmap/bdfread.c		1.5
 	char's bitmap cannot be read), and CVE-2015-1804
 	(bdfReadCharacters: ensure metrics fit into xCharInfo struct)
 	[mrg, ticket #620]
+
+etc/etc.amd64/Makefile.inc			patch
+etc/etc.i386/Makefile.inc			patch
+sys/arch/amd64/conf/ALL				patch
+sys/arch/amd64/conf/DRMKMS			delete
+sys/arch/amd64/conf/GENERIC			patch
+sys/arch/amd64/conf/INSTALL			patch
+sys/arch/amd64/conf/NO_DRM			delete
+sys/arch/i386/conf/ALL				patch
+sys/arch/i386/conf/DRMKMS			delete
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/INSTALL			patch
+sys/arch/i386/conf/NO_DRM			delete
+usr.sbin/sysinst/arch/amd64/md.h		patch
+usr.sbin/sysinst/arch/i386/md.h			patch
+usr.sbin/sysinst/arch/i386/msg.md.de		patch
+usr.sbin/sysinst/arch/i386/msg.md.en		patch
+usr.sbin/sysinst/arch/i386/msg.md.es		patch
+usr.sbin/sysinst/arch/i386/msg.md.fr		patch
+usr.sbin/sysinst/arch/i386/msg.md.pl		patch
+
+
+	- Enable intel and radeon DRM/KMS drivers in GENERIC
+	- Disable all of the old DRM drivers in GENERIC
+	- Remove the separate DRMKMS kernel
+	[christos, ticket #542]
+
+sys/dev/pci/if_wm.c				1.311-1.313
+sys/dev/pci/if_wmreg.h				1.66
+
+	- Fix a bug that sc_mediatype is evaluated incorrectly.
+	- Initialize some hardware bits for 8257[1234], 82583, 80003,
+	  ICH* and PCH*.
+	- Fix a bug that the first access to NVM is failed on 8254[17]
+	  which use SPI EEPROM. Observed on Dell PowerEdge [12]850.
+	[msaitoh, ticket #614]
+
+sys/arch/xen/include/evtchn.h			1.23
+sys/arch/xen/xen/evtchn.c			1.71
+sys/arch/xen/xen/pci_intr_machdep.c		1.17
+
+	Properly implemement pci_intr_disestablish(9), so that interrupt
+	handlers stop being called when the device has been detached.
+	PR port-xen/47720.
+	[bouyer, ticket #618]
 
