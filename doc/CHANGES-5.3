@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.104 2015/03/17 18:43:09 snj Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.105 2015/03/18 17:28:11 snj Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3767,4 +3767,23 @@ xsrc/xfree/xc/lib/font/bitmap/bdfread.c 	patch
 	char's bitmap cannot be read), and CVE-2015-1804
 	(bdfReadCharacters: ensure metrics fit into xCharInfo struct)
 	[mrg, ticket #1953]
+
+sys/dev/cons.c					1.74 via patch
+
+	Fix strange kernel output sequence "\n\r" observed in serial
+	consoles.  Output '\r' before '\n' in conversion.  PR 36306.
+	[nakayama, ticket #1952]
+
+sys/compat/linux32/arch/amd64/linux32_syscall.h	regen
+sys/compat/linux32/arch/amd64/linux32_syscallargs.h regen
+sys/compat/linux32/arch/amd64/linux32_syscalls.c regen
+sys/compat/linux32/arch/amd64/linux32_sysent.c	regen
+sys/compat/linux32/arch/amd64/syscalls.master	1.52, 1.53 via patch
+sys/compat/linux32/common/linux32_misc.c	1.17 via patch
+sys/compat/linux32/common/linux32_stat.c	1.14-1.16 via patch
+
+	- Fix inverted lst_ino/__lst_ino assignment in linux32_from_stat.
+	- Add stat/lstat/fstat syscalls.
+	- Add fstatfs syscall.
+	[joerg, ticket #1149]
 
