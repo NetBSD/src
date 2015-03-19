@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.28 2015/01/21 02:47:39 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.29 2015/03/19 05:46:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.28 2015/01/21 02:47:39 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.29 2015/03/19 05:46:25 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -447,18 +447,12 @@ arc4random_prng_create(void)
 	prng = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
 	if (prng == MAP_FAILED)
 		goto fail0;
-#ifdef MAP_INHERIT_ZERO
 	if (minherit(prng, size, MAP_INHERIT_ZERO) == -1)
 		goto fail1;
-#else
-#warning This arc4random is not fork-safe!
-#endif
 
 	return prng;
 
-#ifdef MAP_INHERIT_ZERO
 fail1:	(void)munmap(prng, size);
-#endif
 fail0:	return NULL;
 }
 #endif
