@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.8 2014/07/20 13:25:23 nonaka Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.8.4.1 2015/03/19 17:26:43 skrll Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -67,14 +67,14 @@ struct urtwn_softc;
 
 struct urtwn_rx_data {
 	struct urtwn_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer *	xfer;
 	uint8_t			*buf;
 };
 
 struct urtwn_tx_data {
 	struct urtwn_softc		*sc;
-	usbd_pipe_handle		pipe;
-	usbd_xfer_handle		xfer;
+	struct usbd_pipe *		pipe;
+	struct usbd_xfer *		xfer;
 	uint8_t				*buf;
 	TAILQ_ENTRY(urtwn_tx_data)	next;
 };
@@ -114,8 +114,8 @@ struct urtwn_softc {
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device *		sc_udev;
+	struct usbd_interface *		sc_iface;
 	u_int				sc_flags;
 #define URTWN_FLAG_CCK_HIPWR	__BIT(0)
 #define	URTWN_FLAG_ATTACHED	__BIT(1)
@@ -131,9 +131,9 @@ struct urtwn_softc {
 	kmutex_t			sc_tx_mtx;
 	kmutex_t			sc_write_mtx;
 
-	usbd_pipe_handle		rx_pipe;
+	struct usbd_pipe *		rx_pipe;
 	int				rx_npipe;
-	usbd_pipe_handle		tx_pipe[R92C_MAX_EPOUT];
+	struct usbd_pipe *		tx_pipe[R92C_MAX_EPOUT];
 	int				tx_npipe;
 	int				ac2idx[WME_NUM_AC];
 

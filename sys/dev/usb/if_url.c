@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.48.4.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.48.4.4 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.4 2015/03/19 17:26:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -99,8 +99,8 @@ Static int url_tx_list_init(struct url_softc *);
 Static int url_newbuf(struct url_softc *, struct url_chain *, struct mbuf *);
 Static void url_start(struct ifnet *);
 Static int url_send(struct url_softc *, struct mbuf *, int);
-Static void url_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void url_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void url_txeof(struct usbd_xfer *, void *, usbd_status);
+Static void url_rxeof(struct usbd_xfer *, void *, usbd_status);
 Static void url_tick(void *);
 Static void url_tick_task(void *);
 Static int url_ioctl(struct ifnet *, u_long, void *);
@@ -181,8 +181,8 @@ url_attach(device_t parent, device_t self, void *aux)
 {
 	struct url_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -941,7 +941,7 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 }
 
 Static void
-url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+url_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct url_chain *c = priv;
@@ -989,7 +989,7 @@ url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 Static void
-url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct url_chain *c = priv;
 	struct url_softc *sc = c->url_sc;

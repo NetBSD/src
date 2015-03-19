@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.4 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.5 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.4 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.5 2015/03/19 17:26:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -132,7 +132,7 @@ struct usb_softc {
 #if 0
 	device_t	sc_dev;		/* base device */
 #endif
-	usbd_bus_handle sc_bus;		/* USB controller */
+	struct usbd_bus *sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
 	struct lwp	*sc_event_thread;
@@ -310,7 +310,7 @@ static void
 usb_doattach(device_t self)
 {
 	struct usb_softc *sc = device_private(self);
-	usbd_device_handle dev;
+	struct usbd_device *dev;
 	usbd_status err;
 	int speed;
 	struct usb_event *ue;
@@ -399,7 +399,7 @@ usb_create_event_thread(device_t self)
  * context ASAP.
  */
 void
-usb_add_task(usbd_device_handle dev, struct usb_task *task, int queue)
+usb_add_task(struct usbd_device *dev, struct usb_task *task, int queue)
 {
 	struct usb_taskq *taskq;
 
@@ -423,7 +423,7 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task, int queue)
  * operation.  Urgh...
  */
 void
-usb_rem_task(usbd_device_handle dev, struct usb_task *task)
+usb_rem_task(struct usbd_device *dev, struct usb_task *task)
 {
 	unsigned queue;
 
@@ -760,7 +760,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case USB_DEVICEINFO:
 	{
-		usbd_device_handle dev;
+		struct usbd_device *dev;
 		struct usb_device_info *di = (void *)data;
 		int addr = di->udi_addr;
 
@@ -775,7 +775,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef COMPAT_30
 	case USB_DEVICEINFO_OLD:
 	{
-		usbd_device_handle dev;
+		struct usbd_device *dev;
 		struct usb_device_info_old *di = (void *)data;
 		int addr = di->udi_addr;
 
@@ -895,7 +895,7 @@ usb_discover(struct usb_softc *sc)
 }
 
 void
-usb_needs_explore(usbd_device_handle dev)
+usb_needs_explore(struct usbd_device *dev)
 {
 	DPRINTFN(2,("usb_needs_explore\n"));
 	mutex_enter(dev->ud_bus->ub_lock);
@@ -905,7 +905,7 @@ usb_needs_explore(usbd_device_handle dev)
 }
 
 void
-usb_needs_reattach(usbd_device_handle dev)
+usb_needs_reattach(struct usbd_device *dev)
 {
 	DPRINTFN(2,("usb_needs_reattach\n"));
 	mutex_enter(dev->ud_bus->ub_lock);
@@ -942,7 +942,7 @@ usb_get_next_event(struct usb_event *ue)
 }
 
 void
-usbd_add_dev_event(int type, usbd_device_handle udev)
+usbd_add_dev_event(int type, struct usbd_device *udev)
 {
 	struct usb_event *ue = usb_alloc_event();
 
@@ -951,7 +951,7 @@ usbd_add_dev_event(int type, usbd_device_handle udev)
 }
 
 void
-usbd_add_drv_event(int type, usbd_device_handle udev, device_t dev)
+usbd_add_drv_event(int type, struct usbd_device *udev, device_t dev)
 {
 	struct usb_event *ue = usb_alloc_event();
 
@@ -1018,7 +1018,7 @@ usb_async_intr(void *cookie)
 Static void
 usb_soft_intr(void *arg)
 {
-	usbd_bus_handle bus = arg;
+	struct usbd_bus *bus = arg;
 
 	mutex_enter(bus->ub_lock);
 	bus->ub_methods->ubm_softint(bus);
@@ -1026,7 +1026,7 @@ usb_soft_intr(void *arg)
 }
 
 void
-usb_schedsoftintr(usbd_bus_handle bus)
+usb_schedsoftintr(struct usbd_bus *bus)
 {
 
 	DPRINTFN(10,("usb_schedsoftintr: polling=%d\n", bus->ub_usepolling));

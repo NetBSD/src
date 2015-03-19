@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.11 2015/03/18 07:37:02 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.12 2015/03/19 17:26:42 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ typedef struct ehci_soft_qtd {
 	ehci_physaddr_t physaddr;
 	usb_dma_t dma;                  /* qTD's DMA infos */
 	int offs;                       /* qTD's offset in usb_dma_t */
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	LIST_ENTRY(ehci_soft_qtd) hnext;
 	uint16_t len;
 } ehci_soft_qtd_t;
@@ -181,7 +181,7 @@ typedef struct ehci_softc {
 
 	int sc_noport;
 	uint8_t sc_hasppc;		/* has Port Power Control */
-	usbd_xfer_handle sc_intrxfer;
+	struct usbd_xfer *sc_intrxfer;
 	char sc_isreset[EHCI_MAX_PORTS];
 	char sc_softwake;
 	kcondvar_t sc_softwake_cv;

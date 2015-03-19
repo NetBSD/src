@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_video.c,v 1.6.32.2 2014/12/03 12:52:07 skrll Exp $ */
+/* $NetBSD: auvitek_video.c,v 1.6.32.3 2015/03/19 17:26:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.6.32.2 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.6.32.3 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,7 @@ static int		auvitek_start_xfer(struct auvitek_softc *);
 static int		auvitek_stop_xfer(struct auvitek_softc *);
 static int		auvitek_isoc_start(struct auvitek_softc *);
 static int		auvitek_isoc_start1(struct auvitek_isoc *);
-static void		auvitek_isoc_intr(usbd_xfer_handle,
-					  usbd_private_handle,
+static void		auvitek_isoc_intr(struct usbd_xfer *, void *,
 					  usbd_status);
 static int		auvitek_isoc_process(struct auvitek_softc *,
 					     uint8_t *, uint32_t);
@@ -694,7 +693,7 @@ auvitek_isoc_start1(struct auvitek_isoc *isoc)
 }
 
 static void
-auvitek_isoc_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+auvitek_isoc_intr(struct usbd_xfer *xfer, void * priv,
     usbd_status status)
 {
 	struct auvitek_isoc *isoc = priv;

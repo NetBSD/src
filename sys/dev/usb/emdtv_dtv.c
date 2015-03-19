@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.10.14.1 2014/12/02 09:00:33 skrll Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.10.14.2 2015/03/19 17:26:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10.14.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10.14.2 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ static int		emdtv_dtv_tuner_reset(void *);
 static void		emdtv_dtv_isoc_startall(struct emdtv_softc *);
 static int		emdtv_dtv_isoc_start(struct emdtv_softc *,
 			    struct emdtv_isoc_xfer *);
-static void		emdtv_dtv_isoc(usbd_xfer_handle, usbd_private_handle,
+static void		emdtv_dtv_isoc(struct usbd_xfer *, void *,
 			    usbd_status);
 
 static const struct dtv_hw_if emdtv_dtv_if = {
@@ -392,13 +392,13 @@ emdtv_dtv_isoc_start(struct emdtv_softc *sc, struct emdtv_isoc_xfer *ix)
 }
 
 static void
-emdtv_dtv_isoc(usbd_xfer_handle xfer, usbd_private_handle priv,
+emdtv_dtv_isoc(struct usbd_xfer *xfer, void * priv,
     usbd_status err)
 {
 	struct emdtv_isoc_xfer *ix = priv;
 	struct emdtv_softc *sc = ix->ix_sc;
 	struct dtv_payload payload;
-	usbd_pipe_handle isoc = sc->sc_isoc_pipe;
+	struct usbd_pipe * isoc = sc->sc_isoc_pipe;
 	uint32_t len;
 	uint8_t *buf;
 	int i;

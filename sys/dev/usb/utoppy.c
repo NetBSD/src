@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.5 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.6 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.5 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.6 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,8 @@ enum utoppy_state {
 
 struct utoppy_softc {
 	device_t sc_dev;
-	usbd_device_handle sc_udev;	/* device */
-	usbd_interface_handle sc_iface;	/* interface */
+	struct usbd_device *sc_udev;	/* device */
+	struct usbd_interface *sc_iface;	/* interface */
 	int sc_dying;
 	int sc_refcnt;
 
@@ -134,16 +134,16 @@ struct utoppy_softc {
 	u_int sc_turbo_mode;
 
 	int sc_out;
-	usbd_pipe_handle sc_out_pipe;	/* bulk out pipe */
-	usbd_xfer_handle sc_out_xfer;
+	struct usbd_pipe *sc_out_pipe;	/* bulk out pipe */
+	struct usbd_xfer *sc_out_xfer;
 	void *sc_out_buf;
 	void *sc_out_data;
 	uint64_t sc_wr_offset;
 	uint64_t sc_wr_size;
 
 	int sc_in;
-	usbd_pipe_handle sc_in_pipe;	/* bulk in pipe */
-	usbd_xfer_handle sc_in_xfer;
+	struct usbd_pipe *sc_in_pipe;	/* bulk in pipe */
+	struct usbd_xfer *sc_in_xfer;
 	void *sc_in_buf;
 	void *sc_in_data;
 	size_t sc_in_len;
@@ -218,8 +218,8 @@ utoppy_attach(device_t parent, device_t self, void *aux)
 {
 	struct utoppy_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
 	uint8_t epcount;
@@ -522,7 +522,7 @@ utoppy_dump_packet(const void *b, size_t len)
 #endif
 
 static usbd_status
-utoppy_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
+utoppy_bulk_transfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
     uint16_t flags, uint32_t timeout, void *buf, uint32_t *size,
     const char *lbl)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.9.14.2 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: uberry.c,v 1.9.14.3 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.9.14.2 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.9.14.3 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ int	uberrydebug = 0;
 
 struct uberry_softc {
  	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 };
 
 /*
@@ -167,7 +167,7 @@ uberry_attach(device_t parent, device_t self, void *aux)
 {
 	struct uberry_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle	dev = uaa->device;
+	struct usbd_device *	dev = uaa->device;
 	char			*devinfop;
 
 	DPRINTFN(10,("uberry_attach: sc=%p\n", sc));

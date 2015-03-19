@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.55.6.5 2015/02/01 06:30:29 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.55.6.6 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ typedef struct ohci_soft_td {
 	usb_dma_t dma;
 	int offs;
 	LIST_ENTRY(ohci_soft_td) hnext;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	uint16_t len;
 	uint16_t flags;
 #define OHCI_CALL_DONE	0x0001
@@ -72,7 +72,7 @@ typedef struct ohci_soft_itd {
 	usb_dma_t dma;
 	int offs;
 	LIST_ENTRY(ohci_soft_itd) hnext;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	uint16_t flags;
 	char isdone;	/* used only when DIAGNOSTIC is defined */
 } ohci_soft_itd_t;
@@ -127,7 +127,7 @@ typedef struct ohci_softc {
 
 	pool_cache_t sc_xferpool;	/* free xfer pool */
 
-	usbd_xfer_handle sc_intrxfer;
+	struct usbd_xfer *sc_intrxfer;
 
 	char sc_vendor[32];
 	int sc_id_vendor;

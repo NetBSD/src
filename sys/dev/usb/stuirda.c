@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.16.2.4 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.16.2.5 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.4 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.5 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -138,8 +138,8 @@ stuirda_fwload(struct uirda_softc *sc) {
 	firmware_handle_t fh;
 	off_t fwsize;
 	usb_device_descriptor_t usbddsc;
-	usbd_xfer_handle	fwxfer;
-	usbd_pipe_handle	fwpipe;
+	struct usbd_xfer *	fwxfer;
+	struct usbd_pipe *	fwpipe;
 	usbd_status status;
 	usb_device_request_t req;
 	char *buffer;

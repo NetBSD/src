@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.35.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.35.6.2 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -136,7 +136,7 @@ typedef void (*umass_callback)(struct umass_softc *, void *, int, int);
 typedef void (*umass_wire_xfer)(struct umass_softc *, int, void *, int, void *,
 				int, int, u_int, int, umass_callback, void *);
 typedef void (*umass_wire_reset)(struct umass_softc *, int);
-typedef void (*umass_wire_state)(usbd_xfer_handle, usbd_private_handle,
+typedef void (*umass_wire_state)(struct usbd_xfer *, void *,
 				 usbd_status);
 
 struct umass_wire_methods {
@@ -152,12 +152,12 @@ struct umassbus_softc {
 /* the per device structure */
 struct umass_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct usbd_device *	sc_udev;	/* device */
+	struct usbd_interface *	sc_iface;	/* interface */
 	int			sc_ifaceno;	/* interface number */
 
 	uint8_t			sc_epaddr[UMASS_NEP];
-	usbd_pipe_handle	sc_pipe[UMASS_NEP];
+	struct usbd_pipe *	sc_pipe[UMASS_NEP];
 	usb_device_request_t	sc_req;
 
 	const struct umass_wire_methods *sc_methods;
@@ -223,7 +223,7 @@ struct umass_softc {
 
 #define XFER_NR			9	/* maximum number */
 
-	usbd_xfer_handle	transfer_xfer[XFER_NR]; /* for ctrl xfers */
+	struct usbd_xfer *	transfer_xfer[XFER_NR]; /* for ctrl xfers */
 
 	void			*data_buffer;
 	void			*cmd_buffer;

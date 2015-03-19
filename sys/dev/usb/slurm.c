@@ -1,4 +1,4 @@
-/*	$NetBSD: slurm.c,v 1.1.18.1 2014/12/03 22:33:56 skrll Exp $ */
+/*	$NetBSD: slurm.c,v 1.1.18.2 2015/03/19 17:26:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slurm.c,v 1.1.18.1 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slurm.c,v 1.1.18.2 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -59,8 +59,8 @@ int	slurmdebug = 0;
 
 struct slurm_softc {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_uif;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_uif;
 	uint32_t		sc_band;
 	uint32_t		sc_space;
 };

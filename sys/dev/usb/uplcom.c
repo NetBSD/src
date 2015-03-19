@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.74.4.6 2014/12/06 08:37:30 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.74.4.7 2015/03/19 17:26:43 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.6 2014/12/06 08:37:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.7 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,13 +84,13 @@ enum  pl2303_type {
 
 struct	uplcom_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct usbd_device *	sc_udev;	/* USB device */
+	struct usbd_interface *	sc_iface;	/* interface */
 	int			sc_iface_number;	/* interface number */
 
-	usbd_interface_handle	sc_intr_iface;	/* interrupt interface */
+	struct usbd_interface *	sc_intr_iface;	/* interrupt interface */
 	int			sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe *	sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
 	int			sc_isize;
 
@@ -119,7 +119,7 @@ Static	usbd_status uplcom_reset(struct uplcom_softc *);
 Static	usbd_status uplcom_set_line_coding(struct uplcom_softc *,
 					   usb_cdc_line_state_t *);
 Static	usbd_status uplcom_set_crtscts(struct uplcom_softc *);
-Static	void uplcom_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static	void uplcom_intr(struct usbd_xfer *, void *, usbd_status);
 
 Static	void uplcom_set(void *, int, int, int);
 Static	void uplcom_dtr(struct uplcom_softc *, int);
@@ -133,7 +133,7 @@ Static	int  uplcom_ioctl(void *, int, u_long, void *, int, proc_t *);
 Static	int  uplcom_param(void *, int, struct termios *);
 Static	int  uplcom_open(void *, int);
 Static	void uplcom_close(void *, int);
-Static usbd_status uplcom_vendor_control_write(usbd_device_handle, uint16_t, uint16_t);
+Static usbd_status uplcom_vendor_control_write(struct usbd_device *, uint16_t, uint16_t);
 
 struct	ucom_methods uplcom_methods = {
 	.ucom_get_status = uplcom_get_status,
@@ -219,7 +219,7 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct uplcom_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_device_descriptor_t *ddesc;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
@@ -741,7 +741,7 @@ uplcom_param(void *addr, int portno, struct termios *t)
 }
 
 Static usbd_status
-uplcom_vendor_control_write(usbd_device_handle dev, uint16_t value, uint16_t index)
+uplcom_vendor_control_write(struct usbd_device *dev, uint16_t value, uint16_t index)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -824,7 +824,7 @@ uplcom_close(void *addr, int portno)
 }
 
 void
-uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+uplcom_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct uplcom_softc *sc = priv;

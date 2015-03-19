@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36.14.3 2015/03/08 13:34:44 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36.14.4 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.3 2015/03/08 13:34:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.4 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -217,10 +217,10 @@ Static int	zyd_set_rxfilter(struct zyd_softc *);
 Static void	zyd_set_chan(struct zyd_softc *, struct ieee80211_channel *);
 Static int	zyd_set_beacon_interval(struct zyd_softc *, int);
 Static uint8_t	zyd_plcp_signal(int);
-Static void	zyd_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	zyd_intr(struct usbd_xfer *, void *, usbd_status);
 Static void	zyd_rx_data(struct zyd_softc *, const uint8_t *, uint16_t);
-Static void	zyd_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void	zyd_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	zyd_rxeof(struct usbd_xfer *, void *, usbd_status);
+Static void	zyd_txeof(struct usbd_xfer *, void *, usbd_status);
 Static int	zyd_tx_mgt(struct zyd_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 Static int	zyd_tx_data(struct zyd_softc *, struct mbuf *,
@@ -795,7 +795,7 @@ Static int
 zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
     void *odata, int olen, u_int flags)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	struct zyd_cmd cmd;
 	struct rq rq;
 	uint16_t xferflags;
@@ -1822,7 +1822,7 @@ zyd_plcp_signal(int rate)
 }
 
 Static void
-zyd_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+zyd_intr(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct zyd_softc *sc = (struct zyd_softc *)priv;
 	struct zyd_cmd *cmd;
@@ -1992,7 +1992,7 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 }
 
 Static void
-zyd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+zyd_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct zyd_rx_data *data = priv;
 	struct zyd_softc *sc = data->sc;
@@ -2163,7 +2163,7 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 }
 
 Static void
-zyd_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+zyd_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct zyd_tx_data *data = priv;
 	struct zyd_softc *sc = data->sc;

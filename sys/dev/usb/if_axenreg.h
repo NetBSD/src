@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.1 2013/10/26 09:16:20 nonaka Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.1.12.1 2015/03/19 17:26:42 skrll Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -268,8 +268,8 @@ struct axen_softc {
 	struct ethercom		axen_ec;
 	struct mii_data		axen_mii;
 	krndsource_t		rnd_source;
-	usbd_device_handle	axen_udev;
-	usbd_interface_handle	axen_iface;
+	struct usbd_device *	axen_udev;
+	struct usbd_interface *	axen_iface;
 
 	uint16_t		axen_vendor;
 	uint16_t		axen_product;

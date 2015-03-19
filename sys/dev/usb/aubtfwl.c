@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.5.10.3 2014/12/03 12:52:07 skrll Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.5.10.4 2015/03/19 17:26:42 skrll Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.3 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.4 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -47,7 +47,7 @@ static int aubtfwl_detach(device_t, int);
 static void aubtfwl_attach_hook(device_t);
 
 struct aubtfwl_softc {
-	usbd_device_handle sc_udev;
+	struct usbd_device *sc_udev;
 	int sc_flags;
 #define AUBT_IS_AR3012		1
 };
@@ -108,9 +108,9 @@ aubtfwl_detach(device_t self, int flags)
 static int
 aubtfwl_firmware_load(device_t self, const char *name) {
 	struct aubtfwl_softc * const sc = device_private(self);
-	usbd_interface_handle iface;
-	usbd_pipe_handle pipe;
-	usbd_xfer_handle xfer;
+	struct usbd_interface *iface;
+	struct usbd_pipe *pipe;
+	struct usbd_xfer *xfer;
 	void *buf;
 	usb_device_request_t req;
 	int error = 0;

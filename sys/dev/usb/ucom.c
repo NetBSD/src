@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.4 2014/12/23 11:24:32 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.5 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.4 2014/12/23 11:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.5 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ int ucomdebug = 0;
 
 struct ucom_buffer {
 	SIMPLEQ_ENTRY(ucom_buffer) ub_link;
-	usbd_xfer_handle ub_xfer;
+	struct usbd_xfer *ub_xfer;
 	u_char *ub_data;
 	u_int ub_len;
 	u_int ub_index;
@@ -103,12 +103,12 @@ struct ucom_buffer {
 struct ucom_softc {
 	device_t		sc_dev;		/* base device */
 
-	usbd_device_handle	sc_udev;	/* USB device */
+	struct usbd_device *	sc_udev;	/* USB device */
 
-	usbd_interface_handle	sc_iface;	/* data interface */
+	struct usbd_interface *	sc_iface;	/* data interface */
 
 	int			sc_bulkin_no;	/* bulk in endpoint address */
-	usbd_pipe_handle	sc_bulkin_pipe;	/* bulk in pipe */
+	struct usbd_pipe *	sc_bulkin_pipe;	/* bulk in pipe */
 	u_int			sc_ibufsize;	/* read buffer size */
 	u_int			sc_ibufsizepad;	/* read buffer size padded */
 	struct ucom_buffer	sc_ibuff[UCOM_IN_BUFFS];
@@ -116,7 +116,7 @@ struct ucom_softc {
 	SIMPLEQ_HEAD(, ucom_buffer) sc_ibuff_full;
 
 	int			sc_bulkout_no;	/* bulk out endpoint address */
-	usbd_pipe_handle	sc_bulkout_pipe;/* bulk out pipe */
+	struct usbd_pipe *	sc_bulkout_pipe;/* bulk out pipe */
 	u_int			sc_obufsize;	/* write buffer size */
 	u_int			sc_opkthdrlen;	/* header length of */
 	struct ucom_buffer	sc_obuff[UCOM_OUT_BUFFS];
@@ -184,12 +184,12 @@ static void	ucom_break(struct ucom_softc *, int);
 static void	tiocm_to_ucom(struct ucom_softc *, u_long, int);
 static int	ucom_to_tiocm(struct ucom_softc *);
 
-static void	ucomreadcb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void	ucomreadcb(struct usbd_xfer *, void *, usbd_status);
 static void	ucom_submit_write(struct ucom_softc *, struct ucom_buffer *);
 static void	ucom_write_status(struct ucom_softc *, struct ucom_buffer *,
 			usbd_status);
 
-static void	ucomwritecb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void	ucomwritecb(struct usbd_xfer *, void *, usbd_status);
 static void	ucom_read_complete(struct ucom_softc *);
 static usbd_status ucomsubmitread(struct ucom_softc *, struct ucom_buffer *);
 static void	ucom_softintr(void *);
@@ -1149,14 +1149,14 @@ ucom_submit_write(struct ucom_softc *sc, struct ucom_buffer *ub)
 {
 
 	usbd_setup_xfer(ub->ub_xfer, sc->sc_bulkout_pipe,
-	    (usbd_private_handle)sc, ub->ub_data, ub->ub_len,
+	    (void *)sc, ub->ub_data, ub->ub_len,
 	    0, USBD_NO_TIMEOUT, ucomwritecb);
 
 	ucom_write_status(sc, ub, usbd_transfer(ub->ub_xfer));
 }
 
 static void
-ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
+ucomwritecb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
 	int s;
@@ -1237,7 +1237,7 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 	usbd_status err;
 
 	usbd_setup_xfer(ub->ub_xfer, sc->sc_bulkin_pipe,
-	    (usbd_private_handle)sc, ub->ub_data, sc->sc_ibufsize,
+	    (void *)sc, ub->ub_data, sc->sc_ibufsize,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ucomreadcb);
 
 	if ((err = usbd_transfer(ub->ub_xfer)) != USBD_IN_PROGRESS) {
@@ -1252,7 +1252,7 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 }
 
 static void
-ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
+ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
 	struct tty *tp = sc->sc_tty;

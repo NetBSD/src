@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.44.14.2 2014/12/03 22:33:56 skrll Exp $ */
+/*	$NetBSD: if_ural.c,v 1.44.14.3 2015/03/19 17:26:43 skrll Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.2 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.3 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -115,9 +115,9 @@ Static void		ural_task(void *);
 Static int		ural_newstate(struct ieee80211com *,
 			    enum ieee80211_state, int);
 Static int		ural_rxrate(struct ural_rx_desc *);
-Static void		ural_txeof(usbd_xfer_handle, usbd_private_handle,
+Static void		ural_txeof(struct usbd_xfer *, void *,
 			    usbd_status);
-Static void		ural_rxeof(usbd_xfer_handle, usbd_private_handle,
+Static void		ural_rxeof(struct usbd_xfer *, void *,
 			    usbd_status);
 Static int		ural_ack_rate(struct ieee80211com *, int);
 Static uint16_t		ural_txtime(int, int, uint32_t);
@@ -166,7 +166,7 @@ Static void		ural_stop(struct ifnet *, int);
 Static void		ural_amrr_start(struct ural_softc *,
 			    struct ieee80211_node *);
 Static void		ural_amrr_timeout(void *);
-Static void		ural_amrr_update(usbd_xfer_handle, usbd_private_handle,
+Static void		ural_amrr_update(struct usbd_xfer *, void *,
 			    usbd_status status);
 
 /*
@@ -870,7 +870,7 @@ ural_rxrate(struct ural_rx_desc *desc)
 }
 
 Static void
-ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+ural_txeof(struct usbd_xfer *xfer, void * priv,
     usbd_status status)
 {
 	struct ural_tx_data *data = priv;
@@ -912,7 +912,7 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 Static void
-ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+ural_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct ural_rx_data *data = priv;
 	struct ural_softc *sc = data->sc;
@@ -1146,7 +1146,7 @@ Static int
 ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct ural_tx_desc *desc;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	uint8_t cmd = 0;
 	usbd_status error;
 	uint8_t *buf;
@@ -2353,7 +2353,7 @@ ural_amrr_timeout(void *arg)
 }
 
 Static void
-ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
+ural_amrr_update(struct usbd_xfer *xfer, void * priv,
     usbd_status status)
 {
 	struct ural_softc *sc = (struct ural_softc *)priv;

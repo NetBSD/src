@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.11.6.2 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.11.6.3 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.2 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.3 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,8 +158,8 @@ static inline void	udl_draw_line_comp(struct udl_softc *, uint16_t *, int,
 
 static int		udl_cmd_send(struct udl_softc *);
 static void		udl_cmd_send_async(struct udl_softc *);
-static void		udl_cmd_send_async_cb(usbd_xfer_handle,
-			    usbd_private_handle, usbd_status);
+static void		udl_cmd_send_async_cb(struct usbd_xfer *,
+			    void *, usbd_status);
 
 static int		udl_ctrl_msg(struct udl_softc *, uint8_t, uint8_t,
 			    uint16_t, uint16_t, uint8_t *, uint16_t);
@@ -1514,7 +1514,7 @@ udl_cmd_send_async(struct udl_softc *sc)
 }
 
 static void
-udl_cmd_send_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+udl_cmd_send_async_cb(struct usbd_xfer *xfer, void * priv,
     usbd_status status)
 {
 	struct udl_cmdq *cmdq = priv;

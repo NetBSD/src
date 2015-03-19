@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.7 2014/12/06 08:37:30 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.8 2015/03/19 17:26:43 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.7 2014/12/06 08:37:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.8 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,13 +74,13 @@ int	umctdebug = 0;
 
 struct	umct_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct usbd_device *	sc_udev;	/* USB device */
+	struct usbd_interface *	sc_iface;	/* interface */
 	int			sc_iface_number;	/* interface number */
 	uint16_t		sc_product;
 
 	int			sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe *	sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
 	int			sc_isize;
 
@@ -111,7 +111,7 @@ struct	umct_softc {
 Static	void umct_init(struct umct_softc *);
 Static	void umct_set_baudrate(struct umct_softc *, u_int);
 Static	void umct_set_lcr(struct umct_softc *, u_int);
-Static	void umct_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static	void umct_intr(struct usbd_xfer *, void *, usbd_status);
 
 Static	void umct_set(void *, int, int, int);
 Static	void umct_dtr(struct umct_softc *, int);
@@ -169,7 +169,7 @@ umct_attach(device_t parent, device_t self, void *aux)
 {
 	struct umct_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -592,7 +592,7 @@ umct_close(void *addr, int portno)
 }
 
 void
-umct_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+umct_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct umct_softc *sc = priv;

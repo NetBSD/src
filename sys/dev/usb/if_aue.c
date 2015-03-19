@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.4.5 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.6 2015/03/19 17:26:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.5 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.6 2015/03/19 17:26:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -223,9 +223,9 @@ Static int aue_tx_list_init(struct aue_softc *);
 Static int aue_rx_list_init(struct aue_softc *);
 Static int aue_newbuf(struct aue_softc *, struct aue_chain *, struct mbuf *);
 Static int aue_send(struct aue_softc *, struct mbuf *, int);
-Static void aue_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void aue_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void aue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void aue_intr(struct usbd_xfer *, void *, usbd_status);
+Static void aue_rxeof(struct usbd_xfer *, void *, usbd_status);
+Static void aue_txeof(struct usbd_xfer *, void *, usbd_status);
 Static void aue_tick(void *);
 Static void aue_tick_task(void *);
 Static void aue_start(struct ifnet *);
@@ -726,8 +726,8 @@ aue_attach(device_t parent, device_t self, void *aux)
 	u_char			eaddr[ETHER_ADDR_LEN];
 	struct ifnet		*ifp;
 	struct mii_data		*mii;
-	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface;
+	struct usbd_device	*dev = uaa->device;
+	struct usbd_interface	*iface;
 	usbd_status		err;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -1052,7 +1052,7 @@ aue_tx_list_init(struct aue_softc *sc)
 }
 
 Static void
-aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+aue_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct aue_softc	*sc = priv;
@@ -1095,7 +1095,7 @@ aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
  * the higher level protocols.
  */
 Static void
-aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct aue_chain	*c = priv;
 	struct aue_softc	*sc = c->aue_sc;
@@ -1195,7 +1195,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  */
 
 Static void
-aue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+aue_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct aue_chain	*c = priv;

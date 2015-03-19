@@ -1,4 +1,4 @@
-/*	$NetBSD: motgvar.h,v 1.4.2.4 2014/12/05 13:23:38 skrll Exp $	*/
+/*	$NetBSD: motgvar.h,v 1.4.2.5 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ SIMPLEQ_HEAD(ep_pipes_head, motg_pipe);
 struct motg_hw_ep {
 	int ep_number;
 	int ep_fifo_size;
-	usbd_xfer_handle xfer;	/* active xfer on this EP */
+	struct usbd_xfer *xfer;	/* active xfer on this EP */
 	char *data; /* pointer to data to be transmitted/received */
 	int datalen; /* data len to be transmitted */
 	usb_phase_t phase; /* current phase of the transfer, if any */
@@ -92,7 +92,7 @@ struct motg_softc {
 	pool_cache_t sc_xferpool;
 
 	/* Info for the root hub interrupt "pipe". */
-	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
+	struct usbd_xfer *sc_intr_xfer;	/* root hub interrupt transfer */
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */

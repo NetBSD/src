@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.2 2014/12/23 11:24:32 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.3 2015/03/19 17:26:43 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.2 2014/12/23 11:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.3 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ static void urndis_watchdog(struct ifnet *);
 #endif
 
 static void urndis_start(struct ifnet *);
-static void urndis_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static void urndis_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void urndis_rxeof(struct usbd_xfer *, void *, usbd_status);
+static void urndis_txeof(struct usbd_xfer *, void *, usbd_status);
 static int urndis_rx_list_init(struct urndis_softc *);
 static int urndis_tx_list_init(struct urndis_softc *);
 
@@ -1190,8 +1190,8 @@ urndis_start(struct ifnet *ifp)
 }
 
 static void
-urndis_rxeof(usbd_xfer_handle xfer,
-    usbd_private_handle priv,
+urndis_rxeof(struct usbd_xfer *xfer,
+    void *priv,
     usbd_status status)
 {
 	struct urndis_chain	*c;
@@ -1232,8 +1232,8 @@ done:
 }
 
 static void
-urndis_txeof(usbd_xfer_handle xfer,
-    usbd_private_handle priv,
+urndis_txeof(struct usbd_xfer *xfer,
+    void *priv,
     usbd_status status)
 {
 	struct urndis_chain	*c;
