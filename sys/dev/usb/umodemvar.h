@@ -1,4 +1,4 @@
-/*	$NetBSD: umodemvar.h,v 1.8.38.1 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: umodemvar.h,v 1.8.38.2 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,12 +33,12 @@
 struct umodem_softc {
 	device_t		sc_dev;		/* base device */
 
-	usbd_device_handle	sc_udev;	/* USB device */
+	struct usbd_device *	sc_udev;	/* USB device */
 
 	int			sc_ctl_iface_no;
-	usbd_interface_handle	sc_ctl_iface;	/* control interface */
+	struct usbd_interface *	sc_ctl_iface;	/* control interface */
 	int			sc_data_iface_no;
-	usbd_interface_handle	sc_data_iface;	/* data interface */
+	struct usbd_interface *	sc_data_iface;	/* data interface */
 
 	int			sc_cm_cap;	/* CM capabilities */
 	int			sc_acm_cap;	/* ACM capabilities */
@@ -55,7 +55,7 @@ struct umodem_softc {
 	u_char			sc_dying;	/* disconnecting */
 
 	int			sc_ctl_notify;	/* Notification endpoint */
-	usbd_pipe_handle	sc_notify_pipe; /* Notification pipe */
+	struct usbd_pipe *	sc_notify_pipe; /* Notification pipe */
 	usb_cdc_notification_t	sc_notify_buf;	/* Notification structure */
 	u_char			sc_lsr;		/* Local status register */
 	u_char			sc_msr;		/* Modem status register */
@@ -65,7 +65,7 @@ void umodem_common_childdet(struct umodem_softc *, device_t);
 int umodem_common_attach(device_t, struct umodem_softc *,
 			 struct usbif_attach_arg *, struct ucom_attach_args *);
 
-int	umodem_get_caps(usbd_device_handle, int *, int *,
+int	umodem_get_caps(struct usbd_device *, int *, int *,
 			usb_interface_descriptor_t *);
 
 void	umodem_get_status(void *, int, u_char *, u_char *);

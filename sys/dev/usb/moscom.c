@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.8.14.4 2015/03/08 13:34:44 skrll Exp $	*/
+/*	$NetBSD: moscom.c,v 1.8.14.5 2015/03/19 17:26:43 skrll Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.4 2015/03/08 13:34:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.5 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,8 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.4 2015/03/08 13:34:44 skrll Exp $"
 
 struct moscom_softc {
 	device_t		 sc_dev;
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
+	struct usbd_device *	 sc_udev;
+	struct usbd_interface *	 sc_iface;
 	device_t		 sc_subdev;
 
 	u_char			 sc_msr;
@@ -196,7 +196,7 @@ moscom_attach(device_t parent, device_t self, void *aux)
 {
 	struct moscom_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	struct ucom_attach_args uca;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;

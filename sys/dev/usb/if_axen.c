@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3.6.3 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.6.4 2015/03/19 17:26:42 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.3 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.4 2015/03/19 17:26:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -95,8 +95,8 @@ static int	axen_tx_list_init(struct axen_softc *);
 static int	axen_rx_list_init(struct axen_softc *);
 static struct mbuf *axen_newbuf(void);
 static int	axen_encap(struct axen_softc *, struct mbuf *, int);
-static void	axen_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static void	axen_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void	axen_rxeof(struct usbd_xfer *, void *, usbd_status);
+static void	axen_txeof(struct usbd_xfer *, void *, usbd_status);
 static void	axen_tick(void *);
 static void	axen_tick_task(void *);
 static void	axen_start(struct ifnet *);
@@ -956,7 +956,7 @@ axen_tx_list_init(struct axen_softc *sc)
  * the higher level protocols.
  */
 static void
-axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct axen_chain *c = (struct axen_chain *)priv;
 	struct axen_softc *sc = c->axen_sc;
@@ -1133,7 +1133,7 @@ done:
  * the list buffers.
  */
 static void
-axen_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+axen_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct axen_chain *c = (struct axen_chain *)priv;
 	struct axen_softc *sc = c->axen_sc;

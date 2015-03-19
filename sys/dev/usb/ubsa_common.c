@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.9.14.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.9.14.4 2015/03/19 17:26:43 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.9.14.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.9.14.4 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +396,7 @@ ubsa_close(void *addr, int portno)
 }
 
 void
-ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+ubsa_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct ubsa_softc *sc = priv;

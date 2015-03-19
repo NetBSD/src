@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.3.12.3 2014/12/04 08:04:32 skrll Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.3.12.4 2015/03/19 17:26:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ typedef struct dwc2_softc {
 	bool sc_hcdenabled;
 	void *sc_rhc_si;
 
-	usbd_xfer_handle sc_intrxfer;
+	struct usbd_xfer *sc_intrxfer;
 
 	device_t sc_child;		/* /dev/usb# device */
 	char sc_dying;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.4.4 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.4.5 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.4 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.5 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ int	uhidevdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-Static void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void uhidev_intr(struct usbd_xfer *, void *, usbd_status);
 
 Static int uhidev_maxrepid(void *, int);
 Static int uhidevprint(void *, const char *);
@@ -107,7 +107,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhidev_softc *sc = device_private(self);
 	struct usbif_attach_arg *uaa = aux;
-	usbd_interface_handle iface = uaa->iface;
+	struct usbd_interface *iface = uaa->iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct uhidev_attach_arg uha;
@@ -459,7 +459,7 @@ uhidev_detach(device_t self, int flags)
 }
 
 void
-uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
+uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uhidev_softc *sc = addr;
 	device_t cdev;

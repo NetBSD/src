@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.9.14.1 2014/12/03 14:18:07 skrll Exp $ */
+/*	$NetBSD: uyurex.c,v 1.9.14.2 2015/03/19 17:26:43 skrll Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.1 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.2 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -65,7 +65,7 @@ int	uyurexdebug = 0;
 
 struct uyurex_softc {
 	struct uhidev		 sc_hdev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device *	 sc_udev;
 	u_char			 sc_dying;
 	uint16_t		 sc_flag;
 
@@ -131,7 +131,7 @@ uyurex_attach(device_t parent, device_t self, void *aux)
 	struct uyurex_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
-	usbd_device_handle dev = uha->parent->sc_udev;
+	struct usbd_device * dev = uha->parent->sc_udev;
 	int size, repid, err;
 	void *desc;
 

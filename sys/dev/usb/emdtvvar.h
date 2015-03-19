@@ -1,4 +1,4 @@
-/* $NetBSD: emdtvvar.h,v 1.3 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: emdtvvar.h,v 1.3.32.1 2015/03/19 17:26:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -55,7 +55,7 @@ struct emdtv_softc;
 
 struct emdtv_isoc_xfer {
 	struct emdtv_softc	*ix_sc;
-	usbd_xfer_handle	ix_xfer;
+	struct usbd_xfer *	ix_xfer;
 	uint8_t			*ix_buf;
 	uint16_t		ix_frlengths[EMDTV_NFRAMES];
 	struct emdtv_isoc_xfer	*ix_altix;
@@ -63,7 +63,7 @@ struct emdtv_isoc_xfer {
 
 struct emdtv_softc {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device	*sc_udev;
 
 	device_t		sc_cirdev;
 	device_t		sc_dtvdev;
@@ -80,14 +80,14 @@ struct emdtv_softc {
 
 	uint8_t			sc_eeprom[EMDTV_EEPROM_LEN];
 
-	usbd_interface_handle	sc_iface;
+	struct usbd_interface	*sc_iface;
 
-	usbd_pipe_handle	sc_isoc_pipe;
+	struct usbd_pipe	*sc_isoc_pipe;
 	int			sc_isoc_buflen;
 	int			sc_isoc_maxpacketsize;
 	struct emdtv_isoc_xfer	sc_ix[EMDTV_NXFERS];
 
-	usbd_pipe_handle	sc_intr_pipe;
+	struct usbd_pipe	*sc_intr_pipe;
 	uint8_t			sc_intr_buf;
 	struct workqueue	*sc_ir_wq;
 	struct work		sc_ir_work;

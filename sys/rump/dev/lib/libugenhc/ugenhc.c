@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.8 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.9 2015/03/19 17:26:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.8 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.9 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,7 +101,7 @@ struct ugenhc_softc {
 	int sc_port_change;
 
 	struct lwp *sc_rhintr;
-	usbd_xfer_handle sc_intrxfer;
+	struct usbd_xfer *sc_intrxfer;
 
 	kmutex_t sc_lock;
 };
@@ -213,7 +213,7 @@ ugenhc_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 }
 
 static usbd_status
-rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
+rumpusb_device_ctrl_start(struct usbd_xfer *xfer)
 {
 	usb_device_request_t *req = &xfer->ux_request;
 	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
@@ -395,7 +395,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 }
 
 static usbd_status
-rumpusb_device_ctrl_transfer(usbd_xfer_handle xfer)
+rumpusb_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
 	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
 	usbd_status err;
@@ -410,25 +410,25 @@ rumpusb_device_ctrl_transfer(usbd_xfer_handle xfer)
 }
 
 static void
-rumpusb_device_ctrl_abort(usbd_xfer_handle xfer)
+rumpusb_device_ctrl_abort(struct usbd_xfer *xfer)
 {
 
 }
 
 static void
-rumpusb_device_ctrl_close(usbd_pipe_handle pipe)
+rumpusb_device_ctrl_close(struct usbd_pipe *pipe)
 {
 
 }
 
 static void
-rumpusb_device_ctrl_cleartoggle(usbd_pipe_handle pipe)
+rumpusb_device_ctrl_cleartoggle(struct usbd_pipe *pipe)
 {
 
 }
 
 static void
-rumpusb_device_ctrl_done(usbd_xfer_handle xfer)
+rumpusb_device_ctrl_done(struct usbd_xfer *xfer)
 {
 
 }
@@ -447,7 +447,7 @@ rhscintr(void *arg)
 {
 	char buf[UGENDEV_BUFSIZE];
 	struct ugenhc_softc *sc = arg;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	int fd, error;
 
 	makeugendevstr(sc->sc_devnum, 0, buf, sizeof(buf));
@@ -515,7 +515,7 @@ rhscintr(void *arg)
 }
 
 static usbd_status
-rumpusb_root_intr_start(usbd_xfer_handle xfer)
+rumpusb_root_intr_start(struct usbd_xfer *xfer)
 {
 	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
 	int error;
@@ -534,7 +534,7 @@ rumpusb_root_intr_start(usbd_xfer_handle xfer)
 }
 
 static usbd_status
-rumpusb_root_intr_transfer(usbd_xfer_handle xfer)
+rumpusb_root_intr_transfer(struct usbd_xfer *xfer)
 {
 	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
 	usbd_status err;
@@ -549,25 +549,25 @@ rumpusb_root_intr_transfer(usbd_xfer_handle xfer)
 }
 
 static void
-rumpusb_root_intr_abort(usbd_xfer_handle xfer)
+rumpusb_root_intr_abort(struct usbd_xfer *xfer)
 {
 
 }
 
 static void
-rumpusb_root_intr_close(usbd_pipe_handle pipe)
+rumpusb_root_intr_close(struct usbd_pipe *pipe)
 {
 
 }
 
 static void
-rumpusb_root_intr_cleartoggle(usbd_pipe_handle pipe)
+rumpusb_root_intr_cleartoggle(struct usbd_pipe *pipe)
 {
 
 }
 
 static void
-rumpusb_root_intr_done(usbd_xfer_handle xfer)
+rumpusb_root_intr_done(struct usbd_xfer *xfer)
 {
 
 }
@@ -582,7 +582,7 @@ static const struct usbd_pipe_methods rumpusb_root_intr_methods = {
 };
 
 static usbd_status
-rumpusb_device_bulk_start(usbd_xfer_handle xfer)
+rumpusb_device_bulk_start(struct usbd_xfer *xfer)
 {
 	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
 	usb_endpoint_descriptor_t *ed = xfer->ux_pipe->up_endpoint->ue_edesc;
@@ -688,12 +688,12 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 static void
 doxfer_kth(void *arg)
 {
-	usbd_pipe_handle pipe = arg;
+	struct usbd_pipe *pipe = arg;
 	struct ugenhc_softc *sc = pipe->up_dev->ud_bus->ub_hcpriv;
 
 	mutex_enter(&sc->sc_lock);
 	do {
-		usbd_xfer_handle xfer = SIMPLEQ_FIRST(&pipe->up_queue);
+		struct usbd_xfer *xfer = SIMPLEQ_FIRST(&pipe->up_queue);
 		mutex_exit(&sc->sc_lock);
 		rumpusb_device_bulk_start(xfer);
 		mutex_enter(&sc->sc_lock);
@@ -703,7 +703,7 @@ doxfer_kth(void *arg)
 }
 
 static usbd_status
-rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
+rumpusb_device_bulk_transfer(struct usbd_xfer *xfer)
 {
 	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
 	usbd_status err;
@@ -739,7 +739,7 @@ rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
 
 /* wait for transfer to abort.  yea, this is cheesy (from a spray can) */
 static void
-rumpusb_device_bulk_abort(usbd_xfer_handle xfer)
+rumpusb_device_bulk_abort(struct usbd_xfer *xfer)
 {
 	struct rusb_xfer *rx = RUSB(xfer);
 
@@ -750,11 +750,11 @@ rumpusb_device_bulk_abort(usbd_xfer_handle xfer)
 }
 
 static void
-rumpusb_device_bulk_close(usbd_pipe_handle pipe)
+rumpusb_device_bulk_close(struct usbd_pipe *pipe)
 {
 	struct ugenhc_softc *sc = pipe->up_dev->ud_bus->ub_hcpriv;
 	int endpt = pipe->up_endpoint->ue_edesc->bEndpointAddress;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -769,13 +769,13 @@ rumpusb_device_bulk_close(usbd_pipe_handle pipe)
 }
 
 static void
-rumpusb_device_bulk_cleartoggle(usbd_pipe_handle pipe)
+rumpusb_device_bulk_cleartoggle(struct usbd_pipe *pipe)
 {
 
 }
 
 static void
-rumpusb_device_bulk_done(usbd_xfer_handle xfer)
+rumpusb_device_bulk_done(struct usbd_xfer *xfer)
 {
 
 }
@@ -792,7 +792,7 @@ static const struct usbd_pipe_methods rumpusb_device_bulk_methods = {
 static usbd_status
 ugenhc_open(struct usbd_pipe *pipe)
 {
-	usbd_device_handle dev = pipe->up_dev;
+	struct usbd_device *dev = pipe->up_dev;
 	struct ugenhc_softc *sc = dev->ud_bus->ub_hcpriv;
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 	uint8_t rhaddr = dev->ud_bus->ub_rhaddr;
@@ -884,7 +884,7 @@ ugenhc_poll(struct usbd_bus *ubus)
 static struct usbd_xfer *
 ugenhc_allocx(struct usbd_bus *bus)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 
 	xfer = kmem_zalloc(sizeof(struct usbd_xfer), KM_SLEEP);
 	xfer->ux_state = XFER_BUSY;

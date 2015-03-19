@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.h,v 1.1 2009/11/30 16:18:34 tsutsui Exp $	*/
+/*	$NetBSD: udl.h,v 1.1.44.1 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -68,7 +68,7 @@
 struct udl_cmdq {
 	TAILQ_ENTRY(udl_cmdq)	 cq_chain;
 	struct udl_softc	*cq_sc;
-	usbd_xfer_handle	 cq_xfer;
+	struct usbd_xfer *	 cq_xfer;
 	uint8_t			*cq_buf;
 };
 
@@ -77,9 +77,9 @@ struct udl_cmdq {
  */
 struct udl_softc {
 	device_t		 sc_dev;
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
-	usbd_pipe_handle	 sc_tx_pipeh;
+	struct usbd_device *	 sc_udev;
+	struct usbd_interface *	 sc_iface;
+	struct usbd_pipe *	 sc_tx_pipeh;
 
 	struct udl_cmdq		 sc_cmdq[UDL_NCMDQ];
 	TAILQ_HEAD(udl_cmdq_head, udl_cmdq)	sc_freecmd,

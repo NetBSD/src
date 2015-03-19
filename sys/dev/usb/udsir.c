@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1.14.3 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.14.4 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.3 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.4 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,8 +67,8 @@ int	udsirdebug = 0;
 
 struct udsir_softc {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_iface;
 
 	uint8_t			*sc_ur_buf; /* Unencapsulated frame */
 	u_int			sc_ur_framelen;
@@ -77,8 +77,8 @@ struct udsir_softc {
 	int			sc_rd_maxpsz;
 	size_t			sc_rd_index;
 	int			sc_rd_addr;
-	usbd_pipe_handle	sc_rd_pipe;
-	usbd_xfer_handle	sc_rd_xfer;
+	struct usbd_pipe *	sc_rd_pipe;
+	struct usbd_xfer *	sc_rd_xfer;
 	u_int			sc_rd_count;
 	int			sc_rd_readinprogress;
 	int			sc_rd_expectdataticks;
@@ -91,8 +91,8 @@ struct udsir_softc {
 	int			sc_wr_maxpsz;
 	int			sc_wr_addr;
 	int			sc_wr_stalewrite;
-	usbd_xfer_handle	sc_wr_xfer;
-	usbd_pipe_handle	sc_wr_pipe;
+	struct usbd_xfer *	sc_wr_xfer;
+	struct usbd_pipe *	sc_wr_pipe;
 	struct selinfo		sc_wr_sel;
 
 	enum {
@@ -143,7 +143,7 @@ static void udsir_dumpdata(uint8_t const *, size_t, char const *);
 #endif
 static int deframe_rd_ur(struct udsir_softc *);
 static void udsir_periodic(struct udsir_softc *);
-static void udsir_rd_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void udsir_rd_cb(struct usbd_xfer *, void *, usbd_status);
 static usbd_status udsir_start_read(struct udsir_softc *);
 
 CFATTACH_DECL2_NEW(udsir, sizeof(struct udsir_softc),
@@ -174,8 +174,8 @@ udsir_attach(device_t parent, device_t self, void *aux)
 {
 	struct udsir_softc *sc = device_private(self);
 	struct usbif_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface = uaa->iface;
+	struct usbd_device * dev = uaa->device;
+	struct usbd_interface * iface = uaa->iface;
 	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	uint8_t epcount;
@@ -936,7 +936,7 @@ udsir_periodic(struct udsir_softc *sc)
 }
 
 static void
-udsir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+udsir_rd_cb(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct udsir_softc *sc = priv;
 	uint32_t size;

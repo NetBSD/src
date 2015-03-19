@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.41.2.6 2014/12/23 11:24:32 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41.2.7 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.6 2014/12/23 11:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.7 2015/03/19 17:26:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -182,14 +182,14 @@ struct uvideo_stream;
 struct uvideo_isoc {
 	struct uvideo_isoc_xfer	*i_ix;
 	struct uvideo_stream	*i_vs;
-	usbd_xfer_handle	i_xfer;
+	struct usbd_xfer *	i_xfer;
 	uint8_t			*i_buf;
 	uint16_t		*i_frlengths;
 };
 
 struct uvideo_isoc_xfer {
 	uint8_t			ix_endpt;
-	usbd_pipe_handle	ix_pipe;
+	struct usbd_pipe *	ix_pipe;
 	struct uvideo_isoc	ix_i[UVIDEO_NXFERS];
 	uint32_t		ix_nframes;
 	uint32_t		ix_uframe_len;
@@ -199,8 +199,8 @@ struct uvideo_isoc_xfer {
 
 struct uvideo_bulk_xfer {
 	uint8_t			bx_endpt;
-	usbd_pipe_handle	bx_pipe;
-	usbd_xfer_handle	bx_xfer;
+	struct usbd_pipe *	bx_pipe;
+	struct usbd_xfer *	bx_xfer;
 	uint8_t			*bx_buffer;
 	int			bx_buflen;
 	bool			bx_running;
@@ -210,7 +210,7 @@ struct uvideo_bulk_xfer {
 
 struct uvideo_stream {
 	struct uvideo_softc	*vs_parent;
-	usbd_interface_handle	vs_iface;
+	struct usbd_interface *	vs_iface;
 	uint8_t			vs_ifaceno;
 	uint8_t			vs_subtype;  /* input or output */
 	uint16_t		vs_probelen; /* length of probe and
@@ -240,8 +240,8 @@ SLIST_HEAD(uvideo_stream_list, uvideo_stream);
 
 struct uvideo_softc {
         device_t   	sc_dev;		/* base device */
-        usbd_device_handle      sc_udev;	/* device */
-	usbd_interface_handle   sc_iface;	/* interface handle */
+        struct usbd_device	*sc_udev;	/* device */
+	struct usbd_interface	*sc_iface;	/* interface handle */
         int     		sc_ifaceno;	/* interface number */
 	char			*sc_devname;
 
@@ -343,8 +343,8 @@ static usbd_status	uvideo_stream_recv_process(struct uvideo_stream *,
 						   uint8_t *, uint32_t);
 static usbd_status	uvideo_stream_recv_isoc_start(struct uvideo_stream *);
 static usbd_status	uvideo_stream_recv_isoc_start1(struct uvideo_isoc *);
-static void		uvideo_stream_recv_isoc_complete(usbd_xfer_handle,
-							 usbd_private_handle,
+static void		uvideo_stream_recv_isoc_complete(struct usbd_xfer *,
+							 void *,
 							 usbd_status);
 static void		uvideo_stream_recv_bulk_transfer(void *);
 
@@ -1790,8 +1790,8 @@ uvideo_stream_recv_process(struct uvideo_stream *vs, uint8_t *buf, uint32_t len)
 
 /* Callback on completion of usb isoc transfer */
 static void
-uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
-				 usbd_private_handle priv,
+uvideo_stream_recv_isoc_complete(struct usbd_xfer *xfer,
+				 void *priv,
 				 usbd_status status)
 {
 	struct uvideo_stream *vs;

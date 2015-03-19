@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.6.14.1 2014/12/06 08:37:30 skrll Exp $	*/
+/*	$NetBSD: uark.c,v 1.6.14.2 2015/03/19 17:26:43 skrll Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -61,8 +61,8 @@ int	uarkebug = 0;
 
 struct uark_softc {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_iface;
 	device_t		sc_subdev;
 
 	u_char			sc_msr;
@@ -113,7 +113,7 @@ uark_attach(device_t parent, device_t self, void *aux)
 {
 	struct uark_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device * dev = uaa->device;
 	char *devinfop;
 	struct ucom_attach_args uca;
 	usb_interface_descriptor_t *id;

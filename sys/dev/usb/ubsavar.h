@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.9.24.2 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.9.24.3 2015/03/19 17:26:43 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -113,14 +113,14 @@
 
 struct	ubsa_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface[UBSA_MAXCONN]; /* interface */
+	struct usbd_device *	sc_udev;	/* USB device */
+	struct usbd_interface *	sc_iface[UBSA_MAXCONN]; /* interface */
 
 	int			sc_iface_number[UBSA_MAXCONN];	/* interface number */
 	int			sc_config_index;	/* USB CONFIG_INDEX */
 
 	int			sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe *	sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
 	int			sc_isize;
 
@@ -139,7 +139,7 @@ struct	ubsa_softc {
 };
 
 
-void ubsa_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void ubsa_intr(struct usbd_xfer *, void *, usbd_status);
 
 void ubsa_get_status(void *, int, u_char *, u_char *);
 void ubsa_set(void *, int, int, int);

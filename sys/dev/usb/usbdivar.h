@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.15 2015/03/18 15:45:45 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.16 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  *	ubm_freex		-
  *	ubm_getlock 		-	Called at attach time
  *	ubm_newdev		-	Will take lock
-	ubm_rhctrl		
+	ubm_rhctrl
  *
  *	PIPE METHOD		LOCK	NOTES
  *	----------------------- -------	-------------------------
@@ -94,10 +94,10 @@ struct usbd_bus_methods {
 	usbd_status	      (*ubm_open)(struct usbd_pipe *);
 	void		      (*ubm_softint)(void *);
 	void		      (*ubm_dopoll)(struct usbd_bus *);
-	struct usbd_xfer *    (*ubm_allocx)(struct usbd_bus *);
+	struct usbd_xfer     *(*ubm_allocx)(struct usbd_bus *);
 	void		      (*ubm_freex)(struct usbd_bus *, struct usbd_xfer *);
 	void		      (*ubm_getlock)(struct usbd_bus *, kmutex_t **);
-	usbd_status	      (*ubm_newdev)(device_t, usbd_bus_handle, int,
+	usbd_status	      (*ubm_newdev)(device_t, struct usbd_bus *, int,
 					    int, int, struct usbd_port *);
 
 	int			(*ubm_rhctrl)(struct usbd_bus *,
@@ -105,12 +105,12 @@ struct usbd_bus_methods {
 };
 
 struct usbd_pipe_methods {
-	usbd_status	      (*upm_transfer)(usbd_xfer_handle);
-	usbd_status	      (*upm_start)(usbd_xfer_handle);
-	void		      (*upm_abort)(usbd_xfer_handle);
-	void		      (*upm_close)(usbd_pipe_handle);
-	void		      (*upm_cleartoggle)(usbd_pipe_handle);
-	void		      (*upm_done)(usbd_xfer_handle);
+	usbd_status	      (*upm_transfer)(struct usbd_xfer *);
+	usbd_status	      (*upm_start)(struct usbd_xfer *);
+	void		      (*upm_abort)(struct usbd_xfer *);
+	void		      (*upm_close)(struct usbd_pipe *);
+	void		      (*upm_cleartoggle)(struct usbd_pipe *);
+	void		      (*upm_done)(struct usbd_xfer *);
 };
 
 #if 0 /* notyet */
@@ -134,7 +134,7 @@ struct usbd_port {
 };
 
 struct usbd_hub {
-	usbd_status	      (*uh_explore)(usbd_device_handle hub);
+	usbd_status	      (*uh_explore)(struct usbd_device *hub);
 	void		       *uh_hubsoftc;
 	usb_hub_descriptor_t	uh_hubdesc;
 	struct usbd_port        uh_ports[1];
@@ -165,7 +165,7 @@ struct usbd_bus {
 	struct usbd_device      *ub_roothub;
 	uint8_t			ub_rhaddr;	/* roothub address */
 	uint8_t			ub_rhconf;	/* roothub configuration */
-	usbd_device_handle	ub_devices[USB_MAX_DEVICES];
+	struct usbd_device *	ub_devices[USB_MAX_DEVICES];
 	kcondvar_t              ub_needsexplore_cv;
 	char			ub_needsexplore;/* a hub a signalled a change */
 	char			ub_usepolling;
@@ -224,7 +224,7 @@ struct usbd_pipe {
 	LIST_ENTRY(usbd_pipe)	up_next;
 	struct usb_task		up_async_task;
 
-	usbd_xfer_handle	up_intrxfer; /* used for repeating requests */
+	struct usbd_xfer *	up_intrxfer; /* used for repeating requests */
 	char			up_repeat;
 	int			up_interval;
 	uint8_t			up_flags;
@@ -284,53 +284,53 @@ void usbd_finish(void);
 void usbd_dump_iface(struct usbd_interface *);
 void usbd_dump_device(struct usbd_device *);
 void usbd_dump_endpoint(struct usbd_endpoint *);
-void usbd_dump_queue(usbd_pipe_handle);
-void usbd_dump_pipe(usbd_pipe_handle);
+void usbd_dump_queue(struct usbd_pipe *);
+void usbd_dump_pipe(struct usbd_pipe *);
 #endif
 
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);
-void		usb_delay_ms_locked(usbd_bus_handle, u_int, kmutex_t *);
-void		usb_delay_ms(usbd_bus_handle, u_int);
-void		usbd_delay_ms_locked(usbd_device_handle, u_int, kmutex_t *);
-void		usbd_delay_ms(usbd_device_handle, u_int);
-usbd_status	usbd_reset_port(usbd_device_handle, int, usb_port_status_t *);
-usbd_status	usbd_setup_pipe(usbd_device_handle,
-				usbd_interface_handle,
+void		usb_delay_ms_locked(struct usbd_bus *, u_int, kmutex_t *);
+void		usb_delay_ms(struct usbd_bus *, u_int);
+void		usbd_delay_ms_locked(struct usbd_device *, u_int, kmutex_t *);
+void		usbd_delay_ms(struct usbd_device *, u_int);
+usbd_status	usbd_reset_port(struct usbd_device *, int, usb_port_status_t *);
+usbd_status	usbd_setup_pipe(struct usbd_device *,
+				struct usbd_interface *,
 				struct usbd_endpoint *, int,
-				usbd_pipe_handle *);
-usbd_status	usbd_setup_pipe_flags(usbd_device_handle,
-				      usbd_interface_handle,
+				struct usbd_pipe **);
+usbd_status	usbd_setup_pipe_flags(struct usbd_device *,
+				      struct usbd_interface *,
 				      struct usbd_endpoint *, int,
-				      usbd_pipe_handle *,
+				      struct usbd_pipe **,
 				      uint8_t);
-usbd_status	usbd_new_device(device_t, usbd_bus_handle, int, int, int,
+usbd_status	usbd_new_device(device_t, struct usbd_bus *, int, int, int,
 				struct usbd_port *);
-usbd_status	usbd_reattach_device(device_t, usbd_device_handle,
+usbd_status	usbd_reattach_device(device_t, struct usbd_device *,
 				     int, const int *);
 
-void		usbd_remove_device(usbd_device_handle, struct usbd_port *);
+void		usbd_remove_device(struct usbd_device *, struct usbd_port *);
 int		usbd_printBCD(char *, size_t, int);
-usbd_status	usbd_fill_iface_data(usbd_device_handle, int, int);
-void		usb_free_device(usbd_device_handle);
+usbd_status	usbd_fill_iface_data(struct usbd_device *, int, int);
+void		usb_free_device(struct usbd_device *);
 
-usbd_status	usb_insert_transfer(usbd_xfer_handle);
-void		usb_transfer_complete(usbd_xfer_handle);
+usbd_status	usb_insert_transfer(struct usbd_xfer *);
+void		usb_transfer_complete(struct usbd_xfer *);
 int		usb_disconnect_port(struct usbd_port *, device_t, int);
 
-void		usbd_kill_pipe(usbd_pipe_handle);
-usbd_status	usbd_attach_roothub(device_t, usbd_device_handle);
-usbd_status	usbd_probe_and_attach(device_t, usbd_device_handle, int, int);
-usbd_status	usbd_get_initial_ddesc(usbd_device_handle,
+void		usbd_kill_pipe(struct usbd_pipe *);
+usbd_status	usbd_attach_roothub(device_t, struct usbd_device *);
+usbd_status	usbd_probe_and_attach(device_t, struct usbd_device *, int, int);
+usbd_status	usbd_get_initial_ddesc(struct usbd_device *,
 				       usb_device_descriptor_t *);
 
 /* Routines from usb.c */
-void		usb_needs_explore(usbd_device_handle);
-void		usb_needs_reattach(usbd_device_handle);
+void		usb_needs_explore(struct usbd_device *);
+void		usb_needs_reattach(struct usbd_device *);
 void		usb_schedsoftintr(struct usbd_bus *);
 
 static inline int
-usbd_xfer_isread(usbd_xfer_handle xfer)
+usbd_xfer_isread(struct usbd_xfer *xfer)
 {
 	if (xfer->ux_rqflags & URQ_REQUEST)
 		return xfer->ux_request.bmRequestType & UT_READ;

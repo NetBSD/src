@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.19.16.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.19.16.2 2015/03/19 17:26:43 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -82,8 +82,8 @@ struct umidi_endpoint {
 	struct umidi_softc	*sc;
 	/* */
 	int			addr;
-	usbd_pipe_handle	pipe;
-	usbd_xfer_handle	xfer;
+	struct usbd_pipe *	pipe;
+	struct usbd_xfer *	xfer;
 	umidi_packet_bufp	buffer;
 	umidi_packet_bufp	next_slot;
 	uint32_t               buffer_size;
@@ -101,8 +101,8 @@ struct umidi_endpoint {
 /* software context */
 struct umidi_softc {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_iface;
 	const struct umidi_quirk	*sc_quirk;
 
 	int			sc_dying;

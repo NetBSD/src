@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.13.24.5 2014/12/06 08:37:30 skrll Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.13.24.6 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.5 2014/12/06 08:37:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.6 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,14 +120,14 @@ Static int	uhmodemdebug = 0;
 #define DPRINTF(x) DPRINTFN(0, x)
 
 Static int uhmodem_open(void *, int);
-Static  usbd_status e220_modechange_request(usbd_device_handle);
+Static  usbd_status e220_modechange_request(struct usbd_device *);
 Static	usbd_status uhmodem_endpointhalt(struct ubsa_softc *, int);
-Static	usbd_status uhmodem_regwrite(usbd_device_handle, uint8_t *, size_t);
-Static	usbd_status uhmodem_regread(usbd_device_handle, uint8_t *, size_t);
-Static  usbd_status a2502_init(usbd_device_handle);
+Static	usbd_status uhmodem_regwrite(struct usbd_device *, uint8_t *, size_t);
+Static	usbd_status uhmodem_regread(struct usbd_device *, uint8_t *, size_t);
+Static  usbd_status a2502_init(struct usbd_device *);
 #if 0
-Static	usbd_status uhmodem_regsetup(usbd_device_handle, uint16_t);
-Static  usbd_status e220_init(usbd_device_handle);
+Static	usbd_status uhmodem_regsetup(struct usbd_device *, uint16_t);
+Static  usbd_status e220_init(struct usbd_device *);
 #endif
 
 struct	uhmodem_softc {
@@ -192,7 +192,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhmodem_softc *sc = device_private(self);
 	struct usbif_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -498,7 +498,7 @@ uhmodem_open(void *addr, int portno)
  * -- DEVICE_REMOTE_WAKEUP ruquest to endpoint 2.
  */
 Static  usbd_status
-e220_modechange_request(usbd_device_handle dev)
+e220_modechange_request(struct usbd_device *dev)
 {
 #define E220_MODE_CHANGE_REQUEST 0x2
 	usb_device_request_t req;
@@ -559,7 +559,7 @@ uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 }
 
 Static usbd_status
-uhmodem_regwrite(usbd_device_handle dev, uint8_t *data, size_t len)
+uhmodem_regwrite(struct usbd_device *dev, uint8_t *data, size_t len)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -577,7 +577,7 @@ uhmodem_regwrite(usbd_device_handle dev, uint8_t *data, size_t len)
 }
 
 Static usbd_status
-uhmodem_regread(usbd_device_handle dev, uint8_t *data, size_t len)
+uhmodem_regread(struct usbd_device *dev, uint8_t *data, size_t len)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -597,7 +597,7 @@ uhmodem_regread(usbd_device_handle dev, uint8_t *data, size_t len)
 
 #if 0
 Static usbd_status
-uhmodem_regsetup(usbd_device_handle dev, uint16_t cmd)
+uhmodem_regsetup(struct usbd_device *dev, uint16_t cmd)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -617,7 +617,7 @@ uhmodem_regsetup(usbd_device_handle dev, uint16_t cmd)
 #endif
 
 Static  usbd_status
-a2502_init(usbd_device_handle dev)
+a2502_init(struct usbd_device *dev)
 {
 	uint8_t data[8];
 	static uint8_t init_cmd[] = {0x00, 0xE1, 0x00, 0x00, 0x00, 0x00, 0x08};
@@ -660,7 +660,7 @@ a2502_init(usbd_device_handle dev)
  * disable this code when I get more information about it.
  */
 Static  usbd_status
-e220_init(usbd_device_handle dev)
+e220_init(struct usbd_device *dev)
 {
 	uint8_t data[8];
 	usb_device_request_t req;

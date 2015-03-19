@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.45.6.4 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.45.6.5 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -35,48 +35,48 @@
 
 #include <dev/usb/usbhid.h>
 
-usbd_status	usbd_get_desc(usbd_device_handle, int,
+usbd_status	usbd_get_desc(struct usbd_device *, int,
 			      int, int, void *);
-usbd_status	usbd_get_config_desc(usbd_device_handle, int,
+usbd_status	usbd_get_config_desc(struct usbd_device *, int,
 				     usb_config_descriptor_t *);
-usbd_status	usbd_get_config_desc_full(usbd_device_handle, int, void *, int);
-usbd_status	usbd_get_device_desc(usbd_device_handle,
+usbd_status	usbd_get_config_desc_full(struct usbd_device *, int, void *, int);
+usbd_status	usbd_get_device_desc(struct usbd_device *,
 				     usb_device_descriptor_t *);
-usbd_status	usbd_set_address(usbd_device_handle, int);
-usbd_status	usbd_get_port_status(usbd_device_handle,
+usbd_status	usbd_set_address(struct usbd_device *, int);
+usbd_status	usbd_get_port_status(struct usbd_device *,
 				     int, usb_port_status_t *);
-usbd_status	usbd_set_hub_feature(usbd_device_handle, int);
-usbd_status	usbd_clear_hub_feature(usbd_device_handle, int);
-usbd_status	usbd_set_port_feature(usbd_device_handle, int, int);
-usbd_status	usbd_clear_port_feature(usbd_device_handle, int, int);
-usbd_status	usbd_get_device_status(usbd_device_handle, usb_status_t *);
-usbd_status	usbd_get_hub_status(usbd_device_handle, usb_hub_status_t *);
-usbd_status	usbd_get_protocol(usbd_interface_handle, uint8_t *);
-usbd_status	usbd_set_protocol(usbd_interface_handle, int);
-usbd_status	usbd_get_report_descriptor(usbd_device_handle, int,
+usbd_status	usbd_set_hub_feature(struct usbd_device *, int);
+usbd_status	usbd_clear_hub_feature(struct usbd_device *, int);
+usbd_status	usbd_set_port_feature(struct usbd_device *, int, int);
+usbd_status	usbd_clear_port_feature(struct usbd_device *, int, int);
+usbd_status	usbd_get_device_status(struct usbd_device *, usb_status_t *);
+usbd_status	usbd_get_hub_status(struct usbd_device *, usb_hub_status_t *);
+usbd_status	usbd_get_protocol(struct usbd_interface *, uint8_t *);
+usbd_status	usbd_set_protocol(struct usbd_interface *, int);
+usbd_status	usbd_get_report_descriptor(struct usbd_device *, int,
 					   int, void *);
-usb_hid_descriptor_t *usbd_get_hid_descriptor(usbd_interface_handle);
-usbd_status	usbd_set_report(usbd_interface_handle, int, int,
+usb_hid_descriptor_t *usbd_get_hid_descriptor(struct usbd_interface *);
+usbd_status	usbd_set_report(struct usbd_interface *, int, int,
 				void *, int);
-usbd_status	usbd_get_report(usbd_interface_handle, int, int,
+usbd_status	usbd_get_report(struct usbd_interface *, int, int,
 				void *, int);
-usbd_status	usbd_set_idle(usbd_interface_handle, int, int);
-usbd_status	usbd_read_report_desc(usbd_interface_handle, void **,
+usbd_status	usbd_set_idle(struct usbd_interface *, int, int);
+usbd_status	usbd_read_report_desc(struct usbd_interface *, void **,
 				      int *);
-usbd_status	usbd_get_config(usbd_device_handle, uint8_t *);
-usbd_status	usbd_get_string_desc(usbd_device_handle, int,
+usbd_status	usbd_get_config(struct usbd_device *, uint8_t *);
+usbd_status	usbd_get_string_desc(struct usbd_device *, int,
 				     int, usb_string_descriptor_t *,
 				     int *);
 
 
-usbd_status usbd_set_config_no(usbd_device_handle, int, int);
-usbd_status usbd_set_config_index(usbd_device_handle, int, int);
+usbd_status usbd_set_config_no(struct usbd_device *, int, int);
+usbd_status usbd_set_config_index(struct usbd_device *, int, int);
 
-usbd_status usbd_bulk_transfer(usbd_xfer_handle, usbd_pipe_handle,
+usbd_status usbd_bulk_transfer(struct usbd_xfer *, struct usbd_pipe *,
 			       uint16_t, uint32_t, void *,
 			       uint32_t *);
 
-usbd_status usbd_intr_transfer(usbd_xfer_handle, usbd_pipe_handle,
+usbd_status usbd_intr_transfer(struct usbd_xfer *, struct usbd_pipe *,
  			       uint16_t, uint32_t, void *,
  			       uint32_t *);
 
@@ -96,9 +96,9 @@ typedef struct {
 	uByte		bDescriptorSubtype;
 } UPACKED usb_cdc_descriptor_t;
 
-const usb_cdc_descriptor_t *usb_find_desc(usbd_device_handle, int,
+const usb_cdc_descriptor_t *usb_find_desc(struct usbd_device *, int,
 				      int);
-const usb_cdc_descriptor_t *usb_find_desc_if(usbd_device_handle, int,
+const usb_cdc_descriptor_t *usb_find_desc_if(struct usbd_device *, int,
 					 int,
 					 usb_interface_descriptor_t *);
 #define USBD_CDCSUBTYPE_ANY (~0)

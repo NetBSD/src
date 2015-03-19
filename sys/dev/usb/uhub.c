@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.6 2014/12/06 08:39:57 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.7 2015/03/19 17:26:43 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.6 2014/12/06 08:39:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.7 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,9 @@ int	uhubdebug = 0;
 
 struct uhub_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_hub;		/* USB device */
+	struct usbd_device *	sc_hub;		/* USB device */
 	int			sc_proto;	/* device protocol */
-	usbd_pipe_handle	sc_ipipe;	/* interrupt pipe */
+	struct usbd_pipe *	sc_ipipe;	/* interrupt pipe */
 
 	/* XXX second buffer needed because we can't suspend pipes yet */
 	uint8_t			*sc_statusbuf;
@@ -83,8 +83,8 @@ struct uhub_softc {
 #define PORTSTAT_ISSET(sc, port) \
 	((sc)->sc_status[(port) / 8] & (1 << ((port) % 8)))
 
-Static usbd_status uhub_explore(usbd_device_handle);
-Static void uhub_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static usbd_status uhub_explore(struct usbd_device *);
+Static void uhub_intr(struct usbd_xfer *, void *, usbd_status);
 
 
 /*
@@ -138,14 +138,14 @@ uhub_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhub_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	char *devinfop;
 	usbd_status err;
 	struct usbd_hub *hub = NULL;
 	usb_device_request_t req;
 	usb_hub_descriptor_t hubdesc;
 	int p, port, nports, nremov, pwrdly;
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
 #if 0 /* notyet */
 	struct usbd_tt *tts = NULL;
@@ -367,7 +367,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 }
 
 usbd_status
-uhub_explore(usbd_device_handle dev)
+uhub_explore(struct usbd_device *dev)
 {
 	usb_hub_descriptor_t *hd = &dev->ud_hub->uh_hubdesc;
 	struct uhub_softc *sc = dev->ud_hub->uh_hubsoftc;
@@ -649,7 +649,7 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct uhub_softc *sc = device_private(self);
 	struct usbd_hub *hub = sc->sc_hub->ud_hub;
-	usbd_device_handle dev;
+	struct usbd_device *dev;
 	int port;
 
 	for (port = 0; port < hub->uh_hubdesc.bNbrPorts; port++) {
@@ -666,8 +666,8 @@ void
 uhub_childdet(device_t self, device_t child)
 {
 	struct uhub_softc *sc = device_private(self);
-	usbd_device_handle devhub = sc->sc_hub;
-	usbd_device_handle dev;
+	struct usbd_device *devhub = sc->sc_hub;
+	struct usbd_device *dev;
 	int nports;
 	int port;
 	int i;
@@ -704,7 +704,7 @@ uhub_childdet(device_t self, device_t child)
  * to be explored again.
  */
 void
-uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
+uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uhub_softc *sc = addr;
 

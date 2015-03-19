@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.33.10.6 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.33.10.7 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.6 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.7 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,8 @@ Static struct ustir_speedrec const ustir_speeds[USTIR_NSPEEDS] = {
 
 struct ustir_softc {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_iface;
 
 	uint8_t			*sc_ur_buf; /* Unencapsulated frame */
 	u_int			sc_ur_framelen;
@@ -99,8 +99,8 @@ struct ustir_softc {
 	uint8_t			*sc_rd_buf; /* Raw incoming data stream */
 	size_t			sc_rd_index;
 	int			sc_rd_addr;
-	usbd_pipe_handle	sc_rd_pipe;
-	usbd_xfer_handle	sc_rd_xfer;
+	struct usbd_pipe *	sc_rd_pipe;
+	struct usbd_xfer *	sc_rd_xfer;
 	u_int			sc_rd_count;
 	int			sc_rd_readinprogress;
 	u_int			sc_rd_expectdataticks;
@@ -112,8 +112,8 @@ struct ustir_softc {
 	uint8_t			*sc_wr_buf;
 	int			sc_wr_addr;
 	int			sc_wr_stalewrite;
-	usbd_xfer_handle	sc_wr_xfer;
-	usbd_pipe_handle	sc_wr_pipe;
+	struct usbd_xfer *	sc_wr_xfer;
+	struct usbd_pipe *	sc_wr_pipe;
 	struct selinfo		sc_wr_sel;
 
 	enum {
@@ -162,7 +162,7 @@ Static struct irframe_methods const ustir_methods = {
 #endif
 };
 
-Static void ustir_rd_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void ustir_rd_cb(struct usbd_xfer *, void *, usbd_status);
 Static usbd_status ustir_start_read(struct ustir_softc *);
 Static void ustir_periodic(struct ustir_softc *);
 Static void ustir_thread(void *);
@@ -235,8 +235,8 @@ ustir_attach(device_t parent, device_t self, void *aux)
 {
 	struct ustir_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	uint8_t epcount;
@@ -537,7 +537,7 @@ ustir_thread(void *arg)
 }
 
 Static void
-ustir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+ustir_rd_cb(struct usbd_xfer *xfer, void *priv,
 	    usbd_status status)
 {
 	struct ustir_softc *sc = priv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.68.4.4 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.68.4.5 2015/03/19 17:26:42 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.4 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.5 2015/03/19 17:26:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -125,8 +125,8 @@ Static int cue_tx_list_init(struct cue_softc *);
 Static int cue_rx_list_init(struct cue_softc *);
 Static int cue_newbuf(struct cue_softc *, struct cue_chain *, struct mbuf *);
 Static int cue_send(struct cue_softc *, struct mbuf *, int);
-Static void cue_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void cue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void cue_rxeof(struct usbd_xfer *, void *, usbd_status);
+Static void cue_txeof(struct usbd_xfer *, void *, usbd_status);
 Static void cue_tick(void *);
 Static void cue_tick_task(void *);
 Static void cue_start(struct ifnet *);
@@ -457,8 +457,8 @@ cue_attach(device_t parent, device_t self, void *aux)
 	char			*devinfop;
 	int			s;
 	u_char			eaddr[ETHER_ADDR_LEN];
-	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface;
+	struct usbd_device *	dev = uaa->device;
+	struct usbd_interface *	iface;
 	usbd_status		err;
 	struct ifnet		*ifp;
 	usb_interface_descriptor_t	*id;
@@ -725,7 +725,7 @@ cue_tx_list_init(struct cue_softc *sc)
  * the higher level protocols.
  */
 Static void
-cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+cue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct cue_chain	*c = priv;
 	struct cue_softc	*sc = c->cue_sc;
@@ -818,7 +818,7 @@ done:
  * the list buffers.
  */
 Static void
-cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+cue_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct cue_chain	*c = priv;

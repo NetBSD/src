@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.10 2014/07/17 17:11:12 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.10.4.1 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10 2014/07/17 17:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.4.1 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1286,7 +1286,7 @@ uatp_ioctl(void *v, unsigned long cmd, void *data, int flag, struct lwp *p)
 static void
 geyser34_enable_raw_mode(struct uatp_softc *sc)
 {
-	usbd_device_handle udev = sc->sc_hdev.sc_parent->sc_udev;
+	struct usbd_device * udev = sc->sc_hdev.sc_parent->sc_udev;
 	usb_device_request_t req;
 	usbd_status status;
 	uint8_t report[GEYSER34_MODE_PACKET_SIZE];
