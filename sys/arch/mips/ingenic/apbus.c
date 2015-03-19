@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.9 2015/03/17 09:26:31 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.10 2015/03/19 12:22:00 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.9 2015/03/17 09:26:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.10 2015/03/19 12:22:00 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -128,12 +128,17 @@ apbus_attach(device_t parent, device_t self, void *aux)
 
 	/* enable USB clocks */
 	reg = readreg(JZ_CLKGR1);
+	reg &= ~(1 << 0);	/* SMB3 clock */
 	reg &= ~(1 << 8);	/* OTG1 clock */
 	reg &= ~(1 << 11);	/* AHB_MON clock */
+	reg &= ~(1 << 12);	/* SMB4 clock */
 	writereg(JZ_CLKGR1, reg);
 
 	reg = readreg(JZ_CLKGR0);
+	reg &= ~(1 << 5);	/* SMB0 clock */
+	reg &= ~(1 << 6);	/* SMB1 clock */
 	reg &= ~(1 << 24);	/* UHC clock */
+	reg &= ~(1 << 25);	/* SMB2 clock */
 	writereg(JZ_CLKGR0, reg);
 
 	/* wake up the USB part */
