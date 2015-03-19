@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.10 2015/03/17 07:22:40 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.11 2015/03/19 12:22:36 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -379,5 +379,72 @@ gpio_as_intr_level(uint32_t g, int pin)
 #define JZ_SMB2_BASE	0x10052000
 #define JZ_SMB3_BASE	0x10053000
 #define JZ_SMB4_BASE	0x10054000
+
+/* SMBus register offsets, per port */
+#define JZ_SMBCON	0x00 /* SMB control */
+	#define JZ_STPHLD	0x80 /* Stop Hold Enable bit */
+	#define JZ_SLVDIS	0x40 /* 1 - slave disabled */
+	#define JZ_REST		0x20 /* 1 - allow RESTART */
+	#define JZ_MATP		0x10 /* 1 - enable 10bit addr. for master */
+	#define JZ_SATP		0x08 /* 1 - enable 10bit addr. for slave */
+	#define JZ_SPD_M	0x06 /* bus speed control */
+	#define JZ_SPD_100KB	0x02 /* 100kBit/s mode */
+	#define JZ_SPD_400KB	0x04 /* 400kBit/s mode */
+	#define JZ_MD		0x01 /* enable master */
+#define JZ_SMBTAR	0x04 /* SMB target address */
+	#define JZ_SMATP	0x1000 /* enable 10bit master addr */
+	#define JZ_SPECIAL	0x0800 /* 1 - special command */
+	#define JZ_START	0x0400 /* 1 - send START */
+	#define JZ_SMBTAR_M	0x03ff /* target address */
+#define JZ_SMBSAR	0x08 /* SMB slave address */
+#define JZ_SMBDC	0x10 /* SMB data buffer and command */
+	#define JZ_CMD	0x100 /* 1 - read, 0 - write */
+	#define JZ_DATA	0x0ff
+#define JZ_SMBSHCNT	0x14 /* Standard speed SMB SCL high count */
+#define JZ_SMBSLCNT	0x18 /* Standard speed SMB SCL low count */
+#define JZ_SMBFHCNT	0x1C /* Fast speed SMB SCL high count */
+#define JZ_SMBFLCNT	0x20 /* Fast speed SMB SCL low count */
+#define JZ_SMBINTST	0x2C /* SMB Interrupt Status */
+	#define JZ_ISTT		0x400	/* START or RESTART occured */
+	#define JZ_ISTP		0x200	/* STOP occured */
+	#define JZ_TXABT	0x40	/* ABORT occured */
+	#define JZ_TXEMP	0x10	/* TX FIFO is low */
+	#define JZ_TXOF		0x08	/* TX FIFO is high */
+	#define JZ_RXFL		0x04	/* RX FIFO is low */
+	#define JZ_RXOF		0x02	/* RX FIFO is high */
+	#define JZ_RXUF		0x01	/* RX FIFO underflow */
+#define JZ_SMBINTM	0x30 /* SMB Interrupt Mask */
+#define JZ_SMBRXTL	0x38 /* SMB RxFIFO Threshold */
+#define JZ_SMBTXTL	0x3C /* SMB TxFIFO Threshold */
+#define JZ_SMBCINT	0x40 /* Clear Interrupts */
+	#define JZ_CLEARALL	0x01
+#define JZ_SMBCRXUF	0x44 /* Clear RXUF Interrupt */
+#define JZ_SMBCRXOF	0x48 /* Clear RX_OVER Interrupt */
+#define JZ_SMBCTXOF	0x4C /* Clear TX_OVER Interrupt */
+#define JZ_SMBCRXREQ	0x50 /* Clear RDREQ Interrupt */
+#define JZ_SMBCTXABT	0x54 /* Clear TX_ABRT Interrupt */
+#define JZ_SMBCRXDN	0x58 /* Clear RX_DONE Interrupt */
+#define JZ_SMBCACT	0x5c /* Clear ACTIVITY Interrupt */
+#define JZ_SMBCSTP	0x60 /* Clear STOP Interrupt */
+#define JZ_SMBCSTT	0x64 /* Clear START Interrupt */
+#define JZ_SMBCGC	0x68 /* Clear GEN_CALL Interrupt */
+#define JZ_SMBENB	0x6C /* SMB Enable */
+	#define JZ_ENABLE	0x01
+#define JZ_SMBST	0x70 /* SMB Status register */
+	#define JZ_SLVACT	0x40 /* slave is active */
+	#define JZ_MSTACT	0x20 /* master is active */
+	#define JZ_RFF		0x10 /* RX FIFO is full */
+	#define JZ_RFNE		0x08 /* RX FIFO not empty */
+	#define JZ_TFE		0x04 /* TX FIFO is empty */
+	#define JZ_TFNF		0x02 /* TX FIFO is not full */
+	#define JZ_ACT		0x01 /* JZ_SLVACT | JZ_MSTACT */
+#define JZ_SMBABTSRC	0x80 /* SMB Transmit Abort Status Register */
+#define JZ_SMBDMACR	0x88 /* DMA Control Register */
+#define JZ_SMBDMATDL	0x8c /* DMA Transmit Data Level */
+#define JZ_SMBDMARDL	0x90 /* DMA Receive Data Level */
+#define JZ_SMBSDASU	0x94 /* SMB SDA Setup Register */
+#define JZ_SMBACKGC	0x98 /* SMB ACK General Call Register */
+#define JZ_SMBENBST	0x9C /* SMB Enable Status Register */
+#define JZ_SMBSDAHD	0xD0 /* SMB SDA HolD time Register */
 
 #endif /* INGENIC_REGS_H */
