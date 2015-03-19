@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2010, Intel Corporation 
+  Copyright (c) 2001-2011, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -31,16 +31,17 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixv.c,v 1.2 2011/03/23 13:10:15 jhb Exp $*/
-/*$NetBSD: ixv.c,v 1.3 2015/03/10 09:26:49 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.4 2015/03/19 14:22:23 msaitoh Exp $*/
 
 #include "opt_inet.h"
+#include "opt_inet6.h"
 
 #include "ixv.h"
 
 /*********************************************************************
  *  Driver version
  *********************************************************************/
-char ixv_driver_version[] = "1.0.0";
+char ixv_driver_version[] = "1.0.1";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -223,7 +224,7 @@ TUNABLE_INT("hw.ixv.flow_control", &ixv_flow_control);
  * it can be a performance win in some workloads, but
  * in others it actually hurts, its off by default.
  */
-static bool ixv_header_split = FALSE;
+static int ixv_header_split = FALSE;
 TUNABLE_INT("hw.ixv.hdr_split", &ixv_header_split);
 
 /*
@@ -254,7 +255,7 @@ static int ixv_total_ports;
  *  ixv_probe determines if the driver should be loaded on
  *  adapter based on PCI vendor/device id of the adapter.
  *
- *  return 0 on success, positive on failure
+ *  return 1 on success, 0 on failure
  *********************************************************************/
 
 static int
@@ -1355,11 +1356,8 @@ ixv_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	txr->next_avail_desc = i;
 
 	txbuf->m_head = m_head;
-	/* We exchange the maps instead of copying because otherwise
-	 * we end up with many pointers to the same map and we free
-	 * one map twice in ixgbe_free_transmit_structures().  Who
-	 * knows what other problems this caused.  --dyoung
-	 */
+	/* Swap the dma map between the first and last descriptor */
+	txr->tx_buffers[first].map = txbuf->map;
 	txbuf->map = map;
 	bus_dmamap_sync(txr->txtag->dt_dmat, map, 0, m_head->m_pkthdr.len,
 	    BUS_DMASYNC_PREWRITE);
@@ -1918,7 +1916,6 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 
 	ifp = adapter->ifp = &ec->ec_if;
 	strlcpy(ifp->if_xname, device_xname(dev), IFNAMSIZ);
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_baudrate = 1000000000;
 	ifp->if_init = ixv_init;
 	ifp->if_stop = ixv_ifstop;
@@ -1949,8 +1946,9 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_capenable = 0;
 
 	ec->ec_capabilities |= ETHERCAP_VLAN_HWCSUM;
-	ec->ec_capabilities |= ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
 	ec->ec_capabilities |= ETHERCAP_JUMBO_MTU;
+	ec->ec_capabilities |= ETHERCAP_VLAN_HWTAGGING
+	    		| ETHERCAP_VLAN_MTU;
 	ec->ec_capenable = ec->ec_capabilities;
 
 	/* Don't enable LRO by default */
