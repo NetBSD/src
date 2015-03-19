@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.34 2015/03/17 19:38:43 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.35 2015/03/19 16:46:42 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -4439,4 +4439,23 @@ external/zlib/pigz/dist/zopfli/zopfli_lib.c     up to 1.1.1.1
 
 	sync pigz with HEAD.
 	[mrg, ticket #1268]
+
+crypto/external/bsd/openssl/dist/crypto/asn1/a_type.c 1.2
+crypto/external/bsd/openssl/dist/crypto/asn1/tasn_dec.c 1.2
+crypto/external/bsd/openssl/dist/crypto/pkcs7/pk7_doit.c 1.2
+crypto/external/bsd/openssl/dist/crypto/pkcs7/pk7_lib.c 1.2
+crypto/external/bsd/openssl/dist/doc/crypto/d2i_X509.pod 1.2
+crypto/external/bsd/openssl/dist/ssl/s2_lib.c	1.3
+crypto/external/bsd/openssl/dist/ssl/s2_srvr.c	1.2
+
+	Address OpenSSL Security Advisory [19 Mar 2015]:
+	Reclassified: RSA silently downgrades to EXPORT_RSA [Client] (CVE-2015-0204)
+	Segmentation fault in ASN1_TYPE_cmp (CVE-2015-0286)
+	ASN.1 structure reuse memory corruption (CVE-2015-0287)
+	PKCS7 NULL pointer dereferences (CVE-2015-0289)
+	Base64 decode (CVE-2015-0292)
+	DoS via reachable assert in SSLv2 servers (CVE-2015-0293)
+	Use After Free following d2i_ECPrivatekey error (CVE-2015-0209)
+	X509_to_X509_REQ NULL pointer deref (CVE-2015-0288)
+	[spz, ticket #1281]
 
