@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.5 2010/12/14 01:21:25 haad Exp $	*/
+/*	$NetBSD: uio.h,v 1.6 2015/03/19 22:57:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -91,8 +91,8 @@ struct xuio {
 #define uio_extflg	uio_offset
 #define UIO_XUIO 0x0004	/* Structure is xuio_t */
 
-#define XUIO_XUZC_PRIV(xuio)	((xuio)->xuio_priv);
-#define XUIO_XUZC_RW(xuio)	((xuio)->xuio_rw);
+#define XUIO_XUZC_PRIV(xuio)	((xuio)->xuio_priv)
+#define XUIO_XUZC_RW(xuio)	((xuio)->xuio_rw)
 
 typedef	struct uio	uio_t;
 typedef struct xuio	xuio_t;
