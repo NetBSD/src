@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.3 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.4 2015/03/19 17:26:42 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.3 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.4 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -119,7 +119,7 @@ static void	upgt_start(struct ifnet *);
 static void	upgt_watchdog(struct ifnet *);
 static void	upgt_tx_task(void *);
 static void	upgt_tx_done(struct upgt_softc *, uint8_t *);
-static void	upgt_rx_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void	upgt_rx_cb(struct usbd_xfer *, void *, usbd_status);
 static void	upgt_rx(struct upgt_softc *, uint8_t *, int);
 static void	upgt_setup_rates(struct upgt_softc *);
 static uint8_t	upgt_rx_rate(struct upgt_softc *, const int);
@@ -136,7 +136,7 @@ static void	upgt_free_tx(struct upgt_softc *);
 static void	upgt_free_rx(struct upgt_softc *);
 static void	upgt_free_cmd(struct upgt_softc *);
 static int	upgt_bulk_xmit(struct upgt_softc *, struct upgt_data *,
-		    usbd_pipe_handle, uint32_t *, int);
+		    struct usbd_pipe *, uint32_t *, int);
 
 #if 0
 static void	upgt_hexdump(void *, int);
@@ -1730,7 +1730,7 @@ upgt_tx_done(struct upgt_softc *sc, uint8_t *data)
 }
 
 static void
-upgt_rx_cb(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+upgt_rx_cb(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct upgt_data *data_rx = priv;
 	struct upgt_softc *sc = data_rx->sc;
@@ -2361,7 +2361,7 @@ upgt_free_cmd(struct upgt_softc *sc)
 
 static int
 upgt_bulk_xmit(struct upgt_softc *sc, struct upgt_data *data,
-    usbd_pipe_handle pipeh, uint32_t *size, int flags)
+    struct usbd_pipe * pipeh, uint32_t *size, int flags)
 {
         usbd_status status;
 

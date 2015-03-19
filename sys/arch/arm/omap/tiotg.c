@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.2.8.3 2015/03/09 14:26:31 skrll Exp $ */
+/* $NetBSD: tiotg.c,v 1.2.8.4 2015/03/19 17:26:42 skrll Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.3 2015/03/09 14:26:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.4 2015/03/19 17:26:42 skrll Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -227,7 +227,7 @@ tiotg_childdet(device_t self, device_t child)
 }
 
 static int
-tiotg_intr(void * v)
+tiotg_intr(void *v)
 {
 	panic("tiotg_intr");
 }

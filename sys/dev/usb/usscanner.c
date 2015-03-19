@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.38.6.6 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38.6.7 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.6 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.7 2015/03/19 17:26:43 skrll Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -93,23 +93,23 @@ int	usscannerdebug = 0;
 
 struct usscanner_softc {
  	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_iface;
 
 	int			sc_in_addr;
-	usbd_pipe_handle	sc_in_pipe;
+	struct usbd_pipe *	sc_in_pipe;
 
 	int			sc_intr_addr;
-	usbd_pipe_handle	sc_intr_pipe;
-	usbd_xfer_handle	sc_intr_xfer;
+	struct usbd_pipe *	sc_intr_pipe;
+	struct usbd_xfer *	sc_intr_xfer;
 	u_char			sc_status;
 
 	int			sc_out_addr;
-	usbd_pipe_handle	sc_out_pipe;
+	struct usbd_pipe *	sc_out_pipe;
 
-	usbd_xfer_handle	sc_cmd_xfer;
+	struct usbd_xfer *	sc_cmd_xfer;
 	void			*sc_cmd_buffer;
-	usbd_xfer_handle	sc_data_xfer;
+	struct usbd_xfer *	sc_data_xfer;
 	void			*sc_data_buffer;
 
 	int			sc_state;
@@ -138,7 +138,7 @@ Static void usscanner_scsipi_request(struct scsipi_channel *,
 Static void usscanner_scsipi_minphys(struct buf *);
 Static void usscanner_done(struct usscanner_softc *);
 Static void usscanner_sense(struct usscanner_softc *);
-typedef void callback(usbd_xfer_handle, usbd_private_handle, usbd_status);
+typedef void callback(struct usbd_xfer *, void *, usbd_status);
 Static callback usscanner_intr_cb;
 Static callback usscanner_cmd_cb;
 Static callback usscanner_data_cb;
@@ -174,8 +174,8 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 {
 	struct usscanner_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface;
+	struct usbd_device *	dev = uaa->device;
+	struct usbd_interface *	iface;
 	char			*devinfop;
 	usbd_status		err;
 	usb_endpoint_descriptor_t *ed;
@@ -462,7 +462,7 @@ usscanner_sense(struct usscanner_softc *sc)
 }
 
 Static void
-usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+usscanner_intr_cb(struct usbd_xfer *xfer, void *priv,
 		 usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
@@ -490,7 +490,7 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 Static void
-usscanner_data_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+usscanner_data_cb(struct usbd_xfer *xfer, void *priv,
 		 usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
@@ -532,7 +532,7 @@ usscanner_data_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 Static void
-usscanner_sensedata_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+usscanner_sensedata_cb(struct usbd_xfer *xfer, void *priv,
 		       usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
@@ -587,7 +587,7 @@ usscanner_done(struct usscanner_softc *sc)
 }
 
 Static void
-usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+usscanner_sensecmd_cb(struct usbd_xfer *xfer, void *priv,
 		      usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
@@ -632,12 +632,12 @@ usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 Static void
-usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+usscanner_cmd_cb(struct usbd_xfer *xfer, void *priv,
 		 usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
-	usbd_pipe_handle pipe;
+	struct usbd_pipe *pipe;
 	usbd_status err;
 
 	DPRINTFN(10, ("usscanner_cmd_cb status=%d\n", status));

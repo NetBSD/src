@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcivar.h,v 1.5.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ahcivar.h,v 1.5.6.2 2015/03/19 17:26:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -70,7 +70,7 @@
 	usb_delay_ms(&sc->sc_bus, (X));
 
 struct ahci_xfer {
-	usbd_xfer_handle sx_xfer;
+	struct usbd_xfer *sx_xfer;
 	callout_t sx_callout_t;
 };
 
@@ -84,10 +84,10 @@ struct ahci_softc {
 	kmutex_t		 sc_lock;
 	kmutex_t		 sc_intr_lock;
 
-	void				(*sc_enable_power)(void *, int);
-	void				(*sc_enable_intr)(void *, int);
-	void				*sc_arg;
-	int				 sc_powerstat;
+	void			(*sc_enable_power)(void *, int);
+	void			(*sc_enable_intr)(void *, int);
+	void			*sc_arg;
+	int			 sc_powerstat;
 #define POWER_ON	(1)
 #define POWER_OFF	(0)
 #define INTR_ON 	(1)
@@ -103,7 +103,7 @@ struct ahci_softc {
 
 	/* Information for the root hub interrupt pipe */
 	int			 sc_interval;
-	usbd_xfer_handle	 sc_intr_xfer;
+	struct usbd_xfer	*sc_intr_xfer;
 	callout_t		 sc_poll_handle;
 
 	int				 sc_flags;

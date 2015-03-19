@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_audio.c,v 1.1.40.1 2014/12/03 12:52:07 skrll Exp $ */
+/* $NetBSD: auvitek_audio.c,v 1.1.40.2 2015/03/19 17:26:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_audio.c,v 1.1.40.1 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_audio.c,v 1.1.40.2 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,9 @@ int
 auvitek_audio_attach(struct auvitek_softc *sc)
 {
 	struct usbif_attach_arg uiaa;
-	usbd_device_handle udev = sc->sc_udev;
+	struct usbd_device *udev = sc->sc_udev;
 	usb_device_descriptor_t *dd = &udev->ud_ddesc;
-	usbd_interface_handle *ifaces;
+	struct usbd_interface **ifaces;
 	int ilocs[USBIFIFCF_NLOCS], nifaces, i;
 
 	nifaces = udev->ud_cdesc->bNumInterface;

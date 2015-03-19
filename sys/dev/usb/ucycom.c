@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.41.2.4 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.41.2.5 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.4 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.5 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ const struct cdevsw ucycom_cdevsw = {
 
 Static int ucycomparam(struct tty *, struct termios *);
 Static void ucycomstart(struct tty *);
-Static void ucycomwritecb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void ucycomwritecb(struct usbd_xfer *, void *, usbd_status);
 Static void ucycom_intr(struct uhidev *, void *, u_int);
 Static int ucycom_configure(struct ucycom_softc *, uint32_t, uint8_t);
 Static void tiocm_to_ucycom(struct ucycom_softc *, u_long, int);
@@ -577,7 +577,7 @@ ucycomstart(struct tty *tp)
 #endif
 	DPRINTFN(4,("ucycomstart: %d chars\n", len));
 	usbd_setup_xfer(sc->sc_hdev.sc_parent->sc_oxfer,
-	    sc->sc_hdev.sc_parent->sc_opipe, (usbd_private_handle)sc,
+	    sc->sc_hdev.sc_parent->sc_opipe, (void *)sc,
 	    sc->sc_obuf, sc->sc_olen, 0 /* USBD_NO_COPY */, USBD_NO_TIMEOUT,
 	    ucycomwritecb);
 
@@ -595,7 +595,7 @@ out:
 }
 
 Static void
-ucycomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
+ucycomwritecb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucycom_softc *sc = (struct ucycom_softc *)p;
 	struct tty *tp = sc->sc_tty;

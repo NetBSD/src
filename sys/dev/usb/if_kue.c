@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.3 2014/12/23 11:24:31 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.4 2015/03/19 17:26:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.3 2014/12/23 11:24:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.4 2015/03/19 17:26:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -168,8 +168,8 @@ static int kue_tx_list_init(struct kue_softc *);
 static int kue_rx_list_init(struct kue_softc *);
 static int kue_send(struct kue_softc *, struct mbuf *, int);
 static int kue_open_pipes(struct kue_softc *);
-static void kue_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static void kue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void kue_rxeof(struct usbd_xfer *, void *, usbd_status);
+static void kue_txeof(struct usbd_xfer *, void *, usbd_status);
 static void kue_start(struct ifnet *);
 static int kue_ioctl(struct ifnet *, u_long, void *);
 static void kue_init(void *);
@@ -399,8 +399,8 @@ kue_attach(device_t parent, device_t self, void *aux)
 	char			*devinfop;
 	int			s;
 	struct ifnet		*ifp;
-	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface;
+	struct usbd_device *	dev = uaa->device;
+	struct usbd_interface *	iface;
 	usbd_status		err;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -637,7 +637,7 @@ kue_tx_list_init(struct kue_softc *sc)
  * the higher level protocols.
  */
 static void
-kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+kue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct kue_chain	*c = priv;
 	struct kue_softc	*sc = c->kue_sc;
@@ -746,7 +746,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  */
 
 static void
-kue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+kue_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct kue_chain	*c = priv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.15.2.1 2015/03/19 17:26:42 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.15.2.1 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -1361,7 +1361,7 @@ dwc2_conn_id_status_change(struct work *work)
 	}
 }
 
-void dwc2_wakeup_detected(void * data)
+void dwc2_wakeup_detected(void *data)
 {
 	struct dwc2_hsotg *hsotg = (struct dwc2_hsotg *)data;
 	u32 hprt0;

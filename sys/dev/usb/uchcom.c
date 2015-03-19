@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.13.6.1 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.13.6.2 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.6.1 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.6.2 2015/03/19 17:26:43 skrll Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -120,14 +120,14 @@ int	uchcomdebug = 0;
 struct uchcom_softc
 {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 	device_t		sc_subdev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_interface *	sc_iface;
 	int			sc_dying;
 	/* */
 	int			sc_intr_endpoint;
 	int			sc_intr_size;
-	usbd_pipe_handle	sc_intr_pipe;
+	struct usbd_pipe *	sc_intr_pipe;
 	u_char			*sc_intr_buf;
 	/* */
 	uint8_t			sc_version;
@@ -184,11 +184,11 @@ Static void	uchcom_set(void *, int, int, int);
 Static int	uchcom_param(void *, int, struct termios *);
 Static int	uchcom_open(void *, int);
 Static void	uchcom_close(void *, int);
-Static void	uchcom_intr(usbd_xfer_handle, usbd_private_handle,
+Static void	uchcom_intr(struct usbd_xfer *, void *,
 			    usbd_status);
 
 static int	set_config(struct uchcom_softc *);
-static int	find_ifaces(struct uchcom_softc *, usbd_interface_handle *);
+static int	find_ifaces(struct uchcom_softc *, struct usbd_interface * *);
 static int	find_endpoints(struct uchcom_softc *,
 			       struct uchcom_endpoints *);
 static void	close_intr_pipe(struct uchcom_softc *);
@@ -240,7 +240,7 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct uchcom_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device * dev = uaa->device;
 	char *devinfop;
 	struct uchcom_endpoints endpoints;
 	struct ucom_attach_args uca;
@@ -369,7 +369,7 @@ set_config(struct uchcom_softc *sc)
 }
 
 static int
-find_ifaces(struct uchcom_softc *sc, usbd_interface_handle *riface)
+find_ifaces(struct uchcom_softc *sc, struct usbd_interface * *riface)
 {
 	usbd_status err;
 
@@ -1009,7 +1009,7 @@ uchcom_close(void *arg, int portno)
  * callback when the modem status is changed.
  */
 void
-uchcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+uchcom_intr(struct usbd_xfer *xfer, void * priv,
 	    usbd_status status)
 {
 	struct uchcom_softc *sc = priv;

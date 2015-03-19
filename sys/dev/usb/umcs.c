@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.8.2.2 2014/12/23 11:24:32 skrll Exp $ */
+/* $NetBSD: umcs.c,v 1.8.2.3 2015/03/19 17:26:43 skrll Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.2 2014/12/23 11:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.3 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,9 @@ struct umcs7840_softc_oneport {
 
 struct umcs7840_softc {
 	device_t sc_dev;		/* ourself */
-	usbd_interface_handle sc_iface; /* the usb interface */
-	usbd_device_handle sc_udev;	/* the usb device */
-	usbd_pipe_handle sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_interface *sc_iface; /* the usb interface */
+	struct usbd_device *sc_udev;	/* the usb device */
+	struct usbd_pipe *sc_intr_pipe;	/* interrupt pipe */
 	uint8_t *sc_intr_buf;		/* buffer for interrupt xfer */
 	unsigned int sc_intr_buflen;	/* size of buffer */
 	struct usb_task sc_change_task;	/* async status changes */
@@ -111,7 +111,7 @@ static void umcs7840_break(struct umcs7840_softc *, int, bool );
 static int umcs7840_match(device_t, cfdata_t, void *);
 static void umcs7840_attach(device_t, device_t, void *);
 static int umcs7840_detach(device_t, int);
-static void umcs7840_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void umcs7840_intr(struct usbd_xfer *, void *, usbd_status);
 static void umcs7840_change_task(void *arg);
 static int umcs7840_activate(device_t, enum devact);
 static void umcs7840_childdet(device_t, device_t);
@@ -179,11 +179,11 @@ umcs7840_match(device_t dev, cfdata_t match, void *aux)
 }
 
 static void
-umcs7840_attach(device_t parent, device_t self, void * aux)
+umcs7840_attach(device_t parent, device_t self, void *aux)
 {
 	struct umcs7840_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
@@ -853,7 +853,7 @@ umcs7840_port_close(void *self, int portno)
 }
 
 static void
-umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+umcs7840_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct umcs7840_softc *sc = priv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.10.6.2 2014/12/23 11:24:31 skrll Exp $	*/
+/*	$NetBSD: if_run.c,v 1.10.6.3 2015/03/19 17:26:42 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.2 2014/12/23 11:24:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.3 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -368,9 +368,9 @@ static void		run_calibrate_to(void *);
 static void		run_calibrate_cb(struct run_softc *, void *);
 static void		run_newassoc(struct ieee80211_node *, int);
 static void		run_rx_frame(struct run_softc *, uint8_t *, int);
-static void		run_rxeof(usbd_xfer_handle, usbd_private_handle,
+static void		run_rxeof(struct usbd_xfer *, void *,
 			    usbd_status);
-static void		run_txeof(usbd_xfer_handle, usbd_private_handle,
+static void		run_txeof(struct usbd_xfer *, void *,
 			    usbd_status);
 static int		run_tx(struct run_softc *, struct mbuf *,
 			    struct ieee80211_node *);
@@ -2141,7 +2141,7 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 }
 
 static void
-run_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+run_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct run_rx_data *data = priv;
 	struct run_softc *sc = data->sc;
@@ -2191,7 +2191,7 @@ skip:	/* setup a new transfer */
 }
 
 static void
-run_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+run_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct run_tx_data *data = priv;
 	struct run_softc *sc = data->sc;

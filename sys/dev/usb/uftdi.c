@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.59.6.5 2014/12/06 08:37:30 skrll Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.59.6.6 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.5 2014/12/06 08:37:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.6 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ int uftdidebug = 0;
 
 struct uftdi_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* device */
-	usbd_interface_handle	sc_iface[UFTDI_MAX_PORTS];	/* interface */
+	struct usbd_device *	sc_udev;	/* device */
+	struct usbd_interface *	sc_iface[UFTDI_MAX_PORTS];	/* interface */
 
 	enum uftdi_type		sc_type;
 	u_int			sc_hdrlen;
@@ -197,8 +197,8 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 {
 	struct uftdi_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usb_device_descriptor_t *ddesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;

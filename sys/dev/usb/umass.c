@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.6 2015/03/01 08:33:15 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.7 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.6 2015/03/01 08:33:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.7 2015/03/19 17:26:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -225,15 +225,15 @@ Static void umass_disco(struct umass_softc *sc);
 
 /* generic transfer functions */
 Static usbd_status umass_setup_transfer(struct umass_softc *,
-				usbd_pipe_handle,
+				struct usbd_pipe *,
 				void *, int, int,
-				usbd_xfer_handle);
+				struct usbd_xfer *);
 Static usbd_status umass_setup_ctrl_transfer(struct umass_softc *,
 				usb_device_request_t *,
 				void *, int, int,
-				usbd_xfer_handle);
+				struct usbd_xfer *);
 Static void umass_clear_endpoint_stall(struct umass_softc *, int,
-				usbd_xfer_handle);
+				struct usbd_xfer *);
 #if 0
 Static void umass_reset(struct umass_softc *, transfer_cb_f, void *);
 #endif
@@ -242,7 +242,7 @@ Static void umass_reset(struct umass_softc *, transfer_cb_f, void *);
 Static void umass_bbb_transfer(struct umass_softc *, int, void *, int, void *,
 			       int, int, u_int, int, umass_callback, void *);
 Static void umass_bbb_reset(struct umass_softc *, int);
-Static void umass_bbb_state(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void umass_bbb_state(struct usbd_xfer *, void *, usbd_status);
 
 usbd_status umass_bbb_get_max_lun(struct umass_softc *, uint8_t *);
 
@@ -250,9 +250,9 @@ usbd_status umass_bbb_get_max_lun(struct umass_softc *, uint8_t *);
 Static void umass_cbi_transfer(struct umass_softc *, int, void *, int, void *,
 			       int, int, u_int, int, umass_callback, void *);
 Static void umass_cbi_reset(struct umass_softc *, int);
-Static void umass_cbi_state(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void umass_cbi_state(struct usbd_xfer *, void *, usbd_status);
 
-Static int umass_cbi_adsc(struct umass_softc *, char *, int, int, usbd_xfer_handle);
+Static int umass_cbi_adsc(struct umass_softc *, char *, int, int, struct usbd_xfer *);
 
 const struct umass_wire_methods umass_bbb_methods = {
 	.wire_xfer = umass_bbb_transfer,
@@ -810,9 +810,9 @@ umass_disco(struct umass_softc *sc)
  */
 
 Static usbd_status
-umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
+umass_setup_transfer(struct umass_softc *sc, struct usbd_pipe *pipe,
 			void *buffer, int buflen, int flags,
-			usbd_xfer_handle xfer)
+			struct usbd_xfer *xfer)
 {
 	usbd_status err;
 
@@ -844,7 +844,7 @@ umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
 
 Static usbd_status
 umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
-	 void *buffer, int buflen, int flags, usbd_xfer_handle xfer)
+	 void *buffer, int buflen, int flags, struct usbd_xfer *xfer)
 {
 	usbd_status err;
 
@@ -870,7 +870,7 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
 
 Static void
 umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
-	usbd_xfer_handle xfer)
+	struct usbd_xfer *xfer)
 {
 	if (sc->sc_dying)
 		return;
@@ -1064,11 +1064,11 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 
 
 Static void
-umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
+umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 		usbd_status err)
 {
 	struct umass_softc *sc = (struct umass_softc *) priv;
-	usbd_xfer_handle next_xfer;
+	struct usbd_xfer *next_xfer;
 	int residue;
 
 	USBHIST_FUNC(); USBHIST_CALLED(umassdebug);
@@ -1389,7 +1389,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 Static int
 umass_cbi_adsc(struct umass_softc *sc, char *buffer, int buflen, int flags,
-	       usbd_xfer_handle xfer)
+	       struct usbd_xfer *xfer)
 {
 	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
 		   "sc->sc_wire == 0x%02x wrong for umass_cbi_adsc\n",
@@ -1524,7 +1524,7 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 }
 
 Static void
-umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
+umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 		usbd_status err)
 {
 	struct umass_softc *sc = (struct umass_softc *) priv;

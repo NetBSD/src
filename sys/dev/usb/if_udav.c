@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.43.4.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.43.4.4 2015/03/19 17:26:42 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.4 2015/03/19 17:26:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -98,8 +98,8 @@ Static int udav_tx_list_init(struct udav_softc *);
 Static int udav_newbuf(struct udav_softc *, struct udav_chain *, struct mbuf *);
 Static void udav_start(struct ifnet *);
 Static int udav_send(struct udav_softc *, struct mbuf *, int);
-Static void udav_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void udav_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void udav_txeof(struct usbd_xfer *, void *, usbd_status);
+Static void udav_rxeof(struct usbd_xfer *, void *, usbd_status);
 Static void udav_tick(void *);
 Static void udav_tick_task(void *);
 Static int udav_ioctl(struct ifnet *, u_long, void *);
@@ -187,8 +187,8 @@ udav_attach(device_t parent, device_t self, void *aux)
 {
 	struct udav_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -1078,7 +1078,7 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 }
 
 Static void
-udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+udav_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct udav_chain *c = priv;
@@ -1126,7 +1126,7 @@ udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 Static void
-udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+udav_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct udav_chain *c = priv;
 	struct udav_softc *sc = c->udav_sc;

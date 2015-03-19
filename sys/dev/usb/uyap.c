@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.19 2011/12/23 00:51:50 jakllsch Exp $	*/
+/*	$NetBSD: uyap.c,v 1.19.24.1 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.19 2011/12/23 00:51:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.19.24.1 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ uyap_attach(device_t parent, device_t self, void *aux)
 {
 	struct uyap_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device * dev = uaa->device;
 	usbd_status err;
 	char *devinfop;
 

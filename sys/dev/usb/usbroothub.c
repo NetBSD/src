@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.1.2.5 2015/02/01 08:23:02 skrll Exp $ */
+/* $NetBSD: usbroothub.c,v 1.1.2.6 2015/03/19 17:26:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -67,12 +67,12 @@ extern int usbdebug;
 
 /* helper functions for USB root hub emulation */
 
-static usbd_status	roothub_ctrl_transfer(usbd_xfer_handle);
-static usbd_status	roothub_ctrl_start(usbd_xfer_handle);
-static void		roothub_ctrl_abort(usbd_xfer_handle);
-static void		roothub_ctrl_close(usbd_pipe_handle);
-static void		roothub_ctrl_done(usbd_xfer_handle);
-static void		roothub_noop(usbd_pipe_handle pipe);
+static usbd_status	roothub_ctrl_transfer(struct usbd_xfer *);
+static usbd_status	roothub_ctrl_start(struct usbd_xfer *);
+static void		roothub_ctrl_abort(struct usbd_xfer *);
+static void		roothub_ctrl_close(struct usbd_pipe *);
+static void		roothub_ctrl_done(struct usbd_xfer *);
+static void		roothub_noop(struct usbd_pipe *pipe);
 
 const struct usbd_pipe_methods roothub_ctrl_methods = {
 	.upm_transfer =	roothub_ctrl_transfer,
@@ -243,9 +243,9 @@ static const usb_hub_descriptor_t usbroothub_hubd = {
  * Simulate a hardware hub by handling all the necessary requests.
  */
 usbd_status
-roothub_ctrl_transfer(usbd_xfer_handle xfer)
+roothub_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	usbd_pipe_handle pipe = xfer->ux_pipe;
+	struct usbd_pipe *pipe = xfer->ux_pipe;
 	struct usbd_bus *bus = pipe->up_dev->ud_bus;
 	usbd_status err;
 
@@ -261,9 +261,9 @@ roothub_ctrl_transfer(usbd_xfer_handle xfer)
 }
 
 static usbd_status
-roothub_ctrl_start(usbd_xfer_handle xfer)
+roothub_ctrl_start(struct usbd_xfer *xfer)
 {
-	usbd_pipe_handle pipe = xfer->ux_pipe;
+	struct usbd_pipe *pipe = xfer->ux_pipe;
 	struct usbd_bus *bus = pipe->up_dev->ud_bus;
 	usb_device_request_t *req;
 	usbd_status err = USBD_IOERROR;		/* XXX STALL? */
@@ -463,7 +463,7 @@ roothub_ctrl_start(usbd_xfer_handle xfer)
 
 /* Abort a root control request. */
 Static void
-roothub_ctrl_abort(usbd_xfer_handle xfer)
+roothub_ctrl_abort(struct usbd_xfer *xfer)
 {
 
 	/* Nothing to do, all transfers are synchronous. */
@@ -471,21 +471,21 @@ roothub_ctrl_abort(usbd_xfer_handle xfer)
 
 /* Close the root pipe. */
 Static void
-roothub_ctrl_close(usbd_pipe_handle pipe)
+roothub_ctrl_close(struct usbd_pipe *pipe)
 {
 
 	/* Nothing to do. */
 }
 
 Static void
-roothub_ctrl_done(usbd_xfer_handle xfer)
+roothub_ctrl_done(struct usbd_xfer *xfer)
 {
 
 	/* Nothing to do. */
 }
 
 static void
-roothub_noop(usbd_pipe_handle pipe)
+roothub_noop(struct usbd_pipe *pipe)
 {
 
 }

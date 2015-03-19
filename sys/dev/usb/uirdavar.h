@@ -1,4 +1,4 @@
-/*	$NetBSD: uirdavar.h,v 1.5.38.2 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: uirdavar.h,v 1.5.38.3 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -118,14 +118,14 @@ typedef struct {
 
 struct uirda_softc {
  	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_iface;
 
 	kmutex_t		sc_rd_buf_lk;
 	uint8_t			*sc_rd_buf;
 	int			sc_rd_addr;
-	usbd_pipe_handle	sc_rd_pipe;
-	usbd_xfer_handle	sc_rd_xfer;
+	struct usbd_pipe *	sc_rd_pipe;
+	struct usbd_xfer *	sc_rd_xfer;
 	struct selinfo		sc_rd_sel;
 	u_int			sc_rd_count;
 	u_char			sc_rd_err;
@@ -133,8 +133,8 @@ struct uirda_softc {
 	kmutex_t		sc_wr_buf_lk;
 	uint8_t			*sc_wr_buf;
 	int			sc_wr_addr;
-	usbd_xfer_handle	sc_wr_xfer;
-	usbd_pipe_handle	sc_wr_pipe;
+	struct usbd_xfer *	sc_wr_xfer;
+	struct usbd_pipe *	sc_wr_pipe;
 	int			sc_wr_hdr;
 	struct selinfo		sc_wr_sel;
 
@@ -150,7 +150,7 @@ struct uirda_softc {
 	struct irframe_methods	*sc_irm;
 };
 
-usbd_status usbd_get_class_desc(usbd_device_handle, int, int, int, void *);
+usbd_status usbd_get_class_desc(struct usbd_device *, int, int, int, void *);
 
 int uirda_open(void *, int, int, struct lwp *);
 int uirda_close(void *, int, int, struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.38.14.2 2014/12/23 11:24:31 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.38.14.3 2015/03/19 17:26:42 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.2 2014/12/23 11:24:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.3 2015/03/19 17:26:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,8 +85,8 @@ Static int	 cdce_rx_list_init(struct cdce_softc *);
 Static int	 cdce_newbuf(struct cdce_softc *, struct cdce_chain *,
 		    struct mbuf *);
 Static int	 cdce_encap(struct cdce_softc *, struct mbuf *, int);
-Static void	 cdce_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void	 cdce_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	 cdce_rxeof(struct usbd_xfer *, void *, usbd_status);
+Static void	 cdce_txeof(struct usbd_xfer *, void *, usbd_status);
 Static void	 cdce_start(struct ifnet *);
 Static int	 cdce_ioctl(struct ifnet *, u_long, void *);
 Static void	 cdce_init(void *);
@@ -140,7 +140,7 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	char				*devinfop;
 	int				 s;
 	struct ifnet			*ifp;
-	usbd_device_handle		 dev = uaa->device;
+	struct usbd_device *		 dev = uaa->device;
 	const struct cdce_type		*t;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -670,7 +670,7 @@ cdce_tx_list_init(struct cdce_softc *sc)
 }
 
 Static void
-cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct cdce_chain	*c = priv;
 	struct cdce_softc	*sc = c->cdce_sc;
@@ -738,7 +738,7 @@ done:
 }
 
 Static void
-cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+cdce_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct cdce_chain	*c = priv;

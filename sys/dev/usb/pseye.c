@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.21.34.4 2014/12/03 22:33:56 skrll Exp $ */
+/* $NetBSD: pseye.c,v 1.21.34.5 2015/03/19 17:26:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.4 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.5 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.4 2014/12/03 22:33:56 skrll Exp $"
 struct pseye_softc {
 	device_t		sc_dev;
 
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_iface;
 
 	device_t		sc_videodev;
 	char			sc_running;
@@ -90,8 +90,8 @@ struct pseye_softc {
 	kcondvar_t		sc_cv;
 	kmutex_t		sc_mtx;
 
-	usbd_pipe_handle	sc_bulkin_pipe;
-	usbd_xfer_handle	sc_bulkin_xfer;
+	struct usbd_pipe *	sc_bulkin_pipe;
+	struct usbd_xfer *	sc_bulkin_xfer;
 	int			sc_bulkin;
 	uint8_t			*sc_bulkin_buffer;
 	int			sc_bulkin_bufferlen;
@@ -184,7 +184,7 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 {
 	struct pseye_softc *sc = device_private(self);
 	struct usbif_attach_arg *uaa = opaque;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device * dev = uaa->device;
 	usb_interface_descriptor_t *id = NULL;
 	usb_endpoint_descriptor_t *ed = NULL, *ed_bulkin = NULL;
 	char *devinfop;

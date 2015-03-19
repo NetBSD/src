@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.22.38.3 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.22.38.4 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.22.38.3 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.22.38.4 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,13 +99,13 @@ Static void	umodem_dtr(struct umodem_softc *, int);
 Static void	umodem_rts(struct umodem_softc *, int);
 Static void	umodem_break(struct umodem_softc *, int);
 Static void	umodem_set_line_state(struct umodem_softc *);
-Static void	umodem_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	umodem_intr(struct usbd_xfer *, void *, usbd_status);
 
 int
 umodem_common_attach(device_t self, struct umodem_softc *sc,
 		     struct usbif_attach_arg *uaa, struct ucom_attach_args *uca)
 {
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
@@ -303,7 +303,7 @@ umodem_close(void *addr, int portno)
 }
 
 Static void
-umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+umodem_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct umodem_softc *sc = priv;
@@ -366,7 +366,7 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 int
-umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
+umodem_get_caps(struct usbd_device *dev, int *cm, int *acm,
 		usb_interface_descriptor_t *id)
 {
 	const usb_cdc_cm_descriptor_t *cmd;

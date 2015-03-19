@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.7 2015/03/10 06:40:56 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.8 2015/03/19 17:26:43 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.7 2015/03/10 06:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.8 2015/03/19 17:26:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -66,14 +66,14 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.7 2015/03/10 06:40:56 skrll Exp
 #define	DPRINTF(FMT,A,B,C,D)	USBHIST_LOG(usbdebug,FMT,A,B,C,D)
 #define	DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(usbdebug,N,FMT,A,B,C,D)
 
-Static usbd_status usbd_set_config(usbd_device_handle, int);
-Static void usbd_devinfo(usbd_device_handle, int, char *, size_t);
-Static void usbd_devinfo_vp(usbd_device_handle, char *, size_t, char *, size_t,
+Static usbd_status usbd_set_config(struct usbd_device *, int);
+Static void usbd_devinfo(struct usbd_device *, int, char *, size_t);
+Static void usbd_devinfo_vp(struct usbd_device *, char *, size_t, char *, size_t,
     int, int);
-Static int usbd_getnewaddr(usbd_bus_handle);
+Static int usbd_getnewaddr(struct usbd_bus *);
 Static int usbd_print(void *, const char *);
 Static int usbd_ifprint(void *, const char *);
-Static void usbd_free_iface_data(usbd_device_handle, int);
+Static void usbd_free_iface_data(struct usbd_device *, int);
 
 uint32_t usb_cookie_no = 0;
 
@@ -116,13 +116,13 @@ usbd_errstr(usbd_status err)
 }
 
 usbd_status
-usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
+usbd_get_string_desc(struct usbd_device *dev, int sindex, int langid,
 		     usb_string_descriptor_t *sdesc, int *sizep)
 {
 	usb_device_request_t req;
 	usbd_status err;
 	int actlen;
-	
+
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
 	req.bmRequestType = UT_READ_DEVICE;
@@ -167,7 +167,7 @@ usbd_trim_spaces(char *p)
 }
 
 Static void
-usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t vl, char *p,
+usbd_devinfo_vp(struct usbd_device *dev, char *v, size_t vl, char *p,
     size_t pl, int usedev, int useencoded)
 {
 	usb_device_descriptor_t *udd = &dev->ud_ddesc;
@@ -198,7 +198,7 @@ usbd_printBCD(char *cp, size_t l, int bcd)
 }
 
 Static void
-usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
+usbd_devinfo(struct usbd_device *dev, int showclass, char *cp, size_t l)
 {
 	usb_device_descriptor_t *udd = &dev->ud_ddesc;
 	char *vendor, *product;
@@ -232,7 +232,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 }
 
 char *
-usbd_devinfo_alloc(usbd_device_handle dev, int showclass)
+usbd_devinfo_alloc(struct usbd_device *dev, int showclass)
 {
 	char *devinfop;
 
@@ -249,7 +249,7 @@ usbd_devinfo_free(char *devinfop)
 
 /* Delay for a certain number of ms */
 void
-usb_delay_ms_locked(usbd_bus_handle bus, u_int ms, kmutex_t *lock)
+usb_delay_ms_locked(struct usbd_bus *bus, u_int ms, kmutex_t *lock)
 {
 	/* Wait at least two clock ticks so we know the time has passed. */
 	if (bus->ub_usepolling || cold)
@@ -259,27 +259,27 @@ usb_delay_ms_locked(usbd_bus_handle bus, u_int ms, kmutex_t *lock)
 }
 
 void
-usb_delay_ms(usbd_bus_handle bus, u_int ms)
+usb_delay_ms(struct usbd_bus *bus, u_int ms)
 {
 	usb_delay_ms_locked(bus, ms, NULL);
 }
 
 /* Delay given a device handle. */
 void
-usbd_delay_ms_locked(usbd_device_handle dev, u_int ms, kmutex_t *lock)
+usbd_delay_ms_locked(struct usbd_device *dev, u_int ms, kmutex_t *lock)
 {
 	usb_delay_ms_locked(dev->ud_bus, ms, lock);
 }
 
 /* Delay given a device handle. */
 void
-usbd_delay_ms(usbd_device_handle dev, u_int ms)
+usbd_delay_ms(struct usbd_device *dev, u_int ms)
 {
 	usb_delay_ms_locked(dev->ud_bus, ms, NULL);
 }
 
 usbd_status
-usbd_reset_port(usbd_device_handle dev, int port, usb_port_status_t *ps)
+usbd_reset_port(struct usbd_device *dev, int port, usb_port_status_t *ps)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -389,9 +389,9 @@ usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx,
 }
 
 usbd_status
-usbd_fill_iface_data(usbd_device_handle dev, int ifaceidx, int altidx)
+usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 {
-	usbd_interface_handle ifc = &dev->ud_ifaces[ifaceidx];
+	struct usbd_interface *ifc = &dev->ud_ifaces[ifaceidx];
 	usb_interface_descriptor_t *idesc;
 	char *p, *end;
 	int endpt, nendpt;
@@ -478,9 +478,9 @@ usbd_fill_iface_data(usbd_device_handle dev, int ifaceidx, int altidx)
 }
 
 void
-usbd_free_iface_data(usbd_device_handle dev, int ifcno)
+usbd_free_iface_data(struct usbd_device *dev, int ifcno)
 {
-	usbd_interface_handle ifc = &dev->ud_ifaces[ifcno];
+	struct usbd_interface *ifc = &dev->ud_ifaces[ifcno];
 	if (ifc->ui_endpoints) {
 		int nendpt = ifc->ui_idesc->bNumEndpoints;
 		size_t sz = nendpt * sizeof(struct usbd_endpoint);
@@ -489,7 +489,7 @@ usbd_free_iface_data(usbd_device_handle dev, int ifcno)
 }
 
 Static usbd_status
-usbd_set_config(usbd_device_handle dev, int conf)
+usbd_set_config(struct usbd_device *dev, int conf)
 {
 	usb_device_request_t req;
 
@@ -502,7 +502,7 @@ usbd_set_config(usbd_device_handle dev, int conf)
 }
 
 usbd_status
-usbd_set_config_no(usbd_device_handle dev, int no, int msg)
+usbd_set_config_no(struct usbd_device *dev, int no, int msg)
 {
 	int index;
 	usb_config_descriptor_t cd;
@@ -526,7 +526,7 @@ usbd_set_config_no(usbd_device_handle dev, int no, int msg)
 }
 
 usbd_status
-usbd_set_config_index(usbd_device_handle dev, int index, int msg)
+usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 {
 	usb_config_descriptor_t cd, *cdp;
 	usbd_status err;
@@ -693,17 +693,17 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 /* XXX add function for alternate settings */
 
 usbd_status
-usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
-		struct usbd_endpoint *ep, int ival, usbd_pipe_handle *pipe)
+usbd_setup_pipe(struct usbd_device *dev, struct usbd_interface *iface,
+		struct usbd_endpoint *ep, int ival, struct usbd_pipe **pipe)
 {
 	return usbd_setup_pipe_flags(dev, iface, ep, ival, pipe, 0);
 }
 
 usbd_status
-usbd_setup_pipe_flags(usbd_device_handle dev, usbd_interface_handle iface,
-    struct usbd_endpoint *ep, int ival, usbd_pipe_handle *pipe, uint8_t flags)
+usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
+    struct usbd_endpoint *ep, int ival, struct usbd_pipe **pipe, uint8_t flags)
 {
-	usbd_pipe_handle p;
+	struct usbd_pipe *p;
 	usbd_status err;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
@@ -739,7 +739,7 @@ usbd_setup_pipe_flags(usbd_device_handle dev, usbd_interface_handle iface,
 
 /* Abort the device control pipe. */
 void
-usbd_kill_pipe(usbd_pipe_handle pipe)
+usbd_kill_pipe(struct usbd_pipe *pipe)
 {
 	usbd_abort_pipe(pipe);
 	usbd_lock_pipe(pipe);
@@ -751,7 +751,7 @@ usbd_kill_pipe(usbd_pipe_handle pipe)
 }
 
 int
-usbd_getnewaddr(usbd_bus_handle bus)
+usbd_getnewaddr(struct usbd_bus *bus)
 {
 	int addr;
 
@@ -762,7 +762,7 @@ usbd_getnewaddr(usbd_bus_handle bus)
 }
 
 usbd_status
-usbd_attach_roothub(device_t parent, usbd_device_handle dev)
+usbd_attach_roothub(device_t parent, struct usbd_device *dev)
 {
 	struct usb_attach_arg uaa;
 	usb_device_descriptor_t *dd = &dev->ud_ddesc;
@@ -790,7 +790,7 @@ usbd_attach_roothub(device_t parent, usbd_device_handle dev)
 }
 
 static usbd_status
-usbd_attachwholedevice(device_t parent, usbd_device_handle dev, int port,
+usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 	int usegeneric)
 {
 	struct usb_attach_arg uaa;
@@ -830,14 +830,14 @@ usbd_attachwholedevice(device_t parent, usbd_device_handle dev, int port,
 }
 
 static usbd_status
-usbd_attachinterfaces(device_t parent, usbd_device_handle dev,
+usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 		      int port, const int *locators)
 {
 	struct usbif_attach_arg uiaa;
 	int ilocs[USBIFIFCF_NLOCS];
 	usb_device_descriptor_t *dd = &dev->ud_ddesc;
 	int nifaces;
-	usbd_interface_handle *ifaces;
+	struct usbd_interface **ifaces;
 	int i, j, loc;
 	device_t dv;
 
@@ -900,7 +900,7 @@ usbd_attachinterfaces(device_t parent, usbd_device_handle dev,
 }
 
 usbd_status
-usbd_probe_and_attach(device_t parent, usbd_device_handle dev,
+usbd_probe_and_attach(device_t parent, struct usbd_device *dev,
                       int port, int addr)
 {
 	usb_device_descriptor_t *dd = &dev->ud_ddesc;
@@ -971,7 +971,7 @@ usbd_probe_and_attach(device_t parent, usbd_device_handle dev,
  * called before calling this.
  */
 usbd_status
-usbd_reattach_device(device_t parent, usbd_device_handle dev,
+usbd_reattach_device(device_t parent, struct usbd_device *dev,
                      int port, const int *locators)
 {
 	int i, loc;
@@ -1019,7 +1019,7 @@ usbd_reattach_device(device_t parent, usbd_device_handle dev,
  * MaxPacketSize is known by the host) by exactly this length.
  */
 usbd_status
-usbd_get_initial_ddesc(usbd_device_handle dev, usb_device_descriptor_t *desc)
+usbd_get_initial_ddesc(struct usbd_device *dev, usb_device_descriptor_t *desc)
 {
 	usb_device_request_t req;
 	char buf[64];
@@ -1047,10 +1047,10 @@ usbd_get_initial_ddesc(usbd_device_handle dev, usb_device_descriptor_t *desc)
  * and attach a driver.
  */
 usbd_status
-usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
+usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
                 int speed, int port, struct usbd_port *up)
 {
-	usbd_device_handle dev, adev;
+	struct usbd_device *dev, *adev;
 	struct usbd_device *hub;
 	usb_device_descriptor_t *dd;
 	usb_port_status_t ps;
@@ -1263,7 +1263,7 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 }
 
 usbd_status
-usbd_reload_device_desc(usbd_device_handle dev)
+usbd_reload_device_desc(struct usbd_device *dev)
 {
 	usbd_status err;
 
@@ -1279,7 +1279,7 @@ usbd_reload_device_desc(usbd_device_handle dev)
 }
 
 void
-usbd_remove_device(usbd_device_handle dev, struct usbd_port *up)
+usbd_remove_device(struct usbd_device *dev, struct usbd_port *up)
 {
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
@@ -1353,7 +1353,7 @@ usbd_ifprint(void *aux, const char *pnp)
 }
 
 void
-usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
+usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 		     int usedev)
 {
 	struct usbd_port *p;
@@ -1424,7 +1424,7 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 
 #ifdef COMPAT_30
 void
-usbd_fill_deviceinfo_old(usbd_device_handle dev, struct usb_device_info_old *di,
+usbd_fill_deviceinfo_old(struct usbd_device *dev, struct usb_device_info_old *di,
                          int usedev)
 {
 	struct usbd_port *p;
@@ -1492,7 +1492,7 @@ usbd_fill_deviceinfo_old(usbd_device_handle dev, struct usb_device_info_old *di,
 
 
 void
-usb_free_device(usbd_device_handle dev)
+usb_free_device(struct usbd_device *dev)
 {
 	int ifcidx, nifc;
 
@@ -1535,7 +1535,7 @@ usb_free_device(usbd_device_handle dev)
 int
 usb_disconnect_port(struct usbd_port *up, device_t parent, int flags)
 {
-	usbd_device_handle dev = up->up_dev;
+	struct usbd_device *dev = up->up_dev;
 	device_t subdev;
 	char subdevname[16];
 	const char *hubname = device_xname(parent);

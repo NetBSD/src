@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48.6.3 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.4 2015/03/19 17:26:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.3 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.4 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -147,9 +147,9 @@ static void		rum_next_scan(void *);
 static void		rum_task(void *);
 static int		rum_newstate(struct ieee80211com *,
 			    enum ieee80211_state, int);
-static void		rum_txeof(usbd_xfer_handle, usbd_private_handle,
+static void		rum_txeof(struct usbd_xfer *, void *,
 			    usbd_status);
-static void		rum_rxeof(usbd_xfer_handle, usbd_private_handle,
+static void		rum_rxeof(struct usbd_xfer *, void *,
 			    usbd_status);
 static uint8_t		rum_rxrate(const struct rum_rx_desc *);
 static int		rum_ack_rate(struct ieee80211com *, int);
@@ -199,7 +199,7 @@ static void		rum_newassoc(struct ieee80211_node *, int);
 static void		rum_amrr_start(struct rum_softc *,
 			    struct ieee80211_node *);
 static void		rum_amrr_timeout(void *);
-static void		rum_amrr_update(usbd_xfer_handle, usbd_private_handle,
+static void		rum_amrr_update(struct usbd_xfer *, void *,
 			    usbd_status);
 
 /*
@@ -786,7 +786,7 @@ rum_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 #define RUM_CTS_SIZE	14	/* 10 + 4(FCS) */
 
 static void
-rum_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+rum_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct rum_tx_data *data = priv;
 	struct rum_softc *sc = data->sc;
@@ -825,7 +825,7 @@ rum_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 static void
-rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct rum_rx_data *data = priv;
 	struct rum_softc *sc = data->sc;
@@ -2267,7 +2267,7 @@ rum_amrr_timeout(void *arg)
 }
 
 static void
-rum_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
+rum_amrr_update(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct rum_softc *sc = (struct rum_softc *)priv;

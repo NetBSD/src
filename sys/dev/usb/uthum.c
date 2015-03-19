@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.10.14.3 2015/03/08 13:34:44 skrll Exp $   */
+/*	$NetBSD: uthum.c,v 1.10.14.4 2015/03/19 17:26:43 skrll Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.3 2015/03/08 13:34:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.4 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,7 +71,7 @@ static uint8_t cmd_end[8] =
 
 struct uthum_softc {
 	struct uhidev		 sc_hdev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device *	 sc_udev;
 	u_char			 sc_dying;
 	uint16_t		 sc_flag;
 	int			 sc_sensortype;
@@ -130,7 +130,7 @@ uthum_attach(device_t parent, device_t self, void *aux)
 	struct uthum_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
-	usbd_device_handle dev = uha->parent->sc_udev;
+	struct usbd_device *dev = uha->parent->sc_udev;
 	int size, repid;
 	void *desc;
 

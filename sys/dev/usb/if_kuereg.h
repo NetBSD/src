@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.18 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.18.24.1 2015/03/19 17:26:42 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -144,7 +144,7 @@ struct kue_softc;
 
 struct kue_chain {
 	struct kue_softc	*kue_sc;
-	usbd_xfer_handle	kue_xfer;
+	struct usbd_xfer *	kue_xfer;
 	uint8_t			*kue_buf;
 	int			kue_idx;
 };
@@ -165,13 +165,13 @@ struct kue_softc {
 	krndsource_t	rnd_source;
 #define GET_IFP(sc) (&(sc)->kue_ec.ec_if)
 
-	usbd_device_handle	kue_udev;
-	usbd_interface_handle	kue_iface;
+	struct usbd_device *	kue_udev;
+	struct usbd_interface *	kue_iface;
 	uint16_t		kue_vendor;
 	uint16_t		kue_product;
 	struct kue_ether_desc	kue_desc;
 	int			kue_ed[KUE_ENDPT_MAX];
-	usbd_pipe_handle	kue_ep[KUE_ENDPT_MAX];
+	struct usbd_pipe *	kue_ep[KUE_ENDPT_MAX];
 	int			kue_if_flags;
 	uint16_t		kue_rxfilt;
 	uint8_t			*kue_mcfilters;

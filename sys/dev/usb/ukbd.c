@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.129.6.3 2014/12/06 08:27:23 skrll Exp $        */
+/*      $NetBSD: ukbd.c,v 1.129.6.4 2015/03/19 17:26:43 skrll Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.6.3 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.6.4 2015/03/19 17:26:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
@@ -889,7 +889,7 @@ void
 ukbd_set_leds(void *v, int leds)
 {
 	struct ukbd_softc *sc = v;
-	usbd_device_handle udev = sc->sc_hdev.sc_parent->sc_udev;
+	struct usbd_device *udev = sc->sc_hdev.sc_parent->sc_udev;
 
 	DPRINTF(("ukbd_set_leds: sc=%p leds=%d, sc_leds=%d\n",
 		 sc, leds, sc->sc_leds));
@@ -1014,7 +1014,7 @@ void
 ukbd_cnpollc(void *v, int on)
 {
 	struct ukbd_softc *sc = v;
-	usbd_device_handle dev;
+	struct usbd_device *dev;
 
 	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 

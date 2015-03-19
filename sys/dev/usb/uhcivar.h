@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.4 2014/12/05 13:23:38 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.5 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ typedef union {
  */
 typedef struct uhci_intr_info {
 	struct uhci_softc *sc;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;
 	LIST_ENTRY(uhci_intr_info) list;
@@ -172,7 +172,7 @@ typedef struct uhci_softc {
 
 	/* Info for the root hub interrupt "pipe". */
 	int sc_ival;			/* time between root hub intrs */
-	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
+	struct usbd_xfer *sc_intr_xfer;	/* root hub interrupt transfer */
 	struct callout sc_poll_handle;
 
 	char sc_vendor[32];		/* vendor string for root hub */

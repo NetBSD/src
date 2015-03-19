@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.3 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.4 2015/03/19 17:26:43 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.3 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.4 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -128,8 +128,8 @@ static void dump_jack(struct umidi_jack *);
 static usbd_status start_input_transfer(struct umidi_endpoint *);
 static usbd_status start_output_transfer(struct umidi_endpoint *);
 static int out_jack_output(struct umidi_jack *, u_char *, int, int);
-static void in_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static void out_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void in_intr(struct usbd_xfer *, void *, usbd_status);
+static void out_intr(struct usbd_xfer *, void *, usbd_status);
 static void out_solicit(void *); /* struct umidi_endpoint* for softintr */
 static void out_solicit_locked(void *); /* pre-locked version */
 
@@ -1429,7 +1429,7 @@ static usbd_status
 start_input_transfer(struct umidi_endpoint *ep)
 {
 	usbd_setup_xfer(ep->xfer, ep->pipe,
-			(usbd_private_handle)ep,
+			(void *)ep,
 			ep->buffer, ep->buffer_size,
 			USBD_SHORT_XFER_OK,
 			USBD_NO_TIMEOUT, in_intr);
@@ -1447,7 +1447,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 	DPRINTFN(200,("umidi out transfer: start %p end %p length %u\n",
 	    ep->buffer, ep->next_slot, length));
 	usbd_setup_xfer(ep->xfer, ep->pipe,
-			(usbd_private_handle)ep,
+			(void *)ep,
 			ep->buffer, length,
 			0, USBD_NO_TIMEOUT, out_intr);
 	rv = usbd_transfer(ep->xfer);
@@ -1572,7 +1572,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 }
 
 static void
-in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+in_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	int cn, len, i;
@@ -1647,7 +1647,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 static void
-out_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+out_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;

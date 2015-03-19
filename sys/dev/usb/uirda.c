@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.38.6.5 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: uirda.c,v 1.38.6.6 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.5 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.6 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ struct irframe_methods uirda_methods = {
 	uirda_get_turnarounds
 };
 
-void uirda_rd_cb(usbd_xfer_handle xfer,	usbd_private_handle priv,
+void uirda_rd_cb(struct usbd_xfer *xfer,	void *priv,
 		 usbd_status status);
 usbd_status uirda_start_read(struct uirda_softc *sc);
 
@@ -173,8 +173,8 @@ uirda_attach(device_t parent, device_t self, void *aux)
 {
 	struct uirda_softc *sc = device_private(self);
 	struct usbif_attach_arg *uaa = aux;
-	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface = uaa->iface;
+	struct usbd_device *	dev = uaa->device;
+	struct usbd_interface *	iface = uaa->iface;
 	char			*devinfop;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status		err;
@@ -846,7 +846,7 @@ uirda_get_turnarounds(void *h, int *turnarounds)
 }
 
 void
-uirda_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+uirda_rd_cb(struct usbd_xfer *xfer, void *priv,
 	    usbd_status status)
 {
 	struct uirda_softc *sc = priv;
@@ -899,7 +899,7 @@ uirda_start_read(struct uirda_softc *sc)
 }
 
 usbd_status
-usbd_get_class_desc(usbd_device_handle dev, int type, int index, int len, void *desc)
+usbd_get_class_desc(struct usbd_device *dev, int type, int index, int len, void *desc)
 {
 	usb_device_request_t req;
 

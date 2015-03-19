@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.45.24.3 2014/12/06 08:37:30 skrll Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.45.24.4 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.3 2014/12/06 08:37:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.4 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,8 @@ struct uvisor_palm_connection_info {
 
 struct uvisor_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct usbd_device *	sc_udev;	/* device */
+	struct usbd_interface *	sc_iface;	/* interface */
 
 	device_t		sc_subdevs[UVISOR_MAX_CONN];
 	int			sc_numcon;
@@ -215,8 +215,8 @@ uvisor_attach(device_t parent, device_t self, void *aux)
 {
 	struct uvisor_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	struct uvisor_connection_info coninfo;
 	struct uvisor_palm_connection_info palmconinfo;

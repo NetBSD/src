@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.18.24.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.18.24.2 2015/03/19 17:26:42 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -149,7 +149,7 @@ struct cue_softc;
 
 struct cue_chain {
 	struct cue_softc	*cue_sc;
-	usbd_xfer_handle	cue_xfer;
+	struct usbd_xfer *	cue_xfer;
 	char			*cue_buf;
 	struct mbuf		*cue_mbuf;
 	int			cue_idx;
@@ -173,12 +173,12 @@ struct cue_softc {
 
 	struct callout cue_stat_ch;
 
-	usbd_device_handle	cue_udev;
-	usbd_interface_handle	cue_iface;
+	struct usbd_device *	cue_udev;
+	struct usbd_interface *	cue_iface;
 	uint16_t		cue_vendor;
 	uint16_t		cue_product;
 	int			cue_ed[CUE_ENDPT_MAX];
-	usbd_pipe_handle	cue_ep[CUE_ENDPT_MAX];
+	struct usbd_pipe *	cue_ep[CUE_ENDPT_MAX];
 	uint8_t			cue_mctab[CUE_MCAST_TABLE_LEN];
 	int			cue_if_flags;
 	uint16_t		cue_rxfilt;

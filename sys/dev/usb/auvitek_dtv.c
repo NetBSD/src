@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.6.14.2 2014/12/05 09:37:49 skrll Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.6.14.3 2015/03/19 17:26:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.6.14.2 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.6.14.3 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,8 @@ static int		auvitek_dtv_close_pipes(struct auvitek_softc *);
 
 static int		auvitek_dtv_bulk_start(struct auvitek_softc *);
 static int		auvitek_dtv_bulk_start1(struct auvitek_bulk_xfer *);
-static void		auvitek_dtv_bulk_cb(usbd_xfer_handle,
-					    usbd_private_handle,
-					    usbd_status);
+static void		auvitek_dtv_bulk_cb(struct usbd_xfer *, void *,
+			    usbd_status);
 
 static const struct dtv_hw_if auvitek_dtv_if = {
 	.get_devinfo = auvitek_dtv_get_devinfo,
@@ -286,7 +285,7 @@ auvitek_dtv_close_pipes(struct auvitek_softc *sc)
 }
 
 static void
-auvitek_dtv_bulk_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+auvitek_dtv_bulk_cb(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct auvitek_bulk_xfer *bx = priv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.4.12.2 2014/12/04 08:04:32 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.4.12.3 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -76,7 +76,7 @@ struct xhci_softc {
 	kmutex_t sc_intr_lock;
 	kcondvar_t sc_softwake_cv;
 
-	usbd_xfer_handle sc_intrxfer;
+	struct usbd_xfer *sc_intrxfer;
 
 	pool_cache_t sc_xferpool;
 

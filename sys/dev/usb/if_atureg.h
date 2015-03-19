@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.10.14.1 2014/11/30 12:18:58 skrll Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.10.14.2 2015/03/19 17:26:42 skrll Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
@@ -108,7 +108,7 @@ struct atu_softc;
 
 struct atu_chain {
 	struct atu_softc	*atu_sc;
-	usbd_xfer_handle	atu_xfer;
+	struct usbd_xfer	*atu_xfer;
 	char			*atu_buf;
 	struct mbuf		*atu_mbuf;
 	uint8_t			atu_idx;
@@ -148,12 +148,12 @@ struct atu_softc {
 #define ATU_C_JOIN		2
 	struct usb_task		sc_task;
 
-	usbd_device_handle	atu_udev;
-	usbd_interface_handle	atu_iface;
+	struct usbd_device	*atu_udev;
+	struct usbd_interface	*atu_iface;
 	struct ethercom		atu_ec;
 	struct ifmedia		atu_media;
 	int			atu_ed[ATU_ENDPT_MAX];
-	usbd_pipe_handle	atu_ep[ATU_ENDPT_MAX];
+	struct usbd_pipe	*atu_ep[ATU_ENDPT_MAX];
 	int			atu_unit;
 	int			atu_if_flags;
 

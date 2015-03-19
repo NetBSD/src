@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67.4.3 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.4.4 2015/03/19 17:26:42 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.3 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.4 2015/03/19 17:26:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -186,8 +186,8 @@ CFATTACH_DECL_NEW(axe, sizeof(struct axe_softc),
 static int	axe_tx_list_init(struct axe_softc *);
 static int	axe_rx_list_init(struct axe_softc *);
 static int	axe_encap(struct axe_softc *, struct mbuf *, int);
-static void	axe_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static void	axe_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void	axe_rxeof(struct usbd_xfer *, void *, usbd_status);
+static void	axe_txeof(struct usbd_xfer *, void *, usbd_status);
 static void	axe_tick(void *);
 static void	axe_tick_task(void *);
 static void	axe_start(struct ifnet *);
@@ -689,7 +689,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 {
 	struct axe_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -990,7 +990,7 @@ axe_tx_list_init(struct axe_softc *sc)
  * the higher level protocols.
  */
 static void
-axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct axe_softc *sc;
 	struct axe_chain *c;
@@ -1114,7 +1114,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  */
 
 static void
-axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+axe_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct axe_softc *sc;
 	struct axe_chain *c;

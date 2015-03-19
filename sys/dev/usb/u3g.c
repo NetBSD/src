@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.31.2.7 2014/12/23 11:24:32 skrll Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31.2.8 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.7 2014/12/23 11:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.8 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.7 2014/12/23 11:24:32 skrll Exp $");
 
 struct u3g_softc {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 	bool			sc_dying;	/* We're going away */
 	int			sc_ifaceno;	/* Device interface number */
 
@@ -127,7 +127,7 @@ struct u3g_softc {
 	} sc_com[10];
 	size_t			sc_ncom;
 
-	usbd_pipe_handle	sc_intr_pipe;	/* Interrupt pipe */
+	struct usbd_pipe *	sc_intr_pipe;	/* Interrupt pipe */
 	u_char			*sc_intr_buff;	/* Interrupt buffer */
 	size_t			sc_intr_size;	/* buffer size */
 };
@@ -161,7 +161,7 @@ CFATTACH_DECL2_NEW(u3g, sizeof(struct u3g_softc), u3g_match,
     u3g_attach, u3g_detach, u3g_activate, NULL, u3g_childdet);
 
 
-static void u3g_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void u3g_intr(struct usbd_xfer *, void *, usbd_status);
 static void u3g_get_status(void *, int, u_char *, u_char *);
 static void u3g_set(void *, int, int, int);
 static int  u3g_open(void *, int);
@@ -266,13 +266,13 @@ static const struct usb_devno u3g_devs[] = {
 };
 
 static int
-send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
+send_bulkmsg(struct usbd_device *dev, void *cmd, size_t cmdlen)
 {
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	usbd_pipe_handle pipe;
-	usbd_xfer_handle xfer;
+	struct usbd_pipe *pipe;
+	struct usbd_xfer *xfer;
 	int err, i;
 
 	/* Move the device into the configured state. */
@@ -347,7 +347,7 @@ set_cbw(unsigned char *cmd)
 }
 
 static int
-u3g_bulk_scsi_eject(usbd_device_handle dev)
+u3g_bulk_scsi_eject(struct usbd_device *dev)
 {
 	unsigned char cmd[31];
 
@@ -375,7 +375,7 @@ u3g_bulk_scsi_eject(usbd_device_handle dev)
 }
 
 static int
-u3g_bulk_ata_eject(usbd_device_handle dev)
+u3g_bulk_ata_eject(struct usbd_device *dev)
 {
 	unsigned char cmd[31];
 
@@ -403,7 +403,7 @@ u3g_bulk_ata_eject(usbd_device_handle dev)
 }
 
 static int
-u3g_huawei_reinit(usbd_device_handle dev)
+u3g_huawei_reinit(struct usbd_device *dev)
 {
 	/*
 	 * The Huawei device presents itself as a umass device with Windows
@@ -455,7 +455,7 @@ u3g_huawei_reinit(usbd_device_handle dev)
 }
 
 static int
-u3g_huawei_k3765_reinit(usbd_device_handle dev)
+u3g_huawei_k3765_reinit(struct usbd_device *dev)
 {
 	unsigned char cmd[31];
 
@@ -470,7 +470,7 @@ u3g_huawei_k3765_reinit(usbd_device_handle dev)
 	return send_bulkmsg(dev, cmd, sizeof(cmd));
 }
 static int
-u3g_huawei_e171_reinit(usbd_device_handle dev)
+u3g_huawei_e171_reinit(struct usbd_device *dev)
 {
 	unsigned char cmd[31];
 
@@ -488,7 +488,7 @@ u3g_huawei_e171_reinit(usbd_device_handle dev)
 }
 
 static int
-u3g_huawei_e353_reinit(usbd_device_handle dev)
+u3g_huawei_e353_reinit(struct usbd_device *dev)
 {
 	unsigned char cmd[31];
 
@@ -510,7 +510,7 @@ u3g_huawei_e353_reinit(usbd_device_handle dev)
 }
 
 static int
-u3g_sierra_reinit(usbd_device_handle dev)
+u3g_sierra_reinit(struct usbd_device *dev)
 {
 	/* Some Sierra devices presents themselves as a umass device with
 	 * Windows drivers on it. After installation of the driver, it
@@ -530,7 +530,7 @@ u3g_sierra_reinit(usbd_device_handle dev)
 }
 
 static int
-u3g_4gsystems_reinit(usbd_device_handle dev)
+u3g_4gsystems_reinit(struct usbd_device *dev)
 {
 	/* magic string adapted from usb_modeswitch database */
 	unsigned char cmd[31];
@@ -679,7 +679,7 @@ static int
 u3g_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usbd_status error;
 
@@ -721,8 +721,8 @@ u3g_attach(device_t parent, device_t self, void *aux)
 {
 	struct u3g_softc *sc = device_private(self);
 	struct usbif_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct ucom_attach_args uca;
@@ -903,7 +903,7 @@ u3g_activate(device_t self, enum devact act)
 }
 
 static void
-u3g_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+u3g_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct u3g_softc *sc = (struct u3g_softc *)priv;
 	u_char *buf;
@@ -1007,7 +1007,7 @@ u3g_open(void *arg, int portno)
 	usb_device_request_t req;
 	usb_endpoint_descriptor_t *ed;
 	usb_interface_descriptor_t *id;
-	usbd_interface_handle ih;
+	struct usbd_interface *ih;
 	usbd_status err;
 	struct u3g_com *com = &sc->sc_com[portno];
 	int i, nin;

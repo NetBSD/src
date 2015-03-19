@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.34.4.5 2014/12/23 11:24:32 skrll Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.34.4.6 2015/03/19 17:26:43 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.5 2014/12/23 11:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.6 2015/03/19 17:26:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -234,8 +234,8 @@ static void	urtwn_update_avgrssi(struct urtwn_softc *, int, int8_t);
 static int8_t	urtwn_get_rssi(struct urtwn_softc *, int, void *);
 static int8_t	urtwn_r88e_get_rssi(struct urtwn_softc *, int, void *);
 static void	urtwn_rx_frame(struct urtwn_softc *, uint8_t *, int);
-static void	urtwn_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static void	urtwn_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void	urtwn_rxeof(struct usbd_xfer *, void *, usbd_status);
+static void	urtwn_txeof(struct usbd_xfer *, void *, usbd_status);
 static int	urtwn_tx(struct urtwn_softc *, struct mbuf *,
 		    struct ieee80211_node *, struct urtwn_tx_data *);
 static void	urtwn_start(struct ifnet *);
@@ -590,7 +590,7 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 static void
 urtwn_close_pipes(struct urtwn_softc *sc)
 {
-	usbd_pipe_handle pipe;
+	struct usbd_pipe *pipe;
 	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
@@ -650,7 +650,7 @@ urtwn_alloc_rx_list(struct urtwn_softc *sc)
 static void
 urtwn_free_rx_list(struct urtwn_softc *sc)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
@@ -711,7 +711,7 @@ urtwn_alloc_tx_list(struct urtwn_softc *sc)
 static void
 urtwn_free_tx_list(struct urtwn_softc *sc)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	size_t i;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
@@ -2304,7 +2304,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 }
 
 static void
-urtwn_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct urtwn_rx_data *data = priv;
 	struct urtwn_softc *sc = data->sc;
@@ -2384,12 +2384,12 @@ urtwn_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 static void
-urtwn_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct urtwn_tx_data *data = priv;
 	struct urtwn_softc *sc = data->sc;
 	struct ifnet *ifp = &sc->sc_if;
-	usbd_pipe_handle pipe = data->pipe;
+	struct usbd_pipe *pipe = data->pipe;
 	int s;
 
 	DPRINTFN(DBG_FN|DBG_TX, ("%s: %s: status=%d\n",
@@ -2428,7 +2428,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	struct r92c_tx_desc *txd;
-	usbd_pipe_handle pipe;
+	struct usbd_pipe *pipe;
 	size_t i, padsize, xferlen;
 	uint16_t seq, sum;
 	uint8_t raid, type, tid, qid;

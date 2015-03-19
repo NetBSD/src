@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.25.24.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.25.24.2 2015/03/19 17:26:42 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -207,7 +207,7 @@ struct aue_softc;
 
 struct aue_chain {
 	struct aue_softc	*aue_sc;
-	usbd_xfer_handle	aue_xfer;
+	struct usbd_xfer	*aue_xfer;
 	char			*aue_buf;
 	struct mbuf		*aue_mbuf;
 	int			aue_idx;
@@ -239,12 +239,12 @@ struct aue_softc {
 
 	struct callout aue_stat_ch;
 
-	usbd_device_handle	aue_udev;
-	usbd_interface_handle	aue_iface;
+	struct usbd_device	*aue_udev;
+	struct usbd_interface	*aue_iface;
 	uint16_t		aue_vendor;
 	uint16_t		aue_product;
 	int			aue_ed[AUE_ENDPT_MAX];
-	usbd_pipe_handle	aue_ep[AUE_ENDPT_MAX];
+	struct usbd_pipe	*aue_ep[AUE_ENDPT_MAX];
 	uint8_t			aue_link;
 	int			aue_if_flags;
 	struct aue_cdata	aue_cdata;

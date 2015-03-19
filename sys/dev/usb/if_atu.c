@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.6 2014/12/06 08:27:23 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.7 2015/03/19 17:26:42 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.6 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.7 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -229,8 +229,8 @@ struct atu_radfirm {
 };
 
 int	atu_newbuf(struct atu_softc *, struct atu_chain *, struct mbuf *);
-void	atu_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void	atu_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	atu_rxeof(struct usbd_xfer *, void *, usbd_status);
+void	atu_txeof(struct usbd_xfer *, void *, usbd_status);
 void	atu_start(struct ifnet *);
 int	atu_ioctl(struct ifnet *, u_long, void *);
 int	atu_init(struct ifnet *);
@@ -292,7 +292,7 @@ atu_usb_request(struct atu_softc *sc, uint8_t type,
     uint8_t *data)
 {
 	usb_device_request_t	req;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	usbd_status		err;
 	int			total_len = 0, s;
 
@@ -1235,7 +1235,7 @@ atu_attach(device_t parent, device_t self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	char				*devinfop;
 	usbd_status			err;
-	usbd_device_handle		dev = uaa->device;
+	struct usbd_device		*dev = uaa->device;
 	uint8_t			mode, channel;
 	int i;
 
@@ -1621,7 +1621,7 @@ atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
  * the higher level protocols.
  */
 void
-atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
 	struct atu_softc	*sc = c->atu_sc;
@@ -1731,7 +1731,7 @@ done:
  * the list buffers.
  */
 void
-atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+atu_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;

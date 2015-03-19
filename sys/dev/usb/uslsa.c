@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.19.6.1 2014/12/06 08:37:30 skrll Exp $ */
+/* $NetBSD: uslsa.c,v 1.19.6.2 2015/03/19 17:26:43 skrll Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.6.1 2014/12/06 08:37:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.6.2 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,8 @@ int uslsadebug = 0;
 struct uslsa_softc {
 	device_t		sc_dev;		/* base device */
 	device_t		sc_subdev;	/* ucom device */
-	usbd_device_handle	sc_udev;	/* usb device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct usbd_device *	sc_udev;	/* usb device */
+	struct usbd_interface *	sc_iface;	/* interface */
 	uint8_t			sc_ifnum;	/* interface number */
 	bool			sc_dying;	/* disconnecting */
 };

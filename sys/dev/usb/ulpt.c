@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.95.4.5 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.95.4.6 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.5 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.6 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,18 +94,18 @@ int	ulptdebug = 0;
 
 struct ulpt_softc {
 	device_t sc_dev;
-	usbd_device_handle sc_udev;	/* device */
-	usbd_interface_handle sc_iface;	/* interface */
+	struct usbd_device *sc_udev;	/* device */
+	struct usbd_interface *sc_iface;	/* interface */
 	int sc_ifaceno;
 
 	int sc_out;
-	usbd_pipe_handle sc_out_pipe;	/* bulk out pipe */
-	usbd_xfer_handle sc_out_xfer;
+	struct usbd_pipe *sc_out_pipe;	/* bulk out pipe */
+	struct usbd_xfer *sc_out_xfer;
 	void *sc_out_buf;
 
 	int sc_in;
-	usbd_pipe_handle sc_in_pipe;	/* bulk in pipe */
-	usbd_xfer_handle sc_in_xfer;
+	struct usbd_pipe *sc_in_pipe;	/* bulk in pipe */
+	struct usbd_xfer *sc_in_xfer;
 	void *sc_in_buf;
 
 	struct callout sc_read_callout;	/* to drain input on write-only opens */
@@ -151,7 +151,7 @@ int ulpt_do_read(struct ulpt_softc *, struct uio *, int);
 int ulpt_status(struct ulpt_softc *);
 void ulpt_reset(struct ulpt_softc *);
 int ulpt_statusmsg(u_char, struct ulpt_softc *);
-void ulpt_read_cb(usbd_xfer_handle, usbd_private_handle,
+void ulpt_read_cb(struct usbd_xfer *, void *,
 		  usbd_status);
 void ulpt_tick(void *xsc);
 
@@ -194,8 +194,8 @@ ulpt_attach(device_t parent, device_t self, void *aux)
 {
 	struct ulpt_softc *sc = device_private(self);
 	struct usbif_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface = uaa->iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface = uaa->iface;
 	usb_interface_descriptor_t *ifcd = usbd_get_interface_descriptor(iface);
 	const usb_interface_descriptor_t *id;
 	usbd_status err;
@@ -619,7 +619,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 	uint32_t n;
 	int error = 0;
 	void *bufp;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	usbd_status err;
 
 	DPRINTFN(3, ("ulptwrite\n"));
@@ -683,7 +683,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 	uint32_t n, nread, nreq;
 	int error = 0, nonblocking, timeout;
 	void *bufp;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	usbd_status err = USBD_NORMAL_COMPLETION;
 
 	/* XXX Resolve with background reader process.  KASSERT? */
@@ -844,12 +844,12 @@ ulptread(dev_t dev, struct uio *uio, int flags)
 }
 
 void
-ulpt_read_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+ulpt_read_cb(struct usbd_xfer *xfer, void *priv,
 	     usbd_status status)
 {
 	usbd_status err;
 	uint32_t n;
-	usbd_private_handle xsc;
+	void *xsc;
 	struct ulpt_softc *sc;
 
 	usbd_get_xfer_status(xfer, &xsc, NULL, &n, &err);

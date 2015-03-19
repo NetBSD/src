@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.5 2014/12/07 20:42:11 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.6 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.5 2014/12/07 20:42:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.6 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ struct as_info {
 	uint8_t		attributes; /* Copy of bmAttributes of
 				     * usb_audio_streaming_endpoint_descriptor
 				     */
-	usbd_interface_handle	ifaceh;
+	struct usbd_interface *	ifaceh;
 	const usb_interface_descriptor_t *idesc;
 	const usb_endpoint_descriptor_audio_t *edesc;
 	const usb_endpoint_descriptor_audio_t *edesc1;
@@ -142,8 +142,8 @@ struct as_info {
 struct chan {
 	void	(*intr)(void *);	/* DMA completion intr handler */
 	void	*arg;		/* arg for intr() */
-	usbd_pipe_handle pipe;
-	usbd_pipe_handle sync_pipe;
+	struct usbd_pipe *pipe;
+	struct usbd_pipe *sync_pipe;
 
 	u_int	sample_size;
 	u_int	sample_rate;
@@ -162,7 +162,7 @@ struct chan {
 	int	curchanbuf;
 	struct chanbuf {
 		struct chan	*chan;
-		usbd_xfer_handle xfer;
+		struct usbd_xfer *xfer;
 		u_char		*buffer;
 		uint16_t	sizes[UAUDIO_NFRAMES];
 		uint16_t	offsets[UAUDIO_NFRAMES];
@@ -184,9 +184,9 @@ struct uaudio_softc {
 	device_t	sc_dev;		/* base device */
 	kmutex_t	sc_lock;
 	kmutex_t	sc_intr_lock;
-	usbd_device_handle sc_udev;	/* USB device */
+	struct usbd_device *sc_udev;	/* USB device */
 	int		sc_ac_iface;	/* Audio Control interface */
-	usbd_interface_handle	sc_ac_ifaceh;
+	struct usbd_interface *	sc_ac_ifaceh;
 	struct chan	sc_playchan;	/* play channel */
 	struct chan	sc_recchan;	/* record channel */
 	int		sc_nullalt;
@@ -322,11 +322,11 @@ Static void	uaudio_chan_init
 Static void	uaudio_chan_set_param(struct chan *, u_char *, u_char *, int);
 Static void	uaudio_chan_ptransfer(struct chan *);
 Static void	uaudio_chan_pintr
-	(usbd_xfer_handle, usbd_private_handle, usbd_status);
+	(struct usbd_xfer *, void *, usbd_status);
 
 Static void	uaudio_chan_rtransfer(struct chan *);
 Static void	uaudio_chan_rintr
-	(usbd_xfer_handle, usbd_private_handle, usbd_status);
+	(struct usbd_xfer *, void *, usbd_status);
 
 Static int	uaudio_open(void *, int);
 Static void	uaudio_close(void *);
@@ -2704,7 +2704,7 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 Static void
 uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 {
-	usbd_pipe_handle pipe;
+	struct usbd_pipe *pipe;
 	struct as_info *as;
 
 	as = &sc->sc_alts[ch->altidx];
@@ -2729,7 +2729,7 @@ uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 Static usbd_status
 uaudio_chan_alloc_buffers(struct uaudio_softc *sc, struct chan *ch)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	void *tbuf;
 	int i, size;
 
@@ -2832,7 +2832,7 @@ uaudio_chan_ptransfer(struct chan *ch)
 }
 
 Static void
-uaudio_chan_pintr(usbd_xfer_handle xfer, usbd_private_handle priv,
+uaudio_chan_pintr(struct usbd_xfer *xfer, void *priv,
 		  usbd_status status)
 {
 	struct chanbuf *cb;
@@ -2915,7 +2915,7 @@ uaudio_chan_rtransfer(struct chan *ch)
 }
 
 Static void
-uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
+uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 		  usbd_status status)
 {
 	struct chanbuf *cb;

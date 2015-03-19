@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.21 2015/03/18 15:45:45 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.22 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.21 2015/03/18 15:45:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.22 2015/03/19 17:26:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -62,10 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.21 2015/03/18 15:45:45 skrll Exp $
 
 extern int usbdebug;
 
-Static usbd_status usbd_ar_pipe(usbd_pipe_handle);
-Static void usbd_start_next(usbd_pipe_handle);
+Static usbd_status usbd_ar_pipe(struct usbd_pipe *);
+Static void usbd_start_next(struct usbd_pipe *);
 Static usbd_status usbd_open_pipe_ival
-	(usbd_interface_handle, uint8_t, uint8_t, usbd_pipe_handle *, int);
+	(struct usbd_interface *, uint8_t, uint8_t, struct usbd_pipe **, int);
 
 #if defined(USB_DEBUG)
 void
@@ -115,9 +115,9 @@ usbd_dump_endpoint(struct usbd_endpoint *endp)
 }
 
 void
-usbd_dump_queue(usbd_pipe_handle pipe)
+usbd_dump_queue(struct usbd_pipe *pipe)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
@@ -128,7 +128,7 @@ usbd_dump_queue(usbd_pipe_handle pipe)
 }
 
 void
-usbd_dump_pipe(usbd_pipe_handle pipe)
+usbd_dump_pipe(struct usbd_pipe *pipe)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
@@ -147,18 +147,18 @@ usbd_dump_pipe(usbd_pipe_handle pipe)
 #endif
 
 usbd_status
-usbd_open_pipe(usbd_interface_handle iface, uint8_t address,
-	       uint8_t flags, usbd_pipe_handle *pipe)
+usbd_open_pipe(struct usbd_interface *iface, uint8_t address,
+	       uint8_t flags, struct usbd_pipe **pipe)
 {
 	return (usbd_open_pipe_ival(iface, address, flags, pipe,
 				    USBD_DEFAULT_INTERVAL));
 }
 
 usbd_status
-usbd_open_pipe_ival(usbd_interface_handle iface, uint8_t address,
-		    uint8_t flags, usbd_pipe_handle *pipe, int ival)
+usbd_open_pipe_ival(struct usbd_interface *iface, uint8_t address,
+		    uint8_t flags, struct usbd_pipe **pipe, int ival)
 {
-	usbd_pipe_handle p;
+	struct usbd_pipe *p;
 	struct usbd_endpoint *ep;
 	usbd_status err;
 	int i;
@@ -188,14 +188,14 @@ usbd_open_pipe_ival(usbd_interface_handle iface, uint8_t address,
 }
 
 usbd_status
-usbd_open_pipe_intr(usbd_interface_handle iface, uint8_t address,
-		    uint8_t flags, usbd_pipe_handle *pipe,
-		    usbd_private_handle priv, void *buffer, uint32_t len,
+usbd_open_pipe_intr(struct usbd_interface *iface, uint8_t address,
+		    uint8_t flags, struct usbd_pipe **pipe,
+		    void *priv, void *buffer, uint32_t len,
 		    usbd_callback cb, int ival)
 {
 	usbd_status err;
-	usbd_xfer_handle xfer;
-	usbd_pipe_handle ipipe;
+	struct usbd_xfer *xfer;
+	struct usbd_pipe *ipipe;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
@@ -239,7 +239,7 @@ usbd_open_pipe_intr(usbd_interface_handle iface, uint8_t address,
 }
 
 usbd_status
-usbd_close_pipe(usbd_pipe_handle pipe)
+usbd_close_pipe(struct usbd_pipe *pipe)
 {
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
@@ -271,9 +271,9 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 }
 
 usbd_status
-usbd_transfer(usbd_xfer_handle xfer)
+usbd_transfer(struct usbd_xfer *xfer)
 {
-	usbd_pipe_handle pipe = xfer->ux_pipe;
+	struct usbd_pipe *pipe = xfer->ux_pipe;
 	usbd_status err;
 	unsigned int size, flags;
 
@@ -356,7 +356,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 
 /* Like usbd_transfer(), but waits for completion. */
 usbd_status
-usbd_sync_transfer(usbd_xfer_handle xfer)
+usbd_sync_transfer(struct usbd_xfer *xfer)
 {
 	xfer->ux_flags |= USBD_SYNCHRONOUS;
 	return usbd_transfer(xfer);
@@ -364,14 +364,14 @@ usbd_sync_transfer(usbd_xfer_handle xfer)
 
 /* Like usbd_transfer(), but waits for completion and listens for signals. */
 usbd_status
-usbd_sync_transfer_sig(usbd_xfer_handle xfer)
+usbd_sync_transfer_sig(struct usbd_xfer *xfer)
 {
 	xfer->ux_flags |= USBD_SYNCHRONOUS | USBD_SYNCHRONOUS_SIG;
 	return usbd_transfer(xfer);
 }
 
 void *
-usbd_alloc_buffer(usbd_xfer_handle xfer, uint32_t size)
+usbd_alloc_buffer(struct usbd_xfer *xfer, uint32_t size)
 {
 
 	KASSERT(xfer->ux_buf == NULL);
@@ -405,7 +405,7 @@ usbd_alloc_buffer(usbd_xfer_handle xfer, uint32_t size)
 }
 
 void
-usbd_free_buffer(usbd_xfer_handle xfer)
+usbd_free_buffer(struct usbd_xfer *xfer)
 {
 	KASSERT(xfer->ux_buf != NULL);
 	KASSERT(xfer->ux_bufsize != 0);
@@ -432,16 +432,16 @@ usbd_free_buffer(usbd_xfer_handle xfer)
 }
 
 void *
-usbd_get_buffer(usbd_xfer_handle xfer)
+usbd_get_buffer(struct usbd_xfer *xfer)
 {
 
 	return xfer->ux_buf;
 }
 
-usbd_xfer_handle
-usbd_alloc_xfer(usbd_device_handle dev)
+struct usbd_xfer *
+usbd_alloc_xfer(struct usbd_device *dev)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
@@ -461,7 +461,7 @@ usbd_alloc_xfer(usbd_device_handle dev)
 }
 
 usbd_status
-usbd_free_xfer(usbd_xfer_handle xfer)
+usbd_free_xfer(struct usbd_xfer *xfer)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
@@ -482,8 +482,8 @@ usbd_free_xfer(usbd_xfer_handle xfer)
 }
 
 void
-usbd_setup_xfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
-		usbd_private_handle priv, void *buffer, uint32_t length,
+usbd_setup_xfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
+		void *priv, void *buffer, uint32_t length,
 		uint16_t flags, uint32_t timeout,
 		usbd_callback callback)
 {
@@ -501,8 +501,8 @@ usbd_setup_xfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 }
 
 void
-usbd_setup_default_xfer(usbd_xfer_handle xfer, usbd_device_handle dev,
-			usbd_private_handle priv, uint32_t timeout,
+usbd_setup_default_xfer(struct usbd_xfer *xfer, struct usbd_device *dev,
+			void *priv, uint32_t timeout,
 			usb_device_request_t *req, void *buffer,
 			uint32_t length, uint16_t flags,
 			usbd_callback callback)
@@ -522,8 +522,8 @@ usbd_setup_default_xfer(usbd_xfer_handle xfer, usbd_device_handle dev,
 }
 
 void
-usbd_setup_isoc_xfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
-		     usbd_private_handle priv, uint16_t *frlengths,
+usbd_setup_isoc_xfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
+		     void *priv, uint16_t *frlengths,
 		     uint32_t nframes, uint16_t flags, usbd_callback callback)
 {
 	xfer->ux_pipe = pipe;
@@ -541,7 +541,7 @@ usbd_setup_isoc_xfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 }
 
 void
-usbd_get_xfer_status(usbd_xfer_handle xfer, usbd_private_handle *priv,
+usbd_get_xfer_status(struct usbd_xfer *xfer, void **priv,
 		     void **buffer, uint32_t *count, usbd_status *status)
 {
 	if (priv != NULL)
@@ -555,7 +555,7 @@ usbd_get_xfer_status(usbd_xfer_handle xfer, usbd_private_handle *priv,
 }
 
 usb_config_descriptor_t *
-usbd_get_config_descriptor(usbd_device_handle dev)
+usbd_get_config_descriptor(struct usbd_device *dev)
 {
 #ifdef DIAGNOSTIC
 	if (dev == NULL) {
@@ -567,7 +567,7 @@ usbd_get_config_descriptor(usbd_device_handle dev)
 }
 
 usb_interface_descriptor_t *
-usbd_get_interface_descriptor(usbd_interface_handle iface)
+usbd_get_interface_descriptor(struct usbd_interface *iface)
 {
 #ifdef DIAGNOSTIC
 	if (iface == NULL) {
@@ -579,13 +579,13 @@ usbd_get_interface_descriptor(usbd_interface_handle iface)
 }
 
 usb_device_descriptor_t *
-usbd_get_device_descriptor(usbd_device_handle dev)
+usbd_get_device_descriptor(struct usbd_device *dev)
 {
 	return &dev->ud_ddesc;
 }
 
 usb_endpoint_descriptor_t *
-usbd_interface2endpoint_descriptor(usbd_interface_handle iface, uint8_t index)
+usbd_interface2endpoint_descriptor(struct usbd_interface *iface, uint8_t index)
 {
 	if (index >= iface->ui_idesc->bNumEndpoints)
 		return NULL;
@@ -602,7 +602,7 @@ usbd_abort_default_pipe(struct usbd_device *device)
 }
 
 usbd_status
-usbd_abort_pipe(usbd_pipe_handle pipe)
+usbd_abort_pipe(struct usbd_pipe *pipe)
 {
 	usbd_status err;
 
@@ -619,9 +619,9 @@ usbd_abort_pipe(usbd_pipe_handle pipe)
 }
 
 usbd_status
-usbd_clear_endpoint_stall(usbd_pipe_handle pipe)
+usbd_clear_endpoint_stall(struct usbd_pipe *pipe)
 {
-	usbd_device_handle dev = pipe->up_dev;
+	struct usbd_device *dev = pipe->up_dev;
 	usb_device_request_t req;
 	usbd_status err;
 
@@ -652,8 +652,8 @@ XXX should we do this?
 void
 usbd_clear_endpoint_stall_task(void *arg)
 {
-	usbd_pipe_handle pipe = arg;
-	usbd_device_handle dev = pipe->up_dev;
+	struct usbd_pipe *pipe = arg;
+	struct usbd_device *dev = pipe->up_dev;
 	usb_device_request_t req;
 
 	pipe->up_methods->upm_cleartoggle(pipe);
@@ -667,20 +667,20 @@ usbd_clear_endpoint_stall_task(void *arg)
 }
 
 void
-usbd_clear_endpoint_stall_async(usbd_pipe_handle pipe)
+usbd_clear_endpoint_stall_async(struct usbd_pipe *pipe)
 {
 
 	usb_add_task(pipe->up_dev, &pipe->up_async_task, USB_TASKQ_DRIVER);
 }
 
 void
-usbd_clear_endpoint_toggle(usbd_pipe_handle pipe)
+usbd_clear_endpoint_toggle(struct usbd_pipe *pipe)
 {
 	pipe->up_methods->upm_cleartoggle(pipe);
 }
 
 usbd_status
-usbd_endpoint_count(usbd_interface_handle iface, uint8_t *count)
+usbd_endpoint_count(struct usbd_interface *iface, uint8_t *count)
 {
 #ifdef DIAGNOSTIC
 	if (iface == NULL || iface->ui_idesc == NULL) {
@@ -693,7 +693,7 @@ usbd_endpoint_count(usbd_interface_handle iface, uint8_t *count)
 }
 
 usbd_status
-usbd_interface_count(usbd_device_handle dev, uint8_t *count)
+usbd_interface_count(struct usbd_device *dev, uint8_t *count)
 {
 	if (dev->ud_cdesc == NULL)
 		return USBD_NOT_CONFIGURED;
@@ -702,15 +702,15 @@ usbd_interface_count(usbd_device_handle dev, uint8_t *count)
 }
 
 void
-usbd_interface2device_handle(usbd_interface_handle iface,
-			     usbd_device_handle *dev)
+usbd_interface2device_handle(struct usbd_interface *iface,
+			     struct usbd_device **dev)
 {
 	*dev = iface->ui_dev;
 }
 
 usbd_status
-usbd_device2interface_handle(usbd_device_handle dev,
-			     uint8_t ifaceno, usbd_interface_handle *iface)
+usbd_device2interface_handle(struct usbd_device *dev,
+			     uint8_t ifaceno, struct usbd_interface **iface)
 {
 	if (dev->ud_cdesc == NULL)
 		return USBD_NOT_CONFIGURED;
@@ -720,15 +720,15 @@ usbd_device2interface_handle(usbd_device_handle dev,
 	return USBD_NORMAL_COMPLETION;
 }
 
-usbd_device_handle
-usbd_pipe2device_handle(usbd_pipe_handle pipe)
+struct usbd_device *
+usbd_pipe2device_handle(struct usbd_pipe *pipe)
 {
 	return pipe->up_dev;
 }
 
 /* XXXX use altno */
 usbd_status
-usbd_set_interface(usbd_interface_handle iface, int altidx)
+usbd_set_interface(struct usbd_interface *iface, int altidx)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -782,13 +782,13 @@ usbd_get_no_alts(usb_config_descriptor_t *cdesc, int ifaceno)
 }
 
 int
-usbd_get_interface_altindex(usbd_interface_handle iface)
+usbd_get_interface_altindex(struct usbd_interface *iface)
 {
 	return iface->ui_altindex;
 }
 
 usbd_status
-usbd_get_interface(usbd_interface_handle iface, uint8_t *aiface)
+usbd_get_interface(struct usbd_interface *iface, uint8_t *aiface)
 {
 	usb_device_request_t req;
 
@@ -804,9 +804,9 @@ usbd_get_interface(usbd_interface_handle iface, uint8_t *aiface)
 
 /* Dequeue all pipe operations, called at splusb(). */
 Static usbd_status
-usbd_ar_pipe(usbd_pipe_handle pipe)
+usbd_ar_pipe(struct usbd_pipe *pipe)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
@@ -832,9 +832,9 @@ usbd_ar_pipe(usbd_pipe_handle pipe)
 
 /* Called with USB lock held. */
 void
-usb_transfer_complete(usbd_xfer_handle xfer)
+usb_transfer_complete(struct usbd_xfer *xfer)
 {
-	usbd_pipe_handle pipe = xfer->ux_pipe;
+	struct usbd_pipe *pipe = xfer->ux_pipe;
  	struct usbd_bus *bus = pipe->up_dev->ud_bus;
 	int sync = xfer->ux_flags & USBD_SYNCHRONOUS;
 	int erred = xfer->ux_status == USBD_CANCELLED ||
@@ -962,9 +962,9 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 /* Called with USB lock held. */
 usbd_status
-usb_insert_transfer(usbd_xfer_handle xfer)
+usb_insert_transfer(struct usbd_xfer *xfer)
 {
-	usbd_pipe_handle pipe = xfer->ux_pipe;
+	struct usbd_pipe *pipe = xfer->ux_pipe;
 	usbd_status err;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
@@ -997,9 +997,9 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 
 /* Called with USB lock held. */
 void
-usbd_start_next(usbd_pipe_handle pipe)
+usbd_start_next(struct usbd_pipe *pipe)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	usbd_status err;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
@@ -1038,14 +1038,14 @@ usbd_start_next(usbd_pipe_handle pipe)
 }
 
 usbd_status
-usbd_do_request(usbd_device_handle dev, usb_device_request_t *req, void *data)
+usbd_do_request(struct usbd_device *dev, usb_device_request_t *req, void *data)
 {
 	return (usbd_do_request_flags(dev, req, data, 0, 0,
 				      USBD_DEFAULT_TIMEOUT));
 }
 
 usbd_status
-usbd_do_request_flags(usbd_device_handle dev, usb_device_request_t *req,
+usbd_do_request_flags(struct usbd_device *dev, usb_device_request_t *req,
 		      void *data, uint16_t flags, int *actlen, uint32_t timo)
 {
 	return (usbd_do_request_flags_pipe(dev, dev->ud_pipe0, req,
@@ -1053,11 +1053,11 @@ usbd_do_request_flags(usbd_device_handle dev, usb_device_request_t *req,
 }
 
 usbd_status
-usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
+usbd_do_request_flags_pipe(struct usbd_device *dev, struct usbd_pipe *pipe,
 	usb_device_request_t *req, void *data, uint16_t flags, int *actlen,
 	uint32_t timeout)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	usbd_status err;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
@@ -1141,7 +1141,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 }
 
 const struct usbd_quirks *
-usbd_get_quirks(usbd_device_handle dev)
+usbd_get_quirks(struct usbd_device *dev)
 {
 #ifdef DIAGNOSTIC
 	if (dev == NULL) {
@@ -1158,7 +1158,7 @@ usbd_get_quirks(usbd_device_handle dev)
  * Called from keyboard driver when in polling mode.
  */
 void
-usbd_dopoll(usbd_interface_handle iface)
+usbd_dopoll(struct usbd_interface *iface)
 {
 	iface->ui_dev->ud_bus->ub_methods->ubm_dopoll(iface->ui_dev->ud_bus);
 }
@@ -1167,7 +1167,7 @@ usbd_dopoll(usbd_interface_handle iface)
  * XXX use this more???  ub_usepolling it touched manually all over
  */
 void
-usbd_set_polling(usbd_device_handle dev, int on)
+usbd_set_polling(struct usbd_device *dev, int on)
 {
 	if (on)
 		dev->ud_bus->ub_usepolling++;
@@ -1182,7 +1182,7 @@ usbd_set_polling(usbd_device_handle dev, int on)
 
 
 usb_endpoint_descriptor_t *
-usbd_get_endpoint_descriptor(usbd_interface_handle iface, uint8_t address)
+usbd_get_endpoint_descriptor(struct usbd_interface *iface, uint8_t address)
 {
 	struct usbd_endpoint *ep;
 	int i;
@@ -1229,7 +1229,7 @@ usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
 
 
 void
-usb_desc_iter_init(usbd_device_handle dev, usbd_desc_iter_t *iter)
+usb_desc_iter_init(struct usbd_device *dev, usbd_desc_iter_t *iter)
 {
 	const usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
 
@@ -1261,13 +1261,13 @@ usb_desc_iter_next(usbd_desc_iter_t *iter)
 }
 
 usbd_status
-usbd_get_string(usbd_device_handle dev, int si, char *buf)
+usbd_get_string(struct usbd_device *dev, int si, char *buf)
 {
 	return usbd_get_string0(dev, si, buf, 1);
 }
 
 usbd_status
-usbd_get_string0(usbd_device_handle dev, int si, char *buf, int unicode)
+usbd_get_string0(struct usbd_device *dev, int si, char *buf, int unicode)
 {
 	int swap = dev->ud_quirks->uq_flags & UQ_SWAP_UNICODE;
 	usb_string_descriptor_t us;

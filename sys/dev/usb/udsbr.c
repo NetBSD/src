@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.22.14.4 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.22.14.5 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.22.14.4 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.22.14.5 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ const struct radio_hw_if udsbr_hw_if = {
 
 struct udsbr_softc {
  	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 
 	char			sc_mute;
 	char			sc_vol;
@@ -124,7 +124,7 @@ udsbr_attach(device_t parent, device_t self, void *aux)
 {
 	struct udsbr_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle	dev = uaa->device;
+	struct usbd_device *	dev = uaa->device;
 	char			*devinfop;
 	usbd_status		err;
 

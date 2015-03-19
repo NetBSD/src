@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.25.6.2 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.25.6.3 2015/03/19 17:26:42 skrll Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.2 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.3 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -130,11 +130,11 @@ Static struct	ieee80211_node *otus_node_alloc(struct ieee80211_node_table *);
 Static int	otus_media_change(struct ifnet *);
 Static int	otus_read_eeprom(struct otus_softc *);
 Static void	otus_newassoc(struct ieee80211_node *, int);
-Static void	otus_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	otus_intr(struct usbd_xfer *, void *, usbd_status);
 Static void	otus_cmd_rxeof(struct otus_softc *, uint8_t *, int);
 Static void	otus_sub_rxeof(struct otus_softc *, uint8_t *, int);
-Static void	otus_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void	otus_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	otus_rxeof(struct usbd_xfer *, void *, usbd_status);
+Static void	otus_txeof(struct usbd_xfer *, void *, usbd_status);
 Static int	otus_tx(struct otus_softc *, struct mbuf *,
 		    struct ieee80211_node *, struct otus_tx_data *);
 Static void	otus_start(struct ifnet *);
@@ -1604,7 +1604,7 @@ otus_newassoc(struct ieee80211_node *ni, int isnew)
 
 /* ARGSUSED */
 Static void
-otus_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+otus_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 #if 0
 	struct otus_softc *sc;
@@ -1845,7 +1845,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 }
 
 Static void
-otus_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+otus_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct otus_rx_data *data;
 	struct otus_softc *sc;
@@ -1903,7 +1903,7 @@ otus_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 Static void
-otus_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+otus_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct otus_tx_data *data;
 	struct otus_softc *sc;

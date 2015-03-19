@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.19.6.2 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: uep.c,v 1.19.6.3 2015/03/19 17:26:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.19.6.2 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.19.6.3 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,12 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.19.6.2 2014/12/03 14:18:07 skrll Exp $");
 
 struct uep_softc {
 	device_t sc_dev;
-	usbd_device_handle sc_udev;	/* device */
-	usbd_interface_handle sc_iface;	/* interface */
+	struct usbd_device *sc_udev;	/* device */
+	struct usbd_interface *sc_iface;	/* interface */
 	int sc_iface_number;
 
 	int			sc_intr_number; /* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe *	sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_ibuf;
 	int			sc_isize;
 
@@ -81,7 +81,7 @@ static struct wsmouse_calibcoords default_calib = {
 	.samplelen = WSMOUSE_CALIBCOORDS_RESET,
 };
 
-Static void uep_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void uep_intr(struct usbd_xfer *, void *, usbd_status);
 
 Static int	uep_enable(void *);
 Static void	uep_disable(void *);
@@ -125,7 +125,7 @@ uep_attach(device_t parent, device_t self, void *aux)
 {
 	struct uep_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -359,7 +359,7 @@ uep_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 void
-uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
+uep_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uep_softc *sc = addr;
 	u_char *p = sc->sc_ibuf;

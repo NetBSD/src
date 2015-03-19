@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.9 2014/08/09 13:33:43 jmcneill Exp $ */
+/* $NetBSD: auvitek.c,v 1.9.4.1 2015/03/19 17:26:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.9 2014/08/09 13:33:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.9.4.1 2015/03/19 17:26:42 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,7 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 {
 	struct auvitek_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = opaque;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status err;
 	unsigned int i;

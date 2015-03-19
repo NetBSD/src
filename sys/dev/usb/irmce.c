@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.1.32.2 2014/12/02 09:00:33 skrll Exp $ */
+/* $NetBSD: irmce.c,v 1.1.32.3 2015/03/19 17:26:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.32.2 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.32.3 2015/03/19 17:26:43 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,19 +62,19 @@ struct irmce_softc {
 	device_t		sc_dev;
 	device_t		sc_cirdev;
 
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_iface;
 
 	int			sc_bulkin_ep;
 	uint16_t		sc_bulkin_maxpktsize;
-	usbd_pipe_handle	sc_bulkin_pipe;
-	usbd_xfer_handle	sc_bulkin_xfer;
+	struct usbd_pipe *	sc_bulkin_pipe;
+	struct usbd_xfer *	sc_bulkin_xfer;
 	uint8_t *		sc_bulkin_buffer;
 
 	int			sc_bulkout_ep;
 	uint16_t		sc_bulkout_maxpktsize;
-	usbd_pipe_handle	sc_bulkout_pipe;
-	usbd_xfer_handle	sc_bulkout_xfer;
+	struct usbd_pipe *	sc_bulkout_pipe;
+	struct usbd_xfer *	sc_bulkout_xfer;
 	uint8_t *		sc_bulkout_buffer;
 
 	bool			sc_raw;
