@@ -1,0 +1,110 @@
+	$NetBSD: README,v 1.1 2015/03/20 12:57:48 riastradh Exp $
+
+libc: The C library.
+
+* ELF symbols and source names
+
+libc contains symbols for:
+
+(a) standard library routines in C and POSIX,
+(b) published NetBSD-specific nonstandard extensions,
+(c) old versions of library routines, and
+(d) internal symbols.
+
+If a library routine is standard and its signature has never changed,
+it is defined as an ELF global symbol.  Its name is declared normally
+in the appropriate header file.
+
+=> Example: libc defines global symbols `malloc' and `free' for the
+   standard C memory allocator routines.  The names `malloc' and `free'
+   are declared normally in <stdlib.h> (src/include/stdlib.h).
+
+If a library routine is nonstandard but published and its signature has
+never changed, it is defined as an ELF weak symbol aliasing an ELF
+global symbol of the same name with an underscore prefix.
+
+The name is declared normally in the appropriate header file, provided
+that the relevant feature macro, such as _NETBSD_SOURCE, is defined.
+
+Within libc, the name is defined in "namespace.h"
+(src/lib/libc/include/namespace.h) as a macro expanding to the
+underscored name, so that the definition in a .c file will define the
+underscored ELF global symbol.
+
+Alongside the definition in the .c file is a __weak_alias directive to
+create the ELF weak symbol alias.
+
+=> Example: For the nonstandard extension consttime_memequal, libc
+   defines a weak symbol `consttime_memequal' aliasing a global symbol
+   `_consttime_memequal'.
+
+   The name `consttime_memequal' is declared in <string.h>
+   (src/include/string.h) if the caller defines _NETBSD_SOURCE.
+
+   The name `consttime_memequal' is defined as a macro in "namespace.h"
+   (src/lib/libc/include/namespace.h) expanding to
+   `_consttime_memequal'.  The source name `consttime_memequal' is
+   defined in src/common/lib/libc/string/consttime_memequal.c, causing
+   the ELF global symbol `_consttime_memequal' to be defined, after
+   macro expansion.
+
+   Alongside the definition is
+
+	__weak_alias(consttime_memequal,_consttime_memequal)
+
+   to provide `consttime_memequal' as an ELF weak symbol aliasing
+   `_consttime_memequal'.
+
+If a library routine is internal to libc, it is defined as an ELF
+global symbol with an underscore prefix.
+
+Its name is declared in the appropriate internal header file.
+
+=> Example: For the internal library routine _initdir, used by the
+   implementations of opendir and rewinddir, libc defines a global
+   symbol `_initdir'.
+
+   The name `_initdir' is declared normally in
+   src/lib/libc/gen/dirent_private.h.
+
+If the signature or semantics of a library routine foo changed in (for
+example) NetBSD 6.0, then libc provides
+
+(1) an ELF global symbol `_foo' implementing its old signature,
+(2) an ELF weak symbol `foo' aliasing `_foo', and
+(3) an ELF global symbol `__foo50' implementing its new signature (yes,
+    `__foo50', not `__foo60').
+
+The name foo is declared in the appropriate header file, under any
+relevant feature macros, with a __RENAME directive so that for calls to
+foo, the compiler will generate relocations for __foo50.  Old programs,
+compiled with the old signature, will continue to use the old symbol.
+
+=> Example: In NetBSD 5.0, time_t was int32_t on every machine.  In
+   NetBSD 6.0 and onward, time_t is int64_t on every machine.
+   Consequently, the signature of time(3), written as
+
+	time_t time(time_t *);
+
+   changed in NetBSD 6.0 from being effectively
+
+	int32_t time(int32_t *);
+
+   to being effectively
+
+	int64_t time(int64_t *);
+
+   Thus, libc provides
+
+   (1) the ELF global symbol `_time' implementing the old signature,
+   (2) the ELF weak symbol `time' aliasing `_time', and
+   (3) the ELF global symbol `__time50' implementing the new signature.
+
+   The header file <time.h> declares
+
+	time_t time(time_t *) __RENAME(__time50);
+
+   so that compiling C programs that call time will yield objects that
+   use the __time50 symbol from libc.  However, old programs that were
+   compiled against the 32-bit declaration will continue to use the
+   32-bit symbol from libc.
