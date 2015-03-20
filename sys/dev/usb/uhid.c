@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.93 2015/03/07 20:20:55 mrg Exp $	*/
+/*	$NetBSD: uhid.c,v 1.94 2015/03/20 03:04:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.93 2015/03/07 20:20:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.94 2015/03/20 03:04:48 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -364,9 +364,7 @@ uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	mutex_enter(&sc->sc_access_lock);
 
-	mutex_enter(&sc->sc_lock);
 	uhidev_stop(&sc->sc_hdev);
-	mutex_exit(&sc->sc_lock);
 
 	clfree(&sc->sc_q);
 	free(sc->sc_obuf, M_USBDEV);
