@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.2 2015/03/20 13:26:51 riastradh Exp $
+	$NetBSD: README,v 1.3 2015/03/20 14:10:40 riastradh Exp $
 
 libc: The C library.
 
@@ -38,15 +38,17 @@ create the ELF weak symbol alias.
    defines a weak symbol `consttime_memequal' aliasing a global symbol
    `_consttime_memequal'.
 
-   The name `consttime_memequal' is declared in <string.h>
-   (src/include/string.h) if the caller defines _NETBSD_SOURCE.
+   The header file <string.h> (src/include/string.h) declares
+   `consttime_memequal' normally, if the caller defines _NETBSD_SOURCE.
 
-   The name `consttime_memequal' is defined as a macro in "namespace.h"
-   (src/lib/libc/include/namespace.h) expanding to
-   `_consttime_memequal'.  The source name `consttime_memequal' is
-   defined in src/common/lib/libc/string/consttime_memequal.c, causing
-   the ELF global symbol `_consttime_memequal' to be defined, after
-   macro expansion.
+   The header file "namespace.h" (src/lib/libc/include/namespace.h)
+   defines `consttime_memequal' as a macro expanding to
+   `_consttime_memequal'.
+
+   The source file src/common/lib/libc/string/consttime_memequal.c
+   includes "namespace.h" and <string.h>, and defines
+   `consttime_memequal' normally, which, after macro expansion, causes
+   the ELF global symbol `_consttime_memequal' to be defined.
 
    Alongside the definition is
 
