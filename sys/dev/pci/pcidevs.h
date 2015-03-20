@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1211 2015/03/18 05:44:13 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1212 2015/03/20 11:45:48 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1217 2015/03/18 05:43:49 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1218 2015/03/20 11:45:28 msaitoh Exp
  */
 
 /*
@@ -3537,6 +3537,76 @@
 #define	PCI_PRODUCT_INTEL_82G41_IGD	0x2e32		/* 82G41 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82B43_HB	0x2e40		/* 82B43 Host Bridge */
 #define	PCI_PRODUCT_INTEL_82B43_IGD	0x2e42		/* 82B43 Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_XE5_V3_DMI2	0x2f00		/* Xeon E5 v3 DMI2 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCIE_1	0x2f01		/* Xeon E5 v3 PCIe Root Port in DMI2 Mode */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCIE_2_1	0x2f04		/* Xeon E5 v3 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCIE_2_2	0x2f05		/* Xeon E5 v3 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCIE_2_3	0x2f06		/* Xeon E5 v3 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCIE_2_4	0x2f07		/* Xeon E5 v3 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCIE_3_1	0x2f08		/* Xeon E5 v3 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCIE_3_2	0x2f09		/* Xeon E5 v3 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCIE_3_3	0x2f0a		/* Xeon E5 v3 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCIE_3_4	0x2f0b		/* Xeon E5 v3 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_XE5_V3_R2PCIE_1	0x2f1d		/* Xeon E5 v3 Integrated IO Ring Interface */
+#define	PCI_PRODUCT_INTEL_XE5_V3_UBOX_1	0x2f1e		/* Xeon E5 v3 Scratchpad and Semaphores */
+#define	PCI_PRODUCT_INTEL_XE5_V3_UBOX_3	0x2f1f		/* Xeon E5 v3 Scratchpad and Semaphores */
+#define	PCI_PRODUCT_INTEL_XE5_V3_QDT_CH0	0x2f20		/* Xeon E5 v3 QDT DMA Channel 0 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_QDT_CH1	0x2f21		/* Xeon E5 v3 QDT DMA Channel 1 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_QDT_CH2	0x2f22		/* Xeon E5 v3 QDT DMA Channel 2 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_QDT_CH3	0x2f23		/* Xeon E5 v3 QDT DMA Channel 3 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_QDT_CH4	0x2f24		/* Xeon E5 v3 QDT DMA Channel 4 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_QDT_CH5	0x2f25		/* Xeon E5 v3 QDT DMA Channel 5 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_QDT_CH6	0x2f26		/* Xeon E5 v3 QDT DMA Channel 6 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_QDT_CH7	0x2f27		/* Xeon E5 v3 QDT DMA Channel 7 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IIO_AM	0x2f28		/* Xeon E5 v3 Address Map, VTd, SMM */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IIO_RAM	0x2f2a		/* Xeon E5 v3 RAS, CS, Global Errors */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IIO_IOAPIC	0x2f2c		/* Xeon E5 v3 I/O APIC */
+#define	PCI_PRODUCT_INTEL_XE5_V3_R2PCIE_2	0x2f34		/* Xeon E5 v3 PCIe Ring Performance Monitoring */
+#define	PCI_PRODUCT_INTEL_XE5_V3_RQPI_PM_1	0x2f36		/* Xeon E5 v3 QPI Ring Performance Monitoring */
+#define	PCI_PRODUCT_INTEL_XE5_V3_RQPI_PM_2	0x2f37		/* Xeon E5 v3 QPI Ring Interface Monitoring */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_MAIN	0x2f68		/* Xeon E5 v3 IMC Main */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_TADR1	0x2f6a		/* Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_TADR2	0x2f6b		/* Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_RAS	0x2f71		/* Xeon E5 v3 IMC RAS Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_RAS	0x2f79		/* Xeon E5 v3 IMC Ras Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_UBOX_2	0x2f7d		/* Xeon E5 v3 Scratchpad and Semaphores */
+#define	PCI_PRODUCT_INTEL_XE5_V3_QPI_LINK0	0x2f80		/* Xeon E5 v3 QPI Link 0 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_RQPI_RING	0x2f81		/* Xeon E5 v3 QPI Ring Interface */
+#define	PCI_PRODUCT_INTEL_XE5_V3_QPI_LINK1	0x2f90		/* Xeon E5 v3 QPI Link 1 */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCU_1	0x2f98		/* Xeon E5 v3 Power Control Unit */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCU_2	0x2f99		/* Xeon E5 v3 Power Control Unit */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCU_3	0x2f9a		/* Xeon E5 v3 Power Control Unit */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCU_5	0x2f9c		/* Xeon E5 v3 Power Control Unit */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_MAIN	0x2fa8		/* Xeon E5 v3 IMC Main */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_TADR1	0x2faa		/* Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_TADR2	0x2fab		/* Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_TADR3	0x2fac		/* Xeon E5 v3 IMC Ch 2-3 Target Address Decode Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_TADR4	0x2fad		/* Xeon E5 v3 IMC Ch 2-3 Target Address Decode Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG1	0x2fb0		/* Xeon E5 v3 IMC Ch 0-1 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG2	0x2fb1		/* Xeon E5 v3 IMC Ch 0-1 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG3	0x2fb2		/* Xeon E5 v3 IMC Ch 2-3 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG4	0x2fb3		/* Xeon E5 v3 IMC Ch 2-3 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG5	0x2fb4		/* Xeon E5 v3 IMC Ch 0-1 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG6	0x2fb5		/* Xeon E5 v3 IMC Ch 0-1 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG7	0x2fb6		/* Xeon E5 v3 IMC Ch 2-3 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG8	0x2fb7		/* Xeon E5 v3 IMC Ch 2-3 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_1	0x2fba		/* Xeon E5 v3 IMC DDRIO Multicast */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_2	0x2fbb		/* Xeon E5 v3 IMC DDRIO Multicast */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_5	0x2fbc		/* Xeon E5 v3 IMC DDRIO */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_6	0x2fbd		/* Xeon E5 v3 IMC DDRIO */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_7	0x2fbe		/* Xeon E5 v3 IMC DDRIO Multicast */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_8	0x2fbf		/* Xeon E5 v3 IMC DDRIO Multicast */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_3	0x2fbe		/* Xeon E5 v3 IMC DDRIO Multicast */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_4	0x2fbf		/* Xeon E5 v3 IMC DDRIO Multicast */
+#define	PCI_PRODUCT_INTEL_XE5_V3_PCU_4	0x2fc0		/* Xeon E5 v3 Power Control Unit */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_REG5	0x2fd4		/* Xeon E5 v3 IMC Ch 0-1 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_REG6	0x2fd5		/* Xeon E5 v3 IMC Ch 0-1 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_REG7	0x2fd6		/* Xeon E5 v3 IMC Ch 0-1 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_REG8	0x2fd7		/* Xeon E5 v3 IMC Ch 0-1 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_9	0x2fd8		/* Xeon E5 v3 IMC DDRIO */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_A	0x2fd9		/* Xeon E5 v3 IMC DDRIO */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_B	0x2fda		/* Xeon E5 v3 IMC DDRIO */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_C	0x2fdb		/* Xeon E5 v3 IMC DDRIO */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_DDR	0x3340		/* 82855PM MCH Host Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-AGP Bridge */
@@ -3920,6 +3990,51 @@
 #define	PCI_PRODUCT_INTEL_9SERIES_LPC_ES	0x8cc2		/* 9 Series Full Featured ES LPC */
 #define	PCI_PRODUCT_INTEL_Z97_LPC	0x8cc4		/* Z97 LPC */
 #define	PCI_PRODUCT_INTEL_H97_LPC	0x8cc6		/* H97 LPC */
+#define	PCI_PRODUCT_INTEL_C610_SATA	0x8d00		/* C61x/X99 SATA Controller */
+#define	PCI_PRODUCT_INTEL_C610_SATA_AHCI	0x8d02		/* C61x/X99 SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_C610_SATA_RAID	0x2822		/* C61x/X99 SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_C610_SATA_RAID_2	0x8d06		/* C61x/X99 SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_C610_SATA_RAID_3	0x2826		/* C61x/X99 SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_C610_SATA_2	0x8d08		/* C61x/X99 SATA Controller */
+#define	PCI_PRODUCT_INTEL_C610_SSATA	0x8d60		/* C61x/X99 sSATA Controller */
+#define	PCI_PRODUCT_INTEL_C610_SSATA_AHCI	0x8d62		/* C61x/X99 sSATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_C610_SSATA_RAID	0x8d66		/* C61x/X99 sSATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_C610_SSATA_RAID_2	0x2827		/* C61x/X99 sSATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_1_1	0x8d10		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_1_2	0x8d11		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_1_3	0x244e		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_2_1	0x8d12		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_2_2	0x8d13		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_3_1	0x8d14		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_3_2	0x8d15		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_4_1	0x8d16		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_4_2	0x8d17		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_5_1	0x8d18		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_5_2	0x8d19		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_6_1	0x8d1a		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_6_2	0x8d1b		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_7_1	0x8d1c		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_7_2	0x8d1d		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_8_1	0x8d1e		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_PCIE_8_2	0x8d1f		/* C61x/X99 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_HDA	0x8d20		/* C61x/X99 HD Audio */
+#define	PCI_PRODUCT_INTEL_C610_HDA_2	0x8d21		/* C61x/X99 HD Audio */
+#define	PCI_PRODUCT_INTEL_C610_SMB	0x8d22		/* C61x/X99 SMBus Controller */
+#define	PCI_PRODUCT_INTEL_C610_THERM	0x8d24		/* C61x/X99 Thermal */
+#define	PCI_PRODUCT_INTEL_C610_EHCI	0x8d26		/* C61x/X99 USB EHCI */
+#define	PCI_PRODUCT_INTEL_C610_EHCI_2	0x8d2d		/* C61x/X99 USB EHCI */
+#define	PCI_PRODUCT_INTEL_C610_XHCI	0x8d31		/* C61x/X99 USB xHCI */
+#define	PCI_PRODUCT_INTEL_C610_LAN	0x8d33		/* C61x/X99 LAN */
+#define	PCI_PRODUCT_INTEL_C610_MEI	0x8d3a		/* C61x/X99 MEI Controller */
+#define	PCI_PRODUCT_INTEL_C610_MEI_2	0x8d3b		/* C61x/X99 MEI Controller */
+#define	PCI_PRODUCT_INTEL_C610_IDE_R	0x8d3c		/* C61x/X99 IDE-R */
+#define	PCI_PRODUCT_INTEL_C610_KT	0x8d3d		/* C61x/X99 KT */
+#define	PCI_PRODUCT_INTEL_X99_LPC	0x8d44		/* X99 LPC */
+#define	PCI_PRODUCT_INTEL_X99_LPC_2	0x8d47		/* X99 LPC */
+#define	PCI_PRODUCT_INTEL_C610_SPSR	0x8d7c		/* C61x/X99 SPSR */
+#define	PCI_PRODUCT_INTEL_C610_MS_SMB0	0x8d7d		/* C61x/X99 MS SMbus */
+#define	PCI_PRODUCT_INTEL_C610_MS_SMB1	0x8d7e		/* C61x/X99 MS SMbus */
+#define	PCI_PRODUCT_INTEL_C610_MS_SMB2	0x8d7f		/* C61x/X99 MS SMbus */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_AHCI	0x9c03		/* Core 4G (mobile) SATA Controller (AHCI) */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_RAID_1	0x9c05		/* Core 4G (mobile) SATA Controller (RAID) */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_RAID_2	0x9c07		/* Core 4G (mobile) SATA Controller (RAID) Premium */
