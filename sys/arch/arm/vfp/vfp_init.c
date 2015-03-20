@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.45 2015/03/20 00:54:30 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.46 2015/03/20 01:27:34 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -403,7 +403,7 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 		return 1;
 
 	/* if we already own the FPU and it's enabled, raise SIGILL */
-	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp)
+	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp
 	    && (armreg_fpexc_read() & VFP_FPEXC_EN) != 0)
 		return 0;
 
