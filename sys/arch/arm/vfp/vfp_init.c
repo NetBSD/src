@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.44 2015/03/17 22:34:10 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.45 2015/03/20 00:54:30 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -402,8 +402,9 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	if (!vfp_fpscr_handler(address, insn, frame, fault_code))
 		return 1;
 
-	/* if we already own the FPU, raise SIGILL */
+	/* if we already own the FPU and it's enabled, raise SIGILL */
 	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp)
+	    && (armreg_fpexc_read() & VFP_FPEXC_EN) != 0)
 		return 0;
 
 	/*
@@ -473,8 +474,9 @@ neon_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	if (fault_code != FAULT_USER)
 		panic("NEON fault in non-user mode");
 
-	/* if we already own the FPU, raise SIGILL */
-	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp)
+	/* if we already own the FPU and it's enabled, raise SIGILL */
+	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp
+	    && (armreg_fpexc_read() & VFP_FPEXC_EN) != 0)
 		return 0;
 
 	pcu_load(&arm_vfp_ops);
