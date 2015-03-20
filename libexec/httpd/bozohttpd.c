@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.61 2015/01/27 04:20:23 snj Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.62 2015/03/20 18:54:18 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -878,7 +878,6 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url)
 			goto encode_it;
 		switch (*s) {
 		case ':':
-		case '/':
 		case '?':
 		case '#':
 		case '[':
