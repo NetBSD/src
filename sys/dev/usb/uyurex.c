@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.9.14.2 2015/03/19 17:26:43 skrll Exp $ */
+/*	$NetBSD: uyurex.c,v 1.9.14.3 2015/03/21 10:07:15 skrll Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.2 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.3 2015/03/21 10:07:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -116,8 +116,7 @@ CFATTACH_DECL_NEW(uyurex, sizeof(struct uyurex_softc),
 int 
 uyurex_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = aux;
 
 	if (uyurex_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
 		return UMATCH_NONE;
@@ -129,8 +128,7 @@ void
 uyurex_attach(device_t parent, device_t self, void *aux)
 {
 	struct uyurex_softc *sc = device_private(self);
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = aux;
 	struct usbd_device * dev = uha->parent->sc_udev;
 	int size, repid, err;
 	void *desc;
