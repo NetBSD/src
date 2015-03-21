@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.75.4.6 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75.4.7 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.6 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.7 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ uscanner_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return uscanner_lookup(uaa->vendor, uaa->product) != NULL ?
+	return uscanner_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -293,15 +293,15 @@ uscanner_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uaa->uaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	sc->sc_dev_flags = uscanner_lookup(uaa->vendor, uaa->product)->flags;
+	sc->sc_dev_flags = uscanner_lookup(uaa->uaa_vendor, uaa->uaa_product)->flags;
 
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
-	err = usbd_set_config_no(uaa->device, 1, 1); /* XXX */
+	err = usbd_set_config_no(uaa->uaa_device, 1, 1); /* XXX */
 	if (err) {
 		aprint_error_dev(self, "failed to set configuration"
 		    ", err=%s\n", usbd_errstr(err));

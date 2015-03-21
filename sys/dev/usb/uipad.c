@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.1.28.3 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uipad.c,v 1.1.28.4 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.1.28.3 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.1.28.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ uipad_match(device_t parent, cfdata_t match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(50, ("uipad_match\n"));
-	return uipad_lookup(uaa->vendor, uaa->product) != NULL ?
+	return uipad_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -134,7 +134,7 @@ uipad_attach(device_t parent, device_t self, void *aux)
 {
 	struct uipad_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	char			*devinfop;
 
 	DPRINTFN(10,("uipad_attach: sc=%p\n", sc));

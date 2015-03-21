@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.10.14.5 2015/03/21 09:42:37 skrll Exp $   */
+/*	$NetBSD: uthum.c,v 1.10.14.6 2015/03/21 11:33:37 skrll Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.5 2015/03/21 09:42:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.6 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -119,7 +119,7 @@ uthum_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	return uthum_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
+	return uthum_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 

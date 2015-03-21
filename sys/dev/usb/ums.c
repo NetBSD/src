@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.87.6.5 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: ums.c,v 1.87.6.6 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87.6.5 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87.6.6 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,8 +152,8 @@ ums_match(device_t parent, cfdata_t match, void *aux)
 	 * Some (older) Griffin PowerMate knobs may masquerade as a
 	 * mouse, avoid treating them as such, they have only one axis.
 	 */
-	if (uha->uaa->vendor == USB_VENDOR_GRIFFIN &&
-	    uha->uaa->product == USB_PRODUCT_GRIFFIN_POWERMATE)
+	if (uha->uiaa->uiaa_vendor == USB_VENDOR_GRIFFIN &&
+	    uha->uiaa->uiaa_product == USB_PRODUCT_GRIFFIN_POWERMATE)
 		return UMATCH_NONE;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
@@ -304,9 +304,9 @@ ums_attach(device_t parent, device_t self, void *aux)
 	 * position for the wheel and wheel tilt controls -- should be
 	 * in bytes 3 & 4 of the report.  Fix this if necessary.
 	 */
-	if (uha->uaa->vendor == USB_VENDOR_MICROSOFT &&
-	    (uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR10 ||
-	     uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR20)) {
+	if (uha->uiaa->uiaa_vendor == USB_VENDOR_MICROSOFT &&
+	    (uha->uiaa->uiaa_product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR10 ||
+	     uha->uiaa->uiaa_product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR20)) {
 		if ((sc->flags & UMS_Z) && sc->sc_loc_z.pos == 0)
 			sc->sc_loc_z.pos = 24;
 		if ((sc->flags & UMS_W) && sc->sc_loc_w.pos == 0)

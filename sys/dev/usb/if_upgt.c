@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.4 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.5 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.4 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.5 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -207,10 +207,10 @@ upgt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (usb_lookup(upgt_devs_1, uaa->vendor, uaa->product) != NULL)
+	if (usb_lookup(upgt_devs_1, uaa->uaa_vendor, uaa->uaa_product) != NULL)
 		return UMATCH_VENDOR_PRODUCT;
 
-	if (usb_lookup(upgt_devs_2, uaa->vendor, uaa->product) != NULL)
+	if (usb_lookup(upgt_devs_2, uaa->uaa_vendor, uaa->uaa_product) != NULL)
 		return UMATCH_VENDOR_PRODUCT;
 
 	return UMATCH_NONE;
@@ -234,14 +234,14 @@ upgt_attach(device_t parent, device_t self, void *aux)
 	 * Attach USB device.
 	 */
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	aprint_normal_dev(sc->sc_dev, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	/* check device type */
-	if (upgt_device_type(sc, uaa->vendor, uaa->product) != 0)
+	if (upgt_device_type(sc, uaa->uaa_vendor, uaa->uaa_product) != 0)
 		return;
 
 	/* set configuration number */

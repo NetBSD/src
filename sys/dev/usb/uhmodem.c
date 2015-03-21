@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.13.24.6 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.13.24.7 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.6 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.7 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,12 +177,12 @@ CFATTACH_DECL2_NEW(uhmodem, sizeof(struct uhmodem_softc), uhmodem_match,
 int
 uhmodem_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
-	if (uhmodem_lookup(uaa->vendor, uaa->product) != NULL)
+	if (uhmodem_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL)
 		/* XXX interface# 0,1 provide modem function, but this driver
 		   handles all modem in single device.  */
-		if (uaa->ifaceno == 0)
+		if (uiaa->uiaa_ifaceno == 0)
 			return UMATCH_VENDOR_PRODUCT;
 	return UMATCH_NONE;
 }
@@ -191,8 +191,8 @@ void
 uhmodem_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhmodem_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_device *dev = uiaa->uiaa_device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -216,7 +216,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ubsa.sc_numif = 1; /* defaut device has one interface */
 
 	/* Hauwei E220 need special request to change its mode to modem */
-	if ((uaa->ifaceno == 0) && (uaa->class != 255)) {
+	if ((uiaa->uiaa_ifaceno == 0) && (uiaa->uiaa_class != 255)) {
 		err = e220_modechange_request(dev);
 		if (err) {
 			aprint_error_dev(self, "failed to change mode: %s\n",
@@ -239,8 +239,8 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ubsa.sc_quadumts = 1;
 	sc->sc_ubsa.sc_config_index = 0;
-	sc->sc_ubsa.sc_numif = uhmodem_lookup(uaa->vendor, uaa->product)->uhmodem_coms;
-	sc->sc_ubsa.sc_devflags = uhmodem_lookup(uaa->vendor, uaa->product)->uhmodem_flags;
+	sc->sc_ubsa.sc_numif = uhmodem_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product)->uhmodem_coms;
+	sc->sc_ubsa.sc_devflags = uhmodem_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product)->uhmodem_flags;
 
 	DPRINTF(("uhmodem attach: sc = %p\n", sc));
 

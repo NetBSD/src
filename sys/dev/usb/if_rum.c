@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48.6.4 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.5 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.4 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.5 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -250,7 +250,7 @@ rum_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (usb_lookup(rum_devs, uaa->vendor, uaa->product) != NULL) ?
+	return (usb_lookup(rum_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -314,7 +314,7 @@ rum_attach(device_t parent, device_t self, void *aux)
 	uint32_t tmp;
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 	sc->sc_flags = 0;
 
 	aprint_naive("\n");

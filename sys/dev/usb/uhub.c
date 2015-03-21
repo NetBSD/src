@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.7 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.8 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.7 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.8 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ uhub_match(device_t parent, cfdata_t match, void *aux)
 	 * The subclass for hubs seems to be 0 for some and 1 for others,
 	 * so we just ignore the subclass.
 	 */
-	if (uaa->class == UDCLASS_HUB)
+	if (uaa->uaa_class == UDCLASS_HUB)
 		return matchvalue;
 	return UMATCH_NONE;
 }
@@ -138,7 +138,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhub_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	char *devinfop;
 	usbd_status err;
 	struct usbd_hub *hub = NULL;
@@ -154,7 +154,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_dev = self;
 	sc->sc_hub = dev;
-	sc->sc_proto = uaa->proto;
+	sc->sc_proto = uaa->uaa_proto;
 
 	devinfop = usbd_devinfo_alloc(dev, 1);
 	aprint_naive("\n");

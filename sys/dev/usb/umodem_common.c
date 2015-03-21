@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.22.38.4 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.22.38.5 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.22.38.4 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.22.38.5 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,9 @@ Static void	umodem_intr(struct usbd_xfer *, void *, usbd_status);
 
 int
 umodem_common_attach(device_t self, struct umodem_softc *sc,
-		     struct usbif_attach_arg *uaa, struct ucom_attach_args *uca)
+		     struct usbif_attach_arg *uiaa, struct ucom_attach_args *uca)
 {
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uiaa->uiaa_device;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
@@ -115,13 +115,13 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
-	sc->sc_ctl_iface = uaa->iface;
+	sc->sc_ctl_iface = uiaa->uiaa_iface;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
 	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal_dev(self, "%s, iclass %d/%d\n",
 	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
@@ -143,12 +143,12 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 	    sc->sc_acm_cap & USB_CDC_ACM_HAS_BREAK ? "" : "no ");
 
 	/* Get the data interface too. */
-	for (i = 0; i < uaa->nifaces; i++) {
-		if (uaa->ifaces[i] != NULL) {
-			id = usbd_get_interface_descriptor(uaa->ifaces[i]);
+	for (i = 0; i < uiaa->uiaa_nifaces; i++) {
+		if (uiaa->uiaa_ifaces[i] != NULL) {
+			id = usbd_get_interface_descriptor(uiaa->uiaa_ifaces[i]);
 			if (id != NULL && id->bInterfaceNumber == data_ifcno) {
-				sc->sc_data_iface = uaa->ifaces[i];
-				uaa->ifaces[i] = NULL;
+				sc->sc_data_iface = uiaa->uiaa_ifaces[i];
+				uiaa->uiaa_ifaces[i] = NULL;
 			}
 		}
 	}

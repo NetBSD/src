@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.43.4.4 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.43.4.5 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.4 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.5 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -177,7 +177,7 @@ udav_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return udav_lookup(uaa->vendor, uaa->product) != NULL ?
+	return udav_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -187,7 +187,7 @@ udav_attach(device_t parent, device_t self, void *aux)
 {
 	struct udav_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	struct usbd_interface *iface;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
@@ -229,7 +229,7 @@ udav_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_udev = dev;
 	sc->sc_ctl_iface = iface;
-	sc->sc_flags = udav_lookup(uaa->vendor, uaa->product)->udav_flags;
+	sc->sc_flags = udav_lookup(uaa->uaa_vendor, uaa->uaa_product)->udav_flags;
 
 	/* get interface descriptor */
 	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);

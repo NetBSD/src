@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_audio.c,v 1.1.40.2 2015/03/19 17:26:42 skrll Exp $ */
+/* $NetBSD: auvitek_audio.c,v 1.1.40.3 2015/03/21 11:33:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_audio.c,v 1.1.40.2 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_audio.c,v 1.1.40.3 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,33 +72,33 @@ auvitek_audio_attach(struct auvitek_softc *sc)
 		ifaces[i] = &udev->ud_ifaces[i];
 	}
 
-	uiaa.device = udev;
-	uiaa.port = sc->sc_uport;
-	uiaa.vendor = UGETW(dd->idVendor);
-	uiaa.product = UGETW(dd->idProduct);
-	uiaa.release = UGETW(dd->bcdDevice);
-	uiaa.configno = udev->ud_cdesc->bConfigurationValue;
-	uiaa.ifaces = ifaces;
-	uiaa.nifaces = nifaces;
-	ilocs[USBIFIFCF_PORT] = uiaa.port;
-	ilocs[USBIFIFCF_VENDOR] = uiaa.vendor;
-	ilocs[USBIFIFCF_PRODUCT] = uiaa.product;
-	ilocs[USBIFIFCF_RELEASE] = uiaa.release;
-	ilocs[USBIFIFCF_CONFIGURATION] = uiaa.configno;
+	uiaa.uiaa_device = udev;
+	uiaa.uiaa_port = sc->sc_uport;
+	uiaa.uiaa_vendor = UGETW(dd->idVendor);
+	uiaa.uiaa_product = UGETW(dd->idProduct);
+	uiaa.uiaa_release = UGETW(dd->bcdDevice);
+	uiaa.uiaa_configno = udev->ud_cdesc->bConfigurationValue;
+	uiaa.uiaa_ifaces = ifaces;
+	uiaa.uiaa_nifaces = nifaces;
+	ilocs[USBIFIFCF_PORT] = uiaa.uiaa_port;
+	ilocs[USBIFIFCF_VENDOR] = uiaa.uiaa_vendor;
+	ilocs[USBIFIFCF_PRODUCT] = uiaa.uiaa_product;
+	ilocs[USBIFIFCF_RELEASE] = uiaa.uiaa_release;
+	ilocs[USBIFIFCF_CONFIGURATION] = uiaa.uiaa_configno;
 
 	for (i = 0; i < nifaces; i++) {
 		if (!ifaces[i])
 			continue;
-		uiaa.class = ifaces[i]->ui_idesc->bInterfaceClass;
-		uiaa.subclass = ifaces[i]->ui_idesc->bInterfaceSubClass;
-		if (uiaa.class != UICLASS_AUDIO)
+		uiaa.uiaa_class = ifaces[i]->ui_idesc->bInterfaceClass;
+		uiaa.uiaa_subclass = ifaces[i]->ui_idesc->bInterfaceSubClass;
+		if (uiaa.uiaa_class != UICLASS_AUDIO)
 			continue;
-		if (uiaa.subclass != UISUBCLASS_AUDIOCONTROL)
+		if (uiaa.uiaa_subclass != UISUBCLASS_AUDIOCONTROL)
 			continue;
-		uiaa.iface = ifaces[i];
-		uiaa.proto = ifaces[i]->ui_idesc->bInterfaceProtocol;
-		uiaa.ifaceno = ifaces[i]->ui_idesc->bInterfaceNumber;
-		ilocs[USBIFIFCF_INTERFACE] = uiaa.ifaceno;
+		uiaa.uiaa_iface = ifaces[i];
+		uiaa.uiaa_proto = ifaces[i]->ui_idesc->bInterfaceProtocol;
+		uiaa.uiaa_ifaceno = ifaces[i]->ui_idesc->bInterfaceNumber;
+		ilocs[USBIFIFCF_INTERFACE] = uiaa.uiaa_ifaceno;
 		sc->sc_audiodev = config_found_sm_loc(sc->sc_dev, "usbifif",
 		    ilocs, &uiaa, auvitek_ifprint, config_stdsubmatch);
 		if (sc->sc_audiodev)
@@ -131,14 +131,14 @@ auvitek_audio_childdet(struct auvitek_softc *sc, device_t child)
 static int
 auvitek_ifprint(void *opaque, const char *pnp)
 {
-	struct usbif_attach_arg *uaa = opaque;
+	struct usbif_attach_arg *uiaa = opaque;
 
 	if (pnp)
 		return QUIET;
 
-	aprint_normal(" port %d", uaa->port);
-	aprint_normal(" configuration %d", uaa->configno);
-	aprint_normal(" interface %d", uaa->ifaceno);
+	aprint_normal(" port %d", uiaa->uiaa_port);
+	aprint_normal(" configuration %d", uiaa->uiaa_configno);
+	aprint_normal(" interface %d", uiaa->uiaa_ifaceno);
 
 	return UNCONF;
 }

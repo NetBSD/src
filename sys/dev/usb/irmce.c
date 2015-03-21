@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.1.32.3 2015/03/19 17:26:43 skrll Exp $ */
+/* $NetBSD: irmce.c,v 1.1.32.4 2015/03/21 11:33:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.32.3 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.32.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,8 +132,8 @@ irmce_match(device_t parent, cfdata_t match, void *opaque)
 	unsigned int i;
 
 	for (i = 0; i < __arraycount(irmce_devices); i++) {
-		if (irmce_devices[i].vendor == uiaa->vendor &&
-		    irmce_devices[i].product == uiaa->product)
+		if (irmce_devices[i].vendor == uiaa->uiaa_vendor &&
+		    irmce_devices[i].product == uiaa->uiaa_product)
 			return UMATCH_VENDOR_PRODUCT;
 	}
 
@@ -154,13 +154,13 @@ irmce_attach(device_t parent, device_t self, void *opaque)
 
 	aprint_naive("\n");
 
-	devinfop = usbd_devinfo_alloc(uiaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal(": %s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
-	sc->sc_udev = uiaa->device;
-	sc->sc_iface = uiaa->iface;
+	sc->sc_udev = uiaa->uiaa_device;
+	sc->sc_iface = uiaa->uiaa_iface;
 
 	nep = 0;
 	usbd_endpoint_count(sc->sc_iface, &nep);

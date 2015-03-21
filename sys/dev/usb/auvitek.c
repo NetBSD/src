@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.9.4.1 2015/03/19 17:26:42 skrll Exp $ */
+/* $NetBSD: auvitek.c,v 1.9.4.2 2015/03/21 11:33:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.9.4.1 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.9.4.2 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,8 +79,8 @@ auvitek_match(device_t parent, cfdata_t match, void *opaque)
 	unsigned int i;
 
 	for (i = 0; i < __arraycount(auvitek_devices); i++) {
-		if (auvitek_devices[i].vendor == uaa->vendor &&
-		    auvitek_devices[i].product == uaa->product)
+		if (auvitek_devices[i].vendor == uaa->uaa_vendor &&
+		    auvitek_devices[i].product == uaa->uaa_product)
 			return UMATCH_VENDOR_PRODUCT;
 	}
 
@@ -92,7 +92,7 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 {
 	struct auvitek_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = opaque;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status err;
 	unsigned int i;
@@ -103,11 +103,11 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
-	sc->sc_uport = uaa->port;
+	sc->sc_uport = uaa->uaa_port;
 
 	for (i = 0; i < __arraycount(auvitek_devices); i++) {
-		if (auvitek_devices[i].vendor == uaa->vendor &&
-		    auvitek_devices[i].product == uaa->product)
+		if (auvitek_devices[i].vendor == uaa->uaa_vendor &&
+		    auvitek_devices[i].product == uaa->uaa_product)
 			break;
 	}
 	KASSERT(i != __arraycount(auvitek_devices));

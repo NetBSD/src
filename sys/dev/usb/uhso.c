@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.17.2.2 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.17.2.3 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.2 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.3 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -439,10 +439,10 @@ uhso_match(device_t parent, cfdata_t match, void *aux)
 	 * don't claim this device if autoswitch is disabled
 	 * and it is not in modem mode already
 	 */
-	if (!uhso_autoswitch && uaa->class != UDCLASS_VENDOR)
+	if (!uhso_autoswitch && uaa->uaa_class != UDCLASS_VENDOR)
 		return UMATCH_NONE;
 
-	if (uhso_lookup(uaa->vendor, uaa->product))
+	if (uhso_lookup(uaa->uaa_vendor, uaa->uaa_product))
 		return UMATCH_VENDOR_PRODUCT;
 
 	return UMATCH_NONE;
@@ -461,12 +461,12 @@ uhso_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(1, ": sc = %p, self=%p", sc, self);
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uaa->uaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -479,9 +479,9 @@ uhso_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (uaa->class != UDCLASS_VENDOR) {
+	if (uaa->uaa_class != UDCLASS_VENDOR) {
 		aprint_verbose_dev(self, "Switching device into modem mode..\n");
-		if (uhso_switch_mode(uaa->device) != 0)
+		if (uhso_switch_mode(uaa->uaa_device) != 0)
 			aprint_error_dev(self, "modem switch failed\n");
 
 		return;
@@ -632,7 +632,7 @@ uhso_get_iface_spec(struct usb_attach_arg *uaa, uint8_t ifnum, uint8_t *spec)
 	usb_device_request_t req;
 	usbd_status status;
 
-	hd = uhso_lookup(uaa->vendor, uaa->product);
+	hd = uhso_lookup(uaa->uaa_vendor, uaa->uaa_product);
 	KASSERT(hd != NULL);
 
 	switch (hd->type) {
@@ -657,7 +657,7 @@ uhso_get_iface_spec(struct usb_attach_arg *uaa, uint8_t ifnum, uint8_t *spec)
 		USETW(req.wIndex, 0);
 		USETW(req.wLength, sizeof(config));
 
-		status = usbd_do_request(uaa->device, &req, config);
+		status = usbd_do_request(uaa->uaa_device, &req, config);
 		if (status != USBD_NORMAL_COMPLETION)
 			break;
 

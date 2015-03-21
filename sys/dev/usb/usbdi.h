@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.90.4.4 2015/03/21 08:35:31 skrll Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.90.4.5 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -226,31 +226,35 @@ const struct usb_devno *usb_match_device(const struct usb_devno *,
 
 /* Attach data */
 struct usb_attach_arg {
-	int			port;
-	int			vendor;
-	int			product;
-	int			release;
-	struct usbd_device *	device;	/* current device */
-	int			class, subclass, proto;
-	int			usegeneric;
+	int			uaa_port;
+	int			uaa_vendor;
+	int			uaa_product;
+	int			uaa_release;
+	struct usbd_device *	uaa_device;	/* current device */
+	int			uaa_class;
+	int			uaa_subclass;
+	int			uaa_proto;
+	int			uaa_usegeneric;
 };
 
 struct usbif_attach_arg {
-	int			port;
-	int			configno;
-	int			ifaceno;
-	int			vendor;
-	int			product;
-	int			release;
-	struct usbd_device *	device;	/* current device */
+	int			uiaa_port;
+	int			uiaa_configno;
+	int			uiaa_ifaceno;
+	int			uiaa_vendor;
+	int			uiaa_product;
+	int			uiaa_release;
+	struct usbd_device *	uiaa_device;	/* current device */
 
-	struct usbd_interface *	iface; /* current interface */
-	int			class, subclass, proto;
+	struct usbd_interface *	uiaa_iface;	/* current interface */
+	int			uiaa_class;
+	int			uiaa_subclass;
+	int			uiaa_proto;
 
 	/* XXX need accounting for interfaces not matched to */
 
-	struct usbd_interface **ifaces;	/* all interfaces */
-	int			nifaces; /* number of interfaces */
+	struct usbd_interface **uiaa_ifaces;	/* all interfaces */
+	int			uiaa_nifaces;	/* number of interfaces */
 };
 
 /* Match codes. */

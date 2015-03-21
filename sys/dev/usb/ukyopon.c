@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.16.16.3 2015/03/21 10:14:46 skrll Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.16.16.4 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.3 2015/03/21 10:14:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,12 +106,12 @@ CFATTACH_DECL_NEW(ukyopon, sizeof(struct ukyopon_softc), ukyopon_match, ukyopon_
 int
 ukyopon_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
-	if (uaa->vendor == USB_VENDOR_KYOCERA &&
-	    uaa->product == USB_PRODUCT_KYOCERA_AHK3001V &&
-	    (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX ||
-	     uaa->ifaceno == UKYOPON_DATA_IFACE_INDEX))
+	if (uiaa->uiaa_vendor == USB_VENDOR_KYOCERA &&
+	    uiaa->uiaa_product == USB_PRODUCT_KYOCERA_AHK3001V &&
+	    (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX ||
+	     uiaa->uiaa_ifaceno == UKYOPON_DATA_IFACE_INDEX))
 		return (UMATCH_VENDOR_PRODUCT);
 
 	return (UMATCH_NONE);
@@ -121,16 +121,16 @@ void
 ukyopon_attach(device_t parent, device_t self, void *aux)
 {
 	struct ukyopon_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	struct ucom_attach_args uca;
 
-	uca.portno = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
+	uca.portno = (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 		UKYOPON_PORT_MODEM : UKYOPON_PORT_DATA;
 	uca.methods = &ukyopon_methods;
-	uca.info = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
+	uca.info = (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
 	    "modem port" : "data transfer port";
 
-	if (umodem_common_attach(self, &sc->sc_umodem, uaa, &uca))
+	if (umodem_common_attach(self, &sc->sc_umodem, uiaa, &uca))
 		return;
 	return;
 }

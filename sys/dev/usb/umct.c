@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.8 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.9 2015/03/21 11:33:37 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.8 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.9 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ umct_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return umct_lookup(uaa->vendor, uaa->product) != NULL ?
+	return umct_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -169,7 +169,7 @@ umct_attach(device_t parent, device_t self, void *aux)
 {
 	struct umct_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -189,7 +189,7 @@ umct_attach(device_t parent, device_t self, void *aux)
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = dev;
-	sc->sc_product = uaa->product;
+	sc->sc_product = uaa->uaa_product;
 
 	DPRINTF(("\n\numct attach: sc=%p\n", sc));
 

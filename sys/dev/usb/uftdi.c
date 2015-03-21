@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.59.6.6 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.59.6.7 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.6 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.7 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,9 +186,9 @@ uftdi_match(device_t parent, cfdata_t match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
-		     uaa->vendor, uaa->product));
+		     uaa->uaa_vendor, uaa->uaa_product));
 
-	return uftdi_lookup(uaa->vendor, uaa->product) != NULL ?
+	return uftdi_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -197,7 +197,7 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 {
 	struct uftdi_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	struct usbd_interface *iface;
 	usb_device_descriptor_t *ddesc;
 	usb_interface_descriptor_t *id;
@@ -230,8 +230,8 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_numports = 1;
 	sc->sc_type = UFTDI_TYPE_8U232AM; /* most devices are post-8U232AM */
 	sc->sc_hdrlen = 0;
-	if (uaa->vendor == USB_VENDOR_FTDI
-	    && uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX) {
+	if (uaa->uaa_vendor == USB_VENDOR_FTDI
+	    && uaa->uaa_product == USB_PRODUCT_FTDI_SERIAL_8U100AX) {
 		sc->sc_type = UFTDI_TYPE_SIO;
 		sc->sc_hdrlen = 1;
 	}

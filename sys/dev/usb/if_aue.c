@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.4.6 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.7 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.6 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.7 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -698,17 +698,17 @@ aue_match(device_t parent, cfdata_t match, void *aux)
 	 * If this turns out to be more common, we could use a quirk
 	 * table.
 	 */
-	if (uaa->vendor == USB_VENDOR_BELKIN &&
-		uaa->product == USB_PRODUCT_BELKIN_USB2LAN) {
+	if (uaa->uaa_vendor == USB_VENDOR_BELKIN &&
+		uaa->uaa_product == USB_PRODUCT_BELKIN_USB2LAN) {
 		usb_device_descriptor_t *dd;
 
-		dd = usbd_get_device_descriptor(uaa->device);
+		dd = usbd_get_device_descriptor(uaa->uaa_device);
 		if (dd != NULL &&
 			dd->bDeviceClass != UDCLASS_IN_INTERFACE)
 			return UMATCH_NONE;
 	}
 
-	return aue_lookup(uaa->vendor, uaa->product) != NULL ?
+	return aue_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -726,7 +726,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	u_char			eaddr[ETHER_ADDR_LEN];
 	struct ifnet		*ifp;
 	struct mii_data		*mii;
-	struct usbd_device	*dev = uaa->device;
+	struct usbd_device	*dev = uaa->uaa_device;
 	struct usbd_interface	*iface;
 	usbd_status		err;
 	usb_interface_descriptor_t	*id;
@@ -740,7 +740,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uaa->uaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -775,12 +775,12 @@ aue_attach(device_t parent, device_t self, void *aux)
 		    "creating multicast configuration thread\n");
 		return;
 	}
-	sc->aue_flags = aue_lookup(uaa->vendor, uaa->product)->aue_flags;
+	sc->aue_flags = aue_lookup(uaa->uaa_vendor, uaa->uaa_product)->aue_flags;
 
 	sc->aue_udev = dev;
 	sc->aue_iface = iface;
-	sc->aue_product = uaa->product;
-	sc->aue_vendor = uaa->vendor;
+	sc->aue_product = uaa->uaa_product;
+	sc->aue_vendor = uaa->uaa_vendor;
 
 	id = usbd_get_interface_descriptor(iface);
 

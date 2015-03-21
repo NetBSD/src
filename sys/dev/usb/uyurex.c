@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.9.14.4 2015/03/21 10:14:46 skrll Exp $ */
+/*	$NetBSD: uyurex.c,v 1.9.14.5 2015/03/21 11:33:37 skrll Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.4 2015/03/21 10:14:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.5 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -118,7 +118,7 @@ uyurex_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	if (uyurex_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
+	if (uyurex_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product) == NULL)
 		return UMATCH_NONE;
 
 	return (UMATCH_VENDOR_PRODUCT);

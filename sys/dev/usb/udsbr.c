@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.22.14.5 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.22.14.6 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.22.14.5 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.22.14.6 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ udsbr_match(device_t parent, cfdata_t match, void *aux)
 
 	DPRINTFN(50,("udsbr_match\n"));
 
-	if (uaa->vendor != USB_VENDOR_CYPRESS ||
-	    uaa->product != USB_PRODUCT_CYPRESS_FMRADIO)
+	if (uaa->uaa_vendor != USB_VENDOR_CYPRESS ||
+	    uaa->uaa_product != USB_PRODUCT_CYPRESS_FMRADIO)
 		return UMATCH_NONE;
 	return UMATCH_VENDOR_PRODUCT;
 }
@@ -124,7 +124,7 @@ udsbr_attach(device_t parent, device_t self, void *aux)
 {
 	struct udsbr_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	char			*devinfop;
 	usbd_status		err;
 

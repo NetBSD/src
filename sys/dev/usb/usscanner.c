@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.38.6.7 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38.6.8 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.7 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.8 2015/03/21 11:33:37 skrll Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -162,8 +162,8 @@ usscanner_match(device_t parent, cfdata_t match, void *aux)
 
 	DPRINTFN(50,("usscanner_match\n"));
 
-	if (uaa->vendor == USB_VENDOR_HP &&
-	    uaa->product == USB_PRODUCT_HP_5300C)
+	if (uaa->uaa_vendor == USB_VENDOR_HP &&
+	    uaa->uaa_product == USB_PRODUCT_HP_5300C)
 		return UMATCH_VENDOR_PRODUCT;
 	else
 		return UMATCH_NONE;
@@ -174,7 +174,7 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 {
 	struct usscanner_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	struct usbd_interface *	iface;
 	char			*devinfop;
 	usbd_status		err;
@@ -262,7 +262,7 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_cmd_xfer = usbd_alloc_xfer(uaa->device);
+	sc->sc_cmd_xfer = usbd_alloc_xfer(uaa->uaa_device);
 	if (sc->sc_cmd_xfer == NULL) {
 		aprint_error_dev(self, "alloc cmd xfer failed, err=%d\n", err);
 		usscanner_cleanup(sc);
@@ -279,14 +279,14 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_intr_xfer = usbd_alloc_xfer (uaa->device);
+	sc->sc_intr_xfer = usbd_alloc_xfer (uaa->uaa_device);
 	if (sc->sc_intr_xfer == NULL) {
 	  aprint_error_dev(self, "alloc intr xfer failed, err=%d\n", err);
 	  usscanner_cleanup(sc);
 	  return;
 	}
 
-	sc->sc_data_xfer = usbd_alloc_xfer(uaa->device);
+	sc->sc_data_xfer = usbd_alloc_xfer(uaa->uaa_device);
 	if (sc->sc_data_xfer == NULL) {
 		aprint_error_dev(self, "alloc data xfer failed, err=%d\n", err);
 		usscanner_cleanup(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67.4.4 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.4.5 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.4 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.5 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -676,7 +676,7 @@ axe_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return axe_lookup(uaa->vendor, uaa->product) != NULL ?
+	return axe_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -689,7 +689,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 {
 	struct axe_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -717,7 +717,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->axe_flags = axe_lookup(uaa->vendor, uaa->product)->axe_flags;
+	sc->axe_flags = axe_lookup(uaa->uaa_vendor, uaa->uaa_product)->axe_flags;
 
 	mutex_init(&sc->axe_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc, 0);
@@ -728,8 +728,8 @@ axe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->axe_product = uaa->product;
-	sc->axe_vendor = uaa->vendor;
+	sc->axe_product = uaa->uaa_product;
+	sc->axe_vendor = uaa->uaa_vendor;
 
 	id = usbd_get_interface_descriptor(sc->axe_iface);
 

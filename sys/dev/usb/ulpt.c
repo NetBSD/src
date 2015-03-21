@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.95.4.6 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.95.4.7 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.6 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.7 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,15 +176,15 @@ CFATTACH_DECL_NEW(ulpt, sizeof(struct ulpt_softc), ulpt_match, ulpt_attach,
 int
 ulpt_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	/* XXX Print something useful, or don't. */
 	DPRINTFN(10,("ulpt_match\n"));
 
-	if (uaa->class == UICLASS_PRINTER &&
-	    uaa->subclass == UISUBCLASS_PRINTER &&
-	    (uaa->proto == UIPROTO_PRINTER_UNI ||
-	     uaa->proto == UIPROTO_PRINTER_BI ||
-	     uaa->proto == UIPROTO_PRINTER_1284))
+	if (uiaa->uiaa_class == UICLASS_PRINTER &&
+	    uiaa->uiaa_subclass == UISUBCLASS_PRINTER &&
+	    (uiaa->uiaa_proto == UIPROTO_PRINTER_UNI ||
+	     uiaa->uiaa_proto == UIPROTO_PRINTER_BI ||
+	     uiaa->uiaa_proto == UIPROTO_PRINTER_1284))
 		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 	return UMATCH_NONE;
 }
@@ -193,9 +193,9 @@ void
 ulpt_attach(device_t parent, device_t self, void *aux)
 {
 	struct ulpt_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
-	struct usbd_interface *iface = uaa->iface;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_device *dev = uiaa->uiaa_device;
+	struct usbd_interface *iface = uiaa->uiaa_iface;
 	usb_interface_descriptor_t *ifcd = usbd_get_interface_descriptor(iface);
 	const usb_interface_descriptor_t *id;
 	usbd_status err;

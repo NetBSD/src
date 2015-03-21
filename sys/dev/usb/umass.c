@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.7 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.8 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.7 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.8 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -284,17 +284,17 @@ Static void umass_dump_buffer(struct umass_softc *sc, uint8_t *buffer,
 int
 umass_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	const struct umass_quirk *quirk;
 
-	quirk = umass_lookup(uaa->vendor, uaa->product);
+	quirk = umass_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product);
 	if (quirk != NULL && quirk->uq_match != UMASS_QUIRK_USE_DEFAULTMATCH)
 		return quirk->uq_match;
 
-	if (uaa->class != UICLASS_MASS)
+	if (uiaa->uiaa_class != UICLASS_MASS)
 		return UMATCH_NONE;
 
-	switch (uaa->subclass) {
+	switch (uiaa->uiaa_subclass) {
 	case UISUBCLASS_RBC:
 	case UISUBCLASS_SFF8020I:
 	case UISUBCLASS_QIC157:
@@ -306,7 +306,7 @@ umass_match(device_t parent, cfdata_t match, void *aux)
 		return UMATCH_IFACECLASS;
 	}
 
-	switch (uaa->proto) {
+	switch (uiaa->uiaa_proto) {
 	case UIPROTO_MASS_CBI_I:
 	case UIPROTO_MASS_CBI:
 	case UIPROTO_MASS_BBB_OLD:
@@ -323,7 +323,7 @@ void
 umass_attach(device_t parent, device_t self, void *aux)
 {
 	struct umass_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	const struct umass_quirk *quirk;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -340,15 +340,15 @@ umass_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_detach_cv, "umassdet");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	sc->sc_udev = uaa->device;
-	sc->sc_iface = uaa->iface;
-	sc->sc_ifaceno = uaa->ifaceno;
+	sc->sc_udev = uiaa->uiaa_device;
+	sc->sc_iface = uiaa->uiaa_iface;
+	sc->sc_ifaceno = uiaa->uiaa_ifaceno;
 
-	quirk = umass_lookup(uaa->vendor, uaa->product);
+	quirk = umass_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product);
 	if (quirk != NULL) {
 		sc->sc_wire = quirk->uq_wire;
 		sc->sc_cmd = quirk->uq_cmd;
@@ -365,7 +365,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->sc_wire == UMASS_WPROTO_UNSPEC) {
-		switch (uaa->proto) {
+		switch (uiaa->uiaa_proto) {
 		case UIPROTO_MASS_CBI:
 			sc->sc_wire = UMASS_WPROTO_CBI;
 			break;
@@ -380,13 +380,13 @@ umass_attach(device_t parent, device_t self, void *aux)
 			DPRINTF(UDMASS_GEN,
 				("%s: Unsupported wire protocol %u\n",
 				device_xname(sc->sc_dev),
-				uaa->proto));
+				uiaa->uiaa_proto));
 			return;
 		}
 	}
 
 	if (sc->sc_cmd == UMASS_CPROTO_UNSPEC) {
-		switch (uaa->subclass) {
+		switch (uiaa->uiaa_subclass) {
 		case UISUBCLASS_SCSI:
 			sc->sc_cmd = UMASS_CPROTO_SCSI;
 			break;
@@ -405,7 +405,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 			DPRINTF(UDMASS_GEN,
 				("%s: Unsupported command protocol %u\n",
 				device_xname(sc->sc_dev),
-				uaa->subclass));
+				uiaa->uiaa_subclass));
 			return;
 		}
 	}
@@ -579,7 +579,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 
 	/* request a sufficient number of xfer handles */
 	for (i = 0; i < XFER_NR; i++) {
-		sc->transfer_xfer[i] = usbd_alloc_xfer(uaa->device);
+		sc->transfer_xfer[i] = usbd_alloc_xfer(uiaa->uiaa_device);
 		if (sc->transfer_xfer[i] == NULL) {
 			aprint_error_dev(self, "Out of memory\n");
 			umass_disco(sc);

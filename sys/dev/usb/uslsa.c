@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.19.6.2 2015/03/19 17:26:43 skrll Exp $ */
+/* $NetBSD: uslsa.c,v 1.19.6.3 2015/03/21 11:33:37 skrll Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.6.2 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.6.3 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,11 +154,9 @@ CFATTACH_DECL2_NEW(uslsa, sizeof(struct uslsa_softc), uslsa_match,
 static int
 uslsa_match(device_t parent, cfdata_t match, void *aux)
 {
-	const struct usbif_attach_arg *uaa;
+	const struct usbif_attach_arg *uiaa = aux;
 
-	uaa = aux;
-
-	if (usb_lookup(uslsa_devs, uaa->vendor, uaa->product) != NULL) {
+	if (usb_lookup(uslsa_devs, uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL) {
 		return UMATCH_VENDOR_PRODUCT;
 	} else {
 		return UMATCH_NONE;
@@ -169,7 +167,7 @@ static void
 uslsa_attach(device_t parent, device_t self, void *aux)
 {
 	struct uslsa_softc *sc;
-	const struct usbif_attach_arg *uaa;
+	const struct usbif_attach_arg *uiaa = aux;
 	const usb_interface_descriptor_t *id;
 	const usb_endpoint_descriptor_t *ed;
 	char *devinfop;
@@ -177,11 +175,10 @@ uslsa_attach(device_t parent, device_t self, void *aux)
 	int i;
 
 	sc = device_private(self);
-	uaa = aux;
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
-	sc->sc_iface = uaa->iface;
+	sc->sc_udev = uiaa->uiaa_device;
+	sc->sc_iface = uiaa->uiaa_iface;
 
 	aprint_naive("\n");
 	aprint_normal("\n");

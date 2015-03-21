@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.4 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.5 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.4 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.5 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -383,7 +383,7 @@ kue_match(device_t parent, cfdata_t match, void *aux)
 
 	DPRINTFN(25,("kue_match: enter\n"));
 
-	return kue_lookup(uaa->vendor, uaa->product) != NULL ?
+	return kue_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -399,7 +399,7 @@ kue_attach(device_t parent, device_t self, void *aux)
 	char			*devinfop;
 	int			s;
 	struct ifnet		*ifp;
-	struct usbd_device *	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	struct usbd_interface *	iface;
 	usbd_status		err;
 	usb_interface_descriptor_t	*id;
@@ -425,8 +425,8 @@ kue_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->kue_udev = dev;
-	sc->kue_product = uaa->product;
-	sc->kue_vendor = uaa->vendor;
+	sc->kue_product = uaa->uaa_product;
+	sc->kue_vendor = uaa->uaa_vendor;
 
 	/* Load the firmware into the NIC. */
 	if (kue_load_fw(sc)) {
