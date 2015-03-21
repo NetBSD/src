@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.198.2.1 2014/08/12 18:56:51 riz Exp $ */
+/*	$NetBSD: autoconf.c,v 1.198.2.2 2015/03/21 17:32:13 snj Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.198.2.1 2014/08/12 18:56:51 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.198.2.2 2015/03/21 17:32:13 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -145,6 +145,7 @@ int kgdb_break_at_attach;
 char	machine_banner[100];
 char	machine_model[100];
 char	ofbootpath[OFPATHLEN], *ofboottarget, *ofbootpartition;
+char	ofbootargs[OFPATHLEN], *ofbootfile, *ofbootflags;
 int	ofbootpackage;
 
 static	int mbprint(void *, const char *);
@@ -417,8 +418,9 @@ get_bootpath_from_prom(void)
 	/* Setup pointer to boot flags */
 	if (OF_getprop(chosen, "bootargs", sbuf, sizeof(sbuf)) == -1)
 		return;
+	strcpy(ofbootargs, sbuf);
 
-	cp = sbuf;
+	cp = ofbootargs;
 
 	/* Find start of boot flags */
 	while (*cp) {
@@ -426,8 +428,12 @@ get_bootpath_from_prom(void)
 		if (*cp == '-' || *cp == '\0')
 			break;
 		while(*cp != ' ' && *cp != '\t' && *cp != '\0') cp++;
-		
+		if (*cp != '\0')
+			*cp++ = '\0';
 	}
+	if (cp != ofbootargs)
+		ofbootfile = ofbootargs;
+	ofbootflags = cp;
 	if (*cp != '-')
 		return;
 
