@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.8 2015/03/21 15:29:38 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.9 2015/03/21 15:30:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.8 2015/03/21 15:29:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.9 2015/03/21 15:30:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -299,7 +299,7 @@ usb_allocmem_flags(struct usbd_bus *bus, size_t size, size_t align, usb_dma_t *p
 	LIST_FOREACH(f, &usb_frag_freelist, ufd_next) {
 		KDASSERTMSG(usb_valid_block_p(f->ufd_block, &usb_blk_fraglist),
 		    "%s: usb frag %p: unknown block pointer %p",
-		     __func__, f, f->ufd_block);
+		    __func__, f, f->ufd_block);
 		if (f->ufd_block->tag == tag)
 			break;
 	}
@@ -357,7 +357,7 @@ usb_freemem(struct usbd_bus *bus, usb_dma_t *p)
 	}
 	KDASSERTMSG(usb_valid_block_p(p->udma_block, &usb_blk_fraglist),
 	    "%s: dma %p: invalid block pointer %p",
-	     __func__, p, p->udma_block);
+	    __func__, p, p->udma_block);
 	//usb_syncmem(p, 0, USB_MEM_SMALL, BUS_DMASYNC_POSTREAD);
 	f = KERNADDR(p, 0);
 #ifdef USB_FRAG_DMA_WORKAROUND
