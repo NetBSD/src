@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.77 2015/03/21 13:11:14 riastradh Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.78 2015/03/21 13:28:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -122,8 +122,9 @@
  * o owned by a uvm_object
  *   => pageq.queue is entry on wired page queue, if any
  *   => listq.queue is entry on list of pages in object
- *   => uanon is NULL
+ *   => uanon is NULL or the vm_anon to which it has been O->A loaned
  *   => uobject is owner
+ *   => iff O->A loaned, PQ_ANON is set in pqflags
  * o owned by a vm_anon
  *   => pageq is unused (XXX correct?)
  *   => listq is unused (XXX correct?)
