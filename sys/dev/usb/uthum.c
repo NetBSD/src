@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.10.14.4 2015/03/19 17:26:43 skrll Exp $   */
+/*	$NetBSD: uthum.c,v 1.10.14.5 2015/03/21 09:42:37 skrll Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.4 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.5 2015/03/21 09:42:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -117,8 +117,7 @@ CFATTACH_DECL_NEW(uthum, sizeof(struct uthum_softc), uthum_match, uthum_attach,
 int
 uthum_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = aux;
 
 	return uthum_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
@@ -128,8 +127,7 @@ void
 uthum_attach(device_t parent, device_t self, void *aux)
 {
 	struct uthum_softc *sc = device_private(self);
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = aux;
 	struct usbd_device *dev = uha->parent->sc_udev;
 	int size, repid;
 	void *desc;
