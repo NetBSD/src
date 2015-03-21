@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.41.2.2 2015/01/11 05:59:16 snj Exp $
+# $NetBSD: md.amd64,v 1.41.2.3 2015/03/21 17:11:35 snj Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -330,6 +330,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/i915drm/i915drm.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/i915drmkms			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/i915drmkms/i915drmkms.kmod	base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/i2cexec				base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/i2cexec/i2cexec.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/if_axe				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/if_axe/if_axe.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/if_axen				base-kernel-modules	kmod,compatmodules

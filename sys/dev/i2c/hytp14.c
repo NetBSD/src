@@ -37,7 +37,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.2 2014/06/29 09:52:43 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.2.4.1 2015/03/21 17:11:35 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ hytp14_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 
-MODULE(MODULE_CLASS_DRIVER, hythygtemp, "iic");
+MODULE(MODULE_CLASS_DRIVER, hythygtemp, "i2cexec");
 
 #ifdef _MODULE
 #include "ioconf.c"

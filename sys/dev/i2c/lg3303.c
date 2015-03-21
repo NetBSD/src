@@ -1,4 +1,4 @@
-/* $NetBSD: lg3303.c,v 1.8 2011/10/02 19:03:56 jmcneill Exp $ */
+/* $NetBSD: lg3303.c,v 1.8.28.1 2015/03/21 17:11:35 snj Exp $ */
 
 /*-
  * Copyright 2007 Jason Harmening
@@ -28,7 +28,7 @@
  */
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.8 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.8.28.1 2015/03/21 17:11:35 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -351,7 +351,7 @@ lg3303_get_ucblocks(struct lg3303 *lg)
 	return (buffer[0] << 8) | buffer[1];
 }
 
-MODULE(MODULE_CLASS_DRIVER, lg3303, "iic,dtv_math");
+MODULE(MODULE_CLASS_DRIVER, lg3303, "i2cexec,dtv_math");
 
 static int
 lg3303_modcmd(modcmd_t cmd, void *opaque)

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.69 2014/05/18 18:28:49 jakllsch Exp $
+# $NetBSD: mi,v 1.69.2.1 2015/03/21 17:11:35 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -94,6 +94,8 @@
 ./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/hythygtemp			base-kernel-modules	kmod
 ./@MODULEDIR@/hythygtemp/hythygtemp.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/i2cexec				base-kernel-modules	kmod
+./@MODULEDIR@/i2cexec/i2cexec.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_axe				base-kernel-modules	kmod
 ./@MODULEDIR@/if_axe/if_axe.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_axen				base-kernel-modules	kmod

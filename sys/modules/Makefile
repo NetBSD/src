@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.140.2.1 2015/01/11 05:59:18 snj Exp $
+#	$NetBSD: Makefile,v 1.140.2.2 2015/03/21 17:11:35 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -40,6 +40,7 @@ SUBDIR+=	gpioow
 SUBDIR+=	gpiosim
 SUBDIR+=	hfs
 SUBDIR+=	hythygtemp
+SUBDIR+=	i2cexec
 SUBDIR+=	if_axe
 SUBDIR+=	if_axen
 SUBDIR+=	if_npflog
