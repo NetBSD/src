@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.4 2014/10/23 03:42:09 apb Exp $
+# $NetBSD: tzdata2netbsd,v 1.5 2015/03/21 15:51:20 apb Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -13,8 +13,8 @@
 #    redo non-trivial work done by earlier runs.
 #
 
-OLDVER=2014h
-NEWVER=2014i
+OLDVER=2015a
+NEWVER=2015b
 
 # Uppercase variants of OLDVER and NEWVER
 OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
@@ -40,11 +40,14 @@ EXTRACTDIR="${WORKDIR}/extract"
 # Files in the work directory
 DISTFILE="${WORKDIR}/${DISTURL##*/}"
 SIGFILE="${DISTFILE}.sig"
+PGPVERIFYLOG="${WORKDIR}/pgpverify.log"
 NEWSFILE="${WORKDIR}/NEWS"
 NEWSTRIMFILE="${WORKDIR}/NEWS.trimmed"
 IMPORTMSGFILE="${WORKDIR}/import.msg"
+IMPORTDONEFILE="${WORKDIR}/import.done"
 MERGSMSGFILE="${WORKDIR}/merge.msg"
-PGPVERIFYLOG="${WORKDIR}/pgpverify.log"
+MERGEDONEFILE="${WORKDIR}/merge.done"
+COMMITMERGEDONEFILE="${WORKDIR}/commitmerge.done"
 
 DOIT()
 {
@@ -268,6 +271,12 @@ editimportmsg()
 
 cvsimport()
 {
+	if [ -s "${IMPORTDONEFILE}" ]; then
+		cat >&2 <<EOF
+The CVS import has already been performed.
+EOF
+		return 0
+	fi
 	if ! [ -s "${IMPORTMSGFILE}" ] \
 	|| grep -q '^EDIT' "${IMPORTMSGFILE}"
 	then
@@ -285,25 +294,33 @@ EOF
 }
 
 cvsmerge()
-{(
+{
 
 	cd "${TZDISTDIR}" || exit 1
+	if [ -s "${MERGEDONEFILE}" ]; then
+		cat >&2 <<EOF
+The CVS merge has already been performed.
+EOF
+		return 0
+	fi
 	DOIT cvs -d "${CVSROOT}" update -j"${CVSOLDTAG}" -j"${CVSNEWTAG}"
-)}
+}
 
 resolveconflicts()
 {
-	cat <<EOF
-Resolve conflicts resulting from the cvs merge.
-exit 0 when done.  exit 1 to abort.
+	cd "${TZDISTDIR}" || exit 1
+	if grep -l '^[<=>][<=>][<=>]' *
+	then
+		cat <<EOF
+There appear to be conflicts in the files listed above.
+Resolve conflicts, then re-run this script.
 EOF
-	nl='
-'
-	PS1="[inside ${0##*/}]${nl}${PS1}" sh -i
+		return 1
+	fi
 }
 
 cvscommitmerge()
-{(
+{
 	cd "${TZDISTDIR}" || exit 1
 	if grep -l '^[<=>][<=>][<=>]' *
 	then
@@ -313,8 +330,14 @@ Not performing cvs commit.
 EOF
 		return 1
 	fi
+	if [ -s "${COMMITMERGEDONEFILE}" ]; then
+		cat >&2 <<EOF
+The CVS commmit (of the merge result) has already been performed.
+EOF
+		return 0
+	fi
 	DOIT cvs -d "${CVSROOT}" commit -m "Merge tzdata${NEWVER}"
-)}
+}
 
 extra()
 {
