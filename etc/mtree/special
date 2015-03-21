@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.151 2015/02/21 23:13:00 joerg Exp $
+#	$NetBSD: special,v 1.152 2015/03/21 19:10:43 jmcneill Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -233,6 +233,7 @@
 ./etc/rc.d/makemandb		type=file mode=0555
 ./etc/rc.d/mdnsd		type=file mode=0555
 ./etc/rc.d/mixerctl		type=file mode=0555
+./etc/rc.d/modules		type=file mode=0555
 ./etc/rc.d/mopd			type=file mode=0555
 ./etc/rc.d/motd			type=file mode=0555
 ./etc/rc.d/mountall		type=file mode=0555
