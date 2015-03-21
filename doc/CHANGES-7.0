@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.234 2015/03/21 09:02:12 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.235 2015/03/21 17:56:02 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18836,4 +18836,104 @@ sys/arch/evarm/conf/ODROID-C1_INSTALL		1.1
 
 	Add suport for ODROID-C1.
 	[jmcneill, ticket #598]
+
+sys/dev/mii/rgephy.c				1.38
+sys/dev/mii/rgephyreg.h				1.7
+
+	Add RTL8211F support.
+	[jmcneill, ticket #624]
+
+distrib/sets/lists/modules/md.amd64		1.51
+distrib/sets/lists/modules/md.evbppc.powerpc	1.5
+distrib/sets/lists/modules/md.i386		1.55
+distrib/sets/lists/modules/mi			1.71
+sys/dev/i2c/au8522.c				1.7
+sys/dev/i2c/cx24227.c				1.7
+sys/dev/i2c/dbcool.c				1.42
+sys/dev/i2c/hytp14.c				1.3
+sys/dev/i2c/i2c_exec.c				1.10
+sys/dev/i2c/lg3303.c				1.9
+sys/dev/i2c/mt2131.c				1.5
+sys/dev/i2c/nxt2k.c				1.4
+sys/dev/i2c/sdtemp.c				1.24
+sys/dev/i2c/spdmem_i2c.c			1.10
+sys/dev/i2c/tvpll.c				1.6
+sys/dev/i2c/xc3028.c				1.7
+sys/dev/i2c/xc5k.c				1.6
+sys/dev/i2c/zl10353.c				1.4
+sys/modules/Makefile				1.143
+sys/modules/i2cexec/Makefile			1.1
+
+	Create an i2cexec module (i2c_exec.c) to mirror the dependencies
+	in files.i2c and switch device drivers to depend on "i2cexec"
+	module instead.
+	[jmcneill, ticket #634]
+
+sys/arch/arm/vfp/vfp_init.c			1.43-1.46
+
+	Don't try to catch undefined VFP instructions if we own the
+	FPU.  Let them raise SIGILL.  PR 49754.
+	[martin, ticket #621]
+
+sys/arch/arm/cortex/gic.c			1.16
+
+	Remove trailing whitespace
+	[skrll, ticket #627]
+
+sys/dev/usb/TODO.usbmp				1.9
+sys/dev/usb/uatp.c				1.11
+sys/dev/usb/ucycom.c				1.42
+sys/dev/usb/uhid.c				1.93, 1.94
+sys/dev/usb/uhidev.c				1.63
+sys/dev/usb/uhidev.h				1.17
+sys/dev/usb/ukbd.c				1.130
+sys/dev/usb/uyurex.c				1.10
+
+	Properly protect uhid's sc_q member with sc_lock.  PR 49728.
+	Remove D_MPSAFE from uhid* and all uhid users, as it really
+	needs all the callers to be safe and they're not.
+	Don't take the device lock when stopping the uhidev.  That calls
+	to abort and close pipes, both of which may take an adaptive lock.
+	[mrg, ticket #626]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.202
+sys/arch/sparc64/sparc64/machdep.c		1.281
+
+	Reuse results of "bootpath" and "bootargs" from openfirmware
+	instead of calling openfirmware in each sysctl CPU_BOOT*.
+	[nakayama, ticket #628]
+
+sys/dev/pckbport/synaptics.c			1.33
+
+	Fix clickpad button detection.  PR 49767.
+	[nonaka, ticket #629]
+
+sys/net/npf/npf_ctl.c				1.41
+sys/net/npf/npf_ruleset.c			1.42
+usr.sbin/npf/npfctl/npf_build.c			1.39
+usr.sbin/npf/npfctl/npf_show.c			1.18
+
+	NPF: replace the TAILQ of the dynamic rules with a linked list
+	and fix the inheriting of the active dynamic rules during the
+	reload; also, fix a bug in the insert path by putting a memory
+	barrier in the right place.
+	npfctl:
+	- Fix the filter criteria when to/from is omitted but port used.
+	- Print more user-friendly error if an NPF table has a duplicate
+	  entry.
+	[rmind, ticket #630]
+
+lib/libc/arch/arm/gen/flt_rounds.c		1.5
+lib/libc/arch/mips/gen/flt_rounds.c		1.9
+lib/libc/arch/powerpc/gen/flt_rounds.c		1.12
+lib/libc/arch/powerpc64/gen/flt_rounds.c	1.2
+lib/libc/arch/sh3/gen/flt_rounds.c		1.6
+
+	Call libc's fpgetround.
+	[joerg, ticket #632]
+
+sys/arch/arm/include/mcontext.h			1.17
+
+	Ensure _lwp_setcontext gets consistent language binding.
+	[joerg, ticket #633]
 
