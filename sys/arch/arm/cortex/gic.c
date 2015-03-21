@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.10.2.3 2015/03/15 22:46:38 snj Exp $	*/
+/*	$NetBSD: gic.c,v 1.10.2.4 2015/03/21 17:24:19 snj Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.10.2.3 2015/03/15 22:46:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.10.2.4 2015/03/21 17:24:19 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -270,7 +270,7 @@ armgic_irq_handler(void *tf)
 #if 0
 		const int ipl = armgic_priority_to_ipl(gicc_read(sc, GICC_RPR));
 		KASSERTMSG(panicstr != NULL || ipl == is->is_ipl,
-		    "%s: irq %d: running ipl %d != source ipl %u", 
+		    "%s: irq %d: running ipl %d != source ipl %u",
 		    ci->ci_data.cpu_name, irq, ipl, is->is_ipl);
 #else
 		const int ipl = is->is_ipl;
@@ -332,7 +332,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	    "irq %u: not valid (group[%zu]=0x%08x [0x%08x])",
 	    is->is_irq, group, sc->sc_gic_valid_lines[group],
 	    (uint32_t)__BIT(irq));
-	    
+
 	KASSERTMSG(is->is_type == IST_LEVEL || is->is_type == IST_EDGE,
 	    "irq %u: type %u unsupported", is->is_irq, is->is_type);
 
@@ -342,7 +342,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	uint32_t cfg = gicd_read(sc, cfg_reg);
 
 	if (group > 0) {
-		/* 
+		/*
 		 * There are 4 irqs per TARGETS register.  For now bind
 		 * to the primary cpu.
 		 */
@@ -357,7 +357,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		targets |= 1 << byte_shift;
 		gicd_write(sc, targets_reg, targets);
 
-		/* 
+		/*
 		 * There are 16 irqs per CFG register.  10=EDGE 00=LEVEL
 		 */
 		uint32_t new_cfg = cfg;
@@ -384,7 +384,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 #endif
 	}
 
-	/* 
+	/*
 	 * There are 4 irqs per PRIORITY register.  Map the IPL
 	 * to GIC priority.
 	 */
@@ -436,7 +436,7 @@ static void
 armgic_cpu_init_targets(struct armgic_softc *sc)
 {
 	/*
-	 * Update the mpsafe targets 
+	 * Update the mpsafe targets
 	 */
 	for (size_t irq = 32; irq < sc->sc_pic.pic_maxsources; irq++) {
 		struct intrsource * const is = sc->sc_pic.pic_sources[irq];
