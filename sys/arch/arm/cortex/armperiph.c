@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.4.10.1 2015/03/11 20:22:55 snj Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.4.10.2 2015/03/21 08:51:18 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,6 +64,8 @@ static const struct armperiph_info a5_devices[] = {
 	{ "armscu", 0x0000, 0 },
 	{ "armgic", 0x1000, 0x0100 },
 	{ "a9tmr",  0x0200, 0 },
+	{ "a9wdt",   0x0600, 0 },
+	{ "arml2cc", 0, 0 },	/* external; needs "offset" property */
 	{ "", 0, 0 },
 };
 #endif
@@ -171,6 +173,11 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args * const mb = aux;
 	bus_addr_t cbar = armreg_cbar_read();
 	const struct mpcore_config * const cfg = armperiph_find_config();
+	prop_dictionary_t prop = device_properties(self);
+	uint32_t cbar_override;
+
+	if (prop_dictionary_get_uint32(prop, "cbar", &cbar_override))
+		cbar = (bus_addr_t)cbar_override;
 
 	/*
 	 * The normal mainbus bus space will not work for us so the port's
