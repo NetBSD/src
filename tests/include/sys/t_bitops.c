@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.18 2015/03/21 05:32:07 isaki Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.19 2015/03/21 05:50:19 isaki Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.18 2015/03/21 05:32:07 isaki Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.19 2015/03/21 05:50:19 isaki Exp $");
 
 #include <atf-c.h>
 
@@ -67,7 +67,7 @@ static const struct {
 ATF_TC(bitmap_basic);
 ATF_TC_HEAD(bitmap_basic, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "A basic test of __BITMAP_*");
+	atf_tc_set_md_var(tc, "descr", "A basic test of __BITMAP_*");
 }
 
 ATF_TC_BODY(bitmap_basic, tc)
