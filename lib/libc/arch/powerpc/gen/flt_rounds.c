@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.11 2011/07/10 21:18:47 matt Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.11.20.1 2015/03/21 17:41:38 snj Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,9 +33,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.11 2011/07/10 21:18:47 matt Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.11.20.1 2015/03/21 17:41:38 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <ieeefp.h>
 #include <float.h>
 #include <stdint.h>
