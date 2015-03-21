@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.32 2014/05/23 01:11:29 christos Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.32.2.1 2015/03/21 17:34:21 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.32 2014/05/23 01:11:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.32.2.1 2015/03/21 17:34:21 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,18 +197,46 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 		cmd[0] = PMS_SEND_DEV_STATUS;
 		res |= pckbport_poll_cmd(psc->sc_kbctag,
 		    psc->sc_kbcslot, cmd, 1, 3, resp, 0);
+/*
+ * The following describes response for the
+ * SYNAPTICS_CONTINUED_CAPABILITIES query.
+ *
+ * byte	mask	name			meaning
+ * ----	----	-------			------------
+ * 0	0x01	adjustable threshold	capacitive button sensitivity
+ *					can be adjusted
+ * 0	0x02	report max		query 0x0d gives max coord reported
+ * 0	0x04	clearpad		sensor is ClearPad product
+ * 0	0x08	advanced gesture	not particularly meaningful
+ * 0	0x10	clickpad bit 0		1-button ClickPad
+ * 0	0x60	multifinger mode	identifies firmware finger counting
+ *					(not reporting!) algorithm.
+ *					Not particularly meaningful
+ * 0	0x80	covered pad		W clipped to 14, 15 == pad mostly covered
+ * 1	0x01	clickpad bit 1		2-button ClickPad
+ * 1	0x02	deluxe LED controls	touchpad support LED commands
+ *					ala multimedia control bar
+ * 1	0x04	reduced filtering	firmware does less filtering on
+ *					position data, driver should watch
+ *					for noise.
+ * 1	0x08	image sensor		image sensor tracks 5 fingers, but only
+ *					reports 2.
+ * 1	0x01	uniform clickpad	whole clickpad moves instead of being
+ *					hinged at the top.
+ * 1	0x20	report min		query 0x0f gives min coord reported
+ */
 		if (res == 0) {
-			u_char clickpad_type = (resp[1] & 0x1);
-			clickpad_type |= ((resp[0] >> 4) & 0x1);
+			u_char clickpad_type = (resp[0] & 0x10);
+			clickpad_type |=       (resp[1] & 0x01);
 
 			aprint_debug_dev(psc->sc_dev, "%s: Continued "
 			    "Capabilities 0x%02x 0x%02x 0x%02x.\n", __func__,
 			    resp[0], resp[1], resp[2]);
 			switch (clickpad_type) {
-			case 1:
+			case 0x10:
 				sc->flags |= SYN_FLAG_HAS_ONE_BUTTON_CLICKPAD;
 				break;
-			case 2:
+			case 0x01:
 				sc->flags |= SYN_FLAG_HAS_TWO_BUTTON_CLICKPAD;
 				break;
 			default:
