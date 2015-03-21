@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.108.10.1 2014/11/14 13:26:46 martin Exp $ */
+/* $NetBSD: wsconsio.h,v 1.108.10.2 2015/03/21 08:46:05 snj Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -335,6 +335,7 @@ struct wsmouse_repeat {
 #define WSDISPLAY_TYPE_WINDERMERE 58	/* SoC for EPOC32 Series 5mx */
 #define WSDISPLAY_TYPE_CLPS711X	59	/* CL PS-711x  */
 #define WSDISPLAY_TYPE_ALLWINNER 60	/* Allwinner ARM SoC */
+#define	WSDISPLAY_TYPE_MESON	62	/* Amlogic Meson ARM Soc */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
