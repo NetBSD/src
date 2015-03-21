@@ -1,4 +1,4 @@
-/*	$NetBSD: slurm.c,v 1.1.18.2 2015/03/19 17:26:43 skrll Exp $ */
+/*	$NetBSD: slurm.c,v 1.1.18.3 2015/03/21 10:14:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slurm.c,v 1.1.18.2 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slurm.c,v 1.1.18.3 2015/03/21 10:14:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,7 +102,7 @@ static const struct radio_hw_if slurm_radio = {
 CFATTACH_DECL_NEW(slurm, sizeof(struct slurm_softc),
     slurm_match, slurm_attach, slurm_detach, NULL);
 
-static int 
+static int
 slurm_match(device_t parent, cfdata_t match, void *aux)
 {
 	const struct usbif_attach_arg * const uaa = aux;
@@ -117,7 +117,7 @@ slurm_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-static void 
+static void
 slurm_attach(device_t parent, device_t self, void *aux)
 {
 	struct slurm_softc * const sc = device_private(self);
@@ -145,7 +145,7 @@ slurm_attach(device_t parent, device_t self, void *aux)
 	radio_attach_mi(&slurm_radio, sc, self);
 }
 
-static int 
+static int
 slurm_detach(device_t self, int flags)
 {
 	struct slurm_softc * const sc = device_private(self);
@@ -202,7 +202,7 @@ static int
 slurm_search(void *v, int f)
 {
 	struct slurm_softc * const sc = v;
-	
+
 	return slurm_si470x_search(sc, f);
 }
 

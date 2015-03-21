@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.9.14.3 2015/03/21 10:07:15 skrll Exp $ */
+/*	$NetBSD: uyurex.c,v 1.9.14.4 2015/03/21 10:14:46 skrll Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.3 2015/03/21 10:07:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.4 2015/03/21 10:14:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -113,7 +113,7 @@ extern struct cfdriver uyurex_cd;
 CFATTACH_DECL_NEW(uyurex, sizeof(struct uyurex_softc),
     uyurex_match, uyurex_attach, uyurex_detach, uyurex_activate);
 
-int 
+int
 uyurex_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
@@ -124,7 +124,7 @@ uyurex_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_VENDOR_PRODUCT);
 }
 
-void 
+void
 uyurex_attach(device_t parent, device_t self, void *aux)
 {
 	struct uyurex_softc *sc = device_private(self);
@@ -196,7 +196,7 @@ uyurex_attach(device_t parent, device_t self, void *aux)
 	uyurex_set_mode(sc, 0);
 }
 
-int 
+int
 uyurex_detach(device_t self, int flags)
 {
 	struct uyurex_softc *sc = device_private(self);
