@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.41.2.5 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.41.2.6 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.5 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.6 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ ucycom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	return ucycom_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
+	return ucycom_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 

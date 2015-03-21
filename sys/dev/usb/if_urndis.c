@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.3 2015/03/19 17:26:43 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.4 2015/03/21 11:33:37 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.3 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1291,15 +1291,13 @@ urndis_txeof(struct usbd_xfer *xfer,
 static int
 urndis_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg		*uaa;
+	struct usbif_attach_arg		*uiaa = aux;
 	usb_interface_descriptor_t	*id;
 
-	uaa = aux;
-
-	if (!uaa->iface)
+	if (!uiaa->uiaa_iface)
 		return UMATCH_NONE;
 
-	id = usbd_get_interface_descriptor(uaa->iface);
+	id = usbd_get_interface_descriptor(uiaa->uiaa_iface);
 	if (id == NULL)
 		return UMATCH_NONE;
 
@@ -1308,7 +1306,7 @@ urndis_match(device_t parent, cfdata_t match, void *aux)
 	    id->bInterfaceProtocol == UIPROTO_RNDIS)
 		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 
-	return usb_lookup(urndis_devs, uaa->vendor, uaa->product) != NULL ?
+	return usb_lookup(urndis_devs, uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -1316,7 +1314,7 @@ static void
 urndis_attach(device_t parent, device_t self, void *aux)
 {
 	struct urndis_softc		*sc;
-	struct usbif_attach_arg		*uaa;
+	struct usbif_attach_arg		*uiaa;
 	struct ifnet			*ifp;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -1334,18 +1332,18 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	char				*devinfop;
 
 	sc = device_private(self);
-	uaa = aux;
+	uiaa = aux;
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uiaa->uiaa_device;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	sc->sc_iface_ctl = uaa->iface;
+	sc->sc_iface_ctl = uiaa->uiaa_iface;
 	id = usbd_get_interface_descriptor(sc->sc_iface_ctl);
 	if_ctl = id->bInterfaceNumber;
 	sc->sc_ifaceno_ctl = if_ctl;
@@ -1373,14 +1371,14 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	} else {
 		DPRINTF(("urndis_attach: union interface: ctl %u, data %u\n",
 		    if_ctl, if_data));
-		for (i = 0; i < uaa->nifaces; i++) {
-			if (uaa->ifaces[i] != NULL) {
+		for (i = 0; i < uiaa->uiaa_nifaces; i++) {
+			if (uiaa->uiaa_ifaces[i] != NULL) {
 				id = usbd_get_interface_descriptor(
-				    uaa->ifaces[i]);
+				    uiaa->uiaa_ifaces[i]);
 				if (id != NULL && id->bInterfaceNumber ==
 				    if_data) {
-					sc->sc_iface_data = uaa->ifaces[i];
-					uaa->ifaces[i] = NULL;
+					sc->sc_iface_data = uiaa->uiaa_ifaces[i];
+					uiaa->uiaa_ifaces[i] = NULL;
 				}
 			}
 		}

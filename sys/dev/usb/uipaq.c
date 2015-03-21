@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.19.14.5 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.19.14.6 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.5 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.6 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,9 +142,9 @@ uipaq_match(device_t parent, cfdata_t match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(20,("uipaq: vendor=0x%x, product=0x%x\n",
-	    uaa->vendor, uaa->product));
+	    uaa->uaa_vendor, uaa->uaa_product));
 
-	return uipaq_lookup(uaa->vendor, uaa->product) != NULL ?
+	return uipaq_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -153,7 +153,7 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 {
 	struct uipaq_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -189,7 +189,7 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	sc->sc_flags = uipaq_lookup(uaa->vendor, uaa->product)->uv_flags;
+	sc->sc_flags = uipaq_lookup(uaa->uaa_vendor, uaa->uaa_product)->uv_flags;
 
 	id = usbd_get_interface_descriptor(iface);
 

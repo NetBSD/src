@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.47.4.5 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.47.4.6 2015/03/21 11:33:37 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.5 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.6 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -206,7 +206,7 @@ upl_match(device_t parent, cfdata_t match, void *aux)
 	struct upl_type			*t;
 
 	for (t = sc_devs; t->upl_vid != 0; t++)
-		if (uaa->vendor == t->upl_vid && uaa->product == t->upl_did)
+		if (uaa->uaa_vendor == t->upl_vid && uaa->uaa_product == t->upl_did)
 			return UMATCH_VENDOR_PRODUCT;
 
 	return UMATCH_NONE;
@@ -219,7 +219,7 @@ upl_attach(device_t parent, device_t self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	char			*devinfop;
 	int			s;
-	struct usbd_device *	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	struct usbd_interface *	iface;
 	usbd_status		err;
 	struct ifnet		*ifp;
@@ -246,8 +246,8 @@ upl_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_udev = dev;
-	sc->sc_product = uaa->product;
-	sc->sc_vendor = uaa->vendor;
+	sc->sc_product = uaa->uaa_product;
+	sc->sc_vendor = uaa->uaa_vendor;
 
 	err = usbd_device2interface_handle(dev, UPL_IFACE_IDX, &iface);
 	if (err) {

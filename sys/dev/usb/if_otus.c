@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.25.6.3 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.25.6.4 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.3 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -597,9 +597,9 @@ otus_match(device_t parent, cfdata_t match, void *aux)
 
 	DPRINTFN(DBG_FN, DBG_NO_SC,
 	    "otus_match: vendor=0x%x product=0x%x revision=0x%x\n",
-		    uaa->vendor, uaa->product, uaa->release);
+		    uaa->uaa_vendor, uaa->uaa_product, uaa->uaa_release);
 
-	return usb_lookup(otus_devs, uaa->vendor, uaa->product) != NULL ?
+	return usb_lookup(otus_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -617,7 +617,7 @@ otus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	uaa = aux;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	aprint_naive("\n");
 	aprint_normal("\n");

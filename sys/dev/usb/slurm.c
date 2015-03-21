@@ -1,4 +1,4 @@
-/*	$NetBSD: slurm.c,v 1.1.18.3 2015/03/21 10:14:45 skrll Exp $ */
+/*	$NetBSD: slurm.c,v 1.1.18.4 2015/03/21 11:33:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slurm.c,v 1.1.18.3 2015/03/21 10:14:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slurm.c,v 1.1.18.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -105,12 +105,12 @@ CFATTACH_DECL_NEW(slurm, sizeof(struct slurm_softc),
 static int
 slurm_match(device_t parent, cfdata_t match, void *aux)
 {
-	const struct usbif_attach_arg * const uaa = aux;
+	const struct usbif_attach_arg * const uiaa = aux;
 
-	if (uaa->ifaceno != 2)
+	if (uiaa->uiaa_ifaceno != 2)
 		return UMATCH_NONE;
 
-	if (usb_lookup(slurm_devs, uaa->vendor, uaa->product) != NULL) {
+	if (usb_lookup(slurm_devs, uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL) {
 		return UMATCH_VENDOR_PRODUCT;
 	}
 
@@ -121,11 +121,11 @@ static void
 slurm_attach(device_t parent, device_t self, void *aux)
 {
 	struct slurm_softc * const sc = device_private(self);
-	const struct usbif_attach_arg * const uaa = aux;
+	const struct usbif_attach_arg * const uiaa = aux;
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
-	sc->sc_uif = uaa->iface;
+	sc->sc_udev = uiaa->uiaa_device;
+	sc->sc_uif = uiaa->uiaa_iface;
 
 	aprint_normal("\n");
 	aprint_naive("\n");

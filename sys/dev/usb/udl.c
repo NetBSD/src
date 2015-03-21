@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.11.6.3 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.11.6.4 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.3 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -334,7 +334,7 @@ udl_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (usb_lookup(udl_devs, uaa->vendor, uaa->product) != NULL)
+	if (usb_lookup(udl_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL)
 		return UMATCH_VENDOR_PRODUCT;
 
 	return UMATCH_NONE;
@@ -354,7 +354,7 @@ udl_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	aprint_normal_dev(sc->sc_dev, "%s\n", devinfop);

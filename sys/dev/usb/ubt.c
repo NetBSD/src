@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51.4.4 2015/03/21 10:14:46 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.4.5 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.4 2015/03/21 10:14:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.5 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -323,12 +323,12 @@ ubt_match(device_t parent, cfdata_t match, void *aux)
 
 	DPRINTFN(50, "ubt_match\n");
 
-	if ((dev = ubt_lookup(uaa->vendor, uaa->product)) != NULL)
+	if ((dev = ubt_lookup(uaa->uaa_vendor, uaa->uaa_product)) != NULL)
 		return dev->match;
 
-	if (uaa->class == UDCLASS_WIRELESS
-	    && uaa->subclass == UDSUBCLASS_RF
-	    && uaa->proto == UDPROTO_BLUETOOTH)
+	if (uaa->uaa_class == UDCLASS_WIRELESS
+	    && uaa->uaa_subclass == UDSUBCLASS_RF
+	    && uaa->uaa_proto == UDPROTO_BLUETOOTH)
 		return UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO;
 
 	return UMATCH_NONE;
@@ -349,7 +349,7 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(50, "ubt_attach: sc=%p\n", sc);
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	MBUFQ_INIT(&sc->sc_cmd_queue);
 	MBUFQ_INIT(&sc->sc_aclwr_queue);

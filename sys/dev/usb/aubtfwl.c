@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.5.10.4 2015/03/19 17:26:42 skrll Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.5.10.5 2015/03/21 11:33:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.4 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.5 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -67,11 +67,11 @@ aubtfwl_match(device_t parent, cfdata_t match, void *aux)
 {
 	const struct usb_attach_arg * const uaa = aux;
 
-	if (usb_lookup(ar3k_devs, uaa->vendor, uaa->product))
+	if (usb_lookup(ar3k_devs, uaa->uaa_vendor, uaa->uaa_product))
 		return UMATCH_VENDOR_PRODUCT;
 
-	if (usb_lookup(ar3k12_devs, uaa->vendor, uaa->product)) {
-		return (UGETW(uaa->device->ud_ddesc.bcdDevice) > 1)?
+	if (usb_lookup(ar3k12_devs, uaa->uaa_vendor, uaa->uaa_product)) {
+		return (UGETW(uaa->uaa_device->ud_ddesc.bcdDevice) > 1)?
 			UMATCH_NONE : UMATCH_VENDOR_PRODUCT;
 	}
 
@@ -85,10 +85,10 @@ aubtfwl_attach(device_t parent, device_t self, void *aux)
 	struct aubtfwl_softc * const sc = device_private(self);
 	aprint_naive("\n");
 	aprint_normal("\n");
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 	sc->sc_flags = 0;
 
-	if (usb_lookup(ar3k12_devs, uaa->vendor, uaa->product))
+	if (usb_lookup(ar3k12_devs, uaa->uaa_vendor, uaa->uaa_product))
 		sc->sc_flags |= AUBT_IS_AR3012;
 
 	config_mountroot(self, aubtfwl_attach_hook);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.38.14.3 2015/03/19 17:26:42 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.38.14.4 2015/03/21 11:33:37 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.3 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.4 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -120,12 +120,12 @@ CFATTACH_DECL_NEW(cdce, sizeof(struct cdce_softc), cdce_match, cdce_attach,
 int
 cdce_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
-	if (cdce_lookup(uaa->vendor, uaa->product) != NULL)
+	if (cdce_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL)
 		return UMATCH_VENDOR_PRODUCT;
 
-	if (uaa->class == UICLASS_CDC && uaa->subclass ==
+	if (uiaa->uiaa_class == UICLASS_CDC && uiaa->uiaa_subclass ==
 	    UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL)
 		return UMATCH_IFACECLASS_GENERIC;
 
@@ -136,11 +136,11 @@ void
 cdce_attach(device_t parent, device_t self, void *aux)
 {
 	struct cdce_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	char				*devinfop;
 	int				 s;
 	struct ifnet			*ifp;
-	struct usbd_device *		 dev = uaa->device;
+	struct usbd_device	        *dev = uiaa->uiaa_device;
 	const struct cdce_type		*t;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -161,10 +161,10 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	sc->cdce_udev = uaa->device;
-	sc->cdce_ctl_iface = uaa->iface;
+	sc->cdce_udev = uiaa->uiaa_device;
+	sc->cdce_ctl_iface = uiaa->uiaa_iface;
 
-	t = cdce_lookup(uaa->vendor, uaa->product);
+	t = cdce_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product);
 	if (t)
 		sc->cdce_flags = t->cdce_flags;
 
@@ -179,14 +179,14 @@ cdce_attach(device_t parent, device_t self, void *aux)
 		}
 		data_ifcno = ud->bSlaveInterface[0];
 
-		for (i = 0; i < uaa->nifaces; i++) {
-			if (uaa->ifaces[i] != NULL) {
+		for (i = 0; i < uiaa->uiaa_nifaces; i++) {
+			if (uiaa->uiaa_ifaces[i] != NULL) {
 				id = usbd_get_interface_descriptor(
-				    uaa->ifaces[i]);
+				    uiaa->uiaa_ifaces[i]);
 				if (id != NULL && id->bInterfaceNumber ==
 				    data_ifcno) {
-					sc->cdce_data_iface = uaa->ifaces[i];
-					uaa->ifaces[i] = NULL;
+					sc->cdce_data_iface = uiaa->uiaa_ifaces[i];
+					uiaa->uiaa_ifaces[i] = NULL;
 				}
 			}
 		}

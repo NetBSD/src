@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.31.2.8 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31.2.9 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.8 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.9 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,33 +570,33 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 	/*
 	 * Huawei changes product when it is configured as a modem.
 	 */
-	switch (uaa->vendor) {
+	switch (uaa->uaa_vendor) {
 	case USB_VENDOR_HUAWEI:
-		if (uaa->product == USB_PRODUCT_HUAWEI_K3765)
+		if (uaa->uaa_product == USB_PRODUCT_HUAWEI_K3765)
 			return UMATCH_NONE;
 
-		switch (uaa->product) {
+		switch (uaa->uaa_product) {
 		case USB_PRODUCT_HUAWEI_E1750INIT:
 		case USB_PRODUCT_HUAWEI_K3765INIT:
-			return u3g_huawei_k3765_reinit(uaa->device);
+			return u3g_huawei_k3765_reinit(uaa->uaa_device);
 			break;
 		case USB_PRODUCT_HUAWEI_E171INIT:
-			return u3g_huawei_e171_reinit(uaa->device);
+			return u3g_huawei_e171_reinit(uaa->uaa_device);
 			break;
 		case USB_PRODUCT_HUAWEI_E353INIT:
-			return u3g_huawei_e353_reinit(uaa->device);
+			return u3g_huawei_e353_reinit(uaa->uaa_device);
 			break;
 		default:
-			return u3g_huawei_reinit(uaa->device);
+			return u3g_huawei_reinit(uaa->uaa_device);
 			break;
 		}
 		break;
 
 	case USB_VENDOR_NOVATEL2:
-		switch (uaa->product){
+		switch (uaa->uaa_product){
 		case USB_PRODUCT_NOVATEL2_MC950D_DRIVER:
 		case USB_PRODUCT_NOVATEL2_U760_DRIVER:
-			return u3g_bulk_scsi_eject(uaa->device);
+			return u3g_bulk_scsi_eject(uaa->uaa_device);
 			break;
 		default:
 			break;
@@ -604,21 +604,21 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 		break;
 
 	case USB_VENDOR_SIERRA:
-		if (uaa->product == USB_PRODUCT_SIERRA_INSTALLER)
-			return u3g_sierra_reinit(uaa->device);
+		if (uaa->uaa_product == USB_PRODUCT_SIERRA_INSTALLER)
+			return u3g_sierra_reinit(uaa->uaa_device);
 		break;
 
 	case USB_VENDOR_QUALCOMM:
-		if (uaa->product == USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE)
-			return u3g_bulk_scsi_eject(uaa->device);
+		if (uaa->uaa_product == USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE)
+			return u3g_bulk_scsi_eject(uaa->uaa_device);
 		break;
 
 	case USB_VENDOR_ZTE:
-		switch (uaa->product){
+		switch (uaa->uaa_product){
 		case USB_PRODUCT_ZTE_INSTALLER:
 		case USB_PRODUCT_ZTE_MF820D_INSTALLER:
-			(void)u3g_bulk_ata_eject(uaa->device);
-			(void)u3g_bulk_scsi_eject(uaa->device);
+			(void)u3g_bulk_ata_eject(uaa->uaa_device);
+			(void)u3g_bulk_scsi_eject(uaa->uaa_device);
 			return UMATCH_HIGHEST;
 		default:
 			break;
@@ -626,8 +626,8 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 		break;
 
 	case USB_VENDOR_4GSYSTEMS:
-		if (uaa->product == USB_PRODUCT_4GSYSTEMS_XSSTICK_P14_INSTALLER)
-			return u3g_4gsystems_reinit(uaa->device);
+		if (uaa->uaa_product == USB_PRODUCT_4GSYSTEMS_XSSTICK_P14_INSTALLER)
+			return u3g_4gsystems_reinit(uaa->uaa_device);
 		break;
 
 	default:
@@ -645,8 +645,8 @@ u3ginit_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Switching to 3G mode\n");
 
-	if (uaa->vendor == USB_VENDOR_NOVATEL2) {
-		switch (uaa->product) {
+	if (uaa->uaa_vendor == USB_VENDOR_NOVATEL2) {
+		switch (uaa->uaa_product) {
 	    	case USB_PRODUCT_NOVATEL2_MC950D_DRIVER:
 	    	case USB_PRODUCT_NOVATEL2_U760_DRIVER:
 			/* About to disappear... */
@@ -658,7 +658,7 @@ u3ginit_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Move the device into the configured state. */
-	(void) usbd_set_config_index(uaa->device, 0, 1);
+	(void) usbd_set_config_index(uaa->uaa_device, 0, 1);
 }
 
 static int
@@ -678,15 +678,16 @@ u3ginit_detach(device_t self, int flags)
 static int
 u3g_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usbd_status error;
 
-	if (!usb_lookup(u3g_devs, uaa->vendor, uaa->product))
+	if (!usb_lookup(u3g_devs, uiaa->uiaa_vendor, uiaa->uiaa_product))
 		return UMATCH_NONE;
 
-	error = usbd_device2interface_handle(uaa->device, uaa->ifaceno, &iface);
+	error = usbd_device2interface_handle(uiaa->uiaa_device,
+	    uiaa->uiaa_ifaceno, &iface);
 	if (error) {
 		printf("u3g_match: failed to get interface, err=%s\n",
 		    usbd_errstr(error));
@@ -703,7 +704,8 @@ u3g_match(device_t parent, cfdata_t match, void *aux)
 	 * Huawei modems use the vendor-specific class for all interfaces,
 	 * both tty and CDC NCM, which we should avoid attaching to.
 	 */
-	if (uaa->vendor == USB_VENDOR_HUAWEI && id->bInterfaceSubClass == 2 &&
+	if (uiaa->uiaa_vendor == USB_VENDOR_HUAWEI &&
+	    id->bInterfaceSubClass == 2 &&
 	    (id->bInterfaceProtocol & 0xf) == 6)	/* 0x16, 0x46, 0x76 */
 		return UMATCH_NONE;
 
@@ -720,8 +722,8 @@ static void
 u3g_attach(device_t parent, device_t self, void *aux)
 {
 	struct u3g_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_device *dev = uiaa->uiaa_device;
 	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -736,7 +738,7 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dying = false;
 	sc->sc_udev = dev;
 
-	error = usbd_device2interface_handle(dev, uaa->ifaceno, &iface);
+	error = usbd_device2interface_handle(dev, uiaa->uiaa_ifaceno, &iface);
 	if (error) {
 		aprint_error_dev(self, "failed to get interface, err=%s\n",
 		    usbd_errstr(error));
@@ -758,7 +760,7 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	uca.bulkin = uca.bulkout = -1;
 
 
-	sc->sc_ifaceno = uaa->ifaceno;
+	sc->sc_ifaceno = uiaa->uiaa_ifaceno;
 	intr_address = -1;
 	intr_size = 0;
 

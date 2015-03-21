@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.44.14.3 2015/03/19 17:26:43 skrll Exp $ */
+/*	$NetBSD: if_ural.c,v 1.44.14.4 2015/03/21 11:33:37 skrll Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.3 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -355,7 +355,7 @@ ural_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (usb_lookup(ural_devs, uaa->vendor, uaa->product) != NULL) ?
+	return (usb_lookup(ural_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -373,7 +373,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 	int i;
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	aprint_naive("\n");
 	aprint_normal("\n");

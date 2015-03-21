@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.38.6.6 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uirda.c,v 1.38.6.7 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.6 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.7 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,16 +154,16 @@ CFATTACH_DECL2_NEW(uirda, sizeof(struct uirda_softc), uirda_match,
 int
 uirda_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
 	DPRINTFN(50,("uirda_match\n"));
 
-	if (uirda_lookup(uaa->vendor, uaa->product) != NULL)
+	if (uirda_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL)
 		return UMATCH_VENDOR_PRODUCT;
 
-	if (uaa->class == UICLASS_APPL_SPEC &&
-	    uaa->subclass == UISUBCLASS_IRDA &&
-	    uaa->proto == UIPROTO_IRDA)
+	if (uiaa->uiaa_class == UICLASS_APPL_SPEC &&
+	    uiaa->uiaa_subclass == UISUBCLASS_IRDA &&
+	    uiaa->uiaa_proto == UIPROTO_IRDA)
 		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 	return UMATCH_NONE;
 }
@@ -172,9 +172,9 @@ void
 uirda_attach(device_t parent, device_t self, void *aux)
 {
 	struct uirda_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	struct usbd_device *	dev = uaa->device;
-	struct usbd_interface *	iface = uaa->iface;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_device *	dev = uiaa->uiaa_device;
+	struct usbd_interface  *iface = uiaa->uiaa_iface;
 	char			*devinfop;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status		err;

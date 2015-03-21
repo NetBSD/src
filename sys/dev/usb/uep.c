@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.19.6.3 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uep.c,v 1.19.6.4 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.19.6.3 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.19.6.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,13 +107,13 @@ uep_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if ((uaa->vendor == USB_VENDOR_EGALAX) && (
-		(uaa->product == USB_PRODUCT_EGALAX_TPANEL)
-		|| (uaa->product == USB_PRODUCT_EGALAX_TPANEL2)))
+	if ((uaa->uaa_vendor == USB_VENDOR_EGALAX) && (
+		(uaa->uaa_product == USB_PRODUCT_EGALAX_TPANEL)
+		|| (uaa->uaa_product == USB_PRODUCT_EGALAX_TPANEL2)))
 		return UMATCH_VENDOR_PRODUCT;
 
-	if ((uaa->vendor == USB_VENDOR_EGALAX2)
-	&&  (uaa->product == USB_PRODUCT_EGALAX2_TPANEL))
+	if ((uaa->uaa_vendor == USB_VENDOR_EGALAX2)
+	&&  (uaa->uaa_product == USB_PRODUCT_EGALAX2_TPANEL))
 		return UMATCH_VENDOR_PRODUCT;
 
 
@@ -125,7 +125,7 @@ uep_attach(device_t parent, device_t self, void *aux)
 {
 	struct uep_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;

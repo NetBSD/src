@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.41.2.7 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41.2.8 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.7 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.8 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -469,14 +469,14 @@ static void print_vs_format_dv_descriptor(
 int
 uvideo_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
         /* TODO: May need to change in the future to work with
          * Interface Association Descriptor. */
 
 	/* Trigger on the Video Control Interface which must be present */
-	if (uaa->class == UICLASS_VIDEO &&
-	    uaa->subclass == UISUBCLASS_VIDEOCONTROL)
+	if (uiaa->uiaa_class == UICLASS_VIDEO &&
+	    uiaa->uiaa_subclass == UISUBCLASS_VIDEOCONTROL)
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
 	return UMATCH_NONE;
@@ -486,7 +486,7 @@ void
 uvideo_attach(device_t parent, device_t self, void *aux)
 {
 	struct uvideo_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	usbd_desc_iter_t iter;
 	const usb_interface_descriptor_t *ifdesc;
 	struct uvideo_stream *vs;
@@ -495,14 +495,14 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	sc->sc_devname = usbd_devinfo_alloc(uaa->device, 0);
+	sc->sc_devname = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->sc_devname);
 
-	sc->sc_udev = uaa->device;
-	sc->sc_iface = uaa->iface;
-	sc->sc_ifaceno = uaa->ifaceno;
+	sc->sc_udev = uiaa->uiaa_device;
+	sc->sc_iface = uiaa->uiaa_iface;
+	sc->sc_ifaceno = uiaa->uiaa_ifaceno;
 	sc->sc_dying = 0;
 	sc->sc_state = UVIDEO_STATE_CLOSED;
 	SLIST_INIT(&sc->sc_stream_list);

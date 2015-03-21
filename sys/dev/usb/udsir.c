@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1.14.4 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.14.5 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.4 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.5 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,12 +158,12 @@ static struct irframe_methods const udsir_methods = {
 static int
 udsir_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
 	DPRINTFN(50, ("udsir_match\n"));
 
-	if (uaa->vendor == USB_VENDOR_KINGSUN &&
-	    uaa->product == USB_PRODUCT_KINGSUN_IRDA)
+	if (uiaa->uiaa_vendor == USB_VENDOR_KINGSUN &&
+	    uiaa->uiaa_product == USB_PRODUCT_KINGSUN_IRDA)
 		return UMATCH_VENDOR_PRODUCT;
 
 	return UMATCH_NONE;
@@ -173,9 +173,9 @@ static void
 udsir_attach(device_t parent, device_t self, void *aux)
 {
 	struct udsir_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	struct usbd_device * dev = uaa->device;
-	struct usbd_interface * iface = uaa->iface;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_device *dev = uiaa->uiaa_device;
+	struct usbd_interface * iface = uiaa->uiaa_iface;
 	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	uint8_t epcount;

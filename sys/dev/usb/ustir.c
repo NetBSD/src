@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.33.10.7 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.33.10.8 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.7 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.8 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,8 +223,8 @@ ustir_match(device_t parent, cfdata_t match, void *aux)
 
 	DPRINTFN(50,("ustir_match\n"));
 
-	if (uaa->vendor == USB_VENDOR_SIGMATEL &&
-	    uaa->product == USB_PRODUCT_SIGMATEL_IRDA)
+	if (uaa->uaa_vendor == USB_VENDOR_SIGMATEL &&
+	    uaa->uaa_product == USB_PRODUCT_SIGMATEL_IRDA)
 		return UMATCH_VENDOR_PRODUCT;
 
 	return UMATCH_NONE;
@@ -235,7 +235,7 @@ ustir_attach(device_t parent, device_t self, void *aux)
 {
 	struct ustir_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	struct usbd_interface *iface;
 	char *devinfop;
 	usb_endpoint_descriptor_t *ed;

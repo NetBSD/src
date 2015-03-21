@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.66.4.3 2014/12/23 11:24:32 skrll Exp $	*/
+/*	$NetBSD: umodem.c,v 1.66.4.4 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.66.4.3 2014/12/23 11:24:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.66.4.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,22 +94,22 @@ CFATTACH_DECL_NEW(umodem, sizeof(struct umodem_softc), umodem_match,
 int
 umodem_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	usb_interface_descriptor_t *id;
 	int cm, acm;
 
-	id = usbd_get_interface_descriptor(uaa->iface);
-	if (uaa->subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL &&
+	id = usbd_get_interface_descriptor(uiaa->uiaa_iface);
+	if (uiaa->uiaa_subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL &&
 	    (id->bInterfaceClass == UICLASS_CDC_DATA &&
 	     id->bInterfaceSubClass == UISUBCLASS_DATA))
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
-	if (uaa->class != UICLASS_CDC ||
-	    uaa->subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
-	    !(uaa->proto == UIPROTO_CDC_NOCLASS || uaa->proto == UIPROTO_CDC_AT))
+	if (uiaa->uiaa_class != UICLASS_CDC ||
+	    uiaa->uiaa_subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
+	    !(uiaa->uiaa_proto == UIPROTO_CDC_NOCLASS || uiaa->uiaa_proto == UIPROTO_CDC_AT))
 		return UMATCH_NONE;
 
-	if (umodem_get_caps(uaa->device, &cm, &acm, id) == -1)
+	if (umodem_get_caps(uiaa->uiaa_device, &cm, &acm, id) == -1)
 		return UMATCH_NONE;
 
 	return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
@@ -119,7 +119,7 @@ void
 umodem_attach(device_t parent, device_t self, void *aux)
 {
 	struct umodem_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	struct ucom_attach_args uca;
 
 	uca.portno = UCOM_UNK_PORTNO;
@@ -129,7 +129,7 @@ umodem_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler");
 
-	if (umodem_common_attach(self, sc, uaa, &uca))
+	if (umodem_common_attach(self, sc, uiaa, &uca))
 		return;
 	return;
 }

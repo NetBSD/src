@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.4.5 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.4.6 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.5 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.6 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,14 +90,14 @@ CFATTACH_DECL2_NEW(uhidev, sizeof(struct uhidev_softc), uhidev_match,
 int
 uhidev_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
 	/* Game controllers in "XInput" mode */
-	if (USBIF_IS_XINPUT(uaa))
+	if (USBIF_IS_XINPUT(uiaa))
 		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
-	if (uaa->class != UICLASS_HID)
+	if (uiaa->uiaa_class != UICLASS_HID)
 		return UMATCH_NONE;
-	if (usbd_get_quirks(uaa->device)->uq_flags & UQ_HID_IGNORE)
+	if (usbd_get_quirks(uiaa->uiaa_device)->uq_flags & UQ_HID_IGNORE)
 		return UMATCH_NONE;
 	return UMATCH_IFACECLASS_GENERIC;
 }
@@ -106,8 +106,8 @@ void
 uhidev_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhidev_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	struct usbd_interface *iface = uaa->iface;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_interface *iface = uiaa->uiaa_iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct uhidev_attach_arg uha;
@@ -123,7 +123,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	int locs[UHIDBUSCF_NLOCS];
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uiaa->uiaa_device;
 	sc->sc_iface = iface;
 
 	aprint_naive("\n");
@@ -133,7 +133,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 
 	id = usbd_get_interface_descriptor(iface);
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal_dev(self, "%s, iclass %d/%d\n",
 	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
@@ -194,11 +194,11 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 
 	/* XXX need to extend this */
 	descptr = NULL;
-	if (uaa->vendor == USB_VENDOR_WACOM) {
+	if (uiaa->uiaa_vendor == USB_VENDOR_WACOM) {
 		static uByte reportbuf[] = {2, 2, 2};
 
 		/* The report descriptor for the Wacom Graphire is broken. */
-		switch (uaa->product) {
+		switch (uiaa->uiaa_product) {
 		case USB_PRODUCT_WACOM_GRAPHIRE:
 		case USB_PRODUCT_WACOM_GRAPHIRE2:
 		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
@@ -209,7 +209,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 			 * feature report ID 2 before it'll start
 			 * returning digitizer data.
 			 */
-			usbd_set_report(uaa->iface, UHID_FEATURE_REPORT, 2,
+			usbd_set_report(uiaa->uiaa_iface, UHID_FEATURE_REPORT, 2,
 			    &reportbuf, sizeof reportbuf);
 
 			size = sizeof uhid_graphire3_4x5_report_descr;
@@ -220,7 +220,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 			break;
 		}
 	}
-	if (USBIF_IS_XINPUT(uaa)) {
+	if (USBIF_IS_XINPUT(uiaa)) {
 		size = sizeof uhid_xinput_report_descr;
 		descptr = uhid_xinput_report_descr;
 	}
@@ -235,7 +235,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		}
 	} else {
 		desc = NULL;
-		err = usbd_read_report_desc(uaa->iface, &desc, &size);
+		err = usbd_read_report_desc(uiaa->uiaa_iface, &desc, &size);
 	}
 	if (err) {
 		aprint_error_dev(self, "no report descriptor\n");
@@ -243,8 +243,8 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (uaa->vendor == USB_VENDOR_HOSIDEN &&
-	    uaa->product == USB_PRODUCT_HOSIDEN_PPP) {
+	if (uiaa->uiaa_vendor == USB_VENDOR_HOSIDEN &&
+	    uiaa->uiaa_product == USB_PRODUCT_HOSIDEN_PPP) {
 		static uByte reportbuf[] = { 1 };
 		/*
 		 *  This device was sold by Konami with its ParaParaParadise
@@ -252,12 +252,12 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		 *  before it will send any reports.
 		 */
 
-		usbd_set_report(uaa->iface, UHID_FEATURE_REPORT, 0,
+		usbd_set_report(uiaa->uiaa_iface, UHID_FEATURE_REPORT, 0,
 		    &reportbuf, sizeof reportbuf);
 	}
 
-	if (uaa->vendor == USB_VENDOR_LOGITECH &&
-	    uaa->product == USB_PRODUCT_LOGITECH_CBT44 && size == 0xb1) {
+	if (uiaa->uiaa_vendor == USB_VENDOR_LOGITECH &&
+	    uiaa->uiaa_product == USB_PRODUCT_LOGITECH_CBT44 && size == 0xb1) {
 		uint8_t *data = desc;
 		/*
 		 * This device has a odd USAGE_MINIMUM value that would
@@ -274,8 +274,8 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	 * Enable the Six Axis and DualShock 3 controllers.
 	 * See http://ps3.jim.sh/sixaxis/usb/
 	 */
-	if (uaa->vendor == USB_VENDOR_SONY &&
-	    uaa->product == USB_PRODUCT_SONY_PS3CONTROLLER) {
+	if (uiaa->uiaa_vendor == USB_VENDOR_SONY &&
+	    uiaa->uiaa_product == USB_PRODUCT_SONY_PS3CONTROLLER) {
 		usb_device_request_t req;
 		char data[17];
 		int actlen;
@@ -293,7 +293,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	sc->sc_repdesc = desc;
 	sc->sc_repdesc_size = size;
 
-	uha.uaa = uaa;
+	uha.uiaa = uiaa;
 	nrepid = uhidev_maxrepid(desc, size);
 	if (nrepid < 0)
 		return;

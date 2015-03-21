@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.42.4.6 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: urio.c,v 1.42.4.7 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.42.4.6 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.42.4.7 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ urio_match(device_t parent, cfdata_t match, void *aux)
 
 	DPRINTFN(50,("urio_match\n"));
 
-	return urio_lookup(uaa->vendor, uaa->product) != NULL ?
+	return urio_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -145,7 +145,7 @@ urio_attach(device_t parent, device_t self, void *aux)
 {
 	struct urio_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	struct usbd_interface *	iface;
 	char			*devinfop;
 	usbd_status		err;

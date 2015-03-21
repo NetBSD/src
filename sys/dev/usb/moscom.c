@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.8.14.5 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: moscom.c,v 1.8.14.6 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.5 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.6 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ moscom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (moscom_lookup(uaa->vendor, uaa->product) != NULL ?
+	return (moscom_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
@@ -196,7 +196,7 @@ moscom_attach(device_t parent, device_t self, void *aux)
 {
 	struct moscom_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	struct ucom_attach_args uca;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -214,7 +214,7 @@ moscom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	memset(&uca, 0, sizeof(uca));
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	if (usbd_set_config_index(sc->sc_udev, MOSCOM_CONFIG_NO, 1) != 0) {
 		aprint_error_dev(self, "could not set configuration no\n");
