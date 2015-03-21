@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.91 2015/02/21 23:13:00 joerg Exp $
+# $NetBSD: Makefile,v 1.92 2015/03/21 19:10:43 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -26,8 +26,8 @@ CONFIGFILES=\
 		irdaattach iscsi_target iscsid isdnd isibootd \
 		kdc \
 		ldconfig ldpd local lpd lvm \
-		makemandb mdnsd mixerctl mopd motd mountall mountcritlocal \
-		mountcritremote mountd moused mrouted \
+		makemandb mdnsd mixerctl modules mopd motd mountall \
+		mountcritlocal mountcritremote mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking npf ntpd \
 		ntpdate \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
