@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.233 2015/03/19 16:50:43 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.234 2015/03/21 09:02:12 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18785,4 +18785,55 @@ crypto/external/bsd/openssl/dist/ssl/s2_srvr.c	1.2
 	Use After Free following d2i_ECPrivatekey error (CVE-2015-0209)
 	X509_to_X509_REQ NULL pointer deref (CVE-2015-0288)
 	[spz, ticket #625]
+
+sys/dev/wscons/wsconsio.h			1.112 via patch
+sys/dev/wsfb/genfb.c				1.57
+
+	add WSDISPLAY_TYPE_MESON
+	support 24bpp framebuffers
+	[jmcneill, ticket #631]
+
+sys/arch/arm/amlogic/amlogic_board.c		up to 1.9
+sys/arch/arm/amlogic/amlogic_canvasreg.h	1.1
+sys/arch/arm/amlogic/amlogic_com.c		up to 1.4
+sys/arch/arm/amlogic/amlogic_comreg.h		up to 1.3
+sys/arch/arm/amlogic/amlogic_comvar.h: 		1.1
+sys/arch/arm/amlogic/amlogic_cpufreq.c:		up to 1.2
+sys/arch/arm/amlogic/amlogic_crureg.h		up to 1.7
+sys/arch/arm/amlogic/amlogic_dwctwo.c		up to 1.2
+sys/arch/arm/amlogic/amlogic_genfb.c		1.1
+sys/arch/arm/amlogic/amlogic_gmac.c		up to 1.2
+sys/arch/arm/amlogic/amlogic_hdmireg.h		1.1
+sys/arch/arm/amlogic/amlogic_intr.h		up to 1.5
+sys/arch/arm/amlogic/amlogic_io.c		up to 1.7
+sys/arch/arm/amlogic/amlogic_reg.h		up to 1.9
+sys/arch/arm/amlogic/amlogic_rng.c		1.1
+sys/arch/arm/amlogic/amlogic_sdhc.c		up to 1.3
+sys/arch/arm/amlogic/amlogic_sdhcreg.h		1.1
+sys/arch/arm/amlogic/amlogic_space.c		1.1
+sys/arch/arm/amlogic/amlogic_var.h		up to 1.8
+sys/arch/arm/amlogic/amlogic_vpureg.h		1.1
+sys/arch/arm/arm/bootconfig.c			1.7-1.8
+sys/arch/arm/conf/files.arm			1.129
+sys/arch/arm/cortex/pl310.c			1.16-1.17
+sys/arch/arm/cortex/a9_mpsubr.S			1.25-1.29
+sys/arch/arm/cortex/a9tmr.c			1.8-1.12
+sys/arch/arm/cortex/a9tmr_var.h			1.4
+sys/arch/arm/cortex/a9wdt.c			1.3-1.4
+sys/arch/arm/cortex/armperiph.c			1.5-1.7
+sys/arch/arm/arm/cpufunc.c			1.151
+sys/arch/arm/include/bootconfig.h		1.7
+sys/arch/arm/include/locore.h			1.19
+sys/arch/evbarm/amlogic/amlogic_machdep.c	up to 1.17
+sys/arch/evbarm/amlogic/amlogic_start.S		up to 1.2
+sys/arch/evbarm/amlogic/genassym.cf		1.1
+sys/arch/evbarm/amlogic/platform.h		1.1
+sys/arch/evbarm/conf/files.amlogic		up to 1.8
+sys/arch/evbarm/conf/std.amlogic		up to 1.2
+sys/arch/evbarm/conf/mk.amlogic			1.1
+sys/arch/evbarm/conf/ODROID-C1			up to 1.12
+sys/arch/evarm/conf/ODROID-C1_INSTALL		1.1
+
+	Add suport for ODROID-C1.
+	[jmcneill, ticket #598]
 
