@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.21.34.5 2015/03/19 17:26:43 skrll Exp $ */
+/* $NetBSD: pseye.c,v 1.21.34.6 2015/03/21 09:13:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.5 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.6 2015/03/21 09:13:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 {
 	struct pseye_softc *sc = device_private(self);
 	struct usbif_attach_arg *uaa = opaque;
-	struct usbd_device * dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_interface_descriptor_t *id = NULL;
 	usb_endpoint_descriptor_t *ed = NULL, *ed_bulkin = NULL;
 	char *devinfop;
