@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.45 2015/03/19 17:26:42 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.46 2015/03/21 16:42:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.45 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.46 2015/03/21 16:42:55 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -142,10 +142,6 @@ struct ehci_pipe {
 		struct {
 			u_int length;
 		} intr;
-		/* Bulk pipe */
-		struct {
-			u_int length;
-		} bulk;
 		/* Iso pipe */
 		struct {
 			u_int next_frame;
@@ -3734,8 +3730,6 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 	endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	sqh = epipe->sqh;
-
-	epipe->u.bulk.length = len;
 
 	err = ehci_alloc_sqtd_chain(epipe, sc, len, isread, xfer, &data,
 				   &dataend);
