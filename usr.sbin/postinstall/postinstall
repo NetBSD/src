@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.189 2015/02/21 23:13:00 joerg Exp $
+# $NetBSD: postinstall,v 1.190 2015/03/21 19:10:43 jmcneill Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1366,6 +1366,7 @@ lvm
 makemandb
 mdnsd
 mixerctl
+modules
 mopd
 motd
 mountall
