@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_reg.h,v 1.8 2015/03/08 12:44:55 jmcneill Exp $ */
+/* $NetBSD: amlogic_reg.h,v 1.9 2015/03/21 01:17:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -69,6 +69,12 @@
 
 #define AMLOGIC_GMAC_OFFSET	0x09410000
 #define AMLOGIC_GMAC_SIZE	0x10000
+
+#define AMLOGIC_HDMI_OFFSET	0x10040000
+#define AMLOGIC_HDMI_SIZE	0x10000	/* ? */
+
+#define AMLOGIC_VPU_OFFSET	0x10100000
+#define AMLOGIC_VPU_SIZE	0x100000 /* ? */
 
 #define AMLOGIC_SRAM_OFFSET	0x19000000
 

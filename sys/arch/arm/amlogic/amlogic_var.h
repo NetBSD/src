@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_var.h,v 1.7 2015/03/17 22:29:40 jmcneill Exp $ */
+/* $NetBSD: amlogic_var.h,v 1.8 2015/03/21 01:17:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -73,6 +73,9 @@ uint32_t amlogic_get_rate_sys(void);
 uint32_t amlogic_get_rate_fixed(void);
 uint32_t amlogic_get_rate_a9(void);
 uint32_t amlogic_get_rate_a9periph(void);
+
+void	amlogic_genfb_ddb_trap_callback(int);
+void	amlogic_genfb_set_console_dev(device_t);
 
 static void inline
 amlogic_reg_set_clear(bus_space_tag_t bst, bus_space_handle_t bsh,

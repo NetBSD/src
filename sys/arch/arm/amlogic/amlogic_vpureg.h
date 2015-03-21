@@ -1,0 +1,73 @@
+/* $NetBSD: amlogic_vpureg.h,v 1.1 2015/03/21 01:17:00 jmcneill Exp $ */
+
+/*-
+ * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef _ARM_AMLOGIC_VPUREG_H
+#define _ARM_AMLOGIC_VPUREG_H
+
+#define VPU_REG(n)	((n) << 2)
+
+#define VIU_OSD2_CTRL_STAT_REG		VPU_REG(0x1a30)
+#define VIU_OSD2_BLK0_CFG_W0_REG	VPU_REG(0x1a3b)
+#define VIU_OSD2_BLK0_CFG_W1_REG	VPU_REG(0x1a3c)
+#define VIU_OSD2_BLK0_CFG_W2_REG	VPU_REG(0x1a3d)
+#define VIU_OSD2_BLK0_CFG_W3_REG	VPU_REG(0x1a3e)
+#define VIU_OSD2_BLK0_CFG_W4_REG	VPU_REG(0x1a64)
+#define VPP_MISC_REG			VPU_REG(0x1d26)
+
+#define VIU_OSD_CTRL_STAT_ENABLE	__BIT(21)
+#define VIU_OSD_CTRL_STAT_BLK3_ENABLE	__BIT(3)
+#define VIU_OSD_CTRL_STAT_BLK2_ENABLE	__BIT(2)
+#define VIU_OSD_CTRL_STAT_BLK1_ENABLE	__BIT(1)
+#define VIU_OSD_CTRL_STAT_BLK0_ENABLE	__BIT(0)
+
+#define VIU_OSD_BLK_CFG_W0_TBL_ADDR	__BITS(23,16)
+#define VIU_OSD_BLK_CFG_W0_LITTLE_ENDIAN __BIT(15)
+#define VIU_OSD_BLK_CFG_W0_RPT_Y	__BIT(14)
+#define VIU_OSD_BLK_CFG_W0_INTERP_CTRL	__BITS(13,12)
+#define VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE	__BITS(11,8)
+#define VIU_OSD_BLK_CFG_W0_RGB_EN	__BIT(7)
+#define VIU_OSD_BLK_CFG_W0_TC_ALPHA_EN	__BIT(6)
+#define VIU_OSD_BLK_CFG_W0_COLOR_MATRIX	__BITS(5,2)
+#define VIU_OSD_BLK_CFG_W0_INTERLACE_EN	__BIT(1)
+#define VIU_OSD_BLK_CFG_W0_INTERLACE_SEL_ODD __BIT(0)
+
+#define VIU_OSD_BLK_CFG_W1_X_END	__BITS(28,16)
+#define VIU_OSD_BLK_CFG_W1_X_START	__BITS(12,0)
+
+#define VIU_OSD_BLK_CFG_W2_Y_END	__BITS(28,16)
+#define VIU_OSD_BLK_CFG_W2_Y_START	__BITS(12,0)
+
+#define VIU_OSD_BLK_CFG_W3_H_END	__BITS(27,16)
+#define VIU_OSD_BLK_CFG_W3_H_START	__BITS(11,0)
+
+#define VIU_OSD_BLK_CFG_W4_V_END	__BITS(27,16)
+#define VIU_OSD_BLK_CFG_W4_V_START	__BITS(11,0)
+
+#define VPP_MISC_POSTBLEND		__BIT(7)
+
+#endif /* _ARM_AMLOGIC_VPUREG_H */

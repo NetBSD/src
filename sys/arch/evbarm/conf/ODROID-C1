@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.11 2015/03/18 23:03:06 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.12 2015/03/21 01:17:00 jmcneill Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -177,19 +177,21 @@ amlogiccom0	at amlogicio0 port 0
 options 	CONSADDR=0xc81004c0, CONSPEED=115200
 
 # Framebuffer
-#genfb0		at amlogicio0
-#wsdisplay*	at genfb?
-#options 	VCONS_DRAW_INTR
-#options 	WSEMUL_VT100
-#options 	WS_DEFAULT_FG=WSCOL_WHITE
-#options 	WS_DEFAULT_BG=WSCOL_BLACK
-#options 	WS_KERNEL_FG=WSCOL_GREEN
-#options 	WS_KERNEL_BG=WSCOL_BLACK
-#options 	WSDISPLAY_COMPAT_PCVT
-#options 	WSDISPLAY_COMPAT_SYSCONS
-#options 	WSDISPLAY_COMPAT_USL
-#options 	WSDISPLAY_COMPAT_RAWKBD
-#options 	WSDISPLAY_DEFAULTSCREENS=4
+genfb0		at amlogicio0
+wsdisplay*	at genfb?
+options 	VCONS_DRAW_INTR
+options 	WSEMUL_VT100
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_DEFAULTSCREENS=4
+pseudo-device	wsmux
+pseudo-device	wsfont
 
 # Hardware random number generator
 amlogicrng0	at amlogicio0

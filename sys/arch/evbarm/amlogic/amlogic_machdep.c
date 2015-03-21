@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.16 2015/03/17 22:29:40 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.17 2015/03/21 01:17:00 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.16 2015/03/17 22:29:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.17 2015/03/21 01:17:00 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -136,6 +136,8 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.16 2015/03/17 22:29:40 jmcneil
 
 #include "amlogic_com.h"
 #include "arml2cc.h"
+#include "ukbd.h"
+#include "genfb.h"
 #include "ether.h"
 
 #include <sys/param.h>
@@ -472,10 +474,8 @@ consinit(void)
         const bus_space_handle_t bsh =
             AMLOGIC_CORE_VBASE + (consaddr - AMLOGIC_CORE_BASE);
 	amlogic_com_cnattach(&amlogic_bs_tag, bsh, conspeed, conmode);
-#endif
-
-#if NUKBD > 0
-	ukbd_cnattach();	/* allow USB keyboard to become console */
+#else
+#error only UART console is supported
 #endif
 }
 
@@ -541,6 +541,25 @@ amlogic_device_register(device_t self, void *aux)
 			prop_object_release(pd);
 		}
 	}
+
+#if NGENFB > 0
+	if (device_is_a(self, "genfb")) {
+		char *ptr;
+		amlogic_genfb_set_console_dev(self);
+#ifdef DDB
+		db_trap_callback = amlogic_genfb_ddb_trap_callback;
+#endif
+		if (get_bootconf_option(boot_args, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+			prop_dictionary_set_bool(dict, "is_console", true);
+#if NUKBD > 0
+			ukbd_cnattach();
+#endif
+		} else {
+			prop_dictionary_set_bool(dict, "is_console", false);
+		}
+	}
+#endif
 }
 
 #if defined(MULTIPROCESSOR)
