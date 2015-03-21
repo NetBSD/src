@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.16 2013/08/15 22:34:59 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.16.4.1 2015/03/21 17:43:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@ typedef struct {
 #define	__UCONTEXT_SIZE	256
 #endif
 
+__BEGIN_DECLS
 static __inline void *
 __lwp_getprivate_fast(void)
 {
@@ -146,5 +147,6 @@ __lwp_getprivate_fast(void)
 void vfp_getcontext(struct lwp *, mcontext_t *, int *);
 void vfp_setcontext(struct lwp *, const mcontext_t *); 
 #endif
+__END_DECLS
 
 #endif	/* !_ARM_MCONTEXT_H_ */
