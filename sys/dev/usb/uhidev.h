@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.15.4.3 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.15.4.4 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct uhidev {
 };
 
 struct uhidev_attach_arg {
-	struct usbif_attach_arg *uaa;
+	struct usbif_attach_arg *uiaa;
 	struct uhidev_softc *parent;
 	int reportid;
 	int reportsize;

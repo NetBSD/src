@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126.2.7 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.8 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.7 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.8 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -203,7 +203,7 @@ ugen_match(device_t parent, cfdata_t match, void *aux)
 
 	if (override)
 		return UMATCH_HIGHEST;
-	else if (uaa->usegeneric)
+	else if (uaa->uaa_usegeneric)
 		return UMATCH_GENERIC;
 	else
 		return UMATCH_NONE;
@@ -225,12 +225,12 @@ ugen_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_detach_cv, "ugendet");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uaa->uaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
-	sc->sc_udev = udev = uaa->device;
+	sc->sc_udev = udev = uaa->uaa_device;
 
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {

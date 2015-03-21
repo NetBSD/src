@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.68.4.5 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.68.4.6 2015/03/21 11:33:37 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.5 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.6 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -441,7 +441,7 @@ cue_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return cue_lookup(uaa->vendor, uaa->product) != NULL ?
+	return cue_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -457,7 +457,7 @@ cue_attach(device_t parent, device_t self, void *aux)
 	char			*devinfop;
 	int			s;
 	u_char			eaddr[ETHER_ADDR_LEN];
-	struct usbd_device *	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	struct usbd_interface *	iface;
 	usbd_status		err;
 	struct ifnet		*ifp;
@@ -484,8 +484,8 @@ cue_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->cue_udev = dev;
-	sc->cue_product = uaa->product;
-	sc->cue_vendor = uaa->vendor;
+	sc->cue_product = uaa->uaa_product;
+	sc->cue_vendor = uaa->uaa_vendor;
 
 	usb_init_task(&sc->cue_tick_task, cue_tick_task, sc, 0);
 	usb_init_task(&sc->cue_stop_task, (void (*)(void *))cue_stop, sc, 0);

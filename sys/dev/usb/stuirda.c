@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.16.2.5 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.16.2.6 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.5 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.6 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -106,11 +106,11 @@ CFATTACH_DECL_NEW(stuirda, sizeof(struct stuirda_softc), stuirda_match, stuirda_
 int
 stuirda_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
 	DPRINTFN(50,("stuirda_match\n"));
 
-	if (stuirda_lookup(uaa->vendor, uaa->product) != NULL)
+	if (stuirda_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL)
 		return UMATCH_VENDOR_PRODUCT;
 
 	return UMATCH_NONE;

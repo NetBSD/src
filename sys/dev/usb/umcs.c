@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.8.2.3 2015/03/19 17:26:43 skrll Exp $ */
+/* $NetBSD: umcs.c,v 1.8.2.4 2015/03/21 11:33:37 skrll Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.3 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.4 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ umcs7840_match(device_t dev, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return umcs7840_lookup(uaa->vendor, uaa->product) != NULL ?
+	return umcs7840_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -183,7 +183,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 {
 	struct umcs7840_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
@@ -192,7 +192,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	uint8_t data;
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	if (usbd_set_config_index(sc->sc_udev, MCS7840_CONFIG_INDEX, 1) != 0) {
 		aprint_error(": could not set configuration no\n");
@@ -224,7 +224,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 		sc->sc_numports = 4;
 		/* physical port no are : 0, 1, 2, 3 */
 	} else {
-		if (uaa->product == USB_PRODUCT_MOSCHIP_MCS7810)
+		if (uaa->uaa_product == USB_PRODUCT_MOSCHIP_MCS7810)
 			sc->sc_numports = 1;
 		else {
 			sc->sc_numports = 2;

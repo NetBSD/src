@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.6.14.2 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uark.c,v 1.6.14.3 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ uark_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (usb_lookup(uark_devs, uaa->vendor, uaa->product) != NULL) ?
+	return (usb_lookup(uark_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -113,7 +113,7 @@ uark_attach(device_t parent, device_t self, void *aux)
 {
 	struct uark_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device * dev = uaa->device;
+	struct usbd_device * dev = uaa->uaa_device;
 	char *devinfop;
 	struct ucom_attach_args uca;
 	usb_interface_descriptor_t *id;

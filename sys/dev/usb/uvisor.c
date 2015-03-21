@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.45.24.4 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.45.24.5 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.4 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.5 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,9 +204,9 @@ uvisor_match(device_t parent, cfdata_t match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(20,("uvisor: vendor=0x%x, product=0x%x\n",
-		     uaa->vendor, uaa->product));
+		     uaa->uaa_vendor, uaa->uaa_product));
 
-	return uvisor_lookup(uaa->vendor, uaa->product) != NULL ?
+	return uvisor_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -215,7 +215,7 @@ uvisor_attach(device_t parent, device_t self, void *aux)
 {
 	struct uvisor_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	struct uvisor_connection_info coninfo;
@@ -253,7 +253,7 @@ uvisor_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	sc->sc_flags = uvisor_lookup(uaa->vendor, uaa->product)->uv_flags;
+	sc->sc_flags = uvisor_lookup(uaa->uaa_vendor, uaa->uaa_product)->uv_flags;
 
 	if ((sc->sc_flags & (VISOR | PALM4)) == 0) {
 		aprint_error_dev(self,

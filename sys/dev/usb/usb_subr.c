@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.8 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.9 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.8 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.9 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -768,15 +768,15 @@ usbd_attach_roothub(device_t parent, struct usbd_device *dev)
 	usb_device_descriptor_t *dd = &dev->ud_ddesc;
 	device_t dv;
 
-	uaa.device = dev;
-	uaa.usegeneric = 0;
-	uaa.port = 0;
-	uaa.vendor = UGETW(dd->idVendor);
-	uaa.product = UGETW(dd->idProduct);
-	uaa.release = UGETW(dd->bcdDevice);
-	uaa.class = dd->bDeviceClass;
-	uaa.subclass = dd->bDeviceSubClass;
-	uaa.proto = dd->bDeviceProtocol;
+	uaa.uaa_device = dev;
+	uaa.uaa_usegeneric = 0;
+	uaa.uaa_port = 0;
+	uaa.uaa_vendor = UGETW(dd->idVendor);
+	uaa.uaa_product = UGETW(dd->idProduct);
+	uaa.uaa_release = UGETW(dd->bcdDevice);
+	uaa.uaa_class = dd->bDeviceClass;
+	uaa.uaa_subclass = dd->bDeviceSubClass;
+	uaa.uaa_proto = dd->bDeviceProtocol;
 
 	dv = config_found_ia(parent, "usbroothubif", &uaa, 0);
 	if (dv) {
@@ -798,20 +798,20 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 	device_t dv;
 	int dlocs[USBDEVIFCF_NLOCS];
 
-	uaa.device = dev;
-	uaa.usegeneric = usegeneric;
-	uaa.port = port;
-	uaa.vendor = UGETW(dd->idVendor);
-	uaa.product = UGETW(dd->idProduct);
-	uaa.release = UGETW(dd->bcdDevice);
-	uaa.class = dd->bDeviceClass;
-	uaa.subclass = dd->bDeviceSubClass;
-	uaa.proto = dd->bDeviceProtocol;
+	uaa.uaa_device = dev;
+	uaa.uaa_usegeneric = usegeneric;
+	uaa.uaa_port = port;
+	uaa.uaa_vendor = UGETW(dd->idVendor);
+	uaa.uaa_product = UGETW(dd->idProduct);
+	uaa.uaa_release = UGETW(dd->bcdDevice);
+	uaa.uaa_class = dd->bDeviceClass;
+	uaa.uaa_subclass = dd->bDeviceSubClass;
+	uaa.uaa_proto = dd->bDeviceProtocol;
 
-	dlocs[USBDEVIFCF_PORT] = uaa.port;
-	dlocs[USBDEVIFCF_VENDOR] = uaa.vendor;
-	dlocs[USBDEVIFCF_PRODUCT] = uaa.product;
-	dlocs[USBDEVIFCF_RELEASE] = uaa.release;
+	dlocs[USBDEVIFCF_PORT] = uaa.uaa_port;
+	dlocs[USBDEVIFCF_VENDOR] = uaa.uaa_vendor;
+	dlocs[USBDEVIFCF_PRODUCT] = uaa.uaa_product;
+	dlocs[USBDEVIFCF_RELEASE] = uaa.uaa_release;
 	/* the rest is historical ballast */
 	dlocs[USBDEVIFCF_CONFIGURATION] = -1;
 	dlocs[USBDEVIFCF_INTERFACE] = -1;
@@ -849,36 +849,37 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 		if (!dev->ud_subdevs[i])
 			ifaces[i] = &dev->ud_ifaces[i];
 
-	uiaa.device = dev;
-	uiaa.port = port;
-	uiaa.vendor = UGETW(dd->idVendor);
-	uiaa.product = UGETW(dd->idProduct);
-	uiaa.release = UGETW(dd->bcdDevice);
-	uiaa.configno = dev->ud_cdesc->bConfigurationValue;
-	uiaa.ifaces = ifaces;
-	uiaa.nifaces = nifaces;
-	ilocs[USBIFIFCF_PORT] = uiaa.port;
-	ilocs[USBIFIFCF_VENDOR] = uiaa.vendor;
-	ilocs[USBIFIFCF_PRODUCT] = uiaa.product;
-	ilocs[USBIFIFCF_RELEASE] = uiaa.release;
-	ilocs[USBIFIFCF_CONFIGURATION] = uiaa.configno;
+	uiaa.uiaa_device = dev;
+	uiaa.uiaa_port = port;
+	uiaa.uiaa_vendor = UGETW(dd->idVendor);
+	uiaa.uiaa_product = UGETW(dd->idProduct);
+	uiaa.uiaa_release = UGETW(dd->bcdDevice);
+	uiaa.uiaa_configno = dev->ud_cdesc->bConfigurationValue;
+	uiaa.uiaa_ifaces = ifaces;
+	uiaa.uiaa_nifaces = nifaces;
+	ilocs[USBIFIFCF_PORT] = uiaa.uiaa_port;
+	ilocs[USBIFIFCF_VENDOR] = uiaa.uiaa_vendor;
+	ilocs[USBIFIFCF_PRODUCT] = uiaa.uiaa_product;
+	ilocs[USBIFIFCF_RELEASE] = uiaa.uiaa_release;
+	ilocs[USBIFIFCF_CONFIGURATION] = uiaa.uiaa_configno;
 
 	for (i = 0; i < nifaces; i++) {
 		if (!ifaces[i])
 			continue; /* interface already claimed */
-		uiaa.iface = ifaces[i];
-		uiaa.class = ifaces[i]->ui_idesc->bInterfaceClass;
-		uiaa.subclass = ifaces[i]->ui_idesc->bInterfaceSubClass;
-		uiaa.proto = ifaces[i]->ui_idesc->bInterfaceProtocol;
-		uiaa.ifaceno = ifaces[i]->ui_idesc->bInterfaceNumber;
-		ilocs[USBIFIFCF_INTERFACE] = uiaa.ifaceno;
+		uiaa.uiaa_iface = ifaces[i];
+		uiaa.uiaa_class = ifaces[i]->ui_idesc->bInterfaceClass;
+		uiaa.uiaa_subclass = ifaces[i]->ui_idesc->bInterfaceSubClass;
+		uiaa.uiaa_proto = ifaces[i]->ui_idesc->bInterfaceProtocol;
+		uiaa.uiaa_ifaceno = ifaces[i]->ui_idesc->bInterfaceNumber;
+		ilocs[USBIFIFCF_INTERFACE] = uiaa.uiaa_ifaceno;
 		if (locators != NULL) {
 			loc = locators[USBIFIFCF_CONFIGURATION];
 			if (loc != USBIFIFCF_CONFIGURATION_DEFAULT &&
-			    loc != uiaa.configno)
+			    loc != uiaa.uiaa_configno)
 				continue;
 			loc = locators[USBIFIFCF_INTERFACE];
-			if (loc != USBIFIFCF_INTERFACE && loc != uiaa.ifaceno)
+			if (loc != USBIFIFCF_INTERFACE &&
+			    loc != uiaa.uiaa_ifaceno)
 				continue;
 		}
 		dv = config_found_sm_loc(parent, "usbifif", ilocs, &uiaa,
@@ -1302,26 +1303,26 @@ usbd_print(void *aux, const char *pnp)
 	if (pnp) {
 #define USB_DEVINFO 1024
 		char *devinfo;
-		if (!uaa->usegeneric)
+		if (!uaa->uaa_usegeneric)
 			return QUIET;
 		devinfo = kmem_alloc(USB_DEVINFO, KM_SLEEP);
-		usbd_devinfo(uaa->device, 1, devinfo, USB_DEVINFO);
+		usbd_devinfo(uaa->uaa_device, 1, devinfo, USB_DEVINFO);
 		aprint_normal("%s, %s", devinfo, pnp);
 		kmem_free(devinfo, USB_DEVINFO);
 	}
-	aprint_normal(" port %d", uaa->port);
+	aprint_normal(" port %d", uaa->uaa_port);
 #if 0
 	/*
 	 * It gets very crowded with these locators on the attach line.
 	 * They are not really needed since they are printed in the clear
 	 * by each driver.
 	 */
-	if (uaa->vendor != UHUB_UNK_VENDOR)
-		aprint_normal(" vendor 0x%04x", uaa->vendor);
-	if (uaa->product != UHUB_UNK_PRODUCT)
-		aprint_normal(" product 0x%04x", uaa->product);
-	if (uaa->release != UHUB_UNK_RELEASE)
-		aprint_normal(" release 0x%04x", uaa->release);
+	if (uaa->uaa_vendor != UHUB_UNK_VENDOR)
+		aprint_normal(" vendor 0x%04x", uaa->uaa_vendor);
+	if (uaa->uaa_product != UHUB_UNK_PRODUCT)
+		aprint_normal(" product 0x%04x", uaa->uaa_product);
+	if (uaa->uaa_release != UHUB_UNK_RELEASE)
+		aprint_normal(" release 0x%04x", uaa->uaa_release);
 #endif
 	return UNCONF;
 }
@@ -1329,25 +1330,25 @@ usbd_print(void *aux, const char *pnp)
 int
 usbd_ifprint(void *aux, const char *pnp)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
 	if (pnp)
 		return QUIET;
-	aprint_normal(" port %d", uaa->port);
-	aprint_normal(" configuration %d", uaa->configno);
-	aprint_normal(" interface %d", uaa->ifaceno);
+	aprint_normal(" port %d", uiaa->uiaa_port);
+	aprint_normal(" configuration %d", uiaa->uiaa_configno);
+	aprint_normal(" interface %d", uiaa->uiaa_ifaceno);
 #if 0
 	/*
 	 * It gets very crowded with these locators on the attach line.
 	 * They are not really needed since they are printed in the clear
 	 * by each driver.
 	 */
-	if (uaa->vendor != UHUB_UNK_VENDOR)
-		aprint_normal(" vendor 0x%04x", uaa->vendor);
-	if (uaa->product != UHUB_UNK_PRODUCT)
-		aprint_normal(" product 0x%04x", uaa->product);
-	if (uaa->release != UHUB_UNK_RELEASE)
-		aprint_normal(" release 0x%04x", uaa->release);
+	if (uaa->uaa_vendor != UHUB_UNK_VENDOR)
+		aprint_normal(" vendor 0x%04x", uaa->uaa_vendor);
+	if (uaa->uaa_product != UHUB_UNK_PRODUCT)
+		aprint_normal(" product 0x%04x", uaa->uaa_product);
+	if (uaa->uaa_release != UHUB_UNK_RELEASE)
+		aprint_normal(" release 0x%04x", uaa->uaa_release);
 #endif
 	return UNCONF;
 }

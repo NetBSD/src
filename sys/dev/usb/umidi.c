@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.4 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.5 2015/03/21 11:33:37 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.4 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.5 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,15 +167,16 @@ CFATTACH_DECL2_NEW(umidi, sizeof(struct umidi_softc), umidi_match,
 int
 umidi_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
 	DPRINTFN(1,("umidi_match\n"));
 
-	if (umidi_search_quirk(uaa->vendor, uaa->product, uaa->ifaceno))
+	if (umidi_search_quirk(uiaa->uiaa_vendor, uiaa->uiaa_product,
+	    uiaa->uiaa_ifaceno))
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
-	if (uaa->class == UICLASS_AUDIO &&
-	    uaa->subclass == UISUBCLASS_MIDISTREAM)
+	if (uiaa->uiaa_class == UICLASS_AUDIO &&
+	    uiaa->uiaa_subclass == UISUBCLASS_MIDISTREAM)
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
 	return UMATCH_NONE;
@@ -186,7 +187,7 @@ umidi_attach(device_t parent, device_t self, void *aux)
 {
 	usbd_status     err;
 	struct umidi_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	char *devinfop;
 
 	DPRINTFN(1,("umidi_attach\n"));
@@ -196,15 +197,16 @@ umidi_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	sc->sc_iface = uaa->iface;
-	sc->sc_udev = uaa->device;
+	sc->sc_iface = uiaa->uiaa_iface;
+	sc->sc_udev = uiaa->uiaa_device;
 
-	sc->sc_quirk =
-	    umidi_search_quirk(uaa->vendor, uaa->product, uaa->ifaceno);
+	sc->sc_quirk = umidi_search_quirk(uiaa->uiaa_vendor,
+	    uiaa->uiaa_product, uiaa->uiaa_ifaceno);
+
 	aprint_normal_dev(self, "");
 	umidi_print_quirk(sc->sc_quirk);
 

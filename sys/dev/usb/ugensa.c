@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.31.6.5 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.31.6.6 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.5 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.6 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,9 +128,9 @@ ugensa_match(device_t parent, cfdata_t match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(20,("ugensa: vendor=0x%x, product=0x%x\n",
-		     uaa->vendor, uaa->product));
+		     uaa->uaa_vendor, uaa->uaa_product));
 
-	return ugensa_lookup(uaa->vendor, uaa->product) != NULL ?
+	return ugensa_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -139,7 +139,7 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ugensa_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -175,7 +175,7 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	if (ugensa_lookup(uaa->vendor, uaa->product)->ugensa_flags & UNTESTED)
+	if (ugensa_lookup(uaa->uaa_vendor, uaa->uaa_product)->ugensa_flags & UNTESTED)
 		aprint_normal_dev(self, "WARNING: This device is marked as "
 		    "untested. Please submit a report via send-pr(1).\n");
 

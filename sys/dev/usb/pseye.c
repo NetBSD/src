@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.21.34.6 2015/03/21 09:13:23 skrll Exp $ */
+/* $NetBSD: pseye.c,v 1.21.34.7 2015/03/21 11:33:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.6 2015/03/21 09:13:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.7 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,15 +162,15 @@ static const struct video_hw_if pseye_hw_if = {
 static int
 pseye_match(device_t parent, cfdata_t match, void *opaque)
 {
-	struct usbif_attach_arg *uaa = opaque;
+	struct usbif_attach_arg *uiaa = opaque;
 
-	if (uaa->class != UICLASS_VENDOR)
+	if (uiaa->uiaa_class != UICLASS_VENDOR)
 		return UMATCH_NONE;
 
-	if (uaa->vendor == USB_VENDOR_OMNIVISION2) {
-		switch (uaa->product) {
+	if (uiaa->uiaa_vendor == USB_VENDOR_OMNIVISION2) {
+		switch (uiaa->uiaa_product) {
 		case USB_PRODUCT_OMNIVISION2_PSEYE:
-			if (uaa->ifaceno != 0)
+			if (uiaa->uiaa_ifaceno != 0)
 				return UMATCH_NONE;
 			return UMATCH_VENDOR_PRODUCT;
 		}
@@ -183,8 +183,8 @@ static void
 pseye_attach(device_t parent, device_t self, void *opaque)
 {
 	struct pseye_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = opaque;
-	struct usbd_device *dev = uaa->device;
+	struct usbif_attach_arg *uiaa = opaque;
+	struct usbd_device *dev = uiaa->uiaa_device;
 	usb_interface_descriptor_t *id = NULL;
 	usb_endpoint_descriptor_t *ed = NULL, *ed_bulkin = NULL;
 	char *devinfop;
@@ -199,7 +199,7 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
-	sc->sc_iface = uaa->iface;
+	sc->sc_iface = uiaa->uiaa_iface;
 	snprintf(sc->sc_businfo, sizeof(sc->sc_businfo), "usb:%08x",
 	    sc->sc_udev->ud_cookie.cookie);
 	sc->sc_bulkin_bufferlen = PSEYE_BULKIN_BUFLEN;

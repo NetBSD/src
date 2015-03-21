@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.7 2015/03/19 17:26:42 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.8 2015/03/21 11:33:37 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.7 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.8 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1093,8 +1093,8 @@ atu_match(device_t parent, cfdata_t match, void *aux)
 	for (i = 0; i < __arraycount(atu_devs); i++) {
 		struct atu_type *t = &atu_devs[i];
 
-		if (uaa->vendor == t->atu_vid &&
-		    uaa->product == t->atu_pid) {
+		if (uaa->uaa_vendor == t->atu_vid &&
+		    uaa->uaa_product == t->atu_pid) {
 			return(UMATCH_VENDOR_PRODUCT);
 		}
 	}
@@ -1235,7 +1235,7 @@ atu_attach(device_t parent, device_t self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	char				*devinfop;
 	usbd_status			err;
-	struct usbd_device		*dev = uaa->device;
+	struct usbd_device		*dev = uaa->uaa_device;
 	uint8_t			mode, channel;
 	int i;
 
@@ -1272,8 +1272,8 @@ atu_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < __arraycount(atu_devs); i++) {
 		struct atu_type *t = &atu_devs[i];
 
-		if (uaa->vendor == t->atu_vid &&
-		    uaa->product == t->atu_pid) {
+		if (uaa->uaa_vendor == t->atu_vid &&
+		    uaa->uaa_product == t->atu_pid) {
 			sc->atu_radio = t->atu_radio;
 			sc->atu_quirk = t->atu_quirk;
 		}

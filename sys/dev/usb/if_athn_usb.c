@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.8.3 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.4 2015/03/21 11:33:37 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.3 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.4 2015/03/21 11:33:37 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -231,7 +231,7 @@ athn_usb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return athn_usb_lookup(uaa->vendor, uaa->product) != NULL ?
+	return athn_usb_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -247,7 +247,7 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	sc = &usc->usc_sc;
 	uaa = aux;
 	sc->sc_dev = self;
-	usc->usc_udev = uaa->device;
+	usc->usc_udev = uaa->uaa_device;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -255,7 +255,7 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(DBG_FN, sc, "\n");
 
 	usc->usc_athn_attached = 0;
-	usc->usc_flags = athn_usb_lookup(uaa->vendor, uaa->product)->flags;
+	usc->usc_flags = athn_usb_lookup(uaa->uaa_vendor, uaa->uaa_product)->flags;
 	sc->sc_flags |= ATHN_FLAG_USB;
 #ifdef notyet
 	/* Check if it is a combo WiFi+Bluetooth (WB193) device. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.10.4.2 2015/03/21 10:14:45 skrll Exp $	*/
+/*	$NetBSD: uatp.c,v 1.10.4.3 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.4.2 2015/03/21 10:14:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.4.3 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -670,8 +670,8 @@ find_uatp_descriptor(const struct uhidev_attach_arg *uha)
 	unsigned int i;
 
 	for (i = 0; i < __arraycount(uatp_descriptors); i++)
-		if ((uha->uaa->vendor == uatp_descriptors[i].vendor) &&
-		    (uha->uaa->product == uatp_descriptors[i].product))
+		if ((uha->uiaa->uiaa_vendor == uatp_descriptors[i].vendor) &&
+		    (uha->uiaa->uiaa_product == uatp_descriptors[i].product))
 			return &uatp_descriptors[i];
 
 	return NULL;
@@ -869,13 +869,13 @@ uatp_match(device_t parent, cfdata_t match, void *aux)
 	const struct uatp_descriptor *uatp_descriptor;
 
 	aprint_debug("%s: vendor 0x%04x, product 0x%04x\n", __func__,
-	    (unsigned int)uha->uaa->vendor,
-	    (unsigned int)uha->uaa->product);
+	    (unsigned int)uha->uiaa->uiaa_vendor,
+	    (unsigned int)uha->uiaa->uiaa_product);
 	aprint_debug("%s: class 0x%04x, subclass 0x%04x, proto 0x%04x\n",
 	    __func__,
-	    (unsigned int)uha->uaa->class,
-	    (unsigned int)uha->uaa->subclass,
-	    (unsigned int)uha->uaa->proto);
+	    (unsigned int)uha->uiaa->uiaa_class,
+	    (unsigned int)uha->uiaa->uiaa_subclass,
+	    (unsigned int)uha->uiaa->uiaa_proto);
 
 	uhidev_get_report_desc(uha->parent, &report_descriptor, &report_size);
 	input_size = hid_report_size(report_descriptor, report_size,
@@ -888,7 +888,7 @@ uatp_match(device_t parent, cfdata_t match, void *aux)
 	 * and product ids, but not protocols: only the trackpad
 	 * reports a mouse protocol.
 	 */
-	if (uha->uaa->proto != UIPROTO_MOUSE)
+	if (uha->uiaa->uiaa_proto != UIPROTO_MOUSE)
 		return UMATCH_NONE;
 
 	/* Check for a known vendor/product id.  */
@@ -933,7 +933,8 @@ uatp_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": %s\n", uatp_descriptor->description);
 	aprint_verbose_dev(self,
 	    "vendor 0x%04x, product 0x%04x, report id %d\n",
-	    (unsigned int)uha->uaa->vendor, (unsigned int)uha->uaa->product,
+	    (unsigned int)uha->uiaa->uiaa_vendor,
+	    (unsigned int)uha->uiaa->uiaa_product,
 	    (int)uha->reportid);
 
 	uhidev_get_report_desc(uha->parent, &report_descriptor, &report_size);

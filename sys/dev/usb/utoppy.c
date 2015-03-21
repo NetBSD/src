@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.6 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.7 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.6 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.7 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,8 +206,8 @@ utoppy_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->vendor == USB_VENDOR_TOPFIELD &&
-	    uaa->product == USB_PRODUCT_TOPFIELD_TF5000PVR)
+	if (uaa->uaa_vendor == USB_VENDOR_TOPFIELD &&
+	    uaa->uaa_product == USB_PRODUCT_TOPFIELD_TF5000PVR)
 		return UMATCH_VENDOR_PRODUCT;
 
 	return UMATCH_NONE;
@@ -218,7 +218,7 @@ utoppy_attach(device_t parent, device_t self, void *aux)
 {
 	struct utoppy_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.4 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.5 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -969,7 +969,7 @@ smsc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (usb_lookup(smsc_devs, uaa->vendor, uaa->product) != NULL) ?
+	return (usb_lookup(smsc_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -978,7 +978,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 {
 	struct smsc_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;

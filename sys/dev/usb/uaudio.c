@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.6 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.7 2015/03/21 11:33:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.6 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.7 2015/03/21 11:33:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,12 +397,12 @@ CFATTACH_DECL2_NEW(uaudio, sizeof(struct uaudio_softc),
 int
 uaudio_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
 	/* Trigger on the control interface. */
-	if (uaa->class != UICLASS_AUDIO ||
-	    uaa->subclass != UISUBCLASS_AUDIOCONTROL ||
-	    (usbd_get_quirks(uaa->device)->uq_flags & UQ_BAD_AUDIO))
+	if (uiaa->uiaa_class != UICLASS_AUDIO ||
+	    uiaa->uiaa_subclass != UISUBCLASS_AUDIOCONTROL ||
+	    (usbd_get_quirks(uiaa->uiaa_device)->uq_flags & UQ_BAD_AUDIO))
 		return UMATCH_NONE;
 
 	return UMATCH_IFACECLASS_IFACESUBCLASS;
@@ -412,7 +412,7 @@ void
 uaudio_attach(device_t parent, device_t self, void *aux)
 {
 	struct uaudio_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 	usb_interface_descriptor_t *id;
 	usb_config_descriptor_t *cdesc;
 	char *devinfop;
@@ -420,7 +420,7 @@ uaudio_attach(device_t parent, device_t self, void *aux)
 	int i, j, found;
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uiaa->uiaa_device;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
@@ -432,7 +432,7 @@ uaudio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -450,24 +450,24 @@ uaudio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ac_ifaceh = uaa->iface;
+	sc->sc_ac_ifaceh = uiaa->uiaa_iface;
 	/* Pick up the AS interface. */
-	for (i = 0; i < uaa->nifaces; i++) {
-		if (uaa->ifaces[i] == NULL)
+	for (i = 0; i < uiaa->uiaa_nifaces; i++) {
+		if (uiaa->uiaa_ifaces[i] == NULL)
 			continue;
-		id = usbd_get_interface_descriptor(uaa->ifaces[i]);
+		id = usbd_get_interface_descriptor(uiaa->uiaa_ifaces[i]);
 		if (id == NULL)
 			continue;
 		found = 0;
 		for (j = 0; j < sc->sc_nalts; j++) {
 			if (id->bInterfaceNumber ==
 			    sc->sc_alts[j].idesc->bInterfaceNumber) {
-				sc->sc_alts[j].ifaceh = uaa->ifaces[i];
+				sc->sc_alts[j].ifaceh = uiaa->uiaa_ifaces[i];
 				found = 1;
 			}
 		}
 		if (found)
-			uaa->ifaces[i] = NULL;
+			uiaa->uiaa_ifaces[i] = NULL;
 	}
 
 	for (j = 0; j < sc->sc_nalts; j++) {
