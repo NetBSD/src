@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.5 2015/03/21 15:51:20 apb Exp $
+# $NetBSD: tzdata2netbsd,v 1.6 2015/03/21 16:42:17 apb Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -271,7 +271,7 @@ editimportmsg()
 
 cvsimport()
 {
-	if [ -s "${IMPORTDONEFILE}" ]; then
+	if [ -e "${IMPORTDONEFILE}" ]; then
 		cat >&2 <<EOF
 The CVS import has already been performed.
 EOF
@@ -290,20 +290,21 @@ EOF
 	( cd "${EXTRACTDIR}" &&
 	  DOIT cvs -d "${CVSROOT}" import -m "$(cat "${IMPORTMSGFILE}")" \
 		"${REPODIR}" "${CVSBRANCHTAG}" "${CVSNEWTAG}"
-	)
+	) && touch "${IMPORTDONEFILE}"
 }
 
 cvsmerge()
 {
 
 	cd "${TZDISTDIR}" || exit 1
-	if [ -s "${MERGEDONEFILE}" ]; then
+	if [ -e "${MERGEDONEFILE}" ]; then
 		cat >&2 <<EOF
 The CVS merge has already been performed.
 EOF
 		return 0
 	fi
-	DOIT cvs -d "${CVSROOT}" update -j"${CVSOLDTAG}" -j"${CVSNEWTAG}"
+	DOIT cvs -d "${CVSROOT}" update -j"${CVSOLDTAG}" -j"${CVSNEWTAG}" \
+	&& touch "${MERGEDONEFILE}"
 }
 
 resolveconflicts()
@@ -330,13 +331,14 @@ Not performing cvs commit.
 EOF
 		return 1
 	fi
-	if [ -s "${COMMITMERGEDONEFILE}" ]; then
+	if [ -e "${COMMITMERGEDONEFILE}" ]; then
 		cat >&2 <<EOF
 The CVS commmit (of the merge result) has already been performed.
 EOF
 		return 0
 	fi
-	DOIT cvs -d "${CVSROOT}" commit -m "Merge tzdata${NEWVER}"
+	DOIT cvs -d "${CVSROOT}" commit -m "Merge tzdata${NEWVER}" \
+	&& touch "${COMMITMERGEDONEFILE}"
 }
 
 extra()
