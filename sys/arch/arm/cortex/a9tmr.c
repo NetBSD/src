@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.7 2014/03/28 21:57:22 matt Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.7.4.1 2015/03/21 08:51:18 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.7 2014/03/28 21:57:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.7.4.1 2015/03/21 08:51:18 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.7 2014/03/28 21:57:22 matt Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/xcall.h>
 
 #include <prop/proplib.h>
 
@@ -95,7 +96,8 @@ a9tmr_match(device_t parent, cfdata_t cf, void *aux)
 	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0)
 		return 0;
 
-	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid))
+	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid) &&
+	    !CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid))
 		return 0;
 
 	if (strcmp(mpcaa->mpcaa_name, cf->cf_name) != 0)
@@ -118,6 +120,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	struct mpcore_attach_args * const mpcaa = aux;
 	prop_dictionary_t dict = device_properties(self);
 	char freqbuf[sizeof("XXX SHz")];
+	const char *cpu_type;
 
 	/*
 	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the CPU clock.
@@ -128,7 +131,12 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
 	aprint_naive("\n");
-	aprint_normal(": A9 Global 64-bit Timer (%s)\n", freqbuf);
+	if (CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid)) {
+		cpu_type = "A5";
+	} else {
+		cpu_type = "A9";
+	}
+	aprint_normal(": %s Global 64-bit Timer (%s)\n", cpu_type, freqbuf);
 
 	self->dv_private = sc;
 	sc->sc_dev = self;
@@ -139,7 +147,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	    device_xname(self), "missing interrupts");
 
 	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
-	    TMR_GLOBAL_BASE, TMR_GLOBAL_BASE, &sc->sc_global_memh);
+	    TMR_GLOBAL_BASE, TMR_GLOBAL_SIZE, &sc->sc_global_memh);
 	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
 	    TMR_PRIVATE_BASE, TMR_PRIVATE_SIZE, &sc->sc_private_memh);
 	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
@@ -245,6 +253,33 @@ cpu_initclocks(void)
 	a9tmr_timecounter.tc_name = device_xname(sc->sc_dev);
 	a9tmr_timecounter.tc_frequency = sc->sc_freq;
 
+	tc_init(&a9tmr_timecounter);
+}
+
+static void
+a9tmr_update_freq_cb(void *arg1, void *arg2)
+{
+	a9tmr_init_cpu_clock(curcpu());
+}
+
+void
+a9tmr_update_freq(uint32_t freq)
+{
+	struct a9tmr_softc * const sc = &a9tmr_sc;
+	uint64_t xc;
+
+	KASSERT(sc->sc_dev != NULL);
+	KASSERT(freq != 0);
+
+	tc_detach(&a9tmr_timecounter);
+
+	sc->sc_freq = freq;
+	sc->sc_autoinc = sc->sc_freq / hz;
+
+	xc = xc_broadcast(0, a9tmr_update_freq_cb, NULL, NULL);
+	xc_wait(xc);
+
+	a9tmr_timecounter.tc_frequency = sc->sc_freq;
 	tc_init(&a9tmr_timecounter);
 }
 

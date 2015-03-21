@@ -1,0 +1,60 @@
+#	$NetBSD: files.amlogic,v 1.8.2.2 2015/03/21 08:51:17 snj Exp $
+#
+# Configuration info for Amlogic ARM Peripherals
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+
+file	arch/arm/amlogic/amlogic_board.c
+file	arch/arm/amlogic/amlogic_cpufreq.c
+file	arch/arm/amlogic/amlogic_space.c
+file	arch/arm/arm/bus_space_a4x.S
+
+# On-board I/O
+device	amlogicio { [port=-1] } : bus_space_generic
+attach	amlogicio at mainbus with amlogic_io
+file	arch/arm/amlogic/amlogic_io.c		amlogic_io
+
+# UART
+device	amlogiccom
+attach	amlogiccom at amlogicio with amlogic_com
+file	arch/arm/amlogic/amlogic_com.c		amlogic_com needs-flag
+
+# Framebuffer console
+attach	genfb at amlogicio with amlogic_genfb
+file	arch/arm/amlogic/amlogic_genfb.c	amlogic_genfb needs-flag
+
+# SDHC
+device	amlogicsdhc: sdmmcbus
+attach	amlogicsdhc at amlogicio with amlogic_sdhc
+file	arch/arm/amlogic/amlogic_sdhc.c		amlogic_sdhc
+
+# usb otg
+attach	dwctwo at amlogicio with amlogic_dwctwo
+file	arch/arm/amlogic/amlogic_dwctwo.c	amlogic_dwctwo
+
+# ethernet mac
+attach	awge at amlogicio with amlogic_gmac
+file	arch/arm/amlogic/amlogic_gmac.c		amlogic_gmac
+
+# Hardware random number generator
+device	amlogicrng
+attach	amlogicrng at amlogicio with amlogic_rng
+file	arch/arm/amlogic/amlogic_rng.c		amlogic_rng
+
+# Console parameters
+defparam opt_amlogic.h			CONADDR
+defparam opt_amlogic.h			CONSPEED
+defparam opt_amlogic.h			CONMODE
+
+# Memory parameters
+defparam opt_amlogic.h			MEMSIZE
+
+# CPU parameters
+defparam opt_amlogic.h			CPUFREQ

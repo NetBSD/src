@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.6 2012/08/31 23:59:52 matt Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.6.14.1 2015/03/21 08:51:18 snj Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -42,6 +42,7 @@
 #define BOOTOPT_TYPE_INT		2
 #define BOOTOPT_TYPE_BININT		3
 #define BOOTOPT_TYPE_HEXINT		4
+#define BOOTOPT_TYPE_MACADDR		5
 #define BOOTOPT_TYPE_MASK		7
 
 struct boot_physmem {

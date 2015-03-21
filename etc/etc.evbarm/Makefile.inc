@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.63.2.3 2015/03/11 20:22:55 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.63.2.4 2015/03/21 08:51:17 snj Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -100,6 +100,8 @@ EVBARM_BOARDS.armv7hf+=		MIRABOX
 #EVBARM_BOARDS.armv7+=		N900
 EVBARM_BOARDS.armv7+=		NETWALKER
 EVBARM_BOARDS.armv7hf+=		NETWALKER
+EVBARM_BOARDS.armv7+=		ODROID-C1
+EVBARM_BOARDS.armv7hf+=		ODROID-C1
 EVBARM_BOARDS.armv7+=		OMAP5EVM
 EVBARM_BOARDS.armv7hf+=		OMAP5EVM
 #EVBARM_BOARDS.armv7+=		OVERO

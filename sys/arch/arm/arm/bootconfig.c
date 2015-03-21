@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.c,v 1.6 2009/08/02 11:32:05 gavan Exp $	*/
+/*	$NetBSD: bootconfig.c,v 1.6.38.1 2015/03/21 08:51:17 snj Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,13 +36,19 @@
  * SUCH DAMAGE.
  */
 
+#include "ether.h"
+
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.6 2009/08/02 11:32:05 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.6.38.1 2015/03/21 08:51:17 snj Exp $");
 
 #include <sys/systm.h>
 
 #include <machine/bootconfig.h>
+
+#if NETHER > 0
+#include <net/if_ether.h>
+#endif
 
 /* 
  * Function to identify and process different types of boot argument
@@ -56,7 +62,7 @@ get_bootconf_option(char *opts, const char *opt, int type, void *result)
 {
 	char *ptr;
 	char *optstart;
-	int not;
+	bool neg;
 
 	ptr = opts;
 
@@ -68,12 +74,12 @@ get_bootconf_option(char *opts, const char *opt, int type, void *result)
 		if (*ptr == 0)
 			break;
 
-		not = 0;
+		neg = false;
 
 		/* Is it a negate option */
 		if ((type & BOOTOPT_TYPE_MASK) == BOOTOPT_TYPE_BOOLEAN &&
 		    *ptr == '!') {
-			not = 1;
+			neg = true;
 			++ptr;
 		}
 
@@ -99,7 +105,7 @@ get_bootconf_option(char *opts, const char *opt, int type, void *result)
 						    ((u_int)strtoul(ptr, NULL,
 						    10) != 0);
 					else
-						*((int *)result) = !not;
+						*((int *)result) = !neg;
 					break;
 				case BOOTOPT_TYPE_STRING :
 					*((char **)result) = ptr;
@@ -116,6 +122,18 @@ get_bootconf_option(char *opts, const char *opt, int type, void *result)
 					*((int *)result) =
 					    (u_int)strtoul(ptr, NULL, 16);
 					break;
+#if NETHER > 0
+				case BOOTOPT_TYPE_MACADDR : {
+					char mac[18];
+					if (strlen(ptr) < ETHER_ADDR_LEN)
+						return 0;
+					strlcpy(mac, ptr, sizeof(mac));
+					if (ether_aton_r((u_char *)result,
+							 ETHER_ADDR_LEN, mac))
+						return 0;
+					break;
+				}
+#endif
 				default:
 					return 0;
 				}
