@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.38.2.1 2014/08/29 11:14:14 martin Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.38.2.2 2015/03/21 17:49:03 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.38.2.1 2014/08/29 11:14:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.38.2.2 2015/03/21 17:49:03 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -778,6 +778,9 @@ npfctl_rule(u_long cmd, void *data)
 	}
 	case NPF_CMD_RULE_LIST: {
 		retdict = npf_ruleset_list(rlset, ruleset_name);
+		if (!retdict) {
+			error = ESRCH;
+		}
 		break;
 	}
 	case NPF_CMD_RULE_FLUSH: {
@@ -797,6 +800,7 @@ npfctl_rule(u_long cmd, void *data)
 	npf_config_exit();
 
 	if (rl) {
+		KASSERT(error);
 		npf_rule_free(rl);
 	}
 out:
