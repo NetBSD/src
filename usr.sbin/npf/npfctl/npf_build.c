@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.38 2014/05/31 22:41:37 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.38.2.1 2015/03/21 17:49:03 snj Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.38 2014/05/31 22:41:37 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.38.2.1 2015/03/21 17:49:03 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -91,6 +91,10 @@ npfctl_config_send(int fd, const char *out)
 	}
 	npf_rule_insert(npf_conf, NULL, defgroup);
 	error = npf_config_submit(npf_conf, fd);
+	if (error == EEXIST) { /* XXX */
+		errx(EXIT_FAILURE, "(re)load failed: "
+		    "some table has a duplicate entry?");
+	}
 	if (error) {
 		nl_error_t ne;
 		_npf_config_error(npf_conf, &ne);
