@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.2.1 2015/02/11 08:25:40 snj Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.2.2 2015/03/21 17:30:43 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.2.1 2015/02/11 08:25:40 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.2.2 2015/03/21 17:30:43 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,6 +648,30 @@ out1:
 }
 
 void
+uhidev_stop(struct uhidev *scd)
+{
+	struct uhidev_softc *sc = scd->sc_parent;
+
+	/* Disable interrupts. */
+	if (sc->sc_opipe != NULL) {
+		usbd_abort_pipe(sc->sc_opipe);
+		usbd_close_pipe(sc->sc_opipe);
+		sc->sc_opipe = NULL;
+	}
+
+	if (sc->sc_ipipe != NULL) {
+		usbd_abort_pipe(sc->sc_ipipe);
+		usbd_close_pipe(sc->sc_ipipe);
+		sc->sc_ipipe = NULL;
+	}
+
+	if (sc->sc_ibuf != NULL) {
+		free(sc->sc_ibuf, M_USBDEV);
+		sc->sc_ibuf = NULL;
+	}
+}
+
+void
 uhidev_close(struct uhidev *scd)
 {
 	struct uhidev_softc *sc = scd->sc_parent;
@@ -671,23 +695,8 @@ uhidev_close(struct uhidev *scd)
 		sc->sc_oxfer = NULL;
 	}
 
-	/* Disable interrupts. */
-	if (sc->sc_opipe != NULL) {
-		usbd_abort_pipe(sc->sc_opipe);
-		usbd_close_pipe(sc->sc_opipe);
-		sc->sc_opipe = NULL;
-	}
-
-	if (sc->sc_ipipe != NULL) {
-		usbd_abort_pipe(sc->sc_ipipe);
-		usbd_close_pipe(sc->sc_ipipe);
-		sc->sc_ipipe = NULL;
-	}
-
-	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV);
-		sc->sc_ibuf = NULL;
-	}
+	/* Possibly redundant, but properly handled */
+	uhidev_stop(scd);
 }
 
 usbd_status

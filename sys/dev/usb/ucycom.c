@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.39 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.39.2.1 2015/03/21 17:30:43 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.39 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.39.2.1 2015/03/21 17:30:43 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1124,9 +1124,14 @@ ucycom_get_cfg(struct ucycom_softc *sc)
 Static void
 ucycom_cleanup(struct ucycom_softc *sc)
 {
+	uint8_t	*obuf;
+
 	DPRINTF(("ucycom_cleanup: closing uhidev\n"));
 
-	if (sc->sc_obuf !=NULL)
-		free (sc->sc_obuf, M_USBDEV);
+	obuf = sc->sc_obuf;
+	sc->sc_obuf = NULL;
 	uhidev_close(&sc->sc_hdev);
+
+	if (obuf != NULL)
+		free (obuf, M_USBDEV);
 }
