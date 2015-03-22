@@ -1,4 +1,4 @@
-/*	$NetBSD: mdesc.c,v 1.3 2015/01/19 19:46:08 palle Exp $	*/
+/*	$NetBSD: mdesc.c,v 1.4 2015/03/22 19:33:21 palle Exp $	*/
 /*	$OpenBSD: mdesc.c,v 1.7 2014/11/30 22:26:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -252,4 +252,24 @@ mdesc_next_node(int idx)
 
 	return elem[idx].d.val;
 }
+
+const char *
+mdesc_name_by_idx(int idx)
+{
+	struct md_header *hdr;
+	struct md_element *elem;
+	const char *name_blk;
+	const char *str;
+
+	hdr = (struct md_header *)mdesc;
+	elem = (struct md_element *)(mdesc + sizeof(struct md_header));
+	name_blk = (char *)mdesc + sizeof(struct md_header) + hdr->node_blk_sz;
+
+	str = name_blk + elem[idx].name_offset;
+
+	return str;
+	
+}
+
+
 
