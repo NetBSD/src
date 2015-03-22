@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.15 2015/03/22 08:07:34 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.16 2015/03/22 08:09:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.15 2015/03/22 08:07:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.16 2015/03/22 08:09:44 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -965,28 +965,29 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 	cp[2] = htole32(0);
 	cp[3] = htole32(0);
 
+	uint8_t eptype = xhci_ep_get_type(pipe->up_endpoint->ue_edesc);
 	cp = xhci_slot_get_icv(sc, xs, xhci_dci_to_ici(dci));
 	if (xfertype == UE_INTERRUPT) {
-	cp[0] = htole32(
-	    XHCI_EPCTX_0_IVAL_SET(3) /* XXX */
-	    );
-	cp[1] = htole32(
-	    XHCI_EPCTX_1_CERR_SET(3) |
-	    XHCI_EPCTX_1_EPTYPE_SET(xhci_ep_get_type(pipe->up_endpoint->ue_edesc)) |
-	    XHCI_EPCTX_1_MAXB_SET(0) |
-	    XHCI_EPCTX_1_MAXP_SIZE_SET(8) /* XXX */
-	    );
-	cp[4] = htole32(
-		XHCI_EPCTX_4_AVG_TRB_LEN_SET(8)
-		);
+		cp[0] = htole32(
+		    XHCI_EPCTX_0_IVAL_SET(3) /* XXX */
+		    );
+		cp[1] = htole32(
+		    XHCI_EPCTX_1_CERR_SET(3) |
+		    XHCI_EPCTX_1_EPTYPE_SET(eptype) |
+		    XHCI_EPCTX_1_MAXB_SET(0) |
+		    XHCI_EPCTX_1_MAXP_SIZE_SET(8) /* XXX */
+		    );
+		cp[4] = htole32(
+		    XHCI_EPCTX_4_AVG_TRB_LEN_SET(8)
+		    );
 	} else {
-	cp[0] = htole32(0);
-	cp[1] = htole32(
-	    XHCI_EPCTX_1_CERR_SET(3) |
-	    XHCI_EPCTX_1_EPTYPE_SET(xhci_ep_get_type(pipe->up_endpoint->ue_edesc)) |
-	    XHCI_EPCTX_1_MAXB_SET(0) |
-	    XHCI_EPCTX_1_MAXP_SIZE_SET(512) /* XXX */
-	    );
+		cp[0] = htole32(0);
+		cp[1] = htole32(
+		    XHCI_EPCTX_1_CERR_SET(3) |
+		    XHCI_EPCTX_1_EPTYPE_SET(eptype) |
+		    XHCI_EPCTX_1_MAXB_SET(0) |
+		    XHCI_EPCTX_1_MAXP_SIZE_SET(512) /* XXX */
+		    );
 	}
 	*(uint64_t *)(&cp[2]) = htole64(
 	    xhci_ring_trbp(&xs->xs_ep[dci].xe_tr, 0) |
@@ -1689,23 +1690,21 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 
 	/* Write the first TRB last */
 	i = 0;
-	{
-		parameter = trbs[i].trb_0;
-		status = trbs[i].trb_2;
-		control = trbs[i].trb_3;
+	parameter = trbs[i].trb_0;
+	status = trbs[i].trb_2;
+	control = trbs[i].trb_3;
 
-		if (xr->xr_cs) {
-			control |= XHCI_TRB_3_CYCLE_BIT;
-		} else {
-			control &= ~XHCI_TRB_3_CYCLE_BIT;
-		}
-
-		xhci_trb_put(&xr->xr_trb[xr->xr_ep], htole64(parameter),
-		    htole32(status), htole32(control));
-		usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * ri, XHCI_TRB_SIZE * 1,
-		    BUS_DMASYNC_PREWRITE);
-		xr->xr_cookies[xr->xr_ep] = cookie;
+	if (xr->xr_cs) {
+		control |= XHCI_TRB_3_CYCLE_BIT;
+	} else {
+		control &= ~XHCI_TRB_3_CYCLE_BIT;
 	}
+
+	xhci_trb_put(&xr->xr_trb[xr->xr_ep], htole64(parameter),
+	    htole32(status), htole32(control));
+	usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * ri, XHCI_TRB_SIZE * 1,
+	    BUS_DMASYNC_PREWRITE);
+	xr->xr_cookies[xr->xr_ep] = cookie;
 
 	xr->xr_ep = ri;
 	xr->xr_cs = cs;
@@ -2512,8 +2511,6 @@ xhci_device_bulk_done(struct usbd_xfer *xfer)
 
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-
 }
 
 static void
