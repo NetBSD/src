@@ -1,4 +1,4 @@
-#	$NetBSD: files.amlogic,v 1.8 2015/03/21 01:17:00 jmcneill Exp $
+#	$NetBSD: files.amlogic,v 1.9 2015/03/22 17:28:22 jmcneill Exp $
 #
 # Configuration info for Amlogic ARM Peripherals
 #
@@ -47,6 +47,11 @@ file	arch/arm/amlogic/amlogic_gmac.c		amlogic_gmac
 device	amlogicrng
 attach	amlogicrng at amlogicio with amlogic_rng
 file	arch/arm/amlogic/amlogic_rng.c		amlogic_rng
+
+# RTC
+device	amlogicrtc
+attach	amlogicrtc at amlogicio with amlogic_rtc
+file	arch/arm/amlogic/amlogic_rtc.c		amlogic_rtc
 
 # Console parameters
 defparam opt_amlogic.h			CONADDR
