@@ -1,5 +1,5 @@
 #!/bin/sh
-#    $NetBSD: service,v 1.1 2015/03/22 09:57:42 ast Exp $
+#    $NetBSD: service,v 1.2 2015/03/22 10:24:48 ast Exp $
 #    service -- run or list system services
 #
 #  Taken from FreeBSD: releng/10.1/usr.sbin/service/service.sh 268098
@@ -37,9 +37,9 @@ load_rc_config 'XXX'
 usage ()
 {
     local me=${0##*/}
-    echo "Usage: ${me} [-vel]"
-    echo "Usage: ${me} [-ve] rc_script_name [rc_script_name2 [...]]"
-    echo "Usage: ${me} [-vf] rc_script_name action"
+    echo "usage: ${me} [-vel]"
+    echo "       ${me} [-ve] rc_script_name [rc_script_name2 [...]]"
+    echo "       ${me} [-vf] rc_script_name action"
     echo "       -l: List all scripts in rcorder"
     echo "       -e: List enabled scripts; check if given scripts are enabled"
     echo "       -f: Set rc_fast=yes when running rc_script_name action"
