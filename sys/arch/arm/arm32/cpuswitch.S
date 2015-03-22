@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.85 2014/10/18 08:33:24 snj Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.86 2015/03/22 23:17:57 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.85 2014/10/18 08:33:24 snj Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.86 2015/03/22 23:17:57 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -395,6 +395,15 @@ ENTRY_NP(softint_switch)
 #else
 	add	r3, r2, #(PCB_R8)
 	stmia	r3, {r8-r13}
+#endif
+
+#ifdef _ARM_ARCH_6
+	/*
+	 * Save user read/write thread/process id register in cause it was
+	 * set in userland.
+	 */
+	mrc	p15, 0, r0, c13, c0, 2
+	str	r0, [r5, #(PCB_USER_PID_RW)]
 #endif
 
 	/* this is an invariant so load before disabling intrs */
