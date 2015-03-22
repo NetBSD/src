@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.86 2015/03/22 23:17:57 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.87 2015/03/22 23:46:08 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.86 2015/03/22 23:17:57 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.87 2015/03/22 23:46:08 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -403,7 +403,12 @@ ENTRY_NP(softint_switch)
 	 * set in userland.
 	 */
 	mrc	p15, 0, r0, c13, c0, 2
-	str	r0, [r5, #(PCB_USER_PID_RW)]
+	str	r0, [r2, #(PCB_USER_PID_RW)]
+	/*
+	 * Now restore l_private for the softint thread.
+	 */
+	ldr	r0, [r5, #(L_PRIVATE)]
+	mcr	p15, 0, r0, c13, c0, 3
 #endif
 
 	/* this is an invariant so load before disabling intrs */
@@ -438,6 +443,10 @@ ENTRY_NP(softint_switch)
 	/*
 	 * If we've returned, we need to change everything back and return.
 	 */
+#ifdef _ARM_ARCH_6
+	ldr	r0, [r4, #(L_PRIVATE)]	/* get pinned lwp's l_private */
+	mcr	p15, 0, r0, c13, c0, 3	/* and restore it */
+#endif
 	ldr	r2, [r4, #(L_PCB)]	/* get pinned lwp's pcb */
 
 #ifndef __HAVE_UNNESTED_INTRS
