@@ -1,6 +1,6 @@
-.\"	$NetBSD: installboot.8,v 1.87 2014/02/24 07:23:44 skrll Exp $
+.\"	$NetBSD: installboot.8,v 1.88 2015/03/22 09:45:50 ast Exp $
 .\"
-.\" Copyright (c) 2002-2012 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -104,7 +104,6 @@ Copy the secondary bootstrap (usually
 or
 .Pa /usr/mdec/boot )
 to the root directory of the target file system.
-.Pp
 .
 .It
 Use
@@ -131,7 +130,6 @@ single bootstrap file is used.
 The single bootstrap is installed like the primary bootstrap on
 other platforms:
 .Sy next68k .
-.Pp
 .El
 .Pp
 The options and arguments recognized by
@@ -432,7 +430,6 @@ overriding the result from
 Most
 .Nx
 ports will contain variations of the following files:
-.Pp
 .Bl -tag -width /usr/mdec/bootxx_ustarfs
 .
 .It Pa /usr/mdec/bootxx_ Ns Sy FSTYPE
@@ -751,7 +748,6 @@ which is used for the OpenFirmware to load kernels.
 Install the bootstrap on to disk
 .Sq sd0 :
 .Dl Ic installboot /dev/rsd0c /usr/mdec/boot
-.Pp
 .
 .Ss Nx Ns Tn /pmax
 Install the Berkeley Fast File System primary bootstrap on to disk
