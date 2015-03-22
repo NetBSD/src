@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/11/03 14:25:33 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2015/03/22 14:02:15 tsutsui Exp $
 
 LIVEIMGBASE=	NetBSD-${DISTRIBVER}-sparc64-live-sd0root # gives ${IMGBASE}.img
 
@@ -11,7 +11,7 @@ BOOTDISK=		sd0		# for QEMU
 LIVEIMAGEMB=		${EMUIMAGEMB}
 .endif
 PRIMARY_BOOT=		bootblk
-#SECONDARY_BOOT=	# nothing
+SECONDARY_BOOT=		ofwboot
 #SECONDARY_BOOT_ARG=	# unnecessary
 
 USE_SUNLABEL=		yes
