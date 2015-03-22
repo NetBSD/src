@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.14 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.15 2015/03/22 08:07:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.14 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.15 2015/03/22 08:07:34 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2408,8 +2408,8 @@ xhci_device_ctrl_close(struct usbd_pipe *pipe)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 }
 
-/* ----------------- */
-/* device isochronus */
+/* ------------------ */
+/* device isochronous */
 
 /* ----------- */
 /* device bulk */
@@ -2528,8 +2528,8 @@ xhci_device_bulk_close(struct usbd_pipe *pipe)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 }
 
-/* --------------- */
-/* device intrrupt */
+/* ---------------- */
+/* device interrupt */
 
 static usbd_status
 xhci_device_intr_transfer(struct usbd_xfer *xfer)
