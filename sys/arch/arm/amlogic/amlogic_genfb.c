@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_genfb.c,v 1.1 2015/03/21 01:17:00 jmcneill Exp $ */
+/* $NetBSD: amlogic_genfb.c,v 1.2 2015/03/22 13:53:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_genfb.c,v 1.1 2015/03/21 01:17:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_genfb.c,v 1.2 2015/03/22 13:53:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_genfb.c,v 1.1 2015/03/21 01:17:00 jmcneill E
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/sysctl.h>
 
 #include <arm/amlogic/amlogic_reg.h>
 #include <arm/amlogic/amlogic_var.h>
@@ -60,6 +61,10 @@ static const struct amlogic_genfb_vic2mode {
 	{ 3, 720, 480 },
 	{ 4, 1280, 720 },
 	{ 5, 1920, 1080 },
+	{ 6, 720, 480 },
+	{ 7, 720, 480 },
+	{ 8, 720, 240 },
+	{ 9, 720, 240 },
 	{ 16, 1920, 1080 },
 	{ 17, 720, 576 },
 	{ 18, 720, 576 },
@@ -75,10 +80,14 @@ static const struct amlogic_genfb_vic2mode {
 struct amlogic_genfb_softc {
 	struct genfb_softc	sc_gen;
 	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
+	bus_space_handle_t	sc_cav_bsh;
 	bus_space_handle_t	sc_hdmi_bsh;
 	bus_space_handle_t	sc_vpu_bsh;
 	bus_dma_tag_t		sc_dmat;
+
+	kmutex_t		sc_lock;
+
+	u_int			sc_scale;
 
 	bus_dma_segment_t	sc_dmasegs[1];
 	bus_size_t		sc_dmasize;
@@ -86,6 +95,9 @@ struct amlogic_genfb_softc {
 	void			*sc_dmap;
 
 	uint32_t		sc_wstype;
+
+	struct sysctllog	*sc_sysctllog;
+	int			sc_node_scale;
 };
 
 static int	amlogic_genfb_match(device_t, cfdata_t, void *);
@@ -95,8 +107,14 @@ static int	amlogic_genfb_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 static paddr_t	amlogic_genfb_mmap(void *, void *, off_t, int);
 static bool	amlogic_genfb_shutdown(device_t, int);
 
-static void	amlogic_genfb_probe(struct amlogic_genfb_softc *);
+static void	amlogic_genfb_canvas_config(struct amlogic_genfb_softc *);
+static void	amlogic_genfb_osd_config(struct amlogic_genfb_softc *);
+static void	amlogic_genfb_scaler_config(struct amlogic_genfb_softc *);
+
+static void	amlogic_genfb_init(struct amlogic_genfb_softc *);
 static int	amlogic_genfb_alloc_videomem(struct amlogic_genfb_softc *);
+
+static int	amlogic_genfb_scale_helper(SYSCTLFN_PROTO);
 
 void		amlogic_genfb_set_console_dev(device_t);
 void		amlogic_genfb_ddb_trap_callback(int);
@@ -131,6 +149,11 @@ amlogic_genfb_hdmi_write_4(struct amlogic_genfb_softc *sc, uint32_t addr,
 #define VPU_WRITE(sc, reg, val) \
     bus_space_write_4((sc)->sc_bst, (sc)->sc_vpu_bsh, (reg), (val))
 
+#define CAV_READ(sc, reg) \
+    bus_space_read_4((sc)->sc_bst, (sc)->sc_cav_bsh, (reg))
+#define CAV_WRITE(sc, reg, val) \
+    bus_space_write_4((sc)->sc_bst, (sc)->sc_cav_bsh, (reg), (val))
+
 static int
 amlogic_genfb_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -152,13 +175,14 @@ amlogic_genfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = aio->aio_core_bst;
 	sc->sc_dmat = aio->aio_dmat;
 	bus_space_subregion(aio->aio_core_bst, aio->aio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	    loc->loc_offset, loc->loc_size, &sc->sc_cav_bsh);
 	bus_space_subregion(aio->aio_core_bst, aio->aio_bsh,
 	    AMLOGIC_HDMI_OFFSET, AMLOGIC_HDMI_SIZE, &sc->sc_hdmi_bsh);
 	bus_space_subregion(aio->aio_core_bst, aio->aio_bsh,
 	    AMLOGIC_VPU_OFFSET, AMLOGIC_VPU_SIZE, &sc->sc_vpu_bsh);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	amlogic_genfb_probe(sc);
+	amlogic_genfb_init(sc);
 
 	sc->sc_wstype = WSDISPLAY_TYPE_MESON;
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
@@ -236,40 +260,207 @@ amlogic_genfb_shutdown(device_t self, int flags)
 }
 
 static void
-amlogic_genfb_probe(struct amlogic_genfb_softc *sc)
+amlogic_genfb_canvas_config(struct amlogic_genfb_softc *sc)
 {
 	prop_dictionary_t cfg = device_properties(sc->sc_gen.sc_dev);
-	u_int width = 0, height = 0, i;
+	const paddr_t pa = sc->sc_dmamap->dm_segs[0].ds_addr;
 	uint32_t datal, datah, addr;
-	uint32_t w1, w2, w3, w4;
+	u_int width, height;
+
+	prop_dictionary_get_uint32(cfg, "width", &width);
+	prop_dictionary_get_uint32(cfg, "height", &height);
+
+	const uint32_t w = (width * 3) >> 3;
+	const uint32_t h = height;
+
+	datal = CAV_READ(sc, DC_CAV_LUT_DATAL_REG);
+	datah = CAV_READ(sc, DC_CAV_LUT_DATAH_REG);
+	addr = CAV_READ(sc, DC_CAV_LUT_ADDR_REG);
+
+	datal &= ~DC_CAV_LUT_DATAL_WIDTH_L;
+	datal |= __SHIFTIN(w & 7, DC_CAV_LUT_DATAL_WIDTH_L);
+	datal &= ~DC_CAV_LUT_DATAL_FBADDR;
+	datal |= __SHIFTIN(pa >> 3, DC_CAV_LUT_DATAL_FBADDR);
+	CAV_WRITE(sc, DC_CAV_LUT_DATAL_REG, datal);
+
+	datah &= ~DC_CAV_LUT_DATAH_BLKMODE;
+	datah |= __SHIFTIN(DC_CAV_LUT_DATAH_BLKMODE_LINEAR,
+			   DC_CAV_LUT_DATAH_BLKMODE);
+	datah &= ~DC_CAV_LUT_DATAH_WIDTH_H;
+	datah |= __SHIFTIN(w >> 3, DC_CAV_LUT_DATAH_WIDTH_H);
+	datah &= ~DC_CAV_LUT_DATAH_HEIGHT;
+	datah |= __SHIFTIN(h, DC_CAV_LUT_DATAH_HEIGHT);
+	CAV_WRITE(sc, DC_CAV_LUT_DATAH_REG, datah);
+
+	addr |= DC_CAV_LUT_ADDR_WR_EN;
+	CAV_WRITE(sc, DC_CAV_LUT_ADDR_REG, addr);
+}
+
+static void
+amlogic_genfb_osd_config(struct amlogic_genfb_softc *sc)
+{
+	prop_dictionary_t cfg = device_properties(sc->sc_gen.sc_dev);
+	uint32_t w0, w1, w2, w3, w4;
+	u_int width, height;
+
+	prop_dictionary_get_uint32(cfg, "width", &width);
+	prop_dictionary_get_uint32(cfg, "height", &height);
+
+	w0 = VPU_READ(sc, VIU_OSD2_BLK0_CFG_W0_REG);
+	w0 &= ~VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE;
+	w0 |= __SHIFTIN(7, VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE);
+	w0 |= VIU_OSD_BLK_CFG_W0_LITTLE_ENDIAN;
+	w0 &= ~VIU_OSD_BLK_CFG_W0_INTERP_CTRL;
+	w0 &= ~VIU_OSD_BLK_CFG_W0_INTERLACE_EN;
+	w0 |= VIU_OSD_BLK_CFG_W0_RGB_EN;
+	w0 &= ~VIU_OSD_BLK_CFG_W0_COLOR_MATRIX;
+	VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W0_REG, w0);
+
+	w1 = __SHIFTIN(width - 1, VIU_OSD_BLK_CFG_W1_X_END) |
+	     __SHIFTIN(0, VIU_OSD_BLK_CFG_W1_X_START);
+	w2 = __SHIFTIN(height - 1, VIU_OSD_BLK_CFG_W2_Y_END) |
+	     __SHIFTIN(0, VIU_OSD_BLK_CFG_W2_Y_START);
+	w3 = __SHIFTIN(width - 1, VIU_OSD_BLK_CFG_W3_H_END) |
+	     __SHIFTIN(0, VIU_OSD_BLK_CFG_W3_H_START);
+	w4 = __SHIFTIN(height - 1, VIU_OSD_BLK_CFG_W4_V_END) |
+	     __SHIFTIN(0, VIU_OSD_BLK_CFG_W4_V_START);
+
+	VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W1_REG, w1);
+	VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W2_REG, w2);
+	VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W3_REG, w3);
+	VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W4_REG, w4);
+}
+
+static void
+amlogic_genfb_scaler_config(struct amlogic_genfb_softc *sc)
+{
+	prop_dictionary_t cfg = device_properties(sc->sc_gen.sc_dev);
+	uint32_t scctl, sci_wh, sco_h, sco_v, hsc, vsc, hps, vps, hip, vip;
+	u_int width, height;
+
+	prop_dictionary_get_uint32(cfg, "width", &width);
+	prop_dictionary_get_uint32(cfg, "height", &height);
+
+	const u_int scale = sc->sc_scale;
+	const u_int dst_w = (width * scale) / 100;
+	const u_int dst_h = (height * scale) / 100;
+	const u_int margin_w = (width - dst_w) / 2;
+	const u_int margin_h = (height - dst_h) / 2;
+	const bool interlace_p = false;	/* TODO */
+	const bool scale_p = scale != 100;
+
+	VPU_WRITE(sc, VPP_OSD_SC_DUMMY_DATA_REG, 0x00808000);
+
+	scctl = VPU_READ(sc, VPP_OSD_SC_CTRL0_REG);
+	scctl |= VPP_OSD_SC_CTRL0_OSD_SC_PATH_EN;
+	scctl &= ~VPP_OSD_SC_CTRL0_OSD_SC_SEL;
+	scctl |= __SHIFTIN(1, VPP_OSD_SC_CTRL0_OSD_SC_SEL); /* OSD2 */
+	scctl &= ~VPP_OSD_SC_CTRL0_DEFAULT_ALPHA;
+	scctl |= __SHIFTIN(0, VPP_OSD_SC_CTRL0_DEFAULT_ALPHA);
+	VPU_WRITE(sc, VPP_OSD_SC_CTRL0_REG, scctl);
+
+	sci_wh = __SHIFTIN(width - 1, VPP_OSD_SCI_WH_M1_WIDTH) |
+		 __SHIFTIN(height - 1, VPP_OSD_SCI_WH_M1_HEIGHT);
+	sco_h = __SHIFTIN(margin_w, VPP_OSD_SCO_H_START) |
+		__SHIFTIN(width - margin_w - 1, VPP_OSD_SCO_H_END);
+	sco_v = __SHIFTIN(margin_h, VPP_OSD_SCO_V_START) |
+		__SHIFTIN(height - margin_h - 1, VPP_OSD_SCO_V_END);
+
+	VPU_WRITE(sc, VPP_OSD_SCI_WH_M1_REG, sci_wh);
+	VPU_WRITE(sc, VPP_OSD_SCO_H_REG, sco_h);
+	VPU_WRITE(sc, VPP_OSD_SCO_V_REG, sco_v);
+
+	/* horizontal scaling */
+	hsc = VPU_READ(sc, VPP_OSD_HSC_CTRL0_REG);
+	if (scale_p) {
+		hsc &= ~VPP_OSD_HSC_CTRL0_BANK_LENGTH;
+		hsc |= __SHIFTIN(4, VPP_OSD_HSC_CTRL0_BANK_LENGTH);
+		hsc &= ~VPP_OSD_HSC_CTRL0_INI_RCV_NUM0;
+		hsc |= __SHIFTIN(4, VPP_OSD_HSC_CTRL0_INI_RCV_NUM0);
+		hsc &= ~VPP_OSD_HSC_CTRL0_RPT_P0_NUM0;
+		hsc |= __SHIFTIN(1, VPP_OSD_HSC_CTRL0_RPT_P0_NUM0);
+		hsc |= VPP_OSD_HSC_CTRL0_HSCALE_EN;
+	} else {
+		hsc &= ~VPP_OSD_HSC_CTRL0_HSCALE_EN;
+	}
+	VPU_WRITE(sc, VPP_OSD_HSC_CTRL0_REG, hsc);
+
+	/* vertical scaling */
+	vsc = VPU_READ(sc, VPP_OSD_VSC_CTRL0_REG);
+	if (scale_p) {
+		vsc &= ~VPP_OSD_VSC_CTRL0_BANK_LENGTH;
+		vsc |= __SHIFTIN(4, VPP_OSD_VSC_CTRL0_BANK_LENGTH);
+		vsc &= ~VPP_OSD_VSC_CTRL0_TOP_INI_RCV_NUM0;
+		vsc |= __SHIFTIN(4, VPP_OSD_VSC_CTRL0_TOP_INI_RCV_NUM0);
+		vsc &= ~VPP_OSD_VSC_CTRL0_TOP_RPT_P0_NUM0;
+		vsc |= __SHIFTIN(1, VPP_OSD_VSC_CTRL0_TOP_RPT_P0_NUM0);
+		vsc &= ~VPP_OSD_VSC_CTRL0_BOT_INI_RCV_NUM0;
+		vsc &= ~VPP_OSD_VSC_CTRL0_BOT_RPT_P0_NUM0;
+		vsc &= ~VPP_OSC_VSC_CTRL0_INTERLACE;
+		if (interlace_p) {
+			/* interlace */
+			vsc |= VPP_OSC_VSC_CTRL0_INTERLACE;
+			vsc |= __SHIFTIN(6, VPP_OSD_VSC_CTRL0_BOT_INI_RCV_NUM0);
+			vsc |= __SHIFTIN(2, VPP_OSD_VSC_CTRL0_BOT_RPT_P0_NUM0);
+		}
+		vsc |= VPP_OSD_VSC_CTRL0_VSCALE_EN;
+	} else {
+		vsc &= ~VPP_OSD_VSC_CTRL0_VSCALE_EN;
+	}
+	VPU_WRITE(sc, VPP_OSD_VSC_CTRL0_REG, vsc);
+
+	/* free scale enable */
+	if (scale_p) {
+		const u_int hf_phase_step = ((width << 18) / dst_w) << 6;
+		const u_int vf_phase_step = ((height << 20) / dst_h) << 4;
+		const u_int bot_ini_phase =
+		    interlace_p ? ((vf_phase_step / 2) >> 8) : 0;
+
+		hps = VPU_READ(sc, VPP_OSD_HSC_PHASE_STEP_REG);
+		hps &= ~VPP_OSD_HSC_PHASE_STEP_FORMAT;
+		hps |= __SHIFTIN(hf_phase_step, VPP_OSD_HSC_PHASE_STEP_FORMAT);
+		VPU_WRITE(sc, VPP_OSD_HSC_PHASE_STEP_REG, hps);
+
+		hip = VPU_READ(sc, VPP_OSD_HSC_INI_PHASE_REG);
+		hip &= ~VPP_OSD_HSC_INI_PHASE_1;
+		VPU_WRITE(sc, VPP_OSD_HSC_INI_PHASE_REG, hip);
+
+		vps = VPU_READ(sc, VPP_OSD_VSC_PHASE_STEP_REG);
+		vps &= ~VPP_OSD_VSC_PHASE_STEP_FORMAT;
+		vps |= __SHIFTIN(hf_phase_step, VPP_OSD_VSC_PHASE_STEP_FORMAT);
+		VPU_WRITE(sc, VPP_OSD_VSC_PHASE_STEP_REG, vps);
+
+		vip = VPU_READ(sc, VPP_OSD_VSC_INI_PHASE_REG);
+		vip &= ~VPP_OSD_VSC_INI_PHASE_1;
+		vip |= __SHIFTIN(0, VPP_OSD_VSC_INI_PHASE_1);
+		vip &= ~VPP_OSD_VSC_INI_PHASE_0;
+		vip |= __SHIFTIN(bot_ini_phase, VPP_OSD_VSC_INI_PHASE_0);
+		VPU_WRITE(sc, VPP_OSD_VSC_INI_PHASE_REG, vip);
+	}
+}
+
+static void
+amlogic_genfb_init(struct amlogic_genfb_softc *sc)
+{
+	prop_dictionary_t cfg = device_properties(sc->sc_gen.sc_dev);
+	const struct sysctlnode *node, *devnode;
+	u_int width = 0, height = 0, i, scale = 100;
 	int error;
 
-	datal = bus_space_read_4(sc->sc_bst, sc->sc_bsh, DC_CAV_LUT_DATAL_REG);
-	datah = bus_space_read_4(sc->sc_bst, sc->sc_bsh, DC_CAV_LUT_DATAH_REG);
-	addr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, DC_CAV_LUT_ADDR_REG);
-
-	w1 = VPU_READ(sc, VIU_OSD2_BLK0_CFG_W1_REG);
-	w2 = VPU_READ(sc, VIU_OSD2_BLK0_CFG_W2_REG);
-	w3 = VPU_READ(sc, VIU_OSD2_BLK0_CFG_W3_REG);
-	w4 = VPU_READ(sc, VIU_OSD2_BLK0_CFG_W4_REG);
-
-#if 0
-	const u_int w = (__SHIFTOUT(datal, DC_CAV_LUT_DATAL_WIDTH_L) |
-	    (__SHIFTOUT(datah, DC_CAV_LUT_DATAH_WIDTH_H) << 3)) << 3;
-	const u_int h = __SHIFTOUT(datah, DC_CAV_LUT_DATAH_HEIGHT);
-#endif
-
-	/* VIC is in AVI InfoFrame PB4. */
+	/*
+	 * Firmware has (maybe) setup HDMI TX for us. Read the VIC from
+	 * the HDMI AVI InfoFrame (bits 6:0 in PB4) and map that to a
+	 * framebuffer geometry.
+	 */
 	const uint32_t vic = HDMI_READ(sc, HDMITX_AVI_INFO_ADDR + 4) & 0x7f;
-
 	for (i = 0; i < __arraycount(amlogic_genfb_modes); i++) {
 		if (amlogic_genfb_modes[i].vic == vic) {
 			aprint_debug(" [HDMI VIC %d]", vic);
 			width = amlogic_genfb_modes[i].width;
 			height = amlogic_genfb_modes[i].height;
+			break;
 		}
 	}
-
 	if (width == 0 || height == 0) {
 		aprint_error(" [UNSUPPORTED HDMI VIC %d]", vic);
 		return;
@@ -279,54 +470,91 @@ amlogic_genfb_probe(struct amlogic_genfb_softc *sc)
 	sc->sc_dmasize = (fbsize + 3) & ~3;
 
 	error = amlogic_genfb_alloc_videomem(sc);
-	if (error == 0) {
-		const paddr_t pa = sc->sc_dmamap->dm_segs[0].ds_addr;
-		const uint32_t w = width * 3;
-		const uint32_t h = height;
-
-		datal &= ~DC_CAV_LUT_DATAL_WIDTH_L;
-		datal |= __SHIFTIN(w >> 3, DC_CAV_LUT_DATAL_WIDTH_L);
-		datal &= ~DC_CAV_LUT_DATAL_FBADDR;
-		datal |= __SHIFTIN(pa >> 3, DC_CAV_LUT_DATAL_FBADDR);
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh, DC_CAV_LUT_DATAL_REG,
-		    datal);
-
-		datah &= ~DC_CAV_LUT_DATAH_BLKMODE;
-		datah |= __SHIFTIN(DC_CAV_LUT_DATAH_BLKMODE_LINEAR,
-				   DC_CAV_LUT_DATAH_BLKMODE);
-		datah &= ~DC_CAV_LUT_DATAH_WIDTH_H;
-		datah |= __SHIFTIN(w >> 6, DC_CAV_LUT_DATAH_WIDTH_H);
-		datah &= ~DC_CAV_LUT_DATAH_HEIGHT;
-		datah |= __SHIFTIN(h, DC_CAV_LUT_DATAH_HEIGHT);
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh, DC_CAV_LUT_DATAH_REG,
-		    datah);
-
-		addr |= DC_CAV_LUT_ADDR_WR_EN;
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh, DC_CAV_LUT_ADDR_REG,
-		    addr);
-
-		w1 = __SHIFTIN(width - 1, VIU_OSD_BLK_CFG_W1_X_END);
-		w2 = __SHIFTIN(height - 1, VIU_OSD_BLK_CFG_W2_Y_END);
-		w3 = __SHIFTIN(width - 1, VIU_OSD_BLK_CFG_W3_H_END);
-		w4 = __SHIFTIN(height - 1, VIU_OSD_BLK_CFG_W4_V_END);
-
-		VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W1_REG, w1);
-		VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W2_REG, w2);
-		VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W3_REG, w3);
-		VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W4_REG, w4);
-
-		prop_dictionary_set_uint32(cfg, "width", width);
-		prop_dictionary_set_uint32(cfg, "height", height);
-		prop_dictionary_set_uint8(cfg, "depth", 24);
-		prop_dictionary_set_uint16(cfg, "linebytes", width * 3);
-		prop_dictionary_set_uint32(cfg, "address", 0);
-		prop_dictionary_set_uint32(cfg, "virtual_address",
-		    (uintptr_t)sc->sc_dmap);
-	} else {
+	if (error) {
 		aprint_error_dev(sc->sc_gen.sc_dev,
 		    "failed to allocate %u bytes of video memory: %d\n",
 		    (u_int)sc->sc_dmasize, error);
+		return;
 	}
+
+	prop_dictionary_get_uint32(cfg, "scale", &scale);
+	if (scale > 100) {
+		scale = 100;
+	} else if (scale < 10) {
+		scale = 10;
+	}
+	sc->sc_scale = scale;
+
+	prop_dictionary_set_uint32(cfg, "width", width);
+	prop_dictionary_set_uint32(cfg, "height", height);
+	prop_dictionary_set_uint8(cfg, "depth", 24);
+	prop_dictionary_set_uint16(cfg, "linebytes", width * 3);
+	prop_dictionary_set_uint32(cfg, "address", 0);
+	prop_dictionary_set_uint32(cfg, "virtual_address",
+	    (uintptr_t)sc->sc_dmap);
+
+	amlogic_genfb_canvas_config(sc);
+	amlogic_genfb_osd_config(sc);
+	amlogic_genfb_scaler_config(sc);
+
+	/* sysctl setup */
+	error = sysctl_createv(&sc->sc_sysctllog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
+	if (error)
+		goto sysctl_failed;
+	error = sysctl_createv(&sc->sc_sysctllog, 0, &node, &devnode,
+	    0, CTLTYPE_NODE, device_xname(sc->sc_gen.sc_dev), NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto sysctl_failed;
+	error = sysctl_createv(&sc->sc_sysctllog, 0, &devnode, &node,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "scale", NULL,
+	    amlogic_genfb_scale_helper, 0, (void *)sc, 0,
+	    CTL_CREATE, CTL_EOL);
+	if (error)
+		goto sysctl_failed;
+	sc->sc_node_scale = node->sysctl_num;
+
+	return;
+
+sysctl_failed:
+	aprint_error_dev(sc->sc_gen.sc_dev,
+	    "couldn't create sysctl nodes (%d)\n", error);
+	sysctl_teardown(&sc->sc_sysctllog);
+}
+
+static int
+amlogic_genfb_scale_helper(SYSCTLFN_ARGS)
+{
+	struct amlogic_genfb_softc *sc;
+	struct sysctlnode node;
+	int scale, oldscale, error;
+
+	node = *rnode;
+	sc = node.sysctl_data;
+	scale = oldscale = sc->sc_scale;
+	node.sysctl_data = &scale;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (scale > 100) {
+		scale = 100;
+	} else if (scale < 10) {
+		scale = 10;
+	}
+
+	if (scale == oldscale) {
+		return 0;
+	}
+
+	mutex_enter(&sc->sc_lock);
+	sc->sc_scale = scale;
+	amlogic_genfb_scaler_config(sc);
+	mutex_exit(&sc->sc_lock);
+
+	return 0;
 }
 
 static int
