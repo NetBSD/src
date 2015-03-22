@@ -1,4 +1,4 @@
-.\"	$NetBSD: service.8,v 1.1 2015/03/22 09:57:42 ast Exp $
+.\"	$NetBSD: service.8,v 1.2 2015/03/22 22:38:19 wiz Exp $
 .\"
 .\" Copyright (c) 2009 Douglas Barton
 .\" All rights reserved.
@@ -32,12 +32,12 @@
 .Nd run or list system services
 .Sh SYNOPSIS
 .Nm
-.Op Fl vel
+.Op Fl elv
 .Nm
-.Op Fl ve
+.Op Fl ev
 .Ar rc_script_name Op Ar rc_script_name2 Op Ar ...
 .Nm
-.Op Fl vf
+.Op Fl fv
 .Ar rc_script_name action
 .Sh DESCRIPTION
 The
@@ -72,12 +72,18 @@ are specified, only those are checked.
 The
 .Ar rc_script_name
 arguments are always specified without a path prefix.
+.It Fl f
+Set
+.Sy rc_fast=yes
+to speed up the
+.Ev rc.d script; that is, run it as it is run during
+.Sq autoboot .
 .It Fl l
 List all files in
 .Pa /etc/rc.d
 (the default of
 .Ev rc_directories as defined in
-.Xr rc.conf 5 ).
+.Xr rc.conf 5 ) .
 A script will be listed unless it has the
 .Qq nostart
 keyword enabled.
@@ -89,12 +95,6 @@ are defined or in which directory the
 was found when an
 .Ar action
 is invoked.
-.It Fl f
-Set
-.Sy rc_fast=yes
-to speed up the
-.Ev rc.d script; that is, run it as it is run during
-.Sq autoboot .
 .El
 .Sh ENVIRONMENT
 When used to invoke
@@ -113,7 +113,8 @@ to
 .Pa /sbin:/bin:/usr/sbin:/usr/bin
 which is how they are set in
 .Pa /etc/rc
-at boot time. The
+at boot time.
+The
 .Ar action
 is typically one of
 .Ar start ,
@@ -149,7 +150,8 @@ was apparently left disabled and the additional directory
 was configured by redefining the variable
 .Ev rc_directories
 in
-.Pa rc.conf ; further,
+.Pa rc.conf ;
+further,
 .Sy my_pkg=yes
 must have also been set.
 .Sh SEE ALSO
@@ -162,6 +164,7 @@ The
 utility first appeared in
 .Nx 7.0 .
 .Sh AUTHORS
+.An -nosplit
 Written for
 .Fx
 by
