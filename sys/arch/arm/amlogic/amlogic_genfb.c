@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_genfb.c,v 1.2 2015/03/22 13:53:33 jmcneill Exp $ */
+/* $NetBSD: amlogic_genfb.c,v 1.3 2015/03/22 16:23:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_genfb.c,v 1.2 2015/03/22 13:53:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_genfb.c,v 1.3 2015/03/22 16:23:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,26 +55,29 @@ static const struct amlogic_genfb_vic2mode {
 	u_int vic;
 	u_int width;
 	u_int height;
+	u_int flags;
+#define INTERLACE __BIT(0)
+#define DBLSCAN __BIT(1)
 } amlogic_genfb_modes[] = {
 	{ 1, 640, 480 },
 	{ 2, 720, 480 },
 	{ 3, 720, 480 },
 	{ 4, 1280, 720 },
-	{ 5, 1920, 1080 },
-	{ 6, 720, 480 },
-	{ 7, 720, 480 },
-	{ 8, 720, 240 },
-	{ 9, 720, 240 },
+	{ 5, 1920, 1080, INTERLACE },
+	{ 6, 720, 480, DBLSCAN | INTERLACE },
+	{ 7, 720, 480, DBLSCAN | INTERLACE },
+	{ 8, 720, 240, DBLSCAN },
+	{ 9, 720, 240, DBLSCAN },
 	{ 16, 1920, 1080 },
 	{ 17, 720, 576 },
 	{ 18, 720, 576 },
 	{ 19, 1280, 720 },
-	{ 20, 1920, 1080 },
+	{ 20, 1920, 1080, INTERLACE },
 	{ 31, 1920, 1080 },
 	{ 32, 1920, 1080 },
 	{ 33, 1920, 1080 },
 	{ 34, 1920, 1080 },
-	{ 39, 1920, 1080 },
+	{ 39, 1920, 1080, INTERLACE },
 };
 
 struct amlogic_genfb_softc {
@@ -302,16 +305,23 @@ amlogic_genfb_osd_config(struct amlogic_genfb_softc *sc)
 	prop_dictionary_t cfg = device_properties(sc->sc_gen.sc_dev);
 	uint32_t w0, w1, w2, w3, w4;
 	u_int width, height;
+	bool interlace_p;
 
 	prop_dictionary_get_uint32(cfg, "width", &width);
 	prop_dictionary_get_uint32(cfg, "height", &height);
+	prop_dictionary_get_bool(cfg, "interlace", &interlace_p);
 
 	w0 = VPU_READ(sc, VIU_OSD2_BLK0_CFG_W0_REG);
 	w0 &= ~VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE;
 	w0 |= __SHIFTIN(7, VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE);
 	w0 |= VIU_OSD_BLK_CFG_W0_LITTLE_ENDIAN;
+	w0 &= ~VIU_OSD_BLK_CFG_W0_RPT_Y;
 	w0 &= ~VIU_OSD_BLK_CFG_W0_INTERP_CTRL;
-	w0 &= ~VIU_OSD_BLK_CFG_W0_INTERLACE_EN;
+	if (interlace_p) {
+		w0 |= VIU_OSD_BLK_CFG_W0_INTERLACE_EN;
+	} else {
+		w0 &= ~VIU_OSD_BLK_CFG_W0_INTERLACE_EN;
+	}
 	w0 |= VIU_OSD_BLK_CFG_W0_RGB_EN;
 	w0 &= ~VIU_OSD_BLK_CFG_W0_COLOR_MATRIX;
 	VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W0_REG, w0);
@@ -337,16 +347,17 @@ amlogic_genfb_scaler_config(struct amlogic_genfb_softc *sc)
 	prop_dictionary_t cfg = device_properties(sc->sc_gen.sc_dev);
 	uint32_t scctl, sci_wh, sco_h, sco_v, hsc, vsc, hps, vps, hip, vip;
 	u_int width, height;
+	bool interlace_p;
 
 	prop_dictionary_get_uint32(cfg, "width", &width);
 	prop_dictionary_get_uint32(cfg, "height", &height);
+	prop_dictionary_get_bool(cfg, "interlace", &interlace_p);
 
 	const u_int scale = sc->sc_scale;
 	const u_int dst_w = (width * scale) / 100;
 	const u_int dst_h = (height * scale) / 100;
 	const u_int margin_w = (width - dst_w) / 2;
 	const u_int margin_h = (height - dst_h) / 2;
-	const bool interlace_p = false;	/* TODO */
 	const bool scale_p = scale != 100;
 
 	VPU_WRITE(sc, VPP_OSD_SC_DUMMY_DATA_REG, 0x00808000);
@@ -360,11 +371,12 @@ amlogic_genfb_scaler_config(struct amlogic_genfb_softc *sc)
 	VPU_WRITE(sc, VPP_OSD_SC_CTRL0_REG, scctl);
 
 	sci_wh = __SHIFTIN(width - 1, VPP_OSD_SCI_WH_M1_WIDTH) |
-		 __SHIFTIN(height - 1, VPP_OSD_SCI_WH_M1_HEIGHT);
+		 __SHIFTIN((height >> interlace_p) - 1, VPP_OSD_SCI_WH_M1_HEIGHT);
 	sco_h = __SHIFTIN(margin_w, VPP_OSD_SCO_H_START) |
 		__SHIFTIN(width - margin_w - 1, VPP_OSD_SCO_H_END);
-	sco_v = __SHIFTIN(margin_h, VPP_OSD_SCO_V_START) |
-		__SHIFTIN(height - margin_h - 1, VPP_OSD_SCO_V_END);
+	sco_v = __SHIFTIN(margin_h >> interlace_p, VPP_OSD_SCO_V_START) |
+		__SHIFTIN(((height - margin_h) >> interlace_p) - 1,
+			  VPP_OSD_SCO_V_END);
 
 	VPU_WRITE(sc, VPP_OSD_SCI_WH_M1_REG, sci_wh);
 	VPU_WRITE(sc, VPP_OSD_SCO_H_REG, sco_h);
@@ -444,7 +456,7 @@ amlogic_genfb_init(struct amlogic_genfb_softc *sc)
 {
 	prop_dictionary_t cfg = device_properties(sc->sc_gen.sc_dev);
 	const struct sysctlnode *node, *devnode;
-	u_int width = 0, height = 0, i, scale = 100;
+	u_int width = 0, height = 0, flags, i, scale = 100;
 	int error;
 
 	/*
@@ -458,6 +470,7 @@ amlogic_genfb_init(struct amlogic_genfb_softc *sc)
 			aprint_debug(" [HDMI VIC %d]", vic);
 			width = amlogic_genfb_modes[i].width;
 			height = amlogic_genfb_modes[i].height;
+			flags = amlogic_genfb_modes[i].flags;
 			break;
 		}
 	}
@@ -487,6 +500,8 @@ amlogic_genfb_init(struct amlogic_genfb_softc *sc)
 
 	prop_dictionary_set_uint32(cfg, "width", width);
 	prop_dictionary_set_uint32(cfg, "height", height);
+	prop_dictionary_set_bool(cfg, "dblscan", !!(flags & DBLSCAN));
+	prop_dictionary_set_bool(cfg, "interlace", !!(flags & INTERLACE));
 	prop_dictionary_set_uint8(cfg, "depth", 24);
 	prop_dictionary_set_uint16(cfg, "linebytes", width * 3);
 	prop_dictionary_set_uint32(cfg, "address", 0);
