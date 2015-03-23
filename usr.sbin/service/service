@@ -1,5 +1,5 @@
 #!/bin/sh
-#    $NetBSD: service,v 1.3 2015/03/22 22:39:05 wiz Exp $
+#    $NetBSD: service,v 1.4 2015/03/23 23:28:55 ast Exp $
 #    service -- run or list system services
 #
 #  Taken from FreeBSD: releng/10.1/usr.sbin/service/service.sh 268098
@@ -31,21 +31,17 @@
 
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
-. /etc/rc.subr
-load_rc_config 'XXX'
-
 usage ()
 {
     local me=${0##*/}
     echo "usage: ${me} [-elv]"
     echo "       ${me} [-ev] rc_script_name [rc_script_name2 [...]]"
-    echo "       ${me} [-fv] rc_script_name action"
+    echo "       ${me} [-v] rc_script_name action"
     echo "       -e: List enabled scripts; check if given scripts are enabled"
-    echo "       -f: Set rc_fast=yes when running rc_script_name action"
     echo "       -l: List all scripts in rcorder"
     echo "       -v: Verbose (mention in which directory script is found)"
     echo "rc_directories is currently set to ${rc_directories}"
-    return 0
+    exit 1
 }
 
 rc_files()
@@ -57,16 +53,20 @@ rc_files()
     return 0
 }
 
-while getopts elvf o; do
+while getopts elv o; do
     case $o in
+        e) ENABLED=1 ;;
         l) LIST=1 ;;
         v) VERBOSE=1 ;;
-        e) ENABLED=1 ;;
-        f) rc_fast=yes ;;
-        *) usage ; exit 1 ;;
+        *) usage ;;
     esac
 done
-shift $(( ${OPTIND} - 1 ))
+shift $( expr $OPTIND - 1 )
+
+[ -n "${ENABLED}" -a -n "${LIST}" ] && usage
+
+. /etc/rc.subr
+load_rc_config :
 
 if [ -n "${ENABLED}" ]; then
     [ -n "${VERBOSE}" ] && echo "rc_directories is ${rc_directories}" >&2
@@ -97,7 +97,6 @@ if [ $# -eq 2 ]; then
     arg=$2
 else
     usage
-    exit 1
 fi
 
 for dir in ${rc_directories}; do
