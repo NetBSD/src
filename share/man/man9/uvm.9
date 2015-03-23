@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.108 2015/03/23 08:00:33 riastradh Exp $
+.\"	$NetBSD: uvm.9,v 1.109 2015/03/23 08:11:10 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 2, 2012
+.Dd March 23, 2015
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -687,18 +687,19 @@ Charles D. Cranor.
 UVM appeared in
 .Nx 1.4 .
 .Sh AUTHORS
-Charles D. Cranor
-.Aq chuck@ccrc.wustl.edu
+.An -nosplit
+.An Charles D. Cranor
+.Aq Mt chuck@ccrc.wustl.edu
 designed and implemented UVM.
 .Pp
-Matthew Green
-.Aq mrg@eterna.com.au
+.An Matthew Green
+.Aq Mt mrg@eterna.com.au
 wrote the swap-space management code and handled the logistical issues
 involved with merging UVM into the
 .Nx
 source tree.
 .Pp
-Chuck Silvers
-.Aq chuq@chuq.com
+.An Chuck Silvers
+.Aq Mt chuq@chuq.com
 implemented the aobj pager, thus allowing UVM to support System V shared
 memory and process swapping.
