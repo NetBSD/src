@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.54 2015/02/26 09:56:11 roy Exp $
+.\"	$NetBSD: route.8,v 1.55 2015/03/23 18:33:17 roy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd February 26, 2015
+.Dd March 19, 2015
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -295,6 +295,7 @@ by indicating the following corresponding modifiers:
 .It Li 1 Ta -proto1 Ta " RTF_PROTO1" Ta set protocol specific flag #1
 .It Li 2 Ta -proto2 Ta " RTF_PROTO2" Ta set protocol specific flag #2
 .It Li B Ta -blackhole Ta " RTF_BLACKHOLE" Ta discard pkts (during updates)
+.It Li b Ta "" Ta " RTF_BROADCAST" Ta Route represents a broadcast address
 .It Li " " Ta -noblackhole Ta ~RTF_BLACKHOLE Ta clear blackhole flag
 .It Li C Ta -cloning Ta " RTF_CLONING" Ta  generates a new route on use
 .It Li " " Ta -nocloning Ta ~RTF_CLONING Ta stop generating new routes on use
