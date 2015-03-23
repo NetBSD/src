@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.87 2015/02/26 09:54:46 roy Exp $	*/
+/*	$NetBSD: route.h,v 1.88 2015/03/23 18:33:17 roy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -156,6 +156,7 @@ struct ortentry {
 #define RTF_SRC		0x10000		/* route has fixed source address */
 #define RTF_ANNOUNCE	0x20000		/* announce new ARP or NDP entry */
 #define RTF_LOCAL	0x40000		/* route represents a local address */
+#define RTF_BROADCAST	0x80000		/* route represents a bcast address */
 
 /*
  * Routing statistics.
