@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.79 2015/03/21 13:58:31 riastradh Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.80 2015/03/23 07:59:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -111,7 +111,7 @@
  * UVM and pmap(9) may use uvm_page_locked_p() to assert whether the
  * page owner's lock is acquired.
  *
- * A page can be in one of four life states:
+ * A page can have one of four identities:
  *
  * o free
  *   => pageq.list is entry on global free page queue
