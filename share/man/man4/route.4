@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.24 2015/02/26 09:58:39 roy Exp $
+.\"	$NetBSD: route.4,v 1.25 2015/03/23 18:33:17 roy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd February 26, 2015
+.Dd March 19, 2015
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -311,6 +311,7 @@ Flags include the values:
 #define	RTF_SRC       0x10000   /* route has fixed source address */
 #define	RTF_ANNOUNCE  0x20000   /* announce new ARP or NDP entry */
 #define	RTF_LOCAL     0x40000   /* route represents a local address */
+#define	RTF_BROADCAST 0x80000   /* route represents a bcast address */
 .Ed
 .Pp
 Specifiers for metric values in rmx_locks and rtm_inits are:
