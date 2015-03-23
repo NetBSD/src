@@ -1,4 +1,4 @@
-.\"	$NetBSD: service.8,v 1.2 2015/03/22 22:38:19 wiz Exp $
+.\"	$NetBSD: service.8,v 1.3 2015/03/23 23:28:55 ast Exp $
 .\"
 .\" Copyright (c) 2009 Douglas Barton
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Op Fl ev
 .Ar rc_script_name Op Ar rc_script_name2 Op Ar ...
 .Nm
-.Op Fl fv
+.Op Fl v
 .Ar rc_script_name action
 .Sh DESCRIPTION
 The
@@ -54,7 +54,7 @@ scripts,
 .Nm
 will set the same environment that is used at boot time.
 .Pp
-The following options are supported:
+The options are as follows:
 .Bl -tag -width F1
 .It Fl e
 List services that are enabled.
@@ -72,12 +72,6 @@ are specified, only those are checked.
 The
 .Ar rc_script_name
 arguments are always specified without a path prefix.
-.It Fl f
-Set
-.Sy rc_fast=yes
-to speed up the
-.Ev rc.d script; that is, run it as it is run during
-.Sq autoboot .
 .It Fl l
 List all files in
 .Pa /etc/rc.d
@@ -128,20 +122,23 @@ or any other argument supported by the
 These are typical usages of the
 .Nm
 command:
-.Pp
-.Dl "# service sshd restart"
-.Dl "Stopping sshd."
-.Dl "Starting sshd."
-.Pp
-.Dl "$ service -v inetd status"
-.Dl "inetd is located in /etc/rc.d"
-.Dl "inetd is running as pid 1713."
-.Pp
-.Dl "$ service -vfe ccd motd hostapd my_pkg"
-.Dl "rc_directories is /etc/rc.d /usr/pkg/etc/rc.d"
-.Dl "/etc/rc.d/ccd"
-.Dl "/usr/pkg/etc/rc.d/my_pkg"
-.Dl "/etc/rc.d/motd"
+.Bd -literal
+# service sshd restart
+Stopping sshd.
+Starting sshd.
+.Ed
+.Bd -literal
+$ service -v inetd status
+inetd is located in /etc/rc.d
+inetd is running as pid 1713.
+.Ed
+.Bd -literal
+$ service -ve ccd motd hostapd my_pkg
+rc_directories is /etc/rc.d /usr/pkg/etc/rc.d
+/etc/rc.d/ccd
+/usr/pkg/etc/rc.d/my_pkg
+/etc/rc.d/motd
+.Ed
 .Pp
 In the last example,
 .Xr hostapd 8
