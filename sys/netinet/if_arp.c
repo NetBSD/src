@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.161 2015/02/26 09:54:46 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.162 2015/03/23 18:33:17 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.161 2015/02/26 09:54:46 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.162 2015/03/23 18:33:17 roy Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -613,10 +613,24 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			log(LOG_DEBUG, "arp_rtrequest: bad gateway value\n");
 			break;
 		}
+
 		satosdl(gate)->sdl_type = ifp->if_type;
 		satosdl(gate)->sdl_index = ifp->if_index;
 		if (la != NULL)
 			break; /* This happens on a route change */
+
+		/* If the route is for a broadcast address mark it as such.
+		 * This way we can avoid an expensive call to in_broadcast()
+		 * in ip_output() most of the time (because the route passed
+		 * to ip_output() is almost always a host route). */
+		if (rt->rt_flags & RTF_HOST &&
+		    !(rt->rt_flags & RTF_BROADCAST) &&
+		    in_broadcast(satocsin(rt_getkey(rt))->sin_addr, rt->rt_ifp))
+			rt->rt_flags |= RTF_BROADCAST;
+		/* There is little point in resolving the broadcast address */
+		if (rt->rt_flags & RTF_BROADCAST)
+			break;
+
 		/*
 		 * Case 2:  This route may come from cloning, or a manual route
 		 * add with a LL address.
