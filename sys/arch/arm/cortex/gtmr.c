@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.9 2015/02/28 09:34:35 skrll Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.10 2015/03/23 23:33:22 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.9 2015/02/28 09:34:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.10 2015/03/23 23:33:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,7 +112,8 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Enable the virtual counter to be accessed from usermode.
 	 */
-	armreg_cntk_ctl_write(armreg_cntk_ctl_read() | ARM_CNTKCTL_PL0VCTEN);
+	armreg_cntk_ctl_write(armreg_cntk_ctl_read() |
+	    ARM_CNTKCTL_PL0VCTEN | ARM_CNTKCTL_PL0PCTEN);
 
 	self->dv_private = sc;
 	sc->sc_dev = self;
@@ -159,6 +160,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	 * enable timer and stop masking the timer.
 	 */
 	armreg_cntv_ctl_write(ARM_CNTCTL_ENABLE);
+	armreg_cntp_ctl_write(ARM_CNTCTL_ENABLE);
 #if 0
 	printf("%s: cntctl=%#x\n", __func__, armreg_cntv_ctl_read());
 #endif
@@ -328,5 +330,5 @@ static u_int
 gtmr_get_timecount(struct timecounter *tc)
 {
 
-	return (u_int) (armreg_cntv_ct_read());
+	return (u_int) (armreg_cntp_ct_read());
 }
