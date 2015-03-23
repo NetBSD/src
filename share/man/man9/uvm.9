@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.107 2012/07/02 21:10:31 jym Exp $
+.\"	$NetBSD: uvm.9,v 1.108 2015/03/23 08:00:33 riastradh Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -466,6 +466,8 @@ The flags can be
 #define UFP_NOALLOC     0x02    /* don't allocate new pages */
 #define UFP_NOCACHE     0x04    /* don't return pages which already exist */
 #define UFP_NORDONLY    0x08    /* don't return PG_READONLY pages */
+#define UFP_DIRTYONLY   0x10    /* stop at first clean pg, clean dirty pgs */
+#define UFP_BACKWARD    0x20    /* find pages in reverse order */
 .Ed
 .Pp
 .Dv UFP_ALL
@@ -478,6 +480,22 @@ causes any pages which do not already exist to be skipped.
 causes any pages which do already exist to be skipped.
 .Dv UFP_NORDONLY
 causes any pages which are marked PG_READONLY to be skipped.
+.Dv UFP_DIRTYONLY
+causes
+.Fn uvn_findpages
+to stop early at the first clean page, and as a side effect to mark
+each dirty page as clean.
+It is the caller's responsibility to write the pages back to permanent
+storage before unbusying them.
+.Dv UFP_BACKWARD
+causes
+.Fn uvn_findpages
+to traverse the array of pages in reverse order, starting at the end.
+If
+.Fn uvn_findpages
+returns early in this case, it will have filled
+.Li * Ns Fa npagesp
+entries at the end rather than beginning of the page array.
 .Pp
 .Fn uvm_vnp_setsize
 sets the size of vnode
