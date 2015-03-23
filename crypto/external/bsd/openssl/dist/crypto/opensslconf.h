@@ -36,11 +36,11 @@ extern "C" {
 #ifndef OPENSSL_NO_UNIT_TEST
 # define OPENSSL_NO_UNIT_TEST
 #endif
-#else
+#else /* __NetBSD__ */
 #ifndef OPENSSL_NO_SCTP
 # define OPENSSL_NO_SCTP
 #endif
-#endif
+#endif /* __NetBSD__ */
 
 #define OPENSSL_CPUID_OBJ
 
