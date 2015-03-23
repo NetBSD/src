@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.233 2014/11/26 10:18:37 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.234 2015/03/23 18:33:17 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233 2014/11/26 10:18:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.234 2015/03/23 18:33:17 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -163,6 +163,7 @@ ip_output(struct mbuf *m0, ...)
 	struct route iproute;
 	const struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
+	int isbroadcast;
 	struct mbuf *opt;
 	struct route *ro;
 	int flags, sw_csum;
@@ -257,12 +258,14 @@ ip_output(struct mbuf *m0, ...)
 		ifp = ia->ia_ifp;
 		mtu = ifp->if_mtu;
 		ip->ip_ttl = 1;
+		isbroadcast = in_broadcast(dst->sin_addr, ifp);
 	} else if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    ip->ip_dst.s_addr == INADDR_BROADCAST) &&
 	    imo != NULL && imo->imo_multicast_ifp != NULL) {
 		ifp = imo->imo_multicast_ifp;
 		mtu = ifp->if_mtu;
 		IFP_TO_IA(ifp, ia);
+		isbroadcast = 0;
 	} else {
 		if (rt == NULL)
 			rt = rtcache_init(ro);
@@ -278,6 +281,10 @@ ip_output(struct mbuf *m0, ...)
 		rt->rt_use++;
 		if (rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(rt->rt_gateway);
+		if (rt->rt_flags & RTF_HOST)
+			isbroadcast = rt->rt_flags & RTF_BROADCAST;
+		else
+			isbroadcast = in_broadcast(dst->sin_addr, ifp);
 	}
 	rtmtu_nolock = rt && (rt->rt_rmx.rmx_locks & RTV_MTU) == 0;
 
@@ -412,7 +419,7 @@ ip_output(struct mbuf *m0, ...)
 	 * Look for broadcast address and and verify user is allowed to
 	 * send such a packet.
 	 */
-	if (in_broadcast(dst->sin_addr, ifp)) {
+	if (isbroadcast) {
 		if ((ifp->if_flags & IFF_BROADCAST) == 0) {
 			error = EADDRNOTAVAIL;
 			goto bad;
