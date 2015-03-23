@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_lwproc.3,v 1.1 2014/11/09 17:39:38 pooka Exp $
+.\"     $NetBSD: rump_lwproc.3,v 1.2 2015/03/23 15:42:29 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -118,7 +118,7 @@ sets curlwp to implicit context.
 Switching to an already running lwp, i.e. attempting to use the
 same curlwp in two host threads simultaneously causes a fatal error.
 .It Fn rump_pub_lwproc_releaselwp
-Release curlwp and set curlwp to context.
+Release curlwp and set curlwp to implicit context.
 In case curlwp was the last thread inside the current process, the
 process container is also released.
 Calling this routine without a dedicated curlwp is a fatal error.
