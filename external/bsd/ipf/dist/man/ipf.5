@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.5,v 1.3 2012/07/22 14:27:50 darrenr Exp $
+.\"	$NetBSD: ipf.5,v 1.4 2015/03/24 19:46:58 apb Exp $
 .\"
 .TH IPF 5
 .SH NAME
@@ -326,8 +326,6 @@ Due to port numbers being used differently to addresses, it is therefore
 possible to match on them in different ways. IPFilter allows you to use
 the following logical operations:
 .IP "< x"
-is true if the port number is greater than or equal to x and less than or
-equal to y
 is true if the port number in the packet is less than x 
 .IP "<= x"
 is true if the port number in the packet is less than or equal to x 
@@ -342,7 +340,7 @@ is true if the port number in the packet is not equal to x
 .PP
 Additionally, there are a number of ways to specify a range of ports:
 .IP "x <> y"
-is true if the port number is less than a and greater than y
+is true if the port number is less than x and greater than y
 .IP "x >< y"
 is true if the port number is greater than x and less than y
 .IP "x:y"
