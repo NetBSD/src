@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.38 2014/10/23 18:45:58 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.39 2015/03/24 20:01:18 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -324,6 +324,8 @@ typedef unsigned long uintmax_t;
 static time_t sys_time(time_t *x) { return time(x); }
 # endif
 
+typedef time_tz tz_time_t;
+
 # undef  ctime
 # define ctime tz_ctime
 # undef  ctime_r
@@ -338,16 +340,24 @@ static time_t sys_time(time_t *x) { return time(x); }
 # define localtime tz_localtime
 # undef  localtime_r
 # define localtime_r tz_localtime_r
+# undef  localtime_rz
+# define localtime_rz tz_localtime_rz
 # undef  mktime
 # define mktime tz_mktime
+# undef  mktime_z
+# define mktime_z tz_mktime_z
 # undef  offtime
 # define offtime tz_offtime
 # undef  posix2time
 # define posix2time tz_posix2time
+# undef  posix2time_z
+# define posix2time_z tz_posix2time_z
 # undef  time
 # define time tz_time
 # undef  time2posix
 # define time2posix tz_time2posix
+# undef  time2posix_z
+# define time2posix_z tz_time2posix_z
 # undef  time_t
 # define time_t tz_time_t
 # undef  timegm
@@ -356,8 +366,14 @@ static time_t sys_time(time_t *x) { return time(x); }
 # define timelocal tz_timelocal
 # undef  timeoff
 # define timeoff tz_timeoff
-
-typedef time_tz time_t;
+# undef  tzalloc
+# define tzalloc tz_tzalloc
+# undef  tzfree
+# define tzfree tz_tzfree
+# undef  tzset
+# define tzset tz_tzset
+# undef  tzsetwall
+# define tzsetwall tz_tzsetwall
 
 char *ctime(time_t const *);
 char *ctime_r(time_t const *, char *);
@@ -368,6 +384,7 @@ struct tm *localtime(time_t const *);
 struct tm *localtime_r(time_t const *restrict, struct tm *restrict);
 time_t mktime(struct tm *);
 time_t time(time_t *);
+void tzset(void);
 #endif
 
 /*
@@ -386,7 +403,7 @@ extern char *	asctime_r(struct tm const *restrict, char *restrict);
 */
 
 #ifdef STD_INSPIRED
-# if !defined tzsetwall
+# if !defined tzsetwall || defined time_tz
 void tzsetwall(void);
 # endif
 # if !defined offtime || defined time_tz

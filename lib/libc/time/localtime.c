@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.93 2015/01/31 18:55:17 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.94 2015/03/24 20:01:18 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.93 2015/01/31 18:55:17 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.94 2015/03/24 20:01:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1914,16 +1914,8 @@ again:
 	/*
 	** Do a binary search (this works whatever time_t's type is).
 	*/
-	/* LINTED const not */
-	if (!TYPE_SIGNED(time_t)) {
-		lo = 0;
-		hi = lo - 1;
-	} else {
-		lo = 1;
-		for (i = 0; i < (int) TYPE_BIT(time_t) - 1; ++i)
-			lo *= 2;
-		hi = -(lo + 1);
-	}
+	lo = time_t_min;
+	hi = time_t_max;
 #ifdef NO_ERROR_IN_DST_GAP
 	ilo = lo;
 #endif
