@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.37 2015/01/04 18:30:05 joerg Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.38 2015/03/24 20:24:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -618,7 +618,8 @@ filt_opts
 	;
 
 filt_addr
-	: addr_or_ifaddr	{ $$ = $1; }
+	: list			{ $$ = $1; }
+	| addr_or_ifaddr	{ $$ = $1; }
 	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
 	| ANY			{ $$ = NULL; }
 	;
