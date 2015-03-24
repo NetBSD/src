@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.10 2015/03/23 23:33:22 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.11 2015/03/24 08:58:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.10 2015/03/23 23:33:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.11 2015/03/24 08:58:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.10 2015/03/23 23:33:22 jmcneill Exp $");
 #include <sys/timetc.h>
 
 #include <prop/proplib.h>
+
+#include <arm/locore.h>
 
 #include <arm/cortex/gtmr_var.h>
 
@@ -169,6 +171,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	 * Get now and update the compare timer.
 	 */
 	ci->ci_lastintr = armreg_cntv_ct_read();
+	arm_isb();
 	armreg_cntv_tval_write(sc->sc_autoinc);
 #if 0
 	printf("%s: %s: delta cval = %"PRIu64"\n",
@@ -186,14 +189,17 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 
 	uint64_t now64;
 	uint64_t start64 = armreg_cntv_ct_read();
+	arm_isb();
 	do {
 		now64 = armreg_cntv_ct_read();
+		arm_isb();
 	} while (start64 == now64);
 	start64 = now64;
 	uint64_t end64 = start64 + 64;
 	uint32_t start32 = armreg_pmccntr_read();
 	do {
 		now64 = armreg_cntv_ct_read();
+		arm_isb();
 	} while (end64 != now64);
 	uint32_t end32 = armreg_pmccntr_read();
 
@@ -241,10 +247,11 @@ gtmr_delay(unsigned int n)
 
 	const uint64_t delta = n * incr_per_us;
 	const uint64_t base = armreg_cntv_ct_read();
+	arm_isb();
 	const uint64_t finish = base + delta;
 
 	while (armreg_cntv_ct_read() < finish) {
-		/* spin */
+		arm_isb();	/* spin */
 	}
 }
 
@@ -273,11 +280,15 @@ gtmr_bootdelay(unsigned int ticks)
 int
 gtmr_intr(void *arg)
 {
-	const uint64_t now = armreg_cntv_ct_read();
 	struct cpu_info * const ci = curcpu();
-	uint64_t delta = now - ci->ci_lastintr;
 	struct clockframe * const cf = arg;
 	struct gtmr_softc * const sc = &gtmr_sc;
+
+	const uint64_t now = armreg_cntv_ct_read();
+
+	arm_isb();
+
+	uint64_t delta = now - ci->ci_lastintr;
 
 #ifdef DIAGNOSTIC
 	const uint64_t then = armreg_cntv_cval_read();
@@ -329,6 +340,9 @@ setstatclockrate(int newhz)
 static u_int
 gtmr_get_timecount(struct timecounter *tc)
 {
+	u_int now = (u_int) armreg_cntp_ct_read();
 
-	return (u_int) (armreg_cntp_ct_read());
+	arm_isb();	// we want the time NOW, not some instructions later.
+
+	return now;
 }
