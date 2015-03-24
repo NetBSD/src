@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.11 2015/03/24 08:58:41 matt Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.12 2015/03/24 15:53:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.11 2015/03/24 08:58:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.12 2015/03/24 15:53:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,7 +128,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	    device_xname(self), "missing interrupts");
 
 	sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
-	    IST_EDGE | IST_MPSAFE, gtmr_intr, NULL);
+	    IST_LEVEL | IST_MPSAFE, gtmr_intr, NULL);
 	if (sc->sc_global_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);
 	aprint_normal_dev(self, "interrupting on irq %d\n",
@@ -170,8 +170,8 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	/*
 	 * Get now and update the compare timer.
 	 */
-	ci->ci_lastintr = armreg_cntv_ct_read();
 	arm_isb();
+	ci->ci_lastintr = armreg_cntv_ct_read();
 	armreg_cntv_tval_write(sc->sc_autoinc);
 #if 0
 	printf("%s: %s: delta cval = %"PRIu64"\n",
@@ -187,19 +187,19 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 
 	s = splsched();
 
+	arm_isb();
 	uint64_t now64;
 	uint64_t start64 = armreg_cntv_ct_read();
-	arm_isb();
 	do {
-		now64 = armreg_cntv_ct_read();
 		arm_isb();
+		now64 = armreg_cntv_ct_read();
 	} while (start64 == now64);
 	start64 = now64;
 	uint64_t end64 = start64 + 64;
 	uint32_t start32 = armreg_pmccntr_read();
 	do {
-		now64 = armreg_cntv_ct_read();
 		arm_isb();
+		now64 = armreg_cntv_ct_read();
 	} while (end64 != now64);
 	uint32_t end32 = armreg_pmccntr_read();
 
@@ -245,9 +245,9 @@ gtmr_delay(unsigned int n)
 	 */
 	const uint64_t incr_per_us = (freq >> 20) + (freq >> 24);
 
-	const uint64_t delta = n * incr_per_us;
-	const uint64_t base = armreg_cntv_ct_read();
 	arm_isb();
+	const uint64_t base = armreg_cntv_ct_read();
+	const uint64_t delta = n * incr_per_us;
 	const uint64_t finish = base + delta;
 
 	while (armreg_cntv_ct_read() < finish) {
@@ -284,10 +284,9 @@ gtmr_intr(void *arg)
 	struct clockframe * const cf = arg;
 	struct gtmr_softc * const sc = &gtmr_sc;
 
-	const uint64_t now = armreg_cntv_ct_read();
-
 	arm_isb();
 
+	const uint64_t now = armreg_cntv_ct_read();
 	uint64_t delta = now - ci->ci_lastintr;
 
 #ifdef DIAGNOSTIC
@@ -340,9 +339,6 @@ setstatclockrate(int newhz)
 static u_int
 gtmr_get_timecount(struct timecounter *tc)
 {
-	u_int now = (u_int) armreg_cntp_ct_read();
-
 	arm_isb();	// we want the time NOW, not some instructions later.
-
-	return now;
+	return (u_int) armreg_cntp_ct_read();
 }
