@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.68 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: cons.c,v 1.68.10.1 2015/03/24 08:58:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.68 2011/02/08 20:20:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.68.10.1 2015/03/24 08:58:29 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -296,9 +296,9 @@ cnputc(int c)
 		return;
 
 	if (c) {
-		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
 		if (c == '\n')
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
+		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
 	}
 }
 
