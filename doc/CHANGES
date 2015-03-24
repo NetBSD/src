@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2057 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2058 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -142,3 +142,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	zoneinfo: Import tzdata2015b. [apb 20150321]
 	service(8): Import adapted script from FreeBSD [ast 20150322]
 	openssl: Import openssl 1.0.1m [spz 20150323]
+	libc: Update to tzcode2015b. [christos 20150324]
