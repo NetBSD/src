@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.204 2015/03/19 16:46:02 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.205 2015/03/24 09:16:12 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9763,4 +9763,37 @@ crypto/external/bsd/openssl/dist/ssl/s2_srvr.c	1.2
 	Use After Free following d2i_ECPrivatekey error (CVE-2015-0209)
 	X509_to_X509_REQ NULL pointer deref (CVE-2015-0288)
 	[spz, ticket #1281]
+
+sys/arch/sparc64/sparc64/locore.s		1.380
+
+	PANICSTACK is a pointer itself, not a pointer to pointer.
+	[nakayama, ticket #1265]
+
+usr.sbin/cpuctl/arch/i386-asm.S			1.4
+usr.sbin/cpuctl/arch/x86_64-asm.S		1.5
+
+	Avoid "cpuctl identify" segfaults on newer intel CPUs.
+	[tnn, ticket #1266]
+
+sys/dev/cons.c					1.74 via patch
+
+	Fix strange kernel output sequence "\n\r" observed in serial
+	consoles.  Output '\r' before '\n' in conversion. PR 36306.
+	[nakayama, ticket #1267]
+
+usr.bin/vndcompress/Makefile			1.14
+usr.bin/vndcompress/vndcompress.c		1.25
+
+	Fix vndcompress restart failure fallback when input is a pipe.
+	[riastradh, ticket #1269]
+
+share/man/man9/pserialize.9			1.4-1.8
+
+	Clarify the pserialize(9) man page.
+	[riastradh, ticket #1270]
+
+share/man/man2/siginfo.2			1.7
+
+	Fix some typos and make style more consistent.
+	[riastradh, ticket #1271]
 
