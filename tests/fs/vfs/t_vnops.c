@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.44 2014/12/29 15:31:44 hannken Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.45 2015/03/24 23:24:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -118,10 +118,10 @@ lookup_complex(const atf_tc_t *tc, const char *mountpath)
 		FIELD(st_uid);
 		FIELD(st_gid);
 		FIELD(st_rdev);
-		TIME(st_atim);
-		TIME(st_mtim);
-		TIME(st_ctim);
-		TIME(st_birthtim);
+		TIME(st_atimespec);
+		TIME(st_mtimespec);
+		TIME(st_ctimespec);
+		TIME(st_birthtimespec);
 		FIELD(st_size);
 		FIELD(st_blocks);
 		FIELD(st_flags);
