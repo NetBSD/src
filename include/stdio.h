@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.95 2015/03/05 03:29:02 dholland Exp $	*/
+/*	$NetBSD: stdio.h,v 1.96 2015/03/24 07:44:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -370,7 +370,7 @@ __END_DECLS
 /*
  * X/Open CAE Specification Issue 5 Version 2
  */
-#if (_XOPEN_SOURCE - 0) >= 500 || defined(_LARGEFILE_SOURCE) || \
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
 #ifndef	off_t
 typedef	__off_t		off_t;
@@ -381,7 +381,7 @@ __BEGIN_DECLS
 int	 fseeko(FILE *, off_t, int);
 off_t	 ftello(FILE *);
 __END_DECLS
-#endif /* _XOPEN_SOURCE >= 500 || _LARGEFILE_SOURCE || _NETBSD_SOURCE */
+#endif /* (_POSIX_C_SOURCE - 0) >= 200112L || _XOPEN_SOURCE >= 500 || ... */
 
 /*
  * Functions defined in ISO C99.  Still put under _NETBSD_SOURCE due to
