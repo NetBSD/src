@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_64-asm.S,v 1.2.20.1 2015/01/16 08:30:50 snj Exp $	*/
+/*	$NetBSD: x86_64-asm.S,v 1.2.20.2 2015/03/24 08:54:51 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@ ENTRY(x86_cpuid2)
 	ret
 
 ENTRY(x86_xgetbv)
+	xorl	%ecx, %ecx
 	xgetbv
 	ret
 
