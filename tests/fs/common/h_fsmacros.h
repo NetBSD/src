@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.38 2013/06/26 19:29:24 reinoud Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.39 2015/03/24 23:22:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -110,10 +110,6 @@ do {									\
 		atf_tc_set_md_var(tc, "descr", type " test for " desc);	\
 		atf_tc_set_md_var(tc, "X-fs.type", #fs);		\
 		atf_tc_set_md_var(tc, "X-fs.mntname", type);		\
-		if (strcmp(#fs, "zfs") == 0) {				\
-			/* This should not be necessary. */		\
-			atf_tc_set_md_var(tc, "require.user", "root");	\
-		}							\
 	}								\
 	void *fs##func##tmp;						\
 									\
@@ -136,10 +132,6 @@ do {									\
 		atf_tc_set_md_var(tc, "descr",_type_" test for "_desc_);\
 		atf_tc_set_md_var(tc, "X-fs.type", #_fs_);		\
 		atf_tc_set_md_var(tc, "X-fs.mntname", _type_);		\
-		if (strcmp(#_fs_, "zfs") == 0) {			\
-			/* This should not be necessary. */		\
-			atf_tc_set_md_var(tc, "require.user", "root");	\
-		}							\
 	}								\
 	void *_fs_##_func_##tmp;					\
 									\
