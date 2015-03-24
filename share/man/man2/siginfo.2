@@ -1,4 +1,4 @@
-.\"	$NetBSD: siginfo.2,v 1.5 2010/07/26 12:50:52 christos Exp $
+.\"	$NetBSD: siginfo.2,v 1.5.8.1 2015/03/24 09:14:17 snj Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -179,15 +179,15 @@ Integer divide by zero
 .It FPE_INTOVF
 Integer overflow
 .It FPE_FLTDIV
-Floating point divide by zero
+Floating-point divide by zero
 .It FPE_FLTOVF
-Floating point overflow
+Floating-point overflow
 .It FPE_FLTUND
-Floating point underflow
+Floating-point underflow
 .It FPE_FLTRES
-Floating point inexact result
+Floating-point inexact result
 .It FPE_FLTINV
-Invalid Floating point operation
+Invalid floating-point operation
 .It FPE_FLTSUB
 Subscript out of range
 .El
@@ -203,9 +203,9 @@ Invalid permissions for mapped object
 .It BUS_ADRALN
 Invalid address alignment
 .It BUS_ADRERR
-Non-existant physical address
+Nonexistent physical address
 .It BUS_OBJERR
-Object specific hardware error
+Object-specific hardware error
 .El
 .It SIGTRAP
 .Bl -tag -width TRAP_BRKPT
@@ -238,7 +238,7 @@ Output buffers available
 .It POLL_MSG
 Input message available
 .It POLL_ERR
-I/O Error
+I/O error
 .It POLL_PRI
 High priority input available
 .It POLL_HUP
