@@ -1,5 +1,105 @@
 News for the tz database
 
+Release 2015b - 2015-03-19 23:28:11 -0700
+
+  Changes affecting future time stamps
+
+    Mongolia will start observing DST again this year, from the last
+    Saturday in March at 02:00 to the last Saturday in September at 00:00.
+    (Thanks to Ganbold Tsagaankhuu.)
+
+    Palestine will start DST on March 28, not March 27.  Also,
+    correct the fall 2014 transition from September 26 to October 24.
+    Adjust future predictions accordingly.  (Thanks to Steffen Thorsen.)
+
+  Changes affecting past time stamps
+
+    The 1982 zone shift in Pacific/Easter has been corrected, fixing a 2015a
+    regression.  (Thanks to Stuart Bishop for reporting the problem.)
+
+    Some more zones have been turned into links, when they differed
+    from existing zones only for older time stamps.  As usual,
+    these changes affect UTC offsets in pre-1970 time stamps only.
+    Their old contents have been moved to the 'backzone' file.
+    The affected zones are: America/Antigua, America/Cayman,
+    Pacific/Midway, and Pacific/Saipan.
+
+  Changes affecting time zone abbreviations
+
+    Correct the 1992-2010 DST abbreviation in Volgograd from "MSK" to "MSD".
+    (Thanks to Hank W.)
+
+  Changes affecting code
+
+    Fix integer overflow bug in reference 'mktime' implementation.
+    (Problem reported by Jörg Richter.)
+
+    Allow -Dtime_tz=time_t compilations, and allow -Dtime_tz=... libraries
+    to be used in the same executable as standard-library time_t functions.
+    (Problems reported by Bradley White.)
+
+  Changes affecting commentary
+
+    Cite the recent Mexican decree changing Quintana Roo's time zone.
+    (Thanks to Carlos Raúl Perasso.)
+
+    Likewise for the recent Chilean decree.  (Thanks to Eduardo Romero Urra.)
+
+    Update info about Mars time.
+
+
+Release 2015a - 2015-01-29 22:35:20 -0800
+
+  Changes affecting future time stamps
+
+    The Mexican state of Quintana Roo, represented by America/Cancun,
+    will shift from Central Time with DST to Eastern Time without DST
+    on 2015-02-01 at 02:00.  (Thanks to Steffen Thorsen and Gwillim Law.)
+
+    Chile will not change clocks in April or thereafter; its new standard time
+    will be its old daylight saving time.  This affects America/Santiago,
+    Pacific/Easter, and Antarctica/Palmer.  (Thanks to Juan Correa.)
+
+    New leap second 2015-06-30 23:59:60 UTC as per IERS Bulletin C 49.
+    (Thanks to Tim Parenti.)
+
+  Changes affecting past time stamps
+
+    Iceland observed DST in 1919 and 1921, and its 1939 fallback
+    transition was Oct. 29, not Nov. 29.  Remove incorrect data from
+    Shanks about time in Iceland between 1837 and 1908.
+
+    Some more zones have been turned into links, when they differed
+    from existing zones only for older time stamps.  As usual,
+    these changes affect UTC offsets in pre-1970 time stamps only.
+    Their old contents have been moved to the 'backzone' file.
+    The affected zones are: Asia/Aden, Asia/Bahrain, Asia/Kuwait,
+    and Asia/Muscat.
+
+  Changes affecting code
+
+    tzalloc now scrubs time zone abbreviations compatibly with the way
+    that tzset always has, by replacing invalid bytes with '_' and by
+    shortening too-long abbreviations.
+
+    tzselect ports to POSIX awk implementations, no longer mishandles
+    POSIX TZ settings when GNU awk is used, and reports POSIX TZ
+    settings to the user.  (Thanks to Stefan Kuhn.)
+
+  Changes affecting build procedure
+
+    'make check' now checks for links to links in the data.
+    One such link (for Africa/Asmera) has been fixed.
+    (Thanks to Stephen Colebourne for pointing out the problem.)
+
+  Changes affecting commentary
+
+    The leapseconds file commentary now mentions the expiration date.
+    (Problem reported by Martin Burnicki.)
+
+    Update Mexican Library of Congress URL.
+
+
 Release 2014j - 2014-11-10 17:37:11 -0800
 
   Changes affecting current and future time stamps
