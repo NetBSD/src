@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.235 2015/03/21 17:56:02 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.236 2015/03/25 13:25:05 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -16075,7 +16075,6 @@ external/bsd/bind/dist/version			1.12
 
 sys/dev/pci/ixgbe/ixgbe.c			1.16-1.19
 sys/dev/pci/ixgbe/ixgbe.h			1.2
-sys/dev/pci/ixgbe/ixgbe_netbsd.c		1.2-1.3
 
 	Fix mutex(9) related problem reported by Uwe Toenjes in PR#49328.
 	[msaitoh, ticket #545]
