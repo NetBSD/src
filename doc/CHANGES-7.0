@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.237 2015/03/25 16:45:01 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.238 2015/03/25 17:18:11 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -18936,4 +18936,75 @@ sys/arch/arm/include/mcontext.h			1.17
 
 	Ensure _lwp_setcontext gets consistent language binding.
 	[joerg, ticket #633]
+
+sys/kern/kern_malloc.c				1.144, 1.145
+sys/kern/kern_pmf.c				1.37
+sys/rump/librump/rumpkern/rump.c		1.316
+sys/uvm/uvm_extern.h				1.193
+sys/uvm/uvm_km.c				1.139
+
+	Kill kmeminit() and remove reference to malloc().
+	[maxv, ticket #617]
+
+sys/arch/arm/amlogic/amlogic_genfb.c		1.2, 1.3
+sys/arch/arm/amlogic/amlogic_vpureg.h		1.2
+sys/arch/evbarm/amlogic/amlogic_machdep.c	1.18
+
+	Use the hardware scaler to do overscan compensation. You can
+	set the scaling value as a percentage in two ways -- either as
+	a kernel cmdline parameter (fb.scale=<pct>) or at runtime with
+	sysctl (hw.genfb0.scale=<pct>).
+
+	Setting scale=100 disables the scaler, any other value enables it.
+	[jmcneill, ticket #637]
+
+doc/3RDPARTY					patch
+external/public-domain/tz/dist/Makefile		up to 1.1.1.7
+external/public-domain/tz/dist/NEWS		up to 1.1.1.7
+external/public-domain/tz/dist/Theory		up to 1.1.1.3
+external/public-domain/tz/dist/antarctica	up to 1.1.1.3
+external/public-domain/tz/dist/asia		up to 1.1.1.7
+external/public-domain/tz/dist/australasia	up to 1.1.1.5
+external/public-domain/tz/dist/backward		up to 1.1.1.3
+external/public-domain/tz/dist/backzone		up to 1.1.1.6
+external/public-domain/tz/dist/checklinks.awk	up to 1.1.1.1
+external/public-domain/tz/dist/checktab.awk	up to 1.1.1.6
+external/public-domain/tz/dist/europe		up to 1.1.1.7
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.3
+external/public-domain/tz/dist/leapseconds	up to 1.1.1.4
+external/public-domain/tz/dist/leapseconds.awk	up to 1.1.1.4
+external/public-domain/tz/dist/northamerica	up to 1.1.1.7
+external/public-domain/tz/dist/southamerica	up to 1.1.1.5
+external/public-domain/tz/dist/zone.tab		up to 1.1.1.4
+external/public-domain/tz/dist/zone1970.tab	up to 1.1.1.5
+
+	Update tzdata from 2014j to 2015b.  Some of the changes are:
+	* Mongolia will start observing DST in 2015.
+	* Changes to Palestine DST dates in 2014 and 2015.
+	* The Mexican state of Quintana Roo, represented by
+	America/Cancun, changed time zone in Feb 2015.
+	* Chile's new standard time from 2015 will be its old DST.
+	* New leap second 2015-06-30 23:59:60 UTC as per IERS Bulletin C 49.
+	* Corrections to historic times in Iceland and Easter Island.
+	* Some more zones have been turned into links, when they
+	differed from existing zones only for times before 1970.
+	[apb, ticket #638]
+
+sys/arch/arm/amlogic/amlogic_intr.h		1.6
+sys/arch/arm/amlogic/amlogic_io.c		1.8
+sys/arch/arm/amlogic/amlogic_reg.h		1.10
+sys/arch/arm/amlogic/amlogic_rtc.c		1.1
+sys/arch/arm/amlogic/amlogic_rtcreg.h		1.1
+sys/arch/arm/amlogic/files.amlogic		1.9
+sys/arch/evbarm/conf/ODROID-C1			1.13
+
+	Add Amlogic RTC driver.
+	[jmcneill, ticket #639]
+
+include/stdio.h					1.96
+include/unistd.h				1.145
+
+	Put fseeko, ftello, pread, and pwrite in the POSIX 2001
+	namespace.
+	[wiz, ticket #642]
 
