@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_reg.h,v 1.9.2.2 2015/03/21 08:51:17 snj Exp $ */
+/* $NetBSD: amlogic_reg.h,v 1.9.2.3 2015/03/25 17:13:25 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -62,6 +62,9 @@
 #define AMLOGIC_UART2AO_OFFSET	0x081004e0
 #define AMLOGIC_UART_SIZE	0x20
 #define AMLOGIC_UART_FREQ	AMLOGIC_REF_FREQ
+
+#define AMLOGIC_RTC_OFFSET	0x08100740
+#define AMLOGIC_RTC_SIZE	0x14
 
 #define AMLOGIC_USB0_OFFSET	0x09040000
 #define AMLOGIC_USB1_OFFSET	0x090c0000

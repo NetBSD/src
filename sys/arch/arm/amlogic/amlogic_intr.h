@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_intr.h,v 1.5.2.2 2015/03/21 08:51:17 snj Exp $ */
+/* $NetBSD: amlogic_intr.h,v 1.5.2.3 2015/03/25 17:13:25 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,6 +40,7 @@
 #define AMLOGIC_INTR_USB0	62
 #define AMLOGIC_INTR_USB1	63
 #define AMLOGIC_INTR_UART2AO	70
+#define AMLOGIC_INTR_RTC	104
 #define AMLOGIC_INTR_SDHC	110
 #define AMLOGIC_INTR_UART0AO	122
 

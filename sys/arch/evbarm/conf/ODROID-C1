@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.12.2.2 2015/03/21 08:51:18 snj Exp $
+#	$NetBSD: ODROID-C1,v 1.12.2.3 2015/03/25 17:13:26 snj Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -195,6 +195,9 @@ pseudo-device	wsfont
 
 # Hardware random number generator
 amlogicrng0	at amlogicio0
+
+# Real-time clock
+amlogicrtc0	at amlogicio0
 
 # SDHC controller
 amlogicsdhc0	at amlogicio0
