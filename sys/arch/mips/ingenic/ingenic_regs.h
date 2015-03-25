@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.11 2015/03/19 12:22:36 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.12 2015/03/25 11:23:26 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -162,6 +162,19 @@ MFC0(uint32_t r, uint32_t s)
 #define CP0_CORE_MBOX	20	/* select 0 for core 0, 1 for 1 */
 
 /* power management */
+#define JZ_CPCCR	0x10000000	/* Clock Control Register */
+	#define JZ_PDIV_M	0x000f0000	/* PCLK divider mask */
+	#define JZ_PDIV_S	16		/* PCLK divider shift */
+#define JZ_CPMPCR	0x00000014	/* MPLL */
+	#define JZ_PLLM_S	19		/* PLL multiplier shift */
+	#define JZ_PLLM_M	0xfff80000	/* PLL multiplier mask */
+	#define JZ_PLLN_S	13		/* PLL divider shift */
+	#define JZ_PLLN_M	0x0007e000	/* PLL divider mask */
+	#define JZ_PLLP_S	9		/* PLL postdivider shift */
+	#define JZ_PLLP_M	0x00001700	/* PLL postdivider mask */
+	#define JZ_PLLON	0x00000010	/* PLL is on and stable */
+	#define JZ_PLLBP	0x00000002	/* PLL bypass */
+	#define JZ_PLLEN	0x00000001	/* PLL enable */
 #define JZ_CLKGR0	0x10000020	/* CLocK Gating Registers */
 #define JZ_OPCR		0x10000024	/* Oscillator Power Control Reg. */
 	#define OPCR_IDLE_DIS	0x80000000	/* don't stop CPU clk on idle */
@@ -360,6 +373,42 @@ gpio_as_dev0(uint32_t g, int pin)
 }
 	
 static inline void
+gpio_as_dev1(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	writereg(reg + JZ_GPIO_INTC, mask);	/* use as gpio */
+	writereg(reg + JZ_GPIO_MASKC, mask);	/* device mode */
+	writereg(reg + JZ_GPIO_PAT1C, mask);	/* select 1 */
+	writereg(reg + JZ_GPIO_PAT0S, mask);
+}
+	
+static inline void
+gpio_as_dev2(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	writereg(reg + JZ_GPIO_INTC, mask);	/* use as gpio */
+	writereg(reg + JZ_GPIO_MASKC, mask);	/* device mode */
+	writereg(reg + JZ_GPIO_PAT1S, mask);	/* select 2 */
+	writereg(reg + JZ_GPIO_PAT0C, mask);
+}
+	
+static inline void
+gpio_as_dev3(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	writereg(reg + JZ_GPIO_INTC, mask);	/* use as gpio */
+	writereg(reg + JZ_GPIO_MASKC, mask);	/* device mode */
+	writereg(reg + JZ_GPIO_PAT1S, mask);	/* select 3 */
+	writereg(reg + JZ_GPIO_PAT0S, mask);
+}
+	
+static inline void
 gpio_as_intr_level(uint32_t g, int pin)
 {
 	uint32_t mask = 1 << pin;
@@ -446,5 +495,6 @@ gpio_as_intr_level(uint32_t g, int pin)
 #define JZ_SMBACKGC	0x98 /* SMB ACK General Call Register */
 #define JZ_SMBENBST	0x9C /* SMB Enable Status Register */
 #define JZ_SMBSDAHD	0xD0 /* SMB SDA HolD time Register */
+	#define JZ_HDENB	0x100	/* enable hold time */
 
 #endif /* INGENIC_REGS_H */
