@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.10 2015/03/19 12:22:00 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.11 2015/03/25 11:25:10 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.10 2015/03/19 12:22:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.11 2015/03/25 11:25:10 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -113,7 +113,7 @@ apbus_match(device_t parent, cfdata_t match, void *aux)
 void
 apbus_attach(device_t parent, device_t self, void *aux)
 {
-	uint32_t reg;
+	uint32_t reg, mpll, m, n, p, mclk, pclk, pdiv;
 	aprint_normal("\n");
 
 	/* should have been called early on */
@@ -125,8 +125,24 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	printf("REIM: %08x\n", MFC0(12, 4));
 	printf("ID: %08x\n", MFC0(15, 1));
 #endif
+	/* assuming we're using MPLL */
+	mpll = readreg(JZ_CPMPCR);
+	m = (mpll & JZ_PLLM_M) >> JZ_PLLM_S;
+	n = (mpll & JZ_PLLN_M) >> JZ_PLLN_S;
+	p = (mpll & JZ_PLLP_M) >> JZ_PLLP_S;
 
-	/* enable USB clocks */
+	/* assuming 48MHz EXTCLK */
+	mclk = (48000 * (m + 1) / (n + 1)) / (p + 1);
+
+	reg = readreg(JZ_CPCCR);
+	pdiv = (reg & JZ_PDIV_M) >> JZ_PDIV_S;
+	pclk = mclk / pdiv;
+#ifdef INGENIC_DEBUG
+	printf("mclk %d kHz\n", mclk);
+	printf("pclk %d kHz\n", pclk);
+#endif
+
+	/* enable clocks */
 	reg = readreg(JZ_CLKGR1);
 	reg &= ~(1 << 0);	/* SMB3 clock */
 	reg &= ~(1 << 8);	/* OTG1 clock */
@@ -135,6 +151,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	writereg(JZ_CLKGR1, reg);
 
 	reg = readreg(JZ_CLKGR0);
+	reg &= ~(1 << 2);	/* OTG0 clock */
 	reg &= ~(1 << 5);	/* SMB0 clock */
 	reg &= ~(1 << 6);	/* SMB1 clock */
 	reg &= ~(1 << 24);	/* UHC clock */
@@ -145,6 +162,30 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	reg = readreg(JZ_OPCR);
 	reg |= OPCR_SPENDN0 | OPCR_SPENDN1;
 	writereg(JZ_OPCR, reg);
+
+	/* setup GPIOs for I2C buses */
+	/* iic0 */
+	gpio_as_dev0(3, 30);
+	gpio_as_dev0(3, 31);
+	/* iic1 */
+	gpio_as_dev0(4, 30);
+	gpio_as_dev0(4, 31);
+	/* iic2 */
+	gpio_as_dev2(5, 16);
+	gpio_as_dev2(5, 17);
+	/* iic3 */
+	gpio_as_dev1(3, 10);
+	gpio_as_dev1(3, 11);
+	/* iic4 */
+	/* make sure these aren't SMB4 */
+	gpio_as_dev3(4, 3);
+	gpio_as_dev3(4, 4);
+	/* these are supposed to be connected to the RTC */
+	gpio_as_dev1(4, 12);
+	gpio_as_dev1(4, 13);
+	/* these can be DDC2 or SMB4, set them to DDC2 */
+	gpio_as_dev0(5, 24);
+	gpio_as_dev0(5, 25);
 
 #ifdef INGENIC_DEBUG
 	printf("JZ_CLKGR0 %08x\n", readreg(JZ_CLKGR0));
@@ -163,6 +204,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 		aa.aa_irq  = adv->irq;
 		aa.aa_dmat = &apbus_dmat;
 		aa.aa_bst = apbus_memt;
+		aa.aa_pclk = pclk;
 
 		(void) config_found_ia(self, "apbus", &aa, apbus_print);
 	}
