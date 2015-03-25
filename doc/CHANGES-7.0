@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.236 2015/03/25 13:25:05 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.237 2015/03/25 16:45:01 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1038,6 +1038,7 @@ sys/dev/sdmmc/sdhc.c				1.50
 	Fix divisor calculation for SDHC 3.0.
 	[skrll, ticket #127]
 
+doc/CHANGES					patch
 games/factor/factor.6				1.13
 games/factor/factor.c				1.27
 games/primes/Makefile				1.8
