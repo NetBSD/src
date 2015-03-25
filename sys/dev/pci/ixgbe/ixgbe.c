@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.22 2015/03/19 14:22:23 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.23 2015/03/25 12:53:55 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1084,6 +1084,9 @@ ixgbe_ifflags_cb(struct ethercom *ec)
 		rc = ENETRESET;
 	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
 		ixgbe_set_promisc(adapter);
+
+	/* Set up VLAN support and filter */
+	ixgbe_setup_vlan_hw_support(adapter);
 
 	IXGBE_CORE_UNLOCK(adapter);
 
