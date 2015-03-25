@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.143 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.143.2.1 2015/03/25 16:54:37 snj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,13 +70,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.143 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.143.2.1 2015/03/25 16:54:37 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
-
-#include <uvm/uvm_extern.h>
 
 /*
  * Built-in malloc types.  Note: ought to be removed.
@@ -199,12 +197,4 @@ kern_realloc(void *curaddr, unsigned long newsize, int flags)
 	 */
 	free(curaddr, ksp);
 	return newaddr;
-}
-
-/*
- * Initialize the kernel memory allocator
- */
-void
-kmeminit(void)
-{
 }
