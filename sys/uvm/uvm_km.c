@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.138 2013/01/29 21:29:40 para Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.138.12.1 2015/03/25 16:54:37 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.138 2013/01/29 21:29:40 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.138.12.1 2015/03/25 16:54:37 snj Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -364,10 +364,7 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 void
 uvm_km_init(void)
 {
-
 	kmem_init();
-
-	kmeminit(); // killme
 }
 
 /*
