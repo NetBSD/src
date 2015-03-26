@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.238 2015/03/25 17:18:11 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.239 2015/03/26 08:55:16 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19007,4 +19007,10 @@ include/unistd.h				1.145
 	Put fseeko, ftello, pread, and pwrite in the POSIX 2001
 	namespace.
 	[wiz, ticket #642]
+
+sys/arch/arm/vfp/vfp_init.c			1.47
+
+	Fix some inverted return values.  Don't return SIGILL if there
+	is an active FPU exception.
+	[skrll, ticket #643]
 
