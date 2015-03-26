@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.111 2014/11/08 16:20:23 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.112 2015/03/26 08:08:27 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -260,6 +260,7 @@ typedef struct {
 #define UC_REMOTE_WAKEUP	0x20
 	uByte		bMaxPower; /* max current in 2 mA units */
 #define UC_POWER_FACTOR 2
+#define UC_POWER_FACTOR_SS 8
 } UPACKED usb_config_descriptor_t;
 #define USB_CONFIG_DESCRIPTOR_SIZE 9
 
@@ -330,6 +331,7 @@ typedef struct {
 } UPACKED usb_endpoint_ss_comp_descriptor_t;
 #define USB_ENDPOINT_SS_COMP_DESCRIPTOR_SIZE 6
 
+/* USB 3.0 9.6.2, Table 9-12 */
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
@@ -338,10 +340,12 @@ typedef struct {
 } UPACKED usb_bos_descriptor_t;
 #define USB_BOS_DESCRIPTOR_SIZE 5
 
+/* common members of device capability descriptors */
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDevCapabilityType;
+/* Table 9-14 */
 #define USB_DEVCAP_RESERVED			0x00
 #define USB_DEVCAP_WUSB				0x01
 #define USB_DEVCAP_USB2EXT			0x02
@@ -357,17 +361,19 @@ typedef struct {
 #define USB_DEVCAP_WUSB_EXT			0x0c
 	/* data ... */
 } UPACKED usb_device_capability_descriptor_t;
-#define USB_DEVICE_CAPABILITY_DESCRIPTOR_SIZE 3 /* variable length */
+#define USB_DEVICE_CAPABILITY_DESCRIPTOR_SIZE 3 /* at least */
 
+/* 9.6.2.1 */
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDevCapabilityType;
 	uDWord		bmAttributes;
 #define USB_DEVCAP_USB2EXT_LPM __BIT(1)
-} UPACKED usb_usb2ext_descriptor_t;
+} UPACKED usb_devcap_usb2ext_descriptor_t;
 #define USB_DEVCAP_USB2EXT_DESCRIPTOR_SIZE 7
 
+/* 9.6.2.2 */
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
@@ -375,16 +381,17 @@ typedef struct {
 	uByte		bmAttributes;
 #define USB_DEVCAP_SS_LTM __BIT(1)
 	uWord		wSpeedsSupported;
-#define USB_DEVCAP_SS_SPEED_SS __BIT(0)
+#define USB_DEVCAP_SS_SPEED_LS __BIT(0)
 #define USB_DEVCAP_SS_SPEED_FS __BIT(1)
 #define USB_DEVCAP_SS_SPEED_HS __BIT(2)
-#define USB_DEVCAP_SS_SPEED_LS __BIT(3)
+#define USB_DEVCAP_SS_SPEED_SS __BIT(3)
 	uByte		bFunctionalitySupport;
 	uByte		bU1DevExitLat;
 	uWord		wU2DevExitLat;
 } UPACKED usb_devcap_ss_descriptor_t;
 #define USB_DEVCAP_SS_DESCRIPTOR_SIZE 10
 
+/* 9.6.2.4 */
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
@@ -749,7 +756,9 @@ typedef struct {
 #endif
 
 #define USB_MIN_POWER		100 /* mA */
+#define USB_MIN_POWER_SS	150 /* mA */
 #define USB_MAX_POWER		500 /* mA */
+#define USB_MAX_POWER_SS	900 /* mA */
 
 #define USB_BUS_RESET_DELAY	100 /* ms XXX?*/
 
