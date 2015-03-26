@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.5 2014/10/29 16:22:31 skrll Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.6 2015/03/26 08:50:42 hsuenaga Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -58,10 +58,10 @@ ENTRY(pj4b_setttb)
 #else
 	bic	r2, r0, #0x18
 #endif
-	mcr	p15, 0, r0, c2, c0, 0	/* load TTBR0 */
+	mcr	p15, 0, r2, c2, c0, 0	/* load TTBR0 */
 #ifdef ARM_MMU_EXTENDED
 	cmp	r1, #0
-	mcreq	p15, 0, r0, c2, c0, 1	/* load TTBR1 */
+	mcreq	p15, 0, r2, c2, c0, 1	/* load TTBR1 */
 #else
 	mov	r0, #0
 	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
