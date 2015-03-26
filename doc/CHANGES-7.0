@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.240 2015/03/26 10:05:26 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.241 2015/03/26 10:59:58 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19303,4 +19303,19 @@ external/mit/xorg/lib/freetype/shlib_version	1.8
 
 	Update freetype to 2.5.5.
 	[snj, ticket #619]
+
+distrib/sets/lists/etc/mi			1.236
+distrib/sets/lists/man/mi			1.1497
+etc/defaults/rc.conf				1.132
+etc/mtree/special				1.152
+etc/rc.d/Makefile				1.92
+etc/rc.d/modules				1.1
+share/man/man5/Makefile				1.71
+share/man/man5/modules.conf.5			1.1
+usr.sbin/postinstall/postinstall		1.190
+
+	Process /etc/modules.conf (if present) at startup, before securelevel
+	is raised, to allow module loading on ports without a module aware
+	bootloader.
+	[jmcneill, ticket #635]
 
