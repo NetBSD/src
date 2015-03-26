@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwm.c,v 1.28 2015/03/07 13:54:57 nonaka Exp $	*/
-/*	OpenBSD: if_iwm.c,v 1.36 2015/03/06 18:39:24 kettenis Exp	*/
+/*	$NetBSD: if_iwm.c,v 1.29 2015/03/26 14:42:56 nonaka Exp $	*/
+/*	OpenBSD: if_iwm.c,v 1.39 2015/03/23 00:35:19 jsg Exp	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.28 2015/03/07 13:54:57 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29 2015/03/26 14:42:56 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -5587,7 +5587,8 @@ iwm_endscan_cb(struct work *work __unused, void *arg)
 
 	DPRINTF(("scan ended\n"));
 
-	if (sc->sc_scanband == IEEE80211_CHAN_2GHZ) {
+	if (sc->sc_scanband == IEEE80211_CHAN_2GHZ &&
+	    sc->sc_nvm.sku_cap_band_52GHz_enable) {
 		int error;
 		done = 0;
 		if ((error = iwm_mvm_scan_request(sc,
@@ -6567,7 +6568,9 @@ iwm_attach_hook(device_t dev)
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
-	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
+	/* not all hardware can do 5GHz band */
+	if (sc->sc_nvm.sku_cap_band_52GHz_enable)
+		ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
