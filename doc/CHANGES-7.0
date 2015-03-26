@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.241 2015/03/26 10:59:58 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.242 2015/03/26 11:30:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19318,4 +19318,14 @@ usr.sbin/postinstall/postinstall		1.190
 	is raised, to allow module loading on ports without a module aware
 	bootloader.
 	[jmcneill, ticket #635]
+
+bin/dd/Makefile					1.18
+bin/dd/args.c					1.39
+bin/dd/dd.1					1.26-1.27
+bin/dd/dd.c					1.50
+bin/dd/dd.h					1.16
+bin/dd/extern.h					1.23
+
+	Add iflag and oflag operands to dd(1).
+	[manu, ticket #640]
 
