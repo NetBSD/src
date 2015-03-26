@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.242 2015/03/26 11:30:49 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.243 2015/03/26 13:44:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19328,4 +19328,48 @@ bin/dd/extern.h					1.23
 
 	Add iflag and oflag operands to dd(1).
 	[manu, ticket #640]
+
+sys/dev/pci/files.pci				1.374
+sys/dev/pci/ixgbe/ixgbe.h			1.3
+sys/dev/pci/ixgbe/ixgbe.c			1.20-1.23
+sys/dev/pci/ixgbe/ixgbe_type.h			1.3-1.7
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.4-1.5
+sys/dev/pci/ixgbe/ixgbe_api.c			1.3-1.4
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.2
+sys/dev/pci/ixgbe/ixv.c				1.3-1.4
+sys/dev/pci/ixgbe/ixv.h				1.3
+
+	- Sync ixg(4) up to FreeBSD r230572.
+	   - Fix in the interrupt handler to make sure the stack TX queue is
+	     processed. (FreeBSD r222588)
+	   - The maximum read size of incoming packets is done in 1024-byte
+	     increments.
+	     The current code was rounding down the maximum frame size
+	     instead of routing up, resulting in a read size of 1024 bytes,
+	     in the non-jumbo frame case, and splitting the packets across
+	     multiple mbufs. (FreeBSD r225045)
+	   - Consequently the above problem exposed another issue, which is
+	     when packets were splitted across multiple mbufs, and all of
+	     the mbufs in the chain have the M_PKTHDR flag set.
+	     (FreeBSD r225045)
+	   - Use the correct constant for conversion between interrupt rate
+	     and EITR values (the previous values were off by a factor of 2)
+	     (FreeBSD r230572)
+	   - Make dev.ix.N.queueM.interrupt_rate a RW sysctl variable. Changing
+	     individual values affects the queue immediately, and propagates
+	     to all interfaces at the next reinit. (FreeBSD r230572)
+	   - Add dev.ix.N.queueM.irqs rdonly sysctl, to export the actual
+	     interrupt counts. (FreeBSD r230572)
+	   - Some netmap related changes.
+	 - Fix a bug that vlan setting may not apply to the parent interface
+	   correctly.
+	 - Add 82599EN_SFP and 82599_SFP_SF_QP.
+	 - Modify to make Intel Intel 10G Ethernet (ixg(4)) virtual function
+	   ixv(4) compilable. Not completed yet. It's required to use MSI-X.
+	 - Change comments, tabs and spaces to make difference among *BSDs
+	   small.
+	 - Enclose macro argument correctly. Same as *BSDs. No binary change.
+	 - Add missing parenthesis in IXGBE_CORE_LOCK_ASSERT() macro. No binary
+	   change.
+	[msaitoh, #641]
 
