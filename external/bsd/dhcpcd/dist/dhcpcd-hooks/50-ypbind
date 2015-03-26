@@ -1,4 +1,4 @@
-# $NetBSD: 50-ypbind,v 1.6 2014/11/07 20:51:03 roy Exp $
+# $NetBSD: 50-ypbind,v 1.7 2015/03/26 10:26:37 roy Exp $
 
 # Sample dhcpcd hook for ypbind
 # This script is only suitable for the BSD versions.
@@ -14,9 +14,10 @@ best_domain()
 {
 	local i=
 
-	for i in $interfaces; do
-		if [ -e "$ypbind_dir/$i" ]; then
-			cat "$ypbind_dir/$i"
+	for i in "$ypbind_dir/$interface_order".*; do
+		if [ -f "$i" ]; then
+			cat "$i"
+			return 0
 		fi
 	done
 	return 1
@@ -26,7 +27,6 @@ make_yp_binding()
 {
 	[ -d "$ypbind_dir" ] || mkdir -p "$ypbind_dir"
 	echo "$new_nis_domain" >"$ypbind_dir/$ifname"
-	local nd="$(best_domain)"
 
 	if [ -z "$ypdomain_dir" ]; then
 		false
@@ -44,7 +44,8 @@ make_yp_binding()
 		fi
 	fi
 
-	if [ $? = 0 -o "$nd" != "$(domainname)" ]; then
+	local nd="$(best_domain)"
+	if [ $? = 0 -a "$nd" != "$(domainname)" ]; then
 		domainname "$nd"
 		if [ -n "$ypbind_restart_cmd" ]; then
 			eval $ypbind_restart_cmd
@@ -73,7 +74,7 @@ restore_yp_binding()
 }
 
 if [ "$reason" = PREINIT ]; then
-	rm -f "$ypbind_dir/$ifname"
+	rm -f "$ypbind_dir/$interface".*
 elif $if_up || $if_down; then
 	if [ -n "$new_nis_domain" ]; then
 		if valid_domainname "$new_nis_domain"; then

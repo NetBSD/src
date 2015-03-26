@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.8 2015/01/30 09:47:05 roy Exp $ */
+/* $NetBSD: if.h,v 1.9 2015/03/26 10:26:37 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,25 +30,22 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
-#include <sys/socket.h>
-
 #include <net/if.h>
+#include <net/route.h>		/* for RTM_ADD et all */
 #include <netinet/in.h>
+
+/* Some systems have route metrics.
+ * OpenBSD route priority is not this. */
+#ifndef HAVE_ROUTE_METRIC
+# if defined(__linux__)
+#  define HAVE_ROUTE_METRIC 1
+# endif
+#endif
 
 #include "config.h"
 #include "dhcpcd.h"
 #include "ipv4.h"
 #include "ipv6.h"
-
-/* Some systems have route metrics */
-#ifndef HAVE_ROUTE_METRIC
-# if defined(__linux__) || defined(SIOCGIFPRIORITY)
-#  define HAVE_ROUTE_METRIC 1
-# endif
-# ifndef HAVE_ROUTE_METRIC
-#  define HAVE_ROUTE_METRIC 0
-# endif
-#endif
 
 #define EUI64_ADDR_LEN			8
 #define INFINIBAND_ADDR_LEN		20
@@ -90,6 +87,7 @@ int if_setflag(struct interface *ifp, short flag);
 struct if_head *if_discover(struct dhcpcd_ctx *, int, char * const *);
 struct interface *if_find(struct dhcpcd_ctx *, const char *);
 struct interface *if_findindex(struct dhcpcd_ctx *, unsigned int);
+void if_sortinterfaces(struct dhcpcd_ctx *);
 void if_free(struct interface *);
 int if_domtu(const char *, short int);
 #define if_getmtu(iface) if_domtu(iface, 0)
@@ -103,6 +101,16 @@ int if_getssid(struct interface *);
 int if_vimaster(const char *);
 int if_openlinksocket(void);
 int if_managelink(struct dhcpcd_ctx *);
+
+/* dhcpcd uses the same routing flags as BSD.
+ * If the platform doesn't use these flags,
+ * map them in the platform interace file. */
+#ifndef RTM_ADD
+#define RTM_ADD		0x1	/* Add Route */
+#define RTM_DELETE	0x2	/* Delete Route */
+#define RTM_CHANGE	0x3	/* Change Metrics or flags */
+#define RTM_GET		0x4	/* Report Metrics */
+#endif
 
 #ifdef INET
 extern const char *if_pfname;
@@ -119,17 +127,19 @@ int if_address(const struct interface *,
 #define if_deladdress(ifp, addr, net)		\
 	if_address(ifp, addr, net, NULL, -1)
 
-int if_route(const struct rt *rt, int);
-#define if_addroute(rt) if_route(rt, 1)
-#define if_chgroute(rt) if_route(rt, 0)
-#define if_delroute(rt) if_route(rt, -1)
+int if_route(unsigned char, const struct rt *rt);
+int if_initrt(struct interface *);
 #endif
 
 #ifdef INET6
 int if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *, int);
+#ifdef IPV6_MANAGETEMPADDR
 int ip6_use_tempaddr(const char *ifname);
 int ip6_temp_preferred_lifetime(const char *ifname);
 int ip6_temp_valid_lifetime(const char *ifname);
+#else
+#define ip6_use_tempaddr(a) (0)
+#endif
 
 int if_address6(const struct ipv6_addr *, int);
 #define if_addaddress6(a) if_address6(a, 1)
@@ -138,10 +148,8 @@ int if_address6(const struct ipv6_addr *, int);
 int if_addrflags6(const struct in6_addr *, const struct interface *);
 int if_getlifetime6(struct ipv6_addr *);
 
-int if_route6(const struct rt6 *rt, int);
-#define if_addroute6(rt) if_route6(rt, 1)
-#define if_chgroute6(rt) if_route6(rt, 0)
-#define if_delroute6(rt) if_route6(rt, -1)
+int if_route6(unsigned char, const struct rt6 *rt);
+int if_initrt6(struct interface *);
 #else
 #define if_checkipv6(a, b, c) (-1)
 #endif

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.9 2015/01/30 09:47:05 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.10 2015/03/26 10:26:37 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -39,7 +39,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #define ELOOP_QUEUE 5
@@ -102,7 +101,7 @@ arp_report_conflicted(const struct arp_state *astate, const struct arp_msg *amsg
 {
 	char buf[HWADDR_LEN * 3];
 
-	syslog(LOG_ERR, "%s: hardware address %s claims %s",
+	logger(astate->iface->ctx, LOG_ERR, "%s: hardware address %s claims %s",
 	    astate->iface->name,
 	    hwaddr_ntoa(amsg->sha, astate->iface->hwlen, buf, sizeof(buf)),
 	    inet_ntoa(astate->failed));
@@ -128,8 +127,8 @@ arp_packet(void *arg)
 		bytes = if_readrawpacket(ifp, ETHERTYPE_ARP,
 		    arp_buffer, sizeof(arp_buffer), &flags);
 		if (bytes == -1) {
-			syslog(LOG_ERR, "%s: arp if_readrawpacket: %m",
-			    ifp->name);
+			logger(ifp->ctx, LOG_ERR,
+			    "%s: arp if_readrawpacket: %m", ifp->name);
 			dhcp_close(ifp);
 			return;
 		}
@@ -187,7 +186,8 @@ arp_open(struct interface *ifp)
 	if (state->arp_fd == -1) {
 		state->arp_fd = if_openrawsocket(ifp, ETHERTYPE_ARP);
 		if (state->arp_fd == -1) {
-			syslog(LOG_ERR, "%s: %s: %m", __func__, ifp->name);
+			logger(ifp->ctx, LOG_ERR, "%s: %s: %m",
+			    __func__, ifp->name);
 			return;
 		}
 		eloop_event_add(ifp->ctx->eloop, state->arp_fd,
@@ -216,19 +216,19 @@ arp_announce1(void *arg)
 	struct interface *ifp = astate->iface;
 
 	if (++astate->claims < ANNOUNCE_NUM)
-		syslog(LOG_DEBUG,
+		logger(ifp->ctx, LOG_DEBUG,
 		    "%s: ARP announcing %s (%d of %d), "
 		    "next in %d.0 seconds",
 		    ifp->name, inet_ntoa(astate->addr),
 		    astate->claims, ANNOUNCE_NUM, ANNOUNCE_WAIT);
 	else
-		syslog(LOG_DEBUG,
+		logger(ifp->ctx, LOG_DEBUG,
 		    "%s: ARP announcing %s (%d of %d)",
 		    ifp->name, inet_ntoa(astate->addr),
 		    astate->claims, ANNOUNCE_NUM);
 	if (arp_send(ifp, ARPOP_REQUEST,
 		astate->addr.s_addr, astate->addr.s_addr) == -1)
-		syslog(LOG_ERR, "send_arp: %m");
+		logger(ifp->ctx, LOG_ERR, "send_arp: %m");
 	eloop_timeout_add_sec(ifp->ctx->eloop, ANNOUNCE_WAIT,
 	    astate->claims < ANNOUNCE_NUM ? arp_announce1 : arp_announced,
 	    astate);
@@ -256,26 +256,26 @@ arp_probe1(void *arg)
 {
 	struct arp_state *astate = arg;
 	struct interface *ifp = astate->iface;
-	struct timeval tv;
+	struct timespec tv;
 
 	if (++astate->probes < PROBE_NUM) {
 		tv.tv_sec = PROBE_MIN;
-		tv.tv_usec = (suseconds_t)arc4random_uniform(
-		    (PROBE_MAX - PROBE_MIN) * 1000000);
-		timernorm(&tv);
+		tv.tv_nsec = (suseconds_t)arc4random_uniform(
+		    (PROBE_MAX - PROBE_MIN) * NSEC_PER_SEC);
+		timespecnorm(&tv);
 		eloop_timeout_add_tv(ifp->ctx->eloop, &tv, arp_probe1, astate);
 	} else {
 		tv.tv_sec = ANNOUNCE_WAIT;
-		tv.tv_usec = 0;
+		tv.tv_nsec = 0;
 		eloop_timeout_add_tv(ifp->ctx->eloop, &tv, arp_probed, astate);
 	}
-	syslog(LOG_DEBUG,
+	logger(ifp->ctx, LOG_DEBUG,
 	    "%s: ARP probing %s (%d of %d), next in %0.1f seconds",
 	    ifp->name, inet_ntoa(astate->addr),
 	    astate->probes ? astate->probes : PROBE_NUM, PROBE_NUM,
-	    timeval_to_double(&tv));
+	    timespec_to_double(&tv));
 	if (arp_send(ifp, ARPOP_REQUEST, 0, astate->addr.s_addr) == -1)
-		syslog(LOG_ERR, "send_arp: %m");
+		logger(ifp->ctx, LOG_ERR, "send_arp: %m");
 }
 
 void
@@ -284,11 +284,10 @@ arp_probe(struct arp_state *astate)
 
 	arp_open(astate->iface);
 	astate->probes = 0;
-	syslog(LOG_DEBUG, "%s: probing for %s",
+	logger(astate->iface->ctx, LOG_DEBUG, "%s: probing for %s",
 	    astate->iface->name, inet_ntoa(astate->addr));
 	arp_probe1(astate);
 }
-
 
 struct arp_state *
 arp_new(struct interface *ifp) {
@@ -297,7 +296,7 @@ arp_new(struct interface *ifp) {
 
 	astate = calloc(1, sizeof(*astate));
 	if (astate == NULL) {
-		syslog(LOG_ERR, "%s: %s: %m", ifp->name, __func__);
+		logger(ifp->ctx, LOG_ERR, "%s: %s: %m", ifp->name, __func__);
 		return NULL;
 	}
 

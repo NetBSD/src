@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp6.h,v 1.7 2015/01/30 09:47:05 roy Exp $ */
+/* $NetBSD: dhcp6.h,v 1.8 2015/03/26 10:26:37 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -174,7 +174,7 @@ struct dhcp6_state {
 	time_t start_uptime;
 
 	/* Message retransmission timings */
-	struct timeval RT;
+	struct timespec RT;
 	unsigned int IMD;
 	unsigned int RTC;
 	time_t IRT;
@@ -199,7 +199,8 @@ struct dhcp6_state {
 	struct in6_addr unicast;
 	struct ipv6_addrhead addrs;
 	uint32_t lowpl;
-	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE];
+	/* The +3 is for the possible .pd extension for prefix delegation */
+	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE + (IF_SSIDSIZE * 4) +3];
 	const char *reason;
 
 	struct authstate auth;

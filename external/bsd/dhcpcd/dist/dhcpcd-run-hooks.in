@@ -1,16 +1,16 @@
 #!/bin/sh
-# $NetBSD: dhcpcd-run-hooks.in,v 1.8 2014/12/09 20:21:05 roy Exp $
+# $NetBSD: dhcpcd-run-hooks.in,v 1.9 2015/03/26 10:26:37 roy Exp $
 
 # dhcpcd client configuration script 
 
 # Handy variables and functions for our hooks to use
 case "$reason" in
 	ROUTERADVERT)
-		ifsuffix=":ra";;
+		ifsuffix=".ra";;
 	INFORM6|BOUND6|RENEW6|REBIND6|REBOOT6|EXPIRE6|RELEASE6|STOP6)
-		ifsuffix=":dhcp6";;
+		ifsuffix=".dhcp6";;
 	*)
-		ifsuffix=;;
+		ifsuffix=".dhcp";;
 esac
 ifname="$interface$ifsuffix${ifclass+.}$ifclass"
 
@@ -47,19 +47,14 @@ list_interfaces()
 {
 	local i= x= ifaces=
 	for i in $interface_order; do
-		[ -e "$1/$i" ] && ifaces="$ifaces${ifaces:+ }$i"
+		for x in "$1"/$i.*; do
+			[ -f "$x" ] && ifaces="$ifaces${ifaces:+ }${x##*/}"
+		done
 	done
 	for x in "$1"/*; do
-		[ -e "$x" ] || continue
-		for i in $interface_order; do
-			if [ $i = "${x##*/}" ]; then
-				x=
-				break
-			fi
-		done
-		[ -n "$x" ] && ifaces="$ifaces${ifaces:+ }${x##*/}"
+		[ -f "$x" ] && ifaces="$ifaces${ifaces:+ }${x##*/}"
 	done
-	echo "$ifaces"
+	uniqify $ifaces
 }
 
 # Trim function
@@ -194,10 +189,13 @@ syslog()
 		${syslog_debug} || return 0
 	fi
 	[ -n "$lvl" ] && shift
-	if [ -n "$*" ]; then
-		if type logger >/dev/null 2>&1; then
-			logger -t dhcpcd -p daemon."$lvl" -is "$interface: $*"
-		fi
+	[ -n "$*" ] || return 0
+	case "$lvl" in
+	err|error)	echo "$interface: $*" >&2;;
+	*)		echo "$interface: $*";;
+	esac
+	if type logger >/dev/null 2>&1; then
+		logger -i -p daemon."$lvl" -t dhcpcd-run-hooks "$interface: $*"
 	fi
 }
 
@@ -283,6 +281,12 @@ detect_init()
 	elif [ -x /sbin/service ]; then
 		_service_exists="/sbin/service \$1 >/dev/null 2>&1"
 		_service_cmd="/sbin/service \$1 \$2"
+	elif [ -x /bin/sv ]; then
+		_service_exists="/bin/sv status \1 >/dev/null 2>&1"
+		_service_cmd="/bin/sv \$1 \$2"
+	elif [ -x /usr/bin/sv ]; then
+		_service_exists="/usr/bin/sv status \1 >/dev/null 2>&1"
+		_service_cmd="/usr/bin/sv \$1 \$2"
 	elif [ -e /etc/slackware-version -a -d /etc/rc.d ]; then
 		_service_exists="[ -x /etc/rc.d/rc.\$1 ]"
 		_service_cmd="/etc/rc.d/rc.\$1 \$2"

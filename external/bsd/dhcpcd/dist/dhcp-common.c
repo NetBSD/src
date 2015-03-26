@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.7 2015/01/30 09:47:05 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.8 2015/03/26 10:26:37 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -33,9 +33,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #include "config.h"
@@ -155,9 +155,9 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
     const struct dhcp_opt *odopts, size_t odopts_len,
     uint8_t *mask, const char *opts, int add)
 {
-	char *token, *o, *p, *t;
+	char *token, *o, *p;
 	const struct dhcp_opt *opt;
-	int match;
+	int match, e;
 	unsigned int n;
 	size_t i;
 
@@ -172,11 +172,10 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
 			if (strcmp(opt->var, token) == 0)
 				match = 1;
 			else {
-				errno = 0;
-				n = (unsigned int)strtol(token, &t, 0);
-				if (errno == 0 && !*t)
-					if (opt->option == n)
-						match = 1;
+				n = (unsigned int)strtou(token, NULL, 0,
+				    0, UINT_MAX, &e);
+				if (e == 0 && opt->option == n)
+					match = 1;
 			}
 			if (match)
 				break;
@@ -186,11 +185,10 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
 				if (strcmp(opt->var, token) == 0)
 				        match = 1;
 				else {
-					errno = 0;
-					n = (unsigned int)strtol(token, &t, 0);
-					if (errno == 0 && !*t)
-						if (opt->option == n)
-							match = 1;
+					n = (unsigned int)strtou(token, NULL, 0,
+					    0, UINT_MAX, &e);
+					if (e == 0 && opt->option == n)
+						match = 1;
 				}
 				if (match)
 					break;
@@ -460,14 +458,15 @@ print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
 			errno = EINVAL;
 			break;
 		}
-		if (!(type & (ASCII | RAW | ESCSTRING)) /*plain string */ &&
+		if (!(type & (ASCII | RAW | ESCSTRING | ESCFILE)) /* plain */ &&
 		    (!isascii(c) && !isprint(c)))
 		{
 			errno = EINVAL;
 			break;
 		}
-		if (type & ESCSTRING &&
-		    (c == '\\' || !isascii(c) || !isprint(c)))
+		if ((type & (ESCSTRING | ESCFILE) &&
+		    (c == '\\' || !isascii(c) || !isprint(c))) ||
+		    (type & ESCFILE && (c == '/' || c == ' ')))
 		{
 			errno = EINVAL;
 			if (c == '\\') {
@@ -488,9 +487,9 @@ print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
 					return -1;
 				}
 				*dst++ = '\\';
-		                *dst++ = (((unsigned char)c >> 6) & 03) + '0';
-		                *dst++ = (((unsigned char)c >> 3) & 07) + '0';
-		                *dst++ = ( (unsigned char)c       & 07) + '0';
+		                *dst++ = (char)(((c >> 6) & 03) + '0');
+		                *dst++ = (char)(((c >> 3) & 07) + '0');
+		                *dst++ = (char)(( c       & 07) + '0');
 				len -= 4;
 			}
 			bytes += 4;
@@ -734,8 +733,40 @@ print_option(char *s, size_t len, int type, const uint8_t *data, size_t dl,
 	return bytes;
 }
 
+int
+dhcp_set_leasefile(char *leasefile, size_t len, int family,
+    const struct interface *ifp, const char *extra)
+{
+	char ssid[len];
+
+	if (ifp->name[0] == '\0') {
+		strlcpy(leasefile, ifp->ctx->pidfile, len);
+		return 0;
+	}
+
+	switch (family) {
+	case AF_INET:
+	case AF_INET6:
+		break;
+	default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (ifp->wireless) {
+		ssid[0] = '-';
+		print_string(ssid + 1, sizeof(ssid) - 1,
+		    ESCFILE,
+		    (const uint8_t *)ifp->ssid, ifp->ssid_len);
+	} else
+		ssid[0] = '\0';
+	return snprintf(leasefile, len,
+	    family == AF_INET ? LEASEFILE : LEASEFILE6,
+	    ifp->name, ssid, extra);
+}
+
 static size_t
-dhcp_envoption1(char **env, const char *prefix,
+dhcp_envoption1(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
     const struct dhcp_opt *opt, int vname, const uint8_t *od, size_t ol,
     const char *ifname)
 {
@@ -759,7 +790,7 @@ dhcp_envoption1(char **env, const char *prefix,
 		return e;
 	v = val = *env = malloc(e);
 	if (v == NULL) {
-		syslog(LOG_ERR, "%s: %m", __func__);
+		logger(ctx, LOG_ERR, "%s: %m", __func__);
 		return 0;
 	}
 	if (vname)
@@ -788,7 +819,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 
 	/* If no embedded or encapsulated options, it's easy */
 	if (opt->embopts_len == 0 && opt->encopts_len == 0) {
-		if (dhcp_envoption1(env == NULL ? NULL : &env[0],
+		if (dhcp_envoption1(ctx, env == NULL ? NULL : &env[0],
 		    prefix, opt, 1, od, ol, ifname))
 			return 1;
 		return 0;
@@ -799,7 +830,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		if (opt->type & INDEX) {
 			if (opt->index > 999) {
 				errno = ENOBUFS;
-				syslog(LOG_ERR, "%s: %m", __func__);
+				logger(ctx, LOG_ERR, "%s: %m", __func__);
 				return 0;
 			}
 		}
@@ -807,7 +838,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		    (opt->type & INDEX ? 3 : 0);
 		pfx = malloc(e);
 		if (pfx == NULL) {
-			syslog(LOG_ERR, "%s: %m", __func__);
+			logger(ctx, LOG_ERR, "%s: %m", __func__);
 			return 0;
 		}
 		if (opt->type & INDEX)
@@ -830,7 +861,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		 * name is different.
 		 * This avoids new_fqdn_fqdn which would be silly. */
 		ov = strcmp(opt->var, eopt->var);
-		if (dhcp_envoption1(env == NULL ? NULL : &env[n],
+		if (dhcp_envoption1(ctx, env == NULL ? NULL : &env[n],
 		    pfx, eopt, ov, od, e, ifname))
 			n++;
 		od += e;
