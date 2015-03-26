@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_genfb.c,v 1.3 2015/03/22 16:23:26 jmcneill Exp $ */
+/* $NetBSD: amlogic_genfb.c,v 1.4 2015/03/26 16:26:35 joerg Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_genfb.c,v 1.3 2015/03/22 16:23:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_genfb.c,v 1.4 2015/03/26 16:26:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -135,7 +135,7 @@ amlogic_genfb_hdmi_read_4(struct amlogic_genfb_softc *sc, uint32_t addr)
 	return bus_space_read_4(sc->sc_bst, sc->sc_hdmi_bsh, HDMI_DATA_REG);
 }
 
-static inline void
+static __unused inline void
 amlogic_genfb_hdmi_write_4(struct amlogic_genfb_softc *sc, uint32_t addr,
     uint32_t data)
 {
