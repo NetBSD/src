@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.127 2015/03/26 15:53:58 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.128 2015/03/26 16:19:26 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.127 2015/03/26 15:53:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.128 2015/03/26 16:19:26 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -224,7 +224,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	USETW2(req.wValue, UDESC_HUB, 0);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, USB_HUB_DESCRIPTOR_SIZE);
-	DPRINTF("getting hub descriptor", 0, 0, 0, 0);
+	DPRINTF("uhub %d getting hub descriptor", device_unit(self), 0, 0, 0);
 	err = usbd_do_request(dev, &req, &hubdesc);
 	nports = hubdesc.bNbrPorts;
 	if (!err && nports > 7) {
@@ -232,8 +232,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		err = usbd_do_request(dev, &req, &hubdesc);
 	}
 	if (err) {
-		DPRINTF("getting hub descriptor failed, sc %p error %d", sc,
-		    err, 0, 0);
+		DPRINTF("getting hub descriptor failed, uhub %d error %d",
+		    device_unit(self), err, 0, 0);
 		return;
 	}
 
@@ -375,7 +375,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		if (err)
 			aprint_error_dev(self, "port %d power on failed, %s\n",
 			    port, usbd_errstr(err));
-		DPRINTF("turn on port %d power", port, 0, 0, 0);
+		DPRINTF("uhub %d turn on port %d power", device_unit(self),
+		    port, 0, 0);
 	}
 
 	/* Wait for stable power if we are not a root hub */
@@ -415,7 +416,8 @@ uhub_explore(usbd_device_handle dev)
 
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
-	DPRINTFN(10, "sc=%p dev=%p addr=%d", sc, dev, dev->address, 0);
+	DPRINTFN(10, "uhub %d dev=%p addr=%d", device_unit(sc->sc_dev), dev,
+	    dev->address, 0);
 
 	if (!sc->sc_running)
 		return (USBD_NOT_STARTED);
@@ -429,8 +431,8 @@ uhub_explore(usbd_device_handle dev)
 
 		err = usbd_get_hub_status(dev, &hs);
 		if (err) {
-			DPRINTF("get hub status failed, sc %p err%d", sc,
-			    err, 0, 0);
+			DPRINTF("get hub status failed, uhub %d err %d",
+			    device_unit(sc->sc_dev), err, 0, 0);
 		} else {
 			/* just acknowledge */
 			status = UGETW(hs.wHubStatus);
@@ -457,8 +459,8 @@ uhub_explore(usbd_device_handle dev)
 		if (PORTSTAT_ISSET(sc, port) || reconnect) {
 			err = usbd_get_port_status(dev, port, &up->status);
 			if (err) {
-				DPRINTF("get port stat failed, sc %p err %d",
-				    sc, err, 0, 0);
+				DPRINTF("get port stat failed, uhub %d err %d",
+				    device_unit(sc->sc_dev), err, 0, 0);
 				continue;
 			}
 			status = UGETW(up->status.wPortStatus);
@@ -637,7 +639,7 @@ uhub_detach(device_t self, int flags)
 
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
-	DPRINTF("sc=%p flags=%d", sc, flags, 0, 0);
+	DPRINTF("uhub %d flags=%d", device_unit(self), flags, 0, 0);
 
 	if (hub == NULL)		/* Must be partially working */
 		return (0);
@@ -746,7 +748,7 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
-	DPRINTFN(5, "sc=%p", sc, 0, 0, 0);
+	DPRINTFN(5, "uhub %d", device_unit(sc->sc_dev), 0, 0, 0);
 
 	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
