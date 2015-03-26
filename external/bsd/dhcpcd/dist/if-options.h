@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.8 2015/01/30 09:47:05 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.9 2015/03/26 10:26:37 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -43,7 +43,8 @@
 
 /* Don't set any optional arguments here so we retain POSIX
  * compatibility with getopt */
-#define IF_OPTS "46bc:de:f:gh:i:kl:m:no:pqr:s:t:u:v:wxy:z:ABC:DEF:GHI:JKLMO:Q:S:TUVW:X:Z:"
+#define IF_OPTS "46bc:de:f:gh:i:j:kl:m:no:pqr:s:t:u:v:wxy:z:" \
+		"ABC:DEF:GHI:JKLMO:Q:S:TUVW:X:Z:"
 
 #define DEFAULT_TIMEOUT		30
 #define DEFAULT_REBOOT		5
@@ -109,6 +110,7 @@
 #define DHCPCD_PFXDLGONLY		(1ULL << 52)
 #define DHCPCD_PFXDLGMIX		(1ULL << 53)
 #define DHCPCD_IPV6RA_AUTOCONF		(1ULL << 54)
+#define DHCPCD_ROUTER_HOST_ROUTE_WARNED	(1ULL << 55)
 
 extern const struct option cf_options[];
 
@@ -163,7 +165,7 @@ struct if_options {
 	char *script;
 
 	char hostname[HOSTNAME_MAX_LEN + 1]; /* We don't store the length */
-	int fqdn;
+	uint8_t fqdn;
 	uint8_t vendorclassid[VENDORCLASSID_MAX_LEN + 2];
 	uint8_t clientid[CLIENTID_MAX_LEN + 2];
 	uint8_t userclass[USERCLASS_MAX_LEN + 2];
