@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.30 2014/01/02 20:12:23 christos Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.31 2015/03/26 11:31:57 justin Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.30 2014/01/02 20:12:23 christos Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.31 2015/03/26 11:31:57 justin Exp $");
 #endif
 #endif
 
@@ -983,8 +983,8 @@ done:
  *
  * Assuming that the address is all properly allocated
  */
-int
-rpcb_getaddr(rpcprog_t program, rpcvers_t version,
+bool_t
+rpcb_getaddr(const rpcprog_t program, const rpcvers_t version,
 	const struct netconfig *nconf, struct netbuf *address,
 	const char *host)
 {
