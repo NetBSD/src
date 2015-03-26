@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.41.2.1 2015/03/21 17:51:21 snj Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.41.2.2 2015/03/26 08:53:48 snj Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -394,15 +394,19 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	}
 
 	/*
-	 * If we are just changing/fetching FPSCR, don't bother loading it.
+	 * If we are just changing/fetching FPSCR, don't bother loading it
+	 * just emulate the instruction.
 	 */
 	if (!vfp_fpscr_handler(address, insn, frame, fault_code))
-		return 1;
-
-	/* if we already own the FPU and it's enabled, raise SIGILL */
-	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp
-	    && (armreg_fpexc_read() & VFP_FPEXC_EN) != 0)
 		return 0;
+
+	/* 
+	 * If we already own the FPU and it's enabled (and no exception), raise
+	 * SIGILL.  If there is an exception, drop through to raise a SIGFPE.
+	 */
+	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp
+	    && (armreg_fpexc_read() & (VFP_FPEXC_EX|VFP_FPEXC_EN)) == VFP_FPEXC_EN)
+		return 1;
 
 	/*
 	 * Make sure we own the FP.
@@ -474,7 +478,7 @@ neon_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	/* if we already own the FPU and it's enabled, raise SIGILL */
 	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp
 	    && (armreg_fpexc_read() & VFP_FPEXC_EN) != 0)
-		return 0;
+		return 1;
 
 	pcu_load(&arm_vfp_ops);
 
