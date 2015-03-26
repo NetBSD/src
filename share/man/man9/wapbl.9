@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.1 2015/03/26 21:38:49 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.2 2015/03/26 22:04:38 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,7 +105,7 @@ When a file system using
 issues writes (as in
 .Xr bwrite 9
 or
-.Xr bdwrite 9 Ns ),
+.Xr bdwrite 9 ) ,
 they are grouped in batches called
 .Em transactions
 in memory, which are serialized to be consistent with program order
@@ -269,7 +269,7 @@ must be
 is a callback that
 .Nm
 will invoke as
-.Fa flushfn Ns Li ( Fa mp Ns Li , Fa deallocblks Ns Li , Fa dealloclens Ns Li , Fa dealloccnt Ns Li )
+.Fa flushfn Ns ( Fa mp , Fa deallocblks , Fa dealloclens , Fa dealloccnt )
 just before it flushes a transaction to disk, with the transaction
 locked exclusively, where
 .Fa mp
