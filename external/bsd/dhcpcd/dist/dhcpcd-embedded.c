@@ -1,10 +1,10 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.7 2015/01/30 09:47:05 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.8 2015/03/26 10:26:37 roy Exp $");
 
 /*
- * DO NOT EDIT
+ * DO NOT EDIT!
  * Automatically generated from dhcpcd-embedded.conf
- * Ths allows us to simply generate DHCP structure without any C programming
+ * Ths allows us to simply generate DHCP structure without any C programming.
  */
 
 /*

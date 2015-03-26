@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.14 2015/01/30 10:20:43 roy Exp $ */
+/* $NetBSD: defs.h,v 1.15 2015/03/26 10:26:37 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,7 +30,7 @@
 #define CONFIG_H
 
 #define PACKAGE			"dhcpcd"
-#define VERSION			"6.7.1"
+#define VERSION			"6.8.0"
 
 #ifndef CONFIG
 # define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
@@ -48,10 +48,10 @@
 # define SECRET			SYSCONFDIR "/" PACKAGE ".secret"
 #endif
 #ifndef LEASEFILE
-# define LEASEFILE		DBDIR "/" PACKAGE "-%s.lease"
+# define LEASEFILE		DBDIR "/" PACKAGE "-%s%s%s.lease"
 #endif
 #ifndef LEASEFILE6
-# define LEASEFILE6		DBDIR "/" PACKAGE "-%s%s.lease6"
+# define LEASEFILE6		LEASEFILE "6"
 #endif
 #ifndef PIDFILE
 # define PIDFILE		RUNDIR "/" PACKAGE "%s%s%s.pid"

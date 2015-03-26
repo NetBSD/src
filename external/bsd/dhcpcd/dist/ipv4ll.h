@@ -1,8 +1,8 @@
-/* $NetBSD: ipv4ll.h,v 1.7 2014/11/14 12:00:54 roy Exp $ */
+/* $NetBSD: ipv4ll.h,v 1.8 2015/03/26 10:26:37 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
