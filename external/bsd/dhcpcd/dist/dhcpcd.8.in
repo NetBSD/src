@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.40 2015/01/30 09:47:05 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.41 2015/03/26 10:26:37 roy Exp $
 .\" Copyright (c) 2006-2015 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 15, 2015
+.Dd March 17, 2015
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Op Fl h , Fl Fl hostname Ar hostname
 .Op Fl I , Fl Fl clientid Ar clientid
 .Op Fl i , Fl Fl vendorclassid Ar vendorclassid
+.Op Fl j , Fl Fl logfile Ar logfile
 .Op Fl l , Fl Fl leasetime Ar seconds
 .Op Fl m , Fl Fl metric Ar metric
 .Op Fl O , Fl Fl nooption Ar option
@@ -52,7 +53,8 @@
 .Op Fl u , Fl Fl userclass Ar class
 .Op Fl v , Fl Fl vendor Ar code , Ar value
 .Op Fl W , Fl Fl whitelist Ar address Ns Op Ar /cidr
-.Op Fl w , Fl Fl waitip Op 4 | 6
+.Op Fl w
+.Op Fl Fl waitip Op 4 | 6
 .Op Fl y , Fl Fl reboot Ar seconds
 .Op Fl X , Fl Fl blacklist Ar address Ns Op Ar /cidr
 .Op Fl Z , Fl Fl denyinterfaces Ar pattern
@@ -318,6 +320,18 @@ For example
 If not set then none is sent.
 Some badly configured DHCP servers reject unknown vendorclassids.
 To work around it, try and impersonate Windows by using the MSFT vendorclassid.
+.It Fl j , Fl Fl logfile Ar logfile
+Writes to the specified
+.Ar logfile
+rather than
+.Xr syslog 3 .
+The
+.Ar logfile
+is truncated when opened and is reopened when
+.Nm
+receives the
+.Dv SIGUSR2
+signal.
 .It Fl k , Fl Fl release Op Ar interface
 This causes an existing
 .Nm
@@ -460,7 +474,12 @@ Set un-encapsulated vendor option to hello world.
 Display both program version and copyright information.
 .Nm
 then exits before doing any configuration.
-.It Fl w , Fl Fl waitip Op 4 | 6
+.It Fl w
+Wait for an address to be assigned before forking to the background.
+Does not take an argument, unlike the below option.
+.Fl fl waitip
+option.
+.It Fl Fl waitip Op 4 | 6
 Wait for an address to be assigned before forking to the background.
 4 means wait for an IPv4 address to be assigned.
 6 means wait for an IPv6 address to be assigned.
@@ -669,11 +688,11 @@ A directory containing bourne shell scripts that are run by the above script.
 Each script can be disabled by using the
 .Fl C , Fl Fl nohook
 option described above.
-.It Pa @DBDIR@/dhcpcd\- Ns Ar interface Ns .lease
+.It Pa @DBDIR@/dhcpcd\- Ns Ar interface Ns Ar -ssid Ns .lease
 The actual DHCP message sent by the server.
 We use this when reading the last
 lease and use the files mtime as when it was issued.
-.It Pa @DBDIR@/dhcpcd\- Ns Ar interface Ns .lease6
+.It Pa @DBDIR@/dhcpcd\- Ns Ar interface Ns Ar -ssid Ns .lease6
 The actual DHCPv6 message sent by the server.
 We use this when reading the last
 lease and use the files mtime as when it was issued.
