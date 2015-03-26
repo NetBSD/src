@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.8 2015/02/07 00:08:34 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.9 2015/03/26 08:45:05 hsuenaga Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,11 +93,19 @@ tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 	arm_dsb();
 	if (arm_has_tlbiasid_p) {
 		for (; lo <= hi; lo++) {
+#ifdef MULTIPROCESSOR
 			armreg_tlbiasidis_write(lo);
+#else
+			armreg_tlbiasid_write(lo);
+#endif
 		}
 		arm_isb();
 		if (__predict_false(vivt_icache_p)) {
+#ifdef MULTIPROCESSOR
 			armreg_icialluis_write(0);
+#else
+			armreg_iciallu_write(0);
+#endif
 		}
 	} else {
 		armreg_tlbiall_write(0);
