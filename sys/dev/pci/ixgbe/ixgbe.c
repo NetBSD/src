@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2011, Intel Corporation 
+  Copyright (c) 2001-2013, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -59,9 +59,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.14.2.2 2015/02/24 10:41:09 martin Exp $*/
+/*$NetBSD: ixgbe.c,v 1.14.2.3 2015/03/26 13:39:34 martin Exp $*/
 
 #include "opt_inet.h"
+#include "opt_inet6.h"
 
 #include "ixgbe.h"
 
@@ -73,7 +74,7 @@ int             ixgbe_display_debug_stats = 0;
 /*********************************************************************
  *  Driver version
  *********************************************************************/
-char ixgbe_driver_version[] = "2.3.10";
+char ixgbe_driver_version[] = "2.3.11";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -106,8 +107,10 @@ static ixgbe_vendor_info_t ixgbe_vendor_info_array[] =
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_T3_LOM, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_COMBO_BACKPLANE, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_BACKPLANE_FCOE, 0, 0, 0},
+	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_SF2, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_FCOE, 0, 0, 0},
-	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_DELL, 0, 0, 0},
+	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599EN_SFP, 0, 0, 0},
+	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_SF_QP, 0, 0, 0},
 	/* required last entry */
 	{0, 0, 0, 0, 0}
 };
@@ -267,7 +270,7 @@ static int ixgbe_enable_aim = TRUE;
 #define TUNABLE_INT(__x, __y)
 TUNABLE_INT("hw.ixgbe.enable_aim", &ixgbe_enable_aim);
 
-static int ixgbe_max_interrupt_rate = (8000000 / IXGBE_LOW_LATENCY);
+static int ixgbe_max_interrupt_rate = (4000000 / IXGBE_LOW_LATENCY);
 TUNABLE_INT("hw.ixgbe.max_interrupt_rate", &ixgbe_max_interrupt_rate);
 
 /* How many packets rxeof tries to clean at a time */
@@ -300,7 +303,7 @@ TUNABLE_INT("hw.ixgbe.enable_msix", &ixgbe_enable_msix);
  * it can be a performance win in some workloads, but
  * in others it actually hurts, its off by default. 
  */
-static bool ixgbe_header_split = FALSE;
+static int ixgbe_header_split = FALSE;
 TUNABLE_INT("hw.ixgbe.hdr_split", &ixgbe_header_split);
 
 #if defined(NETBSD_MSI_OR_MSIX)
@@ -349,6 +352,18 @@ static int atr_sample_rate = 20;
 */
 static int fdir_pballoc = 1;
 #endif
+
+#ifdef DEV_NETMAP
+/*
+ * The #ifdef DEV_NETMAP / #endif blocks in this file are meant to
+ * be a reference on how to implement netmap support in a driver.
+ * Additional comments are in ixgbe_netmap.h .
+ *
+ * <dev/netma/ixgbe_netmap.h> contains functions for netmap support
+ * that extend the standard driver.
+ */
+#include <dev/netmap/ixgbe_netmap.h>
+#endif /* DEV_NETMAP */
 
 /*********************************************************************
  *  Device identification routine
@@ -647,6 +662,9 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	ixgbe_add_hw_stats(adapter);
 
+#ifdef DEV_NETMAP
+	ixgbe_netmap_attach(adapter);
+#endif /* DEV_NETMAP */
 	INIT_DEBUGOUT("ixgbe_attach: end");
 	return;
 err_late:
@@ -717,6 +735,9 @@ ixgbe_detach(device_t dev, int flags)
 
 	ether_ifdetach(adapter->ifp);
 	callout_halt(&adapter->timer, NULL);
+#ifdef DEV_NETMAP
+	netmap_detach(adapter->ifp);
+#endif /* DEV_NETMAP */
 	ixgbe_free_pci_resources(adapter);
 #if 0	/* XXX the NetBSD port is probably missing something here */
 	bus_generic_detach(dev);
@@ -1064,6 +1085,9 @@ ixgbe_ifflags_cb(struct ethercom *ec)
 	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
 		ixgbe_set_promisc(adapter);
 
+	/* Set up VLAN support and filter */
+	ixgbe_setup_vlan_hw_support(adapter);
+
 	IXGBE_CORE_UNLOCK(adapter);
 
 	return rc;
@@ -1289,6 +1313,31 @@ ixgbe_init_locked(struct adapter *adapter)
 				msec_delay(1);
 		}
 		wmb();
+#ifdef DEV_NETMAP
+		/*
+		 * In netmap mode, we must preserve the buffers made
+		 * available to userspace before the if_init()
+		 * (this is true by default on the TX side, because
+		 * init makes all buffers available to userspace).
+		 *
+		 * netmap_reset() and the device specific routines
+		 * (e.g. ixgbe_setup_receive_rings()) map these
+		 * buffers at the end of the NIC ring, so here we
+		 * must set the RDT (tail) register to make sure
+		 * they are not overwritten.
+		 *
+		 * In this driver the NIC ring starts at RDH = 0,
+		 * RDT points to the last slot available for reception (?),
+		 * so RDT = num_rx_desc - 1 means the whole ring is available.
+		 */
+		if (ifp->if_capenable & IFCAP_NETMAP) {
+			struct netmap_adapter *na = NA(adapter->ifp);
+			struct netmap_kring *kring = &na->rx_rings[i];
+			int t = na->num_rx_desc - 1 - kring->nr_hwavail;
+
+			IXGBE_WRITE_REG(hw, IXGBE_RDT(i), t);
+		} else
+#endif /* DEV_NETMAP */
 		IXGBE_WRITE_REG(hw, IXGBE_RDT(i), adapter->num_rx_desc - 1);
 	}
 
@@ -1534,7 +1583,7 @@ ixgbe_legacy_irq(void *arg)
 #if defined(NETBSD_MSI_OR_MSIX)
 /*********************************************************************
  *
- *  MSI Queue Interrupt Service routine
+ *  MSIX Queue Interrupt Service routine
  *
  **********************************************************************/
 void
@@ -1553,6 +1602,17 @@ ixgbe_msix_que(void *arg)
 
 	IXGBE_TX_LOCK(txr);
 	more_tx = ixgbe_txeof(txr);
+	/*
+	** Make certain that if the stack 
+	** has anything queued the task gets
+	** scheduled to handle it.
+	*/
+#if __FreeBSD_version < 800000
+	if (!IFQ_DRV_IS_EMPTY(&adapter->ifp->if_snd))
+#else
+	if (!drbr_empty(adapter->ifp, txr->br))
+#endif
+		more_tx = 1;
 	IXGBE_TX_UNLOCK(txr);
 
 	/* Do AIM now? */
@@ -1889,11 +1949,7 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	txr->next_avail_desc = i;
 
 	txbuf->m_head = m_head;
-	/* We exchange the maps instead of copying because otherwise
-	 * we end up with many pointers to the same map and we free
-	 * one map twice in ixgbe_free_transmit_structures().  Who
-	 * knows what other problems this caused.  --dyoung
-	 */
+	/* Swap the dma map between the first and last descriptor */
 	txr->tx_buffers[first].map = txbuf->map;
 	txbuf->map = map;
 	bus_dmamap_sync(txr->txtag->dt_dmat, map, 0, m_head->m_pkthdr.len,
@@ -2495,7 +2551,9 @@ ixgbe_setup_msix(struct adapter *adapter)
 msi:
        	msgs = pci_msi_count(dev);
        	if (msgs == 1 && pci_alloc_msi(dev, &msgs) == 0)
-               	device_printf(adapter->dev,"Using MSI interrupt\n");
+               	device_printf(adapter->dev,"Using an MSI interrupt\n");
+	else
+               	device_printf(adapter->dev,"Using a Legacy interrupt\n");
 	return (msgs);
 #endif
 }
@@ -2633,7 +2691,6 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 
 	ifp = adapter->ifp = &ec->ec_if;
 	strlcpy(ifp->if_xname, device_xname(dev), IFNAMSIZ);
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_baudrate = 1000000000;
 	ifp->if_init = ixgbe_init;
 	ifp->if_stop = ixgbe_ifstop;
@@ -2663,19 +2720,20 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_capenable = 0;
 
 	ec->ec_capabilities |= ETHERCAP_VLAN_HWCSUM;
-	ec->ec_capabilities |= ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
 	ec->ec_capabilities |= ETHERCAP_JUMBO_MTU;
+	ec->ec_capabilities |= ETHERCAP_VLAN_HWTAGGING
+	    		    | ETHERCAP_VLAN_MTU;
 	ec->ec_capenable = ec->ec_capabilities;
 
 	/* Don't enable LRO by default */
 	ifp->if_capabilities |= IFCAP_LRO;
 
 	/*
-	** Dont turn this on by default, if vlans are
+	** Don't turn this on by default, if vlans are
 	** created on another pseudo device (eg. lagg)
 	** then vlan events are not passed thru, breaking
 	** operation, but with HW FILTER off it works. If
-	** using vlans directly on the em driver you can
+	** using vlans directly on the ixgbe driver you can
 	** enable this and get full hardware tag filtering.
 	*/
 	ec->ec_capabilities |= ETHERCAP_VLAN_HWFILTER;
@@ -3050,9 +3108,20 @@ ixgbe_setup_transmit_ring(struct tx_ring *txr)
 	struct adapter *adapter = txr->adapter;
 	struct ixgbe_tx_buf *txbuf;
 	int i;
+#ifdef DEV_NETMAP
+	struct netmap_adapter *na = NA(adapter->ifp);
+	struct netmap_slot *slot;
+#endif /* DEV_NETMAP */
 
 	/* Clear the old ring contents */
 	IXGBE_TX_LOCK(txr);
+#ifdef DEV_NETMAP
+	/*
+	 * (under lock): if in netmap mode, do some consistency
+	 * checks and set slot to entry 0 of the netmap ring.
+	 */
+	slot = netmap_reset(na, NR_TX, txr->me, 0);
+#endif /* DEV_NETMAP */
 	bzero((void *)txr->tx_base,
 	      (sizeof(union ixgbe_adv_tx_desc)) * adapter->num_tx_desc);
 	/* Reset indices */
@@ -3070,6 +3139,25 @@ ixgbe_setup_transmit_ring(struct tx_ring *txr)
 			m_freem(txbuf->m_head);
 			txbuf->m_head = NULL;
 		}
+#ifdef DEV_NETMAP
+		/*
+		 * In netmap mode, set the map for the packet buffer.
+		 * NOTE: Some drivers (not this one) also need to set
+		 * the physical buffer address in the NIC ring.
+		 * Slots in the netmap ring (indexed by "si") are
+		 * kring->nkr_hwofs positions "ahead" wrt the
+		 * corresponding slot in the NIC ring. In some drivers
+		 * (not here) nkr_hwofs can be negative. When computing
+		 * si = i + kring->nkr_hwofs make sure to handle wraparounds.
+		 */
+		if (slot) {
+			int si = i + na->tx_rings[txr->me].nkr_hwofs;
+
+			if (si >= na->num_tx_desc)
+				si -= na->num_tx_desc;
+			netmap_load_map(txr->txtag, txbuf->map, NMB(slot + si));
+		}
+#endif /* DEV_NETMAP */
 		/* Clear the EOP index */
 		txbuf->eop_index = -1;
         }
@@ -3547,6 +3635,48 @@ ixgbe_txeof(struct tx_ring *txr)
 
 	KASSERT(mutex_owned(&txr->tx_mtx));
 
+#ifdef DEV_NETMAP
+	if (ifp->if_capenable & IFCAP_NETMAP) {
+		struct netmap_adapter *na = NA(ifp);
+		struct netmap_kring *kring = &na->tx_rings[txr->me];
+
+		tx_desc = (struct ixgbe_legacy_tx_desc *)txr->tx_base;
+
+		bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
+		    BUS_DMASYNC_POSTREAD);
+		/*
+		 * In netmap mode, all the work is done in the context
+		 * of the client thread. Interrupt handlers only wake up
+		 * clients, which may be sleeping on individual rings
+		 * or on a global resource for all rings.
+		 * To implement tx interrupt mitigation, we wake up the client
+		 * thread roughly every half ring, even if the NIC interrupts
+		 * more frequently. This is implemented as follows:
+		 * - ixgbe_txsync() sets kring->nr_kflags with the index of
+		 *   the slot that should wake up the thread (nkr_num_slots
+		 *   means the user thread should not be woken up);
+		 * - the driver ignores tx interrupts unless netmap_mitigate=0
+		 *   or the slot has the DD bit set.
+		 *
+		 * When the driver has separate locks, we need to
+		 * release and re-acquire txlock to avoid deadlocks.
+		 * XXX see if we can find a better way.
+		 */
+		if (!netmap_mitigate ||
+		    (kring->nr_kflags < kring->nkr_num_slots &&
+		     tx_desc[kring->nr_kflags].upper.fields.status & IXGBE_TXD_STAT_DD)) {
+			kring->nr_kflags = kring->nkr_num_slots;
+			selwakeuppri(&na->tx_rings[txr->me].si, PI_NET);
+			IXGBE_TX_UNLOCK(txr);
+			IXGBE_CORE_LOCK(adapter);
+			selwakeuppri(&na->tx_rings[na->num_queues + 1].si, PI_NET);
+			IXGBE_CORE_UNLOCK(adapter);
+			IXGBE_TX_LOCK(txr);
+		}
+		return FALSE;
+	}
+#endif /* DEV_NETMAP */
+
 	if (txr->tx_avail == adapter->num_tx_desc) {
 		txr->queue_status = IXGBE_QUEUE_IDLE;
 		return false;
@@ -3926,12 +4056,20 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	struct lro_ctrl		*lro = &rxr->lro;
 #endif /* LRO */
 	int			rsize, error = 0;
+#ifdef DEV_NETMAP
+	struct netmap_adapter *na = NA(rxr->adapter->ifp);
+	struct netmap_slot *slot;
+#endif /* DEV_NETMAP */
 
 	adapter = rxr->adapter;
 	ifp = adapter->ifp;
 
 	/* Clear the ring contents */
 	IXGBE_RX_LOCK(rxr);
+#ifdef DEV_NETMAP
+	/* same as in ixgbe_setup_transmit_ring() */
+	slot = netmap_reset(na, NR_RX, rxr->me, 0);
+#endif /* DEV_NETMAP */
 	rsize = roundup2(adapter->num_rx_desc *
 	    sizeof(union ixgbe_adv_rx_desc), DBA_ALIGN);
 	bzero((void *)rxr->rx_base, rsize);
@@ -3958,6 +4096,28 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		struct mbuf	*mh, *mp;
 
 		rxbuf = &rxr->rx_buffers[j];
+#ifdef DEV_NETMAP
+		/*
+		 * In netmap mode, fill the map and set the buffer
+		 * address in the NIC ring, considering the offset
+		 * between the netmap and NIC rings (see comment in
+		 * ixgbe_setup_transmit_ring() ). No need to allocate
+		 * an mbuf, so end the block with a continue;
+		 */
+		if (slot) {
+			int sj = j + na->rx_rings[rxr->me].nkr_hwofs;
+			uint64_t paddr;
+			void *addr;
+
+			if (sj >= na->num_rx_desc)
+				sj -= na->num_rx_desc;
+			addr = PNMB(slot + sj, &paddr);
+			netmap_load_map(rxr->ptag, rxbuf->pmap, addr);
+			/* Update descriptor */
+			rxr->rx_base[j].read.pkt_addr = htole64(paddr);
+			continue;
+		}
+#endif /* DEV_NETMAP */
 		/*
 		** Don't allocate mbufs if not
 		** doing header split, its wasteful
@@ -4089,6 +4249,8 @@ fail:
  **********************************************************************/
 #define IXGBE_SRRCTL_BSIZEHDRSIZE_SHIFT 2
 
+#define BSIZEPKT_ROUNDUP ((1<<IXGBE_SRRCTL_BSIZEPKT_SHIFT)-1)
+	
 static void
 ixgbe_initialize_receive_units(struct adapter *adapter)
 {
@@ -4123,7 +4285,7 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 		hlreg &= ~IXGBE_HLREG0_JUMBOEN;
 	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg);
 
-	bufsz = adapter->rx_mbuf_sz  >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
+	bufsz = (adapter->rx_mbuf_sz + BSIZEPKT_ROUNDUP) >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
 
 	for (i = 0; i < adapter->num_queues; i++, rxr++) {
 		u64 rdba = rxr->rxdma.dma_paddr;
@@ -4408,6 +4570,25 @@ ixgbe_rxeof(struct ix_queue *que, int count)
 
 	IXGBE_RX_LOCK(rxr);
 
+#ifdef DEV_NETMAP
+	if (ifp->if_capenable & IFCAP_NETMAP) {
+		/*
+		 * Same as the txeof routine: only wakeup clients on intr.
+		 * NKR_PENDINTR in nr_kflags is used to implement interrupt
+		 * mitigation (ixgbe_rxsync() will not look for new packets
+		 * unless NKR_PENDINTR is set).
+		 */
+		struct netmap_adapter *na = NA(ifp);
+
+		na->rx_rings[rxr->me].nr_kflags |= NKR_PENDINTR;
+		selwakeuppri(&na->rx_rings[rxr->me].si, PI_NET);
+		IXGBE_RX_UNLOCK(rxr);
+		IXGBE_CORE_LOCK(adapter);
+		selwakeuppri(&na->rx_rings[na->num_queues + 1].si, PI_NET);
+		IXGBE_CORE_UNLOCK(adapter);
+		return (FALSE);
+	}
+#endif /* DEV_NETMAP */
 	for (i = rxr->next_to_check; count != 0;) {
 		struct mbuf	*sendmp, *mh, *mp;
 		u32		rsc, ptype;
@@ -4571,9 +4752,10 @@ ixgbe_rxeof(struct ix_queue *que, int count)
 			sendmp = rbuf->fmp;
 			rbuf->m_pack = rbuf->fmp = NULL;
 
-			if (sendmp != NULL) /* secondary frag */
+			if (sendmp != NULL) {  /* secondary frag */
+				mp->m_flags &= ~M_PKTHDR;
 				sendmp->m_pkthdr.len += mp->m_len;
-			else {
+			} else {
 				/* first desc of a non-ps chain */
 				sendmp = mp;
 				sendmp->m_flags |= M_PKTHDR;
@@ -4973,7 +5155,7 @@ ixgbe_configure_ivars(struct adapter *adapter)
 	u32 newitr;
 
 	if (ixgbe_max_interrupt_rate > 0)
-		newitr = (8000000 / ixgbe_max_interrupt_rate) & 0x0FF8;
+		newitr = (4000000 / ixgbe_max_interrupt_rate) & 0x0FF8;
 	else
 		newitr = 0;
 
@@ -5336,6 +5518,7 @@ ixgbe_sysctl_rdt_handler(SYSCTLFN_ARGS)
 static int
 ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 {
+	int error;
 	struct sysctlnode node;
 	struct ix_queue *que;
 	uint32_t reg, usec, rate;
@@ -5347,11 +5530,23 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 	reg = IXGBE_READ_REG(&que->adapter->hw, IXGBE_EITR(que->msix));
 	usec = ((reg & 0x0FF8) >> 3);
 	if (usec > 0)
-		rate = 1000000 / usec;
+		rate = 500000 / usec;
 	else
 		rate = 0;
 	node.sysctl_data = &rate;
-	return sysctl_lookup(SYSCTLFN_CALL(&node));
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error)
+		return error;
+	reg &= ~0xfff; /* default, no limitation */
+	ixgbe_max_interrupt_rate = 0;
+	if (rate > 0 && rate < 500000) {
+		if (rate < 1000)
+			rate = 1000;
+		ixgbe_max_interrupt_rate = rate;
+		reg |= ((4000000/rate) & 0xff8 );
+	}
+	IXGBE_WRITE_REG(&que->adapter->hw, IXGBE_EITR(que->msix), reg);
+	return 0;
 }
 
 const struct sysctlnode *
@@ -5460,10 +5655,17 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    CTLFLAG_READWRITE, CTLTYPE_INT,
 		    "interrupt_rate", SYSCTL_DESCR("Interrupt Rate"),
 		    ixgbe_sysctl_interrupt_rate_handler, 0,
 		    (void *)&adapter->queues[i], 0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_QUAD,
+		    "irqs", SYSCTL_DESCR("irqs on this queue"),
+			NULL, 0, &(adapter->queues[i].irqs),
+		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
@@ -5767,7 +5969,7 @@ static int
 ixgbe_set_advertise(SYSCTLFN_ARGS)
 {
 	struct sysctlnode	node;
-	int			t, error;
+	int			t, error = 0;
 	struct adapter		*adapter;
 	struct ixgbe_hw		*hw;
 	ixgbe_link_speed	speed, last;

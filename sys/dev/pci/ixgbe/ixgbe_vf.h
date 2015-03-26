@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_vf.h,v 1.1 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_vf.h,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixgbe_vf.h,v 1.1.28.1 2015/03/26 13:39:35 martin Exp $*/
 
 #ifndef __IXGBE_VF_H__
 #define __IXGBE_VF_H__
@@ -108,6 +108,11 @@ struct ixgbevf_hw_stats {
 	u64 saved_reset_vfgorc;
 	u64 saved_reset_vfgotc;
 	u64 saved_reset_vfmprc;
+
+	struct evcnt ipcs;
+	struct evcnt ipcs_bad;
+	struct evcnt l4cs;
+	struct evcnt l4cs_bad;
 };
 
 #endif /* __IXGBE_VF_H__ */

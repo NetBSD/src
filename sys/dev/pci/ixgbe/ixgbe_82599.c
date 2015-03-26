@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_82599.c,v 1.6 2011/01/19 19:36:27 jfv Exp $*/
-/*$NetBSD: ixgbe_82599.c,v 1.3 2014/04/17 15:34:05 christos Exp $*/
+/*$NetBSD: ixgbe_82599.c,v 1.3.2.1 2015/03/26 13:39:34 martin Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_api.h"
@@ -434,7 +434,9 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw)
 		break;
 	case IXGBE_DEV_ID_82599_SFP:
 	case IXGBE_DEV_ID_82599_SFP_FCOE:
-	case IXGBE_DEV_ID_82599_SFP_DELL:
+	case IXGBE_DEV_ID_82599_SFP_SF2:
+	case IXGBE_DEV_ID_82599_SFP_SF_QP:
+	case IXGBE_DEV_ID_82599EN_SFP:
 		media_type = ixgbe_media_type_fiber;
 		break;
 	case IXGBE_DEV_ID_82599_CX4:
