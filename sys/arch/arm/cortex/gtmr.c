@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.12 2015/03/24 15:53:39 matt Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.13 2015/03/26 22:01:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.12 2015/03/24 15:53:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.13 2015/03/26 22:01:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,7 +103,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * This runs at a fixed frequency of 1 to 50MHz.
 	 */
-	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);            
+	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
 	KASSERT(sc->sc_freq != 0);
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
@@ -204,7 +204,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	uint32_t end32 = armreg_pmccntr_read();
 
 	uint32_t diff32 = end64 - start64;
-	printf("%s: %s: %u cycles per tick\n", 
+	printf("%s: %s: %u cycles per tick\n",
 	    __func__, ci->ci_data.cpu_name, (end32 - start32) / diff32);
 
 	printf("%s: %s: status %#x cmp %#"PRIx64" now %#"PRIx64"\n",
@@ -212,7 +212,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	    armreg_cntv_cval_read(), armreg_cntv_ct_read());
 	splx(s);
 #elif 0
-	delay(1000000 / hz + 1000); 
+	delay(1000000 / hz + 1000);
 #endif
 }
 
