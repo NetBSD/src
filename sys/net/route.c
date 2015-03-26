@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.136 2015/02/26 09:54:46 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.137 2015/03/26 04:38:17 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.136 2015/02/26 09:54:46 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.137 2015/03/26 04:38:17 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -1418,8 +1418,6 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
 {
 	const struct sockaddr *odst;
 	struct rtentry *rt = NULL;
-
-	rtcache_invariants(ro);
 
 	odst = rtcache_getdst(ro);
 
