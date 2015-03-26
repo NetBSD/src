@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4ll.c,v 1.8 2015/01/30 09:47:05 roy Exp $");
+ __RCSID("$NetBSD: ipv4ll.c,v 1.9 2015/03/26 10:26:37 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -32,7 +32,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #define ELOOP_QUEUE 6
@@ -84,7 +83,8 @@ ipv4ll_pick_addr(const struct arp_state *astate)
 		/* RFC 3927 Section 2.1 states that the first 256 and
 		 * last 256 addresses are reserved for future use.
 		 * See ipv4ll_start for why we don't use arc4_random. */
-		addr = ntohl(LINKLOCAL_ADDR | ((random() % 0xFD00) + 0x0100));
+		addr = ntohl(LINKLOCAL_ADDR |
+		    ((uint32_t)(random() % 0xFD00) + 0x0100));
 
 		/* No point using a failed address */
 		if (addr == astate->failed.s_addr)
@@ -116,7 +116,7 @@ ipv4ll_probed(struct arp_state *astate)
 		offer = state->offer;
 		state->offer = ipv4ll_make_lease(astate->addr.s_addr);
 		if (state->offer == NULL)
-			syslog(LOG_ERR, "%s: %m", __func__);
+			logger(astate->iface->ctx, LOG_ERR, "%s: %m", __func__);
 		else
 			dhcp_bind(astate->iface, astate);
 		state->offer = offer;
@@ -168,13 +168,14 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 		/* RFC 3927 Section 2.5 */
 		up = uptime();
 		if (state->defend + DEFEND_INTERVAL > up) {
-			syslog(LOG_WARNING,
+			logger(astate->iface->ctx, LOG_WARNING,
 			    "%s: IPv4LL %d second defence failed for %s",
 			    astate->iface->name, DEFEND_INTERVAL,
 			    inet_ntoa(state->addr));
 			dhcp_drop(astate->iface, "EXPIRE");
 		} else {
-			syslog(LOG_DEBUG, "%s: defended IPv4LL address %s",
+			logger(astate->iface->ctx, LOG_DEBUG,
+			    "%s: defended IPv4LL address %s",
 			    astate->iface->name, inet_ntoa(state->addr));
 			state->defend = up;
 			return;
@@ -183,7 +184,8 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 
 	arp_cancel(astate);
 	if (++state->conflicts == MAX_CONFLICTS)
-		syslog(LOG_ERR, "%s: failed to acquire an IPv4LL address",
+		logger(astate->iface->ctx, LOG_ERR,
+		    "%s: failed to acquire an IPv4LL address",
 		    astate->iface->name);
 	astate->addr.s_addr = ipv4ll_pick_addr(astate);
 	eloop_timeout_add_sec(astate->iface->ctx->eloop,
@@ -249,7 +251,7 @@ ipv4ll_start(void *arg)
 	setstate(state->randomstate);
 	/* We maybe rebooting an IPv4LL address. */
 	if (!IN_LINKLOCAL(htonl(astate->addr.s_addr))) {
-		syslog(LOG_INFO, "%s: probing for an IPv4LL address",
+		logger(ifp->ctx, LOG_INFO, "%s: probing for an IPv4LL address",
 		    ifp->name);
 		astate->addr.s_addr = INADDR_ANY;
 	}
