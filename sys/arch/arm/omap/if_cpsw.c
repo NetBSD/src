@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.10 2015/03/13 08:56:35 skrll Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.11 2015/03/26 22:00:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.10 2015/03/13 08:56:35 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.11 2015/03/26 22:00:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -881,8 +881,9 @@ cpsw_init(struct ifnet *ifp)
 	cpsw_write_4(sc, CPSW_SS_SOFT_RESET, 1);
 	while(cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1);
 
-	/* Clear table (30) and enable ALE(31) and set passthrough (4) */
-	cpsw_write_4(sc, CPSW_ALE_CONTROL, (3 << 30) | 0x10);
+	/* Clear table and enable ALE */
+	cpsw_write_4(sc, CPSW_ALE_CONTROL,
+	    ALECTL_ENABLE_ALE | ALECTL_CLEAR_TABLE);
 
 	/* Reset and init Sliver port 1 and 2 */
 	for (i = 0; i < CPSW_ETH_PORTS; i++) {
@@ -1023,7 +1024,7 @@ cpsw_stop(struct ifnet *ifp, int disable)
 	cpsw_write_4(sc, CPSW_CPDMA_RX_INTMASK_CLEAR, 1);
 	cpsw_write_4(sc, CPSW_WR_C_TX_EN(0), 0x0);
 	cpsw_write_4(sc, CPSW_WR_C_RX_EN(0), 0x0);
-	cpsw_write_4(sc, CPSW_WR_C_MISC_EN(0), 0x1F);
+	cpsw_write_4(sc, CPSW_WR_C_MISC_EN(0), 0x0);
 
 	cpsw_write_4(sc, CPSW_CPDMA_TX_TEARDOWN, 0);
 	cpsw_write_4(sc, CPSW_CPDMA_RX_TEARDOWN, 0);
@@ -1213,13 +1214,12 @@ cpsw_txintr(void *arg)
 	tx0_cp = cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0));
 
 	if (tx0_cp == 0xfffffffc) {
+		/* Teardown, ack it */
 		cpsw_write_4(sc, CPSW_CPDMA_TX_CP(0), 0xfffffffc);
 		cpsw_write_4(sc, CPSW_CPDMA_TX_HDP(0), 0);
 		sc->sc_txrun = false;
 		return 0;
 	}
-
-	cpi = (tx0_cp - sc->sc_txdescs_pa) / sizeof(struct cpsw_cpdma_bd);
 
 	for (;;) {
 		tx0_cp = cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0));
