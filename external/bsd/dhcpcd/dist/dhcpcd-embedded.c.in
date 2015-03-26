@@ -1,7 +1,7 @@
 /*
- * DO NOT EDIT
+ * DO NOT EDIT!
  * Automatically generated from dhcpcd-embedded.conf
- * Ths allows us to simply generate DHCP structure without any C programming
+ * Ths allows us to simply generate DHCP structure without any C programming.
  */
 
 /*
