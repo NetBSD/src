@@ -30,6 +30,8 @@
 
 #include <time.h>
 
+#include "config.h"
+
 #ifndef ELOOP_QUEUE
   #define ELOOP_QUEUE 1
 #endif
@@ -45,18 +47,22 @@ struct eloop_event {
 	void *read_cb_arg;
 	void (*write_cb)(void *);
 	void *write_cb_arg;
+#if !defined(HAVE_KQUEUE) && !defined(HAVE_EPOLL)
 	struct pollfd *pollfd;
+#endif
 };
 
 struct eloop_timeout {
 	TAILQ_ENTRY(eloop_timeout) next;
-	struct timeval when;
+	struct timespec when;
 	void (*callback)(void *);
 	void *arg;
 	int queue;
 };
 
 struct eloop_ctx {
+	struct dhcpcd_ctx *ctx;
+
 	size_t events_len;
 	TAILQ_HEAD (event_head, eloop_event) events;
 	struct event_head free_events;
@@ -67,8 +73,12 @@ struct eloop_ctx {
 	void (*timeout0)(void *);
 	void *timeout0_arg;
 
+#if defined(HAVE_KQUEUE) || defined(HAVE_EPOLL)
+	int poll_fd;
+#else
 	struct pollfd *fds;
 	size_t fds_len;
+#endif
 
 	int exitnow;
 	int exitcode;
@@ -88,12 +98,19 @@ void eloop_event_delete(struct eloop_ctx *, int, int);
 int eloop_q_timeout_add_sec(struct eloop_ctx *, int queue,
     time_t, void (*)(void *), void *);
 int eloop_q_timeout_add_tv(struct eloop_ctx *, int queue,
-    const struct timeval *, void (*)(void *), void *);
+    const struct timespec *, void (*)(void *), void *);
+#if !defined(HAVE_KQUEUE)
 int eloop_timeout_add_now(struct eloop_ctx *, void (*)(void *), void *);
+#endif
 void eloop_q_timeout_delete(struct eloop_ctx *, int, void (*)(void *), void *);
-struct eloop_ctx * eloop_init(void);
+struct eloop_ctx * eloop_init(struct dhcpcd_ctx *);
+#if defined(HAVE_KQUEUE) || defined(HAVE_EPOLL)
+int eloop_requeue(struct eloop_ctx *);
+#else
+#define eloop_requeue(a) (0)
+#endif
 void eloop_free(struct eloop_ctx *);
 void eloop_exit(struct eloop_ctx *, int);
-int eloop_start(struct dhcpcd_ctx *);
+int eloop_start(struct eloop_ctx *);
 
 #endif

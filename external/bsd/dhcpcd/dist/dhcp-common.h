@@ -65,6 +65,7 @@
 #define ASCII		(1 << 22)
 #define RAW		(1 << 23)
 #define ESCSTRING	(1 << 24)
+#define ESCFILE		(1 << 25)
 
 struct dhcp_opt {
 	uint32_t option; /* Also used for IANA Enterpise Number */
@@ -89,9 +90,12 @@ struct dhcp_opt *vivso_find(uint32_t, const void *);
 ssize_t dhcp_vendor(char *, size_t);
 
 void dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols);
-#define add_option_mask(var, val) (var[val >> 3] |= 1 << (val & 7))
-#define del_option_mask(var, val) (var[val >> 3] &= ~(1 << (val & 7)))
-#define has_option_mask(var, val) (var[val >> 3] & (1 << (val & 7)))
+#define add_option_mask(var, val) \
+	((var)[(val) >> 3] = (uint8_t)((var)[(val) >> 3] | 1 << ((val) & 7)))
+#define del_option_mask(var, val) \
+	((var)[(val) >> 3] = (uint8_t)((var)[(val) >> 3] & ~(1 << ((val) & 7))))
+#define has_option_mask(var, val) \
+	((var)[(val) >> 3] & (uint8_t)(1 << ((val) & 7)))
 int make_option_mask(const struct dhcp_opt *, size_t,
     const struct dhcp_opt *, size_t,
     uint8_t *, const char *, int);
@@ -101,6 +105,8 @@ ssize_t decode_rfc3397(char *, size_t, const uint8_t *, size_t);
 ssize_t print_string(char *, size_t, int, const uint8_t *, size_t);
 ssize_t print_option(char *, size_t, int, const uint8_t *, size_t,
     const char *);
+int dhcp_set_leasefile(char *, size_t, int,
+    const struct interface *, const char *);
 
 size_t dhcp_envoption(struct dhcpcd_ctx *,
     char **, const char *, const char *, struct dhcp_opt *,

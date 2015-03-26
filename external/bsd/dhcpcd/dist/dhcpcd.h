@@ -60,15 +60,12 @@ struct interface {
 	struct dhcpcd_ctx *ctx;
 	TAILQ_ENTRY(interface) next;
 	char name[IF_NAMESIZE];
-#ifdef __linux
+#ifdef __linux__
 	char alias[IF_NAMESIZE];
 #endif
 	unsigned int index;
 	unsigned int flags;
 	sa_family_t family;
-#ifdef __FreeBSD__
-	struct sockaddr_storage linkaddr;
-#endif
 	unsigned char hwaddr[HWADDR_LEN];
 	uint8_t hwlen;
 	unsigned int metric;
@@ -84,11 +81,12 @@ struct interface {
 TAILQ_HEAD(if_head, interface);
 
 struct dhcpcd_ctx {
-#ifdef USE_SIGNALS
-	sigset_t sigset;
-#endif
+	int pid_fd;
+	char pidfile[sizeof(PIDFILE) + IF_NAMESIZE + 1];
 	const char *cffile;
 	unsigned long long options;
+	char *logfile;
+	int log_fd;
 	int argc;
 	char **argv;
 	int ifac;	/* allowed interfaces */
@@ -101,10 +99,12 @@ struct dhcpcd_ctx {
 	char **ifcv;	/* configured interfaces */
 	unsigned char *duid;
 	size_t duid_len;
-	int pid_fd;
 	int link_fd;
 	struct if_head *ifaces;
 
+#ifdef USE_SIGNALS
+	sigset_t sigset;
+#endif
 	struct eloop_ctx *eloop;
 
 	int control_fd;
@@ -121,6 +121,7 @@ struct dhcpcd_ctx {
 	struct dhcp_opt *dhcp_opts;
 	size_t dhcp_opts_len;
 	struct rt_head *ipv4_routes;
+	struct rt_head *ipv4_kroutes;
 
 	int udp_fd;
 	uint8_t *packet;
@@ -151,7 +152,12 @@ struct dhcpcd_ctx {
 };
 
 #ifdef USE_SIGNALS
+struct dhcpcd_siginfo {
+	int signo;
+};
+
 extern const int dhcpcd_handlesigs[];
+void dhcpcd_handle_signal(void *);
 #endif
 
 int dhcpcd_oneup(struct dhcpcd_ctx *);
@@ -167,6 +173,6 @@ void dhcpcd_dropinterface(struct interface *, const char *);
 int dhcpcd_selectprofile(struct interface *, const char *);
 
 void dhcpcd_startinterface(void *);
-void dhcpcd_initstate(struct interface *);
+void dhcpcd_initstate(struct interface *, unsigned long long);
 
 #endif

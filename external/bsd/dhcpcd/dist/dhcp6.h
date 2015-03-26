@@ -172,7 +172,7 @@ struct dhcp6_state {
 	time_t start_uptime;
 
 	/* Message retransmission timings */
-	struct timeval RT;
+	struct timespec RT;
 	unsigned int IMD;
 	unsigned int RTC;
 	time_t IRT;
@@ -197,7 +197,8 @@ struct dhcp6_state {
 	struct in6_addr unicast;
 	struct ipv6_addrhead addrs;
 	uint32_t lowpl;
-	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE];
+	/* The +3 is for the possible .pd extension for prefix delegation */
+	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE + (IF_SSIDSIZE * 4) +3];
 	const char *reason;
 
 	struct authstate auth;

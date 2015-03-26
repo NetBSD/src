@@ -36,7 +36,9 @@ struct rt {
 	struct in_addr net;
 	struct in_addr gate;
 	const struct interface *iface;
+#ifdef HAVE_ROUTE_METRIC
 	unsigned int metric;
+#endif
 	struct in_addr src;
 	uint8_t flags;
 };
@@ -47,11 +49,13 @@ struct ipv4_addr {
 	struct in_addr addr;
 	struct in_addr net;
 	struct in_addr dst;
+	struct interface *iface;
 };
 TAILQ_HEAD(ipv4_addrhead, ipv4_addr);
 
 struct ipv4_state {
 	struct ipv4_addrhead addrs;
+	struct rt_head routes;
 };
 
 #define IPV4_STATE(ifp)							       \
@@ -61,7 +65,7 @@ struct ipv4_state {
 
 #ifdef INET
 int ipv4_init(struct dhcpcd_ctx *);
-void ipv4_sortinterfaces(struct dhcpcd_ctx *);
+int ipv4_ifcmp(const struct interface *, const struct interface *);
 uint8_t inet_ntocidr(struct in_addr);
 int inet_cidrtoaddr(int, struct in_addr *);
 uint32_t ipv4_getnetmask(uint32_t);
@@ -72,7 +76,8 @@ int ipv4_addrexists(struct dhcpcd_ctx *, const struct in_addr *);
 
 void ipv4_buildroutes(struct dhcpcd_ctx *);
 void ipv4_applyaddr(void *);
-int ipv4_routedeleted(struct dhcpcd_ctx *, const struct rt *);
+int ipv4_handlert(struct dhcpcd_ctx *, int, struct rt *);
+void ipv4_freerts(struct rt_head *);
 
 struct ipv4_addr *ipv4_iffindaddr(struct interface *,
     const struct in_addr *, const struct in_addr *);

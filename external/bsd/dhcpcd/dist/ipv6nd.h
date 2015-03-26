@@ -37,7 +37,7 @@
 struct ra_opt {
 	TAILQ_ENTRY(ra_opt) next;
 	uint16_t type;
-	struct timeval expire;
+	struct timespec expire;
 	char *option;
 };
 
@@ -48,7 +48,7 @@ struct ra {
 	char sfrom[INET6_ADDRSTRLEN];
 	unsigned char *data;
 	size_t data_len;
-	struct timeval received;
+	struct timespec received;
 	unsigned char flags;
 	uint32_t lifetime;
 	uint32_t reachable;

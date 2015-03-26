@@ -39,12 +39,14 @@
 #include <sys/time.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #ifdef BSD
 #  include <paths.h>
 #endif
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +56,8 @@
 #include <unistd.h>
 
 #include "common.h"
+#include "dhcpcd.h"
+#include "if-options.h"
 
 #ifndef _PATH_DEVNULL
 #  define _PATH_DEVNULL "/dev/null"
@@ -89,18 +93,12 @@ get_hostname(char *buf, size_t buflen, int short_hostname)
  */
 #define NO_MONOTONIC "host does not support a monotonic clock - timing can skew"
 int
-get_monotonic(struct timeval *tp)
+get_monotonic(struct timespec *ts)
 {
-#if defined(_POSIX_MONOTONIC_CLOCK) && defined(CLOCK_MONOTONIC)
-	struct timespec ts;
 
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-		tp->tv_sec = ts.tv_sec;
-		tp->tv_usec = (suseconds_t)(ts.tv_nsec / 1000);
-		return 0;
-	}
+#if defined(_POSIX_MONOTONIC_CLOCK) && defined(CLOCK_MONOTONIC)
+	return clock_gettime(CLOCK_MONOTONIC, ts);
 #elif defined(__APPLE__)
-#define NSEC_PER_SEC 1000000000
 	/* We can use mach kernel functions here.
 	 * This is crap though - why can't they implement clock_gettime?*/
 	static struct mach_timebase_info info = { 0, 0 };
@@ -118,13 +116,12 @@ get_monotonic(struct timeval *tp)
 		nano = mach_absolute_time();
 		if ((info.denom != 1 || info.numer != 1) && factor != 0.0)
 			nano *= factor;
-		tp->tv_sec = nano / NSEC_PER_SEC;
-		rem = nano % NSEC_PER_SEC;
-		if (rem < 0) {
-			tp->tv_sec--;
-			rem += NSEC_PER_SEC;
+		ts->tv_sec = nano / NSEC_PER_SEC;
+		ts->tv_nsec = nano % NSEC_PER_SEC;
+		if (ts->tv_nsec < 0) {
+			ts->tv_sec--;
+			ts->tv_nsec += NSEC_PER_SEC;
 		}
-		tp->tv_usec = rem / 1000;
 		return 0;
 	}
 #endif
@@ -132,15 +129,149 @@ get_monotonic(struct timeval *tp)
 #if 0
 	/* Something above failed, so fall back to gettimeofday */
 	if (!posix_clock_set) {
-		syslog(LOG_WARNING, NO_MONOTONIC);
+		logger(NULL, LOG_WARNING, NO_MONOTONIC);
 		posix_clock_set = 1;
 	}
 #endif
-	return gettimeofday(tp, NULL);
+	{
+		struct timeval tv;
+		if (gettimeofday(&tv, NULL) == 0) {
+			TIMEVAL_TO_TIMESPEC(&tv, ts);
+			return 0;
+		}
+	}
+
+	return -1;
 }
 
+#if USE_LOGFILE
+void
+logger_open(struct dhcpcd_ctx *ctx)
+{
+
+	if (ctx->logfile) {
+		int f = O_CREAT | O_APPEND | O_TRUNC;
+
+#ifdef O_CLOEXEC
+		f |= O_CLOEXEC;
+#endif
+		ctx->log_fd = open(ctx->logfile, O_WRONLY | f, 0644);
+		if (ctx->log_fd == -1)
+			warn("open: %s", ctx->logfile);
+#ifndef O_CLOEXEC
+		else {
+			if (fcntl(ctx->log_fd, F_GETFD, &f) == -1 ||
+			    fcntl(ctx->log_fd, F_SETFD, f | FD_CLOEXEC) == -1)
+				warn("fcntl: %s", ctx->logfile);
+		}
+#endif
+	} else
+		openlog(PACKAGE, LOG_PID, LOG_DAEMON);
+}
+
+void
+logger_close(struct dhcpcd_ctx *ctx)
+{
+
+	if (ctx->log_fd != -1) {
+		close(ctx->log_fd);
+		ctx->log_fd = -1;
+	}
+	closelog();
+}
+
+void
+logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
+{
+	va_list va;
+	int serrno;
+#ifndef HAVE_PRINTF_M
+	char fmt_cpy[1024];
+#endif
+
+	serrno = errno;
+	va_start(va, fmt);
+
+	if (pri >= LOG_DEBUG && ctx && !(ctx->options & DHCPCD_DEBUG))
+		return;
+
+#ifndef HAVE_PRINTF_M
+	/* Print strerrno(errno) in place of %m */
+	if (ctx == NULL || !(ctx->options & DHCPCD_QUIET) || ctx->log_fd != -1)
+	{
+		const char *p;
+		char *fp = fmt_cpy, *serr = NULL;
+		size_t fmt_left = sizeof(fmt_cpy) - 1, fmt_wrote;
+
+		for (p = fmt; *p != '\0'; p++) {
+			if (p[0] == '%' && p[1] == '%') {
+				if (fmt_left < 2)
+					break;
+				*fp++ = '%';
+				*fp++ = '%';
+				fmt_left -= 2;
+				p++;
+			} else if (p[0] == '%' && p[1] == 'm') {
+				if (serr == NULL)
+					serr = strerror(serrno);
+				fmt_wrote = strlcpy(fp, serr, fmt_left);
+				if (fmt_wrote > fmt_left)
+					break;
+				fp += fmt_wrote;
+				fmt_left -= fmt_wrote;
+				p++;
+			} else {
+				*fp++ = *p;
+				--fmt_left;
+			}
+			if (fmt_left == 0)
+				break;
+		}
+		*fp++ = '\0';
+	}
+
+	fmt = fmt_cpy;
+#endif
+
+	if (ctx == NULL || !(ctx->options & DHCPCD_QUIET)) {
+		va_list vac;
+
+		va_copy(vac, va);
+		vfprintf(pri <= LOG_ERR ? stderr : stdout, fmt, vac);
+		fputc('\n', pri <= LOG_ERR ? stderr : stdout);
+		va_end(vac);
+	}
+
+#ifdef HAVE_PRINTF_M
+	errno = serrno;
+#endif
+	if (ctx && ctx->log_fd != -1) {
+		struct timeval tv;
+		char buf[32];
+
+		/* Write the time, syslog style. month day time - */
+		if (gettimeofday(&tv, NULL) != -1) {
+			time_t now;
+			struct tm tmnow;
+
+			tzset();
+			now = tv.tv_sec;
+			localtime_r(&now, &tmnow);
+			strftime(buf, sizeof(buf), "%b %d %T ", &tmnow);
+			dprintf(ctx->log_fd, "%s", buf);
+		}
+
+		vdprintf(ctx->log_fd, fmt, va);
+		dprintf(ctx->log_fd, "\n");
+	} else
+		vsyslog(pri, fmt, va);
+	va_end(va);
+}
+#endif
+
 ssize_t
-setvar(char ***e, const char *prefix, const char *var, const char *value)
+setvar(struct dhcpcd_ctx *ctx,
+    char ***e, const char *prefix, const char *var, const char *value)
 {
 	size_t len = strlen(var) + strlen(value) + 3;
 
@@ -148,7 +279,7 @@ setvar(char ***e, const char *prefix, const char *var, const char *value)
 		len += strlen(prefix) + 1;
 	**e = malloc(len);
 	if (**e == NULL) {
-		syslog(LOG_ERR, "%s: %m", __func__);
+		logger(ctx, LOG_ERR, "%s: %m", __func__);
 		return -1;
 	}
 	if (prefix)
@@ -160,19 +291,20 @@ setvar(char ***e, const char *prefix, const char *var, const char *value)
 }
 
 ssize_t
-setvard(char ***e, const char *prefix, const char *var, size_t value)
+setvard(struct dhcpcd_ctx *ctx,
+    char ***e, const char *prefix, const char *var, size_t value)
 {
 	char buffer[32];
 
 	snprintf(buffer, sizeof(buffer), "%zu", value);
-	return setvar(e, prefix, var, buffer);
+	return setvar(ctx, e, prefix, var, buffer);
 }
 
 
 time_t
 uptime(void)
 {
-	struct timeval tv;
+	struct timespec tv;
 
 	if (get_monotonic(&tv) == -1)
 		return -1;

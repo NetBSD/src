@@ -39,7 +39,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -111,31 +110,32 @@ duid_get(unsigned char *d, const struct interface *ifp)
 			return len;
 	} else {
 		if (errno != ENOENT)
-			syslog(LOG_ERR, "error reading DUID: %s: %m", DUID);
+			logger(ifp->ctx, LOG_ERR,
+			    "error reading DUID: %s: %m", DUID);
 	}
 
 	/* No file? OK, lets make one based on our interface */
 	if (ifp->family == ARPHRD_NETROM) {
-		syslog(LOG_WARNING, "%s: is a NET/ROM psuedo interface",
-		    ifp->name);
+		logger(ifp->ctx, LOG_WARNING,
+		    "%s: is a NET/ROM psuedo interface", ifp->name);
 		TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
 			if (ifp2->family != ARPHRD_NETROM)
 				break;
 		}
 		if (ifp2) {
 			ifp = ifp2;
-			syslog(LOG_WARNING,
+			logger(ifp->ctx, LOG_WARNING,
 			    "picked interface %s to generate a DUID",
 			    ifp->name);
 		} else {
-			syslog(LOG_WARNING,
+			logger(ifp->ctx, LOG_WARNING,
 			    "no interfaces have a fixed hardware address");
 			return duid_make(d, ifp, DUID_LL);
 		}
 	}
 
 	if (!(fp = fopen(DUID, "w"))) {
-		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
+		logger(ifp->ctx, LOG_ERR, "error writing DUID: %s: %m", DUID);
 		return duid_make(d, ifp, DUID_LL);
 	}
 	len = duid_make(d, ifp, DUID_LLT);
@@ -143,7 +143,7 @@ duid_get(unsigned char *d, const struct interface *ifp)
 	fclose(fp);
 	/* Failed to write the duid? scrub it, we cannot use it */
 	if (x < 1) {
-		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
+		logger(ifp->ctx, LOG_ERR, "error writing DUID: %s: %m", DUID);
 		unlink(DUID);
 		return duid_make(d, ifp, DUID_LL);
 	}
@@ -156,7 +156,7 @@ size_t duid_init(const struct interface *ifp)
 	if (ifp->ctx->duid == NULL) {
 		ifp->ctx->duid = malloc(DUID_LEN);
 		if (ifp->ctx->duid == NULL) {
-			syslog(LOG_ERR, "%s: %m", __func__);
+			logger(ifp->ctx, LOG_ERR, "%s: %m", __func__);
 			return 0;
 		}
 		ifp->ctx->duid_len = duid_get(ifp->ctx->duid, ifp);
