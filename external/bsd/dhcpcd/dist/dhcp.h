@@ -181,7 +181,6 @@ struct dhcp_lease {
 	uint32_t renewaltime;
 	uint32_t rebindtime;
 	struct in_addr server;
-	time_t leasedfrom;
 	uint8_t frominfo;
 	uint32_t cookie;
 };
@@ -223,7 +222,7 @@ struct dhcp_state {
 	struct in_addr dst;
 	uint8_t added;
 
-	char leasefile[sizeof(LEASEFILE) + IF_NAMESIZE];
+	char leasefile[sizeof(LEASEFILE) + IF_NAMESIZE + (IF_SSIDSIZE * 4)];
 	time_t start_uptime;
 
 	unsigned char *clientid;
