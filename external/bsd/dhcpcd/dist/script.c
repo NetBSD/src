@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.17 2015/01/30 09:47:05 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.18 2015/03/26 10:26:37 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -42,7 +42,6 @@
  * config.h will pull it in, or our compat one. */
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #include "config.h"
@@ -115,7 +114,7 @@ exec_script(U const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
 	flags = POSIX_SPAWN_SETSIGMASK | POSIX_SPAWN_SETSIGDEF;
 	posix_spawnattr_setflags(&attr, flags);
 	sigemptyset(&defsigs);
-	for (i = 0; i < dhcpcd_handlesigs[i]; i++)
+	for (i = 0; dhcpcd_handlesigs[i]; i++)
 		sigaddset(&defsigs, dhcpcd_handlesigs[i]);
 	posix_spawnattr_setsigdefault(&attr, &defsigs);
 	posix_spawnattr_setsigmask(&attr, &ctx->sigset);
@@ -131,7 +130,7 @@ exec_script(U const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
 
 #ifdef INET
 static char *
-make_var(const char *prefix, const char *var)
+make_var(struct dhcpcd_ctx *ctx, const char *prefix, const char *var)
 {
 	size_t len;
 	char *v;
@@ -139,7 +138,7 @@ make_var(const char *prefix, const char *var)
 	len = strlen(prefix) + strlen(var) + 2;
 	v = malloc(len);
 	if (v == NULL) {
-		syslog(LOG_ERR, "%s: %m", __func__);
+		logger(ctx, LOG_ERR, "%s: %m", __func__);
 		return NULL;
 	}
 	snprintf(v, len, "%s_%s", prefix, var);
@@ -148,7 +147,7 @@ make_var(const char *prefix, const char *var)
 
 
 static int
-append_config(char ***env, size_t *len,
+append_config(struct dhcpcd_ctx *ctx, char ***env, size_t *len,
     const char *prefix, const char *const *config)
 {
 	size_t i, j, e1;
@@ -167,7 +166,7 @@ append_config(char ***env, size_t *len,
 			if (strncmp(ne[j] + strlen(prefix) + 1,
 				config[i], e1) == 0)
 			{
-				p = make_var(prefix, config[i]);
+				p = make_var(ctx, prefix, config[i]);
 				if (p == NULL) {
 					ret = -1;
 					break;
@@ -179,14 +178,14 @@ append_config(char ***env, size_t *len,
 		}
 		if (j == *len) {
 			j++;
-			p = make_var(prefix, config[i]);
+			p = make_var(ctx, prefix, config[i]);
 			if (p == NULL) {
 				ret = -1;
 				break;
 			}
 			nep = realloc(ne, sizeof(char *) * (j + 1));
 			if (nep == NULL) {
-				syslog(LOG_ERR, "%s: %m", __func__);
+				logger(ctx, LOG_ERR, "%s: %m", __func__);
 				free(p);
 				ret = -1;
 				break;
@@ -428,7 +427,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 				goto eexit;
 			elen += (size_t)n;
 		}
-		if (append_config(&env, &elen, "old",
+		if (append_config(ifp->ctx, &env, &elen, "old",
 		    (const char *const *)ifo->config) == -1)
 			goto eexit;
 	}
@@ -478,7 +477,7 @@ dumplease:
 				goto eexit;
 			elen += (size_t)n;
 		}
-		if (append_config(&env, &elen, "new",
+		if (append_config(ifp->ctx, &env, &elen, "new",
 		    (const char *const *)ifo->config) == -1)
 			goto eexit;
 	}
@@ -540,7 +539,7 @@ dumplease:
 	return (ssize_t)elen;
 
 eexit:
-	syslog(LOG_ERR, "%s: %m", __func__);
+	logger(ifp->ctx, LOG_ERR, "%s: %m", __func__);
 	if (env) {
 		nenv = env;
 		while (*nenv)
@@ -640,13 +639,13 @@ script_runreason(const struct interface *ifp, const char *reason)
 
 	argv[0] = ifp->options->script ? ifp->options->script : UNCONST(SCRIPT);
 	argv[1] = NULL;
-	syslog(LOG_DEBUG, "%s: executing `%s' %s",
+	logger(ifp->ctx, LOG_DEBUG, "%s: executing `%s' %s",
 	    ifp->name, argv[0], reason);
 
 	/* Make our env */
 	elen = (size_t)make_env(ifp, reason, &env);
 	if (elen == (size_t)-1) {
-		syslog(LOG_ERR, "%s: make_env: %m", ifp->name);
+		logger(ifp->ctx, LOG_ERR, "%s: make_env: %m", ifp->name);
 		return -1;
 	}
 	/* Resize for PATH and RC_SVCNAME */
@@ -687,23 +686,23 @@ script_runreason(const struct interface *ifp, const char *reason)
 
 	pid = exec_script(ifp->ctx, argv, env);
 	if (pid == -1)
-		syslog(LOG_ERR, "%s: %s: %m", __func__, argv[0]);
+		logger(ifp->ctx, LOG_ERR, "%s: %s: %m", __func__, argv[0]);
 	else if (pid != 0) {
 		/* Wait for the script to finish */
 		while (waitpid(pid, &status, 0) == -1) {
 			if (errno != EINTR) {
-				syslog(LOG_ERR, "waitpid: %m");
+				logger(ifp->ctx, LOG_ERR, "waitpid: %m");
 				status = 0;
 				break;
 			}
 		}
 		if (WIFEXITED(status)) {
 			if (WEXITSTATUS(status))
-				syslog(LOG_ERR,
+				logger(ifp->ctx, LOG_ERR,
 				    "%s: %s: WEXITSTATUS %d",
 				    __func__, argv[0], WEXITSTATUS(status));
 		} else if (WIFSIGNALED(status))
-			syslog(LOG_ERR, "%s: %s: %s",
+			logger(ifp->ctx, LOG_ERR, "%s: %s: %s",
 			    __func__, argv[0], strsignal(WTERMSIG(status)));
 	}
 
@@ -717,13 +716,14 @@ script_runreason(const struct interface *ifp, const char *reason)
 			elen = (size_t)arraytostr((const char *const *)env,
 			    &bigenv);
 			if ((ssize_t)elen == -1) {
-				syslog(LOG_ERR, "%s: arraytostr: %m",
+				logger(ifp->ctx, LOG_ERR, "%s: arraytostr: %m",
 				    ifp->name);
 				    break;
 			}
 		}
 		if (control_queue(fd, bigenv, elen, 1) == -1)
-			syslog(LOG_ERR, "%s: control_queue: %m", __func__);
+			logger(ifp->ctx, LOG_ERR,
+			    "%s: control_queue: %m", __func__);
 		else
 			status = 1;
 	}
