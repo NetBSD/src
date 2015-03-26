@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# $NetBSD: modules,v 1.1.2.2 2015/03/26 10:54:35 martin Exp $
+#
+
+# PROVIDE: modules
+# BEFORE:  securelevel
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="modules"
+rcvar=$name
+start_cmd="modules_start"
+stop_cmd=":"
+
+modules_start()
+{
+	if [ -f /etc/modules.conf ]; then
+		echo "Loading modules."
+		cat /etc/modules.conf |
+		while read -r args; do
+			args=${args%%#*}		# strip comments
+			test -z "$args" && continue
+			/sbin/modload $args
+		done
+	fi
+}
+
+load_rc_config $name
+run_rc_command "$1"
