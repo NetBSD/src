@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.22 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.23 2015/03/27 19:47:14 riastradh Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.22 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.23 2015/03/27 19:47:14 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1329,13 +1329,9 @@ ulfs_bufio(enum uio_rw rw, struct vnode *vp, void *buf, size_t len, off_t off,
 	struct uio uio;
 	int error;
 
-	/* XXX Remove me -- all callers should be locked.  */
-	if (!ISSET(ioflg, IO_NODELOCKED)) {
-		if (rw == UIO_READ)
-			vn_lock(vp, LK_SHARED | LK_RETRY);
-		else /* UIO_WRITE */
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	}
+	KASSERT(ISSET(ioflg, IO_NODELOCKED));
+	KASSERT(VOP_ISLOCKED(vp));
+	KASSERT(rw != UIO_WRITE || VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
 	iov.iov_base = buf;
 	iov.iov_len = len;
@@ -1362,7 +1358,7 @@ ulfs_bufio(enum uio_rw rw, struct vnode *vp, void *buf, size_t len, off_t off,
 	else if (uio.uio_resid && error == 0)
 		error = EIO;
 
-	if (!ISSET(ioflg, IO_NODELOCKED))
-		VOP_UNLOCK(vp);
+	KASSERT(VOP_ISLOCKED(vp));
+	KASSERT(rw != UIO_WRITE || VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	return error;
 }
