@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
+/*	$NetBSD: __clone.S,v 1.3 2015/03/27 23:23:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "SYS.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __clone.S,v 1.2 2015/03/27 06:44:28 matt Exp $");
+	RCSID("$NetBSD: __clone.S,v 1.3 2015/03/27 23:23:14 matt Exp $");
 #endif /* SYSLIBC_SCCS and not lint */
 
 #ifdef WEAK_ALIAS
@@ -92,7 +92,7 @@ ENTRY(__clone)
 	jalr		t0
 
 	/* Pass the return value to _exit. */
-	jump		_C_LABEL(_exit)
+	tail		_C_LABEL(_exit)
 
 	/* NOTREACHED */
 END(__clone)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.3 2015/03/27 23:23:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: cerror.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.3 2015/03/27 23:23:14 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.protected	_C_LABEL(__cerror)
@@ -55,7 +55,7 @@ ENTRY_NP(__cerror)
 	addi		sp, sp, CALLFRAME_SIZ
 #else
 	aiupc		a1, %hi(_C_LABEL(errno))
-	sw		a0, %lo(_C_LABEL(errno))(a1)
+	INT_S		a0, %lo(_C_LABEL(errno))(a1)
 #endif /* _REENTRANT */
 	li		a0, -1
 	li		a1, -1
