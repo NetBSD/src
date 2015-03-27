@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.21 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.22 2015/03/27 11:33:46 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -53,6 +53,7 @@
 #include "dhcp.h"
 #include "dhcp6.h"
 #include "dhcpcd-embedded.h"
+#include "if.h"
 #include "if-options.h"
 #include "ipv4.h"
 
@@ -1041,7 +1042,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				}
 				TAILQ_INIT(ifo->routes);
 			}
-			rt = malloc(sizeof(*rt));
+			rt = calloc(1, sizeof(*rt));
 			if (rt == NULL) {
 				logger(ctx, LOG_ERR, "%s: %m", __func__);
 				*fp = ' ';
@@ -1066,7 +1067,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				}
 				TAILQ_INIT(ifo->routes);
 			}
-			rt = malloc(sizeof(*rt));
+			rt = calloc(1, sizeof(*rt));
 			if (rt == NULL) {
 				logger(ctx, LOG_ERR, "%s: %m", __func__);
 				return -1;
