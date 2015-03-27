@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.52 2010/10/04 23:48:22 cyber Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.53 2015/03/27 07:18:11 hikaru Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.52 2010/10/04 23:48:22 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.53 2015/03/27 07:18:11 hikaru Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -302,7 +302,7 @@ struct bootpcontext {
 };
 
 static int bootpset (struct mbuf*, void*, int);
-static int bootpcheck (struct mbuf*, void*);
+static int bootpcheck (struct mbuf**, void*);
 
 static int
 bootpset(struct mbuf *m, void *context, int waited)
@@ -318,10 +318,11 @@ bootpset(struct mbuf *m, void *context, int waited)
 }
 
 static int
-bootpcheck(struct mbuf *m, void *context)
+bootpcheck(struct mbuf **mp, void *context)
 {
 	struct bootp *bootp;
 	struct bootpcontext *bpc = context;
+	struct mbuf *m = *mp;
 	u_int tag, len;
 	u_char *p, *limit;
 
@@ -343,7 +344,7 @@ bootpcheck(struct mbuf *m, void *context)
 	 * don't make first checks more expensive than necessary
 	 */
 	if (m->m_len < offsetof(struct bootp, bp_sname)) {
-		m = m_pullup(m, offsetof(struct bootp, bp_sname));
+		m = *mp = m_pullup(m, offsetof(struct bootp, bp_sname));
 		if (m == NULL) {
 			DPRINTF(("bootpcheck: m_pullup failed\n"));
 			return (-1);
