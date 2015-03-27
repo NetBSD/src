@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_swap_32.S,v 1.1 2014/09/19 17:36:24 matt Exp $ */
+/* $NetBSD: atomic_swap_32.S,v 1.2 2015/03/27 06:42:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "atomic_op_asm.h"
 
 ENTRY_NP(_atomic_swap_32)
-	amoswap.w.aq	v0, a1, 0(a0)
+	amoswap.w.aq	a0, a1, 0(a0)
 	ret
 END(_atomic_swap_32)
 

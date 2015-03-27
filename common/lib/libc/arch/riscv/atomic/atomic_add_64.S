@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64.S,v 1.1 2014/09/19 17:36:24 matt Exp $	*/
+/*	$NetBSD: atomic_add_64.S,v 1.2 2015/03/27 06:42:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 ENTRY_NP(_atomic_inc_64)
 	li		a1, 1
 ENTRY_NP(_atomic_add_64)
-	amoadd.d.aq	v0, a1, 0(a0)
+	amoadd.d.aq	a0, a1, 0(a0)
 	ret
 END(_atomic_add_64)
 END(_atomic_inc_64)
@@ -56,8 +56,8 @@ STRONG_ALIAS(_atomic_inc_ptr,_atomic_inc_64)
 ENTRY_NP(_atomic_inc_64_nv)
 	li		a1, 1
 ENTRY_NP(_atomic_add_64_nv)
-	amoadd.d.aq	v0, a1, 0(a0)	/* update memory and get old value */
-	LONG_ADD	v0, v0, a1	/* turn into new value */
+	amoadd.d.aq	t0, a1, 0(a0)	/* update memory and get old value */
+	LONG_ADD	a0, t0, a1	/* turn into new value */
 	ret
 END(_atomic_add_64_nv)
 END(_atomic_inc_64_nv)

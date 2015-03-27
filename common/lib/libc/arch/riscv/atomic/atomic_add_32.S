@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32.S,v 1.1 2014/09/19 17:36:24 matt Exp $	*/
+/*	$NetBSD: atomic_add_32.S,v 1.2 2015/03/27 06:42:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 ENTRY_NP(_atomic_inc_32)
 	li		a1, 1
 ENTRY_NP(_atomic_add_32)
-	amoadd.w.aq	v0, a1, 0(a0)
+	amoadd.w.aq	a0, a1, 0(a0)
 	ret
 END(_atomic_add_32)
 END(_atomic_inc_32)
@@ -64,8 +64,8 @@ STRONG_ALIAS(_atomic_inc_ptr,_atomic_inc_32)
 ENTRY_NP(_atomic_inc_32_nv)
 	li		a1, 1
 ENTRY_NP(_atomic_add_32_nv)
-	amoadd.w.aq	v0, a1, 0(a0)	/* update memory and get old value */
-	INT_ADD		v0, v0, a1	/* turn into new value */
+	amoadd.w.aq	t0, a1, 0(a0)	/* update memory and get old value */
+	INT_ADD		a0, t0, a1	/* turn into new value */
 	ret
 END(_atomic_add_32_nv)
 END(_atomic_inc_32_nv)

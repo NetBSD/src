@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_32.S,v 1.1 2014/09/19 17:36:24 matt Exp $	*/
+/*	$NetBSD: atomic_and_32.S,v 1.2 2015/03/27 06:42:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "atomic_op_asm.h"
 
 ENTRY_NP(_atomic_and_32)
-	amoand.w.aq	v0, a1, 0(a0)
+	amoand.w.aq	a0, a1, 0(a0)
 	ret
 END(_atomic_and_32)
 
@@ -47,8 +47,8 @@ CRT_ALIAS(__sync_fetch_and_and_4,_atomic_and_32)
 CRT_ALIAS(__atomic_fetch_and_4,_atomic_and_32)
 
 ENTRY_NP(_atomic_and_32_nv)
-	amoand.w.aq	v0, a1, 0(a0)	/* update memory and get old value */
-	and		v0, v0, a1	/* turn into new value */
+	amoand.w.aq	t0, a1, 0(a0)	/* update memory and get old value */
+	and		a0, t0, a1	/* turn into new value */
 	ret
 END(_atomic_and_32_nv)
 ATOMIC_OP_ALIAS(atomic_and_32_nv,_atomic_and_32_nv)
