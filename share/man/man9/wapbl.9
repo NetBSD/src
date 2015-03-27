@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.6 2015/03/27 21:41:32 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.7 2015/03/27 21:50:39 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -443,6 +443,15 @@ FFS without
 would need to issue synchronously in order for
 .Xr fsck 8
 to work.
+.Pp
+The criteria for when the transaction must be flushed to disk before
+.Fn wapbl_begin
+returns are heuristic, i.e. wrong.
+There is no way for a file system to communicate to
+.Fn wapbl_begin
+how many buffers, inodes, and deallocations it will issue via
+.Nm
+in the transaction.
 .Pp
 There is only one
 .Nm
