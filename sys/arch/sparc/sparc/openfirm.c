@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.19 2014/11/23 02:15:52 christos Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.20 2015/03/27 06:10:25 nakayama Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.19 2014/11/23 02:15:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.20 2015/03/27 06:10:25 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,8 +546,8 @@ OF_seek(int handle, u_quad_t pos)
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.handle = HDL2CELL(handle);
-	args.poshi = HDL2CELL(pos >> 32);
-	args.poslo = HDL2CELL(pos);
+	args.poshi = HDQ2CELL_HI(pos);
+	args.poslo = HDQ2CELL_LO(pos);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.status;
