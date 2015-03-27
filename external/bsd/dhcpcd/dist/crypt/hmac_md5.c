@@ -57,7 +57,7 @@ hmac_md5(const uint8_t *text, size_t text_len,
 	/* Ensure key is no bigger than HMAC_PAD_LEN */
 	if (key_len > HMAC_PAD_LEN) {
 		MD5Init(&context);
-		MD5Update(&context, key, key_len);
+		MD5Update(&context, key, (unsigned int)key_len);
 		MD5Final(tk, &context);
 		key = tk;
 		key_len = MD5_DIGEST_LENGTH;
@@ -78,7 +78,7 @@ hmac_md5(const uint8_t *text, size_t text_len,
 	/* inner MD5 */
 	MD5Init(&context);
 	MD5Update(&context, k_ipad, HMAC_PAD_LEN);
-	MD5Update(&context, text, text_len);
+	MD5Update(&context, text, (unsigned int)text_len);
 	MD5Final(digest, &context);
 
 	/* outer MD5 */
