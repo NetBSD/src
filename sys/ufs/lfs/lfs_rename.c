@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.7 2014/05/17 07:08:35 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.7 2014/05/17 07:08:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,8 +629,8 @@ ulfs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 	KASSERT(ino_ret != NULL);
 	KASSERT(vp->v_type == VDIR);
 
-	error = vn_rdwr(UIO_READ, vp, &dirbuf, sizeof dirbuf, (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED, cred, NULL, NULL);
+	error = ulfs_bufio(UIO_READ, vp, &dirbuf, sizeof dirbuf, (off_t)0,
+	    IO_NODELOCKED, cred, NULL, NULL);
 	if (error)
 		return error;
 
