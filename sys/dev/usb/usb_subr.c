@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198 2014/09/21 14:30:22 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.199 2015/03/27 07:28:56 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198 2014/09/21 14:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.199 2015/03/27 07:28:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1126,7 +1126,7 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 				goto found;
 			}
 		}
-		panic("usbd_new_device: cannot find HS port\n");
+		panic("usbd_new_device: cannot find HS port");
 	found:
 		DPRINTFN(1,("usbd_new_device: high speed port %d\n", p));
 	} else {
