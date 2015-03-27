@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: pipe.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: pipe.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef WEAK_ALIAS
@@ -40,11 +40,12 @@ WEAK_ALIAS(pipe, _pipe)
 #endif
 
 ENTRY(_pipe)
+	mv		a2, a0		# a0 will be overwritten
 	SYSTRAP(pipe)	# pipe(fildes) int fildes[2];
 	JUMP_TO_CERROR()	/* error */
 	/* success */
-	sw		v0, 0(a0)	# store the two file descriptors
-	sw		v1, __SIZEOF_INT__(a0)
-	li		v0, 0
+	sw		a0, 0(a2)	# store the two file descriptors
+	sw		a1, __SIZEOF_INT__(a2)
+	li		a0, 0
 	ret
 END(_pipe)
