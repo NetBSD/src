@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.244 2015/03/26 16:15:38 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.245 2015/03/27 11:29:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19382,4 +19382,12 @@ sys/arch/zaurus/include/bootconfig.h		1.2
 
 	Merge common information.
 	[skrll, ticket #645]
+
+sys/arch/arm/arm32/cpuswitch.S			1.86-1.89
+sys/arch/arm/arm32/genassym.cf			1.70
+
+	Only set vfp & tpid registers and do ras lookups if new lwp is
+	not LW_SYSTEM.
+	[skrll, ticket #646]
+
 
