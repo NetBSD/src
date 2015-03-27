@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.3 2015/03/27 23:23:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@ WEAK_ALIAS(sbrk, _sbrk)
 #endif
 
 ENTRY(_sbrk)
-	auipc		t1, %pcrel_hi(_C_LABEL(__curbrk))
-	addi		t1, t1, %pcrel_lo(_C_LABEL(__curbrk))
+.L0:	auipc		t1, %pcrel_hi(_C_LABEL(__curbrk))
+	addi		t1, t1, %pcrel_lo(.L0)
 	PTR_L		t2, 0(t1)
 	add		a0, a0, t2	// compute current break
 	SYSTRAP(break)

@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3 2015/03/27 23:23:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 #include "assym.h"
 
-__RCSID("$NetBSD: swapcontext.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
+__RCSID("$NetBSD: swapcontext.S,v 1.3 2015/03/27 23:23:14 matt Exp $")
 
 #define	CALLFRAME_UCP	CALLFRAME_S1
 #define	CALLFRAME_OUCP	CALLFRAME_S0
@@ -56,7 +56,7 @@ ENTRY(swapcontext)
 	REG_S	ra, UC_GREGS_PC(a1)		# pc <- ra
 	REG_S	sp, UC_GREGS_SP(a1)		# adjust sp
 
-	jump	PLT(_C_LABEL(setcontext))	# setcontext(ucp)
+	tail	PLT(_C_LABEL(setcontext))	# setcontext(ucp)
 
 1:	ret					# simply return
 END(swapcontext)
