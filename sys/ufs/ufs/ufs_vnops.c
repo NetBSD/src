@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.226 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.227 2015/03/27 19:47:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.226 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.227 2015/03/27 19:47:14 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1896,13 +1896,11 @@ ufs_bufio(enum uio_rw rw, struct vnode *vp, void *buf, size_t len, off_t off,
 	struct uio uio;
 	int error;
 
-	/* XXX Remove me -- all callers should be locked.  */
-	if (!ISSET(ioflg, IO_NODELOCKED)) {
-		if (rw == UIO_READ)
-			vn_lock(vp, LK_SHARED | LK_RETRY);
-		else /* UIO_WRITE */
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	}
+	KASSERT(ISSET(ioflg, IO_NODELOCKED));
+	KASSERT(VOP_ISLOCKED(vp));
+	KASSERT(rw != UIO_WRITE || VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	KASSERT(rw != UIO_WRITE || vp->v_mount->mnt_wapbl == NULL ||
+	    ISSET(ioflg, IO_JOURNALLOCKED));
 
 	iov.iov_base = buf;
 	iov.iov_len = len;
@@ -1929,7 +1927,7 @@ ufs_bufio(enum uio_rw rw, struct vnode *vp, void *buf, size_t len, off_t off,
 	else if (uio.uio_resid && error == 0)
 		error = EIO;
 
-	if (!ISSET(ioflg, IO_NODELOCKED))
-		VOP_UNLOCK(vp);
+	KASSERT(VOP_ISLOCKED(vp));
+	KASSERT(rw != UIO_WRITE || VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	return error;
 }

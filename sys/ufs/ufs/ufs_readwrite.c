@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.108 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.109 2015/03/27 19:47:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.108 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.109 2015/03/27 19:47:14 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -543,10 +543,13 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	bool need_unreserve = false;
 #endif
 
+	KASSERT(ISSET(ioflag, IO_NODELOCKED));
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(vp->v_type == VDIR || vp->v_type == VLNK);
 	KASSERT(vp->v_type != VDIR || ISSET(ioflag, IO_SYNC));
 	KASSERT(uio->uio_rw == UIO_WRITE);
+	KASSERT(ISSET(ioflag, IO_JOURNALLOCKED));
+	UFS_WAPBL_JLOCK_ASSERT(vp->v_mount);
 
 	ip = VTOI(vp);
 	ump = ip->i_ump;
@@ -573,8 +576,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	error = 0;
 
 	KASSERT(vp->v_type != VREG);
-	KASSERT(ISSET(ioflag, IO_JOURNALLOCKED));
-	UFS_WAPBL_JLOCK_ASSERT(vp->v_mount);
 
 #ifdef LFS_READWRITE
 	lfs_availwait(fs, btofsb(fs, uio->uio_resid));
