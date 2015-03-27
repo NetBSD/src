@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.47 2014/05/25 14:07:19 hannken Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.48 2015/03/27 17:27:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -147,6 +147,8 @@ void ext2fs_set_inode_guid(struct inode *);
 /* ext2fs_readwrite.c */
 int ext2fs_read(void *);
 int ext2fs_write(void *);
+int ext2fs_bufrd(struct vnode *, struct uio *, int, kauth_cred_t);
+int ext2fs_bufwr(struct vnode *, struct uio *, int, kauth_cred_t);
 
 /* ext2fs_vnops.c */
 int ext2fs_create(void *);

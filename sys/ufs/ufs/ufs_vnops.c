@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.225 2015/03/17 09:39:29 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.226 2015/03/27 17:27:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.225 2015/03/17 09:39:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.226 2015/03/27 17:27:56 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1210,9 +1210,9 @@ ufs_symlink(void *v)
 			ip->i_flag |= IN_ACCESS;
 		UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	} else
-		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
-		    ap->a_cnp->cn_cred, NULL, NULL);
+		error = ufs_bufio(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
+		    IO_NODELOCKED | IO_JOURNALLOCKED, ap->a_cnp->cn_cred, NULL,
+		    NULL);
 	UFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
 	VOP_UNLOCK(vp);
 	if (error)
@@ -1279,7 +1279,7 @@ ufs_readdir(void *v)
 	cdbuf = kmem_alloc(cdbufsz, KM_SLEEP);
 	aiov.iov_base = cdbuf;
 	aiov.iov_len = rcount;
-	error = VOP_READ(vp, &auio, 0, ap->a_cred);
+	error = UFS_BUFRD(vp, &auio, 0, ap->a_cred);
 	if (error != 0) {
 		kmem_free(cdbuf, cdbufsz);
 		return error;
@@ -1399,7 +1399,7 @@ ufs_readlink(void *v)
 		uiomove((char *)SHORTLINK(ip), isize, ap->a_uio);
 		return (0);
 	}
-	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
+	return (UFS_BUFRD(vp, ap->a_uio, 0, ap->a_cred));
 }
 
 /*
@@ -1886,4 +1886,50 @@ ufs_gop_markupdate(struct vnode *vp, int flags)
 
 		ip->i_flag |= mask;
 	}
+}
+
+int
+ufs_bufio(enum uio_rw rw, struct vnode *vp, void *buf, size_t len, off_t off,
+    int ioflg, kauth_cred_t cred, size_t *aresid, struct lwp *l)
+{
+	struct iovec iov;
+	struct uio uio;
+	int error;
+
+	/* XXX Remove me -- all callers should be locked.  */
+	if (!ISSET(ioflg, IO_NODELOCKED)) {
+		if (rw == UIO_READ)
+			vn_lock(vp, LK_SHARED | LK_RETRY);
+		else /* UIO_WRITE */
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	}
+
+	iov.iov_base = buf;
+	iov.iov_len = len;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_resid = len;
+	uio.uio_offset = off;
+	uio.uio_rw = rw;
+	UIO_SETUP_SYSSPACE(&uio);
+
+	switch (rw) {
+	case UIO_READ:
+		error = UFS_BUFRD(vp, &uio, ioflg, cred);
+		break;
+	case UIO_WRITE:
+		error = UFS_BUFWR(vp, &uio, ioflg, cred);
+		break;
+	default:
+		panic("invalid uio rw: %d", (int)rw);
+	}
+
+	if (aresid)
+		*aresid = uio.uio_resid;
+	else if (uio.uio_resid && error == 0)
+		error = EIO;
+
+	if (!ISSET(ioflg, IO_NODELOCKED))
+		VOP_UNLOCK(vp);
+	return error;
 }
