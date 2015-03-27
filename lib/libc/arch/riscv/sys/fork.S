@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: fork.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
 
 
 /*-
@@ -32,14 +32,14 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: fork.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
+	RCSID("$NetBSD: fork.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(__fork)
 	SYSTRAP(fork)		// pid = fork()
 	JUMP_TO_CERROR()	/* error */
 	/* success */
-	addi	v1, v1, -1	// v1 0->0xffffffff in parent, 1->0 in child
-	and	v0, v0, v1	// v0 = child pid in parent, 0 in child
+	addi	a1, a1, -1	// a1 0->0xffffffff in parent, 1->0 in child
+	and	a0, a0, a1	// a0 = child pid in parent, 0 in child
 	ret
 END(__fork)
