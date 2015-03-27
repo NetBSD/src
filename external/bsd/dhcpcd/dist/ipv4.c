@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4.c,v 1.12 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: ipv4.c,v 1.13 2015/03/27 11:33:46 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -335,6 +335,12 @@ ipv4_handlert(struct dhcpcd_ctx *ctx, int cmd, struct rt *rt)
 	if (ctx->ipv4_kroutes == NULL)
 		return 0;
 
+	/* DHCP host routes have a gateway of the destination.
+	 * We need to emulate that */
+	if (rt->gate.s_addr == INADDR_ANY &&
+	    rt->net.s_addr == INADDR_BROADCAST)
+		rt->gate = rt->dest;
+
 	f = ipv4_findrt(ctx, rt, 1);
 	switch (cmd) {
 	case RTM_ADD:
@@ -367,9 +373,6 @@ ipv4_handlert(struct dhcpcd_ctx *ctx, int cmd, struct rt *rt)
 static int
 nc_route(struct rt *ort, struct rt *nrt)
 {
-#ifdef HAVE_ROUTE_METRIC
-	int retval;
-#endif
 
 	/* Don't set default routes if not asked to */
 	if (nrt->dest.s_addr == 0 &&
@@ -402,21 +405,29 @@ nc_route(struct rt *ort, struct rt *nrt)
 #ifdef HAVE_ROUTE_METRIC
 	/* With route metrics, we can safely add the new route before
 	 * deleting the old route. */
-	if ((retval = if_route(RTM_ADD, nrt))  == -1)
-		logger(nrt->iface->ctx, LOG_ERR, "if_route (ADD): %m");
-	if (ort && if_route(RTM_DELETE, ort) == -1 && errno != ESRCH)
-		logger(nrt->iface->ctx, LOG_ERR, "if_route (DEL): %m");
-	return retval;
-#else
+	if (if_route(RTM_ADD, nrt)  == 0) {
+		if (ort && if_route(RTM_DELETE, ort) == -1 && errno != ESRCH)
+			logger(nrt->iface->ctx, LOG_ERR, "if_route (DEL): %m");
+		return 0;
+	}
+
+	/* If the kernel claims the route exists we need to rip out the
+	 * old one first. */
+	if (errno != EEXIST || ort == NULL)
+		goto logerr;
+#endif
+
 	/* No route metrics, we need to delete the old route before
 	 * adding the new one. */
 	if (ort && if_route(RTM_DELETE, ort) == -1 && errno != ESRCH)
 		logger(nrt->iface->ctx, LOG_ERR, "if_route (DEL): %m");
 	if (if_route(RTM_ADD, nrt) == 0)
 		return 0;
+#ifdef HAVE_ROUTE_METRIC
+logerr:
+#endif
 	logger(nrt->iface->ctx, LOG_ERR, "if_route (ADD): %m");
 	return -1;
-#endif
 }
 
 static int
@@ -701,8 +712,10 @@ ipv4_buildroutes(struct dhcpcd_ctx *ctx)
 				free(or);
 			} else {
 				if (state->added & STATE_FAKE) {
-					if (!ipv4_findrt(ctx, rt, 1))
-						continue;
+					or = ipv4_findrt(ctx, rt, 1);
+					if (or == NULL ||
+					    or->gate.s_addr != rt->gate.s_addr)
+ 						continue;
 				} else {
 					if (n_route(rt) != 0)
 						continue;
