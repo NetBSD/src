@@ -897,6 +897,18 @@ elf64-ia64.c : elfnn-ia64.c
 	sed -e s/NN/64/g < $(srcdir)/elfnn-ia64.c > elf64-ia64.new
 	mv -f elf64-ia64.new elf64-ia64.c
 
+elf32-riscv.c : elfnn-riscv.c
+	rm -f elf32-riscv.c
+	echo "#line 1 \"$(srcdir)/elfnn-riscv.c\"" > elf32-riscv.new
+	sed -e s/NN/32/g < $(srcdir)/elfnn-riscv.c >> elf32-riscv.new
+	mv -f elf32-riscv.new elf32-riscv.c
+
+elf64-riscv.c : elfnn-riscv.c
+	rm -f elf64-riscv.c
+	echo "#line 1 \"$(srcdir)/elfnn-riscv.c\"" > elf64-riscv.new
+	sed -e s/NN/64/g < $(srcdir)/elfnn-riscv.c >> elf64-riscv.new
+	mv -f elf64-riscv.new elf64-riscv.c
+
 peigen.c : peXXigen.c
 	rm -f peigen.c
 	sed -e s/XX/pe/g < $(srcdir)/peXXigen.c > peigen.new
