@@ -1,9 +1,9 @@
-/*	$NetBSD: __syscall.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: __syscall.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
 
 #include "SYS.h"
 
 ENTRY(__syscall)
-	mv	v0, a0
+	mv	t6, a0
 	mv	a0, a1
 	mv	a1, a2
 	mv	a2, a3
