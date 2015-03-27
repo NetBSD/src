@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.64 2014/12/11 12:21:44 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.65 2015/03/27 05:31:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.64 2014/12/11 12:21:44 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.65 2015/03/27 05:31:34 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -349,12 +349,12 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x2f] = "Xeon E7 family",
 				[0x35] = "Atom Family",
 				[0x36] = "Atom S1000",
-				[0x37] = "Atom E3000, Z3000",
+				[0x37] = "Atom E3000, Z3[67]00",
 				[0x3a] = "Xeon E3-1200v2 and 3rd gen core, "
 					 "Ivy Bridge",
 				[0x3c] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
-				[0x3d] = "Core M-5xxx (Broadwell)",
+				[0x3d] = "Core M-5xxx, Future 5th gen Core (Broadwell)",
 				[0x3e] = "Xeon E5/E7 v2 (Ivy Bridge-E), "
 					 "Core i7-49xx Extreme",
 				[0x3f] = "Xeon E5-2600/1600 v3 (Haswell-E), "
@@ -363,12 +363,15 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 					 "(Haswell)",
 				[0x46] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
-				[0x4a] = "Future Atom E3000, Z3000",
+				[0x4a] = "Atom Z3400",
+				[0x4c] = "Atom Z8000",
 				[0x4d] = "Atom C2000",
-				[0x4e] = "Future Core",
-				[0x56] = "Future Xeon",
-				[0x5a] = "Future Atom E3000, Z3000",
-				[0x5d] = "Future Atom E3000, Z3000",
+				[0x4e] = "Future gen Core",
+				[0x4f] = "Future gen Xeon (Broadwell)",
+				[0x56] = "Next gen Xeon D (Broadwell)",
+				[0x57] = "Next gen Xeon Phi",
+				[0x5a] = "Atom E3500",
+				[0x5d] = "Future Atom (Silvermont)",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
@@ -996,6 +999,11 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 			if (descs[i] & 0x80000000)
 				continue;
 			for (j = 0; j < 4; j++) {
+				/*
+				 * The least significant byte in EAX
+				 * ((desc[0] >> 0) & 0xff) is always 0x01 and
+				 * it should be ignored.
+				 */
 				if (i == 0 && j == 0)
 					continue;
 				desc = (descs[i] >> (j * 8)) & 0xff;
