@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2011, Intel Corporation 
+  Copyright (c) 2001-2012, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.h,v 1.24 2011/04/28 23:21:40 jfv Exp $*/
-/*$NetBSD: ixgbe.h,v 1.3 2015/03/10 08:54:17 msaitoh Exp $*/
+/*$NetBSD: ixgbe.h,v 1.4 2015/03/27 05:57:28 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -203,9 +203,11 @@
 #define IXGBE_RX_HDR			128
 #define IXGBE_VFTA_SIZE			128
 #define IXGBE_BR_SIZE			4096
-#define IXGBE_QUEUE_IDLE		0
-#define IXGBE_QUEUE_WORKING		1
-#define IXGBE_QUEUE_HUNG		2
+#define IXGBE_QUEUE_MIN_FREE		32
+#define IXGBE_QUEUE_IDLE		1
+#define IXGBE_QUEUE_WORKING		2
+#define IXGBE_QUEUE_HUNG		4
+#define IXGBE_QUEUE_DEPLETED		8
 
 /* Offload bits in mbuf flag */
 #define	M_CSUM_OFFLOAD	\
@@ -331,6 +333,7 @@ struct rx_ring {
 	bool			hdr_split;
 	bool			hw_rsc;
 	bool			discard;
+	bool			vtag_strip;
         u32			next_to_refresh;
         u32 			next_to_check;
 	char			mtx_name[16];
@@ -392,6 +395,7 @@ struct adapter {
 
 	/* Info about the interface */
 	u32			optics;
+	u32			fc; /* local flow ctrl setting */
 	int			advertise;  /* link speeds */
 	bool			link_active;
 	u16			max_frame_size;

@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2010, Intel Corporation 
+  Copyright (c) 2001-2012, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_mbx.c,v 1.2 2011/01/19 19:36:27 jfv Exp $*/
-/*$NetBSD: ixgbe_mbx.c,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixgbe_mbx.c,v 1.2 2015/03/27 05:57:28 msaitoh Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_mbx.h"
@@ -243,7 +243,7 @@ out:
  *  received an ack to that message within delay * timeout period
  **/
 s32 ixgbe_write_posted_mbx(struct ixgbe_hw *hw, u32 *msg, u16 size,
-                           u16 mbx_id)
+			   u16 mbx_id)
 {
 	struct ixgbe_mbx_info *mbx = &hw->mbx;
 	s32 ret_val = IXGBE_ERR_MBX;
@@ -327,7 +327,7 @@ static s32 ixgbe_check_for_msg_vf(struct ixgbe_hw *hw, u16 mbx_id)
 {
 	s32 ret_val = IXGBE_ERR_MBX;
 
-	UNREFERENCED_PARAMETER(mbx_id);
+	UNREFERENCED_1PARAMETER(mbx_id);
 	DEBUGFUNC("ixgbe_check_for_msg_vf");
 
 	if (!ixgbe_check_for_bit_vf(hw, IXGBE_VFMAILBOX_PFSTS)) {
@@ -349,7 +349,7 @@ static s32 ixgbe_check_for_ack_vf(struct ixgbe_hw *hw, u16 mbx_id)
 {
 	s32 ret_val = IXGBE_ERR_MBX;
 
-	UNREFERENCED_PARAMETER(mbx_id);
+	UNREFERENCED_1PARAMETER(mbx_id);
 	DEBUGFUNC("ixgbe_check_for_ack_vf");
 
 	if (!ixgbe_check_for_bit_vf(hw, IXGBE_VFMAILBOX_PFACK)) {
@@ -371,11 +371,11 @@ static s32 ixgbe_check_for_rst_vf(struct ixgbe_hw *hw, u16 mbx_id)
 {
 	s32 ret_val = IXGBE_ERR_MBX;
 
-	UNREFERENCED_PARAMETER(mbx_id);
+	UNREFERENCED_1PARAMETER(mbx_id);
 	DEBUGFUNC("ixgbe_check_for_rst_vf");
 
 	if (!ixgbe_check_for_bit_vf(hw, (IXGBE_VFMAILBOX_RSTD |
-	                                 IXGBE_VFMAILBOX_RSTI))) {
+	    IXGBE_VFMAILBOX_RSTI))) {
 		ret_val = IXGBE_SUCCESS;
 		hw->mbx.stats.rsts++;
 	}
@@ -415,12 +415,12 @@ static s32 ixgbe_obtain_mbx_lock_vf(struct ixgbe_hw *hw)
  *  returns SUCCESS if it successfully copied message into the buffer
  **/
 static s32 ixgbe_write_mbx_vf(struct ixgbe_hw *hw, u32 *msg, u16 size,
-                              u16 mbx_id)
+			      u16 mbx_id)
 {
 	s32 ret_val;
 	u16 i;
 
-	UNREFERENCED_PARAMETER(mbx_id);
+	UNREFERENCED_1PARAMETER(mbx_id);
 
 	DEBUGFUNC("ixgbe_write_mbx_vf");
 
@@ -457,13 +457,13 @@ out_no_write:
  *  returns SUCCESS if it successfuly read message from buffer
  **/
 static s32 ixgbe_read_mbx_vf(struct ixgbe_hw *hw, u32 *msg, u16 size,
-                             u16 mbx_id)
+			     u16 mbx_id)
 {
 	s32 ret_val = IXGBE_SUCCESS;
 	u16 i;
 
 	DEBUGFUNC("ixgbe_read_mbx_vf");
-	UNREFERENCED_PARAMETER(mbx_id);
+	UNREFERENCED_1PARAMETER(mbx_id);
 
 	/* lock the mailbox to prevent pf/vf race condition */
 	ret_val = ixgbe_obtain_mbx_lock_vf(hw);
@@ -545,7 +545,7 @@ static s32 ixgbe_check_for_msg_pf(struct ixgbe_hw *hw, u16 vf_number)
 	DEBUGFUNC("ixgbe_check_for_msg_pf");
 
 	if (!ixgbe_check_for_bit_pf(hw, IXGBE_MBVFICR_VFREQ_VF1 << vf_bit,
-	                            index)) {
+				    index)) {
 		ret_val = IXGBE_SUCCESS;
 		hw->mbx.stats.reqs++;
 	}
@@ -569,7 +569,7 @@ static s32 ixgbe_check_for_ack_pf(struct ixgbe_hw *hw, u16 vf_number)
 	DEBUGFUNC("ixgbe_check_for_ack_pf");
 
 	if (!ixgbe_check_for_bit_pf(hw, IXGBE_MBVFICR_VFACK_VF1 << vf_bit,
-	                            index)) {
+				    index)) {
 		ret_val = IXGBE_SUCCESS;
 		hw->mbx.stats.acks++;
 	}
@@ -597,8 +597,10 @@ static s32 ixgbe_check_for_rst_pf(struct ixgbe_hw *hw, u16 vf_number)
 	case ixgbe_mac_82599EB:
 		vflre = IXGBE_READ_REG(hw, IXGBE_VFLRE(reg_offset));
 		break;
+	case ixgbe_mac_X540:
+		vflre = IXGBE_READ_REG(hw, IXGBE_VFLREC(reg_offset));
+		break;
 	default:
-		goto out;
 		break;
 	}
 
@@ -608,7 +610,6 @@ static s32 ixgbe_check_for_rst_pf(struct ixgbe_hw *hw, u16 vf_number)
 		hw->mbx.stats.rsts++;
 	}
 
-out:
 	return ret_val;
 }
 
@@ -647,7 +648,7 @@ static s32 ixgbe_obtain_mbx_lock_pf(struct ixgbe_hw *hw, u16 vf_number)
  *  returns SUCCESS if it successfully copied message into the buffer
  **/
 static s32 ixgbe_write_mbx_pf(struct ixgbe_hw *hw, u32 *msg, u16 size,
-                              u16 vf_number)
+			      u16 vf_number)
 {
 	s32 ret_val;
 	u16 i;
@@ -690,7 +691,7 @@ out_no_write:
  *  a message due to a VF request so no polling for message is needed.
  **/
 static s32 ixgbe_read_mbx_pf(struct ixgbe_hw *hw, u32 *msg, u16 size,
-                             u16 vf_number)
+			     u16 vf_number)
 {
 	s32 ret_val;
 	u16 i;
@@ -726,7 +727,8 @@ void ixgbe_init_mbx_params_pf(struct ixgbe_hw *hw)
 {
 	struct ixgbe_mbx_info *mbx = &hw->mbx;
 
-	if (hw->mac.type != ixgbe_mac_82599EB)
+	if (hw->mac.type != ixgbe_mac_82599EB &&
+	    hw->mac.type != ixgbe_mac_X540)
 		return;
 
 	mbx->timeout = 0;
@@ -748,4 +750,3 @@ void ixgbe_init_mbx_params_pf(struct ixgbe_hw *hw)
 	mbx->stats.acks = 0;
 	mbx->stats.rsts = 0;
 }
-

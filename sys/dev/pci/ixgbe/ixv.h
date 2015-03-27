@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2010, Intel Corporation 
+  Copyright (c) 2001-2012, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixv.h,v 1.3 2011/01/07 23:39:41 jfv Exp $*/
-/*$NetBSD: ixv.h,v 1.3 2015/03/10 09:26:49 msaitoh Exp $*/
+/*$NetBSD: ixv.h,v 1.4 2015/03/27 05:57:28 msaitoh Exp $*/
 
 
 #ifndef _IXV_H_
@@ -416,4 +416,20 @@ drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
         return (!buf_ring_empty(br));
 }
 #endif
+
+/*
+** Find the number of unrefreshed RX descriptors
+*/
+static inline u16
+ixv_rx_unrefreshed(struct rx_ring *rxr)
+{       
+	struct adapter  *adapter = rxr->adapter;
+        
+	if (rxr->next_to_check > rxr->next_to_refresh)
+		return (rxr->next_to_check - rxr->next_to_refresh - 1);
+	else
+		return ((adapter->num_rx_desc + rxr->next_to_check) -
+		    rxr->next_to_refresh - 1);
+}       
+
 #endif /* _IXV_H_ */
