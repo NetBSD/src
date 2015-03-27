@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.78 2015/03/17 09:39:29 hannken Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.79 2015/03/27 17:27:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -186,6 +186,8 @@ void	ufs_vinit(struct mount *, int (**)(void *),
 		  int (**)(void *), struct vnode **);
 int	ufs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void	ufs_gop_markupdate(struct vnode *, int);
+int	ufs_bufio(enum uio_rw, struct vnode *, void *, size_t, off_t, int,
+	    kauth_cred_t, size_t *, struct lwp *);
 
 __END_DECLS
 
