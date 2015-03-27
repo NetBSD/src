@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.5 2015/03/27 19:58:58 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.6 2015/03/27 21:41:32 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -345,10 +345,8 @@ Add the buffer
 to the current transaction, which must be locked, because someone has
 asked to write it.
 .Pp
-This is meant to be called by
-.Xr bwrite 9
-or
-.Xr bdwrite 9 ,
+This is meant to be called from within
+.Xr buffercache 9 ,
 not by file systems directly.
 .It Fn wapbl_remove_buf wl bp
 Remove the buffer
