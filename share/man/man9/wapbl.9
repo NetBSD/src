@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.4 2015/03/27 19:48:37 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.5 2015/03/27 19:58:58 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -425,6 +425,26 @@ and provides no way to log writes via the page cache, as in
 and
 .Xr ubc_uiomove 9 ,
 which is normally used for file data.
+.Pp
+Not only is
+.Nm
+unable to log writes via the page cache, it is also unable to defer
+.Xr buffercache 9
+writes until cached pages have been written.
+This manifests as the well-known garbage-data-appended-after-crash bug
+in FFS: when appending to a file, the pages containing new data may not
+reach the disk before the inode update reporting its new size.
+After a crash, the inode update will be on disk, but the new data will
+not be -- instead, whatever garbage data in the free space will appear
+to have been appended to the file.
+.Nm
+exacerbates the problem by increasing the throughput of metadata
+writes, because it can issue many metadata writes asynchronously that
+FFS without
+.Nm
+would need to issue synchronously in order for
+.Xr fsck 8
+to work.
 .Pp
 There is only one
 .Nm
