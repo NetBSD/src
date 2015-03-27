@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 2015/03/27 23:14:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,24 +48,25 @@ ENTRY(_rtld_start)
 					# -> 3*PTR_SIZE(sp) for obj_main
 	move	s1, a2			# save ps_strings pointer
 
-	auipc	gp, %pcrel_hi(_GLOBAL_OFFSET_TABLE_)
-	PTR_L	t0, %pcrel_lo(_GLOBAL_OFFSET_TABLE_)(gp) # &_DYNAMIC
-	auipc	a0, %pcrel_hi(_DYNAMIC)
-	addi	a0, a0, %pcrel_lo(_DYNAMIC)
+.L0:	auipc	gp, %pcrel_hi(_GLOBAL_OFFSET_TABLE_)
+	PTR_L	t0, %pcrel_lo(.L0)(gp) # &_DYNAMIC
+.L1:	auipc	a0, %pcrel_hi(_DYNAMIC)
+	addi	a0, a0, %pcrel_lo(.L1)
 	sub	s2, a0, t0		# save for _rtld
 	move	a1, s2
 	call	_C_LABEL(_rtld_relocate_nonplt_self)
 
 	move	a1, s2			# relocbase
 	addi	a0, sp, 2*__SIZEOF_POINTER__	# sp
-	call	_C_LABEL(_rtld)		# v0 = _rtld(sp, relocbase)
+	call	_C_LABEL(_rtld)		# a0 = _rtld(sp, relocbase)
+	mv	t0, a0
 
 	PTR_L	a0, 2*__SIZEOF_POINTER__(sp)	# cleanup function
 	PTR_L	a1, 3*__SIZEOF_POINTER__(sp)	# obj_main entry
 	move	a2, s1			# restore ps_strings
 	move	sp, s0			# readjust stack
 	move	s0, zero		# break stack chain
-	jr	v0			# _start(cleanup, obj_main, ps_strings);
+	jr	t0			# _start(cleanup, obj_main, ps_strings);
 END(_rtld_start)
 
 #define	XCALLFRAME_SIZ		(12*SZREG)
@@ -95,10 +96,11 @@ ENTRY_NP(_rtld_bind_start)
 	REG_S	a7,  XCALLFRAME_A7(sp)
 	REG_S	ra,  XCALLFRAME_RA(sp)
 
-	move	a0, t0			/* object from got.plt[1] */
-	move	a1, t1			/* reloc offset */
+	mv	a0, t0			/* object from got.plt[1] */
+	mv	a1, t1			/* reloc offset */
 
 	call	_C_LABEL(_rtld_bind)
+	mv	t0, a0			/* save function pointer */
 
 	REG_L	a0, XCALLFRAME_A0(sp)
 	REG_L	a1, XCALLFRAME_A1(sp)
@@ -110,5 +112,5 @@ ENTRY_NP(_rtld_bind_start)
 	REG_L	a7, XCALLFRAME_A7(sp)
 	REG_L	ra, XCALLFRAME_RA(sp)		
 	addi	sp, sp, XCALLFRAME_SIZ
-	jr	v0
+	jr	t0
 END(_rtld_bind_start)
