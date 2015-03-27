@@ -1,5 +1,5 @@
 #!/bin/sh
-#    $NetBSD: service,v 1.4 2015/03/23 23:28:55 ast Exp $
+#    $NetBSD: service,v 1.5 2015/03/27 23:25:42 ast Exp $
 #    service -- run or list system services
 #
 #  Taken from FreeBSD: releng/10.1/usr.sbin/service/service.sh 268098
@@ -44,11 +44,15 @@ usage ()
     exit 1
 }
 
-rc_files()
+# list all files in rc_directories with absolute pathnames
+# written to be compatible with ls(1) from pre netbsd-7
+_rc_files()
 {
-    local dir
-    for dir in ${rc_directories}; do
-        [ -d ${dir} ] && ls -P1 ${dir} 2>/dev/null
+    local _d _f
+    for _d in ${rc_directories}; do
+        if [ -d $_d ]; then
+            for _f in $_d/*; do [ -f $_f -a -x $_f ] && echo $_f; done
+        fi
     done | xargs rcorder -s nostart ${rc_rcorder_flags} 2>/dev/null
     return 0
 }
@@ -75,12 +79,15 @@ if [ -n "${ENABLED}" ]; then
     then
         flt=$( echo $* | sed -e 's; ;|;g' -e 's;^;egrep /(;' -e 's;$;)$;' )
     fi
-    rc_files | $flt | while read file
+    _rc_files | $flt | while read file
     do
         if grep -q ^rcvar $file; then
             eval $( grep ^name= $file )
             eval $( grep ^rcvar $file )
-            checkyesno ${rcvar} 2>/dev/null && echo ${file}
+            if [ -n "${rcvar}" ]; then
+                load_rc_config ${rcvar}
+                checkyesno ${rcvar} 2>/dev/null && echo ${file}
+            fi
         fi
     done
     exit 0
@@ -88,7 +95,7 @@ fi
 
 if [ -n "${LIST}" ]; then
     [ -n "${VERBOSE}" ] && echo "rc_directories is ${rc_directories}" >&2
-    rc_files
+    _rc_files
     exit 0
 fi
 
