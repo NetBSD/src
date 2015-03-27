@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.81 2015/03/17 09:39:29 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.82 2015/03/27 17:27:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -127,6 +127,10 @@ int	ffs_cgupdate(struct ufsmount *, int);
 /* ffs_vnops.c */
 int	ffs_read(void *);
 int	ffs_write(void *);
+int	ffs_bufio(enum uio_rw, struct vnode *, void *, size_t, off_t, int,
+	    kauth_cred_t, size_t *, struct lwp *);
+int	ffs_bufrd(struct vnode *, struct uio *, int, kauth_cred_t);
+int	ffs_bufwr(struct vnode *, struct uio *, int, kauth_cred_t);
 int	ffs_fsync(void *);
 int	ffs_spec_fsync(void *);
 int	ffs_reclaim(void *);
