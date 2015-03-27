@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.4 2014/10/07 09:36:09 ryo Exp $
+#	$NetBSD: files.imx6,v 1.5 2015/03/27 05:31:23 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -62,7 +62,7 @@ attach	imxiomux at axi
 file	arch/arm/imx/imx6_iomux.c		imxiomux
 
 # iMX iic Controler
-device	imxi2c: i2cbus
+device	imxi2c: motoi2c, i2cbus, i2cexec
 attach	imxi2c at axi
 file	arch/arm/imx/imxi2c.c			imxi2c
 file	arch/arm/imx/imx6_i2c.c			imxi2c
