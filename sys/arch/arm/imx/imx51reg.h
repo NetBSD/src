@@ -1,4 +1,4 @@
-/* $NetBSD: imx51reg.h,v 1.5 2014/07/25 07:49:56 hkenken Exp $ */
+/* $NetBSD: imx51reg.h,v 1.6 2015/03/27 05:31:23 hkenken Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -381,7 +381,7 @@
 
 #define	I2C1_BASE	(AIPSTZ2_BASE + 0x03fc8000)
 #define	I2C2_BASE	(AIPSTZ2_BASE + 0x03fc4000)
-/* register definitions in imxi2creg.h */
+#define	I2C_SIZE	0x4000
 
 #define	AUDMUX_BASE	(AIPSTZ2_BASE + 0x03fd0000)
 #define	AUDMUX_SIZE	0x4000
