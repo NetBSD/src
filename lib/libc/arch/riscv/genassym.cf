@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2014/09/19 17:36:25 matt Exp $
+#	$NetBSD: genassym.cf,v 1.2 2015/03/27 23:22:20 matt Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,21 +65,17 @@ define JB_TP		_JB_TP * sizeof(_BSD_JBSLOT_T_)
 define JB_GP		_JB_GP * sizeof(_BSD_JBSLOT_T_)
 define JB_FCSR		_JB_FCSR * sizeof(_BSD_JBSLOT_T_)
 
-define JB_F0		_JB_F0 * sizeof(_BSD_JBSLOT_T_)
-define JB_F1		_JB_F1 * sizeof(_BSD_JBSLOT_T_)
-define JB_F2		_JB_F2 * sizeof(_BSD_JBSLOT_T_)
-define JB_F3		_JB_F3 * sizeof(_BSD_JBSLOT_T_)
-define JB_F4		_JB_F4 * sizeof(_BSD_JBSLOT_T_)
-define JB_F5		_JB_F5 * sizeof(_BSD_JBSLOT_T_)
-define JB_F6		_JB_F6 * sizeof(_BSD_JBSLOT_T_)
-define JB_F7		_JB_F7 * sizeof(_BSD_JBSLOT_T_)
-define JB_F8		_JB_F8 * sizeof(_BSD_JBSLOT_T_)
-define JB_F9		_JB_F9 * sizeof(_BSD_JBSLOT_T_)
-define JB_F10		_JB_F10 * sizeof(_BSD_JBSLOT_T_)
-define JB_F11		_JB_F11 * sizeof(_BSD_JBSLOT_T_)
-define JB_F12		_JB_F12 * sizeof(_BSD_JBSLOT_T_)
-define JB_F13		_JB_F13 * sizeof(_BSD_JBSLOT_T_)
-define JB_F14		_JB_F14 * sizeof(_BSD_JBSLOT_T_)
-define JB_F15		_JB_F15 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS0		_JB_FS0 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS1		_JB_FS1 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS2		_JB_FS2 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS3		_JB_FS3 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS4		_JB_FS4 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS5		_JB_FS5 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS6		_JB_FS6 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS7		_JB_FS7 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS8		_JB_FS8 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS9		_JB_FS9 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS10		_JB_FS10 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS11		_JB_FS11 * sizeof(_BSD_JBSLOT_T_)
 
 define JB_SIGMASK	_JB_SIGMASK * sizeof(_BSD_JBSLOT_T_)
