@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.45 2013/09/26 07:25:31 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.46 2015/03/27 12:46:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@ usbd_status	usbd_get_desc(usbd_device_handle dev, int type,
 usbd_status	usbd_get_config_desc(usbd_device_handle, int,
 				     usb_config_descriptor_t *);
 usbd_status	usbd_get_config_desc_full(usbd_device_handle, int, void *, int);
+usbd_status	usbd_get_bos_desc(usbd_device_handle, int,
+				     usb_bos_descriptor_t *);
+usbd_status	usbd_get_bos_desc_full(usbd_device_handle, int, void *, int);
 usbd_status	usbd_get_device_desc(usbd_device_handle dev,
 				     usb_device_descriptor_t *d);
 usbd_status	usbd_set_address(usbd_device_handle dev, int addr);
