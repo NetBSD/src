@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.13 2014/05/25 13:49:13 hannken Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.14 2015/03/27 17:27:56 riastradh Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -170,6 +170,8 @@ int	ulfs_makeinode(int, struct vnode *, const struct ulfs_lookup_results *,
 		      struct vnode **, struct componentname *);
 int	ulfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void	ulfs_gop_markupdate(struct vnode *, int);
+int	ulfs_bufio(enum uio_rw, struct vnode *, void *, size_t, off_t, int,
+	    kauth_cred_t, size_t *, struct lwp *);
 
 /*
  * Snapshot function prototypes.

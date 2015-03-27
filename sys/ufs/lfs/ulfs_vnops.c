@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.21 2014/05/17 07:09:09 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.22 2015/03/27 17:27:56 riastradh Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.21 2014/05/17 07:09:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.22 2015/03/27 17:27:56 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -934,7 +934,7 @@ ulfs_readlink(void *v)
 		uiomove((char *)SHORTLINK(ip), isize, ap->a_uio);
 		return (0);
 	}
-	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
+	return (lfs_bufrd(vp, ap->a_uio, 0, ap->a_cred));
 }
 
 /*
@@ -1319,4 +1319,50 @@ ulfs_gop_markupdate(struct vnode *vp, int flags)
 
 		ip->i_flag |= mask;
 	}
+}
+
+int
+ulfs_bufio(enum uio_rw rw, struct vnode *vp, void *buf, size_t len, off_t off,
+    int ioflg, kauth_cred_t cred, size_t *aresid, struct lwp *l)
+{
+	struct iovec iov;
+	struct uio uio;
+	int error;
+
+	/* XXX Remove me -- all callers should be locked.  */
+	if (!ISSET(ioflg, IO_NODELOCKED)) {
+		if (rw == UIO_READ)
+			vn_lock(vp, LK_SHARED | LK_RETRY);
+		else /* UIO_WRITE */
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	}
+
+	iov.iov_base = buf;
+	iov.iov_len = len;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_resid = len;
+	uio.uio_offset = off;
+	uio.uio_rw = rw;
+	UIO_SETUP_SYSSPACE(&uio);
+
+	switch (rw) {
+	case UIO_READ:
+		error = lfs_bufrd(vp, &uio, ioflg, cred);
+		break;
+	case UIO_WRITE:
+		error = lfs_bufwr(vp, &uio, ioflg, cred);
+		break;
+	default:
+		panic("invalid uio rw: %d", (int)rw);
+	}
+
+	if (aresid)
+		*aresid = uio.uio_resid;
+	else if (uio.uio_resid && error == 0)
+		error = EIO;
+
+	if (!ISSET(ioflg, IO_NODELOCKED))
+		VOP_UNLOCK(vp);
+	return error;
 }
