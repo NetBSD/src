@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_reg.h,v 1.3 2014/10/06 10:15:40 ryo Exp $	*/
+/*	$NetBSD: imx6_reg.h,v 1.4 2015/03/27 05:31:23 hkenken Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -197,9 +197,12 @@
 #define	AIPS2_MMDC2_BASE	0x000b4000
 #define	AIPS2_MMDC1_BASE	0x000b0000
 #define	AIPS2_ROMCP_BASE	0x000ac000
+
 #define	AIPS2_I2C3_BASE		0x000a8000
 #define	AIPS2_I2C2_BASE		0x000a4000
 #define	AIPS2_I2C1_BASE		0x000a0000
+#define	I2C_SIZE		0x4000
+
 #define	AIPS2_USDHC4_BASE	0x0009c000
 #define	AIPS2_USDHC3_BASE	0x00098000
 #define	AIPS2_USDHC2_BASE	0x00094000
