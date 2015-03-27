@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.3 2015/03/27 17:56:16 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.4 2015/03/27 19:48:37 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -316,6 +316,11 @@ if necessary, and lock it.
 The lock is not exclusive: other threads may lock the transaction too.
 However, if there is not enough space, another thread will obtain an
 exclusive lock in order to flush the transaction.
+.Pp
+The lock is not recursive: a thread may not acquire it again without
+calling
+.Fa wapbl_end
+first.
 .Pp
 May sleep.
 .Pp
