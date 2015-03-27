@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_64.S,v 1.1 2014/09/19 17:36:24 matt Exp $	*/
+/*	$NetBSD: atomic_xor_64.S,v 1.2 2015/03/27 06:42:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "atomic_op_asm.h"
 
 ENTRY_NP(_atomic_xor_64)
-	amoxor.d.aq	v0, a1, 0(a0)
+	amoxor.d.aq	a0, a1, 0(a0)
 	ret
 END(_atomic_xor_64)
 
@@ -43,8 +43,8 @@ CRT_ALIAS(__sync_fetch_and_xor_8,_atomic_xor_64)
 CRT_ALIAS(__atomic_fetch_xor_8,_atomic_xor_64)
 
 ENTRY_NP(_atomic_xor_64_nv)
-	amoxor.d.aq	v0, a1, 0(a0)	/* update memory and get old value */
-	xor		v0, v0, a1	/* turn into new value */
+	amoxor.d.aq	t0, a1, 0(a0)	/* update memory and get old value */
+	xor		a0, t0, a1	/* turn into new value */
 	ret
 END(_atomic_xor_64_nv)
 
