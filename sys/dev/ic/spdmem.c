@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.10 2014/04/14 14:30:24 pooka Exp $ */
+/* $NetBSD: spdmem.c,v 1.11 2015/03/27 05:33:08 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.10 2014/04/14 14:30:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.11 2015/03/27 05:33:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,6 +76,7 @@ static const char* spdmem_basic_types[] = {
 	"DDR2 SDRAM FB",
 	"DDR2 SDRAM FB Probe",
 	"DDR3 SDRAM"
+	"DDR4 SDRAM"
 };
 
 static const char* spdmem_superset_types[] = {
