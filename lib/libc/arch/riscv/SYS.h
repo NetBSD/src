@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1 2014/09/19 17:36:25 matt Exp $ */
+/*	$NetBSD: SYS.h,v 1.2 2015/03/27 06:44:28 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
-#define SYSTRAP(x)		li	v0,SYS_ ## x; scall
+#define SYSTRAP(x)		li	t6,SYS_ ## x; scall
 #define	JUMP_TO_CERROR()	j	_C_LABEL(__cerror)
 
 /*

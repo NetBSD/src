@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS)
-__RCSID("$NetBSD: _setjmp.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
+__RCSID("$NetBSD: _setjmp.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
 #endif
 
 /*
@@ -49,6 +49,9 @@ __RCSID("$NetBSD: _setjmp.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
 ENTRY(_setjmp)
 	REG_S	zero, JB_MAGIC(a0)	/* indicate no sigmask */
 	REG_S	ra, JB_RA(a0)		/* save return address */
+	REG_S	sp, JB_SP(a0)		/* save stack pointer */
+	REG_S	gp, JB_GP(a0)		/* save global pointer */
+	REG_S	tp, JB_TP(a0)		/* save thread pointer */
 	REG_S	s0, JB_S0(a0)		/* save callee saved register */
 	REG_S	s1, JB_S1(a0)		/* save callee saved register */
 	REG_S	s2, JB_S2(a0)		/* save callee saved register */
@@ -61,35 +64,31 @@ ENTRY(_setjmp)
 	REG_S	s9, JB_S9(a0)		/* save callee saved register */
 	REG_S	s10, JB_S10(a0)		/* save callee saved register */
 	REG_S	s11, JB_S11(a0)		/* save callee saved register */
-	REG_S	sp, JB_SP(a0)		/* save stack pointer */
-	REG_S	tp, JB_TP(a0)		/* save thread pointer */
-	REG_S	gp, JB_GP(a0)		/* save global pointer */
 #ifndef _SOFT_FLOAT
 	frcsr	t2			/* get FSCR */
 	REG_S	t2, JB_FCSR(a0)		/* save it */
-	fsd	fs0, JB_F0(a0)		/* save callee saved register */
-	fsd	fs1, JB_F1(a0)		/* save callee saved register */
-	fsd	fs2, JB_F2(a0)		/* save callee saved register */
-	fsd	fs3, JB_F3(a0)		/* save callee saved register */
-	fsd	fs4, JB_F4(a0)		/* save callee saved register */
-	fsd	fs5, JB_F5(a0)		/* save callee saved register */
-	fsd	fs6, JB_F6(a0)		/* save callee saved register */
-	fsd	fs7, JB_F7(a0)		/* save callee saved register */
-	fsd	fs8, JB_F8(a0)		/* save callee saved register */
-	fsd	fs9, JB_F9(a0)		/* save callee saved register */
-	fsd	fs10, JB_F10(a0)	/* save callee saved register */
-	fsd	fs11, JB_F11(a0)	/* save callee saved register */
-	fsd	fs12, JB_F12(a0)	/* save callee saved register */
-	fsd	fs13, JB_F13(a0)	/* save callee saved register */
-	fsd	fs14, JB_F14(a0)	/* save callee saved register */
-	fsd	fs15, JB_F15(a0)	/* save callee saved register */
+	fsd	fs0, JB_FS0(a0)		/* save callee saved register */
+	fsd	fs1, JB_FS1(a0)		/* save callee saved register */
+	fsd	fs2, JB_FS2(a0)		/* save callee saved register */
+	fsd	fs3, JB_FS3(a0)		/* save callee saved register */
+	fsd	fs4, JB_FS4(a0)		/* save callee saved register */
+	fsd	fs5, JB_FS5(a0)		/* save callee saved register */
+	fsd	fs6, JB_FS6(a0)		/* save callee saved register */
+	fsd	fs7, JB_FS7(a0)		/* save callee saved register */
+	fsd	fs8, JB_FS8(a0)		/* save callee saved register */
+	fsd	fs9, JB_FS9(a0)		/* save callee saved register */
+	fsd	fs10, JB_FS10(a0)	/* save callee saved register */
+	fsd	fs11, JB_FS11(a0)	/* save callee saved register */
 #endif
-	li	x1, 0			/* indicate success */
+	li	a0, 0			/* indicate success */
 	ret				/* return */
 END(_setjmp)
 
 ENTRY(_longjmp)
 	REG_L	ra, JB_RA(a0)		/* save return address */
+	REG_L	sp, JB_SP(a0)		/* save stack pointer */
+	REG_L	gp, JB_GP(a0)		/* save global pointer */
+	#REG_L	tp, JB_TP(a0)		/* save thread pointer */
 	REG_L	s0, JB_S0(a0)		/* save callee saved register */
 	REG_L	s1, JB_S1(a0)		/* save callee saved register */
 	REG_L	s2, JB_S2(a0)		/* save callee saved register */
@@ -102,31 +101,24 @@ ENTRY(_longjmp)
 	REG_L	s9, JB_S9(a0)		/* save callee saved register */
 	REG_L	s10, JB_S10(a0)		/* save callee saved register */
 	REG_L	s11, JB_S11(a0)		/* save callee saved register */
-	REG_L	sp, JB_SP(a0)		/* save stack pointer */
-	#REG_L	tp, JB_TP(a0)		/* save thread pointer */
-	REG_L	gp, JB_GP(a0)		/* save global pointer */
 #ifndef _SOFT_FLOAT
 	REG_L	t2, JB_FCSR(a0)		/* get it */
 	fscsr	t2			/* restore FSCR */
-	fld	fs0, JB_F0(a0)		/* restore callee saved register */
-	fld	fs1, JB_F1(a0)		/* restore callee saved register */
-	fld	fs2, JB_F2(a0)		/* restore callee saved register */
-	fld	fs3, JB_F3(a0)		/* restore callee saved register */
-	fld	fs4, JB_F4(a0)		/* restore callee saved register */
-	fld	fs5, JB_F5(a0)		/* restore callee saved register */
-	fld	fs6, JB_F6(a0)		/* restore callee saved register */
-	fld	fs7, JB_F7(a0)		/* restore callee saved register */
-	fld	fs8, JB_F8(a0)		/* restore callee saved register */
-	fld	fs9, JB_F9(a0)		/* restore callee saved register */
-	fld	fs10, JB_F10(a0)	/* restore callee saved register */
-	fld	fs11, JB_F11(a0)	/* restore callee saved register */
-	fld	fs12, JB_F12(a0)	/* restore callee saved register */
-	fld	fs13, JB_F13(a0)	/* restore callee saved register */
-	fld	fs14, JB_F14(a0)	/* restore callee saved register */
-	fld	fs15, JB_F15(a0)	/* restore callee saved register */
+	fld	fs0, JB_FS0(a0)		/* restore callee saved register */
+	fld	fs1, JB_FS1(a0)		/* restore callee saved register */
+	fld	fs2, JB_FS2(a0)		/* restore callee saved register */
+	fld	fs3, JB_FS3(a0)		/* restore callee saved register */
+	fld	fs4, JB_FS4(a0)		/* restore callee saved register */
+	fld	fs5, JB_FS5(a0)		/* restore callee saved register */
+	fld	fs6, JB_FS6(a0)		/* restore callee saved register */
+	fld	fs7, JB_FS7(a0)		/* restore callee saved register */
+	fld	fs8, JB_FS8(a0)		/* restore callee saved register */
+	fld	fs9, JB_FS9(a0)		/* restore callee saved register */
+	fld	fs10, JB_FS10(a0)	/* restore callee saved register */
+	fld	fs11, JB_FS11(a0)	/* restore callee saved register */
 #endif
-	li	v0, 1			/* default return value */
+	li	a0, 1			/* default return value */
 	beqz	a1, 1f			/* test return value */
-	move	v0, a1			/* use it if not 0 */
+	move	a0, a1			/* use it if not 0 */
 1:	ret
 END(_longjmp)
