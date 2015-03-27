@@ -228,9 +228,9 @@ logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 				break;
 		}
 		*fp++ = '\0';
+		fmt = fmt_cpy;
 	}
 
-	fmt = fmt_cpy;
 #endif
 
 	if (ctx == NULL || !(ctx->options & DHCPCD_QUIET)) {
