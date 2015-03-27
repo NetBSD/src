@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.13 2015/03/26 22:01:42 skrll Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.14 2015/03/27 11:12:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.13 2015/03/26 22:01:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.14 2015/03/27 11:12:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,7 +96,7 @@ static void
 gtmr_attach(device_t parent, device_t self, void *aux)
 {
 	struct mpcore_attach_args * const mpcaa = aux;
-        struct gtmr_softc *sc = &gtmr_sc;
+	struct gtmr_softc *sc = &gtmr_sc;
 	prop_dictionary_t dict = device_properties(self);
 	char freqbuf[sizeof("X.XXX SHz")];
 
