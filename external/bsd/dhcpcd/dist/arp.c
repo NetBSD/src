@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.10 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.11 2015/03/27 18:53:15 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -68,7 +68,7 @@ arp_send(const struct interface *ifp, int op, in_addr_t sip, in_addr_t tip)
 	ar.ar_pro = htons(ETHERTYPE_IP);
 	ar.ar_hln = ifp->hwlen;
 	ar.ar_pln = sizeof(sip);
-	ar.ar_op = htons(op);
+	ar.ar_op = htons((uint16_t)op);
 
 	p = arp_buffer;
 	len = 0;
