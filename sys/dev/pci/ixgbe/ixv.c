@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2011, Intel Corporation 
+  Copyright (c) 2001-2012, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixv.c,v 1.2 2011/03/23 13:10:15 jhb Exp $*/
-/*$NetBSD: ixv.c,v 1.4 2015/03/19 14:22:23 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.5 2015/03/27 05:57:28 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -41,7 +41,7 @@
 /*********************************************************************
  *  Driver version
  *********************************************************************/
-char ixv_driver_version[] = "1.0.1";
+char ixv_driver_version[] = "1.1.2";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -56,6 +56,7 @@ char ixv_driver_version[] = "1.0.1";
 static ixv_vendor_info_t ixv_vendor_info_array[] =
 {
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_VF, 0, 0, 0},
+	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_X540_VF, 0, 0, 0},
 	/* required last entry */
 	{0, 0, 0, 0, 0}
 };
@@ -432,7 +433,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	hw->fc.requested_mode = ixgbe_fc_full;
 	hw->fc.pause_time = IXV_FC_PAUSE;
 	hw->fc.low_water = IXV_FC_LO;
-	hw->fc.high_water = IXV_FC_HI;
+	hw->fc.high_water[0] = IXV_FC_HI;
 	hw->fc.send_xon = TRUE;
 
 	error = ixgbe_init_hw(hw);
@@ -1077,6 +1078,17 @@ ixv_msix_que(void *arg)
 
 	IXV_TX_LOCK(txr);
 	more_tx = ixv_txeof(txr);
+	/*
+	** Make certain that if the stack
+	** has anything queued the task gets
+	** scheduled to handle it.
+	*/
+#if __FreeBSD_version < 800000
+	if (!IFQ_IS_EMPTY(&adapter->ifp->if_snd))
+#else
+	if (!drbr_empty(adapter->ifp, txr->br))
+#endif
+                more_tx = 1;
 	IXV_TX_UNLOCK(txr);
 
 	more_rx = ixv_rxeof(que, adapter->rx_process_limit);
@@ -1415,7 +1427,7 @@ ixv_set_multi(struct adapter *adapter)
 	update_ptr = mta;
 
 	ixgbe_update_mc_addr_list(&adapter->hw,
-	    update_ptr, mcnt, ixv_mc_array_itr);
+	    update_ptr, mcnt, ixv_mc_array_itr, TRUE);
 
 	return;
 }
@@ -2806,7 +2818,7 @@ ixv_refresh_mbufs(struct rx_ring *rxr, int limit)
 	bool			refreshed = false;
 
 	i = j = rxr->next_to_refresh;
-	/* Control the loop with one beyond */
+        /* Get the control variable, one beyond refresh point */
 	if (++j == adapter->num_rx_desc)
 		j = 0;
 	while (j != limit) {
@@ -2841,7 +2853,9 @@ ixv_refresh_mbufs(struct rx_ring *rxr, int limit)
 			if (mp == NULL) {
 				rxr->no_jmbuf.ev_count++;
 				goto update;
-			}
+			} else
+				mp = rxbuf->m_pack;
+
 			mp->m_pkthdr.len = mp->m_len = adapter->rx_mbuf_sz;
 			/* Get the memory mapping */
 			error = bus_dmamap_load_mbuf(rxr->ptag->dt_dmat,
@@ -2850,6 +2864,7 @@ ixv_refresh_mbufs(struct rx_ring *rxr, int limit)
 				printf("GET BUF: dmamap load"
 				    " failure - %d\n", error);
 				m_free(mp);
+				rxbuf->m_pack = NULL;
 				goto update;
 			}
 			rxbuf->m_pack = mp;
@@ -2866,7 +2881,7 @@ ixv_refresh_mbufs(struct rx_ring *rxr, int limit)
 			j = 0;
 	}
 update:
-	if (refreshed) /* If we refreshed some, bump tail */
+	if (refreshed) /* update tail index */
 		IXGBE_WRITE_REG(&adapter->hw,
 		    IXGBE_VFRDT(rxr->me), rxr->next_to_refresh);
 	return;
@@ -3081,6 +3096,7 @@ skip_head:
 	rxr->lro_enabled = FALSE;
 	rxr->rx_split_packets.ev_count = 0;
 	rxr->rx_bytes.ev_count = 0;
+	rxr->discard = FALSE;
 
 	ixgbe_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -3372,25 +3388,32 @@ ixv_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype)
 static __inline void
 ixv_rx_discard(struct rx_ring *rxr, int i)
 {
-	struct adapter		*adapter = rxr->adapter;
 	struct ixv_rx_buf	*rbuf;
-	struct mbuf		*mh, *mp;
 
 	rbuf = &rxr->rx_buffers[i];
-        if (rbuf->fmp != NULL) /* Partial chain ? */
-                m_freem(rbuf->fmp);
+	if (rbuf->fmp != NULL) {/* Partial chain ? */
+		rbuf->fmp->m_flags |= M_PKTHDR;
+		m_freem(rbuf->fmp);
+		rbuf->fmp = NULL;
+	}
 
-	mh = rbuf->m_head;
-	mp = rbuf->m_pack;
+	/*
+	** With advanced descriptors the writeback
+	** clobbers the buffer addrs, so its easier
+	** to just free the existing mbufs and take
+	** the normal refresh path to get new buffers
+	** and mapping.
+	*/
+	if (rbuf->m_head) {
+		m_free(rbuf->m_head);
+		rbuf->m_head = NULL;
+	}
 
-	/* Reuse loaded DMA map and just update mbuf chain */
-	mh->m_len = MHLEN;
-	mh->m_flags |= M_PKTHDR;
-	mh->m_next = NULL;
+	if (rbuf->m_pack) {
+		m_free(rbuf->m_pack);
+		rbuf->m_pack = NULL;
+	}
 
-	mp->m_len = mp->m_pkthdr.len = adapter->rx_mbuf_sz;
-	mp->m_data = mp->m_ext.ext_buf;
-	mp->m_next = NULL;
 	return;
 }
 
@@ -3612,10 +3635,8 @@ next_desc:
 	}
 
 	/* Refresh any remaining buf structs */
-	if (processed != 0) {
+	if (ixv_rx_unrefreshed(rxr))
 		ixv_refresh_mbufs(rxr, i);
-		processed = 0;
-	}
 
 	rxr->next_to_check = i;
 
@@ -3757,11 +3778,13 @@ ixv_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 	if ((vtag == 0) || (vtag > 4095))	/* Invalid */
 		return;
 
+	IXV_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
 	ixv_shadow_vfta[index] |= (1 << bit);
 	/* Re-init to load the changes */
-	ixv_init(adapter);
+	ixv_init_locked(adapter);
+	IXV_CORE_UNLOCK(adapter);
 }
 
 /*
@@ -3781,11 +3804,13 @@ ixv_unregister_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 	if ((vtag == 0) || (vtag > 4095))	/* Invalid */
 		return;
 
+	IXV_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
 	ixv_shadow_vfta[index] &= ~(1 << bit);
 	/* Re-init to load the changes */
-	ixv_init(adapter);
+	ixv_init_locked(adapter);
+	IXV_CORE_UNLOCK(adapter);
 }
 #endif
 
