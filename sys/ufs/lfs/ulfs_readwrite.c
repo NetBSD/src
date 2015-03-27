@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.9 2015/03/27 19:47:14 riastradh Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.9 2015/03/27 19:47:14 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -510,6 +510,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	bool need_unreserve = false;
 #endif
 
+	KASSERT(ISSET(ioflag, IO_NODELOCKED));
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(vp->v_type == VDIR || vp->v_type == VLNK);
 	KASSERT(vp->v_type != VDIR || ISSET(ioflag, IO_SYNC));
