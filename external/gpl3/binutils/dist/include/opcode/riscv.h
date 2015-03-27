@@ -28,8 +28,6 @@ Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, US
 
 /* RVC fields */
 
-#define OP_MASK_COP		0x1f
-#define OP_SH_COP		0
 #define OP_MASK_CRD		0x1f
 #define OP_SH_CRD		5
 #define OP_MASK_CRS2	0x1f
@@ -100,7 +98,7 @@ static const char* const riscv_pred_succ[16] = {
 #define EXTRACT_SBTYPE_IMM(x) \
   ((RV_X(x, 8, 4) << 1) | (RV_X(x, 25, 6) << 5) | (RV_X(x, 7, 1) << 11) | (RV_IMM_SIGN(x) << 12))
 #define EXTRACT_UTYPE_IMM(x) \
-  (RV_X(x, 12, 20) | (RV_IMM_SIGN(x) << 20))
+  ((RV_X(x, 12, 20) << 12) | (RV_IMM_SIGN(x) << 32))
 #define EXTRACT_UJTYPE_IMM(x) \
   ((RV_X(x, 21, 10) << 1) | (RV_X(x, 20, 1) << 11) | (RV_X(x, 12, 8) << 12) | (RV_IMM_SIGN(x) << 20))
 
@@ -111,7 +109,7 @@ static const char* const riscv_pred_succ[16] = {
 #define ENCODE_SBTYPE_IMM(x) \
   ((RV_X(x, 1, 4) << 8) | (RV_X(x, 5, 6) << 25) | (RV_X(x, 11, 1) << 7) | (RV_X(x, 12, 1) << 31))
 #define ENCODE_UTYPE_IMM(x) \
-  (RV_X(x, 0, 20) << 12)
+  (RV_X(x, 12, 20) << 12)
 #define ENCODE_UJTYPE_IMM(x) \
   ((RV_X(x, 1, 10) << 21) | (RV_X(x, 11, 1) << 20) | (RV_X(x, 12, 8) << 12) | (RV_X(x, 20, 1) << 31))
 
@@ -139,8 +137,7 @@ static const char* const riscv_pred_succ[16] = {
 #define RISCV_CONST_HIGH_PART(VALUE) \
   (((VALUE) + (RISCV_IMM_REACH/2)) & ~(RISCV_IMM_REACH-1))
 #define RISCV_CONST_LOW_PART(VALUE) ((VALUE) - RISCV_CONST_HIGH_PART (VALUE))
-#define RISCV_LUI_HIGH_PART(VALUE) (RISCV_CONST_HIGH_PART(VALUE) >> RISCV_IMM_BITS)
-#define RISCV_PCREL_HIGH_PART(VALUE, PC) RISCV_LUI_HIGH_PART((VALUE) - (PC))
+#define RISCV_PCREL_HIGH_PART(VALUE, PC) RISCV_CONST_HIGH_PART((VALUE) - (PC))
 #define RISCV_PCREL_LOW_PART(VALUE, PC) RISCV_CONST_LOW_PART((VALUE) - (PC))
 
 /* RV fields */
@@ -199,9 +196,19 @@ static const char* const riscv_pred_succ[16] = {
 #define OP_MASK_CSR             0xfff
 #define OP_SH_CSR               20
 
-#define LINK_REG 1
-#define TP_REG 15
-#define GP_REG 31
+#define X_RA 1
+#define X_SP 2
+#define X_GP 3
+#define X_TP 4
+#define X_T0 5
+#define X_T1 6
+#define X_T2 7
+#define X_T3 28
+
+#define NGPR 32
+#define NFPR 32
+#define NVGPR 32
+#define NVFPR 32
 
 #define RISCV_JUMP_BITS RISCV_BIGIMM_BITS
 #define RISCV_JUMP_ALIGN_BITS 1
@@ -290,7 +297,6 @@ enum
   M_FSW,
   M_FSD,
   M_CALL,
-  M_JUMP,
   M_J,
   M_LI,
   M_VF,
@@ -298,15 +304,12 @@ enum
 };
 
 
-/* The order of overloaded instructions matters.  Label arguments and
-   register arguments look the same. Instructions that can have either
-   for arguments must apear in the correct order in this table for the
-   assembler to pick the right one. In other words, entries with
-   immediate operands must apear after the same instruction with
-   registers.
-
-   Many instructions are short hand for other instructions (i.e., The
-   jal <register> instruction is short for jalr <register>).  */
+extern const char * const riscv_gpr_names_numeric[NGPR];
+extern const char * const riscv_gpr_names_abi[NGPR];
+extern const char * const riscv_fpr_names_numeric[NFPR];
+extern const char * const riscv_fpr_names_abi[NFPR];
+extern const char * const riscv_vec_gpr_names[NVGPR];
+extern const char * const riscv_vec_fpr_names[NVFPR];
 
 extern const struct riscv_opcode riscv_builtin_opcodes[];
 extern const int bfd_riscv_num_builtin_opcodes;

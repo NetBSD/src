@@ -25,39 +25,46 @@ fragment <<EOF
 #include "elf/riscv.h"
 #include "elfxx-riscv.h"
 
-#define is_riscv_elf(bfd)				\
-  (bfd_get_flavour (bfd) == bfd_target_elf_flavour	\
-   && elf_tdata (bfd) != NULL				\
-   && elf_object_id (bfd) == RISCV_ELF_DATA)
-
 static void
-riscv_after_parse (void)
-{
-  /* .gnu.hash and the RISC-V ABI require .dynsym to be sorted in different
-     ways.  .gnu.hash needs symbols to be grouped by hash code whereas the
-     RISC-V ABI requires a mapping between the GOT and the symbol table.  */
-  if (link_info.emit_gnu_hash)
-    {
-      einfo ("%X%P: .gnu.hash is incompatible with the RISC-V ABI\n");
-      link_info.emit_hash = TRUE;
-      link_info.emit_gnu_hash = FALSE;
-    }
-  after_parse_default ();
-}
-
-static void
-riscv_before_allocation (void)
+riscv_elf_before_allocation (void)
 {
   gld${EMULATION_NAME}_before_allocation ();
 
   if (link_info.discard == discard_sec_merge)
     link_info.discard = discard_l;
 
-  if (RELAXATION_DISABLED_BY_DEFAULT)
+  /* We always need at least some relaxation to handle code alignment.  */
+#if 0
+  if (RELAXATION_DISABLED_BY_USER)
+    TARGET_ENABLE_RELAXATION;
+  else
+#endif
     ENABLE_RELAXATION;
+
+  link_info.relax_pass = 2;
+}
+
+static void
+gld${EMULATION_NAME}_after_allocation (void)
+{
+  int need_layout = 0;
+
+  /* Don't attempt to discard unused .eh_frame sections until the final link,
+     as we can't reliably tell if they're used until after relaxation.  */
+  if (!link_info.relocatable)
+    {
+      need_layout = bfd_elf_discard_info (link_info.output_bfd, &link_info);
+      if (need_layout < 0)
+	{
+	  einfo ("%X%P: .eh_frame/.stab edit: %E\n");
+	  return;
+	}
+    }
+
+  gld${EMULATION_NAME}_map_segments (need_layout);
 }
 
 EOF
 
-LDEMUL_AFTER_PARSE=riscv_after_parse
-LDEMUL_BEFORE_ALLOCATION=riscv_before_allocation
+LDEMUL_BEFORE_ALLOCATION=riscv_elf_before_allocation
+LDEMUL_AFTER_ALLOCATION=gld${EMULATION_NAME}_after_allocation

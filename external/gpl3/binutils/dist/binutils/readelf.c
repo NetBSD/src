@@ -126,6 +126,7 @@
 #include "elf/mep.h"
 #include "elf/microblaze.h"
 #include "elf/mips.h"
+#include "elf/riscv.h"
 #include "elf/mmix.h"
 #include "elf/mn10200.h"
 #include "elf/mn10300.h"
@@ -136,7 +137,6 @@
 #include "elf/pj.h"
 #include "elf/ppc.h"
 #include "elf/ppc64.h"
-#include "elf/riscv.h"
 #include "elf/rl78.h"
 #include "elf/rx.h"
 #include "elf/s390.h"
@@ -2009,6 +2009,7 @@ get_machine_name (unsigned e_machine)
     case EM_CR16:
     case EM_MICROBLAZE:
     case EM_MICROBLAZE_OLD:	return "Xilinx MicroBlaze";
+    case EM_RISCV:		return "RISC-V";
     case EM_RL78:		return "Renesas RL78";
     case EM_RX:			return "Renesas RX";
     case EM_METAG:		return "Imagination Technologies META processor architecture";
@@ -2490,6 +2491,14 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 
 	  if (e_flags & EF_SH_FDPIC)
 	    strcat (buf, ", fdpic");
+	  break;
+
+	case EM_RISCV:
+	  {
+	    unsigned int riscv_extension = EF_GET_RISCV_EXT(e_flags);
+	    strcat (buf, ", ");
+	    strcat (buf, riscv_elf_flag_to_name (riscv_extension));
+	  }
 	  break;
 
 	case EM_SH:
@@ -9945,6 +9954,8 @@ is_32bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 1; /* R_PPC64_ADDR32.  */
     case EM_PPC:
       return reloc_type == 1; /* R_PPC_ADDR32.  */
+    case EM_RISCV:
+      return reloc_type == 1; /* R_RISCV_32.  */
     case EM_RL78:
       return reloc_type == 1; /* R_RL78_DIR32.  */
     case EM_RX:
@@ -10078,6 +10089,8 @@ is_64bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 80; /* R_PARISC_DIR64.  */
     case EM_PPC64:
       return reloc_type == 38; /* R_PPC64_ADDR64.  */
+    case EM_RISCV:
+      return reloc_type == 2; /* R_RISCV_64.  */
     case EM_SPARC32PLUS:
     case EM_SPARCV9:
     case EM_SPARC:
@@ -10219,6 +10232,7 @@ is_none_reloc (unsigned int reloc_type)
     case EM_ADAPTEVA_EPIPHANY:
     case EM_PPC:     /* R_PPC_NONE.  */
     case EM_PPC64:   /* R_PPC64_NONE.  */
+    case EM_RISCV:   /* R_RISCV_NONE.  */
     case EM_ARM:     /* R_ARM_NONE.  */
     case EM_IA_64:   /* R_IA64_NONE.  */
     case EM_SH:      /* R_SH_NONE.  */
