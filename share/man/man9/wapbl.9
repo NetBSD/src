@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.7 2015/03/27 21:50:39 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.8 2015/03/27 21:53:50 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -415,7 +415,7 @@ with hooks in
 .Xr wapbl_replay 9
 .Sh BUGS
 .Nm
-is intended only for file system metadata managed via the
+works only for file system metadata managed via the
 .Xr buffercache 9 ,
 and provides no way to log writes via the page cache, as in
 .Xr VOP_GETPAGES 9 ,
