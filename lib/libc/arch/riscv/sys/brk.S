@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: brk.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
+	RCSID("$NetBSD: brk.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.hidden	_C_LABEL(__minbrk)
@@ -57,13 +57,13 @@ _C_LABEL(__curbrk):
 ENTRY(_brk)
 	auipc	t1, %pcrel_hi(_C_LABEL(__minbrk))
 	addi	t1, t1, %pcrel_lo(_C_LABEL(__minbrk))
-	PTR_L	v0, 0(t1)
-	bgeu	a0, v0, 1f
-	move	a0, v0		# dont allow break < minbrk
+	PTR_L	t5, 0(t1)
+	bgeu	a0, t5, 1f
+	move	a0, t5		# dont allow break < minbrk
 1:
 	SYSTRAP(break)
 	JUMP_TO_CERROR()				/* error */
 	PTR_S	a0, __SIZEOF_POINTER__(t1)		/* success */
-	move	v0, zero
+	move	a0, zero
 	ret
 END(_brk)

@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,21 +38,21 @@
 #if 0
 	RCSID("from: @(#)Ovfork.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: __vfork14.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
+	RCSID("$NetBSD: __vfork14.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * pid = vfork();
  *
- * v1 == 0 in parent process, v1 == 1 in child process.
- * v0 == pid of child in parent, v0 == pid of parent in child.
+ * a1 == 0 in parent process, a1 == 1 in child process.
+ * a0 == pid of child in parent, a0 == pid of parent in child.
  */
 
 ENTRY(__vfork14)
 	SYSTRAP(__vfork14)
 	JUMP_TO_CERROR()		/* error */
-	addi	v1, v1, -1		/* success */
-	and	v0, v0, v1
+	addi	a1, a1, -1		/* success */
+	and	a0, a0, a1
 	ret
 END(__vfork14)

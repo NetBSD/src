@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "SYS.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __clone.S,v 1.1 2014/09/19 17:36:25 matt Exp $");
+	RCSID("$NetBSD: __clone.S,v 1.2 2015/03/27 06:44:28 matt Exp $");
 #endif /* SYSLIBC_SCCS and not lint */
 
 #ifdef WEAK_ALIAS
@@ -48,8 +48,9 @@ ENTRY(__clone)
 	/*
 	 * Sanity checks: func and stack may not be NULL.
 	 */
-	li	v0, EINVAL
-	beqz	a0, 8f
+	mv	t0, a0			/* we need a0 for return value */
+	li	a0, EINVAL
+	beqz	t0, 8f
 	beqz	a1, 8f
 
 	/*
@@ -58,7 +59,7 @@ ENTRY(__clone)
 	 * do this: the child's stack.
 	 */
 	addi	a1, a1, -CALLFRAME_SIZ
-	REG_S	a0, 0(a1)
+	REG_S	t0, 0(a1)
 	REG_S	a3, SZREG(a1)
 
 	/*
@@ -66,9 +67,9 @@ ENTRY(__clone)
 	 */
 	mv	a0, a2
 	SYSTRAP(__clone)
-	# v1 (rv[1]) == 0, parent, child pid in v0
+	# a1 (rv[1]) == 0, parent, child pid in a0
 8:	JUMP_TO_CERROR()	/* error */
-	bnez	v1, 9f		/* success */
+	bnez	a1, 9f		/* success */
 	ret			# parent return
 
 	/* NOTREACHED */
@@ -82,16 +83,15 @@ ENTRY(__clone)
 	 * highest is unused.  a1 should equal sp now.
 	 */
 
-	REG_L		v1, 0(sp)
+	REG_L		t0, 0(sp)
 	REG_L		a0, SZREG(sp)
 
 	REG_S		zero, CALLFRAME_RA(sp)	/* make sure stack frame ends */
 
 	/* Call the clone's entry point. */
-	jalr		v1
+	jalr		t0
 
 	/* Pass the return value to _exit. */
-	mv		a0, v0
 	jump		_C_LABEL(_exit)
 
 	/* NOTREACHED */

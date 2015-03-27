@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 #include "assym.h"
 
-__RCSID("$NetBSD: swapcontext.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
+__RCSID("$NetBSD: swapcontext.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
 
 #define	CALLFRAME_UCP	CALLFRAME_S1
 #define	CALLFRAME_OUCP	CALLFRAME_S0
@@ -44,13 +44,14 @@ ENTRY(swapcontext)
 	REG_S	a1, CALLFRAME_UCP(sp)		# save ucp
 
 	call	PLT(_C_LABEL(_getcontext))	# getcontext(oucp)
+	mv	t0, a0				# save return value
 
 	REG_L	ra, CALLFRAME_RA(sp)		# restore return address
 	REG_L	a0, CALLFRAME_UCP(sp)		# load ucp
 	REG_L	a1, CALLFRAME_OUCP(sp)		# load oucp for adjustment
 	addi	sp, sp, CALLFRAME_SIZ		# restore stack
 
-	bnez	v0, 1f				# error? yes, cleanup
+	bnez	t0, 1f				# error? yes, cleanup
 
 	REG_S	ra, UC_GREGS_PC(a1)		# pc <- ra
 	REG_S	sp, UC_GREGS_SP(a1)		# adjust sp
