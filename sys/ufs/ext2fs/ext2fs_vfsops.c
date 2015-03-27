@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.191 2015/03/17 09:39:29 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.192 2015/03/27 17:27:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.191 2015/03/17 09:39:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.192 2015/03/27 17:27:56 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -156,6 +156,8 @@ static const struct genfs_ops ext2fs_genfsops = {
 static const struct ufs_ops ext2fs_ufsops = {
 	.uo_itimes = ext2fs_itimes,
 	.uo_update = ext2fs_update,
+	.uo_bufrd = ext2fs_bufrd,
+	.uo_bufwr = ext2fs_bufwr,
 };
 
 /* Fill in the inode uid/gid from ext2 halves.  */
