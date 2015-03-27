@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #define	XCALLFRAME_SIZ	(8*SZREG)
@@ -56,6 +56,8 @@ ENTRY(ptrace)
 
 	call	PLT(_C_LABEL(__errno))
 
+	INT_S	zero, 0(a0)
+
 	REG_L	a3, XCALLFRAME_A3(sp)
 	REG_L	a2, XCALLFRAME_A2(sp)
 	REG_L	a1, XCALLFRAME_A1(sp)
@@ -63,10 +65,9 @@ ENTRY(ptrace)
 	REG_L	ra, XCALLFRAME_RA(sp)
 	addi	sp, sp, XCALLFRAME_SIZ
 
-	sw	zero, 0(v0)
 #else
-	auipc	v0, %hi(_C_LABEL(errno))
-	sw	zero, %lo(_C_LABEL(errno))(v0)
+	auipc	t0, %hi(_C_LABEL(errno))
+	INT_S	zero, %lo(_C_LABEL(errno))(t0)
 #endif
 
 	SYSTRAP(ptrace)

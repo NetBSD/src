@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: cerror.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.protected	_C_LABEL(__cerror)
@@ -45,19 +45,19 @@ ENTRY_NP(__cerror)
 #ifdef _REENTRANT
 	addi		sp, sp, -CALLFRAME_SIZ
 	REG_S		ra, CALLFRAME_RA(sp)	# save return address
-	sw		v0, CALLFRAME_S0(sp)	# save errno value
+	INT_S		a0, CALLFRAME_S0(sp)	# save errno value
 
 	call		PLT(_C_LABEL(__errno))	# locate address of errno
 
-	lw		t0, CALLFRAME_S0(sp)	# retrieve errno value
+	INT_L		t0, CALLFRAME_S0(sp)	# retrieve errno value
 	REG_L		ra, CALLFRAME_RA(sp)	# retrieve return address
-	sw		t0, 0(v0)		# update errno value
+	INT_S		t0, 0(a0)		# update errno value
 	addi		sp, sp, CALLFRAME_SIZ
 #else
-	aiupc		v1, %hi(_C_LABEL(errno))
-	sw		v0, %lo(_C_LABEL(errno))(v1)
+	aiupc		a1, %hi(_C_LABEL(errno))
+	sw		a0, %lo(_C_LABEL(errno))(a1)
 #endif /* _REENTRANT */
-	li		v0, -1
-	li		v1, -1
+	li		a0, -1
+	li		a1, -1
 	ret
 END(__cerror)
