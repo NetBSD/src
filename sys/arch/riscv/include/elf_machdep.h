@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.2 2015/03/27 06:57:21 matt Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.3 2015/03/27 23:26:14 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #define R_RISCV_TLS_DTPMOD64	8
 #define R_RISCV_TLS_DTPREL64	9
 #define R_RISCV_TLS_TPREL32	10
-#define R_RISCV_TLS_DTPREL64	11
+#define R_RISCV_TLS_TPREL64	11
 
 /* The rest are not used by the dynamic linker */
 #define R_RISCV_BRANCH		16	// (A - P) & 0xffff
@@ -98,12 +98,15 @@
 #define R_RISCV_GNU_VTENTRY	42
 #define R_RISCV_ALIGN		43
 
+/* These are aliases we can use R_TYPESZ */
+#define R_RISCV_ADDR32		R_RISCV_32
+#define R_RISCV_ADDR64		R_RISCV_64
 
 #define R_TYPE(name)		R_RISCV_ ## name
 #if ELFSIZE == 32
-#define R_TLS_TYPE(name)	R_RISCV_ ## name ## 32
+#define R_TYPESZ(name)		R_RISCV_ ## name ## 32
 #else
-#define R_TLS_TYPE(name)	R_RISCV_ ## name ## 64
+#define R_TYPESZ(name)		R_RISCV_ ## name ## 64
 #endif
 
 #ifdef _KERNEL
