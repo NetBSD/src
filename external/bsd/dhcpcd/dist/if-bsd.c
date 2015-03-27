@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.18 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.19 2015/03/27 18:51:08 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -388,7 +388,7 @@ if_sendrawpacket(const struct interface *ifp, int protocol,
 
 	memset(&hw, 0, ETHER_HDR_LEN);
 	memset(&hw.ether_dhost, 0xff, ETHER_ADDR_LEN);
-	hw.ether_type = htons(protocol);
+	hw.ether_type = htons((uint16_t)protocol);
 	iov[0].iov_base = &hw;
 	iov[0].iov_len = ETHER_HDR_LEN;
 	iov[1].iov_base = UNCONST(data);
@@ -728,7 +728,7 @@ ifa_scope(struct sockaddr_in6 *sin, unsigned int ifindex)
 	/* KAME based systems want to store the scope inside the sin6_addr
 	 * for link local addreses */
 	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
-		uint16_t scope = htons(ifindex);
+		uint16_t scope = htons((uint16_t)ifindex);
 		memcpy(&sin->sin6_addr.s6_addr[2], &scope,
 		    sizeof(scope));
 	}
