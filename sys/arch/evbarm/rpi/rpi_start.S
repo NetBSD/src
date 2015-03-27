@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.13 2015/02/28 09:34:34 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.14 2015/03/27 11:42:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.13 2015/02/28 09:34:34 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.14 2015/03/27 11:42:28 skrll Exp $")
 
 /*
  * Workaround Erratum 411920
@@ -223,15 +223,15 @@ _C_LABEL(rpi_start):
 	// When using split TTBRs, we need to set both since the physical
 	// addresses we were/are using might be in either.
 	mcr	p15, 0, r0, c2, c0, 1	/* TTBR1 write */
-#endif  
+#endif
 
 #if defined(ARM_MMU_EXTENDED)
 	mov	r1, #TTBCR_S_N_1        /* make sure TTBCR_S_N is 1 */
-#else   
+#else
 	mov	r1, #0			/* make sure TTBCR is 0 */
 #endif
 	mcr	p15, 0, r1, c2, c0, 2	/* TTBCR write */
-  
+
 	mov     r0, #0
 	mcr	p15, 0, r0, c8, c7, 0	/* Invalidate TLBs */
 
