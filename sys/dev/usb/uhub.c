@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.128 2015/03/26 16:19:26 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.129 2015/03/28 07:58:00 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.128 2015/03/26 16:19:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.129 2015/03/28 07:58:00 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -416,8 +416,8 @@ uhub_explore(usbd_device_handle dev)
 
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
-	DPRINTFN(10, "uhub %d dev=%p addr=%d", device_unit(sc->sc_dev), dev,
-	    dev->address, 0);
+	DPRINTFN(10, "uhub %d dev=%p addr=%d speed=%u",
+	    device_unit(sc->sc_dev), dev, dev->address, dev->speed);
 
 	if (!sc->sc_running)
 		return (USBD_NOT_STARTED);
@@ -431,12 +431,15 @@ uhub_explore(usbd_device_handle dev)
 
 		err = usbd_get_hub_status(dev, &hs);
 		if (err) {
-			DPRINTF("get hub status failed, uhub %d err %d",
+			DPRINTF("uhub %d get hub status failed, err %d",
 			    device_unit(sc->sc_dev), err, 0, 0);
 		} else {
 			/* just acknowledge */
 			status = UGETW(hs.wHubStatus);
 			change = UGETW(hs.wHubChange);
+			DPRINTF("uhub %d s/c=%x/%x", device_unit(sc->sc_dev),
+			    status, change, 0);
+
 			if (change & UHS_LOCAL_POWER)
 				usbd_clear_hub_feature(dev,
 						       UHF_C_HUB_LOCAL_POWER);
@@ -459,16 +462,15 @@ uhub_explore(usbd_device_handle dev)
 		if (PORTSTAT_ISSET(sc, port) || reconnect) {
 			err = usbd_get_port_status(dev, port, &up->status);
 			if (err) {
-				DPRINTF("get port stat failed, uhub %d err %d",
+				DPRINTF("uhub %d get port stat failed, err %d",
 				    device_unit(sc->sc_dev), err, 0, 0);
 				continue;
 			}
 			status = UGETW(up->status.wPortStatus);
 			change = UGETW(up->status.wPortChange);
-#if 0
-			printf("%s port %d: s/c=%x/%x\n",
-			       device_xname(sc->sc_dev), port, status, change);
-#endif
+
+			DPRINTF("uhub %d port %d: s/c=%x/%x",
+			    device_unit(sc->sc_dev), port, status, change);
 		}
 		if (!change && !reconnect) {
 			/* No status change, just do recursive explore. */
@@ -478,7 +480,8 @@ uhub_explore(usbd_device_handle dev)
 		}
 
 		if (change & UPS_C_PORT_ENABLED) {
-			DPRINTF("C_PORT_ENABLED", 0, 0, 0, 0);
+			DPRINTF("uhub %d port %d C_PORT_ENABLED",
+			    device_unit(sc->sc_dev), port, 0, 0);
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);
 			if (change & UPS_C_CONNECT_STATUS) {
 				/* Ignore the port error if the device
@@ -526,20 +529,23 @@ uhub_explore(usbd_device_handle dev)
 	disco:
 		if (up->device != NULL) {
 			/* Disconnected */
-			DPRINTF("device addr=%d disappeared on port %d",
-			    up->device->address, port, 0, 0);
+			DPRINTF("uhub %d device addr=%d disappeared on port %d",
+			    device_unit(sc->sc_dev), up->device->address, port,
+			    0);
 			usb_disconnect_port(up, sc->sc_dev, DETACH_FORCE);
 			usbd_clear_port_feature(dev, port,
 						UHF_C_PORT_CONNECTION);
 		}
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
 			/* Nothing connected, just ignore it. */
-			DPRINTFN(3, "port=%d !CURRENT_CONNECT_STATUS", port, 0,
-			    0, 0);
+			DPRINTFN(3, "uhub %d port=%d !CURRENT_CONNECT_STATUS",
+			    device_unit(sc->sc_dev), port, 0, 0);
 			continue;
 		}
 
 		/* Connected */
+		DPRINTF("unit %d dev->speed=%u dev->depth=%u",
+		    device_unit(sc->sc_dev), dev->speed, dev->depth, 0);
 
 		if (!(status & UPS_PORT_POWER))
 			aprint_normal_dev(sc->sc_dev,
@@ -557,8 +563,8 @@ uhub_explore(usbd_device_handle dev)
 		/* Get port status again, it might have changed during reset */
 		err = usbd_get_port_status(dev, port, &up->status);
 		if (err) {
-			DPRINTF("get port status failed, error %d", err, 0, 0,
-			   0);
+			DPRINTF("uhub %d port=%d get port status failed, "
+			    "err %d", device_unit(sc->sc_dev), port, err, 0);
 			continue;
 		}
 		status = UGETW(up->status.wPortStatus);
@@ -592,6 +598,10 @@ uhub_explore(usbd_device_handle dev)
 			speed = USB_SPEED_LOW;
 		else
 			speed = USB_SPEED_FULL;
+
+		DPRINTF("uhub %d speed %u", device_unit(sc->sc_dev), speed, 0,
+		    0);
+
 		/* Get device info and set its address. */
 		err = usbd_new_device(sc->sc_dev, dev->bus,
 			  dev->depth + 1, speed, port, up);
