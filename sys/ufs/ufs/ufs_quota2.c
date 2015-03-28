@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.39 2014/06/28 22:27:51 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.39 2014/06/28 22:27:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -146,7 +146,7 @@ getq2h(struct ufsmount *ump, int type,
 
 	KASSERT(mutex_owned(&dqlock));
 	error = bread(ump->um_quotas[type], 0, ump->umq2_bsize,
-	    ump->um_cred[type], flags, &bp);
+	    flags, &bp);
 	if (error)
 		return error;
 	if (bp->b_resid != 0) 
@@ -173,7 +173,7 @@ getq2e(struct ufsmount *ump, int type, daddr_t lblkno, int blkoffset,
 		    quotatypes[type]);
 	}
 	error = bread(ump->um_quotas[type], lblkno, ump->umq2_bsize,
-	    ump->um_cred[type], flags, &bp);
+	    flags, &bp);
 	if (error)
 		return error;
 	if (bp->b_resid != 0) {
@@ -213,8 +213,7 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
 			bp = obp;
 		} else {
 			ret = bread(ump->um_quotas[type], lblkno, 
-			    ump->umq2_bsize,
-			    ump->um_cred[type], flags, &bp);
+			    ump->umq2_bsize, flags, &bp);
 			if (ret)
 				return ret;
 			if (bp->b_resid != 0) {

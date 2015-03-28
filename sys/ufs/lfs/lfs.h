@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.160 2013/07/28 01:22:55 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.161 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -555,7 +555,7 @@ struct segusage_v1 {
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
 	if ((_e = bread((F)->lfs_ivnode,				\
 	    ((IN) / (F)->lfs_sepb) + (F)->lfs_cleansz,			\
-	    (F)->lfs_bsize, NOCRED, 0, &(BP))) != 0)			\
+	    (F)->lfs_bsize, 0, &(BP))) != 0)			\
 		panic("lfs: ifile read: %d", _e);			\
 	if ((F)->lfs_version == 1)					\
 		(SP) = (SEGUSE *)((SEGUSE_V1 *)(BP)->b_data +		\
@@ -623,7 +623,7 @@ struct ifile_v1 {
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
 	if ((_e = bread((F)->lfs_ivnode,				\
 	(IN) / (F)->lfs_ifpb + (F)->lfs_cleansz + (F)->lfs_segtabsz,	\
-	(F)->lfs_bsize, NOCRED, 0, &(BP))) != 0)			\
+	(F)->lfs_bsize, 0, &(BP))) != 0)			\
 		panic("lfs: ifile ino %d read %d", (int)(IN), _e);	\
 	if ((F)->lfs_version == 1)					\
 		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data +		\
@@ -656,7 +656,7 @@ typedef struct _cleanerinfo {
 	SHARE_IFLOCK(F);						\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
 	if (bread((F)->lfs_ivnode,					\
-	    (daddr_t)0, (F)->lfs_bsize, NOCRED, 0, &(BP)))		\
+	    (daddr_t)0, (F)->lfs_bsize, 0, &(BP)))		\
 		panic("lfs: ifile read");				\
 	(CP) = (CLEANERINFO *)(BP)->b_data;				\
 	UNSHARE_IFLOCK(F);						\
