@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.113 2015/03/28 17:23:42 maxv Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.114 2015/03/28 17:45:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.113 2015/03/28 17:23:42 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.114 2015/03/28 17:45:47 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -238,21 +238,26 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 }
 
 static int
-ufs_post_read_update(struct vnode *vp, int ioflag, int error)
+ufs_post_read_update(struct vnode *vp, int ioflag, int oerror)
 {
 	struct inode *ip = VTOI(vp);
+	int error = oerror;
 
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ioflag & IO_SYNC) == IO_SYNC) {
 			error = UFS_WAPBL_BEGIN(vp->v_mount);
 			if (error)
-				return error;
+				goto out;
 			error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 			UFS_WAPBL_END(vp->v_mount);
 		}
 	}
 
+out:
+	/* Read error overrides any inode update error.  */
+	if (oerror)
+		error = oerror;
 	return error;
 }
 
@@ -614,9 +619,10 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
 static int
 ufs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
-    kauth_cred_t cred, off_t osize, int resid, int extended, int error)
+    kauth_cred_t cred, off_t osize, int resid, int extended, int oerror)
 {
 	struct inode *ip = VTOI(vp);
+	int error = oerror;
 
 	/* Trigger ctime and mtime updates, and atime if MNT_RELATIME.  */
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -666,5 +672,8 @@ ufs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
 	/* Make sure the vnode uvm size matches the inode file size.  */
 	KASSERT(vp->v_size == ip->i_size);
 
+	/* Write error overrides any inode update error.  */
+	if (oerror)
+		error = oerror;
 	return error;
 }
