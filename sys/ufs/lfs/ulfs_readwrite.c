@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.12 2015/03/28 17:08:53 riastradh Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.13 2015/03/28 17:23:42 maxv Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.12 2015/03/28 17:08:53 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.13 2015/03/28 17:23:42 maxv Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -194,7 +194,7 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 		else {
 			int nextsize = lfs_blksize(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
-			    size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
+			    size, &nextlbn, &nextsize, 1, 0, &bp);
 		}
 		if (error)
 			break;

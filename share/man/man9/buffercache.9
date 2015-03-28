@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.25 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: buffercache.9,v 1.26 2015/03/28 17:23:42 maxv Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -101,7 +101,7 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd November 11, 2009
+.Dd March 28, 2015
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
@@ -128,7 +128,7 @@
 .Ft int
 .Fn breadn "struct vnode *vp" "daddr_t blkno" "int size" \
 "daddr_t rablks[]" "int rasizes[]" "int nrablks" \
-"struct kauth_cred *cred" "int flags" "buf_t **bpp"
+"int flags" "buf_t **bpp"
 .Ft int
 .Fn bwrite "buf_t *bp"
 .Ft void
@@ -220,7 +220,7 @@ it should be unbusied using one of variants of
 Otherwise, it should be unbusied using
 .Fn brelse .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn breadn "vp" "blkno" "size" "rablks" "rasizes" "nrablks" "cred" "flags" \
+.It Fn breadn "vp" "blkno" "size" "rablks" "rasizes" "nrablks" "flags" \
 "bpp"
 Get a buffer as
 .Fn bread .

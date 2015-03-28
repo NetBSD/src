@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.49 2014/07/25 08:20:51 dholland Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.50 2015/03/28 17:23:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.49 2014/07/25 08:20:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.50 2015/03/28 17:23:42 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ cd9660_read(void *v)
 		if (cd9660_lblktosize(imp, rablock) < ip->i_size) {
 			rasize = cd9660_blksize(imp, ip, rablock);
 			error = breadn(vp, lbn, size, &rablock,
-				       &rasize, 1, NOCRED, 0, &bp);
+				       &rasize, 1, 0, &bp);
 		} else {
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		}
