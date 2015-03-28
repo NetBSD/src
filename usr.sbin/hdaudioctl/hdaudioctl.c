@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioctl.c,v 1.1 2009/10/11 08:57:54 sborrill Exp $ */
+/* $NetBSD: hdaudioctl.c,v 1.2 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -42,8 +42,8 @@
 #include <unistd.h>
 #include <ctype.h>
 
-#include <dev/pci/hdaudio/hdaudioio.h>
-#include <dev/pci/hdaudio/hdaudioreg.h>
+#include <dev/hdaudio/hdaudioio.h>
+#include <dev/hdaudio/hdaudioreg.h>
 
 #include "hdaudioctl.h"
 
