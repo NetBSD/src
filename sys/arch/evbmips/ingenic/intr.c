@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7 2015/03/11 12:40:36 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.8 2015/03/28 16:57:23 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2015/03/11 12:40:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2015/03/28 16:57:23 macallan Exp $");
 
 #define __INTR_PRIVATE
 
@@ -111,7 +111,7 @@ evbmips_intr_init(void)
 		snprintf(intrs[i].ih_name, sizeof(intrs[i].ih_name),
 		    "irq %d", i);
 		evcnt_attach_dynamic(&intrs[i].ih_count, EVCNT_TYPE_INTR,
-		    NULL, "PIC", intrs[i].ih_name);
+		    NULL, "INTC", intrs[i].ih_name);
 	}
 
 	/* mask all peripheral IRQs */
