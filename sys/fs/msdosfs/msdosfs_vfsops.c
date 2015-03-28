@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.117 2015/01/23 03:33:58 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.118 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.117 2015/01/23 03:33:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.118 2015/03/28 19:24:05 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -515,7 +515,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		error = EINVAL;
 		goto error_exit;
 	}
-	if ((error = bread(devvp, 0, secsize, NOCRED, 0, &bp)) != 0)
+	if ((error = bread(devvp, 0, secsize, 0, &bp)) != 0)
 		goto error_exit;
 	bsp = (union bootsector *)bp->b_data;
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
@@ -773,7 +773,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		 *	padded at the end or in the middle?
 		 */
 		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    rdsz, NOCRED, 0, &bp)) != 0)
+		    rdsz, 0, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!memcmp(fp->fsisig1, "RRaA", 4)
