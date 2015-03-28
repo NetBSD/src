@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.10 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.11 2015/03/28 14:16:52 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -191,7 +191,7 @@ dhcp6_makevendor(struct dhcp6_option *o, const struct interface *ifp)
 
 	if (o) {
 		o->code = htons(D6_OPTION_VENDOR_CLASS);
-		o->len = htons(len);
+		o->len = htons((uint16_t)len);
 		p = D6_OPTION_DATA(o);
 		u32 = htonl(ifo->vivco_en ? ifo->vivco_en : DHCPCD_IANA_PEN);
 		memcpy(p, &u32, sizeof(u32));
@@ -201,14 +201,14 @@ dhcp6_makevendor(struct dhcp6_option *o, const struct interface *ifp)
 			    i < ifo->vivco_len;
 			    i++, vivco++)
 			{
-				u16 = htons(vivco->len);
+				u16 = htons((uint16_t)vivco->len);
 				memcpy(p, &u16, sizeof(u16));
 				p += sizeof(u16);
 				memcpy(p, vivco->data, vivco->len);
 				p += vivco->len;
 			}
 		} else if (vlen) {
-			u16 = htons(vlen);
+			u16 = htons((uint16_t)vlen);
 			memcpy(p, &u16, sizeof(u16));
 			p += sizeof(u16);
 			memcpy(p, vendor, (size_t)vlen);
@@ -313,7 +313,7 @@ dhcp6_updateelapsed(struct interface *ifp, struct dhcp6_message *m, size_t len)
 	up = uptime() - state->start_uptime;
 	if (up < 0 || up > (time_t)UINT16_MAX)
 		up = (time_t)UINT16_MAX;
-	u16 = htons(up);
+	u16 = htons((uint16_t)up);
 	memcpy(D6_OPTION_DATA(o), &u16, sizeof(u16));
 	return 0;
 }
@@ -734,7 +734,7 @@ dhcp6_makemessage(struct interface *ifp)
 
 	o = D6_FIRST_OPTION(state->send);
 	o->code = htons(D6_OPTION_CLIENTID);
-	o->len = htons(ifp->ctx->duid_len);
+	o->len = htons((uint16_t)ifp->ctx->duid_len);
 	memcpy(D6_OPTION_DATA(o), ifp->ctx->duid, ifp->ctx->duid_len);
 
 	if (si) {
@@ -818,7 +818,7 @@ dhcp6_makemessage(struct interface *ifp)
 
 				u32 = (uint32_t)(ntohs(o->len) + sizeof(*so)
 				    + ntohs(so->len));
-				o->len = htons(u32);
+				o->len = htons((uint16_t)u32);
 			} else {
 				so->code = htons(D6_OPTION_IA_ADDR);
 				so->len = sizeof(ap->addr) +
@@ -855,7 +855,7 @@ dhcp6_makemessage(struct interface *ifp)
 			l = encode_rfc1035(hostname, p + 1);
 			if (l == 0)
 				*p = D6_FQDN_NONE;
-			o->len = htons(l + 1);
+			o->len = htons((uint16_t)(l + 1));
 		}
 
 		if ((ifo->auth.options & DHCPCD_AUTH_SENDREQUIRE) !=
@@ -889,7 +889,7 @@ dhcp6_makemessage(struct interface *ifp)
 				    has_option_mask(ifo->requestmask6,
 				        opt->option)))
 				{
-					u16 = htons(opt->option);
+					u16 = htons((uint16_t)opt->option);
 					memcpy(p, &u16, sizeof(u16));
 					p += sizeof(u16);
 					o->len = (uint16_t)(o->len + sizeof(u16));
@@ -904,7 +904,7 @@ dhcp6_makemessage(struct interface *ifp)
 				    has_option_mask(ifo->requestmask6,
 				        opt->option)))
 				{
-					u16 = htons(opt->option);
+					u16 = htons((uint16_t)opt->option);
 					memcpy(p, &u16, sizeof(u16));
 					p += sizeof(u16);
 					o->len = (uint16_t)(o->len + sizeof(u16));
@@ -923,7 +923,7 @@ dhcp6_makemessage(struct interface *ifp)
 	if (ifo->auth.options & DHCPCD_AUTH_SEND && auth_len != 0) {
 		o = D6_NEXT_OPTION(o);
 		o->code = htons(D6_OPTION_AUTH);
-		o->len = htons(auth_len);
+		o->len = htons((uint16_t)auth_len);
 		/* data will be filled at send message time */
 	}
 

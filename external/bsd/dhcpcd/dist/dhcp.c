@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.28 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.29 2015/03/28 14:16:52 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -752,7 +752,7 @@ make_message(struct dhcp_message **message,
 		if (up < 0 || up > (time_t)UINT16_MAX)
 			dhcp->secs = htons((uint16_t)UINT16_MAX);
 		else
-			dhcp->secs = htons(up);
+			dhcp->secs = htons((uint16_t)up);
 	}
 	dhcp->xid = htonl(state->xid);
 	dhcp->cookie = htonl(MAGIC_COOKIE);
@@ -828,7 +828,7 @@ make_message(struct dhcp_message **message,
 			 * handle DHCP packets any bigger. */
 			mtu = MTU_MAX;
 		}
-		sz = htons(mtu);
+		sz = htons((uint16_t)mtu);
 		memcpy(p, &sz, 2);
 		p += 2;
 
@@ -1545,7 +1545,7 @@ dhcp_makeudppacket(size_t *sz, const uint8_t *data, size_t length,
 
 	udp->uh_sport = htons(DHCP_CLIENT_PORT);
 	udp->uh_dport = htons(DHCP_SERVER_PORT);
-	udp->uh_ulen = htons(sizeof(*udp) + length);
+	udp->uh_ulen = htons((uint16_t)(sizeof(*udp) + length));
 	ip->ip_len = udp->uh_ulen;
 	udp->uh_sum = checksum(udpp, sizeof(*udpp));
 
@@ -1553,7 +1553,7 @@ dhcp_makeudppacket(size_t *sz, const uint8_t *data, size_t length,
 	ip->ip_hl = sizeof(*ip) >> 2;
 	ip->ip_id = (uint16_t)arc4random_uniform(UINT16_MAX);
 	ip->ip_ttl = IPDEFTTL;
-	ip->ip_len = htons(sizeof(*ip) + sizeof(*udp) + length);
+	ip->ip_len = htons((uint16_t)(sizeof(*ip) + sizeof(*udp) + length));
 	ip->ip_sum = checksum(ip, sizeof(*ip));
 
 	*sz = sizeof(*ip) + sizeof(*udp) + length;
