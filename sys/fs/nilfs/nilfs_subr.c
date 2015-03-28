@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.12 2014/10/15 09:05:46 hannken Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.13 2015/03/28 19:24:05 maxv Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.12 2014/10/15 09:05:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.13 2015/03/28 19:24:05 maxv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -133,7 +133,7 @@ nilfs_dev_bread(struct nilfs_device *nilfsdev, uint64_t blocknr,
 	int blk2dev = nilfsdev->blocksize / DEV_BSIZE;
 
 	return bread(nilfsdev->devvp, blocknr * blk2dev, nilfsdev->blocksize,
-		NOCRED, 0, bpp);
+		0, bpp);
 }
 
 
@@ -159,7 +159,7 @@ nilfs_bread(struct nilfs_node *node, uint64_t blocknr,
 	}
 
 	return bread(node->vnode, vblocknr, node->nilfsdev->blocksize,
-		cred, flags, bpp);
+		flags, bpp);
 }
 
 

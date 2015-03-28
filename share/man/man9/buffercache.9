@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.26 2015/03/28 17:23:42 maxv Exp $
+.\"     $NetBSD: buffercache.9,v 1.27 2015/03/28 19:24:04 maxv Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -124,7 +124,7 @@
 .In sys/buf.h
 .Ft int
 .Fn bread "struct vnode *vp" "daddr_t blkno" "int size" \
-"struct kauth_cred *cred" "int flags" "buf_t **bpp"
+"int flags" "buf_t **bpp"
 .Ft int
 .Fn breadn "struct vnode *vp" "daddr_t blkno" "int size" \
 "daddr_t rablks[]" "int rasizes[]" "int nrablks" \
@@ -169,7 +169,7 @@ the disk driver interface.
 .\" ------------------------------------------------------------
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn bread "vp" "blkno" "size" "cred" "flags" "bpp"
+.It Fn bread "vp" "blkno" "size" "flags" "bpp"
 Read a block corresponding to
 .Fa vp
 and
@@ -201,9 +201,7 @@ If the buffer is not found (i.e. the block is not cached in memory),
 .Fn bread
 allocates a buffer with enough pages for
 .Fa size
-and reads the specified disk block into it using
-credential
-.Fa cred .
+and reads the specified disk block into it.
 .Pp
 The buffer returned by
 .Fn bread
