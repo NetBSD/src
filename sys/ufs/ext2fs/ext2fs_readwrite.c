@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.72 2015/03/28 17:23:42 maxv Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.73 2015/03/28 17:45:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.72 2015/03/28 17:23:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.73 2015/03/28 17:45:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,9 +232,10 @@ out:
 }
 
 static int
-ext2fs_post_read_update(struct vnode *vp, int ioflag, int error)
+ext2fs_post_read_update(struct vnode *vp, int ioflag, int oerror)
 {
 	struct inode *ip = VTOI(vp);
+	int error = oerror;
 
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
@@ -242,6 +243,9 @@ ext2fs_post_read_update(struct vnode *vp, int ioflag, int error)
 			error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
 	}
 
+	/* Read error overrides any inode update error.  */
+	if (oerror)
+		error = oerror;
 	return error;
 }
 
@@ -434,9 +438,10 @@ ext2fs_bufwr(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
 static int
 ext2fs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
-    kauth_cred_t cred, off_t osize, int resid, int extended, int error)
+    kauth_cred_t cred, off_t osize, int resid, int extended, int oerror)
 {
 	struct inode *ip = VTOI(vp);
+	int error = oerror;
 
 	/* Trigger ctime and mtime updates, and atime if MNT_RELATIME.  */
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -480,5 +485,8 @@ ext2fs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
 	/* Make sure the vnode uvm size matches the inode file size.  */
 	KASSERT(vp->v_size == ext2fs_size(ip));
 
+	/* Write error overrides any inode update error.  */
+	if (oerror)
+		error = oerror;
 	return error;
 }
