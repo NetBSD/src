@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.21 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.22 2015/03/28 14:16:52 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1460,7 +1460,7 @@ ipv6nd_handlena(struct dhcpcd_ctx *dctx, struct interface *ifp,
 	struct ipv6_ctx *ctx = dctx->ipv6;
 	struct nd_neighbor_advert *nd_na;
 	struct ra *rap;
-	int is_router, is_solicited;
+	uint32_t is_router, is_solicited;
 	char buf[INET6_ADDRSTRLEN];
 	const char *taddr;
 
