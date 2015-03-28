@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1098 2015/03/22 09:57:42 ast Exp $
+# $NetBSD: mi,v 1.1099 2015/03/28 14:09:58 jmcneill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -867,6 +867,7 @@
 ./usr/include/dev/dtv				base-c-usr
 ./usr/include/dev/eisa				base-obsolete		obsolete
 ./usr/include/dev/filemon			base-c-usr
+./usr/include/dev/hdaudio			base-c-usr
 ./usr/include/dev/hpc				base-c-usr
 ./usr/include/dev/i2c				base-c-usr
 ./usr/include/dev/i2o				base-c-usr
@@ -883,7 +884,7 @@
 ./usr/include/dev/ofisa				base-obsolete		obsolete
 ./usr/include/dev/ofw				base-c-usr
 ./usr/include/dev/pci				base-c-usr
-./usr/include/dev/pci/hdaudio			base-c-usr
+./usr/include/dev/pci/hdaudio			base-obsolete		obsolete
 ./usr/include/dev/pckbc				base-c-usr
 ./usr/include/dev/pcmcia			base-c-usr
 ./usr/include/dev/pud				base-c-usr
