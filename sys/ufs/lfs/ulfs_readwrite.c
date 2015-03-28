@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.9 2015/03/27 19:47:14 riastradh Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.10 2015/03/28 03:53:36 riastradh Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.9 2015/03/27 19:47:14 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.10 2015/03/28 03:53:36 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -84,13 +84,9 @@ READ(void *v)
 	ioflag = ap->a_ioflag;
 	error = 0;
 
-#ifdef DIAGNOSTIC
-	if (uio->uio_rw != UIO_READ)
-		panic("%s: mode", READ_S);
+	KASSERT(uio->uio_rw == UIO_READ);
+	KASSERT(vp->v_type == VREG || vp->v_type == VDIR);
 
-	if (vp->v_type != VREG && vp->v_type != VDIR)
-		panic("%s: type %d", READ_S, vp->v_type);
-#endif
 	/* XXX Eliminate me by refusing directory reads from userland.  */
 	if (vp->v_type == VDIR)
 		return BUFRD(vp, uio, ioflag, ap->a_cred);
@@ -269,21 +265,13 @@ WRITE(void *v)
 	ip = VTOI(vp);
 
 	KASSERT(vp->v_size == ip->i_size);
-#ifdef DIAGNOSTIC
-	if (uio->uio_rw != UIO_WRITE)
-		panic("%s: mode", WRITE_S);
-#endif
+	KASSERT(uio->uio_rw == UIO_WRITE);
+	KASSERT(vp->v_type == VREG);
 
-	switch (vp->v_type) {
-	case VREG:
-		if (ioflag & IO_APPEND)
-			uio->uio_offset = ip->i_size;
-		if ((ip->i_flags & APPEND) && uio->uio_offset != ip->i_size)
-			return (EPERM);
-		break;
-	default:
-		panic("%s: type", WRITE_S);
-	}
+	if (ioflag & IO_APPEND)
+		uio->uio_offset = ip->i_size;
+	if ((ip->i_flags & APPEND) && uio->uio_offset != ip->i_size)
+		return (EPERM);
 
 	fs = ip->I_FS;
 	if (uio->uio_offset < 0 ||
