@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.68 2015/03/28 03:46:51 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.69 2015/03/28 03:49:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.68 2015/03/28 03:46:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.69 2015/03/28 03:49:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,12 +284,6 @@ ext2fs_write(void *v)
 		if ((ip->i_e2fs_flags & EXT2_APPEND) &&
 		    uio->uio_offset != ext2fs_size(ip))
 			return (EPERM);
-		/* FALLTHROUGH */
-	case VLNK:
-		break;
-	case VDIR:
-		if ((ioflag & IO_SYNC) == 0)
-			panic("%s: nonsync dir write", "ext2fs_write");
 		break;
 	default:
 		panic("%s: type", "ext2fs_write");
