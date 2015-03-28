@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.17 2014/12/08 00:16:44 justin Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.18 2015/03/28 19:24:05 maxv Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.17 2014/12/08 00:16:44 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.18 2015/03/28 19:24:05 maxv Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -149,8 +149,7 @@ getq2h(struct ulfsmount *ump, int type,
 	struct quota2_header *q2h;
 
 	KASSERT(mutex_owned(&lfs_dqlock));
-	error = bread(ump->um_quotas[type], 0, ump->umq2_bsize,
-	    ump->um_cred[type], flags, &bp);
+	error = bread(ump->um_quotas[type], 0, ump->umq2_bsize, flags, &bp);
 	if (error)
 		return error;
 	if (bp->b_resid != 0) 
@@ -176,8 +175,7 @@ getq2e(struct ulfsmount *ump, int type, daddr_t lblkno, int blkoffset,
 		panic("dq2get: %s quota file corrupted",
 		    lfs_quotatypes[type]);
 	}
-	error = bread(ump->um_quotas[type], lblkno, ump->umq2_bsize,
-	    ump->um_cred[type], flags, &bp);
+	error = bread(ump->um_quotas[type], lblkno, ump->umq2_bsize, flags, &bp);
 	if (error)
 		return error;
 	if (bp->b_resid != 0) {
@@ -218,8 +216,7 @@ quota2_walk_list(struct ulfsmount *ump, struct buf *hbp, int type,
 			bp = obp;
 		} else {
 			ret = bread(ump->um_quotas[type], lblkno, 
-			    ump->umq2_bsize,
-			    ump->um_cred[type], flags, &bp);
+			    ump->umq2_bsize, flags, &bp);
 			if (ret)
 				return ret;
 			if (bp->b_resid != 0) {

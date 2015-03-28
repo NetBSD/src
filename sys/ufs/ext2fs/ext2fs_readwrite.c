@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.73 2015/03/28 17:45:47 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.74 2015/03/28 19:24:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.73 2015/03/28 17:45:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.74 2015/03/28 19:24:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ ext2fs_bufrd(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 			xfersize = bytesinfile;
 
 		if (ext2_lblktosize(fs, nextlbn) >= ext2fs_size(ip))
-			error = bread(vp, lbn, size, NOCRED, 0, &bp);
+			error = bread(vp, lbn, size, 0, &bp);
 		else {
 			int nextsize = fs->e2fs_bsize;
 			error = breadn(vp, lbn,
