@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.69 2015/03/28 03:49:41 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.70 2015/03/28 03:53:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.69 2015/03/28 03:49:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.70 2015/03/28 03:53:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,13 +108,9 @@ ext2fs_read(void *v)
 	uio = ap->a_uio;
 	error = 0;
 
-#ifdef DIAGNOSTIC
-	if (uio->uio_rw != UIO_READ)
-		panic("%s: mode", "ext2fs_read");
+	KASSERT(uio->uio_rw == UIO_READ);
+	KASSERT(vp->v_type == VREG || vp->v_type == VDIR);
 
-	if (vp->v_type != VREG && vp->v_type != VDIR)
-		panic("%s: type %d", "ext2fs_read", vp->v_type);
-#endif
 	/* XXX Eliminate me by refusing directory reads from userland.  */
 	if (vp->v_type == VDIR)
 		return ext2fs_bufrd(vp, uio, ap->a_ioflag, ap->a_cred);
@@ -272,22 +268,14 @@ ext2fs_write(void *v)
 	ump = ip->i_ump;
 	error = 0;
 
-#ifdef DIAGNOSTIC
-	if (uio->uio_rw != UIO_WRITE)
-		panic("%s: mode", "ext2fs_write");
-#endif
+	KASSERT(uio->uio_rw == UIO_WRITE);
+	KASSERT(vp->v_type == VREG);
 
-	switch (vp->v_type) {
-	case VREG:
-		if (ioflag & IO_APPEND)
-			uio->uio_offset = ext2fs_size(ip);
-		if ((ip->i_e2fs_flags & EXT2_APPEND) &&
-		    uio->uio_offset != ext2fs_size(ip))
-			return (EPERM);
-		break;
-	default:
-		panic("%s: type", "ext2fs_write");
-	}
+	if (ioflag & IO_APPEND)
+		uio->uio_offset = ext2fs_size(ip);
+	if ((ip->i_e2fs_flags & EXT2_APPEND) &&
+	    uio->uio_offset != ext2fs_size(ip))
+		return (EPERM);
 
 	fs = ip->i_e2fs;
 	if (uio->uio_offset < 0 ||
