@@ -1,0 +1,5 @@
+#
+#
+#
+include "arch/riscv/conf/GENERIC"
+include "arch/riscv/conf/INSTALL.config"

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: cpu.h,v 1.2 2015/03/28 16:13:56 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -81,14 +81,14 @@ struct cpu_info {
 
 extern struct cpu_info cpu_info_store;
 
-register struct lwp *riscv_curlwp __asm("x15");
+register struct lwp *riscv_curlwp __asm("tp");
 #define	curlwp		riscv_curlwp
 
 static inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *ci;
-	__asm("csrr\t%0, sup0" : "=r"(ci));
+	__asm("csrr\t%0, sscratch" : "=r"(ci));
 	return ci;
 }
 
