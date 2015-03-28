@@ -27,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
 #define DRIVER_SELF_SPECS ""
 
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT MASK_FDIV
+#define TARGET_DEFAULT (MASK_ATOMIC | MASK_FDIV)
 
 #define TARGET_OS_CPP_BUILTINS()				\
   do {								\
