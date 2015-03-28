@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.254 2015/03/28 17:23:42 maxv Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.255 2015/03/28 19:24:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.254 2015/03/28 17:23:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.255 2015/03/28 19:24:04 maxv Exp $");
 
 #include "opt_bufcache.h"
 
@@ -717,8 +717,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
  * This algorithm described in Bach (p.54).
  */
 int
-bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
-    int flags, buf_t **bpp)
+bread(struct vnode *vp, daddr_t blkno, int size, int flags, buf_t **bpp)
 {
 	buf_t *bp;
 	int error;

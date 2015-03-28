@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.18 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.19 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.18 2013/07/28 01:05:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.19 2015/03/28 19:24:05 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -316,7 +316,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 	 * DO NOT update disk blocks, we do that separately.
 	 */
 	error = bread(devvp, LFS_FSBTODB(fs, offset), fs->lfs_ibsize,
-	    cred, 0, &dbp);
+	    0, &dbp);
 	if (error) {
 		DLOG((DLOG_RF, "update_inoblk: bread returned %d\n", error));
 		return error;
@@ -416,7 +416,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 
 	/* Read in the segment summary */
 	error = bread(devvp, LFS_FSBTODB(fs, offset), fs->lfs_sumsize,
-	    cred, 0, &bp);
+	    0, &bp);
 	if (error)
 		return -1;
 
@@ -489,7 +489,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			if (flags & CHECK_CKSUM) {
 				/* Read in the head and add to the buffer */
 				error = bread(devvp, LFS_FSBTODB(fs, offset), fs->lfs_bsize,
-					      cred, 0, &dbp);
+					      0, &dbp);
 				if (error) {
 					offset = -1;
 					goto err2;
@@ -516,7 +516,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 				size = fip->fi_lastlength;
 			if (flags & CHECK_CKSUM) {
 				error = bread(devvp, LFS_FSBTODB(fs, offset), size,
-				    cred, 0, &dbp);
+				    0, &dbp);
 				if (error) {
 					offset = -1;
 					goto err2;
