@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.17 2011/11/14 18:35:13 hannken Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.18 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.17 2011/11/14 18:35:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.18 2015/03/28 19:24:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ hfs_pread(struct vnode *vp, void *buf, size_t secsz, uint64_t off,
 
 		error = bread(vp, (start + curoff) / DEV_BSIZE,/* no rounding involved*/
 		   RBSZ(min(len - curoff + (off - start), MAXBSIZE), secsz),
-		   cred, 0, &bp);
+		   0, &bp);
 
 		if (error == 0)
 			memcpy((uint8_t*)buf + curoff, (uint8_t*)bp->b_data +
