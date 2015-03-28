@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.2 2015/03/28 14:50:20 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.2 2015/03/28 14:50:20 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,7 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $");
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
 
-#include "hdaudio_config.h"
+#ifdef _KERNEL_OPT
+#include "opt_hdaudio.h"
+#endif
 
 #include "hdaudiovar.h"
 #include "hdaudioreg.h"
@@ -3725,9 +3727,6 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	}
 	hda_debug(sc, "assoc type mask: %x\n", astype);
 
-#ifndef HDAUDIO_ENABLE_SPDIF
-	astype &= ~(1 << HDAFG_AS_SPDIF);
-#endif
 #ifndef HDAUDIO_ENABLE_HDMI
 	astype &= ~(1 << HDAFG_AS_HDMI);
 #endif
