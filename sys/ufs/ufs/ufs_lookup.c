@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.133 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.134 2015/03/28 17:23:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.133 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.134 2015/03/28 17:23:42 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1279,7 +1279,7 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp,
 	}
 	KASSERT(run >= 1);
 	error = breadn(vp, blks[0], blksizes[0], &blks[1], &blksizes[1],
-	    run - 1, NOCRED, (modify ? B_MODIFY : 0), &bp);
+	    run - 1, (modify ? B_MODIFY : 0), &bp);
 	if (error != 0) {
 		*bpp = NULL;
 		goto out;

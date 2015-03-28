@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.253 2015/03/28 16:55:21 maxv Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.254 2015/03/28 17:23:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.253 2015/03/28 16:55:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.254 2015/03/28 17:23:42 maxv Exp $");
 
 #include "opt_bufcache.h"
 
@@ -746,7 +746,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
  */
 int
 breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
-    int *rasizes, int nrablks, kauth_cred_t cred, int flags, buf_t **bpp)
+    int *rasizes, int nrablks, int flags, buf_t **bpp)
 {
 	buf_t *bp;
 	int error, i;

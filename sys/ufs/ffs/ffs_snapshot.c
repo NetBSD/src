@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.137 2014/09/05 06:10:07 matt Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.138 2015/03/28 17:23:42 maxv Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.137 2014/09/05 06:10:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.138 2015/03/28 17:23:42 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2098,7 +2098,7 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 		} else {
 			int nextsize = fs->fs_bsize;
 			error = breadn(vp, lbn,
-			    size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
+			    size, &nextlbn, &nextsize, 1, 0, &bp);
 		}
 		if (error)
 			break;

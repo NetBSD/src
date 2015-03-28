@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.25 2015/03/27 17:27:55 riastradh Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.26 2015/03/28 17:23:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -700,7 +700,7 @@ chfs_read(void *v)
 			int nextsize = chfs_blksize(chmp, ip, nextlbn);
 			dbg("size: %ld\n", size);
 			error = breadn(vp, lbn,
-			    size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
+			    size, &nextlbn, &nextsize, 1, 0, &bp);
 			dbg("after breadN\n");
 		}
 		if (error)
