@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.25 2015/02/11 00:37:25 christos Exp $ */
+/* $NetBSD: hdaudio.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.25 2015/02/11 00:37:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1601,11 +1601,7 @@ hdaudioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	return err;
 }
 
-MODULE(MODULE_CLASS_DRIVER, hdaudio, "pci");
-
-#ifdef _MODULE
-#include "ioconf.c"
-#endif
+MODULE(MODULE_CLASS_DRIVER, hdaudio, NULL);
 
 static int
 hdaudio_modcmd(modcmd_t cmd, void *opaque)
@@ -1618,24 +1614,15 @@ hdaudio_modcmd(modcmd_t cmd, void *opaque)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_hdaudio,
-		    cfattach_ioconf_hdaudio, cfdata_ioconf_hdaudio);
-		if (error)
-			return error;
 		error = devsw_attach("hdaudio", NULL, &bmaj,
 		    &hdaudio_cdevsw, &cmaj);
-		if (error)
-			config_fini_component(cfdriver_ioconf_hdaudio,
-			    cfattach_ioconf_hdaudio, cfdata_ioconf_hdaudio);
 #endif
 		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
 		devsw_detach(NULL, &hdaudio_cdevsw);
-		error = config_fini_component(cfdriver_ioconf_hdaudio,
-		    cfattach_ioconf_hdaudio, cfdata_ioconf_hdaudio);
 #endif
-		return error;
+		return 0;
 	default:
 		return ENOTTY;
 	}
