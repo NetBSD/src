@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.67 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.68 2015/03/28 03:46:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.67 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.68 2015/03/28 03:46:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,11 +112,7 @@ ext2fs_read(void *v)
 	if (uio->uio_rw != UIO_READ)
 		panic("%s: mode", "ext2fs_read");
 
-	if (vp->v_type == VLNK) {
-		if (ext2fs_size(ip) < ump->um_maxsymlinklen ||
-		    (ump->um_maxsymlinklen == 0 && ext2fs_nblock(ip) == 0))
-			panic("%s: short symlink", "ext2fs_read");
-	} else if (vp->v_type != VREG && vp->v_type != VDIR)
+	if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", "ext2fs_read", vp->v_type);
 #endif
 	/* XXX Eliminate me by refusing directory reads from userland.  */
