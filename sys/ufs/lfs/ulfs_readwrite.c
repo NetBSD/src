@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.10 2015/03/28 03:53:36 riastradh Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.11 2015/03/28 17:06:15 riastradh Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.10 2015/03/28 03:53:36 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.11 2015/03/28 17:06:15 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -56,6 +56,10 @@ __KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.10 2015/03/28 03:53:36 riastrad
 #define	BUFRD			ffs_bufrd
 #define	BUFWR			ffs_bufwr
 #endif
+
+static int	ulfs_post_read_update(struct vnode *, int, int);
+static int	ulfs_post_write_update(struct vnode *, struct uio *, int,
+		    kauth_cred_t, off_t, int, int, int);
 
 /*
  * Vnode op for reading.
@@ -126,13 +130,7 @@ READ(void *v)
 	}
 
  out:
-	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
-		ip->i_flag |= IN_ACCESS;
-		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
-			error = lfs_update(vp, NULL, NULL, UPDATE_WAIT);
-		}
-	}
-
+	error = ulfs_post_read_update(vp, ap->a_ioflag, error);
 	fstrans_done(vp->v_mount);
 	return (error);
 }
@@ -223,6 +221,16 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 		brelse(bp, 0);
 
  out:
+	error = ulfs_post_read_update(vp, ioflag, error);
+	fstrans_done(vp->v_mount);
+	return (error);
+}
+
+static int
+ulfs_post_read_update(struct vnode *vp, int ioflag, int error)
+{
+	struct inode *ip = VTOI(vp);
+
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ioflag & IO_SYNC) == IO_SYNC) {
@@ -230,8 +238,7 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 		}
 	}
 
-	fstrans_done(vp->v_mount);
-	return (error);
+	return error;
 }
 
 /*
@@ -436,44 +443,9 @@ WRITE(void *v)
 		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
 	}
 
-	/*
-	 * If we successfully wrote any data, and we are not the superuser
-	 * we clear the setuid and setgid bits as a precaution against
-	 * tampering.
-	 */
 out:
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		ip->i_flag |= IN_ACCESS;
-	if (resid > uio->uio_resid && ap->a_cred) {
-		if (ip->i_mode & ISUID) {
-			if (kauth_authorize_vnode(ap->a_cred,
-			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0) {
-				ip->i_mode &= ~ISUID;
-				DIP_ASSIGN(ip, mode, ip->i_mode);
-			}
-		}
-
-		if (ip->i_mode & ISGID) {
-			if (kauth_authorize_vnode(ap->a_cred,
-			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0) {
-				ip->i_mode &= ~ISGID;
-				DIP_ASSIGN(ip, mode, ip->i_mode);
-			}
-		}
-	}
-	if (resid > uio->uio_resid)
-		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
-	if (error) {
-		(void) lfs_truncate(vp, osize, ioflag & IO_SYNC, ap->a_cred);
-		uio->uio_offset -= resid - uio->uio_resid;
-		uio->uio_resid = resid;
-	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC) {
-		error = lfs_update(vp, NULL, NULL, UPDATE_WAIT);
-	} else {
-		/* nothing */
-	}
-	KASSERT(vp->v_size == ip->i_size);
+	error = ulfs_post_write_update(vp, uio, ioflag, cred, osize, resid,
+	    extended, error);
 	fstrans_done(vp->v_mount);
 
 	return (error);
@@ -603,14 +575,29 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	}
 #endif
 
-	/*
-	 * If we successfully wrote any data, and we are not the superuser
-	 * we clear the setuid and setgid bits as a precaution against
-	 * tampering.
-	 */
+	error = ulfs_post_write_update(vp, uio, ioflag, cred, osize, resid,
+	    extended, error);
+	fstrans_done(vp->v_mount);
+
+	return (error);
+}
+
+static int
+ulfs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
+    kauth_cred_t cred, off_t osize, int resid, int extended, int error)
+{
+	struct inode *ip = VTOI(vp);
+
+	/* Trigger ctime and mtime updates, and atime if MNT_RELATIME.  */
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (vp->v_mount->mnt_flag & MNT_RELATIME)
 		ip->i_flag |= IN_ACCESS;
+
+	/*
+	 * If we successfully wrote any data and we are not the superuser,
+	 * we clear the setuid and setgid bits as a precaution against
+	 * tampering.
+	 */
 	if (resid > uio->uio_resid && cred) {
 		if (ip->i_mode & ISUID) {
 			if (kauth_authorize_vnode(cred,
@@ -628,8 +615,15 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 			}
 		}
 	}
+
+	/* If we successfully wrote anything, notify kevent listeners.  */
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
+
+	/*
+	 * Update the size on disk: truncate back to original size on
+	 * error, or reflect the new size on success.
+	 */
 	if (error) {
 		(void) lfs_truncate(vp, osize, ioflag & IO_SYNC, cred);
 		uio->uio_offset -= resid - uio->uio_resid;
@@ -640,7 +634,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 		/* nothing */
 	}
 	KASSERT(vp->v_size == ip->i_size);
-	fstrans_done(vp->v_mount);
 
-	return (error);
+	return error;
 }

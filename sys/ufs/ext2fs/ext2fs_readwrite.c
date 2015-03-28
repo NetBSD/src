@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.70 2015/03/28 03:53:36 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.71 2015/03/28 17:06:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.70 2015/03/28 03:53:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.71 2015/03/28 17:06:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.70 2015/03/28 03:53:36 riastr
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
+
+static int	ext2fs_post_read_update(struct vnode *, int, int);
+static int	ext2fs_post_write_update(struct vnode *, struct uio *, int,
+		    kauth_cred_t, off_t, int, int, int);
 
 /*
  * Vnode op for reading.
@@ -137,11 +141,7 @@ ext2fs_read(void *v)
 	}
 
 out:
-	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
-		ip->i_flag |= IN_ACCESS;
-		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-			error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
-	}
+	error = ext2fs_post_read_update(vp, ap->a_ioflag, error);
 	return (error);
 }
 
@@ -227,12 +227,22 @@ ext2fs_bufrd(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 		brelse(bp, 0);
 
 out:
+	error = ext2fs_post_read_update(vp, ioflag, error);
+	return (error);
+}
+
+static int
+ext2fs_post_read_update(struct vnode *vp, int ioflag, int error)
+{
+	struct inode *ip = VTOI(vp);
+
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ioflag & IO_SYNC) == IO_SYNC)
 			error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
 	}
-	return (error);
+
+	return error;
 }
 
 /*
@@ -335,36 +345,8 @@ ext2fs_write(void *v)
 		    PGO_CLEANIT | PGO_SYNCIO);
 	}
 
-	/*
-	 * If we successfully wrote any data, and we are not the superuser
-	 * we clear the setuid and setgid bits as a precaution against
-	 * tampering.
-	 */
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		ip->i_flag |= IN_ACCESS;
-	if (resid > uio->uio_resid && ap->a_cred) {
-		if (ip->i_e2fs_mode & ISUID) {
-			if (kauth_authorize_vnode(ap->a_cred,
-			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0)
-				ip->i_e2fs_mode &= ISUID;
-		}
-
-		if (ip->i_e2fs_mode & ISGID) {
-			if (kauth_authorize_vnode(ap->a_cred,
-			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0)
-				ip->i_e2fs_mode &= ~ISGID;
-		}
-	}
-	if (resid > uio->uio_resid)
-		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
-	if (error) {
-		(void) ext2fs_truncate(vp, osize, ioflag & IO_SYNC, ap->a_cred);
-		uio->uio_offset -= resid - uio->uio_resid;
-		uio->uio_resid = resid;
-	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
-		error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
-	KASSERT(vp->v_size == ext2fs_size(ip));
+	error = ext2fs_post_write_update(vp, uio, ioflag, ap->a_cred, osize,
+	    resid, extended, error);
 	return (error);
 }
 
@@ -445,14 +427,27 @@ ext2fs_bufwr(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 			break;
 	}
 
-	/*
-	 * If we successfully wrote any data, and we are not the superuser
-	 * we clear the setuid and setgid bits as a precaution against
-	 * tampering.
-	 */
+	error = ext2fs_post_write_update(vp, uio, ioflag, cred, osize, resid,
+	    extended, error);
+	return (error);
+}
+
+static int
+ext2fs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
+    kauth_cred_t cred, off_t osize, int resid, int extended, int error)
+{
+	struct inode *ip = VTOI(vp);
+
+	/* Trigger ctime and mtime updates, and atime if MNT_RELATIME.  */
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (vp->v_mount->mnt_flag & MNT_RELATIME)
 		ip->i_flag |= IN_ACCESS;
+
+	/*
+	 * If we successfully wrote any data and we are not the superuser,
+	 * we clear the setuid and setgid bits as a precaution against
+	 * tampering.
+	 */
 	if (resid > uio->uio_resid && cred) {
 		if (ip->i_e2fs_mode & ISUID) {
 			if (kauth_authorize_vnode(cred,
@@ -466,14 +461,24 @@ ext2fs_bufwr(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 				ip->i_e2fs_mode &= ~ISGID;
 		}
 	}
+
+	/* If we successfully wrote anything, notify kevent listeners.  */
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
+
+	/*
+	 * Update the size on disk: truncate back to original size on
+	 * error, or reflect the new size on success.
+	 */
 	if (error) {
 		(void) ext2fs_truncate(vp, osize, ioflag & IO_SYNC, cred);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
 		error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
+
+	/* Make sure the vnode uvm size matches the inode file size.  */
 	KASSERT(vp->v_size == ext2fs_size(ip));
-	return (error);
+
+	return error;
 }

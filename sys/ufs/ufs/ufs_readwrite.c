@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.111 2015/03/28 04:13:25 riastradh Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.112 2015/03/28 17:06:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.111 2015/03/28 04:13:25 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.112 2015/03/28 17:06:15 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -68,6 +68,10 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.111 2015/03/28 04:13:25 riastrad
 #define ufs_lblktosize		ffs_lblktosize
 #define ufs_blkroundup		ffs_blkroundup
 #endif
+
+static int	ufs_post_read_update(struct vnode *, int, int);
+static int	ufs_post_write_update(struct vnode *, struct uio *, int,
+		    kauth_cred_t, off_t, int, int, int);
 
 /*
  * Vnode op for reading.
@@ -138,19 +142,7 @@ READ(void *v)
 	}
 
  out:
-	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
-		ip->i_flag |= IN_ACCESS;
-		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
-			error = UFS_WAPBL_BEGIN(vp->v_mount);
-			if (error) {
-				fstrans_done(vp->v_mount);
-				return error;
-			}
-			error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
-			UFS_WAPBL_END(vp->v_mount);
-		}
-	}
-
+	error = ufs_post_read_update(vp, ap->a_ioflag, error);
 	fstrans_done(vp->v_mount);
 	return (error);
 }
@@ -240,21 +232,28 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 		brelse(bp, 0);
 
  out:
+	error = ufs_post_read_update(vp, ioflag, error);
+	fstrans_done(vp->v_mount);
+	return (error);
+}
+
+static int
+ufs_post_read_update(struct vnode *vp, int ioflag, int error)
+{
+	struct inode *ip = VTOI(vp);
+
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ioflag & IO_SYNC) == IO_SYNC) {
 			error = UFS_WAPBL_BEGIN(vp->v_mount);
-			if (error) {
-				fstrans_done(vp->v_mount);
+			if (error)
 				return error;
-			}
 			error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 			UFS_WAPBL_END(vp->v_mount);
 		}
 	}
 
-	fstrans_done(vp->v_mount);
-	return (error);
+	return error;
 }
 
 /*
@@ -467,43 +466,9 @@ WRITE(void *v)
 		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
 	}
 
-	/*
-	 * If we successfully wrote any data, and we are not the superuser
-	 * we clear the setuid and setgid bits as a precaution against
-	 * tampering.
-	 */
 out:
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		ip->i_flag |= IN_ACCESS;
-	if (resid > uio->uio_resid && ap->a_cred) {
-		if (ip->i_mode & ISUID) {
-			if (kauth_authorize_vnode(ap->a_cred,
-			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0) {
-				ip->i_mode &= ~ISUID;
-				DIP_ASSIGN(ip, mode, ip->i_mode);
-			}
-		}
-
-		if (ip->i_mode & ISGID) {
-			if (kauth_authorize_vnode(ap->a_cred,
-			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0) {
-				ip->i_mode &= ~ISGID;
-				DIP_ASSIGN(ip, mode, ip->i_mode);
-			}
-		}
-	}
-	if (resid > uio->uio_resid)
-		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
-	if (error) {
-		(void) UFS_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred);
-		uio->uio_offset -= resid - uio->uio_resid;
-		uio->uio_resid = resid;
-	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
-		error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
-	else
-		UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
-	KASSERT(vp->v_size == ip->i_size);
+	error = ufs_post_write_update(vp, uio, ioflag, cred, osize, resid,
+	    extended, error);
 	UFS_WAPBL_END(vp->v_mount);
 	fstrans_done(vp->v_mount);
 
@@ -638,14 +603,31 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	}
 #endif
 
-	/*
-	 * If we successfully wrote any data, and we are not the superuser
-	 * we clear the setuid and setgid bits as a precaution against
-	 * tampering.
-	 */
+	error = ufs_post_write_update(vp, uio, ioflag, cred, osize, resid,
+	    extended, error);
+	if ((ioflag & IO_JOURNALLOCKED) == 0)
+		UFS_WAPBL_END(vp->v_mount);
+	fstrans_done(vp->v_mount);
+
+	return (error);
+}
+
+static int
+ufs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
+    kauth_cred_t cred, off_t osize, int resid, int extended, int error)
+{
+	struct inode *ip = VTOI(vp);
+
+	/* Trigger ctime and mtime updates, and atime if MNT_RELATIME.  */
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (vp->v_mount->mnt_flag & MNT_RELATIME)
 		ip->i_flag |= IN_ACCESS;
+
+	/*
+	 * If we successfully wrote any data and we are not the superuser,
+	 * we clear the setuid and setgid bits as a precaution against
+	 * tampering.
+	 */
 	if (resid > uio->uio_resid && cred) {
 		if (ip->i_mode & ISUID) {
 			if (kauth_authorize_vnode(cred,
@@ -663,8 +645,15 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 			}
 		}
 	}
+
+	/* If we successfully wrote anything, notify kevent listeners.  */
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
+
+	/*
+	 * Update the size on disk: truncate back to original size on
+	 * error, or reflect the new size on success.
+	 */
 	if (error) {
 		(void) UFS_TRUNCATE(vp, osize, ioflag & IO_SYNC, cred);
 		uio->uio_offset -= resid - uio->uio_resid;
@@ -673,10 +662,9 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 		error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	else
 		UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
-	KASSERT(vp->v_size == ip->i_size);
-	if ((ioflag & IO_JOURNALLOCKED) == 0)
-		UFS_WAPBL_END(vp->v_mount);
-	fstrans_done(vp->v_mount);
 
-	return (error);
+	/* Make sure the vnode uvm size matches the inode file size.  */
+	KASSERT(vp->v_size == ip->i_size);
+
+	return error;
 }
