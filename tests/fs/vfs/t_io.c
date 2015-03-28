@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.13 2015/03/28 16:17:25 riastradh Exp $	*/
+/*	$NetBSD: t_io.c,v 1.14 2015/03/28 16:39:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -238,7 +238,6 @@ read_fault(const atf_tc_t *tc, const char *mp)
 	    FSTYPE_FFSLOG(tc) ||
 	    FSTYPE_LFS(tc) ||
 	    FSTYPE_MSDOS(tc) ||
-	    FSTYPE_P2K_FFS(tc) ||
 	    FSTYPE_SYSVBFS(tc))
 		atf_tc_expect_fail("bad sync atime update code path");
 	ATF_REQUIRE_ERRNO(EFAULT, rump_sys_read(fd, NULL, 1) == -1);
