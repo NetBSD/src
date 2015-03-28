@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.11 2015/03/28 17:06:15 riastradh Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.12 2015/03/28 17:08:53 riastradh Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.11 2015/03/28 17:06:15 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.12 2015/03/28 17:08:53 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -506,7 +506,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
 
-	/* XXX Should never have cached pages here.  */
+	/* XXX Should never have pages cached here.  */
 	mutex_enter(vp->v_interlock);
 	VOP_PUTPAGES(vp, trunc_page(origoff), round_page(origoff + resid),
 	    PGO_CLEANIT | PGO_FREE | PGO_SYNCIO | PGO_JOURNALLOCKED);
@@ -633,6 +633,8 @@ ulfs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
 	} else {
 		/* nothing */
 	}
+
+	/* Make sure the vnode uvm size matches the inode file size.  */
 	KASSERT(vp->v_size == ip->i_size);
 
 	return error;
