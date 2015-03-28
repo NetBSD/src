@@ -1,4 +1,4 @@
-/*      $NetBSD: hdaudio_verbose.h,v 1.2 2014/09/21 14:30:22 christos Exp $ */
+/*	$NetBSD: hdaudio_verbose.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -26,11 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_PCI_HDAUDIO_HDAUDIO_VERBOSE_H_
-#define _DEV_PCI_HDAUDIO_HDAUDIO_VERBOSE_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_verbose.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $");
 
-#include <dev/dev_verbose.h>
+#include <sys/param.h>
+#include <sys/module.h>
 
-DEV_VERBOSE_DECLARE(hdaudio);
+#include <dev/hdaudio/hdaudio_verbose.h>
+#include <dev/hdaudio/hdaudiodevs.h>
+#include <dev/hdaudio/hdaudiodevs_data.h>
 
-#endif /* _DEV_PCI_HDAUDIO_HDAUDIO_VERBOSE_H_ */
+DEV_VERBOSE_MODULE_DEFINE(hdaudio, NULL)

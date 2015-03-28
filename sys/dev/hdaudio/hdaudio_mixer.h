@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioio.h,v 1.3 2009/10/11 08:50:12 sborrill Exp $ */
+/* $NetBSD: hdaudio_mixer.h,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -29,19 +29,47 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _HDAUDIOIO_H
-#define _HDAUDIOIO_H
+#ifndef _HDAUDIO_MIXER_H
+#define _HDAUDIO_MIXER_H
 
-#include <sys/ioctl.h>
-#include <prop/proplib.h>
+/* From src/lib/libossaudio/soundcard.h */
 
-#define	HDAUDIO_FGRP_INFO	_IOWR('h', 0, struct plistref)
-#define	HDAUDIO_FGRP_GETCONFIG	_IOWR('h', 1, struct plistref)
-#define	HDAUDIO_FGRP_SETCONFIG	_IOWR('h', 2, struct plistref)
-#define	HDAUDIO_FGRP_WIDGET_INFO	_IOWR('h', 3, struct plistref)
-#define	HDAUDIO_FGRP_CODEC_INFO	_IOWR('h', 4, struct plistref)
+#define	HDAUDIO_MIXER_NRDEVICES	25
+#define	HDAUDIO_MIXER_VOLUME	0
+#define	HDAUDIO_MIXER_BASS	1
+#define	HDAUDIO_MIXER_TREBLE	2
+#define	HDAUDIO_MIXER_SYNTH	3
+#define	HDAUDIO_MIXER_PCM	4
+#define	HDAUDIO_MIXER_SPEAKER	5
+#define	HDAUDIO_MIXER_LINE	6
+#define	HDAUDIO_MIXER_MIC	7
+#define	HDAUDIO_MIXER_CD	8
+#define	HDAUDIO_MIXER_IMIX	9
+#define	HDAUDIO_MIXER_ALTPCM	10
+#define	HDAUDIO_MIXER_RECLEV	11
+#define	HDAUDIO_MIXER_IGAIN	12
+#define	HDAUDIO_MIXER_OGAIN	13
+#define	HDAUDIO_MIXER_LINE1	14
+#define	HDAUDIO_MIXER_LINE2	15
+#define	HDAUDIO_MIXER_LINE3	16
+#define	HDAUDIO_MIXER_DIGITAL1	17
+#define	HDAUDIO_MIXER_DIGITAL2	18
+#define	HDAUDIO_MIXER_DIGITAL3	19
+#define	HDAUDIO_MIXER_PHONEIN	20
+#define	HDAUDIO_MIXER_PHONEOUT	21
+#define	HDAUDIO_MIXER_VIDEO	22
+#define	HDAUDIO_MIXER_RADIO	23
+#define	HDAUDIO_MIXER_MONITOR	24
 
-#define	HDAUDIO_AFG_WIDGET_INFO	_IOWR('H', 0, struct plistref)
-#define	HDAUDIO_AFG_CODEC_INFO	_IOWR('H', 1, struct plistref)
+#define	HDAUDIO_MASK(x)		(1 << (HDAUDIO_MIXER_##x))
 
-#endif /* !_HDAUDIOIO_H */
+#define	HDAUDIO_DEVICE_NAMES	{					   \
+	AudioNmaster, AudioNbass, AudioNtreble, AudioNfmsynth, AudioNdac,  \
+	"beep", AudioNline, AudioNmicrophone, AudioNcd,		   	   \
+	AudioNrecord, AudioNdac"2", "reclvl", AudioNinput, AudioNoutput,   \
+	AudioNline"1", AudioNline"2", AudioNline"3",			   \
+	"dig1", "dig2", "dig3", "phin", "phout",			   \
+	AudioNvideo, "radio", AudioNmonitor				   \
+				}
+
+#endif /* !_HDAUDIO_MIXER_H */
