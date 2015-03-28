@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.2 2015/03/28 14:50:20 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,9 @@
 
 #include <dev/auconv.h>
 
-#include "hdaudio_config.h"
+#ifdef _KERNEL_OPT
+#include "opt_hdaudio.h"
+#endif
 
 #define	HDAUDIO_MAX_CODECS	15
 
