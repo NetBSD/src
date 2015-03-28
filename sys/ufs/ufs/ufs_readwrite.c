@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.110 2015/03/28 03:53:36 riastradh Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.111 2015/03/28 04:13:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.110 2015/03/28 03:53:36 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.111 2015/03/28 04:13:25 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -292,6 +292,8 @@ WRITE(void *v)
 	KASSERT(vp->v_size == ip->i_size);
 	KASSERT(uio->uio_rw == UIO_WRITE);
 	KASSERT(vp->v_type == VREG);
+	KASSERT(!ISSET(ioflag, IO_JOURNALLOCKED));
+	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
 
 	if (ioflag & IO_APPEND)
 		uio->uio_offset = ip->i_size;
@@ -322,12 +324,10 @@ WRITE(void *v)
 
 	KASSERT(vp->v_type == VREG);
 
-	if ((ioflag & IO_JOURNALLOCKED) == 0) {
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
-		if (error) {
-			fstrans_done(vp->v_mount);
-			return error;
-		}
+	error = UFS_WAPBL_BEGIN(vp->v_mount);
+	if (error) {
+		fstrans_done(vp->v_mount);
+		return error;
 	}
 
 #ifdef LFS_READWRITE
@@ -504,8 +504,7 @@ out:
 	else
 		UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	KASSERT(vp->v_size == ip->i_size);
-	if ((ioflag & IO_JOURNALLOCKED) == 0)
-		UFS_WAPBL_END(vp->v_mount);
+	UFS_WAPBL_END(vp->v_mount);
 	fstrans_done(vp->v_mount);
 
 	return (error);
