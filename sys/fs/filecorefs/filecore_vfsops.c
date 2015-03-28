@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.77 2014/10/04 13:27:24 hannken Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.78 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.77 2014/10/04 13:27:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.78 2015/03/28 19:24:05 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -325,7 +325,7 @@ filecore_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct fi
 
 	/* Read the filecore boot block to check FS validity and to find the map */
 	error = bread(devvp, FILECORE_BOOTBLOCK_BLKN,
-			   FILECORE_BOOTBLOCK_SIZE, NOCRED, 0, &bp);
+			   FILECORE_BOOTBLOCK_SIZE, 0, &bp);
 #ifdef FILECORE_DEBUG_BR
 		printf("bread(%p, %x, %d, CRED, %p)=%d\n", devvp,
 		       FILECORE_BOOTBLOCK_BLKN, FILECORE_BOOTBLOCK_SIZE,
@@ -352,7 +352,7 @@ filecore_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct fi
 	bp = NULL;
 
 	/* Read the bootblock in the map */
-	error = bread(devvp, map, 1 << log2secsize, NOCRED, 0, &bp);
+	error = bread(devvp, map, 1 << log2secsize, 0, &bp);
 #ifdef FILECORE_DEBUG_BR
 		printf("bread(%p, %x, %d, CRED, %p)=%d\n", devvp,
 		       map, 1 << log2secsize, bp, error);

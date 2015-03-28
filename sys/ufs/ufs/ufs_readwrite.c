@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.114 2015/03/28 17:45:47 riastradh Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.115 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.114 2015/03/28 17:45:47 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.115 2015/03/28 19:24:05 maxv Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -201,7 +201,7 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 		    bytesinfile);
 
 		if (ufs_lblktosize(fs, nextlbn) >= ip->i_size)
-			error = bread(vp, lbn, size, NOCRED, 0, &bp);
+			error = bread(vp, lbn, size, 0, &bp);
 		else {
 			int nextsize = ufs_blksize(fs, ip, nextlbn);
 			error = breadn(vp, lbn,

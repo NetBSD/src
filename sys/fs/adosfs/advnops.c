@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.45 2014/08/05 08:50:54 hannken Exp $	*/
+/*	$NetBSD: advnops.c,v 1.46 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.45 2014/08/05 08:50:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.46 2015/03/28 19:24:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ adosfs_read(void *v)
 		 * but not much as ados makes little attempt to
 		 * make things contigous
 		 */
-		error = bread(sp->a_vp, lbn, amp->bsize, NOCRED, 0, &bp);
+		error = bread(sp->a_vp, lbn, amp->bsize, 0, &bp);
 		if (error) {
 			goto reterr;
 		}
@@ -516,7 +516,7 @@ adosfs_bmap(void *v)
 			goto reterr;
 		}
 		error = bread(ap->amp->devvp, nb * ap->amp->bsize / DEV_BSIZE,
-			      ap->amp->bsize, NOCRED, 0, &flbp);
+			      ap->amp->bsize, 0, &flbp);
 		if (error) {
 			goto reterr;
 		}

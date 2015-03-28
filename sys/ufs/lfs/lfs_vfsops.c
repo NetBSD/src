@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.321 2014/04/16 18:55:19 maxv Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.322 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.321 2014/04/16 18:55:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.322 2015/03/28 19:24:05 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -857,7 +857,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	sb_addr = LFS_LABELPAD / DEV_BSIZE;
 	while (1) {
 		/* Read in the superblock. */
-		error = bread(devvp, sb_addr, LFS_SBPAD, cred, 0, &bp);
+		error = bread(devvp, sb_addr, LFS_SBPAD, 0, &bp);
 		if (error)
 			goto out;
 		dfs = (struct dlfs *)bp->b_data;
@@ -909,7 +909,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	    dfs->dlfs_sboffs[1] - LFS_LABELPAD / fsbsize > LFS_SBPAD / fsbsize)
 	{
 		error = bread(devvp, dfs->dlfs_sboffs[1] * (fsbsize / DEV_BSIZE),
-			LFS_SBPAD, cred, 0, &abp);
+			LFS_SBPAD, 0, &abp);
 		if (error)
 			goto out;
 		adfs = (struct dlfs *)abp->b_data;
@@ -1531,7 +1531,7 @@ retry:
     again:
 	error = bread(ump->um_devvp, LFS_FSBTODB(fs, daddr),
 		(fs->lfs_version == 1 ? fs->lfs_bsize : fs->lfs_ibsize),
-		NOCRED, 0, &bp);
+		0, &bp);
 	if (error) {
 		/*
 		 * The inode does not contain anything useful, so it would
@@ -2198,7 +2198,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	rw_enter(&fs->lfs_iflock, RW_WRITER);
 	for (i = 0; i < ilast; i++) {
 		/* XXX what to do if bread fails? */
-		bread(ivp, i, fs->lfs_bsize, NOCRED, 0, &bp);
+		bread(ivp, i, fs->lfs_bsize, 0, &bp);
 		brelse(bp, 0);
 	}
 
@@ -2228,11 +2228,11 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 			inc = -1;
 		}
 		for (i = start; i != end; i += inc) {
-			if (bread(ivp, i, fs->lfs_bsize, NOCRED,
+			if (bread(ivp, i, fs->lfs_bsize,
 			    B_MODIFY, &bp) != 0)
 				panic("resize: bread dst blk failed");
 			if (bread(ivp, i - noff, fs->lfs_bsize,
-			    NOCRED, 0, &obp))
+			    0, &obp))
 				panic("resize: bread src blk failed");
 			memcpy(bp->b_data, obp->b_data, fs->lfs_bsize);
 			VOP_BWRITE(bp->b_vp, bp);
@@ -2245,7 +2245,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 		for (i = oldnsegs; i < newnsegs; i++) {
 			if ((error = bread(ivp, i / fs->lfs_sepb +
 					   fs->lfs_cleansz, fs->lfs_bsize,
-					   NOCRED, B_MODIFY, &bp)) != 0)
+					   B_MODIFY, &bp)) != 0)
 				panic("lfs: ifile read: %d", error);
 			while ((i + 1) % fs->lfs_sepb && i < newnsegs) {
 				sup = &((SEGUSE *)bp->b_data)[i % fs->lfs_sepb];
@@ -2305,7 +2305,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 
 	/* Update cleaner info so the cleaner can die */
 	/* XXX what to do if bread fails? */
-	bread(ivp, 0, fs->lfs_bsize, NOCRED, B_MODIFY, &bp);
+	bread(ivp, 0, fs->lfs_bsize, B_MODIFY, &bp);
 	((CLEANERINFO *)bp->b_data)->clean = fs->lfs_nclean;
 	((CLEANERINFO *)bp->b_data)->dirty = fs->lfs_nseg - fs->lfs_nclean;
 	VOP_BWRITE(bp->b_vp, bp);

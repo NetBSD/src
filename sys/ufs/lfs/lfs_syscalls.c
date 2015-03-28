@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.155 2014/04/17 18:15:49 pgoyette Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.156 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.155 2014/04/17 18:15:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.156 2015/03/28 19:24:05 maxv Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -1182,7 +1182,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 		retries = 0;
 	    again:
 		error = bread(ump->um_devvp, LFS_FSBTODB(fs, daddr), fs->lfs_ibsize,
-			      NOCRED, 0, &bp);
+			      0, &bp);
 		if (error) {
 			DLOG((DLOG_CLEAN, "lfs_fastvget: bread failed (%d)\n",
 			      error));

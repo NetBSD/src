@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.326 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.327 2015/03/28 19:24:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.326 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.327 2015/03/28 19:24:04 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -723,7 +723,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	fs = ump->um_fs;
 	fs_sbsize = fs->fs_sbsize;
 	error = bread(devvp, fs->fs_sblockloc / DEV_BSIZE, fs_sbsize,
-		      NOCRED, 0, &bp);
+		      0, &bp);
 	if (error)
 		return (error);
 	newfs = kmem_alloc(fs_sbsize, KM_SLEEP);
@@ -794,7 +794,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		 */
 		error = bread(devvp,
 		    (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
-		    APPLEUFS_LABEL_SIZE, cred, 0, &bp);
+		    APPLEUFS_LABEL_SIZE, 0, &bp);
 		if (error && error != EINVAL) {
 			return error;
 		}
@@ -855,7 +855,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		if (i + fs->fs_frag > blks)
 			bsize = (blks - i) * fs->fs_fsize;
 		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_csaddr + i), bsize,
-			      NOCRED, 0, &bp);
+			      0, &bp);
 		if (error) {
 			return (error);
 		}
@@ -899,7 +899,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		 */
 		ip = VTOI(vp);
 		error = bread(devvp, FFS_FSBTODB(fs, ino_to_fsba(fs, ip->i_number)),
-			      (int)fs->fs_bsize, NOCRED, 0, &bp);
+			      (int)fs->fs_bsize, 0, &bp);
 		if (error) {
 			vput(vp);
 			break;
@@ -1074,7 +1074,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		}
 
 		error = bread(devvp, sblock_try[i] / DEV_BSIZE, SBLOCKSIZE,
-		    cred, 0, &bp);
+		    0, &bp);
 		if (error) {
 			DPRINTF("bread@0x%x returned %d",
 			    sblock_try[i] / DEV_BSIZE, error);
@@ -1250,7 +1250,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		 */
 		error = bread(devvp,
 		    (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
-		    APPLEUFS_LABEL_SIZE, cred, 0, &bp);
+		    APPLEUFS_LABEL_SIZE, 0, &bp);
 		if (error) {
 			DPRINTF("apple bread@0x%jx returned %d",
 			    (intmax_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
@@ -1308,7 +1308,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 */
 	if (!ronly) {
 		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_size - 1),
-		    fs->fs_fsize, cred, 0, &bp);
+		    fs->fs_fsize, 0, &bp);
 		if (error) {
 			DPRINTF("bread@0x%jx returned %d",
 			    (intmax_t)FFS_FSBTODB(fs, fs->fs_size - 1),
@@ -1348,7 +1348,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		if (i + fs->fs_frag > blks)
 			bsize = (blks - i) * fs->fs_fsize;
 		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_csaddr + i), bsize,
-			      cred, 0, &bp);
+			      0, &bp);
 		if (error) {
 			DPRINTF("bread@0x%jx %d",
 			    (intmax_t)FFS_FSBTODB(fs, fs->fs_csaddr + i),
@@ -1945,7 +1945,7 @@ ffs_init_vnode(struct ufsmount *ump, struct vnode *vp, ino_t ino)
 
 	/* Read in the disk contents for the inode. */
 	error = bread(ump->um_devvp, FFS_FSBTODB(fs, ino_to_fsba(fs, ino)),
-		      (int)fs->fs_bsize, NOCRED, 0, &bp);
+		      (int)fs->fs_bsize, 0, &bp);
 	if (error)
 		return error;
 

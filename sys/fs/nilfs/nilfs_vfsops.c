@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.20 2015/02/07 10:40:57 maxv Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.21 2015/03/28 19:24:05 maxv Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.20 2015/02/07 10:40:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.21 2015/03/28 19:24:05 maxv Exp $");
 #endif /* not lint */
 
 
@@ -382,7 +382,7 @@ nilfs_read_superblock(struct nilfs_device *nilfsdev)
 	/* read our superblock regardless of backing device blocksize */
 	dev_blk   = 0;
 	dev_blks  = (sb1off + dev_bsize -1)/dev_bsize;
-	error = bread(nilfsdev->devvp, dev_blk, dev_blks * dev_bsize, NOCRED, 0, &bp);
+	error = bread(nilfsdev->devvp, dev_blk, dev_blks * dev_bsize, 0, &bp);
 	if (error) {
 		return error;
 	}
@@ -396,7 +396,7 @@ nilfs_read_superblock(struct nilfs_device *nilfsdev)
 	/* read our 2nd superblock regardless of backing device blocksize */
 	dev_blk   = sb2off / dev_bsize;
 	dev_blks  = 2;		/* assumption max one dev_bsize */
-	error = bread(nilfsdev->devvp, dev_blk, dev_blks * dev_bsize, NOCRED, 0, &bp);
+	error = bread(nilfsdev->devvp, dev_blk, dev_blks * dev_bsize, 0, &bp);
 	if (error) {
 		return error;
 	}
@@ -717,7 +717,7 @@ nilfs_mount_checkpoint(struct nilfs_mount *ump)
 	cp_node = ump->nilfsdev->cp_node;
 
 	/* get cpfile header from 1st block of cp file */
-	error = nilfs_bread(cp_node, 0, NOCRED, 0, &bp);
+	error = nilfs_bread(cp_node, 0, 0, &bp);
 	if (error)
 		return error;
 	cphdr = (struct nilfs_cpfile_header *) bp->b_data;
@@ -742,7 +742,7 @@ nilfs_mount_checkpoint(struct nilfs_mount *ump)
 	blocknr =  fcpno / cp_per_block;
 	off     = (fcpno % cp_per_block) * dlen;
 
-	error = nilfs_bread(cp_node, blocknr, NOCRED, 0, &bp);
+	error = nilfs_bread(cp_node, blocknr, 0, &bp);
 	if (error) {
 		printf("mount_nilfs: couldn't read cp block %"PRIu64"\n",
 			fcpno);
@@ -1136,7 +1136,7 @@ nilfs_loadvnode(struct mount *mp, struct vnode *vp,
 	nilfsdev = ump->nilfsdev;
 	nilfs_mdt_trans(&nilfsdev->ifile_mdt, ino, &ivblocknr, &entry_in_block);
 
-	error = nilfs_bread(ump->ifile_node, ivblocknr, NOCRED, 0, &bp);
+	error = nilfs_bread(ump->ifile_node, ivblocknr, 0, &bp);
 	if (error)
 		return ENOENT;
 

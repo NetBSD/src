@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.26 2015/03/28 17:23:42 maxv Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.27 2015/03/28 19:24:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -694,7 +694,7 @@ chfs_read(void *v)
 		    bytesinfile);
 
 		if (chfs_lblktosize(chmp, nextlbn) >= ip->size) {
-			error = bread(vp, lbn, size, NOCRED, 0, &bp);
+			error = bread(vp, lbn, size, 0, &bp);
 			dbg("after bread\n");
 		} else {
 			int nextsize = chfs_blksize(chmp, ip, nextlbn);

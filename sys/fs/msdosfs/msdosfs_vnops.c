@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.91 2014/07/25 08:20:51 dholland Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.92 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.91 2014/07/25 08:20:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.92 2015/03/28 19:24:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,7 +522,7 @@ msdosfs_read(void *v)
 		 * vnode for the directory.
 		 */
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, lbn), blsize,
-		    NOCRED, 0, &bp);
+		    0, &bp);
 		if (error) {
 			goto bad;
 		}
@@ -1105,7 +1105,7 @@ abortit:
 		} else
 			bn = cntobn(pmp, cn);
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
-		    pmp->pm_bpcluster, NOCRED, B_MODIFY, &bp);
+		    pmp->pm_bpcluster, B_MODIFY, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
 			VOP_UNLOCK(fvp);
@@ -1496,7 +1496,7 @@ msdosfs_readdir(void *v)
 		if ((error = pcbmap(dep, lbn, &bn, &cn, &blsize)) != 0)
 			break;
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
-		    NOCRED, 0, &bp);
+		    0, &bp);
 		if (error) {
 			goto bad;
 		}

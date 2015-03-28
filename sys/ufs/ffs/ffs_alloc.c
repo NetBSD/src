@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.148 2015/03/17 09:39:29 hannken Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.149 2015/03/28 19:24:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.148 2015/03/17 09:39:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.149 2015/03/28 19:24:04 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -382,7 +382,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	 * Allocate the extra space in the buffer.
 	 */
 	if (bpp != NULL &&
-	    (error = bread(ITOV(ip), lbprev, osize, NOCRED, 0, &bp)) != 0) {
+	    (error = bread(ITOV(ip), lbprev, osize, 0, &bp)) != 0) {
 		return (error);
 	}
 #if defined(QUOTA) || defined(QUOTA2)
@@ -980,7 +980,7 @@ ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
 	}
 	mutex_exit(&ump->um_lock);
 	error = bread(ip->i_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
+		(int)fs->fs_cgsize, B_MODIFY, &bp);
 	if (error)
 		goto fail;
 	cgp = (struct cg *)bp->b_data;
@@ -1054,7 +1054,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size, int flags)
 		return (0);
 	mutex_exit(&ump->um_lock);
 	error = bread(ip->i_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
+		(int)fs->fs_cgsize, B_MODIFY, &bp);
 	if (error)
 		goto fail;
 	cgp = (struct cg *)bp->b_data;
@@ -1247,7 +1247,7 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode, int flags)
 	initediblk = -1;
 retry:
 	error = bread(ip->i_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
+		(int)fs->fs_cgsize, B_MODIFY, &bp);
 	if (error)
 		goto fail;
 	cgp = (struct cg *)bp->b_data;
@@ -1408,7 +1408,7 @@ ffs_blkalloc_ump(struct ufsmount *ump, daddr_t bno, long size)
 
 	cg = dtog(fs, bno);
 	error = bread(ump->um_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
+		(int)fs->fs_cgsize, B_MODIFY, &bp);
 	if (error) {
 		return error;
 	}
@@ -1516,7 +1516,7 @@ ffs_blkfree_cg(struct fs *fs, struct vnode *devvp, daddr_t bno, long size)
 	cgblkno = FFS_FSBTODB(fs, cgtod(fs, cg));
 
 	error = bread(devvp, cgblkno, (int)fs->fs_cgsize,
-	    NOCRED, B_MODIFY, &bp);
+	    B_MODIFY, &bp);
 	if (error) {
 		return;
 	}
@@ -1783,7 +1783,7 @@ ffs_blkfree_snap(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 		return;
 
 	error = bread(devvp, cgblkno, (int)fs->fs_cgsize,
-	    NOCRED, B_MODIFY, &bp);
+	    B_MODIFY, &bp);
 	if (error) {
 		return;
 	}
@@ -1941,7 +1941,7 @@ ffs_freefile(struct mount *mp, ino_t ino, int mode)
 		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
 		    (long long)dev, (unsigned long long)ino, fs->fs_fsmnt);
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
-	    NOCRED, B_MODIFY, &bp);
+	    B_MODIFY, &bp);
 	if (error) {
 		return (error);
 	}
@@ -1980,7 +1980,7 @@ ffs_freefile_snap(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 		    (unsigned long long)dev, (unsigned long long)ino,
 		    fs->fs_fsmnt);
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
-	    NOCRED, B_MODIFY, &bp);
+	    B_MODIFY, &bp);
 	if (error) {
 		return (error);
 	}
@@ -2062,7 +2062,7 @@ ffs_checkfreefile(struct fs *fs, struct vnode *devvp, ino_t ino)
 		cgbno = FFS_FSBTODB(fs, cgtod(fs, cg));
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		return 1;
-	if (bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, 0, &bp)) {
+	if (bread(devvp, cgbno, (int)fs->fs_cgsize, 0, &bp)) {
 		return 1;
 	}
 	cgp = (struct cg *)bp->b_data;
