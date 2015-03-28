@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.3 2015/03/28 15:59:29 jmcneill Exp $	*/
 
 /*	based on omap/obio_com.c	*/
 
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.3 2015/03/28 15:59:29 jmcneill Exp $");
 
 #include "opt_rockchip.h"
 /*#include "opt_com.h"*/
@@ -143,12 +143,10 @@ obiouart_attach(device_t parent, device_t self, void *aux)
 	com_attach_subr(sc);
 	aprint_naive("\n");
 
-#if 1
 	KASSERT(obio->obio_intr != OBIOCF_INTR_DEFAULT);
-	osc->sc_ih = intr_establish(obio->obio_intr, IPL_SERIAL, IST_EDGE,
+	osc->sc_ih = intr_establish(obio->obio_intr, IPL_SERIAL, IST_LEVEL,
 			comintr, sc);
 	if (osc->sc_ih == NULL)
 		panic("%s: failed to establish interrup %d",
 		    device_xname(self), obio->obio_intr);
-#endif
 }
