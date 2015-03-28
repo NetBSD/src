@@ -1,4 +1,4 @@
-/* $NetBSD: graph.c,v 1.2 2010/08/10 13:52:13 joerg Exp $ */
+/* $NetBSD: graph.c,v 1.3 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -40,8 +40,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <dev/pci/hdaudio/hdaudioio.h>
-#include <dev/pci/hdaudio/hdaudioreg.h>
+#include <dev/hdaudio/hdaudioio.h>
+#include <dev/hdaudio/hdaudioreg.h>
 
 #include "hdaudioctl.h"
 
