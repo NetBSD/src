@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.1 2009/11/04 16:54:00 pooka Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.2 2015/03/28 16:13:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.1 2009/11/04 16:54:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.2 2015/03/28 16:13:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -211,11 +211,11 @@ copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
 	if (len == 0)
 		return (0);
 
-	if (VMSPACE_IS_KERNEL_P(vm)) {
-		return kcopy(uaddr, kaddr, len);
-	}
 	if (__predict_true(vm == curproc->p_vmspace)) {
 		return copyin(uaddr, kaddr, len);
+	}
+	if (VMSPACE_IS_KERNEL_P(vm)) {
+		return kcopy(uaddr, kaddr, len);
 	}
 
 	iov.iov_base = kaddr;
@@ -244,11 +244,11 @@ copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
 	if (len == 0)
 		return (0);
 
-	if (VMSPACE_IS_KERNEL_P(vm)) {
-		return kcopy(kaddr, uaddr, len);
-	}
 	if (__predict_true(vm == curproc->p_vmspace)) {
 		return copyout(kaddr, uaddr, len);
+	}
+	if (VMSPACE_IS_KERNEL_P(vm)) {
+		return kcopy(kaddr, uaddr, len);
 	}
 
 	iov.iov_base = __UNCONST(kaddr); /* XXXUNCONST cast away const */
