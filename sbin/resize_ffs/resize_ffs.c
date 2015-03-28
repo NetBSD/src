@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.38 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.39 2015/03/28 17:22:46 riastradh Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.38 2013/06/23 22:03:34 dholland Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.39 2015/03/28 17:22:46 riastradh Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -2026,22 +2026,23 @@ get_dev_size(char *dev_name)
 	struct dkwedge_info dkw;
 	struct partition *pp;
 	struct disklabel lp;
+	struct stat st;
 	size_t ptn;
 
 	/* Get info about partition/wedge */
-	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1) {
-		if (ioctl(fd, DIOCGDINFO, &lp) == -1)
-			return 0;
-
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0)
+		return dkw.dkw_size;
+	if (ioctl(fd, DIOCGDINFO, &lp) == 0) {
 		ptn = strchr(dev_name, '\0')[-1] - 'a';
 		if (ptn >= lp.d_npartitions)
 			return 0;
-
 		pp = &lp.d_partitions[ptn];
 		return pp->p_size;
 	}
+	if (fstat(fd, &st) == 0 && S_ISREG(st.st_mode))
+		return st.st_size;
 
-	return dkw.dkw_size;
+	return 0;
 }
 
 /*
