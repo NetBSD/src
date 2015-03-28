@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1128 2015/02/13 17:50:48 maxv Exp $
+#	$NetBSD: files,v 1.1129 2015/03/28 14:09:58 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20141030
@@ -318,6 +318,9 @@ define	pckbport_machdep_cnattach
 define	firmload
 
 include "dev/files.audio"
+
+# High definition audio
+include "dev/hdaudio/files.hdaudio"
 
 # Base verbose vendor/product printing support
 file	dev/dev_verbose.c

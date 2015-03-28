@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg_dd.h,v 1.2 2012/08/29 18:52:32 dholland Exp $ */
+/* $NetBSD: ceareg.h,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -25,25 +25,40 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _HDAFG_DD_H
-#define _HDAFG_DD_H
+#ifndef _CEAREG_H
+#define _CEAREG_H
 
-#include "hdmireg.h"
-#include "eldreg.h"
-#include "ceareg.h"
+/* short audio descriptor */
+struct cea_sad {
+	uint8_t	flags1;
+	uint8_t sample_rates;
+	uint8_t flags2;
+} __packed;
 
-#define	HDAFG_DD_MONITOR_NAME_LEN	32
-#define	HDAFG_DD_MAX_SAD		15
+#define	CEA_AUDIO_FORMAT(desc)	(((desc)->flags1 >> 3) & 0x0f)
+#define	 CEA_AUDIO_FORMAT_LPCM		1
+#define	 CEA_AUDIO_FORMAT_AC3		2
+#define	 CEA_AUDIO_FORMAT_MPEG1_L12	3
+#define	 CEA_AUDIO_FORMAT_MPEG1_L3	4
+#define	 CEA_AUDIO_FORMAT_MPEG2		5
+#define	 CEA_AUDIO_FORMAT_AAC		6
+#define	 CEA_AUDIO_FORMAT_DTS		7
+#define	 CEA_AUDIO_FORMAT_ATRAC		8
+#define	CEA_MAX_CHANNELS(desc)	((((desc)->flags1 >> 0) & 0x07) + 1)
+#define	CEA_SAMPLE_RATE(desc)	((desc)->sample_rates)
+#define	 CEA_SAMPLE_RATE_192K		0x40
+#define	 CEA_SAMPLE_RATE_176K		0x20
+#define	 CEA_SAMPLE_RATE_96K		0x10
+#define	 CEA_SAMPLE_RATE_88K		0x08
+#define	 CEA_SAMPLE_RATE_48K		0x04
+#define	 CEA_SAMPLE_RATE_44K		0x02
+#define	 CEA_SAMPLE_RATE_32K		0x01
+/* uncompressed */
+#define	CEA_PRECISION(desc)	((desc)->flags2 & 0x07)
+#define	 CEA_PRECISION_24BIT		0x4
+#define	 CEA_PRECISION_20BIT		0x2
+#define	 CEA_PRECISION_16BIT		0x1
+/* compressed */
+#define	CEA_MAX_BITRATE(desc)	((uint32_t)(desc)->flags2 * 8000)
 
-struct hdafg_dd_info {
-	struct eld_baseline_block eld;
-	char		monitor[HDAFG_DD_MONITOR_NAME_LEN];
-	size_t		nsad;
-	struct cea_sad	sad[HDAFG_DD_MAX_SAD];
-};
-
-int	hdafg_dd_parse_info(uint8_t *, size_t, struct hdafg_dd_info *);
-void	hdafg_dd_hdmi_ai_cksum(struct hdmi_audio_infoframe *);
-
-
-#endif /* !_HDAFG_DD_H */
+#endif /* !_CEAREG_H */

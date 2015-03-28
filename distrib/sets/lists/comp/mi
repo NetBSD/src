@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1947 2015/02/17 20:29:20 joerg Exp $
+#	$NetBSD: mi,v 1.1948 2015/03/28 14:09:58 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -398,6 +398,8 @@
 ./usr/include/dev/filemon/filemon.h		comp-c-include
 ./usr/include/dev/fssvar.h			comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
+./usr/include/dev/hdaudio/hdaudioio.h		comp-c-include
+./usr/include/dev/hdaudio/hdaudioreg.h		comp-c-include
 ./usr/include/dev/i2c/i2c_bus.h			comp-obsolete		obsolete
 ./usr/include/dev/i2c/i2c_eeprom.h		comp-obsolete		obsolete
 ./usr/include/dev/i2c/i2c_io.h			comp-c-include
@@ -614,8 +616,8 @@
 ./usr/include/dev/ofw/openfirmio.h		comp-c-include
 ./usr/include/dev/pci/amrio.h			comp-c-include
 ./usr/include/dev/pci/amrreg.h			comp-c-include
-./usr/include/dev/pci/hdaudio/hdaudioio.h	comp-c-include
-./usr/include/dev/pci/hdaudio/hdaudioreg.h	comp-c-include
+./usr/include/dev/pci/hdaudio/hdaudioio.h	comp-obsolete		obsolete
+./usr/include/dev/pci/hdaudio/hdaudioreg.h	comp-obsolete		obsolete
 ./usr/include/dev/pci/if_devar.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_fxpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_fxpvar.h		comp-obsolete		obsolete

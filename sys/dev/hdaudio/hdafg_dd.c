@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg_dd.c,v 1.2 2012/08/29 18:52:31 dholland Exp $ */
+/* $NetBSD: hdafg_dd.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg_dd.c,v 1.2 2012/08/29 18:52:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg_dd.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: hdafg_dd.c,v 1.2 2012/08/29 18:52:31 dholland Exp $"
 
 #include "hdaudioreg.h"
 #include "hdaudiovar.h"
-#include "hdaudio_pci.h"
 #include "hdafg_dd.h"
 
 int

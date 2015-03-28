@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.10 2015/02/11 00:37:25 christos Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>

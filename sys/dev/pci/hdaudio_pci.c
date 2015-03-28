@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.13 2014/10/28 02:49:52 nonaka Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.13 2014/10/28 02:49:52 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.1 2015/03/28 14:09:59 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,13 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.13 2014/10/28 02:49:52 nonaka Exp 
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/module.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
-#include "hdaudioreg.h"
-#include "hdaudiovar.h"
-#include "hdaudio_pci.h"
+#include <dev/hdaudio/hdaudioreg.h>
+#include <dev/hdaudio/hdaudiovar.h>
+#include <dev/pci/hdaudio_pci.h>
 
 struct hdaudio_pci_softc {
 	struct hdaudio_softc	sc_hdaudio;	/* must be first */
@@ -260,4 +261,33 @@ hdaudio_pci_resume(device_t self, const pmf_qual_t *qual)
 
 	hdaudio_pci_reinit(sc);
 	return hdaudio_resume(&sc->sc_hdaudio);
+}
+
+MODULE(MODULE_CLASS_DRIVER, hdaudio_pci, "hdaudio");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+hdaudio_pci_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_hdaudio_pci,
+		    cfattach_ioconf_hdaudio_pci, cfdata_ioconf_hdaudio_pci);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_hdaudio_pci,
+		    cfattach_ioconf_hdaudio_pci, cfdata_ioconf_hdaudio_pci);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }

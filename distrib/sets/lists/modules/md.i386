@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.57 2015/03/08 04:21:41 christos Exp $
+# $NetBSD: md.i386,v 1.58 2015/03/28 14:09:58 jmcneill Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -89,6 +89,8 @@
 ./@MODULEDIR@/hdafg/hdafg.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/hdaudio				base-kernel-modules	kmod
 ./@MODULEDIR@/hdaudio/hdaudio.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/hdaudio_pci			base-kernel-modules	kmod
+./@MODULEDIR@/hdaudio_pci/hdaudio_pci.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/hdaudioverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/hdaudioverbose/hdaudioverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel				base-kernel-modules	kmod
@@ -357,6 +359,8 @@
 ./stand/i386-xen/@OSRELEASE@/modules/hdafg/hdafg.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hdaudio				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/hdaudio_pci			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/hdaudio_pci/hdaudio_pci.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hdaudioverbose			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hdaudioverbose/hdaudioverbose.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules
@@ -762,6 +766,8 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/hdafg/hdafg.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hdaudio				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/hdaudio_pci			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/hdaudio_pci/hdaudio_pci.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hdaudioverbose			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hdaudioverbose/hdaudioverbose.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules

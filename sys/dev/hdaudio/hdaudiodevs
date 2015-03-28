@@ -1,4 +1,4 @@
-$NetBSD: hdaudiodevs,v 1.2 2015/01/19 14:31:32 njoly Exp $
+$NetBSD: hdaudiodevs,v 1.1 2015/03/28 14:09:59 jmcneill Exp $
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>

@@ -1,6 +1,6 @@
-#	$NetBSD: hdaudio.ioconf,v 1.1 2011/01/07 15:32:12 jmcneill Exp $
+#	$NetBSD: hdaudio_pci.ioconf,v 1.1 2015/03/28 14:09:59 jmcneill Exp $
 
-ioconf hdaudio
+ioconf hdaudio_pci
 
 include "conf/files"
 include "dev/pci/files.pci"

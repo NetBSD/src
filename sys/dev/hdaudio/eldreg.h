@@ -1,4 +1,4 @@
-/* $NetBSD: eldreg.h,v 1.1 2011/02/12 15:15:34 jmcneill Exp $ */
+/* $NetBSD: eldreg.h,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>

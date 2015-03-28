@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.h,v 1.1 2010/08/07 16:59:48 jmcneill Exp $ */
+/* $NetBSD: hdaudio_pci.h,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
