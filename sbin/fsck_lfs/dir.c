@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.32 2013/06/18 18:18:58 christos Exp $	 */
+/* $NetBSD: dir.c,v 1.33 2015/03/29 19:35:58 chopps Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -155,7 +155,7 @@ dirscan(struct inodesc *idesc)
 		memcpy(dbuf, dp, (size_t) dsize);
 		idesc->id_dirp = (struct lfs_direct *) dbuf;
 		if ((n = (*idesc->id_func) (idesc)) & ALTERED) {
-			bread(vp, idesc->id_lblkno, blksiz, NOCRED, 0, &bp);
+			bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 			memcpy(bp->b_data + idesc->id_loc - dsize, dbuf,
 			    (size_t) dsize);
 			VOP_BWRITE(bp);
@@ -178,7 +178,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 	long size, blksiz, fix, dploc;
 
 	blksiz = idesc->id_numfrags * fs->lfs_fsize;
-	bread(vp, idesc->id_lblkno, blksiz, NOCRED, 0, &bp);
+	bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 	if (idesc->id_loc % LFS_DIRBLKSIZ == 0 && idesc->id_filesize > 0 &&
 	    idesc->id_loc < blksiz) {
 		dp = (struct lfs_direct *) (bp->b_data + idesc->id_loc);
@@ -188,7 +188,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 		if (idesc->id_fix == IGNORE)
 			return (0);
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
-		bread(vp, idesc->id_lblkno, blksiz, NOCRED, 0, &bp);
+		bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 		dp = (struct lfs_direct *) (bp->b_data + idesc->id_loc);
 		dp->d_reclen = LFS_DIRBLKSIZ;
 		dp->d_ino = 0;
@@ -226,7 +226,7 @@ dpok:
 		if (idesc->id_fix == IGNORE)
 			return 0;
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
-		bread(vp, idesc->id_lblkno, blksiz, NOCRED, 0, &bp);
+		bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 		dp = (struct lfs_direct *) (bp->b_data + dploc);
 		dp->d_reclen += size;
 		if (fix)
@@ -573,11 +573,11 @@ expanddir(struct uvnode *vp, struct ulfs1_dinode *dp, char *name)
 	dp->di_size += fs->lfs_bsize;
 	dp->di_blocks += lfs_btofsb(fs, fs->lfs_bsize);
 	bread(vp, dp->di_db[lastbn + 1],
-	    (long) lfs_dblksize(fs, dp, lastbn + 1), NOCRED, 0, &bp);
+	    (long) lfs_dblksize(fs, dp, lastbn + 1), 0, &bp);
 	if (bp->b_flags & B_ERROR)
 		goto bad;
 	memcpy(firstblk, bp->b_data, LFS_DIRBLKSIZ);
-	bread(vp, lastbn, fs->lfs_bsize, NOCRED, 0, &bp);
+	bread(vp, lastbn, fs->lfs_bsize, 0, &bp);
 	if (bp->b_flags & B_ERROR)
 		goto bad;
 	memcpy(bp->b_data, firstblk, LFS_DIRBLKSIZ);
@@ -587,7 +587,7 @@ expanddir(struct uvnode *vp, struct ulfs1_dinode *dp, char *name)
 		memcpy(cp, &emptydir, sizeof emptydir);
 	VOP_BWRITE(bp);
 	bread(vp, dp->di_db[lastbn + 1],
-	    (long) lfs_dblksize(fs, dp, lastbn + 1), NOCRED, 0, &bp);
+	    (long) lfs_dblksize(fs, dp, lastbn + 1), 0, &bp);
 	if (bp->b_flags & B_ERROR)
 		goto bad;
 	memcpy(bp->b_data, &emptydir, sizeof emptydir);
@@ -626,7 +626,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 	dirp->dotdot_ino = parent;
 	vp = vget(fs, ino);
 	dp = VTOD(vp);
-	bread(vp, dp->di_db[0], fs->lfs_fsize, NOCRED, 0, &bp);
+	bread(vp, dp->di_db[0], fs->lfs_fsize, 0, &bp);
 	if (bp->b_flags & B_ERROR) {
 		brelse(bp, 0);
 		freeino(ino);

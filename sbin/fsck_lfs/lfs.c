@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.43 2014/07/13 02:44:21 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.44 2015/03/29 19:35:58 chopps Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -367,7 +367,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ulfs_daddr_t daddr)
 	/* Load inode block and find inode */
 	if (daddr > 0) {
 		bread(fs->lfs_devvp, LFS_FSBTODB(fs, daddr), fs->lfs_ibsize,
-		    NULL, 0, &bp);
+		    0, &bp);
 		bp->b_flags |= B_AGE;
 		dip = lfs_ifind(fs, ino, bp);
 		if (dip == NULL) {
@@ -479,7 +479,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 
 		dev_bsize = DEV_BSIZE;
 
-		(void)bread(devvp, sblkno, LFS_SBPAD, NOCRED, 0, &bp);
+		(void)bread(devvp, sblkno, LFS_SBPAD, 0, &bp);
 		fs = ecalloc(1, sizeof(*fs));
 		fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 		fs->lfs_devvp = devvp;
@@ -490,7 +490,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	
 		if (tryalt) {
 			(void)bread(devvp, LFS_FSBTODB(fs, fs->lfs_sboffs[1]),
-		    	LFS_SBPAD, NOCRED, 0, &bp);
+		    	LFS_SBPAD, 0, &bp);
 			altfs = ecalloc(1, sizeof(*altfs));
 			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 			altfs->lfs_devvp = devvp;
@@ -598,7 +598,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 
 		/* Read in summary block */
 		bread(devvp, LFS_FSBTODB(osb, daddr), osb->lfs_sumsize,
-		    NULL, 0, &bp);
+		    0, &bp);
 		sp = (SEGSUM *)bp->b_data;
 
 		/*
@@ -790,7 +790,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 		}
 		while (j < howmany(sp->ss_ninos, LFS_INOPB(fs)) && *idp == daddr) {
 			bread(devvp, LFS_FSBTODB(fs, daddr), fs->lfs_ibsize,
-			    NOCRED, 0, &bp);
+			    0, &bp);
 			datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
 			brelse(bp, 0);
 
@@ -806,7 +806,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 				       fp->fi_lastlength
 				       : fs->lfs_bsize);
 				bread(devvp, LFS_FSBTODB(fs, daddr), len,
-				    NOCRED, 0, &bp);
+				    0, &bp);
 				datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
 				brelse(bp, 0);
 				daddr += lfs_btofsb(fs, len);
@@ -1043,7 +1043,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 			if (nsize <= osize) {
 				/* No need to extend */
 				if (bpp && (error = bread(vp, lbn, osize,
-				    NOCRED, 0, &bp)))
+				    0, &bp)))
 					return error;
 			} else {
 				/* Extend existing block */
@@ -1149,8 +1149,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 			break;
 		    default:
 			idp = &indirs[num - 1];
-			if (bread(vp, idp->in_lbn, fs->lfs_bsize, NOCRED,
-				  0, &ibp))
+			if (bread(vp, idp->in_lbn, fs->lfs_bsize, 0, &ibp))
 				panic("lfs_balloc: bread bno %lld",
 				    (long long)idp->in_lbn);
 			/* XXX ondisk32 */
@@ -1200,7 +1199,7 @@ lfs_fragextend(struct uvnode *vp, int osize, int nsize, daddr_t lbn,
 	 * appropriate things and making sure it all goes to disk.
 	 * Don't bother to read in that case.
 	 */
-	if (bpp && (error = bread(vp, lbn, osize, NOCRED, 0, bpp))) {
+	if (bpp && (error = bread(vp, lbn, osize, 0, bpp))) {
 		brelse(*bpp, 0);
 		goto out;
 	}
