@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_cpufreq.c,v 1.2 2015/03/17 22:29:40 jmcneill Exp $ */
+/* $NetBSD: amlogic_cpufreq.c,v 1.3 2015/03/29 22:49:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.2 2015/03/17 22:29:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.3 2015/03/29 22:49:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,10 +68,10 @@ static u_int	meson8b_cpu_get_rate(void);
 static size_t	meson8b_cpu_get_available(u_int *, size_t);
 
 #define CBUS_READ(x)		\
-	bus_space_read_4(&amlogic_bs_tag, amlogic_core_bsh, \
+	bus_space_read_4(&armv7_generic_bs_tag, amlogic_core_bsh, \
 			 AMLOGIC_CBUS_OFFSET + (x))
 #define CBUS_WRITE(x, v)	\
-	bus_space_write_4(&amlogic_bs_tag, amlogic_core_bsh, \
+	bus_space_write_4(&armv7_generic_bs_tag, amlogic_core_bsh, \
 			  AMLOGIC_CBUS_OFFSET + (x), (v))
 
 void
