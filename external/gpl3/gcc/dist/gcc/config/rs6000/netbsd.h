@@ -75,6 +75,18 @@
 #undef WINT_TYPE
 #define WINT_TYPE "int"
 
+#undef INT64_TYPE
+#define INT64_TYPE "long long int"
+
+#undef UINT64_TYPE
+#define UINT64_TYPE "long long unsigned int"
+
+#undef INTMAX_TYPE
+#define INTMAX_TYPE "long long int"
+
+#undef UINTMAX_TYPE
+#define UINTMAX_TYPE "long long unsigned int"
+
 /* Undo the spec mess from sysv4.h, and just define the specs
    the way NetBSD systems actually expect.  */
 
