@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.69.2.1 2014/08/18 07:37:04 martin Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.69.2.2 2015/03/29 09:07:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.69.2.1 2014/08/18 07:37:04 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.69.2.2 2015/03/29 09:07:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -177,6 +177,8 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 
 	a = ai;
 	execname = NULL;
+
+	memset(ai, 0, sizeof(ai));
 
 	/*
 	 * Push extra arguments on the stack needed by dynamically
