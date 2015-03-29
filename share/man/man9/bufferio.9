@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.4 2015/03/29 21:08:08 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.5 2015/03/29 21:08:36 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,6 +96,9 @@ Caller must provide
 and must not call
 .Fn biowait bp .
 .El
+For legibility, callers should indicate writes by passing the
+pseudo-flag
+.Dv B_WRITE ,
 which is zero.
 .It Fa bp Ns Li "->b_data"
 Pointer to kernel virtual address of source/target for transfer.
