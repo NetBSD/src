@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.26 2015/03/29 08:08:01 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.27 2015/03/29 11:33:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.26 2015/03/29 08:08:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.27 2015/03/29 11:33:15 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -114,6 +114,7 @@ fail:
 #endif /* UHCI_DEBUG */
 #endif /* USB_DEBUG */
 
+#define	DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(uhcidebug,1,FMT,A,B,C,D)
 #define	DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(uhcidebug,N,FMT,A,B,C,D)
 #define	UHCIHIST_FUNC()		USBHIST_FUNC()
 #define	UHCIHIST_CALLED(name)	USBHIST_CALLED(uhcidebug)
@@ -552,7 +553,7 @@ uhci_init(uhci_softc_t *sc)
 
 	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
 
-	DPRINTFN(1, "Enabling...", 0, 0, 0, 0);
+	DPRINTF("Enabling...", 0, 0, 0, 0);
 
 	err = uhci_run(sc, 1, 0);		/* and here we go... */
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE |
@@ -747,10 +748,10 @@ Static void
 uhci_dumpregs(uhci_softc_t *sc)
 {
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	DPRINTFN(1, "cmd =%04x  sts    =%04x  intr   =%04x  frnum =%04x",
+	DPRINTF("cmd =%04x  sts    =%04x  intr   =%04x  frnum =%04x",
 	    UREAD2(sc, UHCI_CMD), UREAD2(sc, UHCI_STS),
 	    UREAD2(sc, UHCI_INTR), UREAD2(sc, UHCI_FRNUM));
-	DPRINTFN(1, "sof =%04x  portsc1=%04x  portsc2=%04x  flbase=%08x",
+	DPRINTF("sof =%04x  portsc1=%04x  portsc2=%04x  flbase=%08x",
 	    UREAD1(sc, UHCI_SOF), UREAD2(sc, UHCI_PORTSC1),
 	    UREAD2(sc, UHCI_PORTSC2), UREAD4(sc, UHCI_FLBASEADDR));
 }
@@ -763,33 +764,33 @@ uhci_dump_td(uhci_soft_td_t *p)
 	usb_syncmem(&p->dma, p->offs, sizeof(p->td),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-	DPRINTFN(1, "TD(%p) at %08x", p, p->physaddr, 0, 0);
- 	DPRINTFN(1, "   link=0x%08x status=0x%08x "
+	DPRINTF("TD(%p) at %08x", p, p->physaddr, 0, 0);
+ 	DPRINTF("   link=0x%08x status=0x%08x "
 	    "token=0x%08x buffer=0x%08x",
 	     le32toh(p->td.td_link),
 	     le32toh(p->td.td_status),
 	     le32toh(p->td.td_token),
 	     le32toh(p->td.td_buffer));
 
-	DPRINTFN(1, "bitstuff=%d crcto   =%d nak     =%d babble  =%d",
+	DPRINTF("bitstuff=%d crcto   =%d nak     =%d babble  =%d",
 	    !!(le32toh(p->td.td_status) & UHCI_TD_BITSTUFF),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_CRCTO),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_NAK),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_BABBLE));
-	DPRINTFN(1, "dbuffer =%d stalled =%d active  =%d ioc     =%d",
+	DPRINTF("dbuffer =%d stalled =%d active  =%d ioc     =%d",
 	    !!(le32toh(p->td.td_status) & UHCI_TD_DBUFFER),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_STALLED),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_ACTIVE),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_IOC));
-	DPRINTFN(1, "ios     =%d ls      =%d spd     =%d",
+	DPRINTF("ios     =%d ls      =%d spd     =%d",
 	    !!(le32toh(p->td.td_status) & UHCI_TD_IOS),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_LS),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_SPD), 0);
-	DPRINTFN(1, "errcnt  =%d actlen  =%d pid=%02x",
+	DPRINTF("errcnt  =%d actlen  =%d pid=%02x",
 	    UHCI_TD_GET_ERRCNT(le32toh(p->td.td_status)),
 	    UHCI_TD_GET_ACTLEN(le32toh(p->td.td_status)),
 	    UHCI_TD_GET_PID(le32toh(p->td.td_token)), 0);
-	DPRINTFN(1, "addr=%d  endpt=%d  D=%d  maxlen=%d,",
+	DPRINTF("addr=%d  endpt=%d  D=%d  maxlen=%d,",
 	    UHCI_TD_GET_DEVADDR(le32toh(p->td.td_token)),
 	    UHCI_TD_GET_ENDPT(le32toh(p->td.td_token)),
 	    UHCI_TD_GET_DT(le32toh(p->td.td_token)),
@@ -804,7 +805,7 @@ uhci_dump_qh(uhci_soft_qh_t *sqh)
 	usb_syncmem(&sqh->dma, sqh->offs, sizeof(sqh->qh),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-	DPRINTFN(1, "QH(%p) at %08x: hlink=%08x elink=%08x", sqh,
+	DPRINTF("QH(%p) at %08x: hlink=%08x elink=%08x", sqh,
 	    (int)sqh->physaddr, le32toh(sqh->qh.qh_hlink),
 	    le32toh(sqh->qh.qh_elink));
 
@@ -856,13 +857,13 @@ uhci_dump_qhs(uhci_soft_qh_t *sqh)
 	if (sqh->hlink != NULL && !(le32toh(sqh->qh.qh_hlink) & UHCI_PTR_T))
 		uhci_dump_qhs(sqh->hlink);
 	else
-		DPRINTFN(1, "No QH", 0, 0, 0, 0);
+		DPRINTF("No QH", 0, 0, 0, 0);
 	usb_syncmem(&sqh->dma, sqh->offs, sizeof(sqh->qh), BUS_DMASYNC_PREREAD);
 
 	if (sqh->elink != NULL && !(le32toh(sqh->qh.qh_elink) & UHCI_PTR_T))
 		uhci_dump_tds(sqh->elink);
 	else
-		DPRINTFN(1, "No QH", 0, 0, 0, 0);
+		DPRINTF("No QH", 0, 0, 0, 0);
 }
 
 void
@@ -1291,7 +1292,7 @@ uhci_intr1(uhci_softc_t *sc)
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug > 15) {
-		DPRINTFN(1, "sc %p", sc, 0, 0, 0);
+		DPRINTF("sc %p", sc, 0, 0, 0);
 		uhci_dumpregs(sc);
 	}
 #endif
@@ -1364,7 +1365,7 @@ uhci_softintr(void *v)
 	uhci_intr_info_t *ii, *nextii;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	DPRINTFN(1, "sc %p", sc, 0, 0, 0);
+	DPRINTF("sc %p", sc, 0, 0, 0);
 
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
@@ -1407,7 +1408,7 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 #endif
 	if (ii->xfer->ux_status == USBD_CANCELLED ||
 	    ii->xfer->ux_status == USBD_TIMEOUT) {
-		DPRINTFN(1, "aborted xfer %p", ii->xfer, 0, 0, 0);
+		DPRINTF("aborted xfer %p", ii->xfer, 0, 0, 0);
 		return;
 	}
 
@@ -1556,7 +1557,7 @@ uhci_idone(uhci_intr_info_t *ii)
 			std = stds[n];
 #ifdef UHCI_DEBUG
 			if (uhcidebug > 5) {
-				DPRINTFN(1, "isoc TD %d", i, 0, 0, 0);
+				DPRINTF("isoc TD %d", i, 0, 0, 0);
 				uhci_dump_td(std);
 			}
 #endif
@@ -1662,7 +1663,7 @@ uhci_timeout(void *addr)
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
-	DPRINTFN(1, "uxfer %p", uxfer, 0, 0, 0);
+	DPRINTF("uxfer %p", uxfer, 0, 0, 0);
 
 	if (sc->sc_dying) {
 		mutex_enter(&sc->sc_lock);
@@ -1686,7 +1687,7 @@ uhci_timeout_task(void *addr)
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
-	DPRINTFN(1, "xfer=%p", xfer, 0, 0, 0);
+	DPRINTF("xfer=%p", xfer, 0, 0, 0);
 
 	mutex_enter(&sc->sc_lock);
 	uhci_abort_xfer(xfer, USBD_TIMEOUT);
@@ -1725,7 +1726,7 @@ uhci_waitintr(uhci_softc_t *sc, struct usbd_xfer *xfer)
 	}
 
 	/* Timeout */
-	DPRINTFN(1, "timeout", 0, 0, 0, 0);
+	DPRINTF("timeout", 0, 0, 0, 0);
 	for (ii = LIST_FIRST(&sc->sc_intrhead);
 	     ii != NULL && ii->xfer != xfer;
 	     ii = LIST_NEXT(ii, list))
@@ -1779,7 +1780,7 @@ uhci_run(uhci_softc_t *sc, int run, int locked)
 	if (!locked)
 		mutex_spin_enter(&sc->sc_intr_lock);
 
-	DPRINTFN(1, "setting run=%d", run, 0, 0, 0);
+	DPRINTF("setting run=%d", run, 0, 0, 0);
 	cmd = UREAD2(sc, UHCI_CMD);
 	if (run)
 		cmd |= UHCI_CMD_RS;
@@ -1792,7 +1793,7 @@ uhci_run(uhci_softc_t *sc, int run, int locked)
 		if (run == running) {
 			if (!locked)
 				mutex_spin_exit(&sc->sc_intr_lock);
-			DPRINTFN(1, "done cmd=0x%x sts=0x%x",
+			DPRINTF("done cmd=0x%x sts=0x%x",
 			    UREAD2(sc, UHCI_CMD), UREAD2(sc, UHCI_STS), 0, 0);
 			return USBD_NORMAL_COMPLETION;
 		}
@@ -1971,7 +1972,7 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 
 	if (ntd == 0) {
 		*sp = *ep = NULL;
-		DPRINTFN(1, "ntd=0", 0, 0, 0, 0);
+		DPRINTF("ntd=0", 0, 0, 0, 0);
 		return USBD_NORMAL_COMPLETION;
 	}
 	tog = upipe->nexttoggle;
@@ -2222,7 +2223,7 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 */
 	xfer->ux_status = status;	/* make software ignore it */
 	callout_stop(&xfer->ux_callout);
-	DPRINTFN(1, "stop ii=%p", ii, 0, 0, 0);
+	DPRINTF("stop ii=%p", ii, 0, 0, 0);
 	for (std = ii->stdstart; std != NULL; std = std->link.std) {
 		usb_syncmem(&std->dma,
 		    std->offs + offsetof(uhci_td_t, td_status),
@@ -2244,13 +2245,13 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	usb_delay_ms_locked(upipe->pipe.up_dev->ud_bus, 2, &sc->sc_lock);
 	sc->sc_softwake = 1;
 	usb_schedsoftintr(&sc->sc_bus);
-	DPRINTFN(1, "cv_wait", 0, 0, 0, 0);
+	DPRINTF("cv_wait", 0, 0, 0, 0);
 	cv_wait(&sc->sc_softwake_cv, &sc->sc_lock);
 
 	/*
 	 * Step 3: Execute callback.
 	 */
-	DPRINTFN(1, "callback", 0, 0, 0, 0);
+	DPRINTF("callback", 0, 0, 0, 0);
 #ifdef DIAGNOSTIC
 	ii->isdone = 1;
 #endif
@@ -2468,7 +2469,7 @@ uhci_device_intr_abort(struct usbd_xfer *xfer)
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	DPRINTFN(1, "xfer=%p", xfer, 0, 0, 0);
+	DPRINTF("xfer=%p", xfer, 0, 0, 0);
 
 	uhci_abort_xfer(xfer, USBD_CANCELLED);
 }
@@ -2740,7 +2741,7 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 		DPRINTFN(5, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 5) {
-			DPRINTFN(1, "TD %d", i, 0, 0, 0);
+			DPRINTF("TD %d", i, 0, 0, 0);
 			uhci_dump_td(std);
 		}
 #endif
@@ -3174,7 +3175,7 @@ uhci_device_ctrl_done(struct usbd_xfer *xfer)
 	usb_syncmem(&upipe->u.ctl.reqdma, 0,
 	    sizeof(usb_device_request_t),  BUS_DMASYNC_POSTWRITE);
 
-	DPRINTFN(1, "length=%d", xfer->ux_actlen, 0, 0, 0);
+	DPRINTF("length=%d", xfer->ux_actlen, 0, 0, 0);
 }
 
 /* Deallocate request data structures */
@@ -3287,7 +3288,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 	if (ival > UHCI_VFRAMELIST_COUNT)
 		ival = UHCI_VFRAMELIST_COUNT;
 	npoll = (UHCI_VFRAMELIST_COUNT + ival - 1) / ival;
-	DPRINTFN(1, "ival=%d npoll=%d", ival, npoll, 0, 0);
+	DPRINTF("ival=%d npoll=%d", ival, npoll, 0, 0);
 
 	upipe->u.intr.npoll = npoll;
 	upipe->u.intr.qhs =
@@ -3308,7 +3309,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 			bestoffs = offs;
 		}
 	}
-	DPRINTFN(1, "bw=%d offs=%d", bestbw, bestoffs, 0, 0);
+	DPRINTF("bw=%d offs=%d", bestbw, bestoffs, 0, 0);
 	mutex_enter(&sc->sc_lock);
 	for(i = 0; i < npoll; i++) {
 		upipe->u.intr.qhs[i] = sqh = uhci_alloc_sqh(sc);
@@ -3344,7 +3345,7 @@ uhci_open(struct usbd_pipe *pipe)
 	int ival;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	DPRINTFN(1, "pipe=%p, addr=%d, endpt=%d (%d)",
+	DPRINTF("pipe=%p, addr=%d, endpt=%d (%d)",
 	    pipe, pipe->up_dev->ud_addr, ed->bEndpointAddress, bus->ub_rhaddr);
 
 	if (sc->sc_dying)
@@ -3448,7 +3449,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 
 	usb_delay_ms(&sc->sc_bus, USB_PORT_ROOT_RESET_DELAY);
 
-	DPRINTFN(1, "uhci port %d reset, status0 = 0x%04x", index,
+	DPRINTF("uhci port %d reset, status0 = 0x%04x", index,
 	    UREAD2(sc, port), 0, 0);
 
 	x = URWMASK(UREAD2(sc, port));
@@ -3456,7 +3457,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 
 	delay(100);
 
-	DPRINTFN(1, "uhci port %d reset, status1 = 0x%04x", index,
+	DPRINTF("uhci port %d reset, status1 = 0x%04x", index,
 	    UREAD2(sc, port), 0, 0);
 
 	x = URWMASK(UREAD2(sc, port));
@@ -3466,7 +3467,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 		usb_delay_ms(&sc->sc_bus, USB_PORT_RESET_DELAY);
 
 		x = UREAD2(sc, port);
-		DPRINTFN(1, "uhci port %d iteration %u, status = 0x%04x", index,
+		DPRINTF("uhci port %d iteration %u, status = 0x%04x", index,
 		    lim, x, 0);
 
 		if (!(x & UHCI_PORTSC_CCS)) {
@@ -3506,7 +3507,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 	    UREAD2(sc, port), 0, 0);
 
 	if (lim <= 0) {
-		DPRINTFN(1, "uhci port %d reset timed out", index,
+		DPRINTF("uhci port %d reset timed out", index,
 		    0, 0, 0);
 		return USBD_TIMEOUT;
 	}
@@ -3531,7 +3532,7 @@ uhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	if (sc->sc_dying)
 		return -1;
 
-	DPRINTFN(1, "type=0x%02x request=%02x", req->bmRequestType,
+	DPRINTF("type=0x%02x request=%02x", req->bmRequestType,
 	    req->bRequest, 0, 0);
 
 	len = UGETW(req->wLength);
@@ -3541,7 +3542,7 @@ uhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 #define C(x,y) ((x) | ((y) << 8))
 	switch (C(req->bRequest, req->bmRequestType)) {
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		DPRINTFN(1, "wValue=0x%04x", value, 0, 0, 0);
+		DPRINTF("wValue=0x%04x", value, 0, 0, 0);
 		if (len == 0)
 			break;
 		switch (value) {
@@ -3574,7 +3575,7 @@ uhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
-		DPRINTFN(1, "UR_CLEAR_PORT_FEATURE port=%d feature=%d", index,
+		DPRINTF("UR_CLEAR_PORT_FEATURE port=%d feature=%d", index,
 		    value, 0, 0);
 		if (index == 1)
 			port = UHCI_PORTSC1;
@@ -3741,12 +3742,12 @@ uhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		break;
 	default:
 		/* default from usbroothub */
-		DPRINTFN(1, "returning %d (usbroothub default)",
+		DPRINTF("returning %d (usbroothub default)",
 		    buflen, 0, 0, 0);
 		return buflen;
 	}
 
-	DPRINTFN(1, "returning %d", totlen, 0, 0, 0);
+	DPRINTF("returning %d", totlen, 0, 0, 0);
 
 	return totlen;
 }
@@ -3799,7 +3800,7 @@ uhci_root_intr_start(struct usbd_xfer *xfer)
 	unsigned int ival;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	DPRINTFN(1, "xfer=%p len=%d flags=%d", xfer, xfer->ux_length,
+	DPRINTF("xfer=%p len=%d flags=%d", xfer, xfer->ux_length,
 	    xfer->ux_flags, 0);
 
 	if (sc->sc_dying)
