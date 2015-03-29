@@ -1,4 +1,4 @@
-#	$NetBSD: files.amlogic,v 1.9 2015/03/22 17:28:22 jmcneill Exp $
+#	$NetBSD: files.amlogic,v 1.10 2015/03/29 22:49:44 jmcneill Exp $
 #
 # Configuration info for Amlogic ARM Peripherals
 #
@@ -10,11 +10,11 @@ file	arch/arm/arm32/arm32_boot.c
 file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/amlogic/amlogic_board.c
 file	arch/arm/amlogic/amlogic_cpufreq.c
-file	arch/arm/amlogic/amlogic_space.c
-file	arch/arm/arm/bus_space_a4x.S
 
 # On-board I/O
 device	amlogicio { [port=-1] } : bus_space_generic
