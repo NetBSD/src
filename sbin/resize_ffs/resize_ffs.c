@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.40 2015/03/28 17:25:33 riastradh Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.41 2015/03/29 19:33:55 chopps Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.40 2015/03/28 17:25:33 riastradh Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.41 2015/03/29 19:33:55 chopps Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -152,6 +152,7 @@ static unsigned char *iflags;
 /* global flags */
 int is_ufs2 = 0;
 int needswap = 0;
+int verbose = 0;
 
 static void usage(void) __dead;
 
@@ -2040,7 +2041,7 @@ get_dev_size(char *dev_name)
 		return pp->p_size;
 	}
 	if (fstat(fd, &st) != -1 && S_ISREG(st.st_mode))
-		return st.st_size;
+		return st.st_size / DEV_BSIZE;
 
 	return 0;
 }
@@ -2052,6 +2053,7 @@ int
 main(int argc, char **argv)
 {
 	int ch;
+	int CheckOnlyFlag;
 	int ExpertFlag;
 	int SFlag;
 	size_t i;
@@ -2062,15 +2064,22 @@ main(int argc, char **argv)
 	newsize = 0;
 	ExpertFlag = 0;
 	SFlag = 0;
+        CheckOnlyFlag = 0;
 
-	while ((ch = getopt(argc, argv, "s:y")) != -1) {
+	while ((ch = getopt(argc, argv, "cs:vy")) != -1) {
 		switch (ch) {
+                case 'c':
+			CheckOnlyFlag = 1;
+			break;
 		case 's':
 			SFlag = 1;
 			newsize = strtoll(optarg, NULL, 10);
 			if(newsize < 1) {
 				usage();
 			}
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case 'y':
 			ExpertFlag = 1;
@@ -2090,7 +2099,7 @@ main(int argc, char **argv)
 
 	special = *argv;
 
-	if (ExpertFlag == 0) {
+	if (ExpertFlag == 0 && CheckOnlyFlag == 0) {
 		printf("It's required to manually run fsck on file system "
 		    "before you can resize it\n\n"
 		    " Did you run fsck on your disk (Yes/No) ? ");
@@ -2165,6 +2174,25 @@ main(int argc, char **argv)
 	 * just once, so being generous is cheap. */
 	memcpy(newsb, oldsb, SBLOCKSIZE);
 	loadcgs();
+
+        if (CheckOnlyFlag) {
+		/* Check to see if the newsize would change the file system. */
+		if (FFS_DBTOFSB(oldsb, newsize) == oldsb->fs_size) {
+			if (verbose) {
+				printf("Wouldn't change: already %" PRId64
+				    " blocks\n", newsize);
+			}
+			exit(1);
+		}
+		if (verbose) {
+			printf("Would change: newsize: %" PRId64 " oldsize: %"
+			    PRId64 " fsdb: %" PRId64 "\n", FFS_DBTOFSB(oldsb, newsize),
+			    (int64_t)oldsb->fs_size,
+			    (int64_t)oldsb->fs_fsbtodb);
+		}
+		exit(0);
+        }
+
 	if (newsize > FFS_FSBTODB(oldsb, oldsb->fs_size)) {
 		grow();
 	} else if (newsize < FFS_FSBTODB(oldsb, oldsb->fs_size)) {
@@ -2183,7 +2211,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-y] [-s size] special\n",
+	(void)fprintf(stderr, "usage: %s [-cvy] [-s size] special\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
