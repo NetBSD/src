@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.2 2015/03/29 21:05:21 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.3 2015/03/29 21:06:26 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,7 +117,7 @@ then before the user submits it to a block device, the user must
 increment
 .Fa vp Ns Li "->v_numoutput" .
 The user must not acquire
-.Fa vp Ns No 's
+.Fa vp Ns Ap s
 vnode lock between incrementing
 .Fa vp Ns Li "->v_numoutput"
 and submitting
@@ -183,7 +183,7 @@ For writes associated with a vnode
 accounts for
 .Fa vp Ns Li "->v_numoutput" ,
 so the caller is not allowed to acquire
-.Fa vp Ns No 's
+.Fa vp Ns Ap s
 vnode lock before submitting the nested I/O transfer to a block
 device.
 However, the caller is responsible for accounting the master buffer in
@@ -191,7 +191,7 @@ However, the caller is responsible for accounting the master buffer in
 This must be done very carefully because after incrementing
 .Fa vp Ns Li "->v_numoutput" ,
 the caller is not allowed to acquire
-.Fa vp Ns No 's
+.Fa vp Ns Ap s
 vnode lock before either calling
 .Fn nestiobuf_done
 or submitting the last nested I/O transfer to a block device.
