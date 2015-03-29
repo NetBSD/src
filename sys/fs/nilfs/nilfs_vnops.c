@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.30 2014/10/15 09:05:46 hannken Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.31 2015/03/29 14:12:28 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.30 2014/10/15 09:05:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.31 2015/03/29 14:12:28 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -555,7 +555,7 @@ nilfs_readdir(void *v)
 
 		blocknr = diroffset / blocksize;
 		blkoff  = diroffset % blocksize;
-		error = nilfs_bread(node, blocknr, NOCRED, 0, &bp);
+		error = nilfs_bread(node, blocknr, 0, &bp);
 		if (error)
 			return EIO;
 		while (diroffset < file_size) {
@@ -564,8 +564,7 @@ nilfs_readdir(void *v)
 			if (blkoff >= blocksize) {
 				blkoff = 0; blocknr++;
 				brelse(bp, BC_AGE);
-				error = nilfs_bread(node, blocknr, NOCRED, 0,
-						&bp);
+				error = nilfs_bread(node, blocknr, 0, &bp);
 				if (error)
 					return EIO;
 			}
