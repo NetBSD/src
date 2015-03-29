@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_var.h,v 1.8 2015/03/21 01:17:00 jmcneill Exp $ */
+/* $NetBSD: amlogic_var.h,v 1.9 2015/03/29 22:49:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -49,8 +49,8 @@ struct amlogicio_attach_args {
 	bus_dma_tag_t aio_dmat;
 };
 
-extern struct bus_space amlogic_bs_tag;
-extern struct bus_space amlogic_a4x_bs_tag;
+extern struct bus_space armv7_generic_bs_tag;
+extern struct bus_space armv7_generic_a4x_bs_tag;
 extern bus_space_handle_t amlogic_core_bsh;
 extern struct arm32_bus_dma_tag amlogic_dma_tag;
 
