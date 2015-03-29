@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmc.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_pmc.c,v 1.2 2015/03/29 22:27:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.2 2015/03/29 22:27:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,7 +92,7 @@ tegra_pmc_reset(void)
 		bst = pmc_softc->sc_bst;
 		bsh = pmc_softc->sc_bsh;
 	} else {
-		bst = &tegra_bs_tag;
+		bst = &armv7_generic_bs_tag;
 		bus_space_subregion(bst, tegra_apb_bsh,
 		    TEGRA_PMC_OFFSET, TEGRA_PMC_SIZE, &bsh);
 	}
