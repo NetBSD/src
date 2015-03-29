@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.246 2015/03/29 07:46:21 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.247 2015/03/29 09:09:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19403,4 +19403,23 @@ distrib/atari/floppies/common/Makefile.images	1.9
 	Use "-Os -m68020-60" for DBG, which generates smaller objects
 	than -Os.
 	[martin, ticket #652]
+
+sys/arch/sparc/include/openfirm.h		1.8
+sys/arch/sparc/sparc/openfirm.c			1.20
+sys/arch/sparc/stand/ofwboot/Locore.c		1.14
+
+	Fix kernel loading failures from partitions started from over first
+	4GB of disks on sparc64.
+	Sync sparc64 kernel's OF_seek with ofwboot's one, but sparc version
+	is not changed.
+	[nakayama, ticket #649]
+
+sys/compat/linux/common/linux_exec_elf32.c	1.92
+sys/compat/linux32/common/linux32_exec_elf32.c	1.18
+sys/compat/netbsd32/netbsd32_exec_elf32.c	1.39
+sys/compat/svr4_32/svr4_32_exec_elf32.c		1.24
+sys/kern/exec_elf.c				1.71
+
+	Zero-fill the ELF auxiliary vectors to prevent userland leak.
+	[maxv, ticket #650]
 
