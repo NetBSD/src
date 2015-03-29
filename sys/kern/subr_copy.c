@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.3 2015/03/29 15:05:34 riastradh Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.4 2015/03/29 15:08:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.3 2015/03/29 15:05:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.4 2015/03/29 15:08:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -211,6 +211,11 @@ copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
 	if (len == 0)
 		return (0);
 
+#ifdef _RUMPKERNEL		/* XXX */
+	if (__predict_true(vm == curproc->p_vmspace)) {
+		return copyin(uaddr, kaddr, len);
+	}
+#endif
 	if (VMSPACE_IS_KERNEL_P(vm)) {
 		return kcopy(uaddr, kaddr, len);
 	}
@@ -244,6 +249,11 @@ copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
 	if (len == 0)
 		return (0);
 
+#ifdef _RUMPKERNEL		/* XXX */
+	if (__predict_true(vm == curproc->p_vmspace)) {
+		return copyout(kaddr, uaddr, len);
+	}
+#endif
 	if (VMSPACE_IS_KERNEL_P(vm)) {
 		return kcopy(kaddr, uaddr, len);
 	}
