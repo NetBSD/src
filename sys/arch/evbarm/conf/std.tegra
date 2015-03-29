@@ -1,0 +1,26 @@
+#	$NetBSD: std.tegra,v 1.1 2015/03/29 10:41:59 jmcneill Exp $
+#
+
+machine	evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+include		"arch/evbarm/conf/files.tegra"
+
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
+options 	__HAVE_CPU_COUNTER
+options 	CORTEX_PMC
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	ARM_HAS_VBAR
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	TPIDRPRW_IS_CURCPU
+options 	KERNEL_BASE_EXT=0x80000000
+options 	FPU_VFP
+
+makeoptions	KERNEL_BASE_PHYS="0x81000000"
+makeoptions	KERNEL_BASE_VIRT="0x81000000"
+makeoptions	BOARDTYPE="tegra"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.tegra"
+
+options 	ARM_INTR_IMPL="<arch/arm/nvidia/tegra_intr.h>"
+options		ARM_GENERIC_TODR
