@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.1 2015/03/29 20:56:01 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.2 2015/03/29 21:05:21 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -340,6 +340,16 @@ If
 .Fa waitok
 is false,
 returns null if none can be allocated immediately.
+.Pp
+The resulting
+.Li struct buf
+pointer must eventually be passed to
+.Fn putiobuf
+to release it.
+Do
+.Em not
+use
+.Xr brelse 9 .
 .Pp
 May sleep if
 .Fa waitok
