@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_io.c,v 1.8 2015/03/22 17:28:22 jmcneill Exp $ */
+/* $NetBSD: amlogic_io.c,v 1.9 2015/03/29 22:49:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.8 2015/03/22 17:28:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.9 2015/03/29 22:49:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,8 @@ amlogicio_attach(device_t parent, device_t self, void *aux)
 	     loc++) {
 		struct amlogicio_attach_args aio = {
 			.aio_loc = *loc,
-			.aio_core_bst = &amlogic_bs_tag,
-			.aio_core_a4x_bst = &amlogic_a4x_bs_tag,
+			.aio_core_bst = &armv7_generic_bs_tag,
+			.aio_core_a4x_bst = &armv7_generic_a4x_bs_tag,
 			.aio_bsh = amlogic_core_bsh,
 			.aio_dmat = &amlogic_dma_tag,
 		};
