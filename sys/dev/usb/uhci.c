@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.27 2015/03/29 11:33:15 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.28 2015/03/29 11:40:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.27 2015/03/29 11:33:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.28 2015/03/29 11:40:00 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1812,7 +1812,7 @@ uhci_run(uhci_softc_t *sc, int run, int locked)
  *  uhci_alloc_sqh allocates QHs
  * These two routines do their own free list management,
  * partly for speed, partly because allocating DMAable memory
- * has page size granularaity so much memory would be wasted if
+ * has page size granularity so much memory would be wasted if
  * only one TD/QH (32 bytes) was placed in each allocated chunk.
  */
 
