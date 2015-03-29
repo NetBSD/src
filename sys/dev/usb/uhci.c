@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.28 2015/03/29 11:40:00 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.29 2015/03/29 11:40:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.28 2015/03/29 11:40:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.29 2015/03/29 11:40:36 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1613,8 +1613,7 @@ uhci_idone(uhci_intr_info_t *ii)
 		upipe->nexttoggle = UHCI_TD_GET_DT(le32toh(std->td.td_token));
 
 	status &= UHCI_TD_ERROR;
-	DPRINTFN(10, "actlen=%d, status=0x%x", actlen, status,
-	    0, 0);
+	DPRINTFN(10, "actlen=%d, status=0x%x", actlen, status, 0, 0);
 	xfer->ux_actlen = actlen;
 	if (status != 0) {
 
