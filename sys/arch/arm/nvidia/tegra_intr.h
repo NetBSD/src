@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_intr.h,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_intr.h,v 1.2 2015/03/29 10:44:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #ifndef _ARM_TEGRA_INTR_H
 #define _ARM_TEGRA_INTR_H
 
-#define PIC_MAXSOURCES		192
+#define PIC_MAXSOURCES		256
 #define PIC_MAXMAXSOURCES	(PIC_MAXSOURCES + 32)
 
 #include <arm/cortex/gic_intr.h>
