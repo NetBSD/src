@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.1 2015/03/29 10:41:59 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.2 2015/03/29 22:27:04 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -10,10 +10,10 @@ file	arch/arm/arm32/arm32_boot.c
 file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/nvidia/tegra_soc.c
-file	arch/arm/nvidia/tegra_space.c
-file	arch/arm/arm/bus_space_a4x.S
 file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
 
 # On-board I/O
