@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.28 2014/03/31 06:32:31 ozaki-r Exp $	*/
+/*	$NetBSD: installboot.c,v 1.28.4.1 2015/03/29 07:42:53 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -54,7 +54,9 @@
 #include "installboot.h"
 
 static void	usage(void);
+#ifdef CHECK_OS_BOOTVERSION
 static void	oscheck(void);
+#endif
 static u_int	abcksum(void *);
 static void	setNVpref(void);
 static void	setIDEpar(u_int8_t *, size_t);
@@ -99,8 +101,10 @@ main(int argc, char *argv[])
 	char		 *devchr;
 	int		 fd, c;
 
+#ifdef CHECK_OS_BOOTVERSION
 	/* check OS bootversion */
 	oscheck();
+#endif
 
 	/* parse options */
 	while ((c = getopt(argc, argv, "Nmt:u:v")) != -1) {
@@ -177,6 +181,7 @@ main(int argc, char *argv[])
 	return(EXIT_SUCCESS);
 }
 
+#ifdef CHECK_OS_BOOTVERSION
 static void
 oscheck(void)
 {
@@ -208,6 +213,7 @@ oscheck(void)
 		errx(EXIT_FAILURE, "Kern bootversion: %d, expected: %d",
 		    kvers, BOOTVERSION);
 }
+#endif
 
 static void
 install_fd(char *devnm, struct disklabel *label)
