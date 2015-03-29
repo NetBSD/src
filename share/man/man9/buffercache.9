@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.27 2015/03/28 19:24:04 maxv Exp $
+.\"     $NetBSD: buffercache.9,v 1.28 2015/03/29 20:56:01 riastradh Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -115,9 +115,7 @@
 .Nm geteblk ,
 .Nm incore ,
 .Nm allocbuf ,
-.Nm brelse ,
-.Nm biodone ,
-.Nm biowait
+.Nm brelse
 .Nd buffer cache interfaces
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
@@ -146,10 +144,6 @@
 .Fn allocbuf "buf_t *bp" "int size" "int preserve"
 .Ft void
 .Fn brelse "buf_t *bp" "int set"
-.Ft void
-.Fn biodone "buf_t *bp"
-.Ft int
-.Fn biowait "buf_t *bp"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -319,18 +313,6 @@ the buffer's additional contents.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn brelse "bp" "set"
 Unbusy a buffer and release it to the free lists.
-.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn biodone "bp"
-Mark I/O complete on a buffer.
-If a callback has been requested by
-.Dv B_CALL ,
-do so.
-Otherwise, wakeup waiters.
-.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn biowait "bp"
-Wait for operations on the buffer to complete.
-When they do, extract and return the I/O's error value.
-.El
 .\" ------------------------------------------------------------
 .Sh CODE REFERENCES
 The buffer cache subsystem is implemented within the file
@@ -359,11 +341,3 @@ In the current implementation,
 .Fn bread
 and its variants
 don't use a specified credential.
-.Pp
-Because
-.Fn biodone
-and
-.Fn biowait
-do not really belong to
-.Nm ,
-they shouldn't be documented here.
