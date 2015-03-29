@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.23 2015/03/28 15:56:45 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.24 2015/03/29 11:13:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.23 2015/03/28 15:56:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.24 2015/03/29 11:13:34 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -300,20 +300,26 @@ usbd_transfer(struct usbd_xfer *xfer)
 	size = xfer->ux_length;
 	flags = xfer->ux_flags;
 
-	struct usbd_bus *bus = pipe->up_dev->ud_bus;
-
-	if (bus->ub_usedma) {
+	if (size != 0) {
 		/*
-		 * Copy data if not using the xfer buffer.  isoc transfers
-		 * always use DMA buffer, i.e. buffer == NULL
+		 * Use the xfer buffer if none specified in transfer setup.
+		 * isoc transfers always use the xfer buffer, i.e.
+		 * ux_buffer is always NULL for isoc.
 		 */
 		if (xfer->ux_buffer == NULL) {
 			xfer->ux_buffer = xfer->ux_buf;
-		} else if (xfer->ux_buffer != xfer->ux_buf) {
-			memcpy(xfer->ux_buf, xfer->ux_buffer, size);
 		}
-	} else {
-		xfer->ux_buffer = xfer->ux_buf;
+
+		/*
+		 * If not using the xfer buffer copy data to the
+		 * xfer buffer for OUT transfers of >0 length
+		 */
+		if (xfer->ux_buffer != xfer->ux_buf) {
+			KASSERT(xfer->ux_buf);
+			if (!usbd_xfer_isread(xfer)) {
+				memcpy(xfer->ux_buf, xfer->ux_buffer, size);
+			}
+		}
 	}
 
 	/* xfer is not valid after the transfer method unless synchronous */
@@ -867,15 +873,15 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	if (polling)
 		pipe->up_running = 0;
 
-	if (xfer->ux_buffer != xfer->ux_buf) {
-		/* can only be different for DMA busses */
-		KASSERT(bus->ub_usedma);
+	if (xfer->ux_length != 0 && xfer->ux_buffer != xfer->ux_buf) {
 		KDASSERTMSG(xfer->ux_actlen <= xfer->ux_length,
 		    "actlen %d length %d",xfer->ux_actlen, xfer->ux_length);
 
-		memcpy(xfer->ux_buffer, xfer->ux_buf, xfer->ux_actlen);
+		/* Only if IN transfer */
+		if (usbd_xfer_isread(xfer)) {
+			memcpy(xfer->ux_buffer, xfer->ux_buf, xfer->ux_actlen);
+		}
 	}
-
 
 	if (!repeat) {
 		/* Remove request from queue. */
