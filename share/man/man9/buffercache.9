@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.28 2015/03/29 20:56:01 riastradh Exp $
+.\"     $NetBSD: buffercache.9,v 1.29 2015/03/29 21:02:06 riastradh Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -223,13 +223,6 @@ will start read-ahead of blocks specified by
 .Fa rasizes ,
 .Fa nrablks .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn breada "vp" "blkno" "size" "rablkno" "rabsize" "cred" "flags" "bpp"
-Same as
-.Fn breadn
-with single block read-ahead.
-This function is for compatibility with old filesystem code and
-shouldn't be used by new ones.
-.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn bwrite "bp"
 Write a block.
 Start I/O for write using
@@ -335,9 +328,3 @@ The buffer cache subsystem is implemented within the file
 .%I "Addison Wesley"
 .%D 1996
 .Re
-.\" ------------------------------------------------------------
-.Sh BUGS
-In the current implementation,
-.Fn bread
-and its variants
-don't use a specified credential.
