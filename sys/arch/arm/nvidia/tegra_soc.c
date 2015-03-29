@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soc.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_soc.c,v 1.2 2015/03/29 22:27:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.2 2015/03/29 22:27:04 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -65,11 +65,14 @@ static void	tegra_mpinit(void);
 void
 tegra_bootstrap(void)
 {
-	bus_space_map(&tegra_bs_tag, TEGRA_HOST1X_BASE, TEGRA_HOST1X_SIZE, 0,
+	bus_space_map(&armv7_generic_bs_tag,
+	    TEGRA_HOST1X_BASE, TEGRA_HOST1X_SIZE, 0,
 	    &tegra_host1x_bsh);
-	bus_space_map(&tegra_bs_tag, TEGRA_APB_BASE, TEGRA_APB_SIZE, 0,
+	bus_space_map(&armv7_generic_bs_tag,
+	    TEGRA_APB_BASE, TEGRA_APB_SIZE, 0,
 	    &tegra_apb_bsh);
-	bus_space_map(&tegra_bs_tag, TEGRA_AHB_A2_BASE, TEGRA_AHB_A2_SIZE, 0,
+	bus_space_map(&armv7_generic_bs_tag,
+	    TEGRA_AHB_A2_BASE, TEGRA_AHB_A2_SIZE, 0,
 	    &tegra_ahb_a2_bsh);
 
 	curcpu()->ci_data.cpu_cc_freq = 696000000; /* XXX */
@@ -101,7 +104,7 @@ tegra_chip_id(void)
 	static u_int chip_id = 0;
 
 	if (!chip_id) {
-		const bus_space_tag_t bst = &tegra_bs_tag;
+		const bus_space_tag_t bst = &armv7_generic_bs_tag;
 		const bus_space_handle_t bsh = tegra_apb_bsh;
 		const uint32_t v = bus_space_read_4(bst, bsh,
 		    APB_MISC_GP_HIDREV_0_REG);

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_io.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_io.c,v 1.2 2015/03/29 22:27:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.2 2015/03/29 22:27:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,8 @@ tegraio_scan(device_t self, bus_space_handle_t bsh,
 	for (const struct tegra_locators *loc = locators; loc < eloc; loc++) {
 		struct tegraio_attach_args tio = {
 			.tio_loc = *loc,
-			.tio_bst = &tegra_bs_tag,
-			.tio_a4x_bst = &tegra_a4x_bs_tag,
+			.tio_bst = &armv7_generic_bs_tag,
+			.tio_a4x_bst = &armv7_generic_a4x_bs_tag,
 			.tio_bsh = bsh,
 			.tio_dmat = &tegra_dma_tag,
 		};

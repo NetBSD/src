@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.2 2015/03/29 10:55:11 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.3 2015/03/29 22:27:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.2 2015/03/29 10:55:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3 2015/03/29 22:27:04 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -296,7 +296,7 @@ consinit(void)
 	consinit_called = true;
 
 #if NCOM > 0
-	const bus_space_tag_t bst = &tegra_a4x_bs_tag;
+	const bus_space_tag_t bst = &armv7_generic_a4x_bs_tag;
 	if (comcnattach(bst, CONSADDR, CONSPEED, TEGRA_UART_FREQ,
 			COM_TYPE_NORMAL, CONMODE)) {
 		panic("Serial console cannot be initialized.");
@@ -314,7 +314,7 @@ tegra_device_register(device_t self, void *aux)
 	if (device_is_a(self, "armperiph")
 	    && device_is_a(device_parent(self), "mainbus")) {
 		struct mainbus_attach_args * const mb = aux;
-		mb->mb_iot = &tegra_bs_tag;
+		mb->mb_iot = &armv7_generic_bs_tag;
 		return;
 	}
 
