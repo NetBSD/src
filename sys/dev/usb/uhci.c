@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.25 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.26 2015/03/29 08:08:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.25 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.26 2015/03/29 08:08:01 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1970,7 +1970,7 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 	    maxp, ntd, 0, 0);
 
 	if (ntd == 0) {
-		*sp = *ep = 0;
+		*sp = *ep = NULL;
 		DPRINTFN(1, "ntd=0", 0, 0, 0, 0);
 		return USBD_NORMAL_COMPLETION;
 	}
