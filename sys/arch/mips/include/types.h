@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.54 2014/01/04 00:10:03 dsl Exp $	*/
+/*	$NetBSD: types.h,v 1.55 2015/03/29 12:00:02 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -131,9 +131,13 @@ typedef struct label_t {
 #define	PCU_UNIT_COUNT	2
 #endif
 
+#if defined(__mips_o32)
+typedef __uint32_t		__cpuset_t;
+#define	__CPUSET_MAXNUMCPU	32
+#else
 typedef __uint64_t		__cpuset_t;
 #define	__CPUSET_MAXNUMCPU	64
-
+#endif
 typedef	volatile unsigned int	__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1

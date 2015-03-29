@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.h,v 1.2 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: cpuset.h,v 1.3 2015/03/29 12:00:02 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,10 +33,15 @@
 
 #define	CPUSET_SINGLE(cpu)		((__cpuset_t)1 << (cpu))
 
+#if defined(__mips_o32)
+#define	CPUSET_ADD(set, cpu)		atomic_or_32(&(set), CPUSET_SINGLE(cpu))
+#define	CPUSET_DEL(set, cpu)		atomic_and_32(&(set), ~CPUSET_SINGLE(cpu))
+#define	CPUSET_SUB(set1, set2)		atomic_and_32(&(set1), ~(set2))
+#else
 #define	CPUSET_ADD(set, cpu)		atomic_or_64(&(set), CPUSET_SINGLE(cpu))
 #define	CPUSET_DEL(set, cpu)		atomic_and_64(&(set), ~CPUSET_SINGLE(cpu))
 #define	CPUSET_SUB(set1, set2)		atomic_and_64(&(set1), ~(set2))
-
+#endif
 #define	CPUSET_EXCEPT(set, cpu)		((set) & ~CPUSET_SINGLE(cpu))
 
 #define	CPUSET_HAS_P(set, cpu)		((set) & CPUSET_SINGLE(cpu))
