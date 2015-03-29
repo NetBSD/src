@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.29 2013/10/19 01:09:59 christos Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.30 2015/03/29 19:35:58 chopps Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.29 2013/10/19 01:09:59 christos Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.30 2015/03/29 19:35:58 chopps Exp $");
 #endif
 #endif /* not lint */
 
@@ -689,7 +689,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	if (LFS_DIRBLKSIZ < fs->lfs_bsize)
 		VTOI(vp)->i_lfs_fragsize[i - 1] =
 			roundup(LFS_DIRBLKSIZ,fs->lfs_fsize);
-	bread(vp, 0, fs->lfs_fsize, NOCRED, 0, &bp);
+	bread(vp, 0, fs->lfs_fsize, 0, &bp);
 	make_dir(bp->b_data, lfs_root_dir, 
 		 sizeof(lfs_root_dir) / sizeof(struct lfs_direct));
 	VOP_BWRITE(bp);
@@ -709,7 +709,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	if (DIRBLKSIZ < fs->lfs_bsize)
 		VTOI(vp)->i_lfs_fragsize[i - 1] =
 			roundup(DIRBLKSIZ,fs->lfs_fsize);
-	bread(vp, 0, fs->lfs_fsize, NOCRED, 0, &bp);
+	bread(vp, 0, fs->lfs_fsize, 0, &bp);
 	make_dir(bp->b_data, lfs_lf_dir, 
 		 sizeof(lfs_lf_dir) / sizeof(struct lfs_direct));
 	VOP_BWRITE(bp);
