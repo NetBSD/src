@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.115 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.116 2015/03/29 14:39:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.115 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.116 2015/03/29 14:39:41 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -610,8 +610,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
 	error = ufs_post_write_update(vp, uio, ioflag, cred, osize, resid,
 	    extended, error);
-	if ((ioflag & IO_JOURNALLOCKED) == 0)
-		UFS_WAPBL_END(vp->v_mount);
 	fstrans_done(vp->v_mount);
 
 	return (error);
