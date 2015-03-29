@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.245 2015/03/27 11:29:09 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.246 2015/03/29 07:46:21 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19390,4 +19390,17 @@ sys/arch/arm/arm32/genassym.cf			1.70
 	not LW_SYSTEM.
 	[skrll, ticket #646]
 
+distrib/atari/floppies/common/list.images	1.10
+sys/arch/atari/stand/installboot/Makefile	1.8
+sys/arch/atari/stand/installboot/installboot.c	1.34
+
+	Disable "OS bootversion check" on crunched binaries for
+	installation media.
+	[martin, ticket #651]
+
+distrib/atari/floppies/common/Makefile.images	1.9
+
+	Use "-Os -m68020-60" for DBG, which generates smaller objects
+	than -Os.
+	[martin, ticket #652]
 
