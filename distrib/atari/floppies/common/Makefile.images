@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.images,v 1.8 2010/02/21 20:06:19 tsutsui Exp $
+#	$NetBSD: Makefile.images,v 1.8.26.1 2015/03/29 07:44:46 snj Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,7 @@
 .include <bsd.kernobj.mk>
 
 WARNS=		1
-DBG=		-Os
+DBG=		-Os -m68020-60	# -m68020-60 seems to generate smaller binaries
 
 CRUNCHBIN=	instbin
 LISTS=		${.CURDIR}/list ${.CURDIR}/../common/list.images
