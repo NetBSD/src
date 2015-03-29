@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.10 2015/01/17 15:05:24 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.11 2015/03/29 22:56:23 jmcneill Exp $
 #
 # Configuration info for Rockchip ARM Peripherals
 #
@@ -10,13 +10,12 @@ file	arch/arm/arm32/arm32_boot.c
 file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/rockchip/rockchip_board.c
 file	arch/arm/rockchip/rockchip_cpufreq.c
-file	arch/arm/rockchip/rockchip_space.c	obio
-#file	arch/arm/rockchip/rockchip_a4x_space.c	obio
 file	arch/arm/rockchip/rockchip_dma.c
-file	arch/arm/arm/bus_space_a4x.S		obio
 
 # On-board I/O
 device obio {[addr = -1], [size = -1], [width = -1], [intr = -1], [mult = 1], [port = -1], [crit = 0]}: bus_space_generic

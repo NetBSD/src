@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.21 2015/01/17 17:30:26 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.22 2015/03/29 22:56:23 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.21 2015/01/17 17:30:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.22 2015/03/29 22:56:23 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -349,7 +349,7 @@ rockchip_putchar(char c)
 static uint32_t
 rockchip_get_memsize(void)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
         const bus_space_handle_t ddr_pctl_bsh =
             ROCKCHIP_CORE1_VBASE + ROCKCHIP_DDR_PCTL_OFFSET;
         const bus_space_handle_t ddr_publ_bsh =
@@ -479,7 +479,7 @@ initarm(void *arg)
 	rockchip_bootstrap();
 
 #ifdef MULTIPROCESSOR
-	uint32_t scu_cfg = bus_space_read_4(&rockchip_bs_tag,
+	uint32_t scu_cfg = bus_space_read_4(&armv7_generic_bs_tag,
 	    rockchip_core0_bsh, ROCKCHIP_SCU_OFFSET + SCU_CFG);
 	arm_cpu_max = (scu_cfg & SCU_CFG_CPUMAX) + 1;
 	membar_producer();
@@ -505,7 +505,7 @@ initarm(void *arg)
 	printf("probe the PL310 L2CC\n");
         const bus_space_handle_t pl310_bh =
             ROCKCHIP_CORE0_VBASE + ROCKCHIP_PL310_OFFSET;
-        arml2cc_init(&rockchip_bs_tag, pl310_bh, 0);
+        arml2cc_init(&armv7_generic_bs_tag, pl310_bh, 0);
         rockchip_putchar('l');
 #endif
 
@@ -645,14 +645,14 @@ consinit(void)
 	rockchip_putchar('e');
 
 #if NCOM > 0
-	if (bus_space_map(&rockchip_a4x_bs_tag, consaddr, ROCKCHIP_UART_SIZE, 0, &bh))
+	if (bus_space_map(&armv7_generic_a4x_bs_tag, consaddr, ROCKCHIP_UART_SIZE, 0, &bh))
 		panic("Serial console can not be mapped.");
 
-	if (comcnattach(&rockchip_a4x_bs_tag, consaddr, conspeed,
+	if (comcnattach(&armv7_generic_a4x_bs_tag, consaddr, conspeed,
 			ROCKCHIP_UART_FREQ, COM_TYPE_NORMAL, conmode))
 		panic("Serial console can not be initialized.");
 
-	bus_space_unmap(&rockchip_a4x_bs_tag, bh, ROCKCHIP_UART_SIZE);
+	bus_space_unmap(&armv7_generic_a4x_bs_tag, bh, ROCKCHIP_UART_SIZE);
 #endif
 
 
@@ -667,7 +667,7 @@ consinit(void)
 void
 rockchip_reset(void)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 
 	bus_space_subregion(bst, rockchip_core1_bsh,
@@ -703,14 +703,14 @@ static kgdb_port_init(void)
 	kgdbsinit_called = 1;
 
 	bus_space_handle_t bh;
-	if (bus_space_map(&rockchip_a4x_bs_tag, comkgdbaddr, ROCKCHIP_COM_SIZE, 0, &bh))
+	if (bus_space_map(&armv7_generic_a4x_bs_tag, comkgdbaddr, ROCKCHIP_COM_SIZE, 0, &bh))
 		panic("kgdb port can not be mapped.");
 
-	if (com_kgdb_attach(&rockchip_a4x_bs_tag, comkgdbaddr, comkgdbspeed,
+	if (com_kgdb_attach(&armv7_generic_a4x_bs_tag, comkgdbaddr, comkgdbspeed,
 			ROCKCHIP_COM_FREQ, COM_TYPE_NORMAL, comkgdbmode))
 		panic("KGDB uart can not be initialized.");
 
-	bus_space_unmap(&rockchip_a4x_bs_tag, bh, ROCKCHIP_COM_SIZE);
+	bus_space_unmap(&armv7_generic_a4x_bs_tag, bh, ROCKCHIP_COM_SIZE);
 }
 #endif
 
@@ -728,7 +728,7 @@ rockchip_device_register(device_t self, void *aux)
 		 * bus space used for the armcore regisers (which armperiph uses). 
 		 */
 		struct mainbus_attach_args * const mb = aux;
-		mb->mb_iot = &rockchip_bs_tag;
+		mb->mb_iot = &armv7_generic_bs_tag;
 		return;
 	}
 
