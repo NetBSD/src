@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.18 2015/03/22 13:53:33 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.19 2015/03/29 22:49:44 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.18 2015/03/22 13:53:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.19 2015/03/29 22:49:44 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -300,7 +300,7 @@ amlogic_get_ram_size(void)
 {
 	const bus_space_handle_t ao_bsh =
 	    AMLOGIC_CORE_VBASE + AMLOGIC_SRAM_OFFSET;
-	return bus_space_read_4(&amlogic_bs_tag, ao_bsh, 0) << 20;
+	return bus_space_read_4(&armv7_generic_bs_tag, ao_bsh, 0) << 20;
 }
 
 /*
@@ -334,8 +334,8 @@ initarm(void *arg)
 	if (cbar) {
 		const bus_space_handle_t scu_bsh =
 		    cbar - AMLOGIC_CORE_BASE + AMLOGIC_CORE_VBASE;
-		uint32_t scu_cfg = bus_space_read_4(&amlogic_bs_tag, scu_bsh,
-		    SCU_CFG);
+		uint32_t scu_cfg = bus_space_read_4(&armv7_generic_bs_tag,
+		    scu_bsh, SCU_CFG);
 		arm_cpu_max = (scu_cfg & SCU_CFG_CPUMAX) + 1;
 		membar_producer();
 	}
@@ -356,7 +356,7 @@ initarm(void *arg)
 	DPRINTF(" l2cc");
         const bus_space_handle_t pl310_bh =
             AMLOGIC_CORE_VBASE + AMLOGIC_PL310_OFFSET;
-        arml2cc_init(&amlogic_bs_tag, pl310_bh, 0);
+        arml2cc_init(&armv7_generic_bs_tag, pl310_bh, 0);
 #endif
 
 	DPRINTF(" cbar=%#x", armreg_cbar_read());
@@ -473,7 +473,7 @@ consinit(void)
 #if NAMLOGIC_COM > 0
         const bus_space_handle_t bsh =
             AMLOGIC_CORE_VBASE + (consaddr - AMLOGIC_CORE_BASE);
-	amlogic_com_cnattach(&amlogic_bs_tag, bsh, conspeed, conmode);
+	amlogic_com_cnattach(&armv7_generic_bs_tag, bsh, conspeed, conmode);
 #else
 #error only UART console is supported
 #endif
@@ -482,7 +482,7 @@ consinit(void)
 void
 amlogic_reset(void)
 {
-	bus_space_tag_t bst = &amlogic_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh = amlogic_core_bsh;
 	bus_size_t off = AMLOGIC_CBUS_OFFSET;
 
@@ -503,7 +503,7 @@ amlogic_device_register(device_t self, void *aux)
 	if (device_is_a(self, "armperiph")
 	    && device_is_a(device_parent(self), "mainbus")) {
 		struct mainbus_attach_args * const mb = aux;
-		mb->mb_iot = &amlogic_bs_tag;
+		mb->mb_iot = &armv7_generic_bs_tag;
 		return;
 	}
 
@@ -581,7 +581,7 @@ static void
 amlogic_mpinit_cpu(int cpu)
 {
 	const bus_addr_t cbar = armreg_cbar_read();
-	bus_space_tag_t bst = &amlogic_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	const bus_space_handle_t scu_bsh =
 	    cbar - AMLOGIC_CORE_BASE + AMLOGIC_CORE_VBASE;
 	const bus_space_handle_t ao_bsh =
@@ -637,7 +637,7 @@ void
 amlogic_mpinit(uint32_t mpinit_vec)
 {
 	const bus_addr_t cbar = armreg_cbar_read();
-	bus_space_tag_t bst = &amlogic_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	volatile int i;
 	uint32_t ctrl, hatched = 0;
 	int cpu;

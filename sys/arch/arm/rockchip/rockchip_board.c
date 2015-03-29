@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_board.c,v 1.13 2015/01/17 15:05:24 jmcneill Exp $ */
+/* $NetBSD: rockchip_board.c,v 1.14 2015/03/29 22:56:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.13 2015/01/17 15:05:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.14 2015/03/29 22:56:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,12 +51,12 @@ rockchip_bootstrap(void)
 {
 	int error;
 
-	error = bus_space_map(&rockchip_bs_tag, ROCKCHIP_CORE0_BASE,
+	error = bus_space_map(&armv7_generic_bs_tag, ROCKCHIP_CORE0_BASE,
 	    ROCKCHIP_CORE0_SIZE, 0, &rockchip_core0_bsh);
 	if (error)
 		panic("%s: failed to map CORE0 registers: %d", __func__, error);
 
-	error = bus_space_map(&rockchip_bs_tag, ROCKCHIP_CORE1_BASE,
+	error = bus_space_map(&armv7_generic_bs_tag, ROCKCHIP_CORE1_BASE,
 	    ROCKCHIP_CORE1_SIZE, 0, &rockchip_core1_bsh);
 	if (error)
 		panic("%s: failed to map CORE1 registers: %d", __func__, error);
@@ -100,14 +100,14 @@ rockchip_chip_name(void)
 static void
 rockchip_get_cru_bsh(bus_space_handle_t *pbsh)
 {
-	bus_space_subregion(&rockchip_bs_tag, rockchip_core1_bsh,
+	bus_space_subregion(&armv7_generic_bs_tag, rockchip_core1_bsh,
 	    ROCKCHIP_CRU_OFFSET, ROCKCHIP_CRU_SIZE, pbsh);
 }
 
 static u_int
 rockchip_pll_get_rate(bus_size_t con0_reg, bus_size_t con1_reg)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t pll_con0, pll_con1;
 	uint32_t nr, nf, no;
@@ -169,7 +169,7 @@ rockchip_apll_get_rate(void)
 u_int
 rockchip_cpu_get_rate(void)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con0;
 	u_int a9_core_div;
@@ -205,7 +205,7 @@ rockchip_cpu_get_rate(void)
 u_int
 rockchip_a9periph_get_rate(void)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con0;
 	u_int core_peri_div;
@@ -222,7 +222,7 @@ rockchip_a9periph_get_rate(void)
 u_int
 rockchip_pclk_cpu_get_rate(void)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con1;
 	u_int aclk_div, core_axi_div, pclk_div;
@@ -260,7 +260,7 @@ rockchip_pclk_cpu_get_rate(void)
 u_int
 rockchip_ahb_get_rate(void)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con10;
 	uint32_t hclk_div, aclk_div;
@@ -302,7 +302,7 @@ rockchip_ahb_get_rate(void)
 u_int
 rockchip_apb_get_rate(void)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con10;
 	uint32_t pclk_div, aclk_div;
@@ -342,7 +342,7 @@ rockchip_apb_get_rate(void)
 u_int
 rockchip_mmc0_get_rate(void)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con11;
 	u_int mmc0_div;
@@ -360,7 +360,7 @@ rockchip_mmc0_get_rate(void)
 u_int
 rockchip_mmc0_set_div(u_int div)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con11;
 
@@ -404,7 +404,7 @@ rockchip_i2c_get_rate(u_int port)
 u_int
 rockchip_mac_get_rate(void)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con21;
 	u_int mac_div;
@@ -425,7 +425,7 @@ rockchip_mac_get_rate(void)
 u_int
 rockchip_mac_set_rate(u_int rate)
 {
-	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con21;
 	u_int dpll_rate, gpll_rate;

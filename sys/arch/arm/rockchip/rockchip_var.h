@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_var.h,v 1.12 2015/01/17 15:05:24 jmcneill Exp $ */
+/* $NetBSD: rockchip_var.h,v 1.13 2015/03/29 22:56:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@ struct obio_attach_args {
 	const char	*obio_name;
 };
 
-extern struct bus_space rockchip_bs_tag;
-extern struct bus_space rockchip_a4x_bs_tag;
+extern struct bus_space armv7_generic_bs_tag;
+extern struct bus_space armv7_generic_a4x_bs_tag;
 extern struct arm32_bus_dma_tag	rockchip_bus_dma_tag;
 extern bus_space_handle_t rockchip_core0_bsh;
 extern bus_space_handle_t rockchip_core1_bsh;

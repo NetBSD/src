@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_cpufreq.c,v 1.2 2015/01/17 15:05:24 jmcneill Exp $ */
+/* $NetBSD: rockchip_cpufreq.c,v 1.3 2015/03/29 22:56:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "act8846pm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_cpufreq.c,v 1.2 2015/01/17 15:05:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_cpufreq.c,v 1.3 2015/03/29 22:56:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_cpufreq.c,v 1.2 2015/01/17 15:05:24 jmcneil
 
 #include <arm/cortex/a9tmr_var.h>
 
-static bus_space_tag_t bst = &rockchip_bs_tag;
+static bus_space_tag_t bst = &armv7_generic_bs_tag;
 static bus_space_handle_t cru_bsh;
 static bus_space_handle_t grf_bsh;
 
