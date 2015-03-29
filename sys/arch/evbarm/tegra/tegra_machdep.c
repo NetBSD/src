@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.2 2015/03/29 10:55:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.2 2015/03/29 10:55:11 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -185,11 +185,6 @@ initarm(void *arg)
 
 	DPRINT(" bootstrap");
 	tegra_bootstrap();
-
-#ifdef MULTIPROCESSOR
-	DPRINT(" ncpu");
-	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
-#endif
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	DPRINT(" cpufunc");
