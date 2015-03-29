@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.14 2013/10/19 01:09:58 christos Exp $ */
+/* $NetBSD: bufcache.c,v 1.15 2015/03/29 19:35:58 chopps Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -339,8 +339,7 @@ brelse(struct ubuf * bp, int set)
 
 /* Read the given block from disk, return it B_BUSY. */
 int
-bread(struct uvnode * vp, daddr_t lbn, int size, void * unused,
-    int flags, struct ubuf ** bpp)
+bread(struct uvnode * vp, daddr_t lbn, int size, int flags, struct ubuf ** bpp)
 {
 	struct ubuf *bp;
 	daddr_t daddr;

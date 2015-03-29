@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.37 2013/10/19 17:19:30 christos Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.38 2015/03/29 19:35:58 chopps Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -331,7 +331,7 @@ lfs_ientry(IFILE **ifpp, struct clfs *fs, ino_t ino, struct ubuf **bpp)
 	int error;
 
 	error = bread(fs->lfs_ivnode, ino / fs->lfs_ifpb + fs->lfs_cleansz +
-		      fs->lfs_segtabsz, fs->lfs_bsize, NOCRED, 0, bpp);
+		      fs->lfs_segtabsz, fs->lfs_bsize, 0, bpp);
 	if (error)
 		syslog(LOG_ERR, "%s: ientry failed for ino %d",
 			fs->lfs_fsmnt, (int)ino);
@@ -514,7 +514,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 			syslog(LOG_WARNING, "fixing short FINFO at %x (seg %d)",
 			       odaddr, lfs_dtosn(fs, odaddr));
 			bread(fs->clfs_devvp, odaddr, fs->lfs_fsize,
-			    NOCRED, 0, &nbp);
+			    0, &nbp);
 			nssp = (SEGSUM *)nbp->b_data;
 			--nssp->ss_nfinfo;
 			nssp->ss_sumsum = cksum(&nssp->ss_datasum,
@@ -1014,7 +1014,7 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 	npos = 0;
 	for (i = 0; i < fs->lfs_nseg; i+= fs->lfs_sepb) {
 		bread(fs->lfs_ivnode, fs->lfs_cleansz + i / fs->lfs_sepb,
-		      fs->lfs_bsize, NOCRED, 0, &bp);
+		      fs->lfs_bsize, 0, &bp);
 		for (j = 0; j < fs->lfs_sepb && i + j < fs->lfs_nseg; j++) {
 			sup = ((SEGUSE *)bp->b_data) + j;
 			fs->clfs_segtab[i + j].nbytes  = sup->su_nbytes;
@@ -1214,7 +1214,7 @@ needs_cleaning(struct clfs *fs, CLEANERINFO *cip)
 	 * the cached information, so invalidate the buffer before
 	 * handing it back.
 	 */
-	if (bread(fs->lfs_ivnode, 0, fs->lfs_bsize, NOCRED, 0, &bp)) {
+	if (bread(fs->lfs_ivnode, 0, fs->lfs_bsize, 0, &bp)) {
 		syslog(LOG_ERR, "%s: can't read inode", fs->lfs_fsmnt);
 		return -1;
 	}
