@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.157 2014/01/15 11:42:43 apb Exp $
+.\"	$NetBSD: rc.conf.5,v 1.158 2015/03/30 10:58:37 chopps Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -320,6 +320,13 @@ unbootable even if the file system checks would fail in preen mode.
 Boolean value.
 Should be true if you have deliberately configured your system with no swap.
 If false and no swap devices are configured, the system will warn you.
+.It Sy resize_root
+Boolean value.
+Set to true to have the system resize the root file system to fill it's
+partition.
+Will only attempt to resize the root file system if it is of type ffs and does
+not have logging enabled.
+Defaults to false.
 .It Sy swapoff
 Boolean value.
 Remove block-type swap devices at shutdown time.
