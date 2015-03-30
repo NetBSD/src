@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.8 2015/03/30 13:18:08 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.9 2015/03/30 13:22:12 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -188,8 +188,8 @@ parameters of an I/O transfer for the buffer, called the
 buffer, the user can issue smaller transfers for segments of the buffer
 using
 .Fn nestiobuf_setup .
-The nested I/O transfers are asynchronous -- when they complete, they
-debit from the amount of work left to be done in the master buffer.
+When nested I/O transfers complete, in any order, they debit from the
+amount of work left to be done in the master buffer.
 If any segments of the buffer were skipped, the user can report this
 with
 .Fn nestiobuf_done
