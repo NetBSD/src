@@ -1,4 +1,4 @@
-.\"	$NetBSD: wizd.8,v 1.7 2014/07/20 16:04:48 tron Exp $
+.\"	$NetBSD: wizd.8,v 1.8 2015/03/30 13:51:42 riastradh Exp $
 .\"
 .\" Copyright (c) 2003, 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 20, 2014
+.Dd March 30, 2015
 .Dt WIZD 8
 .Os
 .Sh NAME
@@ -43,13 +43,28 @@ macros, and other typographical errors in man pages.
 is invoked by any
 .Xr cvs 1
 commit to a man page.
-A standalone mode is also available by sending mail to
-.Aq wiz@NetBSD.org .
 .Pp
 .Nm
 also performs periodic sanity checks on the distribution set lists.
 E-mail alerts will be triggered if the build installs files that are marked
 as obsolete and therefore get automatically removed.
+.Sh SIGNALS
+.Nm
+responds to the following signals:
+.Bl -tag -width SIGWIZD
+.It Aq wiz@NetBSD.org
+Examine a man page for errors.
+The man page and particular errors in question may specified in
+standard internet mail format.
+.El
+.Pp
+.Nm
+additionally sometimes delivers the following signals to other
+committer processes:
+.Bl -tag -width SIGWIZD
+.It SIGWIZD
+An error was detected in a man page.
+.El
 .Sh SEE ALSO
 .Xr cvs 1 ,
 .Xr intro 1 ,
