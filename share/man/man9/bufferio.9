@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.10 2015/03/30 13:26:55 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.11 2015/03/30 13:35:50 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -159,7 +159,7 @@ in this case.
 .It
 Otherwise, if
 .Fa bp Ns Li "->b_iodone"
-is null and
+is a null function pointer and
 .Dv B_ASYNC
 is not specified, the user may wait for the I/O transfer to complete
 with
@@ -364,7 +364,9 @@ is nonnull, the transfer is associated with it.
 If
 .Fa waitok
 is false,
-returns null if none can be allocated immediately.
+returns
+.Dv NULL
+if none can be allocated immediately.
 .Pp
 The resulting
 .Vt "struct buf"
