@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.24 2015/03/29 11:13:34 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.25 2015/03/30 12:07:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.24 2015/03/29 11:13:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.25 2015/03/30 12:07:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -740,7 +740,7 @@ usbd_set_interface(struct usbd_interface *iface, int altidx)
 	usbd_status err;
 	void *endpoints;
 
-	if (LIST_FIRST(&iface->ui_pipes) != 0)
+	if (LIST_FIRST(&iface->ui_pipes) != NULL)
 		return USBD_IN_USE;
 
 	endpoints = iface->ui_endpoints;
