@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.6 2015/03/30 13:10:04 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.7 2015/03/30 13:17:14 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -165,6 +165,14 @@ is not specified, the user may wait for the I/O transfer to complete
 with
 .Fn biowait bp .
 .El
+.Pp
+Once an I/O transfer has completed, its
+.Li struct buf
+may be reused, but the user must first clear the
+.Dv BO_DONE
+flag of
+.Fa bp Ns Li "->b_oflags"
+before reusing it.
 .Sh NESTED I/O TRANSFERS
 Sometimes an I/O transfer from a single buffer in memory cannot go to a
 single location on a block device: it must be split up into smaller
