@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.13 2015/03/30 13:58:03 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.14 2015/03/30 13:58:28 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -244,7 +244,7 @@ for (i = 0; i < nsegs; i++) {
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_BMAP(vp, i*segsz, &devvp, &blkno, NULL);
 	VOP_UNLOCK(vp);
-	if (error == 0 && nbn == -1)
+	if (error == 0 && blkno == -1)
 		error = EIO;
 	if (error) {
 		/* Give up early, don't try to handle holes.  */
