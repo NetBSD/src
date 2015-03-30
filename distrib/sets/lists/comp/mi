@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1948 2015/03/28 14:09:58 jmcneill Exp $
+#	$NetBSD: mi,v 1.1949 2015/03/30 00:44:37 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11174,6 +11174,21 @@
 ./usr/share/man/cat9/vwakeup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wakeup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wdc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl.0			comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_start.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_stop.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_begin.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_end.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_flush.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_discard.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_add_buf.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_remove_buf.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_resize_buf.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_register_inode.0	comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_unregister_inode.0	comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_register_deallocation.0	comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_jlock_assert.0	comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_junlock_assert.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/workqueue.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/workqueue_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/workqueue_destroy.0	comp-sys-catman		.cat
@@ -17883,6 +17898,21 @@
 ./usr/share/man/html9/vwakeup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wakeup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wdc.html			comp-sys-htmlman	html
+./usr/share/man/html9/wapbl.html		comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_start.html		comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_stop.html		comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_begin.html		comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_end.html		comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_flush.html		comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_discard.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_add_buf.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_remove_buf.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_resize_buf.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_register_inode.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_unregister_inode.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_register_deallocation.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_jlock_assert.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_junlock_assert.html	comp-sys-htmlman	html
 ./usr/share/man/html9/workqueue.html		comp-sys-htmlman	html
 ./usr/share/man/html9/workqueue_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/workqueue_destroy.html	comp-sys-htmlman	html
@@ -24849,6 +24879,21 @@
 ./usr/share/man/man9/vwakeup.9			comp-sys-man		.man
 ./usr/share/man/man9/wakeup.9			comp-sys-man		.man
 ./usr/share/man/man9/wdc.9			comp-sys-man		.man
+./usr/share/man/man9/wapbl.9			comp-sys-man		.man
+./usr/share/man/man9/wapbl_start.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_stop.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_begin.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_end.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_flush.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_discard.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_add_buf.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_remove_buf.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_resize_buf.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_register_inode.9	comp-sys-man		.man
+./usr/share/man/man9/wapbl_unregister_inode.9	comp-sys-man		.man
+./usr/share/man/man9/wapbl_register_deallocation.9	comp-sys-man	.man
+./usr/share/man/man9/wapbl_jlock_assert.9	comp-sys-man		.man
+./usr/share/man/man9/wapbl_junlock_assert.9	comp-sys-man		.man
 ./usr/share/man/man9/workqueue.9		comp-sys-man		.man
 ./usr/share/man/man9/workqueue_create.9		comp-sys-man		.man
 ./usr/share/man/man9/workqueue_destroy.9	comp-sys-man		.man

@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.380 2014/12/27 19:32:57 maxv Exp $
+#       $NetBSD: Makefile,v 1.381 2015/03/30 00:44:37 riastradh Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -57,7 +57,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	video.9 vme.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
 	ubc.9 usbd_status.9 usbdi.9 uvm.9 uvm_km.9 uvm_map.9 vmem.9 \
-	wdc.9 workqueue.9 \
+	wapbl.9 wdc.9 workqueue.9 \
 	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
 	xcall.9
 
@@ -975,6 +975,20 @@ MLINKS+=vnsubr.9 vn_bwrite.9 \
 	vnsubr.9 vn_stat.9 \
 	vnsubr.9 vn_open.9 \
 	vnsubr.9 vn_writechk.9
+MLINKS+=wapbl.9 wapbl_start.9 \
+	wapbl.9 wapbl_stop.9 \
+	wapbl.9 wapbl_begin.9 \
+	wapbl.9 wapbl_end.9 \
+	wapbl.9 wapbl_flush.9 \
+	wapbl.9 wapbl_discard.9 \
+	wapbl.9 wapbl_add_buf.9 \
+	wapbl.9 wapbl_remove_buf.9 \
+	wapbl.9 wapbl_resize_buf.9 \
+	wapbl.9 wapbl_register_inode.9 \
+	wapbl.9 wapbl_unregister_inode.9 \
+	wapbl.9 wapbl_register_deallocation.9 \
+	wapbl.9 wapbl_jlock_assert.9 \
+	wapbl.9 wapbl_junlock_assert.9
 MLINKS+=workqueue.9 workqueue_create.9 \
 	workqueue.9 workqueue_enqueue.9 \
 	workqueue.9 workqueue_destroy.9
