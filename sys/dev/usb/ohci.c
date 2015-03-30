@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254 2014/11/21 09:40:10 ozaki-r Exp $	*/
+/*	$NetBSD: ohci.c,v 1.255 2015/03/30 11:54:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254 2014/11/21 09:40:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.255 2015/03/30 11:54:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1872,8 +1872,8 @@ ohci_rem_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 	/* XXX */
 	for (p = head; p != NULL && p->next != sed; p = p->next)
 		;
-	if (p == NULL)
-		panic("ohci_rem_ed: ED not found");
+	KASSERT(p != NULL);
+
 	usb_syncmem(&sed->dma, sed->offs + offsetof(ohci_ed_t, ed_nexted),
 	    sizeof(sed->ed.ed_nexted),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
