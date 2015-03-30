@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.40 2014/10/11 20:53:16 christos Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.41 2015/03/30 02:23:21 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 
 #include <sys/queue.h>
 #include <netinet/in_pcb_hdr.h>
+#include <netinet/ip6.h>
 
 /*
  * Common structure pcb for internet protocol implementation.
