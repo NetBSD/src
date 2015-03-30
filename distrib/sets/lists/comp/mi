@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1950 2015/03/30 01:15:15 riastradh Exp $
+#	$NetBSD: mi,v 1.1951 2015/03/30 01:25:36 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10074,8 +10074,8 @@
 ./usr/share/man/cat9/cprng_strong64.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cprng_strong_create.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cprng_strong_destroy.0	comp-sys-catman		.cat
-./usr/share/man/cat9/cprng_strong_getflags.0	comp-sys-catman		.cat
-./usr/share/man/cat9/cprng_strong_setflags.0	comp-sys-catman		.cat
+./usr/share/man/cat9/cprng_strong_getflags.0	comp-obsolete		obsolete
+./usr/share/man/cat9/cprng_strong_setflags.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/cpu_configure.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_coredump.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_dump.0			comp-sys-catman		.cat
@@ -16871,8 +16871,8 @@
 ./usr/share/man/html9/cprng_strong64.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cprng_strong_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cprng_strong_destroy.html	comp-sys-htmlman	html
-./usr/share/man/html9/cprng_strong_getflags.html comp-sys-htmlman	html
-./usr/share/man/html9/cprng_strong_setflags.html comp-sys-htmlman	html
+./usr/share/man/html9/cprng_strong_getflags.html comp-obsolete		obsolete
+./usr/share/man/html9/cprng_strong_setflags.html comp-obsolete		obsolete
 ./usr/share/man/html9/cpu_configure.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cpu_coredump.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cpu_dump.html		comp-sys-htmlman	html
@@ -23786,8 +23786,8 @@
 ./usr/share/man/man9/cprng_strong64.9		comp-sys-man		.man
 ./usr/share/man/man9/cprng_strong_create.9	comp-sys-man		.man
 ./usr/share/man/man9/cprng_strong_destroy.9	comp-sys-man		.man
-./usr/share/man/man9/cprng_strong_getflags.9	comp-sys-man		.man
-./usr/share/man/man9/cprng_strong_setflags.9	comp-sys-man		.man
+./usr/share/man/man9/cprng_strong_getflags.9	comp-obsolete		obsolete
+./usr/share/man/man9/cprng_strong_setflags.9	comp-obsolete		obsolete
 ./usr/share/man/man9/cpu_configure.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_coredump.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_dump.9			comp-sys-man		.man
