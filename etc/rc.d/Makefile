@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.92 2015/03/21 19:10:43 jmcneill Exp $
+# $NetBSD: Makefile,v 1.93 2015/03/30 10:58:37 chopps Exp $
 
 .include <bsd.own.mk>
 
@@ -33,8 +33,8 @@ CONFIGFILES=\
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
-		rbootd rndctl root route6d routed rtadvd rtclocaltime \
-		rwho \
+		rbootd resize_root rndctl root route6d routed rtadvd \
+		rtclocaltime rwho \
 		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.236 2015/03/21 19:10:43 jmcneill Exp $
+# $NetBSD: mi,v 1.237 2015/03/30 10:58:37 chopps Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -266,6 +266,7 @@
 ./etc/rc.d/random_seed				etc-sys-rc
 ./etc/rc.d/rarpd				etc-bootserver-rc
 ./etc/rc.d/rbootd				etc-bootserver-rc
+./etc/rc.d/resize_root				etc-sys-rc
 ./etc/rc.d/rndctl				etc-sys-rc
 ./etc/rc.d/root					etc-sys-rc
 ./etc/rc.d/route6d				etc-router-rc

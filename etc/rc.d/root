@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: root,v 1.4 2009/04/21 16:08:57 joerg Exp $
+# $NetBSD: root,v 1.5 2015/03/30 10:58:37 chopps Exp $
 #
 
 # PROVIDE: root
-# REQUIRE: fsck_root
+# REQUIRE: fsck_root resize_root
 
 $_rc_subr_loaded . /etc/rc.subr
 
