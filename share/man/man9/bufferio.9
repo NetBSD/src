@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.9 2015/03/30 13:22:12 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.10 2015/03/30 13:26:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -322,7 +322,7 @@ If no bytes are transferred, this must be set to
 .Fa bp Ns Li "->b_bcount" .
 .It
 Call
-.Li "biodone(" Ns Fa bp Ns Li ")" .
+.Fn biodone bp .
 .El
 .Sh FUNCTIONS
 .Bl -tag -width abcd
