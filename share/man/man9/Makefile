@@ -1,11 +1,12 @@
-#       $NetBSD: Makefile,v 1.381 2015/03/30 00:44:37 riastradh Exp $
+#       $NetBSD: Makefile,v 1.382 2015/03/30 01:15:15 riastradh Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	altq.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bintime_add.9 bluetooth.9 boothowto.9 bpf.9 \
-	buffercache.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 bzero.9 \
+	buffercache.9 bufferio.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 \
+	bzero.9 \
 	callback.9 callout.9 cardbus.9 clock.9 cnmagic.9 condvar.9 config.9 \
 	cons.9 copy.9 coredump_write.9 \
 	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 \
@@ -19,7 +20,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	dopowerhooks.9 do_setresuid.9 doshutdownhooks.9 driver.9 \
 	edid.9 errno.9 ethersubr.9 evcnt.9 extattr.9 extent.9 \
 	fetch.9 file.9 fileassoc.9 filedesc.9 firmload.9 flash.9 \
-	fork1.9 fsetown.9 fstrans.9 getiobuf.9 genfs.9 genfs_rename.9 \
+	fork1.9 fsetown.9 fstrans.9 \
+	genfs.9 genfs_rename.9 \
 	hash.9 hashinit.9 hardclock.9 humanize_number.9 hz.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
@@ -78,7 +80,7 @@ MLINKS+=cprng.9	cprng_strong.9 \
 	cprng.9 arc4random.9 \
 	cprng.9 arc4randbytes.9 \
 	cprng.9 rnd_extract_data.9
-	
+
 MAN+=	deviter.9
 MLINKS+=deviter.9 deviter_first.9 \
 	deviter.9 deviter_init.9 \
@@ -142,9 +144,13 @@ MLINKS+=buffercache.9 bread.9 \
 	buffercache.9 geteblk.9 \
 	buffercache.9 incore.9 \
 	buffercache.9 allocbuf.9 \
-	buffercache.9 brelse.9 \
-	buffercache.9 biodone.9 \
-	buffercache.9 biowait.9
+	buffercache.9 brelse.9
+MLINKS+=bufferio.9 biodone.9 \
+	bufferio.9 biowait.9 \
+	bufferio.9 getiobuf.9 \
+	bufferio.9 putiobuf.9 \
+	bufferio.9 nestiobuf_setup.9 \
+	bufferio.9 nestiobuf_done.9
 MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_copy_region_1.9 \
 	bus_space.9 bus_space_copy_region_2.9 \
@@ -334,7 +340,6 @@ MLINKS+=fstrans.9 fstrans_done.9 \
 	fstrans.9 fscow_establish.9 \
 	fstrans.9 fscow_disestablish.9 \
 	fstrans.9 fscow_run.9
-MLINKS+=getiobuf.9 putiobuf.9
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
 MLINKS+=hashinit.9 hashdone.9
 MLINKS+=humanize_number.9 format_bytes.9
