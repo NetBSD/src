@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.14 2015/03/30 13:58:28 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.15 2015/03/30 14:00:52 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -324,7 +324,7 @@ Set
 .Fa bp Ns Li "->b_resid"
 to the number of bytes remaining to transfer, whether on success or
 on failure.
-If no bytes are transferred, this must be set to
+If no bytes were transferred, this must be set to
 .Fa bp Ns Li "->b_bcount" .
 .It
 Call
