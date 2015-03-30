@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.155 2015/03/05 10:21:02 skrll Exp $
+# $NetBSD: HACKS,v 1.156 2015/03/30 05:30:08 matt Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -993,3 +993,9 @@ file	src/sys/arch/vax/boot/boot/Makefile: 1.41
 descr	/boot does not work when compiled with -O2 and gcc 4.8
 kcah
 
+port	arm
+hack	avoid using labels in a 12-bit constant.
+who	matt
+file	crypto/external/bsd/openssl/lib/libcrypto/arch/arm/aes-armv4.S: 1.2
+descr	workaround for clang misassembling an instruction
+kcah
