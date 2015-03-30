@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.20 2015/03/29 09:49:54 matt Exp $	*/
+/*	$NetBSD: locore.h,v 1.21 2015/03/30 05:43:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -53,6 +53,8 @@
 #include "opt_cputypes.h"
 #include "opt_arm_debug.h"
 #endif
+
+#include <sys/pcu.h>
 
 #include <arm/cpuconf.h>
 #include <arm/armreg.h>
