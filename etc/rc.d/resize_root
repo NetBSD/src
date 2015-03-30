@@ -1,0 +1,95 @@
+#!/bin/sh
+#
+# $NetBSD: resize_root,v 1.1 2015/03/30 10:58:37 chopps Exp $
+#
+
+# PROVIDE: resize_root
+# REQUIRE: fsck_root
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="resize_root"
+rcvar=$name
+start_cmd="resize_root_start"
+stop_cmd=":"
+fstab_file=/etc/fstab
+rootmp="/"
+
+split_options()
+{
+	local IFS
+	IFS=,
+	OPTS=$1
+	for i in $OPTS; do
+		echo $i
+	done
+}
+
+resize_root_start()
+{
+	# if ! checkyesno $rcvar; then
+	# 	echo "Not resizing $rootmp: resize_root must be set to YES/yes/..."
+	# 	return
+	# fi
+
+	trap : 2 		# Ignore SIGINT, SIGQUIT, so we
+	trap : 3		# enter single-user mode on failure.
+
+	# Do nothing if root file system is not mentioned in /etc/fstab, or if
+	# root file system seems to be a network mount, or if root file system
+	# is not ffs or if logging is enabled.
+	rootdev=""
+	while read fs_spec fs_file fs_vfstype fs_mntops fs_freq fs_passno
+	do
+		# skip comment or blank line
+		case "${fs_spec}" in
+		\#*|'') continue ;;
+		esac
+
+		# skip non-root
+		if [ "${fs_file}" != "$rootmp" ]; then
+			continue
+		fi
+
+		if [ "${fs_vfstype}" != "ffs" ]; then
+			echo "Not resizing $rootmp: not an ffs file system"
+			return
+		fi
+
+		case "${fs_spec}" in
+		*:*)
+			echo "Not resizing $rootmp: network mount"
+			return
+			;;
+		esac
+
+		for opt in $(split_options "${fs_mntops}"); do
+			if [ "$opt" = "log" ];  then
+				echo "Not resizing $rootmp: logging unsupported"
+				return
+			fi
+		done
+
+		rootdev=${fs_spec%/*}/r${fs_spec##*/}
+		break
+	done < "${fstab_file}"
+
+	if [ -z "$rootdev" ]; then
+		echo "Not resizing $rootmp: not listed in ${fstab_file}"
+		return
+	fi
+
+	if resize_ffs -c $rootdev; then
+		echo "Resizing $rootmp"
+		if ! resize_ffs -y $rootdev; then
+		    echo "Error resizing root."
+		    stop_boot
+		fi
+	else
+		echo "Not resizing $rootmp: already correct size"
+	fi
+	return
+}
+
+load_rc_config $name
+run_rc_command "$1"
