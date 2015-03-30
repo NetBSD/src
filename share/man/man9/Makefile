@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.382 2015/03/30 01:15:15 riastradh Exp $
+#       $NetBSD: Makefile,v 1.383 2015/03/30 01:25:36 riastradh Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -70,8 +70,6 @@ MAN+=	cprng.9
 MLINKS+=cprng.9	cprng_strong.9 \
 	cprng.9 cprng_strong_create.9 \
 	cprng.9	cprng_strong_destroy.9 \
-	cprng.9 cprng_strong_getflags.9 \
-	cprng.9 cprng_strong_setflags.9 \
 	cprng.9 cprng_strong32.9 \
 	cprng.9 cprng_strong64.9 \
 	cprng.9 cprng_fast.9 \
