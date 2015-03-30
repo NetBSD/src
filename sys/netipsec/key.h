@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.13 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: key.h,v 1.14 2015/03/30 03:51:50 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -35,8 +35,6 @@
 #define _NETIPSEC_KEY_H_
 
 #ifdef _KERNEL
-
-#include "opt_ipsec.h"
 
 struct secpolicy;
 struct secpolicyindex;

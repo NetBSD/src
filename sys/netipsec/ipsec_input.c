@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.32 2014/03/08 12:18:04 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.33 2015/03/30 03:51:50 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.32 2014/03/08 12:18:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.33 2015/03/30 03:51:50 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.32 2014/03/08 12:18:04 ozaki-r Exp
 #ifdef __FreeBSD__
 #include "opt_inet6.h"
 #endif
-#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

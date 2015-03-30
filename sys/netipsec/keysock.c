@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.43 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.44 2015/03/30 03:51:50 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,9 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.43 2014/08/09 05:33:01 rtr Exp $");
-
-#include "opt_ipsec.h"
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.44 2015/03/30 03:51:50 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
