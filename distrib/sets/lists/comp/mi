@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1949 2015/03/30 00:44:37 riastradh Exp $
+#	$NetBSD: mi,v 1.1950 2015/03/30 01:15:15 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9906,6 +9906,7 @@
 ./usr/share/man/cat9/btoc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/btodb.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/buffercache.0		comp-sys-catman		.cat
+./usr/share/man/cat9/bufferio.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bufq.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_dma.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_dmamap_create.0	comp-sys-catman		.cat
@@ -10558,6 +10559,8 @@
 ./usr/share/man/cat9/nanotime.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/nanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/need_resched.0		comp-obsolete		obsolete
+./usr/share/man/cat9/nestiobuf_done.0		comp-sys-catman		.cat
+./usr/share/man/cat9/nestiobuf_setup.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/nextrunqueue.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/npf_ncode.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/nullop.0			comp-sys-catman		.cat
@@ -16705,6 +16708,7 @@
 ./usr/share/man/html9/btoc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/btodb.html		comp-sys-htmlman	html
 ./usr/share/man/html9/buffercache.html		comp-sys-htmlman	html
+./usr/share/man/html9/bufferio.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bufq.html			comp-sys-htmlman	html
 ./usr/share/man/html9/bus_dma.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bus_dmamap_create.html	comp-sys-htmlman	html
@@ -17330,6 +17334,8 @@
 ./usr/share/man/html9/namei.html		comp-sys-htmlman	html
 ./usr/share/man/html9/nanotime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/nanouptime.html		comp-sys-htmlman	html
+./usr/share/man/html9/nestiobuf_done.html	comp-sys-htmlman	html
+./usr/share/man/html9/nestiobuf_setup.html	comp-sys-htmlman	html
 ./usr/share/man/html9/npf_ncode.html		comp-obsolete		obsolete
 ./usr/share/man/html9/nullop.html		comp-sys-htmlman	html
 ./usr/share/man/html9/old_sysctl.html		comp-sys-htmlman	html
@@ -23612,6 +23618,7 @@
 ./usr/share/man/man9/btoc.9			comp-sys-man		.man
 ./usr/share/man/man9/btodb.9			comp-sys-man		.man
 ./usr/share/man/man9/buffercache.9		comp-sys-man		.man
+./usr/share/man/man9/bufferio.9			comp-sys-man		.man
 ./usr/share/man/man9/bufq.9			comp-sys-man		.man
 ./usr/share/man/man9/bus_dma.9			comp-sys-man		.man
 ./usr/share/man/man9/bus_dmamap_create.9	comp-sys-man		.man
@@ -24264,6 +24271,8 @@
 ./usr/share/man/man9/nanotime.9			comp-sys-man		.man
 ./usr/share/man/man9/nanouptime.9		comp-sys-man		.man
 ./usr/share/man/man9/need_resched.9		comp-obsolete		obsolete
+./usr/share/man/man9/nestiobuf_done.9		comp-sys-man		.man
+./usr/share/man/man9/nestiobuf_setup.9		comp-sys-man		.man
 ./usr/share/man/man9/nextrunqueue.9		comp-obsolete		obsolete
 ./usr/share/man/man9/npf_ncode.9		comp-obsolete		obsolete
 ./usr/share/man/man9/nullop.9			comp-sys-man		.man
