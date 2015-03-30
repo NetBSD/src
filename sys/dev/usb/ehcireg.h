@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.34.14.7 2015/03/16 16:38:27 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.34.14.8 2015/03/30 11:57:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -282,6 +282,7 @@ typedef struct {
 #define EHCI_SITD_LENGTH_MASK	__BITS(25,16)
 #define EHCI_SITD_GET_LEN(x)	__SHIFTOUT((x), EHCI_SITD_LENGTH_MASK)
 #define EHCI_SITD_SET_LEN(x)	__SHIFTIN((x), EHCI_SITD_LENGTH_MASK)
+#define EHCI_SITD_STATUS_MASK	__BITS(7,0)
 #define EHCI_SITD_ACTIVE	0x00000080
 #define EHCI_SITD_ERR		0x00000040
 #define EHCI_SITD_BUFERR	0x00000020
@@ -292,6 +293,8 @@ typedef struct {
 	volatile uint32_t	sitd_buffer[2];
 #define EHCI_SITD_SET_BPTR(x)	((x) & 0xfffff000)
 #define EHCI_SITD_SET_OFFS(x)	((x) & 0xfff)
+#define EHCI_SITD_TP_MASK	__BITS(4,3)
+#define EHCI_SITD_TCOUNT_MASK	__BITS(2,0)
 
 	volatile uint32_t	sitd_back;
 } ehci_sitd_t;
