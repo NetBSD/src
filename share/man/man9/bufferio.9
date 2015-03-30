@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.7 2015/03/30 13:17:14 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.8 2015/03/30 13:18:08 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -167,7 +167,7 @@ with
 .El
 .Pp
 Once an I/O transfer has completed, its
-.Li struct buf
+.Vt "struct buf"
 may be reused, but the user must first clear the
 .Dv BO_DONE
 flag of
@@ -356,7 +356,7 @@ is set in
 .Fa bp Ns Li "->b_flags" .
 .It Fn getiobuf vp waitok
 Allocate a
-.Fa struct buf
+.Vt "struct buf"
 for an I/O transfer.
 If
 .Fa vp
@@ -367,7 +367,7 @@ is false,
 returns null if none can be allocated immediately.
 .Pp
 The resulting
-.Li struct buf
+.Vt "struct buf"
 pointer must eventually be passed to
 .Fn putiobuf
 to release it.
