@@ -170,7 +170,13 @@ AES_encrypt:
 	stmdb   sp!,{r1,r4-r12,lr}
 	mov	r12,r0		@ inp
 	mov	r11,r2
+#ifdef __clang__
+	@ workaround for clang integrated assembler bug
+	ldr	r0,=(AES_encrypt-AES_Te)
+	sub	r10,r3,r0
+#else
 	sub	r10,r3,#AES_encrypt-AES_Te	@ Te
+#endif
 #if __ARM_ARCH__<7
 	ldrb	r0,[r12,#3]	@ load input data in endian-neutral
 	ldrb	r4,[r12,#2]	@ manner...
