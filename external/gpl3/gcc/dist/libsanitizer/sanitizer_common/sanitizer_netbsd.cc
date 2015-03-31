@@ -390,7 +390,7 @@ bool SanitizerGetThreadName(char *name, int max_len) {
 
 #ifndef SANITIZER_GO
 //------------------------- SlowUnwindStack -----------------------------------
-#ifdef __arm__
+#if defined(__arm__) && defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
 #include "unwind-arm-common.h"
 #define UNWIND_STOP _URC_END_OF_STACK
 #define UNWIND_CONTINUE _URC_NO_REASON
@@ -401,7 +401,7 @@ bool SanitizerGetThreadName(char *name, int max_len) {
 #endif
 
 uptr Unwind_GetIP(struct _Unwind_Context *ctx) {
-#ifdef __arm__
+#if defined(__arm__) && defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
   uptr val;
   _Unwind_VRS_Result res = _Unwind_VRS_Get(ctx, _UVRSC_CORE,
       15 /* r15 = PC */, _UVRSD_UINT32, &val);
