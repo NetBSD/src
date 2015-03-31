@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.190 2015/03/21 19:10:43 jmcneill Exp $
+# $NetBSD: postinstall,v 1.191 2015/03/31 07:57:57 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1399,6 +1399,7 @@ raidframeparity
 random_seed
 rarpd
 rbootd
+resize_root
 rndctl
 root
 route6d
