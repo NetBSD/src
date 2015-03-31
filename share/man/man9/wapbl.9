@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.8 2015/03/27 21:53:50 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.9 2015/03/31 00:03:58 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -452,6 +452,18 @@ There is no way for a file system to communicate to
 how many buffers, inodes, and deallocations it will issue via
 .Nm
 in the transaction.
+.Pp
+.Nm
+mainly supports write-ahead, and has only limited support for rolling
+back operations, in the form of
+.Fn wapbl_register_inode
+and
+.Fn wapbl_unregister_inode .
+Consequently, for example, large writes appending to a file, which
+requires multiple disk block allocations and an inode update, must
+occur in a single transaction -- there is no way to roll back the disk
+block allocations if the write fails in the middle, e.g. because of a
+fault in the middle of the user buffer.
 .Pp
 There is only one
 .Nm
