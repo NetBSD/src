@@ -23,7 +23,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addrtoname.c,v 1.6 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.7 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -559,7 +559,7 @@ linkaddr_string(netdissect_options *ndo, const u_char *ep, const unsigned int ty
 		return (etheraddr_string(ndo, ep));
 
 	if (type == LINKADDR_FRELAY)
-		return (q922_string(ep));
+		return (q922_string(ndo, ep, len));
 
 	tp = lookup_bytestring(ep, len);
 	if (tp->e_name)
@@ -1219,3 +1219,15 @@ newh6namemem(void)
 	return (p);
 }
 #endif /* INET6 */
+
+/* Represent TCI part of the 802.1Q 4-octet tag as text. */
+const char *
+ieee8021q_tci_string(const uint16_t tci)
+{
+	static char buf[128];
+	snprintf(buf, sizeof(buf), "vlan %u, p %u%s",
+	         tci & 0xfff,
+	         tci >> 13,
+	         (tci & 0x1000) ? ", DEI" : "");
+	return buf;
+}
