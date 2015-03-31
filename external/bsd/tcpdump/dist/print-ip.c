@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ip.c,v 1.7 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.8 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -441,12 +441,10 @@ again:
 		}
 		break;
 
-#ifdef INET6
 	case IPPROTO_IPV6:
 		/* ip6-in-ip encapsulation */
 		ip6_print(ndo, ipds->cp, ipds->len);
 		break;
-#endif /*INET6*/
 
 	case IPPROTO_RSVP:
 		rsvp_print(ndo, ipds->cp, ipds->len);
@@ -538,18 +536,17 @@ ip_print(netdissect_options *ndo,
 	struct protoent *proto;
 
 	ipds->ip = (const struct ip *)bp;
+	ND_TCHECK(ipds->ip->ip_vhl);
 	if (IP_V(ipds->ip) != 4) { /* print version if != 4 */
-	    ND_PRINT((ndo, "IP%u ", IP_V(ipds->ip)));
 	    if (IP_V(ipds->ip) == 6)
-	      ND_PRINT((ndo, ", wrong link-layer encapsulation"));
+	      ND_PRINT((ndo, "IP6, wrong link-layer encapsulation "));
+	    else
+	      ND_PRINT((ndo, "IP%u ", IP_V(ipds->ip)));
 	}
 	else if (!ndo->ndo_eflag)
 		ND_PRINT((ndo, "IP "));
 
-	if ((u_char *)(ipds->ip + 1) > ndo->ndo_snapend) {
-		ND_PRINT((ndo, "%s", tstr));
-		return;
-	}
+	ND_TCHECK(*ipds->ip);
 	if (length < sizeof (struct ip)) {
 		ND_PRINT((ndo, "truncated-ip %u", length));
 		return;
@@ -678,6 +675,11 @@ ip_print(netdissect_options *ndo,
 				ND_PRINT((ndo, " ip-proto-%d", ipds->ip->ip_p));
 		}
 	}
+	return;
+
+trunc:
+	ND_PRINT((ndo, "%s", tstr));
+	return;
 }
 
 void
@@ -694,11 +696,9 @@ ipN_print(netdissect_options *ndo, register const u_char *bp, register u_int len
 	case 4:
 		ip_print (ndo, bp, length);
 		return;
-#ifdef INET6
 	case 6:
 		ip6_print (ndo, bp, length);
 		return;
-#endif
 	default:
 		ND_PRINT((ndo, "unknown ip %d", IP_V(&hdr)));
 		return;

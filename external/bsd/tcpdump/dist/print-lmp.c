@@ -19,7 +19,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-lmp.c,v 1.6 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-lmp.c,v 1.7 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -359,8 +359,8 @@ static const struct tok lmp_ctype_values[] = {
 
 void
 lmp_print(netdissect_options *ndo,
-          register const u_char *pptr, register u_int len) {
-
+          register const u_char *pptr, register u_int len)
+{
     const struct lmp_common_header *lmp_com_header;
     const struct lmp_object_header *lmp_obj_header;
     const u_char *tptr,*obj_tptr;
