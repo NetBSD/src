@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-mpls.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-mpls.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -191,11 +191,7 @@ mpls_print(netdissect_options *ndo, const u_char *bp, u_int length)
 		break;
 
 	case PT_IPV6:
-#ifdef INET6
 		ip6_print(ndo, p, length - (p - bp));
-#else
-		ND_PRINT((ndo, "IPv6, length: %u", length));
-#endif
 		break;
 
 	case PT_OSI:

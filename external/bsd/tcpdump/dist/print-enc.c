@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-enc.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-enc.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -122,11 +122,11 @@ enc_if_print(netdissect_options *ndo,
 	case AF_INET:
 		ip_print(ndo, p, length);
 		break;
-#ifdef INET6
+#ifdef AF_INET6
 	case AF_INET6:
 		ip6_print(ndo, p, length);
 		break;
-#endif /*INET6*/
+#endif
 	}
 
 out:

@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sl.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-sl.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -67,7 +67,7 @@ sl_if_print(netdissect_options *ndo,
 	register u_int length = h->len;
 	register const struct ip *ip;
 
-	if (caplen < SLIP_HDRLEN) {
+	if (caplen < SLIP_HDRLEN || length < SLIP_HDRLEN) {
 		ND_PRINT((ndo, "%s", tstr));
 		return (caplen);
 	}
@@ -83,11 +83,9 @@ sl_if_print(netdissect_options *ndo,
 	case 4:
 	        ip_print(ndo, (u_char *)ip, length);
 		break;
-#ifdef INET6
 	case 6:
 		ip6_print(ndo, (u_char *)ip, length);
 		break;
-#endif
 	default:
 		ND_PRINT((ndo, "ip v%d", IP_V(ip)));
 	}
