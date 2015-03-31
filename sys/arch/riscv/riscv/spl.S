@@ -1,4 +1,4 @@
-/* $NetBSD: spl.S,v 1.1 2015/03/28 16:13:56 matt Exp $ */
+/* $NetBSD: spl.S,v 1.2 2015/03/31 01:15:26 matt Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-__RCSID("$NetBSD: spl.S,v 1.1 2015/03/28 16:13:56 matt Exp $")
+__RCSID("$NetBSD: spl.S,v 1.2 2015/03/31 01:15:26 matt Exp $")
 
 	.data
 	.globl	_C_LABEL(ipl_sr_map)
@@ -50,22 +50,22 @@ _C_LABEL(ipl_sr_map):
 
 ENTRY_NP(splx)
 	// a0 = new lower IPL
-	csrr	a3, sscratch		// get curcpu()
-	lw	t0, CI_CPL(a3)		// get current IPL
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
+	INT_L	t0, CI_CPL(a3)		// get current IPL
 	beq	a0, t0, 2f
 .L_splset:
 	// a0 = new ipl
-	la	t0, ipl_sr_map
+	PTR_LA	t0, ipl_sr_map
 	slli	a1, a0, 2		// make integer index
 	add	t0, t0, a1		// index into table
-	lw	t0, (t0)		// get new mask bits to clear
+	INT_L	t0, (t0)		// get new mask bits to clear
 	li	t2, SR_IM		// get mask bits
 	xor	t0, t0, t2		// invert mask bits
 	csrc	sstatus, t2		// block everything
-	sw	a0, CI_CPL(a3)		// change IPL
+	INT_S	a0, CI_CPL(a3)		// change IPL
 	beqz	t0, 2f
 	csrs	sstatus, t0		// unmask appropriate bits
-2:	lw	t4, CI_SOFTINTS(a3)	// get softint mask
+2:	INT_L	t4, CI_SOFTINTS(a3)	// get softint mask
 	srl	t4, t4, a0		// see what softints are pending.
 	beqz	t4, 3f			// none, just return
 	// there are softints that need to be delivered, so instead of
@@ -80,10 +80,10 @@ END(splx)
 #error IPL_NONE is not 0
 #endif
 ENTRY_NP(spl0)
-	csrr	a3, sscratch		// get curcpu()
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
 	li	t0, SR_IM|SR_EI		// load SR_IM|EI
 	csrci	sstatus, SR_EI		// disable interrupts
-	sw	zero, CI_CPL(a3)	// set current IPL to IPL_NONE
+	INT_S	zero, CI_CPL(a3)	// set current IPL to IPL_NONE
 	csrs	sstatus, t0		// unmask all & enable interrupts
 	// spl0() is only called rarely so the overhead of always calling
 	// softint_deliver is minimal.
@@ -91,61 +91,61 @@ ENTRY_NP(spl0)
 END(spl0)
 
 ENTRY_NP(splhigh)
-	csrr	a3, sscratch		// get curcpu()
-	lw	a0, CI_CPL(a3)		// get current IPL
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
+	INT_L	a0, CI_CPL(a3)		// get current IPL
 	li	t1, SR_IM		// load SR_IM
 	li	t0, IPL_HIGH		// 
 	csrc	sstatus, t1		// mask all interrupts
-	sw	t0, CI_CPL(a3)		// set it to IPL_HIGH
+	INT_S	t0, CI_CPL(a3)		// set it to IPL_HIGH
 	ret
 END(splhigh)
 
 ENTRY_NP(splsoftclock)
 	li	a0, IPL_SOFTCLOCK
-	csrr	a3, sscratch		// get curcpu()
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
 	j	.L_splset
 END(splsoftclock)
 
 ENTRY_NP(splsoftbio)
 	li	a0, IPL_SOFTBIO
-	csrr	a3, sscratch		// get curcpu()
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
 	j	.L_splset
 END(splsoftbio)
 
 ENTRY_NP(splsoftnet)
 	li	a0, IPL_SOFTNET
-	csrr	a3, sscratch		// get curcpu()
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
 	j	.L_splset
 END(splsoftnet)
 
 ENTRY_NP(splsoftserial)
 	li	a0, IPL_SOFTSERIAL
-	csrr	a3, sscratch		// get curcpu()
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
 	j	.L_splset
 END(splsoftserial)
 
 ENTRY_NP(splvm)
 	li	a0, IPL_VM
-	csrr	a3, sscratch		// get curcpu()
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
 	j	.L_splset
 END(splvm)
 
 ENTRY_NP(splsched)
 	li	a0, IPL_SCHED
-	csrr	a3, sscratch		// get curcpu()
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
 	j	.L_splset
 END(splsched)
 
 ENTRY_NP(splddb)
 	li	a0, IPL_DDB
-	csrr	a3, sscratch		// get curcpu()
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
 	j	.L_splset
 END(splddb)
 
 ENTRY_NP(splraise)
 	mv	t0, a0			// need a0 for return value
-	csrr	a3, sscratch		// get curcpu()
-	lw	a0, CI_CPL(a3)		// get current IPL
+	PTR_L	a3, L_CPU(tp)		// get curcpu()
+	INT_L	a0, CI_CPL(a3)		// get current IPL
 	bgt	t0, a0, .L_splset	// set if new IPL is higher
 	ret
 END(splraise)
