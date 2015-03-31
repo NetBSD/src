@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.18 2015/03/31 15:49:45 riastradh Exp $
+.\"     $NetBSD: fstrans.9,v 1.19 2015/03/31 20:50:29 riastradh Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,13 +108,11 @@ to sync it to its backing store, but blocked while the file system is
 suspended.
 .Pp
 Transactions are per-thread and nestable: if a thread is already in a
-transaction, it can enter another transaction.
+transaction, it can enter another transaction without blocking.
 Each
 .Fn fstrans_start
 must be paired with
 .Fn fstrans_done .
-Entering a shared transaction while in a lazy transaction is not
-allowed and will lead to deadlock.
 Transactions for multiple distinct mount points may not be nested.
 .Pp
 The file system's
