@@ -1,4 +1,4 @@
-/*	$NetBSD: service.c,v 1.2 2010/03/07 10:58:40 plunky Exp $	*/
+/*	$NetBSD: service.c,v 1.3 2015/03/31 09:25:41 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: service.c,v 1.2 2010/03/07 10:58:40 plunky Exp $");
+__RCSID("$NetBSD: service.c,v 1.3 2015/03/31 09:25:41 plunky Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -234,7 +234,7 @@ service_attribute_request(server_t *srv, int fd)
 
 	/*
 	 * Match the selected record against AttributeIDList, writing
-	 * the data to the sparce buffer.
+	 * the data to the sparse buffer.
 	 */
 	r = NULL;
 	db_next(srv, fd, &r);
