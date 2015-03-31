@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.117 2015/03/31 00:22:50 riastradh Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.118 2015/03/31 11:43:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.117 2015/03/31 00:22:50 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.118 2015/03/31 11:43:05 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -349,6 +349,11 @@ WRITE(void *v)
 	 * genfs_getpages/putpages to cope with the possibility that
 	 * the transaction may or may not be locked on entry to the
 	 * page cache.
+	 *
+	 * And even if we added that notion to WAPBL, it wouldn't help
+	 * us get rid of the tentacles in genfs_getpages/putpages
+	 * because we'd have to interoperate with old implementations
+	 * that assume they can replay the log without fsck.
 	 */
 	error = UFS_WAPBL_BEGIN(vp->v_mount);
 	if (error) {
