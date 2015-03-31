@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-pf.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: pcap-pf.c,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-pf.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: pcap-pf.c,v 1.3 2015/03/31 21:39:42 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -242,7 +242,7 @@ pcap_inject_pf(pcap_t *p, const void *buf, size_t size)
 		return (-1);
 	}
 	return (ret);
-}                           
+}
 
 static int
 pcap_stats_pf(pcap_t *p, struct pcap_stat *ps)

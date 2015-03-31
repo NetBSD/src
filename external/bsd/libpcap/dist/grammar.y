@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.y,v 1.5 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: grammar.y,v 1.6 2015/03/31 21:39:42 christos Exp $	*/
 
 %{
 /*
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grammar.y,v 1.5 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.6 2015/03/31 21:39:42 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -303,8 +303,8 @@ pfaction_to_num(const char *action)
 %token  LEN
 %token  IPV6 ICMPV6 AH ESP
 %token	VLAN MPLS
-%token	PPPOED PPPOES
-%token  ISO ESIS CLNP ISIS L1 L2 IIH LSP SNP CSNP PSNP 
+%token	PPPOED PPPOES GENEVE
+%token  ISO ESIS CLNP ISIS L1 L2 IIH LSP SNP CSNP PSNP
 %token  STP
 %token  IPX
 %token  NETBEUI
@@ -314,7 +314,7 @@ pfaction_to_num(const char *action)
 %token	RADIO
 %token	FISU LSSU MSU HFISU HLSSU HMSU
 %token	SIO OPC DPC SLS HSIO HOPC HDPC HSLS
- 
+
 
 %type	<s> ID
 %type	<e> EID
@@ -390,7 +390,7 @@ nid:	  ID			{ $$.b = gen_scode($1, $$.q = $<blk>0.q); }
 					"in this configuration");
 #endif /*INET6*/
 				}
-	| EID			{ 
+	| EID			{
 				  $$.b = gen_ecode($1, $$.q = $<blk>0.q);
 				  /*
 				   * $1 was allocated by "pcap_ether_aton()",
@@ -527,6 +527,8 @@ other:	  pqual TK_BROADCAST	{ $$ = gen_broadcast($1); }
 	| PPPOED		{ $$ = gen_pppoed(); }
 	| PPPOES pnum		{ $$ = gen_pppoes($2); }
 	| PPPOES		{ $$ = gen_pppoes(-1); }
+	| GENEVE pnum		{ $$ = gen_geneve($2); }
+	| GENEVE		{ $$ = gen_geneve(-1); }
 	| pfvar			{ $$ = $1; }
 	| pqual p80211		{ $$ = $2; }
 	| pllc			{ $$ = $1; }

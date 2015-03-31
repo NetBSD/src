@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.5 2014/11/19 19:33:31 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.6 2015/03/31 21:39:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -188,10 +188,25 @@ m_xhalf(const struct mbuf *m, uint32_t k, int *err)
 }
 #endif
 
+#ifdef __linux__
+#include <linux/types.h>
+#include <linux/if_packet.h>
+#include <linux/filter.h>
+#endif
+
+enum {
+        BPF_S_ANC_NONE,
+        BPF_S_ANC_VLAN_TAG,
+        BPF_S_ANC_VLAN_TAG_PRESENT,
+};
+
 /*
  * Execute the filter program starting at pc on the packet p
  * wirelen is the length of the original packet
  * buflen is the amount of data present
+ * aux_data is auxiliary data, currently used only when interpreting
+ * filters intended for the Linux kernel in cases where the kernel
+ * rejects the filter; it contains VLAN tag information
  * For the kernel, p is assumed to be a pointer to an mbuf if buflen is 0,
  * in all other cases, p is a pointer to a buffer and buflen is its size.
  */
@@ -199,8 +214,9 @@ u_int
 bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
     u_int buflen)
 {
-	u_int32 A, X, k;
-	int32 mem[BPF_MEMWORDS];
+	register u_int32 A, X;
+	register bpf_u_int32 k;
+	u_int32 mem[BPF_MEMWORDS];
 #if defined(KERNEL) || defined(_KERNEL)
 	struct mbuf *m, *n;
 	int merr, len;
@@ -240,7 +256,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_W|BPF_ABS:
 			k = pc->k;
-			if (k + sizeof(int32) > buflen) {
+			if (k > buflen || sizeof(int32_t) > buflen - k) {
 #if defined(KERNEL) || defined(_KERNEL)
 				if (m == NULL)
 					return 0;
@@ -257,7 +273,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_H|BPF_ABS:
 			k = pc->k;
-			if (k + sizeof(short) > buflen) {
+			if (k > buflen || sizeof(int16_t) > buflen - k) {
 #if defined(KERNEL) || defined(_KERNEL)
 				if (m == NULL)
 					return 0;
@@ -273,22 +289,50 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 			continue;
 
 		case BPF_LD|BPF_B|BPF_ABS:
-			k = pc->k;
-			if (k >= (int)buflen) {
-#if defined(KERNEL) || defined(_KERNEL)
-				if (m == NULL)
-					return 0;
-				n = m;
-				MINDEX(len, n, k);
-				A = mtod(n, u_char *)[k];
-				continue;
-#else
-				return 0;
-#endif
-			}
-			A = p[k];
-			continue;
+			{
+#if defined(SKF_AD_VLAN_TAG) && defined(SKF_AD_VLAN_TAG_PRESENT)
+				int code = BPF_S_ANC_NONE;
+#define ANCILLARY(CODE) case SKF_AD_OFF + SKF_AD_##CODE:		\
+				code = BPF_S_ANC_##CODE;		\
+                                        if (!aux_data)                  \
+                                                return 0;               \
+                                        break;
 
+				switch (pc->k) {
+					ANCILLARY(VLAN_TAG);
+					ANCILLARY(VLAN_TAG_PRESENT);
+				default :
+#endif
+					k = pc->k;
+					if (k >= (int)buflen) {
+#if defined(KERNEL) || defined(_KERNEL)
+						if (m == NULL)
+							return 0;
+						n = m;
+						MINDEX(len, n, k);
+						A = mtod(n, u_char *)[k];
+						continue;
+#else
+						return 0;
+#endif
+					}
+					A = p[k];
+#if defined(SKF_AD_VLAN_TAG) && defined(SKF_AD_VLAN_TAG_PRESENT)
+				}
+				switch (code) {
+				case BPF_S_ANC_VLAN_TAG:
+					if (aux_data)
+						A = aux_data->vlan_tag;
+					break;
+
+				case BPF_S_ANC_VLAN_TAG_PRESENT:
+					if (aux_data)
+						A = aux_data->vlan_tag_present;
+					break;
+				}
+#endif
+				continue;
+			}
 		case BPF_LD|BPF_W|BPF_LEN:
 			A = wirelen;
 			continue;
@@ -299,7 +343,8 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_W|BPF_IND:
 			k = X + pc->k;
-			if (k + sizeof(int32) > buflen) {
+			if (pc->k > buflen || X > buflen - pc->k ||
+			    sizeof(int32_t) > buflen - k) {
 #if defined(KERNEL) || defined(_KERNEL)
 				if (m == NULL)
 					return 0;
@@ -316,7 +361,8 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_H|BPF_IND:
 			k = X + pc->k;
-			if (k + sizeof(short) > buflen) {
+			if (X > buflen || pc->k > buflen - X ||
+			    sizeof(int16_t) > buflen - k) {
 #if defined(KERNEL) || defined(_KERNEL)
 				if (m == NULL)
 					return 0;
@@ -333,7 +379,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 
 		case BPF_LD|BPF_B|BPF_IND:
 			k = X + pc->k;
-			if (k >= (int)buflen) {
+			if (pc->k >= (int)buflen || X >= buflen - pc->k) {
 #if defined(KERNEL) || defined(_KERNEL)
 				if (m == NULL)
 					return 0;
@@ -534,6 +580,17 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 		}
 	}
 }
+
+u_int
+bpf_filter(pc, p, wirelen, buflen)
+	register const struct bpf_insn *pc;
+	register const u_char *p;
+	u_int wirelen;
+	register u_int buflen;
+{
+	return bpf_filter_with_aux_data(pc, p, wirelen, buflen, NULL);
+}
+
 
 /*
  * Return true if the 'fcode' is a valid filter program.

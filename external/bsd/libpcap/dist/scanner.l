@@ -1,4 +1,4 @@
-/*	$NetBSD: scanner.l,v 1.6 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: scanner.l,v 1.7 2015/03/31 21:39:42 christos Exp $	*/
 
 %{
 /*
@@ -22,11 +22,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scanner.l,v 1.6 2014/11/19 19:33:30 christos Exp $");
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+__RCSID("$NetBSD: scanner.l,v 1.7 2015/03/31 21:39:42 christos Exp $");
 
 #ifdef WIN32
 #include <pcap-stdinc.h>
@@ -285,6 +281,7 @@ vlan		return VLAN;
 mpls		return MPLS;
 pppoed		return PPPOED;
 pppoes		return PPPOES;
+geneve		return GENEVE;
 
 lane		return LANE;
 llc		return LLC;
