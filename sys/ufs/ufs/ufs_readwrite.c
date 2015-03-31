@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.116 2015/03/29 14:39:41 riastradh Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.117 2015/03/31 00:22:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.116 2015/03/29 14:39:41 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.117 2015/03/31 00:22:50 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -328,6 +328,28 @@ WRITE(void *v)
 
 	KASSERT(vp->v_type == VREG);
 
+	/*
+	 * XXX The entire write operation must occur in a single WAPBL
+	 * transaction because it may allocate disk blocks, if
+	 * appending or filling holes, which is allowed to happen only
+	 * if the write fully succeeds.
+	 *
+	 * If ubc_uiomove fails in the middle with EFAULT, we can clean
+	 * up at the end with UFS_TRUNCATE.  But if the power fails in
+	 * the middle, there would be nobody to deallocate the blocks,
+	 * without an fsck to globally analyze the file system.
+	 *
+	 * If the increasingly inaccurately named WAPBL were augmented
+	 * with rollback records for block allocations, then we could
+	 * split this into multiple transactions and commit the
+	 * allocations in the last one.
+	 *
+	 * But WAPBL doesn't have that notion now, so we'll have to
+	 * live with gigantic transactions and WAPBL tentacles in
+	 * genfs_getpages/putpages to cope with the possibility that
+	 * the transaction may or may not be locked on entry to the
+	 * page cache.
+	 */
 	error = UFS_WAPBL_BEGIN(vp->v_mount);
 	if (error) {
 		fstrans_done(vp->v_mount);
