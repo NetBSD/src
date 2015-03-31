@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-arp.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-arp.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -394,8 +394,8 @@ arp_print(netdissect_options *ndo,
 
 	case ARPOP_INVREPLY:
 		ND_PRINT((ndo,"%s at %s",
-			  linkaddr_string(ndo, THA(ap), linkaddr, HRD_LEN(ap)),
-			  ipaddr_string(ndo, TPA(ap))));
+			  linkaddr_string(ndo, SHA(ap), linkaddr, HRD_LEN(ap)),
+			  ipaddr_string(ndo, SPA(ap))));
 		break;
 
 	default:

@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ospf.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-ospf.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -186,8 +186,8 @@ static const struct tok ospf_lls_eo_options[] = {
 
 int
 ospf_print_grace_lsa(netdissect_options *ndo,
-                     const uint8_t *tptr, u_int ls_length) {
-
+                     const uint8_t *tptr, u_int ls_length)
+{
     u_int tlv_type, tlv_length;
 
 
@@ -269,8 +269,8 @@ trunc:
 
 int
 ospf_print_te_lsa(netdissect_options *ndo,
-                  const uint8_t *tptr, u_int ls_length) {
-
+                  const uint8_t *tptr, u_int ls_length)
+{
     u_int tlv_type, tlv_length, subtlv_type, subtlv_length;
     u_int priority_level, te_class, count_srlg;
     union { /* int to float conversion buffer for several subTLVs */

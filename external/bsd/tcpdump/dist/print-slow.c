@@ -20,7 +20,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-slow.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-slow.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -254,8 +254,8 @@ const struct slow_common_header_t *slow_com_header;
 
 void
 slow_print(netdissect_options *ndo,
-           register const u_char *pptr, register u_int len) {
-
+           register const u_char *pptr, register u_int len)
+{
     int print_version;
 
     slow_com_header = (const struct slow_common_header_t *)pptr;
@@ -337,8 +337,8 @@ trunc:
 
 static void
 slow_marker_lacp_print(netdissect_options *ndo,
-                       register const u_char *tptr, register u_int tlen) {
-
+                       register const u_char *tptr, register u_int tlen)
+{
     const struct tlv_header_t *tlv_header;
     const u_char *tlv_tptr;
     u_int tlv_len, tlv_tlen;
@@ -455,8 +455,8 @@ trunc:
 
 static void
 slow_oam_print(netdissect_options *ndo,
-               register const u_char *tptr, register u_int tlen) {
-
+               register const u_char *tptr, register u_int tlen)
+{
     u_int hexdump;
 
     struct slow_oam_common_header_t {

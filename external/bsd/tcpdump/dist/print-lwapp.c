@@ -12,14 +12,14 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * Support for the Light Weight Access Point Protocol as per draft-ohara-capwap-lwapp-04
+ * Support for the Light Weight Access Point Protocol as per RFC 5412
  *
  * Original code by Carles Kishimoto <carles.kishimoto@gmail.com>
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-lwapp.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-lwapp.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -167,8 +167,8 @@ struct lwapp_message_header {
 
 void
 lwapp_control_print(netdissect_options *ndo,
-                    const u_char *pptr, u_int len, int has_ap_ident) {
-
+                    const u_char *pptr, u_int len, int has_ap_ident)
+{
     const struct lwapp_transport_header *lwapp_trans_header;
     const struct lwapp_control_header *lwapp_control_header;
     const u_char *tptr;
@@ -290,8 +290,8 @@ lwapp_control_print(netdissect_options *ndo,
 
 void
 lwapp_data_print(netdissect_options *ndo,
-                 const u_char *pptr, u_int len) {
-
+                 const u_char *pptr, u_int len)
+{
     const struct lwapp_transport_header *lwapp_trans_header;
     const u_char *tptr;
     int tlen;

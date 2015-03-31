@@ -22,7 +22,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-arcnet.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-arcnet.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -185,7 +185,7 @@ arcnet_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_ch
 	u_int seqid = 0;
 	u_char arc_type;
 
-	if (caplen < ARC_HDRLEN) {
+	if (caplen < ARC_HDRLEN || length < ARC_HDRLEN) {
 		ND_PRINT((ndo, "[|arcnet]"));
 		return (caplen);
 	}
@@ -206,14 +206,14 @@ arcnet_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_ch
 	}
 
 	if (phds) {
-		if (caplen < ARC_HDRNEWLEN) {
+		if (caplen < ARC_HDRNEWLEN || length < ARC_HDRNEWLEN) {
 			arcnet_print(ndo, p, length, 0, 0, 0);
 			ND_PRINT((ndo, "[|phds]"));
 			return (caplen);
 		}
 
 		if (ap->arc_flag == 0xff) {
-			if (caplen < ARC_HDRNEWLEN_EXC) {
+			if (caplen < ARC_HDRNEWLEN_EXC || length < ARC_HDRNEWLEN_EXC) {
 				arcnet_print(ndo, p, length, 0, 0, 0);
 				ND_PRINT((ndo, "[|phds extended]"));
 				return (caplen);
@@ -272,7 +272,7 @@ arcnet_linux_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, cons
 	int archdrlen = 0;
 	u_char arc_type;
 
-	if (caplen < ARC_LINUX_HDRLEN) {
+	if (caplen < ARC_LINUX_HDRLEN || length < ARC_LINUX_HDRLEN) {
 		ND_PRINT((ndo, "[|arcnet]"));
 		return (caplen);
 	}
@@ -283,7 +283,7 @@ arcnet_linux_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, cons
 	switch (arc_type) {
 	default:
 		archdrlen = ARC_LINUX_HDRNEWLEN;
-		if (caplen < ARC_LINUX_HDRNEWLEN) {
+		if (caplen < ARC_LINUX_HDRNEWLEN || length < ARC_LINUX_HDRNEWLEN) {
 			ND_PRINT((ndo, "[|arcnet]"));
 			return (caplen);
 		}
@@ -330,11 +330,9 @@ arcnet_encap_print(netdissect_options *ndo, u_char arctype, const u_char *p,
 	        ip_print(ndo, p, length);
 		return (1);
 
-#ifdef INET6
 	case ARCTYPE_INET6:
 		ip6_print(ndo, p, length);
 		return (1);
-#endif /*INET6*/
 
 	case ARCTYPE_ARP_OLD:
 	case ARCTYPE_ARP:

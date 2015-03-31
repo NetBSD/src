@@ -11,11 +11,13 @@
  * FOR A PARTICULAR PURPOSE.
  *
  * Original code by Hannes Gredler (hannes@juniper.net)
+ * Turned into common "text protocol" code, which this uses, by
+ * Guy Harris.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sip.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-sip.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -28,34 +30,29 @@ __RCSID("$NetBSD: print-sip.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
 #include "interface.h"
 #include "extract.h"
 
+static const char *sipcmds[] = {
+	"ACK",
+	"BYE",
+	"CANCEL",
+	"DO",
+	"INFO",
+	"INVITE",
+	"MESSAGE",
+	"NOTIFY",
+	"OPTIONS",
+	"PRACK",
+	"QAUTH",
+	"REFER",
+	"REGISTER",
+	"SPRACK",
+	"SUBSCRIBE",
+	"UPDATE",
+	"PUBLISH",
+	NULL
+};
+
 void
-sip_print(netdissect_options *ndo,
-          register const u_char *pptr, register u_int len)
+sip_print(netdissect_options *ndo, const u_char *pptr, u_int len)
 {
-    u_int idx;
-
-    ND_PRINT((ndo, "SIP, length: %u%s", len, ndo->ndo_vflag ? "\n\t" : ""));
-
-    /* in non-verbose mode just lets print the protocol and length */
-    if (ndo->ndo_vflag < 1)
-        return;
-
-    for (idx = 0; idx < len; idx++) {
-        ND_TCHECK2(*(pptr+idx), 2);
-        if (EXTRACT_16BITS(pptr+idx) != 0x0d0a) { /* linefeed ? */
-            safeputchar(ndo, *(pptr + idx));
-        } else {
-            ND_PRINT((ndo, "\n\t"));
-            idx+=1;
-        }
-    }
-
-    /* do we want to see an additionally hexdump ? */
-    if (ndo->ndo_vflag > 1)
-        print_unknown_data(ndo, pptr, "\n\t", len);
-
-    return;
-
-trunc:
-    ND_PRINT((ndo, "[|sip]"));
+	txtproto_print(ndo, pptr, len, "sip", sipcmds, RESP_CODE_SECOND_TOKEN);
 }

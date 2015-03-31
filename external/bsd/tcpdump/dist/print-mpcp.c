@@ -19,7 +19,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-mpcp.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-mpcp.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -127,8 +127,8 @@ static const struct tok mpcp_reg_ack_flag_values[] = {
 };
 
 void
-mpcp_print(netdissect_options *ndo, register const u_char *pptr, register u_int length) {
-
+mpcp_print(netdissect_options *ndo, register const u_char *pptr, register u_int length)
+{
     union {
         const struct mpcp_common_header_t *common_header;
         const struct mpcp_grant_t *grant;

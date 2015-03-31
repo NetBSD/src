@@ -16,7 +16,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-eigrp.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-eigrp.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -210,8 +210,8 @@ static const struct tok eigrp_ext_proto_id_values[] = {
 };
 
 void
-eigrp_print(netdissect_options *ndo, register const u_char *pptr, register u_int len) {
-
+eigrp_print(netdissect_options *ndo, register const u_char *pptr, register u_int len)
+{
     const struct eigrp_common_header *eigrp_com_header;
     const struct eigrp_tlv_header *eigrp_tlv_header;
     const u_char *tptr,*tlv_tptr;

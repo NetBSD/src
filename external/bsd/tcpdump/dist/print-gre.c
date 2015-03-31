@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-gre.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-gre.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -205,11 +205,9 @@ gre_print_0(netdissect_options *ndo, const u_char *bp, u_int length)
 	case ETHERTYPE_IP:
 	        ip_print(ndo, bp, len);
 		break;
-#ifdef INET6
 	case ETHERTYPE_IPV6:
 		ip6_print(ndo, bp, len);
 		break;
-#endif
 	case ETHERTYPE_MPLS:
 		mpls_print(ndo, bp, len);
 		break;

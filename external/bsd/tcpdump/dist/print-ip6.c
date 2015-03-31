@@ -21,15 +21,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ip6.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-ip6.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
-#ifdef INET6
 
 #include <tcpdump-stdinc.h>
 
@@ -38,6 +36,8 @@ __RCSID("$NetBSD: print-ip6.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
 #include "interface.h"
 #include "addrtoname.h"
 #include "extract.h"
+
+#ifdef INET6
 
 #include "ip6.h"
 #include "ipproto.h"
@@ -269,6 +269,14 @@ ip6_print(netdissect_options *ndo, const u_char *bp, u_int length)
 	return;
 trunc:
 	ND_PRINT((ndo, "[|ip6]"));
+}
+
+#else /* INET6 */
+
+void
+ip6_print(netdissect_options *ndo, const u_char *bp _U_, u_int length)
+{
+	ND_PRINT((ndo, "IP6, length: %u (printing not supported)", length));
 }
 
 #endif /* INET6 */
