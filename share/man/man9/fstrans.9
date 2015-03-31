@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.17 2015/03/31 15:47:50 riastradh Exp $
+.\"     $NetBSD: fstrans.9,v 1.18 2015/03/31 15:49:45 riastradh Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,6 +115,7 @@ must be paired with
 .Fn fstrans_done .
 Entering a shared transaction while in a lazy transaction is not
 allowed and will lead to deadlock.
+Transactions for multiple distinct mount points may not be nested.
 .Pp
 The file system's
 .Xr VFS_SUSPENDCTL 9
