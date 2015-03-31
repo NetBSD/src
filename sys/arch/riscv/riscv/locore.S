@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.3 2015/03/31 06:47:47 matt Exp $ */
+/* $NetBSD: locore.S,v 1.4 2015/03/31 11:48:10 matt Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -318,8 +318,8 @@ ENTRY_NP(cpu_exception_handler)
 	REG_S	sp, L_MD_USP(tp)	// save user stack pointer temporarily
 	PTR_L	sp, L_MD_UTF(sp)	// trapframe pointer loaded
 	REG_S	t1, TF_T1(sp)		// save t1
-	REG_S	t1, L_MD_USP(tp)	// get user stack pointer
-	REG_L	t1, TF_SP(sp)		// save thread pointer in trapframe
+	REG_L	t1, L_MD_USP(tp)	// get user stack pointer
+	REG_S	t1, TF_SP(sp)		// save thread pointer in trapframe
 	csrrw	t1, sscratch, zero	// swap saved thread pointer with 0
 	REG_L	t1, TF_TP(sp)		// save thread pointer in trapframe
 	li	t1, 0			// indicate user exception
