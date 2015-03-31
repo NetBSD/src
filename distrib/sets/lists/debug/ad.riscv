@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.15 2015/01/25 15:50:30 christos Exp $
+# $NetBSD: ad.riscv,v 1.16 2015/03/31 21:40:57 christos Exp $
 ./usr/lib/rv32/libcrypto_g.a					comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/rv32/libcrypto_rc5_g.a				comp-c-debuglib		compat,crypto,crypto_rc5,debuglib,arch64
 ./usr/lib/rv32/libdevmapper_g.a					comp-c-debuglib		compat,debuglib,lvm,arch64
@@ -118,7 +118,7 @@
 ./usr/libdata/debug/usr/lib/rv32/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump,arch64
 ./usr/libdata/debug/usr/lib/rv32/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat,arch64
-./usr/libdata/debug/usr/lib/rv32/libpcap.so.5.0.debug		comp-net-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/rv32/libpcap.so.5.1.debug		comp-net-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libpci.so.2.1.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug,arch64
 ./usr/libdata/debug/usr/lib/rv32/libposix.so.0.1.debug		comp-sys-debug	debug,compat,arch64

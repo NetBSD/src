@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.94 2015/01/25 15:50:30 christos Exp $
+# $NetBSD: shl.mi,v 1.95 2015/03/31 21:40:57 christos Exp $
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libc.so.12.197.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
@@ -14,7 +14,7 @@
 ./usr/libdata/debug/lib/liblzma.so.1.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libm.so.0.11.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libnpf.so.0.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/lib/libpcap.so.5.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libpcap.so.5.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libppath.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libprop.so.1.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libradius.so.4.0.debug		comp-sys-debug	debug
@@ -148,7 +148,7 @@
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug		comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/lib/libpam.so.4.0.debug		comp-sys-debug	pam,debug
-./usr/libdata/debug/usr/lib/libpcap.so.5.0.debug	comp-net-debug	debug
+./usr/libdata/debug/usr/lib/libpcap.so.5.1.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libpci.so.2.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libperfuse.so.0.0.debug	comp-perfuse-debug	debug
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug	comp-sys-debug	debug
