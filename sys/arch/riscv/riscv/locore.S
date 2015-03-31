@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.4 2015/03/31 11:48:10 matt Exp $ */
+/* $NetBSD: locore.S,v 1.5 2015/03/31 11:53:13 matt Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -78,10 +78,10 @@ ENTRY_NP(start)
 	call	memset			// zero through kernel_end
 
 	// As a temporary hack, word 0 contains the amount of memory in MB
-	INT_L	a7, (zero)			// load memory size
-	slli	a7, a7, (20-PGSHIFT)		// convert MB to pages
-.L01:	auipc	t0, %pcrel_hi(physmem)
-	INT_S	a7, %pcrel_lo(.L01)(t0)		// store it in physmem
+	INT_L	a7, (zero)		// load memory size
+	slli	a7, a7, (20-PGSHIFT)	// convert MB to pages
+.L01:	PTR_LA	t0, physmem
+	INT_S	a7, (t0)		// store it in physmem
 
 	li	t4, PTE_V | PTE_SX | PTE_SW | PTE_SR | PTE_G
 #ifdef _LP64
