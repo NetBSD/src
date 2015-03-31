@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bt-monitor-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: pcap-bt-monitor-linux.c,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2014 Michal Labedzki for Tieto Corporation
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-bt-monitor-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: pcap-bt-monitor-linux.c,v 1.3 2015/03/31 21:39:42 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: pcap-bt-monitor-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp
 
 #include "pcap/bluetooth.h"
 #include "pcap-int.h"
+
+#include "pcap-bt-monitor-linux.h"
 
 #define BT_CONTROL_SIZE 32
 #define INTERFACE_NAME "bluetooth-monitor"
@@ -76,7 +78,6 @@ bt_monitor_read(pcap_t *handle, int max_packets _U_, pcap_handler callback, u_ch
     struct pcap_pkthdr pkth;
     pcap_bluetooth_linux_monitor_header *bthdr;
     struct mgmt_hdr hdr;
-    int in = 0;
 
     bthdr = (pcap_bluetooth_linux_monitor_header*) &handle->buffer[handle->offset];
 

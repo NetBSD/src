@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: pcap-common.c,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: pcap-common.c,v 1.3 2015/03/31 21:39:42 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -391,7 +391,7 @@ __RCSID("$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 /*
  * Juniper-private data link type, as per request from
- * Hannes Gredler <hannes@juniper.net>. 
+ * Hannes Gredler <hannes@juniper.net>.
  * The Link Types are used for prepending meta-information
  * like interface index, interface name
  * before standard Ethernet, PPP, Frelay & C-HDLC Frames
@@ -408,7 +408,7 @@ __RCSID("$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 /*
  * Juniper-private data link type, as per request from
- * Hannes Gredler <hannes@juniper.net>. 
+ * Hannes Gredler <hannes@juniper.net>.
  * The DLT_ is used for internal communication with a
  * voice Adapter Card (PIC)
  */
@@ -483,7 +483,7 @@ __RCSID("$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 /*
  * Juniper-private data link type, as per request from
- * Hannes Gredler <hannes@juniper.net>. 
+ * Hannes Gredler <hannes@juniper.net>.
  * The DLT_ is used for internal communication with a
  * integrated service module (ISM).
  */
@@ -524,7 +524,7 @@ __RCSID("$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 /*
  * Juniper-private data link type, as per request from
- * Hannes Gredler <hannes@juniper.net>. 
+ * Hannes Gredler <hannes@juniper.net>.
  * The DLT_ is used for capturing data on a secure tunnel interface.
  */
 #define LINKTYPE_JUNIPER_ST     200
@@ -616,11 +616,11 @@ __RCSID("$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
  */
 #define LINKTYPE_IEEE802_15_4_NONASK_PHY	215
 
-/* 
+/*
  * David Gibson <david@gibson.dropbear.id.au> requested this for
  * captures from the Linux kernel /dev/input/eventN devices. This
  * is used to communicate keystrokes and mouse movements from the
- * Linux kernel to display systems, such as Xorg. 
+ * Linux kernel to display systems, such as Xorg.
  */
 #define LINKTYPE_LINUX_EVDEV	216
 
@@ -782,7 +782,7 @@ __RCSID("$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 /*
  * Juniper-private data link type, as per request from
- * Hannes Gredler <hannes@juniper.net>. 
+ * Hannes Gredler <hannes@juniper.net>.
  */
 #define LINKTYPE_JUNIPER_VS			232
 #define LINKTYPE_JUNIPER_SRX_E2E		233
@@ -814,12 +814,12 @@ __RCSID("$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 /*
  * Juniper-private data link type, as per request from
- * Hannes Gredler <hannes@juniper.net>. 
+ * Hannes Gredler <hannes@juniper.net>.
  */
 #define LINKTYPE_JUNIPER_ATM_CEMIC		238
 
 /*
- * NetFilter LOG messages 
+ * NetFilter LOG messages
  * (payload of netlink NFNL_SUBSYS_ULOG/NFULNL_MSG_PACKET packets)
  *
  * Requested by Jakub Zawadzki <darkjames-ws@darkjames.pl>
@@ -927,7 +927,7 @@ __RCSID("$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 /*
  * Link-layer header type for upper-protocol layer PDU saves from wireshark.
- * 
+ *
  * the actual contents are determined by two TAGs stored with each
  * packet:
  *   EXP_PDU_TAG_LINKTYPE          the link type (LINKTYPE_ value) of the
@@ -999,7 +999,13 @@ __RCSID("$NetBSD: pcap-common.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
  */
 #define LINKTYPE_IPMI_HPM_2	260
 
-#define LINKTYPE_MATCHING_MAX	260		/* highest value in the "matching" range */
+/*
+ * per  Joshua Wright <jwright@hasborg.com>, formats for Zwave captures.
+ */
+#define LINKTYPE_ZWAVE_R1_R2	261
+#define LINKTYPE_ZWAVE_R3	262
+
+#define LINKTYPE_MATCHING_MAX	262		/* highest value in the "matching" range */
 
 static struct linktype_map {
 	int	dlt;
@@ -1161,8 +1167,6 @@ swap_linux_usb_header(const struct pcap_pkthdr *hdr, u_char *buf,
 {
 	pcap_usb_header_mmapped *uhdr = (pcap_usb_header_mmapped *)buf;
 	bpf_u_int32 offset = 0;
-	usb_isodesc *pisodesc;
-	int32_t numdesc, i;
 
 	/*
 	 * "offset" is the offset *past* the field we're swapping;
@@ -1171,7 +1175,7 @@ swap_linux_usb_header(const struct pcap_pkthdr *hdr, u_char *buf,
 	 */
 
 	/*
-	 * The URB id is a totally opaque value; do we really need to 
+	 * The URB id is a totally opaque value; do we really need to
 	 * convert it to the reading host's byte order???
 	 */
 	offset += 8;			/* skip past id */
@@ -1226,6 +1230,17 @@ swap_linux_usb_header(const struct pcap_pkthdr *hdr, u_char *buf,
 	} else
 		offset += 8;			/* skip USB setup header */
 
+	/*
+	 * With the old header, there are no isochronous descriptors
+	 * after the header.
+	 *
+	 * With the new header, the actual number of descriptors in
+	 * the header is not s.iso.numdesc, it's ndesc - only the
+	 * first N descriptors, for some value of N, are put into
+	 * the header, and ndesc is set to the actual number copied.
+	 * In addition, if s.iso.numdesc is negative, no descriptors
+	 * are captured, and ndesc is set to 0.
+	 */
 	if (header_len_64_bytes) {
 		/*
 		 * This is either the "version 1" header, with
@@ -1254,31 +1269,33 @@ swap_linux_usb_header(const struct pcap_pkthdr *hdr, u_char *buf,
 		if (hdr->caplen < offset)
 			return;
 		uhdr->ndesc = SWAPLONG(uhdr->ndesc);
-	}	
 
-	if (uhdr->transfer_type == URB_ISOCHRONOUS) {
-		/* swap the values in struct linux_usb_isodesc */
-		pisodesc = (usb_isodesc *)(void *)(buf+offset);
-		numdesc = uhdr->s.iso.numdesc;
-		for (i = 0; i < numdesc; i++) {
-			offset += 4;		/* skip past status */
-			if (hdr->caplen < offset)
-				return;
-			pisodesc->status = SWAPLONG(pisodesc->status);
+		if (uhdr->transfer_type == URB_ISOCHRONOUS) {
+			/* swap the values in struct linux_usb_isodesc */
+			usb_isodesc *pisodesc;
+			u_int32_t i;
 
-			offset += 4;		/* skip past offset */
-			if (hdr->caplen < offset)
-				return;
-			pisodesc->offset = SWAPLONG(pisodesc->offset);
+			pisodesc = (usb_isodesc *)(void *)(buf+offset);
+			for (i = 0; i < uhdr->ndesc; i++) {
+				offset += 4;		/* skip past status */
+				if (hdr->caplen < offset)
+					return;
+				pisodesc->status = SWAPLONG(pisodesc->status);
 
-			offset += 4;		/* skip past len */
-			if (hdr->caplen < offset)
-				return;
-			pisodesc->len = SWAPLONG(pisodesc->len);
+				offset += 4;		/* skip past offset */
+				if (hdr->caplen < offset)
+					return;
+				pisodesc->offset = SWAPLONG(pisodesc->offset);
 
-			offset += 4;		/* skip past padding */
+				offset += 4;		/* skip past len */
+				if (hdr->caplen < offset)
+					return;
+				pisodesc->len = SWAPLONG(pisodesc->len);
 
-			pisodesc++;
+				offset += 4;		/* skip past padding */
+
+				pisodesc++;
+			}
 		}
 	}
 }
