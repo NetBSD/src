@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2015/03/28 16:13:56 matt Exp $
+#	$NetBSD: genassym.cf,v 1.2 2015/03/31 01:12:47 matt Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -114,6 +114,7 @@ define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
 define	L_MD_ASTPENDING	offsetof(struct lwp, l_md.md_astpending)
 define	L_MD_ONFAULT	offsetof(struct lwp, l_md.md_onfault)
+define	L_MD_TP		offsetof(struct lwp, l_md.md_tp)
 define	L_MD_UTF	offsetof(struct lwp, l_md.md_utf)
 define	L_MD_KTF	offsetof(struct lwp, l_md.md_ktf)
 define	L_PCB		offsetof(struct lwp, l_addr)
