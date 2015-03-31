@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.10 2015/03/27 11:33:46 roy Exp $");
+ __RCSID("$NetBSD: common.c,v 1.11 2015/03/31 18:01:09 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -192,12 +192,12 @@ logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 	char fmt_cpy[1024];
 #endif
 
-	serrno = errno;
-	va_start(va, fmt);
-
 	if (pri >= LOG_DEBUG && ctx && !(ctx->options & DHCPCD_DEBUG))
 		return;
 
+	serrno = errno;
+
+	va_start(va, fmt);
 #ifndef HAVE_PRINTF_M
 	/* Print strerrno(errno) in place of %m */
 	if (ctx == NULL || !(ctx->options & DHCPCD_QUIET) || ctx->log_fd != -1)
