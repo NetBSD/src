@@ -280,7 +280,8 @@ pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
 pcap_t *
 pcap_create(const char *source, char *errbuf)
 {
-	return (dag_create(source, errbuf));
+	int is_ours;
+	return (dag_create(source, errbuf, &is_ours));
 }
 #elif defined(SEPTEL_ONLY)
 int
@@ -292,7 +293,8 @@ pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
 pcap_t *
 pcap_create(const char *source, char *errbuf)
 {
-	return (septel_create(source, errbuf));
+	int is_ours;
+	return (septel_create(source, errbuf, &is_ours));
 }
 #elif defined(SNF_ONLY)
 int
@@ -304,7 +306,8 @@ pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
 pcap_t *
 pcap_create(const char *source, char *errbuf)
 {
-	return (snf_create(source, errbuf));
+	int is_ours;
+	return (snf_create(source, errbuf, &is_ours));
 }
 #else /* regular pcap */
 struct capture_source_type {
@@ -561,6 +564,12 @@ pcap_create_common(const char *source, char *ebuf, size_t size)
 	p->opt.immediate = 0;
 	p->opt.tstamp_type = -1;	/* default to not setting time stamp type */
 	p->opt.tstamp_precision = PCAP_TSTAMP_PRECISION_MICRO;
+
+	/*
+	 * Start out with no BPF code generation flags set.
+	 */
+	p->bpf_codegen_flags = 0;
+
 	return (p);
 }
 
@@ -1831,6 +1840,12 @@ pcap_open_dead_with_tstamp_precision(int linktype, int snaplen, u_int precision)
 	p->setmintocopy_op = pcap_setmintocopy_dead;
 #endif
 	p->cleanup_op = pcap_cleanup_dead;
+
+	/*
+	 * A "dead" pcap_t never requires special BPF code generation.
+	 */
+	p->bpf_codegen_flags = 0;
+
 	p->activated = 1;
 	return (p);
 }

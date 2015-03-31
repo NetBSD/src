@@ -57,6 +57,9 @@ static void warn(const char *, ...)
 extern int optind;
 extern int opterr;
 extern char *optarg;
+#ifdef BDEBUG
+int dflag;
+#endif
 
 /*
  * On Windows, we need to open the file in binary mode, so that
@@ -178,10 +181,13 @@ main(int argc, char **argv)
 {
 	char *cp;
 	int op;
+#ifndef BDEBUG
 	int dflag;
+#endif
 	char *infile;
 	int Oflag;
 	long snaplen;
+	char *p;
 	int dlt;
 	bpf_u_int32 netmask = PCAP_NETMASK_UNKNOWN;
 	char *cmdbuf;
@@ -192,11 +198,19 @@ main(int argc, char **argv)
 	if(wsockinit() != 0) return 1;
 #endif /* WIN32 */
 
+#ifndef BDEBUG
 	dflag = 1;
+#else
+	/* if optimizer debugging is enabled, output DOT graph
+	 * `dflag=4' is equivalent to -dddd to follow -d/-dd/-ddd
+     * convention in tcpdump command line
+	 */
+	dflag = 4;
+#endif
 	infile = NULL;
 	Oflag = 1;
 	snaplen = 68;
-  
+
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
 	else
@@ -252,9 +266,12 @@ main(int argc, char **argv)
 	}
 
 	dlt = pcap_datalink_name_to_val(argv[optind]);
-	if (dlt < 0)
-		error("invalid data link type %s", argv[optind]);
-	
+	if (dlt < 0) {
+		dlt = (int)strtol(argv[optind], &p, 10);
+		if (p == argv[optind] || *p != '\0')
+			error("invalid data link type %s", argv[optind]);
+	}
+
 	if (infile)
 		cmdbuf = read_infile(infile);
 	else
@@ -266,8 +283,21 @@ main(int argc, char **argv)
 
 	if (pcap_compile(pd, &fcode, cmdbuf, Oflag, netmask) < 0)
 		error("%s", pcap_geterr(pd));
+
 	if (!bpf_validate(fcode.bf_insns, fcode.bf_len))
 		warn("Filter doesn't pass validation");
+
+#ifdef BDEBUG
+	// replace line feed with space
+	for (cp = cmdbuf; *cp != '\0'; ++cp) {
+		if (*cp == '\r' || *cp == '\n') {
+			*cp = ' ';
+		}
+	}
+	// only show machine code if BDEBUG defined, since dflag > 3
+	printf("machine codes for filter: %s\n", cmdbuf);
+#endif
+
 	bpf_dump(&fcode, dflag);
 	pcap_close(pd);
 	exit(0);
