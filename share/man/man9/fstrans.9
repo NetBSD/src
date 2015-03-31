@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.19 2015/03/31 20:50:29 riastradh Exp $
+.\"     $NetBSD: fstrans.9,v 1.20 2015/03/31 21:08:06 riastradh Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -167,6 +167,8 @@ in
 Return zero on success, or error code if
 .Xr vfs_busy 9
 fails.
+.Pp
+May sleep.
 .It Fn fstrans_unmount "mp"
 Finalize the
 .Nm
@@ -176,8 +178,10 @@ Clears
 in
 .Fa mp Ns Li "->mnt_iflag" .
 Caller is responsible for ensuring that no transactions are active.
+.Pp
+May sleep.
 .It Fn fstrans_start "mp" "lock_type"
-Begin a transaction of type
+Enter a transaction of type
 .Fa lock_type
 on the file system
 .Fa mp
@@ -194,6 +198,14 @@ If the file system is suspended, wait until it is resumed.
 Intended for operations needed to sync the file system to its backing
 store in order to suspend it.
 .El
+.Pp
+However, if the current thread is already in a transaction on
+.Fa mp ,
+.Fn fstrans_start
+will enter a nested transaction and return immediately without
+waiting.
+.Pp
+May sleep.
 .It Fn fstrans_start_nowait "mp" "lock_type"
 Like
 .Fn fstrans_start ,
@@ -277,9 +289,13 @@ where
 is true if and only if the buffer
 .Fa bp
 has not yet been modified.
+.Pp
+May sleep.
 .It Fn fscow_disestablish "mp" "func" "cookie"
 Disestablish a copy-on-write callback established with
 .Fn fscow_establish .
+.Pp
+May sleep.
 .It Fn fscow_run "bp" "data_valid"
 Run all copy-on-write callbacks established for the file system this buffer
 belongs to, if they have not already been run for this buffer.
@@ -288,6 +304,8 @@ If
 is
 .Dv true
 the buffer data has not yet been modified.
+.Pp
+May sleep.
 .El
 .Sh EXAMPLES
 The following is an example of a file system suspend operation.
