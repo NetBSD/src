@@ -623,6 +623,7 @@ ac_subst_vars='LTLIBOBJS
 INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
+PCAP_SUPPORT_PACKET_RING
 DBUS_SRC
 PCAP_SUPPORT_DBUS
 PKGCONFIG
@@ -745,10 +746,12 @@ with_flex
 with_bison
 enable_universal
 enable_shared
+enable_usb
 enable_bluetooth
 enable_canusb
 enable_can
 enable_dbus
+enable_packet_ring
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1380,6 +1383,8 @@ Optional Features:
   --disable-universal     don't build universal on OS X
   --enable-shared         build shared libraries [default=yes, if support
                           available]
+  --enable-usb            enable nusb support [default=yes, if support
+                          available]
   --enable-bluetooth      enable Bluetooth support [default=yes, if support
                           available]
   --enable-canusb         enable canusb support [default=yes, if support
@@ -1388,6 +1393,7 @@ Optional Features:
                           available]
   --enable-dbus           enable D-Bus capture support [default=yes, if
                           support available]
+  --enable-packet-ring    enable Linux packet ring support [default=yes]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -5512,6 +5518,13 @@ fi
 	if test x$with_libnl != xno ; then
 		have_any_nl="no"
 
+                incdir=-I/usr/include/libnl3
+                libnldir=
+                if test x$withval != x ; then
+                  libnldir=-L${withval}/lib/.libs
+                  incdir=-I${withval}/include
+                fi
+
 		#
 		# Try libnl 3.x first.
 		#
@@ -5521,7 +5534,7 @@ if ${ac_cv_lib_nl_3_nl_socket_alloc+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lnl-3  $LIBS"
+LIBS="-lnl-3 ${incdir} ${libnldir} -lnl-genl-3 -lnl-3  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -5556,7 +5569,7 @@ if test "x$ac_cv_lib_nl_3_nl_socket_alloc" = xyes; then :
 			#
 			# Yes, we have libnl 3.x.
 			#
-			LIBS="-lnl-genl-3 -lnl-3 $LIBS"
+			LIBS="${libnldir} -lnl-genl-3 -lnl-3 $LIBS"
 
 $as_echo "#define HAVE_LIBNL 1" >>confdefs.h
 
@@ -5569,7 +5582,7 @@ $as_echo "#define HAVE_LIBNL_NLE 1" >>confdefs.h
 
 $as_echo "#define HAVE_LIBNL_SOCKETS 1" >>confdefs.h
 
-			V_INCLS="$V_INCLS -I/usr/include/libnl3"
+			V_INCLS="$V_INCLS ${incdir}"
 			have_any_nl="yes"
 
 fi
@@ -5620,7 +5633,7 @@ if test "x$ac_cv_lib_nl_nl_socket_alloc" = xyes; then :
 				#
 				# Yes, we have libnl 2.x.
 				#
-				LIBS="-lnl-genl -lnl $LIBS"
+				LIBS="${libnldir} -lnl-genl -lnl $LIBS"
 
 $as_echo "#define HAVE_LIBNL 1" >>confdefs.h
 
@@ -5684,7 +5697,7 @@ if test "x$ac_cv_lib_nl_nl_handle_alloc" = xyes; then :
 				#
 				# Yes.
 				#
-				LIBS="-lnl $LIBS"
+				LIBS="${libnldir} -lnl $LIBS"
 
 $as_echo "#define HAVE_LIBNL 1" >>confdefs.h
 
@@ -7807,10 +7820,19 @@ ln -s ${srcdir}/bpf/net net
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for USB sniffing support" >&5
+# Check whether --enable-usb was given.
+if test "${enable_usb+set}" = set; then :
+  enableval=$enable_usb;
+else
+  enable_usb=yes
+fi
+
+
+if test "x$enable_usb" != "xno" ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for USB sniffing support" >&5
 $as_echo_n "checking for USB sniffing support... " >&6; }
-case "$host_os" in
-linux*)
+   case "$host_os" in
+   linux*)
 
 $as_echo "#define PCAP_SUPPORT_USB 1" >>confdefs.h
 
@@ -7923,11 +7945,12 @@ $as_echo "#define HAVE_USBDEVFS_CTRLTRANSFER_BREQUESTTYPE 1" >>confdefs.h
 	    fi
 	fi
 	;;
-*)
+    *)
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	;;
 esac
+fi
 
 
 
@@ -8135,7 +8158,7 @@ fi
 
 if test "x$enable_canusb" != "xno" ; then
 		case "$host_os" in
-	linux*)
+	linux*|uclinux*)
 		ac_fn_c_check_header_mongrel "$LINENO" "libusb-1.0/libusb.h" "ac_cv_header_libusb_1_0_libusb_h" "$ac_includes_default"
 if test "x$ac_cv_header_libusb_1_0_libusb_h" = xyes; then :
 
@@ -8145,7 +8168,8 @@ if ${ac_cv_lib_usb_1_0_libusb_init+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lusb-1.0  $LIBS"
+LIBS="-lusb-1.0 -lpthread
+		     $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8186,7 +8210,6 @@ $as_echo "#define PCAP_SUPPORT_CANUSB 1" >>confdefs.h
 
 else
   ac_lbl_has_libusb=no
-
 fi
 
 
@@ -8284,22 +8307,34 @@ if test "x$enable_dbus" != "xno"; then
 
 		darwin*)
 			#
+			# We don't support D-Bus sniffing on OS X; see
+			#
 			# https://bugs.freedesktop.org/show_bug.cgi?id=74029
 			#
+			# The user requested it, so fail.
+			#
 			as_fn_error $? "Due to freedesktop.org bug 74029, D-Bus capture support is not available on OS X" "$LINENO" 5
-			;;
 		esac
 	else
 		case "$host_os" in
 
 		darwin*)
 			#
+			# We don't support D-Bus sniffing on OS X; see
+			#
 			# https://bugs.freedesktop.org/show_bug.cgi?id=74029
 			#
+			# The user dind't explicitly request it, so just
+			# silently refuse to enable it.
+			#
+			enable_dbus="no"
 			;;
+		esac
+	fi
+fi
 
-		*)
-			# Extract the first word of "pkg-config", so it can be a program name with args.
+if test "x$enable_dbus" != "xno"; then
+	# Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -8337,28 +8372,28 @@ $as_echo "no" >&6; }
 fi
 
 
-			if test "x$PKGCONFIG" != "xno"; then
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for D-Bus" >&5
+	if test "x$PKGCONFIG" != "xno"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for D-Bus" >&5
 $as_echo_n "checking for D-Bus... " >&6; }
-				if "$PKGCONFIG" dbus-1; then
-					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+		if "$PKGCONFIG" dbus-1; then
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-					DBUS_CFLAGS=`"$PKGCONFIG" --cflags dbus-1`
-					DBUS_LIBS=`"$PKGCONFIG" --libs dbus-1`
-					save_CFLAGS="$CFLAGS"
-					save_LIBS="$LIBS"
-					CFLAGS="$CFLAGS $DBUS_CFLAGS"
-					LIBS="$LIBS $DBUS_LIBS"
-					{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the D-Bus library defines dbus_connection_read_write" >&5
+			DBUS_CFLAGS=`"$PKGCONFIG" --cflags dbus-1`
+			DBUS_LIBS=`"$PKGCONFIG" --libs dbus-1`
+			save_CFLAGS="$CFLAGS"
+			save_LIBS="$LIBS"
+			CFLAGS="$CFLAGS $DBUS_CFLAGS"
+			LIBS="$LIBS $DBUS_LIBS"
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the D-Bus library defines dbus_connection_read_write" >&5
 $as_echo_n "checking whether the D-Bus library defines dbus_connection_read_write... " >&6; }
-					cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+			cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <string.h>
 
-					     #include <time.h>
-					     #include <sys/time.h>
+			     #include <time.h>
+			     #include <sys/time.h>
 
-					     #include <dbus/dbus.h>
+			     #include <dbus/dbus.h>
 int
 main ()
 {
@@ -8369,37 +8404,34 @@ return dbus_connection_read_write(NULL, 0);
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
 
-						{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
 $as_echo "#define PCAP_SUPPORT_DBUS 1" >>confdefs.h
 
-						DBUS_SRC=pcap-dbus.c
-						V_INCLS="$V_INCLS $DBUS_CFLAGS"
+				DBUS_SRC=pcap-dbus.c
+				V_INCLS="$V_INCLS $DBUS_CFLAGS"
 
 else
 
-						{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-						if test "x$enable_dbus" = "xyes"; then
-						    as_fn_error $? "--enable-dbus was given, but the D-Bus library doesn't define dbus_connection_read_write()" "$LINENO" 5
-						fi
-						LIBS="$save_LIBS"
+				if test "x$enable_dbus" = "xyes"; then
+				    as_fn_error $? "--enable-dbus was given, but the D-Bus library doesn't define dbus_connection_read_write()" "$LINENO" 5
+				fi
+				LIBS="$save_LIBS"
 
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-					CFLAGS="$save_CFLAGS"
-				else
-					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+			CFLAGS="$save_CFLAGS"
+		else
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-					if test "x$enable_dbus" = "xyes"; then
-						as_fn_error $? "--enable-dbus was given, but the dbus-1 package is not installed" "$LINENO" 5
-					fi
-				fi
+			if test "x$enable_dbus" = "xyes"; then
+				as_fn_error $? "--enable-dbus was given, but the dbus-1 package is not installed" "$LINENO" 5
 			fi
-			;;
-		esac
+		fi
 	fi
 
 
@@ -8425,6 +8457,21 @@ done
 $as_echo "$as_me: no hardware timestamp support implemented for $host_os" >&6;}
 	;;
 esac
+
+# Check whether --enable-packet-ring was given.
+if test "${enable_packet_ring+set}" = set; then :
+  enableval=$enable_packet_ring;
+else
+  enable_packet_ring=yes
+fi
+
+
+if test "x$enable_packet_ring" != "xno" ; then
+
+$as_echo "#define PCAP_SUPPORT_PACKET_RING 1" >>confdefs.h
+
+
+fi
 
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
