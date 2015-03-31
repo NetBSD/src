@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.2 2015/03/31 01:36:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LIB_PTHREAD_OR1K_MD_H
-#define _LIB_PTHREAD_OR1K_MD_H
+#ifndef _LIB_PTHREAD_RISCV_MD_H
+#define _LIB_PTHREAD_RISCV_MD_H
 
 static inline unsigned long
 pthread__sp(void)
@@ -42,6 +42,6 @@ pthread__sp(void)
 	return ret;
 }
 
-#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[1])
+#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_SP])
 
-#endif /* _LIB_PTHREAD_OR1K_MD_H */
+#endif /* _LIB_PTHREAD_RISCV_MD_H */
