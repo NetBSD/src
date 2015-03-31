@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-decnet.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-decnet.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -276,7 +276,7 @@ union controlmsg
 /* Macros for decoding routing-info fields */
 #define	RI_COST(x)	((x)&0777)
 #define	RI_HOPS(x)	(((x)>>10)&037)
-
+
 /*
  * NSP protocol fields and values.
  */
@@ -1320,10 +1320,15 @@ dnname_string(u_short dnaddr)
 {
 #ifdef HAVE_DNET_HTOA
 	struct dn_naddr dna;
+	char *dnname;
 
 	dna.a_len = sizeof(short);
 	memcpy((char *)dna.a_addr, (char *)&dnaddr, sizeof(short));
-	return (strdup(dnet_htoa(&dna)));
+	dnname = dnet_htoa(&dna);
+	if(dnname != NULL)
+		return (strdup(dnname));
+	else
+		return(dnnum_string(dnaddr));
 #else
 	return(dnnum_string(dnaddr));	/* punt */
 #endif

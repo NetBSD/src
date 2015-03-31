@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-telnet.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-telnet.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -508,6 +508,10 @@ telnet_print(netdissect_options *ndo, const u_char *sp, u_int length)
 	osp = sp;
 
 	while (length > 0 && *sp == IAC) {
+		/*
+		 * Parse the Telnet command without printing it,
+		 * to determine its length.
+		 */
 		l = telnet_parse(ndo, sp, length, 0);
 		if (l < 0)
 			break;

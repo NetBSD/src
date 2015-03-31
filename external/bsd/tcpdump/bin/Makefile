@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/12/20 13:15:48 prlw1 Exp $	
+#	$NetBSD: Makefile,v 1.13 2015/03/31 21:59:35 christos Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -62,9 +62,12 @@ print-fddi.c \
 print-forces.c \
 print-fr.c \
 print-frag6.c \
+print-ftp.c \
+print-geneve.c \
 print-geonet.c \
 print-gre.c \
 print-hsrp.c \
+print-http.c \
 print-icmp.c \
 print-igmp.c \
 print-igrp.c \
@@ -120,6 +123,7 @@ print-ripng.c \
 print-rpki-rtr.c \
 print-rrcp.c \
 print-rsvp.c \
+print-rtsp.c \
 print-rx.c \
 print-sctp.c \
 print-sflow.c \
@@ -128,6 +132,7 @@ print-sl.c \
 print-sll.c \
 print-slow.c \
 print-smb.c \
+print-smtp.c \
 print-snmp.c \
 print-stp.c \
 print-sunatm.c \

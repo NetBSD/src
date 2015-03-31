@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-atm.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-atm.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -170,7 +170,7 @@ atm_if_print(netdissect_options *ndo,
 	uint32_t llchdr;
 	u_int hdrlen = 0;
 
-	if (caplen < 8) {
+	if (caplen < 1 || length < 1) {
 		ND_PRINT((ndo, "%s", tstr));
 		return (caplen);
 	}
@@ -182,6 +182,15 @@ atm_if_print(netdissect_options *ndo,
             isoclns_print(ndo, p + 1, length - 1, caplen - 1);
             return hdrlen;
         }
+
+	/*
+	 * Must have at least a DSAP, an SSAP, and the first byte of the
+	 * control field.
+	 */
+	if (caplen < 3 || length < 3) {
+		ND_PRINT((ndo, "%s", tstr));
+		return (caplen);
+	}
 
 	/*
 	 * Extract the presumed LLC header into a variable, for quick
@@ -210,6 +219,10 @@ atm_if_print(netdissect_options *ndo,
 		 * packets?  If so, could it be changed to use a
 		 * new DLT_IEEE802_6 value if we added it?
 		 */
+		if (caplen < 20 || length < 20) {
+			ND_PRINT((ndo, "%s", tstr));
+			return (caplen);
+		}
 		if (ndo->ndo_eflag)
 			ND_PRINT((ndo, "%08x%08x %08x%08x ",
 			       EXTRACT_32BITS(p),
@@ -354,8 +367,8 @@ struct oam_fm_ais_rdi_t {
 
 int
 oam_print (netdissect_options *ndo,
-           const u_char *p, u_int length, u_int hec) {
-
+           const u_char *p, u_int length, u_int hec)
+{
     uint32_t cell_header;
     uint16_t vpi, vci, cksum, cksum_shouldbe, idx;
     uint8_t  cell_type, func_type, payload, clp;

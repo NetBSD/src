@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-icmp6.c,v 1.7 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.8 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -665,7 +665,7 @@ rpl_format_dagid(char dagid_str[65], const u_char *dagid)
                 if(isprint(dagid[i])) {
                         *d++ = dagid[i];
                 } else {
-                        snprintf(d,4,"0x%02x", dagid[i]);
+                        snprintf(d,5,"0x%02x", dagid[i]); /* 4 + null char */
                         d += 4;
                 }
         }
