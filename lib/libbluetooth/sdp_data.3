@@ -1,4 +1,4 @@
-.\" $NetBSD: sdp_data.3,v 1.8 2012/03/15 19:04:46 njoly Exp $
+.\" $NetBSD: sdp_data.3,v 1.9 2015/03/31 09:26:45 plunky Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -375,7 +375,7 @@ But, because the value of
 is unknown, the overall length of the ProtocolDataList may vary
 depending if 8, 16 or 32 bits were needed to represent the original
 buffer size.
-.Fn sdp_seq_seq
+.Fn sdp_set_seq
 will only modify the content, not the size of the header.
 .Sh SEE ALSO
 .Xr sdpquery 1 ,
