@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.203 2015/02/14 12:57:53 he Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.204 2015/03/31 08:47:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,10 +99,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.203 2015/02/14 12:57:53 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.204 2015/03/31 08:47:01 ozaki-r Exp $");
 
 #include "opt_inet.h"
-#include "opt_ipsec.h"
 #include "opt_tcp_debug.h"
 #include "opt_mbuftrace.h"
 
