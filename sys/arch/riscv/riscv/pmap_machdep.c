@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: pmap_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.2 2015/03/31 01:14:57 matt Exp $");
 
 #include <sys/param.h>
 
@@ -144,7 +144,7 @@ pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 void
 pmap_md_pdetab_activate(struct pmap *pmap)
 {
-	__asm("csrw\tptbr, %0" :: "r"(pmap->pm_md.md_ptbr));
+	__asm("csrw\tsptbr, %0" :: "r"(pmap->pm_md.md_ptbr));
 }
 
 void
@@ -176,18 +176,18 @@ void    tlb_invalidate_globals(void);
 void
 tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 {
-	(void) riscvreg_fatc_read();
+	__asm __volatile("sfence.vm" ::: "memory");
 }
 void
 tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 {
-	(void) riscvreg_fatc_read();
+	__asm __volatile("sfence.vm" ::: "memory");
 }
 
 bool
 tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 {
-	(void) riscvreg_fatc_read();
+	__asm __volatile("sfence.vm" ::: "memory");
 	return false;
 }
 
