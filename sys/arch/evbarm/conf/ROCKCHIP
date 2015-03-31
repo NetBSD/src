@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ROCKCHIP,v 1.18 2015/01/17 15:05:24 jmcneill Exp $
+#	$NetBSD: ROCKCHIP,v 1.19 2015/03/31 17:37:47 riz Exp $
 #
 #	Rockchip RK3066/RK3188 based SBC (Single Board Computer)
 #
@@ -45,7 +45,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 #options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

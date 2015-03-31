@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.13 2015/03/22 17:28:22 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.14 2015/03/31 17:37:47 riz Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -46,7 +46,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 #options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

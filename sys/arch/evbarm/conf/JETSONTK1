@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.1 2015/03/29 10:41:59 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.2 2015/03/31 17:37:47 riz Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -47,7 +47,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 #options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
