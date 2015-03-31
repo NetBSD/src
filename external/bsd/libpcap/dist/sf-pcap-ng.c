@@ -1,4 +1,4 @@
-/*	$NetBSD: sf-pcap-ng.c,v 1.5 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: sf-pcap-ng.c,v 1.6 2015/03/31 21:39:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] _U_ =
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sf-pcap-ng.c,v 1.5 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: sf-pcap-ng.c,v 1.6 2015/03/31 21:39:42 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -669,7 +669,7 @@ pcap_ng_check_header(bpf_u_int32 magic, FILE *fp, u_int precision, char *errbuf,
 
 	/*
 	 * Check whether the first 4 bytes of the file are the block
-	 * type for a pcap-ng savefile. 
+	 * type for a pcap-ng savefile.
 	 */
 	if (magic != BT_SHB) {
 		/*
@@ -1005,7 +1005,7 @@ pcap_ng_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 				    epbp->timestamp_low;
 			}
 			goto found;
-			
+
 		case BT_SPB:
 			/*
 			 * Get a pointer to the fixed-length portion of the
@@ -1197,7 +1197,7 @@ pcap_ng_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 			 * Not a packet block, IDB, or SHB; ignore it.
 			 */
 			break;
-		}		 
+		}
 	}
 
 found:
@@ -1215,10 +1215,16 @@ found:
 	}
 
 	/*
-	 * Convert the time stamp to a struct timeval.
+	 * Convert the time stamp to seconds and fractions of a second,
+	 * with the fractions being in units of the file-supplied resolution.
 	 */
 	sec = t / ps->ifaces[interface_id].tsresol + ps->ifaces[interface_id].tsoffset;
 	frac = t % ps->ifaces[interface_id].tsresol;
+
+	/*
+	 * Convert the fractions from units of the file-supplied resolution
+	 * to units of the user-requested resolution.
+	 */
 	switch (ps->ifaces[interface_id].scale_type) {
 
 	case PASS_THROUGH:
@@ -1232,21 +1238,28 @@ found:
 	case SCALE_DOWN:
 		/*
 		 * The interface resolution is different from what the
-		 * user wants; scale up or down to that resolution.
+		 * user wants; convert the fractions to units of the
+		 * resolution the user requested by multiplying by the
+		 * quotient of the user-requested resolution and the
+		 * file-supplied resolution.  We do that by multiplying
+		 * by the user-requested resolution and dividing by the
+		 * file-supplied resolution, as the quotient might not
+		 * fit in an integer.
 		 *
 		 * XXX - if ps->ifaces[interface_id].tsresol is a power
 		 * of 10, we could just multiply by the quotient of
-		 * ps->ifaces[interface_id].tsresol and ps->user_tsresol
-		 * in the scale-up case, and divide by the quotient of
 		 * ps->user_tsresol and ps->ifaces[interface_id].tsresol
-		 * in the scale-down case, as we know those are integers,
-		 * which would involve fewer arithmetic operations.
+		 * in the scale-up case, and divide by the quotient of
+		 * ps->ifaces[interface_id].tsresol and ps->user_tsresol
+		 * in the scale-down case, as we know those will be integers.
+		 * That would involve fewer arithmetic operations, and
+		 * would run less risk of overflow.
 		 *
 		 * Is there something clever we could do if
 		 * ps->ifaces[interface_id].tsresol is a power of 2?
 		 */
-		frac *= ps->ifaces[interface_id].tsresol;
-		frac /= ps->user_tsresol;
+		frac *= ps->user_tsresol;
+		frac /= ps->ifaces[interface_id].tsresol;
 		break;
 	}
 	hdr->ts.tv_sec = sec;

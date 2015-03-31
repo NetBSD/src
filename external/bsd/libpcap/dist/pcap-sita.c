@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-sita.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: pcap-sita.c,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
 
 /*
  *  pcap-sita.c: Packet capture interface additions for SITA ACN devices
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-sita.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: pcap-sita.c,v 1.3 2015/03/31 21:39:42 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -188,7 +188,7 @@ static int read_client_nbytes(int fd, int count, unsigned char *buf) {
 	find_unit_by_fd(fd, &chassis, &geoslot, &u);
 	while (count) {
 		if ((len = recv(fd, buf, count, 0)) <= 0)	return -1;	/* read in whatever data was sent to us */
-		count -= len;	
+		count -= len;
 		buf += len;
 	}															/* till we have everything we are looking for */
 	return 0;
@@ -216,7 +216,7 @@ static void empty_unit(int chassis, int geoslot) {
 		u->imsg = (char *)realloc(u->imsg, 1);				/* and re-allocate the old large buffer into a new small one */
 		if (u->imsg == NULL) {	/* oops, realloc call failed */
 			fprintf(stderr, "Warning...call to realloc() failed, value of errno is %d\n", errno);
-		
+
 	}
 }
 
@@ -558,10 +558,10 @@ static void sort_if_table(void) {
 		}
 		if (has_swapped == 0)
 			return;
-	}	
+	}
 	return;
 }
-	
+
 static int process_client_data (char *errbuf) {								/* returns: -1 = error, 0 = OK */
 	int					chassis, geoslot;
 	unit_t				*u;
