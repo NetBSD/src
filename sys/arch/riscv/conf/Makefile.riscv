@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.riscv,v 1.1 2015/03/28 16:13:56 matt Exp $
+#	$NetBSD: Makefile.riscv,v 1.2 2015/03/31 01:05:52 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -38,7 +38,8 @@ GENASSYM_CONF=	${RISCV}/riscv/genassym.cf
 ## Note: -ffixed-?? must be kept in sync with cpu.h.
 ##
 CPPFLAGS+=	-D${MACHINE}
-CFLAGS+=	-fPIC -Wa,-fno-pic -msoft-float
+CFLAGS+=	-mcmodel=medany
+CFLAGS+=	-msoft-float
 .if !defined(LP64) || ${LP64} == "no"
 CFLAGS+=	-m32
 AFLAGS+=	-m32
