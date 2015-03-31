@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.2 2015/03/28 16:13:56 matt Exp $ */
+/* $NetBSD: sysreg.h,v 1.3 2015/03/31 01:14:02 matt Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -216,15 +216,5 @@ riscvreg_asid_write(uint32_t __asid)
 {
 	__asm __volatile("csrw\tsasid, %0" :: "r"(__asid));
 }
-
-#if 0
-static inline uintptr_t
-riscvreg_fatc_read(void)
-{
-	uint32_t __fatc;
-	__asm __volatile("csrr\t%0, fatc" : "=r"(__fatc));
-	return __fatc;
-}
-#endif
 
 #endif /* _RISCV_SYSREG_H_ */
