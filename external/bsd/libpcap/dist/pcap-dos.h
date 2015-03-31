@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-dos.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: pcap-dos.h,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
 
 /*
  * Internal details for libpcap on DOS.
@@ -216,7 +216,7 @@ extern void _w32_os_yield (void); /* Watt-32's misc.c */
   #define PCAP_ASSERT(x) ((void)0)
 
 #else
-  void pcap_assert (const char *what, const char *file, unsigned line);  
+  void pcap_assert (const char *what, const char *file, unsigned line);
 
   #define PCAP_ASSERT(x) do { \
                            if (!(x)) \

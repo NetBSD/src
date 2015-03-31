@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-snoop.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: pcap-snoop.c,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-snoop.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: pcap-snoop.c,v 1.3 2015/03/31 21:39:42 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -119,7 +119,7 @@ again:
 	caplen = (datalen < p->snapshot) ? datalen : p->snapshot;
 	cp = (u_char *)(sh + 1) + p->offset;		/* XXX */
 
-	/* 
+	/*
 	 * XXX unfortunately snoop loopback isn't exactly like
 	 * BSD's.  The address family is encoded in the first 2
 	 * bytes rather than the first 4 bytes!  Luckily the last
@@ -160,7 +160,7 @@ pcap_inject_snoop(pcap_t *p, const void *buf, size_t size)
 		return (-1);
 	}
 	return (ret);
-}                           
+}
 
 static int
 pcap_stats_snoop(pcap_t *p, struct pcap_stat *ps)

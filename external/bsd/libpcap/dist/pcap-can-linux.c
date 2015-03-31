@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-can-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: pcap-can-linux.c,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Felix Obenhuber
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-can-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: pcap-can-linux.c,v 1.3 2015/03/31 21:39:42 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -176,7 +176,7 @@ can_activate(pcap_t* handle)
 
 	/* get interface index */
 	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, handle->opt.source, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, handle->opt.source, sizeof(ifr.ifr_name));
 	if (ioctl(handle->fd, SIOCGIFINDEX, &ifr) < 0)
 	{
 		snprintf(handle->errbuf, PCAP_ERRBUF_SIZE,
