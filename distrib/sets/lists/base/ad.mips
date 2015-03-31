@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.64 2015/01/25 15:50:29 christos Exp $
+# $NetBSD: ad.mips,v 1.65 2015/03/31 21:40:57 christos Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -242,7 +242,7 @@
 ./usr/lib/64/libpam.so.4			base-compat-shlib	compat,pic,pam,arch64
 ./usr/lib/64/libpam.so.4.0			base-compat-shlib	compat,pic,pam,arch64
 ./usr/lib/64/libpcap.so.5			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libpcap.so.5.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libpcap.so.5.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libpci.so.2			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libpci.so.2.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libperfuse.so.0			base-compat-shlib	compat,pic,arch64
@@ -584,7 +584,7 @@
 ./usr/lib/o32/libpam.so.4			base-compat-shlib	compat,pic,pam,arch64
 ./usr/lib/o32/libpam.so.4.0			base-compat-shlib	compat,pic,pam,arch64
 ./usr/lib/o32/libpcap.so.5			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libpcap.so.5.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libpcap.so.5.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libpci.so.2			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libpci.so.2.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libperfuse.so.0			base-compat-shlib	compat,pic,arch64

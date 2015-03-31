@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.15 2015/01/25 15:50:29 christos Exp $
+# $NetBSD: ad.riscv,v 1.16 2015/03/31 21:40:57 christos Exp $
 ./lib/rv32					base-compat-shlib	compat,arch64
 ./lib/rv32/npf					base-npf-shlib		compat,arch64
 ./lib/rv32/npf/ext_log.so			base-npf-shlib		compat,pic,arch64
@@ -214,7 +214,7 @@
 ./usr/lib/rv32/libpam.so.4			base-compat-shlib	compat,pic,pam,arch64
 ./usr/lib/rv32/libpam.so.4.0			base-compat-shlib	compat,pic,pam,arch64
 ./usr/lib/rv32/libpcap.so.5			base-compat-shlib	compat,pic,arch64
-./usr/lib/rv32/libpcap.so.5.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/rv32/libpcap.so.5.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libpci.so.2			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libpci.so.2.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libperfuse.so.0			base-compat-shlib	compat,pic,arch64
