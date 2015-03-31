@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.1 2015/03/28 16:13:56 matt Exp $ */
+/* $NetBSD: locore.S,v 1.2 2015/03/31 01:30:50 matt Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -78,10 +78,10 @@ ENTRY_NP(start)
 	call	memset			// zero through kernel_end
 
 	// As a temporary hack, word 0 contains the amount of memory in MB
-	lw	a7, (zero)			// load memory size
+	INT_L	a7, (zero)			// load memory size
 	slli	a7, a7, (20-PGSHIFT)		// convert MB to pages
-	auipc	t0, %pcrel_hi(physmem)
-	sw	a7, %pcrel_lo(physmem)(t0)	// store it in physmem
+.L01:	auipc	t0, %pcrel_hi(physmem)
+	INT_S	a7, %pcrel_lo(.L01)(t0)		// store it in physmem
 
 	li	t4, PTE_V | PTE_SX | PTE_SW | PTE_SR | PTE_G
 #ifdef _LP64
@@ -115,11 +115,11 @@ ENTRY_NP(start)
 	//
 	// Fill in the PDEs to direct map memory.
 	//
-1:	REG_S	t4, 0(s3)		// store PDE
+.Lfill:	REG_S	t4, 0(s3)		// store PDE
 	add	t4, t4, t3		// advance PA in PDE to next segment
 	add	s3, s3, SZREG		// advance to next PDE slot
 	addi	a7, a7, -1		// count down segment
-	bgtz	a6, 1b			// loop if more
+	bgtz	a6, .Lfill		// loop if more
 
 	csrw	sptbr, s1		// set the page table base
 	li	t0, SR_VM
@@ -131,8 +131,7 @@ ENTRY_NP(start)
 
 .Lmmu_on:
 	// MMU is on!
-	PTR_LA	a0, _C_LABEL(cpu_info_store)
-	csrw	sscratch, a0		// curcpu() in sscratch
+	csrw	sscratch, zero		// zero in sscratch to mark kernel
 
 	PTR_LA	tp, _C_LABEL(lwp0)	// put curlwp in tp
 
@@ -151,8 +150,8 @@ ENTRY_NP(start)
 	// Now we should ready to start initializing the kernel.
 	PTR_LA	a0, _C_LABEL(start)	// kernel_start
 	add	a1, s5, s11		// kernel_end
-	PTR_LA	ra, _C_LABEL(main)	// return to main
-	tail	_C_LABEL(init_riscv)	// do MD startup
+	call	_C_LABEL(init_riscv)	// do MD startup
+	tail	_C_LABEL(main)		// and transfer to main
 	// not reached
 END(start)
 
@@ -162,7 +161,7 @@ END(start)
 ENTRY_NP(cpu_switchto)
 	addi	sp, sp, -TF_LEN		// allocate trapframe
 
-	beqz	a0, 1f			// can skip saving oldl state?
+	beqz	a0, .Lswitchto_newlwp	// can skip saving oldl state?
 
 	REG_S	ra, TF_RA(sp)		// save return address
 	REG_S	s0, TF_S0(sp)		// save callee saved address
@@ -181,17 +180,17 @@ ENTRY_NP(cpu_switchto)
 	REG_S	t4, TF_SR(sp)		// save it
 	
 	REG_S	sp, L_MD_KTF(a0)	// record trapframe pointer
-1:
-	csrrci	t0, sstatus, SR_EI	// disable interrupts
+.Lswitchto_newlwp:
+	csrrci	t0, sstatus, SR_EI	// # disable interrupts
 
-	move	tp, a1			// put the new lwp in thread pointer
+	move	tp, a1			// # put the new lwp in thread pointer
 
-	csrr	t1, sscratch		// get curcpu
-	PTR_S	tp, CI_CURLWP(t1)	// update curcpu with the new curlwp
+	PTR_L	t1, L_CPU(tp)		// # get curcpu
+	PTR_S	tp, CI_CURLWP(t1)	// # update curcpu with the new curlwp
 
-	REG_L	sp, L_MD_KTF(tp)	// load its kernel stack pointer
-	REG_L	t4, TF_SR(sp)		// fetch status register
-	csrw	sstatus, t4		// restore it (and interrutps?)
+	REG_L	sp, L_MD_KTF(tp)	// # load its kernel stack pointer
+	REG_L	t4, TF_SR(sp)		// # fetch status register
+	csrw	sstatus, t4		// # restore it (and interrutps?)
 
 	REG_L	s0, TF_S0(sp)		// restore callee saved
 	REG_L	s1, TF_S1(sp)		// restore callee saved
@@ -205,6 +204,8 @@ ENTRY_NP(cpu_switchto)
 	REG_L	s9, TF_S9(sp)		// restore callee saved
 	REG_L	s10, TF_S10(sp)		// restore callee saved
 	REG_L	s11, TF_S11(sp)		// restore callee saved
+
+	REG_L	ra, TF_RA(sp)		// restore return address
 
 	addi	sp, sp, TF_LEN		// remove trapframe
 
@@ -227,11 +228,11 @@ ENTRY_NP(cpu_lwp_trampoline)
 END(cpu_lwp_trampoline)
 
 ENTRY_NP(cpu_fast_switchto_cleanup)
-	lw	t0, CI_MTX_COUNT(a1)	// get mutex count
+	INT_L	t0, CI_MTX_COUNT(a1)	// get mutex count
 	REG_L	ra, CALLFRAME_RA(sp)	// get return address
 	REG_L	a0, CALLFRAME_S0(sp)	// get pinned LWP
 	addi	t0, t0, 1		// increment mutex count
-	sw	t0, CI_MTX_COUNT(a1)	// save it
+	INT_S	t0, CI_MTX_COUNT(a1)	// save it
 	PTR_S	zero, L_CTXSWTCH(a0)	// clear l_ctxswitch
 	addi	sp, sp, CALLFRAME_SIZ	// remove callframe
 #if IPL_SCHED != IPL_HIGH
@@ -273,7 +274,7 @@ ENTRY_NP(cpu_fast_switchto)
 #if 0
 	csrrci	t0, sstatus, SR_EI	// disable interrupts
 #endif
-	csrr	t1, sscratch		// get curcpu()
+	PTR_L	t1, L_CPU(tp)		// get curcpu()
 
 	PTR_S	sp, L_MD_KTF(tp)	// save trapframe ptr in oldlwp
 	move	tp, a0			// set thread pointer to newlwp
@@ -286,7 +287,7 @@ ENTRY_NP(cpu_fast_switchto)
 #if 0
 	csrrci	t0, sstatus, SR_EI	// disable interrupts
 #endif
-	csrr	t1, sscratch		// get curcpu() again
+	PTR_L	t1, L_CPU(tp)		// get curcpu() again
 	move	tp, s0			// return to pinned lwp
 	PTR_S	tp, CI_CURLWP(t1)	// restore curlwp
 #if 0
@@ -305,26 +306,24 @@ END(cpu_fast_switchto)
 // RISCV only has a simple exception handler handles both synchronous traps
 // and interrupts.
 ENTRY_NP(cpu_exception_handler)
-	csrw	uarch0, sp		// save stack pointer
-	csrr	sp, sstatus		// get status
-	andi	sp, sp, SR_PS		// user fault?
-	bnez	sp, 1f			//   no, already on kernel stack
+	csrrw	sp, sscratch, sp	// swap scratch and stack pointer
+	beqz	sp, .Lexception_kernel	//   sp == 0, already on kernel stack
 	//
 	// The execption happened while user code was executing.  We need to
 	// get the pointer to the user trapframe from the LWP md area.  Then we
 	// save t1 and tp so we have a register to work with and to get curlwp
 	// into tp.  We also save the saved SP into the trapframe.
+	// Upon entry on an exception from user, sscratch will contain curlwp.
 	//
-	csrr	sp, sscratch		// get curcpu()
-	PTR_L	sp, CI_CURLWP(sp)	// get curlwp
+	REG_S	tp, L_MD_TP(sp)		// save thread pointer temporarily
+	mv	tp, sp			// put curlwp in thread pointer
 	PTR_L	sp, L_MD_UTF(sp)	// trapframe pointer loaded
-	REG_S	tp, TF_TP(sp)		// save thread pointer
 	REG_S	t1, TF_T1(sp)		// save t1
-	csrr	t1, uarch0		// get saved SP
+	csrrw	t1, sscratch, zero	// save saved stack pointer with 0
 	REG_S	t1, TF_SP(sp)		// save stack pointer
-	csrr	t1, sscratch		// get curcpu()
-	PTR_L	tp, CI_CURLWP(t1)	// put curlwp in thread pointer
-	j	2f
+	REG_S	t1, L_MD_TP(tp)		// get thread pointer from temp store
+	REG_L	t1, TF_SP(sp)		// save thread pointer in trapframe
+	j	.Lexception_common
 
 	//
 	// The exception happened while we were already in the kernel.  That
@@ -333,12 +332,13 @@ ENTRY_NP(cpu_exception_handler)
 	// trap frame.  We save t1 so we can use it the original sp into the
 	// trapframe for use by the exception exiting code.
 	//
-1:	csrr	sp, uarch0		// get back our stack pointer
+.Lexception_kernel:
+	csrrw	sp, sscratch, zero	// get back our stack pointer
 	addi	sp, sp, -TF_LEN		// allocate stack frame
 	REG_S	t1, TF_T1(sp)		// save t1
 	addi	t1, sp, TF_LEN
 	REG_S	t1, TF_SP(sp)		// save SP
-2:
+.Lexception_common:
 	// Now we save all the temporary registers into the trapframe since
 	// they will most certainly be changed.
 	REG_S	ra, TF_RA(sp)		// save return address
@@ -352,6 +352,7 @@ ENTRY_NP(cpu_exception_handler)
 	REG_S	a6, TF_A6(sp)		// save a6
 	REG_S	a7, TF_A7(sp)		// save a7
 	REG_S	t0, TF_T0(sp)		// save t0
+					// t1 is already saved
 	REG_S	t2, TF_T2(sp)		// save t2
 	REG_S	t3, TF_T3(sp)		// save t3
 	REG_S	t4, TF_T4(sp)		// save t4
@@ -366,8 +367,8 @@ ENTRY_NP(cpu_exception_handler)
 	csrr	a4, sbadaddr		// get badaddr
 
 	REG_S	a1, TF_PC(sp)
-	sw	a2, TF_SR(sp)
-	sw	a3, TF_CAUSE(sp)	// save cause
+	INT_S	a2, TF_SR(sp)
+	INT_S	a3, TF_CAUSE(sp)	// save cause
 	REG_S	a4, TF_BADADDR(sp)
 
 	// Now we've saved the trapfame, the cause is still in a3.
@@ -383,6 +384,8 @@ exception_kernexit:
 	// trap or interrupt).  Simply return the volatile registers and the
 	// exception PC and status, load the saved SP from the trapframe, and
 	// return from the exception
+	csrrci	zero, sstatus, SR_EI	// disable interrupts
+
 	REG_L	ra, TF_RA(sp)		// restore return address
 	REG_L	gp, TF_GP(sp)		// restore gp
 	REG_L	a0, TF_A0(sp)		// restore a0
@@ -431,8 +434,10 @@ trap_user:
 
 	call	_C_LABEL(cpu_trap)	// nope, just a regular trap
 _C_LABEL(exception_userexit):
-	lw	t0, L_MD_ASTPENDING(tp)	// ast pending?
+	INT_L	t0, L_MD_ASTPENDING(tp)	// ast pending?
 	bnez	t0, trap_doast		//   yes, handle it.
+	csrrci	zero, sstatus, SR_EI	// disable interrupts
+	csrw	sscratch, tp		// show we are coming from userland
 	REG_L	s0, TF_S0(sp)		// only restore from userland
 	REG_L	s1, TF_S1(sp)		// only restore from userland
 	REG_L	s2, TF_S2(sp)		// only restore from userland
@@ -449,9 +454,7 @@ _C_LABEL(exception_userexit):
 	j	exception_kernexit
 
 trap_syscall:
-.L0:	auipc	ra, %pcrel_hi(exception_userexit)
-	addi	ra, ra, %pcrel_lo(.L0)
-
+.L0:	PTR_L	ra, exception_userexit
 	PTR_L	t0, L_PROC(tp)		// get proc struct
 	PTR_L	t0, P_MD_SYSCALL(t0)	// get syscall address from proc
 	jr	t0			// and jump to it
@@ -469,15 +472,14 @@ intr_usersave:
 	REG_S	s9, TF_S9(sp)		// only save from userland
 	REG_S	s10, TF_S10(sp)		// only save from userland
 	REG_S	s11, TF_S11(sp)		// only save from userland
-	auipc	ra, %pcrel_hi(exception_userexit)
-	addi	ra, ra, %pcrel_lo(exception_userexit)
+	PTR_LA	ra, exception_userexit
 trap_doast:
 	move	a0, sp			// only argument is trapframe
 	tail	_C_LABEL(cpu_ast)
 
 intr_user:
 	call	_C_LABEL(cpu_intr)	// handle interrupt
-	lw	t0, L_MD_ASTPENDING(tp)	// get astpending
+	INT_L	t0, L_MD_ASTPENDING(tp)	// get astpending
 	bnez	t0, intr_usersave	//    if one is pending, deal with in
 
 	REG_L	tp, TF_TP(sp)		// restore thread pointer
