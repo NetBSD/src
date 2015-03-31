@@ -69,6 +69,8 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 #  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_S8)
 # elif defined(__powerpc__) || defined(__powerpc64__)
 #  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_R1)
+# elif defined(__riscv__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_S0)
 # elif defined(__sparc__)
 #  define _UC_MACHINE_FP(ucontext) sp[15]
 # elif defined(__sh3__)
@@ -106,6 +108,11 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   // The powerpc{,64}-linux ABIs do not specify r31 as the frame
   // pointer, but GCC always uses r31 when we need a frame pointer.
   *bp = ucontext->uc_mcontext.regs->gpr[PT_R31];
+# elif defined(__riscv__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.gregs[REG_PC];
+  *bp = ucontext->uc_mcontext.gregs[REG_S0];
+  *sp = ucontext->uc_mcontext.gregs[REG_SP];
 # elif defined(__sparc__)
   ucontext_t *ucontext = (ucontext_t*)context;
   uptr *stk_ptr;
