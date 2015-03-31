@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.234 2015/03/23 18:33:17 roy Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.235 2015/03/31 08:44:43 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.234 2015/03/23 18:33:17 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.235 2015/03/31 08:44:43 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -132,8 +132,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.234 2015/03/23 18:33:17 roy Exp $");
 #include <netinet/ip_mroute.h>
 #endif
 
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
+#endif
 
 static int ip_pcbopts(struct inpcb *, const struct sockopt *);
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
