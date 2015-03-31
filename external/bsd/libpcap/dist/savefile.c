@@ -1,4 +1,4 @@
-/*	$NetBSD: savefile.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: savefile.c,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: savefile.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: savefile.c,v 1.3 2015/03/31 21:39:42 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -223,14 +223,14 @@ pcap_t* pcap_hopen_offline_with_tstamp_precision(intptr_t osfd, u_int precision,
 	FILE *file;
 
 	fd = _open_osfhandle(osfd, _O_RDONLY);
-	if ( fd < 0 ) 
+	if ( fd < 0 )
 	{
 		snprintf(errbuf, PCAP_ERRBUF_SIZE, pcap_strerror(errno));
 		return NULL;
 	}
 
 	file = _fdopen(fd, "rb");
-	if ( file == NULL ) 
+	if ( file == NULL )
 	{
 		snprintf(errbuf, PCAP_ERRBUF_SIZE, pcap_strerror(errno));
 		return NULL;
@@ -348,6 +348,11 @@ found:
 	 * be used for pcap_next()/pcap_next_ex().
 	 */
 	p->oneshot_callback = pcap_oneshot;
+
+	/*
+	 * Savefiles never require special BPF code generation.
+	 */
+	p->bpf_codegen_flags = 0;
 
 	p->activated = 1;
 
