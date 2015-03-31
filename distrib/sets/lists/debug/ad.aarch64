@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.18 2015/01/25 15:50:30 christos Exp $
+# $NetBSD: ad.aarch64,v 1.19 2015/03/31 21:40:57 christos Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -140,7 +140,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/eabi/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat
-./usr/libdata/debug/usr/lib/eabi/libpcap.so.5.0.debug	comp-net-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libpcap.so.5.1.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libpci.so.2.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/eabi/libposix.so.0.1.debug	comp-sys-debug	debug,compat
@@ -294,7 +294,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/eabihf/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat
-./usr/libdata/debug/usr/lib/eabihf/libpcap.so.5.0.debug	comp-net-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libpcap.so.5.1.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libpci.so.2.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/eabihf/libposix.so.0.1.debug	comp-sys-debug	debug,compat
@@ -448,7 +448,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/oabi/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libpcap.so.5.0.debug		comp-net-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libpcap.so.5.1.debug		comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libpci.so.2.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/oabi/libposix.so.0.1.debug		comp-sys-debug	debug,compat

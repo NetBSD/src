@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.34 2015/01/25 15:50:30 christos Exp $
+# $NetBSD: ad.powerpc,v 1.35 2015/03/31 21:40:57 christos Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasan_g.a			comp-c-debuglib		compat,arch64,debuglib,gcc=48
@@ -224,7 +224,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libossaudio.so.1.1.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libp2k.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic,rump
 ./usr/libdata/debug/usr/lib/powerpc/libpam.so.4.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libpcap.so.5.0.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libpcap.so.5.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libpci.so.2.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libperfuse.so.0.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libposix.so.0.1.debug			comp-compat-shlib	compat,arch64,debug,pic
