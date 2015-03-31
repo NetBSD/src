@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-pflog.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-pflog.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -157,14 +157,16 @@ pflog_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h,
 		        ip_print(ndo, p, length);
 			break;
 
-#ifdef INET6
+#if defined(AF_INET6) || defined(OPENBSD_AF_INET6)
+#ifdef AF_INET6
 		case AF_INET6:
-#if OPENBSD_AF_INET6 != AF_INET6
+#endif /* AF_INET6 */
+#if !defined(AF_INET6) || OPENBSD_AF_INET6 != AF_INET6
 		case OPENBSD_AF_INET6:		/* XXX: read pcap files */
-#endif
+#endif /* !defined(AF_INET6) || OPENBSD_AF_INET6 != AF_INET6 */
 			ip6_print(ndo, p, length);
 			break;
-#endif
+#endif /* defined(AF_INET6) || defined(OPENBSD_AF_INET6) */
 
 	default:
 		/* address family not handled, print raw packet */
