@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.2 2015/03/31 01:30:50 matt Exp $ */
+/* $NetBSD: locore.S,v 1.3 2015/03/31 06:47:47 matt Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -306,8 +306,8 @@ END(cpu_fast_switchto)
 // RISCV only has a simple exception handler handles both synchronous traps
 // and interrupts.
 ENTRY_NP(cpu_exception_handler)
-	csrrw	sp, sscratch, sp	// swap scratch and stack pointer
-	beqz	sp, .Lexception_kernel	//   sp == 0, already on kernel stack
+	csrrw	tp, sscratch, tp	// swap scratch and thread pointer
+	beqz	tp, .Lexception_kernel	//   tp == 0, already on kernel stack
 	//
 	// The execption happened while user code was executing.  We need to
 	// get the pointer to the user trapframe from the LWP md area.  Then we
@@ -315,14 +315,14 @@ ENTRY_NP(cpu_exception_handler)
 	// into tp.  We also save the saved SP into the trapframe.
 	// Upon entry on an exception from user, sscratch will contain curlwp.
 	//
-	REG_S	tp, L_MD_TP(sp)		// save thread pointer temporarily
-	mv	tp, sp			// put curlwp in thread pointer
+	REG_S	sp, L_MD_USP(tp)	// save user stack pointer temporarily
 	PTR_L	sp, L_MD_UTF(sp)	// trapframe pointer loaded
 	REG_S	t1, TF_T1(sp)		// save t1
-	csrrw	t1, sscratch, zero	// save saved stack pointer with 0
-	REG_S	t1, TF_SP(sp)		// save stack pointer
-	REG_S	t1, L_MD_TP(tp)		// get thread pointer from temp store
+	REG_S	t1, L_MD_USP(tp)	// get user stack pointer
 	REG_L	t1, TF_SP(sp)		// save thread pointer in trapframe
+	csrrw	t1, sscratch, zero	// swap saved thread pointer with 0
+	REG_L	t1, TF_TP(sp)		// save thread pointer in trapframe
+	li	t1, 0			// indicate user exception
 	j	.Lexception_common
 
 	//
@@ -333,11 +333,13 @@ ENTRY_NP(cpu_exception_handler)
 	// trapframe for use by the exception exiting code.
 	//
 .Lexception_kernel:
-	csrrw	sp, sscratch, zero	// get back our stack pointer
+	csrrw	tp, sscratch, zero	// get back our thread pointer
 	addi	sp, sp, -TF_LEN		// allocate stack frame
 	REG_S	t1, TF_T1(sp)		// save t1
 	addi	t1, sp, TF_LEN
 	REG_S	t1, TF_SP(sp)		// save SP
+	li	t1, 1			// indicate kernel exception
+
 .Lexception_common:
 	// Now we save all the temporary registers into the trapframe since
 	// they will most certainly be changed.
@@ -364,17 +366,18 @@ ENTRY_NP(cpu_exception_handler)
 	csrr	a1, sepc		// get execption pc
 	csrr	a2, sstatus		// get status
 	csrr	a3, scause		// get cause
-	csrr	a4, sbadaddr		// get badaddr
 
 	REG_S	a1, TF_PC(sp)
 	INT_S	a2, TF_SR(sp)
 	INT_S	a3, TF_CAUSE(sp)	// save cause
-	REG_S	a4, TF_BADADDR(sp)
 
 	// Now we've saved the trapfame, the cause is still in a3.
 
-	andi	t1, a2, SR_PS		// t1 == user or kernel flag
 	bltz	a3, intr_handler	// MSB is set if interrupt
+
+	// badaddr is only relavent for non-interrupts
+	csrr	a4, sbadaddr		// get badaddr
+	REG_S	a4, TF_BADADDR(sp)
 
 	beqz	t1, trap_user		// this was a user trap
 	// This was a kernel exception
@@ -438,6 +441,7 @@ _C_LABEL(exception_userexit):
 	bnez	t0, trap_doast		//   yes, handle it.
 	csrrci	zero, sstatus, SR_EI	// disable interrupts
 	csrw	sscratch, tp		// show we are coming from userland
+	REG_L	tp, TF_TP(sp)		// only restore from userland
 	REG_L	s0, TF_S0(sp)		// only restore from userland
 	REG_L	s1, TF_S1(sp)		// only restore from userland
 	REG_L	s2, TF_S2(sp)		// only restore from userland
@@ -450,7 +454,6 @@ _C_LABEL(exception_userexit):
 	REG_L	s9, TF_S9(sp)		// only restore from userland
 	REG_L	s10, TF_S10(sp)		// only restore from userland
 	REG_L	s11, TF_S11(sp)		// only restore from userland
-	REG_L	tp, TF_TP(sp)		// only restore from userland
 	j	exception_kernexit
 
 trap_syscall:
@@ -482,6 +485,7 @@ intr_user:
 	INT_L	t0, L_MD_ASTPENDING(tp)	// get astpending
 	bnez	t0, intr_usersave	//    if one is pending, deal with in
 
+	csrw	sscratch, tp		// show we are coming from userland
 	REG_L	tp, TF_TP(sp)		// restore thread pointer
 	j	exception_kernexit	// do standard exception exit
 
