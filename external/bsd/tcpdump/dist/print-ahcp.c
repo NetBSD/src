@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ahcp.c,v 1.2 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-ahcp.c,v 1.3 2015/03/31 21:59:35 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -105,7 +105,8 @@ static const struct tok ahcp1_opt_str[] = {
 };
 
 static int
-ahcp_time_print(netdissect_options *ndo, const u_char *cp, const u_char *ep) {
+ahcp_time_print(netdissect_options *ndo, const u_char *cp, const u_char *ep)
+{
 	time_t t;
 	struct tm *tm;
 	char buf[BUFSIZE];
@@ -132,7 +133,8 @@ trunc:
 }
 
 static int
-ahcp_seconds_print(netdissect_options *ndo, const u_char *cp, const u_char *ep) {
+ahcp_seconds_print(netdissect_options *ndo, const u_char *cp, const u_char *ep)
+{
 	if (cp + 4 != ep)
 		goto corrupt;
 	ND_TCHECK2(*cp, 4);
@@ -149,7 +151,8 @@ trunc:
 }
 
 static int
-ahcp_ipv6_addresses_print(netdissect_options *ndo, const u_char *cp, const u_char *ep) {
+ahcp_ipv6_addresses_print(netdissect_options *ndo, const u_char *cp, const u_char *ep)
+{
 	const char *sep = ": ";
 
 	while (cp < ep) {
@@ -176,7 +179,8 @@ trunc:
 }
 
 static int
-ahcp_ipv4_addresses_print(netdissect_options *ndo, const u_char *cp, const u_char *ep) {
+ahcp_ipv4_addresses_print(netdissect_options *ndo, const u_char *cp, const u_char *ep)
+{
 	const char *sep = ": ";
 
 	while (cp < ep) {
@@ -199,7 +203,8 @@ trunc:
 }
 
 static int
-ahcp_ipv6_prefixes_print(netdissect_options *ndo, const u_char *cp, const u_char *ep) {
+ahcp_ipv6_prefixes_print(netdissect_options *ndo, const u_char *cp, const u_char *ep)
+{
 	const char *sep = ": ";
 
 	while (cp < ep) {
@@ -226,7 +231,8 @@ trunc:
 }
 
 static int
-ahcp_ipv4_prefixes_print(netdissect_options *ndo, const u_char *cp, const u_char *ep) {
+ahcp_ipv4_prefixes_print(netdissect_options *ndo, const u_char *cp, const u_char *ep)
+{
 	const char *sep = ": ";
 
 	while (cp < ep) {
@@ -268,7 +274,8 @@ static int
 };
 
 static void
-ahcp1_options_print(netdissect_options *ndo, const u_char *cp, const u_char *ep) {
+ahcp1_options_print(netdissect_options *ndo, const u_char *cp, const u_char *ep)
+{
 	uint8_t option_no, option_len;
 
 	while (cp < ep) {
@@ -308,7 +315,8 @@ trunc:
 }
 
 static void
-ahcp1_body_print(netdissect_options *ndo, const u_char *cp, const u_char *ep) {
+ahcp1_body_print(netdissect_options *ndo, const u_char *cp, const u_char *ep)
+{
 	uint8_t type, mbz;
 	uint16_t body_len;
 
@@ -352,7 +360,8 @@ trunc:
 }
 
 void
-ahcp_print(netdissect_options *ndo, const u_char *cp, const u_int len) {
+ahcp_print(netdissect_options *ndo, const u_char *cp, const u_int len)
+{
 	const u_char *ep = cp + len;
 	uint8_t version;
 
@@ -415,4 +424,3 @@ corrupt:
 trunc:
 	ND_PRINT((ndo, "%s", tstr));
 }
-
