@@ -1,6 +1,6 @@
 /*
  * hostapd - PMKSA cache for IEEE 802.11i RSN
- * Copyright (c) 2004-2008, 2012, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, 2012-2015, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -12,6 +12,7 @@
 #include "utils/eloop.h"
 #include "eapol_auth/eapol_auth_sm.h"
 #include "eapol_auth/eapol_auth_sm_i.h"
+#include "radius/radius_das.h"
 #include "sta_info.h"
 #include "ap_config.h"
 #include "pmksa_cache_auth.h"
@@ -146,6 +147,9 @@ static void pmksa_cache_from_eapol_data(struct rsn_pmksa_cache_entry *entry,
 
 	entry->eap_type_authsrv = eapol->eap_type_authsrv;
 	entry->vlan_id = ((struct sta_info *) eapol->sta)->vlan_id;
+
+	entry->acct_multi_session_id_hi = eapol->acct_multi_session_id_hi;
+	entry->acct_multi_session_id_lo = eapol->acct_multi_session_id_lo;
 }
 
 
@@ -183,6 +187,9 @@ void pmksa_cache_to_eapol_data(struct rsn_pmksa_cache_entry *entry,
 
 	eapol->eap_type_authsrv = entry->eap_type_authsrv;
 	((struct sta_info *) eapol->sta)->vlan_id = entry->vlan_id;
+
+	eapol->acct_multi_session_id_hi = entry->acct_multi_session_id_hi;
+	eapol->acct_multi_session_id_lo = entry->acct_multi_session_id_lo;
 }
 
 
@@ -227,6 +234,8 @@ static void pmksa_cache_link_entry(struct rsn_pmksa_cache *pmksa,
  * @pmksa: Pointer to PMKSA cache data from pmksa_cache_auth_init()
  * @pmk: The new pairwise master key
  * @pmk_len: PMK length in bytes, usually PMK_LEN (32)
+ * @kck: Key confirmation key or %NULL if not yet derived
+ * @kck_len: KCK length in bytes
  * @aa: Authenticator address
  * @spa: Supplicant address
  * @session_timeout: Session timeout
@@ -242,8 +251,9 @@ static void pmksa_cache_link_entry(struct rsn_pmksa_cache *pmksa,
 struct rsn_pmksa_cache_entry *
 pmksa_cache_auth_add(struct rsn_pmksa_cache *pmksa,
 		     const u8 *pmk, size_t pmk_len,
-		const u8 *aa, const u8 *spa, int session_timeout,
-		struct eapol_state_machine *eapol, int akmp)
+		     const u8 *kck, size_t kck_len,
+		     const u8 *aa, const u8 *spa, int session_timeout,
+		     struct eapol_state_machine *eapol, int akmp)
 {
 	struct rsn_pmksa_cache_entry *entry, *pos;
 	struct os_reltime now;
@@ -251,13 +261,21 @@ pmksa_cache_auth_add(struct rsn_pmksa_cache *pmksa,
 	if (pmk_len > PMK_LEN)
 		return NULL;
 
+	if (wpa_key_mgmt_suite_b(akmp) && !kck)
+		return NULL;
+
 	entry = os_zalloc(sizeof(*entry));
 	if (entry == NULL)
 		return NULL;
 	os_memcpy(entry->pmk, pmk, pmk_len);
 	entry->pmk_len = pmk_len;
-	rsn_pmkid(pmk, pmk_len, aa, spa, entry->pmkid,
-		  wpa_key_mgmt_sha256(akmp));
+	if (akmp == WPA_KEY_MGMT_IEEE8021X_SUITE_B_192)
+		rsn_pmkid_suite_b_192(kck, kck_len, aa, spa, entry->pmkid);
+	else if (wpa_key_mgmt_suite_b(akmp))
+		rsn_pmkid_suite_b(kck, kck_len, aa, spa, entry->pmkid);
+	else
+		rsn_pmkid(pmk, pmk_len, aa, spa, entry->pmkid,
+			  wpa_key_mgmt_sha256(akmp));
 	os_get_reltime(&now);
 	entry->expiration = now.sec;
 	if (session_timeout > 0)
@@ -436,4 +454,75 @@ pmksa_cache_auth_init(void (*free_cb)(struct rsn_pmksa_cache_entry *entry,
 	}
 
 	return pmksa;
+}
+
+
+static int das_attr_match(struct rsn_pmksa_cache_entry *entry,
+			  struct radius_das_attrs *attr)
+{
+	int match = 0;
+
+	if (attr->sta_addr) {
+		if (os_memcmp(attr->sta_addr, entry->spa, ETH_ALEN) != 0)
+			return 0;
+		match++;
+	}
+
+	if (attr->acct_multi_session_id) {
+		char buf[20];
+
+		if (attr->acct_multi_session_id_len != 17)
+			return 0;
+		os_snprintf(buf, sizeof(buf), "%08X+%08X",
+			    entry->acct_multi_session_id_hi,
+			    entry->acct_multi_session_id_lo);
+		if (os_memcmp(attr->acct_multi_session_id, buf, 17) != 0)
+			return 0;
+		match++;
+	}
+
+	if (attr->cui) {
+		if (!entry->cui ||
+		    attr->cui_len != wpabuf_len(entry->cui) ||
+		    os_memcmp(attr->cui, wpabuf_head(entry->cui),
+			      attr->cui_len) != 0)
+			return 0;
+		match++;
+	}
+
+	if (attr->user_name) {
+		if (!entry->identity ||
+		    attr->user_name_len != entry->identity_len ||
+		    os_memcmp(attr->user_name, entry->identity,
+			      attr->user_name_len) != 0)
+			return 0;
+		match++;
+	}
+
+	return match;
+}
+
+
+int pmksa_cache_auth_radius_das_disconnect(struct rsn_pmksa_cache *pmksa,
+					   struct radius_das_attrs *attr)
+{
+	int found = 0;
+	struct rsn_pmksa_cache_entry *entry, *prev;
+
+	if (attr->acct_session_id)
+		return -1;
+
+	entry = pmksa->pmksa;
+	while (entry) {
+		if (das_attr_match(entry, attr)) {
+			found++;
+			prev = entry;
+			entry = entry->next;
+			pmksa_cache_free_entry(pmksa, prev);
+			continue;
+		}
+		entry = entry->next;
+	}
+
+	return found ? 0 : -1;
 }

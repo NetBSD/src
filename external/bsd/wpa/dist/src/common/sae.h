@@ -35,6 +35,7 @@ struct sae_temporary_data {
 	const struct crypto_bignum *order;
 	struct crypto_bignum *prime_buf;
 	struct crypto_bignum *order_buf;
+	struct wpabuf *anti_clogging_token;
 };
 
 struct sae_data {
@@ -43,6 +44,7 @@ struct sae_data {
 	u8 pmk[SAE_PMK_LEN];
 	struct crypto_bignum *peer_commit_scalar;
 	int group;
+	int sync;
 	struct sae_temporary_data *tmp;
 };
 
@@ -60,5 +62,6 @@ u16 sae_parse_commit(struct sae_data *sae, const u8 *data, size_t len,
 		     const u8 **token, size_t *token_len, int *allowed_groups);
 void sae_write_confirm(struct sae_data *sae, struct wpabuf *buf);
 int sae_check_confirm(struct sae_data *sae, const u8 *data, size_t len);
+u16 sae_group_allowed(struct sae_data *sae, int *allowed_groups, u16 group);
 
 #endif /* SAE_H */

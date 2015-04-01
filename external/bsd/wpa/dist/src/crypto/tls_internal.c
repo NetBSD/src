@@ -190,6 +190,31 @@ int tls_connection_set_params(void *tls_ctx, struct tls_connection *conn,
 	if (cred == NULL)
 		return -1;
 
+	if (params->subject_match) {
+		wpa_printf(MSG_INFO, "TLS: subject_match not supported");
+		return -1;
+	}
+
+	if (params->altsubject_match) {
+		wpa_printf(MSG_INFO, "TLS: altsubject_match not supported");
+		return -1;
+	}
+
+	if (params->suffix_match) {
+		wpa_printf(MSG_INFO, "TLS: suffix_match not supported");
+		return -1;
+	}
+
+	if (params->domain_match) {
+		wpa_printf(MSG_INFO, "TLS: domain_match not supported");
+		return -1;
+	}
+
+	if (params->openssl_ciphers) {
+		wpa_printf(MSG_INFO, "GnuTLS: openssl_ciphers not supported");
+		return -1;
+	}
+
 	if (tlsv1_set_ca_cert(cred, params->ca_cert,
 			      params->ca_cert_blob, params->ca_cert_blob_len,
 			      params->ca_path)) {
@@ -651,4 +676,10 @@ int tls_connection_set_session_ticket_cb(void *tls_ctx,
 	}
 #endif /* CONFIG_TLS_INTERNAL_SERVER */
 	return -1;
+}
+
+
+int tls_get_library_version(char *buf, size_t buf_len)
+{
+	return os_snprintf(buf, buf_len, "internal");
 }

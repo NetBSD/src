@@ -124,6 +124,8 @@ static int hostapd_setup_radius_srv(struct hostapd_data *hapd)
 	srv.subscr_remediation_url = conf->subscr_remediation_url;
 	srv.subscr_remediation_method = conf->subscr_remediation_method;
 #endif /* CONFIG_HS20 */
+	srv.erp = conf->eap_server_erp;
+	srv.erp_domain = conf->erp_domain;
 
 	hapd->radius_srv = radius_server_init(&srv);
 	if (hapd->radius_srv == NULL) {
@@ -158,6 +160,7 @@ int authsrv_init(struct hostapd_data *hapd)
 		params.private_key = hapd->conf->private_key;
 		params.private_key_passwd = hapd->conf->private_key_passwd;
 		params.dh_file = hapd->conf->dh_file;
+		params.openssl_ciphers = hapd->conf->openssl_ciphers;
 		params.ocsp_stapling_response =
 			hapd->conf->ocsp_stapling_response;
 

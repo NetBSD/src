@@ -22,11 +22,24 @@
 u8 * hostapd_eid_vht_capabilities(struct hostapd_data *hapd, u8 *eid)
 {
 	struct ieee80211_vht_capabilities *cap;
+	struct hostapd_hw_modes *mode = hapd->iface->current_mode;
 	u8 *pos = eid;
 
-	if (!hapd->iconf->ieee80211ac || !hapd->iface->current_mode ||
-	    hapd->conf->disable_11ac)
+	if (!mode)
 		return eid;
+
+	if (mode->mode == HOSTAPD_MODE_IEEE80211G && hapd->conf->vendor_vht &&
+	    mode->vht_capab == 0 && hapd->iface->hw_features) {
+		int i;
+
+		for (i = 0; i < hapd->iface->num_hw_features; i++) {
+			if (hapd->iface->hw_features[i].mode ==
+			    HOSTAPD_MODE_IEEE80211A) {
+				mode = &hapd->iface->hw_features[i];
+				break;
+			}
+		}
+	}
 
 	*pos++ = WLAN_EID_VHT_CAP;
 	*pos++ = sizeof(*cap);
@@ -37,8 +50,7 @@ u8 * hostapd_eid_vht_capabilities(struct hostapd_data *hapd, u8 *eid)
 		hapd->iface->conf->vht_capab);
 
 	/* Supported MCS set comes from hw */
-	os_memcpy(&cap->vht_supported_mcs_set,
-	          hapd->iface->current_mode->vht_mcs_set, 8);
+	os_memcpy(&cap->vht_supported_mcs_set, mode->vht_mcs_set, 8);
 
 	pos += sizeof(*cap);
 
@@ -50,9 +62,6 @@ u8 * hostapd_eid_vht_operation(struct hostapd_data *hapd, u8 *eid)
 {
 	struct ieee80211_vht_operation *oper;
 	u8 *pos = eid;
-
-	if (!hapd->iconf->ieee80211ac || hapd->conf->disable_11ac)
-		return eid;
 
 	*pos++ = WLAN_EID_VHT_OPERATION;
 	*pos++ = sizeof(*oper);
@@ -81,13 +90,55 @@ u8 * hostapd_eid_vht_operation(struct hostapd_data *hapd, u8 *eid)
 }
 
 
+static int check_valid_vht_mcs(struct hostapd_hw_modes *mode,
+			       const u8 *sta_vht_capab)
+{
+	const struct ieee80211_vht_capabilities *vht_cap;
+	struct ieee80211_vht_capabilities ap_vht_cap;
+	u16 sta_rx_mcs_set, ap_tx_mcs_set;
+	int i;
+
+	if (!mode)
+		return 1;
+
+	/*
+	 * Disable VHT caps for STAs for which there is not even a single
+	 * allowed MCS in any supported number of streams, i.e., STA is
+	 * advertising 3 (not supported) as VHT MCS rates for all supported
+	 * stream cases.
+	 */
+	os_memcpy(&ap_vht_cap.vht_supported_mcs_set, mode->vht_mcs_set,
+		  sizeof(ap_vht_cap.vht_supported_mcs_set));
+	vht_cap = (const struct ieee80211_vht_capabilities *) sta_vht_capab;
+
+	/* AP Tx MCS map vs. STA Rx MCS map */
+	sta_rx_mcs_set = le_to_host16(vht_cap->vht_supported_mcs_set.rx_map);
+	ap_tx_mcs_set = le_to_host16(ap_vht_cap.vht_supported_mcs_set.tx_map);
+
+	for (i = 0; i < VHT_RX_NSS_MAX_STREAMS; i++) {
+		if ((ap_tx_mcs_set & (0x3 << (i * 2))) == 3)
+			continue;
+
+		if ((sta_rx_mcs_set & (0x3 << (i * 2))) == 3)
+			continue;
+
+		return 1;
+	}
+
+	wpa_printf(MSG_DEBUG,
+		   "No matching VHT MCS found between AP TX and STA RX");
+	return 0;
+}
+
+
 u16 copy_sta_vht_capab(struct hostapd_data *hapd, struct sta_info *sta,
 		       const u8 *vht_capab, size_t vht_capab_len)
 {
 	/* Disable VHT caps for STAs associated to no-VHT BSSes. */
 	if (!vht_capab ||
 	    vht_capab_len < sizeof(struct ieee80211_vht_capabilities) ||
-	    hapd->conf->disable_11ac) {
+	    hapd->conf->disable_11ac ||
+	    !check_valid_vht_mcs(hapd->iface->current_mode, vht_capab)) {
 		sta->flags &= ~WLAN_STA_VHT;
 		os_free(sta->vht_capabilities);
 		sta->vht_capabilities = NULL;
@@ -106,6 +157,66 @@ u16 copy_sta_vht_capab(struct hostapd_data *hapd, struct sta_info *sta,
 		  sizeof(struct ieee80211_vht_capabilities));
 
 	return WLAN_STATUS_SUCCESS;
+}
+
+
+u16 copy_sta_vendor_vht(struct hostapd_data *hapd, struct sta_info *sta,
+			const u8 *ie, size_t len)
+{
+	const u8 *vht_capab;
+	unsigned int vht_capab_len;
+
+	if (!ie || len < 5 + 2 + sizeof(struct ieee80211_vht_capabilities) ||
+	    hapd->conf->disable_11ac)
+		goto no_capab;
+
+	/* The VHT Capabilities element embedded in vendor VHT */
+	vht_capab = ie + 5;
+	if (vht_capab[0] != WLAN_EID_VHT_CAP)
+		goto no_capab;
+	vht_capab_len = vht_capab[1];
+	if (vht_capab_len < sizeof(struct ieee80211_vht_capabilities) ||
+	    (int) vht_capab_len > ie + len - vht_capab - 2)
+		goto no_capab;
+	vht_capab += 2;
+
+	if (sta->vht_capabilities == NULL) {
+		sta->vht_capabilities =
+			os_zalloc(sizeof(struct ieee80211_vht_capabilities));
+		if (sta->vht_capabilities == NULL)
+			return WLAN_STATUS_UNSPECIFIED_FAILURE;
+	}
+
+	sta->flags |= WLAN_STA_VHT | WLAN_STA_VENDOR_VHT;
+	os_memcpy(sta->vht_capabilities, vht_capab,
+		  sizeof(struct ieee80211_vht_capabilities));
+	return WLAN_STATUS_SUCCESS;
+
+no_capab:
+	sta->flags &= ~WLAN_STA_VENDOR_VHT;
+	return WLAN_STATUS_SUCCESS;
+}
+
+
+u8 * hostapd_eid_vendor_vht(struct hostapd_data *hapd, u8 *eid)
+{
+	u8 *pos = eid;
+
+	if (!hapd->iface->current_mode)
+		return eid;
+
+	*pos++ = WLAN_EID_VENDOR_SPECIFIC;
+	*pos++ = (5 +		/* The Vendor OUI, type and subtype */
+		  2 + sizeof(struct ieee80211_vht_capabilities) +
+		  2 + sizeof(struct ieee80211_vht_operation));
+
+	WPA_PUT_BE32(pos, (OUI_BROADCOM << 8) | VENDOR_VHT_TYPE);
+	pos += 4;
+	*pos++ = VENDOR_VHT_SUBTYPE;
+	pos = hostapd_eid_vht_capabilities(hapd, pos);
+	pos = hostapd_eid_vht_operation(hapd, pos);
+
+	return pos;
 }
 
 

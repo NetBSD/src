@@ -9,6 +9,7 @@
 #include "includes.h"
 
 #include "common.h"
+#include "common/ieee802_11_common.h"
 #include "p2p_i.h"
 
 
@@ -54,56 +55,7 @@ int p2p_random(char *buf, size_t len)
  */
 int p2p_channel_to_freq(int op_class, int channel)
 {
-	/* Table E-4 in IEEE Std 802.11-2012 - Global operating classes */
-	/* TODO: more operating classes */
-	switch (op_class) {
-	case 81:
-		/* channels 1..13 */
-		if (channel < 1 || channel > 13)
-			return -1;
-		return 2407 + 5 * channel;
-	case 82:
-		/* channel 14 */
-		if (channel != 14)
-			return -1;
-		return 2414 + 5 * channel;
-	case 83: /* channels 1..9; 40 MHz */
-	case 84: /* channels 5..13; 40 MHz */
-		if (channel < 1 || channel > 13)
-			return -1;
-		return 2407 + 5 * channel;
-	case 115: /* channels 36,40,44,48; indoor only */
-	case 118: /* channels 52,56,60,64; dfs */
-		if (channel < 36 || channel > 64)
-			return -1;
-		return 5000 + 5 * channel;
-	case 124: /* channels 149,153,157,161 */
-	case 125: /* channels 149,153,157,161,165,169 */
-		if (channel < 149 || channel > 161)
-			return -1;
-		return 5000 + 5 * channel;
-	case 116: /* channels 36,44; 40 MHz; indoor only */
-	case 117: /* channels 40,48; 40 MHz; indoor only */
-	case 119: /* channels 52,60; 40 MHz; dfs */
-	case 120: /* channels 56,64; 40 MHz; dfs */
-		if (channel < 36 || channel > 64)
-			return -1;
-		return 5000 + 5 * channel;
-	case 126: /* channels 149,157; 40 MHz */
-	case 127: /* channels 153,161; 40 MHz */
-		if (channel < 149 || channel > 161)
-			return -1;
-		return 5000 + 5 * channel;
-	case 128: /* center freqs 42, 58, 106, 122, 138, 155; 80 MHz */
-		if (channel < 36 || channel > 161)
-			return -1;
-		return 5000 + 5 * channel;
-	case 180: /* 60 GHz band, channels 1..4 */
-		if (channel < 1 || channel > 4)
-			return -1;
-		return 56160 + 2160 * channel;
-	}
-	return -1;
+	return ieee80211_chan_to_freq(NULL, op_class, channel);
 }
 
 
@@ -241,19 +193,14 @@ static void p2p_op_class_union(struct p2p_reg_class *cl,
 
 
 /**
- * p2p_channels_union - Union of channel lists
- * @a: First set of channels
+ * p2p_channels_union_inplace - Inplace union of channel lists
+ * @res: Input data and place for returning union of the channel sets
  * @b: Second set of channels
- * @res: Data structure for returning the union of channels
  */
-void p2p_channels_union(const struct p2p_channels *a,
-			const struct p2p_channels *b,
-			struct p2p_channels *res)
+void p2p_channels_union_inplace(struct p2p_channels *res,
+				const struct p2p_channels *b)
 {
 	size_t i, j;
-
-	if (a != res)
-		os_memcpy(res, a, sizeof(*res));
 
 	for (i = 0; i < res->reg_classes; i++) {
 		struct p2p_reg_class *cl = &res->reg_class[i];
@@ -281,6 +228,21 @@ void p2p_channels_union(const struct p2p_channels *a,
 				  b_cl, sizeof(struct p2p_reg_class));
 		}
 	}
+}
+
+
+/**
+ * p2p_channels_union - Union of channel lists
+ * @a: First set of channels
+ * @b: Second set of channels
+ * @res: Data structure for returning the union of channels
+ */
+void p2p_channels_union(const struct p2p_channels *a,
+			const struct p2p_channels *b,
+			struct p2p_channels *res)
+{
+	os_memcpy(res, a, sizeof(*res));
+	p2p_channels_union_inplace(res, b);
 }
 
 
@@ -428,7 +390,7 @@ void p2p_channels_dump(struct p2p_data *p2p, const char *title,
 		const struct p2p_reg_class *c;
 		c = &chan->reg_class[i];
 		ret = os_snprintf(pos, end - pos, " %u:", c->reg_class);
-		if (ret < 0 || ret >= end - pos)
+		if (os_snprintf_error(end - pos, ret))
 			break;
 		pos += ret;
 
@@ -436,7 +398,7 @@ void p2p_channels_dump(struct p2p_data *p2p, const char *title,
 			ret = os_snprintf(pos, end - pos, "%s%u",
 					  j == 0 ? "" : ",",
 					  c->channel[j]);
-			if (ret < 0 || ret >= end - pos)
+			if (os_snprintf_error(end - pos, ret))
 				break;
 			pos += ret;
 		}
@@ -516,4 +478,36 @@ int p2p_channel_random_social(struct p2p_channels *chans, u8 *op_class,
 		*op_class = 81;
 
 	return 0;
+}
+
+
+int p2p_channels_to_freqs(const struct p2p_channels *channels, int *freq_list,
+			  unsigned int max_len)
+{
+	unsigned int i, idx;
+
+	if (!channels || max_len == 0)
+		return 0;
+
+	for (i = 0, idx = 0; i < channels->reg_classes; i++) {
+		const struct p2p_reg_class *c = &channels->reg_class[i];
+		unsigned int j;
+
+		if (idx + 1 == max_len)
+			break;
+		for (j = 0; j < c->channels; j++) {
+			int freq;
+			if (idx + 1 == max_len)
+				break;
+			freq = p2p_channel_to_freq(c->reg_class,
+						   c->channel[j]);
+			if (freq < 0)
+				continue;
+			freq_list[idx++] = freq;
+		}
+	}
+
+	freq_list[idx] = 0;
+
+	return idx;
 }
