@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.3 2015/03/31 01:11:41 matt Exp $ */
+/* $NetBSD: cpu.h,v 1.4 2015/04/01 21:55:03 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _RISCV_CPU_H_
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
+
 struct clockframe {
 	uintptr_t cf_pc;
 	uint32_t cf_sr;
@@ -78,6 +79,10 @@ struct cpu_info {
 	struct evcnt ci_ev_fpu_loads;
 	struct evcnt ci_ev_fpu_reenables;
 };
+
+#endif /* _KERNEL || _KMEMUSER */
+
+#ifdef _KERNEL
 
 extern struct cpu_info cpu_info_store;
 
@@ -141,6 +146,6 @@ cpu_idle(void)
 {
 }
 
-#endif /* _KERNEL || _KMEMUSER */
+#endif /* _KERNEL */
 
 #endif /* _RISCV_CPU_H_ */
