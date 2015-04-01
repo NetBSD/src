@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.114 2015/03/24 21:29:52 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.115 2015/04/01 15:23:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.114 2015/03/24 21:29:52 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.115 2015/04/01 15:23:15 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -979,7 +979,8 @@ loop:
 		for (; str[j]; j++) {
 			if (str[j] == '\\' &&
 			    str[j + 1] == history_expansion_char) {
-				(void)strcpy(&str[j], &str[j + 1]);
+				len = strlen(&str[j + 1]) + 1;
+				memmove(&str[j], &str[j + 1], len);
 				continue;
 			}
 			if (!loop_again) {
