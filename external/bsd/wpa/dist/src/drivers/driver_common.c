@@ -44,14 +44,12 @@ const char * event_to_string(enum wpa_event_type event)
 	E2S(ASSOC_REJECT);
 	E2S(AUTH_TIMED_OUT);
 	E2S(ASSOC_TIMED_OUT);
-	E2S(FT_RRB_RX);
 	E2S(WPS_BUTTON_PUSHED);
 	E2S(TX_STATUS);
 	E2S(RX_FROM_UNKNOWN);
 	E2S(RX_MGMT);
 	E2S(REMAIN_ON_CHANNEL);
 	E2S(CANCEL_REMAIN_ON_CHANNEL);
-	E2S(MLME_RX);
 	E2S(RX_PROBE_REQ);
 	E2S(NEW_STA);
 	E2S(EAPOL_RX);
@@ -79,6 +77,9 @@ const char * event_to_string(enum wpa_event_type event)
 	E2S(SURVEY);
 	E2S(SCAN_STARTED);
 	E2S(AVOID_FREQUENCIES);
+	E2S(NEW_PEER_CANDIDATE);
+	E2S(ACS_CHANNEL_SELECTED);
+	E2S(DFS_CAC_STARTED);
 	}
 
 	return "UNKNOWN";
@@ -104,4 +105,116 @@ const char * channel_width_to_string(enum chan_width width)
 	default:
 		return "unknown";
 	}
+}
+
+
+int ht_supported(const struct hostapd_hw_modes *mode)
+{
+	if (!(mode->flags & HOSTAPD_MODE_FLAG_HT_INFO_KNOWN)) {
+		/*
+		 * The driver did not indicate whether it supports HT. Assume
+		 * it does to avoid connection issues.
+		 */
+		return 1;
+	}
+
+	/*
+	 * IEEE Std 802.11n-2009 20.1.1:
+	 * An HT non-AP STA shall support all EQM rates for one spatial stream.
+	 */
+	return mode->mcs_set[0] == 0xff;
+}
+
+
+int vht_supported(const struct hostapd_hw_modes *mode)
+{
+	if (!(mode->flags & HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN)) {
+		/*
+		 * The driver did not indicate whether it supports VHT. Assume
+		 * it does to avoid connection issues.
+		 */
+		return 1;
+	}
+
+	/*
+	 * A VHT non-AP STA shall support MCS 0-7 for one spatial stream.
+	 * TODO: Verify if this complies with the standard
+	 */
+	return (mode->vht_mcs_set[0] & 0x3) != 3;
+}
+
+
+static int wpa_check_wowlan_trigger(const char *start, const char *trigger,
+				    int capa_trigger, u8 *param_trigger)
+{
+	if (os_strcmp(start, trigger) != 0)
+		return 0;
+	if (!capa_trigger)
+		return 0;
+
+	*param_trigger = 1;
+	return 1;
+}
+
+
+struct wowlan_triggers *
+wpa_get_wowlan_triggers(const char *wowlan_triggers,
+			const struct wpa_driver_capa *capa)
+{
+	struct wowlan_triggers *triggers;
+	char *start, *end, *buf;
+	int last;
+
+	if (!wowlan_triggers)
+		return NULL;
+
+	buf = os_strdup(wowlan_triggers);
+	if (buf == NULL)
+		return NULL;
+
+	triggers = os_zalloc(sizeof(*triggers));
+	if (triggers == NULL)
+		goto out;
+
+#define CHECK_TRIGGER(trigger) \
+	wpa_check_wowlan_trigger(start, #trigger,			\
+				  capa->wowlan_triggers.trigger,	\
+				  &triggers->trigger)
+
+	start = buf;
+	while (*start != '\0') {
+		while (isblank(*start))
+			start++;
+		if (*start == '\0')
+			break;
+		end = start;
+		while (!isblank(*end) && *end != '\0')
+			end++;
+		last = *end == '\0';
+		*end = '\0';
+
+		if (!CHECK_TRIGGER(any) &&
+		    !CHECK_TRIGGER(disconnect) &&
+		    !CHECK_TRIGGER(magic_pkt) &&
+		    !CHECK_TRIGGER(gtk_rekey_failure) &&
+		    !CHECK_TRIGGER(eap_identity_req) &&
+		    !CHECK_TRIGGER(four_way_handshake) &&
+		    !CHECK_TRIGGER(rfkill_release)) {
+			wpa_printf(MSG_DEBUG,
+				   "Unknown/unsupported wowlan trigger '%s'",
+				   start);
+			os_free(triggers);
+			triggers = NULL;
+			goto out;
+		}
+
+		if (last)
+			break;
+		start = end + 1;
+	}
+#undef CHECK_TRIGGER
+
+out:
+	os_free(buf);
+	return triggers;
 }

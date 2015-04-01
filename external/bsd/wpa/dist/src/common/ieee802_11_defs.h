@@ -1,6 +1,6 @@
 /*
  * IEEE 802.11 Frame type definitions
- * Copyright (c) 2002-2009, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2015, Jouni Malinen <j@w1.fi>
  * Copyright (c) 2007-2008 Intel Corporation
  *
  * This software may be distributed under the terms of the BSD license.
@@ -24,6 +24,8 @@
 
 #define WLAN_FC_GET_TYPE(fc)	(((fc) & 0x000c) >> 2)
 #define WLAN_FC_GET_STYPE(fc)	(((fc) & 0x00f0) >> 4)
+
+#define WLAN_INVALID_MGMT_SEQ   0xFFFF
 
 #define WLAN_GET_SEQ_FRAG(seq) ((seq) & (BIT(3) | BIT(2) | BIT(1) | BIT(0)))
 #define WLAN_GET_SEQ_SEQ(seq) \
@@ -194,6 +196,16 @@
 #define WLAN_REASON_TDLS_TEARDOWN_UNSPECIFIED 26
 /* IEEE 802.11e */
 #define WLAN_REASON_DISASSOC_LOW_ACK 34
+/* IEEE 802.11s */
+#define WLAN_REASON_MESH_PEERING_CANCELLED 52
+#define WLAN_REASON_MESH_MAX_PEERS 53
+#define WLAN_REASON_MESH_CONFIG_POLICY_VIOLATION 54
+#define WLAN_REASON_MESH_CLOSE_RCVD 55
+#define WLAN_REASON_MESH_MAX_RETRIES 56
+#define WLAN_REASON_MESH_CONFIRM_TIMEOUT 57
+#define WLAN_REASON_MESH_INVALID_GTK 58
+#define WLAN_REASON_MESH_INCONSISTENT_PARAMS 59
+#define WLAN_REASON_MESH_INVALID_SECURITY_CAP 60
 
 
 /* Information Element IDs */
@@ -234,6 +246,7 @@
 #define WLAN_EID_SECONDARY_CHANNEL_OFFSET 62
 #define WLAN_EID_WAPI 68
 #define WLAN_EID_TIME_ADVERTISEMENT 69
+#define WLAN_EID_RRM_ENABLED_CAPABILITIES 70
 #define WLAN_EID_20_40_BSS_COEXISTENCE 72
 #define WLAN_EID_20_40_BSS_INTOLERANT 73
 #define WLAN_EID_OVERLAPPING_BSS_SCAN_PARAMS 74
@@ -249,7 +262,12 @@
 #define WLAN_EID_ADV_PROTO 108
 #define WLAN_EID_QOS_MAP_SET 110
 #define WLAN_EID_ROAMING_CONSORTIUM 111
+#define WLAN_EID_MESH_CONFIG 113
+#define WLAN_EID_MESH_ID 114
+#define WLAN_EID_PEER_MGMT 117
 #define WLAN_EID_EXT_CAPAB 127
+#define WLAN_EID_AMPE 139
+#define WLAN_EID_MIC 140
 #define WLAN_EID_CCKM 156
 #define WLAN_EID_VHT_CAP 191
 #define WLAN_EID_VHT_OPERATION 192
@@ -277,6 +295,7 @@
 #define WLAN_ACTION_WNM 10
 #define WLAN_ACTION_UNPROTECTED_WNM 11
 #define WLAN_ACTION_TDLS 12
+#define WLAN_ACTION_SELF_PROTECTED 15
 #define WLAN_ACTION_WMM 17 /* WMM Specification 1.1 */
 #define WLAN_ACTION_VENDOR_SPECIFIC 127
 
@@ -320,6 +339,19 @@
 #define WLAN_TDLS_PEER_PSM_RESPONSE 8
 #define WLAN_TDLS_PEER_TRAFFIC_RESPONSE 9
 #define WLAN_TDLS_DISCOVERY_REQUEST 10
+
+/* Radio Measurement Action codes */
+#define WLAN_RRM_RADIO_MEASUREMENT_REQUEST 0
+#define WLAN_RRM_RADIO_MEASUREMENT_REPORT 1
+#define WLAN_RRM_LINK_MEASUREMENT_REQUEST 2
+#define WLAN_RRM_LINK_MEASUREMENT_REPORT 3
+#define WLAN_RRM_NEIGHBOR_REPORT_REQUEST 4
+#define WLAN_RRM_NEIGHBOR_REPORT_RESPONSE 5
+
+/* Radio Measurement capabilities (from RRM Capabilities IE) */
+/* byte 1 (out of 5) */
+#define WLAN_RRM_CAPS_LINK_MEASUREMENT BIT(0)
+#define WLAN_RRM_CAPS_NEIGHBOR_REPORT BIT(1)
 
 /* Timeout Interval Type */
 #define WLAN_TIMEOUT_REASSOC_DEADLINE 1
@@ -577,6 +609,10 @@ struct ieee80211_mgmt {
 					 * Entries (optional) */
 					u8 variable[0];
 				} STRUCT_PACKED bss_tm_query;
+				struct {
+					u8 action; /* 15 */
+					u8 variable[0];
+				} STRUCT_PACKED slf_prot_action;
 			} u;
 		} STRUCT_PACKED action;
 	} u;
@@ -636,6 +672,15 @@ struct ieee80211_vht_operation {
 	u8 vht_op_info_chan_center_freq_seg0_idx;
 	u8 vht_op_info_chan_center_freq_seg1_idx;
 	le16 vht_basic_mcs_set;
+} STRUCT_PACKED;
+
+struct ieee80211_ampe_ie {
+	u8 selected_pairwise_suite[4];
+	u8 local_nonce[32];
+	u8 peer_nonce[32];
+	u8 mgtk[16];
+	u8 key_rsc[8];
+	u8 key_expiration[4];
 } STRUCT_PACKED;
 
 #ifdef _MSC_VER
@@ -754,6 +799,7 @@ struct ieee80211_vht_operation {
 #define VHT_CAP_MAX_MPDU_LENGTH_7991                ((u32) BIT(0))
 #define VHT_CAP_MAX_MPDU_LENGTH_11454               ((u32) BIT(1))
 #define VHT_CAP_MAX_MPDU_LENGTH_MASK                ((u32) BIT(0) | BIT(1))
+#define VHT_CAP_MAX_MPDU_LENGTH_MASK_SHIFT          0
 #define VHT_CAP_SUPP_CHAN_WIDTH_160MHZ              ((u32) BIT(2))
 #define VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ     ((u32) BIT(3))
 #define VHT_CAP_SUPP_CHAN_WIDTH_MASK                ((u32) BIT(2) | BIT(3))
@@ -767,13 +813,16 @@ struct ieee80211_vht_operation {
 #define VHT_CAP_RXSTBC_4                            ((u32) BIT(10))
 #define VHT_CAP_RXSTBC_MASK                         ((u32) BIT(8) | BIT(9) | \
 							   BIT(10))
+#define VHT_CAP_RXSTBC_MASK_SHIFT                   8
 #define VHT_CAP_SU_BEAMFORMER_CAPABLE               ((u32) BIT(11))
 #define VHT_CAP_SU_BEAMFORMEE_CAPABLE               ((u32) BIT(12))
 #define VHT_CAP_BEAMFORMEE_STS_MAX                  ((u32) BIT(13) | \
 							   BIT(14) | BIT(15))
+#define VHT_CAP_BEAMFORMEE_STS_MAX_SHIFT            13
 #define VHT_CAP_BEAMFORMEE_STS_OFFSET               13
 #define VHT_CAP_SOUNDING_DIMENSION_MAX              ((u32) BIT(16) | \
 							   BIT(17) | BIT(18))
+#define VHT_CAP_SOUNDING_DIMENSION_MAX_SHIFT        16
 #define VHT_CAP_SOUNDING_DIMENSION_OFFSET           16
 #define VHT_CAP_MU_BEAMFORMER_CAPABLE               ((u32) BIT(19))
 #define VHT_CAP_MU_BEAMFORMEE_CAPABLE               ((u32) BIT(20))
@@ -788,6 +837,7 @@ struct ieee80211_vht_operation {
 #define VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_6        ((u32) BIT(24) | BIT(25))
 #define VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MAX      ((u32) BIT(23) | \
 							   BIT(24) | BIT(25))
+#define VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MAX_SHIFT 23
 #define VHT_CAP_VHT_LINK_ADAPTATION_VHT_UNSOL_MFB   ((u32) BIT(27))
 #define VHT_CAP_VHT_LINK_ADAPTATION_VHT_MRQ_MFB     ((u32) BIT(26) | BIT(27))
 #define VHT_CAP_RX_ANTENNA_PATTERN                  ((u32) BIT(28))
@@ -854,6 +904,8 @@ struct wmm_information_element {
 	u8 qos_info; /* AP/STA specific QoS info */
 
 } STRUCT_PACKED;
+
+#define WMM_QOSINFO_AP_UAPSD 0x80
 
 #define WMM_QOSINFO_STA_AC_MASK 0x0f
 #define WMM_QOSINFO_STA_SP_MASK 0x03
@@ -922,11 +974,12 @@ struct wmm_tspec_element {
 
 
 /* Access Categories / ACI to AC coding */
-enum {
+enum wmm_ac {
 	WMM_AC_BE = 0 /* Best Effort */,
 	WMM_AC_BK = 1 /* Background */,
 	WMM_AC_VI = 2 /* Video */,
-	WMM_AC_VO = 3 /* Voice */
+	WMM_AC_VO = 3 /* Voice */,
+	WMM_AC_NUM = 4
 };
 
 
@@ -981,6 +1034,14 @@ enum p2p_attr_id {
 	P2P_ATTR_OPERATING_CHANNEL = 17,
 	P2P_ATTR_INVITATION_FLAGS = 18,
 	P2P_ATTR_OOB_GO_NEG_CHANNEL = 19,
+	P2P_ATTR_SERVICE_HASH = 21,
+	P2P_ATTR_SESSION_INFORMATION_DATA = 22,
+	P2P_ATTR_CONNECTION_CAPABILITY = 23,
+	P2P_ATTR_ADVERTISEMENT_ID = 24,
+	P2P_ATTR_ADVERTISED_SERVICE = 25,
+	P2P_ATTR_SESSION_ID = 26,
+	P2P_ATTR_FEATURE_CAPABILITY = 27,
+	P2P_ATTR_PERSISTENT_GROUP = 28,
 	P2P_ATTR_VENDOR_SPECIFIC = 221
 };
 
@@ -1025,6 +1086,7 @@ enum p2p_status_code {
 	P2P_SC_FAIL_BOTH_GO_INTENT_15 = 9,
 	P2P_SC_FAIL_INCOMPATIBLE_PROV_METHOD = 10,
 	P2P_SC_FAIL_REJECTED_BY_USER = 11,
+	P2P_SC_SUCCESS_DEFERRED = 12,
 };
 
 enum p2p_role_indication {
@@ -1063,6 +1125,7 @@ enum p2p_service_protocol_type {
 	P2P_SERV_UPNP = 2,
 	P2P_SERV_WS_DISCOVERY = 3,
 	P2P_SERV_WIFI_DISPLAY = 4,
+	P2P_SERV_P2PS = 11,
 	P2P_SERV_VENDOR_SPECIFIC = 255
 };
 
@@ -1087,8 +1150,24 @@ enum wifi_display_subelem {
 	WFD_SUBELEM_SESSION_INFO = 9
 };
 
+/* 802.11s */
+#define MESH_SYNC_METHOD_NEIGHBOR_OFFSET 1
+#define MESH_SYNC_METHOD_VENDOR		255
+#define MESH_PATH_PROTOCOL_HWMP		1
+#define MESH_PATH_PROTOCOL_VENDOR	255
+#define MESH_PATH_METRIC_AIRTIME	1
+#define MESH_PATH_METRIC_VENDOR		255
+
+enum plink_action_field {
+	PLINK_OPEN = 1,
+	PLINK_CONFIRM,
+	PLINK_CLOSE
+};
 
 #define OUI_BROADCOM 0x00904c /* Broadcom (Epigram) */
+#define VENDOR_VHT_TYPE		0x04
+#define VENDOR_VHT_SUBTYPE	0x08
+#define VENDOR_VHT_SUBTYPE2	0x00
 
 #define VENDOR_HT_CAPAB_OUI_TYPE 0x33 /* 00-90-4c:0x33 */
 
@@ -1122,6 +1201,8 @@ enum wifi_display_subelem {
 #define WLAN_AKM_SUITE_FT_PSK		0x000FAC04
 #define WLAN_AKM_SUITE_8021X_SHA256	0x000FAC05
 #define WLAN_AKM_SUITE_PSK_SHA256	0x000FAC06
+#define WLAN_AKM_SUITE_8021X_SUITE_B	0x000FAC11
+#define WLAN_AKM_SUITE_8021X_SUITE_B_192	0x000FAC12
 #define WLAN_AKM_SUITE_CCKM		0x00409600
 #define WLAN_AKM_SUITE_OSEN		0x506f9a01
 
@@ -1246,5 +1327,31 @@ enum wnm_sleep_mode_subelement_id {
 /* Channel Switch modes (802.11h) */
 #define CHAN_SWITCH_MODE_ALLOW_TX	0
 #define CHAN_SWITCH_MODE_BLOCK_TX	1
+
+struct tpc_report {
+	u8 eid;
+	u8 len;
+	u8 tx_power;
+	u8 link_margin;
+} STRUCT_PACKED;
+
+/* IEEE Std 802.11-2012, 8.5.7.4 - Link Measurement Request frame format */
+struct rrm_link_measurement_request {
+	u8 dialog_token;
+	s8 tx_power;
+	s8 max_tp;
+	u8 variable[0];
+} STRUCT_PACKED;
+
+/* IEEE Std 802.11-2012, 8.5.7.5 - Link Measurement Report frame format */
+struct rrm_link_measurement_report {
+	u8 dialog_token;
+	struct tpc_report tpc;
+	u8 rx_ant_id;
+	u8 tx_ant_id;
+	u8 rcpi;
+	u8 rsni;
+	u8 variable[0];
+} STRUCT_PACKED;
 
 #endif /* IEEE802_11_DEFS_H */

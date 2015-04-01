@@ -489,7 +489,7 @@ char * wps_dev_type_bin2str(const u8 dev_type[WPS_DEV_TYPE_LEN], char *buf,
 	ret = os_snprintf(buf, buf_len, "%u-%08X-%u",
 			  WPA_GET_BE16(dev_type), WPA_GET_BE32(&dev_type[2]),
 			  WPA_GET_BE16(&dev_type[6]));
-	if (ret < 0 || (unsigned int) ret >= buf_len)
+	if (os_snprintf_error(buf_len, ret))
 		return NULL;
 
 	return buf;
@@ -535,6 +535,9 @@ u16 wps_config_methods_str2bin(const char *str)
 #ifdef CONFIG_WPS_NFC
 		methods |= WPS_CONFIG_NFC_INTERFACE;
 #endif /* CONFIG_WPS_NFC */
+#ifdef CONFIG_P2P
+		methods |= WPS_CONFIG_P2PS;
+#endif /* CONFIG_P2P */
 	} else {
 		if (os_strstr(str, "ethernet"))
 			methods |= WPS_CONFIG_ETHERNET;
@@ -560,6 +563,8 @@ u16 wps_config_methods_str2bin(const char *str)
 			methods |= WPS_CONFIG_VIRT_PUSHBUTTON;
 		if (os_strstr(str, "physical_push_button"))
 			methods |= WPS_CONFIG_PHY_PUSHBUTTON;
+		if (os_strstr(str, "p2ps"))
+			methods |= WPS_CONFIG_P2PS;
 	}
 
 	return methods;

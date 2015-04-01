@@ -1,6 +1,6 @@
 /*
  * hostapd - IEEE 802.11i-2004 / WPA Authenticator: Internal definitions
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2015, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -58,6 +58,8 @@ struct wpa_state_machine {
 	Boolean GUpdateStationKeys;
 	u8 ANonce[WPA_NONCE_LEN];
 	u8 SNonce[WPA_NONCE_LEN];
+	u8 alt_SNonce[WPA_NONCE_LEN];
+	u8 alt_replay_counter[WPA_REPLAY_COUNTER_LEN];
 	u8 PMK[PMK_LEN];
 	struct wpa_ptk PTK;
 	Boolean PTK_valid;
@@ -84,6 +86,7 @@ struct wpa_state_machine {
 	unsigned int mgmt_frame_prot:1;
 	unsigned int rx_eapol_key_secure:1;
 	unsigned int update_snonce:1;
+	unsigned int alt_snonce_valid:1;
 #ifdef CONFIG_IEEE80211R
 	unsigned int ft_completed:1;
 	unsigned int pmk_r1_name_valid:1;
@@ -227,11 +230,14 @@ int wpa_auth_for_each_auth(struct wpa_authenticator *wpa_auth,
 int wpa_stsl_remove(struct wpa_authenticator *wpa_auth,
 		    struct wpa_stsl_negotiation *neg);
 void wpa_smk_error(struct wpa_authenticator *wpa_auth,
-		   struct wpa_state_machine *sm, struct wpa_eapol_key *key);
+		   struct wpa_state_machine *sm,
+		   const u8 *key_data, size_t key_data_len);
 void wpa_smk_m1(struct wpa_authenticator *wpa_auth,
-		struct wpa_state_machine *sm, struct wpa_eapol_key *key);
+		struct wpa_state_machine *sm, struct wpa_eapol_key *key,
+		const u8 *key_data, size_t key_data_len);
 void wpa_smk_m3(struct wpa_authenticator *wpa_auth,
-		struct wpa_state_machine *sm, struct wpa_eapol_key *key);
+		struct wpa_state_machine *sm, struct wpa_eapol_key *key,
+		const u8 *key_data, size_t key_data_len);
 #endif /* CONFIG_PEERKEY */
 
 #ifdef CONFIG_IEEE80211R
@@ -242,7 +248,7 @@ int wpa_write_ftie(struct wpa_auth_config *conf, const u8 *r0kh_id,
 		   u8 *buf, size_t len, const u8 *subelem,
 		   size_t subelem_len);
 int wpa_auth_derive_ptk_ft(struct wpa_state_machine *sm, const u8 *pmk,
-			   struct wpa_ptk *ptk, size_t ptk_len);
+			   struct wpa_ptk *ptk);
 struct wpa_ft_pmk_cache * wpa_ft_pmk_cache_init(void);
 void wpa_ft_pmk_cache_deinit(struct wpa_ft_pmk_cache *cache);
 void wpa_ft_install_ptk(struct wpa_state_machine *sm);
