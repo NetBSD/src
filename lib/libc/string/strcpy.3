@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.20 2009/05/02 09:37:32 wiz Exp $
+.\"	$NetBSD: strcpy.3,v 1.21 2015/04/01 15:20:58 christos Exp $
 .\"
-.Dd May 1, 2009
+.Dd April 1, 2015
 .Dt STRCPY 3
 .Os
 .Sh NAME
@@ -92,6 +92,10 @@ Otherwise,
 is
 .Em not
 terminated.
+.Pp
+For portability the source and destination strings should not overlap, because
+implementations are allowed to optimize character movement and the standard
+specify that the results are undefined if they do.
 .Sh RETURN VALUES
 The
 .Fn strcpy
