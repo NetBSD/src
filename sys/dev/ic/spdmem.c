@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.11 2015/03/27 05:33:08 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.12 2015/04/01 06:08:39 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.11 2015/03/27 05:33:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.12 2015/04/01 06:08:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,7 +63,7 @@ static void decode_voltage_refresh(device_t, struct spdmem *);
 
 #define IS_RAMBUS_TYPE (s->sm_len < 4)
 
-static const char* spdmem_basic_types[] = {
+static const char* const spdmem_basic_types[] = {
 	"unknown",
 	"FPM",
 	"EDO",
@@ -75,11 +75,11 @@ static const char* spdmem_basic_types[] = {
 	"DDR2 SDRAM",
 	"DDR2 SDRAM FB",
 	"DDR2 SDRAM FB Probe",
-	"DDR3 SDRAM"
+	"DDR3 SDRAM",
 	"DDR4 SDRAM"
 };
 
-static const char* spdmem_superset_types[] = {
+static const char* const spdmem_superset_types[] = {
 	"unknown",
 	"ESDRAM",
 	"DDR ESDRAM",
@@ -87,7 +87,7 @@ static const char* spdmem_superset_types[] = {
 	"PEM SDRAM"
 };
 
-static const char* spdmem_voltage_types[] = {
+static const char* const spdmem_voltage_types[] = {
 	"TTL (5V tolerant)",
 	"LvTTL (not 5V tolerant)",
 	"HSTL 1.5V",
@@ -96,7 +96,7 @@ static const char* spdmem_voltage_types[] = {
 	"SSTL 1.8V"
 };
 
-static const char* spdmem_refresh_types[] = {
+static const char* const spdmem_refresh_types[] = {
 	"15.625us",
 	"3.9us",
 	"7.8us",
@@ -105,7 +105,7 @@ static const char* spdmem_refresh_types[] = {
 	"125us"
 };
 
-static const char* spdmem_parity_types[] = {
+static const char* const spdmem_parity_types[] = {
 	"no parity or ECC",
 	"data parity",
 	"data ECC",
