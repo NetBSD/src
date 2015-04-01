@@ -28,10 +28,14 @@ struct ieee802_11_elems {
 	const u8 *timeout_int;
 	const u8 *ht_capabilities;
 	const u8 *ht_operation;
+	const u8 *mesh_config;
+	const u8 *mesh_id;
+	const u8 *peer_mgmt;
 	const u8 *vht_capabilities;
 	const u8 *vht_operation;
 	const u8 *vht_opmode_notif;
 	const u8 *vendor_ht_cap;
+	const u8 *vendor_vht;
 	const u8 *p2p;
 	const u8 *wfd;
 	const u8 *link_id;
@@ -42,6 +46,8 @@ struct ieee802_11_elems {
 	const u8 *bss_max_idle_period;
 	const u8 *ssid_list;
 	const u8 *osen;
+	const u8 *ampe;
+	const u8 *mic;
 
 	u8 ssid_len;
 	u8 supp_rates_len;
@@ -60,9 +66,13 @@ struct ieee802_11_elems {
 	u8 timeout_int_len;
 	u8 ht_capabilities_len;
 	u8 ht_operation_len;
+	u8 mesh_config_len;
+	u8 mesh_id_len;
+	u8 peer_mgmt_len;
 	u8 vht_capabilities_len;
 	u8 vht_operation_len;
 	u8 vendor_ht_cap_len;
+	u8 vendor_vht_len;
 	u8 p2p_len;
 	u8 wfd_len;
 	u8 interworking_len;
@@ -71,6 +81,8 @@ struct ieee802_11_elems {
 	u8 ext_capab_len;
 	u8 ssid_list_len;
 	u8 osen_len;
+	u8 ampe_len;
+	u8 mic_len;
 };
 
 typedef enum { ParseOK = 0, ParseUnknown = 1, ParseFailed = -1 } ParseRes;
@@ -95,6 +107,8 @@ struct hostapd_wmm_ac_params {
 int hostapd_config_wmm_ac(struct hostapd_wmm_ac_params wmm_ac_params[],
 			  const char *name, const char *val);
 enum hostapd_hw_mode ieee80211_freq_to_chan(int freq, u8 *channel);
+int ieee80211_chan_to_freq(const char *country, u8 op_class, u8 chan);
+int ieee80211_is_dfs(int freq);
 
 int supp_rates_11b_only(struct ieee802_11_elems *elems);
 
