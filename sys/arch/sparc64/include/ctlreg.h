@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.61 2014/07/16 19:53:18 palle Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.62 2015/04/01 18:38:30 palle Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -58,6 +58,7 @@
 #define ASI_MMU				0x21	/* [4v] MMU context control - both IMMU and DMMU */
 
 #define	ASI_NUCLEUS_QUAD_LDD		0x24	/* [4u] use w/LDDA to load 128-bit item */
+#define	ASI_QUEUE			0x25	/* [4v] interrupt queue registers */
 #define	ASI_NUCLEUS_QUAD_LDD_LITTLE	0x2c	/* [4u] use w/LDDA to load 128-bit item, little endian */
 
 #define	ASI_FLUSH_D_PAGE_PRIMARY	0x38	/* [4u] flush D-cache page using primary context */
