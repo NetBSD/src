@@ -42,6 +42,7 @@ static struct radius_msg * radius_das_disconnect(struct radius_das_data *das,
 		RADIUS_ATTR_CALLING_STATION_ID,
 		RADIUS_ATTR_NAS_IDENTIFIER,
 		RADIUS_ATTR_ACCT_SESSION_ID,
+		RADIUS_ATTR_ACCT_MULTI_SESSION_ID,
 		RADIUS_ATTR_EVENT_TIMESTAMP,
 		RADIUS_ATTR_MESSAGE_AUTHENTICATOR,
 		RADIUS_ATTR_CHARGEABLE_USER_IDENTITY,
@@ -129,6 +130,12 @@ static struct radius_msg * radius_das_disconnect(struct radius_das_data *das,
 		attrs.acct_session_id_len = len;
 	}
 
+	if (radius_msg_get_attr_ptr(msg, RADIUS_ATTR_ACCT_MULTI_SESSION_ID,
+				    &buf, &len, NULL) == 0) {
+		attrs.acct_multi_session_id = buf;
+		attrs.acct_multi_session_id_len = len;
+	}
+
 	if (radius_msg_get_attr_ptr(msg, RADIUS_ATTR_CHARGEABLE_USER_IDENTITY,
 				    &buf, &len, NULL) == 0) {
 		attrs.cui = buf;
@@ -146,6 +153,12 @@ static struct radius_msg * radius_das_disconnect(struct radius_das_data *das,
 		wpa_printf(MSG_INFO, "DAS: Session not found for request from "
 			   "%s:%d", abuf, from_port);
 		error = 503;
+		break;
+	case RADIUS_DAS_MULTI_SESSION_MATCH:
+		wpa_printf(MSG_INFO,
+			   "DAS: Multiple sessions match for request from %s:%d",
+			   abuf, from_port);
+		error = 508;
 		break;
 	case RADIUS_DAS_SUCCESS:
 		error = 0;

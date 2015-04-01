@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2014/10/16 19:29:29 christos Exp $
+# $NetBSD: Makefile,v 1.5 2015/04/01 19:45:14 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -22,10 +22,10 @@ eap_register.c \
 eapol_supp_sm.c \
 eloop.c \
 events.c \
+hw_features_common.c \
 ieee802_11_common.c \
 l2_packet_freebsd.c \
 main.c \
-md5.c \
 notify.c \
 os_unix.c \
 peerkey.c \
@@ -33,6 +33,7 @@ pmksa_cache.c \
 preauth.c \
 random.c \
 scan.c \
+wmm_ac.c \
 wpa.c \
 wpa_common.c \
 wpa_debug.c \
@@ -106,7 +107,6 @@ SRCS+=aes-ctr.c \
 aes-eax.c \
 aes-encblock.c \
 aes-omac1.c \
-aes-unwrap.c \
 
 # NB: requires patch to openssl
 #CPPFLAGS+= -DEAP_FAST
@@ -116,7 +116,8 @@ DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES}
 LDADD+= -lssl -lcrypto -ldes
 .else
 CPPFLAGS+= -DINTERNAL_AES -DINTERNAL_MD5 -DINTERNAL_SHA1 -DCONFIG_NO_PBKDF2
-SRCS+=	tls_none.c sha1-internal.c md5-internal.c aes-xinternal.c rc4.c
+SRCS+= tls_none.c sha1-internal.c md5-internal.c aes-xinternal.c rc4.c
+SRCS+= aes-unwrap.c md5.c
 .endif
 
 .endif
