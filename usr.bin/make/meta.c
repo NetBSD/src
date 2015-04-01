@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.36 2014/11/06 01:36:57 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.37 2015/04/01 01:03:55 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -659,17 +659,21 @@ meta_job_child(Job *job)
 {
 #ifdef USE_FILEMON
     BuildMon *pbm;
-    pid_t pid;
 
     if (job != NULL) {
 	pbm = &job->bm;
     } else {
 	pbm = &Mybm;
     }
-    pid = getpid();
-    if (pbm->mfp != NULL && useFilemon) {
-	if (ioctl(pbm->filemon_fd, FILEMON_SET_PID, &pid) < 0) {
-	    err(1, "Could not set filemon pid!");
+    if (pbm->mfp != NULL) {
+	close(fileno(pbm->mfp));
+	if (useFilemon) {
+	    pid_t pid;
+
+	    pid = getpid();
+	    if (ioctl(pbm->filemon_fd, FILEMON_SET_PID, &pid) < 0) {
+		err(1, "Could not set filemon pid!");
+	    }
 	}
     }
 #endif
