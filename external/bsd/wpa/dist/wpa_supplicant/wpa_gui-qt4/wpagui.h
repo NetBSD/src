@@ -70,6 +70,7 @@ public slots:
 	virtual void showTrayMessage(QSystemTrayIcon::MessageIcon type,
 				     int sec, const QString &msg);
 	virtual void showTrayStatus();
+	virtual void updateTrayToolTip(const QString &msg);
 	virtual void wpsDialog();
 	virtual void peersDialog();
 	virtual void tabChanged(int index);
@@ -116,6 +117,7 @@ private:
 	void createTrayIcon(bool);
 	bool ackTrayIcon;
 	bool startInTray;
+	bool quietMode;
 
 	int openCtrlConnection(const char *ifname);
 

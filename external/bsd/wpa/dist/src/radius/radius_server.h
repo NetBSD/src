@@ -159,6 +159,18 @@ struct radius_server_conf {
 	const char *server_id;
 
 	/**
+	 * erp - Whether EAP Re-authentication Protocol (ERP) is enabled
+	 *
+	 * This controls whether the authentication server derives ERP key
+	 * hierarchy (rRK and rIK) from full EAP authentication and allows
+	 * these keys to be used to perform ERP to derive rMSK instead of full
+	 * EAP authentication to derive MSK.
+	 */
+	int erp;
+
+	const char *erp_domain;
+
+	/**
 	 * wps - Wi-Fi Protected Setup context
 	 *
 	 * If WPS is used with an external RADIUS server (which is quite
@@ -223,6 +235,7 @@ struct radius_server_conf {
 struct radius_server_data *
 radius_server_init(struct radius_server_conf *conf);
 
+void radius_server_erp_flush(struct radius_server_data *data);
 void radius_server_deinit(struct radius_server_data *data);
 
 int radius_server_get_mib(struct radius_server_data *data, char *buf,
