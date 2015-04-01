@@ -98,13 +98,15 @@ along with GCC; see the file COPYING3.  If not see
 	  builtin_define_std ("LANGUAGE_C");				\
 	  builtin_define ("_LANGUAGE_C");				\
 	}								\
+      if (riscv_cmodel == CM_MEDANY)					\
+	builtin_define ("_RISCV_CMODEL_MEDANY");			\
     }									\
   while (0)
 
 /* Default target_flags if no switches are specified  */
 
 #ifndef TARGET_DEFAULT
-#define TARGET_DEFAULT (MASK_ATOMIC)
+#define TARGET_DEFAULT 0
 #endif
 
 #ifndef RISCV_ARCH_STRING_DEFAULT
@@ -197,6 +199,8 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS
 #endif
+
+#define TARGET_DEFAULT_CMODEL CM_MEDLOW
 
 /* By default, turn on GDB extensions.  */
 #define DEFAULT_GDB_EXTENSIONS 1

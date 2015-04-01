@@ -108,7 +108,7 @@ enum riscv_address_type {
   ADDRESS_SYMBOLIC
 };
 
-enum riscv_code_model riscv_cmodel = CM_MEDLOW;
+enum riscv_code_model riscv_cmodel = TARGET_DEFAULT_CMODEL;
 
 /* Macros to create an enumeration identifier for a function prototype.  */
 #define RISCV_FTYPE_NAME1(A, B) RISCV_##A##_FTYPE_##B
@@ -1729,7 +1729,7 @@ riscv_output_move (rtx dest, rtx src)
       if (dest_code == REG)
 	{
 	  if (GP_REG_P (REGNO (dest)))
-	    return "move\t%0,%z1";
+	    return "mv\t%0,%z1";
 
 	  if (FP_REG_P (REGNO (dest)))
 	    {
