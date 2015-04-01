@@ -128,6 +128,7 @@ struct eapol_sm {
 	struct wpabuf *eapReqData; /* for EAP */
 	Boolean altAccept; /* for EAP */
 	Boolean altReject; /* for EAP */
+	Boolean eapTriggerStart;
 	Boolean replay_counter_valid;
 	u8 last_replay_counter[16];
 	struct eapol_config conf;
@@ -222,6 +223,7 @@ SM_STATE(SUPP_PAE, DISCONNECTED)
 	SM_ENTRY(SUPP_PAE, DISCONNECTED);
 	sm->sPortMode = Auto;
 	sm->startCount = 0;
+	sm->eapTriggerStart = FALSE;
 	sm->logoffSent = FALSE;
 	eapol_sm_set_port_unauthorized(sm);
 	sm->suppAbort = TRUE;
@@ -244,6 +246,11 @@ SM_STATE(SUPP_PAE, CONNECTING)
 {
 	int send_start = sm->SUPP_PAE_state == SUPP_PAE_CONNECTING;
 	SM_ENTRY(SUPP_PAE, CONNECTING);
+
+	if (sm->eapTriggerStart)
+		send_start = 1;
+	sm->eapTriggerStart = FALSE;
+
 	if (send_start) {
 		sm->startWhen = sm->startPeriod;
 		sm->startCount++;
@@ -255,7 +262,7 @@ SM_STATE(SUPP_PAE, CONNECTING)
 		 * delay authentication. Use a short timeout to send the first
 		 * EAPOL-Start if Authenticator does not start authentication.
 		 */
-		if (sm->conf.wps) {
+		if (sm->conf.wps && !(sm->conf.wps & EAPOL_PEER_IS_WPS20_AP)) {
 			/* Reduce latency on starting WPS negotiation. */
 			wpa_printf(MSG_DEBUG,
 				   "EAPOL: Using shorter startWhen for WPS");
@@ -385,6 +392,8 @@ SM_STEP(SUPP_PAE)
 		else if (sm->eapFail || (sm->keyDone && !sm->portValid))
 			SM_ENTER(SUPP_PAE, HELD);
 		else if (sm->suppTimeout)
+			SM_ENTER(SUPP_PAE, CONNECTING);
+		else if (sm->eapTriggerStart)
 			SM_ENTER(SUPP_PAE, CONNECTING);
 		break;
 	case SUPP_PAE_HELD:
@@ -1099,7 +1108,7 @@ int eapol_sm_get_status(struct eapol_sm *sm, char *buf, size_t buflen,
 			  "suppPortStatus=%s\n",
 			  eapol_supp_pae_state(sm->SUPP_PAE_state),
 			  eapol_port_status(sm->suppPortStatus));
-	if (len < 0 || (size_t) len >= buflen)
+	if (os_snprintf_error(buflen, len))
 		return 0;
 
 	if (verbose) {
@@ -1116,7 +1125,7 @@ int eapol_sm_get_status(struct eapol_sm *sm, char *buf, size_t buflen,
 				  sm->maxStart,
 				  eapol_port_control(sm->portControl),
 				  eapol_supp_be_state(sm->SUPP_BE_state));
-		if (ret < 0 || (size_t) ret >= buflen - len)
+		if (os_snprintf_error(buflen - len, ret))
 			return len;
 		len += ret;
 	}
@@ -1170,7 +1179,7 @@ int eapol_sm_get_mib(struct eapol_sm *sm, char *buf, size_t buflen)
 			  "Authorized" : "Unauthorized",
 			  sm->SUPP_BE_state);
 
-	if (ret < 0 || (size_t) ret >= buflen)
+	if (os_snprintf_error(buflen, ret))
 		return 0;
 	len = ret;
 
@@ -1198,7 +1207,7 @@ int eapol_sm_get_mib(struct eapol_sm *sm, char *buf, size_t buflen)
 			  sm->dot1xSuppLastEapolFrameVersion,
 			  MAC2STR(sm->dot1xSuppLastEapolFrameSource));
 
-	if (ret < 0 || (size_t) ret >= buflen - len)
+	if (os_snprintf_error(buflen - len, ret))
 		return len;
 	len += ret;
 
@@ -1625,21 +1634,15 @@ void eapol_sm_notify_cached(struct eapol_sm *sm)
 /**
  * eapol_sm_notify_pmkid_attempt - Notification of PMKSA caching
  * @sm: Pointer to EAPOL state machine allocated with eapol_sm_init()
- * @attempt: Whether PMKSA caching is tried
  *
- * Notify EAPOL state machines whether PMKSA caching is used.
+ * Notify EAPOL state machines if PMKSA caching is used.
  */
-void eapol_sm_notify_pmkid_attempt(struct eapol_sm *sm, int attempt)
+void eapol_sm_notify_pmkid_attempt(struct eapol_sm *sm)
 {
 	if (sm == NULL)
 		return;
-	if (attempt) {
-		wpa_printf(MSG_DEBUG, "RSN: Trying to use cached PMKSA");
-		sm->cached_pmk = TRUE;
-	} else {
-		wpa_printf(MSG_DEBUG, "RSN: Do not try to use cached PMKSA");
-		sm->cached_pmk = FALSE;
-	}
+	wpa_printf(MSG_DEBUG, "RSN: Trying to use cached PMKSA");
+	sm->cached_pmk = TRUE;
 }
 
 
@@ -1822,6 +1825,8 @@ static Boolean eapol_sm_get_bool(void *ctx, enum eapol_bool_var variable)
 		return sm->altAccept;
 	case EAPOL_altReject:
 		return sm->altReject;
+	case EAPOL_eapTriggerStart:
+		return sm->eapTriggerStart;
 	}
 	return FALSE;
 }
@@ -1860,6 +1865,9 @@ static void eapol_sm_set_bool(void *ctx, enum eapol_bool_var variable,
 		break;
 	case EAPOL_altReject:
 		sm->altReject = value;
+		break;
+	case EAPOL_eapTriggerStart:
+		sm->eapTriggerStart = value;
 		break;
 	}
 }
@@ -1948,13 +1956,14 @@ static void eapol_sm_eap_param_needed(void *ctx, enum wpa_ctrl_req_type field,
 #endif /* CONFIG_CTRL_IFACE || !CONFIG_NO_STDOUT_DEBUG */
 
 static void eapol_sm_notify_cert(void *ctx, int depth, const char *subject,
-				 const char *cert_hash,
+				 const char *altsubject[],
+				 int num_altsubject, const char *cert_hash,
 				 const struct wpabuf *cert)
 {
 	struct eapol_sm *sm = ctx;
 	if (sm->ctx->cert_cb)
-		sm->ctx->cert_cb(sm->ctx->ctx, depth, subject,
-				 cert_hash, cert);
+		sm->ctx->cert_cb(sm->ctx->ctx, depth, subject, altsubject,
+				 num_altsubject, cert_hash, cert);
 }
 
 
@@ -1966,6 +1975,17 @@ static void eapol_sm_notify_status(void *ctx, const char *status,
 	if (sm->ctx->status_cb)
 		sm->ctx->status_cb(sm->ctx->ctx, status, parameter);
 }
+
+
+#ifdef CONFIG_EAP_PROXY
+static void eapol_sm_eap_proxy_cb(void *ctx)
+{
+	struct eapol_sm *sm = ctx;
+
+	if (sm->ctx->eap_proxy_cb)
+		sm->ctx->eap_proxy_cb(sm->ctx->ctx);
+}
+#endif /* CONFIG_EAP_PROXY */
 
 
 static void eapol_sm_set_anon_id(void *ctx, const u8 *id, size_t len)
@@ -1991,6 +2011,9 @@ static struct eapol_callbacks eapol_cb =
 	eapol_sm_eap_param_needed,
 	eapol_sm_notify_cert,
 	eapol_sm_notify_status,
+#ifdef CONFIG_EAP_PROXY
+	eapol_sm_eap_proxy_cb,
+#endif /* CONFIG_EAP_PROXY */
 	eapol_sm_set_anon_id
 };
 
@@ -2026,6 +2049,7 @@ struct eapol_sm *eapol_sm_init(struct eapol_ctx *ctx)
 	conf.opensc_engine_path = ctx->opensc_engine_path;
 	conf.pkcs11_engine_path = ctx->pkcs11_engine_path;
 	conf.pkcs11_module_path = ctx->pkcs11_module_path;
+	conf.openssl_ciphers = ctx->openssl_ciphers;
 	conf.wps = ctx->wps;
 	conf.cert_in_cb = ctx->cert_in_cb;
 
@@ -2105,4 +2129,11 @@ int eapol_sm_get_eap_proxy_imsi(struct eapol_sm *sm, char *imsi, size_t *len)
 #else /* CONFIG_EAP_PROXY */
 	return -1;
 #endif /* CONFIG_EAP_PROXY */
+}
+
+
+void eapol_sm_erp_flush(struct eapol_sm *sm)
+{
+	if (sm)
+		eap_peer_erp_free_keys(sm->eap);
 }

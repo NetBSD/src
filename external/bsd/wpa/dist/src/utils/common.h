@@ -164,6 +164,7 @@ static inline unsigned int wpa_swap_32(unsigned int v)
 #define be_to_host16(n) wpa_swap_16(n)
 #define host_to_be16(n) wpa_swap_16(n)
 #define le_to_host32(n) (n)
+#define host_to_le32(n) (n)
 #define be_to_host32(n) wpa_swap_32(n)
 #define host_to_be32(n) wpa_swap_32(n)
 
@@ -329,6 +330,9 @@ static inline void WPA_PUT_LE64(u8 *a, u64 val)
 #ifndef ETH_ALEN
 #define ETH_ALEN 6
 #endif
+#ifndef ETH_HLEN
+#define ETH_HLEN 14
+#endif
 #ifndef IFNAMSIZ
 #define IFNAMSIZ 16
 #endif
@@ -468,15 +472,19 @@ typedef u64 __bitwise le64;
 #endif /* __must_check */
 
 int hwaddr_aton(const char *txt, u8 *addr);
+int hwaddr_masked_aton(const char *txt, u8 *addr, u8 *mask, u8 maskable);
 int hwaddr_compact_aton(const char *txt, u8 *addr);
 int hwaddr_aton2(const char *txt, u8 *addr);
 int hex2byte(const char *hex);
 int hexstr2bin(const char *hex, u8 *buf, size_t len);
 void inc_byte_array(u8 *counter, size_t len);
 void wpa_get_ntp_timestamp(u8 *buf);
+int wpa_scnprintf(char *buf, size_t size, const char *fmt, ...);
 int wpa_snprintf_hex(char *buf, size_t buf_size, const u8 *data, size_t len);
 int wpa_snprintf_hex_uppercase(char *buf, size_t buf_size, const u8 *data,
 			       size_t len);
+
+int hwaddr_mask_txt(char *buf, size_t len, const u8 *addr, const u8 *mask);
 
 #ifdef CONFIG_NATIVE_WINDOWS
 void wpa_unicode2ascii_inplace(TCHAR *str);
@@ -493,7 +501,6 @@ const char * wpa_ssid_txt(const u8 *ssid, size_t ssid_len);
 
 char * wpa_config_parse_string(const char *value, size_t *len);
 int is_hex(const u8 *data, size_t len);
-int find_first_bit(u32 value);
 size_t merge_byte_arrays(u8 *res, size_t res_len,
 			 const u8 *src1, size_t src1_len,
 			 const u8 *src2, size_t src2_len);
@@ -534,12 +541,17 @@ void int_array_add_unique(int **res, int a);
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
-
 void str_clear_free(char *str);
 void bin_clear_free(void *bin, size_t len);
 
 int random_mac_addr(u8 *addr);
 int random_mac_addr_keep_oui(u8 *addr);
+
+char * str_token(char *str, const char *delim, char **context);
+size_t utf8_escape(const char *inp, size_t in_size,
+		   char *outp, size_t out_size);
+size_t utf8_unescape(const char *inp, size_t in_size,
+		     char *outp, size_t out_size);
 
 
 /*

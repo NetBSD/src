@@ -1,6 +1,6 @@
 /*
  * BSS table
- * Copyright (c) 2009-2012, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2009-2015, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -85,6 +85,7 @@ static struct wpa_bss_anqp * wpa_bss_anqp_clone(struct wpa_bss_anqp *anqp)
 
 #define ANQP_DUP(f) if (anqp->f) n->f = wpabuf_dup(anqp->f)
 #ifdef CONFIG_INTERWORKING
+	ANQP_DUP(capability_list);
 	ANQP_DUP(venue_name);
 	ANQP_DUP(network_auth_type);
 	ANQP_DUP(roaming_consortium);
@@ -94,6 +95,7 @@ static struct wpa_bss_anqp * wpa_bss_anqp_clone(struct wpa_bss_anqp *anqp)
 	ANQP_DUP(domain_name);
 #endif /* CONFIG_INTERWORKING */
 #ifdef CONFIG_HS20
+	ANQP_DUP(hs20_capability_list);
 	ANQP_DUP(hs20_operator_friendly_name);
 	ANQP_DUP(hs20_wan_metrics);
 	ANQP_DUP(hs20_connection_capability);
@@ -154,6 +156,7 @@ static void wpa_bss_anqp_free(struct wpa_bss_anqp *anqp)
 	}
 
 #ifdef CONFIG_INTERWORKING
+	wpabuf_free(anqp->capability_list);
 	wpabuf_free(anqp->venue_name);
 	wpabuf_free(anqp->network_auth_type);
 	wpabuf_free(anqp->roaming_consortium);
@@ -163,6 +166,7 @@ static void wpa_bss_anqp_free(struct wpa_bss_anqp *anqp)
 	wpabuf_free(anqp->domain_name);
 #endif /* CONFIG_INTERWORKING */
 #ifdef CONFIG_HS20
+	wpabuf_free(anqp->hs20_capability_list);
 	wpabuf_free(anqp->hs20_operator_friendly_name);
 	wpabuf_free(anqp->hs20_wan_metrics);
 	wpabuf_free(anqp->hs20_connection_capability);
@@ -171,6 +175,31 @@ static void wpa_bss_anqp_free(struct wpa_bss_anqp *anqp)
 #endif /* CONFIG_HS20 */
 
 	os_free(anqp);
+}
+
+
+static void wpa_bss_update_pending_connect(struct wpa_supplicant *wpa_s,
+					   struct wpa_bss *old_bss,
+					   struct wpa_bss *new_bss)
+{
+	struct wpa_radio_work *work;
+	struct wpa_connect_work *cwork;
+
+	work = radio_work_pending(wpa_s, "sme-connect");
+	if (!work)
+		work = radio_work_pending(wpa_s, "connect");
+	if (!work)
+		return;
+
+	cwork = work->ctx;
+	if (cwork->bss != old_bss)
+		return;
+
+	wpa_printf(MSG_DEBUG,
+		   "Update BSS pointer for the pending connect radio work");
+	cwork->bss = new_bss;
+	if (!new_bss)
+		cwork->bss_removed = 1;
 }
 
 
@@ -190,6 +219,7 @@ static void wpa_bss_remove(struct wpa_supplicant *wpa_s, struct wpa_bss *bss,
 			}
 		}
 	}
+	wpa_bss_update_pending_connect(wpa_s, bss, NULL);
 	dl_list_del(&bss->list);
 	dl_list_del(&bss->list_id);
 	wpa_s->num_bss--;
@@ -256,6 +286,8 @@ static void wpa_bss_copy_res(struct wpa_bss *dst, struct wpa_scan_res *src,
 	dst->noise = src->noise;
 	dst->level = src->level;
 	dst->tsf = src->tsf;
+	dst->est_throughput = src->est_throughput;
+	dst->snr = src->snr;
 
 	calculate_update_time(fetch_time, src->age, &dst->last_update);
 }
@@ -280,8 +312,9 @@ static int wpa_bss_known(struct wpa_supplicant *wpa_s, struct wpa_bss *bss)
 static int wpa_bss_in_use(struct wpa_supplicant *wpa_s, struct wpa_bss *bss)
 {
 	return bss == wpa_s->current_bss ||
-		os_memcmp(bss->bssid, wpa_s->bssid, ETH_ALEN) == 0 ||
-		os_memcmp(bss->bssid, wpa_s->pending_bssid, ETH_ALEN) == 0;
+		(!is_zero_ether_addr(bss->bssid) &&
+		 (os_memcmp(bss->bssid, wpa_s->bssid, ETH_ALEN) == 0 ||
+		  os_memcmp(bss->bssid, wpa_s->pending_bssid, ETH_ALEN) == 0));
 }
 
 
@@ -543,6 +576,7 @@ wpa_bss_update(struct wpa_supplicant *wpa_s, struct wpa_bss *bss,
 			}
 			if (wpa_s->current_bss == bss)
 				wpa_s->current_bss = nbss;
+			wpa_bss_update_pending_connect(wpa_s, bss, nbss);
 			bss = nbss;
 			os_memcpy(bss + 1, res + 1,
 				  res->ie_len + res->beacon_ie_len);
@@ -593,7 +627,7 @@ void wpa_bss_update_scan_res(struct wpa_supplicant *wpa_s,
 			     struct wpa_scan_res *res,
 			     struct os_reltime *fetch_time)
 {
-	const u8 *ssid, *p2p;
+	const u8 *ssid, *p2p, *mesh;
 	struct wpa_bss *bss;
 
 	if (wpa_s->conf->ignore_old_scan_res) {
@@ -643,6 +677,11 @@ void wpa_bss_update_scan_res(struct wpa_supplicant *wpa_s,
 
 	/* TODO: add option for ignoring BSSes we are not interested in
 	 * (to save memory) */
+
+	mesh = wpa_scan_get_ie(res, WLAN_EID_MESH_ID);
+	if (mesh && mesh[1] <= 32)
+		ssid = mesh;
+
 	bss = wpa_bss_get(wpa_s, res->bssid, ssid + 2, ssid[1]);
 	if (bss == NULL)
 		bss = wpa_bss_add(wpa_s, ssid + 2, ssid[1], res, fetch_time);
