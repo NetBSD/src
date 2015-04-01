@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.382 2015/03/04 11:32:31 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.383 2015/04/01 18:38:30 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1040,7 +1040,9 @@ _C_LABEL(trapbase_sun4v):
 	HARDINT4V(13)						! 0x04d = level 13 interrupt
 	HARDINT4V(14)						! 0x04e = level 14 interrupt
 	HARDINT4V(15)						! 0x04f = level 15 interrupt
-	sun4v_trap_entry 48					! 0x050-0x07f
+	sun4v_trap_entry 44					! 0x050-0x07b
+	VTRAP(T_CPU_MONDO, sun4v_cpu_mondo)			! 0x07c = cpu mondo
+	sun4v_trap_entry 3					! 0x07d-0x07f
 	SPILL64(uspill8_sun4vt0,ASI_AIUS)			! 0x080 spill_0_normal -- used to save user windows in user mode
 	SPILL32(uspill4_sun4vt0,ASI_AIUS)			! 0x084 spill_1_normal
 	SPILLBOTH(uspill8_sun4vt0,uspill4_sun4vt0,ASI_AIUS)	! 0x088 spill_2_normal
@@ -3558,6 +3560,32 @@ ret_from_intr_vector:
 	ba,a	ret_from_intr_vector
 	 nop				! XXX spitfire bug?
 
+sun4v_cpu_mondo:
+	mov	0x3c0, %g1			 ! CPU Mondo Queue Head
+	ldxa	[%g1] ASI_QUEUE, %g2		 ! fetch index value for head
+	set	CPUINFO_VA, %g3
+	LDPTR	[%g3 + CI_PADDR], %g3
+	add	%g3, CI_CPUMQ, %g3	
+	ldxa	[%g3] ASI_PHYS_CACHED, %g3	 ! fetch head element
+	ldxa	[%g3 + %g2] ASI_PHYS_CACHED, %g4 ! fetch func 
+	add	%g2, 8, %g5
+	ldxa	[%g3 + %g5] ASI_PHYS_CACHED, %g5 ! fetch arg1
+	add	%g2, 16, %g6
+	ldxa	[%g3 + %g6] ASI_PHYS_CACHED, %g6 ! fetch arg2
+	add	%g2, 64, %g2			 ! point to next element in queue
+	and	%g2, 0x7ff, %g2			 ! modulo queue size 2048 (32*64)
+	stxa	%g2, [%g1] ASI_QUEUE		 ! update head index
+	membar	#Sync
+
+	mov	%g4, %g2
+	mov	%g5, %g3
+	mov	%g6, %g5
+	jmpl	%g2, %g0
+	 nop			! No store here!
+	retry
+	NOTREACHED
+
+	
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
  * on a soft interrupt, is we should check which bits in SOFTINT(%asr22)
