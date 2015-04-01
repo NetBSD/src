@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.3 2015/03/27 23:26:14 matt Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.4 2015/04/01 21:59:01 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -97,6 +97,8 @@
 #define R_RISCV_GNU_VTINHERIT	41	// A & 0xffff
 #define R_RISCV_GNU_VTENTRY	42
 #define R_RISCV_ALIGN		43
+#define R_RISCV_RVC_BRANCH	44
+#define R_RISCV_RVC_JUMP	45
 
 /* These are aliases we can use R_TYPESZ */
 #define R_RISCV_ADDR32		R_RISCV_32
