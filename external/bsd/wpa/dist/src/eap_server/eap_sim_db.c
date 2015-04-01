@@ -573,16 +573,14 @@ static void eap_sim_db_receive(int sock, void *eloop_ctx, void *sock_ctx)
 	char buf[1000], *pos, *cmd, *imsi;
 	int res;
 
-	res = recv(sock, buf, sizeof(buf), 0);
+	res = recv(sock, buf, sizeof(buf) - 1, 0);
 	if (res < 0)
 		return;
+	buf[res] = '\0';
 	wpa_hexdump_ascii_key(MSG_MSGDUMP, "EAP-SIM DB: Received from an "
 			      "external source", (u8 *) buf, res);
 	if (res == 0)
 		return;
-	if (res >= (int) sizeof(buf))
-		res = sizeof(buf) - 1;
-	buf[res] = '\0';
 
 	if (data->get_complete_cb == NULL) {
 		wpa_printf(MSG_DEBUG, "EAP-SIM DB: No get_complete_cb "
@@ -924,12 +922,13 @@ int eap_sim_db_get_gsm_triplets(struct eap_sim_db_data *data,
 
 	imsi_len = os_strlen(imsi);
 	len = os_snprintf(msg, sizeof(msg), "SIM-REQ-AUTH ");
-	if (len < 0 || len + imsi_len >= sizeof(msg))
+	if (os_snprintf_error(sizeof(msg), len) ||
+	    len + imsi_len >= sizeof(msg))
 		return EAP_SIM_DB_FAILURE;
 	os_memcpy(msg + len, imsi, imsi_len);
 	len += imsi_len;
 	ret = os_snprintf(msg + len, sizeof(msg) - len, " %d", max_chal);
-	if (ret < 0 || (size_t) ret >= sizeof(msg) - len)
+	if (os_snprintf_error(sizeof(msg) - len, ret))
 		return EAP_SIM_DB_FAILURE;
 	len += ret;
 
@@ -966,7 +965,7 @@ static char * eap_sim_db_get_next(struct eap_sim_db_data *data, char prefix)
 	pos = id;
 	end = id + sizeof(buf) * 2 + 2;
 	*pos++ = prefix;
-	pos += wpa_snprintf_hex(pos, end - pos, buf, sizeof(buf));
+	wpa_snprintf_hex(pos, end - pos, buf, sizeof(buf));
 	
 	return id;
 }
@@ -1387,7 +1386,8 @@ int eap_sim_db_get_aka_auth(struct eap_sim_db_data *data, const char *username,
 
 	imsi_len = os_strlen(imsi);
 	len = os_snprintf(msg, sizeof(msg), "AKA-REQ-AUTH ");
-	if (len < 0 || len + imsi_len >= sizeof(msg))
+	if (os_snprintf_error(sizeof(msg), len) ||
+	    len + imsi_len >= sizeof(msg))
 		return EAP_SIM_DB_FAILURE;
 	os_memcpy(msg + len, imsi, imsi_len);
 	len += imsi_len;
@@ -1451,19 +1451,20 @@ int eap_sim_db_resynchronize(struct eap_sim_db_data *data,
 
 		imsi_len = os_strlen(imsi);
 		len = os_snprintf(msg, sizeof(msg), "AKA-AUTS ");
-		if (len < 0 || len + imsi_len >= sizeof(msg))
+		if (os_snprintf_error(sizeof(msg), len) ||
+		    len + imsi_len >= sizeof(msg))
 			return -1;
 		os_memcpy(msg + len, imsi, imsi_len);
 		len += imsi_len;
 
 		ret = os_snprintf(msg + len, sizeof(msg) - len, " ");
-		if (ret < 0 || (size_t) ret >= sizeof(msg) - len)
+		if (os_snprintf_error(sizeof(msg) - len, ret))
 			return -1;
 		len += ret;
 		len += wpa_snprintf_hex(msg + len, sizeof(msg) - len,
 					auts, EAP_AKA_AUTS_LEN);
 		ret = os_snprintf(msg + len, sizeof(msg) - len, " ");
-		if (ret < 0 || (size_t) ret >= sizeof(msg) - len)
+		if (os_snprintf_error(sizeof(msg) - len, ret))
 			return -1;
 		len += ret;
 		len += wpa_snprintf_hex(msg + len, sizeof(msg) - len,

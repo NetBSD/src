@@ -55,8 +55,8 @@ dbus_bool_t wpas_dbus_getter_debug_level(DBusMessageIter *iter,
 					 void *user_data);
 
 dbus_bool_t wpas_dbus_getter_debug_timestamp(DBusMessageIter *iter,
-                                             DBusError *error,
-                                             void *user_data);
+					     DBusError *error,
+					     void *user_data);
 
 dbus_bool_t wpas_dbus_getter_debug_show_keys(DBusMessageIter *iter,
 					     DBusError *error,
@@ -319,6 +319,7 @@ DBusMessage * wpas_dbus_error_invalid_args(DBusMessage *message,
 					   const char *arg);
 DBusMessage * wpas_dbus_error_unknown_error(DBusMessage *message,
 					    const char *arg);
+DBusMessage * wpas_dbus_error_no_memory(DBusMessage *message);
 
 DBusMessage * wpas_dbus_handler_subscribe_preq(
 	DBusMessage *message, struct wpa_supplicant *wpa_s);

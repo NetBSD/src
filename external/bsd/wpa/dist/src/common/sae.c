@@ -87,7 +87,8 @@ void sae_clear_temp_data(struct sae_data *sae)
 	crypto_ec_point_deinit(tmp->pwe_ecc, 1);
 	crypto_ec_point_deinit(tmp->own_commit_element_ecc, 0);
 	crypto_ec_point_deinit(tmp->peer_commit_element_ecc, 0);
-	os_free(sae->tmp);
+	wpabuf_free(tmp->anti_clogging_token);
+	bin_clear_free(tmp, sizeof(*tmp));
 	sae->tmp = NULL;
 }
 
@@ -623,8 +624,10 @@ static int sae_derive_keys(struct sae_data *sae, const u8 *k)
 	wpa_hexdump(MSG_DEBUG, "SAE: PMKID", val, SAE_PMKID_LEN);
 	sha256_prf(keyseed, sizeof(keyseed), "SAE KCK and PMK",
 		   val, sae->tmp->prime_len, keys, sizeof(keys));
+	os_memset(keyseed, 0, sizeof(keyseed));
 	os_memcpy(sae->tmp->kck, keys, SAE_KCK_LEN);
 	os_memcpy(sae->pmk, keys + SAE_KCK_LEN, SAE_PMK_LEN);
+	os_memset(keys, 0, sizeof(keys));
 	wpa_hexdump_key(MSG_DEBUG, "SAE: KCK", sae->tmp->kck, SAE_KCK_LEN);
 	wpa_hexdump_key(MSG_DEBUG, "SAE: PMK", sae->pmk, SAE_PMK_LEN);
 
@@ -656,8 +659,11 @@ void sae_write_commit(struct sae_data *sae, struct wpabuf *buf,
 		return;
 
 	wpabuf_put_le16(buf, sae->group); /* Finite Cyclic Group */
-	if (token)
+	if (token) {
 		wpabuf_put_buf(buf, token);
+		wpa_hexdump(MSG_DEBUG, "SAE: Anti-clogging token",
+			    wpabuf_head(token), wpabuf_len(token));
+	}
 	pos = wpabuf_put(buf, sae->tmp->prime_len);
 	crypto_bignum_to_bin(sae->tmp->own_commit_scalar, pos,
 			     sae->tmp->prime_len, sae->tmp->prime_len);
@@ -682,8 +688,7 @@ void sae_write_commit(struct sae_data *sae, struct wpabuf *buf,
 }
 
 
-static u16 sae_group_allowed(struct sae_data *sae, int *allowed_groups,
-			     u16 group)
+u16 sae_group_allowed(struct sae_data *sae, int *allowed_groups, u16 group)
 {
 	if (allowed_groups) {
 		int i;

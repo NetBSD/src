@@ -281,6 +281,112 @@ static int p2p_parse_attribute(u8 id, const u8 *data, u16 len,
 			   data[0], data[1], data[2], data[3], data[4],
 			   data[5]);
 		break;
+	case P2P_ATTR_SERVICE_HASH:
+		if (len < P2PS_HASH_LEN) {
+			wpa_printf(MSG_DEBUG,
+				   "P2P: Too short Service Hash (length %u)",
+				   len);
+			return -1;
+		}
+		msg->service_hash_count = len / P2PS_HASH_LEN;
+		msg->service_hash = data;
+		wpa_hexdump(MSG_DEBUG, "P2P: * Service Hash(s)", data, len);
+		break;
+	case P2P_ATTR_SESSION_INFORMATION_DATA:
+		msg->session_info = data;
+		msg->session_info_len = len;
+		wpa_printf(MSG_DEBUG, "P2P: * Service Instance: %u bytes - %p",
+			   len, data);
+		break;
+	case P2P_ATTR_CONNECTION_CAPABILITY:
+		if (len < 1) {
+			wpa_printf(MSG_DEBUG,
+				   "P2P: Too short Connection Capability (length %u)",
+				   len);
+			return -1;
+		}
+		msg->conn_cap = data;
+		wpa_printf(MSG_DEBUG, "P2P: * Connection Capability: 0x%x",
+			   *msg->conn_cap);
+		break;
+	case P2P_ATTR_ADVERTISEMENT_ID:
+		if (len < 10) {
+			wpa_printf(MSG_DEBUG,
+				   "P2P: Too short Advertisement ID (length %u)",
+				   len);
+			return -1;
+		}
+		msg->adv_id = data;
+		msg->adv_mac = &data[sizeof(u32)];
+		wpa_printf(MSG_DEBUG, "P2P: * Advertisement ID %x",
+			   WPA_GET_LE32(data));
+		break;
+	case P2P_ATTR_ADVERTISED_SERVICE:
+		if (len < 8) {
+			wpa_printf(MSG_DEBUG,
+				   "P2P: Too short Service Instance (length %u)",
+				   len);
+			return -1;
+		}
+		msg->adv_service_instance = data;
+		msg->adv_service_instance_len = len;
+		if (len <= 255 + 8) {
+			char str[256];
+			u8 namelen;
+
+			namelen = data[6];
+			if (namelen > len - 7)
+				break;
+			os_memcpy(str, &data[7], namelen);
+			str[namelen] = '\0';
+			wpa_printf(MSG_DEBUG, "P2P: * Service Instance: %x-%s",
+				   WPA_GET_LE32(data), str);
+		} else {
+			wpa_printf(MSG_DEBUG, "P2P: * Service Instance: %p",
+				   data);
+		}
+		break;
+	case P2P_ATTR_SESSION_ID:
+		if (len < sizeof(u32) + ETH_ALEN) {
+			wpa_printf(MSG_DEBUG,
+				   "P2P: Too short Session ID Info (length %u)",
+				   len);
+			return -1;
+		}
+		msg->session_id = data;
+		msg->session_mac = &data[sizeof(u32)];
+		wpa_printf(MSG_DEBUG, "P2P: * Session ID: %x " MACSTR,
+			   WPA_GET_LE32(data), MAC2STR(msg->session_mac));
+		break;
+	case P2P_ATTR_FEATURE_CAPABILITY:
+		if (!len) {
+			wpa_printf(MSG_DEBUG,
+				   "P2P: Too short Feature Capability (length %u)",
+				   len);
+			return -1;
+		}
+		msg->feature_cap = data;
+		msg->feature_cap_len = len;
+		wpa_printf(MSG_DEBUG, "P2P: * Feature Cap (length=%u)", len);
+		break;
+	case P2P_ATTR_PERSISTENT_GROUP:
+	{
+		if (len < ETH_ALEN) {
+			wpa_printf(MSG_DEBUG,
+				   "P2P: Too short Persistent Group Info (length %u)",
+				   len);
+			return -1;
+		}
+
+		msg->persistent_dev = data;
+		msg->persistent_ssid_len = len - ETH_ALEN;
+		msg->persistent_ssid = &data[ETH_ALEN];
+		wpa_printf(MSG_DEBUG, "P2P: * Persistent Group: " MACSTR " %s",
+			   MAC2STR(msg->persistent_dev),
+			   wpa_ssid_txt(msg->persistent_ssid,
+					msg->persistent_ssid_len));
+		break;
+	}
 	default:
 		wpa_printf(MSG_DEBUG, "P2P: Skipped unknown attribute %d "
 			   "(length %d)", id, len);
@@ -309,23 +415,27 @@ int p2p_parse_p2p_ie(const struct wpabuf *buf, struct p2p_message *msg)
 
 	while (pos < end) {
 		u16 attr_len;
-		if (pos + 2 >= end) {
+		u8 id;
+
+		if (end - pos < 3) {
 			wpa_printf(MSG_DEBUG, "P2P: Invalid P2P attribute");
 			return -1;
 		}
-		attr_len = WPA_GET_LE16(pos + 1);
+		id = *pos++;
+		attr_len = WPA_GET_LE16(pos);
+		pos += 2;
 		wpa_printf(MSG_DEBUG, "P2P: Attribute %d length %u",
-			   pos[0], attr_len);
-		if (pos + 3 + attr_len > end) {
+			   id, attr_len);
+		if (attr_len > end - pos) {
 			wpa_printf(MSG_DEBUG, "P2P: Attribute underflow "
 				   "(len=%u left=%d)",
-				   attr_len, (int) (end - pos - 3));
+				   attr_len, (int) (end - pos));
 			wpa_hexdump(MSG_MSGDUMP, "P2P: Data", pos, end - pos);
 			return -1;
 		}
-		if (p2p_parse_attribute(pos[0], pos + 3, attr_len, msg))
+		if (p2p_parse_attribute(id, pos, attr_len, msg))
 			return -1;
-		pos += 3 + attr_len;
+		pos += attr_len;
 	}
 
 	return 0;
@@ -603,7 +713,7 @@ static int p2p_group_info_text(const u8 *gi, size_t gi_len, char *buf,
 				  "dev=" MACSTR " iface=" MACSTR,
 				  MAC2STR(cli->p2p_device_addr),
 				  MAC2STR(cli->p2p_interface_addr));
-		if (ret < 0 || ret >= end - pos)
+		if (os_snprintf_error(end - pos, ret))
 			return pos - buf;
 		pos += ret;
 
@@ -614,7 +724,7 @@ static int p2p_group_info_text(const u8 *gi, size_t gi_len, char *buf,
 				  wps_dev_type_bin2str(cli->pri_dev_type,
 						       devtype,
 						       sizeof(devtype)));
-		if (ret < 0 || ret >= end - pos)
+		if (os_snprintf_error(end - pos, ret))
 			return pos - buf;
 		pos += ret;
 
@@ -623,7 +733,7 @@ static int p2p_group_info_text(const u8 *gi, size_t gi_len, char *buf,
 					  wps_dev_type_bin2str(
 						  &cli->sec_dev_types[s * 8],
 						  devtype, sizeof(devtype)));
-			if (ret < 0 || ret >= end - pos)
+			if (os_snprintf_error(end - pos, ret))
 				return pos - buf;
 			pos += ret;
 		}
@@ -638,7 +748,7 @@ static int p2p_group_info_text(const u8 *gi, size_t gi_len, char *buf,
 		}
 
 		ret = os_snprintf(pos, end - pos, " dev_name='%s'\n", name);
-		if (ret < 0 || ret >= end - pos)
+		if (os_snprintf_error(end - pos, ret))
 			return pos - buf;
 		pos += ret;
 	}
@@ -672,7 +782,7 @@ int p2p_attr_text(struct wpabuf *data, char *buf, char *end)
 				  "p2p_dev_capab=0x%x\n"
 				  "p2p_group_capab=0x%x\n",
 				  msg.capability[0], msg.capability[1]);
-		if (ret < 0 || ret >= end - pos)
+		if (os_snprintf_error(end - pos, ret))
 			return pos - buf;
 		pos += ret;
 	}
@@ -684,14 +794,14 @@ int p2p_attr_text(struct wpabuf *data, char *buf, char *end)
 				  wps_dev_type_bin2str(msg.pri_dev_type,
 						       devtype,
 						       sizeof(devtype)));
-		if (ret < 0 || ret >= end - pos)
+		if (os_snprintf_error(end - pos, ret))
 			return pos - buf;
 		pos += ret;
 	}
 
 	ret = os_snprintf(pos, end - pos, "p2p_device_name=%s\n",
 			  msg.device_name);
-	if (ret < 0 || ret >= end - pos)
+	if (os_snprintf_error(end - pos, ret))
 		return pos - buf;
 	pos += ret;
 
@@ -699,14 +809,14 @@ int p2p_attr_text(struct wpabuf *data, char *buf, char *end)
 		ret = os_snprintf(pos, end - pos, "p2p_device_addr=" MACSTR
 				  "\n",
 				  MAC2STR(msg.p2p_device_addr));
-		if (ret < 0 || ret >= end - pos)
+		if (os_snprintf_error(end - pos, ret))
 			return pos - buf;
 		pos += ret;
 	}
 
 	ret = os_snprintf(pos, end - pos, "p2p_config_methods=0x%x\n",
 			  msg.config_methods);
-	if (ret < 0 || ret >= end - pos)
+	if (os_snprintf_error(end - pos, ret))
 		return pos - buf;
 	pos += ret;
 

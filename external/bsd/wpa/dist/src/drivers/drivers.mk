@@ -20,6 +20,11 @@ endif
 ifdef CONFIG_DRIVER_NL80211
 DRV_CFLAGS += -DCONFIG_DRIVER_NL80211
 DRV_OBJS += src/drivers/driver_nl80211.c
+DRV_OBJS += src/drivers/driver_nl80211_android.c
+DRV_OBJS += src/drivers/driver_nl80211_capa.c
+DRV_OBJS += src/drivers/driver_nl80211_event.c
+DRV_OBJS += src/drivers/driver_nl80211_monitor.c
+DRV_OBJS += src/drivers/driver_nl80211_scan.c
 DRV_OBJS += src/utils/radiotap.c
 NEED_SME=y
 NEED_AP_MLME=y
@@ -67,12 +72,6 @@ DRV_CFLAGS += -DCONFIG_DRIVER_OPENBSD
 DRV_OBJS += src/drivers/driver_openbsd.c
 endif
 
-ifdef CONFIG_DRIVER_TEST
-DRV_CFLAGS += -DCONFIG_DRIVER_TEST
-DRV_OBJS += src/drivers/driver_test.c
-NEED_AP_MLME=y
-endif
-
 ifdef CONFIG_DRIVER_NONE
 DRV_CFLAGS += -DCONFIG_DRIVER_NONE
 DRV_OBJS += src/drivers/driver_none.c
@@ -85,15 +84,6 @@ DRV_AP_CFLAGS += -DCONFIG_DRIVER_HOSTAP
 DRV_AP_OBJS += src/drivers/driver_hostap.c
 CONFIG_WIRELESS_EXTENSION=y
 NEED_AP_MLME=y
-NEED_NETLINK=y
-NEED_LINUX_IOCTL=y
-endif
-
-ifdef CONFIG_DRIVER_MADWIFI
-DRV_AP_CFLAGS += -DCONFIG_DRIVER_MADWIFI
-DRV_AP_OBJS += src/drivers/driver_madwifi.c
-CONFIG_WIRELESS_EXTENSION=y
-CONFIG_L2_PACKET=linux
 NEED_NETLINK=y
 NEED_LINUX_IOCTL=y
 endif

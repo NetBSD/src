@@ -57,8 +57,8 @@ int hostapd_set_ieee8021x(struct hostapd_data *hapd,
 int hostapd_get_seqnum(const char *ifname, struct hostapd_data *hapd,
 		       const u8 *addr, int idx, u8 *seq);
 int hostapd_flush(struct hostapd_data *hapd);
-int hostapd_set_freq(struct hostapd_data *hapd, int mode, int freq,
-		     int channel, int ht_enabled, int vht_enabled,
+int hostapd_set_freq(struct hostapd_data *hapd, enum hostapd_hw_mode mode,
+		     int freq, int channel, int ht_enabled, int vht_enabled,
 		     int sec_channel_offset, int vht_oper_chwidth,
 		     int center_segment0, int center_segment1);
 int hostapd_set_rts(struct hostapd_data *hapd, int rts);
@@ -102,15 +102,12 @@ int hostapd_sta_assoc(struct hostapd_data *hapd, const u8 *addr,
 		      int reassoc, u16 status, const u8 *ie, size_t len);
 int hostapd_add_tspec(struct hostapd_data *hapd, const u8 *addr,
 		      u8 *tspec_ie, size_t tspec_ielen);
-int hostapd_start_dfs_cac(struct hostapd_iface *iface, int mode, int freq,
+int hostapd_start_dfs_cac(struct hostapd_iface *iface,
+			  enum hostapd_hw_mode mode, int freq,
 			  int channel, int ht_enabled, int vht_enabled,
 			  int sec_channel_offset, int vht_oper_chwidth,
 			  int center_segment0, int center_segment1);
-int hostapd_set_freq_params(struct hostapd_freq_params *data, int mode,
-			    int freq, int channel, int ht_enabled,
-			    int vht_enabled, int sec_channel_offset,
-			    int vht_oper_chwidth, int center_segment0,
-			    int center_segment1, u32 vht_caps);
+int hostapd_drv_do_acs(struct hostapd_data *hapd);
 
 
 #include "drivers/driver.h"
@@ -280,6 +277,47 @@ static inline int hostapd_drv_status(struct hostapd_data *hapd, char *buf,
 	return hapd->driver->status(hapd->drv_priv, buf, buflen);
 }
 
+static inline int hostapd_drv_br_add_ip_neigh(struct hostapd_data *hapd,
+					      int version, const u8 *ipaddr,
+					      int prefixlen, const u8 *addr)
+{
+	if (hapd->driver == NULL || hapd->drv_priv == NULL ||
+	    hapd->driver->br_add_ip_neigh == NULL)
+		return -1;
+	return hapd->driver->br_add_ip_neigh(hapd->drv_priv, version, ipaddr,
+					     prefixlen, addr);
+}
+
+static inline int hostapd_drv_br_delete_ip_neigh(struct hostapd_data *hapd,
+						 u8 version, const u8 *ipaddr)
+{
+	if (hapd->driver == NULL || hapd->drv_priv == NULL ||
+	    hapd->driver->br_delete_ip_neigh == NULL)
+		return -1;
+	return hapd->driver->br_delete_ip_neigh(hapd->drv_priv, version,
+						ipaddr);
+}
+
+static inline int hostapd_drv_br_port_set_attr(struct hostapd_data *hapd,
+					       enum drv_br_port_attr attr,
+					       unsigned int val)
+{
+	if (hapd->driver == NULL || hapd->drv_priv == NULL ||
+	    hapd->driver->br_port_set_attr == NULL)
+		return -1;
+	return hapd->driver->br_port_set_attr(hapd->drv_priv, attr, val);
+}
+
+static inline int hostapd_drv_br_set_net_param(struct hostapd_data *hapd,
+					       enum drv_br_net_param param,
+					       unsigned int val)
+{
+	if (hapd->driver == NULL || hapd->drv_priv == NULL ||
+	    hapd->driver->br_set_net_param == NULL)
+		return -1;
+	return hapd->driver->br_set_net_param(hapd->drv_priv, param, val);
+}
+
 static inline int hostapd_drv_vendor_cmd(struct hostapd_data *hapd,
 					 int vendor_id, int subcmd,
 					 const u8 *data, size_t data_len,
@@ -289,6 +327,13 @@ static inline int hostapd_drv_vendor_cmd(struct hostapd_data *hapd,
 		return -1;
 	return hapd->driver->vendor_cmd(hapd->drv_priv, vendor_id, subcmd, data,
 					data_len, buf);
+}
+
+static inline int hostapd_drv_stop_ap(struct hostapd_data *hapd)
+{
+	if (hapd->driver == NULL || hapd->driver->stop_ap == NULL)
+		return 0;
+	return hapd->driver->stop_ap(hapd->drv_priv);
 }
 
 #endif /* AP_DRV_OPS */

@@ -981,7 +981,19 @@ u8 p2p_group_presence_req(struct p2p_group *group,
 
 unsigned int p2p_get_group_num_members(struct p2p_group *group)
 {
+	if (!group)
+		return 0;
+
 	return group->num_members;
+}
+
+
+int p2p_client_limit_reached(struct p2p_group *group)
+{
+	if (!group || !group->cfg)
+		return 1;
+
+	return group->num_members >= group->cfg->max_clients;
 }
 
 

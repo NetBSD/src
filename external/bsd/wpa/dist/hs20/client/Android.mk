@@ -8,23 +8,28 @@ INCLUDES += external/openssl/include
 INCLUDES += external/libxml2/include
 INCLUDES += external/curl/include
 INCLUDES += external/webkit/Source/WebKit/gtk
-ifneq ($(wildcard external/icu),)
-INCLUDES += external/icu/icu4c/source/common
-else
+
+# We try to keep this compiling against older platform versions.
+# The new icu location (external/icu) exports its own headers, but
+# the older versions in external/icu4c don't, and we need to add those
+# headers to the include path by hand.
+ifeq ($(wildcard external/icu),)
 INCLUDES += external/icu4c/common
+else
+# The LOCAL_EXPORT_C_INCLUDE_DIRS from ICU did not seem to fully resolve the
+# build (e.g., "mm -B" failed to build, but following that with "mm" allowed
+# the build to complete). For now, add the include directory manually here for
+# Android 5.0.
+ver = $(filter 5.0%,$(PLATFORM_VERSION))
+ifneq (,$(strip $(ver)))
+INCLUDES += external/icu/icu4c/source/common
+endif
 endif
 
-
-#GTKCFLAGS := $(shell pkg-config --cflags gtk+-2.0 webkit-1.0)
-#GTKLIBS := $(shell pkg-config --libs gtk+-2.0 webkit-1.0)
-#CFLAGS += $(GTKCFLAGS)
-#LIBS += $(GTKLIBS)
 
 L_CFLAGS += -DCONFIG_CTRL_IFACE
 L_CFLAGS += -DCONFIG_CTRL_IFACE_UNIX
 L_CFLAGS += -DCONFIG_CTRL_IFACE_CLIENT_DIR=\"/data/misc/wifi/sockets\"
-L_CFLAGS += -DLIBXML_SCHEMAS_ENABLED
-L_CFLAGS += -DLIBXML_REGEXP_ENABLED
 
 OBJS = spp_client.c
 OBJS += oma_dm_client.c
@@ -53,8 +58,7 @@ OBJS += ../../src/crypto/sha256-internal.c
 
 L_CFLAGS += -DEAP_TLS_OPENSSL
 
-#CFLAGS += $(shell xml2-config --cflags)
-#LIBS += $(shell xml2-config --libs)
+L_CFLAGS += -Wno-unused-parameter
 
 
 ########################

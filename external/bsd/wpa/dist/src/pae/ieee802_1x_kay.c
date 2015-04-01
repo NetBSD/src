@@ -729,7 +729,8 @@ ieee802_1x_mka_decode_basic_body(struct ieee802_1x_kay *kay, const u8 *mka_msg,
 
 	/* If the peer's MI is my MI, I will choose new MI */
 	if (os_memcmp(body->actor_mi, participant->mi, MI_LEN) == 0) {
-		os_get_random(participant->mi, sizeof(participant->mi));
+		if (os_get_random(participant->mi, sizeof(participant->mi)) < 0)
+			return NULL;
 		participant->mn = 0;
 	}
 
@@ -1003,8 +1004,10 @@ static int ieee802_1x_mka_decode_live_peer_body(
 		if (os_memcmp(peer_mi, participant->mi, MI_LEN) == 0) {
 			/* My message id is used by other participant */
 			if (peer_mn > participant->mn) {
-				os_get_random(participant->mi,
-					      sizeof(participant->mi));
+				if (os_get_random(participant->mi,
+						  sizeof(participant->mi)) < 0)
+					wpa_printf(MSG_DEBUG,
+						   "KaY: Could not update mi");
 				participant->mn = 0;
 			}
 			continue;
@@ -1054,8 +1057,10 @@ ieee802_1x_mka_decode_potential_peer_body(
 		if (os_memcmp(peer_mi, participant->mi, MI_LEN) == 0) {
 			/* My message id is used by other participant */
 			if (peer_mn > participant->mn) {
-				os_get_random(participant->mi,
-					      sizeof(participant->mi));
+				if (os_get_random(participant->mi,
+						  sizeof(participant->mi)) < 0)
+					wpa_printf(MSG_DEBUG,
+						   "KaY: Could not update mi");
 				participant->mn = 0;
 			}
 			continue;
@@ -1998,7 +2003,12 @@ ieee802_1x_kay_generate_new_sak(struct ieee802_1x_mka_participant *participant)
 		return -1;
 	}
 	ctx_offset = 0;
-	os_get_random(context + ctx_offset, conf->key_len);
+	if (os_get_random(context + ctx_offset, conf->key_len) < 0) {
+		os_free(context);
+		os_free(conf->key);
+		os_free(conf);
+		return -1;
+	}
 	ctx_offset += conf->key_len;
 	dl_list_for_each(peer, &participant->live_peers,
 			 struct ieee802_1x_kay_peer, list) {
@@ -3159,7 +3169,7 @@ ieee802_1x_kay_init(struct ieee802_1x_kay_ctx *ctx, enum macsec_policy policy,
 		kay->macsec_capable = MACSEC_CAP_NOT_IMPLEMENTED;
 		kay->macsec_desired = FALSE;
 		kay->macsec_protect = FALSE;
-		kay->macsec_validate = FALSE;
+		kay->macsec_validate = Disabled;
 		kay->macsec_replay_protect = FALSE;
 		kay->macsec_replay_window = 0;
 		kay->macsec_confidentiality = CONFIDENTIALITY_NONE;
@@ -3167,7 +3177,7 @@ ieee802_1x_kay_init(struct ieee802_1x_kay_ctx *ctx, enum macsec_policy policy,
 		kay->macsec_capable = MACSEC_CAP_INTEG_AND_CONF_0_30_50;
 		kay->macsec_desired = TRUE;
 		kay->macsec_protect = TRUE;
-		kay->macsec_validate = TRUE;
+		kay->macsec_validate = Strict;
 		kay->macsec_replay_protect = FALSE;
 		kay->macsec_replay_window = 0;
 		kay->macsec_confidentiality = CONFIDENTIALITY_OFFSET_0;
@@ -3325,7 +3335,8 @@ ieee802_1x_kay_create_mka(struct ieee802_1x_kay *kay, struct mka_key_name *ckn,
 	participant->retry_count = 0;
 	participant->kay = kay;
 
-	os_get_random(participant->mi, sizeof(participant->mi));
+	if (os_get_random(participant->mi, sizeof(participant->mi)) < 0)
+		goto fail;
 	participant->mn = 0;
 
 	participant->lrx = FALSE;
@@ -3340,6 +3351,9 @@ ieee802_1x_kay_create_mka(struct ieee802_1x_kay *kay, struct mka_key_name *ckn,
 	dl_list_init(&participant->rxsc_list);
 	participant->txsc = ieee802_1x_kay_init_transmit_sc(&kay->actor_sci,
 							    kay->sc_ch);
+	secy_cp_control_protect_frames(kay, kay->macsec_protect);
+	secy_cp_control_replay(kay, kay->macsec_replay_protect,
+			       kay->macsec_replay_window);
 	secy_create_transmit_sc(kay, participant->txsc);
 
 	/* to derive KEK from CAK and CKN */

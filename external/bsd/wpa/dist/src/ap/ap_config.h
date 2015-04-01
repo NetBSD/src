@@ -15,6 +15,34 @@
 #include "common/ieee802_11_common.h"
 #include "wps/wps.h"
 
+/**
+ * mesh_conf - local MBSS state and settings
+ */
+struct mesh_conf {
+	u8 meshid[32];
+	u8 meshid_len;
+	/* Active Path Selection Protocol Identifier */
+	u8 mesh_pp_id;
+	/* Active Path Selection Metric Identifier */
+	u8 mesh_pm_id;
+	/* Congestion Control Mode Identifier */
+	u8 mesh_cc_id;
+	/* Synchronization Protocol Identifier */
+	u8 mesh_sp_id;
+	/* Authentication Protocol Identifier */
+	u8 mesh_auth_id;
+	u8 *ies;
+	int ie_len;
+#define MESH_CONF_SEC_NONE BIT(0)
+#define MESH_CONF_SEC_AUTH BIT(1)
+#define MESH_CONF_SEC_AMPE BIT(2)
+	unsigned int security;
+	int dot11MeshMaxRetries;
+	int dot11MeshRetryTimeout; /* msec */
+	int dot11MeshConfirmTimeout; /* msec */
+	int dot11MeshHoldingTimeout; /* msec */
+};
+
 #define MAX_STA_COUNT 2007
 #define MAX_VLAN_ID 4094
 
@@ -196,6 +224,7 @@ struct hostapd_bss_config {
 	int max_num_sta; /* maximum number of STAs in station table */
 
 	int dtim_period;
+	int bss_load_update_period;
 
 	int ieee802_1x; /* use IEEE 802.1X */
 	int eapol_version;
@@ -204,6 +233,7 @@ struct hostapd_bss_config {
 	struct hostapd_eap_user *eap_user;
 	char *eap_user_sqlite;
 	char *eap_sim_db;
+	int eap_server_erp; /* Whether ERP is enabled on internal EAP server */
 	struct hostapd_ip_addr own_ip_addr;
 	char *nas_identifier;
 	struct hostapd_radius_servers *radius;
@@ -230,6 +260,8 @@ struct hostapd_bss_config {
 	int wep_rekeying_period;
 	int broadcast_key_idx_min, broadcast_key_idx_max;
 	int eap_reauth_period;
+	int erp_send_reauth_start;
+	char *erp_domain;
 
 	int ieee802_11f; /* use IEEE 802.11f (IAPP) */
 	char iapp_iface[IFNAMSIZ + 1]; /* interface used with IAPP broadcast
@@ -302,6 +334,7 @@ struct hostapd_bss_config {
 	int check_crl;
 	char *ocsp_stapling_response;
 	char *dh_file;
+	char *openssl_ciphers;
 	u8 *pac_opaque_encr_key;
 	u8 *eap_fast_a_id;
 	size_t eap_fast_a_id_len;
@@ -318,8 +351,6 @@ struct hostapd_bss_config {
 	int radius_server_auth_port;
 	int radius_server_acct_port;
 	int radius_server_ipv6;
-
-	char *test_socket; /* UNIX domain socket path for driver_test */
 
 	int use_pae_group_addr; /* Whether to send EAPOL frames to PAE group
 				 * address instead of individual address
@@ -458,6 +489,7 @@ struct hostapd_bss_config {
 	unsigned int qos_map_set_len;
 
 	int osen;
+	int proxy_arp;
 #ifdef CONFIG_HS20
 	int hs20;
 	int disable_dgaf;
@@ -508,10 +540,19 @@ struct hostapd_bss_config {
 	unsigned int sae_anti_clogging_threshold;
 	int *sae_groups;
 
+	char *wowlan_triggers; /* Wake-on-WLAN triggers */
+
 #ifdef CONFIG_TESTING_OPTIONS
 	u8 bss_load_test[5];
 	u8 bss_load_test_set;
 #endif /* CONFIG_TESTING_OPTIONS */
+
+#define MESH_ENABLED BIT(0)
+	int mesh;
+
+	int radio_measurements;
+
+	int vendor_vht;
 };
 
 
@@ -538,6 +579,7 @@ struct hostapd_config {
 	int *basic_rates;
 
 	const struct wpa_driver_ops *driver;
+	char *driver_params;
 
 	int ap_table_max_size;
 	int ap_table_expiration_time;
@@ -587,6 +629,10 @@ struct hostapd_config {
 	u8 vht_oper_centr_freq_seg0_idx;
 	u8 vht_oper_centr_freq_seg1_idx;
 
+#ifdef CONFIG_P2P
+	u8 p2p_go_ctwindow;
+#endif /* CONFIG_P2P */
+
 #ifdef CONFIG_TESTING_OPTIONS
 	double ignore_probe_probability;
 	double ignore_auth_probability;
@@ -597,6 +643,11 @@ struct hostapd_config {
 
 #ifdef CONFIG_ACS
 	unsigned int acs_num_scans;
+	struct acs_bias {
+		int channel;
+		double bias;
+	} *acs_chan_bias;
+	unsigned int num_acs_chan_bias;
 #endif /* CONFIG_ACS */
 };
 
@@ -606,6 +657,7 @@ int hostapd_mac_comp_empty(const void *a);
 struct hostapd_config * hostapd_config_defaults(void);
 void hostapd_config_defaults_bss(struct hostapd_bss_config *bss);
 void hostapd_config_free_eap_user(struct hostapd_eap_user *user);
+void hostapd_config_clear_wpa_psk(struct hostapd_wpa_psk **p);
 void hostapd_config_free_bss(struct hostapd_bss_config *conf);
 void hostapd_config_free(struct hostapd_config *conf);
 int hostapd_maclist_found(struct mac_acl_entry *list, int num_entries,

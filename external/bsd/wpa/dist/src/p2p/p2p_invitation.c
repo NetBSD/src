@@ -174,7 +174,7 @@ void p2p_process_invitation_req(struct p2p_data *p2p, const u8 *sa,
 	u8 group_bssid[ETH_ALEN], *bssid;
 	int op_freq = 0;
 	u8 reg_class = 0, channel = 0;
-	struct p2p_channels intersection, *channels = NULL;
+	struct p2p_channels all_channels, intersection, *channels = NULL;
 	int persistent;
 
 	os_memset(group_bssid, 0, sizeof(group_bssid));
@@ -226,7 +226,10 @@ void p2p_process_invitation_req(struct p2p_data *p2p, const u8 *sa,
 		persistent = 1;
 	}
 
-	if (p2p_peer_channels_check(p2p, &p2p->cfg->channels, dev,
+	p2p_channels_union(&p2p->cfg->channels, &p2p->cfg->cli_channels,
+			   &all_channels);
+
+	if (p2p_peer_channels_check(p2p, &all_channels, dev,
 				    msg.channel_list, msg.channel_list_len) <
 	    0) {
 		p2p_dbg(p2p, "No common channels found");
@@ -235,8 +238,9 @@ void p2p_process_invitation_req(struct p2p_data *p2p, const u8 *sa,
 	}
 
 	p2p_channels_dump(p2p, "own channels", &p2p->cfg->channels);
+	p2p_channels_dump(p2p, "own client channels", &all_channels);
 	p2p_channels_dump(p2p, "peer channels", &dev->channels);
-	p2p_channels_intersect(&p2p->cfg->channels, &dev->channels,
+	p2p_channels_intersect(&all_channels, &dev->channels,
 			       &intersection);
 	p2p_channels_dump(p2p, "intersection", &intersection);
 
@@ -246,6 +250,17 @@ void p2p_process_invitation_req(struct p2p_data *p2p, const u8 *sa,
 			msg.group_id + ETH_ALEN, msg.group_id_len - ETH_ALEN,
 			&go, group_bssid, &op_freq, persistent, &intersection,
 			msg.dev_password_id_present ? msg.dev_password_id : -1);
+	}
+
+	if (go) {
+		p2p_channels_intersect(&p2p->cfg->channels, &dev->channels,
+				       &intersection);
+		p2p_channels_dump(p2p, "intersection(GO)", &intersection);
+		if (intersection.reg_classes == 0) {
+			p2p_dbg(p2p, "No common channels found (GO)");
+			status = P2P_SC_FAIL_NO_COMMON_CHANNELS;
+			goto fail;
+		}
 	}
 
 	if (op_freq) {
@@ -412,24 +427,67 @@ void p2p_process_invitation_resp(struct p2p_data *p2p, const u8 *sa,
 	if (dev == NULL) {
 		p2p_dbg(p2p, "Ignore Invitation Response from unknown peer "
 			MACSTR, MAC2STR(sa));
+		p2p->cfg->send_action_done(p2p->cfg->cb_ctx);
 		return;
 	}
 
 	if (dev != p2p->invite_peer) {
 		p2p_dbg(p2p, "Ignore unexpected Invitation Response from peer "
 			MACSTR, MAC2STR(sa));
+		p2p->cfg->send_action_done(p2p->cfg->cb_ctx);
 		return;
 	}
 
-	if (p2p_parse(data, len, &msg))
+	if (p2p_parse(data, len, &msg)) {
+		p2p->cfg->send_action_done(p2p->cfg->cb_ctx);
 		return;
+	}
 
 	if (!msg.status) {
 		p2p_dbg(p2p, "Mandatory Status attribute missing in Invitation Response from "
 			MACSTR, MAC2STR(sa));
 		p2p_parse_free(&msg);
+		p2p->cfg->send_action_done(p2p->cfg->cb_ctx);
 		return;
 	}
+
+	/*
+	 * We should not really receive a replayed response twice since
+	 * duplicate frames are supposed to be dropped. However, not all drivers
+	 * do that for pre-association frames. We did not use to verify dialog
+	 * token matches for invitation response frames, but that check can be
+	 * safely used to drop a replayed response to the previous Invitation
+	 * Request in case the suggested operating channel was changed. This
+	 * allows a duplicated reject frame to be dropped with the assumption
+	 * that the real response follows after it.
+	 */
+	if (*msg.status == P2P_SC_FAIL_NO_COMMON_CHANNELS &&
+	    p2p->retry_invite_req_sent &&
+	    msg.dialog_token != dev->dialog_token) {
+		p2p_dbg(p2p, "Unexpected Dialog Token %u (expected %u)",
+			msg.dialog_token, dev->dialog_token);
+		p2p_parse_free(&msg);
+		return;
+	}
+
+	if (*msg.status == P2P_SC_FAIL_NO_COMMON_CHANNELS &&
+	    p2p->retry_invite_req &&
+	    p2p_channel_random_social(&p2p->cfg->channels, &p2p->op_reg_class,
+				      &p2p->op_channel) == 0) {
+		p2p->retry_invite_req = 0;
+		p2p->cfg->send_action_done(p2p->cfg->cb_ctx);
+		p2p->cfg->stop_listen(p2p->cfg->cb_ctx);
+		p2p_set_state(p2p, P2P_INVITE);
+		p2p_dbg(p2p, "Resend Invitation Request setting op_class %u channel %u as operating channel",
+			p2p->op_reg_class, p2p->op_channel);
+		p2p->retry_invite_req_sent = 1;
+		p2p_invite_send(p2p, p2p->invite_peer, p2p->invite_go_dev_addr,
+				p2p->invite_dev_pw_id);
+		p2p_parse_free(&msg);
+		return;
+	}
+	p2p->cfg->send_action_done(p2p->cfg->cb_ctx);
+	p2p->retry_invite_req = 0;
 
 	if (!msg.channel_list && *msg.status == P2P_SC_SUCCESS) {
 		p2p_dbg(p2p, "Mandatory Channel List attribute missing in Invitation Response from "
@@ -592,6 +650,9 @@ int p2p_invite(struct p2p_data *p2p, const u8 *peer, enum p2p_invite_role role,
 			dev_pw_id);
 	}
 	p2p->invite_dev_pw_id = dev_pw_id;
+	p2p->retry_invite_req = role == P2P_INVITE_ROLE_GO &&
+		persistent_group && !force_freq;
+	p2p->retry_invite_req_sent = 0;
 
 	dev = p2p_get_device(p2p, peer);
 	if (dev == NULL || (dev->listen_freq <= 0 && dev->oper_freq <= 0 &&

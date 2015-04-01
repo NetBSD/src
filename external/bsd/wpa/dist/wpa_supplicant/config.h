@@ -15,6 +15,9 @@
 #else /* CONFIG_NO_SCAN_PROCESSING */
 #define DEFAULT_AP_SCAN 1
 #endif /* CONFIG_NO_SCAN_PROCESSING */
+#define DEFAULT_USER_MPM 1
+#define DEFAULT_MAX_PEER_LINKS 99
+#define DEFAULT_MESH_MAX_INACTIVITY 300
 #define DEFAULT_FAST_REAUTH 1
 #define DEFAULT_P2P_GO_INTENT 7
 #define DEFAULT_P2P_INTRA_BSS 1
@@ -28,6 +31,9 @@
 #define DEFAULT_SCAN_CUR_FREQ 0
 #define DEFAULT_P2P_SEARCH_DELAY 500
 #define DEFAULT_RAND_ADDR_LIFETIME 60
+#define DEFAULT_KEY_MGMT_OFFLOAD 1
+#define DEFAULT_CERT_IN_CB 1
+#define DEFAULT_P2P_GO_CTWINDOW 0
 
 #include "config_ssid.h"
 #include "wps/wps.h"
@@ -163,7 +169,7 @@ struct wpa_cred {
 	 * If set, this FQDN is used as a suffix match requirement for the AAA
 	 * server certificate in SubjectAltName dNSName element(s). If a
 	 * matching dNSName is found, this constraint is met. If no dNSName
-	 * values are present, this constraint is matched against SubjetName CN
+	 * values are present, this constraint is matched against SubjectName CN
 	 * using same suffix match comparison. Suffix match here means that the
 	 * host/domain name is compared one label at a time starting from the
 	 * top-level domain and all the labels in @domain_suffix_match shall be
@@ -515,6 +521,15 @@ struct wpa_config {
 	 * module is not loaded.
 	 */
 	char *pkcs11_module_path;
+
+	/**
+	 * openssl_ciphers - OpenSSL cipher string
+	 *
+	 * This is an OpenSSL specific configuration option for configuring the
+	 * default ciphers. If not set, "DEFAULT:!EXP:!LOW" is used as the
+	 * default.
+	 */
+	char *openssl_ciphers;
 
 	/**
 	 * pcsc_reader - PC/SC reader name prefix
@@ -928,6 +943,14 @@ struct wpa_config {
 	int p2p_go_vht;
 
 	/**
+	 * p2p_go_ctwindow - CTWindow to use when operating as GO
+	 *
+	 * By default: 0 (no CTWindow). Values 0-127 can be used to indicate
+	 * the length of the CTWindow in TUs.
+	 */
+	int p2p_go_ctwindow;
+
+	/**
 	 * p2p_disabled - Whether P2P operations are disabled for this interface
 	 */
 	int p2p_disabled;
@@ -1079,6 +1102,67 @@ struct wpa_config {
 	 * 2 = like 1, but maintain OUI (with local admin bit set)
 	 */
 	int preassoc_mac_addr;
+
+	/**
+	 * key_mgmt_offload - Use key management offload
+	 *
+	 * Key management offload should be used if the device supports it.
+	 * Key management offload is the capability of a device operating as
+	 * a station to do the exchange necessary to establish temporal keys
+	 * during initial RSN connection, after roaming, or during a PTK
+	 * rekeying operation.
+	 */
+	int key_mgmt_offload;
+
+	/**
+	 * user_mpm - MPM residency
+	 *
+	 * 0: MPM lives in driver.
+	 * 1: wpa_supplicant handles peering and station allocation.
+	 *
+	 * If AMPE or SAE is enabled, the MPM is always in userspace.
+	 */
+	int user_mpm;
+
+	/**
+	 * max_peer_links - Maximum number of peer links
+	 *
+	 * Maximum number of mesh peering currently maintained by the STA.
+	 */
+	int max_peer_links;
+
+	/**
+	 * cert_in_cb - Whether to include a peer certificate dump in events
+	 *
+	 * This controls whether peer certificates for authentication server and
+	 * its certificate chain are included in EAP peer certificate events.
+	 */
+	int cert_in_cb;
+
+	/**
+	 * mesh_max_inactivity - Timeout in seconds to detect STA inactivity
+	 *
+	 * This timeout value is used in mesh STA to clean up inactive stations.
+	 * By default: 300 seconds.
+	 */
+	int mesh_max_inactivity;
+
+	/**
+	 * passive_scan - Whether to force passive scan for network connection
+	 *
+	 * This parameter can be used to force only passive scanning to be used
+	 * for network connection cases. It should be noted that this will slow
+	 * down scan operations and reduce likelihood of finding the AP. In
+	 * addition, some use cases will override this due to functional
+	 * requirements, e.g., for finding an AP that uses hidden SSID
+	 * (scan_ssid=1) or P2P device discovery.
+	 */
+	int passive_scan;
+
+	/**
+	 * reassoc_same_bss_optim - Whether to optimize reassoc-to-same-BSS
+	 */
+	int reassoc_same_bss_optim;
 };
 
 
@@ -1097,6 +1181,11 @@ int wpa_config_set(struct wpa_ssid *ssid, const char *var, const char *value,
 		   int line);
 int wpa_config_set_quoted(struct wpa_ssid *ssid, const char *var,
 			  const char *value);
+int wpa_config_dump_values(struct wpa_config *config, char *buf,
+			   size_t buflen);
+int wpa_config_get_value(const char *name, struct wpa_config *config,
+			 char *buf, size_t buflen);
+
 char ** wpa_config_get_all(struct wpa_ssid *ssid, int get_keys);
 char * wpa_config_get(struct wpa_ssid *ssid, const char *var);
 char * wpa_config_get_no_key(struct wpa_ssid *ssid, const char *var);

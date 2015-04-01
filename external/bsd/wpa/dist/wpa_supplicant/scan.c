@@ -22,6 +22,7 @@
 #include "notify.h"
 #include "bss.h"
 #include "scan.h"
+#include "mesh.h"
 
 
 static void wpa_supplicant_gen_assoc_event(struct wpa_supplicant *wpa_s)
@@ -95,6 +96,10 @@ int wpa_supplicant_enabled_networks(struct wpa_supplicant *wpa_s)
 {
 	struct wpa_ssid *ssid = wpa_s->conf->ssid;
 	int count = 0, disabled = 0;
+
+	if (wpa_s->p2p_mgmt)
+		return 0; /* no normal network profiles on p2p_mgmt interface */
+
 	while (ssid) {
 		if (!wpas_network_disabled(wpa_s, ssid))
 			count++;
@@ -167,15 +172,34 @@ static void wpas_trigger_scan_cb(struct wpa_radio_work *work, int deinit)
 
 	wpa_supplicant_notify_scanning(wpa_s, 1);
 
-	if (wpa_s->clear_driver_scan_cache)
+	if (wpa_s->clear_driver_scan_cache) {
+		wpa_printf(MSG_DEBUG,
+			   "Request driver to clear scan cache due to local BSS flush");
 		params->only_new_results = 1;
+	}
 	ret = wpa_drv_scan(wpa_s, params);
 	wpa_scan_free_params(params);
 	work->ctx = NULL;
 	if (ret) {
+		int retry = wpa_s->last_scan_req != MANUAL_SCAN_REQ;
+
+		if (wpa_s->disconnected)
+			retry = 0;
+
 		wpa_supplicant_notify_scanning(wpa_s, 0);
 		wpas_notify_scan_done(wpa_s, 0);
+		if (wpa_s->wpa_state == WPA_SCANNING)
+			wpa_supplicant_set_state(wpa_s,
+						 wpa_s->scan_prev_wpa_state);
+		wpa_msg(wpa_s, MSG_INFO, WPA_EVENT_SCAN_FAILED "ret=%d%s",
+			ret, retry ? " retry=1" : "");
 		radio_work_done(work);
+
+		if (retry) {
+			/* Restore scan_req since we will try to scan again */
+			wpa_s->scan_req = wpa_s->last_scan_req;
+			wpa_supplicant_req_scan(wpa_s, 1, 0);
+		}
 		return;
 	}
 
@@ -291,7 +315,7 @@ wpa_supplicant_build_filter_ssids(struct wpa_config *conf, size_t *num_ssids)
 	}
 	if (count == 0)
 		return NULL;
-	ssids = os_zalloc(count * sizeof(struct wpa_driver_scan_filter));
+	ssids = os_calloc(count, sizeof(struct wpa_driver_scan_filter));
 	if (ssids == NULL)
 		return NULL;
 
@@ -319,7 +343,7 @@ static void wpa_supplicant_optimize_freqs(
 			wpa_dbg(wpa_s, MSG_DEBUG, "P2P: Scan only GO "
 				"preferred frequency %d MHz",
 				wpa_s->go_params->freq);
-			params->freqs = os_zalloc(2 * sizeof(int));
+			params->freqs = os_calloc(2, sizeof(int));
 			if (params->freqs)
 				params->freqs[0] = wpa_s->go_params->freq;
 		} else if (wpa_s->p2p_in_provisioning < 8 &&
@@ -343,7 +367,7 @@ static void wpa_supplicant_optimize_freqs(
 		    wpa_s->p2p_invite_go_freq > 0) {
 			wpa_dbg(wpa_s, MSG_DEBUG, "P2P: Scan only GO preferred frequency %d MHz during invitation",
 				wpa_s->p2p_invite_go_freq);
-			params->freqs = os_zalloc(2 * sizeof(int));
+			params->freqs = os_calloc(2, sizeof(int));
 			if (params->freqs)
 				params->freqs[0] = wpa_s->p2p_invite_go_freq;
 		}
@@ -369,7 +393,7 @@ static void wpa_supplicant_optimize_freqs(
 		 */
 		wpa_dbg(wpa_s, MSG_DEBUG, "WPS: Scan only frequency %u MHz "
 			"that was used during provisioning", wpa_s->wps_freq);
-		params->freqs = os_zalloc(2 * sizeof(int));
+		params->freqs = os_calloc(2, sizeof(int));
 		if (params->freqs)
 			params->freqs[0] = wpa_s->wps_freq;
 		wpa_s->after_wps--;
@@ -381,7 +405,7 @@ static void wpa_supplicant_optimize_freqs(
 		/* Optimize provisioning scan based on already known channel */
 		wpa_dbg(wpa_s, MSG_DEBUG, "WPS: Scan only frequency %u MHz",
 			wpa_s->wps_freq);
-		params->freqs = os_zalloc(2 * sizeof(int));
+		params->freqs = os_calloc(2, sizeof(int));
 		if (params->freqs)
 			params->freqs[0] = wpa_s->wps_freq;
 		wpa_s->known_wps_freq = 0; /* only do this once */
@@ -460,6 +484,8 @@ static struct wpabuf * wpa_supplicant_extra_ies(struct wpa_supplicant *wpa_s)
 	}
 #endif /* CONFIG_P2P */
 
+	wpa_supplicant_mesh_add_scan_ie(wpa_s, &extra_ie);
+
 #endif /* CONFIG_WPS */
 
 #ifdef CONFIG_HS20
@@ -528,7 +554,7 @@ static void wpa_setband_scan_freqs_list(struct wpa_supplicant *wpa_s,
 		return;
 	}
 
-	params->freqs = os_zalloc((mode->num_channels + 1) * sizeof(int));
+	params->freqs = os_calloc(mode->num_channels + 1, sizeof(int));
 	if (params->freqs == NULL)
 		return;
 	for (count = 0, i = 0; i < mode->num_channels; i++) {
@@ -600,12 +626,12 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 {
 	struct wpa_supplicant *wpa_s = eloop_ctx;
 	struct wpa_ssid *ssid;
-	int ret;
+	int ret, p2p_in_prog;
 	struct wpabuf *extra_ie = NULL;
 	struct wpa_driver_scan_params params;
 	struct wpa_driver_scan_params *scan_params;
 	size_t max_ssids;
-	enum wpa_states prev_state;
+	int connect_without_scan = 0;
 
 	if (wpa_s->pno || wpa_s->pno_sched_pending) {
 		wpa_dbg(wpa_s, MSG_DEBUG, "Skip scan - PNO is in progress");
@@ -653,7 +679,20 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 		return;
 	}
 
-	if (wpas_p2p_in_progress(wpa_s)) {
+	ssid = NULL;
+	if (wpa_s->scan_req != MANUAL_SCAN_REQ &&
+	    wpa_s->connect_without_scan) {
+		connect_without_scan = 1;
+		for (ssid = wpa_s->conf->ssid; ssid; ssid = ssid->next) {
+			if (ssid == wpa_s->connect_without_scan)
+				break;
+		}
+	}
+
+	p2p_in_prog = wpas_p2p_in_progress(wpa_s);
+	if (p2p_in_prog && p2p_in_prog != 2 &&
+	    (!ssid ||
+	     (ssid->mode != WPAS_MODE_AP && ssid->mode != WPAS_MODE_P2P_GO))) {
 		wpa_dbg(wpa_s, MSG_DEBUG, "Delay station mode scan while P2P operation is in progress");
 		wpa_supplicant_req_scan(wpa_s, 5, 0);
 		return;
@@ -670,9 +709,19 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 	wpa_s->last_scan_req = wpa_s->scan_req;
 	wpa_s->scan_req = NORMAL_SCAN_REQ;
 
+	if (connect_without_scan) {
+		wpa_s->connect_without_scan = NULL;
+		if (ssid) {
+			wpa_printf(MSG_DEBUG, "Start a pre-selected network "
+				   "without scan step");
+			wpa_supplicant_associate(wpa_s, NULL, ssid);
+			return;
+		}
+	}
+
 	os_memset(&params, 0, sizeof(params));
 
-	prev_state = wpa_s->wpa_state;
+	wpa_s->scan_prev_wpa_state = wpa_s->wpa_state;
 	if (wpa_s->wpa_state == WPA_DISCONNECTED ||
 	    wpa_s->wpa_state == WPA_INACTIVE)
 		wpa_supplicant_set_state(wpa_s, WPA_SCANNING);
@@ -685,24 +734,9 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 		goto scan;
 	}
 
-	if (wpa_s->last_scan_req != MANUAL_SCAN_REQ &&
-	    wpa_s->connect_without_scan) {
-		for (ssid = wpa_s->conf->ssid; ssid; ssid = ssid->next) {
-			if (ssid == wpa_s->connect_without_scan)
-				break;
-		}
-		wpa_s->connect_without_scan = NULL;
-		if (ssid) {
-			wpa_printf(MSG_DEBUG, "Start a pre-selected network "
-				   "without scan step");
-			wpa_supplicant_associate(wpa_s, NULL, ssid);
-			return;
-		}
-	}
-
 #ifdef CONFIG_P2P
 	if ((wpa_s->p2p_in_provisioning || wpa_s->show_group_started) &&
-	    wpa_s->go_params) {
+	    wpa_s->go_params && !wpa_s->conf->passive_scan) {
 		wpa_printf(MSG_DEBUG, "P2P: Use specific SSID for scan during P2P group formation (p2p_in_provisioning=%d show_group_started=%d)",
 			   wpa_s->p2p_in_provisioning,
 			   wpa_s->show_group_started);
@@ -810,7 +844,9 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 		    wpa_s->last_scan_req == MANUAL_SCAN_REQ)
 			wpa_set_scan_ssids(wpa_s, &params, max_ssids);
 
-		for (tssid = wpa_s->conf->ssid; tssid; tssid = tssid->next) {
+		for (tssid = wpa_s->conf->ssid;
+		     wpa_s->last_scan_req != MANUAL_SCAN_REQ && tssid;
+		     tssid = tssid->next) {
 			if (wpas_network_disabled(wpa_s, tssid))
 				continue;
 			if ((params.freqs || !freqs_set) && tssid->scan_freq) {
@@ -854,6 +890,9 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 	} else if (wpa_s->last_scan_req == MANUAL_SCAN_REQ &&
 		   wpa_s->manual_scan_passive && params.num_ssids == 0) {
 		wpa_dbg(wpa_s, MSG_DEBUG, "Use passive scan based on manual request");
+	} else if (wpa_s->conf->passive_scan) {
+		wpa_dbg(wpa_s, MSG_DEBUG,
+			"Use passive scan based on configuration");
 	} else {
 		wpa_s->prev_scan_ssid = WILDCARD_SSID_SCAN;
 		params.num_ssids++;
@@ -868,8 +907,11 @@ ssid_list_set:
 	extra_ie = wpa_supplicant_extra_ies(wpa_s);
 
 	if (wpa_s->last_scan_req == MANUAL_SCAN_REQ &&
-	    wpa_s->manual_scan_only_new)
+	    wpa_s->manual_scan_only_new) {
+		wpa_printf(MSG_DEBUG,
+			   "Request driver to clear scan cache due to manual only_new=1 scan");
 		params.only_new_results = 1;
+	}
 
 	if (wpa_s->last_scan_req == MANUAL_SCAN_REQ && params.freqs == NULL &&
 	    wpa_s->manual_scan_freqs) {
@@ -930,6 +972,14 @@ ssid_list_set:
 	}
 #endif /* CONFIG_P2P */
 
+	if (wpa_s->mac_addr_rand_enable & MAC_ADDR_RAND_SCAN) {
+		params.mac_addr_rand = 1;
+		if (wpa_s->mac_addr_scan) {
+			params.mac_addr = wpa_s->mac_addr_scan;
+			params.mac_addr_mask = wpa_s->mac_addr_scan + ETH_ALEN;
+		}
+	}
+
 	scan_params = &params;
 
 scan:
@@ -979,13 +1029,17 @@ scan:
 
 	if (ret) {
 		wpa_msg(wpa_s, MSG_WARNING, "Failed to initiate AP scan");
-		if (prev_state != wpa_s->wpa_state)
-			wpa_supplicant_set_state(wpa_s, prev_state);
+		if (wpa_s->scan_prev_wpa_state != wpa_s->wpa_state)
+			wpa_supplicant_set_state(wpa_s,
+						 wpa_s->scan_prev_wpa_state);
 		/* Restore scan_req since we will try to scan again */
 		wpa_s->scan_req = wpa_s->last_scan_req;
 		wpa_supplicant_req_scan(wpa_s, 1, 0);
 	} else {
 		wpa_s->scan_for_connection = 0;
+#ifdef CONFIG_INTERWORKING
+		wpa_s->interworking_fast_assoc_tried = 0;
+#endif /* CONFIG_INTERWORKING */
 	}
 }
 
@@ -1024,8 +1078,17 @@ void wpa_supplicant_update_scan_int(struct wpa_supplicant *wpa_s, int sec)
  */
 void wpa_supplicant_req_scan(struct wpa_supplicant *wpa_s, int sec, int usec)
 {
-	int res = eloop_deplete_timeout(sec, usec, wpa_supplicant_scan, wpa_s,
-					NULL);
+	int res;
+
+	if (wpa_s->p2p_mgmt) {
+		wpa_dbg(wpa_s, MSG_DEBUG,
+			"Ignore scan request (%d.%06d sec) on p2p_mgmt interface",
+			sec, usec);
+		return;
+	}
+
+	res = eloop_deplete_timeout(sec, usec, wpa_supplicant_scan, wpa_s,
+				    NULL);
 	if (res == 1) {
 		wpa_dbg(wpa_s, MSG_DEBUG, "Rescheduling scan request: %d.%06d sec",
 			sec, usec);
@@ -1145,7 +1208,7 @@ int wpa_supplicant_req_sched_scan(struct wpa_supplicant *wpa_s)
 	os_memset(&params, 0, sizeof(params));
 
 	/* If we can't allocate space for the filters, we just don't filter */
-	params.filter_ssids = os_zalloc(wpa_s->max_match_sets *
+	params.filter_ssids = os_calloc(wpa_s->max_match_sets,
 					sizeof(struct wpa_driver_scan_filter));
 
 	prev_state = wpa_s->wpa_state;
@@ -1272,6 +1335,15 @@ scan:
 	}
 
 	wpa_setband_scan_freqs(wpa_s, scan_params);
+
+	if (wpa_s->mac_addr_rand_enable & MAC_ADDR_RAND_SCHED_SCAN) {
+		params.mac_addr_rand = 1;
+		if (wpa_s->mac_addr_sched_scan) {
+			params.mac_addr = wpa_s->mac_addr_sched_scan;
+			params.mac_addr_mask = wpa_s->mac_addr_sched_scan +
+				ETH_ALEN;
+		}
+	}
 
 	ret = wpa_supplicant_start_sched_scan(wpa_s, scan_params,
 					      wpa_s->sched_scan_interval);
@@ -1543,18 +1615,19 @@ struct wpabuf * wpa_scan_get_vendor_ie_multi(const struct wpa_scan_res *res,
  */
 #define GREAT_SNR 30
 
+#define IS_5GHZ(n) (n > 4000)
+
 /* Compare function for sorting scan results. Return >0 if @b is considered
  * better. */
 static int wpa_scan_result_compar(const void *a, const void *b)
 {
-#define IS_5GHZ(n) (n > 4000)
 #define MIN(a,b) a < b ? a : b
 	struct wpa_scan_res **_wa = (void *) a;
 	struct wpa_scan_res **_wb = (void *) b;
 	struct wpa_scan_res *wa = *_wa;
 	struct wpa_scan_res *wb = *_wb;
-	int wpa_a, wpa_b, maxrate_a, maxrate_b;
-	int snr_a, snr_b;
+	int wpa_a, wpa_b;
+	int snr_a, snr_b, snr_a_full, snr_b_full;
 
 	/* WPA/WPA2 support preferred */
 	wpa_a = wpa_scan_get_vendor_ie(wa, WPA_IE_VENDOR_TYPE) != NULL ||
@@ -1575,37 +1648,34 @@ static int wpa_scan_result_compar(const void *a, const void *b)
 	    (wb->caps & IEEE80211_CAP_PRIVACY) == 0)
 		return -1;
 
-	if ((wa->flags & wb->flags & WPA_SCAN_LEVEL_DBM) &&
-	    !((wa->flags | wb->flags) & WPA_SCAN_NOISE_INVALID)) {
-		snr_a = MIN(wa->level - wa->noise, GREAT_SNR);
-		snr_b = MIN(wb->level - wb->noise, GREAT_SNR);
+	if (wa->flags & wb->flags & WPA_SCAN_LEVEL_DBM) {
+		snr_a_full = wa->snr;
+		snr_a = MIN(wa->snr, GREAT_SNR);
+		snr_b_full = wb->snr;
+		snr_b = MIN(wa->snr, GREAT_SNR);
 	} else {
-		/* Not suitable information to calculate SNR, so use level */
-		snr_a = wa->level;
-		snr_b = wb->level;
+		/* Level is not in dBm, so we can't calculate
+		 * SNR. Just use raw level (units unknown). */
+		snr_a = snr_a_full = wa->level;
+		snr_b = snr_b_full = wb->level;
 	}
 
-	/* best/max rate preferred if SNR close enough */
-        if ((snr_a && snr_b && abs(snr_b - snr_a) < 5) ||
+	/* if SNR is close, decide by max rate or frequency band */
+	if ((snr_a && snr_b && abs(snr_b - snr_a) < 5) ||
 	    (wa->qual && wb->qual && abs(wb->qual - wa->qual) < 10)) {
-		maxrate_a = wpa_scan_get_max_rate(wa);
-		maxrate_b = wpa_scan_get_max_rate(wb);
-		if (maxrate_a != maxrate_b)
-			return maxrate_b - maxrate_a;
+		if (wa->est_throughput != wb->est_throughput)
+			return wb->est_throughput - wa->est_throughput;
 		if (IS_5GHZ(wa->freq) ^ IS_5GHZ(wb->freq))
 			return IS_5GHZ(wa->freq) ? -1 : 1;
 	}
 
-	/* use freq for channel preference */
-
 	/* all things being equal, use SNR; if SNRs are
 	 * identical, use quality values since some drivers may only report
 	 * that value and leave the signal level zero */
-	if (snr_b == snr_a)
+	if (snr_b_full == snr_a_full)
 		return wb->qual - wa->qual;
-	return snr_b - snr_a;
+	return snr_b_full - snr_a_full;
 #undef MIN
-#undef IS_5GHZ
 }
 
 
@@ -1670,21 +1740,22 @@ static void dump_scan_res(struct wpa_scan_results *scan_res)
 	for (i = 0; i < scan_res->num; i++) {
 		struct wpa_scan_res *r = scan_res->res[i];
 		u8 *pos;
-		if ((r->flags & (WPA_SCAN_LEVEL_DBM | WPA_SCAN_NOISE_INVALID))
-		    == WPA_SCAN_LEVEL_DBM) {
-			int snr = r->level - r->noise;
+		if (r->flags & WPA_SCAN_LEVEL_DBM) {
+			int noise_valid = !(r->flags & WPA_SCAN_NOISE_INVALID);
+
 			wpa_printf(MSG_EXCESSIVE, MACSTR " freq=%d qual=%d "
-				   "noise=%d level=%d snr=%d%s flags=0x%x "
-				   "age=%u",
+				   "noise=%d%s level=%d snr=%d%s flags=0x%x age=%u est=%u",
 				   MAC2STR(r->bssid), r->freq, r->qual,
-				   r->noise, r->level, snr,
-				   snr >= GREAT_SNR ? "*" : "", r->flags,
-				   r->age);
+				   r->noise, noise_valid ? "" : "~", r->level,
+				   r->snr, r->snr >= GREAT_SNR ? "*" : "",
+				   r->flags,
+				   r->age, r->est_throughput);
 		} else {
 			wpa_printf(MSG_EXCESSIVE, MACSTR " freq=%d qual=%d "
-				   "noise=%d level=%d flags=0x%x age=%u",
+				   "noise=%d level=%d flags=0x%x age=%u est=%u",
 				   MAC2STR(r->bssid), r->freq, r->qual,
-				   r->noise, r->level, r->flags, r->age);
+				   r->noise, r->level, r->flags, r->age,
+				   r->est_throughput);
 		}
 		pos = (u8 *) (r + 1);
 		if (r->ie_len)
@@ -1751,6 +1822,188 @@ static void filter_scan_res(struct wpa_supplicant *wpa_s,
 }
 
 
+/*
+ * Noise floor values to use when we have signal strength
+ * measurements, but no noise floor measurments. These values were
+ * measured in an office environment with many APs.
+ */
+#define DEFAULT_NOISE_FLOOR_2GHZ (-89)
+#define DEFAULT_NOISE_FLOOR_5GHZ (-92)
+
+static void scan_snr(struct wpa_scan_res *res)
+{
+	if (res->flags & WPA_SCAN_NOISE_INVALID) {
+		res->noise = IS_5GHZ(res->freq) ?
+			DEFAULT_NOISE_FLOOR_5GHZ :
+			DEFAULT_NOISE_FLOOR_2GHZ;
+	}
+
+	if (res->flags & WPA_SCAN_LEVEL_DBM) {
+		res->snr = res->level - res->noise;
+	} else {
+		/* Level is not in dBm, so we can't calculate
+		 * SNR. Just use raw level (units unknown). */
+		res->snr = res->level;
+	}
+}
+
+
+static unsigned int max_ht20_rate(int snr)
+{
+	if (snr < 6)
+		return 6500; /* HT20 MCS0 */
+	if (snr < 8)
+		return 13000; /* HT20 MCS1 */
+	if (snr < 13)
+		return 19500; /* HT20 MCS2 */
+	if (snr < 17)
+		return 26000; /* HT20 MCS3 */
+	if (snr < 20)
+		return 39000; /* HT20 MCS4 */
+	if (snr < 23)
+		return 52000; /* HT20 MCS5 */
+	if (snr < 24)
+		return 58500; /* HT20 MCS6 */
+	return 65000; /* HT20 MCS7 */
+}
+
+
+static unsigned int max_ht40_rate(int snr)
+{
+	if (snr < 3)
+		return 13500; /* HT40 MCS0 */
+	if (snr < 6)
+		return 27000; /* HT40 MCS1 */
+	if (snr < 10)
+		return 40500; /* HT40 MCS2 */
+	if (snr < 15)
+		return 54000; /* HT40 MCS3 */
+	if (snr < 17)
+		return 81000; /* HT40 MCS4 */
+	if (snr < 22)
+		return 108000; /* HT40 MCS5 */
+	if (snr < 24)
+		return 121500; /* HT40 MCS6 */
+	return 135000; /* HT40 MCS7 */
+}
+
+
+static unsigned int max_vht80_rate(int snr)
+{
+	if (snr < 1)
+		return 0;
+	if (snr < 2)
+		return 29300; /* VHT80 MCS0 */
+	if (snr < 5)
+		return 58500; /* VHT80 MCS1 */
+	if (snr < 9)
+		return 87800; /* VHT80 MCS2 */
+	if (snr < 11)
+		return 117000; /* VHT80 MCS3 */
+	if (snr < 15)
+		return 175500; /* VHT80 MCS4 */
+	if (snr < 16)
+		return 234000; /* VHT80 MCS5 */
+	if (snr < 18)
+		return 263300; /* VHT80 MCS6 */
+	if (snr < 20)
+		return 292500; /* VHT80 MCS7 */
+	if (snr < 22)
+		return 351000; /* VHT80 MCS8 */
+	return 390000; /* VHT80 MCS9 */
+}
+
+
+static void scan_est_throughput(struct wpa_supplicant *wpa_s,
+				struct wpa_scan_res *res)
+{
+	enum local_hw_capab capab = wpa_s->hw_capab;
+	int rate; /* max legacy rate in 500 kb/s units */
+	const u8 *ie;
+	unsigned int est, tmp;
+	int snr = res->snr;
+
+	if (res->est_throughput)
+		return;
+
+	/* Get maximum legacy rate */
+	rate = wpa_scan_get_max_rate(res);
+
+	/* Limit based on estimated SNR */
+	if (rate > 1 * 2 && snr < 1)
+		rate = 1 * 2;
+	else if (rate > 2 * 2 && snr < 4)
+		rate = 2 * 2;
+	else if (rate > 6 * 2 && snr < 5)
+		rate = 6 * 2;
+	else if (rate > 9 * 2 && snr < 6)
+		rate = 9 * 2;
+	else if (rate > 12 * 2 && snr < 7)
+		rate = 12 * 2;
+	else if (rate > 18 * 2 && snr < 10)
+		rate = 18 * 2;
+	else if (rate > 24 * 2 && snr < 11)
+		rate = 24 * 2;
+	else if (rate > 36 * 2 && snr < 15)
+		rate = 36 * 2;
+	else if (rate > 48 * 2 && snr < 19)
+		rate = 48 * 2;
+	else if (rate > 54 * 2 && snr < 21)
+		rate = 54 * 2;
+	est = rate * 500;
+
+	if (capab == CAPAB_HT || capab == CAPAB_HT40 || capab == CAPAB_VHT) {
+		ie = wpa_scan_get_ie(res, WLAN_EID_HT_CAP);
+		if (ie) {
+			tmp = max_ht20_rate(snr);
+			if (tmp > est)
+				est = tmp;
+		}
+	}
+
+	if (capab == CAPAB_HT40 || capab == CAPAB_VHT) {
+		ie = wpa_scan_get_ie(res, WLAN_EID_HT_OPERATION);
+		if (ie && ie[1] >= 2 &&
+		    (ie[3] & HT_INFO_HT_PARAM_SECONDARY_CHNL_OFF_MASK)) {
+			tmp = max_ht40_rate(snr);
+			if (tmp > est)
+				est = tmp;
+		}
+	}
+
+	if (capab == CAPAB_VHT) {
+		/* Use +1 to assume VHT is always faster than HT */
+		ie = wpa_scan_get_ie(res, WLAN_EID_VHT_CAP);
+		if (ie) {
+			tmp = max_ht20_rate(snr) + 1;
+			if (tmp > est)
+				est = tmp;
+
+			ie = wpa_scan_get_ie(res, WLAN_EID_HT_OPERATION);
+			if (ie && ie[1] >= 2 &&
+			    (ie[3] &
+			     HT_INFO_HT_PARAM_SECONDARY_CHNL_OFF_MASK)) {
+				tmp = max_ht40_rate(snr) + 1;
+				if (tmp > est)
+					est = tmp;
+			}
+
+			ie = wpa_scan_get_ie(res, WLAN_EID_VHT_OPERATION);
+			if (ie && ie[1] >= 1 &&
+			    (ie[2] & VHT_OPMODE_CHANNEL_WIDTH_MASK)) {
+				tmp = max_vht80_rate(snr) + 1;
+				if (tmp > est)
+					est = tmp;
+			}
+		}
+	}
+
+	/* TODO: channel utilization and AP load (e.g., from AP Beacon) */
+
+	res->est_throughput = est;
+}
+
+
 /**
  * wpa_supplicant_get_scan_results - Get scan results
  * @wpa_s: Pointer to wpa_supplicant data
@@ -1783,6 +2036,13 @@ wpa_supplicant_get_scan_results(struct wpa_supplicant *wpa_s,
 		os_get_reltime(&scan_res->fetch_time);
 	}
 	filter_scan_res(wpa_s, scan_res);
+
+	for (i = 0; i < scan_res->num; i++) {
+		struct wpa_scan_res *scan_res_item = scan_res->res[i];
+
+		scan_snr(scan_res_item);
+		scan_est_throughput(wpa_s, scan_res_item);
+	}
 
 #ifdef CONFIG_WPS
 	if (wpas_wps_searching(wpa_s)) {
@@ -1918,6 +2178,23 @@ wpa_scan_clone_params(const struct wpa_driver_scan_params *src)
 	params->only_new_results = src->only_new_results;
 	params->low_priority = src->low_priority;
 
+	if (src->mac_addr_rand) {
+		params->mac_addr_rand = src->mac_addr_rand;
+
+		if (src->mac_addr && src->mac_addr_mask) {
+			u8 *mac_addr;
+
+			mac_addr = os_malloc(2 * ETH_ALEN);
+			if (!mac_addr)
+				goto failed;
+
+			os_memcpy(mac_addr, src->mac_addr, ETH_ALEN);
+			os_memcpy(mac_addr + ETH_ALEN, src->mac_addr_mask,
+				  ETH_ALEN);
+			params->mac_addr = mac_addr;
+			params->mac_addr_mask = mac_addr + ETH_ALEN;
+		}
+	}
 	return params;
 
 failed:
@@ -1938,13 +2215,20 @@ void wpa_scan_free_params(struct wpa_driver_scan_params *params)
 	os_free((u8 *) params->extra_ies);
 	os_free(params->freqs);
 	os_free(params->filter_ssids);
+
+	/*
+	 * Note: params->mac_addr_mask points to same memory allocation and
+	 * must not be freed separately.
+	 */
+	os_free((u8 *) params->mac_addr);
+
 	os_free(params);
 }
 
 
 int wpas_start_pno(struct wpa_supplicant *wpa_s)
 {
-	int ret, interval;
+	int ret, interval, prio;
 	size_t i, num_ssid, num_match_ssid;
 	struct wpa_ssid *ssid;
 	struct wpa_driver_scan_params params;
@@ -2009,8 +2293,10 @@ int wpas_start_pno(struct wpa_supplicant *wpa_s)
 					sizeof(struct wpa_driver_scan_filter));
 	if (params.filter_ssids == NULL)
 		return -1;
+
 	i = 0;
-	ssid = wpa_s->conf->ssid;
+	prio = 0;
+	ssid = wpa_s->conf->pssid[prio];
 	while (ssid) {
 		if (!wpas_network_disabled(wpa_s, ssid)) {
 			if (ssid->scan_ssid && params.num_ssids < num_ssid) {
@@ -2028,7 +2314,12 @@ int wpas_start_pno(struct wpa_supplicant *wpa_s)
 			if (i == num_match_ssid)
 				break;
 		}
-		ssid = ssid->next;
+		if (ssid->pnext)
+			ssid = ssid->pnext;
+		else if (prio + 1 == wpa_s->conf->num_prio)
+			break;
+		else
+			ssid = wpa_s->conf->pssid[++prio];
 	}
 
 	if (wpa_s->conf->filter_rssi)
@@ -2040,6 +2331,14 @@ int wpas_start_pno(struct wpa_supplicant *wpa_s)
 	if (params.freqs == NULL && wpa_s->manual_sched_scan_freqs) {
 		wpa_dbg(wpa_s, MSG_DEBUG, "Limit sched scan to specified channels");
 		params.freqs = wpa_s->manual_sched_scan_freqs;
+	}
+
+	if (wpa_s->mac_addr_rand_enable & MAC_ADDR_RAND_PNO) {
+		params.mac_addr_rand = 1;
+		if (wpa_s->mac_addr_pno) {
+			params.mac_addr = wpa_s->mac_addr_pno;
+			params.mac_addr_mask = wpa_s->mac_addr_pno + ETH_ALEN;
+		}
 	}
 
 	ret = wpa_supplicant_start_sched_scan(wpa_s, &params, interval);
@@ -2068,4 +2367,62 @@ int wpas_stop_pno(struct wpa_supplicant *wpa_s)
 		wpa_supplicant_req_scan(wpa_s, 0, 0);
 
 	return ret;
+}
+
+
+void wpas_mac_addr_rand_scan_clear(struct wpa_supplicant *wpa_s,
+				    unsigned int type)
+{
+	type &= MAC_ADDR_RAND_ALL;
+	wpa_s->mac_addr_rand_enable &= ~type;
+
+	if (type & MAC_ADDR_RAND_SCAN) {
+		os_free(wpa_s->mac_addr_scan);
+		wpa_s->mac_addr_scan = NULL;
+	}
+
+	if (type & MAC_ADDR_RAND_SCHED_SCAN) {
+		os_free(wpa_s->mac_addr_sched_scan);
+		wpa_s->mac_addr_sched_scan = NULL;
+	}
+
+	if (type & MAC_ADDR_RAND_PNO) {
+		os_free(wpa_s->mac_addr_pno);
+		wpa_s->mac_addr_pno = NULL;
+	}
+}
+
+
+int wpas_mac_addr_rand_scan_set(struct wpa_supplicant *wpa_s,
+				unsigned int type, const u8 *addr,
+				const u8 *mask)
+{
+	u8 *tmp = NULL;
+
+	wpas_mac_addr_rand_scan_clear(wpa_s, type);
+
+	if (addr) {
+		tmp = os_malloc(2 * ETH_ALEN);
+		if (!tmp)
+			return -1;
+		os_memcpy(tmp, addr, ETH_ALEN);
+		os_memcpy(tmp + ETH_ALEN, mask, ETH_ALEN);
+	}
+
+	if (type == MAC_ADDR_RAND_SCAN) {
+		wpa_s->mac_addr_scan = tmp;
+	} else if (type == MAC_ADDR_RAND_SCHED_SCAN) {
+		wpa_s->mac_addr_sched_scan = tmp;
+	} else if (type == MAC_ADDR_RAND_PNO) {
+		wpa_s->mac_addr_pno = tmp;
+	} else {
+		wpa_printf(MSG_INFO,
+			   "scan: Invalid MAC randomization type=0x%x",
+			   type);
+		os_free(tmp);
+		return -1;
+	}
+
+	wpa_s->mac_addr_rand_enable |= type;
+	return 0;
 }

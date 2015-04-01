@@ -1,7 +1,7 @@
 /*
  * DFS - Dynamic Frequency Selection
  * Copyright (c) 2002-2013, Jouni Malinen <j@w1.fi>
- * Copyright (c) 2013, Qualcomm Atheros, Inc.
+ * Copyright (c) 2013-2015, Qualcomm Atheros, Inc.
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -11,6 +11,7 @@
 
 #include "utils/common.h"
 #include "common/ieee802_11_defs.h"
+#include "common/hw_features_common.h"
 #include "common/wpa_ctrl.h"
 #include "hostapd.h"
 #include "ap_drv_ops.h"
@@ -440,7 +441,8 @@ dfs_get_valid_channel(struct hostapd_iface *iface,
 	if (num_available_chandefs == 0)
 		return NULL;
 
-	os_get_random((u8 *) &_rand, sizeof(_rand));
+	if (os_get_random((u8 *) &_rand, sizeof(_rand)) < 0)
+		_rand = os_random();
 	chan_idx = _rand % num_available_chandefs;
 	dfs_find_channel(iface, &chan, chan_idx, skip_radar);
 
@@ -639,6 +641,16 @@ int hostapd_handle_dfs(struct hostapd_iface *iface)
 	int res, n_chans, n_chans1, start_chan_idx, start_chan_idx1;
 	int skip_radar = 0;
 
+	if (!iface->current_mode) {
+		/*
+		 * This can happen with drivers that do not provide mode
+		 * information and as such, cannot really use hostapd for DFS.
+		 */
+		wpa_printf(MSG_DEBUG,
+			   "DFS: No current_mode information - assume no need to perform DFS operations by hostapd");
+		return 1;
+	}
+
 	iface->cac_started = 0;
 
 	do {
@@ -736,11 +748,19 @@ int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
 
 	if (success) {
 		/* Complete iface/ap configuration */
-		set_dfs_state(iface, freq, ht_enabled, chan_offset,
-			      chan_width, cf1, cf2,
-			      HOSTAPD_CHAN_DFS_AVAILABLE);
-		iface->cac_started = 0;
-		hostapd_setup_interface_complete(iface, 0);
+		if (iface->drv_flags & WPA_DRIVER_FLAGS_DFS_OFFLOAD) {
+			/* Complete AP configuration for the first bring up. */
+			if (iface->state != HAPD_IFACE_ENABLED)
+				hostapd_setup_interface_complete(iface, 0);
+			else
+				iface->cac_started = 0;
+		} else {
+			set_dfs_state(iface, freq, ht_enabled, chan_offset,
+				      chan_width, cf1, cf2,
+				      HOSTAPD_CHAN_DFS_AVAILABLE);
+			iface->cac_started = 0;
+			hostapd_setup_interface_complete(iface, 0);
+		}
 	}
 
 	return 0;
@@ -922,12 +942,16 @@ int hostapd_dfs_radar_detected(struct hostapd_iface *iface, int freq,
 {
 	int res;
 
-	if (!iface->conf->ieee80211h)
-		return 0;
-
 	wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, DFS_EVENT_RADAR_DETECTED
 		"freq=%d ht_enabled=%d chan_offset=%d chan_width=%d cf1=%d cf2=%d",
 		freq, ht_enabled, chan_offset, chan_width, cf1, cf2);
+
+	/* Proceed only if DFS is not offloaded to the driver */
+	if (iface->drv_flags & WPA_DRIVER_FLAGS_DFS_OFFLOAD)
+		return 0;
+
+	if (!iface->conf->ieee80211h)
+		return 0;
 
 	/* mark radar frequency as invalid */
 	set_dfs_state(iface, freq, ht_enabled, chan_offset, chan_width,
@@ -952,6 +976,11 @@ int hostapd_dfs_nop_finished(struct hostapd_iface *iface, int freq,
 	wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, DFS_EVENT_NOP_FINISHED
 		"freq=%d ht_enabled=%d chan_offset=%d chan_width=%d cf1=%d cf2=%d",
 		freq, ht_enabled, chan_offset, chan_width, cf1, cf2);
+
+	/* Proceed only if DFS is not offloaded to the driver */
+	if (iface->drv_flags & WPA_DRIVER_FLAGS_DFS_OFFLOAD)
+		return 0;
+
 	/* TODO add correct implementation here */
 	set_dfs_state(iface, freq, ht_enabled, chan_offset, chan_width,
 		      cf1, cf2, HOSTAPD_CHAN_DFS_USABLE);
@@ -982,4 +1011,54 @@ int hostapd_is_dfs_required(struct hostapd_iface *iface)
 	if (start_chan_idx1 >= 0 && n_chans1 > 0)
 		res = dfs_check_chans_radar(iface, start_chan_idx1, n_chans1);
 	return res;
+}
+
+
+int hostapd_dfs_start_cac(struct hostapd_iface *iface, int freq,
+			  int ht_enabled, int chan_offset, int chan_width,
+			  int cf1, int cf2)
+{
+	wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, DFS_EVENT_CAC_START
+		"freq=%d chan=%d chan_offset=%d width=%d seg0=%d "
+		"seg1=%d cac_time=%ds",
+		freq, (freq - 5000) / 5, chan_offset, chan_width, cf1, cf2, 60);
+	iface->cac_started = 1;
+	return 0;
+}
+
+
+/*
+ * Main DFS handler for offloaded case.
+ * 2 - continue channel/AP setup for non-DFS channel
+ * 1 - continue channel/AP setup for DFS channel
+ * 0 - channel/AP setup will be continued after CAC
+ * -1 - hit critical error
+ */
+int hostapd_handle_dfs_offload(struct hostapd_iface *iface)
+{
+	wpa_printf(MSG_DEBUG, "%s: iface->cac_started: %d",
+		   __func__, iface->cac_started);
+
+	/*
+	 * If DFS has already been started, then we are being called from a
+	 * callback to continue AP/channel setup. Reset the CAC start flag and
+	 * return.
+	 */
+	if (iface->cac_started) {
+		wpa_printf(MSG_DEBUG, "%s: iface->cac_started: %d",
+			   __func__, iface->cac_started);
+		iface->cac_started = 0;
+		return 1;
+	}
+
+	if (ieee80211_is_dfs(iface->freq)) {
+		wpa_printf(MSG_DEBUG, "%s: freq %d MHz requires DFS",
+			   __func__, iface->freq);
+		return 0;
+	}
+
+	wpa_printf(MSG_DEBUG,
+		   "%s: freq %d MHz does not require DFS. Continue channel/AP setup",
+		   __func__, iface->freq);
+	return 2;
 }

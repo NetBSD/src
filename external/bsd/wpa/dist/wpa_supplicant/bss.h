@@ -1,6 +1,6 @@
 /*
  * BSS table
- * Copyright (c) 2009-2010, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2009-2015, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -26,6 +26,7 @@ struct wpa_bss_anqp {
 	/** Number of BSS entries referring to this ANQP data instance */
 	unsigned int users;
 #ifdef CONFIG_INTERWORKING
+	struct wpabuf *capability_list;
 	struct wpabuf *venue_name;
 	struct wpabuf *network_auth_type;
 	struct wpabuf *roaming_consortium;
@@ -35,6 +36,7 @@ struct wpa_bss_anqp {
 	struct wpabuf *domain_name;
 #endif /* CONFIG_INTERWORKING */
 #ifdef CONFIG_HS20
+	struct wpabuf *hs20_capability_list;
 	struct wpabuf *hs20_operator_friendly_name;
 	struct wpabuf *hs20_wan_metrics;
 	struct wpabuf *hs20_connection_capability;
@@ -86,6 +88,10 @@ struct wpa_bss {
 	u64 tsf;
 	/** Time of the last update (i.e., Beacon or Probe Response RX) */
 	struct os_reltime last_update;
+	/** Estimated throughput in kbps */
+	unsigned int est_throughput;
+	/** Signal-to-noise ratio in dB */
+	int snr;
 	/** ANQP data */
 	struct wpa_bss_anqp *anqp;
 	/** Length of the following IE field in octets (from Probe Response) */
@@ -133,6 +139,12 @@ int wpa_bss_anqp_unshare_alloc(struct wpa_bss *bss);
 static inline int bss_is_dmg(const struct wpa_bss *bss)
 {
 	return bss->freq > 45000;
+}
+
+static inline void wpa_bss_update_level(struct wpa_bss *bss, int new_level)
+{
+	if (bss != NULL && new_level < 0)
+		bss->level = new_level;
 }
 
 #endif /* BSS_H */
