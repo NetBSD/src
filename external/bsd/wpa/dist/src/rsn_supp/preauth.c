@@ -1,6 +1,6 @@
 /*
  * RSN pre-authentication (supplicant)
- * Copyright (c) 2003-2012, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2003-2015, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -94,6 +94,7 @@ static void rsn_preauth_eapol_cb(struct eapol_sm *eapol,
 					pmk, pmk_len);
 			sm->pmk_len = pmk_len;
 			pmksa_cache_add(sm->pmksa, pmk, pmk_len,
+					NULL, 0,
 					sm->preauth_bssid, sm->own_addr,
 					sm->network_ctx,
 					WPA_KEY_MGMT_IEEE8021X);
@@ -171,6 +172,7 @@ int rsn_preauth_init(struct wpa_sm *sm, const u8 *dst,
 {
 	struct eapol_config eapol_conf;
 	struct eapol_ctx *ctx;
+	int ret;
 
 	if (sm->preauth_eapol)
 		return -1;
@@ -196,14 +198,16 @@ int rsn_preauth_init(struct wpa_sm *sm, const u8 *dst,
 			wpa_printf(MSG_WARNING, "RSN: Failed to initialize L2 "
 				   "packet processing (bridge) for "
 				   "pre-authentication");
-			return -2;
+			ret = -2;
+			goto fail;
 		}
 	}
 
 	ctx = os_zalloc(sizeof(*ctx));
 	if (ctx == NULL) {
 		wpa_printf(MSG_WARNING, "Failed to allocate EAPOL context.");
-		return -4;
+		ret = -4;
+		goto fail;
 	}
 	ctx->ctx = sm->ctx->ctx;
 	ctx->msg_ctx = sm->ctx->ctx;
@@ -221,7 +225,8 @@ int rsn_preauth_init(struct wpa_sm *sm, const u8 *dst,
 		os_free(ctx);
 		wpa_printf(MSG_WARNING, "RSN: Failed to initialize EAPOL "
 			   "state machines for pre-authentication");
-		return -3;
+		ret = -3;
+		goto fail;
 	}
 	os_memset(&eapol_conf, 0, sizeof(eapol_conf));
 	eapol_conf.accept_802_1x_keys = 0;
@@ -246,6 +251,15 @@ int rsn_preauth_init(struct wpa_sm *sm, const u8 *dst,
 			       rsn_preauth_timeout, sm, NULL);
 
 	return 0;
+
+fail:
+	if (sm->l2_preauth_br) {
+		l2_packet_deinit(sm->l2_preauth_br);
+		sm->l2_preauth_br = NULL;
+	}
+	l2_packet_deinit(sm->l2_preauth);
+	sm->l2_preauth = NULL;
+	return ret;
 }
 
 
@@ -298,7 +312,9 @@ void rsn_preauth_candidate_process(struct wpa_sm *sm)
 	    sm->proto != WPA_PROTO_RSN ||
 	    wpa_sm_get_state(sm) != WPA_COMPLETED ||
 	    (sm->key_mgmt != WPA_KEY_MGMT_IEEE8021X &&
-	     sm->key_mgmt != WPA_KEY_MGMT_IEEE8021X_SHA256)) {
+	     sm->key_mgmt != WPA_KEY_MGMT_IEEE8021X_SHA256 &&
+	     sm->key_mgmt != WPA_KEY_MGMT_IEEE8021X_SUITE_B &&
+	     sm->key_mgmt != WPA_KEY_MGMT_IEEE8021X_SUITE_B_192)) {
 		wpa_msg(sm->ctx->msg_ctx, MSG_DEBUG, "RSN: not in suitable "
 			"state for new pre-authentication");
 		return; /* invalid state for new pre-auth */
@@ -391,6 +407,18 @@ void pmksa_candidate_add(struct wpa_sm *sm, const u8 *bssid,
 	dl_list_for_each(pos, &sm->pmksa_candidates,
 			 struct rsn_pmksa_candidate, list) {
 		if (cand->priority <= pos->priority) {
+			if (!pos->list.prev) {
+				/*
+				 * This cannot really happen in pracrice since
+				 * pos was fetched from the list and the prev
+				 * pointer must be set. It looks like clang
+				 * static analyzer gets confused with the
+				 * dl_list_del(&cand->list) call above and ends
+				 * up assuming pos->list.prev could be NULL.
+				 */
+				os_free(cand);
+				return;
+			}
 			dl_list_add(pos->list.prev, &cand->list);
 			cand = NULL;
 			break;
@@ -487,7 +515,7 @@ int rsn_preauth_get_status(struct wpa_sm *sm, char *buf, size_t buflen,
 	if (sm->preauth_eapol) {
 		ret = os_snprintf(pos, end - pos, "Pre-authentication "
 				  "EAPOL state machines:\n");
-		if (ret < 0 || ret >= end - pos)
+		if (os_snprintf_error(end - pos, ret))
 			return pos - buf;
 		pos += ret;
 		res = eapol_sm_get_status(sm->preauth_eapol,

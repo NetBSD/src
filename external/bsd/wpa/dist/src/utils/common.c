@@ -36,6 +36,25 @@ int hex2byte(const char *hex)
 }
 
 
+static const char * hwaddr_parse(const char *txt, u8 *addr)
+{
+	size_t i;
+
+	for (i = 0; i < ETH_ALEN; i++) {
+		int a;
+
+		a = hex2byte(txt);
+		if (a < 0)
+			return NULL;
+		txt += 2;
+		addr[i] = a;
+		if (i < ETH_ALEN - 1 && *txt++ != ':')
+			return NULL;
+	}
+	return txt;
+}
+
+
 /**
  * hwaddr_aton - Convert ASCII string to MAC address (colon-delimited format)
  * @txt: MAC address as a string (e.g., "00:11:22:33:44:55")
@@ -44,24 +63,45 @@ int hex2byte(const char *hex)
  */
 int hwaddr_aton(const char *txt, u8 *addr)
 {
-	int i;
+	return hwaddr_parse(txt, addr) ? 0 : -1;
+}
 
-	for (i = 0; i < 6; i++) {
-		int a, b;
 
-		a = hex2num(*txt++);
-		if (a < 0)
+/**
+ * hwaddr_masked_aton - Convert ASCII string with optional mask to MAC address (colon-delimited format)
+ * @txt: MAC address with optional mask as a string (e.g., "00:11:22:33:44:55/ff:ff:ff:ff:00:00")
+ * @addr: Buffer for the MAC address (ETH_ALEN = 6 bytes)
+ * @mask: Buffer for the MAC address mask (ETH_ALEN = 6 bytes)
+ * @maskable: Flag to indicate whether a mask is allowed
+ * Returns: 0 on success, -1 on failure (e.g., string not a MAC address)
+ */
+int hwaddr_masked_aton(const char *txt, u8 *addr, u8 *mask, u8 maskable)
+{
+	const char *r;
+
+	/* parse address part */
+	r = hwaddr_parse(txt, addr);
+	if (!r)
+		return -1;
+
+	/* check for optional mask */
+	if (*r == '\0' || isspace(*r)) {
+		/* no mask specified, assume default */
+		os_memset(mask, 0xff, ETH_ALEN);
+	} else if (maskable && *r == '/') {
+		/* mask specified and allowed */
+		r = hwaddr_parse(r + 1, mask);
+		/* parser error? */
+		if (!r)
 			return -1;
-		b = hex2num(*txt++);
-		if (b < 0)
-			return -1;
-		*addr++ = (a << 4) | b;
-		if (i < 5 && *txt++ != ':')
-			return -1;
+	} else {
+		/* mask specified but not allowed or trailing garbage */
+		return -1;
 	}
 
 	return 0;
 }
+
 
 /**
  * hwaddr_compact_aton - Convert ASCII string to MAC address (no colon delimitors format)
@@ -144,6 +184,30 @@ int hexstr2bin(const char *hex, u8 *buf, size_t len)
 }
 
 
+int hwaddr_mask_txt(char *buf, size_t len, const u8 *addr, const u8 *mask)
+{
+	size_t i;
+	int print_mask = 0;
+	int res;
+
+	for (i = 0; i < ETH_ALEN; i++) {
+		if (mask[i] != 0xff) {
+			print_mask = 1;
+			break;
+		}
+	}
+
+	if (print_mask)
+		res = os_snprintf(buf, len, MACSTR "/" MACSTR,
+				  MAC2STR(addr), MAC2STR(mask));
+	else
+		res = os_snprintf(buf, len, MACSTR, MAC2STR(addr));
+	if (os_snprintf_error(len, res))
+		return -1;
+	return res;
+}
+
+
 /**
  * inc_byte_array - Increment arbitrary length byte array by one
  * @counter: Pointer to byte array
@@ -183,6 +247,35 @@ void wpa_get_ntp_timestamp(u8 *buf)
 	os_memcpy(buf + 4, (u8 *) &tmp, 4);
 }
 
+/**
+ * wpa_scnprintf - Simpler-to-use snprintf function
+ * @buf: Output buffer
+ * @size: Buffer size
+ * @fmt: format
+ *
+ * Simpler snprintf version that doesn't require further error checks - the
+ * return value only indicates how many bytes were actually written, excluding
+ * the NULL byte (i.e., 0 on error, size-1 if buffer is not big enough).
+ */
+int wpa_scnprintf(char *buf, size_t size, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	if (!size)
+		return 0;
+
+	va_start(ap, fmt);
+	ret = vsnprintf(buf, size, fmt, ap);
+	va_end(ap);
+
+	if (ret < 0)
+		return 0;
+	if ((size_t) ret >= size)
+		return size - 1;
+
+	return ret;
+}
 
 static inline int _wpa_snprintf_hex(char *buf, size_t buf_size, const u8 *data,
 				    size_t len, int uppercase)
@@ -195,7 +288,7 @@ static inline int _wpa_snprintf_hex(char *buf, size_t buf_size, const u8 *data,
 	for (i = 0; i < len; i++) {
 		ret = os_snprintf(pos, end - pos, uppercase ? "%02X" : "%02x",
 				  data[i]);
-		if (ret < 0 || ret >= end - pos) {
+		if (os_snprintf_error(end - pos, ret)) {
 			end[-1] = '\0';
 			return pos - buf;
 		}
@@ -578,21 +671,6 @@ int is_hex(const u8 *data, size_t len)
 }
 
 
-int find_first_bit(u32 value)
-{
-	int pos = 0;
-
-	while (value) {
-		if (value & 0x1)
-			return pos;
-		value >>= 1;
-		pos++;
-	}
-
-	return -1;
-}
-
-
 size_t merge_byte_arrays(u8 *res, size_t res_len,
 			 const u8 *src1, size_t src1_len,
 			 const u8 *src2, size_t src2_len)
@@ -726,7 +804,7 @@ char * freq_range_list_str(const struct wpa_freq_range_list *list)
 			res = os_snprintf(pos, end - pos, "%s%u-%u",
 					  i == 0 ? "" : ",",
 					  range->min, range->max);
-		if (res < 0 || res > end - pos) {
+		if (os_snprintf_error(end - pos, res)) {
 			os_free(buf);
 			return NULL;
 		}
@@ -865,4 +943,122 @@ int random_mac_addr_keep_oui(u8 *addr)
 	addr[0] &= 0xfe; /* unicast */
 	addr[0] |= 0x02; /* locally administered */
 	return 0;
+}
+
+
+/**
+ * str_token - Get next token from a string
+ * @buf: String to tokenize. Note that the string might be modified.
+ * @delim: String of delimiters
+ * @context: Pointer to save our context. Should be initialized with
+ *	NULL on the first call, and passed for any further call.
+ * Returns: The next token, NULL if there are no more valid tokens.
+ */
+char * str_token(char *str, const char *delim, char **context)
+{
+	char *end, *pos = str;
+
+	if (*context)
+		pos = *context;
+
+	while (*pos && os_strchr(delim, *pos))
+		pos++;
+	if (!*pos)
+		return NULL;
+
+	end = pos + 1;
+	while (*end && !os_strchr(delim, *end))
+		end++;
+
+	if (*end)
+		*end++ = '\0';
+
+	*context = end;
+	return pos;
+}
+
+
+size_t utf8_unescape(const char *inp, size_t in_size,
+		     char *outp, size_t out_size)
+{
+	size_t res_size = 0;
+
+	if (!inp || !outp)
+		return 0;
+
+	if (!in_size)
+		in_size = os_strlen(inp);
+
+	/* Advance past leading single quote */
+	if (*inp == '\'' && in_size) {
+		inp++;
+		in_size--;
+	}
+
+	while (in_size--) {
+		if (res_size >= out_size)
+			return 0;
+
+		switch (*inp) {
+		case '\'':
+			/* Terminate on bare single quote */
+			*outp = '\0';
+			return res_size;
+
+		case '\\':
+			if (!in_size--)
+				return 0;
+			inp++;
+			/* fall through */
+
+		default:
+			*outp++ = *inp++;
+			res_size++;
+		}
+	}
+
+	/* NUL terminate if space allows */
+	if (res_size < out_size)
+		*outp = '\0';
+
+	return res_size;
+}
+
+
+size_t utf8_escape(const char *inp, size_t in_size,
+		   char *outp, size_t out_size)
+{
+	size_t res_size = 0;
+
+	if (!inp || !outp)
+		return 0;
+
+	/* inp may or may not be NUL terminated, but must be if 0 size
+	 * is specified */
+	if (!in_size)
+		in_size = os_strlen(inp);
+
+	while (in_size--) {
+		if (res_size++ >= out_size)
+			return 0;
+
+		switch (*inp) {
+		case '\\':
+		case '\'':
+			if (res_size++ >= out_size)
+				return 0;
+			*outp++ = '\\';
+			/* fall through */
+
+		default:
+			*outp++ = *inp++;
+			break;
+		}
+	}
+
+	/* NUL terminate if space allows */
+	if (res_size < out_size)
+		*outp = '\0';
+
+	return res_size;
 }
