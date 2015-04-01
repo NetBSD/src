@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.64 2014/08/13 19:43:47 plunky Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.65 2015/04/01 01:44:56 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.64 2014/08/13 19:43:47 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.65 2015/04/01 01:44:56 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -230,8 +230,8 @@ SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_DEBUG,
 	debug, CTLFLAG_RW,	&ipsec_debug,	0, "");
 SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_ESP_RANDPAD,
 	esp_randpad, CTLFLAG_RW,	&ip6_esp_randpad,	0, "");
-#endif /* INET6 */
 #endif /* __FreeBSD__ */
+#endif /* INET6 */
 
 static int ipsec4_setspidx_inpcb (struct mbuf *, struct inpcb *);
 #ifdef INET6
