@@ -1,6 +1,6 @@
 /*
  * utils module tests
- * Copyright (c) 2014, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2014-2015, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -12,6 +12,7 @@
 #include "utils/bitfield.h"
 #include "utils/ext_password.h"
 #include "utils/trace.h"
+#include "utils/base64.h"
 
 
 struct printf_test_data {
@@ -83,6 +84,15 @@ static int printf_encode_decode_tests(void)
 			errors++;
 		}
 	}
+
+	if (printf_decode(bin, 3, "abcde") != 2)
+		errors++;
+
+	if (printf_decode(bin, 3, "\\xa") != 1 || bin[0] != 10)
+		errors++;
+
+	if (printf_decode(bin, 3, "\\a") != 1 || bin[0] != 'a')
+		errors++;
 
 	if (errors) {
 		wpa_printf(MSG_ERROR, "%d printf test(s) failed", errors);
@@ -167,6 +177,17 @@ static int bitfield_tests(void)
 
 	bitfield_free(bf);
 
+	bf = bitfield_alloc(8);
+	if (bf == NULL)
+		return -1;
+	if (bitfield_get_first_zero(bf) != 0)
+		errors++;
+	for (i = 0; i < 8; i++)
+		bitfield_set(bf, i);
+	if (bitfield_get_first_zero(bf) != -1)
+		errors++;
+	bitfield_free(bf);
+
 	if (errors) {
 		wpa_printf(MSG_ERROR, "%d bitfield test(s) failed", errors);
 		return -1;
@@ -249,6 +270,140 @@ static int trace_tests(void)
 }
 
 
+static int base64_tests(void)
+{
+	int errors = 0;
+	unsigned char *res;
+	size_t res_len;
+
+	wpa_printf(MSG_INFO, "base64 tests");
+
+	res = base64_encode((const unsigned char *) "", ~0, &res_len);
+	if (res) {
+		errors++;
+		os_free(res);
+	}
+
+	res = base64_encode((const unsigned char *) "=", 1, &res_len);
+	if (!res || res_len != 5 || res[0] != 'P' || res[1] != 'Q' ||
+	    res[2] != '=' || res[3] != '=' || res[4] != '\n')
+		errors++;
+	os_free(res);
+
+	res = base64_encode((const unsigned char *) "=", 1, NULL);
+	if (!res || res[0] != 'P' || res[1] != 'Q' ||
+	    res[2] != '=' || res[3] != '=' || res[4] != '\n')
+		errors++;
+	os_free(res);
+
+	res = base64_decode((const unsigned char *) "", 0, &res_len);
+	if (res) {
+		errors++;
+		os_free(res);
+	}
+
+	res = base64_decode((const unsigned char *) "a", 1, &res_len);
+	if (res) {
+		errors++;
+		os_free(res);
+	}
+
+	res = base64_decode((const unsigned char *) "====", 4, &res_len);
+	if (res) {
+		errors++;
+		os_free(res);
+	}
+
+	res = base64_decode((const unsigned char *) "PQ==", 4, &res_len);
+	if (!res || res_len != 1 || res[0] != '=')
+		errors++;
+	os_free(res);
+
+	res = base64_decode((const unsigned char *) "P.Q-=!=*", 8, &res_len);
+	if (!res || res_len != 1 || res[0] != '=')
+		errors++;
+	os_free(res);
+
+	if (errors) {
+		wpa_printf(MSG_ERROR, "%d base64 test(s) failed", errors);
+		return -1;
+	}
+
+	return 0;
+}
+
+
+static int common_tests(void)
+{
+	char buf[3];
+	u8 addr[ETH_ALEN] = { 1, 2, 3, 4, 5, 6 };
+	u8 bin[3];
+	int errors = 0;
+	struct wpa_freq_range_list ranges;
+
+	wpa_printf(MSG_INFO, "common tests");
+
+	if (hwaddr_mask_txt(buf, 3, addr, addr) != -1)
+		errors++;
+
+	if (wpa_scnprintf(buf, 0, "hello") != 0 ||
+	    wpa_scnprintf(buf, 3, "hello") != 2)
+		errors++;
+
+	if (wpa_snprintf_hex(buf, 0, addr, ETH_ALEN) != 0 ||
+	    wpa_snprintf_hex(buf, 3, addr, ETH_ALEN) != 2)
+		errors++;
+
+	if (merge_byte_arrays(bin, 3, addr, ETH_ALEN, NULL, 0) != 3 ||
+	    merge_byte_arrays(bin, 3, NULL, 0, addr, ETH_ALEN) != 3)
+		errors++;
+
+	if (dup_binstr(NULL, 0) != NULL)
+		errors++;
+
+	if (freq_range_list_includes(NULL, 0) != 0)
+		errors++;
+
+	os_memset(&ranges, 0, sizeof(ranges));
+	if (freq_range_list_parse(&ranges, "") != 0 ||
+	    freq_range_list_includes(&ranges, 0) != 0 ||
+	    freq_range_list_str(&ranges) != NULL)
+		errors++;
+
+	if (utf8_unescape(NULL, 0, buf, sizeof(buf)) != 0 ||
+	    utf8_unescape("a", 1, NULL, 0) != 0 ||
+	    utf8_unescape("a\\", 2, buf, sizeof(buf)) != 0 ||
+	    utf8_unescape("abcde", 5, buf, sizeof(buf)) != 0 ||
+	    utf8_unescape("abc", 3, buf, 3) != 3)
+		errors++;
+
+	if (utf8_unescape("a", 0, buf, sizeof(buf)) != 1 || buf[0] != 'a')
+		errors++;
+
+	if (utf8_unescape("\\b", 2, buf, sizeof(buf)) != 1 || buf[0] != 'b')
+		errors++;
+
+	if (utf8_escape(NULL, 0, buf, sizeof(buf)) != 0 ||
+	    utf8_escape("a", 1, NULL, 0) != 0 ||
+	    utf8_escape("abcde", 5, buf, sizeof(buf)) != 0 ||
+	    utf8_escape("a\\bcde", 6, buf, sizeof(buf)) != 0 ||
+	    utf8_escape("ab\\cde", 6, buf, sizeof(buf)) != 0 ||
+	    utf8_escape("abc\\de", 6, buf, sizeof(buf)) != 0 ||
+	    utf8_escape("abc", 3, buf, 3) != 3)
+		errors++;
+
+	if (utf8_escape("a", 0, buf, sizeof(buf)) != 1 || buf[0] != 'a')
+		errors++;
+
+	if (errors) {
+		wpa_printf(MSG_ERROR, "%d common test(s) failed", errors);
+		return -1;
+	}
+
+	return 0;
+}
+
+
 int utils_module_tests(void)
 {
 	int ret = 0;
@@ -259,6 +414,8 @@ int utils_module_tests(void)
 	    ext_password_tests() < 0 ||
 	    trace_tests() < 0 ||
 	    bitfield_tests() < 0 ||
+	    base64_tests() < 0 ||
+	    common_tests() < 0 ||
 	    int_array_tests() < 0)
 		ret = -1;
 
