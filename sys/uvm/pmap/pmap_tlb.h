@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.7 2015/01/05 05:35:18 nonaka Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.8 2015/04/02 06:17:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,7 @@
 #ifndef	_COMMON_PMAP_TLB_H_
 #define	_COMMON_PMAP_TLB_H_
 
+#include <sys/evcnt.h>
 #include <sys/kcpuset.h>
 
 #if !defined(PMAP_TLB_MAX)
