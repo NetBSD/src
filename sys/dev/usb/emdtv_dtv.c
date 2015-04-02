@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.10 2013/01/22 12:40:42 jmcneill Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.11 2015/04/02 06:23:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10 2013/01/22 12:40:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.11 2015/04/02 06:23:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/conf.h>
 
 #include <dev/usb/usb.h>
