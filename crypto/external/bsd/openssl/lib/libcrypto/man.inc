@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.2.16.2 2014/08/15 08:25:09 msaitoh Exp $
+#	$NetBSD: man.inc,v 1.2.16.3 2015/04/02 18:04:14 snj Exp $
 
 .PATH:	${.CURDIR}/man
 

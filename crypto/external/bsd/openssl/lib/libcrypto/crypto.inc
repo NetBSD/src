@@ -1,4 +1,4 @@
-#	$NetBSD: crypto.inc,v 1.3.18.1 2014/06/06 05:20:06 msaitoh Exp $
+#	$NetBSD: crypto.inc,v 1.3.18.2 2015/04/02 18:04:14 snj Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
