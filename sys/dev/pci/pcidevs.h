@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1213 2015/03/20 14:27:06 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1214 2015/04/02 15:10:49 tnn Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1219 2015/03/20 14:26:42 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1220 2015/04/02 15:08:22 tnn Exp
  */
 
 /*
@@ -4066,6 +4066,41 @@
 #define	PCI_PRODUCT_INTEL_CORE4G_M_S_UART_1	0x9c64		/* Core 4G (mobile) Serial I/O UART */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_S_GSPI_0	0x9c65		/* Core 4G (mobile) Serial I/O GSPI */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_S_GSPI_1	0x9c66		/* Core 4G (mobile) Serial I/O GSPI */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_AHCI	0x9c83		/* Core 5G (mobile) SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_RAID_1	0x9c85		/* Core 5G (mobile) SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_RAID_2	0x9c87		/* Core 5G (mobile) SATA Controller (RAID) Premium */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_RAID_3	0x9c8f		/* Core 5G (mobile) SATA Controller (RAID) RRT Only */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_PCIE_1	0x9c90		/* Core 5G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_PCIE_2	0x9c92		/* Core 5G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_PCIE_3	0x9c94		/* Core 5G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_PCIE_4	0x9c96		/* Core 5G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_PCIE_5	0x9c98		/* Core 5G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_PCIE_6	0x9c9a		/* Core 5G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_HDA	0x9ca0		/* Core 5G (mobile) HD Audio */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_SMB	0x9ca2		/* Core 5G (mobile) SMBus */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_THERM	0x9ca4		/* Core 5G (mobile) Thermal */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_EHCI	0x9ca6		/* Core 5G (mobile) USB EHCI */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_XHCI	0x9cb1		/* Core 5G (mobile) USB xHCI */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_SDIO	0x9cb5		/* Core 5G (mobile) SDIO */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_SSOUND	0x9cb6		/* Core 5G (mobile) Smart Sound */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_MEI_1	0x9cba		/* Core 5G (mobile) ME Interface */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_MEI_2	0x9cbb		/* Core 5G (mobile) ME Interface */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_IDE_R	0x9cbc		/* Core 5G (mobile) IDE-R */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_KT	0x9cbd		/* Core 5G (mobile) KT */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_LPC_1	0x9cc1		/* Core 5G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_LPC_2	0x9cc2		/* Core 5G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_LPC_3	0x9cc3		/* Core 5G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_LPC_4	0x9cc5		/* Core 5G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_LPC_5	0x9cc6		/* Core 5G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_LPC_6	0x9cc7		/* Core 5G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_LPC_7	0x9cc9		/* Core 5G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_S_DMA	0x9ce0		/* Core 5G (mobile) Serial I/O DMA */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_S_I2C_0	0x9ce1		/* Core 5G (mobile) Serial I/O I2C */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_S_I2C_1	0x9ce2		/* Core 5G (mobile) Serial I/O I2C */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_S_UART_0	0x9ce3		/* Core 5G (mobile) Serial I/O UART */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_S_UART_1	0x9ce4		/* Core 5G (mobile) Serial I/O UART */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_S_GSPI_0	0x9ce5		/* Core 5G (mobile) Serial I/O GSPI */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_S_GSPI_1	0x9ce6		/* Core 5G (mobile) Serial I/O GSPI */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_HB	0xa000		/* Pineview Host Bridge */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGD	0xa001		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGD_1	0xa002		/* Pineview Integrated Graphics Device */
