@@ -1,5 +1,5 @@
 #!/bin/sh
-#    $NetBSD: service,v 1.5 2015/03/27 23:25:42 ast Exp $
+#    $NetBSD: service,v 1.6 2015/04/02 18:41:22 ast Exp $
 #    service -- run or list system services
 #
 #  Taken from FreeBSD: releng/10.1/usr.sbin/service/service.sh 268098
@@ -50,9 +50,11 @@ _rc_files()
 {
     local _d _f
     for _d in ${rc_directories}; do
-        if [ -d $_d ]; then
-            for _f in $_d/*; do [ -f $_f -a -x $_f ] && echo $_f; done
-        fi
+         if [ -d "$_d" ]; then
+             for _f in "$_d"/*; do
+                 [ -f "$_f" -a -x "$_f" ] && echo "$_f"
+             done
+         fi
     done | xargs rcorder -s nostart ${rc_rcorder_flags} 2>/dev/null
     return 0
 }
