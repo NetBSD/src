@@ -1,4 +1,4 @@
-#       $NetBSD: camellia.inc,v 1.1.8.1 2012/08/14 07:57:02 riz Exp $
+#       $NetBSD: camellia.inc,v 1.1.8.2 2015/04/02 17:47:51 snj Exp $
 
 .PATH:  ${OPENSSLSRC}/crypto/camellia
 

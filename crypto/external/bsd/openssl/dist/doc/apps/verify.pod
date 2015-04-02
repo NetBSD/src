@@ -114,13 +114,13 @@ Print out diagnostics related to policy processing.
 
 =item B<-crl_check>
 
-Checks end entity certificate validity by attempting to lookup a valid CRL.
+Checks end entity certificate validity by attempting to look up a valid CRL.
 If a valid CRL cannot be found an error occurs. 
 
 =item B<-crl_check_all>
 
 Checks the validity of B<all> certificates in the chain by attempting
-to lookup valid CRLs.
+to look up valid CRLs.
 
 =item B<-ignore_critical>
 

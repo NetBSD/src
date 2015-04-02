@@ -94,7 +94,7 @@ OPENSSL_cleanse:
 	stb	0,0(3)
 	addi	3,3,1
 	bc	16,0,$-8
-	blr
+	blr	
 .Lot:	andi.	5,3,3
 	beq	.Laligned
 	stb	0,0(3)
