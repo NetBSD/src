@@ -128,9 +128,11 @@ extern int cpu_fpu_present;
 /*
  * Per-CPU information.  For now we assume one CPU.
  */
+#ifdef _KERNEL
 static inline int curcpl(void);
 static inline void set_curcpl(int);
 static inline void cpu_dosoftints(void);
+#endif
 
 #ifdef _KMEMUSER
 #include <sys/intr.h>
@@ -179,9 +181,6 @@ struct cpu_info {
 extern struct cpu_info cpu_info_store;
 
 #if defined(TPIDRPRW_IS_CURLWP)
-#if defined(MULTIPROCESSOR)
-#error MULTIPROCESSOR requires TPIDRPRW_IS_CURCPU not TPIDRPRW_IS_CURLWP
-#else
 static inline struct lwp *
 _curlwp(void)
 {
@@ -194,8 +193,12 @@ _curlwp_set(struct lwp *l)
 	armreg_tpidrprw_write((uintptr_t)l);
 }
 
-#define	curcpu()	(&cpu_info_store)
-#endif
+// Also in <sys/lwp.h> but also here if this was included before <sys/lwp.h> 
+static inline struct cpu_info *lwp_getcpu(struct lwp *);
+
+#define	curlwp		_curlwp()
+// curcpu() expands into two instructions: a mrc and a ldr
+#define	curcpu()	lwp_getcpu(_curlwp())
 #elif defined(TPIDRPRW_IS_CURCPU)
 static inline struct cpu_info *
 curcpu(void)
@@ -205,7 +208,7 @@ curcpu(void)
 #elif !defined(MULTIPROCESSOR)
 #define	curcpu()	(&cpu_info_store)
 #else
-#error MULTIPROCESSOR requires TPIDRPRW_IS_CURCPU
+#error MULTIPROCESSOR requires TPIDRPRW_IS_CURCPU or TPIDRPRW_IS_CURLWP
 #endif /* !TPIDRPRW_IS_CURCPU && !TPIDRPRW_IS_CURLWP */
 
 #ifndef curlwp
