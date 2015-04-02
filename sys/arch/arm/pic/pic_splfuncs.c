@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.6 2015/03/29 00:31:30 matt Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.7 2015/04/02 03:11:34 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,12 +28,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.6 2015/03/29 00:31:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.7 2015/04/02 03:11:34 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/evcnt.h>
+#include <sys/lwp.h>
 #include <sys/kernel.h>
 
 #include <dev/cons.h>
