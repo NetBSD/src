@@ -1,4 +1,4 @@
-#	$NetBSD: idea.inc,v 1.1.8.1 2012/08/14 07:57:03 riz Exp $
+#	$NetBSD: idea.inc,v 1.1.8.2 2015/04/02 17:47:51 snj Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
