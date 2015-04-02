@@ -1,4 +1,4 @@
-#	$NetBSD: rc4.inc,v 1.1.8.1 2012/08/14 07:57:03 riz Exp $
+#	$NetBSD: rc4.inc,v 1.1.8.1.4.1 2015/04/02 17:58:49 snj Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #

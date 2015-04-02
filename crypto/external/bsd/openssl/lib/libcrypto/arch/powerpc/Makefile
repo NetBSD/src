@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.10.1 2014/04/08 11:58:54 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.2.10.2 2015/04/02 17:58:49 snj Exp $
 
 .include "bsd.own.mk"
 
@@ -13,6 +13,6 @@ regen:
 	    *64*) ;; \
 	    *) perl $$i 32 | perl ${XLATE} linux32 | \
 	       sed -e 's/bc	25,0,/bdnz+	/' \
-	           -e 's/bclr   14,2/beqlr/' > $$(basename $$i .pl).S ;; \
+		   -e 's/bclr	14,2/beqlr/' > $$(basename $$i .pl).S ;; \
 	    esac; \
 	done
