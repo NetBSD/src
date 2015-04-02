@@ -217,8 +217,8 @@ L\$done2
 	.PROCEND
 ___
 }
-$code =~ s/cmpib,\*/comib,/gm if ($SIZE_T==4);
-$code =~ s/,\*/,/gm if ($SIZE_T==4);
+$code =~ s/cmpib,\*/comib,/gm	if ($SIZE_T==4);
+$code =~ s/,\*/,/gm		if ($SIZE_T==4);
 $code =~ s/\bbv\b/bve/gm	if ($SIZE_T==8);
 print $code;
 close STDOUT;
