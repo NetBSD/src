@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixv.c,v 1.2 2011/03/23 13:10:15 jhb Exp $*/
-/*$NetBSD: ixv.c,v 1.5 2015/03/27 05:57:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixv.c 238149 2012-07-05 20:51:44Z jfv $*/
+/*$NetBSD: ixv.c,v 1.6 2015/04/02 09:26:55 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -41,7 +41,7 @@
 /*********************************************************************
  *  Driver version
  *********************************************************************/
-char ixv_driver_version[] = "1.1.2";
+char ixv_driver_version[] = "1.1.4";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -432,7 +432,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* Get Hardware Flow Control setting */
 	hw->fc.requested_mode = ixgbe_fc_full;
 	hw->fc.pause_time = IXV_FC_PAUSE;
-	hw->fc.low_water = IXV_FC_LO;
+	hw->fc.low_water[0] = IXV_FC_LO;
 	hw->fc.high_water[0] = IXV_FC_HI;
 	hw->fc.send_xon = TRUE;
 
@@ -2405,7 +2405,7 @@ ixv_initialize_transmit_units(struct adapter *adapter)
 		    adapter->num_tx_desc *
 		    sizeof(struct ixgbe_legacy_tx_desc));
 		txctrl = IXGBE_READ_REG(hw, IXGBE_VFDCA_TXCTRL(i));
-		txctrl &= ~IXGBE_DCA_TXCTRL_TX_WB_RO_EN;
+		txctrl &= ~IXGBE_DCA_TXCTRL_DESC_WRO_EN;
 		IXGBE_WRITE_REG(hw, IXGBE_VFDCA_TXCTRL(i), txctrl);
 		break;
 	}
@@ -4153,7 +4153,7 @@ ixv_set_flowcntl(SYSCTLFN_ARGS)
 			adapter->hw.fc.requested_mode = ixgbe_fc_none;
 	}
 
-	ixgbe_fc_enable(&adapter->hw, 0);
+	ixgbe_fc_enable(&adapter->hw);
 	return error;
 }
 

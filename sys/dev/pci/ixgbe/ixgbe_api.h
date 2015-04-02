@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe_api.h,v 1.12 2011/01/19 19:36:27 jfv Exp $*/
-/*$NetBSD: ixgbe_api.h,v 1.2 2015/03/27 05:57:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.h 238149 2012-07-05 20:51:44Z jfv $*/
+/*$NetBSD: ixgbe_api.h,v 1.3 2015/04/02 09:26:55 msaitoh Exp $*/
 
 #ifndef _IXGBE_API_H_
 #define _IXGBE_API_H_
@@ -105,6 +105,7 @@ s32 ixgbe_set_rar(struct ixgbe_hw *hw, u32 index, u8 *addr, u32 vmdq,
 		  u32 enable_addr);
 s32 ixgbe_clear_rar(struct ixgbe_hw *hw, u32 index);
 s32 ixgbe_set_vmdq(struct ixgbe_hw *hw, u32 rar, u32 vmdq);
+s32 ixgbe_set_vmdq_san_mac(struct ixgbe_hw *hw, u32 vmdq);
 s32 ixgbe_clear_vmdq(struct ixgbe_hw *hw, u32 rar, u32 vmdq);
 s32 ixgbe_init_rx_addrs(struct ixgbe_hw *hw);
 u32 ixgbe_get_num_rx_addrs(struct ixgbe_hw *hw);
@@ -121,7 +122,7 @@ s32 ixgbe_set_vfta(struct ixgbe_hw *hw, u32 vlan,
 		   u32 vind, bool vlan_on);
 s32 ixgbe_set_vlvf(struct ixgbe_hw *hw, u32 vlan, u32 vind,
 		   bool vlan_on, bool *vfta_changed);
-s32 ixgbe_fc_enable(struct ixgbe_hw *hw, s32 packetbuf_num);
+s32 ixgbe_fc_enable(struct ixgbe_hw *hw);
 s32 ixgbe_set_fw_drv_ver(struct ixgbe_hw *hw, u8 maj, u8 min, u8 build,
 			 u8 ver);
 void ixgbe_set_mta(struct ixgbe_hw *hw, u8 *mc_addr);

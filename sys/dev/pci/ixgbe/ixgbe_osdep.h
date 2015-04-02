@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe_osdep.h,v 1.9 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.4 2015/03/27 05:57:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 238149 2012-07-05 20:51:44Z jfv $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.5 2015/04/02 09:26:55 msaitoh Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -53,6 +53,7 @@
 #include <net/if_ether.h>
 
 #define ASSERT(x) if(!(x)) panic("IXGBE: x")
+#define EWARN(H, W, S) printf(W)
 
 /* The happy-fun DELAY macro is defined in /usr/src/sys/i386/include/clock.h */
 #define usec_delay(x) DELAY(x)

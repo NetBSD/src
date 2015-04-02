@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe_phy.c,v 1.11 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_phy.c,v 1.3 2015/03/27 05:57:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_phy.c 238149 2012-07-05 20:51:44Z jfv $*/
+/*$NetBSD: ixgbe_phy.c,v 1.4 2015/04/02 09:26:55 msaitoh Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -1021,6 +1021,8 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 		  * 8   SFP_act_lmt_DA_CORE1 - 82599-specific
 		  * 9   SFP_1g_cu_CORE0 - 82599-specific
 		  * 10  SFP_1g_cu_CORE1 - 82599-specific
+		  * 11  SFP_1g_sx_CORE0 - 82599-specific
+		  * 12  SFP_1g_sx_CORE1 - 82599-specific
 		  */
 		if (hw->mac.type == ixgbe_mac_82598EB) {
 			if (cable_tech & IXGBE_SFF_DA_PASSIVE_CABLE)
@@ -1071,6 +1073,13 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 				else
 					hw->phy.sfp_type =
 						ixgbe_sfp_type_1g_cu_core1;
+			} else if (comp_codes_1g & IXGBE_SFF_1GBASESX_CAPABLE) {
+				if (hw->bus.lan_id == 0)
+					hw->phy.sfp_type =
+						ixgbe_sfp_type_1g_sx_core0;
+				else
+					hw->phy.sfp_type =
+						ixgbe_sfp_type_1g_sx_core1;
 			} else {
 				hw->phy.sfp_type = ixgbe_sfp_type_unknown;
 			}
@@ -1163,7 +1172,9 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 		/* Verify supported 1G SFP modules */
 		if (comp_codes_10g == 0 &&
 		    !(hw->phy.sfp_type == ixgbe_sfp_type_1g_cu_core1 ||
-		      hw->phy.sfp_type == ixgbe_sfp_type_1g_cu_core0)) {
+		      hw->phy.sfp_type == ixgbe_sfp_type_1g_cu_core0 ||
+		      hw->phy.sfp_type == ixgbe_sfp_type_1g_sx_core0  ||
+		      hw->phy.sfp_type == ixgbe_sfp_type_1g_sx_core1)) {
 			hw->phy.type = ixgbe_phy_sfp_unsupported;
 			status = IXGBE_ERR_SFP_NOT_SUPPORTED;
 			goto out;
@@ -1178,14 +1189,31 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 		ixgbe_get_device_caps(hw, &enforce_sfp);
 		if (!(enforce_sfp & IXGBE_DEVICE_CAPS_ALLOW_ANY_SFP) &&
 		    !((hw->phy.sfp_type == ixgbe_sfp_type_1g_cu_core0) ||
-		      (hw->phy.sfp_type == ixgbe_sfp_type_1g_cu_core1))) {
+		      (hw->phy.sfp_type == ixgbe_sfp_type_1g_cu_core1) ||
+		      (hw->phy.sfp_type == ixgbe_sfp_type_1g_sx_core0)  ||
+		      (hw->phy.sfp_type == ixgbe_sfp_type_1g_sx_core1))) {
 			/* Make sure we're a supported PHY type */
 			if (hw->phy.type == ixgbe_phy_sfp_intel) {
 				status = IXGBE_SUCCESS;
 			} else {
-				DEBUGOUT("SFP+ module not supported\n");
-				hw->phy.type = ixgbe_phy_sfp_unsupported;
-				status = IXGBE_ERR_SFP_NOT_SUPPORTED;
+				if (hw->allow_unsupported_sfp == TRUE) {
+					EWARN(hw, "WARNING: Intel (R) Network "
+					      "Connections are quality tested "
+					      "using Intel (R) Ethernet Optics."
+					      " Using untested modules is not "
+					      "supported and may cause unstable"
+					      " operation or damage to the "
+					      "module or the adapter. Intel "
+					      "Corporation is not responsible "
+					      "for any harm caused by using "
+					      "untested modules.\n", status);
+					status = IXGBE_SUCCESS;
+				} else {
+					DEBUGOUT("SFP+ module not supported\n");
+					hw->phy.type =
+						ixgbe_phy_sfp_unsupported;
+					status = IXGBE_ERR_SFP_NOT_SUPPORTED;
+				}
 			}
 		} else {
 			status = IXGBE_SUCCESS;
@@ -1239,10 +1267,12 @@ s32 ixgbe_get_sfp_init_sequence_offsets(struct ixgbe_hw *hw,
 	 * SR modules
 	 */
 	if (sfp_type == ixgbe_sfp_type_da_act_lmt_core0 ||
-	    sfp_type == ixgbe_sfp_type_1g_cu_core0)
+	    sfp_type == ixgbe_sfp_type_1g_cu_core0 ||
+	    sfp_type == ixgbe_sfp_type_1g_sx_core0)
 		sfp_type = ixgbe_sfp_type_srlr_core0;
 	else if (sfp_type == ixgbe_sfp_type_da_act_lmt_core1 ||
-		 sfp_type == ixgbe_sfp_type_1g_cu_core1)
+		 sfp_type == ixgbe_sfp_type_1g_cu_core1 ||
+		 sfp_type == ixgbe_sfp_type_1g_sx_core1)
 		sfp_type = ixgbe_sfp_type_srlr_core1;
 
 	/* Read offset to PHY init contents */
@@ -1716,15 +1746,24 @@ static s32 ixgbe_clock_out_i2c_bit(struct ixgbe_hw *hw, bool data)
  **/
 static void ixgbe_raise_i2c_clk(struct ixgbe_hw *hw, u32 *i2cctl)
 {
+	u32 i = 0;
+	u32 timeout = IXGBE_I2C_CLOCK_STRETCHING_TIMEOUT;
+	u32 i2cctl_r = 0;
+
 	DEBUGFUNC("ixgbe_raise_i2c_clk");
 
-	*i2cctl |= IXGBE_I2C_CLK_OUT;
+	for (i = 0; i < timeout; i++) {
+		*i2cctl |= IXGBE_I2C_CLK_OUT;
 
-	IXGBE_WRITE_REG(hw, IXGBE_I2CCTL, *i2cctl);
-	IXGBE_WRITE_FLUSH(hw);
+		IXGBE_WRITE_REG(hw, IXGBE_I2CCTL, *i2cctl);
+		IXGBE_WRITE_FLUSH(hw);
+		/* SCL rise time (1000ns) */
+		usec_delay(IXGBE_I2C_T_RISE);
 
-	/* SCL rise time (1000ns) */
-	usec_delay(IXGBE_I2C_T_RISE);
+		i2cctl_r = IXGBE_READ_REG(hw, IXGBE_I2CCTL);
+		if (i2cctl_r & IXGBE_I2C_CLK_IN)
+			break;
+	}
 }
 
 /**
@@ -1841,7 +1880,7 @@ void ixgbe_i2c_bus_clear(struct ixgbe_hw *hw)
 }
 
 /**
- *  ixgbe_tn_check_overtemp - Checks if an overtemp occured.
+ *  ixgbe_tn_check_overtemp - Checks if an overtemp occurred.
  *  @hw: pointer to hardware structure
  *
  *  Checks if the LASI temp alarm status was triggered due to overtemp
