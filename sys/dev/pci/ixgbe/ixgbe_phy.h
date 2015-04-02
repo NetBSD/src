@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_phy.h,v 1.11 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_phy.h,v 1.2 2015/03/27 05:57:28 msaitoh Exp $*/
+/*$NetBSD: ixgbe_phy.h,v 1.3 2015/04/02 09:26:55 msaitoh Exp $*/
 
 #ifndef _IXGBE_PHY_H_
 #define _IXGBE_PHY_H_
