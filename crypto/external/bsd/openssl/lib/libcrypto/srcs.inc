@@ -1,4 +1,4 @@
-#	$NetBSD: srcs.inc,v 1.3.4.1 2012/08/14 07:57:03 riz Exp $
+#	$NetBSD: srcs.inc,v 1.3.4.1.4.1 2015/04/02 17:58:49 snj Exp $
 
 CRYPTOINCS= \
 	aes.inc asn1.inc bf.inc bio.inc bn.inc buffer.inc cast.inc cmac.inc \

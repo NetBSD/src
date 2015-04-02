@@ -301,7 +301,7 @@ Example:
  O=Organisation
  CN=Some Name
 
- 
+
 =head2 Certificate Policies.
 
 This is a I<raw> extension. All the fields of this extension can be set by

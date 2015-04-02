@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_keys.c,v 1.1.14.2 2014/06/06 05:34:33 msaitoh Exp $	*/
+/*	$NetBSD: rnd_keys.c,v 1.1.14.3 2015/04/02 17:58:49 snj Exp $	*/
 
 #include "des_locl.h"
 #include <sys/time.h>

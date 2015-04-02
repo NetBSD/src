@@ -1,4 +1,4 @@
-#	$NetBSD: engine.inc,v 1.3.4.1 2012/08/14 07:57:02 riz Exp $
+#	$NetBSD: engine.inc,v 1.3.4.1.4.1 2015/04/02 17:58:49 snj Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -24,12 +24,6 @@ ENGINE_SRCS = eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	e_sureware.c e_sureware_err.c \
 	e_ubsec.c e_ubsec_err.c   \
 	e_padlock.c e_seed.c
-
-.if defined(AESNI)
-ENGINE_SRCS+=  eng_aesni.c
-.else
-CRYPTOCPPFLAGS+=-DOPENSSL_NO_HW_AESNI
-.endif
 
 ENGINE_SRCS += gost2001.c gost2001_keyx.c gost89.c gost94_keyx.c gost_ameth.c \
 	gost_asn1.c gost_crypt.c gost_ctl.c gost_eng.c gosthash.c \
