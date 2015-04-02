@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.5 2015/02/28 09:34:35 skrll Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.6 2015/04/02 03:11:21 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,8 @@
 
 #ifndef _ARM_CORTEX_GTMR_VAR_
 #define _ARM_CORTEX_GTMR_VAR_
+
+#include <sys/percpu.h>
 
 struct gtmr_softc {
 	device_t sc_dev;
