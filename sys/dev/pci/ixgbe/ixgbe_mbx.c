@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_mbx.c,v 1.2 2011/01/19 19:36:27 jfv Exp $*/
-/*$NetBSD: ixgbe_mbx.c,v 1.2 2015/03/27 05:57:28 msaitoh Exp $*/
+/*$NetBSD: ixgbe_mbx.c,v 1.3 2015/04/02 09:26:55 msaitoh Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_mbx.h"
