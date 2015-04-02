@@ -1,4 +1,4 @@
-#	$NetBSD: sha.inc,v 1.1.22.2 2014/06/06 05:20:06 msaitoh Exp $
+#	$NetBSD: sha.inc,v 1.1.22.3 2015/04/02 18:04:14 snj Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #

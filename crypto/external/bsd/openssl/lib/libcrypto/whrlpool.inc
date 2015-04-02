@@ -1,4 +1,4 @@
-#	$NetBSD: whrlpool.inc,v 1.1.2.2 2012/08/14 07:57:03 riz Exp $
+#	$NetBSD: whrlpool.inc,v 1.1.2.2.6.1 2015/04/02 18:04:14 snj Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #

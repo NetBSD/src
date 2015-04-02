@@ -1,4 +1,4 @@
-#	$NetBSD: aes.inc,v 1.2.18.1 2014/06/06 05:20:06 msaitoh Exp $
+#	$NetBSD: aes.inc,v 1.2.18.2 2015/04/02 18:04:14 snj Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
