@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_vf.h,v 1.1 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_vf.h,v 1.3 2015/03/27 05:57:28 msaitoh Exp $*/
+/*$NetBSD: ixgbe_vf.h,v 1.4 2015/04/02 09:26:55 msaitoh Exp $*/
 
 #ifndef __IXGBE_VF_H__
 #define __IXGBE_VF_H__

@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixv.h,v 1.3 2011/01/07 23:39:41 jfv Exp $*/
-/*$NetBSD: ixv.h,v 1.4 2015/03/27 05:57:28 msaitoh Exp $*/
+/*$NetBSD: ixv.h,v 1.5 2015/04/02 09:26:55 msaitoh Exp $*/
 
 
 #ifndef _IXV_H_

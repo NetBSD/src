@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.24 2015/03/27 05:57:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 238149 2012-07-05 20:51:44Z jfv $*/
+/*$NetBSD: ixgbe.c,v 1.25 2015/04/02 09:26:55 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -74,7 +74,7 @@ int             ixgbe_display_debug_stats = 0;
 /*********************************************************************
  *  Driver version
  *********************************************************************/
-char ixgbe_driver_version[] = "2.4.5";
+char ixgbe_driver_version[] = "2.4.8";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -111,6 +111,7 @@ static ixgbe_vendor_info_t ixgbe_vendor_info_array[] =
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_FCOE, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599EN_SFP, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_SF_QP, 0, 0, 0},
+	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_X540T1, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_X540T, 0, 0, 0},
 	/* required last entry */
 	{0, 0, 0, 0, 0}
@@ -198,7 +199,7 @@ static void     ixgbe_dma_free(struct adapter *, struct ixgbe_dma_alloc *);
 static void	ixgbe_add_rx_process_limit(struct adapter *, const char *,
 		    const char *, int *, int);
 static u32	ixgbe_tx_ctx_setup(struct tx_ring *, struct mbuf *);
-static bool	ixgbe_tso_setup(struct tx_ring *, struct mbuf *, u32 *);
+static bool	ixgbe_tso_setup(struct tx_ring *, struct mbuf *, u32 *, u32 *);
 static void	ixgbe_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixgbe_configure_ivars(struct adapter *);
 static u8 *	ixgbe_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
@@ -357,7 +358,7 @@ static int fdir_pballoc = 1;
  * be a reference on how to implement netmap support in a driver.
  * Additional comments are in ixgbe_netmap.h .
  *
- * <dev/netma/ixgbe_netmap.h> contains functions for netmap support
+ * <dev/netmap/ixgbe_netmap.h> contains functions for netmap support
  * that extend the standard driver.
  */
 #include <dev/netmap/ixgbe_netmap.h>
@@ -595,28 +596,25 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		goto err_late;
 	}
 
-	/* Get Hardware Flow Control setting */
-	hw->fc.requested_mode = ixgbe_fc_full;
-	adapter->fc = hw->fc.requested_mode;
-	hw->fc.pause_time = IXGBE_FC_PAUSE;
-	hw->fc.low_water = IXGBE_FC_LO;
-	hw->fc.high_water[0] = IXGBE_FC_HI;
-	hw->fc.send_xon = TRUE;
-
 	error = ixgbe_init_hw(hw);
-	if (error == IXGBE_ERR_EEPROM_VERSION) {
+	switch (error) {
+	case IXGBE_ERR_EEPROM_VERSION:
 		aprint_error_dev(dev, "This device is a pre-production adapter/"
 		    "LOM.  Please be aware there may be issues associated "
 		    "with your hardware.\n If you are experiencing problems "
 		    "please contact your Intel or hardware representative "
 		    "who provided you with this hardware.\n");
-	} else if (error == IXGBE_ERR_SFP_NOT_SUPPORTED)
+		break;
+	case IXGBE_ERR_SFP_NOT_SUPPORTED:
 		aprint_error_dev(dev,"Unsupported SFP+ Module\n");
-
-	if (error) {
 		error = EIO;
 		aprint_error_dev(dev,"Hardware Initialization Failure\n");
 		goto err_late;
+	case IXGBE_ERR_SFP_NOT_PRESENT:
+		device_printf(dev,"No SFP+ Module found\n");
+		/* falls thru */
+	default:
+		break;
 	}
 
 	/* Detect and set physical type */
@@ -1307,6 +1305,14 @@ ixgbe_init_locked(struct adapter *adapter)
 		txdctl |= IXGBE_TXDCTL_ENABLE;
 		/* Set WTHRESH to 8, burst writeback */
 		txdctl |= (8 << 16);
+		/*
+		 * When the internal queue falls below PTHRESH (32),
+		 * start prefetching as long as there are at least
+		 * HTHRESH (1) buffers ready. The values are taken
+		 * from the Intel linux driver 3.8.21.
+		 * Prefetching enables tx line rate even with 1 queue.
+		 */
+		txdctl |= (32 << 0) | (1 << 8);
 		IXGBE_WRITE_REG(hw, IXGBE_TXDCTL(i), txdctl);
 	}
 
@@ -1393,7 +1399,7 @@ ixgbe_init_locked(struct adapter *adapter)
 #ifdef IXGBE_FDIR
 	/* Init Flow director */
 	if (hw->mac.type != ixgbe_mac_82598EB) {
-		u32 hdrm = 64 << fdir_pballoc;
+		u32 hdrm = 32 << fdir_pballoc;
 
 		hw->mac.ops.setup_rxpba(hw, 0, hdrm, PBA_STRATEGY_EQUAL);
 		ixgbe_init_fdir_signature_82599(&adapter->hw, fdir_pballoc);
@@ -1418,6 +1424,35 @@ ixgbe_init_locked(struct adapter *adapter)
 
 	/* Config/Enable Link */
 	ixgbe_config_link(adapter);
+
+	/* Hardware Packet Buffer & Flow Control setup */
+	{
+		u32 rxpb, frame, size, tmp;
+
+		frame = adapter->max_frame_size;
+
+		/* Calculate High Water */
+		if (hw->mac.type == ixgbe_mac_X540)
+			tmp = IXGBE_DV_X540(frame, frame);
+		else
+			tmp = IXGBE_DV(frame, frame);
+		size = IXGBE_BT2KB(tmp);
+		rxpb = IXGBE_READ_REG(hw, IXGBE_RXPBSIZE(0)) >> 10;
+		hw->fc.high_water[0] = rxpb - size;
+
+		/* Now calculate Low Water */
+		if (hw->mac.type == ixgbe_mac_X540)
+			tmp = IXGBE_LOW_DV_X540(frame);
+		else
+			tmp = IXGBE_LOW_DV(frame);
+		hw->fc.low_water[0] = IXGBE_BT2KB(tmp);
+		
+		adapter->fc = hw->fc.requested_mode = ixgbe_fc_full;
+		hw->fc.pause_time = IXGBE_FC_PAUSE;
+		hw->fc.send_xon = TRUE;
+	}
+	/* Initialize the FC settings */
+	ixgbe_start_hw(hw);
 
 	/* And now turn on interrupts */
 	ixgbe_enable_intr(adapter);
@@ -1527,7 +1562,7 @@ ixgbe_handle_que(void *context)
 			ixgbe_start_locked(txr, ifp);
 #endif
 		IXGBE_TX_UNLOCK(txr);
-		if (more || (ifp->if_flags & IFF_OACTIVE)) {
+		if (more) {
 			adapter->req.ev_count++;
 			softint_schedule(que->que_si);
 			return;
@@ -1724,10 +1759,8 @@ ixgbe_msix_link(void *arg)
 			/* This is probably overkill :) */
 			if (!atomic_cmpset_int(&adapter->fdir_reinit, 0, 1))
 				return;
-                	/* Clear the interrupt */
-			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_FLOW_DIR);
-			/* Turn off the interface */
-			adapter->ifp->if_flags &= ~IFF_RUNNING;
+                	/* Disable the interrupt */
+			IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EICR_FLOW_DIR);
 			softint_schedule(adapter->fdir_si);
 		} else
 #endif
@@ -1925,9 +1958,8 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	** a packet.
 	*/
 	if (m_head->m_pkthdr.csum_flags & (M_CSUM_TSOv4|M_CSUM_TSOv6)) {
-		if (ixgbe_tso_setup(txr, m_head, &paylen)) {
+		if (ixgbe_tso_setup(txr, m_head, &paylen, &olinfo_status)) {
 			cmd_type_len |= IXGBE_ADVTXD_DCMD_TSE;
-			olinfo_status |= IXGBE_TXD_POPTS_IXSM << 8;
 			olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
 			olinfo_status |= paylen << IXGBE_ADVTXD_PAYLEN_SHIFT;
 			++adapter->tso_tx.ev_count;
@@ -2220,6 +2252,8 @@ ixgbe_update_link_status(struct adapter *adapter)
 				    ((adapter->link_speed == 128)? 10:1),
 				    "Full Duplex");
 			adapter->link_active = TRUE;
+			/* Update any Flow Control changes */
+			ixgbe_fc_enable(&adapter->hw);
 			if_link_state_change(ifp, LINK_STATE_UP);
 		}
 	} else { /* Link down */
@@ -2783,7 +2817,7 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	 */
 	ifp->if_hdrlen = sizeof(struct ether_vlan_header);
 
-	ifp->if_capabilities |= IFCAP_HWCSUM | IFCAP_TSOv4;
+	ifp->if_capabilities |= IFCAP_HWCSUM | IFCAP_TSOv4 | IFCAP_TSOv6;
 	ifp->if_capenable = 0;
 
 	ec->ec_capabilities |= ETHERCAP_VLAN_HWCSUM;
@@ -3152,7 +3186,8 @@ ixgbe_allocate_transmit_buffers(struct tx_ring *txr)
 	for (i = 0; i < adapter->num_tx_desc; i++, txbuf++) {
 		error = ixgbe_dmamap_create(txr->txtag, 0, &txbuf->map);
 		if (error != 0) {
-			aprint_error_dev(dev, "Unable to create TX DMA map\n");
+			aprint_error_dev(dev,
+			    "Unable to create TX DMA map (%d)\n", error);
 			goto fail;
 		}
 	}
@@ -3214,14 +3249,11 @@ ixgbe_setup_transmit_ring(struct tx_ring *txr)
 		 * Slots in the netmap ring (indexed by "si") are
 		 * kring->nkr_hwofs positions "ahead" wrt the
 		 * corresponding slot in the NIC ring. In some drivers
-		 * (not here) nkr_hwofs can be negative. When computing
-		 * si = i + kring->nkr_hwofs make sure to handle wraparounds.
+		 * (not here) nkr_hwofs can be negative. Function
+		 * netmap_idx_n2k() handles wraparounds properly.
 		 */
 		if (slot) {
-			int si = i + na->tx_rings[txr->me].nkr_hwofs;
-
-			if (si >= na->num_tx_desc)
-				si -= na->num_tx_desc;
+			int si = netmap_idx_n2k(&na->tx_rings[txr->me], i);
 			netmap_load_map(txr->txtag, txbuf->map, NMB(slot + si));
 		}
 #endif /* DEV_NETMAP */
@@ -3301,7 +3333,7 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 			txctrl = IXGBE_READ_REG(hw, IXGBE_DCA_TXCTRL_82599(i));
 			break;
                 }
-		txctrl &= ~IXGBE_DCA_TXCTRL_TX_WB_RO_EN;
+		txctrl &= ~IXGBE_DCA_TXCTRL_DESC_WRO_EN;
 		switch (hw->mac.type) {
 		case ixgbe_mac_82598EB:
 			IXGBE_WRITE_REG(hw, IXGBE_DCA_TXCTRL(i), txctrl);
@@ -3478,6 +3510,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	case ETHERTYPE_IPV6:
 		m_copydata(mp, ehdrlen, sizeof(ip6), &ip6);
 		ip_hlen = sizeof(ip6);
+		/* XXX-BZ this will go badly in case of ext hdrs. */
 		ipproto = ip6.ip6_nxt;
 		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
 		break;
@@ -3526,7 +3559,8 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
  *
  **********************************************************************/
 static bool
-ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen)
+ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen,
+    u32 *olinfo_status)
 {
 	struct m_tag *mtag;
 	struct adapter *adapter = txr->adapter;
@@ -3534,11 +3568,16 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen)
 	struct ixgbe_adv_tx_context_desc *TXD;
 	struct ixgbe_tx_buf        *tx_buffer;
 	u32 vlan_macip_lens = 0, type_tucmd_mlhl = 0;
-	u32 mss_l4len_idx = 0;
-	u16 vtag = 0;
-	int ctxd, ehdrlen,  hdrlen, ip_hlen, tcp_hlen;
+	u32 mss_l4len_idx = 0, len;
+	u16 vtag = 0, eh_type;
+	int ctxd, ehdrlen, ip_hlen, tcp_hlen;
 	struct ether_vlan_header *eh;
+#ifdef INET6
+	struct ip6_hdr *ip6;
+#endif
+#ifdef INET
 	struct ip *ip;
+#endif
 	struct tcphdr *th;
 
 
@@ -3547,33 +3586,63 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen)
 	 * Jump over vlan headers if already present
 	 */
 	eh = mtod(mp, struct ether_vlan_header *);
-	if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN)) 
+	if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN)) {
 		ehdrlen = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
-	else
+		eh_type = eh->evl_proto;
+	} else {
 		ehdrlen = ETHER_HDR_LEN;
+		eh_type = eh->evl_encap_proto;
+	}
 
         /* Ensure we have at least the IP+TCP header in the first mbuf. */
-        if (mp->m_len < ehdrlen + sizeof(struct ip) + sizeof(struct tcphdr))
-		return FALSE;
+	len = ehdrlen + sizeof(struct tcphdr);
+	switch (ntohs(eh_type)) {
+#ifdef INET6
+	case ETHERTYPE_IPV6:
+		if (mp->m_len < len + sizeof(struct ip6_hdr))
+			return FALSE;
+		ip6 = (struct ip6_hdr *)(mp->m_data + ehdrlen);
+		/* XXX-BZ For now we do not pretend to support ext. hdrs. */
+		if (ip6->ip6_nxt != IPPROTO_TCP)
+			return FALSE;
+		ip_hlen = sizeof(struct ip6_hdr);
+		th = (struct tcphdr *)((char *)ip6 + ip_hlen);
+		th->th_sum = in6_cksum_phdr(&ip6->ip6_src,
+		    &ip6->ip6_dst, 0, htonl(IPPROTO_TCP));
+		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
+		break;
+#endif
+#ifdef INET
+	case ETHERTYPE_IP:
+		if (mp->m_len < len + sizeof(struct ip))
+			return FALSE;
+		ip = (struct ip *)(mp->m_data + ehdrlen);
+		if (ip->ip_p != IPPROTO_TCP)
+			return FALSE;
+		ip->ip_sum = 0;
+		ip_hlen = ip->ip_hl << 2;
+		th = (struct tcphdr *)((char *)ip + ip_hlen);
+		th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
+		    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
+		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
+		/* Tell transmit desc to also do IPv4 checksum. */
+		*olinfo_status |= IXGBE_TXD_POPTS_IXSM << 8;
+		break;
+#endif
+	default:
+		panic("%s: CSUM_TSO but no supported IP version (0x%04x)",
+		    __func__, ntohs(eh_type));
+		break;
+	}
 
 	ctxd = txr->next_avail_desc;
 	tx_buffer = &txr->tx_buffers[ctxd];
 	TXD = (struct ixgbe_adv_tx_context_desc *) &txr->tx_base[ctxd];
 
-	ip = (struct ip *)(mp->m_data + ehdrlen);
-	if (ip->ip_p != IPPROTO_TCP)
-		return FALSE;   /* 0 */
-	ip->ip_sum = 0;
-	ip_hlen = ip->ip_hl << 2;
-	th = (struct tcphdr *)((char *)ip + ip_hlen);
-	/* XXX Educated guess: FreeBSD's in_pseudo == NetBSD's in_cksum_phdr */
-	th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
-	    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
 	tcp_hlen = th->th_off << 2;
-	hdrlen = ehdrlen + ip_hlen + tcp_hlen;
 
 	/* This is used in the transmit desc in encap */
-	*paylen = mp->m_pkthdr.len - hdrlen;
+	*paylen = mp->m_pkthdr.len - ehdrlen - ip_hlen - tcp_hlen;
 
 	/* VLAN MACLEN IPLEN */
 	if ((mtag = VLAN_OUTPUT_TAG(ec, mp)) != NULL) {
@@ -3588,9 +3657,7 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen)
 	/* ADV DTYPE TUCMD */
 	type_tucmd_mlhl |= IXGBE_ADVTXD_DCMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
 	type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
-	type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
 	TXD->type_tucmd_mlhl |= htole32(type_tucmd_mlhl);
-
 
 	/* MSS L4LEN IDX */
 	mss_l4len_idx |= (mp->m_pkthdr.segsz << IXGBE_ADVTXD_MSS_SHIFT);
@@ -3738,7 +3805,7 @@ ixgbe_txeof(struct tx_ring *txr)
 			selwakeuppri(&na->tx_rings[txr->me].si, PI_NET);
 			IXGBE_TX_UNLOCK(txr);
 			IXGBE_CORE_LOCK(adapter);
-			selwakeuppri(&na->tx_rings[na->num_queues + 1].si, PI_NET);
+			selwakeuppri(&na->tx_si, PI_NET);
 			IXGBE_CORE_UNLOCK(adapter);
 			IXGBE_TX_LOCK(txr);
 		}
@@ -4040,6 +4107,9 @@ ixgbe_setup_hw_rsc(struct rx_ring *rxr)
 
 	rdrxctl = IXGBE_READ_REG(hw, IXGBE_RDRXCTL);
 	rdrxctl &= ~IXGBE_RDRXCTL_RSCFRSTSIZE;
+#ifdef DEV_NETMAP /* crcstrip is optional in netmap */
+	if (adapter->ifp->if_capenable & IFCAP_NETMAP && !ix_crcstrip)
+#endif /* DEV_NETMAP */
 	rdrxctl |= IXGBE_RDRXCTL_CRCSTRIP;
 	rdrxctl |= IXGBE_RDRXCTL_RSCACKC;
 	IXGBE_WRITE_REG(hw, IXGBE_RDRXCTL, rdrxctl);
@@ -4169,12 +4239,10 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		 * an mbuf, so end the block with a continue;
 		 */
 		if (slot) {
-			int sj = j + na->rx_rings[rxr->me].nkr_hwofs;
+			int sj = netmap_idx_n2k(&na->rx_rings[rxr->me], j);
 			uint64_t paddr;
 			void *addr;
 
-			if (sj >= na->num_rx_desc)
-				sj -= na->num_rx_desc;
 			addr = PNMB(slot + sj, &paddr);
 			netmap_load_map(rxr->ptag, rxbuf->pmap, addr);
 			/* Update descriptor */
@@ -4348,6 +4416,13 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 		hlreg |= IXGBE_HLREG0_JUMBOEN;
 	else
 		hlreg &= ~IXGBE_HLREG0_JUMBOEN;
+#ifdef DEV_NETMAP
+	/* crcstrip is conditional in netmap (in RDRXCTL too ?) */
+	if (ifp->if_capenable & IFCAP_NETMAP && !ix_crcstrip)
+		hlreg &= ~IXGBE_HLREG0_RXCRCSTRP;
+	else
+		hlreg |= IXGBE_HLREG0_RXCRCSTRP;
+#endif /* DEV_NETMAP */
 	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg);
 
 	bufsz = (adapter->rx_mbuf_sz +
@@ -4540,15 +4615,17 @@ ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype
 	struct ethercom *ec = &adapter->osdep.ec;
 
         /*
-         * ATM LRO is only for IPv4/TCP packets and TCP checksum of the packet
+         * ATM LRO is only for IP/TCP packets and TCP checksum of the packet
          * should be computed by hardware. Also it should not have VLAN tag in
-         * ethernet header.
+         * ethernet header.  In case of IPv6 we do not yet support ext. hdrs.
          */
         if (rxr->lro_enabled &&
             (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING) != 0 &&
             (ptype & IXGBE_RXDADV_PKTTYPE_ETQF) == 0 &&
-            (ptype & (IXGBE_RXDADV_PKTTYPE_IPV4 | IXGBE_RXDADV_PKTTYPE_TCP)) ==
-            (IXGBE_RXDADV_PKTTYPE_IPV4 | IXGBE_RXDADV_PKTTYPE_TCP) &&
+            ((ptype & (IXGBE_RXDADV_PKTTYPE_IPV4 | IXGBE_RXDADV_PKTTYPE_TCP)) ==
+            (IXGBE_RXDADV_PKTTYPE_IPV4 | IXGBE_RXDADV_PKTTYPE_TCP) ||
+            (ptype & (IXGBE_RXDADV_PKTTYPE_IPV6 | IXGBE_RXDADV_PKTTYPE_TCP)) ==
+            (IXGBE_RXDADV_PKTTYPE_IPV6 | IXGBE_RXDADV_PKTTYPE_TCP)) &&
             (m->m_pkthdr.csum_flags & (CSUM_DATA_VALID | CSUM_PSEUDO_HDR)) ==
             (CSUM_DATA_VALID | CSUM_PSEUDO_HDR)) {
                 /*
@@ -4650,7 +4727,7 @@ ixgbe_rxeof(struct ix_queue *que, int count)
 		selwakeuppri(&na->rx_rings[rxr->me].si, PI_NET);
 		IXGBE_RX_UNLOCK(rxr);
 		IXGBE_CORE_LOCK(adapter);
-		selwakeuppri(&na->rx_rings[na->num_queues + 1].si, PI_NET);
+		selwakeuppri(&na->rx_si, PI_NET);
 		IXGBE_CORE_UNLOCK(adapter);
 		return (FALSE);
 	}
@@ -5360,6 +5437,8 @@ ixgbe_reinit_fdir(void *context)
 		return;
 	ixgbe_reinit_fdir_tables_82599(&adapter->hw);
 	adapter->fdir_reinit = 0;
+	/* re-enable flow director interrupts */
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMS, IXGBE_EIMS_FLOW_DIR);
 	/* Restart the interface */
 	ifp->if_flags |= IFF_RUNNING;
 	return;
@@ -6009,8 +6088,9 @@ ixgbe_set_flowcntl(SYSCTLFN_ARGS)
 		default:
 			adapter->hw.fc.requested_mode = ixgbe_fc_none;
 	}
-
-	ixgbe_fc_enable(&adapter->hw, 0);
+	/* Don't autoneg if forcing a value */
+	adapter->hw.fc.disable_fc_autoneg = TRUE;
+	ixgbe_fc_enable(&adapter->hw);
 	return 0;
 }
 
@@ -6039,9 +6119,9 @@ ixgbe_add_rx_process_limit(struct adapter *adapter, const char *name,
 
 /*
 ** Control link advertise speed:
-** 	0 - normal
 **	1 - advertise only 1G
 **	2 - advertise 100Mb
+**	3 - advertise normal
 */
 static int
 ixgbe_set_advertise(SYSCTLFN_ARGS)
@@ -6056,19 +6136,21 @@ ixgbe_set_advertise(SYSCTLFN_ARGS)
 	node = *rnode;
 	adapter = (struct adapter *)node.sysctl_data;
 	dev = adapter->dev;
+	hw = &adapter->hw;
+	last = adapter->advertise;
 	t = adapter->advertise;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error != 0 || newp == NULL)
 		return error;
 
+	if (adapter->advertise == last) /* no change */
+		return (0);
+
 	if (t == -1)
 		return 0;
 
 	adapter->advertise = t;
-
-	hw = &adapter->hw;
-	last = hw->phy.autoneg_advertised;
 
 	if (!((hw->phy.media_type == ixgbe_media_type_copper) ||
             (hw->phy.multispeed_fiber)))
@@ -6083,12 +6165,11 @@ ixgbe_set_advertise(SYSCTLFN_ARGS)
                 speed = IXGBE_LINK_SPEED_1GB_FULL;
 	else if (adapter->advertise == 2)
                 speed = IXGBE_LINK_SPEED_100_FULL;
-	else
+	else if (adapter->advertise == 3)
                 speed = IXGBE_LINK_SPEED_1GB_FULL |
 			IXGBE_LINK_SPEED_10GB_FULL;
-
-	if (speed == last) /* no change */
-		return 0;
+	else /* bogus value */
+ 		return (error);
 
 	hw->mac.autotry_restart = TRUE;
 	hw->mac.ops.setup_link(hw, speed, TRUE, TRUE);
