@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe.h,v 1.24 2011/04/28 23:21:40 jfv Exp $*/
-/*$NetBSD: ixgbe.h,v 1.4 2015/03/27 05:57:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 234620 2012-04-23 22:05:09Z bz $*/
+/*$NetBSD: ixgbe.h,v 1.5 2015/04/02 09:26:55 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -198,7 +198,7 @@
 #define IXGBE_82599_SCATTER		32
 #define MSIX_82598_BAR			3
 #define MSIX_82599_BAR			4
-#define IXGBE_TSO_SIZE			65535
+#define IXGBE_TSO_SIZE			262140
 #define IXGBE_TX_BUFFER_SIZE		((u32) 1514)
 #define IXGBE_RX_HDR			128
 #define IXGBE_VFTA_SIZE			128
