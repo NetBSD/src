@@ -93,5 +93,5 @@ shift
 if [ $# -eq 0 ]; then
 	exec "$cmd"	# old sh, such as Tru64 4.x, fails to expand empty "$@"
 else
-exec "$cmd" "$@"
+	exec "$cmd" "$@"
 fi

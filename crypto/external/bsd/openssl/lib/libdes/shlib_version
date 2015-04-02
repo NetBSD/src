@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.1.8.1 2014/04/08 11:31:21 msaitoh Exp $
+#	$NetBSD: shlib_version,v 1.1.8.2 2015/04/02 17:47:55 snj Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 #	This library is currently only a symbolic link to libcrypto, so
