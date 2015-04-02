@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.18 2015/03/29 22:56:23 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.19 2015/04/02 15:48:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.18 2015/03/29 22:56:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.19 2015/04/02 15:48:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	obio_found = true;
 
 	aprint_naive("\n");
-	aprint_normal(": On-board I/O\n");
+	aprint_normal(": %s\n", rockchip_chip_name());
 
 #ifdef ROCKCHIP_CLOCK_DEBUG
 	obio_dump_clocks();
