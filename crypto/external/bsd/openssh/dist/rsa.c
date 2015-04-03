@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: rsa.c,v 1.5 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: rsa.c,v 1.32 2014/06/24 01:13:21 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -62,7 +62,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: rsa.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: rsa.c,v 1.5 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 
 #include <string.h>
