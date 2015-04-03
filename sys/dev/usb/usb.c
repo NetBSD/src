@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.6 2015/03/21 15:28:10 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.7 2015/04/03 21:22:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.6 2015/03/21 15:28:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.7 2015/04/03 21:22:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -119,6 +119,7 @@ SYSCTL_SETUP(sysctl_hw_usb_setup, "sysctl hw.usb setup")
 fail:
 	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
 }
+#else
 #define	usb_noexplore 0
 #endif
 
