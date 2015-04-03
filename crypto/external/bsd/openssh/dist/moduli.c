@@ -1,4 +1,4 @@
-/* $OpenBSD: moduli.c,v 1.28 2013/10/24 00:49:49 dtucker Exp $ */
+/* $OpenBSD: moduli.c,v 1.30 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright 1994 Phil Karn <karn@qualcomm.com>
  * Copyright 1996-1998, 2003 William Allen Simpson <wsimpson@greendragon.com>
@@ -37,7 +37,7 @@
  * Second step: test primes' safety (processor intensive)
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAX */
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -50,6 +50,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "xmalloc.h"
 #include "dh.h"
@@ -443,11 +444,11 @@ static void
 write_checkpoint(char *cpfile, u_int32_t lineno)
 {
 	FILE *fp;
-	char tmp[MAXPATHLEN];
+	char tmp[PATH_MAX];
 	int r;
 
 	r = snprintf(tmp, sizeof(tmp), "%s.XXXXXXXXXX", cpfile);
-	if (r == -1 || r >= MAXPATHLEN) {
+	if (r == -1 || r >= PATH_MAX) {
 		logit("write_checkpoint: temp pathname too long");
 		return;
 	}
@@ -457,6 +458,7 @@ write_checkpoint(char *cpfile, u_int32_t lineno)
 	}
 	if ((fp = fdopen(r, "w")) == NULL) {
 		logit("write_checkpoint: fdopen: %s", strerror(errno));
+		unlink(tmp);
 		close(r);
 		return;
 	}

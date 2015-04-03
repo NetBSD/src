@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.h,v 1.78 2014/07/03 11:16:55 djm Exp $ */
+/* $OpenBSD: auth.h,v 1.82 2015/02/16 22:13:32 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -37,6 +37,9 @@
 #include <krb5.h>
 #endif
 
+struct ssh;
+struct sshkey;
+
 typedef struct Authctxt Authctxt;
 typedef struct Authmethod Authmethod;
 typedef struct KbdintDevice KbdintDevice;
@@ -66,6 +69,9 @@ struct Authctxt {
 	char		*krb5_ticket_file;
 #endif
 	void		*methoddata;
+
+	struct sshkey	**prev_userkeys;
+	u_int		 nprev_userkeys;
 };
 /*
  * Every authentication method has to handle authentication requests for
@@ -114,6 +120,8 @@ int	 hostbased_key_allowed(struct passwd *, const char *, char *, Key *);
 int	 user_key_allowed(struct passwd *, Key *);
 void	 pubkey_auth_info(Authctxt *, const Key *, const char *, ...)
 	    __attribute__((__format__ (printf, 3, 4)));
+void	 auth2_record_userkey(Authctxt *, struct sshkey *);
+int	 auth2_userkey_already_used(Authctxt *, struct sshkey *);
 
 struct stat;
 int	 auth_secure_path(const char *, struct stat *, const char *, uid_t,
@@ -171,12 +179,13 @@ check_key_in_hostfiles(struct passwd *, Key *, const char *,
 
 /* hostkey handling */
 Key	*get_hostkey_by_index(int);
-Key	*get_hostkey_public_by_index(int);
-Key	*get_hostkey_public_by_type(int);
-Key	*get_hostkey_private_by_type(int);
-int	 get_hostkey_index(Key *);
+Key	*get_hostkey_public_by_index(int, struct ssh *);
+Key	*get_hostkey_public_by_type(int, int, struct ssh *);
+Key	*get_hostkey_private_by_type(int, int, struct ssh *);
+int	 get_hostkey_index(Key *, int, struct ssh *);
 int	 ssh1_session_key(BIGNUM *);
-void	 sshd_hostkey_sign(Key *, Key *, u_char **, u_int *, u_char *, u_int);
+int	 sshd_hostkey_sign(Key *, Key *, u_char **, size_t *,
+	     const u_char *, size_t, u_int);
 
 /* debug messages during authentication */
 void	 auth_debug_add(const char *fmt,...) __attribute__((format(printf, 1, 2)));
