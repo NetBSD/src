@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.44 2015/03/30 03:51:50 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.45 2015/04/03 20:01:07 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.44 2015/03/30 03:51:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.45 2015/04/03 20:01:07 rtr Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -493,7 +493,7 @@ key_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-key_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+key_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
