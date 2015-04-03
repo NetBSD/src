@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.1 2015/04/03 23:25:07 jmcneill Exp $
+#	$NetBSD: GENERIC.common,v 1.2 2015/04/03 23:52:51 jmcneill Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -19,24 +19,10 @@ options 	PMAPCOUNTERS
 # Architecture options
 
 # File systems
-
-file-system	FFS		# UFS
-#file-system	LFS		# log-structured file system
-file-system	MFS		# memory file system
-file-system	NFS		# Network file system
-#file-system 	ADOSFS		# AmigaDOS-compatible file system
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system	CD9660		# ISO 9660 + Rock Ridge file system
-file-system	MSDOSFS		# MS-DOS file system
-#file-system	FDESC		# /dev/fd
-file-system	KERNFS		# /kern
-#file-system	NULLFS		# loopback file system
-file-system	PROCFS		# /proc
-#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
-#file-system	UMAPFS		# NULLFS + uid and gid remapping
-#file-system	UNION		# union file system
-file-system	TMPFS		# memory file system
-file-system	PTYFS		# /dev/pts/N support
+include "conf/filesystems.config"
+no file-system 	LFS
+no file-system 	CODA
+no pseudo-device vcoda
 
 # File system options
 #options 	QUOTA		# legacy UFS quotas
@@ -63,12 +49,12 @@ options 	INET6		# IPV6
 
 options 	NFS_BOOT_BOOTP
 #options 	NFS_BOOT_DHCP
-#options		NFS_BOOT_BOOTSTATIC
-#options		NFS_BOOTSTATIC_MYIP="\"192.168.1.4\""
-#options		NFS_BOOTSTATIC_GWIP="\"192.168.1.1\""
-#options		NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
-#options		NFS_BOOTSTATIC_SERVADDR="\"192.168.1.1\""
-#options		NFS_BOOTSTATIC_SERVER="\"192.168.1.1:/nfs/sdp2430\""
+#options 	NFS_BOOT_BOOTSTATIC
+#options 	NFS_BOOTSTATIC_MYIP="\"192.168.1.4\""
+#options 	NFS_BOOTSTATIC_GWIP="\"192.168.1.1\""
+#options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
+#options 	NFS_BOOTSTATIC_SERVADDR="\"192.168.1.1\""
+#options 	NFS_BOOTSTATIC_SERVER="\"192.168.1.1:/nfs/sdp2430\""
 
 options		NFS_BOOT_RWSIZE=1024
 
@@ -147,7 +133,6 @@ options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	drvctl			# driver control
-pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
