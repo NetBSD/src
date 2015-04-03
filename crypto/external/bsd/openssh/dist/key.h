@@ -1,5 +1,5 @@
-/*	$NetBSD: key.h,v 1.8 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: key.h,v 1.42 2014/06/24 01:13:21 djm Exp $ */
+/*	$NetBSD: key.h,v 1.9 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: key.h,v 1.47 2015/01/28 22:36:00 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -40,7 +40,6 @@ typedef struct sshkey Key;
 #define key_free		sshkey_free
 #define key_equal_public	sshkey_equal_public
 #define key_equal		sshkey_equal
-#define key_fingerprint		sshkey_fingerprint
 #define key_type		sshkey_type
 #define key_cert_type		sshkey_cert_type
 #define key_ssh_name		sshkey_ssh_name
@@ -51,7 +50,6 @@ typedef struct sshkey Key;
 #define key_size		sshkey_size
 #define key_ecdsa_bits_to_nid	sshkey_ecdsa_bits_to_nid
 #define key_ecdsa_key_to_nid	sshkey_ecdsa_key_to_nid
-#define key_names_valid2	sshkey_names_valid2
 #define key_is_cert		sshkey_is_cert
 #define key_type_plain		sshkey_type_plain
 #define key_cert_is_legacy	sshkey_cert_is_legacy
@@ -61,14 +59,12 @@ typedef struct sshkey Key;
 #define key_ec_nid_to_hash_alg	sshkey_ec_nid_to_hash_alg
 #define key_dump_ec_point	sshkey_dump_ec_point
 #define key_dump_ec_key		sshkey_dump_ec_key
-#define key_fingerprint		sshkey_fingerprint
 #endif
 
 void	 key_add_private(Key *);
 Key	*key_new_private(int);
 void	 key_free(Key *);
 Key	*key_demote(const Key *);
-u_char	*key_fingerprint_raw(const Key *, enum fp_type, u_int *);
 int	 key_write(const Key *, FILE *);
 int	 key_read(Key *, char **);
 
@@ -105,8 +101,6 @@ Key	*key_load_public(const char *, char **);
 Key	*key_load_private(const char *, const char *, char **);
 Key	*key_load_private_cert(int, const char *, const char *, int *);
 Key	*key_load_private_type(int, const char *, const char *, char **, int *);
-Key	*key_load_private_pem(int, int, const char *, char **);
 int	 key_perm_ok(int, const char *);
-int	 key_in_file(Key *, const char *, int);
 
 #endif

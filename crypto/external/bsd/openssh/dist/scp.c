@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.10 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.180 2014/06/24 02:21:01 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.11 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: scp.c,v 1.181 2015/01/16 06:40:12 deraadt Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -73,8 +73,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.10 2014/10/19 16:30:58 christos Exp $");
-#include <sys/param.h>
+__RCSID("$NetBSD: scp.c,v 1.11 2015/04/03 23:58:19 christos Exp $");
+#include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <sys/wait.h>
@@ -94,6 +94,7 @@ __RCSID("$NetBSD: scp.c,v 1.10 2014/10/19 16:30:58 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <vis.h>
 
 #include "xmalloc.h"
@@ -738,7 +739,7 @@ source(int argc, char **argv)
 	off_t i, statbytes;
 	size_t amt, nr;
 	int fd = -1, haderr, indx;
-	char *last, *name, buf[16384], encname[MAXPATHLEN];
+	char *last, *name, buf[16384], encname[PATH_MAX];
 	int len;
 
 	for (indx = 0; indx < argc; ++indx) {
@@ -848,7 +849,7 @@ rsource(char *name, struct stat *statp)
 {
 	DIR *dirp;
 	struct dirent *dp;
-	char *last, *vect[1], path[MAXPATHLEN];
+	char *last, *vect[1], path[PATH_MAX];
 
 	if (!(dirp = opendir(name))) {
 		run_err("%s: %s", name, strerror(errno));

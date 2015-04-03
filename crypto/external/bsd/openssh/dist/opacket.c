@@ -1,4 +1,8 @@
+/*	$NetBSD: opacket.c,v 1.2 2015/04/03 23:58:19 christos Exp $	*/
 /* Written by Markus Friedl. Placed in the public domain.  */
+
+#include "includes.h"
+__RCSID("$NetBSD: opacket.c,v 1.2 2015/04/03 23:58:19 christos Exp $");
 
 #include "ssherr.h"
 #include "packet.h"
@@ -102,15 +106,25 @@ ssh_packet_put_ecpoint(struct ssh *ssh, const EC_GROUP *curve,
 }
 #endif /* WITH_OPENSSL */
 
-void
+int
 ssh_packet_send(struct ssh *ssh)
 {
 	int r;
 
 	if ((r = sshpkt_send(ssh)) != 0)
 		fatal("%s: %s", __func__, ssh_err(r));
+	return r;
 }
 
+int
+ssh_packet_sendx(struct ssh *ssh)
+{
+	int r;
+
+	if ((r = sshpkt_sendx(ssh)) < 0)
+		fatal("%s: %s", __func__, ssh_err(r));
+	return r;
+}
 u_int
 ssh_packet_get_char(struct ssh *ssh)
 {
@@ -292,17 +306,18 @@ packet_write_wait(void)
 {
 	int r;
 
-	if ((r = ssh_packet_write_wait(active_state)) != 0)
+	if ((r = ssh_packet_write_wait(active_state)) < 0)
 		sshpkt_fatal(active_state, __func__, r);
 }
 
-void
+int
 packet_write_poll(void)
 {
 	int r;
 
-	if ((r = ssh_packet_write_poll(active_state)) != 0)
+	if ((r = ssh_packet_write_poll(active_state)) < 0)
 		sshpkt_fatal(active_state, __func__, r);
+	return r;
 }
 
 void

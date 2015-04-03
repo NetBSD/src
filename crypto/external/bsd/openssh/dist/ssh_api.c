@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh_api.c,v 1.2 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: ssh_api.c,v 1.4 2015/02/16 22:13:32 djm Exp $ */
 /*
  * Copyright (c) 2012 Markus Friedl.  All rights reserved.
@@ -14,6 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "includes.h"
+__RCSID("$NetBSD: ssh_api.c,v 1.2 2015/04/03 23:58:19 christos Exp $");
 
 #include "ssh1.h" /* For SSH_MSG_NONE */
 #include "ssh_api.h"
@@ -72,9 +76,9 @@ mm_choose_dh(int min, int nbits, int max)
 int
 ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 {
-        char *myproposal[PROPOSAL_MAX] = { KEX_CLIENT };
+        const char *myproposal[PROPOSAL_MAX] = { KEX_CLIENT };
 	struct ssh *ssh;
-	char **proposal;
+	const char **proposal;
 	static int called;
 	int r;
 
@@ -89,7 +93,7 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 		ssh_packet_set_server(ssh);
 
 	/* Initialize key exchange */
-	proposal = kex_params ? kex_params->proposal : myproposal;
+	proposal = kex_params ? (const char **)(void *)kex_params->proposal : myproposal;
 	if ((r = kex_new(ssh, proposal, &ssh->kex)) != 0) {
 		ssh_free(ssh);
 		return r;
@@ -511,7 +515,7 @@ _ssh_order_hostkeyalgs(struct ssh *ssh)
 		free(orig);
 		proposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = replace;
 		replace = NULL;	/* owned by proposal */
-		r = kex_prop2buf(ssh->kex->my, proposal);
+		r = kex_prop2buf(ssh->kex->my, (const char **)(void *)proposal);
 	}
  out:
 	free(oavail);

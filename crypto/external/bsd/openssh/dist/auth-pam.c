@@ -50,7 +50,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.5 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.6 2015/04/03 23:58:19 christos Exp $");
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
 #define HAVE_PAM_GETENVLIST

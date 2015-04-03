@@ -1,3 +1,5 @@
+/*	$NetBSD: bitmap.h,v 1.2 2015/04/03 23:58:19 christos Exp $	*/
+
 /*
  * Copyright (c) 2015 Damien Miller <djm@mindrot.org>
  *

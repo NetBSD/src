@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf.c,v 1.2 2014/06/25 14:16:09 deraadt Exp $	*/
+/*	$OpenBSD: sshbuf.c,v 1.3 2015/01/20 23:14:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,10 +15,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf.c,v 1.2 2014/10/19 16:30:59 christos Exp $");
+__RCSID("$NetBSD: sshbuf.c,v 1.3 2015/04/03 23:58:19 christos Exp $");
 
+#include <sys/param.h>	/* roundup */
 #include <sys/types.h>
-#include <sys/param.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>

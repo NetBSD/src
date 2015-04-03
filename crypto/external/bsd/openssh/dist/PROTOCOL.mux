@@ -220,4 +220,4 @@ XXX server->client error/warning notifications
 XXX send signals via mux
 
 $OpenBSD: PROTOCOL.mux,v 1.9 2012/06/01 00:49:35 djm Exp $
-$NetBSD: PROTOCOL.mux,v 1.6 2014/10/19 16:30:58 christos Exp $
+$NetBSD: PROTOCOL.mux,v 1.7 2015/04/03 23:58:19 christos Exp $

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-chall.c,v 1.5 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: auth-chall.c,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: auth-chall.c,v 1.14 2014/06/24 01:13:21 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-chall.c,v 1.5 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: auth-chall.c,v 1.6 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdlib.h>

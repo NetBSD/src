@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11.h,v 1.3 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: pkcs11.h,v 1.4 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: pkcs11.h,v 1.3 2013/11/26 19:15:09 deraadt Exp $ */
 /* pkcs11.h
    Copyright 2006, 2007 g10 Code GmbH

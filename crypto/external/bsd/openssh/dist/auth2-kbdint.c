@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-kbdint.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: auth2-kbdint.c,v 1.5 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: auth2-kbdint.c,v 1.7 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-kbdint.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: auth2-kbdint.c,v 1.5 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 
 #include "xmalloc.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: getrrsetbyname.c,v 1.2 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: getrrsetbyname.c,v 1.3 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: getrrsetbyname.c,v 1.10 2005/03/30 02:58:28 tedu Exp $ */
 
 /*
@@ -47,7 +47,7 @@
 /* OPENBSD ORIGINAL: lib/libc/net/getrrsetbyname.c */
 
 #include "includes.h"
-__RCSID("$NetBSD: getrrsetbyname.c,v 1.2 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: getrrsetbyname.c,v 1.3 2015/04/03 23:58:19 christos Exp $");
 
 #ifndef HAVE_GETRRSETBYNAME
 

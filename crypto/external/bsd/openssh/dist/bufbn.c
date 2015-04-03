@@ -1,4 +1,4 @@
-/*	$NetBSD: bufbn.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: bufbn.c,v 1.5 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: bufbn.c,v 1.12 2014/04/30 05:29:56 djm Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: bufbn.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: bufbn.c,v 1.5 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 
 #include "buffer.h"

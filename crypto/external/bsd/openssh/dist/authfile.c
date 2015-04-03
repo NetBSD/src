@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.9 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.107 2014/06/24 01:13:21 djm Exp $ */
+/*	$NetBSD: authfile.c,v 1.10 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.111 2015/02/23 16:55:51 djm Exp $ */
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -25,10 +25,9 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.10 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/uio.h>
 
 #include <errno.h>
@@ -37,6 +36,7 @@ __RCSID("$NetBSD: authfile.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "cipher.h"
 #include "key.h"
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: authfile.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
 #include "atomicio.h"
 #include "sshbuf.h"
 #include "ssherr.h"
+#include "krl.h"
 
 #define MAX_KEY_FILE_SIZE	(1024 * 1024)
 
@@ -94,7 +95,7 @@ sshkey_save_private(struct sshkey *key, const char *filename,
 
 /* Load a key from a fd into a buffer */
 int
-sshkey_load_file(int fd, const char *filename, struct sshbuf *blob)
+sshkey_load_file(int fd, struct sshbuf *blob)
 {
 	u_char buf[1024];
 	size_t len;
@@ -141,8 +142,7 @@ sshkey_load_file(int fd, const char *filename, struct sshbuf *blob)
  * otherwise.
  */
 static int
-sshkey_load_public_rsa1(int fd, const char *filename,
-    struct sshkey **keyp, char **commentp)
+sshkey_load_public_rsa1(int fd, struct sshkey **keyp, char **commentp)
 {
 	struct sshbuf *b = NULL;
 	int r;
@@ -153,7 +153,7 @@ sshkey_load_public_rsa1(int fd, const char *filename,
 
 	if ((b = sshbuf_new()) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
-	if ((r = sshkey_load_file(fd, filename, b)) != 0)
+	if ((r = sshkey_load_file(fd, b)) != 0)
 		goto out;
 	if ((r = sshkey_parse_public_rsa1_fileblob(b, keyp, commentp)) != 0)
 		goto out;
@@ -163,33 +163,6 @@ sshkey_load_public_rsa1(int fd, const char *filename,
 	return r;
 }
 #endif /* WITH_SSH1 */
-
-#ifdef WITH_OPENSSL
-/* XXX Deprecate? */
-int
-sshkey_load_private_pem(int fd, int type, const char *passphrase,
-    struct sshkey **keyp, char **commentp)
-{
-	struct sshbuf *buffer = NULL;
-	int r;
-
-	*keyp = NULL;
-	if (commentp != NULL)
-		*commentp = NULL;
-
-	if ((buffer = sshbuf_new()) == NULL)
-		return SSH_ERR_ALLOC_FAIL;
-	if ((r = sshkey_load_file(fd, NULL, buffer)) != 0)
-		goto out;
-	if ((r = sshkey_parse_private_pem_fileblob(buffer, type, passphrase,
-	    keyp, commentp)) != 0)
-		goto out;
-	r = 0;
- out:
-	sshbuf_free(buffer);
-	return r;
-}
-#endif /* WITH_OPENSSL */
 
 /* XXX remove error() calls from here? */
 int
@@ -223,7 +196,6 @@ sshkey_load_private_type(int type, const char *filename, const char *passphrase,
     struct sshkey **keyp, char **commentp, int *perm_ok)
 {
 	int fd, r;
-	struct sshbuf *buffer = NULL;
 
 	*keyp = NULL;
 	if (commentp != NULL)
@@ -243,18 +215,31 @@ sshkey_load_private_type(int type, const char *filename, const char *passphrase,
 	if (perm_ok != NULL)
 		*perm_ok = 1;
 
+	r = sshkey_load_private_type_fd(fd, type, passphrase, keyp, commentp);
+ out:
+	close(fd);
+	return r;
+}
+
+int
+sshkey_load_private_type_fd(int fd, int type, const char *passphrase,
+    struct sshkey **keyp, char **commentp)
+{
+	struct sshbuf *buffer = NULL;
+	int r;
+
 	if ((buffer = sshbuf_new()) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if ((r = sshkey_load_file(fd, filename, buffer)) != 0)
+	if ((r = sshkey_load_file(fd, buffer)) != 0 ||
+	    (r = sshkey_parse_private_fileblob_type(buffer, type,
+	    passphrase, keyp, commentp)) != 0)
 		goto out;
-	if ((r = sshkey_parse_private_fileblob_type(buffer, type, passphrase,
-	    keyp, commentp)) != 0)
-		goto out;
+
+	/* success */
 	r = 0;
  out:
-	close(fd);
 	if (buffer != NULL)
 		sshbuf_free(buffer);
 	return r;
@@ -283,7 +268,7 @@ sshkey_load_private(const char *filename, const char *passphrase,
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if ((r = sshkey_load_file(fd, filename, buffer)) != 0 ||
+	if ((r = sshkey_load_file(fd, buffer)) != 0 ||
 	    (r = sshkey_parse_private_fileblob(buffer, passphrase, filename,
 	    keyp, commentp)) != 0)
 		goto out;
@@ -347,7 +332,7 @@ int
 sshkey_load_public(const char *filename, struct sshkey **keyp, char **commentp)
 {
 	struct sshkey *pub = NULL;
-	char file[MAXPATHLEN];
+	char file[PATH_MAX];
 	int r, fd;
 
 	if (keyp != NULL)
@@ -355,11 +340,13 @@ sshkey_load_public(const char *filename, struct sshkey **keyp, char **commentp)
 	if (commentp != NULL)
 		*commentp = NULL;
 
+	/* XXX should load file once and attempt to parse each format */
+
 	if ((fd = open(filename, O_RDONLY)) < 0)
 		goto skip;
 #ifdef WITH_SSH1
 	/* try rsa1 private key */
-	r = sshkey_load_public_rsa1(fd, filename, keyp, commentp);
+	r = sshkey_load_public_rsa1(fd, keyp, commentp);
 	close(fd);
 	switch (r) {
 	case SSH_ERR_INTERNAL_ERROR:
@@ -406,6 +393,7 @@ sshkey_load_public(const char *filename, struct sshkey **keyp, char **commentp)
 		return 0;
 	}
 	sshkey_free(pub);
+
 	return r;
 }
 
@@ -491,11 +479,14 @@ sshkey_load_private_cert(int type, const char *filename, const char *passphrase,
 /*
  * Returns success if the specified "key" is listed in the file "filename",
  * SSH_ERR_KEY_NOT_FOUND: if the key is not listed or another error.
- * If strict_type is set then the key type must match exactly,
+ * If "strict_type" is set then the key type must match exactly,
  * otherwise a comparison that ignores certficiate data is performed.
+ * If "check_ca" is set and "key" is a certificate, then its CA key is
+ * also checked and sshkey_in_file() will return success if either is found.
  */
 int
-sshkey_in_file(struct sshkey *key, const char *filename, int strict_type)
+sshkey_in_file(struct sshkey *key, const char *filename, int strict_type,
+    int check_ca)
 {
 	FILE *f;
 	char line[SSH_MAX_PUBKEY_BYTES];
@@ -506,12 +497,8 @@ sshkey_in_file(struct sshkey *key, const char *filename, int strict_type)
 	int (*sshkey_compare)(const struct sshkey *, const struct sshkey *) =
 	    strict_type ?  sshkey_equal : sshkey_equal_public;
 
-	if ((f = fopen(filename, "r")) == NULL) {
-		if (errno == ENOENT)
-			return SSH_ERR_KEY_NOT_FOUND;
-		else
-			return SSH_ERR_SYSTEM_ERROR;
-	}
+	if ((f = fopen(filename, "r")) == NULL)
+		return SSH_ERR_SYSTEM_ERROR;
 
 	while (read_keyfile_line(f, filename, line, sizeof(line),
 	    &linenum) != -1) {
@@ -535,7 +522,9 @@ sshkey_in_file(struct sshkey *key, const char *filename, int strict_type)
 		}
 		if ((r = sshkey_read(pub, &cp)) != 0)
 			goto out;
-		if (sshkey_compare(key, pub)) {
+		if (sshkey_compare(key, pub) ||
+		    (check_ca && sshkey_is_cert(key) &&
+		    sshkey_compare(key->cert->signature_key, pub))) {
 			r = 0;
 			goto out;
 		}
@@ -548,5 +537,41 @@ sshkey_in_file(struct sshkey *key, const char *filename, int strict_type)
 		sshkey_free(pub);
 	fclose(f);
 	return r;
+}
+
+/*
+ * Checks whether the specified key is revoked, returning 0 if not,
+ * SSH_ERR_KEY_REVOKED if it is or another error code if something
+ * unexpected happened.
+ * This will check both the key and, if it is a certificate, its CA key too.
+ * "revoked_keys_file" may be a KRL or a one-per-line list of public keys.
+ */
+int
+sshkey_check_revoked(struct sshkey *key, const char *revoked_keys_file)
+{
+	int r;
+
+#ifdef WITH_OPENSSL
+	r = ssh_krl_file_contains_key(revoked_keys_file, key);
+	/* If this was not a KRL to begin with then continue below */
+	if (r != SSH_ERR_KRL_BAD_MAGIC)
+		return r;
+#endif
+
+	/*
+	 * If the file is not a KRL or we can't handle KRLs then attempt to
+	 * parse the file as a flat list of keys.
+	 */
+	switch ((r = sshkey_in_file(key, revoked_keys_file, 0, 1))) {
+	case 0:
+		/* Key found => revoked */
+		return SSH_ERR_KEY_REVOKED;
+	case SSH_ERR_KEY_NOT_FOUND:
+		/* Key not found => not revoked */
+		return 0;
+	default:
+		/* Some other error occurred */
+		return r;
+	}
 }
 

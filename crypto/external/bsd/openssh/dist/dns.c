@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.c,v 1.10 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: dns.c,v 1.31 2014/06/24 01:13:21 djm Exp $ */
+/*	$NetBSD: dns.c,v 1.11 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: dns.c,v 1.34 2015/01/28 22:36:00 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.10 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.11 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -38,10 +38,12 @@ __RCSID("$NetBSD: dns.c,v 1.10 2014/10/19 16:30:58 christos Exp $");
 #include <stdlib.h>
 
 #include "xmalloc.h"
-#include "key.h"
+#include "sshkey.h"
+#include "ssherr.h"
 #include "dns.h"
 #include "log.h"
 #include "getrrsetbyname.h"
+#include "digest.h"
 
 static const char *errset_text[] = {
 	"success",		/* 0 ERRSET_SUCCESS */
@@ -78,10 +80,10 @@ dns_result_totext(unsigned int res)
  */
 static int
 dns_read_key(u_int8_t *algorithm, u_int8_t *digest_type,
-    u_char **digest, u_int *digest_len, Key *key)
+    u_char **digest, size_t *digest_len, struct sshkey *key)
 {
-	int success = 0;
-	enum fp_type fp_type = 0;
+	int r, success = 0;
+	int fp_alg = -1;
 
 	switch (key->type) {
 	case KEY_RSA:
@@ -111,19 +113,20 @@ dns_read_key(u_int8_t *algorithm, u_int8_t *digest_type,
 
 	switch (*digest_type) {
 	case SSHFP_HASH_SHA1:
-		fp_type = SSH_FP_SHA1;
+		fp_alg = SSH_DIGEST_SHA1;
 		break;
 	case SSHFP_HASH_SHA256:
-		fp_type = SSH_FP_SHA256;
+		fp_alg = SSH_DIGEST_SHA256;
 		break;
 	default:
 		*digest_type = SSHFP_HASH_RESERVED; /* 0 */
 	}
 
 	if (*algorithm && *digest_type) {
-		*digest = key_fingerprint_raw(key, fp_type, digest_len);
-		if (*digest == NULL)
-			fatal("dns_read_key: null from key_fingerprint_raw()");
+		if ((r = sshkey_fingerprint_raw(key, fp_alg, digest,
+		    digest_len)) != 0)
+			fatal("%s: sshkey_fingerprint_raw: %s", __func__,
+			   ssh_err(r));
 		success = 1;
 	} else {
 		*digest = NULL;
@@ -139,7 +142,7 @@ dns_read_key(u_int8_t *algorithm, u_int8_t *digest_type,
  */
 static int
 dns_read_rdata(u_int8_t *algorithm, u_int8_t *digest_type,
-    u_char **digest, u_int *digest_len, u_char *rdata, int rdata_len)
+    u_char **digest, size_t *digest_len, u_char *rdata, int rdata_len)
 {
 	int success = 0;
 
@@ -200,7 +203,7 @@ is_numeric_hostname(const char *hostname)
  */
 int
 verify_host_key_dns(const char *hostname, struct sockaddr *address,
-    Key *hostkey, int *flags)
+    struct sshkey *hostkey, int *flags)
 {
 	u_int counter;
 	int result;
@@ -209,12 +212,12 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 	u_int8_t hostkey_algorithm;
 	u_int8_t hostkey_digest_type = SSHFP_HASH_RESERVED;
 	u_char *hostkey_digest;
-	u_int hostkey_digest_len;
+	size_t hostkey_digest_len;
 
 	u_int8_t dnskey_algorithm;
 	u_int8_t dnskey_digest_type;
 	u_char *dnskey_digest;
-	u_int dnskey_digest_len;
+	size_t dnskey_digest_len;
 
 	*flags = 0;
 
@@ -292,7 +295,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 		free(dnskey_digest);
 	}
 
-	free(hostkey_digest); /* from key_fingerprint_raw() */
+	free(hostkey_digest); /* from sshkey_fingerprint_raw() */
 	freerrset(fingerprints);
 
 	if (*flags & DNS_VERIFY_FOUND)
@@ -310,13 +313,13 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
  * Export the fingerprint of a key as a DNS resource record
  */
 int
-export_dns_rr(const char *hostname, Key *key, FILE *f, int generic)
+export_dns_rr(const char *hostname, struct sshkey *key, FILE *f, int generic)
 {
 	u_int8_t rdata_pubkey_algorithm = 0;
 	u_int8_t rdata_digest_type = SSHFP_HASH_RESERVED;
 	u_int8_t dtype;
 	u_char *rdata_digest;
-	u_int i, rdata_digest_len;
+	size_t i, rdata_digest_len;
 	int success = 0;
 
 	for (dtype = SSHFP_HASH_SHA1; dtype < SSHFP_HASH_MAX; dtype++) {
@@ -324,7 +327,7 @@ export_dns_rr(const char *hostname, Key *key, FILE *f, int generic)
 		if (dns_read_key(&rdata_pubkey_algorithm, &rdata_digest_type,
 		    &rdata_digest, &rdata_digest_len, key)) {
 			if (generic) {
-				fprintf(f, "%s IN TYPE%d \\# %d %02x %02x ",
+				fprintf(f, "%s IN TYPE%d \\# %zu %02x %02x ",
 				    hostname, DNS_RDATATYPE_SSHFP,
 				    2 + rdata_digest_len,
 				    rdata_pubkey_algorithm, rdata_digest_type);
@@ -335,7 +338,7 @@ export_dns_rr(const char *hostname, Key *key, FILE *f, int generic)
 			for (i = 0; i < rdata_digest_len; i++)
 				fprintf(f, "%02x", rdata_digest[i]);
 			fprintf(f, "\n");
-			free(rdata_digest); /* from key_fingerprint_raw() */
+			free(rdata_digest); /* from sshkey_fingerprint_raw() */
 			success = 1;
 		}
 	}
