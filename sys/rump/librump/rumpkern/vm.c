@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.162 2015/04/03 16:40:55 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.163 2015/04/03 16:46:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.162 2015/04/03 16:40:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.163 2015/04/03 16:46:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -395,7 +395,7 @@ uvm_init(void)
 
 	/* create vmspace used by local clients */
 	rump_vmspace_local = kmem_zalloc(sizeof(*rump_vmspace_local), KM_SLEEP);
-	uvmspace_init(rump_vmspace_local, (struct pmap *)-2, 0, 0, false);
+	uvmspace_init(rump_vmspace_local, RUMP_PMAP_LOCAL, 0, 0, false);
 }
 
 void
