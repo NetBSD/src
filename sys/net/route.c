@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.137 2015/03/26 04:38:17 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.138 2015/04/03 05:44:13 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.137 2015/03/26 04:38:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.138 2015/04/03 05:44:13 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -1420,20 +1420,28 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
 	struct rtentry *rt = NULL;
 
 	odst = rtcache_getdst(ro);
-
 	if (odst == NULL)
-		;
-	else if (sockaddr_cmp(odst, dst) != 0)
-		rtcache_free(ro);
-	else if ((rt = rtcache_validate(ro)) == NULL)
-		rtcache_clear(ro);
+		goto miss;
 
+	if (sockaddr_cmp(odst, dst) != 0) {
+		rtcache_free(ro);
+		goto miss;
+	}
+
+	rt = rtcache_validate(ro);
 	if (rt == NULL) {
-		*hitp = 0;
-		if (rtcache_setdst(ro, dst) == 0)
-			rt = _rtcache_init(ro, clone);
-	} else
-		*hitp = 1;
+		rtcache_clear(ro);
+		goto miss;
+	}
+
+	*hitp = 1;
+	rtcache_invariants(ro);
+
+	return rt;
+miss:
+	*hitp = 0;
+	if (rtcache_setdst(ro, dst) == 0)
+		rt = _rtcache_init(ro, clone);
 
 	rtcache_invariants(ro);
 
