@@ -366,6 +366,10 @@ int radeon_bo_init(struct radeon_device *rdev)
 		rdev->mc.vram_mtrr = arch_phys_wc_add(rdev->mc.aper_base,
 						      rdev->mc.aper_size);
 	}
+#ifdef __NetBSD__
+	if (rdev->mc.aper_base)
+		pmap_pv_track(rdev->mc.aper_base, rdev->mc.aper_size);
+#endif
 	DRM_INFO("Detected VRAM RAM=%"PRIx64"M, BAR=%lluM\n",
 		rdev->mc.mc_vram_size >> 20,
 		(unsigned long long)rdev->mc.aper_size >> 20);
@@ -377,6 +381,10 @@ int radeon_bo_init(struct radeon_device *rdev)
 void radeon_bo_fini(struct radeon_device *rdev)
 {
 	radeon_ttm_fini(rdev);
+#ifdef __NetBSD__
+	if (rdev->mc.aper_base)
+		pmap_pv_untrack(rdev->mc.aper_base, rdev->mc.aper_size);
+#endif
 	arch_phys_wc_del(rdev->mc.vram_mtrr);
 }
 
