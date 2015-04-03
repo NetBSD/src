@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.185 2015/01/16 10:37:51 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.186 2015/04/03 08:20:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -396,11 +396,10 @@ typedef struct ifnet {
 
 /*
  * Some convenience macros used for setting ifi_baudrate.
- * XXX 1000 vs. 1024? --thorpej@NetBSD.org
  */
-#define	IF_Kbps(x)	((x) * 1000)		/* kilobits/sec. */
-#define	IF_Mbps(x)	(IF_Kbps((x) * 1000))	/* megabits/sec. */
-#define	IF_Gbps(x)	(IF_Mbps((x) * 1000))	/* gigabits/sec. */
+#define	IF_Kbps(x)	((x) * 1000ULL)			/* kilobits/sec. */
+#define	IF_Mbps(x)	(IF_Kbps((x) * 1000ULL))	/* megabits/sec. */
+#define	IF_Gbps(x)	(IF_Mbps((x) * 1000ULL))	/* gigabits/sec. */
 
 /* Capabilities that interfaces can advertise. */
 					/* 0x01 .. 0x40 were previously used */
