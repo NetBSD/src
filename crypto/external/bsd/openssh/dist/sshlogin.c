@@ -1,5 +1,5 @@
-/*	$NetBSD: sshlogin.c,v 1.5 2014/10/19 16:30:59 christos Exp $	*/
-/* $OpenBSD: sshlogin.c,v 1.29 2014/07/15 15:54:14 millert Exp $ */
+/*	$NetBSD: sshlogin.c,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: sshlogin.c,v 1.31 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,9 +41,9 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshlogin.c,v 1.5 2014/10/19 16:30:59 christos Exp $");
-#include <sys/types.h>
+__RCSID("$NetBSD: sshlogin.c,v 1.6 2015/04/03 23:58:19 christos Exp $");
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <errno.h>
@@ -60,12 +60,17 @@ __RCSID("$NetBSD: sshlogin.c,v 1.5 2014/10/19 16:30:59 christos Exp $");
 #include <utmpx.h>
 #endif
 #include <stdarg.h>
+#include <limits.h>
 
 #include "sshlogin.h"
 #include "log.h"
 #include "buffer.h"
 #include "misc.h"
 #include "servconf.h"
+
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX MAXHOSTNAMELEN
+#endif
 
 extern Buffer loginmsg;
 extern ServerOptions options;
@@ -137,7 +142,7 @@ get_last_login_time(uid_t uid, const char *logname,
 static void
 store_lastlog_message(const char *user, uid_t uid)
 {
-	char *time_string, hostname[MAXHOSTNAMELEN] = "", buf[512];
+	char *time_string, hostname[HOST_NAME_MAX+1] = "", buf[512];
 	time_t last_login_time;
 
 	if (!options.print_lastlog)
