@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.10 2015/03/29 22:49:44 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.11 2015/04/03 14:02:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.10 2015/03/29 22:49:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.11 2015/04/03 14:02:06 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -191,10 +191,10 @@ amlogic_eth_init(void)
 void
 amlogic_rng_init(void)
 {
-	CBUS_WRITE(EE_CLK_GATING0_REG,
-	    CBUS_READ(EE_CLK_GATING0_REG) | EE_CLK_GATING0_RNG);
-	CBUS_WRITE(EE_CLK_GATING3_REG,
-	    CBUS_READ(EE_CLK_GATING3_REG) | EE_CLK_GATING3_RNG);
+	CBUS_SET_CLEAR(EE_CLK_GATING0_REG, EE_CLK_GATING0_RNG, 0);
+	CBUS_SET_CLEAR(EE_CLK_GATING3_REG, EE_CLK_GATING3_RNG, 0);
+	CBUS_SET_CLEAR(AM_RING_OSC_REG,
+	    AM_RING_OSC_ENABLE | AM_RING_OSC_HF_MODE, 0);
 }
 
 void
