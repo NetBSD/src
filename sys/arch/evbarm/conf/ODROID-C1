@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.14 2015/03/31 17:37:47 riz Exp $
+#	$NetBSD: ODROID-C1,v 1.15 2015/04/03 18:00:25 jmcneill Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -143,7 +143,7 @@ options 	DIAGNOSTIC	# internal consistency checks
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-options		DDB_COMMANDONENTER="bt"
+#options 	DDB_COMMANDONENTER="bt"
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
