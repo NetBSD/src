@@ -1,5 +1,5 @@
-#	$NetBSD: sshd_config,v 1.12 2014/10/19 16:30:59 christos Exp $
-#	$OpenBSD: sshd_config,v 1.93 2014/01/10 05:59:19 djm Exp $
+#	$NetBSD: sshd_config,v 1.13 2015/04/03 23:58:19 christos Exp $
+#	$OpenBSD: sshd_config,v 1.94 2015/02/02 01:57:44 deraadt Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -93,7 +93,7 @@ UsePam yes
 #Compression delayed
 #ClientAliveInterval 0
 #ClientAliveCountMax 3
-#UseDNS yes
+#UseDNS no
 #PidFile /var/run/sshd.pid
 #MaxStartups 10:30:100
 #PermitTunnel no

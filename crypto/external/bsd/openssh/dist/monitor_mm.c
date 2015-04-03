@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_mm.c,v 1.5 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: monitor_mm.c,v 1.19 2014/01/04 17:50:55 tedu Exp $ */
+/*	$NetBSD: monitor_mm.c,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: monitor_mm.c,v 1.21 2015/02/06 23:21:59 millert Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -26,15 +26,15 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_mm.c,v 1.5 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: monitor_mm.c,v 1.6 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 
 #include <errno.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -171,7 +171,7 @@ mm_malloc(struct mm_master *mm, size_t size)
 
 	if (size == 0)
 		fatal("mm_malloc: try to allocate 0 space");
-	if (size > SIZE_T_MAX - MM_MINSIZE + 1)
+	if (size > SIZE_MAX - MM_MINSIZE + 1)
 		fatal("mm_malloc: size too big");
 
 	size = ((size + (MM_MINSIZE - 1)) / MM_MINSIZE) * MM_MINSIZE;

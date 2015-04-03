@@ -1,4 +1,4 @@
-/*	$NetBSD: readpass.c,v 1.5 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: readpass.c,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: readpass.c,v 1.50 2014/02/02 03:44:31 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readpass.c,v 1.5 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: readpass.c,v 1.6 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 

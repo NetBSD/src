@@ -1,4 +1,4 @@
-/*	$NetBSD: bufec.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: bufec.c,v 1.5 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: bufec.c,v 1.4 2014/04/30 05:29:56 djm Exp $ */
 
 /*
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: bufec.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: bufec.c,v 1.5 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 
 /* Emulation wrappers for legacy OpenSSH buffer API atop sshbuf */

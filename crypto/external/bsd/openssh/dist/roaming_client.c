@@ -1,5 +1,5 @@
-/*	$NetBSD: roaming_client.c,v 1.6 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: roaming_client.c,v 1.8 2014/04/29 18:01:49 markus Exp $ */
+/*	$NetBSD: roaming_client.c,v 1.7 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: roaming_client.c,v 1.9 2015/01/27 12:54:06 okan Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
  *
@@ -16,13 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: roaming_client.c,v 1.6 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: roaming_client.c,v 1.7 2015/04/03 23:58:19 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include <inttypes.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>

@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.13 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.274 2014/07/15 15:54:14 millert Exp $ */
+/*	$NetBSD: session.c,v 1.14 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.277 2015/01/16 06:40:12 deraadt Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,13 +35,12 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.13 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.14 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 
 #include <errno.h>
@@ -56,6 +55,7 @@ __RCSID("$NetBSD: session.c,v 1.13 2014/10/19 16:30:58 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1367,7 +1367,7 @@ static void
 safely_chroot(const char *path, uid_t uid)
 {
 	const char *cp;
-	char component[MAXPATHLEN];
+	char component[PATH_MAX];
 	struct stat st;
 
 	if (*path != '/')
@@ -1525,11 +1525,11 @@ launch_login(struct passwd *pw, const char *hostname)
 static void
 child_close_fds(void)
 {
-	extern AuthenticationConnection *auth_conn;
+	extern int auth_sock;
 
-	if (auth_conn) {
-		ssh_close_authentication_connection(auth_conn);
-		auth_conn = NULL;
+	if (auth_sock != -1) {
+		close(auth_sock);
+		auth_sock = -1;
 	}
 
 	if (packet_get_connection_in() == packet_get_connection_out())
@@ -2537,7 +2537,7 @@ session_setup_x11fwd(Session *s)
 		debug("X11 forwarding disabled in server configuration file.");
 		return 0;
 	}
-	if (!options.xauth_location ||
+	if (options.xauth_location == NULL ||
 	    (stat(options.xauth_location, &st) == -1)) {
 		packet_send_debug("No xauth program; cannot forward with spoofing.");
 		return 0;
