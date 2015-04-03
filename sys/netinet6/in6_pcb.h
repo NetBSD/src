@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.41 2015/03/30 02:23:21 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.42 2015/04/03 20:01:07 rtr Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ struct	in6pcb {
 void	in6_losing(struct in6pcb *);
 void	in6_pcbinit(struct inpcbtable *, int, int);
 int	in6_pcballoc(struct socket *, void *);
-int	in6_pcbbind(void *, struct mbuf *, struct lwp *);
+int	in6_pcbbind(void *, struct sockaddr_in6 *, struct lwp *);
 int	in6_pcbconnect(void *, struct mbuf *, struct lwp *);
 void	in6_pcbdetach(struct in6pcb *);
 void	in6_pcbdisconnect(struct in6pcb *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.81 2014/09/05 09:21:55 matt Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.82 2015/04/03 20:01:07 rtr Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.81 2014/09/05 09:21:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.82 2015/04/03 20:01:07 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -752,10 +752,10 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 	struct svr4_strm *st = svr4_stream_get(fp);
 	struct sockaddr_in sain;
 	struct sockaddr_un saun;
-	void *skp, *sup = NULL;
+	struct sockaddr_big *sbig;
+	void *sup = NULL;
 	int sasize;
 	struct svr4_strmcmd bnd;
-	struct mbuf *name;
 
 	if (st == NULL) {
 		DPRINTF(("ti_bind: bad file descriptor\n"));
@@ -775,8 +775,8 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 
 	switch (st->s_family) {
 	case AF_INET:
-		skp = &sain;
-		sasize = sizeof(sain);
+		sbig = (struct sockaddr_big *)&sain;
+		sbig->sb_len = sasize = sizeof(sain);
 
 		if (bnd.offs == 0)
 			goto reply;
@@ -789,8 +789,8 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		break;
 
 	case AF_LOCAL:
-		skp = &saun;
-		sasize = sizeof(saun);
+		sbig = (struct sockaddr_big *)&saun;
+		sbig->sb_len = sasize = sizeof(saun);
 		if (bnd.offs == 0)
 			goto reply;
 
@@ -814,15 +814,9 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		return ENOSYS;
 	}
 
-	name = m_get(M_WAIT, MT_SONAME);
-	if (sasize > MLEN)
-		MEXTMALLOC(name, sasize, M_WAITOK);
-
-	memcpy(mtod(name, void *), skp, sasize);
-
 	DPRINTF(("TI_BIND: fileno %d\n", fd));
 
-	error = do_sys_bind(l, fd, name);
+	error = do_sys_bind(l, fd, (struct sockaddr *)sbig);
 	if (error != 0) {
 		DPRINTF(("TI_BIND: bind failed %d\n", error));
 		return error;
