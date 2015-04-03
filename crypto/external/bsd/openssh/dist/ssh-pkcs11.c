@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11.c,v 1.6 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11.c,v 1.14 2014/06/24 01:13:21 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11.c,v 1.7 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11.c,v 1.17 2015/02/03 08:07:20 deraadt Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11.c,v 1.6 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11.c,v 1.7 2015/04/03 23:58:19 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: ssh-pkcs11.c,v 1.6 2014/10/19 16:30:58 christos Exp $");
 
 #include "log.h"
 #include "misc.h"
-#include "key.h"
+#include "sshkey.h"
 #include "ssh-pkcs11.h"
 #include "xmalloc.h"
 
@@ -259,8 +259,9 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 		pin = read_passphrase(prompt, RP_ALLOW_EOF);
 		if (pin == NULL)
 			return (-1);	/* bail out */
-		if ((rv = f->C_Login(si->session, CKU_USER,
-		    (u_char *)pin, strlen(pin))) != CKR_OK) {
+		rv = f->C_Login(si->session, CKU_USER,
+		    (u_char *)pin, strlen(pin));
+		if (rv != CKR_OK && rv != CKR_USER_ALREADY_LOGGED_IN) {
 			free(pin);
 			error("C_Login failed: %lu", rv);
 			return (-1);
@@ -362,8 +363,9 @@ pkcs11_open_session(struct pkcs11_provider *p, CK_ULONG slotidx, char *pin)
 		return (-1);
 	}
 	if (login_required && pin) {
-		if ((rv = f->C_Login(session, CKU_USER,
-		    (u_char *)pin, strlen(pin))) != CKR_OK) {
+		rv = f->C_Login(session, CKU_USER,
+		    (u_char *)pin, strlen(pin));
+		if (rv != CKR_OK && rv != CKR_USER_ALREADY_LOGGED_IN) {
 			error("C_Login failed: %lu", rv);
 			if ((rv = f->C_CloseSession(session)) != CKR_OK)
 				error("C_CloseSession failed: %lu", rv);
@@ -381,12 +383,12 @@ pkcs11_open_session(struct pkcs11_provider *p, CK_ULONG slotidx, char *pin)
  * keysp points to an (possibly empty) array with *nkeys keys.
  */
 static int pkcs11_fetch_keys_filter(struct pkcs11_provider *, CK_ULONG,
-    CK_ATTRIBUTE [], CK_ATTRIBUTE [3], Key ***, int *)
+    CK_ATTRIBUTE [], CK_ATTRIBUTE [3], struct sshkey ***, int *)
 	__attribute__((__bounded__(__minbytes__,4, 3 * sizeof(CK_ATTRIBUTE))));
 
 static int
 pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
-    Key ***keysp, int *nkeys)
+    struct sshkey ***keysp, int *nkeys)
 {
 	CK_OBJECT_CLASS		pubkey_class = CKO_PUBLIC_KEY;
 	CK_OBJECT_CLASS		cert_class = CKO_CERTIFICATE;
@@ -416,12 +418,12 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
 }
 
 static int
-pkcs11_key_included(Key ***keysp, int *nkeys, Key *key)
+pkcs11_key_included(struct sshkey ***keysp, int *nkeys, struct sshkey *key)
 {
 	int i;
 
 	for (i = 0; i < *nkeys; i++)
-		if (key_equal(key, (*keysp)[i]))
+		if (sshkey_equal(key, (*keysp)[i]))
 			return (1);
 	return (0);
 }
@@ -429,9 +431,9 @@ pkcs11_key_included(Key ***keysp, int *nkeys, Key *key)
 static int
 pkcs11_fetch_keys_filter(struct pkcs11_provider *p, CK_ULONG slotidx,
     CK_ATTRIBUTE filter[], CK_ATTRIBUTE attribs[3],
-    Key ***keysp, int *nkeys)
+    struct sshkey ***keysp, int *nkeys)
 {
-	Key			*key;
+	struct sshkey		*key;
 	RSA			*rsa;
 	X509 			*x509;
 	EVP_PKEY		*evp;
@@ -511,16 +513,16 @@ pkcs11_fetch_keys_filter(struct pkcs11_provider *p, CK_ULONG slotidx,
 		}
 		if (rsa && rsa->n && rsa->e &&
 		    pkcs11_rsa_wrap(p, slotidx, &attribs[0], rsa) == 0) {
-			key = key_new(KEY_UNSPEC);
+			key = sshkey_new(KEY_UNSPEC);
 			key->rsa = rsa;
 			key->type = KEY_RSA;
 			key->flags |= SSHKEY_FLAG_EXT;
 			if (pkcs11_key_included(keysp, nkeys, key)) {
-				key_free(key);
+				sshkey_free(key);
 			} else {
 				/* expand key array and add key */
 				*keysp = xrealloc(*keysp, *nkeys + 1,
-				    sizeof(Key *));
+				    sizeof(struct sshkey *));
 				(*keysp)[*nkeys] = key;
 				*nkeys = *nkeys + 1;
 				debug("have %d keys", *nkeys);
@@ -538,7 +540,7 @@ pkcs11_fetch_keys_filter(struct pkcs11_provider *p, CK_ULONG slotidx,
 
 /* register a new provider, fails if provider already exists */
 int
-pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
+pkcs11_add_provider(char *provider_id, char *pin, struct sshkey ***keyp)
 {
 	int nkeys, need_finalize = 0;
 	struct pkcs11_provider *p = NULL;
@@ -648,7 +650,7 @@ fail:
 }
 #else
 int
-pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
+pkcs11_add_provider(char *provider_id, char *pin, struct sshkey ***keyp)
 {
 	error("dlopen() not supported");
 	return (-1);

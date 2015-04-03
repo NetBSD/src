@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.6 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.7 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: buffer.h,v 1.25 2014/04/30 05:29:56 djm Exp $ */
 
 /*

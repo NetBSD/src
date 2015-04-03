@@ -1,4 +1,4 @@
-/*	$NetBSD: match.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: match.c,v 1.5 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: match.c,v 1.29 2013/11/20 20:54:10 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: match.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: match.c,v 1.5 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 
 #include <ctype.h>
