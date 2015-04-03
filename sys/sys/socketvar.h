@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.135 2014/09/05 05:37:37 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.136 2015/04/03 20:01:08 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ void	soinit2(void);
 int	soabort(struct socket *);
 int	soaccept(struct socket *, struct mbuf *);
 int	sofamily(const struct socket *);
-int	sobind(struct socket *, struct mbuf *, struct lwp *);
+int	sobind(struct socket *, struct sockaddr *, struct lwp *);
 void	socantrcvmore(struct socket *);
 void	socantsendmore(struct socket *);
 int	soclose(struct socket *);
@@ -354,7 +354,7 @@ int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int, register_t *);
 int	do_sys_recvmsg(struct lwp *, int, struct msghdr *, struct mbuf **,
 	    struct mbuf **, register_t *);
 
-int	do_sys_bind(struct lwp *, int, struct mbuf *);
+int	do_sys_bind(struct lwp *, int, struct sockaddr *);
 int	do_sys_connect(struct lwp *, int, struct mbuf *);
 int	do_sys_accept(struct lwp *, int, struct mbuf **, register_t *,
 	    const sigset_t *, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.175 2015/03/01 01:14:41 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.176 2015/04/03 20:01:07 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.175 2015/03/01 01:14:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.176 2015/04/03 20:01:07 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -931,8 +931,24 @@ makeun(struct mbuf *nam, size_t *addrlen)
 	return sun;
 }
 
+/*
+ * we only need to perform this allocation until syscalls other than
+ * bind are adjusted to use sockaddr_big.
+ */
+static struct sockaddr_un *
+makeun_sb(struct sockaddr *nam, size_t *addrlen)
+{
+	struct sockaddr_un *sun;
+
+	*addrlen = nam->sa_len + 1;
+	sun = malloc(*addrlen, M_SONAME, M_WAITOK);
+	memcpy(sun, nam, nam->sa_len);
+	*(((char *)sun) + nam->sa_len) = '\0';
+	return sun;
+}
+
 static int
-unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+unp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
 	struct unpcb *unp;
@@ -963,7 +979,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	sounlock(so);
 
 	p = l->l_proc;
-	sun = makeun(nam, &addrlen);
+	sun = makeun_sb(nam, &addrlen);
 
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
