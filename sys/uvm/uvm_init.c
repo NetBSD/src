@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.45 2013/01/29 21:37:04 para Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.46 2015/04/03 01:03:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.45 2013/01/29 21:37:04 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.46 2015/04/03 01:03:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,9 @@ uvm_init(void)
 	 */
 
 	uvm_km_init();
+#ifdef __HAVE_PMAP_PV_TRACK
+	pmap_pv_init();
+#endif
 
 #ifdef DEBUG
 	debug_init();
