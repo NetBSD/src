@@ -35,7 +35,7 @@
 # define TRY_EMPTY_VM_SPACE	0x40000000000
 #elif defined(_LP64)
 # define TRY_EMPTY_VM_SPACE	0x400000000000
-#elif defined(__mips__) || defined(__vax__)
+#elif defined(__mips__) || defined(__vax__) || defined (__arm__)
 # define TRY_EMPTY_VM_SPACE	0x60000000
 #else
 # define TRY_EMPTY_VM_SPACE	0xb0000000
