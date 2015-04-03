@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2014/11/20 21:18:47 christos Exp $
+# $NetBSD: Makefile,v 1.6 2015/04/03 21:37:26 christos Exp $
 
 NOMAN=		# defined
 
@@ -52,6 +52,7 @@ FILES+=		d_type_conv1.c
 FILES+=		d_type_conv2.c
 FILES+=		d_type_conv3.c
 FILES+=		d_typename_as_var.c
+FILES+=		d_typefun.c
 FILES+=		d_zero_sized_arrays.c
 
 .include <bsd.test.mk>
