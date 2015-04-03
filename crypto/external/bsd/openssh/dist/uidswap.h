@@ -1,4 +1,4 @@
-/*	$NetBSD: uidswap.h,v 1.3 2014/10/19 16:30:59 christos Exp $	*/
+/*	$NetBSD: uidswap.h,v 1.4 2015/04/03 23:58:19 christos Exp $	*/
 /* $OpenBSD: uidswap.h,v 1.13 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*

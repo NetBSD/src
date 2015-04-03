@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.9 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.94 2014/07/15 15:54:14 millert Exp $ */
+/*	$NetBSD: misc.c,v 1.10 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.96 2015/01/16 06:40:12 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,17 +26,15 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/param.h>
 
 #include <net/if.h>
 #include <net/if_tun.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 
@@ -46,6 +44,7 @@ __RCSID("$NetBSD: misc.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -544,7 +543,7 @@ tilde_expand_filename(const char *filename, uid_t uid)
 	if (path != NULL)
 		filename = path + 1;
 
-	if (xasprintf(&ret, "%s%s%s", homedir, sep, filename) >= MAXPATHLEN)
+	if (xasprintf(&ret, "%s%s%s", homedir, sep, filename) >= PATH_MAX)
 		fatal("tilde_expand_filename: Path too long");
 
 	return (ret);

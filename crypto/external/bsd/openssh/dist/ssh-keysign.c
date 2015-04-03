@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.7 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.42 2014/04/29 18:01:49 markus Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.8 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.47 2015/01/28 22:36:00 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.7 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.8 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -40,78 +40,91 @@ __RCSID("$NetBSD: ssh-keysign.c,v 1.7 2014/10/19 16:30:58 christos Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
-#include "key.h"
+#include "sshkey.h"
 #include "ssh.h"
 #include "ssh2.h"
 #include "misc.h"
-#include "buffer.h"
+#include "sshbuf.h"
 #include "authfile.h"
 #include "msg.h"
 #include "canohost.h"
 #include "pathnames.h"
 #include "readconf.h"
 #include "uidswap.h"
+#include "sshkey.h"
+#include "ssherr.h"
 
 /* XXX readconf.c needs these */
 uid_t original_real_uid;
 
 static int
-valid_request(struct passwd *pw, char *host, Key **ret, u_char *data,
-    u_int datalen)
+valid_request(struct passwd *pw, char *host, struct sshkey **ret,
+    u_char *data, size_t datalen)
 {
-	Buffer b;
-	Key *key = NULL;
-	u_char *pkblob;
-	u_int blen, len;
-	char *pkalg, *p;
-	int pktype, fail;
+	struct sshbuf *b;
+	struct sshkey *key = NULL;
+	u_char type, *pkblob;
+	char *p;
+	size_t blen, len;
+	char *pkalg, *luser;
+	int r, pktype, fail;
 
+	if (ret != NULL)
+		*ret = NULL;
 	fail = 0;
 
-	buffer_init(&b);
-	buffer_append(&b, data, datalen);
+	if ((b = sshbuf_from(data, datalen)) == NULL)
+		fatal("%s: sshbuf_from failed", __func__);
 
 	/* session id, currently limited to SHA1 (20 bytes) or SHA256 (32) */
-	p = buffer_get_string(&b, &len);
+	if ((r = sshbuf_get_string(b, NULL, &len)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	if (len != 20 && len != 32)
 		fail++;
-	free(p);
 
-	if (buffer_get_char(&b) != SSH2_MSG_USERAUTH_REQUEST)
+	if ((r = sshbuf_get_u8(b, &type)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	if (type != SSH2_MSG_USERAUTH_REQUEST)
 		fail++;
 
 	/* server user */
-	buffer_skip_string(&b);
+	if ((r = sshbuf_skip_string(b)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 
 	/* service */
-	p = buffer_get_string(&b, NULL);
+	if ((r = sshbuf_get_cstring(b, &p, NULL)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	if (strcmp("ssh-connection", p) != 0)
 		fail++;
 	free(p);
 
 	/* method */
-	p = buffer_get_string(&b, NULL);
+	if ((r = sshbuf_get_cstring(b, &p, NULL)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	if (strcmp("hostbased", p) != 0)
 		fail++;
 	free(p);
 
 	/* pubkey */
-	pkalg = buffer_get_string(&b, NULL);
-	pkblob = buffer_get_string(&b, &blen);
+	if ((r = sshbuf_get_cstring(b, &pkalg, NULL)) != 0 ||
+	    (r = sshbuf_get_string(b, &pkblob, &blen)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 
-	pktype = key_type_from_name(pkalg);
+	pktype = sshkey_type_from_name(pkalg);
 	if (pktype == KEY_UNSPEC)
 		fail++;
-	else if ((key = key_from_blob(pkblob, blen)) == NULL)
+	else if ((r = sshkey_from_blob(pkblob, blen, &key)) != 0) {
+		error("%s: bad key blob: %s", __func__, ssh_err(r));
 		fail++;
-	else if (key->type != pktype)
+	} else if (key->type != pktype)
 		fail++;
 	free(pkalg);
 	free(pkblob);
 
 	/* client host name, handle trailing dot */
-	p = buffer_get_string(&b, &len);
-	debug2("valid_request: check expect chost %s got %s", host, p);
+	if ((r = sshbuf_get_cstring(b, &p, &len)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	debug2("%s: check expect chost %s got %s", __func__, host, p);
 	if (strlen(host) != len - 1)
 		fail++;
 	else if (p[len - 1] != '.')
@@ -121,21 +134,22 @@ valid_request(struct passwd *pw, char *host, Key **ret, u_char *data,
 	free(p);
 
 	/* local user */
-	p = buffer_get_string(&b, NULL);
+	if ((r = sshbuf_get_cstring(b, &luser, NULL)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 
-	if (strcmp(pw->pw_name, p) != 0)
+	if (strcmp(pw->pw_name, luser) != 0)
 		fail++;
-	free(p);
+	free(luser);
 
 	/* end of message */
-	if (buffer_len(&b) != 0)
+	if (sshbuf_len(b) != 0)
 		fail++;
-	buffer_free(&b);
+	sshbuf_free(b);
 
-	debug3("valid_request: fail %d", fail);
+	debug3("%s: fail %d", __func__, fail);
 
 	if (fail && key != NULL)
-		key_free(key);
+		sshkey_free(key);
 	else
 		*ret = key;
 
@@ -145,15 +159,15 @@ valid_request(struct passwd *pw, char *host, Key **ret, u_char *data,
 int
 main(int argc, char **argv)
 {
-	Buffer b;
+	struct sshbuf *b;
 	Options options;
 #define NUM_KEYTYPES 4
-	Key *keys[NUM_KEYTYPES], *key = NULL;
+	struct sshkey *keys[NUM_KEYTYPES], *key = NULL;
 	struct passwd *pw;
-	int key_fd[NUM_KEYTYPES], i, found, version = 2, fd;
-	u_char *signature, *data;
+	int r, key_fd[NUM_KEYTYPES], i, found, version = 2, fd;
+	u_char *signature, *data, rver;
 	char *host, *fp;
-	u_int slen, dlen;
+	size_t slen, dlen;
 
 	key = NULL;	/* XXX gcc */
 
@@ -183,7 +197,7 @@ main(int argc, char **argv)
 
 	/* verify that ssh-keysign is enabled by the admin */
 	initialize_options(&options);
-	(void)read_config_file(_PATH_HOST_CONFIG_FILE, pw, "", &options, 0);
+	(void)read_config_file(_PATH_HOST_CONFIG_FILE, pw, "", "", &options, 0);
 	fill_default_options(&options);
 	if (options.enable_ssh_keysign != 1)
 		fatal("ssh-keysign not enabled in %s",
@@ -203,30 +217,36 @@ main(int argc, char **argv)
 		keys[i] = NULL;
 		if (key_fd[i] == -1)
 			continue;
-#ifdef WITH_OPENSSL
-/* XXX wrong api */
-		keys[i] = key_load_private_pem(key_fd[i], KEY_UNSPEC,
-		    NULL, NULL);
-#endif
+		r = sshkey_load_private_type_fd(key_fd[i], KEY_UNSPEC,
+		    NULL, &key, NULL);
 		close(key_fd[i]);
-		if (keys[i] != NULL)
+		if (r != 0)
+			debug("parse key %d: %s", i, ssh_err(r));
+		else if (key != NULL) {
+			keys[i] = key;
 			found = 1;
+		}
 	}
 	if (!found)
 		fatal("no hostkey found");
 
-	buffer_init(&b);
-	if (ssh_msg_recv(STDIN_FILENO, &b) < 0)
+	if ((b = sshbuf_new()) == NULL)
+		fatal("%s: sshbuf_new failed", __func__);
+	if (ssh_msg_recv(STDIN_FILENO, b) < 0)
 		fatal("ssh_msg_recv failed");
-	if (buffer_get_char(&b) != version)
-		fatal("bad version");
-	fd = buffer_get_int(&b);
-	if ((fd == STDIN_FILENO) || (fd == STDOUT_FILENO))
+	if ((r = sshbuf_get_u8(b, &rver)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	if (rver != version)
+		fatal("bad version: received %d, expected %d", rver, version);
+	if ((r = sshbuf_get_u32(b, (u_int *)&fd)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	if (fd < 0 || fd == STDIN_FILENO || fd == STDOUT_FILENO)
 		fatal("bad fd");
 	if ((host = get_local_name(fd)) == NULL)
 		fatal("cannot get local name for fd");
 
-	data = buffer_get_string(&b, &dlen);
+	if ((r = sshbuf_get_string(b, &data, &dlen)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	if (valid_request(pw, host, &key, data, dlen) < 0)
 		fatal("not a valid request");
 	free(host);
@@ -234,25 +254,28 @@ main(int argc, char **argv)
 	found = 0;
 	for (i = 0; i < NUM_KEYTYPES; i++) {
 		if (keys[i] != NULL &&
-		    key_equal_public(key, keys[i])) {
+		    sshkey_equal_public(key, keys[i])) {
 			found = 1;
 			break;
 		}
 	}
 	if (!found) {
-		fp = key_fingerprint(key, SSH_FP_MD5, SSH_FP_HEX);
+		if ((fp = sshkey_fingerprint(key, options.fingerprint_hash,
+		    SSH_FP_DEFAULT)) == NULL)
+			fatal("%s: sshkey_fingerprint failed", __func__);
 		fatal("no matching hostkey found for key %s %s",
-		    key_type(key), fp);
+		    sshkey_type(key), fp ? fp : "");
 	}
 
-	if (key_sign(keys[i], &signature, &slen, data, dlen) != 0)
-		fatal("key_sign failed");
+	if ((r = sshkey_sign(keys[i], &signature, &slen, data, dlen, 0)) != 0)
+		fatal("sshkey_sign failed: %s", ssh_err(r));
 	free(data);
 
 	/* send reply */
-	buffer_clear(&b);
-	buffer_put_string(&b, signature, slen);
-	if (ssh_msg_send(STDOUT_FILENO, version, &b) == -1)
+	sshbuf_reset(b);
+	if ((r = sshbuf_put_string(b, signature, slen)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	if (ssh_msg_send(STDOUT_FILENO, version, b) == -1)
 		fatal("ssh_msg_send failed");
 
 	return (0);
