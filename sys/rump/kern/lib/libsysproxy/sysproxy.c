@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy.c,v 1.1 2015/01/07 22:24:04 pooka Exp $	*/
+/*	$NetBSD: sysproxy.c,v 1.2 2015/04/03 16:40:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.1 2015/01/07 22:24:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.2 2015/04/03 16:40:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
@@ -79,7 +79,7 @@ hyp_syscall(int num, void *arg, long *retval)
 static int
 hyp_rfork(void *priv, int flags, const char *comm)
 {
-	struct vmspace *newspace;
+	struct vmspace *vm;
 	struct proc *p;
 	struct lwp *l;
 	int error;
@@ -96,8 +96,16 @@ hyp_rfork(void *priv, int flags, const char *comm)
 		initfds = false;
 	}
 
-	if ((error = rump_lwproc_rfork(flags)) != 0)
+	/*
+	 * Since it's a proxy proc, we need create a vmspace for it.
+	 */
+	vm = kmem_zalloc(sizeof(*vm), KM_SLEEP);
+	uvmspace_init(vm, priv, 0, 0, false);
+
+	if ((error = rump_lwproc_rfork_vmspace(vm, flags)) != 0) {
+		kmem_free(vm, sizeof(*vm));
 		return error;
+	}
 
 	/*
 	 * We forked in this routine, so cannot use curlwp (const)
@@ -105,15 +113,6 @@ hyp_rfork(void *priv, int flags, const char *comm)
 	l = rump_lwproc_curlwp();
 	p = l->l_proc;
 
-	/*
-	 * Since it's a proxy proc, adjust the vmspace.
-	 * Refcount will eternally be 1.
-	 */
-	newspace = kmem_zalloc(sizeof(*newspace), KM_SLEEP);
-	newspace->vm_refcnt = 1;
-	newspace->vm_map.pmap = priv;
-	KASSERT(p->p_vmspace == vmspace_kernel());
-	p->p_vmspace = newspace;
 	if (comm)
 		strlcpy(p->p_comm, comm, sizeof(p->p_comm));
 	if (initfds)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.87 2015/01/07 22:24:04 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.88 2015/04/03 16:40:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -117,7 +117,9 @@ do {									\
 #define RUMPMEM_UNLIMITED ((unsigned long)-1)
 extern unsigned long rump_physmemlimit;
 
-#define RUMP_LOCALPROC_P(p) (p->p_vmspace == vmspace_kernel())
+extern struct vmspace *rump_vmspace_local;
+#define RUMP_LOCALPROC_P(p) \
+    (p->p_vmspace == vmspace_kernel() || p->p_vmspace == rump_vmspace_local)
 
 void		rump_component_load(const struct rump_component *);
 void		rump_component_init(enum rump_component_type);
@@ -186,6 +188,7 @@ void	rump_hyperentropy_init(void);
 void	rump_lwproc_init(void);
 void	rump_lwproc_curlwp_set(struct lwp *);
 void	rump_lwproc_curlwp_clear(struct lwp *);
+int	rump_lwproc_rfork_vmspace(struct vmspace *, int);
 
 /*
  * sysproxy is an optional component.  The interfaces with "hyp"
