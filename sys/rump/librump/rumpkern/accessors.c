@@ -1,4 +1,4 @@
-/*	$NetBSD: accessors.c,v 1.1 2014/04/25 18:25:38 pooka Exp $	*/
+/*	$NetBSD: accessors.c,v 1.2 2015/04/03 16:37:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accessors.c,v 1.1 2014/04/25 18:25:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accessors.c,v 1.2 2015/04/03 16:37:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -68,7 +68,7 @@ rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
 	uio->uio_offset = offset;
 	uio->uio_resid = bufsize;
 	uio->uio_rw = uiorw;
-	UIO_SETUP_SYSSPACE(uio);
+	uio->uio_vmspace = curproc->p_vmspace;
 
 	return uio;
 }
