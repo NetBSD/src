@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.88 2015/04/03 16:40:55 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.89 2015/04/03 16:46:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -120,6 +120,8 @@ extern unsigned long rump_physmemlimit;
 extern struct vmspace *rump_vmspace_local;
 #define RUMP_LOCALPROC_P(p) \
     (p->p_vmspace == vmspace_kernel() || p->p_vmspace == rump_vmspace_local)
+#define RUMP_PMAP_KERNEL ((struct pmap *const)-1)
+#define RUMP_PMAP_LOCAL ((struct pmap *)-2)
 
 void		rump_component_load(const struct rump_component *);
 void		rump_component_init(enum rump_component_type);
