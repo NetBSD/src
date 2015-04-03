@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.67 2014/09/26 15:26:01 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.68 2015/04/03 21:40:04 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.67 2014/09/26 15:26:01 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.68 2015/04/03 21:40:04 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -107,7 +107,7 @@ static inline void RESTORE(const char *file, size_t line)
 #endif
 %}
 
-%expect 75
+%expect 78
 
 %union {
 	int	y_int;
@@ -1025,7 +1025,7 @@ notype_param_decl:
 	;
 
 direct_notype_param_decl:
-	  T_NAME {
+	  identifier {
 		$$ = dname(getsym($1));
 	  }
 	| T_LPARN notype_param_decl T_RPARN {
