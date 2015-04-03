@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.6 2014/11/10 01:05:10 snj Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.7 2015/04/03 14:57:41 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -521,10 +521,10 @@ message net_host
 {Your host name}
 
 message net_ip
-{Your IPv4 number}
+{Your IPv4 address}
 
 message net_srv_ip
-{Server IPv4 number}
+{Server IPv4 address}
 
 message net_mask
 {IPv4 Netmask}
