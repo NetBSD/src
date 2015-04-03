@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.h,v 1.5 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: compat.h,v 1.45 2014/04/18 23:52:25 djm Exp $ */
+/*	$NetBSD: compat.h,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: compat.h,v 1.46 2015/01/19 20:20:20 markus Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
@@ -66,7 +66,7 @@
 
 void     enable_compat13(void);
 void     enable_compat20(void);
-void     compat_datafellows(const char *);
+u_int    compat_datafellows(const char *);
 int	 proto_spec(const char *);
 const char	*compat_cipher_proposal(const char *);
 char	*compat_pkalg_proposal(char *);

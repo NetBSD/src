@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv.c,v 1.6 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: gss-serv.c,v 1.27 2014/07/03 03:34:09 djm Exp $ */
+/*	$NetBSD: gss-serv.c,v 1.7 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: gss-serv.c,v 1.28 2015/01/20 23:14:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,9 +26,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.6 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.7 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 
 #ifdef GSSAPI
@@ -36,6 +35,7 @@ __RCSID("$NetBSD: gss-serv.c,v 1.6 2014/10/19 16:30:58 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <limits.h>
 
 #include "xmalloc.h"
 #include "buffer.h"

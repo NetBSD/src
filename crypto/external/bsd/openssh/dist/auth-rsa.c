@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rsa.c,v 1.9 2014/10/19 16:30:58 christos Exp $	*/
-/* $OpenBSD: auth-rsa.c,v 1.88 2014/07/15 15:54:14 millert Exp $ */
+/*	$NetBSD: auth-rsa.c,v 1.10 2015/04/03 23:58:19 christos Exp $	*/
+/* $OpenBSD: auth-rsa.c,v 1.90 2015/01/28 22:36:00 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rsa.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: auth-rsa.c,v 1.10 2015/04/03 23:58:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -170,7 +170,8 @@ rsa_key_allowed_in_file(struct passwd *pw, char *file,
     const BIGNUM *client_n, Key **rkey)
 {
 	char *fp, line[SSH_MAX_PUBKEY_BYTES];
-	int allowed = 0, bits;
+	int allowed = 0;
+	u_int bits;
 	FILE *f;
 	u_long linenum = 0;
 	Key *key;
@@ -231,12 +232,14 @@ rsa_key_allowed_in_file(struct passwd *pw, char *file,
 
 		/* check the real bits  */
 		keybits = BN_num_bits(key->rsa->n);
-		if (keybits < 0 || bits != keybits)
+		if (keybits < 0 || bits != (u_int)keybits)
 			logit("Warning: %s, line %lu: keysize mismatch: "
 			    "actual %d vs. announced %d.",
 			    file, linenum, BN_num_bits(key->rsa->n), bits);
 
-		fp = key_fingerprint(key, SSH_FP_MD5, SSH_FP_HEX);
+		if ((fp = sshkey_fingerprint(key, options.fingerprint_hash,
+		    SSH_FP_DEFAULT)) == NULL)
+			continue;
 		debug("matching key found: file %s, line %lu %s %s",
 		    file, linenum, key_type(key), fp);
 		free(fp);
@@ -287,7 +290,6 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 #ifdef WITH_LDAP_PUBKEY
 	if (options.lpk.on) {
 	    u_int bits;
-	    int sbits;
 	    ldap_key_t *k;
 	    /* here is the job */
 	    Key *key = key_new(KEY_RSA1);
@@ -322,11 +324,10 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 			    xoptions = NULL;
 
 			/* Parse the key from the line. */
-			if (hostfile_read_key(&cp, &sbits, key) == 0) {
+			if (hostfile_read_key(&cp, &bits, key) == 0) {
 			    debug("[LDAP] line %d: non ssh1 key syntax", i);
 			    continue;
 			}
-			bits = sbits;
 			/* cp now points to the comment part. */
 
 			/* Check if the we have found the desired key (identified by its modulus). */
