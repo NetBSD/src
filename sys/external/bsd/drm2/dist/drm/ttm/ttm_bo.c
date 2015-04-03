@@ -1611,11 +1611,16 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 
 #ifdef __NetBSD__
 	if (bo->mem.bus.is_iomem) {
-		/*
-		 * XXX OOPS!  NetBSD doesn't have a way to enumerate
-		 * and remove the virtual mappings for device addresses
-		 * or of a uvm object.
-		 */
+		paddr_t start, end, pa;
+
+		KASSERT((bo->mem.bus.base & (PAGE_SIZE - 1)) == 0);
+		KASSERT((bo->mem.bus.offset & (PAGE_SIZE - 1)) == 0);
+		start = bo->mem.bus.base + bo->mem.bus.offset;
+		KASSERT((bo->mem.bus.size & (PAGE_SIZE - 1)) == 0);
+		end = start + bo->mem.bus.size;
+
+		for (pa = start; pa < end; pa += PAGE_SIZE)
+			pmap_pv_protect(pa, VM_PROT_NONE);
 	} else if (bo->ttm != NULL) {
 		unsigned i;
 
