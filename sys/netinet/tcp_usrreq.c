@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.204 2015/03/31 08:47:01 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.205 2015/04/03 20:01:07 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.204 2015/03/31 08:47:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.205 2015/04/03 20:01:07 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -711,10 +711,14 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-tcp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+tcp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
+	struct sockaddr_in *sin = (struct sockaddr_in *)nam;
+#ifdef INET6
+	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)nam;
+#endif /* INET6 */
 	struct tcpcb *tp = NULL;
 	int s;
 	int error = 0;
@@ -732,12 +736,12 @@ tcp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	switch (so->so_proto->pr_domain->dom_family) {
 #ifdef INET
 	case PF_INET:
-		error = in_pcbbind(inp, nam, l);
+		error = in_pcbbind(inp, sin, l);
 		break;
 #endif
 #ifdef INET6
 	case PF_INET6:
-		error = in6_pcbbind(in6p, nam, l);
+		error = in6_pcbbind(in6p, sin6, l);
 		if (!error) {
 			/* mapped addr case */
 			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))

@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.58 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.59 2015/04/03 20:01:08 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.58 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.59 2015/04/03 20:01:08 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -70,7 +70,7 @@ static int	sockin_attach(struct socket *, int);
 static void	sockin_detach(struct socket *);
 static int	sockin_accept(struct socket *, struct mbuf *);
 static int	sockin_connect2(struct socket *, struct socket *);
-static int	sockin_bind(struct socket *, struct mbuf *, struct lwp *);
+static int	sockin_bind(struct socket *, struct sockaddr *, struct lwp *);
 static int	sockin_listen(struct socket *, struct lwp *);
 static int	sockin_connect(struct socket *, struct mbuf *, struct lwp *);
 static int	sockin_disconnect(struct socket *);
@@ -494,14 +494,12 @@ sockin_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-sockin_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+sockin_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 	KASSERT(nam != NULL);
 
-	return rumpcomp_sockin_bind(SO2S(so),
-	    mtod(nam, const struct sockaddr *),
-	    nam->m_len);
+	return rumpcomp_sockin_bind(SO2S(so), nam, nam->sa_len);
 }
 
 static int

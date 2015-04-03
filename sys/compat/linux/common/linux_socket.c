@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.122 2014/11/26 09:53:53 ozaki-r Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.123 2015/04/03 20:01:07 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.122 2014/11/26 09:53:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.123 2015/04/03 20:01:07 rtr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -121,6 +121,8 @@ int linux_getifconf(struct lwp *, register_t *, void *);
 int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 static int linux_get_sa(struct lwp *, int, struct mbuf **,
 		const struct osockaddr *, unsigned int);
+static int linux_get_sa_sb(struct lwp *, int, struct sockaddr_big *,
+		const struct osockaddr *, socklen_t);
 static int linux_sa_put(struct osockaddr *osa);
 static int linux_to_bsd_msg_flags(int);
 static int bsd_to_linux_msg_flags(int);
@@ -1445,14 +1447,14 @@ linux_sys_bind(struct lwp *l, const struct linux_sys_bind_args *uap, register_t 
 		syscallarg(int) namelen;
 	} */
 	int		error;
-	struct mbuf     *nam;
+	struct sockaddr_big sb;
 
-	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, name),
+	error = linux_get_sa_sb(l, SCARG(uap, s), &sb, SCARG(uap, name),
 	    SCARG(uap, namelen));
 	if (error)
 		return (error);
 
-	return do_sys_bind(l, SCARG(uap, s), nam);
+	return do_sys_bind(l, SCARG(uap, s), (struct sockaddr *)&sb);
 }
 
 int
@@ -1491,6 +1493,77 @@ linux_sys_getpeername(struct lwp *l, const struct linux_sys_getpeername_args *ua
 		return (error);
 
 	return (0);
+}
+
+static int
+linux_get_sa_sb(struct lwp *l, int s, struct sockaddr_big *sb,
+    const struct osockaddr *name, socklen_t namelen)
+{
+	int error, bdom;
+
+	if (namelen > UCHAR_MAX ||
+	    namelen <= offsetof(struct sockaddr_big, sb_data))
+		return EINVAL;
+
+	error = copyin(name, sb, namelen);
+	if (error)
+		return error;
+
+	bdom = linux_to_bsd_domain(sb->sb_family);
+	if (bdom == -1)
+		return EINVAL;
+
+	/*
+	 * If the family is unspecified, use address family of the socket.
+	 * This avoid triggering strict family checks in netinet/in_pcb.c et.al.
+	 */
+	if (bdom == AF_UNSPEC) {
+		struct socket *so;
+
+		/* fd_getsock() will use the descriptor for us */
+		if ((error = fd_getsock(s, &so)) != 0)
+			return error;
+
+		bdom = so->so_proto->pr_domain->dom_family;
+		fd_putfile(s);
+	}
+
+	/*
+	 * Older Linux IPv6 code uses obsolete RFC2133 struct sockaddr_in6,
+	 * which lacks the scope id compared with RFC2553 one. If we detect
+	 * the situation, reject the address and write a message to system log.
+	 *
+	 * Still accept addresses for which the scope id is not used.
+	 */
+	if (bdom == AF_INET6 &&
+	    namelen == sizeof(struct sockaddr_in6) - sizeof(uint32_t)) {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sb;
+		if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) &&
+		    (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_V4COMPAT(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
+			struct proc *p = l->l_proc;
+			int uid = l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1;
+
+			log(LOG_DEBUG,
+			    "pid %d (%s), uid %d: obsolete pre-RFC2553 "
+			    "sockaddr_in6 rejected",
+			    p->p_pid, p->p_comm, uid);
+			return EINVAL;
+		}
+		namelen = sizeof(struct sockaddr_in6);
+		sin6->sin6_scope_id = 0;
+	}
+
+	if (bdom == AF_INET)
+		namelen = sizeof(struct sockaddr_in);
+
+	sb->sb_family = bdom;
+	sb->sb_len = namelen;
+	ktrkuser("mbsoname", sb, namelen);
+	return 0;
 }
 
 /*

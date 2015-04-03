@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.217 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.218 2015/04/03 20:01:07 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.218 2015/04/03 20:01:07 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -905,9 +905,10 @@ udp_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-udp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+udp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
+	struct sockaddr_in *sin = (struct sockaddr_in *)nam;
 	int error = 0;
 	int s;
 
@@ -916,7 +917,7 @@ udp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	error = in_pcbbind(inp, nam, l);
+	error = in_pcbbind(inp, sin, l);
 	splx(s);
 
 	return error;
