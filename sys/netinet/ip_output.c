@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.235 2015/03/31 08:44:43 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.236 2015/04/03 07:55:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,11 +91,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.235 2015/03/31 08:44:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.236 2015/04/03 07:55:18 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
+#include "opt_net_mpsafe.h"
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -557,9 +558,13 @@ sendit:
 		if (__predict_true(
 		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
 		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
+#ifndef NET_MPSAFE
 			KERNEL_LOCK(1, NULL);
+#endif
 			error = (*ifp->if_output)(ifp, m, sa, rt);
+#ifndef NET_MPSAFE
 			KERNEL_UNLOCK_ONE(NULL);
+#endif
 		} else {
 			error = ip_tso_output(ifp, m, sa, rt);
 		}
@@ -627,11 +632,15 @@ sendit:
 		} else {
 			KASSERT((m->m_pkthdr.csum_flags &
 			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
+#ifndef NET_MPSAFE
 			KERNEL_LOCK(1, NULL);
+#endif
 			error = (*ifp->if_output)(ifp, m,
 			    (m->m_flags & M_MCAST) ?
 			    sintocsa(rdst) : sintocsa(dst), rt);
+#ifndef NET_MPSAFE
 			KERNEL_UNLOCK_ONE(NULL);
+#endif
 		}
 	}
 	if (error == 0) {
@@ -1722,7 +1731,11 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 
 	ip->ip_sum = 0;
 	ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
+#ifndef NET_MPSAFE
 	KERNEL_LOCK(1, NULL);
+#endif
 	(void)looutput(ifp, copym, sintocsa(dst), NULL);
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
+#endif
 }
