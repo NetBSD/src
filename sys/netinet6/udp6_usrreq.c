@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.116 2015/03/30 04:25:26 ozaki-r Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.117 2015/04/03 20:01:07 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.116 2015/03/30 04:25:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.117 2015/04/03 20:01:07 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -696,9 +696,10 @@ udp6_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-udp6_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+udp6_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
+	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)nam;
 	int error = 0;
 	int s;
 
@@ -706,7 +707,7 @@ udp6_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(in6p != NULL);
 
 	s = splsoftnet();
-	error = in6_pcbbind(in6p, nam, l);
+	error = in6_pcbbind(in6p, sin6, l);
 	splx(s);
 	return error;
 }

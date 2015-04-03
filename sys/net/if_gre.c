@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.161 2014/09/05 09:22:22 matt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.162 2015/04/03 20:01:07 rtr Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.161 2014/09/05 09:22:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.162 2015/04/03 20:01:07 rtr Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -444,7 +444,7 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 	sockaddr_copy(sa, MIN(MLEN, sizeof(sp->sp_src)), sstocsa(&sp->sp_src));
 	m->m_len = sp->sp_src.ss_len;
 
-	if ((rc = sobind(so, m, curlwp)) != 0) {
+	if ((rc = sobind(so, sa, curlwp)) != 0) {
 		GRE_DPRINTF(sc, "sobind failed\n");
 		goto out;
 	}

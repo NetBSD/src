@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.193 2014/09/05 05:34:57 matt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.194 2015/04/03 20:01:07 rtr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.193 2014/09/05 05:34:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.194 2015/04/03 20:01:07 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -182,9 +182,8 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep, struct lwp *l)
 	struct socket *so;
 	int error, rcvreserve, sndreserve;
 	struct sockaddr *saddr;
-	struct sockaddr_in *sin;
-	struct sockaddr_in6 *sin6;
-	struct mbuf *m;
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
 	int val;
 
 	nmp->nm_so = NULL;
@@ -210,15 +209,11 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep, struct lwp *l)
 		if ((error = so_setsockopt(NULL, so, IPPROTO_IP, IP_PORTRANGE,
 		    &val, sizeof(val))))
 			goto bad;
-		m = m_get(M_WAIT, MT_SONAME);
-		MCLAIM(m, so->so_mowner);
-		sin = mtod(m, struct sockaddr_in *);
-		sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
-		sin->sin_family = AF_INET;
-		sin->sin_addr.s_addr = INADDR_ANY;
-		sin->sin_port = 0;
-		error = sobind(so, m, &lwp0);
-		m_freem(m);
+		sin.sin_len = sizeof(struct sockaddr_in);
+		sin.sin_family = AF_INET;
+		sin.sin_addr.s_addr = INADDR_ANY;
+		sin.sin_port = 0;
+		error = sobind(so, (struct sockaddr *)&sin, &lwp0);
 		if (error)
 			goto bad;
 	}
@@ -228,14 +223,10 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep, struct lwp *l)
 		if ((error = so_setsockopt(NULL, so, IPPROTO_IPV6,
 		    IPV6_PORTRANGE, &val, sizeof(val))))
 			goto bad;
-		m = m_get(M_WAIT, MT_SONAME);
-		MCLAIM(m, so->so_mowner);
-		sin6 = mtod(m, struct sockaddr_in6 *);
-		memset(sin6, 0, sizeof(*sin6));
-		sin6->sin6_len = m->m_len = sizeof (struct sockaddr_in6);
-		sin6->sin6_family = AF_INET6;
-		error = sobind(so, m, &lwp0);
-		m_freem(m);
+		memset(&sin6, 0, sizeof(sin6));
+		sin6.sin6_len = sizeof(struct sockaddr_in6);
+		sin6.sin6_family = AF_INET6;
+		error = sobind(so, (struct sockaddr *)&sin6, &lwp0);
 		if (error)
 			goto bad;
 	}

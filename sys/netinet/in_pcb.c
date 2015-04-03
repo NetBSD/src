@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.155 2014/11/25 19:09:13 seanb Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.156 2015/04/03 20:01:07 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.155 2014/11/25 19:09:13 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.156 2015/04/03 20:01:07 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -401,10 +401,9 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 }
 
 int
-in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
+in_pcbbind(void *v, struct sockaddr_in *sin, struct lwp *l)
 {
 	struct inpcb *inp = v;
-	struct sockaddr_in *sin = NULL; /* XXXGCC */
 	struct sockaddr_in lsin;
 	int error;
 
@@ -416,9 +415,8 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 	if (inp->inp_lport || !in_nullhost(inp->inp_laddr))
 		return (EINVAL);
 
-	if (nam != NULL) {
-		sin = mtod(nam, struct sockaddr_in *);
-		if (nam->m_len != sizeof (*sin))
+	if (NULL != sin) {
+		if (sin->sin_len != sizeof(*sin))
 			return (EINVAL);
 	} else {
 		lsin = *((const struct sockaddr_in *)
