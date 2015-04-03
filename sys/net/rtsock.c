@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.166 2014/12/02 21:28:31 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.167 2015/04/03 20:01:07 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.166 2014/12/02 21:28:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.167 2015/04/03 20:01:07 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -239,7 +239,7 @@ COMPATNAME(route_accept)(struct socket *so, struct mbuf *nam)
 }
 
 static int
-COMPATNAME(route_bind)(struct socket *so, struct mbuf *nam, struct lwp *l)
+COMPATNAME(route_bind)(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
