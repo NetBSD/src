@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.6 2014/11/10 01:05:10 snj Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.7 2015/04/03 14:57:41 mbalmer Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -518,7 +518,7 @@ message net_ip
 {Twoj adres IPv4}
 
 message net_srv_ip
-{Server IPv4 number}
+{Server IPv4 address}
 
 message net_mask
 {Maska podsieci IPv4}
