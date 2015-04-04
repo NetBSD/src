@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.97 2015/01/28 14:00:58 martin Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.98 2015/04/04 12:34:45 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.97 2015/01/28 14:00:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.98 2015/04/04 12:34:45 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -251,8 +251,13 @@ udf_read(void *v)
 	/* note access time unless not requested */
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		udf_node->i_flags |= IN_ACCESS;
-		if ((ioflag & IO_SYNC) == IO_SYNC)
-			error = udf_update(vp, NULL, NULL, NULL, UPDATE_WAIT);
+		if ((ioflag & IO_SYNC) == IO_SYNC) {
+			int uerror;
+
+			uerror = udf_update(vp, NULL, NULL, NULL, UPDATE_WAIT);
+			if (error == 0)
+				error = uerror;
+		}
 	}
 
 	return error;
