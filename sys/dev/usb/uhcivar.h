@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.5 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.6 2015/04/04 06:19:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ typedef struct uhci_intr_info {
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;
 	LIST_ENTRY(uhci_intr_info) list;
-	int isdone;	/* used only when DIAGNOSTIC is defined */
+	bool isdone;	/* used only when DIAGNOSTIC is defined */
 } uhci_intr_info_t;
 
 struct uhci_xfer {
