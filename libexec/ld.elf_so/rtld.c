@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.175 2015/03/05 09:49:53 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.176 2015/04/04 18:51:57 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.175 2015/03/05 09:49:53 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.176 2015/04/04 18:51:57 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1269,7 +1269,7 @@ dladdr(const void *addr, Dl_info *info)
 	obj = _rtld_obj_from_addr(addr);
 	if (obj == NULL) {
 		_rtld_error("No shared object contains address");
-		lookup_mutex_enter();
+		lookup_mutex_exit();
 		return 0;
 	}
 	info->dli_fname = obj->path;
