@@ -1,5 +1,5 @@
 /*	$KAME: dccp6_usrreq.c,v 1.13 2005/07/27 08:42:56 nishida Exp $	*/
-/*	$NetBSD: dccp6_usrreq.c,v 1.1 2015/02/10 19:11:52 rjs Exp $ */
+/*	$NetBSD: dccp6_usrreq.c,v 1.2 2015/04/04 04:33:39 rtr Exp $ */
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.1 2015/02/10 19:11:52 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.2 2015/04/04 04:33:39 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_dccp.h"
@@ -111,12 +111,11 @@ dccp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 }
 
 int
-dccp6_bind(struct socket *so, struct mbuf *m, struct lwp *td)
+dccp6_bind(struct socket *so, struct sockaddr *nam, struct lwp *td)
 {
 	struct in6pcb *in6p;
-	struct sockaddr *nam;
 	int error;
-	struct sockaddr_in6 *sin6p;
+	struct sockaddr_in6 *sin6p = (struct sockaddr_in6 *)nam;
 
 	DCCP_DEBUG((LOG_INFO, "Entering dccp6_bind!\n"));
 	INP_INFO_WLOCK(&dccpbinfo);
@@ -127,8 +126,6 @@ dccp6_bind(struct socket *so, struct mbuf *m, struct lwp *td)
 		return EINVAL;
 	}
 	/* Do not bind to multicast addresses! */
-	nam = mtod(m, struct sockaddr *);
-	sin6p = (struct sockaddr_in6 *)nam;
 	if (sin6p->sin6_family == AF_INET6 &&
 	    IN6_IS_ADDR_MULTICAST(&sin6p->sin6_addr)) {
 		INP_INFO_WUNLOCK(&dccpbinfo);
@@ -139,7 +136,7 @@ dccp6_bind(struct socket *so, struct mbuf *m, struct lwp *td)
 	in6todccpcb(in6p)->inp_vflag &= ~INP_IPV4;
 	in6todccpcb(in6p)->inp_vflag |= INP_IPV6;
 	
-	error = in6_pcbbind(in6p, m, td);
+	error = in6_pcbbind(in6p, sin6p, td);
 	INP_UNLOCK(inp);
 	INP_INFO_WUNLOCK(&dccpbinfo);
 	return error;
@@ -253,7 +250,7 @@ dccp6_listen(struct socket *so, struct lwp *l)
 	dp = in6todccpcb(in6p);
 	DCCP_DEBUG((LOG_INFO, "Checking in6p->in6p_lport!\n"));
 	if (in6p->in6p_lport == 0) {
-		error = in6_pcbbind(in6p, (struct mbuf *)0, l);
+		error = in6_pcbbind(in6p, NULL, l);
 	}
 	if (error == 0) {
 		dp->state = DCCPS_LISTEN;
