@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.56 2015/03/12 15:33:10 christos Exp $ */
+/* $NetBSD: mfi.c,v 1.57 2015/04/04 15:10:47 christos Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.56 2015/03/12 15:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.57 2015/04/04 15:10:47 christos Exp $");
 
 #include "bio.h"
 
@@ -3404,8 +3404,7 @@ again:
 
 	ld_size = sizeof(*ld_sync) * sc->sc_ld_list.mll_no_ld;
 	
-	ld_sync = (struct mfi_ld *) malloc(ld_size, M_DEVBUF,
-	     M_WAITOK | M_ZERO);
+	ld_sync = malloc(ld_size, M_DEVBUF, M_WAITOK | M_ZERO);
 	if (ld_sync == NULL) {
 		aprint_error_dev(sc->sc_dev, "Failed to allocate sync\n");
 		goto err;
@@ -3416,7 +3415,6 @@ again:
 
 	if ((ccb = mfi_get_ccb(sc)) == NULL) {
 		aprint_error_dev(sc->sc_dev, "Failed to get sync command\n");
-		free(ld_sync, M_DEVBUF);
 		goto err;
 	}
 	sc->sc_ldsync_ccb = ccb;
