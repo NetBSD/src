@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.60 2015/03/31 21:40:57 christos Exp $
+# $NetBSD: ad.arm,v 1.61 2015/04/04 00:00:41 christos Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -186,7 +186,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libss.so.6.0.debug		comp-krb5-debug	obsolete
-./usr/libdata/debug/usr/lib/oabi/libssh.so.23.0.debug	comp-secsh-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx

@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.19 2015/03/31 21:40:57 christos Exp $
+# $NetBSD: ad.aarch64,v 1.20 2015/04/04 00:00:41 christos Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -167,7 +167,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libssh.so.23.0.debug	comp-secsh-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/eabi/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/eabi/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
@@ -321,7 +321,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabihf/libssh.so.23.0.debug	comp-secsh-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/eabihf/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
@@ -475,7 +475,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libskey.so.2.0.debug		comp-sys-debug	skey,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libssh.so.23.0.debug		comp-secsh-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libssh.so.24.0.debug		comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.5.0.debug		comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.0.debug		comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
