@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.95 2015/03/31 21:40:57 christos Exp $
+# $NetBSD: shl.mi,v 1.96 2015/04/04 00:00:41 christos Exp $
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libc.so.12.197.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
@@ -252,7 +252,7 @@
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug	comp-sys-debug	skey,debug
 ./usr/libdata/debug/usr/lib/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.2.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libssh.so.23.0.debug	comp-secsh-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,libstdcxx
