@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.15 2015/03/28 17:45:47 riastradh Exp $	*/
+/*	$NetBSD: t_io.c,v 1.16 2015/04/04 12:34:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -233,9 +233,6 @@ read_fault(const atf_tc_t *tc, const char *mp)
 	ATF_REQUIRE_EQ(rump_sys_write(fd, &ch, 1), 1);
 	RL(rump_sys_close(fd));
 	RL(fd = rump_sys_open("file", O_RDONLY | O_SYNC | O_RSYNC));
-	if (FSTYPE_MSDOS(tc) ||
-	    FSTYPE_SYSVBFS(tc))
-		atf_tc_expect_fail("bad sync atime update code path");
 	ATF_REQUIRE_ERRNO(EFAULT, rump_sys_read(fd, NULL, 1) == -1);
 	RL(rump_sys_close(fd));
 	FSTEST_EXIT();
