@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2015/03/10 22:39:38 macallan Exp $ */
+/*	$NetBSD: machdep.c,v 1.6 2015/04/04 13:06:01 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2015/03/10 22:39:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2015/04/04 13:06:01 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,6 +115,40 @@ cal_timer(void)
 	do {} while (junk == readreg(JZ_OST_CNT_LO));
 }
 
+#ifdef MULTIPROCESSOR
+static void
+ingenic_cpu_init(struct cpu_info *ci)
+{
+	uint32_t reg;
+
+	/* enable IPIs for this core */
+	reg = MFC0(12, 4);	/* reset entry and interrupts */
+	reg &= 0xffff0000;
+	if (cpu_index(ci) == 1) {
+		reg |= REIM_MIRQ1_M;
+	} else
+		reg |= REIM_MIRQ0_M;
+	MTC0(reg, 12, 4);
+}
+
+static int
+ingenic_send_ipi(struct cpu_info *ci, int tag)
+{
+	uint32_t msg;
+
+	msg = 1 << tag;
+
+	if (cpus_running & (1 << cpu_index(ci))) {
+		if (cpu_index(ci) == 0) {
+			MTC0(msg, CP0_CORE_MBOX, 0);
+		} else {
+			MTC0(msg, CP0_CORE_MBOX, 1);
+		}
+	}
+	return 0;
+}
+#endif
+
 void
 mach_init(void)
 {
@@ -154,7 +188,11 @@ mach_init(void)
 	printf("Memory size: 0x%08x\n", memsize);
 	physmem = btoc(memsize);
 
-	/* XXX this is CI20 specific */
+	/*
+	 * memory is at 0x20000000 with first 256MB mirrored to 0x00000000 so
+	 * we can see them through KSEG*
+	 * assume 1GB for now, the SoC can theoretically support up to 3GB
+	 */
 	mem_clusters[0].start = PAGE_SIZE;
 	mem_clusters[0].size = 0x10000000 - PAGE_SIZE;
 	mem_clusters[1].start = 0x30000000;
@@ -181,6 +219,11 @@ mach_init(void)
 	 * Allocate uarea page for lwp0 and set it.
 	 */
 	mips_init_lwp0_uarea();
+
+#ifdef MULTIPROCESSOR
+	mips_locoresw.lsw_send_ipi = ingenic_send_ipi;
+	mips_locoresw.lsw_cpu_init = ingenic_cpu_init;
+#endif
 
 	apbus_init();
 	/*
