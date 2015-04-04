@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 2015/03/28 16:57:23 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.9 2015/04/04 13:06:01 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2015/03/28 16:57:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2015/04/04 13:06:01 macallan Exp $");
 
 #define __INTR_PRIVATE
 
@@ -121,7 +121,7 @@ evbmips_intr_init(void)
 	/* allow peripheral interrupts to core 0 only */
 	reg = MFC0(12, 4);	/* reset entry and interrupts */
 	reg &= 0xffff0000;
-	reg |= REIM_IRQ0_M | REIM_MIRQ0_M | REIM_MIRQ1_M;
+	reg |= REIM_IRQ0_M | REIM_MIRQ0_M;
 	MTC0(reg, 12, 4);
 }
 
@@ -149,7 +149,6 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 	if (ipending & MIPS_INT_MASK_1) {
 		/*
 		 * this is a mailbox interrupt / IPI
-		 * for now just print the message and clear it
 		 */
 		uint32_t reg;
 
@@ -157,12 +156,16 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		reg = MFC0(12, 3);
 		if (id == 0) {
 			if (reg & CS_MIRQ0_P) {
+#ifdef MULTIPROCESSOR
+				uint32_t tag;
+				tag = MFC0(CP0_CORE_MBOX, 0);
 	
+				ipi_process(curcpu(), tag);
 #ifdef INGENIC_INTR_DEBUG
 				snprintf(buffer, 256,
-				    "IPI for core 0, msg %08x\n",
-				    MFC0(CP0_CORE_MBOX, 0));
+				    "IPI for core 0, msg %08x\n", tag);
 				ingenic_puts(buffer);
+#endif
 #endif
 				reg &= (~CS_MIRQ0_P);
 				/* clear it */
@@ -170,13 +173,17 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 			}
 		} else if (id == 1) {
 			if (reg & CS_MIRQ1_P) {
+#ifdef MULTIPROCESSOR
+				uint32_t tag;
+				tag = MFC0(CP0_CORE_MBOX, 1);
+				ipi_process(curcpu(), tag);
 #ifdef INGENIC_INTR_DEBUG
 				snprintf(buffer, 256,
-				    "IPI for core 1, msg %08x\n",
-				    MFC0(CP0_CORE_MBOX, 1));
+				    "IPI for core 1, msg %08x\n", tag);
 				ingenic_puts(buffer);
 #endif
-				reg &= ( 7 - CS_MIRQ1_P);
+#endif
+				reg &= (~CS_MIRQ1_P);
 				/* clear it */
 				MTC0(reg, 12, 3);
 			}
