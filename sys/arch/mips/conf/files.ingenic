@@ -1,4 +1,4 @@
-#	$NetBSD: files.ingenic,v 1.4 2015/03/10 18:16:20 macallan Exp $
+#	$NetBSD: files.ingenic,v 1.5 2015/04/04 12:28:52 macallan Exp $
 
 include "dev/scsipi/files.scsipi"		# SCSI devices
 include "dev/ata/files.ata"			# ATA devices
@@ -26,3 +26,9 @@ file	arch/mips/ingenic/ingenic_ehci.c	ingenic_ehci	needs-flag
 # Ethernet
 attach dme at apbus with ingenic_dme
 file	arch/mips/ingenic/ingenic_dme.c		ingenic_dme	needs-flag
+
+# I2C
+device 	jziic : i2cbus
+attach 	jziic at apbus
+file 	arch/mips/ingenic/jziic.c	jziic
+defflag	opt_ingenic.h	JZIIC_DEBUG
