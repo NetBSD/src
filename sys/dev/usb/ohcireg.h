@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcireg.h,v 1.24.6.3 2015/03/30 11:56:42 skrll Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.24.6.4 2015/04/04 06:22:06 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -31,8 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_PCI_OHCIREG_H_
-#define _DEV_PCI_OHCIREG_H_
+#ifndef _DEV_USB_OHCIREG_H_
+#define _DEV_USB_OHCIREG_H_
 
 /*** PCI config registers ***/
 
@@ -239,4 +239,4 @@ typedef struct {
 #define OHCI_ENABLE_POWER_DELAY	5
 #define OHCI_READ_DESC_DELAY	5
 
-#endif /* _DEV_PCI_OHCIREG_H_ */
+#endif /* _DEV_USB_OHCIREG_H_ */
