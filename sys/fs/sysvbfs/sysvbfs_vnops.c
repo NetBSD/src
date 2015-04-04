@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.57 2015/04/04 12:34:45 riastradh Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.58 2015/04/04 13:28:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.57 2015/04/04 12:34:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.58 2015/04/04 13:28:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -439,6 +439,7 @@ sysvbfs_read(void *arg)
 		return EINVAL;
 	}
 
+	err = 0;
 	while (uio->uio_resid > 0) {
 		if ((sz = MIN(filesz - uio->uio_offset, uio->uio_resid)) == 0)
 			break;
