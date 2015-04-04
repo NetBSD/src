@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.22 2012/01/06 14:04:02 drochner Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.23 2015/04/04 02:51:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.22 2012/01/06 14:04:02 drochner Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.23 2015/04/04 02:51:10 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -352,11 +352,11 @@ done:
 static int
 pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 {
-	AuthenticationConnection *ac;
 	const struct pam_ssh_key *psk;
 	const char **kfn;
 	char **envlist, **env;
 	int pam_err;
+	int agent_fd;
 
 	/* switch to PAM environment */
 	envlist = environ;
@@ -368,11 +368,12 @@ pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 	}
 
 	/* get a connection to the agent */
-	if ((ac = ssh_get_authentication_connection()) == NULL) {
+	if (ssh_get_authentication_socket(&agent_fd) != 0) {
 		openpam_log(PAM_LOG_DEBUG,
 		    "%s: cannot get authentication connection",
 		    __func__);
 		pam_err = PAM_SYSTEM_ERR;
+		agent_fd = -1;
 		goto end;
 	}
 
@@ -382,7 +383,8 @@ pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 		pam_err = pam_get_data(pamh, *kfn, &vp);
 		psk = vp;
 		if (pam_err == PAM_SUCCESS && psk != NULL) {
-			if (ssh_add_identity(ac, psk->key, psk->comment))
+			if (ssh_add_identity_constrained(agent_fd, psk->key,
+			    psk->comment, 0, 0))
 				openpam_log(PAM_LOG_DEBUG,
 				    "added %s to ssh agent", psk->comment);
 			else
@@ -395,8 +397,8 @@ pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 	pam_err = PAM_SUCCESS;
  end:
 	/* disconnect from agent */
-	if (ac != NULL)
-		ssh_close_authentication_connection(ac);
+	if (agent_fd != -1)
+		ssh_close_authentication_socket(agent_fd);
 
 	/* switch back to original environment */
 	for (env = environ; *env != NULL; ++env)
