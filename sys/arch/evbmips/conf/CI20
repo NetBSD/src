@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.11 2015/03/17 07:28:18 macallan Exp $
+#	$NetBSD: CI20,v 1.12 2015/04/04 12:32:34 macallan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.11 $"
+#ident 		"CI20-$Revision: 1.12 $"
 
 maxusers	32
 
@@ -136,6 +136,7 @@ config		netbsd	root on sd0a type ffs
 #config		netbsd	root on axe0 type nfs
 
 mainbus0 	at root
+#options 	MULTIPROCESSOR
 cpu0 		at mainbus?
 #wdog0		at mainbus?
 com*		at mainbus?
@@ -156,10 +157,30 @@ usb* 		at ohci?
 # onboard ethernet
 dme*		at apbus?
 
+# I2C/SMBus
+# Work in progress - can't do transfers over 15 bytes per direction,
+# no interrupts etc.
+# Good enough for talking to an RTC though, so it's enabled.
+jziic* 		at apbus?
+#options 	JZIIC_DEBUG	# spammy
+iic* 		at jziic?
+
+# voltage control and the like, no driver yet
+#act8600pm0 	at iic0 addr 0x5a
+
+# XXX
+# the manual says there's a Pericom RTC at SMB4 addr 0x68
+# on my preproduction CI20 that's not the case, instead there's something that
+# looks like a PCF8563 at addr 0x51
+ 
+# the Pericom PT7C4337 seems to be a DS1339 clone
+#dsrtc0 	at iic4 addr 0x68 flags 1339
+
+# at least some CI20 have this instead
+pcf8563rtc0	at iic4 addr 0x51
+
 #jzgpio* 	at apbus? addr ?
 #gpio*		at jzgpio?
-
-# no RTC!  so fake with a stub (required to prevent evbmips panic)
 
 # USB stuff
 uhub*		at usb?
