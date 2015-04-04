@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.11 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.12 2015/04/04 13:59:20 christos Exp $	*/
 /* $OpenBSD: ssh-keyscan.c,v 1.99 2015/01/30 10:44:49 djm Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
@@ -9,7 +9,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.11 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.12 2015/04/04 13:59:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -91,7 +91,7 @@ typedef struct Connection {
 	int c_len;		/* Total bytes which must be read. */
 	int c_off;		/* Length of data read so far. */
 	int c_keytype;		/* Only one of KT_RSA1, KT_DSA, or KT_RSA */
-	int c_done;		/* SSH2 done */
+	sig_atomic_t c_done;	/* SSH2 done */
 	char *c_namebase;	/* Address to free for c_name and c_namelist */
 	char *c_name;		/* Hostname of connection for errors */
 	char *c_namelist;	/* Pointer to other possible addresses */
