@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.34 2015/03/31 21:40:57 christos Exp $
+# $NetBSD: ad.powerpc,v 1.35 2015/04/04 00:00:41 christos Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -275,8 +275,8 @@
 ./usr/lib/powerpc/libsl.so.5.0			base-compat-shlib	compat,arch64,pic,kerberos
 ./usr/lib/powerpc/libsqlite3.so.1		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libsqlite3.so.1.2		base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libssh.so.23			base-compat-shlib	compat,arch64,pic,crypto
-./usr/lib/powerpc/libssh.so.23.0		base-compat-shlib	compat,arch64,pic,crypto
+./usr/lib/powerpc/libssh.so.24			base-compat-shlib	compat,arch64,pic,crypto
+./usr/lib/powerpc/libssh.so.24.0		base-compat-shlib	compat,arch64,pic,crypto
 ./usr/lib/powerpc/libssl.so.10			base-compat-shlib	compat,arch64,pic,crypto
 ./usr/lib/powerpc/libssl.so.10.5		base-compat-shlib	compat,arch64,pic,crypto
 ./usr/lib/powerpc/libstdc++.so.7		base-compat-shlib	compat,arch64,pic,gcccmds,libstdcxx

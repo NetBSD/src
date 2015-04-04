@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.16 2015/03/31 21:40:57 christos Exp $
+# $NetBSD: ad.riscv,v 1.17 2015/04/04 00:00:41 christos Exp $
 ./lib/rv32					base-compat-shlib	compat,arch64
 ./lib/rv32/npf					base-npf-shlib		compat,arch64
 ./lib/rv32/npf/ext_log.so			base-npf-shlib		compat,pic,arch64
@@ -267,8 +267,8 @@
 ./usr/lib/rv32/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/rv32/libsqlite3.so.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libsqlite3.so.1.2		base-compat-shlib	compat,pic,arch64
-./usr/lib/rv32/libssh.so.23			base-compat-shlib	compat,pic,crypto,arch64
-./usr/lib/rv32/libssh.so.23.0			base-compat-shlib	compat,pic,crypto,arch64
+./usr/lib/rv32/libssh.so.24			base-compat-shlib	compat,pic,crypto,arch64
+./usr/lib/rv32/libssh.so.24.0			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/rv32/libssl.so.10			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/rv32/libssl.so.10.5			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/rv32/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx,arch64
