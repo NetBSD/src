@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.11 2015/02/28 21:30:22 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.12 2015/04/04 15:46:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -147,7 +147,8 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 		(RET) = -cv_timedwait_sig((Q), &(INTERLOCK)->sl_lock, 1);     \
 		if (RET) {						      \
 			if ((RET) == -EWOULDBLOCK)			      \
-				(RET) = (CONDITION) ? 0 : -EBUSY;	      \
+				/* Waited only one tick.  */		      \
+				continue;				      \
 			break;						      \
 		}							      \
 	}								      \
