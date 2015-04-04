@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.92 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.93 2015/04/04 12:34:44 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.92 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.93 2015/04/04 12:34:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -532,8 +532,13 @@ msdosfs_read(void *v)
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
 out:
-	if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-		error = deupdat(dep, 1);
+	if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
+		int uerror;
+
+		uerror = deupdat(dep, 1);
+		if (error == 0)
+			error = uerror;
+	}
 bad:
 	fstrans_done(vp->v_mount);
 	return (error);
