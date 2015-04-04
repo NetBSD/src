@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2014/11/20 20:48:33 christos Exp $
+#	$NetBSD: Makefile,v 1.52 2015/04/04 19:32:06 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -41,3 +41,5 @@ DPADD+=		${LIBL}
 .include "Makefile.ops-c"
 
 .include <bsd.prog.mk>
+
+${SRCS}: ops.h
