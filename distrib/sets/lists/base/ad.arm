@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.71 2015/03/31 21:40:57 christos Exp $
+# $NetBSD: ad.arm,v 1.72 2015/04/04 00:00:41 christos Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -303,8 +303,8 @@
 ./usr/lib/oabi/libsqlite3.so.1.2		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libss.so.6			base-compat-shlib	obsolete
 ./usr/lib/oabi/libss.so.6.0			base-compat-shlib	obsolete
-./usr/lib/oabi/libssh.so.23			base-compat-shlib	compat,pic,crypto
-./usr/lib/oabi/libssh.so.23.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/oabi/libssh.so.24			base-compat-shlib	compat,pic,crypto
+./usr/lib/oabi/libssh.so.24.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libssl.so.10			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libssl.so.10.5			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx
