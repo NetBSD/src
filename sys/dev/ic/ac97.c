@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.95 2012/10/27 17:18:18 chs Exp $ */
+/*      $NetBSD: ac97.c,v 1.96 2015/04/04 15:09:45 christos Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.95 2012/10/27 17:18:18 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.96 2015/04/04 15:09:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1444,6 +1444,7 @@ ac97_attach_type(struct ac97_host_if *host_if, device_t sc_dev, int type, kmutex
 
 		if (as->ext_mid == 0 || as->ext_mid == 0xffff) {
 			aprint_normal_dev(sc_dev, "no modem codec found\n");
+			free(as, M_DEVBUF);
 			return ENXIO;
 		}
 		as->type = AC97_CODEC_TYPE_MODEM;
