@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.47 2015/04/04 15:14:42 riastradh Exp $	*/
+/*	$NetBSD: i2c.c,v 1.48 2015/04/04 15:16:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.47 2015/04/04 15:14:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.48 2015/04/04 15:16:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,19 +519,14 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 		if (cmd == NULL)
 			return ENOMEM;
 		error = copyin(iie->iie_cmd, cmd, iie->iie_cmdlen);
-		if (error) {
-			kmem_free(cmd, iie->iie_cmdlen);
-			return error;
-		}
+		if (error)
+			goto out;
 	}
 
 	if (iie->iie_buf != NULL && I2C_OP_WRITE_P(iie->iie_op)) {
 		error = copyin(iie->iie_buf, buf, iie->iie_buflen);
-		if (error) {
-			if (cmd)
-				kmem_free(cmd, iie->iie_cmdlen);
-			return error;
-		}
+		if (error)
+			goto out;
 	}
 
 	iic_acquire_bus(ic, 0);
@@ -545,6 +540,7 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 	if (error < 0)
 		error = EIO;
 
+out:
 	if (cmd)
 		kmem_free(cmd, iie->iie_cmdlen);
 
