@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.247 2015/03/29 09:09:50 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.248 2015/04/04 19:05:31 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19422,4 +19422,9 @@ sys/kern/exec_elf.c				1.71
 
 	Zero-fill the ELF auxiliary vectors to prevent userland leak.
 	[maxv, ticket #650]
+
+sys/net/if_vlan.c				1.80
+
+	Correct frame padding length.
+	[ozaki-r, ticket #653]
 
