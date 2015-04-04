@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.50 2015/04/04 15:25:16 riastradh Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.51 2015/04/04 15:29:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.50 2015/04/04 15:25:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.51 2015/04/04 15:29:59 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -800,6 +800,8 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 
 		if (sysmon_power_daemon_task(ped, pes, event) == 0)
 			return;
+		/* We failed */
+		prop_object_release(ped->dict);
 		kmem_free(ped, sizeof(*ped));
 	}
 
