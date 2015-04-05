@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.686 2015/04/05 08:41:05 skrll Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.687 2015/04/05 09:22:13 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.694 2015/04/05 08:39:10 skrll Exp
+ *	NetBSD: usbdevs,v 1.695 2015/04/05 09:18:13 skrll Exp
  */
 
 /*
@@ -3179,10 +3179,13 @@
 #define	USB_PRODUCT_TENX_MISSILE	0x0202		/* Missile Launcher */
 #define	USB_PRODUCT_TENX_TEMPER	0x660c		/* TEMPer sensor */
 
-/* Texas Intel products */
+/* Texas Instruments products */
 #define	USB_PRODUCT_TI_UTUSB41	0x1446		/* UT-USB41 hub */
 #define	USB_PRODUCT_TI_TUSB2046	0x2046		/* TUSB2046 hub */
+#define	USB_PRODUCT_TI_TUSB3410	0x3410		/* TUSB3410 */
 #define	USB_PRODUCT_TI_NEXII	0x5409		/* Nex II Digital */
+#define	USB_PRODUCT_TI_MSP430_JTAG	0xf430		/* MSP-FET430UIF JTAG */
+#define	USB_PRODUCT_TI_MSP430	0xf432		/* MSP-FET430UIF */
 
 /* Thrustmaster products */
 #define	USB_PRODUCT_THRUST_FUSION_PAD	0xa0a3		/* Fusion Digital Gamepad */
