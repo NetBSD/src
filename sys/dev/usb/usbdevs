@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.694 2015/04/05 08:39:10 skrll Exp $
+$NetBSD: usbdevs,v 1.695 2015/04/05 09:18:13 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3172,10 +3172,13 @@ product TELEX MIC1		0x0001	Enhanced USB Microphone
 product TENX MISSILE		0x0202	Missile Launcher
 product TENX TEMPER		0x660c	TEMPer sensor
 
-/* Texas Intel products */
+/* Texas Instruments products */
 product TI UTUSB41		0x1446	UT-USB41 hub
 product TI TUSB2046		0x2046	TUSB2046 hub
+product TI TUSB3410		0x3410	TUSB3410
 product TI NEXII		0x5409	Nex II Digital
+product TI MSP430_JTAG		0xf430	MSP-FET430UIF JTAG
+product TI MSP430		0xf432	MSP-FET430UIF
 
 /* Thrustmaster products */
 product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
