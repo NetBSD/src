@@ -1,4 +1,4 @@
-.\"	$NetBSD: bind.2,v 1.27 2010/05/31 12:16:20 njoly Exp $
+.\"	$NetBSD: bind.2,v 1.28 2015/04/05 20:33:45 rtr Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,6 +85,8 @@ is not a valid descriptor.
 is not a socket.
 .It Bq Er EADDRNOTAVAIL
 The specified address is not available from the local machine.
+.It Bq Er EAFNOSUPPORT
+Addresses in the specified address family cannot be used with this socket.
 .It Bq Er EADDRINUSE
 The specified address is already in use.
 .It Bq Er EINVAL
