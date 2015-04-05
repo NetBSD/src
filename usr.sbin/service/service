@@ -1,5 +1,5 @@
 #!/bin/sh
-#    $NetBSD: service,v 1.6 2015/04/02 18:41:22 ast Exp $
+#    $NetBSD: service,v 1.7 2015/04/05 11:33:15 apb Exp $
 #    service -- run or list system services
 #
 #  Taken from FreeBSD: releng/10.1/usr.sbin/service/service.sh 268098
@@ -33,7 +33,7 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 usage ()
 {
-    local me=${0##*/}
+    local me="${0##*/}"
     echo "usage: ${me} [-elv]"
     echo "       ${me} [-ev] rc_script_name [rc_script_name2 [...]]"
     echo "       ${me} [-v] rc_script_name action"
@@ -60,7 +60,7 @@ _rc_files()
 }
 
 while getopts elv o; do
-    case $o in
+    case "$o" in
         e) ENABLED=1 ;;
         l) LIST=1 ;;
         v) VERBOSE=1 ;;
@@ -83,9 +83,9 @@ if [ -n "${ENABLED}" ]; then
     fi
     _rc_files | $flt | while read file
     do
-        if grep -q ^rcvar $file; then
-            eval $( grep ^name= $file )
-            eval $( grep ^rcvar $file )
+        if grep -q ^rcvar "$file"; then
+            eval $( grep ^name= "$file" )
+            eval $( grep ^rcvar "$file" )
             if [ -n "${rcvar}" ]; then
                 load_rc_config ${rcvar}
                 checkyesno ${rcvar} 2>/dev/null && echo ${file}
@@ -116,7 +116,7 @@ for dir in ${rc_directories}; do
         umask 022
         exec env -i \
             HOME=/ PATH=/sbin:/bin:/usr/sbin:/usr/bin \
-                ${dir}/${script} ${arg}
+                "${dir}/${script}" "${arg}"
         echo "Failed to exec ${dir}/${script} ${arg}" >&2
         exit 255
     fi
