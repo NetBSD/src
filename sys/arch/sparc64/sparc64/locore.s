@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.383 2015/04/01 18:38:30 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.384 2015/04/05 20:34:00 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4739,7 +4739,7 @@ ENTRY(cpu_mp_startup)
 	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
 	andn	%l1, %l4, %l1			! Mask the phys page number into RA
 	or	%l2, %l1, %l1			! Now take care of the 8 high bits V|NFO|SW
-	or	%l1, 0x0141, %l2		! And low 13 bits IE=0|E=0|CP=0|CV=0|P=1|
+	or	%l1, 0x0741, %l2		! And low 13 bits IE=0|E=0|CP=1|CV=1|P=1|
 						!		  X=0|W=1|SW=00|SZ=0001
 
 	/*
