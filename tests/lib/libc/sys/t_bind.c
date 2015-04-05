@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bind.c,v 1.2 2015/04/05 23:15:54 rtr Exp $	*/
+/*	$NetBSD: t_bind.c,v 1.3 2015/04/05 23:28:10 rtr Exp $	*/
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@ ATF_TC(bind_foreign_family);
 
 ATF_TC_HEAD(bind_foreign_family, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks that bindinging a socket "
+	atf_tc_set_md_var(tc, "descr", "Checks that binding a socket "
 	    "with a different address family fails");
 }
 
