@@ -1,4 +1,4 @@
-/*	$NetBSD: scanner.l,v 1.7 2015/03/31 21:39:42 christos Exp $	*/
+/*	$NetBSD: scanner.l,v 1.8 2015/04/05 22:36:36 christos Exp $	*/
 
 %{
 /*
@@ -22,8 +22,9 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scanner.l,v 1.7 2015/03/31 21:39:42 christos Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.8 2015/04/05 22:36:36 christos Exp $");
 
+#include "config.h"
 #ifdef WIN32
 #include <pcap-stdinc.h>
 #else /* WIN32 */
