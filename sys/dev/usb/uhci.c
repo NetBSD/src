@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.31 2015/04/03 21:33:23 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.32 2015/04/05 07:26:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.31 2015/04/03 21:33:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.32 2015/04/05 07:26:31 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3106,7 +3106,7 @@ uhci_device_ctrl_done(struct usbd_xfer *xfer)
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
-	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
+	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
 	if (!uhci_active_intr_info(ii))
 		return;
