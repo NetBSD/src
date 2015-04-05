@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.685 2015/03/17 08:15:48 macallan Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.686 2015/04/05 08:41:05 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.692 2015/03/15 01:37:47 nonaka Exp
+ *	NetBSD: usbdevs,v 1.694 2015/04/05 08:39:10 skrll Exp
  */
 
 /*
@@ -3350,6 +3350,7 @@
 #define	USB_PRODUCT_XIRLINK_PCCAM	0x8080		/* IBM PC Camera */
 
 /* Conexant */
+#define	USB_PRODUCT_CONEXANT_MODEM_1	0x1329		/* USB Modem */
 #define	USB_PRODUCT_CONEXANT_PRISM_GT_1	0x2000		/* PrismGT USB 2.0 WLAN */
 #define	USB_PRODUCT_CONEXANT_PRISM_GT_2	0x2002		/* PrismGT USB 2.0 WLAN */
 
