@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bind.c,v 1.1 2015/04/05 06:36:52 martin Exp $	*/
+/*	$NetBSD: t_bind.c,v 1.2 2015/04/05 23:15:54 rtr Exp $	*/
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,17 +50,21 @@ ATF_TC_BODY(bind_foreign_family, tc)
 {
 	struct sockaddr_in addr;
 
+	/* addr.sin_family = AF_UNSPEC = 0 */
 	memset(&addr, 0, sizeof(addr));
-	/* use a sin_family != the socket type */
-	addr.sin_port = htons(8000);
-	addr.sin_addr.s_addr = INADDR_ANY;
+
+	/*
+	 * it is not necessary to initialize sin_{addr,port} since
+	 * those structure members shall not be accessed if bind
+	 * fails correctly.
+	 */
 
 	int sock = socket(AF_LOCAL, SOCK_STREAM, 0);
 	ATF_REQUIRE(sock != -1);
 
 	/* should fail but currently doesn't */
 	ATF_REQUIRE(-1 == bind(sock, (struct sockaddr *)&addr, sizeof(addr)));
-	ATF_REQUIRE(EINVAL == errno);
+	ATF_REQUIRE(EAFNOSUPPORT == errno);
 
 	close(sock);
 }
