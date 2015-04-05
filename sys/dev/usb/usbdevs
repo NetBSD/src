@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.693 2015/03/17 08:14:30 macallan Exp $
+$NetBSD: usbdevs,v 1.694 2015/04/05 08:39:10 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3343,6 +3343,7 @@ product XIRLINK IMAGING		0x800d	IMAGING DEVICE
 product XIRLINK PCCAM		0x8080	IBM PC Camera
 
 /* Conexant */
+product CONEXANT MODEM_1	0x1329	USB Modem
 product CONEXANT PRISM_GT_1	0x2000	PrismGT USB 2.0 WLAN
 product CONEXANT PRISM_GT_2	0x2002	PrismGT USB 2.0 WLAN
 
