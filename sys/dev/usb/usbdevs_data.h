@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.686 2015/03/17 08:15:48 macallan Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.687 2015/04/05 08:41:05 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.692 2015/03/15 01:37:47 nonaka Exp
+ *	NetBSD: usbdevs,v 1.694 2015/04/05 08:39:10 skrll Exp
  */
 
 /*
@@ -4506,6 +4506,8 @@ static const uint16_t usb_products[] = {
 	    18751, 18759, 0,
 	    USB_VENDOR_XIRLINK, USB_PRODUCT_XIRLINK_PCCAM, 
 	    672, 5609, 2882, 0,
+	    USB_VENDOR_CONEXANT, USB_PRODUCT_CONEXANT_MODEM_1, 
+	    4710, 4845, 0,
 	    USB_VENDOR_CONEXANT, USB_PRODUCT_CONEXANT_PRISM_GT_1, 
 	    5167, 4710, 5175, 5140, 0,
 	    USB_VENDOR_CONEXANT, USB_PRODUCT_CONEXANT_PRISM_GT_2, 
@@ -5280,7 +5282,7 @@ static const char usb_words[] = { "."
 	    "GNU\0" /* 1 refs @ 4689 */
 	    "USRP\0" /* 2 refs @ 4693 */
 	    "HomeConnect\0" /* 4 refs @ 4698 */
-	    "USB\0" /* 188 refs @ 4710 */
+	    "USB\0" /* 189 refs @ 4710 */
 	    "Bluetooth\0" /* 17 refs @ 4714 */
 	    "Adapter\0" /* 71 refs @ 4724 */
 	    "3C19250\0" /* 1 refs @ 4732 */
@@ -5296,7 +5298,7 @@ static const char usb_words[] = { "."
 	    "3C460B\0" /* 1 refs @ 4812 */
 	    "3CRUSB10075\0" /* 1 refs @ 4819 */
 	    "OfficeConnect\0" /* 1 refs @ 4831 */
-	    "Modem\0" /* 14 refs @ 4845 */
+	    "Modem\0" /* 15 refs @ 4845 */
 	    "ISDN\0" /* 3 refs @ 4851 */
 	    "TA\0" /* 2 refs @ 4856 */
 	    "camera\0" /* 5 refs @ 4859 */
