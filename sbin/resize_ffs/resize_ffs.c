@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.41 2015/03/29 19:33:55 chopps Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.42 2015/04/06 12:38:21 mlelstv Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.41 2015/03/29 19:33:55 chopps Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.42 2015/04/06 12:38:21 mlelstv Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -959,9 +959,13 @@ grow(void)
 	 * minimal, at most the pre-sb data area. */
 	if (cgdmin(newsb, newsb->fs_ncg - 1) > newsb->fs_size) {
 		newsb->fs_ncg--;
-		newsb->fs_old_ncyl = newsb->fs_ncg * newsb->fs_old_cpg;
-		newsb->fs_size = (newsb->fs_old_ncyl * newsb->fs_old_spc)
-		    / NSPF(newsb);
+		if (is_ufs2)
+			newsb->fs_size = newsb->fs_ncg * newsb->fs_fpg;
+		else {
+			newsb->fs_old_ncyl = newsb->fs_ncg * newsb->fs_old_cpg;
+			newsb->fs_size = (newsb->fs_old_ncyl *
+				newsb->fs_old_spc) / NSPF(newsb);
+		}
 		printf("Warning: last cylinder group is too small;\n");
 		printf("    dropping it.  New size = %lu.\n",
 		    (unsigned long int) FFS_FSBTODB(newsb, newsb->fs_size));
@@ -1699,17 +1703,18 @@ shrink(void)
 		    newsb->fs_old_spc);
 		newsb->fs_ncg = howmany(newsb->fs_old_ncyl, newsb->fs_old_cpg);
 	}
+
 	/* Does the (new) last cg end before the end of its inode area?  See
 	 * the similar code in grow() for more on this. */
 	if (cgdmin(newsb, newsb->fs_ncg - 1) > newsb->fs_size) {
 		newsb->fs_ncg--;
-		if (is_ufs2 == 0) {
+		if (is_ufs2)
+			newsb->fs_size = newsb->fs_ncg * newsb->fs_fpg;
+		else {
 			newsb->fs_old_ncyl = newsb->fs_ncg * newsb->fs_old_cpg;
 			newsb->fs_size = (newsb->fs_old_ncyl *
 			    newsb->fs_old_spc) / NSPF(newsb);
-		} else
-			newsb->fs_size = newsb->fs_ncg * newsb->fs_fpg;
-
+		}
 		printf("Warning: last cylinder group is too small;\n");
 		printf("    dropping it.  New size = %lu.\n",
 		    (unsigned long int) FFS_FSBTODB(newsb, newsb->fs_size));
