@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.176 2015/04/04 18:51:57 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.177 2015/04/06 09:34:15 yamt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.176 2015/04/04 18:51:57 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.177 2015/04/06 09:34:15 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1544,6 +1544,7 @@ _rtld_shared_enter(void)
 			/* Yes, so increment use counter */
 			if (atomic_cas_uint(&_rtld_mutex, cur, cur + 1) != cur)
 				continue;
+			membar_enter();
 			return;
 		}
 		/*
@@ -1561,6 +1562,7 @@ _rtld_shared_enter(void)
 		/*
 		 * Check for race against _rtld_exclusive_exit before sleeping.
 		 */
+		membar_sync();
 		if ((_rtld_mutex & RTLD_EXCLUSIVE_MASK) ||
 		    _rtld_waiter_exclusive)
 			_lwp_park(CLOCK_REALTIME, 0, NULL, 0,
@@ -1588,12 +1590,12 @@ _rtld_shared_exit(void)
 	 * Wakeup LWPs waiting for an exclusive lock if this is the last
 	 * LWP on the shared lock.
 	 */
+	membar_exit();
 	if (atomic_dec_uint_nv(&_rtld_mutex))
 		return;
+	membar_sync();
 	if ((waiter = _rtld_waiter_exclusive) != 0)
 		_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
-
-	membar_exit();
 }
 
 void
@@ -1608,12 +1610,13 @@ _rtld_exclusive_enter(sigset_t *mask)
 	sigdelset(&blockmask, SIGTRAP);	/* Allow the debugger */
 	sigprocmask(SIG_BLOCK, &blockmask, mask);
 
-	membar_enter();
-
 	for (;;) {
-		if (atomic_cas_uint(&_rtld_mutex, 0, locked_value) == 0)
+		if (atomic_cas_uint(&_rtld_mutex, 0, locked_value) == 0) {
+			membar_enter();
 			break;
+		}
 		waiter = atomic_swap_uint(&_rtld_waiter_exclusive, self);
+		membar_sync();
 		cur = _rtld_mutex;
 		if (cur == locked_value) {
 			_rtld_error("dead lock detected");
@@ -1633,13 +1636,14 @@ _rtld_exclusive_exit(sigset_t *mask)
 {
 	lwpid_t waiter;
 
+	membar_exit();
 	_rtld_mutex = 0;
+	membar_sync();
 	if ((waiter = _rtld_waiter_exclusive) != 0)
 		_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
 
 	if ((waiter = _rtld_waiter_shared) != 0)
 		_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
 
-	membar_exit();
 	sigprocmask(SIG_SETMASK, mask, NULL);
 }
