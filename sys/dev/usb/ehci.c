@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.46 2015/03/21 16:42:55 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.47 2015/04/06 07:08:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.46 2015/03/21 16:42:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.47 2015/04/06 07:08:59 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -137,7 +137,7 @@ struct ehci_pipe {
 		/* Control pipe */
 		struct {
 			usb_dma_t reqdma;
-		} ctl;
+		} ctrl;
 		/* Interrupt pipe */
 		struct {
 			u_int length;
@@ -147,7 +147,7 @@ struct ehci_pipe {
 			u_int next_frame;
 			u_int cur_xfers;
 		} isoc;
-	} u;
+	};
 };
 
 Static usbd_status	ehci_open(struct usbd_pipe *);
@@ -1965,7 +1965,7 @@ ehci_open(struct usbd_pipe *pipe)
 	switch (xfertype) {
 	case UE_CONTROL:
 		err = usb_allocmem(&sc->sc_bus, sizeof(usb_device_request_t),
-				   0, &epipe->u.ctl.reqdma);
+				   0, &epipe->ctrl.reqdma);
 #ifdef EHCI_DEBUG
 		if (err)
 			printf("ehci_open: usb_allocmem()=%d\n", err);
@@ -2019,8 +2019,8 @@ ehci_open(struct usbd_pipe *pipe)
 			err = USBD_INVAL;
 			goto bad;
 		}
-		epipe->u.isoc.next_frame = 0;
-		epipe->u.isoc.cur_xfers = 0;
+		epipe->isoc.next_frame = 0;
+		epipe->isoc.cur_xfers = 0;
 		break;
 	default:
 		USBHIST_LOG(ehcidebug, "bad xfer type %d", xfertype, 0, 0, 0);
@@ -3470,7 +3470,7 @@ ehci_device_ctrl_done(struct usbd_xfer *xfer)
 	if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(ex)) {
 		ehci_del_intr_list(sc, ex);	/* remove from active list */
 		ehci_free_sqtd_chain(sc, ex->ex_sqtdstart, NULL);
-		usb_syncmem(&epipe->u.ctl.reqdma, 0, sizeof(*req),
+		usb_syncmem(&epipe->ctrl.reqdma, 0, sizeof(*req),
 		    BUS_DMASYNC_POSTWRITE);
 		if (len)
 			usb_syncmem(&xfer->ux_dmabuf, 0, len,
@@ -3577,8 +3577,8 @@ ehci_device_request(struct usbd_xfer *xfer)
 		next = stat;
 	}
 
-	memcpy(KERNADDR(&epipe->u.ctl.reqdma, 0), req, sizeof(*req));
-	usb_syncmem(&epipe->u.ctl.reqdma, 0, sizeof(*req), BUS_DMASYNC_PREWRITE);
+	memcpy(KERNADDR(&epipe->ctrl.reqdma, 0), req, sizeof(*req));
+	usb_syncmem(&epipe->ctrl.reqdma, 0, sizeof(*req), BUS_DMASYNC_PREWRITE);
 
 	/* Clear toggle */
 	setup->qtd.qtd_status = htole32(
@@ -3588,7 +3588,7 @@ ehci_device_request(struct usbd_xfer *xfer)
 	    EHCI_QTD_SET_TOGGLE(0) |
 	    EHCI_QTD_SET_BYTES(sizeof(*req))
 	    );
-	setup->qtd.qtd_buffer[0] = htole32(DMAADDR(&epipe->u.ctl.reqdma, 0));
+	setup->qtd.qtd_buffer[0] = htole32(DMAADDR(&epipe->ctrl.reqdma, 0));
 	setup->qtd.qtd_buffer_hi[0] = 0;
 	setup->nextqtd = next;
 	setup->qtd.qtd_next = setup->qtd.qtd_altnext = htole32(next->physaddr);
@@ -3914,7 +3914,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	sqh = epipe->sqh;
 
-	epipe->u.intr.length = len;
+	epipe->intr.length = len;
 
 	err = ehci_alloc_sqtd_chain(epipe, sc, len, isread, xfer, &data,
 	    &dataend);
@@ -4016,7 +4016,7 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 	if (xfer->ux_pipe->up_repeat) {
 		ehci_free_sqtd_chain(sc, exfer->ex_sqtdstart, NULL);
 
-		len = epipe->u.intr.length;
+		len = epipe->intr.length;
 		xfer->ux_length = len;
 		endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
 		isread = UE_GET_DIR(endpt) == UE_DIR_IN;
@@ -4273,8 +4273,8 @@ ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
 	mutex_enter(&sc->sc_lock);
 
 	/* Start inserting frames */
-	if (epipe->u.isoc.cur_xfers > 0) {
-		frindex = epipe->u.isoc.next_frame;
+	if (epipe->isoc.cur_xfers > 0) {
+		frindex = epipe->isoc.next_frame;
 	} else {
 		frindex = EOREAD4(sc, EHCI_FRINDEX);
 		frindex = frindex >> 3; /* Erase microframe index */
@@ -4332,8 +4332,8 @@ ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
 		sitd = sitd->xfer_next;
 	}
 
-	epipe->u.isoc.cur_xfers++;
-	epipe->u.isoc.next_frame = frindex;
+	epipe->isoc.cur_xfers++;
+	epipe->isoc.next_frame = frindex;
 
 	exfer->ex_sitdstart = start;
 	exfer->ex_sitdend = stop;
@@ -4381,7 +4381,7 @@ ehci_device_fs_isoc_done(struct usbd_xfer *xfer)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	epipe->u.isoc.cur_xfers--;
+	epipe->isoc.cur_xfers--;
 	if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(exfer)) {
 		ehci_del_intr_list(sc, exfer);
 		ehci_rem_free_sitd_chain(sc, exfer);
@@ -4601,8 +4601,8 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	mutex_enter(&sc->sc_lock);
 
 	/* Start inserting frames */
-	if (epipe->u.isoc.cur_xfers > 0) {
-		frindex = epipe->u.isoc.next_frame;
+	if (epipe->isoc.cur_xfers > 0) {
+		frindex = epipe->isoc.next_frame;
 	} else {
 		frindex = EOREAD4(sc, EHCI_FRINDEX);
 		frindex = frindex >> 3; /* Erase microframe index */
@@ -4661,8 +4661,8 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 		itd = itd->xfer_next;
 	}
 
-	epipe->u.isoc.cur_xfers++;
-	epipe->u.isoc.next_frame = frindex;
+	epipe->isoc.cur_xfers++;
+	epipe->isoc.next_frame = frindex;
 
 	exfer->ex_itdstart = start;
 	exfer->ex_itdend = stop;
@@ -4709,7 +4709,7 @@ ehci_device_isoc_done(struct usbd_xfer *xfer)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	epipe->u.isoc.cur_xfers--;
+	epipe->isoc.cur_xfers--;
 	if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(exfer)) {
 		ehci_del_intr_list(sc, exfer);
 		ehci_rem_free_itd_chain(sc, exfer);
