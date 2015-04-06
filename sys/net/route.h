@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.88 2015/03/23 18:33:17 roy Exp $	*/
+/*	$NetBSD: route.h,v 1.89 2015/04/06 08:39:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -368,8 +368,6 @@ void	 rt_missmsg(int, const struct rt_addrinfo *, int, int);
 struct mbuf *rt_msg1(int, struct rt_addrinfo *, void *, int);
 void	 rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
 
-void	 rt_maskedcopy(const struct sockaddr *,
-	    struct sockaddr *, const struct sockaddr *);
 int	 rt_setgate(struct rtentry *, const struct sockaddr *);
 int      rt_timer_add(struct rtentry *,
              void(*)(struct rtentry *, struct rttimer *),
