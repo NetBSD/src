@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.12 2015/04/04 12:32:34 macallan Exp $
+#	$NetBSD: CI20,v 1.13 2015/04/06 14:12:28 martin Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.12 $"
+#ident 		"CI20-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -262,3 +262,7 @@ pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda				# coda minicache <-> venus comm.
+
+
+cinclude 	"arch/evbmips/conf/CI20.local"
+
