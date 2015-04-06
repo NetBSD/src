@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.37 2009/03/15 17:20:09 cegger Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.37.38.1 2015/04/06 01:37:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.37 2009/03/15 17:20:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.37.38.1 2015/04/06 01:37:29 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ struct rpc_reply {
 
 #define MIN_REPLY_HDR 16	/* xid, dir, astat, errno */
 
-static int krpccheck(struct mbuf*, void*);
+static int krpccheck(struct mbuf**, void*);
 
 /*
  * Call portmap to lookup a port number for a particular rpc program
@@ -183,15 +183,16 @@ krpc_portmap(struct sockaddr_in *sin, u_int prog, u_int vers, u_int proto, u_int
 	return 0;
 }
 
-static int krpccheck(struct mbuf *m, void *context)
+static int krpccheck(struct mbuf **mp, void *context)
 {
 	struct rpc_reply *reply;
+	struct mbuf *m = *mp;
 
 	/* Does the reply contain at least a header? */
 	if (m->m_pkthdr.len < MIN_REPLY_HDR)
 		return(-1);
 	if (m->m_len < sizeof(struct rpc_reply)) {
-		m = m_pullup(m, sizeof(struct rpc_reply));
+		m = *mp = m_pullup(m, sizeof(struct rpc_reply));
 		if (m == NULL)
 			return(-1);
 	}
