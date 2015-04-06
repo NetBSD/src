@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2010, Intel Corporation 
+  Copyright (c) 2001-2012, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,17 +30,18 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixv.c,v 1.2 2011/03/23 13:10:15 jhb Exp $*/
-/*$NetBSD: ixv.c,v 1.2 2014/03/25 16:19:14 christos Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixv.c 238149 2012-07-05 20:51:44Z jfv $*/
+/*$NetBSD: ixv.c,v 1.2.6.1 2015/04/06 15:18:12 skrll Exp $*/
 
 #include "opt_inet.h"
+#include "opt_inet6.h"
 
 #include "ixv.h"
 
 /*********************************************************************
  *  Driver version
  *********************************************************************/
-char ixv_driver_version[] = "1.0.0";
+char ixv_driver_version[] = "1.1.4";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -55,6 +56,7 @@ char ixv_driver_version[] = "1.0.0";
 static ixv_vendor_info_t ixv_vendor_info_array[] =
 {
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_VF, 0, 0, 0},
+	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_X540_VF, 0, 0, 0},
 	/* required last entry */
 	{0, 0, 0, 0, 0}
 };
@@ -63,17 +65,19 @@ static ixv_vendor_info_t ixv_vendor_info_array[] =
  *  Table of branding strings
  *********************************************************************/
 
-static char    *ixv_strings[] = {
+static const char    *ixv_strings[] = {
 	"Intel(R) PRO/10GbE Virtual Function Network Driver"
 };
 
 /*********************************************************************
  *  Function prototypes
  *********************************************************************/
-static int      ixv_probe(device_t);
-static int      ixv_attach(device_t);
-static int      ixv_detach(device_t);
+static int      ixv_probe(device_t, cfdata_t, void *);
+static void      ixv_attach(device_t, device_t, void *);
+static int      ixv_detach(device_t, int);
+#if 0
 static int      ixv_shutdown(device_t);
+#endif
 #if __FreeBSD_version < 800000
 static void     ixv_start(struct ifnet *);
 static void     ixv_start_locked(struct tx_ring *, struct ifnet *);
@@ -83,14 +87,15 @@ static int	ixv_mq_start_locked(struct ifnet *,
 		    struct tx_ring *, struct mbuf *);
 static void	ixv_qflush(struct ifnet *);
 #endif
-static int      ixv_ioctl(struct ifnet *, u_long, caddr_t);
-static void	ixv_init(void *);
+static int      ixv_ioctl(struct ifnet *, u_long, void *);
+static int	ixv_init(struct ifnet *);
 static void	ixv_init_locked(struct adapter *);
 static void     ixv_stop(void *);
 static void     ixv_media_status(struct ifnet *, struct ifmediareq *);
 static int      ixv_media_change(struct ifnet *);
 static void     ixv_identify_hardware(struct adapter *);
-static int      ixv_allocate_pci_resources(struct adapter *);
+static int      ixv_allocate_pci_resources(struct adapter *,
+		    const struct pci_attach_args *);
 static int      ixv_allocate_msix(struct adapter *);
 static int	ixv_allocate_queues(struct adapter *);
 static int	ixv_setup_msix(struct adapter *);
@@ -117,28 +122,31 @@ static void     ixv_enable_intr(struct adapter *);
 static void     ixv_disable_intr(struct adapter *);
 static bool	ixv_txeof(struct tx_ring *);
 static bool	ixv_rxeof(struct ix_queue *, int);
-static void	ixv_rx_checksum(u32, struct mbuf *, u32);
+static void	ixv_rx_checksum(u32, struct mbuf *, u32,
+		    struct ixgbevf_hw_stats *);
 static void     ixv_set_multi(struct adapter *);
 static void     ixv_update_link_status(struct adapter *);
 static void	ixv_refresh_mbufs(struct rx_ring *, int);
-static int      ixv_xmit(struct tx_ring *, struct mbuf **);
-static int	ixv_sysctl_stats(SYSCTL_HANDLER_ARGS);
-static int	ixv_sysctl_debug(SYSCTL_HANDLER_ARGS);
-static int	ixv_set_flowcntl(SYSCTL_HANDLER_ARGS);
+static int      ixv_xmit(struct tx_ring *, struct mbuf *);
+static int	ixv_sysctl_stats(SYSCTLFN_PROTO);
+static int	ixv_sysctl_debug(SYSCTLFN_PROTO);
+static int	ixv_set_flowcntl(SYSCTLFN_PROTO);
 static int	ixv_dma_malloc(struct adapter *, bus_size_t,
 		    struct ixv_dma_alloc *, int);
 static void     ixv_dma_free(struct adapter *, struct ixv_dma_alloc *);
 static void	ixv_add_rx_process_limit(struct adapter *, const char *,
 		    const char *, int *, int);
-static bool	ixv_tx_ctx_setup(struct tx_ring *, struct mbuf *);
+static u32	ixv_tx_ctx_setup(struct tx_ring *, struct mbuf *);
 static bool	ixv_tso_setup(struct tx_ring *, struct mbuf *, u32 *);
 static void	ixv_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixv_configure_ivars(struct adapter *);
 static u8 *	ixv_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
 
 static void	ixv_setup_vlan_support(struct adapter *);
+#if 0
 static void	ixv_register_vlan(void *, struct ifnet *, u16);
 static void	ixv_unregister_vlan(void *, struct ifnet *, u16);
+#endif
 
 static void	ixv_save_stats(struct adapter *);
 static void	ixv_init_stats(struct adapter *);
@@ -153,13 +161,21 @@ static void	ixv_msix_que(void *);
 static void	ixv_msix_mbx(void *);
 
 /* Deferred interrupt tasklets */
-static void	ixv_handle_que(void *, int);
-static void	ixv_handle_mbx(void *, int);
+static void	ixv_handle_que(void *);
+static void	ixv_handle_mbx(void *);
+
+const struct sysctlnode *ixv_sysctl_instance(struct adapter *);
+static ixv_vendor_info_t *ixv_lookup(const struct pci_attach_args *);
 
 /*********************************************************************
  *  FreeBSD Device Interface Entry Points
  *********************************************************************/
 
+CFATTACH_DECL3_NEW(ixv, sizeof(struct adapter),
+    ixv_probe, ixv_attach, ixv_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
+
+# if 0
 static device_method_t ixv_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe, ixv_probe),
@@ -168,6 +184,7 @@ static device_method_t ixv_methods[] = {
 	DEVMETHOD(device_shutdown, ixv_shutdown),
 	{0, 0}
 };
+#endif
 
 #if 0
 static driver_t ixv_driver = {
@@ -208,7 +225,7 @@ TUNABLE_INT("hw.ixv.flow_control", &ixv_flow_control);
  * it can be a performance win in some workloads, but
  * in others it actually hurts, its off by default.
  */
-static bool ixv_header_split = FALSE;
+static int ixv_header_split = FALSE;
 TUNABLE_INT("hw.ixv.hdr_split", &ixv_header_split);
 
 /*
@@ -230,54 +247,97 @@ TUNABLE_INT("hw.ixv.rxd", &ixv_rxd);
 */
 static u32 ixv_shadow_vfta[VFTA_SIZE];
 
+/* Keep running tab on them for sanity check */
+static int ixv_total_ports;
+
 /*********************************************************************
  *  Device identification routine
  *
  *  ixv_probe determines if the driver should be loaded on
  *  adapter based on PCI vendor/device id of the adapter.
  *
- *  return 0 on success, positive on failure
+ *  return 1 on success, 0 on failure
  *********************************************************************/
 
 static int
-ixv_probe(device_t dev)
+ixv_probe(device_t dev, cfdata_t cf, void *aux)
 {
+	const struct pci_attach_args *pa = aux;
+
+	return (ixv_lookup(pa) != NULL) ? 1 : 0;
+}
+
+static ixv_vendor_info_t *
+ixv_lookup(const struct pci_attach_args *pa)
+{
+	pcireg_t subid;
 	ixv_vendor_info_t *ent;
 
-	u16	pci_vendor_id = 0;
-	u16	pci_device_id = 0;
-	u16	pci_subvendor_id = 0;
-	u16	pci_subdevice_id = 0;
-	char	adapter_name[256];
+	INIT_DEBUGOUT("ixv_probe: begin");
 
+	if (PCI_VENDOR(pa->pa_id) != IXGBE_INTEL_VENDOR_ID)
+		return NULL;
 
-	pci_vendor_id = pci_get_vendor(dev);
-	if (pci_vendor_id != IXGBE_INTEL_VENDOR_ID)
-		return (ENXIO);
+	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
-	pci_device_id = pci_get_device(dev);
-	pci_subvendor_id = pci_get_subvendor(dev);
-	pci_subdevice_id = pci_get_subdevice(dev);
+	for (ent = ixv_vendor_info_array; ent->vendor_id != 0; ent++) {
+		if ((PCI_VENDOR(pa->pa_id) == ent->vendor_id) &&
+		    (PCI_PRODUCT(pa->pa_id) == ent->device_id) &&
 
-	ent = ixv_vendor_info_array;
-	while (ent->vendor_id != 0) {
-		if ((pci_vendor_id == ent->vendor_id) &&
-		    (pci_device_id == ent->device_id) &&
-
-		    ((pci_subvendor_id == ent->subvendor_id) ||
+		    ((PCI_SUBSYS_VENDOR(subid) == ent->subvendor_id) ||
 		     (ent->subvendor_id == 0)) &&
 
-		    ((pci_subdevice_id == ent->subdevice_id) ||
+		    ((PCI_SUBSYS_ID(subid) == ent->subdevice_id) ||
 		     (ent->subdevice_id == 0))) {
-			snprintf(adapter_name, sizeof(adapter_name),
-			    "%s, Version - %s", ixv_strings[ent->index],
-			    ixv_driver_version);
-			device_set_desc_copy(dev, adapter_name);
-			return (0);
+			++ixv_total_ports;
+			return ent;
 		}
-		ent++;
 	}
-	return (ENXIO);
+	return NULL;
+}
+
+
+static void
+ixv_sysctl_attach(struct adapter *adapter)
+{
+	struct sysctllog **log;
+	const struct sysctlnode *rnode, *cnode;
+	device_t dev;
+
+	dev = adapter->dev;
+	log = &adapter->sysctllog;
+
+	if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
+		aprint_error_dev(dev, "could not create sysctl root\n");
+		return;
+	}
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "stats", SYSCTL_DESCR("Statistics"),
+	    ixv_sysctl_stats, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Debug Info"),
+	    ixv_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "flow_control", SYSCTL_DESCR("Flow Control"),
+	    ixv_set_flowcntl, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	/* XXX This is an *instance* sysctl controlling a *global* variable.
+	 * XXX It's that way in the FreeBSD driver that this derives from.
+	 */
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
+	    NULL, 0, &ixv_enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
 }
 
 /*********************************************************************
@@ -290,53 +350,44 @@ ixv_probe(device_t dev)
  *  return 0 on success, positive on failure
  *********************************************************************/
 
-static int
-ixv_attach(device_t dev)
+static void
+ixv_attach(device_t parent, device_t dev, void *aux)
 {
 	struct adapter *adapter;
 	struct ixgbe_hw *hw;
 	int             error = 0;
+	ixv_vendor_info_t *ent;
+	const struct pci_attach_args *pa = aux;
 
 	INIT_DEBUGOUT("ixv_attach: begin");
 
 	/* Allocate, clear, and link in our adapter structure */
-	adapter = device_get_softc(dev);
+	adapter = device_private(dev);
 	adapter->dev = adapter->osdep.dev = dev;
 	hw = &adapter->hw;
 
+	ent = ixv_lookup(pa);
+
+	KASSERT(ent != NULL);
+
+	aprint_normal(": %s, Version - %s\n",
+	    ixv_strings[ent->index], ixv_driver_version);
+
 	/* Core Lock Init*/
-	IXV_CORE_LOCK_INIT(adapter, device_get_nameunit(dev));
+	IXV_CORE_LOCK_INIT(adapter, device_xname(dev));
 
 	/* SYSCTL APIs */
-	SYSCTL_ADD_PROC(device_get_sysctl_ctx(dev),
-			SYSCTL_CHILDREN(device_get_sysctl_tree(dev)),
-			OID_AUTO, "stats", CTLTYPE_INT | CTLFLAG_RW,
-			adapter, 0, ixv_sysctl_stats, "I", "Statistics");
-
-	SYSCTL_ADD_PROC(device_get_sysctl_ctx(dev),
-			SYSCTL_CHILDREN(device_get_sysctl_tree(dev)),
-			OID_AUTO, "debug", CTLTYPE_INT | CTLFLAG_RW,
-			adapter, 0, ixv_sysctl_debug, "I", "Debug Info");
-
-	SYSCTL_ADD_PROC(device_get_sysctl_ctx(dev),
-			SYSCTL_CHILDREN(device_get_sysctl_tree(dev)),
-			OID_AUTO, "flow_control", CTLTYPE_INT | CTLFLAG_RW,
-			adapter, 0, ixv_set_flowcntl, "I", "Flow Control");
-                
-	SYSCTL_ADD_INT(device_get_sysctl_ctx(dev),
-			SYSCTL_CHILDREN(device_get_sysctl_tree(dev)),
-			OID_AUTO, "enable_aim", CTLTYPE_INT|CTLFLAG_RW,
-			&ixv_enable_aim, 1, "Interrupt Moderation");
+	ixv_sysctl_attach(adapter);
 
 	/* Set up the timer callout */
-	callout_init_mtx(&adapter->timer, &adapter->core_mtx, 0);
+	callout_init(&adapter->timer, 0);
 
 	/* Determine hardware revision */
 	ixv_identify_hardware(adapter);
 
 	/* Do base PCI setup - map BAR0 */
-	if (ixv_allocate_pci_resources(adapter)) {
-		device_printf(dev, "Allocation of PCI resources failed\n");
+	if (ixv_allocate_pci_resources(adapter, pa)) {
+		aprint_error_dev(dev, "Allocation of PCI resources failed\n");
 		error = ENXIO;
 		goto err_out;
 	}
@@ -344,14 +395,14 @@ ixv_attach(device_t dev)
 	/* Do descriptor calc and sanity checks */
 	if (((ixv_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
 	    ixv_txd < MIN_TXD || ixv_txd > MAX_TXD) {
-		device_printf(dev, "TXD config issue, using default!\n");
+		aprint_error_dev(dev, "TXD config issue, using default!\n");
 		adapter->num_tx_desc = DEFAULT_TXD;
 	} else
 		adapter->num_tx_desc = ixv_txd;
 
 	if (((ixv_rxd * sizeof(union ixgbe_adv_rx_desc)) % DBA_ALIGN) != 0 ||
 	    ixv_rxd < MIN_TXD || ixv_rxd > MAX_TXD) {
-		device_printf(dev, "RXD config issue, using default!\n");
+		aprint_error_dev(dev, "RXD config issue, using default!\n");
 		adapter->num_rx_desc = DEFAULT_RXD;
 	} else
 		adapter->num_rx_desc = ixv_rxd;
@@ -368,7 +419,7 @@ ixv_attach(device_t dev)
 	*/
 	error = ixgbe_init_shared_code(hw);
 	if (error) {
-		device_printf(dev,"Shared Code Initialization Failure\n");
+		aprint_error_dev(dev,"Shared Code Initialization Failure\n");
 		error = EIO;
 		goto err_late;
 	}
@@ -381,13 +432,13 @@ ixv_attach(device_t dev)
 	/* Get Hardware Flow Control setting */
 	hw->fc.requested_mode = ixgbe_fc_full;
 	hw->fc.pause_time = IXV_FC_PAUSE;
-	hw->fc.low_water = IXV_FC_LO;
-	hw->fc.high_water = IXV_FC_HI;
+	hw->fc.low_water[0] = IXV_FC_LO;
+	hw->fc.high_water[0] = IXV_FC_HI;
 	hw->fc.send_xon = TRUE;
 
 	error = ixgbe_init_hw(hw);
 	if (error) {
-		device_printf(dev,"Hardware Initialization Failure\n");
+		aprint_error_dev(dev,"Hardware Initialization Failure\n");
 		error = EIO;
 		goto err_late;
 	}
@@ -409,20 +460,22 @@ ixv_attach(device_t dev)
 	ixv_init_stats(adapter);
 
 	/* Register for VLAN events */
+#if 0 /* XXX msaitoh delete after write? */
 	adapter->vlan_attach = EVENTHANDLER_REGISTER(vlan_config,
 	    ixv_register_vlan, adapter, EVENTHANDLER_PRI_FIRST);
 	adapter->vlan_detach = EVENTHANDLER_REGISTER(vlan_unconfig,
 	    ixv_unregister_vlan, adapter, EVENTHANDLER_PRI_FIRST);
+#endif
 
 	INIT_DEBUGOUT("ixv_attach: end");
-	return (0);
+	return;
 
 err_late:
 	ixv_free_transmit_structures(adapter);
 	ixv_free_receive_structures(adapter);
 err_out:
 	ixv_free_pci_resources(adapter);
-	return (error);
+	return;
 
 }
 
@@ -437,17 +490,21 @@ err_out:
  *********************************************************************/
 
 static int
-ixv_detach(device_t dev)
+ixv_detach(device_t dev, int flags)
 {
-	struct adapter *adapter = device_get_softc(dev);
+	struct adapter *adapter = device_private(dev);
 	struct ix_queue *que = adapter->queues;
 
 	INIT_DEBUGOUT("ixv_detach: begin");
 
 	/* Make sure VLANS are not using driver */
-	if (adapter->ifp->if_vlantrunk != NULL) {
-		device_printf(dev,"Vlan in use, detach first\n");
-		return (EBUSY);
+	if (!VLAN_ATTACHED(&adapter->osdep.ec))
+		;	/* nothing to do: no VLANs */ 
+	else if ((flags & (DETACH_SHUTDOWN|DETACH_FORCE)) != 0)
+		vlan_ifdetach(adapter->ifp);
+	else {
+		aprint_error_dev(dev, "VLANs in use\n");
+		return EBUSY;
 	}
 
 	IXV_CORE_LOCK(adapter);
@@ -455,29 +512,27 @@ ixv_detach(device_t dev)
 	IXV_CORE_UNLOCK(adapter);
 
 	for (int i = 0; i < adapter->num_queues; i++, que++) {
-		if (que->tq) {
-			taskqueue_drain(que->tq, &que->que_task);
-			taskqueue_free(que->tq);
-		}
+		softint_disestablish(que->que_si);
 	}
 
 	/* Drain the Link queue */
-	if (adapter->tq) {
-		taskqueue_drain(adapter->tq, &adapter->mbx_task);
-		taskqueue_free(adapter->tq);
-	}
+	softint_disestablish(adapter->mbx_si);
 
 	/* Unregister VLAN events */
+#if 0 /* XXX msaitoh delete after write? */
 	if (adapter->vlan_attach != NULL)
 		EVENTHANDLER_DEREGISTER(vlan_config, adapter->vlan_attach);
 	if (adapter->vlan_detach != NULL)
 		EVENTHANDLER_DEREGISTER(vlan_unconfig, adapter->vlan_detach);
+#endif
 
 	ether_ifdetach(adapter->ifp);
-	callout_drain(&adapter->timer);
+	callout_halt(&adapter->timer, NULL);
 	ixv_free_pci_resources(adapter);
+#if 0 /* XXX the NetBSD port is probably missing something here */
 	bus_generic_detach(dev);
-	if_free(adapter->ifp);
+#endif
+	if_detach(adapter->ifp);
 
 	ixv_free_transmit_structures(adapter);
 	ixv_free_receive_structures(adapter);
@@ -491,15 +546,17 @@ ixv_detach(device_t dev)
  *  Shutdown entry point
  *
  **********************************************************************/
+#if 0 /* XXX NetBSD ought to register something like this through pmf(9) */
 static int
 ixv_shutdown(device_t dev)
 {
-	struct adapter *adapter = device_get_softc(dev);
+	struct adapter *adapter = device_private(dev);
 	IXV_CORE_LOCK(adapter);
 	ixv_stop(adapter);
 	IXV_CORE_UNLOCK(adapter);
 	return (0);
 }
+#endif
 
 #if __FreeBSD_version < 800000
 /*********************************************************************
@@ -514,37 +571,50 @@ ixv_shutdown(device_t dev)
 static void
 ixv_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 {
+	int rc;
 	struct mbuf    *m_head;
 	struct adapter *adapter = txr->adapter;
 
 	IXV_TX_LOCK_ASSERT(txr);
 
-	if ((ifp->if_drv_flags & (IFF_DRV_RUNNING|IFF_DRV_OACTIVE)) !=
-	    IFF_DRV_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) !=
+	    IFF_RUNNING)
 		return;
 	if (!adapter->link_active)
 		return;
 
-	while (!IFQ_DRV_IS_EMPTY(&ifp->if_snd)) {
+	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 
-		IFQ_DRV_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
-		if (ixv_xmit(txr, &m_head)) {
-			if (m_head == NULL)
-				break;
-			ifp->if_drv_flags |= IFF_DRV_OACTIVE;
-			IFQ_DRV_PREPEND(&ifp->if_snd, m_head);
+		if (ixv_xmit(txr, m_head) == EAGAIN) {
+			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		if (rc == EFBIG) {
+			struct mbuf *mtmp;
+
+			if ((mtmp = m_defrag(m_head, M_DONTWAIT)) != NULL) {
+				m_head = mtmp;
+				rc = ixv_xmit(txr, m_head);
+				if (rc != 0)
+					adapter->efbig2_tx_dma_setup.ev_count++;
+			} else
+				adapter->m_defrag_failed.ev_count++;
+		}
+		if (rc != 0) {
+			m_freem(m_head);
+			continue;
+		}
 		/* Send a copy of the frame to the BPF listener */
-		ETHER_BPF_MTAP(ifp, m_head);
+		bpf_mtap(ifp, m_head);
 
 		/* Set watchdog on */
 		txr->watchdog_check = TRUE;
-		txr->watchdog_time = ticks;
-
+		getmicrotime(&txr->watchdog_time);
 	}
 	return;
 }
@@ -560,7 +630,7 @@ ixv_start(struct ifnet *ifp)
 	struct adapter *adapter = ifp->if_softc;
 	struct tx_ring	*txr = adapter->tx_rings;
 
-	if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
+	if (ifp->if_flags & IFF_RUNNING) {
 		IXV_TX_LOCK(txr);
 		ixv_start_locked(txr, ifp);
 		IXV_TX_UNLOCK(txr);
@@ -594,7 +664,7 @@ ixv_mq_start(struct ifnet *ifp, struct mbuf *m)
 		IXV_TX_UNLOCK(txr);
 	} else {
 		err = drbr_enqueue(ifp, txr->br, m);
-		taskqueue_enqueue(que->tq, &que->que_task);
+		softint_schedule(que->que_si);
 	}
 
 	return (err);
@@ -607,8 +677,8 @@ ixv_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr, struct mbuf *m)
         struct mbuf     *next;
         int             enqueued, err = 0;
 
-	if ((ifp->if_drv_flags & (IFF_DRV_RUNNING | IFF_DRV_OACTIVE)) !=
-	    IFF_DRV_RUNNING || adapter->link_active == 0) {
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
+	    IFF_RUNNING || adapter->link_active == 0) {
 		if (m != NULL)
 			err = drbr_enqueue(ifp, txr->br, m);
 		return (err);
@@ -630,7 +700,7 @@ ixv_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr, struct mbuf *m)
 
 	/* Process the queue */
 	while (next != NULL) {
-		if ((err = ixv_xmit(txr, &next)) != 0) {
+		if ((err = ixv_xmit(txr, next)) != 0) {
 			if (next != NULL)
 				err = drbr_enqueue(ifp, txr->br, next);
 			break;
@@ -639,10 +709,10 @@ ixv_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr, struct mbuf *m)
 		drbr_stats_update(ifp, next->m_pkthdr.len, next->m_flags);
 		/* Send a copy of the frame to the BPF listener */
 		ETHER_BPF_MTAP(ifp, next);
-		if ((ifp->if_drv_flags & IFF_DRV_RUNNING) == 0)
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			break;
 		if (txr->tx_avail <= IXV_TX_OP_THRESHOLD) {
-			ifp->if_drv_flags |= IFF_DRV_OACTIVE;
+			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 		next = drbr_dequeue(ifp, txr->br);
@@ -651,7 +721,7 @@ ixv_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr, struct mbuf *m)
 	if (enqueued > 0) {
 		/* Set watchdog on */
 		txr->watchdog_check = TRUE;
-		txr->watchdog_time = ticks;
+		getmicrotime(&txr->watchdog_time);
 	}
 
 	return (err);
@@ -678,6 +748,26 @@ ixv_qflush(struct ifnet *ifp)
 
 #endif
 
+static int
+ixv_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct adapter *adapter = ifp->if_softc;
+	int change = ifp->if_flags ^ adapter->if_flags, rc = 0;
+
+	IXV_CORE_LOCK(adapter);
+
+	if (change != 0)
+		adapter->if_flags = ifp->if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		rc = ENETRESET;
+
+	IXV_CORE_UNLOCK(adapter);
+
+	return rc;
+}
+
 /*********************************************************************
  *  Ioctl entry point
  *
@@ -688,83 +778,77 @@ ixv_qflush(struct ifnet *ifp)
  **********************************************************************/
 
 static int
-ixv_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
+ixv_ioctl(struct ifnet * ifp, u_long command, void *data)
 {
 	struct adapter	*adapter = ifp->if_softc;
+	struct ifcapreq *ifcr = data;
 	struct ifreq	*ifr = (struct ifreq *) data;
 	int             error = 0;
+	int l4csum_en;
+	const int l4csum = IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx|
+	     IFCAP_CSUM_TCPv6_Rx|IFCAP_CSUM_UDPv6_Rx;
 
 	switch (command) {
-
-	case SIOCSIFMTU:
-		IOCTL_DEBUGOUT("ioctl: SIOCSIFMTU (Set Interface MTU)");
-		if (ifr->ifr_mtu > IXV_MAX_FRAME_SIZE - ETHER_HDR_LEN) {
-			error = EINVAL;
-		} else {
-			IXV_CORE_LOCK(adapter);
-			ifp->if_mtu = ifr->ifr_mtu;
-			adapter->max_frame_size =
-				ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
-			ixv_init_locked(adapter);
-			IXV_CORE_UNLOCK(adapter);
-		}
-		break;
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl: SIOCSIFFLAGS (Set Interface Flags)");
-		IXV_CORE_LOCK(adapter);
-		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_drv_flags & IFF_DRV_RUNNING) == 0)
-				ixv_init_locked(adapter);
-		} else
-			if (ifp->if_drv_flags & IFF_DRV_RUNNING)
-				ixv_stop(adapter);
-		adapter->if_flags = ifp->if_flags;
-		IXV_CORE_UNLOCK(adapter);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		IOCTL_DEBUGOUT("ioctl: SIOC(ADD|DEL)MULTI");
-		if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
+		break;
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		IOCTL_DEBUGOUT("ioctl: SIOCxIFMEDIA (Get/Set Interface Media)");
+		break;
+	case SIOCSIFCAP:
+		IOCTL_DEBUGOUT("ioctl: SIOCSIFCAP (Set Capabilities)");
+		break;
+	case SIOCSIFMTU:
+		IOCTL_DEBUGOUT("ioctl: SIOCSIFMTU (Set Interface MTU)");
+		break;
+	default:
+		IOCTL_DEBUGOUT1("ioctl: UNKNOWN (0x%X)\n", (int)command);
+		break;
+	}
+
+	switch (command) {
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		return ifmedia_ioctl(ifp, ifr, &adapter->media, command);
+	case SIOCSIFCAP:
+		/* Layer-4 Rx checksum offload has to be turned on and
+		 * off as a unit.
+		 */
+		l4csum_en = ifcr->ifcr_capenable & l4csum;
+		if (l4csum_en != l4csum && l4csum_en != 0)
+			return EINVAL;
+		/*FALLTHROUGH*/
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+	case SIOCSIFFLAGS:
+	case SIOCSIFMTU:
+	default:
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			return error;
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
+			;
+		else if (command == SIOCSIFCAP || command == SIOCSIFMTU) {
+			IXV_CORE_LOCK(adapter);
+			ixv_init_locked(adapter);
+			IXV_CORE_UNLOCK(adapter);
+		} else if (command == SIOCADDMULTI || command == SIOCDELMULTI) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
 			IXV_CORE_LOCK(adapter);
 			ixv_disable_intr(adapter);
 			ixv_set_multi(adapter);
 			ixv_enable_intr(adapter);
 			IXV_CORE_UNLOCK(adapter);
 		}
-		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		IOCTL_DEBUGOUT("ioctl: SIOCxIFMEDIA (Get/Set Interface Media)");
-		error = ifmedia_ioctl(ifp, ifr, &adapter->media, command);
-		break;
-	case SIOCSIFCAP:
-	{
-		int mask = ifr->ifr_reqcap ^ ifp->if_capenable;
-		IOCTL_DEBUGOUT("ioctl: SIOCSIFCAP (Set Capabilities)");
-		if (mask & IFCAP_HWCSUM)
-			ifp->if_capenable ^= IFCAP_HWCSUM;
-		if (mask & IFCAP_TSO4)
-			ifp->if_capenable ^= IFCAP_TSO4;
-		if (mask & IFCAP_LRO)
-			ifp->if_capenable ^= IFCAP_LRO;
-		if (mask & IFCAP_VLAN_HWTAGGING)
-			ifp->if_capenable ^= IFCAP_VLAN_HWTAGGING;
-		if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
-			IXV_CORE_LOCK(adapter);
-			ixv_init_locked(adapter);
-			IXV_CORE_UNLOCK(adapter);
-		}
-		VLAN_CAPABILITIES(ifp);
-		break;
+		return 0;
 	}
-
-	default:
-		IOCTL_DEBUGOUT1("ioctl: UNKNOWN (0x%X)\n", (int)command);
-		error = ether_ioctl(ifp, command, data);
-		break;
-	}
-
-	return (error);
 }
 
 /*********************************************************************
@@ -788,7 +872,7 @@ ixv_init_locked(struct adapter *adapter)
 	u32		mhadd, gpie;
 
 	INIT_DEBUGOUT("ixv_init: begin");
-	mtx_assert(&adapter->core_mtx, MA_OWNED);
+	KASSERT(mutex_owned(&adapter->core_mtx));
 	hw->adapter_stopped = FALSE;
 	ixgbe_stop_adapter(hw);
         callout_stop(&adapter->timer);
@@ -797,14 +881,14 @@ ixv_init_locked(struct adapter *adapter)
         ixgbe_set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
 
 	/* Get the latest mac address, User can use a LAA */
-	bcopy(IF_LLADDR(adapter->ifp), hw->mac.addr,
+	memcpy(hw->mac.addr, CLLADDR(adapter->ifp->if_sadl),
 	     IXGBE_ETH_LENGTH_OF_ADDRESS);
         ixgbe_set_rar(hw, 0, hw->mac.addr, 0, 1);
 	hw->addr_ctrl.rar_used_count = 1;
 
 	/* Prepare transmit descriptors and buffers */
 	if (ixv_setup_transmit_structures(adapter)) {
-		device_printf(dev,"Could not setup transmit structures\n");
+		aprint_error_dev(dev,"Could not setup transmit structures\n");
 		ixv_stop(adapter);
 		return;
 	}
@@ -840,6 +924,7 @@ ixv_init_locked(struct adapter *adapter)
 	gpie |= IXGBE_GPIE_PBA_SUPPORT | IXGBE_GPIE_OCD;
         IXGBE_WRITE_REG(hw, IXGBE_GPIE, gpie);
 
+#if 0 /* XXX isn't it required? -- msaitoh  */
 	/* Set the various hardware offload abilities */
 	ifp->if_hwassist = 0;
 	if (ifp->if_capenable & IFCAP_TSO4)
@@ -850,6 +935,7 @@ ixv_init_locked(struct adapter *adapter)
 		ifp->if_hwassist |= CSUM_SCTP;
 #endif
 	}
+#endif
 	
 	/* Set MTU size */
 	if (ifp->if_mtu > ETHERMTU) {
@@ -883,21 +969,21 @@ ixv_init_locked(struct adapter *adapter)
 	ixv_enable_intr(adapter);
 
 	/* Now inform the stack we're ready */
-	ifp->if_drv_flags |= IFF_DRV_RUNNING;
-	ifp->if_drv_flags &= ~IFF_DRV_OACTIVE;
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return;
 }
 
-static void
-ixv_init(void *arg)
+static int
+ixv_init(struct ifnet *ifp)
 {
-	struct adapter *adapter = arg;
+	struct adapter *adapter = ifp->if_softc;
 
 	IXV_CORE_LOCK(adapter);
 	ixv_init_locked(adapter);
 	IXV_CORE_UNLOCK(adapter);
-	return;
+	return 0;
 }
 
 
@@ -946,7 +1032,7 @@ ixv_handle_que(void *context)
 	struct ifnet    *ifp = adapter->ifp;
 	bool		more;
 
-	if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
+	if (ifp->if_flags & IFF_RUNNING) {
 		more = ixv_rxeof(que, adapter->rx_process_limit);
 		IXV_TX_LOCK(txr);
 		ixv_txeof(txr);
@@ -954,12 +1040,13 @@ ixv_handle_que(void *context)
 		if (!drbr_empty(ifp, txr->br))
 			ixv_mq_start_locked(ifp, txr, NULL);
 #else
-		if (!IFQ_DRV_IS_EMPTY(&ifp->if_snd))
+		if (!IFQ_IS_EMPTY(&ifp->if_snd))
 			ixv_start_locked(txr, ifp);
 #endif
 		IXV_TX_UNLOCK(txr);
 		if (more) {
-			taskqueue_enqueue(que->tq, &que->que_task);
+			adapter->req.ev_count++;
+			softint_schedule(que->que_si);
 			return;
 		}
 	}
@@ -991,6 +1078,17 @@ ixv_msix_que(void *arg)
 
 	IXV_TX_LOCK(txr);
 	more_tx = ixv_txeof(txr);
+	/*
+	** Make certain that if the stack
+	** has anything queued the task gets
+	** scheduled to handle it.
+	*/
+#if __FreeBSD_version < 800000
+	if (!IFQ_IS_EMPTY(&adapter->ifp->if_snd))
+#else
+	if (!drbr_empty(adapter->ifp, txr->br))
+#endif
+                more_tx = 1;
 	IXV_TX_UNLOCK(txr);
 
 	more_rx = ixv_rxeof(que, adapter->rx_process_limit);
@@ -1045,7 +1143,7 @@ ixv_msix_que(void *arg)
 
 no_calc:
 	if (more_tx || more_rx)
-		taskqueue_enqueue(que->tq, &que->que_task);
+		softint_schedule(que->que_si);
 	else /* Reenable this interrupt */
 		ixv_enable_queue(adapter, que->msix);
 	return;
@@ -1058,7 +1156,7 @@ ixv_msix_mbx(void *arg)
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32		reg;
 
-	++adapter->mbx_irq;
+	++adapter->mbx_irq.ev_count;
 
 	/* First get the cause */
 	reg = IXGBE_READ_REG(hw, IXGBE_VTEICS);
@@ -1067,7 +1165,7 @@ ixv_msix_mbx(void *arg)
 
 	/* Link status change */
 	if (reg & IXGBE_EICR_LSC)
-		taskqueue_enqueue(adapter->tq, &adapter->mbx_task);
+		softint_schedule(adapter->mbx_si);
 
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, IXGBE_EIMS_OTHER);
 	return;
@@ -1153,26 +1251,24 @@ ixv_media_change(struct ifnet * ifp)
  **********************************************************************/
 
 static int
-ixv_xmit(struct tx_ring *txr, struct mbuf **m_headp)
+ixv_xmit(struct tx_ring *txr, struct mbuf *m_head)
 {
+	struct m_tag *mtag;
 	struct adapter  *adapter = txr->adapter;
+	struct ethercom *ec = &adapter->osdep.ec;
 	u32		olinfo_status = 0, cmd_type_len;
 	u32		paylen = 0;
 	int             i, j, error, nsegs;
 	int		first, last = 0;
-	struct mbuf	*m_head;
-	bus_dma_segment_t segs[32];
 	bus_dmamap_t	map;
-	struct ixv_tx_buf *txbuf, *txbuf_mapped;
+	struct ixv_tx_buf *txbuf;
 	union ixgbe_adv_tx_desc *txd = NULL;
-
-	m_head = *m_headp;
 
 	/* Basic descriptor defines */
         cmd_type_len = (IXGBE_ADVTXD_DTYP_DATA |
 	    IXGBE_ADVTXD_DCMD_IFCS | IXGBE_ADVTXD_DCMD_DEXT);
 
-	if (m_head->m_flags & M_VLANTAG)
+	if ((mtag = VLAN_OUTPUT_TAG(ec, m_head)) != NULL)
         	cmd_type_len |= IXGBE_ADVTXD_DCMD_VLE;
 
         /*
@@ -1182,74 +1278,61 @@ ixv_xmit(struct tx_ring *txr, struct mbuf **m_headp)
          */
         first = txr->next_avail_desc;
 	txbuf = &txr->tx_buffers[first];
-	txbuf_mapped = txbuf;
 	map = txbuf->map;
 
 	/*
 	 * Map the packet for DMA.
 	 */
-	error = bus_dmamap_load_mbuf_sg(txr->txtag, map,
-	    *m_headp, segs, &nsegs, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(txr->txtag->dt_dmat, map,
+	    m_head, BUS_DMA_NOWAIT);
 
-	if (error == EFBIG) {
-		struct mbuf *m;
-
-		m = m_defrag(*m_headp, M_DONTWAIT);
-		if (m == NULL) {
-			adapter->mbuf_defrag_failed++;
-			m_freem(*m_headp);
-			*m_headp = NULL;
-			return (ENOBUFS);
-		}
-		*m_headp = m;
-
-		/* Try it again */
-		error = bus_dmamap_load_mbuf_sg(txr->txtag, map,
-		    *m_headp, segs, &nsegs, BUS_DMA_NOWAIT);
-
-		if (error == ENOMEM) {
-			adapter->no_tx_dma_setup++;
-			return (error);
-		} else if (error != 0) {
-			adapter->no_tx_dma_setup++;
-			m_freem(*m_headp);
-			*m_headp = NULL;
-			return (error);
-		}
-	} else if (error == ENOMEM) {
-		adapter->no_tx_dma_setup++;
-		return (error);
-	} else if (error != 0) {
-		adapter->no_tx_dma_setup++;
-		m_freem(*m_headp);
-		*m_headp = NULL;
-		return (error);
+	switch (error) {
+	case EAGAIN:
+		adapter->eagain_tx_dma_setup.ev_count++;
+		return EAGAIN;
+	case ENOMEM:
+		adapter->enomem_tx_dma_setup.ev_count++;
+		return EAGAIN;
+	case EFBIG:
+		adapter->efbig_tx_dma_setup.ev_count++;
+		return error;
+	case EINVAL:
+		adapter->einval_tx_dma_setup.ev_count++;
+		return error;
+	default:
+		adapter->other_tx_dma_setup.ev_count++;
+		return error;
+	case 0:
+		break;
 	}
 
 	/* Make certain there are enough descriptors */
 	if (nsegs > txr->tx_avail - 2) {
-		txr->no_desc_avail++;
-		error = ENOBUFS;
-		goto xmit_fail;
+		txr->no_desc_avail.ev_count++;
+		/* XXX s/ixgbe/ixv/ */
+		ixgbe_dmamap_unload(txr->txtag, txbuf->map);
+		return EAGAIN;
 	}
-	m_head = *m_headp;
 
 	/*
 	** Set up the appropriate offload context
 	** this becomes the first descriptor of 
 	** a packet.
 	*/
-	if (m_head->m_pkthdr.csum_flags & CSUM_TSO) {
+	if (m_head->m_pkthdr.csum_flags & (M_CSUM_TSOv4|M_CSUM_TSOv6)) {
 		if (ixv_tso_setup(txr, m_head, &paylen)) {
 			cmd_type_len |= IXGBE_ADVTXD_DCMD_TSE;
 			olinfo_status |= IXGBE_TXD_POPTS_IXSM << 8;
 			olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
 			olinfo_status |= paylen << IXGBE_ADVTXD_PAYLEN_SHIFT;
-			++adapter->tso_tx;
-		} else
+			++adapter->tso_tx.ev_count;
+		} else {
+			++adapter->tso_err.ev_count;
+			/* XXX unload DMA map! --dyoung -> easy? --msaitoh */
 			return (ENXIO);
-	} else if (ixv_tx_ctx_setup(txr, m_head))
-		olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
+		}
+	} else
+		olinfo_status |= ixv_tx_ctx_setup(txr, m_head);
 
         /* Record payload length */
 	if (paylen == 0)
@@ -1257,14 +1340,14 @@ ixv_xmit(struct tx_ring *txr, struct mbuf **m_headp)
 		    IXGBE_ADVTXD_PAYLEN_SHIFT;
 
 	i = txr->next_avail_desc;
-	for (j = 0; j < nsegs; j++) {
+	for (j = 0; j < map->dm_nsegs; j++) {
 		bus_size_t seglen;
 		bus_addr_t segaddr;
 
 		txbuf = &txr->tx_buffers[i];
 		txd = &txr->tx_base[i];
-		seglen = segs[j].ds_len;
-		segaddr = htole64(segs[j].ds_addr);
+		seglen = map->dm_segs[j].ds_len;
+		segaddr = htole64(map->dm_segs[j].ds_addr);
 
 		txd->read.buffer_addr = segaddr;
 		txd->read.cmd_type_len = htole32(txr->txd_cmd |
@@ -1281,32 +1364,31 @@ ixv_xmit(struct tx_ring *txr, struct mbuf **m_headp)
 
 	txd->read.cmd_type_len |=
 	    htole32(IXGBE_TXD_CMD_EOP | IXGBE_TXD_CMD_RS);
-	txr->tx_avail -= nsegs;
+	txr->tx_avail -= map->dm_nsegs;
 	txr->next_avail_desc = i;
 
 	txbuf->m_head = m_head;
+	/* Swap the dma map between the first and last descriptor */
+	txr->tx_buffers[first].map = txbuf->map;
 	txbuf->map = map;
-	bus_dmamap_sync(txr->txtag, map, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(txr->txtag->dt_dmat, map, 0, m_head->m_pkthdr.len,
+	    BUS_DMASYNC_PREWRITE);
 
         /* Set the index of the descriptor that will be marked done */
         txbuf = &txr->tx_buffers[first];
 	txbuf->eop_index = last;
 
-        bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
+	/* XXX s/ixgbe/ixg/ */
+        ixgbe_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
             BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/*
 	 * Advance the Transmit Descriptor Tail (Tdt), this tells the
 	 * hardware that this frame is available to transmit.
 	 */
-	++txr->total_packets;
+	++txr->total_packets.ev_count;
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VFTDT(txr->me), i);
 
-	return (0);
-
-xmit_fail:
-	bus_dmamap_unload(txr->txtag, txbuf->map);
-	return (error);
-
+	return 0;
 }
 
 
@@ -1321,37 +1403,31 @@ xmit_fail:
 static void
 ixv_set_multi(struct adapter *adapter)
 {
+	struct ether_multi *enm;
+	struct ether_multistep step;
 	u8	mta[MAX_NUM_MULTICAST_ADDRESSES * IXGBE_ETH_LENGTH_OF_ADDRESS];
 	u8	*update_ptr;
-	struct	ifmultiaddr *ifma;
 	int	mcnt = 0;
-	struct ifnet   *ifp = adapter->ifp;
+	struct ethercom *ec = &adapter->osdep.ec;
 
 	IOCTL_DEBUGOUT("ixv_set_multi: begin");
 
-#if __FreeBSD_version < 800000
-	IF_ADDR_LOCK(ifp);
-#else
-	if_maddr_rlock(ifp);
-#endif
-	TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
-		if (ifma->ifma_addr->sa_family != AF_LINK)
-			continue;
-		bcopy(LLADDR((struct sockaddr_dl *) ifma->ifma_addr),
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		bcopy(enm->enm_addrlo,
 		    &mta[mcnt * IXGBE_ETH_LENGTH_OF_ADDRESS],
 		    IXGBE_ETH_LENGTH_OF_ADDRESS);
 		mcnt++;
+		/* XXX This might be required --msaitoh */
+		if (mcnt >= MAX_NUM_MULTICAST_ADDRESSES)
+			break;
+		ETHER_NEXT_MULTI(step, enm);
 	}
-#if __FreeBSD_version < 800000
-	IF_ADDR_UNLOCK(ifp);
-#else
-	if_maddr_runlock(ifp);
-#endif
 
 	update_ptr = mta;
 
 	ixgbe_update_mc_addr_list(&adapter->hw,
-	    update_ptr, mcnt, ixv_mc_array_itr);
+	    update_ptr, mcnt, ixv_mc_array_itr, TRUE);
 
 	return;
 }
@@ -1382,14 +1458,15 @@ ixv_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
  **********************************************************************/
 
 static void
-ixv_local_timer(void *arg)
+ixv_local_timer1(void *arg)
 {
 	struct adapter	*adapter = arg;
 	device_t	dev = adapter->dev;
 	struct tx_ring	*txr = adapter->tx_rings;
 	int		i;
+	struct timeval now, elapsed;
 
-	mtx_assert(&adapter->core_mtx, MA_OWNED);
+	KASSERT(mutex_owned(&adapter->core_mtx));
 
 	ixv_update_link_status(adapter);
 
@@ -1411,7 +1488,9 @@ ixv_local_timer(void *arg)
 			IXV_TX_UNLOCK(txr);
 			continue;
 		}
-		if ((ticks - txr->watchdog_time) > IXV_WATCHDOG)
+		getmicrotime(&now);
+		timersub(&now, &txr->watchdog_time, &elapsed);
+		if (tvtohz(&elapsed) > IXV_WATCHDOG)
 			goto hung;
 		IXV_TX_UNLOCK(txr);
 	}
@@ -1428,10 +1507,20 @@ hung:
 	device_printf(dev,"TX(%d) desc avail = %d,"
 	    "Next TX to Clean = %d\n",
 	    txr->me, txr->tx_avail, txr->next_to_clean);
-	adapter->ifp->if_drv_flags &= ~IFF_DRV_RUNNING;
-	adapter->watchdog_events++;
+	adapter->ifp->if_flags &= ~IFF_RUNNING;
+	adapter->watchdog_events.ev_count++;
 	IXV_TX_UNLOCK(txr);
 	ixv_init_locked(adapter);
+}
+
+static void
+ixv_local_timer(void *arg)
+{
+	struct adapter *adapter = arg;
+
+	IXV_CORE_LOCK(adapter);
+	ixv_local_timer1(adapter);
+	IXV_CORE_UNLOCK(adapter);
 }
 
 /*
@@ -1472,6 +1561,16 @@ ixv_update_link_status(struct adapter *adapter)
 }
 
 
+static void
+ixv_ifstop(struct ifnet *ifp, int disable)
+{
+	struct adapter *adapter = ifp->if_softc;
+
+	IXV_CORE_LOCK(adapter);
+	ixv_stop(adapter);
+	IXV_CORE_UNLOCK(adapter);
+}
+
 /*********************************************************************
  *
  *  This routine disables all traffic on the adapter by issuing a
@@ -1487,13 +1586,13 @@ ixv_stop(void *arg)
 	struct ixgbe_hw *hw = &adapter->hw;
 	ifp = adapter->ifp;
 
-	mtx_assert(&adapter->core_mtx, MA_OWNED);
+	KASSERT(mutex_owned(&adapter->core_mtx));
 
 	INIT_DEBUGOUT("ixv_stop: begin\n");
 	ixv_disable_intr(adapter);
 
 	/* Tell the stack that the interface is no longer active */
-	ifp->if_drv_flags &= ~(IFF_DRV_RUNNING | IFF_DRV_OACTIVE);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ixgbe_reset_hw(hw);
 	adapter->hw.adapter_stopped = FALSE;
@@ -1515,30 +1614,38 @@ ixv_stop(void *arg)
 static void
 ixv_identify_hardware(struct adapter *adapter)
 {
-	device_t        dev = adapter->dev;
 	u16		pci_cmd_word;
+	pcitag_t tag;
+	pci_chipset_tag_t pc;
+	pcireg_t subid, id;
+	struct ixgbe_hw *hw = &adapter->hw;
+
+	pc = adapter->osdep.pc;
+	tag = adapter->osdep.tag;
 
 	/*
 	** Make sure BUSMASTER is set, on a VM under
 	** KVM it may not be and will break things.
 	*/
-	pci_cmd_word = pci_read_config(dev, PCIR_COMMAND, 2);
-	if (!((pci_cmd_word & PCIM_CMD_BUSMASTEREN) &&
-	    (pci_cmd_word & PCIM_CMD_MEMEN))) {
+	pci_cmd_word = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (!((pci_cmd_word & PCI_COMMAND_MASTER_ENABLE) &&
+	    (pci_cmd_word & PCI_COMMAND_MEM_ENABLE))) {
 		INIT_DEBUGOUT("Memory Access and/or Bus Master "
 		    "bits were not set!\n");
-		pci_cmd_word |= (PCIM_CMD_BUSMASTEREN | PCIM_CMD_MEMEN);
-		pci_write_config(dev, PCIR_COMMAND, pci_cmd_word, 2);
+		pci_cmd_word |=
+		    (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, pci_cmd_word);
 	}
 
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	subid = pci_conf_read(pc, tag, PCI_SUBSYS_ID_REG);
+
 	/* Save off the information about this board */
-	adapter->hw.vendor_id = pci_get_vendor(dev);
-	adapter->hw.device_id = pci_get_device(dev);
-	adapter->hw.revision_id = pci_read_config(dev, PCIR_REVID, 1);
-	adapter->hw.subsystem_vendor_id =
-	    pci_read_config(dev, PCIR_SUBVEND_0, 2);
-	adapter->hw.subsystem_device_id =
-	    pci_read_config(dev, PCIR_SUBDEV_0, 2);
+	hw->vendor_id = PCI_VENDOR(id);
+	hw->device_id = PCI_PRODUCT(id);
+	hw->revision_id = PCI_REVISION(pci_conf_read(pc, tag, PCI_CLASS_REG));
+	hw->subsystem_vendor_id = PCI_SUBSYS_VENDOR(subid);
+	hw->subsystem_device_id = PCI_SUBSYS_ID(subid);
 
 	return;
 }
@@ -1551,16 +1658,24 @@ ixv_identify_hardware(struct adapter *adapter)
 static int
 ixv_allocate_msix(struct adapter *adapter)
 {
+#if !defined(NETBSD_MSI_OR_MSIX)
+	return 0;
+#else
 	device_t        dev = adapter->dev;
 	struct 		ix_queue *que = adapter->queues;
 	int 		error, rid, vector = 0;
+	pcitag_t tag;
+	pci_chipset_tag_t pc;
+
+	pc = adapter->osdep.pc;
+	tag = adapter->osdep.tag;
 
 	for (int i = 0; i < adapter->num_queues; i++, vector++, que++) {
 		rid = vector + 1;
 		que->res = bus_alloc_resource_any(dev, SYS_RES_IRQ, &rid,
 		    RF_SHAREABLE | RF_ACTIVE);
 		if (que->res == NULL) {
-			device_printf(dev,"Unable to allocate"
+			aprint_error_dev(dev,"Unable to allocate"
 		    	    " bus resource: que interrupt [%d]\n", vector);
 			return (ENXIO);
 		}
@@ -1570,7 +1685,8 @@ ixv_allocate_msix(struct adapter *adapter)
 		    ixv_msix_que, que, &que->tag);
 		if (error) {
 			que->res = NULL;
-			device_printf(dev, "Failed to register QUE handler");
+			aprint_error_dev(dev,
+			    "Failed to register QUE handler");
 			return (error);
 		}
 #if __FreeBSD_version >= 800504
@@ -1585,11 +1701,8 @@ ixv_allocate_msix(struct adapter *adapter)
 		if (adapter->num_queues > 1)
 			bus_bind_intr(dev, que->res, i);
 
-		ixgbe_task_init(&que->que_task, ixv_handle_que, que);
-		que->tq = taskqueue_create_fast("ixv_que", M_NOWAIT,
-		    taskqueue_thread_enqueue, &que->tq);
-		taskqueue_start_threads(&que->tq, 1, PI_NET, "%s que",
-		    device_get_nameunit(adapter->dev));
+		que->que_si = softint_establish(SOFTINT_NET, ixv_handle_que,
+		    que);
 	}
 
 	/* and Mailbox */
@@ -1597,7 +1710,7 @@ ixv_allocate_msix(struct adapter *adapter)
 	adapter->res = bus_alloc_resource_any(dev,
     	    SYS_RES_IRQ, &rid, RF_SHAREABLE | RF_ACTIVE);
 	if (!adapter->res) {
-		device_printf(dev,"Unable to allocate"
+		aprint_error_dev(dev,"Unable to allocate"
     	    " bus resource: MBX interrupt [%d]\n", rid);
 		return (ENXIO);
 	}
@@ -1607,7 +1720,7 @@ ixv_allocate_msix(struct adapter *adapter)
 	    ixv_msix_mbx, adapter, &adapter->tag);
 	if (error) {
 		adapter->res = NULL;
-		device_printf(dev, "Failed to register LINK handler");
+		aprint_error_dev(dev, "Failed to register LINK handler");
 		return (error);
 	}
 #if __FreeBSD_version >= 800504
@@ -1615,11 +1728,8 @@ ixv_allocate_msix(struct adapter *adapter)
 #endif
 	adapter->mbxvec = vector;
 	/* Tasklets for Mailbox */
-	ixgbe_task_init(&adapter->mbx_task, ixv_handle_mbx, adapter);
-	adapter->tq = taskqueue_create_fast("ixv_mbx", M_NOWAIT,
-	    taskqueue_thread_enqueue, &adapter->tq);
-	taskqueue_start_threads(&adapter->tq, 1, PI_NET, "%s mbxq",
-	    device_get_nameunit(adapter->dev));
+	adapter->mbx_si = softint_establish(SOFTINT_NET, ixv_handle_mbx,
+	    adapter);
 	/*
 	** Due to a broken design QEMU will fail to properly
 	** enable the guest for MSIX unless the vectors in
@@ -1629,14 +1739,15 @@ ixv_allocate_msix(struct adapter *adapter)
 	*/
 	if (adapter->hw.mac.type == ixgbe_mac_82599_vf) {
 		int msix_ctrl;
-		pci_find_cap(dev, PCIY_MSIX, &rid);
-		rid += PCIR_MSIX_CTRL;
-		msix_ctrl = pci_read_config(dev, rid, 2);
-		msix_ctrl |= PCIM_MSIXCTRL_MSIX_ENABLE;
-		pci_write_config(dev, rid, msix_ctrl, 2);
+		pci_get_capability(pc, tag, PCI_CAP_MSIX, &rid);
+		rid += PCI_MSIX_CTL;
+		msix_ctrl = pci_read_config(pc, tag, rid);
+		msix_ctrl |= PCI_MSIX_CTL_ENABLE;
+		pci_conf_write(pc, tag, msix_ctrl);
 	}
 
 	return (0);
+#endif
 }
 
 /*
@@ -1646,6 +1757,9 @@ ixv_allocate_msix(struct adapter *adapter)
 static int
 ixv_setup_msix(struct adapter *adapter)
 {
+#if !defined(NETBSD_MSI_OR_MSIX)
+	return 0;
+#else
 	device_t dev = adapter->dev;
 	int rid, vectors, want = 2;
 
@@ -1680,29 +1794,45 @@ ixv_setup_msix(struct adapter *adapter)
 out:
 	device_printf(adapter->dev,"MSIX config error\n");
 	return (ENXIO);
+#endif
 }
 
 
 static int
-ixv_allocate_pci_resources(struct adapter *adapter)
+ixv_allocate_pci_resources(struct adapter *adapter,
+    const struct pci_attach_args *pa)
 {
-	int             rid;
+	pcireg_t	memtype;
 	device_t        dev = adapter->dev;
+	bus_addr_t addr;
+	int flags;
 
-	rid = PCIR_BAR(0);
-	adapter->pci_mem = bus_alloc_resource_any(dev, SYS_RES_MEMORY,
-	    &rid, RF_ACTIVE);
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_BAR(0));
 
-	if (!(adapter->pci_mem)) {
-		device_printf(dev,"Unable to allocate bus resource: memory\n");
-		return (ENXIO);
+	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		adapter->osdep.mem_bus_space_tag = pa->pa_memt;
+		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, PCI_BAR(0),
+	              memtype, &addr, &adapter->osdep.mem_size, &flags) != 0)
+			goto map_err;
+		if ((flags & BUS_SPACE_MAP_PREFETCHABLE) != 0) {
+			aprint_normal_dev(dev, "clearing prefetchable bit\n");
+			flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+		}
+		if (bus_space_map(adapter->osdep.mem_bus_space_tag, addr,
+		     adapter->osdep.mem_size, flags,
+		     &adapter->osdep.mem_bus_space_handle) != 0) {
+map_err:
+			adapter->osdep.mem_size = 0;
+			aprint_error_dev(dev, "unable to map BAR0\n");
+			return ENXIO;
+		}
+		break;
+	default:
+		aprint_error_dev(dev, "unexpected type on BAR0\n");
+		return ENXIO;
 	}
-
-	adapter->osdep.mem_bus_space_tag =
-		rman_get_bustag(adapter->pci_mem);
-	adapter->osdep.mem_bus_space_handle =
-		rman_get_bushandle(adapter->pci_mem);
-	adapter->hw.hw_addr = (u8 *) &adapter->osdep.mem_bus_space_handle;
 
 	adapter->num_queues = 1;
 	adapter->hw.back = &adapter->osdep;
@@ -1722,11 +1852,12 @@ ixv_allocate_pci_resources(struct adapter *adapter)
 static void
 ixv_free_pci_resources(struct adapter * adapter)
 {
+#if defined(NETBSD_MSI_OR_MSIX)
 	struct 		ix_queue *que = adapter->queues;
 	device_t	dev = adapter->dev;
 	int		rid, memrid;
 
-	memrid = PCIR_BAR(MSIX_BAR);
+	memrid = PCI_BAR(MSIX_BAR);
 
 	/*
 	** There is a slight possibility of a failure mode
@@ -1778,6 +1909,7 @@ mem:
 		bus_release_resource(dev, SYS_RES_MEMORY,
 		    PCIR_BAR(0), adapter->pci_mem);
 
+#endif
 	return;
 }
 
@@ -1789,17 +1921,16 @@ mem:
 static void
 ixv_setup_interface(device_t dev, struct adapter *adapter)
 {
+	struct ethercom *ec = &adapter->osdep.ec;
 	struct ifnet   *ifp;
 
 	INIT_DEBUGOUT("ixv_setup_interface: begin");
 
-	ifp = adapter->ifp = if_alloc(IFT_ETHER);
-	if (ifp == NULL)
-		panic("%s: can not if_alloc()\n", device_get_nameunit(dev));
-	if_initname(ifp, device_get_name(dev), device_get_unit(dev));
-	ifp->if_mtu = ETHERMTU;
+	ifp = adapter->ifp = &ec->ec_if;
+	strlcpy(ifp->if_xname, device_xname(dev), IFNAMSIZ);
 	ifp->if_baudrate = 1000000000;
 	ifp->if_init = ixv_init;
+	ifp->if_stop = ixv_ifstop;
 	ifp->if_softc = adapter;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ixv_ioctl;
@@ -1811,7 +1942,9 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 #endif
 	ifp->if_snd.ifq_maxlen = adapter->num_tx_desc - 2;
 
+	if_attach(ifp);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
+	ether_set_ifflags_cb(ec, ixv_ifflags_cb);
 
 	adapter->max_frame_size =
 	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
@@ -1819,13 +1952,29 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	/*
 	 * Tell the upper layer(s) we support long frames.
 	 */
-	ifp->if_data.ifi_hdrlen = sizeof(struct ether_vlan_header);
+	ifp->if_hdrlen = sizeof(struct ether_vlan_header);
 
-	ifp->if_capabilities |= IFCAP_HWCSUM | IFCAP_TSO4 | IFCAP_VLAN_HWCSUM;
-	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING | IFCAP_VLAN_MTU;
-	ifp->if_capabilities |= IFCAP_JUMBO_MTU | IFCAP_LRO;
+	ifp->if_capabilities |= IFCAP_HWCSUM | IFCAP_TSOv4;
+	ifp->if_capenable = 0;
 
-	ifp->if_capenable = ifp->if_capabilities;
+	ec->ec_capabilities |= ETHERCAP_VLAN_HWCSUM;
+	ec->ec_capabilities |= ETHERCAP_JUMBO_MTU;
+	ec->ec_capabilities |= ETHERCAP_VLAN_HWTAGGING
+	    		| ETHERCAP_VLAN_MTU;
+	ec->ec_capenable = ec->ec_capabilities;
+
+	/* Don't enable LRO by default */
+	ifp->if_capabilities |= IFCAP_LRO;
+
+	/*
+	** Dont turn this on by default, if vlans are
+	** created on another pseudo device (eg. lagg)
+	** then vlan events are not passed thru, breaking
+	** operation, but with HW FILTER off it works. If
+	** using vlans directly on the em driver you can
+	** enable this and get full hardware tag filtering.
+	*/
+	ec->ec_capabilities |= ETHERCAP_VLAN_HWFILTER;
 
 	/*
 	 * Specify the media types supported by this adapter and register
@@ -1863,62 +2012,72 @@ out:
 /********************************************************************
  * Manage DMA'able memory.
  *******************************************************************/
-static void
-ixv_dmamap_cb(void *arg, bus_dma_segment_t * segs, int nseg, int error)
-{
-	if (error)
-		return;
-	*(bus_addr_t *) arg = segs->ds_addr;
-	return;
-}
 
 static int
 ixv_dma_malloc(struct adapter *adapter, bus_size_t size,
 		struct ixv_dma_alloc *dma, int mapflags)
 {
 	device_t dev = adapter->dev;
-	int             r;
+	int             r, rsegs;
 
-	r = bus_dma_tag_create(bus_get_dma_tag(adapter->dev),	/* parent */
+	r = ixgbe_dma_tag_create(adapter->osdep.dmat,	/* parent */
 			       DBA_ALIGN, 0,	/* alignment, bounds */
-			       BUS_SPACE_MAXADDR,	/* lowaddr */
-			       BUS_SPACE_MAXADDR,	/* highaddr */
-			       NULL, NULL,	/* filter, filterarg */
 			       size,	/* maxsize */
 			       1,	/* nsegments */
 			       size,	/* maxsegsize */
 			       BUS_DMA_ALLOCNOW,	/* flags */
-			       NULL,	/* lockfunc */
-			       NULL,	/* lockfuncarg */
 			       &dma->dma_tag);
 	if (r != 0) {
-		device_printf(dev,"ixv_dma_malloc: bus_dma_tag_create failed; "
-		       "error %u\n", r);
+		aprint_error_dev(dev,
+		    "ixv_dma_malloc: bus_dma_tag_create failed; error %u\n", r);
 		goto fail_0;
 	}
-	r = bus_dmamem_alloc(dma->dma_tag, (void **)&dma->dma_vaddr,
-			     BUS_DMA_NOWAIT, &dma->dma_map);
+	r = bus_dmamem_alloc(dma->dma_tag->dt_dmat,
+		size,
+		dma->dma_tag->dt_alignment,
+		dma->dma_tag->dt_boundary,
+		&dma->dma_seg, 1, &rsegs, BUS_DMA_NOWAIT);
 	if (r != 0) {
-		device_printf(dev,"ixv_dma_malloc: bus_dmamem_alloc failed; "
-		       "error %u\n", r);
+		aprint_error_dev(dev,
+		    "%s: bus_dmamem_alloc failed; error %u\n", __func__, r);
 		goto fail_1;
 	}
-	r = bus_dmamap_load(dma->dma_tag, dma->dma_map, dma->dma_vaddr,
-			    size,
-			    ixv_dmamap_cb,
-			    &dma->dma_paddr,
-			    mapflags | BUS_DMA_NOWAIT);
+
+	r = bus_dmamem_map(dma->dma_tag->dt_dmat, &dma->dma_seg, rsegs,
+	    size, &dma->dma_vaddr, BUS_DMA_NOWAIT);
 	if (r != 0) {
-		device_printf(dev,"ixv_dma_malloc: bus_dmamap_load failed; "
-		       "error %u\n", r);
+		aprint_error_dev(dev, "%s: bus_dmamem_map failed; error %d\n",
+		    __func__, r);
 		goto fail_2;
 	}
+
+	r = ixgbe_dmamap_create(dma->dma_tag, 0, &dma->dma_map);
+	if (r != 0) {
+		aprint_error_dev(dev, "%s: bus_dmamem_map failed; error %d\n",
+		    __func__, r);
+		goto fail_3;
+	}
+
+	r = bus_dmamap_load(dma->dma_tag->dt_dmat, dma->dma_map, dma->dma_vaddr,
+			    size,
+			    NULL,
+			    mapflags | BUS_DMA_NOWAIT);
+	if (r != 0) {
+		aprint_error_dev(dev,"%s: bus_dmamap_load failed; error %u\n",
+		    __func__, r);
+		goto fail_4;
+	}
+	dma->dma_paddr = dma->dma_map->dm_segs[0].ds_addr;
 	dma->dma_size = size;
-	return (0);
+	return 0;
+fail_4:
+	ixgbe_dmamap_destroy(dma->dma_tag, dma->dma_map);
+fail_3:
+	bus_dmamem_unmap(dma->dma_tag->dt_dmat, dma->dma_vaddr, size);
 fail_2:
-	bus_dmamem_free(dma->dma_tag, dma->dma_vaddr, dma->dma_map);
+	bus_dmamem_free(dma->dma_tag->dt_dmat, &dma->dma_seg, rsegs);
 fail_1:
-	bus_dma_tag_destroy(dma->dma_tag);
+	ixgbe_dma_tag_destroy(dma->dma_tag);
 fail_0:
 	dma->dma_map = NULL;
 	dma->dma_tag = NULL;
@@ -1928,11 +2087,11 @@ fail_0:
 static void
 ixv_dma_free(struct adapter *adapter, struct ixv_dma_alloc *dma)
 {
-	bus_dmamap_sync(dma->dma_tag, dma->dma_map,
+	bus_dmamap_sync(dma->dma_tag->dt_dmat, dma->dma_map, 0, dma->dma_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(dma->dma_tag, dma->dma_map);
-	bus_dmamem_free(dma->dma_tag, dma->dma_vaddr, dma->dma_map);
-	bus_dma_tag_destroy(dma->dma_tag);
+	ixgbe_dmamap_unload(dma->dma_tag, dma->dma_map);
+	bus_dmamem_free(dma->dma_tag->dt_dmat, &dma->dma_seg, 1);
+	ixgbe_dma_tag_destroy(dma->dma_tag);
 }
 
 
@@ -1956,7 +2115,7 @@ ixv_allocate_queues(struct adapter *adapter)
         if (!(adapter->queues =
             (struct ix_queue *) malloc(sizeof(struct ix_queue) *
             adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO))) {
-                device_printf(dev, "Unable to allocate queue memory\n");
+                aprint_error_dev(dev, "Unable to allocate queue memory\n");
                 error = ENOMEM;
                 goto fail;
         }
@@ -1965,7 +2124,7 @@ ixv_allocate_queues(struct adapter *adapter)
 	if (!(adapter->tx_rings =
 	    (struct tx_ring *) malloc(sizeof(struct tx_ring) *
 	    adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO))) {
-		device_printf(dev, "Unable to allocate TX ring memory\n");
+		aprint_error_dev(dev, "Unable to allocate TX ring memory\n");
 		error = ENOMEM;
 		goto tx_fail;
 	}
@@ -1974,7 +2133,7 @@ ixv_allocate_queues(struct adapter *adapter)
 	if (!(adapter->rx_rings =
 	    (struct rx_ring *) malloc(sizeof(struct rx_ring) *
 	    adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO))) {
-		device_printf(dev, "Unable to allocate RX ring memory\n");
+		aprint_error_dev(dev, "Unable to allocate RX ring memory\n");
 		error = ENOMEM;
 		goto rx_fail;
 	}
@@ -1996,12 +2155,12 @@ ixv_allocate_queues(struct adapter *adapter)
 
 		/* Initialize the TX side lock */
 		snprintf(txr->mtx_name, sizeof(txr->mtx_name), "%s:tx(%d)",
-		    device_get_nameunit(dev), txr->me);
-		mtx_init(&txr->tx_mtx, txr->mtx_name, NULL, MTX_DEF);
+		    device_xname(dev), txr->me);
+		mutex_init(&txr->tx_mtx, MUTEX_DEFAULT, IPL_NET);
 
 		if (ixv_dma_malloc(adapter, tsize,
 			&txr->txdma, BUS_DMA_NOWAIT)) {
-			device_printf(dev,
+			aprint_error_dev(dev,
 			    "Unable to allocate TX Descriptor memory\n");
 			error = ENOMEM;
 			goto err_tx_desc;
@@ -2011,7 +2170,7 @@ ixv_allocate_queues(struct adapter *adapter)
 
         	/* Now allocate transmit buffers for the ring */
         	if (ixv_allocate_transmit_buffers(txr)) {
-			device_printf(dev,
+			aprint_error_dev(dev,
 			    "Critical Failure setting up transmit buffers\n");
 			error = ENOMEM;
 			goto err_tx_desc;
@@ -2021,7 +2180,7 @@ ixv_allocate_queues(struct adapter *adapter)
 		txr->br = buf_ring_alloc(IXV_BR_SIZE, M_DEVBUF,
 		    M_WAITOK, &txr->tx_mtx);
 		if (txr->br == NULL) {
-			device_printf(dev,
+			aprint_error_dev(dev,
 			    "Critical Failure setting up buf ring\n");
 			error = ENOMEM;
 			goto err_tx_desc;
@@ -2042,12 +2201,12 @@ ixv_allocate_queues(struct adapter *adapter)
 
 		/* Initialize the RX side lock */
 		snprintf(rxr->mtx_name, sizeof(rxr->mtx_name), "%s:rx(%d)",
-		    device_get_nameunit(dev), rxr->me);
-		mtx_init(&rxr->rx_mtx, rxr->mtx_name, NULL, MTX_DEF);
+		    device_xname(dev), rxr->me);
+		mutex_init(&rxr->rx_mtx, MUTEX_DEFAULT, IPL_NET);
 
 		if (ixv_dma_malloc(adapter, rsize,
 			&rxr->rxdma, BUS_DMA_NOWAIT)) {
-			device_printf(dev,
+			aprint_error_dev(dev,
 			    "Unable to allocate RxDescriptor memory\n");
 			error = ENOMEM;
 			goto err_rx_desc;
@@ -2057,7 +2216,7 @@ ixv_allocate_queues(struct adapter *adapter)
 
         	/* Allocate receive buffers for the ring*/
 		if (ixv_allocate_receive_buffers(rxr)) {
-			device_printf(dev,
+			aprint_error_dev(dev,
 			    "Critical Failure setting up receive buffers\n");
 			error = ENOMEM;
 			goto err_rx_desc;
@@ -2110,26 +2269,21 @@ ixv_allocate_transmit_buffers(struct tx_ring *txr)
 	/*
 	 * Setup DMA descriptor areas.
 	 */
-	if ((error = bus_dma_tag_create(NULL,		/* parent */
+	if ((error = ixgbe_dma_tag_create(adapter->osdep.dmat,	/* parent */
 			       1, 0,		/* alignment, bounds */
-			       BUS_SPACE_MAXADDR,	/* lowaddr */
-			       BUS_SPACE_MAXADDR,	/* highaddr */
-			       NULL, NULL,		/* filter, filterarg */
 			       IXV_TSO_SIZE,		/* maxsize */
 			       32,			/* nsegments */
 			       PAGE_SIZE,		/* maxsegsize */
 			       0,			/* flags */
-			       NULL,			/* lockfunc */
-			       NULL,			/* lockfuncarg */
 			       &txr->txtag))) {
-		device_printf(dev,"Unable to allocate TX DMA tag\n");
+		aprint_error_dev(dev,"Unable to allocate TX DMA tag\n");
 		goto fail;
 	}
 
 	if (!(txr->tx_buffers =
 	    (struct ixv_tx_buf *) malloc(sizeof(struct ixv_tx_buf) *
 	    adapter->num_tx_desc, M_DEVBUF, M_NOWAIT | M_ZERO))) {
-		device_printf(dev, "Unable to allocate tx_buffer memory\n");
+		aprint_error_dev(dev, "Unable to allocate tx_buffer memory\n");
 		error = ENOMEM;
 		goto fail;
 	}
@@ -2137,9 +2291,9 @@ ixv_allocate_transmit_buffers(struct tx_ring *txr)
         /* Create the descriptor buffer dma maps */
 	txbuf = txr->tx_buffers;
 	for (i = 0; i < adapter->num_tx_desc; i++, txbuf++) {
-		error = bus_dmamap_create(txr->txtag, 0, &txbuf->map);
+		error = ixgbe_dmamap_create(txr->txtag, 0, &txbuf->map);
 		if (error != 0) {
-			device_printf(dev, "Unable to create TX DMA map\n");
+			aprint_error_dev(dev, "Unable to create TX DMA map\n");
 			goto fail;
 		}
 	}
@@ -2175,9 +2329,10 @@ ixv_setup_transmit_ring(struct tx_ring *txr)
         txbuf = txr->tx_buffers;
 	for (i = 0; i < adapter->num_tx_desc; i++, txbuf++) {
 		if (txbuf->m_head != NULL) {
-			bus_dmamap_sync(txr->txtag, txbuf->map,
+			bus_dmamap_sync(txr->txtag->dt_dmat, txbuf->map,
+			    0, txbuf->m_head->m_pkthdr.len,
 			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(txr->txtag, txbuf->map);
+			ixgbe_dmamap_unload(txr->txtag, txbuf->map);
 			m_freem(txbuf->m_head);
 			txbuf->m_head = NULL;
 		}
@@ -2188,7 +2343,7 @@ ixv_setup_transmit_ring(struct tx_ring *txr)
 	/* Set number of descriptors available */
 	txr->tx_avail = adapter->num_tx_desc;
 
-	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
+	ixgbe_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	IXV_TX_UNLOCK(txr);
 }
@@ -2250,7 +2405,7 @@ ixv_initialize_transmit_units(struct adapter *adapter)
 		    adapter->num_tx_desc *
 		    sizeof(struct ixgbe_legacy_tx_desc));
 		txctrl = IXGBE_READ_REG(hw, IXGBE_VFDCA_TXCTRL(i));
-		txctrl &= ~IXGBE_DCA_TXCTRL_TX_WB_RO_EN;
+		txctrl &= ~IXGBE_DCA_TXCTRL_DESC_WRO_EN;
 		IXGBE_WRITE_REG(hw, IXGBE_VFDCA_TXCTRL(i), txctrl);
 		break;
 	}
@@ -2269,10 +2424,8 @@ ixv_free_transmit_structures(struct adapter *adapter)
 	struct tx_ring *txr = adapter->tx_rings;
 
 	for (int i = 0; i < adapter->num_queues; i++, txr++) {
-		IXV_TX_LOCK(txr);
 		ixv_free_transmit_buffers(txr);
 		ixv_dma_free(adapter, &txr->txdma);
-		IXV_TX_UNLOCK(txr);
 		IXV_TX_LOCK_DESTROY(txr);
 	}
 	free(adapter->tx_rings, M_DEVBUF);
@@ -2298,22 +2451,20 @@ ixv_free_transmit_buffers(struct tx_ring *txr)
 	tx_buffer = txr->tx_buffers;
 	for (i = 0; i < adapter->num_tx_desc; i++, tx_buffer++) {
 		if (tx_buffer->m_head != NULL) {
-			bus_dmamap_sync(txr->txtag, tx_buffer->map,
+			bus_dmamap_sync(txr->txtag->dt_dmat, tx_buffer->map,
+			    0, tx_buffer->m_head->m_pkthdr.len,
 			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(txr->txtag,
-			    tx_buffer->map);
+			ixgbe_dmamap_unload(txr->txtag, tx_buffer->map);
 			m_freem(tx_buffer->m_head);
 			tx_buffer->m_head = NULL;
 			if (tx_buffer->map != NULL) {
-				bus_dmamap_destroy(txr->txtag,
+				ixgbe_dmamap_destroy(txr->txtag,
 				    tx_buffer->map);
 				tx_buffer->map = NULL;
 			}
 		} else if (tx_buffer->map != NULL) {
-			bus_dmamap_unload(txr->txtag,
-			    tx_buffer->map);
-			bus_dmamap_destroy(txr->txtag,
-			    tx_buffer->map);
+			ixgbe_dmamap_unload(txr->txtag, tx_buffer->map);
+			ixgbe_dmamap_destroy(txr->txtag, tx_buffer->map);
 			tx_buffer->map = NULL;
 		}
 	}
@@ -2326,7 +2477,7 @@ ixv_free_transmit_buffers(struct tx_ring *txr)
 		txr->tx_buffers = NULL;
 	}
 	if (txr->txtag != NULL) {
-		bus_dma_tag_destroy(txr->txtag);
+		ixgbe_dma_tag_destroy(txr->txtag);
 		txr->txtag = NULL;
 	}
 	return;
@@ -2334,31 +2485,31 @@ ixv_free_transmit_buffers(struct tx_ring *txr)
 
 /*********************************************************************
  *
- *  Advanced Context Descriptor setup for VLAN or CSUM
+ *  Advanced Context Descriptor setup for VLAN or L4 CSUM
  *
  **********************************************************************/
 
-static boolean_t
+static u32
 ixv_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 {
+	struct m_tag *mtag;
 	struct adapter *adapter = txr->adapter;
+	struct ethercom *ec = &adapter->osdep.ec;
 	struct ixgbe_adv_tx_context_desc *TXD;
 	struct ixv_tx_buf        *tx_buffer;
-	u32 vlan_macip_lens = 0, type_tucmd_mlhl = 0;
+	u32 olinfo = 0, vlan_macip_lens = 0, type_tucmd_mlhl = 0;
 	struct ether_vlan_header *eh;
-	struct ip *ip;
-	struct ip6_hdr *ip6;
+	struct ip ip;
+	struct ip6_hdr ip6;
 	int  ehdrlen, ip_hlen = 0;
 	u16	etype;
 	u8	ipproto = 0;
-	bool	offload = TRUE;
+	bool	offload;
 	int ctxd = txr->next_avail_desc;
 	u16 vtag = 0;
 
 
-	if ((mp->m_pkthdr.csum_flags & CSUM_OFFLOAD) == 0)
-		offload = FALSE;
-
+	offload = ((mp->m_pkthdr.csum_flags & M_CSUM_OFFLOAD) != 0);
 
 	tx_buffer = &txr->tx_buffers[ctxd];
 	TXD = (struct ixgbe_adv_tx_context_desc *) &txr->tx_base[ctxd];
@@ -2367,19 +2518,21 @@ ixv_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	** In advanced descriptors the vlan tag must 
 	** be placed into the descriptor itself.
 	*/
-	if (mp->m_flags & M_VLANTAG) {
-		vtag = htole16(mp->m_pkthdr.ether_vtag);
+	if ((mtag = VLAN_OUTPUT_TAG(ec, mp)) != NULL) {
+		vtag = htole16(VLAN_TAG_VALUE(mtag) & 0xffff);
 		vlan_macip_lens |= (vtag << IXGBE_ADVTXD_VLAN_SHIFT);
-	} else if (offload == FALSE)
-		return FALSE;
+	} else if (!offload)
+		return 0;
 
 	/*
 	 * Determine where frame payload starts.
 	 * Jump over vlan headers if already present,
 	 * helpful for QinQ too.
 	 */
+	KASSERT(mp->m_len >= offsetof(struct ether_vlan_header, evl_tag));
 	eh = mtod(mp, struct ether_vlan_header *);
 	if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN)) {
+		KASSERT(mp->m_len >= sizeof(struct ether_vlan_header));
 		etype = ntohs(eh->evl_proto);
 		ehdrlen = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 	} else {
@@ -2391,50 +2544,43 @@ ixv_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	vlan_macip_lens |= ehdrlen << IXGBE_ADVTXD_MACLEN_SHIFT;
 
 	switch (etype) {
-		case ETHERTYPE_IP:
-			ip = (struct ip *)(mp->m_data + ehdrlen);
-			ip_hlen = ip->ip_hl << 2;
-			if (mp->m_len < ehdrlen + ip_hlen)
-				return (FALSE);
-			ipproto = ip->ip_p;
-			type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
-			break;
-		case ETHERTYPE_IPV6:
-			ip6 = (struct ip6_hdr *)(mp->m_data + ehdrlen);
-			ip_hlen = sizeof(struct ip6_hdr);
-			if (mp->m_len < ehdrlen + ip_hlen)
-				return (FALSE);
-			ipproto = ip6->ip6_nxt;
-			type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
-			break;
-		default:
-			offload = FALSE;
-			break;
+	case ETHERTYPE_IP:
+		m_copydata(mp, ehdrlen, sizeof(ip), &ip);
+		ip_hlen = ip.ip_hl << 2;
+		ipproto = ip.ip_p;
+#if 0
+		ip.ip_sum = 0;
+		m_copyback(mp, ehdrlen, sizeof(ip), &ip);
+#else
+		KASSERT((mp->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0 ||
+		    ip.ip_sum == 0);
+#endif
+		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
+		break;
+	case ETHERTYPE_IPV6:
+		m_copydata(mp, ehdrlen, sizeof(ip6), &ip6);
+		ip_hlen = sizeof(ip6);
+		ipproto = ip6.ip6_nxt;
+		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
+		break;
+	default:
+		break;
 	}
+
+	if ((mp->m_pkthdr.csum_flags & M_CSUM_IPv4) != 0)
+		olinfo |= IXGBE_TXD_POPTS_IXSM << 8;
 
 	vlan_macip_lens |= ip_hlen;
 	type_tucmd_mlhl |= IXGBE_ADVTXD_DCMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
 
-	switch (ipproto) {
-		case IPPROTO_TCP:
-			if (mp->m_pkthdr.csum_flags & CSUM_TCP)
-				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
-			break;
-
-		case IPPROTO_UDP:
-			if (mp->m_pkthdr.csum_flags & CSUM_UDP)
-				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
-			break;
-
-#if __FreeBSD_version >= 800000
-		case IPPROTO_SCTP:
-			if (mp->m_pkthdr.csum_flags & CSUM_SCTP)
-				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_SCTP;
-			break;
-#endif
-		default:
-			offload = FALSE;
-			break;
+	if (mp->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_TCPv6)) {
+		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
+		olinfo |= IXGBE_TXD_POPTS_TXSM << 8;
+		KASSERT(ipproto == IPPROTO_TCP);
+	} else if (mp->m_pkthdr.csum_flags & (M_CSUM_UDPv4|M_CSUM_UDPv6)) {
+		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
+		olinfo |= IXGBE_TXD_POPTS_TXSM << 8;
+		KASSERT(ipproto == IPPROTO_UDP);
 	}
 
 	/* Now copy bits into descriptor */
@@ -2452,7 +2598,7 @@ ixv_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	txr->next_avail_desc = ctxd;
 	--txr->tx_avail;
 
-        return (offload);
+        return olinfo;
 }
 
 /**********************************************************************
@@ -2461,10 +2607,12 @@ ixv_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
  *  adapters using advanced tx descriptors
  *
  **********************************************************************/
-static boolean_t
+static bool
 ixv_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen)
 {
+	struct m_tag *mtag;
 	struct adapter *adapter = txr->adapter;
+	struct ethercom *ec = &adapter->osdep.ec;
 	struct ixgbe_adv_tx_context_desc *TXD;
 	struct ixv_tx_buf        *tx_buffer;
 	u32 vlan_macip_lens = 0, type_tucmd_mlhl = 0;
@@ -2499,8 +2647,9 @@ ixv_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen)
 		return FALSE;   /* 0 */
 	ip->ip_sum = 0;
 	ip_hlen = ip->ip_hl << 2;
-	th = (struct tcphdr *)((caddr_t)ip + ip_hlen);
-	th->th_sum = in_pseudo(ip->ip_src.s_addr,
+	th = (struct tcphdr *)((char *)ip + ip_hlen);
+	/* XXX Educated guess: FreeBSD's in_pseudo == NetBSD's in_cksum_phdr */
+	th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
 	    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
 	tcp_hlen = th->th_off << 2;
 	hdrlen = ehdrlen + ip_hlen + tcp_hlen;
@@ -2509,8 +2658,8 @@ ixv_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen)
 	*paylen = mp->m_pkthdr.len - hdrlen;
 
 	/* VLAN MACLEN IPLEN */
-	if (mp->m_flags & M_VLANTAG) {
-		vtag = htole16(mp->m_pkthdr.ether_vtag);
+	if ((mtag = VLAN_OUTPUT_TAG(ec, mp)) != NULL) {
+		vtag = htole16(VLAN_TAG_VALUE(mtag) & 0xffff);
                 vlan_macip_lens |= (vtag << IXGBE_ADVTXD_VLAN_SHIFT);
 	}
 
@@ -2526,7 +2675,7 @@ ixv_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen)
 
 
 	/* MSS L4LEN IDX */
-	mss_l4len_idx |= (mp->m_pkthdr.tso_segsz << IXGBE_ADVTXD_MSS_SHIFT);
+	mss_l4len_idx |= (mp->m_pkthdr.segsz << IXGBE_ADVTXD_MSS_SHIFT);
 	mss_l4len_idx |= (tcp_hlen << IXGBE_ADVTXD_L4LEN_SHIFT);
 	TXD->mss_l4len_idx = htole32(mss_l4len_idx);
 
@@ -2550,7 +2699,7 @@ ixv_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen)
  *  tx_buffer is put back on the free queue.
  *
  **********************************************************************/
-static boolean_t
+static bool
 ixv_txeof(struct tx_ring *txr)
 {
 	struct adapter	*adapter = txr->adapter;
@@ -2559,10 +2708,10 @@ ixv_txeof(struct tx_ring *txr)
 	struct ixv_tx_buf *tx_buffer;
 	struct ixgbe_legacy_tx_desc *tx_desc, *eop_desc;
 
-	mtx_assert(&txr->tx_mtx, MA_OWNED);
+	KASSERT(mutex_owned(&txr->tx_mtx));
 
 	if (txr->tx_avail == adapter->num_tx_desc)
-		return FALSE;
+		return false;
 
 	first = txr->next_to_clean;
 	tx_buffer = &txr->tx_buffers[first];
@@ -2570,7 +2719,7 @@ ixv_txeof(struct tx_ring *txr)
 	tx_desc = (struct ixgbe_legacy_tx_desc *)&txr->tx_base[first];
 	last = tx_buffer->eop_index;
 	if (last == -1)
-		return FALSE;
+		return false;
 	eop_desc = (struct ixgbe_legacy_tx_desc *)&txr->tx_base[last];
 
 	/*
@@ -2582,7 +2731,7 @@ ixv_txeof(struct tx_ring *txr)
 	if (++last == adapter->num_tx_desc) last = 0;
 	done = last;
 
-        bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
+        ixgbe_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
             BUS_DMASYNC_POSTREAD);
 	/*
 	** Only the EOP descriptor of a packet now has the DD
@@ -2597,17 +2746,17 @@ ixv_txeof(struct tx_ring *txr)
 			++txr->tx_avail;
 
 			if (tx_buffer->m_head) {
-				bus_dmamap_sync(txr->txtag,
+				bus_dmamap_sync(txr->txtag->dt_dmat,
 				    tx_buffer->map,
+				    0, tx_buffer->m_head->m_pkthdr.len,
 				    BUS_DMASYNC_POSTWRITE);
-				bus_dmamap_unload(txr->txtag,
-				    tx_buffer->map);
+				ixgbe_dmamap_unload(txr->txtag, tx_buffer->map);
 				m_freem(tx_buffer->m_head);
 				tx_buffer->m_head = NULL;
 				tx_buffer->map = NULL;
 			}
 			tx_buffer->eop_index = -1;
-			txr->watchdog_time = ticks;
+			getmicrotime(&txr->watchdog_time);
 
 			if (++first == adapter->num_tx_desc)
 				first = 0;
@@ -2628,26 +2777,26 @@ ixv_txeof(struct tx_ring *txr)
 		} else
 			break;
 	}
-	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
+	ixgbe_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	txr->next_to_clean = first;
 
 	/*
-	 * If we have enough room, clear IFF_DRV_OACTIVE to tell the stack that
+	 * If we have enough room, clear IFF_OACTIVE to tell the stack that
 	 * it is OK to send packets. If there are no pending descriptors,
 	 * clear the timeout. Otherwise, if some descriptors have been freed,
 	 * restart the timeout.
 	 */
 	if (txr->tx_avail > IXV_TX_CLEANUP_THRESHOLD) {
-		ifp->if_drv_flags &= ~IFF_DRV_OACTIVE;
+		ifp->if_flags &= ~IFF_OACTIVE;
 		if (txr->tx_avail == adapter->num_tx_desc) {
 			txr->watchdog_check = FALSE;
-			return FALSE;
+			return false;
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 /*********************************************************************
@@ -2663,15 +2812,16 @@ static void
 ixv_refresh_mbufs(struct rx_ring *rxr, int limit)
 {
 	struct adapter		*adapter = rxr->adapter;
-	bus_dma_segment_t	hseg[1];
-	bus_dma_segment_t	pseg[1];
 	struct ixv_rx_buf	*rxbuf;
 	struct mbuf		*mh, *mp;
-	int			i, nsegs, error, cleaned;
+	int			i, j, error;
+	bool			refreshed = false;
 
-	i = rxr->next_to_refresh;
-	cleaned = -1; /* Signify no completions */
-	while (i != limit) {
+	i = j = rxr->next_to_refresh;
+        /* Get the control variable, one beyond refresh point */
+	if (++j == adapter->num_rx_desc)
+		j = 0;
+	while (j != limit) {
 		rxbuf = &rxr->rx_buffers[i];
 		if ((rxbuf->m_head == NULL) && (rxr->hdr_split)) {
 			mh = m_gethdr(M_DONTWAIT, MT_DATA);
@@ -2682,8 +2832,8 @@ ixv_refresh_mbufs(struct rx_ring *rxr, int limit)
 			mh->m_flags |= M_PKTHDR;
 			m_adj(mh, ETHER_ALIGN);
 			/* Get the memory mapping */
-			error = bus_dmamap_load_mbuf_sg(rxr->htag,
-			    rxbuf->hmap, mh, hseg, &nsegs, BUS_DMA_NOWAIT);
+			error = bus_dmamap_load_mbuf(rxr->htag->dt_dmat,
+			    rxbuf->hmap, mh, BUS_DMA_NOWAIT);
 			if (error != 0) {
 				printf("GET BUF: dmamap load"
 				    " failure - %d\n", error);
@@ -2691,45 +2841,49 @@ ixv_refresh_mbufs(struct rx_ring *rxr, int limit)
 				goto update;
 			}
 			rxbuf->m_head = mh;
-			bus_dmamap_sync(rxr->htag, rxbuf->hmap,
+			ixgbe_dmamap_sync(rxr->htag, rxbuf->hmap,
 			    BUS_DMASYNC_PREREAD);
 			rxr->rx_base[i].read.hdr_addr =
-			    htole64(hseg[0].ds_addr);
+			    htole64(rxbuf->hmap->dm_segs[0].ds_addr);
 		}
 
 		if (rxbuf->m_pack == NULL) {
-			mp = m_getjcl(M_DONTWAIT, MT_DATA,
-			    M_PKTHDR, adapter->rx_mbuf_sz);
-			if (mp == NULL)
+			mp = ixgbe_getjcl(&adapter->jcl_head, M_DONTWAIT,
+			    MT_DATA, M_PKTHDR, adapter->rx_mbuf_sz);
+			if (mp == NULL) {
+				rxr->no_jmbuf.ev_count++;
 				goto update;
+			} else
+				mp = rxbuf->m_pack;
+
 			mp->m_pkthdr.len = mp->m_len = adapter->rx_mbuf_sz;
 			/* Get the memory mapping */
-			error = bus_dmamap_load_mbuf_sg(rxr->ptag,
-			    rxbuf->pmap, mp, pseg, &nsegs, BUS_DMA_NOWAIT);
+			error = bus_dmamap_load_mbuf(rxr->ptag->dt_dmat,
+			    rxbuf->pmap, mp, BUS_DMA_NOWAIT);
 			if (error != 0) {
 				printf("GET BUF: dmamap load"
 				    " failure - %d\n", error);
 				m_free(mp);
+				rxbuf->m_pack = NULL;
 				goto update;
 			}
 			rxbuf->m_pack = mp;
-			bus_dmamap_sync(rxr->ptag, rxbuf->pmap,
-			    BUS_DMASYNC_PREREAD);
+			bus_dmamap_sync(rxr->ptag->dt_dmat, rxbuf->pmap,
+			    0, mp->m_pkthdr.len, BUS_DMASYNC_PREREAD);
 			rxr->rx_base[i].read.pkt_addr =
-			    htole64(pseg[0].ds_addr);
+			    htole64(rxbuf->pmap->dm_segs[0].ds_addr);
 		}
 
-		cleaned = i;
+		refreshed = true;
+		rxr->next_to_refresh = i = j;
 		/* Calculate next index */
-		if (++i == adapter->num_rx_desc)
-			i = 0;
-		/* This is the work marker for refresh */
-		rxr->next_to_refresh = i;
+		if (++j == adapter->num_rx_desc)
+			j = 0;
 	}
 update:
-	if (cleaned != -1) /* If we refreshed some, bump tail */
+	if (refreshed) /* update tail index */
 		IXGBE_WRITE_REG(&adapter->hw,
-		    IXGBE_VFRDT(rxr->me), cleaned);
+		    IXGBE_VFRDT(rxr->me), rxr->next_to_refresh);
 	return;
 }
 
@@ -2753,55 +2907,45 @@ ixv_allocate_receive_buffers(struct rx_ring *rxr)
 	if (!(rxr->rx_buffers =
 	    (struct ixv_rx_buf *) malloc(bsize,
 	    M_DEVBUF, M_NOWAIT | M_ZERO))) {
-		device_printf(dev, "Unable to allocate rx_buffer memory\n");
+		aprint_error_dev(dev, "Unable to allocate rx_buffer memory\n");
 		error = ENOMEM;
 		goto fail;
 	}
 
-	if ((error = bus_dma_tag_create(bus_get_dma_tag(dev),	/* parent */
+	if ((error = ixgbe_dma_tag_create(adapter->osdep.dmat,	/* parent */
 				   1, 0,	/* alignment, bounds */
-				   BUS_SPACE_MAXADDR,	/* lowaddr */
-				   BUS_SPACE_MAXADDR,	/* highaddr */
-				   NULL, NULL,		/* filter, filterarg */
 				   MSIZE,		/* maxsize */
 				   1,			/* nsegments */
 				   MSIZE,		/* maxsegsize */
 				   0,			/* flags */
-				   NULL,		/* lockfunc */
-				   NULL,		/* lockfuncarg */
 				   &rxr->htag))) {
-		device_printf(dev, "Unable to create RX DMA tag\n");
+		aprint_error_dev(dev, "Unable to create RX DMA tag\n");
 		goto fail;
 	}
 
-	if ((error = bus_dma_tag_create(bus_get_dma_tag(dev),	/* parent */
+	if ((error = ixgbe_dma_tag_create(adapter->osdep.dmat,	/* parent */
 				   1, 0,	/* alignment, bounds */
-				   BUS_SPACE_MAXADDR,	/* lowaddr */
-				   BUS_SPACE_MAXADDR,	/* highaddr */
-				   NULL, NULL,		/* filter, filterarg */
 				   MJUMPAGESIZE,	/* maxsize */
 				   1,			/* nsegments */
 				   MJUMPAGESIZE,	/* maxsegsize */
 				   0,			/* flags */
-				   NULL,		/* lockfunc */
-				   NULL,		/* lockfuncarg */
 				   &rxr->ptag))) {
-		device_printf(dev, "Unable to create RX DMA tag\n");
+		aprint_error_dev(dev, "Unable to create RX DMA tag\n");
 		goto fail;
 	}
 
 	for (i = 0; i < adapter->num_rx_desc; i++, rxbuf++) {
 		rxbuf = &rxr->rx_buffers[i];
-		error = bus_dmamap_create(rxr->htag,
+		error = ixgbe_dmamap_create(rxr->htag,
 		    BUS_DMA_NOWAIT, &rxbuf->hmap);
 		if (error) {
-			device_printf(dev, "Unable to create RX head map\n");
+			aprint_error_dev(dev, "Unable to create RX head map\n");
 			goto fail;
 		}
-		error = bus_dmamap_create(rxr->ptag,
+		error = ixgbe_dmamap_create(rxr->ptag,
 		    BUS_DMA_NOWAIT, &rxbuf->pmap);
 		if (error) {
-			device_printf(dev, "Unable to create RX pkt map\n");
+			aprint_error_dev(dev, "Unable to create RX pkt map\n");
 			goto fail;
 		}
 	}
@@ -2825,16 +2969,18 @@ ixv_free_receive_ring(struct rx_ring *rxr)
 	for (i = 0; i < adapter->num_rx_desc; i++) {
 		rxbuf = &rxr->rx_buffers[i];
 		if (rxbuf->m_head != NULL) {
-			bus_dmamap_sync(rxr->htag, rxbuf->hmap,
+			ixgbe_dmamap_sync(rxr->htag, rxbuf->hmap,
 			    BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(rxr->htag, rxbuf->hmap);
+			ixgbe_dmamap_unload(rxr->htag, rxbuf->hmap);
 			rxbuf->m_head->m_flags |= M_PKTHDR;
 			m_freem(rxbuf->m_head);
 		}
 		if (rxbuf->m_pack != NULL) {
-			bus_dmamap_sync(rxr->ptag, rxbuf->pmap,
+			/* XXX not ixgbe_ ? */
+			bus_dmamap_sync(rxr->ptag->dt_dmat, rxbuf->pmap,
+			    0, rxbuf->m_pack->m_pkthdr.len,
 			    BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(rxr->ptag, rxbuf->pmap);
+			ixgbe_dmamap_unload(rxr->ptag, rxbuf->pmap);
 			rxbuf->m_pack->m_flags |= M_PKTHDR;
 			m_freem(rxbuf->m_pack);
 		}
@@ -2853,16 +2999,17 @@ static int
 ixv_setup_receive_ring(struct rx_ring *rxr)
 {
 	struct	adapter 	*adapter;
-	struct ifnet		*ifp;
-	device_t		dev;
 	struct ixv_rx_buf	*rxbuf;
-	bus_dma_segment_t	pseg[1], hseg[1];
+#ifdef LRO
+	struct ifnet		*ifp;
 	struct lro_ctrl		*lro = &rxr->lro;
-	int			rsize, nsegs, error = 0;
+#endif /* LRO */
+	int			rsize, error = 0;
 
 	adapter = rxr->adapter;
+#ifdef LRO
 	ifp = adapter->ifp;
-	dev = adapter->dev;
+#endif /* LRO */
 
 	/* Clear the ring contents */
 	IXV_RX_LOCK(rxr);
@@ -2872,6 +3019,16 @@ ixv_setup_receive_ring(struct rx_ring *rxr)
 
 	/* Free current RX buffer structs and their mbufs */
 	ixv_free_receive_ring(rxr);
+
+	IXV_RX_UNLOCK(rxr);
+
+	/* Now reinitialize our supply of jumbo mbufs.  The number
+	 * or size of jumbo mbufs may have changed.
+	 */
+	ixgbe_jcl_reinit(&adapter->jcl_head, rxr->ptag->dt_dmat,
+	    2 * adapter->num_rx_desc, adapter->rx_mbuf_sz);
+
+	IXV_RX_LOCK(rxr);
 
 	/* Configure header split? */
 	if (ixv_header_split)
@@ -2890,7 +3047,7 @@ ixv_setup_receive_ring(struct rx_ring *rxr)
 			goto skip_head;
 
 		/* First the header */
-		rxbuf->m_head = m_gethdr(M_NOWAIT, MT_DATA);
+		rxbuf->m_head = m_gethdr(M_DONTWAIT, MT_DATA);
 		if (rxbuf->m_head == NULL) {
 			error = ENOBUFS;
 			goto fail;
@@ -2900,20 +3057,20 @@ ixv_setup_receive_ring(struct rx_ring *rxr)
 		mh->m_len = mh->m_pkthdr.len = MHLEN;
 		mh->m_flags |= M_PKTHDR;
 		/* Get the memory mapping */
-		error = bus_dmamap_load_mbuf_sg(rxr->htag,
-		    rxbuf->hmap, rxbuf->m_head, hseg,
-		    &nsegs, BUS_DMA_NOWAIT);
+		error = bus_dmamap_load_mbuf(rxr->htag->dt_dmat,
+		    rxbuf->hmap, rxbuf->m_head, BUS_DMA_NOWAIT);
 		if (error != 0) /* Nothing elegant to do here */
 			goto fail;
-		bus_dmamap_sync(rxr->htag,
-		    rxbuf->hmap, BUS_DMASYNC_PREREAD);
+		bus_dmamap_sync(rxr->htag->dt_dmat, rxbuf->hmap,
+		    0, mh->m_pkthdr.len, BUS_DMASYNC_PREREAD);
 		/* Update descriptor */
-		rxr->rx_base[j].read.hdr_addr = htole64(hseg[0].ds_addr);
+		rxr->rx_base[j].read.hdr_addr =
+		    htole64(rxbuf->hmap->dm_segs[0].ds_addr);
 
 skip_head:
 		/* Now the payload cluster */
-		rxbuf->m_pack = m_getjcl(M_NOWAIT, MT_DATA,
-		    M_PKTHDR, adapter->rx_mbuf_sz);
+		rxbuf->m_pack = ixgbe_getjcl(&adapter->jcl_head, M_DONTWAIT,
+		    MT_DATA, M_PKTHDR, adapter->rx_mbuf_sz);
 		if (rxbuf->m_pack == NULL) {
 			error = ENOBUFS;
                         goto fail;
@@ -2921,15 +3078,15 @@ skip_head:
 		mp = rxbuf->m_pack;
 		mp->m_pkthdr.len = mp->m_len = adapter->rx_mbuf_sz;
 		/* Get the memory mapping */
-		error = bus_dmamap_load_mbuf_sg(rxr->ptag,
-		    rxbuf->pmap, mp, pseg,
-		    &nsegs, BUS_DMA_NOWAIT);
+		error = bus_dmamap_load_mbuf(rxr->ptag->dt_dmat,
+		    rxbuf->pmap, mp, BUS_DMA_NOWAIT);
 		if (error != 0)
                         goto fail;
-		bus_dmamap_sync(rxr->ptag,
-		    rxbuf->pmap, BUS_DMASYNC_PREREAD);
+		bus_dmamap_sync(rxr->ptag->dt_dmat, rxbuf->pmap,
+		    0, adapter->rx_mbuf_sz, BUS_DMASYNC_PREREAD);
 		/* Update descriptor */
-		rxr->rx_base[j].read.pkt_addr = htole64(pseg[0].ds_addr);
+		rxr->rx_base[j].read.pkt_addr =
+		    htole64(rxbuf->pmap->dm_segs[0].ds_addr);
 	}
 
 
@@ -2937,16 +3094,19 @@ skip_head:
 	rxr->next_to_check = 0;
 	rxr->next_to_refresh = 0;
 	rxr->lro_enabled = FALSE;
-	rxr->rx_split_packets = 0;
-	rxr->rx_bytes = 0;
+	rxr->rx_split_packets.ev_count = 0;
+	rxr->rx_bytes.ev_count = 0;
+	rxr->discard = FALSE;
 
-	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
+	ixgbe_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
+#ifdef LRO
 	/*
 	** Now set up the LRO interface:
 	*/
 	if (ifp->if_capenable & IFCAP_LRO) {
+		device_t dev = adapter->dev;
 		int err = tcp_lro_init(lro);
 		if (err) {
 			device_printf(dev, "LRO Initialization failed!\n");
@@ -2956,6 +3116,7 @@ skip_head:
 		rxr->lro_enabled = TRUE;
 		lro->ifp = adapter->ifp;
 	}
+#endif /* LRO */
 
 	IXV_RX_UNLOCK(rxr);
 	return (0);
@@ -3006,6 +3167,7 @@ fail:
 static void
 ixv_initialize_receive_units(struct adapter *adapter)
 {
+	int i;
 	struct	rx_ring	*rxr = adapter->rx_rings;
 	struct ixgbe_hw	*hw = &adapter->hw;
 	struct ifnet   *ifp = adapter->ifp;
@@ -3030,7 +3192,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 	}
 	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg);
 
-	for (int i = 0; i < adapter->num_queues; i++, rxr++) {
+	for (i = 0; i < adapter->num_queues; i++, rxr++) {
 		u64 rdba = rxr->rxdma.dma_paddr;
 		u32 reg, rxdctl;
 
@@ -3100,12 +3262,17 @@ ixv_free_receive_structures(struct adapter *adapter)
 	struct rx_ring *rxr = adapter->rx_rings;
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++) {
+#ifdef LRO
 		struct lro_ctrl		*lro = &rxr->lro;
+#endif /* LRO */
 		ixv_free_receive_buffers(rxr);
+#ifdef LRO
 		/* Free LRO memory */
 		tcp_lro_free(lro);
+#endif /* LRO */
 		/* Free the ring memory as well */
 		ixv_dma_free(adapter, &rxr->rxdma);
+		IXV_RX_LOCK_DESTROY(rxr);
 	}
 
 	free(adapter->rx_rings, M_DEVBUF);
@@ -3130,27 +3297,29 @@ ixv_free_receive_buffers(struct rx_ring *rxr)
 		for (int i = 0; i < adapter->num_rx_desc; i++) {
 			rxbuf = &rxr->rx_buffers[i];
 			if (rxbuf->m_head != NULL) {
-				bus_dmamap_sync(rxr->htag, rxbuf->hmap,
+				ixgbe_dmamap_sync(rxr->htag, rxbuf->hmap,
 				    BUS_DMASYNC_POSTREAD);
-				bus_dmamap_unload(rxr->htag, rxbuf->hmap);
+				ixgbe_dmamap_unload(rxr->htag, rxbuf->hmap);
 				rxbuf->m_head->m_flags |= M_PKTHDR;
 				m_freem(rxbuf->m_head);
 			}
 			if (rxbuf->m_pack != NULL) {
-				bus_dmamap_sync(rxr->ptag, rxbuf->pmap,
+				/* XXX not ixgbe_* ? */
+				bus_dmamap_sync(rxr->ptag->dt_dmat, rxbuf->pmap,
+				    0, rxbuf->m_pack->m_pkthdr.len,
 				    BUS_DMASYNC_POSTREAD);
-				bus_dmamap_unload(rxr->ptag, rxbuf->pmap);
+				ixgbe_dmamap_unload(rxr->ptag, rxbuf->pmap);
 				rxbuf->m_pack->m_flags |= M_PKTHDR;
 				m_freem(rxbuf->m_pack);
 			}
 			rxbuf->m_head = NULL;
 			rxbuf->m_pack = NULL;
 			if (rxbuf->hmap != NULL) {
-				bus_dmamap_destroy(rxr->htag, rxbuf->hmap);
+				ixgbe_dmamap_destroy(rxr->htag, rxbuf->hmap);
 				rxbuf->hmap = NULL;
 			}
 			if (rxbuf->pmap != NULL) {
-				bus_dmamap_destroy(rxr->ptag, rxbuf->pmap);
+				ixgbe_dmamap_destroy(rxr->ptag, rxbuf->pmap);
 				rxbuf->pmap = NULL;
 			}
 		}
@@ -3161,11 +3330,11 @@ ixv_free_receive_buffers(struct rx_ring *rxr)
 	}
 
 	if (rxr->htag != NULL) {
-		bus_dma_tag_destroy(rxr->htag);
+		ixgbe_dma_tag_destroy(rxr->htag);
 		rxr->htag = NULL;
 	}
 	if (rxr->ptag != NULL) {
-		bus_dma_tag_destroy(rxr->ptag);
+		ixgbe_dma_tag_destroy(rxr->ptag);
 		rxr->ptag = NULL;
 	}
 
@@ -3175,14 +3344,19 @@ ixv_free_receive_buffers(struct rx_ring *rxr)
 static __inline void
 ixv_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype)
 {
+	int s;
                  
+#ifdef LRO
+	struct adapter	*adapter = ifp->if_softc;
+	struct ethercom *ec = &adapter->osdep.ec;
+
         /*
          * ATM LRO is only for IPv4/TCP packets and TCP checksum of the packet
          * should be computed by hardware. Also it should not have VLAN tag in
          * ethernet header.
          */
         if (rxr->lro_enabled &&
-            (ifp->if_capenable & IFCAP_VLAN_HWTAGGING) != 0 &&
+            (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING) != 0 &&
             (ptype & IXGBE_RXDADV_PKTTYPE_ETQF) == 0 &&
             (ptype & (IXGBE_RXDADV_PKTTYPE_IPV4 | IXGBE_RXDADV_PKTTYPE_TCP)) ==
             (IXGBE_RXDADV_PKTTYPE_IPV4 | IXGBE_RXDADV_PKTTYPE_TCP) &&
@@ -3198,31 +3372,48 @@ ixv_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype)
                         if (tcp_lro_rx(&rxr->lro, m, 0) == 0)
                                 return;
         }
+#endif /* LRO */
+
+	IXV_RX_UNLOCK(rxr);
+
+	s = splnet();
+	/* Pass this up to any BPF listeners. */
+	bpf_mtap(ifp, m);
         (*ifp->if_input)(ifp, m);
+	splx(s);
+
+	IXV_RX_LOCK(rxr);
 }
 
 static __inline void
 ixv_rx_discard(struct rx_ring *rxr, int i)
 {
-	struct adapter		*adapter = rxr->adapter;
 	struct ixv_rx_buf	*rbuf;
-	struct mbuf		*mh, *mp;
 
 	rbuf = &rxr->rx_buffers[i];
-        if (rbuf->fmp != NULL) /* Partial chain ? */
-                m_freem(rbuf->fmp);
+	if (rbuf->fmp != NULL) {/* Partial chain ? */
+		rbuf->fmp->m_flags |= M_PKTHDR;
+		m_freem(rbuf->fmp);
+		rbuf->fmp = NULL;
+	}
 
-	mh = rbuf->m_head;
-	mp = rbuf->m_pack;
+	/*
+	** With advanced descriptors the writeback
+	** clobbers the buffer addrs, so its easier
+	** to just free the existing mbufs and take
+	** the normal refresh path to get new buffers
+	** and mapping.
+	*/
+	if (rbuf->m_head) {
+		m_free(rbuf->m_head);
+		rbuf->m_head = NULL;
+	}
 
-	/* Reuse loaded DMA map and just update mbuf chain */
-	mh->m_len = MHLEN;
-	mh->m_flags |= M_PKTHDR;
-	mh->m_next = NULL;
+	if (rbuf->m_pack) {
+		m_free(rbuf->m_pack);
+		rbuf->m_pack = NULL;
+	}
 
-	mp->m_len = mp->m_pkthdr.len = adapter->rx_mbuf_sz;
-	mp->m_data = mp->m_ext.ext_buf;
-	mp->m_next = NULL;
 	return;
 }
 
@@ -3244,8 +3435,10 @@ ixv_rxeof(struct ix_queue *que, int count)
 	struct adapter		*adapter = que->adapter;
 	struct rx_ring		*rxr = que->rxr;
 	struct ifnet		*ifp = adapter->ifp;
+#ifdef LRO
 	struct lro_ctrl		*lro = &rxr->lro;
 	struct lro_entry	*queued;
+#endif /* LRO */
 	int			i, nextp, processed = 0;
 	u32			staterr = 0;
 	union ixgbe_adv_rx_desc	*cur;
@@ -3255,12 +3448,12 @@ ixv_rxeof(struct ix_queue *que, int count)
 
 	for (i = rxr->next_to_check; count != 0;) {
 		struct mbuf	*sendmp, *mh, *mp;
-		u32		rsc, ptype;
+		u32		ptype;
 		u16		hlen, plen, hdr, vtag;
 		bool		eop;
  
 		/* Sync the ring. */
-		bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
+		ixgbe_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		cur = &rxr->rx_base[i];
@@ -3268,13 +3461,12 @@ ixv_rxeof(struct ix_queue *que, int count)
 
 		if ((staterr & IXGBE_RXD_STAT_DD) == 0)
 			break;
-		if ((ifp->if_drv_flags & IFF_DRV_RUNNING) == 0)
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			break;
 
 		count--;
 		sendmp = NULL;
 		nbuf = NULL;
-		rsc = 0;
 		cur->wb.upper.status_error = 0;
 		rbuf = &rxr->rx_buffers[i];
 		mh = rbuf->m_head;
@@ -3291,7 +3483,7 @@ ixv_rxeof(struct ix_queue *que, int count)
 		if (((staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK) != 0) ||
 		    (rxr->discard)) {
 			ifp->if_ierrors++;
-			rxr->rx_discarded++;
+			rxr->rx_discarded.ev_count++;
 			if (!eop)
 				rxr->discard = TRUE;
 			else
@@ -3343,7 +3535,7 @@ ixv_rxeof(struct ix_queue *que, int count)
 				mh->m_pkthdr.len += mp->m_len;
 				/* Null buf pointer so it is refreshed */
 				rbuf->m_pack = NULL;
-				rxr->rx_split_packets++;
+				rxr->rx_split_packets.ev_count++;
 			}
 			/*
 			** Now create the forward
@@ -3361,9 +3553,11 @@ ixv_rxeof(struct ix_queue *que, int count)
                         } else {
 				/* Singlet, prepare to send */
                                 sendmp = mh;
-                                if (staterr & IXGBE_RXD_STAT_VP) {
-                                        sendmp->m_pkthdr.ether_vtag = vtag;
-                                        sendmp->m_flags |= M_VLANTAG;
+                                if (VLAN_ATTACHED(&adapter->osdep.ec) &&
+				  (staterr & IXGBE_RXD_STAT_VP)) {
+					VLAN_INPUT_TAG(ifp, sendmp, vtag,
+					    printf("%s: could not apply VLAN "
+					        "tag", __func__));
                                 }
                         }
 		} else {
@@ -3388,8 +3582,12 @@ ixv_rxeof(struct ix_queue *que, int count)
 				sendmp->m_flags |= M_PKTHDR;
 				sendmp->m_pkthdr.len = mp->m_len;
 				if (staterr & IXGBE_RXD_STAT_VP) {
-					sendmp->m_pkthdr.ether_vtag = vtag;
-					sendmp->m_flags |= M_VLANTAG;
+					/* XXX Do something reasonable on
+					 * error.
+					 */
+					VLAN_INPUT_TAG(ifp, sendmp, vtag,
+					    printf("%s: could not apply VLAN "
+					        "tag", __func__));
 				}
                         }
 			/* Pass the head pointer on */
@@ -3404,19 +3602,21 @@ ixv_rxeof(struct ix_queue *que, int count)
 		if (eop) {
 			sendmp->m_pkthdr.rcvif = ifp;
 			ifp->if_ipackets++;
-			rxr->rx_packets++;
+			rxr->rx_packets.ev_count++;
 			/* capture data for AIM */
 			rxr->bytes += sendmp->m_pkthdr.len;
-			rxr->rx_bytes += sendmp->m_pkthdr.len;
-			if ((ifp->if_capenable & IFCAP_RXCSUM) != 0)
-				ixv_rx_checksum(staterr, sendmp, ptype);
+			rxr->rx_bytes.ev_count += sendmp->m_pkthdr.len;
+			if ((ifp->if_capenable & IFCAP_RXCSUM) != 0) {
+				ixv_rx_checksum(staterr, sendmp, ptype,
+				   &adapter->stats);
+			}
 #if __FreeBSD_version >= 800000
 			sendmp->m_pkthdr.flowid = que->msix;
 			sendmp->m_flags |= M_FLOWID;
 #endif
 		}
 next_desc:
-		bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
+		ixgbe_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Advance our pointers to the next descriptor. */
@@ -3435,13 +3635,12 @@ next_desc:
 	}
 
 	/* Refresh any remaining buf structs */
-	if (processed != 0) {
+	if (ixv_rx_unrefreshed(rxr))
 		ixv_refresh_mbufs(rxr, i);
-		processed = 0;
-	}
 
 	rxr->next_to_check = i;
 
+#ifdef LRO
 	/*
 	 * Flush any outstanding LRO work
 	 */
@@ -3449,6 +3648,7 @@ next_desc:
 		SLIST_REMOVE_HEAD(&lro->lro_active, next);
 		tcp_lro_flush(lro, queued);
 	}
+#endif /* LRO */
 
 	IXV_RX_UNLOCK(rxr);
 
@@ -3457,11 +3657,11 @@ next_desc:
 	** Schedule another interrupt if so.
 	*/
 	if ((staterr & IXGBE_RXD_STAT_DD) != 0) {
-		ixv_rearm_queues(adapter, (u64)(1 << que->msix));
-		return (TRUE);
+		ixv_rearm_queues(adapter, (u64)(1ULL << que->msix));
+		return true;
 	}
 
-	return (FALSE);
+	return false;
 }
 
 
@@ -3473,35 +3673,36 @@ next_desc:
  *
  *********************************************************************/
 static void
-ixv_rx_checksum(u32 staterr, struct mbuf * mp, u32 ptype)
+ixv_rx_checksum(u32 staterr, struct mbuf * mp, u32 ptype,
+    struct ixgbevf_hw_stats *stats)
 {
 	u16	status = (u16) staterr;
 	u8	errors = (u8) (staterr >> 24);
+#if 0
 	bool	sctp = FALSE;
-
 	if ((ptype & IXGBE_RXDADV_PKTTYPE_ETQF) == 0 &&
 	    (ptype & IXGBE_RXDADV_PKTTYPE_SCTP) != 0)
 		sctp = TRUE;
-
+#endif
 	if (status & IXGBE_RXD_STAT_IPCS) {
+		stats->ipcs.ev_count++;
 		if (!(errors & IXGBE_RXD_ERR_IPE)) {
 			/* IP Checksum Good */
-			mp->m_pkthdr.csum_flags = CSUM_IP_CHECKED;
-			mp->m_pkthdr.csum_flags |= CSUM_IP_VALID;
+			mp->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 
-		} else
-			mp->m_pkthdr.csum_flags = 0;
+		} else {
+			stats->ipcs_bad.ev_count++;
+			mp->m_pkthdr.csum_flags = M_CSUM_IPv4|M_CSUM_IPv4_BAD;
+		}
 	}
 	if (status & IXGBE_RXD_STAT_L4CS) {
-		u16 type = (CSUM_DATA_VALID | CSUM_PSEUDO_HDR);
-#if __FreeBSD_version >= 800000
-		if (sctp)
-			type = CSUM_SCTP_VALID;
-#endif
+		stats->l4cs.ev_count++;
+		u16 type = M_CSUM_TCPv4|M_CSUM_TCPv6|M_CSUM_UDPv4|M_CSUM_UDPv6;
 		if (!(errors & IXGBE_RXD_ERR_TCPE)) {
 			mp->m_pkthdr.csum_flags |= type;
-			if (!sctp)
-				mp->m_pkthdr.csum_data = htons(0xffff);
+		} else {
+			stats->l4cs_bad.ev_count++;
+			mp->m_pkthdr.csum_flags |= type | M_CSUM_TCP_UDP_BAD;
 		} 
 	}
 	return;
@@ -3557,6 +3758,7 @@ ixv_setup_vlan_support(struct adapter *adapter)
 	}
 }
 
+#if 0	/* XXX Badly need to overhaul vlan(4) on NetBSD. */
 /*
 ** This routine is run via an vlan config EVENT,
 ** it enables us to use the HW Filter table since
@@ -3576,12 +3778,13 @@ ixv_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 	if ((vtag == 0) || (vtag > 4095))	/* Invalid */
 		return;
 
+	IXV_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
 	ixv_shadow_vfta[index] |= (1 << bit);
-	++adapter->num_vlans;
 	/* Re-init to load the changes */
-	ixv_init(adapter);
+	ixv_init_locked(adapter);
+	IXV_CORE_UNLOCK(adapter);
 }
 
 /*
@@ -3601,13 +3804,15 @@ ixv_unregister_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 	if ((vtag == 0) || (vtag > 4095))	/* Invalid */
 		return;
 
+	IXV_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
 	ixv_shadow_vfta[index] &= ~(1 << bit);
-	--adapter->num_vlans;
 	/* Re-init to load the changes */
-	ixv_init(adapter);
+	ixv_init_locked(adapter);
+	IXV_CORE_UNLOCK(adapter);
 }
+#endif
 
 static void
 ixv_enable_intr(struct adapter *adapter)
@@ -3804,18 +4009,18 @@ ixv_print_hw_stats(struct adapter * adapter)
         device_t dev = adapter->dev;
 
         device_printf(dev,"Std Mbuf Failed = %lu\n",
-               adapter->mbuf_defrag_failed);
+               adapter->mbuf_defrag_failed.ev_count);
         device_printf(dev,"Driver dropped packets = %lu\n",
-               adapter->dropped_pkts);
+               adapter->dropped_pkts.ev_count);
         device_printf(dev, "watchdog timeouts = %ld\n",
-               adapter->watchdog_events);
+               adapter->watchdog_events.ev_count);
 
         device_printf(dev,"Good Packets Rcvd = %llu\n",
                (long long)adapter->stats.vfgprc);
         device_printf(dev,"Good Packets Xmtd = %llu\n",
                (long long)adapter->stats.vfgptc);
         device_printf(dev,"TSO Transmissions = %lu\n",
-               adapter->tso_tx);
+               adapter->tso_tx.ev_count);
 
 }
 
@@ -3834,7 +4039,9 @@ ixv_print_debug_info(struct adapter *adapter)
         struct ix_queue         *que = adapter->queues;
         struct rx_ring          *rxr;
         struct tx_ring          *txr;
+#ifdef LRO
         struct lro_ctrl         *lro;
+#endif /* LRO */
 
         device_printf(dev,"Error Byte Count = %u \n",
             IXGBE_READ_REG(hw, IXGBE_ERRBC));
@@ -3842,67 +4049,74 @@ ixv_print_debug_info(struct adapter *adapter)
         for (int i = 0; i < adapter->num_queues; i++, que++) {
                 txr = que->txr;
                 rxr = que->rxr;
+#ifdef LRO
                 lro = &rxr->lro;
+#endif /* LRO */
                 device_printf(dev,"QUE(%d) IRQs Handled: %lu\n",
                     que->msix, (long)que->irqs);
                 device_printf(dev,"RX(%d) Packets Received: %lld\n",
-                    rxr->me, (long long)rxr->rx_packets);
+                    rxr->me, (long long)rxr->rx_packets.ev_count);
                 device_printf(dev,"RX(%d) Split RX Packets: %lld\n",
-                    rxr->me, (long long)rxr->rx_split_packets);
+                    rxr->me, (long long)rxr->rx_split_packets.ev_count);
                 device_printf(dev,"RX(%d) Bytes Received: %lu\n",
-                    rxr->me, (long)rxr->rx_bytes);
+                    rxr->me, (long)rxr->rx_bytes.ev_count);
+#ifdef LRO
                 device_printf(dev,"RX(%d) LRO Queued= %d\n",
                     rxr->me, lro->lro_queued);
                 device_printf(dev,"RX(%d) LRO Flushed= %d\n",
                     rxr->me, lro->lro_flushed);
+#endif /* LRO */
                 device_printf(dev,"TX(%d) Packets Sent: %lu\n",
-                    txr->me, (long)txr->total_packets);
+                    txr->me, (long)txr->total_packets.ev_count);
                 device_printf(dev,"TX(%d) NO Desc Avail: %lu\n",
-                    txr->me, (long)txr->no_desc_avail);
+                    txr->me, (long)txr->no_desc_avail.ev_count);
         }
 
         device_printf(dev,"MBX IRQ Handled: %lu\n",
-            (long)adapter->mbx_irq);
+            (long)adapter->mbx_irq.ev_count);
         return;
 }
 
 static int
-ixv_sysctl_stats(SYSCTL_HANDLER_ARGS)
+ixv_sysctl_stats(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node;
 	int             error;
-	int             result;
+	int		result;
 	struct adapter *adapter;
 
-	result = -1;
-	error = sysctl_handle_int(oidp, &result, 0, req);
+	node = *rnode;
+	adapter = (struct adapter *)node.sysctl_data;
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0)
+		return error;
 
-	if (error || !req->newptr)
-		return (error);
-
-	if (result == 1) {
-		adapter = (struct adapter *) arg1;
+	if (result == 1)
 		ixv_print_hw_stats(adapter);
-	}
-	return error;
+
+	return 0;
 }
 
 static int
-ixv_sysctl_debug(SYSCTL_HANDLER_ARGS)
+ixv_sysctl_debug(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node;
 	int error, result;
 	struct adapter *adapter;
 
-	result = -1;
-	error = sysctl_handle_int(oidp, &result, 0, req);
+	node = *rnode;
+	adapter = (struct adapter *)node.sysctl_data;
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
-	if (error || !req->newptr)
-		return (error);
+	if (error)
+		return error;
 
-	if (result == 1) {
-		adapter = (struct adapter *) arg1;
+	if (result == 1)
 		ixv_print_debug_info(adapter);
-	}
-	return error;
+
+	return 0;
 }
 
 /*
@@ -3914,17 +4128,20 @@ ixv_sysctl_debug(SYSCTL_HANDLER_ARGS)
 **	3 - full
 */
 static int
-ixv_set_flowcntl(SYSCTL_HANDLER_ARGS)
+ixv_set_flowcntl(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node;
 	int error;
 	struct adapter *adapter;
 
-	error = sysctl_handle_int(oidp, &ixv_flow_control, 0, req);
+	node = *rnode;
+	adapter = (struct adapter *)node.sysctl_data;
+	node.sysctl_data = &ixv_flow_control;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
 	if (error)
 		return (error);
 
-	adapter = (struct adapter *) arg1;
 	switch (ixv_flow_control) {
 		case ixgbe_fc_rx_pause:
 		case ixgbe_fc_tx_pause:
@@ -3936,17 +4153,53 @@ ixv_set_flowcntl(SYSCTL_HANDLER_ARGS)
 			adapter->hw.fc.requested_mode = ixgbe_fc_none;
 	}
 
-	ixgbe_fc_enable(&adapter->hw, 0);
+	ixgbe_fc_enable(&adapter->hw);
 	return error;
+}
+
+const struct sysctlnode *
+ixv_sysctl_instance(struct adapter *adapter)
+{
+	const char *dvname;
+	struct sysctllog **log;
+	int rc;
+	const struct sysctlnode *rnode;
+
+	log = &adapter->sysctllog;
+	dvname = device_xname(adapter->dev);
+
+	if ((rc = sysctl_createv(log, 0, NULL, &rnode,
+	    0, CTLTYPE_NODE, dvname,
+	    SYSCTL_DESCR("ixv information and settings"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return rnode;
+err:
+	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+	return NULL;
 }
 
 static void
 ixv_add_rx_process_limit(struct adapter *adapter, const char *name,
         const char *description, int *limit, int value)
 {
+	const struct sysctlnode *rnode, *cnode;
+	struct sysctllog **log = &adapter->sysctllog;
+
         *limit = value;
-        SYSCTL_ADD_INT(device_get_sysctl_ctx(adapter->dev),
-            SYSCTL_CHILDREN(device_get_sysctl_tree(adapter->dev)),
-            OID_AUTO, name, CTLTYPE_INT|CTLFLAG_RW, limit, value, description);
+
+	if ((rnode = ixv_sysctl_instance(adapter)) == NULL)
+		aprint_error_dev(adapter->dev,
+		    "could not create sysctl root\n");
+	else if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_INT,
+	    name, SYSCTL_DESCR(description),
+	    NULL, 0, limit, 0,
+	    CTL_CREATE, CTL_EOL) != 0) {
+		aprint_error_dev(adapter->dev, "%s: could not create sysctl",
+		    __func__);
+	}
 }
 

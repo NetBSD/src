@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.73 2014/08/07 08:59:42 joerg Exp $ */
+/*	$NetBSD: sbic.c,v 1.73.4.1 2015/04/06 15:17:51 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.73 2014/08/07 08:59:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.73.4.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1231,11 +1231,17 @@ int
 sbicxfin(sbic_regmap_t regs, int len, void *bp)
 {
 	int wait;
-	u_char *buf;
 	u_char orig_csr, csr, asr;
+	u_char *buf;
+#ifdef DEBUG
+	u_char *obp;
+#endif
 
 	wait = sbic_data_wait;
 	buf = bp;
+#ifdef DEBUG
+	obp = bp;
+#endif
 
 	GET_SBIC_csr (regs, orig_csr);
 	__USE(orig_csr);

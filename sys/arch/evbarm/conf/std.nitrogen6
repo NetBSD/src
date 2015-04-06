@@ -1,4 +1,4 @@
-#	$NetBSD: std.nitrogen6,v 1.1 2014/09/25 05:05:28 ryo Exp $
+#	$NetBSD: std.nitrogen6,v 1.1.2.1 2015/04/06 15:17:55 skrll Exp $
 #
 # standard NetBSD/evbarm options for Nitrogen6X
 
@@ -11,10 +11,8 @@ include 	"arch/evbarm/conf/files.nitrogen6"
 options 	NITROGEN6
 
 options 	ARM_HAS_VBAR
-options 	PMAP_NEED_ALLOC_POOLPAGE
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
-options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	TPIDRPRW_IS_CURCPU
 
 makeoptions	CPUFLAGS="-mcpu=cortex-a9"

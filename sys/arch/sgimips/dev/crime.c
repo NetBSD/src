@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.37 2014/05/17 20:44:08 mrg Exp $	*/
+/*	$NetBSD: crime.c,v 1.37.4.1 2015/04/06 15:18:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.37 2014/05/17 20:44:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.37.4.1 2015/04/06 15:18:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,9 +108,9 @@ crime_attach(device_t parent, device_t self, void *aux)
 	uint32_t startctr, endctr, cps;
 
 	sc->sc_dev = self;
-	crm_iot = SGIMIPS_BUS_SPACE_CRIME;
+	crm_iot = normal_memt;
 
-	if (bus_space_map(crm_iot, ma->ma_addr, 0 /* XXX */,
+	if (bus_space_map(crm_iot, ma->ma_addr, 0x1000,
 	    BUS_SPACE_MAP_LINEAR, &crm_ioh))
 		panic("%s: can't map I/O space", __func__);
 

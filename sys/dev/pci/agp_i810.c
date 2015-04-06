@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.114 2014/08/24 22:56:18 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.114.2.1 2015/04/06 15:18:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.114 2014/08/24 22:56:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.114.2.1 2015/04/06 15:18:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -119,15 +120,23 @@ static struct agp_methods agp_i810_methods = {
 };
 
 int
-agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off, bus_addr_t v)
+agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off,
+    bus_addr_t addr, int flags)
 {
 	u_int32_t pte;
 
-	/* Bits 11:4 (physical start address extension) should be zero. */
-	if ((v & 0xff0) != 0)
+	/*
+	 * Bits 11:4 (physical start address extension) should be zero.
+	 * Flag bits 3:0 should be zero too.
+	 *
+	 * XXX This should be a kassert -- no reason for this routine
+	 * to allow failure.
+	 */
+	if ((addr & 0xfff) != 0)
 		return EINVAL;
+	KASSERT(flags == (flags & 0x7));
 
-	pte = (u_int32_t)v;
+	pte = (u_int32_t)addr;
 	/*
 	 * We need to massage the pte if bus_addr_t is wider than 32 bits.
 	 * The compiler isn't smart enough, hence the casts to uintmax_t.
@@ -137,17 +146,17 @@ agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off, bus_addr_t v)
 		if (isc->chiptype == CHIP_I965 ||
 		    isc->chiptype == CHIP_G33 ||
 		    isc->chiptype == CHIP_G4X) {
-			if (((uintmax_t)v >> 36) != 0)
+			if (((uintmax_t)addr >> 36) != 0)
 				return EINVAL;
-			pte |= (v >> 28) & 0xf0;
+			pte |= (addr >> 28) & 0xf0;
 		} else {
-			if (((uintmax_t)v >> 32) != 0)
+			if (((uintmax_t)addr >> 32) != 0)
 				return EINVAL;
 		}
 	}
 
 	bus_space_write_4(isc->gtt_bst, isc->gtt_bsh,
-	    4*(off >> AGP_PAGE_SHIFT), pte);
+	    4*(off >> AGP_PAGE_SHIFT), pte | flags);
 
 	return 0;
 }
@@ -156,6 +165,13 @@ void
 agp_i810_post_gtt_entry(struct agp_i810_softc *isc, off_t off)
 {
 
+	/*
+	 * See <https://bugs.freedesktop.org/show_bug.cgi?id=88191>.
+	 * Out of paranoia, let's do the write barrier and posting
+	 * read, because I don't have enough time or hardware to
+	 * conduct conclusive tests.
+	 */
+	membar_producer();
 	(void)bus_space_read_4(isc->gtt_bst, isc->gtt_bsh,
 	    4*(off >> AGP_PAGE_SHIFT));
 }
@@ -586,6 +602,16 @@ fail0:	agp_generic_detach(sc);
 	return error;
 }
 
+/*
+ * Skip pages reserved by the BIOS.  Notably, skip 0xa0000-0xfffff,
+ * which includes the video BIOS at 0xc0000-0xdffff which the display
+ * drivers need for video mode detection.
+ *
+ * XXX Is there an MI name for this, or a conventional x86 name?  Or
+ * should we really use bus_dma instead?
+ */
+#define	PCIBIOS_MIN_MEM		0x100000
+
 static int
 agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 {
@@ -605,7 +631,7 @@ agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 	/* Read the PCI config register: 4-byte on gen3, 8-byte on gen>=4.  */
 	if (isc->chiptype == CHIP_I915) {
 		addr = pci_conf_read(pc, tag, AGP_I915_IFPADDR);
-		minaddr = PAGE_SIZE;	/* XXX PCIBIOS_MIN_MEM?  */
+		minaddr = PCIBIOS_MIN_MEM;
 		maxaddr = UINT32_MAX;
 	} else {
 		hi = pci_conf_read(pc, tag, AGP_I965_IFPADDR+4);
@@ -627,7 +653,7 @@ agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 			return EIO;
 #endif
 		}
-		minaddr = PAGE_SIZE;	/* XXX PCIBIOS_MIN_MEM?  */
+		minaddr = PCIBIOS_MIN_MEM;
 		maxaddr = MIN(UINT64_MAX, ~(bus_addr_t)0);
 	}
 
@@ -679,8 +705,7 @@ agp_i810_teardown_chipset_flush_page(struct agp_softc *sc)
 			    AGP_I965_IFPADDR + 4, 0);
 		}
 		isc->flush_addr = 0;
-		bus_space_free(isc->flush_bst, isc->flush_bsh,
-		    PAGE_SIZE);
+		bus_space_free(isc->flush_bst, isc->flush_bsh, PAGE_SIZE);
 	} else {
 		/* Otherwise, just unmap the pre-allocated page.  */
 		bus_space_unmap(isc->flush_bst, isc->flush_bsh, PAGE_SIZE);
@@ -1120,7 +1145,8 @@ agp_i810_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 		}
 	}
 
-	return agp_i810_write_gtt_entry(isc, offset, physical | 1);
+	return agp_i810_write_gtt_entry(isc, offset, physical,
+	    AGP_I810_GTT_VALID);
 }
 
 static int
@@ -1138,7 +1164,7 @@ agp_i810_unbind_page(struct agp_softc *sc, off_t offset)
 		}
 	}
 
-	return agp_i810_write_gtt_entry(isc, offset, 0);
+	return agp_i810_write_gtt_entry(isc, offset, 0, 0);
 }
 
 /*
@@ -1314,9 +1340,6 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	return 0;
 }
 
-#define	I810_GTT_PTE_VALID	0x01
-#define	I810_GTT_PTE_DCACHE	0x02
-
 static int
 agp_i810_bind_memory_dcache(struct agp_softc *sc, struct agp_memory *mem,
     off_t offset)
@@ -1330,7 +1353,7 @@ agp_i810_bind_memory_dcache(struct agp_softc *sc, struct agp_memory *mem,
 	KASSERT((mem->am_size & (AGP_PAGE_SIZE - 1)) == 0);
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
 		error = agp_i810_write_gtt_entry(isc, offset + i,
-		    i | I810_GTT_PTE_VALID | I810_GTT_PTE_DCACHE);
+		    i, AGP_I810_GTT_VALID | AGP_I810_GTT_I810_DCACHE);
 		if (error)
 			goto fail0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.13 2014/04/02 00:46:11 ozaki-r Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.13.6.1 2015/04/06 15:18:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.13 2014/04/02 00:46:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.13.6.1 2015/04/06 15:18:01 skrll Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -102,6 +102,10 @@ static void	giopci_intr_disestablish(void *);
 CFATTACH_DECL_NEW(giopci, sizeof(struct giopci_softc),
     giopci_match, giopci_attach, NULL, NULL);
 
+static void pcimem_bus_mem_init(bus_space_tag_t, void *);
+static struct mips_bus_space	pcimem_mbst;
+bus_space_tag_t	gio_pci_memt = NULL;
+
 static int
 giopci_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -144,6 +148,9 @@ giopci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot	= ga->ga_iot;
 	sc->sc_slot	= ga->ga_slot;
 	sc->sc_gprid	= GIO_PRODUCT_PRODUCTID(ga->ga_product);
+
+	pcimem_bus_mem_init(&pcimem_mbst, NULL);
+	gio_pci_memt = &pcimem_mbst;
 
 	if (mach_type == MACH_SGI_IP22 &&
 	    mach_subtype == MACH_SGI_IP22_FULLHOUSE)
@@ -220,7 +227,7 @@ giopci_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	memset(&pba, 0, sizeof(pba));
-	pba.pba_memt	= SGIMIPS_BUS_SPACE_MEM;
+	pba.pba_memt	= gio_pci_memt;
 	pba.pba_dmat	= ga->ga_dmat;
 	pba.pba_pc	= pc;
 	pba.pba_flags	= PCI_FLAGS_MEM_OKAY;
@@ -322,3 +329,14 @@ giopci_intr_disestablish(void *cookie)
 
 	panic("giopci_intr_disestablish: impossible.");
 }
+
+#define CHIP	   		pcimem
+#define	CHIP_MEM		/* defined */
+#define CHIP_WRONG_ENDIAN
+
+#define	CHIP_W1_BUS_START(v)	0x00000000UL
+#define CHIP_W1_BUS_END(v)	0xffffffffUL
+#define	CHIP_W1_SYS_START(v)	0x00000000UL
+#define	CHIP_W1_SYS_END(v)	0xffffffffUL
+
+#include <mips/mips/bus_space_alignstride_chipdep.c>

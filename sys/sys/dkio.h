@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.20 2014/11/04 07:41:37 mlelstv Exp $	*/
+/*	$NetBSD: dkio.h,v 1.20.2.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -114,5 +114,9 @@
 
 		/* trigger wedge auto discover */
 #define	DIOCMWEDGES	_IOR('d', 131, int)	/* make wedges */
+
+		/* query disk geometry */
+#define	DIOCGSECTORSIZE	_IOR('d', 133, u_int)	/* sector size in bytes */
+#define	DIOCGMEDIASIZE	_IOR('d', 132, off_t)	/* media size in bytes */
 
 #endif /* _SYS_DKIO_H_ */

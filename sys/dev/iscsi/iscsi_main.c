@@ -505,7 +505,7 @@ iscsi_done(ccb_t *ccb)
 
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_DRIVER, iscsi, NULL);
+MODULE(MODULE_CLASS_DRIVER, iscsi, NULL); /* Possibly a builtin module */
 
 #ifdef _MODULE
 static const struct cfiattrdata ibescsi_info = { "scsi", 1,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.43 2012/09/11 00:15:19 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.43.16.1 2015/04/06 15:18:00 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43 2012/09/11 00:15:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43.16.1 2015/04/06 15:18:00 skrll Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43 2012/09/11 00:15:19 matt Exp $"
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/ucontext.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -172,8 +173,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 #endif
 
 	*flagp |= _UC_CPU;
-	if (gr[_REG_R2] == (uintptr_t)l->l_private)
-		*flagp |= _UC_TLSBASE;
+	*flagp |= _UC_TLSBASE;
 
 #ifdef PPC_HAVE_FPU
 	/* Save FPU context, if any. */
@@ -231,17 +231,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #ifdef PPC_OEA
 		tf->tf_mq = gr[_REG_MQ];
 #endif
-		/*
-		 * If R2 contains the TLS base, make sure to update l->l_private.
-		 * If not, restore R2 from l->l_private if not null.  Since setcontext
-		 * existed before the TCB code, a static program could expect R2 to
-		 * the small data pointer.
-		 */
-		if (flags & _UC_TLSBASE) {
-			l->l_private = (void *) tf->tf_fixreg[_REG_R2];
-		} else if (l->l_private) {
-			tf->tf_fixreg[_REG_R2] = (uintptr_t)l->l_private;
-		}
 	}
 
 #ifdef PPC_HAVE_FPU
@@ -263,4 +252,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 
 	return (0);
+}
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+	struct trapframe * const tf = l->l_md.md_utf;
+
+	tf->tf_fixreg[_REG_R2] = (register_t)addr;
+	return 0;
 }

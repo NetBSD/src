@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.15.4.4 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.15.4.5 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,6 +57,9 @@ struct uhidev_softc {
 	u_char sc_dying;
 
 	kmutex_t sc_lock;		/* protects writes to sc_state */
+
+	u_int sc_flags;
+#define UHIDEV_F_XB1	0x0001	/* Xbox 1 controller */
 };
 
 struct uhidev {
@@ -79,6 +82,7 @@ struct uhidev_attach_arg {
 
 void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);
 int uhidev_open(struct uhidev *);
+void uhidev_stop(struct uhidev *);
 void uhidev_close(struct uhidev *);
 usbd_status uhidev_set_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_get_report(struct uhidev *, int, void *, int);

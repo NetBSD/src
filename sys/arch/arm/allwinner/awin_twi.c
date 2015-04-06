@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.5 2014/11/23 13:39:58 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.5.2.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,6 +74,14 @@ static const struct awin_gpio_pinset awin_twi_pinsets_a31[] = {
 	[3] = { 'B', AWIN_A31_PIO_PB_TWI3_FUNC, AWIN_A31_PIO_PB_TWI3_PINS },
 };
 
+static const struct awin_gpio_pinset awin_twi_pinsets_a80[] = {
+	[0] = { 'H', AWIN_A80_PIO_PH_TWI0_FUNC, AWIN_A80_PIO_PH_TWI0_PINS },
+	[1] = { 'H', AWIN_A80_PIO_PH_TWI1_FUNC, AWIN_A80_PIO_PH_TWI1_PINS },
+	[2] = { 'H', AWIN_A80_PIO_PH_TWI2_FUNC, AWIN_A80_PIO_PH_TWI2_PINS },
+	[3] = { 'G', AWIN_A80_PIO_PG_TWI3_FUNC, AWIN_A80_PIO_PG_TWI3_PINS },
+	[4] = { 'B', AWIN_A80_PIO_PB_TWI4_FUNC, AWIN_A80_PIO_PB_TWI4_PINS },
+};
+
 CFATTACH_DECL_NEW(awin_twi, sizeof(struct awin_twi_softc),
 	awin_twi_match, awin_twi_attach, NULL, NULL);
 
@@ -98,6 +106,9 @@ awin_twi_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		if (!awin_gpio_pinset_available(&awin_twi_pinsets_a31[port]))
+			return 0;
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+		if (!awin_gpio_pinset_available(&awin_twi_pinsets_a80[port]))
 			return 0;
 	} else {
 		if (!awin_gpio_pinset_available(&awin_twi_pinsets[port]))
@@ -124,6 +135,8 @@ awin_twi_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		awin_gpio_pinset_acquire(&awin_twi_pinsets_a31[loc->loc_port]);
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+		awin_gpio_pinset_acquire(&awin_twi_pinsets_a80[loc->loc_port]);
 	} else {
 		awin_gpio_pinset_acquire(&awin_twi_pinsets[loc->loc_port]);
 	}
@@ -131,12 +144,22 @@ awin_twi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Clock gating, soft reset
 	 */
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_APB1_GATING_REG, AWIN_APB_GATING1_TWI0 << loc->loc_port, 0);
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+	if (awin_chip_id() == AWIN_CHIP_ID_A80) {
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-		    AWIN_A31_APB2_RESET_REG,
-		    AWIN_A31_APB2_RESET_TWI0_RST << loc->loc_port, 0);
+		    AWIN_A80_CCU_SCLK_BUS_CLK_GATING4_REG,
+		    AWIN_A80_CCU_SCLK_BUS_CLK_GATING4_TWI0 << loc->loc_port, 0);
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A80_CCU_SCLK_BUS_SOFT_RST4_REG,
+		    AWIN_A80_CCU_SCLK_BUS_SOFT_RST4_TWI0 << loc->loc_port, 0);
+	} else {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_APB1_GATING_REG,
+		    AWIN_APB_GATING1_TWI0 << loc->loc_port, 0);
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+			    AWIN_A31_APB2_RESET_REG,
+			    AWIN_A31_APB2_RESET_TWI0_RST << loc->loc_port, 0);
+		}
 	}
 
 	/*
@@ -146,10 +169,13 @@ awin_twi_attach(device_t parent, device_t self, void *aux)
 	    loc->loc_offset, loc->loc_size, &bsh);
 
 	/*
-	 * A31 specific quirk
+	 * A31/A80 quirk
 	 */
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+	switch (awin_chip_id()) {
+	case AWIN_CHIP_ID_A31:
+	case AWIN_CHIP_ID_A80:
 		prop_dictionary_set_bool(cfg, "iflg-rwc", true);
+		break;
 	}
 
 	/*

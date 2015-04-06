@@ -1,0 +1,34 @@
+#	$NetBSD: files.vexpress,v 1.2.2.2 2015/04/06 15:17:55 skrll Exp $
+#
+# Versatile Express board configuration info
+#
+
+file	arch/evbarm/vexpress/vexpress_machdep.c
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file    arch/arm/arm32/arm32_boot.c
+file    arch/arm/arm32/arm32_kvminit.c
+file    arch/arm/arm32/arm32_reboot.c
+file    arch/arm/arm32/irq_dispatch.S
+
+file	arch/evbarm/vexpress/vexpress_space.c
+
+# VEXPRESS AXI/AHB bus interface and SoC domains
+device  axi { [addr=-1], [size=0], [irq=-1], [irqbase=-1]} : bus_space_generic
+attach  axi at mainbus
+file    arch/evbarm/vexpress/vexpress_axi.c	axi
+
+# UART Interface
+attach  plcom at axi with vexpressplcom
+file    arch/evbarm/vexpress/vexpress_plcom.c	vexpressplcom
+
+# MMCI host controller
+attach	plmmc at axi with vexpressplmmc
+file	arch/evbarm/vexpress/vexpress_plmmc.c	vexpressplmmc
+
+# SMSC LAN9118
+attach  smsh at axi with smsh_axi
+file    arch/evbarm/vexpress/if_smsh_axi.c	smsh_axi
+

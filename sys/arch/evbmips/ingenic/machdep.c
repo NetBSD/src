@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2014/11/22 15:17:02 macallan Exp $ */
+/*	$NetBSD: machdep.c,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2014/11/22 15:17:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -42,12 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2014/11/22 15:17:02 macallan Exp $")
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
-
-#include <mips/ingenic/ingenic_regs.h>
 
 #include "ksyms.h"
 
@@ -59,6 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2014/11/22 15:17:02 macallan Exp $")
 #include <mips/cache.h>
 #include <mips/locore.h>
 #include <mips/cpuregs.h>
+
+#include <mips/ingenic/ingenic_regs.h>
+#include <mips/ingenic/ingenic_var.h>
+
+#include "opt_ingenic.h"
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
@@ -111,6 +115,40 @@ cal_timer(void)
 	do {} while (junk == readreg(JZ_OST_CNT_LO));
 }
 
+#ifdef MULTIPROCESSOR
+static void
+ingenic_cpu_init(struct cpu_info *ci)
+{
+	uint32_t reg;
+
+	/* enable IPIs for this core */
+	reg = MFC0(12, 4);	/* reset entry and interrupts */
+	reg &= 0xffff0000;
+	if (cpu_index(ci) == 1) {
+		reg |= REIM_MIRQ1_M;
+	} else
+		reg |= REIM_MIRQ0_M;
+	MTC0(reg, 12, 4);
+}
+
+static int
+ingenic_send_ipi(struct cpu_info *ci, int tag)
+{
+	uint32_t msg;
+
+	msg = 1 << tag;
+
+	if (cpus_running & (1 << cpu_index(ci))) {
+		if (cpu_index(ci) == 0) {
+			MTC0(msg, CP0_CORE_MBOX, 0);
+		} else {
+			MTC0(msg, CP0_CORE_MBOX, 1);
+		}
+	}
+	return 0;
+}
+#endif
+
 void
 mach_init(void)
 {
@@ -150,7 +188,11 @@ mach_init(void)
 	printf("Memory size: 0x%08x\n", memsize);
 	physmem = btoc(memsize);
 
-	/* XXX this is CI20 specific */
+	/*
+	 * memory is at 0x20000000 with first 256MB mirrored to 0x00000000 so
+	 * we can see them through KSEG*
+	 * assume 1GB for now, the SoC can theoretically support up to 3GB
+	 */
 	mem_clusters[0].start = PAGE_SIZE;
 	mem_clusters[0].size = 0x10000000 - PAGE_SIZE;
 	mem_clusters[1].start = 0x30000000;
@@ -178,6 +220,12 @@ mach_init(void)
 	 */
 	mips_init_lwp0_uarea();
 
+#ifdef MULTIPROCESSOR
+	mips_locoresw.lsw_send_ipi = ingenic_send_ipi;
+	mips_locoresw.lsw_cpu_init = ingenic_cpu_init;
+#endif
+
+	apbus_init();
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
@@ -278,7 +326,7 @@ cpu_reboot(int howto, char *bootstr)
 	if (boothowto & RB_DUMP)
 		dumpsys();
 
- haltsys:
+haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
@@ -327,20 +375,4 @@ ingenic_reset(void)
 	writereg(JZ_WDOG_TDR, 128);	/* wait for ~1s */
 	writereg(JZ_WDOG_TCSR, TCSR_RTC_EN | TCSR_DIV_256);
 	writereg(JZ_WDOG_TCER, TCER_ENABLE);	/* fire! */	
-}
-
-void
-evbmips_intr_init(void)
-{
-#if notyet
-	(*platformsw->apsw_intr_init)();
-#endif
-}
-
-void
-evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
-{
-#if notyet
-	(*platformsw->apsw_intrsw->aisw_iointr)(ipl, pc, ipending);
-#endif
 }

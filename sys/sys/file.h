@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.77 2014/09/05 09:17:04 matt Exp $	*/
+/*	$NetBSD: file.h,v 1.77.2.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ struct uio;
 struct iovec;
 struct stat;
 struct knote;
+struct uvm_object;
 
 struct fileops {
 	int	(*fo_read)	(struct file *, off_t *, struct uio *,
@@ -90,17 +91,11 @@ struct fileops {
 	int	(*fo_close)	(struct file *);
 	int	(*fo_kqfilter)	(struct file *, struct knote *);
 	void	(*fo_restart)	(struct file *);
-	void	(*fo_spare1)	(void);
+	int	(*fo_mmap)	(struct file *, off_t *, size_t, int, int *,
+				 int *, struct uvm_object **, int *);
 	void	(*fo_spare2)	(void);
 };
 
-/*
- * Kernel file descriptor.  One entry for each open kernel vnode and
- * socket.
- *
- * This structure is exported via the KERN_FILE and KERN_FILE2 sysctl
- * calls.  Only add members to the end, do not delete them.
- */
 union file_data {
 	struct vnode *fd_vp;		// DTYPE_VNODE
 	struct socket *fd_so;		// DTYPE_SOCKET
@@ -115,6 +110,13 @@ union file_data {
 	struct ksem *fd_ks;		// DTYPE_SEM
 };
 
+/*
+ * Kernel file descriptor.  One entry for each open kernel vnode and
+ * socket.
+ *
+ * This structure is exported via the KERN_FILE and KERN_FILE2 sysctl
+ * calls.  Only add members to the end, do not delete them.
+ */
 struct file {
 	off_t		f_offset;	/* first, is 64-bit */
 	kauth_cred_t 	f_cred;		/* creds associated with descriptor */

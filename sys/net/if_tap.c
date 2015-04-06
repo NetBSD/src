@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.80 2014/11/07 09:26:08 ozaki-r Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.80.2.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80 2014/11/07 09:26:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.1 2015/04/06 15:18:22 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -341,10 +341,10 @@ tap_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ec.ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
 
-	/* Those steps are mandatory for an Ethernet driver, the fisrt call
-	 * being common to all network interface drivers. */
-	if_attach(ifp);
+	/* Those steps are mandatory for an Ethernet driver. */
+	if_initialize(ifp);
 	ether_ifattach(ifp, enaddr);
+	if_register(ifp);
 
 #if defined(COMPAT_40) || defined(MODULAR)
 	/*

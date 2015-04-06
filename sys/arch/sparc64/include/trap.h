@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.10 2014/06/08 17:33:24 palle Exp $ */
+/*	$NetBSD: trap.h,v 1.10.4.1 2015/04/06 15:18:03 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -96,6 +96,7 @@
 #define T_FAST_ECC_ERROR 0x070	/* (2) fast ECC error [USIII] */
 #define T_DC_PAR_ERR	0x071	/* (2) dcache parity error [USIII] */
 #define T_IC_PAR_ERR	0x072	/* (2) icache parity error [USIII] */
+#define T_CPU_MONDO	0x07c	/* cpu mondo [SUN4V] */
 #define T_SPILL_N_NORM	0x080	/* (9) spill (n=0..7) normal */
 /*	through		0x09f	   unused */
 #define T_SPILL_N_OTHER	0x0a0	/* (9) spill (n=0..7) other */

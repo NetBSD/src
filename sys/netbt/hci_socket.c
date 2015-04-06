@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.40 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.40.4.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.40 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.40.4.1 2015/04/06 15:18:22 skrll Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -492,16 +492,15 @@ hci_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-hci_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+hci_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct hci_pcb *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
 	if (sa->bt_len != sizeof(struct sockaddr_bt))
 		return EINVAL;
 

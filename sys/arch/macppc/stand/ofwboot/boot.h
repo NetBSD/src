@@ -5,7 +5,7 @@
 
 typedef void (*boot_entry_t)(int, int, int (*)(void *), void *, u_int);
 
-void main(void);
+void main(void) __section(".text");
 
 #define MAXBOOTPATHLEN	256
 extern char bootdev[MAXBOOTPATHLEN];

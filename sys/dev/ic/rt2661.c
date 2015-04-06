@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.29 2012/02/18 13:38:36 drochner Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.29.16.1 2015/04/06 15:18:09 skrll Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.29 2012/02/18 13:38:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.29.16.1 2015/04/06 15:18:09 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -2572,7 +2572,7 @@ rt2661_init(struct ifnet *ifp)
 
 		if (firmware_read(fh, 0, ucode, size) != 0) {
 			aprint_error_dev(sc->sc_dev, "could not read microcode %s\n", name);
-			firmware_free(ucode, 0);
+			firmware_free(ucode, size);
 			firmware_close(fh);
 			rt2661_stop(ifp, 1);
 			return EIO;
@@ -2580,13 +2580,13 @@ rt2661_init(struct ifnet *ifp)
 
 		if (rt2661_load_microcode(sc, ucode, size) != 0) {
 			aprint_error_dev(sc->sc_dev, "could not load 8051 microcode\n");
-			firmware_free(ucode, 0);
+			firmware_free(ucode, size);
 			firmware_close(fh);
 			rt2661_stop(ifp, 1);
 			return EIO;
 		}
 
-		firmware_free(ucode, 0);
+		firmware_free(ucode, size);
 		firmware_close(fh);
 		sc->sc_flags |= RT2661_FWLOADED;
 	}

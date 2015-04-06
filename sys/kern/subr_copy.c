@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.1 2009/11/04 16:54:00 pooka Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.1.42.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.1 2009/11/04 16:54:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.1.42.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>

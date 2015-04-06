@@ -1,4 +1,4 @@
-/* $NetBSD: mt2131.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $ */
+/* $NetBSD: mt2131.c,v 1.4.30.1 2015/04/06 15:18:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.4.30.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ mt2131_write(struct mt2131_softc *sc, uint8_t a, uint8_t v)
 	return ret;
 }
 
-MODULE(MODULE_CLASS_DRIVER, mt2131, "iic");
+MODULE(MODULE_CLASS_DRIVER, mt2131, "i2cexec");
 
 static int
 mt2131_modcmd(modcmd_t cmd, void *priv)

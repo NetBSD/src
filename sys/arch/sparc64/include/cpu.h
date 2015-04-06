@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.113 2014/09/24 18:32:10 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.113.2.1 2015/04/06 15:18:03 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -287,7 +287,7 @@ typedef void (* ipifunc_t)(void *, void *);
 
 void	sparc64_multicast_ipi(sparc64_cpuset_t, ipifunc_t, uint64_t, uint64_t);
 void	sparc64_broadcast_ipi(ipifunc_t, uint64_t, uint64_t);
-void	sparc64_send_ipi(int, ipifunc_t, uint64_t, uint64_t);
+extern void (*sparc64_send_ipi)(int, ipifunc_t, uint64_t, uint64_t);
 
 /*
  * Call an arbitrary C function on another cpu (or all others but ourself)

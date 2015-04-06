@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_com.c,v 1.7 2014/10/29 10:47:46 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_com.c,v 1.7.2.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,6 +81,10 @@ static const struct awin_gpio_pinset awin_com_pinsets_a31[] = {
 	{ 'H', AWIN_A31_PIO_PH_UART0_FUNC, AWIN_A31_PIO_PH_UART0_PINS },
 };
 
+static const struct awin_gpio_pinset awin_com_pinsets_a80[] = {
+	{ 'H', AWIN_A80_PIO_PH_UART0_FUNC, AWIN_A80_PIO_PH_UART0_PINS },
+};
+
 CFATTACH_DECL_NEW(awin_com, sizeof(struct awin_com_softc),
 	awin_com_match, awin_com_attach, NULL, NULL);
 
@@ -97,14 +101,21 @@ awin_com_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		pinset = awin_com_pinsets_a31;
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+		pinset = awin_com_pinsets_a80;
 	} else {
 		pinset = loc->loc_port + ((cf->cf_flags & 1) ?
 		    awin_com_alt_pinsets : awin_com_pinsets);
 	}
 
 	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
+#if defined(ALLWINNER_A80)
+	KASSERT(loc->loc_offset >= AWIN_A80_UART0_OFFSET);
+	KASSERT(loc->loc_offset <= AWIN_A80_UART5_OFFSET);
+#else
 	KASSERT(loc->loc_offset >= AWIN_UART0_OFFSET);
 	KASSERT(loc->loc_offset <= AWIN_UART7_OFFSET);
+#endif
 	KASSERT((loc->loc_offset & 0x3ff) == 0);
 	KASSERT((awin_com_ports & __BIT(loc->loc_port)) == 0);
 	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
@@ -143,6 +154,8 @@ awin_com_attach(device_t parent, device_t self, void *aux)
 
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		pinset = awin_com_pinsets_a31;
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+		pinset = awin_com_pinsets_a80;
 	} else {
 		pinset = loc->loc_port + ((cf->cf_flags & 1) ?
 		    awin_com_alt_pinsets : awin_com_pinsets);

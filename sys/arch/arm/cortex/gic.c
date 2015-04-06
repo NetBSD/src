@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.12 2014/10/29 19:27:36 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.12.2.1 2015/04/06 15:17:52 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.12 2014/10/29 19:27:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.12.2.1 2015/04/06 15:17:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -181,8 +181,6 @@ armgic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	gicd_write(sc, GICD_ICENABLERn(group), irq_mask);
 }
 
-static uint32_t armgic_last_priority;
-
 static void
 armgic_set_priority(struct pic_softc *pic, int ipl)
 {
@@ -190,7 +188,6 @@ armgic_set_priority(struct pic_softc *pic, int ipl)
 
 	const uint32_t priority = armgic_ipl_to_priority(ipl);
 	gicc_write(sc, GICC_PMR, priority);
-	armgic_last_priority = priority;
 }
 
 #ifdef __HAVE_PIC_FAST_SOFTINTS
@@ -273,7 +270,7 @@ armgic_irq_handler(void *tf)
 #if 0
 		const int ipl = armgic_priority_to_ipl(gicc_read(sc, GICC_RPR));
 		KASSERTMSG(panicstr != NULL || ipl == is->is_ipl,
-		    "%s: irq %d: running ipl %d != source ipl %u", 
+		    "%s: irq %d: running ipl %d != source ipl %u",
 		    ci->ci_data.cpu_name, irq, ipl, is->is_ipl);
 #else
 		const int ipl = is->is_ipl;
@@ -335,7 +332,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	    "irq %u: not valid (group[%zu]=0x%08x [0x%08x])",
 	    is->is_irq, group, sc->sc_gic_valid_lines[group],
 	    (uint32_t)__BIT(irq));
-	    
+
 	KASSERTMSG(is->is_type == IST_LEVEL || is->is_type == IST_EDGE,
 	    "irq %u: type %u unsupported", is->is_irq, is->is_type);
 
@@ -345,7 +342,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	uint32_t cfg = gicd_read(sc, cfg_reg);
 
 	if (group > 0) {
-		/* 
+		/*
 		 * There are 4 irqs per TARGETS register.  For now bind
 		 * to the primary cpu.
 		 */
@@ -360,7 +357,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		targets |= 1 << byte_shift;
 		gicd_write(sc, targets_reg, targets);
 
-		/* 
+		/*
 		 * There are 16 irqs per CFG register.  10=EDGE 00=LEVEL
 		 */
 		uint32_t new_cfg = cfg;
@@ -371,7 +368,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 			new_cfg |= 2 << twopair_shift;
 		}
 		if (new_cfg != cfg) {
-			gicd_write(sc, cfg_reg, cfg);
+			gicd_write(sc, cfg_reg, new_cfg);
 #if 0
 			printf("%s: irq %u: cfg changed from %#x to %#x\n",
 			    pic->pic_name, is->is_irq, cfg, new_cfg);
@@ -387,7 +384,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 #endif
 	}
 
-	/* 
+	/*
 	 * There are 4 irqs per PRIORITY register.  Map the IPL
 	 * to GIC priority.
 	 */
@@ -439,9 +436,9 @@ static void
 armgic_cpu_init_targets(struct armgic_softc *sc)
 {
 	/*
-	 * Update the mpsafe targets 
+	 * Update the mpsafe targets
 	 */
-	for (size_t irq = 32; irq < sc->sc_gic_lines; irq++) {
+	for (size_t irq = 32; irq < sc->sc_pic.pic_maxsources; irq++) {
 		struct intrsource * const is = sc->sc_pic.pic_sources[irq];
 		const bus_size_t targets_reg = GICD_ITARGETSRn(irq / 4);
 		if (is != NULL && is->is_mpsafe) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.319 2014/06/16 00:33:39 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.319.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.319 2014/06/16 00:33:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.319.4.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1189,6 +1189,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		struct sockaddr		dst;
 		struct sockaddr_in	dst4;
 	} u;
+	uint64_t *ips;
 
 	KASSERTMSG(cpu_softintr_p(), "ip_forward: not in the software "
 	    "interrupt handler; synchronization assumptions violated");
@@ -1269,27 +1270,34 @@ ip_forward(struct mbuf *m, int srcrt)
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
 	    NULL, NULL);
 
-	if (error)
+	if (error) {
 		IP_STATINC(IP_STAT_CANTFORWARD);
-	else {
-		uint64_t *ips = IP_STAT_GETREF();
-		ips[IP_STAT_FORWARD]++;
-		if (type) {
-			ips[IP_STAT_REDIRECTSENT]++;
-			IP_STAT_PUTREF();
-		} else {
-			IP_STAT_PUTREF();
-			if (mcopy) {
-#ifdef GATEWAY
-				if (mcopy->m_flags & M_CANFASTFWD)
-					ipflow_create(&ipforward_rt, mcopy);
-#endif
-				m_freem(mcopy);
-			}
-			SOFTNET_UNLOCK();
-			return;
-		}
+		goto error;
 	}
+
+	ips = IP_STAT_GETREF();
+	ips[IP_STAT_FORWARD]++;
+
+	if (type) {
+		ips[IP_STAT_REDIRECTSENT]++;
+		IP_STAT_PUTREF();
+		goto redirect;
+	}
+
+	IP_STAT_PUTREF();
+	if (mcopy) {
+#ifdef GATEWAY
+		if (mcopy->m_flags & M_CANFASTFWD)
+			ipflow_create(&ipforward_rt, mcopy);
+#endif
+		m_freem(mcopy);
+	}
+
+	SOFTNET_UNLOCK();
+	return;
+
+redirect:
+error:
 	if (mcopy == NULL) {
 		SOFTNET_UNLOCK();
 		return;

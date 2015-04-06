@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_device_base.c,v 1.3 2014/08/23 08:03:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_device_base.c,v 1.3.2.1 2015/04/06 15:18:15 skrll Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.3 2014/08/23 08:03:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.3.2.1 2015/04/06 15:18:15 skrll Exp $");
 
 #include <core/object.h>
 #include <core/device.h>
@@ -599,33 +599,18 @@ nv_device_unmap_page(struct nouveau_device *device, dma_addr_t addr)
 		pci_unmap_page(device->pdev, addr, PAGE_SIZE,
 			       PCI_DMA_BIDIRECTIONAL);
 }
-#endif
 
 int
 nv_device_get_irq(struct nouveau_device *device, bool stall)
 {
 	if (nv_device_is_pci(device)) {
-#ifdef __NetBSD__
-		pci_intr_handle_t ih;
-
-		CTASSERT(sizeof ih <= sizeof(int)); /* XXX */
-		if (pci_intr_map(&device->pdev->pd_pa, &ih))
-			panic("unable to map nouveau interrupt"); /* XXX */
-
-		return ih;
-#else
 		return device->pdev->irq;
-#endif
 	} else {
-#ifdef __NetBSD__
-		/* XXX nouveau platform device */
-		panic("can't handle non-PCI nouveau devices");
-#else
 		return platform_get_irq_byname(device->platformdev,
 					       stall ? "stall" : "nonstall");
-#endif
 	}
 }
+#endif
 
 static struct nouveau_oclass
 nouveau_device_oclass = {

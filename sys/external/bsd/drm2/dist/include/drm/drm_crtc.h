@@ -31,6 +31,9 @@
 #include <linux/idr.h>
 #include <linux/fb.h>
 #include <linux/hdmi.h>
+#include <linux/kref.h>
+#include <linux/mutex.h>
+#include <linux/workqueue.h>
 #include <drm/drm_mode.h>
 #include <drm/drm_fourcc.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conf.c,v 1.8 2014/08/11 01:54:12 rmind Exp $	*/
+/*	$NetBSD: npf_conf.c,v 1.8.4.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.8 2014/08/11 01:54:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.8.4.1 2015/04/06 15:18:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -105,11 +105,13 @@ npf_config_destroy(npf_config_t *nc)
 void
 npf_config_fini(void)
 {
+	npf_conndb_t *cd = npf_conndb_create();
+
 	/* Flush the connections. */
 	mutex_enter(&npf_config_lock);
 	npf_conn_tracking(false);
 	pserialize_perform(npf_config_psz);
-	npf_conn_load(NULL, false);
+	npf_conn_load(cd, false);
 	npf_ifmap_flush();
 	mutex_exit(&npf_config_lock);
 
@@ -127,6 +129,7 @@ npf_config_load(npf_ruleset_t *rset, npf_tableset_t *tset,
     npf_ruleset_t *nset, npf_rprocset_t *rpset,
     npf_conndb_t *conns, bool flush)
 {
+	const bool load = conns != NULL;
 	npf_config_t *nc, *onc;
 
 	nc = kmem_zalloc(sizeof(npf_config_t), KM_SLEEP);
@@ -143,9 +146,9 @@ npf_config_load(npf_ruleset_t *rset, npf_tableset_t *tset,
 	 */
 	mutex_enter(&npf_config_lock);
 	if ((onc = npf_config) != NULL) {
-		npf_ruleset_reload(rset, onc->n_rules);
+		npf_ruleset_reload(rset, onc->n_rules, load);
 		npf_tableset_reload(tset, onc->n_tables);
-		npf_ruleset_reload(nset, onc->n_nat_rules);
+		npf_ruleset_reload(nset, onc->n_nat_rules, load);
 	}
 
 	/*

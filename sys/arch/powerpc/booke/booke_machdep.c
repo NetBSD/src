@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.21 2014/09/22 21:35:15 matt Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.21.2.1 2015/04/06 15:18:00 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.21 2014/09/22 21:35:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.21.2.1 2015/04/06 15:18:00 skrll Exp $");
 
 #include "opt_modular.h"
 
@@ -207,6 +207,9 @@ booke_cpu_startup(const char *model)
 	fake_mapiodev = 0;
 
 #ifdef MULTIPROCESSOR
+	pmap_kernel()->pm_active = kcpuset_running;
+	pmap_kernel()->pm_onproc = kcpuset_running;
+
 	for (size_t i = 1; i < __arraycount(cpu_info); i++) {
 		struct cpu_info * const ci = &cpu_info[i];
 		struct cpu_softc * const cpu = &cpu_softc[i];
@@ -227,6 +230,8 @@ booke_cpu_startup(const char *model)
 	kcpuset_create(&cpuset_info.cpus_paused, true);
 	kcpuset_create(&cpuset_info.cpus_resumed, true);
 	kcpuset_create(&cpuset_info.cpus_halted, true);
+
+	kcpuset_set(cpuset_info.cpus_running, cpu_number());
 #endif /* MULTIPROCESSOR */
 }
 

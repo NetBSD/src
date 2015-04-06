@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.150 2014/11/09 17:39:38 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.150.2.1 2015/04/06 15:18:30 skrll Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -50,18 +50,10 @@ SRCS+=	locks_up.c
 SRCS+=	locks.c
 .endif
 
-MKREPRO?=no
-
-.if ${MKREPRO} == "yes"
-_NVFLAGS=-r
-.else
-_NVFLAGS=
-.endif
-
 vers.c: ${RUMPTOP}/../conf/newvers.sh ${RUMPTOP}/../conf/osrelease.sh \
 		${RUMPTOP}/../sys/param.h ${_NETBSD_VERSION_DEPENDS}
 	${_MKMSG_CREATE} vers.c
-	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i RUMP-ROAST -n ${_NVFLAGS}
+	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i RUMP-ROAST -n -r
 SRCS+=		vers.c
 CLEANFILES+=	vers.c version
 
@@ -181,10 +173,6 @@ SRCS+=		subr_lockdebug.c
 .if ${RUMP_KTRACE} == "yes"
 SRCS+=		kern_ktrace.c
 .endif
-
-# no shlib_version because this is automatically in sync with lib/librump
-SHLIB_MAJOR=    0
-SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpvfs
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpnet -I${RUMPTOP}/librump/rumpdev

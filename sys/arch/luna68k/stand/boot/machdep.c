@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2014/04/16 11:18:00 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.4.1 2015/04/06 15:17:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -79,6 +79,7 @@ static void dumpmem(int *, int, int);
 void
 straytrap(int addr)
 {
+
 	printf("stray trap, addr 0x%x\n", addr);
 }
 
@@ -93,7 +94,7 @@ badaddr(volatile void *addr)
 	int i;
 	i = *addr; if (i) return 0;
 #endif
-	nofault = (int *) &faultbuf;
+	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = NULL;
 		return 1;
@@ -156,7 +157,7 @@ regdump(int *rp /* must not be register */, int sbytes)
 
 /*	#define KSADDR	((int *)&(((char *)&u)[(UPAGES-1)*NBPG]))	*/
 
-void
+static void
 dumpmem(int *ptr, int sz, int ustack)
 {
 	int i, val;

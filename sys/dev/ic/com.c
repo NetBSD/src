@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.329 2014/11/22 15:14:35 macallan Exp $ */
+/* $NetBSD: com.c,v 1.329.2.1 2015/04/06 15:18:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329 2014/11/22 15:14:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -382,6 +382,8 @@ com_enable_debugport(struct com_softc *sc)
 	sc->sc_ier = IER_ERXRDY;
 	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier |= IER_EUART | IER_ERXTOUT;
+	if (sc->sc_type == COM_TYPE_INGENIC)
+		sc->sc_ier |= IER_ERXTOUT;
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_MCR, sc->sc_mcr);
@@ -461,16 +463,22 @@ com_attach_subr(struct com_softc *sc)
 		goto fifodelay;
 
 	case COM_TYPE_INGENIC:
-		sc->sc_fifolen = 64;
+		sc->sc_fifolen = 16;
 		fifo_msg = "Ingenic UART, working fifo";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
+		SET(sc->sc_hwflags, COM_HW_NOIEN);
 		goto fifodelay;
 	}
 
 	sc->sc_fifolen = 1;
 	/* look for a NS 16550AF UART with FIFOs */
-	CSR_WRITE_1(regsp, COM_REG_FIFO,
-	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_14);
+	if (sc->sc_type == COM_TYPE_INGENIC) {
+		CSR_WRITE_1(regsp, COM_REG_FIFO,
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | 
+		    FIFO_TRIGGER_14 | FIFO_UART_ON);
+	} else
+		CSR_WRITE_1(regsp, COM_REG_FIFO,
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_14);
 	delay(100);
 	if (ISSET(CSR_READ_1(regsp, COM_REG_IIR), IIR_FIFO_MASK)
 	    == IIR_FIFO_MASK)
@@ -517,7 +525,10 @@ com_attach_subr(struct com_softc *sc)
 			 * should become effective.
 			 */
 			uint8_t iir1, iir2;
-			const uint8_t fcr = FIFO_ENABLE | FIFO_TRIGGER_14;
+			uint8_t fcr = FIFO_ENABLE | FIFO_TRIGGER_14;
+
+			if (sc->sc_type == COM_TYPE_INGENIC)
+				fcr |= FIFO_UART_ON;
 
 			lcr = CSR_READ_1(regsp, COM_REG_LCR);
 			CSR_WRITE_1(regsp, COM_REG_LCR, lcr & ~LCR_DLAB);
@@ -557,7 +568,10 @@ com_attach_subr(struct com_softc *sc)
 			fifo_msg = "ns16550, broken fifo";
 	else
 		fifo_msg = "ns8250 or ns16450, no fifo";
-	CSR_WRITE_1(regsp, COM_REG_FIFO, 0);
+	if (sc->sc_type == COM_TYPE_INGENIC) {
+		CSR_WRITE_1(regsp, COM_REG_FIFO, FIFO_UART_ON);
+	} else
+		CSR_WRITE_1(regsp, COM_REG_FIFO, 0);
 fifodelay:
 	/*
 	 * Some chips will clear down both Tx and Rx FIFOs when zero is
@@ -800,7 +814,8 @@ com_shutdown(struct com_softc *sc)
 	/* Turn off interrupts. */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
-		if (sc->sc_type == COM_TYPE_PXA2x0)
+		if ((sc->sc_type == COM_TYPE_PXA2x0) ||
+		    (sc->sc_type == COM_TYPE_INGENIC))
 			sc->sc_ier |= IER_ERXTOUT;
 	} else
 		sc->sc_ier = 0;
@@ -882,6 +897,8 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		if (sc->sc_type == COM_TYPE_PXA2x0)
 			sc->sc_ier |= IER_EUART | IER_ERXTOUT;
+		else if (sc->sc_type == COM_TYPE_INGENIC)
+			sc->sc_ier |= IER_ERXTOUT;
 		CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 
 		/* Fetch the current modem control status, needed later. */
@@ -1266,8 +1283,12 @@ com_to_tiocm(struct com_softc *sc)
 		SET(ttybits, TIOCM_RTS);
 
 	combits = sc->sc_msr;
-	if (ISSET(combits, MSR_DCD))
+	if (sc->sc_type == COM_TYPE_INGENIC) {
 		SET(ttybits, TIOCM_CD);
+	} else {
+		if (ISSET(combits, MSR_DCD))
+			SET(ttybits, TIOCM_CD);
+	}
 	if (ISSET(combits, MSR_CTS))
 		SET(ttybits, TIOCM_CTS);
 	if (ISSET(combits, MSR_DSR))
@@ -1458,6 +1479,9 @@ comparam(struct tty *tp, struct termios *t)
 	} else
 		sc->sc_fifo = 0;
 
+	if (sc->sc_type == COM_TYPE_INGENIC)
+		sc->sc_fifo |= FIFO_UART_ON;
+
 	/* And copy to tty. */
 	tp->t_ispeed = t->c_ospeed;
 	tp->t_ospeed = t->c_ospeed;
@@ -1496,7 +1520,11 @@ comparam(struct tty *tp, struct termios *t)
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
 	 * explicit request.
 	 */
-	(void) (*tp->t_linesw->l_modem)(tp, ISSET(sc->sc_msr, MSR_DCD));
+	if (sc->sc_type == COM_TYPE_INGENIC) {
+		/* no DCD here */
+		(void) (*tp->t_linesw->l_modem)(tp, 1);
+	} else
+		(void) (*tp->t_linesw->l_modem)(tp, ISSET(sc->sc_msr, MSR_DCD));
 
 #ifdef COM_DEBUG
 	if (com_debug)
@@ -1878,7 +1906,10 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 				if (sc->sc_type == COM_TYPE_PXA2x0)
 					SET(sc->sc_ier, IER_ERXTOUT);
 #endif
-				CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
+				if (sc->sc_type == COM_TYPE_INGENIC)
+					sc->sc_ier |= IER_ERXTOUT;
+				CSR_WRITE_1(&sc->sc_regs, COM_REG_IER,
+				    sc->sc_ier);
 			}
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_BLOCKED);
@@ -2080,6 +2111,9 @@ again:	do {
 					CLR(sc->sc_ier, IER_ERXRDY|IER_ERXTOUT);
 				else
 #endif
+				if (sc->sc_type == COM_TYPE_INGENIC)
+					sc->sc_ier |= IER_ERXRDY|IER_ERXTOUT;
+				else					
 					CLR(sc->sc_ier, IER_ERXRDY);
 				CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
 			}
@@ -2296,7 +2330,8 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 			CSR_WRITE_2(regsp, COM_REG_DLBL, rate);
 		} else {
 			/* no EFR on alchemy */
-			if (type != COM_TYPE_16550_NOERS) {
+			if ((type != COM_TYPE_16550_NOERS) && 
+			    (type != COM_TYPE_INGENIC)) {
 				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
 				CSR_WRITE_1(regsp, COM_REG_EFR, 0);
 			}

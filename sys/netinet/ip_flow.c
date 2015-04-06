@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.65 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.65.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.65 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.65.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,8 @@ ipflow_fastforward(struct mbuf *m)
 	 * Route and interface still up?
 	 */
 	if ((rt = rtcache_validate(&ipf->ipf_ro)) == NULL ||
-	    (rt->rt_ifp->if_flags & IFF_UP) == 0)
+	    (rt->rt_ifp->if_flags & IFF_UP) == 0 ||
+	    (rt->rt_flags & (RTF_BLACKHOLE | RTF_BROADCAST)) != 0)
 		return 0;
 
 	/*

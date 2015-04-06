@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.78 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.78.4.1 2015/04/06 15:17:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.78 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.78.4.1 2015/04/06 15:17:54 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1304,17 +1304,16 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		fdgetdisklabel(fd, dev);
-		*(struct disklabel *)addr = *(fd->sc_dk.dk_label);
-		return 0;
-
 	case DIOCGPART:
 		fdgetdisklabel(fd, dev);
-		((struct partinfo *)addr)->disklab = fd->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-			      &fd->sc_dk.dk_label->d_partitions[RAW_PART];
-		return 0;
+		break;
+	}
 
+	error = disk_ioctl(&fd->sc_dk, RAW_PART, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
+	switch (cmd) {
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -1549,7 +1548,7 @@ fdgetdisklabel(struct fd_softc *fd, dev_t dev)
 	memset(&cpulab, 0, sizeof(cpulab));
 
 	lp->d_secpercyl  = fd->sc_type->seccyl;
-	lp->d_type       = DTYPE_FLOPPY;
+	lp->d_type       = DKTYPE_FLOPPY;
 	lp->d_secsize    = FDC_BSIZE;
 	lp->d_secperunit = fd->sc_type->size;
 
@@ -1568,7 +1567,7 @@ fdgetdisklabel(struct fd_softc *fd, dev_t dev)
 		 *	sounds!
 		 */
 		lp->d_secpercyl  = fd->sc_type->seccyl;
-		lp->d_type       = DTYPE_FLOPPY;
+		lp->d_type       = DKTYPE_FLOPPY;
 		lp->d_secsize    = FDC_BSIZE;
 		lp->d_secperunit = fd->sc_type->size;
 	}
@@ -1590,7 +1589,7 @@ fdgetdefaultlabel(struct fd_softc *fd, struct disklabel *lp, int part)
 	lp->d_ncylinders  = fd->sc_type->size / lp->d_secpercyl;
 	lp->d_secperunit  = fd->sc_type->size;
 
-	lp->d_type        = DTYPE_FLOPPY;
+	lp->d_type        = DKTYPE_FLOPPY;
 	lp->d_rpm         = 300; 	/* good guess I suppose.	*/
 	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
 	lp->d_bbsize      = 0;

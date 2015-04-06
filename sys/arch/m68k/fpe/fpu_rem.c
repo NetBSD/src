@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.16 2013/05/11 12:52:42 isaki Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.16.10.1 2015/04/06 15:17:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.16 2013/05/11 12:52:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.16.10.1 2015/04/06 15:17:58 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.16 2013/05/11 12:52:42 isaki Exp $");
  *                endif
  *
  *       Step 3.  Perform MOD(X,Y)
- *            3.1 If R = Y, then { Q := Q + 1, R := 0, go to Step 8. }
+ *            3.1 If R = Y, then { Q := Q + 1, R := 0, go to Step 7. }
  *            3.2 If R > Y, then { R := R - Y, Q := Q + 1}
  *            3.3 If j = 0, go to Step 4.
  *            3.4 k := k + 1, j := j - 1, Q := 2Q, R := 2R. Go to
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.16 2013/05/11 12:52:42 isaki Exp $");
  *
  *       Step 4.  R := signX*R.
  *
- *       Step 5.  If MOD is requested, go to Step .
+ *       Step 5.  If MOD is requested, go to Step 7.
  *
  *       Step 6.  Now, R = MOD(X,Y), convert to REM(X,Y) is requested.
  *                Do banker's rounding.

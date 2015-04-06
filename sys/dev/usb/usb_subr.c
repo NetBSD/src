@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.9 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.10 2015/04/06 15:18:13 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.9 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.10 2015/04/06 15:18:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -841,13 +841,19 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 	int i, j, loc;
 	device_t dv;
 
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+
 	nifaces = dev->ud_cdesc->bNumInterface;
 	ifaces = kmem_zalloc(nifaces * sizeof(*ifaces), KM_SLEEP);
 	if (!ifaces)
 		return USBD_NOMEM;
-	for (i = 0; i < nifaces; i++)
-		if (!dev->ud_subdevs[i])
+	for (i = 0; i < nifaces; i++) {
+		if (!dev->ud_subdevs[i]) {
 			ifaces[i] = &dev->ud_ifaces[i];
+		}
+		DPRINTF("interface %d %p\n", i, ifaces[i], 0, 0);
+	}
+
 
 	uiaa.uiaa_device = dev;
 	uiaa.uiaa_port = port;
@@ -864,13 +870,20 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 	ilocs[USBIFIFCF_CONFIGURATION] = uiaa.uiaa_configno;
 
 	for (i = 0; i < nifaces; i++) {
-		if (!ifaces[i])
+		if (!ifaces[i]) {
+			DPRINTF("interface %d claimed", i, 0, 0, 0);
 			continue; /* interface already claimed */
+		}
 		uiaa.uiaa_iface = ifaces[i];
 		uiaa.uiaa_class = ifaces[i]->ui_idesc->bInterfaceClass;
 		uiaa.uiaa_subclass = ifaces[i]->ui_idesc->bInterfaceSubClass;
 		uiaa.uiaa_proto = ifaces[i]->ui_idesc->bInterfaceProtocol;
 		uiaa.uiaa_ifaceno = ifaces[i]->ui_idesc->bInterfaceNumber;
+
+		DPRINTF("searching for interface %d...", i, 0, 0, 0);
+		DPRINTF("class %x subclass %x proto %x ifaceno %d\n",
+		    uiaa.uiaa_class, uiaa.uiaa_subclass, uiaa.uiaa_proto,
+		    uiaa.uiaa_ifaceno);
 		ilocs[USBIFIFCF_INTERFACE] = uiaa.uiaa_ifaceno;
 		if (locators != NULL) {
 			loc = locators[USBIFIFCF_CONFIGURATION];
@@ -889,7 +902,10 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 		ifaces[i] = 0; /* claim */
 		/* account for ifaces claimed by the driver behind our back */
 		for (j = 0; j < nifaces; j++) {
+
 			if (!ifaces[j] && !dev->ud_subdevs[j]) {
+				DPRINTF("interface %d claimed behind our back",
+				    j, 0, 0, 0);
 				dev->ud_subdevs[j] = dv;
 				dev->ud_nifaces_claimed++;
 			}
@@ -1125,7 +1141,7 @@ usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
 				goto found;
 			}
 		}
-		panic("usbd_new_device: cannot find HS port\n");
+		panic("usbd_new_device: cannot find HS port");
 	found:
 		DPRINTFN(1, "high speed port %d", p, 0, 0, 0);
 	} else {

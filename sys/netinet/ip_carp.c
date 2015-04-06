@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.59 2014/07/31 02:37:25 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.59.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
 #include "opt_mbuftrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.59 2014/07/31 02:37:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.59.4.1 2015/04/06 15:18:23 skrll Exp $");
 
 /*
  * TODO:
@@ -446,9 +446,9 @@ carp_setroute(struct carp_softc *sc, int cmd)
 #ifdef INET6
 		case AF_INET6:
 			if (cmd == RTM_ADD)
-				in6_ifaddloop(ifa);
+				in6_ifaddlocal(ifa);
 			else
-				in6_ifremloop(ifa);
+				in6_ifremlocal(ifa);
 			break;
 #endif /* INET6 */
 		default:

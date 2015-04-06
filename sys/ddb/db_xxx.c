@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.70 2014/09/05 09:27:24 matt Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.70.2.1 2015/04/06 15:18:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.70 2014/09/05 09:27:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.70.2.1 2015/04/06 15:18:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -160,6 +160,12 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 	struct vnode *vp;
 	bool full = false;
 	fdtab_t *dt;
+
+	if (!haddr) {
+		db_printf("usage: show files address\n");
+		db_printf("\taddress == an address of a proc structure\n");
+		return;
+	}
 
 	if (modif[0] == 'f')
 		full = true;

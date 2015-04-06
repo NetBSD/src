@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.104 2014/09/10 07:04:48 matt Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.104.2.1 2015/04/06 15:18:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.104 2014/09/10 07:04:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.104.2.1 2015/04/06 15:18:08 skrll Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -268,7 +268,7 @@ geometry:
 		wdccommand(chp, xfer->c_drive, WDCC_IDP,
 		    ata_bio->lp->d_ncylinders,
 		    ata_bio->lp->d_ntracks - 1, 0, ata_bio->lp->d_nsectors,
-		    (ata_bio->lp->d_type == DTYPE_ST506) ?
+		    (ata_bio->lp->d_type == DKTYPE_ST506) ?
 			ata_bio->lp->d_precompcyl / 4 : 0);
 		errstring = "geometry";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags))
@@ -531,7 +531,7 @@ again:
 		} else {
 		    wdccommand(chp, xfer->c_drive, cmd, cyl,
 			head, sect, nblks,
-			(ata_bio->lp->d_type == DTYPE_ST506) ?
+			(ata_bio->lp->d_type == DKTYPE_ST506) ?
 			ata_bio->lp->d_precompcyl / 4 : 0);
 		}
 		/* start timeout machinery */

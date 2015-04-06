@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.23 2014/11/22 15:14:35 macallan Exp $	*/
+/*	$NetBSD: comreg.h,v 1.23.2.1 2015/04/06 15:18:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -50,6 +50,7 @@
 #define	IER_ERTS	0x40	/* Enable RTS interrupt */
 #define	IER_ECTS	0x80	/* Enable CTS interrupt */
 /* PXA2X0's ns16550 ports have extra bits in this register */
+/* Ingenic's got this one too */
 #define	IER_ERXTOUT	0x10	/* Enable rx timeout interrupt */
 #define	IER_EUART	0x40	/* Enable UART */
 
@@ -111,7 +112,9 @@
 
 /* modem control register */
 #define MCR_PRESCALE	0x80	/* 16650/16950: Baud rate prescaler select */
+#define MCR_MDCE	0x80	/* Ingenic: modem control enable */
 #define MCR_TCR_TLR	0x40	/* OMAP: enables access to the TCR & TLR regs */
+#define MCR_FCM		0x40	/* Ingenic: 1 - hardware flow control */
 #define MCR_XONENABLE	0x20	/* OMAP XON_EN */
 #define MCR_AFE		0x20	/* tl16c750: Flow Control Enable */
 #define	MCR_LOOPBACK	0x10	/* Loop test: echos from TX to RX */

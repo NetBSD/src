@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.8 2014/04/21 11:06:55 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.8.4.1 2015/04/06 15:17:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -138,7 +138,7 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 	for (cp = str, i = 0; *cp != '\0' && *cp != '(' && i < MAXDEVNAME; i++)
 			devname[i] = *cp++;
 	if (*cp != '(') {
-		return (-1);
+		return -1;
 	}
 	devname[i] = '\0';
 	/* compare dev type name */
@@ -147,7 +147,7 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 			break;
 	cp++;
 	if (dp->dv_name == NULL) {
-		return (-1);
+		return -1;
 	}
 	dev = dp - devsw;
 	/* get mixed controller and unit number */
@@ -164,7 +164,7 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 #ifdef DEBUG
 		printf("%s: invalid unit number (%d)\n", __func__, unit);
 #endif
-		return (-1);
+		return -1;
 	}
 	if (!haveunit && strcmp(devname, default_bootdev) == 0)
 		unit = default_unit;
@@ -182,7 +182,7 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 #ifdef DEBUG
 		printf("%s: invalid partition number (%d)\n", __func__, part);
 #endif
-		return (-1);
+		return -1;
 	}
 	/* check out end of dev spec */
 	*devp  = dev;

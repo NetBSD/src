@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: lock.h,v 1.1.2.1 2015/04/06 15:18:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -50,75 +50,51 @@ __SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
 static __inline void
 __cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
 {
-#if 0
-	__atomic_clear(__ptr, __ATOMIC_RELAXED);
-#else
+#if 1
 	*__ptr = __SIMPLELOCK_UNLOCKED;
+#else
+	__atomic_store_n(__ptr, __SIMPLELOCK_UNLOCKED, __ATOMIC_RELAXED);
 #endif
 }
 
 static __inline void
 __cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
 {
-#if 0
-	(void)__atomic_test_and_set(__ptr, __ATOMIC_RELAXED);
-#else
+#if 1
 	*__ptr = __SIMPLELOCK_LOCKED;
+#else
+	__atomic_store_n(__ptr, __SIMPLELOCK_LOCKED, __ATOMIC_RELAXED);
 #endif
 }
 
 static __inline void __unused
 __cpu_simple_lock_init(__cpu_simple_lock_t *__ptr)
 {
-#if 0
-	__atomic_clear(__ptr, __ATOMIC_RELAXED);
-#else
+#if 1
 	*__ptr = __SIMPLELOCK_UNLOCKED;
+#else
+	__atomic_store_n(__ptr, __SIMPLELOCK_UNLOCKED, __ATOMIC_RELAXED);
 #endif
 }
 
 static __inline void __unused
 __cpu_simple_lock(__cpu_simple_lock_t *__ptr)
 {
-#if 0
-	while (__atomic_test_and_set(__ptr, __ATOMIC_ACQUIRE)) {
+	while (__atomic_exchange_n(__ptr, __SIMPLELOCK_LOCKED, __ATOMIC_ACQUIRE) == __SIMPLELOCK_LOCKED) {
 		/* do nothing */
 	}
-#else
-	int __tmp;
-	__asm(
-	"\n"	"1:"
-	"\n\t"	"amoswap.w.aq	%[__tmp], %[__newval], 0(%[__ptr])"
-	"\n\t"	"bnez		%[__tmp], 1b"
-	   :	[__tmp] "=&r" (__tmp)
-	   :	[__newval] "r" (__SIMPLELOCK_LOCKED),
-		[__ptr] "r" (__ptr));
-#endif
 }
 
 static __inline int __unused
 __cpu_simple_lock_try(__cpu_simple_lock_t *__ptr)
 {
-#if 0
-	return !__atomic_test_and_set(__ptr, __ATOMIC_ACQUIRE);
-#else
-	int __oldval;
-	__asm(	"amoswap.w.aq\t%[__oldval], %[__newval], 0(%[__ptr])"
-	   :	[__oldval] "=r" (__oldval)
-	   :	[__newval] "r" (__SIMPLELOCK_LOCKED),
-		[__ptr] "r" (__ptr));
-	return __oldval == __SIMPLELOCK_UNLOCKED;
-#endif
+	return __atomic_exchange_n(__ptr, __SIMPLELOCK_LOCKED, __ATOMIC_ACQUIRE) == __SIMPLELOCK_LOCKED;
 }
 
 static __inline void __unused
 __cpu_simple_unlock(__cpu_simple_lock_t *__ptr)
 {
-#if 0
-	__atomic_clear(__ptr, __ATOMIC_RELEASE);
-#else
-	__asm("amoswap.w.rl\tx0, x0, 0(%[__ptr])" :: [__ptr] "r" (__ptr));
-#endif
+	__atomic_store_n(__ptr, __SIMPLELOCK_UNLOCKED, __ATOMIC_RELEASE);
 }
 
 #endif /* _RISCV_LOCK_H_ */

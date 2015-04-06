@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.30.2.3 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.30.2.4 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.3 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.4 2015/04/06 15:18:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,8 +195,11 @@ umass_isdata_attach(struct umass_softc *sc)
 	USETW(req.wLength, sizeof *cf);
 
 	err = usbd_do_request(sc->sc_udev, &req, cf);
-	if (err)
+	if (err) {
+		sc->bus = NULL;
+		free(scbus, M_DEVBUF);
 		return EIO;
+	}
 	DPRINTF(("umass_wd_attach info:\n  EventNotification=0x%02x "
 		 "ExternalClock=0x%02x ATAInitTimeout=0x%02x\n"
 		 "  ATAMisc1=0x%02x ATAMajorCommand=0x%02x "

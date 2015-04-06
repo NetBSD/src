@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.92 2014/11/07 12:05:58 nakayama Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.92.2.1 2015/04/06 15:18:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.92 2014/11/07 12:05:58 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.92.2.1 2015/04/06 15:18:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,7 +606,6 @@ smbfs_create(void *v)
 	error = smbfs_nget(VTOVFS(dvp), dvp, name, nmlen, &fattr, ap->a_vpp);
 	if (error)
 		goto out;
-	VOP_UNLOCK(*ap->a_vpp);
 
 	cache_enter(dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
@@ -809,7 +808,6 @@ smbfs_mkdir(void *v)
 	error = smbfs_nget(VTOVFS(dvp), dvp, name, len, &fattr, &vp);
 	if (error)
 		goto out;
-	VOP_UNLOCK(vp);
 	*ap->a_vpp = vp;
 
  out:
@@ -1347,46 +1345,23 @@ smbfs_lookup(void *v)
 
 		if (isdot)
 			return (EISDIR);
-		if (flags & ISDOTDOT)
-			VOP_UNLOCK(dvp);
 		error = smbfs_nget(mp, dvp, name, nmlen, &fattr, vpp);
-		if (flags & ISDOTDOT)
-			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
 			return (error);
-		if (*vpp != dvp)
-			VOP_UNLOCK(*vpp);
 		return (0);
 	}
 
 	if (isdot) {
-
-		/*
-		 * "." lookup
-		 */
 		vref(dvp);
 		*vpp = dvp;
-	} else if (flags & ISDOTDOT) {
-
-		/*
-		 * ".." lookup
-		 */
-		VOP_UNLOCK(dvp);
-		error = smbfs_nget(mp, dvp, name, nmlen, NULL, vpp);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-		if (error) {
-			return error;
-		}
+		error = 0;
 	} else {
-		/*
-		 * Other lookups.
-		 */
-		error = smbfs_nget(mp, dvp, name, nmlen, &fattr, vpp);
-		if (error)
-			return error;
+		error = smbfs_nget(mp, dvp, name, nmlen,
+		    ((flags & ISDOTDOT) ? NULL : &fattr), vpp);
 	}
+	if (error)
+		return error;
 
-	KASSERT(error == 0);
 	if (cnp->cn_nameiop != DELETE || !islastcn) {
 		VTOSMB(*vpp)->n_ctime = VTOSMB(*vpp)->n_mtime.tv_sec;
 		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
@@ -1399,7 +1374,5 @@ smbfs_lookup(void *v)
 #endif
 	}
 
-	if (*vpp != dvp)
-		VOP_UNLOCK(*vpp);
 	return (0);
 }

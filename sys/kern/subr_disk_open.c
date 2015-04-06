@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.11 2012/10/27 17:18:39 chs Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.11.14.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.11 2012/10/27 17:18:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.11.14.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -98,19 +98,25 @@ getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned int *secsizep)
 	uint64_t numsec;
 	int error;
 
-	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED);
+	/*
+	 * We attempt to get the wedge information first if it exists,
+	 * because the label does not support larger size disks.
+	 */
+	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
 	if (error == 0) {
-		secsize = dpart.disklab->d_secsize;
-		numsec  = dpart.part->p_size;
-	} else {
-		error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
+		pdk = disk_find(dkw.dkw_parent);
+		if (pdk != NULL) {
+			secsize = DEV_BSIZE << pdk->dk_blkshift;
+			numsec  = dkw.dkw_size;
+		} else
+			error = ENODEV;
+	}
+
+	if (error) {
+		error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED);
 		if (error == 0) {
-			pdk = disk_find(dkw.dkw_parent);
-			if (pdk != NULL) {
-				secsize = DEV_BSIZE << pdk->dk_blkshift;
-				numsec  = dkw.dkw_size;
-			} else
-				error = ENODEV;
+			secsize = dpart.disklab->d_secsize;
+			numsec  = dpart.part->p_size;
 		}
 	}
 

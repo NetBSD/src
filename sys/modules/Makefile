@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142 2014/11/10 21:15:19 christos Exp $
+#	$NetBSD: Makefile,v 1.142.2.1 2015/04/06 15:18:20 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -40,6 +40,7 @@ SUBDIR+=	gpioow
 SUBDIR+=	gpiosim
 SUBDIR+=	hfs
 SUBDIR+=	hythygtemp
+SUBDIR+=	i2cexec
 SUBDIR+=	if_axe
 SUBDIR+=	if_axen
 SUBDIR+=	if_npflog
@@ -135,6 +136,7 @@ SUBDIR+=	coretemp
 SUBDIR+=	est
 SUBDIR+=	hdafg
 SUBDIR+=	hdaudio
+SUBDIR+=	hdaudio_pci
 SUBDIR+=	hdaudioverbose
 SUBDIR+=	hpet
 SUBDIR+=	odcm

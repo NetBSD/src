@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.68 2014/11/19 19:35:21 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.68.2.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.68 2014/11/19 19:35:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.68.2.1 2015/04/06 15:18:22 skrll Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -628,8 +628,10 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 	if (len > BPF_MAXINSNS)
 		return 0;
 #endif
-	if (BPF_CLASS(f[len - 1].code) != BPF_RET)
+	if (f[len - 1].code != (BPF_RET|BPF_K) &&
+	    f[len - 1].code != (BPF_RET|BPF_A)) {
 		return 0;
+	}
 
 #if defined(KERNEL) || defined(_KERNEL)
 	/* Note: only the pre-initialised is valid on startup */

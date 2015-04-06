@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.4 2014/06/14 20:50:12 phx Exp $	*/
+/*	$NetBSD: siop.c,v 1.4.4.1 2015/04/06 15:17:54 skrll Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -625,7 +625,7 @@ siop_start(struct siop_adapter *adp, struct scsi_xfer *xs)
 {
 	struct siop_xfer *siop_xfer = adp->xfer;
 	uint32_t dsa, *script = adp->script;
-	int target, lun, slot;
+	int slot;
 	void *scriptaddr = (void *)local_to_PCI((u_long)script);
 	const int siop_common_xfer_size = sizeof(struct siop_common_xfer);
 
@@ -652,8 +652,6 @@ siop_start(struct siop_adapter *adp, struct scsi_xfer *xs)
 	} else {
 		slot++;
 	}
-	target = xs->target;
-	lun = xs->lun;
 	/*
 	 * find a free scheduler slot and load it.
 	 */

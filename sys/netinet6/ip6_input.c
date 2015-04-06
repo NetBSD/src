@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.149 2014/06/16 00:33:39 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.149.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149 2014/06/16 00:33:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.4.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -748,11 +748,6 @@ ip6_input(struct mbuf *m)
 
 #ifdef IPSEC
 		if (ipsec_used) {
-			struct m_tag *mtag;
-			struct tdb_ident *tdbi;
-			struct secpolicy *sp;
-			int s, error;
-
 			/*
 			 * enforce IPsec policy checking if we are seeing last
 			 * header. note that we do not visit this with
@@ -760,39 +755,7 @@ ip6_input(struct mbuf *m)
 			 */
 			if ((inet6sw[ip_protox[nxt]].pr_flags
 			    & PR_LASTHDR) != 0) {
-				/*
-				 * Check if the packet has already had IPsec
-				 * processing done. If so, then just pass it
-				 * along. This tag gets set during AH, ESP,
-				 * etc. input handling, before the packet is
-				 * returned to the ip input queue for delivery.
-				 */
-				mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE,
-				    NULL);
-				s = splsoftnet();
-				if (mtag != NULL) {
-					tdbi = (struct tdb_ident *)(mtag + 1);
-					sp = ipsec_getpolicy(tdbi,
-					    IPSEC_DIR_INBOUND);
-				} else {
-					sp = ipsec_getpolicybyaddr(m,
-					    IPSEC_DIR_INBOUND, IP_FORWARDING,
-					    &error);
-				}
-				if (sp != NULL) {
-					/*
-					 * Check security policy against packet
-					 * attributes.
-					 */
-					error = ipsec_in_reject(sp, m);
-					KEY_FREESP(&sp);
-				} else {
-					/* XXX error stat??? */
-					error = EINVAL;
-					DPRINTF(("ip6_input: no SP, packet"
-					    " discarded\n"));/*XXX*/
-				}
-				splx(s);
+				int error = ipsec6_input(m);
 				if (error)
 					goto bad;
 			}
@@ -1898,6 +1861,14 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       CTLTYPE_INT, "use_tempaddr",
 		       SYSCTL_DESCR("Use temporary address"),
 		       NULL, 0, &ip6_use_tempaddr, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "prefer_tempaddr",
+		       SYSCTL_DESCR("Prefer temporary address as source "
+		                    "address"),
+		       NULL, 0, &ip6_prefer_tempaddr, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

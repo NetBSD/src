@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.19 2014/07/25 14:34:22 msaitoh Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.19.4.1 2015/04/06 15:18:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.19 2014/07/25 14:34:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.19.4.1 2015/04/06 15:18:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +272,56 @@ p3_get_bus_clock(struct cpu_info *ci)
 			goto print_msr;
 		}
 		break;
+	case 0x4c: /* Airmont */
+		if (rdmsr_safe(MSR_FSB_FREQ, &msr) == EFAULT) {
+			aprint_debug_dev(ci->ci_dev,
+			    "unable to determine bus speed");
+			goto print_msr;
+		}
+		bus = (msr >> 0) & 0xf;
+		switch (bus) {
+		case 0:
+			bus_clock =  8333;
+			break;
+		case 1:
+			bus_clock = 10000;
+			break;
+		case 2:
+			bus_clock = 13333;
+			break;
+		case 3:
+			bus_clock = 11650;
+			break;
+		case 4:
+			bus_clock =  8333;
+			break;
+		case 5:
+			bus_clock = 10000;
+			break;
+		case 6:
+			bus_clock = 13333;
+			break;
+		case 7:
+			bus_clock = 11666;
+			break;
+		case 12:
+			bus_clock =  8000;
+			break;
+		case 13:
+			bus_clock =  9333;
+			break;
+		case 14:
+			bus_clock =  9000;
+			break;
+		case 15:
+			bus_clock =  8888;
+			break;
+		default:
+			aprint_debug("%s: unknown Airmont FSB_FREQ value %d",
+			    device_xname(ci->ci_dev), bus);
+			goto print_msr;
+		}
+		break;
 	default:
 		aprint_debug("%s: unknown i686 model %02x, can't get bus clock",
 		    device_xname(ci->ci_dev),
@@ -316,7 +366,7 @@ p4_get_bus_clock(struct cpu_info *ci)
 		switch (bus) {
 		case 0:
 			bus_clock = (CPUID_TO_MODEL(ci->ci_signature) == 2) ?
-			    10000 : 26666;
+			    10000 : 26667;
 			break;
 		case 1:
 			bus_clock = 13333;
@@ -325,7 +375,10 @@ p4_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 20000;
 			break;
 		case 3:
-			bus_clock = 16666;
+			bus_clock = 16667;
+			break;
+		case 4:
+			bus_clock = 33333;
 			break;
 		default:
 			aprint_debug("%s: unknown Pentium 4 (model %d) "

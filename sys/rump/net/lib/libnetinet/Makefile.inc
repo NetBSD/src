@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.11 2013/08/14 09:31:42 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.11.6.1 2015/04/06 15:18:31 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netinet
+
+CPPFLAGS+=	-DINET
 
 # INET
 SRCS+=	in_proto.c igmp.c in.c in_offload.c in_pcb.c ip_carp.c ip_icmp.c\

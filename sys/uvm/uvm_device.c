@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.63 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.63.24.1 2015/04/06 15:18:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.63 2012/01/27 19:48:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.63.24.1 2015/04/06 15:18:33 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -106,11 +106,10 @@ udv_init(void)
  */
 
 struct uvm_object *
-udv_attach(void *arg, vm_prot_t accessprot,
+udv_attach(dev_t device, vm_prot_t accessprot,
     voff_t off,		/* used only for access check */
     vsize_t size	/* used only for access check */)
 {
-	dev_t device = *((dev_t *)arg);
 	struct uvm_device *udv, *lcv;
 	const struct cdevsw *cdev;
 	dev_type_mmap((*mapfn));

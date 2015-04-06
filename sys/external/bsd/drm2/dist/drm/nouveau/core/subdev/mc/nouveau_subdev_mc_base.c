@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_mc_base.c,v 1.1.1.1 2014/08/06 12:36:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_mc_base.c,v 1.1.1.1.8.1 2015/04/06 15:18:16 skrll Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mc_base.c,v 1.1.1.1 2014/08/06 12:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mc_base.c,v 1.1.1.1.8.1 2015/04/06 15:18:16 skrll Exp $");
 
 #include <subdev/mc.h>
 #include <core/option.h>
@@ -39,8 +39,13 @@ nouveau_mc_intr_mask(struct nouveau_mc *pmc)
 	return intr;
 }
 
+#ifdef __NetBSD__
+static int
+nouveau_mc_intr(void *arg)
+#else
 static irqreturn_t
 nouveau_mc_intr(int irq, void *arg)
+#endif
 {
 	struct nouveau_mc *pmc = arg;
 	const struct nouveau_mc_oclass *oclass = (void *)nv_object(pmc)->oclass;
@@ -71,7 +76,11 @@ nouveau_mc_intr(int irq, void *arg)
 	}
 
 	nv_wr32(pmc, 0x000140, 0x00000001);
+#ifdef __NetBSD__
+	return intr ? 1 : 0;
+#else
 	return intr ? IRQ_HANDLED : IRQ_NONE;
+#endif
 }
 
 int
@@ -98,7 +107,11 @@ _nouveau_mc_dtor(struct nouveau_object *object)
 {
 	struct nouveau_device *device = nv_device(object);
 	struct nouveau_mc *pmc = (void *)object;
+#ifdef __NetBSD__
+	pci_intr_disestablish(device->pdev->pd_pa.pa_pc, pmc->irq_cookie);
+#else
 	free_irq(pmc->irq, pmc);
+#endif
 	if (pmc->use_msi)
 		pci_disable_msi(device->pdev);
 	nouveau_subdev_destroy(&pmc->base);
@@ -149,6 +162,20 @@ nouveau_mc_create_(struct nouveau_object *parent, struct nouveau_object *engine,
 		}
 	}
 
+#ifdef __NetBSD__		/* XXX nouveau platform */
+	if (nv_device_is_pci(device)) {
+		const pci_chipset_tag_t pc = device->pdev->pd_pa.pa_pc;
+		pci_intr_handle_t ih;
+
+		if (pci_intr_map(&device->pdev->pd_pa, &ih))
+			return -EIO;
+
+		pmc->irq_cookie = pci_intr_establish(pc, ih, IPL_VM,
+		    &nouveau_mc_intr, pmc);
+		if (pmc->irq_cookie == NULL)
+			return -EIO;
+	}
+#else
 	ret = nv_device_get_irq(device, true);
 	if (ret < 0)
 		return ret;
@@ -159,6 +186,7 @@ nouveau_mc_create_(struct nouveau_object *parent, struct nouveau_object *engine,
 
 	if (ret < 0)
 		return ret;
+#endif
 
 	return 0;
 }

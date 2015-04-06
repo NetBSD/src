@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.11 2014/09/24 20:35:43 reinoud Exp $	*/
+/*	$NetBSD: exynos_gpio.c,v 1.11.2.1 2015/04/06 15:17:53 skrll Exp $	*/
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.11 2014/09/24 20:35:43 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.11.2.1 2015/04/06 15:17:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -244,7 +244,7 @@ static struct exynos_gpio_pin_group exynos4_pin_groups[] = {
  *
  * MP2_0-MP2_10: 80 DRAM2 ports NOTE: GPIO registers do not control these
  * ports.
- * 
+ *
  * ETC0, ETC5, ETC6, ETC7, ETC8: 22 in/out ETC ports-JTAG, C2C_CLK (Rx),
  * RESET, CLOCK, USBOTG and USB3, C2C_CLK (Tx)
  */
@@ -381,7 +381,7 @@ exynos_gpio_config_pins(device_t self)
 	/* if no pins available, don't proceed */
 	if (pin_count == 0)
 		return;
-	
+
 	/* allocate pin data */
 	pins = kmem_zalloc(sizeof(gpio_pin_t) * pin_count, KM_SLEEP);
 	KASSERT(pins);

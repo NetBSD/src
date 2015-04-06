@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.25 2014/10/02 11:27:09 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.25.2.1 2015/04/06 15:17:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.25 2014/10/02 11:27:09 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.25.2.1 2015/04/06 15:17:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,7 +72,7 @@ struct cpu_freq {
 	uint64_t freq;
 	int	 P;
 	int	 M;
-	int	 S; 
+	int	 S;
 };
 
 
@@ -878,34 +878,55 @@ static void
 exynos5410_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 {
 	uint32_t phyhost; //, phyotg;
-	uint32_t phyhsic1, phyhsic2, hsic_ctrl;
-	uint32_t ehcictrl; //, ohcictrl;
+	uint32_t phyhsic;
+	uint32_t ehcictrl, ohcictrl;
 
 	/* host configuration: */
 	phyhost = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HOST_CTRL0);
+	    USB_PHY_HOST_CTRL0);
 
 	/* host phy reference clock; assumption its 24 MHz now */
 	phyhost &= ~HOST_CTRL0_FSEL_MASK;
-	phyhost |= __SHIFTIN(HOST_CTRL0_FSEL_MASK, FSEL_CLKSEL_24M);
+	phyhost |= __SHIFTIN(FSEL_CLKSEL_24M, HOST_CTRL0_FSEL_MASK);
 
 	/* enable normal mode of operation */
 	phyhost &= ~(HOST_CTRL0_FORCESUSPEND | HOST_CTRL0_FORCESLEEP);
 
 	/* host phy reset */
 	phyhost &= ~(HOST_CTRL0_PHY_SWRST | HOST_CTRL0_PHY_SWRST_ALL |
-		HOST_CTRL0_SIDDQ | HOST_CTRL0_COMMONON_N);
-			
-	/* host link reset */
-	phyhost |= HOST_CTRL0_LINK_SWRST | HOST_CTRL0_UTMI_SWRST;
+	    HOST_CTRL0_SIDDQ | HOST_CTRL0_FORCESUSPEND |
+	    HOST_CTRL0_FORCESLEEP);
 
+	/* host link reset */
+	phyhost |= HOST_CTRL0_LINK_SWRST | HOST_CTRL0_UTMI_SWRST |
+	    HOST_CTRL0_COMMONON_N;
 	/* do the reset */
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HOST_CTRL0, phyhost);
+	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HOST_CTRL0,
+	    phyhost);
 	DELAY(10000);
+
 	phyhost &= ~(HOST_CTRL0_LINK_SWRST | HOST_CTRL0_UTMI_SWRST);
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HOST_CTRL0, phyhost);
+	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HOST_CTRL0,
+	   phyhost);
+
+	/* HSIC control */
+	phyhsic =
+	    __SHIFTIN(HSIC_CTRL_REFCLKDIV_12, HSIC_CTRL_REFCLKDIV_MASK) |
+	    __SHIFTIN(HSIC_CTRL_REFCLKSEL_DEFAULT, HSIC_CTRL_REFCLKSEL_MASK) |
+	    HSIC_CTRL_PHY_SWRST;
+
+	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL1,
+	   phyhsic);
+	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL2,
+	   phyhsic);
+	DELAY(10);
+
+	phyhsic &= ~HSIC_CTRL_PHY_SWRST;
+	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL1,
+	   phyhsic);
+	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL2,
+	   phyhsic);
+	DELAY(80);
 
 #if 0
 	/* otg configuration: */
@@ -935,57 +956,21 @@ exynos5410_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 		USB_PHY_OTG_SYS, phyotg);
 #endif
 
-	/* HSIC phy configuration: */
-	hsic_ctrl = HSIC_CTRL_FORCESUSPEND | HSIC_CTRL_FORCESLEEP |
-		HSIC_CTRL_SIDDQ;
-
-	phyhsic1 = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HSIC_CTRL1);
-	phyhsic2 = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HSIC_CTRL1);
-
-	phyhsic1 &= ~hsic_ctrl;
-	phyhsic2 &= ~hsic_ctrl;
-
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HSIC_CTRL1, phyhsic1);
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HSIC_CTRL2, phyhsic2);
-	DELAY(10000);
-
-	hsic_ctrl = REFCLKDIV_12 | REFCLKSEL_HSIC_DEFAULT |
-		HSIC_CTRL_UTMI_SWRST;
-
-	phyhsic1 |= hsic_ctrl;
-	phyhsic2 |= hsic_ctrl;
-
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HSIC_CTRL1, phyhsic1);
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HSIC_CTRL2, phyhsic2);
-
-	DELAY(10000);
-
-	hsic_ctrl = HSIC_CTRL_PHY_SWRST | HSIC_CTRL_UTMI_SWRST;
-
-	phyhsic1 &= ~hsic_ctrl;
-	phyhsic2 &= ~hsic_ctrl;
-
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HSIC_CTRL1, phyhsic1);
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HSIC_CTRL2, phyhsic2);
-	DELAY(20000);
-
 	/* enable EHCI DMA burst: */
 	ehcictrl = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HOST_EHCICTRL);
+	    USB_PHY_HOST_EHCICTRL);
 	ehcictrl |= HOST_EHCICTRL_ENA_INCRXALIGN |
-		HOST_EHCICTRL_ENA_INCR4 | HOST_EHCICTRL_ENA_INCR8 |
-		HOST_EHCICTRL_ENA_INCR16;
+	    HOST_EHCICTRL_ENA_INCR4 | HOST_EHCICTRL_ENA_INCR8 |
+	    HOST_EHCICTRL_ENA_INCR16;
 	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
-		USB_PHY_HOST_EHCICTRL, ehcictrl);
-	DELAY(10000);
+	    USB_PHY_HOST_EHCICTRL, ehcictrl);
+
+	/* Set OHCI suspend */
+	ohcictrl = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
+	    USB_PHY_HOST_OHCICTRL);
+	ohcictrl |= HOST_OHCICTRL_SUSPLGCY;
+	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+	    USB_PHY_HOST_OHCICTRL, ohcictrl);
 }
 
 

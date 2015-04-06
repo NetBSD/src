@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.72 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: cons.c,v 1.72.4.1 2015/04/06 15:18:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.72 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.72.4.1 2015/04/06 15:18:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.72 2014/07/25 08:10:35 dholland Exp $");
 #include <sys/mutex.h>
 
 #include <dev/cons.h>
+
+#include "nullcons.h"
 
 dev_type_open(cnopen);
 dev_type_close(cnclose);
@@ -104,6 +106,11 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 	 * open() calls.
 	 */
 	cndev = cn_tab->cn_dev;
+#if NNULLCONS > 0
+	if (cndev == NODEV) {
+		nullconsattach(0);
+	}
+#else /* NNULLCONS > 0 */
 	if (cndev == NODEV) {
 		/*
 		 * This is most likely an error in the console attach
@@ -112,6 +119,7 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 */
 		panic("cnopen: no console device");
 	}
+#endif /* NNULLCONS > 0 */
 	if (dev == cndev) {
 		/*
 		 * This causes cnopen() to be called recursively, which
@@ -314,11 +322,11 @@ cnputc(int c)
 		return;
 
 	if (c) {
-		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
 		if (c == '\n') {
-			docritpollhooks();
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
+			docritpollhooks();
 		}
+		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_space.c,v 1.1 2014/04/13 02:26:26 matt Exp $	*/
+/*	$NetBSD: exynos_space.c,v 1.1.12.1 2015/04/06 15:17:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_space.c,v 1.1 2014/04/13 02:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_space.c,v 1.1.12.1 2015/04/06 15:17:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,17 +366,8 @@ exynos_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
 {
 	flags &= BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE;
 	
-	if (flags) {
-		/* Issue an ARM11 Data Syncronisation Barrier (DSB) */
-#ifdef _ARM_ARCH_7
-		__asm __volatile("dsb");
-#else
-		__asm__ __volatile__ ("mcr p15, 0, %0, c7, c10, 4" : : "r" (0)
-		    : "memory");
-#endif
-		return;
-	}
-
+	if (flags)
+		arm_dsb();
 }
 
 void *

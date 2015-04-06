@@ -50,7 +50,9 @@
 		int ms = (MS);						\
 		while (!(COND)) {					\
 			if (--ms < 0) {					\
-				ret__ = -ETIMEDOUT;			\
+				DELAY(1000);				\
+				if (!(COND))				\
+					ret__ = -ETIMEDOUT;		\
 				break;					\
 			}						\
 			DELAY(1000);					\
@@ -59,7 +61,8 @@
 		unsigned long timeout__ = jiffies + msecs_to_jiffies(MS); \
 		while (!(COND)) {					\
 			if (time_after(jiffies, timeout__)) {		\
-				ret__ = -ETIMEDOUT;			\
+				if (!(COND))				\
+					ret__ = -ETIMEDOUT;		\
 				break;					\
 			}						\
 			if ((W) && drm_can_sleep())  {			\

@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.10 2014/10/11 11:55:07 uebayasi Exp $
+# $Id: IMX23_OLINUXINO,v 1.10.2.1 2015/04/06 15:17:55 skrll Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -65,6 +65,13 @@ usbphy0		at apbx? addr 0x8007C000 size 0x2000 irq -1
 
 # Clock control
 clkctrl0	at apbx? addr 0x80040000 size 0x2000 irq -1
+
+# RTC
+rtc0		at apbx? addr 0x8005C000 size 0x2000 irq -1
+
+# Digital filter: Audio I/O
+digfilt0	at apbx? addr 0x80048000 size 0x8000 irq -1
+audio0		at digfilt0
 
 # USB host
 ehci0		at imxusbc0 unit 0 irq 11

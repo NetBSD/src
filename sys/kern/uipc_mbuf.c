@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.159 2014/11/27 03:15:51 ozaki-r Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.159.2.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.159 2014/11/27 03:15:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.159.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -543,6 +543,7 @@ m_reclaim(void *arg, int flags)
 {
 	struct domain *dp;
 	const struct protosw *pr;
+	struct ifnet *ifp;
 	int s;
 
 	KERNEL_LOCK(1, NULL);
@@ -553,7 +554,10 @@ m_reclaim(void *arg, int flags)
 			if (pr->pr_drain)
 				(*pr->pr_drain)();
 	}
-	if_drain_all();
+	IFNET_FOREACH(ifp) {
+		if (ifp->if_drain)
+			(*ifp->if_drain)(ifp);
+	}
 	splx(s);
 	mbstat.m_drain++;
 	KERNEL_UNLOCK_ONE(NULL);
@@ -773,8 +777,13 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 				/*
 				 * we are unsure about the way m was allocated.
 				 * copy into multiple MCLBYTES cluster mbufs.
+				 *
+				 * recompute m_len, it is no longer valid if MCLGET()
+				 * fails to allocate a cluster. Then we try to split
+				 * the source into normal sized mbufs.
 				 */
 				MCLGET(n, wait);
+				n->m_len = 0;
 				n->m_len = M_TRAILINGSPACE(n);
 				n->m_len = m_copylen(len, n->m_len);
 				n->m_len = min(n->m_len, m->m_len - off);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.143 2013/10/19 15:20:52 christos Exp $	*/
+/*	$NetBSD: db_command.c,v 1.143.6.1 2015/04/06 15:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.143 2013/10/19 15:20:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.143.6.1 2015/04/06 15:18:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -212,10 +212,8 @@ static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
 	/*added from all sub cmds*/
-#ifdef _KERNEL	/* XXX CRASH(8) */
 	{ DDB_ADD_CMD("callout",  db_show_callout,
 	    0 ,"List all used callout functions.",NULL,NULL) },
-#endif
 	{ DDB_ADD_CMD("pages",	db_show_all_pages,
 	    0 ,"List all used memory pages.",NULL,NULL) },
 	{ DDB_ADD_CMD("proc",	db_show_proc,
@@ -305,10 +303,8 @@ static const struct db_command db_command_table[] = {
 	    "Continue execution.", "[/c]",NULL) },
 	{ DDB_ADD_CMD("call",	db_fncall,		CS_OWN,
 	    "Call the function", "address[(expression[,...])]",NULL) },
-#ifdef _KERNEL	/* XXX CRASH(8) */
 	{ DDB_ADD_CMD("callout",	db_show_callout,	0, NULL,
 	    NULL,NULL ) },
-#endif
 	{ DDB_ADD_CMD("continue",	db_continue_cmd,	0,
 	    "Continue execution.", "[/c]",NULL) },
 	{ DDB_ADD_CMD("d",		db_delete_cmd,		0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2reg.h,v 1.8 2012/09/12 12:07:04 macallan Exp $	*/
+/*	$NetBSD: pm2reg.h,v 1.8.14.1 2015/04/06 15:18:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -33,6 +33,11 @@
 #ifndef PM2_REG_H
 #define PM2_REG_H
 
+/* all frequencies are in kHz */
+#define	PM2_EXT_CLOCK_FREQ		14318
+#define	PM2_PLL_FREQ_MIN		150000
+#define	PM2_PLL_FREQ_MAX		300000
+
 #define PM2_RESET	0x00000000	/* any write initiates a chip reset */
 #define		PM2_RESET_BUSY	0x80000000	/* reset in progress */
 
@@ -59,6 +64,8 @@
 						    */
 #define		PM2_AP_SVGA		0x00000100
 #define		PM2_AP_ROM		0x00000200
+
+#define PM2_CHIP_CONFIG         0x00000070
 
 #define PM2_BYPASS_MASK		0x00001100
 #define PM2_FB_WRITE_MASK	0x00001140
@@ -146,9 +153,11 @@
 #define		CM_RGB565	0x06
 #define		CM_RGBA8888	0x08
 #define		CM_RGB888	0x09
-#define		CM_GUI_DISABLE	0x10
+#define		CM_GUI_ENABLE	0x10
 #define		CM_RGB		0x20	/* BGR otherwise */
 #define		CM_TRUECOLOR	0x80	/* use palette for gamma correction */
+#define PM2_DAC_MODE_CONTROL  	0x19
+#define		MOC_BUFFERFRONT	0x00
 
 #define PM2_DAC_MISC_CONTROL	0x1e
 #define		MC_POWERDOWN	0x01
@@ -325,5 +334,5 @@
 #define PM2_RE_DATA		0x00008aa0	/* pixel data */
 #define PM2_RE_SOURCEDATA	0x00008aa8	/* raw data */
 
-
+#define PM2_SYNC_TAG		0x188
 #endif /* PM2_REG_H */

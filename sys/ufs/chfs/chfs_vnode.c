@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.12 2014/11/09 18:23:28 maxv Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.12.2.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -42,18 +42,24 @@
 #include <miscfs/genfs/genfs.h>
 
 /* chfs_vnode_lookup - lookup for a vnode */
+static bool
+chfs_vnode_lookup_selector(void *ctx, struct vnode *vp)
+{
+	ino_t *ino = ctx;
+
+	return (VTOI(vp) != NULL && VTOI(vp)->ino == *ino);
+}
 struct vnode *
 chfs_vnode_lookup(struct chfs_mount *chmp, ino_t vno)
 {
+	struct vnode_iterator *marker;
 	struct vnode *vp;
-	struct chfs_inode *ip;
 
-	TAILQ_FOREACH(vp, &chmp->chm_fsmp->mnt_vnodelist, v_mntvnodes) {
-		ip = VTOI(vp);
-		if (ip && ip->ino == vno)
-			return vp;
-	}
-	return NULL;
+	vfs_vnode_iterator_init(chmp->chm_fsmp, &marker);
+	vp = vfs_vnode_iterator_next(marker, chfs_vnode_lookup_selector, &vno);
+	vfs_vnode_iterator_destroy(marker);
+
+	return vp;
 }
 
 /* chfs_readvnode - reads a vnode from the flash and setups its inode */
@@ -238,7 +244,7 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->target = NULL;
 
 	ip->mode = mode;
-	vp->v_type = type;		/* Rest init'd in getnewvnode(). */
+	vp->v_type = type;		/* Rest init'd in chfs_loadvnode(). */
 	ip->ch_type = VTTOCHT(vp->v_type);
 
 	/* authorize setting SGID if needed */

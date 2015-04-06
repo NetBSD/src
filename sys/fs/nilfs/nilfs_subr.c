@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.12 2014/10/15 09:05:46 hannken Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.12.2.1 2015/04/06 15:18:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.12 2014/10/15 09:05:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.12.2.1 2015/04/06 15:18:19 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,19 +128,19 @@ crc32_le(uint32_t crc, const uint8_t *buf, size_t len)
 /* dev reading */
 static int
 nilfs_dev_bread(struct nilfs_device *nilfsdev, uint64_t blocknr,
-	struct kauth_cred *cred, int flags, struct buf **bpp)
+	int flags, struct buf **bpp)
 {
 	int blk2dev = nilfsdev->blocksize / DEV_BSIZE;
 
 	return bread(nilfsdev->devvp, blocknr * blk2dev, nilfsdev->blocksize,
-		NOCRED, 0, bpp);
+		0, bpp);
 }
 
 
 /* read on a node */
 int
 nilfs_bread(struct nilfs_node *node, uint64_t blocknr,
-	struct kauth_cred *cred, int flags, struct buf **bpp)
+	int flags, struct buf **bpp)
 {
 	struct nilfs_device *nilfsdev = node->nilfsdev;
 	uint64_t vblocknr, pblockno;
@@ -155,11 +155,11 @@ nilfs_bread(struct nilfs_node *node, uint64_t blocknr,
 		error = nilfs_nvtop(node, 1, &vblocknr, &pblockno);
 		if (error)
 			return error;
-		return nilfs_dev_bread(nilfsdev, pblockno, cred, flags, bpp);
+		return nilfs_dev_bread(nilfsdev, pblockno, flags, bpp);
 	}
 
 	return bread(node->vnode, vblocknr, node->nilfsdev->blocksize,
-		cred, flags, bpp);
+		flags, bpp);
 }
 
 
@@ -181,7 +181,7 @@ nilfs_get_segment_log(struct nilfs_device *nilfsdev, uint64_t *blocknr,
 		if (*bpp)
 			brelse(*bpp, BC_AGE);
 		/* read in block */
-		error = nilfs_dev_bread(nilfsdev, *blocknr, NOCRED, 0, bpp);
+		error = nilfs_dev_bread(nilfsdev, *blocknr, 0, bpp);
 		if (error)
 			return error;
 	}
@@ -217,7 +217,7 @@ nilfs_btree_lookup_level(struct nilfs_node *node, uint64_t lblocknr,
 		return error;
 
 	/* get our block */
-	error = nilfs_dev_bread(nilfsdev, btree_blknr, NOCRED, 0, &bp);
+	error = nilfs_dev_bread(nilfsdev, btree_blknr, 0, &bp);
 	if (error) {
 		return error;
 	}
@@ -388,7 +388,7 @@ nilfs_vtop(struct nilfs_device *nilfsdev, uint64_t vblocknr, uint64_t *pblocknr)
 	nilfs_mdt_trans(&nilfsdev->dat_mdt, vblocknr,
 		&ldatblknr, &entry_in_block);
 
-	error = nilfs_bread(nilfsdev->dat_node, ldatblknr, NOCRED, 0, &bp);
+	error = nilfs_bread(nilfsdev->dat_node, ldatblknr, 0, &bp);
 	if (error) {
 		printf("vtop: can't read in DAT block %"PRIu64"!\n", ldatblknr);
 		return error;
@@ -803,7 +803,7 @@ dirhash_fill(struct nilfs_node *dir_node)
 
 	blocknr = diroffset / blocksize;
 	blkoff  = diroffset % blocksize;
-	error = nilfs_bread(dir_node, blocknr, NOCRED, 0, &bp);
+	error = nilfs_bread(dir_node, blocknr, 0, &bp);
 	if (error) {
 		dirh->flags |= DIRH_BROKEN;
 		dirhash_purge_entries(dirh);
@@ -815,8 +815,7 @@ dirhash_fill(struct nilfs_node *dir_node)
 		if (blkoff >= blocksize) {
 			blkoff = 0; blocknr++;
 			brelse(bp, BC_AGE);
-			error = nilfs_bread(dir_node, blocknr, NOCRED, 0,
-					&bp);
+			error = nilfs_bread(dir_node, blocknr, 0, &bp);
 			if (error) {
 				dirh->flags |= DIRH_BROKEN;
 				dirhash_purge_entries(dirh);
@@ -900,7 +899,7 @@ nilfs_lookup_name_in_dir(struct vnode *dvp, const char *name, int namelen,
 
 		blocknr = diroffset / blocksize;
 		blkoff  = diroffset % blocksize;
-		error = nilfs_bread(dir_node, blocknr, NOCRED, 0, &bp);
+		error = nilfs_bread(dir_node, blocknr, 0, &bp);
 		if (error)
 			return EIO;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.59 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.59.6.1 2015/04/06 15:18:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.59 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.59.6.1 2015/04/06 15:18:10 skrll Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -409,6 +409,8 @@ pdq_pci_attach(device_t const parent, device_t const self, void *const aux)
     char intrbuf[PCI_INTRSTR_LEN];
 
     aprint_naive(": FDDI controller\n");
+
+    sc->sc_dev = self;
 
     data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFLT);
     if ((data & 0xFF00) < (DEFPA_LATENCY << 8)) {

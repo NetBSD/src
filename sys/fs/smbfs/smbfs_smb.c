@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.46 2014/11/15 18:52:44 nakayama Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.46.2.1 2015/04/06 15:18:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.46 2014/11/15 18:52:44 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.46.2.1 2015/04/06 15:18:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ smbfs_getino(struct smbnode *dnp, const char *name, int nmlen)
 #endif
 	u_int32_t ino;
 
-	ino = dnp->n_ino + smbfs_hash(name, nmlen);
+	ino = dnp->n_ino + hash32_strn(name, nmlen, HASH32_STR_INIT);
 	if (ino <= 2)
 		ino += 3;
 	return ino;

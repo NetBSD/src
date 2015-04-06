@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.116 2013/10/20 00:29:10 htodd Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.116.6.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.116 2013/10/20 00:29:10 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.116.6.1 2015/04/06 15:18:32 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -149,7 +149,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 	}							/* XXX */
 	error = bread(ip->i_devvp,
 		      FFS_FSBTODB(fs, ino_to_fsba(fs, ip->i_number)),
-		      (int)fs->fs_bsize, NOCRED, B_MODIFY, &bp);
+		      (int)fs->fs_bsize, B_MODIFY, &bp);
 	if (error) {
 		return (error);
 	}

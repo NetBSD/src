@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.202 2014/11/10 18:52:51 maxv Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.202.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,10 +99,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.202 2014/11/10 18:52:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.202.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_inet.h"
-#include "opt_ipsec.h"
 #include "opt_tcp_debug.h"
 #include "opt_mbuftrace.h"
 
@@ -119,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.202 2014/11/10 18:52:51 maxv Exp $"
 #include <sys/domain.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/uidinfo.h>
 
 #include <net/if.h>
@@ -271,6 +271,65 @@ change_keepalive(struct socket *so, struct tcpcb *tp)
 		TCP_TIMER_ARM(tp, TCPT_2MSL, tp->t_maxidle);
 }
 
+/*
+ * Export TCP internal state information via a struct tcp_info, based on the
+ * Linux 2.6 API.  Not ABI compatible as our constants are mapped differently
+ * (TCP state machine, etc).  We export all information using FreeBSD-native
+ * constants -- for example, the numeric values for tcpi_state will differ
+ * from Linux.
+ */
+static void
+tcp_fill_info(struct tcpcb *tp, struct tcp_info *ti)
+{
+
+	bzero(ti, sizeof(*ti));
+
+	ti->tcpi_state = tp->t_state;
+	if ((tp->t_flags & TF_REQ_TSTMP) && (tp->t_flags & TF_RCVD_TSTMP))
+		ti->tcpi_options |= TCPI_OPT_TIMESTAMPS;
+	if (tp->t_flags & TF_SACK_PERMIT)
+		ti->tcpi_options |= TCPI_OPT_SACK;
+	if ((tp->t_flags & TF_REQ_SCALE) && (tp->t_flags & TF_RCVD_SCALE)) {
+		ti->tcpi_options |= TCPI_OPT_WSCALE;
+		ti->tcpi_snd_wscale = tp->snd_scale;
+		ti->tcpi_rcv_wscale = tp->rcv_scale;
+	}
+	if (tp->t_flags & TF_ECN_PERMIT) {
+		ti->tcpi_options |= TCPI_OPT_ECN;
+	}
+
+	ti->tcpi_rto = tp->t_rxtcur * tick;
+	ti->tcpi_last_data_recv = (long)(hardclock_ticks -
+					 (int)tp->t_rcvtime) * tick;
+	ti->tcpi_rtt = ((u_int64_t)tp->t_srtt * tick) >> TCP_RTT_SHIFT;
+	ti->tcpi_rttvar = ((u_int64_t)tp->t_rttvar * tick) >> TCP_RTTVAR_SHIFT;
+
+	ti->tcpi_snd_ssthresh = tp->snd_ssthresh;
+	/* Linux API wants these in # of segments, apparently */
+	ti->tcpi_snd_cwnd = tp->snd_cwnd / tp->t_segsz;
+	ti->tcpi_snd_wnd = tp->snd_wnd / tp->t_segsz;
+
+	/*
+	 * FreeBSD-specific extension fields for tcp_info.
+	 */
+	ti->tcpi_rcv_space = tp->rcv_wnd;
+	ti->tcpi_rcv_nxt = tp->rcv_nxt;
+	ti->tcpi_snd_bwnd = 0;		/* Unused, kept for compat. */
+	ti->tcpi_snd_nxt = tp->snd_nxt;
+	ti->tcpi_snd_mss = tp->t_segsz;
+	ti->tcpi_rcv_mss = tp->t_segsz;
+#ifdef TF_TOE
+	if (tp->t_flags & TF_TOE)
+		ti->tcpi_options |= TCPI_OPT_TOE;
+#endif
+	/* From the redundant department of redundancies... */
+	ti->__tcpi_retransmits = ti->__tcpi_retrans =
+		ti->tcpi_snd_rexmitpack = tp->t_sndrexmitpack;
+
+	ti->tcpi_rcv_ooopack = tp->t_rcvoopack;
+	ti->tcpi_snd_zerowin = tp->t_sndzerowin;
+}
+
 int
 tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
@@ -280,6 +339,7 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	struct in6pcb *in6p;
 #endif
 	struct tcpcb *tp;
+	struct tcp_info ti;
 	u_int ui;
 	int family;	/* family of the socket */
 	int level, optname, optval;
@@ -449,6 +509,10 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case TCP_MAXSEG:
 			optval = tp->t_peermss;
 			error = sockopt_set(sopt, &optval, sizeof(optval));
+			break;
+		case TCP_INFO:
+			tcp_fill_info(tp, &ti);
+			error = sockopt_set(sopt, &ti, sizeof ti);
 			break;
 #ifdef notyet
 		case TCP_CONGCTL:
@@ -647,10 +711,14 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-tcp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+tcp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
+	struct sockaddr_in *sin = (struct sockaddr_in *)nam;
+#ifdef INET6
+	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)nam;
+#endif /* INET6 */
 	struct tcpcb *tp = NULL;
 	int s;
 	int error = 0;
@@ -668,12 +736,12 @@ tcp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	switch (so->so_proto->pr_domain->dom_family) {
 #ifdef INET
 	case PF_INET:
-		error = in_pcbbind(inp, nam, l);
+		error = in_pcbbind(inp, sin, l);
 		break;
 #endif
 #ifdef INET6
 	case PF_INET6:
-		error = in6_pcbbind(in6p, nam, l);
+		error = in6_pcbbind(in6p, sin6, l);
 		if (!error) {
 			/* mapped addr case */
 			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))

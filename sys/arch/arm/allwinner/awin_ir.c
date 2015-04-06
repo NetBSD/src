@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ir.c,v 1.4 2014/11/15 14:56:18 jmcneill Exp $ */
+/* $NetBSD: awin_ir.c,v 1.4.2.1 2015/04/06 15:17:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.4 2014/11/15 14:56:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.4.2.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.4 2014/11/15 14:56:18 jmcneill Exp $")
 #include <dev/ir/cirio.h>
 #include <dev/ir/cirvar.h>
 
-#define AWIN_IR_RXSTA_MASK	__BITS(7,0)
+#define AWIN_IR_RXSTA_MASK	__BITS(6,0)
 
 struct awin_ir_softc {
 	device_t sc_dev;
@@ -116,13 +116,15 @@ awin_ir_attach(device_t parent, device_t self, void *aux)
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
 	struct ir_attach_args iaa;
+	bus_space_handle_t bsh = awin_chip_id() == AWIN_CHIP_ID_A80 ?
+	    aio->aio_a80_rcpus_bsh : aio->aio_core_bsh;
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
 	sc->sc_port = loc->loc_port;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_IR);
 	cv_init(&sc->sc_cv, "awinir");
-	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
+	bus_space_subregion(sc->sc_bst, bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
 	aprint_naive("\n");
@@ -187,7 +189,35 @@ awin_ir_init(struct awin_ir_softc *sc, struct awinio_attach_args * const aio)
 		    AWIN_A31_PRCM_CIR_CLK_REG, clk);
 
 		bus_space_unmap(sc->sc_bst, prcm_bsh, prcm_size);
-	} else  {
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+		const struct awin_gpio_pinset pinset =
+		    { 'L', AWIN_A80_PIO_PL_CIR_FUNC, AWIN_A80_PIO_PL_CIR_PINS,
+		           GPIO_PIN_PULLUP };
+		bus_space_handle_t prcm_bsh;
+		bus_size_t prcm_size = 0x200;
+
+		bus_space_subregion(sc->sc_bst, aio->aio_a80_rcpus_bsh,
+		    AWIN_A80_RPRCM_OFFSET, prcm_size, &prcm_bsh);
+
+		awin_gpio_pinset_acquire(&pinset);
+
+		awin_reg_set_clear(sc->sc_bst, prcm_bsh,
+		    AWIN_A80_RPRCM_APB0_GATING_REG,
+		    AWIN_A80_RPRCM_APB0_GATING_CIR, 0);
+		awin_reg_set_clear(sc->sc_bst, prcm_bsh,
+		    AWIN_A80_RPRCM_APB0_RST_REG,
+		    AWIN_A80_RPRCM_APB0_RST_CIR, 0);
+		awin_reg_set_clear(sc->sc_bst, prcm_bsh,
+		    AWIN_A80_RPRCM_CIR_CLK_REG,
+		    __SHIFTIN(AWIN_CLK_SRC_SEL_CIR_HOSC, AWIN_CLK_SRC_SEL) |
+		    __SHIFTIN(7, AWIN_CLK_DIV_RATIO_M) |
+		    __SHIFTIN(0, AWIN_CLK_DIV_RATIO_N) |
+		    AWIN_CLK_ENABLE,
+		    AWIN_CLK_SRC_SEL |
+		    AWIN_CLK_DIV_RATIO_M | AWIN_CLK_DIV_RATIO_N);
+
+		bus_space_unmap(sc->sc_bst, prcm_bsh, prcm_size);
+	} else {
 		const struct awin_gpio_pinset pinset =
 		    { 'B', AWIN_PIO_PB_IR0_FUNC, AWIN_PIO_PB_IR0_PINS };
 		uint32_t clk;
@@ -253,7 +283,8 @@ awin_ir_open(void *priv, int flag, int mode, struct proc *p)
 	cir |= __SHIFTIN(0, AWIN_IR_CIR_SCS2);
 	cir |= __SHIFTIN(8, AWIN_IR_CIR_NTHR);
 	cir |= __SHIFTIN(2, AWIN_IR_CIR_ITHR);
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+	if (awin_chip_id() == AWIN_CHIP_ID_A31 ||
+	    awin_chip_id() == AWIN_CHIP_ID_A80) {
 		cir |= __SHIFTIN(99, AWIN_IR_CIR_ATHR);
 		cir |= __SHIFTIN(0, AWIN_IR_CIR_ATHC);
 	}
@@ -264,6 +295,8 @@ awin_ir_open(void *priv, int flag, int mode, struct proc *p)
 	IR_WRITE(sc, AWIN_IR_RXSTA_REG, AWIN_IR_RXSTA_MASK);
 
 	rxint = AWIN_IR_RXINT_RPEI_EN;
+	rxint |= AWIN_IR_RXINT_ROI_EN;
+	rxint |= AWIN_IR_RXINT_RAI_EN;
 	rxint |= __SHIFTIN(31, AWIN_IR_RXINT_RAL);
 	IR_WRITE(sc, AWIN_IR_RXINT_REG, rxint);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.1.2.1 2015/04/06 15:17:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.1 2014/09/25 05:05:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.1.2.1 2015/04/06 15:17:55 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -134,6 +134,15 @@ static const struct pmap_devmap devmap[] = {
 	{ 0, 0, 0, 0, 0 }
 };
 
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+static struct boot_physmem bp_highgig = {
+	.bp_start = IMX6_MEM_BASE / NBPG,
+	.bp_pages = (KERNEL_VM_BASE - KERNEL_BASE) / NBPG,
+	.bp_freelist = VM_FREELIST_ISADMA,
+	.bp_flags = 0,
+};
+#endif
+
 /*
  * u_int initarm(...)
  *
@@ -213,24 +222,40 @@ initarm(void *arg)
 	bootconfig.dram[0].address = KERN_VTOPHYS(KERNEL_BASE);
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;
 
-	arm32_bootmem_init(bootconfig.dram[0].address,
-	    bootconfig.dram[0].pages * PAGE_SIZE, (paddr_t)KERNEL_BASE_phys);
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
+	if (memsize > KERNEL_VM_BASE - KERNEL_BASE) {
+		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		   __func__, (unsigned long) (memsize >> 20),
+		   (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		memsize = KERNEL_VM_BASE - KERNEL_BASE;
+	}
+#endif
+#else /* !__HAVE_MM_MD_DIRECT_MAPPED_PHYS */
+	const bool mapallmem_p = false;
+#endif /* __HAVE_MM_MD_DIRECT_MAPPED_PHYS */
 
-	/*
-	 * This is going to do all the hard work of setting up the first and
-	 * and second level page tables.  Pages of memory will be allocated
-	 * and mapped for other structures that are required for system
-	 * operation.  When it returns, physical_freestart and free_pages will
-	 * have been updated to reflect the allocations that were made.  In
-	 * addition, kernel_l1pt, kernel_pt_table[], systempage, irqstack,
-	 * abtstack, undstack, kernelstack, msgbufphys will be set to point to
-	 * the memory that was allocated for them.
-	 */
-	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap, true);
+	arm32_bootmem_init(bootconfig.dram[0].address,
+	    memsize, (paddr_t)KERNEL_BASE_phys);
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, devmap,
+	    mapallmem_p);
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = imx6_device_register;
 
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+	/*
+	 * If we couldn't map all of memory via TTBR1, limit the memory the
+	 * kernel can allocate from to be from the highest available 1GB.
+	 */
+	if (atop(memsize) > bp_highgig.bp_pages) {
+		bp_highgig.bp_start += atop(memsize) - bp_highgig.bp_pages;
+		arm_poolpage_vmfreelist = bp_highgig.bp_freelist;
+		return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
+		    &bp_highgig, 1);
+	}
+#endif
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
 

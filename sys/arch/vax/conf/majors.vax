@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.24 2012/06/22 20:42:23 abs Exp $
+#	$NetBSD: majors.vax,v 1.24.16.1 2015/04/06 15:18:03 skrll Exp $
 #
 # Device majors for vax
 #
@@ -84,6 +84,7 @@ device-major	wsfont		char 80			wsfont
 device-major	ses		char 81			ses
 
 device-major	nsmb		char 98			nsmb
+device-major	audio		char 99			audio
 
 #
 # block-device-only devices

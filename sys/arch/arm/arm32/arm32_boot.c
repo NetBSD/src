@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.10 2014/11/04 22:37:09 matt Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.10.2.1 2015/04/06 15:17:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.10 2014/11/04 22:37:09 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.10.2.1 2015/04/06 15:17:52 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,6 +149,10 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.10 2014/11/04 22:37:09 matt Exp $")
 
 #ifdef KGDB
 #include <sys/kgdb.h>
+#endif
+
+#ifdef MULTIPROCESSOR
+static kmutex_t cpu_hatch_lock;
 #endif
 
 vaddr_t
@@ -300,6 +304,10 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 		Debugger();
 #endif
 
+#ifdef MULTIPROCESSOR
+	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_NONE);
+#endif
+
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
 #endif
@@ -383,6 +391,8 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	}
 #endif
 
+	mutex_enter(&cpu_hatch_lock);
+
 	aprint_naive("%s", device_xname(ci->ci_dev));
 	aprint_normal("%s", device_xname(ci->ci_dev));
 	identify_arm_cpu(ci->ci_dev, ci);
@@ -390,6 +400,8 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	printf(" vfp");
 #endif
 	vfp_attach(ci);
+
+	mutex_exit(&cpu_hatch_lock);
 
 #ifdef VERBOSE_INIT_ARM
 	printf(" interrupts");

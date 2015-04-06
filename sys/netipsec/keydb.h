@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.13 2013/06/04 22:47:37 christos Exp $	*/
+/*	$NetBSD: keydb.h,v 1.13.10.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -35,8 +35,6 @@
 #define _NETIPSEC_KEYDB_H_
 
 #ifdef _KERNEL
-
-#include "opt_ipsec.h"
 
 #include <netipsec/key_var.h>
 #include <net/route.h>

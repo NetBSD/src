@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.9.14.2 2015/03/21 11:33:37 skrll Exp $ */
+/* $NetBSD: emdtv.c,v 1.9.14.3 2015/04/06 15:18:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.9.14.2 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.9.14.3 2015/04/06 15:18:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/module.h>
 #include <sys/conf.h>
 

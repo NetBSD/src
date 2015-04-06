@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.41 2014/07/18 22:54:53 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.41.4.1 2015/04/06 15:17:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -94,6 +94,7 @@ load_vfpregs(const struct vfpreg *fregs)
 	case FPU_VFP_CORTEXA8:
 	case FPU_VFP_CORTEXA9:
 	case FPU_VFP_CORTEXA15:
+	case FPU_VFP_CORTEXA15_QEMU:
 #endif
 		load_vfpregs_hi(fregs->vfp_regs);
 #ifdef CPU_ARM11
@@ -115,6 +116,7 @@ save_vfpregs(struct vfpreg *fregs)
 	case FPU_VFP_CORTEXA8:
 	case FPU_VFP_CORTEXA9:
 	case FPU_VFP_CORTEXA15:
+	case FPU_VFP_CORTEXA15_QEMU:
 #endif
 		save_vfpregs_hi(fregs->vfp_regs);
 #ifdef CPU_ARM11
@@ -312,6 +314,7 @@ vfp_attach(struct cpu_info *ci)
 	case FPU_VFP_CORTEXA8:
 	case FPU_VFP_CORTEXA9:
 	case FPU_VFP_CORTEXA15:
+	case FPU_VFP_CORTEXA15_QEMU:
 		if (armreg_cpacr_read() & CPACR_V7_ASEDIS) {
 			model = "VFP 4.0+";
 		} else {
@@ -373,7 +376,8 @@ vfp_attach(struct cpu_info *ci)
 	install_coproc_handler(VFP_COPROC, vfp_handler);
 	install_coproc_handler(VFP_COPROC2, vfp_handler);
 #ifdef CPU_CORTEX
-	install_coproc_handler(CORE_UNKNOWN_HANDLER, neon_handler);
+	if (cpu_neon_present)
+		install_coproc_handler(CORE_UNKNOWN_HANDLER, neon_handler);
 #endif
 }
 
@@ -393,10 +397,19 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	}
 
 	/*
-	 * If we are just changing/fetching FPSCR, don't bother loading it.
+	 * If we are just changing/fetching FPSCR, don't bother loading it
+	 * just emulate the instruction.
 	 */
 	if (!vfp_fpscr_handler(address, insn, frame, fault_code))
 		return 0;
+
+	/* 
+	 * If we already own the FPU and it's enabled (and no exception), raise
+	 * SIGILL.  If there is an exception, drop through to raise a SIGFPE.
+	 */
+	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp
+	    && (armreg_fpexc_read() & (VFP_FPEXC_EX|VFP_FPEXC_EN)) == VFP_FPEXC_EN)
+		return 1;
 
 	/*
 	 * Make sure we own the FP.
@@ -464,6 +477,11 @@ neon_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	/* This shouldn't ever happen.  */
 	if (fault_code != FAULT_USER)
 		panic("NEON fault in non-user mode");
+
+	/* if we already own the FPU and it's enabled, raise SIGILL */
+	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp
+	    && (armreg_fpexc_read() & VFP_FPEXC_EN) != 0)
+		return 1;
 
 	pcu_load(&arm_vfp_ops);
 

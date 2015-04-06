@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.20 2014/11/25 14:30:05 skrll Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.20.2.1 2015/04/06 15:17:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.20 2014/11/25 14:30:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.20.2.1 2015/04/06 15:17:52 skrll Exp $");
 
 #include "bcmdmac.h"
 
@@ -278,6 +278,7 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 			if ((sc->sc_cblk[seg].cb_txfr_len & 0xf) == 0)
 				sc->sc_cblk[seg].cb_ti |= DMAC_TI_SRC_WIDTH;
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_DEST_DREQ;
+			sc->sc_cblk[seg].cb_ti |= DMAC_TI_WAIT_RESP;
 			sc->sc_cblk[seg].cb_source_ad =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
 			sc->sc_cblk[seg].cb_dest_ad =
@@ -286,7 +287,6 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 		}
 		sc->sc_cblk[seg].cb_stride = 0;
 		if (seg == cmd->c_dmamap->dm_nsegs - 1) {
-			sc->sc_cblk[seg].cb_ti |= DMAC_TI_WAIT_RESP;
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_INTEN;
 			sc->sc_cblk[seg].cb_nextconbk = 0;
 		} else {

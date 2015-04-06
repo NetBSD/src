@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_clock_base.c,v 1.1.1.1 2014/08/06 12:36:29 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_clock_base.c,v 1.1.1.1.8.1 2015/04/06 15:18:16 skrll Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_clock_base.c,v 1.1.1.1 2014/08/06 12:36:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_clock_base.c,v 1.1.1.1.8.1 2015/04/06 15:18:16 skrll Exp $");
 
 #include <core/option.h>
 
@@ -488,13 +488,12 @@ nouveau_clock_create_(struct nouveau_object *parent,
 		if (!strncasecmpz(mode, "disabled", arglen)) {
 			clk->ustate = -1;
 		} else {
-			char save = mode[arglen];
+			char *m = kstrndup(mode, arglen, GFP_KERNEL);
 			long v;
 
-			((char *)mode)[arglen] = '\0';
-			if (!kstrtol(mode, 0, &v))
+			if (!kstrtol(m, 0, &v))
 				nouveau_clock_ustate_update(clk, v);
-			((char *)mode)[arglen] = save;
+			kfree(m);
 		}
 	}
 

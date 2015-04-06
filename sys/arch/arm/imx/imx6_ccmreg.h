@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccmreg.h,v 1.2 2014/10/06 10:27:13 ryo Exp $	*/
+/*	$NetBSD: imx6_ccmreg.h,v 1.2.2.1 2015/04/06 15:17:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,12 +31,21 @@
 
 #include <sys/cdefs.h>
 
+/*
+ * PERIPHCLK_N is an arm root clock divider for MPcore interupt controller.
+ * PERIPHCLK_N is equal to, or greater than two.
+ * see "Cortex-A9 MPCore Technical Reference Manual" -
+ *     Chapter 5: Clocks, Resets, and Power Management, 5.1: Clocks.
+ */
+#ifndef IMX6_PERIPHCLK_N
+#define IMX6_PERIPHCLK_N	2
+#endif
+
 #ifndef IMX6_OSC_FREQ
 #define IMX6_OSC_FREQ	(24 * 1000 * 1000)	/* 24MHz */
 #endif
 
 #define IMX6_CCM_SIZE				0x8000
-
 						/* 0x00000000 = 0x020c4000 */
 #define CCM_CCR					0x00000000
 #define CCM_CCDR				0x00000004
@@ -90,6 +99,13 @@
 #define  CCM_CSCMR1_SSI1_CLK_SEL		__BITS(11, 10)
 #define  CCM_CSCMR1_PERCLK_PODF			__BITS(5, 0)
 
+#define CCM_CSCMR2				0x00000020
+#define  CCM_CSCMR2_ESAI_CLK_SEL		__BITS(20, 19)
+#define  CCM_CSCMR2_LDB_DI1_IPU_DIV		__BIT(11)
+#define  CCM_CSCMR2_LDB_DI0_IPU_DIV		__BIT(10)
+#define  CCM_CSCMR2_CAN_CLK_PODF		__BITS(7, 2)
+
+
 #define CCM_CSCDR1				0x00000024
 #define  CCM_CSCDR1_VPU_AXI_PODF		__BITS(25, 27)
 #define  CCM_CSCDR1_USDHC4_PODF			__BITS(22, 24)
@@ -97,6 +113,32 @@
 #define  CCM_CSCDR1_USDHC2_PODF			__BITS(16, 18)
 #define  CCM_CSCDR1_USDHC1_PODF			__BITS(13, 11)
 #define  CCM_CSCDR1_UART_CLK_PODF		__BITS(5, 0)
+
+#define CCM_CS1CDR				0x00000028
+#define CCM_CS2CDR				0x0000002c
+#define  CCM_CS2CDR_ENFC_CLK_PODF		__BITS(26, 21)
+#define  CCM_CS2CDR_ENFC_CLK_PRED		__BITS(20, 18)
+#define  CCM_CS2CDR_ENFC_CLK_SEL		__BITS(17, 16)
+#define  CCM_CS2CDR_LDB_DI1_CLK_SEL		__BITS(14, 12)
+#define  CCM_CS2CDR_LDB_DI0_CLK_SEL		__BITS(11, 9)
+#define  CCM_CS2CDR_SSI2_CLK_PRED		__BITS(8, 6)
+#define  CCM_CS2CDR_SSI2_CLK_PODF		__BITS(5, 0)
+#define CCM_CDCDR				0x00000030
+#define CCM_CHSCCDR				0x00000034
+#define  CCM_CHSCCDR_IPU1_DI1_PRE_CLK_SEL	__BITS(17, 15)
+#define  CCM_CHSCCDR_IPU1_DI1_PODF		__BITS(14, 12)
+#define  CCM_CHSCCDR_IPU1_DI1_CLK_SEL		__BITS(11, 9)
+#define  CCM_CHSCCDR_IPU1_DI0_PRE_CLK_SEL	__BITS(8, 6)
+#define  CCM_CHSCCDR_IPU1_DI0_PODF		__BITS(5, 3)
+#define  CCM_CHSCCDR_IPU1_DI0_CLK_SEL		__BITS(2, 0)
+
+
+#define CCM_CSCDR2				0x00000038
+#define CCM_CSCDR3				0x0000003c
+#define  CCM_CSCDR3_IPU2_HSP_PODF		__BITS(18, 16)
+#define  CCM_CSCDR3_IPU2_HSP_CLK_SEL		__BITS(15, 14)
+#define  CCM_CSCDR3_IPU1_HSP_PODF		__BITS(13, 11)
+#define  CCM_CSCDR3_IPU1_HSP_CLK_SEL		__BITS(10, 9)
 
 #define CCM_CCGR5				0x0000007c
 #define  CCM_CCGR5_UART_SERIAL_CLK_ENABLE(n)	__SHIFTIN(n, __BITS(27, 26))

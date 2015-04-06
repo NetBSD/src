@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.30 2014/11/10 18:52:51 maxv Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.30.2.1 2015/04/06 15:18:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -102,10 +102,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.30 2014/11/10 18:52:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.30.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_inet.h"
-#include "opt_ipsec.h"
 #include "opt_inet_csum.h"
 #include "opt_tcp_debug.h"
 #include "opt_ddb.h"

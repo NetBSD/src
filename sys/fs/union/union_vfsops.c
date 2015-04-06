@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.73 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.73.2.1 2015/04/06 15:18:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.73 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.73.2.1 2015/04/06 15:18:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.73 2014/10/18 08:33:29 snj Exp $"
 #include <fs/union/union.h>
 
 MODULE(MODULE_CLASS_VFS, union, NULL);
-
-VFS_PROTOS(union);
 
 static struct sysctllog *union_sysctl_log;
 
@@ -518,6 +516,7 @@ struct vfsops union_vfsops = {
 	.vfs_statvfs = union_statvfs,
 	.vfs_sync = union_sync,
 	.vfs_vget = union_vget,
+	.vfs_loadvnode = union_loadvnode,
 	.vfs_fhtovp = (void *)eopnotsupp,
 	.vfs_vptofh = (void *)eopnotsupp,
 	.vfs_init = union_init,

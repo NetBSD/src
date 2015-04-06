@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.149 2014/09/05 09:24:48 matt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.149.2.1 2015/04/06 15:18:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,41 +46,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.149 2014/09/05 09:24:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.149.2.1 2015/04/06 15:18:33 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
-#include "veriexec.h"
 
-#include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/resourcevar.h>
 #include <sys/mman.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/conf.h>
-#include <sys/stat.h>
 
-#if NVERIEXEC > 0
-#include <sys/verified_exec.h>
-#endif /* NVERIEXEC > 0 */
- 
 #if defined(PAX_ASLR) || defined(PAX_MPROTECT)
 #include <sys/pax.h>
 #endif /* PAX_ASLR || PAX_MPROTECT */
-
-#include <miscfs/specfs/specdev.h>
 
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
 
-#ifndef COMPAT_ZERODEV
-#define COMPAT_ZERODEV(dev)	(0)
-#endif
+static int uvm_mmap(struct vm_map *, vaddr_t *, vsize_t, vm_prot_t, vm_prot_t,
+		    int, int, struct uvm_object *, voff_t, vsize_t);
 
 static int
 range_test(vaddr_t addr, vsize_t size, bool ismmap)
@@ -301,15 +288,13 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
-	struct vattr va;
 	off_t pos;
-	vsize_t size, pageoff;
+	vsize_t size, pageoff, newsize;
 	vm_prot_t prot, maxprot;
-	int flags, fd;
+	int flags, fd, advice;
 	vaddr_t defaddr;
 	struct file *fp = NULL;
-	struct vnode *vp;
-	void *handle;
+	struct uvm_object *uobj;
 	int error;
 #ifdef PAX_ASLR
 	vaddr_t orig_addr;
@@ -353,9 +338,13 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	 */
 
 	pageoff = (pos & PAGE_MASK);
-	pos  -= pageoff;
-	size += pageoff;			/* add offset */
-	size = (vsize_t)round_page(size);	/* round up */
+	pos    -= pageoff;
+	newsize = size + pageoff;		/* add offset */
+	newsize = (vsize_t)round_page(newsize);	/* round up */
+
+	if (newsize < size)
+		return (ENOMEM);
+	size = newsize;
 
 	/*
 	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr"
@@ -368,8 +357,10 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 			return (EINVAL);
 
 		error = range_test(addr, size, true);
-		if (error)
+		if (error) {
 			return error;
+		}
+
 	} else if (addr == 0 || !(flags & MAP_TRYFIXED)) {
 
 		/*
@@ -393,113 +384,26 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	 * check for file mappings (i.e. not anonymous) and verify file.
 	 */
 
+	advice = UVM_ADV_NORMAL;
 	if ((flags & MAP_ANON) == 0) {
 		if ((fp = fd_getfile(fd)) == NULL)
 			return (EBADF);
-		if (fp->f_type != DTYPE_VNODE) {
-			fd_putfile(fd);
-			return (ENODEV);		/* only mmap vnodes! */
-		}
-		vp = fp->f_vnode;		/* convert to vnode */
-		if (vp->v_type != VREG && vp->v_type != VCHR &&
-		    vp->v_type != VBLK) {
-			fd_putfile(fd);
-			return (ENODEV);  /* only REG/CHR/BLK support mmap */
-		}
-		if (vp->v_type != VCHR && pos < 0) {
-			fd_putfile(fd);
-			return (EINVAL);
-		}
-		if (vp->v_type != VCHR && (off_t)(pos + size) < pos) {
-			fd_putfile(fd);
-			return (EOVERFLOW);		/* no offset wrapping */
-		}
 
-		/* special case: catch SunOS style /dev/zero */
-		if (vp->v_type == VCHR
-		    && (vp->v_rdev == zerodev || COMPAT_ZERODEV(vp->v_rdev))) {
+		if (fp->f_ops->fo_mmap == NULL) {
+			error = ENODEV;
+			goto out;
+		}
+		error = (*fp->f_ops->fo_mmap)(fp, &pos, size, prot, &flags,
+					      &advice, &uobj, &maxprot);
+		if (error) {
+			goto out;
+		}
+		if (uobj == NULL) {
 			flags |= MAP_ANON;
 			fd_putfile(fd);
 			fp = NULL;
 			goto is_anon;
 		}
-
-		/*
-		 * Old programs may not select a specific sharing type, so
-		 * default to an appropriate one.
-		 *
-		 * XXX: how does MAP_ANON fit in the picture?
-		 */
-		if ((flags & (MAP_SHARED|MAP_PRIVATE)) == 0) {
-#if defined(DEBUG)
-			printf("WARNING: defaulted mmap() share type to "
-			   "%s (pid %d command %s)\n", vp->v_type == VCHR ?
-			   "MAP_SHARED" : "MAP_PRIVATE", p->p_pid,
-			    p->p_comm);
-#endif
-			if (vp->v_type == VCHR)
-				flags |= MAP_SHARED;	/* for a device */
-			else
-				flags |= MAP_PRIVATE;	/* for a file */
-		}
-
-		/*
-		 * MAP_PRIVATE device mappings don't make sense (and aren't
-		 * supported anyway).  However, some programs rely on this,
-		 * so just change it to MAP_SHARED.
-		 */
-		if (vp->v_type == VCHR && (flags & MAP_PRIVATE) != 0) {
-			flags = (flags & ~MAP_PRIVATE) | MAP_SHARED;
-		}
-
-		/*
-		 * now check protection
-		 */
-
-		maxprot = VM_PROT_EXECUTE;
-
-		/* check read access */
-		if (fp->f_flag & FREAD)
-			maxprot |= VM_PROT_READ;
-		else if (prot & PROT_READ) {
-			fd_putfile(fd);
-			return (EACCES);
-		}
-
-		/* check write access, shared case first */
-		if (flags & MAP_SHARED) {
-			/*
-			 * if the file is writable, only add PROT_WRITE to
-			 * maxprot if the file is not immutable, append-only.
-			 * otherwise, if we have asked for PROT_WRITE, return
-			 * EPERM.
-			 */
-			if (fp->f_flag & FWRITE) {
-				vn_lock(vp, LK_SHARED | LK_RETRY);
-				error = VOP_GETATTR(vp, &va, l->l_cred);
-				VOP_UNLOCK(vp);
-				if (error) {
-					fd_putfile(fd);
-					return (error);
-				}
-				if ((va.va_flags &
-				    (SF_SNAPSHOT|IMMUTABLE|APPEND)) == 0)
-					maxprot |= VM_PROT_WRITE;
-				else if (prot & PROT_WRITE) {
-					fd_putfile(fd);
-					return (EPERM);
-				}
-			}
-			else if (prot & PROT_WRITE) {
-				fd_putfile(fd);
-				return (EACCES);
-			}
-		} else {
-			/* MAP_PRIVATE mappings can always write to */
-			maxprot |= VM_PROT_WRITE;
-		}
-		handle = vp;
-
 	} else {		/* MAP_ANON case */
 		/*
 		 * XXX What do we do about (MAP_SHARED|MAP_PRIVATE) == 0?
@@ -508,40 +412,10 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 			return (EINVAL);
 
  is_anon:		/* label for SunOS style /dev/zero */
-		handle = NULL;
+		uobj = NULL;
 		maxprot = VM_PROT_ALL;
 		pos = 0;
 	}
-
-#if NVERIEXEC > 0
-	if (handle != NULL) {
-		/*
-		 * Check if the file can be executed indirectly.
-		 *
-		 * XXX: This gives false warnings about "Incorrect access type"
-		 * XXX: if the mapping is not executable. Harmless, but will be
-		 * XXX: fixed as part of other changes.
-		 */
-		if (veriexec_verify(l, handle, "(mmap)", VERIEXEC_INDIRECT,
-		    NULL)) {
-			/*
-			 * Don't allow executable mappings if we can't
-			 * indirectly execute the file.
-			 */
-			if (prot & VM_PROT_EXECUTE) {
-			     	if (fp != NULL)
-					fd_putfile(fd);
-				return (EPERM);
-			}
-
-			/*
-			 * Strip the executable bit from 'maxprot' to make sure
-			 * it can't be made executable later.
-			 */
-			maxprot &= ~VM_PROT_EXECUTE;
-		}
-	}
-#endif /* NVERIEXEC > 0 */
 
 #ifdef PAX_MPROTECT
 	pax_mprotect(l, &prot, &maxprot);
@@ -556,12 +430,12 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	 */
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
-	    flags, handle, pos, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	    flags, advice, uobj, pos, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 
-	if (error == 0)
-		/* remember to add offset */
-		*retval = (register_t)(addr + pageoff);
+	/* remember to add offset */
+	*retval = (register_t)(addr + pageoff);
 
+ out:
      	if (fp != NULL)
 		fd_putfile(fd);
 
@@ -1045,21 +919,18 @@ sys_munlockall(struct lwp *l, const void *v, register_t *retval)
  * uvm_mmap: internal version of mmap
  *
  * - used by sys_mmap and various framebuffers
- * - handle is a vnode pointer or NULL for MAP_ANON
+ * - uobj is a struct uvm_object pointer or NULL for MAP_ANON
  * - caller must page-align the file offset
  */
 
 int
 uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
-    vm_prot_t maxprot, int flags, void *handle, voff_t foff, vsize_t locklimit)
+    vm_prot_t maxprot, int flags, int advice, struct uvm_object *uobj,
+    voff_t foff, vsize_t locklimit)
 {
-	struct uvm_object *uobj;
-	struct vnode *vp;
 	vaddr_t align = 0;
 	int error;
-	int advice = UVM_ADV_NORMAL;
 	uvm_flag_t uvmflag = 0;
-	bool needwritemap;
 
 	/*
 	 * check params
@@ -1125,9 +996,8 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	 */
 
 	if (flags & MAP_ANON) {
-		KASSERT(handle == NULL);
+		KASSERT(uobj == NULL);
 		foff = UVM_UNKNOWN_OFFSET;
-		uobj = NULL;
 		if ((flags & MAP_SHARED) == 0)
 			/* XXX: defer amap create */
 			uvmflag |= UVM_FLAG_COPYONW;
@@ -1136,74 +1006,9 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 			uvmflag |= UVM_FLAG_OVERLAY;
 
 	} else {
-		KASSERT(handle != NULL);
-		vp = (struct vnode *)handle;
-
-		/*
-		 * Don't allow mmap for EXEC if the file system
-		 * is mounted NOEXEC.
-		 */
-		if ((prot & PROT_EXEC) != 0 &&
-		    (vp->v_mount->mnt_flag & MNT_NOEXEC) != 0)
-			return (EACCES);
-
-		if (vp->v_type != VCHR) {
-			error = VOP_MMAP(vp, prot, curlwp->l_cred);
-			if (error) {
-				return error;
-			}
-			vref(vp);
-			uobj = &vp->v_uobj;
-
-			/*
-			 * If the vnode is being mapped with PROT_EXEC,
-			 * then mark it as text.
-			 */
-			if (prot & PROT_EXEC) {
-				vn_markexec(vp);
-			}
-		} else {
-			int i = maxprot;
-
-			/*
-			 * XXX Some devices don't like to be mapped with
-			 * XXX PROT_EXEC or PROT_WRITE, but we don't really
-			 * XXX have a better way of handling this, right now
-			 */
-			do {
-				uobj = udv_attach((void *) &vp->v_rdev,
-				    (flags & MAP_SHARED) ? i :
-				    (i & ~VM_PROT_WRITE), foff, size);
-				i--;
-			} while ((uobj == NULL) && (i > 0));
-			if (uobj == NULL)
-				return EINVAL;
-			advice = UVM_ADV_RANDOM;
-		}
+		KASSERT(uobj != NULL);
 		if ((flags & MAP_SHARED) == 0) {
 			uvmflag |= UVM_FLAG_COPYONW;
-		}
-
-		/*
-		 * Set vnode flags to indicate the new kinds of mapping.
-		 * We take the vnode lock in exclusive mode here to serialize
-		 * with direct I/O.
-		 *
-		 * Safe to check for these flag values without a lock, as
-		 * long as a reference to the vnode is held.
-		 */
-		needwritemap = (vp->v_iflag & VI_WRMAP) == 0 &&
-			(flags & MAP_SHARED) != 0 &&
-			(maxprot & VM_PROT_WRITE) != 0;
-		if ((vp->v_vflag & VV_MAPPED) == 0 || needwritemap) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			vp->v_vflag |= VV_MAPPED;
-			if (needwritemap) {
-				mutex_enter(vp->v_interlock);
-				vp->v_iflag |= VI_WRMAP;
-				mutex_exit(vp->v_interlock);
-			}
-			VOP_UNLOCK(vp);
 		}
 	}
 
@@ -1266,4 +1071,48 @@ uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
 		return VM_DEFAULT_ADDRESS_TOPDOWN(base, sz);
 	else
 		return VM_DEFAULT_ADDRESS_BOTTOMUP(base, sz);
+}
+
+int
+uvm_mmap_dev(struct proc *p, void **addrp, size_t len, dev_t dev,
+    off_t off)
+{
+	struct uvm_object *uobj;
+	int error, flags, prot;
+
+	flags = MAP_SHARED;
+	prot = VM_PROT_READ | VM_PROT_WRITE;
+	if (*addrp)
+		flags |= MAP_FIXED;
+	else
+		*addrp = (void *)p->p_emul->e_vm_default_addr(p,
+		    (vaddr_t)p->p_vmspace->vm_daddr, len);
+
+	uobj = udv_attach(dev, prot, off, len);
+	if (uobj == NULL)
+		return EINVAL;
+
+	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
+			 (vsize_t)len, prot, prot, flags, UVM_ADV_RANDOM,
+			 uobj, off, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	return error;
+}
+
+int
+uvm_mmap_anon(struct proc *p, void **addrp, size_t len)
+{
+	int error, flags, prot;
+
+	flags = MAP_PRIVATE | MAP_ANON;
+	prot = VM_PROT_READ | VM_PROT_WRITE;
+	if (*addrp)
+		flags |= MAP_FIXED;
+	else
+		*addrp = (void *)p->p_emul->e_vm_default_addr(p,
+		    (vaddr_t)p->p_vmspace->vm_daddr, len);
+
+	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
+			 (vsize_t)len, prot, prot, flags, UVM_ADV_NORMAL,
+			 NULL, 0, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.136 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.136.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136.4.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -653,10 +653,10 @@ rip6_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-rip6_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+rip6_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
-	struct sockaddr_in6 *addr;
+	struct sockaddr_in6 *addr = (struct sockaddr_in6 *)nam;
 	struct ifaddr *ia = NULL;
 	int error = 0;
 
@@ -664,8 +664,7 @@ rip6_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(in6p != NULL);
 	KASSERT(nam != NULL);
 
-	addr = mtod(nam, struct sockaddr_in6 *);
-	if (nam->m_len != sizeof(*addr))
+	if (addr->sin6_len != sizeof(*addr))
 		return EINVAL;
 	if (IFNET_EMPTY() || addr->sin6_family != AF_INET6)
 		return EADDRNOTAVAIL;

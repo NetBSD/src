@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitNativeX86_common.c,v 1.6 2014/06/17 19:33:20 alnsn Exp $	*/
+/*	$NetBSD: sljitNativeX86_common.c,v 1.6.4.1 2015/04/06 15:18:18 skrll Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -1749,7 +1749,7 @@ static sljit_si emit_mul(struct sljit_compiler *compiler,
 			*(sljit_si*)inst = (sljit_si)src2w;
 		}
 		else {
-			EMIT_MOV(compiler, TMP_REG2, 0, SLJIT_IMM, src1w);
+			EMIT_MOV(compiler, TMP_REG2, 0, SLJIT_IMM, src2w);
 			if (dst_r != src1)
 				EMIT_MOV(compiler, dst_r, 0, src1, src1w);
 			inst = emit_x86_instruction(compiler, 2, dst_r, 0, TMP_REG2, 0);

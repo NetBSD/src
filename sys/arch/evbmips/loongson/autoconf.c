@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2013/03/13 21:17:43 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.14.1 2015/04/06 15:17:56 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,8 +35,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_md.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2013/03/13 21:17:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.14.1 2015/04/06 15:17:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2013/03/13 21:17:43 macallan Exp $"
 #include <sys/cpu.h>
 #include <evbmips/loongson/autoconf.h>
 
+#ifndef MEMORY_DISK_IS_ROOT
 static void	findroot(void);
+#endif
 
 enum devclass bootdev_class = DV_DULL;
 char          bootdev[16];
@@ -74,7 +78,9 @@ cpu_configure(void)
 void
 cpu_rootconf(void)
 {
+#ifndef MEMORY_DISK_IS_ROOT
 	findroot();
+#endif
 
 	printf("boot device: %s\n",
 		booted_device ? device_xname(booted_device) : "<unknown>");
@@ -85,6 +91,7 @@ cpu_rootconf(void)
 extern char	bootstring[];
 extern int	netboot;
 
+#ifndef MEMORY_DISK_IS_ROOT
 static void
 findroot(void)
 {
@@ -111,6 +118,7 @@ findroot(void)
 
 	return;
 }
+#endif
 
 void
 device_register(device_t dev, void *aux)

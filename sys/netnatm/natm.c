@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.45 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.45.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.45 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.45.4.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -106,7 +106,7 @@ natm_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-natm_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+natm_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 

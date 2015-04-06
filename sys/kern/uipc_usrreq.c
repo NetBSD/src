@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.172 2014/10/08 16:13:02 taca Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.172.2.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.172 2014/10/08 16:13:02 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.172.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -920,7 +920,8 @@ unp_sockaddr(struct socket *so, struct mbuf *nam)
  * what it calls "abstract" unix sockets.
  */
 static struct sockaddr_un *
-makeun(struct mbuf *nam, size_t *addrlen) {
+makeun(struct mbuf *nam, size_t *addrlen)
+{
 	struct sockaddr_un *sun;
 
 	*addrlen = nam->m_len + 1;
@@ -930,8 +931,24 @@ makeun(struct mbuf *nam, size_t *addrlen) {
 	return sun;
 }
 
+/*
+ * we only need to perform this allocation until syscalls other than
+ * bind are adjusted to use sockaddr_big.
+ */
+static struct sockaddr_un *
+makeun_sb(struct sockaddr *nam, size_t *addrlen)
+{
+	struct sockaddr_un *sun;
+
+	*addrlen = nam->sa_len + 1;
+	sun = malloc(*addrlen, M_SONAME, M_WAITOK);
+	memcpy(sun, nam, nam->sa_len);
+	*(((char *)sun) + nam->sa_len) = '\0';
+	return sun;
+}
+
 static int
-unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+unp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
 	struct unpcb *unp;
@@ -962,7 +979,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	sounlock(so);
 
 	p = l->l_proc;
-	sun = makeun(nam, &addrlen);
+	sun = makeun_sb(nam, &addrlen);
 
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
@@ -1075,7 +1092,7 @@ unp_abort(struct socket *so)
 }
 
 static int
-unp_connect1(struct socket *so, struct socket *so2)
+unp_connect1(struct socket *so, struct socket *so2, struct lwp *l)
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct unpcb *unp2;
@@ -1099,6 +1116,18 @@ unp_connect1(struct socket *so, struct socket *so2)
 
 	unp2 = sotounpcb(so2);
 	unp->unp_conn = unp2;
+
+	if ((so->so_proto->pr_flags & PR_CONNREQUIRED) != 0) {
+		unp2->unp_connid.unp_pid = l->l_proc->p_pid;
+		unp2->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
+		unp2->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
+		unp2->unp_flags |= UNP_EIDSVALID;
+		if (unp2->unp_flags & UNP_EIDSBIND) {
+			unp->unp_connid = unp2->unp_connid;
+			unp->unp_flags |= UNP_EIDSVALID;
+		}
+	}
+
 	switch (so->so_type) {
 
 	case SOCK_DGRAM:
@@ -1208,17 +1237,9 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			unp3->unp_addrlen = unp2->unp_addrlen;
 		}
 		unp3->unp_flags = unp2->unp_flags;
-		unp3->unp_connid.unp_pid = l->l_proc->p_pid;
-		unp3->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
-		unp3->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
-		unp3->unp_flags |= UNP_EIDSVALID;
-		if (unp2->unp_flags & UNP_EIDSBIND) {
-			unp->unp_connid = unp2->unp_connid;
-			unp->unp_flags |= UNP_EIDSVALID;
-		}
 		so2 = so3;
 	}
-	error = unp_connect1(so, so2);
+	error = unp_connect1(so, so2, l);
 	if (error) {
 		sounlock(so);
 		goto bad;
@@ -1269,7 +1290,7 @@ unp_connect2(struct socket *so, struct socket *so2)
 
 	KASSERT(solocked2(so, so2));
 
-	error = unp_connect1(so, so2);
+	error = unp_connect1(so, so2, curlwp);
 	if (error)
 		return error;
 
@@ -1285,6 +1306,10 @@ unp_connect2(struct socket *so, struct socket *so2)
 	case SOCK_SEQPACKET: /* FALLTHROUGH */
 	case SOCK_STREAM:
 		unp2->unp_conn = unp;
+		if ((so->so_proto->pr_flags & PR_CONNREQUIRED) != 0) {
+			unp->unp_connid = unp2->unp_connid;
+			unp->unp_flags |= UNP_EIDSVALID;
+		}
 		soisconnected(so);
 		soisconnected(so2);
 		break;
@@ -1702,7 +1727,14 @@ unp_gc(file_t *dp)
 			if ((fp->f_flag & FDEFER) != 0) {
 				atomic_and_uint(&fp->f_flag, ~FDEFER);
 				unp_defer--;
-				KASSERT(fp->f_count != 0);
+				if (fp->f_count == 0) {
+					/*
+					 * XXX: closef() doesn't pay attention
+					 * to FDEFER
+					 */
+					mutex_exit(&fp->f_lock);
+					continue;
+				}
 			} else {
 				if (fp->f_count == 0 ||
 				    (fp->f_flag & FMARK) != 0 ||

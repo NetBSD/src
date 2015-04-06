@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.676 2014/11/22 14:31:53 njoly Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.676.2.1 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.684 2014/11/22 14:30:57 njoly Exp
+ *	NetBSD: usbdevs,v 1.695 2015/04/05 09:18:13 skrll Exp
  */
 
 /*
@@ -493,6 +493,7 @@
 #define	USB_VENDOR_MOBILITY	0x1342		/* Mobility */
 #define	USB_VENDOR_DICKSMITH	0x1371		/* Dick Smith Electronics */
 #define	USB_VENDOR_NETGEAR3	0x1385		/* Netgear */
+#define	USB_VENDOR_VALIDITY	0x138a		/* Validity Sensors, Inc. */
 #define	USB_VENDOR_BALTECH	0x13ad		/* Baltech */
 #define	USB_VENDOR_CISCOLINKSYS	0x13b1		/* Cisco-Linksys */
 #define	USB_VENDOR_SHARK	0x13d2		/* Shark */
@@ -557,9 +558,12 @@
 #define	USB_VENDOR_PARA	0x20b8		/* PARA Industrial */
 #define	USB_VENDOR_TRENDNET	0x20f4		/* TRENDnet */
 #define	USB_VENDOR_DLINK3	0x2101		/* D-Link */
+#define	USB_VENDOR_VIALABS	0x2109		/* VIA Labs */
 #define	USB_VENDOR_ERICSSON	0x2282		/* Ericsson */
 #define	USB_VENDOR_MOTOROLA2	0x22b8		/* Motorola */
 #define	USB_VENDOR_PINNACLE	0x2304		/* Pinnacle Systems */
+#define	USB_VENDOR_ARDUINO	0x2341		/* Arduino SA */
+#define	USB_VENDOR_TPLINK	0x2357		/* TP-Link */
 #define	USB_VENDOR_TRIPPLITE	0x2478		/* Tripp-Lite */
 #define	USB_VENDOR_HIROSE	0x2631		/* Hirose Electric */
 #define	USB_VENDOR_NHJ	0x2770		/* NHJ */
@@ -580,6 +584,7 @@
 #define	USB_VENDOR_SWEEX	0x5173		/* Sweex */
 #define	USB_VENDOR_ONSPEC2	0x55aa		/* OnSpec Electronic Inc. */
 #define	USB_VENDOR_ZINWELL	0x5a57		/* Zinwell */
+#define	USB_VENDOR_INGENIC	0x601a		/* Ingenic Semiconductor Ltd. */
 #define	USB_VENDOR_SITECOM	0x6189		/* Sitecom */
 #define	USB_VENDOR_SPRINGERDESIGN	0x6400		/* Springer Design, Inc. */
 #define	USB_VENDOR_ARKMICROCHIPS	0x6547		/* ArkMicroChips */
@@ -592,6 +597,10 @@
 #define	USB_VENDOR_NETGEAR4	0x9846		/* Netgear */
 #define	USB_VENDOR_xxFTDI	0x9e88		/* FTDI */
 #define	USB_VENDOR_CACE	0xcace		/* CACE Technologies */
+#define	USB_VENDOR_COMPARE	0xcdab		/* Compare */
+#define	USB_VENDOR_EMPIA	0xeb1a		/* eMPIA Technology */
+#define	USB_VENDOR_DATAAPEX	0xdaae		/* DataApex */
+#define	USB_VENDOR_EVOLUTION	0xdeee		/* Evolution Robotics */
 #define	USB_VENDOR_EMPIA	0xeb1a		/* eMPIA Technology */
 #define	USB_VENDOR_HP2	0xf003		/* Hewlett Packard */
 #define	USB_VENDOR_USRP	0xfffe		/* GNU Radio USRP */
@@ -913,6 +922,7 @@
 #define	USB_PRODUCT_ASUSTEK_RTL8192SU_1	0x1791		/* RTL8192SU */
 #define	USB_PRODUCT_ASUSTEK_RTL8192CU	0x17ab		/* RTL8192CU */
 #define	USB_PRODUCT_ASUSTEK_USBN10NANO	0x17ba		/* USB-N10 Nano */
+#define	USB_PRODUCT_ASUSTEK_RTL8192CU_3	0x17c0		/* RTL8192CU_3 */
 #define	USB_PRODUCT_ASUSTEK_MYPAL_A730	0x4202		/* MyPal A730 */
 #define	USB_PRODUCT_ASUSTEK2_USBN11	0x0b05		/* USB-N11 */
 
@@ -1024,9 +1034,13 @@
 #define	USB_PRODUCT_BELKIN_F5U237	0x0237		/* F5U237 USB 2.0 7-Port Hub */
 #define	USB_PRODUCT_BELKIN_F5U409	0x0409		/* F5U409 Serial */
 #define	USB_PRODUCT_BELKIN_UPS	0x0980		/* UPS */
+#define	USB_PRODUCT_BELKIN_RTL8192CU_2	0x1004		/* RTL8192CU */
 #define	USB_PRODUCT_BELKIN_RTL8188CU	0x1102		/* RTL8188CU */
+#define	USB_PRODUCT_BELKIN_RTL8188CUS	0x11f2		/* RTL8188CUS */
 #define	USB_PRODUCT_BELKIN_F5U120	0x1203		/* F5U120-PC Hub */
 #define	USB_PRODUCT_BELKIN_RTL8192CU	0x2102		/* RTL8192CU */
+#define	USB_PRODUCT_BELKIN_F7D2102	0x2103		/* F7D2102 */
+#define	USB_PRODUCT_BELKIN_RTL8192CU_1	0x21f2		/* RTL8192CU */
 #define	USB_PRODUCT_BELKIN_ZD1211B	0x4050		/* ZD1211B */
 #define	USB_PRODUCT_BELKIN_F5D5055	0x5055		/* F5D5055 Ethernet adapter */
 #define	USB_PRODUCT_BELKIN_F5D7050	0x7050		/* F5D7050 54g USB Network Adapter */
@@ -1118,6 +1132,7 @@
 #define	USB_PRODUCT_CHICONY_RTL8188CUS_3	0xaff9		/* RTL8188CUS */
 #define	USB_PRODUCT_CHICONY_RTL8188CUS_4	0xaffa		/* RTL8188CUS */
 #define	USB_PRODUCT_CHICONY_RTL8188CUS_5	0xaffb		/* RTL8188CUS */
+#define	USB_PRODUCT_CHICONY_RTL8188CUS_6	0xaffc		/* RTL8188CUS */
 #define	USB_PRODUCT_CHICONY2_TWINKLECAM	0x600d		/* TwinkleCam USB camera */
 
 /* CH Products */
@@ -1151,6 +1166,9 @@
 #define	USB_PRODUCT_COMPAQ_PJB100	0x504a		/* Personal Jukebox PJB100 */
 #define	USB_PRODUCT_COMPAQ_IPAQLINUX	0x505a		/* iPAQ Linux */
 #define	USB_PRODUCT_COMPAQ_HNE200	0x8511		/* HNE-200 USB Ethernet adapter */
+
+/* Compare products */
+#define	USB_PRODUCT_COMPARE_RTL8192CU	0x8010		/* RTL8192CU */
 
 /* Composite Corp products looks the same as "TANGTOP" */
 #define	USB_PRODUCT_COMPOSITE_USBPS2	0x0001		/* USB to PS2 Adaptor */
@@ -1307,6 +1325,7 @@
 #define	USB_PRODUCT_DISPLAYLINK_NL571	0x01d7		/* HP USB DVI */
 #define	USB_PRODUCT_DISPLAYLINK_M01061	0x01e2		/* Lenovo DVI */
 #define	USB_PRODUCT_DISPLAYLINK_NBDOCK	0x0215		/* VideoHome NBdock1920 */
+#define	USB_PRODUCT_DISPLAYLINK_GXDVIU2B	0x0223		/* BUFFALO GX-DVI/U2B */
 #define	USB_PRODUCT_DISPLAYLINK_SWDVI	0x024c		/* SUNWEIT DVI */
 #define	USB_PRODUCT_DISPLAYLINK_LUM70	0x02a9		/* Lilliput UM-70 */
 #define	USB_PRODUCT_DISPLAYLINK_LCD8000UD_DVI	0x02b8		/* LCD-8000UD-DVI */
@@ -1326,6 +1345,8 @@
 #define	USB_PRODUCT_DLINK_RTL8188CU	0x3308		/* RTL8188CU */
 #define	USB_PRODUCT_DLINK_RTL8192CU_2	0x3309		/* RTL8192CU */
 #define	USB_PRODUCT_DLINK_RTL8192CU_3	0x330a		/* RTL8192CU */
+#define	USB_PRODUCT_DLINK_RTL8192CU_4	0x330b		/* RTL8192CU */
+#define	USB_PRODUCT_DLINK_DWA131B	0x330d		/* DWA-131 rev B */
 #define	USB_PRODUCT_DLINK_DWL122	0x3700		/* Wireless DWL122 */
 #define	USB_PRODUCT_DLINK_DWLG120	0x3701		/* DWL-G120 */
 #define	USB_PRODUCT_DLINK_DWL120F	0x3702		/* DWL-120 rev F */
@@ -1631,6 +1652,7 @@
 #define	USB_PRODUCT_GUILLEMOT_HWNUM300	0xe031		/* HWNUm-300 */
 #define	USB_PRODUCT_GUILLEMOT_HWGUN54	0xe032		/* HWGUn-54 */
 #define	USB_PRODUCT_GUILLEMOT_HWNUP150	0xe033		/* HWNUP-150 */
+#define	USB_PRODUCT_GUILLEMOT_RTL8192CU	0xe035		/* RTL8192CU */
 
 /* Hagiwara products */
 #define	USB_PRODUCT_HAGIWARA_FGSM	0x0002		/* FlashGate SmartMedia Card Reader */
@@ -1666,6 +1688,7 @@
 #define	USB_PRODUCT_HAWKING_RT2870_4	0x0017		/* RT2870 */
 #define	USB_PRODUCT_HAWKING_RT2870_5	0x0018		/* RT2870 */
 #define	USB_PRODUCT_HAWKING_RTL8192CU	0x0019		/* RTL8192CU */
+#define	USB_PRODUCT_HAWKING_RTL8192CU_2	0x0020		/* RTL8192CU */
 #define	USB_PRODUCT_HAWKING_UF100	0x400c		/* 10/100 USB Ethernet */
 
 /* Hitachi, Ltd. products */
@@ -1734,6 +1757,7 @@
 /* Huawei Technologies products */
 #define	USB_PRODUCT_HUAWEI_MOBILE	0x1001		/* Huawei Mobile */
 #define	USB_PRODUCT_HUAWEI_E220	0x1003		/* Huawei E220 */
+#define	USB_PRODUCT_HUAWEI_U8150	0x1037		/* Huawei U8150 */
 #define	USB_PRODUCT_HUAWEI_EM770W	0x1404		/* Huawei EM770W */
 #define	USB_PRODUCT_HUAWEI_E1750	0x140c		/* Huawei E1750 */
 #define	USB_PRODUCT_HUAWEI_E1750INIT	0x1446		/* Huawei E1750 USB CD */
@@ -1833,6 +1857,8 @@
 #define	USB_PRODUCT_IODATA_RT3072_2	0x0945		/* RT3072 */
 #define	USB_PRODUCT_IODATA_RT3072_3	0x0947		/* RT3072 */
 #define	USB_PRODUCT_IODATA_RT3072_4	0x0948		/* RT3072 */
+#define	USB_PRODUCT_IODATA_WNG150UM	0x094c		/* WN-G150UM */
+#define	USB_PRODUCT_IODATA_RTL8192CU	0x0950		/* RTL8192CU */
 #define	USB_PRODUCT_IODATA_USBRSAQ	0x0a03		/* USB serial adapter USB-RSAQ1 */
 #define	USB_PRODUCT_IODATA_USBRSAQ5	0x0a0e		/* USB serial adapter USB-RSAQ5 */
 
@@ -2089,6 +2115,7 @@
 #define	USB_PRODUCT_MELCO_KG54AI	0x0067		/* WLI-U2-KG54-AI WLAN */
 #define	USB_PRODUCT_MELCO_LUAU2GT	0x006e		/* LUA-U2-GT Ethernet */
 #define	USB_PRODUCT_MELCO_NINWIFI	0x008b		/* Nintendo Wi-Fi */
+#define	USB_PRODUCT_MELCO_PCOPRS1	0x00b3		/* RemoteStation PC-OP-RS1 */
 #define	USB_PRODUCT_MELCO_SG54HP	0x00d8		/* WLI-U2-SG54HP */
 #define	USB_PRODUCT_MELCO_G54HP	0x00d9		/* WLI-U2-G54HP */
 #define	USB_PRODUCT_MELCO_KG54L	0x00da		/* WLI-U2-KG54L */
@@ -2172,6 +2199,7 @@
 #define	USB_PRODUCT_MICROSOFT_XBOX_CONTROLLER_S10	0x0285		/* Xbox Controller S (1.0) */
 #define	USB_PRODUCT_MICROSOFT_XBOX_CONTROLLER_HUB	0x0288		/* Xbox Controller Hub */
 #define	USB_PRODUCT_MICROSOFT_XBOX_CONTROLLER_S12	0x0289		/* Xbox Controller S (1.2) */
+#define	USB_PRODUCT_MICROSOFT_XBOX_360_WIRELESS_RECEIVER	0x0291		/* Xbox 360 Wireless Receiver */
 #define	USB_PRODUCT_MICROSOFT_24GHZ_XCVR10	0x071d		/* 2.4GHz Transceiver V1.0 */
 #define	USB_PRODUCT_MICROSOFT_24GHZ_XCVR20	0x071f		/* 2.4GHz Transceiver V2.0 */
 
@@ -2686,6 +2714,7 @@
 #define	USB_PRODUCT_REALTEK_RTL8192CE	0x817c		/* RTL8192CE */
 #define	USB_PRODUCT_REALTEK_RTL8188RU	0x817d		/* RTL8188RU */
 #define	USB_PRODUCT_REALTEK_RTL8188CE_1	0x817e		/* RTL8188CE */
+#define	USB_PRODUCT_REALTEK_RTL8188RU_3	0x817f		/* RTL8188RU */
 #define	USB_PRODUCT_REALTEK_RTL8187	0x8187		/* RTL8187 */
 #define	USB_PRODUCT_REALTEK_RTL8187B_0	0x8189		/* RTL8187B */
 #define	USB_PRODUCT_REALTEK_RTL8188CUS	0x818a		/* RTL8188CUS */
@@ -2916,6 +2945,7 @@
 #define	USB_PRODUCT_SILABS2_DCU11CLONE	0xaa26		/* DCU-11 clone */
 #define	USB_PRODUCT_SILABS_CP210X_1	0xea60		/* CP210x Serial */
 #define	USB_PRODUCT_SILABS_CP210X_2	0xea61		/* CP210x Serial */
+#define	USB_PRODUCT_SILABS_EC3	0x8044		/* EC3 USB Debug Adapter */
 
 /* Silicon Portals Inc. */
 #define	USB_PRODUCT_SILICONPORTALS_YAPPH_NF	0x0200		/* YAP Phone (no firmware) */
@@ -2986,10 +3016,14 @@
 
 /* SMSC products */
 #define	USB_PRODUCT_SMSC_2020HUB	0x2020		/* USB Hub */
+#define	USB_PRODUCT_SMSC_2512HUB	0x2512		/* USB 2.0 2-Port Hub */
+#define	USB_PRODUCT_SMSC_2513HUB	0x2513		/* USB 2.0 3-Port Hub */
+#define	USB_PRODUCT_SMSC_2514HUB	0x2514		/* USB 2.0 4-Port Hub */
 #define	USB_PRODUCT_SMSC_LAN7500	0x7500		/* LAN7500 USB 2.0 gigabit ethernet device */
 #define	USB_PRODUCT_SMSC_SMSC9500	0x9500		/* SMSC9500 Ethernet device */
 #define	USB_PRODUCT_SMSC_SMSC9505	0x9505		/* SMSC9505 Ethernet device */
-#define	USB_PRODUCT_SMSC_SMSC9512	0x9512		/* SMSC9512 USB Hub */
+#define	USB_PRODUCT_SMSC_SMSC9512	0x9512		/* SMSC9512 USB Hub & Ethernet device */
+#define	USB_PRODUCT_SMSC_SMSC9514	0x9514		/* SMSC9514 USB Hub & Ethernet device */
 #define	USB_PRODUCT_SMSC_LAN9530	0x9530		/* LAN9530 Ethernet Device */
 #define	USB_PRODUCT_SMSC_LAN9730	0x9730		/* LAN9730 Ethernet Device */
 #define	USB_PRODUCT_SMSC_SMSC9500_SAL10	0x9900		/* SMSC9500 Ethernet device (SAL10) */
@@ -3145,10 +3179,13 @@
 #define	USB_PRODUCT_TENX_MISSILE	0x0202		/* Missile Launcher */
 #define	USB_PRODUCT_TENX_TEMPER	0x660c		/* TEMPer sensor */
 
-/* Texas Intel products */
+/* Texas Instruments products */
 #define	USB_PRODUCT_TI_UTUSB41	0x1446		/* UT-USB41 hub */
 #define	USB_PRODUCT_TI_TUSB2046	0x2046		/* TUSB2046 hub */
+#define	USB_PRODUCT_TI_TUSB3410	0x3410		/* TUSB3410 */
 #define	USB_PRODUCT_TI_NEXII	0x5409		/* Nex II Digital */
+#define	USB_PRODUCT_TI_MSP430_JTAG	0xf430		/* MSP-FET430UIF JTAG */
+#define	USB_PRODUCT_TI_MSP430	0xf432		/* MSP-FET430UIF */
 
 /* Thrustmaster products */
 #define	USB_PRODUCT_THRUST_FUSION_PAD	0xa0a3		/* Fusion Digital Gamepad */
@@ -3167,6 +3204,9 @@
 #define	USB_PRODUCT_TOSHIBA_RT3070	0x0a07		/* RT3070 */
 #define	USB_PRODUCT_TOSHIBA_AX88179	0x0a13		/* AX88179 USB 3.0 gigabit ethernet controller */
 #define	USB_PRODUCT_TOSHIBA_HSDPA_MODEM_EU870DT1	0x1302		/* HSDPA 3G Modem Card */
+
+/* TP-Link products */
+#define	USB_PRODUCT_TPLINK_RTL8192CU	0x0100		/* RTL8192CU */
 
 /* Trek Technology products */
 #define	USB_PRODUCT_TREK_THUMBDRIVE	0x1111		/* ThumbDrive */
@@ -3240,6 +3280,14 @@
 /* GNU Radio USRP */
 #define	USB_PRODUCT_USRP_USRPv2	0x0002		/* USRP Revision 2 */
 
+/* Validity */
+#define	USB_PRODUCT_VALIDITY_VFS101	0x0001		/* VFS101 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS301	0x0005		/* VFS301 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS451	0x0007		/* VFS451 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS300	0x0008		/* VFS300 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS5011	0x0011		/* VFS5011 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS471	0x003c		/* VFS471 Fingerprint Reader */
+
 /* VidzMedia products */
 #define	USB_PRODUCT_VIDZMEDIA_MONSTERTV	0x4fb1		/* MonsterTV P2H */
 
@@ -3305,6 +3353,7 @@
 #define	USB_PRODUCT_XIRLINK_PCCAM	0x8080		/* IBM PC Camera */
 
 /* Conexant */
+#define	USB_PRODUCT_CONEXANT_MODEM_1	0x1329		/* USB Modem */
 #define	USB_PRODUCT_CONEXANT_PRISM_GT_1	0x2000		/* PrismGT USB 2.0 WLAN */
 #define	USB_PRODUCT_CONEXANT_PRISM_GT_2	0x2002		/* PrismGT USB 2.0 WLAN */
 

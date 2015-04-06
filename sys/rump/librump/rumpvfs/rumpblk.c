@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.58 2014/11/17 14:30:31 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.58.2.1 2015/04/06 15:18:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.58 2014/11/17 14:30:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.58.2.1 2015/04/06 15:18:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -159,7 +159,7 @@ makedefaultlabel(struct disklabel *lp, off_t size, int part)
 	strncpy(lp->d_typename, "rumpd", sizeof(lp->d_typename));
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 
-	lp->d_type = DTYPE_RUMPD;
+	lp->d_type = DKTYPE_RUMPD;
 	lp->d_rpm = 11;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;

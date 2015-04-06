@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.50 2014/07/25 08:10:35 dholland Exp $ */
+/*	$NetBSD: hp.c,v 1.50.4.1 2015/04/06 15:18:03 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.50 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.50.4.1 2015/04/06 15:18:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,17 +324,11 @@ hpioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct disklabel * const lp = sc->sc_disk.dk_label;
 	int	error;
 
+	error = disk_ioctl(&sc->sc_disk, dev, cmd, addr, flag, l); 
+	if (error != EPASSTHROUGH)
+		return error;
+
 	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *lp;
-		return 0;
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = lp;
-		((struct partinfo *)addr)->part =
-		    &lp->d_partitions[DISKPART(dev)];
-		break;
-
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;

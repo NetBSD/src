@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.28 2012/11/18 00:06:56 chs Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.28.14.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -58,21 +58,24 @@ struct ksyms_symtab {
  * Static allocated ELF header.
  * Basic info is filled in at attach, sizes at open.
  */
-#define	SYMTAB		1
-#define	STRTAB		2
-#define	SHSTRTAB	3
-#define	SHBSS		4
-#define	SHCTF		5
-#define NSECHDR		6
+#define	SHNOTE		1
+#define	SYMTAB		2
+#define	STRTAB		3
+#define	SHSTRTAB	4
+#define	SHBSS		5
+#define	SHCTF		6
+#define	NSECHDR		7
 
 #define	NPRGHDR		1
-#define	SHSTRSIZ	42
+#define	SHSTRSIZ	64
 
 struct ksyms_hdr {
 	Elf_Ehdr	kh_ehdr;
 	Elf_Phdr	kh_phdr[NPRGHDR];
 	Elf_Shdr	kh_shdr[NSECHDR];
 	char 		kh_strtab[SHSTRSIZ];
+	/* 0=NameSize, 1=DescSize, 2=Tag, 3="NetB", 4="SD\0\0", 5=Version */
+	int32_t		kh_note[6];
 };
 #endif	/* _KSYMS_PRIVATE */
 
