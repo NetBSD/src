@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.100.2.1 2014/12/17 18:43:47 martin Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.100.2.2 2015/04/06 01:32:33 snj Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.100.2.1 2014/12/17 18:43:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.100.2.2 2015/04/06 01:32:33 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -804,7 +804,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			s = splsoftnet();
 			dr = defrouter_lookup(in6, rt->rt_ifp);
 			if (dr)
-				defrtrlist_del(dr);
+				defrtrlist_del(dr, NULL);
 			else if (!ip6_forwarding) {
 				/*
 				 * Even if the neighbor is not in the default
