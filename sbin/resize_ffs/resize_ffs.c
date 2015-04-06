@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.43 2015/04/06 13:33:42 mlelstv Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.44 2015/04/06 22:44:04 jmcneill Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.43 2015/04/06 13:33:42 mlelstv Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.44 2015/04/06 22:44:04 jmcneill Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -59,11 +59,16 @@ __RCSID("$NetBSD: resize_ffs.c,v 1.43 2015/04/06 13:33:42 mlelstv Exp $");
 #include <strings.h>
 #include <unistd.h>
 
+#include "progress.h"
+
 /* new size of file system, in sectors */
 static int64_t newsize;
 
 /* fd open onto disk device or file */
 static int fd;
+
+/* disk device or file path */
+char *special;
 
 /* must we break up big I/O operations - see checksmallio() */
 static int smallio;
@@ -153,6 +158,7 @@ static unsigned char *iflags;
 int is_ufs2 = 0;
 int needswap = 0;
 int verbose = 0;
+int progress = 0;
 
 static void usage(void) __dead;
 
@@ -1015,6 +1021,8 @@ grow(void)
                                 "cgs");
 		for (i = oldsb->fs_ncg; i < newsb->fs_ncg; i++) {
 			cgs[i] = (struct cg *) cgp;
+			progress_bar(special, "grow cg",
+			    i - oldsb->fs_ncg, newsb->fs_ncg - oldsb->fs_ncg);
 			initcg(i);
 			cgp += cgblksz;
 		}
@@ -1043,6 +1051,8 @@ grow(void)
 	csum_fixup();
 	/* Make fs_dsize match the new reality. */
 	recompute_fs_dsize();
+
+	progress_done();
 }
 /*
  * Call (*fn)() for each inode, passing the inode and its inumber.  The
@@ -1990,6 +2000,8 @@ flush_cgs(void)
 	int i;
 
 	for (i = 0; i < newsb->fs_ncg; i++) {
+		progress_bar(special, "flush cg",
+		    i, newsb->fs_ncg - 1);
 		if (cgflags[i] & CGF_BLKMAPS) {
 			rescan_blkmaps(i);
 		}
@@ -2009,6 +2021,8 @@ flush_cgs(void)
 	if (needswap)
 		ffs_csum_swap(csums,csums,newsb->fs_cssize);
 	writeat(FFS_FSBTODB(newsb, newsb->fs_csaddr), csums, newsb->fs_cssize);
+
+	progress_done();
 }
 /*
  * Write the superblock, both to the main superblock and to each cg's
@@ -2038,8 +2052,12 @@ write_sbs(void)
 		ffs_sb_swap(newsb,newsb);
 	writeat(where /  DEV_BSIZE, newsb, SBLOCKSIZE);
 	for (i = 0; i < oldsb->fs_ncg; i++) {
+		progress_bar(special, "write sb",
+		    i, oldsb->fs_ncg - 1);
 		writeat(FFS_FSBTODB(oldsb, cgsblock(oldsb, i)), newsb, SBLOCKSIZE);
 	}
+
+	progress_done();
 }
 
 /*
@@ -2103,7 +2121,6 @@ main(int argc, char **argv)
 	int SFlag;
 	size_t i;
 
-	char *special;
 	char reply[5];
 
 	newsize = 0;
@@ -2111,10 +2128,13 @@ main(int argc, char **argv)
 	SFlag = 0;
         CheckOnlyFlag = 0;
 
-	while ((ch = getopt(argc, argv, "cs:vy")) != -1) {
+	while ((ch = getopt(argc, argv, "cps:vy")) != -1) {
 		switch (ch) {
                 case 'c':
 			CheckOnlyFlag = 1;
+			break;
+		case 'p':
+			progress = 1;
 			break;
 		case 's':
 			SFlag = 1;
@@ -2218,7 +2238,18 @@ main(int argc, char **argv)
 	 * thing.  SBLOCKSIZE may be an over-estimate, but we do this
 	 * just once, so being generous is cheap. */
 	memcpy(newsb, oldsb, SBLOCKSIZE);
+
+	if (progress) {
+		progress_ttywidth(0);
+		signal(SIGWINCH, progress_ttywidth);
+	}
+
 	loadcgs();
+
+	if (progress && !CheckOnlyFlag) {
+		progress_switch(progress);
+		progress_init();
+	}
 
 	if (newsize > FFS_FSBTODB(oldsb, oldsb->fs_size)) {
 		if (CheckOnlyFlag)
