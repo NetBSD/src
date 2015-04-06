@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.167 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.168 2015/04/06 06:26:21 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.167 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.168 2015/04/06 06:26:21 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.167 2015/04/03 20:01:07 rtr Exp $");
 #define	DOMAINNAME	"oroute"
 CTASSERT(sizeof(struct ifa_xmsghdr) == 20);
 DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
-#else
+#else /* COMPAT_RTSOCK */
 #define	RTM_XVERSION	RTM_VERSION
 #define	RT_XADVANCE(a,b) RT_ADVANCE(a,b)
 #define	RT_XROUNDUP(n)	RT_ROUNDUP(n)
@@ -125,7 +125,7 @@ CTASSERT(sizeof(struct ifa_xmsghdr) == 24);
 DOMAIN_DEFINE(routedomain); /* forward declare and add to link set */
 #undef COMPAT_50
 #undef COMPAT_14
-#endif
+#endif /* COMPAT_RTSOCK */
 
 #ifndef COMPATCALL
 #define	COMPATCALL(name, args)	do { } while (/*CONSTCOND*/ 0)
