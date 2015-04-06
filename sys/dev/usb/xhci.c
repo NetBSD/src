@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.16 2015/03/22 08:09:44 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.17 2015/04/06 18:30:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.16 2015/03/22 08:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.17 2015/04/06 18:30:39 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2188,7 +2188,7 @@ static int xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	return totlen;
 }
 
-/* root hub intrerrupt */
+/* root hub interrupt */
 
 static usbd_status
 xhci_root_intr_transfer(struct usbd_xfer *xfer)
