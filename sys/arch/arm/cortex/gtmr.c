@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.8.2.1 2015/03/11 20:22:55 snj Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.8.2.2 2015/04/06 01:55:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8.2.1 2015/03/11 20:22:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8.2.2 2015/04/06 01:55:53 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8.2.1 2015/03/11 20:22:55 snj Exp $");
 #include <sys/timetc.h>
 
 #include <prop/proplib.h>
+
+#include <arm/locore.h>
 
 #include <arm/cortex/gtmr_var.h>
 
@@ -94,14 +96,14 @@ static void
 gtmr_attach(device_t parent, device_t self, void *aux)
 {
 	struct mpcore_attach_args * const mpcaa = aux;
-        struct gtmr_softc *sc = &gtmr_sc;
+	struct gtmr_softc *sc = &gtmr_sc;
 	prop_dictionary_t dict = device_properties(self);
 	char freqbuf[sizeof("X.XXX SHz")];
 
 	/*
 	 * This runs at a fixed frequency of 1 to 50MHz.
 	 */
-	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);            
+	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
 	KASSERT(sc->sc_freq != 0);
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
@@ -112,7 +114,8 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Enable the virtual counter to be accessed from usermode.
 	 */
-	armreg_cntk_ctl_write(armreg_cntk_ctl_read() | ARM_CNTKCTL_PL0VCTEN);
+	armreg_cntk_ctl_write(armreg_cntk_ctl_read() |
+	    ARM_CNTKCTL_PL0VCTEN | ARM_CNTKCTL_PL0PCTEN);
 
 	self->dv_private = sc;
 	sc->sc_dev = self;
@@ -125,7 +128,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	    device_xname(self), "missing interrupts");
 
 	sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
-	    IST_EDGE | IST_MPSAFE, gtmr_intr, NULL);
+	    IST_LEVEL | IST_MPSAFE, gtmr_intr, NULL);
 	if (sc->sc_global_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);
 	aprint_normal_dev(self, "interrupting on irq %d\n",
@@ -159,6 +162,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	 * enable timer and stop masking the timer.
 	 */
 	armreg_cntv_ctl_write(ARM_CNTCTL_ENABLE);
+	armreg_cntp_ctl_write(ARM_CNTCTL_ENABLE);
 #if 0
 	printf("%s: cntctl=%#x\n", __func__, armreg_cntv_ctl_read());
 #endif
@@ -166,6 +170,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	/*
 	 * Get now and update the compare timer.
 	 */
+	arm_isb();
 	ci->ci_lastintr = armreg_cntv_ct_read();
 	armreg_cntv_tval_write(sc->sc_autoinc);
 #if 0
@@ -182,21 +187,24 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 
 	s = splsched();
 
+	arm_isb();
 	uint64_t now64;
 	uint64_t start64 = armreg_cntv_ct_read();
 	do {
+		arm_isb();
 		now64 = armreg_cntv_ct_read();
 	} while (start64 == now64);
 	start64 = now64;
 	uint64_t end64 = start64 + 64;
 	uint32_t start32 = armreg_pmccntr_read();
 	do {
+		arm_isb();
 		now64 = armreg_cntv_ct_read();
 	} while (end64 != now64);
 	uint32_t end32 = armreg_pmccntr_read();
 
 	uint32_t diff32 = end64 - start64;
-	printf("%s: %s: %u cycles per tick\n", 
+	printf("%s: %s: %u cycles per tick\n",
 	    __func__, ci->ci_data.cpu_name, (end32 - start32) / diff32);
 
 	printf("%s: %s: status %#x cmp %#"PRIx64" now %#"PRIx64"\n",
@@ -204,7 +212,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	    armreg_cntv_cval_read(), armreg_cntv_ct_read());
 	splx(s);
 #elif 0
-	delay(1000000 / hz + 1000); 
+	delay(1000000 / hz + 1000);
 #endif
 }
 
@@ -237,12 +245,13 @@ gtmr_delay(unsigned int n)
 	 */
 	const uint64_t incr_per_us = (freq >> 20) + (freq >> 24);
 
-	const uint64_t delta = n * incr_per_us;
+	arm_isb();
 	const uint64_t base = armreg_cntv_ct_read();
+	const uint64_t delta = n * incr_per_us;
 	const uint64_t finish = base + delta;
 
 	while (armreg_cntv_ct_read() < finish) {
-		/* spin */
+		arm_isb();	/* spin */
 	}
 }
 
@@ -271,11 +280,14 @@ gtmr_bootdelay(unsigned int ticks)
 int
 gtmr_intr(void *arg)
 {
-	const uint64_t now = armreg_cntv_ct_read();
 	struct cpu_info * const ci = curcpu();
-	uint64_t delta = now - ci->ci_lastintr;
 	struct clockframe * const cf = arg;
 	struct gtmr_softc * const sc = &gtmr_sc;
+
+	arm_isb();
+
+	const uint64_t now = armreg_cntv_ct_read();
+	uint64_t delta = now - ci->ci_lastintr;
 
 #ifdef DIAGNOSTIC
 	const uint64_t then = armreg_cntv_cval_read();
@@ -327,6 +339,6 @@ setstatclockrate(int newhz)
 static u_int
 gtmr_get_timecount(struct timecounter *tc)
 {
-
-	return (u_int) (armreg_cntv_ct_read());
+	arm_isb();	// we want the time NOW, not some instructions later.
+	return (u_int) armreg_cntp_ct_read();
 }
