@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_comreg.h,v 1.3.2.2 2015/03/21 08:51:17 snj Exp $ */
+/* $NetBSD: amlogic_comreg.h,v 1.3.2.3 2015/04/06 01:45:17 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -49,6 +49,7 @@
 #define UART_STATUS_TX_EMPTY	__BIT(22)
 #define UART_STATUS_TX_FULL	__BIT(21)
 #define UART_STATUS_RX_EMPTY	__BIT(20)
+#define UART_STATUS_BREAK	__BIT(17)
 
 #define UART_MISC_TX_IRQ_CNT	__BITS(15,8)
 #define UART_MISC_RX_IRQ_CNT	__BITS(7,0)
