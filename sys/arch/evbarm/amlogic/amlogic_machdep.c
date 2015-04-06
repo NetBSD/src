@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.17.2.3 2015/03/25 17:01:32 snj Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.17.2.4 2015/04/06 01:48:25 snj Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.17.2.3 2015/03/25 17:01:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.17.2.4 2015/04/06 01:48:25 snj Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -545,7 +545,7 @@ amlogic_device_register(device_t self, void *aux)
 #if NGENFB > 0
 	if (device_is_a(self, "genfb")) {
 		char *ptr;
-		int scale;
+		int scale, depth;
 		amlogic_genfb_set_console_dev(self);
 #ifdef DDB
 		db_trap_callback = amlogic_genfb_ddb_trap_callback;
@@ -562,6 +562,10 @@ amlogic_device_register(device_t self, void *aux)
 		if (get_bootconf_option(boot_args, "fb.scale",
 		    BOOTOPT_TYPE_INT, &scale) && scale > 0) {
 			prop_dictionary_set_uint32(dict, "scale", scale);
+		}
+		if (get_bootconf_option(boot_args, "fb.depth",
+		    BOOTOPT_TYPE_INT, &depth)) {
+			prop_dictionary_set_uint32(dict, "depth", depth);
 		}
 	}
 #endif
