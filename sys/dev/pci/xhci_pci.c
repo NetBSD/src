@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.4.2.1 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.4.2.2 2015/04/06 12:17:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.1 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.2 2015/04/06 12:17:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,6 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	default:
 		aprint_error_dev(self, "BAR not 64 or 32-bit MMIO\n");
 		return;
-		break;
 	}
 
 	psc->sc_pc = pc;
