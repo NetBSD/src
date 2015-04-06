@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_com.c,v 1.4.2.2 2015/03/21 08:51:17 snj Exp $ */
+/* $NetBSD: amlogic_com.c,v 1.4.2.3 2015/04/06 01:45:17 snj Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,7 +33,13 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.4.2.2 2015/03/21 08:51:17 snj Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.4.2.3 2015/04/06 01:45:17 snj Exp $");
+
+#define cn_trap()			\
+	do {				\
+		console_debugger();	\
+		cn_trapped = 1;		\
+	} while (/* CONSTCOND */ 0)
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -430,14 +436,23 @@ amlogic_com_intr(void *priv)
 	uint32_t status, c;
 
 	for (;;) {
+		int cn_trapped = 0;
 		status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		    UART_STATUS_REG);
 		if (status & UART_STATUS_RX_EMPTY) {
 			break;
 		}
+		if (status & UART_STATUS_BREAK) {
+			cn_check_magic(tp->t_dev, CNC_BREAK,
+			    amlogic_com_cnm_state);
+			if (cn_trapped)
+				continue;
+		}
 
 		c = bus_space_read_4(sc->sc_bst, sc->sc_bsh, UART_RFIFO_REG);
-		cn_check_magic(tp->t_dev, c, amlogic_com_cnm_state);
+		cn_check_magic(tp->t_dev, c & 0xff, amlogic_com_cnm_state);
+		if (cn_trapped)
+			continue;
 		tp->t_linesw->l_rint(c & 0xff, tp);
 	}
 
