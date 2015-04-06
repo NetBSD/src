@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.10.6.2 2014/12/03 12:52:05 skrll Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.10.6.3 2015/04/06 12:15:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.10.6.2 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.10.6.3 2015/04/06 12:15:32 skrll Exp $");
 
 #include "locators.h"
 
@@ -332,7 +332,7 @@ omap3_ehci_attach1(device_t self)
 	omap3_ehci_find_companions(sc);
 
 	err = ehci_init(&sc->sc);
-	if (err != USBD_NORMAL_COMPLETION) {
+	if (err) {
 		aprint_error_dev(self, "init failed, error = %d\n", err);
 		return;
 	}
