@@ -1,4 +1,4 @@
-/*	$NetBSD: sioreg.h,v 1.3 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: sioreg.h,v 1.3.6.1 2015/04/06 15:17:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -73,10 +73,10 @@
 /* sioreg.h   NOV-26-1991 */
 
 struct siodevice {
-	volatile u_char sio_data;
-	u_char sio_pad1;
-	volatile u_char sio_cmd;
-	u_char sio_pad2;
+	volatile uint8_t sio_data;
+	uint8_t sio_pad1;
+	volatile uint8_t sio_cmd;
+	uint8_t sio_pad2;
 };
 
 #define sio_stat sio_cmd

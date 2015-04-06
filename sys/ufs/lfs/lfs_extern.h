@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.101 2014/03/18 18:20:44 riastradh Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.101.6.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -271,6 +271,9 @@ int lfs_strategy (void *);
 int lfs_write	 (void *);
 int lfs_getpages (void *);
 int lfs_putpages (void *);
+
+int lfs_bufrd(struct vnode *, struct uio *, int, kauth_cred_t);
+int lfs_bufwr(struct vnode *, struct uio *, int, kauth_cred_t);
 
 extern int lfs_mount_type;
 extern int (**lfs_vnodeop_p)(void *);

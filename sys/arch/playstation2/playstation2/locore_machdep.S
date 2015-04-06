@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.11 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.11.8.1 2015/04/06 15:18:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,14 +71,14 @@ LEAF_NOPROFILE(md_imask_update)
 	nor	t2, zero, t2
 	and	t0, t0, t2
 	or	t0, t0, t1	/* cur_mask */
-	nor	t4, zero, t3
-	xor	t4, t4, t0	
+	nor	ta0, zero, t3
+	xor	ta0, ta0, t0	
 	and	t3, t3, t0
-	or	t0, t3, t4
+	or	t0, t3, ta0
 	and	t3, t0, a0	/* INTC */
-	and	t4, t0, a3	/* DMAC */
+	and	ta0, t0, a3	/* DMAC */
 	sw	t3, 0(a1)
-	sw	t4, 0(a2)
+	sw	ta0, 0(a2)
 	sync.p	
 	j	ra
 	nop
@@ -132,14 +132,14 @@ LEAF_NOPROFILE(kloader_playstation2_boot)
 	 move	t7, t6
 	lw	t6, 0(t7)	# p = next
 	lw	t0, 4(t7)	# src
-	lw	t4, 8(t7)	# dst
+	lw	ta0, 8(t7)	# dst
 	lw	t2, 12(t7)	# sz
-	addu	t5, t4, t2	# dst + sz
+	addu	t5, ta0, t2	# dst + sz
 2:	lw	t3, 0(t0)	# copy
-	sw	t3, 0(t4)
-	addiu	t4, t4, 4
+	sw	t3, 0(ta0)
+	addiu	ta0, ta0, 4
 	addiu	t0, t0, 4
-	bltu	t4, t5, 2b
+	bltu	ta0, t5, 2b
 	 nop
 	b	1b
 	 nop

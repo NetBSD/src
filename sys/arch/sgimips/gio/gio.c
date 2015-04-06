@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.33 2012/10/27 17:18:09 chs Exp $	*/
+/*	$NetBSD: gio.c,v 1.33.14.1 2015/04/06 15:18:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.33 2012/10/27 17:18:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.33.14.1 2015/04/06 15:18:01 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.33 2012/10/27 17:18:09 chs Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#define _SGIMIPS_BUS_DMA_PRIVATE
 #include <sys/bus.h>
 #include <machine/machtype.h>
 #include <machine/sysconf.h>
@@ -208,7 +207,8 @@ gio_attach(device_t parent, device_t self, void *aux)
 
 		ga.ga_slot = -1;
 		ga.ga_addr = gfx_bases[i].base;
-		ga.ga_iot = SGIMIPS_BUS_SPACE_NORMAL;
+		ga.ga_iot = normal_memt;
+		/* XXX bus_space_map() */
 		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(ga.ga_addr);
 		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 		ga.ga_product = -1;
@@ -252,7 +252,7 @@ gio_attach(device_t parent, device_t self, void *aux)
 
 		ga.ga_slot = slot_bases[i].slot;
 		ga.ga_addr = slot_bases[i].base;
-		ga.ga_iot = SGIMIPS_BUS_SPACE_NORMAL;
+		ga.ga_iot = normal_memt;
 		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(ga.ga_addr);
 		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 
@@ -366,7 +366,7 @@ gio_cnattach(void)
 
 		ga.ga_slot = -1;
 		ga.ga_addr = gfx_bases[i].base;
-		ga.ga_iot = SGIMIPS_BUS_SPACE_NORMAL;
+		ga.ga_iot = normal_memt;
 		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(ga.ga_addr);
 		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 		ga.ga_product = -1;

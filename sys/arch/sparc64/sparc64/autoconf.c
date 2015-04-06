@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.200 2014/10/18 08:33:27 snj Exp $ */
+/*	$NetBSD: autoconf.c,v 1.200.2.1 2015/04/06 15:18:03 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200.2.1 2015/04/06 15:18:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200 2014/10/18 08:33:27 snj Exp $");
 #include <machine/bootinfo.h>
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/timerreg.h>
+#include <machine/mdesc.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
@@ -145,6 +146,7 @@ int kgdb_break_at_attach;
 char	machine_banner[100];
 char	machine_model[100];
 char	ofbootpath[OFPATHLEN], *ofboottarget, *ofbootpartition;
+char	ofbootargs[OFPATHLEN], *ofbootfile, *ofbootflags;
 int	ofbootpackage;
 
 static	int mbprint(void *, const char *);
@@ -417,8 +419,9 @@ get_bootpath_from_prom(void)
 	/* Setup pointer to boot flags */
 	if (OF_getprop(chosen, "bootargs", sbuf, sizeof(sbuf)) == -1)
 		return;
+	strcpy(ofbootargs, sbuf);
 
-	cp = sbuf;
+	cp = ofbootargs;
 
 	/* Find start of boot flags */
 	while (*cp) {
@@ -426,8 +429,12 @@ get_bootpath_from_prom(void)
 		if (*cp == '-' || *cp == '\0')
 			break;
 		while(*cp != ' ' && *cp != '\t' && *cp != '\0') cp++;
-		
+		if (*cp != '\0')
+			*cp++ = '\0';
 	}
+	if (cp != ofbootargs)
+		ofbootfile = ofbootargs;
+	ofbootflags = cp;
 	if (*cp != '-')
 		return;
 
@@ -469,6 +476,10 @@ get_bootpath_from_prom(void)
 void
 cpu_configure(void)
 {
+	
+	if (CPU_ISSUN4V)
+		mdesc_init();
+	
 	bool userconf = (boothowto & RB_USERCONF) != 0;
 
 	/* fetch boot device settings */

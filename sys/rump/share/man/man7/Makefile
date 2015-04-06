@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2014/11/09 17:39:38 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2015/04/06 15:18:32 skrll Exp $
 
-MAN=	rump_sp.7
+MAN=	rumpkernel.7 rump_sp.7
 
 .include <bsd.man.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.3 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.3.6.1 2015/04/06 15:18:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,8 +38,9 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_map.h>
 
 #include <asm/page.h>
 
@@ -82,8 +83,8 @@ static inline unsigned long
 vm_mmap(struct file *file, unsigned long base, unsigned long size,
     unsigned long prot, unsigned long flags, unsigned long token)
 {
-	struct vnode *vnode;
-	vaddr_t addr;
+	struct vnode *vp;
+	void *addr;
 	int error;
 
 	/*
@@ -96,38 +97,19 @@ vm_mmap(struct file *file, unsigned long base, unsigned long size,
 	KASSERT(flags == MAP_SHARED);
 
 	KASSERT(file->f_type == DTYPE_VNODE);
-	vnode = file->f_data;
+	vp = file->f_data;
 
-	KASSERT(vnode->v_type == VCHR);
+	KASSERT(vp->v_type == VCHR);
 	KASSERT((file->f_flag & (FREAD | FWRITE)) == (FREAD | FWRITE));
-
-	{
-		struct vattr va;
-
-		vn_lock(vnode, (LK_SHARED | LK_RETRY));
-		error = VOP_GETATTR(vnode, &va, kauth_cred_get());
-		VOP_UNLOCK(vnode);
-		if (error)
-			goto out;
-		/* XXX kassert?  */
-		if ((va.va_flags & (SF_SNAPSHOT | IMMUTABLE | APPEND)) != 0) {
-			error = EACCES;
-			goto out;
-		}
-	}
 
 	/* XXX pax_mprotect?  pax_aslr?  */
 
-	addr = (*curproc->p_emul->e_vm_default_addr)(curproc,
-	    (vaddr_t)curproc->p_vmspace->vm_daddr, size);
-	error = uvm_mmap(&curproc->p_vmspace->vm_map, &addr, size,
-	    (VM_PROT_READ | VM_PROT_WRITE), (VM_PROT_READ | VM_PROT_WRITE),
-	    MAP_SHARED, vnode, base,
-	    curproc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	addr = NULL;
+	error = uvm_mmap_dev(curproc, &addr, size, vp->v_rdev, (off_t)base);
 	if (error)
 		goto out;
 
-	KASSERT(addr <= -1024UL); /* XXX Kludgerosity!  */
+	KASSERT((uintptr_t)addr <= -1024UL); /* XXX Kludgerosity!  */
 
 out:	/* XXX errno NetBSD->Linux (kludgerific) */
 	return (error? (-error) : (unsigned long)addr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.3.6.1 2015/04/06 15:18:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #include <sys/cdefs.h>
 #include <sys/systm.h>
+
+#include <linux/string.h>
 
 /*
  * XXX This is bollocks, and is wrong on various architectures (should

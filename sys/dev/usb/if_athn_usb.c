@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.8.4 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.5 2015/04/06 15:18:13 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.4 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.5 2015/04/06 15:18:13 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -797,7 +797,7 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	usb_device_request_t req;
 	const char *name;
 	u_char *fw, *ptr;
-	size_t size;
+	size_t size, remain;
 	uint32_t addr;
 	int s, mlen, error;
 
@@ -833,7 +833,7 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	if (error != 0) {
 		aprint_error_dev(usc->usc_dev,
 		    "failed to read firmware (error %d)\n", error);
-		firmware_free(fw, 0);
+		firmware_free(fw, size);
 		return error;
 	}
 
@@ -843,21 +843,22 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = AR_FW_DOWNLOAD;
 	USETW(req.wIndex, 0);
-	while (size > 0) {
-		mlen = MIN(size, 4096);
+	remain = size;
+	while (remain > 0) {
+		mlen = MIN(remain, 4096);
 
 		USETW(req.wValue, addr);
 		USETW(req.wLength, mlen);
 		error = usbd_do_request(usc->usc_udev, &req, ptr);
 		if (error != 0) {
-			free(fw, M_DEVBUF);
+			firmware_free(fw, size);
 			return error;
 		}
-		addr += mlen >> 8;
-		ptr  += mlen;
-		size -= mlen;
+		addr   += mlen >> 8;
+		ptr    += mlen;
+		remain -= mlen;
 	}
-	free(fw, M_DEVBUF);
+	firmware_free(fw, size);
 
 	/* Start firmware. */
 	if (usc->usc_flags & ATHN_USB_FLAG_AR7010)

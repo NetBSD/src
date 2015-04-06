@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.16 2014/11/28 15:37:02 skrll Exp $	*/
+/*	$NetBSD: profile.h,v 1.16.2.1 2015/04/06 15:17:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -76,7 +76,8 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm("pop	{r0-r3, lr, pc}");				\
+	__asm("pop	{r0-r3, lr}");					\
+	__asm("pop	{pc}");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 #elif defined(__ARM_DWARF_EH__)
 #define	MCOUNT								\
@@ -116,7 +117,8 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm("pop	{r0-r3, lr, pc}");				\
+	__asm("pop	{r0-r3, lr}");					\
+	__asm("pop	{pc}");						\
 	__asm(".cfi_endproc");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 #else
@@ -159,7 +161,8 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm("pop	{r0-r3, lr, pc}");				\
+	__asm("pop	{r0-r3, lr}");					\
+	__asm("pop	{pc}");						\
 	__asm(".cfi_endproc");						\
 	__asm(".fnend");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);

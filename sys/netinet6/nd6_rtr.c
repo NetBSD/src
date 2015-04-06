@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.94 2014/09/05 06:08:15 matt Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.94.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.94 2014/09/05 06:08:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.94.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ static void pfxrtr_del(struct nd_pfxrouter *);
 static struct nd_pfxrouter *find_pfxlist_reachable_router
 	(struct nd_prefix *);
 static void defrouter_delreq(struct nd_defrouter *);
-static void nd6_rtmsg(int, struct rtentry *);
 
 static int in6_init_prefix_ltimes(struct nd_prefix *);
 static void in6_init_address_ltimes(struct nd_prefix *,
@@ -414,25 +413,6 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 /*
  * default router list processing sub routines
  */
-
-/* tell the change to user processes watching the routing socket. */
-static void
-nd6_rtmsg(int cmd, struct rtentry *rt)
-{
-	struct rt_addrinfo info;
-
-	memset((void *)&info, 0, sizeof(info));
-	info.rti_info[RTAX_DST] = rt_getkey(rt);
-	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	if (rt->rt_ifp) {
-		info.rti_info[RTAX_IFP] = rt->rt_ifp->if_dl->ifa_addr;
-		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
-	}
-
-	rt_missmsg(cmd, &info, rt->rt_flags, 0);
-}
-
 void
 defrouter_addreq(struct nd_defrouter *newdr)
 {
@@ -460,7 +440,7 @@ defrouter_addreq(struct nd_defrouter *newdr)
 	error = rtrequest(RTM_ADD, &def.sa, &gate.sa, &mask.sa,
 	    RTF_GATEWAY, &newrt);
 	if (newrt) {
-		nd6_rtmsg(RTM_ADD, newrt); /* tell user process */
+		rt_newmsg(RTM_ADD, newrt); /* tell user process */
 		newrt->rt_refcnt--;
 		nd6_numroutes++;
 	}
@@ -484,12 +464,20 @@ defrouter_lookup(const struct in6_addr *addr, struct ifnet *ifp)
 }
 
 void
-defrtrlist_del(struct nd_defrouter *dr)
+defrtrlist_del(struct nd_defrouter *dr, struct in6_ifextra *ext)
 {
-	struct nd_ifinfo *ndi = ND_IFINFO(dr->ifp);
 	struct nd_defrouter *deldr = NULL;
 	struct nd_prefix *pr;
-	struct in6_ifextra *ext = dr->ifp->if_afdata[AF_INET6];
+	struct nd_ifinfo *ndi;
+
+	if (ext == NULL)
+		ext = dr->ifp->if_afdata[AF_INET6];
+
+	/* detach already in progress, can not do anything */
+	if (ext == NULL)
+		return;
+
+	ndi = ext->nd_ifinfo;
 
 	/*
 	 * Flush all the routing table entries that use the router
@@ -565,7 +553,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 
 	rtrequest(RTM_DELETE, &def.sa, &gw.sa, &mask.sa, RTF_GATEWAY, &oldrt);
 	if (oldrt) {
-		nd6_rtmsg(RTM_DELETE, oldrt);
+		rt_newmsg(RTM_DELETE, oldrt);
 		if (oldrt->rt_refcnt <= 0) {
 			/*
 			 * XXX: borrowed from the RTM_DELETE case of
@@ -750,7 +738,7 @@ defrtrlist_update(struct nd_defrouter *newdr)
 	if ((dr = defrouter_lookup(&newdr->rtaddr, newdr->ifp)) != NULL) {
 		/* entry exists */
 		if (newdr->rtlifetime == 0) {
-			defrtrlist_del(dr);
+			defrtrlist_del(dr, ext);
 			dr = NULL;
 		} else {
 			int oldpref = rtpref(dr);
@@ -1586,7 +1574,8 @@ pfxlist_onlink_check(void)
 			} else {
 				if ((ifa->ia6_flags & IN6_IFF_DETACHED) == 0) {
 					ifa->ia6_flags |= IN6_IFF_DETACHED;
-					nd6_newaddrmsg((struct ifaddr *)ifa);
+					rt_newaddrmsg(RTM_NEWADDR,
+					    (struct ifaddr *)ifa, 0, NULL);
 				}
 			}
 		}
@@ -1697,7 +1686,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	    ifa->ifa_addr, (struct sockaddr *)&mask6, rtflags, &rt);
 	if (error == 0) {
 		if (rt != NULL) { /* this should be non NULL, though */
-			nd6_rtmsg(RTM_ADD, rt);
+			rt_newmsg(RTM_ADD, rt);
 			nd6_numroutes++;
 		}
 		pr->ndpr_stateflags |= NDPRF_ONLINK;
@@ -1743,7 +1732,7 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 
 		/* report the route deletion to the routing socket. */
 		if (rt != NULL) {
-			nd6_rtmsg(RTM_DELETE, rt);
+			rt_newmsg(RTM_DELETE, rt);
 			nd6_numroutes--;
 		}
 

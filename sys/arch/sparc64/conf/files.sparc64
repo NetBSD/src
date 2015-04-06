@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.145 2014/02/01 17:01:35 nakayama Exp $
+#	$NetBSD: files.sparc64,v 1.145.6.1 2015/04/06 15:18:02 skrll Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -32,15 +32,18 @@ file	arch/sparc64/dev/sbus.c			sbus
 
 device	psycho: pcibus, sysmon_power, sysmon_taskq
 attach	psycho at mainbus
-device	schizo: pcibus, sysmon_power, sysmon_taskq
+device	schizo: pcibus
 attach	schizo at mainbus
-device	pyro: pcibus, sysmon_power, sysmon_taskq
+device	pyro: pcibus
 attach	pyro at mainbus
+device	vpci: pcibus
+attach	vpci at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho needs-flag
 file	arch/sparc64/dev/schizo.c		schizo
 file	arch/sparc64/dev/pyro.c			pyro
-file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro
+file	arch/sparc64/dev/vpci.c			vpci
+file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro | vpci
 
 define  central {}
 device	central: central
@@ -56,7 +59,7 @@ file	arch/sparc64/dev/fhc_central.c		fhc_central
 file	arch/sparc64/dev/fhc_mainbus.c		fhc_mainbus
 
 # IOMMU is for both
-file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro
+file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro | vpci
 
 include "dev/ata/files.ata"
 
@@ -76,7 +79,7 @@ device rtc: mc146818
 attach rtc at ebus with rtc_ebus
 file	arch/sparc64/dev/rtc.c			rtc
 
-device psm: sysmon_envsys, sysmon_power
+device psm: sysmon_power
 attach psm at ebus
 file	arch/sparc64/dev/psm.c			psm
 
@@ -87,15 +90,15 @@ device power
 attach power at sbus, ebus
 file	arch/sparc64/dev/power.c		power
 
-device	tda
+device	tda: sysmon_envsys
 attach	tda at iic
 file	arch/sparc64/dev/tda.c			tda
 
-device pcfiic: sysmon_envsys, pcf8584, i2cbus
+device pcfiic: pcf8584, i2cbus
 attach pcfiic at ebus
 file	arch/sparc64/dev/pcfiic_ebus.c		pcfiic
 
-device ecadc
+device ecadc: sysmon_envsys
 attach ecadc at iic
 file	arch/sparc64/dev/pcf8591_envctrl.c	ecadc
 
@@ -249,6 +252,7 @@ file	arch/sparc64/sparc64/vm_machdep.c
 file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor
 file	arch/sparc64/sparc64/lock_stubs.s
 file	arch/sparc64/sparc64/hvcall.S		sun4v
+file	arch/sparc64/sparc64/mdesc.c		sun4v
 
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_machdep.c	ddb

@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.24 2014/05/19 22:47:53 rmind Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.24.4.1 2015/04/06 15:18:00 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,11 +35,13 @@
  */
 
 #include "opt_mpc85xx.h"
+#include "opt_multiprocessor.h"
+#include "opt_ddb.h"
 
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.24 2014/05/19 22:47:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.24.4.1 2015/04/06 15:18:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,6 +85,7 @@ struct intr_source {
 	int8_t is_ipl;
 	uint8_t is_ist;
 	uint8_t is_irq;
+	uint8_t is_refcnt;
 	bus_size_t is_vpr;
 	bus_size_t is_dr;
 };
@@ -360,6 +363,29 @@ const struct e500_intr_name p20x0_onchip_intr_names[] = {
 INTR_INFO_DECL(p20x0, P20x0);
 #endif
 
+#ifdef P1023
+#define	p1023_external_intr_names	default_external_intr_names
+const struct e500_intr_name p1023_onchip_intr_names[] = {
+	{ ISOURCE_FMAN,            "fman" },
+	{ ISOURCE_MDIO,            "mdio" },
+	{ ISOURCE_QMAN0,           "qman0" },
+	{ ISOURCE_BMAN0,           "bman0" },
+	{ ISOURCE_QMAN1,           "qman1" },
+	{ ISOURCE_BMAN1,           "bman1" },
+	{ ISOURCE_QMAN2,           "qman2" },
+	{ ISOURCE_BMAN2,           "bman2" },
+	{ ISOURCE_SECURITY2_P1023, "sec2" },
+	{ ISOURCE_SEC_GENERAL,     "sec-general" },
+	{ ISOURCE_DMA2_CHAN1,      "dma2-chan1" },
+	{ ISOURCE_DMA2_CHAN2,      "dma2-chan2" },
+	{ ISOURCE_DMA2_CHAN3,      "dma2-chan3" },
+	{ ISOURCE_DMA2_CHAN4,      "dma2-chan4" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(p1023, P1023);
+#endif
+
 static const char ist_names[][12] = {
 	[IST_NONE] = "none",
 	[IST_EDGE] = "edge",
@@ -383,6 +409,7 @@ static void 	e500_intr_cpu_attach(struct cpu_info *ci);
 static void 	e500_intr_cpu_hatch(struct cpu_info *ci);
 static void	e500_intr_cpu_send_ipi(cpuid_t, uintptr_t);
 static void 	e500_intr_init(void);
+static void 	e500_intr_init_precpu(void);
 static const char *e500_intr_string(int, int, char *, size_t);
 static const char *e500_intr_typename(int);
 static void 	e500_critintr(struct trapframe *tf);
@@ -713,14 +740,25 @@ e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
 
 	struct intr_source * const is = &e500_intr_sources[ii.irq_vector];
 	mutex_enter(&e500_intr_lock);
-	if (is->is_ipl != IPL_NONE)
-		return NULL;
+	if (is->is_ipl != IPL_NONE) {
+		/* XXX IPI0 is shared by all CPU. */
+		if (is->is_ist != IST_IPI ||
+		    is->is_irq != irq ||
+		    is->is_ipl != ipl ||
+		    is->is_ist != ist ||
+		    is->is_func != handler ||
+		    is->is_arg != arg) {
+			mutex_exit(&e500_intr_lock);
+			return NULL;
+		}
+	}
 
 	is->is_func = handler;
 	is->is_arg = arg;
 	is->is_ipl = ipl;
 	is->is_ist = ist;
 	is->is_irq = irq;
+	is->is_refcnt++;
 	is->is_vpr = ii.irq_vpr;
 	is->is_dr = ii.irq_dr;
 
@@ -787,6 +825,12 @@ e500_intr_disestablish(void *vis)
 	KASSERT(is - e500_intr_sources == ii.irq_vector);
 
 	mutex_enter(&e500_intr_lock);
+
+	if (is->is_refcnt-- > 1) {
+		mutex_exit(&e500_intr_lock);
+		return;
+	}
+
 	/*
 	 * Mask the source using the mask (MSK) bit in the vector/priority reg.
 	 */
@@ -1046,6 +1090,12 @@ e500_intr_init(void)
 		*ii = mpc8572_intr_info;
 		break;
 #endif
+#ifdef P1023
+	case SVR_P1017v1 >> 16:
+	case SVR_P1023v1 >> 16:
+		*ii = p1023_intr_info;
+		break;
+#endif
 #ifdef P1025
 	case SVR_P1016v1 >> 16:
 	case SVR_P1025v1 >> 16:
@@ -1062,6 +1112,11 @@ e500_intr_init(void)
 		panic("%s: don't know how to deal with SVR %#lx",
 		    __func__, mfspr(SPR_SVR));
 	}
+
+	/*
+	 * Initialize interrupt handler lock
+	 */
+	mutex_init(&e500_intr_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * We need to be in mixed mode.
@@ -1087,6 +1142,22 @@ e500_intr_init(void)
 	for (u_int irq = 0; irq < e500_intr_info.ii_external_sources; irq++) { 
 		openpic_write(cpu, OPENPIC_EIVPR(irq),
 		    VPR_VECTOR_MAKE(irq) | VPR_LEVEL_LOW);
+	}
+}
+
+static void
+e500_intr_init_precpu(void)
+{
+	struct cpu_info const *ci = curcpu();
+	struct cpu_softc * const cpu = ci->ci_softc;
+	bus_addr_t dr;
+
+	/*
+	 * timer's DR is set to be delivered to cpu0 as initial value.
+	 */
+	for (u_int irq = 0; irq < e500_intr_info.ii_timer_sources; irq++) { 
+		dr = OPENPIC_GTDR(ci->ci_cpuid, irq);
+		openpic_write(cpu, dr, 0);	/* stop delivery */
 	}
 }
 
@@ -1216,6 +1287,15 @@ e500_ipi_kpreempt(void)
 }
 #endif
 
+static void
+e500_ipi_suspend(void)
+{
+
+#ifdef MULTIPROCESSOR
+	cpu_pause(NULL);
+#endif	/* MULTIPROCESSOR */
+}
+
 static const ipifunc_t e500_ipifuncs[] = {
 	[ilog2(IPI_XCALL)] =	xc_ipi_handler,
 	[ilog2(IPI_GENERIC)] =	ipi_cpu_handler,
@@ -1224,6 +1304,7 @@ static const ipifunc_t e500_ipifuncs[] = {
 	[ilog2(IPI_KPREEMPT)] =	e500_ipi_kpreempt,
 #endif
 	[ilog2(IPI_TLB1SYNC)] =	e500_tlb1_sync,
+	[ilog2(IPI_SUSPEND)] =	e500_ipi_suspend,
 };
 
 static int
@@ -1248,6 +1329,10 @@ e500_ipi_intr(void *v)
 static void
 e500_intr_cpu_hatch(struct cpu_info *ci)
 {
+
+	/* Initialize percpu interupts. */
+	e500_intr_init_precpu();
+
 	/*
 	 * Establish clock interrupt for this CPU.
 	 */

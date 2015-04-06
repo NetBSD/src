@@ -1068,29 +1068,22 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	int retcode = 0;
 	const int zero = 0;
 	vm_offset_t address;
-	struct vmspace *vms;
 #if defined(__FreeBSD__)
+	struct vmspace *vms;
 	vm_ooffset_t foff;
 	vm_size_t size;
 	vm_offset_t vaddr;
 #elif   defined(__NetBSD__)
-	struct vnode *vn;
 	voff_t foff;
 	vsize_t size, rsize;
+	void *addr;
 	vaddr_t vaddr;
 #endif
 	struct drm_buf_map *request = data;
 	int i;
 
-#if defined(__NetBSD__)
-	if (!vfinddev(dev->kdev, VCHR, &vn))
-		return 0;	/* FIXME: Shouldn't this be EINVAL or something? */
-#endif /* __NetBSD__ || __OpenBSD */
-
 #if defined(__FreeBSD__)
 	vms = DRM_CURPROC->td_proc->p_vmspace;
-#elif   defined(__NetBSD__)
-	vms = DRM_CURPROC->p_vmspace;
 #endif
 
 	DRM_SPINLOCK(&dev->dma_lock);
@@ -1128,13 +1121,11 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 #endif
 #elif   defined(__NetBSD__)
 	/* XXXNETBSD */
-	vaddr = curlwp->l_proc->p_emul->e_vm_default_addr(curlwp->l_proc,
-	    (vaddr_t)vms->vm_daddr, size);
 	rsize = round_page(size);
+	addr = NULL;
+	retcode = uvm_mmap_dev(curproc, &addr, rsize, dev->kdev, foff);
+	vaddr = (vaddr_t)addr;
 	DRM_DEBUG("mmap %#lx/%#lx foff %#llx\n", vaddr, rsize, (long long)foff);
-	retcode = uvm_mmap(&vms->vm_map, &vaddr, rsize,
-	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
-	    &vn->v_uobj, foff, curproc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 #endif
 	if (retcode)
 		goto done;
@@ -1167,10 +1158,6 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
  done:
 	request->count = dma->buf_count;
-#if defined(__NetBSD__)
-	vrele(vn);
-#endif
-
 	DRM_DEBUG("%d buffers, retcode = %d\n", request->count, retcode);
 
 	return retcode;

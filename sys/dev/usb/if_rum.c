@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48.6.5 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.6 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.5 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.6 2015/04/06 15:18:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -282,18 +282,18 @@ rum_attachhook(void *xsc)
 	if (error != 0) {
 		printf("%s: failed to read firmware (error %d)\n",
 		    device_xname(sc->sc_dev), error);
-		firmware_free(ucode, 0);
+		firmware_free(ucode, size);
 		return error;
 	}
 
 	if (rum_load_microcode(sc, ucode, size) != 0) {
 		printf("%s: could not load 8051 microcode\n",
 		    device_xname(sc->sc_dev));
-		firmware_free(ucode, 0);
+		firmware_free(ucode, size);
 		return ENXIO;
 	}
 
-	firmware_free(ucode, 0);
+	firmware_free(ucode, size);
 	sc->sc_flags |= RT2573_FWLOADED;
 
 	return 0;

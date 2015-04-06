@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36.14.5 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36.14.6 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.5 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.6 2015/04/06 15:18:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -279,7 +279,7 @@ zyd_attachhook(device_t self)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to read firmware (error %d)\n", error);
-		firmware_free(fw, 0);
+		firmware_free(fw, size);
 		return;
 	}
 
@@ -287,11 +287,11 @@ zyd_attachhook(device_t self)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not load firmware (error=%d)\n", error);
-		firmware_free(fw, 0);
+		firmware_free(fw, size);
 		return;
 	}
 
-	firmware_free(fw, 0);
+	firmware_free(fw, size);
 	sc->sc_flags |= ZD1211_FWLOADED;
 
 	/* complete the attach process */
@@ -1893,7 +1893,7 @@ zyd_intr(struct usbd_xfer *xfer, void * priv, usbd_status status)
 				continue;
 
 			/* copy answer into caller-supplied buffer */
-			memcpy(rqp->odata, cmd->data, 
+			memcpy(rqp->odata, cmd->data,
 			    sizeof(struct zyd_pair) * rqp->len);
 			wakeup(rqp->odata);	/* wakeup caller */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.117 2014/09/05 05:47:40 matt Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.117.2.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -308,11 +308,12 @@ x(JFS2,		16,	"jfs")		/* IBM JFS2 */ \
 x(CGD,		17,	"cgd")		/* cryptographic pseudo-disk */ \
 x(VINUM,	18,	"vinum")	/* vinum volume */ \
 x(FLASH,	19,	"flash")	/* flash memory devices */ \
-x(DM,           20,     "dm")           /* device-mapper pseudo-disk devices */\
-x(RUMPD,	21,     "rumpd")	/* rump virtual disk */ \
+x(DM,		20,	"dm")		/* device-mapper pseudo-disk devices */\
+x(RUMPD,	21,	"rumpd")	/* rump virtual disk */ \
+x(MD,		22,	"md")		/* memory disk */ \
     
 #ifndef _LOCORE
-#define DKTYPE_NUMS(tag, number, name) __CONCAT(DTYPE_,tag=number),
+#define DKTYPE_NUMS(tag, number, name) __CONCAT(DKTYPE_,tag=number),
 #ifndef DKTYPE_ENUMNAME
 #define DKTYPE_ENUMNAME
 #endif

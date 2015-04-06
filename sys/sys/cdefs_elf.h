@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.46 2014/08/26 09:03:17 christos Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.46.2.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -63,6 +63,12 @@
 /* Do not use __weak_extern, use __weak_reference instead */
 #define	__weak_extern(sym)						\
     __asm(".weak " _C_LABEL_STRING(#sym));
+
+#if __GNUC_PREREQ__(4, 0)
+#define	__weak	__attribute__((__weak__))
+#else
+#define	__weak
+#endif
 
 #if __GNUC_PREREQ__(4, 0)
 #define	__weak_reference(sym)	__attribute__((__weakref__(#sym)))
@@ -169,7 +175,7 @@
 
 #define	__link_set_decl(set, ptype)					\
 	extern ptype * const __link_set_start(set)[] __dso_hidden;	\
-	extern ptype * const __link_set_end(set)[] __dso_hidden
+	extern ptype * const __link_set_end(set)[] __weak __dso_hidden
 
 #define	__link_set_count(set)						\
 	(__link_set_end(set) - __link_set_start(set))

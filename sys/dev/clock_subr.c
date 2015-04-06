@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.25 2014/11/17 10:55:42 joerg Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.25.2.1 2015/04/06 15:18:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.25 2014/11/17 10:55:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.25.2.1 2015/04/06 15:18:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,10 +195,10 @@ clock_secs_to_ymdhms(time_t secs, struct clock_ymdhms *dt)
 	dt->dt_day = days + 1;
 
 	/* Hours, minutes, seconds are easy */
-	dt->dt_hour = rsec / 3600;
-	rsec = rsec % 3600;
-	dt->dt_min  = rsec / 60;
-	rsec = rsec % 60;
+	dt->dt_hour = rsec / SECS_PER_HOUR;
+	rsec = rsec % SECS_PER_HOUR;
+	dt->dt_min  = rsec / SECS_PER_MINUTE;
+	rsec = rsec % SECS_PER_MINUTE;
 	dt->dt_sec  = rsec;
 
 	return 0;

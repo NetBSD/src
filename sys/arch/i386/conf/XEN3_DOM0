@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.93 2014/11/16 16:01:41 manu Exp $
+#	$NetBSD: XEN3_DOM0,v 1.93.2.1 2015/04/06 15:17:57 skrll Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -320,6 +320,7 @@ hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
+iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet

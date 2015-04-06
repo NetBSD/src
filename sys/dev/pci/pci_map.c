@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.31 2014/10/16 12:31:23 riastradh Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.31.2.1 2015/04/06 15:18:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.31 2014/10/16 12:31:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.31.2.1 2015/04/06 15:18:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,10 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.31 2014/10/16 12:31:23 riastradh Exp $
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-
-static int pci_mapreg_submap(const struct pci_attach_args *, int, pcireg_t, int,
-    bus_size_t, bus_size_t, bus_space_tag_t *, bus_space_handle_t *, 
-    bus_addr_t *, bus_size_t *);
 
 static int
 pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
@@ -282,7 +278,7 @@ pci_mapreg_map(const struct pci_attach_args *pa, int reg, pcireg_t type,
 	    handlep, basep, sizep);
 }
 
-static int
+int
 pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
     int busflags, bus_size_t maxsize, bus_size_t offset, bus_space_tag_t *tagp,
 	bus_space_handle_t *handlep, bus_addr_t *basep, bus_size_t *sizep)
@@ -324,10 +320,10 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 	 * pci_mapreg_map.
 	 */
 
-	maxsize = (maxsize && offset) ? maxsize : size;
+	maxsize = (maxsize != 0) ? maxsize : size;
 	base += offset;
 
-	if ((maxsize < size && offset + maxsize <= size) || offset != 0)
+	if ((size < maxsize) || (size < (offset + maxsize)))
 		return 1;
 
 	if (bus_space_map(tag, base, maxsize, busflags | flags, &handle))

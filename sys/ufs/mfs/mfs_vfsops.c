@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.108 2014/05/08 08:21:53 hannken Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.108.4.1 2015/04/06 15:18:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.108 2014/05/08 08:21:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.108.4.1 2015/04/06 15:18:33 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -71,7 +71,7 @@ MODULE(MODULE_CLASS_VFS, mfs, "ffs");
 kmutex_t mfs_lock;	/* global lock */
 
 /* used for building internal dev_t, minor == 0 reserved for miniroot */
-static int mfs_minor = 1;
+static devminor_t mfs_minor = 1;
 static int mfs_initcnt;
 
 extern int (**mfs_vnodeop_p)(void *);
@@ -101,6 +101,7 @@ struct vfsops mfs_vfsops = {
 	.vfs_sync = ffs_sync,
 	.vfs_vget = ufs_vget,
 	.vfs_loadvnode = ffs_loadvnode,
+	.vfs_newvnode = ffs_newvnode,
 	.vfs_fhtovp = ffs_fhtovp,
 	.vfs_vptofh = ffs_vptofh,
 	.vfs_init = mfs_init,
@@ -246,6 +247,7 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct fs *fs;
 	struct mfsnode *mfsp;
 	struct proc *p;
+	devminor_t minor;
 	int flags, error = 0;
 
 	if (args == NULL)
@@ -307,14 +309,20 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			return EINVAL;
 		return (0);
 	}
-	error = getnewvnode(VT_MFS, NULL, mfs_vnodeop_p, NULL, &devvp);
+	mutex_enter(&mfs_lock);
+	minor = mfs_minor++;
+	mutex_exit(&mfs_lock);
+	error = bdevvp(makedev(255, minor), &devvp);
 	if (error)
 		return (error);
-	devvp->v_vflag |= VV_MPSAFE;
-	devvp->v_type = VBLK;
-	spec_node_init(devvp, makedev(255, mfs_minor));
-	mfs_minor++;
 	mfsp = kmem_alloc(sizeof(*mfsp), KM_SLEEP);
+	/*
+	 * Changing v_op and v_data here is safe as we are
+	 * the exclusive owner of this device node.
+	 */
+	KASSERT(devvp->v_op == spec_vnodeop_p);
+	KASSERT(devvp->v_data == NULL);
+	devvp->v_op = mfs_vnodeop_p;
 	devvp->v_data = mfsp;
 	mfsp->mfs_baseoff = args->base;
 	mfsp->mfs_size = args->size;

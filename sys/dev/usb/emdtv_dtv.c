@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.10.14.2 2015/03/19 17:26:42 skrll Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.10.14.3 2015/04/06 15:18:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10.14.2 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10.14.3 2015/04/06 15:18:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/conf.h>
 
 #include <dev/usb/usb.h>
@@ -102,7 +103,7 @@ emdtv_dtv_attach(struct emdtv_softc *sc)
 
 	aprint_debug_dev(sc->sc_dev, "calling usbd_open_pipe, ep 0x%02x\n",
 	    ed->bEndpointAddress);
-	status = usbd_open_pipe(sc->sc_iface, 
+	status = usbd_open_pipe(sc->sc_iface,
 	    ed->bEndpointAddress, USBD_EXCLUSIVE_USE|USBD_MPSAFE,
 	    &sc->sc_isoc_pipe);
 	if (status != USBD_NORMAL_COMPLETION) {

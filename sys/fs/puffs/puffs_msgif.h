@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.83 2014/10/31 14:20:54 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.83.2.1 2015/04/06 15:18:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -163,7 +163,8 @@ struct puffs_kargs {
 #define PUFFS_KFLAG_NOCACHE_ATTR	0x040	/* no attrib cache (unused) */
 #define PUFFS_KFLAG_CACHE_FS_TTL	0x080	/* cache use TTL from FS    */
 #define PUFFS_KFLAG_CACHE_DOTDOT	0x100	/* don't send lookup for .. */
-#define PUFFS_KFLAG_MASK		0x1bf
+#define PUFFS_KFLAG_NOFLUSH_META	0x200	/* don't flush metadata cache*/
+#define PUFFS_KFLAG_MASK		0x3bf
 
 #define PUFFS_FHFLAG_DYNAMIC		0x01
 #define PUFFS_FHFLAG_NFSV2		0x02

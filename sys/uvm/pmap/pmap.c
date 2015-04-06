@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2014/02/25 15:20:29 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4.6.1 2015/04/06 15:18:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2014/02/25 15:20:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4.6.1 2015/04/06 15:18:33 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -197,7 +197,7 @@ CTASSERT(PMAP_ASID_RESERVED == 0);
  * Initialize the kernel pmap.
  */
 #ifdef MULTIPROCESSOR
-#define	PMAP_SIZE	offsetof(struct pmap, pm_pai[MAXCPUS])
+#define	PMAP_SIZE	offsetof(struct pmap, pm_pai[PMAP_TLB_MAX])
 #else
 #define	PMAP_SIZE	sizeof(struct pmap)
 kmutex_t pmap_pvlist_mutex __aligned(COHERENCY_UNIT);
@@ -219,6 +219,8 @@ struct pmap_limits pmap_limits;
 #ifdef UVMHIST
 static struct kern_history_ent pmapexechistbuf[10000];
 static struct kern_history_ent pmaphistbuf[10000];
+UVMHIST_DEFINE(pmapexechist);
+UVMHIST_DEFINE(pmaphist);
 #endif
 
 /*
@@ -260,6 +262,11 @@ struct pool_allocator pmap_pv_page_allocator = {
 
 #define	pmap_pv_alloc()		pool_get(&pmap_pv_pool, PR_NOWAIT)
 #define	pmap_pv_free(pv)	pool_put(&pmap_pv_pool, (pv))
+
+#if !defined(MULTIPROCESSOR) || !defined(PMAP_MD_NEED_TLB_MISS_LOCK)
+#define	pmap_md_tlb_miss_lock_enter()	do { } while(/*CONSTCOND*/0)
+#define	pmap_md_tlb_miss_lock_exit()	do { } while(/*CONSTCOND*/0)
+#endif	/* !MULTIPROCESSOR || !PMAP_MD_NEED_TLB_MISS_LOCK */
 
 /*
  * Misc. functions.
@@ -511,6 +518,11 @@ pmap_create(void)
 
 	pmap_segtab_init(pmap);
 
+#ifdef MULTIPROCESSOR
+	kcpuset_create(&pmap->pm_active, true);
+	kcpuset_create(&pmap->pm_onproc, true);
+#endif
+
 	UVMHIST_LOG(pmaphist, "<- pmap %p", pmap,0,0,0);
 	return pmap;
 }
@@ -534,8 +546,15 @@ pmap_destroy(pmap_t pmap)
 	KASSERT(pmap->pm_count == 0);
 	PMAP_COUNT(destroy);
 	kpreempt_disable();
+	pmap_md_tlb_miss_lock_enter();
 	pmap_tlb_asid_release_all(pmap);
 	pmap_segtab_destroy(pmap, NULL, 0);
+	pmap_md_tlb_miss_lock_exit();
+
+#ifdef MULTIPROCESSOR
+	kcpuset_destroy(pmap->pm_active);
+	kcpuset_destroy(pmap->pm_onproc);
+#endif
 
 	pool_put(&pmap_pmap_pool, pmap);
 	kpreempt_enable();
@@ -574,10 +593,12 @@ pmap_activate(struct lwp *l)
 	PMAP_COUNT(activate);
 
 	kpreempt_disable();
+	pmap_md_tlb_miss_lock_enter();
 	pmap_tlb_asid_acquire(pmap, l);
 	if (l == curlwp) {
 		pmap_segtab_activate(pmap, l);
 	}
+	pmap_md_tlb_miss_lock_exit();
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
@@ -596,8 +617,10 @@ pmap_deactivate(struct lwp *l)
 	PMAP_COUNT(deactivate);
 
 	kpreempt_disable();
+	pmap_md_tlb_miss_lock_enter();
 	curcpu()->ci_pmap_user_segtab = PMAP_INVALID_SEGTAB_ADDRESS;
 	pmap_tlb_asid_deactivate(pmap);
+	pmap_md_tlb_miss_lock_exit();
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
@@ -617,7 +640,8 @@ pmap_update(struct pmap *pmap)
 	if (pending && pmap_tlb_shootdown_bystanders(pmap))
 		PMAP_COUNT(shootdown_ipis);
 #endif
-#ifdef DEBUG
+	pmap_md_tlb_miss_lock_enter();
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	pmap_tlb_check(pmap, pmap_md_tlb_check_entry);
 #endif /* DEBUG */
 
@@ -630,6 +654,7 @@ pmap_update(struct pmap *pmap)
 		pmap_tlb_asid_acquire(pmap, curlwp);
 		pmap_segtab_activate(pmap, curlwp);
 	}
+	pmap_md_tlb_miss_lock_exit();
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
@@ -673,11 +698,13 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 			pmap_remove_pv(pmap, sva, pg,
 			   pte_modified_p(pt_entry));
 		}
+		pmap_md_tlb_miss_lock_enter();
 		*ptep = npte;
 		/*
 		 * Flush the TLB for the given address.
 		 */
 		pmap_tlb_invalidate_addr(pmap, sva);
+		pmap_md_tlb_miss_lock_exit();
 	}
 	return false;
 }
@@ -831,12 +858,14 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		}
 		pt_entry = pte_prot_downgrade(pt_entry, prot);
 		if (*ptep != pt_entry) {
+			pmap_md_tlb_miss_lock_enter();
 			*ptep = pt_entry;
 			/*
 			 * Update the TLB if needed.
 			 */
 			pmap_tlb_update_addr(pmap, sva, pt_entry,
 			    PMAP_TLB_NEED_IPI);
+			pmap_md_tlb_miss_lock_exit();
 		}
 	}
 	return false;
@@ -925,9 +954,11 @@ pmap_page_cache(struct vm_page *pg, bool cached)
 		pt_entry_t pt_entry = *ptep;
 		if (pte_valid_p(pt_entry)) {
 			pt_entry = pte_cached_change(pt_entry, cached);
+			pmap_md_tlb_miss_lock_enter();
 			*ptep = pt_entry;
 			pmap_tlb_update_addr(pmap, va, pt_entry,
 			    PMAP_TLB_NEED_IPI);
+			pmap_md_tlb_miss_lock_exit();
 		}
 	}
 	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
@@ -1048,11 +1079,13 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	bool resident = pte_valid_p(opte);
 	if (!resident)
 		pmap->pm_stats.resident_count++;
+	pmap_md_tlb_miss_lock_enter();
 	*ptep = npte;
 
 	pmap_tlb_update_addr(pmap, va, npte,
 	    ((flags & VM_PROT_ALL) ? PMAP_TLB_INSERT : 0)
 	    | (resident ? PMAP_TLB_NEED_IPI : 0));
+	pmap_md_tlb_miss_lock_exit();
 	kpreempt_enable();
 
 	if (pg != NULL && (prot == (VM_PROT_READ | VM_PROT_EXECUTE))) {
@@ -1126,12 +1159,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	pt_entry_t * const ptep = pmap_pte_reserve(pmap_kernel(), va, 0);
 	KASSERT(ptep != NULL);
 	KASSERT(!pte_valid_p(*ptep));
+	pmap_md_tlb_miss_lock_enter();
 	*ptep = npte;
 	/*
 	 * We have the option to force this mapping into the TLB but we
 	 * don't.  Instead let the next reference to the page do it.
 	 */
 	pmap_tlb_update_addr(pmap_kernel(), va, npte, 0);
+	pmap_md_tlb_miss_lock_exit();
 	kpreempt_enable();
 #if DEBUG > 1
 	for (u_int i = 0; i < PAGE_SIZE / sizeof(long); i++) {
@@ -1167,8 +1202,10 @@ pmap_pte_kremove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		if (pg != NULL)
 			pmap_md_vca_clean(pg, sva, PMAP_WBINV);
 
+		pmap_md_tlb_miss_lock_enter();
 		*ptep = new_pt_entry;
 		pmap_tlb_invalidate_addr(pmap_kernel(), sva);
+		pmap_md_tlb_miss_lock_exit();
 	}
 
 	return false;
@@ -1201,8 +1238,10 @@ pmap_remove_all(struct pmap *pmap)
 	 * Free all of our ASIDs which means we can skip doing all the
 	 * tlb_invalidate_addrs().
 	 */
+	pmap_md_tlb_miss_lock_enter();
 	pmap_tlb_asid_deactivate(pmap);
 	pmap_tlb_asid_release_all(pmap);
+	pmap_md_tlb_miss_lock_exit();
 	pmap->pm_flags |= PMAP_DEFERRED_ACTIVATE;
 
 	kpreempt_enable();
@@ -1246,7 +1285,9 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 #endif
 
 	if (pte_wired_p(pt_entry)) {
+		pmap_md_tlb_miss_lock_enter();
 		*ptep = pte_unwire_entry(*ptep);
+		pmap_md_tlb_miss_lock_exit();
 		pmap->pm_stats.wired_count--;
 	}
 #ifdef DIAGNOSTIC
@@ -1409,9 +1450,11 @@ pmap_clear_modify(struct vm_page *pg)
 			continue;
 		}
 		pmap_md_vca_clean(pg, va, PMAP_WBINV);
+		pmap_md_tlb_miss_lock_enter();
 		*ptep = pt_entry;
 		VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 		pmap_tlb_invalidate_addr(pmap, va);
+		pmap_md_tlb_miss_lock_exit();
 		pmap_update(pmap);
 		if (__predict_false(gen != VM_PAGEMD_PVLIST_LOCK(mdpg, false))) {
 			/*

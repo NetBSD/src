@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.24 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.24.4.1 2015/04/06 15:17:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.24 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.24.4.1 2015/04/06 15:17:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -381,7 +381,7 @@ mmem_defaultlabel(struct mmem_softc *sc, struct mmem_pt *pt,
 	memset(d, 0, sizeof *d);
 
 #if 0
-	d->d_type = DTYPE_FLOPPY;		/* XXX? */
+	d->d_type = DKTYPE_FLOPPY;		/* XXX? */
 #endif
 	strncpy(d->d_typename, sc->sc_devinfo->di_product_name,
 	    sizeof d->d_typename);

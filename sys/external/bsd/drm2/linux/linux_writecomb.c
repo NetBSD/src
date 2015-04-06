@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_writecomb.c,v 1.2 2014/11/04 11:27:31 jmcneill Exp $	*/
+/*	$NetBSD: linux_writecomb.c,v 1.2.2.1 2015/04/06 15:18:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.2 2014/11/04 11:27:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.2.2.1 2015/04/06 15:18:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mtrr.h"
@@ -53,7 +53,7 @@ int
 linux_writecomb_init(void)
 {
 
-	mutex_init(&linux_writecomb.lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&linux_writecomb.lock, MUTEX_DEFAULT, IPL_VM);
 	idr_init(&linux_writecomb.idr);
 
 	return 0;

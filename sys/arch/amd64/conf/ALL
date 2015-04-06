@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.23 2014/11/16 16:01:40 manu Exp $
+# $NetBSD: ALL,v 1.23.2.1 2015/04/06 15:17:51 skrll Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.23 $"
+#ident 		"ALL-$Revision: 1.23.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -526,14 +526,14 @@ wsdisplay*	at wsemuldisplaydev?
 #viadrm* 	at drm?		# VIA UniChrome DRM driver
 
 # DRMKMS drivers
-i915drmkms*     at pci? dev ? function ?
-intelfb*        at intelfbbus?
+i915drmkms* 	at pci? dev ? function ?
+intelfb* 	at intelfbbus?
 
-radeon*         at pci? dev ? function ?
+radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
-#nouveau*       at pci? dev ? function ?
-#nouveaufb*     at nouveaufbbus
+nouveau* 	at pci? dev ? function ?
+nouveaufb* 	at nouveaufbbus?
 
 attimer0	at isa?
 pcppi0		at isa?
@@ -912,6 +912,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
@@ -2049,7 +2050,6 @@ options NOTDEF_DEBUG
 options NOT_DEBUG
 options NSIODEBUG
 options NTFS_DEBUG
-options NV_DEBUG
 options OBOE_DEBUG
 options OFW_DEBUG
 options OHCI_DEBUG
@@ -2157,6 +2157,7 @@ options SMB_VNODE_DEBUG
 options SNAPPER_DEBUG
 options SNDEBUG
 options SOCKBUF_DEBUG
+options SOFTINT_INTR
 options SONIC_DEBUG
 options SPARC_PCI_DEBUG
 options SPC_DEBUG

@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.6 2014/01/14 18:51:25 christos Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2015/04/06 15:18:07 skrll Exp $
 
-SYACALL_PREFIX=sunos
+SYSCALL_PREFIX=sunos
 
 .include <bsd.syscall.mk>

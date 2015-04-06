@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.15 2014/06/05 23:48:17 rmind Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.15.4.1 2015/04/06 15:18:30 skrll Exp $
 #
 
 LIB=		rumpnet
@@ -6,6 +6,9 @@ LIB=		rumpnet
 .PATH:	${RUMPTOP}/librump/rumpnet				\
 	${RUMPTOP}/../kern					\
 	${RUMPTOP}/../net					\
+	${RUMPTOP}/../netatalk					\
+	${RUMPTOP}/../netinet					\
+	${RUMPTOP}/../netinet6					\
 	${RUMPTOP}/../compat/common
 
 SRCS=	net_stub.c netisr.c rump_net.c
@@ -21,6 +24,9 @@ SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
 # sys/net
 SRCS+=	pktqueue.c
 
+# formatters
+SRCS+= at_print.c dl_print.c in_print.c in6_print.c
+
 # radix trie support
 SRCS+=	radix.c
 SRCS+=	rtbl.c
@@ -30,10 +36,6 @@ SRCS+=
 
 # bpf stubs, required for all kernels
 SRCS+=	bpf_stub.c
-
-# automatically in sync src/lib
-SHLIB_MAJOR=    0
-SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpnet/opt
 

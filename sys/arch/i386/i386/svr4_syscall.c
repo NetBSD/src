@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.47 2012/07/12 18:13:08 dsl Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.47.16.1 2015/04/06 15:17:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.47 2012/07/12 18:13:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.47.16.1 2015/04/06 15:17:57 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -108,8 +108,8 @@ svr4_syscall(struct trapframe *frame)
 			goto bad;
 	}
 
-	if (!__predict_false(p->p_trace_enabled)
-	    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
+	if (!__predict_false(p->p_trace_enabled || KDTRACE_ENTRY(callp->sy_entry))
+	    || (error = trace_enter(code, callp, args)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
 		error = sy_call(callp, l, args, rval);
@@ -140,8 +140,8 @@ svr4_syscall(struct trapframe *frame)
 		break;
 	}
 
-	if (__predict_false(p->p_trace_enabled))
-		trace_exit(code, rval, error);
+	if (__predict_false(p->p_trace_enabled || KDTRACE_ENTRY(callp->sy_return)))
+		trace_exit(code, callp, args, rval, error);
 
 	userret(l);
 }

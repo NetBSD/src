@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.146 2014/11/10 18:52:51 maxv Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.146.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.146 2014/11/10 18:52:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.146.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -557,10 +557,10 @@ rip_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-rip_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+rip_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
-	struct sockaddr_in *addr;
+	struct sockaddr_in *addr = (struct sockaddr_in *)nam;
 	int error = 0;
 	int s;
 
@@ -568,12 +568,10 @@ rip_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(inp != NULL);
 	KASSERT(nam != NULL);
 
+	if (addr->sin_len != sizeof(*addr))
+		return EINVAL;
+
 	s = splsoftnet();
-	addr = mtod(nam, struct sockaddr_in *);
-	if (nam->m_len != sizeof(*addr)) {
-		error = EINVAL;
-		goto release;
-	}
 	if (IFNET_EMPTY()) {
 		error = EADDRNOTAVAIL;
 		goto release;

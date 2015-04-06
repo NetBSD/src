@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/13 02:03:16 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2015/04/06 15:18:29 skrll Exp $
 #
 
 LIB=	rumpkern_sys_cygwin
@@ -11,3 +11,6 @@ CPPFLAGS+= -I${.CURDIR} -I${RUMPTOP}/librump/rumpkern
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
+
+SYS_P=rump_cygwin_sys
+.include "../Makefile.sys"

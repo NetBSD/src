@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.5 2014/03/26 08:04:19 christos Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.5.6.1 2015/04/06 15:18:04 skrll Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5 2014/03/26 08:04:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5.6.1 2015/04/06 15:18:04 skrll Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -46,10 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5 2014/03/26 08:04:19 christos
 #include <machine/specialreg.h>
 #include <x86/cpu_ucode.h>
 
-#define MSR_IA32_PLATFORM_ID 0x17
-#define MSR_IA32_BIOS_UPDT_TRIGGER 0x79
-#define MSR_IA32_BIOS_SIGN_ID 0x8b
-
 static void
 intel_getcurrentucode(uint32_t *ucodeversion, int *platformid)
 {
@@ -58,9 +54,9 @@ intel_getcurrentucode(uint32_t *ucodeversion, int *platformid)
 
 	kpreempt_disable();
 
-	wrmsr(MSR_IA32_BIOS_SIGN_ID, 0);
+	wrmsr(MSR_BIOS_SIGN, 0);
 	x86_cpuid(0, unneeded_ids);
-	msr = rdmsr(MSR_IA32_BIOS_SIGN_ID);
+	msr = rdmsr(MSR_BIOS_SIGN);
 	*ucodeversion = msr >> 32;
 
 	kpreempt_enable();
@@ -138,7 +134,7 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 		kpreempt_enable();
 		return EEXIST; /* ??? */
 	}
-	wrmsr(MSR_IA32_BIOS_UPDT_TRIGGER, (uintptr_t)(sc->sc_blob) + 48);
+	wrmsr(MSR_BIOS_UPDT_TRIG, (uintptr_t)(sc->sc_blob) + 48);
 	intel_getcurrentucode(&nucodeversion, &platformid);
 
 	kpreempt_enable();

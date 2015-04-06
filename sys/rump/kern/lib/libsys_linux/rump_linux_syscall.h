@@ -1,4 +1,4 @@
-/* $NetBSD: rump_linux_syscall.h,v 1.14 2014/05/29 10:42:23 njoly Exp $ */
+/* $NetBSD: rump_linux_syscall.h,v 1.14.4.1 2015/04/06 15:18:29 skrll Exp $ */
 
 /*
  * System call numbers.

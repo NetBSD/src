@@ -1,0 +1,32 @@
+#       $NetBSD: std.vexpress,v 1.2.2.2 2015/04/06 15:17:55 skrll Exp $
+#
+# standard NetBSD/evbarm for VEXPRESS options
+
+machine evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+# Pull in VEXPRESS config definitions
+include 	"arch/evbarm/conf/files.vexpress"
+
+makeoptions	CPUFLAGS="-march=armv7-a -mfpu=neon"
+
+# To support easy transit to ../arch/arm/arm32
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
+options 	ARM_HAS_VBAR
+options 	CORTEX_PMC
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_FAST_SOFTINTS            # should be in types.h
+#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	TPIDRPRW_IS_CURCPU
+options 	KERNEL_BASE_EXT=0x80000000
+options 	FPU_VFP
+
+makeoptions     KERNEL_BASE_PHYS="0x80000000"
+makeoptions     KERNEL_BASE_VIRT="0x80000000"
+makeoptions     BOARDTYPE="vexpress"
+makeoptions     BOARDMKFRAG="${THISARM}/conf/mk.vexpress"
+
+options         ARM_INTR_IMPL="<arch/evbarm/vexpress/vexpress_intr.h>"
+options         ARM_GENERIC_TODR
+

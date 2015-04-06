@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.8 2014/08/23 08:03:33 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.8.2.1 2015/04/06 15:18:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -165,6 +165,13 @@ find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
 
 	result += ffs(~*p | (~0UL << MIN(nbits, bpl)));
 	return result;
+}
+
+static inline unsigned
+hweight8(unsigned w)
+{
+
+	return popcount(w & 0xff);
 }
 
 #endif  /* _LINUX_BITOPS_H_ */

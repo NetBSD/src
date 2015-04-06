@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.rumpkerncomp,v 1.10 2014/04/02 19:37:17 pooka Exp $
+#	$NetBSD: Makefile.rumpkerncomp,v 1.10.6.1 2015/04/06 15:18:29 skrll Exp $
 #
 
 .include <bsd.own.mk>
 
-RUMPKERNCOMPS=	crypto tty z
+RUMPKERNCOMPS=	crypto sysproxy tty z
 
 .if ${MKSLJIT} != "no"
 RUMPKERNCOMPS+=	sljit

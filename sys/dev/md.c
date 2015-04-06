@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.71 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: md.c,v 1.71.4.1 2015/04/06 15:18:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.71 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.71.4.1 2015/04/06 15:18:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -474,8 +474,6 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct md_softc *sc;
 	struct md_conf *umd;
-	struct disklabel *lp;
-	struct partinfo *pp;
 	int error;
 
 	if ((sc = device_lookup_private(&md_cd, MD_UNIT(dev))) == NULL)
@@ -483,18 +481,8 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	mutex_enter(&sc->sc_lock);
 	if (sc->sc_type != MD_UNCONFIGURED) {
-		switch (cmd) {
-		case DIOCGDINFO:
-			lp = (struct disklabel *)data;
-			*lp = *sc->sc_dkdev.dk_label;
-			mutex_exit(&sc->sc_lock);
-			return 0;
-
-		case DIOCGPART:
-			pp = (struct partinfo *)data;
-			pp->disklab = sc->sc_dkdev.dk_label;
-			pp->part =
-			    &sc->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
+		error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l); 
+		if (error != EPASSTHROUGH) {
 			mutex_exit(&sc->sc_lock);
 			return 0;
 		}
@@ -558,7 +546,7 @@ md_set_disklabel(struct md_softc *sc)
 	lp->d_secpercyl = lp->d_ntracks*lp->d_nsectors;
 
 	strncpy(lp->d_typename, md_cd.cd_name, sizeof(lp->d_typename));
-	lp->d_type = DTYPE_UNKNOWN;
+	lp->d_type = DKTYPE_MD;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;

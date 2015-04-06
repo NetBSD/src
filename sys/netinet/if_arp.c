@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.160 2014/11/13 16:11:18 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.160.2.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.160 2014/11/13 16:11:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.160.2.1 2015/04/06 15:18:22 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -453,7 +453,9 @@ arp_setgate(struct rtentry *rt, struct sockaddr *gate,
 	if ((rt->rt_flags & RTF_HOST) == 0 && netmask != NULL &&
 	    satocsin(netmask)->sin_addr.s_addr != 0xffffffff)
 		rt->rt_flags |= RTF_CLONING;
-	if (rt->rt_flags & RTF_CLONING) {
+	if (rt->rt_flags & RTF_CLONING ||
+	    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && !rt->rt_llinfo))
+	{
 		union {
 			struct sockaddr sa;
 			struct sockaddr_storage ss;
@@ -554,7 +556,9 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		break;
 	case RTM_ADD:
 		gate = arp_setgate(rt, gate, info->rti_info[RTAX_NETMASK]);
-		if (rt->rt_flags & RTF_CLONING) {
+		if (rt->rt_flags & RTF_CLONING ||
+		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && !la))
+		{
 			/*
 			 * Give this route an expiration time, even though
 			 * it's a "permanent" route, so that routes cloned
@@ -592,7 +596,8 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			    }
 #endif
 			}
-			break;
+			if (rt->rt_flags & RTF_CLONING)
+				break;
 		}
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE) {
@@ -608,10 +613,24 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			log(LOG_DEBUG, "arp_rtrequest: bad gateway value\n");
 			break;
 		}
+
 		satosdl(gate)->sdl_type = ifp->if_type;
 		satosdl(gate)->sdl_index = ifp->if_index;
 		if (la != NULL)
 			break; /* This happens on a route change */
+
+		/* If the route is for a broadcast address mark it as such.
+		 * This way we can avoid an expensive call to in_broadcast()
+		 * in ip_output() most of the time (because the route passed
+		 * to ip_output() is almost always a host route). */
+		if (rt->rt_flags & RTF_HOST &&
+		    !(rt->rt_flags & RTF_BROADCAST) &&
+		    in_broadcast(satocsin(rt_getkey(rt))->sin_addr, rt->rt_ifp))
+			rt->rt_flags |= RTF_BROADCAST;
+		/* There is little point in resolving the broadcast address */
+		if (rt->rt_flags & RTF_BROADCAST)
+			break;
+
 		/*
 		 * Case 2:  This route may come from cloning, or a manual route
 		 * add with a LL address.

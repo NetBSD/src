@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.22 2014/07/25 08:20:53 dholland Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.22.4.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -88,8 +88,7 @@ chfs_lookup(void *v)
 	 * directory/name couple is already in the cache. */
 	if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
 			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
-		error = *vpp == NULLVP ? ENOENT : 0;
-		goto out;
+		return (*vpp == NULLVP ? ENOENT : 0);
 	}
 
 	ip = VTOI(dvp);
@@ -695,13 +694,13 @@ chfs_read(void *v)
 		    bytesinfile);
 
 		if (chfs_lblktosize(chmp, nextlbn) >= ip->size) {
-			error = bread(vp, lbn, size, NOCRED, 0, &bp);
+			error = bread(vp, lbn, size, 0, &bp);
 			dbg("after bread\n");
 		} else {
 			int nextsize = chfs_blksize(chmp, ip, nextlbn);
 			dbg("size: %ld\n", size);
 			error = breadn(vp, lbn,
-			    size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
+			    size, &nextlbn, &nextsize, 1, 0, &bp);
 			dbg("after breadN\n");
 		}
 		if (error)
@@ -1311,9 +1310,8 @@ chfs_symlink(void *v)
 
 		uvm_vnp_setsize(vp, len);
 	} else {
-		err = vn_rdwr(UIO_WRITE, vp, target, len, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED, cnp->cn_cred,
-		    (size_t *)0, NULL);
+		err = ufs_bufio(UIO_WRITE, vp, target, len, (off_t)0,
+		    IO_NODELOCKED, cnp->cn_cred, (size_t *)0, NULL);
 	}
 
 out:
@@ -1455,7 +1453,7 @@ chfs_readlink(void *v)
 		return (0);
 	}
 
-	return (VOP_READ(vp, uio, 0, cred));
+	return (UFS_BUFRD(vp, uio, 0, cred));
 }
 
 /* --------------------------------------------------------------------- */
@@ -1515,11 +1513,11 @@ chfs_reclaim(void *v)
 	}
 
 	cache_purge(vp);
+	vcache_remove(vp->v_mount, &ip->ino, sizeof(ip->ino));
 	if (ip->devvp) {
 		vrele(ip->devvp);
 		ip->devvp = 0;
 	}
-	chfs_ihashrem(ip);
 
 	genfs_node_destroy(vp);
 	pool_put(&chfs_inode_pool, vp->v_data);

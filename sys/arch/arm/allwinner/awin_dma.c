@@ -1,4 +1,4 @@
-/* $NetBSD: awin_dma.c,v 1.5 2014/10/13 12:34:00 jmcneill Exp $ */
+/* $NetBSD: awin_dma.c,v 1.5.4.1 2015/04/06 15:17:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_dma.c,v 1.5 2014/10/13 12:34:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_dma.c,v 1.5.4.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,11 +58,7 @@ CFATTACH_DECL_NEW(awin_dma, sizeof(struct awin_dma_softc),
 static int
 awin_dma_match(device_t parent, cfdata_t cf, void *aux)
 {
-#if defined(ALLWINNER_A10) || defined(ALLWINNER_A20) || defined(ALLWINNER_A31)
 	return awin_dma_sc == NULL;
-#else
-	return 0;
-#endif
 }
 
 static void
@@ -71,6 +67,8 @@ awin_dma_attach(device_t parent, device_t self, void *aux)
 	struct awin_dma_softc *sc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+	bus_space_handle_t bsh = awin_chip_id() == AWIN_CHIP_ID_A80 ?
+				 aio->aio_a80_core2_bsh : aio->aio_core_bsh;
 
 	KASSERT(awin_dma_sc == NULL);
 	awin_dma_sc = sc;
@@ -78,8 +76,8 @@ awin_dma_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
 	sc->sc_dmat = aio->aio_dmat;
-	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	bus_space_subregion(sc->sc_bst, bsh, loc->loc_offset,
+	    loc->loc_size, &sc->sc_bsh);
 
 	aprint_naive("\n");
 	aprint_normal(": DMA\n");
@@ -91,8 +89,9 @@ awin_dma_attach(device_t parent, device_t self, void *aux)
 		awin_dma_a10_attach(sc, aio, loc);
 		break;
 #endif
-#if defined(ALLWINNER_A31)
+#if defined(ALLWINNER_A31) || defined(ALLWINNER_A80)
 	case AWIN_CHIP_ID_A31:
+	case AWIN_CHIP_ID_A80:
 		awin_dma_a31_attach(sc, aio, loc);
 		break;
 #endif
@@ -166,8 +165,9 @@ awin_dma_dump_regs(void)
 		awin_dma_a10_dump_regs(sc);
 		break;
 #endif
-#if defined(ALLWINNER_A31)
+#if defined(ALLWINNER_A31) || defined(ALLWINNER_A80)
 	case AWIN_CHIP_ID_A31:
+	case AWIN_CHIP_ID_A80:
 		awin_dma_a31_dump_regs(sc);
 		break;
 #endif

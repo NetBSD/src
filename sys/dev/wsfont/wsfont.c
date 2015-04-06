@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.56 2014/11/05 17:01:38 macallan Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.56.2.1 2015/04/06 15:18:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.56 2014/11/05 17:01:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.56.2.1 2015/04/06 15:18:14 skrll Exp $");
 
 #include "opt_wsfont.h"
 
@@ -113,6 +113,16 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.56 2014/11/05 17:01:38 macallan Exp $")
 #ifdef FONT_OMRON12x20
 #define HAVE_FONT 1
 #include <dev/wsfont/omron12x20.h>
+#endif
+
+#ifdef FONT_GLASS10x19
+#define HAVE_FONT 1
+#include <dev/wsfont/glass10x19.h>
+#endif
+
+#ifdef FONT_GLASS10x25
+#define HAVE_FONT 1
+#include <dev/wsfont/glass10x25.h>
 #endif
 
 #ifdef FONT_DEJAVU_SANS_MONO12x22
@@ -210,6 +220,12 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_OMRON12x20
 	{ { NULL, NULL }, &omron12x20, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_GLASS10x19
+	{ { NULL, NULL }, &Glass_TTY_VT220_10x19, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_GLASS10x25
+	{ { NULL, NULL }, &Glass_TTY_VT220_10x25, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_DEJAVU_SANS_MONO12x22
 	{ { NULL, NULL }, &DejaVu_Sans_Mono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },

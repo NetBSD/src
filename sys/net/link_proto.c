@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.24 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.24.4.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.24 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.24.4.1 2015/04/06 15:18:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -51,7 +51,7 @@ static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
 static int link_attach(struct socket *, int);
 static void link_detach(struct socket *);
 static int link_accept(struct socket *, struct mbuf *);
-static int link_bind(struct socket *, struct mbuf *, struct lwp *);
+static int link_bind(struct socket *, struct sockaddr *, struct lwp *);
 static int link_listen(struct socket *, struct lwp *);
 static int link_connect(struct socket *, struct mbuf *, struct lwp *);
 static int link_connect2(struct socket *, struct socket *);
@@ -274,7 +274,7 @@ link_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-link_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+link_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.99 2014/07/22 20:25:13 alnsn Exp $
+#	$NetBSD: Makefile.rump,v 1.99.4.1 2015/04/06 15:18:24 skrll Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -43,6 +43,9 @@ CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include
 CPPFLAGS+=	-I${RUMPTOP}/include
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
+
+SHLIB_MAJOR?=	0
+SHLIB_MINOR?=	0
 
 .ifdef NEED_ISYSTEM
 CPPFLAGS+=	-isystem ${RUMPTOP}/../arch
@@ -122,12 +125,10 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 # Support for component-specific hypercalls
 #
 
-# XXX: Warning flags are not in CWARNFLAGS.  Manually add a few important ones.
+# no easy way to get WARNS out of bsd.sys.mk
+RUMPCOMP_USER_WARNFLAGS=	-Wall -Wextra -Wno-unused-parameter
+RUMPCOMP_USER_WARNFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 
-.ifdef RUMPCOMP_USER
-.warning RUMPCOMP_USER is deprecated.  Use RUMPCOMP_USER_SRCS
-RUMPCOMP_USER_SRCS= rumpcomp_user.c
-.endif
 .ifdef RUMPCOMP_USER_SRCS && !defined(RUMPKERN_ONLY)
 .if empty(DESTDIR)
 DESTDIR=/
@@ -141,15 +142,15 @@ ${rcusrc}.d: ${rcusrc}.c
 
 ${rcusrc}.o: ${rcusrc}.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
+	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} ${RUMPCOMP_USER_WARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
 
 ${rcusrc}.pico: ${rcusrc}.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
+	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} ${RUMPCOMP_USER_WARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
 
 ${rcusrc}.po: ${rcusrc}.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
+	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} ${RUMPCOMP_USER_WARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
 
 RUMPOBJ_NORENAME+=${rcusrc}.o ${rcusrc}.pico ${rcusrc}.po
 SRCS+=${rcusrc}.c

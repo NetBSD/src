@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.74 2014/11/14 17:34:23 maxv Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.74.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74 2014/11/14 17:34:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
@@ -74,6 +74,39 @@ struct	route ip6_forward_rt;
 
 extern pfil_head_t *inet6_pfil_hook;	/* XXX */
 
+static void __printflike(4, 5)
+ip6_cantforward(const struct ip6_hdr *ip6, const struct ifnet *srcifp,
+    const struct ifnet *dstifp, const char *fmt, ...)
+{
+	char sbuf[INET6_ADDRSTRLEN], dbuf[INET6_ADDRSTRLEN];
+	char reason[256];
+	va_list ap;
+	uint64_t *ip6s;
+
+	/* update statistics */
+	ip6s = IP6_STAT_GETREF();
+	ip6s[IP6_STAT_CANTFORWARD]++;
+	if (dstifp)
+		ip6s[IP6_STAT_BADSCOPE]++;
+	IP6_STAT_PUTREF();
+
+	if (dstifp)
+		in6_ifstat_inc(dstifp, ifs6_in_discard);
+
+	if (ip6_log_time + ip6_log_interval >= time_second)
+		return;
+	ip6_log_time = time_second;
+
+	va_start(ap, fmt);
+	vsnprintf(reason, sizeof(reason), fmt, ap);
+	va_end(ap);
+
+	log(LOG_DEBUG, "Cannot forward from %s@%s to %s@%s nxt %d (%s)\n",
+	    IN6_PRINT(sbuf, &ip6->ip6_src), srcifp ? if_name(srcifp) : "?",
+	    IN6_PRINT(dbuf, &ip6->ip6_dst), dstifp ? if_name(dstifp) : "?",
+	    ip6->ip6_nxt, reason);
+}
+
 /*
  * Forward a packet.  If some error occurs return the sender
  * an icmp packet.  Note we can't always generate a meaningful
@@ -96,7 +129,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	int error = 0, type = 0, code = 0;
 	struct mbuf *mcopy = NULL;
 	struct ifnet *origifp;	/* maybe unnecessary */
-	u_int32_t inzone, outzone;
+	uint32_t inzone, outzone;
 	struct in6_addr src_in6, dst_in6;
 #ifdef IPSEC
 	int needipsec = 0;
@@ -117,18 +150,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0 ||
 	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
-		IP6_STATINC(IP6_STAT_CANTFORWARD);
-		/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard) */
-		if (ip6_log_time + ip6_log_interval < time_second) {
-			ip6_log_time = time_second;
-			log(LOG_DEBUG,
-			    "cannot forward "
-			    "from %s to %s nxt %d received on %s\n",
-			    ip6_sprintf(&ip6->ip6_src),
-			    ip6_sprintf(&ip6->ip6_dst),
-			    ip6->ip6_nxt,
-			    if_name(m->m_pkthdr.rcvif));
-		}
+		ip6_cantforward(ip6, m->m_pkthdr.rcvif, NULL,
+		    ((m->m_flags & (M_BCAST|M_MCAST)) != 0) ? "bcast/mcast" :
+		    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ? "mcast/dst" :
+		    "unspec/src");
 		m_freem(m);
 		return;
 	}
@@ -215,46 +240,20 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 * [draft-ietf-ipngwg-icmp-v3-07, Section 3.1]
 	 */
 	src_in6 = ip6->ip6_src;
-	if (in6_setscope(&src_in6, rt->rt_ifp, &outzone)) {
-		/* XXX: this should not happen */
-		uint64_t *ip6s = IP6_STAT_GETREF();
-		ip6s[IP6_STAT_CANTFORWARD]++;
-		ip6s[IP6_STAT_BADSCOPE]++;
-		IP6_STAT_PUTREF();
-		m_freem(m);
-		return;
-	}
-	if (in6_setscope(&src_in6, m->m_pkthdr.rcvif, &inzone)) {
-		uint64_t *ip6s = IP6_STAT_GETREF();
-		ip6s[IP6_STAT_CANTFORWARD]++;
-		ip6s[IP6_STAT_BADSCOPE]++;
-		IP6_STAT_PUTREF();
-		m_freem(m);
-		return;
-	}
-	if (inzone != outzone) {
-		uint64_t *ip6s = IP6_STAT_GETREF();
-		ip6s[IP6_STAT_CANTFORWARD]++;
-		ip6s[IP6_STAT_BADSCOPE]++;
-		IP6_STAT_PUTREF();
-		in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard);
-
-		if (ip6_log_time + ip6_log_interval < time_second) {
-			ip6_log_time = time_second;
-			log(LOG_DEBUG,
-			    "cannot forward "
-			    "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
-			    ip6_sprintf(&ip6->ip6_src),
-			    ip6_sprintf(&ip6->ip6_dst),
-			    ip6->ip6_nxt,
-			    if_name(m->m_pkthdr.rcvif), if_name(rt->rt_ifp));
-		}
+	inzone = outzone = ~0;
+	if (in6_setscope(&src_in6, rt->rt_ifp, &outzone) != 0 ||
+	    in6_setscope(&src_in6, m->m_pkthdr.rcvif, &inzone) != 0 ||
+	    inzone != outzone) {
+		ip6_cantforward(ip6, m->m_pkthdr.rcvif, rt->rt_ifp,
+		    "src[%s] inzone %d outzone %d", 
+		    in6_getscopename(&ip6->ip6_src), inzone, outzone);
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
 		m_freem(m);
 		return;
 	}
+
 #ifdef IPSEC
 	/*
 	 * If we need to encapsulate the packet, do it here
@@ -277,13 +276,16 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 * packet to a different zone by (e.g.) a default route.
 	 */
 	dst_in6 = ip6->ip6_dst;
+	inzone = outzone = ~0;
 	if (in6_setscope(&dst_in6, m->m_pkthdr.rcvif, &inzone) != 0 ||
 	    in6_setscope(&dst_in6, rt->rt_ifp, &outzone) != 0 ||
 	    inzone != outzone) {
-		uint64_t *ip6s = IP6_STAT_GETREF();
-		ip6s[IP6_STAT_CANTFORWARD]++;
-		ip6s[IP6_STAT_BADSCOPE]++;
-		IP6_STAT_PUTREF();
+		ip6_cantforward(ip6, m->m_pkthdr.rcvif, rt->rt_ifp,
+		    "dst[%s] inzone %d outzone %d",
+		    in6_getscopename(&ip6->ip6_dst), inzone, outzone);
+		if (mcopy)
+			icmp6_error(mcopy, ICMP6_DST_UNREACH,
+				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
 		m_freem(m);
 		return;
 	}

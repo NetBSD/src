@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.h,v 1.3 2014/09/02 14:55:56 skrll Exp $	*/
+/*	$NetBSD: dwc2.h,v 1.3.2.1 2015/04/06 15:18:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 #include <linux/list.h>
 
+#include "opt_usb.h"
 // #define VERBOSE_DEBUG
 // #define DWC2_DUMP_FRREM
 // #define CONFIG_USB_DWC2_TRACK_MISSED_SOFS

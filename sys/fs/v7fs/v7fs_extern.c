@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_extern.c,v 1.3 2014/07/25 08:20:52 dholland Exp $	*/
+/*	$NetBSD: v7fs_extern.c,v 1.3.4.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.3 2014/07/25 08:20:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.3.4.1 2015/04/06 15:18:20 skrll Exp $");
 
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
@@ -235,6 +235,7 @@ struct vfsops v7fs_vfsops = {
 	.vfs_statvfs = v7fs_statvfs,
 	.vfs_sync = v7fs_sync,
 	.vfs_vget = v7fs_vget,
+	.vfs_loadvnode = v7fs_loadvnode,
 	.vfs_fhtovp = v7fs_fhtovp,
 	.vfs_vptofh = v7fs_vptofh,
 	.vfs_init = v7fs_init,

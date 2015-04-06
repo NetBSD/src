@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.179 2014/11/10 18:52:51 maxv Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.179.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.179 2014/11/10 18:52:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.179.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -439,6 +439,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	if (tp->t_force && len == 1)
 		tcps[TCP_STAT_SNDPROBE]++;
 	else if (SEQ_LT(tp->snd_nxt, tp->snd_max)) {
+		tp->t_sndrexmitpack++;
 		tcps[TCP_STAT_SNDREXMITPACK]++;
 		tcps[TCP_STAT_SNDREXMITBYTE] += len;
 	} else {
@@ -1401,6 +1402,9 @@ send:
 	if (win < (long)(int32_t)(tp->rcv_adv - tp->rcv_nxt))
 		win = (long)(int32_t)(tp->rcv_adv - tp->rcv_nxt);
 	th->th_win = htons((u_int16_t) (win>>tp->rcv_scale));
+	if (th->th_win == 0) {
+		tp->t_sndzerowin++;
+	}
 	if (SEQ_GT(tp->snd_up, tp->snd_nxt)) {
 		u_int32_t urp = tp->snd_up - tp->snd_nxt;
 		if (urp > IP_MAXPACKET)

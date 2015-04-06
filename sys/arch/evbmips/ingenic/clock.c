@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2014/11/22 15:17:02 macallan Exp $ */
+/*	$NetBSD: clock.c,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,20 +27,110 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2014/11/22 15:17:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
+
 #include <mips/ingenic/ingenic_regs.h>
+
+#include "opt_ingenic.h"
+
+extern void ingenic_puts(const char *);
+
+void ingenic_clockintr(uint32_t);
+
+static u_int
+ingenic_count_read(struct timecounter *tc)
+{
+	return readreg(JZ_OST_CNT_LO);
+}
 
 void
 cpu_initclocks(void)
 {
+	struct cpu_info * const ci = curcpu();
+	uint32_t cnt;
 
-	/* timecounter setup and such */
+	static struct timecounter tc =  {
+		ingenic_count_read,		/* get_timecount */
+		0,				/* no poll_pps */
+		~0u,				/* counter_mask */
+		12000000,			/* frequency */
+		"Ingenic OS timer",		/* name */
+		100,				/* quality */
+	};
+
+	curcpu()->ci_cctr_freq = tc.tc_frequency;
+
+	tc_init(&tc);
+
+	printf("starting timer interrupt...\n");
+	/* start the timer interrupt */
+	cnt = readreg(JZ_OST_CNT_LO);
+	ci->ci_next_cp0_clk_intr = cnt + ci->ci_cycles_per_hz;
+	writereg(JZ_TC_TFCR, TFR_OSTFLAG);
+	writereg(JZ_OST_DATA, ci->ci_next_cp0_clk_intr);
+	/*
+	 * XXX
+	 * We can use OST or one of the regular timers to generate the 100hz
+	 * interrupt. OST interrupts need to be rescheduled every time and by
+	 * only one core, the regular timer can be programmed to fire every
+	 * 10ms without rescheduling and we'd still use the OST as time base.
+	 * OST is supposed to fire on INT2 although I haven't been able to get
+	 * that to work yet ( all I get is INT0 which is for hardware interrupts
+	 * in general )
+	 * So if we can get OST to fire on INT2 we can just block INT0 on core1
+	 * and have a timer interrupt on both cores, if not the regular timer 
+	 * would be more convenient but we'd have to shoot an IPI to core1 on
+	 * every tick.
+	 * For now, use OST and hope we'll figure out how to make it fire on
+	 * INT2.
+	 */
+#ifdef USE_OST
+	writereg(JZ_TC_TMCR, TFR_OSTFLAG);
+#else
+	writereg(JZ_TC_TECR, TESR_TCST5);	/* disable timer 5 */
+	writereg(JZ_TC_TCNT(5), 0);
+	writereg(JZ_TC_TDFR(5), 30000);	/* 10ms at 48MHz / 16 */
+	writereg(JZ_TC_TDHR(5), 60000);	/* not reached */
+	writereg(JZ_TC_TCSR(5), TCSR_EXT_EN| TCSR_DIV_16);
+	writereg(JZ_TC_TMCR, TFR_FFLAG5);
+	writereg(JZ_TC_TFCR, TFR_FFLAG5);
+	writereg(JZ_TC_TESR, TESR_TCST5);	/* enable timer 5 */
+#endif
+
+#ifdef INGENIC_CLOCK_DEBUG
+	printf("INTC %08x %08x\n", readreg(JZ_ICSR0), readreg(JZ_ICSR1));
+	printf("ICMR0 %08x\n", readreg(JZ_ICMR0));
+#endif
+	writereg(JZ_ICMCR0, 0x0c000000); /* TCU2, OST */
+	spl0();
+#ifdef INGENIC_CLOCK_DEBUG
+	printf("TFR: %08x\n", readreg(JZ_TC_TFR));
+	printf("TMR: %08x\n", readreg(JZ_TC_TMR));
+	printf("cnt5: %08x\n", readreg(JZ_TC_TCNT(5)));
+	printf("CR: %08x\n", MFC0(MIPS_COP_0_CAUSE, 0));
+	printf("SR: %08x\n", MFC0(MIPS_COP_0_STATUS, 0));
+	delay(100000);
+	printf("TFR: %08x\n", readreg(JZ_TC_TFR));
+	printf("TMR: %08x\n", readreg(JZ_TC_TMR));
+	printf("cnt5: %08x\n", readreg(JZ_TC_TCNT(5)));
+	printf("CR: %08x\n", MFC0(MIPS_COP_0_CAUSE, 0));
+	printf("SR: %08x\n", MFC0(MIPS_COP_0_STATUS, 0));
+	printf("TFR: %08x\n", readreg(JZ_TC_TFR));
+	printf("TMR: %08x\n", readreg(JZ_TC_TMR));
+	printf("cnt5: %08x\n", readreg(JZ_TC_TCNT(5)));
+	printf("CR: %08x\n", MFC0(MIPS_COP_0_CAUSE, 0));
+	printf("SR: %08x\n", MFC0(MIPS_COP_0_STATUS, 0));
+	
+	printf("INTC %08x %08x\n", readreg(JZ_ICSR0), readreg(JZ_ICSR1));
+	delay(3000000);
+#endif
 }
 
 /* shamelessly stolen from mips3_clock.c */
@@ -89,5 +179,55 @@ delay(int n)
 void
 setstatclockrate(int r)
 {
-	/* nothing to see here */
+	/* we could just use another timer channel here */
+}
+
+#ifdef INGENIC_CLOCK_DEBUG
+int cnt = 99;
+#endif
+
+void
+ingenic_clockintr(uint32_t id)
+{
+	extern struct clockframe cf;
+	struct cpu_info * const ci = curcpu();
+#ifdef USE_OST
+	uint32_t new_cnt;
+#endif
+	ci->ci_ev_count_compare.ev_count++;
+
+	/* clear flags */
+	writereg(JZ_TC_TFCR, TFR_OSTFLAG);
+
+	KASSERT((ci->ci_cycles_per_hz & ~(0xffffffff)) == 0);
+	ci->ci_next_cp0_clk_intr += (uint32_t)(ci->ci_cycles_per_hz & 0xffffffff);
+#ifdef USE_OST
+	writereg(JZ_OST_DATA, ci->ci_next_cp0_clk_intr);
+
+	/* Check for lost clock interrupts */
+	new_cnt = readreg(JZ_OST_CNT_LO);
+
+	/* 
+	 * Missed one or more clock interrupts, so let's start 
+	 * counting again from the current value.
+	 */
+	if ((ci->ci_next_cp0_clk_intr - new_cnt) & 0x80000000) {
+
+		ci->ci_next_cp0_clk_intr = new_cnt + curcpu()->ci_cycles_per_hz;
+		writereg(JZ_OST_DATA, ci->ci_next_cp0_clk_intr);
+		curcpu()->ci_ev_count_compare_missed.ev_count++;
+	}
+	writereg(JZ_TC_TFCR, TFR_OSTFLAG);
+#else
+	writereg(JZ_TC_TFCR, TFR_FFLAG5);
+#endif
+
+#ifdef INGENIC_CLOCK_DEBUG
+	cnt++;
+	if (cnt == 100) {
+		cnt = 0;
+		ingenic_puts("+");
+	}
+#endif
+	hardclock(&cf);
 }

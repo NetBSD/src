@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.362 2014/11/16 16:01:40 manu Exp $
+# $NetBSD: GENERIC,v 1.362.2.1 2015/04/06 15:17:50 skrll Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.362 $"
+ident		"GENERIC-$Revision: 1.362.2.1 $"
 
 maxusers 32
 
@@ -361,6 +361,7 @@ slide*  at	pci? dev ? function ?		# Symphony Labs IDE controllers
 viaide* at	pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
+pm2fb*	at	pci? dev ? function ?		# 3Dlabs Permedia 2 Graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
 radeonfb* at	pci? dev ? function ?		# ATI/AMD Radeon Graphics
@@ -703,16 +704,8 @@ midi*	at pcppi?
 midi*	at sb?
 
 # Workstation Console attachments
-wsdisplay*	at	cfb?
-wsdisplay*	at	mfb?
-wsdisplay*	at	tfb?
-wsdisplay*	at	sfb?
-#wsdisplay*	at	sfbp?
-wsdisplay*	at	px?
-wsdisplay*	at	pxg?
-wsdisplay*	at	radeonfb?
-wsdisplay*	at	vga?
-wsdisplay*	at	tga?
+wsdisplay0	at	wsemuldisplaydev? console 1
+wsdisplay*	at	wsemuldisplaydev?
 wskbd*		at	lkkbd? console ?
 wsmouse*	at	vsms?
 wskbd*		at	pckbd?

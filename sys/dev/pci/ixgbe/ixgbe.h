@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2011, Intel Corporation 
+  Copyright (c) 2001-2012, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe.h,v 1.24 2011/04/28 23:21:40 jfv Exp $*/
-/*$NetBSD: ixgbe.h,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 234620 2012-04-23 22:05:09Z bz $*/
+/*$NetBSD: ixgbe.h,v 1.1.30.1 2015/04/06 15:18:12 skrll Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -198,14 +198,16 @@
 #define IXGBE_82599_SCATTER		32
 #define MSIX_82598_BAR			3
 #define MSIX_82599_BAR			4
-#define IXGBE_TSO_SIZE			65535
+#define IXGBE_TSO_SIZE			262140
 #define IXGBE_TX_BUFFER_SIZE		((u32) 1514)
 #define IXGBE_RX_HDR			128
 #define IXGBE_VFTA_SIZE			128
 #define IXGBE_BR_SIZE			4096
-#define IXGBE_QUEUE_IDLE		0
-#define IXGBE_QUEUE_WORKING		1
-#define IXGBE_QUEUE_HUNG		2
+#define IXGBE_QUEUE_MIN_FREE		32
+#define IXGBE_QUEUE_IDLE		1
+#define IXGBE_QUEUE_WORKING		2
+#define IXGBE_QUEUE_HUNG		4
+#define IXGBE_QUEUE_DEPLETED		8
 
 /* Offload bits in mbuf flag */
 #define	M_CSUM_OFFLOAD	\
@@ -331,6 +333,7 @@ struct rx_ring {
 	bool			hdr_split;
 	bool			hw_rsc;
 	bool			discard;
+	bool			vtag_strip;
         u32			next_to_refresh;
         u32 			next_to_check;
 	char			mtx_name[16];
@@ -392,6 +395,7 @@ struct adapter {
 
 	/* Info about the interface */
 	u32			optics;
+	u32			fc; /* local flow ctrl setting */
 	int			advertise;  /* link speeds */
 	bool			link_active;
 	u16			max_frame_size;
@@ -476,7 +480,7 @@ struct adapter {
 
 
 #define IXGBE_CORE_LOCK_INIT(_sc, _name) \
-        mutex_init(&(_sc)->core_mtx, MUTEX_DEFAULT, IPL_NET)
+        mutex_init(&(_sc)->core_mtx, MUTEX_DEFAULT, IPL_SOFTNET)
 #define IXGBE_CORE_LOCK_DESTROY(_sc)      mutex_destroy(&(_sc)->core_mtx)
 #define IXGBE_TX_LOCK_DESTROY(_sc)        mutex_destroy(&(_sc)->tx_mtx)
 #define IXGBE_RX_LOCK_DESTROY(_sc)        mutex_destroy(&(_sc)->rx_mtx)
@@ -487,7 +491,7 @@ struct adapter {
 #define IXGBE_CORE_UNLOCK(_sc)            mutex_exit(&(_sc)->core_mtx)
 #define IXGBE_TX_UNLOCK(_sc)              mutex_exit(&(_sc)->tx_mtx)
 #define IXGBE_RX_UNLOCK(_sc)              mutex_exit(&(_sc)->rx_mtx)
-#define IXGBE_CORE_LOCK_ASSERT(_sc)       KASSERT(mutex_owned(&(_sc)->core_mtx)
+#define IXGBE_CORE_LOCK_ASSERT(_sc)       KASSERT(mutex_owned(&(_sc)->core_mtx))
 #define IXGBE_TX_LOCK_ASSERT(_sc)         KASSERT(mutex_owned(&(_sc)->tx_mtx))
 
 

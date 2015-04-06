@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.100 2014/03/24 19:29:59 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.100.6.1 2015/04/06 15:18:00 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -393,6 +393,14 @@ register_t
 	cpu_hatch(void);
 void	cpu_spinup_trampoline(void);
 void	cpu_boot_secondary_processors(void);
+void	cpu_halt(void);
+void	cpu_halt_others(void);
+void	cpu_pause(struct trapframe *);
+void	cpu_pause_others(void);
+void	cpu_resume(cpuid_t);
+void	cpu_resume_others(void);
+int	cpu_is_paused(int);
+void	cpu_debug_dump(void);
 #endif /* MULTIPROCESSOR */
 #endif /* !_MODULE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.111 2014/05/12 11:56:02 joerg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.111.4.1 2015/04/06 15:18:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111 2014/05/12 11:56:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111.4.1 2015/04/06 15:18:04 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -357,6 +357,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_acpiid = caa->cpu_id;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_func = caa->cpu_func;
+	aprint_normal("\n");
 
 	/* Must be before mi_cpu_attach(). */
 	cpu_vm_init(ci);
@@ -366,7 +367,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 		error = mi_cpu_attach(ci);
 		if (error != 0) {
-			aprint_normal("\n");
 			aprint_error_dev(self,
 			    "mi_cpu_attach failed with %d\n", error);
 			return;
@@ -446,7 +446,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	default:
-		aprint_normal("\n");
 		panic("unknown processor type??\n");
 	}
 
@@ -552,11 +551,10 @@ cpu_childdetached(device_t self, device_t child)
 void
 cpu_init(struct cpu_info *ci)
 {
-	uint32_t cr4;
+	uint32_t cr4 = 0;
 
 	lcr0(rcr0() | CR0_WP);
 
-	cr4 = rcr4();
 	/*
 	 * On a P6 or above, enable global TLB caching if the
 	 * hardware supports it.
@@ -581,7 +579,10 @@ cpu_init(struct cpu_info *ci)
 	if (cpu_feature[1] & CPUID2_XSAVE)
 		cr4 |= CR4_OSXSAVE;
 
-	lcr4(cr4);
+	if (cr4) {
+		cr4 |= rcr4();
+		lcr4(cr4);
+	}
 
 	/* If xsave is enabled, enable all fpu features */
 	if (cr4 & CR4_OSXSAVE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.43 2014/09/06 20:56:39 palle Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.43.2.1 2015/04/06 15:18:03 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.43 2014/09/06 20:56:39 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.43.2.1 2015/04/06 15:18:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -67,11 +67,11 @@ get_mmu_handle(void)
 	u_int chosen;
 
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
-		prom_printf("get_mmu_handle: cannot get /chosen\r\n");
+		prom_printf("get_mmu_handle: cannot get /chosen\n");
 		return -1;
 	}
 	if (OF_getprop(chosen, "mmu", &mmuh, sizeof(mmuh)) == -1) {
-		prom_printf("get_mmu_handle: cannot get mmuh\r\n");
+		prom_printf("get_mmu_handle: cannot get mmuh\n");
 		return -1;
 	}
 	return mmuh;
@@ -83,11 +83,11 @@ get_memory_handle(void)
 	u_int chosen;
 
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
-		prom_printf("get_memory_handle: cannot get /chosen\r\n");
+		prom_printf("get_memory_handle: cannot get /chosen\n");
 		return -1;
 	}
 	if (OF_getprop(chosen, "memory", &memh, sizeof(memh)) == -1) {
-		prom_printf("get_memory_handle: cannot get memh\r\n");
+		prom_printf("get_memory_handle: cannot get memh\n");
 		return -1;
 	}
 	return memh;
@@ -161,7 +161,7 @@ prom_vtop(vaddr_t vaddr)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_vtop: cannot get mmuh\r\n");
+		prom_printf("prom_vtop: cannot get mmuh\n");
 		return 0;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -173,7 +173,7 @@ prom_vtop(vaddr_t vaddr)
 	if (openfirmware(&args) == -1)
 		return -1;
 #if 0
-	prom_printf("Called \"translate\", mmuh=%x, vaddr=%x, status=%x %x,\r\n retaddr=%x %x, mode=%x %x, phys_hi=%x %x, phys_lo=%x %x\r\n",
+	prom_printf("Called \"translate\", mmuh=%x, vaddr=%x, status=%x %x,\n retaddr=%x %x, mode=%x %x, phys_hi=%x %x, phys_lo=%x %x\n",
 		    mmuh, vaddr, (int)(args.status>>32), (int)args.status, (int)(args.retaddr>>32), (int)args.retaddr, 
 		    (int)(args.mode>>32), (int)args.mode, (int)(args.phys_hi>>32), (int)args.phys_hi,
 		    (int)(args.phys_lo>>32), (int)args.phys_lo);
@@ -203,7 +203,7 @@ prom_claim_virt(vaddr_t vaddr, int len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
+		prom_printf("prom_claim_virt: cannot get mmuh\n");
 		return 0;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -240,7 +240,7 @@ prom_alloc_virt(int len, int align)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_alloc_virt: cannot get mmuh\r\n");
+		prom_printf("prom_alloc_virt: cannot get mmuh\n");
 		return -1LL;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -274,7 +274,7 @@ prom_free_virt(vaddr_t vaddr, int len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_free_virt: cannot get mmuh\r\n");
+		prom_printf("prom_free_virt: cannot get mmuh\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -307,7 +307,7 @@ prom_unmap_virt(vaddr_t vaddr, int len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_unmap_virt: cannot get mmuh\r\n");
+		prom_printf("prom_unmap_virt: cannot get mmuh\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -344,7 +344,7 @@ prom_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_map_phys: cannot get mmuh\r\n");
+		prom_printf("prom_map_phys: cannot get mmuh\n");
 		return 0;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -388,7 +388,7 @@ prom_alloc_phys(int len, int align)
 	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_alloc_phys: cannot get memh\r\n");
+		prom_printf("prom_alloc_phys: cannot get memh\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -427,7 +427,7 @@ prom_claim_phys(paddr_t phys, int len)
 	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_claim_phys: cannot get memh\r\n");
+		prom_printf("prom_claim_phys: cannot get memh\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -464,7 +464,7 @@ prom_free_phys(paddr_t phys, int len)
 	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_free_phys: cannot get memh\r\n");
+		prom_printf("prom_free_phys: cannot get memh\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -502,7 +502,7 @@ prom_get_msgbuf(int len, int align)
 	paddr_t addr;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
+		prom_printf("prom_get_msgbuf: cannot get memh\n");
 		return -1;
 	}
 	if (OF_test("test-method") == 0) {
@@ -519,17 +519,17 @@ prom_get_msgbuf(int len, int align)
 			args.status = -1;
 			if (openfirmware(&args) == 0 && args.status == 0) {
 				return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
-			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
-		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
-	} else prom_printf("prom_get_msgbuf: test failed\r\n");
+			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\n");
+		} else prom_printf("prom_get_msgbuf: test-method failed\n");
+	} else prom_printf("prom_get_msgbuf: test failed\n");
 	/* Allocate random memory -- page zero avail?*/
 	addr = prom_claim_phys(0x000, len);
-	prom_printf("prom_get_msgbuf: allocated new buf at %08x\r\n", (int)addr); 
+	prom_printf("prom_get_msgbuf: allocated new buf at %08x\n", (int)addr); 
 	if (addr == -1) {
-		prom_printf("prom_get_msgbuf: cannot get allocate physmem\r\n");
+		prom_printf("prom_get_msgbuf: cannot get allocate physmem\n");
 		return -1;
 	}
-	prom_printf("prom_get_msgbuf: claiming new buf at %08x\r\n", (int)addr);
+	prom_printf("prom_get_msgbuf: claiming new buf at %08x\n", (int)addr);
 	{ int i; for (i=0; i<200000000; i++); }
 	return addr; /* Kluge till we go 64-bit */
 }

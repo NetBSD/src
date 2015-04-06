@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.38 2014/08/10 16:44:36 tls Exp $ */
+/*	$NetBSD: if_dge.c,v 1.38.4.1 2015/04/06 15:18:10 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.38 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.38.4.1 2015/04/06 15:18:10 skrll Exp $");
 
 
 
@@ -630,7 +630,7 @@ static uint16_t	dge_eeprom_word(struct dge_softc *sc, int addr);
 static int	dge_xgmii_mediachange(struct ifnet *);
 static void	dge_xgmii_mediastatus(struct ifnet *, struct ifmediareq *);
 static void	dge_xgmii_reset(struct dge_softc *);
-static void	dge_xgmii_writereg(device_t, int, int, int);
+static void	dge_xgmii_writereg(struct dge_softc *, int, int, int);
 
 
 CFATTACH_DECL_NEW(dge, sizeof(struct dge_softc),
@@ -2379,11 +2379,9 @@ phwait(struct dge_softc *sc, int p, int r, int d, int type)
         return mdic;
 }
 
-
 static void
-dge_xgmii_writereg(device_t self, int phy, int reg, int val)
+dge_xgmii_writereg(struct dge_softc *sc, int phy, int reg, int val)
 {
-	struct dge_softc *sc = device_private(self);
 	int mdic;
 
 	CSR_WRITE(sc, DGE_MDIRW, val);
@@ -2393,7 +2391,7 @@ dge_xgmii_writereg(device_t self, int phy, int reg, int val)
 		return;
 	}
 	if (((mdic = phwait(sc, phy, reg, 1, MDIO_WRITE)) & MDIO_CMD)) {
-		printf("%s: read cycle timeout; phy %d reg %d\n",
+		printf("%s: write cycle timeout; phy %d reg %d\n",
 		    device_xname(sc->sc_dev), phy, reg);
 		return;
 	}
@@ -2402,7 +2400,7 @@ dge_xgmii_writereg(device_t self, int phy, int reg, int val)
 static void
 dge_xgmii_reset(struct dge_softc *sc)
 {
-	dge_xgmii_writereg((void *)sc, 0, 0, BMCR_RESET);
+	dge_xgmii_writereg(sc, 0, 0, BMCR_RESET);
 }
 
 static int

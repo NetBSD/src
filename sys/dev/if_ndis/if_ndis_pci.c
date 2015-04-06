@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.20 2014/09/01 19:46:55 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.20.2.1 2015/04/06 15:18:09 skrll Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -204,6 +204,7 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 	int revision, i;
 #endif
 	int bar;
+	size_t rllen;
 	
 	printf("in ndis_attach_pci()\n");
 
@@ -227,9 +228,9 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 	
 	printf("sc->ndis_mtag = %x\n", (unsigned int)sc->ndis_mtag);
 
-	rl = malloc(sizeof(ndis_resource_list) +
-	    (sizeof(cm_partial_resource_desc) * (MAX_RESOURCES-1)),
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
+	rllen = sizeof(ndis_resource_list) +
+	    sizeof(cm_partial_resource_desc) * (MAX_RESOURCES - 1);
+	rl = malloc(rllen, M_DEVBUF, M_NOWAIT|M_ZERO);
 
 	if(rl == NULL) {
 		sc->error = ENOMEM;
@@ -272,7 +273,7 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 					malloc(sizeof(struct ndis_resource), M_DEVBUF, M_NOWAIT | M_ZERO)) == NULL) {
 					//printf("error: out of memory\n");
 					sc->error = ENOMEM;
-					return;
+					goto out;
 				}
 				sc->ndis_res_io->res_base = base;
 				sc->ndis_res_io->res_size = size;
@@ -293,7 +294,7 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 					sc->ndis_res_altmem != NULL) {
 					printf("too many resources\n");
 					sc->error = ENXIO;
-					return;
+					goto out;
 				}
 				if(sc->ndis_res_mem) {
 					if((sc->ndis_res_altmem = 
@@ -317,7 +318,7 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 					if((sc->ndis_res_mem = 
 						malloc(sizeof(struct ndis_resource), M_DEVBUF, M_NOWAIT | M_ZERO)) == NULL) {
 						sc->error = ENOMEM;
-						return;
+						goto out;
 					}
 					sc->ndis_res_mem->res_base = base;
 					sc->ndis_res_mem->res_size = size;
@@ -364,6 +365,10 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 	
 	kthread_create(PRI_NONE, 0, NULL, ndis_attach, (void *)sc,
 	    NULL, "ndis_attach");
+	return;
+out:
+	free(rl, M_DEVBUF); 
+	return;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.173 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.173.2.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.173 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.173.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include "opt_pipe.h"
 
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.173 2014/09/05 09:20:59 matt Exp
  */
 extern const struct fileops socketops;
 
+static int	sockargs_sb(struct sockaddr_big *, const void *, socklen_t);
+
 int
 sys___socket30(struct lwp *l, const struct sys___socket30_args *uap,
     register_t *retval)
@@ -118,30 +120,25 @@ sys_bind(struct lwp *l, const struct sys_bind_args *uap, register_t *retval)
 		syscallarg(const struct sockaddr *)	name;
 		syscallarg(unsigned int)		namelen;
 	} */
-	struct mbuf	*nam;
 	int		error;
+	struct sockaddr_big sb;
 
-	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
-	    MT_SONAME);
+	error = sockargs_sb(&sb, SCARG(uap, name), SCARG(uap, namelen));
 	if (error)
 		return error;
 
-	return do_sys_bind(l, SCARG(uap, s), nam);
+	return do_sys_bind(l, SCARG(uap, s), (struct sockaddr *)&sb);
 }
 
 int
-do_sys_bind(struct lwp *l, int fd, struct mbuf *nam)
+do_sys_bind(struct lwp *l, int fd, struct sockaddr *nam)
 {
 	struct socket	*so;
 	int		error;
 
-	if ((error = fd_getsock(fd, &so)) != 0) {
-		m_freem(nam);
-		return (error);
-	}
-	MCLAIM(nam, so->so_mowner);
+	if ((error = fd_getsock(fd, &so)) != 0)
+		return error;
 	error = sobind(so, nam, l);
-	m_freem(nam);
 	fd_putfile(fd);
 	return error;
 }
@@ -1444,6 +1441,37 @@ sys_getpeername(struct lwp *l, const struct sys_getpeername_args *uap,
 	return error;
 }
 
+static int
+sockargs_sb(struct sockaddr_big *sb, const void *name, socklen_t buflen)
+{
+	int error;
+
+	/*
+	 * We can't allow socket names > UCHAR_MAX in length, since that
+	 * will overflow sb_len. Further no reasonable buflen is <=
+	 * offsetof(sockaddr_big, sb_data) since it shall be at least
+	 * the size of the preamble sb_len and sb_family members.
+	 */
+	if (buflen > UCHAR_MAX ||
+	    buflen <= offsetof(struct sockaddr_big, sb_data))
+		return EINVAL;
+
+	error = copyin(name, (void *)sb, buflen);
+	if (error)
+		return error;
+
+#if BYTE_ORDER != BIG_ENDIAN
+	/*
+	 * 4.3BSD compat thing - need to stay, since bind(2),
+	 * connect(2), sendto(2) were not versioned for COMPAT_43.
+	 */
+	if (sb->sb_family == 0 && sb->sb_len < AF_MAX)
+		sb->sb_family = sb->sb_len;
+#endif
+	sb->sb_len = buflen;
+	return 0;
+}
+
 /*
  * XXX In a perfect world, we wouldn't pass around socket control
  * XXX arguments in mbufs, and this could go away.
@@ -1461,6 +1489,12 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 	 * length is just too much.
 	 */
 	if (buflen > (type == MT_SONAME ? UCHAR_MAX : PAGE_SIZE))
+		return EINVAL;
+
+	/*
+	 * length must greater than sizeof(sa_family) + sizeof(sa_len)
+	 */
+	if (type == MT_SONAME && buflen <= 2)
 		return EINVAL;
 
 	/* Allocate an mbuf to hold the arguments. */

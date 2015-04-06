@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.1 2014/10/12 03:56:18 uebayasi Exp $
+#	$NetBSD: files.net,v 1.1.2.1 2015/04/06 15:18:22 skrll Exp $
 
 # XXX CLEANUP
 define	net
@@ -6,6 +6,7 @@ file	net/bpf.c			bpfilter
 file	net/bpf_filter.c		bpf_filter
 file	net/bpf_stub.c			net
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
+file	net/dl_print.c
 file	net/if.c			net
 file	net/if_arcsubr.c		arcnet			needs-flag
 file	net/if_atmsubr.c		atm

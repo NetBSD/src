@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.78 2014/11/04 07:51:54 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.78.2.1 2015/04/06 15:18:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.78 2014/11/04 07:51:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.78.2.1 2015/04/06 15:18:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,41 +407,21 @@ static int
 ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 {
 	struct ld_softc *sc;
-	int part, unit, error;
+	int unit, error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
 	struct disklabel *lp;
 
 	unit = DISKUNIT(dev);
-	part = DISKPART(dev);
 	sc = device_lookup_private(&ld_cd, unit);
 
-	error = disk_ioctl(&sc->sc_dk, cmd, addr, flag, l);
+	error = disk_ioctl(&sc->sc_dk, dev, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
 	switch (cmd) {
-	case DIOCGDINFO:
-		memcpy(addr, sc->sc_dk.dk_label, sizeof(struct disklabel));
-		return (0);
-
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = *(sc->sc_dk.dk_label);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(addr, &newlabel, sizeof(struct olddisklabel));
-		return (0);
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = sc->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-		    &sc->sc_dk.dk_label->d_partitions[part];
-		break;
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -522,48 +502,6 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 		else
 			error = 0;	/* XXX Error out instead? */
 		break;
-
-	case DIOCAWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(sc->sc_dv),
-			sizeof(dkw->dkw_parent));
-		return (dkwedge_add(dkw));
-	    }
-
-	case DIOCDWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(sc->sc_dv),
-			sizeof(dkw->dkw_parent));
-		return (dkwedge_del(dkw));
-	    }
-
-	case DIOCLWEDGES:
-	    {
-	    	struct dkwedge_list *dkwl = (void *) addr;
-
-		return (dkwedge_list(&sc->sc_dk, dkwl, l));
-	    }
-
-	case DIOCMWEDGES:
-	    {
-	    	if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		dkwedge_discover(&sc->sc_dk);
-		return 0;
-	    }
 
 	case DIOCGSTRATEGY:
 	    {
@@ -821,7 +759,7 @@ ldgetdefaultlabel(struct ld_softc *sc, struct disklabel *lp)
 	lp->d_nsectors = sc->sc_nsectors;
 	lp->d_ncylinders = sc->sc_ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	lp->d_type = DTYPE_LD;
+	lp->d_type = DKTYPE_LD;
 	strlcpy(lp->d_typename, "unknown", sizeof(lp->d_typename));
 	strlcpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	if (sc->sc_secperunit > UINT32_MAX)

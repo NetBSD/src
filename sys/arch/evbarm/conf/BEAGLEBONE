@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.29 2014/10/11 15:55:36 uebayasi Exp $
+#	$NetBSD: BEAGLEBONE,v 1.29.2.1 2015/04/06 15:17:55 skrll Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -39,7 +39,7 @@ file-system 	EXT2FS		# second extended file system (linux)
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
 #file-system	KERNFS		# /kern
-#file-system	NULLFS		# loopback file system
+file-system	NULLFS		# loopback file system
 #file-system	PROCFS		# /proc
 #file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
@@ -115,6 +115,10 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	MEMORY_DISK_DYNAMIC
 #options 	MINIROOTSIZE=1000	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)

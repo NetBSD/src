@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.31 2014/02/24 07:23:43 skrll Exp $ */
+/* $NetBSD: i82596.c,v 1.31.6.1 2015/04/06 15:18:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.31 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.31.6.1 2015/04/06 15:18:09 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -513,10 +513,10 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 				break;
 			}
 			memcpy(__UNVOLATILE(&cb->cb_mcast.mc_addrs[
-			    cb->cb_mcast.mc_size * ETHER_ADDR_LEN]),
+			    cb->cb_mcast.mc_size]),
 			    enm->enm_addrlo, ETHER_ADDR_LEN);
 			ETHER_NEXT_MULTI(step, enm);
-			cb->cb_mcast.mc_size++;
+			cb->cb_mcast.mc_size += ETHER_ADDR_LEN;
 		}
 		if (cb->cb_mcast.mc_size == 0) {
 			/* Can't do exact mcast filtering, do ALLMULTI mode. */

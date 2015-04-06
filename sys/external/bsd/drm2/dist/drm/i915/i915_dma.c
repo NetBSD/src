@@ -812,8 +812,7 @@ static int i915_wait_irq(struct drm_device * dev, int irq_nr)
 #ifdef __NetBSD__
 		unsigned long flags;
 		spin_lock_irqsave(&dev_priv->irq_lock, flags);
-		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &ring->irq_queue,
-		    &dev_priv->irq_lock,
+		DRM_SPIN_WAIT_ON(ret, &ring->irq_queue, &dev_priv->irq_lock,
 		    3 * DRM_HZ,
 		    READ_BREADCRUMB(dev_priv) >= irq_nr);
 		spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
@@ -1650,6 +1649,10 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	mutex_init(&dev_priv->modeset_restore_lock);
 #endif
 
+#ifdef __NetBSD__
+	spin_lock_init(&mchdev_lock);
+#endif
+
 	intel_pm_setup(dev);
 
 	intel_display_crc_init(dev);
@@ -1731,6 +1734,8 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	dev_priv->gtt.mappable =
 	    drm_io_mapping_create_wc(dev, dev_priv->gtt.mappable_base,
 		aperture_size);
+	/* Note: mappable_end is the size, not end paddr, of the aperture.  */
+	pmap_pv_track(dev_priv->gtt.mappable_base, dev_priv->gtt.mappable_end);
 #else
 	dev_priv->gtt.mappable =
 		io_mapping_create_wc(dev_priv->gtt.mappable_base,
@@ -1848,6 +1853,11 @@ out_gem_unload:
 	destroy_workqueue(dev_priv->wq);
 out_mtrrfree:
 	arch_phys_wc_del(dev_priv->gtt.mtrr);
+#ifdef __NetBSD__
+	/* Note: mappable_end is the size, not end paddr, of the aperture.  */
+	pmap_pv_untrack(dev_priv->gtt.mappable_base,
+	    dev_priv->gtt.mappable_end);
+#endif
 	io_mapping_free(dev_priv->gtt.mappable);
 out_gtt:
 	list_del(&dev_priv->gtt.base.global_link);
@@ -1865,6 +1875,7 @@ free_priv:
 	if (dev_priv->slab)
 		kmem_cache_destroy(dev_priv->slab);
 #ifdef __NetBSD__
+	spin_lock_destroy(&mchdev_lock);
 	linux_mutex_destroy(&dev_priv->modeset_restore_lock);
 	linux_mutex_destroy(&dev_priv->dpio_lock);
 	spin_lock_destroy(&dev_priv->mm.object_stat_lock);
@@ -1985,6 +1996,7 @@ int i915_driver_unload(struct drm_device *dev)
 	DRM_DESTROY_WAITQUEUE(&dev_priv->pending_flip_queue);
 	spin_lock_destroy(&dev_priv->pending_flip_lock);
 	DRM_DESTROY_WAITQUEUE(&dev_priv->gpu_error.reset_queue);
+	spin_lock_destroy(&mchdev_lock);
 	linux_mutex_destroy(&dev_priv->modeset_restore_lock);
 	linux_mutex_destroy(&dev_priv->dpio_lock);
 	spin_lock_destroy(&dev_priv->mm.object_stat_lock);

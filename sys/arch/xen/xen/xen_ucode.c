@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ucode.c,v 1.4 2013/07/06 12:06:24 gdt Exp $ */
+/* $NetBSD: xen_ucode.c,v 1.4.8.1 2015/04/06 15:18:04 skrll Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_ucode.c,v 1.4 2013/07/06 12:06:24 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ucode.c,v 1.4.8.1 2015/04/06 15:18:04 skrll Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -115,7 +115,7 @@ cpu_ucode_apply(const struct cpu_ucode *data)
 	error = -HYPERVISOR_platform_op(&op);
 
 	if (sc->sc_blob)
-		firmware_free(sc->sc_blob, 0);
+		firmware_free(sc->sc_blob, sc->sc_blobsize);
 	sc->sc_blob = NULL;
 	sc->sc_blobsize = 0;
 	return error;
@@ -141,7 +141,7 @@ compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *data)
 	error = -HYPERVISOR_platform_op(&op);
 
 	if (sc->sc_blob != NULL)
-		firmware_free(sc->sc_blob, 0);
+		firmware_free(sc->sc_blob, sc->sc_blobsize);
 	sc->sc_blob = NULL;
 	sc->sc_blobsize = 0;
 	return error;

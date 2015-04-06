@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.20 2014/11/22 15:17:02 macallan Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.20.2.1 2015/04/06 15:17:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20 2014/11/22 15:17:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20.2.1 2015/04/06 15:17:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -75,16 +75,16 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 		cf.sr = status;
 		cf.intr = (ci->ci_idepth > 1);
 
+#ifdef MIPS3_ENABLE_CLOCK_INTR
 		if (pending & MIPS_INT_MASK_5) {
 			KASSERTMSG(ipl == IPL_SCHED,
 			    "%s: ipl (%d) != IPL_SCHED (%d)",
 			     __func__, ipl, IPL_SCHED);
-#ifdef MIPS3_ENABLE_CLOCK_INTR
 			/* call the common MIPS3 clock interrupt handler */ 
 			mips3_clockintr(&cf);
-#endif
 			pending ^= MIPS_INT_MASK_5;
 		}
+#endif
 
 		if (pending != 0) {
 			/* Process I/O and error interrupts. */

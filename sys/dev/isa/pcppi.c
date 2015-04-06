@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.42 2012/04/06 20:33:20 plunky Exp $ */
+/* $NetBSD: pcppi.c,v 1.42.16.1 2015/04/06 15:18:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.42 2012/04/06 20:33:20 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.42.16.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include "attimer.h"
 
@@ -167,6 +167,7 @@ pcppi_isa_attach(device_t parent, device_t self, void *aux)
         if (bus_space_map(iot, IO_PPI, sc->sc_size, 0, &sc->sc_ppi_ioh))
                 panic("pcppi_attach: couldn't map");
 
+	aprint_naive("\n");
 	aprint_normal("\n");
         pcppi_attach(sc);
 }

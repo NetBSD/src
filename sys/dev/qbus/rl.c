@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.46 2014/11/09 10:10:08 mlelstv Exp $	*/
+/*	$NetBSD: rl.c,v 1.46.2.1 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.46 2014/11/09 10:10:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.46.2.1 2015/04/06 15:18:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -294,7 +294,7 @@ rlattach(device_t parent, device_t self, void *aux)
 	dl->d_bbsize = BBSIZE;
 	dl->d_sbsize = SBLOCKSIZE;
 	dl->d_rpm = 2400;
-	dl->d_type = DTYPE_DEC;
+	dl->d_type = DKTYPE_DEC;
 	printf(": %s, %s\n", dl->d_typename, rlstate(rc->rc_rlc, ra->hwid));
 
 	/*
@@ -443,31 +443,18 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct rl_softc *rc = device_lookup_private(&rl_cd, DISKUNIT(dev));
 	struct disklabel *lp = rc->rc_disk.dk_label;
-	int err = 0;
+	int error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
 
+	error = disk_ioctl(&rc->rc_disk, dev, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+	else
+		error = 0;
+
 	switch (cmd) {
-	case DIOCGDINFO:
-		memcpy(addr, lp, sizeof (struct disklabel));
-		break;
-
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = *lp;
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
-		break;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = lp;
-		((struct partinfo *)addr)->part =
-		    &lp->d_partitions[DISKPART(dev)];
-		break;
-
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -487,10 +474,10 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		tp = (struct disklabel *)addr;
 
 		if ((flag & FWRITE) == 0)
-			err = EBADF;
+			error = EBADF;
 		else {
 			mutex_enter(&rc->rc_disk.dk_openlock);
-			err = ((
+			error = ((
 #ifdef __HAVE_OLD_DISKLABEL
 			       cmd == ODIOCSDINFO ||
 #endif
@@ -504,50 +491,14 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
-			err = EBADF;
+			error = EBADF;
 		break;
-
-	case DIOCAWEDGE: {
-		struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, device_xname(rc->rc_dev));
-		return dkwedge_add(dkw);
-	}
-
-	case DIOCDWEDGE: {
-		struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, device_xname(rc->rc_dev));
-		return dkwedge_del(dkw);
-	}
-
-	case DIOCLWEDGES: {
-		struct dkwedge_list *dkwl = (void *) addr;
-
-		return dkwedge_list(&rc->rc_disk, dkwl, l);
-	}
-
-	case DIOCMWEDGES: {
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		dkwedge_discover(&rc->rc_disk);
-		return 0;
-	}
 
 	default:
-		err = ENOTTY;
+		error = ENOTTY;
 		break;
 	}
-	return err;
+	return error;
 }
 
 int

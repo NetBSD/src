@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.78 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.78.4.1 2015/04/06 15:18:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.78 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.78.4.1 2015/04/06 15:18:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2220,7 +2220,10 @@ sk_tick(void *xsc_if)
 	SK_XM_CLRBIT_2(sc_if, XM_IMR, XM_IMR_GP0_SET);
 	SK_XM_READ_2(sc_if, XM_ISR);
 	mii_tick(mii);
-	callout_stop(&sc_if->sk_tick_ch);
+	if (ifp->if_link_state != LINK_STATE_UP)
+		callout_reset(&sc_if->sk_tick_ch, hz, sk_tick, sc_if);
+	else
+		callout_stop(&sc_if->sk_tick_ch);
 }
 
 void
@@ -2872,6 +2875,7 @@ sk_init(struct ifnet *ifp)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	callout_reset(&sc_if->sk_tick_ch, hz, sk_tick, sc_if);
 
 out:
 	splx(s);

@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.2 2014/11/18 10:18:45 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.2.2.1 2015/04/06 15:18:14 skrll Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -38,6 +38,11 @@
 #define	 PCI_USBREV_3_0		0x30	/* USB 3.0 */
 #define	PCI_XHCI_FLADJ		0x61	/* RW frame length adjust */
 
+#define	PCI_XHCI_INTEL_XUSB2PR	0xD0    /* Intel USB2 Port Routing */
+#define	PCI_XHCI_INTEL_USB2PRM	0xD4    /* Intel USB2 Port Routing Mask */
+#define	PCI_XHCI_INTEL_USB3_PSSEN 0xD8  /* Intel USB3 Port SuperSpeed Enable */
+#define	PCI_XHCI_INTEL_USB3PRM	0xDC    /* Intel USB3 Port Routing Mask */
+
 /* XHCI capability registers */
 #define XHCI_CAPLENGTH		0x00	/* RO capability */
 #define	XHCI_CAP_CAPLENGTH(x)	((x) & 0xFF)
@@ -46,7 +51,7 @@
 #define	XHCI_HCIVERSION_1_0	0x0100	/* xHCI version 1.0 */
 #define	XHCI_HCSPARAMS1		0x04	/* RO structual parameters 1 */
 #define	XHCI_HCS1_MAXSLOTS(x)	((x) & 0xFF)
-#define	XHCI_HCS1_MAXINTRS(x)	(((x) >> 8) & 0x7FF)
+#define	XHCI_HCS1_MAXINTRS(x)	(((x) >> 8) & 0x3FF)
 #define	XHCI_HCS1_MAXPORTS(x)	(((x) >> 24) & 0xFF)
 #define	XHCI_HCSPARAMS2		0x08	/* RO structual parameters 2 */
 #define	XHCI_HCS2_IST(x)	((x) & 0xF)
@@ -168,6 +173,7 @@
 #define	XHCI_IMOD_ICNT_GET(x)	(((x) >> 16) & 0xFFFF)	/* 250ns unit */
 #define	XHCI_IMOD_ICNT_SET(x)	(((x) & 0xFFFF) << 16)	/* 250ns unit */
 #define	XHCI_IMOD_DEFAULT	0x000001F4U	/* 8000 IRQ/second */
+#define	XHCI_IMOD_DEFAULT_LP	0x000003E8U	/* 4000 IRQ/sec for LynxPoint */
 #define	XHCI_ERSTSZ(n)		(0x0028 + (0x20 * (n)))	/* XHCI event ring segment table size */
 #define	XHCI_ERSTS_GET(x)	((x) & 0xFFFF)
 #define	XHCI_ERSTS_SET(x)	((x) & 0xFFFF)
@@ -188,18 +194,20 @@
 /* XHCI legacy support */
 #define	XHCI_XECP_ID(x)		((x) & 0xFF)
 #define	XHCI_XECP_NEXT(x)	(((x) >> 8) & 0xFF)
-#if 0
 #define	XHCI_XECP_BIOS_SEM	0x0002
 #define	XHCI_XECP_OS_SEM	0x0003
-#endif
 
-/* XHCI capability ID's */
-#define	XHCI_ID_USB_LEGACY	0x0001
-#define	XHCI_ID_PROTOCOLS	0x0002
-#define	XHCI_ID_POWER_MGMT	0x0003
-#define	XHCI_ID_VIRTUALIZATION	0x0004
-#define	XHCI_ID_MSG_IRQ		0x0005
-#define	XHCI_ID_USB_LOCAL_MEM	0x0006
+/* XHCI extended capability ID's */
+#define	XHCI_ID_USB_LEGACY	0x0001	/* USB Legacy Support */
+#define	 XHCI_XECP_USBLESUP	0x0000	/* Legacy Support Capability Reg */
+#define	 XHCI_XECP_USBLEGCTLSTS	0x0004	/* Legacy Support Ctrl & Status Reg */
+#define	XHCI_ID_PROTOCOLS	0x0002	/* Supported Protocol */
+#define	XHCI_ID_POWER_MGMT	0x0003	/* Extended Power Management */
+#define	XHCI_ID_VIRTUALIZATION	0x0004	/* I/O Virtualization */
+#define	XHCI_ID_MSG_IRQ		0x0005	/* Message Interrupt */
+#define	XHCI_ID_USB_LOCAL_MEM	0x0006	/* Local Memory */
+#define	XHCI_ID_USB_DEBUG	0x000A	/* USB Debug Capability */
+#define	XHCI_ID_XMSG_IRQ	0x0011	/* Extended Message Interrupt */
 
 #define XHCI_PAGE_SIZE(sc) ((sc)->sc_pgsz)
 
@@ -266,6 +274,8 @@ struct xhci_trb {
 #define XHCI_TRB_3_FRID_SET(x)          (((x) & 0x7FF) << 20)
 #define XHCI_TRB_3_ISO_SIA_BIT          (1U << 31)
 #define XHCI_TRB_3_SUSP_EP_BIT          (1U << 23)
+#define XHCI_TRB_3_VFID_GET(x)          (((x) >> 16) & 0xFF)
+#define XHCI_TRB_3_VFID_SET(x)          (((x) & 0xFF) << 16)
 #define XHCI_TRB_3_SLOT_GET(x)          (((x) >> 24) & 0xFF)
 #define XHCI_TRB_3_SLOT_SET(x)          (((x) & 0xFF) << 24)
 
@@ -375,10 +385,20 @@ struct xhci_trb {
 #define XHCI_SCTX_3_DEV_ADDR_GET(x)             ((x) & 0xFF)
 #define XHCI_SCTX_3_SLOT_STATE_SET(x)           (((x) & 0x1F) << 27)
 #define XHCI_SCTX_3_SLOT_STATE_GET(x)           (((x) >> 27) & 0x1F)
+#define XHCI_SLOTSTATE_DISABLED			0 /* disabled or enabled */
+#define XHCI_SLOTSTATE_ENABLED			0
+#define XHCI_SLOTSTATE_DEFAULT			1
+#define XHCI_SLOTSTATE_ADDRESSED		2
+#define XHCI_SLOTSTATE_CONFIGURED		3
 
 
 #define XHCI_EPCTX_0_EPSTATE_SET(x)             ((x) & 0x7)
 #define XHCI_EPCTX_0_EPSTATE_GET(x)             ((x) & 0x7)
+#define XHCI_EPSTATE_DISABLED			0
+#define XHCI_EPSTATE_RUNNING			1
+#define XHCI_EPSTATE_HALTED			2
+#define XHCI_EPSTATE_STOPPED			3
+#define XHCI_EPSTATE_ERROR			4
 #define XHCI_EPCTX_0_MULT_SET(x)                (((x) & 0x3) << 8)
 #define XHCI_EPCTX_0_MULT_GET(x)                (((x) >> 8) & 0x3)
 #define XHCI_EPCTX_0_MAXP_STREAMS_SET(x)        (((x) & 0x1F) << 10)

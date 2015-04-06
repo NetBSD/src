@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.270 2014/07/25 08:25:47 dholland Exp $
+	$NetBSD: syscalls.master,v 1.270.4.1 2015/04/06 15:18:20 skrll Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -919,7 +919,7 @@
 			    const struct timespec *tptr, int flag); }
 468	STD  RUMP	{ int|sys||openat(int fd, const char *path, \
 			    int oflags, ... mode_t mode); }
-469	STD  RUMP	{ int|sys||readlinkat(int fd, const char *path, \
+469	STD  RUMP	{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 470	STD  RUMP	{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
@@ -944,7 +944,7 @@
 478	STD 		{ int|sys|60|_lwp_park(clockid_t clock_id, int flags, \
 			    const struct timespec *ts, lwpid_t unpark, \
 			    const void *hint, const void *unparkhint); }
-479	STD  RUMP	{ int|sys||posix_fallocate(int fd, int PAD, off_t pos, \
+479	NOERR	RUMP	{ int|sys||posix_fallocate(int fd, int PAD, off_t pos, \
 			    off_t len); }
 480	STD  RUMP	{ int|sys||fdiscard(int fd, int PAD, off_t pos, \
 			    off_t len); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.233 2014/11/26 10:18:37 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.233.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,11 +91,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233 2014/11/26 10:18:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
+#include "opt_net_mpsafe.h"
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -132,8 +133,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233 2014/11/26 10:18:37 ozaki-r Exp 
 #include <netinet/ip_mroute.h>
 #endif
 
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
+#endif
 
 static int ip_pcbopts(struct inpcb *, const struct sockopt *);
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
@@ -163,6 +166,7 @@ ip_output(struct mbuf *m0, ...)
 	struct route iproute;
 	const struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
+	int isbroadcast;
 	struct mbuf *opt;
 	struct route *ro;
 	int flags, sw_csum;
@@ -257,12 +261,14 @@ ip_output(struct mbuf *m0, ...)
 		ifp = ia->ia_ifp;
 		mtu = ifp->if_mtu;
 		ip->ip_ttl = 1;
+		isbroadcast = in_broadcast(dst->sin_addr, ifp);
 	} else if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    ip->ip_dst.s_addr == INADDR_BROADCAST) &&
 	    imo != NULL && imo->imo_multicast_ifp != NULL) {
 		ifp = imo->imo_multicast_ifp;
 		mtu = ifp->if_mtu;
 		IFP_TO_IA(ifp, ia);
+		isbroadcast = 0;
 	} else {
 		if (rt == NULL)
 			rt = rtcache_init(ro);
@@ -278,6 +284,10 @@ ip_output(struct mbuf *m0, ...)
 		rt->rt_use++;
 		if (rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(rt->rt_gateway);
+		if (rt->rt_flags & RTF_HOST)
+			isbroadcast = rt->rt_flags & RTF_BROADCAST;
+		else
+			isbroadcast = in_broadcast(dst->sin_addr, ifp);
 	}
 	rtmtu_nolock = rt && (rt->rt_rmx.rmx_locks & RTV_MTU) == 0;
 
@@ -412,7 +422,7 @@ ip_output(struct mbuf *m0, ...)
 	 * Look for broadcast address and and verify user is allowed to
 	 * send such a packet.
 	 */
-	if (in_broadcast(dst->sin_addr, ifp)) {
+	if (isbroadcast) {
 		if ((ifp->if_flags & IFF_BROADCAST) == 0) {
 			error = EADDRNOTAVAIL;
 			goto bad;
@@ -548,9 +558,13 @@ sendit:
 		if (__predict_true(
 		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
 		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
+#ifndef NET_MPSAFE
 			KERNEL_LOCK(1, NULL);
+#endif
 			error = (*ifp->if_output)(ifp, m, sa, rt);
+#ifndef NET_MPSAFE
 			KERNEL_UNLOCK_ONE(NULL);
+#endif
 		} else {
 			error = ip_tso_output(ifp, m, sa, rt);
 		}
@@ -618,11 +632,15 @@ sendit:
 		} else {
 			KASSERT((m->m_pkthdr.csum_flags &
 			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
+#ifndef NET_MPSAFE
 			KERNEL_LOCK(1, NULL);
+#endif
 			error = (*ifp->if_output)(ifp, m,
 			    (m->m_flags & M_MCAST) ?
 			    sintocsa(rdst) : sintocsa(dst), rt);
+#ifndef NET_MPSAFE
 			KERNEL_UNLOCK_ONE(NULL);
+#endif
 		}
 	}
 	if (error == 0) {
@@ -1713,7 +1731,11 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 
 	ip->ip_sum = 0;
 	ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
+#ifndef NET_MPSAFE
 	KERNEL_LOCK(1, NULL);
+#endif
 	(void)looutput(ifp, copym, sintocsa(dst), NULL);
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
+#endif
 }

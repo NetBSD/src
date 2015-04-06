@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.68 2014/08/08 10:17:07 jmcneill Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.68.4.1 2015/04/06 15:18:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.68 2014/08/08 10:17:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.68.4.1 2015/04/06 15:18:10 skrll Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.68 2014/08/08 10:17:07 jmcneill Exp $")
 #include <sys/kauth.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
+#include <sys/kthread.h>
 
 #include <sys/bus.h>
 #include <machine/endian.h>
@@ -47,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.68 2014/08/08 10:17:07 jmcneill Exp $")
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -153,6 +156,7 @@ static void	wpi_stop(struct ifnet *, int);
 static bool	wpi_resume(device_t, const pmf_qual_t *);
 static int	wpi_getrfkill(struct wpi_softc *);
 static void	wpi_sysctlattach(struct wpi_softc *);
+static void	wpi_rsw_thread(void *);
 
 #ifdef WPI_DEBUG
 #define DPRINTF(x)	do { if (wpi_debug > 0) printf x; } while (0)
@@ -213,6 +217,22 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+
+	sc->sc_rsw_status = WPI_RSW_UNKNOWN;
+	sc->sc_rsw.smpsw_name = device_xname(self);
+	sc->sc_rsw.smpsw_type = PSWITCH_TYPE_RADIO;
+	error = sysmon_pswitch_register(&sc->sc_rsw);
+	if (error) {
+		aprint_error_dev(self,
+		    "unable to register radio switch with sysmon\n");
+		return;
+	}
+	mutex_init(&sc->sc_rsw_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_rsw_cv, "wpirsw");
+	if (kthread_create(PRI_NONE, 0, NULL,
+	    wpi_rsw_thread, sc, &sc->sc_rsw_lwp, "%s", device_xname(self))) {
+		aprint_error_dev(self, "couldn't create switch thread\n");
+	}
 
 	callout_init(&sc->calib_to, 0);
 	callout_setfunc(&sc->calib_to, wpi_calib_timeout, sc);
@@ -411,6 +431,13 @@ wpi_detach(device_t self, int flags __unused)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
+	mutex_enter(&sc->sc_rsw_mtx);
+	sc->sc_dying = 1;
+	cv_signal(&sc->sc_rsw_cv);
+	while (sc->sc_rsw_lwp != NULL)
+		cv_wait(&sc->sc_rsw_cv, &sc->sc_rsw_mtx);
+	mutex_exit(&sc->sc_rsw_mtx);
+	sysmon_pswitch_unregister(&sc->sc_rsw);
 
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 
@@ -418,7 +445,8 @@ wpi_detach(device_t self, int flags __unused)
 		sc->fw_used = false;
 		wpi_release_firmware();
 	}
-
+	cv_destroy(&sc->sc_rsw_cv);
+	mutex_destroy(&sc->sc_rsw_mtx);
 	return 0;
 }
 
@@ -1688,6 +1716,8 @@ wpi_notif_intr(struct wpi_softc *sc)
 
 			if (le32toh(*status) & 1) {
 				/* the radio button has to be pushed */
+				/* wake up thread to signal powerd */
+				cv_signal(&sc->sc_rsw_cv);
 				aprint_error_dev(sc->sc_dev,
 				    "Radio transmitter is off\n");
 				/* turn the interface down */
@@ -3167,12 +3197,16 @@ wpi_init(struct ifnet *ifp)
 		goto fail1;
 
 	/* Check the status of the radio switch */
+	mutex_enter(&sc->sc_rsw_mtx);
 	if (wpi_getrfkill(sc)) {
+		mutex_exit(&sc->sc_rsw_mtx);
 		aprint_error_dev(sc->sc_dev,
 		    "radio is disabled by hardware switch\n");
+		ifp->if_flags &= ~IFF_UP;
 		error = EBUSY;
 		goto fail1;
 	}
+	mutex_exit(&sc->sc_rsw_mtx);
 
 	/* wait for thermal sensors to calibrate */
 	for (ntries = 0; ntries < 1000; ntries++) {
@@ -3275,6 +3309,23 @@ wpi_getrfkill(struct wpi_softc *sc)
 	tmp = wpi_mem_read(sc, WPI_MEM_RFKILL);
 	wpi_mem_unlock(sc);
 
+	KASSERT(mutex_owned(&sc->sc_rsw_mtx));
+	if (tmp & 0x01) {
+		/* switch is on */
+		if (sc->sc_rsw_status != WPI_RSW_ON) {
+			sc->sc_rsw_status = WPI_RSW_ON;
+			sysmon_pswitch_event(&sc->sc_rsw,
+			    PSWITCH_EVENT_PRESSED);
+		}
+	} else {
+		/* switch is off */
+		if (sc->sc_rsw_status != WPI_RSW_OFF) {
+			sc->sc_rsw_status = WPI_RSW_OFF;
+			sysmon_pswitch_event(&sc->sc_rsw,
+			    PSWITCH_EVENT_RELEASED);
+		}
+	}
+
 	return !(tmp & 0x01);
 }
 
@@ -3288,7 +3339,9 @@ wpi_sysctl_radio(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = (struct wpi_softc *)node.sysctl_data;
 
+	mutex_enter(&sc->sc_rsw_mtx);
 	val = !wpi_getrfkill(sc);
+	mutex_exit(&sc->sc_rsw_mtx);
 
 	node.sysctl_data = &val;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -3333,3 +3386,22 @@ wpi_sysctlattach(struct wpi_softc *sc)
 err:
 	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
+
+static void
+wpi_rsw_thread(void *arg)
+{
+	struct wpi_softc *sc = (struct wpi_softc *)arg;
+
+	mutex_enter(&sc->sc_rsw_mtx);
+	for (;;) {
+		cv_timedwait(&sc->sc_rsw_cv, &sc->sc_rsw_mtx, hz);
+		if (sc->sc_dying) {
+			sc->sc_rsw_lwp = NULL;
+			cv_broadcast(&sc->sc_rsw_cv);
+			mutex_exit(&sc->sc_rsw_mtx);
+			kthread_exit(0);
+		}
+		wpi_getrfkill(sc);
+	}
+}
+

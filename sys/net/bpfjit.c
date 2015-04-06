@@ -1,7 +1,7 @@
-/*	$NetBSD: bpfjit.c,v 1.36 2014/11/20 20:31:22 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.36.2.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2011-2014 Alexander Nasonov.
+ * Copyright (c) 2011-2015 Alexander Nasonov.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.36 2014/11/20 20:31:22 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.36.2.1 2015/04/06 15:18:22 skrll Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.36 2014/11/20 20:31:22 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.36.2.1 2015/04/06 15:18:22 skrll Exp $");
 #endif
 
 #include <sys/types.h>
@@ -290,15 +290,10 @@ read_width(const struct bpf_insn *pc)
 {
 
 	switch (BPF_SIZE(pc->code)) {
-	case BPF_W:
-		return 4;
-	case BPF_H:
-		return 2;
-	case BPF_B:
-		return 1;
-	default:
-		BJ_ASSERT(false);
-		return 0;
+	case BPF_W: return 4;
+	case BPF_H: return 2;
+	case BPF_B: return 1;
+	default:    return 0;
 	}
 }
 
@@ -839,6 +834,8 @@ emit_pkt_read(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 
 	ld_reg = BJ_BUF;
 	width = read_width(pc);
+	if (width == 0)
+		return SLJIT_ERR_ALLOC_FAILED;
 
 	if (BPF_MODE(pc->code) == BPF_IND) {
 		/* tmp1 = buflen - (pc->k + width); */
@@ -871,20 +868,27 @@ emit_pkt_read(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 			return SLJIT_ERR_ALLOC_FAILED;
 	}
 
-	switch (width) {
-	case 4:
-		status = emit_read32(compiler, ld_reg, k);
-		break;
-	case 2:
-		status = emit_read16(compiler, ld_reg, k);
-		break;
-	case 1:
-		status = emit_read8(compiler, ld_reg, k);
-		break;
-	}
+	/*
+	 * Don't emit wrapped-around reads. They're dead code but
+	 * dead code elimination logic isn't smart enough to figure
+	 * it out.
+	 */
+	if (k <= UINT32_MAX - width + 1) {
+		switch (width) {
+		case 4:
+			status = emit_read32(compiler, ld_reg, k);
+			break;
+		case 2:
+			status = emit_read16(compiler, ld_reg, k);
+			break;
+		case 1:
+			status = emit_read8(compiler, ld_reg, k);
+			break;
+		}
 
-	if (status != SLJIT_SUCCESS)
-		return status;
+		if (status != SLJIT_SUCCESS)
+			return status;
+	}
 
 #ifdef _KERNEL
 	over_mchain_jump = sljit_emit_jump(compiler, SLJIT_JUMP);
@@ -1148,7 +1152,7 @@ static int
 emit_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
 {
 	int status;
-	const bool div = BPF_OP(pc->code) == BPF_DIV;
+	const bool xdiv = BPF_OP(pc->code) == BPF_DIV;
 	const bool xreg = BPF_SRC(pc->code) == BPF_X;
 
 #if BJ_XREG == SLJIT_RETURN_REG   || \
@@ -1200,7 +1204,7 @@ emit_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
 #else
 	status = sljit_emit_ijump(compiler,
 	    SLJIT_CALL2,
-	    SLJIT_IMM, div ? SLJIT_FUNC_OFFSET(divide) :
+	    SLJIT_IMM, xdiv ? SLJIT_FUNC_OFFSET(divide) :
 		SLJIT_FUNC_OFFSET(modulus));
 
 #if BJ_AREG != SLJIT_RETURN_REG
@@ -1225,7 +1229,7 @@ static bool
 read_pkt_insn(const struct bpf_insn *pc, bpfjit_abc_length_t *length)
 {
 	bool rv;
-	bpfjit_abc_length_t width;
+	bpfjit_abc_length_t width = 0; /* XXXuninit */
 
 	switch (BPF_CLASS(pc->code)) {
 	default:
@@ -1235,12 +1239,15 @@ read_pkt_insn(const struct bpf_insn *pc, bpfjit_abc_length_t *length)
 	case BPF_LD:
 		rv = BPF_MODE(pc->code) == BPF_ABS ||
 		     BPF_MODE(pc->code) == BPF_IND;
-		if (rv)
+		if (rv) {
 			width = read_width(pc);
+			rv = (width != 0);
+		}
 		break;
 
 	case BPF_LDX:
-		rv = pc->code == (BPF_LDX|BPF_B|BPF_MSH);
+		rv = BPF_MODE(pc->code) == BPF_MSH &&
+		     BPF_SIZE(pc->code) == BPF_B;
 		width = 1;
 		break;
 	}
@@ -1411,6 +1418,13 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 		case BPF_JMP:
 			/* Initialize abc_length for ABC pass. */
 			insn_dat[i].u.jdata.abc_length = MAX_ABC_LENGTH;
+
+			*initmask |= invalid & BJ_INIT_ABIT;
+
+			if (BPF_SRC(insns[i].code) == BPF_X) {
+				*hints |= BJ_HINT_XREG;
+				*initmask |= invalid & BJ_INIT_XBIT;
+			}
 
 			if (BPF_OP(insns[i].code) == BPF_JA) {
 				jt = jf = insns[i].k;
@@ -1590,6 +1604,8 @@ optimize(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 static int
 bpf_alu_to_sljit_op(const struct bpf_insn *pc)
 {
+	const int bad = SLJIT_UNUSED;
+	const uint32_t k = pc->k;
 
 	/*
 	 * Note: all supported 64bit arches have 32bit multiply
@@ -1602,11 +1618,10 @@ bpf_alu_to_sljit_op(const struct bpf_insn *pc)
 	case BPF_OR:  return SLJIT_OR;
 	case BPF_XOR: return SLJIT_XOR;
 	case BPF_AND: return SLJIT_AND;
-	case BPF_LSH: return SLJIT_SHL;
-	case BPF_RSH: return SLJIT_LSHR|SLJIT_INT_OP;
+	case BPF_LSH: return (k > 31) ? bad : SLJIT_SHL;
+	case BPF_RSH: return (k > 31) ? bad : SLJIT_LSHR|SLJIT_INT_OP;
 	default:
-		BJ_ASSERT(false);
-		return 0;
+		return bad;
 	}
 }
 
@@ -1927,10 +1942,12 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 
 			op = BPF_OP(pc->code);
 			if (op != BPF_DIV && op != BPF_MOD) {
+				const int op2 = bpf_alu_to_sljit_op(pc);
+
+				if (op2 == SLJIT_UNUSED)
+					goto fail;
 				status = sljit_emit_op2(compiler,
-				    bpf_alu_to_sljit_op(pc),
-				    BJ_AREG, 0,
-				    BJ_AREG, 0,
+				    op2, BJ_AREG, 0, BJ_AREG, 0,
 				    kx_to_reg(pc), kx_to_reg_arg(pc));
 				if (status != SLJIT_SUCCESS)
 					goto fail;

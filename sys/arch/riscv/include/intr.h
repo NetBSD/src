@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: intr.h,v 1.1.2.1 2015/04/06 15:18:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -134,6 +134,8 @@ void	splx(int);
 void	splx_noprof(int);
 void	spl0(void);
 int	splintr(uint32_t *);
+
+void	softint_deliver(void);
 
 struct cpu_info;
 

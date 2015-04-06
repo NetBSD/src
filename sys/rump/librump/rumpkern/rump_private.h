@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.85 2014/04/27 16:28:21 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.85.4.1 2015/04/06 15:18:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -117,7 +117,11 @@ do {									\
 #define RUMPMEM_UNLIMITED ((unsigned long)-1)
 extern unsigned long rump_physmemlimit;
 
-#define RUMP_LOCALPROC_P(p) (p->p_vmspace == vmspace_kernel())
+extern struct vmspace *rump_vmspace_local;
+#define RUMP_LOCALPROC_P(p) \
+    (p->p_vmspace == vmspace_kernel() || p->p_vmspace == rump_vmspace_local)
+#define RUMP_PMAP_KERNEL ((struct pmap *const)-1)
+#define RUMP_PMAP_LOCAL ((struct pmap *)-2)
 
 void		rump_component_load(const struct rump_component *);
 void		rump_component_init(enum rump_component_type);
@@ -186,5 +190,52 @@ void	rump_hyperentropy_init(void);
 void	rump_lwproc_init(void);
 void	rump_lwproc_curlwp_set(struct lwp *);
 void	rump_lwproc_curlwp_clear(struct lwp *);
+int	rump_lwproc_rfork_vmspace(struct vmspace *, int);
+
+/*
+ * sysproxy is an optional component.  The interfaces with "hyp"
+ * in the name come into the rump kernel from the client or sysproxy
+ * stub, the rest go out of the rump kernel.
+ */
+struct rump_sysproxy_ops {
+	int (*rspo_copyin)(void *, const void *, void *, size_t);
+	int (*rspo_copyinstr)(void *, const void *, void *, size_t *);
+	int (*rspo_copyout)(void *, const void *, void *, size_t);
+	int (*rspo_copyoutstr)(void *, const void *, void *, size_t *);
+	int (*rspo_anonmmap)(void *, size_t, void **);
+	int (*rspo_raise)(void *, int);
+	void (*rspo_fini)(void *);
+
+	pid_t (*rspo_hyp_getpid)(void);
+	int (*rspo_hyp_syscall)(int, void *, long *);
+	int (*rspo_hyp_rfork)(void *, int, const char *);
+	void (*rspo_hyp_lwpexit)(void);
+	void (*rspo_hyp_execnotify)(const char *);
+};
+extern struct rump_sysproxy_ops rump_sysproxy_ops;
+#define rump_sysproxy_copyin(arg, raddr, laddr, len)			\
+ 	rump_sysproxy_ops.rspo_copyin(arg, raddr, laddr, len)
+#define rump_sysproxy_copyinstr(arg, raddr, laddr, lenp)		\
+ 	rump_sysproxy_ops.rspo_copyinstr(arg, raddr, laddr, lenp)
+#define rump_sysproxy_copyout(arg, laddr, raddr, len)			\
+ 	rump_sysproxy_ops.rspo_copyout(arg, laddr, raddr, len)
+#define rump_sysproxy_copyoutstr(arg, laddr, raddr, lenp)		\
+ 	rump_sysproxy_ops.rspo_copyoutstr(arg, laddr, raddr, lenp)
+#define rump_sysproxy_anonmmap(arg, howmuch, addr)			\
+	rump_sysproxy_ops.rspo_anonmmap(arg, howmuch, addr)
+#define rump_sysproxy_raise(arg, signo)					\
+	rump_sysproxy_ops.rspo_raise(arg, signo)
+#define rump_sysproxy_fini(arg)						\
+	rump_sysproxy_ops.rspo_fini(arg)
+#define rump_sysproxy_hyp_getpid()					\
+	rump_sysproxy_ops.rspo_hyp_getpid()
+#define rump_sysproxy_hyp_syscall(num, arg, retval)			\
+	rump_sysproxy_ops.rspo_hyp_syscall(num, arg, retval)
+#define rump_sysproxy_hyp_rfork(priv, flag, comm)			\
+	rump_sysproxy_ops.rspo_hyp_rfork(priv, flag, comm)
+#define rump_sysproxy_hyp_lwpexit()					\
+	rump_sysproxy_ops.rspo_hyp_lwpexit()
+#define rump_sysproxy_hyp_execnotify(comm)				\
+	rump_sysproxy_ops.rspo_hyp_execnotify(comm)
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.17 2014/02/23 16:07:40 njoly Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.17.6.1 2015/04/06 15:18:07 skrll Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.17 2014/02/23 16:07:40 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.17.6.1 2015/04/06 15:18:07 skrll Exp $");
 
 #define	ELFSIZE		32
 
@@ -118,6 +118,8 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 		return error;
 
 	a = ai;
+
+	memset(ai, 0, sizeof(ai));
 
 	/*
 	 * Push extra arguments on the stack needed by dynamically

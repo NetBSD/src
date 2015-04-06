@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_wdt.c,v 1.5 2014/11/25 00:06:32 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_wdt.c,v 1.5.2.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,12 +132,16 @@ awin_wdt_setmode(struct sysmon_wdog *smw)
 	const uint8_t *map;
 	size_t mapsize;
 
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+	switch (awin_chip_id()) {
+	case AWIN_CHIP_ID_A31:
+	case AWIN_CHIP_ID_A80:
 		map = period_map_a31;
 		mapsize = __arraycount(period_map_a31);
-	} else {
+		break;
+	default:
 		map = period_map;
 		mapsize = __arraycount(period_map);
+		break;
 	}
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
@@ -148,7 +152,8 @@ awin_wdt_setmode(struct sysmon_wdog *smw)
 	}
 
 	if (sc->sc_wdog_armed && smw->smw_period == sc->sc_wdog_period) {
-		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		if (awin_chip_id() == AWIN_CHIP_ID_A31 ||
+		    awin_chip_id() == AWIN_CHIP_ID_A80) {
 			bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 			    AWIN_A31_WDOG1_CFG_REG,
 			    __SHIFTIN(AWIN_A31_WDOG_CFG_CONFIG_SYS,
@@ -172,7 +177,8 @@ awin_wdt_setmode(struct sysmon_wdog *smw)
  		sc->sc_wdog_mode |= AWIN_WDOG_MODE_RST_EN;
 	}
 
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+	if (awin_chip_id() == AWIN_CHIP_ID_A31 ||
+	    awin_chip_id() == AWIN_CHIP_ID_A80) {
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 		    AWIN_A31_WDOG1_CFG_REG,
 		    __SHIFTIN(AWIN_A31_WDOG_CFG_CONFIG_SYS,
@@ -216,12 +222,16 @@ awin_wdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_wdog_armed = (device_cfdata(self)->cf_flags & 1) != 0;
 
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+	switch (awin_chip_id()) {
+	case AWIN_CHIP_ID_A31:
+	case AWIN_CHIP_ID_A80:
 		sc->sc_ctrl_reg = AWIN_A31_WDOG1_CTRL_REG;
 		sc->sc_mode_reg = AWIN_A31_WDOG1_MODE_REG;
-	} else {
+		break;
+	default:
 		sc->sc_ctrl_reg = AWIN_WDOG_CTRL_REG;
 		sc->sc_mode_reg = AWIN_WDOG_MODE_REG;
+		break;
 	}
 
 	sc->sc_bst = aio->aio_core_bst;
@@ -255,19 +265,28 @@ awin_wdt_attach(device_t parent, device_t self, void *aux)
 void
 awin_wdog_reset(void)
 {
+	bus_size_t off;
+
 	cpsid(I32_bit|F32_bit);
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+
+	switch (awin_chip_id()) {
+	case AWIN_CHIP_ID_A31:
+	case AWIN_CHIP_ID_A80:
+		off = awin_chip_id() == AWIN_CHIP_ID_A80 ?
+		    AWIN_A80_TIMER_OFFSET : AWIN_TMR_OFFSET;
 		bus_space_write_4(&awin_bs_tag, awin_core_bsh,
-		    AWIN_TMR_OFFSET + AWIN_A31_WDOG1_CFG_REG,
+		    off + AWIN_A31_WDOG1_CFG_REG,
 		    __SHIFTIN(AWIN_A31_WDOG_CFG_CONFIG_SYS,
 			      AWIN_A31_WDOG_CFG_CONFIG));
 		bus_space_write_4(&awin_bs_tag, awin_core_bsh,
-		    AWIN_TMR_OFFSET + AWIN_A31_WDOG1_MODE_REG,
+		    off + AWIN_A31_WDOG1_MODE_REG,
 		    AWIN_A31_WDOG_MODE_EN);
-	} else {
+		break;
+	default:
 		bus_space_write_4(&awin_bs_tag, awin_core_bsh,
 		    AWIN_TMR_OFFSET + AWIN_WDOG_MODE_REG,
 		    AWIN_WDOG_MODE_EN | AWIN_WDOG_MODE_RST_EN);
+		break;
 	}
 	for (;;) {
 		__asm("wfi");

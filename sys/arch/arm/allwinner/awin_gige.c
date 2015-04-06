@@ -29,9 +29,12 @@
 
 #include "locators.h"
 
+#include "axp806pm.h"
+#include "axp809pm.h"
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.19 2014/11/23 23:05:19 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.19.2.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +44,13 @@ __KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.19 2014/11/23 23:05:19 jmcneill Exp 
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
+
+#if NAXP806PM > 0
+#include <dev/i2c/axp806.h>
+#endif
+#if NAXP809PM > 0
+#include <dev/i2c/axp809.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -53,6 +63,7 @@ __KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.19 2014/11/23 23:05:19 jmcneill Exp 
 
 static int awin_gige_match(device_t, cfdata_t, void *);
 static void awin_gige_attach(device_t, device_t, void *);
+static void awin_gige_pmu_init(device_t);
 static int awin_gige_intr(void*);
 
 struct awin_gige_softc {
@@ -69,6 +80,9 @@ static const struct awin_gpio_pinset awin_gige_gpio_pinset_a31 = {
 	'A', AWIN_A31_PIO_PA_GMAC_FUNC, AWIN_A31_PIO_PA_GMAC_PINS, 0, 3
 };
 
+static const struct awin_gpio_pinset awin_gige_gpio_pinset_a80 = {
+	'A', AWIN_A80_PIO_PA_GMAC_FUNC, AWIN_A80_PIO_PA_GMAC_PINS, 0, 3
+};
 
 CFATTACH_DECL_NEW(awin_gige, sizeof(struct awin_gige_softc),
 	awin_gige_match, awin_gige_attach, NULL, NULL);
@@ -76,13 +90,11 @@ CFATTACH_DECL_NEW(awin_gige, sizeof(struct awin_gige_softc),
 static int
 awin_gige_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct awinio_attach_args * const aio = aux;
 	const struct awin_gpio_pinset *pinset =
 	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
 	    &awin_gige_gpio_pinset_a31 : &awin_gige_gpio_pinset;
-#ifdef DIAGNOSTIC
-	const struct awin_locators * const loc = &aio->aio_loc;
-#endif
+	struct awinio_attach_args * const aio __diagused = aux;
+	const struct awin_locators * const loc __diagused = &aio->aio_loc;
 	if (cf->cf_flags & 1)
 		return 0;
 
@@ -102,12 +114,26 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	struct awin_gige_softc * const sc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
-	struct awin_gpio_pinset pinset =
-	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
-	    awin_gige_gpio_pinset_a31 : awin_gige_gpio_pinset;
+	struct awin_gpio_pinset pinset;
 	prop_dictionary_t cfg = device_properties(self);
 	uint32_t clkreg;
 	const char *phy_type, *pin_name;
+	bus_space_handle_t bsh;
+
+	switch (awin_chip_id()) {
+	case AWIN_CHIP_ID_A80:
+		bsh = aio->aio_a80_core2_bsh;
+		pinset = awin_gige_gpio_pinset_a80;
+		break;
+	case AWIN_CHIP_ID_A31:
+		bsh = aio->aio_core_bsh;
+		pinset = awin_gige_gpio_pinset_a31;
+		break;
+	default:
+		bsh = aio->aio_core_bsh;
+		pinset = awin_gige_gpio_pinset;
+		break;
+	}
 
 	sc->sc_core.sc_dev = self;
 
@@ -116,11 +142,13 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_core.sc_bst = aio->aio_core_bst;
 	sc->sc_core.sc_dmat = aio->aio_dmat;
-	bus_space_subregion(sc->sc_core.sc_bst, aio->aio_core_bsh,
+	bus_space_subregion(sc->sc_core.sc_bst, bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_core.sc_bsh);
 
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
+
+	awin_gige_pmu_init(self);
 
 	/*
 	 * Interrupt handler
@@ -147,10 +175,14 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Enable GMAC clock
 	 */
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+	if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A80_CCU_SCLK_BUS_CLK_GATING1_REG,
+		    AWIN_A80_CCU_SCLK_BUS_CLK_GATING1_GMAC, 0);
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 		    AWIN_AHB_GATING0_REG, AWIN_A31_AHB_GATING0_GMAC, 0);
-	} else {
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A20) {
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 		    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_GMAC, 0);
 	}
@@ -158,9 +190,14 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Soft reset
 	 */
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+	if (awin_chip_id() == AWIN_CHIP_ID_A80) {
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-		    AWIN_A31_AHB_RESET0_REG, AWIN_A31_AHB_RESET0_GMAC_RST, 0);
+		    AWIN_A80_CCU_SCLK_BUS_SOFT_RST1_REG,
+		    AWIN_A80_CCU_SCLK_BUS_SOFT_RST1_GMAC, 0);
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_AHB_RESET0_REG,
+		    AWIN_A31_AHB_RESET0_GMAC_RST, 0);
 	}
 
 	/*
@@ -184,7 +221,11 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	} else {
 		panic("unknown phy type '%s'", phy_type);
 	}
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+	if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_a80_core2_bsh,
+		    AWIN_A80_SYS_CTRL_OFFSET + AWIN_A80_SYS_CTRL_EMAC_CLK_REG,
+		    clkreg, AWIN_GMAC_CLK_PIT|AWIN_GMAC_CLK_TCS);
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 		    AWIN_A31_GMAC_CLK_REG, clkreg,
 		    AWIN_GMAC_CLK_PIT|AWIN_GMAC_CLK_TCS);
@@ -203,4 +244,33 @@ awin_gige_intr(void *arg)
 	struct awin_gige_softc *sc = arg;
 
 	return dwc_gmac_intr(&sc->sc_core);
+}
+
+static void
+awin_gige_pmu_init(device_t dev)
+{
+	if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+#if NAXP806PM > 0
+		device_t axp806 = device_find_by_driver_unit("axp806pm", 0);
+		if (axp806) {
+			struct axp806_ctrl *c = axp806_lookup(axp806, "CLDO1");
+			if (c) {
+				axp806_set_voltage(c, 3000, 3000);
+				axp806_enable(c);
+				delay(3000);
+			}
+		}
+#endif
+#if NAXP809PM > 0
+		device_t axp809 = device_find_by_driver_unit("axp809pm", 0);
+		if (axp809) {
+			struct axp809_ctrl *c = axp809_lookup(axp809, "GPIO1");
+			if (c) {
+				axp809_enable(c);
+				delay(3000);
+			}
+		}
+#endif
+		delay(100000);
+	}
 }

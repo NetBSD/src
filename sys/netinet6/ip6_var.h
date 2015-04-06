@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.63 2014/10/12 19:00:21 christos Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.63.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -148,6 +148,11 @@ struct	ip6_pktopts {
 #define IP6PO_MINMTU_MCASTONLY	-1 /* default; send at min MTU for multicast*/
 #define IP6PO_MINMTU_DISABLE	 0 /* always perform pmtu disc */
 #define IP6PO_MINMTU_ALL	 1 /* always send at min MTU */
+	int	ip6po_prefer_tempaddr;	/* whether temporary addresses are
+					 * preferred as source address */
+#define IP6PO_TEMPADDR_SYSTEM	-1 /* follow the system default */
+#define IP6PO_TEMPADDR_NOTPREFER 0 /* not prefer temporary address */
+#define IP6PO_TEMPADDR_PREFER	 1 /* prefer temporary address */
 	int ip6po_flags;
 #if 0	/* parameters in this block is obsolete. do not reuse the values. */
 #define IP6PO_REACHCONF	0x01	/* upper-layer reachability confirmation. */

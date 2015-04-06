@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.320 2014/02/21 22:06:48 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.320.6.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -177,6 +177,11 @@ struct emul {
 
 	size_t		e_ucsize;	/* size of ucontext_t */
 	void		(*e_startlwp)(void *);
+
+	/* Dtrace syscall probe */
+	void 		(*e_dtrace_syscall)(uint32_t, register_t,
+			    const struct sysent *, const void *,
+			    const register_t *, int);
 };
 
 /*

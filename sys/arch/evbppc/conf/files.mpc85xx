@@ -1,9 +1,9 @@
-#	$NetBSD: files.mpc85xx,v 1.9 2012/07/15 08:44:56 matt Exp $
+#	$NetBSD: files.mpc85xx,v 1.9.16.1 2015/04/06 15:17:56 skrll Exp $
 #
 # mpc85xx-specific configuration info
 
 defflag	opt_mpc85xx.h	MPC8536 MPC8544 MPC8548 MPC8555 MPC8568 MPC8572
-			P1025 P2020 CADMUS PIXIS E500_WDOG_STACK
+			P1023 P1025 P2020 CADMUS PIXIS E500_WDOG_STACK
 defparam opt_mpc85xx.h	SYS_CLK MEMSIZE
 
 file	arch/evbppc/mpc85xx/autoconf.c

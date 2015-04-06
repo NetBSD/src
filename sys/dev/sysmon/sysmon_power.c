@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.48 2014/11/21 23:28:57 joerg Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.48.2.1 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.48 2014/11/21 23:28:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.48.2.1 2015/04/06 15:18:13 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -121,6 +121,7 @@ static const struct power_event_description pswitch_type_desc[] = {
 	{ PSWITCH_TYPE_RESET, 		"reset_button" },
 	{ PSWITCH_TYPE_ACADAPTER,	"acadapter" },
 	{ PSWITCH_TYPE_HOTKEY,		"hotkey_button" },
+	{ PSWITCH_TYPE_RADIO,		"radio_button" },
 	{ -1, NULL }
 };
 
@@ -799,6 +800,9 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 
 		if (sysmon_power_daemon_task(ped, pes, event) == 0)
 			return;
+		/* We failed */
+		prop_object_release(ped->dict);
+		kmem_free(ped, sizeof(*ped));
 	}
 
 	switch (pes->pes_type) {
@@ -953,6 +957,9 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 
 		if (sysmon_power_daemon_task(ped, smpsw, event) == 0)
 			return;
+		/* We failed */
+		prop_object_release(ped->dict);
+		kmem_free(ped, sizeof(*ped));
 	}
 	
 	switch (smpsw->smpsw_type) {

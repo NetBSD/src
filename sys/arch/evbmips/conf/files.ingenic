@@ -1,13 +1,16 @@
-#	$NetBSD: files.ingenic,v 1.1 2014/11/22 15:17:02 macallan Exp $
+#	$NetBSD: files.ingenic,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $
 
-#file	arch/evbmips/ingenic/intr.c
+
+file	arch/mips/mips/bus_dma.c
+file	kern/subr_disk_mbr.c
+file	arch/evbmips/evbmips/interrupt.c
+
+defflag	opt_ingenic.h	INGENIC_DEBUG INGENIC_CLOCK_DEBUG
+defflag	opt_ingenic.h	INGENIC_INTR_DEBUG
 
 file	arch/evbmips/ingenic/autoconf.c
 file	arch/evbmips/ingenic/machdep.c
-
-file	arch/mips/mips/bus_dma.c
-file	arch/evbmips/evbmips/disksubr.c
-file	arch/evbmips/evbmips/interrupt.c
+file	arch/evbmips/ingenic/intr.c
 file	arch/evbmips/ingenic/clock.c
 
 # System bus

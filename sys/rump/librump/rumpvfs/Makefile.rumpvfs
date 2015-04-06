@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.42 2014/11/09 17:39:38 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.42.2.1 2015/04/06 15:18:30 skrll Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -73,10 +73,6 @@ SRCS+=	firmload.c
 SRCS+=	vfs_syscalls_50.c compat.c
 
 SRCS+=	rumpvnode_if.c
-
-# no shlib_version because this is automatically in sync with lib/librump
-SHLIB_MAJOR=    0
-SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.23 2014/11/16 16:20:01 ozaki-r Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.23.2.1 2015/04/06 15:18:13 skrll Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.23 2014/11/16 16:20:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.23.2.1 2015/04/06 15:18:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -626,25 +626,31 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 		bus_dma_segment_t ds;
 		int rseg, error;
 
-		error = bus_dmamap_create(sc->sc_dmat, SDMMC_SECTOR_SIZE, 1,
-		    SDMMC_SECTOR_SIZE, 0, BUS_DMA_WAITOK, &sf->bbuf_dmap);
+		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1,
+		    MAXPHYS, 0, BUS_DMA_WAITOK, &sf->bbuf_dmap);
 		if (error)
 			goto fail1;
-		error = bus_dmamem_alloc(sc->sc_dmat, SDMMC_SECTOR_SIZE,
+		error = bus_dmamem_alloc(sc->sc_dmat, MAXPHYS,
 		    PAGE_SIZE, 0, &ds, 1, &rseg, BUS_DMA_WAITOK);
 		if (error)
 			goto fail2;
-		error = bus_dmamem_map(sc->sc_dmat, &ds, 1, SDMMC_SECTOR_SIZE,
+		error = bus_dmamem_map(sc->sc_dmat, &ds, 1, MAXPHYS,
 		    &sf->bbuf, BUS_DMA_WAITOK);
 		if (error)
 			goto fail3;
 		error = bus_dmamap_load(sc->sc_dmat, sf->bbuf_dmap,
-		    sf->bbuf, SDMMC_SECTOR_SIZE, NULL,
+		    sf->bbuf, MAXPHYS, NULL,
 		    BUS_DMA_WAITOK|BUS_DMA_READ|BUS_DMA_WRITE);
+		if (error)
+			goto fail4;
+		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1,
+		    MAXPHYS, 0, BUS_DMA_WAITOK, &sf->sseg_dmap);
 		if (!error)
 			goto out;
 
-		bus_dmamem_unmap(sc->sc_dmat, sf->bbuf, SDMMC_SECTOR_SIZE);
+		bus_dmamap_unload(sc->sc_dmat, sf->bbuf_dmap);
+fail4:
+		bus_dmamem_unmap(sc->sc_dmat, sf->bbuf, MAXPHYS);
 fail3:
 		bus_dmamem_free(sc->sc_dmat, &ds, 1);
 fail2:
@@ -666,8 +672,9 @@ sdmmc_function_free(struct sdmmc_function *sf)
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
 	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
 	    !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
+		bus_dmamap_destroy(sc->sc_dmat, sf->sseg_dmap);
 		bus_dmamap_unload(sc->sc_dmat, sf->bbuf_dmap);
-		bus_dmamem_unmap(sc->sc_dmat, sf->bbuf, SDMMC_SECTOR_SIZE);
+		bus_dmamem_unmap(sc->sc_dmat, sf->bbuf, MAXPHYS);
 		bus_dmamem_free(sc->sc_dmat,
 		    sf->bbuf_dmap->dm_segs, sf->bbuf_dmap->dm_nsegs);
 		bus_dmamap_destroy(sc->sc_dmat, sf->bbuf_dmap);

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.87 2014/10/18 08:33:27 snj Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.87.2.1 2015/04/06 15:18:09 skrll Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.87 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.87.2.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -819,9 +819,12 @@ isp_dog(void *arg)
 	XS_T *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
 	uint32_t handle;
+	int sok;
 
 
 	ISP_ILOCK(isp);
+	sok = isp->isp_osinfo.mbox_sleep_ok;
+	isp->isp_osinfo.mbox_sleep_ok = 0;
 	/*
 	 * We've decided this command is dead. Make sure we're not trying
 	 * to kill a command that's already dead by getting its handle and
@@ -835,15 +838,13 @@ isp_dog(void *arg)
 		if (XS_CMD_DONE_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
 			    "watchdog found done cmd (handle 0x%x)", handle);
-			ISP_IUNLOCK(isp);
-			return;
+			goto out;
 		}
 
 		if (XS_CMD_WDOG_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
 			    "recursive watchdog (handle 0x%x)", handle);
-			ISP_IUNLOCK(isp);
-			return;
+			goto out;
 		}
 
 		XS_CMD_S_WDOG(xs);
@@ -884,10 +885,8 @@ isp_dog(void *arg)
 			XS_CMD_C_WDOG(xs);
 			callout_reset(&xs->xs_callout, hz, isp_dog, xs);
 			qe = isp_getrqentry(isp);
-			if (qe == NULL) {
-				ISP_UNLOCK(isp);
-				return;
-			}
+			if (qe == NULL)
+				goto out;
 			XS_CMD_S_GRACE(xs);
 			ISP_MEMZERO((void *) mp, sizeof (*mp));
 			mp->mrk_header.rqs_entry_count = 1;
@@ -900,6 +899,8 @@ isp_dog(void *arg)
 	} else {
 		isp_prt(isp, ISP_LOGDEBUG0, "watchdog with no command");
 	}
+out:
+	isp->isp_osinfo.mbox_sleep_ok = sok;
 	ISP_IUNLOCK(isp);
 }
 

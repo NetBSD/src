@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.113 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: mcd.c,v 1.113.4.1 2015/04/06 15:18:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.113 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.113.4.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,26 +579,12 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	if ((sc->flags & MCDF_LOADED) == 0)
 		return EIO;
 
+	error = disk_ioctl(&sc->sc_dk, dev, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	part = MCDPART(dev);
 	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
-		return 0;
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = *(sc->sc_dk.dk_label);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
-		return 0;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = sc->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-		    &sc->sc_dk.dk_label->d_partitions[part];
-		return 0;
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 #ifdef __HAVE_OLD_DISKLABEL

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.52 2014/07/20 10:22:55 alnsn Exp $
+#	$NetBSD: files.sgimips,v 1.52.4.1 2015/04/06 15:18:01 skrll Exp $
 
 maxpartitions 16
 
@@ -26,8 +26,7 @@ file arch/sgimips/sgimips/console.c
 file arch/sgimips/sgimips/disksubr.c
 file arch/sgimips/sgimips/machdep.c
 
-file dev/bus_dma/bus_dmamem_common.c
-
+file arch/mips/mips/bus_dma.c
 file arch/mips/mips/mips3_clock.c	mips3
 file arch/mips/mips/mips3_clockintr.c	mips3
 

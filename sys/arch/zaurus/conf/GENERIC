@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.65 2014/11/16 16:01:43 manu Exp $
+#	$NetBSD: GENERIC,v 1.65.2.1 2015/04/06 15:18:05 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -60,6 +60,7 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 #file-system	OVERLAY		# overlay file system
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -392,7 +393,9 @@ pseudo-device	accf_http		# "httpready" accept filter
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	putter			# for puffs and pud
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

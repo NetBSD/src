@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.37 2014/11/17 02:15:49 christos Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.37.2.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,8 +38,10 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 
+#include "opt_todr.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.37 2014/11/17 02:15:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.37.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

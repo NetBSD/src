@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_gc.c,v 1.7 2014/09/08 17:41:11 joerg Exp $	*/
+/*	$NetBSD: chfs_gc.c,v 1.7.2.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -251,6 +251,7 @@ chfs_gc_fetch_inode(struct chfs_mount *chmp, ino_t vno,
 	dbg_gc("vp to ip\n");
 	ip = VTOI(vp);
 	KASSERT(ip);
+	vrele(vp);
 
 	return ip;
 }
@@ -970,6 +971,7 @@ chfs_gcollect_dirent(struct chfs_mount *chmp,
 	}
 
 	ip = VTOI(vnode);
+	vrele(vnode);
 
 	/* Remove and obsolete the previous version. */
 	mutex_enter(&chmp->chm_lock_vnocache);
@@ -1006,7 +1008,7 @@ chfs_gcollect_deletion_dirent(struct chfs_mount *chmp,
 
 	nref_len = chfs_nref_len(chmp, cheb, fd->nref);
 
-	(void)chfs_vnode_lookup(chmp, fd->vno);
+	/* XXX This was a noop  (void)chfs_vnode_lookup(chmp, fd->vno); */
 
 	/* Find it in parent dirents. */
 	for (nref = parent->chvc->dirents;

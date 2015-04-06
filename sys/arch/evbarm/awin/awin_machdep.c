@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.29 2014/11/17 00:50:40 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.29.2.1 2015/04/06 15:17:55 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.29 2014/11/17 00:50:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.29.2.1 2015/04/06 15:17:55 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.29 2014/11/17 00:50:40 jmcneill E
 #include "com.h"
 #include "ukbd.h"
 #include "genfb.h"
+#include "ether.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,6 +287,48 @@ static const struct pmap_devmap devmap[] = {
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
+#if defined(ALLWINNER_A80)
+	{
+		/*
+		 * A80 SYS_CTRL, HS TIMER, DMA, MSG-BOX, SPINLOCK
+		 */
+		.pd_va = _A(AWIN_A80_CORE2_VBASE),
+		.pd_pa = _A(AWIN_A80_CORE2_PBASE),
+		.pd_size = _S(AWIN_A80_CORE2_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
+		/*
+		 * A80 USB-EHCI0/OHCI0, USB-EHCI1, USB-EHCI2/OHCI2
+		 */
+		.pd_va = _A(AWIN_A80_USB_VBASE),
+		.pd_pa = _A(AWIN_A80_USB_PBASE),
+		.pd_size = _S(AWIN_A80_USB_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
+		/*
+		 * A80 RSB, RPRCM
+		 */
+		.pd_va = _A(AWIN_A80_RCPUS_VBASE),
+		.pd_pa = _A(AWIN_A80_RCPUS_PBASE),
+		.pd_size = _S(AWIN_A80_RCPUS_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
+		/*
+		 * A80 CPUCFG
+		 */
+		.pd_va = _A(AWIN_A80_RCPUCFG_VBASE),
+		.pd_pa = _A(AWIN_A80_RCPUCFG_PBASE),
+		.pd_size = _S(AWIN_A80_RCPUCFG_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+#endif
 	{
 		/*
 		 * Map all 1MB of SRAM area.
@@ -481,8 +524,13 @@ initarm(void *arg)
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB | HUPCL)) | CS8) /* 8N1 */
 #endif
 
+#ifdef ALLWINNER_A80
+__CTASSERT(AWIN_CORE_PBASE + AWIN_A80_UART0_OFFSET <= CONADDR);
+__CTASSERT(CONADDR <= AWIN_CORE_PBASE + AWIN_A80_UART5_OFFSET);
+#else
 __CTASSERT(AWIN_CORE_PBASE + AWIN_UART0_OFFSET <= CONADDR);
 __CTASSERT(CONADDR <= AWIN_CORE_PBASE + AWIN_UART7_OFFSET);
+#endif
 __CTASSERT(CONADDR % AWIN_UART_SIZE == 0);
 static const bus_addr_t conaddr = CONADDR;
 static const int conspeed = CONSPEED;
@@ -572,6 +620,17 @@ awin_device_register(device_t self, void *aux)
 
 	if (device_is_a(self, "armperiph")
 	    && device_is_a(device_parent(self), "mainbus")) {
+
+#if defined(ALLWINNER_A80)
+		/* XXX Cubie4 SDK u-boot wrongly sets cbar to 0x01c80000 */
+		if (armreg_cbar_read() != AWIN_A80_GIC_BASE) {
+			aprint_normal("fixup: cbar %#x -> %#x\n",
+			    armreg_cbar_read(), AWIN_A80_GIC_BASE);
+			prop_dictionary_set_uint32(dict, "cbar",
+			    AWIN_A80_GIC_BASE);
+		}
+#endif
+
 		/*
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
@@ -623,15 +682,6 @@ awin_device_register(device_t self, void *aux)
 		 */
 		prop_dictionary_set_cstring(dict, "satapwren",
 		    (cubietruck_p ? ">PH12" : ">PB8"));
-#if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck || AWIN_board == AWIN_bpi
-		if (cubietruck_p) {
-			prop_dictionary_set_cstring(dict, "usb0drv", ">PH17");
-		} else if (awin_chip_id() == AWIN_CHIP_ID_A20) {
-			prop_dictionary_set_cstring(dict, "usb0drv", ">PB9");
-		} else {
-			prop_dictionary_set_cstring(dict, "usb0drv", ">PB2");
-		}
-#endif
 #if AWIN_board == AWIN_hummingbird_a31
 		prop_dictionary_set_cstring(dict, "usb0iddet", "<PA15");
 		prop_dictionary_set_cstring(dict, "usb0vbusdet", "<PA16");
@@ -640,7 +690,17 @@ awin_device_register(device_t self, void *aux)
 		prop_dictionary_set_cstring(dict, "usb1drv", ">PH27");
 		prop_dictionary_set_cstring(dict, "usb1restrict", ">PH26");
 		prop_dictionary_set_cstring(dict, "usb2drv", ">PH24");
+#elif AWIN_board == AWIN_allwinner_a80
+		prop_dictionary_set_cstring(dict, "usb1drv", ">PH14");
+		prop_dictionary_set_cstring(dict, "usb2drv", ">PH15");
 #else
+		if (cubietruck_p) {
+			prop_dictionary_set_cstring(dict, "usb0drv", ">PH17");
+		} else if (awin_chip_id() == AWIN_CHIP_ID_A20) {
+			prop_dictionary_set_cstring(dict, "usb0drv", ">PB9");
+		} else {
+			prop_dictionary_set_cstring(dict, "usb0drv", ">PB2");
+		}
 		prop_dictionary_set_cstring(dict, "usb2drv", ">PH3");
 		prop_dictionary_set_cstring(dict, "usb0iddet",
 		    (cubietruck_p ? "<PH19" : "<PH4"));
@@ -651,6 +711,10 @@ awin_device_register(device_t self, void *aux)
 #if AWIN_board == AWIN_cubietruck
 		prop_dictionary_set_cstring(dict, "usb0restrict", ">PH0");
 #endif
+#if AWIN_board == AWIN_allwinner_a80
+		prop_dictionary_set_cstring(dict, "status-led1", ">PH06");
+		prop_dictionary_set_cstring(dict, "status-led2", ">PH17");
+#else
 		prop_dictionary_set_cstring(dict, "status-led1", ">PH21");
 		prop_dictionary_set_cstring(dict, "status-led2", ">PH20");
 		if (cubietruck_p) {
@@ -660,12 +724,15 @@ awin_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict, "hdd5ven", ">PH17");
 			prop_dictionary_set_cstring(dict, "emacpwren", ">PH19");
 		}
+#endif
 #if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH1");
 #elif AWIN_board == AWIN_bpi
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH10");
 #elif AWIN_board == AWIN_hummingbird_a31
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH8");
+#elif AWIN_board == AWIN_allwinner_a80
+		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH18");
 #endif
 
 #if AWIN_board == AWIN_hummingbird_a31
@@ -716,28 +783,20 @@ awin_device_register(device_t self, void *aux)
 		return;
 	}
 
-	if (device_is_a(self, "awge")) {
+	if (device_is_a(self, "awge") && device_unit(self) == 0) {
+#if NETHER > 0
 		/*
 		 * Get the GMAC MAC address from cmdline.
 		 */
 		uint8_t enaddr[ETHER_ADDR_LEN];
-		char argname[strlen("awge?.mac-address") + 1];
-		char *mac_addr;
-		snprintf(argname, sizeof(argname), "%s.mac-address",
-		    device_xname(self));
-
-		if (get_bootconf_option(boot_args, argname,
-		    BOOTOPT_TYPE_STRING, &mac_addr)) {
-			char mac[strlen("XX:XX:XX:XX:XX:XX") + 1];
-			strlcpy(mac, mac_addr, sizeof(mac));
-			if (!ether_aton_r(enaddr, sizeof(enaddr), mac)) {
-				prop_data_t pd;
-				pd = prop_data_create_data(enaddr, sizeof(enaddr));
-				KASSERT(pd != NULL);
-				prop_dictionary_set(dict, "mac-address", pd);
-				prop_object_release(pd);
-			}
+		if (get_bootconf_option(boot_args, "awge0.mac-address",
+		    BOOTOPT_TYPE_MACADDR, enaddr)) {
+			prop_data_t pd = prop_data_create_data(enaddr,
+			    sizeof(enaddr));
+			prop_dictionary_set(dict, "mac-address", pd);
+			prop_object_release(pd);
 		}
+#endif
 
 #if AWIN_board == AWIN_cubieboard
 		if (awin_chip_id() == AWIN_CHIP_ID_A20) {
@@ -745,10 +804,10 @@ awin_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict, "phy-type", "mii");
 		}
 #endif
-#if AWIN_BOARD == AWIN_bpi
+#if AWIN_board == AWIN_bpi
 		prop_dictionary_set_cstring(dict, "phy-power", "gmacpwren");
 		prop_dictionary_set_cstring(dict, "phy-type", "rgmii-bpi");
-		prop_dictionary_set_uint8(dict, "pinset-func", 2);
+		prop_dictionary_set_uint8(dict, "pinset-func", 3);
 #endif
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.92.4.5 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92.4.6 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.5 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.6 2015/04/06 15:18:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -91,7 +91,7 @@ struct uhid_softc {
 
 	u_char *sc_obuf;
 
-	struct clist sc_q;
+	struct clist sc_q;	/* protected by sc_lock */
 	struct selinfo sc_rsel;
 	proc_t *sc_async;	/* process that wants SIGIO */
 	void *sc_sih;
@@ -127,7 +127,7 @@ const struct cdevsw uhid_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = uhidkqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER | D_MPSAFE
+	.d_flag = D_OTHER
 };
 
 Static void uhid_intr(struct uhidev *, void *, u_int);
@@ -172,7 +172,7 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_intr = uhid_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
-	sc->sc_sih = softint_establish(SOFTINT_MPSAFE | SOFTINT_CLOCK,
+	sc->sc_sih = softint_establish(SOFTINT_CLOCK,
 	    uhid_softintr, sc);
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
@@ -317,19 +317,28 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	mutex_enter(&sc->sc_access_lock);
+
+	/*
+	 * uhid interrupts aren't enabled yet, so setup sc_q now, as
+	 * long as they're not already allocated.
+	 */
+	if (sc->sc_hdev.sc_state & UHIDEV_OPEN) {
+		mutex_exit(&sc->sc_access_lock);
+		return EBUSY;
+	}
+	if (clalloc(&sc->sc_q, UHID_BSIZE, 0) == -1) {
+		mutex_exit(&sc->sc_access_lock);
+		return ENOMEM;
+	}
+
 	error = uhidev_open(&sc->sc_hdev);
 	if (error) {
+		clfree(&sc->sc_q);
 		mutex_exit(&sc->sc_access_lock);
 		return error;
 	}
 	mutex_exit(&sc->sc_access_lock);
 
-	if (clalloc(&sc->sc_q, UHID_BSIZE, 0) == -1) {
-		mutex_enter(&sc->sc_access_lock);
-		uhidev_close(&sc->sc_hdev);
-		mutex_exit(&sc->sc_access_lock);
-		return ENOMEM;
-	}
 	sc->sc_obuf = kmem_alloc(sc->sc_osize, KM_SLEEP);
 	sc->sc_state &= ~UHID_IMMED;
 
@@ -349,15 +358,19 @@ uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	DPRINTF(("uhidclose: sc=%p\n", sc));
 
-	clfree(&sc->sc_q);
-	kmem_free(sc->sc_obuf, sc->sc_osize);
-
 	mutex_enter(proc_lock);
 	sc->sc_async = NULL;
 	mutex_exit(proc_lock);
 
 	mutex_enter(&sc->sc_access_lock);
+
+	uhidev_stop(&sc->sc_hdev);
+
+	clfree(&sc->sc_q);
+	kmem_free(sc->sc_obuf, sc->sc_osize);
+
 	uhidev_close(&sc->sc_hdev);
+
 	mutex_exit(&sc->sc_access_lock);
 
 	return 0;
@@ -400,7 +413,6 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 			break;
 		}
 	}
-	mutex_exit(&sc->sc_lock);
 
 	/* Transfer as many chunks as possible. */
 	while (sc->sc_q.c_cc > 0 && uio->uio_resid > 0 && !error) {
@@ -413,10 +425,13 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 		DPRINTFN(5, ("uhidread: got %lu chars\n", (u_long)length));
 
 		/* Copy the data to the user process. */
+		mutex_exit(&sc->sc_lock);
 		if ((error = uiomove(buffer, length, uio)) != 0)
-			break;
+			return error;
+		mutex_enter(&sc->sc_lock);
 	}
 
+	mutex_exit(&sc->sc_lock);
 	return error;
 }
 

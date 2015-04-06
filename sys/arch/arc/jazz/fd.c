@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.45 2014/07/25 08:10:31 dholland Exp $	*/
+/*	$NetBSD: fd.c,v 1.45.4.1 2015/04/06 15:17:51 skrll Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.45 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.45.4.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1085,7 +1085,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		memset(&buffer, 0, sizeof(buffer));
 
 		buffer.d_secpercyl = fd->sc_type->seccyl;
-		buffer.d_type = DTYPE_FLOPPY;
+		buffer.d_type = DKTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
 		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.8 2014/11/22 19:18:07 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.8.2.1 2015/04/06 15:18:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.8 2014/11/22 19:18:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.8.2.1 2015/04/06 15:18:18 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -94,6 +94,12 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	unsigned int unit;
 	int ret;
 
+	/* Ensure the drm agp hooks are installed.  */
+	/* XXX errno NetBSD->Linux */
+	ret = -drmkms_pci_agp_guarantee_initialized();
+	if (ret)
+		goto fail0;
+
 	/* Initialize the Linux PCI device descriptor.  */
 	linux_pci_dev_init(pdev, self, pa, 0);
 
@@ -105,6 +111,7 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	}
 
 	dev->pdev = pdev;
+	pdev->pd_drm_dev = dev;	/* XXX Nouveau kludge.  */
 
 	/* XXX Set the power state to D0?  */
 
@@ -211,21 +218,12 @@ drm_pci_agp_destroy(struct drm_device *dev)
 static int
 drm_pci_get_irq(struct drm_device *dev)
 {
-	pci_intr_handle_t ih_pih;
-	int ih_int;
 
 	/*
-	 * This is a compile-time assertion that the types match.  If
-	 * this fails, we have to change a bunch of drm code that uses
-	 * int for intr handles.
+	 * Caller expects a nonzero int, and doesn't really use it for
+	 * anything, so no need to pci_intr_map here.
 	 */
-	KASSERT(&ih_pih != &ih_int);
-
-	if (pci_intr_map(drm_pci_attach_args(dev), &ih_pih))
-		return -1;	/* XXX Hope -1 is an invalid intr handle.  */
-
-	ih_int = ih_pih;
-	return ih_int;
+	return dev->pdev->pd_pa.pa_intrpin;
 }
 
 static int
@@ -243,7 +241,7 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 		return -ENOENT;
 
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	ih_cookie = pci_intr_establish(pa->pa_pc, ih, IPL_SCHED, handler, arg);
+	ih_cookie = pci_intr_establish(pa->pa_pc, ih, IPL_DRM, handler, arg);
 	if (ih_cookie == NULL) {
 		aprint_error_dev(dev->dev,
 		    "couldn't establish interrupt at %s (%s)\n",

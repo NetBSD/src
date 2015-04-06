@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.54 2014/07/25 08:10:35 dholland Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.54.4.1 2015/04/06 15:18:04 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.54 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.54.4.1 2015/04/06 15:18:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -688,19 +688,15 @@ rdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct rdsoftc * const rd = device_lookup_private(&rd_cd, DISKUNIT(dev));
 	struct disklabel * const lp = rd->sc_disk.dk_label;
-	int error = 0;
+	int error;
+
+	error = disk_ioctl(&rd->sc_disk, dev, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+	else
+		error = 0;
 
 	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *lp;
-		break;
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = lp;
-		((struct partinfo *)addr)->part =
-		  &lp->d_partitions[DISKPART(dev)];
-		break;
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
@@ -834,7 +830,7 @@ rdmakelabel(struct disklabel *dl, struct rdgeom *g)
 	}
 	dl->d_typename[p++] = n + '0';
 	dl->d_typename[p] = 0;
-	dl->d_type = DTYPE_MSCP; /* XXX - what to use here??? */
+	dl->d_type = DKTYPE_MSCP; /* XXX - what to use here??? */
 	dl->d_rpm = 3600;
 	dl->d_secsize = DEV_BSIZE;
 

@@ -499,11 +499,22 @@ static int init_ring_common(struct intel_ring_buffer *ring)
 	else
 		ring_setup_phys_status_page(ring);
 
+	/* Enforce ordering by reading HEAD register back */
+	I915_READ_HEAD(ring);
+
 	/* Initialize the ring. This must happen _after_ we've cleared the ring
 	 * registers with the above sequence (the readback of the HEAD registers
 	 * also enforces ordering), otherwise the hw might lose the new ring
 	 * register values. */
 	I915_WRITE_START(ring, i915_gem_obj_ggtt_offset(obj));
+
+	/* WaClearRingBufHeadRegAtInit:ctg,elk */
+	if (I915_READ_HEAD(ring))
+		DRM_DEBUG("%s initialization failed [head=%08x], fudging\n",
+			  ring->name, I915_READ_HEAD(ring));
+	I915_WRITE_HEAD(ring, 0);
+	(void)I915_READ_HEAD(ring);
+
 	I915_WRITE_CTL(ring,
 			((ring->size - PAGE_SIZE) & RING_NR_PAGES)
 			| RING_VALID);

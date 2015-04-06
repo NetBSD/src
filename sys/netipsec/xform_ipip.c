@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.31 2014/06/05 23:48:17 rmind Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.31.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.31 2014/06/05 23:48:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.31.4.1 2015/04/06 15:18:23 skrll Exp $");
 
 /*
  * IP-inside-IP processing
@@ -646,7 +646,6 @@ bad:
 	return (error);
 }
 
-#ifdef IPSEC
 static int
 ipe4_init(struct secasvar *sav, const struct xformsw *xsp)
 {
@@ -724,8 +723,6 @@ static struct ip6protosw ipe4_protosw6 = {
  .pr_drain = 0,
 };
 #endif
-
-#endif /* IPSEC */
 
 /*
  * Check the encapsulated packet to see if we want it

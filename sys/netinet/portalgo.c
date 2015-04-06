@@ -1,4 +1,4 @@
-/*	$NetBSD: portalgo.c,v 1.6 2014/09/08 17:40:02 joerg Exp $	*/
+/*	$NetBSD: portalgo.c,v 1.6.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.6 2014/09/08 17:40:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.6.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -163,6 +163,7 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
 	so = inp_hdr->inph_socket;
 	switch (so->so_type) {
 	case SOCK_DGRAM: /* UDP or DCCP */
+	case SOCK_CONN_DGRAM:
 		portalgo_proto = PORTALGO_UDP;
 		break;
 	case SOCK_STREAM: /* TCP or SCTP */
@@ -796,21 +797,24 @@ portalgo_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 	switch (inp_hdr->inph_af) {
 #ifdef INET
 	case AF_INET: {
+		char buf[INET_ADDRSTRLEN];
 		struct inpcb *inp = (struct inpcb *)(void *)inp_hdr;
-		DPRINTF("local addr: %s\n", inet_ntoa(inp->inp_laddr));
+		DPRINTF("local addr: %s\n", IN_PRINT(buf, &inp->inp_laddr));
 		DPRINTF("local port: %d\n", inp->inp_lport);
-		DPRINTF("foreign addr: %s\n", inet_ntoa(inp->inp_faddr));
+		DPRINTF("foreign addr: %s\n", IN_PRINT(buf, &inp->inp_faddr));
 		DPRINTF("foreign port: %d\n", inp->inp_fport);
 		break;
 	}
 #endif
 #ifdef INET6
 	case AF_INET6: {
+		char buf[INET6_ADDRSTRLEN];
 		struct in6pcb *in6p = (struct in6pcb *)(void *)inp_hdr;
 
-		DPRINTF("local addr: %s\n", ip6_sprintf(&in6p->in6p_laddr));
+		DPRINTF("local addr: %s\n", IN6_PRINT(buf, &in6p->in6p_laddr));
 		DPRINTF("local port: %d\n", in6p->in6p_lport);
-		DPRINTF("foreign addr: %s\n", ip6_sprintf(&in6p->in6p_faddr));
+		DPRINTF("foreign addr: %s\n", IN6_PRINT(buf,
+		    &in6p->in6p_laddr));
 		DPRINTF("foreign port: %d\n", in6p->in6p_fport);
 		break;
 	}

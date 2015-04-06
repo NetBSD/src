@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.59 2014/08/11 23:48:01 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.59.2.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -254,7 +254,7 @@ int		npf_table_flush(npf_table_t *);
 npf_ruleset_t *	npf_ruleset_create(size_t);
 void		npf_ruleset_destroy(npf_ruleset_t *);
 void		npf_ruleset_insert(npf_ruleset_t *, npf_rule_t *);
-void		npf_ruleset_reload(npf_ruleset_t *, npf_ruleset_t *);
+void		npf_ruleset_reload(npf_ruleset_t *, npf_ruleset_t *, bool);
 npf_rule_t *	npf_ruleset_sharepm(npf_ruleset_t *, npf_natpolicy_t *);
 npf_natpolicy_t *npf_ruleset_findnat(npf_ruleset_t *, uint64_t);
 void		npf_ruleset_freealg(npf_ruleset_t *, npf_alg_t *);
@@ -344,6 +344,7 @@ prop_array_t	npf_alg_export(void);
 const char *	npf_addr_dump(const npf_addr_t *, int);
 void		npf_state_dump(const npf_state_t *);
 void		npf_nat_dump(const npf_nat_t *);
+void		npf_ruleset_dump(const char *);
 void		npf_state_setsampler(void (*)(npf_state_t *, bool));
 
 #endif	/* _NPF_IMPL_H_ */

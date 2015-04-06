@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.23 2014/03/24 20:06:32 christos Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.23.6.1 2015/04/06 15:17:58 skrll Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.23 2014/03/24 20:06:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.23.6.1 2015/04/06 15:17:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -216,7 +216,7 @@ linux_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 		break;
 	}
 
-	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
+	if ((error = trace_enter(code, callp, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -252,5 +252,5 @@ out:
 		break;
 	}
 
-	trace_exit(code, rval, error);
+	trace_exit(code, callp, args, rval, error);
 }

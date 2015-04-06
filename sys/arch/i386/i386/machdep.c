@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.752 2014/02/23 22:36:43 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.752.6.1 2015/04/06 15:17:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752 2014/02/23 22:36:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.1 2015/04/06 15:17:57 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -936,7 +936,8 @@ int xen_idt_idx;
 extern union descriptor tmpgdt[];
 #endif
 
-void cpu_init_idt(void)
+void 
+cpu_init_idt(void)
 {
 #ifndef XEN
 	struct region_descriptor region;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.39 2014/10/03 14:45:38 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.39.2.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.39 2014/10/03 14:45:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.39.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -1319,6 +1319,82 @@ again:
 	/* Finished loading, finalize node. */
 	mutex_enter(&vcache.lock);
 	new_node->vn_key.vk_key = new_key;
+	new_node->vn_vnode = vp;
+	mutex_exit(&vcache.lock);
+	mutex_enter(vp->v_interlock);
+	vp->v_iflag &= ~VI_CHANGING;
+	cv_broadcast(&vp->v_cv);
+	mutex_exit(vp->v_interlock);
+	*vpp = vp;
+	return 0;
+}
+
+/*
+ * Create a new vnode / fs node pair and return it referenced through vpp.
+ */
+int
+vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
+    kauth_cred_t cred, struct vnode **vpp)
+{
+	int error;
+	uint32_t hash;
+	struct vnode *vp;
+	struct vcache_node *new_node;
+	struct vcache_node *old_node __diagused;
+
+	*vpp = NULL;
+
+	/* Allocate and initialize a new vcache / vnode pair. */
+	error = vfs_busy(mp, NULL);
+	if (error)
+		return error;
+	new_node = pool_cache_get(vcache.pool, PR_WAITOK);
+	new_node->vn_key.vk_mount = mp;
+	new_node->vn_vnode = NULL;
+	vp = vnalloc(NULL);
+
+	/* Create and load the fs node. */
+	vp->v_iflag |= VI_CHANGING;
+	error = VFS_NEWVNODE(mp, dvp, vp, vap, cred,
+	    &new_node->vn_key.vk_key_len, &new_node->vn_key.vk_key);
+	if (error) {
+		pool_cache_put(vcache.pool, new_node);
+		KASSERT(vp->v_usecount == 1);
+		vp->v_usecount = 0;
+		vnfree(vp);
+		vfs_unbusy(mp, false, NULL);
+		KASSERT(*vpp == NULL);
+		return error;
+	}
+	KASSERT(new_node->vn_key.vk_key != NULL);
+	KASSERT(vp->v_op != NULL);
+	hash = vcache_hash(&new_node->vn_key);
+
+	/* Wait for previous instance to be reclaimed, then insert new node. */
+	mutex_enter(&vcache.lock);
+	while ((old_node = vcache_hash_lookup(&new_node->vn_key, hash))) {
+#ifdef DIAGNOSTIC
+		if (old_node->vn_vnode != NULL)
+			mutex_enter(old_node->vn_vnode->v_interlock);
+		KASSERT(old_node->vn_vnode == NULL ||
+		    (old_node->vn_vnode->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0);
+		if (old_node->vn_vnode != NULL)
+			mutex_exit(old_node->vn_vnode->v_interlock);
+#endif
+		mutex_exit(&vcache.lock);
+		kpause("vcache", false, mstohz(20), NULL);
+		mutex_enter(&vcache.lock);
+	}
+	SLIST_INSERT_HEAD(&vcache.hashtab[hash & vcache.hashmask],
+	    new_node, vn_hash);
+	mutex_exit(&vcache.lock);
+	vfs_insmntque(vp, mp);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
+		vp->v_vflag |= VV_MPSAFE;
+	vfs_unbusy(mp, true, NULL);
+
+	/* Finished loading, finalize node. */
+	mutex_enter(&vcache.lock);
 	new_node->vn_vnode = vp;
 	mutex_exit(&vcache.lock);
 	mutex_enter(vp->v_interlock);

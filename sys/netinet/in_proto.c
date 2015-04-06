@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.110 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.110.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,13 +61,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110.4.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_pim.h"
 #include "opt_gateway.h"
+#include "opt_dccp.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -111,6 +112,11 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110 2014/06/05 23:48:16 rmind Exp $")
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/ip_encap.h>
+
+#ifdef DCCP
+#include <netinet/dccp.h>
+#include <netinet/dccp_var.h>
+#endif
 
 /*
  * TCP/IP protocol family: IP, ICMP, UDP, TCP.
@@ -157,6 +163,14 @@ PR_WRAP_CTLOUTPUT(tcp_ctloutput)
 #define	udp_ctloutput	udp_ctloutput_wrapper
 #define	tcp_ctloutput	tcp_ctloutput_wrapper
 
+#ifdef DCCP
+PR_WRAP_CTLINPUT(dccp_ctlinput)
+PR_WRAP_CTLOUTPUT(dccp_ctloutput)
+
+#define dccp_ctlinput	dccp_ctlinput_wrapper
+#define dccp_ctloutput	dccp_ctloutput_wrapper
+#endif
+
 #if defined(IPSEC)
 PR_WRAP_CTLINPUT(ah4_ctlinput)
 
@@ -196,6 +210,18 @@ const struct protosw inetsw[] = {
 	.pr_fasttimo = tcp_fasttimo,
 	.pr_drain = tcp_drainstub,
 },
+#ifdef DCCP
+{	.pr_type = SOCK_CONN_DGRAM,
+	.pr_domain = &inetdomain,
+	.pr_protocol = IPPROTO_DCCP,
+	.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_ATOMIC|PR_LISTEN|PR_ABRTACPTDIS,
+	.pr_input = dccp_input,
+	.pr_ctlinput = dccp_ctlinput,
+	.pr_ctloutput = dccp_ctloutput,
+	.pr_usrreqs = &dccp_usrreqs,
+	.pr_init = dccp_init,
+},
+#endif
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_RAW,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.191 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.191.2.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.191 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.191.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include "veriexec.h"
 
@@ -89,15 +89,21 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.191 2014/09/05 09:20:59 matt Exp $")
 #include <sys/atomic.h>
 #include <sys/filedesc.h>
 #include <sys/wapbl.h>
+#include <sys/mman.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_readahead.h>
+#include <uvm/uvm_device.h>
 
 #ifdef UNION
 #include <fs/union/union.h>
+#endif
+
+#ifndef COMPAT_ZERODEV
+#define COMPAT_ZERODEV(dev)	(0)
 #endif
 
 int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
@@ -113,6 +119,8 @@ static int vn_poll(file_t *fp, int events);
 static int vn_fcntl(file_t *fp, u_int com, void *data);
 static int vn_statfile(file_t *fp, struct stat *sb);
 static int vn_ioctl(file_t *fp, u_long com, void *data);
+static int vn_mmap(struct file *, off_t *, size_t, int, int *, int *,
+		   struct uvm_object **, int *);
 
 const struct fileops vnops = {
 	.fo_read = vn_read,
@@ -124,6 +132,7 @@ const struct fileops vnops = {
 	.fo_close = vn_closefile,
 	.fo_kqfilter = vn_kqfilter,
 	.fo_restart = fnullop_restart,
+	.fo_mmap = vn_mmap,
 };
 
 /*
@@ -664,7 +673,7 @@ vn_stat(struct vnode *vp, struct stat *sb)
 		break;
 	default:
 		return (EBADF);
-	};
+	}
 	sb->st_mode = mode;
 	sb->st_nlink = va.va_nlink;
 	sb->st_uid = va.va_uid;
@@ -788,6 +797,219 @@ vn_kqfilter(file_t *fp, struct knote *kn)
 
 	return (VOP_KQFILTER(fp->f_vnode, kn));
 }
+
+static int
+vn_mmap(struct file *fp, off_t *offp, size_t size, int prot, int *flagsp,
+	int *advicep, struct uvm_object **uobjp, int *maxprotp)
+{
+	struct uvm_object *uobj;
+	struct vnode *vp;
+	struct vattr va;
+	struct lwp *l;
+	vm_prot_t maxprot;
+	off_t off;
+	int error, flags;
+	bool needwritemap;
+
+	l = curlwp;
+
+	off = *offp;
+	flags = *flagsp;
+	maxprot = VM_PROT_EXECUTE;
+
+	vp = fp->f_vnode;
+	if (vp->v_type != VREG && vp->v_type != VCHR &&
+	    vp->v_type != VBLK) {
+		/* only REG/CHR/BLK support mmap */
+		return ENODEV;
+	}
+	if (vp->v_type != VCHR && off < 0) {
+		return EINVAL;
+	}
+	if (vp->v_type != VCHR && (off_t)(off + size) < off) {
+		/* no offset wrapping */
+		return EOVERFLOW;
+	}
+
+	/* special case: catch SunOS style /dev/zero */
+	if (vp->v_type == VCHR &&
+	    (vp->v_rdev == zerodev || COMPAT_ZERODEV(vp->v_rdev))) {
+		*uobjp = NULL;
+		*maxprotp = VM_PROT_ALL;
+		return 0;
+	}
+
+	/*
+	 * Old programs may not select a specific sharing type, so
+	 * default to an appropriate one.
+	 *
+	 * XXX: how does MAP_ANON fit in the picture?
+	 */
+	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == 0) {
+#if defined(DEBUG)
+		struct proc *p = l->l_proc;
+		printf("WARNING: defaulted mmap() share type to "
+		       "%s (pid %d command %s)\n", vp->v_type == VCHR ?
+		       "MAP_SHARED" : "MAP_PRIVATE", p->p_pid,
+		       p->p_comm);
+#endif
+		if (vp->v_type == VCHR)
+			flags |= MAP_SHARED;	/* for a device */
+		else
+			flags |= MAP_PRIVATE;	/* for a file */
+	}
+
+	/*
+	 * MAP_PRIVATE device mappings don't make sense (and aren't
+	 * supported anyway).  However, some programs rely on this,
+	 * so just change it to MAP_SHARED.
+	 */
+	if (vp->v_type == VCHR && (flags & MAP_PRIVATE) != 0) {
+		flags = (flags & ~MAP_PRIVATE) | MAP_SHARED;
+	}
+
+	/*
+	 * now check protection
+	 */
+
+	/* check read access */
+	if (fp->f_flag & FREAD)
+		maxprot |= VM_PROT_READ;
+	else if (prot & PROT_READ) {
+		return EACCES;
+	}
+
+	/* check write access, shared case first */
+	if (flags & MAP_SHARED) {
+		/*
+		 * if the file is writable, only add PROT_WRITE to
+		 * maxprot if the file is not immutable, append-only.
+		 * otherwise, if we have asked for PROT_WRITE, return
+		 * EPERM.
+		 */
+		if (fp->f_flag & FWRITE) {
+			vn_lock(vp, LK_SHARED | LK_RETRY);
+			error = VOP_GETATTR(vp, &va, l->l_cred);
+			VOP_UNLOCK(vp);
+			if (error) {
+				return error;
+			}
+			if ((va.va_flags &
+			     (SF_SNAPSHOT|IMMUTABLE|APPEND)) == 0)
+				maxprot |= VM_PROT_WRITE;
+			else if (prot & PROT_WRITE) {
+				return EPERM;
+			}
+		} else if (prot & PROT_WRITE) {
+			return EACCES;
+		}
+	} else {
+		/* MAP_PRIVATE mappings can always write to */
+		maxprot |= VM_PROT_WRITE;
+	}
+
+	/*
+	 * Don't allow mmap for EXEC if the file system
+	 * is mounted NOEXEC.
+	 */
+	if ((prot & PROT_EXEC) != 0 &&
+	    (vp->v_mount->mnt_flag & MNT_NOEXEC) != 0) {
+		return EACCES;
+	}
+
+	if (vp->v_type != VCHR) {
+		error = VOP_MMAP(vp, prot, curlwp->l_cred);
+		if (error) {
+			return error;
+		}
+		vref(vp);
+		uobj = &vp->v_uobj;
+
+		/*
+		 * If the vnode is being mapped with PROT_EXEC,
+		 * then mark it as text.
+		 */
+		if (prot & PROT_EXEC) {
+			vn_markexec(vp);
+		}
+	} else {
+		int i = maxprot;
+
+		/*
+		 * XXX Some devices don't like to be mapped with
+		 * XXX PROT_EXEC or PROT_WRITE, but we don't really
+		 * XXX have a better way of handling this, right now
+		 */
+		do {
+			uobj = udv_attach(vp->v_rdev,
+					  (flags & MAP_SHARED) ? i :
+					  (i & ~VM_PROT_WRITE), off, size);
+			i--;
+		} while ((uobj == NULL) && (i > 0));
+		if (uobj == NULL) {
+			return EINVAL;
+		}
+		*advicep = UVM_ADV_RANDOM;
+	}
+
+	/*
+	 * Set vnode flags to indicate the new kinds of mapping.
+	 * We take the vnode lock in exclusive mode here to serialize
+	 * with direct I/O.
+	 *
+	 * Safe to check for these flag values without a lock, as
+	 * long as a reference to the vnode is held.
+	 */
+	needwritemap = (vp->v_iflag & VI_WRMAP) == 0 &&
+		(flags & MAP_SHARED) != 0 &&
+		(maxprot & VM_PROT_WRITE) != 0;
+	if ((vp->v_vflag & VV_MAPPED) == 0 || needwritemap) {
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		vp->v_vflag |= VV_MAPPED;
+		if (needwritemap) {
+			mutex_enter(vp->v_interlock);
+			vp->v_iflag |= VI_WRMAP;
+			mutex_exit(vp->v_interlock);
+		}
+		VOP_UNLOCK(vp);
+	}
+
+#if NVERIEXEC > 0
+
+	/*
+	 * Check if the file can be executed indirectly.
+	 *
+	 * XXX: This gives false warnings about "Incorrect access type"
+	 * XXX: if the mapping is not executable. Harmless, but will be
+	 * XXX: fixed as part of other changes.
+	 */
+	if (veriexec_verify(l, vp, "(mmap)", VERIEXEC_INDIRECT,
+			    NULL)) {
+
+		/*
+		 * Don't allow executable mappings if we can't
+		 * indirectly execute the file.
+		 */
+		if (prot & VM_PROT_EXECUTE) {
+			return EPERM;
+		}
+
+		/*
+		 * Strip the executable bit from 'maxprot' to make sure
+		 * it can't be made executable later.
+		 */
+		maxprot &= ~VM_PROT_EXECUTE;
+	}
+#endif /* NVERIEXEC > 0 */
+
+	*uobjp = uobj;
+	*maxprotp = maxprot;
+	*flagsp = flags;
+
+	return 0;
+}
+
+
 
 /*
  * Check that the vnode is still valid, and if so

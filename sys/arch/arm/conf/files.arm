@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.128 2014/11/26 04:20:30 matt Exp $
+#	$NetBSD: files.arm,v 1.128.2.1 2015/04/06 15:17:52 skrll Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -49,6 +49,7 @@ defflag	opt_cputypes.h		CPU_CORTEXA7: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA8: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA9: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA15: CPU_CORTEX
+defflag	opt_cputypes.h		CPU_CORTEXA17: CPU_CORTEX
 defflag	opt_cputypes.h		FPU_VFP
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG
@@ -67,6 +68,8 @@ defflag	 opt_cpuoptions.h	ARM_HAS_LPAE
 # use extended small page in compatible MMU mode for ARMv6
 defflag  opt_cpuoptions.h	SHEEVA_L2_CACHE
 defflag  opt_cpuoptions.h	SHEEVA_L2_CACHE_WT: SHEEVA_L2_CACHE
+# override configuration base address register
+defparam opt_cpuoptions.h	ARM_CBAR
 
 # Interrupt implementation header definition.
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL

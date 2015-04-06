@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.12 2012/07/28 00:43:23 matt Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.12.16.1 2015/04/06 15:18:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.12 2012/07/28 00:43:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.12.16.1 2015/04/06 15:18:19 skrll Exp $");
 
 #include "libhfs.h"
 
@@ -59,7 +59,8 @@ hfs_catalog_key_t* hfs_gPrivateObjectKeys[4] = {
 	&hfs_gMetadataDirectoryKey,
 	&hfs_gJournalInfoBlockFileKey,
 	&hfs_gJournalBufferFileKey,
-	NULL};
+	NULL
+};
 
 
 extern uint16_t be16tohp(void** inout_ptr);
@@ -100,21 +101,21 @@ void
 hfslib_init(hfs_callbacks* in_callbacks)
 {
 	unichar_t	temp[256];
-	
-	if(in_callbacks!=NULL)
+
+	if (in_callbacks != NULL)
 		memcpy(&hfs_gcb, in_callbacks, sizeof(hfs_callbacks));
-	
+
 	hfs_gcft = NULL;
-	
+
 	/*
 	 * Create keys for the HFS+ "private" files so we can reuse them whenever
 	 * we perform a user-visible operation, such as listing directory contents.
 	 */
-		
+
 #define ATOU(str, len) /* quick & dirty ascii-to-unicode conversion */ \
 	do{ int i; for(i=0; i<len; i++) temp[i]=str[i]; } \
 	while( /*CONSTCOND*/ 0)
-	
+
 	ATOU("\0\0\0\0HFS+ Private Data", 21);
 	hfslib_make_catalog_key(HFS_CNID_ROOT_FOLDER, 21, temp, 
 		&hfs_gMetadataDirectoryKey);
@@ -134,8 +135,8 @@ void
 hfslib_done(void)
 {
 	hfs_callback_args	cbargs;
-	
-	if(hfs_gcft!=NULL) {
+
+	if (hfs_gcft != NULL) {
 		hfslib_init_cbargs(&cbargs);
 		hfslib_free(hfs_gcft, &cbargs);
 		hfs_gcft = NULL;
@@ -175,102 +176,97 @@ hfslib_open_volume(
 	result = 1;
 	buffer = NULL;
 
-	if(in_device==NULL || out_vol==NULL)
+	if (in_device == NULL || out_vol == NULL)
 		return 1;
 
 	out_vol->readonly = in_readonly;
 	out_vol->offset = 0;
 
-	if(hfslib_openvoldevice(out_vol, in_device, cbargs) != 0)
+	if (hfslib_openvoldevice(out_vol, in_device, cbargs) != 0)
 		HFS_LIBERR("could not open device");
 	isopen = 1;
 
 	/*
-	 *	Read the volume header.
+	 * Read the volume header.
 	 */
 	buffer = hfslib_malloc(max(sizeof(hfs_volume_header_t),
 		sizeof(hfs_hfs_master_directory_block_t)), cbargs);
-	if(buffer==NULL)
+	if (buffer == NULL)
 		HFS_LIBERR("could not allocate volume header");
-	if(hfslib_readd(out_vol, buffer, max(sizeof(hfs_volume_header_t),
-			    sizeof(hfs_hfs_master_directory_block_t)),
-	       HFS_VOLUME_HEAD_RESERVE_SIZE, cbargs)!=0)
+	if (hfslib_readd(out_vol, buffer, max(sizeof(hfs_volume_header_t),
+	    sizeof(hfs_hfs_master_directory_block_t)),
+	    HFS_VOLUME_HEAD_RESERVE_SIZE, cbargs) != 0)
 		HFS_LIBERR("could not read volume header");
 
 	if (be16toh(*((uint16_t *)buffer)) == HFS_SIG_HFS) {
 		if (hfslib_read_master_directory_block(buffer, &mdb) == 0)
 			HFS_LIBERR("could not parse master directory block");
-		if (mdb.embedded_signature == HFS_SIG_HFSP)
-		{
+		if (mdb.embedded_signature == HFS_SIG_HFSP) {
 			/* XXX: is 512 always correct? */
 			out_vol->offset =
 			    mdb.first_block * 512
 			    + mdb.embedded_extent.start_block
 			    * (uint64_t)mdb.block_size;
 
-			if(hfslib_readd(out_vol, buffer,
-			       sizeof(hfs_volume_header_t),
-			       HFS_VOLUME_HEAD_RESERVE_SIZE, cbargs)!=0)
+			if (hfslib_readd(out_vol, buffer,
+			    sizeof(hfs_volume_header_t),
+			    HFS_VOLUME_HEAD_RESERVE_SIZE, cbargs) != 0)
 				HFS_LIBERR("could not read volume header");
-		}
-		else
+		} else
 			HFS_LIBERR("Plain HFS volumes not currently supported");
 	}
 
-	if(hfslib_read_volume_header(buffer, &(out_vol->vh))==0)
+	if (hfslib_read_volume_header(buffer, &(out_vol->vh)) == 0)
 		HFS_LIBERR("could not parse volume header");
-	
+
 	/*
 	 * Check the volume signature to see if this is a legitimate HFS+ or HFSX
 	 * volume. If so, set the key comparison function pointers appropriately.
 	 */
-	switch(out_vol->vh.signature)
-	{
+	switch(out_vol->vh.signature) {
 		case HFS_SIG_HFSP:
 			out_vol->keycmp = hfslib_compare_catalog_keys_cf;
 			break;
-		
 		case HFS_SIG_HFSX:
 			out_vol->keycmp = NULL; /* will be set below */
 			break;
-			
 		default:
 			/* HFS_LIBERR("unrecognized volume format"); */
 			goto error;
 			break;
 	}
 
-
 	/*
-	 *	Read the catalog header.
+	 * Read the catalog header.
 	 */
 	buffer2 = hfslib_realloc(buffer, 512, cbargs);
-	if(buffer2==NULL)
+	if (buffer2 == NULL)
 		HFS_LIBERR("could not allocate catalog header node");
 	buffer = buffer2;
-	
+
 	/*
-	  We are only interested in the node header, so read the first
-	  512 bytes and construct the node descriptor by hand.
-	*/
-	if(hfslib_readd(out_vol, buffer, 512,
-	       out_vol->vh.catalog_file.extents[0].start_block
-	       *(uint64_t)out_vol->vh.block_size,
-		cbargs) != 0)
+	 * We are only interested in the node header, so read the first
+	 * 512 bytes and construct the node descriptor by hand.
+	 */
+	if (hfslib_readd(out_vol, buffer, 512,
+	    out_vol->vh.catalog_file.extents[0].start_block *
+	    (uint64_t)out_vol->vh.block_size, cbargs) != 0)
 		HFS_LIBERR("could not read catalog header node");
 	node_recs[0] = (char *)buffer+14;
 	node_rec_sizes[0] = 120;
-	if(hfslib_read_header_node(node_recs, node_rec_sizes, 1,
-		&out_vol->chr, NULL, NULL)==0)
+	if (hfslib_read_header_node(node_recs, node_rec_sizes, 1,
+	    &out_vol->chr, NULL, NULL) == 0)
 		HFS_LIBERR("could not parse catalog header node");
-	
-	/* If this is an HFSX volume, the catalog header specifies the type of
-	 * key comparison method (case-folding or binary compare) we should use. */
-	if(out_vol->keycmp == NULL)
-	{
-		if(out_vol->chr.keycomp_type == HFS_KEY_CASEFOLD)
+
+	/*
+	 * If this is an HFSX volume, the catalog header specifies the type of
+	 * key comparison method (case-folding or binary compare) we should
+	 * use.
+	 */
+	if (out_vol->keycmp == NULL) {
+		if (out_vol->chr.keycomp_type == HFS_KEY_CASEFOLD)
 			out_vol->keycmp = hfslib_compare_catalog_keys_cf;
-		else if(out_vol->chr.keycomp_type == HFS_KEY_BINARY)
+		else if (out_vol->chr.keycomp_type == HFS_KEY_BINARY)
 			out_vol->keycmp = hfslib_compare_catalog_keys_bc;
 		else
 			HFS_LIBERR("undefined key compare method");
@@ -281,23 +277,22 @@ hfslib_open_volume(
 	    sizeof(uint16_t) : sizeof(uint8_t);
 
 	/*
-	 *	Read the extent overflow header.
+	 * Read the extent overflow header.
 	 */
 	/*
-	  We are only interested in the node header, so read the first
-	  512 bytes and construct the node descriptor by hand.
-	  buffer is already 512 bytes long.
-	*/
-	if(hfslib_readd(out_vol, buffer, 512,
-	       out_vol->vh.extents_file.extents[0].start_block
-	       *(uint64_t)out_vol->vh.block_size,
-		cbargs) != 0)
+	 * We are only interested in the node header, so read the first
+	 * 512 bytes and construct the node descriptor by hand.
+	 * buffer is already 512 bytes long.
+	 */
+	if (hfslib_readd(out_vol, buffer, 512,
+	    out_vol->vh.extents_file.extents[0].start_block *
+	    (uint64_t)out_vol->vh.block_size, cbargs) != 0)
 		HFS_LIBERR("could not read extent header node");
-	
+
 	node_recs[0] = (char *)buffer+14;
 	node_rec_sizes[0] = 120;
-	if(hfslib_read_header_node(node_recs, node_rec_sizes, 1,
-		&out_vol->ehr, NULL, NULL)==0)
+	if (hfslib_read_header_node(node_recs, node_rec_sizes, 1,
+	    &out_vol->ehr, NULL, NULL) == 0)
 		HFS_LIBERR("could not parse extent header node");
 	out_vol->extkeysizefieldsize
 	    = (out_vol->ehr.attributes & HFS_BIG_KEYS_MASK) ?
@@ -305,48 +300,45 @@ hfslib_open_volume(
 	/*
 	 * Read the journal info block and journal header (if volume journaled).
 	 */
-	if(out_vol->vh.attributes & (1<<HFS_VOL_JOURNALED))
-	{
+	if (out_vol->vh.attributes & (1<<HFS_VOL_JOURNALED)) {
 		/* journal info block */
 		buffer2 = hfslib_realloc(buffer, sizeof(hfs_journal_info_t), cbargs);
-		if(buffer2==NULL)
+		if (buffer2 == NULL)
 			HFS_LIBERR("could not allocate journal info block");
 		buffer = buffer2;
-	
-		if(hfslib_readd(out_vol, buffer, sizeof(hfs_journal_info_t),
-			out_vol->vh.journal_info_block * out_vol->vh.block_size,
-			cbargs) != 0)
+
+		if (hfslib_readd(out_vol, buffer, sizeof(hfs_journal_info_t),
+		    out_vol->vh.journal_info_block * out_vol->vh.block_size,
+		    cbargs) != 0)
 			HFS_LIBERR("could not read journal info block");
-		
-		if(hfslib_read_journal_info(buffer, &out_vol->jib)==0)
+
+		if (hfslib_read_journal_info(buffer, &out_vol->jib) == 0)
 			HFS_LIBERR("could not parse journal info block");
-					
+
 		/* journal header */
-		buffer2 = hfslib_realloc(buffer, sizeof(hfs_journal_header_t),cbargs);
-		if(buffer2==NULL)
+		buffer2 = hfslib_realloc(buffer, sizeof(hfs_journal_header_t), cbargs);
+		if (buffer2 == NULL)
 			HFS_LIBERR("could not allocate journal header");
 		buffer = buffer2;
-	
-		if(hfslib_readd(out_vol, buffer, sizeof(hfs_journal_header_t),
-			out_vol->jib.offset, cbargs) != 0)
+
+		if (hfslib_readd(out_vol, buffer, sizeof(hfs_journal_header_t),
+		    out_vol->jib.offset, cbargs) != 0)
 			HFS_LIBERR("could not read journal header");
-		
-		if(hfslib_read_journal_header(buffer, &out_vol->jh)==0)
+
+		if (hfslib_read_journal_header(buffer, &out_vol->jh) == 0)
 			HFS_LIBERR("could not parse journal header");
 
 		out_vol->journaled = 1;
-	}
-	else
-	{
+	} else {
 		out_vol->journaled = 0;
 	}
-	
+
 	/*
 	 * If this volume uses case-folding comparison and the folding table hasn't
 	 * been created yet, do that here. (We don't do this in hfslib_init()
 	 * because the table is large and we might never even need to use it.)
 	 */
-	if(out_vol->keycmp==hfslib_compare_catalog_keys_cf && hfs_gcft==NULL)
+	if (out_vol->keycmp == hfslib_compare_catalog_keys_cf && hfs_gcft == NULL)
 		result = hfslib_create_casefolding_table();
 	else
 		result = 0;
@@ -354,15 +346,14 @@ hfslib_open_volume(
 	/*
 	 * Find and store the volume name.
 	 */	
-	if(hfslib_make_catalog_key(HFS_CNID_ROOT_FOLDER, 0, NULL, &rootkey)==0)
+	if (hfslib_make_catalog_key(HFS_CNID_ROOT_FOLDER, 0, NULL, &rootkey) == 0)
 		HFS_LIBERR("could not make root search key");
-	
-	if(hfslib_find_catalog_record_with_key(out_vol, &rootkey,
-		(hfs_catalog_keyed_record_t*)&rootthread, cbargs)!=0)
+
+	if (hfslib_find_catalog_record_with_key(out_vol, &rootkey,
+	    (hfs_catalog_keyed_record_t*)&rootthread, cbargs)!=0)
 		HFS_LIBERR("could not find root parent");
 
 	memcpy(&out_vol->name, &rootthread.name, sizeof(hfs_unistr255_t));
-	
 
 	/* FALLTHROUGH */
 error:	
@@ -370,16 +361,14 @@ error:
 		hfslib_close_volume(out_vol, cbargs);
 	if(buffer!=NULL)
 		hfslib_free(buffer, cbargs);
-
 	return result;
 }
 
 void
 hfslib_close_volume(hfs_volume* in_vol, hfs_callback_args* cbargs)
 {
-	if(in_vol==NULL)
+	if (in_vol == NULL)
 		return;
-		
 	hfslib_closevoldevice(in_vol, cbargs);
 }
 
@@ -400,38 +389,36 @@ hfslib_path_to_cnid(hfs_volume* in_vol,
 	uint16_t	uchar;	/* dummy var */
 	uint16_t	total_path_length;
 		
-	if(in_vol==NULL || in_cnid==0 || out_unicode==NULL || out_length==NULL)
+	if (in_vol == NULL || in_cnid == 0 || out_unicode == NULL ||
+	    out_length == NULL)
 		return 1;
-		
+
 	result = 1;
 	*out_unicode = NULL;
 	*out_length = 0;
 	path = NULL;
 	total_path_length = 0;
-	
+
 	path = hfslib_malloc(514, cbargs); /* 256 unichars plus a forward slash */
-	if(path==NULL)
+	if (path == NULL)
 		return 1;
 
 	child_cnid = in_cnid;
 	parent_cnid = child_cnid; /* skips loop in case in_cnid is root id */
-	while(parent_cnid != HFS_CNID_ROOT_FOLDER
-		&& parent_cnid != HFS_CNID_ROOT_PARENT)
+	while (parent_cnid != HFS_CNID_ROOT_FOLDER &&
+	    parent_cnid != HFS_CNID_ROOT_PARENT)
 	{
-		if(child_cnid!=in_cnid)
-		{
+		if (child_cnid != in_cnid) {
 			newpath = hfslib_realloc(path, 514 + total_path_length*2, cbargs);
-
-			if(newpath==NULL)
+			if (newpath == NULL)
 				goto exit;
 			path = newpath;
-
 			memmove(path + 514, path + path_offset, total_path_length*2);
 		}
 
 		parent_cnid = hfslib_find_parent_thread(in_vol, child_cnid,
-			&parent_thread, cbargs);
-		if(parent_cnid==0)
+		    &parent_thread, cbargs);
+		if (parent_cnid == 0)
 			goto exit;
 
 		path_offset = 512 - parent_thread.name.length*2;

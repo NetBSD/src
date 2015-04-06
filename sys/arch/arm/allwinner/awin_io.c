@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.28 2014/11/11 17:00:59 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.28.2.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,6 +55,9 @@ static struct awinio_softc {
 	bus_space_tag_t sc_a4x_bst;
 	bus_space_handle_t sc_bsh;
 	bus_space_handle_t sc_ccm_bsh;
+	bus_space_handle_t sc_a80_usb_bsh;
+	bus_space_handle_t sc_a80_core2_bsh;
+	bus_space_handle_t sc_a80_rcpus_bsh;
 	bus_dma_tag_t sc_dmat;
 	bus_dma_tag_t sc_coherent_dmat;
 } awinio_sc;
@@ -89,13 +92,16 @@ awinio_print(void *aux, const char *pnp)
 #define	A10	AWINIO_ONLY_A10
 #define	A20	AWINIO_ONLY_A20
 #define	A31	AWINIO_ONLY_A31
+#define	A80	AWINIO_ONLY_A80
 #define	REQ	AWINIO_REQUIRED
 
 static const struct awin_locators awin_locators[] = {
 	{ "awinicu", OFFANDSIZE(INTC), NOPORT, NOINTR, A10|REQ },
-	{ "awingpio", OFFANDSIZE(PIO), NOPORT, NOINTR, AANY|REQ },
-	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_IRQ_DMA, A10|A20|REQ },
+	{ "awingpio", OFFANDSIZE(PIO), NOPORT, NOINTR, A10|A20|A31|REQ },
+	{ "awingpio", OFFANDSIZE(A80_PIO), NOPORT, NOINTR, A80|REQ },
+	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_IRQ_DMA, A10|A20 },
 	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_A31_IRQ_DMA, A31 },
+	{ "awindma", OFFANDSIZE(A80_DMA), NOPORT, AWIN_A80_IRQ_DMA, A80 },
 	{ "awintmr", OFFANDSIZE(TMR), NOPORT, AWIN_IRQ_TMR0, A10 },
 	{ "awincnt", OFFANDSIZE(CPUCFG), NOPORT, NOINTR, A20 },
 	{ "awincnt", OFFANDSIZE(A31_CPUCFG), NOPORT, NOINTR, A31 },
@@ -108,19 +114,30 @@ static const struct awin_locators awin_locators[] = {
 	{ "com", OFFANDSIZE(UART6), 6, AWIN_IRQ_UART6, A10|A20 },
 	{ "com", OFFANDSIZE(UART7), 7, AWIN_IRQ_UART7, A10|A20 },
 	{ "com", OFFANDSIZE(UART0), 0, AWIN_A31_IRQ_UART0, A31 },
-	{ "awindebe", AWIN_DE_BE0_OFFSET, 0x1000, 0, NOINTR, AANY },
-	{ "awindebe", AWIN_DE_BE1_OFFSET, 0x1000, 1, NOINTR, AANY },
-	{ "awintcon", OFFANDSIZE(LCD0), 0, NOINTR, AANY },
-	{ "awintcon", OFFANDSIZE(LCD1), 1, NOINTR, AANY },
+	{ "com", OFFANDSIZE(A80_UART0), 0, AWIN_A80_IRQ_UART0, A80 },
+	{ "awinmp", OFFANDSIZE(MP), NOPORT, AWIN_A31_IRQ_MP, A31 },
+	{ "awindebe", AWIN_DE_BE0_OFFSET, 0x1000, 0, NOINTR, A20|A31 },
+	{ "awindebe", AWIN_DE_BE1_OFFSET, 0x1000, 1, NOINTR, A20|A31 },
+	{ "awindebe", AWIN_A80_DE_BE0_OFFSET, 0x1000, 0, NOINTR, A80 },
+	{ "awindebe", AWIN_A80_DE_BE1_OFFSET, 0x1000, 1, NOINTR, A80 },
+	{ "awindebe", AWIN_A80_DE_BE2_OFFSET, 0x1000, 2, NOINTR, A80 },
+	{ "awintcon", OFFANDSIZE(LCD0), 0, NOINTR, A20|A31 },
+	{ "awintcon", OFFANDSIZE(LCD1), 1, NOINTR, A20|A31 },
+	{ "awintcon", OFFANDSIZE(A80_LCD0), 0, NOINTR, A80 },
 	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_IRQ_HDMI0, A20 },
 	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_A31_IRQ_HDMI, A31 },
-	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, AANY },
+	{ "awinhdmi", OFFANDSIZE(A80_HDMI), NOPORT, AWIN_A80_IRQ_HDMI, A80 },
+	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20|A31 },
+	{ "awinwdt", OFFANDSIZE(A80_TIMER), NOPORT, NOINTR, A80 },
 	{ "awinrtc", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20 },
 	{ "awinrtc", OFFANDSIZE(A31_RTC), NOPORT, NOINTR, A31 },
 	{ "awinusb", OFFANDSIZE(USB1), 0, NOINTR, A10|A20 },
 	{ "awinusb", OFFANDSIZE(USB2), 1, NOINTR, A10|A20 },
 	{ "awinusb", OFFANDSIZE(A31_USB1), 0, NOINTR, A31 },
 	{ "awinusb", OFFANDSIZE(A31_USB2), 1, NOINTR, A31 },
+	{ "awinusb", OFFANDSIZE(A80_USB0), 0, NOINTR, A80 },
+	{ "awinusb", OFFANDSIZE(A80_USB1), 1, NOINTR, A80 },
+	{ "awinusb", OFFANDSIZE(A80_USB2), 2, NOINTR, A80 },
 	{ "motg", OFFANDSIZE(USB0), NOPORT, AWIN_IRQ_USB0, A10|A20 },
 	{ "motg", OFFANDSIZE(A31_USB0), NOPORT, AWIN_A31_IRQ_USB0, A31 },
 	{ "awinmmc", OFFANDSIZE(SDMMC0), 0, AWIN_IRQ_SDMMC0, A10|A20 },
@@ -132,6 +149,10 @@ static const struct awin_locators awin_locators[] = {
 	{ "awinmmc", OFFANDSIZE(SDMMC1), 1, AWIN_A31_IRQ_SDMMC1, A31 },
 	{ "awinmmc", OFFANDSIZE(SDMMC2), 2, AWIN_A31_IRQ_SDMMC2, A31 },
 	{ "awinmmc", OFFANDSIZE(SDMMC3), 3, AWIN_A31_IRQ_SDMMC3, A31 },
+	{ "awinmmc", OFFANDSIZE(SDMMC0), 0, AWIN_A80_IRQ_SDMMC0, A80 },
+	{ "awinmmc", OFFANDSIZE(SDMMC1), 1, AWIN_A80_IRQ_SDMMC1, A80 },
+	{ "awinmmc", OFFANDSIZE(SDMMC2), 2, AWIN_A80_IRQ_SDMMC2, A80 },
+	{ "awinmmc", OFFANDSIZE(SDMMC3), 3, AWIN_A80_IRQ_SDMMC3, A80 },
 	{ "ahcisata", OFFANDSIZE(SATA), NOPORT, AWIN_IRQ_SATA, A10|A20 },
 	{ "awiniic", OFFANDSIZE(TWI0), 0, AWIN_IRQ_TWI0, A10|A20 },
 	{ "awiniic", OFFANDSIZE(TWI1), 1, AWIN_IRQ_TWI1, A10|A20 },
@@ -142,7 +163,13 @@ static const struct awin_locators awin_locators[] = {
 	{ "awiniic", OFFANDSIZE(TWI1), 1, AWIN_A31_IRQ_TWI1, A31 },
 	{ "awiniic", OFFANDSIZE(TWI2), 2, AWIN_A31_IRQ_TWI2, A31 },
 	{ "awiniic", OFFANDSIZE(TWI3), 3, AWIN_A31_IRQ_TWI3, A31 },
+	{ "awiniic", OFFANDSIZE(A80_TWI0), 0, AWIN_A80_IRQ_TWI0, A80 },
+	{ "awiniic", OFFANDSIZE(A80_TWI1), 1, AWIN_A80_IRQ_TWI1, A80 },
+	{ "awiniic", OFFANDSIZE(A80_TWI2), 2, AWIN_A80_IRQ_TWI2, A80 },
+	{ "awiniic", OFFANDSIZE(A80_TWI3), 3, AWIN_A80_IRQ_TWI3, A80 },
+	{ "awiniic", OFFANDSIZE(A80_TWI4), 4, AWIN_A80_IRQ_TWI4, A80 },
 	{ "awinp2wi", OFFANDSIZE(A31_P2WI), NOPORT, AWIN_A31_IRQ_P2WI, A31 },
+	{ "awinp2wi", OFFANDSIZE(A80_RSB), NOPORT, AWIN_A80_IRQ_R_RSB, A80 },
 	{ "spi", OFFANDSIZE(SPI0), 0, AWIN_IRQ_SPI0, AANY },
 	{ "spi", OFFANDSIZE(SPI1), 1, AWIN_IRQ_SPI1, AANY },
 	{ "spi", OFFANDSIZE(SPI2), 1, AWIN_IRQ_SPI2, AANY },
@@ -150,15 +177,18 @@ static const struct awin_locators awin_locators[] = {
 	{ "awe", OFFANDSIZE(EMAC), NOPORT, AWIN_IRQ_EMAC, A10|A20 },
 	{ "awge", OFFANDSIZE(GMAC), NOPORT, AWIN_IRQ_GMAC, A20 },
 	{ "awge", OFFANDSIZE(A31_GMAC), NOPORT, AWIN_A31_IRQ_GMAC, A31 },
+	{ "awge", OFFANDSIZE(A80_GMAC), NOPORT, AWIN_A80_IRQ_EMAC, A80 },
 	{ "awincrypto", OFFANDSIZE(SS), NOPORT, AWIN_IRQ_SS, AANY },
 	{ "awinac", OFFANDSIZE(AC), NOPORT, AWIN_IRQ_AC, A10|A20 },
 	{ "awinac", OFFANDSIZE(AC), NOPORT, AWIN_A31_IRQ_AC, A31 },
+	{ "awindaudio", OFFANDSIZE(A80_DAUDIO1), 1, AWIN_A80_IRQ_R_DAUDIO, A80 },
 	{ "awinhdmiaudio", OFFANDSIZE(HDMI), NOPORT, NOINTR, A20 },
 	{ "awinhdmiaudio", OFFANDSIZE(HDMI), NOPORT, NOINTR, A31 },
 	{ "awinnand", OFFANDSIZE(NFC), NOPORT, AWIN_IRQ_NAND, A10|A20 },
 	{ "awinir", OFFANDSIZE(IR0), 0, AWIN_IRQ_IR0, A10|A20 },
 	{ "awinir", OFFANDSIZE(IR1), 1, AWIN_IRQ_IR1, A10|A20 },
 	{ "awinir", OFFANDSIZE(A31_CIR), NOPORT, AWIN_A31_IRQ_CIR, A31 },
+	{ "awinir", OFFANDSIZE(A80_CIR), NOPORT, AWIN_A80_IRQ_R_CIR, A80 },
 };
 
 static int
@@ -184,6 +214,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	const bool a10_p = chip_id == AWIN_CHIP_ID_A10;
 	const bool a20_p = chip_id == AWIN_CHIP_ID_A20;
 	const bool a31_p = chip_id == AWIN_CHIP_ID_A31;
+	const bool a80_p = chip_id == AWIN_CHIP_ID_A80;
 	prop_dictionary_t dict = device_properties(self);
 
 	sc->sc_dev = self;
@@ -194,8 +225,22 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = &awin_dma_tag;
 	sc->sc_coherent_dmat = &awin_coherent_dma_tag;
 
-	bus_space_subregion(sc->sc_bst, sc->sc_bsh, AWIN_CCM_OFFSET, 0x1000,
-	    &sc->sc_ccm_bsh);
+	switch (awin_chip_id()) {
+#ifdef ALLWINNER_A80
+	case AWIN_CHIP_ID_A80:
+		sc->sc_a80_core2_bsh = awin_core2_bsh;
+		sc->sc_a80_rcpus_bsh = awin_rcpus_bsh;
+		bus_space_subregion(sc->sc_bst, sc->sc_bsh,
+		    AWIN_A80_CCU_SCLK_OFFSET, 0x1000, &sc->sc_ccm_bsh);
+		bus_space_map(sc->sc_bst, AWIN_A80_USB_PBASE,
+		    AWIN_A80_USB_SIZE, 0, &sc->sc_a80_usb_bsh);
+		break;
+#endif
+	default:
+		bus_space_subregion(sc->sc_bst, sc->sc_bsh, AWIN_CCM_OFFSET,
+		    0x1000, &sc->sc_ccm_bsh);
+		break;
+	}
 
 	aprint_naive("\n");
 	aprint_normal(": %s (0x%04x)\n", chip_name, chip_id);
@@ -222,6 +267,8 @@ awinio_attach(device_t parent, device_t self, void *aux)
 				continue;
 			if (a31_p && !(loc->loc_flags & AWINIO_ONLY_A31))
 				continue;
+			if (a80_p && !(loc->loc_flags & AWINIO_ONLY_A80))
+				continue;
 		}
 
 		struct awinio_attach_args aio = {
@@ -230,6 +277,9 @@ awinio_attach(device_t parent, device_t self, void *aux)
 			.aio_core_a4x_bst = sc->sc_a4x_bst,
 			.aio_core_bsh = sc->sc_bsh,
 			.aio_ccm_bsh = sc->sc_ccm_bsh,
+			.aio_a80_usb_bsh = sc->sc_a80_usb_bsh,
+			.aio_a80_core2_bsh = sc->sc_a80_core2_bsh,
+			.aio_a80_rcpus_bsh = sc->sc_a80_rcpus_bsh,
 			.aio_dmat = sc->sc_dmat,
 			.aio_coherent_dmat = sc->sc_coherent_dmat,
 		};

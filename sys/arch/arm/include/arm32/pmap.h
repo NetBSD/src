@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.137 2014/11/08 17:18:22 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.137.2.1 2015/04/06 15:17:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -78,6 +78,7 @@
 #include "opt_multiprocessor.h"
 #endif
 #include <arm/cpufunc.h>
+#include <arm/locore.h>
 #include <uvm/uvm_object.h>
 #endif
 
@@ -511,9 +512,7 @@ pmap_ptesync(pt_entry_t *ptep, size_t cnt)
 		    cnt * sizeof(pt_entry_t));
 #endif
 	}
-#if ARM_MMU_V7 > 0
-	__asm("dsb");
-#endif
+	arm_dsb();
 }
 
 #define	PDE_SYNC(pdep)			pmap_ptesync((pdep), 1)

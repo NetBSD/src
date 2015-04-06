@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.175 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.175.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -364,6 +364,11 @@ struct tcpcb {
 	u_int	t_maxidle;		/* t_keepcnt * t_keepintvl */
 
 	u_int	t_msl;			/* MSL to use for this connexion */
+
+	/* maintain a few stats per connection: */
+	uint32_t t_rcvoopack;	 	/* out-of-order packets received */
+	uint32_t t_sndrexmitpack; 	/* retransmit packets sent */
+	uint32_t t_sndzerowin;		/* zero-window updates sent */
 };
 
 /*

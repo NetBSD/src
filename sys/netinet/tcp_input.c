@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.334 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.334.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334.4.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -738,6 +738,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 	/*
 	 * Update the counters.
 	 */
+	tp->t_rcvoopack++;
 	tcps = TCP_STAT_GETREF();
 	tcps[TCP_STAT_RCVOOPACK]++;
 	tcps[TCP_STAT_RCVOOBYTE] += rcvoobyte;
@@ -845,12 +846,12 @@ tcp6_input(struct mbuf **mp, int *offp, int proto)
 static void
 tcp4_log_refused(const struct ip *ip, const struct tcphdr *th)
 {
-	char src[4*sizeof "123"];
-	char dst[4*sizeof "123"];
+	char src[INET_ADDRSTRLEN];
+	char dst[INET_ADDRSTRLEN];
 
 	if (ip) {
-		strlcpy(src, inet_ntoa(ip->ip_src), sizeof(src));
-		strlcpy(dst, inet_ntoa(ip->ip_dst), sizeof(dst));
+		in_print(src, sizeof(src), &ip->ip_src);
+		in_print(dst, sizeof(dst), &ip->ip_dst);
 	}
 	else {
 		strlcpy(src, "(unknown)", sizeof(src));
@@ -871,8 +872,8 @@ tcp6_log_refused(const struct ip6_hdr *ip6, const struct tcphdr *th)
 	char dst[INET6_ADDRSTRLEN];
 
 	if (ip6) {
-		strlcpy(src, ip6_sprintf(&ip6->ip6_src), sizeof(src));
-		strlcpy(dst, ip6_sprintf(&ip6->ip6_dst), sizeof(dst));
+		in6_print(src, sizeof(src), &ip6->ip6_src);
+		in6_print(dst, sizeof(dst), &ip6->ip6_dst);
 	}
 	else {
 		strlcpy(src, "(unknown v6)", sizeof(src));
@@ -3190,9 +3191,11 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 	MD5_CTX ctx;
 	struct ip *ip;
 	struct ipovly *ipovly;
+#ifdef INET6
 	struct ip6_hdr *ip6;
-	struct ippseudo ippseudo;
 	struct ip6_hdr_pseudo ip6pseudo;
+#endif /* INET6 */
+	struct ippseudo ippseudo;
 	struct tcphdr th0;
 	int l, tcphdrlen;
 
@@ -3203,20 +3206,8 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 
 	switch (mtod(m, struct ip *)->ip_v) {
 	case 4:
+		MD5Init(&ctx);
 		ip = mtod(m, struct ip *);
-		ip6 = NULL;
-		break;
-	case 6:
-		ip = NULL;
-		ip6 = mtod(m, struct ip6_hdr *);
-		break;
-	default:
-		return (-1);
-	}
-
-	MD5Init(&ctx);
-
-	if (ip) {
 		memset(&ippseudo, 0, sizeof(ippseudo));
 		ipovly = (struct ipovly *)ip;
 		ippseudo.ippseudo_src = ipovly->ih_src;
@@ -3225,7 +3216,11 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 		ippseudo.ippseudo_p = IPPROTO_TCP;
 		ippseudo.ippseudo_len = htons(m->m_pkthdr.len - thoff);
 		MD5Update(&ctx, (char *)&ippseudo, sizeof(ippseudo));
-	} else {
+		break;
+#if INET6
+	case 6:
+		MD5Init(&ctx);
+		ip6 = mtod(m, struct ip6_hdr *);
 		memset(&ip6pseudo, 0, sizeof(ip6pseudo));
 		ip6pseudo.ip6ph_src = ip6->ip6_src;
 		in6_clearscope(&ip6pseudo.ip6ph_src);
@@ -3234,6 +3229,10 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 		ip6pseudo.ip6ph_len = htons(m->m_pkthdr.len - thoff);
 		ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
 		MD5Update(&ctx, (char *)&ip6pseudo, sizeof(ip6pseudo));
+		break;
+#endif /* INET6 */
+	default:
+		return (-1);
 	}
 
 	th0 = *th;
@@ -3312,27 +3311,25 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 			tp->t_flags |= TF_RCVD_SCALE;
 			tp->requested_s_scale = cp[2];
 			if (tp->requested_s_scale > TCP_MAX_WINSHIFT) {
-#if 0	/*XXX*/
-				char *p;
-
+				char buf[INET6_ADDRSTRLEN];
+				struct ip *ip = mtod(m, struct ip *);
+#ifdef INET6
+				struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+#endif
 				if (ip)
-					p = ntohl(ip->ip_src);
+					in_print(buf, sizeof(buf),
+					    &ip->ip_src);
 #ifdef INET6
 				else if (ip6)
-					p = ip6_sprintf(&ip6->ip6_src);
+					in6_print(buf, sizeof(buf),
+					    &ip6->ip6_src);
 #endif
 				else
-					p = "(unknown)";
+					strlcpy(buf, "(unknown)", sizeof(buf));
 				log(LOG_ERR, "TCP: invalid wscale %d from %s, "
 				    "assuming %d\n",
-				    tp->requested_s_scale, p,
+				    tp->requested_s_scale, buf,
 				    TCP_MAX_WINSHIFT);
-#else
-				log(LOG_ERR, "TCP: invalid wscale %d, "
-				    "assuming %d\n",
-				    tp->requested_s_scale,
-				    TCP_MAX_WINSHIFT);
-#endif
 				tp->requested_s_scale = TCP_MAX_WINSHIFT;
 			}
 			break;

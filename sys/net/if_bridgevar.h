@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.20 2014/07/14 02:34:36 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.20.4.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -207,6 +207,13 @@ struct ifbrparam {
 #define	ifbrp_filter	ifbrp_ifbrpu.ifbrpu_int32	/* filtering flags */
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif /* _KERNEL_OPT */
+
+#include <sys/pserialize.h>
+#include <sys/workqueue.h>
+
 #include <net/pktqueue.h>
 
 /*
@@ -303,11 +310,16 @@ struct bridge_softc {
 	callout_t		sc_brcallout;	/* bridge callout */
 	callout_t		sc_bstpcallout;	/* STP callout */
 	LIST_HEAD(, bridge_iflist) sc_iflist;	/* member interface list */
-	kmutex_t		*sc_iflist_lock;
+	kmutex_t		*sc_iflist_intr_lock;
 	kcondvar_t		sc_iflist_cv;
+	pserialize_t		sc_iflist_psz;
+	kmutex_t		*sc_iflist_lock;
 	LIST_HEAD(, bridge_rtnode) *sc_rthash;	/* our forwarding table */
 	LIST_HEAD(, bridge_rtnode) sc_rtlist;	/* list version of above */
+	kmutex_t		*sc_rtlist_intr_lock;
 	kmutex_t		*sc_rtlist_lock;
+	pserialize_t		sc_rtlist_psz;
+	struct workqueue	*sc_rtage_wq;
 	uint32_t		sc_rthash_key;	/* key for hash */
 	uint32_t		sc_filter_flags; /* ipf and flags */
 	pktqueue_t *		sc_fwd_pktq;
@@ -338,5 +350,58 @@ void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 #define BRIDGE_LOCKED(_sc)	(!(_sc)->sc_iflist_lock || \
 				 mutex_owned((_sc)->sc_iflist_lock))
 
+#define BRIDGE_INTR_LOCK(_sc)	if ((_sc)->sc_iflist_intr_lock) \
+					mutex_enter((_sc)->sc_iflist_intr_lock)
+#define BRIDGE_INTR_UNLOCK(_sc)	if ((_sc)->sc_iflist_intr_lock) \
+					mutex_exit((_sc)->sc_iflist_intr_lock)
+#define BRIDGE_INTR_LOCKED(_sc)	(!(_sc)->sc_iflist_intr_lock || \
+				 mutex_owned((_sc)->sc_iflist_intr_lock))
+
+#ifdef BRIDGE_MPSAFE
+/*
+ * These macros can be used in both HW interrupt and softint contexts.
+ */
+#define BRIDGE_PSZ_RENTER(__s)	do { \
+					if (!cpu_intr_p()) \
+						__s = pserialize_read_enter(); \
+					else \
+						__s = splhigh(); \
+				} while (0)
+#define BRIDGE_PSZ_REXIT(__s)	do { \
+					if (!cpu_intr_p()) \
+						pserialize_read_exit(__s); \
+					else \
+						splx(__s); \
+				} while (0)
+#else /* BRIDGE_MPSAFE */
+#define BRIDGE_PSZ_RENTER(__s)	do { __s = 0; } while (0)
+#define BRIDGE_PSZ_REXIT(__s)	do { (void)__s; } while (0)
+#endif /* BRIDGE_MPSAFE */
+
+#define BRIDGE_PSZ_PERFORM(_sc)	if ((_sc)->sc_iflist_psz) \
+					pserialize_perform((_sc)->sc_iflist_psz);
+
+/*
+ * Locking notes:
+ * - Updates of sc_iflist are serialized by sc_iflist_lock (an adaptive mutex)
+ * - Items of sc_iflist (bridge_iflist) is protected by both pserialize
+ *   (sc_iflist_psz) and reference counting (bridge_iflist#bif_refs)
+ * - Before destroying an item of sc_iflist, we have to do pserialize_perform
+ *   and synchronize with the reference counting via a conditional variable
+ *   (sc_iflist_cz)
+ * - sc_iflist_intr_lock (a spin mutex) is used for the CV
+ *   - A spin mutex is required because the reference counting can be used
+ *     in HW interrupt context
+ *   - The mutex is also used for STP
+ *   - Once we change to execute entire Layer 2 in softint context,
+ *     we can get rid of sc_iflist_intr_lock
+ * - Updates of sc_rtlist are serialized by sc_rtlist_intr_lock (a spin mutex)
+ *   - The sc_rtlist can be modified in HW interrupt context for now
+ * - sc_rtlist_lock (an adaptive mutex) is only for pserialize
+ *   - Once we change to execute entire Layer 2 in softint context,
+ *     we can get rid of sc_rtlist_intr_lock
+ * - A workqueue is used to run bridge_rtage in LWP context via bridge_timer callout
+ *   - bridge_rtage uses pserialize that requires non-interrupt context
+ */
 #endif /* _KERNEL */
 #endif /* !_NET_IF_BRIDGEVAR_H_ */

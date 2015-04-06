@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.122 2014/09/05 05:44:50 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.122.2.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -299,7 +299,7 @@
 #if __GNUC_PREREQ__(4, 6) || defined(__clang__)
 #define	__unreachable()	__builtin_unreachable()
 #else
-#define	__unreachable()	do {} while (0)
+#define	__unreachable()	do {} while (/*CONSTCOND*/0)
 #endif
 
 #if defined(__cplusplus)
@@ -579,6 +579,9 @@
 #else
 #define __CAST(__dt, __st)	((__dt)(__st))
 #endif
+
+#define __CASTV(__dt, __st)	__CAST(__dt, __CAST(void *, __st))
+#define __CASTCV(__dt, __st)	__CAST(__dt, __CAST(const void *, __st))
 
 #define __USE(a) ((void)(a))
 

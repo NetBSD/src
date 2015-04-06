@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.81 2014/04/16 18:55:17 maxv Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.81.4.1 2015/04/06 15:18:05 skrll Exp $	*/
 
 /*
  *
@@ -45,13 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.81 2014/04/16 18:55:17 maxv Exp $");
-
-#ifndef _KERNEL_OPT
-#define	NVCODA 4
-#else
-#include <vcoda.h>
-#endif
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.81.4.1 2015/04/06 15:18:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +106,7 @@ struct vfsops coda_vfsops = {
 	.vfs_statvfs = coda_nb_statvfs,
 	.vfs_sync = coda_sync,
 	.vfs_vget = coda_vget,
+	.vfs_loadvnode = coda_loadvnode,
 	.vfs_fhtovp = (void *)eopnotsupp,
 	.vfs_vptofh = (void *)eopnotsupp,
 	.vfs_init = coda_init,
@@ -264,12 +259,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     rtvp = CTOV(cp);
     rtvp->v_vflag |= VV_ROOT;
 
-/*  cp = make_coda_node(&ctlfid, vfsp, VCHR);
-    The above code seems to cause a loop in the cnode links.
-    I don't totally understand when it happens, it is caught
-    when closing down the system.
- */
-    cp = make_coda_node(&ctlfid, 0, VCHR);
+    cp = make_coda_node(&ctlfid, vfsp, VCHR);
 
     coda_ctlvp = CTOV(cp);
 
@@ -325,6 +315,7 @@ coda_unmount(struct mount *vfsp, int mntflags)
 	mi->mi_started = 0;
 
 	vrele(mi->mi_rootvp);
+	vrele(coda_ctlvp);
 
 	active = coda_kill(vfsp, NOT_DOWNCALL);
 	mi->mi_rootvp->v_vflag &= ~VV_ROOT;
@@ -381,13 +372,19 @@ coda_root(struct mount *vfsp, struct vnode **vpp)
     error = venus_root(vftomi(vfsp), l->l_cred, l->l_proc, &VFid);
 
     if (!error) {
+	struct cnode *cp = VTOC(mi->mi_rootvp);
+
 	/*
-	 * Save the new rootfid in the cnode, and rehash the cnode into the
-	 * cnode hash with the new fid key.
+	 * Save the new rootfid in the cnode, and rekey the cnode
+	 * with the new fid key.
 	 */
-	coda_unsave(VTOC(mi->mi_rootvp));
-	VTOC(mi->mi_rootvp)->c_fid = VFid;
-	coda_save(VTOC(mi->mi_rootvp));
+	error = vcache_rekey_enter(vfsp, mi->mi_rootvp,
+	    &invalfid, sizeof(CodaFid), &VFid, sizeof(CodaFid));
+	if (error)
+	        goto exit;
+	cp->c_fid = VFid;
+	vcache_rekey_exit(vfsp, mi->mi_rootvp,
+	    &invalfid, sizeof(CodaFid), &cp->c_fid, sizeof(CodaFid));
 
 	*vpp = mi->mi_rootvp;
 	vref(*vpp);
@@ -483,6 +480,31 @@ coda_vget(struct mount *vfsp, ino_t ino,
 {
     ENTRY;
     return (EOPNOTSUPP);
+}
+
+int
+coda_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	CodaFid fid;
+	struct cnode *cp;
+	extern int (**coda_vnodeop_p)(void *);
+
+	KASSERT(key_len == sizeof(CodaFid));
+	memcpy(&fid, key, key_len);
+
+	cp = kmem_zalloc(sizeof(*cp), KM_SLEEP);
+	mutex_init(&cp->c_lock, MUTEX_DEFAULT, IPL_NONE);
+	cp->c_fid = fid;
+	cp->c_vnode = vp;
+	vp->v_op = coda_vnodeop_p;
+	vp->v_tag = VT_CODA;
+	vp->v_type = VNON;
+	vp->v_data = cp;
+
+	*new_key = &cp->c_fid;
+
+	return 0;
 }
 
 /*

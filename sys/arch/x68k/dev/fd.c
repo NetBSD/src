@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.111 2014/08/10 16:44:34 tls Exp $	*/
+/*	$NetBSD: fd.c,v 1.111.4.1 2015/04/06 15:18:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.111 2014/08/10 16:44:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.111.4.1 2015/04/06 15:18:04 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -1615,34 +1615,12 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	int il[FD_MAX_NSEC + 1];
 	int i, j;
 
+	error = disk_ioctl(&fd->sc_dk, dev, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	DPRINTF(("fdioctl:"));
 	switch (cmd) {
-	case DIOCGDINFO:
-		DPRINTF(("DIOCGDINFO\n"));
-#if 1
-		*(struct disklabel *)addr = *fd->sc_dk.dk_label;
-		return 0;
-#else
-		memset(&buffer, 0, sizeof(buffer));
-
-		buffer.d_secpercyl = fd->sc_type->seccyl;
-		buffer.d_type = DTYPE_FLOPPY;
-		buffer.d_secsize = 128 << fd->sc_type->secsize;
-
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
-			return EINVAL;
-
-		*(struct disklabel *)addr = buffer;
-		return 0;
-#endif
-
-	case DIOCGPART:
-		DPRINTF(("DIOCGPART\n"));
-		((struct partinfo *)addr)->disklab = fd->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-		    &fd->sc_dk.dk_label->d_partitions[part];
-		return 0;
-
 	case DIOCWLABEL:
 		DPRINTF(("DIOCWLABEL\n"));
 		if ((flag & FWRITE) == 0)
@@ -1899,7 +1877,7 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 	lp->d_ncylinders  = sc->sc_type->size / lp->d_secpercyl;
 	lp->d_secperunit  = sc->sc_type->size;
 
-	lp->d_type        = DTYPE_FLOPPY;
+	lp->d_type        = DKTYPE_FLOPPY;
 	lp->d_rpm         = 300; 	/* XXX */
 	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
 	lp->d_bbsize      = 0;

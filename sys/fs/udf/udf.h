@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.47 2014/09/17 19:47:05 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.47.2.1 2015/04/06 15:18:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -94,6 +94,7 @@ extern int udf_verbose;
 #define DPRINTFIF(name, cond, arg) {}
 #endif
 
+VFS_PROTOS(udf);
 
 /* constants to identify what kind of identifier we are dealing with */
 #define UDF_REGID_DOMAIN		 1
@@ -339,7 +340,6 @@ struct udf_mount {
 
 	/* rb tree for lookup icb to udf_node and sorted list for sync */
 	kmutex_t	ihash_lock;
-	kmutex_t	get_node_lock;
 	struct rb_tree	udf_node_tree;
 
 	/* syncing */

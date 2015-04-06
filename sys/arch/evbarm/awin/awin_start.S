@@ -41,7 +41,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/awin/platform.h>  
 
-RCSID("$NetBSD: awin_start.S,v 1.6 2014/11/05 17:46:51 matt Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.6.2.1 2015/04/06 15:17:55 skrll Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -151,13 +151,14 @@ _C_LABEL(awin_start):
 	// Make sure the cache is flushed out to RAM for the other CPUs
 	bl	_C_LABEL(armv7_dcache_wbinv_all)
 
-#if defined(ALLWINNER_A20) + defined(ALLWINNER_A31) + defined(ALLWINNER_A80) > 1
+#if defined(ALLWINNER_A20) || defined(ALLWINNER_A31)
 	// Read SoC ID
 	movw	r5, #:lower16:(AWIN_CORE_PBASE+AWIN_SRAM_OFFSET)
 	movt	r5, #:upper16:(AWIN_CORE_PBASE+AWIN_SRAM_OFFSET)
 	ldr	r1, [r5, #AWIN_SRAM_VER_REG]
 #ifdef __ARMEB__
-	orr	r1, r1, #(AWIN_SRAM_VER_R_EN << 8)	# it's bit 15
+	# it's bit 15
+	orr	r1, r1, #(AWIN_SRAM_VER_R_EN << 8)
 #else
 	orr	r1, r1, #AWIN_SRAM_VER_R_EN
 #endif
@@ -168,11 +169,10 @@ _C_LABEL(awin_start):
 	rev	r1, r1
 #endif
 	lsr	r1, r1, #16
-#endif /* ALLWINNER_A20 + ALLWINNER_A31 + ALLWINNER_A80 > 1 */
 
 	// MP init based on SoC ID
 #if defined(ALLWINNER_A20)
-# if defined(ALLWINNER_A31) || defined(ALLWINNER_A80)
+# if defined(ALLWINNER_A31)
 	movw	r0, #AWIN_SRAM_VER_KEY_A20
 	cmp	r1, r0
 	bleq	a20_mpinit
@@ -181,13 +181,16 @@ _C_LABEL(awin_start):
 # endif
 #endif
 #if defined(ALLWINNER_A31)
-# if defined(ALLWINNER_A20) || defined(ALLWINNER_A80)
+# if defined(ALLWINNER_A20)
 	movw	r0, #AWIN_SRAM_VER_KEY_A31
 	cmp	r1, r0
 	bleq	a31_mpinit
 # else
 	bl	a31_mpinit
 # endif
+#endif
+#elif defined(ALLWINNER_A80)
+	bl	a80_mpinit
 #endif
 
 	XPUTC2(#62)
@@ -439,6 +442,130 @@ ASEND(a31_mpinit)
 	.popsection
 #endif
 
+#if defined(ALLWINNER_A80)
+#ifndef KERNEL_BASES_EQUAL
+	.pushsection .text,"ax",%progbits
+#endif
+a80_mpinit:
+	mov	r4, lr			// because we call gtmr_bootdelay
+	movw	r5, #:lower16:(AWIN_A80_RCPUCFG_PBASE)
+	movt	r5, #:upper16:(AWIN_A80_RCPUCFG_PBASE)
+	movw	r6, #:lower16:(AWIN_A80_RCPUS_PBASE+AWIN_A80_RPRCM_OFFSET)
+	movt	r6, #:upper16:(AWIN_A80_RCPUS_PBASE+AWIN_A80_RPRCM_OFFSET)
+
+	XPUTC2(#65)
+	XPUTC2(#51)
+	XPUTC2(#49)
+
+#ifdef __ARMEB__
+	setend	le			// everything here is little-endian
+#endif
+
+	mov	r12, #1			// CPU number
+
+a80_mpinit_cpu:
+
+	XPUTC2(r12)
+
+	/* Set where the other CPU(s) are going to execute */
+	movw	r1, #:lower16:cortex_mpstart
+	movt	r1, #:upper16:cortex_mpstart
+	str	r1, [r6, #AWIN_A80_RPRCM_PRIVATE_REG]
+	dsb
+
+	/* Assert CPU power on reset */
+	ldr	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_RST_REG]
+	mov	r0, #1
+	lsl	r0, r0, r12
+	bic	r1, r1, r0
+	str	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_RST_REG]
+
+	/* Assert CPU core reset */
+	ldr	r1, [r5, #AWIN_A80_RCPUCFG_CLUSTER0_RST_REG]
+	mov	r0, #1
+	lsl	r0, r0, r12
+	bic	r1, r1, r0
+	str	r1, [r5, #AWIN_A80_RCPUCFG_CLUSTER0_RST_REG]
+
+	/* Release power clamp */
+	mov	r1, #0x00
+	mov	r2, #0x4
+	mul	r7, r12, r2
+	add	r7, r7, #AWIN_A80_RPRCM_CLUSTER0_PRW_CLAMP_REG
+	str	r1, [r6, r7]
+	dsb
+
+	mov	r2, #0x40
+	mul	r7, r12, r2
+	add	r7, r7, #AWIN_A80_RPRCM_CLUSTER0_PRW_CLAMP_STATUS_REG
+1:
+	ldr	r1, [r5, r7]
+	cmp	r1, #0x00
+	bne	1b
+
+	/* We need to wait (at least) 10ms */
+	mov	r0, #0x3b000			// 10.06ms
+	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
+
+	/* Clear power-off gating */
+	ldr	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_PWR_GATING_REG] 
+	mov	r0, #1
+	lsl	r0, r0, r12
+	bic	r1, r1, r0
+	str	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_PWR_GATING_REG]
+	dsb
+
+	/* We need to wait (at least) 10ms */
+	mov	r0, #0x3b000			// 10.06ms
+	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
+
+	/* Bring core out of reset */
+	ldr	r1, [r5, #AWIN_A80_RCPUCFG_CLUSTER0_RST_REG]
+	mov	r0, #1
+	lsl	r0, r0, r12
+	orr	r1, r1, r0
+	str	r1, [r5, #AWIN_A80_RCPUCFG_CLUSTER0_RST_REG]
+
+	/* Bring cpu power-on out of reset */
+	ldr	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_RST_REG]
+	mov	r0, #1
+	lsl	r0, r0, r12
+	orr	r1, r1, r0
+	str	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_RST_REG]
+	dsb
+
+	/* If there is another CPU, start it */
+	add	r12, r12, #1
+	cmp	r12, #3
+	ble	a80_mpinit_cpu
+
+#ifdef __ARMEB__
+	setend	be				// we're done with little endian
+#endif
+
+	//
+	// Wait up a second for CPU1-3 to hatch. 
+	//
+	movw	r6, #:lower16:arm_cpu_hatched
+	movt	r6, #:upper16:arm_cpu_hatched
+	mov	r5, #200			// 200 x 5ms
+
+1:	dmb					// memory barrier
+	ldr	r0, [r6]			// load hatched
+	cmp	r0, #0xe			// our bits set yet?
+	bxge	r4				//   yes, return
+	subs	r5, r5, #1			// decrement count
+	bxeq	r4				//   0? return
+	mov	r0, #0x1d800			// 5.03ms
+	bl	_C_LABEL(gtmr_bootdelay)
+	b	1b
+
+ASEND(a80_mpinit)
+#ifndef KERNEL_BASES_EQUAL
+	.popsection
+#endif
+#endif /* ALLWINNER_A80 */
+
 #endif /* MULTIPROCESSOR */
 
 .Lmmu_init_table:
@@ -462,6 +589,38 @@ ASEND(a31_mpinit)
 	MMU_INIT(AWIN_CORE_PBASE, AWIN_CORE_PBASE,
 		(AWIN_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+#if defined(ALLWINNER_A80)
+	/* Map AWIN CORE2 */
+	MMU_INIT(AWIN_A80_CORE2_VBASE, AWIN_A80_CORE2_PBASE,
+		(AWIN_A80_CORE2_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map AWIN CORE2 */
+	MMU_INIT(AWIN_A80_CORE2_PBASE, AWIN_A80_CORE2_PBASE,
+		(AWIN_A80_CORE2_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map AWIN RCPUS (for PIO L-N, PRCM) */
+	MMU_INIT(AWIN_A80_RCPUS_VBASE, AWIN_A80_RCPUS_PBASE,
+		(AWIN_A80_RCPUS_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map AWIN RCPUS (for PIO L-N, PRCM) */
+	MMU_INIT(AWIN_A80_RCPUS_PBASE, AWIN_A80_RCPUS_PBASE,
+		(AWIN_A80_RCPUS_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map AWIN RCPUCFG */
+	MMU_INIT(AWIN_A80_RCPUCFG_VBASE, AWIN_A80_RCPUCFG_PBASE,
+		(AWIN_A80_RCPUCFG_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map AWIN RCPUCFG */
+	MMU_INIT(AWIN_A80_RCPUCFG_PBASE, AWIN_A80_RCPUCFG_PBASE,
+		(AWIN_A80_RCPUCFG_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+#endif
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.154 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: nd6.c,v 1.154.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "bridge.h"
 #include "carp.h"
-#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,10 +204,11 @@ nd6_ifattach(struct ifnet *ifp)
 }
 
 void
-nd6_ifdetach(struct nd_ifinfo *nd)
+nd6_ifdetach(struct ifnet *ifp, struct in6_ifextra *ext)
 {
 
-	free(nd, M_IP6NDP);
+	nd6_purge(ifp, ext);
+	free(ext->nd_ifinfo, M_IP6NDP);
 }
 
 void
@@ -556,7 +556,7 @@ nd6_timer(void *ignored_arg)
 	
 	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, next_dr) {
 		if (dr->expire && dr->expire < time_second) {
-			defrtrlist_del(dr);
+			defrtrlist_del(dr, NULL);
 		}
 	}
 
@@ -598,7 +598,8 @@ nd6_timer(void *ignored_arg)
 
 			if ((oldflags & IN6_IFF_DEPRECATED) == 0) {
 				ia6->ia6_flags |= IN6_IFF_DEPRECATED;
-				nd6_newaddrmsg((struct ifaddr *)ia6);
+				rt_newaddrmsg(RTM_NEWADDR,
+				    (struct ifaddr *)ia6, 0, NULL);
 			}
 
 			/*
@@ -632,7 +633,8 @@ nd6_timer(void *ignored_arg)
 			 */
 			if (ia6->ia6_flags & IN6_IFF_DEPRECATED) {
 				ia6->ia6_flags &= ~IN6_IFF_DEPRECATED;
-				nd6_newaddrmsg((struct ifaddr *)ia6);
+				rt_newaddrmsg(RTM_NEWADDR,
+				    (struct ifaddr *)ia6, 0, NULL);
 			}
 		}
 	}
@@ -746,11 +748,21 @@ nd6_accepts_rtadv(const struct nd_ifinfo *ndi)
  * ifp goes away.
  */
 void
-nd6_purge(struct ifnet *ifp)
+nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 {
 	struct llinfo_nd6 *ln, *nln;
 	struct nd_defrouter *dr, *ndr;
 	struct nd_prefix *pr, *npr;
+
+	/*
+	 * During detach, the ND info might be already removed, but
+	 * then is explitly passed as argument.
+	 * Otherwise get it from ifp->if_afdata.
+	 */
+	if (ext == NULL)
+		ext = ifp->if_afdata[AF_INET6];
+	if (ext == NULL)
+		return;
 
 	/*
 	 * Nuke default router list entries toward ifp.
@@ -762,16 +774,20 @@ nd6_purge(struct ifnet *ifp)
 		if (dr->installed)
 			continue;
 
-		if (dr->ifp == ifp)
-			defrtrlist_del(dr);
+		if (dr->ifp == ifp) {
+			KASSERT(ext != NULL);
+			defrtrlist_del(dr, ext);
+		}
 	}
 
 	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
 		if (!dr->installed)
 			continue;
 
-		if (dr->ifp == ifp)
-			defrtrlist_del(dr);
+		if (dr->ifp == ifp) {
+			KASSERT(ext != NULL);
+			defrtrlist_del(dr, ext);
+		}
 	}
 
 	/* Nuke prefix list entries toward ifp */
@@ -1037,6 +1053,7 @@ nd6_free(struct rtentry *rt, int gc)
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
 	struct in6_addr in6 = satocsin6(rt_getkey(rt))->sin6_addr;
 	struct nd_defrouter *dr;
+	struct rtentry *oldrt;
 
 	/*
 	 * we used to have pfctlinput(PRC_HOSTDEAD) here.
@@ -1129,7 +1146,15 @@ nd6_free(struct rtentry *rt, int gc)
 	 * caches, and disable the route entry not to be used in already
 	 * cached routes.
 	 */
-	rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0, NULL);
+	oldrt = NULL;
+	rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0, &oldrt);
+	if (oldrt) {
+		rt_newmsg(RTM_DELETE, oldrt); /* tell user process */
+		if (oldrt->rt_refcnt <= 0) {
+			oldrt->rt_refcnt++;
+			rtfree(oldrt);
+		}
+	}
 
 	return next;
 }
@@ -1788,7 +1813,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		s = splsoftnet();
 		defrouter_reset();
 		TAILQ_FOREACH_SAFE(drtr, &nd_defrouter, dr_entry, next) {
-			defrtrlist_del(drtr);
+			defrtrlist_del(drtr, NULL);
 		}
 		defrouter_select();
 		splx(s);
@@ -2058,6 +2083,9 @@ fail:
 		}
 		break;
 	}
+
+	if (do_update)
+		rt_newmsg(RTM_CHANGE, rt);  /* tell user process */
 
 	/*
 	 * When the link-layer address of a router changes, select the
@@ -2374,16 +2402,25 @@ nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
 		return 0;
 	}
 	if (rt->rt_gateway->sa_family != AF_LINK) {
-		printf("%s: something odd happens\n", __func__);
+		char gbuf[256];
+		char dbuf[LINK_ADDRSTRLEN];
+		sockaddr_format(rt->rt_gateway, gbuf, sizeof(gbuf));
+		printf("%s: bad gateway address type %s for dst %s"
+		    " through interface %s\n", __func__, gbuf, 
+		    IN6_PRINT(dbuf, &satocsin6(dst)->sin6_addr),
+		    if_name(ifp));
 		m_freem(m);
 		return 0;
 	}
 	sdl = satocsdl(rt->rt_gateway);
 	if (sdl->sdl_alen == 0 || sdl->sdl_alen > dstsize) {
+		char sbuf[INET6_ADDRSTRLEN];
+		char dbuf[LINK_ADDRSTRLEN];
 		/* this should be impossible, but we bark here for debugging */
-		printf("%s: sdl_alen == %" PRIu8 ", dst=%s, if=%s\n", __func__,
-		    sdl->sdl_alen, ip6_sprintf(&satocsin6(dst)->sin6_addr),
-		    if_name(ifp));
+		printf("%s: sdl_alen == %" PRIu8 ", if=%s, dst=%s, sdl=%s\n",
+		    __func__, sdl->sdl_alen, if_name(ifp),
+		    IN6_PRINT(sbuf, &satocsin6(dst)->sin6_addr),
+		    DL_PRINT(dbuf, &sdl->sdl_addr));
 		m_freem(m);
 		return 0;
 	}

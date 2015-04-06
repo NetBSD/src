@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.252 2014/09/08 22:01:24 joerg Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.252.2.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252 2014/09/08 22:01:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include "opt_bufcache.h"
 
@@ -172,8 +172,7 @@ static void buf_setwm(void);
 static int buf_trim(void);
 static void *bufpool_page_alloc(struct pool *, int);
 static void bufpool_page_free(struct pool *, void *);
-static buf_t *bio_doread(struct vnode *, daddr_t, int,
-    kauth_cred_t, int);
+static buf_t *bio_doread(struct vnode *, daddr_t, int, int);
 static buf_t *getnewbuf(int, int, int);
 static int buf_lotsfree(void);
 static int buf_canrelease(void);
@@ -659,8 +658,7 @@ buf_mrelease(void *addr, size_t size)
  * bread()/breadn() helper.
  */
 static buf_t *
-bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
-    int async)
+bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 {
 	buf_t *bp;
 	struct mount *mp;
@@ -719,14 +717,13 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
  * This algorithm described in Bach (p.54).
  */
 int
-bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
-    int flags, buf_t **bpp)
+bread(struct vnode *vp, daddr_t blkno, int size, int flags, buf_t **bpp)
 {
 	buf_t *bp;
 	int error;
 
 	/* Get buffer for block. */
-	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
+	bp = *bpp = bio_doread(vp, blkno, size, 0);
 	if (bp == NULL)
 		return ENOMEM;
 
@@ -748,12 +745,12 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
  */
 int
 breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
-    int *rasizes, int nrablks, kauth_cred_t cred, int flags, buf_t **bpp)
+    int *rasizes, int nrablks, int flags, buf_t **bpp)
 {
 	buf_t *bp;
 	int error, i;
 
-	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
+	bp = *bpp = bio_doread(vp, blkno, size, 0);
 	if (bp == NULL)
 		return ENOMEM;
 
@@ -768,7 +765,7 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 
 		/* Get a buffer for the read-ahead block */
 		mutex_exit(&bufcache_lock);
-		(void) bio_doread(vp, rablks[i], rasizes[i], cred, B_ASYNC);
+		(void) bio_doread(vp, rablks[i], rasizes[i], B_ASYNC);
 		mutex_enter(&bufcache_lock);
 	}
 	mutex_exit(&bufcache_lock);

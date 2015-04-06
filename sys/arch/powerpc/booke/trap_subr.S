@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.11 2014/09/18 23:37:51 joerg Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.11.2.1 2015/04/06 15:18:00 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: trap_subr.S,v 1.11 2014/09/18 23:37:51 joerg Exp $")
+RCSID("$NetBSD: trap_subr.S,v 1.11.2.1 2015/04/06 15:18:00 skrll Exp $")
 
 	.globl	_C_LABEL(sctrapexit), _C_LABEL(trapexit), _C_LABEL(intrcall)
 
@@ -346,6 +346,50 @@ RCSID("$NetBSD: trap_subr.S,v 1.11 2014/09/18 23:37:51 joerg Exp $")
 	RESTORE_SPRG1(%r6);	\
 	FRAME_INTR_XEXIT(rfci, CSRR)
 
+#if defined(MULTIPROCESSOR)
+#define	FRAME_TLBMISSLOCK						\
+	GET_CPUINFO(%r23);						\
+	ldint	%r22, CI_MTX_COUNT(%r23);				\
+	subi	%r22, %r22, 1;						\
+	stint	%r22, CI_MTX_COUNT(%r23);				\
+	isync;								\
+	cmpwi	%r22, 0;						\
+	bne	1f;							\
+	ldint	%r22, CI_CPL(%r23);					\
+	stint	%r22, CI_MTX_OLDSPL(%r23);				\
+1:	lis	%r23, _C_LABEL(pmap_tlb_miss_lock)@h;			\
+	ori	%r23, %r23, _C_LABEL(pmap_tlb_miss_lock)@l;		\
+	li	%r20, MTX_LOCK;						\
+2:	lwarx	%r22, %r20, %r23;					\
+	cmpwi	%r22, __SIMPLELOCK_UNLOCKED;				\
+	beq+	4f;							\
+3:	lwzx	%r22, %r20, %r23;					\
+	cmpwi	%r22, __SIMPLELOCK_UNLOCKED;				\
+	beq+	2b;							\
+	b	3b;							\
+4:	li	%r21, __SIMPLELOCK_LOCKED;				\
+	stwcx.	%r21, %r20, %r23;					\
+	bne-	2b;							\
+	isync;								\
+	msync;
+#define	FRAME_TLBMISSUNLOCK						\
+	sync;								\
+	lis	%r23, _C_LABEL(pmap_tlb_miss_lock)@h;			\
+	ori	%r23, %r23, _C_LABEL(pmap_tlb_miss_lock)@l;		\
+	li	%r22, __SIMPLELOCK_UNLOCKED;				\
+	stw	%r22, MTX_LOCK(%r23);					\
+	isync;								\
+	msync;								\
+	GET_CPUINFO(%r23);						\
+	ldint	%r22, CI_MTX_COUNT(%r23);				\
+	addi	%r22, %r22, 1;						\
+	stint	%r22, CI_MTX_COUNT(%r23);				\
+	isync;
+#else	/* !MULTIPROCESSOR */
+#define	FRAME_TLBMISSLOCK
+#define	FRAME_TLBMISSUNLOCK
+#endif	/* MULTIPROCESSOR */
+
 	.text
 	.p2align 4
 _C_LABEL(critical_input_vector):
@@ -535,6 +579,7 @@ _C_LABEL(watchdog_timer_vector):
 _C_LABEL(data_tlb_error_vector):
 	/* MSR[CE], MSR[ME], MSR[DE] are unchanged, all others cleared */
 	FRAME_TLBPROLOGUE
+	FRAME_TLBMISSLOCK
 	/*
 	 * Registers as this point:
 	 *
@@ -577,6 +622,7 @@ _C_LABEL(data_tlb_error_vector):
 		31-PTR_SCALESHIFT, \
 		31-PTR_SCALESHIFT		/* move PSL_DS[27] to bit 29 */
 	bl	pte_load
+	FRAME_TLBMISSUNLOCK
 	mtlr	%r29				/* restore LR */
 	/*
 	 * If we returned, pte load failed so let trap deal with it but
@@ -590,6 +636,7 @@ _C_LABEL(data_tlb_error_vector):
 _C_LABEL(instruction_tlb_error_vector):
 	/* MSR[CE], MSR[ME], MSR[DE] are unchanged, all others cleared */
 	FRAME_TLBPROLOGUE
+	FRAME_TLBMISSLOCK
 	/*
 	 * Attempt to update the TLB from the page table.
 	 */
@@ -600,6 +647,7 @@ _C_LABEL(instruction_tlb_error_vector):
 		31-PTR_SCALESHIFT, \
 		31-PTR_SCALESHIFT		/* move PSL_IS[26] to bit 29 */
 	bl	pte_load
+	FRAME_TLBMISSUNLOCK
 	mtlr	%r29				/* restore LR */
 	/*
 	 * If we returned, pte load failed so let trap deal with it but
@@ -764,6 +812,9 @@ e500_pte_load:
 	addic	%r31, %r31, 1
 	addze	%r30, %r30
 	stmw	%r30, CI_EV_TLBMISS_SOFT(%r2)
+
+	FRAME_TLBMISSUNLOCK
+
 	/*
 	 * Cleanup and leave.  We know any higher priority exception will
 	 * save and restore SPRG1 and %r2 thereby preserving their values.

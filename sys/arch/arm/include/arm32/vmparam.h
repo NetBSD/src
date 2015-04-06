@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.35 2014/07/27 21:31:34 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.35.4.1 2015/04/06 15:17:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -48,6 +48,14 @@
 #include <arm/arm32/pte.h>	/* pt_entry_t */
 
 #define	USRSTACK	VM_MAXUSER_ADDRESS
+
+/*
+ * ARMv4 systems are normaly configured for 256MB KVA only, so restrict
+ * the size of the pager map to 4MB.
+ */
+#ifndef _ARM_ARCH_5
+#define PAGER_MAP_DEFAULT_SIZE          (4 * 1024 * 1024)
+#endif
 
 /*
  * Note that MAXTSIZ can't be larger than 32M, otherwise the compiler

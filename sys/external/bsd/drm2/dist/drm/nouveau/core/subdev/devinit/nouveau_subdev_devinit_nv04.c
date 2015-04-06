@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_devinit_nv04.c,v 1.1.1.1 2014/08/06 12:36:30 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_devinit_nv04.c,v 1.1.1.1.8.1 2015/04/06 15:18:16 skrll Exp $	*/
 
 /*
  * Copyright (C) 2010 Francisco Jerez.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_devinit_nv04.c,v 1.1.1.1 2014/08/06 12:36:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_devinit_nv04.c,v 1.1.1.1.8.1 2015/04/06 15:18:16 skrll Exp $");
 
 #include <subdev/vga.h>
 
@@ -403,8 +403,10 @@ nv04_devinit_fini(struct nouveau_object *object, bool suspend)
 		return ret;
 
 	/* unslave crtcs */
+#if 0	/* XXX Can't happen: priv->owner is unsigned.  */
 	if (priv->owner < 0)
 		priv->owner = nv_rdvgaowner(priv);
+#endif
 	nv_wrvgaowner(priv, 0);
 
 	return 0;

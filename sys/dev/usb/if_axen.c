@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3.6.5 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.6.6 2015/04/06 15:18:13 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -19,11 +19,11 @@
 
 /*
  * ASIX Electronics AX88178a USB 2.0 ethernet and AX88179 USB 3.0 Ethernet
- * driver. 
+ * driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.5 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.6 2015/04/06 15:18:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -433,7 +433,7 @@ axen_ax88179_eeprom(struct axen_softc *sc, void *addr)
 		} while ((le16toh(buf) & 0xff) & AXEN_EEPROM_BUSY);
 
 		/* read data */
-		axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_EEPROM_READ, 
+		axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_EEPROM_READ,
 		    &eeprom[i * 2]);
 
 		/* sanity check */
@@ -688,10 +688,18 @@ axen_attach(device_t parent, device_t self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->axen_iface);
 
-	/* XXX fix when USB3.0 HC is supported */
 	/* decide on what our bufsize will be */
-	sc->axen_bufsz = (sc->axen_udev->ud_speed == USB_SPEED_HIGH) ?
-	    AXEN_BUFSZ_HS * 1024 : AXEN_BUFSZ_LS * 1024;
+	switch (sc->axen_udev->ud_speed) {
+	case USB_SPEED_SUPER:
+		sc->axen_bufsz = AXEN_BUFSZ_SS * 1024;
+		break;
+	case USB_SPEED_HIGH:
+		sc->axen_bufsz = AXEN_BUFSZ_HS * 1024;
+		break;
+	default:
+		sc->axen_bufsz = AXEN_BUFSZ_LS * 1024;
+		break;
+	}
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -998,7 +1006,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		goto done;
 	}
 
-	/* 
+	/*
 	 * buffer map
 	 * [packet #0]...[packet #n][pkt hdr#0]..[pkt hdr#n][recv_hdr]
 	 * each packet has 0xeeee as psuedo header..
@@ -1012,7 +1020,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		aprint_error_dev(sc->axen_dev, "rxeof: too large transfer\n");
 		goto done;
 	}
-		
+
 	/* sanity check */
 	if (hdr_offset > total_len) {
 		ifp->if_ierrors++;
@@ -1029,9 +1037,9 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	 */
 
 #if 1 /* XXX: paranoiac check. need to remove later */
-#define AXEN_MAX_PACKED_PACKET 200 
+#define AXEN_MAX_PACKED_PACKET 200
 	if (pkt_count > AXEN_MAX_PACKED_PACKET) {
-		DPRINTF(("%s: Too many packets (%d) in a transaction, discard.\n", 
+		DPRINTF(("%s: Too many packets (%d) in a transaction, discard.\n",
 		    device_xname(sc->axen_dev), pkt_count));
 		goto done;
 	}
@@ -1048,7 +1056,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		pkt_hdr = le32toh(*hdr_p);
 		pkt_len = (pkt_hdr >> 16) & 0x1fff;
 		DPRINTFN(10,
-		    ("%s: rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n", 
+		    ("%s: rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n",
 		   device_xname(sc->axen_dev), pkt_count, pkt_hdr, pkt_len));
 
 		if ((pkt_hdr & AXEN_RXHDR_CRC_ERR) ||
@@ -1071,11 +1079,11 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		/* skip pseudo header (2byte) */
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = pkt_len - 2;
+		m->m_pkthdr.len = m->m_len = pkt_len - 6;
 
 #ifdef AXEN_TOE
 		/* cheksum err */
-		if ((pkt_hdr & AXEN_RXHDR_L3CSUM_ERR) || 
+		if ((pkt_hdr & AXEN_RXHDR_L3CSUM_ERR) ||
 		    (pkt_hdr & AXEN_RXHDR_L4CSUM_ERR)) {
 			aprint_error_dev(sc->axen_dev,
 			    "checksum err (pkt#%d)\n", pkt_count);
@@ -1084,7 +1092,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 		}
 
-		int l4_type = (pkt_hdr & AXEN_RXHDR_L4_TYPE_MASK) >> 
+		int l4_type = (pkt_hdr & AXEN_RXHDR_L4_TYPE_MASK) >>
 		    AXEN_RXHDR_L4_TYPE_OFFSET;
 
 		if ((l4_type == AXEN_RXHDR_L4_TYPE_TCP) ||
@@ -1094,7 +1102,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		}
 #endif
 
-		memcpy(mtod(m, char *), buf + 2, pkt_len - 2);
+		memcpy(mtod(m, char *), buf + 2, pkt_len - 6);
 
 		/* push the packet up */
 		s = splnet();
@@ -1104,7 +1112,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 
 nextpkt:
 		/*
-		 * prepare next packet 
+		 * prepare next packet
 		 * as each packet will be aligned 8byte boundary,
 		 * need to fix up the start point of the buffer.
 		 */

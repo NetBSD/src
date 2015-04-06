@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.14 2013/05/03 16:38:35 matt Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.14.12.1 2015/04/06 15:18:13 skrll Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -115,6 +115,7 @@
 #define EXT_CSD_REV			192	/* RO */
 #define EXT_CSD_STRUCTURE		194	/* RO */
 #define EXT_CSD_CARD_TYPE		196	/* RO */
+#define EXT_CSD_SEC_COUNT		212	/* RO */
 
 /* EXT_CSD field definitions */
 #define EXT_CSD_CMD_SET_NORMAL		(1U << 0)

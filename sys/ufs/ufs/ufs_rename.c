@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.11 2014/05/25 13:45:39 hannken Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.11.4.1 2015/04/06 15:18:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.11 2014/05/25 13:45:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.11.4.1 2015/04/06 15:18:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -874,8 +874,8 @@ ufs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 	KASSERT(ino_ret != NULL);
 	KASSERT(vp->v_type == VDIR);
 
-	error = vn_rdwr(UIO_READ, vp, &dirbuf, sizeof dirbuf, (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED, cred, NULL, NULL);
+	error = ufs_bufio(UIO_READ, vp, &dirbuf, sizeof dirbuf, (off_t)0,
+	    IO_NODELOCKED, cred, NULL, NULL);
 	if (error)
 		return error;
 

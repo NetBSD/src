@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.19 2012/04/05 20:25:53 plunky Exp $	*/
+/*	$NetBSD: midivar.h,v 1.19.16.1 2015/04/06 15:18:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -189,6 +189,8 @@ struct midi_softc {
 	struct	midi_buffer outbuf;
 	struct	midi_buffer inbuf;
 	int	props;
+	int	refcnt;
+	kcondvar_t detach_cv;
 	kcondvar_t rchan;
 	kcondvar_t wchan;
 	kmutex_t *lock;

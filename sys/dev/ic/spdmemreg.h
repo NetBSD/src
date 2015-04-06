@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemreg.h,v 1.1 2010/03/24 00:31:41 pgoyette Exp $ */
+/* $NetBSD: spdmemreg.h,v 1.1.42.1 2015/04/06 15:18:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -40,6 +40,7 @@
 #define	SPDMEM_MEMTYPE_FBDIMM		0x09
 #define	SPDMEM_MEMTYPE_FBDIMM_PROBE	0x0A
 #define	SPDMEM_MEMTYPE_DDR3SDRAM	0x0B
+#define	SPDMEM_MEMTYPE_DDR4SDRAM	0x0C
 
 #define	SPDMEM_MEMTYPE_RAMBUS		0x11
 #define	SPDMEM_MEMTYPE_DIRECTRAMBUS	0x01

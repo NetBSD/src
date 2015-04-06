@@ -50,6 +50,7 @@ SECTIONS
     *(.dynamic)
     CONSTRUCTORS
   }
+  . = ALIGN(4);
   _edata  =  .;
   PROVIDE (edata = .);
   __bss_start = .;

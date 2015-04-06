@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1118 2014/11/16 16:01:41 manu Exp $
+# $NetBSD: GENERIC,v 1.1118.2.1 2015/04/06 15:17:57 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1118 $"
+#ident 		"GENERIC-$Revision: 1.1118.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -537,14 +537,15 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
-vga0		at isa?
+# vga@isa and pcdisplay@isa are disabled; see PR#49290
+#vga0		at isa?
 vga*		at pci? dev ? function ?
-pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+#pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 genfb*		at pci? dev ? function ?
 options 	VCONS_DRAW_INTR
 #machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 wsdisplay*	at vga? console ?
-wsdisplay*	at pcdisplay? console ?
+#wsdisplay*	at pcdisplay? console ?
 wsdisplay*	at wsemuldisplaydev?
 #wsdisplay*	at machfb? console ?
 wskbd*		at pckbd? console ?
@@ -576,7 +577,7 @@ radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
 #nouveau*	at pci? dev ? function ?
-#nouveaufb*	at nouveaufbbus
+#nouveaufb*	at nouveaufbbus?
 
 # Serial Devices
 
@@ -975,6 +976,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet

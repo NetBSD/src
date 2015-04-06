@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.29 2013/04/21 15:42:11 kiyohara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.29.12.1 2015/04/06 15:18:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29 2013/04/21 15:42:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29.12.1 2015/04/06 15:18:00 skrll Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -100,10 +100,15 @@ init_openpic(int node)
 		uint32_t pci_hi, pci_mid, pci_lo;
 		uint32_t host;
 		uint32_t size_hi, size_lo;
-	} ranges[6], *rp = ranges;
-	unsigned char *baseaddr = NULL;
+	} ranges[6];
 	uint32_t reg[12];
 	int parent, len;
+#if defined(PIC_OPENPIC) || defined(PIC_DISTOPENPIC)
+	unsigned char *baseaddr;
+#endif
+#ifdef PIC_OPENPIC
+	struct ranges *rp = ranges;
+#endif
 #ifdef PIC_DISTOPENPIC
 	unsigned char *isu[OPENPIC_MAX_ISUS];
 	int i, j;
@@ -144,7 +149,6 @@ init_openpic(int node)
 		len -= sizeof(ranges[0]);
 	}
 #endif
-	rp = 0; /* satisfy -Wall */
 	return FALSE;
  noaadr:
 	/* this isn't a PCI-attached openpic */
@@ -153,9 +157,9 @@ init_openpic(int node)
 		return FALSE;
 
 	if (len == sizeof(int)*2) {
-		baseaddr = (unsigned char *)mapiodev(reg[0], reg[1], false);
 		aprint_verbose("Found openpic at %08x\n", reg[0]);
 #ifdef PIC_OPENPIC
+		baseaddr = (unsigned char *)mapiodev(reg[0], reg[1], false);
 		(void)setup_openpic(baseaddr, 0);
 #ifdef MULTIPROCESSOR
 		setup_openpic_ipi();

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.205 2014/11/28 08:29:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.205.2.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205 2014/11/28 08:29:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.1 2015/04/06 15:18:22 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205 2014/11/28 08:29:00 ozaki-r E
 #include "opt_mpls.h"
 #include "opt_gateway.h"
 #include "opt_pppoe.h"
+#include "opt_net_mpsafe.h"
 #include "vlan.h"
 #include "pppoe.h"
 #include "bridge.h"
@@ -214,7 +215,9 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
 
+#ifndef NET_MPSAFE
 	KASSERT(KERNEL_LOCKED_P());
+#endif
 
 #ifdef MBUFTRACE
 	m_claimm(m, ifp->if_mowner);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.52 2014/11/23 01:38:49 joerg Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.52.2.1 2015/04/06 15:18:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.52 2014/11/23 01:38:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.52.2.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -639,10 +639,12 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags)
 	/*
 	 * Base timeout is specified in ms.
 	 * If we are allowed to sleep, wait a tick each round.
-	 * Otherwise delay for 1ms on each round.
+	 * Otherwise delay for 10ms on each round.
 	 */
 	if (flags & AT_WAIT)
 		timeout = MAX(1, mstohz(timeout));
+	else
+		timeout = timeout / 10;
 
 	AHCI_CMDH_SYNC(sc, achp, 0, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/* start command */
@@ -669,7 +671,7 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags)
 		if (flags & AT_WAIT)
 			tsleep(&sc, PRIBIO, "ahcifis", 1);
 		else
-			delay(1000);
+			delay(10000);
 	}
 
 	aprint_debug("%s channel %d: timeout sending FIS\n",

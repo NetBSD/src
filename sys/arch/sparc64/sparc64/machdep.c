@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.280 2014/10/28 13:04:51 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.280.2.1 2015/04/06 15:18:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280 2014/10/28 13:04:51 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280.2.1 2015/04/06 15:18:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -295,59 +295,6 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 #endif
 }
 
-static char *parse_bootfile(char *);
-static char *parse_bootargs(char *);
-
-static char *
-parse_bootfile(char *args)
-{
-	char *cp;
-
-	/*
-	 * bootargs is of the form: [kernelname] [args...]
-	 * It can be the empty string if we booted from the default
-	 * kernel name.
-	 */
-	cp = args;
-	for (cp = args; *cp != 0 && *cp != ' ' && *cp != '\t'; cp++) {
-		if (*cp == '-') {
-			int c;
-			/*
-			 * If this `-' is most likely the start of boot
-			 * options, we're done.
-			 */
-			if (cp == args)
-				break;
-			if ((c = *(cp-1)) == ' ' || c == '\t')
-				break;
-		}
-	}
-	/* Now we've separated out the kernel name from the args */
-	*cp = '\0';
-	return (args);
-}
-
-static char *
-parse_bootargs(char *args)
-{
-	char *cp;
-
-	for (cp = args; *cp != '\0'; cp++) {
-		if (*cp == '-') {
-			int c;
-			/*
-			 * Looks like options start here, but check this
-			 * `-' is not part of the kernel name.
-			 */
-			if (cp == args)
-				break;
-			if ((c = *(cp-1)) == ' ' || c == '\t')
-				break;
-		}
-	}
-	return (cp);
-}
-
 /*
  * machine dependent system variables.
  */
@@ -355,31 +302,28 @@ static int
 sysctl_machdep_boot(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	u_int chosen;
-	char bootargs[256];
-	const char *cp;
-
-	if ((chosen = OF_finddevice("/chosen")) == -1)
-		return (ENOENT);
-	if (node.sysctl_num == CPU_BOOTED_DEVICE)
-		cp = "bootpath";
-	else
-		cp = "bootargs";
-	if (OF_getprop(chosen, cp, bootargs, sizeof bootargs) < 0)
-		return (ENOENT);
+	char bootpath[256];
+	const char *cp = NULL;
+	extern char ofbootpath[], *ofbootpartition, *ofbootfile, *ofbootflags;
 
 	switch (node.sysctl_num) {
 	case CPU_BOOTED_KERNEL:
-		cp = parse_bootfile(bootargs);
-                if (cp != NULL && cp[0] == '\0')
+		cp = ofbootfile;
+                if (cp == NULL || cp[0] == '\0')
                         /* Unknown to firmware, return default name */
                         cp = "netbsd";
 		break;
 	case CPU_BOOT_ARGS:
-		cp = parse_bootargs(bootargs);
+		cp = ofbootflags;
 		break;
 	case CPU_BOOTED_DEVICE:
-		cp = bootargs;
+		if (ofbootpartition) {
+			snprintf(bootpath, sizeof(bootpath), "%s:%s",
+			    ofbootpath, ofbootpartition);
+			cp = bootpath;
+		} else {
+			cp = ofbootpath;
+		}
 		break;
 	}
 

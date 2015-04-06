@@ -248,6 +248,10 @@ int radeon_agp_init(struct radeon_device *rdev)
 	dev_info(rdev->dev, "GTT: %"PRIu64"M 0x%08"PRIX64" - 0x%08"PRIX64"\n",
 		rdev->mc.gtt_size >> 20, rdev->mc.gtt_start, rdev->mc.gtt_end);
 
+#ifdef __NetBSD__
+	pmap_pv_track(rdev->mc.agp_base, rdev->mc.gtt_size);
+#endif
+
 	/* workaround some hw issues */
 	if (rdev->family < CHIP_R200) {
 		WREG32(RADEON_AGP_CNTL, RREG32(RADEON_AGP_CNTL) | 0x000e0000);
@@ -274,6 +278,9 @@ void radeon_agp_fini(struct radeon_device *rdev)
 {
 #if __OS_HAS_AGP
 	if (rdev->ddev->agp && rdev->ddev->agp->acquired) {
+#ifdef __NetBSD__
+		pmap_pv_untrack(rdev->mc.agp_base, rdev->mc.gtt_size);
+#endif
 		drm_agp_release(rdev->ddev);
 	}
 #endif

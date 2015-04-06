@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.159 2014/06/15 12:58:01 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.159.4.1 2015/04/06 15:18:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159 2014/06/15 12:58:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.1 2015/04/06 15:18:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159 2014/06/15 12:58:01 pooka Exp $");
 #include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_readahead.h>
+#include <uvm/uvm_device.h>
 
 #include "rump_private.h"
 #include "rump_vfs_private.h"
@@ -93,6 +94,9 @@ vmem_t *kmem_va_arena;
 static unsigned int pdaemon_waiters;
 static kmutex_t pdaemonmtx;
 static kcondvar_t pdaemoncv, oomwait;
+
+/* all local non-proc0 processes share this vmspace */
+struct vmspace *rump_vmspace_local;
 
 unsigned long rump_physmemlimit = RUMPMEM_UNLIMITED;
 static unsigned long pdlimit = RUMPMEM_UNLIMITED; /* page daemon memlimit */
@@ -388,6 +392,10 @@ uvm_init(void)
 
 	pool_cache_bootstrap(&pagecache, sizeof(struct vm_page), 0, 0, 0,
 	    "page$", NULL, IPL_NONE, pgctor, pgdtor, NULL);
+
+	/* create vmspace used by local clients */
+	rump_vmspace_local = kmem_zalloc(sizeof(*rump_vmspace_local), KM_SLEEP);
+	uvmspace_init(rump_vmspace_local, RUMP_PMAP_LOCAL, 0, 0, false);
 }
 
 void
@@ -395,7 +403,7 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax,
     bool topdown)
 {
 
-	vm->vm_map.pmap = pmap_kernel();
+	vm->vm_map.pmap = pmap;
 	vm->vm_refcnt = 1;
 }
 
@@ -434,36 +442,34 @@ uvm_init_limits(struct proc *p)
 
 /*
  * This satisfies the "disgusting mmap hack" used by proplib.
- * We probably should grow some more assertables to make sure we're
- * not satisfying anything we shouldn't be satisfying.
  */
 int
-uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
-	vm_prot_t maxprot, int flags, void *handle, voff_t off, vsize_t locklim)
+uvm_mmap_anon(struct proc *p, void **addrp, size_t size)
 {
-	void *uaddr;
 	int error;
 
-	if (prot != (VM_PROT_READ | VM_PROT_WRITE))
-		panic("uvm_mmap() variant unsupported");
-	if (flags != (MAP_PRIVATE | MAP_ANON))
-		panic("uvm_mmap() variant unsupported");
-
 	/* no reason in particular, but cf. uvm_default_mapaddr() */
-	if (*addr != 0)
+	if (*addrp != NULL)
 		panic("uvm_mmap() variant unsupported");
 
 	if (RUMP_LOCALPROC_P(curproc)) {
-		error = rumpuser_anonmmap(NULL, size, 0, 0, &uaddr);
+		error = rumpuser_anonmmap(NULL, size, 0, 0, addrp);
 	} else {
-		error = rumpuser_sp_anonmmap(curproc->p_vmspace->vm_map.pmap,
-		    size, &uaddr);
+		error = rump_sysproxy_anonmmap(p->p_vmspace->vm_map.pmap,
+		    size, addrp);
 	}
-	if (error)
-		return error;
+	return error;
+}
 
-	*addr = (vaddr_t)uaddr;
-	return 0;
+/*
+ * Stubs for things referenced from vfs_vnode.c but not used.
+ */
+const dev_t zerodev;
+
+struct uvm_object *
+udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
+{
+	return NULL;
 }
 
 struct pagerinfo {

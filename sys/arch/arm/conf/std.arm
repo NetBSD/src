@@ -1,4 +1,4 @@
-#	$NetBSD: std.arm,v 1.1 2008/01/27 12:37:10 chris Exp $
+#	$NetBSD: std.arm,v 1.1.84.1 2015/04/06 15:17:52 skrll Exp $
 #
 # standard NetBSD/arm options
 

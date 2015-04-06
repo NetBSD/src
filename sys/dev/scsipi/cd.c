@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.325 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: cd.c,v 1.325.2.1 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325.2.1 2015/04/06 15:18:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1321,35 +1321,12 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 	}
 
-	error = disk_ioctl(&cd->sc_dk, cmd, addr, flag, l); 
+	error = disk_ioctl(&cd->sc_dk, dev, cmd, addr, flag, l); 
 	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
 	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(cd->sc_dk.dk_label);
-		return (0);
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = malloc(sizeof (*newlabel), M_TEMP, M_WAITOK);
-		if (newlabel == NULL)
-			return (EIO);
-		memcpy(newlabel, cd->sc_dk.dk_label, sizeof (*newlabel));
-		if (newlabel->d_npartitions > OLDMAXPARTITIONS)
-			error = ENOTTY;
-		else
-			memcpy(addr, newlabel, sizeof (struct olddisklabel));
-		free(newlabel, M_TEMP);
-		return error;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = cd->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-		    &cd->sc_dk.dk_label->d_partitions[part];
-		return (0);
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1721,10 +1698,10 @@ cdgetdefaultlabel(struct cd_softc *cd, struct cd_formatted_toc *toc,
 
 	switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(cd->sc_periph))) {
 	case SCSIPI_BUSTYPE_SCSI:
-		lp->d_type = DTYPE_SCSI;
+		lp->d_type = DKTYPE_SCSI;
 		break;
 	case SCSIPI_BUSTYPE_ATAPI:
-		lp->d_type = DTYPE_ATAPI;
+		lp->d_type = DKTYPE_ATAPI;
 		break;
 	}
 	/*
@@ -2132,7 +2109,6 @@ cd_get_parms(struct cd_softc *cd, int flags)
 	 */
 	if (cd_size(cd, flags) == 0)
 		return (ENXIO);
-	disk_blocksize(&cd->sc_dk, cd->params.blksize);
 	return (0);
 }
 

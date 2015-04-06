@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.4 2014/03/28 21:41:46 matt Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.4.8.1 2015/04/06 15:17:52 skrll Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,6 +31,8 @@
 #ifndef _ARM_CORTEX_GTMR_VAR_
 #define _ARM_CORTEX_GTMR_VAR_
 
+#include <sys/percpu.h>
+
 struct gtmr_softc {
 	device_t sc_dev;
 	struct evcnt sc_ev_missing_ticks;
@@ -44,6 +46,7 @@ struct gtmr_softc {
 
 #ifdef _KERNEL
 struct cpu_info;
+int	gtmr_intr(void *);
 void	gtmr_init_cpu_clock(struct cpu_info *);
 void	gtmr_delay(unsigned int n);
 void	gtmr_bootdelay(unsigned int n);

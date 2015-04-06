@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.118 2011/06/12 03:35:49 rmind Exp $
+#	$NetBSD: files.vax,v 1.118.30.1 2015/04/06 15:18:03 skrll Exp $
 #
 # new style config file for vax architecture
 #
@@ -314,6 +314,11 @@ file	arch/vax/uba/ad.c		ad needs-flag
 device	dh # XXX?
 attach	dh at uba
 file	arch/vax/uba/dh.c		dh needs-flag
+
+# Vaxstation 4000 audio
+device	vsaudio: audiobus, am7930
+attach	vsaudio at vsbus
+file	arch/vax/vsa/vsaudio.c		vsaudio needs-flag
 
 # These are general files needed for compilation.
 file	dev/cons.c

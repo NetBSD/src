@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.14 2014/08/18 03:43:10 riastradh Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.14.2.1 2015/04/06 15:18:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.14 2014/08/18 03:43:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.14.2.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,7 @@ oosiop_alloc_cb(struct oosiop_softc *sc, int ncb)
 			    err);
 			goto loop_fail2;
 		}
-		err = bus_dmamap_load(sc->sc_dmat, cb[i].xferdma, xfer,
+		err = bus_dmamap_load(sc->sc_dmat, cb[i].xferdma, &xfer[i],
 		    sizeof(struct oosiop_xfer), NULL, BUS_DMA_NOWAIT);
 		if (err) {
 			printf(": failed to load xfer block, err=%d\n", err);

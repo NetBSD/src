@@ -1,7 +1,11 @@
-# $Id: files.imx23,v 1.2 2013/10/07 17:36:40 matt Exp $
+# $Id: files.imx23,v 1.2.6.1 2015/04/06 15:17:52 skrll Exp $
 #
 # Freescale i.MX23 applications processor configuration info.
 #
+
+defparam opt_imx.h			MEMSIZE
+
+defflag opt_imx.h                               IMX23
 
 file	arch/arm/arm32/irq_dispatch.S	icoll
 file	arch/arm/imx/imx23_space.c	ahb|apbh|apbx
@@ -80,3 +84,13 @@ file	arch/arm/imx/imx23_usb.c	imxusbc
 # EHCI
 attach	ehci at imxusbc with imxehci
 file	arch/arm/imx/imxusb.c		imxehci
+
+# RTC 
+device rtc
+attach rtc at apbx
+file arch/arm/imx/imx23_rtc.c		rtc
+
+# Digital filter: Audio I/O
+device digfilt: audiobus
+attach digfilt at apbx with digfilt
+file arch/arm/imx/imx23_digfilt.c	digfilt

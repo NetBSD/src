@@ -1,4 +1,4 @@
-/*	$NetBSD: dpclock.c,v 1.5 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: dpclock.c,v 1.5.2.1 2015/04/06 15:18:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Erik Reid
@@ -55,6 +55,7 @@ struct dpclock_softc {
 	/* RTC registers */
 	bus_space_tag_t		sc_rtct;
 	bus_space_handle_t	sc_rtch;
+	int			sc_offset;
 };
 
 static int	dpclock_match(device_t, cfdata_t, void *);
@@ -87,6 +88,20 @@ dpclock_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
+writereg(struct dpclock_softc *sc, uint32_t reg, uint8_t val)
+{
+	bus_space_write_1(sc->sc_rtct, sc->sc_rtch,
+	    (reg << 2) + sc->sc_offset, val);
+} 
+
+static uint8_t
+readreg(struct dpclock_softc *sc, uint32_t reg)
+{
+	return bus_space_read_1(sc->sc_rtct, sc->sc_rtch,
+	    (reg << 2) + sc->sc_offset);
+} 
+
+static void
 dpclock_attach(device_t parent, device_t self, void *aux)
 {
 	struct dpclock_softc *sc = device_private(self);
@@ -95,14 +110,15 @@ dpclock_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
+	sc->sc_rtct = normal_memt;
 	/*
 	 * All machines have one byte register per word. IP6/IP10 use
 	 * the MSB, others the LSB.
 	 */
 	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20)
-		sc->sc_rtct = SGIMIPS_BUS_SPACE_HPC;
+		sc->sc_offset = 3;
 	else
-		sc->sc_rtct = SGIMIPS_BUS_SPACE_IP6_DPCLOCK;
+		sc->sc_offset = 0;
 
 	if ((err = bus_space_map(sc->sc_rtct, ma->ma_addr, 0x1ffff,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_rtch)) != 0) {
@@ -131,14 +147,14 @@ dpclock_gettime(struct todr_chip_handle *todrch, struct timeval *tv)
 	u_int8_t regs[32];
 
 	s = splhigh();
-	i = bus_space_read_1(sc->sc_rtct, sc->sc_rtch, DP8573A_TIMESAVE_CTL);
+	i = readreg(sc, DP8573A_TIMESAVE_CTL);
 	j = i | DP8573A_TIMESAVE_CTL_EN; 
-	bus_space_write_1(sc->sc_rtct, sc->sc_rtch, DP8573A_TIMESAVE_CTL, j);
-	bus_space_write_1(sc->sc_rtct, sc->sc_rtch, DP8573A_TIMESAVE_CTL, i);
+	writereg(sc, DP8573A_TIMESAVE_CTL, j);
+	writereg(sc, DP8573A_TIMESAVE_CTL, i);
 	splx(s);
 
 	for (i = 0; i < 32; i++)
-		regs[i] = bus_space_read_1(sc->sc_rtct, sc->sc_rtch, i);
+		regs[i] = readreg(sc, i);
 
 	dt.dt_sec = bcdtobin(regs[DP8573A_SAVE_SEC]);
 	dt.dt_min = bcdtobin(regs[DP8573A_SAVE_MIN]);
@@ -194,14 +210,14 @@ dpclock_settime(struct todr_chip_handle *todrch, struct timeval *tv)
 	clock_secs_to_ymdhms((time_t)(tv->tv_sec + (tv->tv_usec > 500000)),&dt);
 
 	s = splhigh();
-	i = bus_space_read_1(sc->sc_rtct, sc->sc_rtch, DP8573A_TIMESAVE_CTL);
+	i = readreg(sc, DP8573A_TIMESAVE_CTL);
 	j = i | DP8573A_TIMESAVE_CTL_EN; 
-	bus_space_write_1(sc->sc_rtct, sc->sc_rtch, DP8573A_TIMESAVE_CTL, j);
-	bus_space_write_1(sc->sc_rtct, sc->sc_rtch, DP8573A_TIMESAVE_CTL, i);
+	writereg(sc, DP8573A_TIMESAVE_CTL, j);
+	writereg(sc, DP8573A_TIMESAVE_CTL, i);
 	splx(s);
 
 	for (i = 0; i < 32; i++)
-		regs[i] = bus_space_read_1(sc->sc_rtct, sc->sc_rtch, i);
+		regs[i] = readreg(sc, i);
 
 	regs[DP8573A_SUBSECOND] = 0;
 	regs[DP8573A_SECOND] = bintobcd(dt.dt_sec);
@@ -213,15 +229,14 @@ dpclock_settime(struct todr_chip_handle *todrch, struct timeval *tv)
 	regs[DP8573A_YEAR] = bintobcd(TO_IRIX_YEAR(dt.dt_year));
 
 	s = splhigh();
-	i = bus_space_read_1(sc->sc_rtct, sc->sc_rtch, DP8573A_RT_MODE);
+	i = readreg(sc, DP8573A_RT_MODE);
 	j = i & ~DP8573A_RT_MODE_CLKSS;
-	bus_space_write_1(sc->sc_rtct, sc->sc_rtch, DP8573A_RT_MODE, j);
+	writereg(sc, DP8573A_RT_MODE, j);
 
 	for (i = 0; i < 10; i++)
-		bus_space_write_1(sc->sc_rtct, sc->sc_rtch, DP8573A_COUNTERS +i,
-						    regs[DP8573A_COUNTERS + i]);
+		writereg(sc, DP8573A_COUNTERS +i, regs[DP8573A_COUNTERS + i]);
 	
-	bus_space_write_1(sc->sc_rtct, sc->sc_rtch, DP8573A_RT_MODE, i);
+	writereg(sc, DP8573A_RT_MODE, i);
 	splx(s);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.13 2014/04/01 12:57:46 ozaki-r Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.13.6.1 2015/04/06 15:18:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -76,7 +76,7 @@ struct sgimips_pci_chipset {
 	struct extent *pc_ioext;	/* PCI I/O space extent */
 };
 
-extern struct sgimips_bus_dma_tag pci_bus_dma_tag;
+extern struct mips_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Functions provided to machine-independent PCI code.

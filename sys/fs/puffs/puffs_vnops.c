@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.198 2014/11/04 09:14:42 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.198.2.1 2015/04/06 15:18:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.198 2014/11/04 09:14:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.198.2.1 2015/04/06 15:18:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1000,6 +1000,8 @@ update_va(struct vnode *vp, struct vattr *vap, struct vattr *rvap,
 	  struct timespec *va_ttl, struct timespec *cn_ttl, int flags)
 {
 	struct puffs_node *pn = VPTOPP(vp);
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	int use_metacache;
 
 	if (TTL_VALID(cn_ttl)) {
 		pn->pn_cn_timeout = TTL_TO_TIMEOUT(cn_ttl);
@@ -1023,17 +1025,21 @@ update_va(struct vnode *vp, struct vattr *vap, struct vattr *rvap,
 		(void) memcpy(vap, rvap, sizeof(struct vattr));
 		vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 
-		if (pn->pn_stat & PNODE_METACACHE_ATIME)
-			vap->va_atime = pn->pn_mc_atime;
-		if (pn->pn_stat & PNODE_METACACHE_CTIME)
-			vap->va_ctime = pn->pn_mc_ctime;
-		if (pn->pn_stat & PNODE_METACACHE_MTIME)
-			vap->va_mtime = pn->pn_mc_mtime;
-		if (pn->pn_stat & PNODE_METACACHE_SIZE)
-			vap->va_size = pn->pn_mc_size;
+		if (PUFFS_USE_METAFLUSH(pmp)) {
+			if (pn->pn_stat & PNODE_METACACHE_ATIME)
+				vap->va_atime = pn->pn_mc_atime;
+			if (pn->pn_stat & PNODE_METACACHE_CTIME)
+				vap->va_ctime = pn->pn_mc_ctime;
+			if (pn->pn_stat & PNODE_METACACHE_MTIME)
+				vap->va_mtime = pn->pn_mc_mtime;
+			if (pn->pn_stat & PNODE_METACACHE_SIZE)
+				vap->va_size = pn->pn_mc_size;
+		}
 	}
 
-	if (!(pn->pn_stat & PNODE_METACACHE_SIZE) && (flags & SETATTR_CHSIZE)) {
+	use_metacache = PUFFS_USE_METAFLUSH(pmp) &&
+			(pn->pn_stat & PNODE_METACACHE_SIZE);
+	if (!use_metacache && (flags & SETATTR_CHSIZE)) {
 		if (rvap->va_size != VNOVAL
 		    && vp->v_type != VBLK && vp->v_type != VCHR) {
 			uvm_vnp_setsize(vp, rvap->va_size);
@@ -1201,7 +1207,7 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 	 * parameters, treat them as information overriding metacache
 	 * information.
 	 */
-	if (pn->pn_stat & PNODE_METACACHE_MASK) {
+	if (PUFFS_USE_METAFLUSH(pmp) && pn->pn_stat & PNODE_METACACHE_MASK) {
 		if ((pn->pn_stat & PNODE_METACACHE_ATIME)
 		    && vap->va_atime.tv_sec == VNOVAL)
 			vap->va_atime = pn->pn_mc_atime;
@@ -1234,14 +1240,15 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 		puffs_msg_setfaf(park_setattr);
 
 	puffs_msg_enqueue(pmp, park_setattr);
-	if ((flags & SETATTR_ASYNC) == 0)
+	if ((flags & SETATTR_ASYNC) == 0) {
 		error = puffs_msg_wait2(pmp, park_setattr, vp->v_data, NULL);
 
-	if ((error == 0) && PUFFS_USE_FS_TTL(pmp)) {
-		struct timespec *va_ttl = &setattr_msg->pvnr_va_ttl;
-		struct vattr *rvap = &setattr_msg->pvnr_va;
+		if ((error == 0) && PUFFS_USE_FS_TTL(pmp)) {
+			struct timespec *va_ttl = &setattr_msg->pvnr_va_ttl;
+			struct vattr *rvap = &setattr_msg->pvnr_va;
 
-		update_va(vp, NULL, rvap, va_ttl, NULL, flags);
+			update_va(vp, NULL, rvap, va_ttl, NULL, flags);
+		}
 	}
 
 	PUFFS_MSG_RELEASE(setattr);
@@ -2279,9 +2286,17 @@ puffs_vnop_read(void *v)
 	if (uio->uio_offset < 0)
 		return EFBIG;
 
+	/*
+	 * On the case of reading empty files and (vp->v_size != 0) below:
+	 * some filesystems (hint: FUSE and distributed filesystems) still
+	 * expect to get the READ in order to update atime. Reading through
+	 * the case filters empty files, therefore we prefer to bypass the
+	 * cache here.
+	 */
 	if (vp->v_type == VREG &&
 	    PUFFS_USE_PAGECACHE(pmp) &&
-	    !(pn->pn_stat & PNODE_RDIRECT)) {
+	    !(pn->pn_stat & PNODE_RDIRECT) &&
+	    (vp->v_size != 0)) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		while (uio->uio_resid > 0) {
@@ -2536,6 +2551,23 @@ puffs_vnop_write(void *v)
 	uflags |= PUFFS_UPDATEMTIME;
 	puffs_updatenode(VPTOPP(vp), uflags, vp->v_size);
 
+	/*
+	 * If we do not use meta flush, we need to update the
+	 * filesystem now, otherwise we will get a stale value
+	 * on the next GETATTR
+	 */
+	if (!PUFFS_USE_METAFLUSH(pmp) && (uflags & PUFFS_UPDATESIZE)) {
+		struct vattr va;
+		int ret;
+
+		vattr_null(&va);
+		va.va_size = vp->v_size;
+		ret = dosetattr(vp, &va, FSCRED, 0);
+		if (ret) {
+			DPRINTF(("dosetattr set size to %jd failed: %d\n",
+			    (intmax_t)vp->v_size, ret));
+		}
+	}
 	mutex_exit(&pn->pn_sizemtx);
 	return error;
 }

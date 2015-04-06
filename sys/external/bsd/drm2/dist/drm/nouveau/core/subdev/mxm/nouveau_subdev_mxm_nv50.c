@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_mxm_nv50.c,v 1.1.1.1 2014/08/06 12:36:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_mxm_nv50.c,v 1.1.1.1.8.1 2015/04/06 15:18:16 skrll Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mxm_nv50.c,v 1.1.1.1 2014/08/06 12:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mxm_nv50.c,v 1.1.1.1.8.1 2015/04/06 15:18:16 skrll Exp $");
 
 #include <subdev/mxm.h>
 #include <subdev/bios.h>
@@ -189,7 +189,7 @@ mxm_show_unmatched(struct nouveau_mxm *mxm, u8 *data, void *info)
 {
 	u64 desc = *(u64 *)data;
 	if ((desc & 0xf0) != 0xf0)
-	nv_info(mxm, "unmatched output device 0x%016llx\n", desc);
+	nv_info(mxm, "unmatched output device 0x%016"PRIx64"\n", desc);
 	return true;
 }
 

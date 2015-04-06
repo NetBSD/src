@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccmvar.h,v 1.2 2014/10/07 09:36:09 ryo Exp $	*/
+/*	$NetBSD: imx6_ccmvar.h,v 1.2.2.1 2015/04/06 15:17:52 skrll Exp $	*/
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -53,6 +53,8 @@ enum imx6_clock {
 	IMX6CLK_AXI,
 	IMX6CLK_MMDC_CH0,
 	IMX6CLK_MMDC_CH1,
+	IMX6CLK_MMDC_CH0_CLK_ROOT,
+	IMX6CLK_MMDC_CH1_CLK_ROOT,
 
 	IMX6CLK_USDHC1,
 	IMX6CLK_USDHC2,
@@ -60,6 +62,15 @@ enum imx6_clock {
 	IMX6CLK_USDHC4,
 
 	IMX6CLK_PERCLK,
+
+	IMX6CLK_IPU1_HSP_CLK_ROOT,
+	IMX6CLK_IPU2_HSP_CLK_ROOT,
+	IMX6CLK_IPU1_DI0_CLK_ROOT,
+	IMX6CLK_IPU1_DI1_CLK_ROOT,
+	IMX6CLK_LDB_DI0_IPU,
+	IMX6CLK_LDB_DI0_SERIAL_CLK_ROOT,
+	IMX6CLK_LDB_DI1_IPU,
+	IMX6CLK_LDB_DI1_SERIAL_CLK_ROOT,
 };
 
 uint32_t imx6_get_clock(enum imx6_clock);

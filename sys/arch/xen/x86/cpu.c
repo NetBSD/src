@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.100 2014/11/27 16:29:44 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.100.2.1 2015/04/06 15:18:04 skrll Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100 2014/11/27 16:29:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100.2.1 2015/04/06 15:18:04 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -403,6 +403,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 
 	KASSERT(ci->ci_func == 0);
 	ci->ci_func = caa->cpu_func;
+	aprint_normal("\n");
 
 	/* Must be called before mi_cpu_attach(). */
 	cpu_vm_init(ci);
@@ -414,7 +415,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 		if (error != 0) {
-			aprint_normal("\n");
 			aprint_error_dev(self,
 			    "mi_cpu_attach failed with %d\n", error);
 			return;
@@ -501,12 +501,11 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 			tmp->ci_next = ci;
 		}
 #else
-		aprint_error(": not started\n");
+		aprint_error_dev(ci->ci_dev, "not started\n");
 #endif
 		break;
 
 	default:
-		aprint_normal("\n");
 		panic("unknown processor type??\n");
 	}
 

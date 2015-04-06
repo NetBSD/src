@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.3 2011/07/01 18:53:46 dyoung Exp $	 */
+/*	$NetBSD: ctl.c,v 1.3.30.1 2015/04/06 15:18:01 skrll Exp $	 */
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctl.c,v 1.3 2011/07/01 18:53:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctl.c,v 1.3.30.1 2015/04/06 15:18:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,8 +98,8 @@ ctl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	csc = sc;
 
-	sc->iot = SGIMIPS_BUS_SPACE_NORMAL;
-	if (bus_space_map(sc->iot, ma->ma_addr, 0,
+	sc->iot = normal_memt;
+	if (bus_space_map(sc->iot, ma->ma_addr, 0x10000 /* XXX */,
 	    BUS_SPACE_MAP_LINEAR, &sc->ioh))
 		panic("ctl_attach: could not allocate memory\n");
 

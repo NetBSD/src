@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.95 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.95.2.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.95 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.95.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -52,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.95 2014/09/05 09:20:59 matt Exp $"
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+
+#include <netatalk/at.h>
+#include <net/if_dl.h>
 #include <netinet/in.h>
 
 MALLOC_DECLARE(M_SOCKADDR);
@@ -252,6 +255,47 @@ sockaddr_anyaddr(const struct sockaddr *sa, socklen_t *slenp)
 	return sockaddr_const_addr(any, slenp);
 }
 
+#ifdef DIAGNOSTIC
+static void
+sockaddr_checklen(const struct sockaddr *sa)
+{
+	socklen_t len = 0;
+	switch (sa->sa_family) {
+	case AF_INET:
+		len = sizeof(struct sockaddr_in);
+		break;
+	case AF_INET6:
+		len = sizeof(struct sockaddr_in6);
+		break;
+	case AF_UNIX:
+		len = sizeof(struct sockaddr_un);
+		break;
+	case AF_LINK:
+		len = sizeof(struct sockaddr_dl);
+		// As long as it is not 0...
+		if (sa->sa_len != 0)
+			return;
+		break;
+	case AF_APPLETALK:
+		len = sizeof(struct sockaddr_at);
+		break;
+	default:
+		printf("%s: Unhandled af=%hhu socklen=%hhu\n", __func__,
+		    sa->sa_family, sa->sa_len);
+		return;
+	}
+	if (len != sa->sa_len) {
+		char buf[512];
+		sockaddr_format(sa, buf, sizeof(buf));
+		printf("%s: %p bad len af=%hhu socklen=%hhu len=%u [%s]\n",
+		    __func__, sa, sa->sa_family, sa->sa_len,
+		    (unsigned)len, buf);
+	}
+}
+#else
+#define sockaddr_checklen(sa) ((void)0)
+#endif
+
 struct sockaddr *
 sockaddr_alloc(sa_family_t af, socklen_t socklen, int flags)
 {
@@ -263,6 +307,7 @@ sockaddr_alloc(sa_family_t af, socklen_t socklen, int flags)
 
 	sa->sa_family = af;
 	sa->sa_len = reallen;
+	sockaddr_checklen(sa);
 	return sa;
 }
 
@@ -274,6 +319,7 @@ sockaddr_copy(struct sockaddr *dst, socklen_t socklen,
 		panic("%s: source too long, %d < %d bytes", __func__, socklen,
 		    src->sa_len);
 	}
+	sockaddr_checklen(src);
 	return memcpy(dst, src, src->sa_len);
 }
 
@@ -340,64 +386,62 @@ sockaddr_free(struct sockaddr *sa)
 	free(sa, M_SOCKADDR);
 }
 
-void
+static int
+sun_print(char *buf, size_t len, const void *v)
+{
+	const struct sockaddr_un *sun = v;
+	return snprintf(buf, len, "%s", sun->sun_path);
+}
+
+int
 sockaddr_format(const struct sockaddr *sa, char *buf, size_t len)
 {
-	const struct sockaddr_un *sun = (const struct sockaddr_un *)sa;
-	const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
-	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
-	const uint8_t *data;
-	size_t data_len;
+	size_t plen = 0;
 
-	if (sa == NULL) {
-		strlcpy(buf, "(null)", len);
-		return;
-	}
+	if (sa == NULL)
+		return strlcpy(buf, "(null)", len);
 
 	switch (sa->sa_family) {
-	default:
-		snprintf(buf, len, "(unknown socket family %d)",
-		    (int)sa->sa_family);
-		return;
 	case AF_LOCAL:
-		strlcpy(buf, "unix:", len);
-		strlcat(buf, sun->sun_path, len);
-		return;
+		plen = strlcpy(buf, "unix: ", len);
+		break;
 	case AF_INET:
-		strlcpy(buf, "inet:", len);
-		if (len < 6)
-			return;
-		buf += 5;
-		len -= 5;
-		data = (const uint8_t *)&sin->sin_addr;
-		data_len = sizeof(sin->sin_addr);
+		plen = strlcpy(buf, "inet: ", len);
 		break;
 	case AF_INET6:
-		strlcpy(buf, "inet6:", len);
-		if (len < 7)
-			return;
-		buf += 6;
-		len -= 6;
-		data = (const uint8_t *)&sin6->sin6_addr;
-		data_len = sizeof(sin6->sin6_addr);
+		plen = strlcpy(buf, "inet6: ", len);
 		break;
+	case AF_LINK:
+		plen = strlcpy(buf, "link: ", len);
+		break;
+	case AF_APPLETALK:
+		plen = strlcpy(buf, "atalk: ", len);
+		break;
+	default:
+		return snprintf(buf, len, "(unknown socket family %d)",
+		    (int)sa->sa_family);
 	}
-	for (;;) {
-		if (--len == 0)
-			break;
 
-		uint8_t hi = *data >> 4;
-		uint8_t lo = *data & 15;
-		--data_len;
-		++data;
-		*buf++ = hi + (hi >= 10 ? 'a' - 10 : '0');
-		if (--len == 0)
-			break;
-		*buf++ = lo + (lo >= 10 ? 'a' - 10 : '0');
-		if (data_len == 0)
-			break;
+	buf += plen;
+	if (plen > len)
+		len = 0;
+	else
+		len -= plen;
+
+	switch (sa->sa_family) {
+	case AF_LOCAL:
+		return sun_print(buf, len, sa);
+	case AF_INET:
+		return sin_print(buf, len, sa);
+	case AF_INET6:
+		return sin6_print(buf, len, sa);
+	case AF_LINK:
+		return sdl_print(buf, len, sa);
+	case AF_APPLETALK:
+		return sat_print(buf, len, sa);
+	default:
+		panic("bad family %hhu", sa->sa_family);
 	}
-	*buf = 0;
 }
 
 /*

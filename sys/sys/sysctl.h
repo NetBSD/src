@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.214 2014/09/05 05:42:50 matt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.214.2.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1087,6 +1087,29 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	oldlenp, newp, newlen, \
 	oname, l, node
 
+#ifdef RUMP_USE_CTOR
+struct sysctl_setup_chain {
+	void (*ssc_func)(struct sysctllog **);
+	LIST_ENTRY(sysctl_setup_chain) ssc_entries;
+};
+LIST_HEAD(sysctl_boot_chain, sysctl_setup_chain);
+#define _SYSCTL_REGISTER(name)						\
+static void sysctlctor_##name(void) __attribute__((constructor));	\
+static void sysctlctor_##name(void)					\
+{									\
+        static struct sysctl_setup_chain ssc = {			\
+		.ssc_func = name,					\
+        };								\
+        extern struct sysctl_boot_chain sysctl_boot_chain;		\
+        LIST_INSERT_HEAD(&sysctl_boot_chain, &ssc, ssc_entries);	\
+}
+
+#else /* RUMP_USE_CTOR */
+
+#define _SYSCTL_REGISTER(name) __link_set_add_text(sysctl_funcs, name);
+
+#endif /* RUMP_USE_CTOR */
+
 #ifdef _MODULE
 
 #define SYSCTL_SETUP_PROTO(name)				\
@@ -1098,12 +1121,12 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	void name(struct sysctllog **clog) {			\
 		printf("%s\n", desc);				\
 		__CONCAT(___,name)(clog); }			\
-	__link_set_add_text(sysctl_funcs, name);		\
+	_SYSCTL_REGISTER(name);					\
 	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	SYSCTL_SETUP_PROTO(name);				\
-	__link_set_add_text(sysctl_funcs, name);		\
+	_SYSCTL_REGISTER(name);					\
 	void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
 
@@ -1116,12 +1139,12 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	static void name(struct sysctllog **clog) {		\
 		printf("%s\n", desc);				\
 		__CONCAT(___,name)(clog); }			\
-	__link_set_add_text(sysctl_funcs, name);		\
+	_SYSCTL_REGISTER(name);					\
 	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	static void name(struct sysctllog **);			\
-	__link_set_add_text(sysctl_funcs, name);		\
+	_SYSCTL_REGISTER(name);					\
 	static void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
 

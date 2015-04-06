@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_start.S,v 1.2 2013/10/07 17:36:40 matt Exp $ */
+/* $Id: imx23_olinuxino_start.S,v 1.2.6.1 2015/04/06 15:17:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_imx.h"
 
 #include <machine/asm.h>
 #include <machine/pmap.h>

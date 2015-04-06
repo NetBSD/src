@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitTest.c,v 1.4 2014/06/17 19:37:03 alnsn Exp $	*/
+/*	$NetBSD: sljitTest.c,v 1.4.4.1 2015/04/06 15:18:18 skrll Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -733,7 +733,7 @@ static void test10(void)
 	/* Test multiplications. */
 	executable_code code;
 	struct sljit_compiler* compiler = sljit_create_compiler();
-	sljit_sw buf[6];
+	sljit_sw buf[7];
 
 	if (verbose)
 		printf("Run test10\n");
@@ -745,6 +745,7 @@ static void test10(void)
 	buf[3] = 6;
 	buf[4] = -10;
 	buf[5] = 0;
+	buf[6] = 0;
 
 	sljit_emit_enter(compiler, 1, 3, 1, 0);
 
@@ -764,6 +765,11 @@ static void test10(void)
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_SCRATCH_REG1, 0, SLJIT_IMM, 9);
 	sljit_emit_op2(compiler, SLJIT_MUL, SLJIT_SCRATCH_REG1, 0, SLJIT_SCRATCH_REG1, 0, SLJIT_SCRATCH_REG1, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_SAVED_REG1), sizeof(sljit_sw) * 5, SLJIT_SCRATCH_REG1, 0);
+#if (defined SLJIT_64BIT_ARCHITECTURE && SLJIT_64BIT_ARCHITECTURE)
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_SCRATCH_REG2, 0, SLJIT_IMM, 3);
+	sljit_emit_op2(compiler, SLJIT_MUL, SLJIT_SCRATCH_REG1, 0, SLJIT_SCRATCH_REG2, 0, SLJIT_IMM, SLJIT_W(0x123456789));
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_SAVED_REG1), sizeof(sljit_sw) * 6, SLJIT_SCRATCH_REG1, 0);
+#endif
 	sljit_emit_op2(compiler, SLJIT_MUL, SLJIT_RETURN_REG, 0, SLJIT_IMM, 11, SLJIT_IMM, 10);
 	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_RETURN_REG, 0);
 
@@ -778,6 +784,9 @@ static void test10(void)
 	FAILED(buf[3] != -12, "test10 case 5 failed\n");
 	FAILED(buf[4] != 100, "test10 case 6 failed\n");
 	FAILED(buf[5] != 81, "test10 case 7 failed\n");
+#if (defined SLJIT_64BIT_ARCHITECTURE && SLJIT_64BIT_ARCHITECTURE)
+	FAILED(buf[6] != SLJIT_W(0x123456789) * 3, "test10 case 8 failed\n");
+#endif
 
 	sljit_free_code(code.code);
 	successful_tests++;

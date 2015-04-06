@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.25 2011/07/17 20:54:41 joerg Exp $	*/
+/*	$NetBSD: ansi.h,v 1.25.30.1 2015/04/06 15:17:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -56,7 +56,16 @@
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
+
+#if defined(__WCHAR_TYPE__)
+#define	_BSD_WCHAR_T_		__WCHAR_TYPE__	/* wchar_t */
+#else
 #define	_BSD_WCHAR_T_		int		/* wchar_t */
+#endif
+#if defined(__WINT_TYPE__)
+#define	_BSD_WINT_T_		__WINT_TYPE__	/* wint_t */
+#else
 #define	_BSD_WINT_T_		int		/* wint_t */
+#endif
 
 #endif	/* _I386_ANSI_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.21 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.21.24.1 2015/04/06 15:18:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.21 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.21.24.1 2015/04/06 15:18:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ static int	ld_amr_start(struct ld_softc *, struct buf *);
 static int
 ld_amr_match(device_t parent, cfdata_t match, void *aux)
 {
-
 	return (1);
 }
 
@@ -122,7 +121,7 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 	struct amr_ccb *ac;
 	struct amr_softc *amr;
 	struct amr_mailbox_cmd *mb;
-	int s, rv;
+	int rv;
 
 	amr = device_private(device_parent(sc->sc_ld.sc_dv));
 
@@ -147,9 +146,7 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 		 * Polled commands must not sit on the software queue.  Wait
 		 * up to 30 seconds for the command to complete.
 		 */
-		s = splbio();
 		rv = amr_ccb_poll(amr, ac, 30000);
-		splx(s);
 		amr_ccb_unmap(amr, ac);
 		amr_ccb_free(amr, ac);
 	} else {
@@ -166,7 +163,6 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 static int
 ld_amr_start(struct ld_softc *ld, struct buf *bp)
 {
-
 	return (ld_amr_dobio((struct ld_amr_softc *)ld, bp->b_data,
 	    bp->b_bcount, bp->b_rawblkno, (bp->b_flags & B_READ) == 0, bp));
 }

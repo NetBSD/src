@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.236 2014/03/24 13:42:40 hannken Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.236.6.1 2015/04/06 15:18:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.236 2014/03/24 13:42:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.236.6.1 2015/04/06 15:18:33 skrll Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -702,7 +702,7 @@ lfs_segwrite(struct mount *mp, int flags)
 		for (n = 0; n < fs->lfs_segtabsz; n++) {
 			dirty = 0;
 			if (bread(fs->lfs_ivnode, fs->lfs_cleansz + n,
-			    fs->lfs_bsize, NOCRED, B_MODIFY, &bp))
+			    fs->lfs_bsize, B_MODIFY, &bp))
 				panic("lfs_segwrite: ifile read");
 			segusep = (SEGUSE *)bp->b_data;
 			maxseg = min(segleft, fs->lfs_sepb);
@@ -1504,7 +1504,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 		    break;
 	    default:
 		    ap = &a[num - 1];
-		    if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED,
+		    if (bread(vp, ap->in_lbn, fs->lfs_bsize,
 			B_MODIFY, &bp))
 			    panic("lfs_updatemeta: bread bno %" PRId64,
 				  ap->in_lbn);

@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.8 2014/11/14 23:45:02 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.8.2.1 2015/04/06 15:17:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,13 +28,16 @@
 
 #include "opt_allwinner.h"
 #include "genfb.h"
+#include "awin_mp.h"
 
 #ifndef AWIN_DEBE_VIDEOMEM
 #define AWIN_DEBE_VIDEOMEM	(16 * 1024 * 1024)
 #endif
 
+#define AWIN_DEBE_CURMAX	64
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.8 2014/11/14 23:45:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.8.2.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,6 +69,12 @@ struct awin_debe_softc {
 	void *sc_dmap;
 
 	uint16_t sc_margin;
+
+	bool sc_cursor_enable;
+	int sc_cursor_x, sc_cursor_y;
+	int sc_hot_x, sc_hot_y;
+	uint8_t sc_cursor_bitmap[8 * AWIN_DEBE_CURMAX];
+	uint8_t sc_cursor_mask[8 * AWIN_DEBE_CURMAX];
 };
 
 #define DEBE_READ(sc, reg) \
@@ -79,6 +88,10 @@ static void	awin_debe_attach(device_t, device_t, void *);
 static int	awin_debe_alloc_videomem(struct awin_debe_softc *);
 static void	awin_debe_setup_fbdev(struct awin_debe_softc *,
 				      const struct videomode *);
+
+static int	awin_debe_set_curpos(struct awin_debe_softc *, int, int);
+static int	awin_debe_set_cursor(struct awin_debe_softc *,
+				     struct wsdisplay_cursor *);
 
 CFATTACH_DECL_NEW(awin_debe, sizeof(struct awin_debe_softc),
 	awin_debe_match, awin_debe_attach, NULL, NULL);
@@ -102,6 +115,12 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
 	prop_dictionary_t cfg = device_properties(self);
+#if NAWIN_MP > 0
+	device_t mpdev;
+#endif
+#ifdef AWIN_DEBE_FWINIT
+	struct videomode mode;
+#endif
 	int error;
 
 	sc->sc_dev = self;
@@ -123,7 +142,7 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 		    AWIN_A31_AHB_RESET1_REG,
 		    AWIN_A31_AHB_RESET1_BE0_RST << loc->loc_port,
 		    0);
-	} else {
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A20) {
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
 		    AWIN_BEx_CLK_RST,
@@ -144,7 +163,7 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 			      AWIN_A31_BEx_CLK_SRC_SEL) |
 		    __SHIFTIN(clk_div - 1, AWIN_BEx_CLK_DIV_RATIO_M),
 		    AWIN_A31_BEx_CLK_SRC_SEL | AWIN_BEx_CLK_DIV_RATIO_M);
-	} else {
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A20) {
 		uint32_t pll5x_freq = awin_pll5x_get_rate();
 		unsigned int clk_div = (pll5x_freq + 299999999) / 300000000;
 
@@ -160,22 +179,57 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 		    AWIN_BEx_CLK_SRC_SEL | AWIN_BEx_CLK_DIV_RATIO_M);
 	}
 
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_DE_BE0 << loc->loc_port, 0);
+	if (awin_chip_id() == AWIN_CHIP_ID_A20 ||
+	    awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_AHB_GATING1_REG,
+		    AWIN_AHB_GATING1_DE_BE0 << loc->loc_port, 0);
 
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_DRAM_CLK_REG,
-	    AWIN_DRAM_CLK_BE0_DCLK_ENABLE << loc->loc_port, 0);
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_DRAM_CLK_REG,
+		    AWIN_DRAM_CLK_BE0_DCLK_ENABLE << loc->loc_port, 0);
 
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
-	    AWIN_CLK_ENABLE, 0);
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
+		    AWIN_CLK_ENABLE, 0);
+	}
 
+#ifdef AWIN_DEBE_FWINIT
+	const uint32_t modctl = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+	const uint32_t dissize = DEBE_READ(sc, AWIN_DEBE_DISSIZE_REG);
+	if ((modctl & AWIN_DEBE_MODCTL_EN) == 0) {
+		aprint_error_dev(sc->sc_dev, "disabled\n");
+		return;
+	}
+	if ((modctl & AWIN_DEBE_MODCTL_START_CTL) == 0) {
+		aprint_error_dev(sc->sc_dev, "stopped\n");
+		return;
+	}
+	memset(&mode, 0, sizeof(mode));
+	mode.hdisplay = (dissize & 0xffff) + 1;
+	mode.vdisplay = ((dissize >> 16) & 0xffff) + 1;
+
+	if (mode.hdisplay == 1 || mode.vdisplay == 1) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't determine video mode\n");
+		return;
+	}
+
+	aprint_verbose_dev(sc->sc_dev, "using %dx%d mode from firmware\n",
+	    mode.hdisplay, mode.vdisplay);
+
+	sc->sc_dmasize = mode.hdisplay * mode.vdisplay * 4;
+#else
 	for (unsigned int reg = 0x800; reg < 0x1000; reg += 4) {
 		DEBE_WRITE(sc, reg, 0);
 	}
 
 	DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, AWIN_DEBE_MODCTL_EN);
+
+	sc->sc_dmasize = AWIN_DEBE_VIDEOMEM;
+#endif
+
+	DEBE_WRITE(sc, AWIN_DEBE_HWC_PALETTE_TABLE, 0);
 
 	error = awin_debe_alloc_videomem(sc);
 	if (error) {
@@ -183,6 +237,21 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 		    "couldn't allocate video memory, error = %d\n", error);
 		return;
 	}
+
+#if NAWIN_MP > 0
+	mpdev = device_find_by_driver_unit("awinmp", 0);
+	if (mpdev) {
+		paddr_t pa = sc->sc_dmamap->dm_segs[0].ds_addr;
+		if (pa >= AWIN_SDRAM_PBASE)
+			pa -= AWIN_SDRAM_PBASE;
+		awin_mp_setbase(mpdev, pa, sc->sc_dmasize);
+	}
+#endif
+
+#ifdef AWIN_DEBE_FWINIT
+	awin_debe_set_videomode(&mode);
+	awin_debe_enable(true);
+#endif
 }
 
 static int
@@ -190,9 +259,8 @@ awin_debe_alloc_videomem(struct awin_debe_softc *sc)
 {
 	int error, nsegs;
 
-	sc->sc_dmasize = AWIN_DEBE_VIDEOMEM;
-	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmasize, 0,
-	    sc->sc_dmasize, sc->sc_dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
+	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmasize, 0x1000, 0,
+	    sc->sc_dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
 	if (error)
 		return error;
 	error = bus_dmamem_map(sc->sc_dmat, sc->sc_dmasegs, nsegs,
@@ -255,6 +323,125 @@ awin_debe_setup_fbdev(struct awin_debe_softc *sc, const struct videomode *mode)
 #endif
 }
 
+static int
+awin_debe_set_curpos(struct awin_debe_softc *sc, int x, int y)
+{
+	int xx, yy;
+	u_int yoff, xoff;
+
+	xoff = yoff = 0;
+	xx = x - sc->sc_hot_x + sc->sc_margin;
+	yy = y - sc->sc_hot_y + sc->sc_margin;
+	if (xx < 0) {
+		xoff -= xx;
+		xx = 0;
+	}
+	if (yy < 0) {
+		yoff -= yy;
+		yy = 0;
+	}
+
+	DEBE_WRITE(sc, AWIN_DEBE_HWCCTL_REG,
+	    __SHIFTIN(yy, AWIN_DEBE_HWCCTL_YCOOR) |
+	    __SHIFTIN(xx, AWIN_DEBE_HWCCTL_XCOOR));
+	DEBE_WRITE(sc, AWIN_DEBE_HWCFBCTL_REG,
+#if AWIN_DEBE_CURMAX == 32
+	    __SHIFTIN(AWIN_DEBE_HWCFBCTL_YSIZE_32, AWIN_DEBE_HWCFBCTL_YSIZE) |
+	    __SHIFTIN(AWIN_DEBE_HWCFBCTL_XSIZE_32, AWIN_DEBE_HWCFBCTL_XSIZE) |
+#else
+	    __SHIFTIN(AWIN_DEBE_HWCFBCTL_YSIZE_64, AWIN_DEBE_HWCFBCTL_YSIZE) |
+	    __SHIFTIN(AWIN_DEBE_HWCFBCTL_XSIZE_64, AWIN_DEBE_HWCFBCTL_XSIZE) |
+#endif
+	    __SHIFTIN(AWIN_DEBE_HWCFBCTL_FBFMT_2BPP, AWIN_DEBE_HWCFBCTL_FBFMT) |
+	    __SHIFTIN(yoff, AWIN_DEBE_HWCFBCTL_YCOOROFF) |
+	    __SHIFTIN(xoff, AWIN_DEBE_HWCFBCTL_XCOOROFF));
+
+	return 0;
+}
+
+static int
+awin_debe_set_cursor(struct awin_debe_softc *sc, struct wsdisplay_cursor *cur)
+{
+	uint32_t val;
+	uint8_t r[4], g[4], b[4];
+	u_int index, count, shift, off, pcnt;
+	int i, j, idx, error;
+	uint8_t mask;
+
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+		if (cur->enable)
+			val |= AWIN_DEBE_MODCTL_HWC_EN;
+		else
+			val &= ~AWIN_DEBE_MODCTL_HWC_EN;
+		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+
+		sc->sc_cursor_enable = cur->enable;
+	}
+
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+		sc->sc_hot_x = cur->hot.x;
+		sc->sc_hot_y = cur->hot.y;
+		cur->which |= WSDISPLAY_CURSOR_DOPOS;
+	}
+
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+		awin_debe_set_curpos(sc, cur->pos.x, cur->pos.y);
+	}
+
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		index = cur->cmap.index;
+		count = cur->cmap.count;
+		if (index >= 2 || (index + count) > 2)
+			return EINVAL;
+		error = copyin(cur->cmap.red, &r[index], count);
+		if (error)
+			return error;
+		error = copyin(cur->cmap.green, &g[index], count);
+		if (error)
+			return error;
+		error = copyin(cur->cmap.blue, &b[index], count);
+		if (error)
+			return error;
+
+		for (i = index; i < (index + count); i++) {
+			DEBE_WRITE(sc,
+			    AWIN_DEBE_HWC_PALETTE_TABLE + (4 * (i + 2)),
+			    (r[i] << 16) | (g[i] << 8) | b[i] | 0xff000000);
+		}
+	}
+
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		error = copyin(cur->mask, sc->sc_cursor_mask,
+		    AWIN_DEBE_CURMAX * 8);
+		if (error)
+			return error;
+		error = copyin(cur->image, sc->sc_cursor_bitmap,
+		    AWIN_DEBE_CURMAX * 8);
+		if (error)
+			return error;
+	}
+
+	if (cur->which & (WSDISPLAY_CURSOR_DOCMAP|WSDISPLAY_CURSOR_DOSHAPE)) {
+		for (i = 0, pcnt = 0; i < AWIN_DEBE_CURMAX * 8; i++) {
+			for (j = 0, mask = 1; j < 8; j++, mask <<= 1, pcnt++) {
+				idx = ((sc->sc_cursor_mask[i] & mask) ? 2 : 0) |
+				    ((sc->sc_cursor_bitmap[i] & mask) ? 1 : 0);
+				off = (pcnt >> 4) * 4;
+				shift = (pcnt & 0xf) * 2;
+				val = DEBE_READ(sc,
+				    AWIN_DEBE_HWC_PATTERN_BLOCK + off);
+				val &= ~(3 << shift);
+				val |= (idx << shift);
+				DEBE_WRITE(sc,
+				    AWIN_DEBE_HWC_PATTERN_BLOCK + off, val);
+			}
+		}
+	}
+
+	return 0;
+}
+
 void
 awin_debe_enable(bool enable)
 {
@@ -314,12 +501,14 @@ awin_debe_set_videomode(const struct videomode *mode)
 		}
 
 		paddr_t pa = sc->sc_dmamap->dm_segs[0].ds_addr;
+#if !defined(ALLWINNER_A80)
 		/*
 		 * On 2GB systems, we need to subtract AWIN_SDRAM_PBASE from
 		 * the phys addr.
 		 */
 		if (pa >= AWIN_SDRAM_PBASE)
 			pa -= AWIN_SDRAM_PBASE;
+#endif
 
 		/* notify fb */
 		awin_debe_setup_fbdev(sc, mode);
@@ -340,6 +529,13 @@ awin_debe_set_videomode(const struct videomode *mode)
 				 AWIN_DEBE_ATTCTL1_LAY_FBFMT);
 		val &= ~AWIN_DEBE_ATTCTL1_LAY_BRSWAPEN;
 		val &= ~AWIN_DEBE_ATTCTL1_LAY_FBPS;
+#if __ARMEB__
+		val |= __SHIFTIN(AWIN_DEBE_ATTCTL1_LAY_FBPS_32BPP_BGRA,
+				 AWIN_DEBE_ATTCTL1_LAY_FBPS);
+#else
+		val |= __SHIFTIN(AWIN_DEBE_ATTCTL1_LAY_FBPS_32BPP_ARGB,
+				 AWIN_DEBE_ATTCTL1_LAY_FBPS);
+#endif
 		DEBE_WRITE(sc, AWIN_DEBE_ATTCTL1_REG, val);
 
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
@@ -366,6 +562,7 @@ int
 awin_debe_ioctl(device_t self, u_long cmd, void *data)
 {
 	struct awin_debe_softc *sc = device_private(self);
+	struct wsdisplay_curpos *cp;
 	uint32_t val;
 	int enable;
 
@@ -373,16 +570,38 @@ awin_debe_ioctl(device_t self, u_long cmd, void *data)
 	case WSDISPLAYIO_SVIDEO:
 		enable = *(int *)data;
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
-		if (enable)
+		if (enable) {
 			val |= AWIN_DEBE_MODCTL_LAY0_EN;
-		else
+			if (sc->sc_cursor_enable) {
+				val |= AWIN_DEBE_MODCTL_HWC_EN;
+			} else {
+				val &= ~AWIN_DEBE_MODCTL_HWC_EN;
+			}
+		} else {
 			val &= ~AWIN_DEBE_MODCTL_LAY0_EN;
+			val &= ~AWIN_DEBE_MODCTL_HWC_EN;
+		}
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
 		return 0;
 	case WSDISPLAYIO_GVIDEO:
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
 		*(int *)data = !!(val & AWIN_DEBE_MODCTL_LAY0_EN);
 		return 0;
+	case WSDISPLAYIO_GCURPOS:
+		cp = data;
+		cp->x = sc->sc_cursor_x;
+		cp->y = sc->sc_cursor_y;
+		return 0;
+	case WSDISPLAYIO_SCURPOS:
+		cp = data;
+		return awin_debe_set_curpos(sc, cp->x, cp->y);
+	case WSDISPLAYIO_GCURMAX:
+		cp = data;
+		cp->x = AWIN_DEBE_CURMAX;
+		cp->y = AWIN_DEBE_CURMAX;
+		return 0;
+	case WSDISPLAYIO_SCURSOR:
+		return awin_debe_set_cursor(sc, data);
 	}
 
 	return EPASSTHROUGH;

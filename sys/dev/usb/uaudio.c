@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.7 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.8 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -31,13 +31,17 @@
  */
 
 /*
- * USB audio specs: http://www.usb.org/developers/devclass_docs/audio10.pdf
- *                  http://www.usb.org/developers/devclass_docs/frmts10.pdf
- *                  http://www.usb.org/developers/devclass_docs/termt10.pdf
+ * USB audio specs: http://www.usb.org/developers/docs/devclass_docs/audio10.pdf
+ *                  http://www.usb.org/developers/docs/devclass_docs/frmts10.pdf
+ *                  http://www.usb.org/developers/docs/devclass_docs/termt10.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.7 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.8 2015/04/06 15:18:13 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,6 +252,10 @@ Static const char *uac_names[] = {
 };
 #endif
 
+#ifdef UAUDIO_DEBUG
+Static void uaudio_dump_tml
+	(struct terminal_list *tml);
+#endif
 Static usbd_status uaudio_identify_ac
 	(struct uaudio_softc *, const usb_config_descriptor_t *);
 Static usbd_status uaudio_identify_as
@@ -1115,6 +1123,10 @@ uaudio_add_feature(struct uaudio_softc *sc, const struct io_terminal *iot, int i
 	d = iot[id].d.fu;
 	ctls = d->bmaControls;
 	ctlsize = d->bControlSize;
+	if (ctlsize == 0) {
+		DPRINTF("ignoring feature %d with controlSize of zero\n", id);
+		return;
+	}
 	nchan = (d->bLength - 7) / ctlsize;
 	mmask = GET(0);
 	/* Figure out what we can control */
@@ -1870,6 +1882,21 @@ uaudio_identify_as(struct uaudio_softc *sc,
 	return USBD_NORMAL_COMPLETION;
 }
 
+#ifdef UAUDIO_DEBUG
+Static void
+uaudio_dump_tml(struct terminal_list *tml) {
+	if (tml == NULL) {
+		printf("NULL");
+	} else {
+                int i;
+		for (i = 0; i < tml->size; i++)
+			printf("%s ", uaudio_get_terminal_name
+			       (tml->terminals[i]));
+	}
+	printf("\n");
+}
+#endif
+
 Static usbd_status
 uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc)
 {
@@ -2013,23 +2040,11 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 				  iot[i].d.desc->bDescriptorSubtype);
 		}
 		for (j = 0; j < iot[i].inputs_size; j++) {
-			int k;
 			printf("\tinput%d: ", j);
-			tml = iot[i].inputs[j];
-			if (tml == NULL) {
-				printf("NULL\n");
-				continue;
-			}
-			for (k = 0; k < tml->size; k++)
-				printf("%s ", uaudio_get_terminal_name
-					  (tml->terminals[k]));
-			printf("\n");
+			uaudio_dump_tml(iot[i].inputs[j]);
 		}
 		printf("\toutput: ");
-		tml = iot[i].output;
-		for (j = 0; j < tml->size; j++)
-			printf("%s ", uaudio_get_terminal_name(tml->terminals[j]));
-		printf("\n");
+		uaudio_dump_tml(iot[i].output);
 	}
 #endif
 

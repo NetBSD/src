@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.38 2014/11/16 16:01:39 manu Exp $
+#	$NetBSD: files.ufs,v 1.38.2.1 2015/04/06 15:18:32 skrll Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -28,7 +28,6 @@ file	ufs/ext2fs/ext2fs_vnops.c	ext2fs
 
 define	chfs: vfs, ffs
 file	ufs/chfs/ebh.c			chfs
-file	ufs/chfs/chfs_ihash.c		chfs
 file	ufs/chfs/chfs_scan.c		chfs
 file	ufs/chfs/chfs_write.c		chfs
 file	ufs/chfs/chfs_vnode_cache.c	chfs

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.32 2012/02/06 02:14:11 matt Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.32.24.1 2015/04/06 15:17:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.32 2012/02/06 02:14:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.32.24.1 2015/04/06 15:17:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ linux_syscall_fancy(struct lwp *l, uint64_t code, struct trapframe *framep)
 	args += hidden;
 
 
-	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
+	if ((error = trace_enter(code, callp, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -308,7 +308,7 @@ out:
 		break;
 	}
 
-	trace_exit(code, rval, error);
+	trace_exit(code, callp, args, rval, error);
 
 	userret(l);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.98 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.98.2.1 2015/04/06 15:18:05 skrll Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98.2.1 2015/04/06 15:18:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98 2014/10/18 08:33:27 snj Exp $");
 #include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <coda/coda.h>
 #include <coda/cnode.h>
@@ -792,8 +793,8 @@ coda_fsync(void *v)
 	return(ENODEV);
     }
 
-    /* Check for fsync of control object. */
-    if (IS_CTL_VP(vp)) {
+    /* Check for fsync of control object or unitialized cnode. */
+    if (IS_CTL_VP(vp) || vp->v_type == VNON) {
 	MARK_INT_SAT(CODA_FSYNC_STATS);
 	return(0);
     }
@@ -836,24 +837,13 @@ coda_inactive(void *v)
 
     if (IS_CTL_VP(vp)) {
 	MARK_INT_SAT(CODA_INACTIVE_STATS);
+	VOP_UNLOCK(vp);
 	return 0;
     }
 
     CODADEBUG(CODA_INACTIVE, myprintf(("in inactive, %s, vfsp %p\n",
 				  coda_f2s(&cp->c_fid), vp->v_mount));)
 
-    /* If an array has been allocated to hold the symlink, deallocate it */
-    if ((coda_symlink_cache) && (VALID_SYMLINK(cp))) {
-	if (cp->c_symlink == NULL)
-	    panic("%s: null symlink pointer in cnode", __func__);
-
-	CODA_FREE(cp->c_symlink, cp->c_symlen);
-	cp->c_flags &= ~C_SYMLINK;
-	cp->c_symlen = 0;
-    }
-
-    /* Remove it from the table so it can't be found. */
-    coda_unsave(cp);
     if (vp->v_mount->mnt_data == NULL) {
 	myprintf(("Help! vfsp->vfs_data was NULL, but vnode %p wasn't dying\n", vp));
 	panic("badness in coda_inactive");
@@ -1674,8 +1664,27 @@ coda_reclaim(void *v)
 	}
 #endif
     }
-    coda_free(VTOC(vp));
+    /* If an array has been allocated to hold the symlink, deallocate it */
+    if ((coda_symlink_cache) && (VALID_SYMLINK(cp))) {
+	if (cp->c_symlink == NULL)
+	    panic("%s: null symlink pointer in cnode", __func__);
+
+	CODA_FREE(cp->c_symlink, cp->c_symlen);
+	cp->c_flags &= ~C_SYMLINK;
+	cp->c_symlen = 0;
+    }
+
+    /* Remove it from the table so it can't be found. */
+    vcache_remove(vp->v_mount, &cp->c_fid, sizeof(CodaFid));
+
+    mutex_enter(vp->v_interlock);
+    mutex_enter(&cp->c_lock);
     SET_VTOC(vp) = NULL;
+    mutex_exit(&cp->c_lock);
+    mutex_exit(vp->v_interlock);
+    mutex_destroy(&cp->c_lock);
+    kmem_free(cp, sizeof(*cp));
+
     return (0);
 }
 
@@ -1828,30 +1837,30 @@ coda_print_vattr(struct vattr *attr)
 struct cnode *
 make_coda_node(CodaFid *fid, struct mount *fvsp, short type)
 {
-    struct cnode *cp;
-    int          error;
+	int error __diagused;
+	struct vnode *vp;
+	struct cnode *cp;
 
-    if ((cp = coda_find(fid)) == NULL) {
-	vnode_t *vp;
+	error = vcache_get(fvsp, fid, sizeof(CodaFid), &vp);
+	KASSERT(error == 0);
 
-	cp = coda_alloc();
-	cp->c_fid = *fid;
+	mutex_enter(vp->v_interlock);
+	cp = VTOC(vp);
+	KASSERT(cp != NULL);
+	mutex_enter(&cp->c_lock);
+	mutex_exit(vp->v_interlock);
 
-	error = getnewvnode(VT_CODA, fvsp, coda_vnodeop_p, NULL, &vp);
-	if (error) {
-	    panic("%s: getnewvnode returned error %d", __func__, error);
+	if (vp->v_type != type) {
+		if (vp->v_type == VCHR || vp->v_type == VBLK)
+			spec_node_destroy(vp);
+		vp->v_type = type;
+		if (type == VCHR || type == VBLK)
+			spec_node_init(vp, NODEV);
+		uvm_vnp_setsize(vp, 0);
 	}
-	vp->v_data = cp;
-	vp->v_type = type;
-	cp->c_vnode = vp;
-	uvm_vnp_setsize(vp, 0);
-	coda_save(cp);
+	mutex_exit(&cp->c_lock);
 
-    } else {
-	vref(CTOV(cp));
-    }
-
-    return cp;
+	return cp;
 }
 
 /*
@@ -2014,7 +2023,7 @@ coda_putpages(void *v)
 #ifdef CODA_VERBOSE
 		printf("%s: control object %p\n", __func__, vp);
 #endif
-		return(EINVAL);
+		return 0;
 	}
 
 	/*

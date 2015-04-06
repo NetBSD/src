@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.26 2014/11/18 01:53:53 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.26.2.1 2015/04/06 15:17:51 skrll Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -31,6 +31,7 @@ defflag opt_allwinner.h				AWIN_GPIO_IGNORE_FW
 defflag opt_allwinner.h				AWIN_HDMI_DEBUG
 defflag opt_allwinner.h				AWIN_TCON_DEBUG
 defflag opt_allwinner.h				AWIN_DEBE_DEBUG
+defflag opt_allwinner.h				AWIN_DEBE_FWINIT
 defparam opt_allwinner.h			AWIN_DEBE_VIDEOMEM
 
 # SoC I/O attach point
@@ -78,7 +79,7 @@ device	awindma
 attach	awindma at awinio with awin_dma
 file	arch/arm/allwinner/awin_dma.c		awin_dma
 file	arch/arm/allwinner/awin_dma_a10.c	awin_dma & (allwinner_a10 | allwinner_a20)
-file	arch/arm/allwinner/awin_dma_a31.c	awin_dma & allwinner_a31
+file	arch/arm/allwinner/awin_dma_a31.c	awin_dma & (allwinner_a31 | allwinner_a80)
 
 # A10/A20 TWI (IIC)
 device	awiniic : i2cbus, i2cexec, mvi2c
@@ -157,6 +158,11 @@ file	arch/arm/allwinner/awin_tcon.c		awin_tcon | awin_hdmi
 device	awindebe { }
 attach	awindebe at awinio with awin_debe
 file	arch/arm/allwinner/awin_debe.c		awin_debe | awin_hdmi
+
+# A10/A20/A31 Mixer processor (MP)
+device	awinmp
+attach	awinmp at awinio with awin_mp
+file	arch/arm/allwinner/awin_mp.c		awin_mp		needs-flag
 
 # Framebuffer
 attach	genfb at awindebe with awin_fb: edid

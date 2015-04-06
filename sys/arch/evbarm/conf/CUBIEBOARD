@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.37 2014/11/16 18:54:52 martin Exp $
+#	$NetBSD: CUBIEBOARD,v 1.37.2.1 2015/04/06 15:17:55 skrll Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -36,8 +36,8 @@ file-system	FFS		# UFS
 file-system	MFS		# memory file system
 file-system	NFS		# Network file system
 #file-system 	ADOSFS		# AmigaDOS-compatible file system
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	EXT2FS		# second extended file system (linux)
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern

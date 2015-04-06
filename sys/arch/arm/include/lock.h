@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.28 2014/08/10 06:23:13 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.28.4.1 2015/04/06 15:17:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ static __inline unsigned int
 __arm_load_exclusive(__cpu_simple_lock_t *__alp)
 {
 	unsigned int __rv;
-	if (sizeof(*__alp) == 1) {
+	if (/*CONSTCOND*/sizeof(*__alp) == 1) {
 		__asm __volatile("ldrexb\t%0,[%1]" : "=r"(__rv) : "r"(__alp));
 	} else {
 		__asm __volatile("ldrex\t%0,[%1]" : "=r"(__rv) : "r"(__alp));
@@ -91,7 +91,7 @@ static __inline unsigned int
 __arm_store_exclusive(__cpu_simple_lock_t *__alp, unsigned int __val)
 {
 	unsigned int __rv;
-	if (sizeof(*__alp) == 1) {
+	if (/*CONSTCOND*/sizeof(*__alp) == 1) {
 		__asm __volatile("strexb\t%0,%1,[%2]"
 		    : "=&r"(__rv) : "r"(__val), "r"(__alp) : "cc", "memory");
 	} else {
@@ -139,23 +139,23 @@ __swp(int __val, __cpu_simple_lock_t *__ptr)
 }
 #endif /* !_ARM_ARCH_6 */
 
-static inline void
+static __inline void
 __arm_membar_producer(void)
 {
 #ifdef _ARM_ARCH_7
-		__asm __volatile("dsb");
+	__asm __volatile("dsb" ::: "memory");
 #elif defined(_ARM_ARCH_6)
-		__asm __volatile("mcr\tp15,0,%0,c7,c10,4" :: "r"(0));
+	__asm __volatile("mcr\tp15,0,%0,c7,c10,4" :: "r"(0) : "memory");
 #endif
 }
 
-static inline void
+static __inline void
 __arm_membar_consumer(void)
 {
 #ifdef _ARM_ARCH_7
-		__asm __volatile("dmb");
+	__asm __volatile("dmb" ::: "memory");
 #elif defined(_ARM_ARCH_6)
-		__asm __volatile("mcr\tp15,0,%0,c7,c10,5" :: "r"(0));
+	__asm __volatile("mcr\tp15,0,%0,c7,c10,5" :: "r"(0) : "memory");
 #endif
 }
 

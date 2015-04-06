@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.92 2014/02/15 22:20:41 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.92.6.1 2015/04/06 15:17:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92 2014/02/15 22:20:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92.6.1 2015/04/06 15:17:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -103,19 +103,6 @@ cpu_exec_aout_makecmds(struct lwp *p, struct exec_package *e)
 {
 
 	return ENOEXEC;
-}
-#endif
-
-#ifdef COMPAT_16
-/*
- * There is no NetBSD-1.6 compatibility for native code.
- * COMPAT_16 is useful for i386 emulation (COMPAT_NETBSD32) only.
- */
-int
-compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
-{
-
-	return ENOSYS;
 }
 #endif
 
@@ -953,12 +940,6 @@ netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz)
 }
 
 #ifdef COMPAT_13
-int
-compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
-{
-	return ENOSYS;
-}
-
 int
 compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigreturn_args *uap, register_t *retval)
 {

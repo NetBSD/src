@@ -36,6 +36,7 @@
 #include <sys/device.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kmem.h>
 
 #include "vchiq_core.h"
 #include "vchiq_ioctl.h"
@@ -119,7 +120,7 @@ typedef struct user_service_struct {
 
 struct bulk_waiter_node {
 	struct bulk_waiter bulk_waiter;
-	struct lwp *l;
+	int pid;
 	struct list_head list;
 };
 
@@ -134,7 +135,7 @@ struct vchiq_instance_struct {
 
 	int connected;
 	int closing;
-	struct lwp *l;
+	int pid;
 	int mark;
 
 	struct list_head bulk_waiter_list;
@@ -196,9 +197,10 @@ extern struct cfdriver vchiq_cd;
 
 static int	vchiq_ioctl(struct file *, u_long, void *);
 static int	vchiq_close(struct file *);
+static int	vchiq_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 
 static const struct fileops vchiq_fileops = {
-	.fo_read = fbadop_read,
+	.fo_read = vchiq_read,
 	.fo_write = fbadop_write,
 	.fo_ioctl = vchiq_ioctl,
 	.fo_fcntl = fnullop_fcntl,
@@ -525,7 +527,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 
 			if (pargs->is_open) {
 				status = vchiq_open_service_internal
-					(service, (uintptr_t)instance->l);
+					(service, instance->pid);
 				if (status != VCHIQ_SUCCESS) {
 					vchiq_remove_service(service->handle);
 					service = NULL;
@@ -658,7 +660,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			lmutex_lock(&instance->bulk_waiter_list_mutex);
 			list_for_each(pos, &instance->bulk_waiter_list) {
 				if (list_entry(pos, struct bulk_waiter_node,
-					list)->l == current) {
+					list)->pid == current->l_proc->p_pid) {
 					waiter = list_entry(pos,
 						struct bulk_waiter_node,
 						list);
@@ -670,14 +672,14 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			lmutex_unlock(&instance->bulk_waiter_list_mutex);
 			if (!waiter) {
 				vchiq_log_error(vchiq_arm_log_level,
-					"no bulk_waiter found for lwp %p",
-					current);
+					"no bulk_waiter found for pid %d",
+					current->l_proc->p_pid);
 				ret = -ESRCH;
 				break;
 			}
 			vchiq_log_info(vchiq_arm_log_level,
-				"found bulk_waiter %x for lwp %p",
-				(unsigned int)waiter, current);
+				"found bulk_waiter %x for pid %d",
+				(unsigned int)waiter, current->l_proc->p_pid);
 			pargs->userdata = &waiter->bulk_waiter;
 		}
 		status = vchiq_bulk_transfer
@@ -702,13 +704,13 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 		} else {
 			const VCHIQ_BULK_MODE_T mode_waiting =
 				VCHIQ_BULK_MODE_WAITING;
-			waiter->l = current;
+			waiter->pid = current->l_proc->p_pid;
 			lmutex_lock(&instance->bulk_waiter_list_mutex);
 			list_add(&waiter->list, &instance->bulk_waiter_list);
 			lmutex_unlock(&instance->bulk_waiter_list_mutex);
 			vchiq_log_info(vchiq_arm_log_level,
-				"saved bulk_waiter %x for lwp %p",
-				(unsigned int)waiter, current);
+				"saved bulk_waiter %x for pid %d",
+				(unsigned int)waiter, current->l_proc->p_pid);
 
 			pargs->mode = mode_waiting;
 		}
@@ -716,6 +718,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 
 	case VCHIQ_IOC_AWAIT_COMPLETION: {
 		VCHIQ_AWAIT_COMPLETION_T *pargs = arg;
+		int count = 0;
 
 		DEBUG_TRACE(AWAIT_COMPLETION_LINE);
 		if (!instance->connected) {
@@ -750,9 +753,8 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 
 		if (ret == 0) {
 			int msgbufcount = pargs->msgbufcount;
-			int count;
 
-			for (count = 0; count < pargs->count; count++) {
+			for (; count < pargs->count; count++) {
 				VCHIQ_COMPLETION_DATA_T *completion;
 				VCHIQ_SERVICE_T *service1;
 				USER_SERVICE_T *user_service;
@@ -845,7 +847,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			pargs->count = count;
 		}
 
-		if (ret != 0)
+		if (count != 0)
 			up(&instance->remove_event);
 		lmutex_unlock(&instance->completion_mutex);
 		DEBUG_TRACE(AWAIT_COMPLETION_LINE);
@@ -1062,7 +1064,7 @@ vchiq_open(dev_t dev, int flags, int mode, lwp_t *l)
 		}
 
 		instance->state = state;
-		instance->l = l;
+		instance->pid = current->l_proc->p_pid;
 
 #ifdef notyet
 		ret = vchiq_proc_add_instance(instance);
@@ -1203,8 +1205,8 @@ vchiq_close(struct file *fp)
 				list_del(pos);
 				vchiq_log_info(vchiq_arm_log_level,
 					"bulk_waiter - cleaned up %x "
-					"for lwp %p",
-					(unsigned int)waiter, waiter->l);
+					"for pid %d",
+					(unsigned int)waiter, waiter->pid);
 		                _sema_destroy(&waiter->bulk_waiter.event);
 				kfree(waiter);
 			}
@@ -1245,9 +1247,7 @@ vchiq_dump(void *dump_context, const char *str, int len)
 		copy_bytes = min(len, (int)(context->space - context->actual));
 		if (copy_bytes == 0)
 			return;
-		if (copy_to_user(context->buf + context->actual, str,
-			copy_bytes))
-			context->actual = -EFAULT;
+		memcpy(context->buf + context->actual, str, copy_bytes);
 		context->actual += copy_bytes;
 		len -= copy_bytes;
 
@@ -1256,9 +1256,7 @@ vchiq_dump(void *dump_context, const char *str, int len)
 		** carriage return. */
 		if ((len == 0) && (str[copy_bytes - 1] == '\0')) {
 			char cr = '\n';
-			if (copy_to_user(context->buf + context->actual - 1,
-				&cr, 1))
-				context->actual = -EFAULT;
+			memcpy(context->buf + context->actual - 1, &cr, 1);
 		}
 	}
 }
@@ -1299,9 +1297,9 @@ vchiq_dump_platform_instances(void *dump_context)
 			instance = service->instance;
 			if (instance && !instance->mark) {
 				len = snprintf(buf, sizeof(buf),
-					"Instance %x: lwp %p,%s completions "
+					"Instance %x: pid %d,%s completions "
 						"%d/%d",
-					(unsigned int)instance, instance->l,
+					(unsigned int)instance, instance->pid,
 					instance->connected ? " connected, " :
 						"",
 					instance->completion_insert -
@@ -1432,6 +1430,7 @@ dump_phys_mem(void *virt_addr, uint32_t num_bytes)
 
 	kfree(pages);
 }
+#endif
 
 /****************************************************************************
 *
@@ -1439,23 +1438,29 @@ dump_phys_mem(void *virt_addr, uint32_t num_bytes)
 *
 ***************************************************************************/
 
-static ssize_t
-vchiq_read(struct file *file, char __user *buf,
-	size_t count, loff_t *ppos)
+static int
+vchiq_read(struct file *file, off_t *ppos, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
+	int result;
+
+	char *buf = kmem_zalloc(PAGE_SIZE, KM_SLEEP);
+
 	DUMP_CONTEXT_T context;
 	context.buf = buf;
 	context.actual = 0;
-	context.space = count;
+	context.space = PAGE_SIZE;
 	context.offset = *ppos;
 
 	vchiq_dump_state(&context, &g_state);
 
 	*ppos += context.actual;
 
-	return context.actual;
+	result = uiomove(buf, context.actual, uio);
+	kmem_free(buf, PAGE_SIZE);
+	
+	return result;
 }
-#endif
 
 VCHIQ_STATE_T *
 vchiq_get_state(void)

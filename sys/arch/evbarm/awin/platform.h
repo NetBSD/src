@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1 2014/08/31 19:13:01 matt Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.4.1 2015/04/06 15:17:55 skrll Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -34,6 +34,8 @@
 #define AWIN_cubieboard		1
 #define AWIN_cubietruck		2
 #define AWIN_bpi		3
+#define AWIN_hummingbird_a31	4
+#define AWIN_allwinner_a80	5
 
 #include <arm/allwinner/awin_reg.h>
 
@@ -50,7 +52,15 @@
 #define AWIN_KERNEL_IO_VBASE	(KERNEL_VM_BASE + KERNEL_VM_SIZE)
 #define AWIN_CORE_VBASE		AWIN_KERNEL_IO_VBASE
 #define AWIN_SRAM_VBASE		(AWIN_CORE_VBASE + AWIN_CORE_SIZE)
+#if defined(ALLWINNER_A80)
+#define AWIN_A80_CORE2_VBASE	(AWIN_SRAM_VBASE + AWIN_SRAM_SIZE)
+#define AWIN_A80_USB_VBASE	(AWIN_A80_CORE2_VBASE + AWIN_A80_CORE2_SIZE)
+#define AWIN_A80_RCPUS_VBASE	(AWIN_A80_USB_VBASE + AWIN_A80_USB_SIZE)
+#define AWIN_A80_RCPUCFG_VBASE	(AWIN_A80_RCPUS_VBASE + AWIN_A80_RCPUS_SIZE)
+#define AWIN_KERNEL_IO_VEND	(AWIN_A80_RCPUCFG_VBASE + AWIN_A80_RCPUCFG_SIZE)
+#else
 #define AWIN_KERNEL_IO_VEND	(AWIN_SRAM_VBASE + AWIN_SRAM_SIZE)
+#endif
 #define CONADDR_VA		((CONADDR - AWIN_CORE_PBASE) + AWIN_CORE_VBASE)
 #ifndef _LOCORE
 CTASSERT(AWIN_KERNEL_IO_VEND <= VM_MAX_KERNEL_ADDRESS);

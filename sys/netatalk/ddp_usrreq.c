@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.63 2014/08/09 05:33:01 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.63.4.1 2015/04/06 15:18:22 skrll Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.63 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.63.4.1 2015/04/06 15:18:22 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.63 2014/08/09 05:33:01 rtr Exp $");
 
 static void at_pcbdisconnect(struct ddpcb *);
 static void at_sockaddr(struct ddpcb *, struct mbuf *);
-static int at_pcbsetaddr(struct ddpcb *, struct mbuf *);
+static int at_pcbsetaddr(struct ddpcb *, struct sockaddr_at *);
 static int at_pcbconnect(struct ddpcb *, struct mbuf *);
 static void ddp_detach(struct socket *);
 
@@ -142,19 +142,16 @@ at_sockaddr(struct ddpcb *ddp, struct mbuf *addr)
 }
 
 static int
-at_pcbsetaddr(struct ddpcb *ddp, struct mbuf *addr)
+at_pcbsetaddr(struct ddpcb *ddp, struct sockaddr_at *sat)
 {
-	struct sockaddr_at lsat, *sat;
+	struct sockaddr_at lsat;
 	struct at_ifaddr *aa;
 	struct ddpcb   *ddpp;
 
 	if (ddp->ddp_lsat.sat_port != ATADDR_ANYPORT) {	/* shouldn't be bound */
 		return (EINVAL);
 	}
-	if (addr != 0) {	/* validate passed address */
-		sat = mtod(addr, struct sockaddr_at *);
-		if (addr->m_len != sizeof(*sat))
-			return (EINVAL);
+	if (NULL != sat) {	/* validate passed address */
 
 		if (sat->sat_family != AF_APPLETALK)
 			return (EAFNOSUPPORT);
@@ -413,12 +410,12 @@ ddp_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-ddp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+ddp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotoddpcb(so) != NULL);
 
-	return at_pcbsetaddr(sotoddpcb(so), nam);
+	return at_pcbsetaddr(sotoddpcb(so), (struct sockaddr_at *)nam);
 }
 
 static int

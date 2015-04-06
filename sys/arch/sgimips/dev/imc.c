@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.33 2012/10/27 17:18:09 chs Exp $	*/
+/*	$NetBSD: imc.c,v 1.33.14.1 2015/04/06 15:18:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.33 2012/10/27 17:18:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.33.14.1 2015/04/06 15:18:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,8 +103,8 @@ imc_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args *ma = aux;
 	uint32_t sysid;
 
-	isc.iot = SGIMIPS_BUS_SPACE_HPC;
-	if (bus_space_map(isc.iot, ma->ma_addr, 0,
+	isc.iot = normal_memt;
+	if (bus_space_map(isc.iot, ma->ma_addr, 0x100,
 	    BUS_SPACE_MAP_LINEAR, &isc.ioh))
 		panic("imc_attach: could not allocate memory\n");
 

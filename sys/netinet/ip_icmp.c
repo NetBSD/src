@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.134 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.134.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134 2014/05/30 01:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134.4.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -408,8 +408,10 @@ icmp_input(struct mbuf *m, ...)
 	icmplen = ntohs(ip->ip_len) - hlen;
 #ifdef ICMPPRINTFS
 	if (icmpprintfs) {
-		printf("icmp_input from `%s' to ", inet_ntoa(ip->ip_src));
-		printf("`%s', len %d\n", inet_ntoa(ip->ip_dst), icmplen);
+		char sbuf[INET_ADDRSTRLEN], dbuf[INET_ADDRSTRLEN];
+		printf("icmp_input from `%s' to `%s', len %d\n",
+		    IN_PRINT(sbuf, &ip->ip_src), IN_PRINT(dbuf, &ip->ip_dst),
+		    icmplen);
 	}
 #endif
 	if (icmplen < ICMP_MINLEN) {
@@ -615,9 +617,10 @@ reflect:
 		icmpdst.sin_addr = icp->icmp_gwaddr;
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs) {
+			char gbuf[INET_ADDRSTRLEN], dbuf[INET_ADDRSTRLEN];
 			printf("redirect dst `%s' to `%s'\n",
-			    inet_ntoa(icp->icmp_ip.ip_dst),
-			    inet_ntoa(icp->icmp_gwaddr));
+			    IN_PRINT(dbuf, &icp->icmp_ip.ip_dst),
+			    IN_PRINT(gbuf, &icp->icmp_gwaddr));
 		}
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
@@ -627,11 +630,13 @@ reflect:
 		if (rt != NULL && icmp_redirtimeout != 0) {
 			i = rt_timer_add(rt, icmp_redirect_timeout,
 					 icmp_redirect_timeout_q);
-			if (i)
+			if (i) {
+				char buf[INET_ADDRSTRLEN];
 				log(LOG_ERR, "ICMP:  redirect failed to "
-				    "register timeout for route to %x, "
+				    "register timeout for route to %s, "
 				    "code %d\n",
-				    icp->icmp_ip.ip_dst.s_addr, i);
+				    IN_PRINT(buf, &icp->icmp_ip.ip_dst), i);
+			}
 		}
 		if (rt != NULL)
 			rtfree(rt);
@@ -898,8 +903,9 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	m->m_len += hlen;
 #ifdef ICMPPRINTFS
 	if (icmpprintfs) {
+		char sbuf[INET_ADDRSTRLEN], dbuf[INET_ADDRSTRLEN];
 		printf("icmp_send to destination `%s' from `%s'\n",
-		    inet_ntoa(ip->ip_dst), inet_ntoa(ip->ip_src));
+		    IN_PRINT(dbuf, &ip->ip_dst), IN_PRINT(sbuf, &ip->ip_src));
 	}
 #endif
 	(void)ip_output(m, opts, NULL, 0, NULL, NULL);

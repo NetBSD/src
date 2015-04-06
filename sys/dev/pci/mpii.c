@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.5 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: mpii.c,v 1.5.6.1 2015/04/06 15:18:10 skrll Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.5 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.5.6.1 2015/04/06 15:18:10 skrll Exp $");
 
 #include "bio.h"
 
@@ -5571,29 +5571,7 @@ mpii_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 	splx(s);
 	KERNEL_UNLOCK_ONE(curlwp);
 	if (error)
-		return;
-	switch(bv.bv_status) {
-	case BIOC_SVOFFLINE:
-		edata->value_cur = ENVSYS_DRIVE_FAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-	case BIOC_SVDEGRADED:
-		edata->value_cur = ENVSYS_DRIVE_PFAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-	case BIOC_SVREBUILD:
-		edata->value_cur = ENVSYS_DRIVE_REBUILD;
-		edata->state = ENVSYS_SVALID;
-		break;
-	case BIOC_SVONLINE:
-		edata->value_cur = ENVSYS_DRIVE_ONLINE;
-		edata->state = ENVSYS_SVALID;
-		break;
-	case BIOC_SVINVALID:
-		/* FALLTHROUGH */
-	default:
-		edata->value_cur = 0; /* unknown */
-		edata->state = ENVSYS_SINVALID;
-	}
+		bv.bv_status = BIOC_SVINVALID;
+	bio_vol_to_envsys(edata, &bv);
 }
 #endif /* NBIO > 0 */

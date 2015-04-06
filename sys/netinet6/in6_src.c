@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.55 2014/09/05 06:08:15 matt Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.55.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.55 2014/09/05 06:08:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.55.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -118,9 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.55 2014/09/05 06:08:15 matt Exp $");
 #define ADDR_LABEL_NOTAPP (-1)
 struct in6_addrpolicy defaultaddrpolicy;
 
-#ifdef notyet /* until introducing ND extensions and address selection */
 int ip6_prefer_tempaddr = 0;
-#endif
 
 static int selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
 	struct ip6_moptions *, struct route *, struct ifnet **,
@@ -184,9 +182,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	struct in6_addrpolicy *dst_policy = NULL, *best_policy = NULL;
 	u_int32_t odstzone;
 	int error;
-#ifdef notyet /* until introducing ND extensions and address selection */
 	int prefer_tempaddr;
-#endif
 #if defined(MIP6) && NMIP > 0
 	u_int8_t ip6po_usecoa = 0;
 #endif /* MIP6 && NMIP > 0 */
@@ -458,7 +454,6 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		 * a sysctl variable, so that privacy conscious users can
 		 * always prefer temporary addresses.
 		 */
-#ifdef notyet /* until introducing ND extensions and address selection */
 		if (opts == NULL ||
 		    opts->ip6po_prefer_tempaddr == IP6PO_TEMPADDR_SYSTEM) {
 			prefer_tempaddr = ip6_prefer_tempaddr;
@@ -481,7 +476,6 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			else
 				REPLACE(7);
 		}
-#endif
 
 		/*
 		 * Rule 8: prefer addresses on alive interfaces.

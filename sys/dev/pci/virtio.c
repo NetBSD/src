@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.7 2014/10/06 13:31:54 mlelstv Exp $	*/
+/*	$NetBSD: virtio.c,v 1.7.2.1 2015/04/06 15:18:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.7 2014/10/06 13:31:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.7.2.1 2015/04/06 15:18:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ static int	virtio_match(device_t, cfdata_t, void *);
 static void	virtio_attach(device_t, device_t, void *);
 static int	virtio_detach(device_t, int);
 static int	virtio_intr(void *arg);
+static void	virtio_soft_intr(void *arg);
 static void	virtio_init_vq(struct virtio_softc *,
 		    struct virtqueue *, const bool);
 
@@ -187,6 +188,17 @@ virtio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
+
+	sc->sc_soft_ih = NULL;
+	if (sc->sc_flags & VIRTIO_F_PCI_INTR_SOFTINT) {
+		u_int flags = SOFTINT_NET;
+		if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
+			flags |= SOFTINT_MPSAFE;
+
+		sc->sc_soft_ih = softint_establish(flags, virtio_soft_intr, sc);
+		if (sc->sc_soft_ih == NULL)
+			aprint_error(": failed to establish soft interrupt\n");
+	}
 
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
 
@@ -388,10 +400,24 @@ virtio_intr(void *arg)
 	if ((isr & VIRTIO_CONFIG_ISR_CONFIG_CHANGE) &&
 	    (sc->sc_config_change != NULL))
 		r = (sc->sc_config_change)(sc);
-	if (sc->sc_intrhand != NULL)
-		r |= (sc->sc_intrhand)(sc);
+	if (sc->sc_intrhand != NULL) {
+		if (sc->sc_soft_ih != NULL)
+			softint_schedule(sc->sc_soft_ih);
+		else
+			r |= (sc->sc_intrhand)(sc);
+	}
 
 	return r;
+}
+
+static void
+virtio_soft_intr(void *arg)
+{
+	struct virtio_softc *sc = arg;
+
+	KASSERT(sc->sc_intrhand != NULL);
+
+	(sc->sc_intrhand)(sc);
 }
 
 /*

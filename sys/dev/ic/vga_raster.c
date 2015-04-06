@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.42 2014/08/21 13:52:22 macallan Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.42.2.1 2015/04/06 15:18:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.42 2014/08/21 13:52:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.42.2.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include "opt_vga.h"
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
@@ -402,14 +402,6 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 	    &vh->vh_memh))
 		panic("vga_raster_init: mem subrange failed");
 
-#if 0
-	/* should only reserve the space (no need to map - save KVM) */
-	vc->vc_biostag = memt;
-	if (bus_space_map(vc->vc_biostag, 0xc0000, 0x8000, 0, &vc->vc_bioshdl))
-		vc->vc_biosmapped = 0;
-	else
-		vc->vc_biosmapped = 1;
-#endif
 	vc->nscreens = 0;
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
@@ -575,6 +567,7 @@ vga_cndetach(void)
 
 		bus_space_unmap(vh->vh_iot, vh->vh_ioh_vga, 0x10);
 		bus_space_unmap(vh->vh_iot, vh->vh_ioh_6845, 0x10);
+		bus_space_unmap(vh->vh_memt, vh->vh_allmemh, 0x20000);
 
 		vga_console_attached = 0;
 		vgaconsole = 0;

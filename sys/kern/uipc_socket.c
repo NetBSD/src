@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.235 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.235.2.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -624,11 +624,15 @@ sofamily(const struct socket *so)
 }
 
 int
-sobind(struct socket *so, struct mbuf *nam, struct lwp *l)
+sobind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	int	error;
 
 	solock(so);
+	if (nam->sa_family != so->so_proto->pr_domain->dom_family) {
+		sounlock(so);
+		return EAFNOSUPPORT;
+	}
 	error = (*so->so_proto->pr_usrreqs->pr_bind)(so, nam, l);
 	sounlock(so);
 	return error;

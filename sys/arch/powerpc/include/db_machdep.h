@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.24 2011/06/14 03:28:32 matt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.24.30.1 2015/04/06 15:18:00 skrll Exp $	*/
 
 /* 
  * Mach Operating System
@@ -162,6 +162,10 @@ typedef long	kgdb_reg_t;
 
 void	kdb_kintr(void *);
 int	kdb_trap(int, void *);
+
+bool	ddb_running_on_this_cpu_p(void);
+bool	ddb_running_on_any_cpu_p(void);
+void	db_resume_others(void);
 
 /*
  * We have machine-dependent commands.
