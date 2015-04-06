@@ -1,4 +1,4 @@
-.\" $NetBSD: btmagic.4,v 1.3 2015/04/06 17:57:51 bouyer Exp $
+.\" $NetBSD: btmagic.4,v 1.4 2015/04/06 21:10:31 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,8 +53,8 @@ program.
 .Pp
 The Magic Mouse and Magic Trackpad use the standard
 .Tn USB
-Human Interface Device protocol to communicate, but does not provide a
-proper HID Descriptor, and requires specific initializations to enable
+Human Interface Device protocol to communicate, but do not provide a
+proper HID Descriptor, and require specific initializations to enable
 the proprietary touch reports.
 .Pp
 The Magic Mouse provides basic mouse functionality with two buttons,
@@ -75,10 +75,11 @@ The Magic Trackpad provides multi touch functionality and one button.
 The
 .Nm
 driver emulates 3 buttons by splitting the area at the bottom of the
-device if 3 equal zones and detect finger presence in one of these zones
-when the button is pressed. Pointer movement is reported for single-touch
+device in 3 equal zones and detects finger presence in one of these zones
+when the button is pressed.
+Pointer movement is reported for single-touch
 movements over the device, and scroll is reported for multi-touch movements.
-
+.Pp
 The trackpad has a base resolution of 1300dpi, which the driver scales
 by default to a less sensitive 650dpi, but this is adjustable with
 .Xr sysctl 8
@@ -121,7 +122,8 @@ during the pairing process.
 .Xr wsmouse 4 ,
 .Xr btdevctl 8 ,
 .Xr sysctl 8
-.Sh HISTORY
+.Sh AUTHORS
+.An -nosplit
 The
 .Nm
 driver was written by
@@ -130,7 +132,8 @@ with reference to the
 .Tn Linux
 driver written by
 .An Michael Poole .
-.An Manuel Bouyer added Magic Trackpad support, with reference to the
+.An Manuel Bouyer
+added Magic Trackpad support, with reference to the
 .Tn Linux
 driver written by
 .An Michael Poole
