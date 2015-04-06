@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.38 2013/05/17 12:55:57 joerg Exp $	*/
+/*	$NetBSD: strptime.c,v 1.39 2015/04/06 14:38:22 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.38 2013/05/17 12:55:57 joerg Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.39 2015/04/06 14:38:22 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -357,7 +357,8 @@ literal:
 
 		case 'Z':
 			tzset();
-			if (strncmp((const char *)bp, gmt, 3) == 0) {
+			if (strncmp((const char *)bp, gmt, 3) == 0 ||
+			    strncmp((const char *)bp, utc, 3) == 0) {
 				tm->tm_isdst = 0;
 #ifdef TM_GMTOFF
 				tm->TM_GMTOFF = 0;
