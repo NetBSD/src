@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.139 2015/04/06 06:16:30 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.140 2015/04/06 06:20:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -94,10 +94,12 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.139 2015/04/06 06:16:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.140 2015/04/06 06:20:27 ozaki-r Exp $");
 
 #include <sys/param.h>
+#ifdef RTFLUSH_DEBUG
 #include <sys/sysctl.h>
+#endif
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
