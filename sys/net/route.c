@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.138 2015/04/03 05:44:13 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.139 2015/04/06 06:16:30 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -94,10 +94,9 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.138 2015/04/03 05:44:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.139 2015/04/06 06:16:30 ozaki-r Exp $");
 
 #include <sys/param.h>
-#include <sys/kmem.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -115,7 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.138 2015/04/03 05:44:13 ozaki-r Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <net/raw_cb.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
