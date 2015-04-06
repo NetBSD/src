@@ -1,4 +1,4 @@
-.\"     $NetBSD: resize_ffs.8,v 1.15 2015/03/29 19:42:15 wiz Exp $
+.\"     $NetBSD: resize_ffs.8,v 1.16 2015/04/06 22:44:04 jmcneill Exp $
 .\"
 .\" As its sole author, I explicitly place this man page in the public
 .\" domain.  Anyone may use it in any way for any purpose (though I would
@@ -9,7 +9,7 @@
 .\"  X  Against HTML               mouse@rodents.montreal.qc.ca
 .\" / \ Email!           7D C8 61 52 5D E7 2D 39  4E F1 31 3E E8 B3 27 4B
 .\"
-.Dd January 4, 2011
+.Dd April 6, 2015
 .Dt RESIZE_FFS 8
 .Os
 .Sh NAME
@@ -17,7 +17,7 @@
 .Nd resize a file system on disk or in a file
 .Sh SYNOPSIS
 .Nm
-.Op Fl cvy
+.Op Fl cpvy
 .Op Fl s Ar size
 .Ar special
 .Sh DESCRIPTION
@@ -58,6 +58,8 @@ The options are as follows:
 .It Fl c
 Check to see if the new size would change the file system.
 No changes will be made to the file system.
+.It Fl p
+Display a progress meter during the resize process.
 .It Fl s
 Specify the file system size to which the file system should be
 resized.
