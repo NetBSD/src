@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.249 2015/04/06 02:03:15 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.250 2015/04/06 18:51:14 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19515,4 +19515,20 @@ libexec/ld.elf_so/rtld.c			1.176
 
 	PR lib/49813: Release mutex on error, avoiding a deadlock.
 	[joerg, ticket #665]
+
+sys/dev/sysmon/sysmon_envsys.c			1.129
+sys/dev/sysmon/sysmon_envsys_events.c		1.114
+sys/dev/sysmon/sysmonvar.h			1.46
+
+	Avoid a deadlock where an active event holds "sme_mtx", the
+	callout "sme_events_check" blocks on "sme_mtx" and callout
+	processing stops.
+	[hannken, ticket #666]
+
+distrib/utils/embedded/mkimage			1.54
+
+	Resizing of ffsv2 still doesn't work well, so use ffsv1 and 
+	explicitly set fsize=2048/bsize=16384, which gives a pretty
+	decent boost to resize_ffs performance.
+	[jmcneill, ticket #667]
 
