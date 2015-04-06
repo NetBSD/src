@@ -1,4 +1,4 @@
-.\" $NetBSD: btmagic.4,v 1.2 2010/10/11 15:15:57 plunky Exp $
+.\" $NetBSD: btmagic.4,v 1.3 2015/04/06 17:57:51 bouyer Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 11, 2010
+.Dd April 6, 2015
 .Dt BTMAGIC 4
 .Os
 .Sh NAME
 .Nm btmagic
-.Nd Apple Magic Mouse
+.Nd Apple Magic Mouse and Apple Magic Trackpad
 .Sh SYNOPSIS
 .Cd "btmagic*	at bthub?"
 .Cd "wsmouse*	at btmagic?"
@@ -42,6 +42,8 @@ The
 driver provides support for the
 .Tn Bluetooth
 .Dq Magic Mouse
+and
+.Dq Magic Trackpad
 from
 .Tn Apple, Inc .
 As remote devices cannot be discovered by autoconfig, configuring
@@ -49,7 +51,7 @@ a mouse is normally carried out with the
 .Xr btdevctl 8
 program.
 .Pp
-The Magic Mouse uses the standard
+The Magic Mouse and Magic Trackpad use the standard
 .Tn USB
 Human Interface Device protocol to communicate, but does not provide a
 proper HID Descriptor, and requires specific initializations to enable
@@ -69,6 +71,19 @@ along with the pressure needed to discern a firm touch, the minimum
 distance necessary to trigger scrolling and the additional downscale
 factor applied to scroll movements.
 .Pp
+The Magic Trackpad provides multi touch functionality and one button.
+The
+.Nm
+driver emulates 3 buttons by splitting the area at the bottom of the
+device if 3 equal zones and detect finger presence in one of these zones
+when the button is pressed. Pointer movement is reported for single-touch
+movements over the device, and scroll is reported for multi-touch movements.
+
+The trackpad has a base resolution of 1300dpi, which the driver scales
+by default to a less sensitive 650dpi, but this is adjustable with
+.Xr sysctl 8
+along with the additional downscale factor applied to scroll movements.
+.Pp
 .Nm
 interfaces to the system as usual through the
 .Xr wsmouse 4
@@ -77,7 +92,7 @@ driver, and the following properties are used during autoconfiguration:
 .It vendor-id
 Must be 0x05ac.
 .It product-id
-Must be 0x030d.
+Must be 0x030d or 0x030e.
 .It local-bdaddr
 Local device address.
 .It remote-bdaddr
@@ -115,3 +130,9 @@ with reference to the
 .Tn Linux
 driver written by
 .An Michael Poole .
+.An Manuel Bouyer added Magic Trackpad support, with reference to the
+.Tn Linux
+driver written by
+.An Michael Poole
+and
+.An Chase Douglas .
