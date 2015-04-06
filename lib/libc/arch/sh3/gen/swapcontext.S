@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.11 2015/01/25 01:32:26 uwe Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.12 2015/04/06 01:50:46 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.11 2015/01/25 01:32:26 uwe Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.12 2015/04/06 01:50:46 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -40,44 +40,33 @@
  */
 ENTRY(swapcontext)
 	PIC_PROLOGUE(.L_got)
-	mov.l	r5, @-sp
 	sts.l	pr, @-sp
 
 	mov.l	.L__getcontext, r0
-1:	CALL	r0			/* _getcontext(oucp) */
+	mov.l	r5, @-sp
+1:	CALL	r0			! _getcontext(oucp)
 	 mov.l	r4, @-sp
-	mov.l	@sp+, r1
+	!! getcontext captures oucp resuming here with r12 (when PIC),
+	!! pr, r5 and r4 pushed onto the stack
+
 	tst	r0, r0
-	bf	3f			/* return error from getcontext */
+	bf.s	3f			! return error from getcontext
+	 mov.l	@sp, r1			! saved oucp
 
-	/* Note: getcontext does _UC_MACHINE_INTRV(oucp) = 0 for us */
-	mov.l	@sp, r0
-	mov.l	r0, @(36 + 1 * 4, r1)	/* _UC_MACHINE_SET_PC(oucp, pr) */
-
-	/* Adjust stack pointer in oucp */
-	mov	sp, r2
-	mov	#(36 + 21 * 4), r0	/* offset to _UC_MACHINE_SP */
-#ifdef __PIC__
-	add	#12, r2			/* "drop" r12, r5, pr */
-#else
-	add	#8, r2			/* "drop" r5, pr */
-#endif
-	mov.l	r2, @(r0, r1)		/* set _UC_MACHINE_SP(oucp) */
+	!! adjust oucp to resume after setcontext below
+	mova	3f, r0
+	mov.l	r0, @(36 + 1 * 4, r1)	! _UC_MACHINE_SET_PC(oucp, pr)
 
 	mov.l	.L_setcontext, r2
-2:	CALL	r2			/* setcontext(ucp) */
-	 mov.l	@(4, sp), r4
-	/* if we get here, return error from setcontext */
-3:
+2:	CALL	r2			! setcontext(ucp)
+	 mov.l	@(4, sp), r4		! saved ucp
+
+	.align	2
+3:	!! we get here on errors and when resuming oucp
+	add	#8, sp			! skip r4 and r5
 	lds.l	@sp+, pr
-#ifdef __PIC__
-	add	#4, sp
 	rts
-	 PIC_EPILOGUE
-#else
-	rts
-	 add	#4, sp
-#endif
+	 PIC_EPILOGUE_SLOT
 
 	.align	2
 .L_got:			PIC_GOT_DATUM
