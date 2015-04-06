@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_rng.c,v 1.1.2.2 2015/03/21 08:51:17 snj Exp $ */
+/* $NetBSD: amlogic_rng.c,v 1.1.2.3 2015/04/06 01:43:31 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_rng.c,v 1.1.2.2 2015/03/21 08:51:17 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_rng.c,v 1.1.2.3 2015/04/06 01:43:31 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,10 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_rng.c,v 1.1.2.2 2015/03/21 08:51:17 snj Exp 
 #include <arm/amlogic/amlogic_reg.h>
 #include <arm/amlogic/amlogic_var.h>
 
+struct amlogic_rng_softc;
+
 static int	amlogic_rng_match(device_t, cfdata_t, void *);
 static void	amlogic_rng_attach(device_t, device_t, void *);
 
-static void	amlogic_rng_callout(void *);
+static void	amlogic_rng_get(struct amlogic_rng_softc *);
+static void	amlogic_rng_get_intr(void *);
+static void	amlogic_rng_get_cb(size_t, void *);
 
 struct amlogic_rng_softc {
 	device_t		sc_dev;
@@ -55,9 +59,11 @@ struct amlogic_rng_softc {
 
 	void *			sc_sih;
 
-	callout_t		sc_tick;
 	krndsource_t		sc_rndsource;
 	size_t			sc_bytes_wanted;
+
+	kmutex_t		sc_intr_lock;
+	kmutex_t		sc_rnd_lock;
 };
 
 CFATTACH_DECL_NEW(amlogic_rng, sizeof(struct amlogic_rng_softc),
@@ -81,31 +87,69 @@ amlogic_rng_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(aio->aio_core_bst, aio->aio_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
-	callout_init(&sc->sc_tick, CALLOUT_MPSAFE);
-	callout_setfunc(&sc->sc_tick, amlogic_rng_callout, sc);
-
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SERIAL);
+	mutex_init(&sc->sc_rnd_lock, MUTEX_DEFAULT, IPL_SERIAL);
+	
 	amlogic_rng_init();
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	rnd_attach_source(&sc->sc_rndsource, device_xname(self), RND_TYPE_RNG,
-	    RND_FLAG_COLLECT_VALUE);
+	sc->sc_sih = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
+	    amlogic_rng_get_intr, sc);
+	if (sc->sc_sih == NULL) {
+		aprint_error_dev(self, "couldn't establish softint\n");
+		return;
+	}
 
-	amlogic_rng_callout(sc);
+	rndsource_setcb(&sc->sc_rndsource, amlogic_rng_get_cb, sc);
+	rnd_attach_source(&sc->sc_rndsource, device_xname(self), RND_TYPE_RNG,
+	    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
+
+	amlogic_rng_get_cb(RND_POOLBITS / NBBY, sc);
 }
 
 static void
-amlogic_rng_callout(void *priv)
+amlogic_rng_get(struct amlogic_rng_softc *sc)
 {
-	struct amlogic_rng_softc * const sc = priv;
 	uint32_t data[2];
 
-	bus_space_read_region_4(sc->sc_bst, sc->sc_bsh, 0, data, 2);
-	rnd_add_data(&sc->sc_rndsource, data, sizeof(data),
-	    sizeof(data) * NBBY);
-
+	mutex_spin_enter(&sc->sc_intr_lock);
+	while (sc->sc_bytes_wanted) {
+		bus_space_read_region_4(sc->sc_bst, sc->sc_bsh, 0, data, 2);
+		mutex_spin_exit(&sc->sc_intr_lock);
+		mutex_spin_enter(&sc->sc_rnd_lock);
+		rnd_add_data(&sc->sc_rndsource, data, sizeof(data),
+		    sizeof(data) * NBBY);
+		mutex_spin_exit(&sc->sc_rnd_lock);
+		mutex_spin_enter(&sc->sc_intr_lock);
+		sc->sc_bytes_wanted -= MIN(sc->sc_bytes_wanted, sizeof(data));
+	}
 	explicit_memset(data, 0, sizeof(data));
+	mutex_spin_exit(&sc->sc_intr_lock);
+}
 
-	callout_schedule(&sc->sc_tick, 1);
+static void
+amlogic_rng_get_cb(size_t bytes_wanted, void *priv)
+{
+	struct amlogic_rng_softc * const sc = priv;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+	if (sc->sc_bytes_wanted == 0) {
+		softint_schedule(sc->sc_sih);
+	}
+	if (bytes_wanted > (UINT_MAX - sc->sc_bytes_wanted)) {
+		sc->sc_bytes_wanted = UINT_MAX;
+	} else {
+		sc->sc_bytes_wanted += bytes_wanted;
+	}
+	mutex_spin_exit(&sc->sc_intr_lock);
+}
+
+static void
+amlogic_rng_get_intr(void *priv)
+{
+	struct amlogic_rng_softc * const sc = priv;
+
+	amlogic_rng_get(sc);
 }
