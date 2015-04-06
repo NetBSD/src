@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.81 2013/10/25 20:46:29 martin Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.81.4.1 2015/04/06 01:37:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.81 2013/10/25 20:46:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.81.4.1 2015/04/06 01:37:29 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -432,7 +432,7 @@ int
 nfs_boot_sendrecv(struct socket *so, struct mbuf *nam,
 		int (*sndproc)(struct mbuf *, void *, int),
 		struct mbuf *snd,
-		int (*rcvproc)(struct mbuf *, void *),
+		int (*rcvproc)(struct mbuf **, void *),
 		struct mbuf **rcv, struct mbuf **from_p,
 		void *context, struct lwp *lwp)
 {
@@ -510,7 +510,7 @@ send_again:
 			panic("nfs_boot_sendrecv: return size");
 #endif
 
-		if ((*rcvproc)(m, context))
+		if ((*rcvproc)(&m, context))
 			continue;
 
 		if (rcv)
