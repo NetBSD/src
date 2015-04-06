@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR_CP,v 1.9 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: INTEGRATOR_CP,v 1.9.2.1 2015/04/06 15:17:55 skrll Exp $
 #
 #	INTEGRATOR_CP -- ARM Integrator CP kernel
 #
@@ -135,6 +135,7 @@ makeoptions	COPY_SYMTAB=1
 options 	PLCONSOLE,PLCOMCNUNIT=0,PLCONSPEED=38400,PLCONMODE=0xB00
 
 config		netbsd		root on ? type ?
+config		netbsd-ld0	root on ld0 type ?
 config		netbsd-sm0	root on sm0 type nfs
 
 # The main bus device
@@ -153,6 +154,13 @@ plcom1		at ifpga? offset 0x07000000 irq 2
 
 # PL030 real time clock
 plrtc0		at ifpga? offset 0x05000000
+
+# PL181 MMCI host controller
+plmmc0		at ifpga? offset 0x0c000000 irq 23
+sdmmc*		at plmmc0
+ld*		at sdmmc?
+#options 	SDMMC_DEBUG
+#options 	SDMMCCISDEBUG
 
 # PCI bus via ifpga
 pci0		at ifpga?			# PCI bus

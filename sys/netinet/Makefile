@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.25 2012/09/15 17:41:59 plunky Exp $
+#	$NetBSD: Makefile,v 1.25.14.1 2015/04/06 15:18:22 skrll Exp $
 
 INCSDIR= /usr/include/netinet
 
-INCS=	icmp6.h icmp_var.h if_atm.h if_ether.h if_inarp.h igmp.h \
+INCS=	dccp.h icmp6.h icmp_var.h if_atm.h if_ether.h if_inarp.h igmp.h \
 	igmp_var.h in.h in_gif.h in_pcb.h in_pcb_hdr.h \
 	in_selsrc.h in_systm.h \
 	in_var.h ip.h ip_carp.h ip6.h ip_ecn.h ip_encap.h \

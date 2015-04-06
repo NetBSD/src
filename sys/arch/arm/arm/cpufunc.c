@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.150 2014/07/31 07:14:42 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.150.4.1 2015/04/06 15:17:52 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.150 2014/07/31 07:14:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.150.4.1 2015/04/06 15:17:52 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1490,9 +1490,9 @@ get_cachesize_cp15(int cssr)
 #if defined(CPU_ARMV7)
 	__asm volatile(".arch\tarmv7a");
 	__asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (cssr));
-	__asm volatile("isb");	/* sync to the new cssr */
+	__asm volatile("isb" ::: "memory");	/* sync to the new cssr */
 #else
-	__asm volatile("mcr p15, 1, %0, c0, c0, 2" :: "r" (cssr));
+	__asm volatile("mcr p15, 1, %0, c0, c0, 2" :: "r" (cssr) : "memory");
 #endif
 	__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r" (csid));
 	return csid;

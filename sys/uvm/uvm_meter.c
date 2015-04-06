@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.63 2014/02/26 20:33:53 martin Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.63.6.1 2015/04/06 15:18:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.63 2014/02/26 20:33:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.63.6.1 2015/04/06 15:18:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,8 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.swpginuse = uvmexp.swpginuse;
 	u.swpgonly = uvmexp.swpgonly;
 	u.nswget = uvmexp.nswget;
+	u.cpuhit = uvmexp.cpuhit;
+	u.cpumiss = uvmexp.cpumiss;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		u.faults += ci->ci_data.cpu_nfault;
 		u.traps += ci->ci_data.cpu_ntrap;
@@ -174,8 +176,7 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.execpages = uvmexp.execpages;
 	u.colorhit = uvmexp.colorhit;
 	u.colormiss = uvmexp.colormiss;
-	u.cpuhit = uvmexp.cpuhit;
-	u.cpumiss = uvmexp.cpumiss;
+	u.ncolors = uvmexp.ncolors;
 
 	node = *rnode;
 	node.sysctl_data = &u;

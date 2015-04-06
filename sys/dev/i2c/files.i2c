@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.58 2014/10/15 05:11:36 uebayasi Exp $
+#	$NetBSD: files.i2c,v 1.58.2.1 2015/04/06 15:18:09 skrll Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -9,6 +9,7 @@ attach	iic at i2cbus
 file	dev/i2c/i2c.c				iic
 file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
 file	dev/i2c/i2c_subr.c			iic | i2cbus
+defparam opt_i2c.h				I2C_MAX_ADDR
 
 # Common module for bit-bang'ing an I2C bus
 define	i2c_bitbang
@@ -224,3 +225,23 @@ file	dev/i2c/axp20x.c			axp20x
 device	axp22x: sysmon_envsys
 attach	axp22x at iic
 file	dev/i2c/axp22x.c			axp22x
+
+# AXP806 Power Management Unit
+device	axp806pm
+attach	axp806pm at iic
+file	dev/i2c/axp806.c			axp806pm	needs-flag
+
+# AXP809 Power Management Unit
+device	axp809pm
+attach	axp809pm at iic
+file	dev/i2c/axp809.c			axp809pm	needs-flag
+
+# AC100 integrated audio codec and RTC
+device	ac100ic
+attach	ac100ic at iic
+file	dev/i2c/ac100.c				ac100ic		needs-flag
+
+# ACT8846 Power Management Unit
+device	act8846pm
+attach	act8846pm at iic
+file	dev/i2c/act8846.c			act8846pm	needs-flag

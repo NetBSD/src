@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2014/09/19 17:25:47 christos Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2015/04/06 15:18:22 skrll Exp $
 
 .include "../Makefile.inc"
 
 KMOD=	hdaudioverbose
 
-.PATH:	${S}/dev/pci/hdaudio
+.PATH:	${S}/dev/hdaudio
 SRCS=	hdaudio_verbose.c
 
 .include <bsd.kmodule.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.21 2011/07/03 01:01:06 mrg Exp $ */
+/*	$NetBSD: deflate.c,v 1.21.30.1 2015/04/06 15:18:24 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.21 2011/07/03 01:01:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.21.30.1 2015/04/06 15:18:24 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -88,7 +88,7 @@ deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out,
 	int error, i, j;
 	struct deflate_buf buf[ZBUF];
 
-	DPRINTF(("deflate_global: size %d\n", size));
+	DPRINTF(("deflate_global: size %u\n", size));
 
 	memset(&zbuf, 0, sizeof(z_stream));
 	zbuf.next_in = data;	/* data that is going to be processed */
@@ -236,7 +236,7 @@ gzip_global(u_int8_t *data, u_int32_t size,
 	u_int32_t crc;
 	u_int32_t isize = 0, icrc = 0;
 
-	DPRINTF(("gzip_global: decomp %d, size %d\n", decomp, size));
+	DPRINTF(("gzip_global: decomp %d, size %u\n", decomp, size));
 
 	memset(&zbuf, 0, sizeof(z_stream));
 	zbuf.zalloc = ocf_zalloc;
@@ -245,13 +245,13 @@ gzip_global(u_int8_t *data, u_int32_t size,
 
 	if (!decomp) {
 		/* compress */
-		DPRINTF(("gzip_global: compress malloc %d + %d + %d = %d\n",
+		DPRINTF(("gzip_global: compress malloc %u + %zu + %u = %zu\n",
 				size, sizeof(gzip_header), GZIP_TAIL_SIZE,
 				size + sizeof(gzip_header) + GZIP_TAIL_SIZE));
 
 		buf[0].size = size;
 		crc = crc32(0, data, size);
-		DPRINTF(("gzip_compress: size %d, crc 0x%x\n", size, crc));
+		DPRINTF(("gzip_compress: size %u, crc 0x%x\n", size, crc));
 		zbuf.avail_in = size;	/* Total length of data to be processed */
 		zbuf.next_in = data;	/* data that is going to be processed */
 	} else {
@@ -259,7 +259,7 @@ gzip_global(u_int8_t *data, u_int32_t size,
 		/* check the gzip header */
 		if (size <= sizeof(gzip_header) + GZIP_TAIL_SIZE) {
 			/* Not enough data for the header & tail */
-			DPRINTF(("gzip_global: not enough data (%d)\n",
+			DPRINTF(("gzip_global: not enough data (%u)\n",
 					size));
 			return 0;
 		}
@@ -284,7 +284,7 @@ gzip_global(u_int8_t *data, u_int32_t size,
 		memcpy(&icrc, &data[size-2*sizeof(uint32_t)], sizeof(uint32_t));
 		LE32TOH(icrc);
 
-		DPRINTF(("gzip_global: isize = %d (%02x %02x %02x %02x)\n",
+		DPRINTF(("gzip_global: isize = %u (%02x %02x %02x %02x)\n",
 				isize,
 				data[size-4],
 				data[size-3],
@@ -306,7 +306,7 @@ gzip_global(u_int8_t *data, u_int32_t size,
 		return 0;
 	zbuf.next_out = buf[0].out;
 	zbuf.avail_out = buf[0].size;
-	DPRINTF(("zbuf avail_in %d, avail_out %d\n",
+	DPRINTF(("zbuf avail_in %u, avail_out %u\n",
 			zbuf.avail_in, zbuf.avail_out));
 	i = 1;
 
@@ -319,11 +319,11 @@ gzip_global(u_int8_t *data, u_int32_t size,
 		goto bad2;
 	}
 	for (;;) {
-		DPRINTF(("pre: %s in:%d out:%d\n", decomp ? "deflate()" : "inflate()", 
+		DPRINTF(("pre: %s in:%u out:%u\n", decomp ? "deflate()" : "inflate()", 
 				zbuf.avail_in, zbuf.avail_out));
 		error = decomp ? inflate(&zbuf, Z_SYNC_FLUSH) :
 				 deflate(&zbuf, Z_FINISH);
-		DPRINTF(("post: %s in:%d out:%d\n", decomp ? "deflate()" : "inflate()", 
+		DPRINTF(("post: %s in:%u out:%u\n", decomp ? "deflate()" : "inflate()", 
 				zbuf.avail_in, zbuf.avail_out));
 		if (error == Z_STREAM_END) /* success */
 			break;
@@ -359,7 +359,7 @@ gzip_global(u_int8_t *data, u_int32_t size,
 		count = zbuf.total_out;
 	}
 
-	DPRINTF(("gzip_global: in %d -> out %d\n", size, result));
+	DPRINTF(("gzip_global: in %u -> out %u\n", size, result));
 
 	*out = malloc(result, M_CRYPTO_DATA, M_NOWAIT);
 	if (*out == NULL)

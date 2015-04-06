@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.34.4.7 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.34.4.8 2015/04/06 15:18:13 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.7 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.8 2015/04/06 15:18:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -108,29 +108,43 @@ static const struct urtwn_dev {
 	URTWN_DEV(ABOCOM,	RTL8188CU_2),
 	URTWN_DEV(ABOCOM,	RTL8192CU),
 	URTWN_DEV(ASUSTEK,	RTL8192CU),
+	URTWN_DEV(ASUSTEK,	RTL8192CU_3),
 	URTWN_DEV(ASUSTEK,	USBN10NANO),
+	URTWN_DEV(ASUSTEK,	RTL8192CU_3),
 	URTWN_DEV(AZUREWAVE,	RTL8188CE_1),
 	URTWN_DEV(AZUREWAVE,	RTL8188CE_2),
 	URTWN_DEV(AZUREWAVE,	RTL8188CU),
+	URTWN_DEV(BELKIN,	F7D2102),
 	URTWN_DEV(BELKIN,	RTL8188CU),
+	URTWN_DEV(BELKIN,	RTL8188CUS),
 	URTWN_DEV(BELKIN,	RTL8192CU),
+	URTWN_DEV(BELKIN,	RTL8192CU_1),
+	URTWN_DEV(BELKIN,	RTL8192CU_2),
 	URTWN_DEV(CHICONY,	RTL8188CUS_1),
 	URTWN_DEV(CHICONY,	RTL8188CUS_2),
 	URTWN_DEV(CHICONY,	RTL8188CUS_3),
 	URTWN_DEV(CHICONY,	RTL8188CUS_4),
 	URTWN_DEV(CHICONY,	RTL8188CUS_5),
+	URTWN_DEV(CHICONY,	RTL8188CUS_6),
+	URTWN_DEV(COMPARE,	RTL8192CU),
 	URTWN_DEV(COREGA,	RTL8192CU),
+	URTWN_DEV(DLINK,	DWA131B),
 	URTWN_DEV(DLINK,	RTL8188CU),
 	URTWN_DEV(DLINK,	RTL8192CU_1),
 	URTWN_DEV(DLINK,	RTL8192CU_2),
 	URTWN_DEV(DLINK,	RTL8192CU_3),
+	URTWN_DEV(DLINK,	RTL8192CU_4),
 	URTWN_DEV(EDIMAX,	RTL8188CU),
 	URTWN_DEV(EDIMAX,	RTL8192CU),
 	URTWN_DEV(FEIXUN,	RTL8188CU),
 	URTWN_DEV(FEIXUN,	RTL8192CU),
 	URTWN_DEV(GUILLEMOT,	HWNUP150),
+	URTWN_DEV(GUILLEMOT,	RTL8192CU),
 	URTWN_DEV(HAWKING,	RTL8192CU),
+	URTWN_DEV(HAWKING,	RTL8192CU_2),
 	URTWN_DEV(HP3,		RTL8188CU),
+	URTWN_DEV(IODATA,	WNG150UM),
+	URTWN_DEV(IODATA,	RTL8192CU),
 	URTWN_DEV(NETGEAR,	WNA1000M),
 	URTWN_DEV(NETGEAR,	RTL8192CU),
 	URTWN_DEV(NETGEAR4,	RTL8188CU),
@@ -151,6 +165,7 @@ static const struct urtwn_dev {
 	URTWN_DEV(REALTEK,	RTL8188CUS),
 	URTWN_DEV(REALTEK,	RTL8188RU),
 	URTWN_DEV(REALTEK,	RTL8188RU_2),
+	URTWN_DEV(REALTEK,	RTL8188RU_3),
 	URTWN_DEV(REALTEK,	RTL8191CU),
 	URTWN_DEV(REALTEK,	RTL8192CE),
 	URTWN_DEV(REALTEK,	RTL8192CU),
@@ -158,6 +173,7 @@ static const struct urtwn_dev {
 	URTWN_DEV(SITECOMEU,	RTL8188CU_2),
 	URTWN_DEV(SITECOMEU,	RTL8192CU),
 	URTWN_DEV(SITECOMEU,	RTL8192CUR2),
+	URTWN_DEV(TPLINK,	RTL8192CU),
 	URTWN_DEV(TRENDNET,	RTL8188CU),
 	URTWN_DEV(TRENDNET,	RTL8192CU),
 	URTWN_DEV(ZYXEL,	RTL8192CU),
@@ -3071,7 +3087,7 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 		    error);
 		return error;
 	}
-	len = firmware_get_size(fwh);
+	const size_t fwlen = len = firmware_get_size(fwh);
 	fw = firmware_malloc(len);
 	if (fw == NULL) {
 		aprint_error_dev(sc->sc_dev,
@@ -3084,7 +3100,7 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to read firmware (error %d)\n", error);
-		firmware_free(fw, 0);
+		firmware_free(fw, fwlen);
 		return error;
 	}
 
@@ -3174,7 +3190,7 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 		goto fail;
 	}
  fail:
-	firmware_free(fw, 0);
+	firmware_free(fw, fwlen);
 	return error;
 }
 

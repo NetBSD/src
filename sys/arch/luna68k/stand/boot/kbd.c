@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.2 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.2.6.1 2015/04/06 15:17:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -79,7 +79,7 @@
 #include <luna68k/stand/boot/samachdep.h>
 #include <luna68k/stand/boot/kbdreg.h>
 
-struct kbd_keymap kbd_keymap[] = {
+static const struct kbd_keymap kbd_keymap[] = {
 	{ KC_IGNORE,	{ 0,	    0        } },	/*   0 [0x00]	      */
 	{ KC_IGNORE,	{ 0,	    0        } },	/*   1 [0x01]	      */
 	{ KC_IGNORE,	{ 0,	    0        } },	/*   2 [0x02]	      */
@@ -215,7 +215,7 @@ int	ctrl_flag  = 0;
 int	meta_flag  = 0;
 
 int
-kbd_decode(u_char code)
+kbd_decode(uint8_t code)
 {
 	unsigned int c, updown = 0;
 

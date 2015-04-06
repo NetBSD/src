@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.17 2014/08/08 19:15:33 gson Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.17.4.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.17 2014/08/08 19:15:33 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.17.4.1 2015/04/06 15:18:20 skrll Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.17 2014/08/08 19:15:33 gson Exp $")
 #else
 #define	DPRINTF(arg...)		((void)0)
 #endif
-
-int v7fs_vnode_reload(struct mount *, struct vnode *);
 
 static v7fs_mode_t vtype_to_v7fs_mode(enum vtype);
 static uint8_t v7fs_mode_to_d_type(v7fs_mode_t);
@@ -130,6 +128,10 @@ v7fs_lookup(void *v)
 		DPRINTF("***ROFS.\n");
 		return EROFS;
 	}
+
+	/* No lookup on removed directory */
+	if (v7fs_inode_nlink(parent) == 0)
+		return ENOENT;
 
 	/* "." */
 	if (namelen == 1 && name[0] == '.') {
@@ -421,6 +423,11 @@ v7fs_getattr(void *v)
 	vap->va_fsid = v7fsmount->devvp->v_rdev;
 	vap->va_fileid = inode->inode_number;
 	vap->va_size = vp->v_size;
+	if (vp->v_type == VLNK) {
+		/* Ajust for trailing NUL. */
+		KASSERT(vap->va_size > 0);
+		vap->va_size -= 1;
+	}
 	vap->va_atime.tv_sec = inode->atime;
 	vap->va_mtime.tv_sec = inode->mtime;
 	vap->va_ctime.tv_sec = inode->ctime;
@@ -679,10 +686,9 @@ v7fs_remove(void *v)
 	struct v7fs_node *parent_node = a->a_dvp->v_data;
 	struct v7fs_mount *v7fsmount = parent_node->v7fsmount;
 	struct vnode *vp = a->a_vp;
-	struct v7fs_inode *inode = &((struct v7fs_node *)vp->v_data)->inode;
 	struct vnode *dvp = a->a_dvp;
+	struct v7fs_inode *inode = &((struct v7fs_node *)vp->v_data)->inode;
 	struct v7fs_self *fs = v7fsmount->core;
-	bool remove;
 	int error = 0;
 
 	DPRINTF("delete %s\n", a->a_cnp->cn_nameptr);
@@ -692,20 +698,16 @@ v7fs_remove(void *v)
 		goto out;
 	}
 
-	remove = v7fs_inode_nlink(inode) == 1;
-	if (remove)
-		uvm_vnp_setsize(vp, 0);
-
 	if ((error = v7fs_file_deallocate(fs, &parent_node->inode,
 		    a->a_cnp->cn_nameptr))) {
 		DPRINTF("v7fs_file_delete failed.\n");
 		goto out;
 	}
+	error = v7fs_inode_load(fs, inode, inode->inode_number);
+	if (error)
+		goto out;
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
-	/* This inode is no longer used. -> v7fs_inactive */
-	if (remove)
-		memset(inode, 0, sizeof(*inode));
 
 out:
 	if (dvp == vp)
@@ -789,8 +791,12 @@ v7fs_rename(void *v)
 	    &parent_to->inode, to_name);
 	/* 'to file' inode may be changed. (hard-linked and it is cached.)
 	   t_vnops rename_reg_nodir */
-	if (tvp) {
-		v7fs_vnode_reload(parent_from->v7fsmount->mountp, tvp);
+	if (error == 0 && tvp) {
+		struct v7fs_inode *inode =
+		    &((struct v7fs_node *)tvp->v_data)->inode;
+
+		error = v7fs_inode_load(fs, inode, inode->inode_number);
+		uvm_vnp_setsize(tvp, v7fs_inode_filesize(inode));
 	}
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(tdvp, v7fs_inode_filesize(&parent_to->inode));
@@ -880,11 +886,12 @@ v7fs_rmdir(void *v)
 		DPRINTF("v7fs_directory_deallocate failed.\n");
 		goto out;
 	}
-	uvm_vnp_setsize(vp, 0);
+	error = v7fs_inode_load(fs, inode, inode->inode_number);
+	if (error)
+		goto out;
+	uvm_vnp_setsize(vp, v7fs_inode_filesize(inode));
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
-	/* This inode is no longer used. -> v7fs_inactive */
-	memset(inode, 0, sizeof(*inode));
 out:
 	vput(vp);
 	vput(dvp);
@@ -1011,7 +1018,7 @@ v7fs_inactive(void *v)
 	struct v7fs_inode *inode = &v7node->inode;
 
 	DPRINTF("%p #%d\n", vp, inode->inode_number);
-	if (v7fs_inode_allocated(inode)) {
+	if (v7fs_inode_nlink(inode) > 0) {
 		v7fs_update(vp, 0, 0, UPDATE_WAIT);
 		*a->a_recycle = false;
 	} else {
@@ -1033,14 +1040,23 @@ v7fs_reclaim(void *v)
 				   } */ *a = v;
 	struct vnode *vp = a->a_vp;
 	struct v7fs_node *v7node = vp->v_data;
+	struct v7fs_self *fs = v7node->v7fsmount->core;
+	struct v7fs_inode *inode = &v7node->inode;
 
-	DPRINTF("%p #%d\n", vp, v7node->inode.inode_number);
-	mutex_enter(&mntvnode_lock);
-	LIST_REMOVE(v7node, link);
-	mutex_exit(&mntvnode_lock);
+	DPRINTF("%p #%d\n", vp, inode->inode_number);
+	if (v7fs_inode_nlink(inode) == 0) {
+		v7fs_datablock_size_change(fs, 0, inode);
+		DPRINTF("remove datablock\n");
+		v7fs_inode_deallocate(fs, inode->inode_number);
+		DPRINTF("remove inode\n");
+	}
+	vcache_remove(vp->v_mount,
+	    &inode->inode_number, sizeof(inode->inode_number));
 	genfs_node_destroy(vp);
 	pool_put(&v7fs_node_pool, v7node);
+	mutex_enter(vp->v_interlock);
 	vp->v_data = NULL;
+	mutex_exit(vp->v_interlock);
 
 	return 0;
 }

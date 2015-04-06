@@ -1,4 +1,4 @@
-/*	$NetBSD: lom.c,v 1.13 2014/02/25 18:30:08 pooka Exp $	*/
+/*	$NetBSD: lom.c,v 1.13.6.1 2015/04/06 15:18:03 skrll Exp $	*/
 /*	$OpenBSD: lom.c,v 1.21 2010/02/28 20:44:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.13 2014/02/25 18:30:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.13.6.1 2015/04/06 15:18:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -600,7 +600,15 @@ lom1_write_polled(struct lom_softc *sc, uint8_t reg, uint8_t val)
 static void
 lom1_queue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
 {
+	struct lom_cmd *lcp;
+
 	mutex_enter(&sc->sc_queue_mtx);
+	TAILQ_FOREACH(lcp, &sc->sc_queue, lc_next) {
+		if (lcp == lc) {
+			mutex_exit(&sc->sc_queue_mtx);
+			return;
+		}
+	}
 	TAILQ_INSERT_TAIL(&sc->sc_queue, lc, lc_next);
 	if (sc->sc_state == LOM_STATE_IDLE) {
 		sc->sc_state = LOM_STATE_CMD;
@@ -818,13 +826,21 @@ lom2_write_polled(struct lom_softc *sc, uint8_t reg, uint8_t val)
 static void
 lom2_queue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
 {
+	struct lom_cmd *lcp;
 	uint8_t str;
 
 	mutex_enter(&sc->sc_queue_mtx);
+	TAILQ_FOREACH(lcp, &sc->sc_queue, lc_next) {
+		if (lcp == lc) {
+			mutex_exit(&sc->sc_queue_mtx);
+			return;
+		}
+	}
 	TAILQ_INSERT_TAIL(&sc->sc_queue, lc, lc_next);
 	if (sc->sc_state == LOM_STATE_IDLE) {
 		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
 		if ((str & LOM2_STATUS_IBF) == 0) {
+			lc = TAILQ_FIRST(&sc->sc_queue);
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			    LOM2_CMD, lc->lc_cmd);
 			sc->sc_state = LOM_STATE_DATA;
@@ -852,9 +868,11 @@ lom2_intr(void *arg)
 	}
 
 	if (lc->lc_cmd & LOM_IDX_WRITE) {
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		    LOM2_DATA, lc->lc_data);
-		lc->lc_cmd &= ~LOM_IDX_WRITE;
+		if ((str & LOM2_STATUS_IBF) == 0) {
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    LOM2_DATA, lc->lc_data);
+			lc->lc_cmd &= ~LOM_IDX_WRITE;
+		}
 		mutex_exit(&sc->sc_queue_mtx);
 		return (1);
 	}
@@ -871,6 +889,7 @@ lom2_intr(void *arg)
 	if (!TAILQ_EMPTY(&sc->sc_queue)) {
 		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
 		if ((str & LOM2_STATUS_IBF) == 0) {
+			lc = TAILQ_FIRST(&sc->sc_queue);
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			    LOM2_CMD, lc->lc_cmd);
 			sc->sc_state = LOM_STATE_DATA;

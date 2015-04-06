@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.10 2014/11/16 00:04:06 joerg Exp $	*/
+/*	$NetBSD: scope6.c,v 1.10.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.10 2014/11/16 00:04:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.10.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -181,13 +181,10 @@ in6_addrscope(const struct in6_addr *addr)
 		switch (scope) {
 		case 0x80:
 			return IPV6_ADDR_SCOPE_LINKLOCAL;
-			break;
 		case 0xc0:
 			return IPV6_ADDR_SCOPE_SITELOCAL;
-			break;
 		default:
 			return IPV6_ADDR_SCOPE_GLOBAL; /* just in case */
-			break;
 		}
 	}
 
@@ -202,16 +199,12 @@ in6_addrscope(const struct in6_addr *addr)
 		switch (scope) {
 		case IPV6_ADDR_SCOPE_INTFACELOCAL:
 			return IPV6_ADDR_SCOPE_INTFACELOCAL;
-			break;
 		case IPV6_ADDR_SCOPE_LINKLOCAL:
 			return IPV6_ADDR_SCOPE_LINKLOCAL;
-			break;
 		case IPV6_ADDR_SCOPE_SITELOCAL:
 			return IPV6_ADDR_SCOPE_SITELOCAL;
-			break;
 		default:
 			return IPV6_ADDR_SCOPE_GLOBAL;
-			break;
 		}
 	}
 
@@ -437,6 +430,22 @@ in6_setscope(struct in6_addr *in6, const struct ifnet *ifp, uint32_t *ret_id)
 		*ret_id = zoneid;
 
 	return in6_setzoneid(in6, zoneid);
+}
+
+const char *
+in6_getscopename(const struct in6_addr *addr)
+{
+	switch (in6_addrscope(addr)) {
+	case IPV6_ADDR_SCOPE_INTFACELOCAL:	return "interface";
+#if IPV6_ADDR_SCOPE_INTFACELOCAL != IPV6_ADDR_SCOPE_NODELOCAL
+	case IPV6_ADDR_SCOPE_NODELOCAL:		return "node";
+#endif
+	case IPV6_ADDR_SCOPE_LINKLOCAL:		return "link";
+	case IPV6_ADDR_SCOPE_SITELOCAL:		return "site";
+	case IPV6_ADDR_SCOPE_ORGLOCAL:		return "organization";
+	case IPV6_ADDR_SCOPE_GLOBAL:		return "global";
+	default:				return "unknown";
+	}
 }
 
 /*

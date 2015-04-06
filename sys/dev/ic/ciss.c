@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.32 2013/10/17 21:24:24 christos Exp $	*/
+/*	$NetBSD: ciss.c,v 1.32.6.1 2015/04/06 15:18:09 skrll Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.32 2013/10/17 21:24:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.32.6.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include "bio.h"
 
@@ -437,6 +437,97 @@ cissminphys(struct buf *bp)
 	minphys(bp);
 }
 
+static struct ciss_ccb *
+ciss_poll1(struct ciss_softc *sc)
+{
+	struct ciss_ccb *ccb;
+	uint32_t id;
+
+	if (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_ISR) & sc->iem)) {
+		CISS_DPRINTF(CISS_D_CMD, ("N"));
+		return NULL;
+	}
+
+	if (sc->cfg.methods & CISS_METH_FIFO64) {
+		if (bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_OUTQ64_HI) ==
+		    0xffffffff) {
+			CISS_DPRINTF(CISS_D_CMD, ("Q"));
+			return NULL;
+		}
+		id = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_OUTQ64_LO);
+	} else if (sc->cfg.methods & CISS_METH_FIFO64_RRO) {
+		id = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_OUTQ64_LO);
+		if (id == 0xffffffff) {
+			CISS_DPRINTF(CISS_D_CMD, ("Q"));
+			return NULL;
+		}
+		(void)bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_OUTQ64_HI);
+	} else {
+		id = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_OUTQ);
+		if (id == 0xffffffff) {
+			CISS_DPRINTF(CISS_D_CMD, ("Q"));
+			return NULL;
+		}
+	}
+
+	CISS_DPRINTF(CISS_D_CMD, ("got=0x%x ", id));
+	ccb = (struct ciss_ccb *) ((char *)sc->ccbs + (id >> 2) * sc->ccblen);
+	ccb->ccb_cmd.id = htole32(id);
+	ccb->ccb_cmd.id_hi = htole32(0);
+	return ccb;
+}
+
+static int
+ciss_poll(struct ciss_softc *sc, struct ciss_ccb *ccb, int ms)
+{
+	struct ciss_ccb *ccb1;
+
+	ms /= 10;
+
+	while (ms-- > 0) {
+		DELAY(10);
+		ccb1 = ciss_poll1(sc);
+		if (ccb1 == NULL)
+			continue;
+		ciss_done(ccb1);
+		if (ccb1 == ccb)
+			return 0;
+	}
+
+	return ETIMEDOUT;
+}
+
+static int
+ciss_wait(struct ciss_softc *sc, struct ciss_ccb *ccb, int ms)
+{
+	int tohz, etick;
+
+	tohz = mstohz(ms);
+	if (tohz == 0)
+		tohz = 1;
+	etick = hardclock_ticks + tohz;
+
+	for (;;) {
+		ccb->ccb_state = CISS_CCB_POLL;
+		CISS_DPRINTF(CISS_D_CMD, ("cv_timedwait(%d) ", tohz));
+		mutex_enter(&sc->sc_mutex);
+		if (cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, tohz)
+		    == EWOULDBLOCK) {
+			mutex_exit(&sc->sc_mutex);
+			return EWOULDBLOCK;
+		}
+		mutex_exit(&sc->sc_mutex);
+		if (ccb->ccb_state == CISS_CCB_ONQ) {
+			ciss_done(ccb);
+			return 0;
+		}
+		tohz = etick - hardclock_ticks;
+		if (tohz <= 0)
+			return EWOULDBLOCK;
+		CISS_DPRINTF(CISS_D_CMD, ("T"));
+	}
+}
+
 /*
  * submit a command and optionally wait for completition.
  * wait arg abuses XS_CTL_POLL|XS_CTL_NOSLEEP flags to request
@@ -448,11 +539,9 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 {
 	struct ciss_softc *sc = ccb->ccb_sc;
 	struct ciss_cmd *cmd = &ccb->ccb_cmd;
-	struct ciss_ccb *ccb1;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
-	u_int32_t id;
 	u_int64_t addr;
-	int i, tohz, error = 0;
+	int i, error = 0;
 
 	if (ccb->ccb_state != CISS_CCB_READY) {
 		printf("%s: ccb %d not ready state=0x%x\n", device_xname(sc->sc_dev),
@@ -527,83 +616,18 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 		    ccb->ccb_cmdpa);
 
 	if (wait & XS_CTL_POLL) {
-		int etick;
+		int ms;
 		CISS_DPRINTF(CISS_D_CMD, ("waiting "));
 
-		i = ccb->ccb_xs? ccb->ccb_xs->timeout : 60000;
-		tohz = (i / 1000) * hz + (i % 1000) * (hz / 1000);
-		if (tohz == 0)
-			tohz = 1;
-		for (i *= 100, etick = tick + tohz; i--; ) {
-			if (!(wait & XS_CTL_NOSLEEP)) {
-				ccb->ccb_state = CISS_CCB_POLL;
-				CISS_DPRINTF(CISS_D_CMD, ("cv_timedwait(%d) ", tohz));
-				mutex_enter(&sc->sc_mutex);
-				if (cv_timedwait(&sc->sc_condvar,
-				    &sc->sc_mutex, tohz) == EWOULDBLOCK) {
-					mutex_exit(&sc->sc_mutex);
-					break;
-				}
-				mutex_exit(&sc->sc_mutex);
-				if (ccb->ccb_state != CISS_CCB_ONQ) {
-					tohz = etick - tick;
-					if (tohz <= 0)
-						break;
-					CISS_DPRINTF(CISS_D_CMD, ("T"));
-					continue;
-				}
-				ccb1 = ccb;
-			} else {
-				DELAY(10);
-
-				if (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    CISS_ISR) & sc->iem)) {
-					CISS_DPRINTF(CISS_D_CMD, ("N"));
-					continue;
-				}
-
-				if (sc->cfg.methods & CISS_METH_FIFO64) {
-					if (bus_space_read_4(sc->sc_iot,
-					    sc->sc_ioh,
-					    CISS_OUTQ64_HI) == 0xffffffff) {
-						CISS_DPRINTF(CISS_D_CMD, ("Q"));
-						continue;
-					}
-					id = bus_space_read_4(sc->sc_iot,
-					    sc->sc_ioh, CISS_OUTQ64_LO);
-				} else if (sc->cfg.methods &
-				    CISS_METH_FIFO64_RRO) {
-					id = bus_space_read_4(sc->sc_iot,
-					    sc->sc_ioh, CISS_OUTQ64_LO);
-					if (id == 0xffffffff) {
-						CISS_DPRINTF(CISS_D_CMD, ("Q"));
-						continue;
-					}
-					(void)bus_space_read_4(sc->sc_iot,
-					    sc->sc_ioh, CISS_OUTQ64_HI);
-				} else {
-					id = bus_space_read_4(sc->sc_iot,
-					    sc->sc_ioh, CISS_OUTQ);
-					if (id == 0xffffffff) {
-						CISS_DPRINTF(CISS_D_CMD, ("Q"));
-						continue;
-					}
-				}
-
-				CISS_DPRINTF(CISS_D_CMD, ("got=0x%x ", id));
-				ccb1 = (struct ciss_ccb *)
-					((char *)sc->ccbs + (id >> 2) * sc->ccblen);
-				ccb1->ccb_cmd.id = htole32(id);
-				ccb1->ccb_cmd.id_hi = htole32(0);
-			}
-
-			error = ciss_done(ccb1);
-			if (ccb1 == ccb)
-				break;
-		}
+		ms = ccb->ccb_xs ? ccb->ccb_xs->timeout : 60000;
+		if (wait & XS_CTL_NOSLEEP)
+			error = ciss_poll(sc, ccb, ms);
+		else
+			error = ciss_wait(sc, ccb, ms);
 
 		/* if never got a chance to be done above... */
 		if (ccb->ccb_state != CISS_CCB_FREE) {
+			KASSERT(error);
 			ccb->ccb_err.cmd_stat = CISS_ERR_TMO;
 			error = ciss_done(ccb);
 		}
@@ -1541,38 +1565,9 @@ ciss_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	memset(&bv, 0, sizeof(bv));
 	bv.bv_volid = edata->sensor;
-	if (ciss_ioctl_vol(sc, &bv)) {
-		return;
-	}
+	if (ciss_ioctl_vol(sc, &bv))
+		bv.bv_status = BIOC_SVINVALID;
 
-	switch(bv.bv_status) {
-	case BIOC_SVOFFLINE:
-		edata->value_cur = ENVSYS_DRIVE_FAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-
-	case BIOC_SVDEGRADED:
-		edata->value_cur = ENVSYS_DRIVE_PFAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-
-	case BIOC_SVSCRUB:
-	case BIOC_SVONLINE:
-		edata->value_cur = ENVSYS_DRIVE_ONLINE;
-		edata->state = ENVSYS_SVALID;
-		break;
-
-	case BIOC_SVREBUILD:
-	case BIOC_SVBUILDING:
-		edata->value_cur = ENVSYS_DRIVE_REBUILD;
-		edata->state = ENVSYS_SVALID;
-		break;
-
-	case BIOC_SVINVALID:
-		/* FALLTRHOUGH */
-	default:
-		edata->value_cur = 0; /* unknown */
-		edata->state = ENVSYS_SINVALID;
-	}
+	bio_vol_to_envsys(edata, &bv);
 }
 #endif /* NBIO > 0 */

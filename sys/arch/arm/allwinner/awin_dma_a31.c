@@ -1,4 +1,4 @@
-/* $NetBSD: awin_dma_a31.c,v 1.2 2014/10/13 13:34:54 jmcneill Exp $ */
+/* $NetBSD: awin_dma_a31.c,v 1.2.4.1 2015/04/06 15:17:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_dma_a31.c,v 1.2 2014/10/13 13:34:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_dma_a31.c,v 1.2.4.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,8 +96,20 @@ awin_dma_a31_attach(struct awin_dma_softc *sc, struct awinio_attach_args *aio,
 
 	mutex_init(&awin_dma_a31_lock, MUTEX_DEFAULT, IPL_SCHED);
 
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_AHB_GATING0_REG, AWIN_AHB_GATING0_DMA, 0);
+	switch (awin_chip_id()) {
+	case AWIN_CHIP_ID_A31:
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_AHB_GATING0_REG, AWIN_AHB_GATING0_DMA, 0);
+		break;
+	case AWIN_CHIP_ID_A80:
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A80_CCU_SCLK_BUS_CLK_GATING1_REG,
+		    AWIN_A80_CCU_SCLK_BUS_CLK_GATING1_DMA, 0);
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A80_CCU_SCLK_BUS_SOFT_RST1_REG,
+		    AWIN_A80_CCU_SCLK_BUS_SOFT_RST1_DMA, 0);
+		break;
+	}
 
 	DMA_WRITE(sc, AWIN_A31_DMA_IRQ_EN_REG0_REG, 0);
 	DMA_WRITE(sc, AWIN_A31_DMA_IRQ_EN_REG1_REG, 0);

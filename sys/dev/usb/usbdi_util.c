@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63.2.7 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.8 2015/04/06 15:18:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.7 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.8 2015/04/06 15:18:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -98,6 +98,35 @@ usbd_get_config_desc_full(struct usbd_device *dev, int conf, void *d, int size)
 
 	DPRINTFN(3, "conf=%d", conf, 0, 0, 0);
 	return usbd_get_desc(dev, UDESC_CONFIG, conf, size, d);
+}
+
+usbd_status
+usbd_get_bos_desc(struct usbd_device *dev, int confidx,
+		     usb_bos_descriptor_t *d)
+{
+	usbd_status err;
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+
+	DPRINTFN(3, "confidx=%d", confidx, 0, 0, 0);
+	err = usbd_get_desc(dev, UDESC_BOS, confidx,
+			    USB_BOS_DESCRIPTOR_SIZE, d);
+	if (err)
+		return (err);
+	if (d->bDescriptorType != UDESC_BOS) {
+		DPRINTFN(1, "confidx=%d, bad desc len=%d type=%d",
+		    confidx, d->bLength, d->bDescriptorType, 0);
+		return USBD_INVAL;
+	}
+	return USBD_NORMAL_COMPLETION;
+}
+
+usbd_status
+usbd_get_bos_desc_full(struct usbd_device *dev, int conf, void *d, int size)
+{
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+
+	DPRINTFN(3, "conf=%d", conf, 0, 0, 0);
+	return usbd_get_desc(dev, UDESC_BOS, conf, size, d);
 }
 
 usbd_status

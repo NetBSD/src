@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 2014/10/18 08:33:24 snj Exp $	*/
+/*	$NetBSD: trap.c,v 1.79.2.1 2015/04/06 15:17:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2014/10/18 08:33:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79.2.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -608,15 +608,6 @@ faultcommon:
 			}
 			goto out;
 		}
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_trap = type & ~T_USER;
-		ksi.ksi_addr = (void *)cr2;
-		if (error == EACCES) {
-			ksi.ksi_code = SEGV_ACCERR;
-			error = EFAULT;
-		} else {
-			ksi.ksi_code = SEGV_MAPERR;
-		}
 
 		if (type == T_PAGEFLT) {
 			onfault = onfault_handler(pcb, frame);
@@ -626,20 +617,38 @@ faultcommon:
 			    map, va, ftype, error);
 			goto kernelfault;
 		}
-		if (error == ENOMEM) {
-			ksi.ksi_signo = SIGKILL;
-			printf("UVM: pid %d.%d (%s), uid %d killed: out of swap\n",
-			       p->p_pid, l->l_lid, p->p_comm,
-			       l->l_cred ?
-			       kauth_cred_geteuid(l->l_cred) : -1);
-		} else {
-#ifdef TRAP_SIGDEBUG
-			printf("pid %d.%d (%s): SEGV at rip %lx addr %lx\n",
-			    p->p_pid, l->l_lid, p->p_comm, frame->tf_rip, va);
-			frame_dump(frame);
-#endif
+
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_addr = (void *)cr2;
+		switch (error) {
+		case EINVAL:
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_code = BUS_ADRERR;
+			break;
+		case EACCES:
 			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_ACCERR;
+			error = EFAULT;
+			break;
+		case ENOMEM:
+			ksi.ksi_signo = SIGKILL;
+			printf("UVM: pid %d.%d (%s), uid %d killed: "
+			    "out of swap\n", p->p_pid, l->l_lid, p->p_comm,
+			    l->l_cred ?  kauth_cred_geteuid(l->l_cred) : -1);
+			break;
+		default:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			break;
 		}
+
+#ifdef TRAP_SIGDEBUG
+		printf("pid %d.%d (%s): signal %d at rip %lx addr %lx "
+		    "error %d\n", p->p_pid, l->l_lid, p->p_comm, ksi.ksi_signo,
+		    frame->tf_rip, va, error);
+		frame_dump(frame);
+#endif
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
 	}

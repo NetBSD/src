@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45 2014/11/16 16:01:41 manu Exp $
+# $NetBSD: GENERIC,v 1.45.2.1 2015/04/06 15:17:58 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.45 $"
+#ident          "GENERIC-$Revision: 1.45.2.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -464,6 +464,7 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer		# MIDI sequencer
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
 

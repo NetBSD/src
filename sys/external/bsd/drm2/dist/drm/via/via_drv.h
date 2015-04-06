@@ -73,7 +73,7 @@ typedef struct drm_via_private {
 	drm_local_map_t *mmio;
 	unsigned long agpAddr;
 #ifdef __NetBSD__
-	struct mutex decoder_lock[VIA_NR_XVMC_LOCKS];
+	spinlock_t decoder_lock[VIA_NR_XVMC_LOCKS];
 	drm_waitqueue_t decoder_queue[VIA_NR_XVMC_LOCKS];
 #else
 	wait_queue_head_t decoder_queue[VIA_NR_XVMC_LOCKS];

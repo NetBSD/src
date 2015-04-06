@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.75 2014/11/22 11:59:33 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.75.2.1 2015/04/06 15:18:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.75 2014/11/22 11:59:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.75.2.1 2015/04/06 15:18:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -258,20 +258,22 @@ dkwedge_array_expand(void)
 }
 
 static void
-dkgetproperties(struct disk *disk, struct dkwedge_info *dkw)
+dk_set_geometry(struct dkwedge_softc *sc, struct disk *pdk)
 {
-	struct disk_geom *dg = &disk->dk_geom;
+	struct disk *dk = &sc->sc_dk;
+	struct disk_geom *dg = &dk->dk_geom;
 
 	memset(dg, 0, sizeof(*dg));
 
-	dg->dg_secperunit = dkw->dkw_size >> disk->dk_blkshift;
-	dg->dg_secsize = DEV_BSIZE << disk->dk_blkshift;
+	dg->dg_secperunit = sc->sc_size >> pdk->dk_blkshift;
+	dg->dg_secsize = DEV_BSIZE << pdk->dk_blkshift;
+
+	/* fake numbers, 1 cylinder is 1 MB with default sector size */
 	dg->dg_nsectors = 32;
 	dg->dg_ntracks = 64;
-	/* XXX: why is that dkw->dkw_size instead of secperunit?!?! */
-	dg->dg_ncylinders = dkw->dkw_size / (dg->dg_nsectors * dg->dg_ntracks);
+	dg->dg_ncylinders = dg->dg_secperunit / (dg->dg_nsectors * dg->dg_ntracks);
 
-	disk_set_info(NULL, disk, "ESDI");
+	disk_set_info(sc->sc_dev, dk, NULL);
 }
 
 /*
@@ -453,8 +455,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 */
 
 	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
-	disk_blocksize(&sc->sc_dk, DEV_BSIZE << pdk->dk_blkshift);
-	dkgetproperties(&sc->sc_dk, dkw);
+	dk_set_geometry(sc, pdk);
 	disk_attach(&sc->sc_dk);
 
 	/* Disk wedge is ready for use! */
@@ -1357,7 +1358,11 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (sc->sc_parent->dk_rawvp == NULL)
 		return (ENXIO);
 
-	error = disk_ioctl(&sc->sc_dk, cmd, data, flag, l);
+	/*
+	 * We pass NODEV instead of our device to indicate we don't
+	 * want to handle disklabel ioctls
+	 */
+	error = disk_ioctl(&sc->sc_dk, NODEV, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 

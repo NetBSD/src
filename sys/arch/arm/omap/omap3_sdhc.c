@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.14 2014/03/29 23:32:41 matt Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.14.6.1 2015/04/06 15:17:53 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14 2014/03/29 23:32:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.1 2015/04/06 15:17:53 skrll Exp $");
 
 #include "opt_omap.h"
 
@@ -206,7 +206,7 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	KASSERT(i < __arraycount(am335x_sdhc));
 #endif
 
-	/* XXXXXX: Turn-on regurator via I2C. */
+	/* XXXXXX: Turn-on regulator via I2C. */
 	/* XXXXXX: And enable ICLOCK/FCLOCK. */
 
 	/* MMCHS Soft reset */

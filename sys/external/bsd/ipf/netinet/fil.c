@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.15 2014/06/16 12:38:32 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.15.4.1 2015/04/06 15:18:18 skrll Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.15 2014/06/16 12:38:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.15.4.1 2015/04/06 15:18:18 skrll Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -4495,6 +4495,11 @@ frrequest(ipf_main_softc_t *softc, int unit, ioctlcmd_t req, void *data,
 			if (addrem == 0) {
 				fg = ipf_group_add(softc, group, NULL,
 						   fp->fr_flags, unit, set);
+				if (fg == NULL) {
+					IPFERROR(152);
+					error = ESRCH;
+					goto donenolock;
+				}
 				fp->fr_grp = fg;
 			} else {
 				fg = ipf_findgroup(softc, group, unit,

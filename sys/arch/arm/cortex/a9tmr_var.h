@@ -1,4 +1,4 @@
-/* $NetBSD: a9tmr_var.h,v 1.3 2013/06/20 05:30:21 matt Exp $ */
+/* $NetBSD: a9tmr_var.h,v 1.3.12.1 2015/04/06 15:17:52 skrll Exp $ */
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,6 +47,7 @@ struct a9tmr_softc {
 #ifdef _KERNEL
 struct cpu_info;
 void	a9tmr_init_cpu_clock(struct cpu_info *);
+void	a9tmr_update_freq(uint32_t);
 void	a9tmr_delay(unsigned int n);
 #endif
 

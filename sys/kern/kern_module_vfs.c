@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.12 2011/09/14 12:30:20 christos Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.12.30.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.12 2011/09/14 12:30:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.12.30.1 2015/04/06 15:18:20 skrll Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -56,6 +56,7 @@ void
 module_load_vfs_init(void)
 {
 	module_load_vfs_vec = module_load_vfs;
+	aprint_normal("kern.module.path=%s\n", module_base);
 }
 
 int

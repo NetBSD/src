@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.63 2014/06/28 09:16:18 rtr Exp $	*/
+/*	$NetBSD: boot2.c,v 1.63.4.1 2015/04/06 15:17:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ static int default_unit, default_partition;
 static const char *default_filename;
 
 char *sprint_bootsel(const char *);
-void bootit(const char *, int, int);
+static void bootit(const char *, int);
 void print_banner(void);
 void boot2(int, uint64_t);
 
@@ -244,16 +244,12 @@ clearit(void)
 		clear_pc_screen();
 }
 
-void
-bootit(const char *filename, int howto, int tell)
+static void
+bootit(const char *filename, int howto)
 {
-
-	if (tell) {
-		printf("booting %s", sprint_bootsel(filename));
-		if (howto)
-			printf(" (howto 0x%x)", howto);
-		printf("\n");
-	}
+	if (howto & AB_VERBOSE)
+		printf("booting %s (howto 0x%x)\n", sprint_bootsel(filename),
+		    howto);
 
 	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80, clearit) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
@@ -389,9 +385,9 @@ boot2(int biosdev, uint64_t biossector)
 		 * try pairs of names[] entries, foo and foo.gz
 		 */
 		/* don't print "booting..." again */
-		bootit(names[currname][0], 0, 0);
+		bootit(names[currname][0], 0);
 		/* since it failed, try compressed bootfile. */
-		bootit(names[currname][1], 0, 1);
+		bootit(names[currname][1], AB_VERBOSE);
 	}
 
 	bootmenu();	/* does not return */
@@ -451,23 +447,23 @@ void
 command_boot(char *arg)
 {
 	char *filename;
-	int howto, tell;
+	int howto;
 
 	if (!parseboot(arg, &filename, &howto))
 		return;
 
-	tell = ((howto & AB_VERBOSE) != 0);
 	if (filename != NULL) {
-		bootit(filename, howto, tell);
+		bootit(filename, howto);
 	} else {
 		int i;
 
 #ifndef SMALL
-		bootdefault();
+		if (howto == 0)
+			bootdefault();
 #endif
 		for (i = 0; i < NUMNAMES; i++) {
-			bootit(names[i][0], howto, tell);
-			bootit(names[i][1], howto, tell);
+			bootit(names[i][0], howto);
+			bootit(names[i][1], howto);
 		}
 	}
 }

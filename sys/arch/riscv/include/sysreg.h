@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: sysreg.h,v 1.1.2.1 2015/04/06 15:18:01 skrll Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -125,7 +125,7 @@ static inline uint32_t
 riscvreg_status_read(void)
 {
 	uint32_t __sr;
-	__asm("csrr\t%0, status" : "=r"(__sr));
+	__asm("csrr\t%0, sstatus" : "=r"(__sr));
 	return __sr;
 }
 
@@ -134,9 +134,9 @@ riscvreg_status_clear(uint32_t __mask)
 {
 	uint32_t __sr;
 	if (__builtin_constant_p(__mask) && __mask < 0x20) {
-		__asm("csrrci\t%0, status, %1" : "=r"(__sr) : "i"(__mask));
+		__asm("csrrci\t%0, sstatus, %1" : "=r"(__sr) : "i"(__mask));
 	} else {
-		__asm("csrrc\t%0, status, %1" : "=r"(__sr) : "r"(__mask));
+		__asm("csrrc\t%0, sstatus, %1" : "=r"(__sr) : "r"(__mask));
 	}
 	return __sr;
 }
@@ -146,9 +146,9 @@ riscvreg_status_set(uint32_t __mask)
 {
 	uint32_t __sr;
 	if (__builtin_constant_p(__mask) && __mask < 0x20) {
-		__asm("csrrsi\t%0, status, %1" : "=r"(__sr) : "i"(__mask));
+		__asm("csrrsi\t%0, sstatus, %1" : "=r"(__sr) : "i"(__mask));
 	} else {
-		__asm("csrrs\t%0, status, %1" : "=r"(__sr) : "r"(__mask));
+		__asm("csrrs\t%0, sstatus, %1" : "=r"(__sr) : "r"(__mask));
 	}
 	return __sr;
 }
@@ -158,13 +158,13 @@ riscvreg_status_set(uint32_t __mask)
 #define CAUSE_FAULT_FETCH		1
 #define CAUSE_ILLEGAL_INSTRUCTION	2
 #define CAUSE_PRIVILEGED_INSTRUCTION	3
-#define CAUSE_FP_DISABLED		4
-#define CAUSE_SYSCALL			6
-#define CAUSE_BREAKPOINT		7
-#define CAUSE_MISALIGNED_LOAD		8
-#define CAUSE_MISALIGNED_STORE		9
-#define CAUSE_FAULT_LOAD		10
-#define CAUSE_FAULT_STORE		11
+#define CAUSE_MISALIGNED_LOAD		4
+#define CAUSE_FAULT_LOAD		5
+#define CAUSE_MISALIGNED_STORE		6
+#define CAUSE_FAULT_STORE		7
+#define CAUSE_SYSCALL			8
+#define CAUSE_BREAKPOINT		9
+#define CAUSE_FP_DISABLED		10
 #define CAUSE_ACCELERATOR_DISABLED	12
 
 static inline uint64_t
@@ -172,7 +172,7 @@ riscvreg_cycle_read(void)
 {
 #ifdef _LP64
 	uint64_t __lo;
-	__asm __volatile("csrr\t%0,cycle" : "=r"(__lo));
+	__asm __volatile("csrr\t%0, cycle" : "=r"(__lo));
 	return __lo;
 #else
 	uint32_t __hi0, __hi1, __lo0;
@@ -187,6 +187,34 @@ riscvreg_cycle_read(void)
 	} while (__hi0 != __hi1);
 	return ((uint64_t)__hi0 << 32) | (uint64_t)__lo0;
 #endif
+}
+
+static inline uintptr_t
+riscvreg_ptbr_read(void)
+{
+	uintptr_t __ptbr;
+	__asm("csrr\t%0, sptbr" : "=r"(__ptbr));
+	return __ptbr;
+}
+
+static inline void
+riscvreg_ptbr_write(uint32_t __ptbr)
+{
+	__asm("csrw\tsptbr, %0" :: "r"(__ptbr));
+}
+
+static inline uint32_t
+riscvreg_asid_read(void)
+{
+	uint32_t __asid;
+	__asm __volatile("csrr\t%0, sasid" : "=r"(__asid));
+	return __asid;
+}
+
+static inline void
+riscvreg_asid_write(uint32_t __asid)
+{
+	__asm __volatile("csrw\tsasid, %0" :: "r"(__asid));
 }
 
 #endif /* _RISCV_SYSREG_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.18 2014/05/19 22:47:54 rmind Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.18.4.1 2015/04/06 15:18:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.18 2014/05/19 22:47:54 rmind Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.18.4.1 2015/04/06 15:18:04 skrll Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.18 2014/05/19 22:47:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.18.4.1 2015/04/06 15:18:04 skrll Exp $");
 
 #include <sys/types.h>
 
@@ -131,6 +131,7 @@ xen_ipi_init(void)
 	hypervisor_enable_event(evtchn);
 }
 
+#ifdef DIAGNOSTIC
 static inline bool /* helper */
 valid_ipimask(uint32_t ipimask)
 {
@@ -145,6 +146,7 @@ valid_ipimask(uint32_t ipimask)
 	}
 
 }
+#endif
 
 int
 xen_send_ipi(struct cpu_info *ci, uint32_t ipimask)

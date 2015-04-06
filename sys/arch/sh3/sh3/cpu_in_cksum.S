@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.4 2011/09/27 00:35:38 christos Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.4.30.1 2015/04/06 15:18:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -27,11 +27,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _LOCORE
+#define _LOCORE
+#endif
 #include <machine/endian.h>
 #include <machine/asm.h>
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.4 2011/09/27 00:35:38 christos Exp $")
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.4.30.1 2015/04/06 15:18:02 skrll Exp $")
 
 
 #define	reg_tmp0		r0

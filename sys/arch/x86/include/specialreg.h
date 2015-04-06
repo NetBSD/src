@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.80 2014/09/11 18:11:59 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.80.2.1 2015/04/06 15:18:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -506,6 +506,7 @@
 #define	MSR_CESR		0x011	/* P5 only (trap on P6) */
 #define	MSR_CTR0		0x012	/* P5 only (trap on P6) */
 #define	MSR_CTR1		0x013	/* P5 only (trap on P6) */
+#define MSR_IA32_PLATFORM_ID	0x017
 #define MSR_APICBASE		0x01b
 #define MSR_EBL_CR_POWERON	0x02a
 #define MSR_EBC_FREQUENCY_ID	0x02c	/* PIV only */

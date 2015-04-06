@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.97 2014/03/29 19:28:24 christos Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.97.6.1 2015/04/06 15:18:10 skrll Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.97 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.97.6.1 2015/04/06 15:18:10 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2187,6 +2187,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 		error = EIO;
 		goto fail1;
 	}
+	sc->sc_blobsize = size;
 
 	sc->sc_blob = firmware_malloc(size);
 	if (sc->sc_blob == NULL) {
@@ -2246,7 +2247,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	return 0;
 
 
-fail2:	firmware_free(sc->sc_blob, 0);
+fail2:	firmware_free(sc->sc_blob, sc->sc_blobsize);
 fail1:
 	return error;
 }
@@ -2258,7 +2259,7 @@ iwi_free_firmware(struct iwi_softc *sc)
 	if (!(sc->flags & IWI_FLAG_FW_CACHED))
 		return;
 
-	firmware_free(sc->sc_blob, 0);
+	firmware_free(sc->sc_blob, sc->sc_blobsize);
 
 	sc->flags &= ~IWI_FLAG_FW_CACHED;
 }

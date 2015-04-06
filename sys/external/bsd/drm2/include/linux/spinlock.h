@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.5 2014/11/04 11:27:31 jmcneill Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.5.2.1 2015/04/06 15:18:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -88,7 +88,8 @@ spin_unlock_irqrestore(spinlock_t *spinlock, unsigned long __unused flags)
 static inline void
 spin_lock_init(spinlock_t *spinlock)
 {
-	mutex_init(&spinlock->sl_lock, MUTEX_DEFAULT, IPL_SCHED);
+	/* XXX What's the right IPL?  IPL_DRM...?  */
+	mutex_init(&spinlock->sl_lock, MUTEX_DEFAULT, IPL_VM);
 }
 
 /*

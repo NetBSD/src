@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.17 2008/09/07 13:13:04 tron Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.17.58.1 2015/04/06 15:18:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -82,9 +82,6 @@ struct smbmount {
 	struct smb_share * 	sm_share;
 	struct smbnode *	sm_npstack[SMBFS_MAXPATHCOMP];
 	int			sm_caseopt;
-	kmutex_t		sm_hashlock;
-	LIST_HEAD(smbnode_hashhead, smbnode) *sm_hash;
-	u_long			sm_hashlen;
 	int			sm_didrele;
 };
 

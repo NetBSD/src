@@ -32,7 +32,6 @@ struct nouveau_pwr {
 
 		struct work_struct work;
 #ifdef __NetBSD__
-		struct mutex lock;
 		drm_waitqueue_t wait;
 #else
 		wait_queue_head_t wait;
@@ -67,7 +66,7 @@ nouveau_pwr(void *obj)
 int nouveau_pwr_create_(struct nouveau_object *, struct nouveau_object *,
 			   struct nouveau_oclass *, int, void **);
 #ifdef __NetBSD__
-int _nouveau_pwr_dtor(struct nouveau_object *);
+void _nouveau_pwr_dtor(struct nouveau_object *);
 #else
 #define _nouveau_pwr_dtor _nouveau_subdev_dtor
 #endif

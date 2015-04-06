@@ -1,4 +1,4 @@
-/* $NetBSD: awin_fb.c,v 1.6 2014/11/14 23:45:02 jmcneill Exp $ */
+/* $NetBSD: awin_fb.c,v 1.6.2.1 2015/04/06 15:17:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include "awin_mp.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.6 2014/11/14 23:45:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.6.2.1 2015/04/06 15:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.6 2014/11/14 23:45:02 jmcneill Exp $")
 struct awin_fb_softc {
 	struct genfb_softc sc_gen;
 	device_t sc_debedev;
+	device_t sc_mpdev;
 
 	bus_dma_tag_t sc_dmat;
 	bus_dma_segment_t *sc_dmasegs;
@@ -87,6 +90,7 @@ awin_fb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = afb->afb_dmat;
 	sc->sc_dmasegs = afb->afb_dmasegs;
 	sc->sc_ndmasegs = afb->afb_ndmasegs;
+	sc->sc_mpdev = device_find_by_driver_unit("awinmp", 0);
 
 	prop_dictionary_set_uint32(cfg, "width", afb->afb_width);
 	prop_dictionary_set_uint32(cfg, "height", afb->afb_height);
@@ -143,12 +147,30 @@ awin_fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		fbi = data;
 		ri = &sc->sc_gen.vd.active->scr_ri;
 		error = wsdisplayio_get_fbinfo(ri, fbi);
-		if (error == 0)
+		if (error == 0) {
 			fbi->fbi_flags |= WSFB_VRAM_IS_RAM;
+			fbi->fbi_fbsize = sc->sc_dmasegs[0].ds_len;
+#if NAWIN_MP > 0
+			if (sc->sc_mpdev)
+				fbi->fbi_flags |= WSFB_ACCEL;
+#endif
+		}
 		return error;
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
+	case WSDISPLAYIO_GCURPOS:
+	case WSDISPLAYIO_SCURPOS:
+	case WSDISPLAYIO_GCURMAX:
+	case WSDISPLAYIO_SCURSOR:
 		return awin_debe_ioctl(sc->sc_debedev, cmd, data);
+#if NAWIN_MP > 0
+	case WSDISPLAYIO_FILL:
+	case WSDISPLAYIO_COPY:
+	case WSDISPLAYIO_SYNC:
+		if (sc->sc_mpdev == NULL)
+			return EPASSTHROUGH;
+		return awin_mp_ioctl(sc->sc_mpdev, cmd, data);
+#endif
 	default:
 		return EPASSTHROUGH;
 	}
@@ -159,7 +181,7 @@ awin_fb_mmap(void *v, void *vs, off_t off, int prot)
 {
 	struct awin_fb_softc *sc = v;
 
-	if (off < 0 || off >= sc->sc_gen.sc_fbsize)
+	if (off < 0 || off >= sc->sc_dmasegs[0].ds_len)
 		return -1;
 
 	return bus_dmamem_mmap(sc->sc_dmat, sc->sc_dmasegs, sc->sc_ndmasegs,

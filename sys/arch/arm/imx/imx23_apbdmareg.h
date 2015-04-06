@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdmareg.h,v 1.2 2013/03/03 10:33:56 jkunz Exp $ */
+/* $Id: imx23_apbdmareg.h,v 1.2.14.1 2015/04/06 15:17:52 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -66,4 +66,6 @@
 #define HW_APB_CTRL2_CLR	0x028
 #define HW_APB_CTRL2_TOG	0x02C
 
+#define HW_APBX_CHANNEL_CTRL 0x30
+#define HW_APBX_CHANNEL_CTRL_SET 0x34
 #endif /* !_ARM_IMX_IMX23_APBDMAREG_H_ */

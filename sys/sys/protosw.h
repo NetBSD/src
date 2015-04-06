@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.60 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.60.4.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -241,7 +241,7 @@ struct pr_usrreqs {
 	int	(*pr_accept)(struct socket *, struct mbuf *);
 	int	(*pr_connect)(struct socket *, struct mbuf *, struct lwp *);
 	int	(*pr_connect2)(struct socket *, struct socket *);
-	int	(*pr_bind)(struct socket *, struct mbuf *, struct lwp *);
+	int	(*pr_bind)(struct socket *, struct sockaddr *, struct lwp *);
 	int	(*pr_listen)(struct socket *, struct lwp *);
 	int	(*pr_disconnect)(struct socket *);
 	int	(*pr_shutdown)(struct socket *);
@@ -317,8 +317,8 @@ name##_accept_wrapper(struct socket *a, struct mbuf *b)	\
 	return rv;					\
 }							\
 static int						\
-name##_bind_wrapper(struct socket *a, struct mbuf *b,	\
-    struct lwp *c)					\
+name##_bind_wrapper(struct socket *a,			\
+    struct sockaddr *b,	struct lwp *c)			\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\

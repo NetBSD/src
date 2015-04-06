@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.310 2014/11/04 07:51:55 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.310.2.1 2015/04/06 15:18:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.310 2014/11/04 07:51:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.310.2.1 2015/04/06 15:18:13 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -1053,36 +1053,12 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 	}
 
-	error = disk_ioctl(&sd->sc_dk, cmd, addr, flag, l); 
+	error = disk_ioctl(&sd->sc_dk, dev, cmd, addr, flag, l); 
 	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
 	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(sd->sc_dk.dk_label);
-		return (0);
-
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = malloc(sizeof *newlabel, M_TEMP, M_WAITOK);
-		if (newlabel == NULL)
-			return EIO;
-		memcpy(newlabel, sd->sc_dk.dk_label, sizeof (*newlabel));
-		if (newlabel->d_npartitions <= OLDMAXPARTITIONS)
-			memcpy(addr, newlabel, sizeof (struct olddisklabel));
-		else
-			error = ENOTTY;
-		free(newlabel, M_TEMP);
-		return error;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = sd->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-		    &sd->sc_dk.dk_label->d_partitions[part];
-		return (0);
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1223,48 +1199,6 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 		return (error);
 
-	case DIOCAWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(sd->sc_dev),
-			sizeof(dkw->dkw_parent));
-		return (dkwedge_add(dkw));
-	    }
-
-	case DIOCDWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(sd->sc_dev),
-			sizeof(dkw->dkw_parent));
-		return (dkwedge_del(dkw));
-	    }
-
-	case DIOCLWEDGES:
-	    {
-	    	struct dkwedge_list *dkwl = (void *) addr;
-
-		return (dkwedge_list(&sd->sc_dk, dkwl, l));
-	    }
-
-	case DIOCMWEDGES:
-	    {
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		dkwedge_discover(&sd->sc_dk);
-		return 0;
-	    }
-
 	case DIOCGSTRATEGY:
 	    {
 		struct disk_strategy *dks = addr;
@@ -1332,10 +1266,10 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 
 	switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sd->sc_periph))) {
 	case SCSIPI_BUSTYPE_SCSI:
-		lp->d_type = DTYPE_SCSI;
+		lp->d_type = DKTYPE_SCSI;
 		break;
 	case SCSIPI_BUSTYPE_ATAPI:
-		lp->d_type = DTYPE_ATAPI;
+		lp->d_type = DKTYPE_ATAPI;
 		break;
 	}
 	/*
@@ -2145,15 +2079,13 @@ sd_get_parms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	if (sd->type == T_SIMPLE_DIRECT) {
 		error = sd_get_simplifiedparms(sd, dp, flags);
 		if (!error)
-			disk_blocksize(&sd->sc_dk, dp->blksize);
+			goto setprops;
 		return (error);
 	}
 
 	error = sd_get_capacity(sd, dp, flags);
 	if (error)
 		return (error);
-
-	disk_blocksize(&sd->sc_dk, dp->blksize);
 
 	if (sd->type == T_OPTICAL)
 		goto page0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.80 2014/10/18 08:33:25 snj Exp $	*/
+/*	$NetBSD: fd.c,v 1.80.2.1 2015/04/06 15:17:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80 2014/10/18 08:33:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80.2.1 2015/04/06 15:17:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,23 +426,20 @@ int
 fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct fd_softc *sc;
+	int error;
 
 	sc = device_lookup_private(&fd_cd, DISKUNIT(dev));
 
 	if ((sc->flags & FLPF_HAVELAB) == 0)
 		return EBADF;
 
+	error = disk_ioctl(&sc->dkdev, RAW_PART, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	switch (cmd) {
 	case DIOCSBAD:
 		return EINVAL;
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(sc->dkdev.dk_label);
-		return 0;
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = sc->dkdev.dk_label;
-		((struct partinfo *)addr)->part =
-		    &sc->dkdev.dk_label->d_partitions[RAW_PART];
-		return 0;
 #ifdef notyet /* XXX LWP */
 	case DIOCSRETRIES:
 	case DIOCSSTEP:
@@ -1301,7 +1298,7 @@ fdgetdefaultlabel(struct fd_softc *sc, struct disklabel *lp, int part)
 	lp->d_ncylinders  = sc->nblocks / lp->d_secpercyl;
 	lp->d_secperunit  = sc->nblocks;
 
-	lp->d_type        = DTYPE_FLOPPY;
+	lp->d_type        = DKTYPE_FLOPPY;
 	lp->d_rpm         = 300; 	/* good guess I suppose.	*/
 	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
 	lp->d_bbsize      = 0;

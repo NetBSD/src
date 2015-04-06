@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.44 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: i2c.c,v 1.44.4.1 2015/04/06 15:18:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -35,8 +35,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_i2c.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.44 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.44.4.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.44 2014/07/25 08:10:37 dholland Exp $");
 
 #include "locators.h"
 
+#ifndef I2C_MAX_ADDR
 #define I2C_MAX_ADDR	0x3ff	/* 10-bit address, max */
+#endif
 
 struct iic_softc {
 	i2c_tag_t sc_tag;
@@ -513,10 +519,14 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 		if (cmd == NULL)
 			return ENOMEM;
 		error = copyin(iie->iie_cmd, cmd, iie->iie_cmdlen);
-		if (error) {
-			kmem_free(cmd, iie->iie_cmdlen);
-			return error;
-		}
+		if (error)
+			goto out;
+	}
+
+	if (iie->iie_buf != NULL && I2C_OP_WRITE_P(iie->iie_op)) {
+		error = copyin(iie->iie_buf, buf, iie->iie_buflen);
+		if (error)
+			goto out;
 	}
 
 	iic_acquire_bus(ic, 0);
@@ -530,13 +540,14 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 	if (error < 0)
 		error = EIO;
 
+out:
 	if (cmd)
 		kmem_free(cmd, iie->iie_cmdlen);
 
 	if (error)
 		return error;
 
-	if (iie->iie_buf)
+	if (iie->iie_buf != NULL && I2C_OP_READ_P(iie->iie_op))
 		error = copyout(buf, iie->iie_buf, iie->iie_buflen);
 
 	return error;

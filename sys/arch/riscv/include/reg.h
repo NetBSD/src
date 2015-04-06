@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: reg.h,v 1.1.2.1 2015/04/06 15:18:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,14 +34,17 @@
 
 // x0 = 0
 // x1 = ra (return address)
-// x2 = s0/fp (frame pointer)
-// x3-r13 = saved registers
-// x14 = sp (stack pointer)
-// x15 = tp (thread pointer)
-// x16-x17 = v0/v1 (return value)
-// x18-x25 = a0-a7 (arguements)
+// x2 = sp (stack pointer)
+// x3 = gp (global pointer)
+// x4 = tp (thread pointer)
+// x5-x7 = t0-t2 (temporary)
+// x8 = s0/fp (saved register / frame pointer)
+// x9 = s1 (saved register)
+// x10-x11 = a0-a1 (arguments/return values)
+// x12-x17 = a2-a7 (arguments)
+// x18-r27 = s2-s11 (saved registers)
+// x28-x31 = t3-r6 (temporaries)
 // x26-x30 = t0-t4 (temporary)
-// x31 = global pointer
 
 struct reg {	// synced with register_t in <riscv/types.h>
 #ifdef _LP64
@@ -62,36 +65,44 @@ struct reg32 {	// synced with register_t in <riscv/types.h>
 
 #define _XREG(n)	((n)-1)
 #define _X_RA		_XREG(1)
-#define _X_S0		_XREG(2)
-#define _X_S1		_XREG(3)
-#define _X_S2		_XREG(4)
-#define _X_S3		_XREG(5)
-#define _X_S4		_XREG(6)
-#define _X_S5		_XREG(7)
-#define _X_S6		_XREG(8)
-#define _X_S7		_XREG(9)
-#define _X_S8		_XREG(10)
-#define _X_S9		_XREG(11)
-#define _X_S10		_XREG(12)
-#define _X_S11		_XREG(13)
-#define _X_SP		_XREG(14)
-#define _X_TP		_XREG(15)
-#define _X_V0		_XREG(16)
-#define _X_V1		_XREG(17)
-#define _X_A0		_XREG(18)
-#define _X_A1		_XREG(19)
-#define _X_A2		_XREG(20)
-#define _X_A3		_XREG(21)
-#define _X_A4		_XREG(22)
-#define _X_A5		_XREG(23)
-#define _X_A6		_XREG(24)
-#define _X_A7		_XREG(25)
-#define _X_T0		_XREG(26)
-#define _X_T1		_XREG(27)
-#define _X_T2		_XREG(28)
-#define _X_T3		_XREG(29)
-#define _X_T4		_XREG(30)
-#define _X_GP		_XREG(31)
+#define _X_SP		_XREG(2)
+#define _X_GP		_XREG(3)
+#define _X_TP		_XREG(4)
+#define _X_T0		_XREG(5)
+#define _X_T1		_XREG(6)
+#define _X_T2		_XREG(7)
+#define _X_S0		_XREG(8)
+#define _X_S1		_XREG(9)
+#define _X_A0		_XREG(10)
+#define _X_A1		_XREG(11)
+#define _X_A2		_XREG(12)
+#define _X_A3		_XREG(13)
+#define _X_A4		_XREG(14)
+#define _X_A5		_XREG(15)
+#define _X_A6		_XREG(16)
+#define _X_A7		_XREG(17)
+#define _X_S2		_XREG(18)
+#define _X_S3		_XREG(19)
+#define _X_S4		_XREG(20)
+#define _X_S5		_XREG(21)
+#define _X_S6		_XREG(22)
+#define _X_S7		_XREG(23)
+#define _X_S8		_XREG(24)
+#define _X_S9		_XREG(25)
+#define _X_S10		_XREG(26)
+#define _X_S11		_XREG(27)
+#define _X_T3		_XREG(28)
+#define _X_T4		_XREG(29)
+#define _X_T5		_XREG(30)
+#define _X_T6		_XREG(31)
+
+// f0-f7 = ft0-ft7 (FP temporaries)
+// following layout is similar to integer registers above
+// f8-f9 = fs0-fs1 (FP saved registers)
+// f10-f11 = fa0-fa1 (FP arguments/return values)
+// f12-f17 = fa2-fa7 (FP arguments)
+// f18-f27 = fs2-fa11 (FP saved registers)
+// f28-f31 = ft8-ft11 (FP temporaries)
 
 /*
  * This fragment is common to <riscv/mcontext.h> and <riscv/reg.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.h,v 1.3 2014/10/15 09:05:46 hannken Exp $ */
+/* $NetBSD: nilfs_subr.h,v 1.3.2.1 2015/04/06 15:18:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -46,7 +46,7 @@ int nilfs_get_segment_log(struct nilfs_device *nilfsdev, uint64_t *blocknr,
 void nilfs_search_super_root(struct nilfs_device *nilfsdev);
 
 /* reading */
-int nilfs_bread(struct nilfs_node *node, uint64_t blocknr, struct kauth_cred *cred,
+int nilfs_bread(struct nilfs_node *node, uint64_t blocknr,
 	int flags, struct buf **bpp);
 
 /* btree operations */

@@ -1,4 +1,4 @@
-/* $NetBSD: setjmp.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: setjmp.h,v 1.1.2.1 2015/04/06 15:18:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,45 +29,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-			/* magic + 16 reg + 1 fcsr + 16 fp + 4 sigmask */
-#define _JBLEN		(_JB_SIGMASK + 4)
+	/* magic + 16 reg + 1 fcsr + 12 fp + 4 sigmask + 8 spare */
+#define _JBLEN		(_JB_SIGMASK + 4 + 8)
 #define _JB_MAGIC	0
 #define	_JB_RA		1
-#define _JB_S0		2
-#define _JB_S1		3
-#define _JB_S2		4
-#define _JB_S3		5
-#define _JB_S4		6
-#define _JB_S5		7
-#define _JB_S6		8
-#define _JB_S7		9
-#define _JB_S8		10
-#define _JB_S9		11
-#define _JB_S10		12
-#define _JB_S11		13
-#define _JB_SP		14
-#define _JB_TP		15
-#define _JB_GP		16
+#define _JB_SP		2
+#define _JB_GP		3
+#define _JB_TP		4
+#define _JB_S0		5
+#define _JB_S1		6
+#define _JB_S2		7
+#define _JB_S3		8
+#define _JB_S4		9
+#define _JB_S5		10
+#define _JB_S6		11
+#define _JB_S7		12
+#define _JB_S8		13
+#define _JB_S9		14
+#define _JB_S10		15
+#define _JB_S11		16
 #define _JB_FCSR	17
 
-#define	_JB_F0		18
-#define	_JB_F1		(_JB_F0 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F2		(_JB_F1 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F3		(_JB_F2 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F4		(_JB_F3 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F5		(_JB_F4 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F6		(_JB_F5 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F7		(_JB_F6 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F8		(_JB_F7 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F9		(_JB_F8 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F10		(_JB_F9 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F11		(_JB_F10 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F12		(_JB_F11 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F13		(_JB_F12 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F14		(_JB_F13 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
-#define	_JB_F15		(_JB_F14 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS0		18
+#define	_JB_FS1		(_JB_FS0 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS2		(_JB_FS1 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS3		(_JB_FS2 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS4		(_JB_FS3 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS5		(_JB_FS4 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS6		(_JB_FS5 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS7		(_JB_FS6 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS8		(_JB_FS7 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS9		(_JB_FS8 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS10	(_JB_FS9 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define	_JB_FS11	(_JB_FS10 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
 
-#define _JB_SIGMASK	(_JB_F15 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
+#define _JB_SIGMASK	(_JB_FS11 + sizeof(double) / sizeof(_BSD_JBSLOT_T_))
 
 #ifndef _BSD_JBSLOT_T_
 #define	_BSD_JBSLOT_T_	long long

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.80 2013/07/28 01:25:06 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.80.6.1 2015/04/06 15:18:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.80 2013/07/28 01:25:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.80.6.1 2015/04/06 15:18:32 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -199,7 +199,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 			if (nsize <= osize) {
 				/* No need to extend */
 				if (bpp && (error = bread(vp, lbn, osize,
-				    NOCRED, 0, &bp)))
+				    0, &bp)))
 					return error;
 			} else {
 				/* Extend existing block */
@@ -329,7 +329,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 			break;
 		    default:
 			idp = &indirs[num - 1];
-			if (bread(vp, idp->in_lbn, fs->lfs_bsize, NOCRED,
+			if (bread(vp, idp->in_lbn, fs->lfs_bsize,
 				  B_MODIFY, &ibp))
 				panic("lfs_balloc: bread bno %lld",
 				    (long long)idp->in_lbn);
@@ -409,7 +409,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	 * appropriate things and making sure it all goes to disk.
 	 * Don't bother to read in that case.
 	 */
-	if (bpp && (error = bread(vp, lbn, osize, NOCRED, 0, bpp))) {
+	if (bpp && (error = bread(vp, lbn, osize, 0, bpp))) {
 		goto out;
 	}
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)

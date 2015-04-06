@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.13 2014/08/26 09:38:54 manu Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.13.2.1 2015/04/06 15:18:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.13 2014/08/26 09:38:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.13.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -118,7 +118,7 @@ struct tftproot_handle {
 int tftproot_dhcpboot(device_t);
 
 static int tftproot_getfile(struct tftproot_handle *, struct lwp *);
-static int tftproot_recv(struct mbuf *, void *);
+static int tftproot_recv(struct mbuf **, void *);
 
 int
 tftproot_dhcpboot(device_t bootdv)
@@ -350,10 +350,11 @@ out:
 }
 
 static int
-tftproot_recv(struct mbuf *m, void *ctx)
+tftproot_recv(struct mbuf **mp, void *ctx)
 {
 	struct tftproot_handle *trh = ctx;
 	struct tftphdr *tftp;
+	struct mbuf *m = *mp;
 	size_t newlen;
 	size_t hdrlen = sizeof(*tftp) - sizeof(tftp->th_data);
 
@@ -380,7 +381,7 @@ tftproot_recv(struct mbuf *m, void *ctx)
 	 * Examine the TFTP header
 	 */
 	if (m->m_len > sizeof(*tftp)) {
-		if ((m = m_pullup(m, sizeof(*tftp))) == NULL) {
+		if ((m = *mp = m_pullup(m, sizeof(*tftp))) == NULL) {
 			DPRINTF(("%s():%d m_pullup failed\n",
 			    __func__, __LINE__));
 			return -1;

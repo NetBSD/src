@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.18 2014/11/07 20:48:41 martin Exp $	*/
+/*	$NetBSD: locore.h,v 1.18.2.1 2015/04/06 15:17:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -54,6 +54,8 @@
 #include "opt_arm_debug.h"
 #endif
 
+#include <sys/pcu.h>
+
 #include <arm/cpuconf.h>
 #include <arm/armreg.h>
 
@@ -87,7 +89,13 @@
 #define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
 #elif defined (TPIDRPRW_IS_CURLWP)
 #define GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
+#if defined (MULTIPROCESSOR)
 #define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
+#elif defined(_ARM_ARCH_7)
+#define GET_CURCPU(rX)		movw rX, #:lower16:cpu_info_store; movt rX, #:upper16:cpu_info_store
+#else 
+#define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
+#endif
 #elif !defined(MULTIPROCESSOR)
 #define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
 #define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
@@ -244,7 +252,7 @@ arm_dmb(void)
 	if (CPU_IS_ARMV6_P())
 		armreg_dmb_write(0);
 	else if (CPU_IS_ARMV7_P())
-		__asm __volatile("dmb");
+		__asm __volatile("dmb" ::: "memory");
 }
 
 static inline void
@@ -253,7 +261,7 @@ arm_dsb(void)
 	if (CPU_IS_ARMV6_P())
 		armreg_dsb_write(0);
 	else if (CPU_IS_ARMV7_P())
-		__asm __volatile("dsb");
+		__asm __volatile("dsb" ::: "memory");
 }
 
 static inline void
@@ -262,7 +270,7 @@ arm_isb(void)
 	if (CPU_IS_ARMV6_P())
 		armreg_isb_write(0);
 	else if (CPU_IS_ARMV7_P())
-		__asm __volatile("isb");
+		__asm __volatile("isb" ::: "memory");
 }
 #endif
 

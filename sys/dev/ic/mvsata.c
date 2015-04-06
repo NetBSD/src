@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.33 2014/02/17 13:41:20 kiyohara Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.33.6.1 2015/04/06 15:18:09 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.33 2014/02/17 13:41:20 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.33.6.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1223,7 +1223,7 @@ do_pio:
 		else
 			wdccommand(chp, 0, cmd, cyl,
 			    head, sect, nblks,
-			    (ata_bio->lp->d_type == DTYPE_ST506) ?
+			    (ata_bio->lp->d_type == DKTYPE_ST506) ?
 			    ata_bio->lp->d_precompcyl / 4 : 0);
 
 		/* start timeout machinery */
@@ -1519,7 +1519,7 @@ geometry:
 		goto multimode;
 	wdccommand(chp, 0, WDCC_IDP, ata_bio->lp->d_ncylinders,
 	    ata_bio->lp->d_ntracks - 1, 0, ata_bio->lp->d_nsectors,
-	    (ata_bio->lp->d_type == DTYPE_ST506) ?
+	    (ata_bio->lp->d_type == DKTYPE_ST506) ?
 	    ata_bio->lp->d_precompcyl / 4 : 0);
 	errstring = "geometry";
 	if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, flags))

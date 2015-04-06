@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.164 2014/09/05 06:00:05 matt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.164.2.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.164 2014/09/05 06:00:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.164.2.1 2015/04/06 15:18:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.164 2014/09/05 06:00:05 matt Exp $");
 #define	DOMAINNAME	"oroute"
 CTASSERT(sizeof(struct ifa_xmsghdr) == 20);
 DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
-#else
+#else /* COMPAT_RTSOCK */
 #define	RTM_XVERSION	RTM_VERSION
 #define	RT_XADVANCE(a,b) RT_ADVANCE(a,b)
 #define	RT_XROUNDUP(n)	RT_ROUNDUP(n)
@@ -125,11 +125,16 @@ CTASSERT(sizeof(struct ifa_xmsghdr) == 24);
 DOMAIN_DEFINE(routedomain); /* forward declare and add to link set */
 #undef COMPAT_50
 #undef COMPAT_14
-#endif
+#endif /* COMPAT_RTSOCK */
 
 #ifndef COMPATCALL
 #define	COMPATCALL(name, args)	do { } while (/*CONSTCOND*/ 0)
 #endif
+
+#ifdef RTSOCK_DEBUG
+#define RT_IN_PRINT(b, a) (in_print((b), sizeof(b), \
+    &((const struct sockaddr_in *)info.rti_info[(a)])->sin_addr), (b))
+#endif /* RTSOCK_DEBUG */
 
 struct route_info COMPATNAME(route_info) = {
 	.ri_dst = { .sa_len = 2, .sa_family = PF_XROUTE, },
@@ -234,7 +239,7 @@ COMPATNAME(route_accept)(struct socket *so, struct mbuf *nam)
 }
 
 static int
-COMPATNAME(route_bind)(struct socket *so, struct mbuf *nam, struct lwp *l)
+COMPATNAME(route_bind)(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -493,9 +498,9 @@ COMPATNAME(route_output)(struct mbuf *m, ...)
 	info.rti_flags = rtm->rtm_flags;
 #ifdef RTSOCK_DEBUG
 	if (info.rti_info[RTAX_DST]->sa_family == AF_INET) {
+		char abuf[INET_ADDRSTRLEN];
 		printf("%s: extracted info.rti_info[RTAX_DST] %s\n", __func__,
-		    inet_ntoa(((const struct sockaddr_in *)
-		    info.rti_info[RTAX_DST])->sin_addr));
+		    RT_IN_PRINT(abuf, RTAX_DST));
 	}
 #endif /* RTSOCK_DEBUG */
 	if (info.rti_info[RTAX_DST] == NULL ||
@@ -577,16 +582,14 @@ COMPATNAME(route_output)(struct mbuf *m, ...)
 #ifdef RTSOCK_DEBUG
 				if (info.rti_info[RTAX_IFA]->sa_family ==
 				    AF_INET) {
-					printf("%s: copying out RTAX_IFA %s ",
-					    __func__, inet_ntoa(
-					    ((const struct sockaddr_in *)
-					    info.rti_info[RTAX_IFA])->sin_addr)
-					    );
-					printf("for info.rti_info[RTAX_DST] %s "
+					char ibuf[INET_ADDRSTRLEN];
+					char abuf[INET_ADDRSTRLEN];
+					printf("%s: copying out RTAX_IFA %s "
+					    "for info.rti_info[RTAX_DST] %s "
 					    "ifa_getifa %p ifa_seqno %p\n",
-					    inet_ntoa(
-					    ((const struct sockaddr_in *)
-					    info.rti_info[RTAX_DST])->sin_addr),
+					    __func__,
+					    RT_IN_PRINT(ibuf, RTAX_IFA),
+					    RT_IN_PRINT(abuf, RTAX_DST),
 					    (void *)rtifa->ifa_getifa,
 					    rtifa->ifa_seqno);
 				}

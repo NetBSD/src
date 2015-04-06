@@ -323,7 +323,7 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 {
 	uint64_t last_seq[RADEON_NUM_RINGS];
 	bool signaled;
-	int i, r;
+	int i, r = 0;
 
 	spin_lock(&rdev->fence_lock);
 	while (!radeon_fence_any_seq_signaled(rdev, target_seq)) {
@@ -372,12 +372,12 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 		}
 
 		if (unlikely(r < 0))
-			goto out;
+			break;
 
 		if (unlikely(!signaled)) {
 			if (rdev->needs_reset) {
 				r = -EDEADLK;
-				goto out;
+				break;
 			}
 
 			/* we were interrupted for some reason and fence
@@ -420,12 +420,17 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 				wake_up_all(&rdev->fence_queue);
 #endif
 				r = -EDEADLK;
-				goto out;
+				break;
 			}
 		}
 	}
-out:	spin_unlock(&rdev->fence_lock);
-	return 0;
+	spin_unlock(&rdev->fence_lock);
+	/*
+	 * The timed wait returns 0 on timeout or the positive number
+	 * of ticks left (minimum 1) if the condition passed.  We
+	 * return zero on success.
+	 */
+	return (r < 0? r : 0);
 }
 
 /**

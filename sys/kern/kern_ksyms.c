@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.73 2014/08/17 21:17:44 joerg Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.73.2.1 2015/04/06 15:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.73 2014/08/17 21:17:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.73.2.1 2015/04/06 15:18:20 skrll Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -843,9 +843,19 @@ ksyms_sizes_calc(void)
 }
 
 static void
+ksyms_fill_note(void)
+{
+	int32_t *note = ksyms_hdr.kh_note;
+	note[0] = ELF_NOTE_NETBSD_NAMESZ;
+	note[1] = ELF_NOTE_NETBSD_DESCSZ;
+	note[2] = ELF_NOTE_TYPE_NETBSD_TAG;
+	memcpy(&note[3],  "NetBSD\0", 8);
+	note[5] = __NetBSD_Version__;
+}
+
+static void
 ksyms_hdr_init(void *hdraddr)
 {
-
 	/* Copy the loaded elf exec header */
 	memcpy(&ksyms_hdr.kh_ehdr, hdraddr, sizeof(Elf_Ehdr));
 
@@ -863,59 +873,64 @@ ksyms_hdr_init(void *hdraddr)
 	ksyms_hdr.kh_phdr[0].p_memsz = (unsigned long)-1L;
 	ksyms_hdr.kh_phdr[0].p_flags = PF_R | PF_X | PF_W;
 
-	/* First section is null */
+#define SHTCOPY(name)  strlcpy(&ksyms_hdr.kh_strtab[offs], (name), \
+    sizeof(ksyms_hdr.kh_strtab) - offs), offs += sizeof(name)
+
+	uint32_t offs = 1;
+	/* First section header ".note.netbsd.ident" */
+	ksyms_hdr.kh_shdr[SHNOTE].sh_name = offs;
+	ksyms_hdr.kh_shdr[SHNOTE].sh_type = SHT_NOTE;
+	ksyms_hdr.kh_shdr[SHNOTE].sh_offset = 
+	    offsetof(struct ksyms_hdr, kh_note[0]);
+	ksyms_hdr.kh_shdr[SHNOTE].sh_size = sizeof(ksyms_hdr.kh_note);
+	ksyms_hdr.kh_shdr[SHNOTE].sh_addralign = sizeof(int);
+	SHTCOPY(".note.netbsd.ident");
+	ksyms_fill_note();
 
 	/* Second section header; ".symtab" */
-	ksyms_hdr.kh_shdr[SYMTAB].sh_name = 1; /* Section 3 offset */
+	ksyms_hdr.kh_shdr[SYMTAB].sh_name = offs;
 	ksyms_hdr.kh_shdr[SYMTAB].sh_type = SHT_SYMTAB;
 	ksyms_hdr.kh_shdr[SYMTAB].sh_offset = sizeof(struct ksyms_hdr);
 /*	ksyms_hdr.kh_shdr[SYMTAB].sh_size = filled in at open */
-	ksyms_hdr.kh_shdr[SYMTAB].sh_link = 2; /* Corresponding strtab */
+	ksyms_hdr.kh_shdr[SYMTAB].sh_link = STRTAB; /* Corresponding strtab */
 	ksyms_hdr.kh_shdr[SYMTAB].sh_addralign = sizeof(long);
 	ksyms_hdr.kh_shdr[SYMTAB].sh_entsize = sizeof(Elf_Sym);
+	SHTCOPY(".symtab");
 
 	/* Third section header; ".strtab" */
-	ksyms_hdr.kh_shdr[STRTAB].sh_name = 9; /* Section 3 offset */
+	ksyms_hdr.kh_shdr[STRTAB].sh_name = offs;
 	ksyms_hdr.kh_shdr[STRTAB].sh_type = SHT_STRTAB;
 /*	ksyms_hdr.kh_shdr[STRTAB].sh_offset = filled in at open */
 /*	ksyms_hdr.kh_shdr[STRTAB].sh_size = filled in at open */
 	ksyms_hdr.kh_shdr[STRTAB].sh_addralign = sizeof(char);
+	SHTCOPY(".strtab");
 
 	/* Fourth section, ".shstrtab" */
-	ksyms_hdr.kh_shdr[SHSTRTAB].sh_name = 17; /* This section name offset */
+	ksyms_hdr.kh_shdr[SHSTRTAB].sh_name = offs;
 	ksyms_hdr.kh_shdr[SHSTRTAB].sh_type = SHT_STRTAB;
 	ksyms_hdr.kh_shdr[SHSTRTAB].sh_offset =
 	    offsetof(struct ksyms_hdr, kh_strtab);
 	ksyms_hdr.kh_shdr[SHSTRTAB].sh_size = SHSTRSIZ;
 	ksyms_hdr.kh_shdr[SHSTRTAB].sh_addralign = sizeof(char);
+	SHTCOPY(".shstrtab");
 
 	/* Fifth section, ".bss". All symbols reside here. */
-	ksyms_hdr.kh_shdr[SHBSS].sh_name = 27; /* This section name offset */
+	ksyms_hdr.kh_shdr[SHBSS].sh_name = offs;
 	ksyms_hdr.kh_shdr[SHBSS].sh_type = SHT_NOBITS;
 	ksyms_hdr.kh_shdr[SHBSS].sh_offset = 0;
 	ksyms_hdr.kh_shdr[SHBSS].sh_size = (unsigned long)-1L;
 	ksyms_hdr.kh_shdr[SHBSS].sh_addralign = PAGE_SIZE;
 	ksyms_hdr.kh_shdr[SHBSS].sh_flags = SHF_ALLOC | SHF_EXECINSTR;
+	SHTCOPY(".bss");
 
 	/* Sixth section header; ".SUNW_ctf" */
-	ksyms_hdr.kh_shdr[SHCTF].sh_name = 32; /* Section 6 offset */
+	ksyms_hdr.kh_shdr[SHCTF].sh_name = offs;
 	ksyms_hdr.kh_shdr[SHCTF].sh_type = SHT_PROGBITS;
 /*	ksyms_hdr.kh_shdr[SHCTF].sh_offset = filled in at open */
 /*	ksyms_hdr.kh_shdr[SHCTF].sh_size = filled in at open */
 	ksyms_hdr.kh_shdr[SHCTF].sh_link = SYMTAB; /* Corresponding symtab */
 	ksyms_hdr.kh_shdr[SHCTF].sh_addralign = sizeof(char);
-
-	/* Set section names */
-	strlcpy(&ksyms_hdr.kh_strtab[1], ".symtab",
-	    sizeof(ksyms_hdr.kh_strtab) - 1);
-	strlcpy(&ksyms_hdr.kh_strtab[9], ".strtab",
-	    sizeof(ksyms_hdr.kh_strtab) - 9);
-	strlcpy(&ksyms_hdr.kh_strtab[17], ".shstrtab",
-	    sizeof(ksyms_hdr.kh_strtab) - 17);
-	strlcpy(&ksyms_hdr.kh_strtab[27], ".bss",
-	    sizeof(ksyms_hdr.kh_strtab) - 27);
-	strlcpy(&ksyms_hdr.kh_strtab[32], ".SUNW_ctf",
-	    sizeof(ksyms_hdr.kh_strtab) - 32);
+	SHTCOPY(".SUNW_ctf");
 }
 
 static int

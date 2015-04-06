@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.54 2014/11/04 07:51:54 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.54.2.1 2015/04/06 15:18:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54 2014/11/04 07:51:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54.2.1 2015/04/06 15:18:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,9 +178,13 @@ dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 void
 dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 {
-	int	s;
+	int	s, part;
 	int	wlabel;
 	daddr_t	blkno;
+	struct disklabel *lp;
+	struct disk *dk;
+	uint64_t numsecs;
+	unsigned secsize;
 
 	DPRINTF_FOLLOW(("dk_strategy(%s, %p, %p)\n",
 	    di->di_dkname, dksc, bp));
@@ -192,9 +196,24 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 		return;
 	}
 
-	/* XXX look for some more errors, c.f. ld.c */
+	lp = dksc->sc_dkdev.dk_label;
+	dk = &dksc->sc_dkdev;
+
+	part = DISKPART(bp->b_dev);
+	numsecs = dk->dk_geom.dg_secperunit;
+	secsize = dk->dk_geom.dg_secsize;
 
 	bp->b_resid = bp->b_bcount;
+
+	/*
+	 * The transfer must be a whole number of blocks and the offset must
+	 * not be negative.
+	 */     
+	if ((bp->b_bcount % secsize) != 0 || bp->b_blkno < 0) {
+		bp->b_error = EINVAL;
+		biodone(bp);
+		return;
+	}       
 
 	/* If there is nothing to do, then we are done */
 	if (bp->b_bcount == 0) {
@@ -203,20 +222,21 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 	}
 
 	wlabel = dksc->sc_flags & (DKF_WLABEL|DKF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(&dksc->sc_dkdev, bp, wlabel) <= 0) {
-		biodone(bp);
-		return;
+	if (part == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE, numsecs) <= 0) {
+			biodone(bp);
+			return;
+		}
+	} else {
+		if (bounds_check_with_label(&dksc->sc_dkdev, bp, wlabel) <= 0) {
+			biodone(bp);
+			return;
+		}
 	}
 
 	blkno = bp->b_blkno;
-	if (DISKPART(bp->b_dev) != RAW_PART) {
-		struct partition *pp;
-
-		pp =
-		    &dksc->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		blkno += pp->p_offset;
-	}
+	if (part != RAW_PART)
+		blkno += lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
 	bp->b_rawblkno = blkno;
 
 	/*
@@ -265,11 +285,11 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	    u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct	disklabel *lp;
-	struct	disk *dk;
+	struct	disk *dk = &dksc->sc_dkdev;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct	disklabel newlabel;
 #endif
-	int	error = 0;
+	int	error;
 
 	DPRINTF_FOLLOW(("dk_ioctl(%s, %p, 0x%"PRIx64", 0x%lx)\n",
 	    di->di_dkname, dksc, dev, cmd));
@@ -291,10 +311,6 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 
 	/* ensure that the pseudo-disk is initialized for these */
 	switch (cmd) {
-#ifdef DIOCGSECTORSIZE
-	case DIOCGSECTORSIZE:
-	case DIOCGMEDIASIZE:
-#endif
 	case DIOCGDINFO:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
@@ -316,37 +332,13 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 			return ENXIO;
 	}
 
+	error = disk_ioctl(dk, dev, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+	else
+		error = 0;
+
 	switch (cmd) {
-#ifdef DIOCGSECTORSIZE
-	case DIOCGSECTORSIZE:
-		*(u_int *)data = dksc->sc_dkdev.dk_geom.dg_secsize;
-		return 0;
-	case DIOCGMEDIASIZE:
-		*(off_t *)data =
-		    (off_t)dksc->sc_dkdev.dk_geom.dg_secsize *
-		    dksc->sc_dkdev.dk_geom.dg_nsectors;
-		return 0;
-#endif
-
-	case DIOCGDINFO:
-		*(struct disklabel *)data = *(dksc->sc_dkdev.dk_label);
-		break;
-
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = *(dksc->sc_dkdev.dk_label);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(data, &newlabel, sizeof (struct olddisklabel));
-		break;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)data)->disklab = dksc->sc_dkdev.dk_label;
-		((struct partinfo *)data)->part =
-		    &dksc->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
-		break;
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -362,7 +354,6 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 #endif
 		lp = (struct disklabel *)data;
 
-		dk = &dksc->sc_dkdev;
 		mutex_enter(&dk->dk_openlock);
 		dksc->sc_flags |= DKF_LABELLING;
 
@@ -402,46 +393,6 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
-
-	case DIOCAWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *)data;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, dksc->sc_dkdev.dk_name);
-		return (dkwedge_add(dkw));
-	    }
-
-	case DIOCDWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *)data;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, dksc->sc_dkdev.dk_name);
-		return (dkwedge_del(dkw));
-	    }
-
-	case DIOCLWEDGES:
-	    {
-	    	struct dkwedge_list *dkwl = (void *)data;
-
-		return (dkwedge_list(&dksc->sc_dkdev, dkwl, l));
-	    }
-
-	case DIOCMWEDGES:
-	    {
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-	    	dkwedge_discover(&dksc->sc_dkdev);
-		return 0;
-	    }
 
 	case DIOCGSTRATEGY:
 	    {

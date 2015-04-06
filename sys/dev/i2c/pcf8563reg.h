@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563reg.h,v 1.1 2011/01/21 19:11:47 jakllsch Exp $	*/
+/*	$NetBSD: pcf8563reg.h,v 1.1.38.1 2015/04/06 15:18:09 skrll Exp $	*/
 
 /*
  * Jonathan Kollasch, 2011
@@ -42,6 +42,7 @@
 #define PCF8563_NREGS		0x10
 
 #define PCF8563_M_SECOND	0x7f
+#define PCF8563_M_VL		0x80
 #define PCF8563_M_MINUTE	0x7f
 #define PCF8563_M_HOUR		0x3f
 #define PCF8563_M_DAY		0x3f

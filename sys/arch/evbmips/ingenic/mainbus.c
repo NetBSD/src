@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2014/11/22 15:17:02 macallan Exp $ */
+/*	$NetBSD: mainbus.c,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2014/11/22 15:17:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2014/11/22 15:17:02 macallan Exp $")
 
 #include <mips/cache.h>
 #include <mips/cpuregs.h>
+
+#include <mips/ingenic/ingenic_regs.h>
+
+#include "opt_ingenic.h"
 
 #include "locators.h"
 
@@ -55,6 +59,7 @@ struct mainbusdev {
 struct mainbusdev mainbusdevs[] = {
 	{ "cpu",	},
 	{ "com",	},
+	{ "apbus",	},
 	{ NULL,		}
 };
 
@@ -80,6 +85,19 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		struct mainbusdev ma = *md;
 		config_found_ia(self, "mainbus", &ma, mainbus_print);
 	}
+
+#ifdef INGENIC_DEBUG
+	printf("TFR: %08x\n", readreg(JZ_TC_TFR));
+	printf("TMR: %08x\n", readreg(JZ_TC_TMR));
+
+	/* send ourselves an IPI */
+	MTC0(0x12345678, CP0_CORE_MBOX, 0);
+	delay(1000);
+
+	/* send the other core an IPI */
+	MTC0(0x12345678, CP0_CORE_MBOX, 1);
+	delay(1000);
+#endif
 }
 
 static int

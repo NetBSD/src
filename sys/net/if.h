@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.181 2014/11/28 08:29:00 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.181.2.1 2015/04/06 15:18:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,8 +86,6 @@
 #ifdef _KERNEL
 #include <net/pktqueue.h>
 #endif
-
-//#define NET_MPSAFE 1
 
 /*
  * Always include ALTQ glue here -- we use the ALTQ interface queue
@@ -398,11 +396,10 @@ typedef struct ifnet {
 
 /*
  * Some convenience macros used for setting ifi_baudrate.
- * XXX 1000 vs. 1024? --thorpej@NetBSD.org
  */
-#define	IF_Kbps(x)	((x) * 1000)		/* kilobits/sec. */
-#define	IF_Mbps(x)	(IF_Kbps((x) * 1000))	/* megabits/sec. */
-#define	IF_Gbps(x)	(IF_Mbps((x) * 1000))	/* gigabits/sec. */
+#define	IF_Kbps(x)	((x) * 1000ULL)			/* kilobits/sec. */
+#define	IF_Mbps(x)	(IF_Kbps((x) * 1000ULL))	/* megabits/sec. */
+#define	IF_Gbps(x)	(IF_Mbps((x) * 1000ULL))	/* gigabits/sec. */
 
 /* Capabilities that interfaces can advertise. */
 					/* 0x01 .. 0x40 were previously used */
@@ -864,16 +861,16 @@ void if_activate_sadl(struct ifnet *, struct ifaddr *,
     const struct sockaddr_dl *);
 void	if_set_sadl(struct ifnet *, const void *, u_char, bool);
 void	if_alloc_sadl(struct ifnet *);
-void	if_attach(struct ifnet *);
+void	if_initialize(struct ifnet *);
+void	if_register(struct ifnet *);
+void	if_attach(struct ifnet *); /* Deprecated. Use if_initialize and if_register */
 void	if_attachdomain(void);
-void	if_attachdomain1(struct ifnet *);
 void	if_deactivate(struct ifnet *);
 void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);
 void	if_up(struct ifnet *);
-int	ifconf(u_long, void *);
 void	ifinit(void);
 void	ifinit1(void);
 int	ifaddrpref_ioctl(struct socket *, u_long, void *, struct ifnet *);
@@ -904,9 +901,6 @@ void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
-
-int	if_clone_create(const char *);
-int	if_clone_destroy(const char *);
 
 int	ifq_enqueue(struct ifnet *, struct mbuf * ALTQ_COMMA
     ALTQ_DECL(struct altq_pktattr *));
@@ -967,7 +961,6 @@ extern struct ifnet_head ifnet_list;
 extern struct ifnet *lo0ifp;
 
 ifnet_t *	if_byindex(u_int);
-void		if_drain_all(void);
 
 /*
  * ifq sysctl support

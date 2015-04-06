@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.102 2014/10/12 20:05:50 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.102.2.1 2015/04/06 15:18:23 skrll Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,10 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102 2014/10/12 20:05:50 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102.2.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include "opt_inet.h"
-#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,6 +566,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct sockaddr_dl *sdl;
 	union nd_opts ndopts;
 	struct sockaddr_in6 ssin6;
+	int rt_announce;
 
 	if (ip6->ip6_hlim != 255) {
 		nd6log((LOG_ERR,
@@ -669,6 +669,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	   ((sdl = satosdl(rt->rt_gateway)) == NULL))
 		goto freeit;
 
+	rt_announce = 0;
 	if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 		/*
 		 * If the link-layer has address, and no lladdr option came,
@@ -682,6 +683,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		 */
 		(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lladdr,
 		    ifp->if_addrlen);
+		rt_announce = 1;
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
@@ -712,11 +714,11 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		else {
 			if (sdl->sdl_alen) {
 				if (memcmp(lladdr, CLLADDR(sdl), ifp->if_addrlen))
-					llchange = 1;
+					llchange = rt_announce = 1;
 				else
 					llchange = 0;
 			} else
-				llchange = 1;
+				llchange = rt_announce = 1;
 		}
 
 		/*
@@ -801,7 +803,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			s = splsoftnet();
 			dr = defrouter_lookup(in6, rt->rt_ifp);
 			if (dr)
-				defrtrlist_del(dr);
+				defrtrlist_del(dr, NULL);
 			else if (!ip6_forwarding) {
 				/*
 				 * Even if the neighbor is not in the default
@@ -819,6 +821,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	rt->rt_flags &= ~RTF_REJECT;
 	ln->ln_asked = 0;
 	nd6_llinfo_release_pkts(ln, ifp, rt);
+	if (rt_announce) /* tell user process about any new lladdr */
+		rt_newmsg(RTM_CHANGE, rt);
 
  freeit:
 	m_freem(m);
@@ -1062,26 +1066,6 @@ nd6_dad_stoptimer(struct dadq *dp)
 }
 
 /*
- * Routine to report address flag changes to the routing socket
- */
-void
-nd6_newaddrmsg(struct ifaddr *ifa)
-{
-	struct sockaddr_in6 all1_sa;
-	struct rtentry *nrt = NULL;
-	int e;
-
-	sockaddr_in6_init(&all1_sa, &in6mask128, 0, 0, 0);
-	e = rtrequest(RTM_GET, ifa->ifa_addr, ifa->ifa_addr,
-	    (struct sockaddr *)&all1_sa, RTF_UP | RTF_HOST | RTF_LLINFO, &nrt);
-	if (nrt) {
-		rt_newaddrmsg(RTM_ADD, ifa, e, nrt);
-		nrt->rt_refcnt--;
-	}
-}
-
-
-/*
  * Start Duplicate Address Detection (DAD) for specified interface address.
  *
  * Note that callout is used when xtick > 0 and not when xtick == 0.
@@ -1115,7 +1099,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	}
 	if (ia->ia6_flags & IN6_IFF_ANYCAST || !ip6_dad_count) {
 		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
-		nd6_newaddrmsg(ifa);
+		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		return;
 	}
 	if (ifa->ifa_ifp == NULL)
@@ -1271,7 +1255,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 			 * No duplicate address found.
 			 */
 			ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
-			nd6_newaddrmsg(ifa);
+			rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 
 			nd6log((LOG_DEBUG,
 			    "%s: DAD complete for %s - no duplicates found\n",
@@ -1321,7 +1305,7 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	    if_name(ifp));
 
 	/* Inform the routing socket that DAD has completed */
-	nd6_newaddrmsg(ifa);
+	rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 
 	/*
 	 * If the address is a link-local address formed from an interface

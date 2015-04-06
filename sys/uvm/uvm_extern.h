@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.191 2014/07/07 20:14:43 riastradh Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.191.4.1 2015/04/06 15:18:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -175,19 +175,23 @@
 /*
  * flags for ubc_alloc()
  */
-#define UBC_READ	0x001
-#define UBC_WRITE	0x002
-#define UBC_FAULTBUSY	0x004
+#define UBC_READ	0x001	/* reading from object */
+#define UBC_WRITE	0x002	/* writing to object */
+#define UBC_FAULTBUSY	0x004	/* nobody else is using these pages, so busy
+				 * them at alloc and unbusy at release (e.g.,
+				 * for writes extending a file) */
 
 /*
  * flags for ubc_release()
  */
-#define UBC_UNMAP	0x010
+#define UBC_UNMAP	0x010	/* unmap pages now -- don't leave the
+				 * mappings cached indefinitely */
 
 /*
- * flags for ubc_uiomve()
+ * flags for ubc_uiomove()
  */
-#define	UBC_PARTIALOK	0x100
+#define	UBC_PARTIALOK	0x100	/* return early on error; otherwise, zero all
+				 * remaining bytes after error */
 
 /*
  * flags for uvn_findpages().
@@ -668,9 +672,9 @@ int			uvm_pctparam_createsysctlnode(struct uvm_pctparam *,
 			    const char *, const char *);
 
 /* uvm_mmap.c */
-int			uvm_mmap(struct vm_map *, vaddr_t *, vsize_t,
-			    vm_prot_t, vm_prot_t, int,
-			    void *, voff_t, vsize_t);
+int			uvm_mmap_dev(struct proc *, void **, size_t, dev_t,
+			    off_t);
+int			uvm_mmap_anon(struct proc *, void **, size_t);
 vaddr_t			uvm_default_mapaddr(struct proc *, vaddr_t, vsize_t);
 
 /* uvm_mremap.c */
@@ -741,7 +745,6 @@ bool			uvn_needs_writefault_p(struct uvm_object *);
 
 /* kern_malloc.c */
 void			kmeminit_nkmempages(void);
-void			kmeminit(void);
 extern int		nkmempages;
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_disksubr.c,v 1.4 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: ufs_disksubr.c,v 1.4.6.1 2015/04/06 15:17:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -91,7 +91,7 @@
 char *
 readdisklabel(int ctlr, int id, struct disklabel *lp)
 {
-	u_char *bp = lbl_buff;
+	uint8_t *bp = lbl_buff;
 	struct disklabel *dlp;
 	char *msg = NULL;
 	static struct scsi_generic_cdb cdb = {

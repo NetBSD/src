@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1 2014/09/19 17:36:26 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.1.2.1 2015/04/06 15:18:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -119,9 +119,9 @@
 #define RCSID(name)	__RCSID(name)
 
 #if defined(_LP64)
-#define	SZREG	4
-#else
 #define	SZREG	8
+#else
+#define	SZREG	4
 #endif
 
 #define	ALSK	15		/* stack alignment */

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.3 2014/10/07 09:36:09 ryo Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.3.2.1 2015/04/06 15:17:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -27,11 +27,11 @@
  */
 
 /*
- * Clock Controller Module (CCM) for i.MX5
+ * Clock Controller Module (CCM) for i.MX6
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.3 2014/10/07 09:36:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.3.2.1 2015/04/06 15:17:52 skrll Exp $");
 
 #include "opt_imx.h"
 #include "opt_imx6clk.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.3 2014/10/07 09:36:09 ryo Exp $");
 #include <sys/param.h>
 
 #include <machine/cpu.h>
+#include <arm/cortex/a9tmr_var.h>
 
 #include <arm/imx/imx6_ccmvar.h>
 #include <arm/imx/imx6_ccmreg.h>
@@ -282,7 +283,7 @@ imxccm_sysctl_setup(struct imxccm_softc *sc)
 	    imxccm_sysctl_freq_helper, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 	if (rv != 0)
 		goto fail;
-	sc->sc_sysctlnode_arm= node->sysctl_num;
+	sc->sc_sysctlnode_arm = node->sysctl_num;
 
 	rv = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    0, CTLTYPE_INT,
@@ -436,7 +437,9 @@ imx6_set_clock(enum imx6_clock clk, uint32_t freq)
 					v &= ~CCM_ANALOG_PLL_ARM_DIV_SELECT;
 					imx6_ccm_write(CCM_ANALOG_PLL_ARM, v | __SHIFTIN(pll, CCM_ANALOG_PLL_ARM_DIV_SELECT));
 
-					cpufreq_set_all(imx6_get_clock(IMX6CLK_ARM_ROOT));
+					v = imx6_get_clock(IMX6CLK_ARM_ROOT);
+					cpufreq_set_all(v);
+					a9tmr_update_freq(v / IMX6_PERIPHCLK_N);
 					return 0;
 				}
 			}
@@ -663,6 +666,179 @@ imx6_get_clock(enum imx6_clock clk)
 		freq = imx6_get_clock(IMX6CLK_IPG);
 		v = imx6_ccm_read(CCM_CSCMR1);
 		freq = freq / (__SHIFTOUT(v, CCM_CSCMR1_PERCLK_PODF) + 1);
+		break;
+
+	case IMX6CLK_MMDC_CH1_CLK_ROOT:
+		freq = imx6_get_clock(IMX6CLK_MMDC_CH1);
+		v = __SHIFTOUT(imx6_ccm_read(CCM_CBCDR), CCM_CBCDR_MMDC_CH1_AXI_PODF);
+		freq = freq / (v + 1);
+		break;
+
+	case IMX6CLK_MMDC_CH0_CLK_ROOT:
+		freq = imx6_get_clock(IMX6CLK_MMDC_CH0);
+		v = __SHIFTOUT(imx6_ccm_read(CCM_CBCDR), CCM_CBCDR_MMDC_CH0_AXI_PODF);
+		freq = freq / (v + 1);
+		break;
+
+	case IMX6CLK_MMDC_CH0:
+	case IMX6CLK_MMDC_CH1:
+		v = imx6_ccm_read(CCM_CBCMR);
+		sel = (clk == IMX6CLK_MMDC_CH0) ?
+		    __SHIFTOUT(v, CCM_CBCMR_PRE_PERIPH_CLK_SEL) :
+		    __SHIFTOUT(v, CCM_CBCMR_PRE_PERIPH2_CLK_SEL);
+		switch (sel) {
+		case 0:
+			freq = imx6_get_clock(IMX6CLK_PLL2);
+			break;
+		case 1:
+			freq = imx6_get_clock(IMX6CLK_PLL2_PFD2);
+			break;
+		case 2:
+			freq = imx6_get_clock(IMX6CLK_PLL2_PFD0);
+			break;
+		case 3:
+			freq = imx6_get_clock(IMX6CLK_PLL2_PFD2) / 2;
+			break;
+		}
+		break;
+
+	case IMX6CLK_IPU1_HSP_CLK_ROOT:
+		v = imx6_ccm_read(CCM_CSCDR3);
+		switch (__SHIFTOUT(v, CCM_CSCDR3_IPU1_HSP_CLK_SEL)) {
+		case 0:
+			freq = imx6_get_clock(IMX6CLK_MMDC_CH0);
+			break;
+		case 1:
+			freq = imx6_get_clock(IMX6CLK_PLL2_PFD2);
+			break;
+		case 2:
+			freq = imx6_get_clock(IMX6CLK_PLL3) / 4;
+			break;
+		case 3:
+			freq = imx6_get_clock(IMX6CLK_PLL3_PFD1);
+			break;
+		}
+		v = __SHIFTOUT(v, CCM_CSCDR3_IPU1_HSP_CLK_SEL);
+		freq = freq / (v + 1);
+		break;
+	case IMX6CLK_IPU2_HSP_CLK_ROOT:
+		v = imx6_ccm_read(CCM_CSCDR3);
+		switch (__SHIFTOUT(v, CCM_CSCDR3_IPU2_HSP_CLK_SEL)) {
+		case 0:
+			freq = imx6_get_clock(IMX6CLK_MMDC_CH0);
+			break;
+		case 1:
+			freq = imx6_get_clock(IMX6CLK_PLL2_PFD2);
+			break;
+		case 2:
+			freq = imx6_get_clock(IMX6CLK_PLL3) / 4;
+			break;
+		case 3:
+			freq = imx6_get_clock(IMX6CLK_PLL3_PFD1);
+			break;
+		}
+		v = __SHIFTOUT(v, CCM_CSCDR3_IPU2_HSP_CLK_SEL);
+		freq = freq / (v + 1);
+		break;
+
+	case IMX6CLK_IPU1_DI0_CLK_ROOT:
+	case IMX6CLK_IPU1_DI1_CLK_ROOT:
+		v = imx6_ccm_read(CCM_CHSCCDR);
+		sel = (clk == IMX6CLK_IPU1_DI0_CLK_ROOT) ?
+		    __SHIFTOUT(v, CCM_CHSCCDR_IPU1_DI0_CLK_SEL) :
+		    __SHIFTOUT(v, CCM_CHSCCDR_IPU1_DI1_CLK_SEL);
+		switch (sel) {
+		case 0:
+			sel = (clk == IMX6CLK_IPU1_DI0_CLK_ROOT) ?
+			    __SHIFTOUT(v, CCM_CHSCCDR_IPU1_DI0_PRE_CLK_SEL) :
+			    __SHIFTOUT(v, CCM_CHSCCDR_IPU1_DI1_PRE_CLK_SEL);
+			switch (sel) {
+			case 0:
+				freq = imx6_get_clock(IMX6CLK_MMDC_CH0);
+				break;
+			case 1:
+				freq = imx6_get_clock(IMX6CLK_PLL3);
+				break;
+			case 2:
+				freq = imx6_get_clock(IMX6CLK_PLL5);
+				break;
+			case 3:
+				freq = imx6_get_clock(IMX6CLK_PLL2_PFD0);
+				break;
+			case 4:
+				freq = imx6_get_clock(IMX6CLK_PLL2_PFD2);
+				break;
+			case 5:
+				freq = imx6_get_clock(IMX6CLK_PLL3_PFD1);
+				break;
+			default:
+				/* reserved */
+				freq = 0;
+			}
+			if (clk == IMX6CLK_IPU1_DI0_CLK_ROOT)
+				freq = freq / (__SHIFTOUT(v, CCM_CHSCCDR_IPU1_DI0_PODF) + 1);
+			else
+				freq = freq / (__SHIFTOUT(v, CCM_CHSCCDR_IPU1_DI1_PODF) + 1);
+			break;
+		case 1:
+		case 2:
+			/* IPP_DI[01]_CLK is an external clock */
+			freq = 0;
+			break;
+		case 3:
+			freq = imx6_get_clock(IMX6CLK_LDB_DI0_IPU);
+			break;
+		case 4:
+			freq = imx6_get_clock(IMX6CLK_LDB_DI1_IPU);
+			break;
+		default:
+			/* reserved */
+			freq = 0;
+		}
+		break;
+
+	case IMX6CLK_LDB_DI0_SERIAL_CLK_ROOT:
+	case IMX6CLK_LDB_DI1_SERIAL_CLK_ROOT:
+		v = imx6_ccm_read(CCM_CS2CDR);
+		sel = (clk == IMX6CLK_LDB_DI0_SERIAL_CLK_ROOT) ?
+		    __SHIFTOUT(v, CCM_CS2CDR_LDB_DI0_CLK_SEL) :
+		    __SHIFTOUT(v, CCM_CS2CDR_LDB_DI1_CLK_SEL);
+		switch (sel) {
+		case 0:
+			freq = imx6_get_clock(IMX6CLK_PLL5);
+			break;
+		case 1:
+			freq = imx6_get_clock(IMX6CLK_PLL2_PFD0);
+			break;
+		case 2:
+			freq = imx6_get_clock(IMX6CLK_PLL2_PFD2);
+			break;
+		case 3:
+			freq = imx6_get_clock(IMX6CLK_MMDC_CH1);
+			break;
+		case 4:
+			freq = imx6_get_clock(IMX6CLK_PLL3);
+			break;
+		case 5:
+		default:
+			/* reserved */
+			freq = 0;
+		}
+		break;
+
+	case IMX6CLK_LDB_DI0_IPU:
+		freq = imx6_get_clock(IMX6CLK_LDB_DI0_SERIAL_CLK_ROOT);
+		v = imx6_ccm_read(CCM_CSCMR2);
+		if (!ISSET(v, CCM_CSCMR2_LDB_DI0_IPU_DIV))
+			freq *= 2;
+		freq /= 7;
+		break;
+	case IMX6CLK_LDB_DI1_IPU:
+		freq = imx6_get_clock(IMX6CLK_LDB_DI1_SERIAL_CLK_ROOT);
+		v = imx6_ccm_read(CCM_CSCMR2);
+		if (!ISSET(v, CCM_CSCMR2_LDB_DI1_IPU_DIV))
+			freq *= 2;
+		freq /= 7;
 		break;
 
 	default:

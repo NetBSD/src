@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: types.h,v 1.1.2.1 2015/04/06 15:18:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ typedef unsigned short	tlb_asid_t;
 #if defined(_KERNEL)
 typedef struct label_t {	/* Used by setjmp & longjmp */
         register_t lb_reg[16];	/* */
+	__uint32_t lb_sr;
 } label_t;
 #endif
          

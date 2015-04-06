@@ -50,7 +50,11 @@
 #include <drm/bus_dma_hacks.h>
 #endif
 
+#ifdef _LP64
 #define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
+#else
+#define DRM_FILE_PAGE_OFFSET (0xa0000000UL >> PAGE_SHIFT)
+#endif
 
 static int radeon_ttm_debugfs_init(struct radeon_device *rdev);
 static void radeon_ttm_debugfs_fini(struct radeon_device *rdev);

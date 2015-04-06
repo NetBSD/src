@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1121.2.2 2014/12/03 23:05:06 skrll Exp $
+#	$NetBSD: files,v 1.1121.2.3 2015/04/06 15:18:07 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20141030
@@ -51,6 +51,7 @@ defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
 defflag	opt_route.h		RTCACHE_DEBUG RTFLUSH_DEBUG
 
 defflag				MULTIPROCESSOR
+defflag				NET_MPSAFE
 
 defflag	opt_config.h		INCLUDE_CONFIG_FILE INCLUDE_JUST_CONFIG
 
@@ -119,6 +120,8 @@ defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 
 # printf entropy source
 defflag opt_rnd_printf.h	RND_PRINTF
+
+defflag opt_todr.h		TODR_DEBUG
 
 # compatibility options
 #
@@ -198,7 +201,7 @@ include "dev/sysmon/files.sysmon"
 define	bpf_filter
 defparam opt_bpf.h	BPF_BUFSIZE
 
-defflag	opt_bpfjit.h	BPFJIT
+defflag	opt_bpf.h	BPFJIT
 
 file	net/bpfjit.c	sljit & bpfjit
 
@@ -315,6 +318,9 @@ define	pckbport_machdep_cnattach
 define	firmload
 
 include "dev/files.audio"
+
+# High definition audio
+include "dev/hdaudio/files.hdaudio"
 
 # Base verbose vendor/product printing support
 file	dev/dev_verbose.c
@@ -1095,6 +1101,10 @@ file	dev/ic/acpipmtimer.c	acpipmtimer
 device 	hpet
 file 	dev/ic/hpet.c		hpet			needs-flag
 
+# DesignWare timer
+device	dwctmr
+file	dev/ic/dwc_tmr.c	dwctmr
+
 # SMSC LAN9118 Family Ethernet Controller
 #
 device	smsh: arp, ether, ifnet, mii
@@ -1262,6 +1272,15 @@ file	dev/ic/w83l518d_sdmmc.c		wb
 device	rtsx: sdmmcbus
 file	dev/ic/rtsx.c			rtsx
 
+# DesignWare SD/MMC host controller
+defflag	opt_dwc_mmc.h	DWC_MMC_DEBUG
+device	dwcmmc: sdmmcbus
+file	dev/ic/dwc_mmc.c		dwcmmc
+
+# ARM PrimeCell PL181 (MMCI) host controller
+device	plmmc: sdmmcbus
+file	dev/ic/pl181.c			plmmc
+
 # Myson MTD803 3-in-1 Fast Ethernet Controller
 device	mtd: arp, ether, ifnet, mii
 file	dev/ic/mtd803.c			mtd
@@ -1404,7 +1423,7 @@ file	dev/kttcp.c			kttcp		needs-flag
 
 # Veriexec
 defpseudo veriexec
-file	kern/kern_verifiedexec.c	veriexec
+file	kern/kern_veriexec.c	veriexec
 file	dev/verified_exec.c		veriexec	needs-flag
 
 # isochronous pseudo device for IEEE 1394, i.LINK or FireWire

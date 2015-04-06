@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.191 2013/11/01 06:22:46 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.191.6.1 2015/04/06 15:18:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.191 2013/11/01 06:22:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.191.6.1 2015/04/06 15:18:02 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -949,17 +949,24 @@ kfault:
 			return;
 		}
 		KSI_INIT_TRAP(&ksi);
-		if (rv == ENOMEM) {
+		switch (rv) {
+		case ENOMEM:
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       l->l_cred ?
 			       kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
-			ksi.ksi_code = SI_NOINFO;
-		} else {
+			break;
+		case EINVAL:
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_code = BUS_ADRERR;
+		case EACCES:
 			ksi.ksi_signo = SIGSEGV;
-			ksi.ksi_code = (rv == EACCES
-				? SEGV_ACCERR : SEGV_MAPERR);
+			ksi.ksi_code = SEGV_ACCERR;
+		default:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			break;
 		}
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)v;
@@ -1236,17 +1243,24 @@ kfault:
 			return;
 		}
 		KSI_INIT_TRAP(&ksi);
-		if (rv == ENOMEM) {
+		switch (rv) {
+		case ENOMEM:
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       l->l_cred ?
 			       kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
-			ksi.ksi_code = SI_NOINFO;
-		} else {
+			break;
+		case EINVAL:
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_code = BUS_ADRERR;
+		case EACCES:
 			ksi.ksi_signo = SIGSEGV;
-			ksi.ksi_code = (rv == EACCES)
-				? SEGV_ACCERR : SEGV_MAPERR;
+			ksi.ksi_code = SEGV_ACCERR;
+		default:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			break;
 		}
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)sfva;

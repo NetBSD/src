@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.4 2014/09/07 15:28:05 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.4.2.1 2015/04/06 15:17:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,21 +30,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.4 2014/09/07 15:28:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.4.2.1 2015/04/06 15:17:52 skrll Exp $");
 
 #define _INTR_PRIVATE
 
+#include "opt_bcm283x.h"
+
 #include <sys/param.h>
-#include <sys/proc.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <machine/intr.h>
-#include <sys/bus.h>
+
+#include <arm/locore.h>
 
 #include <arm/pic/picvar.h>
+#include <arm/cortex/gtmr_var.h>
 
 #include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
+#include <arm/broadcom/bcm2835var.h>
 
 static void bcm2835_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
 static void bcm2835_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
@@ -52,6 +59,29 @@ static int bcm2835_pic_find_pending_irqs(struct pic_softc *);
 static void bcm2835_pic_establish_irq(struct pic_softc *, struct intrsource *);
 static void bcm2835_pic_source_name(struct pic_softc *, int, char *,
     size_t);
+
+#if defined(BCM2836)
+static void bcm2836mp_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
+static void bcm2836mp_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
+static int bcm2836mp_pic_find_pending_irqs(struct pic_softc *);
+static void bcm2836mp_pic_establish_irq(struct pic_softc *, struct intrsource *);
+static void bcm2836mp_pic_source_name(struct pic_softc *, int, char *,
+    size_t);
+#if 0
+#ifdef MULTIPROCESSOR
+int bcm2836mp_ipi_handler(void *);
+static void bcm2836mp_cpu_init(struct pic_softc *, struct cpu_info *);
+static void bcm2836mp_send_ipi(struct pic_softc *, const kcpuset_t *, u_long);
+#endif
+#endif
+#endif
+
+#ifdef MULTIPROCESSOR
+static void
+bcm2835_dummy(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
+{
+}
+#endif
 
 static int  bcm2835_icu_match(device_t, cfdata_t, void *);
 static void bcm2835_icu_attach(device_t, device_t, void *);
@@ -62,6 +92,9 @@ static struct pic_ops bcm2835_picops = {
 	.pic_find_pending_irqs = bcm2835_pic_find_pending_irqs,
 	.pic_establish_irq = bcm2835_pic_establish_irq,
 	.pic_source_name = bcm2835_pic_source_name,
+#if defined(MULTIPROCESSOR)
+	.pic_ipi_send = bcm2835_dummy,
+#endif
 };
 
 struct pic_softc bcm2835_pic = {
@@ -69,6 +102,26 @@ struct pic_softc bcm2835_pic = {
 	.pic_maxsources = BCM2835_NIRQ,
 	.pic_name = "bcm2835 pic",
 };
+
+#if defined(BCM2836)
+static struct pic_ops bcm2836mp_picops = {
+	.pic_unblock_irqs = bcm2836mp_pic_unblock_irqs,
+	.pic_block_irqs = bcm2836mp_pic_block_irqs,
+	.pic_find_pending_irqs = bcm2836mp_pic_find_pending_irqs,
+	.pic_establish_irq = bcm2836mp_pic_establish_irq,
+	.pic_source_name = bcm2836mp_pic_source_name,
+#if 0 && defined(MULTIPROCESSOR)
+	.pic_cpu_init = bcm2836mp_cpu_init,
+	.pic_ipi_send = bcm2836mp_send_ipi,
+#endif
+};
+
+struct pic_softc bcm2836mp_pic = {
+	.pic_ops = &bcm2836mp_picops,
+	.pic_maxsources = BCM2836MP_NIRQ,
+	.pic_name = "bcm2836 mp pic",
+};
+#endif
 
 struct bcm2835icu_softc {
 	device_t		sc_dev;
@@ -111,6 +164,15 @@ static const char * const bcm2835_sources[BCM2835_NIRQ] = {
 	"GPU0 Halted",	"GPU1 Halted",	"Illegal #1",	"Illegal #0"
 };
 
+#if defined(BCM2836)
+static const char * const bcm2836mp_sources[BCM2836MP_NIRQ] = {
+	"cntpsirq",	"cntpnsirq",	"cnthpirq",	"cntvirq",
+	"mailbox0",	"mailbox1",	"mailbox2",	"mailbox3",
+};
+#endif
+
+#define	BCM2836_INTBIT_GPUPENDING	__BIT(8)
+
 #define	BCM2835_INTBIT_PENDING1		__BIT(8)
 #define	BCM2835_INTBIT_PENDING2		__BIT(9)
 #define	BCM2835_INTBIT_ARM		__BITS(0,7)
@@ -148,7 +210,16 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 	}
 
 	bcmicu_sc = sc;
+
 	pic_add(sc->sc_pic, 0);
+
+#if defined(BCM2836)
+#if 0 && defined(MULTIPROCESSOR)
+	aprint_normal(": Multiprocessor");
+#endif
+	pic_add(&bcm2836mp_pic, BCM2836_INT_LOCALBASE);
+#endif
+
 	aprint_normal("\n");
 }
 
@@ -164,6 +235,9 @@ bcm2835_irq_handler(void *frame)
 
 	bcm2835_barrier();
 	ipl_mask = bcm2835_pic_find_pending_irqs(&bcm2835_pic);
+#if defined(BCM2836)
+	ipl_mask |= bcm2836mp_pic_find_pending_irqs(&bcm2836mp_pic);
+#endif
 
 	/*
 	 * Record the pending_ipls and deliver them if we can.
@@ -247,3 +321,122 @@ bcm2835_pic_source_name(struct pic_softc *pic, int irq, char *buf, size_t len)
 
 	strlcpy(buf, bcm2835_sources[irq], len);
 }
+
+
+#if defined(BCM2836)
+
+#define	BCM2836MP_TIMER_IRQS	__BITS(3,0)
+#define	BCM2836MP_MAILBOX_IRQS	__BITS(4,4)
+
+#define	BCM2836MP_ALL_IRQS	\
+     (BCM2836MP_TIMER_IRQS | BCM2836MP_MAILBOX_IRQS)
+
+static void
+bcm2836mp_pic_unblock_irqs(struct pic_softc *pic, size_t irqbase,
+    uint32_t irq_mask)
+{
+	const int cpuid = 0;
+
+//printf("%s: irqbase %zu irq_mask %08x\n", __func__, irqbase, irq_mask);
+
+	if (irq_mask & BCM2836MP_TIMER_IRQS) {
+		uint32_t mask = __SHIFTOUT(irq_mask, BCM2836MP_TIMER_IRQS);
+		uint32_t val = bus_space_read_4(al_iot, al_ioh,
+		    BCM2836_LOCAL_TIMER_IRQ_CONTROLN(cpuid));
+		val |= mask;
+		bus_space_write_4(al_iot, al_ioh,
+		    BCM2836_LOCAL_TIMER_IRQ_CONTROLN(cpuid),
+		    val);
+		bus_space_barrier(al_iot, al_ioh,
+		    BCM2836_LOCAL_TIMER_IRQ_CONTROL_BASE,
+		    BCM2836_LOCAL_TIMER_IRQ_CONTROL_SIZE,
+		    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
+//printf("%s: val %08x\n", __func__, val);
+	} else if (irq_mask & BCM2836MP_MAILBOX_IRQS) {
+		uint32_t mask = __SHIFTOUT(irq_mask, BCM2836MP_MAILBOX_IRQS);
+		uint32_t val = bus_space_read_4(al_iot, al_ioh,
+		    BCM2836_LOCAL_MAILBOX_IRQ_CONTROLN(cpuid));
+		val |= mask;
+		bus_space_write_4(al_iot, al_ioh,
+		    BCM2836_LOCAL_MAILBOX_IRQ_CONTROLN(cpuid),
+		    val);
+		bus_space_barrier(al_iot, al_ioh,
+		    BCM2836_LOCAL_MAILBOX_IRQ_CONTROL_BASE,
+		    BCM2836_LOCAL_MAILBOX_IRQ_CONTROL_SIZE,
+		    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
+	}
+
+	return;
+}
+
+static void
+bcm2836mp_pic_block_irqs(struct pic_softc *pic, size_t irqbase,
+    uint32_t irq_mask)
+{
+	const int cpuid = 0;
+
+//printf("%s: irqbase %zu irq_mask %08x\n", __func__, irqbase, irq_mask);
+	if (irq_mask & BCM2836MP_TIMER_IRQS) {
+		uint32_t mask = __SHIFTOUT(irq_mask, BCM2836MP_TIMER_IRQS);
+		uint32_t val = bus_space_read_4(al_iot, al_ioh,
+		    BCM2836_LOCAL_TIMER_IRQ_CONTROLN(cpuid));
+		val &= ~mask;
+		bus_space_write_4(al_iot, al_ioh,
+		    BCM2836_LOCAL_TIMER_IRQ_CONTROLN(cpuid),
+		    val);
+//printf("%s: val %08x\n", __func__, val);
+	} else if (irq_mask & BCM2836MP_MAILBOX_IRQS) {
+		uint32_t mask = __SHIFTOUT(irq_mask, BCM2836MP_MAILBOX_IRQS);
+		uint32_t val = bus_space_read_4(al_iot, al_ioh,
+		    BCM2836_LOCAL_MAILBOX_IRQ_CONTROLN(cpuid));
+		val &= ~mask;
+		bus_space_write_4(al_iot, al_ioh,
+		    BCM2836_LOCAL_MAILBOX_IRQ_CONTROLN(cpuid),
+		    val);
+	}
+
+	bcm2835_barrier();
+	return;
+}
+
+
+static int
+bcm2836mp_pic_find_pending_irqs(struct pic_softc *pic)
+{
+	const int cpuid = 0;
+	uint32_t lpending;
+	int ipl = 0;
+
+	bcm2835_barrier();
+
+	lpending = bus_space_read_4(al_iot, al_ioh,
+	    BCM2836_LOCAL_INTC_IRQPENDINGN(cpuid));
+
+	lpending &= ~BCM2836_INTBIT_GPUPENDING;
+	if (lpending & BCM2836MP_ALL_IRQS) {
+		ipl |= pic_mark_pending_sources(pic, 0 /* BCM2836_INT_LOCALBASE */,
+		    lpending & BCM2836MP_ALL_IRQS);
+	}
+
+	return ipl;
+}
+
+static void
+bcm2836mp_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
+{
+
+	/* Nothing really*/
+	KASSERT(is->is_irq >= 0);
+	KASSERT(is->is_irq < BCM2836MP_NIRQ);
+//	KASSERT(is->is_type == IST_LEVEL);
+
+
+}
+
+static void
+bcm2836mp_pic_source_name(struct pic_softc *pic, int irq, char *buf, size_t len)
+{
+	irq %= 32;
+	strlcpy(buf, bcm2836mp_sources[irq], len);
+}
+#endif

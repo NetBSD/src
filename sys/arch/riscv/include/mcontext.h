@@ -1,4 +1,4 @@
-/* $NetBSD: mcontext.h,v 1.2 2014/10/24 01:08:07 dennis Exp $ */
+/* $NetBSD: mcontext.h,v 1.2.2.1 2015/04/06 15:18:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -88,11 +88,12 @@ typedef _BSD_FPREG_T_	__fregset_t[_NFREG];
 #define	_REG_PC		31
 
 #define	_REG_RA		_REG_X1
-#define	_REG_SP		_REG_X14
-#define	_REG_TP		_REG_X15
-#define	_REG_RV		_REG_X16
-#define _REG_A0		_REG_X18
-#define	_REG_GP		_REG_X31
+#define	_REG_SP		_REG_X2
+#define	_REG_GP		_REG_X3
+#define	_REG_TP		_REG_X4
+#define	_REG_S0		_REG_X8
+#define	_REG_RV		_REG_X10
+#define	_REG_A0		_REG_X10
 
 #define	_REG_F0		0
 #define	_REG_FPCSR	32

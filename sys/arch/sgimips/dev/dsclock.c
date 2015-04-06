@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock.c,v 1.6 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: dsclock.c,v 1.6.2.1 2015/04/06 15:18:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.6 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.6.2.1 2015/04/06 15:18:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,9 +72,9 @@ CFATTACH_DECL_NEW(dsclock, sizeof(struct dsclock_softc),
     dsclock_match, dsclock_attach, NULL, NULL);
 
 #define	ds1286_write(sc, reg, datum)					\
-    bus_space_write_1((sc)->sc_rtct, (sc)->sc_rtch, (reg), (datum))
+    bus_space_write_1((sc)->sc_rtct, (sc)->sc_rtch, (reg << 2) + 3, (datum))
 #define	ds1286_read(sc, reg)						\
-    bus_space_read_1((sc)->sc_rtct, (sc)->sc_rtch, (reg))
+    bus_space_read_1((sc)->sc_rtct, (sc)->sc_rtch, (reg << 2) + 3)
 
 static int
 dsclock_match(device_t parent, cfdata_t cf, void *aux)
@@ -96,7 +96,7 @@ dsclock_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	sc->sc_rtct = SGIMIPS_BUS_SPACE_HPC;
+	sc->sc_rtct = normal_memt;
 	if ((err = bus_space_map(sc->sc_rtct, ma->ma_addr, 0x1ffff,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_rtch)) != 0) {
 		aprint_error_dev(self,

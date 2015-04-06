@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/03/16 14:14:40 pooka Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2015/04/06 15:18:30 skrll Exp $
 #
 
 LIB=	rumpkern_sys_sunos
@@ -11,3 +11,6 @@ CPPFLAGS+= -I${.CURDIR} -I${RUMPTOP}/librump/rumpkern
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
+
+SYS_P=rump_sunos_sys
+.include "../Makefile.sys"

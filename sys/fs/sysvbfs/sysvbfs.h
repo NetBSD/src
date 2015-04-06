@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.h,v 1.9 2010/05/27 23:40:12 pooka Exp $	*/
+/*	$NetBSD: sysvbfs.h,v 1.9.36.1 2015/04/06 15:18:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -53,15 +53,12 @@ struct sysvbfs_node {
 	int update_atime;
 	int update_mtime;
 	int removed;
-
-	LIST_ENTRY(sysvbfs_node) link;
 };
 
 struct sysvbfs_mount {
 	struct mount *mountp;
 	struct vnode *devvp;		/* block device mounted vnode */
 	struct bfs *bfs;
-	LIST_HEAD(, sysvbfs_node) bnode_head;
 };
 
 /* v-node ops. */

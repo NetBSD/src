@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.21 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: bmd.c,v 1.21.4.1 2015/04/06 15:18:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.21 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.21.4.1 2015/04/06 15:18:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,14 +350,15 @@ bmdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	DPRINTF(("%s%d %ld\n", __func__, BMD_UNIT(dev), cmd));
 
 	sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev));
+
 	if (sc == NULL)
 		return ENXIO;
 
-	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *)data = *(sc->sc_dkdev.dk_label);
-		break;
+	error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l); 
+	if (error != EPASSTHROUGH)
+		return error;
 
+	switch (cmd) {
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -425,7 +426,7 @@ bmd_getdisklabel(struct bmd_softc *sc, dev_t dev)
 	lp->d_secpercyl   = lp->d_nsectors * lp->d_ntracks;
 	lp->d_secperunit  = lp->d_secpercyl * lp->d_ncylinders;
 
-	lp->d_type        = DTYPE_LD;
+	lp->d_type        = DKTYPE_LD;
 	lp->d_rpm         = 300;	/* dummy */
 	lp->d_interleave  = 1;	/* dummy? */
 

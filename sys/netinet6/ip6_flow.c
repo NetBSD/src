@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.23 2014/05/20 20:23:56 bouyer Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.23.4.1 2015/04/06 15:18:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.23 2014/05/20 20:23:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.23.4.1 2015/04/06 15:18:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,10 +275,9 @@ ip6flow_fastforward(struct mbuf **mp)
 	 * Route and interface still up?
 	 */
 	if ((rt = rtcache_validate(&ip6f->ip6f_ro)) == NULL ||
-	    (rt->rt_ifp->if_flags & IFF_UP) == 0) {
-	    	/* Route or interface is down */
+	    (rt->rt_ifp->if_flags & IFF_UP) == 0 ||
+	    (rt->rt_flags & RTF_BLACKHOLE) != 0)
 		return 0;
-	}
 
 	/*
 	 * Packet size greater than MTU?

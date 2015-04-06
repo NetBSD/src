@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177 2014/11/16 16:01:43 manu Exp $
+# $NetBSD: GENERIC,v 1.177.2.1 2015/04/06 15:18:02 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177 $"
+#ident 		"GENERIC-$Revision: 1.177.2.1 $"
 
 maxusers	64
 
@@ -238,11 +238,13 @@ sbus*	at mainbus0				# SBus-based systems
 psycho*	at mainbus0				# PCI-based systems
 schizo*	at mainbus?
 pyro*	at mainbus?
+vpci*	at mainbus0
 central* at mainbus?
 fhc*	at mainbus?
 pci*	at psycho?
 pci*	at schizo?
 pci*	at pyro?
+pci*	at vpci?
 pci*	at ppb?
 ppb*	at pci?
 fhc*	at central?
@@ -888,6 +890,9 @@ cgthree*	at sbus? slot ? offset ?
 ## Sun "cgsix" accelerated color framebuffer.
 cgsix*		at sbus? slot ? offset ?
 
+## Southland Media Systems (now Quantum 3D) MGX
+mgx* 		at sbus? slot ? offset ?
+
 ## Sun FFB
 ffb*		at mainbus0
 upa*		at mainbus?
@@ -910,6 +915,7 @@ wcfb*		at pci?
 
 # generic PCI framebuffers
 genfb*		at pci?
+genfb* 		at sbus? slot ? offset ?
 
 # make sure the console display is always wsdisplay0
 wsdisplay0	at wsemuldisplaydev? console 1

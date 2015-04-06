@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.24 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: bwi.c,v 1.24.6.1 2015/04/06 15:18:09 skrll Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.24 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.24.6.1 2015/04/06 15:18:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -1939,7 +1939,7 @@ invalid:
 	error = EINVAL;
 
 free_and_fail:
-	firmware_free(fwi->fwi_data, 0);
+	firmware_free(fwi->fwi_data, fwi->fwi_size);
 	fwi->fwi_data = NULL;
 	fwi->fwi_size = 0;
 
@@ -1953,7 +1953,7 @@ bwi_mac_fw_image_free(struct bwi_mac *mac, struct bwi_fw_image *fwi)
 	if (fwi->fwi_data != NULL) {
 		DPRINTF(mac->mac_sc, BWI_DBG_FIRMWARE, "freeing firmware %s\n",
 		    fwi->fwi_name);
-		firmware_free(fwi->fwi_data, 0);
+		firmware_free(fwi->fwi_data, fwi->fwi_size);
 		fwi->fwi_data = NULL;
 		fwi->fwi_size = 0;
 	}

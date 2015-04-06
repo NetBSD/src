@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.4 2014/11/04 11:27:31 jmcneill Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.4.2.1 2015/04/06 15:18:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.4 2014/11/04 11:27:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.4.2.1 2015/04/06 15:18:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -58,7 +58,7 @@ int
 linux_idr_module_init(void)
 {
 
-	mutex_init(&idr_cache.lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&idr_cache.lock, MUTEX_DEFAULT, IPL_VM);
 	SIMPLEQ_INIT(&idr_cache.preloaded_nodes);
 	SIMPLEQ_INIT(&idr_cache.discarded_nodes);
 	return 0;
@@ -115,7 +115,7 @@ void
 idr_init(struct idr *idr)
 {
 
-	mutex_init(&idr->idr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&idr->idr_lock, MUTEX_DEFAULT, IPL_VM);
 	rb_tree_init(&idr->idr_tree, &idr_rb_ops);
 }
 

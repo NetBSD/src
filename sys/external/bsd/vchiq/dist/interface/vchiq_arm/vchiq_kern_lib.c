@@ -42,7 +42,7 @@
 
 struct bulk_waiter_node {
 	struct bulk_waiter bulk_waiter;
-	struct lwp *l;
+	int pid;
 	struct list_head list;
 };
 
@@ -151,8 +151,8 @@ VCHIQ_STATUS_T vchiq_shutdown(VCHIQ_INSTANCE_T instance)
 			list_del(pos);
 			vchiq_log_info(vchiq_arm_log_level,
 					"bulk_waiter - cleaned up %x "
-					"for lwp %p",
-					(unsigned int)waiter, waiter->l);
+					"for pid %d",
+					(unsigned int)waiter, waiter->pid);
 			_sema_destroy(&waiter->bulk_waiter.event);
 
 			kfree(waiter);
@@ -290,7 +290,7 @@ VCHIQ_STATUS_T vchiq_open_service(
 	if (service) {
 		*phandle = service->handle;
 		status = vchiq_open_service_internal(service,
-		    (uintptr_t)current);
+		    current->l_proc->p_pid);
 		if (status != VCHIQ_SUCCESS) {
 			vchiq_remove_service(service->handle);
 			*phandle = VCHIQ_SERVICE_HANDLE_INVALID;
@@ -396,7 +396,7 @@ vchiq_blocking_bulk_transfer(VCHIQ_SERVICE_HANDLE_T handle, void *data,
 	lmutex_lock(&instance->bulk_waiter_list_mutex);
 	list_for_each(pos, &instance->bulk_waiter_list) {
 		if (list_entry(pos, struct bulk_waiter_node,
-				list)->l == current) {
+				list)->pid == current->l_proc->p_pid) {
 			waiter = list_entry(pos,
 				struct bulk_waiter_node,
 				list);
@@ -448,13 +448,13 @@ vchiq_blocking_bulk_transfer(VCHIQ_SERVICE_HANDLE_T handle, void *data,
 
 		kfree(waiter);
 	} else {
-		waiter->l = current;
+		waiter->pid = current->l_proc->p_pid;
 		lmutex_lock(&instance->bulk_waiter_list_mutex);
 		list_add(&waiter->list, &instance->bulk_waiter_list);
 		lmutex_unlock(&instance->bulk_waiter_list_mutex);
 		vchiq_log_info(vchiq_arm_log_level,
-				"saved bulk_waiter %x for lwp %p",
-				(unsigned int)waiter, current);
+				"saved bulk_waiter %x for pid %d",
+				(unsigned int)waiter, current->l_proc->p_pid);
 	}
 
 	return status;

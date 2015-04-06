@@ -1,4 +1,4 @@
-/*	$NetBSD: biovar.h,v 1.8 2009/05/07 12:15:33 cegger Exp $ */
+/*	$NetBSD: biovar.h,v 1.8.40.1 2015/04/06 15:18:08 skrll Exp $ */
 /*	$OpenBSD: biovar.h,v 1.26 2007/03/19 03:02:08 marco Exp $	*/
 
 /*
@@ -255,5 +255,9 @@ struct bioc_volops {
 #define BIOC_VREMOVE_VOLUME	0x01	/* remove volume */
 	int 		bc_volid;	/* volume id to be created/removed */
 };
+
+struct envsys_data;
+void bio_disk_to_envsys(struct envsys_data *, const struct bioc_disk *);
+void bio_vol_to_envsys(struct envsys_data *, const struct bioc_vol *) ;
 
 #endif /* ! _DEV_BIOVAR_H_ */
