@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.140 2015/04/06 06:20:27 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.141 2015/04/06 08:39:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.140 2015/04/06 06:20:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.141 2015/04/06 08:39:06 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -144,6 +144,9 @@ static kauth_listener_t route_listener;
 static int rtdeletemsg(struct rtentry *);
 static int rtflushclone1(struct rtentry *, void *);
 static void rtflushclone(sa_family_t family, struct rtentry *);
+
+static void rt_maskedcopy(const struct sockaddr *,
+    struct sockaddr *, const struct sockaddr *);
 
 #ifdef RTFLUSH_DEBUG
 static void sysctl_net_rtcache_setup(struct sysctllog **);
@@ -872,7 +875,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 	return 0;
 }
 
-void
+static void
 rt_maskedcopy(const struct sockaddr *src, struct sockaddr *dst,
 	const struct sockaddr *netmask)
 {
