@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.55 2015/04/06 20:19:28 jmcneill Exp $
+# $NetBSD: mkimage,v 1.56 2015/04/06 22:20:52 jmcneill Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -102,6 +102,8 @@ then
 	exit 1
 fi
 
+resize=false
+
 . "${DIR}/conf/${h}.conf"
 release="/usr/obj/${MACHINE}/release"
 
@@ -109,7 +111,6 @@ selected_sets="$sets"
 dsets_p=false
 xsets_p=false
 minwrites=false
-resize=false
 rootdev=ld
 
 OPTIND=1
