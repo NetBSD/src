@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_genfb.c,v 1.1.2.3 2015/03/25 17:01:32 snj Exp $ */
+/* $NetBSD: amlogic_genfb.c,v 1.1.2.4 2015/04/06 01:48:25 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_genfb.c,v 1.1.2.3 2015/03/25 17:01:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_genfb.c,v 1.1.2.4 2015/04/06 01:48:25 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_genfb.c,v 1.1.2.3 2015/03/25 17:01:32 snj Ex
 #include <arm/amlogic/amlogic_hdmireg.h>
 
 #include <dev/wsfb/genfbvar.h>
+
+#define AMLOGIC_GENFB_DEFAULT_DEPTH	16
 
 /* Map CEA-861-D video code (VIC) to framebuffer dimensions */
 static const struct amlogic_genfb_vic2mode {
@@ -268,12 +270,13 @@ amlogic_genfb_canvas_config(struct amlogic_genfb_softc *sc)
 	prop_dictionary_t cfg = device_properties(sc->sc_gen.sc_dev);
 	const paddr_t pa = sc->sc_dmamap->dm_segs[0].ds_addr;
 	uint32_t datal, datah, addr;
-	u_int width, height;
+	u_int width, height, depth;
 
 	prop_dictionary_get_uint32(cfg, "width", &width);
 	prop_dictionary_get_uint32(cfg, "height", &height);
+	prop_dictionary_get_uint32(cfg, "depth", &depth);
 
-	const uint32_t w = (width * 3) >> 3;
+	const uint32_t w = (width * (depth/8)) >> 3;
 	const uint32_t h = height;
 
 	datal = CAV_READ(sc, DC_CAV_LUT_DATAL_REG);
@@ -303,17 +306,56 @@ static void
 amlogic_genfb_osd_config(struct amlogic_genfb_softc *sc)
 {
 	prop_dictionary_t cfg = device_properties(sc->sc_gen.sc_dev);
-	uint32_t w0, w1, w2, w3, w4;
-	u_int width, height;
+	uint32_t cs, tc, w0, w1, w2, w3, w4;
+	u_int width, height, depth;
 	bool interlace_p;
 
 	prop_dictionary_get_uint32(cfg, "width", &width);
 	prop_dictionary_get_uint32(cfg, "height", &height);
+	prop_dictionary_get_uint32(cfg, "depth", &depth);
 	prop_dictionary_get_bool(cfg, "interlace", &interlace_p);
 
+	cs = VPU_READ(sc, VIU_OSD2_CTRL_STAT_REG);
+	cs |= VIU_OSD_CTRL_STAT_ENABLE;
+	cs &= ~VIU_OSD_CTRL_STAT_GLOBAL_ALPHA;
+	cs |= __SHIFTIN(0xff, VIU_OSD_CTRL_STAT_GLOBAL_ALPHA);
+	cs |= VIU_OSD_CTRL_STAT_BLK0_ENABLE;
+	cs &= ~VIU_OSD_CTRL_STAT_BLK1_ENABLE;
+	cs &= ~VIU_OSD_CTRL_STAT_BLK2_ENABLE;
+	cs &= ~VIU_OSD_CTRL_STAT_BLK3_ENABLE;
+	VPU_WRITE(sc, VIU_OSD2_CTRL_STAT_REG, cs);
+
+	tc = __SHIFTIN(0, VIU_OSD_TCOLOR_R) |
+	     __SHIFTIN(0, VIU_OSD_TCOLOR_G) |
+	     __SHIFTIN(0, VIU_OSD_TCOLOR_B) |
+	     __SHIFTIN(255, VIU_OSD_TCOLOR_A);
+	VPU_WRITE(sc, VIU_OSD2_TCOLOR_AG0_REG, tc);
+
 	w0 = VPU_READ(sc, VIU_OSD2_BLK0_CFG_W0_REG);
+	w0 |= VIU_OSD_BLK_CFG_W0_RGB_EN;
+	w0 &= ~VIU_OSD_BLK_CFG_W0_TC_ALPHA_EN;
 	w0 &= ~VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE;
-	w0 |= __SHIFTIN(7, VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE);
+	w0 &= ~VIU_OSD_BLK_CFG_W0_COLOR_MATRIX;
+	switch (depth) {
+	case 32:
+		w0 |= __SHIFTIN(VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE_32BPP,
+				VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE);
+		w0 |= __SHIFTIN(VIU_OSD_BLK_CFG_W0_COLOR_MATRIX_ARGB,
+				VIU_OSD_BLK_CFG_W0_COLOR_MATRIX);
+		break;
+	case 24:
+		w0 |= __SHIFTIN(VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE_24BPP,
+				VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE);
+		w0 |= __SHIFTIN(VIU_OSD_BLK_CFG_W0_COLOR_MATRIX_RGB,
+				VIU_OSD_BLK_CFG_W0_COLOR_MATRIX);
+		break;
+	case 16:
+		w0 |= __SHIFTIN(VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE_16BPP,
+				VIU_OSD_BLK_CFG_W0_OSD_BLK_MODE);
+		w0 |= __SHIFTIN(VIU_OSD_BLK_CFG_W0_COLOR_MATRIX_RGB565,
+				VIU_OSD_BLK_CFG_W0_COLOR_MATRIX);
+		break;
+	}
 	w0 |= VIU_OSD_BLK_CFG_W0_LITTLE_ENDIAN;
 	w0 &= ~VIU_OSD_BLK_CFG_W0_RPT_Y;
 	w0 &= ~VIU_OSD_BLK_CFG_W0_INTERP_CTRL;
@@ -322,8 +364,6 @@ amlogic_genfb_osd_config(struct amlogic_genfb_softc *sc)
 	} else {
 		w0 &= ~VIU_OSD_BLK_CFG_W0_INTERLACE_EN;
 	}
-	w0 |= VIU_OSD_BLK_CFG_W0_RGB_EN;
-	w0 &= ~VIU_OSD_BLK_CFG_W0_COLOR_MATRIX;
 	VPU_WRITE(sc, VIU_OSD2_BLK0_CFG_W0_REG, w0);
 
 	w1 = __SHIFTIN(width - 1, VIU_OSD_BLK_CFG_W1_X_END) |
@@ -456,7 +496,7 @@ amlogic_genfb_init(struct amlogic_genfb_softc *sc)
 {
 	prop_dictionary_t cfg = device_properties(sc->sc_gen.sc_dev);
 	const struct sysctlnode *node, *devnode;
-	u_int width = 0, height = 0, flags, i, scale = 100;
+	u_int width = 0, height = 0, depth, flags, i, scale = 100;
 	int error;
 
 	/*
@@ -479,7 +519,22 @@ amlogic_genfb_init(struct amlogic_genfb_softc *sc)
 		return;
 	}
 
-	const uint32_t fbsize = width * height * 3;
+	depth = AMLOGIC_GENFB_DEFAULT_DEPTH;
+	prop_dictionary_get_uint32(cfg, "depth", &depth);
+	switch (depth) {
+	case 16:
+	case 24:
+		break;
+	default:
+		aprint_error_dev(sc->sc_gen.sc_dev,
+		    "unsupported depth %d, using %d\n", depth,
+		    AMLOGIC_GENFB_DEFAULT_DEPTH);
+		depth = AMLOGIC_GENFB_DEFAULT_DEPTH;
+		break;
+	}
+	prop_dictionary_set_uint8(cfg, "depth", depth);
+
+	const uint32_t fbsize = width * height * (depth / 8);
 	sc->sc_dmasize = (fbsize + 3) & ~3;
 
 	error = amlogic_genfb_alloc_videomem(sc);
@@ -502,8 +557,7 @@ amlogic_genfb_init(struct amlogic_genfb_softc *sc)
 	prop_dictionary_set_uint32(cfg, "height", height);
 	prop_dictionary_set_bool(cfg, "dblscan", !!(flags & DBLSCAN));
 	prop_dictionary_set_bool(cfg, "interlace", !!(flags & INTERLACE));
-	prop_dictionary_set_uint8(cfg, "depth", 24);
-	prop_dictionary_set_uint16(cfg, "linebytes", width * 3);
+	prop_dictionary_set_uint16(cfg, "linebytes", width * (depth / 8));
 	prop_dictionary_set_uint32(cfg, "address", 0);
 	prop_dictionary_set_uint32(cfg, "virtual_address",
 	    (uintptr_t)sc->sc_dmap);
