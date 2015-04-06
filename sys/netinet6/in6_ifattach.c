@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.91.2.1 2015/01/17 12:10:54 martin Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.91.2.2 2015/04/06 01:32:33 snj Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.91.2.1 2015/01/17 12:10:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.91.2.2 2015/04/06 01:32:33 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -848,7 +848,7 @@ in6_ifdetach(struct ifnet *ifp)
 	ip6_mrouter_detach(ifp);
 
 	/* remove neighbor management table */
-	nd6_purge(ifp);
+	nd6_purge(ifp, NULL);
 
 	/* XXX this code is duplicated in in6_purgeif() --dyoung */
 	/* nuke any of IPv6 addresses we have */
@@ -919,7 +919,7 @@ in6_ifdetach(struct ifnet *ifp)
 	 * prefixes after removing all addresses above.
 	 * (Or can we just delay calling nd6_purge until at this point?)
 	 */
-	nd6_purge(ifp);
+	nd6_purge(ifp, NULL);
 }
 
 int

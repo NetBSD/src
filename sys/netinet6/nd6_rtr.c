@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.93.2.1 2014/12/17 18:43:47 martin Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.93.2.2 2015/04/06 01:32:33 snj Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.93.2.1 2014/12/17 18:43:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.93.2.2 2015/04/06 01:32:33 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,12 +483,20 @@ defrouter_lookup(const struct in6_addr *addr, struct ifnet *ifp)
 }
 
 void
-defrtrlist_del(struct nd_defrouter *dr)
+defrtrlist_del(struct nd_defrouter *dr, struct in6_ifextra *ext)
 {
-	struct nd_ifinfo *ndi = ND_IFINFO(dr->ifp);
 	struct nd_defrouter *deldr = NULL;
 	struct nd_prefix *pr;
-	struct in6_ifextra *ext = dr->ifp->if_afdata[AF_INET6];
+	struct nd_ifinfo *ndi;
+
+	if (ext == NULL)
+		ext = dr->ifp->if_afdata[AF_INET6];
+
+	/* detach already in progress, can not do anything */
+	if (ext == NULL)
+		return;
+
+	ndi = ext->nd_ifinfo;
 
 	/*
 	 * Flush all the routing table entries that use the router
@@ -749,7 +757,7 @@ defrtrlist_update(struct nd_defrouter *new)
 	if ((dr = defrouter_lookup(&new->rtaddr, new->ifp)) != NULL) {
 		/* entry exists */
 		if (new->rtlifetime == 0) {
-			defrtrlist_del(dr);
+			defrtrlist_del(dr, ext);
 			dr = NULL;
 		} else {
 			int oldpref = rtpref(dr);
