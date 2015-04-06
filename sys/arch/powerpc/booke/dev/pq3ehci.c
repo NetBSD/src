@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.5.16.2 2014/12/03 12:52:06 skrll Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.5.16.3 2015/04/06 12:14:22 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5.16.2 2014/12/03 12:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5.16.3 2015/04/06 12:14:22 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -141,7 +141,7 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
 
 	error = ehci_init(&sc->sc);
-	if (error != USBD_NORMAL_COMPLETION) {
+	if (error) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
 		goto fail;
 	}
