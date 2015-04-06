@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.89 2015/04/06 08:39:06 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.90 2015/04/06 09:45:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -360,47 +360,48 @@ extern	struct	rtstat	rtstat;
 struct socket;
 struct dom_rtlist;
 
-void	 rt_init(void);
-void	 rt_ifannouncemsg(struct ifnet *, int);
-void	 rt_ieee80211msg(struct ifnet *, int, void *, size_t);
-void	 rt_ifmsg(struct ifnet *);
-void	 rt_missmsg(int, const struct rt_addrinfo *, int, int);
-struct mbuf *rt_msg1(int, struct rt_addrinfo *, void *, int);
-void	 rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
+void	rt_init(void);
 
-int	 rt_setgate(struct rtentry *, const struct sockaddr *);
-int      rt_timer_add(struct rtentry *,
-             void(*)(struct rtentry *, struct rttimer *),
-	     struct rttimer_queue *);
-void	 rt_timer_init(void);
+int	rt_timer_add(struct rtentry *,
+	    void(*)(struct rtentry *, struct rttimer *),
+	    struct rttimer_queue *);
+unsigned long
+	rt_timer_count(struct rttimer_queue *);
+void	rt_timer_init(void);
+void	rt_timer_queue_change(struct rttimer_queue *, long);
 struct rttimer_queue *
-	 rt_timer_queue_create(u_int);
-void	 rt_timer_queue_change(struct rttimer_queue *, long);
-void	 rt_timer_queue_remove_all(struct rttimer_queue *, int);
-void	 rt_timer_queue_destroy(struct rttimer_queue *, int);
-void	 rt_timer_remove_all(struct rtentry *, int);
-unsigned long	rt_timer_count(struct rttimer_queue *);
-void	 rt_timer_timer(void *);
-void	 rtflushall(int);
+	rt_timer_queue_create(u_int);
+void	rt_timer_queue_destroy(struct rttimer_queue *, int);
+void	rt_timer_queue_remove_all(struct rttimer_queue *, int);
+void	rt_timer_remove_all(struct rtentry *, int);
+void	rt_timer_timer(void *);
+
+void	rt_newmsg(int, struct rtentry *);
 struct rtentry *
-	 rtalloc1(const struct sockaddr *, int);
-void	 rtfree(struct rtentry *);
-int	 rt_getifa(struct rt_addrinfo *);
-void	 rt_newmsg(int, struct rtentry *);
-int	 rtinit(struct ifaddr *, int, int);
-void	 rtredirect(const struct sockaddr *, const struct sockaddr *,
+	rtalloc1(const struct sockaddr *, int);
+void	rtflushall(int);
+void	rtfree(struct rtentry *);
+int	rtinit(struct ifaddr *, int, int);
+void	rtredirect(const struct sockaddr *, const struct sockaddr *,
 	    const struct sockaddr *, int, const struct sockaddr *,
 	    struct rtentry **);
-int	 rtrequest(int, const struct sockaddr *,
+int	rtrequest(int, const struct sockaddr *,
 	    const struct sockaddr *, const struct sockaddr *, int,
 	    struct rtentry **);
-int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
+int	rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 
-struct ifaddr	*rt_get_ifa(struct rtentry *);
+int	rt_ifa_addlocal(struct ifaddr *);
+int	rt_ifa_remlocal(struct ifaddr *, struct ifaddr *);
+struct ifaddr *
+	rt_get_ifa(struct rtentry *);
+int	rt_getifa(struct rt_addrinfo *);
 void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
+int	rt_setgate(struct rtentry *, const struct sockaddr *);
 
-const struct sockaddr *rt_settag(struct rtentry *, const struct sockaddr *);
-struct sockaddr *rt_gettag(struct rtentry *);
+const struct sockaddr *
+	rt_settag(struct rtentry *, const struct sockaddr *);
+struct sockaddr *
+	rt_gettag(struct rtentry *);
 
 static inline void
 rt_destroy(struct rtentry *rt)
@@ -428,17 +429,20 @@ out:
 	return rt->_rt_key;
 }
 
-struct rtentry *rtcache_init(struct route *);
-struct rtentry *rtcache_init_noclone(struct route *);
-void	rtcache_copy(struct route *, const struct route *);
-void rtcache_invalidate(struct dom_rtlist *);
-
-struct rtentry *rtcache_lookup2(struct route *, const struct sockaddr *, int,
-    int *);
 void	rtcache_clear(struct route *);
-struct rtentry *rtcache_update(struct route *, int);
+void	rtcache_copy(struct route *, const struct route *);
 void	rtcache_free(struct route *);
+struct rtentry *
+	rtcache_init(struct route *);
+struct rtentry *
+	rtcache_init_noclone(struct route *);
+void	rtcache_invalidate(struct dom_rtlist *);
+struct rtentry *
+	rtcache_lookup2(struct route *, const struct sockaddr *, int,
+	    int *);
 int	rtcache_setdst(struct route *, const struct sockaddr *);
+struct rtentry *
+	rtcache_update(struct route *, int);
 
 static inline void
 rtcache_invariants(const struct route *ro)
@@ -494,20 +498,31 @@ rtcache_validate(const struct route *ro)
 
 }
 
-int rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
-void route_enqueue(struct mbuf *, int);
-int rt_inithead(rtbl_t **, int);
-struct rtentry *rt_matchaddr(rtbl_t *, const struct sockaddr *);
-int rt_addaddr(rtbl_t *, struct rtentry *, const struct sockaddr *);
-struct rtentry *rt_lookup(rtbl_t *, const struct sockaddr *,
-    const struct sockaddr *);
-struct rtentry *rt_deladdr(rtbl_t *, const struct sockaddr *,
-    const struct sockaddr *);
-void rtbl_init(void);
-int rt_ifa_addlocal(struct ifaddr *);
-int rt_ifa_remlocal(struct ifaddr *, struct ifaddr *);
+/* rtsock */
+void	rt_ieee80211msg(struct ifnet *, int, void *, size_t);
+void	rt_ifannouncemsg(struct ifnet *, int);
+void	rt_ifmsg(struct ifnet *);
+void	rt_missmsg(int, const struct rt_addrinfo *, int, int);
+struct mbuf *
+	rt_msg1(int, struct rt_addrinfo *, void *, int);
+void	rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
+void	route_enqueue(struct mbuf *, int);
+
+/* rtbl */
+int	rt_addaddr(rtbl_t *, struct rtentry *, const struct sockaddr *);
+void	rt_assert_inactive(const struct rtentry *);
+struct rtentry *
+	rt_deladdr(rtbl_t *, const struct sockaddr *,
+	    const struct sockaddr *);
 rtbl_t *rt_gettable(sa_family_t);
-void rt_assert_inactive(const struct rtentry *);
+int	rt_inithead(rtbl_t **, int);
+struct rtentry *
+	rt_lookup(rtbl_t *, const struct sockaddr *,
+	    const struct sockaddr *);
+struct rtentry *
+	rt_matchaddr(rtbl_t *, const struct sockaddr *);
+int	rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
+void	rtbl_init(void);
 
 #endif /* _KERNEL */
 
