@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.54 2015/04/06 17:59:36 jmcneill Exp $
+# $NetBSD: mkimage,v 1.55 2015/04/06 20:19:28 jmcneill Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -109,6 +109,7 @@ selected_sets="$sets"
 dsets_p=false
 xsets_p=false
 minwrites=false
+resize=false
 rootdev=ld
 
 OPTIND=1
