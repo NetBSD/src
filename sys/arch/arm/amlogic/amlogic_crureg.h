@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_crureg.h,v 1.7.2.2 2015/03/21 08:51:17 snj Exp $ */
+/* $NetBSD: amlogic_crureg.h,v 1.7.2.3 2015/04/06 01:43:31 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -106,6 +106,11 @@
 #define PAD_PULL_UP_EN_4_REG		CBUS_REG(0x204c)
 #define PAD_PULL_UP_EN_5_REG		CBUS_REG(0x204d)
 #define PAD_PULL_UP_EN_6_REG		CBUS_REG(0x204e)
+
+#define AM_RING_OSC_REG			CBUS_REG(0x207f)
+
+#define AM_RING_OSC_ENABLE		__BIT(0)
+#define AM_RING_OSC_HF_MODE		__BIT(1)
 
 #define PREI_USB_PHY_A_CFG_REG		CBUS_REG(0x2200)
 #define PREI_USB_PHY_A_CTRL_REG		CBUS_REG(0x2201)
