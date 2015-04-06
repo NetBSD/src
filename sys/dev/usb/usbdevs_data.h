@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.688 2015/04/05 09:22:13 skrll Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.689 2015/04/06 17:16:25 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.695 2015/04/05 09:18:13 skrll Exp
+ *	NetBSD: usbdevs,v 1.696 2015/04/06 17:15:32 bouyer Exp
  */
 
 /*
@@ -932,6 +932,8 @@ static const uint16_t usb_products[] = {
 	    1539, 5889, 6199, 6219, 0,
 	    USB_VENDOR_APPLE, USB_PRODUCT_APPLE_MAGICMOUSE, 
 	    6228, 6193, 0,
+	    USB_VENDOR_APPLE, USB_PRODUCT_APPLE_MAGICTRACKPAD, 
+	    6228, 6199, 0,
 	    USB_VENDOR_APPLE, USB_PRODUCT_APPLE_BLUETOOTH_HIDMODE, 
 	    4714, 6234, 6238, 6249, 0,
 	    USB_VENDOR_APPLE, USB_PRODUCT_APPLE_EXT_KBD_HUB, 
@@ -5477,10 +5479,10 @@ static const char usb_words[] = { "."
 	    "mouse\0" /* 17 refs @ 6180 */
 	    "Mighty\0" /* 2 refs @ 6186 */
 	    "Mouse\0" /* 11 refs @ 6193 */
-	    "Trackpad\0" /* 2 refs @ 6199 */
+	    "Trackpad\0" /* 3 refs @ 6199 */
 	    "(Fountain)\0" /* 1 refs @ 6208 */
 	    "(Geyser)\0" /* 1 refs @ 6219 */
-	    "Magic\0" /* 1 refs @ 6228 */
+	    "Magic\0" /* 2 refs @ 6228 */
 	    "HCI\0" /* 1 refs @ 6234 */
 	    "(HID-proxy\0" /* 1 refs @ 6238 */
 	    "mode)\0" /* 1 refs @ 6249 */
