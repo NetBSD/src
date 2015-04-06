@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.687 2015/04/05 09:22:13 skrll Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.688 2015/04/06 17:16:25 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.695 2015/04/05 09:18:13 skrll Exp
+ *	NetBSD: usbdevs,v 1.696 2015/04/06 17:15:32 bouyer Exp
  */
 
 /*
@@ -862,6 +862,7 @@
 #define	USB_PRODUCT_APPLE_FOUNTAIN_TP	0x030a		/* Apple Internal Trackpad (Fountain) */
 #define	USB_PRODUCT_APPLE_GEYSER1_TP	0x030b		/* Apple Internal Trackpad (Geyser) */
 #define	USB_PRODUCT_APPLE_MAGICMOUSE	0x030d		/* Magic Mouse */
+#define	USB_PRODUCT_APPLE_MAGICTRACKPAD	0x030e		/* Magic Trackpad */
 #define	USB_PRODUCT_APPLE_BLUETOOTH_HIDMODE	0x1000		/* Bluetooth HCI (HID-proxy mode) */
 #define	USB_PRODUCT_APPLE_EXT_KBD_HUB	0x1003		/* Hub in Apple Extended USB Keyboard */
 #define	USB_PRODUCT_APPLE_SPEAKERS	0x1101		/* Speakers */
