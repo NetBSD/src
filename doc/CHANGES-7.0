@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.248 2015/04/04 19:05:31 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.249 2015/04/06 02:03:15 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19427,4 +19427,92 @@ sys/net/if_vlan.c				1.80
 
 	Correct frame padding length.
 	[ozaki-r, ticket #653]
+
+sys/netinet6/in6.c				1.182 via patch
+sys/netinet6/in6_ifattach.c			1.95 via patch
+sys/netinet6/nd6.c				1.158 via patch
+sys/netinet6/nd6.h				1.62 via patch
+sys/netinet6/nd6_nbr.c				1.104 via patch
+sys/netinet6/nd6_rtr.c				1.96 via patch
+
+	Rearange interface detachement slightly: before we free the
+	INET6 specific per-interface data, make sure to call nd6_purge
+	with it to remove routing entries pointing to the going interface.
+	When we should happen to call this function again later, with the
+	data already gone, just return.
+	Fixes PR kern/49682.
+	[martin, ticket #655]
+
+sys/kern/subr_tftproot.c			1.14
+sys/nfs/krpc_subr.c				1.39
+sys/nfs/nfs_boot.c				1.82
+sys/nfs/nfs_bootdhcp.c				1.53
+sys/nfs/nfsdiskless.h				1.31
+
+	m_pullup() is called in rcvproc callback functions, so
+	nfs_boot_sendrecv() should keep track of the head of mbuf chain.
+	PR kern/48746.
+	[hikaru, ticket #656]
+
+usr.sbin/sysinst/msg.mi.en			1.7
+usr.sbin/sysinst/msg.mi.pl			1.7
+
+	IPv4 number -> IPv4 address
+	[mbalmer, ticket #657]
+
+sys/arch/arm/amlogic/amlogic_board.c		1.11
+sys/arch/arm/amlogic/amlogic_crureg.h		1.8
+sys/arch/arm/amlogic/amlogic_rng.c		1.2
+
+	Use a callback (with ugly lock dance from bcm2835_rng) instead of
+	callout.  Make sure the ring oscillator is enabled as well.
+	[jmcneill, ticket #658]
+
+sys/arch/arm/amlogic/amlogic_com.c		1.5
+sys/arch/arm/amlogic/amlogic_comreg.h		1.4
+
+	Fix cnmagic handling, now I can enter ddb from serial console.
+	[jmcneill, ticket #659]
+
+sys/arch/evbarm/conf/ODROID-C1			1.15
+
+	Comment out DDB_COMMANDONENTER.
+	[jmcneill, ticket #660]
+
+sys/arch/arm/amlogic/amlogic_genfb.c		1.5
+sys/arch/arm/amlogic/amlogic_vpureg.h		1.3
+sys/arch/evbarm/amlogic/amlogic_machdep.c	1.20
+
+	Allow for choosing between 16 and 24bpp framebuffers. The default
+	is now 16 instead of 24. Set 'fb.depth=16' or 'fb.depth=24' on
+	kernel command-line to explicitly select a colour depth.
+	[jmcneill, ticket #661]
+
+sys/arch/arm/cortex/gtmr.c			1.10-1.14
+
+	PR port-arm/49737: armgtmr0 timer broken
+	Use physical timer instead of virtual timer for timecounter.
+	--
+	Sprinkle some arm_isb() to force execution of the mcrr
+	instructions to get more accurate values.
+	--
+	Move isb's to before reading count.  Change interrupt to level.
+	[skrll, ticket #662]
+
+sys/arch/arm/arm32/cpu.c			1.105
+
+	Increase the `freqbuf' buffer that holds the result of
+	humanize_number(). Now it prints 1600 Mhz instead of 1 Ghz.
+	[jmcneill, ticket #663]
+
+distrib/utils/embedded/mkimage			1.53
+
+	Use FFSv2 instead of FFSv1 for the root file-system to speed up
+	the process of growing it with resize_ffs.
+	[jmcneill, ticket #664]
+
+libexec/ld.elf_so/rtld.c			1.176
+
+	PR lib/49813: Release mutex on error, avoiding a deadlock.
+	[joerg, ticket #665]
 
