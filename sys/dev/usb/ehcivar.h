@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.12 2015/03/19 17:26:42 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.13 2015/04/06 08:58:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ typedef struct ehci_soft_itd {
 		} frame_list;
 		/* circular list of free itds */
 		LIST_ENTRY(ehci_soft_itd) free_list;
-	} u;
+	};
 	struct ehci_soft_itd *xfer_next; /* Next soft_itd in xfer */
 	ehci_physaddr_t physaddr;
 	usb_dma_t dma;

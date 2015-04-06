@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.47 2015/04/06 07:08:59 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.48 2015/04/06 08:58:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.47 2015/04/06 07:08:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.48 2015/04/06 08:58:43 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1824,7 +1824,7 @@ ehci_dump_sitd(struct ehci_soft_itd *itd)
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
 	USBHIST_LOG(ehcidebug, "SITD %p next = %p prev = %p",
-	    itd, itd->u.frame_list.next, itd->u.frame_list.prev, 0);
+	    itd, itd->frame_list.next, itd->frame_list.prev, 0);
 	USBHIST_LOG(ehcidebug, "        xfernext=%p physaddr=%X slot=%d",
 	    itd->xfer_next, itd->physaddr, itd->slot, 0);
 }
@@ -2173,18 +2173,18 @@ ehci_rem_free_itd_chain(ehci_softc_t *sc, struct ehci_xfer *exfer)
 		panic("ehci isoc xfer being freed, but with no itd chain\n");
 
 	for (itd = exfer->ex_itdstart; itd != NULL; itd = itd->xfer_next) {
-		prev = itd->u.frame_list.prev;
+		prev = itd->frame_list.prev;
 		/* Unlink itd from hardware chain, or frame array */
 		if (prev == NULL) { /* We're at the table head */
-			sc->sc_softitds[itd->slot] = itd->u.frame_list.next;
+			sc->sc_softitds[itd->slot] = itd->frame_list.next;
 			sc->sc_flist[itd->slot] = itd->itd.itd_next;
 			usb_syncmem(&sc->sc_fldma,
 			    sizeof(ehci_link_t) * itd->slot,
 			    sizeof(ehci_link_t),
 			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-			if (itd->u.frame_list.next != NULL)
-				itd->u.frame_list.next->u.frame_list.prev = NULL;
+			if (itd->frame_list.next != NULL)
+				itd->frame_list.next->frame_list.prev = NULL;
 		} else {
 			/* XXX this part is untested... */
 			prev->itd.itd_next = itd->itd.itd_next;
@@ -2192,9 +2192,9 @@ ehci_rem_free_itd_chain(ehci_softc_t *sc, struct ehci_xfer *exfer)
 			    itd->offs + offsetof(ehci_itd_t, itd_next),
 			    sizeof(itd->itd.itd_next), BUS_DMASYNC_PREWRITE);
 
-			prev->u.frame_list.next = itd->u.frame_list.next;
-			if (itd->u.frame_list.next != NULL)
-				itd->u.frame_list.next->u.frame_list.prev = prev;
+			prev->frame_list.next = itd->frame_list.next;
+			if (itd->frame_list.next != NULL)
+				itd->frame_list.next->frame_list.prev = prev;
 		}
 	}
 
@@ -2221,18 +2221,18 @@ ehci_rem_free_sitd_chain(ehci_softc_t *sc, struct ehci_xfer *exfer)
 		panic("ehci isoc xfer being freed, but with no sitd chain\n");
 
 	for (sitd = exfer->ex_sitdstart; sitd != NULL; sitd = sitd->xfer_next) {
-		prev = sitd->u.frame_list.prev;
+		prev = sitd->frame_list.prev;
 		/* Unlink sitd from hardware chain, or frame array */
 		if (prev == NULL) { /* We're at the table head */
-			sc->sc_softsitds[sitd->slot] = sitd->u.frame_list.next;
+			sc->sc_softsitds[sitd->slot] = sitd->frame_list.next;
 			sc->sc_flist[sitd->slot] = sitd->sitd.sitd_next;
 			usb_syncmem(&sc->sc_fldma,
 			    sizeof(ehci_link_t) * sitd->slot,
 			    sizeof(ehci_link_t),
 			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-			if (sitd->u.frame_list.next != NULL)
-				sitd->u.frame_list.next->u.frame_list.prev = NULL;
+			if (sitd->frame_list.next != NULL)
+				sitd->frame_list.next->frame_list.prev = NULL;
 		} else {
 			/* XXX this part is untested... */
 			prev->sitd.sitd_next = sitd->sitd.sitd_next;
@@ -2240,9 +2240,9 @@ ehci_rem_free_sitd_chain(ehci_softc_t *sc, struct ehci_xfer *exfer)
 			    sitd->offs + offsetof(ehci_sitd_t, sitd_next),
 			    sizeof(sitd->sitd.sitd_next), BUS_DMASYNC_PREWRITE);
 
-			prev->u.frame_list.next = sitd->u.frame_list.next;
-			if (sitd->u.frame_list.next != NULL)
-				sitd->u.frame_list.next->u.frame_list.prev = prev;
+			prev->frame_list.next = sitd->frame_list.next;
+			if (sitd->frame_list.next != NULL)
+				sitd->frame_list.next->frame_list.prev = prev;
 		}
 	}
 
@@ -2944,7 +2944,7 @@ ehci_alloc_itd(ehci_softc_t *sc)
 	previndex = (frindex != 0) ? frindex - 1 : sc->sc_flsize;
 
 	freeitd = NULL;
-	LIST_FOREACH(itd, &sc->sc_freeitds, u.free_list) {
+	LIST_FOREACH(itd, &sc->sc_freeitds, free_list) {
 		if (itd == NULL)
 			break;
 		if (itd->slot != frindex && itd->slot != previndex) {
@@ -2971,20 +2971,20 @@ ehci_alloc_itd(ehci_softc_t *sc)
 			itd->physaddr = DMAADDR(&dma, offs);
 	 		itd->dma = dma;
 			itd->offs = offs;
-			LIST_INSERT_HEAD(&sc->sc_freeitds, itd, u.free_list);
+			LIST_INSERT_HEAD(&sc->sc_freeitds, itd, free_list);
 		}
 		freeitd = LIST_FIRST(&sc->sc_freeitds);
 	}
 
 	itd = freeitd;
-	LIST_REMOVE(itd, u.free_list);
+	LIST_REMOVE(itd, free_list);
 	memset(&itd->itd, 0, sizeof(ehci_itd_t));
 	usb_syncmem(&itd->dma, itd->offs + offsetof(ehci_itd_t, itd_next),
 	    sizeof(itd->itd.itd_next),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-	itd->u.frame_list.next = NULL;
-	itd->u.frame_list.prev = NULL;
+	itd->frame_list.next = NULL;
+	itd->frame_list.prev = NULL;
 	itd->xfer_next = NULL;
 	itd->slot = 0;
 
@@ -3015,7 +3015,7 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 	previndex = (frindex != 0) ? frindex - 1 : sc->sc_flsize;
 
 	freesitd = NULL;
-	LIST_FOREACH(sitd, &sc->sc_freesitds, u.free_list) {
+	LIST_FOREACH(sitd, &sc->sc_freesitds, free_list) {
 		if (sitd == NULL)
 			break;
 		if (sitd->slot != frindex && sitd->slot != previndex) {
@@ -3042,20 +3042,20 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 			sitd->physaddr = DMAADDR(&dma, offs);
 	 		sitd->dma = dma;
 			sitd->offs = offs;
-			LIST_INSERT_HEAD(&sc->sc_freesitds, sitd, u.free_list);
+			LIST_INSERT_HEAD(&sc->sc_freesitds, sitd, free_list);
 		}
 		freesitd = LIST_FIRST(&sc->sc_freesitds);
 	}
 
 	sitd = freesitd;
-	LIST_REMOVE(sitd, u.free_list);
+	LIST_REMOVE(sitd, free_list);
 	memset(&sitd->sitd, 0, sizeof(ehci_sitd_t));
 	usb_syncmem(&sitd->dma, sitd->offs + offsetof(ehci_sitd_t, sitd_next),
 		    sizeof(sitd->sitd.sitd_next), BUS_DMASYNC_PREWRITE |
 		    BUS_DMASYNC_PREREAD);
 
-	sitd->u.frame_list.next = NULL;
-	sitd->u.frame_list.prev = NULL;
+	sitd->frame_list.next = NULL;
+	sitd->frame_list.prev = NULL;
 	sitd->xfer_next = NULL;
 	sitd->slot = 0;
 
@@ -3070,7 +3070,7 @@ ehci_free_itd(ehci_softc_t *sc, ehci_soft_itd_t *itd)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	LIST_INSERT_HEAD(&sc->sc_freeitds, itd, u.free_list);
+	LIST_INSERT_HEAD(&sc->sc_freeitds, itd, free_list);
 }
 
 Static void
@@ -3079,7 +3079,7 @@ ehci_free_sitd(ehci_softc_t *sc, ehci_soft_sitd_t *sitd)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	LIST_INSERT_HEAD(&sc->sc_freesitds, sitd, u.free_list);
+	LIST_INSERT_HEAD(&sc->sc_freesitds, sitd, free_list);
 }
 
 /****************/
@@ -4318,12 +4318,12 @@ ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
 		    sizeof(ehci_link_t),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-		sitd->u.frame_list.next = sc->sc_softsitds[frindex];
+		sitd->frame_list.next = sc->sc_softsitds[frindex];
 		sc->sc_softsitds[frindex] = sitd;
-		if (sitd->u.frame_list.next != NULL)
-			sitd->u.frame_list.next->u.frame_list.prev = sitd;
+		if (sitd->frame_list.next != NULL)
+			sitd->frame_list.next->frame_list.prev = sitd;
 		sitd->slot = frindex;
-		sitd->u.frame_list.prev = NULL;
+		sitd->frame_list.prev = NULL;
 
 		frindex += i;
 		if (frindex >= sc->sc_flsize)
@@ -4647,12 +4647,12 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 		    sizeof(ehci_link_t),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-		itd->u.frame_list.next = sc->sc_softitds[frindex];
+		itd->frame_list.next = sc->sc_softitds[frindex];
 		sc->sc_softitds[frindex] = itd;
-		if (itd->u.frame_list.next != NULL)
-			itd->u.frame_list.next->u.frame_list.prev = itd;
+		if (itd->frame_list.next != NULL)
+			itd->frame_list.next->frame_list.prev = itd;
 		itd->slot = frindex;
-		itd->u.frame_list.prev = NULL;
+		itd->frame_list.prev = NULL;
 
 		frindex += i;
 		if (frindex >= sc->sc_flsize)
