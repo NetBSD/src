@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.playstation2.inc,v 1.8 2014/07/02 13:27:14 martin Exp $
+#	$NetBSD: Makefile.playstation2.inc,v 1.9 2015/04/06 10:49:13 martin Exp $
 
 .if !defined(EXTERNAL_TOOLCHAIN) || ${EXTERNAL_TOOLCHAIN}==""
 .error please do not run "make" directly, use sh ../../conf/build.playstation2.sh instead
@@ -21,5 +21,5 @@ SIZE=${PREFIX}/bin/${PLATFORM}-size
 STRIP=${PREFIX}/bin/${PLATFORM}-strip
 
 # Playstation2 uses 128 bit access, which currently requires n32 ABI
-CFLAGS+= -mabi=n32 -march=r5900 -fno-pic -msoft-float
+CFLAGS+= -mabi=n32 -march=r5900 -fno-pic -msoft-float -Wa,-msoft-float
 AFLAGS+= -mabi=n32 -march=r5900 -fno-pic -msoft-float
