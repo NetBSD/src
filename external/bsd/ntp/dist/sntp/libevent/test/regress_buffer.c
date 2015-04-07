@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_buffer.c,v 1.2 2014/12/19 20:43:19 christos Exp $	*/
+/*	$NetBSD: regress_buffer.c,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -248,7 +248,7 @@ test_evbuffer(void *ptr)
 	if (memcmp(evbuffer_pullup(
 			   evb, -1), buffer, sizeof(buffer) / 2) != 0 ||
 	    memcmp(evbuffer_pullup(
-			   evb_two, -1), buffer, sizeof(buffer) != 0))
+			   evb_two, -1), buffer, sizeof(buffer)) != 0)
 		tt_abort_msg("Pullup did not preserve content");
 
 	evbuffer_validate(evb);
@@ -865,6 +865,10 @@ test_evbuffer_add_file(void *ptr)
 		evutil_closesocket(pair[0]);
 	if (pair[1] >= 0)
 		evutil_closesocket(pair[1]);
+	if (wev)
+		event_free(wev);
+	if (rev)
+		event_free(rev);
 	if (tmpfilename) {
 		unlink(tmpfilename);
 		free(tmpfilename);
@@ -1536,9 +1540,9 @@ test_evbuffer_callbacks(void *ptr)
 	tt_assert(!evbuffer_remove_cb(buf, log_change_callback, buf_out2));
 	evbuffer_validate(buf);
 
-	tt_str_op(evbuffer_pullup(buf_out1, -1), ==,
+	tt_str_op((const char *) evbuffer_pullup(buf_out1, -1), ==,
 		  "0->36; 36->26; 26->31; 31->38; ");
-	tt_str_op(evbuffer_pullup(buf_out2, -1), ==,
+	tt_str_op((const char *) evbuffer_pullup(buf_out2, -1), ==,
 		  "0->36; 31->38; 38->0; 0->1; ");
 	evbuffer_drain(buf_out1, evbuffer_get_length(buf_out1));
 	evbuffer_drain(buf_out2, evbuffer_get_length(buf_out2));
@@ -1554,7 +1558,7 @@ test_evbuffer_callbacks(void *ptr)
 	tt_uint_op(evbuffer_get_length(buf_out2), ==, 0);
 	evbuffer_setcb(buf, NULL, NULL);
 	evbuffer_add_printf(buf, "This will not.");
-	tt_str_op(evbuffer_pullup(buf, -1), ==, "This will not.");
+	tt_str_op((const char *) evbuffer_pullup(buf, -1), ==, "This will not.");
 	evbuffer_validate(buf);
 	evbuffer_drain(buf, evbuffer_get_length(buf));
 	evbuffer_validate(buf);
@@ -1662,7 +1666,7 @@ test_evbuffer_add_reference(void *ptr)
 	evbuffer_add(buf1, "You shake and shake the ", 24);
 	evbuffer_add_reference(buf1, "ketchup bottle", 14, ref_done_cb,
 	    (void*)3333);
-	evbuffer_add(buf1, ". Nothing comes and then a lot'll.", 42);
+	evbuffer_add(buf1, ". Nothing comes and then a lot'll.", 35);
 	evbuffer_free(buf1);
 	buf1 = NULL;
 	tt_int_op(ref_done_cb_called_count, ==, 3);
@@ -1839,6 +1843,42 @@ end:
 	if (buf2)
 		evbuffer_free(buf2);
 
+}
+
+static void
+test_evbuffer_peek_first_gt(void *info)
+{
+	struct evbuffer *buf = NULL, *tmp_buf = NULL;
+	struct evbuffer_ptr ptr;
+	struct evbuffer_iovec v[2];
+
+	buf = evbuffer_new();
+	tmp_buf = evbuffer_new();
+	evbuffer_add_printf(tmp_buf, "Contents of chunk 100\n");
+	evbuffer_add_buffer(buf, tmp_buf);
+	evbuffer_add_printf(tmp_buf, "Contents of chunk 1\n");
+	evbuffer_add_buffer(buf, tmp_buf);
+
+	evbuffer_ptr_set(buf, &ptr, 0, EVBUFFER_PTR_SET);
+
+	/** The only case that matters*/
+	tt_int_op(evbuffer_peek(buf, -1, &ptr, NULL, 0), ==, 2);
+	/** Just in case */
+	tt_int_op(evbuffer_peek(buf, -1, &ptr, v, 2), ==, 2);
+
+	evbuffer_ptr_set(buf, &ptr, 20, EVBUFFER_PTR_ADD);
+	tt_int_op(evbuffer_peek(buf, -1, &ptr, NULL, 0), ==, 2);
+	tt_int_op(evbuffer_peek(buf, -1, &ptr, v, 2), ==, 2);
+	tt_int_op(evbuffer_peek(buf, 2, &ptr, NULL, 0), ==, 1);
+	tt_int_op(evbuffer_peek(buf, 2, &ptr, v, 2), ==, 1);
+	tt_int_op(evbuffer_peek(buf, 3, &ptr, NULL, 0), ==, 2);
+	tt_int_op(evbuffer_peek(buf, 3, &ptr, v, 2), ==, 2);
+
+end:
+	if (buf)
+		evbuffer_free(buf);
+	if (tmp_buf)
+		evbuffer_free(tmp_buf);
 }
 
 static void
@@ -2098,7 +2138,7 @@ test_evbuffer_copyout(void *dummy)
 	    "When the rich Allobrogenses never kept amanuenses, "
 	    "And our only plots were piled in lakes at Berne.";
 	/* -- Kipling, "In The Neolithic Age" */
-	char tmp[256];
+	char tmp[1024];
 	struct evbuffer_ptr ptr;
 	struct evbuffer *buf;
 
@@ -2208,6 +2248,7 @@ struct testcase_t evbuffer_testcases[] = {
 	{ "multicast_drain", test_evbuffer_multicast_drain, 0, NULL, NULL },
 	{ "prepend", test_evbuffer_prepend, TT_FORK, NULL, NULL },
 	{ "peek", test_evbuffer_peek, 0, NULL, NULL },
+	{ "peek_first_gt", test_evbuffer_peek_first_gt, 0, NULL, NULL },
 	{ "freeze_start", test_evbuffer_freeze, 0, &nil_setup, (void*)"start" },
 	{ "freeze_end", test_evbuffer_freeze, 0, &nil_setup, (void*)"end" },
 	{ "add_iovec", test_evbuffer_add_iovec, 0, NULL, NULL},

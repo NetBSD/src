@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.h,v 1.2 2014/12/19 20:43:19 christos Exp $	*/
+/*	$NetBSD: regress.h,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -54,6 +54,10 @@ extern struct testcase_t ssl_testcases[];
 extern struct testcase_t listener_testcases[];
 extern struct testcase_t listener_iocp_testcases[];
 extern struct testcase_t thread_testcases[];
+
+extern struct evutil_weakrand_state test_weakrand_state;
+
+#define test_weakrand() (evutil_weakrand_(&test_weakrand_state))
 
 void regress_threads(void *);
 void test_bufferevent_zlib(void *);
@@ -116,7 +120,7 @@ int test_ai_eq_(const struct evutil_addrinfo *ai, const char *sockaddr_port,
 	} while (0)
 
 #define test_timeval_diff_leq(tv1, tv2, diff, tolerance)		\
-	tt_int_op(abs(timeval_msec_diff((tv1), (tv2)) - diff), <=, tolerance)
+	tt_int_op(labs(timeval_msec_diff((tv1), (tv2)) - diff), <=, tolerance)
 
 #define test_timeval_diff_eq(tv1, tv2, diff)				\
 	test_timeval_diff_leq((tv1), (tv2), (diff), 50)

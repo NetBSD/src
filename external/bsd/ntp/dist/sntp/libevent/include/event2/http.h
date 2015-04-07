@@ -1,4 +1,4 @@
-/*	$NetBSD: http.h,v 1.2 2014/12/19 20:43:19 christos Exp $	*/
+/*	$NetBSD: http.h,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -632,6 +632,12 @@ struct evhttp_connection *evhttp_connection_base_new(
 	struct event_base *base, struct evdns_base *dnsbase,
 	const char *address, unsigned short port);
 
+/**
+ * Set family hint for DNS requests.
+ */
+void evhttp_connection_set_family(struct evhttp_connection *evcon,
+	int family);
+
 /** Takes ownership of the request object
  *
  * Can be used in a request callback to keep onto the request until
@@ -670,6 +676,14 @@ void evhttp_connection_set_max_body_size(struct evhttp_connection* evcon,
 /** Frees an http connection */
 EVENT2_EXPORT_SYMBOL
 void evhttp_connection_free(struct evhttp_connection *evcon);
+
+/** Disowns a given connection object
+ *
+ * Can be used to tell libevent to free the connection object after
+ * the last request has completed or failed.
+ */
+EVENT2_EXPORT_SYMBOL
+void evhttp_connection_free_on_completion(struct evhttp_connection *evcon);
 
 /** sets the ip address from which http connections are made */
 EVENT2_EXPORT_SYMBOL

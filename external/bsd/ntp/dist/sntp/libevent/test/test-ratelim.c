@@ -1,4 +1,4 @@
-/*	$NetBSD: test-ratelim.c,v 1.2 2014/12/19 20:43:19 christos Exp $	*/
+/*	$NetBSD: test-ratelim.c,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -52,6 +52,7 @@
 #include "event2/listener.h"
 #include "event2/thread.h"
 
+static struct evutil_weakrand_state weakrand_state;
 
 static int cfg_verbose = 0;
 static int cfg_help = 0;
@@ -115,11 +116,7 @@ loud_writecb(struct bufferevent *bev, void *ctx)
 	struct client_state *cs = ctx;
 	struct evbuffer *output = bufferevent_get_output(bev);
 	char buf[1024];
-#ifdef _WIN32
-	int r = rand() % 256;
-#else
-	int r = random() % 256;
-#endif
+	int r = evutil_weakrand_(&weakrand_state);
 	memset(buf, r, sizeof(buf));
 	while (evbuffer_get_length(output) < 8192) {
 		evbuffer_add(output, buf, sizeof(buf));
@@ -225,7 +222,7 @@ check_bucket_levels_cb(evutil_socket_t fd, short events, void *arg)
 #undef B
 
 	total_n_bev_checks++;
-	if (total_n_bev_checks >= .8 * (cfg_duration / cfg_tick_msec) * cfg_n_connections) {
+	if (total_n_bev_checks >= .8 * ((double)cfg_duration / cfg_tick_msec) * cfg_n_connections) {
 		event_free(event_base_get_running_event(bufferevent_get_base(bev)));
 	}
 }
@@ -554,6 +551,8 @@ main(int argc, char **argv)
 
 	(void) WSAStartup(wVersionRequested, &wsaData);
 #endif
+
+	evutil_weakrand_seed_(&weakrand_state, 0);
 
 #ifndef _WIN32
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: evrpc-internal.h,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
+/*	$NetBSD: evrpc-internal.h,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2006-2007 Niels Provos <provos@citi.umich.edu>
@@ -29,6 +29,7 @@
 #ifndef EVRPC_INTERNAL_H_INCLUDED_
 #define EVRPC_INTERNAL_H_INCLUDED_
 
+#include "event2/http.h"
 #include "http-internal.h"
 
 struct evrpc;

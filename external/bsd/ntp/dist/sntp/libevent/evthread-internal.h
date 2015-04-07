@@ -1,4 +1,4 @@
-/*	$NetBSD: evthread-internal.h,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
+/*	$NetBSD: evthread-internal.h,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2008-2012 Niels Provos, Nick Mathewson
@@ -377,6 +377,13 @@ int event_global_setup_locks_(const int enable_locks);
 int evsig_global_setup_locks_(const int enable_locks);
 int evutil_global_setup_locks_(const int enable_locks);
 int evutil_secure_rng_global_setup_locks_(const int enable_locks);
+
+/** Return current evthread_lock_callbacks */
+struct evthread_lock_callbacks *evthread_get_lock_callbacks(void);
+/** Return current evthread_condition_callbacks */
+struct evthread_condition_callbacks *evthread_get_condition_callbacks(void);
+/** Disable locking for internal usage (like global shutdown) */
+void evthreadimpl_disable_lock_debugging_(void);
 
 #endif
 

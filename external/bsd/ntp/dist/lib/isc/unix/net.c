@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.5 2014/12/19 20:43:16 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.6 2015/04/07 17:34:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -107,7 +107,8 @@ const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
 # if defined(WANT_IPV6)
 static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
 
-# if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
+# if defined(ISC_PLATFORM_HAVEIPV6) && \
+     defined(WANT_IPV6) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
 # endif
 # endif

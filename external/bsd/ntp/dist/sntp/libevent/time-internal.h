@@ -1,4 +1,4 @@
-/*	$NetBSD: time-internal.h,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
+/*	$NetBSD: time-internal.h,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -87,9 +87,6 @@ struct evutil_monotonic_timer {
 	struct timeval adjust_monotonic_clock;
 	struct timeval last_time;
 };
-
-#define EV_MONOT_PRECISE  1
-#define EV_MONOT_FALLBACK 2
 
 int evutil_configure_monotonic_time_(struct evutil_monotonic_timer *mt,
     int flags);

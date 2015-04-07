@@ -1,4 +1,4 @@
-/*	$NetBSD: listener.c,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
+/*	$NetBSD: listener.c,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos, Nick Mathewson
@@ -234,6 +234,11 @@ evconnlistener_new_bind(struct event_base *base, evconnlistener_cb cb,
 
 	if (flags & LEV_OPT_REUSEABLE) {
 		if (evutil_make_listen_socket_reuseable(fd) < 0)
+			goto err;
+	}
+
+	if (flags & LEV_OPT_REUSEABLE_PORT) {
+		if (evutil_make_listen_socket_reuseable_port(fd) < 0)
 			goto err;
 	}
 
