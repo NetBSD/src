@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.70 2015/03/23 17:28:14 matt Exp $
+#	$NetBSD: genassym.cf,v 1.71 2015/04/07 20:38:20 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -76,10 +76,6 @@ endif
 
 ifdef __HAVE_PIC_FAST_SOFTINTS
 define	__HAVE_PIC_FAST_SOFTINTS	1
-endif
-
-ifdef __HAVE_UNNESTED_INTRS
-define	__HAVE_UNNESTED_INTRS	1
 endif
 
 ifdef ARM_MMU_EXTENDED
