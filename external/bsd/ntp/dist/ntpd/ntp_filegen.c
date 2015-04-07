@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_filegen.c,v 1.5 2014/12/19 20:43:17 christos Exp $	*/
+/*	$NetBSD: ntp_filegen.c,v 1.6 2015/04/07 17:34:19 christos Exp $	*/
 
 /*
  * ntp_filegen.c,v 3.12 1994/01/25 19:06:11 kardel Exp

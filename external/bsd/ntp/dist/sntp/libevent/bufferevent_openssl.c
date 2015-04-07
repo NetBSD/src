@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_openssl.c,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
+/*	$NetBSD: bufferevent_openssl.c,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -1278,6 +1278,8 @@ be_openssl_ctrl(struct bufferevent *bev,
 			SSL_set_bio(bev_ssl->ssl, bio, bio);
 			bev_ssl->fd_is_set = 1;
 		}
+		if (data->fd == -1)
+			bev_ssl->fd_is_set = 0;
 		if (bev_ssl->state == BUFFEREVENT_SSL_OPEN)
 			return set_open_callbacks(bev_ssl, data->fd);
 		else {

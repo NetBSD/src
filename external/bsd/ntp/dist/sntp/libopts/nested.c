@@ -1,4 +1,4 @@
-/*	$NetBSD: nested.c,v 1.6 2014/12/19 20:43:19 christos Exp $	*/
+/*	$NetBSD: nested.c,v 1.7 2015/04/07 17:34:20 christos Exp $	*/
 
 
 /**
