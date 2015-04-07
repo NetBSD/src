@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.10 2015/04/07 06:09:55 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.11 2015/04/07 06:23:10 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.10 2015/04/07 06:09:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.11 2015/04/07 06:23:10 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -571,6 +571,9 @@ uhub_explore(struct usbd_device *dev)
 		}
 		status = UGETW(up->up_status.wPortStatus);
 		change = UGETW(up->up_status.wPortChange);
+		DPRINTF("hub %d port %d after reset: s/c=%x/%x",
+		    device_unit(sc->sc_dev), port, status, change);
+
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
 			/* Nothing connected, just ignore it. */
 #ifdef DIAGNOSTIC
