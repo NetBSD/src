@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.19 2015/04/07 06:49:10 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.20 2015/04/07 06:52:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.19 2015/04/07 06:49:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.20 2015/04/07 06:52:03 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1123,6 +1123,12 @@ xhci_setup_sctx(struct usbd_device *dev, uint32_t *cp)
 	cp[3] |= htole32(0);
 }
 
+/*
+ * called
+ *  from xhci_open
+ *  from usbd_setup_pipe_flags
+ *  from usbd_open_pipe_ival
+ */
 static usbd_status
 xhci_configure_endpoint(struct usbd_pipe *pipe)
 {
@@ -1309,6 +1315,7 @@ xhci_unconfigure_endpoint(struct usbd_pipe *pipe)
 }
 #endif
 
+/* 4.6.8, 6.4.3.7 */
 static usbd_status
 xhci_reset_endpoint(struct usbd_pipe *pipe)
 {
@@ -1334,6 +1341,11 @@ xhci_reset_endpoint(struct usbd_pipe *pipe)
 	return err;
 }
 
+/*
+ * 4.6.9, 6.4.3.8
+ * Stop execution of TDs on xfer ring.
+ * Should be called with sc_lock held.
+ */
 static usbd_status
 xhci_stop_endpoint(struct usbd_pipe *pipe)
 {
@@ -1359,6 +1371,12 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
 	return err;
 }
 
+/*
+ * Set TR Dequeue Pointer.
+ * xCHI 1.1  4.6.10  6.4.3.9
+ * Purge all of transfer requests in ring.
+ * EPSTATE of endpoint must be ERROR or STOPPED, or CONTEXT_STATE error.
+ */
 static usbd_status
 xhci_set_dequeue(struct usbd_pipe *pipe)
 {
@@ -1379,6 +1397,7 @@ xhci_set_dequeue(struct usbd_pipe *pipe)
 	xr->xr_ep = 0;
 	xr->xr_cs = 1;
 
+	/* set DCS */
 	trb.trb_0 = xhci_ring_trbp(xr, 0) | 1; /* XXX */
 	trb.trb_2 = 0;
 	trb.trb_3 = XHCI_TRB_3_SLOT_SET(xs->xs_idx) |
@@ -1390,6 +1409,11 @@ xhci_set_dequeue(struct usbd_pipe *pipe)
 	return err;
 }
 
+/*
+ * Open new pipe: called from usbd_setup_pipe_flags.
+ * Fills methods of pipe.
+ * If pipe is not for ep0, calls configure_endpoint.
+ */
 static usbd_status
 xhci_open(struct usbd_pipe *pipe)
 {
@@ -1449,6 +1473,11 @@ xhci_open(struct usbd_pipe *pipe)
 	return USBD_NORMAL_COMPLETION;
 }
 
+/*
+ * Closes pipe, called from usbd_kill_pipe via close methods.
+ * If the endpoint to be closed is ep0, disable_slot.
+ * Should be called with sc_lock held.
+ */
 static usbd_status
 xhci_close_pipe(struct usbd_pipe *pipe)
 {
@@ -1482,6 +1511,10 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 		return xhci_disable_slot(sc, xs->xs_idx);
 	}
 
+	/*
+	 * This may fail in the case that xhci_close_pipe is called after
+	 * xhci_abort_xfer e.g. usbd_kill_pipe.
+	 */
 	(void)xhci_stop_endpoint(pipe);
 
 	/*
@@ -1511,6 +1544,11 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	return err;
 }
 
+/*
+ * Abort transfer.
+ * Called with sc_lock held.
+ * May be called from softintr context.
+ */
 static void
 xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
@@ -1540,6 +1578,7 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 }
 
 #if 1 /* XXX experimental */
+/* issue reset_ep and set_dequeue in thread context */
 static void
 xhci_clear_endpoint_stall_async_task(void *cookie)
 {
@@ -1574,6 +1613,7 @@ xhci_clear_endpoint_stall_async(struct usbd_xfer *xfer)
 		return USBD_IOERROR;
 	}
 
+	/* XXX never use up_async_task for incompatible type of function */
 	usb_init_task(&xfer->ux_pipe->up_async_task,
 	    xhci_clear_endpoint_stall_async_task, xfer, USB_TASKQ_MPSAFE);
 	usb_add_task(xfer->ux_pipe->up_dev, &xfer->ux_pipe->up_async_task,
@@ -1584,6 +1624,10 @@ xhci_clear_endpoint_stall_async(struct usbd_xfer *xfer)
 }
 
 #endif /* XXX experimental */
+
+/*
+ * Notify roothub port status/change to uhub_intr.
+ */
 static void
 xhci_rhpsc(struct xhci_softc * const sc, u_int port)
 {
@@ -1604,6 +1648,12 @@ xhci_rhpsc(struct xhci_softc * const sc, u_int port)
 	usb_transfer_complete(xfer);
 }
 
+/*
+ * Process events:
+ * + Transfer comeplete
+ * + Command complete
+ * + Roothub Port status/change
+ */
 static void
 xhci_handle_event(struct xhci_softc * const sc,
     const struct xhci_trb * const trb)
@@ -1849,6 +1899,16 @@ xhci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 
 extern uint32_t usb_cookie_no;
 
+/*
+ * Called if uhub_explore find new device (via usbd_new_device).
+ * Allocate and construct dev structure of default endpoint (ep0).
+ *   Determine initial MaxPacketSize (mps) by speed.
+ *   Determine route string and roothub port for slot of dev.
+ * Allocate pipe of ep0.
+ * Enable and initialize slot and Set Address.
+ * Read device descriptor.
+ * Register this device.
+ */
 static usbd_status
 xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
     int speed, int port, struct usbd_port *up)
@@ -2202,6 +2262,13 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	DPRINTFN(12, "%p xr_ep 0x%x xr_cs %u", xr, xr->xr_ep, xr->xr_cs, 0);
 }
 
+/*
+ * Put a command on command ring, ring bell, set timer, and cv_timedwait.
+ * Command completion is notified by cv_signal from xhci_handle_event
+ * (called from interrupt from xHCI), or timed-out.
+ * Command validation is performed in xhci_handle_event by checking if
+ * trb_0 in CMD_COMPLETE TRB and sc->sc_command_addr are identical.
+ */
 static usbd_status
 xhci_do_command1(struct xhci_softc * const sc, struct xhci_trb * const trb,
     int timeout, int locked)
@@ -2218,6 +2285,7 @@ xhci_do_command1(struct xhci_softc * const sc, struct xhci_trb * const trb,
 	if (!locked)
 		mutex_enter(&sc->sc_lock);
 
+	/* XXX KASSERT may fire when cv_timedwait unlocks sc_lock */
 	KASSERT(sc->sc_command_addr == 0);
 	sc->sc_command_addr = xhci_ring_trbp(cr, cr->xr_ep);
 
@@ -2267,6 +2335,11 @@ xhci_do_command(struct xhci_softc * const sc, struct xhci_trb * const trb,
 	return xhci_do_command1(sc, trb, timeout, 0);
 }
 
+/*
+ * This allows xhci_do_command with already sc_lock held.
+ * This is needed as USB stack calls close methods with sc_lock_held.
+ * (see usbdivar.h)
+ */
 static usbd_status
 xhci_do_command_locked(struct xhci_softc * const sc,
     struct xhci_trb * const trb, int timeout)
@@ -2296,6 +2369,10 @@ xhci_enable_slot(struct xhci_softc * const sc, uint8_t * const slotp)
 	return err;
 }
 
+/*
+ * Deallocate DMA buffer and ring buffer, and disable_slot.
+ * Should be called with sc_lock held.
+ */
 static usbd_status
 xhci_disable_slot(struct xhci_softc * const sc, uint8_t slot)
 {
@@ -2326,6 +2403,12 @@ xhci_disable_slot(struct xhci_softc * const sc, uint8_t slot)
 	return xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
 }
 
+/*
+ * Change slot state.
+ * bsr=0: ENABLED -> ADDRESSED
+ * bsr=1: ENABLED -> DEFAULT
+ * see xHCI 1.1  4.5.3, 3.3.4
+ */
 static usbd_status
 xhci_address_device(struct xhci_softc * const sc,
     uint64_t icp, uint8_t slot_id, bool bsr)
@@ -2392,6 +2475,11 @@ xhci_set_dcba(struct xhci_softc * const sc, uint64_t dcba, int si)
 	    BUS_DMASYNC_PREWRITE);
 }
 
+/*
+ * Allocate DMA buffer and ring buffer for specified slot
+ * and set Device Context Base Address
+ * and issue Set Address device command.
+ */
 static usbd_status
 xhci_init_slot(struct usbd_device *dev, uint32_t slot, int route, int rhport)
 {
@@ -2502,6 +2590,9 @@ xhci_noop(struct usbd_pipe *pipe)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 }
 
+/*
+ * Process root hub request.
+ */
 static int
 xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
     void *buf, int buflen)
@@ -2773,6 +2864,7 @@ xhci_root_intr_transfer(struct usbd_xfer *xfer)
 	return xhci_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
+/* Wait for roothub port status/change */
 static usbd_status
 xhci_root_intr_start(struct usbd_xfer *xfer)
 {
