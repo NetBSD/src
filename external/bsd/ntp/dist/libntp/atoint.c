@@ -1,4 +1,4 @@
-/*	$NetBSD: atoint.c,v 1.1.1.2 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: atoint.c,v 1.1.1.3 2015/04/07 16:49:04 christos Exp $	*/
 
 /*
  * atoint - convert an ascii string to a signed long, with error checking
@@ -37,7 +37,7 @@ atoint(
 
 	u = 0;
 	while (*cp != '\0') {
-		if (!isdigit((int)*cp))
+		if (!isdigit((unsigned char)*cp))
 		    return 0;
 		if (u > 214748364 || (u == 214748364 && *cp > oflow_digit))
 		    return 0;	/* overflow */

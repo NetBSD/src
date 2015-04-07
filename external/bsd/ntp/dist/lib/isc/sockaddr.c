@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr.c,v 1.1.1.2 2013/12/27 23:30:39 christos Exp $	*/
+/*	$NetBSD: sockaddr.c,v 1.1.1.3 2015/04/07 16:49:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -194,9 +194,10 @@ isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size) {
 		 * The message is the same as in netaddr.c.
 		 */
 		snprintf(array, size,
+			 "<%s %u>",
 			 isc_msgcat_get(isc_msgcat, ISC_MSGSET_NETADDR,
 					ISC_MSG_UNKNOWNADDR,
-					"<unknown address, family %u>"),
+					"unknown address, family"),
 			 sa->type.sa.sa_family);
 		array[size - 1] = '\0';
 	}
@@ -232,10 +233,11 @@ isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, isc_boolean_t address_only) {
 		break;
 	default:
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "%s: %d",
 				 isc_msgcat_get(isc_msgcat,
 						ISC_MSGSET_SOCKADDR,
 						ISC_MSG_UNKNOWNFAMILY,
-						"unknown address family: %d"),
+						"unknown address family"),
 					     (int)sockaddr->type.sa.sa_family);
 		s = (const unsigned char *)&sockaddr->type;
 		length = sockaddr->length;
@@ -412,9 +414,10 @@ isc_sockaddr_setport(isc_sockaddr_t *sockaddr, in_port_t port) {
 		break;
 	default:
 		FATAL_ERROR(__FILE__, __LINE__,
+			    "%s: %d",
 			    isc_msgcat_get(isc_msgcat, ISC_MSGSET_SOCKADDR,
 					   ISC_MSG_UNKNOWNFAMILY,
-					   "unknown address family: %d"),
+					   "unknown address family"),
 			    (int)sockaddr->type.sa.sa_family);
 	}
 }
@@ -432,9 +435,10 @@ isc_sockaddr_getport(const isc_sockaddr_t *sockaddr) {
 		break;
 	default:
 		FATAL_ERROR(__FILE__, __LINE__,
+			    "%s: %d",
 			    isc_msgcat_get(isc_msgcat, ISC_MSGSET_SOCKADDR,
 					   ISC_MSG_UNKNOWNFAMILY,
-					   "unknown address family: %d"),
+					   "unknown address family"),
 			    (int)sockaddr->type.sa.sa_family);
 	}
 

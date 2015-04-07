@@ -1,4 +1,4 @@
-/*	$NetBSD: parsestreams.h,v 1.1.1.1 2009/12/13 16:54:57 kardel Exp $	*/
+/*	$NetBSD: parsestreams.h,v 1.1.1.2 2015/04/07 16:49:04 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/kernel/sys/parsestreams.h,v 4.5 2005/06/25 10:52:47 kardel RELEASE_20050625_A
@@ -6,7 +6,7 @@
  * parsestreams.h,v 4.5 2005/06/25 10:52:47 kardel RELEASE_20050625_A
  *
  * Copyright (c) 1995-2005 by Frank Kardel <kardel <AT> ntp.org>
- * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universität Erlangen-Nürnberg, Germany
+ * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universitaet Erlangen-Nuernberg, Germany
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.h,v 1.1.1.2 2014/12/19 20:37:47 christos Exp $	*/
+/*	$NetBSD: dns.h,v 1.1.1.3 2015/04/07 16:49:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2006-2007 Niels Provos <provos@citi.umich.edu>
@@ -455,7 +455,7 @@ int evdns_base_set_option(struct evdns_base *base, const char *option, const cha
 
   @param base the evdns_base to which to apply this operation
   @param flags any of DNS_OPTION_NAMESERVERS|DNS_OPTION_SEARCH|DNS_OPTION_MISC|
-    DNS_OPTIONS_HOSTSFILE|DNS_OPTIONS_ALL
+    DNS_OPTION_HOSTSFILE|DNS_OPTIONS_ALL
   @param filename the path to the resolv.conf file
   @return 0 if successful, or various positive error codes if an error
     occurred (see above)
@@ -695,6 +695,22 @@ struct evdns_getaddrinfo_request *evdns_getaddrinfo(
  * and the callback will be invoked with the error EVUTIL_EAI_CANCEL. */
 EVENT2_EXPORT_SYMBOL
 void evdns_getaddrinfo_cancel(struct evdns_getaddrinfo_request *req);
+
+/**
+   Retrieve the address of the 'idx'th configured nameserver.
+
+   @param base The evdns_base to examine.
+   @param idx The index of the nameserver to get the address of.
+   @param sa A location to receive the server's address.
+   @param len The number of bytes available at sa.
+
+   @return the number of bytes written into sa on success.  On failure, returns
+     -1 if idx is greater than the number of configured nameservers, or a
+     value greater than 'len' if len was not high enough.
+ */
+EVENT2_EXPORT_SYMBOL
+int evdns_base_get_nameserver_addr(struct evdns_base *base, int idx,
+    struct sockaddr *sa, ev_socklen_t len);
 
 #ifdef __cplusplus
 }

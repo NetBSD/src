@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.h,v 1.1.1.4 2014/12/19 20:37:45 christos Exp $	*/
+/*	$NetBSD: autoopts.h,v 1.1.1.5 2015/04/07 16:49:13 christos Exp $	*/
 
 
 /*
@@ -260,7 +260,7 @@ typedef struct {
 
 #define AGALOC(c, w)          ao_malloc((size_t)c)
 #define AGREALOC(p, c, w)     ao_realloc((void*)p, (size_t)c)
-#define AGFREE(_p)            free((void *)_p)
+#define AGFREE(p)            free((void *)(intptr_t)p)
 #define AGDUPSTR(p, s, w)     (p = ao_strdup(s))
 
 static void *
@@ -454,7 +454,7 @@ typedef enum { AOFLAG_TABLE } ao_flags_t;
 #undef  _aof_
 
 static char const   zNil[] = "";
-static arg_types_t  argTypes             = { NULL };
+static arg_types_t  argTypes             = { 0 };
 static char         line_fmt_buf[32];
 static bool         displayEnum          = false;
 static char const   pkgdatadir_default[] = PKGDATADIR;

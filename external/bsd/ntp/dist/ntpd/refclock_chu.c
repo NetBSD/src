@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.1.1.3 2013/12/27 23:31:01 christos Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.1.1.4 2015/04/07 16:49:08 christos Exp $	*/
 
 /*
  * refclock_chu - clock driver for Canadian CHU time/frequency station
@@ -969,15 +969,11 @@ chu_serial_receive(
 	struct recvbuf *rbufp	/* receive buffer structure pointer */
 	)
 {
-	struct chuunit *up;
-	struct refclockproc *pp;
 	struct peer *peer;
 
 	u_char	*dpt;		/* receive buffer pointer */
 
 	peer = rbufp->recv_peer;
-	pp = peer->procptr;
-	up = pp->unitptr;
 
 	dpt = (u_char *)&rbufp->recv_space;
 	chu_decode(peer, *dpt, rbufp->recv_time);

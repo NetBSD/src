@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.1.1.4 2014/12/19 20:37:40 christos Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.1.1.5 2015/04/07 16:49:05 christos Exp $	*/
 
 /* ntp_parser.y
  *
@@ -161,6 +161,7 @@
 %token	<Integer>	T_Maxdist
 %token	<Integer>	T_Maxmem
 %token	<Integer>	T_Maxpoll
+%token	<Integer>	T_Mdnstries
 %token	<Integer>	T_Mem
 %token	<Integer>	T_Memlock
 %token	<Integer>	T_Minclock
@@ -221,6 +222,8 @@
 %token	<Integer>	T_Stats
 %token	<Integer>	T_Statsdir
 %token	<Integer>	T_Step
+%token	<Integer>	T_Stepback
+%token	<Integer>	T_Stepfwd
 %token	<Integer>	T_Stepout
 %token	<Integer>	T_Stratum
 %token	<String>	T_String		/* not a token */
@@ -528,6 +531,8 @@ other_mode_command
 			{ CONCAT_G_FIFOS(cfgt.manycastserver, $2); }
 	|	T_Multicastclient address_list
 			{ CONCAT_G_FIFOS(cfgt.multicastclient, $2); }
+	|	T_Mdnstries T_Integer
+			{ cfgt.mdnstries = $2; }
 	;
 
 
@@ -1108,6 +1113,8 @@ tinker_option_keyword
 	|	T_Huffpuff
 	|	T_Panic
 	|	T_Step
+	|	T_Stepback
+	|	T_Stepfwd
 	|	T_Stepout
 	|	T_Tick
 	;

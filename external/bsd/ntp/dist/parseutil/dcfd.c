@@ -1,8 +1,8 @@
-/*	$NetBSD: dcfd.c,v 1.1.1.2 2013/12/27 23:31:07 christos Exp $	*/
+/*	$NetBSD: dcfd.c,v 1.1.1.3 2015/04/07 16:49:10 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/parseutil/dcfd.c,v 4.18 2005/10/07 22:08:18 kardel RELEASE_20051008_A
- *  
+ *
  * dcfd.c,v 4.18 2005/10/07 22:08:18 kardel RELEASE_20051008_A
  *
  * DCF77 100/200ms pulse synchronisation daemon program (via 50Baud serial line)
@@ -16,7 +16,7 @@
  *  Leap second handling (at that level you should switch to NTP Version 4 - really!)
  *
  * Copyright (c) 1995-2005 by Frank Kardel <kardel <AT> ntp.org>
- * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universität Erlangen-Nürnberg, Germany
+ * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universitaet Erlangen-Nuernberg, Germany
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -200,7 +200,7 @@ static char skip_adjust  = 1;	/* discard first adjustment (bad samples) */
 #define DCFB_ANNOUNCE		0x0001 /* switch time zone warning (DST switch) */
 #define DCFB_DST		0x0002 /* DST in effect */
 #define DCFB_LEAP		0x0004 /* LEAP warning (1 hour prior to occurrence) */
-#define DCFB_ALTERNATE		0x0008 /* alternate antenna used */
+#define DCFB_CALLBIT		0x0008 /* "call bit" used to signalize irregularities in the control facilities */
 
 struct clocktime		/* clock time broken up from time code */
 {
@@ -221,9 +221,16 @@ typedef struct clocktime clocktime_t;
 /*
  * (usually) quick constant multiplications
  */
+#ifndef TIMES10
 #define TIMES10(_X_) (((_X_) << 3) + ((_X_) << 1))	/* *8 + *2 */
+#endif
+#ifndef TIMES24
 #define TIMES24(_X_) (((_X_) << 4) + ((_X_) << 3))      /* *16 + *8 */
+#endif
+#ifndef TIMES60
 #define TIMES60(_X_) ((((_X_) << 4)  - (_X_)) << 2)     /* *(16 - 1) *4 */
+#endif
+
 /*
  * generic l_abs() function
  */
@@ -262,7 +269,8 @@ typedef struct clocktime clocktime_t;
  * Second	Contents
  * 0  - 10	AM: free, FM: 0
  * 11 - 14	free
- * 15		R     - alternate antenna
+ * 15		R     - "call bit" used to signalize irregularities in the control facilities
+ *		        (until 2003 indicated transmission via alternate antenna)
  * 16		A1    - expect zone change (1 hour before)
  * 17 - 18	Z1,Z2 - time zone
  *		 0  0 illegal
@@ -296,7 +304,7 @@ typedef struct clocktime clocktime_t;
  *   while the length is given as the difference between the start index and
  *   the start index of the following field.
  */
-static struct rawdcfcode 
+static struct rawdcfcode
 {
 	char offset;			/* start bit */
 } rawdcfcode[] =
@@ -363,7 +371,7 @@ static struct dcfparam
 {
 	unsigned char onebits[60];
 	unsigned char zerobits[60];
-} dcfparam = 
+} dcfparam =
 {
 	"###############RADMLS1248124P124812P1248121241248112481248P", /* 'ONE' representation */
 	"--------------------s-------p------p----------------------p"  /* 'ZERO' representation */
@@ -386,7 +394,7 @@ ext_bf(
 	register int i, first;
 
 	first = rawdcfcode[idx].offset;
-  
+
 	for (i = rawdcfcode[idx+1].offset - 1; i >= first; i--)
 	{
 		sum <<= 1;
@@ -440,7 +448,7 @@ convert_rawdcf(
 		PRINTF("%-30s", "*** INCOMPLETE");
 		return CVT_NONE;
 	}
-  
+
 	/*
 	 * check Start and Parity bits
 	 */
@@ -497,7 +505,7 @@ convert_rawdcf(
 		    clock_time->flags |= DCFB_LEAP;
 
 		if (ext_bf(buffer, DCF_R))
-		    clock_time->flags |= DCFB_ALTERNATE;
+		    clock_time->flags |= DCFB_CALLBIT;
 
 		return CVT_OK;
 	}
@@ -741,7 +749,7 @@ cvt_rawdcf(
 	 * if everything went well so far return the result of the symbolic
 	 * conversion routine else just the accumulated errors
 	 */
-	if (rtc != CVT_NONE) 
+	if (rtc != CVT_NONE)
 	{
 		PRINTF("%-30s", "*** BAD DATA");
 	}
@@ -760,13 +768,13 @@ dcf_to_unixtime(
 		)
 {
 #define SETRTC(_X_)	{ if (cvtrtc) *cvtrtc = (_X_); }
-	static int days_of_month[] = 
+	static int days_of_month[] =
 	{
 		0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 	};
 	register int i;
 	time_t t;
-  
+
 	/*
 	 * map 2 digit years to 19xx (DCF77 is a 20th century item)
 	 */
@@ -849,7 +857,7 @@ dcf_to_unixtime(
 	 */
 	t = TIMES60(t) + clock_time->minute;
 				/* sec */
-  
+
 	/*
 	 * calculate UTC in minutes
 	 */
@@ -1249,7 +1257,7 @@ usage(
  */
 static int
 check_y2k( void )
-{ 
+{
     int  year;			/* current working year */
     int  year0 = 1900;		/* sarting year for NTP time */
     int  yearend;		/* ending year we test for NTP time.
@@ -1308,7 +1316,7 @@ check_y2k( void )
 		 * *a minor difference to arg2 type */
 	if ( ct.year != year )
 	{
-	    fprintf( stdout, 
+	    fprintf( stdout,
 	       "%04d: dcf_to_unixtime(,%d) CORRUPTED ct.year: was %d\n",
 	       (int)year, (int)Flag, (int)ct.year );
 	    Error(year);
@@ -1318,9 +1326,9 @@ check_y2k( void )
 	Expected = t * 24 * 60 * 60;
 	if ( Observed != Expected  ||  Flag )
 	{   /* time difference */
-	    fprintf( stdout, 
+	    fprintf( stdout,
 	       "%04d: dcf_to_unixtime(,%d) FAILURE: was=%lu s/b=%lu  (%ld)\n",
-	       year, (int)Flag, 
+	       year, (int)Flag,
 	       (unsigned long)Observed, (unsigned long)Expected,
 	       ((long)Observed - (long)Expected) );
 	    Error(year);
@@ -1346,7 +1354,7 @@ rawdcf_init(
 	 * Here a voltage between the DTR and the RTS line is used. Unfortunately
 	 * the name has changed from CIOCM_DTR to TIOCM_DTR recently.
 	 */
-	
+
 #ifdef TIOCM_DTR
 	int sl232 = TIOCM_DTR;	/* turn on DTR for power supply */
 #else
@@ -1440,7 +1448,7 @@ main(
 					errs=1;
 				}
 				break;
-	      
+
 			    case 'd':
 				if (ac > 1)
 				{
@@ -1453,8 +1461,8 @@ main(
 					errs=1;
 				}
 				break;
-	      
-			    case 'Y':	
+
+			    case 'Y':
 				errs=check_y2k();
 				exit( errs ? 1 : 0 );
 
@@ -1521,7 +1529,7 @@ main(
 		unsigned int rtc = CVT_NONE;
 
 		rawdcf_init(fd);
-		
+
 		timeout.tv_sec  = 1;
 		timeout.tv_usec = 500000;
 
@@ -1562,7 +1570,7 @@ main(
 		 */
 		if (!interactive)
 		    detach();
-      
+
 		/*
 		 * get syslog() initialized
 		 */
@@ -1620,7 +1628,7 @@ main(
 			it.it_interval.tv_usec = 0;
 			it.it_value.tv_sec     = 1<<ADJINTERVAL;
 			it.it_value.tv_usec    = 0;
-	
+
 			if (setitimer(ITIMER_REAL, &it, (struct itimerval *)0) == -1)
 			{
 				syslog(LOG_ERR, "setitimer: %m");
@@ -1799,7 +1807,7 @@ main(
 					       wday[clock_time.wday],
 					       clock_time.hour, clock_time.minute, i, clock_time.day, clock_time.month,
 					       clock_time.year,
-					       (clock_time.flags & DCFB_ALTERNATE) ? "R" : "_",
+					       (clock_time.flags & DCFB_CALLBIT) ? "R" : "_",
 					       (clock_time.flags & DCFB_ANNOUNCE) ? "A" : "_",
 					       (clock_time.flags & DCFB_DST) ? "D" : "_",
 					       (clock_time.flags & DCFB_LEAP) ? "L" : "_",
@@ -1831,7 +1839,7 @@ main(
 				    fflush(stdout);
 			}
 		} while ((rrc == -1) && (errno == EINTR));
-      
+
 		/*
 		 * lost IO - sorry guys
 		 */
@@ -1841,7 +1849,7 @@ main(
 	}
 
 	closelog();
-  
+
 	return 0;
 }
 

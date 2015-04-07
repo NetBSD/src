@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.1.1.4 2014/12/19 20:37:39 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.1.1.5 2015/04/07 16:49:06 christos Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -170,8 +170,8 @@ int root_dropped;
 char *user;		/* User to switch to */
 char *group;		/* group to switch to */
 const char *chrootdir;	/* directory to chroot to */
-int sw_uid;
-int sw_gid;
+uid_t sw_uid;
+gid_t sw_gid;
 char *endp;
 struct group *gr;
 struct passwd *pw;
@@ -939,6 +939,10 @@ getgroup:
 			msyslog(LOG_ERR, "Cannot setegid() to group `%s': %m", group);
 			exit (-1);
 		}
+		if (group)
+			setgroups(1, &sw_gid);
+		else
+			initgroups(pw->pw_name, pw->pw_gid);
 		if (user && setuid(sw_uid)) {
 			msyslog(LOG_ERR, "Cannot setuid() to user `%s': %m", user);
 			exit (-1);
@@ -1260,6 +1264,7 @@ finish(
 	if (mdns != NULL)
 		DNSServiceRefDeallocate(mdns);
 # endif
+	peer_cleanup();
 	exit(0);
 }
 #endif	/* !SIM && SIGDIE1 */

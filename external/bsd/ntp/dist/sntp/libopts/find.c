@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.1.1.2 2014/12/19 20:37:45 christos Exp $	*/
+/*	$NetBSD: find.c,v 1.1.1.3 2015/04/07 16:49:13 christos Exp $	*/
 
 /**
  * @file check.c
@@ -82,7 +82,7 @@ parse_opt(char const ** nm_pp, char ** arg_pp, char * buf, size_t bufsz)
 
             buf[res] = NUL;
             *nm_pp   = buf;
-            *arg_pp  = (char *)p;
+            *arg_pp  = (char *)(intptr_t)p;
             return res;
 
         default:
@@ -713,7 +713,7 @@ find_opt(tOptions * opts, tOptState * o_st)
          *  strip off the "const" quality of the "default_opt" field.
          */
         while (*(++pz) == '-')   ;
-        def_opt  = (void *)&(opts->specOptIdx.default_opt);
+        def_opt  = (void *)(intptr_t)&(opts->specOptIdx.default_opt);
         def      = *def_opt;
         *def_opt = NO_EQUIVALENT;
         res      = opt_find_long(opts, pz, o_st);

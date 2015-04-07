@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_acts.c,v 1.1.1.3 2013/12/27 23:30:52 christos Exp $	*/
+/*	$NetBSD: refclock_acts.c,v 1.1.1.4 2015/04/07 16:49:05 christos Exp $	*/
 
 /*
  * refclock_acts - clock driver for the NIST/USNO/PTB/NPL Computer Time
@@ -345,7 +345,7 @@ acts_receive(
 				up->bufptr = up->buf;
 				acts_message(peer, up->buf);
 			}
-		} else if (!iscntrl(*tptr)) {
+		} else if (!iscntrl((unsigned char)*tptr)) {
 			*up->bufptr++ = *tptr;
 			if (*tptr == '*' || *tptr == '#') {
 				up->tstamp = pp->lastrec;
@@ -517,7 +517,7 @@ acts_timeout(
 		    up->unit);
 		fd = refclock_open(device, SPEED232, LDISC_ACTS |
 		    LDISC_RAW | LDISC_REMOTE);
-		if (fd <= 0) {
+		if (fd < 0) {
 			msyslog(LOG_ERR, "acts: open fails %m");
 			return;
 		}

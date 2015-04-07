@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_nmea.c,v 1.1.1.4 2014/12/19 20:37:40 christos Exp $	*/
+/*	$NetBSD: refclock_nmea.c,v 1.1.1.5 2015/04/07 16:49:06 christos Exp $	*/
 
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
@@ -31,6 +31,9 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <ctype.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 
 #include "ntpd.h"
 #include "ntp_io.h"
@@ -313,7 +316,7 @@ static int	unfold_century	(struct calendar * jd, u_int32 rec_ui);
 static int	gpsfix_century	(struct calendar * jd, const gps_weektm * wd,
 				 u_short * ccentury);
 static l_fp     eval_gps_time	(struct peer * peer, const struct calendar * gpst,
-				 const struct timespec * gpso, const l_fp * recv);
+				 const struct timespec * gpso, const l_fp * xrecv);
 
 static int	nmead_open	(const char * device);
 static void     save_ltc        (struct refclockproc * const, const char * const,
@@ -408,7 +411,7 @@ nmea_start(
 	size_t				devlen;
 	u_int32				rate;
 	int				baudrate;
-	char *				baudtext;
+	const char *			baudtext;
 
 
 	/* Get baudrate choice from mode byte bits 4/5/6 */
@@ -1147,7 +1150,7 @@ nmea_poll(
 	*/
 	if (peer->ttl & NMEA_EXTLOG_MASK) {
 		/* Log & reset counters with extended logging */
-		char *nmea = pp->a_lastcode;
+		const char *nmea = pp->a_lastcode;
 		if (*nmea == '\0') nmea = "(none)";
 		mprintf_clock_stats(
 		  &peer->srcadr, "%s  %u %u %u %u %u %u",
@@ -1781,7 +1784,7 @@ eval_gps_time(
 	struct peer           * peer, /* for logging etc */
 	const struct calendar * gpst, /* GPS time stamp  */
 	const struct timespec * tofs, /* GPS frac second & offset */
-	const l_fp            * recv  /* receive time stamp */
+	const l_fp            * xrecv /* receive time stamp */
 	)
 {
 	struct refclockproc * const pp = peer->procptr;
@@ -1837,7 +1840,7 @@ eval_gps_time(
 	}
 
 	/* - get unfold base: day of full recv time - 512 weeks */
-	vi64 = ntpcal_ntp_to_ntp(recv->l_ui, NULL);
+	vi64 = ntpcal_ntp_to_ntp(xrecv->l_ui, NULL);
 	rs64 = ntpcal_daysplit(&vi64);
 	rcv_sec = rs64.lo;
 	rcv_day = rs64.hi - 512 * 7;
@@ -1847,7 +1850,7 @@ eval_gps_time(
 	 * fractional day of the receive time, we shift the base day for
 	 * the unfold by 1. */
 	if (   gps_sec  < rcv_sec
-	   || (gps_sec == rcv_sec && retv.l_uf < recv->l_uf))
+	   || (gps_sec == rcv_sec && retv.l_uf < xrecv->l_uf))
 		rcv_day += 1;
 
 	/* - don't warp ahead of GPS invention! */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl_init.c,v 1.1.1.3 2013/12/27 23:30:47 christos Exp $	*/
+/*	$NetBSD: ssl_init.c,v 1.1.1.4 2015/04/07 16:49:05 christos Exp $	*/
 
 /*
  * ssl_init.c	Common OpenSSL initialization code for the various
@@ -98,13 +98,13 @@ keytype_from_text(
 	LIB_GETBUF(upcased);
 	strlcpy(upcased, text, LIB_BUFLENGTH);
 	for (pch = upcased; '\0' != *pch; pch++)
-		*pch = (char)toupper(*pch);
+		*pch = (char)toupper((unsigned char)*pch);
 	key_type = OBJ_sn2nid(upcased);
 #else
 	key_type = 0;
 #endif
 
-	if (!key_type && 'm' == tolower(text[0]))
+	if (!key_type && 'm' == tolower((unsigned char)text[0]))
 		key_type = NID_md5;
 
 	if (!key_type)

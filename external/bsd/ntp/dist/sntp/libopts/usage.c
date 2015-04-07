@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.1.1.4 2014/12/19 20:37:45 christos Exp $	*/
+/*	$NetBSD: usage.c,v 1.1.1.5 2015/04/07 16:49:13 christos Exp $	*/
 
 
 /*
@@ -437,7 +437,7 @@ print_one_paragraph(char const * text, bool plain, FILE * fp)
     else {
         char const * t = optionQuoteString(text, LINE_SPLICE);
         fprintf(fp, PUTS_FMT, t);
-        AGFREE((void *)t);
+        AGFREE(t);
     }
 }
  
@@ -548,7 +548,7 @@ optionPrintParagraphs(char const * text, bool plain, FILE * fp)
             buf = scan;
         }
     }
-    AGFREE((void *)text);
+    AGFREE(text);
 }
 
 /*=export_func  optionUsage

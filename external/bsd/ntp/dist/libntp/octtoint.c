@@ -1,4 +1,4 @@
-/*	$NetBSD: octtoint.c,v 1.1.1.2 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: octtoint.c,v 1.1.1.3 2015/04/07 16:49:05 christos Exp $	*/
 
 /*
  * octtoint - convert an ascii string in octal to an unsigned
@@ -26,7 +26,7 @@ octtoint(
 
 	u = 0;
 	while (*cp != '\0') {
-		if (!isdigit((int)*cp) || *cp == '8' || *cp == '9')
+		if (!isdigit((unsigned char)*cp) || *cp == '8' || *cp == '9')
 		    return 0;
 		if (u >= 0x20000000)
 		    return 0;	/* overflow */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.h,v 1.1.1.3 2013/12/27 23:30:46 christos Exp $	*/
+/*	$NetBSD: ntp_config.h,v 1.1.1.4 2015/04/07 16:49:04 christos Exp $	*/
 
 #ifndef NTP_CONFIG_H
 #define NTP_CONFIG_H
@@ -241,6 +241,7 @@ struct config_tree_tag {
 	int_fifo *	reset_counters;
 
 	sim_fifo *	sim_details;
+	int		mdnstries;
 };
 
 
@@ -288,7 +289,7 @@ attr_val *create_attr_dval(int attr, double value);
 attr_val *create_attr_ival(int attr, int value);
 attr_val *create_attr_uval(int attr, u_int value);
 attr_val *create_attr_rangeval(int attr, int first, int last);
-attr_val *create_attr_sval(int attr, char *s);
+attr_val *create_attr_sval(int attr, const char *s);
 filegen_node *create_filegen_node(int filegen_token,
 				  attr_val_fifo *options);
 string_node *create_string_node(char *str);
@@ -318,7 +319,7 @@ int dump_all_config_trees(FILE *df, int comment);
 #endif
 
 #if defined(HAVE_SETRLIMIT)
-void ntp_rlimit(int, rlim_t, int, char *);
+void ntp_rlimit(int, rlim_t, int, const char *);
 #endif
 
 #endif	/* !defined(NTP_CONFIG_H) */

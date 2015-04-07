@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.c,v 1.1.1.4 2014/12/19 20:37:44 christos Exp $	*/
+/*	$NetBSD: networking.c,v 1.1.1.5 2015/04/07 16:49:13 christos Exp $	*/
 
 #include <config.h>
 #include "networking.h"
@@ -82,7 +82,7 @@ skip_efields(
 	while ((tail - head) > 6) {
 		nlen = ntohl(*head++) & 0xffff;
 		nlen = (nlen + 3) >> 2;
-		if (nlen > (tail - head) || nlen < 4)
+		if (nlen > (u_int)(tail - head) || nlen < 4)
 			return NULL;	/* Blooper! Inconsistent! */
 		head += nlen;
 	}
@@ -131,8 +131,7 @@ process_pkt (
 	 * extension field is present, so we subtract the length of the
 	 * field and go around again.
 	 */
-	if (pkt_len < LEN_PKT_NOMAC || (pkt_len & 3) != 0) {
-unusable:
+	if (pkt_len < (int)LEN_PKT_NOMAC || (pkt_len & 3) != 0) {
 		msyslog(LOG_ERR,
 			"%s: Incredible packet length: %d.  Discarding.",
 			func_name, pkt_len);
@@ -141,8 +140,12 @@ unusable:
 	/* Note: pkt_len must be a multiple of 4 at this point! */
 	packet_end = (u_int32*)((char*)rpkt + pkt_len);
 	exten_end = skip_efields(rpkt->exten, packet_end);
-	if (NULL == exten_end)
-		goto unusable;
+	if (NULL == exten_end) {
+		msyslog(LOG_ERR,
+			"%s: Missing extension field.  Discarding.",
+			func_name);
+		return PACKET_UNUSEABLE;
+	}
 	/* get size of MAC in cells; can be zero */
 	exten_len = (u_int)(packet_end - exten_end);
 
@@ -158,7 +161,10 @@ unusable:
 		break;
 
 	case 3: /* key ID + 3DES MAC -- unsupported! */
-		goto unusable;
+		msyslog(LOG_ERR,
+			"%s: Key ID + 3DES MAC is unsupported.  Discarding.",
+			func_name);
+		return PACKET_UNUSEABLE;
 
 	case 5:	/* key ID + MD5 MAC */
 	case 6:	/* key ID + SHA MAC */
@@ -192,7 +198,10 @@ unusable:
 		break;
 
 	default:
-		goto unusable;
+		msyslog(LOG_ERR,
+			"%s: Unexpected extension length: %d.  Discarding.",
+			func_name, exten_len);
+		return PACKET_UNUSEABLE;
 	}
 
 	switch (is_authentic) {

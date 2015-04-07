@@ -1,4 +1,4 @@
-/*	$NetBSD: authkeys.c,v 1.1.1.2 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: authkeys.c,v 1.1.1.3 2015/04/07 16:49:05 christos Exp $	*/
 
 /*
  * authkeys.c - routines to manage the storage of authentication keys
@@ -519,7 +519,7 @@ MD5auth_setkey(
 	keyid_t keyno,
 	int	keytype,
 	const u_char *key,
-	int	len
+	size_t len
 	)
 {
 	symkey *	sk;
@@ -529,7 +529,6 @@ MD5auth_setkey(
 	
 	DEBUG_ENSURE(keytype <= USHRT_MAX);
 	DEBUG_ENSURE(len < 4 * 1024);
-	len = max(0, len);
 	/*
 	 * See if we already have the key.  If so just stick in the
 	 * new value.

@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.1.1.2 2014/12/19 20:37:46 christos Exp $	*/
+/*	$NetBSD: http.c,v 1.1.1.3 2015/04/07 16:49:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
@@ -771,6 +771,7 @@ evhttp_connection_done(struct evhttp_connection *evcon)
 {
 	struct evhttp_request *req = TAILQ_FIRST(&evcon->requests);
 	int con_outgoing = evcon->flags & EVHTTP_CON_OUTGOING;
+	int free_evcon = 0;
 
 	if (con_outgoing) {
 		/* idle or close the connection */
@@ -803,6 +804,12 @@ evhttp_connection_done(struct evhttp_connection *evcon)
 			 * need to detect if the other side closes it.
 			 */
 			evhttp_connection_start_detectclose(evcon);
+		} else if ((evcon->flags & EVHTTP_CON_AUTOFREE)) {
+			/*
+			 * If we have no more requests that need completion
+			 * and we're not waiting for the connection to close
+			 */
+			 free_evcon = 1;
 		}
 	} else {
 		/*
@@ -820,6 +827,16 @@ evhttp_connection_done(struct evhttp_connection *evcon)
 	 */
 	if (con_outgoing && ((req->flags & EVHTTP_USER_OWNED) == 0)) {
 		evhttp_request_free(req);
+	}
+
+	/* If this was the last request of an outgoing connection and we're
+	 * not waiting to receive a connection close event and we want to
+	 * automatically free the connection. We check to ensure our request
+	 * list is empty one last time just in case our callback added a
+	 * new request.
+	 */
+	if (free_evcon && TAILQ_FIRST(&evcon->requests) == NULL) {
+		evhttp_connection_free(evcon);
 	}
 }
 
@@ -1177,6 +1194,11 @@ evhttp_connection_free(struct evhttp_connection *evcon)
 }
 
 void
+evhttp_connection_free_on_completion(struct evhttp_connection *evcon) {
+	evcon->flags |= EVHTTP_CON_AUTOFREE;
+}
+
+void
 evhttp_connection_set_local_address(struct evhttp_connection *evcon,
     const char *address)
 {
@@ -1245,6 +1267,7 @@ evhttp_connection_reset_(struct evhttp_connection *evcon)
 
 		shutdown(evcon->fd, EVUTIL_SHUT_WR);
 		evutil_closesocket(evcon->fd);
+		bufferevent_setfd(evcon->bufev, -1);
 		evcon->fd = -1;
 	}
 
@@ -1287,6 +1310,7 @@ evhttp_connection_cb_cleanup(struct evhttp_connection *evcon)
 {
 	struct evcon_requestq requests;
 
+	evhttp_connection_reset_(evcon);
 	if (evcon->retry_max < 0 || evcon->retry_cnt < evcon->retry_max) {
 		struct timeval tv_retry = evcon->initial_retry_timeout;
 		int i;
@@ -1308,7 +1332,6 @@ evhttp_connection_cb_cleanup(struct evhttp_connection *evcon)
 		evcon->retry_cnt++;
 		return;
 	}
-	evhttp_connection_reset_(evcon);
 
 	/*
 	 * User callback can do evhttp_make_request() on the same
@@ -1387,6 +1410,17 @@ evhttp_error_cb(struct bufferevent *bufev, short what, void *arg)
 		 */
 		EVUTIL_ASSERT(evcon->state == EVCON_IDLE);
 		evhttp_connection_reset_(evcon);
+
+		/*
+		 * If we have no more requests that need completion
+		 * and we want to auto-free the connection when all
+		 * requests have been completed.
+		 */
+		if (TAILQ_FIRST(&evcon->requests) == NULL
+		  && (evcon->flags & EVHTTP_CON_OUTGOING)
+		  && (evcon->flags & EVHTTP_CON_AUTOFREE)) {
+			evhttp_connection_free(evcon);
+		}
 		return;
 	}
 
@@ -2269,6 +2303,7 @@ evhttp_connection_base_bufferevent_new(struct event_base *base, struct evdns_bas
 	    evhttp_deferred_read_cb, evcon);
 
 	evcon->dns_base = dnsbase;
+	evcon->ai_family = AF_UNSPEC;
 
 	return (evcon);
 
@@ -2294,6 +2329,12 @@ evhttp_connection_base_new(struct event_base *base, struct evdns_base *dnsbase,
     const char *address, unsigned short port)
 {
 	return evhttp_connection_base_bufferevent_new(base, dnsbase, NULL, address, port);
+}
+
+void evhttp_connection_set_family(struct evhttp_connection *evcon,
+	int family)
+{
+	evcon->ai_family = family;
 }
 
 void
@@ -2421,7 +2462,7 @@ evhttp_connection_connect_(struct evhttp_connection *evcon)
 	evcon->state = EVCON_CONNECTING;
 
 	if (bufferevent_socket_connect_hostname(evcon->bufev, evcon->dns_base,
-		AF_UNSPEC, evcon->address, evcon->port) < 0) {
+		evcon->ai_family, evcon->address, evcon->port) < 0) {
 		evcon->state = old_state;
 		event_sock_warn(evcon->fd, "%s: connection to \"%s\" failed",
 		    __func__, evcon->address);
@@ -4290,6 +4331,8 @@ parse_port(const char *s, const char *eos)
 			return -1;
 		portnum = (portnum * 10) + (*s - '0');
 		if (portnum < 0)
+			return -1;
+		if (portnum > 65535)
 			return -1;
 		++s;
 	}

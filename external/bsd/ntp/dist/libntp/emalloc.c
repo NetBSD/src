@@ -1,4 +1,4 @@
-/*	$NetBSD: emalloc.c,v 1.1.1.2 2012/01/31 21:24:16 kardel Exp $	*/
+/*	$NetBSD: emalloc.c,v 1.1.1.3 2015/04/07 16:49:04 christos Exp $	*/
 
 /*
  * emalloc - return new memory obtained from the system.  Belch if none.
@@ -88,11 +88,13 @@ estrdup_impl(
 }
 
 
+#if 0
 #ifndef EREALLOC_CALLSITE
 void *
 emalloc(size_t newsz)
 {
 	return ereallocz(NULL, newsz, 0, FALSE);
 }
+#endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.1.1.2 2014/12/19 20:37:45 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.3 2015/04/07 16:49:13 christos Exp $	*/
 
 /**
  * \file initialize.c
@@ -103,20 +103,17 @@ validate_struct(tOptions * opts, char const * pname)
      */
     if (opts->pzProgName == NULL) {
         char const *  pz = strrchr(pname, DIRCH);
-        char const ** pp =
-            (char const **)(void **)&(opts->pzProgName);
 
         if (pz != NULL)
-            *pp = pz+1;
+            opts->pzProgName = pz+1;
         else
-            *pp = pname;
+            opts->pzProgName = pname;
 
-        pz = pathfind(getenv("PATH"), (char *)pname, "rx");
+        pz = pathfind(getenv("PATH"), (char *)(intptr_t)pname, "rx");
         if (pz != NULL)
-            pname = (void *)pz;
+            pname = (void *)(intptr_t)pz;
 
-        pp  = (char const **)(void **)&(opts->pzProgPath);
-        *pp = pname;
+        opts->pzProgPath = pname;
 
         /*
          *  when comparing long names, these are equivalent

@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.c,v 1.1.1.1 2013/12/27 23:30:37 christos Exp $	*/
+/*	$NetBSD: backtrace.c,v 1.1.1.2 2015/04/07 16:49:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -213,17 +213,17 @@ isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes) {
 #endif
 
 isc_result_t
-isc_backtrace_getsymbolfromindex(int index, const void **addrp,
+isc_backtrace_getsymbolfromindex(int idx, const void **addrp,
 				 const char **symbolp)
 {
 	REQUIRE(addrp != NULL && *addrp == NULL);
 	REQUIRE(symbolp != NULL && *symbolp == NULL);
 
-	if (index < 0 || index >= isc__backtrace_nsymbols)
+	if (idx < 0 || idx >= isc__backtrace_nsymbols)
 		return (ISC_R_RANGE);
 
-	*addrp = isc__backtrace_symtable[index].addr;
-	*symbolp = isc__backtrace_symtable[index].symbol;
+	*addrp = isc__backtrace_symtable[idx].addr;
+	*symbolp = isc__backtrace_symtable[idx].symbol;
 	return (ISC_R_SUCCESS);
 }
 

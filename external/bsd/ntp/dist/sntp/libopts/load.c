@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.1.1.4 2014/12/19 20:37:45 christos Exp $	*/
+/*	$NetBSD: load.c,v 1.1.1.5 2015/04/07 16:49:13 christos Exp $	*/
 
 
 /**
@@ -227,7 +227,7 @@ add_prog_path(char * buf, int b_sz, char const * fname, char const * prg_path)
     if (strchr(prg_path, DIRCH) != NULL)
         path = prg_path;
     else {
-        path = pathfind(getenv("PATH"), (char*)prg_path, "rx");
+        path = pathfind(getenv("PATH"), (char*)(intptr_t)prg_path, "rx");
 
         if (path == NULL)
             return false;

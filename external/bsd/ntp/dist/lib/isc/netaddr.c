@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.c,v 1.1.1.3 2013/12/27 23:30:39 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.1.1.4 2015/04/07 16:49:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -204,9 +204,10 @@ isc_netaddr_format(const isc_netaddr_t *na, char *array, unsigned int size) {
 
 	if (result != ISC_R_SUCCESS) {
 		snprintf(array, size,
+			 "<%s %u>",
 			 isc_msgcat_get(isc_msgcat, ISC_MSGSET_NETADDR,
 					ISC_MSG_UNKNOWNADDR,
-					"<unknown address, family %u>"),
+					"unknown address, family"),
 			 na->family);
 		array[size - 1] = '\0';
 	}

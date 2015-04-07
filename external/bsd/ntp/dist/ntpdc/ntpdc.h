@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.h,v 1.1.1.2 2013/12/27 23:31:03 christos Exp $	*/
+/*	$NetBSD: ntpdc.h,v 1.1.1.3 2015/04/07 16:49:09 christos Exp $	*/
 
 /*
  * ntpdc.h - definitions of interest to ntpdc
@@ -45,7 +45,7 @@ typedef struct {
 struct parse {
 	char *keyword;
 	arg_v argval[MAXARGS + MOREARGS];
-	int nargs;
+	size_t nargs;
 };
 
 /*

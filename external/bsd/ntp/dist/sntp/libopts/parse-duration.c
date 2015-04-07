@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-duration.c,v 1.1.1.4 2014/12/19 20:37:45 christos Exp $	*/
+/*	$NetBSD: parse-duration.c,v 1.1.1.5 2015/04/07 16:49:13 christos Exp $	*/
 
 /* Parse a time duration and return a seconds count
    Copyright (C) 2008-2014 Free Software Foundation, Inc.
@@ -62,14 +62,14 @@ typedef enum {
 static unsigned long
 str_const_to_ul (cch_t * str, cch_t ** ppz, int base)
 {
-  return strtoul (str, (char **)ppz, base);
+  return strtoul (str, (char **)(intptr_t)ppz, base);
 }
 
 /* Wrapper around strtol that does not require a cast.  */
 static long
 str_const_to_l (cch_t * str, cch_t ** ppz, int base)
 {
-  return strtol (str, (char **)ppz, base);
+  return strtol (str, (char **)(intptr_t)ppz, base);
 }
 
 /* Returns BASE + VAL * SCALE, interpreting BASE = BAD_TIME

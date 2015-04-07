@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.1.1.2 2013/12/27 23:30:38 christos Exp $	*/
+/*	$NetBSD: event.c,v 1.1.1.3 2015/04/07 16:49:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -36,9 +36,7 @@
 
 static void
 destroy(isc_event_t *event) {
-	isc_mem_t *mctx = event->ev_destroy_arg;
-
-	isc_mem_put(mctx, event, event->ev_size);
+	isc_mem_put(event->ev_destroy_arg, event, event->ev_size);
 }
 
 isc_event_t *

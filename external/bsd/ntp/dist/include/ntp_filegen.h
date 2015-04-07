@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_filegen.h,v 1.1.1.2 2013/12/27 23:30:46 christos Exp $	*/
+/*	$NetBSD: ntp_filegen.h,v 1.1.1.3 2015/04/07 16:49:04 christos Exp $	*/
 
 /*
  * ntp_filegen.h,v 3.9 1996/12/01 16:02:45 kardel Exp
@@ -54,5 +54,5 @@ extern	void	filegen_statsdir(void);
 extern	FILEGEN *filegen_get	(const char *);
 extern	void	filegen_register (const char *, const char *, FILEGEN *);
 #ifdef DEBUG
-extern	void	filegen_unregister(char *);
+extern	void	filegen_unregister(const char *);
 #endif

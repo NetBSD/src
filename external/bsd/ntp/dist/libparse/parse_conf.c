@@ -1,8 +1,8 @@
-/*	$NetBSD: parse_conf.c,v 1.1.1.2 2013/12/27 23:30:49 christos Exp $	*/
+/*	$NetBSD: parse_conf.c,v 1.1.1.3 2015/04/07 16:49:05 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/parse_conf.c,v 4.9 2005/04/16 17:32:10 kardel RELEASE_20050508_A
- *  
+ *
  * parse_conf.c,v 4.9 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
  * Parser configuration module for reference clocks
@@ -14,7 +14,7 @@
  * when STREAM is not defined NTP time stamps will be used.
  *
  * Copyright (c) 1995-2005 by Frank Kardel <kardel <AT> ntp.org>
- * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universität Erlangen-Nürnberg, Germany
+ * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universitaet Erlangen-Nuernberg, Germany
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

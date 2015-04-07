@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_http.c,v 1.1.1.2 2014/12/19 20:37:48 christos Exp $	*/
+/*	$NetBSD: regress_http.c,v 1.1.1.3 2015/04/07 16:49:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -107,8 +107,12 @@ http_bind(struct evhttp *myhttp, ev_uint16_t *pport, int ipv6)
 	else
 		sock = evhttp_bind_socket_with_handle(myhttp, "127.0.0.1", *pport);
 
-	if (sock == NULL)
-		event_errx(1, "Could not start web server");
+	if (sock == NULL) {
+		if (ipv6)
+			return -1;
+		else
+			event_errx(1, "Could not start web server");
+	}
 
 	port = regress_get_socket_port(evhttp_bound_socket_get_fd(sock));
 	if (port < 0)
@@ -397,7 +401,7 @@ http_basic_test(void *arg)
 {
 	struct basic_test_data *data = arg;
 	struct timeval tv;
-	struct bufferevent *bev;
+	struct bufferevent *bev = NULL;
 	evutil_socket_t fd;
 	const char *http_request;
 	ev_uint16_t port = 0, port2 = 0;
@@ -482,7 +486,8 @@ http_basic_test(void *arg)
 
 	evhttp_free(http);
  end:
-	;
+	if (bev)
+		bufferevent_free(bev);
 }
 
 
@@ -716,6 +721,7 @@ http_delete_test(void *arg)
 
 	http = http_setup(&port, data->base, 0);
 
+	tt_assert(http);
 	fd = http_connect("127.0.0.1", port);
 	tt_int_op(fd, >=, 0);
 
@@ -736,6 +742,7 @@ http_delete_test(void *arg)
 
 	bufferevent_free(bev);
 	evutil_closesocket(fd);
+	fd = -1;
 
 	evhttp_free(http);
 
@@ -955,7 +962,8 @@ static void http_request_done(struct evhttp_request *, void *);
 static void http_request_empty_done(struct evhttp_request *, void *);
 
 static void
-http_connection_test_(struct basic_test_data *data, int persistent, const char *address, struct evdns_base *dnsbase, int ipv6)
+http_connection_test_(struct basic_test_data *data, int persistent,
+	const char *address, struct evdns_base *dnsbase, int ipv6, int family)
 {
 	ev_uint16_t port = 0;
 	struct evhttp_connection *evcon = NULL;
@@ -964,9 +972,14 @@ http_connection_test_(struct basic_test_data *data, int persistent, const char *
 	test_ok = 0;
 
 	http = http_setup(&port, data->base, ipv6);
+	if (!http && ipv6) {
+		tt_skip();
+	}
+	tt_assert(http);
 
 	evcon = evhttp_connection_base_new(data->base, dnsbase, address, port);
 	tt_assert(evcon);
+	evhttp_connection_set_family(evcon, family);
 
 	tt_assert(evhttp_connection_get_base(evcon) == data->base);
 
@@ -1040,12 +1053,12 @@ http_connection_test_(struct basic_test_data *data, int persistent, const char *
 static void
 http_connection_test(void *arg)
 {
-	http_connection_test_(arg, 0, "127.0.0.1", NULL, 0);
+	http_connection_test_(arg, 0, "127.0.0.1", NULL, 0, AF_UNSPEC);
 }
 static void
 http_persist_connection_test(void *arg)
 {
-	http_connection_test_(arg, 1, "127.0.0.1", NULL, 0);
+	http_connection_test_(arg, 1, "127.0.0.1", NULL, 0, AF_UNSPEC);
 }
 
 static struct regress_dns_server_table search_table[] = {
@@ -1146,6 +1159,63 @@ http_connection_async_test(void *arg)
 	if (dns_base)
 		evdns_base_free(dns_base, 0);
 	regress_clean_dnsserver();
+}
+
+static void
+http_autofree_connection_test(void *arg)
+{
+	struct basic_test_data *data = arg;
+	ev_uint16_t port = 0;
+	struct evhttp_connection *evcon = NULL;
+	struct evhttp_request *req[2] = { NULL };
+
+	test_ok = 0;
+	http = http_setup(&port, data->base, 0);
+
+	evcon = evhttp_connection_base_new(data->base, NULL, "127.0.0.1", port);
+	tt_assert(evcon);
+
+	/*
+	 * At this point, we want to schedule two request to the HTTP
+	 * server using our make request method.
+	 */
+	req[0] = evhttp_request_new(http_request_empty_done, data->base);
+	req[1] = evhttp_request_new(http_request_empty_done, data->base);
+
+	/* Add the information that we care about */
+	evhttp_add_header(evhttp_request_get_output_headers(req[0]), "Host", "somehost");
+	evhttp_add_header(evhttp_request_get_output_headers(req[0]), "Connection", "close");
+	evhttp_add_header(evhttp_request_get_output_headers(req[0]), "Empty", "itis");
+	evhttp_add_header(evhttp_request_get_output_headers(req[1]), "Host", "somehost");
+	evhttp_add_header(evhttp_request_get_output_headers(req[1]), "Connection", "close");
+	evhttp_add_header(evhttp_request_get_output_headers(req[1]), "Empty", "itis");
+
+	/* We give ownership of the request to the connection */
+	if (evhttp_make_request(evcon, req[0], EVHTTP_REQ_GET, "/test") == -1) {
+		tt_abort_msg("couldn't make request");
+	}
+	if (evhttp_make_request(evcon, req[1], EVHTTP_REQ_GET, "/test") == -1) {
+		tt_abort_msg("couldn't make request");
+	}
+
+	/*
+	 * Tell libevent to free the connection when the request completes
+	 *	We then set the evcon pointer to NULL since we don't want to free it
+	 *	when this function ends.
+	 */
+	evhttp_connection_free_on_completion(evcon);
+	evcon = NULL;
+
+	event_base_dispatch(data->base);
+
+	/* at this point, the http server should have no connection */
+	tt_assert(TAILQ_FIRST(&http->connections) == NULL);
+
+ end:
+	if (evcon)
+		evhttp_connection_free(evcon);
+	if (http)
+		evhttp_free(http);
 }
 
 static void
@@ -2745,6 +2815,7 @@ http_incomplete_test_(struct basic_test_data *data, int use_timeout)
 	bufferevent_free(bev);
 	if (use_timeout) {
 		evutil_closesocket(fd);
+		fd = -1;
 	}
 
 	evhttp_free(http);
@@ -3750,7 +3821,7 @@ static struct regress_dns_server_table ipv6_search_table[] = {
 };
 
 static void
-http_ipv6_for_domain_test(void *arg)
+http_ipv6_for_domain_test_impl(void *arg, int family)
 {
 	struct basic_test_data *data = arg;
 	struct evdns_base *dns_base = NULL;
@@ -3767,12 +3838,18 @@ http_ipv6_for_domain_test(void *arg)
 	evutil_snprintf(address, sizeof(address), "127.0.0.1:%d", portnum);
 	evdns_base_nameserver_ip_add(dns_base, address);
 
-	http_connection_test_(arg, 0 /* not persistent */, "localhost", dns_base, 1 /* ipv6 */);
+	http_connection_test_(arg, 0 /* not persistent */, "localhost", dns_base,
+		1 /* ipv6 */, family);
 
  end:
 	if (dns_base)
 		evdns_base_free(dns_base, 0);
 	regress_clean_dnsserver();
+}
+static void
+http_ipv6_for_domain_test(void *arg)
+{
+	http_ipv6_for_domain_test_impl(arg, AF_UNSPEC);
 }
 
 static void
@@ -3838,6 +3915,22 @@ http_get_addr_test(void *arg)
 		evhttp_free(http);
 }
 
+static void
+http_set_family_test(void *arg)
+{
+	http_connection_test_(arg, 0, "127.0.0.1", NULL, 0, AF_UNSPEC);
+}
+static void
+http_set_family_ipv4_test(void *arg)
+{
+	http_connection_test_(arg, 0, "127.0.0.1", NULL, 0, AF_INET);
+}
+static void
+http_set_family_ipv6_test(void *arg)
+{
+	http_ipv6_for_domain_test_impl(arg, AF_INET6);
+}
+
 #define HTTP_LEGACY(name)						\
 	{ #name, run_legacy_test_fn, TT_ISOLATED|TT_LEGACY, &legacy_setup, \
 		    http_##name##_test }
@@ -3863,6 +3956,7 @@ struct testcase_t http_testcases[] = {
 	HTTP(failure),
 	HTTP(connection),
 	HTTP(persist_connection),
+	HTTP(autofree_connection),
 	HTTP(connection_async),
 	HTTP(close_detection),
 	HTTP(close_detection_delay),
@@ -3889,6 +3983,10 @@ struct testcase_t http_testcases[] = {
 
 	HTTP(ipv6_for_domain),
 	HTTP(get_addr),
+
+	HTTP(set_family),
+	HTTP(set_family_ipv4),
+	HTTP(set_family_ipv6),
 
 	END_OF_TESTCASES
 };

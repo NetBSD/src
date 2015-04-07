@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.1.1.3 2013/12/27 23:30:46 christos Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.1.1.4 2015/04/07 16:49:04 christos Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -98,14 +98,14 @@ extern	int	ymd2yd		(int, int, int);
 /* a_md5encrypt.c */
 extern	int	MD5authdecrypt	(int, u_char *, u_int32 *, int, int);
 extern	int	MD5authencrypt	(int, u_char *, u_int32 *, int);
-extern	void	MD5auth_setkey	(keyid_t, int, const u_char *, int);
+extern	void	MD5auth_setkey	(keyid_t, int, const u_char *, size_t);
 extern	u_int32	addr2refid	(sockaddr_u *);
 
 /* emalloc.c */
 #ifndef EREALLOC_CALLSITE	/* ntp_malloc.h defines */
 extern	void *	ereallocz	(void *, size_t, size_t, int);
 #define	erealloczsite(p, n, o, z, f, l) ereallocz(p, n, o, (z))
-extern	void *	emalloc		(size_t);
+#define	emalloc(n)		ereallocz(NULL, n, 0, FALSE)
 #define	emalloc_zero(c)		ereallocz(NULL, (c), 0, TRUE)
 #define	erealloc(p, c)		ereallocz(p, (c), 0, FALSE)
 #define erealloc_zero(p, n, o)	ereallocz(p, n, (o), TRUE)
@@ -131,11 +131,11 @@ extern	char *	estrdup_impl	(const char *, const char *, int);
 extern	int	atoint		(const char *, long *);
 extern	int	atouint		(const char *, u_long *);
 extern	int	hextoint	(const char *, u_long *);
-extern	char *	humanlogtime	(void);
-extern	char *	humantime	(time_t);
+extern	const char *	humanlogtime	(void);
+extern	const char *	humantime	(time_t);
 extern	char *	mfptoa		(u_int32, u_int32, short);
 extern	char *	mfptoms		(u_int32, u_int32, short);
-extern	const char * modetoa	(int);
+extern	const char * modetoa	(size_t);
 extern	const char * eventstr	(int);
 extern	const char * ceventstr	(int);
 extern	const char * res_match_flags(u_short);

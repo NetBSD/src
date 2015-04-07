@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent.h,v 1.1.1.2 2014/12/19 20:37:47 christos Exp $	*/
+/*	$NetBSD: bufferevent.h,v 1.1.1.3 2015/04/07 16:49:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -537,8 +537,9 @@ void bufferevent_setwatermark(struct bufferevent *bufev, short events,
     size_t lowmark, size_t highmark);
 
 /**
-  Retrieves the watermarks for read or write events. Result is undefined if
-  events contains both EV_READ and EV_WRITE.
+  Retrieves the watermarks for read or write events.
+  Returns non-zero if events contains not only EV_READ or EV_WRITE.
+  Returns zero if events equal EV_READ or EV_WRITE
 
   @param bufev the bufferevent to be examined
   @param events EV_READ or EV_WRITE
@@ -546,7 +547,7 @@ void bufferevent_setwatermark(struct bufferevent *bufev, short events,
   @param highmark receives the high watermark if not NULL
 */
 EVENT2_EXPORT_SYMBOL
-void bufferevent_getwatermark(struct bufferevent *bufev, short events,
+int bufferevent_getwatermark(struct bufferevent *bufev, short events,
     size_t *lowmark, size_t *highmark);
 
 /**
@@ -600,7 +601,7 @@ enum bufferevent_trigger_options {
 	BEV_TRIG_IGNORE_WATERMARKS = (1<<16),
 
 	/** defer even if the callbacks are not */
-	BEV_TRIG_DEFER_CALLBACKS = BEV_OPT_DEFER_CALLBACKS,
+	BEV_TRIG_DEFER_CALLBACKS = BEV_OPT_DEFER_CALLBACKS
 
 	/* (Note: for internal reasons, these need to be disjoint from
 	 * bufferevent_options, except when they mean the same thing. */

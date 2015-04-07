@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptime.c,v 1.1.1.2 2013/12/27 23:31:40 christos Exp $	*/
+/*	$NetBSD: ntptime.c,v 1.1.1.3 2015/04/07 16:49:19 christos Exp $	*/
 
 /*
  * NTP test program
@@ -100,15 +100,16 @@ main(
 	volatile unsigned ts_mask = TS_MASK;		/* defaults to 20 bits (us) */
 	volatile unsigned ts_roundbit = TS_ROUNDBIT;	/* defaults to 20 bits (us) */
 	volatile int fdigits = 6;			/* fractional digits for us */
-	int c;
+	size_t c;
+	int ch;
 	int errflg	= 0;
 	int cost	= 0;
 	volatile int rawtime	= 0;
 
 	ZERO(ntx);
 	progname = argv[0];
-	while ((c = ntp_getopt(argc, argv, optargs)) != EOF) {
-		switch (c) {
+	while ((ch = ntp_getopt(argc, argv, optargs)) != EOF) {
+		switch (ch) {
 #ifdef MOD_MICRO
 		case 'M':
 			ntx.modes |= MOD_MICRO;
@@ -469,7 +470,7 @@ timex_state(
 {
 	static char buf[32];
 
-	if (s >= 0 && s < COUNTOF(timex_states))
+	if ((size_t)s < COUNTOF(timex_states))
 		return timex_states[s];
 	snprintf(buf, sizeof(buf), "TIME-#%d", s);
 	return buf;

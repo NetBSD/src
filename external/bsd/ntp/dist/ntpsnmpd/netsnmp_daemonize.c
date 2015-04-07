@@ -1,4 +1,4 @@
-/*	$NetBSD: netsnmp_daemonize.c,v 1.1.1.3 2013/12/27 23:31:07 christos Exp $	*/
+/*	$NetBSD: netsnmp_daemonize.c,v 1.1.1.4 2015/04/07 16:49:10 christos Exp $	*/
 
 /*
  * system.c
@@ -42,6 +42,7 @@ SOFTWARE.
 #undef PACKAGE_NAME
 #undef PACKAGE_STRING
 #undef PACKAGE_TARNAME
+#undef PACKAGE_URL
 #undef PACKAGE_VERSION
 #include <config.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_ssl.c,v 1.1.1.2 2014/12/19 20:37:48 christos Exp $	*/
+/*	$NetBSD: regress_ssl.c,v 1.1.1.3 2015/04/07 16:49:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -196,6 +196,7 @@ respond_to_number(struct bufferevent *bev, void *ctx)
 	n = atoi(line);
 	if (n <= 0)
 		TT_FAIL(("Bad number: %s", line));
+	free(line);
 	TT_BLATHER(("The number was %d", n));
 	if (n == 1001) {
 		++test_is_done;

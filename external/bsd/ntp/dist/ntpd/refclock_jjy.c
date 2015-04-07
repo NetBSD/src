@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.1.1.3 2013/12/27 23:30:54 christos Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.1.1.4 2015/04/07 16:49:06 christos Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -299,9 +299,9 @@ struct	refclock refclock_jjy = {
 
 static  struct
 {
-	char	commandNumber ;
-	char	*commandLog ;
-	char	*command ;
+	const char	commandNumber ;
+	const char	*commandLog ;
+	const char	*command ;
 	int	commandLength ;
 } tristate_jjy01_command_sequence[] =
 {
@@ -339,8 +339,8 @@ static  struct
 static  struct
 {
 	char	commandNumber ;
-	char	*commandLog ;
-	char	*command ;
+	const char	*commandLog ;
+	const char	*command ;
 	int	commandLength ;
 } tristate_gpsclock01_command_sequence[] =
 {
@@ -743,7 +743,7 @@ static int
 jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 {
 #ifdef DEBUG
-	static	char	*sFunctionName = "jjy_receive_tristate_jjy01" ;
+	static	const char	*sFunctionName = "jjy_receive_tristate_jjy01" ;
 #endif
 
 	struct jjyunit	    *up ;
@@ -758,7 +758,7 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 
 	char	sLogText [ MAX_LOGTEXT ], sReplyText  [ MAX_LOGTEXT ] ;
 
-	char	*pCmd ;
+	const char *pCmd ;
 	int 	iCmdLen ;
 
 	/*
@@ -932,7 +932,7 @@ static int
 jjy_receive_cdex_jst2000 ( struct recvbuf *rbufp )
 {
 #ifdef DEBUG
-	static	char	*sFunctionName = "jjy_receive_cdex_jst2000" ;
+	static	const char	*sFunctionName = "jjy_receive_cdex_jst2000" ;
 #endif
 
 	struct jjyunit      *up ;
@@ -1012,7 +1012,7 @@ static int
 jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
 {
 #ifdef DEBUG
-	static	char	*sFunctionName = "jjy_receive_echokeisokuki_lt2000" ;
+	static	const char	*sFunctionName = "jjy_receive_echokeisokuki_lt2000" ;
 #endif
 
 	struct jjyunit      *up ;
@@ -1054,7 +1054,7 @@ jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
 			if ( up->operationmode == 1 ) {
 #ifdef DEBUG
 				if ( debug ) {
-					printf ( "%s (refclock_jjy.c) : send '#'\n", sFunctionName ) ;
+					printf ( "%s (refclock_jjy.c) : send '#'\n", __func__ ) ;
 				}
 #endif
 				if ( write ( pp->io.fd, "#",1 ) != 1  ) {
@@ -1171,7 +1171,7 @@ static int
 jjy_receive_citizentic_jjy200 ( struct recvbuf *rbufp )
 {
 #ifdef DEBUG
-	static char *sFunctionName = "jjy_receive_citizentic_jjy200" ;
+	static const char *sFunctionName = "jjy_receive_citizentic_jjy200" ;
 #endif
 
 	struct jjyunit		*up ;
@@ -1266,7 +1266,7 @@ static int
 jjy_receive_tristate_gpsclock01 ( struct recvbuf *rbufp )
 {
 #ifdef DEBUG
-	static	char	*sFunctionName = "jjy_receive_tristate_gpsclock01" ;
+	static	const char	*sFunctionName = "jjy_receive_tristate_gpsclock01" ;
 #endif
 
 	struct jjyunit	    *up ;
@@ -1281,7 +1281,7 @@ jjy_receive_tristate_gpsclock01 ( struct recvbuf *rbufp )
 
 	char	sLogText [ MAX_LOGTEXT ], sReplyText [ MAX_LOGTEXT ] ;
 
-	char	*pCmd ;
+	const char	*pCmd ;
 	int 	iCmdLen ;
 
 	/*
@@ -1521,13 +1521,13 @@ static void
 jjy_poll_tristate_jjy01  ( int unit, struct peer *peer )
 {
 #ifdef DEBUG
-	static char *sFunctionName = "jjy_poll_tristate_jjy01" ;
+	static const char *sFunctionName = "jjy_poll_tristate_jjy01" ;
 #endif
 
 	struct jjyunit	    *up;
 	struct refclockproc *pp;
 
-	char	*pCmd ;
+	const char *pCmd ;
 	int 	iCmdLen ;
 
 	pp = peer->procptr;
@@ -1643,13 +1643,13 @@ static void
 jjy_poll_tristate_gpsclock01  ( int unit, struct peer *peer )
 {
 #ifdef DEBUG
-	static char *sFunctionName = "jjy_poll_tristate_gpsclock01" ;
+	static const char *sFunctionName = "jjy_poll_tristate_gpsclock01" ;
 #endif
 
 	struct jjyunit	    *up;
 	struct refclockproc *pp;
 
-	char	*pCmd ;
+	const char	*pCmd ;
 	int 	iCmdLen ;
 
 	pp = peer->procptr;
@@ -1692,7 +1692,7 @@ jjy_poll_tristate_gpsclock01  ( int unit, struct peer *peer )
 static void
 printableString ( char *sOutput, int iOutputLen, char *sInput, int iInputLen )
 {
-	char	*printableControlChar[] = {
+	const char	*printableControlChar[] = {
 			"<NUL>", "<SOH>", "<STX>", "<ETX>",
 			"<EOT>", "<ENQ>", "<ACK>", "<BEL>",
 			"<BS>" , "<HT>" , "<LF>" , "<VT>" ,
@@ -1702,16 +1702,15 @@ printableString ( char *sOutput, int iOutputLen, char *sInput, int iInputLen )
 			"<CAN>", "<EM>" , "<SUB>", "<ESC>",
 			"<FS>" , "<GS>" , "<RS>" , "<US>" ,
 			" " } ;
+
+	size_t	i, j, n ;
 	size_t	InputLen;
 	size_t	OutputLen;
-	size_t	i;
-	size_t	j;
-	size_t	n;
 
 	InputLen = (size_t)iInputLen;
 	OutputLen = (size_t)iOutputLen;
 	for ( i = j = 0 ; i < InputLen && j < OutputLen ; i ++ ) {
-		if ( isprint( sInput[i] ) ) {
+		if ( isprint( (unsigned char)sInput[i] ) ) {
 			n = 1 ;
 			if ( j + 1 >= OutputLen )
 				break ;
@@ -1734,7 +1733,7 @@ printableString ( char *sOutput, int iOutputLen, char *sInput, int iInputLen )
 		j += n ;
 	}
 
-	sOutput[min(j, iOutputLen - 1)] = '\0' ;
+	sOutput[min(j, (size_t)iOutputLen - 1)] = '\0' ;
 
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_lineedit.c,v 1.1.1.3 2013/12/27 23:30:47 christos Exp $	*/
+/*	$NetBSD: ntp_lineedit.c,v 1.1.1.4 2015/04/07 16:49:04 christos Exp $	*/
 
 /*
  * ntp_lineedit.c - generic interface to various line editing libs
@@ -180,23 +180,22 @@ ntp_readline(
 	if (NULL != line) {
 		if (*line) {
 			add_history(line);
-			*pcount = strlen(line);
-		} else {
-			free(line);
-			line = NULL;
 		}
+		*pcount = strlen(line);
 	}
 #endif	/* LE_READLINE */
 
 #ifdef LE_EDITLINE
 	cline = el_gets(ntp_el, pcount);
 
-	if (NULL != cline && *cline) {
+	if (NULL != cline) {
 		history(ntp_hist, &hev, H_ENTER, cline);
-		*pcount = strlen(cline);
 		line = estrdup(cline);
-	} else
+	} else if (*pcount == -1) {
 		line = NULL;
+	} else {
+		line = estrdup("");
+	}
 #endif	/* LE_EDITLINE */
 
 #ifdef LE_NONE

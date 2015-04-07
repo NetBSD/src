@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.1.1.4 2014/12/19 20:37:49 christos Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.1.1.5 2015/04/07 16:49:19 christos Exp $	*/
 
 /*
  * Program to generate cryptographic keys for ntp clients and servers
@@ -110,6 +110,7 @@
 #endif	/* OPENSSL */
 #include <ssl_applink.c>
 
+#define _UC(str)	((char *)(intptr_t)(str))
 /*
  * Cryptodefines
  */
@@ -133,19 +134,19 @@
  * Prototypes
  */
 FILE	*fheader	(const char *, const char *, const char *);
-int	gen_md5		(char *);
+int	gen_md5		(const char *);
 void	followlink	(char *, size_t);
 #ifdef AUTOKEY
-EVP_PKEY *gen_rsa	(char *);
-EVP_PKEY *gen_dsa	(char *);
-EVP_PKEY *gen_iffkey	(char *);
-EVP_PKEY *gen_gqkey	(char *);
-EVP_PKEY *gen_mvkey	(char *, EVP_PKEY **);
+EVP_PKEY *gen_rsa	(const char *);
+EVP_PKEY *gen_dsa	(const char *);
+EVP_PKEY *gen_iffkey	(const char *);
+EVP_PKEY *gen_gqkey	(const char *);
+EVP_PKEY *gen_mvkey	(const char *, EVP_PKEY **);
 void	gen_mvserv	(char *, EVP_PKEY **);
-int	x509		(EVP_PKEY *, const EVP_MD *, char *, char *,
+int	x509		(EVP_PKEY *, const EVP_MD *, char *, const char *,
 			    char *);
 void	cb		(int, int, void *);
-EVP_PKEY *genkey	(char *, char *);
+EVP_PKEY *genkey	(const char *, const char *);
 EVP_PKEY *readkey	(char *, char *, u_int *, EVP_PKEY **);
 void	writekey	(char *, char *, u_int *, EVP_PKEY **);
 u_long	asn2ntp		(ASN1_TIME *);
@@ -313,7 +314,7 @@ main(
 	char	pathbuf[MAXFILENAME + 1];
 	const char *scheme = NULL; /* digest/signature scheme */
 	const char *ciphername = NULL; /* to encrypt priv. key */
-	char	*exten = NULL;	/* private extension */
+	const char *exten = NULL;	/* private extension */
 	char	*grpkey = NULL;	/* identity extension */
 	int	nid;		/* X509 digest/signature scheme */
 	FILE	*fstr = NULL;	/* file handle */
@@ -813,7 +814,7 @@ main(
  */
 int
 gen_md5(
-	char	*id		/* file name id */
+	const char *id		/* file name id */
 	)
 {
 	u_char	md5key[MD5SIZE + 1];	/* MD5 key */
@@ -828,24 +829,24 @@ gen_md5(
 	str = fheader("MD5key", id, groupname);
 	for (i = 1; i <= MD5KEYS; i++) {
 		for (j = 0; j < MD5SIZE; j++) {
-			int temp;
+			u_char temp;
 
 			while (1) {
 				int rc;
 
-				rc = ntp_crypto_random_buf(&temp, 1);
+				rc = ntp_crypto_random_buf(
+				    &temp, sizeof(temp));
 				if (-1 == rc) {
 					fprintf(stderr, "ntp_crypto_random_buf() failed.\n");
 					exit (-1);
 				}
-				temp &= 0xff;
 				if (temp == '#')
 					continue;
 
 				if (temp > 0x20 && temp < 0x7f)
 					break;
 			}
-			md5key[j] = (u_char)temp;
+			md5key[j] = temp;
 		}
 		md5key[j] = '\0';
 		fprintf(str, "%2d MD5 %s  # MD5 key\n", i,
@@ -960,7 +961,7 @@ readkey(
  */
 EVP_PKEY *			/* public/private key pair */
 gen_rsa(
-	char	*id		/* file name id */
+	const char *id		/* file name id */
 	)
 {
 	EVP_PKEY *pkey;		/* private key */
@@ -968,7 +969,7 @@ gen_rsa(
 	FILE	*str;
 
 	fprintf(stderr, "Generating RSA keys (%d bits)...\n", modulus);
-	rsa = RSA_generate_key(modulus, 65537, cb, "RSA");
+	rsa = RSA_generate_key(modulus, 65537, cb, _UC("RSA"));
 	fprintf(stderr, "\n");
 	if (rsa == NULL) {
 		fprintf(stderr, "RSA generate keys fails\n%s\n",
@@ -1013,7 +1014,7 @@ gen_rsa(
  */
 EVP_PKEY *			/* public/private key pair */
 gen_dsa(
-	char	*id		/* file name id */
+	const char *id		/* file name id */
 	)
 {
 	EVP_PKEY *pkey;		/* private key */
@@ -1028,7 +1029,7 @@ gen_dsa(
 	    "Generating DSA parameters (%d bits)...\n", modulus);
 	RAND_bytes(seed, sizeof(seed));
 	dsa = DSA_generate_parameters(modulus, seed, sizeof(seed), NULL,
-	    NULL, cb, "DSA");
+	    NULL, cb, _UC("DSA"));
 	fprintf(stderr, "\n");
 	if (dsa == NULL) {
 		fprintf(stderr, "DSA generate parameters fails\n%s\n",
@@ -1115,7 +1116,7 @@ gen_dsa(
  */
 EVP_PKEY *			/* DSA cuckoo nest */
 gen_iffkey(
-	char	*id		/* file name id */
+	const char *id		/* file name id */
 	)
 {
 	EVP_PKEY *pkey;		/* private key */
@@ -1133,7 +1134,7 @@ gen_iffkey(
 	    modulus2);
 	RAND_bytes(seed, sizeof(seed));
 	dsa = DSA_generate_parameters(modulus2, seed, sizeof(seed), NULL,
-	    NULL, cb, "IFF");
+	    NULL, cb, _UC("IFF"));
 	fprintf(stderr, "\n");
 	if (dsa == NULL) {
 		fprintf(stderr, "DSA generate parameters fails\n%s\n",
@@ -1293,7 +1294,7 @@ gen_iffkey(
  */
 EVP_PKEY *			/* RSA cuckoo nest */
 gen_gqkey(
-	char	*id		/* file name id */
+	const char *id		/* file name id */
 	)
 {
 	EVP_PKEY *pkey;		/* private key */
@@ -1309,7 +1310,7 @@ gen_gqkey(
 	fprintf(stderr,
 	    "Generating GQ parameters (%d bits)...\n",
 	     modulus2);
-	rsa = RSA_generate_key(modulus2, 65537, cb, "GQ");
+	rsa = RSA_generate_key(modulus2, 65537, cb, _UC("GQ"));
 	fprintf(stderr, "\n");
 	if (rsa == NULL) {
 		fprintf(stderr, "RSA generate keys fails\n%s\n",
@@ -1502,7 +1503,7 @@ gen_gqkey(
  */
 EVP_PKEY *			/* DSA cuckoo nest */
 gen_mvkey(
-	char	*id,		/* file name id */
+	const char *id,		/* file name id */
 	EVP_PKEY **evpars	/* parameter list pointer */
 	)
 {
@@ -1927,7 +1928,7 @@ x509	(
 	EVP_PKEY *pkey,		/* signing key */
 	const EVP_MD *md,	/* signature/digest scheme */
 	char	*gqpub,		/* identity extension (hex string) */
-	char	*exten,		/* private cert extension */
+	const char *exten,	/* private cert extension */
 	char	*name		/* subject/issuer name */
 	)
 {
@@ -1981,7 +1982,7 @@ x509	(
 	fprintf(stderr, "%s: %s\n", LN_basic_constraints,
 	    BASIC_CONSTRAINTS);
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
-	    BASIC_CONSTRAINTS);
+	    _UC(BASIC_CONSTRAINTS));
 	if (!X509_add_ext(cert, ex, -1)) {
 		fprintf(stderr, "Add extension field fails\n%s\n",
 		    ERR_error_string(ERR_get_error(), NULL));
@@ -1994,7 +1995,7 @@ x509	(
 	 * be used for.
 	 */
 	fprintf(stderr, "%s: %s\n", LN_key_usage, KEY_USAGE);
-	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage, KEY_USAGE);
+	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_key_usage, _UC(KEY_USAGE));
 	if (!X509_add_ext(cert, ex, -1)) {
 		fprintf(stderr, "Add extension field fails\n%s\n",
 		    ERR_error_string(ERR_get_error(), NULL));
@@ -2029,7 +2030,7 @@ x509	(
 	if (exten != NULL) {
 		fprintf(stderr, "%s: %s\n", LN_ext_key_usage, exten);
 		ex = X509V3_EXT_conf_nid(NULL, NULL,
-		    NID_ext_key_usage, exten);
+		    NID_ext_key_usage, _UC(exten));
 		if (!X509_add_ext(cert, ex, -1)) {
 			fprintf(stderr,
 			    "Add extension field fails\n%s\n",
@@ -2140,8 +2141,8 @@ cb	(
  */
 EVP_PKEY *			/* public/private key pair */
 genkey(
-	char	*type,		/* key type (RSA or DSA) */
-	char	*id		/* file name id */
+	const char *type,	/* key type (RSA or DSA) */
+	const char *id		/* file name id */
 	)
 {
 	if (type == NULL)
@@ -2171,15 +2172,29 @@ fheader	(
 	FILE	*str;		/* file handle */
 	char	linkname[MAXFILENAME]; /* link name */
 	int	temp;
-
+#ifdef HAVE_UMASK
+        mode_t  orig_umask;
+#endif
+        
 	snprintf(filename, sizeof(filename), "ntpkey_%s_%s.%u", file,
 	    owner, fstamp); 
-	if ((str = fopen(filename, "w")) == NULL) {
+#ifdef HAVE_UMASK
+        orig_umask = umask( S_IWGRP | S_IRWXO );
+        str = fopen(filename, "w");
+        (void) umask(orig_umask);
+#else
+        str = fopen(filename, "w");
+#endif
+	if (str == NULL) {
 		perror("Write");
 		exit (-1);
 	}
-	snprintf(linkname, sizeof(linkname), "ntpkey_%s_%s", ulink,
-	    hostname);
+        if (strcmp(ulink, "md5") == 0) {
+          strcpy(linkname,"ntp.keys");
+        } else {
+          snprintf(linkname, sizeof(linkname), "ntpkey_%s_%s", ulink,
+                   hostname);
+        }
 	(void)remove(linkname);		/* The symlink() line below matters */
 	temp = symlink(filename, linkname);
 	if (temp < 0)

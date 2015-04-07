@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.1.1.2 2014/12/19 20:37:39 christos Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.1.1.3 2015/04/07 16:49:04 christos Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -384,7 +384,7 @@ fork_blocking_child(
 	int		rc;
 	int		was_pipe;
 	int		is_pipe;
-	int		saved_errno;
+	int		saved_errno = 0;
 	int		childpid;
 	int		keep_fd;
 	int		fd;

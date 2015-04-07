@@ -1,4 +1,4 @@
-/*	$NetBSD: event_tagging.c,v 1.1.1.1 2013/12/27 23:31:16 christos Exp $	*/
+/*	$NetBSD: event_tagging.c,v 1.1.1.2 2015/04/07 16:49:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2009 Niels Provos <provos@citi.umich.edu>
@@ -209,10 +209,19 @@ decode_tag_internal(ev_uint32_t *ptag, struct evbuffer *evbuf, int dodrain)
 	 */
 	data = evbuffer_pullup(
 		evbuf, len < sizeof(number) + 1 ? len : sizeof(number) + 1);
+	if (!data)
+		return (-1);
 
 	while (count++ < len) {
 		ev_uint8_t lower = *data++;
-		number |= (lower & 0x7f) << shift;
+		if (shift >= 28) {
+			/* Make sure it fits into 32 bits */
+			if (shift > 28)
+				return (-1);
+			if ((lower & 0x7f) > 15)
+				return (-1);
+		}
+		number |= (lower & (unsigned)0x7f) << shift;
 		shift += 7;
 
 		if (!(lower & 0x80)) {
@@ -315,6 +324,8 @@ do {									\
 									\
 	/* XXX(niels): faster? */					\
 	data = evbuffer_pullup(evbuf, offset + 1) + offset;		\
+	if (!data)							\
+		return (-1);						\
 									\
 	nibbles = ((data[0] & 0xf0) >> 4) + 1;				\
 	if (nibbles > maxnibbles || (nibbles >> 1) + 1 > len)		\
@@ -322,6 +333,8 @@ do {									\
 	len = (nibbles >> 1) + 1;					\
 									\
 	data = evbuffer_pullup(evbuf, offset + len) + offset;		\
+	if (!data)							\
+		return (-1);						\
 									\
 	while (nibbles > 0) {						\
 		number <<= 4;						\

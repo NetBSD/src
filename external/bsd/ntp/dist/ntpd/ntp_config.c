@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.1.1.4 2014/12/19 20:37:41 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.1.1.5 2015/04/07 16:49:07 christos Exp $	*/
 
 /* ntp_config.c
  *
@@ -129,6 +129,8 @@ typedef struct peer_resolved_ctx_tag {
  */
 #define ISEOL(c)	((c) == '#' || (c) == '\n' || (c) == '\0')
 #define ISSPACE(c)	((c) == ' ' || (c) == '\t')
+
+#define _UC(str)	((char *)(intptr_t)(str))
 
 /*
  * Definitions of things either imported from or exported to outside
@@ -318,6 +320,7 @@ static void config_ntpd(config_tree *);
 static void config_other_modes(config_tree *);
 static void config_auth(config_tree *);
 static void config_access(config_tree *);
+static void config_mdnstries(config_tree *);
 static void config_phone(config_tree *);
 static void config_setvar(config_tree *);
 static void config_ttl(config_tree *);
@@ -357,6 +360,7 @@ static u_int32 get_logmask(const char *);
 #ifndef SIM
 static int getnetnum(const char *num, sockaddr_u *addr, int complain,
 		     enum gnn_type a_type);
+
 #endif
 
 
@@ -394,6 +398,7 @@ init_syntax_tree(
 	)
 {
 	ZERO(*ptree);
+	ptree->mdnstries = 5;
 }
 
 
@@ -504,7 +509,7 @@ dump_config_tree(
 	int_node *counter_set;
 	string_node *str_node;
 
-	const char *s;
+	const char *s = NULL;
 	char *s1;
 	char *s2;
 	char timestamp[80];
@@ -1107,7 +1112,7 @@ create_attr_rangeval(
 attr_val *
 create_attr_sval(
 	int attr,
-	char *s
+	const char *s
 	)
 {
 	attr_val *my_val;
@@ -1116,7 +1121,7 @@ create_attr_sval(
 	my_val->attr = attr;
 	if (NULL == s)			/* free() hates NULL */
 		s = estrdup("");
-	my_val->value.s = s;
+	my_val->value.s = _UC(s);
 	my_val->type = T_String;
 
 	return my_val;
@@ -1331,7 +1336,7 @@ create_unpeer_node(
 	 * We treat all valid 16-bit numbers as association IDs.
 	 */
 	pch = addr->address;
-	while (*pch && isdigit(*pch))
+	while (*pch && isdigit((unsigned char)*pch))
 		pch++;
 
 	if (!*pch
@@ -2459,12 +2464,12 @@ config_access(
 
 		/* It would be swell if we could identify the line number */
 		if ((RES_KOD & flags) && !(RES_LIMITED & flags)) {
-			char *kod_where = (my_node->addr)
+			const char *kod_where = (my_node->addr)
 					  ? my_node->addr->address
 					  : (mflags & RESM_SOURCE)
 					    ? "source"
 					    : "default";
-			char *kod_warn = "KOD does nothing without LIMITED.";
+			const char *kod_warn = "KOD does nothing without LIMITED.";
 
 			fprintf(stderr, "restrict %s: %s\n", kod_where, kod_warn);
 			msyslog(LOG_WARNING, "restrict %s: %s", kod_where, kod_warn);
@@ -2700,6 +2705,14 @@ config_tinker(
 
 		case T_Step:
 			item = LOOP_MAX;
+			break;
+
+		case T_Stepback:
+			item = LOOP_MAX_BACK;
+			break;
+
+		case T_Stepfwd:
+			item = LOOP_MAX_FWD;
 			break;
 
 		case T_Stepout:
@@ -3035,7 +3048,7 @@ config_phone(
 	config_tree *ptree
 	)
 {
-	int		i;
+	size_t		i;
 	string_node *	sn;
 
 	i = 0;
@@ -3047,13 +3060,23 @@ config_phone(
 			sys_phone[i] = NULL;
 		} else {
 			msyslog(LOG_INFO,
-				"phone: Number of phone entries exceeds %lu. Ignoring phone %s...",
-				(u_long)(COUNTOF(sys_phone) - 1), sn->s);
+				"phone: Number of phone entries exceeds %zu. Ignoring phone %s...",
+				(COUNTOF(sys_phone) - 1), sn->s);
 		}
 	}
 }
 #endif	/* !SIM */
 
+static void
+config_mdnstries(
+	config_tree *ptree
+	)
+{
+#ifdef HAVE_DNSREGISTRATION
+	extern int mdnstries;
+	mdnstries = ptree->mdnstries;
+#endif  /* HAVE_DNSREGISTRATION */
+}
 
 #ifdef FREE_CFG_T
 static void
@@ -3112,7 +3135,7 @@ config_ttl(
 	config_tree *ptree
 	)
 {
-	int i = 0;
+	size_t i = 0;
 	int_node *curr_ttl;
 
 	curr_ttl = HEAD_PFIFO(ptree->ttl);
@@ -3121,8 +3144,8 @@ config_ttl(
 			sys_ttl[i++] = (u_char)curr_ttl->i;
 		else
 			msyslog(LOG_INFO,
-				"ttl: Number of TTL entries exceeds %lu. Ignoring TTL %d...",
-				(u_long)COUNTOF(sys_ttl), curr_ttl->i);
+				"ttl: Number of TTL entries exceeds %zu. Ignoring TTL %d...",
+				COUNTOF(sys_ttl), curr_ttl->i);
 	}
 	sys_ttlmax = i - 1;
 }
@@ -4288,6 +4311,7 @@ config_ntpd(
 	config_system_opts(ptree);
 	config_logconfig(ptree);
 	config_phone(ptree);
+	config_mdnstries(ptree);
 	config_setvar(ptree);
 	config_ttl(ptree);
 	config_trap(ptree);
@@ -4429,7 +4453,7 @@ getconfig(
 		&& check_netinfo && !(config_netinfo = get_netinfo_config())
 #endif /* HAVE_NETINFO */
 		) {
-		msyslog(LOG_INFO, "getconfig: Couldn't open <%s>", FindConfig(config_file));
+		msyslog(LOG_INFO, "getconfig: Couldn't open <%s>: %m", FindConfig(config_file));
 #ifndef SYS_WINNT
 		io_open_sockets();
 
@@ -4443,7 +4467,7 @@ getconfig(
 			 * Broadcast clients can sometimes run without
 			 * a configuration file.
 			 */
-			msyslog(LOG_INFO, "getconfig: Couldn't open <%s>", FindConfig(alt_config_file));
+			msyslog(LOG_INFO, "getconfig: Couldn't open <%s>: %m", FindConfig(alt_config_file));
 			io_open_sockets();
 
 			return;
@@ -4888,7 +4912,7 @@ ntp_rlimit(
 	int	rl_what,
 	rlim_t	rl_value,
 	int	rl_scale,
-	char *	rl_sstr
+	const char *	rl_sstr
 	)
 {
 	struct rlimit	rl;

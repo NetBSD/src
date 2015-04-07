@@ -1,4 +1,4 @@
-/*	$NetBSD: atouint.c,v 1.1.1.2 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: atouint.c,v 1.1.1.3 2015/04/07 16:49:04 christos Exp $	*/
 
 #include <config.h>
 #include <sys/types.h>
@@ -30,7 +30,7 @@ atouint(
 
 	u = 0;
 	while ('\0' != *cp) {
-		if (!isdigit(*cp))
+		if (!isdigit((unsigned char)*cp))
 			return 0;
 		if (u > 429496729 || (u == 429496729 && *cp >= '6'))
 			return 0;		/* overflow */

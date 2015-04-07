@@ -1,11 +1,11 @@
-/*	$NetBSD: crypto.c,v 1.1.1.3 2013/12/27 23:31:10 christos Exp $	*/
+/*	$NetBSD: crypto.c,v 1.1.1.4 2015/04/07 16:49:13 christos Exp $	*/
 
 #include <config.h>
 #include "crypto.h"
 #include <ctype.h>
 
 struct key *key_ptr;
-int key_cnt = 0;
+size_t key_cnt = 0;
 
 int
 make_mac(
@@ -53,7 +53,7 @@ auth_md5(
 	int  authentic;
 	char digest[20];
 
-	if (mac_size > sizeof(digest))
+	if (mac_size > (int)sizeof(digest))
 		return 0;
 	hash_len = make_mac(pkt_data, pkt_size, sizeof(digest), cmp_key,
 			    digest);

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.c,v 1.1.1.3 2013/12/27 23:31:00 christos Exp $	*/
+/*	$NetBSD: refclock_palisade.c,v 1.1.1.4 2015/04/07 16:49:08 christos Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -586,7 +586,10 @@ TSIP_decode (
 				break;
 			}
 
-			if (up->leap_status & PALISADE_LEAP_PENDING) {
+			up->month = mb(15);
+			if ( (up->leap_status & PALISADE_LEAP_PENDING) &&
+			/* Avoid early announce: https://bugs.ntp.org/2773 */
+				(6 == up->month || 12 == up->month) ) {
 				if (up->leap_status & PALISADE_UTC_TIME)  
 					pp->leap = LEAP_ADDSECOND;
 				else
@@ -617,6 +620,7 @@ TSIP_decode (
 			pp->hour = mb(11);
 			pp->minute = mb(12);
 			pp->second = mb(13);
+			up->month = mb(14);  /* Save for LEAP check */
 
 #ifdef DEBUG
 			if (debug > 1)
@@ -647,7 +651,9 @@ TSIP_decode (
 				printf("TSIP_decode: unit %d\n", up->unit);
 			}
 #endif
-			if (getint((u_char *) &mb(10)) & 0x80) 
+			if ( (getint((u_char *) &mb(10)) & 0x80) &&
+			/* Avoid early announce: https://bugs.ntp.org/2773 */
+			    (6 == up->month || 12 == up->month) )
 				pp->leap = LEAP_ADDSECOND;  /* we ASSUME addsecond */
 			else 
 				pp->leap = LEAP_NOWARNING;

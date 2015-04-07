@@ -1,4 +1,4 @@
-/*	$NetBSD: http-server.c,v 1.1.1.2 2014/12/19 20:37:47 christos Exp $	*/
+/*	$NetBSD: http-server.c,v 1.1.1.3 2015/04/07 16:49:18 christos Exp $	*/
 
 /*
   A trivial static http webserver using Libevent's evhttp.
@@ -248,7 +248,10 @@ send_document_cb(struct evhttp_request *req, void *arg)
 			goto err;
 #endif
 
-		evbuffer_add_printf(evb, "<html>\n <head>\n"
+		evbuffer_add_printf(evb,
+                    "<!DOCTYPE html>\n"
+                    "<html>\n <head>\n"
+                    "  <meta charset='utf-8'>\n"
 		    "  <title>%s</title>\n"
 		    "  <base href='%s%s'>\n"
 		    " </head>\n"
@@ -276,7 +279,7 @@ send_document_cb(struct evhttp_request *req, void *arg)
 #endif
 		evbuffer_add_printf(evb, "</ul></body></html>\n");
 #ifdef _WIN32
-		CloseHandle(d);
+		FindClose(d);
 #else
 		closedir(d);
 #endif

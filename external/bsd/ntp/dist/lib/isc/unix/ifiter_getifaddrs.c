@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_getifaddrs.c,v 1.1.1.3 2014/12/19 20:37:37 christos Exp $	*/
+/*	$NetBSD: ifiter_getifaddrs.c,v 1.1.1.4 2015/04/07 16:49:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -98,9 +98,13 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	}
 	if (ret < 0) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__, isc_msgcat_get(isc_msgcat,
-		    ISC_MSGSET_IFITERGETIFADDRS, ISC_MSG_GETIFADDRS,
-		    "getting interface addresses: getifaddrs: %s"), strbuf);
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+                		 "getting interface addresses: %s: %s",
+				 isc_msgcat_get(isc_msgcat,
+						ISC_MSGSET_IFITERGETIFADDRS,
+						ISC_MSG_GETIFADDRS,
+						"getifaddrs"),
+				 strbuf);
 		result = ISC_R_UNEXPECTED;
 		goto failure;
 	}
@@ -210,6 +214,9 @@ internal_current(isc_interfaceiter_t *iter) {
 		get_addr(family, &iter->current.broadcast, ifa->ifa_broadaddr,
 			 ifa->ifa_name);
 
+#ifdef ISC_PLATFORM_HAVEIFNAMETOINDEX
+	iter->current.ifindex = if_nametoindex(iter->current.name);
+#endif
 	return (ISC_R_SUCCESS);
 }
 

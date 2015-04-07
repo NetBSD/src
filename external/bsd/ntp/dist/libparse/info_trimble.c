@@ -1,9 +1,10 @@
-/*	$NetBSD: info_trimble.c,v 1.1.1.3 2014/12/19 20:37:39 christos Exp $	*/
+/*	$NetBSD: info_trimble.c,v 1.1.1.4 2015/04/07 16:49:05 christos Exp $	*/
 
 /*
  * Automatically generated - do not modify
  */
 
+#include <config.h>
 #include "ntp_types.h"
 #include "ntpd.h"
 #include "trimble.h"
@@ -49,7 +50,7 @@ cmd_info_t trimble_scmds[] = {
 	{ CMD_CHIGH8CNT, "CMD_CHIGH8CNT", "high-8 (best 4) / high-6 (overdetermined) control (0x75)", "", 0 },
 	{ CMD_CMAXDGPSCOR, "CMD_CMAXDGPSCOR", "maximum rate of DGPS corrections (0x77)", "", 0 },
 	{ CMD_CSUPER, "CMD_CSUPER", "super paket (0x8E)", "", 0 },
-	{ 0xFF, "", "" }
+	{ 0xFF, "", "", "", 0 }
 };
 
 
@@ -91,6 +92,5 @@ cmd_info_t trimble_rcmds[] = {
 	{ CMD_RDOUBLELLA, "CMD_RDOUBLELLA", "double precision LLA (0x84)", "gps_position_ext(LLA)", RO|DEF },
 	{ CMD_RDGPSSTAT, "CMD_RDGPSSTAT", "differential correction status (0x85)", "trimble_dgpsstatus", RO },
 	{ CMD_RSUPER, "CMD_RSUPER", "super paket (0x8F)", "", 0 },
-	{ 0xFF, "", "" }
+	{ 0xFF, "", "", "", 0 }
 };
-

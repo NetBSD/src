@@ -1,4 +1,4 @@
-/*	$NetBSD: icom.c,v 1.1.1.2 2012/01/31 21:24:16 kardel Exp $	*/
+/*	$NetBSD: icom.c,v 1.1.1.3 2015/04/07 16:49:04 christos Exp $	*/
 
 /*
  * Program to control ICOM radios
@@ -123,17 +123,15 @@ doublefreq(			/* returns void */
  */
 int
 icom_init(
-	char *device,		/* device name/link */
+	const char *device,	/* device name/link */
 	int speed,		/* line speed */
 	int trace		/* trace flags */	)
 {
 	TTY ttyb;
 	int fd;
-	int flags;
 	int rc;
 	int saved_errno;
 
-	flags = trace;
 	fd = tty_open(device, O_RDWR, 0777);
 	if (fd < 0)
 		return -1;

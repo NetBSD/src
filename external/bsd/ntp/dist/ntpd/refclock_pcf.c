@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_pcf.c,v 1.1.1.3 2013/12/27 23:31:03 christos Exp $	*/
+/*	$NetBSD: refclock_pcf.c,v 1.1.1.4 2015/04/07 16:49:07 christos Exp $	*/
 
 /*
  * refclock_pcf - clock driver for the Conrad parallel port radio clock
@@ -142,7 +142,7 @@ pcf_poll(
 	pp = peer->procptr;
 
 	buf[0] = 0;
-	if (read(pp->io.fd, buf, sizeof(buf)) < sizeof(buf) || buf[0] != 9) {
+	if (read(pp->io.fd, buf, sizeof(buf)) < (ssize_t)sizeof(buf) || buf[0] != 9) {
 		refclock_report(peer, CEVNT_FAULT);
 		return;
 	}

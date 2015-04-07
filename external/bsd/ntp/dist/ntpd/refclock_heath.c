@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_heath.c,v 1.1.1.3 2013/12/27 23:30:55 christos Exp $	*/
+/*	$NetBSD: refclock_heath.c,v 1.1.1.4 2015/04/07 16:49:07 christos Exp $	*/
 
 /*
  * refclock_heath - clock driver for Heath GC-1000
@@ -381,7 +381,7 @@ heath_receive(
 	/*
 	 * Determine synchronization and last update
 	 */
-	if (!isdigit((int)dsec))
+	if (!isdigit((unsigned char)dsec))
 		pp->leap = LEAP_NOTINSYNC;
 	else {
 		pp->nsec = (dsec - '0') * 100000000;

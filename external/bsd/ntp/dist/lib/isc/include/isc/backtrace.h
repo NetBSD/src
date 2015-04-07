@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.h,v 1.1.1.1 2013/12/27 23:30:43 christos Exp $	*/
+/*	$NetBSD: backtrace.h,v 1.1.1.2 2015/04/07 16:49:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -87,12 +87,12 @@ isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes);
  */
 
 isc_result_t
-isc_backtrace_getsymbolfromindex(int index, const void **addrp,
+isc_backtrace_getsymbolfromindex(int idx, const void **addrp,
 				 const char **symbolp);
 /*%<
  * Returns the content of the internal symbol table of the given index.
  * On success, *addrsp and *symbolp point to the address and the symbol of
- * the 'index'th entry of the table, respectively.  If 'index' is not in the
+ * the 'index'th entry of the table, respectively.  If 'idx' is not in the
  * range of the symbol table, ISC_R_RANGE will be returned.
  *
  * Requires
