@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/06/15 17:54:55 tls Exp $
+#	$NetBSD: Makefile,v 1.9 2015/04/07 17:48:13 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -33,7 +33,8 @@ MLINKS+=	pigz.1 gzip.1 \
 		pigz.1 zcat.1 \
 		zdiff.1 zcmp.1 \
 		zgrep.1 zegrep.1 \
-		zgrep.1 zfgrep.1
+		zgrep.1 zfgrep.1 \
+		zmore.1 zless.1
 
 LINKS+=		${BINDIR}/pigz ${BINDIR}/gzip \
 		${BINDIR}/pigz ${BINDIR}/gunzip \
@@ -41,7 +42,8 @@ LINKS+=		${BINDIR}/pigz ${BINDIR}/gzip \
 		${BINDIR}/pigz ${BINDIR}/zcat \
 		${BINDIR}/zdiff ${BINDIR}/zcmp \
 		${BINDIR}/zgrep ${BINDIR}/zegrep \
-		${BINDIR}/zgrep ${BINDIR}/zfgrep
+		${BINDIR}/zgrep ${BINDIR}/zfgrep \
+		${BINDIR}/zmore ${BINDIR}/zless
 .endif
 
 .include <bsd.prog.mk>
