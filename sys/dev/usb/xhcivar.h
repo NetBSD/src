@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.4.12.3 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.4.12.4 2015/04/07 07:11:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -109,6 +109,10 @@ struct xhci_softc {
 
 	bool sc_ac64;
 	bool sc_dying;
+
+	int sc_quirks;
+#define XHCI_QUIRK_FORCE_INTR	__BIT(0) /* force interrupt reading */
+#define XHCI_QUIRK_INTEL	__BIT(1) /* Intel xhci chip */
 };
 
 int	xhci_init(struct xhci_softc *);
