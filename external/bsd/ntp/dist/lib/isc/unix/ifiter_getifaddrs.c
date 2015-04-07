@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_getifaddrs.c,v 1.4 2014/12/19 20:43:16 christos Exp $	*/
+/*	$NetBSD: ifiter_getifaddrs.c,v 1.5 2015/04/07 17:34:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -214,6 +214,9 @@ internal_current(isc_interfaceiter_t *iter) {
 		get_addr(family, &iter->current.broadcast, ifa->ifa_broadaddr,
 			 ifa->ifa_name);
 
+#ifdef ISC_PLATFORM_HAVEIFNAMETOINDEX
+	iter->current.ifindex = if_nametoindex(iter->current.name);
+#endif
 	return (ISC_R_SUCCESS);
 }
 

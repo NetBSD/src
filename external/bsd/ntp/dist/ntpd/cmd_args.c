@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd_args.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
+/*	$NetBSD: cmd_args.c,v 1.3 2015/04/07 17:34:19 christos Exp $	*/
 
 /*
  * cmd_args.c = command-line argument processing
@@ -77,6 +77,9 @@ getCmdOpts(
 
 	if (HAVE_OPT( PANICGATE ))
 		allow_panic = TRUE;
+
+	if (HAVE_OPT( FORCE_STEP_ONCE ))
+		force_step_once = TRUE;
 
 #ifdef HAVE_DROPROOT
 	if (HAVE_OPT( JAILDIR )) {
@@ -177,14 +180,14 @@ getCmdOpts(
 
 	if (HAVE_OPT( UPDATEINTERVAL )) {
 		long val = OPT_VALUE_UPDATEINTERVAL;
-			  
+
 		if (val >= 0)
 			interface_interval = val;
 		else {
-			fprintf(stderr, 
+			fprintf(stderr,
 				"command line interface update interval %ld must not be negative\n",
 				val);
-			msyslog(LOG_ERR, 
+			msyslog(LOG_ERR,
 				"command line interface update interval %ld must not be negative",
 				val);
 			errflg++;

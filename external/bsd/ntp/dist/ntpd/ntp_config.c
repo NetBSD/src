@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.9 2014/12/19 20:43:17 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.10 2015/04/07 17:34:19 christos Exp $	*/
 
 /* ntp_config.c
  *
@@ -129,6 +129,8 @@ typedef struct peer_resolved_ctx_tag {
  */
 #define ISEOL(c)	((c) == '#' || (c) == '\n' || (c) == '\0')
 #define ISSPACE(c)	((c) == ' ' || (c) == '\t')
+
+#define _UC(str)	((char *)(intptr_t)(str))
 
 /*
  * Definitions of things either imported from or exported to outside
@@ -927,7 +929,7 @@ dump_config_tree(
 	for ( ; setv_node != NULL; setv_node = setv_node->link) {
 		s1 = quote_if_needed(setv_node->var);
 		s2 = quote_if_needed(setv_node->val);
-		fprintf(df, "setvar %s = %s", s, s2);
+		fprintf(df, "setvar %s = %s", s1, s2);
 		free(s1);
 		free(s2);
 		if (setv_node->isdefault)
@@ -1119,7 +1121,7 @@ create_attr_sval(
 	my_val->attr = attr;
 	if (NULL == s)			/* free() hates NULL */
 		s = estrdup("");
-	my_val->value.s = __UNCONST(s);
+	my_val->value.s = _UC(s);
 	my_val->type = T_String;
 
 	return my_val;
@@ -2705,6 +2707,14 @@ config_tinker(
 			item = LOOP_MAX;
 			break;
 
+		case T_Stepback:
+			item = LOOP_MAX_BACK;
+			break;
+
+		case T_Stepfwd:
+			item = LOOP_MAX_FWD;
+			break;
+
 		case T_Stepout:
 			item = LOOP_MINSTEP;
 			break;
@@ -3136,8 +3146,6 @@ config_ttl(
 			msyslog(LOG_INFO,
 				"ttl: Number of TTL entries exceeds %zu. Ignoring TTL %d...",
 				COUNTOF(sys_ttl), curr_ttl->i);
-
-		curr_ttl = next_node(curr_ttl);
 	}
 	sys_ttlmax = i - 1;
 }
@@ -4445,7 +4453,7 @@ getconfig(
 		&& check_netinfo && !(config_netinfo = get_netinfo_config())
 #endif /* HAVE_NETINFO */
 		) {
-		msyslog(LOG_INFO, "getconfig: Couldn't open <%s>", FindConfig(config_file));
+		msyslog(LOG_INFO, "getconfig: Couldn't open <%s>: %m", FindConfig(config_file));
 #ifndef SYS_WINNT
 		io_open_sockets();
 
@@ -4459,7 +4467,7 @@ getconfig(
 			 * Broadcast clients can sometimes run without
 			 * a configuration file.
 			 */
-			msyslog(LOG_INFO, "getconfig: Couldn't open <%s>", FindConfig(alt_config_file));
+			msyslog(LOG_INFO, "getconfig: Couldn't open <%s>: %m", FindConfig(alt_config_file));
 			io_open_sockets();
 
 			return;
