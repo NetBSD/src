@@ -1,4 +1,4 @@
-/*	$NetBSD: tinytest.c,v 1.2 2014/12/19 20:43:19 christos Exp $	*/
+/*	$NetBSD: tinytest.c,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /* tinytest.c -- Copyright 2009-2012 Nick Mathewson
  *
@@ -33,6 +33,8 @@
 #include <string.h>
 #include <assert.h>
 
+#ifndef NO_FORKING
+
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -49,6 +51,8 @@
 #include <vproc.h>
 #endif
 #endif
+
+#endif /* !NO_FORKING */
 
 #ifndef __GNUC__
 #define __attribute__(x)
@@ -112,6 +116,8 @@ testcase_run_bare_(const struct testcase_t *testcase)
 }
 
 #define MAGIC_EXITCODE 42
+
+#ifndef NO_FORKING
 
 static enum outcome
 testcase_run_forked_(const struct testgroup_t *group,
@@ -213,6 +219,8 @@ testcase_run_forked_(const struct testgroup_t *group,
 #endif
 }
 
+#endif /* !NO_FORKING */
+
 int
 testcase_run_one(const struct testgroup_t *group,
 		 const struct testcase_t *testcase)
@@ -236,9 +244,13 @@ testcase_run_one(const struct testgroup_t *group,
 		cur_test_name = testcase->name;
 	}
 
+#ifndef NO_FORKING
 	if ((testcase->flags & TT_FORK) && !(opt_forked||opt_nofork)) {
 		outcome = testcase_run_forked_(group, testcase);
 	} else {
+#else
+	{
+#endif
 		outcome = testcase_run_bare_(testcase);
 	}
 
@@ -413,7 +425,9 @@ tinytest_main(int c, const char **v, struct testgroup_t *groups)
 	if (!n)
 		tinytest_set_flag_(groups, "..", 1, TT_ENABLED_);
 
+#ifdef _IONBF
 	setvbuf(stdout, NULL, _IONBF, 0);
+#endif
 
 	++in_tinytest_main;
 	for (i=0; groups[i].prefix; ++i)
@@ -460,3 +474,22 @@ tinytest_set_test_skipped_(void)
 		cur_test_outcome = SKIP;
 }
 
+char *
+tinytest_format_hex_(const void *val_, unsigned long len)
+{
+	const unsigned char *val = val_;
+	char *result, *cp;
+	size_t i;
+
+	if (!val)
+		return strdup("null");
+	if (!(result = malloc(len*2+1)))
+		return strdup("<allocation failure>");
+	cp = result;
+	for (i=0;i<len;++i) {
+		*cp++ = "0123456789ABCDEF"[val[i] >> 4];
+		*cp++ = "0123456789ABCDEF"[val[i] & 0x0f];
+	}
+	*cp = 0;
+	return result;
+}
