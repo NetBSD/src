@@ -1,9 +1,10 @@
-/*	$NetBSD: info_trimble.c,v 1.4 2014/12/19 20:43:17 christos Exp $	*/
+/*	$NetBSD: info_trimble.c,v 1.5 2015/04/07 17:34:19 christos Exp $	*/
 
 /*
  * Automatically generated - do not modify
  */
-#include "config.h"
+
+#include <config.h>
 #include "ntp_types.h"
 #include "ntpd.h"
 #include "trimble.h"
@@ -93,4 +94,3 @@ cmd_info_t trimble_rcmds[] = {
 	{ CMD_RSUPER, "CMD_RSUPER", "super paket (0x8F)", "", 0 },
 	{ 0xFF, "", "", "", 0 }
 };
-

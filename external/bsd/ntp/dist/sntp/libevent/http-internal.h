@@ -1,4 +1,4 @@
-/*	$NetBSD: http-internal.h,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
+/*	$NetBSD: http-internal.h,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
 
 /*
  * Copyright 2001-2007 Niels Provos <provos@citi.umich.edu>
@@ -76,6 +76,7 @@ struct evhttp_connection {
 #define EVHTTP_CON_INCOMING	0x0001	/* only one request on it ever */
 #define EVHTTP_CON_OUTGOING	0x0002  /* multiple requests possible */
 #define EVHTTP_CON_CLOSEDETECT  0x0004  /* detecting if persistent close */
+#define EVHTTP_CON_AUTOFREE 0x0008  /* set when we want to auto free the connection */
 
 	struct timeval timeout;		/* timeout for events */
 	int retry_cnt;			/* retry count */
@@ -101,6 +102,7 @@ struct evhttp_connection {
 
 	struct event_base *base;
 	struct evdns_base *dns_base;
+	int ai_family;
 
 	/* Saved conn_addr, to extract IP address from it.
 	 *

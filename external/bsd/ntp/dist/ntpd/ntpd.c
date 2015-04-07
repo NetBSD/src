@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.8 2014/12/19 20:43:17 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.9 2015/04/07 17:34:19 christos Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -1264,6 +1264,7 @@ finish(
 	if (mdns != NULL)
 		DNSServiceRefDeallocate(mdns);
 # endif
+	peer_cleanup();
 	exit(0);
 }
 #endif	/* !SIM && SIGDIE1 */
