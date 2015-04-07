@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.185 2015/02/26 12:58:36 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.186 2015/04/07 23:30:36 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.185 2015/02/26 12:58:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.186 2015/04/07 23:30:36 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -979,7 +979,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	if (ifp->if_link_state == LINK_STATE_DOWN) {
 		ia->ia6_flags |= IN6_IFF_DETACHED;
 		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
-	} else if ((hostIsNew || was_tentative) && in6if_do_dad(ifp))
+	} else if ((hostIsNew || was_tentative) && if_do_dad(ifp))
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
 
 	/*
@@ -1205,7 +1205,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * XXX It may be of use, if we can administratively
 	 * disable DAD.
 	 */
-	if (hostIsNew && in6if_do_dad(ifp) &&
+	if (hostIsNew && if_do_dad(ifp) &&
 	    ((ifra->ifra_flags & IN6_IFF_NODAD) == 0) &&
 	    (ia->ia6_flags & IN6_IFF_TENTATIVE))
 	{
@@ -2005,7 +2005,7 @@ in6_if_link_up(struct ifnet *ifp)
 		/* If detached then mark as tentative */
 		if (ia->ia6_flags & IN6_IFF_DETACHED) {
 			ia->ia6_flags &= ~IN6_IFF_DETACHED;
-			if (in6if_do_dad(ifp)) {
+			if (if_do_dad(ifp)) {
 				ia->ia6_flags |= IN6_IFF_TENTATIVE;
 				nd6log((LOG_ERR, "in6_if_up: "
 				    "%s marked tentative\n",
@@ -2095,39 +2095,6 @@ in6_if_down(struct ifnet *ifp)
 {
 
 	in6_if_link_down(ifp);
-}
-
-int
-in6if_do_dad(struct ifnet *ifp)
-{
-	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
-		return 0;
-
-	switch (ifp->if_type) {
-	case IFT_FAITH:
-		/*
-		 * These interfaces do not have the IFF_LOOPBACK flag,
-		 * but loop packets back.  We do not have to do DAD on such
-		 * interfaces.  We should even omit it, because loop-backed
-		 * NS would confuse the DAD procedure.
-		 */
-		return 0;
-	default:
-		/*
-		 * Our DAD routine requires the interface up and running.
-		 * However, some interfaces can be up before the RUNNING
-		 * status.  Additionaly, users may try to assign addresses
-		 * before the interface becomes up (or running).
-		 * We simply skip DAD in such a case as a work around.
-		 * XXX: we should rather mark "tentative" on such addresses,
-		 * and do DAD after the interface becomes ready.
-		 */
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING))
-			return 0;
-
-		return 1;
-	}
 }
 
 /*
