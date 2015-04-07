@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.308 2015/01/16 10:36:14 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.309 2015/04/07 23:30:36 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.308 2015/01/16 10:36:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.309 2015/04/07 23:30:36 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2314,6 +2314,39 @@ if_addr_init(ifnet_t *ifp, struct ifaddr *ifa, const bool src)
 		rc = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ifa);
 
 	return rc;
+}
+
+int
+if_do_dad(struct ifnet *ifp)
+{
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
+		return 0;
+
+	switch (ifp->if_type) {
+	case IFT_FAITH:
+		/*
+		 * These interfaces do not have the IFF_LOOPBACK flag,
+		 * but loop packets back.  We do not have to do DAD on such
+		 * interfaces.  We should even omit it, because loop-backed
+		 * responses would confuse the DAD procedure.
+		 */
+		return 0;
+	default:
+		/*
+		 * Our DAD routine requires the interface up and running.
+		 * However, some interfaces can be up before the RUNNING
+		 * status.  Additionaly, users may try to assign addresses
+		 * before the interface becomes up (or running).
+		 * We simply skip DAD in such a case as a work around.
+		 * XXX: we should rather mark "tentative" on such addresses,
+		 * and do DAD after the interface becomes ready.
+		 */
+		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING))
+			return 0;
+
+		return 1;
+	}
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.72 2015/02/26 09:54:46 roy Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.73 2015/04/07 23:30:36 roy Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -685,7 +685,6 @@ int	in6_control(struct socket *, u_long, void *, struct ifnet *);
 int	in6_update_ifa(struct ifnet *, struct in6_aliasreq *,
 	struct in6_ifaddr *, int);
 void	in6_purgeaddr(struct ifaddr *);
-int	in6if_do_dad(struct ifnet *);
 void	in6_purgeif(struct ifnet *);
 void	in6_savemkludge(struct in6_ifaddr *);
 void	in6_setmaxmtu  (void);
