@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.4 2014/12/19 20:43:14 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.5 2015/04/07 17:34:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -174,7 +174,7 @@ const char *
 isc_result_totext(isc_result_t result) {
 	resulttable *table;
 	const char *txt, *default_text;
-	int index;
+	int idx;
 
 	initialize();
 
@@ -185,15 +185,15 @@ isc_result_totext(isc_result_t result) {
 	     table != NULL;
 	     table = ISC_LIST_NEXT(table, link)) {
 		if (result >= table->base && result <= table->last) {
-			index = (int)(result - table->base);
-			default_text = table->text[index];
+			idx = (int)(result - table->base);
+			default_text = table->text[idx];
 			/*
-			 * Note: we use 'index + 1' as the message number
-			 * instead of index because isc_msgcat_get() requires
+			 * Note: we use 'idx + 1' as the message number
+			 * instead of idx because isc_msgcat_get() requires
 			 * the message number to be > 0.
 			 */
 			txt = isc_msgcat_get(table->msgcat, table->set,
-					     index + 1, default_text);
+					     idx + 1, default_text);
 			break;
 		}
 	}
