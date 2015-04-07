@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.317 2015/02/25 13:52:42 joerg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.318 2015/04/07 20:36:21 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.317 2015/02/25 13:52:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.318 2015/04/07 20:36:21 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -924,9 +924,18 @@ static inline bool
 pmap_is_cached(pmap_t pm)
 {
 #ifdef ARM_MMU_EXTENDED
-	struct pmap_tlb_info * const ti = cpu_tlb_info(curcpu());
-	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(PMAP_PAI(pm, ti), ti))
+	if (pm == pmap_kernel())
 		return true;
+#ifdef MULTIPROCESSOR
+	// Is this pmap active on any CPU?
+	if (!kcpuset_iszero(pm->pm_active))
+		return true;
+#else
+	struct pmap_tlb_info * const ti = cpu_tlb_info(curcpu());
+	// Is this pmap active?
+	if (PMAP_PAI_ASIDVALID_P(PMAP_PAI(pm, ti), ti))
+		return true;
+#endif
 #else
 	struct cpu_info * const ci = curcpu();
 	if (pm == pmap_kernel() || ci->ci_pmap_lastuser == NULL
@@ -4937,6 +4946,7 @@ pmap_deactivate(struct lwp *l)
 	pmap_tlb_asid_deactivate(pm);
 	cpu_setttb(pmap_kernel()->pm_l1_pa, KERNEL_PID);
 	ci->ci_pmap_cur = pmap_kernel();
+	ci->ci_pmap_asid_cur = KERNEL_PID;
 	kpreempt_enable();
 #else
 	/*
