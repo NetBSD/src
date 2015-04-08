@@ -137,6 +137,7 @@ static inline void cpu_dosoftints(void);
 #ifdef _KMEMUSER
 #include <sys/intr.h>
 #endif
+#include <sys/atomic.h>
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
@@ -150,7 +151,7 @@ struct cpu_info {
 	uint32_t ci_arm_cpurev;		/* CPU revision */
 	uint32_t ci_ctrl;		/* The CPU control register */
 	int ci_cpl;			/* current processor level (spl) */
-	int ci_astpending;		/* */
+	volatile int ci_astpending;	/* */
 	int ci_want_resched;		/* resched() was called */
 	int ci_intr_depth;		/* */
 	struct cpu_softc *ci_softc;	/* platform softc */
@@ -276,7 +277,12 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * Scheduling glue
  */
 
-#define setsoftast()			(curcpu()->ci_astpending = 1)
+#ifdef __HAVE_PREEMPTION
+#define setsoftast()		atomic_or_uint(&curcpu()->ci_astpending, \
+				    __BIT(0))
+#else
+#define setsoftast()		(curcpu()->ci_astpending = __BIT(0))
+#endif
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -291,6 +297,9 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * through trap(), marking the proc as needing a profiling tick.
  */
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
+
+/* for preeemption. */
+void	cpu_set_curpri(int);
 
 /*
  * We've already preallocated the stack for the idlelwps for additional CPUs.  
