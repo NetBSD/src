@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.32 2015/04/08 02:35:33 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.33 2015/04/08 02:44:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.32 2015/04/08 02:35:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.33 2015/04/08 02:44:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -730,14 +730,15 @@ rnd_detach_source(krndsource_t *source)
 {
 	rnd_sample_t *sample;
 
-	mutex_spin_enter(&rnd_mtx);
-
+	mutex_spin_enter(&rndpool_mtx);
 	LIST_REMOVE(source, list);
+	mutex_spin_exit(&rndpool_mtx);
 
 	/*
 	 * If there are samples queued up "remove" them from the sample queue
 	 * by setting the source to the no-collect pseudosource.
 	 */
+	mutex_spin_enter(&rnd_mtx);
 	sample = SIMPLEQ_FIRST(&rnd_samples);
 	while (sample != NULL) {
 		if (sample->source == source)
@@ -745,7 +746,6 @@ rnd_detach_source(krndsource_t *source)
 
 		sample = SIMPLEQ_NEXT(sample, next);
 	}
-
 	mutex_spin_exit(&rnd_mtx);
 
 	if (!cpu_softintr_p()) {	/* XXX XXX very temporary "fix" */
