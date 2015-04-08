@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.h,v 1.4 2014/03/18 06:46:14 matt Exp $	*/
+/*	$NetBSD: mvsoc_intr.h,v 1.5 2015/04/08 21:43:30 matt Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -33,6 +33,7 @@
 
 #if defined(ARMADAXP)
 #define __HAVE_PIC_SET_PRIORITY
+#define __HAVE_PIC_PENDING_INTRS
 #endif
 #endif
 
