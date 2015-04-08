@@ -209,6 +209,9 @@ static inline struct cpu_info *lwp_getcpu(struct lwp *);
 // curcpu() expands into two instructions: a mrc and a ldr
 #define	curcpu()	lwp_getcpu(_curlwp())
 #elif defined(TPIDRPRW_IS_CURCPU)
+#ifdef __HAVE_PREEMPTION
+#error __HAVE_PREEMPTION requires TPIDRPRW_IS_CURLWP
+#endif
 static inline struct cpu_info *
 curcpu(void)
 {
@@ -216,8 +219,10 @@ curcpu(void)
 }
 #elif !defined(MULTIPROCESSOR)
 #define	curcpu()	(&cpu_info_store)
+#elif !defined(__HAVE_PREEEMPTION)
+#error MULTIPROCESSOR && !__HAVE_PREEMPTION requires TPIDRPRW_IS_CURCPU or TPIDRPRW_IS_CURLWP
 #else
-#error MULTIPROCESSOR requires TPIDRPRW_IS_CURCPU or TPIDRPRW_IS_CURLWP
+#error MULTIPROCESSOR && __HAVE_PREEMPTION requires TPIDRPRW_IS_CURLWP
 #endif /* !TPIDRPRW_IS_CURCPU && !TPIDRPRW_IS_CURLWP */
 
 #ifndef curlwp
