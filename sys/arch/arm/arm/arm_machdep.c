@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.45 2015/04/08 16:37:32 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.46 2015/04/08 18:10:08 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.45 2015/04/08 16:37:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.46 2015/04/08 18:10:08 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -266,7 +266,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 #ifdef __HAVE_PREEMPTION
 		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
 		if (ci == cur_ci) {
-			ci->ci_astpending |= 2;
+			atomic_or_uint(&ci->ci_astpending, __BIT(1));
 		} else {
 			ipi = IPI_KPREEMPT;
 			goto send_ipi;
@@ -274,7 +274,11 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 #endif /* __HAVE_PREEMPTION */
 		return;
 	}
-	ci->ci_astpending |= 1;
+#ifdef __HAVE_PREEMPTION
+	atomic_or_uint(&ci->ci_astpending, __BIT(0));
+#else
+	ci->ci_astpending = __BIT(0);
+#endif
 #ifdef MULTIPROCESSOR
 	if (ci == curcpu() || !immed)
 		return;
@@ -321,3 +325,31 @@ arm_curcpu(void)
 	return curcpu();
 }
 #endif
+
+#ifdef __HAVE_PREEMPTION
+void
+cpu_set_curpri(int pri)
+{
+	kpreempt_disable();
+	curcpu()->ci_schedstate.spc_curpriority = pri;
+	kpreempt_enable();
+}
+
+bool
+cpu_kpreempt_enter(uintptr_t where, int s)
+{
+	return s == IPL_NONE;
+}
+
+void
+cpu_kpreempt_exit(uintptr_t where)
+{
+	atomic_and_uint(&curcpu()->ci_astpending, (unsigned int)~__BIT(1));
+}
+
+bool
+cpu_kpreempt_disabled(void)
+{
+	return curcpu()->ci_cpl != IPL_NONE;
+}
+#endif /* __HAVE_PREEMPTION */
