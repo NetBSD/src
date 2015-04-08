@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.29 2015/01/08 16:13:07 christos Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.30 2015/04/08 02:25:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.29 2015/01/08 16:13:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.30 2015/04/08 02:25:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -167,7 +167,7 @@ static inline uint32_t	rnd_counter(void);
 static        void	rnd_intr(void *);
 static	      void	rnd_wake(void *);
 static	      void	rnd_process_events(void);
-u_int32_t     rnd_extract_data_locked(void *, u_int32_t, u_int32_t); /* XXX */
+static	      u_int32_t	rnd_extract_data_locked(void *, u_int32_t, u_int32_t);
 static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
 					uint32_t, uint32_t, uint32_t);
 static inline void	rnd_schedule_process(void);
@@ -1175,7 +1175,7 @@ rnd_wake(void *arg)
 	rnd_wakeup_readers();
 }
 
-u_int32_t
+static u_int32_t
 rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 {
 	static int timed_in;
