@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.31 2015/04/08 02:32:26 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.32 2015/04/08 02:35:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.31 2015/04/08 02:32:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.32 2015/04/08 02:35:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -284,16 +284,15 @@ rnd_getmore(size_t byteswanted)
 	KASSERT(mutex_owned(&rndpool_mtx));
 
 	LIST_FOREACH(rs, &rnd_sources, list) {
-		if (rs->flags & RND_FLAG_HASCB) {
-			KASSERT(rs->get != NULL);
-			KASSERT(rs->getarg != NULL);
-			rs->get(byteswanted, rs->getarg);
-			rnd_printf_verbose("rnd: entropy estimate %zu bits\n",
-			    rndpool_get_entropy_count(&rnd_pool));
-			rnd_printf_verbose("rnd: asking source %s"
-			    " for %zu bytes\n",
-			    rs->name, byteswanted);
-		}
+		if (!ISSET(rs->flags, RND_FLAG_HASCB))
+			continue;
+		KASSERT(rs->get != NULL);
+		KASSERT(rs->getarg != NULL);
+		rs->get(byteswanted, rs->getarg);
+		rnd_printf_verbose("rnd: entropy estimate %zu bits\n",
+		    rndpool_get_entropy_count(&rnd_pool));
+		rnd_printf_verbose("rnd: asking source %s for %zu bytes\n",
+		    rs->name, byteswanted);
 	}
 }
 
