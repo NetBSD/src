@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.34 2015/04/08 02:49:03 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.35 2015/04/08 02:52:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.34 2015/04/08 02:49:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.35 2015/04/08 02:52:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -108,13 +108,15 @@ typedef struct _rnd_sample_t {
 	u_int32_t	values[RND_SAMPLE_COUNT];
 } rnd_sample_t;
 
+SIMPLEQ_HEAD(rnd_sampleq, _rnd_sample_t);
+
 /*
  * The sample queue.  Samples are put into the queue and processed in a
  * softint in order to limit the latency of adding a sample.
  */
 static struct {
-	kmutex_t			lock;
-	SIMPLEQ_HEAD(, _rnd_sample_t)	q;
+	kmutex_t		lock;
+	struct rnd_sampleq	q;
 } rnd_samples __cacheline_aligned;
 
 /*
@@ -865,8 +867,7 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 	uint32_t dint;
 	int todo, done, filled = 0;
 	int sample_count;
-	SIMPLEQ_HEAD(, _rnd_sample_t) tmp_samples =
-	    		SIMPLEQ_HEAD_INITIALIZER(tmp_samples);
+	struct rnd_sampleq tmp_samples = SIMPLEQ_HEAD_INITIALIZER(tmp_samples);
 
 	if (rs && (rs->flags & RND_FLAG_NO_COLLECT ||
 	    __predict_false(!(rs->flags & 
@@ -1036,10 +1037,8 @@ rnd_process_events(void)
 	u_int32_t entropy;
 	size_t pool_entropy;
 	int found = 0, wake = 0;
-	SIMPLEQ_HEAD(, _rnd_sample_t) dq_samples =
-			SIMPLEQ_HEAD_INITIALIZER(dq_samples);
-	SIMPLEQ_HEAD(, _rnd_sample_t) df_samples =
-			SIMPLEQ_HEAD_INITIALIZER(df_samples);
+	struct rnd_sampleq dq_samples = SIMPLEQ_HEAD_INITIALIZER(dq_samples);
+	struct rnd_sampleq df_samples = SIMPLEQ_HEAD_INITIALIZER(df_samples);
 
 	/*
 	 * Drain to the on-stack queue and drop the lock.
