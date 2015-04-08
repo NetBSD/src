@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.43 2014/10/29 14:14:14 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.44 2015/04/08 07:29:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,10 +76,11 @@
 #include "opt_cputypes.h"
 #include "opt_arm_debug.h"
 #include "opt_multiprocessor.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.43 2014/10/29 14:14:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.44 2015/04/08 07:29:44 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -212,7 +213,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 void
 startlwp(void *arg)
 {
-	ucontext_t *uc = arg; 
+	ucontext_t *uc = (ucontext_t *)arg; 
 	lwp_t *l = curlwp;
 	int error __diagused;
 
@@ -306,3 +307,17 @@ ucas_ras_check(trapframe_t *tf)
 		tf->tf_pc = (vaddr_t)ucas_32_ras_start;
 	}
 }
+
+#ifdef MODULAR
+struct lwp *
+arm_curlwp(void)
+{
+	return curlwp;
+}
+
+struct cpu_info *
+arm_curcpu(void)
+{
+	return curcpu();
+}
+#endif
