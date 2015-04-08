@@ -452,8 +452,8 @@ CONFIGURATION
      X11FLAVOUR  The style of X11 cross-built, set to either ``Xorg'' or
                  ``XFree86''.
 
-                 Default: ``Xorg'' on amd64, i386, macppc, shark and sparc64
-                 platforms, ``XFree86'' on everything else.
+                 Default: ``XFree86'' on acorn32, alpha, amiga, mac68k, pmax,
+                 and sun3 platforms, ``Xorg'' on everything else.
 
    "make" variables for full builds
      These variables only affect the top level ``Makefile'' and do not affect
@@ -1108,4 +1108,4 @@ CAVEATS
      files in object directories.  Instead, one may have to manually remove
      the files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                          August 7, 2014                          NetBSD
+NetBSD                           April 7, 2015                          NetBSD
