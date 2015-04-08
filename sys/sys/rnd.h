@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.43 2014/10/26 18:22:32 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.44 2015/04/08 13:45:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -228,15 +228,10 @@ rnd_add_uint64(krndsource_t *kr, uint64_t val)
 	}
 }
 
-extern int	rnd_empty;
-extern int	rnd_full;
-extern int	rnd_filled;
 extern int	rnd_initial_entropy;
 
 extern int	rnd_ready;
 extern int	rnd_printing;		/* XXX recursion through printf */
-
-extern int	rnd_blockonce;
 
 #endif /* _KERNEL */
 
