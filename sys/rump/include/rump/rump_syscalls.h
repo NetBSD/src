@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.82 2015/03/07 16:40:05 christos Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.83 2015/04/08 13:31:42 justin Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -106,6 +106,10 @@
 
 #ifndef RUMP_SYS_RENAME_AIO_CANCEL
 #define RUMP_SYS_RENAME_AIO_CANCEL rump___sysimpl_aio_cancel
+#endif
+
+#ifndef RUMP_SYS_RENAME___POSIX_RENAME
+#define RUMP_SYS_RENAME___POSIX_RENAME rump___sysimpl___posix_rename
 #endif
 
 #ifndef RUMP_SYS_RENAME_LISTXATTR
@@ -937,6 +941,7 @@ int rump_sys__ksem_trywait(intptr_t) __RENAME(RUMP_SYS_RENAME__KSEM_TRYWAIT);
 int rump_sys__ksem_getvalue(intptr_t, unsigned int *) __RENAME(RUMP_SYS_RENAME__KSEM_GETVALUE);
 int rump_sys__ksem_destroy(intptr_t) __RENAME(RUMP_SYS_RENAME__KSEM_DESTROY);
 int rump_sys__ksem_timedwait(intptr_t, const struct timespec *) __RENAME(RUMP_SYS_RENAME__KSEM_TIMEDWAIT);
+int rump_sys___posix_rename(const char *, const char *) __RENAME(RUMP_SYS_RENAME___POSIX_RENAME);
 int rump_sys_lchmod(const char *, mode_t) __RENAME(RUMP_SYS_RENAME_LCHMOD);
 int rump_sys_lchown(const char *, uid_t, gid_t) __RENAME(RUMP_SYS_RENAME_LCHOWN);
 int rump_sys_lutimes(const char *, const struct timeval *) __RENAME(RUMP_SYS_RENAME_LUTIMES);

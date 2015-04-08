@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.260 2015/03/07 16:39:20 christos Exp $ */
+/* $NetBSD: syscallargs.h,v 1.261 2015/04/08 13:31:42 justin Exp $ */
 
 /*
  * System call argument lists.
@@ -1681,13 +1681,11 @@ struct compat_50_sys_mq_timedreceive_args {
 check_syscall_args(compat_50_sys_mq_timedreceive)
 #endif /* !RUMP_CLIENT */
 
-#ifndef RUMP_CLIENT
 struct sys___posix_rename_args {
 	syscallarg(const char *) from;
 	syscallarg(const char *) to;
 };
 check_syscall_args(sys___posix_rename)
-#endif /* !RUMP_CLIENT */
 
 #ifndef RUMP_CLIENT
 struct sys_swapctl_args {

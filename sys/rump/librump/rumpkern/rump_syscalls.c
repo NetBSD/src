@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.107 2015/03/08 20:32:21 christos Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.108 2015/04/08 13:31:42 justin Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.107 2015/03/08 20:32:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.108 2015/04/08 13:31:42 justin Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -2952,6 +2952,35 @@ rump___sysimpl__ksem_timedwait(intptr_t id, const struct timespec * abstime)
 __weak_alias(_ksem_timedwait,rump___sysimpl__ksem_timedwait);
 __weak_alias(__ksem_timedwait,rump___sysimpl__ksem_timedwait);
 __strong_alias(_sys__ksem_timedwait,rump___sysimpl__ksem_timedwait);
+#endif /* RUMP_KERNEL_IS_LIBC */
+
+int rump___sysimpl___posix_rename(const char *, const char *);
+int
+rump___sysimpl___posix_rename(const char * from, const char * to)
+{
+	register_t retval[2];
+	int error = 0;
+	int rv = -1;
+	struct sys___posix_rename_args callarg;
+
+	memset(&callarg, 0, sizeof(callarg));
+	SPARG(&callarg, from) = from;
+	SPARG(&callarg, to) = to;
+
+	error = rsys_syscall(SYS___posix_rename, &callarg, sizeof(callarg), retval);
+	rsys_seterrno(error);
+	if (error == 0) {
+		if (sizeof(int) > sizeof(register_t))
+			rv = *(int *)retval;
+		else
+			rv = *retval;
+	}
+	return rv;
+}
+#ifdef RUMP_KERNEL_IS_LIBC
+__weak_alias(__posix_rename,rump___sysimpl___posix_rename);
+__weak_alias(___posix_rename,rump___sysimpl___posix_rename);
+__strong_alias(_sys___posix_rename,rump___sysimpl___posix_rename);
 #endif /* RUMP_KERNEL_IS_LIBC */
 
 int rump___sysimpl_lchmod(const char *, mode_t);
@@ -7519,8 +7548,9 @@ struct sysent rump_sysent[] = {
 		.sy_call = (sy_call_t *)rumpns_enosys,
 	},		/* 269 = filler */
 	{
+		ns(struct sys___posix_rename_args),
 		.sy_call = (sy_call_t *)rumpns_enosys,
-},		/* 270 = __posix_rename */
+	},		/* 270 = __posix_rename */
 	{
 		.sy_call = (sy_call_t *)rumpns_enosys,
 },		/* 271 = swapctl */
