@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.89 2015/03/24 21:09:11 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.90 2015/04/08 12:07:40 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,10 +87,10 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.89 2015/03/24 21:09:11 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.90 2015/04/08 12:07:40 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
-	
+
 #undef IRQdisable
 #undef IRQenable
 
@@ -138,38 +138,8 @@ ENTRY(cpu_switchto)
 
 #ifdef TPIDRPRW_IS_CURCPU
 	GET_CURCPU(r5)
-#elif defined(TPIDRPRW_IS_CURLWP)
-	mrc	p15, 0, r0, c13, c0, 4		/* get old lwp (r4 maybe 0) */
-	ldr	r5, [r0, #(L_CPU)]		/* get cpu from old lwp */
-#elif !defined(MULTIPROCESSOR) 
+#else
 	ldr	r5, [r6, #L_CPU]		/* get cpu from new lwp */
-#else
-#error curcpu() method not defined
-#endif
-
-	/* rem: r4 = old lwp */
-	/* rem: r5 = curcpu() */
-	/* rem: r6 = new lwp */
-	
-#ifndef __HAVE_UNNESTED_INTRS
-	IRQdisable
-#endif
-
-#ifdef MULTIPROCESSOR
-	str	r5, [r6, #(L_CPU)]
-#else
-	/* l->l_cpu initialized in fork1() for single-processor */
-#endif
-
-#if defined(TPIDRPRW_IS_CURLWP)
-	mcr	p15, 0, r6, c13, c0, 4		/* set current lwp */
-#endif
-	/* We have a new curlwp now so make a note it */
-	str	r6, [r5, #(CI_CURLWP)]
-
-	/* At this point we can allow IRQ's again. */
-#ifndef __HAVE_UNNESTED_INTRS
-	IRQenable
 #endif
 
 	/* rem: r4 = old lwp */
@@ -226,8 +196,25 @@ ENTRY(cpu_switchto)
 	/* Restore saved context */
 
 .Ldo_switch:
+	/* rem: r4 = old lwp */
+	/* rem: r5 = curcpu() */
+	/* rem: r6 = new lwp */
+
+	IRQdisable
+#if defined(TPIDRPRW_IS_CURLWP)
+	mcr	p15, 0, r6, c13, c0, 4		/* set current lwp */
+#endif
+
+	/* We have a new curlwp now so make a note of it */
+	str	r6, [r5, #(CI_CURLWP)]
 	/* Get the new pcb */
 	ldr	r7, [r6, #(L_PCB)]
+
+	/* make sure we are using the new lwp's stack */
+	ldr	sp, [r7, #(PCB_KSP)]
+
+	/* At this point we can allow IRQ's again. */
+	IRQenable
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = curcpu() */
@@ -292,14 +279,13 @@ ENTRY(cpu_switchto)
 	ldr	r10, [r7, #(PCB_R10)]
 	ldr	r11, [r7, #(PCB_R11)]
 	ldr	r12, [r7, #(PCB_R12)]
-	ldr	r13, [r7, #(PCB_KSP)]	/* sp */
 #elif defined(_ARM_ARCH_DWORD_OK)
 	ldrd	r8, r9, [r7, #(PCB_R8)]
 	ldrd	r10, r11, [r7, #(PCB_R10)]
-	ldrd	r12, r13, [r7, #(PCB_R12)]	/* sp */
+	ldr	r12, [r7, #(PCB_R12)]
 #else
 	add	r0, r7, #PCB_R8
-	ldmia	r0, {r8-r13}
+	ldmia	r0, {r8-r12}
 #endif
 
 	/* Record the old lwp for pmap_activate()'s benefit */
@@ -410,9 +396,7 @@ ENTRY_NP(softint_switch)
 	/* this is an invariant so load before disabling intrs */
 	ldr	r2, [r5, #(L_PCB)]	/* get new lwp's pcb */
 
-#ifndef __HAVE_UNNESTED_INTRS
 	IRQdisable
-#endif
 	/*
 	 * We're switching to a bound LWP so its l_cpu is already correct.
 	 */
@@ -429,10 +413,7 @@ ENTRY_NP(softint_switch)
 	ldr	sp, [r5, #(L_MD_TF)]	/* get new lwp's stack ptr */
 
 	/* At this point we can allow IRQ's again. */
-#ifndef __HAVE_UNNESTED_INTRS
 	IRQenable
-#endif
-
 					/* r1 still has ipl */
 	mov	r0, r4			/* r0 has pinned (old) lwp */
 	bl	_C_LABEL(softint_dispatch)
@@ -441,14 +422,12 @@ ENTRY_NP(softint_switch)
 	 */
 	ldr	r2, [r4, #(L_PCB)]	/* get pinned lwp's pcb */
 
-#ifndef __HAVE_UNNESTED_INTRS
-	IRQdisable
-#endif
 	/*
 	 * We don't need to restore all the registers since another lwp was
 	 * never executed.  But we do need the SP from the formerly pinned lwp.
 	 */
 
+	IRQdisable
 #if defined(TPIDRPRW_IS_CURLWP)
 	mcr	p15, 0, r4, c13, c0, 4		/* restore pinned lwp */
 #endif
