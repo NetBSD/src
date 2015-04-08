@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.39 2014/02/26 01:56:51 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.40 2015/04/08 16:38:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -174,7 +174,7 @@ void validate_trapframe(trapframe_t *, int);
  */
 #define	ENABLE_ALIGNMENT_FAULTS						\
 	and	r7, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
-	teq	r7, #(PSR_USR32_MODE)					;\
+	cmp	r7, #(PSR_USR32_MODE)					;\
 	GET_CURCPU(r4)			/* r4 = cpuinfo */		;\
 	bne	1f			/* Not USR mode skip AFLT */	;\
 	ldr	r1, [r4, #CI_CURLWP]	/* get curlwp from cpu_info */	;\
@@ -197,10 +197,10 @@ void validate_trapframe(trapframe_t *, int);
 	DO_PENDING_SOFTINTS						;\
 	GET_CPSR(r5)			/* save CPSR */			;\
 	CPSID_I(r1, r5)			/* Disable interrupts */	;\
-	teq	r7, #(PSR_USR32_MODE)	/* Returning to USR mode? */	;\
+	cmp	r7, #(PSR_USR32_MODE)	/* Returning to USR mode? */	;\
 	bne	3f			/* Nope, get out now */		;\
 1:	ldr	r1, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
-	teq	r1, #0x00000000						;\
+	tst	r1, #0x00000001						;\
 	bne	2f			/* Yup. Go deal with it */	;\
 	ldr	r1, [r4, #CI_CURLWP]	/* get curlwp from cpu_info */	;\
 	ldr	r0, [r1, #L_MD_FLAGS]	/* get md_flags from lwp */	;\
@@ -213,7 +213,7 @@ void validate_trapframe(trapframe_t *, int);
 	adr	lr, 3f							;\
 	B_CF_CONTROL(r2)		/* Set new CTRL reg value */	;\
 	/* NOTREACHED */						\
-2:	mov	r1, #0x00000000						;\
+2:	bic	r1, r1, #0x00000001					;\
 	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
 	CPSIE_I(r5, r5)			/* Restore interrupts */	;\
 	mov	r0, sp							;\
@@ -235,12 +235,12 @@ void validate_trapframe(trapframe_t *, int);
 	DO_PENDING_SOFTINTS						;\
 	GET_CPSR(r5)			/* save CPSR */			;\
 	CPSID_I(r1, r5)			/* Disable interrupts */	;\
-	teq	r7, #(PSR_USR32_MODE)					;\
+	cmp	r7, #(PSR_USR32_MODE)					;\
 	bne	2f			/* Nope, get out now */		;\
 1:	ldr	r1, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
-	teq	r1, #0x00000000						;\
+	tst	r1, #0x00000001						;\
 	beq	2f			/* Nope. Just bail */		;\
-	mov	r1, #0x00000000						;\
+	bic	r1, r1, #0x00000001					;\
 	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
 	CPSIE_I(r5, r5)			/* Restore interrupts */	;\
 	mov	r0, sp							;\
@@ -288,7 +288,7 @@ LOCK_CAS_DEBUG_LOCALS
 #define	LOCK_CAS_CHECK							 \
 	ldr	r0, [sp]		/* get saved PSR */		;\
 	and	r0, r0, #(PSR_MODE)	/* check for SVC32 mode */	;\
-	teq	r0, #(PSR_SVC32_MODE)					;\
+	cmp	r0, #(PSR_SVC32_MODE)					;\
 	bne	99f			/* nope, get out now */		;\
 	ldr	r0, [sp, #(TF_PC)]					;\
 	ldr	r1, .L_lock_cas_end					;\
