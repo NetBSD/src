@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.41 2015/04/08 14:08:49 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.42 2015/04/08 14:11:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.41 2015/04/08 14:08:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.42 2015/04/08 14:11:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -444,22 +444,18 @@ static void
 rnd_skew_enable(krndsource_t *rs, bool enabled)
 {
 
-	mutex_spin_enter(&rnd_skew.lock);
 	if (enabled) {
 		rnd_skew_intr(rs);
 	} else {
 		callout_stop(&rnd_skew.callout);
 	}
-	mutex_spin_exit(&rnd_skew.lock);
 }
 
 static void
 rnd_skew_stop_intr(void *arg)
 {
 
-	mutex_spin_enter(&rnd_skew.lock);
 	callout_stop(&rnd_skew.callout);
-	mutex_spin_exit(&rnd_skew.lock);
 }
 
 static void
@@ -470,11 +466,8 @@ rnd_skew_get(size_t bytes, void *priv)
 	KASSERT(skewsrcp == &rnd_skew.source);
 	if (RND_ENABLED(skewsrcp)) {
 		/* Measure for 30s */
-		if (mutex_tryenter(&rnd_skew.lock)) {
-			callout_schedule(&rnd_skew.stop_callout, hz * 30);
-			callout_schedule(&rnd_skew.callout, 1);
-			mutex_spin_exit(&rnd_skew.lock);
-		}
+		callout_schedule(&rnd_skew.stop_callout, hz * 30);
+		callout_schedule(&rnd_skew.callout, 1);
 	}
 }
 
