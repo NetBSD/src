@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.40 2015/04/08 16:38:42 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.41 2015/04/08 18:10:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -213,9 +213,7 @@ void validate_trapframe(trapframe_t *, int);
 	adr	lr, 3f							;\
 	B_CF_CONTROL(r2)		/* Set new CTRL reg value */	;\
 	/* NOTREACHED */						\
-2:	bic	r1, r1, #0x00000001					;\
-	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
-	CPSIE_I(r5, r5)			/* Restore interrupts */	;\
+2:	CPSIE_I(r5, r5)			/* Restore interrupts */	;\
 	mov	r0, sp							;\
 	bl	_C_LABEL(ast)		/* ast(frame) */		;\
 	CPSID_I(r0, r5)			/* Disable interrupts */	;\
@@ -240,8 +238,6 @@ void validate_trapframe(trapframe_t *, int);
 1:	ldr	r1, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
 	tst	r1, #0x00000001						;\
 	beq	2f			/* Nope. Just bail */		;\
-	bic	r1, r1, #0x00000001					;\
-	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
 	CPSIE_I(r5, r5)			/* Restore interrupts */	;\
 	mov	r0, sp							;\
 	bl	_C_LABEL(ast)		/* ast(frame) */		;\
