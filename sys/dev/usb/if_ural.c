@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.44 2013/01/22 12:40:43 jmcneill Exp $ */
+/*	$NetBSD: if_ural.c,v 1.45 2015/04/08 12:29:42 nonaka Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.45 2015/04/08 12:29:42 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -524,6 +524,9 @@ ural_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_dev);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 }
 
@@ -534,6 +537,8 @@ ural_detach(device_t self, int flags)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
 	int s;
+
+	pmf_device_deregister(self);
 
 	s = splusb();
 
