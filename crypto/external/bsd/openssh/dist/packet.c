@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.16 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.17 2015/04/08 15:49:46 christos Exp $	*/
 /* $OpenBSD: packet.c,v 1.208 2015/02/13 18:57:00 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.16 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.17 2015/04/08 15:49:46 christos Exp $");
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -1452,7 +1452,7 @@ ssh_packet_read_poll1(struct ssh *ssh, u_char *typep)
 		if (emsg != NULL) {
 			error("%s", emsg);
 			if ((r = sshpkt_disconnect(ssh, "%s", emsg)) != 0 ||
-			    (r = ssh_packet_write_wait(ssh)) != 0)
+			    (r = ssh_packet_write_wait(ssh)) < 0)
 					return r;
 			return SSH_ERR_CONN_CORRUPT;
 		}
@@ -1487,7 +1487,7 @@ ssh_packet_read_poll1(struct ssh *ssh, u_char *typep)
 		error("%s: len %d != sshbuf_len %zd", __func__,
 		    len, sshbuf_len(state->incoming_packet));
 		if ((r = sshpkt_disconnect(ssh, "invalid packet length")) != 0 ||
-		    (r = ssh_packet_write_wait(ssh)) != 0)
+		    (r = ssh_packet_write_wait(ssh)) < 0)
 			return r;
 		return SSH_ERR_CONN_CORRUPT;
 	}
@@ -1497,7 +1497,7 @@ ssh_packet_read_poll1(struct ssh *ssh, u_char *typep)
 	if (checksum != stored_checksum) {
 		error("Corrupted check bytes on input");
 		if ((r = sshpkt_disconnect(ssh, "connection corrupted")) != 0 ||
-		    (r = ssh_packet_write_wait(ssh)) != 0)
+		    (r = ssh_packet_write_wait(ssh)) < 0)
 			return r;
 		return SSH_ERR_CONN_CORRUPT;
 	}
@@ -1521,7 +1521,7 @@ ssh_packet_read_poll1(struct ssh *ssh, u_char *typep)
 	if (*typep < SSH_MSG_MIN || *typep > SSH_MSG_MAX) {
 		error("Invalid ssh1 packet type: %d", *typep);
 		if ((r = sshpkt_disconnect(ssh, "invalid packet type")) != 0 ||
-		    (r = ssh_packet_write_wait(ssh)) != 0)
+		    (r = ssh_packet_write_wait(ssh)) < 0)
 			return r;
 		return SSH_ERR_PROTOCOL_ERROR;
 	}
@@ -1694,7 +1694,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	if (padlen < 4)	{
 		if ((r = sshpkt_disconnect(ssh,
 		    "Corrupted padlen %d on input.", padlen)) != 0 ||
-		    (r = ssh_packet_write_wait(ssh)) != 0)
+		    (r = ssh_packet_write_wait(ssh)) < 0)
 			return r;
 		return SSH_ERR_CONN_CORRUPT;
 	}
@@ -1727,7 +1727,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	if (*typep < SSH2_MSG_MIN || *typep >= SSH2_MSG_LOCAL_MIN) {
 		if ((r = sshpkt_disconnect(ssh,
 		    "Invalid ssh2 packet type: %d", *typep)) != 0 ||
-		    (r = ssh_packet_write_wait(ssh)) != 0)
+		    (r = ssh_packet_write_wait(ssh)) < 0)
 			return r;
 		return SSH_ERR_PROTOCOL_ERROR;
 	}
@@ -1896,7 +1896,7 @@ ssh_packet_send_debug(struct ssh *ssh, const char *fmt,...)
 		    (r = sshpkt_send(ssh)) != 0)
 			fatal("%s: %s", __func__, ssh_err(r));
 	}
-	if ((r = ssh_packet_write_wait(ssh)) != 0)
+	if ((r = ssh_packet_write_wait(ssh)) < 0)
 		fatal("%s: %s", __func__, ssh_err(r));
 }
 
@@ -1957,7 +1957,7 @@ ssh_packet_disconnect(struct ssh *ssh, const char *fmt,...)
 	if ((r = sshpkt_disconnect(ssh, "%s", buf)) != 0)
 		sshpkt_fatal(ssh, __func__, r);
 
-	if ((r = ssh_packet_write_wait(ssh)) != 0)
+	if ((r = ssh_packet_write_wait(ssh)) < 0)
 		sshpkt_fatal(ssh, __func__, r);
 
 	/* Close the connection. */
