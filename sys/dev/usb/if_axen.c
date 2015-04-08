@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.4 2015/02/12 13:07:37 nonaka Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.5 2015/04/08 12:38:13 nonaka Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.4 2015/02/12 13:07:37 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.5 2015/04/08 12:38:13 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -803,6 +803,9 @@ axen_attach(device_t parent, device_t self, void *aux)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axen_udev,sc->axen_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -817,6 +820,8 @@ axen_detach(device_t self, int flags)
 	/* Detached before attached finished, so just bail out. */
 	if (!sc->axen_attached)
 		return 0;
+
+	pmf_device_deregister(self);
 
 	sc->axen_dying = true;
 
