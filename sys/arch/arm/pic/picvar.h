@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.11 2014/10/29 14:14:14 skrll Exp $	*/
+/*	$NetBSD: picvar.h,v 1.12 2015/04/08 21:43:30 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -59,11 +59,17 @@ struct cpu_info;
 #define	NIPI			6
 #endif
 
+#if !defined(__HAVE_PIC_SET_PRIORITY)
+#define __HAVE_PIC_PENDING_INTRS
+#endif
+
 int	pic_handle_intr(void *);
+#if defined(__HAVE_PIC_PENDING_INTRS)
 void	pic_mark_pending(struct pic_softc *pic, int irq);
 void	pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is);
 uint32_t pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 	    uint32_t pending);
+#endif /* __HAVE_PIC_PENDING_INTRS */
 void	*pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	    int (*func)(void *), void *arg);
 int	pic_alloc_irq(struct pic_softc *pic);
