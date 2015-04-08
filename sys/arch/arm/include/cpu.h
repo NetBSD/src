@@ -180,7 +180,15 @@ struct cpu_info {
 
 extern struct cpu_info cpu_info_store;
 
-#if defined(TPIDRPRW_IS_CURLWP)
+struct lwp *arm_curlwp(void);
+struct cpu_info *arm_curcpu(void);
+
+#if defined(_MODULE)
+
+#define	curlwp		arm_curlwp()
+#define curcpu()	arm_curcpu()
+
+#elif defined(TPIDRPRW_IS_CURLWP)
 static inline struct lwp *
 _curlwp(void)
 {
