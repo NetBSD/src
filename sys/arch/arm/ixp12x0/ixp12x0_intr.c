@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.30 2015/04/07 03:19:25 ozaki-r Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.31 2015/04/08 08:35:54 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.30 2015/04/07 03:19:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.31 2015/04/08 08:35:54 ozaki-r Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -42,9 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.30 2015/04/07 03:19:25 ozaki-r Ex
 #include <sys/termios.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/lwp.h>
 
 #include <arm/locore.h>
-#include <arm/cpu.h>
 
 #include <arm/ixp12x0/ixp12x0reg.h> 
 #include <arm/ixp12x0/ixp12x0var.h> 
