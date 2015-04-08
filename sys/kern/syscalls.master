@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.272 2015/02/22 00:50:30 christos Exp $
+	$NetBSD: syscalls.master,v 1.273 2015/04/08 13:24:25 justin Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -523,7 +523,7 @@
 267	UNIMPL
 268	UNIMPL
 269	UNIMPL
-270	STD 		{ int|sys||__posix_rename(const char *from, \
+270	STD 	 RUMP	{ int|sys||__posix_rename(const char *from, \
 			    const char *to); }
 271	STD 		{ int|sys||swapctl(int cmd, void *arg, int misc); }
 272	COMPAT_30 MODULAR { int|sys||getdents(int fd, char *buf, size_t count); }
