@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.30 2015/04/08 02:25:06 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.31 2015/04/08 02:32:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.30 2015/04/08 02:25:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.31 2015/04/08 02:32:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -80,6 +80,12 @@ int	rnd_debug = 0;
  */
 #if 0
 #define	RND_VERBOSE
+#endif
+
+#ifdef RND_VERBOSE
+#define	rnd_printf_verbose(fmt, ...)	rnd_printf(fmt, ##__VA_ARGS__)
+#else
+#define	rnd_printf_verbose(fmt, ...)	((void)0)
 #endif
 
 #ifdef RND_VERBOSE
@@ -167,7 +173,6 @@ static inline uint32_t	rnd_counter(void);
 static        void	rnd_intr(void *);
 static	      void	rnd_wake(void *);
 static	      void	rnd_process_events(void);
-static	      u_int32_t	rnd_extract_data_locked(void *, u_int32_t, u_int32_t);
 static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
 					uint32_t, uint32_t, uint32_t);
 static inline void	rnd_schedule_process(void);
@@ -274,7 +279,7 @@ rnd_schedule_wakeup(void)
 void
 rnd_getmore(size_t byteswanted)
 {
-	krndsource_t *rs; 
+	krndsource_t *rs;
 
 	KASSERT(mutex_owned(&rndpool_mtx));
 
@@ -283,14 +288,13 @@ rnd_getmore(size_t byteswanted)
 			KASSERT(rs->get != NULL);
 			KASSERT(rs->getarg != NULL);
 			rs->get(byteswanted, rs->getarg);
-#ifdef RND_VERBOSE
-			rnd_printf("rnd: entropy estimate %zu bits\n",
-				   rndpool_get_entropy_count(&rnd_pool));
-			rnd_printf("rnd: asking source %s for %zu bytes\n",
-			       rs->name, byteswanted);
-#endif
-		}    
-	}    
+			rnd_printf_verbose("rnd: entropy estimate %zu bits\n",
+			    rndpool_get_entropy_count(&rnd_pool));
+			rnd_printf_verbose("rnd: asking source %s"
+			    " for %zu bytes\n",
+			    rs->name, byteswanted);
+		}
+	}
 }
 
 /*
@@ -314,7 +318,7 @@ rnd_wakeup_readers(void)
 	} else {
 #ifdef RND_VERBOSE
 		if (__predict_false(!rnd_initial_entropy))
-			rnd_printf("rnd: have initial entropy (%zu)\n",
+			rnd_printf_verbose("rnd: have initial entropy (%zu)\n",
 			    entropy_count);
 #endif
 		rnd_empty = 0;
@@ -389,7 +393,7 @@ rnd_dt_estimate(krndsource_t *rs, uint32_t t)
 	KASSERT(d->dx == delta);
 #ifdef RND_VERBOSE
 	if (deltacnt++ % 1151 == 0) {
-		rnd_printf("rnd_dt_estimate: %s x = %lld, dx = %lld, "
+		rnd_printf_verbose("rnd_dt_estimate: %s x = %lld, dx = %lld, "
 		       "d2x = %lld\n", rs->name,
 		       (int)d->x, (int)d->dx, (int)d->d2x);
 	}
@@ -418,7 +422,7 @@ rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 	KASSERT(d->dx == delta);
 #ifdef RND_VERBOSE
 	if (deltacnt++ % 1151 == 0) {
-		rnd_printf("rnd_dv_estimate: %s x = %lld, dx = %lld, "
+		rnd_printf_verbose("rnd_dv_estimate: %s x = %lld, dx = %lld, "
 		       " d2x = %lld\n", rs->name,
 		       (long long int)d->x,
 		       (long long int)d->dx,
@@ -575,10 +579,8 @@ rnd_init(void)
 	rnd_skew(NULL);
 #endif
 
-#ifdef RND_VERBOSE
-	rnd_printf("rnd: initialised (%u)%s", RND_POOLBITS,
-	       c ? " with counter\n" : "\n");
-#endif
+	rnd_printf_verbose("rnd: initialised (%u)%s", RND_POOLBITS,
+	    c ? " with counter\n" : "\n");
 	if (boot_rsp != NULL) {
 		mutex_spin_enter(&rndpool_mtx);
 			rndpool_add_data(&rnd_pool, boot_rsp->data,
@@ -590,10 +592,8 @@ rnd_init(void)
                 	rnd_initial_entropy = 1;
 		}
                 mutex_spin_exit(&rndpool_mtx);
-#ifdef RND_VERBOSE
 		rnd_printf("rnd: seeded with %d bits\n",
-		       MIN(boot_rsp->entropy, RND_POOLBITS / 2));
-#endif
+		    MIN(boot_rsp->entropy, RND_POOLBITS / 2));
 		memset(boot_rsp, 0, sizeof(*boot_rsp));
 	}
 	rnd_attach_source(&rnd_source_anonymous, "Anonymous",
@@ -701,15 +701,16 @@ rnd_attach_source(krndsource_t *rs, const char *name, uint32_t type,
 	LIST_INSERT_HEAD(&rnd_sources, rs, list);
 
 #ifdef RND_VERBOSE
-	rnd_printf("rnd: %s attached as an entropy source (", rs->name);
+	rnd_printf_verbose("rnd: %s attached as an entropy source (",
+	    rs->name);
 	if (!(flags & RND_FLAG_NO_COLLECT)) {
-		rnd_printf("collecting");
+		rnd_printf_verbose("collecting");
 		if (flags & RND_FLAG_NO_ESTIMATE)
-			rnd_printf(" without estimation");
+			rnd_printf_verbose(" without estimation");
 	}
 	else
-		rnd_printf("off");
-	rnd_printf(")\n");
+		rnd_printf_verbose("off");
+	rnd_printf_verbose(")\n");
 #endif
 
 	/*
@@ -759,9 +760,8 @@ rnd_detach_source(krndsource_t *source)
 		}
 	}
 
-#ifdef RND_VERBOSE
-	rnd_printf("rnd: %s detached as an entropy source\n", source->name);
-#endif
+	rnd_printf_verbose("rnd: %s detached as an entropy source\n",
+	    source->name);
 }
 
 static inline uint32_t
@@ -892,13 +892,12 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 			    (upt.tv_sec > 10 && rs->total > upt.tv_sec) ||
 			    (upt.tv_sec > 100 &&
 			      rs->total > upt.tv_sec / 10)) {
-#ifdef RND_VERBOSE
-				rnd_printf("rnd: source %s is fast (%d samples "
-				       "at once, %d bits in %lld seconds), "
-				       "processing samples in bulk.\n",
-				       rs->name, todo, rs->total,
-				       (long long int)upt.tv_sec);
-#endif
+				rnd_printf_verbose("rnd: source %s is fast"
+				    " (%d samples at once,"
+				    " %d bits in %lld seconds), "
+				    "processing samples in bulk.\n",
+				    rs->name, todo, rs->total,
+				    (long long int)upt.tv_sec);
 				rs->flags |= RND_FLAG_FAST;
 			}
 		}
@@ -1129,10 +1128,8 @@ rnd_process_events(void)
 	} else {
 		rnd_empty = 1;
 		rnd_getmore(howmany((RND_POOLBITS - pool_entropy), NBBY));
-#ifdef RND_VERBOSE
-		rnd_printf("rnd: empty, asking for %d bytes\n",
-		       (int)(howmany((RND_POOLBITS - pool_entropy), NBBY)));
-#endif
+		rnd_printf_verbose("rnd: empty, asking for %d bytes\n",
+		    (int)(howmany((RND_POOLBITS - pool_entropy), NBBY)));
 	}
 	mutex_spin_exit(&rndpool_mtx);
 
@@ -1175,13 +1172,14 @@ rnd_wake(void *arg)
 	rnd_wakeup_readers();
 }
 
-static u_int32_t
-rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
+u_int32_t
+rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 {
 	static int timed_in;
 	int entropy_count;
+	uint32_t retval;
 
-	KASSERT(mutex_owned(&rndpool_mtx));
+	mutex_spin_enter(&rndpool_mtx);
 	if (__predict_false(!timed_in)) {
 		if (boottime.tv_sec) {
 			rndpool_add_data(&rnd_pool, &boottime,
@@ -1192,10 +1190,8 @@ rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 	if (__predict_false(!rnd_initial_entropy)) {
 		uint32_t c;
 
-#ifdef RND_VERBOSE
-		rnd_printf("rnd: WARNING! initial entropy low (%u).\n",
+		rnd_printf_verbose("rnd: WARNING! initial entropy low (%u).\n",
 		       rndpool_get_entropy_count(&rnd_pool));
-#endif
 		/* Try once again to put something in the pool */
 		c = rnd_counter();
 		rndpool_add_data(&rnd_pool, &c, sizeof(c), 1);
@@ -1204,10 +1200,9 @@ rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 #ifdef DIAGNOSTIC
 	while (!rnd_tested) {
 		entropy_count = rndpool_get_entropy_count(&rnd_pool);
-#ifdef RND_VERBOSE
-		rnd_printf("rnd: starting statistical RNG test, entropy = %d.\n",
-			entropy_count);
-#endif
+		rnd_printf_verbose("rnd: starting statistical RNG test,"
+		    " entropy = %d.\n",
+		    entropy_count);
 		if (rndpool_extract_data(&rnd_pool, rnd_rt.rt_b,
 		    sizeof(rnd_rt.rt_b), RND_EXTRACT_ANY)
 		    != sizeof(rnd_rt.rt_b)) {
@@ -1237,33 +1232,21 @@ rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 		rndpool_add_data(&rnd_pool, rnd_testbits, sizeof(rnd_testbits),
 				 entropy_count);
 		memset(rnd_testbits, 0, sizeof(rnd_testbits));
-#ifdef RND_VERBOSE
-		rnd_printf("rnd: statistical RNG test done, entropy = %d.\n",
-		       rndpool_get_entropy_count(&rnd_pool));
-#endif
+		rnd_printf_verbose("rnd: statistical RNG test done,"
+		    " entropy = %d.\n",
+		    rndpool_get_entropy_count(&rnd_pool));
 		rnd_tested++;
 	}
 #endif
 	entropy_count = rndpool_get_entropy_count(&rnd_pool);
 	if (entropy_count < (RND_ENTROPY_THRESHOLD * 2 + len) * NBBY) {
-#ifdef RND_VERBOSE
-		rnd_printf("rnd: empty, asking for %d bytes\n",
-			   (int)(howmany((RND_POOLBITS - entropy_count),
-				 NBBY)));
-#endif
+		rnd_printf_verbose("rnd: empty, asking for %d bytes\n",
+		    (int)(howmany((RND_POOLBITS - entropy_count), NBBY)));
 		rnd_getmore(howmany((RND_POOLBITS - entropy_count), NBBY));
 	}
-	return rndpool_extract_data(&rnd_pool, p, len, flags);
-}
-
-u_int32_t
-rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
-{
-	uint32_t retval;
-
-	mutex_spin_enter(&rndpool_mtx);
-	retval = rnd_extract_data_locked(p, len, flags);
+	retval = rndpool_extract_data(&rnd_pool, p, len, flags);
 	mutex_spin_exit(&rndpool_mtx);
+
 	return retval;
 }
 
@@ -1295,9 +1278,8 @@ rnd_seed(void *base, size_t len)
 	 * modules run before or after rnd_init().  Handle both cases.
 	 */
 	if (rnd_ready) {
-#ifdef RND_VERBOSE
-		rnd_printf("rnd: ready, feeding in seed data directly.\n");
-#endif
+		rnd_printf_verbose("rnd: ready,"
+		    " feeding in seed data directly.\n");
 		mutex_spin_enter(&rndpool_mtx);
 		rndpool_add_data(&rnd_pool, boot_rsp->data,
 				 sizeof(boot_rsp->data),
@@ -1305,8 +1287,6 @@ rnd_seed(void *base, size_t len)
 		memset(boot_rsp, 0, sizeof(*boot_rsp));
 		mutex_spin_exit(&rndpool_mtx);
 	} else {
-#ifdef RND_VERBOSE
-		rnd_printf("rnd: not ready, deferring seed feed.\n");
-#endif
+		rnd_printf_verbose("rnd: not ready, deferring seed feed.\n");
 	}
 }
