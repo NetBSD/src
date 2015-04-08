@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.39 2015/04/08 13:45:01 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.40 2015/04/08 14:04:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.39 2015/04/08 13:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.40 2015/04/08 14:04:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -169,7 +169,6 @@ static krndsource_t rnd_source_anonymous = {
 krndsource_t rnd_printf_source, rnd_autoconf_source;
 
 void *rnd_process, *rnd_wakeup;
-struct callout skew_callout, skew_stop_callout;
 
 void	      		rnd_wakeup_readers(void);
 static inline uint32_t	rnd_counter(void);
@@ -432,46 +431,53 @@ rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 }
 
 #if defined(__HAVE_CPU_COUNTER)
-kmutex_t                        rnd_skew_mtx;
+static struct {
+	kmutex_t	lock;
+	struct callout	callout;
+	struct callout	stop_callout;
+} rnd_skew __cacheline_aligned;
 
-static void rnd_skew(void *);
+static void rnd_skew_intr(void *);
 
 static void
 rnd_skew_enable(krndsource_t *rs, bool enabled)
 {
-	mutex_spin_enter(&rnd_skew_mtx);
+
+	mutex_spin_enter(&rnd_skew.lock);
 	if (enabled) {
-		rnd_skew(rs);
+		rnd_skew_intr(rs);
 	} else {
-		callout_stop(&skew_callout);
+		callout_stop(&rnd_skew.callout);
 	}
-	mutex_spin_exit(&rnd_skew_mtx);
+	mutex_spin_exit(&rnd_skew.lock);
 }
 
 static void
-rnd_skew_stop(void *arg)
+rnd_skew_stop_intr(void *arg)
 {
-	mutex_spin_enter(&rnd_skew_mtx);
-	callout_stop(&skew_callout);
-	mutex_spin_exit(&rnd_skew_mtx);
+
+	mutex_spin_enter(&rnd_skew.lock);
+	callout_stop(&rnd_skew.callout);
+	mutex_spin_exit(&rnd_skew.lock);
 }
 
 static void
 rnd_skew_get(size_t bytes, void *priv)
 {
 	krndsource_t *skewsrcp = priv;
+
 	if (RND_ENABLED(skewsrcp)) {
 		/* Measure for 30s */
-		if (mutex_tryenter(&rnd_skew_mtx)) {
-			callout_schedule(&skew_stop_callout, hz * 30);
-			callout_schedule(&skew_callout, 1);
-			mutex_spin_exit(&rnd_skew_mtx);
+		if (mutex_tryenter(&rnd_skew.lock)) {
+			callout_schedule(&rnd_skew.stop_callout, hz * 30);
+			callout_schedule(&rnd_skew.callout, 1);
+			mutex_spin_exit(&rnd_skew.lock);
 		}
 	}
 }
 
 static void
-rnd_skew(void *arg)
+rnd_skew_intr(void *arg)
 {
 	static krndsource_t skewsrc;
 	static int live, flipflop;
@@ -484,7 +490,7 @@ rnd_skew(void *arg)
 	 */
 	if (__predict_false(!live)) {
 		/* XXX must be spin, taken with rndpool_mtx held */
-		mutex_init(&rnd_skew_mtx, MUTEX_DEFAULT, IPL_VM);
+		mutex_init(&rnd_skew.lock, MUTEX_DEFAULT, IPL_VM);
 		rndsource_setcb(&skewsrc, rnd_skew_get, &skewsrc);
 		rndsource_setenable(&skewsrc, rnd_skew_enable);
 		rnd_attach_source(&skewsrc, "callout", RND_TYPE_SKEW,
@@ -494,18 +500,18 @@ rnd_skew(void *arg)
 		live = 1;
 		return;
 	}
-	mutex_spin_enter(&rnd_skew_mtx);
+	mutex_spin_enter(&rnd_skew.lock);
 	flipflop = !flipflop;
 
 	if (RND_ENABLED(&skewsrc)) {
 		if (flipflop) {
 			rnd_add_uint32(&skewsrc, rnd_counter());
-			callout_schedule(&skew_callout, hz / 10);
+			callout_schedule(&rnd_skew.callout, hz / 10);
 		} else {
-			callout_schedule(&skew_callout, 1);
+			callout_schedule(&rnd_skew.callout, 1);
 		}
 	}
-	mutex_spin_exit(&rnd_skew_mtx);
+	mutex_spin_exit(&rnd_skew.lock);
 }
 #endif
 
@@ -571,11 +577,11 @@ rnd_init(void)
  	 *
 	 */
 #if defined(__HAVE_CPU_COUNTER)
-	callout_init(&skew_callout, CALLOUT_MPSAFE);
-	callout_init(&skew_stop_callout, CALLOUT_MPSAFE);
-	callout_setfunc(&skew_callout, rnd_skew, NULL);
-	callout_setfunc(&skew_stop_callout, rnd_skew_stop, NULL);
-	rnd_skew(NULL);
+	callout_init(&rnd_skew.callout, CALLOUT_MPSAFE);
+	callout_init(&rnd_skew.stop_callout, CALLOUT_MPSAFE);
+	callout_setfunc(&rnd_skew.callout, rnd_skew_intr, NULL);
+	callout_setfunc(&rnd_skew.stop_callout, rnd_skew_stop_intr, NULL);
+	rnd_skew_intr(NULL);
 #endif
 
 	rnd_printf_verbose("rnd: initialised (%u)%s", RND_POOLBITS,
