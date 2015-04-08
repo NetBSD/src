@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.33 2015/04/08 02:44:07 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.34 2015/04/08 02:49:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.33 2015/04/08 02:44:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.34 2015/04/08 02:49:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -109,11 +109,13 @@ typedef struct _rnd_sample_t {
 } rnd_sample_t;
 
 /*
- * The event queue.  Fields are altered at an interrupt level.
- * All accesses must be protected with the mutex.
+ * The sample queue.  Samples are put into the queue and processed in a
+ * softint in order to limit the latency of adding a sample.
  */
-SIMPLEQ_HEAD(, _rnd_sample_t)	rnd_samples;
-kmutex_t			rnd_mtx;
+static struct {
+	kmutex_t			lock;
+	SIMPLEQ_HEAD(, _rnd_sample_t)	q;
+} rnd_samples __cacheline_aligned;
 
 /*
  * Memory pool for sample buffers
@@ -522,7 +524,7 @@ rnd_init(void)
 	if (rnd_ready)
 		return;
 
-	mutex_init(&rnd_mtx, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&rnd_samples.lock, MUTEX_DEFAULT, IPL_VM);
 	rndsinks_init();
 
 	/*
@@ -532,7 +534,7 @@ rnd_init(void)
 	c = rnd_counter();
 
 	LIST_INIT(&rnd_sources);
-	SIMPLEQ_INIT(&rnd_samples);
+	SIMPLEQ_INIT(&rnd_samples.q);
 
 	rndpool_init(&rnd_pool);
 	mutex_init(&rndpool_mtx, MUTEX_DEFAULT, IPL_VM);
@@ -738,15 +740,15 @@ rnd_detach_source(krndsource_t *source)
 	 * If there are samples queued up "remove" them from the sample queue
 	 * by setting the source to the no-collect pseudosource.
 	 */
-	mutex_spin_enter(&rnd_mtx);
-	sample = SIMPLEQ_FIRST(&rnd_samples);
+	mutex_spin_enter(&rnd_samples.lock);
+	sample = SIMPLEQ_FIRST(&rnd_samples.q);
 	while (sample != NULL) {
 		if (sample->source == source)
 			sample->source = &rnd_source_no_collect;
 
 		sample = SIMPLEQ_NEXT(sample, next);
 	}
-	mutex_spin_exit(&rnd_mtx);
+	mutex_spin_exit(&rnd_samples.lock);
 
 	if (!cpu_softintr_p()) {	/* XXX XXX very temporary "fix" */
 		if (source->state) {
@@ -955,12 +957,12 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 		return;
 	}
 
-	mutex_spin_enter(&rnd_mtx);
+	mutex_spin_enter(&rnd_samples.lock);
 	while ((state = SIMPLEQ_FIRST(&tmp_samples))) {
 		SIMPLEQ_REMOVE_HEAD(&tmp_samples, next);
-		SIMPLEQ_INSERT_HEAD(&rnd_samples, state, next);
+		SIMPLEQ_INSERT_HEAD(&rnd_samples.q, state, next);
 	}
-	mutex_spin_exit(&rnd_mtx);
+	mutex_spin_exit(&rnd_samples.lock);
 
 	/* Cause processing of queued samples */
 	rnd_schedule_process();
@@ -1040,14 +1042,12 @@ rnd_process_events(void)
 			SIMPLEQ_HEAD_INITIALIZER(df_samples);
 
 	/*
-	 * Sample queue is protected by rnd_mtx, drain to onstack queue
-	 * and drop lock.
+	 * Drain to the on-stack queue and drop the lock.
 	 */
-
-	mutex_spin_enter(&rnd_mtx);
-	while ((sample = SIMPLEQ_FIRST(&rnd_samples))) {
+	mutex_spin_enter(&rnd_samples.lock);
+	while ((sample = SIMPLEQ_FIRST(&rnd_samples.q))) {
 		found++;
-		SIMPLEQ_REMOVE_HEAD(&rnd_samples, next);
+		SIMPLEQ_REMOVE_HEAD(&rnd_samples.q, next);
 		/*
 		 * We repeat this check here, since it is possible
 		 * the source was disabled before we were called, but
@@ -1061,7 +1061,7 @@ rnd_process_events(void)
 			SIMPLEQ_INSERT_TAIL(&dq_samples, sample, next);
 		}
 	}
-	mutex_spin_exit(&rnd_mtx);
+	mutex_spin_exit(&rnd_samples.lock);
 
 	/* Don't thrash the rndpool mtx either.  Hold, add all samples. */
 	mutex_spin_enter(&rndpool_mtx);
