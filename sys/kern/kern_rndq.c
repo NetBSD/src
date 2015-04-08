@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.35 2015/04/08 02:52:25 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.36 2015/04/08 03:00:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.35 2015/04/08 02:52:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.36 2015/04/08 03:00:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.35 2015/04/08 02:52:25 riastradh Exp
 #include <sys/kauth.h>
 #include <sys/once.h>
 #include <sys/rngtest.h>
-#include <sys/cpu.h>	/* XXX temporary, see rnd_detach_source */
 
 #include <dev/rnd_private.h>
 
@@ -752,15 +751,13 @@ rnd_detach_source(krndsource_t *source)
 	}
 	mutex_spin_exit(&rnd_samples.lock);
 
-	if (!cpu_softintr_p()) {	/* XXX XXX very temporary "fix" */
-		if (source->state) {
-			rnd_sample_free(source->state);
-			source->state = NULL;
-		}
+	if (source->state) {
+		rnd_sample_free(source->state);
+		source->state = NULL;
+	}
 
-		if (source->test) {
-			kmem_free(source->test, sizeof(rngtest_t));
-		}
+	if (source->test) {
+		kmem_free(source->test, sizeof(rngtest_t));
 	}
 
 	rnd_printf_verbose("rnd: %s detached as an entropy source\n",
@@ -1087,19 +1084,25 @@ rnd_process_events(void)
 		last_source = source;
 
 		/*
+		 * If the source has been disabled, ignore samples from
+		 * it.
+		 */
+		if (source->flags & RND_FLAG_NO_COLLECT)
+			goto skip;
+
+		/*
 		 * Hardware generators are great but sometimes they
 		 * have...hardware issues.  Don't use any data from
 		 * them unless it passes some tests.
 		 */
 		if (source->type == RND_TYPE_RNG) {
 			if (__predict_false(rnd_hwrng_test(sample))) {
-				/*
-				 * Detach the bad source.  See below.
-				 */
-				badsource = source;
-				rnd_printf("rnd: detaching source \"%s\".",
-				       badsource->name);
-				break;
+				mutex_spin_enter(&rndpool_mtx);
+				source->flags |= RND_FLAG_NO_COLLECT;
+				mutex_spin_exit(&rndpool_mtx);
+				rnd_printf("rnd: disabling source \"%s\".",
+				    badsource->name);
+				goto skip;
 			}
 		}
 
@@ -1118,7 +1121,7 @@ rnd_process_events(void)
 
 		pool_entropy += entropy;
 		source->total += sample->entropy;
-		SIMPLEQ_INSERT_TAIL(&df_samples, sample, next);
+skip:		SIMPLEQ_INSERT_TAIL(&df_samples, sample, next);
 	}
 	rndpool_set_entropy_count(&rnd_pool, pool_entropy);
 	if (pool_entropy > RND_ENTROPY_THRESHOLD * 8) {
@@ -1132,19 +1135,6 @@ rnd_process_events(void)
 	mutex_spin_exit(&rndpool_mtx);
 
 	/* Now we hold no locks: clean up. */
-	if (__predict_false(badsource)) {
-		/*
-		 * The detach routine frees any samples we have not
-		 * dequeued ourselves.  For sanity's sake, we simply
-		 * free (without using) all dequeued samples from the
-		 * point at which we detected a problem onwards.
-		 */
-		rnd_detach_source(badsource);
-		while ((sample = SIMPLEQ_FIRST(&dq_samples))) {
-			SIMPLEQ_REMOVE_HEAD(&dq_samples, next);
-			rnd_sample_free(sample);
-		}
-	}
 	while ((sample = SIMPLEQ_FIRST(&df_samples))) {
 		SIMPLEQ_REMOVE_HEAD(&df_samples, next);
 		rnd_sample_free(sample);
