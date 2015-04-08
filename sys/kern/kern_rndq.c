@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.37 2015/04/08 03:14:29 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.38 2015/04/08 13:24:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.37 2015/04/08 03:14:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.38 2015/04/08 13:24:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1070,7 +1070,7 @@ rnd_process_events(void)
 		SIMPLEQ_REMOVE_HEAD(&dq_samples, next);
 		source = sample->source;
 		entropy = sample->entropy;
-		sample_count = sample->cursor + 1;
+		sample_count = sample->cursor;
 
 		/*
 		 * Don't provide a side channel for timing attacks on
