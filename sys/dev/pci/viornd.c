@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.5 2014/11/06 01:42:01 pooka Exp $ */
+/* 	$NetBSD: viornd.c,v 1.6 2015/04/08 13:47:06 riastradh Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -205,6 +205,7 @@ viornd_attach( device_t parent, device_t self, void *aux)
 	viornd_get(VIORND_BUFSIZE, sc);
 	return;
 vio_failed:
+	bus_dmamap_unload(vsc->sc_dmat, sc->sc_dmamap);
 load_failed:
 	bus_dmamap_destroy(vsc->sc_dmat, sc->sc_dmamap);
 create_failed:
