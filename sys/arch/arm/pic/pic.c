@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.27 2015/04/08 18:10:08 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.28 2015/04/08 21:43:30 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.27 2015/04/08 18:10:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.28 2015/04/08 21:43:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.27 2015/04/08 18:10:08 matt Exp $");
 
 #include <arm/pic/picvar.h>
 
+#if defined(__HAVE_PIC_PENDING_INTRS)
 static uint32_t
 	pic_find_pending_irqs_by_ipl(struct pic_softc *, size_t, uint32_t, int);
 static struct pic_softc *
@@ -68,14 +69,15 @@ static void
 	pic_deliver_irqs(struct pic_softc *, int, void *);
 static void
 	pic_list_deliver_irqs(register_t, int, void *);
+volatile uint32_t pic_blocked_pics;
+volatile uint32_t pic_pending_pics;
+volatile uint32_t pic_pending_ipls;
+#endif /* __HAVE_PIC_PENDING_INTRS */
 
 struct pic_softc *pic_list[PIC_MAXPICS];
 #if PIC_MAXPICS > 32
 #error PIC_MAXPICS > 32 not supported
 #endif
-volatile uint32_t pic_blocked_pics;
-volatile uint32_t pic_pending_pics;
-volatile uint32_t pic_pending_ipls;
 struct intrsource *pic_sources[PIC_MAXMAXSOURCES];
 struct intrsource *pic__iplsources[PIC_MAXMAXSOURCES];
 struct intrsource **pic_iplsource[NIPL] = {
@@ -196,6 +198,7 @@ pic_handle_intr(void *arg)
 	return rv > 0;
 }
 
+#if defined(__HAVE_PIC_PENDING_INTRS)
 void
 pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is)
 {
@@ -283,6 +286,7 @@ pic_find_pending_irqs_by_ipl(struct pic_softc *pic, size_t irq_base,
 		pending &= ~irq_mask;
 	}
 }
+#endif /* __HAVE_PIC_PENDING_INTRS */
 
 void
 pic_dispatch(struct intrsource *is, void *frame)
@@ -318,6 +322,7 @@ pic_dispatch(struct intrsource *is, void *frame)
 	percpu_putref(is->is_pic->pic_percpu);
 }
 
+#if defined(__HAVE_PIC_PENDING_INTRS)
 void
 pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 {
@@ -483,6 +488,7 @@ pic_list_deliver_irqs(register_t psw, int ipl, void *frame)
 	}
 	atomic_and_32(&pic_pending_ipls, ~ipl_mask);
 }
+#endif /* __HAVE_PIC_PENDING_INTRS */
 
 void
 pic_do_pending_ints(register_t psw, int newipl, void *frame)
@@ -492,6 +498,7 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 		KASSERTMSG(ci->ci_cpl == IPL_HIGH, "cpl %d", ci->ci_cpl);
 		return;
 	}
+#if defined(__HAVE_PIC_PENDING_INTRS)
 	while ((pic_pending_ipls & ~__BIT(newipl)) > __BIT(newipl)) {
 		KASSERT(pic_pending_ipls < __BIT(NIPL));
 		for (;;) {
@@ -505,6 +512,7 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 			pic_list_unblock_irqs();
 		}
 	}
+#endif /* __HAVE_PIC_PENDING_INTRS */
 #ifdef __HAVE_PREEEMPTION
 	if (newipl == IPL_NONE && (ci->ci_astpending & __BIT(1))) {
 		pic_set_priority(ci, IPL_SCHED);
