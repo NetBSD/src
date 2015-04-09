@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.12 2015/04/08 21:43:30 matt Exp $	*/
+/*	$NetBSD: picvar.h,v 1.13 2015/04/09 06:03:43 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -125,9 +125,11 @@ struct pic_percpu {
 struct pic_softc {
 	const struct pic_ops *pic_ops;
 	struct intrsource **pic_sources;
+#ifdef __HAVE_PIC_PENDING_INTRS
 	volatile uint32_t pic_pending_irqs[(PIC_MAXSOURCES + 31) / 32];
 	volatile uint32_t pic_blocked_irqs[(PIC_MAXSOURCES + 31) / 32];
 	volatile uint32_t pic_pending_ipls;
+#endif
 	size_t pic_maxsources;
 	percpu_t *pic_percpu;
 	uint8_t pic_id;
@@ -167,7 +169,7 @@ void	pic_set_priority(struct cpu_info *, int);
 void	pic_add(struct pic_softc *, int);
 void	pic_do_pending_int(void);
 #ifdef MULTIPROCESSOR
-int	pic_ipi_nop(void *);
+int	pic_ipi_nop(void *);		// IPI_KPREEMPT tto
 int	pic_ipi_xcall(void *);
 int	pic_ipi_generic(void *);
 int	pic_ipi_shootdown(void *);
