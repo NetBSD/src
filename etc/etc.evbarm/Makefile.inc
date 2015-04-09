@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.71 2015/03/16 22:18:14 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.72 2015/04/09 10:55:23 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -133,7 +133,7 @@ __mkimage: .USE
 	TOOL_MTREE=${TOOL_MTREE} \
 	HOST_SH=${HOST_SH} \
 	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
-	    -K ${.ALLSRC} -S ${NETBSDSRCDIR} ${MKI_OPTS.${.TARGET}} \
+	    -S ${NETBSDSRCDIR} ${MKI_OPTS.${.TARGET}} \
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
 ARCHES.arm=		armv4 xscale armv5t armv6 armv7
@@ -162,23 +162,21 @@ BUILD_KERNELS+=		${board}_INSTALL
 KERNEL_SETS+=		${KERNEL_SETS.${arch}}
 .endfor
 
-.if !empty(KERNEL_SETS:MBEAGLEBOARD) && !empty(KERNEL_SETS:MBEAGLEBONE)
-smp_beagleboard: ${IMAGE.kern}/netbsd-BEAGLEBOARD.ub.gz __mkimage
-#            XXX ${IMAGE.kern}/netbsd-BEAGLEBONE.ub.gz
-.if empty(ALL_KERNELS) || (!empty(ALL_KERNELS:MBEAGLEBOARD) && !empty(ALL_KERNELS:MBEAGLEBONE))
-SNAP_MD_POST_DEPS+=	smp_beagleboard
-.endif
+.if !empty(MACHINE_ARCH:M*armv7*) && empty(ALL_KERNELS)
+smp_armv7: __mkimage
+MKI_OPTS.smp_armv7=	-K ${IMAGE.kern}
+SNAP_MD_POST_DEPS+=	smp_armv7
 .endif
 
 .if !empty(KERNEL_SETS:MRPI)
-smp_rpi: ${IMAGE.kern}/netbsd-RPI.bin.gz __mkimage
-#            XXX ${IMAGE.kern}/netbsd-RPI2.bin.gz
+smp_rpi: __mkimage
 .if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI)
+MKI_OPTS.smp_rpi=	-K ${IMAGE.kern}/netbsd-RPI.bin.gz
 SNAP_MD_POST_DEPS+=	smp_rpi
 .endif
-MKI_OPTS.smp_rpi_inst="-b"
 smp_rpi_inst: ${IMAGE.instk}/netbsd-RPI_INSTALL.bin.gz __mkimage
 .if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI_INSTALL)
+MKI_OPTS.smp_rpi_inst=	-b -K ${IMAGE.instk}/netbsd-RPI_INSTALL.bin.gz
 SNAP_MD_POST_DEPS+=	smp_rpi_inst
 .endif
 .endif
