@@ -4959,15 +4959,6 @@ zfs_netbsd_create(void *v)
 	KASSERT(cnp->cn_nameptr != NULL);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
-#if 0
-	/*
-	 * ZFS doesn't require dvp to be BSD-locked, and the caller
-	 * expects us to drop this lock anyway, so we might as well
-	 * drop it early to encourage concurrency.
-	 */
-	VOP_UNLOCK(dvp);
-#endif
-
 	vattr_init_mask(vap);
 	mode = vap->va_mode & ALLPERMS;
 
@@ -5000,15 +4991,6 @@ zfs_netbsd_remove(void *v)
 	KASSERT(cnp->cn_nameptr != NULL);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
-
-#if 0
-	/*
-	 * ZFS doesn't require dvp to be BSD-locked, and the caller
-	 * expects us to drop this lock anyway, so we might as well
-	 * drop it early to encourage concurrency.
-	 */
-	VOP_UNLOCK(dvp);
-#endif
 
 	/*
 	 * zfs_remove will look up the entry again itself, so discard vp.
@@ -5052,15 +5034,6 @@ zfs_netbsd_mkdir(void *v)
 	KASSERT(cnp->cn_nameptr != NULL);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
-#if 0
-	/*
-	 * ZFS doesn't require dvp to be BSD-locked, and the caller
-	 * expects us to drop this lock anyway, so we might as well
-	 * drop it early to encourage concurrency.
-	 */
-	VOP_UNLOCK(dvp);
-#endif
-
 	vattr_init_mask(vap);
 
 	error = zfs_mkdir(dvp, __UNCONST(cnp->cn_nameptr), vap, vpp,
@@ -5091,15 +5064,6 @@ zfs_netbsd_rmdir(void *v)
 	KASSERT(cnp->cn_nameptr != NULL);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
-
-#if 0
-	/*
-	 * ZFS doesn't require dvp to be BSD-locked, and the caller
-	 * expects us to drop this lock anyway, so we might as well
-	 * drop it early to encourage concurrency.
-	 */
-	VOP_UNLOCK(dvp);
-#endif
 
 	/*
 	 * zfs_rmdir will look up the entry again itself, so discard vp.
@@ -5354,15 +5318,6 @@ zfs_netbsd_symlink(void *v)
 	KASSERT(cnp->cn_nameptr != NULL);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
-#if 0
-	/*
-	 * ZFS doesn't require dvp to be BSD-locked, and the caller
-	 * expects us to drop this lock anyway, so we might as well
-	 * drop it early to encourage concurrency.
-	 */
-	VOP_UNLOCK(dvp);
-#endif
-
 	vap->va_type = VLNK;	/* Netbsd: Syscall only sets va_mode. */
 	vattr_init_mask(vap);
 
@@ -5568,15 +5523,6 @@ zfs_netbsd_link(void *v)
 	KASSERT(cnp->cn_nameptr != NULL);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
-#if 0
-	/*
-	 * ZFS doesn't require dvp to be BSD-locked, and the caller
-	 * expects us to drop this lock anyway, so we might as well
-	 * drop it early to encourage concurrency.
-	 */
-	VOP_UNLOCK(dvp);
-#endif
-
 	error = zfs_link(dvp, vp, __UNCONST(cnp->cn_nameptr), cnp->cn_cred,
 	    NULL, 0);
 
@@ -5724,33 +5670,9 @@ zfs_netbsd_pathconf(void *v)
 	return (error);
 }
 
-#if 1
-#  define	zfs_netbsd_lock		genfs_lock
-#  define	zfs_netbsd_unlock	genfs_unlock
-#  define	zfs_netbsd_islocked	genfs_islocked
-#else
-int
-zfs_netbsd_lock(void *v)
-{
-	struct vop_lock_args *ap = v;
-
-	return 0;
-}
-
-int
-zfs_netbsd_unlock(void *v)
-{
-
-	return 0;
-}
-
-static int
-zfs_netbsd_islocked(void *v)
-{
-
-	return LK_EXCLUSIVE;
-}
-#endif
+#define	zfs_netbsd_lock		genfs_lock
+#define	zfs_netbsd_unlock	genfs_unlock
+#define	zfs_netbsd_islocked	genfs_islocked
 
 /*
 int
