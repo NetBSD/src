@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.46 2015/04/09 05:02:28 riastradh Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.47 2015/04/09 05:03:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -274,8 +274,6 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	md(pb1, mp, "dir3/.");
 	if (rump_sys_rename(pb1, pb3) != -1 || errno != EINVAL)
 		atf_tc_fail_errno("rename 2");
-	if (FSTYPE_ZFS(tc))
-		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (rump_sys_rename(pb3, pb1) != -1 || errno != EISDIR)
 		atf_tc_fail_errno("rename 3");
 
