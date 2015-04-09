@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.12 2013/10/29 09:53:51 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.13 2015/04/09 05:32:53 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -521,7 +521,7 @@ vattr_init_mask(vattr_t *vap)
 		vap->va_mask |= AT_ATIME;
 	if (vap->va_mtime.tv_sec != VNOVAL)
 		vap->va_mask |= AT_MTIME;
-	if (vap->va_mode != (u_short)VNOVAL)
+	if (vap->va_mode != (mode_t)VNOVAL)
 		vap->va_mask |= AT_MODE;
 }
 
