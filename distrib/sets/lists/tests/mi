@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.615 2015/04/05 06:37:25 martin Exp $
+# $NetBSD: mi,v 1.616 2015/04/09 16:47:57 ginsbach Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2454,6 +2454,7 @@
 ./usr/tests/lib/libc/inet			tests-lib-tests
 ./usr/tests/lib/libc/inet/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/inet/Kyuafile		tests-lib-tests		atf,kyua
+./usr/tests/lib/libc/inet/t_inet_addr		tests-lib-tests		atf
 ./usr/tests/lib/libc/inet/t_inet_network	tests-lib-tests		atf
 ./usr/tests/lib/libc/locale			tests-lib-tests
 ./usr/tests/lib/libc/locale/Atffile		tests-lib-tests		atf
