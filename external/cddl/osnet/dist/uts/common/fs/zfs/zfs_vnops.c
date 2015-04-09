@@ -5153,9 +5153,12 @@ zfs_netbsd_setattr(void *v)
 	xvattr_t xvap;
 	u_long fflags;
 	uint64_t zflags;
+	int flags = 0;
 
 	vattr_init_mask(vap);
 	vap->va_mask &= ~AT_NOSET;
+	if (ISSET(vap->va_vaflags, VA_UTIMES_NULL))
+		flags |= ATTR_UTIME;
 
 	xva_init(&xvap);
 	xvap.xva_vattr = *vap;
@@ -5216,7 +5219,7 @@ zfs_netbsd_setattr(void *v)
 		    xvap.xva_xoptattrs.xoa_nodump);
 #undef	FLAG_CHANGE
 	}
-	return (zfs_setattr(vp, (vattr_t *)&xvap, 0, cred, NULL));
+	return (zfs_setattr(vp, (vattr_t *)&xvap, flags, cred, NULL));
 }
 
 static int
