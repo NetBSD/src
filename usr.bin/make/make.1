@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.243 2014/09/14 08:47:19 apb Exp $
+.\"	$NetBSD: make.1,v 1.244 2015/04/09 18:21:01 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -481,6 +481,7 @@ This is similar to the effect of the .MAKE special source,
 except that the effect can be limited to a single line of a script.
 A
 .Ql Ic \-
+in compatibility mode 
 causes any non-zero exit status of the command line to be ignored.
 .Pp
 When
@@ -495,6 +496,15 @@ If the command contains any shell meta characters
 it will be passed to the shell; otherwise
 .Nm
 will attempt direct execution.
+If a line starts with
+.Ql Ic \- 
+and the shell has ErrCtl enabled then failure of the command line
+will be ignored as in compatibility mode.
+Otherwise 
+.Ql Ic \-
+affects the entire job;
+the script will stop at the first command line that fails,
+but the target will not be deemed to have failed.
 .Pp
 Makefiles should be written so that the mode of
 .Nm
