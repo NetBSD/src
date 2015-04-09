@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.45 2015/03/24 23:24:55 riastradh Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.46 2015/04/09 05:02:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -179,8 +179,6 @@ dir_notempty(const atf_tc_t *tc, const char *mountpath)
 	rump_sys_close(fd);
 
 	rv = rump_sys_rmdir(pb);
-	if (FSTYPE_ZFS(tc))
-		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (rv != -1 || errno != ENOTEMPTY)
 		atf_tc_fail("non-empty directory removed succesfully");
 
