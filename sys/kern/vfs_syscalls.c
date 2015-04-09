@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.493 2015/02/15 10:48:21 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.494 2015/04/09 05:03:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.493 2015/02/15 10:48:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.494 2015/04/09 05:03:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4286,7 +4286,7 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	    ((tnd.ni_cnd.cn_namelen == 2) &&
 		(tnd.ni_cnd.cn_nameptr[0] == '.') &&
 		(tnd.ni_cnd.cn_nameptr[1] == '.'))) {
-		error = EINVAL;	/* XXX EISDIR?  */
+		error = EISDIR;
 		goto abort1;
 	}
 
