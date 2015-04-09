@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.109 2015/04/05 06:37:25 martin Exp $
+# $NetBSD: mi,v 1.110 2015/04/09 17:56:30 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1870,6 +1870,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_nan_inf.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_round.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_subnormal.debug		tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/inet/t_inet_addr.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/inet/t_inet_network.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype1.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype2.debug		tests-obsolete		obsolete
