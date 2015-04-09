@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.48 2015/04/09 05:32:53 riastradh Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.49 2015/04/09 19:47:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -678,9 +678,6 @@ fcntl_lock(const atf_tc_t *tc, const char *mp)
 	RL(fd = rump_sys_open(TESTFILE, O_RDWR | O_CREAT, 0755));
 	RL(rump_sys_ftruncate(fd, 8192));
 
-	/* PR kern/43321 */
-	if (FSTYPE_ZFS(tc))
-		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	RL(rump_sys_fcntl(fd, F_SETLK, &l));
 
 	/* Next, we fork and try to lock the same area */
@@ -814,9 +811,6 @@ fcntl_getlock_pids(const atf_tc_t *tc, const char *mp)
 
 		RL(rump_sys_ftruncate(fd[i], sz));
 
-		if (FSTYPE_ZFS(tc))
-			atf_tc_expect_fail("PR kern/47656: Test known to be "
-			    "broken");
 		if (i < __arraycount(lock)) {
 			RL(rump_sys_fcntl(fd[i], F_SETLK, &lock[i]));
 			expect[i].l_pid = pid[i];
