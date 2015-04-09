@@ -5674,6 +5674,36 @@ zfs_netbsd_pathconf(void *v)
 #define	zfs_netbsd_unlock	genfs_unlock
 #define	zfs_netbsd_islocked	genfs_islocked
 
+static int
+zfs_netbsd_advlock(void *v)
+{
+	struct vop_advlock_args /* {
+		struct vnode *a_vp;
+		void *a_id;
+		int a_op;
+		struct flock *a_fl;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp;
+	struct znode *zp;
+	struct zfsvfs *zfsvfs;
+	int error;
+
+	vp = ap->a_vp;
+	KASSERT(vp != NULL);
+	zp = VTOZ(vp);
+	KASSERT(zp != NULL);
+	zfsvfs = zp->z_zfsvfs;
+	KASSERT(zfsvfs != NULL);
+
+	ZFS_ENTER(zfsvfs);
+	ZFS_VERIFY_ZP(zp);
+	error = lf_advlock(ap, &zp->z_lockf, zp->z_phys->zp_size);
+	ZFS_EXIT(zfsvfs);
+
+	return error;
+}
+
 /*
 int
 zfs_netbsd_getpages(void *v)
@@ -5753,8 +5783,8 @@ const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
 	{ &vop_putpages_desc,		zfs_netbsd_putpages },
 	{ &vop_mmap_desc,		zfs_netbsd_mmap },
 	{ &vop_islocked_desc,		zfs_netbsd_islocked },
-#ifdef notyet
 	{ &vop_advlock_desc,		zfs_netbsd_advlock },
+#ifdef notyet
 	{ &vop_fcntl_desc,		zfs_netbsd_fcntl },
 	{ &vop_bmap_desc,		zfs_netbsd_bmap },
 	{ &vop_strategy_desc,		zfs_netbsd_strategy },		

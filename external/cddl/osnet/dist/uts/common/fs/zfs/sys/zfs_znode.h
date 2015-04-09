@@ -222,6 +222,10 @@ typedef struct znode {
 	 */
 	znode_phys_t	*z_phys;	/* pointer to persistent znode */
 	dmu_buf_t	*z_dbuf;	/* buffer containing the z_phys */
+	/*
+	 * NetBSD-specific fields.
+	 */
+	struct lockf	*z_lockf;	/* Head of byte-level lock list. */
 } znode_t;
 
 
