@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/12/14 01:03:10 haad Exp $
+#	$NetBSD: Makefile,v 1.5 2015/04/10 20:34:16 riastradh Exp $
 
 .include "../../Makefile.zfs"
 
@@ -7,7 +7,7 @@ MAN=	zpool.8
 USETBL=	yes
 SRCS=	zpool_main.c zpool_iter.c zpool_util.c zpool_vdev.c
 
-CFLAGS+="-Dprint_timestamp(a)=((void)0)"
+CPPFLAGS+=	"-Dprint_timestamp(a)=((void)0)"
 
 DPADD=	${LIBAVL} ${LIBZFS} ${LIBM} ${LIBNVPAIR} ${LIBUUTIL} ${LIBUTIL} ${LIBUMEM}
 
