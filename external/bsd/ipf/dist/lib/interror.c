@@ -1,4 +1,4 @@
-/*	$NetBSD: interror.c,v 1.3 2013/05/08 18:20:14 christos Exp $	*/
+/*	$NetBSD: interror.c,v 1.3.6.1 2015/04/10 20:26:46 snj Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -19,7 +19,7 @@ typedef	struct	{
 
 static ipf_error_entry_t *find_error __P((int));
 
-#define	IPF_NUM_ERRORS	475
+#define	IPF_NUM_ERRORS	476
 
 /*
  * NO REUSE OF NUMBERS!
@@ -179,6 +179,7 @@ static ipf_error_entry_t ipf_errors[IPF_NUM_ERRORS] = {
 	{	149,	"object size validation failed for kernel copyout" },
 	{	150,	"error copying data out for kernel copyout" },
 	{	151,	"version mismatch for kernel copyout" },
+	{	152,	"direction does not match the group rule" },
 /* -------------------------------------------------------------------------- */
 	{	10001,	"could not find token for auth iterator" },
 	{	10002,	"write permissions require to add/remove auth rule" },
