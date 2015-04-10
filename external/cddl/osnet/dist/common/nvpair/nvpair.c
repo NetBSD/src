@@ -1606,10 +1606,10 @@ nvlist_lookup_nvpair_ei_sep(nvlist_t *nvl, const char *name, const char sep,
 {
 	nvpair_t	*nvp;
 	const char	*np;
-	char		*sepp;
+	char		*sepp = NULL;
 	char		*idxp, *idxep;
 	nvlist_t	**nva;
-	long		idx;
+	long		idx = -1;
 	int		n;
 
 	if (ip)
@@ -3008,10 +3008,12 @@ nvs_xdr_nvp_op(nvstream_t *nvs, nvpair_t *nvp)
 		 */
 		ret = xdr_longlong_t(xdr, (void *)buf);
 		break;
+#ifndef __NetBSD__
 #if !defined(_KERNEL)
 	case DATA_TYPE_DOUBLE:
 		ret = xdr_double(xdr, (void *)buf);
 		break;
+#endif
 #endif
 	case DATA_TYPE_STRING:
 		ret = xdr_string(xdr, &buf, buflen - 1);
