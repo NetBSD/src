@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.58 2013/10/25 11:35:55 martin Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.59 2015/04/10 13:02:15 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.58 2013/10/25 11:35:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.59 2015/04/10 13:02:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ static int genfs_do_directio(struct vmspace *, vaddr_t, size_t, struct vnode *,
     off_t, enum uio_rw);
 static void genfs_dio_iodone(struct buf *);
 
+static int genfs_getpages_read(struct vnode *, struct vm_page **, int, off_t,
+    off_t, bool, bool, bool, bool);
 static int genfs_do_io(struct vnode *, off_t, vaddr_t, size_t, int, enum uio_rw,
     void (*)(struct buf *));
 static void genfs_rel_pages(struct vm_page **, unsigned int);
@@ -123,7 +125,6 @@ genfs_getpages(void *v)
 	const int flags = ap->a_flags;
 	struct vnode * const vp = ap->a_vp;
 	struct uvm_object * const uobj = &vp->v_uobj;
-	kauth_cred_t const cred = curlwp->l_cred;		/* XXXUBC curlwp */
 	const bool async = (flags & PGO_SYNCIO) == 0;
 	const bool memwrite = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
@@ -258,8 +259,6 @@ startover:
 
 	const int fs_bshift = (vp->v_type != VBLK) ?
 	    vp->v_mount->mnt_fs_bshift : DEV_BSHIFT;
-	const int dev_bshift = (vp->v_type != VBLK) ?
-	    vp->v_mount->mnt_dev_bshift : DEV_BSHIFT;
 	const int fs_bsize = 1 << fs_bshift;
 #define	blk_mask	(fs_bsize - 1)
 #define	trunc_blk(x)	((x) & ~blk_mask)
@@ -421,12 +420,106 @@ startover:
 	}
 
 	mutex_exit(uobj->vmobjlock);
+	error = genfs_getpages_read(vp, pgs, npages, startoffset, diskeof,
+	    async, memwrite, blockalloc, glocked);
+	if (error == 0 && async)
+		goto out_err_free;
+	if (!glocked) {
+		genfs_node_unlock(vp);
+	}
+	mutex_enter(uobj->vmobjlock);
 
-    {
+	/*
+	 * we're almost done!  release the pages...
+	 * for errors, we free the pages.
+	 * otherwise we activate them and mark them as valid and clean.
+	 * also, unbusy pages that were not actually requested.
+	 */
+
+	if (error) {
+		genfs_rel_pages(pgs, npages);
+		mutex_exit(uobj->vmobjlock);
+		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
+		goto out_err_free;
+	}
+
+out:
+	UVMHIST_LOG(ubchist, "succeeding, npages %d", npages,0,0,0);
+	error = 0;
+	mutex_enter(&uvm_pageqlock);
+	for (i = 0; i < npages; i++) {
+		struct vm_page *pg = pgs[i];
+		if (pg == NULL) {
+			continue;
+		}
+		UVMHIST_LOG(ubchist, "examining pg %p flags 0x%x",
+		    pg, pg->flags, 0,0);
+		if (pg->flags & PG_FAKE && !overwrite) {
+			pg->flags &= ~(PG_FAKE);
+			pmap_clear_modify(pgs[i]);
+		}
+		KASSERT(!memwrite || !blockalloc || (pg->flags & PG_RDONLY) == 0);
+		if (i < ridx || i >= ridx + orignmempages || async) {
+			UVMHIST_LOG(ubchist, "unbusy pg %p offset 0x%x",
+			    pg, pg->offset,0,0);
+			if (pg->flags & PG_WANTED) {
+				wakeup(pg);
+			}
+			if (pg->flags & PG_FAKE) {
+				KASSERT(overwrite);
+				uvm_pagezero(pg);
+			}
+			if (pg->flags & PG_RELEASED) {
+				uvm_pagefree(pg);
+				continue;
+			}
+			uvm_pageenqueue(pg);
+			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
+			UVM_PAGE_OWN(pg, NULL);
+		}
+	}
+	mutex_exit(&uvm_pageqlock);
+	if (memwrite) {
+		genfs_markdirty(vp);
+	}
+	mutex_exit(uobj->vmobjlock);
+	if (ap->a_m != NULL) {
+		memcpy(ap->a_m, &pgs[ridx],
+		    orignmempages * sizeof(struct vm_page *));
+	}
+
+out_err_free:
+	if (pgs != NULL && pgs != pgs_onstack)
+		kmem_free(pgs, pgs_size);
+out_err:
+	if (has_trans_wapbl) {
+		if (need_wapbl)
+			WAPBL_END(vp->v_mount);
+		fstrans_done(vp->v_mount);
+	}
+	return error;
+}
+
+/*
+ * genfs_getpages_read: Read the pages in with VOP_BMAP/VOP_STRATEGY.
+ */
+static int
+genfs_getpages_read(struct vnode *vp, struct vm_page **pgs, int npages,
+    off_t startoffset, off_t diskeof,
+    bool async, bool memwrite, bool blockalloc, bool glocked)
+{
+	struct uvm_object * const uobj = &vp->v_uobj;
+	const int fs_bshift = (vp->v_type != VBLK) ?
+	    vp->v_mount->mnt_fs_bshift : DEV_BSHIFT;
+	const int dev_bshift = (vp->v_type != VBLK) ?
+	    vp->v_mount->mnt_dev_bshift : DEV_BSHIFT;
+	kauth_cred_t const cred = curlwp->l_cred;		/* XXXUBC curlwp */
 	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
 	vaddr_t kva;
 	struct buf *bp, *mbp;
 	bool sawhole = false;
+	int i;
+	int error = 0;
 
 	/*
 	 * read the desired page(s).
@@ -439,10 +532,8 @@ startover:
 
 	kva = uvm_pagermapin(pgs, npages,
 	    UVMPAGER_MAPIN_READ | (async ? 0 : UVMPAGER_MAPIN_WAITOK));
-	if (kva == 0) {
-		error = EBUSY;
-		goto mapin_fail;
-	}
+	if (kva == 0)
+		return EBUSY;
 
 	mbp = getiobuf(vp, true);
 	mbp->b_bufsize = totalbytes;
@@ -618,8 +709,7 @@ loopdone:
 		if (!glocked) {
 			genfs_node_unlock(vp);
 		}
-		error = 0;
-		goto out_err_free;
+		return 0;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
@@ -658,82 +748,6 @@ loopdone:
 	}
 
 	putiobuf(mbp);
-    }
-
-mapin_fail:
-	if (!glocked) {
-		genfs_node_unlock(vp);
-	}
-	mutex_enter(uobj->vmobjlock);
-
-	/*
-	 * we're almost done!  release the pages...
-	 * for errors, we free the pages.
-	 * otherwise we activate them and mark them as valid and clean.
-	 * also, unbusy pages that were not actually requested.
-	 */
-
-	if (error) {
-		genfs_rel_pages(pgs, npages);
-		mutex_exit(uobj->vmobjlock);
-		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
-		goto out_err_free;
-	}
-
-out:
-	UVMHIST_LOG(ubchist, "succeeding, npages %d", npages,0,0,0);
-	error = 0;
-	mutex_enter(&uvm_pageqlock);
-	for (i = 0; i < npages; i++) {
-		struct vm_page *pg = pgs[i];
-		if (pg == NULL) {
-			continue;
-		}
-		UVMHIST_LOG(ubchist, "examining pg %p flags 0x%x",
-		    pg, pg->flags, 0,0);
-		if (pg->flags & PG_FAKE && !overwrite) {
-			pg->flags &= ~(PG_FAKE);
-			pmap_clear_modify(pgs[i]);
-		}
-		KASSERT(!memwrite || !blockalloc || (pg->flags & PG_RDONLY) == 0);
-		if (i < ridx || i >= ridx + orignmempages || async) {
-			UVMHIST_LOG(ubchist, "unbusy pg %p offset 0x%x",
-			    pg, pg->offset,0,0);
-			if (pg->flags & PG_WANTED) {
-				wakeup(pg);
-			}
-			if (pg->flags & PG_FAKE) {
-				KASSERT(overwrite);
-				uvm_pagezero(pg);
-			}
-			if (pg->flags & PG_RELEASED) {
-				uvm_pagefree(pg);
-				continue;
-			}
-			uvm_pageenqueue(pg);
-			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
-			UVM_PAGE_OWN(pg, NULL);
-		}
-	}
-	mutex_exit(&uvm_pageqlock);
-	if (memwrite) {
-		genfs_markdirty(vp);
-	}
-	mutex_exit(uobj->vmobjlock);
-	if (ap->a_m != NULL) {
-		memcpy(ap->a_m, &pgs[ridx],
-		    orignmempages * sizeof(struct vm_page *));
-	}
-
-out_err_free:
-	if (pgs != NULL && pgs != pgs_onstack)
-		kmem_free(pgs, pgs_size);
-out_err:
-	if (has_trans_wapbl) {
-		if (need_wapbl)
-			WAPBL_END(vp->v_mount);
-		fstrans_done(vp->v_mount);
-	}
 	return error;
 }
 
