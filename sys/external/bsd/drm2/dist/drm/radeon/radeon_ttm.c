@@ -450,6 +450,10 @@ static int radeon_ttm_io_mem_reserve(struct ttm_bo_device *bdev, struct ttm_mem_
 			mem->bus.offset = mem->start << PAGE_SHIFT;
 			mem->bus.base = rdev->mc.agp_base;
 			mem->bus.is_iomem = !rdev->ddev->agp->cant_use_aperture;
+			KASSERTMSG((mem->bus.base & (PAGE_SIZE - 1)) == 0,
+			    "agp aperture is not page-aligned: %lx",
+			    mem->bus.base);
+			KASSERT((mem->bus.offset & (PAGE_SIZE - 1)) == 0);
 		}
 #endif
 		break;
@@ -483,6 +487,10 @@ static int radeon_ttm_io_mem_reserve(struct ttm_bo_device *bdev, struct ttm_mem_
 		mem->bus.base = (mem->bus.base & 0x0ffffffffUL) +
 			rdev->ddev->hose->dense_mem_base;
 #endif
+		KASSERTMSG((mem->bus.base & (PAGE_SIZE - 1)) == 0,
+		    "mc aperture is not page-aligned: %lx",
+		    mem->bus.base);
+		KASSERT((mem->bus.offset & (PAGE_SIZE - 1)) == 0);
 		break;
 	default:
 		return -EINVAL;
