@@ -1,4 +1,4 @@
-# $Id: export-all.mk,v 1.1 2014/08/21 13:44:51 apb Exp $
+# $Id: export-all.mk,v 1.2 2015/04/10 20:41:59 sjg Exp $
 
 UT_OK=good
 UT_F=fine
@@ -17,7 +17,7 @@ UT_OKDIR = ${${here}/../${here:T}:L:${M_tA}:T}
 
 .export
 
-.include "export"
+.include "export.mk"
 
 UT_TEST=export-all
 UT_ALL=even this gets exported
