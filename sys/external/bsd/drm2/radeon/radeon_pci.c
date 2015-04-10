@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.7 2015/03/01 10:07:01 mrg Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.8 2015/04/10 02:03:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.7 2015/03/01 10:07:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.8 2015/04/10 02:03:14 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -105,6 +105,8 @@ static int	radeon_match(device_t, cfdata_t, void *);
 static void	radeon_attach(device_t, device_t, void *);
 static void	radeon_attach_real(device_t);
 static int	radeon_detach(device_t, int);
+static bool	radeon_do_suspend(device_t, const pmf_qual_t *);
+static bool	radeon_do_resume(device_t, const pmf_qual_t *);
 
 static void	radeon_task_work(struct work *, void *);
 
@@ -162,6 +164,9 @@ radeon_attach(device_t parent, device_t self, void *aux)
 	const struct pci_attach_args *const pa = aux;
 
 	pci_aprint_devinfo(pa, NULL);
+
+	if (!pmf_device_register(self, &radeon_do_suspend, &radeon_do_resume))
+		aprint_error_dev(self, "unable to establish power handler\n");
 
 	/*
 	 * Trivial initialization first; the rest will come after we
@@ -275,6 +280,40 @@ radeon_detach(device_t self, int flags)
 	sc->sc_drm_dev = NULL;
 
 	return 0;
+}
+
+static bool
+radeon_do_suspend(device_t self, const pmf_qual_t *qual)
+{
+	struct radeon_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
+	int ret;
+
+	if (dev == NULL)
+		return true;
+
+	ret = radeon_suspend_kms(dev, true, true);
+	if (ret)
+		return false;
+
+	return true;
+}
+
+static bool
+radeon_do_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct radeon_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
+	int ret;
+
+	if (dev == NULL)
+		return true;
+
+	ret = radeon_resume_kms(dev, true, true);
+	if (ret)
+		return false;
+
+	return true;
 }
 
 static void
