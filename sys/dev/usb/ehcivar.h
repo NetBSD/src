@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.13 2015/04/06 08:58:43 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.14 2015/04/10 15:25:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
 
 typedef struct ehci_soft_qtd {
 	ehci_qtd_t qtd;
-	struct ehci_soft_qtd *nextqtd; /* mirrors nextqtd in TD */
+	struct ehci_soft_qtd *nextqtd;	/* mirrors nextqtd in TD */
 	ehci_physaddr_t physaddr;
-	usb_dma_t dma;                  /* qTD's DMA infos */
-	int offs;                       /* qTD's offset in usb_dma_t */
+	usb_dma_t dma;			/* qTD's DMA infos */
+	int offs;			/* qTD's offset in usb_dma_t */
 	struct usbd_xfer *xfer;
 	LIST_ENTRY(ehci_soft_qtd) hnext;
 	uint16_t len;
@@ -53,8 +53,8 @@ typedef struct ehci_soft_qh {
 	struct ehci_soft_qh *next;
 	struct ehci_soft_qtd *sqtd;
 	ehci_physaddr_t physaddr;
-	usb_dma_t dma;                  /* QH's DMA infos */
-	int offs;                       /* QH's offset in usb_dma_t */
+	usb_dma_t dma;			/* QH's DMA infos */
+	int offs;			/* QH's offset in usb_dma_t */
 	int islot;
 } ehci_soft_qh_t;
 #define EHCI_SQH_SIZE ((sizeof(struct ehci_soft_qh) + EHCI_QH_ALIGN - 1) / EHCI_QH_ALIGN * EHCI_QH_ALIGN)
