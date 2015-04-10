@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.250 2015/04/06 18:51:14 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.251 2015/04/10 20:44:51 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19531,4 +19531,53 @@ distrib/utils/embedded/mkimage			1.54
 	explicitly set fsize=2048/bsize=16384, which gives a pretty
 	decent boost to resize_ffs performance.
 	[jmcneill, ticket #667]
+
+external/gpl3/gcc/dist/gcc/config/host-netbsd.c	1.2
+
+	Use the same TRY_EMPTY_VM_SPACE as mips and vax for arm, which
+	also has VM_MAXUSER_ADDRESS set to 2GB. Fixes "fatal error: had
+	to relocate PCH" from g++ building wxGTK28 or wxGTK30.
+	See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58379
+	[bouyer, ticket #668]
+
+sys/arch/arm/arm32/pmap.c			1.318
+
+	Fix two bugs.  pmap_is_cached fix for MULTIPROCESSOR (not just
+	ASID on local cpu -> any valid ASID on any cpu).
+	pmap_deactivate: update curcpu()->ci_pmap_cur_asid to KERNEL_PID
+	too.
+	[skrll, ticket #669]
+
+lib/libc/softfloat/Makefile.inc			1.20
+
+	Restrict the arm compiler optimization hack (see PR 46953) to
+	gcc 4.5.
+	[martin, ticket #670]
+
+external/bsd/ipf/dist/lib/interror.c		1.4
+sys/external/bsd/ipf/netinet/fil.c		1.16
+
+	Don't panic if the direction of group rules to be added does
+	not match to the direction of head rule.  PR kern/48109 and
+	PR kern/49807.
+	[khorben, ticket #671]
+
+sys/dev/i2c/ds1307.c				1.19, 1.20
+sys/dev/i2c/ds1307reg.h				1.5
+
+	- Support DS3231
+	- Support the DS3231's temperature sensor
+	[nonaka, ticket #672]
+
+distrib/sets/lists/xcomp/mi			1.162
+external/mit/xorg/lib/libXaw/Makefile		1.10
+xsrc/external/mit/libXaw/dist/xaw.m4		delete
+xsrc/external/mit/libXaw/dist/xaw8.pc.in	delete
+xsrc/external/mit/libXaw/dist/include/X11/Xaw/Print.h delete
+xsrc/external/mit/libXaw/dist/include/X11/Xaw/PrintSP.h delete
+xsrc/external/mit/libXaw/dist/src/PrintShell.c	delete
+
+	Don't install X11/Xaw/Print.h and X11/Xaw/PrintSP.h.
+	Nuke old files that disappeared upstream in 1.0.5.
+	[mrg, ticket #673]
 
