@@ -1613,8 +1613,12 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 	if (bo->mem.bus.is_iomem) {
 		paddr_t start, end, pa;
 
-		KASSERT((bo->mem.bus.base & (PAGE_SIZE - 1)) == 0);
-		KASSERT((bo->mem.bus.offset & (PAGE_SIZE - 1)) == 0);
+		KASSERTMSG((bo->mem.bus.base & (PAGE_SIZE - 1)) == 0,
+		    "bo bus base addr not page-aligned: %lx",
+		    bo->mem.bus.base);
+		KASSERTMSG((bo->mem.bus.offset & (PAGE_SIZE - 1)) == 0,
+		    "bo bus offset not page-aligned: %lx",
+		    bo->mem.bus.offset);
 		start = bo->mem.bus.base + bo->mem.bus.offset;
 		KASSERT((bo->mem.bus.size & (PAGE_SIZE - 1)) == 0);
 		end = start + bo->mem.bus.size;
