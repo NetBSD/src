@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/04/22 15:02:38 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2015/04/10 22:36:50 riastradh Exp $
 
 .include "${.CURDIR}/../../dist/uts/common/Makefile.files"
 .include "../../Makefile.zfs"
@@ -26,7 +26,7 @@ SRCS=		kernel.c kernel2.c atomic.c
 # Sun stuff
 SRCS+=		${ZFS_COMMON_OBJS:C/.o$/.c/}
 SRCS+=		${ZFS_SHARED_OBJS:C/.o$/.c/}
-SRCS+=		taskq.c util.c list.o u8_textprep.o
+SRCS+=		taskq.c util.c list.c u8_textprep.c
 
 print:
 	echo ${LIST_SRCS} ${LIST_OBJS}
