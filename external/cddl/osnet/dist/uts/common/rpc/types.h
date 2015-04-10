@@ -88,6 +88,10 @@ typedef long rpc_inline_t;
 #endif
 
 #ifndef	_KERNEL
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+
 #define	mem_alloc(bsize)	malloc(bsize)
 #define	mem_free(ptr, bsize)	free(ptr)
 #else
