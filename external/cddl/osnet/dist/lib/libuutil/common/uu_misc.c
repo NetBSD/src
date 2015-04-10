@@ -248,6 +248,7 @@ uu_release_child(void)
 }
 
 #pragma init(uu_init)
+__attribute__((constructor))
 static void
 uu_init(void)
 {
