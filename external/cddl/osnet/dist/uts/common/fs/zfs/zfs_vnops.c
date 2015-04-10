@@ -5750,7 +5750,7 @@ zfs_netbsd_putpages(void *v)
 }
 
 #define zfs_netbsd_seek genfs_seek
-#define zfs_netbsd_mmap genfs_mmap
+#define zfs_netbsd_mmap genfs_eopnotsupp
 #define zfs_netbsd_getpages genfs_compat_getpages
 //#define zfs_netbsd_putpages genfs_putpages
 
