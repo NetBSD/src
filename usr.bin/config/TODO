@@ -44,6 +44,29 @@ o Rename "interface attribute" to "bus".
 	defbus	audiobus {}
 	attach	audio at audiobus
 
+  Always provide xxxbusprint() (and xxxbussubmatch if multiple children).
+  Extend struct cfiattrdata like:
+
+	struct cfiattrdata {
+		const char *ci_name;
+		cfprint_t ci_print;
+		cfsubmatch_t ci_submatch;
+		int ci_loclen;
+		const struct cflocdesc ci_locdesc[];
+	};
+
+o Simplify child configuration API
+
+  With said struct cfiattrdata extension, config_found*() can omit
+  print/submatch args.  If the found child is known (e.g., "pcibus" creating
+  "pci"):
+
+	config_found(self, "xxxbus");
+
+  If finding unknown children (e.g. "pci" finding pci devices):
+
+	config_find(self, "pci", locs, aux);
+
 o Retire "attach foo at bar with foo_bar.c"
 
   Most of these should be rewritten by defining a common interface attribute
