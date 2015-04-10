@@ -1624,9 +1624,11 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 	} else if (bo->ttm != NULL) {
 		unsigned i;
 
+		mutex_enter(bo->uvmobj.vmobjlock);
 		for (i = 0; i < bo->ttm->num_pages; i++)
 			pmap_page_protect(&bo->ttm->pages[i]->p_vmp,
 			    VM_PROT_NONE);
+		mutex_exit(bo->uvmobj.vmobjlock);
 	}
 #else
 	drm_vma_node_unmap(&bo->vma_node, bdev->dev_mapping);
