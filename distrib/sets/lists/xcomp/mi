@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.152.2.5 2015/03/11 07:21:15 snj Exp $
+#	 $NetBSD: mi,v 1.152.2.6 2015/04/10 20:40:19 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5240,8 +5240,8 @@
 ./usr/X11R7/include/X11/Xaw/PannerP.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xaw/Porthole.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xaw/PortholeP.h			-unknown-	xorg
-./usr/X11R7/include/X11/Xaw/Print.h			-unknown-	xorg
-./usr/X11R7/include/X11/Xaw/PrintSP.h			-unknown-	xorg
+./usr/X11R7/include/X11/Xaw/Print.h			-obsoltete-	obsolete
+./usr/X11R7/include/X11/Xaw/PrintSP.h			-obsolete-	obsolete
 ./usr/X11R7/include/X11/Xaw/Repeater.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xaw/RepeaterP.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xaw/Reports.h			-unknown-	xorg
