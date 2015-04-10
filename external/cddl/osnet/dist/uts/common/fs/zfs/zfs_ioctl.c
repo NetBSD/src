@@ -4441,11 +4441,11 @@ zfsdev_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 	uint_t vec;
 	int error, rc;
 
-	printf("zfsdev_ioctl called \n");
+	dprintf("zfsdev_ioctl called \n");
 
 	if (getminor(dev) != 0)
 		return (zvol_ioctl(dev, cmd, arg, flag, cr, rvalp));
-	printf("zfsdev_ioctl -> zvol_ioctl\n");
+	dprintf("zfsdev_ioctl -> zvol_ioctl\n");
 	vec = cmd - ZFS_IOC;
 	ASSERT3U(getmajor(dev), ==, ddi_driver_major(zfs_dip));
 
@@ -4488,7 +4488,7 @@ zfsdev_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 		}
 	}
 
-	printf("zfsdev_ioctl -> calling zfs_ioc_vec zvec_func on %d\n", vec);
+	dprintf("zfsdev_ioctl -> calling zfs_ioc_vec zvec_func on %d\n", vec);
 	if (error == 0)
 		error = zfs_ioc_vec[vec].zvec_func(zc);
 
@@ -4500,7 +4500,7 @@ zfsdev_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 	}
 
 	kmem_free(zc, sizeof (zfs_cmd_t));
-	printf("zfsdev_ioctl %d\n", error);
+	dprintf("zfsdev_ioctl %d\n", error);
 	return (error);
 }
 
