@@ -229,6 +229,7 @@ zfs_range_proxify(avl_tree_t *tree, rl_t *rl)
 
 	/* create a proxy range lock */
 	proxy = kmem_alloc(sizeof (rl_t), KM_SLEEP);
+	proxy->r_zp = rl->r_zp;
 	proxy->r_off = rl->r_off;
 	proxy->r_len = rl->r_len;
 	proxy->r_cnt = 1;
@@ -261,6 +262,7 @@ zfs_range_split(avl_tree_t *tree, rl_t *rl, uint64_t off)
 
 	/* create the rear proxy range lock */
 	rear = kmem_alloc(sizeof (rl_t), KM_SLEEP);
+	rear->r_zp = rl->r_zp;
 	rear->r_off = off;
 	rear->r_len = rl->r_off + rl->r_len - off;
 	rear->r_cnt = rl->r_cnt;
@@ -283,12 +285,13 @@ zfs_range_split(avl_tree_t *tree, rl_t *rl, uint64_t off)
  * Create and add a new proxy range lock for the supplied range.
  */
 static void
-zfs_range_new_proxy(avl_tree_t *tree, uint64_t off, uint64_t len)
+zfs_range_new_proxy(avl_tree_t *tree, uint64_t off, uint64_t len, znode_t *zp)
 {
 	rl_t *rl;
 
 	ASSERT(len);
 	rl = kmem_alloc(sizeof (rl_t), KM_SLEEP);
+	rl->r_zp = zp;
 	rl->r_off = off;
 	rl->r_len = len;
 	rl->r_cnt = 1;
@@ -305,6 +308,7 @@ zfs_range_new_proxy(avl_tree_t *tree, uint64_t off, uint64_t len)
 static void
 zfs_range_add_reader(avl_tree_t *tree, rl_t *new, rl_t *prev, avl_index_t where)
 {
+	znode_t *zp = new->r_zp;
 	rl_t *next;
 	uint64_t off = new->r_off;
 	uint64_t len = new->r_len;
@@ -343,7 +347,7 @@ zfs_range_add_reader(avl_tree_t *tree, rl_t *new, rl_t *prev, avl_index_t where)
 
 	if (off < next->r_off) {
 		/* Add a proxy for initial range before the overlap */
-		zfs_range_new_proxy(tree, off, next->r_off - off);
+		zfs_range_new_proxy(tree, off, next->r_off - off, zp);
 	}
 
 	new->r_cnt = 0; /* will use proxies in tree */
@@ -360,7 +364,7 @@ zfs_range_add_reader(avl_tree_t *tree, rl_t *new, rl_t *prev, avl_index_t where)
 			/* there's a gap */
 			ASSERT3U(next->r_off, >, prev->r_off + prev->r_len);
 			zfs_range_new_proxy(tree, prev->r_off + prev->r_len,
-			    next->r_off - (prev->r_off + prev->r_len));
+			    next->r_off - (prev->r_off + prev->r_len), zp);
 		}
 		if (off + len == next->r_off + next->r_len) {
 			/* exact overlap with end */
@@ -381,7 +385,7 @@ zfs_range_add_reader(avl_tree_t *tree, rl_t *new, rl_t *prev, avl_index_t where)
 
 	/* Add the remaining end range. */
 	zfs_range_new_proxy(tree, prev->r_off + prev->r_len,
-	    (off + len) - (prev->r_off + prev->r_len));
+	    (off + len) - (prev->r_off + prev->r_len), zp);
 }
 
 /*
