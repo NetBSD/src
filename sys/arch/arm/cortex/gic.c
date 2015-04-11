@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.17 2015/04/09 00:38:29 matt Exp $	*/
+/*	$NetBSD: gic.c,v 1.18 2015/04/11 16:47:47 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.17 2015/04/09 00:38:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.18 2015/04/11 16:47:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -569,6 +569,9 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	    "%zu sources (%zu valid)\n",
 	    sc->sc_pic.pic_maxsources, sc->sc_gic_lines);
 
+#ifdef MULTIPROCESSOR
+	sc->sc_pic.pic_cpus = kcpuset_running;
+#endif
 	pic_add(&sc->sc_pic, 0);
 
 	/*
