@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.200 2015/04/05 09:12:06 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.201 2015/04/11 10:10:14 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.200 2015/04/05 09:12:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.201 2015/04/11 10:10:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -896,12 +896,13 @@ usbd_attachinterfaces(device_t parent, usbd_device_handle dev,
 					 usbd_ifprint, config_stdsubmatch);
 		if (!dv)
 			continue;
-		ifaces[i] = 0; /* claim */
+		/* claim */
+		ifaces[i] = NULL;
 		/* account for ifaces claimed by the driver behind our back */
 		for (j = 0; j < nifaces; j++) {
 			if (!ifaces[j] && !dev->subdevs[j]) {
 				DPRINTF(("%s: interface %d claimed "
-				    "behind our back", __func__, j));
+				    "behind our back\n", __func__, j));
 				dev->subdevs[j] = dv;
 				dev->nifaces_claimed++;
 			}
