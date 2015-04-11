@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.186 2014/09/05 05:36:21 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.187 2015/04/11 19:24:13 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,9 +66,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.186 2014/09/05 05:36:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.187 2015/04/11 19:24:13 joerg Exp $");
 
 #include "opt_ddb.h"
+#include "opt_uvm.h"
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
 
@@ -107,7 +108,10 @@ bool vm_page_zero_enable = false;
 /*
  * number of pages per-CPU to reserve for the kernel.
  */
-int vm_page_reserve_kernel = 5;
+#ifndef	UVM_RESERVED_PAGES_PER_CPU
+#define	UVM_RESERVED_PAGES_PER_CPU	5
+#endif
+int vm_page_reserve_kernel = UVM_RESERVED_PAGES_PER_CPU;
 
 /*
  * physical memory size;
