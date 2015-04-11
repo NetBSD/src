@@ -96,7 +96,7 @@ static struct wpabuf * eap_sm_buildInitiateReauthStart(struct eap_sm *sm,
 		plen += 2 + domain_len;
 	}
 
-	msg = eap_msg_alloc(EAP_VENDOR_IETF, EAP_ERP_TYPE_REAUTH_START, plen,
+	msg = eap_msg_alloc(EAP_VENDOR_IETF, (EapType)EAP_ERP_TYPE_REAUTH_START, plen,
 			    EAP_CODE_INITIATE, id);
 	if (msg == NULL)
 		return NULL;
