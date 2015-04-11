@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.116 2015/03/05 00:26:17 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.117 2015/04/11 12:54:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.116 2015/03/05 00:26:17 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.117 2015/04/11 12:54:41 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1721,7 +1721,8 @@ fork(void)
 }
 #ifdef VFORK
 /* we do not have the luxury of not requiring a stackframe */
-__strong_alias(VFORK,fork);
+#define	__strong_alias_macro(m, f)	__strong_alias(m, f)
+__strong_alias_macro(VFORK,fork);
 #endif
 
 int
