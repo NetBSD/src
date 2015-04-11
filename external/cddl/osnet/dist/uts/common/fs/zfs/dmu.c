@@ -807,8 +807,10 @@ dmu_read_uio(objset_t *os, uint64_t object, uio_t *uio, uint64_t size)
 	if (err)
 		return (err);
 
+#ifndef __NetBSD__		/* XXX xuio */
 	if (uio->uio_extflg == UIO_XUIO)
 		xuio = (xuio_t *)uio;
+#endif
 
 	for (i = 0; i < numbufs; i++) {
 		int tocpy;
