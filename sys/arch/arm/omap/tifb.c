@@ -1,4 +1,4 @@
-/*	$NetBSD: tifb.c,v 1.3 2014/08/22 20:01:16 jakllsch Exp $	*/
+/*	$NetBSD: tifb.c,v 1.4 2015/04/11 13:44:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.3 2014/08/22 20:01:16 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.4 2015/04/11 13:44:14 bouyer Exp $");
 
 #include "opt_omap.h"
 
@@ -226,6 +226,7 @@ static struct evcnt ev_eof0;
 static struct evcnt ev_eof1;
 static struct evcnt ev_fifo_underflow;
 static struct evcnt ev_ac_bias;
+static struct evcnt ev_frame_done;
 static struct evcnt ev_others;
 
 
@@ -319,6 +320,8 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	    "lcd", "fifo underflow");
 	evcnt_attach_dynamic(&ev_ac_bias, EVCNT_TYPE_MISC, NULL,
 	    "lcd", "ac bias");
+	evcnt_attach_dynamic(&ev_frame_done, EVCNT_TYPE_MISC, NULL,
+	    "lcd", "frame_done");
 	evcnt_attach_dynamic(&ev_others, EVCNT_TYPE_MISC, NULL,
 	    "lcd", "others");
 
@@ -400,7 +403,7 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, sc->sc_dmamem, 1, sc->sc_vramsize,
-	    &sc->sc_vramaddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
+	    &sc->sc_vramaddr, BUS_DMA_NOWAIT) != 0) {
 		aprint_error_dev(sc->sc_dev, "failed to map video RAM\n");
 		return;
 	}
@@ -681,6 +684,17 @@ tifb_intr(void *v)
 		reg |= RASTER_CTRL_LCDEN;
 		TIFB_WRITE(sc, LCD_RASTER_CTRL, reg);
 		return 0;
+	}
+
+	if (reg & (IRQ_FRAME_DONE|IRQ_EOF0|IRQ_EOF1)) {
+		/* flush the write-back cache */
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    0, sc->sc_vramsize, BUS_DMASYNC_PREWRITE);
+	}
+
+	if (reg & IRQ_FRAME_DONE) {
+		ev_frame_done.ev_count ++;
+		reg &= ~IRQ_FRAME_DONE;
 	}
 
 	if (reg & IRQ_EOF0) {
