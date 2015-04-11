@@ -490,11 +490,10 @@ zfs_range_lock(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type)
 		/*
 		 * First check for the usual case of no locks
 		 */
-		if (avl_numnodes(&zp->z_range_avl) == 0) {
+		if (avl_numnodes(&zp->z_range_avl) == 0)
 			avl_add(&zp->z_range_avl, new);
-		} else {
+		else
 			zfs_range_lock_reader(zp, new);
-		}
 	} else {
 		zfs_range_lock_writer(zp, new); /* RL_WRITER or RL_APPEND */
 	}
