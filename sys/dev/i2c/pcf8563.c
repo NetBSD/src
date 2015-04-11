@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.6 2015/01/11 18:58:09 jmcneill Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.7 2015/04/11 20:05:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.6 2015/01/11 18:58:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.7 2015/04/11 20:05:44 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ pcf8563rtc_clock_read(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 {
 	uint8_t bcd[PCF8563_NREGS];
 	uint8_t reg = PCF8563_R_SECOND;
-	const int flags = cold ? I2C_F_POLL : 0;
+	const int flags = I2C_F_POLL;
 
 	if (iic_acquire_bus(sc->sc_tag, flags)) {
 		device_printf(sc->sc_dev, "acquire bus for read failed\n");
@@ -166,7 +166,7 @@ pcf8563rtc_clock_write(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 {
 	uint8_t bcd[PCF8563_NREGS];
 	uint8_t reg = PCF8563_R_SECOND;
-	const int flags = cold ? I2C_F_POLL : 0;
+	const int flags = I2C_F_POLL;
 
 	bcd[PCF8563_R_SECOND] = bintobcd(dt->dt_sec);
 	bcd[PCF8563_R_MINUTE] = bintobcd(dt->dt_min);
