@@ -156,10 +156,13 @@ typedef struct XDR {
  * xdr_ops
  * Changes must be reviewed by Solaris File Sharing
  * Changes must be communicated to contract-2003-523@sun.com
+ *
+ * XXX We are not Solaris, we are NetBSD.  So no need for silly ABI
+ * compatibility with Solaris ILP32 gunk.
  */
 struct xdr_ops {
 #ifdef __STDC__
-#if !defined(_KERNEL)
+#if !defined(_KERNEL) && !defined(__NetBSD__)
 		bool_t	(*x_getlong)(struct XDR *, long *);
 		/* get a long from underlying stream */
 		bool_t	(*x_putlong)(struct XDR *, long *);
@@ -178,14 +181,14 @@ struct xdr_ops {
 		void	(*x_destroy)(struct XDR *);
 		/* free privates of this xdr_stream */
 		bool_t	(*x_control)(struct XDR *, int, void *);
-#if defined(_LP64) || defined(_KERNEL)
+#if defined(_LP64) || defined(_KERNEL) || defined(__NetBSD__)
 		bool_t	(*x_getint32)(struct XDR *, int32_t *);
 		/* get a int from underlying stream */
 		bool_t	(*x_putint32)(struct XDR *, int32_t *);
 		/* put an int to " */
 #endif /* _LP64 || _KERNEL */
 #else
-#if !defined(_KERNEL)
+#if !defined(_KERNEL) && !defined(__NetBSD__)
 		bool_t	(*x_getlong)();	/* get a long from underlying stream */
 		bool_t	(*x_putlong)();	/* put a long to " */
 #endif /* KERNEL */
@@ -197,7 +200,7 @@ struct xdr_ops {
 				/* buf quick ptr to buffered data */
 		void	(*x_destroy)();	/* free privates of this xdr_stream */
 		bool_t	(*x_control)();
-#if defined(_LP64) || defined(_KERNEL)
+#if defined(_LP64) || defined(_KERNEL) || defined(__NetBSD__)
 		bool_t	(*x_getint32)();
 		bool_t	(*x_putint32)();
 #endif /* _LP64 || defined(_KERNEL) */
@@ -213,7 +216,7 @@ struct xdr_ops {
  * uint_t	 len;
  * uint_t	 pos;
  */
-#if !defined(_KERNEL)
+#if !defined(_KERNEL) && !defined(__NetBSD__)
 #define	XDR_GETLONG(xdrs, longp)			\
 	(*(xdrs)->x_ops->x_getlong)(xdrs, longp)
 #define	xdr_getlong(xdrs, longp)			\
@@ -226,7 +229,7 @@ struct xdr_ops {
 #endif /* KERNEL */
 
 
-#if !defined(_LP64) && !defined(_KERNEL)
+#if !defined(_LP64) && !defined(_KERNEL) && !defined(__NetBSD__)
 
 /*
  * For binary compatability on ILP32 we do not change the shape
@@ -367,7 +370,7 @@ struct xdr_discrim {
 #define	IXDR_GET_U_INT32(buf)		((uint32_t)IXDR_GET_INT32(buf))
 #define	IXDR_PUT_U_INT32(buf, v)	IXDR_PUT_INT32((buf), ((int32_t)(v)))
 
-#if !defined(_KERNEL) && !defined(_LP64)
+#if !defined(_KERNEL) && !defined(_LP64) && !defined(__NetBSD__)
 
 #define	IXDR_GET_LONG(buf)		((long)ntohl((ulong_t)*(buf)++))
 #define	IXDR_PUT_LONG(buf, v)		(*(buf)++ = (long)htonl((ulong_t)v))
