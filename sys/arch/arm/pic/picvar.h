@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.13 2015/04/09 06:03:43 matt Exp $	*/
+/*	$NetBSD: picvar.h,v 1.14 2015/04/11 16:47:47 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -129,6 +129,9 @@ struct pic_softc {
 	volatile uint32_t pic_pending_irqs[(PIC_MAXSOURCES + 31) / 32];
 	volatile uint32_t pic_blocked_irqs[(PIC_MAXSOURCES + 31) / 32];
 	volatile uint32_t pic_pending_ipls;
+#endif
+#ifdef MULTIPROCESSOR
+	kcpuset_t *pic_cpus;
 #endif
 	size_t pic_maxsources;
 	percpu_t *pic_percpu;
