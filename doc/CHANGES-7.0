@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.251 2015/04/10 20:44:51 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.252 2015/04/11 05:47:34 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19580,4 +19580,10 @@ xsrc/external/mit/libXaw/dist/src/PrintShell.c	delete
 	Don't install X11/Xaw/Print.h and X11/Xaw/PrintSP.h.
 	Nuke old files that disappeared upstream in 1.0.5.
 	[mrg, ticket #673]
+
+share/mk/bsd.own.mk				1.845
+external/gpl3/gcc.old/*				delete
+
+	Delete GCC 4.5.
+	[mrg, ticket #674]
 
