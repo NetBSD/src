@@ -192,18 +192,17 @@ xdrmem_control(XDR *xdrs, int request, void *info)
 static struct xdr_ops *
 xdrmem_ops(void)
 {
-	static struct xdr_ops ops;
+	static struct xdr_ops ops = {
+		.x_getbytes = xdrmem_getbytes,
+		.x_putbytes = xdrmem_putbytes,
+		.x_getpostn = xdrmem_getpos,
+		.x_setpostn = xdrmem_setpos,
+		.x_inline = xdrmem_inline,
+		.x_destroy = xdrmem_destroy,
+		.x_control = xdrmem_control,
+		.x_getint32 = xdrmem_getint32,
+		.x_putint32 = xdrmem_putint32,
+	};
 
-	if (ops.x_getint32 == NULL) {
-		ops.x_getbytes = xdrmem_getbytes;
-		ops.x_putbytes = xdrmem_putbytes;
-		ops.x_getpostn = xdrmem_getpos;
-		ops.x_setpostn = xdrmem_setpos;
-		ops.x_inline = xdrmem_inline;
-		ops.x_destroy = xdrmem_destroy;
-		ops.x_control = xdrmem_control;
-		ops.x_getint32 = xdrmem_getint32;
-		ops.x_putint32 = xdrmem_putint32;
-	}
 	return (&ops);
 }
