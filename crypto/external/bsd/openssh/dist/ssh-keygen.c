@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.15 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.16 2015/04/11 21:14:31 joerg Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.266 2015/02/26 20:45:47 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.15 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.16 2015/04/11 21:14:31 joerg Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -291,7 +291,7 @@ load_identity(char *filename)
 #define	SSH_COM_PRIVATE_KEY_MAGIC	0x3f6ff9eb
 
 #ifdef WITH_OPENSSL
-static void
+__dead static void
 do_convert_to_ssh2(struct passwd *pw, struct sshkey *k)
 {
 	size_t len;

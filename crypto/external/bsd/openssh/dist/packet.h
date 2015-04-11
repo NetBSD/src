@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.h,v 1.10 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: packet.h,v 1.11 2015/04/11 21:14:31 joerg Exp $	*/
 /* $OpenBSD: packet.h,v 1.66 2015/01/30 01:13:33 djm Exp $ */
 
 /*
@@ -151,7 +151,7 @@ int	sshpkt_sendx(struct ssh *ssh);
 int     sshpkt_disconnect(struct ssh *, const char *fmt, ...)
 	    __attribute__((format(printf, 2, 3)));
 int	sshpkt_add_padding(struct ssh *, u_char);
-void	sshpkt_fatal(struct ssh *ssh, const char *tag, int r);
+void	sshpkt_fatal(struct ssh *ssh, const char *tag, int r) __dead;
 
 int	sshpkt_put(struct ssh *ssh, const void *v, size_t len);
 int	sshpkt_putb(struct ssh *ssh, const struct sshbuf *b);
