@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.318 2015/04/07 20:36:21 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.319 2015/04/11 15:21:33 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -186,6 +186,7 @@
 
 /* Include header files */
 
+#include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 #include "opt_ddb.h"
@@ -215,7 +216,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.318 2015/04/07 20:36:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.319 2015/04/11 15:21:33 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
