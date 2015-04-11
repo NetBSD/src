@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.108 2014/11/19 10:01:50 martin Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.109 2015/04/11 13:37:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.108 2014/11/19 10:01:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.109 2015/04/11 13:37:59 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -575,6 +575,10 @@ parse_mi_bootargs(char *args)
 	    || get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= AB_VERBOSE;
+	if (get_bootconf_option(args, "debug", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-x", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= AB_DEBUG;
 }
 
 #ifdef __HAVE_FAST_SOFTINTS
