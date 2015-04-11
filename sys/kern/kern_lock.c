@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.156 2015/04/11 15:23:56 skrll Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.157 2015/04/11 15:24:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.156 2015/04/11 15:23:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.157 2015/04/11 15:24:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -236,7 +236,7 @@ _kernel_lock(int nlocks)
 	/*
 	 * Now that we have kernel_lock, reset ci_biglock_wanted.  This
 	 * store must be unbuffered (immediately visible on the bus) in
-	 * order for non-interlocked mutex release to work correctly. 
+	 * order for non-interlocked mutex release to work correctly.
 	 * It must be visible before a mutex_exit() can execute on this
 	 * processor.
 	 *
