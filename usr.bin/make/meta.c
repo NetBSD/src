@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.37 2015/04/01 01:03:55 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.38 2015/04/11 05:24:30 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -848,6 +848,7 @@ string_match(const void *p, const void *q)
  * if any of the references in its meta data file is more recent.
  * We have to track the latestdir on a per-process basis.
  */
+#define LCWD_VNAME_FMT ".meta.%d.lcwd"
 #define LDIR_VNAME_FMT ".meta.%d.ldir"
 
 /*
@@ -873,11 +874,14 @@ meta_oodate(GNode *gn, Boolean oodate)
 {
     static char *tmpdir = NULL;
     static char cwd[MAXPATHLEN];
+    char lcwd_vname[64];
     char ldir_vname[64];
+    char lcwd[MAXPATHLEN];
     char latestdir[MAXPATHLEN];
     char fname[MAXPATHLEN];
     char fname1[MAXPATHLEN];
     char fname2[MAXPATHLEN];
+    char fname3[MAXPATHLEN];
     char *p;
     char *cp;
     char *link_src;
@@ -929,6 +933,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		err(1, "Could not get current working directory");
 	    cwdlen = strlen(cwd);
 	}
+	strlcpy(lcwd, cwd, sizeof(lcwd));
+	strlcpy(latestdir, cwd, sizeof(latestdir));
 
 	if (!tmpdir) {
 	    tmpdir = getTmpdir();
@@ -1012,9 +1018,11 @@ meta_oodate(GNode *gn, Boolean oodate)
 			char *tp;
 		    
 			if (lastpid > 0) {
-			    /* We need to remember this. */
+			    /* We need to remember these. */
+			    Var_Set(lcwd_vname, lcwd, VAR_GLOBAL, 0);
 			    Var_Set(ldir_vname, latestdir, VAR_GLOBAL, 0);
 			}
+			snprintf(lcwd_vname, sizeof(lcwd_vname), LCWD_VNAME_FMT, pid);
 			snprintf(ldir_vname, sizeof(ldir_vname), LDIR_VNAME_FMT, pid);
 			lastpid = pid;
 			ldir = Var_Value(ldir_vname, VAR_GLOBAL, &tp);
@@ -1022,15 +1030,22 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    strlcpy(latestdir, ldir, sizeof(latestdir));
 			    if (tp)
 				free(tp);
-			} else 
-			    strlcpy(latestdir, cwd, sizeof(latestdir));
+			}
+			ldir = Var_Value(lcwd_vname, VAR_GLOBAL, &tp);
+			if (ldir) {
+			    strlcpy(lcwd, ldir, sizeof(lcwd));
+			    if (tp)
+				free(tp);
+			}
 		    }
 		    /* Skip past the pid. */
 		    if (strsep(&p, " ") == NULL)
 			continue;
 #ifdef DEBUG_META_MODE
 		    if (DEBUG(META))
-			fprintf(debug_file, "%s: %d: cwd=%s ldir=%s\n", fname, lineno, cwd, latestdir);
+			    fprintf(debug_file, "%s: %d: %d: %c: cwd=%s lcwd=%s ldir=%s\n",
+				    fname, lineno,
+				    pid, buf[0], cwd, lcwd, latestdir);
 #endif
 		    break;
 		}
@@ -1040,6 +1055,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		/* Process according to record type. */
 		switch (buf[0]) {
 		case 'X':		/* eXit */
+		    Var_Delete(lcwd_vname, VAR_GLOBAL);
 		    Var_Delete(ldir_vname, VAR_GLOBAL);
 		    lastpid = 0;	/* no need to save ldir_vname */
 		    break;
@@ -1051,15 +1067,30 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 			child = atoi(p);
 			if (child > 0) {
+			    snprintf(cldir, sizeof(cldir), LCWD_VNAME_FMT, child);
+			    Var_Set(cldir, lcwd, VAR_GLOBAL, 0);
 			    snprintf(cldir, sizeof(cldir), LDIR_VNAME_FMT, child);
 			    Var_Set(cldir, latestdir, VAR_GLOBAL, 0);
+#ifdef DEBUG_META_MODE
+			    if (DEBUG(META))
+				    fprintf(debug_file, "%s: %d: %d: cwd=%s lcwd=%s ldir=%s\n",
+					    fname, lineno,
+					    child, cwd, lcwd, latestdir);
+#endif
 			}
 		    }
 		    break;
 
 		case 'C':		/* Chdir */
-		    /* Update the latest directory. */
-		    strlcpy(latestdir, p, sizeof(latestdir));
+		    /* Update lcwd and latest directory. */
+		    strlcpy(latestdir, p, sizeof(latestdir));	
+		    strlcpy(lcwd, p, sizeof(lcwd));
+		    Var_Set(lcwd_vname, lcwd, VAR_GLOBAL, 0);
+		    Var_Set(ldir_vname, lcwd, VAR_GLOBAL, 0);
+#ifdef DEBUG_META_MODE
+		    if (DEBUG(META))
+			fprintf(debug_file, "%s: %d: cwd=%s ldir=%s\n", fname, lineno, cwd, lcwd);
+#endif
 		    break;
 
 		case 'M':		/* renaMe */
@@ -1208,10 +1239,15 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    snprintf(fname1, sizeof(fname1), "%s/%s", latestdir, p);
 			    sdirs[sdx++] = fname1;
 
-			    if (strcmp(latestdir, cwd) != 0) {
-				/* Check vs cwd */
-				snprintf(fname2, sizeof(fname2), "%s/%s", cwd, p);
+			    if (strcmp(latestdir, lcwd) != 0) {
+				/* Check vs lcwd */
+				snprintf(fname2, sizeof(fname2), "%s/%s", lcwd, p);
 				sdirs[sdx++] = fname2;
+			    }
+			    if (strcmp(lcwd, cwd) != 0) {
+				/* Check vs cwd */
+				snprintf(fname3, sizeof(fname3), "%s/%s", cwd, p);
+				sdirs[sdx++] = fname3;
 			    }
 			}
 			sdirs[sdx++] = NULL;
@@ -1250,6 +1286,10 @@ meta_oodate(GNode *gn, Boolean oodate)
 				fprintf(debug_file, "%s: %d: file '%s' may have moved?...\n", fname, lineno, p);
 			    oodate = TRUE;
 			}
+		    }
+		    if (buf[0] == 'E') {
+			/* previous latestdir is no longer relevant */
+			strlcpy(latestdir, lcwd, sizeof(latestdir));
 		    }
 		    break;
 		default:
