@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.59 2015/04/10 13:02:15 riastradh Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.60 2015/04/12 14:44:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.59 2015/04/10 13:02:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.60 2015/04/12 14:44:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,6 +520,8 @@ genfs_getpages_read(struct vnode *vp, struct vm_page **pgs, int npages,
 	bool sawhole = false;
 	int i;
 	int error = 0;
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
 
 	/*
 	 * read the desired page(s).
