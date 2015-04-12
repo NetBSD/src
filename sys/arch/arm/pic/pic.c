@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.30 2015/04/12 08:52:54 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.31 2015/04/12 08:55:14 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.30 2015/04/12 08:52:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.31 2015/04/12 08:55:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -160,18 +160,6 @@ intr_cpu_init(struct cpu_info *ci)
 }
 
 typedef void (*pic_ipi_send_func_t)(struct pic_softc *, u_long);
-
-static struct pic_softc *
-pic_ipi_sender(void)
-{
-	for (size_t slot = 0; slot < PIC_MAXPICS; slot++) {
-		struct pic_softc * const pic = pic_list[slot];
-		if (pic != NULL && pic->pic_ops->pic_ipi_send != NULL) {
-			return pic;
-		}
-	}
-	return NULL;
-}
 
 void
 intr_ipi_send(const kcpuset_t *kcp, u_long ipi)
