@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.119 2015/04/12 22:41:28 riastradh Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.120 2015/04/12 22:48:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.119 2015/04/12 22:41:28 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.120 2015/04/12 22:48:38 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -518,7 +518,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	FS *fs;
 	int flags;
 	struct buf *bp;
-	off_t osize, origoff;
+	off_t osize;
 	int resid, xfersize, size, blkoffset;
 	daddr_t lbn;
 	int extended=0;
@@ -554,7 +554,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
-	origoff = uio->uio_offset;
 	resid = uio->uio_resid;
 	osize = ip->i_size;
 	error = 0;
