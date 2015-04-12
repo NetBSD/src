@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.8 2015/04/12 17:32:39 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.9 2015/04/12 23:25:57 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.8 2015/04/12 17:32:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.9 2015/04/12 23:25:57 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 
@@ -467,7 +467,7 @@ bcm2836mp_send_ipi(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 	const cpuid_t cpuid = pic - &bcm2836mp_pic[0];
 
 	bus_space_write_4(al_iot, al_ioh,
-	    BCM2836_LOCAL_MAILBOX0_SETN(cpuid), ipi);
+	    BCM2836_LOCAL_MAILBOX0_SETN(cpuid), __BIT(ipi));
 }
 
 int
@@ -475,36 +475,39 @@ bcm2836mp_ipi_handler(void *priv)
 {
 	const struct cpu_info *ci = curcpu();
 	const cpuid_t cpuid = ci->ci_cpuid;
-	const uint32_t ipi = bus_space_read_4(al_iot, al_ioh,
+	uint32_t ipimask, bit;
+
+	ipimask = bus_space_read_4(al_iot, al_ioh,
 	    BCM2836_LOCAL_MAILBOX0_CLRN(cpuid));
-
 	bus_space_write_4(al_iot, al_ioh, BCM2836_LOCAL_MAILBOX0_CLRN(cpuid),
-	    ipi);
+	    ipimask);
 
-	switch (ipi) {
-	case IPI_AST:
-	case IPI_NOP:
-		pic_ipi_nop(priv);
-		break;
-	case IPI_XCALL:
-		pic_ipi_xcall(priv);
-		break;
-	case IPI_GENERIC:
-		pic_ipi_generic(priv);
-		break;
-	case IPI_SHOOTDOWN:
-		pic_ipi_shootdown(priv);
-		break;
-#ifdef DDB
-	case IPI_DDB:
-		pic_ipi_ddb(priv);
-		break;
-#endif
+	while ((bit = ffs(ipimask)) > 0) {
+		const u_int ipi = bit - 1;
+		switch (ipi) {
+		case IPI_AST:
+		case IPI_NOP:
 #ifdef __HAVE_PREEMPTION
-	case IPI_KPREEMPT:
-		pic_ipi_nop(priv);
-		break;
+		case IPI_KPREEMPT:
 #endif
+			pic_ipi_nop(priv);
+			break;
+		case IPI_XCALL:
+			pic_ipi_xcall(priv);
+			break;
+		case IPI_GENERIC:
+			pic_ipi_generic(priv);
+			break;
+		case IPI_SHOOTDOWN:
+			pic_ipi_shootdown(priv);
+			break;
+#ifdef DDB
+		case IPI_DDB:
+			pic_ipi_ddb(priv);
+			break;
+#endif
+		}
+		ipimask &= ~__BIT(ipi);
 	}
 
 	return 1;
