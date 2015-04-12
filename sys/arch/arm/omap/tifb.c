@@ -1,4 +1,4 @@
-/*	$NetBSD: tifb.c,v 1.4 2015/04/11 13:44:14 bouyer Exp $	*/
+/*	$NetBSD: tifb.c,v 1.5 2015/04/12 20:00:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.4 2015/04/11 13:44:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.5 2015/04/12 20:00:42 bouyer Exp $");
 
 #include "opt_omap.h"
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.4 2015/04/11 13:44:14 bouyer Exp $");
 #include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -155,6 +156,7 @@ struct tifb_softc {
 	int sc_stride;
 	int sc_locked;
 	void *sc_fbaddr, *sc_vramaddr;
+	void *sc_shadowfb;
 
 	bus_addr_t sc_fbhwaddr;
 	uint16_t *sc_palette;
@@ -395,6 +397,12 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_vramsize = sc->sc_palettesize +
 	    sc->sc_stride * sc->sc_panel->panel_height;
 
+	sc->sc_shadowfb = kmem_alloc(sc->sc_vramsize - sc->sc_palettesize,
+	    KM_NOSLEEP);
+	if (sc->sc_shadowfb == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "warning: failed to allocate shadow framebuffer\n");
+	}
 	if (bus_dmamem_alloc(sc->sc_dmat, sc->sc_vramsize, 0, 0,
 	    sc->sc_dmamem, 1, &segs, BUS_DMA_NOWAIT) != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -403,7 +411,7 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, sc->sc_dmamem, 1, sc->sc_vramsize,
-	    &sc->sc_vramaddr, BUS_DMA_NOWAIT) != 0) {
+	    &sc->sc_vramaddr, BUS_DMA_NOWAIT | BUS_DMA_PREFETCHABLE) != 0) {
 		aprint_error_dev(sc->sc_dev, "failed to map video RAM\n");
 		return;
 	}
@@ -543,7 +551,7 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	    timing0, timing1, timing2);
 
 	/* DMA settings */
-	reg = LCDDMA_CTRL_FB0_FB1;    
+	reg = 0;    
 	/* Find power of 2 for current burst size */
 	switch (sc->sc_panel->dma_burst_sz) { 
 	case 1:
@@ -597,9 +605,7 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	TIFB_WRITE(sc, LCD_CLKC_RESET, 0);
 	aprint_debug_dev(self, ": LCD_CLKC_ENABLE 0x%x\n", TIFB_READ(sc, LCD_CLKC_ENABLE));
 
-	reg = IRQ_EOF1 | IRQ_EOF0 | IRQ_FUF | IRQ_PL |
-	    IRQ_ACB | IRQ_SYNC_LOST |  IRQ_RASTER_DONE |
-	    IRQ_FRAME_DONE;
+	reg = IRQ_FUF | IRQ_PL | IRQ_ACB | IRQ_SYNC_LOST;
 	TIFB_WRITE(sc, LCD_IRQENABLE_SET, reg);
 
 	reg = TIFB_READ(sc, LCD_RASTER_CTRL);
@@ -653,6 +659,8 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 }
 
+uint32_t tifb_intr_unh = 0;
+
 static int
 tifb_intr(void *v)
 {
@@ -684,12 +692,6 @@ tifb_intr(void *v)
 		reg |= RASTER_CTRL_LCDEN;
 		TIFB_WRITE(sc, LCD_RASTER_CTRL, reg);
 		return 0;
-	}
-
-	if (reg & (IRQ_FRAME_DONE|IRQ_EOF0|IRQ_EOF1)) {
-		/* flush the write-back cache */
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
-		    0, sc->sc_vramsize, BUS_DMASYNC_PREWRITE);
 	}
 
 	if (reg & IRQ_FRAME_DONE) {
@@ -724,8 +726,10 @@ tifb_intr(void *v)
 		/* TODO: Handle ACB */
 		reg =~ IRQ_ACB;
 	}
-	if (reg)
+	if (reg) {
 		ev_others.ev_count ++;
+		tifb_intr_unh = reg;
+	}
 	return 0;
 }
 
@@ -850,8 +854,14 @@ tifb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_height = sc->sc_panel->panel_height;
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
-
-	ri->ri_bits = (char *)sc->sc_fbaddr;
+	
+	if (sc->sc_shadowfb != NULL) {
+		ri->ri_bits = (char *)sc->sc_shadowfb;
+		ri->ri_hwbits = (char *)sc->sc_fbaddr;
+	} else {
+		ri->ri_bits = (char *)sc->sc_fbaddr;
+		ri->ri_hwbits = NULL;
+	}
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
