@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.14 2015/03/27 11:12:08 skrll Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.15 2015/04/12 17:08:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.14 2015/03/27 11:12:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.15 2015/04/12 17:08:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -306,12 +306,13 @@ gtmr_intr(void *arg)
 	    ci->ci_data.cpu_name, delta, sc->sc_autoinc);
 
 	/*
-	 * If we got interrupted too soon (delta < sc->sc_autoinc) or
-	 * we missed a tick (delta >= 2 * sc->sc_autoinc), don't try to
-	 * adjust for jitter.
+	 * If we got interrupted too soon (delta < sc->sc_autoinc)
+	 * or we missed (or almost missed) a tick
+	 * (delta >= 7 * sc->sc_autoinc / 4), don't try to adjust for jitter.
 	 */
-	delta -= sc->sc_autoinc;
-	if (delta >= sc->sc_autoinc) {
+	if (delta >= sc->sc_autoinc && delta <= 7 * sc->sc_autoinc / 4) {
+		delta -= sc->sc_autoinc;
+	} else {
 		delta = 0;
 	}
 	armreg_cntv_tval_write(sc->sc_autoinc - delta);
