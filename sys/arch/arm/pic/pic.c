@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.29 2015/04/11 19:39:09 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.30 2015/04/12 08:52:54 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.29 2015/04/11 19:39:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.30 2015/04/12 08:52:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -182,7 +182,7 @@ intr_ipi_send(const kcpuset_t *kcp, u_long ipi)
 		struct pic_softc * const pic = pic_list[slot];
 		if (pic == NULL || pic->pic_cpus == NULL)
 			continue;
-		if (kcp == NULL || kcpuset_intersect(kcp, pic->pic_cpus)) {
+		if (kcp == NULL || kcpuset_intersecting_p(kcp, pic->pic_cpus)) {
 			(*pic->pic_ops->pic_ipi_send)(pic, kcp, ipi);
 			// If we were targeting a single CPU or this pic
 			// handles all cpus, we're done.
