@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.16 2015/04/12 22:49:55 riastradh Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.17 2015/04/12 22:51:23 riastradh Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.16 2015/04/12 22:49:55 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.17 2015/04/12 22:51:23 riastradh Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -338,7 +338,7 @@ WRITE(void *v)
 			mutex_enter(vp->v_interlock);
 			VOP_PUTPAGES(vp, trunc_page(osize & fs->fs_bmask),
 			    round_page(eob),
-			    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
+			    PGO_CLEANIT | PGO_SYNCIO);
 		}
 	}
 
@@ -348,7 +348,7 @@ WRITE(void *v)
 		off_t newoff;
 
 		if (ioflag & IO_DIRECT) {
-			genfs_directio(vp, uio, ioflag | IO_JOURNALLOCKED);
+			genfs_directio(vp, uio, ioflag);
 		}
 
 		oldoff = uio->uio_offset;
@@ -432,7 +432,7 @@ WRITE(void *v)
 			mutex_enter(vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16,
-			    PGO_CLEANIT | PGO_JOURNALLOCKED | PGO_LAZY);
+			    PGO_CLEANIT | PGO_LAZY);
 			if (error)
 				break;
 		}
@@ -444,7 +444,7 @@ WRITE(void *v)
 		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
 		    round_page(lfs_blkroundup(fs, uio->uio_offset)),
-		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
+		    PGO_CLEANIT | PGO_SYNCIO);
 	}
 
 out:
