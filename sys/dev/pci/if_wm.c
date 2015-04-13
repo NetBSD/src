@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.314 2015/03/28 17:35:59 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.315 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.314 2015/03/28 17:35:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.315 2015/04/13 16:33:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.314 2015/03/28 17:35:59 msaitoh Exp $");
 #include <sys/queue.h>
 #include <sys/syslog.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

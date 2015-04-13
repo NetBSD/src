@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.27 2012/02/24 18:04:51 mhitch Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.28 2015/04/13 16:33:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.27 2012/02/24 18:04:51 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.28 2015/04/13 16:33:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.27 2012/02/24 18:04:51 mhitch Exp $");
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
-#include <sys/rnd.h>
 
 #include <sys/bus.h>
 
