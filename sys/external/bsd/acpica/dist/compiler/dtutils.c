@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2014, Intel Corp.
+ * Copyright (C) 2000 - 2015, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __DTUTILS_C__
 
 #include "aslcompiler.h"
 #include "dtcompiler.h"
@@ -366,6 +364,7 @@ DtGetFieldType (
         break;
 
     case ACPI_DMT_BUFFER:
+    case ACPI_DMT_RAW_BUFFER:
     case ACPI_DMT_BUF7:
     case ACPI_DMT_BUF10:
     case ACPI_DMT_BUF16:
@@ -533,7 +532,6 @@ DtGetFieldLength (
 
     case ACPI_DMT_UINT32:
     case ACPI_DMT_NAME4:
-    case ACPI_DMT_SLIC:
     case ACPI_DMT_SIG:
     case ACPI_DMT_LPIT:
 
@@ -590,6 +588,7 @@ DtGetFieldLength (
         break;
 
     case ACPI_DMT_BUFFER:
+    case ACPI_DMT_RAW_BUFFER:
 
         Value = DtGetFieldValue (Field);
         if (Value)
