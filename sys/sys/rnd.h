@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.45 2015/04/13 15:13:50 riastradh Exp $	*/
+/*	$NetBSD: rnd.h,v 1.46 2015/04/13 15:23:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,15 +42,12 @@
 
 #ifdef _KERNEL
 #include <sys/queue.h>
+#include <sys/rngtest.h>
 #include <sys/systm.h>
 #endif
 
-#ifdef _KERNEL
-#include <sys/rngtest.h>
-#endif
-
-#define	RND_DEV_RANDOM	0	/* minor devices for random and kinda random */
-#define	RND_DEV_URANDOM	1
+#define	RND_DEV_RANDOM	0	/* minor for blocking until unpredictable */
+#define	RND_DEV_URANDOM	1	/* minor for randomly generating data */
 
 /*
  * Exposed "size" of entropy pool, for convenience in load/save
@@ -227,9 +224,6 @@ rnd_add_uint64(krndsource_t *kr, uint64_t val)
 }
 
 extern int	rnd_initial_entropy;
-
-extern int	rnd_ready;
-extern int	rnd_printing;		/* XXX recursion through printf */
 
 #endif /* _KERNEL */
 
