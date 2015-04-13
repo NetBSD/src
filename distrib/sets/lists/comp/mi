@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1951 2015/03/30 01:25:36 riastradh Exp $
+#	$NetBSD: mi,v 1.1952 2015/04/13 21:55:52 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3267,6 +3267,7 @@
 ./usr/include/sys/resourcevar.h			comp-c-include
 ./usr/include/sys/rmd160.h			comp-c-include
 ./usr/include/sys/rnd.h				comp-c-include
+./usr/include/sys/rndio.h			comp-c-include
 ./usr/include/sys/rwlock.h			comp-c-include
 ./usr/include/sys/sa.h				comp-obsolete		obsolete
 ./usr/include/sys/satypes.h			comp-obsolete		obsolete
