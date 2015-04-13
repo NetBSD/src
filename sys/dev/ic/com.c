@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.332 2015/03/07 22:13:16 skrll Exp $ */
+/* $NetBSD: com.c,v 1.333 2015/04/13 16:33:24 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.332 2015/03/07 22:13:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.333 2015/04/13 16:33:24 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -74,8 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.332 2015/03/07 22:13:16 skrll Exp $");
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_ntp.h"
-
-#include "rnd.h"
 
 /* The COM16650 option was renamed to COM_16650. */
 #ifdef COM16650
@@ -114,7 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.332 2015/03/07 22:13:16 skrll Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 
