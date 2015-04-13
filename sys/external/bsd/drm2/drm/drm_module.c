@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.10 2015/03/05 17:42:48 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.11 2015/04/13 22:24:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.10 2015/03/05 17:42:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.11 2015/04/13 22:24:34 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.10 2015/03/05 17:42:48 riastradh Ex
 /*
  * XXX I2C stuff should be moved to a separate drmkms_i2c module.
  */
-MODULE(MODULE_CLASS_DRIVER, drmkms, "iic,drmkms_linux");
+MODULE(MODULE_CLASS_DRIVER, drmkms, "drmkms_linux");
 
 struct mutex	drm_global_mutex;
 

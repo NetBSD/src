@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.5 2014/11/11 02:37:17 christos Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.6 2015/04/13 22:24:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.5 2014/11/11 02:37:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.6 2015/04/13 22:24:34 pgoyette Exp $");
 
 #include <sys/module.h>
 #ifndef _MODULE
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.5 2014/11/11 02:37:17 christos Ex
 #include <linux/reservation.h>
 #include <linux/workqueue.h>
 
-MODULE(MODULE_CLASS_MISC, drmkms_linux, NULL);
+MODULE(MODULE_CLASS_MISC, drmkms_linux, "i2cexec");
 
 DEFINE_WW_CLASS(reservation_ww_class __cacheline_aligned);
 
