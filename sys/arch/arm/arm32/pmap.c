@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.319 2015/04/11 15:21:33 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.320 2015/04/13 16:19:42 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.319 2015/04/11 15:21:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.320 2015/04/13 16:19:42 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3671,6 +3671,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 
 	pmap_t kpm = pmap_kernel();
+	pmap_acquire_pmap_lock(kpm);
 	struct l2_bucket * const l2b = pmap_get_l2_bucket(kpm, va);
 	const size_t l1slot __diagused = l1pte_index(va);
 	KASSERTMSG(l2b != NULL,
@@ -3718,6 +3719,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			cpu_cpwait();
 		}
 	}
+	pmap_release_pmap_lock(kpm);
 
 	pt_entry_t npte = L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot)
 	    | ((flags & PMAP_NOCACHE)
@@ -3814,6 +3816,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 	const vaddr_t eva = va + len;
 
+	pmap_acquire_pmap_lock(pmap_kernel());
+
 	while (va < eva) {
 		vaddr_t next_bucket = L2_NEXT_BUCKET_VA(va);
 		if (next_bucket > eva)
@@ -3875,6 +3879,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		total_mappings += mappings;
 #endif
 	}
+	pmap_release_pmap_lock(pmap_kernel());
 	cpu_cpwait();
 	UVMHIST_LOG(maphist, "  <--- done (%u mappings removed)",
 	    total_mappings, 0, 0, 0);
