@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.148 2015/02/06 14:48:24 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.149 2015/04/13 00:39:57 rodent Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -739,6 +739,7 @@ MLC	multi-level cell
 MLHP	micro loop heat pipe
 MMIC	monolithic microwave integrated circuit
 MMIO	memory mapped input/output
+MMORPG	massive multiplayer online role playing game
 MMU	memory management unit
 MMX	matrix math extension
 MMX	multimedia extension
@@ -770,6 +771,7 @@ MSS	maximum segment size
 MT	machine translation
 MTA	mail transfer agent
 MTBF	mean time between failures
+MTP	media transfer protocol
 MTRR	memory type range register
 MTTF	mean time to failure
 MTU	maximum transmission unit
