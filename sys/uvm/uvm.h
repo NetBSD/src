@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.65 2015/04/13 16:46:33 riastradh Exp $	*/
+/*	$NetBSD: uvm.h,v 1.66 2015/04/13 22:04:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -59,9 +59,10 @@
 #include <uvm/uvm_pager.h>
 #include <uvm/uvm_pdaemon.h>
 #include <uvm/uvm_swap.h>
-#include <sys/rndsource.h>
 
 #ifdef _KERNEL
+
+#include <sys/rndsource.h>
 
 /*
  * pull in VM_NFREELIST
