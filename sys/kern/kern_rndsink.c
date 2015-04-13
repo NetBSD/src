@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.12 2015/04/13 15:13:50 riastradh Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.13 2015/04/13 22:43:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.12 2015/04/13 15:13:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.13 2015/04/13 22:43:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.12 2015/04/13 15:13:50 riastradh 
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
-#include <sys/rnd.h>
 #include <sys/rndsink.h>
 
 #include <dev/rnd_private.h>
