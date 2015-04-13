@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.6 2015/04/08 13:47:06 riastradh Exp $ */
+/* 	$NetBSD: viornd.c,v 1.7 2015/04/13 16:33:25 riastradh Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #include <sys/mutex.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

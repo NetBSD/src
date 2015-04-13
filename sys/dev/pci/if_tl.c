@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.101 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.102 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.101 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.102 2015/04/13 16:33:25 riastradh Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.101 2014/08/10 16:44:36 tls Exp $");
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #ifdef INET
 #include <netinet/in.h>

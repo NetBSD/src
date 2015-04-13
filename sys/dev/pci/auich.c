@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.144 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: auich.c,v 1.145 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.144 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.145 2015/04/13 16:33:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.144 2014/08/10 16:44:35 tls Exp $");
 #include <sys/sysctl.h>
 #include <sys/audioio.h>
 #include <sys/bus.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

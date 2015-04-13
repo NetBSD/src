@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.6 2014/07/22 01:55:54 ozaki-r Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.7 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.6 2014/07/22 01:55:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.7 2015/04/13 16:33:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.6 2014/07/22 01:55:54 ozaki-r Exp $"
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/mutex.h>
-#include <sys/rnd.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>

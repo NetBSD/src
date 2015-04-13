@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.39 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.40 2015/04/13 16:33:24 riastradh Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.39 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.40 2015/04/13 16:33:24 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.39 2014/08/10 16:44:35 tls Exp $");
 #include <netinet/ip.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

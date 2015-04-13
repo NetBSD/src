@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.79 2014/12/10 00:15:26 christos Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.80 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.79 2014/12/10 00:15:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.80 2015/04/13 16:33:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.79 2014/12/10 00:15:26 christos Exp $");
 #include <net/if_media.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

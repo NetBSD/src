@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.81 2015/01/02 19:42:06 christos Exp $	*/
+/*	$NetBSD: ld.c,v 1.82 2015/04/13 16:33:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.81 2015/01/02 19:42:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.82 2015/04/13 16:33:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.81 2015/01/02 19:42:06 christos Exp $");
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mutex.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/ldvar.h>
 
