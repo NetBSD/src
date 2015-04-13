@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.25 2015/04/13 14:56:22 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.26 2015/04/13 15:13:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.25 2015/04/13 14:56:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.26 2015/04/13 15:13:50 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -73,15 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.25 2015/04/13 14:56:22 riastradh Exp
 
 #ifdef RND_DEBUG
 #define	DPRINTF(l,x)      if (rnd_debug & (l)) printf x
-extern int rnd_debug;
 #else
 #define	DPRINTF(l,x)
 #endif
-
-#define	RND_DEBUG_WRITE		0x0001
-#define	RND_DEBUG_READ		0x0002
-#define	RND_DEBUG_IOCTL		0x0004
-#define	RND_DEBUG_SNOOZE	0x0008
 
 /*
  * list devices attached
@@ -112,17 +106,7 @@ static pool_cache_t rnd_ctx_cache;
  */
 static percpu_t *percpu_urandom_cprng;
 
-/*
- * Our random pool.  This is defined here rather than using the general
- * purpose one defined in rndpool.c.
- *
- * Samples are collected and queued into a separate mutex-protected queue
- * (rnd_samples, see above), and processed in a timeout routine; therefore,
- * the mutex protecting the random pool is at IPL_SOFTCLOCK() as well.
- */
-extern rndpool_t rnd_pool;
-extern kmutex_t  rndpool_mtx;
-
+/* Used by ioconf.c to attach the rnd pseudo-device.  */
 void	rndattach(int);
 
 dev_type_open(rndopen);
@@ -161,11 +145,6 @@ const struct fileops rnd_fileops = {
 	.fo_kqfilter = rnd_kqfilter,
 	.fo_restart = fnullop_restart
 };
-
-void			rnd_wakeup_readers(void);	/* XXX */
-extern int		rnd_ready;		/* XXX */
-extern rndsave_t	*boot_rsp;		/* XXX */
-extern LIST_HEAD(, krndsource) rnd_sources;	/* XXX */
 
 static struct evcnt rndpseudo_soft = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "rndpseudo", "open soft");
