@@ -375,7 +375,11 @@ int MAIN(int argc, char **argv)
 
     if (st_bugs)
         SSL_CTX_set_options(tm_ctx, SSL_OP_ALL);
-    SSL_CTX_set_cipher_list(tm_ctx, tm_cipher);
+    if (!SSL_CTX_set_cipher_list(tm_ctx, tm_cipher)) {
+	/* BIO_printf(bio_err, "Error in cipher list\n"); */
+	goto end;
+    }
+
     if (!set_cert_stuff(tm_ctx, t_cert_file, t_key_file))
         goto end;
 
