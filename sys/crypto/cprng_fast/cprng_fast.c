@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.11 2014/08/11 22:36:49 justin Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.12 2015/04/13 15:51:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.11 2014/08/11 22:36:49 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.12 2015/04/13 15:51:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,7 +233,7 @@ cprng_fast_init_cpu(void *p, void *arg __unused, struct cpu_info *ci __unused)
 	struct cprng_fast *const cprng = p;
 	uint8_t seed[CPRNG_FAST_SEED_BYTES];
 
-	cprng_strong(kern_cprng, seed, sizeof seed, FASYNC);
+	cprng_strong(kern_cprng, seed, sizeof seed, 0);
 	cprng_fast_seed(cprng, seed);
 	cprng->have_initial = rnd_initial_entropy;
 	(void)explicit_memset(seed, 0, sizeof seed);
@@ -278,7 +278,7 @@ cprng_fast_intr(void *cookie __unused)
 	uint8_t seed[CPRNG_FAST_SEED_BYTES];
 	int s;
 
-	cprng_strong(kern_cprng, seed, sizeof(seed), FASYNC);
+	cprng_strong(kern_cprng, seed, sizeof(seed), 0);
 
 	cprng = percpu_getref(cprng_fast_percpu);
 	s = splvm();
