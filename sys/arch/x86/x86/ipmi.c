@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.60 2014/12/29 14:00:26 mlelstv Exp $ */
+/*	$NetBSD: ipmi.c,v 1.61 2015/04/13 16:03:51 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.60 2014/12/29 14:00:26 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.61 2015/04/13 16:03:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.60 2014/12/29 14:00:26 mlelstv Exp $");
 #include <sys/kthread.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
-#include <sys/rnd.h>
 
 #include <x86/smbiosvar.h>
 
@@ -89,7 +88,6 @@ struct ipmi_sensor {
 	uint32_t	i_props, i_defprops;
 	SLIST_ENTRY(ipmi_sensor) i_list;
 	int32_t		i_prevval;	/* feed rnd source on change */
-	krndsource_t	i_rnd;
 };
 
 int	ipmi_nintr;
