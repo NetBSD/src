@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.46 2014/11/15 19:20:01 christos Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.47 2015/04/13 21:18:41 riastradh Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,14 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.46 2014/11/15 19:20:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.47 2015/04/13 21:18:41 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
-#include "rnd.h"
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/param.h>
