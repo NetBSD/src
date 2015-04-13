@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.48 2015/04/04 15:16:54 christos Exp $	*/
+/*	$NetBSD: i2c.c,v 1.49 2015/04/13 22:26:20 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.48 2015/04/04 15:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.49 2015/04/13 22:26:20 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,7 +573,7 @@ iic_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 CFATTACH_DECL2_NEW(iic, sizeof(struct iic_softc),
     iic_match, iic_attach, iic_detach, NULL, iic_rescan, iic_child_detach);
 
-MODULE(MODULE_CLASS_DRIVER, iic, NULL);
+MODULE(MODULE_CLASS_DRIVER, iic, "i2cexec");
 
 #ifdef _MODULE
 #include "ioconf.c"
