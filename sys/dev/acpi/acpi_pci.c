@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.18 2010/12/31 10:56:39 jruoho Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.19 2015/04/13 18:32:50 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.18 2010/12/31 10:56:39 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.19 2015/04/13 18:32:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -146,10 +146,10 @@ acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *res, void *context)
 	if (*bus != -1)
 		return AE_ALREADY_EXISTS;
 
-	if (addr64.Minimum > 0xFFFF)
+	if (addr64.Address.Minimum > 0xFFFF)
 		return AE_BAD_DATA;
 
-	*bus = (int32_t)addr64.Minimum;
+	*bus = (int32_t)addr64.Address.Minimum;
 
 	return AE_OK;
 }
