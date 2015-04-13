@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.64 2014/08/10 16:44:37 tls Exp $	*/
+/*	$NetBSD: uvm.h,v 1.65 2015/04/13 16:46:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -59,7 +59,7 @@
 #include <uvm/uvm_pager.h>
 #include <uvm/uvm_pdaemon.h>
 #include <uvm/uvm_swap.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #ifdef _KERNEL
 
