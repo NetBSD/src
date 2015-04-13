@@ -1,4 +1,4 @@
-/*      $NetBSD: rnd_private.h,v 1.4 2013/08/27 19:30:10 riastradh Exp $     */
+/*      $NetBSD: rnd_private.h,v 1.5 2015/04/13 14:30:05 riastradh Exp $     */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,13 +38,6 @@
  * hash to extract it.
  */
 #define RND_ENTROPY_THRESHOLD   10
-
-/*
- * Size of the event queue.  This _MUST_ be a power of 2.
- */
-#ifndef RND_EVENTQSIZE
-#define RND_EVENTQSIZE  128
-#endif
 
 /*
  * Used by rnd_extract_data() and rndpool_extract_data() to describe how
