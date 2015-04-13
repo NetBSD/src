@@ -56,7 +56,7 @@
 
 /* Local prototypes */
 
-static char *
+static const char *
 AcpiDmGetCompoundSymbol (
    UINT16                   AslOpcode);
 
@@ -96,7 +96,7 @@ AcpiDmCheckForSymbolicOpcode (
     ACPI_PARSE_OBJECT       *Op,
     ACPI_OP_WALK_INFO       *Info)
 {
-    char                    *OperatorSymbol = NULL;
+    const char              *OperatorSymbol = NULL;
     ACPI_PARSE_OBJECT       *Child1;
     ACPI_PARSE_OBJECT       *Child2;
     ACPI_PARSE_OBJECT       *Target;
@@ -565,11 +565,11 @@ AcpiDmCloseOperator (
  *
  ******************************************************************************/
 
-static char *
+static const char *
 AcpiDmGetCompoundSymbol (
    UINT16                   AmlOpcode)
 {
-    char                    *Symbol;
+    const char               *Symbol;
 
 
     switch (AmlOpcode)
