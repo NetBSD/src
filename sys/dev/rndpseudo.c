@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.24 2014/11/09 20:29:58 christos Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.25 2015/04/13 14:56:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.24 2014/11/09 20:29:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.25 2015/04/13 14:56:22 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -641,10 +641,10 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		 * Find the starting source by running through the
 		 * list of sources.
 		 */
-		kr = rnd_sources.lh_first;
+		kr = LIST_FIRST(&rnd_sources);
 		start = rst->start;
 		while (kr != NULL && start >= 1) {
-			kr = kr->list.le_next;
+			kr = LIST_NEXT(kr, list);
 			start--;
 		}
 
@@ -655,7 +655,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		 */
 		for (count = 0; count < rst->count && kr != NULL; count++) {
 			krndsource_to_rndsource(kr, &rst->source[count]);
-			kr = kr->list.le_next;
+			kr = LIST_NEXT(kr, list);
 		}
 
 		rst->count = count;
@@ -677,10 +677,10 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		 * Find the starting source by running through the
 		 * list of sources.
 		 */
-		kr = rnd_sources.lh_first;
+		kr = LIST_FIRST(&rnd_sources);
 		start = rset->start;
 		while (kr != NULL && start > 1) {
-			kr = kr->list.le_next;
+			kr = LIST_NEXT(kr, list);
 			start--;
 		}
 
@@ -690,7 +690,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		 */
 		for (count = 0; count < rset->count && kr != NULL; count++) {
 			krndsource_to_rndsource_est(kr, &rset->source[count]);
-			kr = kr->list.le_next;
+			kr = LIST_NEXT(kr, list);
 		}
 
 		rset->count = count;
@@ -704,7 +704,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		 */
 		mutex_spin_enter(&rndpool_mtx);
 		rstnm = (rndstat_name_t *)addr;
-		kr = rnd_sources.lh_first;
+		kr = LIST_FIRST(&rnd_sources);
 		while (kr != NULL) {
 			if (strncmp(kr->name, rstnm->name,
 				    MIN(sizeof(kr->name),
@@ -713,7 +713,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 				mutex_spin_exit(&rndpool_mtx);
 				return (0);
 			}
-			kr = kr->list.le_next;
+			kr = LIST_NEXT(kr, list);
 		}
 		mutex_spin_exit(&rndpool_mtx);
 
@@ -727,7 +727,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		 */
 		mutex_spin_enter(&rndpool_mtx);
 		rsetnm = (rndstat_est_name_t *)addr;
-		kr = rnd_sources.lh_first;
+		kr = LIST_FIRST(&rnd_sources);
 		while (kr != NULL) {
 			if (strncmp(kr->name, rsetnm->name,
 				    MIN(sizeof(kr->name),
@@ -737,7 +737,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 				mutex_spin_exit(&rndpool_mtx);
 				return (0);
 			}
-			kr = kr->list.le_next;
+			kr = LIST_NEXT(kr, list);
 		}
 		mutex_spin_exit(&rndpool_mtx);
 
@@ -752,7 +752,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		 */
 		mutex_spin_enter(&rndpool_mtx);
 		rctl = (rndctl_t *)addr;
-		kr = rnd_sources.lh_first;
+		kr = LIST_FIRST(&rnd_sources);
 
 		/*
 		 * Flags set apply to all sources of this type.
@@ -763,7 +763,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 					krs_setflags(kr,
 						     rctl->flags, rctl->mask);
 				}
-				kr = kr->list.le_next;
+				kr = LIST_NEXT(kr, list);
 			}
 			mutex_spin_exit(&rndpool_mtx);
 			return (0);
@@ -780,7 +780,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 				mutex_spin_exit(&rndpool_mtx);
 				return (0);
 			}
-			kr = kr->list.le_next;
+			kr = LIST_NEXT(kr, list);
 		}
 
 		mutex_spin_exit(&rndpool_mtx);
