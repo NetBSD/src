@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.38 2015/01/11 14:22:53 jmcneill Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.39 2015/04/13 16:36:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.38 2015/01/11 14:22:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.39 2015/04/13 16:36:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.38 2015/01/11 14:22:53 jmcneill Exp 
 #include <sys/device.h>
 #include <sys/timetc.h>
 #include <sys/intr.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
 
