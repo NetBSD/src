@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_shm.c,v 1.4 2015/04/07 17:34:19 christos Exp $	*/
+/*	$NetBSD: refclock_shm.c,v 1.5 2015/04/13 17:45:19 christos Exp $	*/
 
 /*
  * refclock_shm - clock driver for utc via shared memory
@@ -197,9 +197,8 @@ getShmTime(
 		return NULL;
 	}
 
-#endif
-
 	return p;
+#endif
 }
 /*
  * shm_start - attach to shared memory
