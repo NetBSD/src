@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2014, Intel Corp.
+ * Copyright (C) 2000 - 2015, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
 /* Common info for tool signons */
 
 #define ACPICA_NAME                 "Intel ACPI Component Architecture"
-#define ACPICA_COPYRIGHT            "Copyright (c) 2000 - 2014 Intel Corporation"
+#define ACPICA_COPYRIGHT            "Copyright (c) 2000 - 2015 Intel Corporation"
 
 #if ACPI_MACHINE_WIDTH == 64
 #define ACPI_WIDTH          "-64"
@@ -74,15 +74,15 @@
 #endif
 
 #define ACPI_COMMON_SIGNON(UtilityName) \
-    "\n%s\n%s version %8.8X%s [%s]\n%s\n\n", \
+    "\n%s\n%s version %8.8X%s\n%s\n\n", \
     ACPICA_NAME, \
-    UtilityName, ((UINT32) ACPI_CA_VERSION), ACPI_WIDTH, ACPI_DATE, \
+    UtilityName, ((UINT32) ACPI_CA_VERSION), ACPI_WIDTH, \
     ACPICA_COPYRIGHT
 
 #define ACPI_COMMON_HEADER(UtilityName, Prefix) \
-    "%s%s\n%s%s version %8.8X%s [%s]\n%s%s\n%s\n", \
+    "%s%s\n%s%s version %8.8X%s\n%s%s\n%s\n", \
     Prefix, ACPICA_NAME, \
-    Prefix, UtilityName, ((UINT32) ACPI_CA_VERSION), ACPI_WIDTH, ACPI_DATE, \
+    Prefix, UtilityName, ((UINT32) ACPI_CA_VERSION), ACPI_WIDTH, \
     Prefix, ACPICA_COPYRIGHT, \
     Prefix
 
