@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.12 2015/04/13 15:51:00 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.13 2015/04/13 22:43:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.12 2015/04/13 15:51:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.13 2015/04/13 22:43:41 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.12 2015/04/13 15:51:00 riastradh Ex
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/percpu.h>
-#include <sys/rnd.h>
+#include <sys/rnd.h>		/* rnd_initial_entropy */
 
 /* ChaCha core */
 

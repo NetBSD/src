@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.26 2014/11/19 14:25:00 christos Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.27 2015/04/13 22:43:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.26 2014/11/19 14:25:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.27 2015/04/13 22:43:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.26 2014/11/19 14:25:00 christos Exp
 #include <sys/select.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
-#include <sys/rnd.h>
 #include <sys/rndsink.h>
 #if DIAGNOSTIC
 #include <sys/rngtest.h>

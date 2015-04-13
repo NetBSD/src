@@ -1,4 +1,4 @@
-/*      $NetBSD: rnd_private.h,v 1.7 2015/04/13 15:13:50 riastradh Exp $     */
+/*      $NetBSD: rnd_private.h,v 1.8 2015/04/13 22:43:41 riastradh Exp $     */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
 #include <sys/types.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
-#include <sys/rnd.h>
+#include <sys/rndio.h>
+#include <sys/rndsource.h>
+#include <sys/rndpool.h>
 
 /*
  * Number of bytes returned per hash.  This value is used in both
