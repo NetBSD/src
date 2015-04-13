@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.10 2014/10/26 18:22:32 tls Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.11 2015/04/13 14:41:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.10 2014/10/26 18:22:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.11 2015/04/13 14:41:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,74 +86,6 @@ rndsinks_init(void)
 	mutex_init(&rndsinks_lock, MUTEX_DEFAULT, IPL_VM);
 }
 
-/*
- * XXX Provisional -- rndpool_extract and rndpool_maybe_extract should
- * move into kern_rndpool.c.
- */
-extern rndpool_t rnd_pool;
-extern kmutex_t rndpool_mtx;
-
-/*
- * Fill the buffer with as much entropy as we can.  Return true if it
- * has full entropy and false if not.
- */
-static bool
-rndpool_extract(void *buffer, size_t bytes)
-{
-	const size_t extracted = rnd_extract_data(buffer, bytes,
-	    RND_EXTRACT_GOOD);
-
-	if (extracted < bytes) {
-		(void)rnd_extract_data((uint8_t *)buffer + extracted,
-		    bytes - extracted, RND_EXTRACT_ANY);
-		mutex_spin_enter(&rndpool_mtx);
-		rnd_getmore(bytes - extracted);
-		mutex_spin_exit(&rndpool_mtx);
-		return false;
-	}
-
-	return true;
-}
-
-/*
- * If we have as much entropy as is requested, fill the buffer with it
- * and return true.  Otherwise, leave the buffer alone and return
- * false.
- */
-
-CTASSERT(RND_ENTROPY_THRESHOLD <= 0xffffffffUL);
-CTASSERT(RNDSINK_MAX_BYTES <= (0xffffffffUL - RND_ENTROPY_THRESHOLD));
-CTASSERT((RNDSINK_MAX_BYTES + RND_ENTROPY_THRESHOLD) <=
-	    (0xffffffffUL / NBBY));
-
-static bool
-rndpool_maybe_extract(void *buffer, size_t bytes)
-{
-	bool ok;
-
-	KASSERT(bytes <= RNDSINK_MAX_BYTES);
-
-	const uint32_t bits_needed = ((bytes + RND_ENTROPY_THRESHOLD) * NBBY);
-
-	mutex_spin_enter(&rndpool_mtx);
-	if (bits_needed <= rndpool_get_entropy_count(&rnd_pool)) {
-		const uint32_t extracted __diagused =
-		    rndpool_extract_data(&rnd_pool, buffer, bytes,
-			RND_EXTRACT_GOOD);
-
-		KASSERT(extracted == bytes);
-
-		ok = true;
-	} else {
-		ok = false;
-		rnd_getmore(howmany(bits_needed -
-			rndpool_get_entropy_count(&rnd_pool), NBBY));
-	}
-	mutex_spin_exit(&rndpool_mtx);
-
-	return ok;
-}
-
 void
 rndsinks_distribute(void)
 {
@@ -167,7 +99,7 @@ rndsinks_distribute(void)
 		KASSERT(rndsink->rsink_state == RNDSINK_QUEUED);
 
 		/* Bail if we can't get some entropy for this rndsink.  */
-		if (!rndpool_maybe_extract(buffer, rndsink->rsink_bytes))
+		if (!rnd_tryextract(buffer, rndsink->rsink_bytes))
 			break;
 
 		/*
@@ -225,9 +157,12 @@ rndsinks_enqueue(struct rndsink *rndsink)
 	 * or something -- as soon as we get that much from the entropy
 	 * sources, distribute it.
 	 */
+    {
+	extern kmutex_t rndpool_mtx;
 	mutex_spin_enter(&rndpool_mtx);
 	rnd_getmore(MAX(rndsink->rsink_bytes, 2 * sizeof(uint32_t)));
 	mutex_spin_exit(&rndpool_mtx);
+    }
 
 	switch (rndsink->rsink_state) {
 	case RNDSINK_IDLE:
@@ -331,7 +266,7 @@ rndsink_request(struct rndsink *rndsink, void *buffer, size_t bytes)
 	KASSERT(bytes == rndsink->rsink_bytes);
 
 	mutex_spin_enter(&rndsinks_lock);
-	const bool full_entropy = rndpool_extract(buffer, bytes);
+	const bool full_entropy = rnd_extract(buffer, bytes);
 	if (!full_entropy)
 		rndsinks_enqueue(rndsink);
 	mutex_spin_exit(&rndsinks_lock);

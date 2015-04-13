@@ -1,4 +1,4 @@
-/*      $NetBSD: rnd_private.h,v 1.5 2015/04/13 14:30:05 riastradh Exp $     */
+/*      $NetBSD: rnd_private.h,v 1.6 2015/04/13 14:41:06 riastradh Exp $     */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,5 +47,6 @@
 #define RND_EXTRACT_GOOD	1  /* return as many good bytes
 				      (short read ok) */
 
-uint32_t        rnd_extract_data(void *, uint32_t, uint32_t);
+bool	rnd_extract(void *, size_t);
+bool	rnd_tryextract(void *, size_t);
 #endif
