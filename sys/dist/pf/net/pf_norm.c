@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.27 2013/10/20 21:05:47 christos Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.28 2015/04/13 16:35:33 riastradh Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.109 2007/05/28 17:16:39 henning Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.27 2013/10/20 21:05:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.28 2015/04/13 16:35:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.27 2013/10/20 21:05:47 christos Exp $"
 #include <sys/pool.h>
 
 #ifdef __NetBSD__
-#include <sys/rnd.h>
 #include <sys/cprng.h>
 #else
 #include <dev/rndvar.h>
