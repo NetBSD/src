@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.12 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.13 2015/04/13 17:59:21 christos Exp $	*/
 /* $OpenBSD: clientloop.c,v 1.272 2015/02/25 19:54:02 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -61,7 +61,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.12 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.13 2015/04/13 17:59:21 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -1594,7 +1594,8 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 			channel_after_select(readset, writeset);
 			if (need_rekeying || packet_need_rekeying()) {
 				debug("need rekeying");
-				active_state->kex->done = 0;
+				if (active_state->kex != NULL)
+					active_state->kex->done = 0;
 				if ((r = kex_send_kexinit(active_state)) != 0)
 					fatal("%s: kex_send_kexinit: %s",
 					    __func__, ssh_err(r));
