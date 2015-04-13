@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.18 2015/02/09 07:53:39 slp Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.19 2015/04/13 16:33:24 riastradh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.18 2015/02/09 07:53:39 slp Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.19 2015/04/13 16:33:24 riastradh Exp $");
 
 /*
  * The LAN9118 Family
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.18 2015/02/09 07:53:39 slp Exp $");
 #include <dev/mii/miivar.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/ic/lan9118reg.h>
 #include <dev/ic/lan9118var.h>

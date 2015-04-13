@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22 2014/09/20 15:07:06 jmcneill Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.23 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -77,7 +77,7 @@
 
 #include <sys/device.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

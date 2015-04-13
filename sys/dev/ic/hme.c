@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.90 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: hme.c,v 1.91 2015/04/13 16:33:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.90 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.91 2015/04/13 16:33:24 riastradh Exp $");
 
 /* #define HMEDEBUG */
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.90 2014/08/10 16:44:35 tls Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
