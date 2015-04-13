@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpool.h,v 1.1 2015/04/13 15:39:19 riastradh Exp $	*/
+/*	$NetBSD: rndpool.h,v 1.2 2015/04/13 23:21:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -57,13 +57,9 @@ typedef struct {
 } rndpool_t;
 
 void		rndpool_init(rndpool_t *);
-void		rndpool_init_global(void);
 uint32_t	rndpool_get_entropy_count(rndpool_t *);
 void		rndpool_set_entropy_count(rndpool_t *, uint32_t);
 void		rndpool_get_stats(rndpool_t *, void *, int);
-void		rndpool_increment_entropy_count(rndpool_t *, uint32_t);
-uint32_t	*rndpool_get_pool(rndpool_t *);
-uint32_t	rndpool_get_poolsize(void);
 void		rndpool_add_data(rndpool_t *,
 				 const void *const , uint32_t, uint32_t);
 uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
