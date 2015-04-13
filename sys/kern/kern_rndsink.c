@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.11 2015/04/13 14:41:06 riastradh Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.12 2015/04/13 15:13:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.11 2015/04/13 14:41:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.12 2015/04/13 15:13:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.11 2015/04/13 14:41:06 riastradh 
 #include <sys/rnd.h>
 #include <sys/rndsink.h>
 
-#include <dev/rnd_private.h>	/* XXX provisional, for rnd_extract_data */
+#include <dev/rnd_private.h>
 
 enum rsink_state {
 	RNDSINK_IDLE,		/* no callback in progress */
@@ -157,12 +157,9 @@ rndsinks_enqueue(struct rndsink *rndsink)
 	 * or something -- as soon as we get that much from the entropy
 	 * sources, distribute it.
 	 */
-    {
-	extern kmutex_t rndpool_mtx;
 	mutex_spin_enter(&rndpool_mtx);
 	rnd_getmore(MAX(rndsink->rsink_bytes, 2 * sizeof(uint32_t)));
 	mutex_spin_exit(&rndpool_mtx);
-    }
 
 	switch (rndsink->rsink_state) {
 	case RNDSINK_IDLE:

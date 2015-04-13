@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.44 2015/04/08 13:45:01 riastradh Exp $	*/
+/*	$NetBSD: rnd.h,v 1.45 2015/04/13 15:13:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -199,8 +199,6 @@ void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
 void		rnd_attach_source(krndsource_t *, const char *,
 		    uint32_t, uint32_t);
 void		rnd_detach_source(krndsource_t *);
-
-void		rnd_getmore(size_t);
 
 void		rnd_seed(void *, size_t);
 

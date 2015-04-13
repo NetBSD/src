@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.44 2015/04/13 14:41:06 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.45 2015/04/13 15:13:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.44 2015/04/13 14:41:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.45 2015/04/13 15:13:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -68,11 +68,6 @@ int	rnd_debug = 0;
 #else
 #define	DPRINTF(l,x)
 #endif
-
-#define	RND_DEBUG_WRITE		0x0001
-#define	RND_DEBUG_READ		0x0002
-#define	RND_DEBUG_IOCTL		0x0004
-#define	RND_DEBUG_SNOOZE	0x0008
 
 /*
  * list devices attached
@@ -189,7 +184,7 @@ static rngtest_t	rnd_rt;
 static uint8_t		rnd_testbits[sizeof(rnd_rt.rt_b)];
 #endif
 
-LIST_HEAD(, krndsource)	rnd_sources;
+struct rndsource_head	rnd_sources;
 
 rndsave_t		*boot_rsp;
 
