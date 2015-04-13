@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.224 2014/05/25 21:49:29 dholland Exp $
+$NetBSD: acronyms,v 1.225 2015/04/13 00:39:57 rodent Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -35,6 +35,7 @@ AM	ante meridiem
 AMOL	a mountain of love
 ASAIC	as soon as I can
 ASAP	as soon as possible
+ASL	age/sex/location
 ATEOTD	at the end of the day
 ATM	at the moment
 ATM	{automated,automatic} teller machine
@@ -62,7 +63,7 @@ BCP	best current practice
 BF	best friend
 BF	boyfriend
 BFD	big fucking deal
-BFF	best friend forever
+BFF	best {friend,friends} forever
 BFH	big fucking hammer
 BIAB	back in a bit
 BIAF	back in a few
@@ -81,6 +82,8 @@ BS	bullshit
 BSD	booze, sex, drugs
 BTDT	been there, done that
 BTFT	been there, fixed that
+BTFO	bent the fuck over
+BTFO	blown the fuck out
 BTTH	boot to the head
 BTW	by the way
 CC	credit card
@@ -103,6 +106,7 @@ D/B/A	doing business as
 D/L	download
 DBA	doing business as
 DBEYR	don't believe everything you read
+DFC	delicious flat {chest,chests}
 DGAS	don't give a shit
 DIAFYO	did I ask for your opinion?
 DIY	do it yourself
@@ -172,10 +176,12 @@ FUD	fear, uncertainty, [and] doubt
 FWIW	for what it's worth
 FYEO	for your eyes only
 FYI	for your information
+FYIAD	fuck you, I'm a dragon!
 G	grin
 G/C	garbage collect
 G2G	got to go
 G2K	good to know
+GA	go ahead
 GAC	get a clue
 GAL	get a life
 GBTW	get back to work
@@ -184,6 +190,8 @@ GFU	good for you
 GFY	go fuck yourself
 GFY	good for you
 GG	good game
+GGA	good game all
+GGP	good game partner
 GGWP	good game, well played
 GIGO	garbage in, garbage out
 GIYF	Google is your friend
@@ -219,6 +227,7 @@ IAE	in any event
 IANAL	I am not a lawyer
 IAW	in another window
 IAWTC	I agree with this comment
+IAWTP	I agree with this post
 IAY	I adore you
 IB	I'm back
 IC	I see
@@ -229,6 +238,7 @@ IDC	I don't care
 IDGI	I don't get it
 IDGW	in a good way
 IDI	I doubt it
+IDIFTL	I did it for the lulz
 IDK	I don't know
 IDRC	I don't really care
 IDTS	I don't think so
@@ -306,6 +316,7 @@ LMAO	laughing my ass off
 LMB	lick my balls
 LMC	let me check
 LMFAO	laughing my fucking ass off
+LMGTFY	let me google that for you
 LMHO	laughing my head off
 LMK	let me know
 LMNO	laughing my nuts off
@@ -329,6 +340,7 @@ N/M	never mind
 NAFAIK	not as far as I know
 NBD	no big deal
 NE1	anyone
+NEDM	not even Doom music
 NFA	no flaming allowed
 NFC	no fucking clue
 NFI	no fucking idea
@@ -341,6 +353,7 @@ NMF	not my fault
 NMP	not my problem
 NOM	no offence meant
 NOOB	newbie
+NORP	normal ordinary {respectable,responsible} person
 NOYB	none of your business
 NOYFB	none of your fucking business
 NP	no problem
@@ -350,6 +363,7 @@ NRN	no reply necessary
 NRN	not right now
 NSFW	not suitable for work
 NTN	no thanks needed
+NTSA	not this shit again
 NUNP	no users, no problems
 NVM	never mind
 NW	no way
@@ -390,6 +404,7 @@ PFY	pimply faced youth
 PHB	pointy haired boss
 PIN	personal identification number
 PITA	pain in the ass
+PITR	{parent,parents} in the room
 PKSP	pound keys and spew profanity
 PM	post meridiem
 PMFI	problem magically fixed itself
@@ -441,6 +456,7 @@ SAR	some assembly required
 SCNR	sorry, could not resist
 SEP	someone else's problem
 SERP	search engine results page
+SIF	secret Internet fatty
 SFA	sweet fuck all
 SFAICT	so far as I can tell
 SHID	slaps head in disgust
@@ -450,6 +466,7 @@ SMH	shaking my head
 SMLSFB	so many losers, so few bullets
 SMOP	simple matter of programming
 SNAFU	situation normal, all fucked up
+SNCA	shit no one cares about
 SNERT	snot-nosed egotistical rude teenager
 SNMP	sorry, not my problem
 SO	significant other
@@ -469,6 +486,7 @@ SWAG	silly, wild-assed guess
 SWAHBI	silly, wild-assed hare-brained idea
 SWFG	search with fucking Google
 SWMBO	she who must be obeyed
+SWTF	she wants to fuck
 SYS	see you soon
 TA	teaching assistant
 TANSTAAFL	there ain't no such thing as a free lunch
@@ -492,6 +510,7 @@ TINLA	this is not legal advice
 TINWIS	this is not what I said
 TJM	that's just me
 TLA	three letter acronym
+TLA	true love always
 TLC	tender loving care
 TLDR	too long, didn't read
 TM	trademark
@@ -555,6 +574,7 @@ WWJD	what would Jesus do?
 YAGNI	you ain't gonna need it
 YALIMO	you are lame, in my opinion
 YAOTM	yet another off-topic message
+YGGR	you gonna get raped
 YGM	you got mail
 YHBT	you have been trolled
 YHL	you have lost
