@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.47 2015/04/13 15:39:19 riastradh Exp $	*/
+/*	$NetBSD: rndpool.h,v 1.1 2015/04/13 15:39:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,32 +30,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_RND_H_
-#define	_SYS_RND_H_
+#ifndef	_SYS_RNDPOOL_H
+#define	_SYS_RNDPOOL_H
 
-#ifndef _KERNEL
-#include <sys/cdefs.h>
-#endif /* !_KERNEL */
+#ifndef _KERNEL			/* XXX */
+#error <sys/rndpool.h> is meant for kernel consumers only.
+#endif
 
 #include <sys/types.h>
-#include <sys/rndio.h>		/* XXX provisional until users converted */
+#include <sys/rndio.h>		/* rndpoolstat_t */
 
-#ifdef _KERNEL
-#include <sys/queue.h>
-#include <sys/rndpool.h>	/* XXX provisional until users converted */
-#include <sys/rndsource.h>	/* XXX provisional until users converted */
-#include <sys/rngtest.h>
-#include <sys/systm.h>
+/*
+ * Size of entropy pool in 32-bit words.  This _MUST_ be a power of 2.  Don't
+ * change this unless you really know what you are doing...
+ */
+#ifndef RND_POOLWORDS
+#define RND_POOLWORDS	128
+#endif
+#define RND_POOLBITS	(RND_POOLWORDS * 32)
 
-#define	RND_DEV_RANDOM	0	/* minor for blocking until unpredictable */
-#define	RND_DEV_URANDOM	1	/* minor for randomly generating data */
+typedef struct {
+        uint32_t        cursor;         /* current add point in the pool */
+        uint32_t        rotate;         /* how many bits to rotate by */
+        rndpoolstat_t   stats;          /* current statistics */
+        uint32_t        pool[RND_POOLWORDS]; /* random pool data */
+} rndpool_t;
 
-void		rnd_init(void);
-void		rnd_init_softint(void);
-void		rnd_seed(void *, size_t);
+void		rndpool_init(rndpool_t *);
+void		rndpool_init_global(void);
+uint32_t	rndpool_get_entropy_count(rndpool_t *);
+void		rndpool_set_entropy_count(rndpool_t *, uint32_t);
+void		rndpool_get_stats(rndpool_t *, void *, int);
+void		rndpool_increment_entropy_count(rndpool_t *, uint32_t);
+uint32_t	*rndpool_get_pool(rndpool_t *);
+uint32_t	rndpool_get_poolsize(void);
+void		rndpool_add_data(rndpool_t *,
+				 const void *const , uint32_t, uint32_t);
+uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
 
-extern int	rnd_initial_entropy;
-
-#endif /* _KERNEL */
-
-#endif /* !_SYS_RND_H_ */
+#endif	/* _SYS_RNDPOOL_H */
