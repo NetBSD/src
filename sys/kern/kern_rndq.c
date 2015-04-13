@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.45 2015/04/13 15:13:50 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.46 2015/04/13 15:23:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.45 2015/04/13 15:13:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.46 2015/04/13 15:23:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -176,7 +176,8 @@ static inline void	rnd_schedule_process(void);
 
 int			rnd_ready = 0;
 int			rnd_initial_entropy = 0;
-int			rnd_printing = 0;
+
+static int		rnd_printing = 0;
 
 #ifdef DIAGNOSTIC
 static int		rnd_tested = 0;
