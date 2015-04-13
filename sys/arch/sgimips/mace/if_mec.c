@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.50 2014/08/10 16:44:34 tls Exp $ */
+/* $NetBSD: if_mec.c,v 1.51 2015/04/13 21:22:34 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.50 2014/08/10 16:44:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.51 2015/04/13 21:22:34 riastradh Exp $");
 
 #include "opt_ddb.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.50 2014/08/10 16:44:34 tls Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
