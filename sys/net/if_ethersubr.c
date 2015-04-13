@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.206 2015/04/03 07:55:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.207 2015/04/13 22:46:57 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.206 2015/04/03 07:55:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.207 2015/04/13 22:46:57 riastradh Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.206 2015/04/03 07:55:18 ozaki-r E
 #include <sys/intr.h>
 #include <sys/device.h>
 #include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
