@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.11 2015/04/13 17:50:31 christos Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.12 2015/04/13 18:00:47 christos Exp $	*/
 /* $OpenBSD: serverloop.c,v 1.178 2015/02/20 22:17:21 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.11 2015/04/13 17:50:31 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.12 2015/04/13 18:00:47 christos Exp $");
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -863,8 +863,9 @@ server_loop2(Authctxt *authctxt)
 			if (packet_need_rekeying()) {
 				int r;
 				debug("need rekeying");
-				active_state->kex->done = 0;
-				 if ((r = kex_send_kexinit(active_state)) != 0)
+				if (active_state->kex)
+					active_state->kex->done = 0;
+				if ((r = kex_send_kexinit(active_state)) != 0)
 					logit("%s: kex_send_kexinit: %s",
 					    __func__, ssh_err(r));
 			}
