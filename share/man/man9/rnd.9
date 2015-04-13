@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.24 2014/08/10 17:17:04 wiz Exp $
+.\"	$NetBSD: rnd.9,v 1.25 2015/04/13 22:23:54 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nm rnd_add_uint32
 .Nd functions to make a device available for entropy collection
 .Sh SYNOPSIS
-.In sys/rnd.h
+.In sys/rndsource.h
 .Ft void
 .Fn rnd_attach_source "krndsource_t *rnd_source" "char *devname" "uint32_t source_type" "uint32_t flags"
 .Ft void
@@ -220,7 +220,7 @@ Direct access to the entropy pool is unsupported and may be dangerous.
 There is no supported API for direct access to the output of the entropy pool.
 .\" .Sh ERRORS
 .Sh FILES
-These functions are declared in src/sys/sys/rnd.h and defined in
+These functions are declared in src/sys/sys/rndsource.h and defined in
 src/sys/kern/kern_rndq.c.
 .Sh SEE ALSO
 .Xr rnd 4 ,
