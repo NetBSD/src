@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.14 2012/10/27 17:18:05 chs Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.15 2015/04/13 21:18:42 riastradh Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #define MB8795_NRXBUFS (32)
 

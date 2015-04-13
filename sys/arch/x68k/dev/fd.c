@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.115 2015/01/02 19:42:06 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.116 2015/04/13 21:18:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.115 2015/01/02 19:42:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.116 2015/04/13 21:18:43 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.115 2015/01/02 19:42:06 christos Exp $");
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/cons.h>
 

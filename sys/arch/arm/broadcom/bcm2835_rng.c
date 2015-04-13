@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.10 2014/08/10 16:44:33 tls Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.11 2015/04/13 21:18:40 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,14 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.10 2014/08/10 16:44:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.11 2015/04/13 21:18:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/bus.h>
-#include <sys/rnd.h>
+#include <sys/rndpool.h>
+#include <sys/rndsource.h>
 #include <sys/atomic.h>
 #include <sys/intr.h>
 
