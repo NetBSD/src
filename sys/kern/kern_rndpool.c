@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.11 2015/04/13 23:24:33 riastradh Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.12 2015/04/13 23:25:14 riastradh Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.11 2015/04/13 23:24:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.12 2015/04/13 23:25:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.11 2015/04/13 23:24:33 riastradh 
 #define	TAP3	31
 #define	TAP4	 9
 #define	TAP5	 7
-
-static inline void rndpool_add_one_word(rndpool_t *, u_int32_t);
 
 void
 rndpool_init(rndpool_t *rp)
