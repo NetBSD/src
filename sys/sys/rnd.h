@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.47 2015/04/13 15:39:19 riastradh Exp $	*/
+/*	$NetBSD: rnd.h,v 1.48 2015/04/13 22:52:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,19 +33,7 @@
 #ifndef _SYS_RND_H_
 #define	_SYS_RND_H_
 
-#ifndef _KERNEL
-#include <sys/cdefs.h>
-#endif /* !_KERNEL */
-
-#include <sys/types.h>
-#include <sys/rndio.h>		/* XXX provisional until users converted */
-
 #ifdef _KERNEL
-#include <sys/queue.h>
-#include <sys/rndpool.h>	/* XXX provisional until users converted */
-#include <sys/rndsource.h>	/* XXX provisional until users converted */
-#include <sys/rngtest.h>
-#include <sys/systm.h>
 
 #define	RND_DEV_RANDOM	0	/* minor for blocking until unpredictable */
 #define	RND_DEV_URANDOM	1	/* minor for randomly generating data */
