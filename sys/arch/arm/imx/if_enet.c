@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.2 2015/03/15 04:12:07 ryo Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.3 2015/04/13 21:18:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.2 2015/03/15 04:12:07 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.3 2015/04/13 21:18:41 riastradh Exp $");
 
 #include "imxocotp.h"
 #include "imxccm.h"
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.2 2015/03/15 04:12:07 ryo Exp $");
 #include <sys/device.h>
 #include <sys/sockio.h>
 #include <sys/kernel.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <lib/libkern/libkern.h>
 

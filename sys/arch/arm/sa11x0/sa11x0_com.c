@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.54 2014/11/15 19:20:01 christos Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.55 2015/04/13 21:18:41 riastradh Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.54 2014/11/15 19:20:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.55 2015/04/13 21:18:41 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -73,9 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.54 2014/11/15 19:20:01 christos Exp
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
-#include "rnd.h"
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/param.h>
