@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.12 2015/04/04 13:59:20 christos Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.13 2015/04/13 17:54:52 christos Exp $	*/
 /* $OpenBSD: ssh-keyscan.c,v 1.99 2015/01/30 10:44:49 djm Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
@@ -9,7 +9,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.12 2015/04/04 13:59:20 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.13 2015/04/13 17:54:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -284,6 +284,7 @@ static void
 keyprint(con *c, struct sshkey *key)
 {
 	char *host = c->c_output_name ? c->c_output_name : c->c_name;
+	int r;
 
 	if (!key)
 		return;
@@ -291,7 +292,9 @@ keyprint(con *c, struct sshkey *key)
 		fatal("host_hash failed");
 
 	fprintf(stdout, "%s ", host);
-	sshkey_write(key, stdout);
+	if ((r = sshkey_write(key, stdout)) != 0)
+		fprintf(stderr, "key_write failed: %s", ssh_err(r));
+
 	fputs("\n", stdout);
 }
 
