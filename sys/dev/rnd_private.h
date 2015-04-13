@@ -1,4 +1,4 @@
-/*      $NetBSD: rnd_private.h,v 1.6 2015/04/13 14:41:06 riastradh Exp $     */
+/*      $NetBSD: rnd_private.h,v 1.7 2015/04/13 15:13:50 riastradh Exp $     */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,6 +32,12 @@
 
 #ifndef _DEV_RNDPRIVATE_H
 #define _DEV_RNDPRIVATE_H
+
+#include <sys/types.h>
+#include <sys/mutex.h>
+#include <sys/queue.h>
+#include <sys/rnd.h>
+
 /*
  * Number of bytes returned per hash.  This value is used in both
  * rnd.c and rndpool.c to decide when enough entropy exists to do a
@@ -49,4 +55,42 @@
 
 bool	rnd_extract(void *, size_t);
 bool	rnd_tryextract(void *, size_t);
+void	rnd_getmore(size_t);
+void	rnd_wakeup_readers(void);
+
+/*
+ * Flag indicating rnd_init has run.
+ */
+extern int		rnd_ready;
+
+/*
+ * Bootloader-supplied entropy.  Use only in tests against NULL to
+ * determine whether the bootloader supplied entropy.
+ */
+extern rndsave_t	*boot_rsp;
+
+/*
+ * List of rndsources.
+ */
+LIST_HEAD(rndsource_head, krndsource);
+
+/*
+ * Global entropy pool state.  Access to everything here is serialized
+ * by rndpool_mtx.
+ */
+extern kmutex_t			rndpool_mtx;
+extern rndpool_t		rnd_pool;
+extern struct rndsource_head	rnd_sources;
+
+/*
+ * Debugging flags.
+ */
+#ifdef RND_DEBUG
+extern int rnd_debug;
+#define	RND_DEBUG_WRITE		0x0001
+#define	RND_DEBUG_READ		0x0002
+#define	RND_DEBUG_IOCTL		0x0004
+#define	RND_DEBUG_SNOOZE	0x0008
 #endif
+
+#endif	/* _DEV_RNDPRIVATE_H */
