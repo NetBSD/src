@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.16 2014/11/15 19:20:01 christos Exp $ */
+/* $NetBSD: imxuart.c,v 1.17 2015/04/13 21:18:41 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.16 2014/11/15 19:20:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.17 2015/04/13 21:18:41 riastradh Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -108,9 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.16 2014/11/15 19:20:01 christos Exp $"
 #include "opt_imxuart.h"
 #include "opt_imx.h"
 
-#include "rnd.h"
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #ifndef	IMXUART_TOLERANCE
