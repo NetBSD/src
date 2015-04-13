@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.29 2014/08/10 17:13:14 wiz Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.30 2015/04/13 22:18:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -33,14 +33,14 @@
 #include <sha1.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.29 2014/08/10 17:13:14 wiz Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.30 2015/04/13 22:18:50 riastradh Exp $");
 #endif
 
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
-#include <sys/rnd.h>
+#include <sys/rndio.h>
 
 #include <stdio.h>
 #include <stdlib.h>
