@@ -1,4 +1,4 @@
-/*	$NetBSD: rndsource.h,v 1.1 2015/04/13 15:39:19 riastradh Exp $	*/
+/*	$NetBSD: rndsource.h,v 1.2 2015/04/13 16:02:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #endif
 
 #include <sys/types.h>
+#include <sys/rndio.h>		/* RND_TYPE_*, RND_FLAG_* */
 #include <sys/rngtest.h>
 
 typedef struct rnd_delta_estimator {
