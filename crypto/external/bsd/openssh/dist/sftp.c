@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.14 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: sftp.c,v 1.15 2015/04/13 17:35:16 christos Exp $	*/
 /* $OpenBSD: sftp.c,v 1.170 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.14 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.15 2015/04/13 17:35:16 christos Exp $");
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -732,6 +732,8 @@ process_put(struct sftp_conn *conn, char *src, char *dst, char *pwd,
 			    fflag || global_fflag) == -1)
 				err = -1;
 		}
+		free(abs_dst);
+		abs_dst = NULL;
 	}
 
 out:
