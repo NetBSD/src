@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.23 2014/11/16 16:20:00 ozaki-r Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.24 2015/04/13 16:03:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.23 2014/11/16 16:20:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.24 2015/04/13 16:03:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -28,12 +28,10 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.23 2014/11/16 16:20:00 ozaki-r Exp
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/module.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/cpu.h>
-#include <sys/rnd.h>
-#include <sys/cprng.h>
 
 #include <x86/specialreg.h>
 
