@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.8 2015/04/08 13:45:01 riastradh Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.9 2015/04/13 22:43:41 riastradh Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.8 2015/04/08 13:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.9 2015/04/13 22:43:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sha1.h>
 
-#include <sys/rnd.h>
+#include <sys/rndpool.h>
 #include <dev/rnd_private.h>
 
 /*
