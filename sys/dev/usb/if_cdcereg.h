@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdcereg.h,v 1.7 2012/02/02 19:43:07 tls Exp $ */
+/*	$NetBSD: if_cdcereg.h,v 1.8 2015/04/13 16:34:43 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -33,6 +33,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/rndsource.h>
 
 #define CDCE_RX_LIST_CNT	1
 #define CDCE_TX_LIST_CNT	1
