@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.46 2015/04/13 15:23:01 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.47 2015/04/13 22:43:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.46 2015/04/13 15:23:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.47 2015/04/13 22:43:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -49,7 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.46 2015/04/13 15:23:01 riastradh Exp
 #include <sys/callout.h>
 #include <sys/intr.h>
 #include <sys/rnd.h>
+#include <sys/rndpool.h>
 #include <sys/rndsink.h>
+#include <sys/rndsource.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
