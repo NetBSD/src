@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.281 2015/04/06 07:38:17 martin Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.282 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.281 2015/04/06 07:38:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.282 2015/04/13 16:33:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.281 2015/04/06 07:38:17 martin Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #ifdef INET
 #include <netinet/in.h>

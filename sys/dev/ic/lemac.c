@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.42 2014/08/10 16:44:35 tls Exp $ */
+/* $NetBSD: lemac.c,v 1.43 2015/04/13 16:33:24 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.42 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.43 2015/04/13 16:33:24 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.42 2014/08/10 16:44:35 tls Exp $");
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

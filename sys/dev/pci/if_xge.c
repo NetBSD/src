@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.19 2014/03/29 19:28:25 christos Exp $ */
+/*      $NetBSD: if_xge.c,v 1.20 2015/04/13 16:33:25 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.19 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.20 2015/04/13 16:33:25 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.19 2014/03/29 19:28:25 christos Exp $")
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-
-#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.54 2014/10/10 17:41:05 christos Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.55 2015/04/13 16:33:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -34,7 +34,7 @@
  *	FreeBSD Id: if_rlreg.h,v 1.9 1999/06/20 18:56:09 wpaul Exp
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #define RTK_ETHER_ALIGN	2
 #define RTK_RXSTAT_LEN	4

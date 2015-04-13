@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.47 2014/10/10 14:23:06 christos Exp $ */
+/* $NetBSD: if_msk.c,v 1.48 2015/04/13 16:33:25 riastradh Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.47 2014/10/10 14:23:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.48 2015/04/13 16:33:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.47 2014/10/10 14:23:06 christos Exp $")
 #include <net/if_media.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

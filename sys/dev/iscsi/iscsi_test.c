@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_test.c,v 1.3 2012/12/29 11:05:30 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_test.c,v 1.4 2015/04/13 16:33:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006,2011 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cprng.h>
 
 #include "iscsi_globals.h"
 

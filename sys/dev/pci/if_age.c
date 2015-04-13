@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.44 2014/03/29 19:28:24 christos Exp $ */
+/*	$NetBSD: if_age.c,v 1.45 2015/04/13 16:33:25 riastradh Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.44 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.45 2015/04/13 16:33:25 riastradh Exp $");
 
 #include "vlan.h"
 
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.44 2014/03/29 19:28:24 christos Exp $")
 #include <net/if_vlanvar.h>
 
 #include <net/bpf.h>
-
-#include <sys/rnd.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.144 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_de.c,v 1.145 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.144 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.145 2015/04/13 16:33:25 riastradh Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.144 2014/08/10 16:44:36 tls Exp $");
 #endif
 
 #if defined(__NetBSD__)
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.129 2015/03/14 09:52:49 hannken Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.130 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.129 2015/03/14 09:52:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.130 2015/04/13 16:33:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.129 2015/03/14 09:52:49 hannken 
 #include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/kmem.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>

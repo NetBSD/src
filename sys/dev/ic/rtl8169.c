@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.143 2014/11/22 00:17:07 joerg Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.144 2015/04/13 16:33:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.143 2014/11/22 00:17:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.144 2015/04/13 16:33:24 riastradh Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -134,7 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.143 2014/11/22 00:17:07 joerg Exp $");
 #include <netinet/ip.h>		/* XXX for IP_MAXPACKET */
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/bus.h>
 
