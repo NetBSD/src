@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2014, Intel Corp.
+ * Copyright (C) 2000 - 2015, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __EXTABLES_C__
 
 #include "examples.h"
 #include "actables.h"
@@ -237,7 +235,7 @@ AcpiOsGetRootPointer (
     void)
 {
 
-    return ((ACPI_PHYSICAL_ADDRESS) RsdpCode);
+    return (ACPI_PTR_TO_PHYSADDR (RsdpCode));
 }
 
 

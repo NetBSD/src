@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2014, Intel Corp.
+ * Copyright (C) 2000 - 2015, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -687,8 +687,8 @@ AeRegionHandler (
                 {
                     /* Right overlap */
 
-                    RegionElement->Length = BaseAddress -
-                        RegionAddress + Length;
+                    RegionElement->Length = (UINT32) (BaseAddress -
+                        RegionAddress + Length);
                     BufferResize = TRUE;
                 }
 
@@ -699,8 +699,8 @@ AeRegionHandler (
                     /* Left overlap */
 
                     RegionElement->Address = BaseAddress;
-                    RegionElement->Length = RegionAddress -
-                        BaseAddress + RegionElement->Length;
+                    RegionElement->Length = (UINT32) (RegionAddress -
+                        BaseAddress + RegionElement->Length);
                     BufferResize = TRUE;
                 }
 

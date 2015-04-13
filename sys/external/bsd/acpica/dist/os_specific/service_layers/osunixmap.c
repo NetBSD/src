@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2014, Intel Corp.
+ * Copyright (C) 2000 - 2015, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -166,6 +166,6 @@ AcpiOsUnmapMemory (
 
 
     PageSize = AcpiOsGetPageSize ();
-    Offset = (ACPI_PHYSICAL_ADDRESS) Where % PageSize;
+    Offset = ACPI_TO_INTEGER (Where) % PageSize;
     munmap ((UINT8 *) Where - Offset, (Length + Offset));
 }

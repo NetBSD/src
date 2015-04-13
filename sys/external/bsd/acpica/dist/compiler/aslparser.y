@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2014, Intel Corp.
+ * Copyright (C) 2000 - 2015, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,6 @@ AslLocalAllocate (
 #define malloc              AslLocalAllocate
 #undef alloca
 #define alloca              AslLocalAllocate
-#undef yytname
 #define yytname             AslCompilername
 
 #define YYINITDEPTH         600             /* State stack depth */
@@ -100,7 +99,7 @@ AslLocalAllocate (
  * These shift/reduce conflicts are expected. There should be zero
  * reduce/reduce conflicts.
  */
-%expect 86
+%expect 89
 
 /*! [Begin] no source code translation */
 
