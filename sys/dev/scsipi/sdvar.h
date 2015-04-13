@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.35 2014/09/05 05:30:23 matt Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.36 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 #include "opt_scsi.h"
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #ifndef	SDRETRIES
 #define	SDRETRIES	4

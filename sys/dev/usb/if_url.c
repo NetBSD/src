@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.48 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_url.c,v 1.49 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.49 2015/04/13 16:33:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48 2014/08/10 16:44:36 tls Exp $");
 #include <sys/socket.h>
 
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>

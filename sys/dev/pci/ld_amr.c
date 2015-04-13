@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.22 2015/03/02 15:26:57 christos Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.23 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.22 2015/03/02 15:26:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.23 2015/04/13 16:33:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.22 2015/03/02 15:26:57 christos Exp $")
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
-#include <sys/rnd.h>
 
 #include <sys/bus.h>
 

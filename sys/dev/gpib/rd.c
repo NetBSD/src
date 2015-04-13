@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.39 2015/01/02 19:42:06 christos Exp $ */
+/*	$NetBSD: rd.c,v 1.40 2015/04/13 16:33:24 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.39 2015/01/02 19:42:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.40 2015/04/13 16:33:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.39 2015/01/02 19:42:06 christos Exp $");
 #include <sys/proc.h>
 #include <sys/stat.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/gpib/gpibvar.h>
 #include <dev/gpib/cs80busvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.6 2012/12/29 11:05:29 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.7 2015/04/13 16:33:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
-#include <sys/rnd.h>
 #include <sys/device.h>
 
 #include <dev/scsipi/scsi_all.h>

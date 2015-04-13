@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.88 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.89 2015/04/13 16:33:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.88 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.89 2015/04/13 16:33:24 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.88 2014/08/10 16:44:35 tls Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

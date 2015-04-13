@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.52 2015/04/04 15:31:17 christos Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.53 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.52 2015/04/04 15:31:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.53 2015/04/13 16:33:25 riastradh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.52 2015/04/04 15:31:17 christos E
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
