@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.17 2015/01/02 19:42:05 christos Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.18 2015/04/13 21:18:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.17 2015/01/02 19:42:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.18 2015/04/13 21:18:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.17 2015/01/02 19:42:05 christos Exp $
 #include <sys/lock.h>
 #include <sys/queue.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

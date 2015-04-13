@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_uart.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $	*/
+/*	$NetBSD: zynq_uart.c,v 1.2 2015/04/13 21:18:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.2 2015/04/13 21:18:41 riastradh Exp $");
 
 #include "opt_zynq.h"
 #include "opt_zynquart.h"
@@ -107,8 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_ntp.h"
-
-#include "rnd.h"
 
 /*
  * Override cnmagic(9) macro before including <sys/systm.h>.
@@ -141,7 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $"
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.9 2012/05/10 10:27:10 skrll Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.10 2015/04/13 21:18:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,16 +58,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.9 2012/05/10 10:27:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.10 2015/04/13 21:18:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/bus.h>
-
-
-#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

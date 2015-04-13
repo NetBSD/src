@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.53 2014/08/10 16:44:34 tls Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.54 2015/04/13 21:18:42 riastradh Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.53 2014/08/10 16:44:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.54 2015/04/13 21:18:42 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.53 2014/08/10 16:44:34 tls Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

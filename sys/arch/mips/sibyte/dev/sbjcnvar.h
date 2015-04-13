@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcnvar.h,v 1.5 2014/11/15 19:20:01 christos Exp $ */
+/* $NetBSD: sbjcnvar.h,v 1.6 2015/04/13 21:18:42 riastradh Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,9 +64,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
 #ifdef RND_SBJCN
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/callout.h>

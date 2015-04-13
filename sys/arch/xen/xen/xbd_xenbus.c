@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.69 2015/01/02 19:42:06 christos Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.70 2015/04/13 21:18:40 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.69 2015/01/02 19:42:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.70 2015/04/13 21:18:40 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.69 2015/01/02 19:42:06 christos Exp
 
 #include <uvm/uvm.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>

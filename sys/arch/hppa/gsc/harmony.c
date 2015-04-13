@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.2 2014/08/10 16:44:34 tls Exp $	*/
+/*	$NetBSD: harmony.c,v 1.3 2015/04/13 21:18:42 riastradh Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -73,7 +73,7 @@
 #include <sys/kmem.h>
 #include <uvm/uvm_extern.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
