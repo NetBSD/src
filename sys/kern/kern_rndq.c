@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.43 2015/04/08 14:13:55 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.44 2015/04/13 14:41:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.43 2015/04/08 14:13:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.44 2015/04/13 14:41:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1148,7 +1148,7 @@ rnd_wake(void *arg)
 	rnd_wakeup_readers();
 }
 
-u_int32_t
+static uint32_t
 rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 {
 	static int timed_in;
@@ -1224,6 +1224,67 @@ rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 	mutex_spin_exit(&rndpool_mtx);
 
 	return retval;
+}
+
+/*
+ * Fill the buffer with as much entropy as we can.  Return true if it
+ * has full entropy and false if not.
+ */
+bool
+rnd_extract(void *buffer, size_t bytes)
+{
+	const size_t extracted = rnd_extract_data(buffer, bytes,
+	    RND_EXTRACT_GOOD);
+
+	if (extracted < bytes) {
+		(void)rnd_extract_data((uint8_t *)buffer + extracted,
+		    bytes - extracted, RND_EXTRACT_ANY);
+		mutex_spin_enter(&rndpool_mtx);
+		rnd_getmore(bytes - extracted);
+		mutex_spin_exit(&rndpool_mtx);
+		return false;
+	}
+
+	return true;
+}
+
+/*
+ * If we have as much entropy as is requested, fill the buffer with it
+ * and return true.  Otherwise, leave the buffer alone and return
+ * false.
+ */
+
+CTASSERT(RND_ENTROPY_THRESHOLD <= 0xffffffffUL);
+CTASSERT(RNDSINK_MAX_BYTES <= (0xffffffffUL - RND_ENTROPY_THRESHOLD));
+CTASSERT((RNDSINK_MAX_BYTES + RND_ENTROPY_THRESHOLD) <=
+	    (0xffffffffUL / NBBY));
+
+bool
+rnd_tryextract(void *buffer, size_t bytes)
+{
+	bool ok;
+
+	KASSERT(bytes <= RNDSINK_MAX_BYTES);
+
+	const uint32_t bits_needed = ((bytes + RND_ENTROPY_THRESHOLD) * NBBY);
+
+	mutex_spin_enter(&rndpool_mtx);
+	if (bits_needed <= rndpool_get_entropy_count(&rnd_pool)) {
+		const uint32_t extracted __diagused =
+		    rndpool_extract_data(&rnd_pool, buffer, bytes,
+			RND_EXTRACT_GOOD);
+
+		KASSERT(extracted == bytes);
+
+		ok = true;
+	} else {
+		ok = false;
+		rnd_getmore(howmany(bits_needed -
+			rndpool_get_entropy_count(&rnd_pool), NBBY));
+	}
+	mutex_spin_exit(&rndpool_mtx);
+
+	return ok;
 }
 
 void
