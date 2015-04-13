@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.12 2015/04/13 23:25:14 riastradh Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.13 2015/04/13 23:26:54 riastradh Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.12 2015/04/13 23:25:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.13 2015/04/13 23:26:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,8 +280,8 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 
 	}
 
-	memset(&hash, 0, sizeof(hash));
-	memset(digest, 0, sizeof(digest));
+	explicit_memset(&hash, 0, sizeof(hash));
+	expliict_memset(digest, 0, sizeof(digest));
 
 	return (len - remain);
 }
