@@ -81,7 +81,7 @@ AcpiDmPldBuffer (
 
 /* Strings for ToPld */
 
-static char *DmPanelList[] =
+static const char *DmPanelList[] =
 {
     "TOP",
     "BOTTOM",
@@ -93,7 +93,7 @@ static char *DmPanelList[] =
     NULL
 };
 
-static char *DmVerticalPositionList[] =
+static const char *DmVerticalPositionList[] =
 {
     "UPPER",
     "CENTER",
@@ -101,7 +101,7 @@ static char *DmVerticalPositionList[] =
     NULL
 };
 
-static char *DmHorizontalPositionList[] =
+static const char *DmHorizontalPositionList[] =
 {
     "LEFT",
     "CENTER",
@@ -109,7 +109,7 @@ static char *DmHorizontalPositionList[] =
     NULL
 };
 
-static char *DmShapeList[] =
+static const char *DmShapeList[] =
 {
     "ROUND",
     "OVAL",
@@ -654,12 +654,12 @@ AcpiDmIsPldBuffer (
  *
  ******************************************************************************/
 
-static char *
+static const char *
 AcpiDmFindNameByIndex (
     UINT64                  Index,
-    char                    **List)
+    const char            **List)
 {
-    char                     *Str;
+    const char              *Str;
     UINT32                   i;
 
 
