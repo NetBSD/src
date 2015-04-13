@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.12 2012/10/27 17:18:21 chs Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.13 2015/04/13 16:33:24 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>
@@ -27,8 +27,7 @@
 #ifndef _LEMAC_VAR_H
 #define	_LEMAC_VAR_H
 
-
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 /*
  * Ethernet status, per interface.

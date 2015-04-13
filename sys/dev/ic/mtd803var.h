@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803var.h,v 1.9 2012/10/27 17:18:22 chs Exp $ */
+/* $NetBSD: mtd803var.h,v 1.10 2015/04/13 16:33:24 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/device.h>
 #include <sys/socket.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>

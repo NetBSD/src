@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.58 2012/10/27 17:18:32 chs Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.59 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -31,7 +31,7 @@
 
 #if defined(__NetBSD__)
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #if NetBSD >= 199803
 #define	TULIP_BUS_DMA		1

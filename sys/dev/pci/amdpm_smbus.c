@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.20 2013/06/13 00:55:01 tls Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.21 2015/04/13 16:33:25 riastradh Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,13 +32,12 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.20 2013/06/13 00:55:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.21 2015/04/13 16:33:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
 #include <sys/mutex.h>
 
 #include <dev/pci/pcireg.h>

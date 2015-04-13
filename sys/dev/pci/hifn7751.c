@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.56 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.57 2015/04/13 16:33:25 riastradh Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.56 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.57 2015/04/13 16:33:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.56 2014/08/10 16:44:35 tls Exp $");
 #else
 #include <opencrypto/cryptodev.h>
 #include <sys/cprng.h>
-#include <sys/rnd.h>
+#include <sys/rndpool.h>
+#include <sys/rndsource.h>
 #include <sys/sha1.h>
 #endif
 

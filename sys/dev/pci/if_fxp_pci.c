@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.81 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.82 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.81 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.82 2015/04/13 16:33:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.81 2014/03/29 19:28:24 christos Exp
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <sys/rnd.h>
 
 #include <machine/endian.h>
 

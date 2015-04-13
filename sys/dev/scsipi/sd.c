@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.314 2015/01/02 19:42:07 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.315 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.314 2015/01/02 19:42:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.315 2015/04/13 16:33:25 riastradh Exp $");
 
 #include "opt_scsi.h"
 
@@ -69,8 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.314 2015/01/02 19:42:07 christos Exp $");
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <sys/rnd.h>
-#include <sys/cprng.h>
+#include <sys/rndsource.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>

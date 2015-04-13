@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.90 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: if_el.c,v 1.91 2015/04/13 16:33:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.90 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.91 2015/04/13 16:33:24 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -31,7 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.90 2014/08/10 16:44:35 tls Exp $");
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.133 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.133 2015/04/13 16:33:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132 2014/08/10 16:44:36 tls Exp $");
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>

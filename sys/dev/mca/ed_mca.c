@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.62 2015/01/02 19:42:07 christos Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.63 2015/04/13 16:33:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.62 2015/01/02 19:42:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.63 2015/04/13 16:33:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.62 2015/01/02 19:42:07 christos Exp $")
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/intr.h>
 #include <sys/bus.h>

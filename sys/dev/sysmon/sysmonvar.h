@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.46 2015/03/14 09:52:49 hannken Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.47 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -44,7 +44,7 @@
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 struct lwp;
 struct proc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.158 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.159 2015/04/13 16:33:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.158 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.159 2015/04/13 16:33:25 riastradh Exp $");
 
 
 
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.158 2014/08/10 16:44:36 tls Exp $");
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

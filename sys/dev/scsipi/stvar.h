@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.24 2012/02/28 10:58:11 mbalmer Exp $ */
+/*	$NetBSD: stvar.h,v 1.25 2015/04/13 16:33:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  * A lot of rewhacking done by mjacob (mjacob@nas.nasa.gov).
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
