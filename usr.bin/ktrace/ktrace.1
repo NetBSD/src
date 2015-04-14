@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.42 2011/06/01 22:17:43 wiz Exp $
+.\"	$NetBSD: ktrace.1,v 1.42.4.1 2015/04/14 13:36:26 msaitoh Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 1, 2011
+.Dd January 8, 2015
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -201,7 +201,7 @@ trace exec environment
 .It Cm w
 trace context switches
 .It Cm +
-trace the default set of trace points (c, e, i, l, m, n, s, u)
+trace the default set of trace points (c, e, i, n, s, u)
 .It Cm -
 do not trace following trace points
 .El
