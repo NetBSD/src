@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.18 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.19 2015/04/14 20:32:36 riastradh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -40,6 +40,8 @@
  * microcontroller. The one exception is the 'send scan data' command,
  * which is used to load the firmware.
  */
+
+#include <sys/rndsource.h>
 
 #define KUE_CONFIG_NO		1
 #define KUE_IFACE_IDX		0

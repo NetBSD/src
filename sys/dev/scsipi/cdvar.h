@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.31 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.32 2015/04/14 20:32:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -23,6 +23,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/rndsource.h>
 
 #define	CDRETRIES	4
 
