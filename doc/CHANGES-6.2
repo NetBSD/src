@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.206 2015/04/02 17:50:33 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.207 2015/04/14 15:08:37 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11291,3 +11291,63 @@ doc/3RDPARTY					patch
 	Update OpenSSL to 1.0.1m
 	[spz, ticket #1284]
 
+include/unistd.h				1.144
+sys/kern/init_sysent.c				regen
+sys/kern/syscalls.c				regen
+sys/kern/syscalls.master			1.272
+sys/rump/include/rump/rump_syscalls.h		regen
+sys/rump/librump/rumpkern/rump_syscalls.c	regen
+sys/sys/syscall.h				regen
+sys/sys/syscallargs.h				regen
+sys/compat/netbds32/netbsd32_syscall.h		regen
+sys/compat/netbds32/netbsd32_syscallargs.h	regen
+sys/compat/netbds32/netbsd32_syscalls.c		regen
+sys/compat/netbds32/netbsd32_sysent.c		regen
+sys/compat/netbsd32/syscalls.master		1.102
+
+	Fix return type of the readlinkat(2) syscall. PR#49684.
+	[khorben, ticket #1264]
+
+share/man/man9/pci_intr.9			1.18 via patch
+
+	Fix type of pc argument in pci_intr(9) man page.
+	[riastradh, ticket #1272]
+
+lib/libc/stdio/fopen.3				1.30
+
+	Use Pq to avoid space before O_EXCL.
+	[riastradh, ticket #1273]
+
+doc/BUILDING.mdoc				1.111
+
+	Use `It Sy', not just `It', for live-image, to match other targets.
+	No change to plain-text BUILDING file.
+	[riastradh, ticket #1274]
+
+share/man/man9/uvm_km.9				1.4
+
+	Clarify uvm_km_alloc is contiguous and zero result means fail.
+	[riastradh, ticket #1275]
+
+usr.bin/ktrace/ktrace.1				1.43
+
+	Omit no longer existing l, m from default trace points.
+	[riastradh, ticket #1276]
+
+sys/arch/xen/include/evtchn.h			1.23
+sys/arch/xen/xen/evtchn.c			1.71
+sys/arch/xen/xen/pci_intr_machdep.c		1.17
+
+	Properly implemement pci_intr_disestablish(9), so that interrupt
+	handlers stop being called when the device has been detached.
+	Should fix PR port-xen/47720 (which turns out to not be related to
+	raidframe). While there fix possible races in event_remove_handler()
+	and pirq_establish().
+	[bouyer, ticket #1278]
+
+distrib/sets/makesrctars			1.40
+
+	GPL code isn't just in src/gnu these days (i.e., the last 6 years).
+	move stuff from src/external/gpl[23] out of the src tarball and into
+	gnusrc.
+	[snj, ticket #1279]
