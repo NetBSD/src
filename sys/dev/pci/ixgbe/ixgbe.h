@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 234620 2012-04-23 22:05:09Z bz $*/
-/*$NetBSD: ixgbe.h,v 1.5 2015/04/02 09:26:55 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 243716 2012-11-30 22:33:21Z jfv $*/
+/*$NetBSD: ixgbe.h,v 1.6 2015/04/14 07:17:06 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -173,6 +173,19 @@
 #define IXGBE_FC_HI		0x20000
 #define IXGBE_FC_LO		0x10000
 
+/*
+ * Used for optimizing small rx mbufs.  Effort is made to keep the copy
+ * small and aligned for the CPU L1 cache.
+ * 
+ * MHLEN is typically 168 bytes, giving us 8-byte alignment.  Getting
+ * 32 byte alignment needed for the fast bcopy results in 8 bytes being
+ * wasted.  Getting 64 byte alignment, which _should_ be ideal for
+ * modern Intel CPUs, results in 40 bytes wasted and a significant drop
+ * in observed efficiency of the optimization, 97.9% -> 81.8%.
+ */
+#define IXGBE_RX_COPY_LEN	160
+#define IXGBE_RX_COPY_ALIGN	(MHLEN - IXGBE_RX_COPY_LEN)
+
 /* Keep older OS drivers building... */
 #if !defined(SYSCTL_ADD_UQUAD)
 #define SYSCTL_ADD_UQUAD SYSCTL_ADD_QUAD
@@ -204,10 +217,6 @@
 #define IXGBE_VFTA_SIZE			128
 #define IXGBE_BR_SIZE			4096
 #define IXGBE_QUEUE_MIN_FREE		32
-#define IXGBE_QUEUE_IDLE		1
-#define IXGBE_QUEUE_WORKING		2
-#define IXGBE_QUEUE_HUNG		4
-#define IXGBE_QUEUE_DEPLETED		8
 
 /* Offload bits in mbuf flag */
 #define	M_CSUM_OFFLOAD	\
@@ -246,11 +255,12 @@ struct ixgbe_tx_buf {
 };
 
 struct ixgbe_rx_buf {
-	struct mbuf	*m_head;
-	struct mbuf	*m_pack;
+	struct mbuf	*buf;
 	struct mbuf	*fmp;
-	bus_dmamap_t	hmap;
-	bus_dmamap_t	pmap;
+	bus_dmamap_t	map;
+	u_int		flags;
+#define IXGBE_RX_COPY	0x01
+	uint64_t	addr;
 };
 
 /*
@@ -291,7 +301,11 @@ struct tx_ring {
         struct adapter		*adapter;
 	kmutex_t		tx_mtx;
 	u32			me;
-	int			queue_status;
+	enum {
+	    IXGBE_QUEUE_IDLE,
+	    IXGBE_QUEUE_WORKING,
+	    IXGBE_QUEUE_HUNG,
+	}			queue_status;
 	struct timeval		watchdog_time;
 	union ixgbe_adv_tx_desc	*tx_base;
 	struct ixgbe_dma_alloc	txdma;
@@ -304,6 +318,7 @@ struct tx_ring {
 	char			mtx_name[16];
 #if __FreeBSD_version >= 800000
 	struct buf_ring		*br;
+	struct task		txq_task;
 #endif
 #ifdef IXGBE_FDIR
 	u16			atr_sample;
@@ -330,7 +345,6 @@ struct rx_ring {
 	struct lro_ctrl		lro;
 #endif /* LRO */
 	bool			lro_enabled;
-	bool			hdr_split;
 	bool			hw_rsc;
 	bool			discard;
 	bool			vtag_strip;
@@ -338,15 +352,14 @@ struct rx_ring {
         u32 			next_to_check;
 	char			mtx_name[16];
 	struct ixgbe_rx_buf	*rx_buffers;
-	ixgbe_dma_tag_t		*htag;
-	ixgbe_dma_tag_t		*ptag;
+	ixgbe_dma_tag_t		*tag;
 
 	u32			bytes; /* Used for AIM calc */
 	u32			packets;
 
 	/* Soft stats */
 	struct evcnt		rx_irq;
-	struct evcnt		rx_split_packets;
+	struct evcnt		rx_copies;
 	struct evcnt		rx_packets;
 	struct evcnt 		rx_bytes;
 	struct evcnt 		rx_discarded;

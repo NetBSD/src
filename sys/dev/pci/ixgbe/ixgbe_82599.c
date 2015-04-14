@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 238149 2012-07-05 20:51:44Z jfv $*/
-/*$NetBSD: ixgbe_82599.c,v 1.7 2015/04/02 09:26:55 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 240155 2012-09-06 02:07:58Z kevlo $*/
+/*$NetBSD: ixgbe_82599.c,v 1.8 2015/04/14 07:17:06 msaitoh Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -870,12 +870,13 @@ s32 ixgbe_setup_mac_link_82599(struct ixgbe_hw *hw,
 	    link_mode == IXGBE_AUTOC_LMS_KX4_KX_KR_SGMII) {
 		/* Set KX4/KX/KR support according to speed requested */
 		autoc &= ~(IXGBE_AUTOC_KX4_KX_SUPP_MASK | IXGBE_AUTOC_KR_SUPP);
-		if (speed & IXGBE_LINK_SPEED_10GB_FULL)
+		if (speed & IXGBE_LINK_SPEED_10GB_FULL) {
 			if (orig_autoc & IXGBE_AUTOC_KX4_SUPP)
 				autoc |= IXGBE_AUTOC_KX4_SUPP;
 			if ((orig_autoc & IXGBE_AUTOC_KR_SUPP) &&
 			    (hw->phy.smart_speed_active == FALSE))
 				autoc |= IXGBE_AUTOC_KR_SUPP;
+		}
 		if (speed & IXGBE_LINK_SPEED_1GB_FULL)
 			autoc |= IXGBE_AUTOC_KX_SUPP;
 	} else if ((pma_pmd_1g == IXGBE_AUTOC_1G_SFI) &&

@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixv.c 238149 2012-07-05 20:51:44Z jfv $*/
-/*$NetBSD: ixv.c,v 1.6 2015/04/02 09:26:55 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixv.c 241917 2012-10-22 22:29:48Z eadler $*/
+/*$NetBSD: ixv.c,v 1.7 2015/04/14 07:17:06 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -706,7 +706,9 @@ ixv_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr, struct mbuf *m)
 			break;
 		}
 		enqueued++;
-		drbr_stats_update(ifp, next->m_pkthdr.len, next->m_flags);
+		ifp->if_obytes += next->m_pkthdr.len;
+		if (next->m_flags & M_MCAST)
+			ifp->if_omcasts++;
 		/* Send a copy of the frame to the BPF listener */
 		ETHER_BPF_MTAP(ifp, next);
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
