@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307reg.h,v 1.4 2012/02/23 20:59:19 matt Exp $	*/
+/*	$NetBSD: ds1307reg.h,v 1.4.14.1 2015/04/14 04:24:58 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -81,6 +81,8 @@
 #define DS3232_CSR		0x0f
 #define	DS3232_RTC_START	0
 #define	DS3232_RTC_SIZE		DSXXXX_RTC_SIZE
+#define DS3232_TEMP_MSB		0x11
+#define DS3232_TEMP_LSB		0x12
 #define	DS3232_NVRAM_START	0x14
 #define	DS3232_NVRAM_SIZE	0xec
 
