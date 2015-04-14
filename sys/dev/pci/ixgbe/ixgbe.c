@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 243716 2012-11-30 22:33:21Z jfv $*/
-/*$NetBSD: ixgbe.c,v 1.26 2015/04/14 07:17:06 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.27 2015/04/14 07:41:52 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -5313,8 +5313,10 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32  missed_rx = 0, bprc, lxon, lxoff, total;
 	u64  total_missed_rx = 0;
+	uint64_t crcerrs, rlec;
 
-	adapter->stats.crcerrs.ev_count += IXGBE_READ_REG(hw, IXGBE_CRCERRS);
+	crcerrs = IXGBE_READ_REG(hw, IXGBE_CRCERRS);
+	adapter->stats.crcerrs.ev_count += crcerrs;
 	adapter->stats.illerrc.ev_count += IXGBE_READ_REG(hw, IXGBE_ILLERRC);
 	adapter->stats.errbc.ev_count += IXGBE_READ_REG(hw, IXGBE_ERRBC);
 	adapter->stats.mspdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MSPDC);
@@ -5328,7 +5330,7 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		/* global total per queue */
         	adapter->stats.mpc[j].ev_count += mp;
 		/* Running comprehensive total for stats display */
-		total_missed_rx += adapter->stats.mpc[j].ev_count;
+		total_missed_rx += mp;
 		if (hw->mac.type == ixgbe_mac_82598EB)
 			adapter->stats.rnbc[j] +=
 			    IXGBE_READ_REG(hw, IXGBE_RNBC(i));
@@ -5357,7 +5359,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	}
 	adapter->stats.mlfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MLFC);
 	adapter->stats.mrfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MRFC);
-	adapter->stats.rlec.ev_count += IXGBE_READ_REG(hw, IXGBE_RLEC);
+	rlec = IXGBE_READ_REG(hw, IXGBE_RLEC);
+	adapter->stats.rlec.ev_count += rlec;
 
 	/* Hardware workaround, gprc counts missed packets */
 	adapter->stats.gprc.ev_count += IXGBE_READ_REG(hw, IXGBE_GPRC) - missed_rx;
@@ -5439,17 +5442,15 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	}
 
 	/* Fill out the OS statistics structure */
-	ifp->if_ipackets = adapter->stats.gprc.ev_count;
-	ifp->if_opackets = adapter->stats.gptc.ev_count;
-	ifp->if_ibytes = adapter->stats.gorc.ev_count;
-	ifp->if_obytes = adapter->stats.gotc.ev_count;
-	ifp->if_imcasts = adapter->stats.mprc.ev_count;
-	ifp->if_omcasts = adapter->stats.mptc.ev_count;
+	/*
+	 * NetBSD: Don't override if_{i|o}{packets|bytes|mcasts} with
+	 * adapter->stats counters. It's required to make ifconfig -z
+	 * (SOICZIFDATA) work.
+	 */
 	ifp->if_collisions = 0;
-
+	
 	/* Rx Errors */
-	ifp->if_ierrors = total_missed_rx + adapter->stats.crcerrs.ev_count +
-		adapter->stats.rlec.ev_count;
+	ifp->if_ierrors += total_missed_rx + crcerrs + rlec;
 }
 
 /** ixgbe_sysctl_tdh_handler - Handler function
