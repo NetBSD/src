@@ -1,4 +1,4 @@
-/*	$NetBSD: deref.c,v 1.1.1.3 2014/05/28 09:58:52 tron Exp $	*/
+/*	$NetBSD: deref.c,v 1.1.1.3.2.1 2015/04/14 05:00:15 snj Exp $	*/
 
 /* deref.c - dereference overlay */
 /* $OpenLDAP$ */
@@ -185,7 +185,8 @@ deref_parseCtrl (
 		ber_len_t cnt = sizeof(struct berval);
 		ber_len_t off = 0;
 
-		if ( ber_scanf( ber, "{m{M}}", &derefAttr, &attributes, &cnt, off ) == LBER_ERROR )
+		if ( ber_scanf( ber, "{m{M}}", &derefAttr, &attributes, &cnt, off ) == LBER_ERROR
+			|| !cnt )
 		{
 			rs->sr_text = "Dereference control: derefSpec decoding error";
 			rs->sr_err = LDAP_PROTOCOL_ERROR;

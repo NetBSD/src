@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.1.1.4 2014/05/28 09:58:46 tron Exp $	*/
+/*	$NetBSD: filter.c,v 1.1.1.4.2.1 2015/04/14 05:00:15 snj Exp $	*/
 
 /* filter.c - routines for parsing and dealing with filters */
 /* $OpenLDAP$ */
@@ -1160,14 +1160,10 @@ get_vrFilter( Operation *op, BerElement *ber,
 void
 vrFilter_free( Operation *op, ValuesReturnFilter *vrf )
 {
-	ValuesReturnFilter	*p, *next;
+	ValuesReturnFilter	*next;
 
-	if ( vrf == NULL ) {
-		return;
-	}
-
-	for ( p = vrf; p != NULL; p = next ) {
-		next = p->vrf_next;
+	for ( p = vrf; vrf != NULL; vrf = next ) {
+		next = vrf->vrf_next;
 
 		switch ( vrf->vrf_choice & SLAPD_FILTER_MASK ) {
 		case LDAP_FILTER_PRESENT:
