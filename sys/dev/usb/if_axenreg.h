@@ -1,10 +1,12 @@
-/*	$NetBSD: if_axenreg.h,v 1.1 2013/10/26 09:16:20 nonaka Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.2 2015/04/14 20:32:36 riastradh Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>. All right reserved.
  *
  */
+
+#include <sys/rndsource.h>
 
 /*
  * Definitions for the ASIX Electronics AX88179 to ethernet controller.
