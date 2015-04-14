@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.56 2015/04/14 13:12:33 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.57 2015/04/14 13:15:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.56 2015/04/14 13:12:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.57 2015/04/14 13:15:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -134,7 +134,6 @@ static pool_cache_t rnd_mempc;
  */
 static rndpool_t rnd_pool;
 static kmutex_t  rndpool_mtx;
-static kcondvar_t rndpool_cv;
 
 /*
  * This source is used to easily "remove" queue entries when the source
@@ -514,7 +513,6 @@ rnd_init(void)
 
 	rndpool_init(&rnd_pool);
 	mutex_init(&rndpool_mtx, MUTEX_DEFAULT, IPL_VM);
-	cv_init(&rndpool_cv, "rndread");
 
 	rnd_mempc = pool_cache_init(sizeof(rnd_sample_t), 0, 0, 0,
 				    "rndsample", NULL, IPL_VM,
