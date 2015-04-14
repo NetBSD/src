@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.29 2015/04/14 12:25:41 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.30 2015/04/14 12:27:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.29 2015/04/14 12:25:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.30 2015/04/14 12:27:02 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -432,7 +432,7 @@ static int
 rnd_write(struct file *fp, off_t *offp, struct uio *uio,
 	   kauth_cred_t cred, int flags)
 {
-	u_int8_t *bf;
+	uint8_t *bf;
 	int n, ret = 0, estimate_ok = 0, estimate = 0, added = 0;
 
 	ret = kauth_authorize_device(cred,
@@ -600,7 +600,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 
 	case RNDGETENTCNT:
 		mutex_spin_enter(&rndpool_mtx);
-		*(u_int32_t *)addr = rndpool_get_entropy_count(&rnd_pool);
+		*(uint32_t *)addr = rndpool_get_entropy_count(&rnd_pool);
 		mutex_spin_exit(&rndpool_mtx);
 		break;
 
