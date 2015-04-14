@@ -1,4 +1,4 @@
-/*      $NetBSD: rnd_private.h,v 1.10 2015/04/14 13:12:33 riastradh Exp $     */
+/*      $NetBSD: rnd_private.h,v 1.11 2015/04/14 13:14:20 riastradh Exp $     */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,14 +46,6 @@
  * hash to extract it.
  */
 #define RND_ENTROPY_THRESHOLD   10
-
-/*
- * Used by rnd_extract_data() and rndpool_extract_data() to describe how
- * "good" the data has to be.
- */
-#define RND_EXTRACT_ANY		0  /* extract anything, even if no entropy */
-#define RND_EXTRACT_GOOD	1  /* return as many good bytes
-				      (short read ok) */
 
 bool	rnd_extract(void *, size_t);
 bool	rnd_tryextract(void *, size_t);

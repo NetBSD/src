@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpool.h,v 1.2 2015/04/13 23:21:03 riastradh Exp $	*/
+/*	$NetBSD: rndpool.h,v 1.3 2015/04/14 13:14:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,6 +55,11 @@ typedef struct {
         rndpoolstat_t   stats;          /* current statistics */
         uint32_t        pool[RND_POOLWORDS]; /* random pool data */
 } rndpool_t;
+
+/* Mode for rnd_extract_data.  */
+#define RND_EXTRACT_ANY		0  /* extract as many bits as requested */
+#define RND_EXTRACT_GOOD	1  /* extract as many bits as we have counted
+				    * entropy */
 
 void		rndpool_init(rndpool_t *);
 uint32_t	rndpool_get_entropy_count(rndpool_t *);
