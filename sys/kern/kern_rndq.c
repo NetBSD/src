@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.49 2015/04/14 12:25:41 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.50 2015/04/14 12:28:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.49 2015/04/14 12:25:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.50 2015/04/14 12:28:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -101,7 +101,7 @@ typedef struct _rnd_sample_t {
 	int		cursor;
 	int		entropy;
 	uint32_t	ts[RND_SAMPLE_COUNT];
-	u_int32_t	values[RND_SAMPLE_COUNT];
+	uint32_t	values[RND_SAMPLE_COUNT];
 } rnd_sample_t;
 
 SIMPLEQ_HEAD(rnd_sampleq, _rnd_sample_t);
@@ -847,8 +847,8 @@ rnd_add_data(krndsource_t *rs, const void *const data, uint32_t len,
 }
 
 static void
-rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
-		u_int32_t entropy, uint32_t ts)
+rnd_add_data_ts(krndsource_t *rs, const void *const data, uint32_t len,
+    uint32_t entropy, uint32_t ts)
 {
 	rnd_sample_t *state = NULL;
 	const uint8_t *p = data;
@@ -1022,7 +1022,7 @@ rnd_process_events(void)
 	rnd_sample_t *sample = NULL;
 	krndsource_t *source, *badsource = NULL;
 	static krndsource_t *last_source;
-	u_int32_t entropy;
+	uint32_t entropy;
 	size_t pool_entropy;
 	int found = 0, wake = 0;
 	struct rnd_sampleq dq_samples = SIMPLEQ_HEAD_INITIALIZER(dq_samples);
@@ -1149,7 +1149,7 @@ rnd_wake(void *arg)
 }
 
 static uint32_t
-rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
+rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 {
 	static int timed_in;
 	int entropy_count;
