@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2067 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2068 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -152,3 +152,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	btmagic(4): add Magic Trackpad support [bouyer 20150406]
 	ntp: Import ntp 4.2.8p2. [christos 20150407]
 	acpi(4): Updated ACPICA to 20150410. [christos 20150413]
+	evbarm: add a driver for EDMA controller on AM335x SoC.
+		Add DMA support to the sdhc controllers on AM335x SoC.
+		Enable DMA for sdhc0 and sdhc1 on BEAGLEBONE [bouyer 20150414]
