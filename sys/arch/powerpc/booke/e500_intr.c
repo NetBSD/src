@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.32 2015/01/23 09:02:42 nonaka Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.33 2015/04/14 22:36:54 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.32 2015/01/23 09:02:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.33 2015/04/14 22:36:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1279,7 +1279,7 @@ e500_intr_cpu_send_ipi(cpuid_t target, uint32_t ipimsg)
 
 typedef void (*ipifunc_t)(void);
 
-#ifdef __HAVE_PREEEMPTION
+#ifdef __HAVE_PREEMPTION
 static void
 e500_ipi_kpreempt(void)
 {
