@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.61 2015/04/14 14:11:51 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.62 2015/04/14 14:16:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.61 2015/04/14 14:11:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.62 2015/04/14 14:16:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -154,7 +154,6 @@ krndsource_t rnd_printf_source, rnd_autoconf_source;
 
 static void *rnd_process, *rnd_wakeup;
 
-static        void	rnd_wakeup_readers(void);
 static inline uint32_t	rnd_counter(void);
 static        void	rnd_intr(void *);
 static	      void	rnd_wake(void *);
@@ -257,7 +256,7 @@ rnd_schedule_wakeup(void)
 		rnd_schedule_softint(rnd_wakeup);
 		return;
 	}
-	rnd_wakeup_readers();
+	rndsinks_distribute();
 }
 
 /*
@@ -281,16 +280,6 @@ rnd_getmore(size_t byteswanted)
 		    rs->name, byteswanted);
 	}
 	mutex_spin_exit(&rnd_global.lock);
-}
-
-/*
- * Check to see if there are readers waiting on us.  If so, kick them.
- */
-static void
-rnd_wakeup_readers(void)
-{
-
-	rndsinks_distribute();
 }
 
 /*
@@ -1133,7 +1122,7 @@ rnd_intr(void *arg)
 static void
 rnd_wake(void *arg)
 {
-	rnd_wakeup_readers();
+	rndsinks_distribute();
 }
 
 static uint32_t
@@ -1610,7 +1599,7 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 			rnd_entropy_added();
 			mutex_spin_exit(&rnd_global.lock);
 
-			rnd_wakeup_readers();
+			rndsinks_distribute();
 		} else {
 			rnd_printf_verbose("rnd"
 			    ": already seeded by boot loader\n");
