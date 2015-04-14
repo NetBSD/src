@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.154 2015/02/04 12:48:05 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.155 2015/04/14 13:32:34 riastradh Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -154,6 +154,7 @@ SRCS+=	cprng_fast.c
 # compat
 SRCS+=	kern_select_50.c
 SRCS+=	kern_time_50.c
+SRCS+=	rndpseudo_50.c
 
 # Set RUMP_UNREAL_ALLOCATORS to "yes" to use memory allocation hypercalls
 # directly instead of the kmem/pool allocators backed by hypercalls.
