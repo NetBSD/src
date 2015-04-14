@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.77 2012/02/11 23:18:14 martin Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.77.2.1 2015/04/14 15:03:38 msaitoh Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.77 2012/02/11 23:18:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.77.2.1 2015/04/14 15:03:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/fstypes.h>
@@ -4408,13 +4408,13 @@ rump___sysimpl_openat(int fd, const char * path, int oflags, mode_t mode)
 }
 rsys_alias(sys_openat,rump_enosys)
 
-int rump___sysimpl_readlinkat(int, const char *, char *, size_t);
-int
+ssize_t rump___sysimpl_readlinkat(int, const char *, char *, size_t);
+ssize_t
 rump___sysimpl_readlinkat(int fd, const char * path, char * buf, size_t bufsize)
 {
 	register_t retval[2] = {0, 0};
 	int error = 0;
-	int rv = -1;
+	ssize_t rv = -1;
 	struct sys_readlinkat_args callarg;
 
 	SPARG(&callarg, fd) = fd;
@@ -4425,8 +4425,8 @@ rump___sysimpl_readlinkat(int fd, const char * path, char * buf, size_t bufsize)
 	error = rsys_syscall(SYS_readlinkat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
-		if (sizeof(int) > sizeof(register_t))
-			rv = *(int *)retval;
+		if (sizeof(ssize_t) > sizeof(register_t))
+			rv = *(ssize_t *)retval;
 		else
 			rv = *retval;
 	}
