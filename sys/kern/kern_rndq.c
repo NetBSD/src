@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.60 2015/04/14 13:57:35 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.61 2015/04/14 14:11:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.60 2015/04/14 13:57:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.61 2015/04/14 14:11:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -290,25 +290,6 @@ static void
 rnd_wakeup_readers(void)
 {
 
-	/*
-	 * XXX This bookkeeping shouldn't be here -- this is not where
-	 * the rnd_initial_entropy state change actually happens.
-	 */
-	mutex_spin_enter(&rnd_global.lock);
-	const size_t entropy_count = rndpool_get_entropy_count(&rnd_global.pool);
-	if (entropy_count < RND_ENTROPY_THRESHOLD * 8) {
-		mutex_spin_exit(&rnd_global.lock);
-		return;
-	} else {
-#ifdef RND_VERBOSE
-		if (__predict_false(!rnd_initial_entropy))
-			rnd_printf_verbose("rnd: have initial entropy (%zu)\n",
-			    entropy_count);
-#endif
-		rnd_initial_entropy = 1;
-	}
-	mutex_spin_exit(&rnd_global.lock);
-
 	rndsinks_distribute();
 }
 
@@ -483,6 +464,27 @@ rnd_skew_intr(void *arg)
 #endif
 
 /*
+ * Entropy was just added to the pool.  If we crossed the threshold for
+ * the first time, set rnd_initial_entropy = 1.
+ */
+static void
+rnd_entropy_added(void)
+{
+	uint32_t pool_entropy;
+
+	KASSERT(mutex_owned(&rnd_global.lock));
+
+	if (__predict_true(rnd_initial_entropy))
+		return;
+	pool_entropy = rndpool_get_entropy_count(&rnd_global.pool);
+	if (pool_entropy > RND_ENTROPY_THRESHOLD * NBBY) {
+		rnd_printf_verbose("rnd: have initial entropy (%zu)\n",
+		    pool_entropy);
+		rnd_initial_entropy = 1;
+	}
+}
+
+/*
  * initialize the global random pool for our use.
  * rnd_init() must be called very early on in the boot process, so
  * the pool is ready for other devices to attach as sources.
@@ -566,11 +568,8 @@ rnd_init(void)
 		rndpool_add_data(&rnd_global.pool, boot_rsp->data,
 		    sizeof(boot_rsp->data),
 		    MIN(boot_rsp->entropy, RND_POOLBITS / 2));
-		if (rndpool_get_entropy_count(&rnd_global.pool) >
-		    RND_ENTROPY_THRESHOLD * 8) {
-                	rnd_initial_entropy = 1;
-		}
-                mutex_spin_exit(&rnd_global.lock);
+		rnd_entropy_added();
+		mutex_spin_exit(&rnd_global.lock);
 		rnd_printf("rnd: seeded with %d bits\n",
 		    MIN(boot_rsp->entropy, RND_POOLBITS / 2));
 		memset(boot_rsp, 0, sizeof(*boot_rsp));
@@ -1095,6 +1094,7 @@ rnd_process_events(void)
 skip:		SIMPLEQ_INSERT_TAIL(&df_samples, sample, next);
 	}
 	rndpool_set_entropy_count(&rnd_global.pool, pool_entropy);
+	rnd_entropy_added();
 	mutex_spin_exit(&rnd_global.lock);
 
 	/*
@@ -1607,6 +1607,7 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 			mutex_spin_enter(&rnd_global.lock);
 			rndpool_add_data(&rnd_global.pool, rnddata->data,
 					 rnddata->len, estimate);
+			rnd_entropy_added();
 			mutex_spin_exit(&rnd_global.lock);
 
 			rnd_wakeup_readers();
