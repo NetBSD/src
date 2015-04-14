@@ -1,4 +1,4 @@
-/*      $NetBSD: rnd_private.h,v 1.9 2015/04/14 13:03:37 riastradh Exp $     */
+/*      $NetBSD: rnd_private.h,v 1.10 2015/04/14 13:12:33 riastradh Exp $     */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,31 +58,11 @@
 bool	rnd_extract(void *, size_t);
 bool	rnd_tryextract(void *, size_t);
 void	rnd_getmore(size_t);
-void	rnd_wakeup_readers(void);
 
 /*
  * Flag indicating rnd_init has run.
  */
 extern int		rnd_ready;
-
-/*
- * Bootloader-supplied entropy.  Use only in tests against NULL to
- * determine whether the bootloader supplied entropy.
- */
-extern rndsave_t	*boot_rsp;
-
-/*
- * List of rndsources.
- */
-LIST_HEAD(rndsource_head, krndsource);
-
-/*
- * Global entropy pool state.  Access to everything here is serialized
- * by rndpool_mtx.
- */
-extern kmutex_t			rndpool_mtx;
-extern rndpool_t		rnd_pool;
-extern struct rndsource_head	rnd_sources;
 
 /*
  * Debugging flags.
