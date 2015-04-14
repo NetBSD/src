@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.253 2015/04/14 05:31:17 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.254 2015/04/14 13:17:47 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -16089,7 +16089,7 @@ sys/rump/librump/rumpkern/rump_syscalls.c	(regen)
 sys/sys/syscall.h				(regen)
 sys/sys/syscallargs.h				(regen)
 
-	Fix return type of the readlinkat(2) syscall.
+	Fix return type of the readlinkat(2) syscall. PR#49684.
 	[khorben, ticket #547]
 
 sys/external/bsd/acpica/dist/namespace/nsinit.c	1.7
@@ -18112,7 +18112,7 @@ sys/compat/netbds32/netbsd32_syscalls.c		regen
 sys/compat/netbds32/netbsd32_sysent.c		regen
 sys/compat/netbsd32/syscalls.master		1.102
 
-	Fix readlinkat return value (ssize_t) for netbsd32 compat.
+	Fix readlinkat return value (ssize_t) for netbsd32 compat. PR#49864.
 	[khorben, ticket #560]
 
 sbin/devpubd/hooks/02-wedgenames		1.3
