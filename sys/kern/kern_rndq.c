@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.53 2015/04/14 12:51:30 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.54 2015/04/14 13:05:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.53 2015/04/14 12:51:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.54 2015/04/14 13:05:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1606,12 +1606,10 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 			mutex_spin_exit(&rndpool_mtx);
 
 			rnd_wakeup_readers();
+		} else {
+			rnd_printf_verbose("rnd"
+			    ": already seeded by boot loader\n");
 		}
-#ifdef RND_VERBOSE
-		else {
-			printf("rnd: already seeded by boot loader\n");
-		}
-#endif
 		break;
 
 	default:
