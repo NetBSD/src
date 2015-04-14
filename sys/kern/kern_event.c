@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.80 2014/06/24 14:42:43 maxv Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.80.2.1 2015/04/14 04:39:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.80 2014/06/24 14:42:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.80.2.1 2015/04/14 04:39:58 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,6 +548,10 @@ filt_proc(struct knote *kn, long hint)
 		fflag |= event;
 
 	if (event == NOTE_EXIT) {
+		struct proc *p = kn->kn_obj;
+
+		if (p != NULL)
+			kn->kn_data = p->p_xstat;
 		/*
 		 * Process is gone, so flag the event as finished.
 		 *
