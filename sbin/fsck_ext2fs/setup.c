@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.31 2013/06/23 02:06:04 dholland Exp $	*/
+/*	$NetBSD: setup.c,v 1.31.6.1 2015/04/14 05:15:57 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.31 2013/06/23 02:06:04 dholland Exp $");
+__RCSID("$NetBSD: setup.c,v 1.31.6.1 2015/04/14 05:15:57 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -488,6 +488,10 @@ calcsb(const char *dev, int devfd, struct m_ext2fs *fs)
 		pfatal("%s: NOT LABELED AS A EXT2 FILE SYSTEM (%s)\n",
 		    dev, pp->p_fstype < FSMAXTYPES ?
 		    fstypenames[pp->p_fstype] : "unknown");
+		return 0;
+	}
+	if (pp->p_fsize == 0) {
+		pfatal("%s: PARTITION SIZE IS 0\n", dev);
 		return 0;
 	}
 	memset(fs, 0, sizeof(struct m_ext2fs));
