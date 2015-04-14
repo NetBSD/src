@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.47 2015/04/13 22:43:41 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.48 2015/04/14 11:59:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.47 2015/04/13 22:43:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.48 2015/04/14 11:59:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -218,7 +218,7 @@ rnd_init_softint(void) {
 }
 
 /*
- * Generate a 64-bit counter.
+ * Generate a 32-bit counter.
  */
 static inline uint32_t
 rnd_counter(void)
