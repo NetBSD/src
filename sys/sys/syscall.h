@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.248 2012/02/11 23:18:14 martin Exp $ */
+/* $NetBSD: syscall.h,v 1.248.2.1 2015/04/14 15:03:38 msaitoh Exp $ */
 
 /*
  * System call numbers.
@@ -1328,7 +1328,7 @@
 /* syscall: "openat" ret: "int" args: "int" "const char *" "int" "..." */
 #define	SYS_openat	468
 
-/* syscall: "readlinkat" ret: "int" args: "int" "const char *" "char *" "size_t" */
+/* syscall: "readlinkat" ret: "ssize_t" args: "int" "const char *" "char *" "size_t" */
 #define	SYS_readlinkat	469
 
 /* syscall: "symlinkat" ret: "int" args: "const char *" "int" "const char *" */

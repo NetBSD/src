@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.254 2012/02/11 23:16:17 martin Exp $
+	$NetBSD: syscalls.master,v 1.254.2.1 2015/04/14 15:03:38 msaitoh Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -917,7 +917,7 @@
 			    const struct timespec *tptr, int flag); }
 468	STD  RUMP	{ int|sys||openat(int fd, const char *path, \
 			    int oflags, ... mode_t mode); }
-469	STD  RUMP	{ int|sys||readlinkat(int fd, const char *path, \
+469	STD  RUMP	{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 470	STD  RUMP	{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
