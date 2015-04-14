@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.252 2015/04/11 05:47:34 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.253 2015/04/14 05:31:17 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19586,4 +19586,108 @@ external/gpl3/gcc.old/*				delete
 
 	Delete GCC 4.5.
 	[mrg, ticket #674]
+
+usr.sbin/makemandb/makemandb.c			1.27
+
+	- handle section numbers that are not single digits
+	- don't allocate and free needlessly
+	[christos, ticket #675]
+
+usr.bin/man/man.conf.5				1.25
+usr.sbin/makemandb/makemandb.8			1.8
+
+	Adjust documentation to reflect the fact that makemandb has
+	replaced makewhatis.
+	[christos, ticket #676]
+
+lib/libc/sys/kqueue.2				1.34
+sys/kern/kern_event.c				1.83
+
+	kqueue: on NOTE_EXIT, put the exit code of the process in data.
+	[christos, ticket #677]
+
+sys/kern/uipc_usrreq.c				1.175
+
+	Replace KASSERT with continue, since the file descriptor can be
+	closed since closef does not pay attention to FDEFER.  PR 39918
+	[christos, ticket #678]
+
+lib/libedit/chartype.c				1.11, 1.12
+lib/libedit/chartype.h				1.12, 1.13
+
+	Fix an off-by-one comparison in ct_decode_string().  PR 49683.
+	Split the allocation functions for clarity.
+	[christos, ticket #679]
+
+external/bsd/openldap/dist/servers/slapd/filter.c 1.2
+external/bsd/openldap/dist/servers/slapd/overlays/deref.c 1.2
+
+	Fix CVE-2015-1545 and CVE-1546.
+	[christos, ticket #680]
+
+xsrc/external/mit/xorg-server/dist/include/regionstr.h 1.3, 1.4
+
+	Fix signed/unsigned comparison.
+	[christos, ticket #681]
+
+sys/dev/dkwedge/dkwedge_apple.c			1.2
+
+	Look at the bzb flags to mark partition as swap.
+	[christos, ticket #683]
+
+usr.sbin/makefs/ffs.c				1.64
+
+	Fix typo: maxbpf instead of maxbpg. PR bin/49559.
+	[christos, ticket #684]
+
+usr.bin/ftp/ftp_var.h				1.83
+
+	Increase the buffer limit.
+	[christos, ticket #685]
+
+sys/kern/kern_exec.c				1.411
+sys/sys/exec.h					1.147
+
+	Handle exec_script argument vector from the 32 -> 64 bit case.
+	PR kern/49287
+	[christos, ticket #686]
+
+usr.sbin/nfsd/nfsd.c				1.63
+
+	Memset the whole cfg array, not piecemeal because otherwise
+	you'll end up with random data depending on the options set.
+	[christos, ticket #687]
+
+sbin/fsck_ext2fs/setup.c			1.32
+
+	Instead of zerodivide, give a useful error message.
+	[christos, ticket #688]
+
+sys/netinet/in.c				1.149
+
+	Don't pass junk in sin_family and sin_len for SIOCGIFNETMASK, and
+	explain why.
+	[christos, ticket #689]
+
+external/bsd/nvi/dist/ex/ex_mkexrc.c		1.4
+
+	exrc expects 1 argument.
+	[christos, ticket #690]
+
+lib/libc/gen/opendir.c				1.39
+
+	- Use O_DIRECTORY to open the file, so that we don't need to
+	  stat() after that.
+	- Move the stat() call to fdopendir() and change it's error
+	  handling so that it does not hide errors.
+	- According to POSIX, fdopendir() transfers ownership of the
+	  fd only on success, so don't close it on failure.
+	[christos, ticket #691]
+
+sbin/ping/ping.c				1.108, 1.109
+
+	Fix ping with small packets (e.g., ping -s 20).  PR bin/49423.
+	Adjust default packet size to 56 data bytes (64 total).
+	Make error messages consistent.
+	[christos, ticket #692]
 
