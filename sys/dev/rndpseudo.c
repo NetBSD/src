@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.26 2015/04/13 15:13:50 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.27 2015/04/14 12:14:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.26 2015/04/13 15:13:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.27 2015/04/14 12:14:09 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -190,9 +190,7 @@ rndattach(int num)
 
 	/* Mix in another counter.  */
 	c = rndpseudo_counter();
-	mutex_spin_enter(&rndpool_mtx);
-	rndpool_add_data(&rnd_pool, &c, sizeof(c), 1);
-	mutex_spin_exit(&rndpool_mtx);
+	rnd_add_data(NULL, &c, sizeof(c), 1);
 }
 
 int
@@ -483,9 +481,7 @@ rnd_write(struct file *fp, off_t *offp, struct uio *uio,
 		/*
 		 * Mix in the bytes.
 		 */
-		mutex_spin_enter(&rndpool_mtx);
-		rndpool_add_data(&rnd_pool, bf, n, estimate);
-		mutex_spin_exit(&rndpool_mtx);
+		rnd_add_data(NULL, bf, n, estimate);
 
 		added += n;
 		DPRINTF(RND_DEBUG_WRITE, ("Random: Copied in %d bytes\n", n));
