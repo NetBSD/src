@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.24.2.2 2015/03/15 22:44:28 snj Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.24.2.3 2015/04/14 04:26:04 snj Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.24.2.2 2015/03/15 22:44:28 snj Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.24.2.3 2015/04/14 04:26:04 snj Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -990,12 +990,11 @@ pmdoc_Nd(const struct mdoc_node *n, mandb_rec *rec)
 			 * An Xr macro was seen previously, so parse this
 			 * and the next node.
 			 */
-			temp = estrdup(n->string);
+			temp = n->string;
 			n = n->next;
 			easprintf(&buf, "%s(%s)", temp, n->string);
 			concat(&rec->name_desc, buf);
 			free(buf);
-			free(temp);
 		} else {
 			nd_text = estrdup(n->string);
 			replace_hyph(nd_text);
@@ -1052,13 +1051,8 @@ pmdoc_macro_handler(const struct mdoc_node *n, mandb_rec *rec, enum mdoct doct)
 			n = n->next;
 
 		if (n && n->type == MDOC_TEXT) {
-			size_t len = strlen(sn->string);
-			char *buf = emalloc(len + 4);
-			memcpy(buf, sn->string, len);
-			buf[len] = '(';
-			buf[len + 1] = n->string[0];
-			buf[len + 2] = ')';
-			buf[len + 3] = 0;
+			char *buf;
+			easprintf(&buf, "%s(%s)", sn->string, n->string);
 			mdoc_parse_section(n->sec, buf, rec);
 			free(buf);
 		}
