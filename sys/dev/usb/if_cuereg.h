@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.18 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.19 2015/04/14 21:09:48 riastradh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -37,6 +37,7 @@
  * Definitions for the CATC Netmate II USB to ethernet controller.
  */
 
+#include <sys/rndsource.h>
 
 /*
  * Vendor specific control commands.
