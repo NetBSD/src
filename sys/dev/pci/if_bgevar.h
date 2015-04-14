@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.17 2013/10/31 04:26:40 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.18 2015/04/14 20:32:36 riastradh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -67,6 +67,7 @@
 #define _DEV_PCI_IF_BGEVAR_H_
 
 #include <sys/bus.h>
+#include <sys/rndsource.h>
 #include <net/if_ether.h>
 #include <dev/pci/pcivar.h>
 
