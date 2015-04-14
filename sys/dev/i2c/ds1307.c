@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.18 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.18.2.1 2015/04/14 04:24:58 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.18 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.18.2.1 2015/04/14 04:24:58 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.18 2014/07/25 08:10:37 dholland Exp $")
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/ds1307reg.h>
+#include <dev/sysmon/sysmonvar.h>
 
 struct dsrtc_model {
 	uint16_t dm_model;
@@ -63,6 +64,7 @@ struct dsrtc_model {
 	uint8_t dm_flags;
 #define	DSRTC_FLAG_CLOCK_HOLD	1
 #define	DSRTC_FLAG_BCD		2	
+#define	DSRTC_FLAG_TEMP		4	
 };
 
 static const struct dsrtc_model dsrtc_models[] = {
@@ -86,6 +88,16 @@ static const struct dsrtc_model dsrtc_models[] = {
 		.dm_rtc_size = DS1672_RTC_SIZE,
 		.dm_flags = 0,
 	}, {
+		.dm_model = 3231,
+		.dm_rtc_start = DS3232_RTC_START,
+		.dm_rtc_size = DS3232_RTC_SIZE,
+		/*
+		 * XXX
+		 * the DS3232 likely has the temperature sensor too but I can't
+		 * easily verify or test that right now
+		 */
+		.dm_flags = DSRTC_FLAG_BCD | DSRTC_FLAG_TEMP,
+	}, {
 		.dm_model = 3232,
 		.dm_rtc_start = DS3232_RTC_START,
 		.dm_rtc_size = DS3232_RTC_SIZE,
@@ -102,6 +114,8 @@ struct dsrtc_softc {
 	bool sc_open;
 	struct dsrtc_model sc_model;
 	struct todr_chip_handle sc_todr;
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor;
 };
 
 static void	dsrtc_attach(device_t, device_t, void *);
@@ -140,6 +154,9 @@ static int dsrtc_gettime_timeval(struct todr_chip_handle *, struct timeval *);
 static int dsrtc_settime_timeval(struct todr_chip_handle *, struct timeval *);
 static int dsrtc_clock_read_timeval(struct dsrtc_softc *, time_t *);
 static int dsrtc_clock_write_timeval(struct dsrtc_softc *, time_t);
+
+static int dsrtc_read_temp(struct dsrtc_softc *, uint32_t *);
+static void dsrtc_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static const struct dsrtc_model *
 dsrtc_model(u_int model)
@@ -202,6 +219,35 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
+	if ((sc->sc_model.dm_flags & DSRTC_FLAG_TEMP) != 0) {
+		int error;
+
+		sc->sc_sme = sysmon_envsys_create();
+		sc->sc_sme->sme_name = device_xname(self);
+		sc->sc_sme->sme_cookie = sc;
+		sc->sc_sme->sme_refresh = dsrtc_refresh;
+
+		sc->sc_sensor.units =  ENVSYS_STEMP;
+		sc->sc_sensor.state = ENVSYS_SINVALID;
+		sc->sc_sensor.flags = 0;
+		(void)strlcpy(sc->sc_sensor.desc, "temperature",
+		    sizeof(sc->sc_sensor.desc));
+
+		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
+			aprint_error_dev(self, "unable to attach sensor\n");
+			goto bad;
+		}
+
+		error = sysmon_envsys_register(sc->sc_sme);
+		if (error) {
+			aprint_error_dev(self, 
+			    "error %d registering with sysmon\n", error);
+			goto bad;
+		}
+	}
+	return;
+bad:
+	sysmon_envsys_destroy(sc->sc_sme);
 }
 
 /*ARGSUSED*/
@@ -623,4 +669,57 @@ dsrtc_clock_write_timeval(struct dsrtc_softc *sc, time_t t)
 	}
 
 	return 1;
+}
+
+static int
+dsrtc_read_temp(struct dsrtc_softc *sc, uint32_t *temp)
+{
+	int error, tc;
+	uint8_t reg = DS3232_TEMP_MSB;
+	uint8_t buf[2];
+
+	if ((sc->sc_model.dm_flags & DSRTC_FLAG_TEMP) == 0)
+		return ENOTSUP;
+
+	if ((error = iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to acquire I2C bus: %d\n",
+		    __func__, error);
+		return 0;
+	}
+
+	/* read temperature registers: */
+	error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
+	     &reg, 1, buf, 2, I2C_F_POLL);
+
+	/* Done with I2C */
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to read temperature: %d\n",
+		    __func__, error);
+		return 0;
+	}
+
+	/* convert to microkelvin */
+	tc = buf[0] * 1000000 + (buf[1] >> 6) * 250000;
+	*temp = tc + 273150000;
+	return 1;
+}
+
+static void
+dsrtc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct dsrtc_softc *sc = sme->sme_cookie;
+	uint32_t temp = 0;	/* XXX gcc */
+
+	if (dsrtc_read_temp(sc, &temp) == 0) {
+		edata->state = ENVSYS_SINVALID;
+		return;
+	}
+
+	edata->value_cur = temp;
+
+	edata->state = ENVSYS_SVALID;
 }
