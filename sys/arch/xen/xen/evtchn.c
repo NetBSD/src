@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.62.2.1 2013/12/17 22:39:17 riz Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.62.2.2 2015/04/14 14:59:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.62.2.1 2013/12/17 22:39:17 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.62.2.2 2015/04/14 14:59:11 msaitoh Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -554,15 +554,15 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 		return NULL;
 	}
 
-	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
-		kmem_free(ih, sizeof(struct pintrhand));
-		return NULL;
-	}
-
 	ih->pirq = pirq;
 	ih->evtch = evtch;
 	ih->func = func;
 	ih->arg = arg;
+
+	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
+		kmem_free(ih, sizeof(struct pintrhand));
+		return NULL;
+	}
 
 	physdev_op.cmd = PHYSDEVOP_IRQ_STATUS_QUERY;
 	physdev_op.u.irq_status_query.irq = pirq;
@@ -577,6 +577,17 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 	}
 	hypervisor_enable_event(evtch);
 	return ih;
+}
+
+void
+pirq_disestablish(struct pintrhand *ih)
+{
+	int error = event_remove_handler(ih->evtch, pirq_interrupt, ih);
+	if (error) {
+		printf("pirq_disestablish(%p): %d\n", ih, error);
+		return;
+	}
+	kmem_free(ih, sizeof(struct pintrhand));
 }
 
 int
@@ -776,7 +787,6 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	}
 	ci = ih->ih_cpu;
 	*ihp = ih->ih_evt_next;
-	mutex_spin_exit(&evtlock[evtch]);
 
 	ipls = ci->ci_isources[ih->ih_level];
 	for (ihp = &ipls->ipl_handlers, ih = ipls->ipl_handlers;
@@ -788,6 +798,7 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	if (ih == NULL)
 		panic("event_remove_handler");
 	*ihp = ih->ih_ipl_next;
+	mutex_spin_exit(&evtlock[evtch]);
 	kmem_free(ih, sizeof (struct intrhand));
 	if (evts->ev_handlers == NULL) {
 		xen_atomic_clear_bit(&ci->ci_evtmask[0], evtch);
