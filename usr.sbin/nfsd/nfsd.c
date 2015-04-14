@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.62 2014/03/29 13:50:53 gson Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.62.4.1 2015/04/14 05:14:17 snj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.62 2014/03/29 13:50:53 gson Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.62.4.1 2015/04/14 05:14:17 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,6 @@ tryconf(struct conf *cfg, int t, int reregister)
 	struct addrinfo hints;
 	int ecode;
 
-	memset(cfg, 0, sizeof(*cfg));
 	memset(&hints, 0, sizeof hints);
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_family = cfg_family[t];
@@ -473,6 +472,7 @@ main(int argc, char *argv[])
 
 	openlog("nfsd", LOG_PID, LOG_DAEMON);
 
+	memset(cfg, 0, sizeof(cfg));
 	for (i = 0; i < __arraycount(cfg); i++) {
 		if (ip4flag == 0 && cfg_family[i] == PF_INET)
 			continue;
