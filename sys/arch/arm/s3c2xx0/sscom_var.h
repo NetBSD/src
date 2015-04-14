@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.13 2014/03/14 21:40:48 matt Exp $ */
+/* $NetBSD: sscom_var.h,v 1.14 2015/04/14 20:32:35 riastradh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -76,6 +76,9 @@
 #include <sys/termios.h>
 #include <sys/callout.h>
 #include <sys/bus.h>
+#ifdef RND_COM
+#include <sys/rndsource.h>
+#endif
 
 #ifdef	SSCOM_S3C2410
 #include <arm/s3c2xx0/s3c2410reg.h>
