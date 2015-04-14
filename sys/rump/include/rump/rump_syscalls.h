@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.55 2012/02/11 23:18:13 martin Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.55.2.1 2015/04/14 15:03:38 msaitoh Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -883,7 +883,7 @@ int rump_sys_fexecve(int, char *const *, char *const *) __RENAME(RUMP_SYS_RENAME
 int rump_sys_fstatat(int, const char *, struct stat *, int) __RENAME(RUMP_SYS_RENAME_FSTATAT);
 int rump_sys_utimensat(int, const char *, const struct timespec *, int) __RENAME(RUMP_SYS_RENAME_UTIMENSAT);
 int rump_sys_openat(int, const char *, int, ...) __RENAME(RUMP_SYS_RENAME_OPENAT);
-int rump_sys_readlinkat(int, const char *, char *, size_t) __RENAME(RUMP_SYS_RENAME_READLINKAT);
+ssize_t rump_sys_readlinkat(int, const char *, char *, size_t) __RENAME(RUMP_SYS_RENAME_READLINKAT);
 int rump_sys_symlinkat(const char *, int, const char *) __RENAME(RUMP_SYS_RENAME_SYMLINKAT);
 int rump_sys_unlinkat(int, const char *, int) __RENAME(RUMP_SYS_RENAME_UNLINKAT);
 int rump_sys_futimens(int, const struct timespec *) __RENAME(RUMP_SYS_RENAME_FUTIMENS);

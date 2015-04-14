@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.128 2011/11/05 09:27:06 joerg Exp $	*/
+/*	$NetBSD: unistd.h,v 1.128.2.1 2015/04/14 15:03:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -304,7 +304,7 @@ int	faccessat(int, const char *, int, int);
 int	fchmodat(int, const char *, mode_t, int);
 int	fchownat(int, const char *, uid_t, gid_t, int);
 int	fexecve(int, char * const *, char * const *);
-int	readlinkat(int, const char *, char *, size_t);
+ssize_t	readlinkat(int, const char *, char *, size_t);
 int	symlinkat(const char *, int, const char *);
 int	unlinkat(int, const char *, int);
 #endif
