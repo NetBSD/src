@@ -219,7 +219,7 @@ curcpu(void)
 }
 #elif !defined(MULTIPROCESSOR)
 #define	curcpu()	(&cpu_info_store)
-#elif !defined(__HAVE_PREEEMPTION)
+#elif !defined(__HAVE_PREEMPTION)
 #error MULTIPROCESSOR && !__HAVE_PREEMPTION requires TPIDRPRW_IS_CURCPU or TPIDRPRW_IS_CURLWP
 #else
 #error MULTIPROCESSOR && __HAVE_PREEMPTION requires TPIDRPRW_IS_CURLWP

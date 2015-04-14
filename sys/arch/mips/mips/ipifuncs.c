@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.7 2014/05/19 22:47:53 rmind Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.8 2015/04/14 22:36:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.7 2014/05/19 22:47:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.8 2015/04/14 22:36:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -84,7 +84,7 @@ ipi_syncicache(struct cpu_info *ci)
 	pmap_tlb_syncicache_wanted(ci);
 }
 
-#ifdef __HAVE_PREEEMPTION
+#ifdef __HAVE_PREEMPTION
 static inline void
 ipi_kpreempt(struct cpu_info *ci)
 {
