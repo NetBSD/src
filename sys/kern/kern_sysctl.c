@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.254 2014/10/02 23:07:30 justin Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.255 2015/04/14 06:08:03 nat Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.254 2014/10/02 23:07:30 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.255 2015/04/14 06:08:03 nat Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.254 2014/10/02 23:07:30 justin Exp
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
 #include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #define	MAXDESCLEN	1024
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
