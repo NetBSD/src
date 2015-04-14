@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.169.2.2 2015/02/04 06:29:07 snj Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.169.2.3 2015/04/14 04:44:41 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.169.2.2 2015/02/04 06:29:07 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.169.2.3 2015/04/14 04:44:41 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1710,7 +1710,14 @@ unp_gc(file_t *dp)
 			if ((fp->f_flag & FDEFER) != 0) {
 				atomic_and_uint(&fp->f_flag, ~FDEFER);
 				unp_defer--;
-				KASSERT(fp->f_count != 0);
+				if (fp->f_count == 0) {
+					/*
+					 * XXX: closef() doesn't pay attention
+					 * to FDEFER
+					 */
+					mutex_exit(&fp->f_lock);
+					continue;
+				}
 			} else {
 				if (fp->f_count == 0 ||
 				    (fp->f_flag & FMARK) != 0 ||
