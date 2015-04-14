@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.48 2015/04/14 11:59:40 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.49 2015/04/14 12:25:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.48 2015/04/14 11:59:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.49 2015/04/14 12:25:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -223,22 +223,24 @@ rnd_init_softint(void) {
 static inline uint32_t
 rnd_counter(void)
 {
-	struct timespec ts;
+	struct bintime bt;
 	uint32_t ret;
 
 #if defined(__HAVE_CPU_COUNTER)
 	if (cpu_hascounter())
 		return cpu_counter32();
 #endif
-	if (rnd_ready) {
-		nanouptime(&ts);
-		ret = ts.tv_sec;
-		ret *= (uint32_t)1000000000;
-		ret += ts.tv_nsec;
-		return ret;
-	}
-	/* when called from rnd_init, its too early to call nanotime safely */
-	return (0);
+	if (!rnd_ready)
+		/* Too early to call nanotime.  */
+		return 0;
+
+	binuptime(&bt);
+	ret = bt.sec;
+	ret |= bt.sec >> 32;
+	ret |= bt.frac;
+	ret |= bt.frac >> 32;
+
+	return ret;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.28 2015/04/14 12:21:12 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.29 2015/04/14 12:25:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.28 2015/04/14 12:21:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.29 2015/04/14 12:25:41 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -156,20 +156,26 @@ EVCNT_ATTACH_STATIC(rndpseudo_soft);
 EVCNT_ATTACH_STATIC(rndpseudo_hard);
 
 /*
- * Generate a 32-bit counter.  This should be more machine dependent,
- * using cycle counters and the like when possible.
+ * Generate a 32-bit counter.
  */
-static inline u_int32_t
+static inline uint32_t
 rndpseudo_counter(void)
 {
-	struct timeval tv;
+	struct bintime bt;
+	uint32_t ret;
 
 #if defined(__HAVE_CPU_COUNTER)
 	if (cpu_hascounter())
 		return (cpu_counter32());
 #endif
-	microtime(&tv);
-	return (tv.tv_sec * 1000000 + tv.tv_usec);
+
+	binuptime(&bt);
+	ret = bt.sec;
+	ret |= bt.sec >> 32;
+	ret |= bt.frac;
+	ret |= bt.frac >> 32;
+
+	return ret;
 }
 
 /*
