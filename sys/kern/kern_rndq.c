@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.55 2015/04/14 13:08:22 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.56 2015/04/14 13:12:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.55 2015/04/14 13:08:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.56 2015/04/14 13:12:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -132,9 +132,9 @@ static pool_cache_t rnd_mempc;
  * (rnd_samples, see above), and processed in a timeout routine; therefore,
  * the mutex protecting the random pool is at IPL_SOFTCLOCK() as well.
  */
-rndpool_t rnd_pool;
-kmutex_t  rndpool_mtx;
-kcondvar_t rndpool_cv;
+static rndpool_t rnd_pool;
+static kmutex_t  rndpool_mtx;
+static kcondvar_t rndpool_cv;
 
 /*
  * This source is used to easily "remove" queue entries when the source
@@ -157,7 +157,7 @@ krndsource_t rnd_printf_source, rnd_autoconf_source;
 
 void *rnd_process, *rnd_wakeup;
 
-void	      		rnd_wakeup_readers(void);
+static        void	rnd_wakeup_readers(void);
 static inline uint32_t	rnd_counter(void);
 static        void	rnd_intr(void *);
 static	      void	rnd_wake(void *);
@@ -177,9 +177,9 @@ static rngtest_t	rnd_rt;
 static uint8_t		rnd_testbits[sizeof(rnd_rt.rt_b)];
 #endif
 
-struct rndsource_head	rnd_sources;
+static LIST_HEAD(, krndsource)	rnd_sources;
 
-rndsave_t		*boot_rsp;
+static rndsave_t	*boot_rsp;
 
 static inline void
 rnd_printf(const char *fmt, ...)
@@ -291,7 +291,7 @@ rnd_getmore(size_t byteswanted)
 /*
  * Check to see if there are readers waiting on us.  If so, kick them.
  */
-void
+static void
 rnd_wakeup_readers(void)
 {
 
