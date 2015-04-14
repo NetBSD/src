@@ -1,10 +1,11 @@
-$NetBSD: acronyms,v 1.227 2015/04/13 03:49:28 rodent Exp $
+$NetBSD: acronyms,v 1.228 2015/04/14 12:19:48 rodent Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
 224	today, tomorrow, forever
 31337	elite ("eleet")
 4TW	for the win
+A/S/L	age/sex/location
 AAMOF	as a matter of fact
 ABD	all but dissertation
 AC	audible chuckle
@@ -46,10 +47,12 @@ AYBABTU	all your base are belong to us
 AYF	all your fault
 AYOR	at your own risk
 AYT	are you there
+B&	banned
 B/C	because
 B/S	bullshit
 B/W	bandwidth
 B/W	between
+BAI	goodbye
 BAK	back at keyboard
 BAMF	bad-ass motherfucker
 BBIAB	be back in a bit
@@ -92,6 +95,7 @@ CEO	chief executive officer
 CFV	call for votes
 CFY	calling for you
 CG	center of gravity
+CHANOPS	channel operator status
 CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
@@ -141,6 +145,7 @@ ETLA	extended three letter acronym
 ETR	early to rise
 EWAG	experienced wild-ass guess
 EZ	easy
+EZPZ	easy-peasy
 F9	fine
 FAQ	frequently asked question
 FBOW	for better or worse
@@ -203,6 +208,7 @@ GIYF	Google is your friend
 GJ	good job
 GL	good luck
 GLHF	good luck, have fun
+GLINE	global kill line
 GLWT	good luck with that
 GM	game master
 GMTA	great minds think alike
@@ -225,6 +231,7 @@ HHOS	ha ha, only serious
 HICA	here it comes again
 HNY	happy new year
 HOAS	hold on a second
+HOPS	half-operator status
 HSIW	HOLY SHIT IT WORKS
 HTH	hope this helps
 IAC	in any case
@@ -267,6 +274,8 @@ INPO	in no particular order
 IOW	in other words
 IPML	I pissed myself laughing
 IQ	intelligence quotient
+IRCOP	Internet relay chat {operator,operators}
+IRCOPS	Internet relay chat operator status
 IRL	in real life
 IRT	in real time
 IRT	in regards to
@@ -274,6 +283,8 @@ ISAGN	I see a great need
 ISBN	International Standard Book Number
 ISTM	it seems to me
 ISTR	I seem to {recall,remember}
+ITC	in this {channel,chat}
+ITT	in this thread
 ITYM	I think you mean
 IUD	insert usual disclaimers
 IUSS	if you say so
@@ -304,12 +315,14 @@ JW	just wondering
 KISS	keep it simple, stupid
 KITA	kick in the ass
 KK	okay, okay
+KLINE	kill line
 KMA	keep me advised
 KMA	keep moving ahead
 KMA	kill me already
 KNF	kernel normal form
 KOS	kill on sight
 KTHX	okay, thanks
+KTHXBAI	okay, thanks. Goodbye.
 KWIM	know what I mean?
 L8	late
 L8R	later
@@ -387,6 +400,9 @@ OOB	out of bounds
 OOC	out of curiosity
 OOI	out of interest
 OOSOOM	out of sight, out of mind
+OPP	other people's {penis,property,pussy}
+OPS	operator status
+OPS	operators
 OT	off topic
 OTL	out to lunch
 OTOH	on the other hand
@@ -548,6 +564,8 @@ TY	thank you
 TYVM	thank you very much
 U/L	upload
 UGT	universal greeting time
+UR	your
+UR	{you're, you are}
 UTSL	use the source, Luke
 VCR	video cassette recorder
 VEG	very evil grin
@@ -581,6 +599,7 @@ WWJD	what would Jesus do?
 YAGNI	you ain't gonna need it
 YALIMO	you are lame, in my opinion
 YAOTM	yet another off-topic message
+YCTAT	you can't troll a troll
 YGGR	you gonna get raped
 YGM	you got mail
 YHBT	you have been trolled
