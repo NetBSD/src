@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.9 2012/08/24 09:01:23 msaitoh Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.10 2015/04/14 20:32:36 riastradh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -28,6 +28,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/rndsource.h>
 
 #define	URL_IFACE_INDEX		0
 #define	URL_CONFIG_NO		1

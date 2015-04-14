@@ -1,4 +1,4 @@
-/*      $NetBSD: at91usartvar.h,v 1.6 2012/11/12 18:00:36 skrll Exp $	*/
+/*      $NetBSD: at91usartvar.h,v 1.7 2015/04/14 20:32:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -31,6 +31,9 @@
 
 #include <sys/tty.h>
 #include <arm/at91/at91pdcvar.h>
+#ifdef RND_COM
+#include <sys/rndsource.h>
+#endif
 
 /* Hardware flag masks */
 #define COM_HW_NOIEN		0x01

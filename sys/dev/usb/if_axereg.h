@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.16 2013/11/08 17:46:35 roy Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.17 2015/04/14 20:32:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -38,6 +38,7 @@
  * Definitions for the ASIX Electronics AX88172 to ethernet controller.
  */
 
+#include <sys/rndsource.h>
 
 /*
  * Vendor specific commands
