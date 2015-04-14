@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.27.4.1 2012/11/28 23:50:57 riz Exp $
+.\"	$NetBSD: fopen.3,v 1.27.4.2 2015/04/14 13:30:33 msaitoh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,8 +121,8 @@ extension.
 .It Sq x
 The letter
 .Sq x
-in the mode turns on exclusive open mode to the file (
-.Dv O_EXCL )
+in the mode turns on exclusive open mode to the file
+.Pq Dv O_EXCL
 which means that the file will not be created if it already exists.
 .El
 .Pp
