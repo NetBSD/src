@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.27 2015/04/14 12:14:09 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.28 2015/04/14 12:21:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.27 2015/04/14 12:14:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.28 2015/04/14 12:21:12 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.27 2015/04/14 12:14:09 riastradh Exp
 #include <sys/evcnt.h>
 
 #include <sys/rnd.h>
+#include <sys/rndpool.h>
+#include <sys/rndsource.h>
 #ifdef COMPAT_50
 #include <compat/sys/rnd.h>
 #endif
