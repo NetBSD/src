@@ -1,4 +1,4 @@
-.\"	$NetBSD: swwdog.4,v 1.8 2011/06/08 12:19:14 pgoyette Exp $
+.\"	$NetBSD: swwdog.4,v 1.9 2015/04/14 10:50:25 pgoyette Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Steven M. Bellovin
 .\" All rights reserved.
@@ -51,9 +51,9 @@ is
 .Dv true ;
 otherwise, the system will panic.
 .Va swwdog_reboot
-is accessible as a
+is accessible as the
 .Xr sysctl 8
-variable, hw.swwdog.reboot and defaults to
+variable hw.swwdog.reboot and defaults to
 .Dv false .
 .Pp
 The default period of
