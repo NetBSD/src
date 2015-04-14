@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.50 2015/04/14 12:28:12 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.51 2015/04/14 12:33:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.50 2015/04/14 12:28:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.51 2015/04/14 12:33:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1020,7 +1020,7 @@ static void
 rnd_process_events(void)
 {
 	rnd_sample_t *sample = NULL;
-	krndsource_t *source, *badsource = NULL;
+	krndsource_t *source;
 	static krndsource_t *last_source;
 	uint32_t entropy;
 	size_t pool_entropy;
@@ -1090,7 +1090,7 @@ rnd_process_events(void)
 			if (__predict_false(rnd_hwrng_test(sample))) {
 				source->flags |= RND_FLAG_NO_COLLECT;
 				rnd_printf("rnd: disabling source \"%s\".",
-				    badsource->name);
+				    source->name);
 				goto skip;
 			}
 		}
