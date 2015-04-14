@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.255 2015/04/14 06:08:03 nat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.256 2015/04/14 12:18:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.255 2015/04/14 06:08:03 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.256 2015/04/14 12:18:37 riastradh Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.255 2015/04/14 06:08:03 nat Exp $"
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
-#include <sys/rnd.h>
 #include <sys/rndsource.h>
 
 #define	MAXDESCLEN	1024
