@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.59 2015/04/14 13:26:58 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.60 2015/04/14 13:57:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.59 2015/04/14 13:26:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.60 2015/04/14 13:57:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -152,7 +152,7 @@ static krndsource_t rnd_source_no_collect = {
 
 krndsource_t rnd_printf_source, rnd_autoconf_source;
 
-void *rnd_process, *rnd_wakeup;
+static void *rnd_process, *rnd_wakeup;
 
 static        void	rnd_wakeup_readers(void);
 static inline uint32_t	rnd_counter(void);
