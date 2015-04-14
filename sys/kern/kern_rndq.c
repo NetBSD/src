@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.54 2015/04/14 13:05:33 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.55 2015/04/14 13:08:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.54 2015/04/14 13:05:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.55 2015/04/14 13:08:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -273,8 +273,7 @@ rnd_getmore(size_t byteswanted)
 {
 	krndsource_t *rs;
 
-	KASSERT(mutex_owned(&rndpool_mtx));
-
+	mutex_spin_enter(&rndpool_mtx);
 	LIST_FOREACH(rs, &rnd_sources, list) {
 		if (!ISSET(rs->flags, RND_FLAG_HASCB))
 			continue;
@@ -286,6 +285,7 @@ rnd_getmore(size_t byteswanted)
 		rnd_printf_verbose("rnd: asking source %s for %zu bytes\n",
 		    rs->name, byteswanted);
 	}
+	mutex_spin_exit(&rndpool_mtx);
 }
 
 /*
@@ -1099,6 +1099,13 @@ rnd_process_events(void)
 skip:		SIMPLEQ_INSERT_TAIL(&df_samples, sample, next);
 	}
 	rndpool_set_entropy_count(&rnd_pool, pool_entropy);
+	mutex_spin_exit(&rndpool_mtx);
+
+	/*
+	 * If we filled the pool past the threshold, wake anyone
+	 * waiting for entropy.  Otherwise, ask all the entropy sources
+	 * for more.
+	 */
 	if (pool_entropy > RND_ENTROPY_THRESHOLD * 8) {
 		wake++;
 	} else {
@@ -1106,7 +1113,6 @@ skip:		SIMPLEQ_INSERT_TAIL(&df_samples, sample, next);
 		rnd_printf_verbose("rnd: empty, asking for %d bytes\n",
 		    (int)(howmany((RND_POOLBITS - pool_entropy), NBBY)));
 	}
-	mutex_spin_exit(&rndpool_mtx);
 
 	/* Now we hold no locks: clean up. */
 	while ((sample = SIMPLEQ_FIRST(&df_samples))) {
@@ -1201,13 +1207,14 @@ rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 	}
 #endif
 	entropy_count = rndpool_get_entropy_count(&rnd_pool);
+	retval = rndpool_extract_data(&rnd_pool, p, len, flags);
+	mutex_spin_exit(&rndpool_mtx);
+
 	if (entropy_count < (RND_ENTROPY_THRESHOLD * 2 + len) * NBBY) {
 		rnd_printf_verbose("rnd: empty, asking for %d bytes\n",
 		    (int)(howmany((RND_POOLBITS - entropy_count), NBBY)));
 		rnd_getmore(howmany((RND_POOLBITS - entropy_count), NBBY));
 	}
-	retval = rndpool_extract_data(&rnd_pool, p, len, flags);
-	mutex_spin_exit(&rndpool_mtx);
 
 	return retval;
 }
@@ -1223,11 +1230,9 @@ rnd_extract(void *buffer, size_t bytes)
 	    RND_EXTRACT_GOOD);
 
 	if (extracted < bytes) {
+		rnd_getmore(bytes - extracted);
 		(void)rnd_extract_data((uint8_t *)buffer + extracted,
 		    bytes - extracted, RND_EXTRACT_ANY);
-		mutex_spin_enter(&rndpool_mtx);
-		rnd_getmore(bytes - extracted);
-		mutex_spin_exit(&rndpool_mtx);
 		return false;
 	}
 
@@ -1248,11 +1253,10 @@ CTASSERT((RNDSINK_MAX_BYTES + RND_ENTROPY_THRESHOLD) <=
 bool
 rnd_tryextract(void *buffer, size_t bytes)
 {
-	bool ok;
+	uint32_t bits_needed, bytes_requested;
 
 	KASSERT(bytes <= RNDSINK_MAX_BYTES);
-
-	const uint32_t bits_needed = ((bytes + RND_ENTROPY_THRESHOLD) * NBBY);
+	bits_needed = ((bytes + RND_ENTROPY_THRESHOLD) * NBBY);
 
 	mutex_spin_enter(&rndpool_mtx);
 	if (bits_needed <= rndpool_get_entropy_count(&rnd_pool)) {
@@ -1261,16 +1265,19 @@ rnd_tryextract(void *buffer, size_t bytes)
 			RND_EXTRACT_GOOD);
 
 		KASSERT(extracted == bytes);
-
-		ok = true;
+		bytes_requested = 0;
 	} else {
-		ok = false;
-		rnd_getmore(howmany(bits_needed -
-			rndpool_get_entropy_count(&rnd_pool), NBBY));
+		/* XXX Figure the threshold into this...  */
+		bytes_requested = howmany((bits_needed -
+			rndpool_get_entropy_count(&rnd_pool)), NBBY);
+		KASSERT(0 < bytes_requested);
 	}
 	mutex_spin_exit(&rndpool_mtx);
 
-	return ok;
+	if (0 < bytes_requested)
+		rnd_getmore(bytes_requested);
+
+	return bytes_requested == 0;
 }
 
 void
