@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.15 2014/10/04 18:09:32 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.16 2015/04/14 18:34:29 bouyer Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -36,21 +36,22 @@ struct sdhc_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	uint32_t		sc_flags;
-#define	SDHC_FLAG_USE_DMA	0x0001
-#define	SDHC_FLAG_FORCE_DMA	0x0002
-#define	SDHC_FLAG_NO_PWR0	0x0004	/* Freescale ESDHC */
-#define	SDHC_FLAG_HAVE_DVS	0x0008	/* Freescale ESDHC */
-#define	SDHC_FLAG_32BIT_ACCESS	0x0010	/* Freescale ESDHC */
-#define	SDHC_FLAG_ENHANCED	0x0020	/* Freescale ESDHC */
-#define	SDHC_FLAG_8BIT_MODE	0x0040	/* MMC 8bit mode is supported */
-#define	SDHC_FLAG_HAVE_CGM	0x0080	/* Netlogic XLP */
-#define	SDHC_FLAG_NO_LED_ON	0x0100	/* LED_ON unsupported in HOST_CTL */
-#define	SDHC_FLAG_HOSTCAPS	0x0200	/* No device provided capabilities */
-#define	SDHC_FLAG_RSP136_CRC	0x0400	/* Resp 136 with CRC and end-bit */
-#define	SDHC_FLAG_SINGLE_ONLY	0x0800	/* Single transfer only */
-#define	SDHC_FLAG_WAIT_RESET	0x1000	/* Wait for soft resets to start */
-#define	SDHC_FLAG_NO_HS_BIT	0x2000	/* Don't set SDHC_HIGH_SPEED bit */
-#define	SDHC_FLAG_EXTERNAL_DMA	0x4000
+#define	SDHC_FLAG_USE_DMA	0x00000001
+#define	SDHC_FLAG_FORCE_DMA	0x00000002
+#define	SDHC_FLAG_NO_PWR0	0x00000004 /* Freescale ESDHC */
+#define	SDHC_FLAG_HAVE_DVS	0x00000008 /* Freescale ESDHC */
+#define	SDHC_FLAG_32BIT_ACCESS	0x00000010 /* Freescale ESDHC */
+#define	SDHC_FLAG_ENHANCED	0x00000020 /* Freescale ESDHC */
+#define	SDHC_FLAG_8BIT_MODE	0x00000040 /* MMC 8bit mode is supported */
+#define	SDHC_FLAG_HAVE_CGM	0x00000080 /* Netlogic XLP */
+#define	SDHC_FLAG_NO_LED_ON	0x00000100 /* LED_ON unsupported in HOST_CTL */
+#define	SDHC_FLAG_HOSTCAPS	0x00000200 /* No device provided capabilities */
+#define	SDHC_FLAG_RSP136_CRC	0x00000400 /* Resp 136 with CRC and end-bit */
+#define	SDHC_FLAG_SINGLE_ONLY	0x00000800 /* Single transfer only */
+#define	SDHC_FLAG_WAIT_RESET	0x00001000 /* Wait for soft resets to start */
+#define	SDHC_FLAG_NO_HS_BIT	0x00002000 /* Don't set SDHC_HIGH_SPEED bit */
+#define	SDHC_FLAG_EXTERNAL_DMA	0x00004000
+#define	SDHC_FLAG_EXTDMA_DMAEN	0x00008000 /* ext. dma need SDHC_DMA_ENABLE */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
