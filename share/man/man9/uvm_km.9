@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_km.9,v 1.2.4.1 2014/09/29 18:38:09 msaitoh Exp $
+.\"	$NetBSD: uvm_km.9,v 1.2.4.2 2015/04/14 13:35:33 msaitoh Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -50,10 +50,11 @@ For general purpose memory allocation,
 interface should be used.
 .Sh FUNCTIONS
 .Fn uvm_km_alloc
-allocates
+allocates a contiguous range of
 .Fa size
 bytes of kernel memory in map
-.Fa map .
+.Fa map
+and returns the virtual address of the range, or returns zero on failure.
 The first address of the allocated memory range will be aligned according to the
 .Fa align
 argument
