@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.62 2015/04/14 14:16:34 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.63 2015/04/14 14:18:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.62 2015/04/14 14:16:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.63 2015/04/14 14:18:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -994,7 +994,7 @@ rnd_process_events(void)
 	static krndsource_t *last_source;
 	uint32_t entropy;
 	size_t pool_entropy;
-	int found = 0, wake = 0;
+	int wake = 0;
 	struct rnd_sampleq dq_samples = SIMPLEQ_HEAD_INITIALIZER(dq_samples);
 	struct rnd_sampleq df_samples = SIMPLEQ_HEAD_INITIALIZER(df_samples);
 
@@ -1003,7 +1003,6 @@ rnd_process_events(void)
 	 */
 	mutex_spin_enter(&rnd_samples.lock);
 	while ((sample = SIMPLEQ_FIRST(&rnd_samples.q))) {
-		found++;
 		SIMPLEQ_REMOVE_HEAD(&rnd_samples.q, next);
 		/*
 		 * We repeat this check here, since it is possible
