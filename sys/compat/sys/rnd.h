@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.3 2015/04/14 06:11:15 nat Exp $	*/
+/*	$NetBSD: rnd.h,v 1.4 2015/04/14 12:19:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997,2011 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 #include <compat/netbsd32/netbsd32.h>
 #endif /* COMPAT_NETBSD32 */
 
-#include <sys/rnd.h>
 #include <sys/rndio.h>
 
 /*
