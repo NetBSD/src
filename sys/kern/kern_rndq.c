@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.51 2015/04/14 12:33:53 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.52 2015/04/14 12:35:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.51 2015/04/14 12:33:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.52 2015/04/14 12:35:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -144,20 +144,6 @@ static krndsource_t rnd_source_no_collect = {
 	.type = RND_TYPE_UNKNOWN,
 	.flags = (RND_FLAG_NO_COLLECT |
 		  RND_FLAG_NO_ESTIMATE),
-	.state = NULL,
-	.test_cnt = 0,
-	.test = NULL
-};
-
-static krndsource_t rnd_source_anonymous = {
-	/* LIST_ENTRY list */
-	.name = { 'A', 'n', 'o', 'n', 'y', 'm', 'o', 'u', 's',
-		  0, 0, 0, 0, 0, 0, 0 },
-	.total = 0,
-	.type = RND_TYPE_UNKNOWN,
-        .flags = (RND_FLAG_COLLECT_TIME|
-		  RND_FLAG_COLLECT_VALUE|
-		  RND_FLAG_ESTIMATE_TIME),
 	.state = NULL,
 	.test_cnt = 0,
 	.test = NULL
@@ -589,10 +575,6 @@ rnd_init(void)
 		    MIN(boot_rsp->entropy, RND_POOLBITS / 2));
 		memset(boot_rsp, 0, sizeof(*boot_rsp));
 	}
-	rnd_attach_source(&rnd_source_anonymous, "Anonymous",
-			  RND_TYPE_UNKNOWN,
-			  RND_FLAG_COLLECT_TIME|RND_FLAG_COLLECT_VALUE|
-			  RND_FLAG_ESTIMATE_TIME);
 	rnd_attach_source(&rnd_printf_source, "printf", RND_TYPE_UNKNOWN,
 			  RND_FLAG_NO_ESTIMATE);
 	rnd_attach_source(&rnd_autoconf_source, "autoconf",
