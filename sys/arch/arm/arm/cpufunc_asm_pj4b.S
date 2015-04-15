@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.6 2015/03/26 08:50:42 hsuenaga Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.7 2015/04/15 10:52:18 hsuenaga Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -41,189 +41,49 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-#define TTB_RGN_OC_WB	(3 << 3)
-#define TTB_IRGN_WB	((1 << 0) | (1 << 6))
-
-/* PTWs cacheable, inner WB not shareable, outer WB not shareable */
-#define TTB_FLAGS_UP	(TTB_IRGN_WB | TTB_RGN_OC_WB)
-
 .Lpj4b_cache_line_size:
 	.word	_C_LABEL(arm_dcache_align)
 
-ENTRY(pj4b_setttb)
-	/* Cache synchronization is not required as this core has PIPT caches */
+ENTRY(pj4b_cpu_sleep)
 	dsb
-#if defined(L2CACHE_ENABLE) && defined(AURORA_L2_PT_WALK)
-	orr	r2, r0, #TTB_FLAGS_UP
-#else
-	bic	r2, r0, #0x18
-#endif
-	mcr	p15, 0, r2, c2, c0, 0	/* load TTBR0 */
-#ifdef ARM_MMU_EXTENDED
-	cmp	r1, #0
-	mcreq	p15, 0, r2, c2, c0, 1	/* load TTBR1 */
-#else
-	mov	r0, #0
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
-#endif
-	isb
-	dsb
-	RET
-END(pj4b_setttb)
-
-ENTRY(pj4b_tlb_flushID)
-	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
-	dsb
-	RET
-END(pj4b_tlb_flushID)
-
-ENTRY(pj4b_tlb_flushID_SE)
-	bfc	r0, #0, #12             @ always KERNEL_PID (i.e. 0)
-	mcr	p15, 0, r0, c8, c7, 1	@flush I+D tlb single entry
-#if PAGE_SIZE == 2 * L2_S_SIZE
-	add	r0, r0, L2_S_SIZE
-	mcr	p15, 0, r0, c8, c7, 1	@flush I+D tlb single entry
-#endif
-	dsb
-	RET
-END(pj4b_tlb_flushID_SE)
-
-ENTRY(pj4b_icache_sync_range)
-	ldr	ip, .Lpj4b_cache_line_size
-	ldr	ip, [ip]
-	sub	r1, r1, #1		/* Don't overrun */
-	sub	r3, ip, #1
-	and	r2, r0, r3
-	add	r1, r1, r2
-	bic	r0, r0, r3
-1:
-	mcr	p15, 0, r0, c7, c5, 1	/* Invalidate I cache SE with VA */
-	mcr	p15, 0, r0, c7, c14, 1	/* Clean and invalidate D cache SE with VA */
-	add	r0, r0, ip
-	subs	r1, r1, ip
-	bpl	1b
-	isb				/* instruction synchronization barrier */
-	dsb
-	RET
-END(pj4b_icache_sync_range)
-
-ENTRY(pj4b_dcache_inv_range)
-	ldr	ip, .Lpj4b_cache_line_size
-	ldr	ip, [ip]
-	sub	r1, r1, #1		/* Don't overrun */
-	sub	r3, ip, #1
-	and	r2, r0, r3
-	add	r1, r1, r2
-	bic	r0, r0, r3
-1:
-	mcr	p15, 0, r0, c7, c6, 1
-	add	r0, r0, ip
-	subs	r1, r1, ip
-	bpl	1b
-	dsb
-	RET
-END(pj4b_dcache_inv_range)
-
-ENTRY(pj4b_idcache_wbinv_range)
-	ldr	ip, .Lpj4b_cache_line_size
-	ldr	ip, [ip]
-	sub	r1, r1, #1		/* Don't overrun */
-	sub	r3, ip, #1
-	and	r2, r0, r3
-	add	r1, r1, r2
-	bic	r0, r0, r3
-1:
-	mcr	p15, 0, r0, c7, c5, 1
-	mcr	p15, 0, r0, c7, c14, 1	/* L2C clean and invalidate entry */
-	add	r0, r0, ip
-	subs	r1, r1, ip
-	bpl	1b
-	dsb
-	RET
-END(pj4b_idcache_wbinv_range)
-
-ENTRY(pj4b_dcache_wbinv_range)
-	ldr	ip, .Lpj4b_cache_line_size
-	ldr	ip, [ip]
-	sub	r1, r1, #1		/* Don't overrun */
-	sub	r3, ip, #1
-	and	r2, r0, r3
-	add	r1, r1, r2
-	bic	r0, r0, r3
-1:
-	mcr	p15, 0, r0, c7, c14, 1
-	add	r0, r0, ip
-	subs	r1, r1, ip
-	bpl	1b
-	dsb
-	RET
-END(pj4b_dcache_wbinv_range)
-
-ENTRY(pj4b_dcache_wb_range)
-	ldr	ip, .Lpj4b_cache_line_size
-	ldr	ip, [ip]
-	sub	r1, r1, #1		/* Don't overrun */
-	sub	r3, ip, #1
-	and	r2, r0, r3
-	add	r1, r1, r2
-	bic	r0, r0, r3
-1:
-	mcr	p15, 0, r0, c7, c14, 1	/* Clean and invalidate D cache SE with VA */
-	add	r0, r0, ip
-	subs	r1, r1, ip
-	bpl	1b
-	dsb
-	RET
-END(pj4b_dcache_wb_range)
-
-ENTRY(pj4b_drain_readbuf)
-	isb
-	RET
-END(pj4b_drain_readbuf)
-
-ENTRY(pj4b_drain_writebuf)
-	dsb
-	RET
-END(pj4b_drain_writebuf)
-
-ENTRY(pj4b_flush_brnchtgt_all)
-	mcr	p15, 0, r0, c7, c5, 6	/* flush entrie branch target cache */
-	RET
-END(pj4b_flush_brnchtgt_all)
-
-ENTRY(pj4b_flush_brnchtgt_va)
-	mcr	p15, 0, r0, c7, c5, 7	/* flush branch target cache by VA */
-	RET
-END(pj4b_flush_brnchtgt_va)
-
-ENTRY(pj4b_context_switch)
-	dsb
-#if defined(L2CACHE_ENABLE) && defined(AURORA_L2_PT_WALK)
-	orr	r2, r0, #TTB_FLAGS_UP
-#else
-	bic	r2, r0, #0x18
-#endif
-	mcr	p15, 0, r2, c2, c0, 0 	@set the new TTBR0
-#ifdef ARM_MMU_EXTENDED
-	cmp	r1, #0
-	mcreq	p15, 0, r2, c2, c0, 1 	@set the new TTBR1
-#else
-	mov	r0, #0
-	mcr	p15, 0, r0, c8, c7, 0	@flush the I+D
-#endif
-	dsb
-	isb
-	RET
-END(pj4b_context_switch)
+	wfi				@ wait for an interrupt
+	dsb				@ Erratum#ARM-CPU-4742
+	b	irq_idle_entry		@ assume we got an interrupt
+END(pj4b_cpu_sleep)
 
 ENTRY(pj4b_config)
+	/* Set Auxiliary Debug Modes Control 0 register */
+	mrc	p15, 1, r0, c15, c1, 0
+	bic	r0, r0, #(1 << 12)	@ Erratum#ARM-CPU-6136
+					@ LDSTM 1st issue is single word
+	orr	r0, r0, #(1 << 22)	@ DVM_WAKEUP enable
+	mcr	p15, 1, r0, c15, c1, 0
+
+	/* Set Auxiliary Debug Modes Control 1 register */
+	mrc	p15, 1, r0, c15, c1, 1
+	bic	r0, r0, #(1 << 2)	@ Erratum#ARM-CPU-6409
+					@ Disable static branch prediction
+	orr	r0, r0, #(1 << 5)	@ STREX backoff disable
+	mcr	p15, 1, r0, c15, c1, 1
+
 	/* Set Auxiliary Debug Modes Control 2 register */
 	mrc	p15, 1, r0, c15, c1, 2
-	bic	r0, r0, #(1 << 23)
-	orr	r0, r0, #(1 << 25)
-	orr	r0, r0, #(1 << 27)
-	orr	r0, r0, #(1 << 29)
-	orr	r0, r0, #(1 << 30)
+	bic	r0, r0, #(1 << 23)	@ Enable fast LDR
+	orr	r0, r0, #(1 << 25)	@ Intervention Interleave disable
+	orr	r0, r0, #(1 << 27)	@ Critical word 1st sequencing dis.
+	orr	r0, r0, #(1 << 29)	@ Disable MO device R/W
+	orr	r0, r0, #(1 << 30)	@ L1 cache strict round-robin 
+	orr	r0, r0, #(1 << 31)	@ Enable write evict
 	mcr	p15, 1, r0, c15, c1, 2
+
+	/* Set Auxiliary FUnction Modes Control 0 register */
+	mrc	p15, 1, r0, c15, c2, 0
+#ifdef MULTIPROCESSOR
+	orr	r0, r0, #(1 << 1)	@ SMP/nAMP enable
+#endif
+	orr	r0, r0, #(1 << 2)	@ L2 parity enable
+	orr	r0, r0, #(1 << 8)	@ Cache & TLB maintenance broadcast
+	mcr	p15, 1, r0, c15, c2, 0
+
 	RET
 END(pj4b_config)
