@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.41 2015/04/15 03:38:50 ozaki-r Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.42 2015/04/15 08:47:28 ozaki-r Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.41 2015/04/15 03:38:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.42 2015/04/15 08:47:28 ozaki-r Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -735,10 +735,10 @@ int
 encap_detach(const struct encaptab *cookie)
 {
 	const struct encaptab *ep = cookie;
-	struct encaptab *p;
+	struct encaptab *p, *np;
 	int error;
 
-	LIST_FOREACH(p, &encaptab, chain) {
+	LIST_FOREACH_SAFE(p, &encaptab, chain, np) {
 		if (p == ep) {
 			error = encap_remove(p);
 			if (error)
