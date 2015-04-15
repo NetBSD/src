@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.42 2015/04/15 08:47:28 ozaki-r Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.43 2015/04/15 13:02:16 riastradh Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.42 2015/04/15 08:47:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.43 2015/04/15 13:02:16 riastradh Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -505,8 +505,10 @@ encap_attach(int af, int proto,
 		if (ep->func)
 			continue;
 
-		KASSERT(ep->src != NULL && ep->dst != NULL &&
-		    ep->srcmask != NULL && ep->dstmask != NULL);
+		KASSERT(ep->src != NULL);
+		KASSERT(ep->dst != NULL);
+		KASSERT(ep->srcmask != NULL);
+		KASSERT(ep->dstmask != NULL);
 
 		if (ep->src->sa_len != sp->sa_len ||
 		    memcmp(ep->src, sp, sp->sa_len) != 0 ||
