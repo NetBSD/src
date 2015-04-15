@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.37 2015/04/14 15:25:46 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.38 2015/04/15 04:35:52 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -5957,3 +5957,18 @@ distrib/sets/makesrctars			1.40
 
 	Move some GPL code from src.tgz to gnusrc.tgz
 	[snj, ticket #1279]
+
+crypto/external/bsd/openssl/lib/libcrypto/arch/i386/aes.inc 1.3
+crypto/external/bsd/openssl/lib/libcrypto/evp.inc 1.5
+crypto/external/bsd/openssl/lib/libcrypto/modes.inc 1.3
+
+	Fix build goo for OpenSSL AES-NI support.
+
+	OpenSSL now supports AES-NI in evp, not in an engine.  We can
+	now get rid of the no longer maintained aesni engine, which
+	was broken last summer.  Not only can OpenSSL now use AES-NI
+	for everything it did before we broke it last summer, but it
+	can also use AES-NI for more encryption modes than before,
+	such as CTR.
+	[riastradh, ticket #832]
+
