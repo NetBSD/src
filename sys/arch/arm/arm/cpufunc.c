@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.151 2015/02/25 13:52:42 joerg Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.152 2015/04/15 10:52:18 hsuenaga Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.151 2015/02/25 13:52:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.152 2015/04/15 10:52:18 hsuenaga Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -86,6 +86,16 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.151 2015/02/25 13:52:42 joerg Exp $");
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 #include <arm/xscale/xscalereg.h>
+#endif
+
+#if defined(CPU_PJ4B)
+#include "opt_cputypes.h"
+#include "opt_mvsoc.h"
+#include <machine/bus_defs.h>
+#if defined(ARMADAXP)
+#include <arm/marvell/armadaxpreg.h>
+#include <arm/marvell/armadaxpvar.h>
+#endif
 #endif
 
 #if defined(PERFCTRS)
@@ -1342,57 +1352,63 @@ struct cpu_functions pj4bv7_cpufuncs = {
 	/* CPU functions */
 
 	.cf_id			= cpufunc_id,
-	.cf_cpwait		= pj4b_drain_writebuf,
+	.cf_cpwait		= armv7_drain_writebuf,
 
 	/* MMU functions */
 
 	.cf_control		= cpufunc_control,
 	.cf_domains		= cpufunc_domains,
-	.cf_setttb		= pj4b_setttb,
+	.cf_setttb		= armv7_setttb,
 	.cf_faultstatus		= cpufunc_faultstatus,
 	.cf_faultaddress	= cpufunc_faultaddress,
 
 	/* TLB functions */
 
-	.cf_tlb_flushID		= pj4b_tlb_flushID,
-	.cf_tlb_flushID_SE	= pj4b_tlb_flushID_SE,
-	.cf_tlb_flushI		= pj4b_tlb_flushID,
-	.cf_tlb_flushI_SE	= pj4b_tlb_flushID_SE,
-	.cf_tlb_flushD		= pj4b_tlb_flushID,
-	.cf_tlb_flushD_SE	= pj4b_tlb_flushID_SE,
+	.cf_tlb_flushID		= armv7_tlb_flushID,
+	.cf_tlb_flushID_SE	= armv7_tlb_flushID_SE,
+	.cf_tlb_flushI		= armv7_tlb_flushID,
+	.cf_tlb_flushI_SE	= armv7_tlb_flushID_SE,
+	.cf_tlb_flushD		= armv7_tlb_flushID,
+	.cf_tlb_flushD_SE	= armv7_tlb_flushID_SE,
 
 	/* Cache operations */
 
 	.cf_icache_sync_all	= armv7_idcache_wbinv_all,
-	.cf_icache_sync_range	= pj4b_icache_sync_range,
+	.cf_icache_sync_range	= armv7_icache_sync_range,
 
 	.cf_dcache_wbinv_all	= armv7_dcache_wbinv_all,
-	.cf_dcache_wbinv_range	= pj4b_dcache_wbinv_range,
-	.cf_dcache_inv_range	= pj4b_dcache_inv_range,
-	.cf_dcache_wb_range	= pj4b_dcache_wb_range,
+	.cf_dcache_wbinv_range	= armv7_dcache_wbinv_range,
+	.cf_dcache_inv_range	= armv7_dcache_inv_range,
+	.cf_dcache_wb_range	= armv7_dcache_wb_range,
 
+#if !defined(AURORA_IO_CACHE_COHERENCY) && defined(ARMADAXP)
+	.cf_sdcache_wbinv_range	= armadaxp_sdcache_wbinv_range,
+	.cf_sdcache_inv_range	= armadaxp_sdcache_inv_range,
+	.cf_sdcache_wb_range	= armadaxp_sdcache_wb_range,
+#else
 	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
 	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
 	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+#endif
 
 	.cf_idcache_wbinv_all	= armv7_idcache_wbinv_all,
-	.cf_idcache_wbinv_range	= pj4b_idcache_wbinv_range,
+	.cf_idcache_wbinv_range	= armv7_idcache_wbinv_range,
 
 	/* Other functions */
 
-	.cf_flush_prefetchbuf	= pj4b_drain_readbuf,
-	.cf_drain_writebuf	= pj4b_drain_writebuf,
-	.cf_flush_brnchtgt_C	= pj4b_flush_brnchtgt_all,
-	.cf_flush_brnchtgt_E	= pj4b_flush_brnchtgt_va,
+	.cf_flush_prefetchbuf	= cpufunc_nullop,
+	.cf_drain_writebuf	= armv7_drain_writebuf,
+	.cf_flush_brnchtgt_C	= cpufunc_nullop,
+	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
 
-	.cf_sleep		= (void *)cpufunc_nullop,
+	.cf_sleep		= pj4b_cpu_sleep,
 
 	/* Soft functions */
 
 	.cf_dataabt_fixup	= cpufunc_null_fixup,
 	.cf_prefetchabt_fixup	= cpufunc_null_fixup,
 
-	.cf_context_switch	= pj4b_context_switch,
+	.cf_context_switch	= armv7_context_switch,
 
 	.cf_setup		= pj4bv7_setup
 };
