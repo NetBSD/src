@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.8 2014/04/05 22:41:50 matt Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.9 2015/04/15 10:40:36 hsuenaga Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.8 2014/04/05 22:41:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.9 2015/04/15 10:40:36 hsuenaga Exp $");
 
 #define _INTR_PRIVATE
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.8 2014/04/05 22:41:50 matt Exp $");
 #include <arm/marvell/mvsocreg.h>
 #include <arm/marvell/mvsocvar.h>
 #include <arm/marvell/armadaxpreg.h>
+#include <arm/marvell/armadaxpvar.h>
 
 #include <dev/marvell/marvellreg.h>
 
@@ -99,8 +100,6 @@ static void armadaxp_pic_set_priority(struct pic_softc *, int);
 
 static int armadaxp_find_pending_irqs(void);
 static void armadaxp_pic_block_irq(struct pic_softc *, size_t);
-void armadaxp_io_coherency_init(void);
-int armadaxp_l2_init(bus_addr_t);
 
 struct vco_freq_ratio {
 	uint8_t	vco_cpu;	/* VCO to CLK0(CPU) clock ratio */
@@ -474,6 +473,61 @@ armadaxp_l2_init(bus_addr_t pbase)
 #endif
 
 	return (0);
+}
+
+void
+armadaxp_sdcache_inv_all(void)
+{
+	L2_WRITE(ARMADAXP_L2_INV_WAY, L2_ALL_WAYS);
+}
+
+void
+armadaxp_sdcache_wb_all(void)
+{
+	L2_WRITE(ARMADAXP_L2_WB_WAY, L2_ALL_WAYS);
+	__asm__ __volatile__("dsb");
+}
+
+void
+armadaxp_sdcache_wbinv_all(void)
+{
+	L2_WRITE(ARMADAXP_L2_WBINV_WAY, L2_ALL_WAYS);
+	__asm__ __volatile__("dsb");
+}
+
+void
+armadaxp_sdcache_inv_range(vaddr_t va, paddr_t pa, psize_t sz)
+{
+	paddr_t pa_base, pa_end;
+
+	pa_base = pa & ~0x1f;
+	pa_end = (pa_base + sz) & ~0x1f;
+	L2_WRITE(ARMADAXP_L2_RANGE_BASE, pa_base);
+	L2_WRITE(ARMADAXP_L2_INV_RANGE, pa_end);
+}
+
+void
+armadaxp_sdcache_wb_range(vaddr_t va, paddr_t pa, psize_t sz)
+{
+	paddr_t pa_base, pa_end;
+
+	pa_base = pa & ~0x1f;
+	pa_end = (pa_base + sz) & ~0x1f;
+	L2_WRITE(ARMADAXP_L2_RANGE_BASE, pa_base);
+	L2_WRITE(ARMADAXP_L2_WB_RANGE, pa_end);
+	__asm__ __volatile__("dsb");
+}
+
+void
+armadaxp_sdcache_wbinv_range(vaddr_t va, paddr_t pa, psize_t sz)
+{
+	paddr_t pa_base, pa_end;
+
+	pa_base = pa & ~0x1f;
+	pa_end = (pa_base + sz) & ~0x1f;
+	L2_WRITE(ARMADAXP_L2_RANGE_BASE, pa_base);
+	L2_WRITE(ARMADAXP_L2_WBINV_RANGE, pa_end);
+	__asm__ __volatile__("dsb");
 }
 
 void
