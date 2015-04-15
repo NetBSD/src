@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.46 2015/04/08 18:10:08 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.47 2015/04/15 21:26:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.46 2015/04/08 18:10:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.47 2015/04/15 21:26:48 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -274,18 +274,17 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 #endif /* __HAVE_PREEMPTION */
 		return;
 	}
-#ifdef __HAVE_PREEMPTION
-	atomic_or_uint(&ci->ci_astpending, __BIT(0));
-#else
-	ci->ci_astpending = __BIT(0);
-#endif
 #ifdef MULTIPROCESSOR
-	if (ci == curcpu() || !immed)
+	if (ci == cur_ci || !immed) {
+		setsoftast(ci);
 		return;
+	}
 	ipi = IPI_AST;
 
    send_ipi:
 	intr_ipi_send(ci->ci_kcpuset, ipi);
+#else
+	setsoftast(ci);
 #endif /* MULTIPROCESSOR */
 }
 
