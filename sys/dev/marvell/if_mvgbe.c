@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.40 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.40 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -674,6 +674,13 @@ mvgbe_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
 	uint32_t pbase, maddrh, maddrl;
+	prop_dictionary_t dict;
+
+	dict = device_properties(parent);
+	if (dict) {
+		if (prop_dictionary_get(dict, "mac-address"))
+			return 1;
+	}
 
 	pbase = MVGBE_PORTR_BASE + mva->mva_unit * MVGBE_PORTR_SIZE;
 	maddrh =
@@ -694,15 +701,24 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	struct mvgbe_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
 	struct mvgbe_txmap_entry *entry;
+	prop_dictionary_t dict;
+	prop_data_t enaddrp;
 	struct ifnet *ifp;
 	bus_dma_segment_t seg;
 	bus_dmamap_t dmamap;
 	int rseg, i;
 	uint32_t maddrh, maddrl;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 	void *kva;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	dict = device_properties(parent);
+	if (dict)
+		enaddrp = prop_dictionary_get(dict, "mac-address");
+	else
+		enaddrp = NULL;
 
 	sc->sc_dev = self;
 	sc->sc_port = mva->mva_unit;
@@ -749,6 +765,18 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		sc->sc_linkup.bit = MVGBE_PS_LINKUP;
+	}
+
+	if (enaddrp) {
+		memcpy(enaddr, prop_data_data_nocopy(enaddrp), ETHER_ADDR_LEN);
+		maddrh  = enaddr[0] << 24;
+		maddrh |= enaddr[1] << 16;
+		maddrh |= enaddr[2] << 8;
+		maddrh |= enaddr[3];
+		maddrl  = enaddr[4] << 8;
+		maddrl |= enaddr[5];
+		MVGBE_WRITE(sc, MVGBE_MACAH, maddrh);
+		MVGBE_WRITE(sc, MVGBE_MACAL, maddrl);
 	}
 
 	maddrh = MVGBE_READ(sc, MVGBE_MACAH);
