@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.89 2011/07/09 15:01:33 mrg Exp $
+#	$NetBSD: Makefile.hp300,v 1.90 2015/04/15 19:13:47 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -69,10 +69,6 @@ dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o tra
 ##
 ## (7) misc settings
 ##
-
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 45
-CWARNFLAGS.diofb.c+=	 -Wno-cast-qual
-.endif
 
 ##
 ## (8) config(8) generated machinery

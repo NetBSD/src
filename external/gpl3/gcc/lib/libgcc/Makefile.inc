@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 2014/08/21 08:52:23 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2015/04/15 19:13:46 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -193,8 +193,3 @@ DPSRCS+=	${_dst}
 
 EXTRA_FAKEHEADERS=	options.h libgcc_tm.h
 .include "../../Makefile.hacks"
-
-# XXX
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 45 && ${LIBGCC_MACHINE_ARCH} == "m68k"
-COPTS._fixunsxfdi.c+=	-O0
-.endif
