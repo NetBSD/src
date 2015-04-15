@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.29 2015/03/26 14:42:56 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.30 2015/04/15 05:40:48 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.39 2015/03/23 00:35:19 jsg Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29 2015/03/26 14:42:56 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.30 2015/04/15 05:40:48 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -6616,6 +6616,11 @@ iwm_attach_hook(device_t dev)
 	callout_setfunc(&sc->sc_calib_to, iwm_calib_timeout, sc);
 
 	//task_set(&sc->init_task, iwm_init_task, sc);
+
+	if (pmf_device_register(dev, NULL, NULL))
+		pmf_class_network_register(dev, ifp);
+	else
+		aprint_error_dev(dev, "couldn't establish power handler\n");
 }
 
 static void
