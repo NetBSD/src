@@ -283,10 +283,9 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  */
 
 #ifdef __HAVE_PREEMPTION
-#define setsoftast()		atomic_or_uint(&curcpu()->ci_astpending, \
-				    __BIT(0))
+#define setsoftast(ci)		atomic_or_uint(&(ci)->ci_astpending, __BIT(0))
 #else
-#define setsoftast()		(curcpu()->ci_astpending = __BIT(0))
+#define setsoftast(ci)		((ci)->ci_astpending = __BIT(0))
 #endif
 
 /*
@@ -294,14 +293,15 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * process as soon as possible.
  */
 
-#define cpu_signotify(l)		setsoftast()
+#define cpu_signotify(l)		setsoftast((l)->l_cpu)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, \
+				 setsoftast((l)->l_cpu))
 
 /* for preeemption. */
 void	cpu_set_curpri(int);
