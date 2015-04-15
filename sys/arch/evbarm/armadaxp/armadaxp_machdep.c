@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.9 2015/04/15 10:15:40 hsuenaga Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.10 2015/04/15 10:30:42 hsuenaga Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.9 2015/04/15 10:15:40 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.10 2015/04/15 10:30:42 hsuenaga Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.9 2015/04/15 10:15:40 hsuenag
 
 #include <evbarm/marvell/marvellreg.h>
 #include <evbarm/marvell/marvellvar.h>
+#include <dev/marvell/marvellreg.h>
 
 #include "mvpex.h"
 #include "com.h"
@@ -344,7 +345,21 @@ initarm(void *arg)
 	/* Get CPU, system and timebase frequencies */
 	extern vaddr_t misc_base;
 	misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
-	armadaxp_getclks();
+	switch (mvsoc_model()) {
+	case MARVELL_ARMADA370_MV6707:
+	case MARVELL_ARMADA370_MV6710:
+	case MARVELL_ARMADA370_MV6W11:
+		armada370_getclks();
+		break;
+	case MARVELL_ARMADAXP_MV78130:
+	case MARVELL_ARMADAXP_MV78160:
+	case MARVELL_ARMADAXP_MV78230:
+	case MARVELL_ARMADAXP_MV78260:
+	case MARVELL_ARMADAXP_MV78460:
+	default:
+		armadaxp_getclks();
+		break;
+	}
 	mvsoc_clkgating = armadaxp_clkgating;
 
 	/* Preconfigure interrupts */
