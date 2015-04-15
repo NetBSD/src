@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2014/08/10 05:47:36 matt Exp $
+# $NetBSD: Makefile.inc,v 1.2 2015/04/15 19:13:46 mrg Exp $
 
 SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
 #SRCS+= qdivrem.c
@@ -16,7 +16,3 @@ SRCS.softfloat= softfloat-wrapper.c
 SRCS+= ${SRCS.softfloat}
 CPPFLAGS+=      -I${ARCHDIR}/softfloat -I${.CURDIR}/softfloat \
 		-I${.CURDIR}/softfloat/bits64
-
-#.if ${HAVE_GCC} == 45
-#COPTS.softfloat-wrapper.c+=	-Wno-enum-compare
-#.endif
