@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.71 2015/04/07 20:38:20 matt Exp $
+#	$NetBSD: genassym.cf,v 1.72 2015/04/15 15:44:19 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -64,6 +64,10 @@ endif
 define	__PROG32		1
 ifdef __ARM_FIQ_INDIRECT
 define	__ARM_FIQ_INDIRECT	1
+endif
+
+ifdef __HAVE_PREEMPTION
+define	__HAVE_PREEMPTION	1
 endif
 
 ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
