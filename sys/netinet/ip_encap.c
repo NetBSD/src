@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.40 2015/04/15 03:32:23 ozaki-r Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.41 2015/04/15 03:38:50 ozaki-r Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.40 2015/04/15 03:32:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.41 2015/04/15 03:38:50 ozaki-r Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -185,10 +185,8 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	struct radix_node *rn;
 #endif
 
-#ifdef DIAGNOSTIC
-	if (m->m_len < sizeof(*ip))
-		panic("encap4_lookup");
-#endif
+	KASSERT(m->m_len >= sizeof(*ip));
+
 	ip = mtod(m, struct ip *);
 
 	memset(&pack, 0, sizeof(pack));
@@ -309,10 +307,8 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	struct radix_node *rn;
 #endif
 
-#ifdef DIAGNOSTIC
-	if (m->m_len < sizeof(*ip6))
-		panic("encap6_lookup");
-#endif
+	KASSERT(m->m_len >= sizeof(*ip6));
+
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	memset(&pack, 0, sizeof(pack));
@@ -508,10 +504,10 @@ encap_attach(int af, int proto,
 			continue;
 		if (ep->func)
 			continue;
-#ifdef DIAGNOSTIC
-		if (!ep->src || !ep->dst || !ep->srcmask || !ep->dstmask)
-			panic("null pointers in encaptab");
-#endif
+
+		KASSERT(ep->src != NULL && ep->dst != NULL &&
+		    ep->srcmask != NULL && ep->dstmask != NULL);
+
 		if (ep->src->sa_len != sp->sa_len ||
 		    memcmp(ep->src, sp, sp->sa_len) != 0 ||
 		    memcmp(ep->srcmask, sm, sp->sa_len) != 0)
@@ -808,10 +804,8 @@ mask_match(const struct encaptab *ep,
 	u_int8_t *r;
 	int matchlen;
 
-#ifdef DIAGNOSTIC
-	if (ep->func)
-		panic("wrong encaptab passed to mask_match");
-#endif
+	KASSERTMSG(ep->func == NULL, "wrong encaptab passed to mask_match");
+
 	if (sp->sa_len > sizeof(s) || dp->sa_len > sizeof(d))
 		return 0;
 	if (sp->sa_family != ep->af || dp->sa_family != ep->af)
