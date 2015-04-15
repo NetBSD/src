@@ -1,3 +1,4 @@
+/*	$NetBSD: ip_encap.c,v 1.40 2015/04/15 03:32:23 ozaki-r Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -74,7 +75,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.39 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.40 2015/04/15 03:32:23 ozaki-r Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
