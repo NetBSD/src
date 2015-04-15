@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.9 2015/04/15 10:40:36 hsuenaga Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.10 2015/04/15 12:11:31 hsuenaga Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.9 2015/04/15 10:40:36 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.10 2015/04/15 12:11:31 hsuenaga Exp $");
 
 #define _INTR_PRIVATE
 
@@ -485,6 +485,7 @@ void
 armadaxp_sdcache_wb_all(void)
 {
 	L2_WRITE(ARMADAXP_L2_WB_WAY, L2_ALL_WAYS);
+	L2_WRITE(ARMADAXP_L2_SYNC, 0);
 	__asm__ __volatile__("dsb");
 }
 
@@ -492,6 +493,7 @@ void
 armadaxp_sdcache_wbinv_all(void)
 {
 	L2_WRITE(ARMADAXP_L2_WBINV_WAY, L2_ALL_WAYS);
+	L2_WRITE(ARMADAXP_L2_SYNC, 0);
 	__asm__ __volatile__("dsb");
 }
 
@@ -515,6 +517,7 @@ armadaxp_sdcache_wb_range(vaddr_t va, paddr_t pa, psize_t sz)
 	pa_end = (pa_base + sz) & ~0x1f;
 	L2_WRITE(ARMADAXP_L2_RANGE_BASE, pa_base);
 	L2_WRITE(ARMADAXP_L2_WB_RANGE, pa_end);
+	L2_WRITE(ARMADAXP_L2_SYNC, 0);
 	__asm__ __volatile__("dsb");
 }
 
@@ -527,6 +530,7 @@ armadaxp_sdcache_wbinv_range(vaddr_t va, paddr_t pa, psize_t sz)
 	pa_end = (pa_base + sz) & ~0x1f;
 	L2_WRITE(ARMADAXP_L2_RANGE_BASE, pa_base);
 	L2_WRITE(ARMADAXP_L2_WBINV_RANGE, pa_end);
+	L2_WRITE(ARMADAXP_L2_SYNC, 0);
 	__asm__ __volatile__("dsb");
 }
 
