@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.43 2015/04/15 13:02:16 riastradh Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.44 2015/04/16 06:50:16 ozaki-r Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.43 2015/04/15 13:02:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.44 2015/04/16 06:50:16 ozaki-r Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -259,8 +259,6 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	}
 
 	return match;
-#undef s
-#undef d
 }
 
 void
@@ -361,8 +359,6 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	}
 
 	return match;
-#undef s
-#undef d
 }
 
 int
