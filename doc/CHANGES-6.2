@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.209 2015/04/16 06:29:33 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.210 2015/04/16 07:03:53 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11370,4 +11370,18 @@ sys/net/if.h					1.186
 
 	Use 1000ULL to prevent integer overflow (for IF_Gbps(10)).
 	[msaitoh, ticket #1289]
+
+distrib/sets/lists/man/mi			1.1411
+share/man/man4/Makefile				1.593
+share/man/man4/gpio.4				1.24
+share/man/man4/ptcd.4				1.1-1.4
+sys/arch/i386/conf/ALL				1.348
+sys/arch/i386/conf/files.i386			1.369
+sys/dev/isa/ptcd.c				1.1
+
+	ptcd(4) is a device driver for the cash drawer port found on
+	Protech PS3100 point of sale terminals.  It controls the cash
+	drawer using a gpio(4) device that attaches at ptcd0: Pin 0
+	controls the drawer, pin 1 reports the current state.
+	[mbalmer, ticket #891]
 
