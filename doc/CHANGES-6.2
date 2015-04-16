@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.208 2015/04/14 15:10:57 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.209 2015/04/16 06:29:33 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11349,3 +11349,25 @@ distrib/sets/makesrctars			1.40
 
 	Move some GPL code from src.tgz to gnusrc.tgz
 	[snj, ticket #1279]
+
+sys/dev/pci/if_wm.c				1.312 via patch
+sys/dev/pci/if_wmreg.h				1.66 via patch
+
+	- Initialize some hardware bits for 8257[1234], 82583, 80003,
+	  ICH* and PCH*.  Some of them are workaround code. From other
+	  *BSDs, Linux and documents.
+	- Add comment.
+	- Fix typo in comment.
+	[msaitoh, ticket #1277]
+
+lib/libc/stdio/gettemp.c			1.16 via patch
+
+	Fix PR bin/47757: mktemp(3) mangles the pathname if not given an
+	absolute path.
+	[msaitoh, ticket #1282]
+
+sys/net/if.h					1.186
+
+	Use 1000ULL to prevent integer overflow (for IF_Gbps(10)).
+	[msaitoh, ticket #1289]
+
