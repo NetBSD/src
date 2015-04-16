@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.255 2015/04/16 06:14:51 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.256 2015/04/16 09:30:35 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19425,7 +19425,7 @@ sys/kern/exec_elf.c				1.71
 
 sys/net/if_vlan.c				1.80
 
-	Correct frame padding length.
+	Correct frame padding length. Fixes PR#49788.
 	[ozaki-r, ticket #653]
 
 sys/netinet6/in6.c				1.182 via patch
