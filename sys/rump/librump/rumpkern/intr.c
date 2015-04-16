@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.48 2015/01/14 18:51:56 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.49 2015/04/16 10:08:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2010, 2015 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.48 2015/01/14 18:51:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.49 2015/04/16 10:08:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -111,7 +111,6 @@ doclock(void *noarg)
 	long nsec;
 	int error;
 	int cpuindx = curcpu()->ci_index;
-	extern int hz;
 
 	error = rumpuser_clock_gettime(RUMPUSER_CLOCK_ABSMONO, &sec, &nsec);
 	if (error)
