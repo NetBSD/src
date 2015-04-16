@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.12 2015/04/06 17:45:31 bouyer Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.13 2015/04/16 19:53:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.12 2015/04/06 17:45:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.13 2015/04/16 19:53:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1523,6 +1523,8 @@ btmagic_input_magict(struct btmagic_softc *sc, uint8_t *data, size_t len)
 				 */
 				 continue;
 			}
+			if (id >= __arraycount(sc->sc_ax))
+				continue;
 					
 			tx = ax - sc->sc_ax[id];
 			ty = ay - sc->sc_ay[id];
@@ -1561,6 +1563,9 @@ btmagic_input_magict(struct btmagic_softc *sc, uint8_t *data, size_t len)
 			}
 			break;
 		}
+
+		if (id >= __arraycount(sc->sc_ax))
+			continue;
 
 		sc->sc_ax[id] = ax;
 		sc->sc_ay[id] = ay;
