@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.227.2.15 2015/02/04 10:55:00 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.227.2.16 2015/04/16 06:20:08 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.15 2015/02/04 10:55:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.16 2015/04/16 06:20:08 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,6 +530,7 @@ static void	wm_set_pcie_completion_timeout(struct wm_softc *);
 static void	wm_get_auto_rd_done(struct wm_softc *);
 static void	wm_lan_init_done(struct wm_softc *);
 static void	wm_get_cfg_done(struct wm_softc *);
+static void	wm_initialize_hardware_bits(struct wm_softc *);
 static void	wm_reset(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_softc *, int);
 static void	wm_rxdrain(struct wm_softc *);
@@ -4209,6 +4210,200 @@ wm_tick(void *arg)
 	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 }
 
+/* Init hardware bits */
+void
+wm_initialize_hardware_bits(struct wm_softc *sc)
+{
+	uint32_t tarc0, tarc1, reg;
+	
+	/* For 82571 variant, 80003 and ICHs */
+	if (((sc->sc_type >= WM_T_82571) && (sc->sc_type <= WM_T_82583))
+	    || (sc->sc_type >= WM_T_80003)) {
+
+		/* Transmit Descriptor Control 0 */
+		reg = CSR_READ(sc, WMREG_TXDCTL(0));
+		reg |= TXDCTL_COUNT_DESC;
+		CSR_WRITE(sc, WMREG_TXDCTL(0), reg);
+
+		/* Transmit Descriptor Control 1 */
+		reg = CSR_READ(sc, WMREG_TXDCTL(1));
+		reg |= TXDCTL_COUNT_DESC;
+		CSR_WRITE(sc, WMREG_TXDCTL(1), reg);
+
+		/* TARC0 */
+		tarc0 = CSR_READ(sc, WMREG_TARC0);
+		switch (sc->sc_type) {
+		case WM_T_82571:
+		case WM_T_82572:
+		case WM_T_82573:
+		case WM_T_82574:
+		case WM_T_82583:
+		case WM_T_80003:
+			/* Clear bits 30..27 */
+			tarc0 &= ~__BITS(30, 27);
+			break;
+		default:
+			break;
+		}
+
+		switch (sc->sc_type) {
+		case WM_T_82571:
+		case WM_T_82572:
+			tarc0 |= __BITS(26, 23); /* TARC0 bits 23-26 */
+
+			tarc1 = CSR_READ(sc, WMREG_TARC1);
+			tarc1 &= ~__BITS(30, 29); /* Clear bits 30 and 29 */
+			tarc1 |= __BITS(26, 24); /* TARC1 bits 26-24 */
+			/* 8257[12] Errata No.7 */
+			tarc1 |= __BIT(22); /* TARC1 bits 22 */
+
+			/* TARC1 bit 28 */
+			if ((CSR_READ(sc, WMREG_TCTL) & TCTL_MULR) != 0)
+				tarc1 &= ~__BIT(28);
+			else
+				tarc1 |= __BIT(28);
+			CSR_WRITE(sc, WMREG_TARC1, tarc1);
+
+			/*
+			 * 8257[12] Errata No.13
+			 * Disable Dyamic Clock Gating.
+			 */
+			reg = CSR_READ(sc, WMREG_CTRL_EXT);
+			reg &= ~CTRL_EXT_DMA_DYN_CLK;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+			break;
+		case WM_T_82573:
+		case WM_T_82574:
+		case WM_T_82583:
+			if ((sc->sc_type == WM_T_82574)
+			    || (sc->sc_type == WM_T_82583))
+				tarc0 |= __BIT(26); /* TARC0 bit 26 */
+
+			/* Extended Device Control */
+			reg = CSR_READ(sc, WMREG_CTRL_EXT);
+			reg &= ~__BIT(23);	/* Clear bit 23 */
+			reg |= __BIT(22);	/* Set bit 22 */
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+			/* Device Control */
+			sc->sc_ctrl &= ~__BIT(29);	/* Clear bit 29 */
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+
+			/* PCIe Control Register */
+			if ((sc->sc_type == WM_T_82574)
+			    || (sc->sc_type == WM_T_82583)) {
+				/*
+				 * Document says this bit must be set for
+				 * proper operation.
+				 */
+				reg = CSR_READ(sc, WMREG_GCR);
+				reg |= __BIT(22);
+				CSR_WRITE(sc, WMREG_GCR, reg);
+
+				/*
+				 * Apply workaround for hardware errata
+				 * documented in errata docs Fixes issue where
+				 * some error prone or unreliable PCIe
+				 * completions are occurring, particularly
+				 * with ASPM enabled. Without fix, issue can
+				 * cause Tx timeouts.
+				 */
+				reg = CSR_READ(sc, WMREG_GCR2);
+				reg |= __BIT(0);
+				CSR_WRITE(sc, WMREG_GCR2, reg);
+			}
+			break;
+		case WM_T_80003:
+			/* TARC0 */
+			if ((sc->sc_wmp->wmp_flags == WMP_F_1000X)
+			    || (sc->sc_wmp->wmp_flags == WMP_F_SERDES))
+				tarc0 &= ~__BIT(20); /* Clear bits 20 */
+
+			/* TARC1 bit 28 */
+			tarc1 = CSR_READ(sc, WMREG_TARC1);
+			if ((CSR_READ(sc, WMREG_TCTL) & TCTL_MULR) != 0)
+				tarc1 &= ~__BIT(28);
+			else
+				tarc1 |= __BIT(28);
+			CSR_WRITE(sc, WMREG_TARC1, tarc1);
+			break;
+		case WM_T_ICH8:
+		case WM_T_ICH9:
+		case WM_T_ICH10:
+		case WM_T_PCH:
+		case WM_T_PCH2:
+		case WM_T_PCH_LPT:
+			/* TARC 0 */
+			if (sc->sc_type == WM_T_ICH8) {
+				/* Set TARC0 bits 29 and 28 */
+				tarc0 |= __BITS(29, 28);
+			}
+			/* Set TARC0 bits 23,24,26,27 */
+			tarc0 |= __BITS(27, 26) | __BITS(24, 23);
+
+			/* CTRL_EXT */
+			reg = CSR_READ(sc, WMREG_CTRL_EXT);
+			reg |= __BIT(22);	/* Set bit 22 */
+			/*
+			 * Enable PHY low-power state when MAC is at D3
+			 * w/o WoL
+			 */
+			if (sc->sc_type >= WM_T_PCH)
+				reg |= CTRL_EXT_PHYPDEN;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+			/* TARC1 */
+			tarc1 = CSR_READ(sc, WMREG_TARC1);
+			/* bit 28 */
+			if ((CSR_READ(sc, WMREG_TCTL) & TCTL_MULR) != 0)
+				tarc1 &= ~__BIT(28);
+			else
+				tarc1 |= __BIT(28);
+			tarc1 |= __BIT(24) | __BIT(26) | __BIT(30);
+			CSR_WRITE(sc, WMREG_TARC1, tarc1);
+
+			/* Device Status */
+			if (sc->sc_type == WM_T_ICH8) {
+				reg = CSR_READ(sc, WMREG_STATUS);
+				reg &= ~__BIT(31);
+				CSR_WRITE(sc, WMREG_STATUS, reg);
+
+			}
+
+			/*
+			 * Work-around descriptor data corruption issue during
+			 * NFS v2 UDP traffic, just disable the NFS filtering
+			 * capability.
+			 */
+			reg = CSR_READ(sc, WMREG_RFCTL);
+			reg |= WMREG_RFCTL_NFSWDIS | WMREG_RFCTL_NFSRDIS;
+			CSR_WRITE(sc, WMREG_RFCTL, reg);
+			break;
+		default:
+			break;
+		}
+		CSR_WRITE(sc, WMREG_TARC0, tarc0);
+
+		/*
+		 * 8257[12] Errata No.52 and some others.
+		 * Avoid RSS Hash Value bug.
+		 */
+		switch (sc->sc_type) {
+		case WM_T_82571:
+		case WM_T_82572:
+		case WM_T_82573:
+		case WM_T_80003:
+		case WM_T_ICH8:
+			reg = CSR_READ(sc, WMREG_RFCTL);
+			reg |= WMREG_RFCTL_NEWIPV6EXDIS |WMREG_RFCTL_IPV6EXDIS;
+			CSR_WRITE(sc, WMREG_RFCTL, reg);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 /*
  * wm_reset:
  *
@@ -4263,6 +4458,7 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_pba = PBA_20K;
 		break;
 	case WM_T_ICH8:
+		/* Workaround for a bit corruption issue in FIFO memory */
 		sc->sc_pba = PBA_8K;
 		CSR_WRITE(sc, WMREG_PBS, PBA_16K);
 		break;
@@ -4645,15 +4841,12 @@ wm_init(struct ifnet *ifp)
 		break;
 	}
 
+	/* Init hardware bits */
+	wm_initialize_hardware_bits(sc);
+
 	/* Reset the PHY. */
 	if (sc->sc_flags & WM_F_HAS_MII)
 		wm_gmii_reset(sc);
-
-	reg = CSR_READ(sc, WMREG_CTRL_EXT);
-	/* Enable PHY low-power state when MAC is at D3 w/o WoL */
-	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
-	    || (sc->sc_type == WM_T_PCH_LPT))
-		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_PHYPDEN);
 
 	/* Initialize the transmit descriptor ring. */
 	memset(sc->sc_txdescs, 0, WM_TXDESCSIZE(sc));
@@ -4682,12 +4875,12 @@ wm_init(struct ifnet *ifp)
 			 * Don't write TDT before TCTL.EN is set.
 			 * See the document.
 			 */
-			CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_QUEUE_ENABLE
+			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_QUEUE_ENABLE
 			    | TXDCTL_PTHRESH(0) | TXDCTL_HTHRESH(0)
 			    | TXDCTL_WTHRESH(0));
 		else {
 			CSR_WRITE(sc, WMREG_TDT, 0);
-			CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
+			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_PTHRESH(0) |
 			    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
 			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_PTHRESH(0) |
 			    RXDCTL_HTHRESH(0) | RXDCTL_WTHRESH(1));
@@ -8735,7 +8928,7 @@ wm_reset_init_script_82575(struct wm_softc *sc)
 {
 	/*
 	 * remark: this is untested code - we have no board without EEPROM
-	 *  same setup as mentioned int the freeBSD driver for the i82575
+	 *  same setup as mentioned int the FreeBSD driver for the i82575
 	 */
 
 	/* SerDes configuration via SERDESCTRL */
