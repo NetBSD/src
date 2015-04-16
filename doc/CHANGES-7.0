@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.254 2015/04/14 13:17:47 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.255 2015/04/16 06:14:51 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19690,4 +19690,21 @@ sbin/ping/ping.c				1.108, 1.109
 	Adjust default packet size to 56 data bytes (64 total).
 	Make error messages consistent.
 	[christos, ticket #692]
+
+sys/net/if.h					1.186
+
+	Use 1000ULL to prevent integer overflow (for IF_Gbps(10)).
+	[msaitoh, ticket #693]
+
+sys/dev/pci/if_wm.c				1.314
+
+	Fix a bug that wm_sgmii_writereg() function doesn't pass the
+	"val" argument to the I2CCMD register. PR kern/49789.
+	[msaitoh, ticket #694]
+
+sys/arch/arm/omap/am335x_prcm.c			1.8
+
+	Change CPU frequency change message to aprint_debug to prevent
+	dmesg spam when running estd.
+	[jmcneill, ticket #695]
 
