@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.69.8.2 2014/11/03 20:38:09 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.69.8.3 2015/04/16 09:27:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.69.8.2 2014/11/03 20:38:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.69.8.3 2015/04/16 09:27:32 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -791,9 +791,10 @@ vlan_start(struct ifnet *ifp)
 				 * after deleting a tag.
 				 */
 				if (m->m_pkthdr.len <
-				    (ETHER_MIN_LEN + ETHER_VLAN_ENCAP_LEN)) {
+				    (ETHER_MIN_LEN - ETHER_CRC_LEN +
+				     ETHER_VLAN_ENCAP_LEN)) {
 					m_copyback(m, m->m_pkthdr.len,
-					    (ETHER_MIN_LEN +
+					    (ETHER_MIN_LEN - ETHER_CRC_LEN +
 					     ETHER_VLAN_ENCAP_LEN) -
 					     m->m_pkthdr.len,
 					    vlan_zero_pad_buff);
