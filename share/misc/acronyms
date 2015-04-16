@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.228 2015/04/14 12:19:48 rodent Exp $
+$NetBSD: acronyms,v 1.229 2015/04/16 01:07:24 rodent Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -270,6 +270,7 @@ IMCO	in my considered opinion
 IMHO	in my humble opinion
 IMNSHO	in my not so humble opinion
 IMO	in my opinion
+INB4	in before
 INPO	in no particular order
 IOW	in other words
 IPML	I pissed myself laughing
@@ -389,6 +390,10 @@ NW	no way
 NXT	next
 O2W	off to work
 OAO	over and out
+OBV	obviously
+OBVS	obviously
+OFC	of course
+OFC	of fucking course
 OH	other half
 OIC	oh, I see
 OMFG	oh my fucking God
@@ -403,6 +408,7 @@ OOSOOM	out of sight, out of mind
 OPP	other people's {penis,property,pussy}
 OPS	operator status
 OPS	operators
+ORITE	oh, right
 OT	off topic
 OTL	out to lunch
 OTOH	on the other hand
@@ -495,6 +501,8 @@ SO	significant other
 SOB	son of [a] bitch
 SOL	shit out [of] luck
 SOP	standard operating procedure
+SRS	serious
+SRSLY	seriously
 SSIA	subject says it all
 SSTO	single stage to orbit
 STFA	search the fucking archives
