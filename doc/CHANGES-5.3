@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.107 2015/03/19 18:12:20 riz Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.108 2015/04/16 06:35:27 snj Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3805,4 +3805,10 @@ crypto/dist/openssl/dist/ssl/s2_srvr.c	1.2
 	Use After Free following d2i_ECPrivatekey error (CVE-2015-0209)
 	X509_to_X509_REQ NULL pointer deref (CVE-2015-0288)
 	[spz, ticket #1954]
+
+lib/libc/stdio/gettemp.c			1.16 via patch
+
+	Fix PR bin/47757: mktemp(3) mangles the pathname if not given
+	an absolute path.
+	[msaitoh, ticket #1955]
 
