@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.210 2015/04/16 07:03:53 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.211 2015/04/16 13:40:00 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11385,3 +11385,29 @@ sys/dev/isa/ptcd.c				1.1
 	controls the drawer, pin 1 reports the current state.
 	[mbalmer, ticket #891]
 
+sys/arch/sparc/stand/ofwboot/Locore.c		1.14
+
+	Fix kernel loading failures from partitions started from over first
+	4GB of disks on sparc64.
+	[nakayama, ticket #1285]
+
+sys/net/if_vlan.c				1.80
+
+	Correct frame padding length. Fixes PR#49788.
+	[ozaki-r, ticket #1286]
+
+sys/kern/subr_tftproot.c			1.14 via patch
+sys/nfs/krpc_subr.c				1.39
+sys/nfs/nfs_boot.c				1.82
+sys/nfs/nfs_bootdhcp.c				1.53
+sys/nfs/nfsdiskless.h				1.31
+
+	m_pullup() is called in rcvproc callback functions,
+	so nfs_boot_sendrecv() should keep track of the head of mbuf chain.
+	fixes kern/48746
+	[hikaru, ticket #1287]
+
+libexec/ld.elf_so/rtld.c			1.176
+
+	lib/49813: Release mutex on error.
+	[joerg, ticket #1288]
