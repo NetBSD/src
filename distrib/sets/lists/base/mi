@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1099 2015/03/28 14:09:58 jmcneill Exp $
+# $NetBSD: mi,v 1.1100 2015/04/16 02:32:33 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1254,6 +1254,7 @@
 ./usr/libexec/atf-format			base-obsolete		obsolete
 ./usr/libexec/atf-killpg			base-obsolete		obsolete
 ./usr/libexec/atrun				base-cron-bin
+./usr/libexec/bozohttpd				base-netutil-bin
 ./usr/libexec/ching				base-games-usr
 ./usr/libexec/comsat				base-mail-bin
 ./usr/libexec/cpp0				base-obsolete		obsolete
