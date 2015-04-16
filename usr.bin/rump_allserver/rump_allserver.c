@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.38 2014/11/04 19:05:17 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.39 2015/04/16 10:05:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.38 2014/11/04 19:05:17 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.39 2015/04/16 10:05:43 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -284,7 +284,8 @@ main(int argc, char *argv[])
 			}
 
 			if (key == NULL || hostpath == NULL ||
-			    (flen == 0 && partition == 0)) {
+			    (flen == 0
+			      && partition == 0 && ftype != RUMP_ETFS_REG)) {
 				fprintf(stderr, "incomplete drivespec\n");
 				usage();
 			}
