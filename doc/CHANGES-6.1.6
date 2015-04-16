@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.37 2015/04/14 15:18:21 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.38 2015/04/16 13:40:30 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -5691,3 +5691,9 @@ distrib/sets/makesrctars			1.40
 
 	Move some GPL code from src.tgz to gnusrc.tgz
 	[snj, ticket #1279]
+
+sys/arch/sparc/stand/ofwboot/Locore.c		1.14
+
+	Fix kernel loading failures from partitions started from over first
+	4GB of disks on sparc64.
+	[nakayama, ticket #1285]
