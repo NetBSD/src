@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.289.2.4 2015/03/18 04:39:15 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.289.2.5 2015/04/16 06:10:43 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289.2.4 2015/03/18 04:39:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289.2.5 2015/04/16 06:10:43 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -7390,16 +7390,18 @@ wm_sgmii_writereg(device_t self, int phy, int reg, int val)
 	struct wm_softc *sc = device_private(self);
 	uint32_t i2ccmd;
 	int i;
+	int val_swapped;
 
 	if (wm_get_swfw_semaphore(sc, swfwphysem[sc->sc_funcid])) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
 		    __func__);
 		return;
 	}
-
+	/* Swap the data bytes for the I2C interface */
+	val_swapped = ((val >> 8) & 0x00FF) | ((val << 8) & 0xFF00);
 	i2ccmd = (reg << I2CCMD_REG_ADDR_SHIFT)
 	    | (phy << I2CCMD_PHY_ADDR_SHIFT)
-	    | I2CCMD_OPCODE_WRITE;
+	    | I2CCMD_OPCODE_WRITE | val_swapped;
 	CSR_WRITE(sc, WMREG_I2CCMD, i2ccmd);
 
 	/* Poll the ready bit */
