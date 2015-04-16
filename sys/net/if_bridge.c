@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.97 2015/01/08 10:47:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.98 2015/04/16 08:54:15 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.97 2015/01/08 10:47:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.98 2015/04/16 08:54:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -474,8 +474,10 @@ bridge_clone_destroy(struct ifnet *ifp)
 
 	bridge_stop(ifp, 1);
 
+	BRIDGE_LOCK(sc);
 	while ((bif = LIST_FIRST(&sc->sc_iflist)) != NULL)
 		bridge_delete_member(sc, bif);
+	BRIDGE_UNLOCK(sc);
 
 	mutex_enter(&bridge_list_lock);
 	LIST_REMOVE(sc, sc_list);
@@ -815,7 +817,7 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	struct ifnet *ifs = bif->bif_ifp;
 
-	BRIDGE_LOCK(sc);
+	KASSERT(BRIDGE_LOCKED(sc));
 
 	ifs->if_input = ether_input;
 	ifs->if_bridge = NULL;
@@ -840,6 +842,8 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 #endif
 
 	kmem_free(bif, sizeof(*bif));
+
+	BRIDGE_LOCK(sc);
 }
 
 static int
@@ -940,10 +944,9 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 		return ENOENT;
 	}
 
-	BRIDGE_UNLOCK(sc);
-
 	bridge_delete_member(sc, bif);
 
+	BRIDGE_UNLOCK(sc);
 
 	switch (ifs->if_type) {
 	case IFT_ETHER:
