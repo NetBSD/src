@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.27 2015/04/14 22:36:53 jmcneill Exp $	*/
+/*	$NetBSD: ast.c,v 1.28 2015/04/17 17:28:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.27 2015/04/14 22:36:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.28 2015/04/17 17:28:33 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -131,11 +131,6 @@ ast(struct trapframe *tf)
 	ci->ci_data.cpu_ntrap++;
 
 	KDASSERT(ci->ci_cpl == IPL_NONE);
-#ifdef __HAVE_PREEMPTION
-	atomic_and_uint(&ci->ci_astpending, ~__BIT(0));
-#else
-	ci->ci_astpending = 0;
-#endif
 	const int want_resched = ci->ci_want_resched;
 #ifdef __HAVE_PREEMPTION
 	kpreempt_enable();
