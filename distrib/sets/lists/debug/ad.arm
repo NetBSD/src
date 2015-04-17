@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.61 2015/04/04 00:00:41 christos Exp $
+# $NetBSD: ad.arm,v 1.62 2015/04/17 19:35:25 christos Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -136,7 +136,7 @@
 ./usr/libdata/debug/usr/lib/oabi/liblwres.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
 ./usr/libdata/debug/usr/lib/oabi/liblwres.so.8.1.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/liblzma.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libm.so.0.11.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libmagic.so.5.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libmenu.so.6.0.debug	comp-sys-debug	debug,compat

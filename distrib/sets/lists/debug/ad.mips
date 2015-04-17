@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.56 2015/04/04 00:00:41 christos Exp $
+# $NetBSD: ad.mips,v 1.57 2015/04/17 19:35:25 christos Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -141,7 +141,7 @@
 ./usr/libdata/debug/usr/lib/64/liblwres.so.6.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
 ./usr/libdata/debug/usr/lib/64/liblwres.so.8.1.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/liblzf.so.1.0.debug		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/liblzma.so.1.1.debug	comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/liblzma.so.2.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libm.so.0.11.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libmagic.so.5.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libmenu.so.6.0.debug	comp-sys-debug	debug,compat,arch64
@@ -320,7 +320,7 @@
 ./usr/libdata/debug/usr/lib/o32/liblwres.so.6.0.debug	comp-bind-debug	debug,compat,arch64,obsolete
 ./usr/libdata/debug/usr/lib/o32/liblwres.so.8.1.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/liblzf.so.1.0.debug		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/liblzma.so.1.1.debug	comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/liblzma.so.2.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libm.so.0.11.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libmagic.so.5.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libmenu.so.6.0.debug	comp-sys-debug	debug,compat,arch64
