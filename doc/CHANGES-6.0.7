@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.39 2015/04/16 13:40:55 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.40 2015/04/17 09:39:58 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -5977,3 +5977,8 @@ sys/arch/sparc/stand/ofwboot/Locore.c		1.14
 	Fix kernel loading failures from partitions started from over first
 	4GB of disks on sparc64.
 	[nakayama, ticket #1285]
+
+libexec/ld.elf_so/rtld.c			1.176
+
+	lib/49813: Release mutex on error.
+	[joerg, ticket #1288]
