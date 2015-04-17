@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.21 2015/04/04 00:00:41 christos Exp $
+# $NetBSD: ad.aarch64,v 1.22 2015/04/17 19:35:25 christos Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -213,8 +213,8 @@
 ./usr/lib/eabi/liblwres.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/eabi/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/eabi/liblzf.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/eabi/liblzma.so.1			base-compat-shlib	compat,pic
-./usr/lib/eabi/liblzma.so.1.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/liblzma.so.2			base-compat-shlib	compat,pic
+./usr/lib/eabi/liblzma.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/eabi/libm.so.0.11			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libmagic.so.5			base-compat-shlib	compat,pic
@@ -531,8 +531,8 @@
 ./usr/lib/eabihf/liblwres.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/liblzf.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/eabihf/liblzma.so.1			base-compat-shlib	compat,pic
-./usr/lib/eabihf/liblzma.so.1.1			base-compat-shlib	compat,pic
+./usr/lib/eabihf/liblzma.so.2			base-compat-shlib	compat,pic
+./usr/lib/eabihf/liblzma.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libm.so.0.11			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libmagic.so.5			base-compat-shlib	compat,pic
@@ -847,8 +847,8 @@
 ./usr/lib/oabi/liblwres.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblzf.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/liblzma.so.1			base-compat-shlib	compat,pic
-./usr/lib/oabi/liblzma.so.1.1			base-compat-shlib	compat,pic
+./usr/lib/oabi/liblzma.so.2			base-compat-shlib	compat,pic
+./usr/lib/oabi/liblzma.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libm.so.0.11			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libmagic.so.5			base-compat-shlib	compat,pic

@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.36 2015/04/04 00:00:41 christos Exp $
+# $NetBSD: ad.powerpc,v 1.37 2015/04/17 19:35:25 christos Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasan_g.a			comp-c-debuglib		compat,arch64,debuglib,gcc=48
@@ -209,7 +209,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/liblutok.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic,kyua
 ./usr/libdata/debug/usr/lib/powerpc/liblwres.so.8.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/liblzf.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/liblzma.so.1.1.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/liblzma.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libm.so.0.11.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libmagic.so.5.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libmenu.so.6.0.debug			comp-compat-shlib	compat,arch64,debug,pic
