@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.20 2015/04/04 00:00:41 christos Exp $
+# $NetBSD: ad.aarch64,v 1.21 2015/04/17 19:35:25 christos Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -123,7 +123,7 @@
 ./usr/libdata/debug/usr/lib/eabi/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/liblwres.so.8.1.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/liblzma.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libm.so.0.11.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libmagic.so.5.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libmenu.so.6.0.debug	comp-sys-debug	debug,compat
@@ -277,7 +277,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/liblutok.so.2.0.debug	comp-kyua-debug	kyua,debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/liblwres.so.8.1.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabihf/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/liblzma.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libm.so.0.11.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libmagic.so.5.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libmenu.so.6.0.debug	comp-sys-debug	debug,compat
@@ -431,7 +431,7 @@
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblwres.so.8.1.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/liblzma.so.1.1.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/liblzma.so.2.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libm.so.0.11.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libmagic.so.5.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libmenu.so.6.0.debug		comp-sys-debug	debug,compat

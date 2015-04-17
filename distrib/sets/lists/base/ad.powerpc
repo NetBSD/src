@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.35 2015/04/04 00:00:41 christos Exp $
+# $NetBSD: ad.powerpc,v 1.36 2015/04/17 19:35:25 christos Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -190,8 +190,8 @@
 ./usr/lib/powerpc/liblwres.so.8.1		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/liblzf.so.1			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/liblzf.so.1.0			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/liblzma.so.1			base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/liblzma.so.1.1		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/liblzma.so.2			base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/liblzma.so.2.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libm.so.0			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libm.so.0.11			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libmagic.so.5			base-compat-shlib	compat,arch64,pic
