@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.257 2015/04/17 08:46:25 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.258 2015/04/17 09:47:18 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19714,3 +19714,9 @@ sys/arch/arm/omap/if_cpswreg.h			1.5
 	Disable flow control with CPSW_SS FLOW_CONTROL register (cherry-picked
 	from FreeBSD driver). Resolves device timeout / watchdog issues.
 	[jmcneill, ticket #696]
+
+sys/dev/i2c/files.i2c				1.58
+
+	Fix break build on evbppc which was caused by ticket 672.
+	dsrtc depends on sysmon_envsys.
+	[nonaka, ticket #700]
