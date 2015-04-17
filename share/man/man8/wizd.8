@@ -1,4 +1,4 @@
-.\"	$NetBSD: wizd.8,v 1.9 2015/03/30 16:57:40 dholland Exp $
+.\"	$NetBSD: wizd.8,v 1.10 2015/04/17 11:27:37 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@ as obsolete and therefore get automatically removed.
 .Nm
 responds to the following signals:
 .Bl -tag -width SIGWIZD
-.It Aq wiz@NetBSD.org
+.It Aq Mt wiz@NetBSD.org
 Examine a man page for errors.
 The man page and particular errors in question may be specified in
 standard internet mail format.
@@ -62,7 +62,7 @@ standard internet mail format.
 additionally sometimes delivers the following signals to other
 committer processes:
 .Bl -tag -width SIGWIZD
-.It SIGWIZD
+.It Dv SIGWIZD
 An error was detected in a man page.
 .El
 .Sh SEE ALSO
