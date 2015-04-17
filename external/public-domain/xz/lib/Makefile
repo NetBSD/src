@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2015/04/17 18:49:23 christos Exp $
+# $NetBSD: Makefile,v 1.5 2015/04/17 20:12:45 christos Exp $
 
 LIB=		lzma
 USE_SHLIBDIR=	yes
@@ -6,22 +6,12 @@ NOLINT=		yes
 
 .include <bsd.init.mk>
 
-# There are two different lzma.h files.
-# Copy public version to distinguish them.
-pub-lzma.h:	${XZSRCDIR}/src/liblzma/api/lzma.h
-	${_MKTARGET_CREATE}
-	rm -f ${.TARGET}
-	${TOOL_CAT} ${XZSRCDIR}/src/liblzma/api/lzma.h > ${.TARGET}
-CLEANFILES+=	pub-lzma.h
-INCS=	pub-lzma.h
-INCSDIR_pub-lzma.h=	/usr/include
-INCSNAME_pub-lzma.h=	lzma.h
-
-.PATH:	${XZSRCDIR}/src/liblzma/api/lzma
+.PATH:	${XZSRCDIR}/src/liblzma/api ${XZSRCDIR}/src/liblzma/api/lzma
 INCS+=	base.h bcj.h block.h check.h container.h delta.h \
-	filter.h hardware.h index.h index_hash.h lzma.h stream_flags.h \
-	version.h vli.h
+	filter.h hardware.h index.h index_hash.h lzma.h lzma12.h \
+	stream_flags.h version.h vli.h
 
+INCSDIR_lzma.h=	/usr/include
 INCSDIR=	/usr/include/lzma
 
 LDFLAGS+=	-Wl,-z,defs
