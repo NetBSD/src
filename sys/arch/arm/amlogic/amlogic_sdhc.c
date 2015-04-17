@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.3 2015/03/16 21:37:35 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.4 2015/04/17 18:36:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.3 2015/03/16 21:37:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.4 2015/04/17 18:36:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -110,6 +110,12 @@ static struct sdmmc_chip_functions amlogic_sdhc_chip_functions = {
 static int
 amlogic_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
+	struct amlogicio_attach_args * const aio = aux;
+	const struct amlogic_locators * const loc = &aio->aio_loc;
+
+	if (loc->loc_port == AMLOGICIOCF_PORT_DEFAULT)
+		return 0;
+
 	return 1;
 }
 
