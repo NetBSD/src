@@ -1718,7 +1718,7 @@ _Unwind_SetIP (struct _Unwind_Context *context, _Unwind_Ptr val)
 _Unwind_Ptr
 _Unwind_GetLanguageSpecificData (struct _Unwind_Context *context)
 {
-  return context->lsda;
+  return (_Unwind_Ptr)context->lsda;
 }
 
 _Unwind_Ptr
