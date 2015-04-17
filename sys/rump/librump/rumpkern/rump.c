@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.317 2015/04/13 16:46:33 riastradh Exp $	*/
+/*	$NetBSD: rump.c,v 1.318 2015/04/17 13:02:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.317 2015/04/13 16:46:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.318 2015/04/17 13:02:54 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -492,6 +492,7 @@ rump_init(void)
 	mutex_exit(proc_lock);
 	if (initproc == NULL)
 		panic("where in the world is initproc?");
+	strlcpy(initproc->p_comm, "rumplocal", sizeof(initproc->p_comm));
 
 	rump_component_init(RUMP_COMPONENT_POSTINIT);
 
