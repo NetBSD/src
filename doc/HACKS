@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.156 2015/03/30 05:30:08 matt Exp $
+# $NetBSD: HACKS,v 1.157 2015/04/17 12:40:17 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -926,6 +926,16 @@ port	ia64
 		{standard input}: Assembler messages:
 		{standard input}:22979: Warning: Use of 'mov' may violate WAW dependency 'GR%, % in 1 - 127' (impliedf), specific resource number is 8
 		{standard input}:22978: Warning: This is the location of the conflicting usage
+	kcah
+
+	hack	libgcc unwind dummy function
+	cdate	Fri Apr 17 14:31:03 CEST 2015
+	who	martin
+	file	src/external/gpl3/gcc/dist/libgcc/config/ia64/unwind-ia64.c: 1.4
+	descr
+		Add an empty _Unwind_FindTableEntry() implementation.
+		In the end we will use our libc stuff, and this should
+		go away again.
 	kcah
 
 port	x68k
