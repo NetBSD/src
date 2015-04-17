@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.164 2015/04/17 12:43:16 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.165 2015/04/17 12:46:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.164 2015/04/17 12:43:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.165 2015/04/17 12:46:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -79,8 +79,6 @@ const int * const uvmexp_pagesize = &uvmexp.pagesize;
 const int * const uvmexp_pagemask = &uvmexp.pagemask;
 const int * const uvmexp_pageshift = &uvmexp.pageshift;
 #endif
-
-struct vm_map rump_vmmap;
 
 static struct vm_map kernel_map_store;
 struct vm_map *kernel_map = &kernel_map_store;
