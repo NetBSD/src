@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.315 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.316 2015/04/17 02:54:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.315 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.316 2015/04/17 02:54:15 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6414,8 +6414,9 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	 *  For some devices, we can determine the PHY access method
 	 * from sc_type.
 	 *
-	 *  For ICH8 variants, it's difficult to determine the PHY access
-	 * method by sc_type, so use the PCI product ID for some devices.
+	 *  For ICH and PCH variants, it's difficult to determine the PHY
+	 * access  method by sc_type, so use the PCI product ID for some
+	 * devices.
 	 * For other ICH8 variants, try to use igp's method. If the PHY
 	 * can't detect, then use bm's method.
 	 */
@@ -6424,30 +6425,16 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	case PCI_PRODUCT_INTEL_PCH_M_LC:
 		/* 82577 */
 		sc->sc_phytype = WMPHY_82577;
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_PCH_D_DM:
 	case PCI_PRODUCT_INTEL_PCH_D_DC:
 		/* 82578 */
 		sc->sc_phytype = WMPHY_82578;
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_PCH2_LV_LM:
 	case PCI_PRODUCT_INTEL_PCH2_LV_V:
 		/* 82579 */
 		sc->sc_phytype = WMPHY_82579;
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
-		break;
-	case PCI_PRODUCT_INTEL_I217_LM:
-	case PCI_PRODUCT_INTEL_I217_V:
-	case PCI_PRODUCT_INTEL_I218_LM:
-	case PCI_PRODUCT_INTEL_I218_V:
-		/* I21[78] */
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_82801I_BM:
 	case PCI_PRODUCT_INTEL_82801J_R_BM_LM:
@@ -6483,6 +6470,11 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 			mii->mii_writereg = wm_gmii_i82543_writereg;
 		}
 		break;
+	}
+	if ((sc->sc_type >= WM_T_PCH) && (sc->sc_type <= WM_T_PCH_LPT)) {
+		/* All PCH* use _hv_ */
+		mii->mii_readreg = wm_gmii_hv_readreg;
+		mii->mii_writereg = wm_gmii_hv_writereg;
 	}
 	mii->mii_statchg = wm_gmii_statchg;
 
