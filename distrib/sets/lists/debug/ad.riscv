@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.17 2015/04/04 00:00:41 christos Exp $
+# $NetBSD: ad.riscv,v 1.18 2015/04/17 19:35:25 christos Exp $
 ./usr/lib/rv32/libcrypto_g.a					comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/rv32/libcrypto_rc5_g.a				comp-c-debuglib		compat,crypto,crypto_rc5,debuglib,arch64
 ./usr/lib/rv32/libdevmapper_g.a					comp-c-debuglib		compat,debuglib,lvm,arch64
@@ -102,7 +102,7 @@
 ./usr/libdata/debug/usr/lib/rv32/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/liblwres.so.8.1.debug		comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/liblzf.so.1.0.debug		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/rv32/liblzma.so.1.1.debug		comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/rv32/liblzma.so.2.0.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libm.so.0.11.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libmagic.so.5.1.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libmenu.so.6.0.debug		comp-sys-debug	debug,compat,arch64
