@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.211 2015/04/16 13:40:00 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.212 2015/04/17 10:28:58 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11411,3 +11411,10 @@ libexec/ld.elf_so/rtld.c			1.176
 
 	lib/49813: Release mutex on error.
 	[joerg, ticket #1288]
+
+lib/libutil/parsedate.3				1.11-1.14
+lib/libutil/parsedate.y				1.14-1.20
+tests/lib/libutil/t_parsedate.c			1.4-1.13
+
+	Fix parsedate(3)'s bugs which include PR#47916.
+	[nonaka, ticket #1291]
