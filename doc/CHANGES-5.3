@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.108 2015/04/16 06:35:27 snj Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.109 2015/04/17 10:51:57 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3812,3 +3812,8 @@ lib/libc/stdio/gettemp.c			1.16 via patch
 	an absolute path.
 	[msaitoh, ticket #1955]
 
+sys/arch/sparc/stand/ofwboot/Locore.c		1.14
+
+	Fix kernel loading failures from partitions started from over first
+	4GB of disks on sparc64.
+	[nakayama, ticket #1958]
