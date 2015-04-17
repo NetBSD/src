@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.33 2015/04/03 16:40:55 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.34 2015/04/17 13:03:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.33 2015/04/03 16:40:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.34 2015/04/17 13:03:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -327,7 +327,7 @@ rump__lwproc_alloclwp(struct proc *p)
 	bool newproc = false;
 
 	if (p == NULL) {
-		p = lwproc_newproc(&proc0, rump_vmspace_local, 0);
+		p = lwproc_newproc(&proc0, rump_vmspace_local, RUMP_RFCFDG);
 		newproc = true;
 	}
 
