@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2010/11/09 23:07:09 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2015/04/17 18:49:23 christos Exp $
 
 LIB=		lzma
 USE_SHLIBDIR=	yes
@@ -37,7 +37,7 @@ CPPFLAGS+=	-DTUKLIB_SYMBOL_PREFIX=lzma_
 CPPFLAGS+=	-DNETBSD_NATIVE_SHA256
 
 .PATH:	${XZSRCDIR}/src/common
-SRCS+=	tuklib_physmem.c
+SRCS+=	tuklib_physmem.c tuklib_cpucores.c
 
 .PATH:	${XZSRCDIR}/src/liblzma/check
 SRCS+=	check.c crc32_table.c crc64_table.c
@@ -45,14 +45,14 @@ SRCS+=	crc32_fast.c crc64_fast.c
 
 .PATH:	${XZSRCDIR}/src/liblzma/common
 SRCS+=	common.c block_util.c easy_preset.c filter_common.c \
-	hardware_physmem.c index.c \
+	hardware_physmem.c hardware_cputhreads.c index.c \
 	stream_flags_common.c vli_size.c \
 	alone_encoder.c block_buffer_encoder.c block_encoder.c \
 	block_header_encoder.c easy_buffer_encoder.c easy_encoder.c \
 	easy_encoder_memusage.c filter_buffer_encoder.c \
 	filter_encoder.c filter_flags_encoder.c index_encoder.c \
-	stream_buffer_encoder.c stream_encoder.c stream_flags_encoder.c \
-	vli_encoder.c \
+	stream_buffer_encoder.c stream_encoder.c stream_encoder_mt.c \
+	stream_flags_encoder.c vli_encoder.c outqueue.c \
 	alone_decoder.c auto_decoder.c block_buffer_decoder.c \
 	block_decoder.c block_header_decoder.c easy_decoder_memusage.c \
 	filter_buffer_decoder.c filter_decoder.c filter_flags_decoder.c \
@@ -94,5 +94,8 @@ liblzma.pc:	${XZSRCDIR}/src/liblzma/liblzma.pc.in
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
 CLEANFILES+=	liblzma.pc
+
+LDADD+=	-lpthread
+DPADD+=	${LIBPTHREAD}
 
 .include <bsd.lib.mk>
