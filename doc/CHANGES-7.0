@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.256 2015/04/16 09:30:35 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.257 2015/04/17 08:46:25 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19708,3 +19708,9 @@ sys/arch/arm/omap/am335x_prcm.c			1.8
 	dmesg spam when running estd.
 	[jmcneill, ticket #695]
 
+sys/arch/arm/omap/if_cpsw.c			1.12
+sys/arch/arm/omap/if_cpswreg.h			1.5
+
+	Disable flow control with CPSW_SS FLOW_CONTROL register (cherry-picked
+	from FreeBSD driver). Resolves device timeout / watchdog issues.
+	[jmcneill, ticket #696]
