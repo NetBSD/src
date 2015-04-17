@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.152 2015/04/15 10:52:18 hsuenaga Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.153 2015/04/17 13:39:01 hsuenaga Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.152 2015/04/15 10:52:18 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.153 2015/04/17 13:39:01 hsuenaga Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1381,7 +1381,9 @@ struct cpu_functions pj4bv7_cpufuncs = {
 	.cf_dcache_inv_range	= armv7_dcache_inv_range,
 	.cf_dcache_wb_range	= armv7_dcache_wb_range,
 
-#if !defined(AURORA_IO_CACHE_COHERENCY) && defined(ARMADAXP)
+#if defined(L2CACHE_ENABLE) && \
+    !defined(AURORA_IO_CACHE_COHERENCY) && \
+    defined(ARMADAXP)
 	.cf_sdcache_wbinv_range	= armadaxp_sdcache_wbinv_range,
 	.cf_sdcache_inv_range	= armadaxp_sdcache_inv_range,
 	.cf_sdcache_wb_range	= armadaxp_sdcache_wb_range,
