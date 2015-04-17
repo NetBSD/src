@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.12 2015/04/17 07:03:40 skrll Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.13 2015/04/17 07:15:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ ENTRY_NP(__sync_lock_release_4)
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, r3, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r1, c7, c10, 5	/* data memory barrier */
 #endif
 	strb	r1, [r0]
 	RET
@@ -131,7 +131,7 @@ ENTRY_NP(__sync_lock_release_1)
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, r3, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r1, c7, c10, 5	/* data memory barrier */
 #endif
 	strb	r1, [r0]
 	RET
