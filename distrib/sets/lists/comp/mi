@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1952 2015/04/13 21:55:52 riastradh Exp $
+#	$NetBSD: mi,v 1.1953 2015/04/17 20:14:27 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2503,7 +2503,8 @@
 ./usr/include/lzma/hardware.h			comp-c-include
 ./usr/include/lzma/index.h			comp-c-include
 ./usr/include/lzma/index_hash.h			comp-c-include
-./usr/include/lzma/lzma.h			comp-c-include
+./usr/include/lzma/lzma.h			comp-obsolete		obsolete
+./usr/include/lzma/lzma12.h			comp-c-include
 ./usr/include/lzma/stream_flags.h		comp-c-include
 ./usr/include/lzma/version.h			comp-c-include
 ./usr/include/lzma/vli.h			comp-c-include
