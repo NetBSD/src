@@ -146,7 +146,9 @@
 #define HAVE_ICONV 1
 
 /* Define to 1 if you have the <immintrin.h> header file. */
+#if defined(__i386__) || defined(__x86_64__)
 #define HAVE_IMMINTRIN_H 1
+#endif
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
