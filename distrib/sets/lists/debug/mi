@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.110 2015/04/09 17:56:30 christos Exp $
+# $NetBSD: mi,v 1.111 2015/04/17 09:50:00 pgoyette Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -895,6 +895,7 @@
 ./usr/libdata/debug/usr/libexec/atf-format.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/atf-killpg.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/atrun.debug	comp-cron-debug		debug
+./usr/libdata/debug/usr/libexec/bozohttpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/cc1.debug	comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1obj.debug	comp-objc-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1plus.debug	comp-cxx-debug		gcccmds,debug
