@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.220 2015/01/25 15:47:36 christos Exp $
+#	$NetBSD: Makefile,v 1.221 2015/04/17 22:17:23 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -67,7 +67,6 @@ SUBDIR+=	libbpfjit
 SUBDIR+=	../external/mit/expat/lib
 
 SUBDIR+=	../external/public-domain/sqlite/lib
-SUBDIR+=	../external/public-domain/xz/lib
 
 SUBDIR+=	../gnu/lib/libmalloc
 
@@ -90,6 +89,8 @@ SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
 #
 #==================== 1st library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+SUBDIR+=	../external/public-domain/xz/lib	# depends on libpthread
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/netpgp/libmj
@@ -126,8 +127,6 @@ SUBDIR+=	../external/bsd/file/lib	# depends on libz
 SUBDIR+=	../external/bsd/iscsi/lib	# depends on libpthread
 .endif
 
-SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz
-
 .if (${MKLVM} != "no")
 SUBDIR+=	../external/gpl2/lvm2/lib	# depends on libprop
 .endif
@@ -151,6 +150,8 @@ SUBDIR+=	${SANITIZER_DIR}
 
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz
 
 .if (${MKNPF} != "no")
 SUBDIR+=	npf		# depends on libnpf
