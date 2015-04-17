@@ -56,4 +56,12 @@ CPPFLAGS.sanitizer_netbsd.cc+=-I${GCCDIST}/gcc/ginclude
 LIBDPLIBS+=    stdc++ ${.CURDIR}/../libstdc++-v3
 LIBDPLIBS+=    pthread ${.CURDIR}/../../../../../lib/libpthread
 
+.if ${MACHINE_ARCH} == "vax"
+COPTS.asan_allocator2.cc += -O1
+COPTS.sanitizer_mac.cc += -O1
+COPTS.sanitizer_netbsd.cc += -O1
+COPTS.sanitizer_printf.cc += -O1
+COPTS.sanitizer_stackdepot.cc += -O1
+.endif
+
 .include <bsd.lib.mk>
