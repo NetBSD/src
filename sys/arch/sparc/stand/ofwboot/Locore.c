@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.10 2007/10/17 19:57:16 garbled Exp $	*/
+/*	$NetBSD: Locore.c,v 1.10.30.1 2015/04/17 10:49:16 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -311,8 +311,8 @@ OF_seek(int handle, u_quad_t pos)
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.handle = HDL2CELL(handle);
-	args.poshi = HDL2CELL(pos >> 32);
-	args.poslo = HDL2CELL(pos);
+	args.poshi = HDQ2CELL_HI(pos);
+	args.poslo = HDQ2CELL_LO(pos);
 	if (openfirmware(&args) == -1) {
 		return -1;
 	}
