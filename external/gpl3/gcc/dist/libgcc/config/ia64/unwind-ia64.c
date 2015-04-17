@@ -2445,6 +2445,16 @@ uw_identify_context (struct _Unwind_Context *context)
   return _Unwind_GetIP (context);
 }
 
+#ifdef __NetBSD__
+/* dummy for bootstrapping purposes */
+struct unw_table_entry *
+_Unwind_FindTableEntry (void *pc, unw_word *segment_base,
+			unw_word *gp, struct unw_table_entry *ent)
+{
+	return NULL;
+}
+#endif
+
 #include "unwind.inc"
 
 #if defined (USE_GAS_SYMVER) && defined (SHARED) && defined (USE_LIBUNWIND_EXCEPTIONS)
