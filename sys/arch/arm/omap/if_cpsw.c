@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.6 2014/04/09 20:52:14 hans Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.6.2.1 2015/04/17 08:44:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6 2014/04/09 20:52:14 hans Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6.2.1 2015/04/17 08:44:54 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -890,6 +890,9 @@ cpsw_init(struct ifnet *ifp)
 		cpsw_new_rxbuf(sc, i);
 	}
 	sc->sc_rxhead = 0;
+
+	/* turn off flow control */
+	cpsw_write_4(sc, CPSW_SS_FLOW_CONTROL, 0);
 
 	/* align layer 3 header to 32-bit */
 	cpsw_write_4(sc, CPSW_CPDMA_RX_BUFFER_OFFSET, ETHER_ALIGN);
