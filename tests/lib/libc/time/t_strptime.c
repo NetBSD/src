@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.1 2011/01/13 00:14:10 pgoyette Exp $ */
+/* $NetBSD: t_strptime.c,v 1.2 2015/04/17 15:13:47 ginsbach Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.1 2011/01/13 00:14:10 pgoyette Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.2 2015/04/17 15:13:47 ginsbach Exp $");
 
 #include <time.h>
 
@@ -126,7 +126,8 @@ ATF_TC(day);
 ATF_TC_HEAD(day, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", "Checks strptime(3): day names");
+	atf_tc_set_md_var(tc, "descr",
+			  "Checks strptime(3) day name conversions [aA]");
 }
 
 ATF_TC_BODY(day, tc)
@@ -178,7 +179,8 @@ ATF_TC(month);
 ATF_TC_HEAD(month, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", "Checks strptime(3): month names");
+	atf_tc_set_md_var(tc, "descr",
+			  "Checks strptime(3) month name conversions [bB]");
 }
 
 ATF_TC_BODY(month, tc)
