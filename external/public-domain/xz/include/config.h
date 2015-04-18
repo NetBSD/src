@@ -359,9 +359,9 @@
 
 /* Define to 1 if the system supports fast unaligned access to 16-bit and
    32-bit integers. */
-#ifndef __NetBSD__
-/* Not all archs support this */
-#define TUKLIB_FAST_UNALIGNED_ACCESS 1
+#include <machine/types.h>
+#ifdef __NO_STRICT_ALIGNMENT
+# define TUKLIB_FAST_UNALIGNED_ACCESS 1
 #endif
 
 /* Define to 1 if the amount of physical memory can be detected with
