@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.14 2015/04/18 10:49:31 pgoyette Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.15 2015/04/18 22:56:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.14 2015/04/18 10:49:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.15 2015/04/18 22:56:52 pgoyette Exp $");
 
 /*
  *
@@ -116,7 +116,6 @@ swwdogattach(int n __unused)
 	int error;
 	static struct cfdata cf;
 
-printf("%s: entered\n", __func__); /* XXX PRG */
 	if (workqueue_create(&wq, "swwreboot", doreboot, NULL,
 	    PRI_NONE, IPL_NONE, 0) != 0) {
 		aprint_error("failed to create swwdog reboot wq");
@@ -141,7 +140,6 @@ printf("%s: entered\n", __func__); /* XXX PRG */
 
 	swwdog_dev = config_attach_pseudo(&cf);
 
-printf("%s: swwdog_dev = 0x%p\n", __func__, swwdog_dev); /* XXX PRG */
 	if (swwdog_dev == NULL) {
 		config_cfattach_detach(swwdog_cd.cd_name, &swwdog_ca);
 		workqueue_destroy(wq);
@@ -154,7 +152,6 @@ static int
 swwdog_match(device_t parent, cfdata_t data, void *aux)
 {
 
-printf("%s: entered\n", __func__); /* XXX PRG */
 	return 1;
 }
 
@@ -163,7 +160,6 @@ swwdog_attach(device_t parent, device_t self, void *aux)
 {
 	struct swwdog_softc *sc = device_private(self);
 
-printf("%s: entered\n", __func__); /* XXX PRG */
 	if (workqueue_create(&wq, "swwreboot", doreboot, NULL,
 	    PRI_NONE, IPL_NONE, 0) != 0) {
 		aprint_error_dev(self, "failed to create reboot workqueue");
@@ -200,7 +196,6 @@ swwdog_detach(device_t self, int flags)
 {
 	struct swwdog_softc *sc = device_private(self);
 
-printf("%s: entered\n", __func__); /* XXX PRG */
 	pmf_device_deregister(self);
 	swwdog_disarm(sc);
 	sysctl_teardown(&swwdog_sysctllog);
@@ -365,7 +360,6 @@ swwdog_modcmd(modcmd_t cmd, void *arg)
 {
 	int ret;
  
-printf("%s: cmd %d\n", __func__, cmd); /* XXX PRG */
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		ret = swwdog_init(arg);
