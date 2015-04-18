@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.56 2015/03/28 14:09:58 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.57 2015/04/18 10:54:59 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -496,6 +496,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/swcrypto/swcrypto.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/swsensor				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/swsensor/swsensor.kmod		base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/swwdog				base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/swwdog/swwdog.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/syscallemu			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/syscallemu/syscallemu.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/sysvbfs				base-kernel-modules	kmod,compatmodules
