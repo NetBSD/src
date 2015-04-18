@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.114 2015/03/14 09:52:49 hannken Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.115 2015/04/18 14:44:44 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.114 2015/03/14 09:52:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.115 2015/04/18 14:44:44 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -784,7 +784,7 @@ sme_events_worker(struct work *wk, void *arg)
 	}
 
 	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d type=%d state=%d units=%d "
-	    "value_cur=%d upropset=%d\n", __func__, sme->sme_name, edata->desc,
+	    "value_cur=%d upropset=0x%04x\n", __func__, sme->sme_name, edata->desc,
 	    edata->sensor, see->see_type, edata->state, edata->units,
 	    edata->value_cur, edata->upropset));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.47 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.48 2015/04/18 14:44:44 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -104,7 +104,7 @@ struct envsys_data {
 	int32_t		value_min;	/* min value */
 	int32_t		private;	/* private data for drivers */
 	sysmon_envsys_lim_t limits;	/* thresholds for monitoring */
-	int		upropset;	/* userland property set? */
+	uint32_t	upropset;	/* userland property set? */
 	krndsource_t	rnd_src;	/* source element for rnd(4) */
 	char		desc[ENVSYS_DESCLEN];	/* sensor description */
 };
