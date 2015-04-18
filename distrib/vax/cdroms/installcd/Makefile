@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/09/13 10:18:24 roy Exp $
+#	$NetBSD: Makefile,v 1.11 2015/04/18 08:56:56 martin Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
@@ -75,6 +75,7 @@ CDRUNTIME+=	./usr/lib/libgcc_s.so*
 CDRUNTIME+=	./usr/lib/libintl.so*
 CDRUNTIME+=	./usr/lib/libkvm.so*
 CDRUNTIME+=	./usr/lib/liblzma.so*
+CDRUNTIME+=	./usr/lib/libpthread.so*
 CDRUNTIME+=	./usr/lib/libterminfo.so*
 CDRUNTIME+=	./usr/lib/libutil.so*
 CDRUNTIME+=	./usr/lib/libz.so*
