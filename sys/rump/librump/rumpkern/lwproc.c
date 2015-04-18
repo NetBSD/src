@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.34 2015/04/17 13:03:38 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.35 2015/04/18 15:49:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.34 2015/04/17 13:03:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.35 2015/04/18 15:49:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -132,8 +132,9 @@ lwproc_proc_free(struct proc *p)
 
 	/* non-local vmspaces are not shared */
 	if (!RUMP_LOCALPROC_P(p)) {
+		struct rump_spctl *ctl = (struct rump_spctl *)p->p_vmspace;
 		KASSERT(p->p_vmspace->vm_refcnt == 1);
-		kmem_free(p->p_vmspace, sizeof(*p->p_vmspace));
+		kmem_free(ctl, sizeof(*ctl));
 	}
 
 	proc_free_mem(p);
