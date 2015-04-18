@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.57 2015/01/25 20:09:42 christos Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.58 2015/04/18 11:23:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.57 2015/01/25 20:09:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.58 2015/04/18 11:23:58 mlelstv Exp $");
 
 #include "opt_wsfont.h"
 
@@ -570,6 +570,7 @@ int
 wsfont_matches(struct wsdisplay_font *font, const char *name,
 	       int width, int height, int stride, int flags)
 {
+	int score = 10000;
 
 	/* first weed out fonts the caller doesn't claim support for */
 	if (FONT_IS_ALPHA(font)) {
@@ -583,8 +584,16 @@ wsfont_matches(struct wsdisplay_font *font, const char *name,
 	if (height != 0 && font->fontheight != height)
 		return (0);
 
-	if (width != 0 && font->fontwidth != width)
-		return (0);
+	if (width != 0) {
+		if ((flags & WSFONT_FIND_BESTWIDTH) == 0) {
+			if (font->fontwidth != width)
+				return (0);
+		} else {
+			if (font->fontwidth > width)
+				return (0);
+			score -= min(width - font->fontwidth, 9999);
+		}
+	}
 
 	if (stride != 0 && font->stride != stride)
 		return (0);
@@ -592,18 +601,26 @@ wsfont_matches(struct wsdisplay_font *font, const char *name,
 	if (name != NULL && strcmp(font->name, name) != 0)
 		return (0);
 
-	return (1);
+	return (score);
 }
 
 int
 wsfont_find(const char *name, int width, int height, int stride, int bito, int byteo, int flags)
 {
-	struct font *ent;
+	struct font *ent, *bestent = NULL;
+	int score, bestscore = 0;
 
 	TAILQ_FOREACH(ent, &list, chain) {
-		if (wsfont_matches(ent->font, name, width, height, stride, flags))
-			return (wsfont_make_cookie(ent->cookie, bito, byteo));
+		score = wsfont_matches(ent->font, name,
+				width, height, stride, flags);
+		if (score > bestscore) {
+			bestscore = score;
+			bestent = ent;
+		}
 	}
+
+	if (bestent != NULL)
+		return (wsfont_make_cookie(bestent->cookie, bito, byteo));
 
 	return (-1);
 }
