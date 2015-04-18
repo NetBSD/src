@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.30 2015/03/04 17:02:17 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.31 2015/04/18 09:47:13 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -180,52 +180,52 @@ arm_cpuinit:
 
 	mcr	p15, 0, r2, c1, c0, 0	// SCTRL write
 
-	XPUTC(#70)
+	XPUTC(#'F')
 	dsb				// Drain the write buffers.
 1:
-	XPUTC(#71)
+	XPUTC(#'G')
 	mrc	p15, 0, r1, c0, c0, 5	// MPIDR read
 	cmp	r1, #0
 	orrlt	r10, r10, #0x5b		// MP, cachable (Normal WB)
 	orrge	r10, r10, #0x1b		// Non-MP, cacheable, normal WB
-	XPUTC(#48)
+	XPUTC(#'0')
 	mcr	p15, 0, r10, c2, c0, 0	// TTBR0 write
 #if defined(ARM_MMU_EXTENDED)
 	// When using split TTBRs, we need to set both since the physical
 	// addresses we were/are using might be in either.
-	XPUTC(#49)
+	XPUTC(#'1')
 	mcr	p15, 0, r10, c2, c0, 1	// TTBR1 write
 #endif
 
-	XPUTC(#72)
+	XPUTC(#'H')
 #if defined(ARM_MMU_EXTENDED)
-	XPUTC(#49)
+	XPUTC(#'1')
 	mov	r1, #TTBCR_S_N_1	// make sure TTBCR_S_N is 1
 #else
-	XPUTC(#48)
+	XPUTC(#'0')
 	mov	r1, #0			// make sure TTBCR is 0
 #endif
 	mcr	p15, 0, r1, c2, c0, 2	// TTBCR write
 
-#if !defined(CPU_CORTEXA5)
-	XPUTC(#73)
+	XPUTC(#'I')
 	mov	r1, #0
 	mcr	p15, 0, r1, c8, c7, 0	// TLBIALL (just this core)
-#endif
+	dsb
+	isb
 
-	XPUTC(#74)
+	XPUTC(#'J')
 	mov	r1, #0			// get KERNEL_PID
 	mcr	p15, 0, r1, c13, c0, 1	// CONTEXTIDR write
 
 	// Set the Domain Access register.  Very important!
-	XPUTC(#75)
+	XPUTC(#'K')
 	mov     r1, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
 	mcr	p15, 0, r1, c3, c0, 0	// DACR write
 
 	//
 	// Enable the MMU, etc.
 	//
-	XPUTC(#76)
+	XPUTC(#'L')
 	mrc	p15, 0, r1, c1, c0, 0	// SCTRL read
 
 	movw	r3, #:lower16:CPU_CONTROL_SET
@@ -251,7 +251,7 @@ arm_cpuinit:
 	//
 	mrc	p15, 0, r0, c0, c0, 0	// Read an arbitrary value.
 	mov	r0, r0			// Stall until read completes.
-	XPUTC(#77)
+	XPUTC(#'M')
 
 	bx	ip			// return
 
@@ -335,7 +335,7 @@ cortex_init:
         mov	r0, #0
         msr	spsr_sxc, r0			// set SPSR[23:8] to known value
 
-	XPUTC(#64)
+	XPUTC(#'@')
 #if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
 	//
 	// If SMP is already enabled, don't do anything.
@@ -366,7 +366,7 @@ cortex_init:
 	//
 	// Step 1a, invalidate the all cache tags in all ways on the SCU.
 	//
-	XPUTC(#65)
+	XPUTC(#'A')
 #if defined(ARM_CBAR)
 	movw	r3, #:lower16:ARM_CBAR
 	movt	r3, #:upper16:ARM_CBAR
@@ -392,7 +392,7 @@ cortex_init:
 	//
 	// Step 1b, invalidate the data cache
 	//
-	XPUTC(#66)
+	XPUTC(#'B')
 #if defined(KERNEL_BASES_EQUAL)
 	bl	_C_LABEL(armv7_dcache_wbinv_all)
 #else
@@ -401,7 +401,7 @@ cortex_init:
 	sub	ip, ip, #KERNEL_BASE_VOFFSET
 	blx	ip				// writeback & toss d-cache
 #endif
-	XPUTC(#67)
+	XPUTC(#'C')
 
 	//
 	// Check to see if we are really MP before enabling SMP mode
@@ -419,7 +419,7 @@ cortex_init:
 	bic	r2, r2, #CPU_CONTROL_DC_ENABLE	// clear data cache enable
 	mcr	p15, 0, r2, c1, c0, 0		// SCTLR write
 	isb
-	XPUTC(#49)
+	XPUTC(#'1')
 #endif
 
 #if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA9)
@@ -443,7 +443,7 @@ cortex_init:
 #endif
 	dsb
 	isb
-	XPUTC(#50)
+	XPUTC(#'2')
 #endif /* CORTEXA5 || CORTEXA9 */
 
 #if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA17)
@@ -491,7 +491,7 @@ cortex_init:
 	orr	r4, r4, #CPU_CONTROL_DC_ENABLE	// enable dcache
 	mcr	p15, 0, r4, c1, c0, 0		// SCTRL write
 	isb
-	XPUTC(#45)
+	XPUTC(#'-')
 
 	bx	r10
 ASEND(cortex_init)
