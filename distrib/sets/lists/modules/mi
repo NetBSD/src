@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.73 2015/03/09 12:32:11 riastradh Exp $
+# $NetBSD: mi,v 1.74 2015/04/18 10:54:59 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -226,6 +226,8 @@
 ./@MODULEDIR@/swcrypto/swcrypto.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/swsensor				base-kernel-modules	kmod
 ./@MODULEDIR@/swsensor/swsensor.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/swwdog				base-kernel-modules	kmod
+./@MODULEDIR@/swwdog/swwdog.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs				base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/tmpfs				base-kernel-modules	kmod
