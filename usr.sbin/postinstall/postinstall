@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.175.2.3 2014/11/14 18:18:14 snj Exp $
+# $NetBSD: postinstall,v 1.175.2.4 2015/04/18 09:39:17 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1339,8 +1339,8 @@ do_rc()
 		irdaattach iscsi_target isdnd isibootd \
 		kdc \
 		ldconfig ldpd local lpd lvm \
-		makemandb mdnsd mixerctl mopd motd mountall mountcritlocal \
-		mountcritremote mountd moused mrouted \
+		makemandb mdnsd mixerctl modules mopd motd mountall \
+		mountcritlocal mountcritremote mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking npf ntpd \
 		ntpdate \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
