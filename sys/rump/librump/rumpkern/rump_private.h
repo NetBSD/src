@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.90 2015/04/17 12:43:16 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.91 2015/04/18 15:49:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -121,6 +121,13 @@ extern struct vmspace *rump_vmspace_local;
 extern struct pmap rump_pmap_local;
 #define RUMP_LOCALPROC_P(p) \
     (p->p_vmspace == vmspace_kernel() || p->p_vmspace == rump_vmspace_local)
+
+/* vm bundle for remote clients.  the last member is the hypercall cookie */
+struct rump_spctl {
+	struct vmspace spctl_vm;
+	void *spctl;
+};
+#define RUMP_SPVM2CTL(vm) (((struct rump_spctl *)vm)->spctl)
 
 void		rump_component_load(const struct rump_component *);
 void		rump_component_init(enum rump_component_type);
