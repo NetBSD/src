@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.144 2015/03/28 14:09:58 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.145 2015/04/18 10:52:44 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -93,6 +93,7 @@ SUBDIR+=	sysvbfs
 SUBDIR+=	suser
 SUBDIR+=	swcrypto
 SUBDIR+=	swsensor
+SUBDIR+=	swwdog
 SUBDIR+=	tmpfs
 SUBDIR+=	uatp
 SUBDIR+=	udf
