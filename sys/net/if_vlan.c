@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.80 2015/03/29 13:30:43 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.81 2015/04/18 18:32:16 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.80 2015/03/29 13:30:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.81 2015/04/18 18:32:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -836,6 +836,10 @@ vlan_start(struct ifnet *ifp)
 		}
 
 		ifp->if_opackets++;
+
+		p->if_obytes += m->m_pkthdr.len;
+		if (m->m_flags & M_MCAST)
+			p->if_omcasts++;
 		if ((p->if_flags & (IFF_RUNNING|IFF_OACTIVE)) == IFF_RUNNING)
 			(*p->if_start)(p);
 	}
