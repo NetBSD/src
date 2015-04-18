@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.62 2015/04/18 11:30:22 skrll Exp $
+#	$NetBSD: RPI,v 1.63 2015/04/18 13:43:45 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -199,10 +199,6 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-
-# data mover pseudo-devices
-#pseudo-device	swdmover		# software dmover(9) back-end
-#pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 # userland interface to drivers, including autoconf and properties retrieval
 
