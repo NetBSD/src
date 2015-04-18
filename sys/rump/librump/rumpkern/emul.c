@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.169 2015/01/03 17:23:51 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.170 2015/04/18 15:49:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.169 2015/01/03 17:23:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.170 2015/04/18 15:49:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -362,7 +362,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("rump kernel halting...\n");
 
 	if (!RUMP_LOCALPROC_P(curproc))
-		finiarg = curproc->p_vmspace->vm_map.pmap;
+		finiarg = RUMP_SPVM2CTL(curproc->p_vmspace);
 	else
 		finiarg = NULL;
 
