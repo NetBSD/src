@@ -41,7 +41,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/awin/platform.h>  
 
-RCSID("$NetBSD: awin_start.S,v 1.11 2014/12/26 21:45:17 martin Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.12 2015/04/18 11:04:49 skrll Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -117,7 +117,7 @@ _C_LABEL(awin_start):
 	movw	r1, #:lower16:.Lmmu_init_table
 	movt	r1, #:upper16:.Lmmu_init_table
 	bl	arm_boot_l1pt_init
-	XPUTC(#68)
+	XPUTC(#'D')
 
 	/*
 	 * Turn on the MMU, Caches, etc.  Return to new enabled address space.
@@ -141,13 +141,13 @@ _C_LABEL(awin_start):
 	.pushsection .text,"ax",%progbits
 1:
 #endif
-	XPUTC2(#90)
+	XPUTC2(#'Z')
 
 #if defined(MULTIPROCESSOR)
 	// Now spin up the second processors into the same state we are now.
-	XPUTC2(#77)
-	XPUTC2(#80)
-	XPUTC2(#60)
+	XPUTC2(#'M')
+	XPUTC2(#'P')
+	XPUTC2(#'<')
 	// Make sure the cache is flushed out to RAM for the other CPUs
 	bl	_C_LABEL(armv7_dcache_wbinv_all)
 
@@ -193,7 +193,7 @@ _C_LABEL(awin_start):
 	bl	a80_mpinit
 #endif
 
-	XPUTC2(#62)
+	XPUTC2(#'>')
 #endif /* MULTIPROCESSOR */
 	XPUTC2(#13)
 	XPUTC2(#10)
@@ -220,9 +220,9 @@ a20_mpinit:
 	movw	r5, #:lower16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
 	movt	r5, #:upper16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
 
-	XPUTC2(#65)
-	XPUTC2(#50)
-	XPUTC2(#48)
+	XPUTC2(#'A')
+	XPUTC2(#'2')
+	XPUTC2(#'0')
 
 #ifdef __ARMEB__
 	setend	le			// everything here is little-endian
@@ -315,9 +315,9 @@ a31_mpinit:
 	movw	r6, #:lower16:(AWIN_CORE_PBASE+AWIN_A31_PRCM_OFFSET)
 	movt	r6, #:upper16:(AWIN_CORE_PBASE+AWIN_A31_PRCM_OFFSET)
 
-	XPUTC2(#65)
-	XPUTC2(#51)
-	XPUTC2(#49)
+	XPUTC2(#'A')
+	XPUTC2(#'3')
+	XPUTC2(#'1')
 
 #ifdef __ARMEB__
 	setend	le			// everything here is little-endian
@@ -327,7 +327,8 @@ a31_mpinit:
 
 a31_mpinit_cpu:
 
-	XPUTC2(r12)
+	add	r1, r12, #'0'
+	XPUTC2(r1)
 
 	/* Set where the other CPU(s) are going to execute */
 	movw	r1, #:lower16:cortex_mpstart
@@ -453,9 +454,9 @@ a80_mpinit:
 	movw	r6, #:lower16:(AWIN_A80_RCPUS_PBASE+AWIN_A80_RPRCM_OFFSET)
 	movt	r6, #:upper16:(AWIN_A80_RCPUS_PBASE+AWIN_A80_RPRCM_OFFSET)
 
-	XPUTC2(#65)
-	XPUTC2(#51)
-	XPUTC2(#49)
+	XPUTC2(#'A')
+	XPUTC2(#'8')
+	XPUTC2(#'0')
 
 #ifdef __ARMEB__
 	setend	le			// everything here is little-endian
@@ -465,7 +466,8 @@ a80_mpinit:
 
 a80_mpinit_cpu:
 
-	XPUTC2(r12)
+	add	r1, r12, #'0'
+	XPUTC2(r1)
 
 	/* Set where the other CPU(s) are going to execute */
 	movw	r1, #:lower16:cortex_mpstart
