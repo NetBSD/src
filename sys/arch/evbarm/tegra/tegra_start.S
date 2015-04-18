@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_start.S,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_start.S,v 1.2 2015/04/18 11:03:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <arm/nvidia/tegra_reg.h>
 #include <evbarm/tegra/platform.h>  
 
-RCSID("$NetBSD: tegra_start.S,v 1.1 2015/03/29 10:41:59 jmcneill Exp $")
+RCSID("$NetBSD: tegra_start.S,v 1.2 2015/04/18 11:03:31 skrll Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -115,7 +115,7 @@ _C_LABEL(tegra_start):
 	movw	r1, #:lower16:mmu_init_table
 	movt	r1, #:upper16:mmu_init_table
 	bl	arm_boot_l1pt_init
-	XPUTC(#68)
+	XPUTC(#'D')
 
 	/*
 	 * Turn on the MMU, Caches, etc.  Return to new enabled address space.
@@ -139,7 +139,7 @@ _C_LABEL(tegra_start):
 	.pushsection .text,"ax",%progbits
 1:
 #endif
-	XPUTC2(#90)
+	XPUTC2(#'Z')
 
 	/*
 	 * Jump to start in locore.S, which in turn will call initarm and main.
