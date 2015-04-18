@@ -331,12 +331,8 @@
    your system. */
 /* #undef PTHREAD_CREATE_JOINABLE */
 
-#ifdef _LP64
 /* The size of `size_t', as computed by sizeof. */
 #define SIZEOF_SIZE_T 8
-#else
-#define SIZEOF_SIZE_T 4
-#endif
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
