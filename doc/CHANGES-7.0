@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.262 2015/04/19 06:46:42 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.263 2015/04/19 06:51:43 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19805,4 +19805,9 @@ sys/dev/pci/ixgbe/ixv.h				1.4-1.5 via patch
 	 - Fix a lot of bugs.
 	 - Improve performance.
 	[msaitoh, ticket #697]
+
+sys/dev/pci/if_wm.c				1.316
+
+	Fix PHY access functions for newer revisions of I218-{LM,V}.
+	[msaitoh, ticket #698]
 
