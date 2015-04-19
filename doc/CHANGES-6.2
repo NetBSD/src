@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.213 2015/04/19 05:58:46 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.214 2015/04/19 17:08:12 riz Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11430,3 +11430,45 @@ lib/libc/arch/sh3/gen/swapcontext.S		1.11-1.12 via patch
 	Correctly preserve old sate in swapcontext(3).
 	Fixes PR port-sh3/49597 reported by Yasushi Oshima.
 	[uwe, ticket #1294]
+
+sys/dev/pci/if_wm.c				1.313-1.314 and 1.316 via patch
+
+	Fix a bug that the first access to NVM is failed on 8254[17] which use
+	SPI EEPROM. Observed on Dell PowerEdge [12]850.
+	Thanks Tom Ivar Helbekkmo for debugging.
+
+	Fix a bug that wm_sgmii_writereg() function doesn't pass the "val"
+	argument to the I2CCMD register. Reported by Bernard Merindol
+	in PR#49789.
+
+	Fix a bug that newer revision of I218-{LM,V} use wrong PHY access
+	functions. The problem only occured on devices that the PCI device ID
+	was 0x15a[0123].
+	[msaitoh, ticket #1292]
+
+sys/dev/pci/pcidevs				1.1208-1.1220 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Add Intel QuickAssist Virtual Function Device IDs
+	- Add some Intel 10/40G devices.
+	- Add Some Intel E7520 devices
+	- Add Some Intel IOP332 devices
+	- Add Xeon E5 v3 and C61x devices.
+	- Add Mobile 5th Generation Intel Core devices.
+	- Add Intel 63xxESB AC'97 Audio Controller
+	- Fix product ID of INTEL 5000_PCIE_4.
+	- Add some Intel devices.
+	- Sort VIATECH's entries in the device ID's order.
+	- Add some VIATECH devices.
+	- Add COMPAQ iLOs.
+	- Add HP IPMI device.
+	- Add another HP vendor ID (was 3PAR)
+	- Add AR816x/AR817x chips (part of PR/49584)
+	- Add two PLX PCI Bridges.
+	- Add Radeon HD 54xx Audio
+	- Add Dell DARC 4 devices
+	- Add nForce Host Bridges.
+	- Add MegaRAID SAS3108
+	[msaitoh, ticket #1293]
+
