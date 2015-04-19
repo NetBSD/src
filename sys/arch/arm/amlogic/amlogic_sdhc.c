@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.5 2015/04/19 21:23:01 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.6 2015/04/19 22:51:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.5 2015/04/19 21:23:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.6 2015/04/19 22:51:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -226,7 +226,7 @@ amlogic_sdhc_dmainit(struct amlogic_sdhc_softc *sc)
 	}
 	KASSERT(rseg == 1);
 
-	error = bus_dmamem_map(sc->sc_dmat, sc->sc_segs, rseg, PAGE_SIZE,
+	error = bus_dmamem_map(sc->sc_dmat, sc->sc_segs, rseg, MAXPHYS,
 	    &sc->sc_bbuf, BUS_DMA_WAITOK);
 	if (error) {
 		device_printf(sc->sc_dev, "bus_dmamem_map failed\n");
