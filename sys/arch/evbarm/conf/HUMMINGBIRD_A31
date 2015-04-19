@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.23 2015/04/03 23:25:07 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.24 2015/04/19 23:03:47 matt Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -12,7 +12,6 @@ no makeoptions	BOARDTYPE
 makeoptions	BOARDTYPE="hummingbird_a31"
 
 # CPU options
-options 	CPU_CORTEXA7
 options 	MULTIPROCESSOR
 options 	MEMSIZE=1024
 options 	ALLWINNER_A31
