@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.110 2015/04/19 06:12:56 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.111 2015/04/19 07:45:47 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3820,3 +3820,15 @@ sys/arch/sparc/stand/ofwboot/openfirm.h		1.4
 	Fix kernel loading failures from partitions started from over first
 	4GB of disks on sparc64.
 	[nakayama, ticket #1958]
+
+xsrc/external/mit/libX11/dist/include/X11/Xlibint.h	patch
+xsrc/xfree/xc/lib/X11/Xlibint.h				1.2
+
+	Fix CVE-2013-7439: Buffer overflow in MakeBigReq macro in libX11.
+	[mrg, ticket #1959]
+
+lib/libc/arch/sh3/gen/swapcontext.S		1.11-1.12 via patch
+
+	Correctly preserve old sate in swapcontext(3).
+	Fixes PR port-sh3/49597 reported by Yasushi Oshima.
+	[uwe, ticket #1960]
