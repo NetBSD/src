@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.371.4.2 2015/03/26 13:39:34 martin Exp $
+#	$NetBSD: files.pci,v 1.371.4.3 2015/04/19 06:45:17 riz Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -671,6 +671,7 @@ file	dev/pci/ixgbe/ixgbe.c		ixg
 file	dev/pci/ixgbe/ixgbe_netbsd.c	ixg
 file	dev/pci/ixgbe/ixgbe_82598.c	ixg
 file	dev/pci/ixgbe/ixgbe_82599.c	ixg
+file	dev/pci/ixgbe/ixgbe_x540.c	ixg
 file	dev/pci/ixgbe/ixgbe_api.c	ixg
 file	dev/pci/ixgbe/ixgbe_common.c	ixg
 file	dev/pci/ixgbe/ixgbe_mbx.c	ixg
