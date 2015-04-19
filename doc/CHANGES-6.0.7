@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.40 2015/04/17 09:39:58 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.41 2015/04/19 05:59:36 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -5982,3 +5982,9 @@ libexec/ld.elf_so/rtld.c			1.176
 
 	lib/49813: Release mutex on error.
 	[joerg, ticket #1288]
+
+xsrc/external/mit/libX11/dist/include/X11/Xlibint.h	patch
+xsrc/xfree/xc/lib/X11/Xlibint.h				1.2
+
+	Fix CVE-2013-7439: Buffer overflow in MakeBigReq macro in libX11.
+	[mrg, ticket #1290]
