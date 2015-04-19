@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2010, Intel Corporation 
+  Copyright (c) 2001-2012, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,14 +30,15 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe_osdep.h,v 1.9 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.3 2014/03/18 18:20:42 riastradh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 240466 2012-09-13 14:40:24Z eadler $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.3.4.1 2015/04/19 06:45:17 riz Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
@@ -52,6 +53,7 @@
 #include <net/if_ether.h>
 
 #define ASSERT(x) if(!(x)) panic("IXGBE: x")
+#define EWARN(H, W, S) printf(W)
 
 /* The happy-fun DELAY macro is defined in /usr/src/sys/i386/include/clock.h */
 #define usec_delay(x) DELAY(x)
@@ -65,12 +67,17 @@
 	#define DEBUGOUT1(S,A)      printf(S "\n",A)
 	#define DEBUGOUT2(S,A,B)    printf(S "\n",A,B)
 	#define DEBUGOUT3(S,A,B,C)  printf(S "\n",A,B,C)
+	#define DEBUGOUT4(S,A,B,C,D)  printf(S "\n",A,B,C,D)
+	#define DEBUGOUT5(S,A,B,C,D,E)  printf(S "\n",A,B,C,D,E)
+	#define DEBUGOUT6(S,A,B,C,D,E,F)  printf(S "\n",A,B,C,D,E,F)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)  printf(S "\n",A,B,C,D,E,F,G)
 #else
 	#define DEBUGOUT(S)		do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT1(S,A)		do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT2(S,A,B)	do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT3(S,A,B,C)	do { } while (/*CONSTCOND*/false)
+	#define DEBUGOUT4(S,A,B,C,D)	do { } while (/*CONSTCOND*/false)
+	#define DEBUGOUT5(S,A,B,C,D,E)	do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT6(S,A,B,C,D,E,F)	\
 					do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)	\
@@ -83,11 +90,21 @@
 #define true                1
 #define CMD_MEM_WRT_INVALIDATE          0x0010  /* BIT_4 */
 #define PCI_COMMAND_REGISTER            PCIR_COMMAND
+
+/* Bunch of defines for shared code bogosity */
 #define UNREFERENCED_PARAMETER(_p)
+#define UNREFERENCED_1PARAMETER(_p)
+#define UNREFERENCED_2PARAMETER(_p, _q)
+#define UNREFERENCED_3PARAMETER(_p, _q, _r)
+#define UNREFERENCED_4PARAMETER(_p, _q, _r, _s)
 
 
 #define IXGBE_NTOHL(_i)	ntohl(_i)
 #define IXGBE_NTOHS(_i)	ntohs(_i)
+
+/* XXX these need to be revisited */
+#define IXGBE_CPU_TO_LE32 le32toh
+#define IXGBE_LE32_TO_CPUS le32dec
 
 typedef uint8_t		u8;
 typedef int8_t		s8;
@@ -119,6 +136,25 @@ void prefetch(void *x)
 #else
 #define prefetch(x)
 #endif
+
+/*
+ * Optimized bcopy thanks to Luigi Rizzo's investigative work.  Assumes
+ * non-overlapping regions and 32-byte padding on both src and dst.
+ */
+static __inline int
+ixgbe_bcopy(void *_src, void *_dst, int l)
+{
+	uint64_t *src = _src;
+	uint64_t *dst = _dst;
+
+	for (; l > 0; l -= 32) {
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = *src++;
+	}
+	return (0);
+}
 
 struct ixgbe_osdep
 {
