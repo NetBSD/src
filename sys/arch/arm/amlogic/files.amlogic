@@ -1,4 +1,4 @@
-#	$NetBSD: files.amlogic,v 1.10 2015/03/29 22:49:44 jmcneill Exp $
+#	$NetBSD: files.amlogic,v 1.11 2015/04/19 18:54:52 jmcneill Exp $
 #
 # Configuration info for Amlogic ARM Peripherals
 #
@@ -29,6 +29,11 @@ file	arch/arm/amlogic/amlogic_com.c		amlogic_com needs-flag
 # Framebuffer console
 attach	genfb at amlogicio with amlogic_genfb
 file	arch/arm/amlogic/amlogic_genfb.c	amlogic_genfb needs-flag
+
+# SDIO
+device	amlogicsdio: sdmmcbus
+attach	amlogicsdio at amlogicio with amlogic_sdio
+file	arch/arm/amlogic/amlogic_sdio.c		amlogic_sdio
 
 # SDHC
 device	amlogicsdhc: sdmmcbus
