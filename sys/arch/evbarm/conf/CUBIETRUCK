@@ -1,4 +1,4 @@
-#	$NetBSD: CUBIETRUCK,v 1.6 2014/11/05 20:34:38 martin Exp $
+#	$NetBSD: CUBIETRUCK,v 1.7 2015/04/19 21:28:37 matt Exp $
 #
 #	CUBIETRUCK - Cubieboard3 (mostly cubieboard2 with 2GB)
 #
@@ -19,7 +19,6 @@ makeoptions	BOARDTYPE="cubietruck"
 # Cubietruck is an A20
 #
 no options 	ALLWINNER_A10
-no options 	CPU_CORTEXA8
 no makeoptions	CPUFLAGS
 makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 
