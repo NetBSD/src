@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.29 2014/12/21 17:40:59 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.30 2015/04/19 21:25:19 matt Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -23,10 +23,10 @@ defparam opt_allwinner.h			MEMSIZE
 defparam opt_allwinner.h			AWIN_WDT_DEFAULT_PERIOD
 defflag opt_allwinner.h				AWIN_CONSOLE_EARLY
 defflag opt_allwinner.h				AWINETH_COUNTERS
-defflag opt_allwinner.h				ALLWINNER_A10
-defflag opt_allwinner.h				ALLWINNER_A20
-defflag opt_allwinner.h				ALLWINNER_A31
-defflag opt_allwinner.h				ALLWINNER_A80
+defflag opt_allwinner.h				ALLWINNER_A10: CPU_CORTEXA8
+defflag opt_allwinner.h				ALLWINNER_A20: CPU_CORTEXA7
+defflag opt_allwinner.h				ALLWINNER_A31: CPU_CORTEXA7
+defflag opt_allwinner.h				ALLWINNER_A80: CPU_CORTEXA7
 defflag opt_allwinner.h				AWIN_GPIO_IGNORE_FW
 defflag opt_allwinner.h				AWIN_HDMI_DEBUG
 defflag opt_allwinner.h				AWIN_TCON_DEBUG
