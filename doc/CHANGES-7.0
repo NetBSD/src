@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.259 2015/04/19 05:14:06 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.260 2015/04/19 05:27:29 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19745,8 +19745,7 @@ sys/arch/evbarm/conf/BEAGLEBONE			1.31
 
 libexec/httpd/CHANGES				1.20
 libexec/httpd/bozohttpd.8			1.49
-libexec/httpd/bozohttpd.c			1.62
-libexec/httpd/bozohttpd.c			1.63
+libexec/httpd/bozohttpd.c			1.62-1.63
 
 	Don't quote /. It doesn't work.  This should fix PR#49765.
 	Update the copyright and version name.
