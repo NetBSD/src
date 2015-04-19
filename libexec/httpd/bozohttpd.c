@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.56.2.2 2015/02/04 10:17:19 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.56.2.3 2015/04/19 04:44:03 msaitoh Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2015 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20141225"
+#define SERVER_SOFTWARE		"bozohttpd/20150320"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -878,7 +878,6 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url)
 			goto encode_it;
 		switch (*s) {
 		case ':':
-		case '/':
 		case '?':
 		case '#':
 		case '[':
