@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.25 2014/06/24 07:23:59 shm Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.26 2015/04/19 19:05:19 christos Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -247,7 +247,8 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	char	date[40];
 	bozoheaders_t *headp;
 	const char *type, *clen, *info, *cgihandler;
-	char	*query, *s, *t, *path, *env, *command, *file, *url;
+	char	*query, *s, *t, *path, *env, *file, *url;
+	char	command[MAXPATHLEN];
 	char	**envp, **curenvp, *argv[4];
 	char	*uri;
 	size_t	len;
@@ -284,7 +285,6 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	path = NULL;
 	envp = NULL;
 	cgihandler = NULL;
-	command = NULL;
 	info = NULL;
 
 	len = strlen(url);
@@ -309,12 +309,13 @@ bozo_process_cgi(bozo_httpreq_t *request)
 
 	ix = 0;
 	if (cgihandler) {
-		command = file + 1;
+		snprintf(command, sizeof(command), "%s", file + 1);
 		path = bozostrdup(httpd, cgihandler);
 		argv[ix++] = path;
 			/* argv[] = [ path, command, query, NULL ] */
 	} else {
-		command = file + CGIBIN_PREFIX_LEN + 1;
+		snprintf(command, sizeof(command), "%s",
+		    file + CGIBIN_PREFIX_LEN + 1);
 		if ((s = strchr(command, '/')) != NULL) {
 			info = bozostrdup(httpd, s);
 			*s = '\0';
