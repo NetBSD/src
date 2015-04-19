@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.263 2015/04/19 06:51:43 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.264 2015/04/19 16:49:08 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19810,4 +19810,46 @@ sys/dev/pci/if_wm.c				1.316
 
 	Fix PHY access functions for newer revisions of I218-{LM,V}.
 	[msaitoh, ticket #698]
+
+sys/dev/pci/pcidevs				1.1200, 1.1203, 1.1208-1.1212, 1.1214-1.1220 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Sync pcidevs with rev. 1.1220:
+	- Add Samsung Electronics XP941 M.2 SSD
+	- Add Intel Atom Z36xx and Z37xx devices from the datasheet.
+	- Add Intel QuickAssist Virtual Function Device IDs
+	- Add some Intel 10/40G devices.
+	- Add Some Intel E7520 devices
+	- Add Some Intel IOP332 devices
+	- Add Xeon E5 v3 and C61x devices.
+	- Add Mobile 5th Generation Intel Core devices.
+	- Add Intel 63xxESB AC'97 Audio Controller
+	- Fix product ID of INTEL 5000_PCIE_4.
+	- Add some Intel 9 Series devices
+	- Add some Intel devices.
+	- Sort VIATECH's entries in the device ID's order.
+	- Add some VIATECH devices.
+	- Add COMPAQ iLOs.
+	- Add HP IPMI device.
+	- Add another HP vendor ID (was 3PAR)
+	- Add two PLX PCI Bridges.
+	- Add Radeon HD 54xx Audio
+	- Add Dell DARC 4 devices
+	- Add nForce Host Bridges.
+	- Add MegaRAID SAS3108
+	[msaitoh, ticket #699]
+
+usr.sbin/cpuctl/arch/i386.c			1.65
+
+	Update from Intel SDM:
+	- Add Atom Z8000, Future gen Xeon (Broadwell), Next gen Xeon Phi and so on.
+	- Add comments.
+	[msaitoh, ticket #701]
+
+sys/arch/x86/x86/intel_busclock.c		1.21
+
+	Update from Intel SDM:
+	- Add busclock values for Airmont.
+	[msaitoh, ticket #702]
 
