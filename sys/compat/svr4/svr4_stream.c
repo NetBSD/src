@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.82 2015/04/03 20:01:07 rtr Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.83 2015/04/19 19:17:37 rtr Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.82 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.83 2015/04/19 19:17:37 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -750,9 +750,9 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 {
 	int error;
 	struct svr4_strm *st = svr4_stream_get(fp);
-	struct sockaddr_in sain;
-	struct sockaddr_un saun;
-	struct sockaddr_big *sbig;
+	struct sockaddr_in *sain;
+	struct sockaddr_un *saun;
+	struct sockaddr_big sbig;
 	void *sup = NULL;
 	int sasize;
 	struct svr4_strmcmd bnd;
@@ -775,34 +775,34 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 
 	switch (st->s_family) {
 	case AF_INET:
-		sbig = (struct sockaddr_big *)&sain;
-		sbig->sb_len = sasize = sizeof(sain);
+		sain = (struct sockaddr_in *)&sbig;
+		sasize = sizeof(*sain);
 
 		if (bnd.offs == 0)
 			goto reply;
 
-		netaddr_to_sockaddr_in(&sain, &bnd);
+		netaddr_to_sockaddr_in(sain, &bnd);
 
 		DPRINTF(("TI_BIND: fam %d, port %d, addr %x\n",
-			 sain.sin_family, sain.sin_port,
-			 sain.sin_addr.s_addr));
+			 sain->sin_family, sain->sin_port,
+			 sain->sin_addr.s_addr));
 		break;
 
 	case AF_LOCAL:
-		sbig = (struct sockaddr_big *)&saun;
-		sbig->sb_len = sasize = sizeof(saun);
+		saun = (struct sockaddr_un *)&sbig;
+		sasize = sizeof(*saun);
 		if (bnd.offs == 0)
 			goto reply;
 
-		netaddr_to_sockaddr_un(&saun, &bnd);
+		netaddr_to_sockaddr_un(saun, &bnd);
 
-		if (saun.sun_path[0] == '\0')
+		if (saun->sun_path[0] == '\0')
 			goto reply;
 
 		DPRINTF(("TI_BIND: fam %d, path %s\n",
-			 saun.sun_family, saun.sun_path));
+			 saun->sun_family, saun->sun_path));
 
-		if ((error = clean_pipe(l, saun.sun_path)) != 0)
+		if ((error = clean_pipe(l, saun->sun_path)) != 0)
 			return error;
 
 		bnd.pad[28] = 0x00001000;	/* magic again */
@@ -816,7 +816,7 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 
 	DPRINTF(("TI_BIND: fileno %d\n", fd));
 
-	error = do_sys_bind(l, fd, (struct sockaddr *)sbig);
+	error = do_sys_bind(l, fd, (struct sockaddr *)&sbig);
 	if (error != 0) {
 		DPRINTF(("TI_BIND: bind failed %d\n", error));
 		return error;
