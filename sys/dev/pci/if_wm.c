@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.227.2.16 2015/04/16 06:20:08 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.227.2.17 2015/04/19 17:01:50 riz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.16 2015/04/16 06:20:08 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.17 2015/04/19 17:01:50 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1713,6 +1713,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82541_2:
 	case WM_T_82547:
 	case WM_T_82547_2:
+		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 		reg = CSR_READ(sc, WMREG_EECD);
 		if (reg & EECD_EE_TYPE) {
 			/* SPI */
@@ -1728,7 +1729,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 				sc->sc_nvm_addrbits = 6;
 			}
 		}
-		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 		break;
 	case WM_T_82571:
 	case WM_T_82572:
@@ -6842,8 +6842,9 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	 *  For some devices, we can determine the PHY access method
 	 * from sc_type.
 	 *
-	 *  For ICH8 variants, it's difficult to determine the PHY access
-	 * method by sc_type, so use the PCI product ID for some devices.
+	 *  For ICH and PCH variants, it's difficult to determine the PHY
+	 * access  method by sc_type, so use the PCI product ID for some
+	 * devices.
 	 * For other ICH8 variants, try to use igp's method. If the PHY
 	 * can't detect, then use bm's method.
 	 */
@@ -6852,30 +6853,16 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	case PCI_PRODUCT_INTEL_PCH_M_LC:
 		/* 82577 */
 		sc->sc_phytype = WMPHY_82577;
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_PCH_D_DM:
 	case PCI_PRODUCT_INTEL_PCH_D_DC:
 		/* 82578 */
 		sc->sc_phytype = WMPHY_82578;
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_PCH2_LV_LM:
 	case PCI_PRODUCT_INTEL_PCH2_LV_V:
 		/* 82579 */
 		sc->sc_phytype = WMPHY_82579;
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
-		break;
-	case PCI_PRODUCT_INTEL_I217_LM:
-	case PCI_PRODUCT_INTEL_I217_V:
-	case PCI_PRODUCT_INTEL_I218_LM:
-	case PCI_PRODUCT_INTEL_I218_V:
-		/* I21[78] */
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_82801I_BM:
 	case PCI_PRODUCT_INTEL_82801J_R_BM_LM:
@@ -6911,6 +6898,11 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 			mii->mii_writereg = wm_gmii_i82543_writereg;
 		}
 		break;
+	}
+	if ((sc->sc_type >= WM_T_PCH) && (sc->sc_type <= WM_T_PCH_LPT)) {
+		/* All PCH* use _hv_ */
+		mii->mii_readreg = wm_gmii_hv_readreg;
+		mii->mii_writereg = wm_gmii_hv_writereg;
 	}
 	mii->mii_statchg = wm_gmii_statchg;
 
@@ -7644,16 +7636,18 @@ wm_sgmii_writereg(device_t self, int phy, int reg, int val)
 	struct wm_softc *sc = device_private(self);
 	uint32_t i2ccmd;
 	int i;
+	int val_swapped;
 
 	if (wm_get_swfw_semaphore(sc, swfwphysem[sc->sc_funcid])) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
 		    __func__);
 		return;
 	}
-
+	/* Swap the data bytes for the I2C interface */
+	val_swapped = ((val >> 8) & 0x00FF) | ((val << 8) & 0xFF00);
 	i2ccmd = (reg << I2CCMD_REG_ADDR_SHIFT)
 	    | (phy << I2CCMD_PHY_ADDR_SHIFT)
-	    | I2CCMD_OPCODE_WRITE;
+	    | I2CCMD_OPCODE_WRITE | val_swapped;
 	CSR_WRITE(sc, WMREG_I2CCMD, i2ccmd);
 
 	/* Poll the ready bit */
