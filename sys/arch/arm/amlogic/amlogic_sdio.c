@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdio.c,v 1.1 2015/04/19 18:54:52 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdio.c,v 1.2 2015/04/19 23:12:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdio.c,v 1.1 2015/04/19 18:54:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdio.c,v 1.2 2015/04/19 23:12:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,6 +68,10 @@ struct amlogic_sdio_softc {
 	kcondvar_t		sc_intr_cv;
 
 	uint32_t		sc_intr_irqs;
+
+	bus_dmamap_t		sc_dmamap;
+	bus_dma_segment_t	sc_segs[1];
+	void			*sc_bbuf;
 };
 
 CFATTACH_DECL_NEW(amlogic_sdio, sizeof(struct amlogic_sdio_softc),
@@ -89,6 +93,8 @@ static void	amlogic_sdio_card_intr_ack(sdmmc_chipset_handle_t);
 
 static int	amlogic_sdio_set_clock(struct amlogic_sdio_softc *, u_int);
 static int	amlogic_sdio_wait_irqs(struct amlogic_sdio_softc *, uint32_t, int);
+
+static void	amlogic_sdio_dmainit(struct amlogic_sdio_softc *);
 
 static struct sdmmc_chip_functions amlogic_sdio_chip_functions = {
 	.host_reset = amlogic_sdio_host_reset,
@@ -159,6 +165,8 @@ amlogic_sdio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus_freq = amlogic_get_rate_clk81();
 	aprint_debug_dev(self, "CLK81 rate: %u Hz\n", sc->sc_bus_freq);
 
+	amlogic_sdio_dmainit(sc);
+
 	config_interrupts(self, amlogic_sdio_attach_i);
 }
 
@@ -179,10 +187,10 @@ amlogic_sdio_attach_i(device_t self)
 	saa.saa_sch = sc;
 	saa.saa_clkmin = 400;
 	saa.saa_clkmax = 50000;
+	/* Do not advertise DMA capabilities, we handle DMA ourselves */
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|
 		       SMC_CAPS_SD_HIGHSPEED|
-		       SMC_CAPS_MMC_HIGHSPEED|
-		       SMC_CAPS_DMA;
+		       SMC_CAPS_MMC_HIGHSPEED;
 
 	sc->sc_sdmmc_dev = config_found(self, &saa, NULL);
 }
@@ -193,11 +201,43 @@ amlogic_sdio_intr(void *priv)
 	struct amlogic_sdio_softc *sc = priv;
 
 	mutex_enter(&sc->sc_intr_lock);
-	sc->sc_intr_irqs |= SDIO_READ(sc, SDIO_IRQS_REG);
-	cv_broadcast(&sc->sc_intr_cv);
+	const u_int irqs = SDIO_READ(sc, SDIO_IRQS_REG);
+	if (irqs & SDIO_IRQS_CLEAR) {
+		SDIO_WRITE(sc, SDIO_IRQS_REG, irqs);
+		sc->sc_intr_irqs |= irqs;
+		cv_broadcast(&sc->sc_intr_cv);
+	}
 	mutex_exit(&sc->sc_intr_lock);
 
 	return 1;
+}
+
+static void
+amlogic_sdio_dmainit(struct amlogic_sdio_softc *sc)
+{
+	int error, rseg;
+
+	error = bus_dmamem_alloc(sc->sc_dmat, MAXPHYS, PAGE_SIZE, MAXPHYS,
+	    sc->sc_segs, 1, &rseg, BUS_DMA_WAITOK);
+	if (error) {
+		device_printf(sc->sc_dev, "bus_dmamem_alloc failed\n");
+		return;
+	}
+	KASSERT(rseg == 1);
+
+	error = bus_dmamem_map(sc->sc_dmat, sc->sc_segs, rseg, MAXPHYS,
+	    &sc->sc_bbuf, BUS_DMA_WAITOK);
+	if (error) {
+		device_printf(sc->sc_dev, "bus_dmamem_map failed\n");
+		return;
+	}
+
+	error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1, MAXPHYS, 0,
+	    BUS_DMA_WAITOK, &sc->sc_dmamap);
+	if (error) {
+		device_printf(sc->sc_dev, "bus_dmamap_create failed\n");
+		return;
+	}
 }
 
 static int
@@ -337,6 +377,7 @@ amlogic_sdio_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct amlogic_sdio_softc *sc = sch;
 	uint32_t send, ext, mult, addr;
+	bool use_bbuf = false;
 	int i;
 
 	KASSERT(cmd->c_blklen <= 512);
@@ -386,10 +427,22 @@ amlogic_sdio_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			send |= SDIO_SEND_COMMAND_HAS_DATA;
 		}
 
-		KASSERT(cmd->c_dmamap->dm_nsegs == 1);
-		KASSERT(cmd->c_dmamap->dm_segs[0].ds_len >= cmd->c_datalen);
-
-		addr = cmd->c_dmamap->dm_segs[0].ds_addr;
+		cmd->c_error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap,
+		    sc->sc_bbuf, MAXPHYS, NULL, BUS_DMA_WAITOK);
+		if (cmd->c_error) {
+			device_printf(sc->sc_dev, "bus_dmamap_load failed\n");
+			goto done;
+		}
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+			    MAXPHYS, BUS_DMASYNC_PREREAD);
+		} else {
+			memcpy(sc->sc_bbuf, cmd->c_data, cmd->c_datalen);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+			    MAXPHYS, BUS_DMASYNC_PREWRITE);
+		}
+		addr = sc->sc_dmamap->dm_segs[0].ds_addr;
+		use_bbuf = true;
 	}
 	send |= __SHIFTIN(cmd->c_opcode | 0x40, SDIO_SEND_COMMAND_INDEX);
 
@@ -411,18 +464,17 @@ amlogic_sdio_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmd->c_error) {
 		goto done;
 	}
-	SDIO_WRITE(sc, SDIO_IRQS_REG, SDIO_IRQS_CLEAR);
 
 	if (SDIO_READ(sc, SDIO_IRQS_REG) & SDIO_IRQS_CMD_BUSY) {
 		int retry;
-		for (retry = 20000; retry > 0; retry--) {
+		for (retry = 10000; retry > 0; retry--) {
 			const uint32_t irqs = SDIO_READ(sc, SDIO_IRQS_REG);
 			if ((irqs & SDIO_IRQS_CMD_BUSY) == 0)
 				break;
 			delay(100);
 		}
 		if (retry == 0) {
-			device_printf(sc->sc_dev,
+			aprint_debug_dev(sc->sc_dev,
 			    "busy timeout, opcode %d flags %#x datalen %d\n",
 			    cmd->c_opcode, cmd->c_flags, cmd->c_datalen);
 			cmd->c_error = ETIMEDOUT;
@@ -463,6 +515,19 @@ amlogic_sdio_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 done:
+	if (use_bbuf) {
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+			    MAXPHYS, BUS_DMASYNC_POSTREAD);
+		} else {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+			    MAXPHYS, BUS_DMASYNC_POSTWRITE);
+		}
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap);
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			memcpy(cmd->c_data, sc->sc_bbuf, cmd->c_datalen);
+		}
+	}
 	cmd->c_flags |= SCF_ITSDONE;
 
 	SDIO_WRITE(sc, SDIO_IRQC_REG, 0);
