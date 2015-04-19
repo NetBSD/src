@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.260 2015/04/19 05:27:29 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.261 2015/04/19 06:45:52 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19767,3 +19767,41 @@ lib/libc/arch/sh3/gen/swapcontext.S		1.11-1.12
 	Correctly preserve old sate in swapcontext(3).
 	Fixes PR port-sh3/49597 reported by Yasushi Oshima.
 	[uwe, ticket #709]
+sys/dev/pci/files.pci				1.375 via patch
+sys/dev/pci/ixgbe/ixgbe.c			1.24-1.27 via patch
+sys/dev/pci/ixgbe/ixgbe.h			1.4-1.6 via patch
+sys/dev/pci/ixgbe/ixgbe_82598.c			1.2-1.3 via patch
+sys/dev/pci/ixgbe/ixgbe_82598.h			1.1-1.2 via patch
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.6-1.8 via patch
+sys/dev/pci/ixgbe/ixgbe_82599.h			1.1 via patch
+sys/dev/pci/ixgbe/ixgbe_api.c			1.5-1.6 via patch
+sys/dev/pci/ixgbe/ixgbe_api.h			1.2-1.3 via patch
+sys/dev/pci/ixgbe/ixgbe_common.c		1.3-1.4 via patch
+sys/dev/pci/ixgbe/ixgbe_common.h		1.2-1.3 via patch
+sys/dev/pci/ixgbe/ixgbe_mbx.c			1.2-1.3 via patch
+sys/dev/pci/ixgbe/ixgbe_mbx.h			1.2-1.3 via patch
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.4-1.6 via patch
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.3-1.4 via patch
+sys/dev/pci/ixgbe/ixgbe_phy.h			1.2-1.3 via patch
+sys/dev/pci/ixgbe/ixgbe_type.h			1.8-1.9 via patch
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.2-1.3 via patch
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.3-1.4 via patch
+sys/dev/pci/ixgbe/ixgbe_x540.c			1.1-1.2 via patch
+sys/dev/pci/ixgbe/ixgbe_x540.h			1.1 via patch
+sys/dev/pci/ixgbe/ixv.c				1.5-1.7 via patch
+sys/dev/pci/ixgbe/ixv.h				1.4-1.5 via patch
+
+	Synchronize our ixg(4) driver up to FreeBSD r243716:
+	 - Add X540 support.
+	 - Add TSO6 support.
+	 - Add 100BaseTX support.
+	 - The max size in dma tag is changed from 65535 to 262140 (IXGBE_TSO_SIZE).
+	   The value is the same as other *BSDs. The change might cause a address
+	   space shortage (ixgbe_dmamap_create() might fail) on some machines.
+	 - Show 1000Base-SX correctly.
+	 - Fix if_baudrate from 1G to 10G.
+	 - Fix a bug that ifconfig -z (SOICZIFDATA) doesn't work.
+	 - Fix a lot of bugs.
+	 - Improve performance.
+	[msaitoh, ticket #697]
+
