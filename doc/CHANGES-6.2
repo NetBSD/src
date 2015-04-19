@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.212 2015/04/17 10:28:58 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.213 2015/04/19 05:58:46 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11418,3 +11418,15 @@ tests/lib/libutil/t_parsedate.c			1.4-1.13
 
 	Fix parsedate(3)'s bugs which include PR#47916.
 	[nonaka, ticket #1291]
+
+xsrc/external/mit/libX11/dist/include/X11/Xlibint.h	patch
+xsrc/xfree/xc/lib/X11/Xlibint.h				1.2
+
+	Fix CVE-2013-7439: Buffer overflow in MakeBigReq macro in libX11.
+	[mrg, ticket #1290]
+
+lib/libc/arch/sh3/gen/swapcontext.S		1.11-1.12 via patch
+
+	Correctly preserve old sate in swapcontext(3).
+	Fixes PR port-sh3/49597 reported by Yasushi Oshima.
+	[uwe, ticket #1294]
