@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.57 2015/04/18 22:06:48 hubertf Exp $
+# $NetBSD: mkimage,v 1.58 2015/04/19 17:56:57 hubertf Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,6 +30,20 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# Makes a bootable image for the host architecture given.
+# The host specific functions are pulled in from a /bin/sh script in the
+# "conf" directory, and is expected to provide the following shell
+# functions, which are called in the following order:
+#
+#  - make_fstab: Creates the host's /etc/fstab with / on ${rootdev}.
+#    If -m is given, a number of directories are put on a tmpfs RAM disk
+#  - customize: After unpacking the sets, this gets the system to
+#    a working state, e. g. by setting up /etc/rc.conf and /dev
+#  - populate: Add common goods like kernel and bootloader
+#  - make_label: Prints disklabel to stdout
 #
 
 set -e
