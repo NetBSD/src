@@ -23,7 +23,7 @@
 
 #include <cxxabi.h>
 
-#if defined(__arm__) && defined(__ARM_EABI__)
+#if defined(__arm__) && defined(__ARM_EABI__) && !defined(__NetBSD__)
 
 namespace __aeabiv1
 {
