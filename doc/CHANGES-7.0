@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.261 2015/04/19 06:45:52 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.262 2015/04/19 06:46:42 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19767,6 +19767,7 @@ lib/libc/arch/sh3/gen/swapcontext.S		1.11-1.12
 	Correctly preserve old sate in swapcontext(3).
 	Fixes PR port-sh3/49597 reported by Yasushi Oshima.
 	[uwe, ticket #709]
+
 sys/dev/pci/files.pci				1.375 via patch
 sys/dev/pci/ixgbe/ixgbe.c			1.24-1.27 via patch
 sys/dev/pci/ixgbe/ixgbe.h			1.4-1.6 via patch
