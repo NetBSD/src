@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.6,v 1.1.2.23 2015/04/17 10:52:38 msaitoh Exp $
+# $NetBSD: CHANGES-5.1.6,v 1.1.2.24 2015/04/19 07:46:48 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.1.5 release to the NetBSD 5.1.6
 release:
@@ -2589,3 +2589,9 @@ sys/arch/sparc/stand/ofwboot/Locore.c		1.14
 	Fix kernel loading failures from partitions started from over first
 	4GB of disks on sparc64.
 	[nakayama, ticket #1958]
+
+xsrc/external/mit/libX11/dist/include/X11/Xlibint.h	patch
+xsrc/xfree/xc/lib/X11/Xlibint.h				1.2
+
+	Fix CVE-2013-7439: Buffer overflow in MakeBigReq macro in libX11.
+	[mrg, ticket #1959]
