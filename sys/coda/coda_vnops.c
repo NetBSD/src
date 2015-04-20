@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.101 2014/12/13 15:59:30 hannken Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.102 2015/04/20 23:03:07 riastradh Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.101 2014/12/13 15:59:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.102 2015/04/20 23:03:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1147,7 +1147,7 @@ int
 coda_link(void *v)
 {
 /* true args */
-    struct vop_link_args *ap = v;
+    struct vop_link_v2_args *ap = v;
     vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     vnode_t *dvp = ap->a_dvp;
@@ -1208,7 +1208,6 @@ coda_link(void *v)
     CODADEBUG(CODA_LINK,	myprintf(("in link result %d\n",error)); )
 
 exit:
-    vput(dvp);
     return(error);
 }
 
