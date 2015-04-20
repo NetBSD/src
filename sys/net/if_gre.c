@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.162 2015/04/03 20:01:07 rtr Exp $ */
+/*	$NetBSD: if_gre.c,v 1.163 2015/04/20 10:19:54 roy Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.162 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.163 2015/04/20 10:19:54 roy Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -1180,6 +1180,7 @@ static int
 gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 {
 	struct ifreq *ifr;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
 	struct gre_soparm *sp;
@@ -1221,6 +1222,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 			break;
 		gre_clearconf(sp, false);
 		ifp->if_flags |= IFF_UP;
+		ifa->ifa_rtrequest = p2p_rtrequest;
 		goto mksocket;
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)

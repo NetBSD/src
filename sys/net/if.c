@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.309 2015/04/07 23:30:36 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.310 2015/04/20 10:19:54 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.309 2015/04/07 23:30:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.310 2015/04/20 10:19:54 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1479,6 +1479,58 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 #endif
 
 	splx(s);
+}
+
+/*
+ * Default action when installing a local route on a point-to-point
+ * interface.
+ */
+void
+p2p_rtrequest(int req, struct rtentry *rt,
+    __unused const struct rt_addrinfo *info)
+{
+	struct ifnet *ifp = rt->rt_ifp;
+	struct ifaddr *ifa, *lo0ifa;
+
+	switch (req) {
+	case RTM_ADD:
+		if ((rt->rt_flags & RTF_LOCAL) == 0)
+			break;
+
+		IFADDR_FOREACH(ifa, ifp) {
+			if (equal(rt_getkey(rt), ifa->ifa_addr))
+				break;
+		}
+		if (ifa == NULL)
+			break;
+
+		/*
+		 * Ensure lo0 has an address of the same family.
+		 */
+		IFADDR_FOREACH(lo0ifa, lo0ifp) {
+			if (lo0ifa->ifa_addr->sa_family ==
+			    ifa->ifa_addr->sa_family)
+				break;
+		}
+		if (lo0ifa == NULL)
+			break;
+
+		rt->rt_ifp = lo0ifp;
+		rt->rt_flags &= ~RTF_LLINFO;
+
+		/*
+		 * Make sure to set rt->rt_ifa to the interface
+		 * address we are using, otherwise we will have trouble
+		 * with source address selection.
+		 */
+		if (ifa != rt->rt_ifa)
+			rt_replace_ifa(rt, ifa);
+		break;
+	case RTM_DELETE:
+	case RTM_RESOLVE:
+	default:
+		break;
+	}
 }
 
 /*

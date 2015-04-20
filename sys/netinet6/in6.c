@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.186 2015/04/07 23:30:36 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.187 2015/04/20 10:19:54 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.186 2015/04/07 23:30:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.187 2015/04/20 10:19:54 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1695,7 +1695,9 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 	/* Add ownaddr as loopback rtentry, if necessary (ex. on p2p link). */
 	if (newhost) {
 		/* set the rtrequest function to create llinfo */
-		if ((ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) == 0)
+		if (ifp->if_flags & IFF_POINTOPOINT)
+			ia->ia_ifa.ifa_rtrequest = p2p_rtrequest;
+		else if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 			ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
 		in6_ifaddlocal(&ia->ia_ifa);
 	} else {
