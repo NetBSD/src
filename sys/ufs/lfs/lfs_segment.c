@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.237 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.238 2015/04/20 13:44:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.237 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.238 2015/04/20 13:44:16 riastradh Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -2781,7 +2781,7 @@ lfs_vref(struct vnode *vp)
  		return 0;
  	}
 
-	return vget(vp, LK_NOWAIT);
+	return vget(vp, LK_NOWAIT, false /* !wait */);
 }
 
 /*
