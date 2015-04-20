@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.44 2015/04/16 06:50:16 ozaki-r Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.45 2015/04/20 07:34:48 ozaki-r Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 /* XXX is M_NETADDR correct? */
 
 /*
- * With USE_RADIX the code will use radix table for tunnel lookup, for
+ * The code will use radix table for tunnel lookup, for
  * tunnels registered with encap_attach() with a addr/mask pair.
  * Faster on machines with thousands of tunnel registerations (= interfaces).
  *
@@ -67,15 +67,10 @@
  *
  * FreeBSD is excluded here as they make max_keylen a static variable, and
  * thus forbid definition of radix table other than proper domains.
- * 
- * !!!!!!!
- * !!NOTE: dom_maxrtkey assumes USE_RADIX is defined.
- * !!!!!!!
  */
-#define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.44 2015/04/16 06:50:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.45 2015/04/20 07:34:48 ozaki-r Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -123,22 +118,14 @@ static struct encaptab *encap6_lookup(struct mbuf *, int, int, enum direction);
 static int encap_add(struct encaptab *);
 static int encap_remove(struct encaptab *);
 static int encap_afcheck(int, const struct sockaddr *, const struct sockaddr *);
-#ifdef USE_RADIX
 static struct radix_node_head *encap_rnh(int);
 static int mask_matchlen(const struct sockaddr *);
-#endif
-#ifndef USE_RADIX
-static int mask_match(const struct encaptab *, const struct sockaddr *,
-		const struct sockaddr *);
-#endif
 static void encap_fillarg(struct mbuf *, const struct encaptab *);
 
 LIST_HEAD(, encaptab) encaptab = LIST_HEAD_INITIALIZER(&encaptab);
 
-#ifdef USE_RADIX
 extern int max_keylen;	/* radix.c */
 struct radix_node_head *encap_head[2];	/* 0 for AF_INET, 1 for AF_INET6 */
-#endif
 
 void
 encap_init(void)
@@ -159,7 +146,6 @@ encap_init(void)
 	LIST_INIT(&encaptab);
 #endif
 
-#ifdef USE_RADIX
 	/*
 	 * initialize radix lookup table when the radix subsystem is inited.
 	 */
@@ -168,7 +154,6 @@ encap_init(void)
 #ifdef INET6
 	rn_delayedinit((void *)&encap_head[1],
 	    sizeof(struct sockaddr_pack) << 3);
-#endif
 #endif
 }
 
@@ -180,10 +165,8 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	struct ip_pack4 pack;
 	struct encaptab *ep, *match;
 	int prio, matchprio;
-#ifdef USE_RADIX
 	struct radix_node_head *rnh = encap_rnh(AF_INET);
 	struct radix_node *rn;
-#endif
 
 	KASSERT(m->m_len >= sizeof(*ip));
 
@@ -204,14 +187,12 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	match = NULL;
 	matchprio = 0;
 
-#ifdef USE_RADIX
 	rn = rnh->rnh_matchaddr((void *)&pack, rnh);
 	if (rn && (rn->rn_flags & RNF_ROOT) == 0) {
 		match = (struct encaptab *)rn;
 		matchprio = mask_matchlen(match->srcmask) +
 		    mask_matchlen(match->dstmask);
 	}
-#endif
 
 	LIST_FOREACH(ep, &encaptab, chain) {
 		if (ep->af != AF_INET)
@@ -220,14 +201,8 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 			continue;
 		if (ep->func)
 			prio = (*ep->func)(m, off, proto, ep->arg);
-		else {
-#ifdef USE_RADIX
+		else
 			continue;
-#else
-			prio = mask_match(ep, (struct sockaddr *)&pack.mine,
-			    (struct sockaddr *)&pack.yours);
-#endif
-		}
 
 		/*
 		 * We prioritize the matches by using bit length of the
@@ -300,10 +275,8 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	struct ip_pack6 pack;
 	int prio, matchprio;
 	struct encaptab *ep, *match;
-#ifdef USE_RADIX
 	struct radix_node_head *rnh = encap_rnh(AF_INET6);
 	struct radix_node *rn;
-#endif
 
 	KASSERT(m->m_len >= sizeof(*ip6));
 
@@ -324,14 +297,12 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	match = NULL;
 	matchprio = 0;
 
-#ifdef USE_RADIX
 	rn = rnh->rnh_matchaddr((void *)&pack, rnh);
 	if (rn && (rn->rn_flags & RNF_ROOT) == 0) {
 		match = (struct encaptab *)rn;
 		matchprio = mask_matchlen(match->srcmask) +
 		    mask_matchlen(match->dstmask);
 	}
-#endif
 
 	LIST_FOREACH(ep, &encaptab, chain) {
 		if (ep->af != AF_INET6)
@@ -340,14 +311,8 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 			continue;
 		if (ep->func)
 			prio = (*ep->func)(m, off, proto, ep->arg);
-		else {
-#ifdef USE_RADIX
+		else
 			continue;
-#else
-			prio = mask_match(ep, (struct sockaddr *)&pack.mine,
-			    (struct sockaddr *)&pack.yours);
-#endif
-		}
 
 		/* see encap4_lookup() for issues here */
 		if (prio <= 0)
@@ -390,13 +355,10 @@ encap6_input(struct mbuf **mp, int *offp, int proto)
 static int
 encap_add(struct encaptab *ep)
 {
-#ifdef USE_RADIX
 	struct radix_node_head *rnh = encap_rnh(ep->af);
-#endif
 	int error = 0;
 
 	LIST_INSERT_HEAD(&encaptab, ep, chain);
-#ifdef USE_RADIX
 	if (!ep->func && rnh) {
 		if (!rnh->rnh_addaddr((void *)ep->addrpack,
 		    (void *)ep->maskpack, rnh, ep->nodes)) {
@@ -404,7 +366,6 @@ encap_add(struct encaptab *ep)
 			goto fail;
 		}
 	}
-#endif
 	return error;
 
  fail:
@@ -415,19 +376,15 @@ encap_add(struct encaptab *ep)
 static int
 encap_remove(struct encaptab *ep)
 {
-#ifdef USE_RADIX
 	struct radix_node_head *rnh = encap_rnh(ep->af);
-#endif
 	int error = 0;
 
 	LIST_REMOVE(ep, chain);
-#ifdef USE_RADIX
 	if (!ep->func && rnh) {
 		if (!rnh->rnh_deladdr((void *)ep->addrpack,
 		    (void *)ep->maskpack, rnh))
 			error = ESRCH;
 	}
-#endif
 	return error;
 }
 
@@ -753,7 +710,6 @@ encap_detach(const struct encaptab *cookie)
 	return ENOENT;
 }
 
-#ifdef USE_RADIX
 static struct radix_node_head *
 encap_rnh(int af)
 {
@@ -787,63 +743,6 @@ mask_matchlen(const struct sockaddr *sa)
 	}
 	return l;
 }
-#endif
-
-#ifndef USE_RADIX
-static int
-mask_match(const struct encaptab *ep,
-	   const struct sockaddr *sp,
-	   const struct sockaddr *dp)
-{
-	struct sockaddr_storage s;
-	struct sockaddr_storage d;
-	int i;
-	const u_int8_t *p, *q;
-	u_int8_t *r;
-	int matchlen;
-
-	KASSERTMSG(ep->func == NULL, "wrong encaptab passed to mask_match");
-
-	if (sp->sa_len > sizeof(s) || dp->sa_len > sizeof(d))
-		return 0;
-	if (sp->sa_family != ep->af || dp->sa_family != ep->af)
-		return 0;
-	if (sp->sa_len != ep->src->sa_len || dp->sa_len != ep->dst->sa_len)
-		return 0;
-
-	matchlen = 0;
-
-	p = (const u_int8_t *)sp;
-	q = (const u_int8_t *)ep->srcmask;
-	r = (u_int8_t *)&s;
-	for (i = 0 ; i < sp->sa_len; i++) {
-		r[i] = p[i] & q[i];
-		/* XXX estimate */
-		matchlen += (q[i] ? 8 : 0);
-	}
-
-	p = (const u_int8_t *)dp;
-	q = (const u_int8_t *)ep->dstmask;
-	r = (u_int8_t *)&d;
-	for (i = 0 ; i < dp->sa_len; i++) {
-		r[i] = p[i] & q[i];
-		/* XXX rough estimate */
-		matchlen += (q[i] ? 8 : 0);
-	}
-
-	/* need to overwrite len/family portion as we don't compare them */
-	s.ss_len = sp->sa_len;
-	s.ss_family = sp->sa_family;
-	d.ss_len = dp->sa_len;
-	d.ss_family = dp->sa_family;
-
-	if (memcmp(&s, ep->src, ep->src->sa_len) == 0 &&
-	    memcmp(&d, ep->dst, ep->dst->sa_len) == 0) {
-		return matchlen;
-	} else
-		return 0;
-}
-#endif
 
 static void
 encap_fillarg(struct mbuf *m, const struct encaptab *ep)
