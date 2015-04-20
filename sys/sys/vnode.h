@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.252 2015/04/20 13:44:16 riastradh Exp $	*/
+/*	$NetBSD: vnode.h,v 1.253 2015/04/20 13:49:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -589,7 +589,6 @@ void	vntblinit(void);
 /* misc stuff */
 void	vn_syncer_add_to_worklist(struct vnode *, int);
 void	vn_syncer_remove_from_worklist(struct vnode *);
-int	speedup_syncer(void);
 int	dorevoke(struct vnode *, kauth_cred_t);
 int	rawdev_mounted(struct vnode *, struct vnode **);
 uint8_t	vtype2dt(enum vtype);
