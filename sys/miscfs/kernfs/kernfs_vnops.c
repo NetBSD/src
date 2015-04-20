@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.154 2014/07/25 08:20:52 dholland Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.155 2015/04/20 23:03:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.154 2014/07/25 08:20:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.155 2015/04/20 23:03:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1146,14 +1146,13 @@ kernfs_print(void *v)
 int
 kernfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 

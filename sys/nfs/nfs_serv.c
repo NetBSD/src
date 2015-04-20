@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.170 2014/01/23 10:13:57 hannken Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.171 2015/04/20 23:03:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.170 2014/01/23 10:13:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.171 2015/04/20 23:03:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2222,6 +2222,9 @@ out:
 		nqsrv_getl(vp, ND_WRITE);
 		nqsrv_getl(xp, ND_WRITE);
 		error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
+		if (nd.ni_dvp != nd.ni_vp)
+			VOP_UNLOCK(nd.ni_dvp);
+		vrele(nd.ni_dvp);
 	} else {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)

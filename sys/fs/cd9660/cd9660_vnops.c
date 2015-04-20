@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.51 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.52 2015/04/20 23:03:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.51 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.52 2015/04/20 23:03:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -664,14 +664,13 @@ cd9660_readlink(void *v)
 int
 cd9660_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 

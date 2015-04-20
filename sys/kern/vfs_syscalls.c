@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.495 2015/04/09 05:08:15 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.496 2015/04/20 23:03:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.495 2015/04/09 05:08:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.496 2015/04/20 23:03:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2407,6 +2407,8 @@ do_sys_linkat(struct lwp *l, int fdpath, const char *path, int fdlink,
 		goto abortop;
 	}
 	error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
+	VOP_UNLOCK(nd.ni_dvp);
+	vrele(nd.ni_dvp);
 out2:
 	pathbuf_destroy(linkpb);
 out1:

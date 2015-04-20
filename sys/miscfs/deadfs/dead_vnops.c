@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.57 2014/07/25 08:20:52 dholland Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.58 2015/04/20 23:03:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.57 2014/07/25 08:20:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.58 2015/04/20 23:03:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,13 +245,13 @@ dead_remove(void *v)
 int
 dead_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
-	vput(ap->a_dvp);
+	(void)ap;
 
 	return EIO;
 }

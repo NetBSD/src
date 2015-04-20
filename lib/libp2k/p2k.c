@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.65 2015/04/20 21:48:47 riastradh Exp $	*/
+/*	$NetBSD: p2k.c,v 1.66 2015/04/20 23:03:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -1054,6 +1054,8 @@ p2k_node_link(struct puffs_usermount *pu, puffs_cookie_t opc,
 	RUMP_VOP_LOCK(dvp, LK_EXCLUSIVE);
 	rump_pub_vp_incref(dvp);
 	rv = RUMP_VOP_LINK(dvp, OPC2VP(targ), cn);
+	rump_pub_vp_rele(dvp);
+	RUMP_VOP_UNLOCK(dvp);
 	freecn(cn);
 
 	return rv;

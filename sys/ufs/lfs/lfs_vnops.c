@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.270 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.271 2015/04/20 23:03:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.270 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.271 2015/04/20 23:03:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1231,7 +1231,7 @@ lfs_rmdir(void *v)
 int
 lfs_link(void *v)
 {
-	struct vop_link_args	/* {
+	struct vop_link_v2_args	/* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1250,12 +1250,6 @@ lfs_link(void *v)
 
 	error = lfs_set_dirop(dvp, NULL);
 	if (error) {
-		/*
-		 * XXX dholland 20140515 this was here before but must
-		 * be wrong.
-		 */
-		vput(dvp);
-
 		return error;
 	}
 

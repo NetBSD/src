@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.202 2015/02/25 23:14:59 christos Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.203 2015/04/20 23:03:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.202 2015/02/25 23:14:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.203 2015/04/20 23:03:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2017,7 +2017,7 @@ puffs_vnop_rmdir(void *v)
 int
 puffs_vnop_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
@@ -2040,8 +2040,6 @@ puffs_vnop_link(void *v)
 	    PUFFS_VN_LINK, VPTOPNC(dvp));
 
 	puffs_msg_enqueue(pmp, park_link);
-	REFPN_AND_UNLOCKVP(dvp, dpn);
-	REFPN(pn);
 	error = puffs_msg_wait2(pmp, park_link, dpn, pn);
 
 	PUFFS_MSG_RELEASE(link);
@@ -2057,9 +2055,6 @@ puffs_vnop_link(void *v)
 		puffs_updatenode(VPTOPP(dvp),
 				 PUFFS_UPDATECTIME|PUFFS_UPDATEMTIME, 0);
 	}
-
-	RELEPN_AND_VP(dvp, dpn);
-	puffs_releasenode(pn);
 
 	return error;
 }

@@ -5510,7 +5510,7 @@ zfs_netbsd_readlink(void *v)
 static int
 zfs_netbsd_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -5526,16 +5526,8 @@ zfs_netbsd_link(void *v)
 	KASSERT(cnp->cn_nameptr != NULL);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
-	error = zfs_link(dvp, vp, __UNCONST(cnp->cn_nameptr), cnp->cn_cred,
-	    NULL, 0);
-
-	/*
-	 * Unlock and release dvp because the VOP_LINK protocol is insane.
-	 */
-	VOP_UNLOCK(dvp);
-	VN_RELE(dvp);
-
-	return (error);
+	return (zfs_link(dvp, vp, __UNCONST(cnp->cn_nameptr), cnp->cn_cred,
+		NULL, 0));
 }
 
 static int

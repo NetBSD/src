@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.100 2015/04/06 08:39:23 hannken Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.101 2015/04/20 23:03:08 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.100 2015/04/06 08:39:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.101 2015/04/20 23:03:08 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -1593,7 +1593,7 @@ udf_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 int
 udf_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1609,7 +1609,6 @@ udf_link(void *v)
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 
 	return error;
 }
