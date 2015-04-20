@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.6 2015/04/19 21:09:02 matt Exp $
+#	$NetBSD: GENERIC.common,v 1.7 2015/04/20 10:09:09 jmcneill Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -136,6 +136,10 @@ options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 
 # Pseudo-Devices
 
+# crypto pseudo-devices
+pseudo-device	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
+
 # disk/mass storage pseudo-devices
 #pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
@@ -145,7 +149,14 @@ pseudo-device	drvctl			# driver control
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
-#pseudo-device	kttcp			# network loopback
+pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	tun			# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	npf			# NPF packet filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
