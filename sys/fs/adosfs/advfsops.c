@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.73 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.74 2015/04/20 13:44:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.73 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.74 2015/04/20 13:44:16 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -364,7 +364,7 @@ adosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 
 /*
  * lookup an anode, if not found, create
- * return locked and referenced al la vget(vp, LK_EXCLUSIVE);
+ * return locked and referenced
  */
 int
 adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)

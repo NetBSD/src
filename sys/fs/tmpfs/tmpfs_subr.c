@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.97 2014/09/08 14:49:46 gson Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.98 2015/04/20 13:44:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.97 2014/09/08 14:49:46 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.98 2015/04/20 13:44:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -282,11 +282,12 @@ again:
 		atomic_or_32(&node->tn_gen, TMPFS_RECLAIMING_BIT);
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&node->tn_vlock);
-		error = vget(vp, LK_EXCLUSIVE);
+		error = vget(vp, 0, true /* wait */);
 		if (error == ENOENT) {
 			mutex_enter(&node->tn_vlock);
 			goto again;
 		}
+		vn_lock(vp, LK_EXCLUSIVE);
 		atomic_and_32(&node->tn_gen, ~TMPFS_RECLAIMING_BIT);
 		*vpp = vp;
 		return error;

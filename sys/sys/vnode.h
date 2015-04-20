@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.251 2015/04/20 13:12:24 riastradh Exp $	*/
+/*	$NetBSD: vnode.h,v 1.252 2015/04/20 13:44:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -533,7 +533,7 @@ void	vdevgone(int, int, int, enum vtype);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);
 int	vflushbuf(struct vnode *, int);
-int 	vget(struct vnode *, int);
+int 	vget(struct vnode *, int, bool);
 void 	vgone(struct vnode *);
 int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, bool, int);
 void	vprint(const char *, struct vnode *);

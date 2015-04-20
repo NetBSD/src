@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.40 2015/03/17 09:38:21 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.41 2015/04/20 13:44:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.40 2015/03/17 09:38:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.41 2015/04/20 13:44:16 riastradh Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -518,13 +518,14 @@ vremfree(vnode_t *vp)
  * vnode is no longer usable.
  */
 int
-vget(vnode_t *vp, int flags)
+vget(vnode_t *vp, int flags, bool waitok)
 {
 	int error = 0;
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 	KASSERT(mutex_owned(vp->v_interlock));
-	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT)) == 0);
+	KASSERT((flags & ~LK_NOWAIT) == 0);
+	KASSERT(waitok == ((flags & LK_NOWAIT) == 0));
 
 	/*
 	 * Before adding a reference, we must remove the vnode
@@ -555,16 +556,10 @@ vget(vnode_t *vp, int flags)
 	}
 
 	/*
-	 * Ok, we got it in good shape.  Just locking left.
+	 * Ok, we got it in good shape.
 	 */
 	KASSERT((vp->v_iflag & VI_CLEAN) == 0);
 	mutex_exit(vp->v_interlock);
-	if (flags & (LK_EXCLUSIVE | LK_SHARED)) {
-		error = vn_lock(vp, flags);
-		if (error != 0) {
-			vrele(vp);
-		}
-	}
 	return error;
 }
 
@@ -1247,7 +1242,7 @@ again:
 		vp = node->vn_vnode;
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&vcache.lock);
-		error = vget(vp, 0);
+		error = vget(vp, 0, true /* wait */);
 		if (error == ENOENT)
 			goto again;
 		if (error == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_ihash.c,v 1.4 2014/02/27 16:51:39 hannken Exp $	*/
+/*	$NetBSD: ulfs_ihash.c,v 1.5 2015/04/20 13:44:16 riastradh Exp $	*/
 /*  from NetBSD: ufs_ihash.c,v 1.31 2011/06/12 03:36:02 rmind Exp  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_ihash.c,v 1.4 2014/02/27 16:51:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_ihash.c,v 1.5 2015/04/20 13:44:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,8 @@ ulfs_ihashget(dev_t dev, ino_t inum, int flags)
 	struct inode *ip;
 	struct vnode *vp;
 
+	KASSERT(flags == (flags & LK_EXCLUSIVE));
+
  loop:
 	mutex_enter(&ulfs_ihash_lock);
 	ipp = &ihashtbl[INOHASH(dev, inum)];
@@ -151,8 +153,14 @@ ulfs_ihashget(dev_t dev, ino_t inum, int flags)
 			} else {
 				mutex_enter(vp->v_interlock);
 				mutex_exit(&ulfs_ihash_lock);
-				if (vget(vp, flags))
+				if (vget(vp, 0, true /* wait */) != 0)
 					goto loop;
+				if (flags & LK_EXCLUSIVE) {
+					if (vn_lock(vp, LK_EXCLUSIVE) != 0) {
+						vrele(vp);
+						goto loop;
+					}
+				}
 			}
 			return (vp);
 		}
