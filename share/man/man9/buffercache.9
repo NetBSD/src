@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.29 2015/03/29 21:02:06 riastradh Exp $
+.\"     $NetBSD: buffercache.9,v 1.30 2015/04/20 06:50:13 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -306,6 +306,7 @@ the buffer's additional contents.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn brelse "bp" "set"
 Unbusy a buffer and release it to the free lists.
+.El
 .\" ------------------------------------------------------------
 .Sh CODE REFERENCES
 The buffer cache subsystem is implemented within the file
