@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.228 2015/04/01 20:03:11 riastradh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.229 2015/04/20 21:02:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.228 2015/04/01 20:03:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.229 2015/04/20 21:02:49 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -731,7 +731,7 @@ ufs_remove(void *v)
 	dvp = ap->a_dvp;
 	ip = VTOI(vp);
 	mp = dvp->v_mount;
-	KASSERT(mp == vp->v_mount);
+	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
@@ -774,6 +774,7 @@ ufs_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
+	struct mount *mp = dvp->v_mount;
 	struct inode *ip;
 	struct direct *newdir;
 	int error;
@@ -781,13 +782,13 @@ ufs_link(void *v)
 
 	KASSERT(dvp != vp);
 	KASSERT(vp->v_type != VDIR);
-	KASSERT(dvp->v_mount == vp->v_mount);
+	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+	fstrans_start(mp, FSTRANS_SHARED);
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error) {
 		VOP_ABORTOP(dvp, cnp);
@@ -804,7 +805,7 @@ ufs_link(void *v)
 		error = EPERM;
 		goto out1;
 	}
-	error = UFS_WAPBL_BEGIN(vp->v_mount);
+	error = UFS_WAPBL_BEGIN(mp);
 	if (error) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out1;
@@ -825,14 +826,14 @@ ufs_link(void *v)
 		ip->i_flag |= IN_CHANGE;
 		UFS_WAPBL_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	}
-	UFS_WAPBL_END(vp->v_mount);
+	UFS_WAPBL_END(mp);
  out1:
 	VOP_UNLOCK(vp);
  out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
-	fstrans_done(dvp->v_mount);
+	fstrans_done(mp);
 	return (error);
 }
 

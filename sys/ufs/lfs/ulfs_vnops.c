@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.23 2015/03/27 19:47:14 riastradh Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.24 2015/04/20 21:02:49 riastradh Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.23 2015/03/27 19:47:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.24 2015/04/20 21:02:49 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -502,18 +502,21 @@ ulfs_remove(void *v)
 	} */ *ap = v;
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
+	struct mount	*mp;
 	int		error;
 	struct ulfs_lookup_results *ulr;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
 	ip = VTOI(vp);
+	mp = dvp->v_mount;
+	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+	fstrans_start(mp, FSTRANS_SHARED);
 	if (vp->v_type == VDIR || (ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND))
 		error = EPERM;
@@ -528,7 +531,7 @@ ulfs_remove(void *v)
 	else
 		vput(vp);
 	vput(dvp);
-	fstrans_done(dvp->v_mount);
+	fstrans_done(mp);
 	return (error);
 }
 
@@ -546,6 +549,7 @@ ulfs_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
+	struct mount *mp = dvp->v_mount;
 	struct inode *ip;
 	struct lfs_direct *newdir;
 	int error;
@@ -553,13 +557,13 @@ ulfs_link(void *v)
 
 	KASSERT(dvp != vp);
 	KASSERT(vp->v_type != VDIR);
-	KASSERT(dvp->v_mount == vp->v_mount);
+	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+	fstrans_start(mp, FSTRANS_SHARED);
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error) {
 		VOP_ABORTOP(dvp, cnp);
@@ -597,7 +601,7 @@ ulfs_link(void *v)
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
-	fstrans_done(dvp->v_mount);
+	fstrans_done(mp);
 	return (error);
 }
 
