@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.68 2015/04/20 22:59:19 riastradh Exp $
+#	$NetBSD: vnode_if.src,v 1.69 2015/04/20 23:08:07 riastradh Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -278,7 +278,7 @@ vop_remove {
 };
 
 #
-#% link               dvp     L U U
+#% link               dvp     L L L
 #% link               vp      U U U
 #
 #! link	 cnp	CREATE, LOCKPARENT
