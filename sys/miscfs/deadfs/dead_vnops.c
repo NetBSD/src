@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.58 2015/04/20 23:03:08 riastradh Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.59 2015/04/20 23:30:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.58 2015/04/20 23:03:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.59 2015/04/20 23:30:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,17 +122,18 @@ dead_default_error(void *v)
 	return EBADF;
 }
 
-/* ARGSUSED */
 int
 dead_bmap(void *v)
 {
-	/* struct vop_bmap_args {
+	struct vop_bmap_args /* {
 		struct vnode *a_vp;
 		daddr_t  a_bn;
 		struct vnode **a_vpp;
 		daddr_t *a_bnp;
 		int *a_runp;
-	} *ap = v; */
+	} */ *ap = v;
+
+	(void)ap;
 
 	return (EIO);
 }
@@ -151,15 +152,16 @@ dead_lookup(void *v)
 	return ENOENT;
 }
 
-/* ARGSUSED */
 int
 dead_open(void *v)
 {
-	/* struct vop_open_args {
+	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-	} *ap = v; */
+	} */ *ap = v;
+
+	(void)ap;
 
 	return (ENXIO);
 }
@@ -182,32 +184,34 @@ dead_read(void *v)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 dead_write(void *v)
 {
-	/* struct vop_write_args {
+	struct vop_write_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
 		kauth_cred_t a_cred;
-	} *ap = v; */
+	} */ *ap = v;
+
+	(void)ap;
 
 	return (EIO);
 }
 
-/* ARGSUSED */
 int
 dead_ioctl(void *v)
 {
-	/* struct vop_ioctl_args {
+	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
 		void *a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
-	} *ap = v; */
+	} */ *ap = v;
+
+	(void)ap;
 
 	return (EBADF);
 }
@@ -356,7 +360,7 @@ int
 dead_putpages(void *v)
 {
         struct vop_putpages_args /* {
-	struct vnode *a_vp;
+		struct vnode *a_vp;
 		voff_t a_offlo;
 		voff_t a_offhi;
 		int a_flags;
