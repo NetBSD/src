@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.61 2014/03/24 13:42:40 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.62 2015/04/20 14:03:10 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 24, 2014
+.Dd April 20, 2015
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@
 .Ft void
 .Fn vrele_async "struct vnode *vp"
 .Ft int
-.Fn vget "struct vnode *vp" "int lockflag"
+.Fn vget "struct vnode *vp" "int lockflag" "int wait"
 .Ft void
 .Fn vput "struct vnode *vp"
 .Ft void
@@ -527,27 +527,60 @@ are zero, the vnode is placed on the freelist.
 .It Fn vrele_async "vp"
 Will asychronously release the vnode in different context than the caller,
 sometime after the call.
-.It Fn vget "vp" "lockflags"
+.It Fn vget "vp" "lockflags" "wait"
 Reclaim vnode
 .Fa vp
-from the freelist, increment its reference count and lock it.
-The argument
-.Fa lockflags
-specifies the
-.Xr rwlock 9
-flags used to lock the vnode.
-If the
-.Dv VI_XLOCK
-flag is set in
-.Fa vp Ns 's
-.Em v_flag ,
-vnode
+from the freelist and increment its reference count.
+.Pp
+The vnode
 .Fa vp
-is being recycled in
-.Fn vgone
-and the calling thread sleeps until the transition is complete.
-When it is awakened, an error is returned to indicate that the vnode is
-no longer usable.
+may be changing state: another thread may be initializing it from disk,
+or revoking it with
+.Xr revoke 2 ,
+or reclaiming it with
+.Xr VOP_RECLAIM 9 .
+In that case,
+.Fn vget
+will wait until the state has changed, if
+.Fa lockflags
+is
+.Li 0
+and
+.Fa wait
+is
+.Li true ;
+or will return
+.Dv EBUSY
+if
+.Fa lockflags
+is
+.Dv LK_NOWAIT
+and
+.Fa wait
+is
+.Li false .
+.Pp
+(The extra argument enables the compiler to detect old code which
+additionally used
+.Fn vget
+to lock the vnode.)
+.Pp
+Returns
+.Bl -tag -offset abcd -width ENOENT -compact
+.It Li EBUSY
+if
+.Fa vp
+was changing state and
+.Fa wait
+is false,
+.It Li ENOENT
+if the system was reclaiming
+.Fa vp
+with
+.Xr VOP_RECLAIM 9 .
+.It Li 0
+on success.
+.El
 .It Fn vput "vp"
 Unlock vnode
 .Fa vp
