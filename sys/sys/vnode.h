@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.250 2015/03/17 09:38:21 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.251 2015/04/20 13:12:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -384,12 +384,6 @@ VN_KNOTE(struct vnode *vp, long hint)
 extern struct vnode	*rootvnode;	/* root (i.e. "/") vnode */
 extern int		desiredvnodes;	/* number of vnodes desired */
 extern u_int		numvnodes;	/* current number of vnodes */
-
-/*
- * Macro/function to check for client cache inconsistency w.r.t. leasing.
- */
-#define	LEASE_READ	0x1		/* Check lease for readers */
-#define	LEASE_WRITE	0x2		/* Check lease for modifiers */
 
 #endif /* _KERNEL */
 
