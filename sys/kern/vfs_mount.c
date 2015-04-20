@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.33 2015/03/09 15:35:11 pooka Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.34 2015/04/20 13:44:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.33 2015/03/09 15:35:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.34 2015/04/20 13:44:16 riastradh Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -404,7 +404,7 @@ again:
 		TAILQ_INSERT_AFTER(&mp->mnt_vnodelist, vp, mvp, v_mntvnodes);
 		mvp->v_usecount = 1;
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, 0);
+		error = vget(vp, 0, true /* wait */);
 		KASSERT(error == 0 || error == ENOENT);
 	} while (error != 0);
 
