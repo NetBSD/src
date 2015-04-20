@@ -897,7 +897,7 @@ static int
 unionfs_link(void *v)
 {
 #if 0
-	struct vop_link_args *ap = v;
+	struct vop_link_v2_args *ap = v;
 	int		error;
 	int		needrelookup;
 	struct unionfs_node *dunp;

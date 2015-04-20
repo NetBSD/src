@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.24 2015/04/20 21:02:49 riastradh Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.25 2015/04/20 23:03:09 riastradh Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.24 2015/04/20 21:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.25 2015/04/20 23:03:09 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -541,7 +541,7 @@ ulfs_remove(void *v)
 int
 ulfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -600,7 +600,6 @@ ulfs_link(void *v)
  out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 	fstrans_done(mp);
 	return (error);
 }
