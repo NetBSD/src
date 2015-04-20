@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.119 2015/02/14 19:46:55 nakayama Exp $
+#	$NetBSD: security,v 1.120 2015/04/20 22:46:35 pgoyette Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -918,7 +918,7 @@ if checkyesno check_disklabels; then
 		[cfm]d[0-9]*|dk[0-9]*|st[0-9]*|nfs[0-9]*|device)
 			;;
 		*)
-			if disklabel $i > /dev/null 1>&2; then
+			if disklabel $i > /dev/null 2>&1; then
 				disklabel $i > "$work_dir/disklabel.$i"
 			fi
 			;;
