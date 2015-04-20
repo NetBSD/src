@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.71 2015/02/24 16:08:01 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.72 2015/04/20 13:44:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.71 2015/02/24 16:08:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.72 2015/04/20 13:44:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -991,7 +991,7 @@ union_lowervp(struct vnode *vp)
 
 	if ((un->un_lowervp != NULLVP) &&
 	    (vp->v_type == un->un_lowervp->v_type)) {
-		if (vget(un->un_lowervp, 0) == 0)
+		if (vget(un->un_lowervp, 0, true /* wait */) == 0)
 			return (un->un_lowervp);
 	}
 
