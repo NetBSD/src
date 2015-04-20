@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.30 2015/04/19 21:25:19 matt Exp $
+#	$NetBSD: files.awin,v 1.31 2015/04/20 01:33:22 matt Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -12,7 +12,7 @@ file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 
 file	arch/arm/allwinner/awin_board.c
-file	arch/arm/allwinner/awin_space.c
+file	arch/arm/arm32/armv7_generic_space.c
 file	arch/arm/arm/bus_space_a4x.S
 
 # Console parameters
