@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.117 2015/01/16 18:36:31 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.118 2015/04/20 15:22:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -308,6 +308,33 @@ tolower(int ch)
     ((size_t)(unsigned long)(&(((type *)0)->member)))
 #endif
 #endif
+
+/*
+ * Return the container of an embedded struct.  Given x = &c->f,
+ * container_of(x, T, f) yields c, where T is the type of c.  Example:
+ *
+ *	struct foo { ... };
+ *	struct bar {
+ *		int b_x;
+ *		struct foo b_foo;
+ *		...
+ *	};
+ *
+ *	struct bar b;
+ *	struct foo *fp = b.b_foo;
+ *
+ * Now we can get at b from fp by:
+ *
+ *	struct bar *bp = container_of(fp, struct bar, b_foo);
+ *
+ * The 0*sizeof((PTR) - ...) causes the compiler to warn if the type of
+ * *fp does not match the type of struct bar::b_foo.
+ */
+#define	container_of(PTR, TYPE, FIELD)					\
+	((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD) +		\
+	    0*sizeof((PTR) -						\
+		&((TYPE *)(((char *)(PTR)) -				\
+			offsetof(TYPE, FIELD)))->FIELD)))
 
 #define	MTPRNG_RLEN		624
 struct mtprng_state {
