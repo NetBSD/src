@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.15 2015/04/12 17:08:25 matt Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.16 2015/04/20 20:19:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.15 2015/04/12 17:08:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.16 2015/04/20 20:19:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -246,11 +246,11 @@ gtmr_delay(unsigned int n)
 	const uint64_t incr_per_us = (freq >> 20) + (freq >> 24);
 
 	arm_isb();
-	const uint64_t base = armreg_cntv_ct_read();
+	const uint64_t base = armreg_cntp_ct_read();
 	const uint64_t delta = n * incr_per_us;
 	const uint64_t finish = base + delta;
 
-	while (armreg_cntv_ct_read() < finish) {
+	while (armreg_cntp_ct_read() < finish) {
 		arm_isb();	/* spin */
 	}
 }
