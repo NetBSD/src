@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.67 2015/04/20 15:39:38 riastradh Exp $
+.\"     $NetBSD: vnode.9,v 1.68 2015/04/20 19:36:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -244,12 +244,6 @@ This vnode is currently locked to change underlying type.
 This vnode is on syncer work-list.
 .It Dv VI_MARKER
 A dummy marker vnode.
-.It Dv VI_LAYER
-This vnode is on a layered file system.
-.It Dv VI_LOCKSHARE
-This vnode shares its
-.Em v_interlock
-with other vnodes.
 .It Dv VI_CLEAN
 This vnode has been reclaimed and is no longer attached to a file system.
 .It Dv VU_DIROP
