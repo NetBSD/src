@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.66 2015/04/20 15:30:41 riastradh Exp $
+.\"     $NetBSD: vnode.9,v 1.67 2015/04/20 15:39:38 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -573,7 +573,7 @@ and
 is
 .Li true ;
 or will return
-.Dv EBUSY
+.Er EBUSY
 if
 .Fa lockflags
 is
@@ -590,13 +590,13 @@ to lock the vnode.)
 .Pp
 Returns
 .Bl -tag -offset abcd -width ENOENT -compact
-.It Dv EBUSY
+.It Er EBUSY
 if
 .Fa vp
 was changing state and
 .Fa wait
 is false.
-.It Dv ENOENT
+.It Er ENOENT
 if the system was reclaiming
 .Fa vp
 with
