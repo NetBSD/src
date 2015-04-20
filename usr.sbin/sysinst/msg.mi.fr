@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.6 2015/04/19 16:14:03 maxv Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.7 2015/04/20 14:10:31 maxv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -479,7 +479,7 @@ de chaque disquette.
 }
 
 message cdromsource
-{Veuillez spéficier le nom du lecteur CD-ROM à utiliser,
+{Veuillez spécifier le nom du lecteur CD-ROM à utiliser,
 ainsi que le nom du répertoire contenant les fichiers d'installation.
 Ils doivent être placés à sa racine, sous la forme de fichiers
 tgz.
@@ -566,26 +566,26 @@ message netok
 
 Nom de domaine (DNS) :		%s 
 Nom d'ordinateur :		%s 
-Adresse du serveur de noms :	%s
-Interface réseau :		%s
+Adresse du serveur de noms :	%s 
+Interface réseau :		%s 
 Type de réseau (média)		%s 
-Adresse IPv4 :			%s
-Masque de sous-réseau :		%s
-Adresse IPv4 de la passerelle : %s
+Adresse IPv4 :			%s 
+Masque de sous-réseau :		%s 
+Adresse IPv4 de la passerelle : %s 
 }
 
 message netok_slip
 {Vous avez spécifié les valeurs suivantes. Êtes-vous d'accord ?
 
-Nom de domaine (DNS) :		%s
-Nom d'ordinateur :		%s
-Adresse du serveur de noms :	%s
-Interface réseau :		%s
-Type de réseau (média) :	%s
-Adresse IPv4 :			%s
-Adresse IPv4 du serveur :	%s
-Masque de sous-réseau :		%s
-Adresse IPv4 de la passerelle :	%s
+Nom de domaine (DNS) :		%s 
+Nom d'ordinateur :		%s 
+Adresse du serveur de noms :	%s 
+Interface réseau :		%s 
+Type de réseau (média) :	%s 
+Adresse IPv4 :			%s 
+Adresse IPv4 du serveur :	%s 
+Masque de sous-réseau :		%s 
+Adresse IPv4 de la passerelle :	%s 
 }
 
 message netokv6
@@ -944,7 +944,7 @@ sur le disque cible pour l'installation. Vous devez redémarrer et tenter
 message rootpw
 {
 Aucun mot de passe pour le compte "root" n'a été défini.
-Nous vous recommandons de spéficier un mot de passe maintenant.
+Nous vous recommandons de spécifier un mot de passe maintenant.
 
 Le souhaitez-vous ?
 }
@@ -989,7 +989,7 @@ message NetBSD_VERSION_Utilities {Utilitaires NetBSD-@@VERSION@@}
 message Run_bin_sh {Exécuter /bin/sh}
 message Set_timezone {Configurer le fuseau horaire}
 message Configure_network {Configurer le réseau}
-message Partition_a_disk {Partitioner un disque}
+message Partition_a_disk {Partitionner un disque}
 message Logging_functions {Journaux}
 message Halt_the_system {Arrêter le système}
 message yes_or_no {oui ou non?}
@@ -1053,7 +1053,7 @@ message aoutfail
 {
 Le répertoire où se situent les anciennes librairies a.out doit être
 déplacé. Veuillez suivre la procédure de mise à jour et bien
-vérifier que tous les sytèmes de fichiers sont montés.
+vérifier que tous les systèmes de fichiers sont montés.
 }
 
 message emulbackup
@@ -1069,7 +1069,7 @@ vous devrez fusionner manuellement le nouveau répertoire avec l'ancien
 message oldsendmail
 {
 Sendmail n'est plus distribué dans cette version de NetBSD, le MTA par défaut
-etant maintenant postfix. Toutefois, le fichier /etc/mailer.conf est toujours
+étant maintenant postfix. Toutefois, le fichier /etc/mailer.conf est toujours
 configuré pour utiliser sendmail. Voulez-vous mettre à jour le fichier
 /etc/mailer.conf automatiquement pour utiliser postfix à la place ? Si vous
 choisissez "Non", vous devrez mettre à jour /etc/mailer.conf manuellement
@@ -1097,7 +1097,7 @@ un mot de passe n'est pas requis.
 message rcconf_backup_failed {La copie de rc.conf a échoué. Continuer ?}
 message rcconf_backup_succeeded {La copie de rc.conf a été sauvegardée jusqu'à %s.}
 message rcconf_restore_failed {La restauration de la sauvegarde de rc.conf a échoué.}
-message rcconf_delete_failed {La suppresion de l'ancien fichier %s a échoué.}
+message rcconf_delete_failed {La suppression de l'ancien fichier %s a échoué.}
 message Pkg_dir {Dossier de paquetages}
 message configure_prior {configurer une installation existante de}
 message configure {configurer}
@@ -1113,14 +1113,14 @@ message change_rootpw {Changer le mot de passe "root"}
 message enable_binpkg {Activer l'installation de paquetages binaires}
 message enable_sshd {Activer sshd}
 message enable_ntpd {Activer ntpd}
-message run_ntpdate {Executer ntpdate au démarrage}
+message run_ntpdate {Exécuter ntpdate au démarrage}
 message enable_mdnsd {Activer mdnsd}
 message enable_xdm {Activer xdm}
 message enable_cgd {Activer cgd}
 message enable_lvm {Activer lvm}
 message enable_raid {Activer raidframe}
 message add_a_user {Ajouter un utilisateur}
-message configmenu {Configurer les items suivants si nécéssaire.}
+message configmenu {Configurer les items suivants si nécessaire.}
 message doneconfig {Configuration terminée}
 message Install_pkgin {Installer pkgin et mettre à jour le sommaire des paquetages}
 message binpkg_installed 
@@ -1132,7 +1132,7 @@ pkgin install <packagename>
 à partir d'un shell "root".  Consultez le manuel pkgin(1) pour plus de détails.}
 message Install_pkgsrc {Obtenir et extraire pkgsrc}
 message pkgsrc
-{L'installation de pkgsrc nécéssite l'extraction d'une archive obtenue
+{L'installation de pkgsrc nécessite l'extraction d'une archive obtenue
 par le réseau.
 Voici les configurations actuelles pour : serveur, répertoire, utilisateur et
 mot de passe qui seront utilisés.  Si "utilisateur" est "ftp", un mot de passe
@@ -1295,8 +1295,8 @@ message lvmlv_regsiz_ask {MirrorLogRegionSize?}
 message lvmlv_readahsect_ask {ReadAheadSectors?}
 message lvmlv_stripes_ask {Stripes?}
 
-message addusername {8 character username to add}
-message addusertowheel {Do you wish to add this user to group wheel?}
+message addusername {Nom d'utilisateur (8 caractères)}
+message addusertowheel {Ajouter cet utilisateur au groupe "wheel" ?}
 message Delete_partition
 {Supprimer la partition}
 
