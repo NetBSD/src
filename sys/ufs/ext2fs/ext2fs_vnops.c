@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.116 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.117 2015/04/20 23:03:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.116 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.117 2015/04/20 23:03:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,7 +589,7 @@ ext2fs_remove(void *v)
 int
 ext2fs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -639,7 +639,6 @@ out1:
 out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 	return (error);
 }
 

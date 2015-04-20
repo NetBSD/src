@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.31 2015/03/29 14:12:28 riastradh Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.32 2015/04/20 23:03:08 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.31 2015/03/29 14:12:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.32 2015/04/20 23:03:08 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -1189,7 +1189,7 @@ nilfs_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 int
 nilfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1205,7 +1205,6 @@ nilfs_link(void *v)
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 
 	return error;
 }
