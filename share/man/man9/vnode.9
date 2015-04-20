@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.62 2015/04/20 14:03:10 riastradh Exp $
+.\"     $NetBSD: vnode.9,v 1.63 2015/04/20 14:07:24 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -582,16 +582,24 @@ with
 on success.
 .El
 .It Fn vput "vp"
-Unlock vnode
-.Fa vp
-and decrement its
-.Em v_usecount .
-Depending on the reference counts, move the vnode to the holdlist or
-the freelist.
-This operation is functionally equivalent to calling
+Legacy convenience routine for unlocking and releasing
+.Fa vp .
+Equivalent to:
+.Bd -literal -offset abcd
+.No "VOP_UNLOCK(" Ns Fa vp Ns Li ");"
+.No "vrele(" Ns Fa vp Ns Li ");"
+.Ed
+.Pp
+Note that this is
+.Em not
+an inverse of
+.Fn vget .
+The name appears so for hysterical raisins.
+New code should prefer using
 .Xr VOP_UNLOCK 9
-followed by
-.Fn vrele .
+and
+.Fn vrele
+directly.
 .It Fn vhold "vp"
 Mark the vnode
 .Fa vp
