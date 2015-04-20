@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.146 2015/03/28 19:24:06 maxv Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.147 2015/04/20 13:44:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.146 2015/03/28 19:24:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.147 2015/04/20 13:44:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -309,7 +309,7 @@ spec_node_lookup_by_dev(enum vtype type, dev_t dev, vnode_t **vpp)
 		mutex_enter(vp->v_interlock);
 	}
 	mutex_exit(&device_lock);
-	error = vget(vp, 0);
+	error = vget(vp, 0, true /* wait */);
 	if (error != 0)
 		return error;
 	*vpp = vp;
@@ -344,7 +344,7 @@ spec_node_lookup_by_mount(struct mount *mp, vnode_t **vpp)
 	}
 	mutex_enter(vq->v_interlock);
 	mutex_exit(&device_lock);
-	error = vget(vq, 0);
+	error = vget(vq, 0, true /* wait */);
 	if (error != 0)
 		return error;
 	*vpp = vq;
