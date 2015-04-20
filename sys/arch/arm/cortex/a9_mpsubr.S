@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.31 2015/04/18 09:47:13 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.32 2015/04/20 23:12:56 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -207,11 +207,13 @@ arm_cpuinit:
 #endif
 	mcr	p15, 0, r1, c2, c0, 2	// TTBCR write
 
+#if !defined(CPU_CORTEXA5)
 	XPUTC(#'I')
 	mov	r1, #0
 	mcr	p15, 0, r1, c8, c7, 0	// TLBIALL (just this core)
 	dsb
 	isb
+#endif
 
 	XPUTC(#'J')
 	mov	r1, #0			// get KERNEL_PID
