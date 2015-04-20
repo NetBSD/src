@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.470 2015/04/13 21:32:04 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.471 2015/04/20 15:18:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -374,7 +374,25 @@
 #endif
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
 #define	rounddown(x,y)	(((x)/(y))*(y))
-#define	roundup2(x, m)	(((x) + (m) - 1) & ~((m) - 1))
+
+/*
+ * Rounding to powers of two.  The naive definitions of roundup2 and
+ * rounddown2,
+ *
+ *	#define	roundup2(x,m)	(((x) + ((m) - 1)) & ~((m) - 1))
+ *	#define	rounddown2(x,m)	((x) & ~((m) - 1)),
+ *
+ * exhibit a quirk of integer arithmetic in C because the complement
+ * happens in the type of m, not in the type of x.  So if unsigned int
+ * is 32-bit, and m is an unsigned int while x is a uint64_t, then
+ * roundup2 and rounddown2 would have the unintended effect of clearing
+ * the upper 32 bits of the result(!).  These definitions avoid the
+ * pitfalls of C arithmetic depending on the types of x and m, and
+ * additionally avoid multiply evaluating their arguments.
+ */
+#define	roundup2(x,m)	((((x) - 1) | ((m) - 1)) + 1)
+#define	rounddown2(x,m)	((x) & ~((__typeof__(x))((m) - 1)))
+
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /*
