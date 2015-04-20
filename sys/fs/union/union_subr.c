@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.72 2015/04/20 13:44:16 riastradh Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.73 2015/04/20 19:36:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.72 2015/04/20 13:44:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.73 2015/04/20 19:36:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,7 +578,6 @@ union_loadvnode(struct mount *mp, struct vnode *vp,
 
 	mutex_obj_hold(svp->v_interlock);
 	uvm_obj_setlock(&vp->v_uobj, svp->v_interlock);
-	vp->v_iflag |= VI_LOCKSHARE;
 
 	/* detect the root vnode (and aliases) */
 	if ((un->un_uppervp == um->um_uppervp) &&
@@ -589,8 +588,6 @@ union_loadvnode(struct mount *mp, struct vnode *vp,
 				vref(un->un_lowervp);
 		}
 		vp->v_vflag |= VV_ROOT;
-	} else {
-		vp->v_iflag |= VI_LAYER;
 	}
 
 	uppersz = lowersz = VNOVAL;
