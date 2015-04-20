@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.64 2014/03/10 22:47:27 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.65 2015/04/20 21:48:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -803,6 +803,7 @@ do_makenode(struct puffs_usermount *pu, struct p2k_node *p2n_dir,
 	} else {
 		rv = symfn(dvp, &vp, cn, va_x, link_target);
 	}
+	rump_pub_vp_rele(dvp);
 	RUMP_VOP_UNLOCK(dvp);
 	freecn(cn);
 
