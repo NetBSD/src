@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.41 2015/04/20 13:44:16 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.42 2015/04/20 19:36:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.41 2015/04/20 13:44:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.42 2015/04/20 19:36:55 riastradh Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -293,10 +293,6 @@ vnfree(vnode_t *vp)
 		mutex_exit(&vnode_free_list_lock);
 	}
 
-	/*
-	 * Note: the vnode interlock will either be freed, of reference
-	 * dropped (if VI_LOCKSHARE was in use).
-	 */
 	uvm_obj_destroy(&vp->v_uobj, true);
 	cv_destroy(&vp->v_cv);
 	pool_cache_put(vnode_cache, vp);
@@ -424,7 +420,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		mutex_obj_hold(slock);
 		uvm_obj_setlock(&vp->v_uobj, slock);
 		KASSERT(vp->v_interlock == slock);
-		vp->v_iflag |= VI_LOCKSHARE;
 	}
 
 	/* Finally, move vnode into the mount queue. */
