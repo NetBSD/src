@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.124 2014/05/26 20:07:25 dholland Exp $	*/
+/*	$NetBSD: pstat.c,v 1.125 2015/04/20 19:36:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.124 2014/05/26 20:07:25 dholland Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.125 2015/04/20 19:36:56 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -388,7 +388,6 @@ const struct flagbit_desc vnode_flags[] = {
 	{ VV_ISTTY,	'I' },
 	{ VI_EXECMAP,	'E' },
 	{ VU_DIROP,	'D' },
-	{ VI_LAYER,	'Y' },
 	{ VI_ONWORKLST,	'O' },
 	{ 0,		'\0' },
 };
