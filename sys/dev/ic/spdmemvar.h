@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.5 2015/04/20 02:55:14 pgoyette Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.6 2015/04/20 07:51:36 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -739,7 +739,7 @@ struct spdmem_ddr4 {				/* Dual Data Rate 4 SDRAM */
 		uint8_t	ddr4_signal_loading:2,	\
 		uint8_t	ddr4_unused3:2,		\
 		uint8_t	ddr4_diecount:3,	\
-		uint8_t	ddr4_non_monolithic:1	\	
+		uint8_t	ddr4_non_monolithic:1	\
 	);
 	SPD_BITFIELD(				\
 		uint8_t ddr4_max_activate_count:4,	\
@@ -845,7 +845,7 @@ struct spdmem_ddr4 {				/* Dual Data Rate 4 SDRAM */
 	uint8_t	ddr4_dram_stepping;
 	uint8_t ddr4_mfg_specific_data[29];
 	uint8_t	ddr4_unused18[2];
-	uint8_t	ddr4_user_data[128]
+	uint8_t	ddr4_user_data[128];
 } __packed;
 
 struct spdmem {
