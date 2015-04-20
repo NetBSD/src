@@ -1021,6 +1021,7 @@ static int ttm_bo_move_buffer(struct ttm_buffer_object *bo,
 	mem.num_pages = bo->num_pages;
 	mem.size = mem.num_pages << PAGE_SHIFT;
 	mem.page_alignment = bo->mem.page_alignment;
+	mem.bus.is_iomem = false;
 	mem.bus.io_reserved_vm = false;
 	mem.bus.io_reserved_count = 0;
 	/*
