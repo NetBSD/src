@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.65 2015/04/20 14:09:14 riastradh Exp $
+.\"     $NetBSD: vnode.9,v 1.66 2015/04/20 15:30:41 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,26 +110,49 @@
 .Ft void
 .Fn vprint "const char *label" "struct vnode *vp"
 .Sh DESCRIPTION
-The vnode is the focus of all file activity in
-.Nx .
-There is a unique vnode allocated for each active file, directory,
-mounted-on file, fifo, domain socket, symbolic link and device.
-The kernel has no concept of a file's underlying structure and so it
-relies on the information stored in the vnode to describe the file.
-Thus, the vnode associated with a file holds all the administration
-information pertaining to it.
-.Pp
-When a process requests an operation on a file, the
+A
+.Em vnode
+represents an on-disk file in use by the system.
+Each
 .Xr vfs 9
-interface passes control to a file system type dependent function to carry
-out the operation.
-If the file system type dependent function finds that a vnode
-representing the file is not in main memory, it dynamically allocates
-a new vnode from the system main memory pool.
-Once allocated, the vnode is attached to the data structure pointer
-associated with the cause of the vnode allocation and it remains
-resident in the main memory until the system decides that it is no
-longer needed and can be recycled.
+file system provides a set of
+.Xr vnodeops 9
+operations on vnodes, invoked by file-system-independent system calls
+and supported by file-system-independent library routines.
+.Pp
+Each mounted file system provides a vnode for the root of the file
+system, via
+.Xr VFS_ROOT 9 .
+Other vnodes are obtained by
+.Xr VOP_LOOKUP 9 .
+Users of vnodes usually invoke these indirectly via
+.Xr namei 9
+to obtain vnodes from paths.
+.Pp
+Each file system usually maintains a cache mapping recently used inode
+numbers, or the equivalent, to vnodes, and a cache mapping recently
+used file names to vnodes.
+If memory is scarce, the system may decide to
+.Em reclaim
+an unused cached vnode, calling
+.Xr VOP_RECLAIM 9
+to remove it from the caches and to free file-system-specific memory
+associated with it.
+A file system may also choose to immediately reclaim a cached vnode
+once it is unused, in
+.Xr VOP_INACTIVE 9 ,
+if the vnode has been deleted on disk.
+.Pp
+When a file system retrieves a vnode from a cache, the vnode may not
+have any users, and another thread in the system may be simultaneously
+deciding to reclaim it.
+Thus, to retrieve a vnode from a cache, one must use
+.Fn vget ,
+not
+.Fn vref ,
+to acquire the first reference, and be prepared for
+.Fn vget
+to fail if another thread is reclaiming the vnode.
 .Pp
 The vnode has the following structure:
 .Bd -literal
