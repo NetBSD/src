@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.496 2015/04/20 23:03:08 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.497 2015/04/21 03:19:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.496 2015/04/20 23:03:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.497 2015/04/21 03:19:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4198,7 +4198,7 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	 * locked yet, but (a) namei is insane, and (b) VOP_RENAME is
 	 * insane, so for the time being we need to leave it like this.
 	 */
-	NDINIT(&fnd, DELETE, (LOCKPARENT | TRYEMULROOT | INRENAME), fpb);
+	NDINIT(&fnd, DELETE, (LOCKPARENT | TRYEMULROOT), fpb);
 	if ((error = fd_nameiat(l, fromfd, &fnd)) != 0)
 		goto out2;
 
@@ -4251,7 +4251,7 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	 * XXX Why not pass CREATEDIR always?
 	 */
 	NDINIT(&tnd, RENAME,
-	    (LOCKPARENT | NOCACHE | TRYEMULROOT | INRENAME |
+	    (LOCKPARENT | NOCACHE | TRYEMULROOT |
 		((fvp->v_type == VDIR)? CREATEDIR : 0)),
 	    tpb);
 	if ((error = fd_nameiat(l, tofd, &tnd)) != 0)
