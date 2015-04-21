@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BPI,v 1.13 2014/11/23 20:02:37 snj Exp $
+#	$NetBSD: BPI,v 1.14 2015/04/21 04:24:51 matt Exp $
 #
 #	BPI -- Banana Pi - an Allwinner A20 Eval Board Kernel
 #
@@ -22,7 +22,6 @@ makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 no makeoptions	BOARDTYPE
 makeoptions	BOARDTYPE="bpi"
 #options 	UVMHIST,UVMHIST_PRINT
-options 	CPU_CORTEXA7
 options 	ALLWINNER_A20
 options 	PMAPCOUNTERS
 options 	AWIN_CONSOLE_EARLY
