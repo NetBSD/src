@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1100 2015/04/16 02:32:33 mrg Exp $
+# $NetBSD: mi,v 1.1101 2015/04/21 22:41:32 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4496,6 +4496,7 @@
 ./usr/share/me					base-groff-share
 ./usr/share/misc				base-terminfo-share
 ./usr/share/misc/acronyms			base-reference-share	share
+./usr/share/misc/acronyms-o			base-reference-share	share
 ./usr/share/misc/acronyms.comp			base-reference-share	share
 ./usr/share/misc/ascii				base-reference-share	share
 ./usr/share/misc/bsd-family-tree		base-reference-share	share
