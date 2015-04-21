@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperentropy.c,v 1.9 2015/04/21 03:53:50 riastradh Exp $	*/
+/*	$NetBSD: hyperentropy.c,v 1.10 2015/04/21 04:05:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -26,9 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.9 2015/04/21 03:53:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.10 2015/04/21 04:05:57 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/rndpool.h>
 #include <sys/rndsource.h>
@@ -38,10 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: hyperentropy.c,v 1.9 2015/04/21 03:53:50 riastradh E
 #include "rump_private.h"
 
 static krndsource_t rndsrc;
+static volatile unsigned hyperentropy_wanted;
+static void *feedrandom_softint;
 
 #define MAXGET (RND_POOLBITS/NBBY)
 static void
-feedrandom_cb(size_t bytes, void *cookie __unused)
+feedrandom(size_t bytes)
 {
 	uint8_t *rnddata;
 	size_t dsize;
@@ -53,11 +56,42 @@ feedrandom_cb(size_t bytes, void *cookie __unused)
 	kmem_intr_free(rnddata, MAXGET);
 }
 
+static void
+feedrandom_intr(void *cookie __unused)
+{
+
+	feedrandom(atomic_swap_uint(&hyperentropy_wanted, 0));
+}
+
+static void
+feedrandom_cb(size_t bytes, void *cookie __unused)
+{
+	unsigned old, new;
+
+	do {
+		old = hyperentropy_wanted;
+		new = ((MAXGET - old) < bytes? MAXGET : (old + bytes));
+	} while (atomic_cas_uint(&hyperentropy_wanted, old, new) != old);
+
+	softint_schedule(feedrandom_softint);
+}
+
 void
 rump_hyperentropy_init(void)
 {
 
-	rndsource_setcb(&rndsrc, &feedrandom_cb, &rndsrc);
-	rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
-	    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
+	if (rump_threads) {
+		feedrandom_softint =
+		    softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
+			feedrandom_intr, NULL);
+		KASSERT(feedrandom_softint != NULL);
+		rndsource_setcb(&rndsrc, feedrandom_cb, &rndsrc);
+		rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
+		    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
+	} else {
+		/* without threads, just fill the pool */
+		rnd_attach_source(&rndsrc, "rump_hyperent", RND_TYPE_VM,
+		    RND_FLAG_COLLECT_VALUE);
+		feedrandom(MAXGET);
+	}
 }
