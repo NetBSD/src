@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.264 2015/04/19 16:49:08 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.265 2015/04/21 05:29:50 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19753,8 +19753,8 @@ libexec/httpd/bozohttpd.c			1.62-1.63
 
 xfree/xc/lib/X11/Xlibint.h			1.2
 
-	Fix CVE-2013-7439: Buffer overflow in MakeBigReq macro in libX11 prior
-	to 1.6.
+	Fix CVE-2013-7439: Buffer overflow in MakeBigReq macro in
+	libX11 prior to 1.6.
 	[mrg, ticket #706]
 
 lib/libc/stdlib/atexit.c			1.28
@@ -19796,9 +19796,10 @@ sys/dev/pci/ixgbe/ixv.h				1.4-1.5 via patch
 	 - Add X540 support.
 	 - Add TSO6 support.
 	 - Add 100BaseTX support.
-	 - The max size in dma tag is changed from 65535 to 262140 (IXGBE_TSO_SIZE).
-	   The value is the same as other *BSDs. The change might cause a address
-	   space shortage (ixgbe_dmamap_create() might fail) on some machines.
+	 - The max size in dma tag is changed from 65535 to 262140
+	   (IXGBE_TSO_SIZE).  The value is the same as other *BSDs. The
+	   change might cause a address space shortage
+	   (ixgbe_dmamap_create() might fail) on some machines.
 	 - Show 1000Base-SX correctly.
 	 - Fix if_baudrate from 1G to 10G.
 	 - Fix a bug that ifconfig -z (SOICZIFDATA) doesn't work.
@@ -19843,7 +19844,8 @@ sys/dev/pci/pcidevs_data.h			regen
 usr.sbin/cpuctl/arch/i386.c			1.65
 
 	Update from Intel SDM:
-	- Add Atom Z8000, Future gen Xeon (Broadwell), Next gen Xeon Phi and so on.
+	- Add Atom Z8000, Future gen Xeon (Broadwell), Next gen Xeon
+	  Phi and so on.
 	- Add comments.
 	[msaitoh, ticket #701]
 
@@ -19852,4 +19854,29 @@ sys/arch/x86/x86/intel_busclock.c		1.21
 	Update from Intel SDM:
 	- Add busclock values for Airmont.
 	[msaitoh, ticket #702]
+
+external/gpl3/gcc/dist/libstdc++-v3/libsupc++/atexit_arm.cc 1.2
+lib/libc/stdlib/atexit.c			1.29
+
+	Redo __aeabi_atexit by shuffling the arguments and dropping the
+	code in libstdc++.
+	[joerg, ticket #712]
+
+sys/dev/ic/bwi.c				1.26
+sys/nfs/krpc_subr.c				1.38
+
+	Fix an uninitialized variable and a double free.
+	[maxv, ticket #713]
+
+distrib/sets/lists/base/mi			1.1098
+distrib/sets/lists/man/mi			1.1498
+doc/CHANGES					patch
+usr.sbin/Makefile				1.270
+usr.sbin/service/Makefile			1.1
+usr.sbin/service/service			1.1-1.7
+usr.sbin/service/service.8			1.1-1.4
+
+	Import a substantially modified service(8) command from FreeBSD
+	to manage rc.d scripts.
+	[ast, ticket #636]
 
