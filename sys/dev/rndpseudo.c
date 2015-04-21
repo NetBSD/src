@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.33 2015/04/21 12:51:53 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.34 2015/04/21 12:57:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.33 2015/04/21 12:51:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.34 2015/04/21 12:57:03 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.33 2015/04/21 12:51:53 riastradh Exp
  */
 #define	RND_TEMP_BUFFER_SIZE	512
 
-static pool_cache_t rnd_temp_buffer_cache;
+static pool_cache_t rnd_temp_buffer_cache __read_mostly;
 
 /*
  * Per-open state -- a lazily initialized CPRNG.
@@ -97,12 +97,12 @@ struct rnd_ctx {
 	bool			rc_hard;
 };
 
-static pool_cache_t rnd_ctx_cache;
+static pool_cache_t rnd_ctx_cache __read_mostly;
 
 /*
  * The per-CPU RNGs used for short requests
  */
-static percpu_t *percpu_urandom_cprng;
+static percpu_t *percpu_urandom_cprng __read_mostly;
 
 /* Used by ioconf.c to attach the rnd pseudo-device.  */
 void	rndattach(int);
