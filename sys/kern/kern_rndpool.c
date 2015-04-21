@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.15 2015/04/21 03:30:06 riastradh Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.16 2015/04/21 04:41:36 riastradh Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.15 2015/04/21 03:30:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.16 2015/04/21 04:41:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/rndpool.h>
@@ -62,8 +62,6 @@ rndpool_init(rndpool_t *rp)
 	rp->stats.poolsize = RND_POOLWORDS;
 	rp->stats.threshold = RND_ENTROPY_THRESHOLD;
 	rp->stats.maxentropy = RND_POOLBITS;
-
-	KASSERT(RND_ENTROPY_THRESHOLD * 2 <= SHA1_DIGEST_LENGTH);
 }
 
 u_int32_t
@@ -254,7 +252,8 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 		 * that the next hash will generate a different value
 		 * if no new values were added to the pool.
 		 */
-		for (i = 0; i < 5; i++) {
+		CTASSERT(RND_ENTROPY_THRESHOLD * 2 == SHA1_DIGEST_LENGTH);
+		for (i = 0; i < SHA1_DIGEST_LENGTH/4; i++) {
 			u_int32_t word;
 			memcpy(&word, &digest[i * 4], 4);
 			rndpool_add_one_word(rp, word);
