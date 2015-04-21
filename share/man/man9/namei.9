@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.32 2014/06/21 04:28:23 dholland Exp $
+.\"     $NetBSD: namei.9,v 1.33 2015/04/21 03:21:54 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -164,21 +164,12 @@ The additional flags are:
 do not cross mount points
 .It Dv RDONLY
 lookup with read-only semantics
-.It Dv HASBUF
-caller has allocated pathname buffer
-.Em ni_cnd.cn_pnbuf
-.It Dv SAVENAME
-save pathname buffer
-.It Dv SAVESTART
-save starting directory
 .It Dv ISDOTDOT
 current pathname component is ..
 .It Dv MAKEENTRY
 add entry to the name cache
 .It Dv ISLASTCN
 this is last component of pathname
-.It Dv ISSYMLINK
-symlink needs interpretation
 .It Dv ISWHITEOUT
 found whiteout
 .It Dv DOWHITEOUT
@@ -190,32 +181,6 @@ trailing slashes are ok
 .It Dv PARAMASK
 mask of parameter descriptors
 .El
-.Pp
-If the caller of
-.Fn namei
-sets the SAVENAME flag, then it must free the buffer.
-If
-.Fn VOP_LOOKUP
-sets the flag, then the buffer must be freed by either the commit
-routine or the
-.Fn VOP_ABORT
-routine.
-The
-.Dv SAVESTART
-flag is set only by the callers of
-.Fn namei .
-It implies
-.Dv SAVENAME
-plus the addition of saving the parent directory
-that contains the name in
-.Em ni_startdir .
-It allows repeated calls to
-.Fn lookup
-for the name being sought.
-The caller is responsible for releasing the buffer and for invoking
-.Fn vrele
-on
-.Em ni_startdir .
 .Pp
 All access to the
 .Nm
