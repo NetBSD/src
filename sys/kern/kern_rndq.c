@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.68 2015/04/21 03:53:07 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.69 2015/04/21 12:07:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.68 2015/04/21 03:53:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.69 2015/04/21 12:07:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -216,9 +216,9 @@ rnd_counter(void)
 
 	binuptime(&bt);
 	ret = bt.sec;
-	ret |= bt.sec >> 32;
-	ret |= bt.frac;
-	ret |= bt.frac >> 32;
+	ret ^= bt.sec >> 32;
+	ret ^= bt.frac;
+	ret ^= bt.frac >> 32;
 
 	return ret;
 }

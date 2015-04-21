@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.31 2015/04/14 12:51:30 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.32 2015/04/21 12:07:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.31 2015/04/14 12:51:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.32 2015/04/21 12:07:31 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -168,9 +168,9 @@ rndpseudo_counter(void)
 
 	binuptime(&bt);
 	ret = bt.sec;
-	ret |= bt.sec >> 32;
-	ret |= bt.frac;
-	ret |= bt.frac >> 32;
+	ret ^= bt.sec >> 32;
+	ret ^= bt.frac;
+	ret ^= bt.frac >> 32;
 
 	return ret;
 }
