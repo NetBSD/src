@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2015/04/17 18:49:23 christos Exp $
+# $NetBSD: Makefile,v 1.3 2015/04/21 10:12:04 christos Exp $
 
 PROG=	xz
 BINDIR=	/usr/bin
@@ -39,5 +39,8 @@ FILESDIR_${XZSRCDIR}/po/${lang}.gmo=	/usr/share/locale/${lang}/LC_MESSAGES
 FILESNAME_${XZSRCDIR}/po/${lang}.gmo=	xz.mo
 .endfor
 .endif
+
+LDADD+=	-lpthread
+DPADD+=	${LIBPTHREAD}
 
 .include <bsd.prog.mk>
