@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1087.2.3 2015/01/28 19:00:28 martin Exp $
+# $NetBSD: mi,v 1.1087.2.4 2015/04/21 05:22:58 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1673,6 +1673,7 @@
 ./usr/sbin/scriptdump				base-obsolete		obsolete
 ./usr/sbin/sdpd					base-sysutil-bin
 ./usr/sbin/sendmail				base-mailwrapper-bin
+./usr/sbin/service				base-sysutil-bin
 ./usr/sbin/services_mkdb			base-sysutil-bin
 ./usr/sbin/sesd					base-sysutil-bin
 ./usr/sbin/setencstat				base-sysutil-bin
