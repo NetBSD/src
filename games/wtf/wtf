@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.20 2015/04/21 22:49:46 christos Exp $
+#	$NetBSD: wtf,v 1.21 2015/04/21 23:56:30 christos Exp $
 #
 # Public domain
 #
@@ -51,6 +51,8 @@ if [ -z "$acronyms" ]; then
 				;;
 			esac
 		done
+	else
+		acronyms="$ACRONYMDB"
 	fi
 fi
 
