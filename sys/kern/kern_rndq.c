@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.63 2015/04/14 14:18:57 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.64 2015/04/21 03:24:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,31 +32,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.63 2015/04/14 14:18:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.64 2015/04/21 03:24:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
-#include <sys/ioctl.h>
+#include <sys/callout.h>
+#include <sys/conf.h>
 #include <sys/fcntl.h>
-#include <sys/select.h>
-#include <sys/poll.h>
+#include <sys/intr.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/once.h>
+#include <sys/poll.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/systm.h>
-#include <sys/callout.h>
-#include <sys/intr.h>
 #include <sys/rnd.h>
 #include <sys/rndpool.h>
 #include <sys/rndsink.h>
 #include <sys/rndsource.h>
-#include <sys/vnode.h>
-#include <sys/pool.h>
-#include <sys/kauth.h>
-#include <sys/once.h>
 #include <sys/rngtest.h>
+#include <sys/select.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <dev/rnd_private.h>
 
