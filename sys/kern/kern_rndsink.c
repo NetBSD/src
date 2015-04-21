@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.15 2015/04/21 04:19:25 riastradh Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.16 2015/04/21 04:24:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.15 2015/04/21 04:19:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.16 2015/04/21 04:24:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,12 +57,6 @@ struct rndsink {
 	/* Entry on the queue of rndsinks, iff in the RNDSINK_QUEUED state.  */
 	TAILQ_ENTRY(rndsink)	rsink_entry;
 
-	/*
-	 * Notifies rndsink_destroy when rsink_state transitions to
-	 * RNDSINK_IDLE or RNDSINK_QUEUED.
-	 */
-	kcondvar_t		rsink_cv;
-
 	/* rndsink_create parameters.  */
 	unsigned int		rsink_bytes;
 	rndsink_callback_t	*rsink_callback;
@@ -71,6 +65,7 @@ struct rndsink {
 
 static struct {
 	kmutex_t		lock;
+	kcondvar_t		cv;
 	TAILQ_HEAD(, rndsink)	q;
 } rndsinks __cacheline_aligned;
 
@@ -85,6 +80,7 @@ rndsinks_init(void)
 	 * XXX Call this IPL_RND, perhaps.
 	 */
 	mutex_init(&rndsinks.lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&rndsinks.cv, "rndsink");
 	TAILQ_INIT(&rndsinks.q);
 }
 
@@ -133,7 +129,7 @@ rndsinks_distribute(void)
 			KASSERT(rndsink->rsink_state == RNDSINK_IN_FLIGHT);
 			rndsink->rsink_state = RNDSINK_IDLE;
 		}
-		cv_broadcast(&rndsink->rsink_cv);
+		cv_broadcast(&rndsinks.cv);
 	}
 	mutex_spin_exit(&rndsinks.lock);
 
@@ -198,7 +194,6 @@ rndsink_create(size_t bytes, rndsink_callback_t *callback, void *arg)
 	KASSERT(bytes <= RNDSINK_MAX_BYTES);
 
 	rndsink->rsink_state = RNDSINK_IDLE;
-	cv_init(&rndsink->rsink_cv, "rndsink");
 	rndsink->rsink_bytes = bytes;
 	rndsink->rsink_callback = callback;
 	rndsink->rsink_arg = arg;
@@ -224,7 +219,7 @@ rndsink_destroy(struct rndsink *rndsink)
 
 		case RNDSINK_IN_FLIGHT:
 		case RNDSINK_REQUEUED:
-			cv_wait(&rndsink->rsink_cv, &rndsinks.lock);
+			cv_wait(&rndsinks.cv, &rndsinks.lock);
 			break;
 
 		case RNDSINK_DEAD:
@@ -237,8 +232,6 @@ rndsink_destroy(struct rndsink *rndsink)
 	}
 	rndsink->rsink_state = RNDSINK_DEAD;
 	mutex_spin_exit(&rndsinks.lock);
-
-	cv_destroy(&rndsink->rsink_cv);
 
 	kmem_free(rndsink, sizeof(*rndsink));
 }
