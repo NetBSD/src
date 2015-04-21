@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.32 2015/04/21 12:07:31 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.33 2015/04/21 12:51:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,38 +31,37 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.32 2015/04/21 12:07:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.33 2015/04/21 12:51:53 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/ioctl.h>
+#include <sys/atomic.h>
+#include <sys/conf.h>
+#include <sys/cprng.h>
+#include <sys/cpu.h>
+#include <sys/evcnt.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/select.h>
-#include <sys/poll.h>
-#include <sys/kmem.h>
-#include <sys/atomic.h>
-#include <sys/mutex.h>
-#include <sys/proc.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/systm.h>
-#include <sys/vnode.h>
-#include <sys/pool.h>
+#include <sys/ioctl.h>
 #include <sys/kauth.h>
-#include <sys/cprng.h>
-#include <sys/cpu.h>
-#include <sys/stat.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/mutex.h>
 #include <sys/percpu.h>
-#include <sys/evcnt.h>
-
+#include <sys/poll.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/rnd.h>
 #include <sys/rndpool.h>
 #include <sys/rndsource.h>
+#include <sys/select.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <dev/rnd_private.h>
 
