@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1953 2015/04/17 20:14:27 christos Exp $
+#	$NetBSD: mi,v 1.1954 2015/04/21 11:10:29 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10447,7 +10447,7 @@
 ./usr/share/man/cat9/kthread.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_create1.0		comp-obsolete		obsolete
-./usr/share/man/cat9/kthread_destroy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kthread_destroy.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/kthread_exit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_join.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/le16dec.0			comp-sys-catman		.cat
@@ -17224,7 +17224,7 @@
 ./usr/share/man/html9/kpsignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kthread.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kthread_create.html	comp-sys-htmlman	html
-./usr/share/man/html9/kthread_destroy.html	comp-sys-htmlman	html
+./usr/share/man/html9/kthread_destroy.html	comp-obsolete		obsolete
 ./usr/share/man/html9/kthread_exit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kthread_join.html		comp-sys-htmlman	html
 ./usr/share/man/html9/le16dec.html		comp-sys-htmlman	html
@@ -24159,7 +24159,7 @@
 ./usr/share/man/man9/kthread.9			comp-sys-man		.man
 ./usr/share/man/man9/kthread_create.9		comp-sys-man		.man
 ./usr/share/man/man9/kthread_create1.9		comp-obsolete		obsolete
-./usr/share/man/man9/kthread_destroy.9		comp-sys-man		.man
+./usr/share/man/man9/kthread_destroy.9		comp-obsolete		obsolete
 ./usr/share/man/man9/kthread_exit.9		comp-sys-man		.man
 ./usr/share/man/man9/kthread_join.9		comp-sys-man		.man
 ./usr/share/man/man9/le16dec.9			comp-sys-man		.man
