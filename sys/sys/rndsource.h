@@ -1,4 +1,4 @@
-/*	$NetBSD: rndsource.h,v 1.2 2015/04/13 16:02:48 riastradh Exp $	*/
+/*	$NetBSD: rndsource.h,v 1.3 2015/04/21 03:53:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ typedef struct krndsource {
 	void		*getarg;	/* argument to get-function */
 	void		(*enable)(struct krndsource *, bool); /* turn on/off */
 	rngtest_t	*test;		/* test data for RNG type sources */
+	unsigned	refcnt;
 } krndsource_t;
 
 static inline void
