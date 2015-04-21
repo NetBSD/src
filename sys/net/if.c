@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.310 2015/04/20 10:19:54 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.311 2015/04/21 10:39:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.310 2015/04/20 10:19:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.311 2015/04/21 10:39:41 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -239,7 +239,8 @@ ifinit(void)
 	sysctl_net_pktq_setup(NULL, PF_INET);
 #endif
 #ifdef INET6
-	sysctl_net_pktq_setup(NULL, PF_INET6);
+	if (in6_present)
+		sysctl_net_pktq_setup(NULL, PF_INET6);
 #endif
 
 	if_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
