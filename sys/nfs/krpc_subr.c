@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.37.38.1 2015/04/06 01:37:29 snj Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.37.38.2 2015/04/21 04:55:15 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.37.38.1 2015/04/06 01:37:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.37.38.2 2015/04/21 04:55:15 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,7 +242,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func, struct mbu
 	 * Create socket and set its receive timeout.
 	 */
 	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0, l, NULL)))
-		goto out;
+		return error;
 
 	if ((error = nfs_boot_setrecvtimo(so)))
 		goto out;
