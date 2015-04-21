@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.14 2015/04/14 13:08:22 riastradh Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.15 2015/04/21 04:19:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.14 2015/04/14 13:08:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.15 2015/04/21 04:19:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -69,8 +69,10 @@ struct rndsink {
 	void			*rsink_arg;
 };
 
-static kmutex_t 		rndsinks_lock __cacheline_aligned;
-static TAILQ_HEAD(, rndsink)	rndsinks = TAILQ_HEAD_INITIALIZER(rndsinks);
+static struct {
+	kmutex_t		lock;
+	TAILQ_HEAD(, rndsink)	q;
+} rndsinks __cacheline_aligned;
 
 void
 rndsinks_init(void)
@@ -82,7 +84,8 @@ rndsinks_init(void)
 	 *
 	 * XXX Call this IPL_RND, perhaps.
 	 */
-	mutex_init(&rndsinks_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&rndsinks.lock, MUTEX_DEFAULT, IPL_VM);
+	TAILQ_INIT(&rndsinks.q);
 }
 
 void
@@ -93,8 +96,8 @@ rndsinks_distribute(void)
 
 	explicit_memset(buffer, 0, sizeof(buffer)); /* paranoia */
 
-	mutex_spin_enter(&rndsinks_lock);
-	while ((rndsink = TAILQ_FIRST(&rndsinks)) != NULL) {
+	mutex_spin_enter(&rndsinks.lock);
+	while ((rndsink = TAILQ_FIRST(&rndsinks.q)) != NULL) {
 		KASSERT(rndsink->rsink_state == RNDSINK_QUEUED);
 
 		/* Bail if we can't get some entropy for this rndsink.  */
@@ -107,15 +110,15 @@ rndsinks_distribute(void)
 		 * dropped.  While running the callback, lock out
 		 * rndsink_destroy by marking the sink in flight.
 		 */
-		TAILQ_REMOVE(&rndsinks, rndsink, rsink_entry);
+		TAILQ_REMOVE(&rndsinks.q, rndsink, rsink_entry);
 		rndsink->rsink_state = RNDSINK_IN_FLIGHT;
-		mutex_spin_exit(&rndsinks_lock);
+		mutex_spin_exit(&rndsinks.lock);
 
 		(*rndsink->rsink_callback)(rndsink->rsink_arg, buffer,
 		    rndsink->rsink_bytes);
 		explicit_memset(buffer, 0, rndsink->rsink_bytes);
 
-		mutex_spin_enter(&rndsinks_lock);
+		mutex_spin_enter(&rndsinks.lock);
 
 		/*
 		 * If, while the callback was running, anyone requested
@@ -124,7 +127,7 @@ rndsinks_distribute(void)
 		 * pending rndsink_destroy, if there is one.
 		 */
 		if (rndsink->rsink_state == RNDSINK_REQUEUED) {
-			TAILQ_INSERT_TAIL(&rndsinks, rndsink, rsink_entry);
+			TAILQ_INSERT_TAIL(&rndsinks.q, rndsink, rsink_entry);
 			rndsink->rsink_state = RNDSINK_QUEUED;
 		} else {
 			KASSERT(rndsink->rsink_state == RNDSINK_IN_FLIGHT);
@@ -132,7 +135,7 @@ rndsinks_distribute(void)
 		}
 		cv_broadcast(&rndsink->rsink_cv);
 	}
-	mutex_spin_exit(&rndsinks_lock);
+	mutex_spin_exit(&rndsinks.lock);
 
 	explicit_memset(buffer, 0, sizeof(buffer));	/* paranoia */
 }
@@ -141,7 +144,7 @@ static void
 rndsinks_enqueue(struct rndsink *rndsink)
 {
 
-	KASSERT(mutex_owned(&rndsinks_lock));
+	KASSERT(mutex_owned(&rndsinks.lock));
 
 	/*
 	 * XXX This should request only rndsink->rs_bytes bytes of
@@ -161,7 +164,7 @@ rndsinks_enqueue(struct rndsink *rndsink)
 	switch (rndsink->rsink_state) {
 	case RNDSINK_IDLE:
 		/* Not on the queue and nobody is handling it.  */
-		TAILQ_INSERT_TAIL(&rndsinks, rndsink, rsink_entry);
+		TAILQ_INSERT_TAIL(&rndsinks.q, rndsink, rsink_entry);
 		rndsink->rsink_state = RNDSINK_QUEUED;
 		break;
 
@@ -211,17 +214,17 @@ rndsink_destroy(struct rndsink *rndsink)
 	 * Make sure the rndsink is off the queue, and if it's already
 	 * in flight, wait for the callback to complete.
 	 */
-	mutex_spin_enter(&rndsinks_lock);
+	mutex_spin_enter(&rndsinks.lock);
 	while (rndsink->rsink_state != RNDSINK_IDLE) {
 		switch (rndsink->rsink_state) {
 		case RNDSINK_QUEUED:
-			TAILQ_REMOVE(&rndsinks, rndsink, rsink_entry);
+			TAILQ_REMOVE(&rndsinks.q, rndsink, rsink_entry);
 			rndsink->rsink_state = RNDSINK_IDLE;
 			break;
 
 		case RNDSINK_IN_FLIGHT:
 		case RNDSINK_REQUEUED:
-			cv_wait(&rndsink->rsink_cv, &rndsinks_lock);
+			cv_wait(&rndsink->rsink_cv, &rndsinks.lock);
 			break;
 
 		case RNDSINK_DEAD:
@@ -233,7 +236,7 @@ rndsink_destroy(struct rndsink *rndsink)
 		}
 	}
 	rndsink->rsink_state = RNDSINK_DEAD;
-	mutex_spin_exit(&rndsinks_lock);
+	mutex_spin_exit(&rndsinks.lock);
 
 	cv_destroy(&rndsink->rsink_cv);
 
@@ -247,9 +250,9 @@ rndsink_schedule(struct rndsink *rndsink)
 	/* Optimistically check without the lock whether we're queued.  */
 	if ((rndsink->rsink_state != RNDSINK_QUEUED) &&
 	    (rndsink->rsink_state != RNDSINK_REQUEUED)) {
-		mutex_spin_enter(&rndsinks_lock);
+		mutex_spin_enter(&rndsinks.lock);
 		rndsinks_enqueue(rndsink);
-		mutex_spin_exit(&rndsinks_lock);
+		mutex_spin_exit(&rndsinks.lock);
 	}
 }
 
@@ -259,11 +262,11 @@ rndsink_request(struct rndsink *rndsink, void *buffer, size_t bytes)
 
 	KASSERT(bytes == rndsink->rsink_bytes);
 
-	mutex_spin_enter(&rndsinks_lock);
+	mutex_spin_enter(&rndsinks.lock);
 	const bool full_entropy = rnd_extract(buffer, bytes);
 	if (!full_entropy)
 		rndsinks_enqueue(rndsink);
-	mutex_spin_exit(&rndsinks_lock);
+	mutex_spin_exit(&rndsinks.lock);
 
 	return full_entropy;
 }
