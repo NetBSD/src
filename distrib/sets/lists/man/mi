@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1485.2.6 2015/03/26 10:54:35 martin Exp $
+# $NetBSD: mi,v 1.1485.2.7 2015/04/21 05:22:58 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2943,6 +2943,7 @@
 ./usr/share/man/cat8/sdpd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/security.0			man-obsolete		obsolete
 ./usr/share/man/cat8/sendmail.0			man-obsolete		obsolete
+./usr/share/man/cat8/service.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/services_mkdb.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/sesd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/setencstat.0		man-sysutil-catman	.cat
@@ -5739,6 +5740,7 @@
 ./usr/share/man/html8/scsictl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/sdpd.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/security.html		man-obsolete		obsolete
+./usr/share/man/html8/service.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/services_mkdb.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/sesd.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/setencstat.html		man-sysutil-htmlman	html
@@ -8821,6 +8823,7 @@
 ./usr/share/man/man8/sdpd.8			man-sysutil-man		.man
 ./usr/share/man/man8/security.8			man-obsolete		obsolete
 ./usr/share/man/man8/sendmail.8			man-obsolete		obsolete
+./usr/share/man/man8/service.8			man-sysutil-man		.man
 ./usr/share/man/man8/services_mkdb.8		man-sysutil-man		.man
 ./usr/share/man/man8/sesd.8			man-sysutil-man		.man
 ./usr/share/man/man8/setencstat.8		man-sysutil-man		.man
