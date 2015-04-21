@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.26.4.1 2015/04/19 05:03:02 msaitoh Exp $	*/
+/*	$NetBSD: atexit.c,v 1.26.4.2 2015/04/21 04:50:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.26.4.1 2015/04/19 05:03:02 msaitoh Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.26.4.2 2015/04/21 04:50:17 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -134,7 +134,14 @@ __libc_atexit_init(void)
  *	http://www.codesourcery.com/cxx-abi/abi.html#dso-dtor
  */
 #if defined(__ARM_EABI__) && !defined(lint)
-__strong_alias(__aeabi_atexit,__cxa_atexit);
+int
+__aeabi_atexit(void *arg, void (*func)(void *), void *dso);
+
+int
+__aeabi_atexit(void *arg, void (*func)(void *), void *dso)
+{
+	return __cxa_atexit(func, arg, dso);
+}
 #endif
 
 int
