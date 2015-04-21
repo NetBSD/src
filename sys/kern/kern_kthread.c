@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.40 2015/04/21 10:54:52 pooka Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.41 2015/04/21 11:10:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.40 2015/04/21 10:54:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.41 2015/04/21 11:10:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,19 +184,6 @@ kthread_exit(int ecode)
 	/* And exit.. */
 	lwp_exit(l);
 	panic("kthread_exit");
-}
-
-/*
- * Destroy an inactive kthread.  The kthread must be in the LSIDL state.
- */
-void
-kthread_destroy(lwp_t *l)
-{
-
-	KASSERT((l->l_flag & LW_SYSTEM) != 0);
-	KASSERT(l->l_stat == LSIDL);
-
-	lwp_exit(l);
 }
 
 /*

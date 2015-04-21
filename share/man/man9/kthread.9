@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.27 2011/08/07 14:03:16 rmind Exp $
+.\"     $NetBSD: kthread.9,v 1.28 2015/04/21 11:10:29 pooka Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 7, 2011
+.Dd April 21, 2015
 .Dt KTHREAD 9
 .Os
 .Sh NAME
 .Nm kthread_create ,
-.Nm kthread_destroy ,
 .Nm kthread_exit ,
 .Nm kthread_join
 .Nd kernel threads
@@ -41,8 +40,6 @@
 .Ft int
 .Fn kthread_create "pri_t pri" "int flags" "struct cpu_info *ci" \
 "void (*func)(void *)" "void *arg" "lwp_t **newlp" "const char *fmt" "..."
-.Ft void
-.Fn kthread_destroy "lwp_t *l"
 .Ft void
 .Fn kthread_exit "int ecode"
 .Ft int
@@ -146,11 +143,6 @@ will wait until
 .Fn kthread_join
 will be called.
 .El
-.It Fn kthread_destroy "l"
-From another thread executing in the kernel, cause a kthread to exit.
-The kthread must be in the
-.Dv LSIDL
-(idle) state.
 .It Fn kthread_exit "ecode"
 Exit from a kernel thread.
 Must only be called by a kernel thread.
