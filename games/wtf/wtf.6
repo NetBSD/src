@@ -1,8 +1,8 @@
-.\"	$NetBSD: wtf.6,v 1.16 2012/11/20 12:40:54 abs Exp $
+.\"	$NetBSD: wtf.6,v 1.17 2015/04/21 22:49:46 christos Exp $
 .\"
 .\" Public Domain
 .\"
-.Dd November 20, 2012
+.Dd April 21, 2015
 .Dt WTF 6
 .Os
 .Sh NAME
@@ -11,6 +11,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl f Ar dbfile
+.Op Fl o
 .Op Ar is
 .Ar term ...
 .Sh DESCRIPTION
@@ -50,6 +51,13 @@ Unlike this variable the
 .Fl f
 option only accepts one file name as an argument,
 but it may be given multiple times to specify more than one file to use.
+.It Fl o
+Include acronyms that could be considered offensive to some.
+Please consult
+.Xr forture 6
+for more information about the
+.Fl o 
+flag.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width ACRONYMDB
@@ -70,7 +78,8 @@ default computer-related acronym database.
 .Sh SEE ALSO
 .Xr make 1 ,
 .Xr pkg_info 1 ,
-.Xr whatis 1
+.Xr whatis 1 ,
+.Xr fortune 6
 .Sh HISTORY
 .Nm
 first appeared in
