@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.67 2015/04/21 03:46:46 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.68 2015/04/21 03:53:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.67 2015/04/21 03:46:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.68 2015/04/21 03:53:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -126,6 +126,7 @@ static struct {
 	kmutex_t		lock;
 	rndpool_t		pool;
 	LIST_HEAD(, krndsource)	sources;
+	kcondvar_t		cv;
 } rnd_global __cacheline_aligned;
 
 /*
@@ -260,15 +261,32 @@ rnd_schedule_wakeup(void)
 void
 rnd_getmore(size_t byteswanted)
 {
-	krndsource_t *rs;
+	krndsource_t *rs, *next;
 
 	mutex_spin_enter(&rnd_global.lock);
-	LIST_FOREACH(rs, &rnd_global.sources, list) {
+	LIST_FOREACH_SAFE(rs, &rnd_global.sources, list, next) {
+		/* Skip if there's no callback.  */
 		if (!ISSET(rs->flags, RND_FLAG_HASCB))
 			continue;
 		KASSERT(rs->get != NULL);
-		KASSERT(rs->getarg != NULL);
+
+		/* Skip if there are too many users right now.  */
+		if (rs->refcnt == UINT_MAX)
+			continue;
+
+		/*
+		 * Hold a reference while we release rnd_global.lock to
+		 * call the callback.  The callback may in turn call
+		 * rnd_add_data, which acquires rnd_global.lock.
+		 */
+		rs->refcnt++;
+		mutex_spin_exit(&rnd_global.lock);
 		rs->get(byteswanted, rs->getarg);
+		mutex_spin_enter(&rnd_global.lock);
+		if (--rs->refcnt == 0)
+			cv_broadcast(&rnd_global.cv);
+
+		/* Dribble some goo to the console.  */
 		rnd_printf_verbose("rnd: entropy estimate %zu bits\n",
 		    rndpool_get_entropy_count(&rnd_global.pool));
 		rnd_printf_verbose("rnd: asking source %s for %zu bytes\n",
@@ -497,6 +515,7 @@ rnd_init(void)
 	mutex_init(&rnd_global.lock, MUTEX_DEFAULT, IPL_VM);
 	rndpool_init(&rnd_global.pool);
 	LIST_INIT(&rnd_global.sources);
+	cv_init(&rnd_global.cv, "rndsrc");
 
 	rnd_mempc = pool_cache_init(sizeof(rnd_sample_t), 0, 0, 0,
 				    "rndsample", NULL, IPL_VM,
@@ -652,6 +671,7 @@ rnd_attach_source(krndsource_t *rs, const char *name, uint32_t type,
 
 	rs->type = type;
 	rs->flags = flags;
+	rs->refcnt = 1;
 
 	rs->state = rnd_sample_allocate(rs);
 
@@ -691,6 +711,11 @@ rnd_detach_source(krndsource_t *source)
 
 	mutex_spin_enter(&rnd_global.lock);
 	LIST_REMOVE(source, list);
+	if (0 < --source->refcnt) {
+		do {
+			cv_wait(&rnd_global.cv, &rnd_global.lock);
+		} while (0 < source->refcnt);
+	}
 	mutex_spin_exit(&rnd_global.lock);
 
 	/*
