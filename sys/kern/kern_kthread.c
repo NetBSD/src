@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.39 2012/09/01 00:26:37 matt Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.40 2015/04/21 10:54:52 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.39 2012/09/01 00:26:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.40 2015/04/21 10:54:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,6 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	}
 	if (fmt != NULL) {
 		l->l_name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
-		if (l->l_name == NULL) {
-			kthread_destroy(l);
-			return ENOMEM;
-		}
 		va_start(ap, fmt);
 		vsnprintf(l->l_name, MAXCOMLEN, fmt, ap);
 		va_end(ap);
