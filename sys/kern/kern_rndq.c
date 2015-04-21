@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.69 2015/04/21 12:07:31 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.70 2015/04/21 12:55:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.69 2015/04/21 12:07:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.70 2015/04/21 12:55:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -117,7 +117,7 @@ static struct {
 /*
  * Memory pool for sample buffers
  */
-static pool_cache_t rnd_mempc;
+static pool_cache_t rnd_mempc __read_mostly;
 
 /*
  * Global entropy pool and sources.
@@ -148,7 +148,8 @@ static krndsource_t rnd_source_no_collect = {
 
 krndsource_t rnd_printf_source, rnd_autoconf_source;
 
-static void *rnd_process, *rnd_wakeup;
+static void *rnd_process __read_mostly;
+static void *rnd_wakeup __read_mostly;
 
 static inline uint32_t	rnd_counter(void);
 static        void	rnd_intr(void *);
