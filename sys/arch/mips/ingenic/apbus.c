@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.11 2015/03/25 11:25:10 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.12 2015/04/21 19:57:41 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.11 2015/03/25 11:25:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.12 2015/04/21 19:57:41 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -63,29 +63,31 @@ struct mips_bus_dma_tag	apbus_dmat = {
 };
 
 typedef struct apbus_dev {
-	const char *name;
-	bus_addr_t addr;
-	uint32_t irq;
+	const char *name;	/* driver name */
+	bus_addr_t addr;	/* base address */
+	uint32_t irq;		/* interrupt */
+	uint32_t clk0;		/* bit(s) in CLKGR0 */
+	uint32_t clk1;		/* bit(s) in CLKGR1 */
 } apbus_dev_t;
 
 static const apbus_dev_t apbus_devs[] = {
-	{ "dwctwo",	JZ_DWC2_BASE,   21},
-	{ "ohci",	JZ_OHCI_BASE,    5 },
-	{ "ehci",	JZ_EHCI_BASE,   20},
-	{ "dme",	JZ_DME_BASE,    -1},	/* irq via gpio abuse */
-	{ "jzgpio",	JZ_GPIO_A_BASE, 17},
-	{ "jzgpio",	JZ_GPIO_B_BASE, 16},
-	{ "jzgpio",	JZ_GPIO_C_BASE, 15},
-	{ "jzgpio",	JZ_GPIO_D_BASE, 14},
-	{ "jzgpio",	JZ_GPIO_E_BASE, 13},
-	{ "jzgpio",	JZ_GPIO_F_BASE, 12},
-	{ "jziic",	JZ_SMB0_BASE,   60},
-	{ "jziic",	JZ_SMB1_BASE,   59},
-	{ "jziic",	JZ_SMB2_BASE,   58},
-	{ "jziic",	JZ_SMB3_BASE,   57},
-	{ "jziic",	JZ_SMB4_BASE,   56},
-	{ "jzfb",	-1,           -1},
-	{ NULL,		-1,           -1}
+	{ "dwctwo",	JZ_DWC2_BASE,   21, CLK_OTG0 | CLK_UHC, CLK_OTG1},
+	{ "ohci",	JZ_OHCI_BASE,    5, CLK_UHC, 0},
+	{ "ehci",	JZ_EHCI_BASE,   20, CLK_UHC, 0},
+	{ "dme",	JZ_DME_BASE,    -1, 0, 0},
+	{ "jzgpio",	JZ_GPIO_A_BASE, 17, 0, 0},
+	{ "jzgpio",	JZ_GPIO_B_BASE, 16, 0, 0},
+	{ "jzgpio",	JZ_GPIO_C_BASE, 15, 0, 0},
+	{ "jzgpio",	JZ_GPIO_D_BASE, 14, 0, 0},
+	{ "jzgpio",	JZ_GPIO_E_BASE, 13, 0, 0},
+	{ "jzgpio",	JZ_GPIO_F_BASE, 12, 0, 0},
+	{ "jziic",	JZ_SMB0_BASE,   60, CLK_SMB0, 0},
+	{ "jziic",	JZ_SMB1_BASE,   59, CLK_SMB1, 0},
+	{ "jziic",	JZ_SMB2_BASE,   58, CLK_SMB2, 0},
+	{ "jziic",	JZ_SMB3_BASE,   57, 0, CLK_SMB3},
+	{ "jziic",	JZ_SMB4_BASE,   56, 0, CLK_SMB4},
+	{ "jzfb",	JZ_LCDC0_BASE,  31, CLK_LCD, CLK_HDMI},
+	{ NULL,		-1,             -1, 0, 0}
 };
 
 void
@@ -144,19 +146,8 @@ apbus_attach(device_t parent, device_t self, void *aux)
 
 	/* enable clocks */
 	reg = readreg(JZ_CLKGR1);
-	reg &= ~(1 << 0);	/* SMB3 clock */
-	reg &= ~(1 << 8);	/* OTG1 clock */
-	reg &= ~(1 << 11);	/* AHB_MON clock */
-	reg &= ~(1 << 12);	/* SMB4 clock */
+	reg &= ~CLK_AHB_MON;	/* AHB_MON clock */
 	writereg(JZ_CLKGR1, reg);
-
-	reg = readreg(JZ_CLKGR0);
-	reg &= ~(1 << 2);	/* OTG0 clock */
-	reg &= ~(1 << 5);	/* SMB0 clock */
-	reg &= ~(1 << 6);	/* SMB1 clock */
-	reg &= ~(1 << 24);	/* UHC clock */
-	reg &= ~(1 << 25);	/* SMB2 clock */
-	writereg(JZ_CLKGR0, reg);
 
 	/* wake up the USB part */
 	reg = readreg(JZ_OPCR);
@@ -206,6 +197,19 @@ apbus_attach(device_t parent, device_t self, void *aux)
 		aa.aa_bst = apbus_memt;
 		aa.aa_pclk = pclk;
 
+		/* enable clocks as needed */
+		if (adv->clk0 != 0) {
+			reg = readreg(JZ_CLKGR0);
+			reg &= ~adv->clk0;
+			writereg(JZ_CLKGR0, reg);
+		}
+
+		if (adv->clk1 != 0) {
+			reg = readreg(JZ_CLKGR1);
+			reg &= ~adv->clk1;
+			writereg(JZ_CLKGR1, reg);
+		}
+	
 		(void) config_found_ia(self, "apbus", &aa, apbus_print);
 	}
 }
