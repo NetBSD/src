@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.51 2015/04/22 16:49:42 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.52 2015/04/22 17:38:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2010, 2015 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.51 2015/04/22 16:49:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.52 2015/04/22 17:38:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -96,7 +96,7 @@ static void
 doclock(void *noarg)
 {
 	struct timespec thetick, curclock;
-	struct clockframe frame;
+	struct clockframe *clkframe;
 	int64_t sec;
 	long nsec;
 	int error;
@@ -111,13 +111,13 @@ doclock(void *noarg)
 	thetick.tv_sec = 0;
 	thetick.tv_nsec = 1000000000/hz;
 
-	/* not used, so doesn't matter what we pass in */
-	memset(&frame, 0, sizeof(frame));
+	/* generate dummy clockframe for hardclock to consume */
+	clkframe = rump_cpu_makeclockframe();
 
 	for (;;) {
 		int lbolt_ticks = 0;
 
-		hardclock(&frame);
+		hardclock(clkframe);
 		if (CPU_IS_PRIMARY(ci)) {
 			if (++lbolt_ticks >= hz) {
 				lbolt_ticks = 0;

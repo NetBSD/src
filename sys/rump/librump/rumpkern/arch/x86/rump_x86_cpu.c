@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_x86_cpu.c,v 1.2 2014/03/15 15:15:27 pooka Exp $	*/
+/*	$NetBSD: rump_x86_cpu.c,v 1.3 2015/04/22 17:38:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,9 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu.c,v 1.2 2014/03/15 15:15:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_x86_cpu.c,v 1.3 2015/04/22 17:38:33 pooka Exp $");
 
 #include <sys/param.h>
+#include <sys/kmem.h>
 
 #include <machine/cpu.h>
 
@@ -79,4 +80,11 @@ wbinvd(void)
 	 * But, we Best not execute this since we're not Ring0 *.
 	 * Honestly, I don't know why it's required even in the kernel.
 	 */
+}
+
+struct clockframe *
+rump_cpu_makeclockframe(void)
+{
+
+	return kmem_zalloc(sizeof(struct clockframe), KM_SLEEP);
 }
