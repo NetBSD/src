@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.3 2015/04/21 17:39:50 ginsbach Exp $ */
+/* $NetBSD: t_strptime.c,v 1.4 2015/04/22 13:15:30 ginsbach Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.3 2015/04/21 17:39:50 ginsbach Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.4 2015/04/22 13:15:30 ginsbach Exp $");
 
 #include <time.h>
 
@@ -103,16 +103,6 @@ ATF_TC_BODY(common, tc)
 		21, 34, 5, 20, 4, 2, 105, 5, -1);
 	h_pass("Fri Mar  4 20:05:34 2005", "%c",
 		24, 34, 5, 20, 4, 2, 105, 5, -1);
-
-	h_pass("x20y", "x%Cy", 4, -1, -1, -1, -1, -1, 100, -1, -1);
-	h_pass("x84y", "x%yy", 4, -1, -1, -1, -1, -1, 84, -1, -1);
-	h_pass("x2084y", "x%C%yy", 6, -1, -1, -1, -1, -1, 184, -1, -1);
-	h_pass("x8420y", "x%y%Cy", 6, -1, -1, -1, -1, -1, 184, -1, -1);
-	h_pass("%20845", "%%%C%y5", 6, -1, -1, -1, -1, -1, 184, -1, -1);
-	h_fail("%", "%E%");
-
-	h_pass("1980", "%Y", 4, -1, -1, -1, -1, -1, 80, -1, -1);
-	h_pass("1980", "%EY", 4, -1, -1, -1, -1, -1, 80, -1, -1);
 }
 
 ATF_TC(day);
@@ -256,6 +246,29 @@ ATF_TC_BODY(seconds, tc)
 	h_fail("62", "%S");
 }
 
+ATF_TC(year);
+
+ATF_TC_HEAD(year, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+			  "Checks strptime(3) century/year conversions [CyY]");
+}
+
+ATF_TC_BODY(year, tc)
+{
+
+	h_pass("x20y", "x%Cy", 4, -1, -1, -1, -1, -1, 100, -1, -1);
+	h_pass("x84y", "x%yy", 4, -1, -1, -1, -1, -1, 84, -1, -1);
+	h_pass("x2084y", "x%C%yy", 6, -1, -1, -1, -1, -1, 184, -1, -1);
+	h_pass("x8420y", "x%y%Cy", 6, -1, -1, -1, -1, -1, 184, -1, -1);
+	h_pass("%20845", "%%%C%y5", 6, -1, -1, -1, -1, -1, 184, -1, -1);
+	h_fail("%", "%E%");
+
+	h_pass("1980", "%Y", 4, -1, -1, -1, -1, -1, 80, -1, -1);
+	h_pass("1980", "%EY", 4, -1, -1, -1, -1, -1, 80, -1, -1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -263,6 +276,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, day);
 	ATF_TP_ADD_TC(tp, month);
 	ATF_TP_ADD_TC(tp, seconds);
+	ATF_TP_ADD_TC(tp, year);
 
 	return atf_no_error();
 }
