@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.132 2015/04/22 16:42:24 pooka Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.133 2015/04/22 16:43:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,11 +69,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.132 2015/04/22 16:42:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.133 2015/04/22 16:43:11 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
 #include "opt_ntp.h"
 #include "opt_perfctrs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
