@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtoul.3,v 1.25 2009/12/02 12:50:27 pooka Exp $
+.\"	$NetBSD: strtoul.3,v 1.25.24.1 2015/04/22 07:18:58 snj Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,10 +33,11 @@
 .\"
 .\"     from: @(#)strtoul.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 2, 2009
+.Dd March 10, 2015
 .Dt STRTOUL 3
 .Os
 .Sh NAME
+.Nm strtou ,
 .Nm strtoul ,
 .Nm strtoull ,
 .Nm strtoumax ,
@@ -53,6 +54,8 @@
 .Fn strtoull "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Pp
 .In inttypes.h
+.Ft uintmax_t
+.Fn strtou "const char * restrict nptr" "char ** restrict endptr" "int base" "uintmax_t lo" "uintmax_t hi" "int *rstatus"
 .Ft uintmax_t
 .Fn strtoumax "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Pp
@@ -86,6 +89,26 @@ converts the string in
 to an
 .Ft uintmax_t
 value.
+.Fn strtou
+function
+uses internally
+.Fn strtoumax
+and ensures that the result is always in the range [
+.Fa lo ..
+.Fa hi
+].
+In adddition it always places
+.Dv 0
+on success or a conversion status in the
+.Fa rstatus
+argument, avoiding the
+.Dv errno
+gymnastics the other functions require.
+The
+.Fa rstatus
+argument can be
+.Dv NULL
+if conversion status is to be ignored.
 The
 .Fn strtouq
 function
@@ -157,6 +180,15 @@ is
 on return, the entire string was valid.)
 .Sh RETURN VALUES
 The
+.Fn strtou
+function
+always returns the closest value in the range specified by
+the
+.Fa lo
+and
+.Fa hi
+arguments.
+The
 .Fn strtoul
 function
 returns either the result of the conversion
@@ -201,6 +233,21 @@ is left unchanged.
 This behavior (which is unlike most library functions) is guaranteed
 by the pertinent standards.
 .Sh EXAMPLES
+The
+.Fn strtou
+function is the simplest to use:
+.Bd -literal -offset indent
+int e;
+uintmax_t lval = strtou(buf, NULL, 0, 1, 99, &e);
+if (e)
+	warnc(e, "conversion of `%s' to a number failed, using %ju",
+	    buf, lval);
+.Ed
+.Pp
+This will always return a number in
+.Dv [1..99]
+range no matter what the input is, and warn if the conversion failed.
+.Pp
 Because the return value of
 .Fn strtoul
 cannot be used unambiguously to detect an error,
@@ -243,7 +290,26 @@ is not between 2 and 36 and does not contain the special value 0.
 .It Bq Er ERANGE
 The given string was out of range; the value converted has been clamped.
 .El
+.Pp
+In addition to the above errors
+.Fn strtou
+returns:
+.Bl -tag -width Er
+.It Bq Er ECANCELED
+The string did not contain any characters that were converted.
+.It Bq Er ENOTSUP
+The string contained non-numeric characters that did not get converted.
+In this case,
+.Fa endptr
+points to the first unconverted character.
+.It Bq Er ERANGE
+The range given was invalid, i.e.
+.Fa lo
+\*[Gt]
+.Fa hi .
+.El
 .Sh SEE ALSO
+.Xr strtoi 3 ,
 .Xr strtoimax 3 ,
 .Xr strtol 3 ,
 .Xr strtoll 3
@@ -259,5 +325,9 @@ and
 .Fn strtoumax
 functions conform to
 .St -isoC-99 .
+The
+.Fn strtou
+function appeared in
+.Nx 8 .
 .Sh BUGS
 Ignores the current locale.

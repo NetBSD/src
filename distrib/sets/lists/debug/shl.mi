@@ -1,5 +1,5 @@
-# $NetBSD: shl.mi,v 1.71.2.9 2015/01/25 00:19:25 martin Exp $
-./usr/libdata/debug/lib/libc.so.12.193.debug		comp-sys-debug	debug
+# $NetBSD: shl.mi,v 1.71.2.10 2015/04/22 07:18:58 snj Exp $
+./usr/libdata/debug/lib/libc.so.12.193.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.4.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug	comp-sys-debug	debug
@@ -62,7 +62,7 @@
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libc++.so.1.0.debug		comp-sys-debug	debug,libcxx
-./usr/libdata/debug/usr/lib/libc.so.12.193.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libc.so.12.193.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcrypto.so.8.4.debug	comp-crypto-debug	crypto,debug

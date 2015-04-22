@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1906.2.4 2015/01/25 00:19:24 martin Exp $
+#	$NetBSD: mi,v 1.1906.2.5 2015/04/22 07:18:57 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9171,6 +9171,7 @@
 ./usr/share/man/cat3/strsvisx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtod.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtof.0			comp-c-catman		.cat
+./usr/share/man/cat3/strtoi.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoimax.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strtok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtok_r.0			comp-c-catman		.cat
@@ -9178,6 +9179,7 @@
 ./usr/share/man/cat3/strtold.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoq.0			comp-c-catman		.cat
+./usr/share/man/cat3/strtou.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoul.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoull.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoumax.0		comp-c-catman		.cat
@@ -15962,6 +15964,7 @@
 ./usr/share/man/html3/strsvisx.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtod.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtof.html		comp-c-htmlman		html
+./usr/share/man/html3/strtoi.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtoimax.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtok.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtok_r.html		comp-c-htmlman		html
@@ -15969,6 +15972,7 @@
 ./usr/share/man/html3/strtold.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtoll.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtoq.html		comp-c-htmlman		html
+./usr/share/man/html3/strtou.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtoul.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtoull.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtoumax.html		comp-c-htmlman		html
@@ -22789,6 +22793,7 @@
 ./usr/share/man/man3/strsvisx.3			comp-c-man		.man
 ./usr/share/man/man3/strtod.3			comp-c-man		.man
 ./usr/share/man/man3/strtof.3			comp-c-man		.man
+./usr/share/man/man3/strtoi.3			comp-c-man		.man
 ./usr/share/man/man3/strtoimax.3		comp-c-man		.man
 ./usr/share/man/man3/strtok.3			comp-c-man		.man
 ./usr/share/man/man3/strtok_r.3			comp-c-man		.man
@@ -22796,6 +22801,7 @@
 ./usr/share/man/man3/strtold.3			comp-c-man		.man
 ./usr/share/man/man3/strtoll.3			comp-c-man		.man
 ./usr/share/man/man3/strtoq.3			comp-c-man		.man
+./usr/share/man/man3/strtou.3			comp-c-man		.man
 ./usr/share/man/man3/strtoul.3			comp-c-man		.man
 ./usr/share/man/man3/strtoull.3			comp-c-man		.man
 ./usr/share/man/man3/strtoumax.3		comp-c-man		.man

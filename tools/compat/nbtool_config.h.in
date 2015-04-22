@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.35 2014/06/06 01:40:40 christos Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.35.2.1 2015/04/22 07:18:58 snj Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -491,8 +491,14 @@
 /* Define if you have the `strsuftoll' function. */
 #undef HAVE_STRSUFTOLL
 
+/* Define if you have the `strtoi' function. */
+#undef HAVE_STRTOI
+
 /* Define if you have the `strtoll' function. */
 #undef HAVE_STRTOLL
+
+/* Define if you have the `strtou' function. */
+#undef HAVE_STRTOU
 
 /* Define if `d_namlen' is member of `struct dirent'. */
 #undef HAVE_STRUCT_DIRENT_D_NAMLEN
