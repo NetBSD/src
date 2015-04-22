@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.265 2015/04/21 05:29:50 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.266 2015/04/22 07:32:08 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19879,4 +19879,38 @@ usr.sbin/service/service.8			1.1-1.4
 	Import a substantially modified service(8) command from FreeBSD
 	to manage rc.d scripts.
 	[ast, ticket #636]
+
+common/lib/libc/stdlib/_strtoi.h		1.1, 1.2
+common/lib/libc/stdlib/strtoi.c			1.1
+common/lib/libc/stdlib/strtou.c			1.1
+distrib/sets/lists/base/ad.aarch64		patch
+distrib/sets/lists/base/ad.arm			patch
+distrib/sets/lists/base/ad.mips			patch
+distrib/sets/lists/base/ad.powerpc		patch
+distrib/sets/lists/base/md.amd64		patch
+distrib/sets/lists/base/md.sparc64		patch
+distrib/sets/lists/base/shl.mi			patch
+distrib/sets/lists/comp/mi			1.1939
+distrib/sets/lists/debug/ad.aarch64		patch
+distrib/sets/lists/debug/ad.arm			patch
+distrib/sets/lists/debug/ad.mips		patch
+distrib/sets/lists/debug/ad.powerpc		patch
+distrib/sets/lists/debug/md.amd64		patch
+distrib/sets/lists/debug/md.sparc64		patch
+distrib/sets/lists/debug/shl.mi			patch
+include/inttypes.h				1.11
+lib/libc/shlib_version				patch
+lib/libc/stdlib/Makefile.inc			1.84
+lib/libc/stdlib/strtol.3			1.27-1.31
+lib/libc/stdlib/strtoul.3			1.26-1.29
+sys/lib/libkern/Makefile.libkern		1.37
+sys/lib/libkern/libkern.h			1.117
+tools/compat/Makefile				1.73
+tools/compat/compat_defs.h			1.101
+tools/compat/configure.ac			1.83
+tools/compat/configure				1.82
+tools/compat/nbtool_config.h.in			1.36
+
+	Add strtoi(3) and strtou(3).
+	[roy, ticket #648]
 
