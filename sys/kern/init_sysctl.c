@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.204 2014/08/03 09:15:21 apb Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.205 2015/04/22 16:42:24 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.204 2014/08/03 09:15:21 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.205 2015/04/22 16:42:24 pooka Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -105,7 +105,6 @@ static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
 static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
-static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
 static int sysctl_msgbuf(SYSCTLFN_PROTO);
 static int sysctl_kern_defcorename(SYSCTLFN_PROTO);
 static int sysctl_kern_cptime(SYSCTLFN_PROTO);
@@ -174,19 +173,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System host ID number"),
 		       sysctl_kern_hostid, 0, NULL, 0,
 		       CTL_KERN, KERN_HOSTID, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "clockrate",
-		       SYSCTL_DESCR("Kernel clock rates"),
-		       sysctl_kern_clockrate, 0, NULL,
-		       sizeof(struct clockinfo),
-		       CTL_KERN, KERN_CLOCKRATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "hardclock_ticks",
-		       SYSCTL_DESCR("Number of hardclock ticks"),
-		       NULL, 0, &hardclock_ticks, sizeof(hardclock_ticks),
-		       CTL_KERN, KERN_HARDCLOCK_TICKS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "vnode",
@@ -953,27 +939,6 @@ sysctl_kern_hostid(SYSCTLFN_ARGS)
 	hostid = (unsigned)inthostid;
 
 	return (0);
-}
-
-/*
- * sysctl helper routine for kern.clockrate. Assembles a struct on
- * the fly to be returned to the caller.
- */
-static int
-sysctl_kern_clockrate(SYSCTLFN_ARGS)
-{
-	struct clockinfo clkinfo;
-	struct sysctlnode node;
-
-	clkinfo.tick = tick;
-	clkinfo.tickadj = tickadj;
-	clkinfo.hz = hz;
-	clkinfo.profhz = profhz;
-	clkinfo.stathz = stathz ? stathz : hz;
-
-	node = *rnode;
-	node.sysctl_data = &clkinfo;
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
 /*
