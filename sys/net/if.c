@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.311 2015/04/21 10:39:41 pooka Exp $	*/
+/*	$NetBSD: if.c,v 1.312 2015/04/22 19:46:08 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.311 2015/04/21 10:39:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.312 2015/04/22 19:46:08 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1423,9 +1423,8 @@ void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
 	int s;
-#if defined(DEBUG) || defined(INET6)
 	int old_link_state;
-#endif
+	struct domain *dp;
 
 	s = splnet();
 	if (ifp->if_link_state == link_state) {
@@ -1433,9 +1432,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 		return;
 	}
 
-#if defined(DEBUG) || defined(INET6)
 	old_link_state = ifp->if_link_state;
-#endif
 	ifp->if_link_state = link_state;
 #ifdef DEBUG
 	log(LOG_DEBUG, "%s: link state %s (was %s)\n", ifp->if_xname,
@@ -1447,7 +1444,6 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 		"UNKNOWN");
 #endif
 
-#ifdef INET6
 	/*
 	 * When going from UNKNOWN to UP, we need to mark existing
 	 * IPv6 addresses as tentative and restart DAD as we may have
@@ -1457,10 +1453,15 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	 * listeners would have an address and expect it to work right
 	 * away.
 	 */
-	if (in6_present && link_state == LINK_STATE_UP &&
+	if (link_state == LINK_STATE_UP &&
 	    old_link_state == LINK_STATE_UNKNOWN)
-		in6_if_link_down(ifp);
-#endif
+	{
+		DOMAIN_FOREACH(dp) {
+			if (dp->dom_if_link_state_change != NULL)
+				dp->dom_if_link_state_change(ifp,
+				    LINK_STATE_DOWN);
+		}
+	}
 
 	/* Notify that the link state has changed. */
 	rt_ifmsg(ifp);
@@ -1470,14 +1471,10 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 		carp_carpdev_state(ifp);
 #endif
 
-#ifdef INET6
-	if (in6_present) {
-		if (link_state == LINK_STATE_DOWN)
-			in6_if_link_down(ifp);
-		else if (link_state == LINK_STATE_UP)
-			in6_if_link_up(ifp);
+	DOMAIN_FOREACH(dp) {
+		if (dp->dom_if_link_state_change != NULL)
+			dp->dom_if_link_state_change(ifp, link_state);
 	}
-#endif
 
 	splx(s);
 }
@@ -1543,6 +1540,7 @@ void
 if_down(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
+	struct domain *dp;
 
 	ifp->if_flags &= ~IFF_UP;
 	nanotime(&ifp->if_lastchange);
@@ -1554,10 +1552,10 @@ if_down(struct ifnet *ifp)
 		carp_carpdev_state(ifp);
 #endif
 	rt_ifmsg(ifp);
-#ifdef INET6
-	if (in6_present)
-		in6_if_down(ifp);
-#endif
+	DOMAIN_FOREACH(dp) {
+		if (dp->dom_if_down)
+			dp->dom_if_down(ifp);
+	}
 }
 
 /*
@@ -1571,6 +1569,7 @@ if_up(struct ifnet *ifp)
 #ifdef notyet
 	struct ifaddr *ifa;
 #endif
+	struct domain *dp;
 
 	ifp->if_flags |= IFF_UP;
 	nanotime(&ifp->if_lastchange);
@@ -1584,10 +1583,10 @@ if_up(struct ifnet *ifp)
 		carp_carpdev_state(ifp);
 #endif
 	rt_ifmsg(ifp);
-#ifdef INET6
-	if (in6_present)
-		in6_if_up(ifp);
-#endif
+	DOMAIN_FOREACH(dp) {
+		if (dp->dom_if_down)
+			dp->dom_if_down(ifp);
+	}
 }
 
 /*
@@ -2067,13 +2066,11 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
-#ifdef INET6
-		if (in6_present && (ifp->if_flags & IFF_UP) != 0) {
+		if ((ifp->if_flags & IFF_UP) != 0) {
 			int s = splnet();
-			in6_if_up(ifp);
+			if_up(ifp);
 			splx(s);
 		}
-#endif
 	}
 #ifdef COMPAT_OIFREQ
 	if (cmd != ocmd)
