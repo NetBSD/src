@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.105 2015/04/22 17:58:19 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.106 2015/04/22 18:12:39 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -13,7 +13,6 @@ NOLINT=		# kernel code
 # compile-time options may override this at a later date.
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 _RUMP_NATIVEABI= yes
-CPPFLAGS+=	-D_RUMP_NATIVE_ABI
 .else
 _RUMP_NATIVEABI= no
 CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
