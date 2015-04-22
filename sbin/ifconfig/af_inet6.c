@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.31 2015/01/20 22:13:19 roy Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.32 2015/04/22 17:42:22 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.31 2015/01/20 22:13:19 roy Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.32 2015/04/22 17:42:22 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -72,6 +72,7 @@ static int setia6vltime_impl(prop_dictionary_t, struct in6_aliasreq *);
 static int setia6lifetime(prop_dictionary_t, int64_t, time_t *, uint32_t *);
 
 static void in6_status(prop_dictionary_t, prop_dictionary_t, bool);
+static bool in6_addr_tentative(struct ifaddrs *ifa);
 
 static struct usage_func usage;
 static cmdloop_branch_t branch[2];
@@ -101,7 +102,8 @@ struct pkw inet6 = PKW_INITIALIZER(&inet6, "IPv6 keywords", NULL,
 
 static struct afswtch in6af = {
 	.af_name = "inet6", .af_af = AF_INET6, .af_status = in6_status,
-	.af_addr_commit = in6_commit_address
+	.af_addr_commit = in6_commit_address,
+	.af_addr_tentative = in6_addr_tentative
 };
 
 static int
@@ -472,6 +474,22 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 		, .pre_aifaddr = in6_pre_aifaddr
 	};
 	commit_address(env, oenv, &in6param);
+}
+
+static bool
+in6_addr_tentative(struct ifaddrs *ifa)
+{
+	int s;
+	struct in6_ifreq ifr;
+
+	if ((s = getsock(AF_INET6)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
+	memset(&ifr, 0, sizeof(ifr));
+	strncpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
+	ifr.ifr_addr = *(struct sockaddr_in6 *)ifa->ifa_addr;
+	if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr) == -1)
+		err(EXIT_FAILURE, "SIOCGIFAFLAG_IN6");
+	return ifr.ifr_ifru.ifru_flags6 & IN6_IFF_TENTATIVE ? true : false;
 }
 
 static void
