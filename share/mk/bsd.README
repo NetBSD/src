@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.339 2015/03/17 01:58:29 mrg Exp $
+#	$NetBSD: bsd.README,v 1.340 2015/04/22 19:43:45 pooka Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -423,8 +423,9 @@ MKYP		If "no", disables building of YP (NIS)
 
 MKZFS		If "no", do not build and install utilities and libraries
 		used to manage ZFS file system. Do not build zfs and solaris
-		compatibility kernel modules.
-		Default: yes on i386/amd64, no elsewhere.
+		compatibility kernel modules.  Note: ZFS requires 64bit
+		atomic operations.
+		Default: yes on amd64, no elsewhere.
 
 MKRUMP		If "no", do not build and install rump related headers,
 		libraries, and programs.
