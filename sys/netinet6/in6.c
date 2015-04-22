@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.187 2015/04/20 10:19:54 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.188 2015/04/22 19:46:08 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.187 2015/04/20 10:19:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.188 2015/04/22 19:46:08 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -2097,6 +2097,20 @@ in6_if_down(struct ifnet *ifp)
 {
 
 	in6_if_link_down(ifp);
+}
+
+void
+in6_if_link_state_change(struct ifnet *ifp, int link_state)
+{
+
+	switch (link_state) {
+	case LINK_STATE_DOWN:
+		in6_if_link_down(ifp);
+		break;
+	case LINK_STATE_UP:
+		in6_if_link_up(ifp);
+		break;
+	}
 }
 
 /*
