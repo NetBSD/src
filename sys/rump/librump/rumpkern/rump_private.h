@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.91 2015/04/18 15:49:18 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.92 2015/04/22 17:38:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -172,6 +172,8 @@ void	rump_user_schedule(int, void *);
 void	rump_user_unschedule(int, int *, void *);
 
 void	rump_cpu_attach(struct cpu_info *);
+
+struct clockframe *rump_cpu_makeclockframe(void);
 
 void	rump_kernel_bigwrap(int *);
 void	rump_kernel_bigunwrap(int);
