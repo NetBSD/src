@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.43 2014/12/02 01:59:16 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.44 2015/04/22 17:00:59 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -70,7 +70,7 @@ SRCS+= quota1_subr.c vfs_quotactl.c
 SRCS+=	firmload.c
 
 # compat syscalls
-SRCS+=	vfs_syscalls_50.c compat.c
+SRCS+=	vfs_syscalls_50.c rumpvfs_compat50.c
 
 SRCS+=	rumpvnode_if.c
 
