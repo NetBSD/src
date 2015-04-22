@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.328 2015/04/04 06:00:12 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.329 2015/04/22 07:27:09 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.328 2015/04/04 06:00:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.329 2015/04/22 07:27:09 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -113,6 +113,7 @@ MODULE(MODULE_CLASS_VFS, ffs, NULL);
 
 static int ffs_vfs_fsync(vnode_t *, int);
 static int ffs_superblock_validate(struct fs *);
+static int ffs_is_appleufs(struct vnode *, struct fs *);
 
 static int ffs_init_vnode(struct ufsmount *, struct vnode *, ino_t);
 static void ffs_deinit_vnode(struct ufsmount *, struct vnode *);
@@ -693,7 +694,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	void *space;
 	struct buf *bp;
 	struct fs *fs, *newfs;
-	struct dkwedge_info dkw;
 	int i, bsize, blks, error;
 	int32_t *lp, fs_sbsize;
 	struct ufsmount *ump;
@@ -776,41 +776,18 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	memcpy(fs, newfs, (u_int)fs_sbsize);
 	kmem_free(newfs, fs_sbsize);
 
-	/* Recheck for apple UFS filesystem */
-	ump->um_flags &= ~UFS_ISAPPLEUFS;
-	/* First check to see if this is tagged as an Apple UFS filesystem
-	 * in the disklabel
+	/*
+	 * Recheck for Apple UFS filesystem.
 	 */
-	if (getdiskinfo(devvp, &dkw) == 0 &&
-	    strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS) == 0)
-		ump->um_flags |= UFS_ISAPPLEUFS;
+	ump->um_flags &= ~UFS_ISAPPLEUFS;
+	if (ffs_is_appleufs(devvp, fs)) {
 #ifdef APPLE_UFS
-	else {
-		/* Manually look for an apple ufs label, and if a valid one
-		 * is found, then treat it like an Apple UFS filesystem anyway
-		 *
-		 * EINVAL is most probably a blocksize or alignment problem,
-		 * it is unlikely that this is an Apple UFS filesystem then.
-		 */
-		error = bread(devvp,
-		    (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
-		    APPLEUFS_LABEL_SIZE, 0, &bp);
-		if (error && error != EINVAL) {
-			return error;
-		}
-		if (error == 0) {
-			error = ffs_appleufs_validate(fs->fs_fsmnt,
-				(struct appleufslabel *)bp->b_data, NULL);
-			if (error == 0)
-				ump->um_flags |= UFS_ISAPPLEUFS;
-			brelse(bp, 0);
-		}
-		bp = NULL;
-	}
+		ump->um_flags |= UFS_ISAPPLEUFS;
 #else
-	if (ump->um_flags & UFS_ISAPPLEUFS)
-		return (EIO);
+		DPRINTF("AppleUFS not supported");
+		return (EIO); /* XXX: really? */
 #endif
+	}
 
 	if (UFS_MPISAPPLEUFS(ump)) {
 		/* see comment about NeXT below */
@@ -1006,6 +983,46 @@ ffs_superblock_validate(struct fs *fs)
 	return 1;
 }
 
+static int
+ffs_is_appleufs(struct vnode *devvp, struct fs *fs)
+{
+	struct dkwedge_info dkw;
+	int ret = 0;
+
+	/*
+	 * First check to see if this is tagged as an Apple UFS filesystem
+	 * in the disklabel.
+	 */
+	if (getdiskinfo(devvp, &dkw) == 0 &&
+	    strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS) == 0)
+		ret = 1;
+#ifdef APPLE_UFS
+	else {
+		struct appleufslabel *applefs;
+		struct buf *bp;
+		daddr_t blkno = APPLEUFS_LABEL_OFFSET / DEV_BSIZE;
+		int error;
+
+		/*
+		 * Manually look for an Apple UFS label, and if a valid one
+		 * is found, then treat it like an Apple UFS filesystem anyway.
+		 */
+		error = bread(devvp, blkno, APPLEUFS_LABEL_SIZE, 0, &bp);
+		if (error) {
+			DPRINTF("bread@0x%jx returned %d", (intmax_t)blkno, error);
+			return 0;
+		}
+		applefs = (struct appleufslabel *)bp->b_data;
+		error = ffs_appleufs_validate(fs->fs_fsmnt, applefs, NULL);
+		if (error == 0)
+			ret = 1;
+		brelse(bp, 0);
+	}
+#endif
+
+	return ret;
+}
+
 /*
  * Common code for mount and mountroot
  */
@@ -1016,7 +1033,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct buf *bp = NULL;
 	struct fs *fs = NULL;
 	dev_t dev;
-	struct dkwedge_info dkw;
 	void *space;
 	daddr_t sblockloc = 0;
 	int blks, fstype = 0;
@@ -1239,42 +1255,15 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		brelse(bp, 0);
 	bp = NULL;
 
-	/*
-	 * First check to see if this is tagged as an Apple UFS filesystem
-	 * in the disklabel
-	 */
-	if (getdiskinfo(devvp, &dkw) == 0 &&
-	    strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS) == 0)
-		ump->um_flags |= UFS_ISAPPLEUFS;
+	if (ffs_is_appleufs(devvp, fs)) {
 #ifdef APPLE_UFS
-	else {
-		/*
-		 * Manually look for an apple ufs label, and if a valid one
-		 * is found, then treat it like an Apple UFS filesystem anyway
-		 */
-		error = bread(devvp,
-		    (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
-		    APPLEUFS_LABEL_SIZE, 0, &bp);
-		if (error) {
-			DPRINTF("apple bread@0x%jx returned %d",
-			    (intmax_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
-			    error);
-			goto out;
-		}
-		error = ffs_appleufs_validate(fs->fs_fsmnt,
-		    (struct appleufslabel *)bp->b_data, NULL);
-		if (error == 0)
-			ump->um_flags |= UFS_ISAPPLEUFS;
-		brelse(bp, 0);
-		bp = NULL;
-	}
+		ump->um_flags |= UFS_ISAPPLEUFS;
 #else
-	if (ump->um_flags & UFS_ISAPPLEUFS) {
 		DPRINTF("AppleUFS not supported");
 		error = EINVAL;
 		goto out;
-	}
 #endif
+	}
 
 #if 0
 /*
