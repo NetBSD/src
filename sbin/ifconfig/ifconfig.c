@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.233 2014/09/12 08:54:26 martin Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.234 2015/04/22 17:42:22 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.233 2014/09/12 08:54:26 martin Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.234 2015/04/22 17:42:22 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -515,14 +515,12 @@ no_cmds_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 static int
 wait_dad_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-#ifdef INET6
 	bool waiting;
 	struct ifaddrs *ifaddrs, *ifa;
-	struct in6_ifreq ifr6;
-	int s;
 	const struct timespec ts = { .tv_sec = 0, .tv_nsec = WAIT_DAD };
 	const struct timespec add = { .tv_sec = wflag_secs, .tv_nsec = 0};
 	struct timespec now, end = { .tv_sec = wflag_secs, .tv_nsec = 0};
+	const struct afswtch *afp;
 
 	if (wflag_secs) {
 		if (clock_gettime(CLOCK_MONOTONIC, &now) == -1)
@@ -538,27 +536,13 @@ wait_dad_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 		for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
 			if (ifa->ifa_addr == NULL)
 				continue;
-			switch (ifa->ifa_addr->sa_family) {
-			case AF_INET6:
-				memset(&ifr6, 0, sizeof(ifr6));
-				strncpy(ifr6.ifr_name,
-				    ifa->ifa_name, sizeof(ifr6.ifr_name));
-				ifr6.ifr_addr =
-				    *(struct sockaddr_in6 *)ifa->ifa_addr;
-				if ((s = getsock(AF_INET6)) == -1)
-					err(EXIT_FAILURE,
-					    "%s: getsock", __func__);
-				if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) == -1)
-					err(EXIT_FAILURE, "SIOCGIFAFLAG_IN6");
-				if (ifr6.ifr_ifru.ifru_flags6 &
-				    IN6_IFF_TENTATIVE)
-				{
-					waiting = true;
-					break;
-				}
-			}
-			if (waiting)
+			afp = lookup_af_bynum(ifa->ifa_addr->sa_family);
+			if (afp && afp->af_addr_tentative &&
+			    afp->af_addr_tentative(ifa))
+			{
+				waiting = true;
 				break;
+			}
 		}
 		if (!waiting)
 			break;
@@ -572,7 +556,6 @@ wait_dad_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 	}
 
 	freeifaddrs(ifaddrs);
-#endif
 	exit(EXIT_SUCCESS);
 }
 
