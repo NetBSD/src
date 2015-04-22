@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.313 2015/04/22 20:42:32 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.314 2015/04/22 20:49:44 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.313 2015/04/22 20:42:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.314 2015/04/22 20:49:44 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1446,7 +1446,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 
 	/*
 	 * When going from UNKNOWN to UP, we need to mark existing
-	 * IPv6 addresses as tentative and restart DAD as we may have
+	 * addresses as tentative and restart DAD as we may have
 	 * erroneously not found a duplicate.
 	 *
 	 * This needs to happen before rt_ifmsg to avoid a race where
