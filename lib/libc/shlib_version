@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.254 2014/07/25 08:31:06 dholland Exp $
+#	$NetBSD: shlib_version,v 1.254.2.1 2015/04/22 07:18:58 snj Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -43,3 +43,4 @@
 # - remove arc4random(3) API
 major=12
 minor=193
+teeny=1

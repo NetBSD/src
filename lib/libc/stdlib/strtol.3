@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.26 2009/07/23 13:38:57 wiz Exp $
+.\"	$NetBSD: strtol.3,v 1.26.24.1 2015/04/22 07:18:58 snj Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,10 +33,11 @@
 .\"
 .\"     from: @(#)strtol.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 23, 2009
+.Dd March 10, 2015
 .Dt STRTOL 3
 .Os
 .Sh NAME
+.Nm strtoi ,
 .Nm strtol ,
 .Nm strtoll ,
 .Nm strtoimax ,
@@ -53,6 +54,8 @@
 .Fn strtoll "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Pp
 .In inttypes.h
+.Ft intmax_t
+.Fn strtoi "const char * restrict nptr" "char ** restrict endptr" "int base" "intmax_t lo" "intmax_t hi" "int *rstatus"
 .Ft intmax_t
 .Fn strtoimax "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Pp
@@ -86,6 +89,30 @@ converts the string in
 to an
 .Ft intmax_t
 value.
+The
+.Fn strtoi
+function
+uses internally
+.Fn strtoimax
+and ensures that the result is always in the range [
+.Fa lo ..
+.Fa hi
+].
+In adddition it always places
+.Dv 0
+on success or a conversion status in the
+.Fa rstatus
+argument, avoiding the
+.Dv errno
+gymnastics the other functions require.
+The
+.Fn strtoi
+function doesn't affect errno on exit.
+The
+.Fa rstatus
+argument can be
+.Dv NULL
+if conversion status is to be ignored.
 The
 .Fn strtoq
 function
@@ -156,6 +183,15 @@ is
 on return, the entire string was valid.)
 .Sh RETURN VALUES
 The
+.Fn strtoi
+function
+always returns the closest value in the range specified by
+the
+.Fa lo
+and
+.Fa hi
+arguments.
+The
 .Fn strtol
 function
 returns the result of the conversion,
@@ -200,6 +236,21 @@ is left unchanged.
 This behavior (which is unlike most library functions) is guaranteed
 by the pertinent standards.
 .Sh EXAMPLES
+The
+.Fn strtoi
+function is the simplest to use:
+.Bd -literal -offset indent
+int e;
+intmax_t lval = strtoi(buf, NULL, 0, 1, 99, &e);
+if (e)
+	warnc(e, "conversion of `%s' to a number failed, using %jd",
+	    buf, lval);
+.Ed
+.Pp
+This will always return a number in
+.Dv [1..99]
+range no matter what the input is, and warn if the conversion failed.
+.Pp
 Because the return value of
 .Fn strtol
 cannot be used unambiguously to detect an error,
@@ -269,12 +320,31 @@ is not between 2 and 36 and does not contain the special value 0.
 .It Bq Er ERANGE
 The given string was out of range; the value converted has been clamped.
 .El
+.Pp
+In addition to the above errors
+.Fn strtoi
+returns:
+.Bl -tag -width Er
+.It Bq Er ECANCELED
+The string did not contain any characters that were converted.
+.It Bq Er ENOTSUP
+The string contained non-numeric characters that did not get converted.
+In this case,
+.Fa endptr
+points to the first unconverted character.
+.It Bq Er ERANGE
+The range given was invalid, i.e.
+.Fa lo
+\*[Gt]
+.Fa hi .
+.El
 .Sh SEE ALSO
 .Xr atof 3 ,
 .Xr atoi 3 ,
 .Xr atol 3 ,
 .Xr atoll 3 ,
 .Xr strtod 3 ,
+.Xr strtou 3 ,
 .Xr strtoul 3 ,
 .Xr strtoull 3 ,
 .Xr strtoumax 3
@@ -290,5 +360,9 @@ and
 .Fn strtoimax
 functions conform to
 .St -isoC-99 .
+The
+.Fn strtoi
+function appeared in
+.Nx 8 .
 .Sh BUGS
 Ignores the current locale.

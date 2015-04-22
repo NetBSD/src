@@ -5047,7 +5047,7 @@ for ac_func in atoll asprintf asnprintf basename devname dirfd dirname \
 	pwrite raise_default_signal random setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
-	strndup strnlen strsep strsuftoll strtoll \
+	strndup strnlen strsep strsuftoll strtoi strtoll strtou \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`

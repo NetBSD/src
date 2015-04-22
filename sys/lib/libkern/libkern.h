@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.115 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: libkern.h,v 1.115.2.1 2015/04/22 07:18:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -403,6 +403,11 @@ long long strtoll(const char *, char **, int);
 unsigned long long strtoull(const char *, char **, int);
 intmax_t  strtoimax(const char *, char **, int);
 uintmax_t strtoumax(const char *, char **, int);
+intmax_t strtoi(const char * __restrict, char ** __restrict, int, intmax_t,
+    intmax_t, int *);
+uintmax_t strtou(const char * __restrict, char ** __restrict, int, uintmax_t,
+    uintmax_t, int *);
+
 int	 snprintb(char *, size_t, const char *, uint64_t);
 int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
