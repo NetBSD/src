@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.318 2015/04/17 13:02:54 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.319 2015/04/22 18:12:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.318 2015/04/17 13:02:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.319 2015/04/22 18:12:39 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -685,17 +685,6 @@ rump_getversion(void)
 }
 /* compat */
 __strong_alias(rump_pub_getversion,rump_getversion);
-
-int
-rump_nativeabi_p(void)
-{
-
-#ifdef _RUMP_NATIVE_ABI
-	return 1;
-#else
-	return 0;
-#endif
-}
 
 /*
  * Note: may be called unscheduled.  Not fully safe since no locking
