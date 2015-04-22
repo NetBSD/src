@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.312 2015/04/22 19:46:08 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.313 2015/04/22 20:42:32 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.312 2015/04/22 19:46:08 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.313 2015/04/22 20:42:32 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1584,8 +1584,8 @@ if_up(struct ifnet *ifp)
 #endif
 	rt_ifmsg(ifp);
 	DOMAIN_FOREACH(dp) {
-		if (dp->dom_if_down)
-			dp->dom_if_down(ifp);
+		if (dp->dom_if_up)
+			dp->dom_if_up(ifp);
 	}
 }
 
