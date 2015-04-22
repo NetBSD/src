@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.845 2015/04/08 06:03:09 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.846 2015/04/22 19:43:45 pooka Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -945,9 +945,9 @@ MKBINUTILS?=	${MKBFD}
 .endif
 
 #
-# We want to build zfs only for i386 and amd64 by default for now.
+# We want to build zfs only for amd64 by default for now.
 #
-.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
+.if ${MACHINE} == "amd64"
 MKZFS?=		yes
 .endif
 
