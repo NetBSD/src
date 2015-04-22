@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2014/03/13 02:02:30 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2015/04/22 17:57:49 pooka Exp $
 #
+
+.include <bsd.init.mk>
 
 .PATH:  ${.CURDIR}/../../../../kern					\
 	${.CURDIR}/../../../../compat/common
@@ -7,7 +9,10 @@
 LIB=	rumpkern_tty
 
 SRCS=	tty.c tty_bsdpty.c tty_conf.c tty_ptm.c tty_pty.c tty_tty.c tty_subr.c
+
+.if !empty(RUMP_COMPAT:M60)
 SRCS+=	tty_60.c
+.endif
 
 SRCS+=	tty_component.c
 
