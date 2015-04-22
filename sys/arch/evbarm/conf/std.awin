@@ -1,4 +1,4 @@
-#	$NetBSD: std.awin,v 1.6 2015/04/20 00:11:27 matt Exp $
+#	$NetBSD: std.awin,v 1.7 2015/04/22 23:04:16 matt Exp $
 #
 # standard NetBSD/evbarm for Allwinner based options
 
@@ -16,7 +16,7 @@ options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	ARM_HAS_VBAR
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-options 	TPIDRPRW_IS_CURLWP
+options 	TPIDRPRW_IS_CURCPU
 options 	KERNEL_BASE_EXT=0x80000000
 options 	FPU_VFP
 options 	GTTWSI_ALLWINNER
