@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2002/05/02 18:02:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2015/04/22 20:21:11 christos Exp $
 
 IMAGE=		sysinst.fs
-IMAGESIZE?=	1440k
+IMAGESIZE?=	2880k
 MAKEDEVTARGETS=	floppy
 USE_SYSINST=	yes
 MAKEFS_FLAGS=	-f 10
