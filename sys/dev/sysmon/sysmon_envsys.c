@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.130 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.131 2015/04/23 23:22:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.130 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.131 2015/04/23 23:22:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.130 2015/04/13 16:33:25 riastrad
 #include <sys/mutex.h>
 #include <sys/kmem.h>
 #include <sys/rndsource.h>
+#include <sys/module.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
@@ -101,17 +102,46 @@ static void sme_initial_refresh(void *);
 static uint32_t sme_get_max_value(struct sysmon_envsys *,
      bool (*)(const envsys_data_t*), bool);
 
+MODULE(MODULE_CLASS_MISC, sysmon_envsys, "sysmon,sysmon_taskq");
+
+static struct sysmon_opvec sysmon_envsys_opvec = {    
+        sysmonopen_envsys, sysmonclose_envsys, sysmonioctl_envsys,
+        NULL, NULL, NULL
+};
+
 /*
  * sysmon_envsys_init:
  *
  * 	+ Initialize global mutex, dictionary and the linked list.
  */
-void
+int
 sysmon_envsys_init(void)
 {
+	int error;
+
 	LIST_INIT(&sysmon_envsys_list);
 	mutex_init(&sme_global_mtx, MUTEX_DEFAULT, IPL_NONE);
 	sme_propd = prop_dictionary_create();
+
+	error = sysmon_attach_minor(SYSMON_MINOR_ENVSYS, &sysmon_envsys_opvec);
+
+	return error;
+}
+
+int
+sysmon_envsys_fini(void)
+{
+	int error;
+
+	if ( ! LIST_EMPTY(&sysmon_envsys_list))
+		error = EBUSY;
+	else
+		error = sysmon_attach_minor(SYSMON_MINOR_ENVSYS, NULL);
+
+	if (error == 0)
+		mutex_destroy(&sme_global_mtx);
+
+	return error;
 }
 
 /*
@@ -771,7 +801,6 @@ out:
 	 */
 	if (error == 0) {
 		nevent = 0;
-		sysmon_task_queue_init();
 
 		if (sme->sme_flags & SME_INIT_REFRESH) {
 			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
@@ -848,6 +877,7 @@ out2:
 		SLIST_REMOVE_HEAD(&sme_evdrv_list, evdrv_head);
 		kmem_free(evdv, sizeof(*evdv));
 	}
+printf("%s: finished, error %d\n", __func__, error);
 	if (!error)
 		return 0;
 
@@ -2034,3 +2064,26 @@ sysmon_envsys_refresh_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
 		rnd_add_uint32(&edata->rnd_src, edata->value_cur);
 	edata->value_prev = edata->value_cur;
 }
+
+static
+int
+sysmon_envsys_modcmd(modcmd_t cmd, void *arg)
+{
+        int ret;
+ 
+        switch (cmd) { 
+        case MODULE_CMD_INIT:
+                ret = sysmon_envsys_init();
+                break;
+ 
+        case MODULE_CMD_FINI:
+                ret = sysmon_envsys_fini();
+                break; 
+   
+        case MODULE_CMD_STAT:
+        default:
+                ret = ENOTTY;
+        }
+  
+        return ret; 
+} 
