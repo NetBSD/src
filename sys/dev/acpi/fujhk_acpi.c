@@ -1,4 +1,4 @@
-/*	$NetBSD: fujhk_acpi.c,v 1.3 2014/02/25 18:30:09 pooka Exp $ */
+/*	$NetBSD: fujhk_acpi.c,v 1.4 2015/04/23 23:23:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fujhk_acpi.c,v 1.3 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fujhk_acpi.c,v 1.4 2015/04/23 23:23:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -515,7 +515,7 @@ fujitsu_hk_eval_nary_integer(ACPI_HANDLE handle, const char *path, const
 	return AE_OK;
 }
 
-MODULE(MODULE_CLASS_DRIVER, fujhk, NULL);
+MODULE(MODULE_CLASS_DRIVER, fujhk, "sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"
