@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.53 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.54 2015/04/23 23:22:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,9 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.53 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.54 2015/04/23 23:22:03 pgoyette Exp $");
 
+#ifndef _LKM
 #include "opt_compat_netbsd.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
@@ -84,9 +87,12 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.53 2015/04/13 16:33:25 riastradh 
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/rndsource.h>
+#include <sys/module.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
+
+MODULE(MODULE_CLASS_MISC, sysmon_power, "sysmon");
 
 /*
  * Singly linked list for dictionaries to be stored/sent.
@@ -186,17 +192,24 @@ static int sysmon_power_daemon_task(struct power_event_dictionary *,
 				    void *, int);
 static void sysmon_power_destroy_dictionary(struct power_event_dictionary *);
 
+static struct sysmon_opvec sysmon_power_opvec = {
+	sysmonopen_power, sysmonclose_power, sysmonioctl_power,
+	sysmonread_power, sysmonpoll_power, sysmonkqfilter_power
+};
+
 #define	SYSMON_NEXT_EVENT(x)		(((x) + 1) % SYSMON_MAX_POWER_EVENTS)
 
 /*
  * sysmon_power_init:
  *
  * 	Initializes the mutexes and condition variables in the
- * 	boot process via init_main.c.
+ * 	boot process via module initialization process.
  */
-void
+int
 sysmon_power_init(void)
 {
+	int error;
+
 	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sysmon_power_event_queue_cv, "smpower");
 	selinit(&sysmon_power_event_queue_selinfo);
@@ -204,6 +217,29 @@ sysmon_power_init(void)
 	rnd_attach_source(&sysmon_rndsource, "system-power",
 			  RND_TYPE_POWER, RND_FLAG_DEFAULT);
 
+	error = sysmon_attach_minor(SYSMON_MINOR_POWER, &sysmon_power_opvec);
+
+	return error;
+}
+
+int
+sysmon_power_fini(void)
+{
+	int error;
+
+	if (sysmon_power_daemon != NULL)
+		error = EBUSY;
+	else
+		error = sysmon_attach_minor(SYSMON_MINOR_POWER, NULL);
+
+	if (error == 0) {
+		rnd_detach_source(&sysmon_rndsource);
+		seldestroy(&sysmon_power_event_queue_selinfo);
+		cv_destroy(&sysmon_power_event_queue_cv);
+		mutex_destroy(&sysmon_power_event_queue_mtx);
+	}
+
+	return error;
 }
 
 /*
@@ -1059,3 +1095,27 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 
 	}
 }
+
+static
+int   
+sysmon_power_modcmd(modcmd_t cmd, void *arg)
+{
+	int ret;
+ 
+	switch (cmd) { 
+	case MODULE_CMD_INIT:
+		ret = sysmon_power_init();
+		break;
+ 
+	case MODULE_CMD_FINI: 
+		ret = sysmon_power_fini();
+		break;
+ 
+	case MODULE_CMD_STAT:
+	default: 
+		ret = ENOTTY;
+	}
+
+	return ret;
+}
+
