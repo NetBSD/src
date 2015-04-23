@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1220 2015/04/17 18:50:36 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1221 2015/04/23 13:51:53 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -420,8 +420,8 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	4.5.4/4.8.4
-Current Vers:	4.8.4/4.9.2
+Version:	4.8.4
+Current Vers:	4.8.4/5.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
@@ -432,7 +432,6 @@ Location:	gnu/dist/gcc4
 Location:	external/gpl3/gcc.old/dist
 Location:	external/gpl3/gcc/dist
 Notes:
-As of April 2014, there are three versions of gcc in the NetBSD tree.
 In the long term, we expect that there will often be two versions,
 in the "gcc" and "gcc.old" directories.  Having two versions allows
 migration from one version of gcc to another to happen for one port
