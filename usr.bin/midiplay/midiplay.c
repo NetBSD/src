@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.29 2011/11/25 01:39:47 jmcneill Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.29.18.1 2015/04/23 07:03:49 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.29 2011/11/25 01:39:47 jmcneill Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.29.18.1 2015/04/23 07:03:49 snj Exp $");
 #endif
 
 
@@ -404,7 +404,7 @@ playdata(u_char *buf, u_int tot, const char *name)
 
 	/* verify that the requested midi unit exists */
 	info.device = unit;
-	if (ioctl(fd, SEQUENCER_INFO, &info) < 0)
+	if (play && ioctl(fd, SEQUENCER_INFO, &info) < 0)
 		err(1, "ioctl(SEQUENCER_INFO) failed");
 
 	end = buf + tot;
@@ -488,7 +488,9 @@ playdata(u_char *buf, u_int tot, const char *name)
 	 * in some cases by frobbing tempo and timebase more obscurely, but this
 	 * player is meant to be simple and clear.
 	 */
-	if ((divfmt & 0x80) == 0) {
+	if (!play)
+		/* do nothing */;
+	else if ((divfmt & 0x80) == 0) {
 		ticks |= divfmt << 8;
 		if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &(int){ticks}) < 0)
 			err(1, "SEQUENCER_TMR_TIMEBASE");
@@ -681,7 +683,7 @@ playdata(u_char *buf, u_int tot, const char *name)
 			tp->delta = getvar(tp);
 		Heapify(tracks, ntrks, 0);
 	}
-	if (ioctl(fd, SEQUENCER_SYNC, 0) < 0)
+	if (play && ioctl(fd, SEQUENCER_SYNC, 0) < 0)
 		err(1, "SEQUENCER_SYNC");
 
  ret:
