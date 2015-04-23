@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2015/04/22 17:57:49 pooka Exp $
+#	$NetBSD: Makefile,v 1.22 2015/04/23 07:56:03 pooka Exp $
 #
 
 .include <bsd.init.mk>
@@ -18,7 +18,6 @@ SRCS+=	rtsock_50.c uipc_syscalls_50.c
 .endif
 
 CPPFLAGS+=	-I${.CURDIR}/opt -I${.CURDIR}/../libnetinet/opt
-CPPFLAGS+=	-DCOMPAT_OIFREQ -DCOMPAT_OIFDATA
 
 .include "${.CURDIR}/../libnetinet/Makefile.inc"
 .include "${.CURDIR}/../libnetinet6/Makefile.inc"
