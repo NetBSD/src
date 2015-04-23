@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.158 2015/04/23 06:39:19 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.159 2015/04/23 14:49:26 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -150,7 +150,7 @@ SRCS+=	rijndael.c
 SRCS+=	cprng_fast.c
 
 # compat
-.if !empty(RUMP_COMPAT:M50)
+.if !empty(RUMP_NBCOMPAT:M50)
 SRCS+=	kern_select_50.c
 SRCS+=	kern_time_50.c
 SRCS+=	rndpseudo_50.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2015/04/22 17:57:49 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2015/04/23 14:49:26 pooka Exp $
 #
 
 .include <bsd.init.mk>
@@ -25,7 +25,7 @@ SRCS=   rf_acctrace.c rf_alloclist.c rf_aselect.c rf_callback.c		\
 
 SRCS+=	raidframe_component.c
 
-.if !empty(RUMP_COMPAT:M50)
+.if !empty(RUMP_NBCOMPAT:M50)
 SRCS+=	rf_compat50.c
 .endif
 
