@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.3.4.1 2014/12/24 00:05:19 riz Exp $	*/
+/*	$NetBSD: file.c,v 1.3.4.2 2015/04/23 18:53:01 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -510,7 +510,7 @@ isc_file_safecreate(const char *filename, FILE **fp) {
 }
 
 isc_result_t
-isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirname, char **basename)
+isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirnam, char **basenam)
 {
 	char *dir, *file, *slash;
 
@@ -539,8 +539,8 @@ isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirname, char **basename)
 		return (ISC_R_INVALIDFILE);
 	}
 
-	*dirname = dir;
-	*basename = file;
+	*dirnam = dir;
+	*basenam = file;
 
 	return (ISC_R_SUCCESS);
 }

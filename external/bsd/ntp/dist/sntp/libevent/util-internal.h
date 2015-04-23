@@ -1,4 +1,4 @@
-/*	$NetBSD: util-internal.h,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
+/*	$NetBSD: util-internal.h,v 1.1.1.1.6.2 2015/04/23 18:53:06 snj Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -394,7 +394,7 @@ void evutil_free_secure_rng_globals_(void);
 void evutil_free_globals_(void);
 
 #ifdef _WIN32
-HANDLE evutil_load_windows_system_library_(const TCHAR *library_name);
+HMODULE evutil_load_windows_system_library_(const TCHAR *library_name);
 #endif
 
 #ifndef EV_SIZE_FMT

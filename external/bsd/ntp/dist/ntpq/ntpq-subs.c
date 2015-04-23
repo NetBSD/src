@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.7.4.1 2014/12/24 00:05:22 riz Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.7.4.2 2015/04/23 18:53:03 snj Exp $	*/
 
 /*
  * ntpq-subs.c - subroutines which are called to perform ntpq commands.
@@ -332,8 +332,11 @@ typedef struct var_display_collection_tag {
 		l_fp		lfp;	/* NTP_LFP */
 	} v;				/* retrieved value */
 } vdc;
-#define VDC_INIT(a, b, c) { .tag = a, .display = b, .type = c }
-
+#if !defined(MISSING_C99_STRUCT_INIT)
+# define VDC_INIT(a, b, c) { .tag = a, .display = b, .type = c }
+#else
+# define VDC_INIT(a, b, c) { a, b, c }
+#endif
 /*
  * other local function prototypes
  */

@@ -404,6 +404,20 @@ in order to avoid accidental or malicious disruption in this mode,
 both the server and client should operate using symmetric-key or
 public-key authentication as described in
 .Sx Authentication Options .
+.It Ic mdnstries Ar number
+If we are participating in mDNS,
+after we have synched for the first time
+we attempt to register with the mDNS system.
+If that registration attempt fails,
+we try again at one minute intervals for up to
+.Ic mdnstries
+times.
+After all,
+.Ic ntpd
+may be starting before mDNS.
+The default value for
+.Ic mdnstries
+is 5.
 .El
 .Sh Authentication Support
 Authentication support allows the NTP client to verify that the
@@ -2606,7 +2620,9 @@ holds the names of the reference clock variables.
 .Cm freq Ar freq |
 .Cm huffpuff Ar huffpuff |
 .Cm panic Ar panic |
-.Cm step Ar srep |
+.Cm step Ar step |
+.Cm stepback Ar stepback |
+.Cm stepfwd Ar stepfwd |
 .Cm stepout Ar stepout
 .Oc
 .Xc
@@ -2666,6 +2682,19 @@ adjustments will never occur.
 Note: The kernel time discipline is
 disabled if the step threshold is set to zero or greater than the
 default.
+.It Cm stepback Ar stepback
+The argument is the step threshold for the backward direction,
+which by default is 0.128 s.
+It can
+be set to any positive number in seconds.
+If both the forward and backward step thresholds are set to zero, step
+adjustments will never occur.
+Note: The kernel time discipline is
+disabled if
+each direction of step threshold are either
+set to zero or greater than .5 second.
+.It Cm stepfwd Ar stepfwd
+As for stepback, but for the forward direction.
 .It Cm stepout Ar stepout
 The argument is the stepout timeout, which by default is 900 s.
 It can

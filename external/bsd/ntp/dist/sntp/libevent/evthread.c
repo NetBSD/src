@@ -1,4 +1,4 @@
-/*	$NetBSD: evthread.c,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
+/*	$NetBSD: evthread.c,v 1.1.1.1.6.2 2015/04/23 18:53:05 snj Exp $	*/
 
 /*
  * Copyright (c) 2008-2012 Niels Provos, Nick Mathewson
@@ -71,12 +71,25 @@ evthread_set_id_callback(unsigned long (*id_fn)(void))
 	evthread_id_fn_ = id_fn;
 }
 
+struct evthread_lock_callbacks *evthread_get_lock_callbacks()
+{
+	return evthread_lock_debugging_enabled_
+	    ? &original_lock_fns_ : &evthread_lock_fns_;
+}
+struct evthread_condition_callbacks *evthread_get_condition_callbacks()
+{
+	return evthread_lock_debugging_enabled_
+	    ? &original_cond_fns_ : &evthread_cond_fns_;
+}
+void evthreadimpl_disable_lock_debugging_(void)
+{
+	evthread_lock_debugging_enabled_ = 0;
+}
+
 int
 evthread_set_lock_callbacks(const struct evthread_lock_callbacks *cbs)
 {
-	struct evthread_lock_callbacks *target =
-	    evthread_lock_debugging_enabled_
-	    ? &original_lock_fns_ : &evthread_lock_fns_;
+	struct evthread_lock_callbacks *target = evthread_get_lock_callbacks();
 
 	if (!cbs) {
 		if (target->alloc)
@@ -111,9 +124,7 @@ evthread_set_lock_callbacks(const struct evthread_lock_callbacks *cbs)
 int
 evthread_set_condition_callbacks(const struct evthread_condition_callbacks *cbs)
 {
-	struct evthread_condition_callbacks *target =
-	    evthread_lock_debugging_enabled_
-	    ? &original_cond_fns_ : &evthread_cond_fns_;
+	struct evthread_condition_callbacks *target = evthread_get_condition_callbacks();
 
 	if (!cbs) {
 		if (target->alloc_condition)

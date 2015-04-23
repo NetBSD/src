@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.1.6.2 2015/04/23 18:53:06 snj Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -398,6 +398,12 @@ const char *event_base_get_method(const struct event_base *);
 EVENT2_EXPORT_SYMBOL
 const char **event_get_supported_methods(void);
 
+/** Query the current monotonic time from a the timer for a struct
+ * event_base.
+ */
+EVENT2_EXPORT_SYMBOL
+int event_gettime_monotonic(struct event_base *base, struct timeval *tp);
+
 /**
    @name event type flag
 
@@ -772,6 +778,10 @@ void event_set_fatal_callback(event_fatal_cb cb);
  */
 EVENT2_EXPORT_SYMBOL
 void event_enable_debug_logging(ev_uint32_t which);
+
+EVENT2_EXPORT_SYMBOL
+void
+event_disable_debug_mode(void);
 
 /**
   Associate a different event base with an event.

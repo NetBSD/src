@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.4.4.1 2014/12/24 00:05:21 riz Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.4.4.2 2015/04/23 18:53:02 snj Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -94,6 +94,7 @@ int	peer_free_count;		/* count of free structures */
  * value every time an association is mobilized.
  */
 static associd_t current_association_ID; /* association ID */
+static associd_t initial_association_ID; /* association ID */
 
 /*
  * Memory allocation watermarks.
@@ -149,6 +150,7 @@ init_peer(void)
 	do
 		current_association_ID = ntp_random() & ASSOCID_MAX;
 	while (!current_association_ID);
+	initial_association_ID = current_association_ID;
 }
 
 
@@ -1037,4 +1039,22 @@ findmanycastpeer(
 		}
 
 	return peer;
+}
+
+/* peer_cleanup - clean peer list prior to shutdown */
+void peer_cleanup(void)
+{
+        struct peer *peer;
+        associd_t assoc;
+
+        for (assoc = initial_association_ID; assoc != current_association_ID; assoc++) {
+            if (assoc != 0U) {
+                peer = findpeerbyassoc(assoc);
+                if (peer != NULL)
+                    unpeer(peer);
+            }
+        }
+        peer = findpeerbyassoc(current_association_ID);
+        if (peer != NULL)
+            unpeer(peer);
 }

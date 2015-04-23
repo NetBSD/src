@@ -1,4 +1,4 @@
-/*	$NetBSD: https-client.c,v 1.2.2.2 2014/12/24 00:05:26 riz Exp $	*/
+/*	$NetBSD: https-client.c,v 1.2.2.3 2015/04/23 18:53:06 snj Exp $	*/
 
 /*
   This is an example of how to hook up evhttp with bufferevent_ssl
@@ -98,7 +98,7 @@ static void
 syntax(void)
 {
 	fputs("Syntax:\n", stderr);
-	fputs("   https-client -url <https-url> [-data data-file.bin] [-ignore-cert]\n", stderr);
+	fputs("   https-client -url <https-url> [-data data-file.bin] [-ignore-cert] [-retries num]\n", stderr);
 	fputs("Example:\n", stderr);
 	fputs("   https-client -url https://ip.appspot.com/\n", stderr);
 
@@ -197,6 +197,7 @@ main(int argc, char **argv)
 	const char *scheme, *host, *path, *query;
 	char uri[256];
 	int port;
+	int retries = 0;
 
 	SSL_CTX *ssl_ctx;
 	SSL *ssl;
@@ -220,6 +221,12 @@ main(int argc, char **argv)
 		} else if (!strcmp("-data", argv[i])) {
 			if (i < argc - 1) {
 				data_file = argv[i + 1];
+			} else {
+				syntax();
+			}
+		} else if (!strcmp("-retries", argv[i])) {
+			if (i < argc - 1) {
+				retries = atoi(argv[i + 1]);
 			} else {
 				syntax();
 			}
@@ -348,8 +355,10 @@ main(int argc, char **argv)
 		die_openssl("SSL_new()");
 	}
 
+	#ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
 	// Set hostname for SNI extension
 	SSL_set_tlsext_host_name(ssl, host);
+	#endif
 
 	if (strcasecmp(scheme, "http") == 0) {
 		bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE);
@@ -373,6 +382,10 @@ main(int argc, char **argv)
 	if (evcon == NULL) {
 		fprintf(stderr, "evhttp_connection_base_bufferevent_new() failed\n");
 		return 1;
+	}
+
+	if (retries > 0) {
+		evhttp_connection_set_retries(evcon, retries);
 	}
 
 	// Fire off the request
@@ -404,7 +417,7 @@ main(int argc, char **argv)
 			evbuffer_add(output_buffer, buf, s);
 			bytes += s;
 		}
-		evutil_snprintf(buf, sizeof(buf)-1, "%lu", bytes);
+		evutil_snprintf(buf, sizeof(buf)-1, "%lu", (unsigned long)bytes);
 		evhttp_add_header(output_headers, "Content-Length", buf);
 		fclose(f);
 	}

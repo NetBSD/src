@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_leapsec.c,v 1.1.1.1.6.1 2014/12/24 00:05:21 riz Exp $	*/
+/*	$NetBSD: ntp_leapsec.c,v 1.1.1.1.6.2 2015/04/23 18:53:02 snj Exp $	*/
 
 /*
  * ntp_leapsec.c - leap second processing for NTPD
@@ -789,7 +789,7 @@ leapsec_add(
 	const vint64 * now64 ,
 	int            insert)
 {
-	vint64		ttime, stime;
+	vint64		ttime, starttime;
 	struct calendar	fts;
 	leap_info_t	li;
 
@@ -817,12 +817,12 @@ leapsec_add(
 	fts.hour     = 0;
 	fts.minute   = 0;
 	fts.second   = 0;
-	stime = ntpcal_date_to_ntp64(&fts);
+	starttime = ntpcal_date_to_ntp64(&fts);
 	fts.month++;
 	ttime = ntpcal_date_to_ntp64(&fts);
 
 	li.ttime = ttime;
-	li.stime = ttime.D_s.lo - stime.D_s.lo;
+	li.stime = ttime.D_s.lo - starttime.D_s.lo;
 	li.taiof = (pt->head.size ? pt->info[0].taiof : pt->head.base_tai)
 	         + (insert ? 1 : -1);
 	li.dynls = 1;
@@ -841,7 +841,7 @@ leapsec_raw(
 	int            taiof,
 	int            dynls)
 {
-	vint64		stime;
+	vint64		starttime;
 	struct calendar	fts;
 	leap_info_t	li;
 
@@ -858,9 +858,9 @@ leapsec_raw(
 		return FALSE;
 	}
 	fts.month--; /* was in range 1..12, no overflow here! */
-	stime    = ntpcal_date_to_ntp64(&fts);
+	starttime    = ntpcal_date_to_ntp64(&fts);
 	li.ttime = *ttime;
-	li.stime = ttime->D_s.lo - stime.D_s.lo;
+	li.stime = ttime->D_s.lo - starttime.D_s.lo;
 	li.taiof = (int16_t)taiof;
 	li.dynls = (dynls != 0);
 	return add_range(pt, &li);
@@ -922,7 +922,8 @@ do_leap_hash(
 	/* now do the byte twiddle */
 	for (wi=0; wi < 5; ++wi)
 		for (di=3; di >= 0; --di) {
-			mac->hv[wi*4 + di] = (unsigned char)tmp[wi];
+			mac->hv[wi*4 + di] =
+				(unsigned char)(tmp[wi] & 0x0FF);
 			tmp[wi] >>= 8;
 		}
 	return TRUE;

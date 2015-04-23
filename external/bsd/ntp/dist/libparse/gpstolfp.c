@@ -1,4 +1,4 @@
-/*	$NetBSD: gpstolfp.c,v 1.1.1.2.4.1 2014/12/24 00:05:20 riz Exp $	*/
+/*	$NetBSD: gpstolfp.c,v 1.1.1.2.4.2 2015/04/23 18:53:02 snj Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libntp/gpstolfp.c,v 4.8 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -36,25 +36,24 @@
  */
 #include <config.h>
 #include "ntp_fp.h"
-
-#define GPSORIGIN	2524953600UL	/* NTP origin - GPS origin in seconds */
-#define SECSPERWEEK	(unsigned)(604800)	/* seconds per week - GPS tells us about weeks */
-#define GPSWRAP		990	/* assume week count less than this in the previous epoch */
+#include "ntp_calendar.h"
+#include "parse.h"
 
 void
 gpstolfp(
-	 int weeks,
+	 int sweeks,
 	 int days,
 	 unsigned long  seconds,
 	 l_fp * lfp
 	 )
 {
+  unsigned int weeks = sweeks;
   if (weeks < GPSWRAP)
     {
-      weeks += 1024;
+      weeks += GPSWEEKS;
     }
 
-  lfp->l_ui = weeks * SECSPERWEEK + days * 86400 + seconds + GPSORIGIN; /* convert to NTP time */
+  lfp->l_ui = (uint32_t)(weeks * SECSPERWEEK + days * SECSPERDAY + seconds + GPSORIGIN); /* convert to NTP time */
   lfp->l_uf = 0;
 }
 

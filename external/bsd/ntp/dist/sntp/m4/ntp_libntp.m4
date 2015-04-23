@@ -78,6 +78,12 @@ esac
 
 AC_CHECK_FUNCS([getclock stime timegm strlcpy strlcat])
 
+# Bug 2713
+LDADD_LIBUTIL=
+AC_SUBST([LDADD_LIBUTIL])
+HMS_SEARCH_LIBS([LDADD_LIBUTIL], [snprintb], [util],
+		[AC_DEFINE([USE_SNPRINTB], 1, [OK to use snprintb()?])])
+
 dnl  HP-UX 11.31 on HPPA has a net/if.h that can't be compiled with gcc4
 dnl  due to an incomplete type (a union) mpinfou used in an array.  gcc3
 dnl  compiles it without complaint.  The mpinfou union is defined later
@@ -872,13 +878,13 @@ AC_CACHE_CHECK(
     [for SIGIO],
     [ntp_cv_hdr_def_sigio],
     [AC_PREPROC_IFELSE(
-	[
+	[AC_LANG_SOURCE([
 	    #include <signal.h>
 
 	    #ifndef SIGIO
 	    # error
 	    #endif
-	],
+	])],
 	[ntp_cv_hdr_def_sigio=yes],
 	[ntp_cv_hdr_def_sigio=no]
     )]
@@ -941,13 +947,13 @@ AC_CACHE_CHECK(
     [for SIGPOLL],
     [ntp_cv_hdr_def_sigpoll],
     [AC_PREPROC_IFELSE(
-	[
+	[AC_LANG_SOURCE([
 	    #include <signal.h>
 	    
 	    #ifndef SIGPOLL
 	    # error
 	    #endif
-	],
+	])],
 	[ntp_cv_hdr_def_sigpoll=yes],
 	[ntp_cv_hdr_def_sigpoll=no]
     )]
