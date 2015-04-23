@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1485.2.7 2015/04/21 05:22:58 snj Exp $
+# $NetBSD: mi,v 1.1485.2.8 2015/04/23 19:38:11 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2326,6 +2326,7 @@
 ./usr/share/man/cat8/bootptest.0		man-bootserver-catman	.cat
 ./usr/share/man/cat8/bootselect.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bounce.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/bozohttpd.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/brconfig.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/btattach.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/btconfig.0			man-sysutil-catman	.cat
@@ -5248,6 +5249,7 @@
 ./usr/share/man/html8/bootpgw.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/bootptest.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/bounce.html		man-postfix-htmlman	postfix,html
+./usr/share/man/html8/bozohttpd.html		man-netutil-htmlman	html
 ./usr/share/man/html8/brconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html8/btattach.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/btconfig.html		man-sysutil-htmlman	html
@@ -8204,6 +8206,7 @@
 ./usr/share/man/man8/bootptest.8		man-bootserver-man	.man
 ./usr/share/man/man8/bootselect.8		man-obsolete		obsolete
 ./usr/share/man/man8/bounce.8			man-postfix-man		postfix,.man
+./usr/share/man/man8/bozohttpd.8		man-netutil-man		.man
 ./usr/share/man/man8/brconfig.8			man-netutil-man		.man
 ./usr/share/man/man8/btattach.8			man-sysutil-man		.man
 ./usr/share/man/man8/btconfig.8			man-sysutil-man		.man
