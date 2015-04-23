@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.11 2011/07/31 16:18:54 jmcneill Exp $ */
+/*	$NetBSD: smsc.c,v 1.12 2015/04/23 23:23:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.11 2011/07/31 16:18:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.12 2015/04/23 23:23:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ smsc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, smsc, NULL);
+MODULE(MODULE_CLASS_DRIVER, smsc, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

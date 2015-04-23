@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.15 2015/04/18 22:56:52 pgoyette Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.16 2015/04/23 23:23:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.15 2015/04/18 22:56:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.16 2015/04/23 23:23:01 pgoyette Exp $");
 
 /*
  *
@@ -69,11 +69,9 @@ bool	swwdog_reboot = false;	/* false --> panic , true  --> reboot */
 static struct workqueue *wq;
 static device_t		swwdog_dev;
 
-MODULE(MODULE_CLASS_DRIVER, swwdog, NULL);
+MODULE(MODULE_CLASS_DRIVER, swwdog, "sysmon_wdog");
 
-#ifdef _LKM
 CFDRIVER_DECL(swwdog, DV_DULL, NULL);
-#endif
 
 int swwdogattach(int);
 
@@ -305,7 +303,6 @@ static
 int
 swwdog_init(void *arg)
 {
-#ifdef _LKM
 	/*
 	 * Merge the driver info into the kernel tables and attach the
 	 * pseudo-device
@@ -325,10 +322,6 @@ swwdog_init(void *arg)
 	}
 
 	return error;
-#else
-
-	return 0;
-#endif
 }
 
 static
@@ -344,12 +337,10 @@ swwdog_fini(void *arg)
 		aprint_error("%s: error detaching cfattach: %d\n",
 		    swwdog_cd.cd_name, error);
 
-#ifdef _LKM
 	error = config_cfdriver_detach(&swwdog_cd);
 	if (error)
 		aprint_error("%s: error detaching cfdriver: %d\n",
 		    swwdog_cd.cd_name, error);
-#endif
 
         return error;
 }

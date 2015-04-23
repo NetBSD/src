@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.10 2014/07/25 07:12:55 ozaki-r Exp $ */
+/* $NetBSD: vmt.c,v 1.11 2015/04/23 23:23:00 pgoyette Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -1300,7 +1300,7 @@ vm_rpc_send_rpci_tx(struct vmt_softc *sc, const char *fmt, ...)
  * match the register values to the various constants in this file.
  */
 
-MODULE(MODULE_CLASS_DRIVER, vmt, NULL);
+MODULE(MODULE_CLASS_DRIVER, vmt, "sysmon_power,sysmon_taskq");
 
 #ifdef _MODULE
 #include "ioconf.c"

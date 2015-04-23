@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.24 2015/03/07 14:16:51 jmcneill Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.25 2015/04/23 23:23:00 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.24 2015/03/07 14:16:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.25 2015/04/23 23:23:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,7 +553,7 @@ sdtemp_pmf_resume(device_t dev, const pmf_qual_t *qual)
 	return (error == 0);
 }
 
-MODULE(MODULE_CLASS_DRIVER, sdtemp, "i2cexec");
+MODULE(MODULE_CLASS_DRIVER, sdtemp, "i2cexec,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"
