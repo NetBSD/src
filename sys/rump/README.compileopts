@@ -1,4 +1,4 @@
-	$NetBSD: README.compileopts,v 1.7 2015/04/23 14:39:03 pooka Exp $
+	$NetBSD: README.compileopts,v 1.8 2015/04/23 14:49:26 pooka Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
@@ -77,13 +77,13 @@ effect: Control how curlwp is obtained in a rump kernel.  This is
 	register    - use a dedicated register (implies -ffixed)
 
 
-    RUMP_COMPAT
+    RUMP_NBCOMPAT
 
 values: either a comma-separated list of releases (e.g. 50,60), or "all"
 defval:	two previous NetBSD releases; check Makefile.rump
-effect:	Builds COMPAT_nn code for each of the elements in the list.
-	This is only useful when building rump kernels for NetBSD
-	userspace.
+effect:	Builds NetBSD COMPAT_nn code for each of the elements in the list.
+	This option is useful only when building rump kernels for
+	NetBSD userspace, and an empty value may be supplied elsewhere.
 
 
 ================================================================================
