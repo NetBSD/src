@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.145 2015/04/18 10:52:44 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.146 2015/04/23 23:22:27 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -89,6 +89,11 @@ SUBDIR+=	securelevel
 SUBDIR+=	skipjack
 SUBDIR+=	smbfs
 SUBDIR+=	spdmem
+SUBDIR+=	sysmon
+SUBDIR+=	sysmon_envsys
+SUBDIR+=	sysmon_power
+SUBDIR+=	sysmon_taskq
+SUBDIR+=	sysmon_wdog
 SUBDIR+=	sysvbfs
 SUBDIR+=	suser
 SUBDIR+=	swcrypto
