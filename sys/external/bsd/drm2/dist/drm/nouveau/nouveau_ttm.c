@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_ttm.c,v 1.2.4.1 2015/03/06 21:39:08 snj Exp $	*/
+/*	$NetBSD: nouveau_ttm.c,v 1.2.4.2 2015/04/23 07:31:17 snj Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Tungsten Graphics, Inc., Cedar Park, TX., USA,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.2.4.1 2015/03/06 21:39:08 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.2.4.2 2015/04/23 07:31:17 snj Exp $");
 
 #include <subdev/fb.h>
 #include <subdev/vm.h>
@@ -443,6 +443,11 @@ nouveau_ttm_init(struct nouveau_drm *drm)
 	drm->ttm.mtrr = arch_phys_wc_add(nv_device_resource_start(device, 1),
 					 nv_device_resource_len(device, 1));
 
+#ifdef __NetBSD__
+	pmap_pv_track(nv_device_resource_start(device, 1),
+	    nv_device_resource_len(device, 1));
+#endif
+
 	/* GART init */
 	if (drm->agp.stat != ENABLED) {
 		drm->gem.gart_available = nouveau_vmmgr(drm->device)->limit;
@@ -476,4 +481,9 @@ nouveau_ttm_fini(struct nouveau_drm *drm)
 
 	arch_phys_wc_del(drm->ttm.mtrr);
 	drm->ttm.mtrr = 0;
+
+#ifdef __NetBSD__
+	pmap_pv_untrack(nv_device_resource_start(nv_device(drm->device), 1),
+	    nv_device_resource_len(nv_device(drm->device), 1));
+#endif
 }

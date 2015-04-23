@@ -1021,6 +1021,7 @@ static int ttm_bo_move_buffer(struct ttm_buffer_object *bo,
 	mem.num_pages = bo->num_pages;
 	mem.size = mem.num_pages << PAGE_SHIFT;
 	mem.page_alignment = bo->mem.page_alignment;
+	mem.bus.is_iomem = false;
 	mem.bus.io_reserved_vm = false;
 	mem.bus.io_reserved_count = 0;
 	/*
@@ -1611,17 +1612,28 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 
 #ifdef __NetBSD__
 	if (bo->mem.bus.is_iomem) {
-		/*
-		 * XXX OOPS!  NetBSD doesn't have a way to enumerate
-		 * and remove the virtual mappings for device addresses
-		 * or of a uvm object.
-		 */
+		paddr_t start, end, pa;
+
+		KASSERTMSG((bo->mem.bus.base & (PAGE_SIZE - 1)) == 0,
+		    "bo bus base addr not page-aligned: %lx",
+		    bo->mem.bus.base);
+		KASSERTMSG((bo->mem.bus.offset & (PAGE_SIZE - 1)) == 0,
+		    "bo bus offset not page-aligned: %lx",
+		    bo->mem.bus.offset);
+		start = bo->mem.bus.base + bo->mem.bus.offset;
+		KASSERT((bo->mem.bus.size & (PAGE_SIZE - 1)) == 0);
+		end = start + bo->mem.bus.size;
+
+		for (pa = start; pa < end; pa += PAGE_SIZE)
+			pmap_pv_protect(pa, VM_PROT_NONE);
 	} else if (bo->ttm != NULL) {
 		unsigned i;
 
+		mutex_enter(bo->uvmobj.vmobjlock);
 		for (i = 0; i < bo->ttm->num_pages; i++)
 			pmap_page_protect(&bo->ttm->pages[i]->p_vmp,
 			    VM_PROT_NONE);
+		mutex_exit(bo->uvmobj.vmobjlock);
 	}
 #else
 	drm_vma_node_unmap(&bo->vma_node, bdev->dev_mapping);

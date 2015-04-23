@@ -2121,32 +2121,19 @@ i915_gem_release_mmap(struct drm_i915_gem_object *obj)
 
 #ifdef __NetBSD__		/* XXX gem gtt fault */
 	{
-		struct vm_page *page;
+		struct drm_device *const dev = obj->base.dev;
+		struct drm_i915_private *const dev_priv = dev->dev_private;
+		const paddr_t start = dev_priv->gtt.mappable_base +
+		    i915_gem_obj_ggtt_offset(obj);
+		const size_t size = obj->base.size;
+		const paddr_t end = start + size;
+		paddr_t pa;
 
-		mutex_enter(obj->base.gemo_shm_uao->vmobjlock);
-		KASSERT(obj->pages != NULL);
-		/* Force a fresh fault for each page.  */
-		/*
-		 * XXX OOPS!  This doesn't actually do what we want.
-		 * This causes a fresh fault for access to the backing
-		 * pages -- but nothing accesses the backing pages
-		 * directly!  What is actually entered into CPU page
-		 * table entries is aperture addresses which have been
-		 * programmed by the GTT to refer to those backing
-		 * pages.
-		 *
-		 * We need to clear those page table entries, but
-		 * there's no good way to do that at the moment: nobody
-		 * records for us a map from either uvm objects or
-		 * physical device addresses to a list of all virtual
-		 * pages where they have been mapped.  pmap(9) records
-		 * a map only from physical RAM addresses to virtual
-		 * pages; it does nothing for physical device
-		 * addresses.
-		 */
-		TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue)
-			pmap_page_protect(page, VM_PROT_NONE);
-		mutex_exit(obj->base.gemo_shm_uao->vmobjlock);
+		KASSERT((start & (PAGE_SIZE - 1)) == 0);
+		KASSERT((size & (PAGE_SIZE - 1)) == 0);
+
+		for (pa = start; pa < end; pa += PAGE_SIZE)
+			pmap_pv_protect(pa, VM_PROT_NONE);
 	}
 #else
 	drm_vma_node_unmap(&obj->base.vma_node,

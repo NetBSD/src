@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.4.2.3 2015/03/06 21:39:10 snj Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.4.2.4 2015/04/23 07:31:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -124,9 +124,8 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 
 #define	DRM_SPIN_WAIT_ON(RET, Q, INTERLOCK, TICKS, CONDITION)	do	      \
 {									      \
-	extern int hardclock_ticks;					      \
-	const int _dswo_start = hardclock_ticks;			      \
-	const int _dswo_end = _dswo_start + (TICKS);			      \
+	unsigned _dswo_ticks = (TICKS);					      \
+	unsigned _dswo_start, _dswo_end;				      \
 									      \
 	KASSERT(spin_is_locked((INTERLOCK)));				      \
 	KASSERT(!cpu_intr_p());						      \
@@ -138,16 +137,22 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 			(RET) = 0;					      \
 			break;						      \
 		}							      \
-		const int _dswo_now = hardclock_ticks;			      \
-		if (_dswo_end < _dswo_now) {				      \
+		if (_dswo_ticks == 0) {					      \
 			(RET) = -EBUSY;		/* Match Linux...  */	      \
 			break;						      \
 		}							      \
+		_dswo_start = hardclock_ticks;				      \
 		/* XXX errno NetBSD->Linux */				      \
 		(RET) = -cv_timedwait_sig((Q), &(INTERLOCK)->sl_lock, 1);     \
+		_dswo_end = hardclock_ticks;				      \
+		if (_dswo_end - _dswo_start < _dswo_ticks)		      \
+			_dswo_ticks -= _dswo_end - _dswo_start;		      \
+		else							      \
+			_dswo_ticks = 0;				      \
 		if (RET) {						      \
 			if ((RET) == -EWOULDBLOCK)			      \
-				(RET) = (CONDITION) ? 0 : -EBUSY;	      \
+				/* Waited only one tick.  */		      \
+				continue;				      \
 			break;						      \
 		}							      \
 	}								      \
@@ -211,31 +216,34 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 
 #define	_DRM_TIMED_WAIT_UNTIL(RET, WAIT, Q, INTERLOCK, TICKS, CONDITION) do \
 {									\
-	extern int hardclock_ticks;					\
-	const int _dtwu_start = hardclock_ticks;			\
-	int _dtwu_ticks = (TICKS);					\
+	unsigned _dtwu_ticks = (TICKS);					\
+	unsigned _dtwu_start, _dtwu_end;				\
+									\
 	KASSERT(mutex_is_locked((INTERLOCK)));				\
 	ASSERT_SLEEPABLE();						\
 	KASSERT(!cold);							\
+									\
 	for (;;) {							\
 		if (CONDITION) {					\
-			(RET) = _dtwu_ticks;				\
+			(RET) = MAX(_dtwu_ticks, 1);			\
 			break;						\
 		}							\
+		if (_dtwu_ticks == 0) {					\
+			(RET) = 0;					\
+			break;						\
+		}							\
+		_dtwu_start = hardclock_ticks;				\
 		/* XXX errno NetBSD->Linux */				\
 		(RET) = -WAIT((Q), &(INTERLOCK)->mtx_lock,		\
-		    _dtwu_ticks);					\
+		    MIN(_dtwu_ticks, INT_MAX/2));			\
+		_dtwu_end = hardclock_ticks;				\
+		if ((_dtwu_end - _dtwu_start) < _dtwu_ticks)		\
+			_dtwu_ticks -= _dtwu_end - _dtwu_start;		\
+		else							\
+			_dtwu_ticks = 0;				\
 		if (RET) {						\
 			if ((RET) == -EWOULDBLOCK)			\
 				(RET) = (CONDITION) ? 1 : 0;		\
-			break;						\
-		}							\
-		const int _dtwu_now = hardclock_ticks;			\
-		KASSERT(_dtwu_start <= _dtwu_now);			\
-		if ((_dtwu_now - _dtwu_start) < _dtwu_ticks) {		\
-			_dtwu_ticks -= (_dtwu_now - _dtwu_start);	\
-		} else {						\
-			(RET) = (CONDITION) ? 1 : 0;			\
 			break;						\
 		}							\
 	}								\
@@ -278,32 +286,35 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 #define	_DRM_SPIN_TIMED_WAIT_UNTIL(RET, WAIT, Q, INTERLOCK, TICKS, CONDITION) \
 	do								\
 {									\
-	extern int hardclock_ticks;					\
-	const int _dstwu_start = hardclock_ticks;			\
-	int _dstwu_ticks = (TICKS);					\
+	unsigned _dstwu_ticks = (TICKS);				\
+	unsigned _dstwu_start, _dstwu_end;				\
+									\
 	KASSERT(spin_is_locked((INTERLOCK)));				\
 	KASSERT(!cpu_intr_p());						\
 	KASSERT(!cpu_softintr_p());					\
 	KASSERT(!cold);							\
+									\
 	for (;;) {							\
 		if (CONDITION) {					\
-			(RET) = _dstwu_ticks;				\
+			(RET) = MAX(_dstwu_ticks, 1);			\
 			break;						\
 		}							\
+		if (_dstwu_ticks == 0) {				\
+			(RET) = 0;					\
+			break;						\
+		}							\
+		_dstwu_start = hardclock_ticks;				\
 		/* XXX errno NetBSD->Linux */				\
 		(RET) = -WAIT((Q), &(INTERLOCK)->sl_lock,		\
-		    _dstwu_ticks);					\
+		    MIN(_dstwu_ticks, INT_MAX/2));			\
+		_dstwu_end = hardclock_ticks;				\
+		if ((_dstwu_end - _dstwu_start) < _dstwu_ticks)		\
+			_dstwu_ticks -= _dstwu_end - _dstwu_start;	\
+		else							\
+			_dstwu_ticks = 0;				\
 		if (RET) {						\
 			if ((RET) == -EWOULDBLOCK)			\
 				(RET) = (CONDITION) ? 1 : 0;		\
-			break;						\
-		}							\
-		const int _dstwu_now = hardclock_ticks;			\
-		KASSERT(_dstwu_start <= _dstwu_now);			\
-		if ((_dstwu_now - _dstwu_start) < _dstwu_ticks) {	\
-			_dstwu_ticks -= (_dstwu_now - _dstwu_start);	\
-		} else {						\
-			(RET) = (CONDITION) ? 1 : 0;			\
 			break;						\
 		}							\
 	}								\

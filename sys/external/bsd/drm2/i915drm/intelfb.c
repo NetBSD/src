@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.9.4.2 2015/03/06 21:39:10 snj Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.9.4.3 2015/04/23 07:31:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.9.4.2 2015/03/06 21:39:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.9.4.3 2015/04/23 07:31:17 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -180,7 +180,7 @@ intelfb_attach_task(struct i915drmkms_task *task)
 		return;
 	}
 
-	if (pmf_device_register1(sc->sc_dev, NULL, NULL, &intelfb_shutdown))
+	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, &intelfb_shutdown))
 		aprint_error_dev(sc->sc_dev,
 		    "failed to register shutdown handler\n");
 

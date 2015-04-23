@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveaufb.c,v 1.1.2.2 2015/03/06 21:39:11 snj Exp $	*/
+/*	$NetBSD: nouveaufb.c,v 1.1.2.3 2015/04/23 07:31:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.1.2.2 2015/03/06 21:39:11 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.1.2.3 2015/04/23 07:31:17 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -158,7 +158,7 @@ nouveaufb_attach_task(struct nouveau_task *task)
 		return;
 	}
 
-	if (pmf_device_register1(sc->sc_dev, NULL, NULL, &nouveaufb_shutdown))
+	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, &nouveaufb_shutdown))
 		aprint_error_dev(sc->sc_dev,
 		    "failed to register shutdown handler\n");
 

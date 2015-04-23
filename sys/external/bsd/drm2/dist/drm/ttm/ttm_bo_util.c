@@ -524,8 +524,13 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 	INIT_LIST_HEAD(&fbo->swap);
 	INIT_LIST_HEAD(&fbo->io_reserve_lru);
 #ifdef __NetBSD__
+	linux_mutex_init(&fbo->wu_mutex);
 	drm_vma_node_init(&fbo->vma_node);
+	uvm_obj_init(&fbo->uvmobj, bdev->driver->ttm_uvm_ops, true, 1);
+	mutex_obj_hold(bo->uvmobj.vmobjlock);
+	uvm_obj_setlock(&fbo->uvmobj, bo->uvmobj.vmobjlock);
 #else
+	mutex_init(&fbo->wu_mutex);
 	drm_vma_node_reset(&fbo->vma_node);
 #endif
 	atomic_set(&fbo->cpu_writers, 0);
