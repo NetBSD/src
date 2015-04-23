@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp $
+#	$NetBSD: makerumpif.sh,v 1.9 2015/04/23 10:50:00 pooka Exp $
 #
-# Copyright (c) 2009 Antti Kantee.  All rights reserved.
+# Copyright (c) 2009, 2015 Antti Kantee.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -78,9 +78,9 @@ sed -e '
 ' ${1} | awk -F\| -v topdir=${TOPDIR} '
 function fileheaders(file, srcstr)
 {
-	printf("/*\t$NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp $\t*/\n\n") > file
+	printf("/*\t$NetBSD: makerumpif.sh,v 1.9 2015/04/23 10:50:00 pooka Exp $\t*/\n\n") > file
 	printf("/*\n * Automatically generated.  DO NOT EDIT.\n") > file
-	genstr = "$NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp $"
+	genstr = "$NetBSD: makerumpif.sh,v 1.9 2015/04/23 10:50:00 pooka Exp $"
 	gsub("\\$", "", genstr)
 	printf(" * from: %s\n", srcstr) > file
 	printf(" * by:   %s\n", genstr) > file
@@ -113,13 +113,17 @@ $1 == "WRAPPERS"{gencalls = topdir "/" $2;print gencalls;next}
 	if (NF != 3 && NF != 4) {
 		die("error: unexpected number of fields\n")
 	}
+	isweak = 0
+	iscompat = 0
 	if (NF == 4) {
-		if ($4 == "WEAK")
+		if ($4 == "WEAK") {
 			isweak = 1
-		else
+		} else if (match($4, "COMPAT_")) {
+			iscompat = 1
+			compat = $4
+		} else {
 			die("error: unexpected fourth field");
-	} else {
-		isweak = 0
+		}
 	}
 	if (!myname)
 		die("name not specified");
@@ -184,7 +188,12 @@ $1 == "WRAPPERS"{gencalls = topdir "/" $2;print gencalls;next}
 	else
 		voidarg = 0
 
-	printf("\n%s\nrump_pub_%s(", funtype, funname) > gencalls
+	printf("\n") > gencalls
+	if (iscompat) {
+		printf("#ifdef %s\n", compat) > gencalls
+	}
+
+	printf("%s\nrump_pub_%s(", funtype, funname) > gencalls
 	if (!voidarg) {
 		narg = split(funargs, argv, ",")
 		for (i = 1; i <= narg; i++) {
@@ -218,6 +227,12 @@ $1 == "WRAPPERS"{gencalls = topdir "/" $2;print gencalls;next}
 	if (!voidret)
 		printf("\n\treturn rv;\n") > gencalls
 	printf("}\n") > gencalls
+	if (iscompat) {
+		printf("#else\n") > gencalls
+		printf("__strong_alias(rump_pub_%s,rump_%s_unavailable);\n", \
+		    funname, myname) > gencalls
+		printf("#endif /* %s */\n", compat) > gencalls
+	}
 	if (isweak)
 		printf("__weak_alias(rump_%s,rump_%s_unavailable);\n", \
 		    funname, myname) > gencalls
