@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.266 2015/04/22 07:32:08 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.267 2015/04/23 07:36:24 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -19913,4 +19913,36 @@ tools/compat/nbtool_config.h.in			1.36
 
 	Add strtoi(3) and strtou(3).
 	[roy, ticket #648]
+
+usr.bin/midiplay/midiplay.c			1.30
+
+	midiplay: fix -q mode.
+	[mrg, ticket #717]
+
+sys/arch/x86/include/pmap.h			1.56
+sys/arch/x86/x86/pmap.c				1.188
+sys/dev/pci/agp_amd64.c				1.8
+sys/dev/pci/agp_i810.c				1.118
+sys/external/bsd/drm2/dist/drm/i915/i915_dma.c	1.16
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.29
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_agp.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_ttm.c 1.4
+sys/external/bsd/drm2/dist/drm/radeon/atombios_crtc.c 1.3
+sys/external/bsd/drm2/dist/drm/radeon/radeon_agp.c 1.3
+sys/external/bsd/drm2/dist/drm/radeon/radeon_display.c 1.3
+sys/external/bsd/drm2/dist/drm/radeon/radeon_legacy_crtc.c 1.2
+sys/external/bsd/drm2/dist/drm/radeon/radeon_object.c 1.3
+sys/external/bsd/drm2/dist/drm/radeon/radeon_ttm.c 1.7
+sys/external/bsd/drm2/dist/drm/ttm/ttm_bo.c	1.7-1.10
+sys/external/bsd/drm2/dist/drm/ttm/ttm_bo_util.c 1.5
+sys/external/bsd/drm2/i915drm/intelfb.c		1.13
+sys/external/bsd/drm2/include/drm/drm_wait_netbsd.h 1.12, 1.13
+sys/external/bsd/drm2/include/linux/mm.h	1.5
+sys/external/bsd/drm2/include/linux/pci.h	1.16, 1.17
+sys/external/bsd/drm2/nouveau/nouveaufb.c	1.2
+sys/external/bsd/drm2/radeon/radeon_pci.c	1.8, 1.9
+sys/uvm/uvm_init.c				1.46
+
+	sync drm2 with HEAD, fixing rendering issues and crashes.
+	[mrg, ticket #718]
 
