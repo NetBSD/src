@@ -1,4 +1,4 @@
-# $NetBSD: t_swsensor.sh,v 1.8 2015/02/27 09:16:07 martin Exp $
+# $NetBSD: t_swsensor.sh,v 1.9 2015/04/23 23:23:28 pgoyette Exp $
 
 get_sensor_info() {
 	rump.envstat -x | \
@@ -6,7 +6,13 @@ get_sensor_info() {
 }
 
 get_sensor_key() {
-	get_sensor_info | grep -A1 $1 | grep integer | sed -e 's;<[/a-z]*>;;g'
+	local v
+	v=$(get_sensor_info | grep -A1 $1 | grep integer | \
+	    sed -e 's;<[/a-z]*>;;g')
+	if [ -z "$v" ] ; then
+		v="key_$1_not_found"
+	fi
+	echo $v
 }
 
 get_powerd_event_count() {
