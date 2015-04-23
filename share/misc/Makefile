@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2015/04/21 22:40:37 christos Exp $
+#	$NetBSD: Makefile,v 1.38 2015/04/23 02:01:12 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 FILES=	NetBSD.el acronyms acronyms-o acronyms.comp airport ascii \
@@ -19,6 +19,7 @@ TYPE=	real
 TYPE=	fake
 .endif
 CLEANFILES+=acronyms-o
+FILESBUILD_acronyms-o=yes
 
 # According to iana@ISI.EDU, the URL below is the authoritative list
 # distributed by the ISO 3166 Maintenance Agency.
