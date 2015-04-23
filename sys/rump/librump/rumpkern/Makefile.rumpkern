@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.157 2015/04/22 17:57:49 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.158 2015/04/23 06:39:19 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -38,9 +38,6 @@ RUMPOBJ_NORENAME= rump_syscalls.o rump_syscalls.pico rump_syscalls.po
 .ifdef RUMP_KERNEL_IS_LIBC
 CPPFLAGS+= -DRUMP_KERNEL_IS_LIBC
 .endif
-
-# optional hypervisor interfaces
-#SRCS+=	hyperstubs.c
 
 # Multiprocessor or uniprocessor locking.  TODO: select right
 # locking at runtime.
