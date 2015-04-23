@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.12 2014/04/25 17:50:28 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.13 2015/04/23 10:51:20 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.9 2014/04/25 13:10:42 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.10 2015/04/23 10:50:29 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.9 2015/04/23 10:50:00 pooka Exp 
  */
 
 #include <sys/cdefs.h>
@@ -303,6 +303,7 @@ rump_pub_syspuffs_glueinit(int arg1, int *arg2)
 }
 __weak_alias(rump_syspuffs_glueinit,rump_vfs_unavailable);
 
+#ifdef COMPAT_50
 void
 rump_pub_vattr50_to_vattr(const struct vattr *arg1, struct vattr *arg2)
 {
@@ -311,7 +312,11 @@ rump_pub_vattr50_to_vattr(const struct vattr *arg1, struct vattr *arg2)
 	rump_vattr50_to_vattr(arg1, arg2);
 	rump_unschedule();
 }
+#else
+__strong_alias(rump_pub_vattr50_to_vattr,rump_vfs_unavailable);
+#endif /* COMPAT_50 */
 
+#ifdef COMPAT_50
 void
 rump_pub_vattr_to_vattr50(const struct vattr *arg1, struct vattr *arg2)
 {
@@ -320,3 +325,6 @@ rump_pub_vattr_to_vattr50(const struct vattr *arg1, struct vattr *arg2)
 	rump_vattr_to_vattr50(arg1, arg2);
 	rump_unschedule();
 }
+#else
+__strong_alias(rump_pub_vattr_to_vattr50,rump_vfs_unavailable);
+#endif /* COMPAT_50 */
