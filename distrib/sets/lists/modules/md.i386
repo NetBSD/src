@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.59 2015/04/18 10:54:59 pgoyette Exp $
+# $NetBSD: md.i386,v 1.60 2015/04/23 23:22:39 pgoyette Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -531,6 +531,16 @@
 ./stand/i386-xen/@OSRELEASE@/modules/swwdog/swwdog.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/syscallemu				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/syscallemu/syscallemu.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysmon				base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysmon/sysmon.kmod			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysmon_envsys			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysmon_envsys/sysmon_envsys.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysmon_power			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysmon_power/sysmon_power.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysmon_taskq			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysmon_taskq/sysmon_taskq.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysmon_wdog			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysmon_wdog/sysmon_wdog.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/sysvbfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/tdfxdrm				base-kernel-modules	kmod,compatmodules
@@ -940,6 +950,16 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/swsensor/swsensor.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/syscallemu			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/syscallemu/syscallemu.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysmon				base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysmon/sysmon.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_envsys			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_envsys/sysmon_envsys.kmod base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_power			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_power/sysmon_power.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_taskq			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_taskq/sysmon_taskq.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_wdog			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_wdog/sysmon_wdog.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/sysvbfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/tdfxdrm				base-kernel-modules	kmod,compatmodules
