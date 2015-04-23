@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.183.2.1 2014/10/14 07:37:37 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.183.2.2 2015/04/23 07:31:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.1 2014/10/14 07:37:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.2 2015/04/23 07:31:16 snj Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -191,6 +191,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.1 2014/10/14 07:37:37 martin Exp $"
 #include <sys/intr.h>
 #include <sys/xcall.h>
 #include <sys/kcore.h>
+#include <sys/kmem.h>
+#include <sys/pserialize.h>
 
 #include <uvm/uvm.h>
 
@@ -248,8 +250,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.1 2014/10/14 07:37:37 martin Exp $"
  * data structures we use include:
  *
  *  - struct pmap: describes the address space of one thread
+ *  - struct pmap_page: describes one pv-tracked page, without
+ *	necessarily a corresponding vm_page
  *  - struct pv_entry: describes one <PMAP,VA> mapping of a PA
- *  - struct pv_head: there is one pv_head per managed page of
+ *  - struct pv_head: there is one pv_head per pv-tracked page of
  *	physical memory.   the pv_head points to a list of pv_entry
  *	structures which describe all the <PMAP,VA> pairs that this
  *      page is mapped in.    this is critical for page based operations
@@ -303,7 +307,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.1 2014/10/14 07:37:37 martin Exp $"
  *
  * - pvh_lock (per pv_head)
  *   this lock protects the pv_entry list which is chained off the
- *   pv_head structure for a specific managed PA.   it is locked
+ *   pv_head structure for a specific pv-tracked PA.   it is locked
  *   when traversing the list (e.g. adding/removing mappings,
  *   syncing R/M bits, etc.)
  *
@@ -456,6 +460,120 @@ pvhash_remove(struct pv_hash_head *hh, struct vm_page *ptp, vaddr_t va)
 		prev = pve;
 	}
 	return pve;
+}
+
+/*
+ * unmanaged pv-tracked ranges
+ *
+ * This is a linear list for now because the only user are the DRM
+ * graphics drivers, with a single tracked range per device, for the
+ * graphics aperture, so there are expected to be few of them.
+ *
+ * This is used only after the VM system is initialized well enough
+ * that we can use kmem_alloc.
+ */
+
+struct pv_track {
+	paddr_t			pvt_start;
+	psize_t			pvt_size;
+	struct pv_track		*pvt_next;
+	struct pmap_page	pvt_pages[];
+};
+
+static struct {
+	kmutex_t	lock;
+	pserialize_t	psz;
+	struct pv_track	*list;
+} pv_unmanaged __cacheline_aligned;
+
+void
+pmap_pv_init(void)
+{
+
+	mutex_init(&pv_unmanaged.lock, MUTEX_DEFAULT, IPL_VM);
+	pv_unmanaged.psz = pserialize_create();
+	pv_unmanaged.list = NULL;
+}
+
+void
+pmap_pv_track(paddr_t start, psize_t size)
+{
+	struct pv_track *pvt;
+	size_t npages;
+
+	KASSERT(start == trunc_page(start));
+	KASSERT(size == trunc_page(size));
+
+	npages = size >> PAGE_SHIFT;
+	pvt = kmem_zalloc(offsetof(struct pv_track, pvt_pages[npages]),
+	    KM_SLEEP);
+	pvt->pvt_start = start;
+	pvt->pvt_size = size;
+
+	mutex_enter(&pv_unmanaged.lock);
+	pvt->pvt_next = pv_unmanaged.list;
+	membar_producer();
+	pv_unmanaged.list = pvt;
+	mutex_exit(&pv_unmanaged.lock);
+}
+
+void
+pmap_pv_untrack(paddr_t start, psize_t size)
+{
+	struct pv_track **pvtp, *pvt;
+	size_t npages;
+
+	KASSERT(start == trunc_page(start));
+	KASSERT(size == trunc_page(size));
+
+	mutex_enter(&pv_unmanaged.lock);
+	for (pvtp = &pv_unmanaged.list;
+	     (pvt = *pvtp) != NULL;
+	     pvtp = &pvt->pvt_next) {
+		if (pvt->pvt_start != start)
+			continue;
+		if (pvt->pvt_size != size)
+			panic("pmap_pv_untrack: pv-tracking at 0x%"PRIxPADDR
+			    ": 0x%"PRIxPSIZE" bytes, not 0x%"PRIxPSIZE" bytes",
+			    pvt->pvt_start, pvt->pvt_size, size);
+		*pvtp = pvt->pvt_next;
+		pserialize_perform(pv_unmanaged.psz);
+		pvt->pvt_next = NULL;
+		goto out;
+	}
+	panic("pmap_pv_untrack: pages not pv-tracked at 0x%"PRIxPADDR
+	    " (0x%"PRIxPSIZE" bytes)",
+	    start, size);
+out:	mutex_exit(&pv_unmanaged.lock);
+
+	npages = size >> PAGE_SHIFT;
+	kmem_free(pvt, offsetof(struct pv_track, pvt_pages[npages]));
+}
+
+static struct pmap_page *
+pmap_pv_tracked(paddr_t pa)
+{
+	struct pv_track *pvt;
+	size_t pgno;
+	int s;
+
+	KASSERT(pa == trunc_page(pa));
+
+	s = pserialize_read_enter();
+	for (pvt = pv_unmanaged.list; pvt != NULL; pvt = pvt->pvt_next) {
+		membar_datadep_consumer();
+		if ((pvt->pvt_start <= pa) &&
+		    ((pa - pvt->pvt_start) < pvt->pvt_size))
+			break;
+	}
+	pserialize_read_exit(s);
+
+	if (pvt == NULL)
+		return NULL;
+	KASSERT(pvt->pvt_start <= pa);
+	KASSERT((pa - pvt->pvt_start) < pvt->pvt_size);
+	pgno = (pa - pvt->pvt_start) >> PAGE_SHIFT;
+	return &pvt->pvt_pages[pgno];
 }
 
 /*
@@ -3300,27 +3418,30 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	 */
 	if ((opte & PG_PVLIST) == 0) {
 #if defined(DIAGNOSTIC) && !defined(DOM0OPS)
-		if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL)
-			panic("pmap_remove_pte: managed page without "
-			      "PG_PVLIST for %#" PRIxVADDR, va);
+		if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL ||
+		    pmap_pv_tracked(pmap_pte2pa(opte)) != NULL)
+			panic("pmap_remove_pte: managed or pv-tracked page"
+			    " without PG_PVLIST for %#"PRIxVADDR, va);
 #endif
 		return true;
 	}
 
-	pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte));
-
-	KASSERTMSG(pg != NULL, "pmap_remove_pte: unmanaged page marked "
-	    "PG_PVLIST, va = %#" PRIxVADDR ", pa = %#" PRIxPADDR,
-	    va, (paddr_t)pmap_pte2pa(opte));
-
-	KASSERT(uvm_page_locked_p(pg));
+	if ((pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte))) != NULL) {
+		KASSERT(uvm_page_locked_p(pg));
+		pp = VM_PAGE_TO_PP(pg);
+	} else if ((pp = pmap_pv_tracked(pmap_pte2pa(opte))) == NULL) {
+		paddr_t pa = pmap_pte2pa(opte);
+		panic("pmap_remove_pte: PG_PVLIST with pv-untracked page"
+		    " va = 0x%"PRIxVADDR
+		    " pa = 0x%"PRIxPADDR" (0x%"PRIxPADDR")",
+		    va, pa, atop(pa));
+	}
 
 	/* Sync R/M bits. */
-	pp = VM_PAGE_TO_PP(pg);
 	pp->pp_attrs |= opte;
 	pve = pmap_remove_pv(pp, ptp, va);
 
-	if (pve) { 
+	if (pve) {
 		pve->pve_next = *pv_tofree;
 		*pv_tofree = pve;
 	}
@@ -3545,26 +3666,16 @@ pmap_sync_pv(struct pv_pte *pvpte, pt_entry_t expect, int clearbits,
 	return 0;
 }
 
-/*
- * pmap_page_remove: remove a managed vm_page from all pmaps that map it
- *
- * => R/M bits are sync'd back to attrs
- */
-
-void
-pmap_page_remove(struct vm_page *pg)
+static void
+pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 {
-	struct pmap_page *pp;
 	struct pv_pte *pvpte;
 	struct pv_entry *killlist = NULL;
 	struct vm_page *ptp;
 	pt_entry_t expect;
 	int count;
 
-	KASSERT(uvm_page_locked_p(pg));
-
-	pp = VM_PAGE_TO_PP(pg);
-	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
+	expect = pmap_pa2pte(pa) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
 	kpreempt_disable();
 startover:
@@ -3637,6 +3748,42 @@ startover:
 }
 
 /*
+ * pmap_page_remove: remove a managed vm_page from all pmaps that map it
+ *
+ * => R/M bits are sync'd back to attrs
+ */
+
+void
+pmap_page_remove(struct vm_page *pg)
+{
+	struct pmap_page *pp;
+	paddr_t pa;
+
+	KASSERT(uvm_page_locked_p(pg));
+
+	pp = VM_PAGE_TO_PP(pg);
+	pa = VM_PAGE_TO_PHYS(pg);
+	pmap_pp_remove(pp, pa);
+}
+
+/*
+ * pmap_pv_remove: remove an unmanaged pv-tracked page from all pmaps
+ *	that map it
+ */
+
+void
+pmap_pv_remove(paddr_t pa)
+{
+	struct pmap_page *pp;
+
+	pp = pmap_pv_tracked(pa);
+	if (pp == NULL)
+		panic("pmap_pv_protect: page not pv-tracked: 0x%"PRIxPADDR,
+		    pa);
+	pmap_pp_remove(pp, pa);
+}
+
+/*
  * p m a p   a t t r i b u t e  f u n c t i o n s
  * functions that test/change managed page's attributes
  * since a page can be mapped multiple times we must check each PTE that
@@ -3686,25 +3833,15 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	return result != 0;
 }
 
-/*
- * pmap_clear_attrs: clear the specified attribute for a page.
- *
- * => we return true if we cleared one of the bits we were asked to
- */
-
-bool
-pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
+static bool
+pmap_pp_clear_attrs(struct pmap_page *pp, paddr_t pa, unsigned clearbits)
 {
-	struct pmap_page *pp;
 	struct pv_pte *pvpte;
 	u_int result;
 	pt_entry_t expect;
 	int count;
 
-	KASSERT(uvm_page_locked_p(pg));
-
-	pp = VM_PAGE_TO_PP(pg);
-	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
+	expect = pmap_pa2pte(pa) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
 	kpreempt_disable();
 startover:
@@ -3729,6 +3866,43 @@ startover:
 	return result != 0;
 }
 
+/*
+ * pmap_clear_attrs: clear the specified attribute for a page.
+ *
+ * => we return true if we cleared one of the bits we were asked to
+ */
+
+bool
+pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
+{
+	struct pmap_page *pp;
+	paddr_t pa;
+
+	KASSERT(uvm_page_locked_p(pg));
+
+	pp = VM_PAGE_TO_PP(pg);
+	pa = VM_PAGE_TO_PHYS(pg);
+
+	return pmap_pp_clear_attrs(pp, pa, clearbits);
+}
+
+/*
+ * pmap_pv_clear_attrs: clear the specified attributes for an unmanaged
+ *	pv-tracked page.
+ */
+
+bool
+pmap_pv_clear_attrs(paddr_t pa, unsigned clearbits)
+{
+	struct pmap_page *pp;
+
+	pp = pmap_pv_tracked(pa);
+	if (pp == NULL)
+		panic("pmap_pv_protect: page not pv-tracked: 0x%"PRIxPADDR,
+		    pa);
+
+	return pmap_pp_clear_attrs(pp, pa, clearbits);
+}
 
 /*
  * p m a p   p r o t e c t i o n   f u n c t i o n s
@@ -3737,6 +3911,15 @@ startover:
 /*
  * pmap_page_protect: change the protection of all recorded mappings
  *	of a managed page
+ *
+ * => NOTE: this is an inline function in pmap.h
+ */
+
+/* see pmap.h */
+
+/*
+ * pmap_pv_protect: change the protection of all recorded mappings
+ *	of an unmanaged pv-tracked page
  *
  * => NOTE: this is an inline function in pmap.h
  */
@@ -3900,9 +4083,9 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	pt_entry_t *ptes, opte, npte;
 	pt_entry_t *ptep;
 	pd_entry_t * const *pdes;
-	struct vm_page *ptp, *pg;
-	struct pmap_page *new_pp;
-	struct pmap_page *old_pp;
+	struct vm_page *ptp;
+	struct vm_page *new_pg, *old_pg;
+	struct pmap_page *new_pp, *old_pp;
 	struct pv_entry *old_pve = NULL;
 	struct pv_entry *new_pve;
 	struct pv_entry *new_pve2;
@@ -3945,14 +4128,17 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 
 #ifdef XEN
 	if (domid != DOMID_SELF)
-		pg = NULL;
+		new_pg = NULL;
 	else
 #endif
-		pg = PHYS_TO_VM_PAGE(pa);
-	if (pg != NULL) {
+		new_pg = PHYS_TO_VM_PAGE(pa);
+	if (new_pg != NULL) {
 		/* This is a managed page */
 		npte |= PG_PVLIST;
-		new_pp = VM_PAGE_TO_PP(pg);
+		new_pp = VM_PAGE_TO_PP(new_pg);
+	} else if ((new_pp = pmap_pv_tracked(pa)) != NULL) {
+		/* This is an unmanaged pv-tracked page */
+		npte |= PG_PVLIST;
 	} else {
 		new_pp = NULL;
 	}
@@ -4041,25 +4227,28 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	}
 
 	/*
-	 * if old page is managed, remove pv_entry from its list.
+	 * if old page is pv-tracked, remove pv_entry from its list.
 	 */
 
 	if ((~opte & (PG_V | PG_PVLIST)) == 0) {
-		pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte));
+		if ((old_pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte))) != NULL) {
+			KASSERT(uvm_page_locked_p(old_pg));
+			old_pp = VM_PAGE_TO_PP(old_pg);
+		} else if ((old_pp = pmap_pv_tracked(pmap_pte2pa(opte)))
+		    == NULL) {
+			pa = pmap_pte2pa(opte);
+			panic("pmap_enter: PG_PVLIST with pv-untracked page"
+			    " va = 0x%"PRIxVADDR
+			    " pa = 0x%" PRIxPADDR " (0x%" PRIxPADDR ")",
+			    va, pa, atop(pa));
+		}
 
-		KASSERTMSG(pg != NULL, "pmap_enter: PG_PVLIST mapping with "
-		    "unmanaged page pa = 0x%" PRIx64 " (0x%" PRIx64 ")",
-		    (int64_t)pa, (int64_t)atop(pa));
-
-		KASSERT(uvm_page_locked_p(pg));
-
-		old_pp = VM_PAGE_TO_PP(pg);
 		old_pve = pmap_remove_pv(old_pp, ptp, va);
 		old_pp->pp_attrs |= opte;
 	}
 
 	/*
-	 * if new page is managed, insert pv_entry into its list.
+	 * if new page is pv-tracked, insert pv_entry into its list.
 	 */
 
 	if (new_pp) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.7.2.5 2015/03/06 21:39:10 snj Exp $	*/
+/*	$NetBSD: pci.h,v 1.7.2.6 2015/04/23 07:31:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -331,7 +331,7 @@ pci_clear_master(struct pci_dev *pdev)
 	    PCI_COMMAND_STATUS_REG, csr);
 }
 
-#define	PCIBIOS_MIN_MEM	0	/* XXX bogus x86 kludge bollocks */
+#define	PCIBIOS_MIN_MEM	0x100000	/* XXX bogus x86 kludge bollocks */
 
 static inline bus_addr_t
 pcibios_align_resource(void *p, const struct resource *resource,

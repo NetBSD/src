@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.112.2.2 2015/03/17 17:52:49 riz Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.112.2.3 2015/04/23 07:31:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.112.2.2 2015/03/17 17:52:49 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.112.2.3 2015/04/23 07:31:16 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -602,6 +602,16 @@ fail0:	agp_generic_detach(sc);
 	return error;
 }
 
+/*
+ * Skip pages reserved by the BIOS.  Notably, skip 0xa0000-0xfffff,
+ * which includes the video BIOS at 0xc0000-0xdffff which the display
+ * drivers need for video mode detection.
+ *
+ * XXX Is there an MI name for this, or a conventional x86 name?  Or
+ * should we really use bus_dma instead?
+ */
+#define	PCIBIOS_MIN_MEM		0x100000
+
 static int
 agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 {
@@ -621,7 +631,7 @@ agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 	/* Read the PCI config register: 4-byte on gen3, 8-byte on gen>=4.  */
 	if (isc->chiptype == CHIP_I915) {
 		addr = pci_conf_read(pc, tag, AGP_I915_IFPADDR);
-		minaddr = PAGE_SIZE;	/* XXX PCIBIOS_MIN_MEM?  */
+		minaddr = PCIBIOS_MIN_MEM;
 		maxaddr = UINT32_MAX;
 	} else {
 		hi = pci_conf_read(pc, tag, AGP_I965_IFPADDR+4);
@@ -643,7 +653,7 @@ agp_i810_setup_chipset_flush_page(struct agp_softc *sc)
 			return EIO;
 #endif
 		}
-		minaddr = PAGE_SIZE;	/* XXX PCIBIOS_MIN_MEM?  */
+		minaddr = PCIBIOS_MIN_MEM;
 		maxaddr = MIN(UINT64_MAX, ~(bus_addr_t)0);
 	}
 
@@ -695,8 +705,7 @@ agp_i810_teardown_chipset_flush_page(struct agp_softc *sc)
 			    AGP_I965_IFPADDR + 4, 0);
 		}
 		isc->flush_addr = 0;
-		bus_space_free(isc->flush_bst, isc->flush_bsh,
-		    PAGE_SIZE);
+		bus_space_free(isc->flush_bst, isc->flush_bsh, PAGE_SIZE);
 	} else {
 		/* Otherwise, just unmap the pre-allocated page.  */
 		bus_space_unmap(isc->flush_bst, isc->flush_bsh, PAGE_SIZE);

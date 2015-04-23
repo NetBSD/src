@@ -1,7 +1,7 @@
-/*	$NetBSD: nouveau_agp.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_agp.c,v 1.2.4.1 2015/04/23 07:31:17 snj Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_agp.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_agp.c,v 1.2.4.1 2015/04/23 07:31:17 snj Exp $");
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -190,6 +190,9 @@ nouveau_agp_init(struct nouveau_drm *drm)
 	drm->agp.stat = ENABLED;
 	drm->agp.base = info.aperture_base;
 	drm->agp.size = info.aperture_size;
+#ifdef __NetBSD__
+	pmap_pv_track(drm->agp.base, drm->agp.size);
+#endif
 #endif
 }
 
@@ -198,7 +201,11 @@ nouveau_agp_fini(struct nouveau_drm *drm)
 {
 #if __OS_HAS_AGP
 	struct drm_device *dev = drm->dev;
-	if (dev->agp && dev->agp->acquired)
+	if (dev->agp && dev->agp->acquired) {
+#ifdef __NetBSD__
+		pmap_pv_untrack(drm->agp.base, drm->agp.size);
+#endif
 		drm_agp_release(dev);
+	}
 #endif
 }

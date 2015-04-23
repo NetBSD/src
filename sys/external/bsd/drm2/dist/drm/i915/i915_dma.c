@@ -1734,6 +1734,8 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	dev_priv->gtt.mappable =
 	    drm_io_mapping_create_wc(dev, dev_priv->gtt.mappable_base,
 		aperture_size);
+	/* Note: mappable_end is the size, not end paddr, of the aperture.  */
+	pmap_pv_track(dev_priv->gtt.mappable_base, dev_priv->gtt.mappable_end);
 #else
 	dev_priv->gtt.mappable =
 		io_mapping_create_wc(dev_priv->gtt.mappable_base,
@@ -1851,6 +1853,11 @@ out_gem_unload:
 	destroy_workqueue(dev_priv->wq);
 out_mtrrfree:
 	arch_phys_wc_del(dev_priv->gtt.mtrr);
+#ifdef __NetBSD__
+	/* Note: mappable_end is the size, not end paddr, of the aperture.  */
+	pmap_pv_untrack(dev_priv->gtt.mappable_base,
+	    dev_priv->gtt.mappable_end);
+#endif
 	io_mapping_free(dev_priv->gtt.mappable);
 out_gtt:
 	list_del(&dev_priv->gtt.base.global_link);
