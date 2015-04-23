@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.32 2012/02/28 22:30:44 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.32.10.1 2015/04/23 19:46:40 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$NetBSD: extern.h,v 1.32 2012/02/28 22:30:44 joerg Exp $
+ *	$NetBSD: extern.h,v 1.32.10.1 2015/04/23 19:46:40 snj Exp $
  */
 
 #ifndef __EXTERN_H__
@@ -224,7 +224,7 @@ struct name * extract(char [], int);
 struct name * gexpand(struct name *, struct grouphead *, int, int);
 struct name * nalloc(char [], int);
 struct name * outof(struct name *, FILE *, struct header *);
-const char ** unpack(struct name *);
+const char ** unpack(struct name *, struct name *);
 struct name * usermap(struct name *);
 #if 0
 void	prettyprint(struct name *);	/* commented out? */

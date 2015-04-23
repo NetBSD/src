@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.40 2013/03/09 19:43:07 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.40.8.1 2015/04/23 19:46:40 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.40 2013/03/09 19:43:07 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.40.8.1 2015/04/23 19:46:40 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: fio.c,v 1.40 2013/03/09 19:43:07 christos Exp $");
 #include "extern.h"
 #include "thread.h"
 #include "sig.h"
+#include <wordexp.h>
 
 /*
  * Mail -- a mail program
@@ -424,13 +425,10 @@ PUBLIC const char *
 expand(const char *name)
 {
 	char xname[PATHSIZE];
-	char cmdbuf[PATHSIZE];		/* also used for file names */
-	pid_t pid;
-	ssize_t l;
-	char *cp;
-	const char *shellcmd;
-	int pivec[2];
-	struct stat sbuf;
+	char cmdbuf[PATHSIZE];
+	int e;
+	wordexp_t we; 
+	sigset_t nset, oset;
 
 	/*
 	 * The order of evaluation is "%" and "#" expand into constants.
@@ -466,47 +464,54 @@ expand(const char *name)
 	}
 	if (strpbrk(name, "~{[*?$`'\"\\") == NULL)
 		return name;
-	if (pipe(pivec) < 0) {
-		warn("pipe");
-		return name;
-	}
-	(void)snprintf(cmdbuf, sizeof(cmdbuf), "echo %s", name);
-	if ((shellcmd = value(ENAME_SHELL)) == NULL)
-		shellcmd = _PATH_CSHELL;
-	pid = start_command(shellcmd, NULL, -1, pivec[1], "-c", cmdbuf, NULL);
-	if (pid < 0) {
-		(void)close(pivec[0]);
-		(void)close(pivec[1]);
+
+	*xname = '\0';
+
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
+	e = wordexp(name, &we, WRDE_NOCMD);
+	sigprocmask(SIG_SETMASK, &oset, NULL);
+
+	switch (e) {
+	case 0: /* OK */
+		break;
+	case WRDE_NOSPACE:
+		warnx("Out of memory expanding `%s'", name);
+		return NULL;
+	case WRDE_BADVAL:
+	case WRDE_BADCHAR:
+	case WRDE_SYNTAX:
+		warnx("Syntax error expanding `%s'", name);
+		return NULL;
+	case WRDE_CMDSUB:
+		warnx("Command substitution not allowed expanding `%s'",
+		    name);
+		return NULL;
+	default:
+		warnx("Unknown expansion error %d expanding `%s'", e, name);
 		return NULL;
 	}
-	(void)close(pivec[1]);
-	l = read(pivec[0], xname, sizeof(xname));
-	(void)close(pivec[0]);
-	if (wait_child(pid) < 0 && WTERMSIG(wait_status) != SIGPIPE) {
-		warnx("Expansion `%s' failed [%x]", cmdbuf, wait_status);
-		return NULL;
-	}
-	if (l < 0) {
-		warn("read");
-		return NULL;
-	}
-	if (l == 0) {
+
+	switch (we.we_wordc) {
+	case 0:
 		warnx("No match for `%s'", name);
-		return NULL;
-	}
-	if (l == sizeof(xname)) {
-		warnx("Expansion buffer overflow for `%s'", name);
-		return NULL;
-	}
-	xname[l] = '\0';
-	for (cp = &xname[l-1]; *cp == '\n' && cp > xname; cp--)
-		continue;
-	cp[1] = '\0';
-	if (strchr(xname, ' ') && stat(xname, &sbuf) < 0) {
+		break;
+	case 1:
+		if (strlen(we.we_wordv[0]) >= PATHSIZE)
+			warnx("Expansion too long for `%s'", name);
+		strlcpy(xname, we.we_wordv[0], PATHSIZE);
+		break;
+	default:
 		warnx("Ambiguous expansion for `%s'", name);
-		return NULL;
+		break;
 	}
-	return savestr(xname);
+
+	wordfree(&we);
+	if (!*xname)
+		return NULL;
+	else
+		return savestr(xname);
 }
 
 /*

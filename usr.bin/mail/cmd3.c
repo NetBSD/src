@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.42 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.42.10.1 2015/04/23 19:46:40 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.42 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.42.10.1 2015/04/23 19:46:40 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -577,7 +577,7 @@ bounce(void *v)
 	if (hdr.h_to == NULL)
 		return 1;
 
-	smargs = unpack(hdr.h_to);
+	smargs = unpack(NULL, hdr.h_to);
 	for (ip = msgvec; *ip; ip++) {
 		int e;
 		if ((e = bounce_one(*ip, smargs, hdr.h_to)) != 0)

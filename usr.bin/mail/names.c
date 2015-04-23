@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.30 2012/10/21 01:11:23 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.30.8.1 2015/04/23 19:46:40 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.30 2012/10/21 01:11:23 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.30.8.1 2015/04/23 19:46:40 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,6 +253,9 @@ outof(struct name *names, FILE *fo, struct header *hp)
 	FILE *fout, *fin;
 	int ispipe;
 	char tempname[PATHSIZE];
+
+	if (value("expandaddr") == NULL)
+		return names;
 
 	begin = names;
 	np = names;
@@ -532,7 +535,7 @@ count(struct name *np)
  * Return an error if the name list won't fit.
  */
 PUBLIC const char **
-unpack(struct name *np)
+unpack(struct name *smopts, struct name *np)
 {
 	const char **ap, **begin;
 	struct name *n;
@@ -547,7 +550,7 @@ unpack(struct name *np)
 	 * the terminating 0 pointer.  Additional spots may be needed
 	 * to pass along -f to the host mailer.
 	 */
-	extra = 2;
+	extra = 3 + count(smopts);
 	extra++;
 	metoo = value(ENAME_METOO) != NULL;
 	if (metoo)
@@ -563,6 +566,10 @@ unpack(struct name *np)
 		*ap++ = "-m";
 	if (verbose)
 		*ap++ = "-v";
+	for (/*EMPTY*/; smopts != NULL; smopts = smopts->n_flink)
+		if ((smopts->n_type & GDEL) == 0)
+			*ap++ = smopts->n_name;
+	*ap++ = "--";
 	for (/*EMPTY*/; n != NULL; n = n->n_flink)
 		if ((n->n_type & GDEL) == 0)
 			*ap++ = n->n_name;
