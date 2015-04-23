@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.14 2015/04/21 19:56:01 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.15 2015/04/23 01:20:20 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -181,12 +181,39 @@ MFC0(uint32_t r, uint32_t s)
 	#define JZ_PLLBP	0x00000002	/* PLL bypass */
 	#define JZ_PLLEN	0x00000001	/* PLL enable */
 #define JZ_CLKGR0	0x10000020	/* CLocK Gating Registers */
+	#define CLK_NEMC	(1 << 0)
+	#define CLK_BCH		(1 << 1)
 	#define CLK_OTG0	(1 << 2)
+	#define CLK_MSC0	(1 << 3)
+	#define CLK_SSI0	(1 << 4)
 	#define CLK_SMB0	(1 << 5)
 	#define CLK_SMB1	(1 << 6)
+	#define CLK_SCC		(1 << 7)
+	#define CLK_AIC		(1 << 8)
+	#define CLK_TSSI0	(1 << 9)
+	#define CLK_OWI		(1 << 10)
+	#define CLK_MSC1	(1 << 11)
+	#define CLK_MSC2	(1 << 12)
+	#define CLK_KBC		(1 << 13)
+	#define CLK_SADC	(1 << 14)
+	#define CLK_UART0	(1 << 15)
+	#define CLK_UART1	(1 << 16)
+	#define CLK_UART2	(1 << 17)
+	#define CLK_UART3	(1 << 18)
+	#define CLK_SSI1	(1 << 19)
+	#define CLK_SSI2	(1 << 20)
+	#define CLK_PDMA	(1 << 21)
+	#define CLK_GPS		(1 << 22)
+	#define CLK_MAC		(1 << 23)
 	#define CLK_UHC		(1 << 24)
 	#define CLK_SMB2	(1 << 25)
+	#define CLK_CIM		(1 << 26)
+	#define CLK_TVE		(1 << 27)
 	#define CLK_LCD		(1 << 28)
+	#define CLK_IPU		(1 << 29)
+	#define CLK_DDR0	(1 << 30)
+	#define CLK_DDR1	(1 << 31)
+
 #define JZ_OPCR		0x10000024	/* Oscillator Power Control Reg. */
 	#define OPCR_IDLE_DIS	0x80000000	/* don't stop CPU clk on idle */
 	#define OPCR_GPU_CLK_ST	0x40000000	/* stop GPU clock */
@@ -204,10 +231,21 @@ MFC0(uint32_t r, uint32_t s)
 	#define OPCR_OSE	0x00000001	/* disable EXTCLK */
 #define JZ_CLKGR1	0x10000028	/* CLocK Gating Registers */
 	#define CLK_SMB3	(1 << 0)
+	#define CLK_TSSI1	(1 << 1)
+	#define CLK_VPU		(1 << 2)
+	#define CLK_PCM		(1 << 3)
+	#define CLK_GPU		(1 << 4)
+	#define CLK_COMPRESS	(1 << 5)
+	#define CLK_AIC1	(1 << 6)
+	#define CLK_GPVLC	(1 << 7)
 	#define CLK_OTG1	(1 << 8)
 	#define CLK_HDMI	(1 << 9)
+	#define CLK_UART4	(1 << 10)
 	#define CLK_AHB_MON	(1 << 11)
 	#define CLK_SMB4	(1 << 12)
+	#define CLK_DES		(1 << 13)
+	#define CLK_X2D		(1 << 14)
+	#define CLK_P1		(1 << 15)
 
 #define JZ_USBPCR	0x1000003c
 	#define PCR_USB_MODE		0x80000000	/* 1 - otg */
@@ -513,5 +551,10 @@ gpio_as_intr_level(uint32_t g, int pin)
 #define JZ_SMBENBST	0x9C /* SMB Enable Status Register */
 #define JZ_SMBSDAHD	0xD0 /* SMB SDA HolD time Register */
 	#define JZ_HDENB	0x100	/* enable hold time */
+
+/* SD/MMC hosts */
+#define JZ_MSC0_BASE	0x13450000
+#define JZ_MSC1_BASE	0x13460000
+#define JZ_MSC2_BASE	0x13470000
 
 #endif /* INGENIC_REGS_H */
