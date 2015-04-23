@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.107 2015/04/22 18:14:55 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.108 2015/04/23 10:52:18 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -29,7 +29,7 @@ CPPFLAGS+=	-DMIPS1=1
 .endif
 .endif
 
-RUMP_COMPAT?=	50 60 70
+RUMP_COMPAT?=	60 70
 CPPFLAGS+=	${RUMP_COMPAT:C/[1-9]0/-DCOMPAT_&/g}
 
 CPPFLAGS+=	-DMAXUSERS=32
