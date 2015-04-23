@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.462 2015/03/06 09:28:15 mrg Exp $	*/
+/*	$NetBSD: init_main.c,v 1.463 2015/04/23 23:23:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.462 2015/03/06 09:28:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.463 2015/04/23 23:23:08 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -117,10 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.462 2015/03/06 09:28:15 mrg Exp $");
 #include "drvctl.h"
 #include "ksyms.h"
 
-#include "sysmon_envsys.h"
-#include "sysmon_power.h"
 #include "sysmon_taskq.h"
-#include "sysmon_wdog.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -226,10 +223,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.462 2015/03/06 09:28:15 mrg Exp $");
 #endif
 
 #include <dev/cons.h>
-
-#if NSYSMON_ENVSYS > 0 || NSYSMON_POWER > 0 || NSYSMON_WDOG > 0
-#include <dev/sysmon/sysmonvar.h>
-#endif
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -467,21 +460,14 @@ main(void)
 	/* Initialize kqueue. */
 	kqueue_init();
 
-	/* Initialize the system monitor subsystems. */
+	/*
+	 * Initialize sysmon's task queue.  It is used by at
+	 * least one non-modularized component (dev/acpica)
+	 * and needs to be available early, before the rest
+	 * of the module(9) subsystem is ready.
+	 */
 #if NSYSMON_TASKQ > 0
 	sysmon_task_queue_preinit();
-#endif
-
-#if NSYSMON_ENVSYS > 0
-	sysmon_envsys_init();
-#endif
-
-#if NSYSMON_POWER > 0
-	sysmon_power_init();
-#endif
-
-#if NSYSMON_WDOG > 0
-	sysmon_wdog_init();
 #endif
 
 	inittimecounter();
