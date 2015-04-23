@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword-gen.c,v 1.4.4.1 2014/12/24 00:05:21 riz Exp $	*/
+/*	$NetBSD: keyword-gen.c,v 1.4.4.2 2015/04/23 18:53:02 snj Exp $	*/
 
 /*
  * keyword-gen.c -- generate keyword scanner finite state machine and
@@ -208,6 +208,8 @@ struct key_tok ntp_keywords[] = {
 { "filenum",		T_Filenum,		FOLLBY_TOKEN },
 /* tinker_option */
 { "step",		T_Step,			FOLLBY_TOKEN },
+{ "stepback",		T_Stepback,		FOLLBY_TOKEN },
+{ "stepfwd",		T_Stepfwd,		FOLLBY_TOKEN },
 { "panic",		T_Panic,		FOLLBY_TOKEN },
 { "dispersion",		T_Dispersion,		FOLLBY_TOKEN },
 { "stepout",		T_Stepout,		FOLLBY_TOKEN },

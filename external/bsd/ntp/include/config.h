@@ -328,6 +328,9 @@
    */
 /* #undef HAVE_ALLOCA_H */
 
+/* Define to 1 if you have the `arc4random_buf' function. */
+#define HAVE_ARC4RANDOM_BUF 1
+
 /* Define to 1 if you have the <arpa/nameser.h> header file. */
 #define HAVE_ARPA_NAMESER_H 1
 
@@ -1337,6 +1340,10 @@
 /* Should we recommend a minimum value for tickadj? */
 /* #undef MIN_REC_TICKADJ */
 
+/* Define to 1 if the compiler does not support C99's structure
+   initialization. */
+/* #undef MISSING_C99_STRUCT_INIT */
+
 /* Do we need HPUX adjtime() library support? */
 /* #undef NEED_HPUX_ADJTIME */
 
@@ -1428,7 +1435,7 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.8"
+#define PACKAGE_STRING "ntp 4.2.8p2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
@@ -1437,7 +1444,7 @@
 #define PACKAGE_URL "http://www.ntp.org./"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.8"
+#define PACKAGE_VERSION "4.2.8p2"
 
 /* data dir */
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
@@ -1538,7 +1545,7 @@
 /* #undef STRERROR_R_CHAR_P */
 
 /* canonical system (cpu-vendor-os) of where we should run */
-#define STR_SYSTEM  "NetBSD"
+#define STR_SYSTEM "NetBSD"
 
 /* Does Xettimeofday take 1 arg? */
 /* #undef SYSV_TIMEOFDAY */
@@ -1582,6 +1589,9 @@ typedef unsigned int	uintptr_t;
 /* Use OpenSSL's crypto random functions */
 #define USE_OPENSSL_CRYPTO_RAND 1
 
+/* OK to use snprintb()? */
+#define USE_SNPRINTB 1
+
 /* Can we use SIGPOLL for tty IO? */
 /* #undef USE_TTY_SIGPOLL */
 
@@ -1589,7 +1599,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.8"
+#define VERSION "4.2.8p2"
 
 /* vsnprintf expands "%m" to strerror(errno) */
 /* #undef VSNPRINTF_PERCENT_M */

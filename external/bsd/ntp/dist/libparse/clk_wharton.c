@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_wharton.c,v 1.1.1.2.4.1 2014/12/24 00:05:20 riz Exp $	*/
+/*	$NetBSD: clk_wharton.c,v 1.1.1.2.4.2 2015/04/23 18:53:02 snj Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_wharton.c,v 4.2 2004/11/14 15:29:41 kardel RELEASE_20050508_A
@@ -76,8 +76,11 @@ extern void printf (const char *, ...);
  * 
  */
 
+static parse_cvt_fnc_t cvt_wharton_400a;
+static parse_inp_fnc_t inp_wharton_400a;
+
 /*
- * cvt_wharton_400a
+ * parse_cvt_fnc_t cvt_wharton_400a
  * 
  * convert simple type format
  */
@@ -123,14 +126,14 @@ cvt_wharton_400a(
 }
 
 /*
- * inp_wharton_400a
+ * parse_inp_fnc_t inp_wharton_400a
  *
- * grep data from input stream
+ * grab data from input stream
  */
 static u_long
 inp_wharton_400a(
 	      parse_t      *parseio,
-	      unsigned int  ch,
+	      char         ch,
 	      timestamp_t  *tstamp
 	      )
 {
@@ -168,7 +171,7 @@ clockformat_t   clock_wharton_400a =
 	0,			/* conversion configuration */
 	"WHARTON 400A Series clock Output Format 1",	/* String format name */
 	15,			/* string buffer */
-	0			/* no private data (complete pakets) */
+	0			/* no private data (complete packets) */
 };
 
 #else /* not (REFCLOCK && CLOCK_PARSE && CLOCK_WHARTON_400A) */

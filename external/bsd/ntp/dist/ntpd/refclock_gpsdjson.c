@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.4.2.2 2014/12/24 00:05:21 riz Exp $	*/
+/*	$NetBSD: refclock_gpsdjson.c,v 1.4.2.3 2015/04/23 18:53:02 snj Exp $	*/
 
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
@@ -54,7 +54,7 @@
 
 #if defined(HAVE_SYS_POLL_H)
 # include <sys/poll.h>
-#elif defined(HAVE_SYS_SLECET_H)
+#elif defined(HAVE_SYS_SELECT_H)
 # include <sys/select.h>
 #else
 # error need poll() or select()

@@ -1,11 +1,11 @@
-/*	$NetBSD: clk_sel240x.c,v 1.1.1.1.6.1 2014/12/24 00:05:20 riz Exp $	*/
+/*	$NetBSD: clk_sel240x.c,v 1.1.1.1.6.2 2015/04/23 18:53:02 snj Exp $	*/
 
 //////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2009,2012 -
 //        Schweitzer Engineering Laboratories, Inc. <opensource@selinc.com>
 //////////////////////////////////////////////////////////////////////////////
 
-// Need to have _XOPEN_SOURCE defined for time.h to give the 
+// Need to have _XOPEN_SOURCE defined for time.h to give the
 // correct strptime signature.  As per feature_test_macros(7),
 // define this before including any header files.
 
@@ -53,14 +53,8 @@
 // a '?'.  But we are only going to call it synced when we receive a ' '
 //////////////////////////////////////////////////////////////////////////////
 
-static unsigned long inp_sel240x( parse_t *parseio,
-		                  unsigned int ch,
-				  timestamp_t *tstamp);
-static unsigned long cvt_sel240x( unsigned char *buffer,
-		                  int size,
-				  struct format *format,
-				  clocktime_t *clock_time,
-				  void *local );
+static parse_inp_fnc_t inp_sel240x;
+static parse_cvt_fnc_t cvt_sel240x;
 
 // Parse clock format structure describing the message above
 static struct format sel240x_fmt =
@@ -96,7 +90,7 @@ clockformat_t clock_sel240x =
 //////////////////////////////////////////////////////////////////////////////
 static unsigned long
 inp_sel240x( parse_t      *parseio,
-	     unsigned int ch,
+	     char         ch,
 	     timestamp_t  *tstamp
 	   )
 {
@@ -141,7 +135,7 @@ cvt_sel240x( unsigned char *buffer,
 	{
 		struct tm ptime;
 		buffer++;
-		buffer = (unsigned char *) strptime( 
+		buffer = (unsigned char *) strptime(
 			(const char *)buffer, "%Y:%j:%H:%M:%S", &ptime );
 		if( *(buffer+1) != '\x0d' )
 		{

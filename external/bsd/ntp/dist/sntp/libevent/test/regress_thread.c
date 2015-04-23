@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_thread.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
+/*	$NetBSD: regress_thread.c,v 1.1.1.1.6.2 2015/04/23 18:53:06 snj Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -363,7 +363,7 @@ thread_conditions_simple(void *arg)
 			    &tv_signal);
 			diff2 = timeval_msec_diff(&actual_delay,
 			    &tv_broadcast);
-			if (abs(diff1) < abs(diff2)) {
+			if (labs(diff1) < labs(diff2)) {
 				TT_BLATHER(("%d looks like a signal\n", i));
 				target_delay = &tv_signal;
 				++n_signal;
@@ -384,7 +384,8 @@ thread_conditions_simple(void *arg)
 	tt_int_op(n_signal, ==, 1);
 
 end:
-	;
+	EVTHREAD_FREE_LOCK(cond.lock, EVTHREAD_LOCKTYPE_RECURSIVE);
+	EVTHREAD_FREE_COND(cond.cond);
 }
 
 #define CB_COUNT 128

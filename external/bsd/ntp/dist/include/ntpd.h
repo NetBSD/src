@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.4.4.1 2014/12/24 00:05:16 riz Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.4.4.2 2015/04/23 18:53:01 snj Exp $	*/
 
 /*
  * ntpd.h - Prototypes and external variables for ntpd.
@@ -190,6 +190,7 @@ extern	void	unpeer		(struct peer *);
 extern	void	clear_all	(void);
 extern	int	score_all	(struct peer *);
 extern	struct peer *findmanycastpeer(struct recvbuf *);
+extern	void	peer_cleanup	(void);
 
 /* ntp_crypto.c */
 #ifdef AUTOKEY
@@ -287,7 +288,7 @@ extern	void	record_loop_stats (double, double, double, double, int);
 extern	void	record_clock_stats (sockaddr_u *, const char *);
 extern	int	mprintf_clock_stats(sockaddr_u *, const char *, ...)
 			NTP_PRINTF(2, 3);
-extern	void	record_raw_stats (sockaddr_u *srcadr, sockaddr_u *dstadr, l_fp *t1, l_fp *t2, l_fp *t3, l_fp *t4, int leap, int version, int mode, int stratum, int poll, int precision, double root_delay, double root_dispersion, u_int32 refid);
+extern	void	record_raw_stats (sockaddr_u *srcadr, sockaddr_u *dstadr, l_fp *t1, l_fp *t2, l_fp *t3, l_fp *t4, int leap, int version, int mode, int stratum, int ppoll, int precision, double root_delay, double root_dispersion, u_int32 refid);
 extern	void	check_leap_file	(int is_daily_check, u_int32 ntptime, const time_t * systime);
 extern	void	record_crypto_stats (sockaddr_u *, const char *);
 #ifdef DEBUG
@@ -387,7 +388,8 @@ extern endpt *	ep_list;		/* linked list */
 /* ntp_loopfilter.c */
 extern double	drift_comp;		/* clock frequency (s/s) */
 extern double	clock_stability;	/* clock stability (s/s) */
-extern double	clock_max;		/* max offset before step (s) */
+extern double	clock_max_back;		/* max backward offset before step (s) */
+extern double	clock_max_fwd;		/* max forward offset before step (s) */
 extern double	clock_panic;		/* max offset before panic (s) */
 extern double	clock_phi;		/* dispersion rate (s/s) */
 extern double	clock_minstep;		/* step timeout (s) */
@@ -405,8 +407,9 @@ extern int	kern_enable;		/* kernel support enabled */
 extern int	hardpps_enable;		/* kernel PPS discipline enabled */
 extern int	ext_enable;		/* external clock enabled */
 extern int	cal_enable;		/* refclock calibrate enable */
-extern int	allow_panic;		/* allow panic correction */
-extern int	mode_ntpdate;		/* exit on first clock set */
+extern int	allow_panic;		/* allow panic correction (-g) */
+extern int	force_step_once;	/* always step time once at startup (-G) */
+extern int	mode_ntpdate;		/* exit on first clock set (-q) */
 extern int	peer_ntpdate;		/* count of ntpdate peers */
 
 /*
@@ -520,7 +523,7 @@ extern u_int32		conf_file_sum;	/* Simple sum of characters */
 
 /* ntp_signd.c */
 #ifdef HAVE_NTP_SIGND
-extern void send_via_ntp_signd(struct recvbuf *, int, keyid_t, int, 
+extern void send_via_ntp_signd(struct recvbuf *, int, keyid_t, int,
 			       struct pkt *);
 #endif
 

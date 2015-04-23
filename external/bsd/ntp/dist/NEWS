@@ -1,4 +1,205 @@
 ---
+NTP 4.2.8p2 (Harlan Stenn <stenn@ntp.org>, 2015/04/xx) 
+
+Focus: Security and Bug fixes, enhancements.
+
+Severity: MEDIUM
+ 
+In addition to bug fixes and enhancements, this release fixes the
+following medium-severity vulnerabilities involving private key
+authentication:
+
+* [Sec 2779] ntpd accepts unauthenticated packets with symmetric key crypto.
+
+    References: Sec 2779 / CVE-2015-1798 / VU#374268
+    Affects: All NTP4 releases starting with ntp-4.2.5p99 up to but not
+	including ntp-4.2.8p2 where the installation uses symmetric keys
+	to authenticate remote associations.
+    CVSS: (AV:A/AC:M/Au:N/C:P/I:P/A:P) Base Score: 5.4
+    Date Resolved: Stable (4.2.8p2) 07 Apr 2015
+    Summary: When ntpd is configured to use a symmetric key to authenticate
+	a remote NTP server/peer, it checks if the NTP message
+	authentication code (MAC) in received packets is valid, but not if
+	there actually is any MAC included. Packets without a MAC are
+	accepted as if they had a valid MAC. This allows a MITM attacker to
+	send false packets that are accepted by the client/peer without
+	having to know the symmetric key. The attacker needs to know the
+	transmit timestamp of the client to match it in the forged reply
+	and the false reply needs to reach the client before the genuine
+	reply from the server. The attacker doesn't necessarily need to be
+	relaying the packets between the client and the server.
+
+	Authentication using autokey doesn't have this problem as there is
+	a check that requires the key ID to be larger than NTP_MAXKEY,
+	which fails for packets without a MAC.
+    Mitigation:
+        Upgrade to 4.2.8p2, or later, from the NTP Project Download Page
+	or the NTP Public Services Project Download Page
+        Configure ntpd with enough time sources and monitor it properly. 
+    Credit: This issue was discovered by Miroslav Lichvar, of Red Hat. 
+
+* [Sec 2781] Authentication doesn't protect symmetric associations against
+  DoS attacks.
+
+    References: Sec 2781 / CVE-2015-1799 / VU#374268
+    Affects: All NTP releases starting with at least xntp3.3wy up to but
+	not including ntp-4.2.8p2 where the installation uses symmetric
+	key authentication.
+    CVSS: (AV:A/AC:M/Au:N/C:P/I:P/A:P) Base Score: 5.4
+    Note: the CVSS base Score for this issue could be 4.3 or lower, and
+	it could be higher than 5.4.
+    Date Resolved: Stable (4.2.8p2) 07 Apr 2015
+    Summary: An attacker knowing that NTP hosts A and B are peering with
+	each other (symmetric association) can send a packet to host A
+	with source address of B which will set the NTP state variables
+	on A to the values sent by the attacker. Host A will then send
+	on its next poll to B a packet with originate timestamp that
+	doesn't match the transmit timestamp of B and the packet will
+	be dropped. If the attacker does this periodically for both
+	hosts, they won't be able to synchronize to each other. This is
+	a known denial-of-service attack, described at
+	https://www.eecis.udel.edu/~mills/onwire.html .
+
+	According to the document the NTP authentication is supposed to
+	protect symmetric associations against this attack, but that
+	doesn't seem to be the case. The state variables are updated even
+	when authentication fails and the peers are sending packets with
+	originate timestamps that don't match the transmit timestamps on
+	the receiving side.
+
+	This seems to be a very old problem, dating back to at least
+	xntp3.3wy. It's also in the NTPv3 (RFC 1305) and NTPv4 (RFC 5905)
+	specifications, so other NTP implementations with support for
+	symmetric associations and authentication may be vulnerable too.
+	An update to the NTP RFC to correct this error is in-process.
+    Mitigation:
+        Upgrade to 4.2.8p2, or later, from the NTP Project Download Page
+	or the NTP Public Services Project Download Page
+        Note that for users of autokey, this specific style of MITM attack
+	is simply a long-known potential problem.
+        Configure ntpd with appropriate time sources and monitor ntpd.
+	Alert your staff if problems are detected. 
+    Credit: This issue was discovered by Miroslav Lichvar, of Red Hat. 
+
+* New script: update-leap
+The update-leap script will verify and if necessary, update the
+leap-second definition file.
+It requires the following commands in order to work:
+
+	wget logger tr sed shasum
+
+Some may choose to run this from cron.  It needs more portability testing.
+
+Bug Fixes and Improvements:
+
+* [Bug 1787] DCF77's formerly "antenna" bit is "call bit" since 2003.
+* [Bug 1960] setsockopt IPV6_MULTICAST_IF: Invalid argument.
+* [Bug 2346] "graceful termination" signals do not do peer cleanup.
+* [Bug 2728] See if C99-style structure initialization works.
+* [Bug 2747] Upgrade libevent to 2.1.5-beta.
+* [Bug 2749] ntp/lib/NTP/Util.pm needs update for ntpq -w, IPv6, .POOL. .
+* [Bug 2751] jitter.h has stale copies of l_fp macros.
+* [Bug 2756] ntpd hangs in startup with gcc 3.3.5 on ARM.
+* [Bug 2757] Quiet compiler warnings.
+* [Bug 2759] Expose nonvolatile/clk_wander_threshold to ntpq.
+* [Bug 2763] Allow different thresholds for forward and backward steps.
+* [Bug 2766] ntp-keygen output files should not be world-readable.
+* [Bug 2767] ntp-keygen -M should symlink to ntp.keys.
+* [Bug 2771] nonvolatile value is documented in wrong units.
+* [Bug 2773] Early leap announcement from Palisade/Thunderbolt
+* [Bug 2774] Unreasonably verbose printout - leap pending/warning
+* [Bug 2775] ntp-keygen.c fails to compile under Windows.
+* [Bug 2777] Fixed loops and decoding of Meinberg GPS satellite info.
+  Removed non-ASCII characters from some copyright comments.
+  Removed trailing whitespace.
+  Updated definitions for Meinberg clocks from current Meinberg header files.
+  Now use C99 fixed-width types and avoid non-ASCII characters in comments.
+  Account for updated definitions pulled from Meinberg header files.
+  Updated comments on Meinberg GPS receivers which are not only called GPS16x.
+  Replaced some constant numbers by defines from ntp_calendar.h
+  Modified creation of parse-specific variables for Meinberg devices
+  in gps16x_message().
+  Reworked mk_utcinfo() to avoid printing of ambiguous leap second dates.
+  Modified mbg_tm_str() which now expexts an additional parameter controlling
+  if the time status shall be printed.
+* [Sec 2779] ntpd accepts unauthenticated packets with symmetric key crypto.
+* [Sec 2781] Authentication doesn't protect symmetric associations against
+  DoS attacks.
+* [Bug 2783] Quiet autoconf warnings about missing AC_LANG_SOURCE.
+* [Bug 2789] Quiet compiler warnings from libevent.
+* [Bug 2790] If ntpd sets the Windows MM timer highest resolution
+  pause briefly before measuring system clock precision to yield
+  correct results.
+* Comment from Juergen Perlinger in ntp_calendar.c to make the code clearer.
+* Use predefined function types for parse driver functions
+  used to set up function pointers.
+  Account for changed prototype of parse_inp_fnc_t functions.
+  Cast parse conversion results to appropriate types to avoid
+  compiler warnings.
+  Let ioctl() for Windows accept a (void *) to avoid compiler warnings
+  when called with pointers to different types.
+
+---
+NTP 4.2.8p1 (Harlan Stenn <stenn@ntp.org>, 2015/02/04) 
+
+Focus: Security and Bug fixes, enhancements.
+
+Severity: HIGH
+ 
+In addition to bug fixes and enhancements, this release fixes the
+following high-severity vulnerabilities:
+
+* vallen is not validated in several places in ntp_crypto.c, leading
+  to a potential information leak or possibly a crash
+
+    References: Sec 2671 / CVE-2014-9297 / VU#852879
+    Affects: All NTP4 releases before 4.2.8p1 that are running autokey.
+    CVSS: (AV:N/AC:L/Au:N/C:P/I:P/A:P) Base Score: 7.5
+    Date Resolved: Stable (4.2.8p1) 04 Feb 2015
+    Summary: The vallen packet value is not validated in several code
+             paths in ntp_crypto.c which can lead to information leakage
+	     or perhaps a crash of the ntpd process.
+    Mitigation - any of:
+	Upgrade to 4.2.8p1, or later, from the NTP Project Download Page
+		or the NTP Public Services Project Download Page.
+	Disable Autokey Authentication by removing, or commenting out,
+		all configuration directives beginning with the "crypto"
+		keyword in your ntp.conf file. 
+    Credit: This vulnerability was discovered by Stephen Roettger of the
+    	Google Security Team, with additional cases found by Sebastian
+	Krahmer of the SUSE Security Team and Harlan Stenn of Network
+	Time Foundation. 
+
+* ::1 can be spoofed on some OSes, so ACLs based on IPv6 ::1 addresses
+  can be bypassed.
+
+    References: Sec 2672 / CVE-2014-9298 / VU#852879
+    Affects: All NTP4 releases before 4.2.8p1, under at least some
+	versions of MacOS and Linux. *BSD has not been seen to be vulnerable.
+    CVSS: (AV:N/AC:L/Au:N/C:P/I:P/A:C) Base Score: 9
+    Date Resolved: Stable (4.2.8p1) 04 Feb 2014
+    Summary: While available kernels will prevent 127.0.0.1 addresses
+	from "appearing" on non-localhost IPv4 interfaces, some kernels
+	do not offer the same protection for ::1 source addresses on
+	IPv6 interfaces. Since NTP's access control is based on source
+	address and localhost addresses generally have no restrictions,
+	an attacker can send malicious control and configuration packets
+	by spoofing ::1 addresses from the outside. Note Well: This is
+	not really a bug in NTP, it's a problem with some OSes. If you
+	have one of these OSes where ::1 can be spoofed, ALL ::1 -based
+	ACL restrictions on any application can be bypassed!
+    Mitigation:
+        Upgrade to 4.2.8p1, or later, from the NTP Project Download Page
+	or the NTP Public Services Project Download Page
+        Install firewall rules to block packets claiming to come from
+	::1 from inappropriate network interfaces. 
+    Credit: This vulnerability was discovered by Stephen Roettger of
+	the Google Security Team. 
+
+Additionally, over 30 bugfixes and improvements were made to the codebase.
+See the ChangeLog for more information.
+
+---
 NTP 4.2.8 (Harlan Stenn <stenn@ntp.org>, 2014/12/18) 
  
 Focus: Security and Bug fixes, enhancements.
@@ -7,6 +208,24 @@ Severity: HIGH
  
 In addition to bug fixes and enhancements, this release fixes the
 following high-severity vulnerabilities:
+
+************************** vv NOTE WELL vv *****************************
+
+The vulnerabilities listed below can be significantly mitigated by
+following the BCP of putting
+
+ restrict default ... noquery
+
+in the ntp.conf file.  With the exception of:
+
+   receive(): missing return on error
+   References: Sec 2670 / CVE-2014-9296 / VU#852879
+
+below (which is a limited-risk vulnerability), none of the recent
+vulnerabilities listed below can be exploited if the source IP is
+restricted from sending a 'query'-class packet by your ntp.conf file.
+
+************************** ^^ NOTE WELL ^^ *****************************
 
 * Weak default key in config_auth().
 
@@ -23,7 +242,9 @@ following high-severity vulnerabilities:
 	entropy.  This was sufficient back in the late 1990s when the
 	code was written.  Not today.
 
-  Mitigation: Upgrade to 4.2.7p11 or later.
+  Mitigation - any of:
+	- Upgrade to 4.2.7p11 or later.
+	- Follow BCP and put 'restrict ... noquery' in your ntp.conf file.
 
   Credit: This vulnerability was noticed in ntp-4.2.6 by Neel Mehta
   	of the Google Security Team.
@@ -43,7 +264,9 @@ following high-severity vulnerabilities:
 	cryptographic random number generator, either RAND_bytes from
 	OpenSSL, or arc4random(). 
 
-  Mitigation: Upgrade to 4.2.7p230 or later.
+  Mitigation - any of:
+  	- Upgrade to 4.2.7p230 or later.
+	- Follow BCP and put 'restrict ... noquery' in your ntp.conf file.
 
   Credit:  This vulnerability was discovered in ntp-4.2.6 by
   	Stephen Roettger of the Google Security Team.
@@ -61,10 +284,11 @@ following high-severity vulnerabilities:
 	buffer and potentially allow malicious code to be executed
 	with the privilege level of the ntpd process.
 
-  Mitigation: Upgrade to 4.2.8, or later, or
-	Disable Autokey Authentication by removing, or commenting out,
-	all configuration directives beginning with the crypto keyword
-	in your ntp.conf file. 
+  Mitigation - any of:
+  	- Upgrade to 4.2.8, or later, or
+	- Disable Autokey Authentication by removing, or commenting out,
+	  all configuration directives beginning with the crypto keyword
+	  in your ntp.conf file. 
 
   Credit: This vulnerability was discovered by Stephen Roettger of the
   	Google Security Team. 
@@ -80,7 +304,9 @@ following high-severity vulnerabilities:
   	can overflow a stack buffer and potentially allow malicious
 	code to be executed with the privilege level of the ntpd process.
 
-  Mitigation: Upgrade to 4.2.8, or later.
+  Mitigation - any of:
+  	- Upgrade to 4.2.8, or later.
+	- Follow BCP and put 'restrict ... noquery' in your ntp.conf file.
 
   Credit: This vulnerability was discovered by Stephen Roettger of the
   	Google Security Team. 
@@ -96,7 +322,9 @@ following high-severity vulnerabilities:
 	can overflow a stack buffer and potentially allow malicious
 	code to be executed with the privilege level of the ntpd process.
 
-  Mitigation: Upgrade to 4.2.8, or later.
+  Mitigation - any of:
+  	- Upgrade to 4.2.8, or later.
+	- Follow BCP and put 'restrict ... noquery' in your ntp.conf file.
 
   Credit: This vulnerability was discovered by Stephen Roettger of the
 	Google Security Team. 
@@ -118,10 +346,10 @@ following high-severity vulnerabilities:
 	becomes a 5. If system integrity can be partially affected
 	via all three integrity metrics, the CVSS base score become 7.5.
 
-  Mitigation:
-        Upgrade to 4.2.8, or later,
-        or Remove or comment out all configuration directives
-	beginning with the crypto keyword in your ntp.conf file. 
+  Mitigation - any of:
+        - Upgrade to 4.2.8, or later,
+        - Remove or comment out all configuration directives
+	  beginning with the crypto keyword in your ntp.conf file. 
 
   Credit: This vulnerability was discovered by Stephen Roettger of the
   	Google Security Team. 

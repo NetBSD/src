@@ -1,4 +1,4 @@
-/*	$NetBSD: jsmn.c,v 1.2.2.2 2014/12/24 00:05:20 riz Exp $	*/
+/*	$NetBSD: jsmn.c,v 1.2.2.3 2015/04/23 18:53:01 snj Exp $	*/
 
 #include <stdlib.h>
 #include <string.h>
@@ -110,6 +110,8 @@ static jsmnerr_t jsmn_parse_string(jsmn_parser *parser, const char *js,
 
 		/* Backslash: Quoted symbol expected */
 		if (c == '\\') {
+			int i = 0;
+
 			parser->pos++;
 			switch (js[parser->pos]) {
 				/* Allowed escaped symbols */
@@ -119,7 +121,6 @@ static jsmnerr_t jsmn_parse_string(jsmn_parser *parser, const char *js,
 				/* Allows escaped symbol \uXXXX */
 				case 'u':
 					parser->pos++;
-					int i = 0;
 					for(; i < 4 && js[parser->pos] != '\0'; i++) {
 						/* If it isn't a hex character we have an error */
 						if(!((js[parser->pos] >= 48 && js[parser->pos] <= 57) || /* 0-9 */

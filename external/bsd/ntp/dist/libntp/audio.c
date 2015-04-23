@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.5.4.1 2014/12/24 00:05:20 riz Exp $	*/
+/*	$NetBSD: audio.c,v 1.5.4.2 2015/04/23 18:53:02 snj Exp $	*/
 
 /*
  * audio.c - audio interface for reference clock audio drivers
@@ -69,7 +69,7 @@ static struct audio_info info;	/* audio device info */
 static int ctl_fd;		/* audio control file descriptor */
 
 #ifdef PCM_STYLE_SOUND
-static void audio_config_read (int, char **, char **);
+static void audio_config_read (int, const char **, const char **);
 static int  mixer_name (const char *, int);
 
 
@@ -116,8 +116,8 @@ mixer_name(
 static void
 audio_config_read(
 	int unit,
-	char **c_dev,	/* Control device */
-	char **i_dev	/* input device */
+	const char **c_dev,	/* Control device */
+	const char **i_dev	/* input device */
 	)
 {
 	FILE *fd;

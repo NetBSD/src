@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_main.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
+/*	$NetBSD: regress_main.c,v 1.1.1.1.6.2 2015/04/23 18:53:06 snj Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -91,6 +91,8 @@
 #include "tinytest_macros.h"
 #include "../iocp-internal.h"
 #include "../event-internal.h"
+
+struct evutil_weakrand_state test_weakrand_state;
 
 long
 timeval_msec_diff(const struct timeval *start, const struct timeval *end)
@@ -453,6 +455,8 @@ main(int argc, const char **argv)
 	}
 
 	tinytest_set_aliases(testaliases);
+
+	evutil_weakrand_seed_(&test_weakrand_state, 0);
 
 	if (tinytest_main(argc,argv,testgroups))
 		return 1;

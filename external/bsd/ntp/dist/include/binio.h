@@ -1,4 +1,4 @@
-/*	$NetBSD: binio.h,v 1.1.1.2.4.1 2014/12/24 00:05:16 riz Exp $	*/
+/*	$NetBSD: binio.h,v 1.1.1.2.4.2 2015/04/23 18:53:01 snj Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/include/binio.h,v 4.5 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -44,10 +44,20 @@ void put_lsb_short (unsigned char **, long);
 long get_lsb_long (unsigned char **);
 void put_lsb_long (unsigned char **, long);
 
+#define get_lsb_int16( _x_ )   ((int16_t) get_lsb_short( _x_ ))
+#define get_lsb_uint16( _x_ )  ((uint16_t) get_lsb_short( _x_ ))
+#define get_lsb_int32( _x_ )   ((int32_t) get_lsb_long( _x_ ))
+#define get_lsb_uint32( _x_ )  ((uint32_t) get_lsb_long( _x_ ))
+
 long get_msb_short (unsigned char **);
 void put_msb_short (unsigned char **, long);
 long get_msb_long (unsigned char **);
 void put_msb_long (unsigned char **, long);
+
+#define get_msb_int16( _x_ )   ((int16_t) get_msb_short( _x_ ))
+#define get_msb_uint16( _x_ )  ((uint16_t) get_msb_short( _x_ ))
+#define get_msb_int32( _x_ )   ((int32_t) get_msb_long( _x_ ))
+#define get_msb_uint32( _x_ )  ((uint32_t) get_msb_long( _x_ ))
 
 #endif
 /*
