@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.50 2011/06/03 18:40:41 jruoho Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.51 2015/04/23 23:23:00 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.50 2011/06/03 18:40:41 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.51 2015/04/23 23:23:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -285,7 +285,7 @@ fail:
 	sc->sc_sme = NULL;
 }
 
-MODULE(MODULE_CLASS_DRIVER, acpiacad, NULL);
+MODULE(MODULE_CLASS_DRIVER, acpiacad, "sysmon_envsys,sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"
