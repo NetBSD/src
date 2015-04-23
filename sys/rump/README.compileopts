@@ -1,4 +1,4 @@
-	$NetBSD: README.compileopts,v 1.6 2014/07/11 20:26:31 justin Exp $
+	$NetBSD: README.compileopts,v 1.7 2015/04/23 14:39:03 pooka Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
@@ -75,6 +75,15 @@ effect: Control how curlwp is obtained in a rump kernel.  This is
 	hypercall   - use a hypercall to fetch the value
 	__thread    - use the __thread feature to fetch value via TLS
 	register    - use a dedicated register (implies -ffixed)
+
+
+    RUMP_COMPAT
+
+values: either a comma-separated list of releases (e.g. 50,60), or "all"
+defval:	two previous NetBSD releases; check Makefile.rump
+effect:	Builds COMPAT_nn code for each of the elements in the list.
+	This is only useful when building rump kernels for NetBSD
+	userspace.
 
 
 ================================================================================

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.108 2015/04/23 10:52:18 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.109 2015/04/23 14:39:03 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -30,6 +30,11 @@ CPPFLAGS+=	-DMIPS1=1
 .endif
 
 RUMP_COMPAT?=	60 70
+.if ${RUMP_COMPAT} == "all"
+RUMP_COMPAT=	50 60 70
+.endif
+# normalize alternatively accepted comma-separated list
+RUMP_COMPAT:=	${RUMP_COMPAT:S/,/ /g}
 CPPFLAGS+=	${RUMP_COMPAT:C/[1-9]0/-DCOMPAT_&/g}
 
 CPPFLAGS+=	-DMAXUSERS=32
