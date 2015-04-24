@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.753 2015/01/23 02:52:14 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.754 2015/04/24 00:04:04 khorben Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.753 2015/01/23 02:52:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.754 2015/04/24 00:04:04 khorben Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -760,10 +760,6 @@ haltsys:
 	doshutdownhooks();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-#ifdef XEN
-		HYPERVISOR_shutdown();
-		for (;;);
-#endif
 #if NACPICA > 0
 		if (s != IPL_NONE)
 			splx(s);
@@ -771,6 +767,10 @@ haltsys:
 		acpi_enter_sleep_state(ACPI_STATE_S5);
 #else
 		__USE(s);
+#endif
+#ifdef XEN
+		HYPERVISOR_shutdown();
+		for (;;);
 #endif
 	}
 

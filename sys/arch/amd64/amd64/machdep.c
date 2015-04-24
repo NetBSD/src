@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211 2014/05/12 22:50:03 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.212 2015/04/24 00:04:04 khorben Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2014/05/12 22:50:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2015/04/24 00:04:04 khorben Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -674,14 +674,13 @@ haltsys:
 	doshutdownhooks();
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-#ifndef XEN
 #if NACPICA > 0
 		if (s != IPL_NONE)
 			splx(s);
 
 		acpi_enter_sleep_state(ACPI_STATE_S5);
 #endif
-#else /* XEN */
+#ifdef XEN
 		HYPERVISOR_shutdown();
 #endif /* XEN */
 	}
