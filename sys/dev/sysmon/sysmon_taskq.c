@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.16 2015/04/24 00:04:47 agc Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.17 2015/04/24 00:31:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.16 2015/04/24 00:04:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.17 2015/04/24 00:31:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -134,12 +134,12 @@ sysmon_task_queue_init(void)
  *
  *	Tear town the sysmon task queue.
  */
-void
+int
 sysmon_task_queue_fini(void)
 {
 
 	if (sysmon_task_queue_initialized > 1)
-		return;
+		return EBUSY;
 
 	mutex_enter(&sysmon_task_queue_mtx);
 
@@ -151,6 +151,8 @@ sysmon_task_queue_fini(void)
 			&sysmon_task_queue_mtx);
 
 	mutex_exit(&sysmon_task_queue_mtx);
+
+	return 0;
 }
 
 /*
@@ -250,8 +252,7 @@ sysmon_taskq_modcmd(modcmd_t cmd, void *arg)
 		break;
  
 	case MODULE_CMD_FINI: 
-		sysmon_task_queue_fini();
-		ret = 0;
+		ret = sysmon_task_queue_fini();
 		break;
  
 	case MODULE_CMD_STAT:
