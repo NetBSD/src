@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.131 2015/04/23 23:22:03 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.132 2015/04/24 03:32:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.131 2015/04/23 23:22:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.132 2015/04/24 03:32:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -877,7 +877,6 @@ out2:
 		SLIST_REMOVE_HEAD(&sme_evdrv_list, evdrv_head);
 		kmem_free(evdv, sizeof(*evdv));
 	}
-printf("%s: finished, error %d\n", __func__, error);
 	if (!error)
 		return 0;
 
