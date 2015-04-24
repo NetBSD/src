@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2012, Intel Corporation 
+  Copyright (c) 2001-2013, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 240466 2012-09-13 14:40:24Z eadler $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.6 2015/04/14 07:17:06 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 247822 2013-03-04 23:07:40Z jfv $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.7 2015/04/24 07:00:51 msaitoh Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -90,6 +90,9 @@
 #define true                1
 #define CMD_MEM_WRT_INVALIDATE          0x0010  /* BIT_4 */
 #define PCI_COMMAND_REGISTER            PCIR_COMMAND
+
+/* Shared code dropped this define.. */
+#define IXGBE_INTEL_VENDOR_ID		0x8086
 
 /* Bunch of defines for shared code bogosity */
 #define UNREFERENCED_PARAMETER(_p)
