@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.42 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.43 2015/04/24 22:32:37 rtr Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -169,8 +169,8 @@ void	in6_pcbpurgeif0(struct inpcbtable *, struct ifnet *);
 void	in6_pcbpurgeif(struct inpcbtable *, struct ifnet *);
 void	in6_pcbstate(struct in6pcb *, int);
 void	in6_rtchange(struct in6pcb *, int);
-void	in6_setpeeraddr(struct in6pcb *, struct mbuf *);
-void	in6_setsockaddr(struct in6pcb *, struct mbuf *);
+void	in6_setpeeraddr(struct in6pcb *, struct sockaddr_in6 *);
+void	in6_setsockaddr(struct in6pcb *, struct sockaddr_in6 *);
 
 /* in in6_src.c */
 int	in6_selecthlim(struct in6pcb *, struct ifnet *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.168 2015/04/06 06:26:21 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.169 2015/04/24 22:32:37 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.168 2015/04/06 06:26:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.169 2015/04/24 22:32:37 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -229,7 +229,7 @@ COMPATNAME(route_detach)(struct socket *so)
 }
 
 static int
-COMPATNAME(route_accept)(struct socket *so, struct mbuf *nam)
+COMPATNAME(route_accept)(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -329,7 +329,7 @@ COMPATNAME(route_stat)(struct socket *so, struct stat *ub)
 }
 
 static int
-COMPATNAME(route_peeraddr)(struct socket *so, struct mbuf *nam)
+COMPATNAME(route_peeraddr)(struct socket *so, struct sockaddr *nam)
 {
 	struct rawcb *rp = sotorawcb(so);
 
@@ -345,7 +345,7 @@ COMPATNAME(route_peeraddr)(struct socket *so, struct mbuf *nam)
 }
 
 static int
-COMPATNAME(route_sockaddr)(struct socket *so, struct mbuf *nam)
+COMPATNAME(route_sockaddr)(struct socket *so, struct sockaddr *nam)
 {
 	struct rawcb *rp = sotorawcb(so);
 
