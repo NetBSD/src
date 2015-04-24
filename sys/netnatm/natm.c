@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.46 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.47 2015/04/24 22:32:38 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.46 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.47 2015/04/24 22:32:38 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -98,7 +98,7 @@ natm_detach(struct socket *so)
 }
 
 static int
-natm_accept(struct socket *so, struct mbuf *nam)
+natm_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -299,18 +299,17 @@ natm_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-natm_peeraddr(struct socket *so, struct mbuf *nam)
+natm_peeraddr(struct socket *so, struct sockaddr *nam)
 {
   struct natmpcb *npcb = (struct natmpcb *) so->so_pcb;
-  struct sockaddr_natm *snatm;
+  struct sockaddr_natm *snatm = (struct sockaddr_natm *)nam;
 
   KASSERT(solocked(so));
   KASSERT(pcb != NULL);
   KASSERT(nam != NULL);
 
-  snatm = mtod(nam, struct sockaddr_natm *);
   memset(snatm, 0, sizeof(*snatm));
-  nam->m_len = snatm->snatm_len = sizeof(*snatm);
+  snatm->snatm_len = sizeof(*snatm);
   snatm->snatm_family = AF_NATM;
   memcpy(snatm->snatm_if, npcb->npcb_ifp->if_xname, sizeof(snatm->snatm_if));
   snatm->snatm_vci = npcb->npcb_vci;
@@ -319,7 +318,7 @@ natm_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-natm_sockaddr(struct socket *so, struct mbuf *nam)
+natm_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
