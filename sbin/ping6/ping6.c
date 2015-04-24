@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.85 2014/09/17 01:00:41 ozaki-r Exp $	*/
+/*	$NetBSD: ping6.c,v 1.86 2015/04/24 00:42:56 christos Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.85 2014/09/17 01:00:41 ozaki-r Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.86 2015/04/24 00:42:56 christos Exp $");
 #endif
 #endif
 
@@ -189,6 +189,7 @@ struct tv32 {
 #define F_NIGROUP	0x40000
 #define F_SUPTYPES	0x80000
 #define F_NOMINMTU	0x100000
+#define F_ONCE		0x200000
 #define F_NOUSERDATA	(F_NODEADDR | F_FQDN | F_FQDNOLD | F_SUPTYPES)
 static u_int options;
 
@@ -327,7 +328,7 @@ main(int argc, char *argv[])
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dfHg:h:I:i:l:mnNp:qRS:s:tvwW" ADDOPTS)) != -1) {
+	    "a:b:c:dfHg:h:I:i:l:mnNop:qRS:s:tvwW" ADDOPTS)) != -1) {
 #undef ADDOPTS
 		switch (ch) {
 		case 'a':
@@ -467,6 +468,9 @@ main(int argc, char *argv[])
 			break;
 		case 'N':
 			options |= F_NIGROUP;
+			break;
+		case 'o':
+			options |= F_ONCE;
 			break;
 		case 'p':		/* fill buffer with user pattern */
 			options |= F_PINGFILLED;
@@ -1101,6 +1105,8 @@ main(int argc, char *argv[])
 			pr_pack(packet, cc, &m);
 		}
 		if (npackets && nreceived >= npackets)
+			break;
+		if (nreceived != 0 && (options & F_ONCE))
 			break;
 	}
 	summary();
