@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.214 2015/04/19 17:08:12 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.215 2015/04/24 05:58:36 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11472,3 +11472,7 @@ sys/dev/pci/pcidevs_data.h			regen
 	- Add MegaRAID SAS3108
 	[msaitoh, ticket #1293]
 
+sys/net/if_vlan.c				1.81
+
+	Count up parent's obytes and omcasts counters. PR kern/49837.
+	[ozaki-r, ticket #1295]
