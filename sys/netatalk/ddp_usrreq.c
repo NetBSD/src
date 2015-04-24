@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.64 2015/04/03 20:01:07 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.65 2015/04/24 22:32:37 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.64 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.65 2015/04/24 22:32:37 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.64 2015/04/03 20:01:07 rtr Exp $");
 #include <netatalk/at_extern.h>
 
 static void at_pcbdisconnect(struct ddpcb *);
-static void at_sockaddr(struct ddpcb *, struct mbuf *);
+static void at_sockaddr(struct ddpcb *, struct sockaddr_at *);
 static int at_pcbsetaddr(struct ddpcb *, struct sockaddr_at *);
 static int at_pcbconnect(struct ddpcb *, struct mbuf *);
 static void ddp_detach(struct socket *);
@@ -132,13 +132,10 @@ release:
 }
 
 static void
-at_sockaddr(struct ddpcb *ddp, struct mbuf *addr)
+at_sockaddr(struct ddpcb *ddp, struct sockaddr_at *addr)
 {
-	struct sockaddr_at *sat;
 
-	addr->m_len = sizeof(struct sockaddr_at);
-	sat = mtod(addr, struct sockaddr_at *);
-	*sat = ddp->ddp_lsat;
+	*addr = ddp->ddp_lsat;
 }
 
 static int
@@ -402,7 +399,7 @@ ddp_detach(struct socket *so)
 }
 
 static int
-ddp_accept(struct socket *so, struct mbuf *nam)
+ddp_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -504,7 +501,7 @@ ddp_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-ddp_peeraddr(struct socket *so, struct mbuf *nam)
+ddp_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -512,13 +509,13 @@ ddp_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-ddp_sockaddr(struct socket *so, struct mbuf *nam)
+ddp_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotoddpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	at_sockaddr(sotoddpcb(so), nam);
+	at_sockaddr(sotoddpcb(so), (struct sockaddr_at *)nam);
 	return 0;
 }
 
