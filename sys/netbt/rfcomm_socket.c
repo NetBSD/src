@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.34 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.35 2015/04/24 22:32:37 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.34 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.35 2015/04/24 22:32:37 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -125,10 +125,9 @@ rfcomm_detach(struct socket *so)
 }
 
 static int
-rfcomm_accept(struct socket *so, struct mbuf *nam)
+rfcomm_accept(struct socket *so, struct sockaddr *nam)
 {
 	struct rfcomm_dlc *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
 
 	KASSERT(solocked(so));
 	KASSERT(nam != NULL);
@@ -136,9 +135,7 @@ rfcomm_accept(struct socket *so, struct mbuf *nam)
 	if (pcb == NULL)
 		return EINVAL;
 
-	sa = mtod(nam, struct sockaddr_bt *);
-	nam->m_len = sizeof(struct sockaddr_bt);
-	return rfcomm_peeraddr_pcb(pcb, sa);
+	return rfcomm_peeraddr_pcb(pcb, (struct sockaddr_bt *)nam);
 }
 
 static int
@@ -265,33 +262,27 @@ rfcomm_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-rfcomm_peeraddr(struct socket *so, struct mbuf *nam)
+rfcomm_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	struct rfcomm_dlc *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
-	nam->m_len = sizeof(struct sockaddr_bt);
-	return rfcomm_peeraddr_pcb(pcb, sa);
+	return rfcomm_peeraddr_pcb(pcb, (struct sockaddr_bt *)nam);
 }
 
 static int
-rfcomm_sockaddr(struct socket *so, struct mbuf *nam)
+rfcomm_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	struct rfcomm_dlc *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
-	nam->m_len = sizeof(struct sockaddr_bt);
-	return rfcomm_sockaddr_pcb(pcb, sa);
+	return rfcomm_sockaddr_pcb(pcb, (struct sockaddr_bt *)nam);
 }
 
 static int

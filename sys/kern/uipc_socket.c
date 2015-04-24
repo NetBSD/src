@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.238 2015/04/05 23:19:56 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.239 2015/04/24 22:32:37 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.238 2015/04/05 23:19:56 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.239 2015/04/24 22:32:37 rtr Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -793,7 +793,7 @@ soabort(struct socket *so)
 }
 
 int
-soaccept(struct socket *so, struct mbuf *nam)
+soaccept(struct socket *so, struct sockaddr *nam)
 {
 	int error;
 
