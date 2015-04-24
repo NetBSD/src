@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.233 2015/04/24 01:17:32 rodent Exp $
+$NetBSD: acronyms,v 1.234 2015/04/24 12:58:47 jmcneill Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -227,6 +227,7 @@ IHBW	I have been wrong
 IIANM	if I am not mistaken
 IIRC	if I {recall,remember} correctly
 IIUC	if I understand correctly
+IKR	I know, right?
 IKWYM	I know what you mean
 ILU	I love you
 ILY	I love you
