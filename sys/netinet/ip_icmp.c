@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.136 2015/04/24 02:56:51 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.137 2015/04/24 03:20:41 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.136 2015/04/24 02:56:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.137 2015/04/24 03:20:41 ozaki-r Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1209,8 +1209,8 @@ ip_next_mtu(u_int mtu, int dir)	/* XXX */
 static void
 icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
-	if (rt == NULL)
-		panic("icmp_mtudisc_timeout:  bad route to timeout");
+	KASSERT(rt != NULL);
+
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, rt_getkey(rt),
@@ -1225,8 +1225,8 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 static void
 icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
-	if (rt == NULL)
-		panic("icmp_redirect_timeout:  bad route to timeout");
+	KASSERT(rt != NULL);
+
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, rt_getkey(rt),
