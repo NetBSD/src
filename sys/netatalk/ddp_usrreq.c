@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.65 2015/04/24 22:32:37 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.66 2015/04/24 23:36:48 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.65 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.66 2015/04/24 23:36:48 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.65 2015/04/24 22:32:37 rtr Exp $");
 static void at_pcbdisconnect(struct ddpcb *);
 static void at_sockaddr(struct ddpcb *, struct sockaddr_at *);
 static int at_pcbsetaddr(struct ddpcb *, struct sockaddr_at *);
-static int at_pcbconnect(struct ddpcb *, struct mbuf *);
+static int at_pcbconnect(struct ddpcb *, struct sockaddr_at *);
 static void ddp_detach(struct socket *);
 
 struct ifqueue atintrq1, atintrq2;
@@ -231,18 +231,15 @@ at_pcbsetaddr(struct ddpcb *ddp, struct sockaddr_at *sat)
 }
 
 static int
-at_pcbconnect(struct ddpcb *ddp, struct mbuf *addr)
+at_pcbconnect(struct ddpcb *ddp, struct sockaddr_at *sat)
 {
 	struct rtentry *rt;
 	const struct sockaddr_at *cdst;
-	struct sockaddr_at *sat = mtod(addr, struct sockaddr_at *);
 	struct route *ro;
 	struct at_ifaddr *aa;
 	struct ifnet   *ifp;
 	u_short         hintnet = 0, net;
 
-	if (addr->m_len != sizeof(*sat))
-		return EINVAL;
 	if (sat->sat_family != AF_APPLETALK) {
 		return EAFNOSUPPORT;
 	}
@@ -435,7 +432,9 @@ ddp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 
 	if (ddp->ddp_fsat.sat_port != ATADDR_ANYPORT)
 		return EISCONN;
-	error = at_pcbconnect(ddp, nam);
+	if (nam->m_len != sizeof(struct sockaddr_at))
+		return EINVAL;
+	error = at_pcbconnect(ddp, mtod(nam, struct sockaddr_at *));
 	if (error == 0)
 		soisconnected(so);
 
@@ -550,7 +549,9 @@ ddp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		if (ddp->ddp_fsat.sat_port != ATADDR_ANYPORT)
 			return EISCONN;
 		s = splnet();
-		error = at_pcbconnect(ddp, nam);
+		if (nam->m_len != sizeof(struct sockaddr_at))
+			return EINVAL;
+		error = at_pcbconnect(ddp, mtod(nam, struct sockaddr_at *));
 		if (error) {
 			splx(s);
 			return error;
