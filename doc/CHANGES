@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2070 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2071 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -143,7 +143,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	openssl: Import openssl 1.0.1m [spz 20150323]
 	libc: Update to tzcode2015b. [christos 20150324]
 	dhcpcd(8): Import dhcpcd-6.8.1. [roy 20150327]
-	wm(4): Add X540 support [msaitoh 20150327]
 	libpcap: Import 1.7.2. [christos 20150331]
 	tcpdump(8): Import 4.7.3. [christos 20150331]
 	wpa: Import wpa_supplicant and hostapd 2.4. [christos 20150401]
