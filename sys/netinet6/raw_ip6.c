@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.137 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.138 2015/04/24 22:32:37 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.137 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.138 2015/04/24 22:32:37 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -645,7 +645,7 @@ rip6_detach(struct socket *so)
 }
 
 static int
-rip6_accept(struct socket *so, struct mbuf *nam)
+rip6_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -815,24 +815,24 @@ rip6_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-rip6_peeraddr(struct socket *so, struct mbuf *nam)
+rip6_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotoin6pcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setpeeraddr(sotoin6pcb(so), nam);
+	in6_setpeeraddr(sotoin6pcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 
 static int
-rip6_sockaddr(struct socket *so, struct mbuf *nam)
+rip6_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotoin6pcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setsockaddr(sotoin6pcb(so), nam);
+	in6_setsockaddr(sotoin6pcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 

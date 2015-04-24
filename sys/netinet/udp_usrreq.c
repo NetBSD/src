@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.218 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.219 2015/04/24 22:32:37 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.218 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.219 2015/04/24 22:32:37 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -895,7 +895,7 @@ udp_detach(struct socket *so)
 }
 
 static int
-udp_accept(struct socket *so, struct mbuf *nam)
+udp_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -1018,7 +1018,7 @@ udp_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-udp_peeraddr(struct socket *so, struct mbuf *nam)
+udp_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	int s;
 
@@ -1027,14 +1027,14 @@ udp_peeraddr(struct socket *so, struct mbuf *nam)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	in_setpeeraddr(sotoinpcb(so), nam);
+	in_setpeeraddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	splx(s);
 
 	return 0;
 }
 
 static int
-udp_sockaddr(struct socket *so, struct mbuf *nam)
+udp_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	int s;
 
@@ -1043,7 +1043,7 @@ udp_sockaddr(struct socket *so, struct mbuf *nam)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	in_setsockaddr(sotoinpcb(so), nam);
+	in_setsockaddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	splx(s);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.83 2015/04/19 19:17:37 rtr Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.84 2015/04/24 22:32:37 rtr Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.83 2015/04/19 19:17:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.84 2015/04/24 22:32:37 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -872,11 +872,12 @@ svr4_stream_ti_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_lo
 	struct svr4_strm *st = svr4_stream_get(fp);
 	int error;
 	struct svr4_strmcmd sc;
-	struct mbuf *name;
+	struct sockaddr_big sbig;
 
 	if (st == NULL)
 		return EINVAL;
 
+	sbig.sb_len = UCHAR_MAX;
 	sc.offs = 0x10;
 
 	if ((error = copyin(sub, &skb, sizeof(skb))) != 0) {
@@ -887,14 +888,14 @@ svr4_stream_ti_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_lo
 	switch (cmd) {
 	case SVR4_TI_GETMYNAME:
 		DPRINTF(("TI_GETMYNAME\n"));
-		error = do_sys_getsockname(fd, &name);
+		error = do_sys_getsockname(fd, (struct sockaddr *)&sbig);
 		if (error != 0)
 			return error;
 		break;
 
 	case SVR4_TI_GETPEERNAME:
 		DPRINTF(("TI_GETPEERNAME\n"));
-		error = do_sys_getpeername(fd, &name);
+		error = do_sys_getpeername(fd, (struct sockaddr *)&sbig);
 		if (error != 0)
 			return error;
 		break;
@@ -913,12 +914,12 @@ svr4_stream_ti_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_lo
 
 	switch (st->s_family) {
 	case AF_INET:
-		sockaddr_to_netaddr_in(&sc, mtod(name, void *));
+		sockaddr_to_netaddr_in(&sc, (struct sockaddr_in *)&sbig);
 		skb.len = sizeof (struct sockaddr_in);
 		break;
 
 	case AF_LOCAL:
-		sockaddr_to_netaddr_un(&sc, mtod(name, void *));
+		sockaddr_to_netaddr_un(&sc, (struct sockaddr_un *)&sbig);
 		/* XXX: the length gets adjusted but the copyout doesn't */
 		skb.len = sizeof (struct sockaddr_un) + 4;
 		break;
@@ -926,12 +927,10 @@ svr4_stream_ti_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_lo
 	default:
 		DPRINTF(("ti_ioctl: Unsupported address family %d\n",
 			 st->s_family));
-		m_free(name);
 		return ENOSYS;
 	}
 
-	error = copyout(SVR4_ADDROF(&sc), NETBSD32PTR(skb.buf), name->m_len);
-	m_free(name);
+	error = copyout(SVR4_ADDROF(&sc), NETBSD32PTR(skb.buf), sbig.sb_len);
 	if (error != 0) {
 		DPRINTF(("ti_ioctl: error copying out socket data\n"));
 		return error;
@@ -1539,8 +1538,10 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 	struct iovec aiov;
 	struct svr4_strm *st;
 	int fl;
+	struct sockaddr_big sbig;
 	struct mbuf *name;
 
+	sbig.sb_len = UCHAR_MAX;
 	memset(&sc, 0, sizeof(sc));
 
 #ifdef DEBUG_SVR4
@@ -1618,7 +1619,8 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 		 * a connect verification.
 		 */
 
-		error = do_sys_getsockname(SCARG(uap, fd), &name);
+		error = do_sys_getsockname(SCARG(uap, fd),
+		    (struct sockaddr *)&sbig);
 		if (error != 0) {
 			DPRINTF(("getmsg: getsockname failed %d\n", error));
 			goto out;
@@ -1633,20 +1635,20 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 		switch (st->s_family) {
 		case AF_INET:
 			sc.len = sizeof (struct sockaddr_in) + 4;
-			sockaddr_to_netaddr_in(&sc, mtod(name, void *));
+			sockaddr_to_netaddr_in(&sc,
+			    (struct sockaddr_in *)&sbig);
 			break;
 
 		case AF_LOCAL:
 			sc.len = sizeof (struct sockaddr_un) + 4;
-			sockaddr_to_netaddr_un(&sc, mtod(name, void *));
+			sockaddr_to_netaddr_un(&sc,
+			    (struct sockaddr_un *)&sbig);
 			break;
 
 		default:
-			m_free(name);
 			error = ENOSYS;
 			goto out;
 		}
-		m_free(name);
 
 		ctl.len = 40;
 		dat.len = -1;
@@ -1675,8 +1677,8 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 		 * We are after a listen, so we try to accept...
 		 */
 
-		error = do_sys_accept(l, SCARG(uap, fd), &name, retval,
-		    NULL, 0, FNONBLOCK);
+		error = do_sys_accept(l, SCARG(uap, fd),
+		    (struct sockaddr *)&sbig, retval, NULL, 0, FNONBLOCK);
 		if (error != 0) {
 			DPRINTF(("getmsg: accept failed %d\n", error));
 			goto out;
@@ -1693,7 +1695,8 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 		switch (st->s_family) {
 		case AF_INET:
 			sc.pad[1] = 0x28;
-			sockaddr_to_netaddr_in(&sc, mtod(name, void *));
+			sockaddr_to_netaddr_in(&sc,
+			    (struct sockaddr_in *)&sbig);
 			ctl.len = 40;
 			sc.len = sizeof (struct sockaddr_in);
 			break;
@@ -1707,11 +1710,9 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 			break;
 
 		default:
-			m_free(name);
 			error = ENOSYS;
 			goto out;
 		}
-		m_free(name);
 
 		dat.len = -1;
 		fl = 0;
