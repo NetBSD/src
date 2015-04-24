@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.20 2015/04/23 23:22:03 pgoyette Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.21 2015/04/24 03:35:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.20 2015/04/23 23:22:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.21 2015/04/24 03:35:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -345,7 +345,9 @@ MODULE(MODULE_CLASS_DRIVER, sysmon, "");
 int
 sysmon_init(void)
 {
+#ifdef _MODULE
 	devmajor_t bmajor, cmajor;
+#endif
 	static struct cfdata cf;
 	int error = 0;
 
@@ -367,6 +369,7 @@ sysmon_init(void)
 		return error;
 	}
 
+#ifdef _MODULE
 	bmajor = cmajor = -1;
 	error = devsw_attach("sysmon", NULL, &bmajor,
 			&sysmon_cdevsw, &cmajor);
@@ -377,6 +380,7 @@ sysmon_init(void)
 		    sysmon_cd.cd_name);
 		return error;
 	}
+#endif
 
 	cf.cf_name = sysmon_cd.cd_name;
 	cf.cf_atname = sysmon_cd.cd_name; 
