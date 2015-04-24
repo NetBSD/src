@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.205 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.206 2015/04/24 22:32:37 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.205 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.206 2015/04/24 22:32:37 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -674,7 +674,7 @@ tcp_detach(struct socket *so)
 }
 
 static int
-tcp_accept(struct socket *so, struct mbuf *nam)
+tcp_accept(struct socket *so, struct sockaddr *nam)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -696,12 +696,12 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 	s = splsoftnet();
 #ifdef INET
 	if (inp) {
-		in_setpeeraddr(inp, nam);
+		in_setpeeraddr(inp, (struct sockaddr_in *)nam);
 	}
 #endif
 #ifdef INET6
 	if (in6p) {
-		in6_setpeeraddr(in6p, nam);
+		in6_setpeeraddr(in6p, (struct sockaddr_in6 *)nam);
 	}
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_ACCEPT);
@@ -1023,7 +1023,7 @@ tcp_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-tcp_peeraddr(struct socket *so, struct mbuf *nam)
+tcp_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -1039,12 +1039,14 @@ tcp_peeraddr(struct socket *so, struct mbuf *nam)
 
 	s = splsoftnet();
 #ifdef INET
-	if (inp)
-		in_setpeeraddr(inp, nam);
+	if (inp) {
+		in_setpeeraddr(inp, (struct sockaddr_in *)nam);
+	}
 #endif
 #ifdef INET6
-	if (in6p)
-		in6_setpeeraddr(in6p, nam);
+	if (in6p) {
+		in6_setpeeraddr(in6p, (struct sockaddr_in6 *)nam);
+	}
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_PEERADDR);
 	splx(s);
@@ -1053,7 +1055,7 @@ tcp_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-tcp_sockaddr(struct socket *so, struct mbuf *nam)
+tcp_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -1069,12 +1071,14 @@ tcp_sockaddr(struct socket *so, struct mbuf *nam)
 
 	s = splsoftnet();
 #ifdef INET
-	if (inp)
-		in_setsockaddr(inp, nam);
+	if (inp) {
+		in_setsockaddr(inp, (struct sockaddr_in *)nam);
+	}
 #endif
 #ifdef INET6
-	if (in6p)
-		in6_setsockaddr(in6p, nam);
+	if (in6p) {
+		in6_setsockaddr(in6p, (struct sockaddr_in6 *)nam);
+	}
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_SOCKADDR);
 	splx(s);
