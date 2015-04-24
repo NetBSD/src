@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.136 2015/04/03 20:01:08 rtr Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.137 2015/04/24 22:32:38 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ void	soinit(void);
 void	soinit1(void);
 void	soinit2(void);
 int	soabort(struct socket *);
-int	soaccept(struct socket *, struct mbuf *);
+int	soaccept(struct socket *, struct sockaddr *);
 int	sofamily(const struct socket *);
 int	sobind(struct socket *, struct sockaddr *, struct lwp *);
 void	socantrcvmore(struct socket *);
@@ -348,15 +348,15 @@ int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
 void	free_control_mbuf(struct lwp *, struct mbuf *, struct mbuf *);
 
-int	do_sys_getpeername(int, struct mbuf **);
-int	do_sys_getsockname(int, struct mbuf **);
+int	do_sys_getpeername(int, struct sockaddr *);
+int	do_sys_getsockname(int, struct sockaddr *);
 int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int, register_t *);
 int	do_sys_recvmsg(struct lwp *, int, struct msghdr *, struct mbuf **,
 	    struct mbuf **, register_t *);
 
 int	do_sys_bind(struct lwp *, int, struct sockaddr *);
 int	do_sys_connect(struct lwp *, int, struct mbuf *);
-int	do_sys_accept(struct lwp *, int, struct mbuf **, register_t *,
+int	do_sys_accept(struct lwp *, int, struct sockaddr *, register_t *,
 	    const sigset_t *, int, int);
 
 /*

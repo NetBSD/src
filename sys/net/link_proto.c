@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.25 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.26 2015/04/24 22:32:37 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.25 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.26 2015/04/24 22:32:37 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.25 2015/04/03 20:01:07 rtr Exp $");
 static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
 static int link_attach(struct socket *, int);
 static void link_detach(struct socket *);
-static int link_accept(struct socket *, struct mbuf *);
+static int link_accept(struct socket *, struct sockaddr *);
 static int link_bind(struct socket *, struct sockaddr *, struct lwp *);
 static int link_listen(struct socket *, struct lwp *);
 static int link_connect(struct socket *, struct mbuf *, struct lwp *);
@@ -60,8 +60,8 @@ static int link_shutdown(struct socket *);
 static int link_abort(struct socket *);
 static int link_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int link_stat(struct socket *, struct stat *);
-static int link_peeraddr(struct socket *, struct mbuf *);
-static int link_sockaddr(struct socket *, struct mbuf *);
+static int link_peeraddr(struct socket *, struct sockaddr *);
+static int link_sockaddr(struct socket *, struct sockaddr *);
 static int link_rcvd(struct socket *, int, struct lwp *);
 static int link_recvoob(struct socket *, struct mbuf *, int);
 static int link_send(struct socket *, struct mbuf *, struct mbuf *,
@@ -266,7 +266,7 @@ link_detach(struct socket *so)
 }
 
 static int
-link_accept(struct socket *so, struct mbuf *nam)
+link_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -344,7 +344,7 @@ link_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-link_peeraddr(struct socket *so, struct mbuf *nam)
+link_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -352,7 +352,7 @@ link_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-link_sockaddr(struct socket *so, struct mbuf *nam)
+link_sockaddr(struct socket *so, struct sockaddr *nam)
 {
  	KASSERT(solocked(so));
 

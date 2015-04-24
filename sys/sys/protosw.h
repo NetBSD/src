@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.61 2015/04/03 20:01:08 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.62 2015/04/24 22:32:38 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -238,7 +238,7 @@ static const char * const prcorequests[] = {
 struct pr_usrreqs {
 	int	(*pr_attach)(struct socket *, int);
 	void	(*pr_detach)(struct socket *);
-	int	(*pr_accept)(struct socket *, struct mbuf *);
+	int	(*pr_accept)(struct socket *, struct sockaddr *);
 	int	(*pr_connect)(struct socket *, struct mbuf *, struct lwp *);
 	int	(*pr_connect2)(struct socket *, struct socket *);
 	int	(*pr_bind)(struct socket *, struct sockaddr *, struct lwp *);
@@ -248,8 +248,8 @@ struct pr_usrreqs {
 	int	(*pr_abort)(struct socket *);
 	int	(*pr_ioctl)(struct socket *, u_long, void *, struct ifnet *);
 	int	(*pr_stat)(struct socket *, struct stat *);
-	int	(*pr_peeraddr)(struct socket *, struct mbuf *);
-	int	(*pr_sockaddr)(struct socket *, struct mbuf *);
+	int	(*pr_peeraddr)(struct socket *, struct sockaddr *);
+	int	(*pr_sockaddr)(struct socket *, struct sockaddr *);
 	int	(*pr_rcvd)(struct socket *, int, struct lwp *);
 	int	(*pr_recvoob)(struct socket *, struct mbuf *, int);
 	int	(*pr_send)(struct socket *, struct mbuf *, struct mbuf *,
@@ -308,7 +308,8 @@ name##_detach_wrapper(struct socket *a)			\
 	KERNEL_UNLOCK_ONE(NULL);			\
 }							\
 static int						\
-name##_accept_wrapper(struct socket *a, struct mbuf *b)	\
+name##_accept_wrapper(struct socket *a,			\
+    struct sockaddr *b)					\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
@@ -402,7 +403,8 @@ name##_stat_wrapper(struct socket *a, struct stat *b)	\
 	return rv;					\
 }							\
 static int						\
-name##_peeraddr_wrapper(struct socket *a, struct mbuf *b)	\
+name##_peeraddr_wrapper(struct socket *a,		\
+    struct sockaddr *b)					\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
@@ -411,7 +413,8 @@ name##_peeraddr_wrapper(struct socket *a, struct mbuf *b)	\
 	return rv;					\
 }							\
 static int						\
-name##_sockaddr_wrapper(struct socket *a, struct mbuf *b)	\
+name##_sockaddr_wrapper(struct socket *a,		\
+    struct sockaddr *b)					\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\

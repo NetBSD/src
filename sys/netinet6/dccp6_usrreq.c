@@ -1,5 +1,5 @@
 /*	$KAME: dccp6_usrreq.c,v 1.13 2005/07/27 08:42:56 nishida Exp $	*/
-/*	$NetBSD: dccp6_usrreq.c,v 1.2 2015/04/04 04:33:39 rtr Exp $ */
+/*	$NetBSD: dccp6_usrreq.c,v 1.3 2015/04/24 22:32:37 rtr Exp $ */
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.2 2015/04/04 04:33:39 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.3 2015/04/24 22:32:37 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_dccp.h"
@@ -262,7 +262,7 @@ dccp6_listen(struct socket *so, struct lwp *l)
 }
 
 int
-dccp6_accept(struct socket *so, struct mbuf *m)
+dccp6_accept(struct socket *so, struct sockaddr *nam)
 {
 	struct in6pcb *in6p = NULL;
 	int error = 0;
@@ -284,7 +284,7 @@ dccp6_accept(struct socket *so, struct mbuf *m)
 	}
 	INP_LOCK(inp);
 	INP_INFO_RUNLOCK(&dccpbinfo);
-	in6_setpeeraddr(in6p, m);
+	in6_setpeeraddr(in6p, (struct sockaddr_in6 *)nam);
 
 	INP_UNLOCK(inp);
 	return error;
@@ -420,24 +420,24 @@ dccp6_abort(struct socket *so)
 
 
 static int
-dccp6_peeraddr(struct socket *so, struct mbuf *nam)
+dccp6_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setpeeraddr(sotoin6pcb(so), nam);
+	in6_setpeeraddr(sotoin6pcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 
 static int
-dccp6_sockaddr(struct socket *so, struct mbuf *nam)
+dccp6_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotoinpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setsockaddr(sotoin6pcb(so), nam);
+	in6_setsockaddr(sotoin6pcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 

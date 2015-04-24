@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.32 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.33 2015/04/24 22:32:37 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.32 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.33 2015/04/24 22:32:37 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -117,10 +117,9 @@ l2cap_detach(struct socket *so)
 }
 
 static int
-l2cap_accept(struct socket *so, struct mbuf *nam)
+l2cap_accept(struct socket *so, struct sockaddr *nam)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
 
 	KASSERT(solocked(so));
 	KASSERT(nam != NULL);
@@ -128,9 +127,7 @@ l2cap_accept(struct socket *so, struct mbuf *nam)
 	if (pcb == NULL)
 		return EINVAL;
 
-	sa = mtod(nam, struct sockaddr_bt *);
-	nam->m_len = sizeof(struct sockaddr_bt);
-	return l2cap_peeraddr_pcb(pcb, sa);
+	return l2cap_peeraddr_pcb(pcb, (struct sockaddr_bt *)nam);
 }
 
 static int
@@ -255,33 +252,27 @@ l2cap_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-l2cap_peeraddr(struct socket *so, struct mbuf *nam)
+l2cap_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
-	nam->m_len = sizeof(struct sockaddr_bt);
-	return l2cap_peeraddr_pcb(pcb, sa);
+	return l2cap_peeraddr_pcb(pcb, (struct sockaddr_bt *)nam);
 }
 
 static int
-l2cap_sockaddr(struct socket *so, struct mbuf *nam)
+l2cap_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	struct l2cap_channel *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
-	nam->m_len = sizeof(struct sockaddr_bt);
-	return l2cap_sockaddr_pcb(pcb, sa);
+	return l2cap_sockaddr_pcb(pcb, (struct sockaddr_bt *)nam);
 }
 
 static int

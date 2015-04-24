@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.41 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.42 2015/04/24 22:32:37 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.41 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.42 2015/04/24 22:32:37 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -484,7 +484,7 @@ hci_detach(struct socket *so)
 }
 
 static int
-hci_accept(struct socket *so, struct mbuf *nam)
+hci_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -616,18 +616,16 @@ hci_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-hci_peeraddr(struct socket *so, struct mbuf *nam)
+hci_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	struct hci_pcb *pcb = (struct hci_pcb *)so->so_pcb;
-	struct sockaddr_bt *sa;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
 	memset(sa, 0, sizeof(struct sockaddr_bt));
-	nam->m_len =
 	sa->bt_len = sizeof(struct sockaddr_bt);
 	sa->bt_family = AF_BLUETOOTH;
 	bdaddr_copy(&sa->bt_bdaddr, &pcb->hp_raddr);
@@ -635,18 +633,16 @@ hci_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-hci_sockaddr(struct socket *so, struct mbuf *nam)
+hci_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	struct hci_pcb *pcb = (struct hci_pcb *)so->so_pcb;
-	struct sockaddr_bt *sa;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
 	memset(sa, 0, sizeof(struct sockaddr_bt));
-	nam->m_len =
 	sa->bt_len = sizeof(struct sockaddr_bt);
 	sa->bt_family = AF_BLUETOOTH;
 	bdaddr_copy(&sa->bt_bdaddr, &pcb->hp_laddr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.135 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.136 2015/04/24 22:32:37 rtr Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.135 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.136 2015/04/24 22:32:37 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -626,29 +626,23 @@ in6_pcbdetach(struct in6pcb *in6p)
 }
 
 void
-in6_setsockaddr(struct in6pcb *in6p, struct mbuf *nam)
+in6_setsockaddr(struct in6pcb *in6p, struct sockaddr_in6 *sin6)
 {
-	struct sockaddr_in6 *sin6;
 
 	if (in6p->in6p_af != AF_INET6)
 		return;
 
-	nam->m_len = sizeof(*sin6);
-	sin6 = mtod(nam, struct sockaddr_in6 *);
 	sockaddr_in6_init(sin6, &in6p->in6p_laddr, in6p->in6p_lport, 0, 0);
 	(void)sa6_recoverscope(sin6); /* XXX: should catch errors */
 }
 
 void
-in6_setpeeraddr(struct in6pcb *in6p, struct mbuf *nam)
+in6_setpeeraddr(struct in6pcb *in6p, struct sockaddr_in6 *sin6)
 {
-	struct sockaddr_in6 *sin6;
 
 	if (in6p->in6p_af != AF_INET6)
 		return;
 
-	nam->m_len = sizeof(*sin6);
-	sin6 = mtod(nam, struct sockaddr_in6 *);
 	sockaddr_in6_init(sin6, &in6p->in6p_faddr, in6p->in6p_fport, 0, 0);
 	(void)sa6_recoverscope(sin6); /* XXX: should catch errors */
 }

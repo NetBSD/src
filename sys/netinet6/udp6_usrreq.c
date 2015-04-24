@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.117 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.118 2015/04/24 22:32:37 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.117 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.118 2015/04/24 22:32:37 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -688,7 +688,7 @@ udp6_detach(struct socket *so)
 }
 
 static int
-udp6_accept(struct socket *so, struct mbuf *nam)
+udp6_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -825,24 +825,24 @@ udp6_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-udp6_peeraddr(struct socket *so, struct mbuf *nam)
+udp6_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotoin6pcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setpeeraddr(sotoin6pcb(so), nam);
+	in6_setpeeraddr(sotoin6pcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 
 static int
-udp6_sockaddr(struct socket *so, struct mbuf *nam)
+udp6_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotoin6pcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	in6_setsockaddr(sotoin6pcb(so), nam);
+	in6_setsockaddr(sotoin6pcb(so), (struct sockaddr_in6 *)nam);
 	return 0;
 }
 
