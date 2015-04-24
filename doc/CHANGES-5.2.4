@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.4,v 1.1.2.25 2015/04/19 07:46:18 msaitoh Exp $
+# $NetBSD: CHANGES-5.2.4,v 1.1.2.26 2015/04/24 05:48:57 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2.3 release to the NetBSD 5.2.4
 release:
@@ -2595,3 +2595,11 @@ xsrc/xfree/xc/lib/X11/Xlibint.h				1.2
 
 	Fix CVE-2013-7439: Buffer overflow in MakeBigReq macro in libX11.
 	[mrg, ticket #1959]
+
+sys/kern/sys_select.c				patch
+
+	Limit nfds arg to poll() to a large enough value that user programs
+	cannot allocate indefinite sized blocks of kvm. If the limit is
+	exceeded, then return EINVAL instead of silently truncating the list.
+	Addresses PR/17507.
+	[prlw1, ticket #1957]
