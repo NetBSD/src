@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.111 2015/04/19 07:45:47 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.112 2015/04/24 05:48:35 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3832,3 +3832,11 @@ lib/libc/arch/sh3/gen/swapcontext.S		1.11-1.12 via patch
 	Correctly preserve old sate in swapcontext(3).
 	Fixes PR port-sh3/49597 reported by Yasushi Oshima.
 	[uwe, ticket #1960]
+
+sys/kern/sys_select.c				patch
+
+	Limit nfds arg to poll() to a large enough value that user programs
+	cannot allocate indefinite sized blocks of kvm. If the limit is
+	exceeded, then return EINVAL instead of silently truncating the list.
+	Addresses PR/17507.
+	[prlw1, ticket #1957]
