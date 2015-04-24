@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2010, Intel Corporation 
+  Copyright (c) 2001-2013, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,5 +30,5 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/LICENSE,v 1.4 2010/03/27 00:21:40 jfv Exp $*/
-/*$NetBSD: LICENSE,v 1.1 2011/08/12 21:55:28 dyoung Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/LICENSE 247822 2013-03-04 23:07:40Z jfv $*/
+/*$NetBSD: LICENSE,v 1.2 2015/04/24 07:00:51 msaitoh Exp $*/

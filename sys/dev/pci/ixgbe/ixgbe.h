@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 243716 2012-11-30 22:33:21Z jfv $*/
-/*$NetBSD: ixgbe.h,v 1.6 2015/04/14 07:17:06 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 244514 2012-12-20 22:26:03Z luigi $*/
+/*$NetBSD: ixgbe.h,v 1.7 2015/04/24 07:00:51 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -106,10 +106,7 @@
 #include <sys/sysctl.h>
 #include <sys/endian.h>
 #include <sys/workqueue.h>
-
-#ifdef IXGBE_IEEE1588
-#include <sys/ieee1588.h>
-#endif
+#include <sys/cpu.h>
 
 #include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"
@@ -218,6 +215,9 @@
 #define IXGBE_BR_SIZE			4096
 #define IXGBE_QUEUE_MIN_FREE		32
 
+/* IOCTL define to gather SFP+ Diagnostic data */
+#define SIOCGI2C	SIOCGIFGENERIC
+
 /* Offload bits in mbuf flag */
 #define	M_CSUM_OFFLOAD	\
     (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4|M_CSUM_UDPv6|M_CSUM_TCPv6)
@@ -247,9 +247,16 @@ typedef struct _ixgbe_vendor_info_t {
 	unsigned int    index;
 } ixgbe_vendor_info_t;
 
+/* This is used to get SFP+ module data */
+struct ixgbe_i2c_req {
+        u8 dev_addr;
+        u8 offset;
+        u8 len;
+        u8 data[8];
+};
 
 struct ixgbe_tx_buf {
-	u32		eop_index;
+	union ixgbe_adv_tx_desc	*eop;
 	struct mbuf	*m_head;
 	bus_dmamap_t	map;
 };
@@ -257,7 +264,7 @@ struct ixgbe_tx_buf {
 struct ixgbe_rx_buf {
 	struct mbuf	*buf;
 	struct mbuf	*fmp;
-	bus_dmamap_t	map;
+	bus_dmamap_t	pmap;
 	u_int		flags;
 #define IXGBE_RX_COPY	0x01
 	uint64_t	addr;
@@ -301,24 +308,26 @@ struct tx_ring {
         struct adapter		*adapter;
 	kmutex_t		tx_mtx;
 	u32			me;
+	struct timeval		watchdog_time;
+	union ixgbe_adv_tx_desc	*tx_base;
+	struct ixgbe_tx_buf	*tx_buffers;
+	struct ixgbe_dma_alloc	txdma;
+	volatile u16		tx_avail;
+	u16			next_avail_desc;
+	u16			next_to_clean;
+	u32			process_limit;
+	u16			num_desc;
 	enum {
 	    IXGBE_QUEUE_IDLE,
 	    IXGBE_QUEUE_WORKING,
 	    IXGBE_QUEUE_HUNG,
 	}			queue_status;
-	struct timeval		watchdog_time;
-	union ixgbe_adv_tx_desc	*tx_base;
-	struct ixgbe_dma_alloc	txdma;
-	u32			next_avail_desc;
-	u32			next_to_clean;
-	struct ixgbe_tx_buf	*tx_buffers;
-	volatile u16		tx_avail;
 	u32			txd_cmd;
 	ixgbe_dma_tag_t		*txtag;
 	char			mtx_name[16];
-#if __FreeBSD_version >= 800000
+#ifndef IXGBE_LEGACY_TX
 	struct buf_ring		*br;
-	struct task		txq_task;
+	void			*txq_si;
 #endif
 #ifdef IXGBE_FDIR
 	u16			atr_sample;
@@ -327,6 +336,8 @@ struct tx_ring {
 	u32			bytes;  /* used for AIM */
 	u32			packets;
 	/* Soft Stats */
+	struct evcnt	   	tso_tx;
+	struct evcnt	   	no_tx_map_avail;
 	struct evcnt		no_desc_avail;
 	struct evcnt		total_packets;
 };
@@ -348,11 +359,14 @@ struct rx_ring {
 	bool			hw_rsc;
 	bool			discard;
 	bool			vtag_strip;
-        u32			next_to_refresh;
-        u32 			next_to_check;
+        u16			next_to_refresh;
+        u16 			next_to_check;
+	u16			num_desc;
+	u16			mbuf_sz;
+	u32			process_limit;
 	char			mtx_name[16];
 	struct ixgbe_rx_buf	*rx_buffers;
-	ixgbe_dma_tag_t		*tag;
+	ixgbe_dma_tag_t		*ptag;
 
 	u32			bytes; /* Used for AIM calc */
 	u32			packets;
@@ -443,16 +457,15 @@ struct adapter {
 	 *	Allocated at run time, an array of rings.
 	 */
 	struct tx_ring		*tx_rings;
-	int			num_tx_desc;
+	u32			num_tx_desc;
 
 	/*
 	 * Receive rings:
 	 *	Allocated at run time, an array of rings.
 	 */
 	struct rx_ring		*rx_rings;
-	int			num_rx_desc;
 	u64			que_mask;
-	u32			rx_process_limit;
+	u32			num_rx_desc;
 
 	/* Multicast array memory */
 	u8			*mta;
@@ -462,7 +475,6 @@ struct adapter {
 	struct evcnt   		mbuf_defrag_failed;
 	struct evcnt	   	mbuf_header_failed;
 	struct evcnt	   	mbuf_packet_failed;
-	struct evcnt	   	no_tx_map_avail;
 	struct evcnt	   	efbig_tx_dma_setup;
 	struct evcnt	   	efbig2_tx_dma_setup;
 	struct evcnt	   	m_defrag_failed;
@@ -472,7 +484,6 @@ struct adapter {
 	struct evcnt	   	enomem_tx_dma_setup;
 	struct evcnt	   	watchdog_events;
 	struct evcnt	   	tso_err;
-	struct evcnt	   	tso_tx;
 	struct evcnt		link_irq;
 	struct evcnt		morerx;
 	struct evcnt		moretx;
@@ -543,12 +554,10 @@ drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
 static inline u16
 ixgbe_rx_unrefreshed(struct rx_ring *rxr)
 {       
-	struct adapter  *adapter = rxr->adapter;
-        
 	if (rxr->next_to_check > rxr->next_to_refresh)
 		return (rxr->next_to_check - rxr->next_to_refresh - 1);
 	else
-		return ((adapter->num_rx_desc + rxr->next_to_check) -
+		return ((rxr->num_desc + rxr->next_to_check) -
 		    rxr->next_to_refresh - 1);
 }       
 

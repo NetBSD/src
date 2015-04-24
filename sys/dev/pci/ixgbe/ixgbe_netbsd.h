@@ -1,4 +1,4 @@
-/*$NetBSD: ixgbe_netbsd.h,v 1.2 2014/04/17 16:22:48 christos Exp $*/
+/*$NetBSD: ixgbe_netbsd.h,v 1.3 2015/04/24 07:00:51 msaitoh Exp $*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,8 @@
 
 #ifndef _IXGBE_NETBSD_H
 #define _IXGBE_NETBSD_H
+
+#define	IXGBE_LEGACY_TX	1
 
 #define	ETHERCAP_VLAN_HWFILTER	0
 #define	ETHERCAP_VLAN_HWCSUM	0
