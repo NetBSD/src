@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.268 2015/04/23 19:55:08 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.269 2015/04/24 17:22:13 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -20334,4 +20334,9 @@ usr.bin/mail/send.c				1.38
 	Fix several security issues related to expansions and shell
 	invocations.
 	[christos, ticket #719]
+
+distrib/sets/lists/debug/mi			1.111
+
+	Add missing debug entry for bozohttpd
+	[riz, ticket #721]
 
