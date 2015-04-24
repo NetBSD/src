@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.16 2015/04/23 23:23:01 pgoyette Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.17 2015/04/24 19:49:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.16 2015/04/23 23:23:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.17 2015/04/24 19:49:24 christos Exp $");
 
 /*
  *
@@ -71,7 +71,9 @@ static device_t		swwdog_dev;
 
 MODULE(MODULE_CLASS_DRIVER, swwdog, "sysmon_wdog");
 
+#ifdef _MODULE
 CFDRIVER_DECL(swwdog, DV_DULL, NULL);
+#endif
 
 int swwdogattach(int);
 
