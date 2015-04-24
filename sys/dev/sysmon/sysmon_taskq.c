@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.15 2015/04/23 23:22:03 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.16 2015/04/24 00:04:47 agc Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.15 2015/04/23 23:22:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.16 2015/04/24 00:04:47 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -139,7 +139,7 @@ sysmon_task_queue_fini(void)
 {
 
 	if (sysmon_task_queue_initialized > 1)
-		return EBUSY;
+		return;
 
 	mutex_enter(&sysmon_task_queue_mtx);
 
