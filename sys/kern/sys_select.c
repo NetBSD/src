@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.10 2008/10/15 08:13:17 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.10.14.1 2015/04/24 05:46:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.10 2008/10/15 08:13:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.10.14.1 2015/04/24 05:46:09 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,9 +432,17 @@ pollcommon(lwp_t *l, register_t *retval,
 	struct timeval	sleeptv;
 	selcpu_t	*sc;
 
-	if (nfds > p->p_fd->fd_nfiles) {
-		/* forgiving; slightly wrong */
-		nfds = p->p_fd->fd_nfiles;
+	if (nfds > 1000 + p->p_fd->fd_nfiles) {
+		/*      
+		 * Either the user passed in a very sparse 'fds' or junk!
+		 * The kmem_alloc() call below would be bad news.
+		 * We could process the 'fds' array in chunks, but that
+		 * is a lot of code that isn't normally useful.
+		 * (Or just move the copyin/out into pollscan().)
+		 * Historically the code silently truncated 'fds' to
+		 * dt_nfiles entries - but that does cause issues.
+		 */
+		return EINVAL;
 	}
 	ni = nfds * sizeof(struct pollfd);
 	if (ni > sizeof(smallbits)) {
