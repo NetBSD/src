@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.21 2015/04/24 03:35:49 pgoyette Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.22 2015/04/25 22:46:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.21 2015/04/24 03:35:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.22 2015/04/25 22:46:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -397,6 +397,10 @@ sysmon_init(void)
 		error = ENODEV;
 	}
 
+	if (pmf_device_register(sysmon_dev, NULL, NULL))
+		aprintf_error("%s: failed to register with pmf\n",
+		    sysmon_cd.cd_name);
+
 	return error;
 }
 
@@ -413,6 +417,7 @@ sysmon_fini(void)
 		error = EBUSY;
 
 	else {
+		pmf_device_deregister(sysmon_dev);
 		config_detach(sysmon_dev, 0);
 		devsw_detach(NULL, &sysmon_cdevsw);
 		config_cfattach_detach(sysmon_cd.cd_name, &sysmon_ca);
