@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2011/01/14 10:26:30 tsutsui Exp $
+#	$NetBSD: list,v 1.17 2015/04/25 18:41:55 christos Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -39,7 +39,7 @@ PROG	sbin/umount
 
 PROG	usr/bin/ftp
 PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
-PROG	usr/bin/sed
+#PROG	usr/bin/sed
 
 PROG	usr/mdec/installboot
 
