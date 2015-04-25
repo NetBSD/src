@@ -185,7 +185,7 @@ static void legacy_crtc_load_lut(struct drm_crtc *crtc)
 	 * At least the RV100 [vendor 1002 product 515e (rev. 0x02)]
 	 * has an old style palette
 	 */
-	if (ASIC_IS_RV100(rdev)) {
+	if (rdev->family < CHIP_RV280) {
 #ifdef notyet
 		/*
 		 * Leave CLUT alone for now. The code below gives us a
