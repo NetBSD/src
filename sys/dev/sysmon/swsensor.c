@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.14 2015/04/23 23:23:01 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.15 2015/04/25 23:55:23 pgoyette Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.14 2015/04/23 23:23:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.15 2015/04/25 23:55:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -225,7 +225,6 @@ swsensor_init(void *arg)
 				val = prop_number_integer_value(po);
 
 			/* Sensor type/units */
-printf("%s: prop object key = \"%s\"\n", __func__, key);
 			if (strcmp(key, "type") == 0) {
 				if (type == PROP_TYPE_NUMBER) {
 					descr = sme_find_table_entry(
