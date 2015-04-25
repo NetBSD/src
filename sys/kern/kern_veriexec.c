@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.1 2015/02/13 17:50:48 maxv Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.2 2015/04/25 08:19:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.1 2015/02/13 17:50:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.2 2015/04/25 08:19:06 maxv Exp $");
 
 #include "opt_veriexec.h"
 
@@ -713,7 +713,7 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 		return (0);
 	}
 
-        switch (vfe->status) {
+	switch (vfe->status) {
 	case FINGERPRINT_NOTEVAL:
 		/* Should not happen. */
 		rw_exit(&vfe->lock);
@@ -722,8 +722,7 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 		veriexec_file_report(vfe, "Not-evaluated status "
 		    "post evaluation; inconsistency detected.", name,
 		    NULL, REPORT_ALWAYS|REPORT_PANIC);
-
-		/*NOTREACHED*/
+		/* NOTREACHED */
 
 	case FINGERPRINT_VALID:
 		/* Valid fingerprint. */
@@ -752,7 +751,8 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 			rw_exit(&veriexec_op_lock);
 		veriexec_file_report(vfe, "Invalid status "
 		    "post evaluation.", name, NULL, REPORT_ALWAYS|REPORT_PANIC);
-        }
+		/* NOTREACHED */
+	}
 
 	if (lockstate == VERIEXEC_UNLOCKED)
 		rw_exit(&veriexec_op_lock);
@@ -888,7 +888,6 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 		error = EPERM;
 	else
 		error = veriexec_file_delete(l, vp);
-
 
 	return error;
 }
@@ -1029,7 +1028,6 @@ veriexec_file_purge_cb(struct veriexec_file_entry *vfe, void *cookie)
 void
 veriexec_purge(struct vnode *vp)
 {
-
 	rw_enter(&veriexec_op_lock, RW_READER);
 	veriexec_file_purge(veriexec_get(vp), VERIEXEC_UNLOCKED);
 	rw_exit(&veriexec_op_lock);
@@ -1201,14 +1199,11 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	if (vp->v_type != VREG) {
 		log(LOG_ERR, "Veriexec: Not adding `%s': Not a regular file.\n",
 		    file);
-
 		error = EBADF;
-
 		goto out;
 	}
 
 	vfe = kmem_zalloc(sizeof(*vfe), KM_SLEEP);
-
 	rw_init(&vfe->lock);
 
 	/* Lookup fingerprint hashing algorithm. */
@@ -1217,9 +1212,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	if ((vfe->ops = veriexec_fpops_lookup(fp_type)) == NULL) {
 		log(LOG_ERR, "Veriexec: Invalid or unknown fingerprint type "
 		    "`%s' for file `%s'.\n", fp_type, file);
-
 		error = EOPNOTSUPP;
-
 		goto out;
 	}
 
@@ -1227,9 +1220,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	    vfe->ops->hash_len) {
 		log(LOG_ERR, "Veriexec: Bad fingerprint length for `%s'.\n",
 		    file);
-
 		error = EINVAL;
-
 		goto out;
 	}
 
@@ -1253,16 +1244,16 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		else
 			fp_mismatch = false;
 
-		if ((veriexec_verbose >= 1) || fp_mismatch)
+		if ((veriexec_verbose >= 1) || fp_mismatch) {
 			log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s' "
 			    "ignored. (%s fingerprint)\n", file,
 			    fp_mismatch ? "different" : "same");
+		}
 
 		veriexec_file_free(vfe);
 
 		/* XXX Should this be EEXIST if fp_mismatch is true? */
 		error = 0;
-
 		goto unlock_out;
 	}
 
@@ -1277,9 +1268,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		if (extra_flags) {
 			log(LOG_NOTICE, "Veriexec: Contaminated flags `0x%x' "
 			    "for `%s', skipping.\n", extra_flags, file);
-
 			error = EINVAL;
-
 			goto unlock_out;
 		}
 	}
@@ -1411,8 +1400,8 @@ veriexec_convert(struct vnode *vp, prop_dictionary_t rdict)
 
 	rw_enter(&vfe->lock, RW_READER);
 	veriexec_file_convert(vfe, rdict);
-
 	rw_exit(&vfe->lock);
+
 	rw_exit(&veriexec_op_lock);
 	return (0);
 }
