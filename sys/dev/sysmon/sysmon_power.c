@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.54 2015/04/23 23:22:03 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.55 2015/04/25 23:40:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.54 2015/04/23 23:22:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.55 2015/04/25 23:40:09 pgoyette Exp $");
 
 #ifndef _LKM
 #include "opt_compat_netbsd.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.54 2015/04/23 23:22:03 pgoyette E
 #include <sys/device.h>
 #include <sys/rndsource.h>
 #include <sys/module.h>
+#include <sys/once.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
@@ -199,6 +200,18 @@ static struct sysmon_opvec sysmon_power_opvec = {
 
 #define	SYSMON_NEXT_EVENT(x)		(((x) + 1) % SYSMON_MAX_POWER_EVENTS)
 
+ONCE_DECL(once_power);
+
+static int
+power_preinit(void)
+{
+
+	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sysmon_power_event_queue_cv, "smpower");
+
+	return 0;
+}
+
 /*
  * sysmon_power_init:
  *
@@ -210,8 +223,8 @@ sysmon_power_init(void)
 {
 	int error;
 
-	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sysmon_power_event_queue_cv, "smpower");
+	(void)RUN_ONCE(&once_power, power_preinit);
+
 	selinit(&sysmon_power_event_queue_selinfo);
 
 	rnd_attach_source(&sysmon_rndsource, "system-power",
@@ -938,7 +951,8 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 int
 sysmon_pswitch_register(struct sysmon_pswitch *smpsw)
 {
-	/* nada */
+	(void)RUN_ONCE(&once_power, power_preinit);
+
 	return 0;
 }
 

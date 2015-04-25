@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.26 2015/04/23 23:22:03 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.27 2015/04/25 23:40:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.26 2015/04/23 23:22:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.27 2015/04/25 23:40:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.26 2015/04/23 23:22:03 pgoyette Ex
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/module.h>
+#include <sys/once.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -82,14 +83,26 @@ static struct sysmon_opvec sysmon_wdog_opvec = {
 
 MODULE(MODULE_CLASS_MISC, sysmon_wdog, "sysmon");
 
+ONCE_DECL(once_wdog);
+
+static int
+wdog_preinit(void)
+{
+
+	mutex_init(&sysmon_wdog_list_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sysmon_wdog_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	cv_init(&sysmon_wdog_cv, "wdogref");
+
+	return 0;
+}
+
 int
 sysmon_wdog_init(void)
 {
 	int error;
 
-	mutex_init(&sysmon_wdog_list_mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sysmon_wdog_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	cv_init(&sysmon_wdog_cv, "wdogref");
+	(void)RUN_ONCE(&once_wdog, wdog_preinit);
+
 	sysmon_wdog_sdhook = shutdownhook_establish(sysmon_wdog_shutdown, NULL);
 	if (sysmon_wdog_sdhook == NULL)
 		printf("WARNING: unable to register watchdog shutdown hook\n");
@@ -311,6 +324,8 @@ sysmon_wdog_register(struct sysmon_wdog *smw)
 {
 	struct sysmon_wdog *lsmw;
 	int error = 0;
+
+	(void)RUN_ONCE(&once_wdog, wdog_preinit);
 
 	mutex_enter(&sysmon_wdog_list_mtx);
 
