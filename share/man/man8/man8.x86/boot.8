@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.4 2014/08/16 12:30:12 apb Exp $
+.\"	$NetBSD: boot.8,v 1.5 2015/04/25 14:05:43 mlelstv Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -624,6 +624,55 @@ In an emergency, the bootstrap methods described in the
 installation notes for the x86 architectures
 can be used to boot from floppy or other media,
 or over the network.
+.Ss Locating the root filesystem
+The kernel uses information from the bootloader to locate the
+filesystem to mount as root. There are three methods:
+.Bl -tag -width 04n -offset 04n
+.It Ic BTINFO_ROOTDEVICE Va from
+.Xr boot.cfg 5
+or multiboot.
+The bootloader passes the root device name as driver,unit and
+partition (like sd0a). This will be automatically substituted
+by a
+.Xr dk 4
+wedge if one is discovered.
+.Pp
+The bootloader passes a wedge name as "wedge:" followed by the name.
+The kernel will search for a
+.Xr dk 4
+device with that name.
+.It Ic BTINFO_BOOTWEDGE Va determined by bootblock
+The bootloader passes start offset and length of a hard disk partition
+and a offset, size and hash of a "boot area". Then kernel searches
+all disks and wedges for a block sequence at that offset with a
+matching hash. If one is found, the kernel will look for a wedge
+on that device at the same offset.
+.Pp
+An additional partition number is provided if the bootloader also
+passed a BTINFO_BOOTDISK record. This (or partition 'a') will be used
+by the kernel as a fallback if there is no matching wedge.
+.It Ic BTINFO_BOOTDISK Va determined by bootblock
+This uses the device number passed by the BIOS that
+distinguishes between floppy, hard drive and CD-ROM boot.
+.Bl -tag -width xxx
+.It Ic Floppy
+The kernel searches for the
+.Xr fd 4
+device with the correct unit, the partition number is used
+to select a specific disk format. See
+.Xr fd 4 for details.
+.It Ic Hard drive
+The bootloader passed a partition number and disklabel
+data (offset, type, checksum, packname). The kernel searches
+all disks for a matching disklabel. If one is found, the
+kernel will use that device and partition number.
+.It Ic CDROM
+The BIOS does not distinguish between multiple CD devices.
+The kernel searches for the first
+.Xr cd 4
+device. So you can only boot from unit 0.
+.El
+.El
 .Sh FILES
 .Bl -tag -width /usr/mdec/bootxx_fstype -compact
 .It Pa /boot
@@ -647,6 +696,7 @@ partition by
 .Xr ddb 4 ,
 .Xr pciback 4 ,
 .Xr userconf 4 ,
+.Xr fd 4 ,
 .Xr boot.cfg 5 ,
 .Xr boot_console 8 ,
 .Xr dosboot 8 ,
