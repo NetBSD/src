@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.134 2015/04/25 00:54:14 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.135 2015/04/25 02:41:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.134 2015/04/25 00:54:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.135 2015/04/25 02:41:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -687,8 +687,8 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	mutex_enter(&sme_global_mtx);
 	LIST_FOREACH(lsme, &sysmon_envsys_list, sme_list) {
 	       if (strcmp(lsme->sme_name, sme->sme_name) == 0) {
-		       mutex_exit(&sme_global_mtx);
-		       return EEXIST;
+			mutex_exit(&sme_global_mtx);
+			return EEXIST;
 	       }
 	}
 	mutex_exit(&sme_global_mtx);
