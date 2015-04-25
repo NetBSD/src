@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.4 2015/04/25 18:43:13 maxv Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.5 2015/04/25 19:10:29 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.4 2015/04/25 18:43:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.5 2015/04/25 19:10:29 maxv Exp $");
 
 #include "opt_veriexec.h"
 
@@ -878,7 +878,6 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 		return 0;
 
 	rw_enter(&veriexec_op_lock, RW_READER);
-
 	vfe = veriexec_get(vp);
 	rw_exit(&veriexec_op_lock);
 
@@ -913,7 +912,7 @@ int
 veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
     struct vnode *tovp, const char *toname)
 {
-	struct veriexec_file_entry *vfe, *tvfe;
+	struct veriexec_file_entry *fvfe = NULL, *tvfe = NULL;
 
 	if (veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
 		return 0;
@@ -924,70 +923,73 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 		log(LOG_ALERT, "Veriexec: Preventing rename of `%s' to "
 		    "`%s', uid=%u, pid=%u: Lockdown mode.\n", fromname, toname,
 		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
-
 		rw_exit(&veriexec_op_lock);
 		return (EPERM);
 	}
 
-	vfe = veriexec_get(fromvp);
-	tvfe = NULL;
+	fvfe = veriexec_get(fromvp);
 	if (tovp != NULL)
 		tvfe = veriexec_get(tovp);
 
-	if ((vfe != NULL) || (tvfe != NULL)) {
-		if (veriexec_strict >= VERIEXEC_IPS) {
-			log(LOG_ALERT, "Veriexec: Preventing rename of `%s' "
-			    "to `%s', uid=%u, pid=%u: IPS mode, %s "
-			    "monitored.\n", fromname, toname,
-			    kauth_cred_geteuid(l->l_cred),
-			    l->l_proc->p_pid, (vfe != NULL && tvfe != NULL) ?
-			    "files" : "file");
+	if ((fvfe == NULL) && (tvfe == NULL)) {
+		/* None of them is monitored */
+		rw_exit(&veriexec_op_lock);
+		return 0;
+	}
 
-			rw_exit(&veriexec_op_lock);
-			return (EPERM);
-		}
+	if (veriexec_strict >= VERIEXEC_IPS) {
+		log(LOG_ALERT, "Veriexec: Preventing rename of `%s' "
+		    "to `%s', uid=%u, pid=%u: IPS mode, %s "
+		    "monitored.\n", fromname, toname,
+		    kauth_cred_geteuid(l->l_cred),
+		    l->l_proc->p_pid, (fvfe != NULL && tvfe != NULL) ?
+		    "files" : "file");
+		rw_exit(&veriexec_op_lock);
+		return (EPERM);
+	}
 
+	if (fvfe != NULL) {
 		/*
 		 * Monitored file is renamed; filename no longer relevant.
-		 *
+		 */
+
+		/*
 		 * XXX: We could keep the buffer, and when (and if) updating the
 		 * XXX: filename post-rename, re-allocate it only if it's not
 		 * XXX: big enough for the new filename.
 		 */
-		if (vfe != NULL) {
-			/* XXXX get write lock on vfe here? */
 
-			VERIEXEC_RW_UPGRADE(&veriexec_op_lock);
-			/* once we have the op lock in write mode
-			 * there should be no locks on any file
-			 * entries so we can destroy the object.
-			 */
+		/* XXX: Get write lock on fvfe here? */
 
-			if (vfe->filename_len > 0)
-				kmem_free(vfe->filename, vfe->filename_len);
+		VERIEXEC_RW_UPGRADE(&veriexec_op_lock);
+		/* once we have the op lock in write mode
+		 * there should be no locks on any file
+		 * entries so we can destroy the object.
+		 */
 
-			vfe->filename = NULL;
-			vfe->filename_len = 0;
+		if (fvfe->filename_len > 0)
+			kmem_free(fvfe->filename, fvfe->filename_len);
 
-			rw_downgrade(&veriexec_op_lock);
-		}
+		fvfe->filename = NULL;
+		fvfe->filename_len = 0;
 
-		log(LOG_NOTICE, "Veriexec: %s file `%s' renamed to "
-		    "%s file `%s', uid=%u, pid=%u.\n", (vfe != NULL) ?
-		    "Monitored" : "Non-monitored", fromname, (tvfe != NULL) ?
-		    "monitored" : "non-monitored", toname,
-		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
+		rw_downgrade(&veriexec_op_lock);
+	}
 
-		rw_exit(&veriexec_op_lock);
+	log(LOG_NOTICE, "Veriexec: %s file `%s' renamed to "
+	    "%s file `%s', uid=%u, pid=%u.\n", (fvfe != NULL) ?
+	    "Monitored" : "Non-monitored", fromname, (tvfe != NULL) ?
+	    "monitored" : "non-monitored", toname,
+	    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
 
+	rw_exit(&veriexec_op_lock);
+
+	if (tvfe != NULL) {
 		/*
 		 * Monitored file is overwritten. Remove the entry.
 		 */
-		if (tvfe != NULL)
-			(void)veriexec_file_delete(l, tovp);
-
-	} else
-		rw_exit(&veriexec_op_lock);
+		(void)veriexec_file_delete(l, tovp);
+	}
 
 	return (0);
 }
@@ -1337,7 +1339,8 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 }
 
 int
-veriexec_table_delete(struct lwp *l, struct mount *mp) {
+veriexec_table_delete(struct lwp *l, struct mount *mp)
+{
 	struct veriexec_table_entry *vte;
 
 	vte = veriexec_table_lookup(mp);
@@ -1351,7 +1354,8 @@ veriexec_table_delete(struct lwp *l, struct mount *mp) {
 }
 
 int
-veriexec_file_delete(struct lwp *l, struct vnode *vp) {
+veriexec_file_delete(struct lwp *l, struct vnode *vp)
+{
 	struct veriexec_table_entry *vte;
 	int error;
 
@@ -1362,8 +1366,10 @@ veriexec_file_delete(struct lwp *l, struct vnode *vp) {
 	rw_enter(&veriexec_op_lock, RW_WRITER);
 	error = fileassoc_clear(vp, veriexec_hook);
 	rw_exit(&veriexec_op_lock);
-	if (!error)
+	if (!error) {
+		KASSERT(vte->vte_count > 0);
 		vte->vte_count--;
+	}
 
 	return (error);
 }
