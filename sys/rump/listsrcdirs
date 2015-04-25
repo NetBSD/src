@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.30 2015/04/17 13:04:19 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.31 2015/04/25 08:48:06 pooka Exp $
 #
 
 #
@@ -92,7 +92,7 @@ lsrc posix /usr.bin/		rump_server rump_allserver shmif_dumpbus
 # NOTE! libc++ is handled below as a special case due to the NetBSD
 # dist directory consisting ~90% (50+MB) of tests unnecessary to us
 lsrc usr /lib/			i18n_module
-lsrc usr /lib/lib		crypt ipsec m npf pci prop
+lsrc usr /lib/lib		crypt ipsec kvm m npf pci prop
 lsrc usr /lib/lib		pthread rmt y z
 lsrc usr /libexec/		ld.elf_so
 lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
