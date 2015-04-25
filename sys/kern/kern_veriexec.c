@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.3 2015/04/25 09:08:51 maxv Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.4 2015/04/25 18:43:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.3 2015/04/25 09:08:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.4 2015/04/25 18:43:13 maxv Exp $");
 
 #include "opt_veriexec.h"
 
@@ -557,6 +557,32 @@ veriexec_fp_cmp(struct veriexec_fpops *ops, u_char *fp1, u_char *fp2)
 	return (memcmp(fp1, fp2, ops->hash_len));
 }
 
+static int
+veriexec_fp_status(struct lwp *l, struct vnode *vp, int file_lock_state,
+    struct veriexec_file_entry *vfe, u_char *status)
+{
+	size_t hash_len = vfe->ops->hash_len;
+	u_char *digest;
+	int error = 0;
+
+	digest = kmem_zalloc(hash_len, KM_SLEEP);
+
+	error = veriexec_fp_calc(l, vp, file_lock_state, vfe, digest);
+	if (error)
+		goto out;
+
+	/* Compare fingerprint with loaded data. */
+	if (veriexec_fp_cmp(vfe->ops, vfe->fp, digest) == 0)
+		*status = FINGERPRINT_VALID;
+	else
+		*status = FINGERPRINT_NOMATCH;
+
+out:
+	kmem_free(digest, hash_len);
+	return error;
+}
+
+
 static struct veriexec_table_entry *
 veriexec_table_lookup(struct mount *mp)
 {
@@ -624,7 +650,7 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
     int flag, int file_lock_state, struct veriexec_file_entry **vfep)
 {
 	struct veriexec_file_entry *vfe;
-	int error;
+	int error = 0;
 
 	KASSERT(rw_lock_held(&veriexec_op_lock));
 	KASSERT((file_lock_state != VERIEXEC_LOCKED) &&
@@ -643,10 +669,23 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 	vfe = veriexec_get(vp);
 	if (vfep != NULL)
 		*vfep = vfe;
-	if (vfe == NULL)
-		goto out;
 
-	error = 0;
+	/* No entry in the veriexec tables. */
+	if (vfe == NULL) {
+		veriexec_file_report(NULL, "No entry.", name,
+		    l, REPORT_VERBOSE);
+
+		/*
+		 * Lockdown mode: Deny access to non-monitored files.
+		 * IPS mode: Deny execution of non-monitored files.
+		 */
+		if ((veriexec_strict >= VERIEXEC_LOCKDOWN) ||
+		    ((veriexec_strict >= VERIEXEC_IPS) &&
+		     (flag != VERIEXEC_FILE)))
+			return (EPERM);
+
+		return (0);
+	}
 
 	/*
 	 * Grab the lock for the entry, if we need to do an evaluation
@@ -663,27 +702,16 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 
 	/* Evaluate fingerprint if needed. */
 	if (VFE_NEEDS_EVAL(vfe)) {
-		u_char *digest;
+		u_char status;
 
-		/* Calculate fingerprint for on-disk file. */
-		digest = kmem_zalloc(vfe->ops->hash_len, KM_SLEEP);
-
-		error = veriexec_fp_calc(l, vp, file_lock_state, vfe, digest);
+		error = veriexec_fp_status(l, vp, file_lock_state, vfe, &status);
 		if (error) {
 			veriexec_file_report(vfe, "Fingerprint calculation error.",
 			    name, NULL, REPORT_ALWAYS);
-			kmem_free(digest, vfe->ops->hash_len);
 			rw_exit(&vfe->lock);
 			return (error);
 		}
-
-		/* Compare fingerprint with loaded data. */
-		if (veriexec_fp_cmp(vfe->ops, vfe->fp, digest) == 0)
-			vfe->status = FINGERPRINT_VALID;
-		else
-			vfe->status = FINGERPRINT_NOMATCH;
-
-		kmem_free(digest, vfe->ops->hash_len);
+		vfe->status = status;
 		rw_downgrade(&vfe->lock);
 	}
 
@@ -696,24 +724,6 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 			rw_exit(&vfe->lock);
 			return (EPERM);
 		}
-	}
-
- out:
-	/* No entry in the veriexec tables. */
-	if (vfe == NULL) {
-		veriexec_file_report(NULL, "No entry.", name,
-		    l, REPORT_VERBOSE);
-
-		/*
-		 * Lockdown mode: Deny access to non-monitored files.
-		 * IPS mode: Deny execution of non-monitored files.
-		 */
-		if ((veriexec_strict >= VERIEXEC_LOCKDOWN) ||
-		    ((veriexec_strict >= VERIEXEC_IPS) &&
-		     (flag != VERIEXEC_FILE)))
-			return (EPERM);
-
-		return (0);
 	}
 
 	switch (vfe->status) {
@@ -1291,23 +1301,13 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 	if (prop_bool_true(prop_dictionary_get(dict, "eval-on-load")) ||
 	    (vfe->type & VERIEXEC_UNTRUSTED)) {
-		u_char *digest;
+		u_char status;
 
-		digest = kmem_zalloc(vfe->ops->hash_len, KM_SLEEP);
-
-		error = veriexec_fp_calc(l, vp, VERIEXEC_FILE_UNLOCKED,
-					 vfe, digest);
-		if (error) {
-			kmem_free(digest, vfe->ops->hash_len);
+		error = veriexec_fp_status(l, vp, VERIEXEC_FILE_UNLOCKED,
+		    vfe, &status);
+		if (error)
 			goto unlock_out;
-		}
-
-		if (veriexec_fp_cmp(vfe->ops, vfe->fp, digest) == 0)
-			vfe->status = FINGERPRINT_VALID;
-		else
-			vfe->status = FINGERPRINT_NOMATCH;
-
-		kmem_free(digest, vfe->ops->hash_len);
+		vfe->status = status;
 	}
 
 	vte = veriexec_table_lookup(vp->v_mount);
