@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.17 2015/04/17 18:36:15 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.18 2015/04/25 14:41:33 jmcneill Exp $
 #
 #	Hardkernel ODROID-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -34,6 +34,10 @@ amlogicio0	at mainbus?
 # On-board UARTs
 amlogiccom0	at amlogicio0 port 0
 options 	CONSADDR=0xc81004c0, CONSPEED=115200
+
+# GPIO
+amlogicgpio0	at amlogicio0
+gpio*		at gpiobus?
 
 # Framebuffer
 genfb0		at amlogicio0
