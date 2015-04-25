@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.5 2015/04/25 14:05:43 mlelstv Exp $
+.\"	$NetBSD: boot.8,v 1.6 2015/04/25 14:27:02 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd August 16, 2014
+.Dd April 25, 2015
 .Dt BOOT 8 x86
 .Os
 .Sh NAME
@@ -343,7 +343,7 @@ See
 in
 .Xr boot_console 8 .
 .It Ic dev Op Va device
-Set the default drive and partition for subsequent filesystem
+Set the default drive and partition for subsequent file system
 operations.
 Without an argument, print the current setting.
 .Va device
@@ -442,7 +442,7 @@ network mask
 address of the host
 .It Va iface
 interface
-.Po e.g. Dq xennet0
+.Po e.g., Dq xennet0
 or
 .Dq eth0
 .Pc
@@ -624,16 +624,17 @@ In an emergency, the bootstrap methods described in the
 installation notes for the x86 architectures
 can be used to boot from floppy or other media,
 or over the network.
-.Ss Locating the root filesystem
+.Ss Locating the root file system
 The kernel uses information from the bootloader to locate the
-filesystem to mount as root. There are three methods:
+file system to mount as root.
+There are three methods:
 .Bl -tag -width 04n -offset 04n
 .It Ic BTINFO_ROOTDEVICE Va from
 .Xr boot.cfg 5
 or multiboot.
-The bootloader passes the root device name as driver,unit and
-partition (like sd0a). This will be automatically substituted
-by a
+The bootloader passes the root device name as driver, unit, and
+partition (like sd0a).
+This will be automatically substituted by a
 .Xr dk 4
 wedge if one is discovered.
 .Pp
@@ -643,13 +644,16 @@ The kernel will search for a
 device with that name.
 .It Ic BTINFO_BOOTWEDGE Va determined by bootblock
 The bootloader passes start offset and length of a hard disk partition
-and a offset, size and hash of a "boot area". Then kernel searches
+and a offset, size and hash of a "boot area".
+Then kernel searches
 all disks and wedges for a block sequence at that offset with a
-matching hash. If one is found, the kernel will look for a wedge
+matching hash.
+If one is found, the kernel will look for a wedge
 on that device at the same offset.
 .Pp
 An additional partition number is provided if the bootloader also
-passed a BTINFO_BOOTDISK record. This (or partition 'a') will be used
+passed a BTINFO_BOOTDISK record.
+This (or partition 'a') will be used
 by the kernel as a fallback if there is no matching wedge.
 .It Ic BTINFO_BOOTDISK Va determined by bootblock
 This uses the device number passed by the BIOS that
@@ -659,18 +663,23 @@ distinguishes between floppy, hard drive and CD-ROM boot.
 The kernel searches for the
 .Xr fd 4
 device with the correct unit, the partition number is used
-to select a specific disk format. See
-.Xr fd 4 for details.
+to select a specific disk format.
+See
+.Xr fd 4
+for details.
 .It Ic Hard drive
 The bootloader passed a partition number and disklabel
-data (offset, type, checksum, packname). The kernel searches
-all disks for a matching disklabel. If one is found, the
+data (offset, type, checksum, packname).
+The kernel searches
+all disks for a matching disklabel.
+If one is found, the
 kernel will use that device and partition number.
 .It Ic CDROM
 The BIOS does not distinguish between multiple CD devices.
 The kernel searches for the first
 .Xr cd 4
-device. So you can only boot from unit 0.
+device.
+So you can only boot from unit 0.
 .El
 .El
 .Sh FILES
@@ -686,7 +695,7 @@ gzip-compressed system code
 .It Pa /usr/mdec/boot
 master copy of the boot program (copy to /boot)
 .It Pa /usr/mdec/bootxx_fstype
-primary bootstrap for filesystem type fstype, copied to the start of
+primary bootstrap for file system type fstype, copied to the start of
 the
 .Nx
 partition by
@@ -694,9 +703,9 @@ partition by
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
+.Xr fd 4 ,
 .Xr pciback 4 ,
 .Xr userconf 4 ,
-.Xr fd 4 ,
 .Xr boot.cfg 5 ,
 .Xr boot_console 8 ,
 .Xr dosboot 8 ,
