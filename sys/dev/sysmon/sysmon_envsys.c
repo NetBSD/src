@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.133 2015/04/24 11:34:14 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.134 2015/04/25 00:54:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.133 2015/04/24 11:34:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.134 2015/04/25 00:54:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -779,6 +779,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	mutex_enter(&sme_global_mtx);
 	if (!prop_dictionary_set(sme_propd, sme->sme_name, array)) {
 		error = EINVAL;
+		mutex_exit(&sme_global_mtx);
 		DPRINTF(("%s: prop_dictionary_set for '%s'\n", __func__,
 		    sme->sme_name));
 		goto out;
