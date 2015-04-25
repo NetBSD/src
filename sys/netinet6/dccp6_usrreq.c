@@ -1,5 +1,5 @@
 /*	$KAME: dccp6_usrreq.c,v 1.13 2005/07/27 08:42:56 nishida Exp $	*/
-/*	$NetBSD: dccp6_usrreq.c,v 1.3 2015/04/24 22:32:37 rtr Exp $ */
+/*	$NetBSD: dccp6_usrreq.c,v 1.4 2015/04/25 14:56:05 rtr Exp $ */
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.3 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.4 2015/04/25 14:56:05 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_dccp.h"
@@ -268,7 +268,7 @@ dccp6_accept(struct socket *so, struct sockaddr *nam)
 	int error = 0;
 
 	DCCP_DEBUG((LOG_INFO, "Entering dccp6_accept!\n"));
-	if (m == NULL) {
+	if (nam == NULL) {
 		return EINVAL;
 	}
 	if (so->so_state & SS_ISDISCONNECTED) {
