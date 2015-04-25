@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.148 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.149 2015/04/25 15:19:54 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.148 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.149 2015/04/25 15:19:54 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -111,7 +111,7 @@ struct inpcbtable rawcbtable;
 
 int	 rip_pcbnotify(struct inpcbtable *, struct in_addr,
     struct in_addr, int, int, void (*)(struct inpcb *, int));
-int	 rip_connect_pcb(struct inpcb *, struct mbuf *);
+static int	 rip_connect_pcb(struct inpcb *, struct sockaddr_in *);
 static void	 rip_disconnect1(struct inpcb *);
 
 static void sysctl_net_inet_raw_setup(struct sysctllog **);
@@ -480,12 +480,9 @@ rip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 }
 
 int
-rip_connect_pcb(struct inpcb *inp, struct mbuf *nam)
+rip_connect_pcb(struct inpcb *inp, struct sockaddr_in *addr)
 {
-	struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
 
-	if (nam->m_len != sizeof(*addr))
-		return (EINVAL);
 	if (IFNET_EMPTY())
 		return (EADDRNOTAVAIL);
 	if (addr->sin_family != AF_INET)
@@ -612,7 +609,9 @@ rip_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	error = rip_connect_pcb(inp, nam);
+	if (nam->m_len != sizeof(struct sockaddr_in))
+		return EINVAL;
+	error = rip_connect_pcb(inp, mtod(nam, struct sockaddr_in *));
 	if (! error)
 		soisconnected(so);
 	splx(s);
@@ -763,7 +762,9 @@ rip_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			goto die;
 		}
-		error = rip_connect_pcb(inp, nam);
+		if (nam->m_len != sizeof(struct sockaddr_in))
+			return EINVAL;
+		error = rip_connect_pcb(inp, mtod(nam, struct sockaddr_in *));
 		if (error) {
 		die:
 			m_freem(m);
