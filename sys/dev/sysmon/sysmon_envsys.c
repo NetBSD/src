@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.135 2015/04/25 02:41:42 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.136 2015/04/25 14:06:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.135 2015/04/25 02:41:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.136 2015/04/25 14:06:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -109,6 +109,20 @@ static struct sysmon_opvec sysmon_envsys_opvec = {
         NULL, NULL, NULL
 };
 
+static void
+sme_preinit(void)
+{
+	static bool passed = false;
+
+	if (passed)
+		return;
+
+	passed = true;
+	LIST_INIT(&sysmon_envsys_list);
+	mutex_init(&sme_global_mtx, MUTEX_DEFAULT, IPL_NONE);
+	sme_propd = prop_dictionary_create();
+}
+
 /*
  * sysmon_envsys_init:
  *
@@ -119,9 +133,7 @@ sysmon_envsys_init(void)
 {
 	int error;
 
-	LIST_INIT(&sysmon_envsys_list);
-	mutex_init(&sme_global_mtx, MUTEX_DEFAULT, IPL_NONE);
-	sme_propd = prop_dictionary_create();
+	sme_preinit();
 
 	error = sysmon_attach_minor(SYSMON_MINOR_ENVSYS, &sysmon_envsys_opvec);
 
@@ -140,6 +152,8 @@ sysmon_envsys_fini(void)
 
 	if (error == 0)
 		mutex_destroy(&sme_global_mtx);
+
+	// XXX: prop_dictionary ???
 
 	return error;
 }
@@ -679,6 +693,8 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 
 	KASSERT(sme != NULL);
 	KASSERT(sme->sme_name != NULL);
+
+	sme_preinit();
 
 	/*
 	 * Check if requested sysmon_envsys device is valid
