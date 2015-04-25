@@ -1,4 +1,4 @@
-#	$NetBSD: files.amlogic,v 1.11 2015/04/19 18:54:52 jmcneill Exp $
+#	$NetBSD: files.amlogic,v 1.12 2015/04/25 14:41:33 jmcneill Exp $
 #
 # Configuration info for Amlogic ARM Peripherals
 #
@@ -25,6 +25,11 @@ file	arch/arm/amlogic/amlogic_io.c		amlogic_io
 device	amlogiccom
 attach	amlogiccom at amlogicio with amlogic_com
 file	arch/arm/amlogic/amlogic_com.c		amlogic_com needs-flag
+
+# GPIO
+device	amlogicgpio: gpiobus
+attach	amlogicgpio at amlogicio with amlogic_gpio
+file	arch/arm/amlogic/amlogic_gpio.c		amlogic_gpio
 
 # Framebuffer console
 attach	genfb at amlogicio with amlogic_genfb
