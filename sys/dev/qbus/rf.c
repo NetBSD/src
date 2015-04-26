@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.31 2015/01/02 19:42:07 christos Exp $	*/
+/*	$NetBSD: rf.c,v 1.32 2015/04/26 15:15:20 mlelstv Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.31 2015/01/02 19:42:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.32 2015/04/26 15:15:20 mlelstv Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -202,7 +202,7 @@ struct rfc_attach_args {
 
 
 const struct dkdriver rfdkdriver = {
-	rfstrategy
+	.d_strategy = rfstrategy
 };
 
 

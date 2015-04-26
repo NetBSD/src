@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.73 2015/01/02 19:42:06 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.74 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.73 2015/01/02 19:42:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.74 2015/04/26 15:15:20 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -132,7 +132,9 @@ const struct cdevsw md_cdevsw = {
 	.d_flag = D_DISK
 };
 
-static struct dkdriver mddkdriver = { mdstrategy, NULL };
+static struct dkdriver mddkdriver = {
+	.d_strategy = mdstrategy
+};
 
 extern struct cfdriver md_cd;
 CFATTACH_DECL3_NEW(md, sizeof(struct md_softc),
