@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.157 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.158 2015/04/26 16:45:51 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.157 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.158 2015/04/26 16:45:51 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -460,6 +460,8 @@ in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 		return (EINVAL);
 
 	if (nam->m_len != sizeof (*sin))
+		return (EINVAL);
+	if (sin->sin_len != sizeof (*sin))
 		return (EINVAL);
 	if (sin->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
