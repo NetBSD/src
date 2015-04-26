@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_reg.h,v 1.2 2015/04/26 16:24:01 jmcneill Exp $ */
+/* $NetBSD: tegra_reg.h,v 1.3 2015/04/26 22:04:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -42,7 +42,8 @@
 #define TEGRA_AHB_A2_BASE	0x7c000000
 #define TEGRA_AHB_A2_SIZE	0x02000000
 
-#define TEGRA_HOST1X_VBASE	0xfb000000
+#define TEGRA_HOST1X_VBASE	0xfaf00000
+#define TEGRA_PPSB_VBASE	0xfb000000
 #define TEGRA_APB_VBASE		0xfc000000
 #define TEGRA_AHB_A2_VBASE	0xfd000000
 
@@ -84,6 +85,10 @@
 #define TEGRA_SDMMC4_SIZE	0x200
 #define TEGRA_XUSB_DEV_OFFSET	0x000d0000
 #define TEGRA_XUSB_DEV_SIZE	0xa000
+
+/* PPSB */
+#define TEGRA_EVP_OFFSET	0x0000f000
+#define TEGRA_EVP_SIZE		0x1000
 
 /* AHB_A2 */
 #define TEGRA_USB1_OFFSET	0x01000000
