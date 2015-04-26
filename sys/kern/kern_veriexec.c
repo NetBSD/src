@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.5 2015/04/25 19:10:29 maxv Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.6 2015/04/26 09:16:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.5 2015/04/25 19:10:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.6 2015/04/26 09:16:06 maxv Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1195,7 +1195,7 @@ int
 veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 {
 	struct veriexec_table_entry *vte;
-	struct veriexec_file_entry *vfe = NULL, *hh;
+	struct veriexec_file_entry *vfe = NULL;
 	struct vnode *vp;
 	const char *file, *fp_type;
 	int error;
@@ -1242,30 +1242,9 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 	rw_enter(&veriexec_op_lock, RW_WRITER);
 
-	/*
-	 * See if we already have an entry for this file. If we do, then
-	 * let the user know and silently pretend to succeed.
-	 */
-	hh = veriexec_get(vp);
-	if (hh != NULL) {
-		bool fp_mismatch;
-
-		if (strcmp(vfe->ops->type, fp_type) ||
-		    memcmp(hh->fp, vfe->fp, hh->ops->hash_len))
-			fp_mismatch = true;
-		else
-			fp_mismatch = false;
-
-		if ((veriexec_verbose >= 1) || fp_mismatch) {
-			log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s' "
-			    "ignored. (%s fingerprint)\n", file,
-			    fp_mismatch ? "different" : "same");
-		}
-
-		veriexec_file_free(vfe);
-
-		/* XXX Should this be EEXIST if fp_mismatch is true? */
-		error = 0;
+	if (veriexec_get(vp)) {
+		/* We already have an entry for this file. */
+		error = EEXIST;
 		goto unlock_out;
 	}
 
