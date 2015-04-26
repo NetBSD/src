@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.2 2015/04/26 22:04:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.2 2015/04/26 22:04:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,16 +42,38 @@ __KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.1 2015/03/29 10:41:59 jmcneill Ex
 #include <arm/cpufunc.h>
 
 #include <arm/nvidia/tegra_reg.h>
+#include <arm/nvidia/tegra_pmcreg.h>
 #include <arm/nvidia/tegra_var.h>
+
+#define EVP_RESET_VECTOR_0_REG	0x100
 
 void
 tegra124_mpinit(void)
 {
 #if defined(MULTIPROCESSOR)
 	extern void cortex_mpstart(void);
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	bus_space_handle_t bsh;
+	u_int i;
+
+	bus_space_subregion(bst, tegra_ppsb_bsh,
+	    TEGRA_EVP_OFFSET, TEGRA_EVP_SIZE, &bsh);
 
 	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
+	KASSERT(arm_cpu_max == 4);
 
-	/* TODO */
+	bus_space_write_4(bst, bsh, EVP_RESET_VECTOR_0_REG, (uint32_t)cortex_mpstart);
+	bus_space_barrier(bst, bsh, EVP_RESET_VECTOR_0_REG, 4,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+
+	tegra_pmc_power(PMC_PARTID_CPU1, true);
+	tegra_pmc_power(PMC_PARTID_CPU2, true);
+	tegra_pmc_power(PMC_PARTID_CPU3, true);
+
+	for (i = 0x10000000; i > 0; i--) {
+		__asm __volatile("dmb" ::: "memory");
+		if (arm_cpu_hatched == 0xe)
+			break;
+	}
 #endif
 }

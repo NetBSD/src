@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmc.c,v 1.2 2015/03/29 22:27:04 jmcneill Exp $ */
+/* $NetBSD: tegra_pmc.c,v 1.3 2015/04/26 22:04:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.2 2015/03/29 22:27:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.3 2015/04/26 22:04:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,6 +81,19 @@ tegra_pmc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PMC\n");
 }
 
+static void
+tegra_pmc_get_bs(bus_space_tag_t *pbst, bus_space_handle_t *pbsh)
+{
+	if (pmc_softc) {
+		*pbst = pmc_softc->sc_bst;
+		*pbsh = pmc_softc->sc_bsh;
+	} else {
+		*pbst = &armv7_generic_bs_tag;
+		bus_space_subregion(*pbst, tegra_apb_bsh,
+		    TEGRA_PMC_OFFSET, TEGRA_PMC_SIZE, pbsh);
+	}
+}
+
 void
 tegra_pmc_reset(void)
 {
@@ -88,14 +101,7 @@ tegra_pmc_reset(void)
 	bus_space_handle_t bsh;
 	uint32_t cntrl;
 
-	if (pmc_softc) {
-		bst = pmc_softc->sc_bst;
-		bsh = pmc_softc->sc_bsh;
-	} else {
-		bst = &armv7_generic_bs_tag;
-		bus_space_subregion(bst, tegra_apb_bsh,
-		    TEGRA_PMC_OFFSET, TEGRA_PMC_SIZE, &bsh);
-	}
+	tegra_pmc_get_bs(&bst, &bsh);
 
 	cntrl = bus_space_read_4(bst, bsh, PMC_CNTRL_0_REG);
 	cntrl |= PMC_CNTRL_0_MAIN_RST;
@@ -104,4 +110,24 @@ tegra_pmc_reset(void)
 	for (;;) {
 		__asm("wfi");
 	}
+}
+
+void
+tegra_pmc_power(u_int partid, bool enable)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	uint32_t status;
+	bool state;
+
+	tegra_pmc_get_bs(&bst, &bsh);
+
+	status = bus_space_read_4(bst, bsh, PMC_PWRGATE_STATUS_0_REG);
+	state = !!(status & __BIT(partid));
+	if (state == enable)
+		return;
+
+	bus_space_write_4(bst, bsh, PMC_PWRGATE_TOGGLE_0_REG,
+	    __SHIFTIN(partid, PMC_PWRGATE_TOGGLE_0_PARTID) |
+	    PMC_PWRGATE_TOGGLE_0_START);
 }
