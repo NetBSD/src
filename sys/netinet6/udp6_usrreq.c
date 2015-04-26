@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.118 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.119 2015/04/26 21:40:49 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.118 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.119 2015/04/26 21:40:49 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -907,57 +907,6 @@ udp6_purgeif(struct socket *so, struct ifnet *ifp)
 	return 0;
 }
 
-int
-udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
-    struct mbuf *control, struct lwp *l)
-{
-	int error = 0;
-
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	if (sotoin6pcb(so) == NULL) {
-		error = EINVAL;
-		goto release;
-	}
-
-	switch (req) {
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
-		error = EOPNOTSUPP;
-		break;
-
-	default:
-		panic("udp6_usrreq");
-	}
-
-release:
-	if (control != NULL)
-		m_freem(control);
-	if (m != NULL)
-		m_freem(m);
-	return error;
-}
-
 static int
 sysctl_net_inet6_udp6_stats(SYSCTLFN_ARGS)
 {
@@ -1046,7 +995,6 @@ PR_WRAP_USRREQS(udp6)
 #define	udp6_send	udp6_send_wrapper
 #define	udp6_sendoob	udp6_sendoob_wrapper
 #define	udp6_purgeif	udp6_purgeif_wrapper
-#define	udp6_usrreq	udp6_usrreq_wrapper
 
 const struct pr_usrreqs udp6_usrreqs = {
 	.pr_attach	= udp6_attach,
@@ -1068,5 +1016,4 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pr_send	= udp6_send,
 	.pr_sendoob	= udp6_sendoob,
 	.pr_purgeif	= udp6_purgeif,
-	.pr_generic	= udp6_usrreq,
 };

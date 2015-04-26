@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.177 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.178 2015/04/26 21:40:48 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.177 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.178 2015/04/26 21:40:48 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,41 +545,6 @@ unp_sendoob(struct socket *so, struct mbuf *m, struct mbuf * control)
 	m_freem(control);
 
 	return EOPNOTSUPP;
-}
-
-static int
-unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
-{
-
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	KASSERT(solocked(so));
-
-	if (sotounpcb(so) == NULL)
-		return EINVAL;
-
-	panic("piusrreq");
-
-	return 0;
 }
 
 /*
@@ -1997,5 +1962,4 @@ const struct pr_usrreqs unp_usrreqs = {
 	.pr_recvoob	= unp_recvoob,
 	.pr_send	= unp_send,
 	.pr_sendoob	= unp_sendoob,
-	.pr_generic	= unp_usrreq,
 };

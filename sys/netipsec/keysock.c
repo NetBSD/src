@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.46 2015/04/24 22:32:38 rtr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.47 2015/04/26 21:40:49 rtr Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.46 2015/04/24 22:32:38 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.47 2015/04/26 21:40:49 rtr Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -667,44 +667,6 @@ key_purgeif(struct socket *so, struct ifnet *ifa)
 }
 
 /*
- * key_usrreq()
- * derived from net/rtsock.c:route_usrreq()
- */
-static int
-key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
-{
-	int s, error = 0;
-
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	s = splsoftnet();
-	error = raw_usrreq(so, req, m, nam, control, l);
-	m = control = NULL;	/* reclaimed in raw_usrreq */
-	splx(s);
-
-	return error;
-}
-
-/*
  * Definitions of protocols supported in the KEY domain.
  */
 
@@ -730,7 +692,6 @@ PR_WRAP_USRREQS(key)
 #define	key_send	key_send_wrapper
 #define	key_sendoob	key_sendoob_wrapper
 #define	key_purgeif	key_purgeif_wrapper
-#define	key_usrreq	key_usrreq_wrapper
 
 const struct pr_usrreqs key_usrreqs = {
 	.pr_attach	= key_attach,
@@ -752,7 +713,6 @@ const struct pr_usrreqs key_usrreqs = {
 	.pr_send	= key_send,
 	.pr_sendoob	= key_sendoob,
 	.pr_purgeif	= key_purgeif,
-	.pr_generic	= key_usrreq,
 };
 
 const struct protosw keysw[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.62 2015/04/24 22:32:38 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.63 2015/04/26 21:40:49 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -256,8 +256,6 @@ struct pr_usrreqs {
 	    struct mbuf *, struct lwp *);
 	int	(*pr_sendoob)(struct socket *, struct mbuf *, struct mbuf *);
 	int	(*pr_purgeif)(struct socket *, struct ifnet *);
-	int	(*pr_generic)(struct socket *, int, struct mbuf *,
-	    struct mbuf *, struct mbuf *, struct lwp *);
 };
 
 /*
@@ -469,17 +467,6 @@ name##_purgeif_wrapper(struct socket *a,		\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
 	rv = name##_purgeif(a, b);			\
-	KERNEL_UNLOCK_ONE(NULL);			\
-	return rv;					\
-}							\
-static int						\
-name##_usrreq_wrapper(struct socket *a, int b,		\
-    struct mbuf *c, struct mbuf *d, struct mbuf *e,	\
-    struct lwp *f)					\
-{							\
-	int rv;						\
-	KERNEL_LOCK(1, NULL);				\
-	rv = name##_usrreq(a, b, c, d, e, f);		\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }
