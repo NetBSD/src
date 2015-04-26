@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.26 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.27 2015/04/26 21:40:48 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.26 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.27 2015/04/26 21:40:48 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -68,8 +68,6 @@ static int link_send(struct socket *, struct mbuf *, struct mbuf *,
     struct mbuf *, struct lwp *);
 static int link_sendoob(struct socket *, struct mbuf *, struct mbuf *);
 static int link_purgeif(struct socket *, struct ifnet *);
-static int link_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
-    struct mbuf *, struct lwp *);
 static void link_init(void);
 
 /*
@@ -98,7 +96,6 @@ static const struct pr_usrreqs link_usrreqs = {
 	.pr_send	= link_send,
 	.pr_sendoob	= link_sendoob,
 	.pr_purgeif	= link_purgeif,
-	.pr_generic	= link_usrreq,
 };
 
 const struct protosw linksw[] = {
@@ -395,33 +392,6 @@ link_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 static int
 link_purgeif(struct socket *so, struct ifnet *ifp)
 {
-
-	return EOPNOTSUPP;
-}
-
-static int
-link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct lwp *l)
-{
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
 
 	return EOPNOTSUPP;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.169 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.170 2015/04/26 21:40:48 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.169 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.170 2015/04/26 21:40:48 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -410,39 +410,6 @@ COMPATNAME(route_purgeif)(struct socket *so, struct ifnet *ifp)
 	panic("route_purgeif");
 
 	return EOPNOTSUPP;
-}
-
-static int
-COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *control, struct lwp *l)
-{
-	int s, error = 0;
-
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	s = splsoftnet();
-	error = raw_usrreq(so, req, m, nam, control, l);
-	splx(s);
-
-	return error;
 }
 
 /*ARGSUSED*/
@@ -1547,7 +1514,6 @@ static const struct pr_usrreqs route_usrreqs = {
 	.pr_send	= COMPATNAME(route_send_wrapper),
 	.pr_sendoob	= COMPATNAME(route_sendoob_wrapper),
 	.pr_purgeif	= COMPATNAME(route_purgeif_wrapper),
-	.pr_generic	= COMPATNAME(route_usrreq_wrapper),
 };
 
 static const struct protosw COMPATNAME(route_protosw)[] = {
