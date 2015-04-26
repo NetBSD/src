@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.2 2015/03/29 22:27:04 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.3 2015/04/26 22:04:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -54,6 +54,7 @@ struct tegraio_attach_args {
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
 extern bus_space_handle_t tegra_host1x_bsh;
+extern bus_space_handle_t tegra_ppsb_bsh;
 extern bus_space_handle_t tegra_apb_bsh;
 extern bus_space_handle_t tegra_ahb_a2_bsh;
 extern struct arm32_bus_dma_tag tegra_dma_tag;
@@ -69,6 +70,7 @@ const char *tegra_chip_name(void);
 void	tegra_bootstrap(void);
 
 void	tegra_pmc_reset(void);
+void	tegra_pmc_power(u_int, bool);
 
 psize_t	tegra_mc_memsize(void);
 
