@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.63 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.64 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.63 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.64 2015/04/26 15:15:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,10 @@ const struct cdevsw ed_cdevsw = {
 	.d_flag = D_DISK
 };
 
-static struct dkdriver eddkdriver = { edmcastrategy, minphys };
+static struct dkdriver eddkdriver = {
+	.d_strategy = edmcastrategy,
+	.d_minphys = minphys
+};
 
 /*
  * Just check if it's possible to identify the disk.

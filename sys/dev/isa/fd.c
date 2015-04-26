@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.108 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: fd.c,v 1.109 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.108 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.109 2015/04/26 15:15:20 mlelstv Exp $");
 
 #include "opt_ddb.h"
 
@@ -253,7 +253,10 @@ void fdgetdisklabel(struct fd_softc *);
 int fd_get_parms(struct fd_softc *);
 void fdstart(struct fd_softc *);
 
-struct dkdriver fddkdriver = { fdstrategy, NULL };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy,
+	.d_minphys = minphys
+};
 
 #if defined(i386) || defined(x86_64)
 const struct fd_type *fd_nvtotype(const char *, int, int);

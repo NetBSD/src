@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.49 2015/01/02 19:42:07 christos Exp $	*/
+/*	$NetBSD: rl.c,v 1.50 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.49 2015/01/02 19:42:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.50 2015/04/26 15:15:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -140,7 +140,8 @@ static const char * const rlstates[] = {
 };
 
 static const struct dkdriver rldkdriver = {
-	rlstrategy, minphys
+	.d_strategy = rlstrategy,
+	.d_minphys = minphys
 };
 
 static const char *

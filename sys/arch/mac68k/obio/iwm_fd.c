@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.55 2015/01/03 16:44:14 christos Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.56 2015/04/26 15:15:19 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.55 2015/01/03 16:44:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.56 2015/04/26 15:15:19 mlelstv Exp $");
 
 #include "locators.h"
 
@@ -260,7 +260,7 @@ const struct cdevsw fd_cdevsw = {
 
 /* disk(9) framework device switch */
 struct dkdriver fd_dkDriver = {
-	fdstrategy
+	.d_strategy = fdstrategy
 };
 
 /***  Configure the IWM controller  ***/

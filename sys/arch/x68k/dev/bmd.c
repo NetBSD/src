@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.23 2015/01/02 19:42:06 christos Exp $	*/
+/*	$NetBSD: bmd.c,v 1.24 2015/04/26 15:15:19 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.23 2015/01/02 19:42:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.24 2015/04/26 15:15:19 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,9 @@ const struct cdevsw bmd_cdevsw = {
 	.d_flag = D_DISK
 };
 
-struct dkdriver bmddkdriver = { bmdstrategy };
+struct dkdriver bmddkdriver = {
+	.d_strategy = bmdstrategy
+};
 
 static int
 bmd_match(device_t parent, cfdata_t cf, void *aux)
