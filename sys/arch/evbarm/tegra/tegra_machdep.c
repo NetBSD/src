@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.4 2015/04/26 16:24:01 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.5 2015/04/26 17:40:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.4 2015/04/26 16:24:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.5 2015/04/26 17:40:59 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -134,6 +134,15 @@ static const struct pmap_devmap devmap[] = {
 
 #undef	_A
 #undef	_S
+
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+static struct boot_physmem bp_highgig = {
+	.bp_start = TEGRA_EXTMEM_BASE / NBPG,
+	.bp_pages = (KERNEL_VM_BASE - KERNEL_BASE) / NBPG,
+	.bp_freelist = VM_FREELIST_ISADMA,
+	.bp_flags = 0
+};
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 static void
@@ -245,12 +254,17 @@ initarm(void *arg)
 	ram_size = tegra_mc_memsize();
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
 	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
 		printf("%s: dropping RAM size from %luMB to %uMB\n",
 		    __func__, (unsigned long) (ram_size >> 20),     
 		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
 		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
 	}
+#endif
+#else
+	const bool mapallmem_p = false;
 #endif
 
 	/*
@@ -270,12 +284,6 @@ initarm(void *arg)
 	bootconfig.dram[0].address = TEGRA_EXTMEM_BASE; /* DDR PHY addr */
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
 
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	const bool mapallmem_p = true;
-	KASSERT(ram_size <= KERNEL_VM_BASE - KERNEL_BASE);
-#else
-	const bool mapallmem_p = false;
-#endif
 	KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
 
 	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
@@ -297,6 +305,15 @@ initarm(void *arg)
 	parse_mi_bootargs(boot_args);
 
 	evbarm_device_register = tegra_device_register;
+
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+	if (atop(ram_size) > bp_highgig.bp_pages) {
+		bp_highgig.bp_start += atop(ram_size) - bp_highgig.bp_pages;
+		arm_poolpage_vmfreelist = bp_highgig.bp_freelist;
+		return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
+		    &bp_highgig, 1);
+	}
+#endif
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
