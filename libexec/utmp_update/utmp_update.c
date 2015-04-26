@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.12 2015/04/26 08:03:05 mlelstv Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.13 2015/04/26 08:56:19 mlelstv Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: utmp_update.c,v 1.12 2015/04/26 08:03:05 mlelstv Exp $");
+__RCSID("$NetBSD: utmp_update.c,v 1.13 2015/04/26 08:56:19 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ logerr(int e, const char *fmt, ...)
 	va_copy(eap, sap);
 	vsyslog(LOG_ERR, fmt, sap);
 	va_end(sap);
-	errx(1, fmt, eap);
+	verrx(1, fmt, eap);
 	va_end(eap);
 }
 
