@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.3 2015/03/29 22:27:04 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.4 2015/04/26 16:24:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3 2015/03/29 22:27:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.4 2015/04/26 16:24:01 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -122,6 +122,13 @@ static const struct pmap_devmap devmap[] = {
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
+	{
+		.pd_va = _A(TEGRA_AHB_A2_VBASE),
+		.pd_pa = _A(TEGRA_AHB_A2_BASE),
+		.pd_size = _S(TEGRA_AHB_A2_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
 	{0}
 };
 
@@ -154,11 +161,28 @@ tegra_putstr(const char *s)
 		tegra_putchar(*p);
 	}
 }
+
+static void
+tegra_printn(u_int n, int base)
+{
+	char *p, buf[(sizeof(u_int) * NBBY / 3) + 1 + 2 /* ALT + SIGN */];
+
+	p = buf;
+	do {
+		*p++ = hexdigits[n % base];
+	} while (n /= base);
+
+	do {
+		tegra_putchar(*--p);
+	} while (p > buf);
+}
 #define DPRINTF(...)		printf(__VA_ARGS__)
 #define DPRINT(x)		tegra_putstr(x)
+#define DPRINTN(x,b)		tegra_printn((x), (b))
 #else
 #define DPRINTF(...)
 #define DPRINT(x)
+#define DPRINTN(x,b)
 #endif
 
 /*
@@ -179,6 +203,10 @@ initarm(void *arg)
 {
 	psize_t ram_size = 0;
 	DPRINT("initarm:");
+
+	DPRINT(" sctlr<0x");
+	DPRINTN(armreg_sctlr_read(), 16);
+	DPRINT(">");
 
 	DPRINT(" devmap");
 	pmap_devmap_register(devmap);
