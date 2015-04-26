@@ -1,5 +1,5 @@
 /*	$KAME: dccp6_usrreq.c,v 1.13 2005/07/27 08:42:56 nishida Exp $	*/
-/*	$NetBSD: dccp6_usrreq.c,v 1.4 2015/04/25 14:56:05 rtr Exp $ */
+/*	$NetBSD: dccp6_usrreq.c,v 1.5 2015/04/26 21:40:49 rtr Exp $ */
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.4 2015/04/25 14:56:05 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.5 2015/04/26 21:40:49 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_dccp.h"
@@ -329,57 +329,6 @@ dccp6_purgeif(struct socket *so, struct ifnet *ifp)
 	return 0;
 }
 
-int
-dccp6_usrreq(struct socket *so, int req, struct mbuf *m,
-	     struct mbuf *nam, struct mbuf *control, struct lwp *l)
-{
-	int error = 0;
-
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	if (sotoin6pcb(so) == NULL) {
-		error = EINVAL;
-		goto release;
-	}
-
-	switch (req) {
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
-		error = EOPNOTSUPP;
-		break;
-
-	default:
-		panic("dccp6_usrreq");
-	}
-
-release:
-	if (control != NULL)
-		m_freem(control);
-	if (m != NULL)
-		m_freem(m);
-	return error;
-}
-
 static int
 dccp6_attach(struct socket *so, int proto)
 {
@@ -496,7 +445,6 @@ PR_WRAP_USRREQS(dccp6)
 #define	dccp6_send		dccp6_send_wrapper
 #define	dccp6_sendoob		dccp6_sendoob_wrapper
 #define	dccp6_purgeif		dccp6_purgeif_wrapper
-#define	dccp6_usrreq		dccp6_usrreq_wrapper
 
 const struct pr_usrreqs dccp6_usrreqs = {
 	.pr_attach	= dccp6_attach,
@@ -518,5 +466,4 @@ const struct pr_usrreqs dccp6_usrreqs = {
 	.pr_send	= dccp6_send,
 	.pr_sendoob	= dccp6_sendoob,
 	.pr_purgeif	= dccp6_purgeif,
-	.pr_generic	= dccp6_usrreq,
 };
