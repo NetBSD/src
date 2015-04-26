@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.114 2014/12/31 19:52:05 christos Exp $	*/
+/*	$NetBSD: mcd.c,v 1.115 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.114 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.115 2015/04/26 15:15:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,9 @@ int	mcd_get_parms(struct mcd_softc *);
 void	mcdstart(struct mcd_softc *);
 void	mcd_pseudointr(void *);
 
-struct dkdriver mcddkdriver = { mcdstrategy, NULL, };
+struct dkdriver mcddkdriver = {
+	.d_strategy = mcdstrategy
+};
 
 #define MCD_RETRIES	3
 #define MCD_RDRETRIES	3

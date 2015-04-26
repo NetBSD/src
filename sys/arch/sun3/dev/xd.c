@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.72 2014/12/31 19:52:05 christos Exp $	*/
+/*	$NetBSD: xd.c,v 1.73 2015/04/26 15:15:19 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.72 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.73 2015/04/26 15:15:19 mlelstv Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -315,7 +315,9 @@ const struct cdevsw xd_cdevsw = {
  * dkdriver
  */
 
-struct dkdriver xddkdriver = { xdstrategy };
+struct dkdriver xddkdriver = {
+	.d_strategy = xdstrategy
+};
 
 /*
  * start: disk label fix code (XXX)
