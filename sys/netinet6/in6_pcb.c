@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.136 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.137 2015/04/26 16:45:50 rtr Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.136 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.137 2015/04/26 16:45:50 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -445,6 +445,8 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 		return (EINVAL);
 
 	if (nam->m_len != sizeof(*sin6))
+		return (EINVAL);
+	if (sin6->sin6_len != sizeof(*sin6))
 		return (EINVAL);
 	if (sin6->sin6_family != AF_INET6)
 		return (EAFNOSUPPORT);
