@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.5 2015/04/26 17:40:59 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.6 2015/04/26 22:04:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.5 2015/04/26 17:40:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.6 2015/04/26 22:04:28 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -116,6 +116,13 @@ static const struct pmap_devmap devmap[] = {
 		.pd_cache = PTE_NOCACHE
 	},
 	{
+		.pd_va = _A(TEGRA_PPSB_VBASE),
+		.pd_pa = _A(TEGRA_PPSB_BASE),
+		.pd_size = _S(TEGRA_PPSB_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
 		.pd_va = _A(TEGRA_APB_VBASE),
 		.pd_pa = _A(TEGRA_APB_BASE),
 		.pd_size = _S(TEGRA_APB_SIZE),
@@ -194,6 +201,8 @@ tegra_printn(u_int n, int base)
 #define DPRINTN(x,b)
 #endif
 
+extern void cortex_mpstart(void);
+
 /*
  * u_int initarm(...)
  *
@@ -215,6 +224,10 @@ initarm(void *arg)
 
 	DPRINT(" sctlr<0x");
 	DPRINTN(armreg_sctlr_read(), 16);
+	DPRINT(">");
+
+	DPRINT(" mpstart<0x");
+	DPRINTN((uint32_t)cortex_mpstart, 16);
 	DPRINT(">");
 
 	DPRINT(" devmap");
