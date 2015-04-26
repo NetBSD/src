@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.37 2014/07/27 04:23:44 dholland Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.38 2015/04/26 09:20:09 maxv Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -248,10 +248,11 @@ main(int argc, char **argv)
 			err(1, "Cannot open `%s'", file);
 
 		yyin = fdopen(lfd, "r");
-
 		yyparse();
+		fclose(yyin);
 
-		(void)fclose(yyin);
+		if (error != EXIT_SUCCESS)
+			errx(1, "Cannot load '%s'", file);
 	} else if (argc == 2 && strcasecmp(argv[0], "delete") == 0) {
 		prop_dictionary_t dp;
 		struct stat sb;
