@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.112 2015/04/24 05:48:35 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.113 2015/04/26 09:04:32 martin Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3840,3 +3840,9 @@ sys/kern/sys_select.c				patch
 	exceeded, then return EINVAL instead of silently truncating the list.
 	Addresses PR/17507.
 	[prlw1, ticket #1957]
+
+sys/dev/pci/if_wm.c:				patch
+	Fix a bug (in the backport for #1850) that passed the wrong
+	pointer as the first argument of bpf_mtap() on 82575 and newer chips.
+	[msaitoh, #1961]
+
