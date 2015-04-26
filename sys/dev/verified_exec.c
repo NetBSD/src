@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.69 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.70 2015/04/26 09:38:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.69 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.70 2015/04/26 09:38:01 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -60,7 +60,7 @@ static dev_type_close(veriexecclose);
 static dev_type_ioctl(veriexecioctl);
 
 struct veriexec_softc {
-        DEVPORT_DEVICE veriexec_dev;
+	DEVPORT_DEVICE veriexec_dev;
 };
 
 #if defined(__FreeBSD__)
@@ -69,11 +69,11 @@ struct veriexec_softc {
 #endif
 
 const struct cdevsw veriexec_cdevsw = {
-        .d_open = veriexecopen,
+	.d_open = veriexecopen,
 	.d_close = veriexecclose,
 	.d_read = noread,
 	.d_write = nowrite,
-        .d_ioctl = veriexecioctl,
+	.d_ioctl = veriexecioctl,
 #ifdef __NetBSD__
 	.d_stop = nostop,
 	.d_tty = notty,
@@ -82,16 +82,16 @@ const struct cdevsw veriexec_cdevsw = {
 	.d_mmap = nommap,
 	.d_discard = nodiscard,
 #if defined(__NetBSD__)
-       .d_kqfilter = nokqfilter,
-       .d_flag = D_OTHER,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER,
 #elif defined(__FreeBSD__)
-       nostrategy,
-       "veriexec",
-       CDEV_MAJOR,
-       nodump,
-       nopsize,
-       0,                              /* flags */
-       BDEV_MAJOR
+	nostrategy,
+	"veriexec",
+	CDEV_MAJOR,
+	nodump,
+	nopsize,
+	0,                              /* flags */
+	BDEV_MAJOR
 #endif
 };
 
