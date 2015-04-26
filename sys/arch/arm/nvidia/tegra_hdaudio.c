@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdaudio.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_hdaudio.c,v 1.2 2015/04/26 16:48:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.2 2015/04/26 16:48:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,7 +80,7 @@ tegra_hdaudio_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dmat = tio->tio_dmat;
 
 	aprint_naive("\n");
-	aprint_normal(": SATA\n");
+	aprint_normal(": HDA\n");
 
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_AUDIO, IST_LEVEL,
 	    tegra_hdaudio_intr, sc);
