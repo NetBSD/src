@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.25 2015/01/02 19:42:05 christos Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.26 2015/04/26 15:15:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.25 2015/01/02 19:42:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.26 2015/04/26 15:15:19 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -217,7 +217,9 @@ const struct cdevsw mmem_cdevsw = {
 CFATTACH_DECL_NEW(mmem, sizeof(struct mmem_softc),
     mmemmatch, mmemattach, mmemdetach, NULL);
 
-struct dkdriver mmemdkdriver = { mmemstrategy };
+struct dkdriver mmemdkdriver = {
+	.d_strategy = mmemstrategy
+};
 
 static int
 mmemmatch(device_t parent, cfdata_t cf, void *aux)

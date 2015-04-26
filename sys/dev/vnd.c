@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.242 2015/04/06 12:02:08 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.243 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.242 2015/04/06 12:02:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.243 2015/04/26 15:15:20 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -233,7 +233,10 @@ extern struct cfdriver vnd_cd;
 static struct vnd_softc	*vnd_spawn(int);
 int	vnd_destroy(device_t);
 
-static struct	dkdriver vnddkdriver = { vndstrategy, minphys };
+static struct	dkdriver vnddkdriver = {
+	.d_strategy = vndstrategy,
+	.d_minphys = minphys
+};
 
 void
 vndattach(int num)

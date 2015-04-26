@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.315 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: sd.c,v 1.316 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.315 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.316 2015/04/26 15:15:20 mlelstv Exp $");
 
 #include "opt_scsi.h"
 
@@ -181,7 +181,10 @@ const struct cdevsw sd_cdevsw = {
 	.d_flag = D_DISK
 };
 
-static struct dkdriver sddkdriver = { sdstrategy, sdminphys };
+static struct dkdriver sddkdriver = {
+	.d_strategy = sdstrategy,
+	.d_minphys = sdminphys
+};
 
 static const struct scsipi_periphsw sd_switch = {
 	sd_interpret_sense,	/* check our error handler first */

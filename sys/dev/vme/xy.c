@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.98 2014/12/31 19:52:06 christos Exp $	*/
+/*	$NetBSD: xy.c,v 1.99 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.98 2014/12/31 19:52:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.99 2015/04/26 15:15:20 mlelstv Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -243,7 +243,9 @@ struct xyc_attach_args {	/* this is the "aux" args to xyattach */
  * dkdriver
  */
 
-struct dkdriver xydkdriver = { xystrategy };
+struct dkdriver xydkdriver = {
+	.d_strategy = xystrategy
+};
 
 /*
  * start: disk label fix code (XXX)
