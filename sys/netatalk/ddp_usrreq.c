@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.66 2015/04/24 23:36:48 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.67 2015/04/26 21:40:49 rtr Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.66 2015/04/24 23:36:48 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.67 2015/04/26 21:40:49 rtr Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -74,62 +74,6 @@ u_long ddp_recvspace = 25 * (587 + sizeof(struct sockaddr_at));
 struct mowner atalk_rx_mowner = MOWNER_INIT("atalk", "rx");
 struct mowner atalk_tx_mowner = MOWNER_INIT("atalk", "tx");
 #endif
-
-static int
-ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
-    struct mbuf *rights, struct lwp *l)
-{
-	struct ddpcb   *ddp;
-	int             error = 0;
-
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	ddp = sotoddpcb(so);
-
-	if (rights && rights->m_len) {
-		error = EINVAL;
-		goto release;
-	}
-	if (ddp == NULL) {
-		error = EINVAL;
-		goto release;
-	}
-	switch (req) {
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
-		error = EOPNOTSUPP;
-		break;
-
-	default:
-		error = EOPNOTSUPP;
-	}
-
-release:
-	if (m != NULL) {
-		m_freem(m);
-	}
-	return (error);
-}
 
 static void
 at_sockaddr(struct ddpcb *ddp, struct sockaddr_at *addr)
@@ -683,7 +627,6 @@ PR_WRAP_USRREQS(ddp)
 #define	ddp_send	ddp_send_wrapper
 #define	ddp_sendoob	ddp_sendoob_wrapper
 #define	ddp_purgeif	ddp_purgeif_wrapper
-#define	ddp_usrreq	ddp_usrreq_wrapper
 
 const struct pr_usrreqs ddp_usrreqs = {
 	.pr_attach	= ddp_attach,
@@ -705,7 +648,6 @@ const struct pr_usrreqs ddp_usrreqs = {
 	.pr_send	= ddp_send,
 	.pr_sendoob	= ddp_sendoob,
 	.pr_purgeif	= ddp_purgeif,
-	.pr_generic	= ddp_usrreq,
 };
 
 static int

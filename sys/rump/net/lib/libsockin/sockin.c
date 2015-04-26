@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.60 2015/04/24 22:32:38 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.61 2015/04/26 21:40:49 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.60 2015/04/24 22:32:38 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.61 2015/04/26 21:40:49 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -86,8 +86,6 @@ static int	sockin_send(struct socket *, struct mbuf *, struct mbuf *,
 			    struct mbuf *, struct lwp *);
 static int	sockin_sendoob(struct socket *, struct mbuf *, struct mbuf *);
 static int	sockin_purgeif(struct socket *, struct ifnet *);
-static int	sockin_usrreq(struct socket *, int, struct mbuf *,
-			      struct mbuf *, struct mbuf *, struct lwp *);
 static int	sockin_ctloutput(int op, struct socket *, struct sockopt *);
 
 static const struct pr_usrreqs sockin_usrreqs = {
@@ -110,7 +108,6 @@ static const struct pr_usrreqs sockin_usrreqs = {
 	.pr_send = sockin_send,
 	.pr_sendoob = sockin_sendoob,
 	.pr_purgeif = sockin_purgeif,
-	.pr_generic = sockin_usrreq,
 };
 
 const struct protosw sockinsw[] = {
@@ -692,33 +689,6 @@ sockin_purgeif(struct socket *so, struct ifnet *ifp)
 {
 
 	panic("sockin_purgeif: IMPLEMENT ME, purgeif not supported");
-}
-
-static int
-sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct lwp *l)
-{
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	panic("sockin_usrreq: IMPLEMENT ME, req %d not supported", req);
-
-	return 0;
 }
 
 static int

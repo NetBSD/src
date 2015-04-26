@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.33 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.34 2015/04/26 21:40:49 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.33 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.34 2015/04/26 21:40:49 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -355,70 +355,6 @@ l2cap_purgeif(struct socket *so, struct ifnet *ifp)
 }
 
 /*
- * User Request.
- * up is socket
- * m is optional mbuf chain containing message
- * ctl is either
- *	optional mbuf chain containing socket options
- * l is pointer to process requesting action (if any)
- *
- * we are responsible for disposing of m and ctl if
- * they are mbuf chains
- */
-static int
-l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
-{
-	struct l2cap_channel *pcb = up->so_pcb;
-	int err = 0;
-
-	DPRINTFN(2, "%s\n", prurequests[req]);
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	if (pcb == NULL) {
-		err = EINVAL;
-		goto release;
-	}
-
-	switch(req) {
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
-		err = EOPNOTSUPP;
-		break;
-
-	default:
-		UNKNOWN(req);
-		err = EOPNOTSUPP;
-		break;
-	}
-
-release:
-	if (m) m_freem(m);
-	if (ctl) m_freem(ctl);
-	return err;
-}
-
-/*
  * l2cap_ctloutput(req, socket, sockopt)
  *
  *	Apply configuration commands to channel. This corresponds to
@@ -579,7 +515,6 @@ PR_WRAP_USRREQS(l2cap)
 #define	l2cap_send		l2cap_send_wrapper
 #define	l2cap_sendoob		l2cap_sendoob_wrapper
 #define	l2cap_purgeif		l2cap_purgeif_wrapper
-#define	l2cap_usrreq		l2cap_usrreq_wrapper
 
 const struct pr_usrreqs l2cap_usrreqs = {
 	.pr_attach	= l2cap_attach,
@@ -601,5 +536,4 @@ const struct pr_usrreqs l2cap_usrreqs = {
 	.pr_send	= l2cap_send,
 	.pr_sendoob	= l2cap_sendoob,
 	.pr_purgeif	= l2cap_purgeif,
-	.pr_generic	= l2cap_usrreq,
 };
