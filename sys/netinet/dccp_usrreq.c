@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.3 2015/04/24 22:32:37 rtr Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.4 2015/04/26 21:40:49 rtr Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.3 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.4 2015/04/26 21:40:49 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_dccp.h"
@@ -2978,40 +2978,6 @@ dccp_purgeif(struct socket *so, struct ifnet *ifp)
 	return 0;
 }
 
-int
-dccp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	    struct mbuf *control, struct lwp *l)
-{
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	KASSERT(solocked(so));
-
-	if (sotoinpcb(so) == NULL)
-		return EINVAL;
-
-	panic("dccp_usrreq");
-
-	return 0;
-}
-
 /****** Ack Vector functions *********/
 
 /**
@@ -3384,7 +3350,6 @@ PR_WRAP_USRREQS(dccp)
 #define	dccp_send	dccp_send_wrapper
 #define	dccp_sendoob	dccp_sendoob_wrapper
 #define	dccp_purgeif	dccp_purgeif_wrapper
-#define	dccp_usrreq	dccp_usrreq_wrapper
 
 const struct pr_usrreqs dccp_usrreqs = {
 	.pr_attach	= dccp_attach,
@@ -3406,5 +3371,4 @@ const struct pr_usrreqs dccp_usrreqs = {
 	.pr_send	= dccp_send,
 	.pr_sendoob	= dccp_sendoob,
 	.pr_purgeif	= dccp_purgeif,
-	.pr_generic	= dccp_usrreq,
 };

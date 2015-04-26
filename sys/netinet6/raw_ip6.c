@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.138 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.139 2015/04/26 21:40:49 rtr Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.138 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.139 2015/04/26 21:40:49 rtr Exp $");
 
 #include "opt_ipsec.h"
 
@@ -931,34 +931,6 @@ rip6_purgeif(struct socket *so, struct ifnet *ifp)
 	return 0;
 }
 
-int
-rip6_usrreq(struct socket *so, int req, struct mbuf *m, 
-	struct mbuf *nam, struct mbuf *control, struct lwp *l)
-{
-
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_PURGEIF);
-	KASSERT(req != PRU_SENDOOB);
-
-	panic("rip6_usrreq");
-
-	return 0;
-}
-
 static int
 sysctl_net_inet6_raw6_stats(SYSCTLFN_ARGS)
 {
@@ -1018,7 +990,6 @@ PR_WRAP_USRREQS(rip6)
 #define	rip6_send		rip6_send_wrapper
 #define	rip6_sendoob		rip6_sendoob_wrapper
 #define	rip6_purgeif		rip6_purgeif_wrapper
-#define	rip6_usrreq		rip6_usrreq_wrapper
 
 const struct pr_usrreqs rip6_usrreqs = {
 	.pr_attach	= rip6_attach,
@@ -1040,5 +1011,4 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pr_send	= rip6_send,
 	.pr_sendoob	= rip6_sendoob,
 	.pr_purgeif	= rip6_purgeif,
-	.pr_generic	= rip6_usrreq,
 };

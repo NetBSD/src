@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.206 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.207 2015/04/26 21:40:49 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.206 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.207 2015/04/26 21:40:49 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -210,42 +210,6 @@ tcp_getpcb(struct socket *so, struct inpcb **inp,
 	}
 
 	KASSERT(tp != NULL);
-
-	return 0;
-}
-
-/*
- * Process a TCP user request for TCP tb.  If this is a send request
- * then m is the mbuf chain of send data.  If this is a timer expiration
- * (called from the software clock routine), then timertype tells which timer.
- */
-static int
-tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
-{
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	KASSERT(solocked(so));
-
-	panic("tcp_usrreq");
 
 	return 0;
 }
@@ -2523,7 +2487,6 @@ PR_WRAP_USRREQS(tcp)
 #define	tcp_send	tcp_send_wrapper
 #define	tcp_sendoob	tcp_sendoob_wrapper
 #define	tcp_purgeif	tcp_purgeif_wrapper
-#define	tcp_usrreq	tcp_usrreq_wrapper
 
 const struct pr_usrreqs tcp_usrreqs = {
 	.pr_attach	= tcp_attach,
@@ -2545,5 +2508,4 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pr_send	= tcp_send,
 	.pr_sendoob	= tcp_sendoob,
 	.pr_purgeif	= tcp_purgeif,
-	.pr_generic	= tcp_usrreq,
 };
