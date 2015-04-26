@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.322 2015/01/03 11:48:04 prlw1 Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.323 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.322 2015/01/03 11:48:04 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.323 2015/04/26 15:15:20 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -230,7 +230,10 @@ const struct cdevsw raid_cdevsw = {
 	.d_flag = D_DISK
 };
 
-static struct dkdriver rf_dkdriver = { raidstrategy, minphys };
+static struct dkdriver rf_dkdriver = {
+	.d_strategy = raidstrategy,
+	.d_minphys = minphys
+};
 
 struct raid_softc {
 	device_t sc_dev;

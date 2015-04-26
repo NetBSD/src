@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.87 2015/01/02 19:42:07 christos Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.88 2015/04/26 15:15:20 mlelstv Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.87 2015/01/02 19:42:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.88 2015/04/26 15:15:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -183,7 +183,8 @@ const struct cdevsw ra_cdevsw = {
 };
 
 static struct dkdriver radkdriver = {
-	rastrategy, minphys
+	.d_strategy = rastrategy,
+	.d_minphys = minphys
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.329 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: cd.c,v 1.330 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.329 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.330 2015/04/26 15:15:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,10 @@ const struct cdevsw cd_cdevsw = {
 	.d_flag = D_DISK
 };
 
-static struct dkdriver cddkdriver = { cdstrategy, NULL };
+static struct dkdriver cddkdriver = {
+	.d_strategy = cdstrategy,
+	.d_minphys = cdminphys
+};
 
 static const struct scsipi_periphsw cd_switch = {
 	cd_interpret_sense,	/* use our error handler first */

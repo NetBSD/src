@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.50 2014/12/31 19:52:06 christos Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.51 2015/04/26 15:15:20 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.50 2014/12/31 19:52:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.51 2015/04/26 15:15:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -108,7 +108,10 @@ const struct cdevsw ofdisk_cdevsw = {
 
 static void ofminphys(struct buf *);
 
-struct dkdriver ofdisk_dkdriver = { ofdisk_strategy, ofminphys };
+struct dkdriver ofdisk_dkdriver = {
+	.d_strategy = ofdisk_strategy,
+	.d_minphys = ofminphys
+};
 
 void ofdisk_getdefaultlabel (struct ofdisk_softc *, struct disklabel *);
 void ofdisk_getdisklabel (dev_t);
