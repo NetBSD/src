@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.162.4.19 2013/09/07 17:10:18 bouyer Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.162.4.20 2015/04/26 09:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.19 2013/09/07 17:10:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.20 2015/04/26 09:03:12 martin Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3304,7 +3304,7 @@ wm_nq_start(struct ifnet *ifp)
 #if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp, m0);
+			bpf_mtap(ifp->if_bpf, m0);
 #endif
 	}
 
