@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.2 2015/04/26 16:41:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.2 2015/04/26 16:41:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,8 +70,9 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_atac.atac_dev = self;
 	sc->sc.sc_dmat = tio->tio_dmat;
 	sc->sc.sc_ahcit = tio->tio_bst;
+	sc->sc.sc_ahcis = loc->loc_size;
 	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc.sc_ahcis);
+	    loc->loc_offset, loc->loc_size, &sc->sc.sc_ahcih);
 	sc->sc.sc_ahci_ports = 1;
 
 	aprint_naive("\n");
