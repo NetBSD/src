@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.32 2015/04/20 23:12:56 jmcneill Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.33 2015/04/26 16:22:57 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -206,6 +206,8 @@ arm_cpuinit:
 	mov	r1, #0			// make sure TTBCR is 0
 #endif
 	mcr	p15, 0, r1, c2, c0, 2	// TTBCR write
+
+	isb
 
 #if !defined(CPU_CORTEXA5)
 	XPUTC(#'I')
