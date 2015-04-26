@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.4,v 1.1.2.26 2015/04/24 05:48:57 msaitoh Exp $
+# $NetBSD: CHANGES-5.2.4,v 1.1.2.27 2015/04/26 12:53:34 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2.3 release to the NetBSD 5.2.4
 release:
@@ -2584,7 +2584,10 @@ crypto/dist/openssl/dist/ssl/s2_srvr.c	1.2
 	X509_to_X509_REQ NULL pointer deref (CVE-2015-0288)
 	[spz, ticket #1954]
 
-sys/arch/sparc/stand/ofwboot/Locore.c		1.14
+sys/arch/sparc/include/openfirm.h		1.7
+sys/arch/sparc/stand/ofwboot/Locore.c		1.11, 1.14
+sys/arch/sparc/stand/ofwboot/loadfile_machdep.c	1.7
+sys/arch/sparc/stand/ofwboot/openfirm.h		1.4
 
 	Fix kernel loading failures from partitions started from over first
 	4GB of disks on sparc64.
