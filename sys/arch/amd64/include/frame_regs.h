@@ -1,4 +1,4 @@
-/*	$NetBSD: frame_regs.h,v 1.6 2015/04/26 12:44:08 christos Exp $	*/
+/*	$NetBSD: frame_regs.h,v 1.7 2015/04/26 18:49:39 mrg Exp $	*/
 
 #ifndef _AMD64_FRAME_REGS_H_
 #define _AMD64_FRAME_REGS_H_
@@ -11,8 +11,8 @@
  * has been changed to improve syscall efficiency.
  *
  * Notes:
- * 1) gdb (src/external/gpl3/gdb/dist/gdb/amd64nbsd-tdep.c) has a lookup
- *    table that assumes the __greg_t ordering.
+ * 1) gdb (amd64nbsd-tdep.c) has a lookup table that assumes the __greg_t 
+ *    ordering.
  * 2) src/lib/libc/arch/x86_64/gen/makecontext.c assumes that the first
  *    6 entries in the __greg_t array match the registers used to pass
  *    function arguments.
