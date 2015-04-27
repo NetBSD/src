@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.79 2015/04/27 06:42:52 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.80 2015/04/27 06:51:40 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.79 2015/04/27 06:42:52 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.80 2015/04/27 06:51:40 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -200,7 +200,7 @@ static SIMPLEQ_HEAD(, intrsource) io_interrupt_sources =
 	SIMPLEQ_HEAD_INITIALIZER(io_interrupt_sources);
 
 #if NIOAPIC > 0 || NACPICA > 0
-static int intr_scan_bus(int, int, int *);
+static int intr_scan_bus(int, int, intr_handle_t *);
 #if NPCI > 0
 static int intr_find_pcibridge(int, pcitag_t *, pci_chipset_tag_t *);
 #endif
@@ -401,7 +401,7 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
  * 'pin' argument pci bus_pin encoding of a device/pin combination.
  */
 int
-intr_find_mpmapping(int bus, int pin, int *handle)
+intr_find_mpmapping(int bus, int pin, intr_handle_t *handle)
 {
 
 #if NPCI > 0
@@ -425,7 +425,7 @@ intr_find_mpmapping(int bus, int pin, int *handle)
 }
 
 static int
-intr_scan_bus(int bus, int pin, int *handle)
+intr_scan_bus(int bus, int pin, intr_handle_t *handle)
 {
 	struct mp_intr_map *mip, *intrs;
 
@@ -1131,14 +1131,14 @@ legacy_intr_string(int ih, char *buf, size_t len, struct pic *pic)
 }
 
 const char *
-intr_string(int ih, char *buf, size_t len)
+intr_string(intr_handle_t ih, char *buf, size_t len)
 {
 #if NIOAPIC > 0
 	struct ioapic_softc *pic;
 #endif
 
 	if (ih == 0)
-		panic("%s: bogus handle 0x%x", __func__, ih);
+		panic("%s: bogus handle 0x%" PRIx64, __func__, ih);
 
 #if NIOAPIC > 0
 	if (ih & APIC_INT_VIA_APIC) {
@@ -1151,13 +1151,13 @@ intr_string(int ih, char *buf, size_t len)
 			    "apic %d int %d (irq %d)",
 			    APIC_IRQ_APIC(ih),
 			    APIC_IRQ_PIN(ih),
-			    ih&0xff);
+			    APIC_IRQ_LEGACY_IRQ(ih));
 		}
 	} else
-		snprintf(buf, len, "irq %d", ih&0xff);
+		snprintf(buf, len, "irq %d", APIC_IRQ_LEGACY_IRQ(ih));
 #else
 
-	snprintf(buf, len, "irq %d", ih&0xff);
+	snprintf(buf, len, "irq %d" APIC_IRQ_LEGACY_IRQ(ih));
 #endif
 	return buf;
 
