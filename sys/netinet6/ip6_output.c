@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.164 2015/04/24 08:53:06 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.165 2015/04/27 10:14:44 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.164 2015/04/24 08:53:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.165 2015/04/27 10:14:44 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2333,7 +2333,9 @@ ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp, void *v,
 			sockaddr_in_init(&u.dst4, ia4, 0);
 		else
 			sockaddr_in6_init(&u.dst6, ia, 0, 0, 0);
-		rtcache_setdst(&ro, &u.dst);
+		error = rtcache_setdst(&ro, &u.dst);
+		if (error != 0)
+			return error;
 		*ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp : NULL;
 		rtcache_free(&ro);
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.237 2015/04/24 00:48:47 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.238 2015/04/27 10:14:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.237 2015/04/24 00:48:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.238 2015/04/27 10:14:44 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -246,7 +246,9 @@ ip_output(struct mbuf *m0, ...)
 	if ((rt = rtcache_validate(ro)) == NULL &&
 	    (rt = rtcache_update(ro, 1)) == NULL) {
 		dst = &u.dst4;
-		rtcache_setdst(ro, &u.dst);
+		error = rtcache_setdst(ro, &u.dst);
+		if (error != 0)
+			goto bad;
 	}
 
 	/*
@@ -1416,7 +1418,9 @@ ip_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
 		memset(&ro, 0, sizeof(ro));
 
 		sockaddr_in_init(&u.dst4, ia, 0);
-		rtcache_setdst(&ro, &u.dst);
+		error = rtcache_setdst(&ro, &u.dst);
+		if (error != 0)
+			return error;
 		*ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp : NULL;
 		rtcache_free(&ro);
 	} else {

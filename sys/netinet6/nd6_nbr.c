@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.107 2015/03/30 04:25:26 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.108 2015/04/27 10:14:44 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.107 2015/03/30 04:25:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.108 2015/04/27 10:14:44 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -927,7 +927,8 @@ nd6_na_output(
 	ip6->ip6_dst = daddr6;
 	sockaddr_in6_init(&u.dst6, &daddr6, 0, 0, 0);
 	dst = &u.dst;
-	rtcache_setdst(&ro, dst);
+	if (rtcache_setdst(&ro, dst) != 0)
+		goto bad;
 
 	/*
 	 * Select a source whose scope is the same as that of the dest.

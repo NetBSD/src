@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.138 2015/04/27 02:59:44 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.139 2015/04/27 10:14:44 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.138 2015/04/27 02:59:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.139 2015/04/27 10:14:44 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1100,7 +1100,8 @@ in6_pcbrtentry(struct in6pcb *in6p)
 		addr.s_addr = in6p->in6p_faddr.s6_addr32[3];
 
 		sockaddr_in_init(&u.dst4, &addr, 0);
-		rtcache_setdst(ro, &u.dst);
+		if (rtcache_setdst(ro, &u.dst) != 0)
+			return NULL;
 
 		rt = rtcache_init(ro);
 	} else
@@ -1112,7 +1113,8 @@ in6_pcbrtentry(struct in6pcb *in6p)
 		} u;
 
 		sockaddr_in6_init(&u.dst6, &in6p->in6p_faddr, 0, 0, 0);
-		rtcache_setdst(ro, &u.dst);
+		if (rtcache_setdst(ro, &u.dst) != 0)
+			return NULL;
 
 		rt = rtcache_init(ro);
 	}
