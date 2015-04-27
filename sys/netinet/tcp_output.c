@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.181 2015/04/27 02:59:44 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.182 2015/04/27 16:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.181 2015/04/27 02:59:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.182 2015/04/27 16:50:17 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1020,11 +1020,19 @@ again:
 		long adv = min(win, (long)TCP_MAXWIN << tp->rcv_scale) -
 			(tp->rcv_adv - tp->rcv_nxt);
 
+		/*
+		 * If the new window size ends up being the same as the old
+		 * size when it is scaled, then don't force a window update.
+		 */
+		if ((tp->rcv_adv - tp->rcv_nxt) >> tp->rcv_scale ==
+		    (adv + tp->rcv_adv - tp->rcv_nxt) >> tp->rcv_scale)
+			goto dontupdate;
 		if (adv >= (long) (2 * rxsegsize))
 			goto send;
 		if (2 * adv >= (long) so->so_rcv.sb_hiwat)
 			goto send;
 	}
+dontupdate:
 
 	/*
 	 * Send if we owe peer an ACK.
