@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.13 2014/03/29 19:28:30 christos Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.14 2015/04/27 06:42:52 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -40,6 +40,8 @@
 #ifndef XEN
 #define	__HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH
 #endif
+
+#include <sys/kcpuset.h>
 
 /*
  * x86-specific PCI structure and type definitions.
@@ -116,6 +118,7 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+int		pci_intr_distribute(void *, const kcpuset_t *, kcpuset_t *);
 
 /* experimental MSI support */
 void *pci_msi_establish(struct pci_attach_args *, int, int (*)(void *), void *);

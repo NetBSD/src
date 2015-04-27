@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.45 2014/07/20 15:46:34 uebayasi Exp $	*/
+/*	$NetBSD: intr.h,v 1.46 2015/04/27 06:42:52 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #endif
 
 #include <sys/evcnt.h>
+#include <sys/queue.h>
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
@@ -71,6 +72,11 @@ struct intrstub {
 	void *ist_resume;
 };
 
+struct percpu_evcnt {
+	cpuid_t cpuid;
+	uint64_t count;
+};
+
 struct intrsource {
 	int is_maxlevel;		/* max. IPL for this source */
 	int is_pin;			/* IRQ for legacy; pin for IO APIC,
@@ -86,6 +92,10 @@ struct intrsource {
 	int is_idtvec;
 	int is_minlevel;
 	char is_evname[32];		/* event counter name */
+	char is_intrid[INTRIDBUF];	/* intrid created by create_intrid() */
+	cpuid_t is_active_cpu;		/* active cpuid */
+	struct percpu_evcnt *is_saved_evcnt;	/* interrupt count of deactivated cpus */
+	SIMPLEQ_ENTRY(intrsource) is_list;	/* link of intrsources */
 };
 
 #define IS_LEGACY	0x0001		/* legacy ISA irq source */
@@ -181,6 +191,9 @@ void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int, int, int *);
 struct pic *intr_findpic(int);
 void intr_printconfig(void);
+
+struct intrsource *intr_allocate_io_intrsource(const char *);
+void intr_free_io_intrsource(const char *);
 
 int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
