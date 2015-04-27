@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.99 2015/04/27 07:03:57 knakahara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.100 2015/04/27 08:30:11 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.99 2015/04/27 07:03:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.100 2015/04/27 08:30:11 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.99 2015/04/27 07:03:57 knakahara Exp $
 #include <arch/x86/pci/pci_addr_fixup.h>
 #endif
 #endif
-#include <archx86/pci/msipic.h>
+#include <arch/x86/pci/msipic.h>
 #endif
 
 void	mainbus_childdetached(device_t, device_t);
