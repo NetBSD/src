@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1955 2015/04/27 06:42:52 knakahara Exp $
+#	$NetBSD: mi,v 1.1956 2015/04/27 07:03:57 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -17367,10 +17367,27 @@
 ./usr/share/man/html9/pci_intr_evcnt.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_map.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_string.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_intx_alloc.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_intx_release.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_make_tag.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pci_mapreg_info.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_mapreg_map.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_mapreg_type.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msi.html		comp-sys-htmlman	html
+./usr/share/man/html9/pci_msi_alloc.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msi_alloc_exact.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msi_count.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msi_disestablish.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msi_establish.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msi_release.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msix.html		comp-sys-htmlman	html
+./usr/share/man/html9/pci_msix_alloc.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msix_alloc_exact.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msix_alloc_map.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msix_count.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msix_disestablish.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msix_establish.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_msix_release.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_set_powerstate.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_vpd_read.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pci_vpd_write.html	comp-sys-htmlman	html
@@ -24306,10 +24323,27 @@
 ./usr/share/man/man9/pci_intr_evcnt.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_map.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_string.9		comp-sys-man		.man
+./usr/share/man/man9/pci_intx_alloc.9		comp-sys-man		.man
+./usr/share/man/man9/pci_intx_release.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_make_tag.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_mapreg_info.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_mapreg_map.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_mapreg_type.9		comp-sys-man		.man
+./usr/share/man/man9/pci_msi.9			comp-sys-man		.man
+./usr/share/man/man9/pci_msi_alloc.9		comp-sys-man		.man
+./usr/share/man/man9/pci_msi_alloc_exact.9	comp-sys-man		.man
+./usr/share/man/man9/pci_msi_count.9		comp-sys-man		.man
+./usr/share/man/man9/pci_msi_disestablish.9	comp-sys-man		.man
+./usr/share/man/man9/pci_msi_establish.9	comp-sys-man		.man
+./usr/share/man/man9/pci_msi_release.9		comp-sys-man		.man
+./usr/share/man/man9/pci_msix.9			comp-sys-man		.man
+./usr/share/man/man9/pci_msix_alloc.9		comp-sys-man		.man
+./usr/share/man/man9/pci_msix_alloc_exact.9	comp-sys-man		.man
+./usr/share/man/man9/pci_msix_alloc_map.9	comp-sys-man		.man
+./usr/share/man/man9/pci_msix_count.9		comp-sys-man		.man
+./usr/share/man/man9/pci_msix_disestablish.9	comp-sys-man		.man
+./usr/share/man/man9/pci_msix_establish.9	comp-sys-man		.man
+./usr/share/man/man9/pci_msix_release.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_set_powerstate.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_vpd_read.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_vpd_write.9		comp-sys-man		.man

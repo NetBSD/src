@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.145 2014/09/05 05:29:16 matt Exp $	*/
+/*	$NetBSD: pci.c,v 1.146 2015/04/27 07:03:58 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.145 2014/09/05 05:29:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.146 2015/04/27 07:03:58 knakahara Exp $");
 
 #include "opt_pci.h"
 
@@ -275,6 +275,10 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct pci_attach_args pa;
 	pcireg_t id, /* csr, */ pciclass, intr, bhlcr, bar, endbar;
+#ifdef __HAVE_PCI_MSI_MSIX
+	pcireg_t cap;
+	int off;
+#endif
 	int ret, pin, bus, device, function, i, width;
 	int locs[PCICF_NLOCS];
 
@@ -406,6 +410,34 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	}
 	pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
 
+#ifdef __HAVE_PCI_MSI_MSIX
+	if (pci_get_ht_capability(pc, tag, PCI_HT_CAP_MSIMAP, &off, &cap)) {
+		/*
+		 * XXX Should we enable MSI mapping ourselves on
+		 * systems that have it disabled?
+		 */
+		if (cap & PCI_HT_MSI_ENABLED) {
+			uint64_t addr;
+			if ((cap & PCI_HT_MSI_FIXED) == 0) {
+				addr = pci_conf_read(pc, tag,
+				    off + PCI_HT_MSI_ADDR_LO);
+				addr |= (uint64_t)pci_conf_read(pc, tag,
+				    off + PCI_HT_MSI_ADDR_HI) << 32;
+			} else
+				addr = PCI_HT_MSI_FIXED_ADDR;
+
+			/*
+			 * XXX This will fail to enable MSI on systems
+			 * that don't use the canonical address.
+			 */
+			if (addr == PCI_HT_MSI_FIXED_ADDR) {
+				pa.pa_flags |= PCI_FLAGS_MSI_OKAY;
+				pa.pa_flags |= PCI_FLAGS_MSIX_OKAY;
+			}
+		}
+	}
+#endif
+
 	if (match != NULL) {
 		ret = (*match)(&pa);
 		if (ret != 0 && pap != NULL)
@@ -495,6 +527,35 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 		}
 		reg = pci_conf_read(pc, tag, ofs);
 		if (PCI_CAPLIST_CAP(reg) == capid) {
+			if (offset)
+				*offset = ofs;
+			if (value)
+				*value = reg;
+			return 1;
+		}
+		ofs = PCI_CAPLIST_NEXT(reg);
+	}
+
+	return 0;
+}
+
+int
+pci_get_ht_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
+    int *offset, pcireg_t *value)
+{
+	pcireg_t reg;
+	unsigned int ofs;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_LDT, &ofs, NULL) == 0)
+		return 0;
+
+	while (ofs != 0) {
+#ifdef DIAGNOSTIC
+		if ((ofs & 3) || (ofs < 0x40))
+			panic("pci_get_ht_capability");
+#endif
+		reg = pci_conf_read(pc, tag, ofs);
+		if (PCI_HT_CAP(reg) == capid) {
 			if (offset)
 				*offset = ofs;
 			if (value)

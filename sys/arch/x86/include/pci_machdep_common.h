@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.14 2015/04/27 06:42:52 knakahara Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.15 2015/04/27 07:03:58 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -120,9 +120,34 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 int		pci_intr_distribute(void *, const kcpuset_t *, kcpuset_t *);
 
+/*
+ * If device drivers use MSI/MSI-X, they should use these API for INTx
+ * instead of pci_intr_map(), because of conforming the pci_intr_handle
+ * ownership to MSI/MSI-X.
+ */
+int		pci_intx_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **);
+void		pci_intx_release(pci_chipset_tag_t, pci_intr_handle_t *);
+
 /* experimental MSI support */
-void *pci_msi_establish(struct pci_attach_args *, int, int (*)(void *), void *);
-void pci_msi_disestablish(void *);
+const char	*pci_msi_string(pci_chipset_tag_t, pci_intr_handle_t, char *, size_t);
+int		pci_msi_count(struct pci_attach_args *);
+int		pci_msi_alloc(struct pci_attach_args *, pci_intr_handle_t **, int *);
+int		pci_msi_alloc_exact(struct pci_attach_args *, pci_intr_handle_t **, int);
+void		pci_msi_release(pci_chipset_tag_t, pci_intr_handle_t **, int);
+void		*pci_msi_establish(pci_chipset_tag_t, pci_intr_handle_t,
+		    int, int (*)(void *), void *);
+void		pci_msi_disestablish(pci_chipset_tag_t, void *);
+
+/* experimental MSI-X support */
+int		pci_msix_count(struct pci_attach_args *);
+int		pci_msix_alloc(struct pci_attach_args *, pci_intr_handle_t **, int *);
+int		pci_msix_alloc_exact(struct pci_attach_args *, pci_intr_handle_t **, int);
+int		pci_msix_alloc_map(struct pci_attach_args *, pci_intr_handle_t **, u_int *, int);
+void		pci_msix_release(pci_chipset_tag_t, pci_intr_handle_t **, int);
+void		*pci_msix_establish(pci_chipset_tag_t, pci_intr_handle_t,
+		    int, int (*)(void *), void *);
+void		pci_msix_disestablish(pci_chipset_tag_t, void *);
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED

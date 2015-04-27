@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.69 2014/11/07 12:48:21 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.70 2015/04/27 07:03:58 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69 2014/11/07 12:48:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.70 2015/04/27 07:03:58 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,6 +125,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69 2014/11/07 12:48:21 christos Ex
 #ifdef VGA_POST
 #include <x86/vga_post.h>
 #endif
+
+#include <x86/cpuvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
@@ -209,6 +211,58 @@ const struct {
 };
 #undef _tag
 #undef _qe
+
+/* arch/xen does not support MSI/MSI-X yet. */
+#ifdef __HAVE_PCI_MSI_MSIX
+#define PCI_QUIRK_DISABLE_MSI	1 /* Neigher MSI nor MSI-X work */
+#define PCI_QUIRK_DISABLE_MSIX	2 /* MSI-X does not work */
+#define PCI_QUIRK_ENABLE_MSI_VM	3 /* Older chipset in VM where MSI and MSI-X works */
+
+#define _dme(vend, prod) \
+	{ PCI_QUIRK_DISABLE_MSI, PCI_ID_CODE(vend, prod) }
+#define _dmxe(vend, prod) \
+	{ PCI_QUIRK_DISABLE_MSIX, PCI_ID_CODE(vend, prod) }
+#define _emve(vend, prod) \
+	{ PCI_QUIRK_ENABLE_MSI_VM, PCI_ID_CODE(vend, prod) }
+const struct {
+	int type;
+	pcireg_t id;
+} pci_msi_quirk_tbl[] = {
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCMC),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437MX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437VX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439HX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439TX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX_AGP),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82441FX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_AGP),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX_NOAGP),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX_AGP),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_MCH),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810E_MCH),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_HUB),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB),
+	_dme(PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_PCHB),
+	_dme(PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCHB),
+	_dme(PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC),
+	_dme(PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_SC),
+	_dme(PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_NB),
+
+	_emve(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82441FX), /* QEMU */
+	_emve(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX), /* VMWare */
+};
+#undef _dme
+#undef _dmxe
+#undef _emve
+#endif /* __HAVE_PCI_MSI_MSIX */
 
 /*
  * PCI doesn't have any special needs; just use the generic versions
@@ -370,9 +424,30 @@ pci_conf_select(uint32_t sel)
 	}
 }
 
+#ifdef __HAVE_PCI_MSI_MSIX
+static int
+pci_has_msi_quirk(pcireg_t id, int type)
+{
+	int i;
+
+	for (i = 0; i < __arraycount(pci_msi_quirk_tbl); i++) {
+		if (id == pci_msi_quirk_tbl[i].id &&
+		    type == pci_msi_quirk_tbl[i].type)
+			return 1;
+	}
+
+	return 0;
+}
+#endif
+
 void
 pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
+#ifdef __HAVE_PCI_MSI_MSIX
+	pci_chipset_tag_t pc = pba->pba_pc;
+	pcitag_t tag;
+	pcireg_t id, class;
+#endif
 
 	if (pba->pba_bus == 0)
 		aprint_normal(": configuration mode %d", pci_mode);
@@ -382,6 +457,58 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 #if NACPICA > 0
 	mpacpi_pci_attach_hook(parent, self, pba);
 #endif
+
+#ifdef __HAVE_PCI_MSI_MSIX
+	/*
+	 * In order to decide whether the system supports MSI we look
+	 * at the host bridge, which should be device 0 function 0 on
+	 * bus 0.  It is better to not enable MSI on systems that
+	 * support it than the other way around, so be conservative
+	 * here.  So we don't enable MSI if we don't find a host
+	 * bridge there.  We also deliberately don't enable MSI on
+	 * chipsets from low-end manifacturers like VIA and SiS.
+	 */
+	tag = pci_make_tag(pc, 0, 0, 0);
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+
+	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
+	    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_HOST)
+		return;
+
+	if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSI)) {
+		pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
+		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+	} else if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSIX)) {
+		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
+		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+	} else {
+		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
+		pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
+	}
+
+	/* VMware and KVM use old chipset, but they can use MSI/MSI-X */
+	if (cpu_feature[1] & CPUID2_RAZ) {
+		if (pci_has_msi_quirk(id, PCI_QUIRK_ENABLE_MSI_VM)) {
+			pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
+			pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
+		}
+	}
+
+	/*
+	 * Don't enable MSI on a HyperTransport bus.  In order to
+	 * determine that bus 0 is a HyperTransport bus, we look at
+	 * device 24 function 0, which is the HyperTransport
+	 * host/primary interface integrated on most 64-bit AMD CPUs.
+	 * If that device has a HyperTransport capability, bus 0 must
+	 * be a HyperTransport bus and we disable MSI.
+	 */
+	tag = pci_make_tag(pc, 0, 24, 0);
+	if (pci_get_capability(pc, tag, PCI_CAP_LDT, NULL, NULL)) {
+		pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
+		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+	}
+#endif /* __HAVE_PCI_MSI_MSIX */
 }
 
 int
