@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.59 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.60 2015/04/27 17:40:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.59 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.60 2015/04/27 17:40:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -982,6 +982,7 @@ pcn_start(struct ifnet *ifp)
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", device_xname(sc->sc_dev),
 				    error);
+				m_freem(m);
 				break;
 			}
 		}
