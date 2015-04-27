@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.3 2015/04/13 21:18:41 riastradh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.4 2015/04/27 17:34:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.3 2015/04/13 21:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.4 2015/04/27 17:34:51 christos Exp $");
 
 #include "imxocotp.h"
 #include "imxccm.h"
@@ -1413,8 +1413,10 @@ enet_alloc_rxbuf(struct enet_softc *sc, int idx)
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_rxsoft[idx].rxs_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
 	    BUS_DMA_READ | BUS_DMA_NOWAIT);
-	if (error)
+	if (error) {
+		m_freem(m);
 		return error;
+	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxsoft[idx].rxs_dmamap, 0,
 	    sc->sc_rxsoft[idx].rxs_dmamap->dm_mapsize, 
