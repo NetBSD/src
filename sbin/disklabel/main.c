@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.44 2015/04/25 21:43:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2015/04/27 17:05:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.44 2015/04/25 21:43:53 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.45 2015/04/27 17:05:58 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -198,8 +198,8 @@ int bswap_p;
 
 static const struct disklabel_params {
 	const char *machine;
-	u_char labelusesmbr : 4;
-	u_char labelsector : 4;
+	u_char labelusesmbr : 1;
+	u_char labelsector : 7;
 	u_char maxpartitions;
 	u_char raw_part;
 	u_char oldmaxpartitions;
@@ -256,37 +256,37 @@ static const struct disklabel_params {
 	{ "macppc",	1, 0, 16, 2, 0,  64, BIG_ENDIAN },	/* powerpc */
 	{ "pmon",	1, 0, 16, 2, 0,  64, 0 },		/* evbmips */
 
-	{ "prep",	1, 1,  0,  8, 2,  0, BIG_ENDIAN },	/* powerpc */
+	{ "prep",	1, 1,  8, 2,  0,  0, BIG_ENDIAN },	/* powerpc */
 
-	{ "dreamcast",	1, 1,  0, 16, 2,  0, LITTLE_ENDIAN },	/* sh3 */
-	{ "evbarm64",	1, 1,  0, 16, 2,  0, 0 },		/* aarch64 */
-	{ "evbcf",	1, 1,  0, 16, 2,  0, BIG_ENDIAN },	/* coldfire */
-	{ "evbppc-mbr",	1, 1,  0, 16, 2,  0, BIG_ENDIAN },	/* powerpc */
-	{ "evbsh3",	1, 1,  0, 16, 2,  0, 0 },		/* sh3 */
-	{ "hpcsh",	1, 1,  0, 16, 2,  0, LITTLE_ENDIAN },	/* sh3 */
-	{ "mmeye",	1, 1,  0, 16, 2,  0, 0 },		/* sh3 */
-	{ "or1k",	1, 1,  0, 16, 2,  0, BIG_ENDIAN },	/* or1k */
-	{ "riscv",	1, 1,  0, 16, 2,  0, LITTLE_ENDIAN },	/* riscv */
+	{ "dreamcast",	1, 1, 16, 2,  0,  0, LITTLE_ENDIAN },	/* sh3 */
+	{ "evbarm64",	1, 1, 16, 2,  0,  0, 0 },		/* aarch64 */
+	{ "evbcf",	1, 1, 16, 2,  0,  0, BIG_ENDIAN },	/* coldfire */
+	{ "evbppc-mbr",	1, 1, 16, 2,  0,  0, BIG_ENDIAN },	/* powerpc */
+	{ "evbsh3",	1, 1, 16, 2,  0,  0, 0 },		/* sh3 */
+	{ "hpcsh",	1, 1, 16, 2,  0,  0, LITTLE_ENDIAN },	/* sh3 */
+	{ "mmeye",	1, 1, 16, 2,  0,  0, 0 },		/* sh3 */
+	{ "or1k",	1, 1, 16, 2,  0,  0, BIG_ENDIAN },	/* or1k */
+	{ "riscv",	1, 1, 16, 2,  0,  0, LITTLE_ENDIAN },	/* riscv */
 
- 	{ "acorn26",	1, 1,  0, 16, 2,  8, LITTLE_ENDIAN },	/* arm */
-	{ "acorn32",	1, 1,  0, 16, 2,  8, LITTLE_ENDIAN },	/* arm */
-	{ "cats",	1, 1,  0, 16, 2,  8, LITTLE_ENDIAN },	/* arm */
-	{ "evbarm",	1, 1,  0, 16, 2,  8, 0 },		/* arm */
-	{ "iyonix",	1, 1,  0, 16, 2,  8, LITTLE_ENDIAN },	/* arm */
-	{ "netwinder",	1, 1,  0, 16, 2,  8, LITTLE_ENDIAN },	/* arm */
-	{ "shark",	1, 1,  0, 16, 2,  8, LITTLE_ENDIAN },	/* arm */
+ 	{ "acorn26",	1, 1, 16, 2,  8,  0, LITTLE_ENDIAN },	/* arm */
+	{ "acorn32",	1, 1, 16, 2,  8,  0, LITTLE_ENDIAN },	/* arm */
+	{ "cats",	1, 1, 16, 2,  8,  0, LITTLE_ENDIAN },	/* arm */
+	{ "evbarm",	1, 1, 16, 2,  8,  0, 0 },		/* arm */
+	{ "iyonix",	1, 1, 16, 2,  8,  0, LITTLE_ENDIAN },	/* arm */
+	{ "netwinder",	1, 1, 16, 2,  8,  0, LITTLE_ENDIAN },	/* arm */
+	{ "shark",	1, 1, 16, 2,  8,  0, LITTLE_ENDIAN },	/* arm */
 
-	{ "amd64",	1, 1,  0, 16, 3,  0, LITTLE_ENDIAN },	/* x86 */
-	{ "arc",	1, 1,  0, 16, 3,  0, LITTLE_ENDIAN },	/* mips */
-	{ "cobalt",	1, 1,  0, 16, 3,  0, LITTLE_ENDIAN },	/* mips */
-	{ "landisk",	1, 1,  0, 16, 3,  0, LITTLE_ENDIAN },	/* sh3 */
+	{ "amd64",	1, 1, 16, 3,  0,  0, LITTLE_ENDIAN },	/* x86 */
+	{ "arc",	1, 1, 16, 3,  0,  0, LITTLE_ENDIAN },	/* mips */
+	{ "cobalt",	1, 1, 16, 3,  0,  0, LITTLE_ENDIAN },	/* mips */
+	{ "landisk",	1, 1, 16, 3,  0,  0, LITTLE_ENDIAN },	/* sh3 */
 
-	{ "epoc32",	1, 1,  0, 16, 3,  8, LITTLE_ENDIAN },	/* arm */
-	{ "hpcarm",	1, 1,  0, 16, 3,  8, LITTLE_ENDIAN },	/* arm */
-	{ "hpcmips",	1, 1,  0, 16, 3,  8, LITTLE_ENDIAN },	/* mips */
-	{ "i386",	1, 1,  0, 16, 3,  8, LITTLE_ENDIAN },	/* x86 */
-	{ "ia64",	1, 1,  0, 16, 3,  8, LITTLE_ENDIAN },	/* x86 */
-	{ "zaurus",	1, 1,  0, 16, 3,  8, LITTLE_ENDIAN },	/* arm */
+	{ "epoc32",	1, 1, 16, 3,  8,  0, LITTLE_ENDIAN },	/* arm */
+	{ "hpcarm",	1, 1, 16, 3,  8,  0, LITTLE_ENDIAN },	/* arm */
+	{ "hpcmips",	1, 1, 16, 3,  8,  0, LITTLE_ENDIAN },	/* mips */
+	{ "i386",	1, 1, 16, 3,  8,  0, LITTLE_ENDIAN },	/* x86 */
+	{ "ia64",	1, 1, 16, 3,  8,  0, LITTLE_ENDIAN },	/* x86 */
+	{ "zaurus",	1, 1, 16, 3,  8,  0, LITTLE_ENDIAN },	/* arm */
 
 	{ NULL,		0, 0,  0,  0, 0,  0, 0 },	/* must be last */
 };
