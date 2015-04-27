@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.282 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.283 2015/04/27 17:42:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.282 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.283 2015/04/27 17:42:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1744,8 +1744,10 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 	if (!(sc->bge_flags & BGEF_RX_ALIGNBUG))
 	    m_adj(m_new, ETHER_ALIGN);
 	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT))
+	    BUS_DMA_READ|BUS_DMA_NOWAIT)) {
+		m_freem(m_new);
 		return ENOBUFS;
+	}
 	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
