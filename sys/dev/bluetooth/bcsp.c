@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.25 2014/11/16 16:20:00 ozaki-r Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.26 2015/04/27 17:36:41 christos Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.25 2014/11/16 16:20:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.26 2015/04/27 17:36:41 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1442,6 +1442,7 @@ bcsp_start_le(struct bcsp_softc *sc)
 		m->m_pkthdr.len = m->m_len = 0;
 		m_copyback(m, 0, sizeof(sync), sync);
 		if (!bcsp_tx_unreliable_pkt(sc, m, BCSP_CHANNEL_LE)) {
+			m_freem(m);
 			aprint_error_dev(sc->sc_dev,
 			    "le-packet transmit failed\n");
 			return EINVAL;
