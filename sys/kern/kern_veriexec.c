@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.6 2015/04/26 09:16:06 maxv Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.7 2015/04/27 09:17:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.6 2015/04/26 09:16:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.7 2015/04/27 09:17:31 maxv Exp $");
 
 #include "opt_veriexec.h"
 
@@ -46,17 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.6 2015/04/26 09:16:06 maxv Exp $
 #include <sys/sysctl.h>
 #include <sys/inttypes.h>
 #include <sys/verified_exec.h>
-#if defined(__FreeBSD__)
-# include <sys/systm.h>
-# include <sys/imgact.h>
-# include <crypto/sha1.h>
-# include <crypto/sha2/sha2.h>
-# include <crypto/ripemd160/rmd160.h>
-#else
-# include <sys/sha1.h>
-# include <sys/sha2.h>
-# include <sys/rmd160.h>
-#endif
+#include <sys/sha1.h>
+#include <sys/sha2.h>
+#include <sys/rmd160.h>
 #include <sys/md5.h>
 #include <uvm/uvm_extern.h>
 #include <sys/fileassoc.h>
