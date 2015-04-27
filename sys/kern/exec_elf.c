@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.71 2015/03/20 20:36:28 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.72 2015/04/27 09:19:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.71 2015/03/20 20:36:28 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.72 2015/04/27 09:19:58 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -467,13 +467,6 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	if (vp->v_mount->mnt_flag & MNT_NOSUID)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
-#ifdef notyet /* XXX cgd 960926 */
-	XXX cgd 960926: (maybe) VOP_OPEN it (and VOP_CLOSE in copyargs?)
-
-	XXXps: this problem will make it impossible to use an interpreter
-	from a file system which actually does something in VOP_OPEN
-#endif
-
 	error = vn_marktext(vp);
 	if (error)
 		goto badunlock;
@@ -622,9 +615,6 @@ badunlock:
 bad:
 	if (ph != NULL)
 		kmem_free(ph, phsize);
-#ifdef notyet /* XXX cgd 960926 */
-	(maybe) VOP_CLOSE it
-#endif
 	vrele(vp);
 	return error;
 }
