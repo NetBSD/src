@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.27 2014/03/29 19:28:30 christos Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.28 2015/04/27 06:42:52 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,15 +73,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.27 2014/03/29 19:28:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.28 2015/04/27 06:42:52 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
@@ -326,6 +328,15 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 	}
 
 	intr_disestablish(cookie);
+}
+
+int
+pci_intr_distribute(void *cookie, const kcpuset_t *newset, kcpuset_t *oldset)
+{
+
+	/* XXX Is pc_ov->ov_intr_distribute required? */
+
+	return intr_distribute(cookie, newset, oldset);
 }
 
 #if NIOAPIC > 0
