@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr_distribute.9,v 1.1 2015/04/27 06:42:52 knakahara Exp $
+.\" $NetBSD: pci_intr_distribute.9,v 1.2 2015/04/27 10:32:22 wiz Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -37,17 +37,17 @@
 .Sh DESCRIPTION
 The
 .Nm
-functions exist to assing an interrupt to CPU.
+function exists to assign an interrupt to a CPU.
 .Pp
 If a driver (or the other kernel component) wishes to assign an
-interrupt to CPU, it should pass the return value of
+interrupt to a CPU, it should pass the return value of
 .Fn pci_intr_establish
-to the
-.Ft ich .
-And it should set kcpuset which want to assign to
-.Ft newset .
-If it want to get the assignment before changing, it should be
-pass non-NULL value to
-.Ft oldset .
-If not, it should set NULL to
+as
+.Fa ich
+argument, and it should pass the kcpuset to which it should be
+assigned as
+.Fa newset .
+To get the previous value, pass a
+.Pf non- Dv NULL
+value to
 .Ft oldset .
