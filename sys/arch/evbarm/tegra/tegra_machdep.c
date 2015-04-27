@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.6 2015/04/26 22:04:28 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.7 2015/04/27 00:33:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.6 2015/04/26 22:04:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.7 2015/04/27 00:33:46 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -221,10 +221,6 @@ initarm(void *arg)
 {
 	psize_t ram_size = 0;
 	DPRINT("initarm:");
-
-	DPRINT(" sctlr<0x");
-	DPRINTN(armreg_sctlr_read(), 16);
-	DPRINT(">");
 
 	DPRINT(" mpstart<0x");
 	DPRINTN((uint32_t)cortex_mpstart, 16);
