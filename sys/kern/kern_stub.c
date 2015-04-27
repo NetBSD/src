@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.38 2013/12/09 18:06:27 pooka Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.39 2015/04/27 06:42:53 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.38 2013/12/09 18:06:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.39 2015/04/27 06:42:53 knakahara Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -146,6 +146,8 @@ __weak_alias(userconf_init, voidop);
 __weak_alias(userconf_prompt, voidop);
 
 __weak_alias(kobj_renamespace, nullop);
+
+__weak_alias(pci_intr_distribute, eopnotsupp);
 
 /*
  * Scheduler activations system calls.  These need to remain until libc's
