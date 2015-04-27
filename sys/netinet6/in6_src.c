@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.56 2015/01/20 21:27:36 roy Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.57 2015/04/27 02:59:44 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.56 2015/01/20 21:27:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.57 2015/04/27 02:59:44 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -786,6 +786,21 @@ in6_selecthlim(struct in6pcb *in6p, struct ifnet *ifp)
 		return (ND_IFINFO(ifp)->chlim);
 	else
 		return (ip6_defhlim);
+}
+
+int
+in6_selecthlim_rt(struct in6pcb *in6p)
+{
+	struct rtentry *rt;
+
+	if (in6p == NULL)
+		return in6_selecthlim(in6p, NULL);
+
+	rt = rtcache_validate(&in6p->in6p_route);
+	if (rt != NULL)
+		return in6_selecthlim(in6p, rt->rt_ifp);
+	else
+		return in6_selecthlim(in6p, NULL);
 }
 
 /*
