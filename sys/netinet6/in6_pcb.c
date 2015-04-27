@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.137 2015/04/26 16:45:50 rtr Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.138 2015/04/27 02:59:44 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.137 2015/04/26 16:45:50 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.138 2015/04/27 02:59:44 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -426,7 +426,6 @@ in6_pcbbind(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 int
 in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 {
-	struct rtentry *rt;
 	struct in6pcb *in6p = v;
 	struct in6_addr *in6a = NULL;
 	struct sockaddr_in6 *sin6 = mtod(nam, struct sockaddr_in6 *);
@@ -526,10 +525,11 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 			return (error);
 		}
 	}
-	if (ifp == NULL && (rt = rtcache_validate(&in6p->in6p_route)) != NULL)
-		ifp = rt->rt_ifp;
 
-	in6p->in6p_ip6.ip6_hlim = (u_int8_t)in6_selecthlim(in6p, ifp);
+	if (ifp != NULL)
+		in6p->in6p_ip6.ip6_hlim = (u_int8_t)in6_selecthlim(in6p, ifp);
+	else
+		in6p->in6p_ip6.ip6_hlim = (u_int8_t)in6_selecthlim_rt(in6p);
 
 	if (in6_pcblookup_connect(in6p->in6p_table, &sin6->sin6_addr,
 	    sin6->sin6_port,
