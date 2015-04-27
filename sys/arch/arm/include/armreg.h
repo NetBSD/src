@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.103 2015/04/27 06:54:12 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.104 2015/04/27 06:56:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -43,7 +43,7 @@
  * ARM Process Status Register
  *
  * The picture in the ARM manuals looks like this:
- *       3 3 2 2 2 2                            
+ *       3 3 2 2 2 2
  *       1 0 9 8 7 6                                   8 7 6 5 4       0
  *      +-+-+-+-+-+-------------------------------------+-+-+-+---------+
  *      |N|Z|C|V|Q|                reserved             |I|F|T|M M M M M|
@@ -303,7 +303,7 @@
 #define ARM3_CP15_CONTROL	2
 #define ARM3_CP15_CACHEABLE	3
 #define ARM3_CP15_UPDATEABLE	4
-#define ARM3_CP15_DISRUPTIVE	5	
+#define ARM3_CP15_DISRUPTIVE	5
 
 /* ARM3 Control register bits */
 #define ARM3_CTL_CACHE_ON	0x00000001
@@ -412,7 +412,7 @@
 					    * in r0 steppings. See errata
 					    * 364296.
 					    */
-/* ARM1176 Auxiliary Control Register (CP15 register 1, opcode2 1) */   
+/* ARM1176 Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	ARM1176_AUXCTL_PHD	0x10000000 /* inst. prefetch halting disable */
 #define	ARM1176_AUXCTL_BFD	0x20000000 /* branch folding disable */
 #define	ARM1176_AUXCTL_FSD	0x40000000 /* force speculative ops disable */
@@ -490,10 +490,10 @@
 #define	CPU_CT4_CWG(x)		(((x) >> 24) & 0xf)	/* Exclusive Resv. Granule */
 
 /* Cache size identifaction register definitions 1, Rd, c0, c0, 0 */
-#define	CPU_CSID_CTYPE_WT	0x80000000	/* write-through avail */ 
-#define	CPU_CSID_CTYPE_WB	0x40000000	/* write-back avail */ 
-#define	CPU_CSID_CTYPE_RA	0x20000000	/* read-allocation avail */ 
-#define	CPU_CSID_CTYPE_WA	0x10000000	/* write-allocation avail */ 
+#define	CPU_CSID_CTYPE_WT	0x80000000	/* write-through avail */
+#define	CPU_CSID_CTYPE_WB	0x40000000	/* write-back avail */
+#define	CPU_CSID_CTYPE_RA	0x20000000	/* read-allocation avail */
+#define	CPU_CSID_CTYPE_WA	0x10000000	/* write-allocation avail */
 #define	CPU_CSID_NUMSETS(x)	(((x) >> 13) & 0x7fff)
 #define	CPU_CSID_ASSOC(x)	(((x) >> 3) & 0x1ff)
 #define	CPU_CSID_LEN(x)		((x) & 0x07)
@@ -553,7 +553,7 @@
 /*
  * ARM Instructions
  *
- *       3 3 2 2 2                              
+ *       3 3 2 2 2
  *       1 0 9 8 7                                                     0
  *      +-------+-------------------------------------------------------+
  *      | cond  |              instruction dependent                    |
@@ -768,7 +768,7 @@
 #define ARM_A5_TLBDATAOP_INDEX		__BITS(5,0)
 #define ARM_A7_TLBDATAOP_INDEX		__BITS(6,0)
 
-#if !defined(__ASSEMBLER__) && defined(_KERNEL) 
+#if !defined(__ASSEMBLER__) && defined(_KERNEL)
 static inline bool
 arm_cond_ok_p(uint32_t insn, uint32_t psr)
 {
