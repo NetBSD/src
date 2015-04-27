@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.7 2015/04/27 09:17:31 maxv Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.8 2015/04/27 20:21:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.7 2015/04/27 09:17:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.8 2015/04/27 20:21:19 riastradh Exp $");
 
 #include "opt_veriexec.h"
 
@@ -428,8 +428,8 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp, int file_lock_state,
 	size_t resid, npages;
 	int error, do_perpage, pagen;
 
-	KASSERT((file_lock_state != VERIEXEC_LOCKED) &&
-	    (file_lock_state != VERIEXEC_UNLOCKED));
+	KASSERT(file_lock_state != VERIEXEC_LOCKED);
+	KASSERT(file_lock_state != VERIEXEC_UNLOCKED);
 
 	if (file_lock_state == VERIEXEC_FILE_UNLOCKED)
 		vn_lock(vp, LK_SHARED | LK_RETRY);
@@ -645,8 +645,8 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 	int error = 0;
 
 	KASSERT(rw_lock_held(&veriexec_op_lock));
-	KASSERT((file_lock_state != VERIEXEC_LOCKED) &&
-	    (file_lock_state != VERIEXEC_UNLOCKED));
+	KASSERT(file_lock_state != VERIEXEC_LOCKED);
+	KASSERT(file_lock_state != VERIEXEC_UNLOCKED);
 
 #define VFE_NEEDS_EVAL(vfe) ((vfe->status == FINGERPRINT_NOTEVAL) || \
 			     (vfe->type & VERIEXEC_UNTRUSTED))
