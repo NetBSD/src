@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.13 2014/05/12 11:55:39 joerg Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.14 2015/04/27 06:51:40 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.13 2014/05/12 11:55:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.14 2015/04/27 06:51:40 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ pciide_machdep_compat_intr_establish(device_t dev,
 	int irq;
 	void *cookie;
 #if NIOAPIC > 0
-	int mpih;
+	intr_handle_t mpih;
 	char buf[PCI_INTRSTR_LEN];
 #endif
 

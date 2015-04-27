@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.32 2012/02/28 20:26:37 mbalmer Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.33 2015/04/27 06:51:40 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.32 2012/02/28 20:26:37 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.33 2015/04/27 06:51:40 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 	struct pic *pic;
 	int pin;
 #if NIOAPIC > 0
-	int mpih;
+	intr_handle_t mpih;
 	struct ioapic_softc *ioapic;
 #endif
 

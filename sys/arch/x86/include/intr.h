@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.46 2015/04/27 06:42:52 knakahara Exp $	*/
+/*	$NetBSD: intr.h,v 1.47 2015/04/27 06:51:40 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -181,14 +181,16 @@ struct cpu_info;
 
 struct pcibus_attach_args;
 
+typedef uint64_t intr_handle_t;
+
 void intr_default_setup(void);
 void x86_nmi(void);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
 void intr_add_pcibus(struct pcibus_attach_args *);
-const char *intr_string(int, char *, size_t);
+const char *intr_string(intr_handle_t, char *, size_t);
 void cpu_intr_init(struct cpu_info *);
-int intr_find_mpmapping(int, int, int *);
+int intr_find_mpmapping(int, int, intr_handle_t *);
 struct pic *intr_findpic(int);
 void intr_printconfig(void);
 
