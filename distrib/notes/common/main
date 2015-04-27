@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.517 2015/01/22 02:07:28 sevan Exp $
+.\"	$NetBSD: main,v 1.518 2015/04/27 12:26:35 hikaru Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1112,6 +1112,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .\" Please keep in alphabetical order
 .\"
 .It Ta Ta
+.It Ta Hikaru Abe Ta Mt hikaru@NetBSD.org
 .It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
 .It Ta Steve Allen Ta Mt wormey@NetBSD.org
 .It Ta Jukka Andberg Ta Mt jandberg@NetBSD.org
