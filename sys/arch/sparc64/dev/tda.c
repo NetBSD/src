@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.9 2013/10/26 18:49:30 jdc Exp $	*/
+/*	$NetBSD: tda.c,v 1.10 2015/04/27 11:55:29 martin Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.9 2013/10/26 18:49:30 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.10 2015/04/27 11:55:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,7 @@ tda_attach(device_t parent, device_t self, void *aux)
 {
 	struct tda_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
+	int rc;
 
 	sc->sc_dev = self;
 	sc->sc_tag = ia->ia_tag;
@@ -138,26 +139,29 @@ tda_attach(device_t parent, device_t self, void *aux)
 	strlcpy(sc->sc_sensor[SENSOR_FAN_SYS].desc,
 	    "fan.sys",sizeof("fan.sys"));
 	sc->sc_sme = sysmon_envsys_create();
-	if (sysmon_envsys_sensor_attach(
-	    sc->sc_sme, &sc->sc_sensor[SENSOR_FAN_CPU])) {
+	rc = sysmon_envsys_sensor_attach(
+	    sc->sc_sme, &sc->sc_sensor[SENSOR_FAN_CPU]);
+	if (rc) {
 		sysmon_envsys_destroy(sc->sc_sme);
 		aprint_error_dev(self,
-		    "unable to attach cpu fan at sysmon\n");
+		    "unable to attach cpu fan at sysmon, error %d\n", rc);
 		return;
 	}
-	if (sysmon_envsys_sensor_attach(
-	    sc->sc_sme, &sc->sc_sensor[SENSOR_FAN_SYS])) {
+	rc = sysmon_envsys_sensor_attach(
+	    sc->sc_sme, &sc->sc_sensor[SENSOR_FAN_SYS]);
+	if (rc) {
 		sysmon_envsys_destroy(sc->sc_sme);
 		aprint_error_dev(self,
-		    "unable to attach sys fan at sysmon\n");
+		    "unable to attach sys fan at sysmon, error %d\n", rc);
 		return;
 	}
         sc->sc_sme->sme_name = device_xname(self);
         sc->sc_sme->sme_cookie = sc;
         sc->sc_sme->sme_refresh = tda_refresh;
-	if (sysmon_envsys_register(sc->sc_sme)) {
+	rc = sysmon_envsys_register(sc->sc_sme);
+	if (rc) {
 		aprint_error_dev(self,
-		    "unable to register with sysmon\n");
+		    "unable to register with sysmon, error %d\n", rc);
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
