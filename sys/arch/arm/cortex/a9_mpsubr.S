@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.33 2015/04/26 16:22:57 jmcneill Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.34 2015/04/27 06:54:12 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -161,12 +161,12 @@ arm_cpuinit:
 
 	mcr     p15, 0, r1, c7, c5, 0	// invalidate I cache
 
-	mrc	p15, 0, r2, c1, c0, 0	// SCTRL read
+	mrc	p15, 0, r2, c1, c0, 0	// SCTLR read
 	movw	r1, #(CPU_CONTROL_DC_ENABLE|CPU_CONTROL_IC_ENABLE)
 	bic	r2, r2, r1		// clear I+D cache enable
 
 #ifdef __ARMEB__
-	// SCTRL.EE determines the endianness of translation table lookups.
+	// SCTLR.EE determines the endianness of translation table lookups.
 	// So we need to make sure it's set before starting to use the new
 	// translation tables (which are big endian).
 	//
@@ -178,7 +178,7 @@ arm_cpuinit:
 	pli	[pc, #128]
 #endif
 
-	mcr	p15, 0, r2, c1, c0, 0	// SCTRL write
+	mcr	p15, 0, r2, c1, c0, 0	// SCTLR write
 
 	XPUTC(#'F')
 	dsb				// Drain the write buffers.
@@ -230,7 +230,7 @@ arm_cpuinit:
 	// Enable the MMU, etc.
 	//
 	XPUTC(#'L')
-	mrc	p15, 0, r1, c1, c0, 0	// SCTRL read
+	mrc	p15, 0, r1, c1, c0, 0	// SCTLR read
 
 	movw	r3, #:lower16:CPU_CONTROL_SET
 #if (CPU_CONTROL_SET & 0xffff0000)
@@ -240,7 +240,7 @@ arm_cpuinit:
 #if defined(CPU_CONTROL_CLR) && (CPU_CONTROL_CLR != 0)
 	bic	r0, r0, #CPU_CONTROL_CLR
 #endif
-	//cmp	r0, r1			// any changes to SCTRL?
+	//cmp	r0, r1			// any changes to SCTLR?
 	//bxeq	ip			//    no, then return.
 
 	pli	1f
@@ -249,7 +249,7 @@ arm_cpuinit:
 	// turn mmu on!
 	//
 	mov	r0, r0			// fetch instruction cacheline
-1:	mcr	p15, 0, r0, c1, c0, 0	// SCTRL write
+1:	mcr	p15, 0, r0, c1, c0, 0	// SCTLR write
 
 	// Ensure that the coprocessor has finished turning on the MMU.
 	//
@@ -489,11 +489,11 @@ cortex_init:
 #endif	/* MULTIPROCESSOR */
 
 	//
-	// Step 4b, restore SCTRL (enable the data cache)
+	// Step 4b, restore SCTLR (enable the data cache)
 	//
 	orr	r4, r4, #CPU_CONTROL_IC_ENABLE	// enable icache
 	orr	r4, r4, #CPU_CONTROL_DC_ENABLE	// enable dcache
-	mcr	p15, 0, r4, c1, c0, 0		// SCTRL write
+	mcr	p15, 0, r4, c1, c0, 0		// SCTLR write
 	isb
 	XPUTC(#'-')
 
@@ -590,11 +590,11 @@ cortex_mpcontinuation:
 	mcr	p15, 0, r2, c12, c0, 0		// VBAR set
 	isb
 
-	mrc	p15, 0, r0, c1, c0, 0		// SCTRL read
+	mrc	p15, 0, r0, c1, c0, 0		// SCTLR read
 #ifdef MULTIPROCESSOR
 	bic	r0, r0, #CPU_CONTROL_VECRELOC	// use VBAR
 #endif
-	mcr	p15, 0, r0, c1, c0, 0		// SCTRL write
+	mcr	p15, 0, r0, c1, c0, 0		// SCTLR write
 	dsb
 	isb
 #endif
