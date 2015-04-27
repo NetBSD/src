@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.48 2013/06/28 14:31:49 jakllsch Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.49 2015/04/27 06:51:40 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.48 2013/06/28 14:31:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.49 2015/04/27 06:51:40 knakahara Exp $");
 
 #include "opt_ddb.h"
 
@@ -183,7 +183,7 @@ ioapic_write(struct ioapic_softc *sc,int regid, int val)
 }
 
 struct ioapic_softc *
-ioapic_find(int apicid)
+ioapic_find(intr_handle_t apicid)
 {
 	struct ioapic_softc *sc;
 
