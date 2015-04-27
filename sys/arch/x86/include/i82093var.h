@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.12 2012/06/15 13:55:22 yamt Exp $ */
+/* $NetBSD: i82093var.h,v 1.13 2015/04/27 06:51:40 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,20 +71,20 @@ struct ioapic_softc {
  * 0x80000000 is used by pci_intr_machdep.c for MPSAFE_MASK
  */
 
-#define APIC_INT_VIA_APIC	0x10000000
-#define APIC_INT_APIC_MASK	0x00ff0000
+#define APIC_INT_VIA_APIC	0x10000000ULL
+#define APIC_INT_APIC_MASK	0x00ff0000ULL
 #define APIC_INT_APIC_SHIFT	16
-#define APIC_INT_PIN_MASK	0x0000ff00
+#define APIC_INT_PIN_MASK	0x0000ff00ULL
 #define APIC_INT_PIN_SHIFT	8
 
-#define APIC_IRQ_APIC(x) ((x & APIC_INT_APIC_MASK) >> APIC_INT_APIC_SHIFT)
-#define APIC_IRQ_PIN(x) ((x & APIC_INT_PIN_MASK) >> APIC_INT_PIN_SHIFT)
-#define APIC_IRQ_ISLEGACY(x) (!((x) & APIC_INT_VIA_APIC))
-#define APIC_IRQ_LEGACY_IRQ(x) ((x) & 0xff)
+#define APIC_IRQ_APIC(x) (int)(((x) & APIC_INT_APIC_MASK) >> APIC_INT_APIC_SHIFT)
+#define APIC_IRQ_PIN(x) (int)(((x) & APIC_INT_PIN_MASK) >> APIC_INT_PIN_SHIFT)
+#define APIC_IRQ_ISLEGACY(x) (bool)(!((x) & APIC_INT_VIA_APIC))
+#define APIC_IRQ_LEGACY_IRQ(x) (int)((x) & 0xff)
 
 void ioapic_print_redir(struct ioapic_softc *, const char *, int);
 void ioapic_format_redir(char *, const char *, int, uint32_t, uint32_t);
-struct ioapic_softc *ioapic_find(int);
+struct ioapic_softc *ioapic_find(intr_handle_t);
 struct ioapic_softc *ioapic_find_bybase(int);
 
 void ioapic_enable(void);
