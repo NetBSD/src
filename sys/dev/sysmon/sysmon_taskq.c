@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.17 2015/04/24 00:31:04 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.18 2015/04/27 07:51:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.17 2015/04/24 00:31:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.18 2015/04/27 07:51:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.17 2015/04/24 00:31:04 pgoyette E
 #include <sys/kthread.h>
 #include <sys/systm.h>
 #include <sys/module.h>
+#include <sys/once.h>
 
 #include <dev/sysmon/sysmon_taskq.h>
 
@@ -88,18 +89,23 @@ MODULE(MODULE_CLASS_MISC, sysmon_taskq, NULL);
  */
 
 /*
- * sysmon_task_queue_preinit:
+ * tq_preinit:
  *
  *	Early one-time initialization of task-queue
  */
-void
-sysmon_task_queue_preinit(void)
+
+ONCE_DECL(once_tq);
+
+static int
+tq_preinit(void)
 {
 
 	mutex_init(&sysmon_task_queue_mtx, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&sysmon_task_queue_init_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sysmon_task_queue_cv, "smtaskq");
 	sysmon_task_queue_initialized = 0;
+
+	return 0;
 }
 
 /*
@@ -111,6 +117,8 @@ void
 sysmon_task_queue_init(void)
 {
 	int error;
+
+	(void)RUN_ONCE(&once_tq, tq_preinit);
 
 	mutex_enter(&sysmon_task_queue_init_mtx);
 	if (sysmon_task_queue_initialized++) {
@@ -244,9 +252,6 @@ sysmon_taskq_modcmd(modcmd_t cmd, void *arg)
  
 	switch (cmd) { 
 	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		sysmon_task_queue_preinit();
-#endif
 		sysmon_task_queue_init();
 		ret = 0;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.463 2015/04/23 23:23:08 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.464 2015/04/27 07:51:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.463 2015/04/23 23:23:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.464 2015/04/27 07:51:28 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -117,7 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.463 2015/04/23 23:23:08 pgoyette Exp
 #include "drvctl.h"
 #include "ksyms.h"
 
-#include "sysmon_taskq.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -217,10 +216,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.463 2015/04/23 23:23:08 pgoyette Exp
 #include <sys/cpu.h>
 
 #include <uvm/uvm.h>	/* extern struct uvm uvm */
-
-#if NSYSMON_TASKQ > 0
-#include <dev/sysmon/sysmon_taskq.h>
-#endif
 
 #include <dev/cons.h>
 
@@ -459,16 +454,6 @@ main(void)
 
 	/* Initialize kqueue. */
 	kqueue_init();
-
-	/*
-	 * Initialize sysmon's task queue.  It is used by at
-	 * least one non-modularized component (dev/acpica)
-	 * and needs to be available early, before the rest
-	 * of the module(9) subsystem is ready.
-	 */
-#if NSYSMON_TASKQ > 0
-	sysmon_task_queue_preinit();
-#endif
 
 	inittimecounter();
 	ntp_init();
