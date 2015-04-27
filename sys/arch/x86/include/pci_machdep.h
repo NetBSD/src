@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.15 2015/03/04 05:35:50 knakahara Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.16 2015/04/27 06:42:52 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,8 @@
 
 #ifndef _X86_PCI_MACHDEP_H_
 #define _X86_PCI_MACHDEP_H_
+
+#include <x86/intr_distribute.h>
 
 /*
  * Types provided to machine-independent PCI code

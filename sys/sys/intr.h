@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2014/05/25 15:42:01 rmind Exp $	*/
+/*	$NetBSD: intr.h,v 1.18 2015/04/27 06:42:53 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _SYS_INTR_H_
 #define	_SYS_INTR_H_
+
+#define INTRIDBUF 64
 
 #ifdef _KERNEL
 

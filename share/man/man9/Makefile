@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.384 2015/04/21 11:10:29 pooka Exp $
+#       $NetBSD: Makefile,v 1.385 2015/04/27 06:42:52 knakahara Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -39,10 +39,11 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	microseq.9 microtime.9 microuptime.9 mi_switch.9 module.9 \
 	mstohz.9 mutex.9 m_tag.9 namecache.9 \
 	namei.9 nullop.9 opencrypto.9 optstr.9 \
-	panic.9 pathbuf.9 pci.9 pci_configure_bus.9 pci_intr.9 pckbport.9 \
-	pcmcia.9 pcq.9 pcu.9 percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 \
-	pmc.9 pmf.9 pool.9 pool_cache.9 powerhook_establish.9 ppi.9 \
-	ppsratecheck.9 preempt.9 proc_find.9 pserialize.9 putter.9 \
+	panic.9 pathbuf.9 pci.9 pci_configure_bus.9 pci_intr.9 \
+	pci_intr_distribute.9 pckbport.9 pcmcia.9 pcq.9 pcu.9 \
+	percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 pmf.9 pool.9 \
+	pool_cache.9 powerhook_establish.9 ppi.9 ppsratecheck.9 preempt.9 \
+	proc_find.9 pserialize.9 putter.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rndsink.9 \
 	roundup.9 rssadapt.9 rt_timer.9 rwlock.9 RUN_ONCE.9 STACK.9 \
 	scanc.9 \

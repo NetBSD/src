@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1954 2015/04/21 11:10:29 pooka Exp $
+#	$NetBSD: mi,v 1.1955 2015/04/27 06:42:52 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -17131,6 +17131,7 @@
 ./usr/share/man/html9/in_getifa.html		comp-sys-htmlman	html
 ./usr/share/man/html9/incore.html		comp-sys-htmlman	html
 ./usr/share/man/html9/inittodr.html		comp-sys-htmlman	html
+./usr/share/man/html9/pci_intr_distribute.html	comp-sys-htmlman	html
 ./usr/share/man/html9/intro.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ioasic.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ioasic_attach_devs.html	comp-sys-htmlman	html
@@ -24063,6 +24064,7 @@
 ./usr/share/man/man9/in_getifa.9		comp-sys-man		.man
 ./usr/share/man/man9/incore.9			comp-sys-man		.man
 ./usr/share/man/man9/inittodr.9			comp-sys-man		.man
+./usr/share/man/man9/pci_intr_distribute.9	comp-sys-man		.man
 ./usr/share/man/man9/intro.9			comp-sys-man		.man
 ./usr/share/man/man9/ioasic.9			comp-sys-man		.man
 ./usr/share/man/man9/ioasic_attach_devs.9	comp-sys-man		.man
