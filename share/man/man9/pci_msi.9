@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_msi.9,v 1.1 2015/04/27 07:03:57 knakahara Exp $
+.\" $NetBSD: pci_msi.9,v 1.2 2015/04/27 10:37:20 wiz Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -25,11 +25,11 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd April 8, 2015
-.Dt PCI_MSI 9 (DRAFT)
+.Dt PCI_MSI 9
 .Os
-.Sh NAME (DRAFT)
+.Sh NAME
 .Nm pci_msi ,
-.Nm pci_msix,
+.Nm pci_msix ,
 .Nm pci_msi_count ,
 .Nm pci_msi_alloc ,
 .Nm pci_msi_alloc_exact ,
@@ -48,7 +48,6 @@
 .Nm pci_intx_release
 .Nd PCI MSI{,-X} manipulation functions
 .Sh SYNOPSIS
-.In NOTYET
 .Ft int
 .Fn pci_msi_count "struct pci_attach_args *pa"
 .Ft int
@@ -90,12 +89,11 @@
 .Ft void
 .Fn pci_intx_release "pci_intr_handle_t *pih"
 .Sh DESCRIPTION
-XXX This decument describes draft APIs. These APIs may change later.
-.Pp
 The
 .Nm
 functions exist to allow device drivers to use MSI/MSI-X.
-When the system use MSI/MSI-X, it must define a __HAVE_PCI_MSI_MSIX
+When the system uses MSI/MSI-X, it must define the
+.Dv __HAVE_PCI_MSI_MSIX
 build option.
 .Pp
 Each driver has an
@@ -113,28 +111,29 @@ If a driver wishes to establish an MSI handler for the device,
 it should pass the
 .Ft struct pci_attach_args *
 and
-.Ft count
+.Fa count
 .Fn pci_msi_alloc
 or
 .Fn pci_msi_alloc_exact
-functions, which returns zero on success, and nonzero on failure.
-When the functions successed, set the pointer to allocated handle
-array to
+functions, which return zero on success, and nonzero on failure.
+When the functions are successful, they return the pointer to the
+allocated handle array in
 .Ft pihs
 whose size is
 .Ft count
-or less. The difference between
+or less.
+The difference between
 .Fn pci_msi_alloc
 and
 .Fn pci_msi_alloc_exact
-is
-.Ft count
+is whether
+.Fa count
 can be decremented or not.
 .Fn pci_msi_alloc
 can decrement
-.Ft count ,
-and
-which is similar to FreeBSD's
+.Fa count ,
+and which is similar to
+.Fx Ap s
 .Fn pci_alloc_msi .
 In contrast,
 .Fn pci_msi_alloc_exact
@@ -148,7 +147,7 @@ The buffer passed to
 .Fn pci_msi_string
 should be at least
 .Dv PCI_INTRSTR_LEN
-bytes.
+bytes long.
 .Pp
 Subsequently, when the driver is prepared to receive MSIs, it
 should call
@@ -168,43 +167,43 @@ may be saved and passed to
 .Fn pci_msi_disestablish
 to disable the interrupt handler
 when the driver is no longer interested in MSIs from the device.
-After that, the driver should also
+After that, the driver should also call
 .Fn pci_msi_release
 to free resources about MSI.
 .Pp
 If a driver wishes to establish an MSI-X handler for the device,
-it is alomost the same as MSI.
+it is almost the same as MSI.
 The only differences is
 .Fn pci_msix_alloc_map .
-This function can assign each handles to MSI-X table entries.
-e.g. If the driver want assign each handler to
+This function can assign separate handlers for each MSI-X table
+entry.
+I.e., if the driver wants to assign the handlers in the following way:
 .Bd -literal
 	msix_handler0 => MSI-X table index: 4
 	msix_handler1 => MSI-X table index: 5
 	msix_handler2 => MSI-X table index: 0
 .Ed
-, the driver should set
+the driver should set
+.Fa table_indexes
+this way:
 .Bd -literal
 	table_indexes[0] = 4;
 	table_indexes[1] = 5;
 	table_indexes[2] = 0;
 .Ed
-to
-.Ft table_indexes .
 .Pp
-If the driver want to fallback to INTx, the driver should use
+If the driver wants to fall back to INTx, the driver should use
 .Fn pci_intx_alloc
 and
 .Fn pci_intx_release
 instead of
 .Fn pci_intr_map
 to resolve contradiction of the interrupt handler ownership.
-i.e.
+I.e.,
 .Fn pci_intr_map
-does not have the ownership (the function just calcurates value),
+does not have the ownership (the function just calculates value),
 in contrast,
 .Fn pci_msi_alloc
 and
 .Fn pci_msix_alloc
-has the owneship (the functions allocate memory for interrupt
-handlers).
+have (the functions allocate memory for interrupt handlers).
