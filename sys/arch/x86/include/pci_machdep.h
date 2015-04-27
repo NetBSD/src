@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.17 2015/04/27 06:51:40 knakahara Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.18 2015/04/27 07:03:58 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,7 @@
  * Types provided to machine-independent PCI code
  * See also i82093var.h to find out pci_intr_handle_t's bitfield.
  */
+
 typedef intr_handle_t pci_intr_handle_t;
 
 #include <x86/pci_machdep_common.h>

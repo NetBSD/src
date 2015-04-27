@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.29 2015/04/27 06:51:40 knakahara Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.30 2015/04/27 07:03:58 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.29 2015/04/27 06:51:40 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.30 2015/04/27 07:03:58 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,8 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.29 2015/04/27 06:51:40 knakah
 #if NACPICA > 0
 #include <machine/mpacpi.h>
 #endif
-
-#define	MPSAFE_MASK	0x80000000
 
 int
 pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
@@ -227,6 +225,9 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
 {
 	pci_chipset_tag_t ipc;
 
+	if (INT_VIA_MSI(ih))
+		return pci_msi_string(pc, ih, buf, len);
+
 	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
 		if ((ipc->pc_present & PCI_OVERRIDE_INTR_STRING) == 0)
 			continue;
@@ -340,105 +341,60 @@ pci_intr_distribute(void *cookie, const kcpuset_t *newset, kcpuset_t *oldset)
 }
 
 #if NIOAPIC > 0
-/*
- * experimental support for MSI, does support a single vector,
- * no MSI-X, 8-bit APIC IDs
- * (while it doesn't need the ioapic technically, it borrows
- * from its kernel support)
- */
-
-/* dummies, needed by common intr_establish code */
-static void
-msipic_hwmask(struct pic *pic, int pin)
+int
+pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **pih)
 {
-}
-static void
-msipic_addroute(struct pic *pic, struct cpu_info *ci,
-		int pin, int vec, int type)
-{
-}
+	struct intrsource *isp;
+	pci_intr_handle_t *handle;
+	int error;
+	char intrstr_buf[INTRIDBUF];
+	const char *intrstr;
 
-static struct pic msi_pic = {
-	.pic_name = "msi",
-	.pic_type = PIC_SOFT,
-	.pic_vecbase = 0,
-	.pic_apicid = 0,
-	.pic_lock = __SIMPLELOCK_UNLOCKED,
-	.pic_hwmask = msipic_hwmask,
-	.pic_hwunmask = msipic_hwmask,
-	.pic_addroute = msipic_addroute,
-	.pic_delroute = msipic_addroute,
-	.pic_edge_stubs = ioapic_edge_stubs,
-};
-
-struct msi_hdl {
-	struct intrhand *ih;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int co;
-};
-
-void *
-pci_msi_establish(struct pci_attach_args *pa, int level,
-		  int (*func)(void *), void *arg)
-{
-	int co;
-	struct intrhand *ih;
-	struct msi_hdl *msih;
-	struct cpu_info *ci;
-	struct intrsource *is;
-	pcireg_t reg;
-
-	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI, &co, 0))
-		return NULL;
-
-	ih = intr_establish(-1, &msi_pic, -1, IST_EDGE, level, func, arg, 0);
-	if (ih == NULL)
-		return NULL;
-
-	msih = malloc(sizeof(*msih), M_DEVBUF, M_WAITOK);
-	msih->ih = ih;
-	msih->pc = pa->pa_pc;
-	msih->tag = pa->pa_tag;
-	msih->co = co;
-
-	ci = ih->ih_cpu;
-	is = ci->ci_isources[ih->ih_slot];
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, co + PCI_MSI_CTL);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MADDR64_LO,
-		       LAPIC_MSIADDR_BASE |
-		       __SHIFTIN(ci->ci_cpuid, LAPIC_MSIADDR_DSTID_MASK));
-	if (reg & PCI_MSI_CTL_64BIT_ADDR) {
-		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MADDR64_HI,
-		    0);
-		/* XXX according to the manual, ASSERT is unnecessary if
-		 * EDGE
-		 */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MDATA64,
-		    __SHIFTIN(is->is_idtvec, LAPIC_MSIDATA_VECTOR_MASK) |
-		    LAPIC_MSIDATA_TRGMODE_EDGE | LAPIC_MSIDATA_LEVEL_ASSERT |
-		    LAPIC_MSIDATA_DM_FIXED);
-	} else {
-		/* XXX according to the manual, ASSERT is unnecessary if
-		 * EDGE
-		 */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_MDATA,
-		    __SHIFTIN(is->is_idtvec, LAPIC_MSIDATA_VECTOR_MASK) |
-		    LAPIC_MSIDATA_TRGMODE_EDGE | LAPIC_MSIDATA_LEVEL_ASSERT |
-		    LAPIC_MSIDATA_DM_FIXED);
+	handle = kmem_zalloc(sizeof(*handle), KM_SLEEP);
+	if (handle == NULL) {
+		aprint_normal("cannot allocate pci_intr_handle_t\n");
+		return ENOMEM;
 	}
-	pci_conf_write(pa->pa_pc, pa->pa_tag, co + PCI_MSI_CTL,
-	    PCI_MSI_CTL_MSI_ENABLE);
-	return msih;
+
+	if (pci_intr_map(pa, handle) != 0) {
+		aprint_normal("cannot set up pci_intr_handle_t\n");
+		error = EINVAL;
+		goto error;
+	}
+
+	intrstr = pci_intr_string(pa->pa_pc, *handle,
+	    intrstr_buf, sizeof(intrstr_buf));
+	mutex_enter(&cpu_lock);
+	isp = intr_allocate_io_intrsource(intrstr);
+	mutex_exit(&cpu_lock);
+	if (isp == NULL) {
+		aprint_normal("can't allocate io_intersource\n");
+		error = ENOMEM;
+		goto error;
+	}
+
+	*pih = handle;
+	return 0;
+
+error:
+	kmem_free(handle, sizeof(*handle));
+	return error;
 }
 
 void
-pci_msi_disestablish(void *ih)
+pci_intx_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih)
 {
-	struct msi_hdl *msih = ih;
+	char intrstr_buf[INTRIDBUF];
+	const char *intrstr;
 
-	pci_conf_write(msih->pc, msih->tag, msih->co + PCI_MSI_CTL, 0);
-	intr_disestablish(msih->ih);
-	free(msih, M_DEVBUF);
+	if (pih == NULL)
+		return;
+
+	intrstr = pci_intr_string(NULL, *pih, intrstr_buf, sizeof(intrstr_buf));
+	mutex_enter(&cpu_lock);
+	intr_free_io_intrsource(intrstr);
+	mutex_exit(&cpu_lock);
+
+	kmem_free(pih, sizeof(*pih));
 }
 #endif
