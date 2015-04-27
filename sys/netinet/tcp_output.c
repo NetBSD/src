@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.180 2015/02/14 12:57:53 he Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.181 2015/04/27 02:59:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.180 2015/02/14 12:57:53 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.181 2015/04/27 02:59:44 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1579,9 +1579,7 @@ timer:
 			 * setsockopt. Also, desired default hop limit might
 			 * be changed via Neighbor Discovery.
 			 */
-			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb,
-				(rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
-				                                    : NULL);
+			ip6->ip6_hlim = in6_selecthlim_rt(tp->t_in6pcb);
 		}
 		ip6->ip6_flow |= htonl(ecn_tos << 20);
 		/* ip6->ip6_flow = ??? (from template) */

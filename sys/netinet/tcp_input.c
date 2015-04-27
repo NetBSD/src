@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.337 2015/03/14 02:08:16 rtr Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.338 2015/04/27 02:59:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.337 2015/03/14 02:08:16 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.338 2015/04/27 02:59:44 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -174,7 +174,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.337 2015/03/14 02:08:16 rtr Exp $");
 #include <sys/cprng.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>
@@ -4797,8 +4796,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_hlim = in6_selecthlim(NULL,
-				(rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
-				                                    : NULL);
+		    (rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp : NULL);
 
 		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
 		break;

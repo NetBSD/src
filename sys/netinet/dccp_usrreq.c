@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.4 2015/04/26 21:40:49 rtr Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.5 2015/04/27 02:59:44 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.4 2015/04/26 21:40:49 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.5 2015/04/27 02:59:44 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_dccp.h"
@@ -91,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.4 2015/04/26 21:40:49 rtr Exp $");
 #include <sys/queue.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -2308,9 +2307,6 @@ dccp_newdccpcb(int family, void *aux)
 	struct inpcb *inp;
 	struct in6pcb *in6p;
 	struct dccpcb	*dp;
-#ifdef INET6
-	struct rtentry *rt;
-#endif
 
 	DCCP_DEBUG((LOG_INFO, "Creating a new dccpcb!\n"));
 
@@ -2362,8 +2358,7 @@ dccp_newdccpcb(int family, void *aux)
 	case PF_INET6:
 		in6p = (struct in6pcb *)aux;
 		dp->d_in6pcb = in6p;
-		rt = rtcache_validate(&in6p->in6p_route);
-		in6p->in6p_ip6.ip6_hlim = in6_selecthlim(in6p, (rt != NULL) ? rt->rt_ifp : NULL);
+		in6p->in6p_ip6.ip6_hlim = in6_selecthlim_rt(in6p);
 		in6p->in6p_ppcb = dp;
 		break;
 	}
