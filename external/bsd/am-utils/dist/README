@@ -38,9 +38,8 @@ and then run
 
 	make
 
-This would configure amd in the directory you've run the configure script
-in, and the built it there.  Run "make install" to install all the necessary
-files.
+This would configure amd in the directory you've run the configure script,
+and build it there.  Run "make install" to install all the necessary files.
 
 Note that this is good for building only one version of amd on one
 architecture!  Don't try this for multiple architectures.  If you must, then
@@ -91,7 +90,7 @@ buildall script to rerun configure and then remake the binaries.
 
 Modifying M4 macros may not be very intuitive to anyone that has not done so
 before.  Let me know if you are having any problems with them.  I fully
-expect, at least initially, to have to be the sole developers of the M4
+expect, at least initially, to have to be the sole developer of the M4
 macros and let others concentrate on C sources.
 
 [E] Report all bugs via Bugzilla or the am-utils list (see

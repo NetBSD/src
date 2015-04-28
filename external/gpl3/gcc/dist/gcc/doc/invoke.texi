@@ -14192,7 +14192,7 @@ suffer significant run time performance penalties.  On Pentium III, the
 Streaming SIMD Extension (SSE) data type @code{__m128} may not work
 properly if it is not 16-byte aligned.
 
-To ensure proper alignment of this values on the stack, the stack boundary
+To ensure proper alignment of these values on the stack, the stack boundary
 must be as aligned as that required by any value stored on the stack.
 Further, every function must be generated such that it keeps the stack
 aligned.  Thus calling a function compiled with a higher preferred
