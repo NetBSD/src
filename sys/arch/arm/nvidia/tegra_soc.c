@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soc.c,v 1.3 2015/04/26 22:04:28 jmcneill Exp $ */
+/* $NetBSD: tegra_soc.c,v 1.4 2015/04/28 11:15:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.3 2015/04/26 22:04:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.4 2015/04/28 11:15:55 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -81,7 +81,7 @@ tegra_bootstrap(void)
 	    &tegra_ahb_a2_bsh) != 0)
 		panic("couldn't map AHB A2");
 
-	curcpu()->ci_data.cpu_cc_freq = 696000000; /* XXX */
+	curcpu()->ci_data.cpu_cc_freq = tegra_car_pllx_rate();
 
 	tegra_mpinit();
 }
