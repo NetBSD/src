@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.1 2015/04/27 07:03:58 knakahara Exp $	*/
+/*	$NetBSD: msipic.c,v 1.2 2015/04/28 02:38:53 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.1 2015/04/27 07:03:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.2 2015/04/28 02:38:53 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -478,7 +478,7 @@ msix_set_vecctl_mask(struct pic *pic, int msix_vec, int flag)
 
 	if (msix_vec < 0) {
 		DPRINTF(("%s: invalid MSI-X table index, devid=%d vecid=%d",
-			__func__, msi_get_devid(pic), msix_vec));
+			__func__, msipic_get_devid(pic), msix_vec));
 		return;
 	}
 
@@ -531,7 +531,7 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 
 	if (msix_vec < 0) {
 		DPRINTF(("%s: invalid MSI-X table index, devid=%d vecid=%d",
-			__func__, msi_get_devid(pic), msix_vec));
+			__func__, msipic_get_devid(pic), msix_vec));
 		return;
 	}
 
