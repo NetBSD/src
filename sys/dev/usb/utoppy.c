@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.7 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.8 2015/04/28 06:55:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.7 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.8 2015/04/28 06:55:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,8 +523,7 @@ utoppy_dump_packet(const void *b, size_t len)
 
 static usbd_status
 utoppy_bulk_transfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
-    uint16_t flags, uint32_t timeout, void *buf, uint32_t *size,
-    const char *lbl)
+    uint16_t flags, uint32_t timeout, void *buf, uint32_t *size)
 {
 	usbd_status err;
 
@@ -613,8 +612,7 @@ utoppy_send_packet(struct utoppy_softc *sc, uint16_t cmd, uint32_t timeout)
 		memcpy(sc->sc_out_buf, data, thislen);
 
 		err = utoppy_bulk_transfer(sc->sc_out_xfer, sc->sc_out_pipe,
-		    0, timeout, sc->sc_out_buf, &thislen,
-		    "utoppytx");
+		    0, timeout, sc->sc_out_buf, &thislen);
 
 		if (thislen != min(len, UTOPPY_FRAG_SIZE)) {
 			DPRINTF(UTOPPY_DBG_SEND_PACKET, ("%s: "
@@ -655,7 +653,7 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 
 		err = utoppy_bulk_transfer(sc->sc_in_xfer, sc->sc_in_pipe,
 		    USBD_SHORT_XFER_OK, timeout, sc->sc_in_buf,
-		    &thislen, "utoppyrx");
+		    &thislen);
 
 		DPRINTF(UTOPPY_DBG_RECV_PACKET, ("%s: utoppy_recv_packet: "
 		    "usbd_bulk_transfer() returned %d, thislen %d, data %p\n",
