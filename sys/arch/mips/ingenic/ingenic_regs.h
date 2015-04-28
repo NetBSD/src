@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.15 2015/04/23 01:20:20 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.16 2015/04/28 15:05:45 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -556,5 +556,167 @@ gpio_as_intr_level(uint32_t g, int pin)
 #define JZ_MSC0_BASE	0x13450000
 #define JZ_MSC1_BASE	0x13460000
 #define JZ_MSC2_BASE	0x13470000
+
+#define JZ_MSC_CTRL	0x00
+	#define JZ_SEND_CCSD		0x8000
+	#define JZ_SEND_AS_CCSD		0x4000
+	#define JZ_EXIT_MULTIPLE	0x0080
+	#define JZ_EXIT_TRANSFER	0x0040
+	#define JZ_START_READWAIT	0x0020
+	#define JZ_STOP_READWAIT	0x0010
+	#define JZ_RESET		0x0008
+	#define JZ_START_OP		0x0004
+	#define JZ_CLOCK_CTRL_M		0x0003
+	#define JZ_CLOCK_START		0x0002
+	#define JZ_CLOCK_STOP		0x0001
+#define JZ_MSC_STAT	0x04
+	#define JZ_AUTO_CMD12_DONE	0x80000000
+	#define JZ_AUTO_CMD23_DONE	0x40000000
+	#define JZ_SVS			0x20000000
+	#define JZ_PIN_LEVEL_M		0x1f000000
+	#define JZ_BCE			0x00100000 /* boot CRC error */
+	#define JZ_BDE			0x00080000 /* boot data end */
+	#define JZ_BAE			0x00040000 /* boot acknowledge error */
+	#define JZ_BAR			0x00020000 /* boot ack. received */
+	#define JZ_DMAEND		0x00010000
+	#define JZ_IS_RESETTING		0x00008000
+	#define JZ_SDIO_INT_ACTIVE	0x00004000
+	#define JZ_PRG_DONE		0x00002000
+	#define JZ_DATA_TRAN_DONE	0x00001000
+	#define JZ_END_CMD_RES		0x00000800
+	#define JZ_DATA_FIFO_AFULL	0x00000400
+	#define JZ_IS_READWAIT		0x00000200
+	#define JZ_CLK_EN		0x00000100
+	#define JZ_DATA_FIFO_FULL	0x00000080
+	#define JZ_DATA_FIFO_EMPTY	0x00000040
+	#define JZ_CRC_RES_ERR		0x00000020
+	#define JZ_CRC_READ_ERR		0x00000010
+	#define JZ_CRC_WRITE_ERR_M	0x0000000c
+	#define JZ_CRC_WRITE_OK		0x00000000
+	#define JZ_CRC_CARD_ERR		0x00000004
+	#define JZ_CRC_NO_STATUS	0x00000008
+	#define JZ_TIME_OUT_RES		0x00000002
+	#define JZ_TIME_OUT_READ	0x00000001
+#define JZ_MSC_CLKRT	0x08
+	#define JZ_DEV_CLK	0x0
+	#define JZ_DEV_CLK_2	0x1	/* DEV_CLK / 2 */
+	#define JZ_DEV_CLK_4	0x2	/* DEV_CLK / 4 */
+	#define JZ_DEV_CLK_8	0x3	/* DEV_CLK / 8 */
+	#define JZ_DEV_CLK_16	0x4	/* DEV_CLK / 16 */
+	#define JZ_DEV_CLK_32	0x5	/* DEV_CLK / 32 */
+	#define JZ_DEV_CLK_64	0x6	/* DEV_CLK / 64 */
+	#define JZ_DEV_CLK_128	0x7	/* DEV_CLK / 128 */
+#define JZ_MSC_CMDAT	0x0c
+	#define JZ_CCS_EXPECTED	0x80000000
+	#define JZ_READ_CEATA	0x40000000
+	#define JZ_DIS_BOOT	0x08000000
+	#define JZ_ENA_BOOT	0x04000000
+	#define JZ_EXP_BOOT_ACK	0x02000000
+	#define JZ_BOOT_MODE	0x01000000
+	#define JZ_AUTO_CMD23	0x00040000
+	#define JZ_SDIO_PRDT	0x00020000
+	#define JZ_AUTO_CMD12	0x00010000
+	#define JZ_RTRG_M	0x0000c000 /* receive FIFO trigger */
+	#define JZ_RTRG_16	0x00000000 /* >= 16 */
+	#define JZ_RTRG_32	0x00004000 /* >= 32 */
+	#define JZ_RTRG_64	0x00008000 /* >= 64 */
+	#define JZ_RTRG_96	0x0000c000 /* >= 96 */
+	#define JZ_TTRG_M	0x00003000 /* transmit FIFO trigger */
+	#define JZ_TTRG_16	0x00000000 /* >= 16 */
+	#define JZ_TTRG_32	0x00001000 /* >= 32 */
+	#define JZ_TTRG_64	0x00002000 /* >= 64 */
+	#define JZ_TTRG_96	0x00003000 /* >= 96 */
+	#define JZ_IO_ABORT	0x00000800
+	#define JZ_BUS_WIDTH_M	0x00000600
+	#define JZ_BUS_1BIT	0x00000000
+	#define JZ_BUS_4BIT	0x00000200
+	#define JZ_BUS_8BIT	0x00000300
+	#define JZ_INIT		0x00000080 /* send 80 clk init before cmd */
+	#define JZ_BUSY		0x00000040
+	#define JZ_STREAM	0x00000020
+	#define JZ_WRITE	0x00000010 /* read otherwise */
+	#define JZ_DATA_EN	0x00000008
+	#define JZ_RESPONSE_M	0x00000007 /* response format */
+	#define JZ_RES_NONE	0x00000000
+	#define JZ_RES_R1	0x00000001 /* R1 and R1b */
+	#define JZ_RES_R2	0x00000002
+	#define JZ_RES_R3	0x00000003
+	#define JZ_RES_R4	0x00000004
+	#define JZ_RES_R5	0x00000005
+	#define JZ_RES_R6	0x00000006
+	#define JZ_RES_R7	0x00000007
+#define JZ_MSC_RESTO	0x10 /* 16bit response timeout in MSC_CLK */
+#define JZ_MSC_RDTO RW	0x14 /* 32bit read timeout in MSC_CLK */
+#define JZ_MSC_BLKLEN	0x18 /* 16bit block length */
+#define JZ_MSC_NOB RW	0x1c /* 16bit block counter */
+#define JZ_MSC_SNOB	0x20 /* 16bit successful block counter */
+#define JZ_MSC_IMASK	0x24 /* interrupt mask */
+	#define JZ_INT_AUTO_CMD23_DONE	0x40000000
+	#define JZ_INT_SVS		0x20000000
+	#define JZ_INT_PIN_LEVEL_M	0x1f000000
+	#define JZ_INT_BCE		0x00100000
+	#define JZ_INT_BDE		0x00080000
+	#define JZ_INT_BAE		0x00040000
+	#define JZ_INT_BAR		0x00020000
+	#define JZ_INT_DMAEND		0x00010000
+	#define JZ_INT_AUTO_CMD12_DONE	0x00008000
+	#define JZ_INT_DATA_FIFO_FULL	0x00004000
+	#define JZ_INT_DATA_FIFO_EMPTY	0x00002000
+	#define JZ_INT_CRC_RES_ERR	0x00001000
+	#define JZ_INT_CRC_READ_ERR	0x00000800
+	#define JZ_INT_CRC_WRITE_ERR	0x00000400
+	#define JZ_INT_TIMEOUT_RES	0x00000200
+	#define JZ_INT_TIMEOUT_READ	0x00000100
+	#define JZ_INT_SDIO		0x00000080
+	#define JZ_INT_TXFIFO_WR_REQ	0x00000040
+	#define JZ_INT_RXFIFO_RD_REQ	0x00000020
+	#define JZ_INT_EMD_CMD_RES	0x00000004
+	#define JZ_INT_PRG_DONE		0x00000002
+	#define JZ_INT_DATA_TRAN_DONE	0x00000001
+#define JZ_MSC_IFLG	0x28 /* interrupt flags */
+#define JZ_MSC_CMD	0x2c /* 6bit CMD index */
+#define JZ_MSC_ARG	0x30 /* 32bit argument */
+#define JZ_MSC_RES	0x34 /* 8x16bit response data FIFO */
+#define JZ_MSC_RXFIFO	0x38
+#define JZ_MSC_TXFIFO	0x3c
+#define JZ_MSC_LPM	0x40
+	#define JZ_DRV_SEL_M	0xc0000000
+	#define JZ_FALLING_EDGE	0x00000000
+	#define JZ_RISING_1NS	0x40000000 /* 1ns delay */
+	#define JZ_RISING_4	0x80000000 /* 1/4 MSC_CLK delay */
+	#define JZ_SMP_SEL	0x20000000 /* 1 - rising edge */
+	#define JZ_LPM		0x00000001 /* low power mode */
+#define JZ_MSC_DMAC	0x44
+	#define JZ_MODE_SEL	0x80 /* 1 - specify transfer length */
+	#define JZ_AOFST_M	0x60 /* address offset in bytes */
+	#define JZ_ALIGNEN	0x10 /* allow non-32bit-aligned transfers */
+	#define JZ_INCR_M	0x0c /* burst type */
+	#define JZ_INCR_16	0x00
+	#define JZ_INCR_32	0x04
+	#define JZ_INCR_64	0x08
+	#define JZ_DMASEL	0x02 /* 1 - SoC DMAC, 0 - MSC built-in */
+	#define JZ_DMAEN	0x01 /* enable DMA */
+#define JZ_MSC_DMANDA	0x48 /* next descriptor paddr */
+#define JZ_MSC_DMADA	0x4c /* current descriptor */
+#define JZ_MSC_DMALEN	0x50 /* transfer tength */
+#define JZ_MSC_DMACMD	0x54
+	#define JZ_DMA_IDI_M	0xff000000
+	#define JZ_DMA_ID_M	0x00ff0000
+	#define JZ_DMA_AOFST_M	0x00000600
+	#define JZ_DMA_ALIGN	0x00000100
+	#define JZ_DMA_ENDI	0x00000002
+	#define JZ_DMA_LINK	0x00000001
+#define JZ_MSC_CTRL2	0x58
+	#define JZ_PIP		0x1f000000	/* 1 - intr trigger on high */
+	#define JZ_RST_EN	0x00800000
+	#define JZ_STPRM	0x00000010
+	#define JZ_SVC		0x00000008
+	#define JZ_SMS_M	0x00000007
+	#define JZ_SMS_DEF	0x00000000	/* default speed */
+	#define JZ_SMS_HIGH	0x00000001	/* high speed */
+	#define JZ_SMS_SDR12	0x00000002
+	#define JZ_SMS_SDR25	0x00000003
+	#define JZ_SMS_SDR50	0x00000004
+#define JZ_MSC_RTCNT	0x5c /* RT FIFO count */
 
 #endif /* INGENIC_REGS_H */
