@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.142 2015/04/07 04:36:19 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.143 2015/04/28 02:56:58 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.142 2015/04/07 04:36:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.143 2015/04/28 02:56:58 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1472,11 +1472,11 @@ rtcache_setdst(struct route *ro, const struct sockaddr *sa)
 		if (ro->ro_sa->sa_family == sa->sa_family) {
 			rtcache_clear(ro);
 			sockaddr_copy(ro->ro_sa, ro->ro_sa->sa_len, sa);
-			sockaddr_free(ro->ro_sa);
-		} else {
-			/* free ro_sa, wrong family */
-			rtcache_free(ro);
+			rtcache_invariants(ro);
+			return 0;
 		}
+		/* free ro_sa, wrong family */
+		rtcache_free(ro);
 	}
 
 	KASSERT(ro->_ro_rt == NULL);
