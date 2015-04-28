@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.47 2015/03/23 17:42:02 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.48 2015/04/28 17:14:21 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -264,6 +264,8 @@ vfp_attach(struct cpu_info *ci)
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp);
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp2);
 		armreg_cpacr_write(cpacr);
+
+		arm_isb();
 
 		/*
 		 * If we could enable them, then they exist.
