@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2013/03/01 18:25:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.55 2015/04/28 15:14:57 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -23,6 +23,10 @@ SRCS+= af_inet6.c
 RUMPSRCS= getifaddrs.c
 .if (${MKRUMP} != "no")
 CPPFLAGS+= -DRUMP_ACTION
+.endif
+
+.ifdef SMALLPROG
+CPPFLAGS+=-DSMALL
 .endif
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys/dist/pf/
