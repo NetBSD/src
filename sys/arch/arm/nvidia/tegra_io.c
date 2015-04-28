@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_io.c,v 1.2 2015/03/29 22:27:04 jmcneill Exp $ */
+/* $NetBSD: tegra_io.c,v 1.3 2015/04/28 11:15:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.2 2015/03/29 22:27:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.3 2015/04/28 11:15:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,11 @@ static bool tegraio_found = false;
 
 #define NOPORT	TEGRAIOCF_PORT_DEFAULT
 #define NOINTR	TEGRAIO_INTR_DEFAULT
+
+static const struct tegra_locators tegra_ppsb_locators[] = {
+  { "tegracar",
+    TEGRA_CAR_OFFSET, TEGRA_CAR_SIZE, NOPORT, NOINTR },
+};
 
 static const struct tegra_locators tegra_apb_locators[] = {
   { "tegramc",
@@ -113,6 +118,8 @@ tegraio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": %s\n", tegra_chip_name());
 
+	tegraio_scan(self, tegra_ppsb_bsh,
+	    tegra_ppsb_locators, __arraycount(tegra_ppsb_locators));
 	tegraio_scan(self, tegra_apb_bsh,
 	    tegra_apb_locators, __arraycount(tegra_apb_locators));
 	tegraio_scan(self, tegra_ahb_a2_bsh,
