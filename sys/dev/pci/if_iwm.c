@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.30 2015/04/15 05:40:48 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.31 2015/04/28 15:38:02 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.39 2015/03/23 00:35:19 jsg Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.30 2015/04/15 05:40:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.31 2015/04/28 15:38:02 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -6628,7 +6628,9 @@ iwm_attach(device_t parent, device_t self, void *aux)
 {
 	struct iwm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
+#ifndef __HAVE_PCI_MSI_MSIX
 	pci_intr_handle_t ih;
+#endif
 	pcireg_t reg, memtype;
 	const char *intrstr;
 	int error;
@@ -6676,14 +6678,46 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Install interrupt handler. */
+	sc->sc_intr_type = IWM_INTR_INTX;
+#ifdef __HAVE_PCI_MSI_MSIX
+	error = ENODEV;
+	if (pci_msi_count(pa) > 0) {
+		error = pci_msi_alloc_exact(pa, &sc->sc_pihp, 1);
+		if (error == 0)
+			sc->sc_intr_type = IWM_INTR_MSI;
+	}
+	if (error != 0) {
+		if (pci_intx_alloc(pa, &sc->sc_pihp)) {
+			aprint_error_dev(self, "can't map interrupt\n");
+			return;
+		}
+	}
+#else	/* !__HAVE_PCI_MSI_MSIX */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(self, "can't map interrupt\n");
 		return;
 	}
+#endif	/* __HAVE_PCI_MSI_MSIX */
 
 	char intrbuf[PCI_INTRSTR_LEN];
+#ifdef __HAVE_PCI_MSI_MSIX
+	intrstr = pci_intr_string(sc->sc_pct, sc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
+	switch (sc->sc_intr_type) {
+	case IWM_INTR_MSI:
+		sc->sc_ih = pci_msi_establish(sc->sc_pct, sc->sc_pihp[0],
+		    IPL_NET, iwm_intr, sc);
+		break;
+
+	case IWM_INTR_INTX:
+		sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0],
+		    IPL_NET, iwm_intr, sc);
+		break;
+	}
+#else	/* !__HAVE_PCI_MSI_MSIX */
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwm_intr, sc);
+#endif	/* __HAVE_PCI_MSI_MSIX */
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
