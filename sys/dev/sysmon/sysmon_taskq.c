@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.18 2015/04/27 07:51:28 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.19 2015/04/28 11:58:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.18 2015/04/27 07:51:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.19 2015/04/28 11:58:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -211,6 +211,8 @@ int
 sysmon_task_queue_sched(u_int pri, void (*func)(void *), void *arg)
 {
 	struct sysmon_task *st, *lst;
+
+	(void)RUN_ONCE(&once_tq, tq_preinit);
 
 	if (sysmon_task_queue_lwp == NULL)
 		aprint_debug("WARNING: Callback scheduled before sysmon "
