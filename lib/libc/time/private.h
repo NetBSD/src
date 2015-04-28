@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.39 2015/03/24 20:01:18 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.40 2015/04/28 17:00:24 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -53,6 +53,10 @@
 #ifndef HAVE_SETTIMEOFDAY
 #define HAVE_SETTIMEOFDAY	3
 #endif /* !defined HAVE_SETTIMEOFDAY */
+
+#ifndef HAVE_STRDUP
+#define HAVE_STRDUP 1
+#endif
 
 #ifndef HAVE_SYMLINK
 #define HAVE_SYMLINK		1
@@ -465,14 +469,6 @@ time_t time2posix_z(timezone_t __restrict, time_t) ATTRIBUTE_PURE;
 # endif
 #endif
 #endif
-
-/*
-** Private function declarations.
-*/
-
-char *		icatalloc(char * old, const char * new);
-char *		icpyalloc(const char * string);
-const char *	scheck(const char * string, const char * format);
 
 /*
 ** Finally, some convenience items.
