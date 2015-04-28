@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.2 2015/04/28 02:38:53 knakahara Exp $	*/
+/*	$NetBSD: msipic.c,v 1.3 2015/04/28 06:23:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.2 2015/04/28 02:38:53 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.3 2015/04/28 06:23:57 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -322,12 +322,13 @@ msi_set_msictl_enablebit(struct pic *pic, int msi_vec, int flag)
 	struct pci_attach_args *pa;
 	pcitag_t tag;
 	pcireg_t ctl;
-	int off;
+	int off, err __diagused;
 
 	pc = NULL;
 	pa = &pic->pic_msipic->mp_pa;
 	tag = pa->pa_tag;
-	KASSERT(pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL) != 0);
+	err = pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL);
+	KASSERT(err != 0);
 
 	/*
 	 * MSI can establish only one vector at once.
@@ -368,12 +369,13 @@ msi_addroute(struct pic *pic, struct cpu_info *ci,
 	struct pci_attach_args *pa;
 	pcitag_t tag;
 	pcireg_t addr, data, ctl;
-	int off;
+	int off, err __diagused;
 
 	pc = NULL;
 	pa = &pic->pic_msipic->mp_pa;
 	tag = pa->pa_tag;
-	KASSERT(pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL) != 0);
+	err = pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL);
+	KASSERT(err != 0);
 
 	/*
 	 * See Intel 64 and IA-32 Architectures Software Developer's Manual
@@ -527,7 +529,7 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 	bus_space_handle_t bshandle;
 	uint64_t entry_base;
 	pcireg_t addr, data, ctl;
-	int off;
+	int off, err __diagused;
 
 	if (msix_vec < 0) {
 		DPRINTF(("%s: invalid MSI-X table index, devid=%d vecid=%d",
@@ -538,7 +540,8 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 	pa = &pic->pic_msipic->mp_pa;
 	pc = pa->pa_pc;
 	tag = pa->pa_tag;
-	KASSERT(pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL) != 0);
+	err = pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL);
+	KASSERT(err != 0);
 
 	entry_base = PCI_MSIX_TABLE_ENTRY_SIZE * msix_vec;
 
