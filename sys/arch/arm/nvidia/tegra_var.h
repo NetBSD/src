@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.3 2015/04/26 22:04:28 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.4 2015/04/28 11:15:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -68,6 +68,9 @@ extern struct arm32_bus_dma_tag tegra_dma_tag;
 u_int	tegra_chip_id(void);
 const char *tegra_chip_name(void);
 void	tegra_bootstrap(void);
+
+u_int	tegra_car_osc_rate(void);
+u_int	tegra_car_pllx_rate(void);
 
 void	tegra_pmc_reset(void);
 void	tegra_pmc_power(u_int, bool);

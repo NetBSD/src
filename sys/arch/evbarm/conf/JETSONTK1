@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.5 2015/04/27 09:56:36 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.6 2015/04/28 11:15:55 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -40,6 +40,9 @@ tegramc0	at tegraio?		# MC
 
 # Power management controller
 tegrapmc0	at tegraio?		# PMC
+
+# Clock and Reset controller
+tegracar0	at tegraio?		# CAR
 
 # UART
 com3		at tegraio? port 3	# UART-D
