@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.269 2015/04/24 17:22:13 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.270 2015/04/28 20:45:05 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -20339,4 +20339,9 @@ distrib/sets/lists/debug/mi			1.111
 
 	Add missing debug entry for bozohttpd
 	[riz, ticket #721]
+
+distrib/sets/lists/debug/mi			1.112
+
+	Mark httpd.debug as obsolete.
+	[mrg, ticket #724]
 
