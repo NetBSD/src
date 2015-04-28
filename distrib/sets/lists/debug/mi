@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.81.2.4 2015/04/24 17:14:07 snj Exp $
+# $NetBSD: mi,v 1.81.2.5 2015/04/28 20:43:26 snj Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -908,7 +908,7 @@
 ./usr/libdata/debug/usr/libexec/getNAME.debug	comp-man-debug		!makemandb,debug
 ./usr/libdata/debug/usr/libexec/getty.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/libexec/hpropd.debug	comp-krb5-debug		kerberos,debug
-./usr/libdata/debug/usr/libexec/httpd.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/libexec/httpd.debug	comp-netutil-debug	obsolete
 ./usr/libdata/debug/usr/libexec/identd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/ipropd-master.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/ipropd-slave.debug	comp-krb5-debug		kerberos,debug
