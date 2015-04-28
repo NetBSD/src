@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2071 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2072 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -154,3 +154,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		Add DMA support to the sdhc controllers on AM335x SoC.
 		Enable DMA for sdhc0 and sdhc1 on BEAGLEBONE [bouyer 20150414]
 	xz(1): Import of XZ 5.2.1. [christos 20150417]
+	libc: Update to tzcode2015d. [christos 20150428]
