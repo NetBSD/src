@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.12 2015/04/21 19:57:41 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.13 2015/04/28 15:08:07 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.12 2015/04/21 19:57:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.13 2015/04/28 15:08:07 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -86,6 +86,9 @@ static const apbus_dev_t apbus_devs[] = {
 	{ "jziic",	JZ_SMB2_BASE,   58, CLK_SMB2, 0},
 	{ "jziic",	JZ_SMB3_BASE,   57, 0, CLK_SMB3},
 	{ "jziic",	JZ_SMB4_BASE,   56, 0, CLK_SMB4},
+	{ "jzmmc",	JZ_MSC0_BASE,   37, CLK_MSC0, 0},
+	{ "jzmmc",	JZ_MSC1_BASE,   36, CLK_MSC1, 0},
+	{ "jzmmc",	JZ_MSC2_BASE,   35, CLK_MSC2, 0},
 	{ "jzfb",	JZ_LCDC0_BASE,  31, CLK_LCD, CLK_HDMI},
 	{ NULL,		-1,             -1, 0, 0}
 };
