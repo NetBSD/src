@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.27 2014/01/08 01:56:20 christos Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.28 2015/04/28 15:14:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.27 2014/01/08 01:56:20 christos Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.28 2015/04/28 15:14:57 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -482,6 +482,7 @@ scan_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 static void
 ieee80211_statistics(prop_dictionary_t env)
 {
+#ifndef SMALL
 	struct ieee80211_stats stats;
 	struct ifreq ifr;
 
@@ -584,6 +585,7 @@ ieee80211_statistics(prop_dictionary_t env)
 	STAT_PRINT(is_ff_decap, "fast frames decap'd");
 	STAT_PRINT(is_ff_encap, "fast frames encap'd for tx");
 	STAT_PRINT(is_rx_badbintval, "rx frame w/ bogus bintval");
+#endif
 }
 
 static void
