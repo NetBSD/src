@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.27 2015/03/06 15:09:50 riastradh Exp $
+# $NetBSD: ALL,v 1.28 2015/04/28 13:52:49 rjs Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.27 $"
+#ident 		"ALL-$Revision: 1.28 $"
 
 maxusers	64		# estimated number of users
 
@@ -224,6 +224,7 @@ options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)
 options 	MROUTING	# IP multicast routing
 options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking protocols
+options 	DCCP		# Datagram Congestion Control Protocol
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
