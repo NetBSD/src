@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.2 2015/03/29 22:27:04 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.3 2015/04/28 11:15:55 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -30,6 +30,11 @@ file	arch/arm/nvidia/tegra_mc.c		tegra_mc
 device	tegrapmc
 attach	tegrapmc at tegraio with tegra_pmc
 file	arch/arm/nvidia/tegra_pmc.c		tegra_pmc
+
+# Clock and Reset controller
+device	tegracar
+attach	tegracar at tegraio with tegra_car
+file	arch/arm/nvidia/tegra_car.c		tegra_car
 
 # UART
 attach	com at tegraio with tegra_com
