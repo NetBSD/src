@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dwctwo.c,v 1.9 2015/03/17 09:27:09 macallan Exp $ */
+/*	$NetBSD: ingenic_dwctwo.c,v 1.10 2015/04/28 15:07:07 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.9 2015/03/17 09:27:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.10 2015/04/28 15:07:07 macallan Exp $");
 
 /*
  * adapted from bcm2835_dwctwo.c
@@ -134,9 +134,10 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_naive(": USB controller\n");
-	aprint_normal(": USB controller\n");
+	aprint_naive(": USB OTG controller\n");
+	aprint_normal(": USB OTG controller\n");
 
+	/* reset PHY, flash LED */
 	gpio_set(5, 15, 0);
 	delay(250000);
 	gpio_set(5, 15, 1);
