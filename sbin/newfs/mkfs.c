@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.122 2014/04/26 14:15:08 martin Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.123 2015/04/28 15:15:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.122 2014/04/26 14:15:08 martin Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.123 2015/04/28 15:15:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,13 +132,13 @@ static void *mkfs_malloc(size_t size);
 union {
 	struct fs fs;
 	char data[SBLOCKSIZE];
-} fsun;
-#define	sblock	fsun.fs
+} *fsun;
+#define	sblock	fsun->fs
 
-union {
+union Buffer {
 	struct quota2_header q2h;
 	char data[MAXBSIZE];
-} buf;
+};
 
 struct	csum *fscs_0;		/* first block of cylinder summaries */
 struct	csum *fscs_next;	/* place for next summary */
@@ -149,8 +149,8 @@ uint	fs_csaddr;		/* fragment number to write to */
 union {
 	struct cg cg;
 	char pad[MAXBSIZE];
-} cgun;
-#define	acg	cgun.cg
+} *cgun;
+#define	acg	cgun->cg
 
 #define DIP(dp, field) \
 	((sblock.fs_magic == FS_UFS1_MAGIC) ? \
@@ -199,6 +199,11 @@ mkfs(const char *fsys, int fi, int fo,
 			exit(12);
 	}
 #endif
+	if ((fsun = mkfs_malloc(sizeof(*fsun))) == NULL)
+		exit(12);
+	if ((cgun = mkfs_malloc(sizeof(*cgun))) == NULL)
+		exit(12);
+
 	fsi = fi;
 	fso = fo;
 	if (Oflag == 0) {
@@ -1024,6 +1029,7 @@ int
 fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 	union dinode node;
+	union Buffer buf;
 	int i;
 	int qblocks = 0;
 	int qinos = 0;
@@ -1257,6 +1263,7 @@ int
 makedir(struct direct *protodir, int entries)
 {
 	char *cp;
+	union Buffer buf;
 	int i, spcleft;
 	int dirblksiz = UFS_DIRBLKSIZ;
 	if (isappleufs)
