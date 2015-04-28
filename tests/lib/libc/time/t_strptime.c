@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.4 2015/04/22 13:15:30 ginsbach Exp $ */
+/* $NetBSD: t_strptime.c,v 1.5 2015/04/28 16:06:09 ginsbach Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.4 2015/04/22 13:15:30 ginsbach Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.5 2015/04/28 16:06:09 ginsbach Exp $");
 
 #include <time.h>
 
@@ -158,6 +158,28 @@ ATF_TC_BODY(day, tc)
 	h_fail("SaturDay", "%OA");
 }
 
+ATF_TC(hour);
+
+ATF_TC_HEAD(hour, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+			  "Checks strptime(3) hour conversions [IH]");
+}
+
+ATF_TC_BODY(hour, tc)
+{
+
+	h_fail("00", "%I");
+	h_fail("13", "%I");
+
+	h_pass("00", "%H", 2, -1, -1, 0, -1, -1, -1, -1, -1);
+	h_pass("12", "%H", 2, -1, -1, 12, -1, -1, -1, -1, -1);
+	h_pass("23", "%H", 2, -1, -1, 23, -1, -1, -1, -1, -1);
+	h_fail("24", "%H");
+}
+
+
 ATF_TC(month);
 
 ATF_TC_HEAD(month, tc)
@@ -274,6 +296,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, common);
 	ATF_TP_ADD_TC(tp, day);
+	ATF_TP_ADD_TC(tp, hour);
 	ATF_TP_ADD_TC(tp, month);
 	ATF_TP_ADD_TC(tp, seconds);
 	ATF_TP_ADD_TC(tp, year);
