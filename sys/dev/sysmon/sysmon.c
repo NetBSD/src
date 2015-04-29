@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.24 2015/04/25 23:40:09 pgoyette Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.25 2015/04/29 03:27:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.24 2015/04/25 23:40:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.25 2015/04/29 03:27:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.24 2015/04/25 23:40:09 pgoyette Exp $")
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/device.h>
+#include <sys/once.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -77,13 +78,8 @@ const struct cdevsw sysmon_cdevsw = {
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
-static int	sysmon_match(device_t, cfdata_t, void *);
-static void	sysmon_attach(device_t, device_t, void *);
-static int	sysmon_detach(device_t, int);
-
 static int	sysmon_modcmd(modcmd_t, void *); 
-
-CFDRIVER_DECL(sysmon, DV_DULL, NULL);
+static int	sm_init_once(void);
 
 /*
  * Info about our minor "devices"
@@ -93,44 +89,13 @@ static int			sysmon_refcnt[] = { 0, 0, 0 };
 static const char		*sysmon_mod[] = { "sysmon_envsys",
 						  "sysmon_wdog",
 						  "sysmon_power" };
+static kmutex_t sysmon_minor_mtx;
 
-struct sysmon_softc { 
-	device_t sc_dev;
-	kmutex_t sc_minor_mtx;
-}; 
+#ifdef _MODULE
+static bool	sm_is_attached;
+#endif
 
-static device_t sysmon_dev = NULL;
-
-CFATTACH_DECL_NEW(sysmon, sizeof(struct sysmon_softc),
-        sysmon_match, sysmon_attach, sysmon_detach, NULL);
-extern struct cfdriver sysmon_cd;
-
-static int
-sysmon_match(device_t parent, cfdata_t data, void *aux)   
-{
-
-	return 1;
-}
-
-static void
-sysmon_attach(device_t parent, device_t self, void *aux)
-{
-
-        struct sysmon_softc *sc = device_private(self);
-                    
-        sc->sc_dev = self;
-
-	mutex_init(&sc->sc_minor_mtx, MUTEX_DEFAULT, IPL_NONE);
-}
-
-static int
-sysmon_detach(device_t self, int flags)
-{
-        struct sysmon_softc *sc = device_private(self);
-
-	mutex_destroy(&sc->sc_minor_mtx);
-	return 0;
-}
+ONCE_DECL(once_sm);
 
 /*
  * sysmon_attach_minor
@@ -145,10 +110,9 @@ sysmon_detach(device_t self, int flags)
 int
 sysmon_attach_minor(int minor, struct sysmon_opvec *opvec)
 {
-	struct sysmon_softc *sc = device_private(sysmon_dev);
 	int ret;
 
-	mutex_enter(&sc->sc_minor_mtx);
+	mutex_enter(&sysmon_minor_mtx);
 	if (opvec) {
 		if (sysmon_opvec_table[minor] == NULL) {
 			sysmon_refcnt[minor] = 0;
@@ -164,7 +128,7 @@ sysmon_attach_minor(int minor, struct sysmon_opvec *opvec)
 			ret = EBUSY;
 	}
 
-	mutex_exit(&sc->sc_minor_mtx);
+	mutex_exit(&sysmon_minor_mtx);
 	return ret;
 }
 
@@ -176,20 +140,19 @@ sysmon_attach_minor(int minor, struct sysmon_opvec *opvec)
 int
 sysmonopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct sysmon_softc *sc = device_private(sysmon_dev);
 	int error;
 
-	mutex_enter(&sc->sc_minor_mtx);
+	mutex_enter(&sysmon_minor_mtx);
 
 	switch (minor(dev)) {
 	case SYSMON_MINOR_ENVSYS:
 	case SYSMON_MINOR_WDOG:
 	case SYSMON_MINOR_POWER:
 		if (sysmon_opvec_table[minor(dev)] == NULL) {
-			mutex_exit(&sc->sc_minor_mtx);
+			mutex_exit(&sysmon_minor_mtx);
 			error = module_autoload(sysmon_mod[minor(dev)],
 						MODULE_CLASS_MISC);
-			mutex_enter(&sc->sc_minor_mtx);
+			mutex_enter(&sysmon_minor_mtx);
 			if (sysmon_opvec_table[minor(dev)] == NULL)
 				error = ENODEV;
 		}
@@ -202,7 +165,7 @@ sysmonopen(dev_t dev, int flag, int mode, struct lwp *l)
 		error = ENODEV;
 	}
 
-	mutex_exit(&sc->sc_minor_mtx);
+	mutex_exit(&sysmon_minor_mtx);
 	return (error);
 }
 
@@ -342,64 +305,35 @@ sysmonkqfilter(dev_t dev, struct knote *kn)
 
 MODULE(MODULE_CLASS_DRIVER, sysmon, "");
 
+static int
+sm_init_once(void)
+{
+
+	mutex_init(&sysmon_minor_mtx, MUTEX_DEFAULT, IPL_NONE);
+
+	return 0;
+}
+
 int
 sysmon_init(void)
 {
+	int error;
 #ifdef _MODULE
 	devmajor_t bmajor, cmajor;
 #endif
-	static struct cfdata cf;
-	int error = 0;
 
-	if (sysmon_dev != NULL) {
-		return EEXIST;
-	}
-
-	error = config_cfdriver_attach(&sysmon_cd);
-	if (error) {
-		aprint_error("%s: unable to attach cfdriver\n",
-		    sysmon_cd.cd_name);
-		return error;
-	}
-	error = config_cfattach_attach(sysmon_cd.cd_name, &sysmon_ca);
-	if (error) {
-		config_cfdriver_detach(&sysmon_cd);
-		aprint_error("%s: unable to attach cfattach\n",
-		    sysmon_cd.cd_name);
-		return error;
-	}
+	error = RUN_ONCE(&once_sm, sm_init_once);
 
 #ifdef _MODULE
-	bmajor = cmajor = -1;
-	error = devsw_attach("sysmon", NULL, &bmajor,
-			&sysmon_cdevsw, &cmajor);
-	if (error) {
-		config_cfattach_detach(sysmon_cd.cd_name, &sysmon_ca);
-		config_cfdriver_detach(&sysmon_cd);
-		aprint_error("%s: unable to attach devsw\n",
-		    sysmon_cd.cd_name);
-		return error;
+	mutex_enter(&sysmon_minor_mtx);
+	if (!sm_is_attached) {
+		bmajor = cmajor = -1;
+		error = devsw_attach("sysmon", NULL, &bmajor,
+				&sysmon_cdevsw, &cmajor);
+		sm_is_attached = (error != 0);
 	}
+	mutex_exit(&sysmon_minor_mtx);
 #endif
-
-	cf.cf_name = sysmon_cd.cd_name;
-	cf.cf_atname = sysmon_cd.cd_name; 
-	cf.cf_unit = 0;
-	cf.cf_fstate = FSTATE_STAR;
-	cf.cf_pspec = NULL;
-	cf.cf_loc = NULL;
-	cf.cf_flags = 0;
- 
-	sysmon_dev = config_attach_pseudo(&cf);
-	if (sysmon_dev == NULL) {
-		aprint_error("%s: failed to attach pseudo device\n",
-		    sysmon_cd.cd_name);
-		error = ENODEV;
-	}
-
-	if (!pmf_device_register(sysmon_dev, NULL, NULL))
-		aprint_error("%s: failed to register with pmf\n",
-		    sysmon_cd.cd_name);
 
 	return error;
 }
@@ -409,22 +343,19 @@ sysmon_fini(void)
 {
 	int error = 0;
 
-	if (sysmon_opvec_table[SYSMON_MINOR_ENVSYS] != NULL)
-		error = EBUSY;
-	else if (sysmon_opvec_table[SYSMON_MINOR_WDOG] != NULL)
-		error = EBUSY;
-	else if (sysmon_opvec_table[SYSMON_MINOR_POWER] != NULL)
+	if ((sysmon_opvec_table[SYSMON_MINOR_ENVSYS] != NULL) ||
+	    (sysmon_opvec_table[SYSMON_MINOR_WDOG] != NULL) ||
+	    (sysmon_opvec_table[SYSMON_MINOR_POWER] != NULL))
 		error = EBUSY;
 
-	else {
-		pmf_device_deregister(sysmon_dev);
-		config_detach(sysmon_dev, 0);
-		devsw_detach(NULL, &sysmon_cdevsw);
-		config_cfattach_detach(sysmon_cd.cd_name, &sysmon_ca);
-		config_cfdriver_detach(&sysmon_cd);
+#ifdef _MODULE
+	if (error == 0) {
+		mutex_enter(&sysmon_minor_mtx);
+		sm_is_attached = false;
+		error = devsw_detach(NULL, &sysmon_cdevsw);
+		mutex_exit(&sysmon_minor_mtx);
 	}
-	if (error == 0)
-		sysmon_dev = NULL;
+#endif
 
 	return error;
 }
