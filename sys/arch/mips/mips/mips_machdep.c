@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.262 2014/11/25 05:28:26 macallan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.263 2015/04/29 08:32:00 hikaru Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.262 2014/11/25 05:28:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.263 2015/04/29 08:32:00 hikaru Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -624,6 +624,30 @@ static const struct pridtab cputab[] = {
 	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(1,4)|MIPS_CIDFL_RMI_L2(256KB),
 	  "XLS104"		},
 
+	{ MIPS_PRID_CID_CAVIUM, MIPS_CN31XX, -1, -1, -1, 0,
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR,
+	  MIPS_CP0FL_USE |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG |
+	  MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 | MIPS_CP0FL_CONFIG3,
+	  0,
+	  "CN31xx"		},
+
+	{ MIPS_PRID_CID_CAVIUM, MIPS_CN30XX, -1, -1, -1, 0,
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR,
+	  MIPS_CP0FL_USE |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG |
+	  MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 | MIPS_CP0FL_CONFIG3,
+	  0,
+	  "CN30xx"		},
+
+	{ MIPS_PRID_CID_CAVIUM, MIPS_CN50XX, -1, -1, -1, 0,
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR,
+	  MIPS_CP0FL_USE |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG |
+	  MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 | MIPS_CP0FL_CONFIG3,
+	  0,
+	  "CN50xx"		},
+
 	/* Microsoft Research' extensible MIPS */
 	{ MIPS_PRID_CID_MICROSOFT, MIPS_eMIPS, 1, -1, CPU_ARCH_MIPS1, 64,
 	  CPU_MIPS_NO_WAIT, 0, 0,		"eMIPS CPU"		},
@@ -663,6 +687,7 @@ static const char * const cidnames[] = {
 	"(unannounced)",
 	"Lexra",
 	"RMI",
+	"Cavium",
 };
 #define	ncidnames __arraycount(cidnames)
 
@@ -1138,7 +1163,21 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		case MIPSNN_CFG_AR_REV1:
 			break;
 		case MIPSNN_CFG_AR_REV2:
-			opts->mips_cpu_arch += CPU_ARCH_MIPS32R2 - CPU_ARCH_MIPS32;
+			switch (opts->mips_cpu_arch) {
+			case CPU_ARCH_MIPS32:
+				opts->mips_cpu_arch = CPU_ARCH_MIPS32R2;
+				break;
+#ifdef notyet
+			case CPU_ARCH_MIPS64:
+				opts->mips_cpu_arch = CPU_ARCH_MIPS64R2;
+				break;
+#endif
+			default:
+				printf("WARNING: MIPS32/64 arch %d revision %d "
+				    "unknown!\n", opts->mips_cpu_arch,
+				    MIPSNN_GET(CFG_AR, cfg));
+				break;
+			}
 			break;
 		default:
 			printf("WARNING: MIPS32/64 arch revision %d "
@@ -1383,15 +1422,18 @@ cpu_identify(device_t dev)
 	const mips_prid_t cpu_id = opts->mips_cpu_id;
 	const mips_prid_t fpu_id = opts->mips_fpu_id;
 	static const char * const waynames[] = {
-		"fully set-associative",	/* 0 */
-		"direct-mapped",		/* 1 */
-		"2-way set-associative",	/* 2 */
-		NULL,				/* 3 */
-		"4-way set-associative",	/* 4 */
-		"5-way set-associative",	/* 5 */
-		"6-way set-associative",	/* 6 */
-		"7-way set-associative",	/* 7 */
-		"8-way set-associative",	/* 8 */
+		[0] = "fully set-associative",
+		[1] = "direct-mapped",
+		[2] = "2-way set-associative",
+		[3] = NULL,
+		[4] = "4-way set-associative",
+		[5] = "5-way set-associative",
+		[6] = "6-way set-associative",
+		[7] = "7-way set-associative",
+		[8] = "8-way set-associative",
+#ifdef MIPS64_OCTEON
+		[64] = "64-way set-associative",
+#endif
 	};
 #define	nwaynames (sizeof(waynames) / sizeof(waynames[0]))
 	static const char * const wtnames[] = {
