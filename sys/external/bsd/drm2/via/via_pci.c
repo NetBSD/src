@@ -1,4 +1,4 @@
-/*	$NetBSD: via_pci.c,v 1.1 2015/04/29 11:25:36 riastradh Exp $	*/
+/*	$NetBSD: via_pci.c,v 1.2 2015/04/29 12:30:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_pci.c,v 1.1 2015/04/29 11:25:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_pci.c,v 1.2 2015/04/29 12:30:43 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/pmf.h>
 #include <sys/systm.h>
 
 #include <linux/pci.h>
@@ -112,6 +113,9 @@ viadrm_attach(device_t parent, device_t self, void *aux)
 
 	KASSERT(cookiep != NULL);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	/* XXX errno Linux->NetBSD */
 	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, via_drm_driver,
 	    *cookiep, &sc->sc_drm_dev);
@@ -137,5 +141,6 @@ viadrm_detach(device_t self, int flags)
 	if (error)
 		return error;
 	sc->sc_drm_dev = NULL;
+	pmf_device_deregister(self);
 out:	return 0;
 }
