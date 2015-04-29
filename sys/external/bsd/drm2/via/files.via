@@ -1,16 +1,13 @@
-#	$NetBSD: files.via,v 1.1 2014/08/26 17:28:14 riastradh Exp $
+#	$NetBSD: files.via,v 1.2 2015/04/29 04:45:03 riastradh Exp $
 
-define	viafbbus	{ }
-device	viadrmums: drmkms, drmkms_pci, viafbbus
-attach	viadrmums at pci
-
-device	viafb: viafbbus, genfb, wsemuldisplaydev
-attach	viafb at viafbbus
+device	viadrmums
+attach	viadrmums at drmums_pci
 
 makeoptions	viadrmums	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/via"
 makeoptions	viadrmums	CPPFLAGS+="-I$S/external/bsd/drm2/via"
 
 makeoptions	viadrmums	"CWARNFLAGS.via_verifier.c"+="-Wno-shadow"
+makeoptions	viadrmums	"CWARNFLAGS.via_pci.c"+="-Wno-missing-field-initializers"
 
 file	external/bsd/drm2/dist/drm/via/via_dma.c		viadrmums
 file	external/bsd/drm2/dist/drm/via/via_dmablit.c		viadrmums
@@ -20,3 +17,5 @@ file	external/bsd/drm2/dist/drm/via/via_map.c		viadrmums
 file	external/bsd/drm2/dist/drm/via/via_mm.c			viadrmums
 file	external/bsd/drm2/dist/drm/via/via_verifier.c		viadrmums
 file	external/bsd/drm2/dist/drm/via/via_video.c		viadrmums
+
+file	external/bsd/drm2/via/via_pci.c				viadrmums
