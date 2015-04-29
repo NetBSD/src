@@ -116,10 +116,10 @@ int via_decoder_futex(struct drm_device *dev, void *data, struct drm_file *file_
 		return ret;
 	case VIA_FUTEX_WAKE:
 #ifdef __NetBSD__
-		mutex_lock(&dev_priv->decoder_lock[fx->lock]);
-		DRM_WAKEUP_ALL(&dev_priv->decoder_queue[fx->lock],
+		spin_lock(&dev_priv->decoder_lock[fx->lock]);
+		DRM_SPIN_WAKEUP_ALL(&dev_priv->decoder_queue[fx->lock],
 		    &dev_priv->decoder_lock[fx->lock]);
-		mutex_unlock(&dev_priv->decoder_lock[fx->lock]);
+		spin_unlock(&dev_priv->decoder_lock[fx->lock]);
 #else
 		wake_up(&(dev_priv->decoder_queue[fx->lock]));
 #endif
