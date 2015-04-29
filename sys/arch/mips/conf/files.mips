@@ -1,10 +1,11 @@
-#	$NetBSD: files.mips,v 1.72 2011/08/16 06:58:15 matt Exp $
+#	$NetBSD: files.mips,v 1.73 2015/04/29 08:32:00 hikaru Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
 				MIPS64_SB1
 				ENABLE_MIPS_16KB_PAGE
 				MIPS64_XLP MIPS64_XLR MIPS64_XLS
+				MIPS64_OCTEON
 					# and the rest...
 					# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
 					# MIPS3_LOONGSON2
@@ -69,6 +70,7 @@ file	arch/mips/mips/cache_r4k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k_subr.S		mips3 | mips4
 file	arch/mips/mips/cache_r10k.c	(mips3|mips4) & enable_mips4_cache_r10k
+file	arch/mips/mips/cache_octeon.c		mips64_octeon
 file	arch/mips/mips/cache_mipsNN.c		mips32|mips32r2|mips64|mips64r2
 
 file	arch/mips/mips/mips_fputrap.c		!nofpu | fpemul

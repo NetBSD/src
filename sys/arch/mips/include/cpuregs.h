@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.89 2014/11/22 15:02:39 macallan Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.90 2015/04/29 08:32:00 hikaru Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -966,6 +966,24 @@
 #define	MIPS_XLS204	0x8F	/* RMI XLS204	 		ISA 64  */
 #define	MIPS_XLS108	0xCE	/* RMI XLS108	 		ISA 64  */
 #define	MIPS_XLS104	0xCF	/* RMI XLS104	 		ISA 64  */
+
+/*
+ * CPU processor IDs for company ID == 13 (Cavium)
+ */
+#define	MIPS_CN38XX	0x00	/* Cavium Octeon CN38XX		ISA 64  */
+#define	MIPS_CN31XX	0x01	/* Cavium Octeon CN31XX		ISA 64  */
+#define	MIPS_CN30XX	0x02	/* Cavium Octeon CN30XX		ISA 64  */
+#define	MIPS_CN58XX	0x03	/* Cavium Octeon CN58XX		ISA 64  */
+#define	MIPS_CN56XX	0x04	/* Cavium Octeon CN56XX		ISA 64  */
+#define	MIPS_CN50XX	0x06	/* Cavium Octeon CN50XX		ISA 64  */
+#define	MIPS_CN52XX	0x07	/* Cavium Octeon CN52XX		ISA 64  */
+#define	MIPS_CN63XX	0x90	/* Cavium Octeon CN63XX		ISA 64  */
+#define	MIPS_CN68XX	0x91	/* Cavium Octeon CN68XX		ISA 64  */
+#define	MIPS_CN66XX	0x92	/* Cavium Octeon CN66XX		ISA 64  */
+#define	MIPS_CN61XX	0x93	/* Cavium Octeon CN61XX		ISA 64  */
+#define	MIPS_CNF71XX	0x94	/* Cavium Octeon CNF71XX	ISA 64  */
+#define	MIPS_CN78XX	0x95	/* Cavium Octeon CN78XX		ISA 64  */
+#define	MIPS_CN70XX	0x96	/* Cavium Octeon CN70XX		ISA 64  */
 
 /*
  * CPU processor revision IDs for company ID == 7 (Microsoft)
