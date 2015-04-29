@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms_pci,v 1.7 2015/04/29 11:28:32 riastradh Exp $
+#	$NetBSD: files.drmkms_pci,v 1.8 2015/04/29 11:37:31 riastradh Exp $
 
 # Attribute for kernel components supporting PCI-based real graphics
 # drivers, a.k.a. `KMS' (kernel mode-setting), as opposed to the legacy
@@ -20,4 +20,4 @@ file	external/bsd/drm2/pci/drmfb_pci.c		drmfb_pci
 include "external/bsd/drm2/i915drm/files.i915drmkms"
 include "external/bsd/drm2/radeon/files.radeon"
 include "external/bsd/drm2/nouveau/files.nouveau"
-#include "external/bsd/drm2/via/files.via"
+include "external/bsd/drm2/via/files.via"
