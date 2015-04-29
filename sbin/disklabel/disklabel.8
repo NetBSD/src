@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.64 2011/08/02 10:21:12 wiz Exp $
+.\"	$NetBSD: disklabel.8,v 1.65 2015/04/29 17:07:11 christos Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd July 25, 2011
+.Dd April 29, 2015
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -41,27 +41,37 @@
 .Sh SYNOPSIS
 .\" disklabel: read label
 .Nm
-.Op Fl ACDFrtv
+.Op Fl ACDFmrtv
+.Op Fl B Ar endian
+.Op Fl M Ar machine
 .Ar disk
 .\" disklabel -e: read/modify/write using $EDITOR
 .Nm
 .Fl e
-.Op Fl CDFIrv
+.Op Fl CDFImrv
+.Op Fl B Ar endian
+.Op Fl M Ar machine
 .Ar disk
 .\" disklabel -i: read/modify/write using builtin commands
 .Nm
 .Fl i
-.Op Fl DFIrv
+.Op Fl DFImrv
+.Op Fl B Ar endian
+.Op Fl M Ar machine
 .Ar disk
 .\" disklabel -R: write from edited output
 .Nm
 .Fl R
-.Op Fl DFrv
+.Op Fl DFmrv
+.Op Fl B Ar endian
+.Op Fl M Ar machine
 .Ar disk Ar protofile
 .\" disklabel -w: write from disctab entry
 .Nm
 .Fl w
-.Op Fl DFrv
+.Op Fl DFmrv
+.Op Fl B Ar endian
+.Op Fl M Ar machine
 .Op Fl f Ar disktab
 .Ar disk Ar disktype
 .Oo Ar packid Oc
@@ -126,6 +136,12 @@ Read all labels from the disk, including ones deleted with
 .Fl D .
 Implies
 .Fl r .
+.It Fl B Ar endian
+Specify the byteorder of the label to be written.
+It should be:
+.Dq be
+or
+.Dq le .
 .It Fl C
 Output the partition offset and size values in
 .Aq cylinder/head/sector
@@ -170,6 +186,11 @@ Implies
 .It Fl f Ar disktab
 Specify the name of a file to use instead of
 .Pa /etc/disktab .
+.It Fl M Ar machine
+Specify the machine to generate a label for.
+Defaults to the current machine it is compiled for.
+.It Fl m
+expect the label to have an MBR.
 .It Fl r
 Read/write the disk directly rather than using
 .Xr ioctl 2
