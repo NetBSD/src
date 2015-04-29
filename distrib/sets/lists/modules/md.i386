@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.60 2015/04/23 23:22:39 pgoyette Exp $
+# $NetBSD: md.i386,v 1.61 2015/04/29 23:27:45 riastradh Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -163,6 +163,8 @@
 ./@MODULEDIR@/viac7temp/viac7temp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/viadrm				base-kernel-modules	kmod
 ./@MODULEDIR@/viadrm/viadrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/viadrmums				base-kernel-modules	kmod
+./@MODULEDIR@/viadrmums/viadrmums.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/vmt				base-kernel-modules	kmod
 ./@MODULEDIR@/vmt/vmt.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/wbsio				base-kernel-modules	kmod
@@ -577,6 +579,8 @@
 ./stand/i386-xen/@OSRELEASE@/modules/viac7temp/viac7temp.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/viadrm				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/viadrm/viadrm.kmod			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/viadrmums				base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/viadrmums/viadrmums.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/vmt				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/vmt/vmt.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/vnd				base-kernel-modules	kmod,compatmodules
@@ -996,6 +1000,8 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/viac7temp/viac7temp.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/viadrm				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/viadrm/viadrm.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/viadrmums			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/viadrmums/viadrmums.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/vmt				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/vmt/vmt.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/vnd				base-kernel-modules	kmod,compatmodules
