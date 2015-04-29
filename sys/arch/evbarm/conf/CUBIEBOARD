@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.40 2015/04/20 00:09:48 matt Exp $
+#	$NetBSD: CUBIEBOARD,v 1.41 2015/04/29 19:05:51 martin Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -16,6 +16,10 @@ options 	ALLWINNER_A20
 options 	AWIN_CONSOLE_EARLY
 
 include		"arch/evbarm/conf/GENERIC.common"
+
+# u-boot images contain kernels w/o any symbols, so we need to copy
+# them over to kernel text
+makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
 options 	USB_DEBUG
