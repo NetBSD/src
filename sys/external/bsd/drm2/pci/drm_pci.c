@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.12 2015/03/06 13:44:18 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.13 2015/04/29 04:38:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.12 2015/03/06 13:44:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.13 2015/04/29 04:38:55 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -140,7 +140,7 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 			continue;
 		}
 
-		/* Inquire about it.  We'll map it in drm_ioremap.  */
+		/* Inquire about it.  We'll map it in drm_core_ioremap.  */
 		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, reg, type,
 			&bm->bm_base, &bm->bm_size, &bm->bm_flags) != 0) {
 			aprint_debug_dev(self, "map %u failed\n", unit);
