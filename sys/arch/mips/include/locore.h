@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.94 2014/11/22 15:02:39 macallan Exp $ */
+/* $NetBSD: locore.h,v 1.95 2015/04/29 08:32:00 hikaru Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -317,6 +317,39 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 }
 #endif	/* (MIPS3 + MIPS4 + MIPS64 + MIPS64R2) > 0 */
 
+#if (MIPS64 + MIPS64R2) > 0
+/* 64-bits address space accessor for n32, n64 ABI */
+
+static __inline uint64_t	mips64_ld_a64(uint64_t addr) __unused;
+static __inline void		mips64_sd_a64(uint64_t addr, uint64_t val) __unused;
+
+static __inline uint64_t
+mips64_ld_a64(uint64_t addr)
+{
+	uint64_t rv;
+#if defined(__mips_n32)
+	__asm volatile("ld	%0, 0(%1)" : "=r"(rv) : "d"(addr));
+#elif defined(_LP64)
+	rv = *(volatile uint64_t *)addr;
+#else
+#error unknown ABI
+#endif
+	return (rv);
+}
+
+static __inline void
+mips64_sd_a64(uint64_t addr, uint64_t val)
+{
+#if defined(__mips_n32)
+	__asm volatile("sd	%1, 0(%0)" :: "d"(addr), "r"(val));
+#elif defined(_LP64)
+	*(volatile uint64_t *)addr = val;
+#else
+#error unknown ABI
+#endif
+}
+#endif	/* (MIPS64 + MIPS64R2) > 0 */
+
 /*
  * A vector with an entry for each mips-ISA-level dependent
  * locore function, and macros which jump through it.
@@ -421,6 +454,7 @@ void	mips_page_physload(vaddr_t, vaddr_t,
 				/*	0x0a	unannounced */
 #define     MIPS_PRID_CID_LEXRA		0x0b	/* Lexra */
 #define     MIPS_PRID_CID_RMI		0x0c	/* RMI / NetLogic */
+#define     MIPS_PRID_CID_CAVIUM	0x0d	/* Cavium */
 #define     MIPS_PRID_CID_INGENIC	0xe1
 #define MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
 
