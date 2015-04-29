@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.146 2015/04/23 23:22:27 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.147 2015/04/29 12:52:05 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -237,6 +237,7 @@ SUBDIR+=	drmkms_pci
 SUBDIR+=	i915drm
 SUBDIR+=	i915drmkms
 SUBDIR+=	pad
+SUBDIR+=	viadrmums
 #
 # ISA modules
 #
