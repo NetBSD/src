@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.123 2015/04/28 15:15:53 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.124 2015/04/29 01:49:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.123 2015/04/28 15:15:53 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.124 2015/04/29 01:49:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,8 @@ union dinode {
 
 static void initcg(int, const struct timeval *);
 static int fsinit(const struct timeval *, mode_t, uid_t, gid_t);
-static int makedir(struct direct *, int);
+union Buffer;
+static int makedir(union Buffer *, struct direct *, int);
 static daddr_t alloc(int, int);
 static void iput(union dinode *, ino_t);
 static void rdfs(daddr_t, int, void *);
@@ -199,9 +200,9 @@ mkfs(const char *fsys, int fi, int fo,
 			exit(12);
 	}
 #endif
-	if ((fsun = mkfs_malloc(sizeof(*fsun))) == NULL)
+	if ((fsun = calloc(1, sizeof(*fsun))) == NULL)
 		exit(12);
-	if ((cgun = mkfs_malloc(sizeof(*cgun))) == NULL)
+	if ((cgun = calloc(1, sizeof(*cgun))) == NULL)
 		exit(12);
 
 	fsi = fi;
@@ -1054,12 +1055,12 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 	 */
 	memset(&node, 0, sizeof(node));
 	if (Oflag == 0) {
-		(void)makedir((struct direct *)olost_found_dir, 2);
+		(void)makedir(&buf, (struct direct *)olost_found_dir, 2);
 		for (i = dirblksiz; i < sblock.fs_bsize; i += dirblksiz)
 			copy_dir((struct direct*)&olost_found_dir[2],
 				(struct direct*)&buf[i]);
 	} else {
-		(void)makedir(lost_found_dir, 2);
+		(void)makedir(&buf, lost_found_dir, 2);
 		for (i = dirblksiz; i < sblock.fs_bsize; i += dirblksiz)
 			copy_dir(&lost_found_dir[2], (struct direct*)&buf[i]);
 	}
@@ -1125,10 +1126,10 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		}
 		node.dp1.di_nlink = PREDEFDIR;
 		if (Oflag == 0)
-			node.dp1.di_size = makedir((struct direct *)oroot_dir,
-			    PREDEFDIR);
+			node.dp1.di_size = makedir(&buf, 
+			    (struct direct *)oroot_dir, PREDEFDIR);
 		else
-			node.dp1.di_size = makedir(root_dir, PREDEFDIR);
+			node.dp1.di_size = makedir(&buf, root_dir, PREDEFDIR);
 		node.dp1.di_db[0] = alloc(sblock.fs_fsize, node.dp1.di_mode);
 		if (node.dp1.di_db[0] == 0)
 			return (0);
@@ -1155,7 +1156,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.dp2.di_birthtime = tv->tv_sec;
 		node.dp2.di_birthnsec = tv->tv_usec * 1000;
 		node.dp2.di_nlink = PREDEFDIR;
-		node.dp2.di_size = makedir(root_dir, PREDEFDIR);
+		node.dp2.di_size = makedir(&buf, root_dir, PREDEFDIR);
 		node.dp2.di_db[0] = alloc(sblock.fs_fsize, node.dp2.di_mode);
 		if (node.dp2.di_db[0] == 0)
 			return (0);
@@ -1260,18 +1261,17 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
  * return size of directory.
  */
 int
-makedir(struct direct *protodir, int entries)
+makedir(union Buffer *buf, struct direct *protodir, int entries)
 {
 	char *cp;
-	union Buffer buf;
 	int i, spcleft;
 	int dirblksiz = UFS_DIRBLKSIZ;
 	if (isappleufs)
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
 
-	memset(&buf, 0, UFS_DIRBLKSIZ);
+	memset(buf, 0, dirblksiz);
 	spcleft = dirblksiz;
-	for (cp = buf.data, i = 0; i < entries - 1; i++) {
+	for (cp = buf->data, i = 0; i < entries - 1; i++) {
 		protodir[i].d_reclen = UFS_DIRSIZ(Oflag == 0, &protodir[i], 0);
 		copy_dir(&protodir[i], (struct direct*)cp);
 		cp += protodir[i].d_reclen;
