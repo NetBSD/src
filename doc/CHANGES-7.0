@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.274 2015/04/30 14:02:09 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.275 2015/04/30 19:43:53 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22724,4 +22724,35 @@ libexec/ftpd/ftpd.c                             up to 1.201
 	on demand to mitigate abuse, and related changes to system daemons
 	to support it. Also updated OpenSSH to version 6.8.
 	[christos, ticket #711]
+
+sys/dev/mii/rgephy.c				1.39
+sys/dev/mii/rgephyreg.h				1.8
+
+	When resetting RTL8211F, make sure to disable manual MDI mode.
+	[jmcneill, ticket #722]
+
+sys/arch/x86/pci/ichlpcib.c			1.47-1.48
+sys/dev/pci/ichsmb.c				1.39-1.41
+sys/dev/pci/pucdata.c				1.94
+
+	Add Some Intel 9 Series, C61x and Mobile 5th Gen. Core support
+	to ichlpcib(4), ichsmb(4) and puc(4).
+	[msaitoh, ticket #725]
+
+sys/arch/arm/amlogic/amlogic_crureg.h		1.9, 1.10
+sys/arch/arm/amlogic/amlogic_gpio.c		1.1
+sys/arch/arm/amlogic/amlogic_io.c		1.11
+sys/arch/arm/amlogic/amlogic_reg.h		1.11
+sys/arch/arm/amlogic/files.amlogic		1.12
+sys/arch/evbarm/conf/ODROID-C1			1.18
+
+	Add Amlogic GPIO driver.
+	[jmcneill, ticket #723]
+
+external/bsd/blacklist/bin/blacklistctl.8	1.7
+external/bsd/blacklist/bin/blacklistd.8		1.11
+external/bsd/blacklist/bin/blacklistd.conf.5	1.3
+
+	blacklistd and friends will actually be in NetBSD 7.
+	[riz, ticket #726]
 
