@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.35.4.2 2015/03/21 16:58:31 snj Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.35.4.3 2015/04/30 19:15:10 snj Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.35.4.2 2015/03/21 16:58:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.35.4.3 2015/04/30 19:15:10 snj Exp $");
 
 
 /*
@@ -619,7 +619,7 @@ rgephy_load_dspcode(struct mii_softc *sc)
 static void
 rgephy_reset(struct mii_softc *sc)
 {
-	uint16_t ssr;
+	uint16_t ssr, phycr1;
 
 	mii_phy_reset(sc);
 	DELAY(1000);
@@ -633,6 +633,13 @@ rgephy_reset(struct mii_softc *sc)
 		if ((ssr & RGEPHY_SSR_ALDPS) != 0) {
 			ssr &= ~RGEPHY_SSR_ALDPS;
 			PHY_WRITE(sc, RGEPHY_MII_SSR, ssr);
+		}
+	} else if (sc->mii_mpd_rev == 6) {
+		/* RTL8211F */
+		phycr1 = PHY_READ(sc, RGEPHY_MII_PHYCR1);
+		if ((phycr1 & RGEPHY_PHYCR1_MDI_MMCE) != 0) {
+			phycr1 &= ~RGEPHY_PHYCR1_MDI_MMCE;
+			PHY_WRITE(sc, RGEPHY_MII_PHYCR1, phycr1);
 		}
 	} else {
 		PHY_WRITE(sc, 0x1F, 0x0000);
