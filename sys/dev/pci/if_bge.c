@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.283 2015/04/27 17:42:20 christos Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.284 2015/04/30 15:48:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.283 2015/04/27 17:42:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.284 2015/04/30 15:48:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -740,6 +740,7 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5761_A1, "BCM5761 A1" },
 	{ BGE_CHIPID_BCM5784_A0, "BCM5784 A0" },
 	{ BGE_CHIPID_BCM5784_A1, "BCM5784 A1" },
+	{ BGE_CHIPID_BCM5784_B0, "BCM5784 B0" },
 	/* 5754 and 5787 share the same ASIC ID */
 	{ BGE_CHIPID_BCM5787_A0, "BCM5754/5787 A0" },
 	{ BGE_CHIPID_BCM5787_A1, "BCM5754/5787 A1" },
