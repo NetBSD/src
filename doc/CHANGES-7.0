@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.273 2015/04/30 06:22:52 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.274 2015/04/30 14:02:09 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22653,6 +22653,7 @@ distrib/sets/lists/debug/md.sparc64		patch
 distrib/sets/lists/debug/shl.mi			patch
 distrib/sets/lists/etc/mi			patch
 distrib/sets/lists/man/mi			patch
+doc/3RDPARTY					patch
 etc/defaults/rc.conf				1.130
 etc/mtree/NetBSD.dist.base			1.142
 external/bsd/Makefile                           up to 1.48
@@ -22721,6 +22722,6 @@ libexec/ftpd/ftpd.c                             up to 1.201
 
 	Add blacklistd(8), a daemon to block and release network ports
 	on demand to mitigate abuse, and related changes to system daemons
-	to support it.
+	to support it. Also updated OpenSSH to version 6.8.
 	[christos, ticket #711]
 
