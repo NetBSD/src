@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.162.4.20 2015/04/26 09:03:12 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.162.4.21 2015/04/30 20:00:26 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.20 2015/04/26 09:03:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.21 2015/04/30 20:00:26 snj Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -176,7 +176,7 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #define	WM_NEXTTX(sc, x)	(((x) + 1) & WM_NTXDESC_MASK(sc))
 #define	WM_NEXTTXS(sc, x)	(((x) + 1) & WM_TXQUEUELEN_MASK(sc))
 
-#define	WM_MAXTXDMA		round_page(IP_MAXPACKET) /* for TSO */
+#define	WM_MAXTXDMA		 (2 * round_page(IP_MAXPACKET)) /* for TSO */
 
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
@@ -273,6 +273,7 @@ struct wm_softc {
 	int sc_pcixe_capoff;		/* PCI[Xe] capability register offset */
 
 	const struct wm_product *sc_wmp; /* Pointer to the wm_product entry */
+	uint16_t sc_pcidevid;		/* PCI device ID */
 	wm_chip_type sc_type;		/* MAC type */
 	int sc_rev;			/* MAC revision */
 	wm_phy_type sc_phytype;		/* PHY type */
@@ -285,7 +286,8 @@ struct wm_softc {
 	void *sc_ih;			/* interrupt cookie */
 	callout_t sc_tick_ch;		/* tick callout */
 
-	int sc_ee_addrbits;		/* EEPROM address bits */
+	int sc_nvm_addrbits;		/* NVM address bits */
+	unsigned int sc_nvm_wordsize;		/* NVM word size */
 	int sc_ich8_flash_base;
 	int sc_ich8_flash_bank_size;
 	int sc_nvm_k1_enabled;
@@ -383,8 +385,6 @@ struct wm_softc {
 	int sc_tbi_linkup;		/* TBI link status */
 	int sc_tbi_anegticks;		/* autonegotiation ticks */
 	int sc_tbi_ticks;		/* tbi ticks */
-	int sc_tbi_nrxcfg;		/* count of ICR_RXCFG */
-	int sc_tbi_lastnrxcfg;		/* count of ICR_RXCFG (on last tick) */
 
 	int sc_mchash_type;		/* multicast filter offset */
 
@@ -520,7 +520,7 @@ static int	wm_add_rxbuf(struct wm_softc *, int);
 static int	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_read_eeprom_eerd(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_validate_eeprom_checksum(struct wm_softc *);
-static int	wm_check_alt_mac_addr(struct wm_softc *);
+static uint16_t	wm_check_alt_mac_addr(struct wm_softc *);
 static int	wm_read_mac_addr(struct wm_softc *, uint8_t *);
 static void	wm_tick(void *);
 
@@ -553,11 +553,13 @@ static int	wm_gmii_hv_readreg(device_t, int, int);
 static void	wm_gmii_hv_writereg(device_t, int, int, int);
 static int	wm_gmii_82580_readreg(device_t, int, int);
 static void	wm_gmii_82580_writereg(device_t, int, int, int);
+static bool	wm_sgmii_uses_mdio(struct wm_softc *);
 static int	wm_sgmii_readreg(device_t, int, int);
 static void	wm_sgmii_writereg(device_t, int, int, int);
 
 static void	wm_gmii_statchg(device_t);
 
+static int	wm_get_phy_id_82575(struct wm_softc *);
 static void	wm_gmii_mediainit(struct wm_softc *, pci_product_id_t);
 static int	wm_gmii_mediachange(struct ifnet *);
 static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -565,7 +567,7 @@ static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 static int	wm_kmrn_readreg(struct wm_softc *, int);
 static void	wm_kmrn_writereg(struct wm_softc *, int, int);
 
-static void	wm_set_spiaddrbits(struct wm_softc *);
+static int	wm_nvm_set_addrbits_size_eecd(struct wm_softc *);
 static int	wm_match(device_t, cfdata_t, void *);
 static void	wm_attach(device_t, device_t, void *);
 static int	wm_detach(device_t, int);
@@ -573,6 +575,7 @@ static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
 static void	wm_get_auto_rd_done(struct wm_softc *);
 static void	wm_lan_init_done(struct wm_softc *);
 static void	wm_get_cfg_done(struct wm_softc *);
+static void	wm_initialize_hardware_bits(struct wm_softc *);
 static int	wm_get_swsm_semaphore(struct wm_softc *);
 static void	wm_put_swsm_semaphore(struct wm_softc *);
 static int	wm_poll_eerd_eewr_done(struct wm_softc *, int);
@@ -580,6 +583,8 @@ static int	wm_get_swfw_semaphore(struct wm_softc *, uint16_t);
 static void	wm_put_swfw_semaphore(struct wm_softc *, uint16_t);
 static int	wm_get_swfwhw_semaphore(struct wm_softc *);
 static void	wm_put_swfwhw_semaphore(struct wm_softc *);
+static int	wm_get_hw_semaphore_82573(struct wm_softc *);
+static void	wm_put_hw_semaphore_82573(struct wm_softc *);
 
 static int	wm_read_eeprom_ich8(struct wm_softc *, int, int, uint16_t *);
 static int32_t	wm_ich8_cycle_init(struct wm_softc *);
@@ -797,13 +802,13 @@ static const struct wm_product {
 	  "Intel PRO/1000 QT (82571EB)",
 	  WM_T_82571,		WMP_F_1000T },
 
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
-	  "Intel i82572EI 1000baseT Ethernet",
-	  WM_T_82572,		WMP_F_1000T },
-
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
 	  "Intel PRO/1000 PT Quad Port Server Adapter",
 	  WM_T_82571,		WMP_F_1000T, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
+	  "Intel i82572EI 1000baseT Ethernet",
+	  WM_T_82572,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
 	  "Intel i82572EI 1000baseX Ethernet",
@@ -1009,15 +1014,14 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_COPPER_DUAL,
 	  "82580 dual-1000BaseT Ethernet",
 	  WM_T_82580,		WMP_F_1000T },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_ER,
-	  "82580 1000BaseT Ethernet",
-	  WM_T_82580ER,		WMP_F_1000T },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_ER_DUAL,
-	  "82580 dual-1000BaseT Ethernet",
-	  WM_T_82580ER,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_QUAD_FIBER,
 	  "82580 quad-1000BaseX Ethernet",
 	  WM_T_82580,		WMP_F_1000X },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_DH89XXCC_SGMII,
+	  "DH89XXCC Gigabit Ethernet (SGMII)",
+	  WM_T_82580,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_COPPER,
 	  "I350 Gigabit Network Connection",
 	  WM_T_I350,		WMP_F_1000T },
@@ -1032,6 +1036,9 @@ static const struct wm_product {
 	  "I350 Gigabit Connection",
 	  WM_T_I350,		WMP_F_1000T },
 #endif
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_C2000_SGMII,
+	  "I354 Gigabit Connection",
+	  WM_T_I354,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_T1,
 	  "I210-T1 Ethernet Server Adapter",
 	  WM_T_I210,		WMP_F_1000T },
@@ -1064,7 +1071,19 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_V,
 	  "I218 V Ethernet Connection",
 	  WM_T_PCH_LPT,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_V2,
+	  "I218 V Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_V3,
+	  "I218 V Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM,
+	  "I218 LM Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM2,
+	  "I218 LM Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM3,
 	  "I218 LM Ethernet Connection",
 	  WM_T_PCH_LPT,		WMP_F_1000T },
 	{ 0,			0,
@@ -1126,14 +1145,68 @@ wm_set_dma_addr(volatile wiseman_addr_t *wa, bus_addr_t v)
 		wa->wa_high = 0;
 }
 
-static void
-wm_set_spiaddrbits(struct wm_softc *sc)
+/*
+ * Set SPI and FLASH related information from the EECD register.
+ * For 82541 and 82547, the word size is taken from EEPROM.
+ */
+static int
+wm_nvm_set_addrbits_size_eecd(struct wm_softc *sc)
 {
+	int size;
 	uint32_t reg;
+	uint16_t data;
 
-	sc->sc_flags |= WM_F_EEPROM_SPI;
 	reg = CSR_READ(sc, WMREG_EECD);
-	sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
+	sc->sc_nvm_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
+
+	/* Read the size of NVM from EECD by default */
+	size = __SHIFTOUT(reg, EECD_EE_SIZE_EX_MASK);
+	switch (sc->sc_type) {
+	case WM_T_82541:
+	case WM_T_82541_2:
+	case WM_T_82547:
+	case WM_T_82547_2:
+		/* Set dummy value to access EEPROM */
+		sc->sc_nvm_wordsize = 64;
+		wm_read_eeprom(sc, NVM_OFF_EEPROM_SIZE, 1, &data);
+		reg = data;
+		size = __SHIFTOUT(reg, EECD_EE_SIZE_EX_MASK);
+		if (size == 0)
+			size = 6; /* 64 word size */
+		else
+			size += NVM_WORD_SIZE_BASE_SHIFT + 1;
+		break;
+	case WM_T_80003:
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573: /* SPI case */
+	case WM_T_82574: /* SPI case */
+	case WM_T_82583: /* SPI case */
+		size += NVM_WORD_SIZE_BASE_SHIFT;
+		if (size > 14)
+			size = 14;
+		break;
+	case WM_T_82575:
+	case WM_T_82576:
+	case WM_T_82580:
+	case WM_T_I350:
+	case WM_T_I354:
+	case WM_T_I210:
+	case WM_T_I211:
+		size += NVM_WORD_SIZE_BASE_SHIFT;
+		if (size > 15)
+			size = 15;
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev,
+		    "%s: unknown device(%d)?\n", __func__, sc->sc_type);
+		return -1;
+		break;
+	}
+
+	sc->sc_nvm_wordsize = 1 << size;
+
+	return 0;
 }
 
 static const struct wm_product *
@@ -1183,6 +1256,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	uint16_t cfg1, cfg2, swdpin, io3;
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
+	bool force_clear_smbi;
 	uint32_t reg;
 
 	sc->sc_dev = self;
@@ -1202,6 +1276,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_dmat = pa->pa_dmat;
 
+	sc->sc_pcidevid = PCI_PRODUCT(pa->pa_id);
 	sc->sc_rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
 	aprint_naive(": Ethernet controller\n");
 	aprint_normal(": %s, rev. %d\n", wmp->wmp_name, sc->sc_rev);
@@ -1218,9 +1293,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
-	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210)
-	    || (sc->sc_type == WM_T_I211))
+	    || (sc->sc_type == WM_T_82580)
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
+	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211))
 		sc->sc_flags |= WM_F_NEWQUEUE;
 
 	/* Set device properties (mactype) */
@@ -1252,8 +1327,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 		    "unable to map device registers\n");
 		return;
 	}
-
-	wm_get_wakeup(sc);
 
 	/*
 	 * In addition, i82544 and later support I/O mapped indirect
@@ -1336,8 +1409,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if ((sc->sc_type == WM_T_82546) || (sc->sc_type == WM_T_82546_3)
 	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
 	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
-	    || (sc->sc_type == WM_T_I350))
+	    || (sc->sc_type == WM_T_82580)
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
 		sc->sc_funcid = (CSR_READ(sc, WMREG_STATUS)
 		    >> STATUS_FUNCID_SHIFT) & STATUS_FUNCID_MASK;
 	else
@@ -1372,7 +1445,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 		    && (sc->sc_type != WM_T_PCH)
 		    && (sc->sc_type != WM_T_PCH2)
 		    && (sc->sc_type != WM_T_PCH_LPT)) {
-			sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 			/* ICH* and PCH* have no PCIe capability registers */
 			if (pci_get_capability(pa->pa_pc, pa->pa_tag,
 				PCI_CAP_PCIEXPRESS, &sc->sc_pcixe_capoff,
@@ -1549,26 +1621,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	wm_reset(sc);
 
-	switch (sc->sc_type) {
-	case WM_T_82571:
-	case WM_T_82572:
-	case WM_T_82573:
-	case WM_T_82574:
-	case WM_T_82583:
-	case WM_T_80003:
-	case WM_T_ICH8:
-	case WM_T_ICH9:
-	case WM_T_ICH10:
-	case WM_T_PCH:
-	case WM_T_PCH2:
-	case WM_T_PCH_LPT:
-		if (wm_check_mng_mode(sc) != 0)
-			wm_get_hw_control(sc);
-		break;
-	default:
-		break;
-	}
-
 	/*
 	 * Get some information about the EEPROM.
 	 */
@@ -1578,7 +1630,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82543:
 	case WM_T_82544:
 		/* Microwire */
-		sc->sc_ee_addrbits = 6;
+		sc->sc_nvm_wordsize = 64;
+		sc->sc_nvm_addrbits = 6;
 		break;
 	case WM_T_82540:
 	case WM_T_82545:
@@ -1587,51 +1640,70 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82546_3:
 		/* Microwire */
 		reg = CSR_READ(sc, WMREG_EECD);
-		if (reg & EECD_EE_SIZE)
-			sc->sc_ee_addrbits = 8;
-		else
-			sc->sc_ee_addrbits = 6;
+		if (reg & EECD_EE_SIZE) {
+			sc->sc_nvm_wordsize = 256;
+			sc->sc_nvm_addrbits = 8;
+		} else {
+			sc->sc_nvm_wordsize = 64;
+			sc->sc_nvm_addrbits = 6;
+		}
 		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 		break;
 	case WM_T_82541:
 	case WM_T_82541_2:
 	case WM_T_82547:
 	case WM_T_82547_2:
+		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 		reg = CSR_READ(sc, WMREG_EECD);
 		if (reg & EECD_EE_TYPE) {
 			/* SPI */
-			wm_set_spiaddrbits(sc);
-		} else
+			sc->sc_flags |= WM_F_EEPROM_SPI;
+			wm_nvm_set_addrbits_size_eecd(sc);
+		} else {
 			/* Microwire */
-			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 8 : 6;
-		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
+			if ((reg & EECD_EE_ABITS) != 0) {
+				sc->sc_nvm_wordsize = 256;
+				sc->sc_nvm_addrbits = 8;
+			} else {
+				sc->sc_nvm_wordsize = 64;
+				sc->sc_nvm_addrbits = 6;
+			}
+		}
 		break;
 	case WM_T_82571:
 	case WM_T_82572:
 		/* SPI */
-		wm_set_spiaddrbits(sc);
+		sc->sc_flags |= WM_F_EEPROM_SPI;
+		wm_nvm_set_addrbits_size_eecd(sc);
+		sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 		break;
 	case WM_T_82573:
+		sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
+		/* FALLTHROUGH */
 	case WM_T_82574:
 	case WM_T_82583:
-		if (wm_is_onboard_nvm_eeprom(sc) == 0)
+		if (wm_is_onboard_nvm_eeprom(sc) == 0) {
 			sc->sc_flags |= WM_F_EEPROM_FLASH;
-		else {
+			sc->sc_nvm_wordsize = 2048;
+		} else {
 			/* SPI */
-			wm_set_spiaddrbits(sc);
+			sc->sc_flags |= WM_F_EEPROM_SPI;
+			wm_nvm_set_addrbits_size_eecd(sc);
 		}
 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
 		break;
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_80003:
 		/* SPI */
-		wm_set_spiaddrbits(sc);
-		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_SWFW_SYNC;
+		sc->sc_flags |= WM_F_EEPROM_SPI;
+		wm_nvm_set_addrbits_size_eecd(sc);
+		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_SWFW_SYNC
+		    | WM_F_EEPROM_SEMAPHORE;
 		break;
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -1641,12 +1713,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_PCH_LPT:
 		/* FLASH */
 		sc->sc_flags |= WM_F_EEPROM_FLASH | WM_F_SWFWHW_SYNC;
+		sc->sc_nvm_wordsize = 2048;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_ICH8_FLASH);
 		if (pci_mapreg_map(pa, WM_ICH8_FLASH, memtype, 0,
 		    &sc->sc_flasht, &sc->sc_flashh, NULL, NULL)) {
 			aprint_error_dev(sc->sc_dev,
 			    "can't map FLASH registers\n");
-			return;
+			goto fail_5;
 		}
 		reg = ICH8_FLASH_READ32(sc, ICH_FLASH_GFPREG);
 		sc->sc_ich8_flash_base = (reg & ICH_GFPREG_BASE_MASK) *
@@ -1660,11 +1733,40 @@ wm_attach(device_t parent, device_t self, void *aux)
 		break;
 	case WM_T_I210:
 	case WM_T_I211:
+		wm_nvm_set_addrbits_size_eecd(sc);
 		sc->sc_flags |= WM_F_EEPROM_FLASH_HW;
 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_SWFW_SYNC;
 		break;
 	default:
 		break;
+	}
+
+	/* Ensure the SMBI bit is clear before first NVM or PHY access */
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+		reg = CSR_READ(sc, WMREG_SWSM2);
+		if ((reg & SWSM2_LOCK) == 0) {
+			CSR_WRITE(sc, WMREG_SWSM2, reg | SWSM2_LOCK);
+			force_clear_smbi = true;
+		} else
+			force_clear_smbi = false;
+		break;
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+		force_clear_smbi = true;
+		break;
+	default:
+		force_clear_smbi = false;
+		break;
+	}
+	if (force_clear_smbi) {
+		reg = CSR_READ(sc, WMREG_SWSM);
+		if ((reg & SWSM_SMBI) != 0)
+			aprint_error_dev(sc->sc_dev,
+			    "Please update the Bootagent\n");
+		CSR_WRITE(sc, WMREG_SWSM, reg & ~SWSM_SMBI);
 	}
 
 	/*
@@ -1690,21 +1792,43 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
 		aprint_verbose_dev(sc->sc_dev, "No EEPROM\n");
-	else if (sc->sc_flags & WM_F_EEPROM_FLASH_HW) {
-		aprint_verbose_dev(sc->sc_dev, "FLASH(HW)\n");
-	} else if (sc->sc_flags & WM_F_EEPROM_FLASH) {
-		aprint_verbose_dev(sc->sc_dev, "FLASH\n");
-	} else {
-		if (sc->sc_flags & WM_F_EEPROM_SPI)
-			eetype = "SPI";
-		else
-			eetype = "MicroWire";
-		aprint_verbose_dev(sc->sc_dev,
-		    "%u word (%d address bits) %s EEPROM\n",
-		    1U << sc->sc_ee_addrbits,
-		    sc->sc_ee_addrbits, eetype);
+	else {
+		aprint_verbose_dev(sc->sc_dev, "%u words ",
+		    sc->sc_nvm_wordsize);
+		if (sc->sc_flags & WM_F_EEPROM_FLASH_HW) {
+			aprint_verbose("FLASH(HW)\n");
+		} else if (sc->sc_flags & WM_F_EEPROM_FLASH) {
+			aprint_verbose("FLASH\n");
+		} else {
+			if (sc->sc_flags & WM_F_EEPROM_SPI)
+				eetype = "SPI";
+			else
+				eetype = "MicroWire";
+			aprint_verbose("(%d address bits) %s EEPROM\n",
+			    sc->sc_nvm_addrbits, eetype);
+		}
 	}
 
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+	case WM_T_80003:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+	case WM_T_PCH:
+	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
+		if (wm_check_mng_mode(sc) != 0)
+			wm_get_hw_control(sc);
+		break;
+	default:
+		break;
+	}
+	wm_get_wakeup(sc);
 	/*
 	 * Read the Ethernet address from the EEPROM, if not first found
 	 * in device properties.
@@ -1718,7 +1842,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		if (wm_read_mac_addr(sc, enaddr) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to read Ethernet address\n");
-			return;
+			goto fail_5;
 		}
 	}
 
@@ -1736,7 +1860,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (wm_read_eeprom(sc, EEPROM_OFF_CFG1, 1, &cfg1)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG1\n");
-			return;
+			goto fail_5;
 		}
 	}
 
@@ -1747,7 +1871,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &cfg2)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG2\n");
-			return;
+			goto fail_5;
 		}
 	}
 
@@ -1780,8 +1904,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354: /* XXX ok? */
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
@@ -1816,7 +1940,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 			if (wm_read_eeprom(sc, EEPROM_OFF_SWDPIN, 1, &swdpin)) {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to read SWDPIN\n");
-				return;
+				goto fail_5;
 			}
 		}
 	}
@@ -1906,22 +2030,31 @@ wm_attach(device_t parent, device_t self, void *aux)
 		case WM_T_82575:
 		case WM_T_82576:
 		case WM_T_82580:
-		case WM_T_82580ER:
 		case WM_T_I350:
+		case WM_T_I354:
 		case WM_T_I210:
 		case WM_T_I211:
 			reg = CSR_READ(sc, WMREG_CTRL_EXT);
 			switch (reg & CTRL_EXT_LINK_MODE_MASK) {
-			case CTRL_EXT_LINK_MODE_SGMII:
-				aprint_verbose_dev(sc->sc_dev, "SGMII\n");
-				sc->sc_flags |= WM_F_SGMII;
+			case CTRL_EXT_LINK_MODE_1000KX:
+				aprint_verbose_dev(sc->sc_dev, "1000KX\n");
 				CSR_WRITE(sc, WMREG_CTRL_EXT,
 				    reg | CTRL_EXT_I2C_ENA);
-				wm_gmii_mediainit(sc, wmp->wmp_product);
+				panic("not supported yet\n");
 				break;
-			case CTRL_EXT_LINK_MODE_1000KX:
+			case CTRL_EXT_LINK_MODE_SGMII:
+				if (wm_sgmii_uses_mdio(sc)) {
+					aprint_verbose_dev(sc->sc_dev,
+					    "SGMII(MDIO)\n");
+					sc->sc_flags |= WM_F_SGMII;
+					wm_gmii_mediainit(sc,
+					    wmp->wmp_product);
+					break;
+				}
+				aprint_verbose_dev(sc->sc_dev, "SGMII(I2C)\n");
+				/*FALLTHROUGH*/
 			case CTRL_EXT_LINK_MODE_PCIE_SERDES:
-				aprint_verbose_dev(sc->sc_dev, "1000KX or SERDES\n");
+				aprint_verbose_dev(sc->sc_dev, "SERDES\n");
 				CSR_WRITE(sc, WMREG_CTRL_EXT,
 				    reg | CTRL_EXT_I2C_ENA);
 				panic("not supported yet\n");
@@ -1972,8 +2105,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354: /* XXXX ok? */
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
@@ -2116,6 +2249,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	else
 		pmf_class_network_register(self, ifp);
 
+	sc->sc_flags |= WM_F_ATTACHED;
 	return;
 
 	/*
@@ -2152,6 +2286,9 @@ wm_detach(device_t self, int flags __unused)
 	struct wm_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, s;
+
+	if ((sc->sc_flags & WM_F_ATTACHED) == 0)
+		return 0;
 
 	s = splnet();
 	/* Stop the interface. Callouts are stopped in it. */
@@ -3517,7 +3654,7 @@ wm_intr(void *arg)
 #endif
 		wm_txintr(sc);
 
-		if (icr & (ICR_LSC|ICR_RXSEQ|ICR_RXCFG)) {
+		if (icr & (ICR_LSC|ICR_RXSEQ)) {
 			WM_EVCNT_INCR(&sc->sc_ev_linkintr);
 			wm_linkintr(sc, icr);
 		}
@@ -3736,7 +3873,8 @@ wm_rxintr(struct wm_softc *sc)
 		 * For an eratta, the RCTL_SECRC bit in RCTL register
 		 * is always set in I350, so we don't trim it.
 		 */
-		if ((sc->sc_type != WM_T_I350) && (sc->sc_type != WM_T_I210)
+		if ((sc->sc_type != WM_T_I350) && (sc->sc_type != WM_T_I354)
+		    && (sc->sc_type != WM_T_I210)
 		    && (sc->sc_type != WM_T_I211)) {
 			if (m->m_len < ETHER_CRC_LEN) {
 				sc->sc_rxtail->m_len
@@ -3787,6 +3925,7 @@ wm_rxintr(struct wm_softc *sc)
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
 		 */
+		/* XXXX should check for i350 and i354 */
 		if ((status & WRX_ST_VP) != 0) {
 			VLAN_INPUT_TAG(ifp, m,
 			    le16toh(vlantag),
@@ -3970,11 +4109,6 @@ wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 			sc->sc_tbi_linkup = 0;
 		}
 		wm_tbi_set_linkled(sc);
-	} else if (icr & ICR_RXCFG) {
-		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: receiving /C/\n",
-		    device_xname(sc->sc_dev)));
-		sc->sc_tbi_nrxcfg++;
-		wm_check_for_link(sc);
 	} else if (icr & ICR_RXSEQ) {
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: Receive sequence error\n",
@@ -4040,6 +4174,200 @@ wm_tick(void *arg)
 	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 }
 
+/* Init hardware bits */
+void
+wm_initialize_hardware_bits(struct wm_softc *sc)
+{
+	uint32_t tarc0, tarc1, reg;
+	
+	/* For 82571 variant, 80003 and ICHs */
+	if (((sc->sc_type >= WM_T_82571) && (sc->sc_type <= WM_T_82583))
+	    || (sc->sc_type >= WM_T_80003)) {
+
+		/* Transmit Descriptor Control 0 */
+		reg = CSR_READ(sc, WMREG_TXDCTL(0));
+		reg |= TXDCTL_COUNT_DESC;
+		CSR_WRITE(sc, WMREG_TXDCTL(0), reg);
+
+		/* Transmit Descriptor Control 1 */
+		reg = CSR_READ(sc, WMREG_TXDCTL(1));
+		reg |= TXDCTL_COUNT_DESC;
+		CSR_WRITE(sc, WMREG_TXDCTL(1), reg);
+
+		/* TARC0 */
+		tarc0 = CSR_READ(sc, WMREG_TARC0);
+		switch (sc->sc_type) {
+		case WM_T_82571:
+		case WM_T_82572:
+		case WM_T_82573:
+		case WM_T_82574:
+		case WM_T_82583:
+		case WM_T_80003:
+			/* Clear bits 30..27 */
+			tarc0 &= ~__BITS(30, 27);
+			break;
+		default:
+			break;
+		}
+
+		switch (sc->sc_type) {
+		case WM_T_82571:
+		case WM_T_82572:
+			tarc0 |= __BITS(26, 23); /* TARC0 bits 23-26 */
+
+			tarc1 = CSR_READ(sc, WMREG_TARC1);
+			tarc1 &= ~__BITS(30, 29); /* Clear bits 30 and 29 */
+			tarc1 |= __BITS(26, 24); /* TARC1 bits 26-24 */
+			/* 8257[12] Errata No.7 */
+			tarc1 |= __BIT(22); /* TARC1 bits 22 */
+
+			/* TARC1 bit 28 */
+			if ((CSR_READ(sc, WMREG_TCTL) & TCTL_MULR) != 0)
+				tarc1 &= ~__BIT(28);
+			else
+				tarc1 |= __BIT(28);
+			CSR_WRITE(sc, WMREG_TARC1, tarc1);
+
+			/*
+			 * 8257[12] Errata No.13
+			 * Disable Dyamic Clock Gating.
+			 */
+			reg = CSR_READ(sc, WMREG_CTRL_EXT);
+			reg &= ~CTRL_EXT_DMA_DYN_CLK;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+			break;
+		case WM_T_82573:
+		case WM_T_82574:
+		case WM_T_82583:
+			if ((sc->sc_type == WM_T_82574)
+			    || (sc->sc_type == WM_T_82583))
+				tarc0 |= __BIT(26); /* TARC0 bit 26 */
+
+			/* Extended Device Control */
+			reg = CSR_READ(sc, WMREG_CTRL_EXT);
+			reg &= ~__BIT(23);	/* Clear bit 23 */
+			reg |= __BIT(22);	/* Set bit 22 */
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+			/* Device Control */
+			sc->sc_ctrl &= ~__BIT(29);	/* Clear bit 29 */
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+
+			/* PCIe Control Register */
+			if ((sc->sc_type == WM_T_82574)
+			    || (sc->sc_type == WM_T_82583)) {
+				/*
+				 * Document says this bit must be set for
+				 * proper operation.
+				 */
+				reg = CSR_READ(sc, WMREG_GCR);
+				reg |= __BIT(22);
+				CSR_WRITE(sc, WMREG_GCR, reg);
+
+				/*
+				 * Apply workaround for hardware errata
+				 * documented in errata docs Fixes issue where
+				 * some error prone or unreliable PCIe
+				 * completions are occurring, particularly
+				 * with ASPM enabled. Without fix, issue can
+				 * cause Tx timeouts.
+				 */
+				reg = CSR_READ(sc, WMREG_GCR2);
+				reg |= __BIT(0);
+				CSR_WRITE(sc, WMREG_GCR2, reg);
+			}
+			break;
+		case WM_T_80003:
+			/* TARC0 */
+			if (((sc->sc_wmp->wmp_flags & WMP_F_1000X) != 0)
+			    || ((sc->sc_wmp->wmp_flags & WMP_F_SERDES) != 0))
+				tarc0 &= ~__BIT(20); /* Clear bits 20 */
+
+			/* TARC1 bit 28 */
+			tarc1 = CSR_READ(sc, WMREG_TARC1);
+			if ((CSR_READ(sc, WMREG_TCTL) & TCTL_MULR) != 0)
+				tarc1 &= ~__BIT(28);
+			else
+				tarc1 |= __BIT(28);
+			CSR_WRITE(sc, WMREG_TARC1, tarc1);
+			break;
+		case WM_T_ICH8:
+		case WM_T_ICH9:
+		case WM_T_ICH10:
+		case WM_T_PCH:
+		case WM_T_PCH2:
+		case WM_T_PCH_LPT:
+			/* TARC 0 */
+			if (sc->sc_type == WM_T_ICH8) {
+				/* Set TARC0 bits 29 and 28 */
+				tarc0 |= __BITS(29, 28);
+			}
+			/* Set TARC0 bits 23,24,26,27 */
+			tarc0 |= __BITS(27, 26) | __BITS(24, 23);
+
+			/* CTRL_EXT */
+			reg = CSR_READ(sc, WMREG_CTRL_EXT);
+			reg |= __BIT(22);	/* Set bit 22 */
+			/*
+			 * Enable PHY low-power state when MAC is at D3
+			 * w/o WoL
+			 */
+			if (sc->sc_type >= WM_T_PCH)
+				reg |= CTRL_EXT_PHYPDEN;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+			/* TARC1 */
+			tarc1 = CSR_READ(sc, WMREG_TARC1);
+			/* bit 28 */
+			if ((CSR_READ(sc, WMREG_TCTL) & TCTL_MULR) != 0)
+				tarc1 &= ~__BIT(28);
+			else
+				tarc1 |= __BIT(28);
+			tarc1 |= __BIT(24) | __BIT(26) | __BIT(30);
+			CSR_WRITE(sc, WMREG_TARC1, tarc1);
+
+			/* Device Status */
+			if (sc->sc_type == WM_T_ICH8) {
+				reg = CSR_READ(sc, WMREG_STATUS);
+				reg &= ~__BIT(31);
+				CSR_WRITE(sc, WMREG_STATUS, reg);
+
+			}
+
+			/*
+			 * Work-around descriptor data corruption issue during
+			 * NFS v2 UDP traffic, just disable the NFS filtering
+			 * capability.
+			 */
+			reg = CSR_READ(sc, WMREG_RFCTL);
+			reg |= WMREG_RFCTL_NFSWDIS | WMREG_RFCTL_NFSRDIS;
+			CSR_WRITE(sc, WMREG_RFCTL, reg);
+			break;
+		default:
+			break;
+		}
+		CSR_WRITE(sc, WMREG_TARC0, tarc0);
+
+		/*
+		 * 8257[12] Errata No.52 and some others.
+		 * Avoid RSS Hash Value bug.
+		 */
+		switch (sc->sc_type) {
+		case WM_T_82571:
+		case WM_T_82572:
+		case WM_T_82573:
+		case WM_T_80003:
+		case WM_T_ICH8:
+			reg = CSR_READ(sc, WMREG_RFCTL);
+			reg |= WMREG_RFCTL_NEWIPV6EXDIS |WMREG_RFCTL_IPV6EXDIS;
+			CSR_WRITE(sc, WMREG_RFCTL, reg);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 /*
  * wm_reset:
  *
@@ -4049,8 +4377,8 @@ static void
 wm_reset(struct wm_softc *sc)
 {
 	int phy_reset = 0;
+	int error = 0;
 	uint32_t reg, mask;
-	int i;
 
 	/*
 	 * Allocate on-chip memory according to the MTU size.
@@ -4072,11 +4400,11 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82572:
 	case WM_T_82575:	/* XXX need special handing for jumbo frames */
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_80003:
 		sc->sc_pba = PBA_32K;
 		break;
 	case WM_T_82580:
-	case WM_T_82580ER:
 		sc->sc_pba = PBA_35K;
 		break;
 	case WM_T_I210:
@@ -4094,6 +4422,7 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_pba = PBA_20K;
 		break;
 	case WM_T_ICH8:
+		/* Workaround for a bit corruption issue in FIFO memory */
 		sc->sc_pba = PBA_8K;
 		CSR_WRITE(sc, WMREG_PBS, PBA_16K);
 		break;
@@ -4130,7 +4459,9 @@ wm_reset(struct wm_softc *sc)
 
 	/* Set the completion timeout for interface */
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_I350))
+	    || (sc->sc_type == WM_T_82580)
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
+	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211))
 		wm_set_pcie_completion_timeout(sc);
 
 	/* Clear interrupt */
@@ -4138,8 +4469,9 @@ wm_reset(struct wm_softc *sc)
 
 	/* Stop the transmit and receive processes. */
 	CSR_WRITE(sc, WMREG_RCTL, 0);
-	CSR_WRITE(sc, WMREG_TCTL, TCTL_PSP);
 	sc->sc_rctl &= ~RCTL_EN;
+	CSR_WRITE(sc, WMREG_TCTL, TCTL_PSP);
+	CSR_WRITE_FLUSH(sc);
 
 	/* XXX set_tbi_sbp_82543() */
 
@@ -4150,19 +4482,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
-		i = 0;
-		reg = CSR_READ(sc, WMREG_EXTCNFCTR)
-		    | EXTCNFCTR_MDIO_SW_OWNERSHIP;
-		do {
-			CSR_WRITE(sc, WMREG_EXTCNFCTR,
-			    reg | EXTCNFCTR_MDIO_SW_OWNERSHIP);
-			reg = CSR_READ(sc, WMREG_EXTCNFCTR);
-			if ((reg & EXTCNFCTR_MDIO_SW_OWNERSHIP) != 0)
-				break;
-			reg |= EXTCNFCTR_MDIO_SW_OWNERSHIP;
-			delay(2*1000);
-			i++;
-		} while (i < WM_MDIO_OWNERSHIP_TIMEOUT);
+		error = wm_get_hw_semaphore_82573(sc);
 		break;
 	default:
 		break;
@@ -4176,6 +4496,7 @@ wm_reset(struct wm_softc *sc)
 	if ((sc->sc_type == WM_T_82541) || (sc->sc_type == WM_T_82547)) {
 		CSR_WRITE(sc, WMREG_CTRL,
 		    CSR_READ(sc, WMREG_CTRL) | CTRL_PHY_RESET);
+		CSR_WRITE_FLUSH(sc);
 		delay(5000);
 	}
 
@@ -4236,8 +4557,19 @@ wm_reset(struct wm_softc *sc)
 		}
 		wm_get_swfwhw_semaphore(sc);
 		CSR_WRITE(sc, WMREG_CTRL, reg);
+		/* Don't insert a completion barrier when reset */
 		delay(20*1000);
 		wm_put_swfwhw_semaphore(sc);
+		break;
+	case WM_T_82580:
+	case WM_T_I350:
+	case WM_T_I354:
+	case WM_T_I210:
+	case WM_T_I211:
+		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
+		if (sc->sc_pcidevid != PCI_PRODUCT_INTEL_DH89XXCC_SGMII)
+			CSR_WRITE_FLUSH(sc);
+		delay(5000);
 		break;
 	case WM_T_82542_2_0:
 	case WM_T_82542_2_1:
@@ -4251,15 +4583,22 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
-	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_82583:
-	case WM_T_I350:
-	case WM_T_I210:
-	case WM_T_I211:
 	default:
 		/* Everything else can safely use the documented method. */
 		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
+		break;
+	}
+
+	/* Must release the MDIO ownership after MAC reset */
+	switch (sc->sc_type) {
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+		if (error == 0)
+			wm_put_hw_semaphore_82573(sc);
+		break;
+	default:
 		break;
 	}
 
@@ -4275,6 +4614,7 @@ wm_reset(struct wm_softc *sc)
 		delay(10);
 		reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2000);
 		break;
 	case WM_T_82540:
@@ -4301,6 +4641,7 @@ wm_reset(struct wm_softc *sc)
 			delay(10);
 			reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+			CSR_WRITE_FLUSH(sc);
 		}
 		/* check EECD_EE_AUTORD */
 		wm_get_auto_rd_done(sc);
@@ -4315,8 +4656,8 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
@@ -4340,9 +4681,9 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82576:
 #if 0 /* XXX */
 	case WM_T_82580:
-	case WM_T_82580ER:
 #endif
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 		if ((CSR_READ(sc, WMREG_EECD) & EECD_EE_PRES) == 0) {
@@ -4351,8 +4692,8 @@ wm_reset(struct wm_softc *sc)
 			if ((sc->sc_type == WM_T_82575)
 			    || (sc->sc_type == WM_T_82576)
 			    || (sc->sc_type == WM_T_82580)
-			    || (sc->sc_type == WM_T_82580ER)
-			    || (sc->sc_type == WM_T_I350))
+			    || (sc->sc_type == WM_T_I350)
+			    || (sc->sc_type == WM_T_I354))
 				wm_reset_init_script_82575(sc);
 		}
 		break;
@@ -4360,8 +4701,8 @@ wm_reset(struct wm_softc *sc)
 		break;
 	}
 
-	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
-	    || (sc->sc_type == WM_T_I350)) {
+	if ((sc->sc_type == WM_T_82580)
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)) {
 		/* clear global device reset status bit */
 		CSR_WRITE(sc, WMREG_STATUS, STATUS_DEV_RST_SET);
 	}
@@ -4469,15 +4810,12 @@ wm_init(struct ifnet *ifp)
 		break;
 	}
 
+	/* Init hardware bits */
+	wm_initialize_hardware_bits(sc);
+
 	/* Reset the PHY. */
 	if (sc->sc_flags & WM_F_HAS_MII)
 		wm_gmii_reset(sc);
-
-	reg = CSR_READ(sc, WMREG_CTRL_EXT);
-	/* Enable PHY low-power state when MAC is at D3 w/o WoL */
-	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
-	    || (sc->sc_type == WM_T_PCH_LPT))
-		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_PHYPDEN);
 
 	/* Initialize the transmit descriptor ring. */
 	memset(sc->sc_txdescs, 0, WM_TXDESCSIZE(sc));
@@ -4506,12 +4844,12 @@ wm_init(struct ifnet *ifp)
 			 * Don't write TDT before TCTL.EN is set.
 			 * See the document.
 			 */
-			CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_QUEUE_ENABLE
+			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_QUEUE_ENABLE
 			    | TXDCTL_PTHRESH(0) | TXDCTL_HTHRESH(0)
 			    | TXDCTL_WTHRESH(0));
 		else {
 			CSR_WRITE(sc, WMREG_TDT, 0);
-			CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
+			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_PTHRESH(0) |
 			    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
 			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_PTHRESH(0) |
 			    RXDCTL_HTHRESH(0) | RXDCTL_WTHRESH(1));
@@ -4597,7 +4935,7 @@ wm_init(struct ifnet *ifp)
 	 * Clear out the VLAN table -- we don't use it (yet).
 	 */
 	CSR_WRITE(sc, WMREG_VET, 0);
-	if (sc->sc_type == WM_T_I350)
+	if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
 		trynum = 10; /* Due to hw errata */
 	else
 		trynum = 1;
@@ -4695,17 +5033,12 @@ wm_init(struct ifnet *ifp)
 		reg |= RXCSUM_IPV6OFL | RXCSUM_TUOFL;
 	CSR_WRITE(sc, WMREG_RXCSUM, reg);
 
-	/* Reset TBI's RXCFG count */
-	sc->sc_tbi_nrxcfg = sc->sc_tbi_lastnrxcfg = 0;
-
 	/*
 	 * Set up the interrupt registers.
 	 */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 	sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
 	    ICR_RXO | ICR_RXT0;
-	if ((sc->sc_flags & WM_F_HAS_MII) == 0)
-		sc->sc_icr |= ICR_RXCFG;
 	CSR_WRITE(sc, WMREG_IMS, sc->sc_icr);
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
@@ -4796,7 +5129,8 @@ wm_init(struct ifnet *ifp)
 	 * The I350 has a bug where it always strips the CRC whether
 	 * asked to or not. So ask for stripped CRC here and cope in rxeof
 	 */
-	if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210))
+	if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
+	    || (sc->sc_type == WM_T_I210))
 		sc->sc_rctl |= RCTL_SECRC;
 
 	if (((sc->sc_ethercom.ec_capabilities & ETHERCAP_JUMBO_MTU) != 0)
@@ -4973,8 +5307,8 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
@@ -5064,8 +5398,8 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 		if (sc->sc_type == WM_T_82571) {
@@ -5216,10 +5550,13 @@ wm_eeprom_sendbits(struct wm_softc *sc, uint32_t bits, int nbits)
 		else
 			reg &= ~EECD_DI;
 		CSR_WRITE(sc, WMREG_EECD, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 		CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 		CSR_WRITE(sc, WMREG_EECD, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 	}
 }
@@ -5240,10 +5577,12 @@ wm_eeprom_recvbits(struct wm_softc *sc, uint32_t *valp, int nbits)
 	val = 0;
 	for (x = nbits; x > 0; x--) {
 		CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 		if (CSR_READ(sc, WMREG_EECD) & EECD_DO)
 			val |= (1U << (x - 1));
 		CSR_WRITE(sc, WMREG_EECD, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 	}
 	*valp = val;
@@ -5277,6 +5616,7 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 			CSR_WRITE(sc, WMREG_EECD, reg);
 			reg &= ~EECD_SK;
 			CSR_WRITE(sc, WMREG_EECD, reg);
+			CSR_WRITE_FLUSH(sc);
 			delay(2);
 		}
 		/* XXX: end of workaround */
@@ -5284,13 +5624,14 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		/* Set CHIP SELECT. */
 		reg |= EECD_CS;
 		CSR_WRITE(sc, WMREG_EECD, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 
 		/* Shift in the READ command. */
 		wm_eeprom_sendbits(sc, UWIRE_OPC_READ, 3);
 
 		/* Shift in address. */
-		wm_eeprom_sendbits(sc, word + i, sc->sc_ee_addrbits);
+		wm_eeprom_sendbits(sc, word + i, sc->sc_nvm_addrbits);
 
 		/* Shift out the data. */
 		wm_eeprom_recvbits(sc, &val, 16);
@@ -5299,6 +5640,7 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		/* Clear CHIP SELECT. */
 		reg = CSR_READ(sc, WMREG_EECD) & ~EECD_CS;
 		CSR_WRITE(sc, WMREG_EECD, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(2);
 	}
 
@@ -5344,6 +5686,7 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	/* Clear SK and CS. */
 	reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_CS);
 	CSR_WRITE(sc, WMREG_EECD, reg);
+	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
 	if (wm_spi_eeprom_ready(sc))
@@ -5351,16 +5694,18 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 
 	/* Toggle CS to flush commands. */
 	CSR_WRITE(sc, WMREG_EECD, reg | EECD_CS);
+	CSR_WRITE_FLUSH(sc);
 	delay(2);
 	CSR_WRITE(sc, WMREG_EECD, reg);
+	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
 	opc = SPI_OPC_READ;
-	if (sc->sc_ee_addrbits == 8 && word >= 128)
+	if (sc->sc_nvm_addrbits == 8 && word >= 128)
 		opc |= SPI_OPC_A8;
 
 	wm_eeprom_sendbits(sc, opc, 8);
-	wm_eeprom_sendbits(sc, word << 1, sc->sc_ee_addrbits);
+	wm_eeprom_sendbits(sc, word << 1, sc->sc_nvm_addrbits);
 
 	for (i = 0; i < wordcnt; i++) {
 		wm_eeprom_recvbits(sc, &val, 16);
@@ -5370,17 +5715,11 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	/* Raise CS and clear SK. */
 	reg = (CSR_READ(sc, WMREG_EECD) & ~EECD_SK) | EECD_CS;
 	CSR_WRITE(sc, WMREG_EECD, reg);
+	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
 	return 0;
 }
-
-#define NVM_CHECKSUM			0xBABA
-#define EEPROM_SIZE			0x0040
-#define NVM_COMPAT			0x0003
-#define NVM_COMPAT_VALID_CHECKSUM	0x0001
-#define NVM_FUTURE_INIT_WORD1			0x0019
-#define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
 
 /*
  * wm_validate_eeprom_checksum
@@ -5390,9 +5729,11 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 static int
 wm_validate_eeprom_checksum(struct wm_softc *sc)
 {
-	uint16_t checksum, valid_checksum;
+	uint16_t checksum;
 	uint16_t eeprom_data;
-	uint16_t csum_wordaddr;
+#ifdef WM_DEBUG
+	uint16_t csum_wordaddr, valid_checksum;
+#endif
 	int i;
 
 	checksum = 0;
@@ -5401,6 +5742,7 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 	if (sc->sc_type == WM_T_I211)
 		return 0;
 
+#ifdef WM_DEBUG
 	if (sc->sc_type == WM_T_PCH_LPT) {
 		csum_wordaddr = NVM_COMPAT;
 		valid_checksum = NVM_COMPAT_VALID_CHECKSUM;
@@ -5409,7 +5751,6 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 		valid_checksum = NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM;
 	}
 
-#ifdef WM_DEBUG
 	/* Dump EEPROM image for debug */
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
@@ -5427,9 +5768,9 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 		printf("%s: NVM dump:\n", device_xname(sc->sc_dev));
 		for (i = 0; i < EEPROM_SIZE; i++) {
 			if (wm_read_eeprom(sc, i, 1, &eeprom_data))
-				printf("XX ");
+				printf("XXXX ");
 			else
-				printf("%04x ", eeprom_data);
+				printf("%04hx ", eeprom_data);
 			if (i % 8 == 7)
 				printf("\n");
 		}
@@ -5525,7 +5866,11 @@ wm_poll_eerd_eewr_done(struct wm_softc *sc, int rw)
 	return done;
 }
 
-static int
+/*
+ * Get the offset of MAC address and return it.
+ * If error occured, use offset 0.
+ */
+static uint16_t
 wm_check_alt_mac_addr(struct wm_softc *sc)
 {
 	uint16_t myea[ETHER_ADDR_LEN / 2];
@@ -5533,12 +5878,13 @@ wm_check_alt_mac_addr(struct wm_softc *sc)
 
 	/* Try to read alternative MAC address pointer */
 	if (wm_read_eeprom(sc, EEPROM_ALT_MAC_ADDR_PTR, 1, &offset) != 0)
-		return -1;
+		return 0;
 
-	/* Check pointer */
-	if (offset == 0xffff)
-		return -1;
+	/* Check pointer if it's valid or not. */
+	if ((offset == 0x0000) || (offset == 0xffff))
+		return 0;
 
+	offset += NVM_OFF_MACADDR_82571(sc->sc_funcid);
 	/*
 	 * Check whether alternative MAC address is valid or not.
 	 * Some cards have non 0xffff pointer but those don't use
@@ -5548,10 +5894,10 @@ wm_check_alt_mac_addr(struct wm_softc *sc)
 	 */
 	if (wm_read_eeprom(sc, offset, 1, myea) == 0)
 		if (((myea[0] & 0xff) & 0x01) == 0)
-			return 0; /* found! */
+			return offset; /* Found */
 
-	/* not found */
-	return -1;
+	/* Not found */
+	return 0;
 }
 
 static int
@@ -5563,26 +5909,10 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 
 	switch (sc->sc_type) {
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
-		switch (sc->sc_funcid) {
-		case 0:
-			/* default value (== EEPROM_OFF_MACADDR) */
-			break;
-		case 1:
-			offset = EEPROM_OFF_LAN1;
-			break;
-		case 2:
-			offset = EEPROM_OFF_LAN2;
-			break;
-		case 3:
-			offset = EEPROM_OFF_LAN3;
-			break;
-		default:
-			goto bad;
-			/* NOTREACHED */
-			break;
-		}
+	case WM_T_I354:
+		/* EEPROM Top Level Partitioning */
+		offset = NVM_OFF_LAN_FUNC_82580(sc->sc_funcid) + 0;
 		break;
 	case WM_T_82571:
 	case WM_T_82575:
@@ -5590,34 +5920,10 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	case WM_T_80003:
 	case WM_T_I210:
 	case WM_T_I211:
-		if (wm_check_alt_mac_addr(sc) != 0) {
-			/* reset the offset to LAN0 */
-			offset = EEPROM_OFF_MACADDR;
+		offset = wm_check_alt_mac_addr(sc);
+		if (offset == 0)
 			if ((sc->sc_funcid & 0x01) == 1)
 				do_invert = 1;
-			goto do_read;
-		}
-		switch (sc->sc_funcid) {
-		case 0:
-			/*
-			 * The offset is the value in EEPROM_ALT_MAC_ADDR_PTR
-			 * itself.
-			 */
-			break;
-		case 1:
-			offset += EEPROM_OFF_MACADDR_LAN1;
-			break;
-		case 2:
-			offset += EEPROM_OFF_MACADDR_LAN2;
-			break;
-		case 3:
-			offset += EEPROM_OFF_MACADDR_LAN3;
-			break;
-		default:
-			goto bad;
-			/* NOTREACHED */
-			break;
-		}
 		break;
 	default:
 		if ((sc->sc_funcid & 0x01) == 1)
@@ -5625,11 +5931,9 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 		break;
 	}
 
- do_read:
 	if (wm_read_eeprom(sc, offset, sizeof(myea) / sizeof(myea[0]),
-		myea) != 0) {
+		myea) != 0)
 		goto bad;
-	}
 
 	enaddr[0] = myea[0] & 0xff;
 	enaddr[1] = myea[0] >> 8;
@@ -5648,8 +5952,6 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	return 0;
 
  bad:
-	aprint_error_dev(sc->sc_dev, "unable to read Ethernet address\n");
-
 	return -1;
 }
 
@@ -5806,7 +6108,7 @@ wm_set_filter(struct wm_softc *sc)
 		size = WM_RAL_TABSIZE_82575;
 	else if ((sc->sc_type == WM_T_82576) || (sc->sc_type == WM_T_82580))
 		size = WM_RAL_TABSIZE_82576;
-	else if (sc->sc_type == WM_T_I350)
+	else if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
 		size = WM_RAL_TABSIZE_I350;
 	else
 		size = WM_RAL_TABSIZE;
@@ -5919,8 +6221,15 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 	aprint_normal_dev(sc->sc_dev, "");
-	ADD("1000baseSX", IFM_1000_SX, ANAR_X_HD);
-	ADD("1000baseSX-FDX", IFM_1000_SX|IFM_FDX, ANAR_X_FD);
+
+	/* Only 82545 is LX */
+	if (sc->sc_type == WM_T_82545) {
+		ADD("1000baseLX", IFM_1000_LX, ANAR_X_HD);
+		ADD("1000baseLX-FDX", IFM_1000_LX|IFM_FDX, ANAR_X_FD);
+	} else {
+		ADD("1000baseSX", IFM_1000_SX, ANAR_X_HD);
+		ADD("1000baseSX-FDX", IFM_1000_SX|IFM_FDX, ANAR_X_FD);
+	}
 	ADD("auto", IFM_AUTO, ANAR_X_FD|ANAR_X_HD);
 	aprint_normal("\n");
 
@@ -5950,7 +6259,11 @@ wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 
 	ifmr->ifm_status |= IFM_ACTIVE;
-	ifmr->ifm_active |= IFM_1000_SX;
+	/* Only 82545 is LX */
+	if (sc->sc_type == WM_T_82545)
+		ifmr->ifm_active |= IFM_1000_LX;
+	else
+		ifmr->ifm_active |= IFM_1000_SX;
 	if (CSR_READ(sc, WMREG_STATUS) & STATUS_FD)
 		ifmr->ifm_active |= IFM_FDX;
 	ctrl = CSR_READ(sc, WMREG_CTRL);
@@ -5973,28 +6286,30 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	uint32_t status;
 	int i;
 
-	sc->sc_txcw = 0;
-	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO ||
-	    (sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
+	if ((sc->sc_type == WM_T_82571) || (sc->sc_type == WM_T_82572)
+	    || (sc->sc_type >= WM_T_82575))
+		CSR_WRITE(sc, WMREG_SCTL, SCTL_DISABLE_SERDES_LOOPBACK);
+
+	/* XXX power_up_serdes_link_82575() */
+
+	sc->sc_ctrl &= ~CTRL_LRST;
+	sc->sc_txcw = TXCW_ANE;
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+		sc->sc_txcw |= TXCW_FD | TXCW_HD;
+	else if (ife->ifm_media & IFM_FDX)
+		sc->sc_txcw |= TXCW_FD;
+	else
+		sc->sc_txcw |= TXCW_HD;
+
+	if ((sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
 		sc->sc_txcw |= TXCW_SYM_PAUSE | TXCW_ASYM_PAUSE;
-	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-		sc->sc_txcw |= TXCW_ANE;
-	} else {
-		/*
-		 * If autonegotiation is turned off, force link up and turn on
-		 * full duplex
-		 */
-		sc->sc_txcw &= ~TXCW_ANE;
-		sc->sc_ctrl |= CTRL_SLU | CTRL_FD;
-		sc->sc_ctrl &= ~(CTRL_TFCE | CTRL_RFCE);
-		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		delay(1000);
-	}
 
 	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x after autoneg check\n",
-		    device_xname(sc->sc_dev),sc->sc_txcw));
+		    device_xname(sc->sc_dev), sc->sc_txcw));
 	CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
-	delay(10000);
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	CSR_WRITE_FLUSH(sc);
+	delay(1000);
 
 	i = CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1);
 	DPRINTF(WM_DEBUG_LINK,("%s: i = 0x%x\n", device_xname(sc->sc_dev),i));
@@ -6005,19 +6320,6 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	 */
 	if (((i != 0) && (sc->sc_type > WM_T_82544)) || (i == 0)) {
 		/* Have signal; wait for the link to come up. */
-
-		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-			/*
-			 * Reset the link, and let autonegotiation do its thing
-			 */
-			sc->sc_ctrl |= CTRL_LRST;
-			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-			delay(1000);
-			sc->sc_ctrl &= ~CTRL_LRST;
-			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-			delay(1000);
-		}
-
 		for (i = 0; i < WM_LINKUP_TIMEOUT; i++) {
 			delay(10000);
 			if (CSR_READ(sc, WMREG_STATUS) & STATUS_LU)
@@ -6106,14 +6408,14 @@ wm_tbi_set_linkled(struct wm_softc *sc)
 static void
 wm_tbi_check_link(struct wm_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
-	uint32_t rxcw, ctrl, status;
+	uint32_t status;
 
 	status = CSR_READ(sc, WMREG_STATUS);
 
-	rxcw = CSR_READ(sc, WMREG_RXCW);
-	ctrl = CSR_READ(sc, WMREG_CTRL);
+	/* XXX is this needed? */
+	(void)CSR_READ(sc, WMREG_RXCW);
+	(void)CSR_READ(sc, WMREG_CTRL);
 
 	/* set link status */
 	if ((status & STATUS_LU) == 0) {
@@ -6130,13 +6432,7 @@ wm_tbi_check_link(struct wm_softc *sc)
 	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP)
 	    && ((status & STATUS_LU) == 0)) {
 		sc->sc_tbi_linkup = 0;
-		if (sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg > 100) {
-			/* RXCFG storm! */
-			DPRINTF(WM_DEBUG_LINK, ("RXCFG storm! (%d)\n",
-				sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg));
-			wm_init(ifp);
-			ifp->if_start(ifp);
-		} else if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 			/* If the timer expired, retry autonegotiation */
 			if (++sc->sc_tbi_ticks >= sc->sc_tbi_anegticks) {
 				DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
@@ -6147,9 +6443,11 @@ wm_tbi_check_link(struct wm_softc *sc)
 				 */
 				sc->sc_ctrl |= CTRL_LRST;
 				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				CSR_WRITE_FLUSH(sc);
 				delay(1000);
 				sc->sc_ctrl &= ~CTRL_LRST;
 				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				CSR_WRITE_FLUSH(sc);
 				delay(1000);
 				CSR_WRITE(sc, WMREG_TXCW,
 				    sc->sc_txcw & ~TXCW_ANE);
@@ -6185,8 +6483,8 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
@@ -6233,9 +6531,11 @@ wm_gmii_reset(struct wm_softc *sc)
 		reg |= CTRL_EXT_SWDPIO(4);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+		CSR_WRITE_FLUSH(sc);
 		delay(10*1000);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_SWDPIN(4));
+		CSR_WRITE_FLUSH(sc);
 		delay(150);
 #if 0
 		sc->sc_ctrl_ext = reg | CTRL_EXT_SWDPIN(4);
@@ -6259,16 +6559,18 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_82583:
 	case WM_T_80003:
 		/* generic reset */
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
+		CSR_WRITE_FLUSH(sc);
 		delay(20000);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		CSR_WRITE_FLUSH(sc);
 		delay(20000);
 
 		if ((sc->sc_type == WM_T_82541)
@@ -6287,8 +6589,10 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_PCH_LPT:
 		/* generic reset */
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
+		CSR_WRITE_FLUSH(sc);
 		delay(100);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		CSR_WRITE_FLUSH(sc);
 		delay(150);
 		break;
 	default:
@@ -6310,8 +6614,8 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_80003:
@@ -6354,8 +6658,8 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
+	case WM_T_I354:
 	case WM_T_I210:
 	case WM_T_I211:
 	case WM_T_82583:
@@ -6414,6 +6718,45 @@ wm_gmii_reset(struct wm_softc *sc)
 }
 
 /*
+ * wm_get_phy_id_82575:
+ *
+ * Return PHY ID. Return -1 if it failed.
+ */
+static int
+wm_get_phy_id_82575(struct wm_softc *sc)
+{
+	uint32_t reg;
+	int phyid = -1;
+
+	/* XXX */
+	if ((sc->sc_flags & WM_F_SGMII) == 0)
+		return -1;
+
+	if (wm_sgmii_uses_mdio(sc)) {
+		switch (sc->sc_type) {
+		case WM_T_82575:
+		case WM_T_82576:
+			reg = CSR_READ(sc, WMREG_MDIC);
+			phyid = (reg & MDIC_PHY_MASK) >> MDIC_PHY_SHIFT;
+			break;
+		case WM_T_82580:
+		case WM_T_I350:
+		case WM_T_I354:
+		case WM_T_I210:
+		case WM_T_I211:
+			reg = CSR_READ(sc, WMREG_MDICNFG);
+			phyid = (reg & MDICNFG_PHY_MASK) >> MDICNFG_PHY_SHIFT;
+			break;
+		default:
+			return -1;
+		}
+	}
+
+	return phyid;
+}
+
+
+/*
  * wm_gmii_mediainit:
  *
  *	Initialize media for use on 1000BASE-T devices.
@@ -6423,6 +6766,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
+	uint32_t reg;
 
 	/* We have MII. */
 	sc->sc_flags |= WM_F_HAS_MII;
@@ -6431,6 +6775,15 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		sc->sc_tipg =  TIPG_1000T_80003_DFLT;
 	else
 		sc->sc_tipg = TIPG_1000T_DFLT;
+
+	/* XXX Not for I354? FreeBSD's e1000_82575.c doesn't include it */
+	if ((sc->sc_type == WM_T_82580)
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210)
+	    || (sc->sc_type == WM_T_I211)) {
+		reg = CSR_READ(sc, WMREG_PHPM);
+		reg &= ~PHPM_GO_LINK_D;
+		CSR_WRITE(sc, WMREG_PHPM, reg);
+	}
 
 	/*
 	 * Let the chip set speed/duplex on its own based on
@@ -6452,8 +6805,9 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	 *  For some devices, we can determine the PHY access method
 	 * from sc_type.
 	 *
-	 *  For ICH8 variants, it's difficult to detemine the PHY access
-	 * method by sc_type, so use the PCI product ID for some devices.
+	 *  For ICH and PCH variants, it's difficult to determine the PHY
+	 * access  method by sc_type, so use the PCI product ID for some
+	 * devices.
 	 * For other ICH8 variants, try to use igp's method. If the PHY
 	 * can't detect, then use bm's method.
 	 */
@@ -6462,30 +6816,16 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	case PCI_PRODUCT_INTEL_PCH_M_LC:
 		/* 82577 */
 		sc->sc_phytype = WMPHY_82577;
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_PCH_D_DM:
 	case PCI_PRODUCT_INTEL_PCH_D_DC:
 		/* 82578 */
 		sc->sc_phytype = WMPHY_82578;
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_PCH2_LV_LM:
 	case PCI_PRODUCT_INTEL_PCH2_LV_V:
 		/* 82579 */
 		sc->sc_phytype = WMPHY_82579;
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
-		break;
-	case PCI_PRODUCT_INTEL_I217_LM:
-	case PCI_PRODUCT_INTEL_I217_V:
-	case PCI_PRODUCT_INTEL_I218_LM:
-	case PCI_PRODUCT_INTEL_I218_V:
-		/* I21[78] */
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_82801I_BM:
 	case PCI_PRODUCT_INTEL_82801J_R_BM_LM:
@@ -6499,7 +6839,8 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		mii->mii_writereg = wm_gmii_bm_writereg;
 		break;
 	default:
-		if ((sc->sc_flags & WM_F_SGMII) != 0) {
+		if (((sc->sc_flags & WM_F_SGMII) != 0)
+		    && !wm_sgmii_uses_mdio(sc)){
 			mii->mii_readreg = wm_sgmii_readreg;
 			mii->mii_writereg = wm_sgmii_writereg;
 		} else if (sc->sc_type >= WM_T_80003) {
@@ -6521,6 +6862,11 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		}
 		break;
 	}
+	if ((sc->sc_type >= WM_T_PCH) && (sc->sc_type <= WM_T_PCH_LPT)) {
+		/* All PCH* use _hv_ */
+		mii->mii_readreg = wm_gmii_hv_readreg;
+		mii->mii_writereg = wm_gmii_hv_writereg;
+	}
 	mii->mii_statchg = wm_gmii_statchg;
 
 	wm_gmii_reset(sc);
@@ -6530,31 +6876,40 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	    wm_gmii_mediastatus);
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
-	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210)
-	    || (sc->sc_type == WM_T_I211)) {
+	    || (sc->sc_type == WM_T_82580)
+	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
+	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211)) {
 		if ((sc->sc_flags & WM_F_SGMII) == 0) {
 			/* Attach only one port */
 			mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
 			    MII_OFFSET_ANY, MIIF_DOPAUSE);
 		} else {
-			int i;
+			int i, id;
 			uint32_t ctrl_ext;
 
-			/* Power on sgmii phy if it is disabled */
-			ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
-			CSR_WRITE(sc, WMREG_CTRL_EXT,
-			    ctrl_ext &~ CTRL_EXT_SWDPIN(3));
-			CSR_WRITE_FLUSH(sc);
-			delay(300*1000); /* XXX too long */
-
-			/* from 1 to 8 */
-			for (i = 1; i < 8; i++)
+			id = wm_get_phy_id_82575(sc);
+			if (id != -1) {
 				mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff,
-				    i, MII_OFFSET_ANY, MIIF_DOPAUSE);
+				    id, MII_OFFSET_ANY, MIIF_DOPAUSE);
+			}
+			if ((id == -1)
+			    || (LIST_FIRST(&mii->mii_phys) == NULL)) {
+				/* Power on sgmii phy if it is disabled */
+				ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
+				CSR_WRITE(sc, WMREG_CTRL_EXT,
+				    ctrl_ext &~ CTRL_EXT_SWDPIN(3));
+				CSR_WRITE_FLUSH(sc);
+				delay(300*1000); /* XXX too long */
 
-			/* restore previous sfp cage power state */
-			CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+				/* from 1 to 8 */
+				for (i = 1; i < 8; i++)
+					mii_attach(sc->sc_dev, &sc->sc_mii,
+					    0xffffffff, i, MII_OFFSET_ANY,
+					    MIIF_DOPAUSE);
+
+				/* restore previous sfp cage power state */
+				CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+			}
 		}
 	} else {
 		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
@@ -6694,10 +7049,13 @@ i82543_mii_sendbits(struct wm_softc *sc, uint32_t data, int nbits)
 		else
 			v &= ~MDI_IO;
 		CSR_WRITE(sc, WMREG_CTRL, v);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 		CSR_WRITE(sc, WMREG_CTRL, v | MDI_CLK);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 		CSR_WRITE(sc, WMREG_CTRL, v);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 	}
 }
@@ -6712,25 +7070,32 @@ i82543_mii_recvbits(struct wm_softc *sc)
 	v |= CTRL_SWDPIO(3);
 
 	CSR_WRITE(sc, WMREG_CTRL, v);
+	CSR_WRITE_FLUSH(sc);
 	delay(10);
 	CSR_WRITE(sc, WMREG_CTRL, v | MDI_CLK);
+	CSR_WRITE_FLUSH(sc);
 	delay(10);
 	CSR_WRITE(sc, WMREG_CTRL, v);
+	CSR_WRITE_FLUSH(sc);
 	delay(10);
 
 	for (i = 0; i < 16; i++) {
 		data <<= 1;
 		CSR_WRITE(sc, WMREG_CTRL, v | MDI_CLK);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 		if (CSR_READ(sc, WMREG_CTRL) & MDI_IO)
 			data |= 1;
 		CSR_WRITE(sc, WMREG_CTRL, v);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 	}
 
 	CSR_WRITE(sc, WMREG_CTRL, v | MDI_CLK);
+	CSR_WRITE_FLUSH(sc);
 	delay(10);
 	CSR_WRITE(sc, WMREG_CTRL, v);
+	CSR_WRITE_FLUSH(sc);
 	delay(10);
 
 	return data;
@@ -7146,6 +7511,39 @@ wm_gmii_hv_writereg(device_t self, int phy, int reg, int val)
 }
 
 /*
+ * wm_sgmii_uses_mdio
+ *
+ * Check whether the transaction is to the internal PHY or the external
+ * MDIO interface. Return true if it's MDIO.
+ */
+static bool
+wm_sgmii_uses_mdio(struct wm_softc *sc)
+{
+	uint32_t reg;
+	bool ismdio = false;
+
+	switch (sc->sc_type) {
+	case WM_T_82575:
+	case WM_T_82576:
+		reg = CSR_READ(sc, WMREG_MDIC);
+		ismdio = ((reg & MDIC_DEST) != 0);
+		break;
+	case WM_T_82580:
+	case WM_T_I350:
+	case WM_T_I354:
+	case WM_T_I210:
+	case WM_T_I211:
+		reg = CSR_READ(sc, WMREG_MDICNFG);
+		ismdio = ((reg & MDICNFG_DEST) != 0);
+		break;
+	default:
+		break;
+	}
+
+	return ismdio;
+}
+
+/*
  * wm_sgmii_readreg:	[mii interface function]
  *
  *	Read a PHY register on the SGMII
@@ -7201,16 +7599,18 @@ wm_sgmii_writereg(device_t self, int phy, int reg, int val)
 	struct wm_softc *sc = device_private(self);
 	uint32_t i2ccmd;
 	int i;
+	int val_swapped;
 
 	if (wm_get_swfw_semaphore(sc, swfwphysem[sc->sc_funcid])) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
 		    __func__);
 		return;
 	}
-
+	/* Swap the data bytes for the I2C interface */
+	val_swapped = ((val >> 8) & 0x00FF) | ((val << 8) & 0xFF00);
 	i2ccmd = (reg << I2CCMD_REG_ADDR_SHIFT)
 	    | (phy << I2CCMD_PHY_ADDR_SHIFT)
-	    | I2CCMD_OPCODE_WRITE;
+	    | I2CCMD_OPCODE_WRITE | val_swapped;
 	CSR_WRITE(sc, WMREG_I2CCMD, i2ccmd);
 
 	/* Poll the ready bit */
@@ -7371,6 +7771,7 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
 	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
 	    KUMCTRLSTA_REN);
+	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
 	rv = CSR_READ(sc, WMREG_KUMCTRLSTA) & KUMCTRLSTA_MASK;
@@ -7441,8 +7842,28 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 	int32_t timeout;
 	uint32_t swsm;
 
+	if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE) {
+		/* Get the SW semaphore. */
+		timeout = sc->sc_nvm_wordsize + 1;
+		while (timeout) {
+			swsm = CSR_READ(sc, WMREG_SWSM);
+
+			if ((swsm & SWSM_SMBI) == 0)
+				break;
+
+			delay(50);
+			timeout--;
+		}
+
+		if (timeout == 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not acquire SWSM SMBI\n");
+			return 1;
+		}
+	}
+
 	/* Get the FW semaphore. */
-	timeout = 1000 + 1; /* XXX */
+	timeout = sc->sc_nvm_wordsize + 1;
 	while (timeout) {
 		swsm = CSR_READ(sc, WMREG_SWSM);
 		swsm |= SWSM_SWESMBI;
@@ -7457,7 +7878,7 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 	}
 
 	if (timeout == 0) {
-		aprint_error_dev(sc->sc_dev, "could not acquire EEPROM GNT\n");
+		aprint_error_dev(sc->sc_dev, "could not acquire SWSM SWESMBI\n");
 		/* Release semaphores */
 		wm_put_swsm_semaphore(sc);
 		return 1;
@@ -7471,7 +7892,7 @@ wm_put_swsm_semaphore(struct wm_softc *sc)
 	uint32_t swsm;
 
 	swsm = CSR_READ(sc, WMREG_SWSM);
-	swsm &= ~(SWSM_SWESMBI);
+	swsm &= ~(SWSM_SMBI | SWSM_SWESMBI);
 	CSR_WRITE(sc, WMREG_SWSM, swsm);
 }
 
@@ -7556,6 +7977,43 @@ wm_put_swfwhw_semaphore(struct wm_softc *sc)
 }
 
 static int
+wm_get_hw_semaphore_82573(struct wm_softc *sc)
+{
+	int i = 0;
+	uint32_t reg;
+
+	reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+	do {
+		CSR_WRITE(sc, WMREG_EXTCNFCTR,
+		    reg | EXTCNFCTR_MDIO_SW_OWNERSHIP);
+		reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+		if ((reg & EXTCNFCTR_MDIO_SW_OWNERSHIP) != 0)
+			break;
+		delay(2*1000);
+		i++;
+	} while (i < WM_MDIO_OWNERSHIP_TIMEOUT);
+
+	if (i == WM_MDIO_OWNERSHIP_TIMEOUT) {
+		wm_put_hw_semaphore_82573(sc);
+		log(LOG_ERR, "%s: Driver can't access the PHY\n",
+		    device_xname(sc->sc_dev));
+		return -1;
+	}
+
+	return 0;
+}
+
+static void
+wm_put_hw_semaphore_82573(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+	reg &= ~EXTCNFCTR_MDIO_SW_OWNERSHIP;
+	CSR_WRITE(sc, WMREG_EXTCNFCTR, reg);
+}
+
+static int
 wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 {
 	uint32_t eecd;
@@ -7592,7 +8050,8 @@ wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 		}
 	}
 
-	aprint_error_dev(sc->sc_dev, "EEPROM not present\n");
+	DPRINTF(WM_DEBUG_NVM, ("%s: No valid NVM bank present\n",
+		device_xname(sc->sc_dev)));
 	return -1;
 }
 
@@ -7622,9 +8081,9 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	 */
 	error = wm_valid_nvm_bank_detect_ich8lan(sc, &flash_bank);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to detect NVM bank\n",
-		    __func__);
-		return error;
+		DPRINTF(WM_DEBUG_NVM, ("%s: failed to detect NVM bank\n",
+			device_xname(sc->sc_dev)));
+		flash_bank = 0;
 	}
 
 	/*
@@ -7964,8 +8423,7 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 
 	DPRINTF(WM_DEBUG_MANAGE, ("%s: MANC (%08x)\n",
 		device_xname(sc->sc_dev), manc));
-	if (((manc & MANC_RECV_TCO_EN) == 0)
-	    || ((manc & MANC_EN_MAC_ADDR_FILTER) == 0))
+	if ((manc & MANC_RECV_TCO_EN) == 0)
 		return 0;
 
 	if ((sc->sc_flags & WM_F_ARC_SUBSYS_VALID) != 0) {
@@ -7974,6 +8432,17 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 		if (((factps & FACTPS_MNGCG) == 0)
 		    && ((fwsm & FWSM_MODE_MASK)
 			== (MNG_ICH_IAMT_MODE << FWSM_MODE_SHIFT)))
+			return 1;
+	} else if ((sc->sc_type == WM_T_82574) || (sc->sc_type == WM_T_82583)){
+		uint16_t data;
+
+		factps = CSR_READ(sc, WMREG_FACTPS);
+		wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &data);
+		DPRINTF(WM_DEBUG_MANAGE, ("%s: FACTPS = %08x, CFG2=%04x\n",
+			device_xname(sc->sc_dev), factps, data));
+		if (((factps & FACTPS_MNGCG) == 0)
+		    && ((data & EEPROM_CFG2_MNGM_MASK)
+			== (EEPROM_CFG2_MNGM_PT << EEPROM_CFG2_MNGM_SHIFT)))
 			return 1;
 	} else if (((manc & MANC_SMBUS_EN) != 0)
 	    && ((manc & MANC_ASF_EN) == 0))
@@ -8344,10 +8813,12 @@ wm_configure_k1_ich8lan(struct wm_softc *sc, int k1_enable)
 
 	CSR_WRITE(sc, WMREG_CTRL, tmp);
 	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext | CTRL_EXT_SPD_BYPS);
+	CSR_WRITE_FLUSH(sc);
 	delay(20);
 
 	CSR_WRITE(sc, WMREG_CTRL, ctrl);
 	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+	CSR_WRITE_FLUSH(sc);
 	delay(20);
 }
 
@@ -8362,9 +8833,11 @@ wm_smbustopci(struct wm_softc *sc)
 		sc->sc_ctrl |= CTRL_LANPHYPC_OVERRIDE;
 		sc->sc_ctrl &= ~CTRL_LANPHYPC_VALUE;
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		CSR_WRITE_FLUSH(sc);
 		delay(10);
 		sc->sc_ctrl &= ~CTRL_LANPHYPC_OVERRIDE;
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		CSR_WRITE_FLUSH(sc);
 		delay(50*1000);
 
 		/*
@@ -8412,7 +8885,7 @@ wm_reset_init_script_82575(struct wm_softc *sc)
 {
 	/*
 	 * remark: this is untested code - we have no board without EEPROM
-	 *  same setup as mentioned int the freeBSD driver for the i82575
+	 *  same setup as mentioned int the FreeBSD driver for the i82575
 	 */
 
 	/* SerDes configuration via SERDESCTRL */
@@ -8467,6 +8940,7 @@ wm_release_manageability(struct wm_softc *sc)
 	if (sc->sc_flags & WM_F_HAS_MANAGE) {
 		uint32_t manc = CSR_READ(sc, WMREG_MANC);
 
+		manc |= MANC_ARP_EN;
 		if (sc->sc_type >= WM_T_82571)
 			manc &= ~MANC_EN_MNG2HOST;
 
@@ -8492,11 +8966,9 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
-#if 0 /* XXX */
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
-#endif
+	case WM_T_I354:
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
 			sc->sc_flags |= WM_F_ARC_SUBSYS_VALID;
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
