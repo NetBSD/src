@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.227.2.17 2015/04/19 17:01:50 riz Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.227.2.18 2015/04/30 19:53:28 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.17 2015/04/19 17:01:50 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.18 2015/04/30 19:53:28 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,6 +264,7 @@ struct wm_softc {
 	int sc_pcixe_capoff;		/* PCI[Xe] capability register offset */
 
 	const struct wm_product *sc_wmp; /* Pointer to the wm_product entry */
+	uint16_t sc_pcidevid;		/* PCI device ID */
 	wm_chip_type sc_type;		/* MAC type */
 	int sc_rev;			/* MAC revision */
 	wm_phy_type sc_phytype;		/* PHY type */
@@ -854,13 +855,13 @@ static const struct wm_product {
 	  "Intel PRO/1000 QT (82571EB)",
 	  WM_T_82571,		WMP_F_1000T },
 
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
-	  "Intel i82572EI 1000baseT Ethernet",
-	  WM_T_82572,		WMP_F_1000T },
-
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
 	  "Intel PRO/1000 PT Quad Port Server Adapter",
 	  WM_T_82571,		WMP_F_1000T, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
+	  "Intel i82572EI 1000baseT Ethernet",
+	  WM_T_82572,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
 	  "Intel i82572EI 1000baseX Ethernet",
@@ -1069,6 +1070,11 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_QUAD_FIBER,
 	  "82580 quad-1000BaseX Ethernet",
 	  WM_T_82580,		WMP_F_1000X },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_DH89XXCC_SGMII,
+	  "DH89XXCC Gigabit Ethernet (SGMII)",
+	  WM_T_82580,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_COPPER,
 	  "I350 Gigabit Network Connection",
 	  WM_T_I350,		WMP_F_1000T },
@@ -1338,6 +1344,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_dmat = pa->pa_dmat;
 
+	sc->sc_pcidevid = PCI_PRODUCT(pa->pa_id);
 	sc->sc_rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
 	pci_aprint_devinfo_fancy(pa, "Ethernet controller", wmp->wmp_name, 1);
 
@@ -1779,7 +1786,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		    &sc->sc_flasht, &sc->sc_flashh, NULL, NULL)) {
 			aprint_error_dev(sc->sc_dev,
 			    "can't map FLASH registers\n");
-			return;
+			goto fail_5;
 		}
 		reg = ICH8_FLASH_READ32(sc, ICH_FLASH_GFPREG);
 		sc->sc_ich8_flash_base = (reg & ICH_GFPREG_BASE_MASK) *
@@ -1902,7 +1909,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		if (wm_read_mac_addr(sc, enaddr) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to read Ethernet address\n");
-			return;
+			goto fail_5;
 		}
 	}
 
@@ -1920,7 +1927,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (wm_nvm_read(sc, NVM_OFF_CFG1, 1, &cfg1)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG1\n");
-			return;
+			goto fail_5;
 		}
 	}
 
@@ -1931,7 +1938,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (wm_nvm_read(sc, NVM_OFF_CFG2, 1, &cfg2)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG2\n");
-			return;
+			goto fail_5;
 		}
 	}
 
@@ -2000,7 +2007,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 			if (wm_nvm_read(sc, NVM_OFF_SWDPIN, 1, &swdpin)) {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to read SWDPIN\n");
-				return;
+				goto fail_5;
 			}
 		}
 	}
@@ -2308,6 +2315,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+	sc->sc_flags |= WM_F_ATTACHED;
 	return;
 
 	/*
@@ -2345,6 +2353,9 @@ wm_detach(device_t self, int flags __unused)
 	struct wm_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, s;
+
+	if ((sc->sc_flags & WM_F_ATTACHED) == 0)
+		return 0;
 
 	s = splnet();
 	/* Stop the interface. Callouts are stopped in it. */
@@ -4597,6 +4608,16 @@ wm_reset(struct wm_softc *sc)
 		delay(20*1000);
 		wm_put_swfwhw_semaphore(sc);
 		break;
+	case WM_T_82580:
+	case WM_T_I350:
+	case WM_T_I354:
+	case WM_T_I210:
+	case WM_T_I211:
+		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
+		if (sc->sc_pcidevid != PCI_PRODUCT_INTEL_DH89XXCC_SGMII)
+			CSR_WRITE_FLUSH(sc);
+		delay(5000);
+		break;
 	case WM_T_82542_2_0:
 	case WM_T_82542_2_1:
 	case WM_T_82543:
@@ -4609,12 +4630,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
-	case WM_T_82580:
 	case WM_T_82583:
-	case WM_T_I350:
-	case WM_T_I354:
-	case WM_T_I210:
-	case WM_T_I211:
 	default:
 		/* Everything else can safely use the documented method. */
 		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
