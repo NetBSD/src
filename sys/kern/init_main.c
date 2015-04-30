@@ -1,5 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.465 2015/04/30 13:46:47 nat Exp $	*/
-
+/*	$NetBSD: init_main.c,v 1.466 2015/04/30 15:22:32 nat Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -98,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.465 2015/04/30 13:46:47 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.466 2015/04/30 15:22:32 nat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
