@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.284 2015/04/30 15:48:46 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.285 2015/04/30 16:09:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.284 2015/04/30 15:48:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.285 2015/04/30 16:09:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4726,7 +4726,7 @@ bge_asf_driver_up(struct bge_softc *sc)
 			bge_wait_for_event_ack(sc);
 
 			bge_writemem_ind(sc, BGE_SRAM_FW_CMD_MB,
-			    BGE_FW_CMD_DRV_ALIVE);
+			    BGE_FW_CMD_DRV_ALIVE3);
 			bge_writemem_ind(sc, BGE_SRAM_FW_CMD_LEN_MB, 4);
 			bge_writemem_ind(sc, BGE_SRAM_FW_CMD_DATA_MB,
 			    BGE_FW_HB_TIMEOUT_SEC);
