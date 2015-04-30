@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.46 2015/04/30 13:46:47 nat Exp $
-
+#	$NetBSD: Makefile.arm,v 1.47 2015/04/30 15:22:32 nat Exp $
 
 # Makefile for NetBSD
 #
