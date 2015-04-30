@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.12.10.5 2014/12/04 06:04:07 snj Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.12.10.6 2015/04/30 19:53:28 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -95,6 +95,7 @@
 #define WM_F_WOL		0x00100000
 #define WM_F_EEE		0x00200000 /* Energy Efficiency Ethernet */
 #define	WM_F_EEPROM_FLASH_HW	0x00400000 /* EEPROM is FLASH */
+#define WM_F_ATTACHED		0x00800000 /* attach() fininsed successfully */
 
 typedef enum {
 	WM_T_unknown		= 0,
