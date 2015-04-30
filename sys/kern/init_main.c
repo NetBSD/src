@@ -1,4 +1,5 @@
-/*	$NetBSD: init_main.c,v 1.464 2015/04/27 07:51:28 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.465 2015/04/30 13:46:47 nat Exp $	*/
+
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.464 2015/04/27 07:51:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.465 2015/04/30 13:46:47 nat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -113,6 +114,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.464 2015/04/27 07:51:28 pgoyette Exp
 #include "opt_wapbl.h"
 #include "opt_ptrace.h"
 #include "opt_rnd_printf.h"
+#include "opt_splash.h"
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_IMAGE)
+extern void *_binary_splash_image_start;
+extern void *_binary_splash_image_end;
+#endif
 
 #include "drvctl.h"
 #include "ksyms.h"
@@ -218,6 +225,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.464 2015/04/27 07:51:28 pgoyette Exp
 #include <uvm/uvm.h>	/* extern struct uvm uvm */
 
 #include <dev/cons.h>
+#include <dev/splash/splash.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -355,6 +363,13 @@ main(void)
 
 	/* Initialize the buffer cache */
 	bufinit();
+
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_IMAGE)
+	size_t splash_size = (&_binary_splash_image_end -
+	    &_binary_splash_image_start) * sizeof(void *);
+	splash_setimage(&_binary_splash_image_start, splash_size);
+#endif
 
 	/* Initialize sockets. */
 	soinit();
