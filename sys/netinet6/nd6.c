@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.161 2015/03/30 04:25:26 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.162 2015/04/30 10:00:04 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.161 2015/03/30 04:25:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.162 2015/04/30 10:00:04 ozaki-r Exp $");
+
+#include "opt_net_mpsafe.h"
 
 #include "bridge.h"
 #include "carp.h"
@@ -2329,12 +2331,16 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		goto bad;
 	}
 
+#ifndef NET_MPSAFE
 	KERNEL_LOCK(1, NULL);
+#endif
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
 		error = (*ifp->if_output)(origifp, m, sin6tocsa(dst), rt);
 	else
 		error = (*ifp->if_output)(ifp, m, sin6tocsa(dst), rt);
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
+#endif
 	return error;
 
   bad:
