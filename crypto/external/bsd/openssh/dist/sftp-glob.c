@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-glob.c,v 1.6 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: sftp-glob.c,v 1.24.2.1 2013/11/08 01:33:56 djm Exp $ */
+/*	$NetBSD: sftp-glob.c,v 1.6.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: sftp-glob.c,v 1.27 2015/01/14 13:54:13 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,17 +17,18 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-glob.c,v 1.6 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: sftp-glob.c,v 1.6.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include <dirent.h>
 #include <glob.h>
+#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "xmalloc.h"
 #include "sftp.h"
-#include "buffer.h"
 #include "sftp-common.h"
 #include "sftp-client.h"
 

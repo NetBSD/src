@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.42.2.6 2015/04/22 07:18:58 snj Exp $
+# $NetBSD: ad.arm,v 1.42.2.7 2015/04/30 06:07:32 riz Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -62,6 +62,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbind9.so.8.1.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libblacklist.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
@@ -185,7 +186,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libss.so.6.0.debug		comp-krb5-debug	obsolete
-./usr/libdata/debug/usr/lib/oabi/libssh.so.22.0.debug	comp-secsh-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx

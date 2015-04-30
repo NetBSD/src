@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.244.2.6 2015/04/22 07:18:57 snj Exp $
+# $NetBSD: md.amd64,v 1.244.2.7 2015/04/30 06:07:31 riz Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -79,6 +79,8 @@
 ./usr/lib/i386/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbind9.so.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbind9.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libblacklist.so.0		base-compat-shlib	compat,pic
+./usr/lib/i386/libblacklist.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -293,8 +295,8 @@
 ./usr/lib/i386/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libsqlite3.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libsqlite3.so.1.2		base-compat-shlib	compat,pic
-./usr/lib/i386/libssh.so.22			base-compat-shlib	compat,pic
-./usr/lib/i386/libssh.so.22.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libssh.so.24			base-compat-shlib	compat,pic
+./usr/lib/i386/libssh.so.24.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10.5			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds,libstdcxx

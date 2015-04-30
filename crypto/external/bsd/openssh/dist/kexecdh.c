@@ -1,5 +1,5 @@
-/*	$NetBSD: kexecdh.c,v 1.3 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: kexecdh.c,v 1.4 2013/04/19 01:06:50 djm Exp $ */
+/*	$NetBSD: kexecdh.c,v 1.3.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: kexecdh.c,v 1.6 2015/01/19 20:16:15 markus Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexecdh.c,v 1.3 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: kexecdh.c,v 1.3.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 
 #include <signal.h>
@@ -37,61 +37,62 @@ __RCSID("$NetBSD: kexecdh.c,v 1.3 2013/11/08 19:18:25 christos Exp $");
 #include <openssl/ec.h>
 #include <openssl/ecdh.h>
 
-#include "buffer.h"
 #include "ssh2.h"
-#include "key.h"
+#include "sshkey.h"
 #include "cipher.h"
 #include "kex.h"
-#include "log.h"
+#include "sshbuf.h"
+#include "digest.h"
+#include "ssherr.h"
 
-void
+int
 kex_ecdh_hash(
-    const EVP_MD *evp_md,
+    int hash_alg,
     const EC_GROUP *ec_group,
-    char *client_version_string,
-    char *server_version_string,
-    char *ckexinit, int ckexinitlen,
-    char *skexinit, int skexinitlen,
-    u_char *serverhostkeyblob, int sbloblen,
+    const char *client_version_string,
+    const char *server_version_string,
+    const u_char *ckexinit, size_t ckexinitlen,
+    const u_char *skexinit, size_t skexinitlen,
+    const u_char *serverhostkeyblob, size_t sbloblen,
     const EC_POINT *client_dh_pub,
     const EC_POINT *server_dh_pub,
     const BIGNUM *shared_secret,
-    u_char **hash, u_int *hashlen)
+    u_char *hash, size_t *hashlen)
 {
-	Buffer b;
-	EVP_MD_CTX md;
-	static u_char digest[EVP_MAX_MD_SIZE];
+	struct sshbuf *b;
+	int r;
 
-	buffer_init(&b);
-	buffer_put_cstring(&b, client_version_string);
-	buffer_put_cstring(&b, server_version_string);
-
-	/* kexinit messages: fake header: len+SSH2_MSG_KEXINIT */
-	buffer_put_int(&b, ckexinitlen+1);
-	buffer_put_char(&b, SSH2_MSG_KEXINIT);
-	buffer_append(&b, ckexinit, ckexinitlen);
-	buffer_put_int(&b, skexinitlen+1);
-	buffer_put_char(&b, SSH2_MSG_KEXINIT);
-	buffer_append(&b, skexinit, skexinitlen);
-
-	buffer_put_string(&b, serverhostkeyblob, sbloblen);
-	buffer_put_ecpoint(&b, ec_group, client_dh_pub);
-	buffer_put_ecpoint(&b, ec_group, server_dh_pub);
-	buffer_put_bignum2(&b, shared_secret);
-
+	if (*hashlen < ssh_digest_bytes(hash_alg))
+		return SSH_ERR_INVALID_ARGUMENT;
+	if ((b = sshbuf_new()) == NULL)
+		return SSH_ERR_ALLOC_FAIL;
+	if ((r = sshbuf_put_cstring(b, client_version_string)) != 0 ||
+	    (r = sshbuf_put_cstring(b, server_version_string)) != 0 ||
+	    /* kexinit messages: fake header: len+SSH2_MSG_KEXINIT */
+	    (r = sshbuf_put_u32(b, ckexinitlen+1)) != 0 ||
+	    (r = sshbuf_put_u8(b, SSH2_MSG_KEXINIT)) != 0 ||
+	    (r = sshbuf_put(b, ckexinit, ckexinitlen)) != 0 ||
+	    (r = sshbuf_put_u32(b, skexinitlen+1)) != 0 ||
+	    (r = sshbuf_put_u8(b, SSH2_MSG_KEXINIT)) != 0 ||
+	    (r = sshbuf_put(b, skexinit, skexinitlen)) != 0 ||
+	    (r = sshbuf_put_string(b, serverhostkeyblob, sbloblen)) != 0 ||
+	    (r = sshbuf_put_ec(b, client_dh_pub, ec_group)) != 0 ||
+	    (r = sshbuf_put_ec(b, server_dh_pub, ec_group)) != 0 ||
+	    (r = sshbuf_put_bignum2(b, shared_secret)) != 0) {
+		sshbuf_free(b);
+		return r;
+	}
 #ifdef DEBUG_KEX
-	buffer_dump(&b);
+	sshbuf_dump(b, stderr);
 #endif
-	EVP_DigestInit(&md, evp_md);
-	EVP_DigestUpdate(&md, buffer_ptr(&b), buffer_len(&b));
-	EVP_DigestFinal(&md, digest, NULL);
-
-	buffer_free(&b);
-
+	if (ssh_digest_buffer(hash_alg, b, hash, *hashlen) != 0) {
+		sshbuf_free(b);
+		return SSH_ERR_LIBCRYPTO_ERROR;
+	}
+	sshbuf_free(b);
+	*hashlen = ssh_digest_bytes(hash_alg);
 #ifdef DEBUG_KEX
-	dump_digest("hash", digest, EVP_MD_size(evp_md));
+	dump_digest("hash", hash, *hashlen);
 #endif
-	*hash = digest;
-	*hashlen = EVP_MD_size(evp_md);
+	return 0;
 }
-

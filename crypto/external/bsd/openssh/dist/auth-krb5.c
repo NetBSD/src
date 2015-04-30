@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb5.c,v 1.5 2013/11/08 19:18:24 christos Exp $	*/
+/*	$NetBSD: auth-krb5.c,v 1.5.4.1 2015/04/30 06:07:30 riz Exp $	*/
 /* $OpenBSD: auth-krb5.c,v 1.20 2013/07/20 01:55:13 djm Exp $ */
 /*
  *    Kerberos v5 authentication and ticket-passing routines.
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-krb5.c,v 1.5 2013/11/08 19:18:24 christos Exp $");
+__RCSID("$NetBSD: auth-krb5.c,v 1.5.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: auth-krb5.c,v 1.5 2013/11/08 19:18:24 christos Exp $");
 #include "packet.h"
 #include "log.h"
 #include "buffer.h"
+#include "misc.h"
 #include "servconf.h"
 #include "uidswap.h"
 #include "key.h"

@@ -1,5 +1,5 @@
-/*	$NetBSD: match.c,v 1.3 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: match.c,v 1.28 2013/05/17 00:13:13 djm Exp $ */
+/*	$NetBSD: match.c,v 1.3.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: match.c,v 1.29 2013/11/20 20:54:10 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: match.c,v 1.3 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: match.c,v 1.3.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -142,8 +142,8 @@ match_pattern_list(const char *string, const char *pattern, u_int len,
 		for (subi = 0;
 		    i < len && subi < sizeof(sub) - 1 && pattern[i] != ',';
 		    subi++, i++)
-			sub[subi] = dolower && isupper((unsigned char)pattern[i]) ?
-			    (char)tolower((unsigned char)pattern[i]) : pattern[i];
+			sub[subi] = dolower && isupper((u_char)pattern[i]) ?
+			    tolower((u_char)pattern[i]) : pattern[i];
 		/* If subpattern too long, return failure (no match). */
 		if (subi >= sizeof(sub) - 1)
 			return 0;

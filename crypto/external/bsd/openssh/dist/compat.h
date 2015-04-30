@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.h,v 1.4 2012/05/02 02:41:08 christos Exp $	*/
-/* $OpenBSD: compat.h,v 1.43 2011/09/23 07:45:05 markus Exp $ */
+/*	$NetBSD: compat.h,v 1.4.12.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: compat.h,v 1.46 2015/01/19 20:20:20 markus Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
@@ -60,14 +60,17 @@
 #define SSH_BUG_RFWD_ADDR	0x02000000
 #define SSH_NEW_OPENSSH		0x04000000
 #define SSH_BUG_DYNAMIC_RPORT	0x08000000
-#define SSH_BUG_K5USER		0x10000000
-#define SSH_BUG_LARGEWINDOW     0x20000000
+#define SSH_BUG_CURVE25519PAD	0x10000000
+#define SSH_BUG_K5USER		0x20000000
+#define SSH_BUG_LARGEWINDOW     0x40000000
 
 void     enable_compat13(void);
 void     enable_compat20(void);
-void     compat_datafellows(const char *);
+u_int    compat_datafellows(const char *);
 int	 proto_spec(const char *);
 const char	*compat_cipher_proposal(const char *);
+char	*compat_pkalg_proposal(char *);
+const char	*compat_kex_proposal(const char *);
 
 extern int compat13;
 extern int compat20;

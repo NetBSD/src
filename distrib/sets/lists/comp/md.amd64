@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.224.2.2 2015/02/08 22:15:02 snj Exp $
+# $NetBSD: md.amd64,v 1.224.2.3 2015/04/30 06:07:31 riz Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -548,6 +548,10 @@
 ./usr/lib/i386/libbind9.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libbind9_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libbind9_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/i386/libblacklist.a			comp-c-lib		compat
+./usr/lib/i386/libblacklist.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libblacklist_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libblacklist_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/i386/libbluetooth.a			comp-c-lib		compat
 ./usr/lib/i386/libbluetooth.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libbluetooth_p.a			comp-c-proflib		compat,profile

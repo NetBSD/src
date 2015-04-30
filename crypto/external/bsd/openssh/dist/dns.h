@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.h,v 1.4 2012/12/12 17:42:39 christos Exp $	*/
-/* $OpenBSD: dns.h,v 1.12 2012/05/23 03:28:28 djm Exp $ */
+/*	$NetBSD: dns.h,v 1.4.10.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: dns.h,v 1.14 2015/01/15 09:40:00 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -33,7 +33,8 @@ enum sshfp_types {
 	SSHFP_KEY_RESERVED = 0,
 	SSHFP_KEY_RSA = 1,
 	SSHFP_KEY_DSA = 2,
-	SSHFP_KEY_ECDSA = 3
+	SSHFP_KEY_ECDSA = 3,
+	SSHFP_KEY_ED25519 = 4 
 };
 
 enum sshfp_hashes {
@@ -50,7 +51,8 @@ enum sshfp_hashes {
 #define DNS_VERIFY_MATCH	0x00000002
 #define DNS_VERIFY_SECURE	0x00000004
 
-int	verify_host_key_dns(const char *, struct sockaddr *, Key *, int *);
-int	export_dns_rr(const char *, Key *, FILE *, int);
+int	verify_host_key_dns(const char *, struct sockaddr *,
+    struct sshkey *, int *);
+int	export_dns_rr(const char *, struct sshkey *, FILE *, int);
 
 #endif /* DNS_H */

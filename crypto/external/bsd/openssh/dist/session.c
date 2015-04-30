@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.12 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.266 2013/07/19 07:37:48 markus Exp $ */
+/*	$NetBSD: session.c,v 1.12.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: session.c,v 1.277 2015/01/16 06:40:12 deraadt Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,19 +35,19 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.12 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.12.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <login_cap.h>
+#include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: session.c,v 1.12 2013/11/08 19:18:25 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -76,11 +77,11 @@ __RCSID("$NetBSD: session.c,v 1.12 2013/11/08 19:18:25 christos Exp $");
 #include "authfd.h"
 #include "pathnames.h"
 #include "log.h"
+#include "misc.h"
 #include "servconf.h"
 #include "sshlogin.h"
 #include "serverloop.h"
 #include "canohost.h"
-#include "misc.h"
 #include "session.h"
 #ifdef GSSAPI
 #include "ssh-gss.h"
@@ -170,7 +171,6 @@ auth_input_request_forwarding(struct passwd * pw)
 {
 	Channel *nc;
 	int sock = -1;
-	struct sockaddr_un sunaddr;
 
 	if (auth_sock_name != NULL) {
 		error("authentication forwarding requested twice.");
@@ -196,33 +196,15 @@ auth_input_request_forwarding(struct passwd * pw)
 	xasprintf(&auth_sock_name, "%s/agent.%ld",
 	    auth_sock_dir, (long) getpid());
 
-	/* Create the socket. */
-	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock < 0) {
-		error("socket: %.100s", strerror(errno));
-		restore_uid();
-		goto authsock_err;
-	}
-
-	/* Bind it to the name. */
-	memset(&sunaddr, 0, sizeof(sunaddr));
-	sunaddr.sun_family = AF_UNIX;
-	strlcpy(sunaddr.sun_path, auth_sock_name, sizeof(sunaddr.sun_path));
-
-	if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0) {
-		error("bind: %.100s", strerror(errno));
-		restore_uid();
-		goto authsock_err;
-	}
+	/* Start a Unix listener on auth_sock_name. */
+	sock = unix_listener(auth_sock_name, SSH_LISTEN_BACKLOG, 0);
 
 	/* Restore the privileged uid. */
 	restore_uid();
 
-	/* Start listening on the socket. */
-	if (listen(sock, SSH_LISTEN_BACKLOG) < 0) {
-		error("listen: %.100s", strerror(errno));
+	/* Check for socket/bind/listen failure. */
+	if (sock < 0)
 		goto authsock_err;
-	}
 
 	/* Allocate a channel for the authentication agent socket. */
 	/* this shouldn't matter if its hpn or not - cjr */
@@ -262,6 +244,7 @@ do_authenticated(Authctxt *authctxt)
 	setproctitle("%s", authctxt->pw->pw_name);
 
 	/* setup the channel layer */
+	/* XXX - streamlocal? */
 	if (no_port_forwarding_flag ||
 	    (options.allow_tcp_forwarding & FORWARD_LOCAL) == 0)
 		channel_disable_adm_local_opens();
@@ -381,7 +364,7 @@ do_authenticated1(Authctxt *authctxt)
 			}
 			debug("Received TCP/IP port forwarding request.");
 			if (channel_input_port_forward_request(s->pw->pw_uid == 0,
-			    options.gateway_ports) < 0) {
+			    &options.fwd_opts) < 0) {
 				debug("Port forwarding failed.");
 				break;
 			}
@@ -482,7 +465,7 @@ do_authenticated1(Authctxt *authctxt)
 	}
 }
 
-#define USE_PIPES
+#define USE_PIPES 1
 /*
  * This is called to fork and execute a command when we have no tty.  This
  * will call do_child from the child, and server_loop from the parent after
@@ -785,26 +768,49 @@ int
 do_exec(Session *s, const char *command)
 {
 	int ret;
+	const char *forced = NULL;
+	char session_type[1024], *tty = NULL;
 
 	if (options.adm_forced_command) {
 		original_command = command;
 		command = options.adm_forced_command;
-		if (IS_INTERNAL_SFTP(command)) {
-			s->is_subsystem = s->is_subsystem ?
-			    SUBSYSTEM_INT_SFTP : SUBSYSTEM_INT_SFTP_ERROR;
-		} else if (s->is_subsystem)
-			s->is_subsystem = SUBSYSTEM_EXT;
-		debug("Forced command (config) '%.900s'", command);
+		forced = "(config)";
 	} else if (forced_command) {
 		original_command = command;
 		command = forced_command;
+		forced = "(key-option)";
+	}
+	if (forced != NULL) {
 		if (IS_INTERNAL_SFTP(command)) {
 			s->is_subsystem = s->is_subsystem ?
 			    SUBSYSTEM_INT_SFTP : SUBSYSTEM_INT_SFTP_ERROR;
 		} else if (s->is_subsystem)
 			s->is_subsystem = SUBSYSTEM_EXT;
-		debug("Forced command (key option) '%.900s'", command);
+		snprintf(session_type, sizeof(session_type),
+		    "forced-command %s '%.900s'", forced, command);
+	} else if (s->is_subsystem) {
+		snprintf(session_type, sizeof(session_type),
+		    "subsystem '%.900s'", s->subsys);
+	} else if (command == NULL) {
+		snprintf(session_type, sizeof(session_type), "shell");
+	} else {
+		/* NB. we don't log unforced commands to preserve privacy */
+		snprintf(session_type, sizeof(session_type), "command");
 	}
+
+	if (s->ttyfd != -1) {
+		tty = s->tty;
+		if (strncmp(tty, "/dev/", 5) == 0)
+			tty += 5;
+	}
+
+	verbose("Starting session: %s%s%s for %s from %.200s port %d",
+	    session_type,
+	    tty == NULL ? "" : " on ",
+	    tty == NULL ? "" : tty,
+	    s->pw->pw_name,
+	    get_remote_ipaddr(),
+	    get_remote_port());
 
 #ifdef GSSAPI
 	if (options.gss_authentication) {
@@ -942,6 +948,11 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
 	char **env;
 	u_int envsize;
 	u_int i, namelen;
+
+	if (strchr(name, '=') != NULL) {
+		error("Invalid environment variable \"%.100s\"", name);
+		return;
+	}
 
 	/*
 	 * Find the slot where the value should be stored.  If the variable
@@ -1261,7 +1272,8 @@ do_rc_files(Session *s, const char *shell)
 
 	/* ignore _PATH_SSH_USER_RC for subsystems and admin forced commands */
 	if (!s->is_subsystem && options.adm_forced_command == NULL &&
-	    !no_user_rc && stat(_PATH_SSH_USER_RC, &st) >= 0) {
+	    !no_user_rc && options.permit_user_rc &&
+	    stat(_PATH_SSH_USER_RC, &st) >= 0) {
 		snprintf(cmd, sizeof cmd, "%s -c '%s %s'",
 		    shell, _PATH_BSHELL, _PATH_SSH_USER_RC);
 		if (debug_flag)
@@ -1355,7 +1367,7 @@ static void
 safely_chroot(const char *path, uid_t uid)
 {
 	const char *cp;
-	char component[MAXPATHLEN];
+	char component[PATH_MAX];
 	struct stat st;
 
 	if (*path != '/')
@@ -1513,11 +1525,11 @@ launch_login(struct passwd *pw, const char *hostname)
 static void
 child_close_fds(void)
 {
-	extern AuthenticationConnection *auth_conn;
+	extern int auth_sock;
 
-	if (auth_conn) {
-		ssh_close_authentication_connection(auth_conn);
-		auth_conn = NULL;
+	if (auth_sock != -1) {
+		close(auth_sock);
+		auth_sock = -1;
 	}
 
 	if (packet_get_connection_in() == packet_get_connection_out())
@@ -1766,7 +1778,7 @@ session_unused(int id)
 		fatal("%s: insane session id %d (max %d nalloc %d)",
 		    __func__, id, options.max_sessions, sessions_nalloc);
 	}
-	bzero(&sessions[id], sizeof(*sessions));
+	memset(&sessions[id], 0, sizeof(*sessions));
 	sessions[id].self = id;
 	sessions[id].used = 0;
 	sessions[id].chanid = -1;
@@ -1944,7 +1956,7 @@ session_pty_req(Session *s)
 	u_int len;
 	int n_bytes;
 
-	if (no_pty_flag) {
+	if (no_pty_flag || !options.permit_tty) {
 		debug("Allocating a pty not permitted for this authentication.");
 		return 0;
 	}
@@ -2005,15 +2017,16 @@ session_subsystem_req(Session *s)
 	struct stat st;
 	u_int len;
 	int success = 0;
-	char *prog, *cmd, *subsys = packet_get_string(&len);
+	char *prog, *cmd;
 	u_int i;
 
+	s->subsys = packet_get_string(&len);
 	packet_check_eom();
-	logit("subsystem request for %.100s by user %s", subsys,
+	debug2("subsystem request for %.100s by user %s", s->subsys,
 	    s->pw->pw_name);
 
 	for (i = 0; i < options.num_subsystems; i++) {
-		if (strcmp(subsys, options.subsystem_name[i]) == 0) {
+		if (strcmp(s->subsys, options.subsystem_name[i]) == 0) {
 			prog = options.subsystem_command[i];
 			cmd = options.subsystem_args[i];
 			if (strcmp(INTERNAL_SFTP_NAME, prog) == 0) {
@@ -2032,10 +2045,9 @@ session_subsystem_req(Session *s)
 	}
 
 	if (!success)
-		logit("subsystem request for %.100s failed, subsystem not found",
-		    subsys);
+		logit("subsystem request for %.100s by user %s failed, "
+		    "subsystem not found", s->subsys, s->pw->pw_name);
 
-	free(subsys);
 	return success;
 }
 
@@ -2102,8 +2114,8 @@ session_env_req(Session *s)
 	char *name, *val;
 	u_int name_len, val_len, i;
 
-	name = packet_get_string(&name_len);
-	val = packet_get_string(&val_len);
+	name = packet_get_cstring(&name_len);
+	val = packet_get_cstring(&val_len);
 	packet_check_eom();
 
 	/* Don't set too many environment variables */
@@ -2388,6 +2400,7 @@ session_close(Session *s)
 	free(s->auth_display);
 	free(s->auth_data);
 	free(s->auth_proto);
+	free(s->subsys);
 	if (s->env != NULL) {
 		for (i = 0; i < s->num_env; i++) {
 			free(s->env[i].name);
@@ -2513,7 +2526,7 @@ session_setup_x11fwd(Session *s)
 {
 	struct stat st;
 	char display[512], auth_display[512];
-	char hostname[MAXHOSTNAMELEN];
+	char hostname[NI_MAXHOST];
 	u_int i;
 
 	if (no_x11_forwarding_flag) {
@@ -2524,7 +2537,7 @@ session_setup_x11fwd(Session *s)
 		debug("X11 forwarding disabled in server configuration file.");
 		return 0;
 	}
-	if (!options.xauth_location ||
+	if (options.xauth_location == NULL ||
 	    (stat(options.xauth_location, &st) == -1)) {
 		packet_send_debug("No xauth program; cannot forward with spoofing.");
 		return 0;

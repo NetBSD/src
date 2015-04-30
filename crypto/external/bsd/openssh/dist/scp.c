@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.9 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.178 2013/06/22 06:31:57 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.9.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: scp.c,v 1.181 2015/01/16 06:40:12 deraadt Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -73,8 +73,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.9 2013/11/08 19:18:25 christos Exp $");
-#include <sys/param.h>
+__RCSID("$NetBSD: scp.c,v 1.9.4.1 2015/04/30 06:07:30 riz Exp $");
+#include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <sys/wait.h>
@@ -94,6 +94,7 @@ __RCSID("$NetBSD: scp.c,v 1.9 2013/11/08 19:18:25 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <vis.h>
 
 #include "xmalloc.h"
@@ -736,9 +737,9 @@ source(int argc, char **argv)
 	static BUF buffer;
 	BUF *bp;
 	off_t i, statbytes;
-	size_t amt;
+	size_t amt, nr;
 	int fd = -1, haderr, indx;
-	char *last, *name, buf[16384], encname[MAXPATHLEN];
+	char *last, *name, buf[16384], encname[PATH_MAX];
 	int len;
 
 	for (indx = 0; indx < argc; ++indx) {
@@ -810,12 +811,16 @@ next:			if (fd != -1) {
 			if (i + (off_t)amt > stb.st_size)
 				amt = stb.st_size - i;
 			if (!haderr) {
-				if (atomicio(read, fd, bp->buf, amt) != amt)
+				if ((nr = atomicio(read, fd,
+				    bp->buf, amt)) != amt) {
 					haderr = errno;
+					memset(bp->buf + nr, 0, amt - nr);
+				}
 			}
 			/* Keep writing after error to retain sync */
 			if (haderr) {
 				(void)atomicio(vwrite, remout, bp->buf, amt);
+				memset(bp->buf, 0, amt);
 				continue;
 			}
 			if (atomicio6(vwrite, remout, bp->buf, amt, scpio,
@@ -844,7 +849,7 @@ rsource(char *name, struct stat *statp)
 {
 	DIR *dirp;
 	struct dirent *dp;
-	char *last, *vect[1], path[MAXPATHLEN];
+	char *last, *vect[1], path[PATH_MAX];
 
 	if (!(dirp = opendir(name))) {
 		run_err("%s: %s", name, strerror(errno));
@@ -1270,7 +1275,7 @@ okname(char *cp0)
 		c = (int)*cp;
 		if (c & 0200)
 			goto bad;
-		if (!isalpha(c) && !isdigit(c)) {
+		if (!isalpha(c) && !isdigit((unsigned char)c)) {
 			switch (c) {
 			case '\'':
 			case '"':

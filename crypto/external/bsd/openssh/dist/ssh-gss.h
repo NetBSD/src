@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-gss.h,v 1.3 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: ssh-gss.h,v 1.10 2007/06/12 08:20:00 djm Exp $ */
+/*	$NetBSD: ssh-gss.h,v 1.3.22.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: ssh-gss.h,v 1.11 2014/02/26 20:28:44 djm Exp $ */
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
  *
@@ -84,6 +84,8 @@ void ssh_gssapi_set_oid_data(Gssctxt *, void *, size_t);
 void ssh_gssapi_set_oid(Gssctxt *, gss_OID);
 void ssh_gssapi_supported_oids(gss_OID_set *);
 ssh_gssapi_mech *ssh_gssapi_get_ctype(Gssctxt *);
+void ssh_gssapi_prepare_supported_oids(void);
+OM_uint32 ssh_gssapi_test_oid_supported(OM_uint32 *, gss_OID, int *);
 
 OM_uint32 ssh_gssapi_import_name(Gssctxt *, const char *);
 OM_uint32 ssh_gssapi_init_ctx(Gssctxt *, int,

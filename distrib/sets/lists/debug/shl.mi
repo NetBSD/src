@@ -1,4 +1,5 @@
-# $NetBSD: shl.mi,v 1.71.2.10 2015/04/22 07:18:58 snj Exp $
+# $NetBSD: shl.mi,v 1.71.2.11 2015/04/30 06:07:32 riz Exp $
+./usr/libdata/debug/lib/libblacklist.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libc.so.12.193.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.4.debug		comp-sys-debug	debug
@@ -58,6 +59,7 @@
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug
 ./usr/libdata/debug/usr/lib/libbind9.so.8.1.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/libblacklist.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug
@@ -248,7 +250,7 @@
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug	comp-sys-debug	skey,debug
 ./usr/libdata/debug/usr/lib/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.2.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libssh.so.22.0.debug	comp-secsh-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libssl.so.10.5.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,libstdcxx

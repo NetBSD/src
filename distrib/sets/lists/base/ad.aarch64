@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2.2.4 2015/04/22 07:18:57 snj Exp $
+# $NetBSD: ad.aarch64,v 1.2.2.5 2015/04/30 06:07:31 riz Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -99,6 +99,8 @@
 ./usr/lib/eabi/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/eabi/libbind9.so.8			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libbind9.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/libblacklist.so.0			base-compat-shlib	compat,pic
+./usr/lib/eabi/libblacklist.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/eabi/libbluetooth.so.4			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/eabi/libbsdmalloc.so.0			base-compat-shlib	compat,pic
@@ -293,8 +295,8 @@
 ./usr/lib/eabi/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabi/libsqlite3.so.1			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libsqlite3.so.1.2			base-compat-shlib	compat,pic
-./usr/lib/eabi/libssh.so.22			base-compat-shlib	compat,pic,crypto
-./usr/lib/eabi/libssh.so.22.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/eabi/libssh.so.24			base-compat-shlib	compat,pic,crypto
+./usr/lib/eabi/libssh.so.24.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/eabi/libssl.so.10			base-compat-shlib	compat,pic,crypto
 ./usr/lib/eabi/libssl.so.10.5			base-compat-shlib	compat,pic,crypto
 ./usr/lib/eabi/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx
@@ -607,8 +609,8 @@
 #./usr/lib/eabihf/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 #./usr/lib/eabihf/libsqlite3.so.1			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libsqlite3.so.1.2			base-compat-shlib	compat,pic
-#./usr/lib/eabihf/libssh.so.22			base-compat-shlib	compat,pic,crypto
-#./usr/lib/eabihf/libssh.so.22.0			base-compat-shlib	compat,pic,crypto
+#./usr/lib/eabihf/libssh.so.24			base-compat-shlib	compat,pic,crypto
+#./usr/lib/eabihf/libssh.so.24.0			base-compat-shlib	compat,pic,crypto
 #./usr/lib/eabihf/libssl.so.10			base-compat-shlib	compat,pic,crypto
 #./usr/lib/eabihf/libssl.so.10.5			base-compat-shlib	compat,pic,crypto
 #./usr/lib/eabihf/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx
@@ -727,6 +729,8 @@
 ./usr/lib/oabi/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libbind9.so.8			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbind9.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/oabi/libblacklist.so.0		base-compat-shlib	compat,pic
+./usr/lib/oabi/libblacklist.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -919,8 +923,8 @@
 ./usr/lib/oabi/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libsqlite3.so.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libsqlite3.so.1.2		base-compat-shlib	compat,pic
-./usr/lib/oabi/libssh.so.22			base-compat-shlib	compat,pic,crypto
-./usr/lib/oabi/libssh.so.22.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/oabi/libssh.so.24			base-compat-shlib	compat,pic,crypto
+./usr/lib/oabi/libssh.so.24.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libssl.so.10			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libssl.so.10.5			base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx

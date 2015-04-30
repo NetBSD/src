@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.215.2.1 2015/01/25 00:19:45 martin Exp $
+#	$NetBSD: Makefile,v 1.215.2.2 2015/04/30 06:07:34 riz Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -51,6 +51,7 @@ SUBDIR+=	../external/apache2/mDNSResponder/lib
 .endif
 
 SUBDIR+=	../external/bsd/am-utils/lib
+SUBDIR+=	../external/bsd/blacklist/lib
 
 SUBDIR+=	../external/bsd/flex/lib
 SUBDIR+=	../external/bsd/tre/lib

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.63.2.6 2015/04/22 07:18:58 snj Exp $
+# $NetBSD: md.amd64,v 1.63.2.7 2015/04/30 06:07:32 riz Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -30,6 +30,7 @@
 ./usr/lib/i386/libatf-c_g.a			comp-c-debuglib		compat,debuglib,atf
 ./usr/lib/i386/libbfd_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libbind9_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/i386/libblacklist_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libbluetooth_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libbsdmalloc_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libbz2_g.a			comp-c-debuglib		compat,debuglib
@@ -198,6 +199,7 @@
 ./usr/libdata/debug/usr/lib/i386/libatf-c.so.0.0.debug	comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/i386/libbfd.so.13.0.debug	comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/i386/libbind9.so.8.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libblacklist.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbluetooth.so.4.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbsdmalloc.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbz2.so.1.1.debug	comp-compat-shlib	compat,pic,debug
@@ -316,7 +318,7 @@
 ./usr/libdata/debug/usr/lib/i386/libsl.so.5.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libsqlite3.so.1.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	obsolete
-./usr/libdata/debug/usr/lib/i386/libssh.so.22.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libssh.so.24.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libssl.so.10.5.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug,libstdcxx

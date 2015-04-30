@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.72.2.1 2015/01/25 00:19:24 martin Exp $
+# $NetBSD: ad.powerpc,v 1.72.2.2 2015/04/30 06:07:31 riz Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -190,6 +190,10 @@
 ./usr/lib/powerpc/libbind9.so			base-sys-shlib		compat,arch64,pic
 ./usr/lib/powerpc/libbind9_p.a			comp-c-proflib		compat,arch64,profile
 ./usr/lib/powerpc/libbind9_pic.a		comp-c-piclib		compat,arch64,pic,picinstall
+./usr/lib/powerpc/libblacklist.a		comp-c-lib		compat,arch64
+./usr/lib/powerpc/libblacklist.so		base-sys-shlib		compat,arch64,pic
+./usr/lib/powerpc/libblacklist_p.a		comp-c-proflib		compat,arch64,profile
+./usr/lib/powerpc/libblacklist_pic.a		comp-c-piclib		compat,arch64,pic,picinstall
 ./usr/lib/powerpc/libbluetooth.a		comp-c-lib		compat,arch64
 ./usr/lib/powerpc/libbluetooth.so		base-sys-shlib		compat,arch64,pic
 ./usr/lib/powerpc/libbluetooth_p.a		comp-c-proflib		compat,arch64,profile

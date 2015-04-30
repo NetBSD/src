@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.10.2.1 2014/12/22 03:28:33 msaitoh Exp $	*/
+/*	$NetBSD: client.c,v 1.10.2.2 2015/04/30 06:07:32 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -64,6 +64,8 @@
 #include <named/os.h>
 #include <named/server.h>
 #include <named/update.h>
+
+#include "pfilter.h"
 
 /***
  *** Client
@@ -3101,6 +3103,7 @@ ns_client_checkacl(ns_client_t *client, isc_sockaddr_t *sockaddr,
 	result = ns_client_checkaclsilent(client, sockaddr ? &netaddr : NULL,
 					  acl, default_allow);
 
+	pfilter_notify(result, client, opname);
 	if (result == ISC_R_SUCCESS)
 		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
 			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(3),

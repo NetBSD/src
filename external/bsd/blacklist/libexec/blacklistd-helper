@@ -1,0 +1,26 @@
+#!/bin/sh
+#echo "run $@" 1>&2
+#set -x
+# $1 command
+# $2 rulename
+# $3 protocol
+# $4 address
+# $5 mask
+# $6 port
+# $7 id
+
+case "$1" in
+add)
+	exec /sbin/npfctl rule $2 add block in final proto $3 from $4/$5 to any port $6
+	;;
+rem)
+	exec /sbin/npfctl rule $2 rem-id $7
+	;;
+flush)
+	exec /sbin/npfctl rule $2 flush
+	;;
+*)
+	echo "$0: Unknown command '$1'" 1>&2
+	exit 1
+	;;
+esac

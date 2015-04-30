@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2014/08/08 19:34:35 apb Exp $
+#	$NetBSD: Makefile,v 1.47.2.1 2015/04/30 06:07:32 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,6 @@ SUBDIR+= llvm
 SUBDIR+= pcc
 .endif
 
-SUBDIR+= pdisk dhcp nvi ppp smbfs
+SUBDIR+= blacklist pdisk dhcp nvi ppp smbfs
 
 .include <bsd.subdir.mk>

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-chall.c,v 1.4 2013/11/08 19:18:24 christos Exp $	*/
-/* $OpenBSD: auth-chall.c,v 1.13 2013/05/17 00:13:13 djm Exp $ */
+/*	$NetBSD: auth-chall.c,v 1.4.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: auth-chall.c,v 1.14 2014/06/24 01:13:21 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,8 +25,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-chall.c,v 1.4 2013/11/08 19:18:24 christos Exp $");
+__RCSID("$NetBSD: auth-chall.c,v 1.4.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "xmalloc.h"
 #include "key.h"
@@ -34,6 +37,7 @@ __RCSID("$NetBSD: auth-chall.c,v 1.4 2013/11/08 19:18:24 christos Exp $");
 #include "auth.h"
 #include "log.h"
 #ifdef USE_PAM
+#include "misc.h"
 #include "buffer.h"
 #include "servconf.h"
 extern ServerOptions options;

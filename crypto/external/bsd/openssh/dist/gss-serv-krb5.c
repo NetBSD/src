@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv-krb5.c,v 1.6 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: gss-serv-krb5.c,v 1.6.4.1 2015/04/30 06:07:30 riz Exp $	*/
 /* $OpenBSD: gss-serv-krb5.c,v 1.8 2013/07/20 01:55:13 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv-krb5.c,v 1.6 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: gss-serv-krb5.c,v 1.6.4.1 2015/04/30 06:07:30 riz Exp $");
 #ifdef GSSAPI
 #ifdef KRB5
 
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: gss-serv-krb5.c,v 1.6 2013/11/08 19:18:25 christos Exp $");
 #include "log.h"
 
 #include "buffer.h"
+#include "misc.h"
 #include "servconf.h"
 #include "ssh-gss.h"
 

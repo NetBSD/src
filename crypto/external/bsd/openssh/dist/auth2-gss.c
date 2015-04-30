@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-gss.c,v 1.6 2013/11/08 19:18:24 christos Exp $	*/
-/* $OpenBSD: auth2-gss.c,v 1.20 2013/05/17 00:13:13 djm Exp $ */
+/*	$NetBSD: auth2-gss.c,v 1.6.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: auth2-gss.c,v 1.22 2015/01/19 20:07:45 markus Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-gss.c,v 1.6 2013/11/08 19:18:24 christos Exp $");
+__RCSID("$NetBSD: auth2-gss.c,v 1.6.4.1 2015/04/30 06:07:30 riz Exp $");
 
 #ifdef GSSAPI
 
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: auth2-gss.c,v 1.6 2013/11/08 19:18:24 christos Exp $");
 #include "log.h"
 #include "dispatch.h"
 #include "buffer.h"
+#include "misc.h"
 #include "servconf.h"
 #include "packet.h"
 #include "ssh-gss.h"
@@ -47,10 +48,10 @@ __RCSID("$NetBSD: auth2-gss.c,v 1.6 2013/11/08 19:18:24 christos Exp $");
 
 extern ServerOptions options;
 
-static void input_gssapi_token(int type, u_int32_t plen, void *ctxt);
-static void input_gssapi_mic(int type, u_int32_t plen, void *ctxt);
-static void input_gssapi_exchange_complete(int type, u_int32_t plen, void *ctxt);
-static void input_gssapi_errtok(int, u_int32_t, void *);
+static int input_gssapi_token(int type, u_int32_t plen, void *ctxt);
+static int input_gssapi_mic(int type, u_int32_t plen, void *ctxt);
+static int input_gssapi_exchange_complete(int type, u_int32_t plen, void *ctxt);
+static int input_gssapi_errtok(int, u_int32_t, void *);
 
 /*
  * We only support those mechanisms that we know about (ie ones that we know
@@ -62,7 +63,6 @@ userauth_gssapi(Authctxt *authctxt)
 	gss_OID_desc goid = {0, NULL};
 	Gssctxt *ctxt = NULL;
 	int mechs;
-	gss_OID_set supported;
 	int present;
 	OM_uint32 ms;
 	u_int len;
@@ -77,7 +77,6 @@ userauth_gssapi(Authctxt *authctxt)
 		return (0);
 	}
 
-	ssh_gssapi_supported_oids(&supported);
 	do {
 		mechs--;
 
@@ -90,14 +89,11 @@ userauth_gssapi(Authctxt *authctxt)
 		    doid[1] == len - 2) {
 			goid.elements = doid + 2;
 			goid.length   = len - 2;
-			gss_test_oid_set_member(&ms, &goid, supported,
-			    &present);
+			ssh_gssapi_test_oid_supported(&ms, &goid, &present);
 		} else {
 			logit("Badly formed OID received");
 		}
 	} while (mechs > 0 && !present);
-
-	gss_release_oid_set(&ms, &supported);
 
 	if (!present) {
 		free(doid);
@@ -130,7 +126,7 @@ userauth_gssapi(Authctxt *authctxt)
 	return (0);
 }
 
-static void
+static int
 input_gssapi_token(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -182,9 +178,10 @@ input_gssapi_token(int type, u_int32_t plen, void *ctxt)
 	}
 
 	gss_release_buffer(&min_status, &send_tok);
+	return 0;
 }
 
-static void
+static int
 input_gssapi_errtok(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -216,6 +213,7 @@ input_gssapi_errtok(int type, u_int32_t plen, void *ctxt)
 	/* The client will have already moved on to the next auth */
 
 	gss_release_buffer(&maj_status, &send_tok);
+	return 0;
 }
 
 /*
@@ -224,7 +222,7 @@ input_gssapi_errtok(int type, u_int32_t plen, void *ctxt)
  * which only enables it once the GSSAPI exchange is complete.
  */
 
-static void
+static int
 input_gssapi_exchange_complete(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -248,9 +246,10 @@ input_gssapi_exchange_complete(int type, u_int32_t plen, void *ctxt)
 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_MIC, NULL);
 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, NULL);
 	userauth_finish(authctxt, authenticated, "gssapi-with-mic", NULL);
+	return 0;
 }
 
-static void
+static int
 input_gssapi_mic(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -288,6 +287,7 @@ input_gssapi_mic(int type, u_int32_t plen, void *ctxt)
 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_MIC, NULL);
 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, NULL);
 	userauth_finish(authctxt, authenticated, "gssapi-with-mic", NULL);
+	return 0;
 }
 
 Authmethod method_gssapi = {

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rsa.c,v 1.8 2013/11/08 19:18:24 christos Exp $	*/
-/* $OpenBSD: auth-rsa.c,v 1.85 2013/07/12 00:19:58 djm Exp $ */
+/*	$NetBSD: auth-rsa.c,v 1.8.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: auth-rsa.c,v 1.90 2015/01/28 22:36:00 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,12 +16,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rsa.c,v 1.8 2013/11/08 19:18:24 christos Exp $");
+__RCSID("$NetBSD: auth-rsa.c,v 1.8.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include <openssl/rsa.h>
-#include <openssl/md5.h>
 
 #include <pwd.h>
 #include <stdio.h>
@@ -36,6 +35,7 @@ __RCSID("$NetBSD: auth-rsa.c,v 1.8 2013/11/08 19:18:24 christos Exp $");
 #include "buffer.h"
 #include "pathnames.h"
 #include "log.h"
+#include "misc.h"
 #include "servconf.h"
 #include "key.h"
 #include "auth-options.h"
@@ -46,7 +46,8 @@ __RCSID("$NetBSD: auth-rsa.c,v 1.8 2013/11/08 19:18:24 christos Exp $");
 #endif
 #include "monitor_wrap.h"
 #include "ssh.h"
-#include "misc.h"
+
+#include "digest.h"
 
 /* import */
 extern ServerOptions options;
@@ -91,12 +92,13 @@ int
 auth_rsa_verify_response(Key *key, BIGNUM *challenge, u_char response[16])
 {
 	u_char buf[32], mdbuf[16];
-	MD5_CTX md;
+	struct ssh_digest_ctx *md;
 	int len;
 
 	/* don't allow short keys */
 	if (BN_num_bits(key->rsa->n) < SSH_RSA_MINIMUM_MODULUS_SIZE) {
-		error("auth_rsa_verify_response: RSA modulus too small: %d < minimum %d bits",
+		error("%s: RSA modulus too small: %d < minimum %d bits",
+		    __func__,
 		    BN_num_bits(key->rsa->n), SSH_RSA_MINIMUM_MODULUS_SIZE);
 		return (0);
 	}
@@ -104,13 +106,15 @@ auth_rsa_verify_response(Key *key, BIGNUM *challenge, u_char response[16])
 	/* The response is MD5 of decrypted challenge plus session id. */
 	len = BN_num_bytes(challenge);
 	if (len <= 0 || len > 32)
-		fatal("auth_rsa_verify_response: bad challenge length %d", len);
+		fatal("%s: bad challenge length %d", __func__, len);
 	memset(buf, 0, 32);
 	BN_bn2bin(challenge, buf + 32 - len);
-	MD5_Init(&md);
-	MD5_Update(&md, buf, 32);
-	MD5_Update(&md, session_id, 16);
-	MD5_Final(mdbuf, &md);
+	if ((md = ssh_digest_start(SSH_DIGEST_MD5)) == NULL ||
+	    ssh_digest_update(md, buf, 32) < 0 ||
+	    ssh_digest_update(md, session_id, 16) < 0 ||
+	    ssh_digest_final(md, mdbuf, sizeof(mdbuf)) < 0)
+		fatal("%s: md5 failed", __func__);
+	ssh_digest_free(md);
 
 	/* Verify that the response is the original challenge. */
 	if (timingsafe_bcmp(response, mdbuf, 16) != 0) {
@@ -140,7 +144,8 @@ auth_rsa_challenge_dialog(Key *key)
 	challenge = PRIVSEP(auth_rsa_generate_challenge(key));
 
 	/* Encrypt the challenge with the public key. */
-	rsa_public_encrypt(encrypted_challenge, challenge, key->rsa);
+	if (rsa_public_encrypt(encrypted_challenge, challenge, key->rsa) != 0)
+		fatal("%s: rsa_public_encrypt failed", __func__);
 
 	/* Send the encrypted challenge to the client. */
 	packet_start(SSH_SMSG_AUTH_RSA_CHALLENGE);
@@ -165,7 +170,8 @@ rsa_key_allowed_in_file(struct passwd *pw, char *file,
     const BIGNUM *client_n, Key **rkey)
 {
 	char *fp, line[SSH_MAX_PUBKEY_BYTES];
-	int allowed = 0, bits;
+	int allowed = 0;
+	u_int bits;
 	FILE *f;
 	u_long linenum = 0;
 	Key *key;
@@ -226,12 +232,14 @@ rsa_key_allowed_in_file(struct passwd *pw, char *file,
 
 		/* check the real bits  */
 		keybits = BN_num_bits(key->rsa->n);
-		if (keybits < 0 || bits != keybits)
+		if (keybits < 0 || bits != (u_int)keybits)
 			logit("Warning: %s, line %lu: keysize mismatch: "
 			    "actual %d vs. announced %d.",
 			    file, linenum, BN_num_bits(key->rsa->n), bits);
 
-		fp = key_fingerprint(key, SSH_FP_MD5, SSH_FP_HEX);
+		if ((fp = sshkey_fingerprint(key, options.fingerprint_hash,
+		    SSH_FP_DEFAULT)) == NULL)
+			continue;
 		debug("matching key found: file %s, line %lu %s %s",
 		    file, linenum, key_type(key), fp);
 		free(fp);
@@ -282,7 +290,6 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 #ifdef WITH_LDAP_PUBKEY
 	if (options.lpk.on) {
 	    u_int bits;
-	    int sbits;
 	    ldap_key_t *k;
 	    /* here is the job */
 	    Key *key = key_new(KEY_RSA1);
@@ -317,11 +324,10 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 			    xoptions = NULL;
 
 			/* Parse the key from the line. */
-			if (hostfile_read_key(&cp, &sbits, key) == 0) {
+			if (hostfile_read_key(&cp, &bits, key) == 0) {
 			    debug("[LDAP] line %d: non ssh1 key syntax", i);
 			    continue;
 			}
-			bits = sbits;
 			/* cp now points to the comment part. */
 
 			/* Check if the we have found the desired key (identified by its modulus). */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14.2.1 2014/12/22 03:28:34 msaitoh Exp $	*/
+/*	$NetBSD: main.c,v 1.14.2.2 2015/04/30 06:07:32 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -83,6 +83,9 @@
 #ifdef HAVE_LIBXML2
 #include <libxml/xmlversion.h>
 #endif
+
+#include "pfilter.h"
+
 /*
  * Include header files for database drivers here.
  */
@@ -280,12 +283,12 @@ library_unexpected_error(const char *file, int line, const char *format,
 	 */
 
 	if (ns_g_lctx != NULL) {
-		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
-			      NS_LOGMODULE_MAIN, ISC_LOG_ERROR,
-			      "%s:%d: unexpected error:", file, line);
+		char fmt[2048];
+		snprintf(fmt, sizeof(fmt),
+		    "%s:%d: unexpected error: %s", file, line, format);
 		isc_log_vwrite(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			       NS_LOGMODULE_MAIN, ISC_LOG_ERROR,
-			       format, args);
+			       fmt, args);
 	} else {
 		fprintf(stderr, "%s:%d: fatal error: ", file, line);
 		vfprintf(stderr, format, args);
@@ -1205,6 +1208,8 @@ main(int argc, char *argv[]) {
 #endif
 
 	parse_command_line(argc, argv);
+
+	pfilter_open();
 
 	/*
 	 * Warn about common configuration error.
