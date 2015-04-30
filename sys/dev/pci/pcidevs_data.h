@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.19 2013/09/07 17:11:18 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.20 2015/04/30 20:01:45 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.19 2013/09/07 17:10:18 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.20 2015/04/30 20:00:27 snj Exp
  */
 
 /*
@@ -7408,6 +7408,26 @@ static const struct pci_product pci_products[] = {
 	    "SATA RAID controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XXCC_IQIA,
+	    "DH89xx CC PCIe Endpoint and QuiskAssit",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XXCC_SGMII,
+	    "DH89XXCC SGMII",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XXCC_SERDES,
+	    "DH89XXCC SerDes",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XXCC_BPLANE,
+	    "DH89XXCC backplane",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XXCC_SFP,
+	    "DH89XXCC SFP",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
 	    "82375EB/SB PCI-EISA Bridge",
 	},
@@ -8152,6 +8172,22 @@ static const struct pci_product pci_products[] = {
 	    "I218-LM Ethernet Connection",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM2,
+	    "I218-LM Ethernet Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_V2,
+	    "I218-V Ethernet Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM3,
+	    "I218-LM Ethernet Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_V3,
+	    "I218-V Ethernet Connection",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP,
 	    "ROB-in i960RP Microprocessor",
 	},
@@ -8278,6 +8314,206 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_KT,
 	    "6 Series KT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_0,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_1,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_2,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_3,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_4,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_5,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_6,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_7,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_8,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_9,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_A,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_B,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_C,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_D,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_E,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_TROUTER_F,
+	    "C2000 Transaction Router",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCIE_1,
+	    "C2000 PCIe Root Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCIE_2,
+	    "C2000 PCIe Root Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCIE_3,
+	    "C2000 PCIe Root Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCIE_4,
+	    "C2000 PCIe Root Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_RAS,
+	    "C2000 RAS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_SMBUS,
+	    "C2000 SMBus 2.0",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_RCEC,
+	    "C2000 RCEC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_IQIA_PHYS,
+	    "C2000 IQIA Physical Function",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_IQIA,
+	    "C2000 IQIA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_SATA2,
+	    "C2000 SATA2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_USB,
+	    "C2000 USB 2.0",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_SATA3,
+	    "C2000 SATA3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCU_1,
+	    "C2000 PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCU_2,
+	    "C2000 PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCU_3,
+	    "C2000 PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCU_4,
+	    "C2000 PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_PCU_SMBUS,
+	    "C2000 PCU SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_1000KX,
+	    "C2000 Ethernet(1000BASE-KX)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_SGMII,
+	    "C2000 Ethernet(SGMII)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_DUMMYGBE,
+	    "C2000 Ethernet(Dummy function)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C2000_25GBE,
+	    "C2000 Ethernet(2.5Gbe)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_LPC,
+	    "DH89xx LPC Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_SATA_1,
+	    "DH89xx SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_SATA_2,
+	    "DH89xx SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_SMB,
+	    "DH89xx SMBus Host Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_THERMAL,
+	    "DH89xx Thermal Subsystem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_USB,
+	    "DH89xx USB EHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_PCIE_1,
+	    "DH89xx PCIe Root Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_PCIE_2,
+	    "DH89xx PCIe Root Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_PCIE_3,
+	    "DH89xx PCIe Root Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_PCIE_4,
+	    "DH89xx PCIe Root Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_WDT,
+	    "DH89xx Watchdog Timer for Core Reset",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_MEI_1,
+	    "DH89xx MEI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DH89XX_MEI_2,
+	    "DH89xx MEI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
@@ -15164,4 +15400,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3190;
+const int pci_nproducts = 3249;
