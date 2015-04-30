@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.215 2015/04/24 05:58:36 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.216 2015/04/30 19:56:24 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11476,3 +11476,18 @@ sys/net/if_vlan.c				1.81
 
 	Count up parent's obytes and omcasts counters. PR kern/49837.
 	[ozaki-r, ticket #1295]
+
+sys/dev/pci/pcidevs				1.1195 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/if_wm.c				1.290, 1.304 via patch
+sys/dev/pci/if_wmvar.h				1.20 via patch
+
+	- Set the WM_F_ATTACHED flag if wm_attach() finished succesfully and
+	  check the flag in wm_detach(). It will avoid to panic in wm_detach().
+	  Fixes PR#49102.
+	- Support DH89xxCC device.
+	- Add extra delay for 82580 and newer devices except DH89XXCC SGMII device.
+	  Same as FreeBSD.
+	[msaitoh, ticket #1296]
+
