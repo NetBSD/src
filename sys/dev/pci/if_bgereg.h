@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.89 2015/04/30 15:48:47 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.90 2015/04/30 16:09:06 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -100,6 +100,7 @@
 
 #define	BGE_FW_CMD_DRV_ALIVE		0x00000001
 #define	BGE_FW_CMD_PAUSE		0x00000002
+#define	BGE_FW_CMD_DRV_ALIVE3		0x0000000e
 
 #define	BGE_FW_HB_TIMEOUT_SEC		3
 
