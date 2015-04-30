@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.24.20.8 2013/09/07 17:10:18 bouyer Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.24.20.9 2015/04/30 20:00:27 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -209,8 +209,8 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_FD		(1U << 0)	/* full duplex */
 #define	CTRL_BEM	(1U << 1)	/* big-endian mode */
 #define	CTRL_PRIOR	(1U << 2)	/* 0 = receive, 1 = fair */
+#define	CTRL_GIO_M_DIS	(1U << 2)	/* disabl PCI master access */
 #define	CTRL_LRST	(1U << 3)	/* link reset */
-#define	CTRL_GIO_M_DIS	(1U << 3)	/* disabl PCI master access */
 #define	CTRL_ASDE	(1U << 5)	/* auto speed detect enable */
 #define	CTRL_SLU	(1U << 6)	/* set link up */
 #define	CTRL_ILOS	(1U << 7)	/* invert loss of signal */
@@ -286,6 +286,7 @@ struct livengood_tcpip_ctxdesc {
 #define	EECD_EE_AUTORD	(1U << 9)	/* auto read done */
 #define	EECD_EE_ABITS	(1U << 10)	/* EEPROM address bits
 					   (based on type) */
+#define	EECD_EE_SIZE_EX_MASK __BITS(14,11) /* EEPROM size for new devices */
 #define	EECD_EE_TYPE	(1U << 13)	/* EEPROM type
 					   (0 = Microwire, 1 = SPI) */
 #define EECD_SEC1VAL	(1U << 22)	/* Sector One Valid */
@@ -310,10 +311,17 @@ struct livengood_tcpip_ctxdesc {
 #define	SPI_SR_BP1	0x08
 #define	SPI_SR_WPEN	0x80
 
+#define NVM_CHECKSUM			0xBABA
+#define EEPROM_SIZE			0x0040
+#define NVM_COMPAT_VALID_CHECKSUM	0x0001
+
 #define	EEPROM_OFF_MACADDR	0x00	/* MAC address offset */
+#define NVM_COMPAT		0x03
 #define	EEPROM_OFF_CFG1		0x0a	/* config word 1 */
 #define	EEPROM_OFF_CFG2		0x0f	/* config word 2 */
+#define	NVM_OFF_EEPROM_SIZE	0x12	/* NVM SIZE */
 #define	EEPROM_OFF_CFG3_PORTB	0x14	/* config word 3 */
+#define NVM_FUTURE_INIT_WORD1	0x19
 #define	EEPROM_INIT_3GIO_3	0x1a	/* PCIe Initial Configuration Word 3 */
 #define	EEPROM_OFF_K1_CONFIG	0x1b	/* NVM K1 Config */
 #define	EEPROM_OFF_SWDPIN	0x20	/* SWD Pins (Cordova) */
@@ -350,7 +358,13 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_CFG2_APM_PME	(1U << 15)
 #define	EEPROM_CFG2_SWDPIO_SHIFT 4
 #define	EEPROM_CFG2_SWDPIO_MASK	(0xf << EEPROM_CFG2_SWDPIO_SHIFT)
-#define	EEPROM_CFG2_MNGM_MASK	(3U << 13) /* Manageability Operation mode */
+#define	EEPROM_CFG2_MNGM_SHIFT	13	/* Manageability Operation mode */
+#define	EEPROM_CFG2_MNGM_MASK	(3U << EEPROM_CFG2_MNGM_SHIFT)
+#define	EEPROM_CFG2_MNGM_DIS	0
+#define	EEPROM_CFG2_MNGM_NCSI	1
+#define	EEPROM_CFG2_MNGM_PT	2
+
+#define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
 
 #define	EEPROM_K1_CONFIG_ENABLE	0x01
 
@@ -362,17 +376,13 @@ struct livengood_tcpip_ctxdesc {
 
 #define EEPROM_CFG3_APME	(1U << 10)	
 
-#define	EEPROM_OFF_MACADDR_LAN1	3	/* macaddr offset from PTR (port 1) */
-#define	EEPROM_OFF_MACADDR_LAN2	6	/* macaddr offset from PTR (port 2) */
-#define	EEPROM_OFF_MACADDR_LAN3	9	/* macaddr offset from PTR (port 3) */
+#define	NVM_OFF_MACADDR_82571(x)	(3 * (x))
 
 /*
  * EEPROM Partitioning. See Table 6-1, "EEPROM Top Level Partitioning"
  * in 82580's datasheet.
  */
-#define EEPROM_OFF_LAN1	0x0080	/* Offset for LAN1 (82580)*/
-#define EEPROM_OFF_LAN2	0x00c0	/* Offset for LAN2 (82580)*/
-#define EEPROM_OFF_LAN3	0x0100	/* Offset for LAN3 (82580)*/
+#define NVM_OFF_LAN_FUNC_82580(x)	((x) ? (0x40 + (0x40 * (x))) : 0)
 
 #define	WMREG_EERD	0x0014	/* EEPROM read */
 #define	EERD_DONE	0x02    /* done bit */
@@ -397,6 +407,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_SPD_BYPS	(1U << 15) /* speed select bypass */
 #define	CTRL_EXT_IPS1		(1U << 16) /* invert power state bit 1 */
 #define	CTRL_EXT_RO_DIS		(1U << 17) /* relaxed ordering disabled */
+#define	CTRL_EXT_DMA_DYN_CLK	(1U << 19) /* DMA Dymamic Gating Enable */
 #define	CTRL_EXT_LINK_MODE_MASK		0x00C00000
 #define	CTRL_EXT_LINK_MODE_GMII		0x00000000
 #define	CTRL_EXT_LINK_MODE_KMRN		0x00000000
@@ -413,12 +424,15 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_MDIC	0x0020	/* MDI Control Register */
 #define	MDIC_DATA(x)	((x) & 0xffff)
 #define	MDIC_REGADD(x)	((x) << 16)
+#define	MDIC_PHY_SHIFT	21
+#define	MDIC_PHY_MASK	__BITS(25, 21)
 #define	MDIC_PHYADD(x)	((x) << 21)
 #define	MDIC_OP_WRITE	(1U << 26)
 #define	MDIC_OP_READ	(2U << 26)
 #define	MDIC_READY	(1U << 28)
 #define	MDIC_I		(1U << 29)	/* interrupt on MDI complete */
 #define	MDIC_E		(1U << 30)	/* MDI error */
+#define	MDIC_DEST	(1U << 31)	/* Destination */
 
 #define WMREG_SCTL	0x0024	/* SerDes Control - RW */
 /*
@@ -429,6 +443,7 @@ struct livengood_tcpip_ctxdesc {
 #define SCTL_CTL_DATA_MASK 0x000000ff
 #define SCTL_CTL_ADDR_SHIFT 8
 #define SCTL_CTL_POLL_TIMEOUT 640
+#define SCTL_DISABLE_SERDES_LOOPBACK 0x0400
 
 #define	WMREG_FCAL	0x0028	/* Flow Control Address Low */
 #define	FCAL_CONST	0x00c28001	/* Flow Control MAC addr low */
@@ -592,6 +607,8 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_TXCW	0x0178	/* Transmit Configuration Word (TBI mode) */
 	/* See MII ANAR_X bits. */
+#define	TXCW_FD		(1U << 5)	/* Full Duplex */
+#define	TXCW_HD		(1U << 6)	/* Half Duplex */
 #define	TXCW_SYM_PAUSE	(1U << 7)	/* sym pause request */
 #define	TXCW_ASYM_PAUSE	(1U << 8)	/* asym pause request */
 #define	TXCW_TxConfig	(1U << 30)	/* Tx Config */
@@ -686,11 +703,14 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_OLD_TIDV	0x0440	/* Transmit Delay Interrupt Value */
 #define	WMREG_TIDV	0x3820
 
-#define	WMREG_TXDCTL	0x3828	/* Trandmit Descriptor Control */
+#define	WMREG_TXDCTL(n)		/* Trandmit Descriptor Control */ \
+	(((n) < 4) ? (0x3828 + ((n) * 0x100)) : (0xe028 + ((n) * 0x40)))
 #define	TXDCTL_PTHRESH(x) ((x) << 0)	/* prefetch threshold */
 #define	TXDCTL_HTHRESH(x) ((x) << 8)	/* host threshold */
 #define	TXDCTL_WTHRESH(x) ((x) << 16)	/* write back threshold */
 /* flags used starting with 82575 ... */
+#define TXDCTL_COUNT_DESC	__BIT(22) /* Enable the counting of desc.
+					   still to be processed. */
 #define TXDCTL_QUEUE_ENABLE  0x02000000 /* Enable specific Tx Queue */
 #define TXDCTL_SWFLSH        0x04000000 /* Tx Desc. write-back flushing */
 #define TXDCTL_PRIORITY      0x08000000
@@ -701,9 +721,18 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_VFTA	0x0600
 
+#define	WMREG_MDICNFG	0x0e04	/* MDC/MDIO Configuration Register */
+#define MDICNFG_PHY_SHIFT	21
+#define MDICNFG_PHY_MASK	__BITS(25, 21)
+#define MDICNFG_COM_MDIO	__BIT(30)
+#define MDICNFG_DEST		__BIT(31)
+
 #define	WM_MC_TABSIZE	128
 #define	WM_ICH8_MC_TABSIZE 32
 #define	WM_VLAN_TABSIZE	128
+
+#define	WMREG_PHPM	0x0e14	/* PHY Power Management */
+#define	PHPM_GO_LINK_D		__BIT(5)	/* Go Link Disconnect */
 
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
 #define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
@@ -787,10 +816,11 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_TSPMT	0x3830	/* TCP Segmentation Pad and Minimum
 				   Threshold (Cordova) */
 
-#define	WMREG_TARC0	0x3840	/* Tx arbitration count */
-
 #define	TSPMT_TSMT(x)	(x)		/* TCP seg min transfer */
 #define	TSPMT_TSPBP(x)	((x) << 16)	/* TCP seg pkt buf padding */
+
+#define	WMREG_TARC0	0x3840	/* Tx arbitration count (0) */
+#define	WMREG_TARC1	0x3940	/* Tx arbitration count (1) */
 
 #define	WMREG_CRCERRS	0x4000	/* CRC Error Count */
 #define	WMREG_ALGNERRC	0x4004	/* Alignment Error Count */
@@ -853,6 +883,13 @@ struct livengood_tcpip_ctxdesc {
 
 #define WMREG_RLPML	0x5004	/* Rx Long Packet Max Length */
 
+#define WMREG_RFCTL	0x5008	/* Receive Filter Control */
+#define WMREG_RFCTL_NFSWDIS	__BIT(6)  /* NFS Write Disable */
+#define WMREG_RFCTL_NFSRDIS	__BIT(7)  /* NFS Read Disable */
+#define WMREG_RFCTL_ACKDIS	__BIT(13) /* ACK Accelerate Disable */
+#define WMREG_RFCTL_IPV6EXDIS	__BIT(16) /* IPv6 Extension Header Disable */
+#define WMREG_RFCTL_NEWIPV6EXDIS __BIT(17) /* New IPv6 Extension Header */
+
 #define	WMREG_WUC	0x5800	/* Wakeup Control */
 #define	WUC_APME		0x00000001 /* APM Enable */
 #define	WUC_PME_EN		0x00000002 /* PME Enable */
@@ -870,8 +907,10 @@ struct livengood_tcpip_ctxdesc {
 #define	MANC_SMBUS_EN		0x00000001
 #define	MANC_ASF_EN		0x00000002
 #define	MANC_ARP_EN		0x00002000
+#define	MANC_RECV_TCO_RESET	0x00010000
 #define	MANC_RECV_TCO_EN	0x00020000
 #define	MANC_BLK_PHY_RST_ON_IDE	0x00040000
+#define	MANC_RECV_ALL		0x00080000
 #define	MANC_EN_MAC_ADDR_FILTER	0x00100000
 #define	MANC_EN_MNG2HOST	0x00200000
 
@@ -913,6 +952,9 @@ struct livengood_tcpip_ctxdesc {
 #define FWSM_RSPCIPHY		0x00000040	/* Reset PHY on PCI reset */
 #define FWSM_FW_VALID		0x00008000 /* FW established a valid mode */
 
+#define	WMREG_SWSM2	0x5b58	/* SW Semaphore 2 */
+#define SWSM2_LOCK		0x00000002 /* Secondary driver semaphore bit */
+
 #define	WMREG_SW_FW_SYNC 0x5b5c	/* software-firmware semaphore */
 #define	SWFW_EEP_SM		0x0001 /* eeprom access */
 #define	SWFW_PHY0_SM		0x0002 /* first ctrl phy access */
@@ -922,6 +964,8 @@ struct livengood_tcpip_ctxdesc {
 #define	SWFW_PHY3_SM		0x0040 /* first ctrl phy access */
 #define	SWFW_SOFT_SHIFT		0	/* software semaphores */
 #define	SWFW_FIRM_SHIFT		16	/* firmware semaphores */
+
+#define WMREG_GCR2	0x5b64	/* 3GPIO Control Register 2 */
 
 #define WMREG_CRC_OFFSET	0x5f50
 
@@ -1008,6 +1052,8 @@ struct livengood_tcpip_ctxdesc {
 #define ICH_FLASH_SECTOR_SIZE      4096
 #define ICH_GFPREG_BASE_MASK       0x1FFF
 #define ICH_FLASH_LINEAR_ADDR_MASK 0x00FFFFFF
+
+#define NVM_WORD_SIZE_BASE_SHIFT 6
 
 #define ICH_NVM_SIG_WORD	0x13
 #define ICH_NVM_SIG_MASK	0xc000

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.962.4.19 2013/09/07 17:10:18 bouyer Exp $
+$NetBSD: pcidevs,v 1.962.4.20 2015/04/30 20:00:27 snj Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2138,6 +2138,11 @@ product INTEL 6700PXH_PCIE1	0x032a	6700PXH PCI Express-to-PCI Bridge #1
 product INTEL SRCZCRX		0x0407	RAID controller
 product INTEL SRCU42E		0x0408	SCSI RAID controller
 product INTEL SRCS28X		0x0409	SATA RAID controller
+product INTEL DH89XXCC_IQIA	0x0434	DH89xx CC PCIe Endpoint and QuiskAssit
+product INTEL DH89XXCC_SGMII	0x0438	DH89XXCC SGMII
+product INTEL DH89XXCC_SERDES	0x043a	DH89XXCC SerDes
+product INTEL DH89XXCC_BPLANE	0x043c	DH89XXCC backplane
+product INTEL DH89XXCC_SFP	0x0440	DH89XXCC SFP
 product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge
 product INTEL CDC		0x0483	82424ZX Cache and DRAM controller
 product INTEL SIO		0x0484	82378ZB System I/O
@@ -2324,6 +2329,10 @@ product INTEL I217_LM		0x153a	I217-LM Ethernet Connection
 product INTEL I217_V		0x153b	I217-V Ethernet Connection
 product INTEL I218_V		0x1559	I218-V Ethernet Connection
 product INTEL I218_LM		0x155a	I218-LM Ethernet Connection
+product INTEL I218_LM2		0x15a0	I218-LM Ethernet Connection
+product INTEL I218_V2		0x15a1	I218-V Ethernet Connection
+product INTEL I218_LM3		0x15a2	I218-LM Ethernet Connection
+product INTEL I218_V3		0x15a3	I218-V Ethernet Connection
 product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 80960RM_2		0x1962	i960 RM PCI-PCI
 product INTEL 82840_HB		0x1a21	82840 Host
@@ -2356,6 +2365,56 @@ product INTEL 6SERIES_EHCI_1	0x1c26	6 Series USB
 product INTEL 6SERIES_EHCI_2	0x1c2d	6 Series USB
 product INTEL 6SERIES_MEI	0x1c3a	6 Series MEI
 product INTEL 6SERIES_KT	0x1c3d	6 Series KT
+product INTEL C2000_TROUTER_0	0x1f00	C2000 Transaction Router
+product INTEL C2000_TROUTER_1	0x1f01	C2000 Transaction Router
+product INTEL C2000_TROUTER_2	0x1f02	C2000 Transaction Router
+product INTEL C2000_TROUTER_3	0x1f03	C2000 Transaction Router
+product INTEL C2000_TROUTER_4	0x1f04	C2000 Transaction Router
+product INTEL C2000_TROUTER_5	0x1f05	C2000 Transaction Router
+product INTEL C2000_TROUTER_6	0x1f06	C2000 Transaction Router
+product INTEL C2000_TROUTER_7	0x1f07	C2000 Transaction Router
+product INTEL C2000_TROUTER_8	0x1f08	C2000 Transaction Router
+product INTEL C2000_TROUTER_9	0x1f09	C2000 Transaction Router
+product INTEL C2000_TROUTER_A	0x1f0a	C2000 Transaction Router
+product INTEL C2000_TROUTER_B	0x1f0b	C2000 Transaction Router
+product INTEL C2000_TROUTER_C	0x1f0c	C2000 Transaction Router
+product INTEL C2000_TROUTER_D	0x1f0d	C2000 Transaction Router
+product INTEL C2000_TROUTER_E	0x1f0e	C2000 Transaction Router
+product INTEL C2000_TROUTER_F	0x1f0f	C2000 Transaction Router
+product INTEL C2000_PCIE_1	0x1f10	C2000 PCIe Root Port
+product INTEL C2000_PCIE_2	0x1f11	C2000 PCIe Root Port
+product INTEL C2000_PCIE_3	0x1f12	C2000 PCIe Root Port
+product INTEL C2000_PCIE_4	0x1f13	C2000 PCIe Root Port
+product INTEL C2000_RAS		0x1f14	C2000 RAS
+product INTEL C2000_SMBUS	0x1f15	C2000 SMBus 2.0
+product INTEL C2000_RCEC	0x1f16	C2000 RCEC
+product INTEL C2000_IQIA_PHYS	0x1f18	C2000 IQIA Physical Function
+product INTEL C2000_IQIA	0x1f19	C2000 IQIA
+product INTEL C2000_SATA2	0x1f22	C2000 SATA2
+product INTEL C2000_USB		0x1f2c	C2000 USB 2.0
+product INTEL C2000_SATA3	0x1f32	C2000 SATA3
+product INTEL C2000_PCU_1	0x1f38	C2000 PCU
+product INTEL C2000_PCU_2	0x1f39	C2000 PCU
+product INTEL C2000_PCU_3	0x1f3a	C2000 PCU
+product INTEL C2000_PCU_4	0x1f3b	C2000 PCU
+product INTEL C2000_PCU_SMBUS	0x1f3c	C2000 PCU SMBus
+product INTEL C2000_1000KX	0x1f40	C2000 Ethernet(1000BASE-KX)
+product INTEL C2000_SGMII	0x1f41	C2000 Ethernet(SGMII)
+product INTEL C2000_DUMMYGBE	0x1f42	C2000 Ethernet(Dummy function)
+product INTEL C2000_25GBE	0x1f45	C2000 Ethernet(2.5Gbe)
+product INTEL DH89XX_LPC	0x2310	DH89xx LPC Controller
+product INTEL DH89XX_SATA_1	0x2323	DH89xx SATA Controller
+product INTEL DH89XX_SATA_2	0x2326	DH89xx SATA Controller
+product INTEL DH89XX_SMB	0x2330	DH89xx SMBus Host Controller
+product INTEL DH89XX_THERMAL	0x2332	DH89xx Thermal Subsystem
+product INTEL DH89XX_USB	0x2334	DH89xx USB EHCI
+product INTEL DH89XX_PCIE_1	0x2342	DH89xx PCIe Root Port
+product INTEL DH89XX_PCIE_2	0x2344	DH89xx PCIe Root Port
+product INTEL DH89XX_PCIE_3	0x2346	DH89xx PCIe Root Port
+product INTEL DH89XX_PCIE_4	0x2348	DH89xx PCIe Root Port
+product INTEL DH89XX_WDT	0x2360	DH89xx Watchdog Timer for Core Reset
+product INTEL DH89XX_MEI_1	0x2364	DH89xx MEI Controller
+product INTEL DH89XX_MEI_2	0x2365	DH89xx MEI Controller
 product INTEL 82801AA_LPC	0x2410	82801AA LPC Interface Bridge
 product INTEL 82801AA_IDE	0x2411	82801AA IDE Controller
 product INTEL 82801AA_USB	0x2412	82801AA USB Controller
