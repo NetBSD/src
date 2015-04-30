@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.88 2014/06/17 17:37:08 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.89 2015/04/30 15:48:47 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -318,7 +318,8 @@
 #define BGE_CHIPID_BCM5761_A0		0x5761000
 #define BGE_CHIPID_BCM5761_A1		0x5761100
 #define BGE_CHIPID_BCM5784_A0		0x5784000
-#define BGE_CHIPID_BCM5784_A1		0x5784100
+#define BGE_CHIPID_BCM5784_A1		0x5784001
+#define BGE_CHIPID_BCM5784_B0		0x5784100
 #define BGE_CHIPID_BCM5752_A0		0x6000
 #define BGE_CHIPID_BCM5752_A1		0x6001
 #define BGE_CHIPID_BCM5752_A2		0x6002
@@ -385,6 +386,7 @@
 #define BGE_CHIPREV_5704_BX		0x21
 #define BGE_CHIPREV_5750_AX		0x40
 #define BGE_CHIPREV_5750_BX		0x41
+#define BGE_CHIPREV_5784_AX		0x57840
 #define BGE_CHIPREV_57765_AX		0x577850
 
 /* PCI DMA Read/Write Control register */
