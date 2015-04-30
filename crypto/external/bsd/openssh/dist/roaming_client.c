@@ -1,5 +1,5 @@
-/*	$NetBSD: roaming_client.c,v 1.5 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: roaming_client.c,v 1.5 2013/05/17 00:13:14 djm Exp $ */
+/*	$NetBSD: roaming_client.c,v 1.5.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: roaming_client.c,v 1.9 2015/01/27 12:54:06 okan Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
  *
@@ -16,19 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: roaming_client.c,v 1.5 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: roaming_client.c,v 1.5.4.1 2015/04/30 06:07:30 riz Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include <inttypes.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <openssl/crypto.h>
-#include <openssl/sha.h>
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -47,6 +43,7 @@ __RCSID("$NetBSD: roaming_client.c,v 1.5 2013/11/08 19:18:25 christos Exp $");
 #include "roaming.h"
 #include "ssh2.h"
 #include "sshconnect.h"
+#include "digest.h"
 
 /* import */
 extern Options options;
@@ -89,10 +86,8 @@ request_roaming(void)
 static void
 roaming_auth_required(void)
 {
-	u_char digest[SHA_DIGEST_LENGTH];
-	EVP_MD_CTX md;
+	u_char digest[SSH_DIGEST_MAX_LENGTH];
 	Buffer b;
-	const EVP_MD *evp_md = EVP_sha1();
 	u_int64_t chall, oldchall;
 
 	chall = packet_get_int64();
@@ -106,14 +101,13 @@ roaming_auth_required(void)
 	buffer_init(&b);
 	buffer_put_int64(&b, cookie);
 	buffer_put_int64(&b, chall);
-	EVP_DigestInit(&md, evp_md);
-	EVP_DigestUpdate(&md, buffer_ptr(&b), buffer_len(&b));
-	EVP_DigestFinal(&md, digest, NULL);
+	if (ssh_digest_buffer(SSH_DIGEST_SHA1, &b, digest, sizeof(digest)) != 0)
+		fatal("%s: ssh_digest_buffer failed", __func__);
 	buffer_free(&b);
 
 	packet_start(SSH2_MSG_KEX_ROAMING_AUTH);
 	packet_put_int64(key1 ^ get_recv_bytes());
-	packet_put_raw(digest, sizeof(digest));
+	packet_put_raw(digest, ssh_digest_bytes(SSH_DIGEST_SHA1));
 	packet_send();
 
 	oldkey1 = key1;
@@ -258,10 +252,10 @@ wait_for_roaming_reconnect(void)
 		if (c != '\n' && c != '\r')
 			continue;
 
-		if (ssh_connect(host, &hostaddr, options.port,
+		if (ssh_connect(host, NULL, &hostaddr, options.port,
 		    options.address_family, 1, &timeout_ms,
-		    options.tcp_keep_alive, options.use_privileged_port,
-		    options.proxy_command) == 0 && roaming_resume() == 0) {
+		    options.tcp_keep_alive, options.use_privileged_port) == 0 &&
+		    roaming_resume() == 0) {
 			packet_restore_state();
 			reenter_guard = 0;
 			fprintf(stderr, "[connection resumed]\n");

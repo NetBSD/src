@@ -1,5 +1,5 @@
-/*	$NetBSD: sshlogin.c,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: sshlogin.c,v 1.27 2011/01/11 06:06:09 djm Exp $ */
+/*	$NetBSD: sshlogin.c,v 1.4.22.1 2015/04/30 06:07:31 riz Exp $	*/
+/* $OpenBSD: sshlogin.c,v 1.31 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,9 +41,9 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshlogin.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
-#include <sys/types.h>
+__RCSID("$NetBSD: sshlogin.c,v 1.4.22.1 2015/04/30 06:07:31 riz Exp $");
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <errno.h>
@@ -60,11 +60,17 @@ __RCSID("$NetBSD: sshlogin.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
 #include <utmpx.h>
 #endif
 #include <stdarg.h>
+#include <limits.h>
 
 #include "sshlogin.h"
 #include "log.h"
 #include "buffer.h"
+#include "misc.h"
 #include "servconf.h"
+
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX MAXHOSTNAMELEN
+#endif
 
 extern Buffer loginmsg;
 extern ServerOptions options;
@@ -136,7 +142,7 @@ get_last_login_time(uid_t uid, const char *logname,
 static void
 store_lastlog_message(const char *user, uid_t uid)
 {
-	char *time_string, hostname[MAXHOSTNAMELEN] = "", buf[512];
+	char *time_string, hostname[HOST_NAME_MAX+1] = "", buf[512];
 	time_t last_login_time;
 
 	if (!options.print_lastlog)
@@ -199,7 +205,7 @@ record_login(pid_t pid, const char *tty, const char *user, uid_t uid,
 	/* Update lastlog unless actually recording a logout. */
 	if (*user != '\0') {
 		/*
-		 * It is safer to bzero the lastlog structure first because
+		 * It is safer to memset the lastlog structure first because
 		 * some systems might have some extra fields in it (e.g. SGI)
 		 */
 		memset(&ll, 0, sizeof(ll));

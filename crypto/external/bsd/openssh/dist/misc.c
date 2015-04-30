@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.8 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.91 2013/07/12 00:43:50 djm Exp $ */
+/*	$NetBSD: misc.c,v 1.8.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: misc.c,v 1.96 2015/01/16 06:40:12 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,24 +26,25 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.8 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/param.h>
+#include <sys/un.h>
 
 #include <net/if.h>
 #include <net/if_tun.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -542,7 +543,7 @@ tilde_expand_filename(const char *filename, uid_t uid)
 	if (path != NULL)
 		filename = path + 1;
 
-	if (xasprintf(&ret, "%s%s%s", homedir, sep, filename) >= MAXPATHLEN)
+	if (xasprintf(&ret, "%s%s%s", homedir, sep, filename) >= PATH_MAX)
 		fatal("tilde_expand_filename: Path too long");
 
 	return (ret);
@@ -788,6 +789,20 @@ get_u32(const void *vp)
 	return (v);
 }
 
+u_int32_t
+get_u32_le(const void *vp)
+{
+	const u_char *p = (const u_char *)vp;
+	u_int32_t v;
+
+	v  = (u_int32_t)p[0];
+	v |= (u_int32_t)p[1] << 8;
+	v |= (u_int32_t)p[2] << 16;
+	v |= (u_int32_t)p[3] << 24;
+
+	return (v);
+}
+
 u_int16_t
 get_u16(const void *vp)
 {
@@ -826,6 +841,16 @@ put_u32(void *vp, u_int32_t v)
 	p[3] = (u_char)v & 0xff;
 }
 
+void
+put_u32_le(void *vp, u_int32_t v)
+{
+	u_char *p = (u_char *)vp;
+
+	p[0] = (u_char)v & 0xff;
+	p[1] = (u_char)(v >> 8) & 0xff;
+	p[2] = (u_char)(v >> 16) & 0xff;
+	p[3] = (u_char)(v >> 24) & 0xff;
+}
 
 void
 put_u16(void *vp, u_int16_t v)
@@ -1012,13 +1037,55 @@ iptos2str(int iptos)
 	return iptos_str;
 }
 
-int
-timingsafe_bcmp(const void *b1, const void *b2, size_t n)
+void
+lowercase(char *s)
 {
-	const unsigned char *p1 = b1, *p2 = b2;
-	int ret = 0;
+	for (; *s; s++)
+		*s = tolower((u_char)*s);
+}
 
-	for (; n > 0; n--)
-		ret |= *p1++ ^ *p2++;
-	return (ret != 0);
+int
+unix_listener(const char *path, int backlog, int unlink_first)
+{
+	struct sockaddr_un sunaddr;
+	int saved_errno, sock;
+
+	memset(&sunaddr, 0, sizeof(sunaddr));
+	sunaddr.sun_family = AF_UNIX;
+	if (strlcpy(sunaddr.sun_path, path, sizeof(sunaddr.sun_path)) >= sizeof(sunaddr.sun_path)) {
+		error("%s: \"%s\" too long for Unix domain socket", __func__,
+		    path);
+		errno = ENAMETOOLONG;
+		return -1;
+	}
+
+	sock = socket(PF_UNIX, SOCK_STREAM, 0);
+	if (sock < 0) {
+		saved_errno = errno;
+		error("socket: %.100s", strerror(errno));
+		errno = saved_errno;
+		return -1;
+	}
+	if (unlink_first == 1) {
+		if (unlink(path) != 0 && errno != ENOENT)
+			error("unlink(%s): %.100s", path, strerror(errno));
+	}
+	if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0) {
+		saved_errno = errno;
+		error("bind: %.100s", strerror(errno));
+		close(sock);
+		error("%s: cannot bind to path: %s", __func__, path);
+		errno = saved_errno;
+		return -1;
+	}
+	if (listen(sock, backlog) < 0) {
+		saved_errno = errno;
+		error("listen: %.100s", strerror(errno));
+		close(sock);
+		unlink(path);
+		error("%s: cannot listen on path: %s", __func__, path);
+		errno = saved_errno;
+		return -1;
+	}
+	return sock;
 }

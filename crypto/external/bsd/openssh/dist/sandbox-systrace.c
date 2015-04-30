@@ -1,4 +1,4 @@
-/* $OpenBSD: sandbox-systrace.c,v 1.7 2013/06/01 13:15:52 dtucker Exp $ */
+/* $OpenBSD: sandbox-systrace.c,v 1.14 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Copyright (c) 2011 Damien Miller <djm@mindrot.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
 #include <sys/socket.h>
@@ -33,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "atomicio.h"
 #include "log.h"
@@ -48,7 +48,16 @@ struct sandbox_policy {
 static const struct sandbox_policy preauth_policy[] = {
 	{ SYS_open, SYSTR_POLICY_NEVER },
 
+#ifdef SYS_getentropy
+	/* OpenBSD 5.6 and newer use getentropy(2) to seed arc4random(3). */
+	{ SYS_getentropy, SYSTR_POLICY_PERMIT },
+#else
+	/* Previous releases used sysctl(3)'s kern.arnd variable. */
 	{ SYS___sysctl, SYSTR_POLICY_PERMIT },
+#endif
+#ifdef SYS_sendsyslog
+	{ SYS_sendsyslog, SYSTR_POLICY_PERMIT },
+#endif
 	{ SYS_close, SYSTR_POLICY_PERMIT },
 	{ SYS_exit, SYSTR_POLICY_PERMIT },
 	{ SYS_getpid, SYSTR_POLICY_PERMIT },
@@ -62,6 +71,7 @@ static const struct sandbox_policy preauth_policy[] = {
 	{ SYS_munmap, SYSTR_POLICY_PERMIT },
 	{ SYS_read, SYSTR_POLICY_PERMIT },
 	{ SYS_select, SYSTR_POLICY_PERMIT },
+	{ SYS_shutdown, SYSTR_POLICY_PERMIT },
 	{ SYS_sigprocmask, SYSTR_POLICY_PERMIT },
 	{ SYS_write, SYSTR_POLICY_PERMIT },
 	{ -1, -1 }
@@ -137,7 +147,7 @@ ssh_sandbox_parent(struct ssh_sandbox *box, pid_t child_pid,
 		    box->systrace_fd, child_pid, strerror(errno));
 
 	/* Allocate and assign policy */
-	bzero(&policy, sizeof(policy));
+	memset(&policy, 0, sizeof(policy));
 	policy.strp_op = SYSTR_POLICY_NEW;
 	policy.strp_maxents = SYS_MAXSYSCALL;
 	if (ioctl(box->systrace_fd, STRIOCPOLICY, &policy) == -1)

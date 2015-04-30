@@ -1,5 +1,5 @@
-/*	$NetBSD: mac.c,v 1.8 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: mac.c,v 1.24 2013/06/03 00:03:18 dtucker Exp $ */
+/*	$NetBSD: mac.c,v 1.8.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: mac.c,v 1.32 2015/01/15 18:32:54 naddy Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,35 +25,29 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.8 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: mac.c,v 1.8.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 
-#include <openssl/hmac.h>
-
 #include <string.h>
-#include <signal.h>
+#include <stdio.h>
+#include <time.h>
 
-#include "xmalloc.h"
-#include "log.h"
-#include "cipher.h"
-#include "buffer.h"
-#include "key.h"
-#include "kex.h"
+#include "digest.h"
+#include "hmac.h"
+#include "umac.h"
 #include "mac.h"
 #include "misc.h"
+#include "ssherr.h"
+#include "sshbuf.h"
 
-#ifdef UMAC_HAS_BEEN_UNBROKEN
-#include "umac.h"
-#endif
-
-#define SSH_EVP		1	/* OpenSSL EVP-based MAC */
+#define SSH_DIGEST	1	/* SSH_DIGEST_XXX */
 #define SSH_UMAC	2	/* UMAC (not integrated with OpenSSL) */
 #define SSH_UMAC128	3
 
 struct macalg {
 	const char	*name;
 	int		type;
-	const EVP_MD *	(*mdfunc)(void);
+	int		alg;
 	int		truncatebits;	/* truncate digest if != 0 */
 	int		key_len;	/* just for UMAC */
 	int		len;		/* just for UMAC */
@@ -62,63 +56,62 @@ struct macalg {
 
 static const struct macalg macs[] = {
 	/* Encrypt-and-MAC (encrypt-and-authenticate) variants */
-	{ "hmac-sha1",				SSH_EVP, EVP_sha1, 0, 0, 0, 0 },
-	{ "hmac-sha1-96",			SSH_EVP, EVP_sha1, 96, 0, 0, 0 },
-	{ "hmac-sha2-256",			SSH_EVP, EVP_sha256, 0, 0, 0, 0 },
-	{ "hmac-sha2-512",			SSH_EVP, EVP_sha512, 0, 0, 0, 0 },
-	{ "hmac-md5",				SSH_EVP, EVP_md5, 0, 0, 0, 0 },
-	{ "hmac-md5-96",			SSH_EVP, EVP_md5, 96, 0, 0, 0 },
-	{ "hmac-ripemd160",			SSH_EVP, EVP_ripemd160, 0, 0, 0, 0 },
-	{ "hmac-ripemd160@openssh.com",		SSH_EVP, EVP_ripemd160, 0, 0, 0, 0 },
-#ifdef UMAC_HAS_BEEN_UNBROKEN
-	{ "umac-64@openssh.com",		SSH_UMAC, NULL, 0, 128, 64, 0 },
-	{ "umac-128@openssh.com",		SSH_UMAC128, NULL, 0, 128, 128, 0 },
-#endif
+	{ "hmac-sha1",				SSH_DIGEST, SSH_DIGEST_SHA1, 0, 0, 0, 0 },
+	{ "hmac-sha1-96",			SSH_DIGEST, SSH_DIGEST_SHA1, 96, 0, 0, 0 },
+	{ "hmac-sha2-256",			SSH_DIGEST, SSH_DIGEST_SHA256, 0, 0, 0, 0 },
+	{ "hmac-sha2-512",			SSH_DIGEST, SSH_DIGEST_SHA512, 0, 0, 0, 0 },
+	{ "hmac-md5",				SSH_DIGEST, SSH_DIGEST_MD5, 0, 0, 0, 0 },
+	{ "hmac-md5-96",			SSH_DIGEST, SSH_DIGEST_MD5, 96, 0, 0, 0 },
+	{ "hmac-ripemd160",			SSH_DIGEST, SSH_DIGEST_RIPEMD160, 0, 0, 0, 0 },
+	{ "hmac-ripemd160@openssh.com",		SSH_DIGEST, SSH_DIGEST_RIPEMD160, 0, 0, 0, 0 },
+	{ "umac-64@openssh.com",		SSH_UMAC, 0, 0, 128, 64, 0 },
+	{ "umac-128@openssh.com",		SSH_UMAC128, 0, 0, 128, 128, 0 },
 
 	/* Encrypt-then-MAC variants */
-	{ "hmac-sha1-etm@openssh.com",		SSH_EVP, EVP_sha1, 0, 0, 0, 1 },
-	{ "hmac-sha1-96-etm@openssh.com",	SSH_EVP, EVP_sha1, 96, 0, 0, 1 },
-	{ "hmac-sha2-256-etm@openssh.com",	SSH_EVP, EVP_sha256, 0, 0, 0, 1 },
-	{ "hmac-sha2-512-etm@openssh.com",	SSH_EVP, EVP_sha512, 0, 0, 0, 1 },
-	{ "hmac-md5-etm@openssh.com",		SSH_EVP, EVP_md5, 0, 0, 0, 1 },
-	{ "hmac-md5-96-etm@openssh.com",	SSH_EVP, EVP_md5, 96, 0, 0, 1 },
-	{ "hmac-ripemd160-etm@openssh.com",	SSH_EVP, EVP_ripemd160, 0, 0, 0, 1 },
-	{ "umac-64-etm@openssh.com",		SSH_UMAC, NULL, 0, 128, 64, 1 },
-	{ "umac-128-etm@openssh.com",		SSH_UMAC128, NULL, 0, 128, 128, 1 },
+	{ "hmac-sha1-etm@openssh.com",		SSH_DIGEST, SSH_DIGEST_SHA1, 0, 0, 0, 1 },
+	{ "hmac-sha1-96-etm@openssh.com",	SSH_DIGEST, SSH_DIGEST_SHA1, 96, 0, 0, 1 },
+	{ "hmac-sha2-256-etm@openssh.com",	SSH_DIGEST, SSH_DIGEST_SHA256, 0, 0, 0, 1 },
+	{ "hmac-sha2-512-etm@openssh.com",	SSH_DIGEST, SSH_DIGEST_SHA512, 0, 0, 0, 1 },
+	{ "hmac-md5-etm@openssh.com",		SSH_DIGEST, SSH_DIGEST_MD5, 0, 0, 0, 1 },
+	{ "hmac-md5-96-etm@openssh.com",	SSH_DIGEST, SSH_DIGEST_MD5, 96, 0, 0, 1 },
+	{ "hmac-ripemd160-etm@openssh.com",	SSH_DIGEST, SSH_DIGEST_RIPEMD160, 0, 0, 0, 1 },
+	{ "umac-64-etm@openssh.com",		SSH_UMAC, 0, 0, 128, 64, 1 },
+	{ "umac-128-etm@openssh.com",		SSH_UMAC128, 0, 0, 128, 128, 1 },
 
-	{ NULL,					0, NULL, 0, 0, 0, 0 }
+	{ NULL,					0, 0, 0, 0, 0, 0 }
 };
 
-/* Returns a comma-separated list of supported MACs. */
+/* Returns a list of supported MACs separated by the specified char. */
 char *
-mac_alg_list(void)
+mac_alg_list(char sep)
 {
-	char *ret = NULL;
+	char *ret = NULL, *tmp;
 	size_t nlen, rlen = 0;
 	const struct macalg *m;
 
 	for (m = macs; m->name != NULL; m++) {
 		if (ret != NULL)
-			ret[rlen++] = '\n';
+			ret[rlen++] = sep;
 		nlen = strlen(m->name);
-		ret = xrealloc(ret, 1, rlen + nlen + 2);
+		if ((tmp = realloc(ret, rlen + nlen + 2)) == NULL) {
+			free(ret);
+			return NULL;
+		}
+		ret = tmp;
 		memcpy(ret + rlen, m->name, nlen + 1);
 		rlen += nlen;
 	}
 	return ret;
 }
 
-static void
-mac_setup_by_alg(Mac *mac, const struct macalg *macalg)
+static int
+mac_setup_by_alg(struct sshmac *mac, const struct macalg *macalg)
 {
-	int evp_len;
-
 	mac->type = macalg->type;
-	if (mac->type == SSH_EVP) {
-		mac->evp_md = macalg->mdfunc();
-		if ((evp_len = EVP_MD_size(mac->evp_md)) <= 0)
-			fatal("mac %s len %d", mac->name, evp_len);
-		mac->key_len = mac->mac_len = (u_int)evp_len;
+	if (mac->type == SSH_DIGEST) {
+		if ((mac->hmac_ctx = ssh_hmac_start(macalg->alg)) == NULL)
+			return SSH_ERR_ALLOC_FAIL;
+		mac->key_len = mac->mac_len = ssh_hmac_bytes(macalg->alg);
 	} else {
 		mac->mac_len = macalg->len / 8;
 		mac->key_len = macalg->key_len / 8;
@@ -127,10 +120,11 @@ mac_setup_by_alg(Mac *mac, const struct macalg *macalg)
 	if (macalg->truncatebits != 0)
 		mac->mac_len = macalg->truncatebits / 8;
 	mac->etm = macalg->etm;
+	return 0;
 }
 
 int
-mac_setup(Mac *mac, char *name)
+mac_setup(struct sshmac *mac, char *name)
 {
 	const struct macalg *m;
 
@@ -138,67 +132,62 @@ mac_setup(Mac *mac, char *name)
 		if (strcmp(name, m->name) != 0)
 			continue;
 		if (mac != NULL)
-			mac_setup_by_alg(mac, m);
-		debug2("mac_setup: found %s", name);
-		return (0);
+			return mac_setup_by_alg(mac, m);
+		return 0;
 	}
-	debug2("mac_setup: unknown %s", name);
-	return (-1);
+	return SSH_ERR_INVALID_ARGUMENT;
 }
 
 int
-mac_init(Mac *mac)
+mac_init(struct sshmac *mac)
 {
 	if (mac->key == NULL)
-		fatal("mac_init: no key");
+		return SSH_ERR_INVALID_ARGUMENT;
 	switch (mac->type) {
-	case SSH_EVP:
-		if (mac->evp_md == NULL)
-			return -1;
-		HMAC_CTX_init(&mac->evp_ctx);
-		HMAC_Init(&mac->evp_ctx, mac->key, mac->key_len, mac->evp_md);
+	case SSH_DIGEST:
+		if (mac->hmac_ctx == NULL ||
+		    ssh_hmac_init(mac->hmac_ctx, mac->key, mac->key_len) < 0)
+			return SSH_ERR_INVALID_ARGUMENT;
 		return 0;
-#ifdef UMAC_HAS_BEEN_UNBROKEN
 	case SSH_UMAC:
-		mac->umac_ctx = umac_new(mac->key);
+		if ((mac->umac_ctx = umac_new(mac->key)) == NULL)
+			return SSH_ERR_ALLOC_FAIL;
 		return 0;
 	case SSH_UMAC128:
-		mac->umac_ctx = umac128_new(mac->key);
+		if ((mac->umac_ctx = umac128_new(mac->key)) == NULL)
+			return SSH_ERR_ALLOC_FAIL;
 		return 0;
-#endif
 	default:
-		return -1;
+		return SSH_ERR_INVALID_ARGUMENT;
 	}
 }
 
-u_char *
-mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
+int
+mac_compute(struct sshmac *mac, u_int32_t seqno, const u_char *data, int datalen,
+    u_char *digest, size_t dlen)
 {
 	static union {
-		u_char m[EVP_MAX_MD_SIZE];
+		u_char m[SSH_DIGEST_MAX_LENGTH];
 		u_int64_t for_align;
 	} u;
 	u_char b[4];
-#ifdef UMAC_HAS_BEEN_UNBROKEN
 	u_char nonce[8];
-#endif
 
 	if (mac->mac_len > sizeof(u))
-		fatal("mac_compute: mac too long %u %lu",
-		    mac->mac_len, (u_long)sizeof(u));
+		return SSH_ERR_INTERNAL_ERROR;
 
 	switch (mac->type) {
-	case SSH_EVP:
+	case SSH_DIGEST:
 		put_u32(b, seqno);
 		/* reset HMAC context */
-		HMAC_Init(&mac->evp_ctx, NULL, 0, NULL);
-		HMAC_Update(&mac->evp_ctx, b, sizeof(b));
-		HMAC_Update(&mac->evp_ctx, data, datalen);
-		HMAC_Final(&mac->evp_ctx, u.m, NULL);
+		if (ssh_hmac_init(mac->hmac_ctx, NULL, 0) < 0 ||
+		    ssh_hmac_update(mac->hmac_ctx, b, sizeof(b)) < 0 ||
+		    ssh_hmac_update(mac->hmac_ctx, data, datalen) < 0 ||
+		    ssh_hmac_final(mac->hmac_ctx, u.m, sizeof(u.m)) < 0)
+			return SSH_ERR_LIBCRYPTO_ERROR;
 		break;
-#ifdef UMAC_HAS_BEEN_UNBROKEN
 	case SSH_UMAC:
-		put_u64(nonce, seqno);
+		POKE_U64(nonce, seqno);
 		umac_update(mac->umac_ctx, data, datalen);
 		umac_final(mac->umac_ctx, u.m, nonce);
 		break;
@@ -207,28 +196,29 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 		umac128_update(mac->umac_ctx, data, datalen);
 		umac128_final(mac->umac_ctx, u.m, nonce);
 		break;
-#endif
 	default:
-		fatal("mac_compute: unknown MAC type");
+		return SSH_ERR_INVALID_ARGUMENT;
 	}
-	return (u.m);
+	if (digest != NULL) {
+		if (dlen > mac->mac_len)
+			dlen = mac->mac_len;
+		memcpy(digest, u.m, dlen);
+	}
+	return 0;
 }
 
 void
-mac_clear(Mac *mac)
+mac_clear(struct sshmac *mac)
 {
-#ifdef UMAC_HAS_BEEN_UNBROKEN
 	if (mac->type == SSH_UMAC) {
 		if (mac->umac_ctx != NULL)
 			umac_delete(mac->umac_ctx);
 	} else if (mac->type == SSH_UMAC128) {
 		if (mac->umac_ctx != NULL)
 			umac128_delete(mac->umac_ctx);
-	} else
-#endif
-	if (mac->evp_md != NULL)
-		HMAC_cleanup(&mac->evp_ctx);
-	mac->evp_md = NULL;
+	} else if (mac->hmac_ctx != NULL)
+		ssh_hmac_free(mac->hmac_ctx);
+	mac->hmac_ctx = NULL;
 	mac->umac_ctx = NULL;
 }
 
@@ -240,19 +230,16 @@ mac_valid(const char *names)
 	char *maclist, *cp, *p;
 
 	if (names == NULL || strcmp(names, "") == 0)
-		return (0);
-	maclist = cp = xstrdup(names);
+		return 0;
+	if ((maclist = cp = strdup(names)) == NULL)
+		return 0;
 	for ((p = strsep(&cp, MAC_SEP)); p && *p != '\0';
 	    (p = strsep(&cp, MAC_SEP))) {
 		if (mac_setup(NULL, p) < 0) {
-			debug("bad mac %s [%s]", p, names);
 			free(maclist);
-			return (0);
-		} else {
-			debug3("mac ok: %s [%s]", p, names);
+			return 0;
 		}
 	}
-	debug3("macs ok: [%s]", names);
 	free(maclist);
-	return (1);
+	return 1;
 }

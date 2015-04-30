@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.8.4.1 2014/12/22 03:28:34 msaitoh Exp $	*/
+/*	$NetBSD: update.c,v 1.8.4.2 2015/04/30 06:07:32 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -58,6 +58,8 @@
 #include <named/log.h>
 #include <named/server.h>
 #include <named/update.h>
+
+#include "pfilter.h"
 
 /*! \file
  * \brief
@@ -307,6 +309,7 @@ checkqueryacl(ns_client_t *client, dns_acl_t *queryacl, dns_name_t *zonename,
 
 	result = ns_client_checkaclsilent(client, NULL, queryacl, ISC_TRUE);
 	if (result != ISC_R_SUCCESS) {
+		pfilter_notify(result, client, "queryacl");
 		dns_name_format(zonename, namebuf, sizeof(namebuf));
 		dns_rdataclass_format(client->view->rdclass, classbuf,
 				      sizeof(classbuf));
@@ -324,6 +327,7 @@ checkqueryacl(ns_client_t *client, dns_acl_t *queryacl, dns_name_t *zonename,
 				      sizeof(classbuf));
 
 		result = DNS_R_REFUSED;
+		pfilter_notify(result, client, "updateacl");
 		ns_client_log(client, NS_LOGCATEGORY_UPDATE_SECURITY,
 			      NS_LOGMODULE_UPDATE, ISC_LOG_INFO,
 			      "update '%s/%s' denied", namebuf, classbuf);
@@ -362,6 +366,7 @@ checkupdateacl(ns_client_t *client, dns_acl_t *acl, const char *message,
 		msg = "disabled";
 	} else {
 		result = ns_client_checkaclsilent(client, NULL, acl, ISC_FALSE);
+		pfilter_notify(result, client, "updateacl");
 		if (result == ISC_R_SUCCESS) {
 			level = ISC_LOG_DEBUG(3);
 			msg = "approved";

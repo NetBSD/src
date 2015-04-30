@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.17.2.5 2015/04/22 07:18:57 snj Exp $
+# $NetBSD: ad.powerpc,v 1.17.2.6 2015/04/30 06:07:31 riz Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -76,6 +76,8 @@
 ./usr/lib/powerpc/libbfd.so.13.0		base-compat-shlib	compat,arch64,pic,binutils
 ./usr/lib/powerpc/libbind9.so.8			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libbind9.so.8.1		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libblacklist.so.0		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libblacklist.so.0.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libbluetooth.so.4		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libbluetooth.so.4.2		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libbsdmalloc.so.0		base-compat-shlib	compat,arch64,pic
@@ -273,8 +275,8 @@
 ./usr/lib/powerpc/libsl.so.5.0			base-compat-shlib	compat,arch64,pic,kerberos
 ./usr/lib/powerpc/libsqlite3.so.1		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libsqlite3.so.1.2		base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libssh.so.22			base-compat-shlib	compat,arch64,pic,crypto
-./usr/lib/powerpc/libssh.so.22.0		base-compat-shlib	compat,arch64,pic,crypto
+./usr/lib/powerpc/libssh.so.24			base-compat-shlib	compat,arch64,pic,crypto
+./usr/lib/powerpc/libssh.so.24.0		base-compat-shlib	compat,arch64,pic,crypto
 ./usr/lib/powerpc/libssl.so.10			base-compat-shlib	compat,arch64,pic,crypto
 ./usr/lib/powerpc/libssl.so.10.5		base-compat-shlib	compat,arch64,pic,crypto
 ./usr/lib/powerpc/libstdc++.so.7		base-compat-shlib	compat,arch64,pic,gcccmds,libstdcxx

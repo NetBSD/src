@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.h,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: sshconnect.h,v 1.27 2010/11/29 23:45:51 djm Exp $ */
+/*	$NetBSD: sshconnect.h,v 1.4.22.1 2015/04/30 06:07:31 riz Exp $	*/
+/* $OpenBSD: sshconnect.h,v 1.28 2013/10/16 02:31:47 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -32,9 +32,9 @@ struct Sensitive {
 	int	external_keysign;
 };
 
-int
-ssh_connect(const char *, struct sockaddr_storage *, u_short, int, int,
-    int *, int, int, const char *);
+struct addrinfo;
+int	 ssh_connect(const char *, struct addrinfo *, struct sockaddr_storage *,
+    u_short, int, int, int *, int, int);
 void	 ssh_kill_proxy_command(void);
 
 void	 ssh_login(Sensitive *, const char *, struct sockaddr *, u_short,

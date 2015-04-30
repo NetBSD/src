@@ -1,5 +1,5 @@
-#	$NetBSD: ssh_config,v 1.6 2013/11/08 19:18:25 christos Exp $
-#	$OpenBSD: ssh_config,v 1.27 2013/05/16 02:00:34 dtucker Exp $
+#	$NetBSD: ssh_config,v 1.6.4.1 2015/04/30 06:07:30 riz Exp $
+#	$OpenBSD: ssh_config,v 1.28 2013/09/16 11:35:43 sthen Exp $
 
 # This is the ssh client system-wide configuration file.  See
 # ssh_config(5) for more information.  This file provides defaults for
@@ -25,8 +25,6 @@
 #   RSAAuthentication yes
 #   PasswordAuthentication yes
 #   HostbasedAuthentication no
-#   GSSAPIAuthentication no
-#   GSSAPIDelegateCredentials no
 #   BatchMode no
 #   CheckHostIP yes
 #   AddressFamily any

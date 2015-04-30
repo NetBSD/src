@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.15 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.198 2013/06/05 12:52:38 dtucker Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.15.4.1 2015/04/30 06:07:31 riz Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.223 2015/01/30 11:43:14 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.15 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.15.4.1 2015/04/30 06:07:31 riz Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -62,8 +62,8 @@ __RCSID("$NetBSD: sshconnect2.c,v 1.15 2013/11/08 19:18:25 christos Exp $");
 #include "dh.h"
 #include "authfd.h"
 #include "log.h"
-#include "readconf.h"
 #include "misc.h"
+#include "readconf.h"
 #include "match.h"
 #include "dispatch.h"
 #include "canohost.h"
@@ -71,8 +71,7 @@ __RCSID("$NetBSD: sshconnect2.c,v 1.15 2013/11/08 19:18:25 christos Exp $");
 #include "pathnames.h"
 #include "uidswap.h"
 #include "hostfile.h"
-#include "schnorr.h"
-#include "jpake.h"
+#include "ssherr.h"
 
 #ifdef GSSAPI
 #include "ssh-gss.h"
@@ -82,7 +81,6 @@ __RCSID("$NetBSD: sshconnect2.c,v 1.15 2013/11/08 19:18:25 christos Exp $");
 extern char *client_version_string;
 extern char *server_version_string;
 extern Options options;
-extern Kex *xxx_kex;
 
 /* tty_flag is set in ssh.c. use this in ssh_userauth2 */
 /* if it is set then prevent the switch to the null cipher */
@@ -99,10 +97,8 @@ u_int session_id2_len = 0;
 char *xxx_host;
 struct sockaddr *xxx_hostaddr;
 
-Kex *xxx_kex = NULL;
-
 static int
-verify_host_key_callback(Key *hostkey)
+verify_host_key_callback(Key *hostkey, struct ssh *ssh)
 {
 	if (verify_host_key(xxx_host, xxx_hostaddr, hostkey) == -1)
 		fatal("Host key verification failed.");
@@ -140,16 +136,17 @@ order_hostkeyalgs(char *host, struct sockaddr *hostaddr, u_short port)
 	} while (0)
 
 	while ((alg = strsep(&avail, ",")) && *alg != '\0') {
-		if ((ktype = key_type_from_name(alg)) == KEY_UNSPEC)
+		if ((ktype = sshkey_type_from_name(alg)) == KEY_UNSPEC)
 			fatal("%s: unknown alg %s", __func__, alg);
 		if (lookup_key_in_hostkeys_by_type(hostkeys,
-		    key_type_plain(ktype), NULL))
+		    sshkey_type_plain(ktype), NULL))
 			ALG_APPEND(first, alg);
 		else
 			ALG_APPEND(last, alg);
 	}
 #undef ALG_APPEND
-	xasprintf(&ret, "%s%s%s", first, *first == '\0' ? "" : ",", last);
+	xasprintf(&ret, "%s%s%s", first,
+	    (*first == '\0' || *last == '\0') ? "" : ",", last);
 	if (*first != '\0')
 		debug3("%s: prefer hostkeyalgs: %s", __func__, first);
 
@@ -165,7 +162,9 @@ order_hostkeyalgs(char *host, struct sockaddr *hostaddr, u_short port)
 void
 ssh_kex2(char *host, struct sockaddr *hostaddr, u_short port)
 {
-	Kex *kex;
+	const char *myproposal[PROPOSAL_MAX] = { KEX_CLIENT };
+	struct kex *kex;
+	int r;
 
 	xxx_host = host;
 	xxx_hostaddr = hostaddr;
@@ -195,33 +194,39 @@ ssh_kex2(char *host, struct sockaddr *hostaddr, u_short port)
 	}
 	if (options.hostkeyalgorithms != NULL)
 		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] =
-		    options.hostkeyalgorithms;
+		    compat_pkalg_proposal(options.hostkeyalgorithms);
 	else {
 		/* Prefer algorithms that we already have keys for */
 		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] =
-		    order_hostkeyalgs(host, hostaddr, port);
+		    compat_pkalg_proposal(
+		    order_hostkeyalgs(host, hostaddr, port));
 	}
 	if (options.kex_algorithms != NULL)
 		myproposal[PROPOSAL_KEX_ALGS] = options.kex_algorithms;
+	myproposal[PROPOSAL_KEX_ALGS] = compat_kex_proposal(
+	    myproposal[PROPOSAL_KEX_ALGS]);
 
 	if (options.rekey_limit || options.rekey_interval)
 		packet_set_rekey_limits((u_int32_t)options.rekey_limit,
 		    (time_t)options.rekey_interval);
 
 	/* start key exchange */
-	kex = kex_setup(myproposal);
+	if ((r = kex_setup(active_state, myproposal)) != 0)
+		fatal("kex_setup: %s", ssh_err(r));
+	kex = active_state->kex;
+#ifdef WITH_OPENSSL
 	kex->kex[KEX_DH_GRP1_SHA1] = kexdh_client;
 	kex->kex[KEX_DH_GRP14_SHA1] = kexdh_client;
 	kex->kex[KEX_DH_GEX_SHA1] = kexgex_client;
 	kex->kex[KEX_DH_GEX_SHA256] = kexgex_client;
 	kex->kex[KEX_ECDH_SHA2] = kexecdh_client;
+#endif
+	kex->kex[KEX_C25519_SHA256] = kexc25519_client;
 	kex->client_version_string=client_version_string;
 	kex->server_version_string=server_version_string;
 	kex->verify_host_key=&verify_host_key_callback;
 
-	xxx_kex = kex;
-
-	dispatch_run(DISPATCH_BLOCK, &kex->done, kex);
+	dispatch_run(DISPATCH_BLOCK, &kex->done, active_state);
 
 	if (options.use_roaming && !kex->roaming) {
 		debug("Roaming not allowed by server");
@@ -244,15 +249,15 @@ ssh_kex2(char *host, struct sockaddr *hostaddr, u_short port)
  * Authenticate user
  */
 
-typedef struct Authctxt Authctxt;
-typedef struct Authmethod Authmethod;
+typedef struct cauthctxt Authctxt;
+typedef struct cauthmethod Authmethod;
 typedef struct identity Identity;
 typedef struct idlist Idlist;
 
 struct identity {
 	TAILQ_ENTRY(identity) next;
-	AuthenticationConnection *ac;	/* set if agent supports key */
-	Key	*key;			/* public/private key */
+	int	agent_fd;		/* >=0 if agent supports key */
+	struct sshkey	*key;		/* public/private key */
 	char	*filename;		/* comment for agent-only keys */
 	int	tried;
 	int	isprivate;		/* key points to the private key */
@@ -260,25 +265,29 @@ struct identity {
 };
 TAILQ_HEAD(idlist, identity);
 
-struct Authctxt {
+struct cauthctxt {
 	const char *server_user;
 	const char *local_user;
 	const char *host;
 	const char *service;
-	Authmethod *method;
+	struct cauthmethod *method;
 	sig_atomic_t success;
 	char *authlist;
+	int attempt;
 	/* pubkey */
-	Idlist keys;
-	AuthenticationConnection *agent;
+	struct idlist keys;
+	int agent_fd;
 	/* hostbased */
 	Sensitive *sensitive;
+	char *oktypes, *ktypes;
+	const char *active_ktype;
 	/* kbd-interactive */
 	int info_req_seen;
 	/* generic */
 	void *methoddata;
 };
-struct Authmethod {
+
+struct cauthmethod {
 	const char	*name;	/* string to compare against server's list */
 	int	(*userauth)(Authctxt *authctxt);
 	void	(*cleanup)(Authctxt *authctxt);
@@ -286,17 +295,14 @@ struct Authmethod {
 	int	*batch_flag;	/* flag in option struct that disables method */
 };
 
-void	input_userauth_success(int, u_int32_t, void *);
-__dead void	input_userauth_success_unexpected(int, u_int32_t, void *);
-void	input_userauth_failure(int, u_int32_t, void *);
-void	input_userauth_banner(int, u_int32_t, void *);
-__dead void	input_userauth_error(int, u_int32_t, void *);
-void	input_userauth_info_req(int, u_int32_t, void *);
-void	input_userauth_pk_ok(int, u_int32_t, void *);
-void	input_userauth_passwd_changereq(int, u_int32_t, void *);
-void	input_userauth_jpake_server_step1(int, u_int32_t, void *);
-void	input_userauth_jpake_server_step2(int, u_int32_t, void *);
-void	input_userauth_jpake_server_confirm(int, u_int32_t, void *);
+int	input_userauth_success(int, u_int32_t, void *);
+int	input_userauth_success_unexpected(int, u_int32_t, void *);
+int	input_userauth_failure(int, u_int32_t, void *);
+int	input_userauth_banner(int, u_int32_t, void *);
+int	input_userauth_error(int, u_int32_t, void *);
+int	input_userauth_info_req(int, u_int32_t, void *);
+int	input_userauth_pk_ok(int, u_int32_t, void *);
+int	input_userauth_passwd_changereq(int, u_int32_t, void *);
 
 int	userauth_none(Authctxt *);
 int	userauth_pubkey(Authctxt *);
@@ -304,17 +310,14 @@ int	userauth_passwd(Authctxt *);
 int	userauth_kbdint(Authctxt *);
 int	userauth_hostbased(Authctxt *);
 int	userauth_kerberos(Authctxt *);
-int	userauth_jpake(Authctxt *);
-
-void	userauth_jpake_cleanup(Authctxt *);
 
 #ifdef GSSAPI
 int	userauth_gssapi(Authctxt *authctxt);
-void	input_gssapi_response(int type, u_int32_t, void *);
-void	input_gssapi_token(int type, u_int32_t, void *);
-void	input_gssapi_hash(int type, u_int32_t, void *);
-void	input_gssapi_error(int, u_int32_t, void *);
-void	input_gssapi_errtok(int, u_int32_t, void *);
+int	input_gssapi_response(int type, u_int32_t, void *);
+int	input_gssapi_token(int type, u_int32_t, void *);
+int	input_gssapi_hash(int type, u_int32_t, void *);
+int	input_gssapi_error(int, u_int32_t, void *);
+int	input_gssapi_errtok(int, u_int32_t, void *);
 #endif
 
 void	userauth(Authctxt *, char *);
@@ -353,13 +356,6 @@ Authmethod authmethods[] = {
 		NULL,
 		&options.pubkey_authentication,
 		NULL},
-#ifdef JPAKE
-	{"jpake-01@openssh.com",
-		userauth_jpake,
-		userauth_jpake_cleanup,
-		&options.zero_knowledge_password_authentication,
-		&options.batch_mode},
-#endif
 	{"keyboard-interactive",
 		userauth_kbdint,
 		NULL,
@@ -421,7 +417,9 @@ ssh_userauth2(const char *local_user, const char *server_user, char *host,
 	authctxt.authlist = NULL;
 	authctxt.methoddata = NULL;
 	authctxt.sensitive = sensitive;
+	authctxt.active_ktype = authctxt.oktypes = authctxt.ktypes = NULL;
 	authctxt.info_req_seen = 0;
+	authctxt.agent_fd = -1;
 	if (authctxt.method == NULL)
 		fatal("ssh_userauth2: internal error: cannot send userauth none request");
 
@@ -445,11 +443,12 @@ ssh_userauth2(const char *local_user, const char *server_user, char *host,
 	{
 		if (!tty_flag) /* no null on tty sessions */
 		{
+			const char *myproposal[PROPOSAL_MAX] = { KEX_CLIENT };
 			debug("Requesting none rekeying...");
 			myproposal[PROPOSAL_ENC_ALGS_STOC] = "none";
 			myproposal[PROPOSAL_ENC_ALGS_CTOS] = "none";
-			kex_prop2buf(&xxx_kex->my,myproposal);
-			packet_request_rekeying();
+			kex_prop2buf(active_state->kex->my, myproposal);
+			ssh_packet_request_rekeying();
 			fprintf(stderr, "WARNING: ENABLED NONE CIPHER\n");
 		}
 		else
@@ -498,15 +497,16 @@ userauth(Authctxt *authctxt, char *authlist)
 }
 
 /* ARGSUSED */
-void
+int
 input_userauth_error(int type, u_int32_t seq, void *ctxt)
 {
 	fatal("input_userauth_error: bad message during authentication: "
 	    "type %d", type);
+	return 0;
 }
 
 /* ARGSUSED */
-void
+int
 input_userauth_banner(int type, u_int32_t seq, void *ctxt)
 {
 	char *msg, *raw, *lang;
@@ -525,10 +525,11 @@ input_userauth_banner(int type, u_int32_t seq, void *ctxt)
 	}
 	free(raw);
 	free(lang);
+	return 0;
 }
 
 /* ARGSUSED */
-void
+int
 input_userauth_success(int type, u_int32_t seq, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -542,9 +543,10 @@ input_userauth_success(int type, u_int32_t seq, void *ctxt)
 	free(authctxt->methoddata);
 	authctxt->methoddata = NULL;
 	authctxt->success = 1;			/* break out */
+	return 0;
 }
 
-void
+int
 input_userauth_success_unexpected(int type, u_int32_t seq, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -554,10 +556,11 @@ input_userauth_success_unexpected(int type, u_int32_t seq, void *ctxt)
 
 	fatal("Unexpected authentication success during %s.",
 	    authctxt->method->name);
+	return 0;
 }
 
 /* ARGSUSED */
-void
+int
 input_userauth_failure(int type, u_int32_t seq, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -580,10 +583,11 @@ input_userauth_failure(int type, u_int32_t seq, void *ctxt)
 	debug("Authentications that can continue: %s", authlist);
 
 	userauth(authctxt, authlist);
+	return 0;
 }
 
 /* ARGSUSED */
-void
+int
 input_userauth_pk_ok(int type, u_int32_t seq, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -627,7 +631,9 @@ input_userauth_pk_ok(int type, u_int32_t seq, void *ctxt)
 		    key->type, pktype);
 		goto done;
 	}
-	fp = key_fingerprint(key, SSH_FP_MD5, SSH_FP_HEX);
+	if ((fp = sshkey_fingerprint(key, options.fingerprint_hash,
+	    SSH_FP_DEFAULT)) == NULL)
+		goto done;
 	debug2("input_userauth_pk_ok: fp %s", fp);
 	free(fp);
 
@@ -651,6 +657,7 @@ done:
 	/* try another method if we did not send a packet */
 	if (sent == 0)
 		userauth(authctxt, NULL);
+	return 0;
 }
 
 #ifdef GSSAPI
@@ -768,7 +775,7 @@ process_gssapi_token(void *ctxt, gss_buffer_t recv_tok)
 }
 
 /* ARGSUSED */
-void
+int
 input_gssapi_response(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -789,7 +796,7 @@ input_gssapi_response(int type, u_int32_t plen, void *ctxt)
 		free(oidv);
 		debug("Badly encoded mechanism OID received");
 		userauth(authctxt, NULL);
-		return;
+		return 0;
 	}
 
 	if (!ssh_gssapi_check_oid(gssctxt, oidv + 2, oidlen - 2))
@@ -803,12 +810,13 @@ input_gssapi_response(int type, u_int32_t plen, void *ctxt)
 		/* Start again with next method on list */
 		debug("Trying to start again");
 		userauth(authctxt, NULL);
-		return;
+		return 0;
 	}
+	return 0;
 }
 
 /* ARGSUSED */
-void
+int
 input_gssapi_token(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -831,12 +839,13 @@ input_gssapi_token(int type, u_int32_t plen, void *ctxt)
 	if (GSS_ERROR(status)) {
 		/* Start again with the next method in the list */
 		userauth(authctxt, NULL);
-		return;
+		return 0;
 	}
+	return 0;
 }
 
 /* ARGSUSED */
-void
+int
 input_gssapi_errtok(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -863,10 +872,11 @@ input_gssapi_errtok(int type, u_int32_t plen, void *ctxt)
 	gss_release_buffer(&ms, &send_tok);
 
 	/* Server will be returning a failed packet after this one */
+	return 0;
 }
 
 /* ARGSUSED */
-void
+int
 input_gssapi_error(int type, u_int32_t plen, void *ctxt)
 {
 	char *msg;
@@ -882,6 +892,7 @@ input_gssapi_error(int type, u_int32_t plen, void *ctxt)
 	debug("Server GSSAPI Error:\n%s", msg);
 	free(msg);
 	free(lang);
+	return 0;
 }
 #endif /* GSSAPI */
 
@@ -921,7 +932,7 @@ userauth_passwd(Authctxt *authctxt)
 	packet_put_cstring(authctxt->method->name);
 	packet_put_char(0);
 	packet_put_cstring(password);
-	memset(password, 0, strlen(password));
+	explicit_bzero(password, strlen(password));
 	free(password);
 	packet_add_padding(64);
 	packet_send();
@@ -936,7 +947,7 @@ userauth_passwd(Authctxt *authctxt)
  * parse PASSWD_CHANGEREQ, prompt user and send SSH2_MSG_USERAUTH_REQUEST
  */
 /* ARGSUSED */
-void
+int
 input_userauth_passwd_changereq(int type, u_int32_t seqnr, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -967,7 +978,7 @@ input_userauth_passwd_changereq(int type, u_int32_t seqnr, void *ctxt)
 	    authctxt->server_user, host);
 	password = read_passphrase(prompt, 0);
 	packet_put_cstring(password);
-	memset(password, 0, strlen(password));
+	explicit_bzero(password, strlen(password));
 	free(password);
 	password = NULL;
 	while (password == NULL) {
@@ -977,256 +988,56 @@ input_userauth_passwd_changereq(int type, u_int32_t seqnr, void *ctxt)
 		password = read_passphrase(prompt, RP_ALLOW_EOF);
 		if (password == NULL) {
 			/* bail out */
-			return;
+			return 0;
 		}
 		snprintf(prompt, sizeof(prompt),
 		    "Retype %.30s@%.128s's new password: ",
 		    authctxt->server_user, host);
 		retype = read_passphrase(prompt, 0);
 		if (strcmp(password, retype) != 0) {
-			memset(password, 0, strlen(password));
+			explicit_bzero(password, strlen(password));
 			free(password);
 			logit("Mismatch; try again, EOF to quit.");
 			password = NULL;
 		}
-		memset(retype, 0, strlen(retype));
+		explicit_bzero(retype, strlen(retype));
 		free(retype);
 	}
 	packet_put_cstring(password);
-	memset(password, 0, strlen(password));
+	explicit_bzero(password, strlen(password));
 	free(password);
 	packet_add_padding(64);
 	packet_send();
 
 	dispatch_set(SSH2_MSG_USERAUTH_PASSWD_CHANGEREQ,
 	    &input_userauth_passwd_changereq);
+	return 0;
 }
-
-#ifdef JPAKE
-static char *
-pw_encrypt(const char *password, const char *crypt_scheme, const char *salt)
-{
-	/* OpenBSD crypt(3) handles all of these */
-	if (strcmp(crypt_scheme, "crypt") == 0 ||
-	    strcmp(crypt_scheme, "bcrypt") == 0 ||
-	    strcmp(crypt_scheme, "md5crypt") == 0 ||
-	    strcmp(crypt_scheme, "crypt-extended") == 0)
-		return xstrdup(crypt(password, salt));
-	error("%s: unsupported password encryption scheme \"%.100s\"",
-	    __func__, crypt_scheme);
-	return NULL;
-}
-
-static BIGNUM *
-jpake_password_to_secret(Authctxt *authctxt, const char *crypt_scheme,
-    const char *salt)
-{
-	char prompt[256], *password, *crypted;
-	u_char *secret;
-	u_int secret_len;
-	BIGNUM *ret;
-
-	snprintf(prompt, sizeof(prompt), "%.30s@%.128s's password (JPAKE): ",
-	    authctxt->server_user, authctxt->host);
-	password = read_passphrase(prompt, 0);
-
-	if ((crypted = pw_encrypt(password, crypt_scheme, salt)) == NULL) {
-		logit("Disabling %s authentication", authctxt->method->name);
-		authctxt->method->enabled = NULL;
-		/* Continue with an empty password to fail gracefully */
-		crypted = xstrdup("");
-	}
-
-#ifdef JPAKE_DEBUG
-	debug3("%s: salt = %s", __func__, salt);
-	debug3("%s: scheme = %s", __func__, crypt_scheme);
-	debug3("%s: crypted = %s", __func__, crypted);
-#endif
-
-	if (hash_buffer(crypted, strlen(crypted), EVP_sha256(),
-	    &secret, &secret_len) != 0)
-		fatal("%s: hash_buffer", __func__);
-
-	bzero(password, strlen(password));
-	bzero(crypted, strlen(crypted));
-	free(password);
-	free(crypted);
-
-	if ((ret = BN_bin2bn(secret, secret_len, NULL)) == NULL)
-		fatal("%s: BN_bin2bn (secret)", __func__);
-	bzero(secret, secret_len);
-	free(secret);
-
-	return ret;
-}
-
-/* ARGSUSED */
-void
-input_userauth_jpake_server_step1(int type, u_int32_t seq, void *ctxt)
-{
-	Authctxt *authctxt = ctxt;
-	struct jpake_ctx *pctx = authctxt->methoddata;
-	u_char *x3_proof, *x4_proof, *x2_s_proof;
-	u_int x3_proof_len, x4_proof_len, x2_s_proof_len;
-	char *crypt_scheme, *salt;
-
-	/* Disable this message */
-	dispatch_set(SSH2_MSG_USERAUTH_JPAKE_SERVER_STEP1, NULL);
-
-	if ((pctx->g_x3 = BN_new()) == NULL ||
-	    (pctx->g_x4 = BN_new()) == NULL)
-		fatal("%s: BN_new", __func__);
-
-	/* Fetch step 1 values */
-	crypt_scheme = packet_get_string(NULL);
-	salt = packet_get_string(NULL);
-	pctx->server_id = packet_get_string(&pctx->server_id_len);
-	packet_get_bignum2(pctx->g_x3);
-	packet_get_bignum2(pctx->g_x4);
-	x3_proof = packet_get_string(&x3_proof_len);
-	x4_proof = packet_get_string(&x4_proof_len);
-	packet_check_eom();
-
-	JPAKE_DEBUG_CTX((pctx, "step 1 received in %s", __func__));
-
-	/* Obtain password and derive secret */
-	pctx->s = jpake_password_to_secret(authctxt, crypt_scheme, salt);
-	bzero(crypt_scheme, strlen(crypt_scheme));
-	bzero(salt, strlen(salt));
-	free(crypt_scheme);
-	free(salt);
-	JPAKE_DEBUG_BN((pctx->s, "%s: s = ", __func__));
-
-	/* Calculate step 2 values */
-	jpake_step2(pctx->grp, pctx->s, pctx->g_x1,
-	    pctx->g_x3, pctx->g_x4, pctx->x2,
-	    pctx->server_id, pctx->server_id_len,
-	    pctx->client_id, pctx->client_id_len,
-	    x3_proof, x3_proof_len,
-	    x4_proof, x4_proof_len,
-	    &pctx->a,
-	    &x2_s_proof, &x2_s_proof_len);
-
-	bzero(x3_proof, x3_proof_len);
-	bzero(x4_proof, x4_proof_len);
-	free(x3_proof);
-	free(x4_proof);
-
-	JPAKE_DEBUG_CTX((pctx, "step 2 sending in %s", __func__));
-
-	/* Send values for step 2 */
-	packet_start(SSH2_MSG_USERAUTH_JPAKE_CLIENT_STEP2);
-	packet_put_bignum2(pctx->a);
-	packet_put_string(x2_s_proof, x2_s_proof_len);
-	packet_send();
-
-	bzero(x2_s_proof, x2_s_proof_len);
-	free(x2_s_proof);
-
-	/* Expect step 2 packet from peer */
-	dispatch_set(SSH2_MSG_USERAUTH_JPAKE_SERVER_STEP2,
-	    input_userauth_jpake_server_step2);
-}
-
-/* ARGSUSED */
-void
-input_userauth_jpake_server_step2(int type, u_int32_t seq, void *ctxt)
-{
-	Authctxt *authctxt = ctxt;
-	struct jpake_ctx *pctx = authctxt->methoddata;
-	u_char *x4_s_proof;
-	u_int x4_s_proof_len;
-
-	/* Disable this message */
-	dispatch_set(SSH2_MSG_USERAUTH_JPAKE_SERVER_STEP2, NULL);
-
-	if ((pctx->b = BN_new()) == NULL)
-		fatal("%s: BN_new", __func__);
-
-	/* Fetch step 2 values */
-	packet_get_bignum2(pctx->b);
-	x4_s_proof = packet_get_string(&x4_s_proof_len);
-	packet_check_eom();
-
-	JPAKE_DEBUG_CTX((pctx, "step 2 received in %s", __func__));
-
-	/* Derive shared key and calculate confirmation hash */
-	jpake_key_confirm(pctx->grp, pctx->s, pctx->b,
-	    pctx->x2, pctx->g_x1, pctx->g_x2, pctx->g_x3, pctx->g_x4,
-	    pctx->client_id, pctx->client_id_len,
-	    pctx->server_id, pctx->server_id_len,
-	    session_id2, session_id2_len,
-	    x4_s_proof, x4_s_proof_len,
-	    &pctx->k,
-	    &pctx->h_k_cid_sessid, &pctx->h_k_cid_sessid_len);
-
-	bzero(x4_s_proof, x4_s_proof_len);
-	free(x4_s_proof);
-
-	JPAKE_DEBUG_CTX((pctx, "confirm sending in %s", __func__));
-
-	/* Send key confirmation proof */
-	packet_start(SSH2_MSG_USERAUTH_JPAKE_CLIENT_CONFIRM);
-	packet_put_string(pctx->h_k_cid_sessid, pctx->h_k_cid_sessid_len);
-	packet_send();
-
-	/* Expect confirmation from peer */
-	dispatch_set(SSH2_MSG_USERAUTH_JPAKE_SERVER_CONFIRM,
-	    input_userauth_jpake_server_confirm);
-}
-
-/* ARGSUSED */
-void
-input_userauth_jpake_server_confirm(int type, u_int32_t seq, void *ctxt)
-{
-	Authctxt *authctxt = ctxt;
-	struct jpake_ctx *pctx = authctxt->methoddata;
-
-	/* Disable this message */
-	dispatch_set(SSH2_MSG_USERAUTH_JPAKE_SERVER_CONFIRM, NULL);
-
-	pctx->h_k_sid_sessid = packet_get_string(&pctx->h_k_sid_sessid_len);
-	packet_check_eom();
-
-	JPAKE_DEBUG_CTX((pctx, "confirm received in %s", __func__));
-
-	/* Verify expected confirmation hash */
-	if (jpake_check_confirm(pctx->k,
-	    pctx->server_id, pctx->server_id_len,
-	    session_id2, session_id2_len,
-	    pctx->h_k_sid_sessid, pctx->h_k_sid_sessid_len) == 1)
-		debug("%s: %s success", __func__, authctxt->method->name);
-	else {
-		debug("%s: confirmation mismatch", __func__);
-		/* XXX stash this so if auth succeeds then we can warn/kill */
-	}
-
-	userauth_jpake_cleanup(authctxt);
-}
-#endif /* JPAKE */
 
 static int
-identity_sign(Identity *id, u_char **sigp, u_int *lenp,
-    u_char *data, u_int datalen)
+identity_sign(struct identity *id, u_char **sigp, size_t *lenp,
+    const u_char *data, size_t datalen, u_int compat)
 {
 	Key *prv;
 	int ret;
 
 	/* the agent supports this key */
-	if (id->ac)
-		return (ssh_agent_sign(id->ac, id->key, sigp, lenp,
-		    data, datalen));
+	if (id->agent_fd)
+		return ssh_agent_sign(id->agent_fd, id->key, sigp, lenp,
+		    data, datalen, compat);
+
 	/*
 	 * we have already loaded the private key or
 	 * the private key is stored in external hardware
 	 */
-	if (id->isprivate || (id->key->flags & KEY_FLAG_EXT))
-		return (key_sign(id->key, sigp, lenp, data, datalen));
+	if (id->isprivate || (id->key->flags & SSHKEY_FLAG_EXT))
+		return (sshkey_sign(id->key, sigp, lenp, data, datalen,
+		    compat));
 	/* load the private key from the file */
 	if ((prv = load_identity_file(id->filename, id->userprovided)) == NULL)
-		return (-1);
-	ret = key_sign(prv, sigp, lenp, data, datalen);
-	key_free(prv);
+		return (-1); /* XXX return decent error code */
+	ret = sshkey_sign(prv, sigp, lenp, data, datalen, compat);
+	sshkey_free(prv);
 	return (ret);
 }
 
@@ -1235,13 +1046,16 @@ sign_and_send_pubkey(Authctxt *authctxt, Identity *id)
 {
 	Buffer b;
 	u_char *blob, *signature;
-	u_int bloblen, slen;
+	u_int bloblen;
+	size_t slen;
 	u_int skip = 0;
 	int ret = -1;
 	int have_sig = 1;
 	char *fp;
 
-	fp = key_fingerprint(id->key, SSH_FP_MD5, SSH_FP_HEX);
+	if ((fp = sshkey_fingerprint(id->key, options.fingerprint_hash,
+	    SSH_FP_DEFAULT)) == NULL)
+		return 0;
 	debug3("sign_and_send_pubkey: %s %s", key_type(id->key), fp);
 	free(fp);
 
@@ -1276,8 +1090,8 @@ sign_and_send_pubkey(Authctxt *authctxt, Identity *id)
 
 	/* generate signature */
 	ret = identity_sign(id, &signature, &slen,
-	    buffer_ptr(&b), buffer_len(&b));
-	if (ret == -1) {
+	    buffer_ptr(&b), buffer_len(&b), datafellows);
+	if (ret != 0) {
 		free(blob);
 		buffer_free(&b);
 		return 0;
@@ -1352,7 +1166,7 @@ load_identity_file(char *filename, int userprovided)
 {
 	Key *private;
 	char prompt[300], *passphrase;
-	int perm_ok = 0, quit, i;
+	int r, perm_ok = 0, quit = 0, i;
 	struct stat st;
 
 	if (stat(filename, &st) < 0) {
@@ -1360,33 +1174,50 @@ load_identity_file(char *filename, int userprovided)
 		    filename, strerror(errno));
 		return NULL;
 	}
-	private = key_load_private_type(KEY_UNSPEC, filename, "", NULL, &perm_ok);
-	if (!perm_ok) {
-		if (private != NULL)
-			key_free(private);
-		return NULL;
-	}
-	if (private == NULL) {
-		if (options.batch_mode)
-			return NULL;
-		snprintf(prompt, sizeof prompt,
-		    "Enter passphrase for key '%.100s': ", filename);
-		for (i = 0; i < options.number_of_password_prompts; i++) {
+	snprintf(prompt, sizeof prompt,
+	    "Enter passphrase for key '%.100s': ", filename);
+	for (i = 0; i <= options.number_of_password_prompts; i++) {
+		if (i == 0)
+			passphrase = xstrdup("");
+		else {
 			passphrase = read_passphrase(prompt, 0);
-			if (strcmp(passphrase, "") != 0) {
-				private = key_load_private_type(KEY_UNSPEC,
-				    filename, passphrase, NULL, NULL);
-				quit = 0;
-			} else {
+			if (*passphrase == '\0') {
 				debug2("no passphrase given, try next key");
-				quit = 1;
-			}
-			memset(passphrase, 0, strlen(passphrase));
-			free(passphrase);
-			if (private != NULL || quit)
+				free(passphrase);
 				break;
-			debug2("bad passphrase given, try again...");
+			}
 		}
+		switch ((r = sshkey_load_private_type(KEY_UNSPEC, filename,
+		    passphrase, &private, NULL, &perm_ok))) {
+		case 0:
+			break;
+		case SSH_ERR_KEY_WRONG_PASSPHRASE:
+			if (options.batch_mode) {
+				quit = 1;
+				break;
+			}
+			if (i != 0)
+				debug2("bad passphrase given, try again...");
+			break;
+		case SSH_ERR_SYSTEM_ERROR:
+			if (errno == ENOENT) {
+				debug2("Load key \"%s\": %s",
+				    filename, ssh_err(r));
+				quit = 1;
+				break;
+			}
+			/* FALLTHROUGH */
+		default:
+			error("Load key \"%s\": %s", filename, ssh_err(r));
+			quit = 1;
+			break;
+		}
+		if (i > 0) {
+			explicit_bzero(passphrase, strlen(passphrase));
+			free(passphrase);
+		}
+		if (private != NULL || quit)
+			break;
 	}
 	return private;
 }
@@ -1400,12 +1231,12 @@ load_identity_file(char *filename, int userprovided)
 static void
 pubkey_prepare(Authctxt *authctxt)
 {
-	Identity *id, *id2, *tmp;
-	Idlist agent, files, *preferred;
-	Key *key;
-	AuthenticationConnection *ac;
-	char *comment;
-	int i, found;
+	struct identity *id, *id2, *tmp;
+	struct idlist agent, files, *preferred;
+	struct sshkey *key;
+	int agent_fd, i, r, found;
+	size_t j;
+	struct ssh_identitylist *idlist;
 
 	TAILQ_INIT(&agent);	/* keys from the agent */
 	TAILQ_INIT(&files);	/* keys from the config file */
@@ -1428,14 +1259,14 @@ pubkey_prepare(Authctxt *authctxt)
 	}
 	/* Prefer PKCS11 keys that are explicitly listed */
 	TAILQ_FOREACH_SAFE(id, &files, next, tmp) {
-		if (id->key == NULL || (id->key->flags & KEY_FLAG_EXT) == 0)
+		if (id->key == NULL || (id->key->flags & SSHKEY_FLAG_EXT) == 0)
 			continue;
 		found = 0;
 		TAILQ_FOREACH(id2, &files, next) {
 			if (id2->key == NULL ||
-			    (id2->key->flags & KEY_FLAG_EXT) != 0)
+			    (id2->key->flags & SSHKEY_FLAG_EXT) == 0)
 				continue;
-			if (key_equal(id->key, id2->key)) {
+			if (sshkey_equal(id->key, id2->key)) {
 				TAILQ_REMOVE(&files, id, next);
 				TAILQ_INSERT_TAIL(preferred, id, next);
 				found = 1;
@@ -1445,42 +1276,53 @@ pubkey_prepare(Authctxt *authctxt)
 		/* If IdentitiesOnly set and key not found then don't use it */
 		if (!found && options.identities_only) {
 			TAILQ_REMOVE(&files, id, next);
-			memset(id, 0, sizeof(*id));
+			explicit_bzero(id, sizeof(*id));
 			free(id);
 		}
 	}
 	/* list of keys supported by the agent */
-	if ((ac = ssh_get_authentication_connection())) {
-		for (key = ssh_get_first_identity(ac, &comment, 2);
-		    key != NULL;
-		    key = ssh_get_next_identity(ac, &comment, 2)) {
+	if ((r = ssh_get_authentication_socket(&agent_fd)) != 0) {
+		if (r != SSH_ERR_AGENT_NOT_PRESENT)
+			debug("%s: ssh_get_authentication_socket: %s",
+			    __func__, ssh_err(r));
+	} else if ((r = ssh_fetch_identitylist(agent_fd, 2, &idlist)) != 0) {
+		if (r != SSH_ERR_AGENT_NO_IDENTITIES)
+			debug("%s: ssh_fetch_identitylist: %s",
+			    __func__, ssh_err(r));
+	} else {
+		for (j = 0; j < idlist->nkeys; j++) {
 			found = 0;
 			TAILQ_FOREACH(id, &files, next) {
-				/* agent keys from the config file are preferred */
-				if (key_equal(key, id->key)) {
-					key_free(key);
-					free(comment);
+				/*
+				 * agent keys from the config file are
+				 * preferred
+				 */
+				if (sshkey_equal(idlist->keys[j], id->key)) {
 					TAILQ_REMOVE(&files, id, next);
 					TAILQ_INSERT_TAIL(preferred, id, next);
-					id->ac = ac;
+					id->agent_fd = agent_fd;
 					found = 1;
 					break;
 				}
 			}
 			if (!found && !options.identities_only) {
 				id = xcalloc(1, sizeof(*id));
-				id->key = key;
-				id->filename = comment;
-				id->ac = ac;
+				/* XXX "steals" key/comment from idlist */
+				id->key = idlist->keys[j];
+				id->filename = idlist->comments[j];
+				idlist->keys[j] = NULL;
+				idlist->comments[j] = NULL;
+				id->agent_fd = agent_fd;
 				TAILQ_INSERT_TAIL(&agent, id, next);
 			}
 		}
+		ssh_free_identitylist(idlist);
 		/* append remaining agent keys */
 		for (id = TAILQ_FIRST(&agent); id; id = TAILQ_FIRST(&agent)) {
 			TAILQ_REMOVE(&agent, id, next);
 			TAILQ_INSERT_TAIL(preferred, id, next);
 		}
-		authctxt->agent = ac;
+		authctxt->agent_fd = agent_fd;
 	}
 	/* append remaining keys from the config file */
 	for (id = TAILQ_FIRST(&files); id; id = TAILQ_FIRST(&files)) {
@@ -1498,13 +1340,13 @@ pubkey_cleanup(Authctxt *authctxt)
 {
 	Identity *id;
 
-	if (authctxt->agent != NULL)
-		ssh_close_authentication_connection(authctxt->agent);
+	if (authctxt->agent_fd != -1)
+		ssh_close_authentication_socket(authctxt->agent_fd);
 	for (id = TAILQ_FIRST(&authctxt->keys); id;
 	    id = TAILQ_FIRST(&authctxt->keys)) {
 		TAILQ_REMOVE(&authctxt->keys, id, next);
 		if (id->key)
-			key_free(id->key);
+			sshkey_free(id->key);
 		free(id->filename);
 		free(id);
 	}
@@ -1527,17 +1369,31 @@ userauth_pubkey(Authctxt *authctxt)
 		 * encrypted keys we cannot do this and have to load the
 		 * private key instead
 		 */
-		if (id->key && id->key->type != KEY_RSA1) {
-			debug("Offering %s public key: %s", key_type(id->key),
-			    id->filename);
-			sent = send_pubkey_test(authctxt, id);
-		} else if (id->key == NULL) {
+		if (id->key != NULL) {
+			if (key_type_plain(id->key->type) == KEY_RSA &&
+			    (datafellows & SSH_BUG_RSASIGMD5) != 0) {
+				debug("Skipped %s key %s for RSA/MD5 server",
+				    key_type(id->key), id->filename);
+			} else if (id->key->type != KEY_RSA1) {
+				debug("Offering %s public key: %s",
+				    key_type(id->key), id->filename);
+				sent = send_pubkey_test(authctxt, id);
+			}
+		} else {
 			debug("Trying private key: %s", id->filename);
 			id->key = load_identity_file(id->filename,
 			    id->userprovided);
 			if (id->key != NULL) {
 				id->isprivate = 1;
-				sent = sign_and_send_pubkey(authctxt, id);
+				if (key_type_plain(id->key->type) == KEY_RSA &&
+				    (datafellows & SSH_BUG_RSASIGMD5) != 0) {
+					debug("Skipped %s key %s for RSA/MD5 "
+					    "server", key_type(id->key),
+					    id->filename);
+				} else {
+					sent = sign_and_send_pubkey(
+					    authctxt, id);
+				}
 				key_free(id->key);
 				id->key = NULL;
 			}
@@ -1582,7 +1438,7 @@ userauth_kbdint(Authctxt *authctxt)
 /*
  * parse INFO_REQUEST, prompt user and send INFO_RESPONSE
  */
-void
+int
 input_userauth_info_req(int type, u_int32_t seq, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -1626,7 +1482,7 @@ input_userauth_info_req(int type, u_int32_t seq, void *ctxt)
 		response = read_passphrase(prompt, echo ? RP_ECHO : 0);
 
 		packet_put_cstring(response);
-		memset(response, 0, strlen(response));
+		explicit_bzero(response, strlen(response));
 		free(response);
 		free(prompt);
 	}
@@ -1634,81 +1490,120 @@ input_userauth_info_req(int type, u_int32_t seq, void *ctxt)
 
 	packet_add_padding(64);
 	packet_send();
+	return 0;
 }
 
 static int
-ssh_keysign(Key *key, u_char **sigp, u_int *lenp,
-    u_char *data, u_int datalen)
+ssh_keysign(struct sshkey *key, u_char **sigp, size_t *lenp,
+    const u_char *data, size_t datalen)
 {
-	Buffer b;
+	struct sshbuf *b;
 	struct stat st;
 	pid_t pid;
-	int to[2], from[2], status, version = 2;
+	int i, r, to[2], from[2], status, sock = packet_get_connection_in();
+	u_char rversion = 0, version = 2;
+	void (*osigchld)(int);
 
-	debug2("ssh_keysign called");
+	*sigp = NULL;
+	*lenp = 0;
 
 	if (stat(_PATH_SSH_KEY_SIGN, &st) < 0) {
-		error("ssh_keysign: not installed: %s", strerror(errno));
+		error("%s: not installed: %s", __func__, strerror(errno));
 		return -1;
 	}
-	if (fflush(stdout) != 0)
-		error("ssh_keysign: fflush: %s", strerror(errno));
+	if (fflush(stdout) != 0) {
+		error("%s: fflush: %s", __func__, strerror(errno));
+		return -1;
+	}
 	if (pipe(to) < 0) {
-		error("ssh_keysign: pipe: %s", strerror(errno));
+		error("%s: pipe: %s", __func__, strerror(errno));
 		return -1;
 	}
 	if (pipe(from) < 0) {
-		error("ssh_keysign: pipe: %s", strerror(errno));
+		error("%s: pipe: %s", __func__, strerror(errno));
 		return -1;
 	}
 	if ((pid = fork()) < 0) {
-		error("ssh_keysign: fork: %s", strerror(errno));
+		error("%s: fork: %s", __func__, strerror(errno));
 		return -1;
 	}
+	osigchld = signal(SIGCHLD, SIG_DFL);
 	if (pid == 0) {
 		/* keep the socket on exec */
-		fcntl(packet_get_connection_in(), F_SETFD, 0);
+		fcntl(sock, F_SETFD, 0);
 		permanently_drop_suid(getuid());
 		close(from[0]);
 		if (dup2(from[1], STDOUT_FILENO) < 0)
-			fatal("ssh_keysign: dup2: %s", strerror(errno));
+			fatal("%s: dup2: %s", __func__, strerror(errno));
 		close(to[1]);
 		if (dup2(to[0], STDIN_FILENO) < 0)
-			fatal("ssh_keysign: dup2: %s", strerror(errno));
+			fatal("%s: dup2: %s", __func__, strerror(errno));
 		close(from[1]);
 		close(to[0]);
+		/* Close everything but stdio and the socket */
+		for (i = STDERR_FILENO + 1; i < sock; i++)
+			close(i);
+		closefrom(sock + 1);
+		debug3("%s: [child] pid=%ld, exec %s",
+		    __func__, (long)getpid(), _PATH_SSH_KEY_SIGN);
 		execl(_PATH_SSH_KEY_SIGN, _PATH_SSH_KEY_SIGN, (char *) 0);
-		fatal("ssh_keysign: exec(%s): %s", _PATH_SSH_KEY_SIGN,
+		fatal("%s: exec(%s): %s", __func__, _PATH_SSH_KEY_SIGN,
 		    strerror(errno));
 	}
 	close(from[1]);
 	close(to[0]);
 
-	buffer_init(&b);
-	buffer_put_int(&b, packet_get_connection_in()); /* send # of socket */
-	buffer_put_string(&b, data, datalen);
-	if (ssh_msg_send(to[1], version, &b) == -1)
-		fatal("ssh_keysign: couldn't send request");
-
-	if (ssh_msg_recv(from[0], &b) < 0) {
-		error("ssh_keysign: no reply");
-		buffer_free(&b);
-		return -1;
-	}
+	if ((b = sshbuf_new()) == NULL)
+		fatal("%s: sshbuf_new failed", __func__);
+	/* send # of sock, data to be signed */
+	if ((r = sshbuf_put_u32(b, sock) != 0) ||
+	    (r = sshbuf_put_string(b, data, datalen)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	if (ssh_msg_send(to[1], version, b) == -1)
+		fatal("%s: couldn't send request", __func__);
+	sshbuf_reset(b);
+	r = ssh_msg_recv(from[0], b);
 	close(from[0]);
 	close(to[1]);
+	if (r < 0) {
+		error("%s: no reply", __func__);
+		goto fail;
+	}
 
-	while (waitpid(pid, &status, 0) < 0)
-		if (errno != EINTR)
-			break;
-
-	if (buffer_get_char(&b) != version) {
-		error("ssh_keysign: bad version");
-		buffer_free(&b);
+	errno = 0;
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno != EINTR) {
+			error("%s: waitpid %ld: %s",
+			    __func__, (long)pid, strerror(errno));
+			goto fail;
+		}
+	}
+	if (!WIFEXITED(status)) {
+		error("%s: exited abnormally", __func__);
+		goto fail;
+	}
+	if (WEXITSTATUS(status) != 0) {
+		error("%s: exited with status %d",
+		    __func__, WEXITSTATUS(status));
+		goto fail;
+	}
+	if ((r = sshbuf_get_u8(b, &rversion)) != 0) {
+		error("%s: buffer error: %s", __func__, ssh_err(r));
+		goto fail;
+	}
+	if (rversion != version) {
+		error("%s: bad version", __func__);
+		goto fail;
+	}
+	if ((r = sshbuf_get_string(b, sigp, lenp)) != 0) {
+		error("%s: buffer error: %s", __func__, ssh_err(r));
+ fail:
+		signal(SIGCHLD, osigchld);
+		sshbuf_free(b);
 		return -1;
 	}
-	*sigp = buffer_get_string(&b, lenp);
-	buffer_free(&b);
+	signal(SIGCHLD, osigchld);
+	sshbuf_free(b);
 
 	return 0;
 }
@@ -1716,168 +1611,150 @@ ssh_keysign(Key *key, u_char **sigp, u_int *lenp,
 int
 userauth_hostbased(Authctxt *authctxt)
 {
-	Key *private = NULL;
-	Sensitive *sensitive = authctxt->sensitive;
-	Buffer b;
-	u_char *signature, *blob;
-	char *chost, *pkalg, *p;
+	struct ssh *ssh = active_state;
+	struct sshkey *private = NULL;
+	struct sshbuf *b = NULL;
 	const char *service;
-	u_int blen, slen;
-	int ok, i, found = 0;
+	u_char *sig = NULL, *keyblob = NULL;
+	char *fp = NULL, *chost = NULL, *lname = NULL;
+	size_t siglen = 0, keylen = 0;
+	int i, r, success = 0;
 
-	/* check for a useful key */
-	for (i = 0; i < sensitive->nkeys; i++) {
-		private = sensitive->keys[i];
-		if (private && private->type != KEY_RSA1) {
-			found = 1;
+	if (authctxt->ktypes == NULL) {
+		authctxt->oktypes = xstrdup(options.hostbased_key_types);
+		authctxt->ktypes = authctxt->oktypes;
+	}
+
+	/*
+	 * Work through each listed type pattern in HostbasedKeyTypes,
+	 * trying each hostkey that matches the type in turn.
+	 */
+	for (;;) {
+		if (authctxt->active_ktype == NULL)
+			authctxt->active_ktype = strsep(&authctxt->ktypes, ",");
+		if (authctxt->active_ktype == NULL ||
+		    *authctxt->active_ktype == '\0')
+			break;
+		debug3("%s: trying key type %s", __func__,
+		    authctxt->active_ktype);
+
+		/* check for a useful key */
+		private = NULL;
+		for (i = 0; i < authctxt->sensitive->nkeys; i++) {
+			if (authctxt->sensitive->keys[i] == NULL ||
+			    authctxt->sensitive->keys[i]->type == KEY_RSA1 ||
+			    authctxt->sensitive->keys[i]->type == KEY_UNSPEC)
+				continue;
+			if (match_pattern_list(
+			    sshkey_ssh_name(authctxt->sensitive->keys[i]),
+			    authctxt->active_ktype,
+			    strlen(authctxt->active_ktype), 0) != 1)
+				continue;
 			/* we take and free the key */
-			sensitive->keys[i] = NULL;
+			private = authctxt->sensitive->keys[i];
+			authctxt->sensitive->keys[i] = NULL;
 			break;
 		}
+		/* Found one */
+		if (private != NULL)
+			break;
+		/* No more keys of this type; advance */
+		authctxt->active_ktype = NULL;
 	}
-	if (!found) {
+	if (private == NULL) {
+		free(authctxt->oktypes);
+		authctxt->oktypes = authctxt->ktypes = NULL;
+		authctxt->active_ktype = NULL;
 		debug("No more client hostkeys for hostbased authentication.");
-		return 0;
+		goto out;
 	}
-	if (key_to_blob(private, &blob, &blen) == 0) {
-		key_free(private);
-		return 0;
+
+	if ((fp = sshkey_fingerprint(private, options.fingerprint_hash,
+	    SSH_FP_DEFAULT)) == NULL) {
+		error("%s: sshkey_fingerprint failed", __func__);
+		goto out;
 	}
+	debug("%s: trying hostkey %s %s",
+	    __func__, sshkey_ssh_name(private), fp);
+
 	/* figure out a name for the client host */
-	p = get_local_name(packet_get_connection_in());
-	if (p == NULL) {
-		error("userauth_hostbased: cannot get local ipaddr/name");
-		key_free(private);
-		free(blob);
-		return 0;
+	if ((lname = get_local_name(packet_get_connection_in())) == NULL) {
+		error("%s: cannot get local ipaddr/name", __func__);
+		goto out;
 	}
-	xasprintf(&chost, "%s.", p);
-	debug2("userauth_hostbased: chost %s", chost);
-	free(p);
+
+	/* XXX sshbuf_put_stringf? */
+	xasprintf(&chost, "%s.", lname);
+	debug2("%s: chost %s", __func__, chost);
 
 	service = datafellows & SSH_BUG_HBSERVICE ? "ssh-userauth" :
 	    authctxt->service;
-	pkalg = xstrdup(key_ssh_name(private));
-	buffer_init(&b);
+
 	/* construct data */
-	buffer_put_string(&b, session_id2, session_id2_len);
-	buffer_put_char(&b, SSH2_MSG_USERAUTH_REQUEST);
-	buffer_put_cstring(&b, authctxt->server_user);
-	buffer_put_cstring(&b, service);
-	buffer_put_cstring(&b, authctxt->method->name);
-	buffer_put_cstring(&b, pkalg);
-	buffer_put_string(&b, blob, blen);
-	buffer_put_cstring(&b, chost);
-	buffer_put_cstring(&b, authctxt->local_user);
+	if ((b = sshbuf_new()) == NULL) {
+		error("%s: sshbuf_new failed", __func__);
+		goto out;
+	}
+	if ((r = sshkey_to_blob(private, &keyblob, &keylen)) != 0) {
+		error("%s: sshkey_to_blob: %s", __func__, ssh_err(r));
+		goto out;
+	}
+	if ((r = sshbuf_put_string(b, session_id2, session_id2_len)) != 0 ||
+	    (r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
+	    (r = sshbuf_put_cstring(b, authctxt->server_user)) != 0 ||
+	    (r = sshbuf_put_cstring(b, service)) != 0 ||
+	    (r = sshbuf_put_cstring(b, authctxt->method->name)) != 0 ||
+	    (r = sshbuf_put_cstring(b, key_ssh_name(private))) != 0 ||
+	    (r = sshbuf_put_string(b, keyblob, keylen)) != 0 ||
+	    (r = sshbuf_put_cstring(b, chost)) != 0 ||
+	    (r = sshbuf_put_cstring(b, authctxt->local_user)) != 0) {
+		error("%s: buffer error: %s", __func__, ssh_err(r));
+		goto out;
+	}
+
 #ifdef DEBUG_PK
-	buffer_dump(&b);
+	sshbuf_dump(b, stderr);
 #endif
-	if (sensitive->external_keysign)
-		ok = ssh_keysign(private, &signature, &slen,
-		    buffer_ptr(&b), buffer_len(&b));
-	else
-		ok = key_sign(private, &signature, &slen,
-		    buffer_ptr(&b), buffer_len(&b));
-	key_free(private);
-	buffer_free(&b);
-	if (ok != 0) {
-		error("key_sign failed");
-		free(chost);
-		free(pkalg);
-		free(blob);
-		return 0;
+	if (authctxt->sensitive->external_keysign)
+		r = ssh_keysign(private, &sig, &siglen,
+		    sshbuf_ptr(b), sshbuf_len(b));
+	else if ((r = sshkey_sign(private, &sig, &siglen,
+	    sshbuf_ptr(b), sshbuf_len(b), datafellows)) != 0)
+		debug("%s: sshkey_sign: %s", __func__, ssh_err(r));
+	if (r != 0) {
+		error("sign using hostkey %s %s failed",
+		    sshkey_ssh_name(private), fp);
+		goto out;
 	}
-	packet_start(SSH2_MSG_USERAUTH_REQUEST);
-	packet_put_cstring(authctxt->server_user);
-	packet_put_cstring(authctxt->service);
-	packet_put_cstring(authctxt->method->name);
-	packet_put_cstring(pkalg);
-	packet_put_string(blob, blen);
-	packet_put_cstring(chost);
-	packet_put_cstring(authctxt->local_user);
-	packet_put_string(signature, slen);
-	memset(signature, 's', slen);
-	free(signature);
+	if ((r = sshpkt_start(ssh, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
+	    (r = sshpkt_put_cstring(ssh, authctxt->server_user)) != 0 ||
+	    (r = sshpkt_put_cstring(ssh, authctxt->service)) != 0 ||
+	    (r = sshpkt_put_cstring(ssh, authctxt->method->name)) != 0 ||
+	    (r = sshpkt_put_cstring(ssh, key_ssh_name(private))) != 0 ||
+	    (r = sshpkt_put_string(ssh, keyblob, keylen)) != 0 ||
+	    (r = sshpkt_put_cstring(ssh, chost)) != 0 ||
+	    (r = sshpkt_put_cstring(ssh, authctxt->local_user)) != 0 ||
+	    (r = sshpkt_put_string(ssh, sig, siglen)) != 0 ||
+	    (r = sshpkt_send(ssh)) != 0) {
+		error("%s: packet error: %s", __func__, ssh_err(r));
+		goto out;
+	}
+	success = 1;
+
+ out:
+	if (sig != NULL) {
+		explicit_bzero(sig, siglen);
+		free(sig);
+	}
+	free(keyblob);
+	free(lname);
+	free(fp);
 	free(chost);
-	free(pkalg);
-	free(blob);
+	sshkey_free(private);
+	sshbuf_free(b);
 
-	packet_send();
-	return 1;
+	return success;
 }
-
-#ifdef JPAKE
-int
-userauth_jpake(Authctxt *authctxt)
-{
-	struct jpake_ctx *pctx;
-	u_char *x1_proof, *x2_proof;
-	u_int x1_proof_len, x2_proof_len;
-	static int attempt = 0; /* XXX share with userauth_password's? */
-
-	if (attempt++ >= options.number_of_password_prompts)
-		return 0;
-	if (attempt != 1)
-		error("Permission denied, please try again.");
-
-	if (authctxt->methoddata != NULL)
-		fatal("%s: authctxt->methoddata already set (%p)",
-		    __func__, authctxt->methoddata);
-
-	authctxt->methoddata = pctx = jpake_new();
-
-	/*
-	 * Send request immediately, to get the protocol going while
-	 * we do the initial computations.
-	 */
-	packet_start(SSH2_MSG_USERAUTH_REQUEST);
-	packet_put_cstring(authctxt->server_user);
-	packet_put_cstring(authctxt->service);
-	packet_put_cstring(authctxt->method->name);
-	packet_send();
-	packet_write_wait();
-
-	jpake_step1(pctx->grp,
-	    &pctx->client_id, &pctx->client_id_len,
-	    &pctx->x1, &pctx->x2, &pctx->g_x1, &pctx->g_x2,
-	    &x1_proof, &x1_proof_len,
-	    &x2_proof, &x2_proof_len);
-
-	JPAKE_DEBUG_CTX((pctx, "step 1 sending in %s", __func__));
-
-	packet_start(SSH2_MSG_USERAUTH_JPAKE_CLIENT_STEP1);
-	packet_put_string(pctx->client_id, pctx->client_id_len);
-	packet_put_bignum2(pctx->g_x1);
-	packet_put_bignum2(pctx->g_x2);
-	packet_put_string(x1_proof, x1_proof_len);
-	packet_put_string(x2_proof, x2_proof_len);
-	packet_send();
-
-	bzero(x1_proof, x1_proof_len);
-	bzero(x2_proof, x2_proof_len);
-	free(x1_proof);
-	free(x2_proof);
-
-	/* Expect step 1 packet from peer */
-	dispatch_set(SSH2_MSG_USERAUTH_JPAKE_SERVER_STEP1,
-	    input_userauth_jpake_server_step1);
-	dispatch_set(SSH2_MSG_USERAUTH_SUCCESS,
-	    &input_userauth_success_unexpected);
-
-	return 1;
-}
-
-void
-userauth_jpake_cleanup(Authctxt *authctxt)
-{
-	debug3("%s: clean up", __func__);
-	if (authctxt->methoddata != NULL) {
-		jpake_free(authctxt->methoddata);
-		authctxt->methoddata = NULL;
-	}
-	dispatch_set(SSH2_MSG_USERAUTH_SUCCESS, &input_userauth_success);
-}
-#endif /* JPAKE */
 
 #if KRB5
 static int

@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.9 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: servconf.h,v 1.109 2013/07/19 07:37:48 markus Exp $ */
+/*	$NetBSD: servconf.h,v 1.9.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: servconf.h,v 1.116 2015/01/13 07:39:19 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -90,6 +90,8 @@ typedef struct {
 					 * searching at */
 	int     x11_use_localhost;	/* If true, use localhost for fake X11 server. */
 	char   *xauth_location;	/* Location of xauth program */
+	int	permit_tty;	/* If false, deny pty allocation */
+	int	permit_user_rc;	/* If false, deny ~/.ssh/rc execution */
 	int     strict_modes;	/* If true, require string home dir modes. */
 	int     tcp_keep_alive;	/* If true, set SO_KEEPALIVE. */
 	int	ip_qos_interactive;	/* IP ToS/DSCP/class for interactive */
@@ -98,15 +100,17 @@ typedef struct {
 	char   *macs;		/* Supported SSH2 macs. */
 	char   *kex_algorithms;	/* SSH2 kex methods in order of preference. */
 	int	protocol;	/* Supported protocol versions. */
-	int     gateway_ports;	/* If true, allow remote connects to forwarded ports. */
+	struct ForwardOptions fwd_opts;	/* forwarding options */
 	SyslogFacility log_facility;	/* Facility for system logging. */
 	LogLevel log_level;	/* Level for system logging. */
 	int     rhosts_rsa_authentication;	/* If true, permit rhosts RSA
 						 * authentication. */
 	int     hostbased_authentication;	/* If true, permit ssh2 hostbased auth */
 	int     hostbased_uses_name_from_packet_only; /* experimental */
+	char   *hostbased_key_types;	/* Key types allowed for hostbased */
 	int     rsa_authentication;	/* If true, permit RSA authentication. */
 	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
+	char   *pubkey_key_types;	/* Key types allowed for public key */
 	int     kerberos_authentication;	/* If true, permit Kerberos
 						 * authentication. */
 	int     kerberos_or_local_passwd;	/* If true, permit kerberos
@@ -129,14 +133,13 @@ typedef struct {
 						 * authentication. */
 	int     kbd_interactive_authentication;	/* If true, permit */
 	int     challenge_response_authentication;
-	int     zero_knowledge_password_authentication;
-					/* If true, permit jpake auth */
 	int     permit_empty_passwd;	/* If false, do not permit empty
 					 * passwords. */
 	int     permit_user_env;	/* If true, read ~/.ssh/environment */
 	int     use_login;	/* If true, login(1) is used */
 	int     compression;	/* If true, compression is allowed */
 	int	allow_tcp_forwarding; /* One of FORWARD_* */
+	int	allow_streamlocal_forwarding; /* One of FORWARD_* */
 	int	allow_agent_forwarding;
 	u_int num_allow_users;
 	char   *allow_users[MAX_ALLOW_USERS];
@@ -204,6 +207,8 @@ typedef struct {
 
 	u_int	num_auth_methods;
 	char   *auth_methods[MAX_AUTH_METHODS];
+
+	int	fingerprint_hash;
 }       ServerOptions;
 
 /* Information about the incoming connection as used by Match */
@@ -221,6 +226,9 @@ struct connection_info {
  * Match sub-config and the main config, and must be sent from the
  * privsep slave to the privsep master. We use a macro to ensure all
  * the options are copied and the copies are done in the correct order.
+ *
+ * NB. an option must appear in servconf.c:copy_set_server_options() or
+ * COPY_MATCH_STRING_OPTS here but never both.
  */
 #define COPY_MATCH_STRING_OPTS() do { \
 		M_CP_STROPT(banner); \
@@ -229,6 +237,8 @@ struct connection_info {
 		M_CP_STROPT(authorized_principals_file); \
 		M_CP_STROPT(authorized_keys_command); \
 		M_CP_STROPT(authorized_keys_command_user); \
+		M_CP_STROPT(hostbased_key_types); \
+		M_CP_STROPT(pubkey_key_types); \
 		M_CP_STRARRAYOPT(authorized_keys_files, num_authkeys_files); \
 		M_CP_STRARRAYOPT(allow_users, num_allow_users); \
 		M_CP_STRARRAYOPT(deny_users, num_deny_users); \

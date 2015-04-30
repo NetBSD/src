@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1485.2.8 2015/04/23 19:38:11 snj Exp $
+# $NetBSD: mi,v 1.1485.2.9 2015/04/30 06:07:32 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3056,8 +3056,6 @@
 ./usr/share/man/cat8/trace.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/trace.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
-./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
-./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/trivial-rewrite.0	man-postfix-catman	postfix,.cat
@@ -4984,6 +4982,7 @@
 ./usr/share/man/html5/ar.html			man-sys-htmlman		html
 ./usr/share/man/html5/atf-formats.html		man-atf-htmlman		html,atf
 ./usr/share/man/html5/audit-packages.conf.html	man-obsolete		obsolete
+./usr/share/man/html5/blacklistd.conf.html	man-sysutil-htmlman	html
 ./usr/share/man/html5/body_checks.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/boot.cfg.html		man-sys-htmlman		html
 ./usr/share/man/html5/bootparams.html		man-bootserver-htmlman	html
@@ -5242,6 +5241,8 @@
 ./usr/share/man/html8/bad144.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/badsect.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/bioctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/blacklistctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/blacklistd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/boot.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/bootparamd.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/bootpd.html		man-bootserver-htmlman	html
@@ -7890,6 +7891,7 @@
 ./usr/share/man/man5/ar.5			man-sys-man		.man
 ./usr/share/man/man5/atf-formats.5		man-atf-man		.man,atf
 ./usr/share/man/man5/audit-packages.conf.5	man-obsolete		obsolete
+./usr/share/man/man5/blacklistd.conf.5		man-sysutil-man		.man
 ./usr/share/man/man5/bluetooth.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/body_checks.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/boot.cfg.5			man-sys-man		.man
@@ -8198,6 +8200,8 @@
 ./usr/share/man/man8/bebox/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/bebox/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/bioctl.8			man-sysutil-man		.man
+./usr/share/man/man8/blacklistctl.8		man-sysutil-man		.man
+./usr/share/man/man8/blacklistd.8		man-sysutil-man		.man
 ./usr/share/man/man8/boot.8			man-sysutil-man		.man
 ./usr/share/man/man8/bootparamd.8		man-bootserver-man	.man
 ./usr/share/man/man8/bootpd.8			man-bootserver-man	.man

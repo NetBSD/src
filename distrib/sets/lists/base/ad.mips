@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.48.2.6 2015/04/22 07:18:57 snj Exp $
+# $NetBSD: ad.mips,v 1.48.2.7 2015/04/30 06:07:31 riz Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -87,6 +87,8 @@
 ./usr/lib/64/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libbind9.so.8			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbind9.so.8.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libblacklist.so.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libblacklist.so.0.0		base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbluetooth.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbluetooth.so.4.2		base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbsdmalloc.so.0			base-compat-shlib	compat,pic,arch64
@@ -299,8 +301,8 @@
 ./usr/lib/64/libsqlite3.so.1.2			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libss.so.6				base-compat-shlib	obsolete,arch64
 ./usr/lib/64/libss.so.6.0			base-compat-shlib	obsolete,arch64
-./usr/lib/64/libssh.so.22			base-compat-shlib	compat,pic,crypto,arch64
-./usr/lib/64/libssh.so.22.0			base-compat-shlib	compat,pic,crypto,arch64
+./usr/lib/64/libssh.so.24			base-compat-shlib	compat,pic,crypto,arch64
+./usr/lib/64/libssh.so.24.0			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/64/libssl.so.10			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/64/libssl.so.10.5			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/64/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx,arch64
@@ -435,6 +437,8 @@
 ./usr/lib/o32/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/o32/libbind9.so.8			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbind9.so.8.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libblacklist.so.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libblacklist.so.0.0		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbluetooth.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbluetooth.so.4.2		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbsdmalloc.so.0			base-compat-shlib	compat,pic,arch64
@@ -639,8 +643,8 @@
 ./usr/lib/o32/libsqlite3.so.1.2			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libss.so.6			base-compat-shlib	obsolete,arch64
 ./usr/lib/o32/libss.so.6.0			base-compat-shlib	obsolete,arch64
-./usr/lib/o32/libssh.so.22			base-compat-shlib	compat,pic,crypto,arch64
-./usr/lib/o32/libssh.so.22.0			base-compat-shlib	compat,pic,crypto,arch64
+./usr/lib/o32/libssh.so.24			base-compat-shlib	compat,pic,crypto,arch64
+./usr/lib/o32/libssh.so.24.0			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/o32/libssl.so.10			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/o32/libssl.so.10.5			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/o32/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx,arch64

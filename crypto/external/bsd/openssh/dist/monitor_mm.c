@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_mm.c,v 1.4 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: monitor_mm.c,v 1.17.2.1 2013/11/08 01:33:56 djm Exp $ */
+/*	$NetBSD: monitor_mm.c,v 1.4.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: monitor_mm.c,v 1.21 2015/02/06 23:21:59 millert Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -26,14 +26,15 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_mm.c,v 1.4 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: monitor_mm.c,v 1.4.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 
 #include <errno.h>
 #include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -45,7 +46,7 @@ __RCSID("$NetBSD: monitor_mm.c,v 1.4 2013/11/08 19:18:25 christos Exp $");
 static int
 mm_compare(struct mm_share *a, struct mm_share *b)
 {
-	long diff = (char *)a->address - (char *)b->address;
+	ptrdiff_t diff = (char *)a->address - (char *)b->address;
 
 	if (diff == 0)
 		return (0);
@@ -72,8 +73,8 @@ mm_make_entry(struct mm_master *mm, struct mmtree *head,
 
 	tmp2 = RB_INSERT(mmtree, head, tmp);
 	if (tmp2 != NULL)
-		fatal("mm_make_entry(%p): double address %p->%p(%lu)",
-		    mm, tmp2, address, (u_long)size);
+		fatal("mm_make_entry(%p): double address %p->%p(%zu)",
+		    mm, tmp2, address, size);
 
 	return (tmp);
 }
@@ -99,9 +100,9 @@ mm_create(struct mm_master *mmalloc, size_t size)
 	mm->mmalloc = mmalloc;
 
 	address = mmap(NULL, size, PROT_WRITE|PROT_READ, MAP_ANON|MAP_SHARED,
-	    -1, (off_t)0);
+	    -1, 0);
 	if (address == MAP_FAILED)
-		fatal("mmap(%lu): %s", (u_long)size, strerror(errno));
+		fatal("mmap(%zu): %s", size, strerror(errno));
 
 	mm->address = address;
 	mm->size = size;
@@ -140,7 +141,7 @@ mm_destroy(struct mm_master *mm)
 	mm_freelist(mm->mmalloc, &mm->rb_allocated);
 
 	if (munmap(mm->address, mm->size) == -1)
-		fatal("munmap(%p, %lu): %s", mm->address, (u_long)mm->size,
+		fatal("munmap(%p, %zu): %s", mm->address, mm->size,
 		    strerror(errno));
 	if (mm->mmalloc == NULL)
 		free(mm);
@@ -155,7 +156,7 @@ mm_xmalloc(struct mm_master *mm, size_t size)
 
 	address = mm_malloc(mm, size);
 	if (address == NULL)
-		fatal("%s: mm_malloc(%lu)", __func__, (u_long)size);
+		fatal("%s: mm_malloc(%zu)", __func__, size);
 	memset(address, 0, size);
 	return (address);
 }
@@ -170,7 +171,7 @@ mm_malloc(struct mm_master *mm, size_t size)
 
 	if (size == 0)
 		fatal("mm_malloc: try to allocate 0 space");
-	if (size > SIZE_T_MAX - MM_MINSIZE + 1)
+	if (size > SIZE_MAX - MM_MINSIZE + 1)
 		fatal("mm_malloc: size too big");
 
 	size = ((size + (MM_MINSIZE - 1)) / MM_MINSIZE) * MM_MINSIZE;
@@ -190,7 +191,7 @@ mm_malloc(struct mm_master *mm, size_t size)
 
 	/* Does not change order in RB tree */
 	mms->size -= size;
-	mms->address = (u_char *)mms->address + size;
+	mms->address = (char *)mms->address + size;
 
 	if (mms->size == 0) {
 		RB_REMOVE(mmtree, &mm->rb_free, mms);
@@ -243,8 +244,8 @@ mm_free(struct mm_master *mm, void *address)
 
 	/* Check if range does not overlap */
 	if (prev != NULL && MM_ADDRESS_END(prev) > address)
-		fatal("mm_free: memory corruption: %p(%lu) > %p",
-		    prev->address, (u_long)prev->size, address);
+		fatal("mm_free: memory corruption: %p(%zu) > %p",
+		    prev->address, prev->size, address);
 
 	/* See if we can merge backwards */
 	if (prev != NULL && MM_ADDRESS_END(prev) == address) {
@@ -266,8 +267,8 @@ mm_free(struct mm_master *mm, void *address)
 		return;
 
 	if (MM_ADDRESS_END(prev) > mms->address)
-		fatal("mm_free: memory corruption: %p < %p(%lu)",
-		    mms->address, prev->address, (u_long)prev->size);
+		fatal("mm_free: memory corruption: %p < %p(%zu)",
+		    mms->address, prev->address, prev->size);
 	if (MM_ADDRESS_END(prev) != mms->address)
 		return;
 
@@ -338,12 +339,12 @@ mm_share_sync(struct mm_master **pmm, struct mm_master **pmmalloc)
 void
 mm_memvalid(struct mm_master *mm, void *address, size_t size)
 {
-	void *end = (u_char *)address + size;
+	void *end = (char *)address + size;
 
 	if (address < mm->address)
 		fatal("mm_memvalid: address too small: %p", address);
 	if (end < address)
 		fatal("mm_memvalid: end < address: %p < %p", end, address);
-	if (end > (void *)((u_char *)mm->address + mm->size))
+	if (end > MM_ADDRESS_END(mm))
 		fatal("mm_memvalid: address too large: %p", address);
 }

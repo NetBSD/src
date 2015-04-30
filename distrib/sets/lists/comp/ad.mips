@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.50.2.2 2015/02/08 22:15:02 snj Exp $
+# $NetBSD: ad.mips,v 1.50.2.3 2015/04/30 06:07:31 riz Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/g++/bits/mips32			comp-c-include		arch64
@@ -200,6 +200,10 @@
 ./usr/lib/64/libbind9.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libbind9_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libbind9_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/64/libblacklist.a			comp-c-lib		compat
+./usr/lib/64/libblacklist.so			base-sys-shlib		compat,pic
+./usr/lib/64/libblacklist_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/libblacklist_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/64/libbluetooth.a			comp-c-lib		compat
 ./usr/lib/64/libbluetooth.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libbluetooth_p.a			comp-c-proflib		compat,profile
@@ -823,6 +827,10 @@
 ./usr/lib/o32/libbind9.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libbind9_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libbind9_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/o32/libblacklist.a			comp-c-lib		compat
+./usr/lib/o32/libblacklist.so			base-sys-shlib		compat,pic
+./usr/lib/o32/libblacklist_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libblacklist_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/o32/libbluetooth.a			comp-c-lib		compat
 ./usr/lib/o32/libbluetooth.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libbluetooth_p.a			comp-c-proflib		compat,profile

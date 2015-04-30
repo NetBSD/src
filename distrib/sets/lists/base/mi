@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1087.2.5 2015/04/23 19:38:11 snj Exp $
+# $NetBSD: mi,v 1.1087.2.6 2015/04/30 06:07:31 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -225,6 +225,7 @@
 ./libdata/firmware/zyd/zyd-zd1211		base-firmware-root
 ./libdata/firmware/zyd/zyd-zd1211b		base-firmware-root
 ./libexec					base-sys-root
+./libexec/blacklistd-helper			base-sysutil-root
 ./libexec/devpubd-hooks				base-sysutil-root
 ./libexec/devpubd-hooks/01-makedev		base-sysutil-root
 ./libexec/devpubd-hooks/02-wedgenames		base-sysutil-root
@@ -258,6 +259,8 @@
 ./sbin/atactl					base-sysutil-root
 ./sbin/badsect					base-sysutil-root
 ./sbin/bioctl					base-sysutil-root
+./sbin/blacklistctl				base-sysutil-root
+./sbin/blacklistd				base-sysutil-root
 ./sbin/brconfig					base-netutil-root
 ./sbin/ccdconfig				base-sysutil-root
 ./sbin/cgdconfig				base-sysutil-root	crypto
@@ -1936,6 +1939,9 @@
 ./usr/share/examples				base-sys-share
 ./usr/share/examples/amd			base-amd-examples
 ./usr/share/examples/apm			base-sys-examples
+./usr/share/examples/blacklist			base-sys-examples
+./usr/share/examples/blacklist/blacklistd.conf	base-sys-examples
+./usr/share/examples/blacklist/npf.conf		base-sys-examples
 ./usr/share/examples/dhcp			base-dhcpd-examples
 ./usr/share/examples/disktab			base-sys-examples
 ./usr/share/examples/emul			base-sys-examples

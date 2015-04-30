@@ -1,5 +1,5 @@
-/*	$NetBSD: atomicio.c,v 1.4 2011/08/01 15:55:00 christos Exp $	*/
-/* $OpenBSD: atomicio.c,v 1.26 2010/09/22 22:58:51 djm Exp $ */
+/*	$NetBSD: atomicio.c,v 1.4.22.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: atomicio.c,v 1.27 2015/01/16 06:40:12 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Damien Miller. All rights reserved.
  * Copyright (c) 2005 Anil Madhavapeddy. All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: atomicio.c,v 1.4 2011/08/01 15:55:00 christos Exp $");
+__RCSID("$NetBSD: atomicio.c,v 1.4.22.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/param.h>
 #include <sys/uio.h>
 
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: atomicio.c,v 1.4 2011/08/01 15:55:00 christos Exp $");
 #include <poll.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "atomicio.h"
 

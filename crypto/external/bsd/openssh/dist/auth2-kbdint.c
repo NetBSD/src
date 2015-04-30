@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-kbdint.c,v 1.3 2013/11/08 19:18:24 christos Exp $	*/
-/* $OpenBSD: auth2-kbdint.c,v 1.6 2013/05/17 00:13:13 djm Exp $ */
+/*	$NetBSD: auth2-kbdint.c,v 1.3.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: auth2-kbdint.c,v 1.7 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-kbdint.c,v 1.3 2013/11/08 19:18:24 christos Exp $");
+__RCSID("$NetBSD: auth2-kbdint.c,v 1.3.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 
 #include "xmalloc.h"
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: auth2-kbdint.c,v 1.3 2013/11/08 19:18:24 christos Exp $");
 #include "auth.h"
 #include "log.h"
 #include "buffer.h"
+#include "misc.h"
 #include "servconf.h"
 
 /* import */

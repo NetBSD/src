@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2 2014/08/10 23:26:48 matt Exp $
+# $NetBSD: ad.aarch64,v 1.2.2.1 2015/04/30 06:07:31 riz Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -200,6 +200,10 @@
 ./usr/lib/eabi/libbind9.so			base-sys-shlib		compat,pic
 ./usr/lib/eabi/libbind9_p.a			comp-c-proflib		compat,profile
 ./usr/lib/eabi/libbind9_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/eabi/libblacklist.a			comp-c-lib		compat
+./usr/lib/eabi/libblacklist.so			base-sys-shlib		compat,pic
+./usr/lib/eabi/libblacklist_p.a			comp-c-proflib		compat,profile
+./usr/lib/eabi/libblacklist_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/eabi/libbluetooth.a			comp-c-lib		compat
 ./usr/lib/eabi/libbluetooth.so			base-sys-shlib		compat,pic
 ./usr/lib/eabi/libbluetooth_p.a			comp-c-proflib		compat,profile
@@ -1230,6 +1234,10 @@
 ./usr/lib/oabi/libbind9.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libbind9_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libbind9_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/oabi/libblacklist.a			comp-c-lib		compat
+./usr/lib/oabi/libblacklist.so			base-sys-shlib		compat,pic
+./usr/lib/oabi/libblacklist_p.a			comp-c-proflib		compat,profile
+./usr/lib/oabi/libblacklist_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/oabi/libbluetooth.a			comp-c-lib		compat
 ./usr/lib/oabi/libbluetooth.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libbluetooth_p.a			comp-c-proflib		compat,profile

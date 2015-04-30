@@ -1,5 +1,5 @@
-.\"	$NetBSD: ssh-agent.1,v 1.6 2011/07/25 03:03:11 christos Exp $
-.\" $OpenBSD: ssh-agent.1,v 1.53 2010/11/21 01:01:13 djm Exp $
+.\"	$NetBSD: ssh-agent.1,v 1.6.22.1 2015/04/30 06:07:30 riz Exp $
+.\" $OpenBSD: ssh-agent.1,v 1.57 2014/12/21 22:27:56 djm Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 21, 2010
+.Dd December 21 2014
 .Dt SSH-AGENT 1
 .Os
 .Sh NAME
@@ -46,6 +46,7 @@
 .Op Fl c | s
 .Op Fl d
 .Op Fl a Ar bind_address
+.Op Fl E Ar fingerprint_hash
 .Op Fl t Ar life
 .Op Ar command Op Ar arg ...
 .Nm ssh-agent
@@ -54,16 +55,28 @@
 .Sh DESCRIPTION
 .Nm
 is a program to hold private keys used for public key authentication
-(RSA, DSA, ECDSA).
-The idea is that
+(RSA, DSA, ECDSA, Ed25519).
 .Nm
-is started in the beginning of an X-session or a login session, and
+is usually started in the beginning of an X-session or a login session, and
 all other windows or programs are started as clients to the ssh-agent
 program.
 Through use of environment variables the agent can be located
 and automatically used for authentication when logging in to other
 machines using
 .Xr ssh 1 .
+.Pp
+The agent initially does not have any private keys.
+Keys are added using
+.Xr ssh-add 1 .
+Multiple identities may be stored in
+.Nm
+concurrently and
+.Xr ssh 1
+will automatically use them if present.
+.Xr ssh-add 1
+is also used to remove keys from
+.Nm
+and to query the keys that are held in one.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -85,6 +98,14 @@ Debug mode.
 When this option is specified
 .Nm
 will not fork.
+.It Fl E Ar fingerprint_hash
+Specifies the hash algorithm used when displaying key fingerprints.
+Valid options are:
+.Dq md5
+and
+.Dq sha256 .
+The default is
+.Dq sha256 .
 .It Fl k
 Kill the current agent (given by the
 .Ev SSH_AGENT_PID
@@ -107,28 +128,6 @@ Without this option the default maximum lifetime is forever.
 .Pp
 If a commandline is given, this is executed as a subprocess of the agent.
 When the command dies, so does the agent.
-.Pp
-The agent initially does not have any private keys.
-Keys are added using
-.Xr ssh-add 1 .
-When executed without arguments,
-.Xr ssh-add 1
-adds the files
-.Pa ~/.ssh/id_rsa ,
-.Pa ~/.ssh/id_dsa ,
-.Pa ~/.ssh/id_ecdsa
-and
-.Pa ~/.ssh/identity .
-If the identity has a passphrase,
-.Xr ssh-add 1
-asks for the passphrase on the terminal if it has one or from a small X11
-program if running under X11.
-If neither of these is the case then the authentication will fail.
-It then sends the identity to the agent.
-Several identities can be stored in the
-agent; the agent can automatically use any of these identities.
-.Ic ssh-add -l
-displays the identities currently held by the agent.
 .Pp
 The idea is that the agent is run in the user's local PC, laptop, or
 terminal.
@@ -185,14 +184,6 @@ The agent exits automatically when the command given on the command
 line terminates.
 .Sh FILES
 .Bl -tag -width Ds
-.It Pa ~/.ssh/identity
-Contains the protocol version 1 RSA authentication identity of the user.
-.It Pa ~/.ssh/id_dsa
-Contains the protocol version 2 DSA authentication identity of the user.
-.It Pa ~/.ssh/id_ecdsa
-Contains the protocol version 2 ECDSA authentication identity of the user.
-.It Pa ~/.ssh/id_rsa
-Contains the protocol version 2 RSA authentication identity of the user.
 .It Pa $TMPDIR/ssh-XXXXXXXXXX/agent.\*(Ltppid\*(Gt
 .Ux Ns -domain
 sockets used to contain the connection to the authentication agent.

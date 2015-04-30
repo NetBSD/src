@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: auth-passwd.c,v 1.43 2007/09/21 08:15:29 djm Exp $ */
+/*	$NetBSD: auth-passwd.c,v 1.2.26.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: auth-passwd.c,v 1.44 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.2.26.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: auth-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include "packet.h"
 #include "buffer.h"
 #include "log.h"
+#include "misc.h"
 #include "servconf.h"
 #include "key.h"
 #include "hostfile.h"

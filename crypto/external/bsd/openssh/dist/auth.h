@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.7 2013/11/08 19:18:24 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.76 2013/07/19 07:37:48 markus Exp $ */
+/*	$NetBSD: auth.h,v 1.7.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: auth.h,v 1.82 2015/02/16 22:13:32 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -43,6 +43,9 @@
 #include <krb5.h>
 #endif
 
+struct ssh;
+struct sshkey;
+
 typedef struct Authctxt Authctxt;
 typedef struct Authmethod Authmethod;
 typedef struct KbdintDevice KbdintDevice;
@@ -62,7 +65,6 @@ struct Authctxt {
 	char		*style;
 	void		*kbdintctxt;
 	char		*info;		/* Extra info for next auth_log */
-	void		*jpake_ctx;
 #ifdef BSD_AUTH
 	auth_session_t	*as;
 #endif
@@ -79,6 +81,9 @@ struct Authctxt {
 	char		*krb5_ticket_file;
 #endif
 	void		*methoddata;
+
+	struct sshkey	**prev_userkeys;
+	u_int		 nprev_userkeys;
 };
 /*
  * Every authentication method has to handle authentication requests for
@@ -132,6 +137,8 @@ int	 hostbased_key_allowed(struct passwd *, const char *, char *, Key *);
 int	 user_key_allowed(struct passwd *, Key *);
 void	 pubkey_auth_info(Authctxt *, const Key *, const char *, ...)
 	    __attribute__((__format__ (printf, 3, 4)));
+void	 auth2_record_userkey(Authctxt *, struct sshkey *);
+int	 auth2_userkey_already_used(Authctxt *, struct sshkey *);
 
 #ifdef KRB4
 #include <krb.h>
@@ -165,6 +172,7 @@ void	auth_info(Authctxt *authctxt, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)))
 	    __attribute__((__nonnull__ (2)));
 void	auth_log(Authctxt *, int, int, const char *, const char *);
+void	auth_maxtries_exceeded(Authctxt *) __attribute__((noreturn));
 void	userauth_finish(Authctxt *, int, const char *, const char *);
 int	auth_root_allowed(const char *);
 
@@ -182,9 +190,6 @@ int	bsdauth_query(void *, char **, char **, u_int *, char ***, u_int **);
 int	bsdauth_respond(void *, u_int, char **);
 int	skey_query(void *, char **, char **, u_int *, char ***, u_int **);
 int	skey_respond(void *, u_int, char **);
-
-void	auth2_jpake_get_pwdata(Authctxt *, BIGNUM **, char **, char **);
-void	auth2_jpake_stop(Authctxt *);
 
 int	allowed_user(struct passwd *);
 struct passwd * getpwnamallow(const char *user);
@@ -205,12 +210,13 @@ check_key_in_hostfiles(struct passwd *, Key *, const char *,
 
 /* hostkey handling */
 Key	*get_hostkey_by_index(int);
-Key	*get_hostkey_public_by_index(int);
-Key	*get_hostkey_public_by_type(int);
-Key	*get_hostkey_private_by_type(int);
-int	 get_hostkey_index(Key *);
+Key	*get_hostkey_public_by_index(int, struct ssh *);
+Key	*get_hostkey_public_by_type(int, int, struct ssh *);
+Key	*get_hostkey_private_by_type(int, int, struct ssh *);
+int	 get_hostkey_index(Key *, int, struct ssh *);
 int	 ssh1_session_key(BIGNUM *);
-void	 sshd_hostkey_sign(Key *, Key *, u_char **, u_int *, u_char *, u_int);
+int	 sshd_hostkey_sign(Key *, Key *, u_char **, size_t *,
+	     const u_char *, size_t, u_int);
 
 /* debug messages during authentication */
 void	 auth_debug_add(const char *fmt,...) __attribute__((format(printf, 1, 2)));

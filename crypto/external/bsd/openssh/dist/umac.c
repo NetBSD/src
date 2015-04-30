@@ -1,5 +1,5 @@
-/*	$NetBSD: umac.c,v 1.4 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: umac.c,v 1.7.2.1 2013/11/08 01:33:56 djm Exp $ */
+/*	$NetBSD: umac.c,v 1.4.4.1 2015/04/30 06:07:31 riz Exp $	*/
+/* $OpenBSD: umac.c,v 1.11 2014/07/22 07:13:42 guenther Exp $ */
 /* -----------------------------------------------------------------------
  * 
  * umac.c -- C Implementation UMAC Message Authentication
@@ -53,7 +53,9 @@
 /* --- User Switches ---------------------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
+#ifndef UMAC_OUTPUT_LEN
 #define UMAC_OUTPUT_LEN     8  /* Alowable: 4, 8, 12, 16                  */
+#endif
 /* #define FORCE_C_ONLY        1  ANSI C and 64-bit integers req'd        */
 /* #define AES_IMPLEMENTAION   1  1 = OpenSSL, 2 = Barreto, 3 = Gladman   */
 /* #define SSE2                0  Is SSE2 is available?                   */
@@ -65,15 +67,18 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.4 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: umac.c,v 1.4.4.1 2015/04/30 06:07:31 riz Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "umac.h"
-#include <string.h>
-#include <stdlib.h>
-#include <stddef.h>
+#include "misc.h"
 
 /* ---------------------------------------------------------------------- */
 /* --- Primitive Data Types ---                                           */
@@ -122,55 +127,24 @@ typedef unsigned int	UWORD;  /* Register */
 
 #define MUL64(a,b) ((UINT64)((UINT64)(UINT32)(a) * (UINT64)(UINT32)(b)))
 
-#if defined(__NetBSD__)
-#include <sys/endian.h>
-#define LOAD_UINT32_LITTLE(ptr)	le32toh(*ptr)
-#define STORE_UINT32_BIG(ptr,x)	(*(UINT32 *)(ptr) = htobe32(x))
-#define LOAD_UINT32_REVERSED(p)		(bswap32(*(UINT32 *)(p)))
-#define STORE_UINT32_REVERSED(p,v) 	(*(UINT32 *)(p) = bswap32(v))
-#else /* !NetBSD */
-
- /* ---------------------------------------------------------------------- */
- /* --- Endian Conversion --- Forcing assembly on some platforms           */
-
 /* ---------------------------------------------------------------------- */
 /* --- Endian Conversion --- Forcing assembly on some platforms           */
 /* ---------------------------------------------------------------------- */
 
-#if !defined(__OpenBSD__)
-static UINT32 LOAD_UINT32_REVERSED(const void *ptr)
-{
-    UINT32 temp = *(const UINT32 *)ptr;
-    temp = (temp >> 24) | ((temp & 0x00FF0000) >> 8 )
-         | ((temp & 0x0000FF00) << 8 ) | (temp << 24);
-    return (UINT32)temp;
-}
-
-static void STORE_UINT32_REVERSED(void *ptr, UINT32 x)
-{
-    UINT32 i = (UINT32)x;
-    *(UINT32 *)ptr = (i >> 24) | ((i & 0x00FF0000) >> 8 )
-                   | ((i & 0x0000FF00) << 8 ) | (i << 24);
-}
-#endif
-
-#else
 /* The following definitions use the above reversal-primitives to do the right
  * thing on endian specific load and stores.
  */
 
-#define LOAD_UINT32_REVERSED(p)		(swap32(*(const UINT32 *)(p)))
-#define STORE_UINT32_REVERSED(p,v) 	(*(UINT32 *)(p) = swap32(v))
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define LOAD_UINT32_REVERSED(p)		get_u32(p)
+#define STORE_UINT32_REVERSED(p,v) 	put_u32(p,v)
+#else
+#define LOAD_UINT32_REVERSED(p)		get_u32_le(p)
+#define STORE_UINT32_REVERSED(p,v) 	put_u32_le(p,v)
 #endif
 
-#if (__LITTLE_ENDIAN__)
-#define LOAD_UINT32_LITTLE(ptr)     (*(const UINT32 *)(ptr))
-#define STORE_UINT32_BIG(ptr,x)     STORE_UINT32_REVERSED(ptr,x)
-#else
-#define LOAD_UINT32_LITTLE(ptr)     LOAD_UINT32_REVERSED(ptr)
-#define STORE_UINT32_BIG(ptr,x)     (*(UINT32 *)(ptr) = (UINT32)(x))
-#endif
-#endif /*!NetBSD*/
+#define LOAD_UINT32_LITTLE(p)           (get_u32_le(p))
+#define STORE_UINT32_BIG(p,v)           put_u32(p, v)
 
 
 
@@ -183,13 +157,23 @@ static void STORE_UINT32_REVERSED(void *ptr, UINT32 x)
 /* UMAC uses AES with 16 byte block and key lengths */
 #define AES_BLOCK_LEN  16
 
-/* OpenSSL's AES */
+#ifdef WITH_OPENSSL
 #include <openssl/aes.h>
 typedef AES_KEY aes_int_key[1];
 #define aes_encryption(in,out,int_key)                  \
   AES_encrypt((u_char *)(in),(u_char *)(out),(AES_KEY *)int_key)
 #define aes_key_setup(key,int_key)                      \
   AES_set_encrypt_key((const u_char *)(key),UMAC_KEY_LEN*8,int_key)
+#else
+#include "rijndael.h"
+#define AES_ROUNDS ((UMAC_KEY_LEN / 4) + 6)
+typedef UINT8 aes_int_key[AES_ROUNDS+1][4][4];	/* AES internal */
+#define aes_encryption(in,out,int_key) \
+  rijndaelEncrypt((u32 *)(int_key), AES_ROUNDS, (u8 *)(in), (u8 *)(out))
+#define aes_key_setup(key,int_key) \
+  rijndaelKeySetupEnc((u32 *)(int_key), (const unsigned char *)(key), \
+  UMAC_KEY_LEN*8)
+#endif
 
 /* The user-supplied UMAC key is stretched using AES in a counter
  * mode to supply all random bits needed by UMAC. The kdf function takes
@@ -245,6 +229,26 @@ static void pdf_init(pdf_ctx *pc, aes_int_key prf_key)
     aes_encryption(pc->nonce, pc->cache, pc->prf_key);
 }
 
+static inline void
+xor64(uint8_t *dp, int di, uint8_t *sp, int si)
+{
+    uint64_t dst, src;
+    memcpy(&dst, dp + sizeof(dst) * di, sizeof(dst));
+    memcpy(&src, sp + sizeof(src) * si, sizeof(src));
+    dst ^= src;
+    memcpy(dp + sizeof(dst) * di, &dst, sizeof(dst));
+}
+
+__unused static inline void
+xor32(uint8_t *dp, int di, uint8_t *sp, int si)
+{
+    uint32_t dst, src;
+    memcpy(&dst, dp + sizeof(dst) * di, sizeof(dst));
+    memcpy(&src, sp + sizeof(src) * si, sizeof(src));
+    dst ^= src;
+    memcpy(dp + sizeof(dst) * di, &dst, sizeof(dst));
+}
+
 static void pdf_gen_xor(pdf_ctx *pc, const UINT8 nonce[8], UINT8 buf[8])
 {
     /* 'ndx' indicates that we'll be using the 0th or 1st eight bytes
@@ -266,27 +270,27 @@ static void pdf_gen_xor(pdf_ctx *pc, const UINT8 nonce[8], UINT8 buf[8])
 #if LOW_BIT_MASK != 0
     int ndx = nonce[7] & LOW_BIT_MASK;
 #endif
-    *(UINT32 *)t.tmp_nonce_lo = ((const UINT32 *)nonce)[1];
+    memcpy(t.tmp_nonce_lo, nonce + 4, sizeof(t.tmp_nonce_lo));
     t.tmp_nonce_lo[3] &= ~LOW_BIT_MASK; /* zero last bit */
     
-    if ( (((UINT32 *)t.tmp_nonce_lo)[0] != ((UINT32 *)pc->nonce)[1]) ||
-         (((const UINT32 *)nonce)[0] != ((UINT32 *)pc->nonce)[0]) )
+    if (memcmp(t.tmp_nonce_lo, pc->nonce + 1, sizeof(t.tmp_nonce_lo)) != 0 ||
+         memcmp(nonce, pc->nonce, sizeof(t.tmp_nonce_lo)) != 0)
     {
-        ((UINT32 *)pc->nonce)[0] = ((const UINT32 *)nonce)[0];
-        ((UINT32 *)pc->nonce)[1] = ((UINT32 *)t.tmp_nonce_lo)[0];
+	memcpy(pc->nonce, nonce, sizeof(t.tmp_nonce_lo));
+	memcpy(pc->nonce + 4, t.tmp_nonce_lo, sizeof(t.tmp_nonce_lo));
         aes_encryption(pc->nonce, pc->cache, pc->prf_key);
     }
     
 #if (UMAC_OUTPUT_LEN == 4)
-    *((UINT32 *)buf) ^= ((UINT32 *)pc->cache)[ndx];
+    xor32(buf, 0, pc->cache, ndx);
 #elif (UMAC_OUTPUT_LEN == 8)
-    *((UINT64 *)buf) ^= ((UINT64 *)pc->cache)[ndx];
+    xor64(buf, 0, pc->cache, ndx);
 #elif (UMAC_OUTPUT_LEN == 12)
-    ((UINT64 *)buf)[0] ^= ((UINT64 *)pc->cache)[0];
-    ((UINT32 *)buf)[2] ^= ((UINT32 *)pc->cache)[2];
+    xor64(buf, 0, pc->cache, 0);
+    xor32(buf, 2, pc->cache, 2);
 #elif (UMAC_OUTPUT_LEN == 16)
-    ((UINT64 *)buf)[0] ^= ((UINT64 *)pc->cache)[0];
-    ((UINT64 *)buf)[1] ^= ((UINT64 *)pc->cache)[1];
+    xor64(buf, 0, pc->cache, 0);
+    xor64(buf, 1, pc->cache, 1);
 #endif
 }
 
@@ -562,7 +566,6 @@ static void nh_transform(nh_ctx *hc, const UINT8 *buf, UINT32 nbytes)
 /* ---------------------------------------------------------------------- */
 
 #if (__LITTLE_ENDIAN__)
-#define endian_convert_if_le(x,y,z) endian_convert((x),(y),(z))
 static void endian_convert(void *buf, UWORD bpw, UINT32 num_bytes)
 /* We endian convert the keys on little-endian computers to               */
 /* compensate for the lack of big-endian memory reads during hashing.     */
@@ -585,7 +588,6 @@ static void endian_convert(void *buf, UWORD bpw, UINT32 num_bytes)
         } while (--iters);
     }
 }
-#if (__LITTLE_ENDIAN__)
 #define endian_convert_if_le(x,y,z) endian_convert((x),(y),(z))
 #else
 #define endian_convert_if_le(x,y,z) do{}while(0)  /* Do nothing */

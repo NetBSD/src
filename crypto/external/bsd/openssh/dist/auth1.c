@@ -1,5 +1,5 @@
-/*	$NetBSD: auth1.c,v 1.8 2013/11/08 19:18:24 christos Exp $	*/
-/* $OpenBSD: auth1.c,v 1.79 2013/05/19 02:42:42 djm Exp $ */
+/*	$NetBSD: auth1.c,v 1.8.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: auth1.c,v 1.82 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth1.c,v 1.8 2013/11/08 19:18:24 christos Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.8.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -27,6 +27,7 @@ __RCSID("$NetBSD: auth1.c,v 1.8 2013/11/08 19:18:24 christos Exp $");
 #include "packet.h"
 #include "buffer.h"
 #include "log.h"
+#include "misc.h"
 #include "servconf.h"
 #include "compat.h"
 #include "key.h"
@@ -40,6 +41,7 @@ __RCSID("$NetBSD: auth1.c,v 1.8 2013/11/08 19:18:24 christos Exp $");
 #endif
 #include "monitor_wrap.h"
 #include "buffer.h"
+#include "pfilter.h"
 
 /* import */
 extern ServerOptions options;
@@ -137,7 +139,7 @@ auth1_process_password(Authctxt *authctxt)
 	/* Try authentication with the password. */
 	authenticated = PRIVSEP(auth_password(authctxt, password));
 
-	memset(password, 0, dlen);
+	explicit_bzero(password, dlen);
 	free(password);
 
 	return (authenticated);
@@ -287,7 +289,7 @@ auth1_process_tis_response(Authctxt *authctxt)
 	response = packet_get_string(&dlen);
 	packet_check_eom();
 	authenticated = verify_response(authctxt, response);
-	memset(response, 'r', dlen);
+	explicit_bzero(response, dlen);
 	free(response);
 
 	return (authenticated);
@@ -378,7 +380,7 @@ do_authloop(Authctxt *authctxt)
 			    "configuration", authctxt->user);
 			len = buffer_len(&loginmsg);
 			buffer_append(&loginmsg, "\0", 1);
-			msg = buffer_ptr(&loginmsg);
+			msg = (char *)buffer_ptr(&loginmsg);
 			/* strip trailing newlines */
 			if (len > 0)
 				while (len > 0 && msg[--len] == '\n')
@@ -397,7 +399,7 @@ do_authloop(Authctxt *authctxt)
 			return;
 
 		if (++authctxt->failures >= options.max_authtries)
-			packet_disconnect(AUTH_FAIL_MSG, authctxt->user);
+			auth_maxtries_exceeded(authctxt);
 
 		packet_start(SSH_SMSG_FAILURE);
 		packet_send();
@@ -444,6 +446,7 @@ do_authentication(Authctxt *authctxt)
 	else {
 		debug("do_authentication: invalid user %s", user);
 		authctxt->pw = fakepw();
+		pfilter_notify(1);
 	}
 
 	/* Configuration may have changed as a result of Match */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.11 2013/11/08 19:18:25 christos Exp $
+.\"	$NetBSD: sshd.8,v 1.11.4.1 2015/04/30 06:07:31 riz Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.270 2013/06/27 14:05:37 jmc Exp $
-.Dd June 27 2013
+.\" $OpenBSD: sshd.8,v 1.278 2014/11/15 14:41:03 bentley Exp $
+.Dd November 15 2014
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -62,10 +62,7 @@
 .Nm
 (OpenSSH Daemon) is the daemon program for
 .Xr ssh 1 .
-Together these programs replace
-.Xr rlogin 1
-and
-.Xr rsh 1 ,
+Together these programs replace rlogin and rsh,
 and provide secure encrypted communications between two untrusted hosts
 over an insecure network.
 .Pp
@@ -177,7 +174,8 @@ The default is
 .Pa /etc/ssh/ssh_host_key
 for protocol version 1, and
 .Pa /etc/ssh/ssh_host_dsa_key ,
-.Pa /etc/ssh/ssh_host_ecdsa_key
+.Pa /etc/ssh/ssh_host_ecdsa_key .
+.Pa /etc/ssh/ssh_host_ed25519_key
 and
 .Pa /etc/ssh/ssh_host_rsa_key
 for protocol version 2.
@@ -282,7 +280,7 @@ though this can be changed via the
 .Cm Protocol
 option in
 .Xr sshd_config 5 .
-Protocol 2 supports DSA, ECDSA and RSA keys;
+Protocol 2 supports DSA, ECDSA, Ed25519 and RSA keys;
 protocol 1 only supports RSA keys.
 For both protocols,
 each host has a host-specific key,
@@ -385,7 +383,10 @@ Changes to user's home directory.
 .It
 If
 .Pa ~/.ssh/rc
-exists, runs it; else if
+exists and the
+.Xr sshd_config 5
+.Cm PermitUserRC
+option is set, runs it; else if
 .Pa /etc/ssh/sshrc
 exists, runs
 it; otherwise runs xauth.
@@ -469,6 +470,7 @@ For protocol version 2 the keytype is
 .Dq ecdsa-sha2-nistp256 ,
 .Dq ecdsa-sha2-nistp384 ,
 .Dq ecdsa-sha2-nistp521 ,
+.Dq ssh-ed25519 ,
 .Dq ssh-dss
 or
 .Dq ssh-rsa .
@@ -481,6 +483,7 @@ You don't want to type them in; instead, copy the
 .Pa identity.pub ,
 .Pa id_dsa.pub ,
 .Pa id_ecdsa.pub ,
+.Pa id_ed25519.pub ,
 or the
 .Pa id_rsa.pub
 file and edit it.
@@ -576,10 +579,10 @@ Disables execution of
 Forbids X11 forwarding when this key is used for authentication.
 Any X11 forward requests by the client will return an error.
 .It Cm permitopen="host:port"
-Limit local
-.Li ``ssh -L''
-port forwarding such that it may only connect to the specified host and
-port.
+Limit local port forwarding with
+.Xr ssh 1
+.Fl L
+such that it may only connect to the specified host and port.
 IPv6 addresses can be specified by enclosing the address in square brackets.
 Multiple
 .Cm permitopen
@@ -780,8 +783,8 @@ secret, but the recommended permissions are read/write/execute for the user,
 and not accessible by others.
 .Pp
 .It Pa ~/.ssh/authorized_keys
-Lists the public keys (DSA/ECDSA/RSA) that can be used for logging in
-as this user.
+Lists the public keys (DSA, ECDSA, Ed25519, RSA)
+that can be used for logging in as this user.
 The format of this file is described above.
 The content of the file is not highly sensitive, but the recommended
 permissions are read/write for the user, and not accessible by others.
@@ -823,12 +826,6 @@ the user's home directory becomes accessible.
 This file should be writable only by the user, and need not be
 readable by anyone else.
 .Pp
-.It Pa /etc/hosts.allow
-.It Pa /etc/hosts.deny
-Access controls that should be enforced by tcp-wrappers are defined here.
-Further details are described in
-.Xr hosts_access 5 .
-.Pp
 .It Pa /etc/hosts.equiv
 This file is for host-based authentication (see
 .Xr ssh 1 ) .
@@ -861,6 +858,7 @@ rlogin/rsh.
 .It Pa /etc/ssh/ssh_host_key
 .It Pa /etc/ssh/ssh_host_dsa_key
 .It Pa /etc/ssh/ssh_host_ecdsa_key
+.It Pa /etc/ssh/ssh_host_ed25519_key
 .It Pa /etc/ssh/ssh_host_rsa_key
 These files contain the private parts of the host keys.
 These files should only be owned by root, readable only by root, and not
@@ -872,6 +870,7 @@ does not start if these files are group/world-accessible.
 .It Pa /etc/ssh/ssh_host_key.pub
 .It Pa /etc/ssh/ssh_host_dsa_key.pub
 .It Pa /etc/ssh/ssh_host_ecdsa_key.pub
+.It Pa /etc/ssh/ssh_host_ed25519_key.pub
 .It Pa /etc/ssh/ssh_host_rsa_key.pub
 These files contain the public parts of the host keys.
 These files should be world-readable but writable only by
@@ -930,7 +929,6 @@ The content of this file is not sensitive; it can be world-readable.
 .Xr ssh-keygen 1 ,
 .Xr ssh-keyscan 1 ,
 .Xr chroot 2 ,
-.Xr hosts_access 5 ,
 .Xr login.conf 5 ,
 .Xr moduli 5 ,
 .Xr sshd_config 5 ,
@@ -947,14 +945,3 @@ Markus Friedl contributed the support for SSH
 protocol versions 1.5 and 2.0.
 Niels Provos and Markus Friedl contributed support
 for privilege separation.
-.Sh CAVEATS
-System security is not improved unless
-.Nm rshd ,
-.Nm rlogind ,
-and
-.Nm rexecd
-are disabled (thus completely disabling
-.Xr rlogin
-and
-.Xr rsh
-into the machine).

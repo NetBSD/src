@@ -1,5 +1,5 @@
-/*	$NetBSD: readpass.c,v 1.4 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: readpass.c,v 1.49 2013/05/17 00:13:14 djm Exp $ */
+/*	$NetBSD: readpass.c,v 1.4.4.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: readpass.c,v 1.50 2014/02/02 03:44:31 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readpass.c,v 1.4 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: readpass.c,v 1.4.4.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -99,13 +99,13 @@ ssh_askpass(const char *askpass, const char *msg)
 			break;
 	signal(SIGCHLD, osigchld);
 	if (ret == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-		memset(buf, 0, sizeof(buf));
+		explicit_bzero(buf, sizeof(buf));
 		return NULL;
 	}
 
 	buf[strcspn(buf, "\r\n")] = '\0';
 	pass = xstrdup(buf);
-	memset(buf, 0, sizeof(buf));
+	explicit_bzero(buf, sizeof(buf));
 	return pass;
 }
 
@@ -163,7 +163,7 @@ read_passphrase(const char *prompt, int flags)
 	}
 
 	ret = xstrdup(buf);
-	memset(buf, 'x', sizeof buf);
+	explicit_bzero(buf, sizeof(buf));
 	return ret;
 }
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rh-rsa.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: auth-rh-rsa.c,v 1.43 2010/03/04 10:36:03 djm Exp $ */
+/*	$NetBSD: auth-rh-rsa.c,v 1.4.22.1 2015/04/30 06:07:30 riz Exp $	*/
+/* $OpenBSD: auth-rh-rsa.c,v 1.44 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rh-rsa.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: auth-rh-rsa.c,v 1.4.22.1 2015/04/30 06:07:30 riz Exp $");
 #include <sys/types.h>
 
 #include <pwd.h>
@@ -25,6 +25,7 @@ __RCSID("$NetBSD: auth-rh-rsa.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 #include "uidswap.h"
 #include "log.h"
 #include "buffer.h"
+#include "misc.h"
 #include "servconf.h"
 #include "key.h"
 #include "hostfile.h"

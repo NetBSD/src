@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.200 2013/07/31 19:50:47 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.200.4.1 2015/04/30 06:07:34 riz Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.200 2013/07/31 19:50:47 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.200.4.1 2015/04/30 06:07:34 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,6 +164,8 @@ __RCSID("$NetBSD: ftpd.c,v 1.200 2013/07/31 19:50:47 christos Exp $");
 #ifdef USE_PAM
 #include <security/pam_appl.h>
 #endif
+
+#include "pfilter.h"
 
 #define	GLOBAL
 #include "extern.h"
@@ -470,6 +472,8 @@ main(int argc, char *argv[])
 	}
 	if (EMPTYSTR(confdir))
 		confdir = _DEFAULT_CONFDIR;
+
+	pfilter_open();
 
 	if (dowtmp) {
 #ifdef SUPPORT_UTMPX
@@ -1401,6 +1405,7 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 		if (rval) {
 			reply(530, "%s", rval == 2 ? "Password expired." :
 			    "Login incorrect.");
+			pfilter_notify(1, rval == 2 ? "exppass" : "badpass");
 			if (logging) {
 				syslog(LOG_NOTICE,
 				    "FTP LOGIN FAILED FROM %s", remoteloghost);
@@ -1444,6 +1449,7 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 				*remote_ip = 0;
 		remote_ip[sizeof(remote_ip) - 1] = 0;
 		if (!auth_hostok(lc, remotehost, remote_ip)) {
+			pfilter_notify(1, "bannedhost");
 			syslog(LOG_INFO|LOG_AUTH,
 			    "FTP LOGIN FAILED (HOST) as %s: permission denied.",
 			    pw->pw_name);
