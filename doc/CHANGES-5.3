@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.113 2015/04/26 09:04:32 martin Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.114 2015/04/30 20:04:33 snj Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3845,4 +3845,50 @@ sys/dev/pci/if_wm.c:				patch
 	Fix a bug (in the backport for #1850) that passed the wrong
 	pointer as the first argument of bpf_mtap() on 82575 and newer chips.
 	[msaitoh, #1961]
+
+sys/dev/pci/if_wm.c				1.259-1.266, 1.269, 1.271, 1.273-1.274, 1.277-1.278, 1.282, 1.284-1.285, 1.287, 1.290, 1.294, 1.297-1.298, 1.300-1.301, 1.304-1.307, 1.310, 1.312-1.314, 1.316 via patch
+sys/dev/pci/if_wmreg.c				1.54-1.57, 1.59-1.60, 1.62, 1.64-1.66 via patch
+sys/dev/pci/if_wmvar.c				1.17, 1.20-1.21 via patch
+sys/dev/pci/pcidevs				1.1172, 1.1195, 1.1201 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Fix "MDIC write error" bug for 82574 and 82583. For those chips, the
+	  semaphore must be released after chip reset. Found and tested by
+	  Mark Davies.
+	- Fix BMC related bugs.
+	- Fix yet another NVM bank detect problem in wm(4). Use bank 0 if the detect
+	  function failed. It's the same as FreeBSD. Observed and tested with
+	  Asus P8P67 Deluxe motherboard and tested by jnemeth.
+	- Add support for I354 DH89xxCC and some new I218 devices.
+	- Fix definition of CTRL_GIO_M_DIS bit.
+	- Insert completion barrier between register write and delay().
+	- Bump max TX DMA size to avoid pathological condition with TSO. From dyoung.
+	- Fix semaphore related bugs.
+	- Call wm_set_pcie_completion_timeout() on I350, I354, I210 and I211, too.
+	  Same as FreeBSD and OpenBSD.
+	- Drop PHPM_GO_LINK_D bit in WMREG_PHPM on some chips. From FreeBSD.
+	-  Fix fiber link problem (PR#44776 and PR#30880).
+	- WM_T_82545 is not 1000base-SX but 1000base-LX. Same as FreeBSD.
+	- Set the WM_F_ATTACHED flag if wm_attach() finished succesfully and check
+	  the flag in wm_detach(). It will avoid to panic in wm_detach().
+	  Fixes PR#49102.
+	- It's not required to print "failed to detect NVM bank" with
+	  aprint_error_dev(). Use DPRINTF(). Same as {Free,Open}BSD.
+	- Fix a bug that the offset of alt MAC address is wrongly calculated to 0
+	  when alt MAC address function is really used. This bug does not appear
+	  as real bug if the same MAC address is written in the default location
+	  and alt MAC address's location.
+	- Initialize some hardware bits for 8257[1234], 82583, 80003, ICH* and PCH*.
+	  Some of them are workaround code. From other *BSDs, Linux and documents.
+	- Fix a bug that wm_sgmii_writereg() function doesn't pass the "val" argument
+	  to the I2CCMD register. Reported by Bernard Merindol in PR#49789.
+	- Delete 82580ER related code. It was from FreeBSD and was removed
+	  in r203049.
+	- Remove extra debug message.
+	- Remove unused variable.
+	- Remove a duplicated error message.
+	- Cleanup comments.
+	- Fix debug message.
+	[msaitoh, ticket #1962]
 
