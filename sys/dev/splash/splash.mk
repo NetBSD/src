@@ -1,7 +1,7 @@
 # Makefile for embedding splash image into kernel.
 .include <bsd.endian.mk>
 
-MD_OBJS+=	splash_image.o
+MI_OBJS+=	splash_image.o
 CFLAGS+=	-DSPLASHSCREEN_IMAGE
 
 .if (${OBJECT_FMTS:Melf64})
