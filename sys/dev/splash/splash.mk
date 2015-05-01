@@ -1,3 +1,5 @@
+# $NetBSD: splash.mk,v 1.3 2015/05/01 02:35:16 nat Exp $
+
 # Makefile for embedding splash image into kernel.
 .include <bsd.endian.mk>
 
