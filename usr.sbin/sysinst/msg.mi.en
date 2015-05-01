@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.8 2015/04/30 06:37:26 snj Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.9 2015/05/01 13:48:05 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -712,7 +712,7 @@ message set_base
 {Base}
 
 message set_system
-{System configuration files (/etc)}
+{Configuration files (/etc)}
 
 message set_compiler
 {Compiler tools}
