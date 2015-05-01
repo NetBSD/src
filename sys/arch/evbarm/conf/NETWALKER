@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.33 2015/04/10 10:58:07 hkenken Exp $
+#	$NetBSD: NETWALKER,v 1.34 2015/05/01 07:22:42 hkenken Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -16,7 +16,7 @@ options 	IMX51
 options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x73fbc000
 options 	CONSPEED=115200	# Console speed
 
-options         DIAGNOSTIC      # internal consistency checks
+# Development and Debugging options
 #options        DEBUG
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
