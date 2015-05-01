@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.1 2015/04/29 08:32:00 hikaru Exp $
+#	$NetBSD: ERLITE,v 1.2 2015/05/01 07:23:47 hikaru Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.1 $"
+#ident 		"ERLITE-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -131,11 +131,15 @@ octeon_rnm*	at iobus?
 octeon_gmx*	at iobus?
 cnmac*		at octeon_gmx?
 
-#octeon_usbn*	at iobus?
-#usb*		at octeon_usbn?
+dwctwo*		at iobus?
+usb*		at dwctwo?
 
-#uhub*		at usb?
-#ugen*		at uhub? port ?
+uhub*		at usb?
+
+# USB Mass Storage
+umass*		at uhub? port ? configuration ? interface ?
+scsibus*	at umass? channel ?
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
 
 atphy*		at mii? phy ?		# Attansic/Atheros PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
