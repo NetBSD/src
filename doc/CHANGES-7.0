@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.275 2015/04/30 19:43:53 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.276 2015/05/01 08:06:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22755,4 +22755,10 @@ external/bsd/blacklist/bin/blacklistd.conf.5	1.3
 
 	blacklistd and friends will actually be in NetBSD 7.
 	[riz, ticket #726]
+
+usr.bin/calendar/calendars/calendar.usholiday	1.5
+
+	Update for 2015 dates.
+	[snj, ticket #727]
+
 
