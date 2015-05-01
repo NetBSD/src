@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2014/12/27 18:03:41 martin Exp $
+# $NetBSD: Makefile,v 1.25 2015/05/01 14:17:56 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ TESTS_C+=	t_posix_memalign
 TESTS_C+=	t_random
 TESTS_C+=	t_strtod
 TESTS_C+=	t_strtol
+TESTS_C+=	t_strtoi
 TESTS_C+=	t_system
 
 TESTS_SH+=	t_atexit
