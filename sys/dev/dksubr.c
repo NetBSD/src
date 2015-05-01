@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.58 2014/12/31 19:52:05 christos Exp $ */
+/* $NetBSD: dksubr.c,v 1.59 2015/05/01 12:30:28 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.58 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.59 2015/05/01 12:30:28 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ dk_size(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 		    (lp->d_secsize / DEV_BSIZE);
 
 	if (!is_open && di->di_close(dev, 0, S_IFBLK, curlwp))
-		return 1;
+		return -1;
 
 	return size;
 }
