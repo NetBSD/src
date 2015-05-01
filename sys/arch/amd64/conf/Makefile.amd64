@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.48 2015/04/30 15:22:32 nat Exp $
+#	$NetBSD: Makefile.amd64,v 1.49 2015/05/01 02:00:41 nat Exp $
 
 # Makefile for NetBSD
 #
@@ -72,10 +72,6 @@ copy.o: ${AMD64}/amd64/copy.S assym.h
 
 spl.o: ${AMD64}/amd64/spl.S assym.h
 	${NORMAL_S}
-
-.if defined(SPLASHSCREEN_IMAGE)
-.include "$S/dev/splash/splash.mk"
-.endif
 
 ##
 ## (5) link settings
