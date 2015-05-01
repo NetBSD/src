@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.47 2015/04/30 15:22:32 nat Exp $
+#	$NetBSD: Makefile.arm,v 1.48 2015/05/01 02:00:41 nat Exp $
 
 # Makefile for NetBSD
 #
@@ -73,10 +73,6 @@ ${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
 
 locore.o: ${ARM}/arm32/locore.S assym.h
 	${NORMAL_S}
-
-.if defined(SPLASHSCREEN_IMAGE)
-.include "$S/dev/splash/splash.mk"
-.endif
 
 ##
 ## (5) link settings
