@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.112 2015/04/17 10:00:02 pgoyette Exp $
+# $NetBSD: mi,v 1.113 2015/05/01 14:17:56 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1947,6 +1947,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_posix_memalign.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_random.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtod.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtoi.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtol.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtox.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_system.debug		tests-lib-debug		debug,atf
