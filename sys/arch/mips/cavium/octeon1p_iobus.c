@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon1p_iobus.c,v 1.1 2015/04/29 08:32:00 hikaru Exp $	*/
+/*	$NetBSD: octeon1p_iobus.c,v 1.2 2015/05/01 07:23:47 hikaru Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon1p_iobus.c,v 1.1 2015/04/29 08:32:00 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon1p_iobus.c,v 1.2 2015/05/01 07:23:47 hikaru Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ static const struct iobus_unit	iobus_units_octeon_usbn[] = {
 };
 
 static const struct iobus_dev iobus_dev_octeon_usbn = {
-	.name = "octeon_usbn",
+	.name = "dwctwo",
 	.nunits = USBN_NUNITS,
 	.units = iobus_units_octeon_usbn
 };

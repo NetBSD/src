@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.1 2015/04/29 08:32:00 hikaru Exp $
+#	$NetBSD: files.octeon,v 1.2 2015/05/01 07:23:47 hikaru Exp $
 
 file	arch/mips/mips/locore_octeon.S
 file	arch/mips/mips/bus_dma.c
@@ -65,10 +65,8 @@ device	cnmac: ether, ifnet, arp, mii
 attach	cnmac at octeon_gmx
 file	arch/mips/cavium/dev/if_cnmac.c		cnmac
 
-device	octeon_usbn: usbus, usbroothub, usb_dma
-attach	octeon_usbn at iobus
-file	arch/mips/cavium/dev/octeon_usbn.c	octeon_usbn
-file	arch/mips/cavium/dev/octeon_usbc.c	octeon_usbn
+attach	dwctwo at iobus with octeon_dwctwo
+file	arch/mips/cavium/dev/octeon_dwctwo.c	octeon_dwctwo
 
 # Boot-Bus
 
