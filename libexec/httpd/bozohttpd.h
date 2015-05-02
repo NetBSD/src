@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.h,v 1.34 2014/11/21 08:58:28 shm Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.35 2015/05/02 11:35:48 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2015 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,6 @@ typedef struct lua_state_map {
 
 typedef struct bozo_content_map_t {
 	const char	*name;		/* postfix of file */
-	size_t	 	 namelen;	/* length of postfix */
 	const char	*type;		/* matching content-type */
 	const char	*encoding;	/* matching content-encoding */
 	const char	*encoding11;	/* matching content-encoding (HTTP/1.1) */
