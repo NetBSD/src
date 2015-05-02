@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.48 2015/04/26 21:40:49 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.49 2015/05/02 17:18:04 rtr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.48 2015/04/26 21:40:49 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.49 2015/05/02 17:18:04 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -122,11 +122,11 @@ natm_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-natm_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+natm_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	int error = 0, s2;
 	struct natmpcb *npcb;
-	struct sockaddr_natm *snatm;
+	struct sockaddr_natm *snatm = (struct sockaddr_natm *)nam;
 	struct atm_pseudoioctl api;
 	struct atm_pseudohdr *aph;
 	struct ifnet *ifp;
@@ -138,9 +138,6 @@ natm_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	 * validate nam and npcb
 	 */
 
-	if (nam->m_len != sizeof(*snatm))
-		return EINVAL;
-	snatm = mtod(nam, struct sockaddr_natm *);
 	if (snatm->snatm_len != sizeof(*snatm) ||
 	    (npcb->npcb_flags & NPCB_FREE) == 0)
 		return EINVAL;
@@ -342,7 +339,7 @@ natm_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-natm_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+natm_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control)
 {
 	struct natmpcb *npcb = (struct natmpcb *) so->so_pcb;
