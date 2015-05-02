@@ -54,9 +54,6 @@
 /* Debugging Router Solicitations is a lot of spam, so disable it */
 //#define DEBUG_RS
 
-#define RTR_SOLICITATION_INTERVAL       4 /* seconds */
-#define MAX_RTR_SOLICITATIONS           3 /* times */
-
 #ifndef ND_OPT_RDNSS
 #define ND_OPT_RDNSS			25
 struct nd_opt_rdnss {           /* RDNSS option RFC 6106 */
@@ -295,7 +292,7 @@ ipv6nd_sendrsprobe(void *arg)
 	cm->cmsg_type = IPV6_PKTINFO;
 	cm->cmsg_len = CMSG_LEN(sizeof(pi));
 	memset(&pi, 0, sizeof(pi));
-	pi.ipi6_ifindex = CAST_IPI6_IFINDEX(ifp->index);
+	pi.ipi6_ifindex = ifp->index;
 	memcpy(CMSG_DATA(cm), &pi, sizeof(pi));
 
 	logger(ifp->ctx, LOG_DEBUG,
@@ -311,9 +308,48 @@ ipv6nd_sendrsprobe(void *arg)
 	if (state->rsprobes++ < MAX_RTR_SOLICITATIONS)
 		eloop_timeout_add_sec(ifp->ctx->eloop,
 		    RTR_SOLICITATION_INTERVAL, ipv6nd_sendrsprobe, ifp);
-	else
+	else {
 		logger(ifp->ctx, LOG_WARNING,
 		    "%s: no IPv6 Routers available", ifp->name);
+		ipv6nd_drop(ifp);
+		dhcp6_drop(ifp, "EXPIRE6");
+	}
+}
+
+void
+ipv6nd_expire(struct interface *ifp, uint32_t seconds)
+{
+	struct ra *rap;
+	struct timespec now;
+
+	get_monotonic(&now);
+
+	TAILQ_FOREACH(rap, ifp->ctx->ipv6->ra_routers, next) {
+		if (rap->iface == ifp) {
+			rap->received = now;
+			rap->expired = seconds ? 0 : 1;
+			if (seconds) {
+				struct ra_opt *rao;
+				struct ipv6_addr *ap;
+
+				rap->lifetime = seconds;
+				TAILQ_FOREACH(ap, &rap->addrs, next) {
+					if (ap->prefix_vltime) {
+						ap->prefix_vltime = seconds;
+						ap->prefix_pltime = seconds / 2;
+					}
+				}
+				ipv6_addaddrs(&rap->addrs);
+				TAILQ_FOREACH(rao, &rap->options, next) {
+					timespecclear(&rao->expire);
+				}
+			}
+		}
+	}
+	if (seconds)
+		ipv6nd_expirera(ifp);
+	else
+		ipv6_buildroutes(ifp->ctx);
 }
 
 static void
@@ -407,7 +443,6 @@ void ipv6nd_freedrop_ra(struct ra *rap, int drop)
 	ipv6nd_free_opts(rap);
 	free(rap->data);
 	free(rap);
-
 }
 
 ssize_t
@@ -673,6 +708,19 @@ try_script:
 	}
 }
 
+static int
+ipv6nd_ra_has_public_addr(const struct ra *rap)
+{
+	const struct ipv6_addr *ia;
+
+	TAILQ_FOREACH(ia, &rap->addrs, next) {
+		if (ia->flags & IPV6_AF_AUTOCONF &&
+		    ipv6_publicaddr(ia))
+			return 1;
+	}
+	return 0;
+}
+
 static void
 ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
     struct icmp6_hdr *icp, size_t len)
@@ -760,6 +808,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 		if (rap) {
 			free(rap->data);
 			rap->data_len = 0;
+			rap->no_public_warned = 0;
 		}
 		new_data = 1;
 	} else
@@ -833,7 +882,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 		}
 		if (olen > len) {
 			logger(ifp->ctx, LOG_ERR,
-			    "%s: Option length exceeds message", ifp->name);
+			    "%s: option length exceeds message", ifp->name);
 			break;
 		}
 
@@ -1058,8 +1107,8 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 						    STRING | ARRAY | DOMAIN,
 						    (const uint8_t *)tmp, l);
 					} else
-						logger(ifp->ctx, LOG_ERR, "%s: %m",
-						    __func__);
+						logger(ifp->ctx, LOG_ERR,
+						    "%s: %m", __func__);
 					free(tmp);
 				}
 			}
@@ -1120,6 +1169,19 @@ extra_opt:
 
 	if (new_rap)
 		add_router(ifp->ctx->ipv6, rap);
+	if (!ipv6nd_ra_has_public_addr(rap) &&
+	    !(rap->iface->options->options & DHCPCD_IPV6RA_ACCEPT_NOPUBLIC) &&
+	    (!(rap->flags & ND_RA_FLAG_MANAGED) ||
+	    !dhcp6_has_public_addr(rap->iface)))
+	{
+		logger(rap->iface->ctx,
+		    rap->no_public_warned ? LOG_DEBUG : LOG_WARNING,
+		    "%s: ignoring RA from %s"
+		    " (no public prefix, no managed address)",
+		    rap->iface->name, rap->sfrom);
+		rap->no_public_warned = 1;
+		return;
+	}
 	if (ifp->ctx->options & DHCPCD_TEST) {
 		script_runreason(ifp, "TEST");
 		goto handle_flag;
@@ -1165,6 +1227,34 @@ nodhcp6:
 
 	/* Expire should be called last as the rap object could be destroyed */
 	ipv6nd_expirera(ifp);
+}
+
+/* Run RA's we ignored becuase they had no public addresses
+ * This should only be called when DHCPv6 applies a public address */
+void
+ipv6nd_runignoredra(struct interface *ifp)
+{
+	struct ra *rap;
+
+	TAILQ_FOREACH(rap, ifp->ctx->ipv6->ra_routers, next) {
+		if (rap->iface == ifp &&
+		    !rap->expired &&
+		    rap->no_public_warned)
+		{
+			rap->no_public_warned = 0;
+			logger(rap->iface->ctx, LOG_INFO,
+			    "%s: applying ignored RA from %s",
+			    rap->iface->name, rap->sfrom);
+			if (ifp->ctx->options & DHCPCD_TEST) {
+				script_runreason(ifp, "TEST");
+				continue;
+			}
+			if (ipv6nd_scriptrun(rap))
+				return;
+			eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
+			eloop_timeout_delete(ifp->ctx->eloop, NULL, rap);
+		}
+	}
 }
 
 int
@@ -1333,13 +1423,14 @@ ipv6nd_expirera(void *arg)
 	struct ra *rap, *ran;
 	struct ra_opt *rao, *raon;
 	struct timespec now, lt, expire, next;
-	int expired, valid;
+	uint8_t expired, valid, validone;
 
 	ifp = arg;
 	get_monotonic(&now);
 	expired = 0;
 	timespecclear(&next);
 
+	validone = 0;
 	TAILQ_FOREACH_SAFE(rap, ifp->ctx->ipv6->ra_routers, next, ran) {
 		if (rap->iface != ifp)
 			continue;
@@ -1355,6 +1446,7 @@ ipv6nd_expirera(void *arg)
 					    "%s: %s: router expired",
 					    ifp->name, rap->sfrom);
 					rap->expired = expired = 1;
+					rap->lifetime = 0;
 				}
 			} else {
 				valid = 1;
@@ -1407,6 +1499,8 @@ ipv6nd_expirera(void *arg)
 		 * as well punt it. */
 		if (!valid && TAILQ_FIRST(&rap->addrs) == NULL)
 			ipv6nd_free_ra(rap);
+		else
+			validone = 1;
 	}
 
 	if (timespecisset(&next))
@@ -1416,13 +1510,17 @@ ipv6nd_expirera(void *arg)
 		ipv6_buildroutes(ifp->ctx);
 		script_runreason(ifp, "ROUTERADVERT");
 	}
+
+	/* No valid routers? Kill any DHCPv6. */
+	if (!validone)
+		dhcp6_drop(ifp, "EXPIRE6");
 }
 
 void
 ipv6nd_drop(struct interface *ifp)
 {
 	struct ra *rap;
-	int expired = 0;
+	uint8_t expired = 0;
 	TAILQ_HEAD(rahead, ra) rtrs;
 
 	if (ifp->ctx->ipv6 == NULL)
@@ -1457,7 +1555,7 @@ ipv6nd_handlena(struct dhcpcd_ctx *dctx, struct interface *ifp,
 	struct ipv6_ctx *ctx = dctx->ipv6;
 	struct nd_neighbor_advert *nd_na;
 	struct ra *rap;
-	int is_router, is_solicited;
+	uint32_t is_router, is_solicited;
 	char buf[INET6_ADDRSTRLEN];
 	const char *taddr;
 

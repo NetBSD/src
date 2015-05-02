@@ -160,6 +160,67 @@ if_hasconf(struct dhcpcd_ctx *ctx, const char *ifname)
 	return 0;
 }
 
+static void if_learnaddrs1(struct dhcpcd_ctx *ctx, struct if_head *ifs,
+    struct ifaddrs *ifaddrs)
+{
+	struct ifaddrs *ifa;
+	struct interface *ifp;
+#ifdef INET
+	const struct sockaddr_in *addr, *net, *dst;
+#endif
+#ifdef INET6
+	struct sockaddr_in6 *sin6, *net6;
+#endif
+	int ifa_flags;
+
+
+	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == NULL)
+			continue;
+		if ((ifp = if_find(ifs, ifa->ifa_name)) == NULL)
+			continue;
+		switch(ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			addr = (const struct sockaddr_in *)
+			    (void *)ifa->ifa_addr;
+			net = (const struct sockaddr_in *)
+			    (void *)ifa->ifa_netmask;
+			if (ifa->ifa_flags & IFF_POINTOPOINT)
+				dst = (const struct sockaddr_in *)
+				    (void *)ifa->ifa_dstaddr;
+			else
+				dst = NULL;
+			ifa_flags = if_addrflags(&addr->sin_addr, ifp);
+			ipv4_handleifa(ctx, RTM_NEWADDR, ifs, ifa->ifa_name,
+				&addr->sin_addr,
+				&net->sin_addr,
+				dst ? &dst->sin_addr : NULL, ifa_flags);
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			sin6 = (struct sockaddr_in6 *)(void *)ifa->ifa_addr;
+			net6 = (struct sockaddr_in6 *)(void *)ifa->ifa_netmask;
+#ifdef __KAME__
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				/* Remove the scope from the address */
+				sin6->sin6_addr.s6_addr[2] =
+				    sin6->sin6_addr.s6_addr[3] = '\0';
+#endif
+			ifa_flags = if_addrflags6(&sin6->sin6_addr, ifp);
+			if (ifa_flags != -1)
+				ipv6_handleifa(ctx, RTM_NEWADDR, ifs,
+				    ifa->ifa_name,
+				    &sin6->sin6_addr,
+				    ipv6_prefixlen(&net6->sin6_addr),
+				    ifa_flags);
+			break;
+#endif
+		}
+	}
+}
+
 struct if_head *
 if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 {
@@ -170,15 +231,6 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 	struct interface *ifp;
 #ifdef __linux__
 	char ifn[IF_NAMESIZE];
-#endif
-#ifdef INET
-	const struct sockaddr_in *addr;
-	const struct sockaddr_in *net;
-	const struct sockaddr_in *dst;
-#endif
-#ifdef INET6
-	struct sockaddr_in6 *sin6, *net6;
-	int ifa_flags;
 #endif
 #ifdef AF_LINK
 	const struct sockaddr_dl *sdl;
@@ -475,55 +527,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		TAILQ_INSERT_TAIL(ifs, ifp, next);
 	}
 
-	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr == NULL)
-			continue;
-		switch(ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			addr = (const struct sockaddr_in *)
-			    (void *)ifa->ifa_addr;
-			net = (const struct sockaddr_in *)
-			    (void *)ifa->ifa_netmask;
-			if (ifa->ifa_flags & IFF_POINTOPOINT)
-				dst = (const struct sockaddr_in *)
-				    (void *)ifa->ifa_dstaddr;
-			else
-				dst = NULL;
-			ipv4_handleifa(ctx, RTM_NEWADDR, ifs, ifa->ifa_name,
-				&addr->sin_addr,
-				&net->sin_addr,
-				dst ? &dst->sin_addr : NULL);
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			TAILQ_FOREACH(ifp, ifs, next) {
-				if (strcmp(ifp->name, ifa->ifa_name) == 0)
-					break;
-			}
-			if (ifp == NULL)
-				break; /* Should be impossible */
-			sin6 = (struct sockaddr_in6 *)(void *)ifa->ifa_addr;
-			net6 = (struct sockaddr_in6 *)(void *)ifa->ifa_netmask;
-#ifdef __KAME__
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
-				/* Remove the scope from the address */
-				sin6->sin6_addr.s6_addr[2] =
-				    sin6->sin6_addr.s6_addr[3] = '\0';
-#endif
-			ifa_flags = if_addrflags6(&sin6->sin6_addr, ifp);
-			if (ifa_flags != -1)
-				ipv6_handleifa(ctx, RTM_NEWADDR, ifs,
-				    ifa->ifa_name,
-				    &sin6->sin6_addr,
-				    ipv6_prefixlen(&net6->sin6_addr),
-				    ifa_flags);
-			break;
-#endif
-		}
-	}
-
+	if_learnaddrs1(ctx, ifs, ifaddrs);
 	freeifaddrs(ifaddrs);
 
 #ifdef SIOCGIFPRIORITY
@@ -537,12 +541,13 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 }
 
 static struct interface *
-if_findindexname(struct dhcpcd_ctx *ctx, unsigned int idx, const char *name)
+if_findindexname(struct if_head *ifaces, unsigned int idx, const char *name)
 {
-	struct interface *ifp;
 
-	if (ctx != NULL && ctx->ifaces != NULL) {
-		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+	if (ifaces != NULL) {
+		struct interface *ifp;
+
+		TAILQ_FOREACH(ifp, ifaces, next) {
 			if ((ifp->options == NULL ||
 			    !(ifp->options->options & DHCPCD_PFXDLGONLY)) &&
 			    ((name && strcmp(ifp->name, name) == 0) ||
@@ -553,21 +558,23 @@ if_findindexname(struct dhcpcd_ctx *ctx, unsigned int idx, const char *name)
 				return ifp;
 		}
 	}
+
+	errno = ESRCH;
 	return NULL;
 }
 
 struct interface *
-if_find(struct dhcpcd_ctx *ctx, const char *name)
+if_find(struct if_head *ifaces, const char *name)
 {
 
-	return if_findindexname(ctx, 0, name);
+	return if_findindexname(ifaces, 0, name);
 }
 
 struct interface *
-if_findindex(struct dhcpcd_ctx *ctx, unsigned int idx)
+if_findindex(struct if_head *ifaces, unsigned int idx)
 {
 
-	return if_findindexname(ctx, idx, NULL);
+	return if_findindexname(ifaces, idx, NULL);
 }
 
 int
@@ -604,6 +611,12 @@ if_cmp(const struct interface *si, const struct interface *ti)
 	    !(ti->options->options & DHCPCD_PFXDLGONLY))
 		return 1;
 
+	/* Check carrier status first */
+	if (si->carrier > ti->carrier)
+		return -1;
+	if (si->carrier < ti->carrier)
+		return 1;
+
 	if (D_STATE_RUNNING(si) && !D_STATE_RUNNING(ti))
 		return -1;
 	if (!D_STATE_RUNNING(si) && D_STATE_RUNNING(ti))
@@ -618,16 +631,11 @@ if_cmp(const struct interface *si, const struct interface *ti)
 		return 1;
 
 #ifdef INET
-	/* Special attention needed hereto due take states and IPv4LL. */
+	/* Special attention needed here due to states and IPv4LL. */
 	if ((r = ipv4_ifcmp(si, ti)) != 0)
 		return r;
 #endif
 
-	/* Then carrier status. */
-	if (si->carrier > ti->carrier)
-		return -1;
-	if (si->carrier < ti->carrier)
-		return 1;
 	/* Finally, metric */
 	if (si->metric < ti->metric)
 		return -1;

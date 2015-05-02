@@ -56,7 +56,8 @@ struct ra {
 	uint32_t mtu;
 	struct ipv6_addrhead addrs;
 	TAILQ_HEAD(, ra_opt) options;
-	int expired;
+	uint8_t expired;
+	uint8_t no_public_warned;
 };
 
 TAILQ_HEAD(ra_head, ra);
@@ -72,6 +73,14 @@ struct rs_state {
 
 #define MAX_RTR_SOLICITATION_DELAY	1	/* seconds */
 #define MAX_UNICAST_SOLICIT		3	/* 3 transmissions */
+#define RTR_SOLICITATION_INTERVAL	4	/* seconds */
+#define MAX_RTR_SOLICITATIONS		3	/* times */
+
+/* On carrier up, expire known routers after RTR_CARRIER_EXPIRE seconds. */
+#define RTR_CARRIER_EXPIRE		\
+    (MAX_RTR_SOLICITATION_DELAY +	\
+    (MAX_RTR_SOLICITATIONS + 1) *	\
+    RTR_SOLICITATION_INTERVAL)
 
 #define MAX_REACHABLE_TIME		3600000	/* milliseconds */
 #define REACHABLE_TIME			30000	/* milliseconds */
@@ -93,9 +102,11 @@ ssize_t ipv6nd_free(struct interface *);
 void ipv6nd_expirera(void *arg);
 int ipv6nd_hasra(const struct interface *);
 int ipv6nd_hasradhcp(const struct interface *);
+void ipv6nd_runignoredra(struct interface *);
 void ipv6nd_handleifa(struct dhcpcd_ctx *, int,
     const char *, const struct in6_addr *, int);
 int ipv6nd_dadcompleted(const struct interface *);
+void ipv6nd_expire(struct interface *, uint32_t);
 void ipv6nd_drop(struct interface *);
 void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, int);
 #else

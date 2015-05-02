@@ -86,14 +86,8 @@ if_printoptions(void)
 		printf(" -  %s\n", *p);
 }
 
-#ifdef USE_SIGNALS
-#define U
-#else
-#define U __unused
-#endif
 static int
-exec_script(U const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
-#undef U
+exec_script(const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
 {
 	pid_t pid;
 	posix_spawnattr_t attr;
@@ -101,6 +95,8 @@ exec_script(U const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
 #ifdef USE_SIGNALS
 	short flags;
 	sigset_t defsigs;
+#else
+	UNUSED(ctx);
 #endif
 
 	/* posix_spawn is a safe way of executing another image

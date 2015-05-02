@@ -105,11 +105,17 @@ static void
 ipv4ll_probed(struct arp_state *astate)
 {
 	struct dhcp_state *state = D_STATE(astate->iface);
-	struct dhcp_message *offer;
+
+	if (state->state == DHS_IPV4LL_BOUND) {
+		ipv4_finaliseaddr(astate->iface);
+		return;
+	}
 
 	if (state->state != DHS_BOUND) {
+		struct dhcp_message *offer;
+
 		/* A DHCP lease could have already been offered.
-		 * Backup and replace once the IPv4LL addres is bound */
+		 * Backup and replace once the IPv4LL address is bound */
 		offer = state->offer;
 		state->offer = ipv4ll_make_lease(astate->addr.s_addr);
 		if (state->offer == NULL)
@@ -133,7 +139,11 @@ static void
 ipv4ll_probe(void *arg)
 {
 
+#ifdef IN_IFF_TENTATIVE
+	ipv4ll_probed(arg);
+#else
 	arp_probe(arg);
+#endif
 }
 
 static void
@@ -144,13 +154,14 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 
 	fail = 0;
 	/* RFC 3927 2.2.1, Probe Conflict Detection */
-	if (amsg->sip.s_addr == astate->addr.s_addr ||
-	    (amsg->sip.s_addr == 0 && amsg->tip.s_addr == astate->addr.s_addr))
+	if (amsg == NULL ||
+	    (amsg->sip.s_addr == astate->addr.s_addr ||
+	    (amsg->sip.s_addr == 0 && amsg->tip.s_addr == astate->addr.s_addr)))
 		fail = astate->addr.s_addr;
 
 	/* RFC 3927 2.5, Conflict Defense */
 	if (IN_LINKLOCAL(htonl(state->addr.s_addr)) &&
-	    amsg->sip.s_addr == state->addr.s_addr)
+	    amsg && amsg->sip.s_addr == state->addr.s_addr)
 		fail = state->addr.s_addr;
 
 	if (fail == 0)
@@ -218,7 +229,7 @@ ipv4ll_start(void *arg)
 		initstate(seed, state->randomstate, sizeof(state->randomstate));
 	}
 
-	if ((astate = arp_new(ifp)) == NULL)
+	if ((astate = arp_new(ifp, NULL)) == NULL)
 		return;
 
 	state->arp_ipv4ll = astate;
@@ -254,7 +265,11 @@ ipv4ll_start(void *arg)
 	}
 	if (astate->addr.s_addr == INADDR_ANY)
 		astate->addr.s_addr = ipv4ll_pick_addr(astate);
+#ifdef IN_IFF_TENTATIVE
+	ipv4ll_probed(astate);
+#else
 	arp_probe(astate);
+#endif
 }
 
 void

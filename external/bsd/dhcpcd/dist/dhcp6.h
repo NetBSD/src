@@ -235,6 +235,7 @@ void dhcp6_printoptions(const struct dhcpcd_ctx *,
 struct ipv6_addr *dhcp6_findaddr(struct dhcpcd_ctx *, const struct in6_addr *,
     short);
 size_t dhcp6_find_delegates(struct interface *);
+int dhcp6_has_public_addr(const struct interface *);
 int dhcp6_start(struct interface *, enum DH6S);
 void dhcp6_reboot(struct interface *);
 ssize_t dhcp6_env(char **, const char *, const struct interface *,

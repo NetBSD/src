@@ -25,9 +25,6 @@
  * SUCH DAMAGE.
  */
 
-/* Needed for ppoll(2) */
-#define _GNU_SOURCE
-
 #include <sys/time.h>
 
 #include <errno.h>
