@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.321 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.322 2015/05/02 20:22:12 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.321 2015/05/02 14:41:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.322 2015/05/02 20:22:12 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1645,6 +1645,7 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       sysctl_net_inet_ip_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS,
 		       CTL_EOL);
+#if NARP
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "dad_count",
@@ -1653,6 +1654,7 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       NULL, 0, &ip_dad_count, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_DAD_COUNT, CTL_EOL);
+#endif
 
 	/* anonportalgo RFC6056 subtree */
 	const struct sysctlnode *portalgo_node;
