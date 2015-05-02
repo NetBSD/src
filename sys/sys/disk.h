@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.63 2014/12/31 20:13:41 mlelstv Exp $	*/
+/*	$NetBSD: disk.h,v 1.64 2015/05/02 08:00:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -470,18 +470,18 @@ struct disk {
 	struct cpu_disklabel *dk_cpulabel;
 };
 
+#ifdef _KERNEL
 struct dkdriver {
 	void	(*d_strategy)(struct buf *);
 	void	(*d_minphys)(struct buf *);
-#ifdef notyet
-	int	(*d_open)(dev_t, int, int, struct proc *);
-	int	(*d_close)(dev_t, int, int, struct proc *);
-	int	(*d_ioctl)(dev_t, u_long, void *, int, struct proc *);
-	int	(*d_dump)(dev_t);
-	void	(*d_start)(struct buf *, daddr_t);
-	int	(*d_mklabel)(struct disk *);
-#endif
+	int	(*d_open)(dev_t, int, int, struct lwp *);
+	int	(*d_close)(dev_t, int, int, struct lwp *);
+	void	(*d_diskstart)(device_t);
+	void	(*d_iosize)(device_t, int *);
+	int	(*d_dumpblocks)(device_t, void *, daddr_t, int);
+	int	(*d_lastclose)(device_t);
 };
+#endif
 
 /* states */
 #define	DK_CLOSED	0		/* drive is closed */
