@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.44 2012/09/30 05:13:12 dholland Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.45 2015/05/02 14:41:32 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,6 +56,22 @@ struct sockaddr_inarp {
 };
 
 #ifdef _KERNEL
+
+/* ARP timings from RFC5227 */
+#define PROBE_WAIT               1
+#define PROBE_NUM                3
+#define PROBE_MIN                1
+#define PROBE_MAX                2
+#define ANNOUNCE_WAIT            2
+#define ANNOUNCE_NUM             2
+#define ANNOUNCE_INTERVAL        2
+#define MAX_CONFLICTS           10
+#define RATE_LIMIT_INTERVAL     60
+#define DEFEND_INTERVAL         10
+
+#include <sys/malloc.h>
+MALLOC_DECLARE(M_IPARP);
+
 extern struct ifqueue arpintrq;
 void arp_ifinit(struct ifnet *, struct ifaddr *);
 void arp_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
@@ -68,6 +84,9 @@ void arp_init(void);
 void arp_drain(void);
 int arpioctl(u_long, void *);
 void arpwhohas(struct ifnet *, struct in_addr *);
+
+void arp_dad_start(struct ifaddr *);
+void arp_dad_stop(struct ifaddr *);
 
 void revarpinput(struct mbuf *);
 void in_revarpinput(struct mbuf *);

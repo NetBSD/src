@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.70 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: in_var.h,v 1.71 2015/05/02 14:41:32 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,13 @@
 
 #include <sys/queue.h>
 
+#define IN_IFF_TENTATIVE	0x01	/* tentative address */
+#define IN_IFF_DUPLICATED	0x02	/* DAD detected duplicate */
+#define IN_IFF_DETACHED		0x04	/* may be detached from the link */
+
+/* do not input/output */
+#define IN_IFF_NOTREADY (IN_IFF_TENTATIVE | IN_IFF_DUPLICATED)
+
 /*
  * Interface address, Internet version.  One of these structures
  * is allocated for each interface with an Internet address.
@@ -92,6 +99,7 @@ struct in_ifaddr {
 	struct	in_multi *ia_allhosts;	/* multicast address record for
 					   the allhosts multicast group */
 	uint16_t ia_idsalt;		/* ip_id salt for this ia */
+	int	ia4_flags;		/* address flags */
 };
 
 struct	in_aliasreq {
@@ -101,6 +109,7 @@ struct	in_aliasreq {
 #define	ifra_broadaddr	ifra_dstaddr
 	struct	sockaddr_in ifra_mask;
 };
+
 /*
  * Given a pointer to an in_ifaddr (ifaddr),
  * return a pointer to the addr as a sockaddr_in.
@@ -217,6 +226,8 @@ struct in_multi {
 
 extern pktqueue_t *ip_pktq;
 
+extern int ip_dad_count;		/* Duplicate Address Detection probes */
+
 /*
  * Structure used by functions below to remember position when stepping
  * through all of the in_multi records.
@@ -240,7 +251,7 @@ int in_multi_lock_held(void);
 struct ifaddr;
 
 int	in_ifinit(struct ifnet *,
-	    struct in_ifaddr *, const struct sockaddr_in *, int);
+	    struct in_ifaddr *, const struct sockaddr_in *, int, int);
 void	in_savemkludge(struct in_ifaddr *);
 void	in_restoremkludge(struct in_ifaddr *, struct ifnet *);
 void	in_purgemkludge(struct ifnet *);

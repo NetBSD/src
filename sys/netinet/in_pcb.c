@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.158 2015/04/26 16:45:51 rtr Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.159 2015/05/02 14:41:32 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.158 2015/04/26 16:45:51 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.159 2015/05/02 14:41:32 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -286,6 +286,8 @@ in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 		if (ia == NULL)
 			ia = ifatoia(ifa_ifwithaddr(sintosa(sin)));
 		if (ia == NULL)
+			return (EADDRNOTAVAIL);
+		if (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
 			return (EADDRNOTAVAIL);
 	}
 

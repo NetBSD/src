@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.320 2015/03/26 04:05:58 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.321 2015/05/02 14:41:32 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.320 2015/03/26 04:05:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.321 2015/05/02 14:41:32 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -593,11 +593,13 @@ ip_input(struct mbuf *m)
 	 *
 	 * Traditional 4.4BSD did not consult IFF_UP at all.
 	 * The behavior here is to treat addresses on !IFF_UP interface
-	 * as not mine.
+	 * or IN_IFF_NOTREADY addresses as not mine.
 	 */
 	downmatch = 0;
 	LIST_FOREACH(ia, &IN_IFADDR_HASH(ip->ip_dst.s_addr), ia_hash) {
 		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
+			if (ia->ia4_flags & IN_IFF_NOTREADY)
+				continue;
 			if (checkif && ia->ia_ifp != ifp)
 				continue;
 			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
@@ -613,6 +615,8 @@ ip_input(struct mbuf *m)
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			ia = ifatoia(ifa);
+			if (ia->ia4_flags & IN_IFF_NOTREADY)
+				continue;
 			if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
 			    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
 			    /*
@@ -1641,6 +1645,14 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       sysctl_net_inet_ip_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS,
 		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "dad_count",
+		       SYSCTL_DESCR("Number of Duplicate Address Detection "
+				    "probes to send"),
+		       NULL, 0, &ip_dad_count, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP,
+		       IPCTL_DAD_COUNT, CTL_EOL);
 
 	/* anonportalgo RFC6056 subtree */
 	const struct sysctlnode *portalgo_node;
