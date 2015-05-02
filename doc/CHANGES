@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2074 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2075 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -159,3 +159,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	netinet: Added IN_IFF_TENTATIVE, IN_IFF_DUPLICATED and IN_IFF_DETACHED.
 	         IPV4 addresses now perform DAD using ARP as described in
 		 RFC 5227. [roy 20150502]
+	dhcpcd(8): Import dhcpcd-6.8.2. [roy 20150502]
