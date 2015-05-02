@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.153 2015/05/02 15:22:03 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.154 2015/05/02 20:22:12 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,8 +91,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.153 2015/05/02 15:22:03 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.154 2015/05/02 20:22:12 joerg Exp $");
 
+#include "arp.h"
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
 #include "opt_mrouting.h"
@@ -663,8 +664,10 @@ in_purgeaddr(struct ifaddr *ifa)
 	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in_ifaddr *ia = (void *) ifa;
 
-        /* stop DAD processing */
+#if NARP
+	/* stop DAD processing */
 	arp_dad_stop(ifa);
+#endif
 
 	in_ifscrub(ifp, ia);
 	in_ifremlocal(ifa);
@@ -979,10 +982,12 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
 
+#if NARP
 	if (hostIsNew && if_do_dad(ifp) &&
 	    !in_nullhost(ia->ia_addr.sin_addr) &&
 	    ia->ia4_flags & IN_IFF_TENTATIVE)
 		arp_dad_start((struct ifaddr *)ia);
+#endif
 
 	return (error);
 bad:
@@ -1178,11 +1183,13 @@ in_if_link_up(struct ifnet *ifp)
 				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		}
 
+#if NARP
 		if (ia->ia4_flags & IN_IFF_TENTATIVE) {
 			/* Clear the duplicated flag as we're starting DAD. */
 			ia->ia4_flags &= ~IN_IFF_DUPLICATED;
 			arp_dad_start(ifa);
 		}
+#endif
 	}
 }
 
@@ -1208,8 +1215,10 @@ in_if_link_down(struct ifnet *ifp)
 			continue;
 		ia = (struct in_ifaddr *)ifa;
 
+#if NARP
 		/* Stop DAD processing */
 		arp_dad_stop(ifa);
+#endif
 
 		/*
 		 * Mark the address as detached.
