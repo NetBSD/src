@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_gpio.c,v 1.1 2015/05/02 12:08:32 jmcneill Exp $ */
+/* $NetBSD: tegra_gpio.c,v 1.2 2015/05/02 17:06:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.1 2015/05/02 12:08:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.2 2015/05/02 17:06:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -250,25 +250,41 @@ tegra_gpio_pin_ctl(void *priv, int pin, int flags)
 }
 
 static const struct tegra_gpio_pinbank *
-tegra_gpio_pinbank_lookup(const char *bankname)
+tegra_gpio_pin_lookup(const char *pinname, int *ppin)
 {
+	char bankname[3];
 	u_int n;
+	int pin;
+
+	KASSERT(strlen(pinname) == 2 || strlen(pinname) == 3);
+
+	memset(bankname, 0, sizeof(bankname));
+	bankname[0] = pinname[0];
+	if (strlen(pinname) == 2) {
+		pin = pinname[1] - '0';
+	} else {
+		bankname[1] = pinname[1];
+		pin = pinname[2] - '0';
+	}
 
 	for (n = 0; n < __arraycount(tegra_gpio_pinbanks); n++) {
 		const struct tegra_gpio_pinbank *pb =
 		    &tegra_gpio_pinbanks[n];
-		if (strcmp(pb->name, bankname) == 0)
+		if (strcmp(pb->name, bankname) == 0) {
+			*ppin = pin;
 			return pb;
+		}
 	}
 
 	return NULL;
 }
 
 struct tegra_gpio_pin *
-tegra_gpio_acquire(const char *bankname, int pin, u_int flags)
+tegra_gpio_acquire(const char *pinname, u_int flags)
 {
 	struct tegra_gpio_bank bank;
 	struct tegra_gpio_pin *gpin;
+	int pin;
 	device_t dev;
 
 	dev = device_find_by_driver_unit("tegragpio", 0);
@@ -276,7 +292,7 @@ tegra_gpio_acquire(const char *bankname, int pin, u_int flags)
 		return NULL;
 
 	bank.bank_sc = device_private(dev);
-	bank.bank_pb = tegra_gpio_pinbank_lookup(bankname);
+	bank.bank_pb = tegra_gpio_pin_lookup(pinname, &pin);
 	if (bank.bank_pb == NULL)
 		return NULL;
 
