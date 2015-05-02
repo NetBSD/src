@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2014/08/10 19:11:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.32 2015/05/02 14:54:18 macallan Exp $
 
 NOLINT=	1	# defined
 
@@ -90,7 +90,7 @@ AFLAGS+=	${${ACTIVE_CC} == "clang" :? -fno-integrated-as :}
 #CPPFLAGS+=	-DUSE_ARM_IWMMXT
 .endif
 
-.if ${MACHINE} == "evbmips"
+.if ${MACHINE_ARCH} == "mips64el"
 # Loongson MMI
 SRCS+=		pixman-mmx.c
 CPPFLAGS+=	-DUSE_LOONGSON_MMI
