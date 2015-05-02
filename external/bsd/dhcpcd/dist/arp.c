@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.11 2015/03/27 18:53:15 christos Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.12 2015/05/02 15:18:36 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -44,6 +44,7 @@
 #define ELOOP_QUEUE 5
 #include "config.h"
 #include "arp.h"
+#include "if.h"
 #include "ipv4.h"
 #include "common.h"
 #include "dhcp.h"
@@ -57,7 +58,7 @@
 	(sizeof(struct arphdr) + (2 * sizeof(uint32_t)) + (2 * HWADDR_LEN))
 
 static ssize_t
-arp_send(const struct interface *ifp, int op, in_addr_t sip, in_addr_t tip)
+arp_request(const struct interface *ifp, in_addr_t sip, in_addr_t tip)
 {
 	uint8_t arp_buffer[ARP_LEN];
 	struct arphdr ar;
@@ -68,7 +69,7 @@ arp_send(const struct interface *ifp, int op, in_addr_t sip, in_addr_t tip)
 	ar.ar_pro = htons(ETHERTYPE_IP);
 	ar.ar_hln = ifp->hwlen;
 	ar.ar_pln = sizeof(sip);
-	ar.ar_op = htons((uint16_t)op);
+	ar.ar_op = htons(ARPOP_REQUEST);
 
 	p = arp_buffer;
 	len = 0;
@@ -99,12 +100,20 @@ eexit:
 void
 arp_report_conflicted(const struct arp_state *astate, const struct arp_msg *amsg)
 {
-	char buf[HWADDR_LEN * 3];
 
-	logger(astate->iface->ctx, LOG_ERR, "%s: hardware address %s claims %s",
-	    astate->iface->name,
-	    hwaddr_ntoa(amsg->sha, astate->iface->hwlen, buf, sizeof(buf)),
-	    inet_ntoa(astate->failed));
+	if (amsg) {
+		char buf[HWADDR_LEN * 3];
+
+		logger(astate->iface->ctx, LOG_ERR,
+		    "%s: hardware address %s claims %s",
+		    astate->iface->name,
+		    hwaddr_ntoa(amsg->sha, astate->iface->hwlen,
+		    buf, sizeof(buf)),
+		    inet_ntoa(astate->failed));
+	} else
+		logger(astate->iface->ctx, LOG_ERR,
+		    "%s: DAD detected %s",
+		    astate->iface->name, inet_ntoa(astate->failed));
 }
 
 static void
@@ -226,8 +235,7 @@ arp_announce1(void *arg)
 		    "%s: ARP announcing %s (%d of %d)",
 		    ifp->name, inet_ntoa(astate->addr),
 		    astate->claims, ANNOUNCE_NUM);
-	if (arp_send(ifp, ARPOP_REQUEST,
-		astate->addr.s_addr, astate->addr.s_addr) == -1)
+	if (arp_request(ifp, astate->addr.s_addr, astate->addr.s_addr) == -1)
 		logger(ifp->ctx, LOG_ERR, "send_arp: %m");
 	eloop_timeout_add_sec(ifp->ctx->eloop, ANNOUNCE_WAIT,
 	    astate->claims < ANNOUNCE_NUM ? arp_announce1 : arp_announced,
@@ -274,7 +282,7 @@ arp_probe1(void *arg)
 	    ifp->name, inet_ntoa(astate->addr),
 	    astate->probes ? astate->probes : PROBE_NUM, PROBE_NUM,
 	    timespec_to_double(&tv));
-	if (arp_send(ifp, ARPOP_REQUEST, 0, astate->addr.s_addr) == -1)
+	if (arp_request(ifp, 0, astate->addr.s_addr) == -1)
 		logger(ifp->ctx, LOG_ERR, "send_arp: %m");
 }
 
@@ -289,19 +297,38 @@ arp_probe(struct arp_state *astate)
 	arp_probe1(astate);
 }
 
-struct arp_state *
-arp_new(struct interface *ifp) {
+static struct arp_state *
+arp_find(struct interface *ifp, const struct in_addr *addr)
+{
 	struct arp_state *astate;
 	struct dhcp_state *state;
 
-	astate = calloc(1, sizeof(*astate));
-	if (astate == NULL) {
+	state = D_STATE(ifp);
+	TAILQ_FOREACH(astate, &state->arp_states, next) {
+		if (astate->addr.s_addr == addr->s_addr && astate->iface == ifp)
+			return astate;
+	}
+	errno = ESRCH;
+	return NULL;
+}
+
+struct arp_state *
+arp_new(struct interface *ifp, const struct in_addr *addr)
+{
+	struct arp_state *astate;
+	struct dhcp_state *state;
+
+	if (addr && (astate = arp_find(ifp, addr)))
+		return astate;
+
+	if ((astate = calloc(1, sizeof(*astate))) == NULL) {
 		logger(ifp->ctx, LOG_ERR, "%s: %s: %m", ifp->name, __func__);
 		return NULL;
 	}
-
-	astate->iface = ifp;
 	state = D_STATE(ifp);
+	astate->iface = ifp;
+	if (addr)
+		astate->addr = *addr;
 	TAILQ_INSERT_TAIL(&state->arp_states, astate, next);
 	return astate;
 }
@@ -365,4 +392,34 @@ arp_close(struct interface *ifp)
 		arp_free(astate);
 #endif
 	}
+}
+
+void
+arp_handleifa(int cmd, struct interface *ifp, const struct in_addr *addr,
+    int flags)
+{
+#ifdef IN_IFF_DUPLICATED
+	struct dhcp_state *state = D_STATE(ifp);
+	struct arp_state *astate, *asn;
+
+	if (cmd != RTM_NEWADDR || (state = D_STATE(ifp)) == NULL)
+		return;
+
+	TAILQ_FOREACH_SAFE(astate, &state->arp_states, next, asn) {
+		if (astate->addr.s_addr == addr->s_addr) {
+			if (flags & IN_IFF_DUPLICATED) {
+				if (astate->conflicted_cb)
+					astate->conflicted_cb(astate, NULL);
+			} else if (!(flags & IN_IFF_NOTUSEABLE)) {
+				if (astate->probed_cb)
+					astate->probed_cb(astate);
+			}
+		}
+	}
+#else
+	UNUSED(cmd);
+	UNUSED(ifp);
+	UNUSED(addr);
+	UNUSED(flags);
+#endif
 }
