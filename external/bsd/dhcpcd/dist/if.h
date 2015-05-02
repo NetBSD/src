@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.9 2015/03/26 10:26:37 roy Exp $ */
+/* $NetBSD: if.h,v 1.10 2015/05/02 15:18:37 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -31,8 +31,14 @@
 #define INTERFACE_H
 
 #include <net/if.h>
+#ifdef __FreeBSD__
+#include <net/if_var.h>
+#endif
 #include <net/route.h>		/* for RTM_ADD et all */
 #include <netinet/in.h>
+#ifdef BSD
+#include <netinet/in_var.h>	/* for IN_IFF_TENTATIVE et all */
+#endif
 
 /* Some systems have route metrics.
  * OpenBSD route priority is not this. */
@@ -40,6 +46,14 @@
 # if defined(__linux__)
 #  define HAVE_ROUTE_METRIC 1
 # endif
+#endif
+
+/* Some systems have in-built IPv4 DAD.
+ * However, we need them to do DAD at carrier up as well. */
+#ifdef IN_IFF_TENTATIVE
+#  ifdef __NetBSD__
+#    define NOCARRIER_PRESERVE_IP
+#  endif
 #endif
 
 #include "config.h"
@@ -85,8 +99,8 @@
 int if_setflag(struct interface *ifp, short flag);
 #define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING))
 struct if_head *if_discover(struct dhcpcd_ctx *, int, char * const *);
-struct interface *if_find(struct dhcpcd_ctx *, const char *);
-struct interface *if_findindex(struct dhcpcd_ctx *, unsigned int);
+struct interface *if_find(struct if_head *, const char *);
+struct interface *if_findindex(struct if_head *, unsigned int);
 void if_sortinterfaces(struct dhcpcd_ctx *);
 void if_free(struct interface *);
 int if_domtu(const char *, short int);
@@ -114,10 +128,10 @@ int if_managelink(struct dhcpcd_ctx *);
 
 #ifdef INET
 extern const char *if_pfname;
-int if_openrawsocket(struct interface *, int);
+int if_openrawsocket(struct interface *, uint16_t);
 ssize_t if_sendrawpacket(const struct interface *,
-    int, const void *, size_t);
-ssize_t if_readrawpacket(struct interface *, int, void *, size_t, int *);
+    uint16_t, const void *, size_t);
+ssize_t if_readrawpacket(struct interface *, uint16_t, void *, size_t, int *);
 
 int if_address(const struct interface *,
     const struct in_addr *, const struct in_addr *,
@@ -126,6 +140,8 @@ int if_address(const struct interface *,
 	if_address(ifp, addr, net, brd, 1)
 #define if_deladdress(ifp, addr, net)		\
 	if_address(ifp, addr, net, NULL, -1)
+
+int if_addrflags(const struct in_addr *, const struct interface *);
 
 int if_route(unsigned char, const struct rt *rt);
 int if_initrt(struct interface *);
