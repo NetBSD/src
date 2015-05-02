@@ -257,8 +257,8 @@ void dhcp_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 int get_option_addr(struct dhcpcd_ctx *,struct in_addr *,
     const struct dhcp_message *, uint8_t);
-#define is_bootp(i, m) ((m) &&						\
-	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			\
+#define IS_BOOTP(i, m) ((m) &&						    \
+	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			    \
 	    get_option_uint8((i)->ctx, NULL, (m), DHO_MESSAGETYPE) == -1)
 struct rt_head *get_option_routes(struct interface *,
     const struct dhcp_message *);
@@ -274,15 +274,14 @@ ssize_t make_message(struct dhcp_message **, const struct interface *,
 int valid_dhcp_packet(unsigned char *);
 
 void dhcp_handleifa(int, struct interface *,
-    const struct in_addr *, const struct in_addr *, const struct in_addr *);
+    const struct in_addr *, const struct in_addr *, const struct in_addr *,
+    int);
 
 void dhcp_drop(struct interface *, const char *);
 void dhcp_start(struct interface *);
 void dhcp_stop(struct interface *);
-void dhcp_decline(struct interface *);
 void dhcp_discover(void *);
 void dhcp_inform(struct interface *);
-void dhcp_probe(struct interface *);
 void dhcp_bind(struct interface *, struct arp_state *);
 void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
