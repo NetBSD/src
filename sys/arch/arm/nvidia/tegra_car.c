@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.1 2015/04/28 11:15:55 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.2 2015/05/02 14:10:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.1 2015/04/28 11:15:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.2 2015/05/02 14:10:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,6 +81,7 @@ tegra_car_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": CAR\n");
 
 	aprint_verbose_dev(self, "PLLX = %u Hz\n", tegra_car_pllx_rate());
+	aprint_verbose_dev(self, "PLLP0 = %u Hz\n", tegra_car_pllp0_rate());
 }
 
 static void
@@ -102,8 +103,9 @@ tegra_car_osc_rate(void)
 	return TEGRA_REF_FREQ;
 }
 
-u_int
-tegra_car_pllx_rate(void)
+static u_int
+tegra_car_pll_rate(u_int base_reg, u_int divm_mask, u_int divn_mask,
+    u_int divp_mask)
 {
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
@@ -112,12 +114,79 @@ tegra_car_pllx_rate(void)
 	tegra_car_get_bs(&bst, &bsh);
 
 	rate = tegra_car_osc_rate();	
-	const uint32_t base = bus_space_read_4(bst, bsh, CAR_PLLX_BASE_REG);
-	const u_int divm = __SHIFTOUT(base, CAR_PLLX_BASE_DIVM);
-	const u_int divn = __SHIFTOUT(base, CAR_PLLX_BASE_DIVN);
-	const u_int divp = __SHIFTOUT(base, CAR_PLLX_BASE_DIVP);
+	const uint32_t base = bus_space_read_4(bst, bsh, base_reg);
+	const u_int divm = __SHIFTOUT(base, divm_mask);
+	const u_int divn = __SHIFTOUT(base, divn_mask);
+	const u_int divp = __SHIFTOUT(base, divp_mask);
 
-	rate = tegra_car_osc_rate() * divn;
+	rate = (uint64_t)tegra_car_osc_rate() * divn;
 
 	return rate / (divm << divp);
+}
+
+u_int
+tegra_car_pllx_rate(void)
+{
+	return tegra_car_pll_rate(CAR_PLLX_BASE_REG, CAR_PLLX_BASE_DIVM,
+	    CAR_PLLX_BASE_DIVN, CAR_PLLX_BASE_DIVP);
+}
+
+u_int
+tegra_car_pllp0_rate(void)
+{
+	return tegra_car_pll_rate(CAR_PLLP_BASE_REG, CAR_PLLP_BASE_DIVM,
+	    CAR_PLLP_BASE_DIVN, CAR_PLLP_BASE_DIVP);
+}
+
+u_int
+tegra_car_periph_sdmmc_rate(u_int port)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t src_reg;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	switch (port) {
+	case 0:	src_reg = CAR_CLKSRC_SDMMC1_REG; break;
+	case 1: src_reg = CAR_CLKSRC_SDMMC2_REG; break;
+	case 2: src_reg = CAR_CLKSRC_SDMMC3_REG; break;
+	case 3: src_reg = CAR_CLKSRC_SDMMC4_REG; break;
+	default: return 0;
+	}
+
+	const uint32_t src = bus_space_read_4(bst, bsh, src_reg);
+
+	const u_int div = __SHIFTOUT(src, CAR_CLKSRC_SDMMC_DIV) + 1;
+
+	return tegra_car_pllp0_rate() / div;
+}
+
+int
+tegra_car_periph_sdmmc_set_div(u_int port, u_int div)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t src_reg;
+	uint32_t src;
+
+	KASSERT(div > 0);
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	switch (port) {
+	case 0:	src_reg = CAR_CLKSRC_SDMMC1_REG; break;
+	case 1: src_reg = CAR_CLKSRC_SDMMC2_REG; break;
+	case 2: src_reg = CAR_CLKSRC_SDMMC3_REG; break;
+	case 3: src_reg = CAR_CLKSRC_SDMMC4_REG; break;
+	default: return EINVAL;
+	}
+
+	src = __SHIFTIN(CAR_CLKSRC_SDMMC_SRC_PLLP_OUT0,
+			CAR_CLKSRC_SDMMC_SRC);
+	src |= __SHIFTIN(div - 1, CAR_CLKSRC_SDMMC_DIV);
+
+	bus_space_write_4(bst, bsh, src_reg, src);
+
+	return 0;
 }
