@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.22 2015/03/27 11:33:46 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.23 2015/05/02 15:18:37 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -31,6 +31,7 @@
 #define _WITH_GETLINE /* Stop FreeBSD bitching */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #include <arpa/inet.h>
@@ -100,6 +101,8 @@
 #define O_IPV6RA_AUTOCONF	O_BASE + 38
 #define O_IPV6RA_NOAUTOCONF	O_BASE + 39
 #define O_REJECT		O_BASE + 40
+#define O_IPV6RA_ACCEPT_NOPUBLIC	O_BASE + 41
+#define O_BOOTP			O_BASE + 42
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -159,6 +162,7 @@ const struct option cf_options[] = {
 	{"ipv6ra_fork",     no_argument,       NULL, O_IPV6RA_FORK},
 	{"ipv6ra_own",      no_argument,       NULL, O_IPV6RA_OWN},
 	{"ipv6ra_own_default", no_argument,    NULL, O_IPV6RA_OWN_D},
+	{"ipv6ra_accept_nopublic", no_argument, NULL, O_IPV6RA_ACCEPT_NOPUBLIC},
 	{"ipv4only",        no_argument,       NULL, '4'},
 	{"ipv6only",        no_argument,       NULL, '6'},
 	{"ipv4",            no_argument,       NULL, O_IPV4},
@@ -191,6 +195,7 @@ const struct option cf_options[] = {
 	{"gateway",         no_argument,       NULL, O_GATEWAY},
 	{"ia_pd_mix",       no_argument,       NULL, O_PFXDLGMIX},
 	{"reject",          required_argument, NULL, O_REJECT},
+	{"bootp",           no_argument,       NULL, O_BOOTP},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -1237,6 +1242,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	case O_IPV6RA_OWN_D:
 		ifo->options |= DHCPCD_IPV6RA_OWN_DEFAULT;
 		break;
+	case O_IPV6RA_ACCEPT_NOPUBLIC:
+		ifo->options |= DHCPCD_IPV6RA_ACCEPT_NOPUBLIC;
+		break;
 	case O_IPV6RA_AUTOCONF:
 		ifo->options |= DHCPCD_IPV6RA_AUTOCONF;
 		break;
@@ -1955,6 +1963,9 @@ err_sla:
 	case O_PFXDLGMIX:
 		ifo->options |= DHCPCD_PFXDLGMIX;
 		break;
+	case O_BOOTP:
+		ifo->options |= DHCPCD_BOOTP;
+		break;
 	default:
 		return 0;
 	}
@@ -2033,6 +2044,7 @@ read_config(struct dhcpcd_ctx *ctx,
 {
 	struct if_options *ifo;
 	FILE *fp;
+	struct stat sb;
 	char *line, *buf, *option, *p;
 	size_t buflen;
 	ssize_t vlen;
@@ -2189,6 +2201,8 @@ read_config(struct dhcpcd_ctx *ctx,
 		free(buf);
 		return ifo;
 	}
+	if (stat(ctx->cffile, &sb) == 0)
+		ifo->mtime = sb.st_mtime;
 
 	ldop = edop = NULL;
 	while ((line = get_line(&buf, &buflen, fp))) {

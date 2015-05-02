@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.10 2015/03/27 11:33:46 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.11 2015/05/02 15:18:37 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -746,6 +746,14 @@ ipv6_addaddr(struct ipv6_addr *ap, const struct timespec *now)
 #endif
 
 	return 0;
+}
+
+int
+ipv6_publicaddr(const struct ipv6_addr *ia)
+{
+	return (ia->prefix_pltime &&
+	    (ia->addr.s6_addr[0] & 0xfe) != 0xc &&
+	    !(ia->addr_flags & IN6_IFF_NOTUSEABLE));
 }
 
 struct ipv6_addr *
@@ -1963,7 +1971,7 @@ static void
 ipv6_build_ra_routes(struct ipv6_ctx *ctx, struct rt6_head *dnr, int expired)
 {
 	struct rt6 *rt;
-	const struct ra *rap;
+	struct ra *rap;
 	const struct ipv6_addr *addr;
 
 	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
@@ -1977,7 +1985,8 @@ ipv6_build_ra_routes(struct ipv6_ctx *ctx, struct rt6_head *dnr, int expired)
 			}
 		}
 		if (rap->lifetime && rap->iface->options->options &
-		    (DHCPCD_IPV6RA_OWN | DHCPCD_IPV6RA_OWN_DEFAULT))
+		    (DHCPCD_IPV6RA_OWN | DHCPCD_IPV6RA_OWN_DEFAULT) &&
+		    !rap->no_public_warned)
 		{
 			rt = make_router(rap);
 			if (rt)

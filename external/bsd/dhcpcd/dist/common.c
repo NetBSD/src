@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.11 2015/03/31 18:01:09 christos Exp $");
+ __RCSID("$NetBSD: common.c,v 1.12 2015/05/02 15:18:36 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -27,11 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* Needed define to get at getline for glibc and FreeBSD */
-#ifndef _GNU_SOURCE
-#  define _GNU_SOURCE
-#endif
 
 #ifdef __APPLE__
 #  include <mach/mach_time.h>
@@ -196,8 +191,8 @@ logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 		return;
 
 	serrno = errno;
-
 	va_start(va, fmt);
+
 #ifndef HAVE_PRINTF_M
 	/* Print strerrno(errno) in place of %m */
 	if (ctx == NULL || !(ctx->options & DHCPCD_QUIET) || ctx->log_fd != -1)

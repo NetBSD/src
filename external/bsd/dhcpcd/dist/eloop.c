@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: eloop.c,v 1.9 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: eloop.c,v 1.10 2015/05/02 15:18:37 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -27,9 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* Needed for ppoll(2) */
-#define _GNU_SOURCE
 
 #include <sys/time.h>
 

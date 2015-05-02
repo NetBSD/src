@@ -1,4 +1,4 @@
-/* $NetBSD: arp.h,v 1.8 2015/01/30 09:47:05 roy Exp $ */
+/* $NetBSD: arp.h,v 1.9 2015/05/02 15:18:36 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -71,11 +71,13 @@ TAILQ_HEAD(arp_statehead, arp_state);
 void arp_report_conflicted(const struct arp_state *, const struct arp_msg *);
 void arp_announce(struct arp_state *);
 void arp_probe(struct arp_state *);
-struct arp_state *arp_new(struct interface *);
+struct arp_state *arp_new(struct interface *, const struct in_addr *);
 void arp_cancel(struct arp_state *);
 void arp_free(struct arp_state *);
 void arp_free_but(struct arp_state *);
 void arp_close(struct interface *);
+
+void arp_handleifa(int, struct interface *, const struct in_addr *, int);
 #else
 #define arp_close(a) {}
 #endif

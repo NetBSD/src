@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.19 2015/03/27 18:51:08 christos Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.20 2015/05/02 15:18:37 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -284,7 +284,7 @@ if_findsdl(struct dhcpcd_ctx *ctx, struct sockaddr_dl *sdl)
 		char ifname[IF_NAMESIZE];
 		memcpy(ifname, sdl->sdl_data, sdl->sdl_nlen);
 		ifname[sdl->sdl_nlen] = '\0';
-		return if_find(ctx, ifname);
+		return if_find(ctx->ifaces, ifname);
 	}
 	return NULL;
 }
@@ -294,7 +294,7 @@ if_findsdl(struct dhcpcd_ctx *ctx, struct sockaddr_dl *sdl)
 const char *if_pfname = "Berkley Packet Filter";
 
 int
-if_openrawsocket(struct interface *ifp, int protocol)
+if_openrawsocket(struct interface *ifp, uint16_t protocol)
 {
 	struct dhcp_state *state;
 	int fd = -1;
@@ -378,7 +378,7 @@ eexit:
 }
 
 ssize_t
-if_sendrawpacket(const struct interface *ifp, int protocol,
+if_sendrawpacket(const struct interface *ifp, uint16_t protocol,
     const void *data, size_t len)
 {
 	struct iovec iov[2];
@@ -388,7 +388,7 @@ if_sendrawpacket(const struct interface *ifp, int protocol,
 
 	memset(&hw, 0, ETHER_HDR_LEN);
 	memset(&hw.ether_dhost, 0xff, ETHER_ADDR_LEN);
-	hw.ether_type = htons((uint16_t)protocol);
+	hw.ether_type = htons(protocol);
 	iov[0].iov_base = &hw;
 	iov[0].iov_len = ETHER_HDR_LEN;
 	iov[1].iov_base = UNCONST(data);
@@ -404,7 +404,7 @@ if_sendrawpacket(const struct interface *ifp, int protocol,
 /* BPF requires that we read the entire buffer.
  * So we pass the buffer in the API so we can loop on >1 packet. */
 ssize_t
-if_readrawpacket(struct interface *ifp, int protocol,
+if_readrawpacket(struct interface *ifp, uint16_t protocol,
     void *data, size_t len, int *flags)
 {
 	int fd;
@@ -520,7 +520,7 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, struct rt_msghdr *rtm)
 	COPYOUT(rt->gate, rti_info[RTAX_GATEWAY]);
 
 	if (rtm->rtm_index)
-		rt->iface = if_findindex(ctx, rtm->rtm_index);
+		rt->iface = if_findindex(ctx->ifaces, rtm->rtm_index);
 	else if (rtm->rtm_addrs & RTA_IFP) {
 		struct sockaddr_dl *sdl;
 
@@ -549,7 +549,6 @@ if_route(unsigned char cmd, const struct rt *rt)
 		struct sockaddr sa;
 		struct sockaddr_in sin;
 		struct sockaddr_dl sdl;
-		struct sockaddr_storage ss;
 	} su;
 	struct rtm
 	{
@@ -609,8 +608,8 @@ if_route(unsigned char cmd, const struct rt *rt)
 #endif
 		}
 	}
-	if (rt->dest.s_addr == rt->gate.s_addr &&
-	    rt->net.s_addr == INADDR_BROADCAST)
+	if (rt->net.s_addr == htonl(INADDR_BROADCAST) &&
+	    rt->gate.s_addr == htonl(INADDR_ANY))
 	{
 #ifdef RTF_CLONING
 		/* We add a cloning network route for a single host.
@@ -625,7 +624,7 @@ if_route(unsigned char cmd, const struct rt *rt)
 		rtm.hdr.rtm_flags |= RTF_HOST;
 #endif
 	} else if (rt->gate.s_addr == htonl(INADDR_LOOPBACK) &&
-	    rt->net.s_addr == INADDR_BROADCAST)
+	    rt->net.s_addr == htonl(INADDR_BROADCAST))
 	{
 		rtm.hdr.rtm_flags |= RTF_HOST | RTF_GATEWAY;
 		/* Going via lo0 so remove the interface flags */
@@ -717,7 +716,40 @@ if_initrt(struct interface *ifp)
 	free(buf);
 	return 0;
 }
+
+#ifdef SIOCGIFAFLAG_IN
+int
+if_addrflags(const struct in_addr *addr, const struct interface *ifp)
+{
+	int s, flags;
+	struct ifreq ifr;
+	struct sockaddr_in *sin;
+
+	s = socket(PF_INET, SOCK_DGRAM, 0);
+	flags = -1;
+	if (s != -1) {
+		memset(&ifr, 0, sizeof(ifr));
+		strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
+		sin = (struct sockaddr_in *)(void *)&ifr.ifr_addr;
+		sin->sin_family = AF_INET;
+		sin->sin_addr = *addr;
+		if (ioctl(s, SIOCGIFAFLAG_IN, &ifr) != -1)
+			flags = ifr.ifr_addrflags;
+		close(s);
+	}
+	return flags;
+}
+#else
+int
+if_addrflags(__unused const struct in_addr *addr,
+    __unused const struct interface *ifp)
+{
+
+	errno = ENOTSUP;
+	return 0;
+}
 #endif
+#endif /* INET */
 
 #ifdef INET6
 static void
@@ -877,7 +909,7 @@ if_copyrt6(struct dhcpcd_ctx *ctx, struct rt6 *rt, struct rt_msghdr *rtm)
 	COPYOUT6(rt->gate, rti_info[RTAX_GATEWAY]);
 
 	if (rtm->rtm_index)
-		rt->iface = if_findindex(ctx, rtm->rtm_index);
+		rt->iface = if_findindex(ctx->ifaces, rtm->rtm_index);
 	else if (rtm->rtm_addrs & RTA_IFP) {
 		struct sockaddr_dl *sdl;
 
@@ -905,7 +937,6 @@ if_route6(unsigned char cmd, const struct rt6 *rt)
 		struct sockaddr sa;
 		struct sockaddr_in6 sin;
 		struct sockaddr_dl sdl;
-		struct sockaddr_storage ss;
 	} su;
 	struct rtm
 	{
@@ -1132,6 +1163,8 @@ if_managelink(struct dhcpcd_ctx *ctx)
 	struct rt6 rt6;
 	struct in6_addr ia6, net6;
 	struct sockaddr_in6 *sin6;
+#endif
+#if (defined(INET) && defined(IN_IFF_TENTATIVE)) || defined(INET6)
 	int ifa_flags;
 #endif
 
@@ -1161,7 +1194,8 @@ if_managelink(struct dhcpcd_ctx *ctx)
 #endif
 		case RTM_IFINFO:
 			ifm = (struct if_msghdr *)(void *)p;
-			if ((ifp = if_findindex(ctx, ifm->ifm_index)) == NULL)
+			ifp = if_findindex(ctx->ifaces, ifm->ifm_index);
+			if (ifp == NULL)
 				break;
 			switch (ifm->ifm_data.ifi_link_state) {
 			case LINK_STATE_DOWN:
@@ -1237,7 +1271,8 @@ if_managelink(struct dhcpcd_ctx *ctx)
 		case RTM_DELADDR:	/* FALLTHROUGH */
 		case RTM_NEWADDR:
 			ifam = (struct ifa_msghdr *)(void *)p;
-			if ((ifp = if_findindex(ctx, ifam->ifam_index)) == NULL)
+			ifp = if_findindex(ctx->ifaces, ifam->ifam_index);
+			if (ifp == NULL)
 				break;
 			cp = (char *)(void *)(ifam + 1);
 			get_addrs(ifam->ifam_addrs, cp, rti_info);
@@ -1264,9 +1299,15 @@ if_managelink(struct dhcpcd_ctx *ctx)
 				COPYOUT(rt.dest, rti_info[RTAX_IFA]);
 				COPYOUT(rt.net, rti_info[RTAX_NETMASK]);
 				COPYOUT(rt.gate, rti_info[RTAX_BRD]);
+				if (rtm->rtm_type == RTM_NEWADDR) {
+					ifa_flags = if_addrflags(&rt.dest, ifp);
+					if (ifa_flags == -1)
+						break;
+				} else
+					ifa_flags = 0;
 				ipv4_handleifa(ctx, rtm->rtm_type,
 				    NULL, ifp->name,
-				    &rt.dest, &rt.net, &rt.gate);
+				    &rt.dest, &rt.net, &rt.gate, ifa_flags);
 				break;
 #endif
 #ifdef INET6
