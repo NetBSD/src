@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.47 2014/05/19 02:51:25 rmind Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.48 2015/05/02 17:18:04 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.47 2014/05/19 02:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.48 2015/05/02 17:18:04 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct lwp *l)
 	*mtod(m, struct sockaddr *) = *(struct sockaddr *)to;
 	m->m_len = sizeof(struct sockaddr);
 	solock(so);
-	error = soconnect(so, m, l);
+	error = soconnect(so, mtod(m, struct sockaddr*), l);
 	m_free(m);
 	if (error) {
 		sounlock(so);
