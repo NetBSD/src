@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.152 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.153 2015/05/02 15:22:03 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.152 2015/05/02 14:41:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.153 2015/05/02 15:22:03 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -370,6 +370,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	if (ifp != NULL)
 		IFP_TO_IA(ifp, ia);
 
+	hostIsNew = 1;		/* moved here to appease gcc */
 	switch (cmd) {
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
@@ -396,7 +397,6 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		}
 		/* FALLTHROUGH */
 	case SIOCSIFADDR:
-		hostIsNew = 1;
 		if (ia == NULL || ia->ia_addr.sin_family != AF_INET)
 			;
 		else if (ifra->ifra_addr.sin_len == 0) {
