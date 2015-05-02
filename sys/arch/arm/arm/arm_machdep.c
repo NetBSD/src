@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.48 2015/05/02 16:18:49 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.49 2015/05/02 16:20:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.48 2015/05/02 16:18:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.49 2015/05/02 16:20:41 skrll Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -187,7 +187,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
 #else
 	tf->tf_spsr = PSR_USR32_MODE;
-#endif /* __ARMEB__ */
+#endif /* __ARMEB__ */ 
 
 #ifdef THUMB_CODE
 	if (pack->ep_entry & 1)
@@ -213,7 +213,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 void
 startlwp(void *arg)
 {
-	ucontext_t *uc = (ucontext_t *)arg;
+	ucontext_t *uc = (ucontext_t *)arg; 
 	lwp_t *l = curlwp;
 	int error __diagused;
 
@@ -243,11 +243,9 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		 */
 		return;
 	}
-#if 0
-	/* XXXNH??? */
 	if (ci->ci_want_resched && !immed)
 		return;
-#endif
+
 	if (l == ci->ci_data.cpu_idlelwp) {
 #ifdef MULTIPROCESSOR
 		/*
