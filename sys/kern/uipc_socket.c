@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.240 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.241 2015/05/02 20:10:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.240 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.241 2015/05/02 20:10:26 rtr Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -827,10 +827,15 @@ soconnect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	 */
 	if (so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING) &&
 	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) ||
-	    (error = sodisconnect(so))))
+	    (error = sodisconnect(so)))) {
 		error = EISCONN;
-	else
+	} else {
+		if (NULL != nam &&
+		    nam->sa_family != so->so_proto->pr_domain->dom_family) {
+			return EAFNOSUPPORT;
+		}
 		error = (*so->so_proto->pr_usrreqs->pr_connect)(so, nam, l);
+	}
 
 	return error;
 }
