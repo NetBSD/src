@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.55 2015/04/14 18:34:29 bouyer Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.56 2015/05/02 12:10:24 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.55 2015/04/14 18:34:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.56 2015/05/02 12:10:24 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -289,6 +289,10 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		aprint_normal("3.0");
 		break;
 
+	case SDHC_SPEC_VERS_400:
+		aprint_normal("4.0");
+		break;
+
 	default:
 		aprint_normal("unknown version(0x%x)",
 		    SDHC_SPEC_VERSION(sdhcver));
@@ -329,12 +333,13 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	/*
 	 * Determine the base clock frequency. (2.2.24)
 	 */
-	if (hp->specver == SDHC_SPEC_VERS_300) {
+	if (hp->specver >= SDHC_SPEC_VERS_300) {
 		hp->clkbase = SDHC_BASE_V3_FREQ_KHZ(caps);
 	} else {
 		hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
 	}
-	if (hp->clkbase == 0) {
+	if (hp->clkbase == 0 ||
+	    ISSET(sc->sc_flags, SDHC_FLAG_NO_CLKBASE)) {
 		if (sc->sc_clkbase == 0) {
 			/* The attachment driver must tell us. */
 			aprint_error_dev(sc->sc_dev,
@@ -424,7 +429,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	else if (hp->sc->sc_clkmsk != 0)
 		saa.saa_clkmin = hp->clkbase / (hp->sc->sc_clkmsk >>
 		    (ffs(hp->sc->sc_clkmsk) - 1));
-	else if (hp->specver == SDHC_SPEC_VERS_300)
+	else if (hp->specver >= SDHC_SPEC_VERS_300)
 		saa.saa_clkmin = hp->clkbase / 0x3ff;
 	else
 		saa.saa_clkmin = hp->clkbase / 256;
@@ -827,7 +832,7 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, u_int *divp)
 		//freq = hp->clkbase / div;
 		return true;
 	}
-	if (hp->specver == SDHC_SPEC_VERS_300) {
+	if (hp->specver >= SDHC_SPEC_VERS_300) {
 		div = howmany(hp->clkbase, freq);
 		div = div > 1 ? howmany(div, 2) : 0;
 		if (div > 0x3ff)
