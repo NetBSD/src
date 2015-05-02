@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.53 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.54 2015/05/02 17:18:03 rtr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.53 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.54 2015/05/02 17:18:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -152,7 +152,7 @@ raw_setpeeraddr(struct rawcb *rp, struct sockaddr *nam)
 }
 
 int
-raw_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+raw_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct rawcb *rp = sotorawcb(so);

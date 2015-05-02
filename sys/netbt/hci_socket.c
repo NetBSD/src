@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.43 2015/04/26 21:40:49 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.44 2015/05/02 17:18:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.43 2015/04/26 21:40:49 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.44 2015/05/02 17:18:03 rtr Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -526,16 +526,15 @@ hci_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-hci_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+hci_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct hci_pcb *pcb = so->so_pcb;
-	struct sockaddr_bt *sa;
+	struct sockaddr_bt *sa = (struct sockaddr_bt *)nam;
 
 	KASSERT(solocked(so));
 	KASSERT(pcb != NULL);
 	KASSERT(nam != NULL);
 
-	sa = mtod(nam, struct sockaddr_bt *);
 	if (sa->bt_len != sizeof(struct sockaddr_bt))
 		return EINVAL;
 
@@ -666,11 +665,11 @@ hci_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-hci_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+hci_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct hci_pcb *pcb = so->so_pcb;
-	struct sockaddr_bt * sa = NULL;
+	struct sockaddr_bt * sa = (struct sockaddr_bt *)nam;
 	int err = 0;
 
 	KASSERT(solocked(so));
@@ -680,8 +679,6 @@ hci_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		m_freem(control);
 
 	if (nam) {
-		sa = mtod(nam, struct sockaddr_bt *);
-
 		if (sa->bt_len != sizeof(struct sockaddr_bt)) {
 			err = EINVAL;
 			goto release;

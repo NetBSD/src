@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.61 2015/04/26 21:40:49 rtr Exp $	*/
+/*	$NetBSD: sockin.c,v 1.62 2015/05/02 17:18:04 rtr Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.61 2015/04/26 21:40:49 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.62 2015/05/02 17:18:04 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -72,7 +72,7 @@ static int	sockin_accept(struct socket *, struct sockaddr *);
 static int	sockin_connect2(struct socket *, struct socket *);
 static int	sockin_bind(struct socket *, struct sockaddr *, struct lwp *);
 static int	sockin_listen(struct socket *, struct lwp *);
-static int	sockin_connect(struct socket *, struct mbuf *, struct lwp *);
+static int	sockin_connect(struct socket *, struct sockaddr *, struct lwp *);
 static int	sockin_disconnect(struct socket *);
 static int	sockin_shutdown(struct socket *);
 static int	sockin_abort(struct socket *);
@@ -82,7 +82,7 @@ static int	sockin_peeraddr(struct socket *, struct sockaddr *);
 static int	sockin_sockaddr(struct socket *, struct sockaddr *);
 static int	sockin_rcvd(struct socket *, int, struct lwp *);
 static int	sockin_recvoob(struct socket *, struct mbuf *, int);
-static int	sockin_send(struct socket *, struct mbuf *, struct mbuf *,
+static int	sockin_send(struct socket *, struct mbuf *, struct sockaddr *,
 			    struct mbuf *, struct lwp *);
 static int	sockin_sendoob(struct socket *, struct mbuf *, struct mbuf *);
 static int	sockin_purgeif(struct socket *, struct ifnet *);
@@ -508,15 +508,14 @@ sockin_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-sockin_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+sockin_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	int error = 0;
 
 	KASSERT(solocked(so));
 	KASSERT(nam != NULL);
 
-	error = rumpcomp_sockin_connect(SO2S(so),
-	    mtod(nam, struct sockaddr *), nam->m_len);
+	error = rumpcomp_sockin_connect(SO2S(so), nam, nam->sa_len);
 	if (error == 0)
 		soisconnected(so);
 
@@ -617,10 +616,9 @@ sockin_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-sockin_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+sockin_send(struct socket *so, struct mbuf *m, struct sockaddr *saddr,
     struct mbuf *control, struct lwp *l)
 {
-	struct sockaddr *saddr;
 	struct msghdr mhdr;
 	size_t iov_max, i;
 	struct iovec iov_buf[32], *iov;
@@ -655,8 +653,7 @@ sockin_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	mhdr.msg_iovlen = i;
 	s = SO2S(so);
 
-	if (nam != NULL) {
-		saddr = mtod(nam, struct sockaddr *);
+	if (saddr != NULL) {
 		mhdr.msg_name = saddr;
 		mhdr.msg_namelen = saddr->sa_len;
 	}

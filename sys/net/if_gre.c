@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.164 2015/04/24 22:32:37 rtr Exp $ */
+/*	$NetBSD: if_gre.c,v 1.165 2015/05/02 17:18:03 rtr Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.164 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.165 2015/05/02 17:18:03 rtr Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -418,9 +418,8 @@ static int
 gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 {
 	int fd, rc;
-	struct mbuf *m;
-	struct sockaddr *sa;
 	struct socket *so;
+	struct sockaddr_big sbig;
 	sa_family_t af;
 	int val;
 
@@ -436,31 +435,20 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 	if ((rc = fd_getsock(fd, &so)) != 0)
 		return rc;
 
-	if ((m = getsombuf(so, MT_SONAME)) == NULL) {
-		rc = ENOBUFS;
-		goto out;
-	}
-	sa = mtod(m, struct sockaddr *);
-	sockaddr_copy(sa, MIN(MLEN, sizeof(sp->sp_src)), sstocsa(&sp->sp_src));
-	m->m_len = sp->sp_src.ss_len;
-
-	if ((rc = sobind(so, sa, curlwp)) != 0) {
+	memcpy(&sbig, &sp->sp_src, sizeof(sp->sp_src));
+	if ((rc = sobind(so, (struct sockaddr *)&sbig, curlwp)) != 0) {
 		GRE_DPRINTF(sc, "sobind failed\n");
 		goto out;
 	}
 
-	sockaddr_copy(sa, MIN(MLEN, sizeof(sp->sp_dst)), sstocsa(&sp->sp_dst));
-	m->m_len = sp->sp_dst.ss_len;
-
+	memcpy(&sbig, &sp->sp_dst, sizeof(sp->sp_dst));
 	solock(so);
-	if ((rc = soconnect(so, m, curlwp)) != 0) {
+	if ((rc = soconnect(so, (struct sockaddr *)&sbig, curlwp)) != 0) {
 		GRE_DPRINTF(sc, "soconnect failed\n");
 		sounlock(so);
 		goto out;
 	}
 	sounlock(so);
-
-	m = NULL;
 
 	/* XXX convert to a (new) SOL_SOCKET call */
   	KASSERT(so->so_proto != NULL);
@@ -479,8 +467,6 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 		rc = 0;
 	}
 out:
-	m_freem(m);
-
 	if (rc != 0)
 		fd_close(fd);
 	else  {

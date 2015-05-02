@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.63 2015/04/26 21:40:49 rtr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.64 2015/05/02 17:18:04 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -239,7 +239,7 @@ struct pr_usrreqs {
 	int	(*pr_attach)(struct socket *, int);
 	void	(*pr_detach)(struct socket *);
 	int	(*pr_accept)(struct socket *, struct sockaddr *);
-	int	(*pr_connect)(struct socket *, struct mbuf *, struct lwp *);
+	int	(*pr_connect)(struct socket *, struct sockaddr *, struct lwp *);
 	int	(*pr_connect2)(struct socket *, struct socket *);
 	int	(*pr_bind)(struct socket *, struct sockaddr *, struct lwp *);
 	int	(*pr_listen)(struct socket *, struct lwp *);
@@ -252,7 +252,7 @@ struct pr_usrreqs {
 	int	(*pr_sockaddr)(struct socket *, struct sockaddr *);
 	int	(*pr_rcvd)(struct socket *, int, struct lwp *);
 	int	(*pr_recvoob)(struct socket *, struct mbuf *, int);
-	int	(*pr_send)(struct socket *, struct mbuf *, struct mbuf *,
+	int	(*pr_send)(struct socket *, struct mbuf *, struct sockaddr *,
 	    struct mbuf *, struct lwp *);
 	int	(*pr_sendoob)(struct socket *, struct mbuf *, struct mbuf *);
 	int	(*pr_purgeif)(struct socket *, struct ifnet *);
@@ -327,7 +327,7 @@ name##_bind_wrapper(struct socket *a,			\
 }							\
 static int						\
 name##_connect_wrapper(struct socket *a,		\
-    struct mbuf *b, struct lwp *c)			\
+    struct sockaddr *b, struct lwp *c)			\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
@@ -442,7 +442,7 @@ name##_recvoob_wrapper(struct socket *a,		\
 }							\
 static int						\
 name##_send_wrapper(struct socket *a, struct mbuf *b,	\
-    struct mbuf *c, struct mbuf *d, struct lwp *e)	\
+    struct sockaddr *c, struct mbuf *d, struct lwp *e)	\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\

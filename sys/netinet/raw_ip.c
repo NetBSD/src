@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.151 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.152 2015/05/02 17:18:03 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.151 2015/05/02 14:41:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.152 2015/05/02 17:18:03 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -607,7 +607,7 @@ rip_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-rip_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+rip_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
@@ -618,9 +618,7 @@ rip_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	if (nam->m_len != sizeof(struct sockaddr_in))
-		return EINVAL;
-	error = rip_connect_pcb(inp, mtod(nam, struct sockaddr_in *));
+	error = rip_connect_pcb(inp, (struct sockaddr_in *)nam);
 	if (! error)
 		soisconnected(so);
 	splx(s);
@@ -744,7 +742,7 @@ rip_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-rip_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+rip_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
@@ -771,9 +769,7 @@ rip_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			goto die;
 		}
-		if (nam->m_len != sizeof(struct sockaddr_in))
-			return EINVAL;
-		error = rip_connect_pcb(inp, mtod(nam, struct sockaddr_in *));
+		error = rip_connect_pcb(inp, (struct sockaddr_in *)nam);
 		if (error) {
 		die:
 			m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.123 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.124 2015/05/02 17:18:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.123 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.124 2015/05/02 17:18:03 rtr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1402,14 +1402,14 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 		syscallarg(int) namelen;
 	} */
 	int		error;
-	struct mbuf *nam;
+	struct sockaddr_big sb;
 
-	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, name),
+	error = linux_get_sa_sb(l, SCARG(uap, s), &sb, SCARG(uap, name),
 	    SCARG(uap, namelen));
 	if (error)
 		return (error);
 
-	error = do_sys_connect(l, SCARG(uap, s), nam);
+	error = do_sys_connect(l, SCARG(uap, s), (struct sockaddr *)&sb);
 
 	if (error == EISCONN) {
 		struct socket *so;

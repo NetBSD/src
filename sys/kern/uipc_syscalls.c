@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.176 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.177 2015/05/02 17:18:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.176 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.177 2015/05/02 17:18:03 rtr Exp $");
 
 #include "opt_pipe.h"
 
@@ -336,28 +336,25 @@ sys_connect(struct lwp *l, const struct sys_connect_args *uap,
 		syscallarg(unsigned int)		namelen;
 	} */
 	int		error;
-	struct mbuf	*nam;
+	struct sockaddr_big sbig;
 
-	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
-	    MT_SONAME);
+	error = sockargs_sb(&sbig, SCARG(uap, name), SCARG(uap, namelen));
 	if (error)
 		return error;
-	return do_sys_connect(l,  SCARG(uap, s), nam);
+	return do_sys_connect(l, SCARG(uap, s), (struct sockaddr *)&sbig);
 }
 
 int
-do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
+do_sys_connect(struct lwp *l, int fd, struct sockaddr *nam)
 {
 	struct socket	*so;
 	int		error;
 	int		interrupted = 0;
 
 	if ((error = fd_getsock(fd, &so)) != 0) {
-		m_freem(nam);
 		return (error);
 	}
 	solock(so);
-	MCLAIM(nam, so->so_mowner);
 	if ((so->so_state & SS_ISCONNECTING) != 0) {
 		error = EALREADY;
 		goto out;
@@ -396,7 +393,6 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
  out:
 	sounlock(so);
 	fd_putfile(fd);
-	m_freem(nam);
 	return error;
 }
 

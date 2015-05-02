@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.207 2015/04/26 21:40:49 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.208 2015/05/02 17:18:03 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.207 2015/04/26 21:40:49 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.208 2015/05/02 17:18:03 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -765,7 +765,7 @@ release:
 }
 
 static int
-tcp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -794,7 +794,7 @@ tcp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			if (error)
 				goto release;
 		}
-		error = in_pcbconnect(inp, nam, l);
+		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 	}
 #endif
 #ifdef INET6
@@ -804,7 +804,7 @@ tcp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			if (error)
 				goto release;
 		}
-		error = in6_pcbconnect(in6p, nam, l);
+		error = in6_pcbconnect(in6p, (struct sockaddr_in6 *)nam, l);
 		if (!error) {
 			/* mapped addr case */
 			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))
@@ -1125,7 +1125,7 @@ tcp_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-tcp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+tcp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp = NULL;

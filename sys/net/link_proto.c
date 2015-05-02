@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.27 2015/04/26 21:40:48 rtr Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.28 2015/05/02 17:18:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.27 2015/04/26 21:40:48 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.28 2015/05/02 17:18:03 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -53,7 +53,7 @@ static void link_detach(struct socket *);
 static int link_accept(struct socket *, struct sockaddr *);
 static int link_bind(struct socket *, struct sockaddr *, struct lwp *);
 static int link_listen(struct socket *, struct lwp *);
-static int link_connect(struct socket *, struct mbuf *, struct lwp *);
+static int link_connect(struct socket *, struct sockaddr *, struct lwp *);
 static int link_connect2(struct socket *, struct socket *);
 static int link_disconnect(struct socket *);
 static int link_shutdown(struct socket *);
@@ -64,7 +64,7 @@ static int link_peeraddr(struct socket *, struct sockaddr *);
 static int link_sockaddr(struct socket *, struct sockaddr *);
 static int link_rcvd(struct socket *, int, struct lwp *);
 static int link_recvoob(struct socket *, struct mbuf *, int);
-static int link_send(struct socket *, struct mbuf *, struct mbuf *,
+static int link_send(struct socket *, struct mbuf *, struct sockaddr *,
     struct mbuf *, struct lwp *);
 static int link_sendoob(struct socket *, struct mbuf *, struct mbuf *);
 static int link_purgeif(struct socket *, struct ifnet *);
@@ -287,7 +287,7 @@ link_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-link_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+link_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
  	KASSERT(solocked(so));
 
@@ -373,7 +373,7 @@ link_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-link_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+link_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	KASSERT(solocked(so));
