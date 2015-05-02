@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.151 2015/02/26 12:58:36 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.152 2015/05/02 14:41:32 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.151 2015/02/26 12:58:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.152 2015/05/02 14:41:32 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.151 2015/02/26 12:58:36 roy Exp $");
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -373,6 +374,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 	case SIOCGIFALIAS:
+	case SIOCGIFAFLAG_IN:
 		if (ifra->ifra_addr.sin_family == AF_INET)
 			LIST_FOREACH(ia,
 			    &IN_IFADDR_HASH(ifra->ifra_addr.sin_addr.s_addr),
@@ -382,7 +384,10 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 				    ifra->ifra_addr.sin_addr))
 					break;
 			}
-		if ((cmd == SIOCDIFADDR || cmd == SIOCGIFALIAS) && ia == NULL)
+		if ((cmd == SIOCDIFADDR ||
+		    cmd == SIOCGIFALIAS ||
+		    cmd == SIOCGIFAFLAG_IN) &&
+		    ia == NULL)
 			return (EADDRNOTAVAIL);
 
 		if (cmd == SIOCDIFADDR &&
@@ -391,6 +396,16 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		}
 		/* FALLTHROUGH */
 	case SIOCSIFADDR:
+		hostIsNew = 1;
+		if (ia == NULL || ia->ia_addr.sin_family != AF_INET)
+			;
+		else if (ifra->ifra_addr.sin_len == 0) {
+			ifra->ifra_addr = ia->ia_addr;
+			hostIsNew = 0;
+		} else if (in_hosteq(ia->ia_addr.sin_addr,
+		           ifra->ifra_addr.sin_addr))
+			hostIsNew = 0;
+		/* FALLTHROUGH */
 	case SIOCSIFDSTADDR:
 		if (ifra->ifra_addr.sin_family != AF_INET)
 			return (EAFNOSUPPORT);
@@ -399,7 +414,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		if (ifp == NULL)
 			panic("in_control");
 
-		if (cmd == SIOCGIFALIAS)
+		if (cmd == SIOCGIFALIAS || cmd == SIOCGIFAFLAG_IN)
 			break;
 
 		if (ia == NULL &&
@@ -509,7 +524,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
-		    1);
+		    1, hostIsNew);
 		if (error == 0) {
 			(void)pfil_run_hooks(if_pfil,
 			    (struct mbuf **)SIOCSIFADDR, ifp, PFIL_IFADDR);
@@ -520,20 +535,11 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		in_ifscrub(ifp, ia);
 		ia->ia_sockmask = *satocsin(ifreq_getaddr(cmd, ifr));
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
-		error = in_ifinit(ifp, ia, NULL, 0);
+		error = in_ifinit(ifp, ia, NULL, 0, 0);
 		break;
 
 	case SIOCAIFADDR:
 		maskIsNew = 0;
-		hostIsNew = 1;
-		if (ia->ia_addr.sin_family != AF_INET)
-			;
-		else if (ifra->ifra_addr.sin_len == 0) {
-			ifra->ifra_addr = ia->ia_addr;
-			hostIsNew = 0;
-		} else if (in_hosteq(ia->ia_addr.sin_addr,
-		           ifra->ifra_addr.sin_addr))
-			hostIsNew = 0;
 		if (ifra->ifra_mask.sin_len) {
 			/* Only scrub if we control the prefix route,
 			 * otherwise userland gets a bogus message */
@@ -554,7 +560,8 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		}
 		if (ifra->ifra_addr.sin_family == AF_INET &&
 		    (hostIsNew || maskIsNew)) {
-			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0);
+			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0,
+			    hostIsNew);
 		}
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
@@ -575,6 +582,10 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		else
 			memset(&ifra->ifra_broadaddr, 0,
 			      sizeof(ifra->ifra_broadaddr));
+		break;
+
+	case SIOCGIFAFLAG_IN:
+		ifr->ifr_addrflags = ia->ia4_flags;
 		break;
 
 	case SIOCDIFADDR:
@@ -651,6 +662,9 @@ in_purgeaddr(struct ifaddr *ifa)
 {
 	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in_ifaddr *ia = (void *) ifa;
+
+        /* stop DAD processing */
+	arp_dad_stop(ifa);
 
 	in_ifscrub(ifp, ia);
 	in_ifremlocal(ifa);
@@ -870,7 +884,7 @@ in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
  */
 int
 in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
-    const struct sockaddr_in *sin, int scrub)
+    const struct sockaddr_in *sin, int scrub, int hostIsNew)
 {
 	u_int32_t i;
 	struct sockaddr_in oldaddr;
@@ -887,6 +901,14 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		LIST_REMOVE(ia, ia_hash);
 	ia->ia_addr = *sin;
 	LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr), ia, ia_hash);
+
+	/* Set IN_IFF flags early for arp_ifinit() */
+	if (hostIsNew && if_do_dad(ifp) && !in_nullhost(ia->ia_addr.sin_addr)) {
+		if (ifp->if_link_state == LINK_STATE_DOWN)
+			ia->ia4_flags |= IN_IFF_DETACHED;
+		else
+			ia->ia4_flags |= IN_IFF_TENTATIVE;
+	}
 
 	/*
 	 * Give the interface a chance to initialize
@@ -956,6 +978,12 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		addr.s_addr = INADDR_ALLHOSTS_GROUP;
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
+
+	if (hostIsNew && if_do_dad(ifp) &&
+	    !in_nullhost(ia->ia_addr.sin_addr) &&
+	    ia->ia4_flags & IN_IFF_TENTATIVE)
+		arp_dad_start((struct ifaddr *)ia);
+
 	return (error);
 bad:
 	splx(s);
@@ -1119,6 +1147,101 @@ in_broadcast(struct in_addr in, struct ifnet *ifp)
 			return 1;
 	return (0);
 #undef ia
+}
+
+/*
+ * perform DAD when interface becomes IFF_UP.
+ */
+void
+in_if_link_up(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	struct in_ifaddr *ia;
+
+	/* Ensure it's sane to run DAD */
+	if (ifp->if_link_state == LINK_STATE_DOWN)
+		return;
+	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
+		return;
+
+	IFADDR_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		ia = (struct in_ifaddr *)ifa;
+
+		/* If detached then mark as tentative */
+		if (ia->ia4_flags & IN_IFF_DETACHED) {
+			ia->ia4_flags &= ~IN_IFF_DETACHED;
+			if (if_do_dad(ifp))
+				ia->ia4_flags |= IN_IFF_TENTATIVE;
+			else if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0)
+				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		}
+
+		if (ia->ia4_flags & IN_IFF_TENTATIVE) {
+			/* Clear the duplicated flag as we're starting DAD. */
+			ia->ia4_flags &= ~IN_IFF_DUPLICATED;
+			arp_dad_start(ifa);
+		}
+	}
+}
+
+void
+in_if_up(struct ifnet *ifp)
+{
+
+	/* interface may not support link state, so bring it up also */
+	in_if_link_up(ifp);
+}
+
+/*
+ * Mark all addresses as detached.
+ */
+void
+in_if_link_down(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	struct in_ifaddr *ia;
+
+	IFADDR_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		ia = (struct in_ifaddr *)ifa;
+
+		/* Stop DAD processing */
+		arp_dad_stop(ifa);
+
+		/*
+		 * Mark the address as detached.
+		 */
+		if (!(ia->ia4_flags & IN_IFF_DETACHED)) {
+			ia->ia4_flags |= IN_IFF_DETACHED;
+			ia->ia4_flags &=
+			    ~(IN_IFF_TENTATIVE | IN_IFF_DUPLICATED);
+			rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		}
+	}
+}
+
+void
+in_if_down(struct ifnet *ifp)
+{
+
+	in_if_link_down(ifp);
+}
+
+void
+in_if_link_state_change(struct ifnet *ifp, int link_state)
+{
+
+	switch (link_state) {
+	case LINK_STATE_DOWN:
+		in_if_link_down(ifp);
+		break;
+	case LINK_STATE_UP:
+		in_if_link_up(ifp);
+		break;
+	}
 }
 
 /*
@@ -1375,7 +1498,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 		if (imo->imo_multicast_ifp != NULL) {
 			ifp = imo->imo_multicast_ifp;
 			IFP_TO_IA(ifp, ia);		/* XXX */
-			if (ia == 0) {
+			if (ia == 0 || ia->ia4_flags & IN_IFF_NOTREADY) {
 				*errorp = EADDRNOTAVAIL;
 				return NULL;
 			}
@@ -1384,6 +1507,10 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	if (ia->ia_ifa.ifa_getifa != NULL) {
 		ia = ifatoia((*ia->ia_ifa.ifa_getifa)(&ia->ia_ifa,
 		                                      sintosa(sin)));
+		if (ia == NULL) {
+			*errorp = EADDRNOTAVAIL;
+			return NULL;
+		}
 	}
 #ifdef GETIFA_DEBUG
 	else
