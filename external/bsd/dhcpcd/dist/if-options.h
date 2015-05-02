@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.9 2015/03/26 10:26:37 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.10 2015/05/02 15:18:37 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -111,6 +111,12 @@
 #define DHCPCD_PFXDLGMIX		(1ULL << 53)
 #define DHCPCD_IPV6RA_AUTOCONF		(1ULL << 54)
 #define DHCPCD_ROUTER_HOST_ROUTE_WARNED	(1ULL << 55)
+#define DHCPCD_IPV6RA_ACCEPT_NOPUBLIC	(1ULL << 56)
+#define DHCPCD_BOOTP			(1ULL << 57)
+
+#define DHCPCD_WARNINGS (DHCPCD_CSR_WARNED | \
+		DHCPCD_ROUTER_HOST_ROUTE_WARNED)
+#define DHCPCD_CONF (DHCPCD_NOPFXDLG | DHCPCD_PFXDLGONLY)
 
 extern const struct option cf_options[];
 
@@ -140,6 +146,7 @@ struct vivco {
 };
 
 struct if_options {
+	time_t mtime;
 	uint8_t iaid[4];
 	int metric;
 	uint8_t requestmask[256 / NBBY];
