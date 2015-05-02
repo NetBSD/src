@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.81 2015/04/27 07:03:58 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.82 2015/05/02 14:30:27 roy Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.81 2015/04/27 07:03:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.82 2015/05/02 14:30:27 roy Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -572,7 +572,7 @@ intr_free_io_intrsource_direct(struct intrsource *isp)
 	SIMPLEQ_REMOVE(&io_interrupt_sources, isp, intrsource, is_list);
 
 	/* Is this interrupt established? */
-	if (isp->is_evname != '\0')
+	if (isp->is_evname[0] != '\0')
 		evcnt_detach(&isp->is_evcnt);
 
 	kmem_free(isp->is_saved_evcnt,
