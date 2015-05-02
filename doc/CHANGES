@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2073 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2074 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -156,3 +156,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	xz(1): Import of XZ 5.2.1. [christos 20150417]
 	libc: Update to tzcode2015d. [christos 20150428]
 	openresolv(8): Import openresolv-3.7.0 [roy 20150501]
+	netinet: Added IN_IFF_TENTATIVE, IN_IFF_DUPLICATED and IN_IFF_DETACHED.
+	         IPV4 addresses now perform DAD using ARP as described in
+		 RFC 5227. [roy 20150502]
