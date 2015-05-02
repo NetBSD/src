@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.7 2015/05/02 12:09:34 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.8 2015/05/02 17:15:20 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -10,6 +10,7 @@ include	"arch/evbarm/conf/GENERIC.common"
 
 options 	CPU_CORTEXA15
 options 	SOC_TEGRA124
+options 	BOARD_JETSONTK1
 options 	MULTIPROCESSOR
 #options 	MEMSIZE=2048
 
