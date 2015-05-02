@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.2 2015/05/02 14:10:03 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.3 2015/05/02 17:07:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.2 2015/05/02 14:10:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.3 2015/05/02 17:07:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.2 2015/05/02 14:10:03 jmcneill Exp 
 static int	tegra_sdhc_match(device_t, cfdata_t, void *);
 static void	tegra_sdhc_attach(device_t, device_t, void *);
 
+static int	tegra_sdhc_card_detect(struct sdhc_softc *);
+static int	tegra_sdhc_write_protect(struct sdhc_softc *);
+
 struct tegra_sdhc_softc {
 	struct sdhc_softc	sc;
 
@@ -60,6 +63,10 @@ struct tegra_sdhc_softc {
 	bus_size_t		sc_bsz;
 	struct sdhc_host	*sc_host;
 	void			*sc_ih;
+
+	struct tegra_gpio_pin	*sc_pin_cd;
+	struct tegra_gpio_pin	*sc_pin_power;
+	struct tegra_gpio_pin	*sc_pin_wp;
 };
 
 CFATTACH_DECL_NEW(tegra_sdhc, sizeof(struct tegra_sdhc_softc),
@@ -77,6 +84,8 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	struct tegra_sdhc_softc * const sc = device_private(self);
 	struct tegraio_attach_args * const tio = aux;
 	const struct tegra_locators * const loc = &tio->tio_loc;
+	prop_dictionary_t prop = device_properties(self);
+	const char *pin;
 	int error;
 
 	sc->sc.sc_dev = self;
@@ -96,6 +105,22 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 	sc->sc_bsz = loc->loc_size;
 	sc->sc_port = loc->loc_port;
+
+	if (prop_dictionary_get_cstring_nocopy(prop, "power-gpio", &pin)) {
+		sc->sc_pin_power = tegra_gpio_acquire(pin, GPIO_PIN_OUTPUT);
+		if (sc->sc_pin_power)
+			tegra_gpio_write(sc->sc_pin_power, 1);
+	}
+
+	if (prop_dictionary_get_cstring_nocopy(prop, "cd-gpio", &pin))
+		sc->sc_pin_cd = tegra_gpio_acquire(pin, GPIO_PIN_INPUT);
+	if (prop_dictionary_get_cstring_nocopy(prop, "wp-gpio", &pin))
+		sc->sc_pin_wp = tegra_gpio_acquire(pin, GPIO_PIN_INPUT);
+
+	if (sc->sc_pin_cd)
+		sc->sc.sc_vendor_card_detect = tegra_sdhc_card_detect;
+	if (sc->sc_pin_wp)
+		sc->sc.sc_vendor_write_protect = tegra_sdhc_write_protect;
 
 	/*
 	 * The controller supports SDR104 speeds (208 MHz). With PLLP (408 Mhz)
@@ -130,4 +155,24 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ih = NULL;
 		return;
 	}
+}
+
+static int
+tegra_sdhc_card_detect(struct sdhc_softc *ssc)
+{
+	struct tegra_sdhc_softc *sc = device_private(ssc->sc_dev);
+
+	KASSERT(sc->sc_pin_cd != NULL);
+
+	return !tegra_gpio_read(sc->sc_pin_cd);
+}
+
+static int
+tegra_sdhc_write_protect(struct sdhc_softc *ssc)
+{
+	struct tegra_sdhc_softc *sc = device_private(ssc->sc_dev);
+
+	KASSERT(sc->sc_pin_wp != NULL);
+
+	return tegra_gpio_read(sc->sc_pin_wp);
 }
