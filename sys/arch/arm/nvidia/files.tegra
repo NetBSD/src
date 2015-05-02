@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.4 2015/05/02 12:09:04 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.5 2015/05/02 17:15:20 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -72,3 +72,6 @@ defparam opt_tegra.h			MEMSIZE
 # SOC parameters
 defflag	opt_tegra.h			SOC_TEGRAK1
 defflag	opt_tegra.h			SOC_TEGRA124: SOC_TEGRAK1
+
+# Board parameters
+defflag	opt_tegra.h			BOARD_JETSONTK1
