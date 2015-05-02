@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.96 2015/05/01 18:37:40 christos Exp $ */
+/* $NetBSD: locore.h,v 1.97 2015/05/02 18:16:17 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -317,7 +317,7 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 }
 #endif	/* (MIPS3 + MIPS4 + MIPS64 + MIPS64R2) > 0 */
 
-#if (MIPS64 + MIPS64R2) > 0
+#if (MIPS64 + MIPS64R2) > 0 && !defined(__mips_o32)
 /* 64-bits address space accessor for n32, n64 ABI */
 
 static __inline uint64_t	mips64_ld_a64(uint64_t addr) __unused;
@@ -332,7 +332,7 @@ mips64_ld_a64(uint64_t addr)
 #elif defined(_LP64)
 	rv = *(volatile uint64_t *)addr;
 #else
-	KASSERT(0);	// LKM, STANDALONE, MODULE
+#error unknown ABI
 #endif
 	return (rv);
 }
@@ -345,7 +345,7 @@ mips64_sd_a64(uint64_t addr, uint64_t val)
 #elif defined(_LP64)
 	*(volatile uint64_t *)addr = val;
 #else
-	KASSERT(0);	// LKM, STANDALONE, MODULE
+#error unknown ABI
 #endif
 }
 #endif	/* (MIPS64 + MIPS64R2) > 0 */
