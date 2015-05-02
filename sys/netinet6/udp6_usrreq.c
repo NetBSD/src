@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.119 2015/04/26 21:40:49 rtr Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.120 2015/05/02 17:18:03 rtr Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.119 2015/04/26 21:40:49 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.120 2015/05/02 17:18:03 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -721,7 +721,7 @@ udp6_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-udp6_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+udp6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
 	int error = 0;
@@ -733,7 +733,7 @@ udp6_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr))
 		return EISCONN;
 	s = splsoftnet();
-	error = in6_pcbconnect(in6p, nam, l);
+	error = in6_pcbconnect(in6p, (struct sockaddr_in6 *)nam, l);
 	splx(s);
 	if (error == 0)
 		soisconnected(so);
@@ -863,7 +863,7 @@ udp6_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-udp6_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+udp6_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
@@ -875,7 +875,7 @@ udp6_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	KASSERT(m != NULL);
 
 	s = splsoftnet();
-	error = udp6_output(in6p, m, nam, control, l);
+	error = udp6_output(in6p, m, (struct sockaddr_in6 *)nam, control, l);
 	splx(s);
 
 	return error;

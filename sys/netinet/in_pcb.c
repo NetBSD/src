@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.159 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.160 2015/05/02 17:18:03 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.159 2015/05/02 14:41:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.160 2015/05/02 17:18:03 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -443,26 +443,38 @@ in_pcbbind(void *v, struct sockaddr_in *sin, struct lwp *l)
 }
 
 /*
+ * adapter function that accepts nam as mbuf for in_pcbconnect()
+ */
+int
+in_pcbconnect_m(void *v, struct mbuf *nam, struct lwp *l)
+{
+	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
+
+	if (sizeof (*sin) != nam->m_len) {
+		return EINVAL;
+	}
+
+	return in_pcbconnect(v, sin, l);
+}
+
+/*
  * Connect from a socket to a specified address.
  * Both address and port must be specified in argument sin.
  * If don't have a local address for this socket yet,
  * then pick one.
  */
 int
-in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
+in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 {
 	struct inpcb *inp = v;
 	struct in_ifaddr *ia = NULL;
 	struct sockaddr_in *ifaddr = NULL;
-	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
 	vestigial_inpcb_t vestige;
 	int error;
 
 	if (inp->inp_af != AF_INET)
 		return (EINVAL);
 
-	if (nam->m_len != sizeof (*sin))
-		return (EINVAL);
 	if (sin->sin_len != sizeof (*sin))
 		return (EINVAL);
 	if (sin->sin_family != AF_INET)

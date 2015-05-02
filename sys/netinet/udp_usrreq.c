@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.220 2015/04/26 21:40:49 rtr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.221 2015/05/02 17:18:03 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.220 2015/04/26 21:40:49 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.221 2015/05/02 17:18:03 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -932,7 +932,7 @@ udp_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-udp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+udp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
@@ -943,7 +943,7 @@ udp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	error = in_pcbconnect(inp, nam, l);
+	error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 	if (! error)
 		soisconnected(so);
 	splx(s);
@@ -1066,7 +1066,7 @@ udp_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-udp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
@@ -1093,7 +1093,7 @@ udp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			goto die;
 		}
-		error = in_pcbconnect(inp, nam, l);
+		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 		if (error)
 			goto die;
 	} else {
