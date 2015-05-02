@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.52 2014/11/13 02:31:24 christos Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.53 2015/05/02 18:18:13 matt Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -37,6 +37,12 @@ CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mlongcall :}
 CFLAGS+=	-fno-pic
 .elif ${MACHINE_CPU} == "riscv"
 CFLAGS+=	-fPIC -Wa,-fno-pic
+.elif ${MACHINE_ARCH} == "mips64eb"
+CFLAGS+=	-mabi=64
+LDFLAGS+=	-Wl,-m,elf64btsmip
+.elif ${MACHINE_ARCH} == "mips64el"
+CFLAGS+=	-mabi=64
+LDFLAGS+=	-Wl,-m,elf64ltsmip
 .endif
 
 .if ${MACHINE_CPU} == "sparc64"
