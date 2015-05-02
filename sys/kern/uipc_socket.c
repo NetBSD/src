@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.239 2015/04/24 22:32:37 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.240 2015/05/02 17:18:03 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.239 2015/04/24 22:32:37 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.240 2015/05/02 17:18:03 rtr Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -811,7 +811,7 @@ soaccept(struct socket *so, struct sockaddr *nam)
 }
 
 int
-soconnect(struct socket *so, struct mbuf *nam, struct lwp *l)
+soconnect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	int error;
 
@@ -1051,12 +1051,17 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				so->so_options |= SO_DONTROUTE;
 			if (resid > 0)
 				so->so_state |= SS_MORETOCOME;
-			if (flags & MSG_OOB)
+			if (flags & MSG_OOB) {
 				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(so,
 				    top, control);
-			else
+			} else {
+				struct sockaddr *sin = NULL;
+				if (addr) {
+					sin = mtod(addr, struct sockaddr *);
+				}
 				error = (*so->so_proto->pr_usrreqs->pr_send)(so,
-				    top, addr, control, l);
+				    top, sin, control, l);
+			}
 			if (dontroute)
 				so->so_options &= ~SO_DONTROUTE;
 			if (resid > 0)
