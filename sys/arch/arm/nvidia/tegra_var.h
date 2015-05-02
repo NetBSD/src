@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.5 2015/05/02 12:08:32 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.6 2015/05/02 17:06:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -77,7 +77,7 @@ u_int	tegra_car_periph_sdmmc_rate(u_int);
 int	tegra_car_periph_sdmmc_set_div(u_int, u_int);
 
 struct tegra_gpio_pin;
-struct tegra_gpio_pin *tegra_gpio_acquire(const char *, int, u_int);
+struct tegra_gpio_pin *tegra_gpio_acquire(const char *, u_int);
 void	tegra_gpio_release(struct tegra_gpio_pin *);
 int	tegra_gpio_read(struct tegra_gpio_pin *);
 void	tegra_gpio_write(struct tegra_gpio_pin *, int);
