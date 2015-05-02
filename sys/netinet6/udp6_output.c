@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.48 2015/04/27 02:59:44 ozaki-r Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.49 2015/05/02 17:18:03 rtr Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.48 2015/04/27 02:59:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.49 2015/05/02 17:18:03 rtr Exp $");
 
 #include "opt_inet.h"
 
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.48 2015/04/27 02:59:44 ozaki-r Exp
 
 int
 udp6_output(struct in6pcb * const in6p, struct mbuf *m,
-    struct mbuf * const addr6, struct mbuf * const control,
+    struct sockaddr_in6 * const addr6, struct mbuf * const control,
     struct lwp * const l)
 {
 	u_int32_t ulen = m->m_pkthdr.len;
@@ -136,11 +136,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 	struct sockaddr_in6 tmp;
 
 	if (addr6) {
-		if (addr6->m_len != sizeof(*sin6)) {
-			error = EINVAL;
-			goto release;
-		}
-		sin6 = mtod(addr6, struct sockaddr_in6 *);
+		sin6 = addr6;
 		if (sin6->sin6_family != AF_INET6) {
 			error = EAFNOSUPPORT;
 			goto release;
