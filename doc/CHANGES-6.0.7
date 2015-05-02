@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.41 2015/04/19 05:59:36 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.42 2015/05/02 17:25:37 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -5988,3 +5988,9 @@ xsrc/xfree/xc/lib/X11/Xlibint.h				1.2
 
 	Fix CVE-2013-7439: Buffer overflow in MakeBigReq macro in libX11.
 	[mrg, ticket #1290]
+
+distrib/sparc64/liveimage/emuimage/Makefile	1.4
+
+	Don't forget to put /ofwboot into the image otherwise boot fails.
+	[tsutsui, ticket #1297]
+
