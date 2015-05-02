@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.150 2015/04/26 21:40:49 rtr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.151 2015/05/02 14:41:32 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.150 2015/04/26 21:40:49 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.151 2015/05/02 14:41:32 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -560,6 +560,7 @@ rip_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	struct sockaddr_in *addr = (struct sockaddr_in *)nam;
 	int error = 0;
 	int s;
+	struct ifaddr *ia;
 
 	KASSERT(solocked(so));
 	KASSERT(inp != NULL);
@@ -577,11 +578,19 @@ rip_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		error = EAFNOSUPPORT;
 		goto release;
 	}
-	if (!in_nullhost(addr->sin_addr) &&
-	    ifa_ifwithaddr(sintosa(addr)) == 0) {
+	if ((ia = ifa_ifwithaddr(sintosa(addr))) == 0 &&
+	    !in_nullhost(addr->sin_addr))
+	{
 		error = EADDRNOTAVAIL;
 		goto release;
 	}
+        if (ia && ((struct in_ifaddr *)ia)->ia4_flags &
+	            (IN6_IFF_NOTREADY | IN_IFF_DETACHED))
+	{
+		error = EADDRNOTAVAIL;
+		goto release;
+	}
+
 	inp->inp_laddr = addr->sin_addr;
 
 release:
