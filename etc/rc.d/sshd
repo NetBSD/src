@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.22 2013/02/07 19:32:19 christos Exp $
+# $NetBSD: sshd,v 1.22.10.1 2015/05/02 18:04:37 martin Exp $
 #
 
 # PROVIDE: sshd
@@ -17,44 +17,31 @@ extra_commands="keygen reload"
 
 sshd_keygen()
 {
-	(
+(
+	keygen="/usr/bin/ssh-keygen"
 	umask 022
-	if [ -f /etc/ssh/ssh_host_key ]; then
-		echo "You already have an RSA host key" \
-		    "in /etc/ssh/ssh_host_key"
-		echo "Skipping protocol version 1 RSA Key Generation"
-	else
-		/usr/bin/ssh-keygen -t rsa1 ${ssh_keygen_flags} \
-		    -f /etc/ssh/ssh_host_key -N ''
-	fi
-
-	if [ -f /etc/ssh/ssh_host_dsa_key ]; then
-		echo "You already have a DSA host key" \
-		    "in /etc/ssh/ssh_host_dsa_key"
-		echo "Skipping protocol version 2 DSA Key Generation"
-	else
-		/usr/bin/ssh-keygen -t dsa -b 1024 \
-		    -f /etc/ssh/ssh_host_dsa_key -N ''
-	fi
-
-	if [ -f /etc/ssh/ssh_host_ecdsa_key ]; then
-		echo "You already have a ECDSA host key" \
-		    "in /etc/ssh/ssh_host_ecdsa_key"
-		echo "Skipping protocol version 1 ECDSA Key Generation"
-	else
-		/usr/bin/ssh-keygen -t ecdsa -b 521 \
-		    -f /etc/ssh/ssh_host_ecdsa_key -N ''
-	fi
-
-	if [ -f /etc/ssh/ssh_host_rsa_key ]; then
-		echo "You already have a RSA host key" \
-		    "in /etc/ssh/ssh_host_rsa_key"
-		echo "Skipping protocol version 2 RSA Key Generation"
-	else
-		/usr/bin/ssh-keygen -t rsa ${ssh_keygen_flags} \
-		    -f /etc/ssh/ssh_host_rsa_key -N ''
-	fi
-	)
+	while read type bits filename version name;  do
+		f="/etc/ssh/$filename"
+		if [ -f "$f" ]; then
+			echo "You already have an $name host key in $f"
+			echo "Skipping protocol version $version $name" \
+			    "Key Generation"
+		else
+			case "${bits}" in
+			-1)	bitarg=;;
+			0)	bitarg="${ssh_keygen_flags}";;
+			*)	bitarg="-b ${bits}";;
+			esac
+			"${keygen}" -t "${type}" ${bitarg} -f "${f}" -N ''
+		fi
+	done << _EOF
+rsa1	0	ssh_host_key		1	RSA
+dsa	1024	ssh_host_dsa_key	2	DSA
+ecdsa	521	ssh_host_ecdsa_key	1	ECDSA
+ed25519	-1	ssh_host_ed25519_key	1	ED25519
+rsa	0	ssh_host_rsa_key	2	RSA
+_EOF
+)
 }
 
 sshd_precmd()
@@ -62,6 +49,7 @@ sshd_precmd()
 	if [ ! -f /etc/ssh/ssh_host_key -o \
 	    ! -f /etc/ssh/ssh_host_dsa_key -o \
 	    ! -f /etc/ssh/ssh_host_ecdsa_key -o \
+	    ! -f /etc/ssh/ssh_host_ed25519_key -o \
 	    ! -f /etc/ssh/ssh_host_rsa_key ]; then
 		run_rc_command keygen
 	fi
