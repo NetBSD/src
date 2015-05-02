@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.2 2015/05/02 14:10:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.2 2015/05/02 14:10:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,10 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp 
 static int	tegra_sdhc_match(device_t, cfdata_t, void *);
 static void	tegra_sdhc_attach(device_t, device_t, void *);
 
-static void	tegra_sdhc_attach_i(device_t);
-
 struct tegra_sdhc_softc {
 	struct sdhc_softc	sc;
+
+	u_int			sc_port;
 
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
@@ -77,10 +77,14 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	struct tegra_sdhc_softc * const sc = device_private(self);
 	struct tegraio_attach_args * const tio = aux;
 	const struct tegra_locators * const loc = &tio->tio_loc;
+	int error;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = tio->tio_dmat;
 	sc->sc.sc_flags = SDHC_FLAG_32BIT_ACCESS |
+			  SDHC_FLAG_NO_PWR0 |
+			  SDHC_FLAG_NO_HS_BIT |
+			  SDHC_FLAG_NO_CLKBASE |
 			  SDHC_FLAG_USE_DMA;
 	if (SDMMC_8BIT_P(loc->loc_port)) {
 		sc->sc.sc_flags |= SDHC_FLAG_8BIT_MODE;
@@ -91,12 +95,15 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 	sc->sc_bsz = loc->loc_size;
+	sc->sc_port = loc->loc_port;
 
-#if notyet
-	sc->sc.sc_clkbase = tegra_sdhc_get_freq(loc->loc_port) / 1000;
-#else
-	sc->sc.sc_clkbase = 0;
-#endif
+	/*
+	 * The controller supports SDR104 speeds (208 MHz). With PLLP (408 Mhz)
+	 * as input and div=2 we can get a reasonable 204 MHz for the SDHC.
+	 */
+	const u_int div = howmany(tegra_car_pllp0_rate() / 1000, 208000);
+	tegra_car_periph_sdmmc_set_div(sc->sc_port, div);
+	sc->sc.sc_clkbase = tegra_car_periph_sdmmc_rate(sc->sc_port) / 1000;
 
 	aprint_naive("\n");
 	aprint_normal(": SDMMC%d\n", loc->loc_port + 1);
@@ -114,15 +121,6 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
-
-	config_interrupts(self, tegra_sdhc_attach_i);
-}
-
-static void
-tegra_sdhc_attach_i(device_t self)
-{
-	struct tegra_sdhc_softc * const sc = device_private(self);
-	int error;
 
 	error = sdhc_host_found(&sc->sc, sc->sc_bst, sc->sc_bsh, sc->sc_bsz);
 	if (error) {
