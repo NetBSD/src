@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.4 2015/04/28 11:15:55 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.5 2015/05/02 12:08:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/bus.h>
+#include <sys/gpio.h>
 
 #include "opt_tegra.h"
 
@@ -71,6 +72,15 @@ void	tegra_bootstrap(void);
 
 u_int	tegra_car_osc_rate(void);
 u_int	tegra_car_pllx_rate(void);
+u_int	tegra_car_pllp0_rate(void);
+u_int	tegra_car_periph_sdmmc_rate(u_int);
+int	tegra_car_periph_sdmmc_set_div(u_int, u_int);
+
+struct tegra_gpio_pin;
+struct tegra_gpio_pin *tegra_gpio_acquire(const char *, int, u_int);
+void	tegra_gpio_release(struct tegra_gpio_pin *);
+int	tegra_gpio_read(struct tegra_gpio_pin *);
+void	tegra_gpio_write(struct tegra_gpio_pin *, int);
 
 void	tegra_pmc_reset(void);
 void	tegra_pmc_power(u_int, bool);
