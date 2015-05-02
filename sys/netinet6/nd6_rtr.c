@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.93.2.2 2015/04/06 01:32:33 snj Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.93.2.3 2015/05/02 18:23:25 martin Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.93.2.2 2015/04/06 01:32:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.93.2.3 2015/05/02 18:23:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,8 +272,15 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	}
 	if (nd_ra->nd_ra_retransmit)
 		ndi->retrans = ntohl(nd_ra->nd_ra_retransmit);
-	if (nd_ra->nd_ra_curhoplimit)
-		ndi->chlim = nd_ra->nd_ra_curhoplimit;
+	if (nd_ra->nd_ra_curhoplimit) {
+		if (ndi->chlim < nd_ra->nd_ra_curhoplimit)
+			ndi->chlim = nd_ra->nd_ra_curhoplimit;
+		else if (ndi->chlim != nd_ra->nd_ra_curhoplimit)
+			log(LOG_ERR, "nd_ra_input: lower CurHopLimit sent from "
+			   "%s on %s (current=%d, received=%d), ignored\n",
+			   ip6_sprintf(&ip6->ip6_src),
+			   if_name(ifp), ndi->chlim, nd_ra->nd_ra_curhoplimit);
+	}
 	dr = defrtrlist_update(&drtr);
     }
 
