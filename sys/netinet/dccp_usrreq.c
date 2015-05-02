@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.5 2015/04/27 02:59:44 ozaki-r Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.6 2015/05/02 17:18:03 rtr Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.5 2015/04/27 02:59:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.6 2015/05/02 17:18:03 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_dccp.h"
@@ -1851,11 +1851,10 @@ dccp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
  * Called by the connect system call.
  */
 static int
-dccp_connect(struct socket *so, struct mbuf *m, struct lwp *l)
+dccp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp;
 	struct dccpcb *dp;
-	struct sockaddr *nam;
 	int error;
 	struct sockaddr_in *sin;
 	char test[2];
@@ -1889,7 +1888,6 @@ dccp_connect(struct socket *so, struct mbuf *m, struct lwp *l)
 
 	dccpstat.dccps_connattempt++;
 
-	nam = mtod(m, struct sockaddr *);
 	sin = (struct sockaddr_in *)nam;
 	if (sin->sin_family == AF_INET
 	    && IN_MULTICAST(ntohl(sin->sin_addr.s_addr))) {
@@ -1897,7 +1895,7 @@ dccp_connect(struct socket *so, struct mbuf *m, struct lwp *l)
 		goto bad;
 	}
 
-	error = dccp_doconnect(so, m, l, 0);
+	error = dccp_doconnect(so, nam, l, 0);
 
 	if (error != 0)
 		goto bad;
@@ -1931,7 +1929,8 @@ dccp_connect2(struct socket *so, struct socket *so2)
  *
  */
 int
-dccp_doconnect(struct socket *so, struct mbuf *m, struct lwp *l, int isipv6)
+dccp_doconnect(struct socket *so, struct sockaddr *nam,
+    struct lwp *l, int isipv6)
 { 
 	struct inpcb *inp;
 #ifdef INET6
@@ -1974,11 +1973,11 @@ dccp_doconnect(struct socket *so, struct mbuf *m, struct lwp *l, int isipv6)
 
 #ifdef INET6
 	if (isipv6) {
-		error = in6_pcbconnect(in6p, m, l);
+		error = in6_pcbconnect(in6p, (struct sockaddr_in6 *)nam, l);
 		DCCP_DEBUG((LOG_INFO, "in6_pcbconnect=%d\n",error));
 	} else
 #endif
-		error = in_pcbconnect(inp, m, l);
+		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 	if (error) {
 		DCCP_DEBUG((LOG_INFO, "in_pcbconnect=%d\n",error));
 		return error;
@@ -2112,12 +2111,11 @@ dccp_disconnect2(struct dccpcb *dp)
 }
 
 int
-dccp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+dccp_send(struct socket *so, struct mbuf *m, struct sockaddr *addr,
     struct mbuf *control, struct lwp *l)
 {
 	struct inpcb	*inp;
 	struct dccpcb	*dp;
-	struct sockaddr *addr;
 	int		error = 0;
 	int		isipv6 = 0;
 
@@ -2130,11 +2128,6 @@ dccp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		m_freem(m);
 		return EINVAL;
 	}
-
-	if (nam == 0)
-		addr = NULL;
-	else
-		addr = mtod(nam, struct sockaddr *);
 
 #ifdef INET6
 	isipv6 = addr && addr->sa_family == AF_INET6;
@@ -2197,7 +2190,7 @@ dccp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	dp->pktcnt ++;
 
 	if (addr && dp->state == DCCPS_CLOSED) {
-		error = dccp_doconnect(so, nam, l, isipv6);
+		error = dccp_doconnect(so, addr, l, isipv6);
 		if (error)
 			goto out;
 	}
