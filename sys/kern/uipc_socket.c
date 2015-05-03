@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.243 2015/05/02 23:46:04 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.244 2015/05/03 04:18:45 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.243 2015/05/02 23:46:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.244 2015/05/03 04:18:45 rtr Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -941,7 +941,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					error = ENOTCONN;
 					goto release;
 				}
-			} else if (NULL == addr) {
+			} else if (addr == NULL) {
 				error = EDESTADDRREQ;
 				goto release;
 			}
