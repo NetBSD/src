@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.56 2015/05/02 12:10:24 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.57 2015/05/03 11:46:25 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.56 2015/05/02 12:10:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.57 2015/05/03 11:46:25 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -755,13 +755,20 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 		 * Enable bus power.  Wait at least 1 ms (or 74 clocks) plus
 		 * voltage ramp until power rises.
 		 */
-		HWRITE1(hp, SDHC_POWER_CTL,
-		    HREAD1(hp, SDHC_POWER_CTL) & pcmask);
-		sdmmc_delay(1);
-		HWRITE1(hp, SDHC_POWER_CTL, (vdd << SDHC_VOLTAGE_SHIFT));
-		sdmmc_delay(1);
-		HSET1(hp, SDHC_POWER_CTL, SDHC_BUS_POWER);
-		sdmmc_delay(10000);
+
+		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_SINGLE_POWER_WRITE)) {
+			HWRITE1(hp, SDHC_POWER_CTL,
+			    (vdd << SDHC_VOLTAGE_SHIFT) | SDHC_BUS_POWER);
+		} else {
+			HWRITE1(hp, SDHC_POWER_CTL,
+			    HREAD1(hp, SDHC_POWER_CTL) & pcmask);
+			sdmmc_delay(1);
+			HWRITE1(hp, SDHC_POWER_CTL,
+			    (vdd << SDHC_VOLTAGE_SHIFT));
+			sdmmc_delay(1);
+			HSET1(hp, SDHC_POWER_CTL, SDHC_BUS_POWER);
+			sdmmc_delay(10000);
+		}
 
 		/*
 		 * The host system may not power the bus due to battery low,
