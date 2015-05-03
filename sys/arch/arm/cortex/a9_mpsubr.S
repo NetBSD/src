@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.35 2015/04/27 07:13:44 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.36 2015/05/03 16:18:51 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -536,6 +536,20 @@ cortex_mpstart:
 #else
 #ifdef __ARMEB__
 	setend	be				// switch to BE now
+#endif
+
+	// We haven't used anything from memory yet so we can invalidate the
+	// cache without fear of losing valuable data.  Note that the A5/A9
+	// L2 cache are not flushed via this call so this affects only this
+	// core's L1 cache.  The A7/A15/A17 L2 cache is write-through so
+	// invalidating it doesn't cause any data loss either.
+#if defined(KERNEL_BASES_EQUAL)
+	bl	_C_LABEL(armv7_dcache_inv_all)
+#else
+	movw	ip, #:lower16:_C_LABEL(armv7_dcache_inv_all)
+	movt	ip, #:upper16:_C_LABEL(armv7_dcache_inv_all)
+	sub	ip, ip, #KERNEL_BASE_VOFFSET
+	blx	ip				// toss d-cache
 #endif
 
 #if 0
