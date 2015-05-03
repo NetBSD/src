@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.333 2015/04/13 16:33:24 riastradh Exp $ */
+/* $NetBSD: com.c,v 1.334 2015/05/03 17:22:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.333 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.334 2015/05/03 17:22:54 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -465,6 +465,11 @@ com_attach_subr(struct com_softc *sc)
 		fifo_msg = "Ingenic UART, working fifo";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		SET(sc->sc_hwflags, COM_HW_NOIEN);
+		goto fifodelay;
+
+	case COM_TYPE_TEGRA:
+		sc->sc_fifolen = 1;
+		fifo_msg = "Tegra UART, broken fifo";
 		goto fifodelay;
 	}
 
