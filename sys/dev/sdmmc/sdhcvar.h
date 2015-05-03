@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.17 2015/05/02 12:10:24 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.18 2015/05/03 11:46:25 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -53,6 +53,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_EXTERNAL_DMA	0x00004000
 #define	SDHC_FLAG_EXTDMA_DMAEN	0x00008000 /* ext. dma need SDHC_DMA_ENABLE */
 #define	SDHC_FLAG_NO_CLKBASE	0x00020000 /* ignore clkbase register */
+#define	SDHC_FLAG_SINGLE_POWER_WRITE 0x00040000
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
