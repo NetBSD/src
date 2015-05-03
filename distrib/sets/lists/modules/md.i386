@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.63 2015/05/03 07:30:52 pgoyette Exp $
+# $NetBSD: md.i386,v 1.64 2015/05/03 21:59:23 pgoyette Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -548,7 +548,7 @@
 ./stand/i386-xen/@OSRELEASE@/modules/sysvbfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/tco				base-kernel-modules	kmod,compatmodules
-./stand/i386-xen/@OSRELEASE@/modulestco/tco.kmod			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/tco/tco.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/tdfxdrm				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/tdfxdrm/tdfxdrm.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/thinkpad				base-kernel-modules	kmod,compatmodules
