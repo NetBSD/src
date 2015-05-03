@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.2 2015/05/02 14:10:03 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.3 2015/05/03 11:47:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.2 2015/05/02 14:10:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.3 2015/05/03 11:47:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -167,7 +167,8 @@ tegra_car_periph_sdmmc_set_div(u_int port, u_int div)
 {
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
-	bus_size_t src_reg;
+	bus_size_t src_reg, rst_reg, enb_reg;
+	u_int dev_bit;
 	uint32_t src;
 
 	KASSERT(div > 0);
@@ -175,18 +176,46 @@ tegra_car_periph_sdmmc_set_div(u_int port, u_int div)
 	tegra_car_get_bs(&bst, &bsh);
 
 	switch (port) {
-	case 0:	src_reg = CAR_CLKSRC_SDMMC1_REG; break;
-	case 1: src_reg = CAR_CLKSRC_SDMMC2_REG; break;
-	case 2: src_reg = CAR_CLKSRC_SDMMC3_REG; break;
-	case 3: src_reg = CAR_CLKSRC_SDMMC4_REG; break;
+	case 0:
+		src_reg = CAR_CLKSRC_SDMMC1_REG;
+		rst_reg = CAR_RST_DEV_L_SET_REG;
+		enb_reg = CAR_CLK_ENB_L_SET_REG;
+		dev_bit = CAR_DEV_L_SDMMC1;
+		break;
+	case 1:
+		src_reg = CAR_CLKSRC_SDMMC2_REG;
+		rst_reg = CAR_RST_DEV_L_SET_REG;
+		enb_reg = CAR_CLK_ENB_L_SET_REG;
+		dev_bit = CAR_DEV_L_SDMMC2;
+		break;
+	case 2:
+		src_reg = CAR_CLKSRC_SDMMC3_REG;
+		rst_reg = CAR_RST_DEV_U_SET_REG;
+		enb_reg = CAR_CLK_ENB_U_SET_REG;
+		dev_bit = CAR_DEV_U_SDMMC3;
+		break;
+	case 3:
+		src_reg = CAR_CLKSRC_SDMMC4_REG;
+		rst_reg = CAR_RST_DEV_L_SET_REG;
+		enb_reg = CAR_CLK_ENB_L_SET_REG;
+		dev_bit = CAR_DEV_L_SDMMC4;
+		break;
 	default: return EINVAL;
 	}
 
+	/* enter reset */
+	bus_space_write_4(bst, bsh, rst_reg, dev_bit);
+	/* enable clk */
+	bus_space_write_4(bst, bsh, enb_reg, dev_bit);
+
+	/* update clk div */
 	src = __SHIFTIN(CAR_CLKSRC_SDMMC_SRC_PLLP_OUT0,
 			CAR_CLKSRC_SDMMC_SRC);
 	src |= __SHIFTIN(div - 1, CAR_CLKSRC_SDMMC_DIV);
-
 	bus_space_write_4(bst, bsh, src_reg, src);
+
+	/* leave reset */
+	bus_space_write_4(bst, bsh, rst_reg+4, dev_bit);
 
 	return 0;
 }

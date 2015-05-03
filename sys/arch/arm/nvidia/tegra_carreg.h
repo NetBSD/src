@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_carreg.h,v 1.2 2015/05/02 14:10:03 jmcneill Exp $ */
+/* $NetBSD: tegra_carreg.h,v 1.3 2015/05/03 11:47:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -79,5 +79,18 @@
 #define CAR_RST_DEV_H_CLR_REG		0x30c
 #define CAR_RST_DEV_U_SET_REG		0x310
 #define CAR_RST_DEV_U_CLR_REG		0x314
+
+#define CAR_CLK_ENB_L_SET_REG		0x320
+#define CAR_CLK_ENB_L_CLR_REG		0x324
+#define CAR_CLK_ENB_H_SET_REG		0x328
+#define CAR_CLK_ENB_H_CLR_REG		0x32c
+#define CAR_CLK_ENB_U_SET_REG		0x330
+#define CAR_CLK_ENB_U_CLR_REG		0x334
+
+#define CAR_DEV_L_SDMMC4		__BIT(15)
+#define CAR_DEV_L_SDMMC1		__BIT(14)
+#define CAR_DEV_L_SDMMC2		__BIT(9)
+
+#define CAR_DEV_U_SDMMC3		__BIT(5)
 
 #endif /* _ARM_TEGRA_CARREG_H */
