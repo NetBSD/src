@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.48 2015/03/20 12:01:32 msaitoh Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.49 2015/05/03 02:50:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,12 +34,13 @@
  *
  *  LPC Interface Bridge is basically a pcib (PCI-ISA Bridge), but has
  *  some power management and monitoring functions.
- *  Currently we support the watchdog timer, SpeedStep (on some systems)
+ *  Currently we support the watchdog timer, SpeedStep (on some systems),
+ *  the gpio interface, hpet timer, hardware random number generator,
  *  and the power management timer.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.48 2015/03/20 12:01:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.49 2015/05/03 02:50:59 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,13 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.48 2015/03/20 12:01:32 msaitoh Exp $"
 #include <dev/pci/pcidevs.h>
 
 #include <dev/gpio/gpiovar.h>
-#include <dev/sysmon/sysmonvar.h>
 
 #include <dev/ic/acpipmtimer.h>
 #include <dev/ic/i82801lpcreg.h>
 #include <dev/ic/i82801lpcvar.h>
 #include <dev/ic/hpetreg.h>
 #include <dev/ic/hpetvar.h>
+
+#include <arch/x86/pci/tco.h>
 
 #include "pcibvar.h"
 #include "gpio.h"
@@ -82,8 +84,7 @@ struct lpcib_softc {
 	bus_space_handle_t	sc_rcbah;
 	pcireg_t		sc_rcba_reg;
 
-	/* Watchdog variables. */
-	struct sysmon_wdog	sc_smw;
+	/* Power management variables. */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_iosize;
@@ -114,6 +115,7 @@ struct lpcib_softc {
 	pcireg_t		sc_fwhsel2;
 
 	/* Child devices */
+	device_t		sc_tco;
 	device_t		sc_hpetbus;
 	acpipmtimer_t		sc_pmtimer;
 	pcireg_t		sc_acpi_cntl;
@@ -135,12 +137,6 @@ static int pmtimer_unconfigure(device_t, int);
 
 static void tcotimer_configure(device_t);
 static int tcotimer_unconfigure(device_t, int);
-static int tcotimer_setmode(struct sysmon_wdog *);
-static int tcotimer_tickle(struct sysmon_wdog *);
-static void tcotimer_stop(struct lpcib_softc *);
-static void tcotimer_start(struct lpcib_softc *);
-static void tcotimer_status_reset(struct lpcib_softc *);
-static int  tcotimer_disable_noreboot(device_t);
 
 static void speedstep_configure(device_t);
 static void speedstep_unconfigure(device_t);
@@ -411,6 +407,11 @@ lpcibchilddet(device_t self, device_t child)
 		return;
 	}
 #endif
+	if (sc->sc_tco == child) {
+		sc->sc_tco = NULL;
+		return;
+	}
+
 	if (sc->sc_hpetbus != child) {
 		pcibchilddet(self, child);
 		return;
@@ -453,6 +454,9 @@ static int
 lpcibrescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct lpcib_softc *sc = device_private(self);
+
+	if(ifattr_match(ifattr, "tcoichbus") && sc->sc_tco == NULL)
+		tcotimer_configure(self);
 
 #if NFWHRNG > 0
 	if (ifattr_match(ifattr, "fwhichbus") && sc->sc_fwhbus == NULL)
@@ -613,59 +617,22 @@ pmtimer_unconfigure(device_t self, int flags)
 }
 
 /*
- * Initialize the watchdog timer.
+ * Configure the watchdog timer.
  */
 static void
 tcotimer_configure(device_t self)
 {
 	struct lpcib_softc *sc = device_private(self);
-	uint32_t ioreg;
-	unsigned int period;
+	struct lpcib_tco_attach_args arg;
 
-	/* Explicitly stop the TCO timer. */
-	tcotimer_stop(sc);
+	arg.ta_iot = sc->sc_iot;
+	arg.ta_ioh = sc->sc_ioh;
+	arg.ta_rcbat = sc->sc_rcbat;
+	arg.ta_rcbah = sc->sc_rcbah;
+	arg.ta_has_rcba = sc->sc_has_rcba;
+	arg.ta_pcib = &(sc->sc_pcib);
 
-	/*
-	 * Enable TCO timeout SMI only if the hardware reset does not
-	 * work. We don't know what the SMBIOS does.
-	 */
-	ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
-	ioreg &= ~LPCIB_SMI_EN_TCO_EN;
-
-	/* 
-	 * Clear the No Reboot (NR) bit. If this fails, enabling the TCO_EN bit
-	 * in the SMI_EN register is the last chance.
-	 */
-	if (tcotimer_disable_noreboot(self)) {
-		ioreg |= LPCIB_SMI_EN_TCO_EN;
-	}
-	if ((ioreg & LPCIB_SMI_EN_GBL_SMI_EN) != 0) {
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN, ioreg);
-	}
-
-	/* Reset the watchdog status registers. */
-	tcotimer_status_reset(sc);
-
-	/* 
-	 * Register the driver with the sysmon watchdog framework.
-	 */
-	sc->sc_smw.smw_name = device_xname(self);
-	sc->sc_smw.smw_cookie = sc;
-	sc->sc_smw.smw_setmode = tcotimer_setmode;
-	sc->sc_smw.smw_tickle = tcotimer_tickle;
-	if (sc->sc_has_rcba)
-		period = LPCIB_TCOTIMER2_MAX_TICK;
-	else
-		period = LPCIB_TCOTIMER_MAX_TICK;
-	sc->sc_smw.smw_period = lpcib_tcotimer_tick_to_second(period);
-
-	if (sysmon_wdog_register(&sc->sc_smw)) {
-		aprint_error_dev(self, "unable to register TCO timer"
-		       "as a sysmon watchdog device.\n");
-		return;
-	}
-
-	aprint_verbose_dev(self, "TCO (watchdog) timer configured.\n");
+	sc->sc_tco = config_found_ia(self, "tcoichbus", &arg, NULL);
 }
 
 static int
@@ -674,165 +641,11 @@ tcotimer_unconfigure(device_t self, int flags)
 	struct lpcib_softc *sc = device_private(self);
 	int rc;
 
-	if ((rc = sysmon_wdog_unregister(&sc->sc_smw)) != 0) {
-		if (rc == ERESTART)
-			rc = EINTR;
+	if (sc->sc_tco != NULL &&
+	    (rc = config_detach(sc->sc_tco, flags)) != 0)
 		return rc;
-	}
-
-	/* Explicitly stop the TCO timer. */
-	tcotimer_stop(sc);
-
-	/* XXX Set No Reboot? */
 
 	return 0;
-}
-
-
-/*
- * Sysmon watchdog callbacks.
- */
-static int
-tcotimer_setmode(struct sysmon_wdog *smw)
-{
-	struct lpcib_softc *sc = smw->smw_cookie;
-	unsigned int period;
-	uint16_t ich6period = 0;
-	uint8_t ich5period = 0;
-
-	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
-		/* Stop the TCO timer. */
-		tcotimer_stop(sc);
-	} else {
-		/* 
-		 * ICH6 or newer are limited to 2s min and 613s max.
-		 * ICH5 or older are limited to 4s min and 39s max.
-		 */
-		period = lpcib_tcotimer_second_to_tick(smw->smw_period);
-		if (sc->sc_has_rcba) {
-			if (period < LPCIB_TCOTIMER2_MIN_TICK ||
-			    period > LPCIB_TCOTIMER2_MAX_TICK)
-				return EINVAL;
-		} else {
-			if (period < LPCIB_TCOTIMER_MIN_TICK ||
-			    period > LPCIB_TCOTIMER_MAX_TICK)
-				return EINVAL;
-		}
-		
-		/* Stop the TCO timer, */
-		tcotimer_stop(sc);
-
-		/* set the timeout, */
-		if (sc->sc_has_rcba) {
-			/* ICH6 or newer */
-			ich6period = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-						      LPCIB_TCO_TMR2);
-			ich6period &= 0xfc00;
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-					  LPCIB_TCO_TMR2, ich6period | period);
-		} else {
-			/* ICH5 or older */
-			ich5period = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-						   LPCIB_TCO_TMR);
-			ich5period &= 0xc0;
-			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-					  LPCIB_TCO_TMR, ich5period | period);
-		}
-
-		/* and start/reload the timer. */
-		tcotimer_start(sc);
-		tcotimer_tickle(smw);
-	}
-
-	return 0;
-}
-
-static int
-tcotimer_tickle(struct sysmon_wdog *smw)
-{
-	struct lpcib_softc *sc = smw->smw_cookie;
-
-	/* any value is allowed */
-	if (sc->sc_has_rcba)
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 1);
-	else
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 1);
-
-	return 0;
-}
-
-static void
-tcotimer_stop(struct lpcib_softc *sc)
-{
-	uint16_t ioreg;
-
-	ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT);
-	ioreg |= LPCIB_TCO1_CNT_TCO_TMR_HLT;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT, ioreg);
-}
-
-static void
-tcotimer_start(struct lpcib_softc *sc)
-{
-	uint16_t ioreg;
-
-	ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT);
-	ioreg &= ~LPCIB_TCO1_CNT_TCO_TMR_HLT;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT, ioreg);
-}
-
-static void
-tcotimer_status_reset(struct lpcib_softc *sc)
-{
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_STS,
-			  LPCIB_TCO1_STS_TIMEOUT);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO2_STS,
-			  LPCIB_TCO2_STS_BOOT_STS);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO2_STS,
-			  LPCIB_TCO2_STS_SECONDS_TO_STS);
-}
-
-/*
- * Clear the No Reboot (NR) bit, this enables reboots when the timer
- * reaches the timeout for the second time.
- */
-static int
-tcotimer_disable_noreboot(device_t self)
-{
-	struct lpcib_softc *sc = device_private(self);
-
-	if (sc->sc_has_rcba) {
-		uint32_t status;
-
-		status = bus_space_read_4(sc->sc_rcbat, sc->sc_rcbah,
-		    LPCIB_GCS_OFFSET);
-		status &= ~LPCIB_GCS_NO_REBOOT;
-		bus_space_write_4(sc->sc_rcbat, sc->sc_rcbah,
-		    LPCIB_GCS_OFFSET, status);
-		status = bus_space_read_4(sc->sc_rcbat, sc->sc_rcbah,
-		    LPCIB_GCS_OFFSET);
-		if (status & LPCIB_GCS_NO_REBOOT)
-			goto error;
-	} else {
-		pcireg_t pcireg;
-
-		pcireg = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
-				       LPCIB_PCI_GEN_STA);
-		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT) {
-			/* TCO timeout reset is disabled; try to enable it */
-			pcireg &= ~LPCIB_PCI_GEN_STA_NO_REBOOT;
-			pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
-				       LPCIB_PCI_GEN_STA, pcireg);
-			if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT)
-				goto error;
-		}
-	}
-
-	return 0;
-error:
-	aprint_error_dev(self, "TCO timer reboot disabled by hardware; "
-	    "hope SMBIOS properly handles it.\n");
-	return EINVAL;
 }
 
 
