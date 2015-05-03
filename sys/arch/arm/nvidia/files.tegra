@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.5 2015/05/02 17:15:20 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.6 2015/05/03 01:07:44 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -52,6 +52,11 @@ file	arch/arm/nvidia/tegra_ehci.c		tegra_ehci
 # SDMMC
 attach	sdhc at tegraio with tegra_sdhc
 file	arch/arm/nvidia/tegra_sdhc.c		tegra_sdhc
+
+# PCIE
+device	tegrapcie: pcibus
+attach	tegrapcie at tegraio with tegra_pcie
+file	arch/arm/nvidia/tegra_pcie.c		tegra_pcie
 
 # SATA
 attach	ahcisata at tegraio with tegra_ahcisata

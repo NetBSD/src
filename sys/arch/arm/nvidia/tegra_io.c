@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_io.c,v 1.4 2015/05/02 12:08:32 jmcneill Exp $ */
+/* $NetBSD: tegra_io.c,v 1.5 2015/05/03 01:07:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.4 2015/05/02 12:08:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.5 2015/05/03 01:07:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,11 @@ static const struct tegra_locators tegra_ahb_a2_locators[] = {
     TEGRA_USB3_OFFSET, TEGRA_USB3_SIZE, 2, TEGRA_INTR_USB3 },
 };
 
+static const struct tegra_locators tegra_pcie_locators[] = {
+  { "tegrapcie",
+    TEGRA_PCIE_OFFSET, TEGRA_PCIE_SIZE, NOPORT, TEGRA_INTR_PCIE_INT },
+};
+
 int
 tegraio_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -126,6 +131,8 @@ tegraio_attach(device_t parent, device_t self, void *aux)
 	    tegra_apb_locators, __arraycount(tegra_apb_locators));
 	tegraio_scan(self, tegra_ahb_a2_bsh,
 	    tegra_ahb_a2_locators, __arraycount(tegra_ahb_a2_locators));
+	tegraio_scan(self, (bus_space_handle_t)NULL,
+	    tegra_pcie_locators, __arraycount(tegra_pcie_locators));
 }
 
 static void
@@ -140,6 +147,7 @@ tegraio_scan(device_t self, bus_space_handle_t bsh,
 			.tio_a4x_bst = &armv7_generic_a4x_bs_tag,
 			.tio_bsh = bsh,
 			.tio_dmat = &tegra_dma_tag,
+			.tio_coherent_dmat = &tegra_coherent_dma_tag,
 		};
 		cfdata_t cf = config_search_ia(tegraio_find, self,
 		    "tegraio", &tio);

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soc.c,v 1.4 2015/04/28 11:15:55 jmcneill Exp $ */
+/* $NetBSD: tegra_soc.c,v 1.5 2015/05/03 01:07:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.4 2015/04/28 11:15:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.5 2015/05/03 01:07:44 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -54,6 +54,22 @@ bus_space_handle_t tegra_apb_bsh;
 bus_space_handle_t tegra_ahb_a2_bsh;
 
 struct arm32_bus_dma_tag tegra_dma_tag = {
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
+};
+
+static struct arm32_dma_range tegra_coherent_dma_ranges[] = {
+	[0] = {
+		.dr_sysbase = TEGRA_EXTMEM_BASE,
+		.dr_busbase = TEGRA_EXTMEM_BASE,
+		.dr_flags = _BUS_DMAMAP_COHERENT,
+	},
+};
+
+struct arm32_bus_dma_tag tegra_coherent_dma_tag = {
+	._ranges = tegra_coherent_dma_ranges,
+	._nranges = __arraycount(tegra_coherent_dma_ranges),
 	_BUS_DMAMAP_FUNCS,
 	_BUS_DMAMEM_FUNCS,
 	_BUS_DMATAG_FUNCS,
@@ -84,6 +100,12 @@ tegra_bootstrap(void)
 	curcpu()->ci_data.cpu_cc_freq = tegra_car_pllx_rate();
 
 	tegra_mpinit();
+}
+
+void
+tegra_dma_bootstrap(psize_t psize)
+{
+	tegra_coherent_dma_ranges[0].dr_len = psize;
 }
 
 static void

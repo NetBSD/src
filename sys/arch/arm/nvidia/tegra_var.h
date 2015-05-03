@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.6 2015/05/02 17:06:53 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.7 2015/05/03 01:07:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -50,6 +50,7 @@ struct tegraio_attach_args {
 	bus_space_tag_t tio_a4x_bst;
 	bus_space_handle_t tio_bsh;
 	bus_dma_tag_t tio_dmat;
+	bus_dma_tag_t tio_coherent_dmat;
 };
 
 extern struct bus_space armv7_generic_bs_tag;
@@ -59,6 +60,7 @@ extern bus_space_handle_t tegra_ppsb_bsh;
 extern bus_space_handle_t tegra_apb_bsh;
 extern bus_space_handle_t tegra_ahb_a2_bsh;
 extern struct arm32_bus_dma_tag tegra_dma_tag;
+extern struct arm32_bus_dma_tag tegra_coherent_dma_tag;
 
 #define CHIP_ID_TEGRA20		0x20
 #define CHIP_ID_TEGRA30		0x30
@@ -69,6 +71,7 @@ extern struct arm32_bus_dma_tag tegra_dma_tag;
 u_int	tegra_chip_id(void);
 const char *tegra_chip_name(void);
 void	tegra_bootstrap(void);
+void	tegra_dma_bootstrap(psize_t);
 
 u_int	tegra_car_osc_rate(void);
 u_int	tegra_car_pllx_rate(void);
