@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.6 2012/12/29 11:05:29 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.7 2015/05/03 15:07:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1524,7 +1524,7 @@ iscsi_cleanup_thread(void *par)
 			while (conn->usecount > 0)
 				tsleep(conn, PWAIT, "finalwait", hz);
 
-			callout_stop(&conn->timeout);
+			callout_halt(&conn->timeout, NULL);
 			closef(conn->sock);
 			free(conn, M_DEVBUF);
 
