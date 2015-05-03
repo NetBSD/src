@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.3 2015/05/03 11:47:15 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.4 2015/05/03 16:40:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.3 2015/05/03 11:47:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.4 2015/05/03 16:40:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,10 +132,52 @@ tegra_car_pllx_rate(void)
 }
 
 u_int
+tegra_car_pllc_rate(void)
+{
+	return tegra_car_pll_rate(CAR_PLLC_BASE_REG, CAR_PLLC_BASE_DIVM,
+	    CAR_PLLC_BASE_DIVN, CAR_PLLC_BASE_DIVP);
+}
+
+u_int
 tegra_car_pllp0_rate(void)
 {
 	return tegra_car_pll_rate(CAR_PLLP_BASE_REG, CAR_PLLP_BASE_DIVM,
 	    CAR_PLLP_BASE_DIVN, CAR_PLLP_BASE_DIVP);
+}
+
+u_int
+tegra_car_uart_rate(u_int port)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t src_reg;
+	u_int src_rate;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	switch (port) {
+	case 0: src_reg = CAR_CLKSRC_UARTA_REG; break;
+	case 1: src_reg = CAR_CLKSRC_UARTB_REG; break;
+	case 2: src_reg = CAR_CLKSRC_UARTC_REG; break;
+	case 3: src_reg = CAR_CLKSRC_UARTD_REG; break;
+	default: return 0;
+	}
+
+	const uint32_t src = bus_space_read_4(bst, bsh, src_reg);
+	switch (__SHIFTOUT(src, CAR_CLKSRC_UART_SRC)) {
+	case 0:
+		src_rate = tegra_car_pllp0_rate();
+		break;
+	default:
+		panic("%s: unsupported src %#x", __func__, src);
+	}
+
+	if (__SHIFTOUT(src, CAR_CLKSRC_UART_DIV_ENB)) {
+		const u_int div = __SHIFTOUT(src, CAR_CLKSRC_UART_DIV) + 1;
+		return src_rate / div;
+	} else {
+		return src_rate;
+	}
 }
 
 u_int
