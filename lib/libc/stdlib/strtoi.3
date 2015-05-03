@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtoi.3,v 1.1 2015/05/01 14:17:56 christos Exp $
+.\"	$NetBSD: strtoi.3,v 1.2 2015/05/03 12:27:32 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,21 +171,20 @@ if (e)
 .Ed
 .Sh ERRORS
 .Bl -tag -width Er
+.It Bq Er ECANCELED
+The string did not contain any characters that were converted.
 .It Bq Er EINVAL
 The
 .Ar base
 is not between 2 and 36 and does not contain the special value 0.
-.It Bq Er ERANGE
-The given string was out of range; the value converted has been clamped.
-.It Bq Er ECANCELED
-The string did not contain any characters that were converted.
 .It Bq Er ENOTSUP
 The string contained non-numeric characters that did not get converted.
 In this case,
 .Fa endptr
 points to the first unconverted character.
 .It Bq Er ERANGE
-The range given was invalid, i.e.
+The given string was out of range; the value converted has been clamped;
+or the range given was invalid, i.e.
 .Fa lo
 \*[Gt]
 .Fa hi .
@@ -196,9 +195,9 @@ The range given was invalid, i.e.
 .Xr atol 3 ,
 .Xr atoll 3 ,
 .Xr strtod 3 ,
+.Xr strtoimax 3 ,
 .Xr strtol 3 ,
 .Xr strtoll 3 ,
-.Xr strtoimax 3 ,
 .Xr strtou 3 ,
 .Xr strtoul 3 ,
 .Xr strtoull 3 ,
