@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.1 2015/05/03 01:07:44 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.2 2015/05/03 01:26:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.1 2015/05/03 01:07:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.2 2015/05/03 01:26:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,7 +124,11 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	sc->sc_dev = self;
+#if notyet
 	sc->sc_dmat = tio->tio_coherent_dmat;
+#else
+	sc->sc_dmat = tio->tio_dmat;
+#endif
 	sc->sc_bst = tio->tio_bst;
 	sc->sc_intr = loc->loc_intr;
 	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_AFI_BASE, TEGRA_PCIE_AFI_SIZE,
