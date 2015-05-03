@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.4 2015/05/03 11:46:44 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.5 2015/05/03 22:40:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.4 2015/05/03 11:46:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.5 2015/05/03 22:40:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,12 +123,12 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_pin_wp)
 		sc->sc.sc_vendor_write_protect = tegra_sdhc_write_protect;
 
-	/*
-	 * The controller supports SDR104 speeds (208 MHz). With PLLP (408 Mhz)
-	 * as input and div=2 we can get a reasonable 204 MHz for the SDHC.
-	 */
-	const u_int div = howmany(tegra_car_pllp0_rate() / 1000, 208000);
+#if notyet
+	tegra_car_periph_sdmmc_set_div(sc->sc_port, 1);
+#else
+	const u_int div = howmany(tegra_car_pllp0_rate() / 1000, 50000);
 	tegra_car_periph_sdmmc_set_div(sc->sc_port, div);
+#endif
 	sc->sc.sc_clkbase = tegra_car_periph_sdmmc_rate(sc->sc_port) / 1000;
 
 	aprint_naive("\n");
