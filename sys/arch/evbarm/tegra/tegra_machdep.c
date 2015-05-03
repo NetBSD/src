@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.8 2015/05/02 17:15:20 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.9 2015/05/03 01:07:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.8 2015/05/02 17:15:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.9 2015/05/03 01:07:44 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -287,6 +287,9 @@ initarm(void *arg)
 #else
 	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
 #endif
+
+	/* DMA tag setup */
+	tegra_dma_bootstrap(ram_size);
 
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
