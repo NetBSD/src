@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_intr.h,v 1.3 2015/05/03 01:07:44 jmcneill Exp $ */
+/* $NetBSD: tegra_pciereg.h,v 1.1 2015/05/03 01:07:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,32 +26,20 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM_TEGRA_INTR_H
-#define _ARM_TEGRA_INTR_H
+#ifndef _ARM_TEGRA_PCIEREG_H
+#define _ARM_TEGRA_PCIEREG_H
 
-#define PIC_MAXSOURCES		256
-#define PIC_MAXMAXSOURCES	(PIC_MAXSOURCES + 32)
+/* AFI */
+#define AFI_INTR_MASK_REG	0xb4
+#define AFI_INTR_CODE_REG	0xb8
+#define AFI_INTR_SIGNATURE_REG	0xbc
+#define AFI_SM_INTR_ENABLE_REG	0xc4
+#define AFI_AFI_INTR_ENABLE_REG	0xc8
 
-#include <arm/cortex/gic_intr.h>
-#include <arm/cortex/gtmr_intr.h>
+#define AFI_INTR_MASK_MSI	__BIT(8)
+#define AFI_INTR_MASK_INT	__BIT(0)
 
-#define TEGRA_INTR(x)		((x) + 32)
+#define AFI_INTR_CODE_INT_CODE	__BITS(4,0)
+#define AFI_INTR_CODE_SM_MSG	6
 
-#define TEGRA_INTR_SDMMC1	TEGRA_INTR(14)
-#define TEGRA_INTR_SDMMC2	TEGRA_INTR(15)
-#define TEGRA_INTR_SDMMC3	TEGRA_INTR(19)
-#define TEGRA_INTR_USB1		TEGRA_INTR(20)
-#define TEGRA_INTR_USB2		TEGRA_INTR(21)
-#define TEGRA_INTR_SATA		TEGRA_INTR(23)
-#define TEGRA_INTR_SDMMC4	TEGRA_INTR(31)
-#define TEGRA_INTR_UARTA	TEGRA_INTR(36)
-#define TEGRA_INTR_UARTB	TEGRA_INTR(37)
-#define TEGRA_INTR_UARTC	TEGRA_INTR(46)
-#define TEGRA_INTR_HDA		TEGRA_INTR(81)
-#define TEGRA_INTR_UARTD	TEGRA_INTR(90)
-#define TEGRA_INTR_USB3		TEGRA_INTR(97)
-#define TEGRA_INTR_PCIE_INT	TEGRA_INTR(98)
-#define TEGRA_INTR_PCIE_MSI	TEGRA_INTR(99)
-#define TEGRA_INTR_PCIE_WAKE	TEGRA_INTR(100)
-
-#endif /* _ARM_TEGRA_INTR_H */
+#endif /* _ARM_TEGRA_PCIEREG_H */
