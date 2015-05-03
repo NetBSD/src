@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.8 2015/05/02 17:15:20 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.9 2015/05/03 01:07:44 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -19,7 +19,7 @@ options 	DEBUG
 options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
@@ -48,6 +48,17 @@ tegracar0	at tegraio?		# CAR
 # GPIO controller
 tegragpio0	at tegraio?		# GPIO
 gpio*		at gpiobus?
+
+# PCIE
+tegrapcie0	at tegraio?		# PCIE
+pci*		at tegrapcie0
+ppb*		at pci? dev ? function ?
+pci*		at ppb?
+
+# Ethernet
+re*		at pci? dev ? function ?	# Realtek RTL8111GS
+rgephy*		at mii? phy ?
+ukphy*		at mii? phy ?
 
 # UART
 com3		at tegraio? port 3	# UART-D
