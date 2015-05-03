@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.9 2015/05/03 01:07:44 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.10 2015/05/03 17:24:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.9 2015/05/03 01:07:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.10 2015/05/03 17:24:45 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -354,8 +354,9 @@ consinit(void)
 
 #if NCOM > 0
 	const bus_space_tag_t bst = &armv7_generic_a4x_bs_tag;
-	if (comcnattach(bst, CONSADDR, CONSPEED, TEGRA_UART_FREQ,
-			COM_TYPE_NORMAL, CONMODE)) {
+	const u_int freq = tegra_car_uart_rate(3);
+	if (comcnattach(bst, CONSADDR, CONSPEED, freq,
+			COM_TYPE_TEGRA, CONMODE)) {
 		panic("Serial console cannot be initialized.");
 	}
 #else
