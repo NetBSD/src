@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.163 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.164 2015/05/03 10:44:04 justin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.163 2015/05/02 14:41:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.164 2015/05/03 10:44:04 justin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1629,19 +1629,19 @@ arp_dad_timer(struct ifaddr *ifa)
 
 	/* Need more checks? */
 	if (dp->dad_arp_ocount < dp->dad_count) {
-		int delay;
+		int adelay;
 
 		/*
 		 * We have more ARP to go.  Send ARP packet for DAD.
 		 */
 		arp_dad_output(dp, ifa);
 		if (dp->dad_arp_ocount < dp->dad_count)
-			delay = (PROBE_MIN * hz) +
+			adelay = (PROBE_MIN * hz) +
 			    (cprng_fast32() %
 			    ((PROBE_MAX * hz) - (PROBE_MIN * hz)));
 		else
-			delay = ANNOUNCE_WAIT * hz;
-		arp_dad_starttimer(dp, delay);
+			adelay = ANNOUNCE_WAIT * hz;
+		arp_dad_starttimer(dp, adelay);
 		goto done;
 	} else if (dp->dad_arp_acount == 0) {
 		/*
