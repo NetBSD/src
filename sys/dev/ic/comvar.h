@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.80 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: comvar.h,v 1.81 2015/05/03 17:22:54 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -234,6 +234,7 @@ struct com_softc {
 #define	COM_TYPE_OMAP		4	/* TI OMAP processor built-in */
 #define	COM_TYPE_16550_NOERS	5	/* like a 16550, no ERS */
 #define	COM_TYPE_INGENIC	6	/* JZ4780 built-in */
+#define	COM_TYPE_TEGRA		7	/* NVIDIA Tegra built-in */
 
 	/* power management hooks */
 	int (*enable)(struct com_softc *);
