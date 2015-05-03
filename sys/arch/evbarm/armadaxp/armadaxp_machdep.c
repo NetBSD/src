@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.10 2015/04/15 10:30:42 hsuenaga Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.11 2015/05/03 14:38:10 hsuenaga Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.10 2015/04/15 10:30:42 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.11 2015/05/03 14:38:10 hsuenaga Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.10 2015/04/15 10:30:42 hsuena
 #include <dev/cons.h>
 #include <dev/md.h>
 
+#include <dev/marvell/marvellreg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <machine/pci_machdep.h>
@@ -616,6 +617,31 @@ axp_device_register(device_t dev, void *aux)
 		    "cache-line-size", arm_dcache_align);
 	}
 	if (device_is_a(dev, "mvgbec")) {
+		uint8_t enaddr[ETHER_ADDR_LEN];
+		char optname[9];
+		int unit = device_unit(dev);
+
+		if (unit > 9)
+			return;
+		switch (unit) {
+		case 0:
+			strlcpy(optname, "ethaddr", sizeof(optname));
+			break;
+		default:
+			/* eth1addr ... eth9addr */
+			snprintf(optname, sizeof(optname),
+			    "eth%daddr", unit);
+			break;
+		}
+		if (get_bootconf_option(boot_args, optname,
+		    BOOTOPT_TYPE_MACADDR, enaddr)) {
+			prop_data_t pd =
+			    prop_data_create_data(enaddr, sizeof(enaddr));
+
+			prop_dictionary_set(dict, "mac-address", pd);
+		}
+	}
+	if (device_is_a(dev, "mvxpe")) {
 		uint8_t enaddr[ETHER_ADDR_LEN];
 		char optname[9];
 		int unit = device_unit(dev);
