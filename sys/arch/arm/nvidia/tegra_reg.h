@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_reg.h,v 1.6 2015/05/03 01:07:44 jmcneill Exp $ */
+/* $NetBSD: tegra_reg.h,v 1.7 2015/05/03 17:24:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -66,7 +66,6 @@
 #define TEGRA_AHB_A2_VBASE	0xfd000000
 
 #define TEGRA_REF_FREQ		12000000
-#define TEGRA_UART_FREQ		TEGRA_REF_FREQ
 
 /* APB */
 #define TEGRA_UARTA_OFFSET	0x00006000

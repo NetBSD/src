@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_com.c,v 1.2 2015/05/03 17:24:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.1 2015/03/29 10:41:59 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.2 2015/05/03 17:24:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,8 +88,8 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t bsh;
 
 	sc->sc_dev = self;
-	sc->sc_frequency = TEGRA_UART_FREQ;
-	sc->sc_type = COM_TYPE_NORMAL;
+	sc->sc_frequency = tegra_car_uart_rate(loc->loc_port);
+	sc->sc_type = COM_TYPE_TEGRA;
 
 	if (com_is_console(bst, iobase, &bsh) == 0
 	    && bus_space_subregion(bst, tio->tio_bsh,
