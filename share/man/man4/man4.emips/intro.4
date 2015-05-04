@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.2 2011/02/14 21:13:17 pooka Exp $
+.\"	$NetBSD: intro.4,v 1.3 2015/05/04 07:44:18 wiz Exp $
 .\"
 .\" Copyright (c) 2010 NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,15 +90,17 @@ The following systems are supported:
 .Pp
 .Bl -tag -width speaker -offset indent -compact
 .It BeSquare BErkeley Emulation System-3 FPGA development board
-known as the "BEE3". This is a quad-chip FPGA system where eMIPS can run on each FPGA separately,
+known as the "BEE3".
+This is a quad-chip FPGA system where eMIPS can run on each FPGA separately,
 on multiple FPGAs in concert, and in multi-processor configurations.
 .It Xilinx University Program board
-known as "XUP". This is the Xilinx reference board for the Virtex-5 series chips.
+known as "XUP".
+This is the Xilinx reference board for the Virtex-5 series chips.
 It can use the same XL110T FPGA chip present on the BEE3.
 .It Xilinx ML402
 Xilinx reference board for the Virtex-4 series chip, including the SX35.
 .It Xilinx ML401
-Same as the above, but with the smaller LX25 chip. 
+Same as the above, but with the smaller LX25 chip.
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the system.
@@ -108,11 +110,15 @@ Not all supported devices are listed.
 .Bl -tag -width speaker -offset indent -compact
 .It ace
 Xilinx SystemACE interface for Compact-FLASH cards, bears similarities to the IDE interface.
-Present on XUP and ML40x boards. Not present on BEE3.
+Present on XUP and ML40x boards.
+Not present on BEE3.
 .It dz
-serial driver for the eMIPS console serial device. Present on all systems.
+serial driver for the eMIPS console serial device.
+Present on all systems.
 .It enic
-Ethernet driver for the eNIC device. Present on XUP and BEE3 systems. Not present on ML40x systems.
+Ethernet driver for the eNIC device.
+Present on XUP and BEE3 systems.
+Not present on ML40x systems.
 .It eclock
 System clock, must be configured on all systems.
 .It ebus
