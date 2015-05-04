@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.317 2015/05/04 06:44:13 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.318 2015/05/04 06:51:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.317 2015/05/04 06:44:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.318 2015/05/04 06:51:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3485,7 +3485,8 @@ wm_reset(struct wm_softc *sc)
 		break;
 	case WM_T_ICH9:
 	case WM_T_ICH10:
-		sc->sc_pba = PBA_10K;
+		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 4096 ?
+		    PBA_14K : PBA_10K;
 		break;
 	case WM_T_PCH:
 	case WM_T_PCH2:
