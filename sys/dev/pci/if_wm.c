@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.318 2015/05/04 06:51:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.319 2015/05/04 08:46:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.318 2015/05/04 06:51:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.319 2015/05/04 08:46:09 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3951,6 +3951,32 @@ wm_init_locked(struct ifnet *ifp)
 	if (sc->sc_flags & WM_F_HAS_MII)
 		wm_gmii_reset(sc);
 
+	/* Calculate (E)ITR value */
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+		sc->sc_itr = 450;	/* For EITR */
+	} else if (sc->sc_type >= WM_T_82543) {
+		/*
+		 * Set up the interrupt throttling register (units of 256ns)
+		 * Note that a footnote in Intel's documentation says this
+		 * ticker runs at 1/4 the rate when the chip is in 100Mbit
+		 * or 10Mbit mode.  Empirically, it appears to be the case
+		 * that that is also true for the 1024ns units of the other
+		 * interrupt-related timer registers -- so, really, we ought
+		 * to divide this value by 4 when the link speed is low.
+		 *
+		 * XXX implement this division at link speed change!
+		 */
+
+		/*
+		 * For N interrupts/sec, set this value to:
+		 * 1000000000 / (N * 256).  Note that we set the
+		 * absolute and packet timer values to this value
+		 * divided by 4 to get "simple timer" behavior.
+		 */
+
+		sc->sc_itr = 1500;		/* 2604 ints/sec */
+	}
+
 	/* Initialize the transmit descriptor ring. */
 	memset(sc->sc_txdescs, 0, WM_TXDESCSIZE(sc));
 	WM_CDTXSYNC(sc, 0, WM_NTXDESC(sc),
@@ -3970,8 +3996,6 @@ wm_init_locked(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_TDBAL, WM_CDTXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_TDH, 0);
-		CSR_WRITE(sc, WMREG_TIDV, 375);		/* ITR / 4 */
-		CSR_WRITE(sc, WMREG_TADV, 375);		/* should be same */
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
 			/*
@@ -3982,6 +4006,13 @@ wm_init_locked(struct ifnet *ifp)
 			    | TXDCTL_PTHRESH(0) | TXDCTL_HTHRESH(0)
 			    | TXDCTL_WTHRESH(0));
 		else {
+			/* ITR / 4 */
+			CSR_WRITE(sc, WMREG_TIDV, sc->sc_itr / 4);
+			if (sc->sc_type >= WM_T_82540) {
+				/* should be same */
+				CSR_WRITE(sc, WMREG_TADV, sc->sc_itr / 4);
+			}
+
 			CSR_WRITE(sc, WMREG_TDT, 0);
 			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_PTHRESH(0) |
 			    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
@@ -4019,8 +4050,8 @@ wm_init_locked(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_RDBAH, WM_CDRXADDR_HI(sc, 0));
 		CSR_WRITE(sc, WMREG_RDBAL, WM_CDRXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_RDLEN, sizeof(sc->sc_rxdescs));
+
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
-			CSR_WRITE(sc, WMREG_EITR(0), 450);
 			if (MCLBYTES & ((1 << SRRCTL_BSIZEPKT_SHIFT) - 1))
 				panic("%s: MCLBYTES %d unsupported for i2575 or higher\n", __func__, MCLBYTES);
 			CSR_WRITE(sc, WMREG_SRRCTL, SRRCTL_DESCTYPE_LEGACY
@@ -4182,26 +4213,13 @@ wm_init_locked(struct ifnet *ifp)
 
 	if (sc->sc_type >= WM_T_82543) {
 		/*
-		 * Set up the interrupt throttling register (units of 256ns)
-		 * Note that a footnote in Intel's documentation says this
-		 * ticker runs at 1/4 the rate when the chip is in 100Mbit
-		 * or 10Mbit mode.  Empirically, it appears to be the case
-		 * that that is also true for the 1024ns units of the other
-		 * interrupt-related timer registers -- so, really, we ought
-		 * to divide this value by 4 when the link speed is low.
-		 *
-		 * XXX implement this division at link speed change!
+		 * XXX 82574 has both ITR and EITR. SET EITR when we use
+		 * the multi queue function with MSI-X.
 		 */
-
-		/*
-		 * For N interrupts/sec, set this value to:
-		 * 1000000000 / (N * 256).  Note that we set the
-		 * absolute and packet timer values to this value
-		 * divided by 4 to get "simple timer" behavior.
-		 */
-
-		sc->sc_itr = 1500;		/* 2604 ints/sec */
-		CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
+		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
+			CSR_WRITE(sc, WMREG_EITR(0), sc->sc_itr);
+		else
+			CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
 	}
 
 	/* Set the VLAN ethernetype. */
