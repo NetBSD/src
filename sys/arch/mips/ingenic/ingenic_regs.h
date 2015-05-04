@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.16 2015/04/28 15:05:45 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.17 2015/05/04 12:16:24 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -170,6 +170,8 @@ MFC0(uint32_t r, uint32_t s)
 #define JZ_CPCCR	0x10000000	/* Clock Control Register */
 	#define JZ_PDIV_M	0x000f0000	/* PCLK divider mask */
 	#define JZ_PDIV_S	16		/* PCLK divider shift */
+	#define JZ_CDIV_M	0x0000000f	/* CPU clock divider mask */
+	#define JZ_CDIV_S	0		/* CPU clock divider shift */
 #define JZ_CPMPCR	0x00000014	/* MPLL */
 	#define JZ_PLLM_S	19		/* PLL multiplier shift */
 	#define JZ_PLLM_M	0xfff80000	/* PLL multiplier mask */
@@ -292,6 +294,14 @@ MFC0(uint32_t r, uint32_t s)
 	#define PCR_TXRISETUNE1	0x00000001	/* rise/fall wave adj. */
 
 #define JZ_UHCCDR	0x1000006c	/* UHC Clock Divider Register */
+	#define UHCCDR_SCLK_A	0x00000000
+	#define UHCCDR_MPLL	0x40000000
+	#define UHCCDR_EPLL	0x80000000
+	#define UHCCDR_OTG_PHY	0xc0000000
+	#define UHCCDR_CE	0x20000000
+	#define UHCCDR_BUSY	0x10000000
+	#define UHCCDR_STOP	0x08000000
+	#define UHCCDR_DIV_M	0x000000ff
 #define JZ_SPCR0	0x100000b8	/* SRAM Power Control Registers */
 #define JZ_SPCR1	0x100000bc
 #define JZ_SRBC		0x100000c4	/* Soft Reset & Bus Control */
@@ -475,6 +485,32 @@ gpio_as_intr_level(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_PAT0S, mask);	/* trigger on high */
 	writereg(reg + JZ_GPIO_FLAGC, mask);	/* clear it */
 	writereg(reg + JZ_GPIO_MASKC, mask);	/* enable it */
+}
+
+static inline void
+gpio_as_intr_level_low(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	writereg(reg + JZ_GPIO_MASKS, mask);	/* mask it */
+	writereg(reg + JZ_GPIO_INTS, mask);	/* use as interrupt */
+	writereg(reg + JZ_GPIO_PAT1C, mask);	/* level trigger */
+	writereg(reg + JZ_GPIO_PAT0C, mask);	/* trigger on low */
+	writereg(reg + JZ_GPIO_FLAGC, mask);	/* clear it */
+	writereg(reg + JZ_GPIO_MASKC, mask);	/* enable it */
+}
+
+static inline void
+gpio_as_input(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	writereg(reg + JZ_GPIO_MASKS, mask);	/* mask it */
+	writereg(reg + JZ_GPIO_INTC, mask);	/* not an interrupt */
+	writereg(reg + JZ_GPIO_PAT1S, mask);	/* use as input */
+	writereg(reg + JZ_GPIO_FLAGC, mask);	/* clear it just in case */
 }
 
 /* I2C / SMBus */
