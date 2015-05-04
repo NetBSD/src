@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.15 2014/06/10 01:42:39 hikaru Exp $
+#	$NetBSD: Makefile,v 1.16 2015/05/04 02:43:18 pgoyette Exp $
 
 MAN=	amdpcib.4 apic.4 balloon.4 coretemp.4 est.4 fdc.4 \
 	fwhrng.4 hpet.4 ichlpcib.4 lpt.4 mem.4 odcm.4 powernow.4 \
-	soekrisgpio.4 tprof_amdpmi.4 tprof_pmi.4 vmt.4 vmx.4
+	soekrisgpio.4 tco.4 tprof_amdpmi.4 tprof_pmi.4 vmt.4 vmx.4
 
 MLINKS+=apic.4 ioapic.4 \
 	apic.4 lapic.4
