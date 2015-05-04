@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.319 2015/05/04 08:46:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.320 2015/05/04 10:10:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.319 2015/05/04 08:46:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.320 2015/05/04 10:10:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -251,6 +251,10 @@ static uint16_t swfwphysem[] = {
 	SWFW_PHY1_SM,
 	SWFW_PHY2_SM,
 	SWFW_PHY3_SM
+};
+
+static const uint32_t wm_82580_rxpbs_table[] = {
+	36, 72, 144, 1, 2, 4, 8, 16, 35, 70, 140
 };
 
 /*
@@ -566,6 +570,7 @@ static void	wm_get_auto_rd_done(struct wm_softc *);
 static void	wm_lan_init_done(struct wm_softc *);
 static void	wm_get_cfg_done(struct wm_softc *);
 static void	wm_initialize_hardware_bits(struct wm_softc *);
+static uint32_t	wm_rxpbs_adjust_82580(uint32_t);
 static void	wm_reset(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_softc *, int);
 static void	wm_rxdrain(struct wm_softc *);
@@ -3425,6 +3430,17 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 	}
 }
 
+static uint32_t
+wm_rxpbs_adjust_82580(uint32_t val)
+{
+	uint32_t rv = 0;
+
+	if (val < __arraycount(wm_82580_rxpbs_table))
+		rv = wm_82580_rxpbs_table[val];
+
+	return rv;
+}
+
 /*
  * wm_reset:
  *
@@ -3456,20 +3472,8 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82571:
 	case WM_T_82572:
 	case WM_T_82575:	/* XXX need special handing for jumbo frames */
-	case WM_T_I350:
-	case WM_T_I354:
 	case WM_T_80003:
 		sc->sc_pba = PBA_32K;
-		break;
-	case WM_T_82580:
-		sc->sc_pba = PBA_35K;
-		break;
-	case WM_T_I210:
-	case WM_T_I211:
-		sc->sc_pba = PBA_34K;
-		break;
-	case WM_T_82576:
-		sc->sc_pba = PBA_64K;
 		break;
 	case WM_T_82573:
 		sc->sc_pba = PBA_12K;
@@ -3477,6 +3481,19 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82583:
 		sc->sc_pba = PBA_20K;
+		break;
+	case WM_T_82576:
+		sc->sc_pba = CSR_READ(sc, WMREG_RXPBS);
+		sc->sc_pba &= RXPBS_SIZE_MASK_82576;
+		break;
+	case WM_T_82580:
+	case WM_T_I350:
+	case WM_T_I354:
+		sc->sc_pba = wm_rxpbs_adjust_82580(CSR_READ(sc, WMREG_RXPBS));
+		break;
+	case WM_T_I210:
+	case WM_T_I211:
+		sc->sc_pba = PBA_34K;
 		break;
 	case WM_T_ICH8:
 		/* Workaround for a bit corruption issue in FIFO memory */
@@ -3498,7 +3515,13 @@ wm_reset(struct wm_softc *sc)
 		    PBA_40K : PBA_48K;
 		break;
 	}
-	CSR_WRITE(sc, WMREG_PBA, sc->sc_pba);
+	/*
+	 * Only old or non-multiqueue devices have the PBA register
+	 * XXX Need special handling for 82575.
+	 */
+	if (((sc->sc_flags & WM_F_NEWQUEUE) == 0)
+	    || (sc->sc_type == WM_T_82575))
+		CSR_WRITE(sc, WMREG_PBA, sc->sc_pba);
 
 	/* Prevent the PCI-E bus from sticking */
 	if (sc->sc_flags & WM_F_PCIE) {

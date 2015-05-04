@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.68 2015/05/04 06:51:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.69 2015/05/04 10:10:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -736,6 +736,9 @@ struct livengood_tcpip_ctxdesc {
 
 #define WMREG_EITR(x)	(0x01680 + (0x4 * (x)))
 #define EITR_ITR_INT_MASK	0x0000ffff
+
+#define	WMREG_RXPBS	0x2404	/* Rx Packet Buffer Size  */
+#define RXPBS_SIZE_MASK_82576	0x0000007F
 
 #define	WMREG_RDFH	0x2410	/* Receive Data FIFO Head */
 #define	WMREG_RDFT	0x2418	/* Receive Data FIFO Tail */
