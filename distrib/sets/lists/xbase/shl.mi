@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.60 2015/03/12 07:58:05 snj Exp $
+# $NetBSD: shl.mi,v 1.61 2015/05/04 23:51:25 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -424,8 +424,8 @@
 ./usr/X11R7/lib/libxcb-xinerama.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xinerama.so.0.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xkb.so			-unknown-		xorg
-./usr/X11R7/lib/libxcb-xkb.so.0			-unknown-		xorg
-./usr/X11R7/lib/libxcb-xkb.so.0.1		-unknown-		xorg
+./usr/X11R7/lib/libxcb-xkb.so.1			-unknown-		xorg
+./usr/X11R7/lib/libxcb-xkb.so.1.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xtest.so			-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xtest.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xtest.so.0.1		-unknown-		xorg
