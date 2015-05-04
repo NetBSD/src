@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.316 2015/04/17 02:54:15 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.317 2015/05/04 06:44:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.316 2015/04/17 02:54:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.317 2015/05/04 06:44:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3988,8 +3988,6 @@ wm_init_locked(struct ifnet *ifp)
 			    RXDCTL_HTHRESH(0) | RXDCTL_WTHRESH(1));
 		}
 	}
-	CSR_WRITE(sc, WMREG_TQSA_LO, 0);
-	CSR_WRITE(sc, WMREG_TQSA_HI, 0);
 
 	/* Initialize the transmit job descriptors. */
 	for (i = 0; i < WM_TXQUEUELEN(sc); i++)
