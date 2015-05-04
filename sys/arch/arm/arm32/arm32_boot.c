@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.14 2015/05/04 00:41:42 matt Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.15 2015/05/04 00:55:30 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.14 2015/05/04 00:41:42 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.15 2015/05/04 00:55:30 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -268,14 +268,6 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 					break;
 				}
 			}
-#ifndef ARM_HAS_LPAE
-			// If memory ends at 4GB (and wraps to 0), ignore
-			// the last page.
-			const paddr_t fourgig = 1 << (32 - PGSHIFT);
-			if (__predict_false(segend >= fourgig && start > 0)) {
-				segend = fourgig - 1;
-			}
-#endif
 	
 			uvm_page_physload(start, segend, start, segend,
 			    vm_freelist);
