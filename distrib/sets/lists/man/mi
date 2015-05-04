@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1499 2015/04/16 02:32:33 mrg Exp $
+# $NetBSD: mi,v 1.1500 2015/05/04 02:43:45 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1978,6 +1978,7 @@
 ./usr/share/man/cat4/x86/odcm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/powernow.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/soekrisgpio.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/tco.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/tprof_amdpmi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/tprof_pmi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/vmt.0			man-sys-catman		.cat
@@ -4955,6 +4956,7 @@
 ./usr/share/man/html4/x86/odcm.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/powernow.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/soekrisgpio.html	man-sys-htmlman		html
+./usr/share/man/html4/x86/tco.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/tprof_amdpmi.html	man-sys-htmlman		html
 ./usr/share/man/html4/x86/tprof_pmi.html	man-sys-htmlman		html
 ./usr/share/man/html4/x86/vmt.html		man-sys-htmlman		html
@@ -7867,6 +7869,7 @@
 ./usr/share/man/man4/x86/odcm.4			man-sys-man		.man
 ./usr/share/man/man4/x86/powernow.4		man-sys-man		.man
 ./usr/share/man/man4/x86/soekrisgpio.4		man-sys-man		.man
+./usr/share/man/man4/x86/tco.4			man-sys-man		.man
 ./usr/share/man/man4/x86/tprof_amdpmi.4		man-sys-man		.man
 ./usr/share/man/man4/x86/tprof_pmi.4		man-sys-man		.man
 ./usr/share/man/man4/x86/vmt.4			man-sys-man		.man
