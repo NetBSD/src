@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.66 2015/02/15 21:32:33 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.67 2015/05/04 06:44:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -581,9 +581,6 @@ struct livengood_tcpip_ctxdesc {
 #define	TCTL_EXT_GCEX_MASK	0x000FFC00 /* Gigabit Carry Extend Padding */
 
 #define	DEFAULT_80003ES2LAN_TCTL_EXT_GCEX 0x00010000
-
-#define	WMREG_TQSA_LO	0x0408
-#define	WMREG_TQSA_HI	0x040c
 
 #define	WMREG_TIPG	0x0410	/* Transmit IPG Register */
 #define	TIPG_IPGT(x)	(x)		/* IPG transmit time */
