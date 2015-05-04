@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.335 2015/05/04 20:25:48 macallan Exp $ */
+/* $NetBSD: com.c,v 1.336 2015/05/04 22:59:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.335 2015/05/04 20:25:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.336 2015/05/04 22:59:36 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -380,7 +380,8 @@ com_enable_debugport(struct com_softc *sc)
 	sc->sc_ier = IER_ERXRDY;
 	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier |= IER_EUART | IER_ERXTOUT;
-	if (sc->sc_type == COM_TYPE_INGENIC)
+	if (sc->sc_type == COM_TYPE_INGENIC ||
+	    sc->sc_type == COM_TYPE_TEGRA)
 		sc->sc_ier |= IER_ERXTOUT;
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
@@ -465,11 +466,6 @@ com_attach_subr(struct com_softc *sc)
 		fifo_msg = "Ingenic UART, working fifo";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		SET(sc->sc_hwflags, COM_HW_NOIEN);
-		goto fifodelay;
-
-	case COM_TYPE_TEGRA:
-		sc->sc_fifolen = 1;
-		fifo_msg = "Tegra UART, broken fifo";
 		goto fifodelay;
 	}
 
@@ -818,7 +814,8 @@ com_shutdown(struct com_softc *sc)
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
 		if ((sc->sc_type == COM_TYPE_PXA2x0) ||
-		    (sc->sc_type == COM_TYPE_INGENIC))
+		    (sc->sc_type == COM_TYPE_INGENIC) ||
+		    (sc->sc_type == COM_TYPE_TEGRA))
 			sc->sc_ier |= IER_ERXTOUT;
 	} else
 		sc->sc_ier = 0;
@@ -900,7 +897,8 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		if (sc->sc_type == COM_TYPE_PXA2x0)
 			sc->sc_ier |= IER_EUART | IER_ERXTOUT;
-		else if (sc->sc_type == COM_TYPE_INGENIC)
+		else if (sc->sc_type == COM_TYPE_INGENIC ||
+			 sc->sc_type == COM_TYPE_TEGRA)
 			sc->sc_ier |= IER_ERXTOUT;
 		CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 
@@ -1909,7 +1907,8 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 				if (sc->sc_type == COM_TYPE_PXA2x0)
 					SET(sc->sc_ier, IER_ERXTOUT);
 #endif
-				if (sc->sc_type == COM_TYPE_INGENIC)
+				if (sc->sc_type == COM_TYPE_INGENIC ||
+				    sc->sc_type == COM_TYPE_TEGRA)
 					SET(sc->sc_ier, IER_ERXTOUT);
 
 				CSR_WRITE_1(&sc->sc_regs, COM_REG_IER,
@@ -2115,7 +2114,8 @@ again:	do {
 					CLR(sc->sc_ier, IER_ERXRDY|IER_ERXTOUT);
 				else
 #endif
-				if (sc->sc_type == COM_TYPE_INGENIC)
+				if (sc->sc_type == COM_TYPE_INGENIC ||
+				    sc->sc_type == COM_TYPE_TEGRA)
 					CLR(sc->sc_ier,
 					    IER_ERXRDY | IER_ERXTOUT);
 				else					
