@@ -1,4 +1,4 @@
-/*	$NetBSD: virtioreg.h,v 1.2 2013/12/06 02:39:58 yamt Exp $	*/
+/*	$NetBSD: virtioreg.h,v 1.3 2015/05/04 14:08:57 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -95,7 +95,7 @@
 #define  VIRTIO_CONFIG_ISR_CONFIG_CHANGE	2
 #define VIRTIO_CONFIG_CONFIG_VECTOR	20 /* 16bit, optional */
 #define VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI	20
-#define VIRTIO_CONFIG_DEVICE_CONFIG_MSI		22
+#define VIRTIO_CONFIG_DEVICE_CONFIG_MSI		24
 
 /* Virtqueue */
 /* This marks a buffer as continuing via the next field. */
