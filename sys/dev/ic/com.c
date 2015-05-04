@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.334 2015/05/03 17:22:54 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.335 2015/05/04 20:25:48 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.334 2015/05/03 17:22:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.335 2015/05/04 20:25:48 macallan Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1910,7 +1910,8 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 					SET(sc->sc_ier, IER_ERXTOUT);
 #endif
 				if (sc->sc_type == COM_TYPE_INGENIC)
-					sc->sc_ier |= IER_ERXTOUT;
+					SET(sc->sc_ier, IER_ERXTOUT);
+
 				CSR_WRITE_1(&sc->sc_regs, COM_REG_IER,
 				    sc->sc_ier);
 			}
@@ -2115,7 +2116,8 @@ again:	do {
 				else
 #endif
 				if (sc->sc_type == COM_TYPE_INGENIC)
-					sc->sc_ier |= IER_ERXRDY|IER_ERXTOUT;
+					CLR(sc->sc_ier,
+					    IER_ERXRDY | IER_ERXTOUT);
 				else					
 					CLR(sc->sc_ier, IER_ERXRDY);
 				CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
