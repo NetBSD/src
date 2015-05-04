@@ -1,4 +1,4 @@
-.\"	$NetBSD: ichlpcib.4,v 1.8 2015/05/04 07:39:00 wiz Exp $
+.\"	$NetBSD: ichlpcib.4,v 1.9 2015/05/04 08:04:50 pgoyette Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ and 2 seconds (on ICH5 or older) min period and for a 23 seconds
 Prior to
 .Nx 8.0 ,
 the
-.Xr tco 4
+.Xr x86/tco 4
 watchdog timer was included as part of the
 .Nm
 driver, and did not require explicit configuration.
@@ -80,11 +80,11 @@ The ICH provides up to 64 I/O pins which can be accessed through the
 framework.
 .El
 .Sh SEE ALSO
-.Xr est 4 ,
-.Xr fwhrng 4 ,
 .Xr gpio 4 ,
 .Xr hpet 4 ,
-.Xr tco 4 ,
+.Xr x86/est 4 ,
+.Xr x86/fwhrng 4 ,
+.Xr x86/tco 4 ,
 .Xr x86/ioapic 4 ,
 .Xr sysctl 8 ,
 .Xr wdogctl 8
