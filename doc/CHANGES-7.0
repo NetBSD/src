@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.277 2015/05/02 18:27:09 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.278 2015/05/04 20:25:57 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22783,4 +22783,15 @@ sys/netinet6/nd6_rtr.c				1.99
 	log attack attempts.
 	Fixes CVE-2015-2923, taken from FreeBSD.
 	[roy, ticket #731]
+
+usr.sbin/sysinst/savenewlabel.c			1.3
+
+	Replace all '/' characters in packnames with a space
+	before using the string as a file name.
+	[martin, ticket #732]
+
+Makefile					1.313
+
+	Pass the xsrc path to postinstall.  PR#49870
+	[martin, ticket #733]
 
