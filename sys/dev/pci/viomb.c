@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.3 2014/07/22 01:55:54 ozaki-r Exp $	*/
+/*	$NetBSD: viomb.c,v 1.4 2015/05/04 14:02:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.3 2014/07/22 01:55:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.4 2015/05/04 14:02:13 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,6 +383,8 @@ deflate(struct viomb_softc *sc)
 	TAILQ_INIT(&b->bl_pglist);
 	for (i = 0; i < nhpages; i++) {
 		p = TAILQ_FIRST(&sc->sc_balloon_pages);
+		if (p == NULL)
+			break;
 		TAILQ_REMOVE(&sc->sc_balloon_pages, p, pageq.queue);
 		TAILQ_INSERT_TAIL(&b->bl_pglist, p, pageq.queue);
 		b->bl_pages[i] = p->phys_addr / VIRTIO_PAGE_SIZE;
