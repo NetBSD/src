@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.67 2015/05/04 06:44:13 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.68 2015/05/04 06:51:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -667,6 +667,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_8K		0x0008
 #define	PBA_10K		0x000a
 #define	PBA_12K		0x000c
+#define	PBA_14K		0x000e
 #define	PBA_16K		0x0010		/* 16K, default Tx allocation */
 #define	PBA_20K		0x0014
 #define	PBA_22K		0x0016
