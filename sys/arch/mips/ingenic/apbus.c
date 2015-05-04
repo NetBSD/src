@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.13 2015/04/28 15:08:07 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.14 2015/05/04 12:23:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.13 2015/04/28 15:08:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.14 2015/05/04 12:23:15 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -118,7 +118,7 @@ apbus_match(device_t parent, cfdata_t match, void *aux)
 void
 apbus_attach(device_t parent, device_t self, void *aux)
 {
-	uint32_t reg, mpll, m, n, p, mclk, pclk, pdiv;
+	uint32_t reg, mpll, m, n, p, mclk, pclk, pdiv, cclk, cdiv;
 	aprint_normal("\n");
 
 	/* should have been called early on */
@@ -140,12 +140,14 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	mclk = (48000 * (m + 1) / (n + 1)) / (p + 1);
 
 	reg = readreg(JZ_CPCCR);
-	pdiv = (reg & JZ_PDIV_M) >> JZ_PDIV_S;
+	pdiv = ((reg & JZ_PDIV_M) >> JZ_PDIV_S) + 1;
 	pclk = mclk / pdiv;
-#ifdef INGENIC_DEBUG
-	printf("mclk %d kHz\n", mclk);
-	printf("pclk %d kHz\n", pclk);
-#endif
+	cdiv = (reg & JZ_CDIV_M) + 1;
+	cclk = mclk / cdiv;
+
+	aprint_debug_dev(self, "mclk %d kHz\n", mclk);
+	aprint_debug_dev(self, "pclk %d kHz\n", pclk);
+	aprint_debug_dev(self, "CPU clock %d kHz\n", cclk);
 
 	/* enable clocks */
 	reg = readreg(JZ_CLKGR1);
@@ -157,7 +159,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	reg |= OPCR_SPENDN0 | OPCR_SPENDN1;
 	writereg(JZ_OPCR, reg);
 
-	/* setup GPIOs for I2C buses */
+	/* wire up GPIOs */
 	/* iic0 */
 	gpio_as_dev0(3, 30);
 	gpio_as_dev0(3, 31);
@@ -181,6 +183,36 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	gpio_as_dev0(5, 24);
 	gpio_as_dev0(5, 25);
 
+	/* MSC0 */
+	gpio_as_dev1(0, 4);
+	gpio_as_dev1(0, 5);
+	gpio_as_dev1(0, 6);
+	gpio_as_dev1(0, 7);
+	gpio_as_dev1(0, 18);
+	gpio_as_dev1(0, 19);
+	gpio_as_dev1(0, 20);
+	gpio_as_dev1(0, 21);
+	gpio_as_dev1(0, 22);
+	gpio_as_dev1(0, 23);
+	gpio_as_dev1(0, 24);
+	gpio_as_intr_level_low(5, 20);	/* card detect */
+
+	/* MSC1, for wifi/bt */
+	gpio_as_dev0(3, 20);
+	gpio_as_dev0(3, 21);
+	gpio_as_dev0(3, 22);
+	gpio_as_dev0(3, 23);
+	gpio_as_dev0(3, 24);
+	gpio_as_dev0(3, 25);
+
+	/* MSC2, on expansion header */
+	gpio_as_dev0(1, 20);
+	gpio_as_dev0(1, 21);
+	gpio_as_dev0(1, 28);
+	gpio_as_dev0(1, 29);
+	gpio_as_dev0(1, 30);
+	gpio_as_dev0(1, 31);
+
 #ifdef INGENIC_DEBUG
 	printf("JZ_CLKGR0 %08x\n", readreg(JZ_CLKGR0));
 	printf("JZ_CLKGR1 %08x\n", readreg(JZ_CLKGR1));
@@ -199,6 +231,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 		aa.aa_dmat = &apbus_dmat;
 		aa.aa_bst = apbus_memt;
 		aa.aa_pclk = pclk;
+		aa.aa_mclk = mclk;
 
 		/* enable clocks as needed */
 		if (adv->clk0 != 0) {
