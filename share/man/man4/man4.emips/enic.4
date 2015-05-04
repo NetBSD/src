@@ -1,4 +1,4 @@
-.\"	$NetBSD: enic.4,v 1.4 2015/05/04 05:30:48 ryoon Exp $
+.\"	$NetBSD: enic.4,v 1.5 2015/05/04 07:40:53 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2010 The NetBSD Foundation, Inc.
 .\"
@@ -36,9 +36,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface provides access to a
+interface provides access to an
 .Tn Ethernet
-network via the eMIPS builtin 
+network via the eMIPS builtin
 .Tn eNIC
 (Extensible Network Interface Controller - Ethernet) interface.
 .Pp
@@ -54,18 +54,21 @@ to dynamically map between Internet and
 .Tn Ethernet
 addresses on the local network.
 .Pp
-Multicast Ethernet frames are unconditionally received and must be filtered in software.
+Multicast Ethernet frames are unconditionally received and must be
+filtered in software.
 .Sh HARDWARE
 .Ss emips
 The
 .Tn ENIC
-interface is present on the BEE3 and Xilinx XUP boards. The interface speed is wired at 1Gbps.
+interface is present on the BEE3 and Xilinx XUP boards.
+The interface speed is wired at 1Gbps.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "enic%d: enic_put: no mem?"
 The driver could not allocate a transmit buffer, packet was not sent.
 .It "enic%d: internal error"
-This and other messages are indicative of bad hardware or software driver coding errors.
+This and other messages are indicative of bad hardware or software
+driver coding errors.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
