@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.32 2014/10/29 14:14:14 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.33 2015/05/04 00:44:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -124,7 +124,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.32 2014/10/29 14:14:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.33 2015/05/04 00:44:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -191,6 +191,16 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 
 	physical_start = bmi->bmi_start = memstart;
 	physical_end = bmi->bmi_end = memstart + memsize;
+#ifndef ARM_HAS_LPAE
+	if (physical_end == 0) {
+		physical_end = -PAGE_SIZE;
+		memsize -= PAGE_SIZE;
+#ifdef VERBOSE_INIT_ARM
+		printf("%s: memsize shrunk by a page to avoid ending at 4GB\n",
+		    __func__);
+#endif
+	}
+#endif
 	physmem = memsize / PAGE_SIZE;
 
 	/*
@@ -225,9 +235,24 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 #if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
 		pv->pv_va = pmap_directbase;
 #else
+		/*
+		 * If there's lots of memory the kernel could be placed far
+		 * from the start of RAM.  If that's the case, don't map the
+		 * RAM that would have virtual addresses below KERNEL_BASE.
+		 */
+		if (pv->pv_pa < KERN_VTOPHYS(bmi, KERNEL_BASE)) {
+			psize_t size = KERN_VTOPHYS(bmi, KERNEL_BASE) - pv->pv_pa;
+			bmi->bmi_freepages += size / PAGE_SIZE;
+#ifdef VERBOSE_INIT_ARM
+			printf("%s: adding %lu free pages: [%#lx..%#lx]\n",
+			    __func__, size / PAGE_SIZE, pv->pv_va,
+			    pv->pv_pa + size - 1);
+#endif
+			pv->pv_pa = KERN_VTOPHYS(bmi, KERNEL_BASE);
+		}
 		pv->pv_va = KERNEL_BASE;
 #endif
-		pv->pv_size = bmi->bmi_kernelstart - bmi->bmi_start;
+		pv->pv_size = bmi->bmi_kernelstart - pv->pv_pa;
 		bmi->bmi_freepages += pv->pv_size / PAGE_SIZE;
 #ifdef VERBOSE_INIT_ARM
 		printf("%s: adding %lu free pages: [%#lx..%#lx] (VA %#lx)\n",
