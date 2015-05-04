@@ -1,4 +1,4 @@
-# $NetBSD: t_ldp_regen.sh,v 1.4 2014/09/01 06:38:35 gson Exp $
+# $NetBSD: t_ldp_regen.sh,v 1.5 2015/05/04 10:57:17 martin Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -158,7 +158,7 @@ docleanup() {
 
 ldp_regen_body() {
 
-        if sysctl machdep.cpu_brand | grep QEMU >/dev/null 2>&1
+        if sysctl machdep.cpu_brand 2>/dev/null | grep QEMU >/dev/null 2>&1
 	then
 	    atf_skip "unreliable under qemu, skip until PR kern/43997 fixed"
 	fi
