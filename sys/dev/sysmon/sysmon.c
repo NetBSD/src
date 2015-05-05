@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.26 2015/05/04 23:50:36 pgoyette Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.27 2015/05/05 00:28:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.26 2015/05/04 23:50:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.27 2015/05/05 00:28:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -153,6 +153,8 @@ sysmonopen(dev_t dev, int flag, int mode, struct lwp *l)
 			error = module_autoload(sysmon_mod[minor(dev)],
 						MODULE_CLASS_MISC);
 			mutex_enter(&sysmon_minor_mtx);
+			if (error)
+				break;
 			if (sysmon_opvec_table[minor(dev)] == NULL) {
 				error = ENODEV;
 				break;
