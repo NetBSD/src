@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.111 2015/01/02 01:14:22 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.112 2015/05/05 22:09:24 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.111 2015/01/02 01:14:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.112 2015/05/05 22:09:24 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -564,6 +564,16 @@ disk_set_info(device_t dev, struct disk *dk, const char *type)
 {
 	struct disk_geom *dg = &dk->dk_geom;
 
+	if (dg->dg_secsize == 0) {
+#ifdef DIAGNOSTIC
+		printf("%s: fixing 0 sector size\n", dk->dk_name);
+#endif
+		dg->dg_secsize = DEV_BSIZE;
+	}
+
+	dk->dk_blkshift = DK_BSIZE2BLKSHIFT(dg->dg_secsize);
+	dk->dk_byteshift = DK_BSIZE2BYTESHIFT(dg->dg_secsize);
+
 	if (dg->dg_secperunit == 0 && dg->dg_ncylinders == 0) {
 #ifdef DIAGNOSTIC
 		printf("%s: secperunit and ncylinders are zero\n", dk->dk_name);
@@ -588,16 +598,6 @@ disk_set_info(device_t dev, struct disk *dk, const char *type)
 			dg->dg_ncylinders = dg->dg_secperunit /
 			    (dg->dg_ntracks * dg->dg_nsectors);
 	}
-
-	if (dg->dg_secsize == 0) {
-#ifdef DIAGNOSTIC
-		printf("%s: fixing 0 sector size\n", dk->dk_name);
-#endif
-		dg->dg_secsize = DEV_BSIZE;
-	}
-
-	dk->dk_blkshift = DK_BSIZE2BLKSHIFT(dg->dg_secsize);
-	dk->dk_byteshift = DK_BSIZE2BYTESHIFT(dg->dg_secsize);
 
 	prop_dictionary_t disk_info, odisk_info, geom;
 
