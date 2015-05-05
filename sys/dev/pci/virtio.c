@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.8 2014/12/19 06:54:40 ozaki-r Exp $	*/
+/*	$NetBSD: virtio.c,v 1.9 2015/05/05 10:58:35 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.8 2014/12/19 06:54:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.9 2015/05/05 10:58:35 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,7 +489,6 @@ virtio_vq_intr(struct virtio_softc *sc)
 				r |= (vq->vq_done)(vq);
 		}
 	}
-		
 
 	return r;
 }
