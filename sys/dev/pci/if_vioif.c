@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.15 2015/01/16 10:36:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.16 2015/05/05 10:56:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.15 2015/01/16 10:36:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.16 2015/05/05 10:56:13 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -501,7 +501,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	vsc->sc_child = self;
 	vsc->sc_ipl = IPL_NET;
 	vsc->sc_vqs = &sc->sc_vq[0];
-	vsc->sc_config_change = 0;
+	vsc->sc_config_change = NULL;
 	vsc->sc_intrhand = virtio_vq_intr;
 	vsc->sc_flags = 0;
 
