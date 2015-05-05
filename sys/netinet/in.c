@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.154 2015/05/02 20:22:12 joerg Exp $	*/
+/*	$NetBSD: in.c,v 1.155 2015/05/05 08:52:51 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.154 2015/05/02 20:22:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.155 2015/05/05 08:52:51 roy Exp $");
 
 #include "arp.h"
 #include "opt_inet.h"
@@ -909,8 +909,10 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	if (hostIsNew && if_do_dad(ifp) && !in_nullhost(ia->ia_addr.sin_addr)) {
 		if (ifp->if_link_state == LINK_STATE_DOWN)
 			ia->ia4_flags |= IN_IFF_DETACHED;
+#if NARP
 		else
 			ia->ia4_flags |= IN_IFF_TENTATIVE;
+#endif
 	}
 
 	/*
@@ -1177,9 +1179,12 @@ in_if_link_up(struct ifnet *ifp)
 		/* If detached then mark as tentative */
 		if (ia->ia4_flags & IN_IFF_DETACHED) {
 			ia->ia4_flags &= ~IN_IFF_DETACHED;
+#if NARP
 			if (if_do_dad(ifp))
 				ia->ia4_flags |= IN_IFF_TENTATIVE;
-			else if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0)
+			else
+#endif
+			if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0)
 				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		}
 
