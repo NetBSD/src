@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.7 2015/04/13 16:33:25 riastradh Exp $ */
+/* 	$NetBSD: viornd.c,v 1.8 2015/05/05 10:56:13 ozaki-r Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ viornd_attach( device_t parent, device_t self, void *aux)
 
 	vsc->sc_vqs = &sc->sc_vq;
 	vsc->sc_nvqs = 1;
-	vsc->sc_config_change = 0;
+	vsc->sc_config_change = NULL;
 	if (vsc->sc_child != NULL)
 		panic("already attached to something else");
 	vsc->sc_child = self;
