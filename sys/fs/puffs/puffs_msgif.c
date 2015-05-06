@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.97 2014/11/10 18:46:33 maxv Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.98 2015/05/06 15:57:08 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.97 2014/11/10 18:46:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.98 2015/05/06 15:57:08 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.97 2014/11/10 18:46:33 maxv Exp $"
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
-
-#include <miscfs/syncfs/syncfs.h> /* XXX: for syncer_mutex reference */
 
 /*
  * waitq data structures

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.46 2015/04/23 14:49:26 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.47 2015/05/06 15:57:08 hannken Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -11,7 +11,7 @@ MAN=	rump_etfs.3 rumpfs.4
 
 .PATH:	${RUMPTOP}/librump/rumpvfs ${RUMPTOP}/librump		\
 	${RUMPTOP}/../kern					\
-	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs	\
+	${RUMPTOP}/../miscfs/genfs				\
 	${RUMPTOP}/../miscfs/specfs ${RUMPTOP}/../miscfs/deadfs	\
 	${RUMPTOP}/../compat/common ${RUMPTOP}/../uvm		\
 	${RUMPTOP}/../dev ${RUMPTOP}/../ufs/mfs			\
@@ -40,9 +40,6 @@ SRCS+=	kern_module_vfs.c subr_kobj_vfs.c
 
 # sys/uvm
 SRCS+=	uvm_vnode.c
-
-# sys/miscfs/syncfs
-SRCS+=	sync_subr.c sync_vnops.c
 
 # sys/miscfs/deadfs
 SRCS+=	dead_vfsops.c dead_vnops.c

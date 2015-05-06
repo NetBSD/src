@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.216 2015/03/17 09:38:21 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.217 2015/05/06 15:57:08 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -112,7 +112,7 @@ struct mount {
 	TAILQ_HEAD(, vnode) mnt_vnodelist;	/* list of vnodes this mount */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
-	struct vnode	*mnt_syncer;		/* syncer vnode */
+	int		mnt_synclist_slot;	/* synclist slot index */
 	void		*mnt_transinfo;		/* for FS-internal use */
 	void		*mnt_data;		/* private data */
 	kmutex_t	mnt_unmounting;		/* to prevent new activity */
@@ -453,6 +453,16 @@ void	vfs_vnode_iterator_init(struct mount *, struct vnode_iterator **);
 void	vfs_vnode_iterator_destroy(struct vnode_iterator *);
 struct vnode *vfs_vnode_iterator_next(struct vnode_iterator *,
     bool (*)(void *, struct vnode *), void *);
+
+/* Syncer */
+extern int	syncer_maxdelay;
+extern kmutex_t	syncer_mutex;
+extern time_t	syncdelay;
+extern time_t	filedelay;
+extern time_t	dirdelay; 
+extern time_t	metadelay;
+void	vfs_syncer_add_to_worklist(struct mount *);
+void	vfs_syncer_remove_from_worklist(struct mount *);
 
 extern	TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
