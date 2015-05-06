@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.47 2014/12/08 20:50:11 joerg Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.48 2015/05/06 20:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -64,11 +64,14 @@
 #define	__weak_extern(sym)						\
     __asm(".weak " _C_LABEL_STRING(#sym));
 
+#ifndef __OBJC__
+/* Avoid overriding Apple's garbage collection keywords (__weak, __strong) */
 #if __GNUC_PREREQ__(4, 0)
 #define	__weak	__attribute__((__weak__))
 #else
 #define	__weak
 #endif
+#endif /* __OBJC__ */
 
 #if __GNUC_PREREQ__(4, 0)
 #define	__weak_reference(sym)	__attribute__((__weakref__(#sym)))
