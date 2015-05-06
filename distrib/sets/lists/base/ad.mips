@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.67 2015/04/17 19:35:25 christos Exp $
+# $NetBSD: ad.mips,v 1.68 2015/05/06 05:57:48 martin Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -455,6 +455,11 @@
 ./usr/lib/o32/libcrypt.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libcrypto.so.8			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/o32/libcrypto.so.8.4			base-compat-shlib	compat,pic,crypto,arch64
+./usr/lib/o32/libcrypto_rc5.so			base-compat-shlib	compat,pic,crypto,crypto_rc5,arch64
+./usr/lib/o32/libcrypto_rc5.so.7		base-compat-shlib	compat,pic,crypto,crypto_rc5,arch64
+./usr/lib/o32/libcrypto_rc5.so.7.0		base-compat-shlib	compat,pic,crypto,crypto_rc5,arch64
+./usr/lib/o32/libcrypto_rc5_g.a			base-compat-shlib	compat,pic,crypto,crypto_rc5,arch64
+./usr/lib/o32/libcrypto_rc5_pic.a		base-compat-shlib	compat,pic,crypto,crypto_rc5,arch64
 ./usr/lib/o32/libcurses.so.7			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libcurses.so.7.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libdes.so.8			base-compat-shlib	compat,pic,crypto,arch64
