@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.306 2015/02/01 18:49:25 christos Exp $
+#	$NetBSD: build.sh,v 1.307 2015/05/06 17:31:49 wiz Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1045,7 +1045,7 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
                         RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage.
     install-image       Create bootable installation image in
                         RELEASEDIR/RELEASEMACHINEDIR/installation/installimage.
-    disk-image=target   Creae bootable disk image in
+    disk-image=target   Create bootable disk image in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/gzimg/target.img.gz.
     params              Display various make(1) parameters.
     list-arch           Display a list of valid MACHINE/MACHINE_ARCH values,
@@ -1869,7 +1869,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.306 2015/02/01 18:49:25 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.307 2015/05/06 17:31:49 wiz Exp $
 # with these arguments: ${_args}
 #
 
