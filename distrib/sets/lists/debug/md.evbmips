@@ -1,4 +1,4 @@
-#$NetBSD: md.evbmips,v 1.7 2015/01/25 15:50:30 christos Exp $
+#$NetBSD: md.evbmips,v 1.8 2015/05/06 05:57:48 martin Exp $
 ./usr/lib/64/i18n/libBIG5_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/i18n/libDECHanyu_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/i18n/libEUCTW_g.a	comp-c-debuglib	compat,debuglib,arch64
@@ -173,12 +173,7 @@
 ./usr/lib/o32/libcom_err_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libcompat_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libcrypt_g.a	comp-c-debuglib compat,debuglib,arch64
-./usr/lib/o32/libcrypto_g.a	comp-c-debuglib compat,debuglib,arch64
-./usr/lib/o32/libcrypto_rc5.so	comp-c-debuglib compat,debuglib,arch64
-./usr/lib/o32/libcrypto_rc5.so.7	comp-c-debuglib compat,debuglib,arch64
-./usr/lib/o32/libcrypto_rc5.so.7.0	comp-c-debuglib compat,debuglib,arch64
-./usr/lib/o32/libcrypto_rc5_g.a	comp-c-debuglib compat,debuglib,arch64
-./usr/lib/o32/libcrypto_rc5_pic.a	comp-c-debuglib compat,debuglib,arch64
+./usr/lib/o32/libcrypto_g.a	comp-c-debuglib compat,debuglib,crypto,arch64
 ./usr/lib/o32/libcurses_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libdes_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libdns_g.a	comp-c-debuglib compat,debuglib,arch64
