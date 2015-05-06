@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.278 2015/05/04 20:25:57 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.279 2015/05/06 23:29:47 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22794,4 +22794,41 @@ Makefile					1.313
 
 	Pass the xsrc path to postinstall.  PR#49870
 	[martin, ticket #733]
+
+sys/dev/pci/ixgbe/LICENSE			1.2
+sys/dev/pci/ixgbe/ixgbe.c			1.28-1.29
+sys/dev/pci/ixgbe/ixgbe.h			1.7
+sys/dev/pci/ixgbe/ixgbe_82598.c			1.4
+sys/dev/pci/ixgbe/ixgbe_82598.h			1.3
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.9
+sys/dev/pci/ixgbe/ixgbe_82599.h			1.2
+sys/dev/pci/ixgbe/ixgbe_api.c			1.7
+sys/dev/pci/ixgbe/ixgbe_api.h			1.4
+sys/dev/pci/ixgbe/ixgbe_common.c		1.5
+sys/dev/pci/ixgbe/ixgbe_common.h		1.4
+sys/dev/pci/ixgbe/ixgbe_mbx.h			1.4
+sys/dev/pci/ixgbe/ixgbe_netbsd.h		1.3
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.7
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.5
+sys/dev/pci/ixgbe/ixgbe_phy.h			1.4
+sys/dev/pci/ixgbe/ixgbe_type.h			1.10
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.4
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.5
+sys/dev/pci/ixgbe/ixgbe_x540.c			1.3
+sys/dev/pci/ixgbe/ixgbe_x540.h			1.2
+sys/dev/pci/ixgbe/ixv.c				1.8
+
+	- Sync ixg(4) up to FreeBSD r250108:
+	  - Cleanup some unused counters and some unused code.
+	  - Improve performance.
+	  - Fix flow control - don't override user value on re-init
+	  - Fix to make 1G optics work correctly
+	  - Change to interrupt enabling - some bits were incorrect
+	    for certain hardware.
+	  - Certain stats fixes, remove a duplicate increment of
+	    ierror, thanks to Scott Long for pointing these out.
+	  - Fix the setting of RX which related to multicast.
+	  - Some netmap related fixes.
+	- Fixes link error without vlan. PR#49879 reported by Hauke Fath.
+	[msaitoh, ticket #734]
 
