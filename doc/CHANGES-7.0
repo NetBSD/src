@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.279 2015/05/06 23:29:47 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.280 2015/05/06 23:38:00 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22831,4 +22831,9 @@ sys/dev/pci/ixgbe/ixv.c				1.8
 	  - Some netmap related fixes.
 	- Fixes link error without vlan. PR#49879 reported by Hauke Fath.
 	[msaitoh, ticket #734]
+
+usr.sbin/sysinst/msg.mi.en			1.8-1.9
+
+	English wording fixes for sysinst messages.
+	[snj, ticket #735]
 
