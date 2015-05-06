@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2012, Intel Corporation 
+  Copyright (c) 2001-2013, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe_vf.h,v 1.1 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_vf.h,v 1.1.28.2 2015/04/19 06:45:17 riz Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.h 247822 2013-03-04 23:07:40Z jfv $*/
+/*$NetBSD: ixgbe_vf.h,v 1.1.28.3 2015/05/06 23:29:21 riz Exp $*/
 
 #ifndef __IXGBE_VF_H__
 #define __IXGBE_VF_H__
@@ -39,6 +39,9 @@
 #define IXGBE_VF_IRQ_CLEAR_MASK	7
 #define IXGBE_VF_MAX_TX_QUEUES	8
 #define IXGBE_VF_MAX_RX_QUEUES	8
+
+/* DCB define */
+#define IXGBE_VF_MAX_TRAFFIC_CLASS	8
 
 #define IXGBE_VFCTRL		0x00000
 #define IXGBE_VFSTATUS		0x00008
@@ -123,7 +126,7 @@ u32 ixgbe_get_num_of_tx_queues_vf(struct ixgbe_hw *hw);
 u32 ixgbe_get_num_of_rx_queues_vf(struct ixgbe_hw *hw);
 s32 ixgbe_get_mac_addr_vf(struct ixgbe_hw *hw, u8 *mac_addr);
 s32 ixgbe_setup_mac_link_vf(struct ixgbe_hw *hw, ixgbe_link_speed speed,
-			    bool autoneg, bool autoneg_wait_to_complete);
+			    bool autoneg_wait_to_complete);
 s32 ixgbe_check_mac_link_vf(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 			    bool *link_up, bool autoneg_wait_to_complete);
 s32 ixgbe_set_rar_vf(struct ixgbe_hw *hw, u32 index, u8 *addr, u32 vmdq,
@@ -133,5 +136,9 @@ s32 ixgbe_update_mc_addr_list_vf(struct ixgbe_hw *hw, u8 *mc_addr_list,
 				 u32 mc_addr_count, ixgbe_mc_addr_itr,
 				 bool clear);
 s32 ixgbe_set_vfta_vf(struct ixgbe_hw *hw, u32 vlan, u32 vind, bool vlan_on);
+void ixgbevf_rlpml_set_vf(struct ixgbe_hw *hw, u16 max_size);
+int ixgbevf_negotiate_api_version(struct ixgbe_hw *hw, int api);
+int ixgbevf_get_queues(struct ixgbe_hw *hw, unsigned int *num_tcs,
+		       unsigned int *default_tc);
 
 #endif /* __IXGBE_VF_H__ */
