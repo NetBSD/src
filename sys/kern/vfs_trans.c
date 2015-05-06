@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.32 2015/04/21 10:54:52 pooka Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.33 2015/05/06 15:57:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.32 2015/04/21 10:54:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.33 2015/05/06 15:57:08 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.32 2015/04/21 10:54:52 pooka Exp $")
 #include <sys/proc.h>
 
 #include <miscfs/specfs/specdev.h>
-#include <miscfs/syncfs/syncfs.h>
 
 struct fscow_handler {
 	LIST_ENTRY(fscow_handler) ch_list;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.466 2015/04/30 15:22:32 nat Exp $	*/
+/*	$NetBSD: init_main.c,v 1.467 2015/05/06 15:57:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.466 2015/04/30 15:22:32 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.467 2015/05/06 15:57:08 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -216,7 +216,6 @@ extern void *_binary_splash_image_end;
 #include <ufs/ufs/quota.h>
 
 #include <miscfs/genfs/genfs.h>
-#include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <sys/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.5 2013/11/25 22:48:05 christos Exp $	*/
+/*	$NetBSD: vfs.c,v 1.6 2015/05/06 15:57:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -332,12 +332,9 @@ domount(kthread_t *td, vnode_t *vp, const char *fstype, char *fspath,
 		vput(mvp);
 		VOP_UNLOCK(vp);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			error = vfs_allocate_syncvnode(mp);
+			vfs_syncer_add_to_worklist(mp);
 		vfs_unbusy(mp, td);
-		if (error)
-			vrele(vp);
-		else
-			vfs_mountedfrom(mp, fspec);
+		vfs_mountedfrom(mp, fspec);
 	} else {
 		simple_lock(&vp->v_interlock);
 		vp->v_iflag &= ~VI_MOUNT;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.4 2015/05/02 12:57:19 mlelstv Exp $
+#	$NetBSD: files.kern,v 1.5 2015/05/06 15:57:08 hannken Exp $
 
 #
 # kernel sources
@@ -226,5 +226,3 @@ file	miscfs/genfs/layer_vfsops.c	layerfs
 file	miscfs/genfs/layer_vnops.c	layerfs
 
 file	miscfs/specfs/spec_vnops.c	vfs
-file	miscfs/syncfs/sync_subr.c	vfs
-file	miscfs/syncfs/sync_vnops.c	vfs

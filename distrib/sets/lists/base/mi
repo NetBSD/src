@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1102 2015/04/26 21:37:22 mrg Exp $
+# $NetBSD: mi,v 1.1103 2015/05/06 15:57:07 hannken Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1135,7 +1135,7 @@
 ./usr/include/miscfs/procfs			base-c-usr
 ./usr/include/miscfs/ptyfs			base-obsolete		obsolete
 ./usr/include/miscfs/specfs			base-c-usr
-./usr/include/miscfs/syncfs			base-c-usr
+./usr/include/miscfs/syncfs			base-obsolete		obsolete
 ./usr/include/miscfs/umapfs			base-c-usr
 ./usr/include/miscfs/union			base-c-usr
 ./usr/include/msdosfs				base-c-usr
