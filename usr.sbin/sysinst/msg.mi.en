@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.2.4.3 2015/04/06 01:41:50 snj Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.2.4.4 2015/05/06 23:37:10 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,8 +106,8 @@ disks.)
 
 message reinstallusure
 {Ok, let's unpack the NetBSD distribution sets to a bootable hard disk.
-This procedure just fetches and unpacks sets onto an pre-partitioned
-bootable disk. It does not label disks, upgrade bootblocks, or save
+This procedure just fetches and unpacks sets onto a pre-partitioned
+bootable disk.  It does not label disks, upgrade bootblocks, or save
 any existing configuration info.  (Quit and choose `install' or
 `upgrade' if you want those options.)  You should have already done an
 `install' or `upgrade' before starting this procedure!
@@ -118,7 +118,7 @@ disks.)
 }
 
 message mount_failed
-{Mounting %s failed. Continue?
+{Mounting %s failed.  Continue?
 }
 
 message nodisk
@@ -176,19 +176,18 @@ at least %d Megabytes if the X sets are included.
 message Choose_your_size_specifier
 {Choosing megabytes will give partition sizes close to your choice,
 but aligned to cylinder boundaries.  Choosing sectors will allow you
-to more accurately specify the sizes.  On modern ZBR disks, actual
-cylinder size varies across the disk and there is little real gain
-from cylinder alignment.  On older disks, it is most efficient to
-choose partition sizes that are exact multiples of your actual
+to more accurately specify the sizes.  On most disks, there is little
+to gain from cylinder alignment.  On very old disks, it is most efficient
+to choose partition sizes that are exact multiples of your actual
 cylinder size.
 
 Choose your size specifier}
 
 message ptnsizes
 {You can now change the sizes for the system partitions.  The default is
-to allocate all the space to the root file system, however you may wish
+to allocate all the space to the root file system.  However, you may wish
 to have separate /usr (additional system files), /var (log files etc)
-or /home (users' home directories).
+or /home (users' home directories) file systems.
 
 Free space will be added to the partition marked with a '+'.
 }
@@ -244,7 +243,7 @@ partition.
 }
 
 message fspart
-{We now have your BSD-disklabel partitions as: 
+{We now have your BSD disklabel partitions as: 
 This is your last chance to change them.
 
 }
@@ -356,13 +355,13 @@ Shall we continue?
 }
 
 message disksetupdone
-{Okay, the first part of the procedure is finished.  Sysinst has
+{Ok, the first part of the procedure is finished.  Sysinst has
 written a disklabel to the target disk, and newfs'ed and fsck'ed
 the new partitions you specified for the target disk.
 }
 
 message disksetupdoneupdate
-{Okay, the first part of the procedure is finished.  Sysinst has
+{Ok, the first part of the procedure is finished.  Sysinst has
 written a disklabel to the target disk, and fsck'ed the new
 partitions you specified for the target disk.
 }
@@ -377,7 +376,7 @@ message mountfail
 
 message extractcomplete
 {The extraction of the selected sets for NetBSD-@@VERSION@@ is complete.
-The system is now able to boot from the selected harddisk. To complete
+The system is now able to boot from the selected hard disk.  To complete
 the installation, sysinst will give you the opportunity to configure
 some essential things first.
 }
@@ -385,11 +384,11 @@ some essential things first.
 message instcomplete
 {The installation of NetBSD-@@VERSION@@ is now complete.  The system
 should boot from hard disk.  Follow the instructions in the INSTALL
-document about final configuration of your system.  The afterboot(8)
-manpage is another recommended reading; it contains a list of things
-to be checked after the first complete boot.
+document about final configuration of your system.  We also recommend
+reading the afterboot(8) manpage; it contains a list of things to be
+checked after the first complete boot.
 
-At a minimum, you should edit /etc/rc.conf to match your needs. See
+At a minimum, you should edit /etc/rc.conf to match your needs.  See
 /etc/defaults/rc.conf for the default values.
 }
 
@@ -399,12 +398,6 @@ now need to follow the instructions in the INSTALL document as to
 what you need to do to get your system reconfigured for your situation.
 Remember to (re)read the afterboot(8) manpage as it may contain new
 items since your last upgrade.
-
-At a minimum, you must edit rc.conf for your local environment and change
-rc_configured=NO to rc_configured=YES or reboots will stop at single-user,
-and copy back the password files (taking into account new system accounts
-that may have been created for this release) if you were using local
-password files.
 }
 
 
@@ -414,8 +407,9 @@ You will now need to follow the instructions in the INSTALL document
 to get your system reconfigured for your situation.
 The afterboot(8) manpage can also be of some help.
 
-At a minimum, you must edit rc.conf for your local environment and change
-rc_configured=NO to rc_configured=YES or reboots will stop at single-user.
+If you unpacked the etc set, you will need to edit /etc/rc.conf to get a
+multi-user system.  At a minimum, you will need to change rc_configured=NO
+to rc_configured=YES.
 }
 
 message distmedium
@@ -431,10 +425,10 @@ Sets selected %d, processed %d, Next set %s.
 message distset
 {The NetBSD distribution is broken into a collection of distribution
 sets.  There are some basic sets that are needed by all installations
-and there are some other sets that are not needed by all installations.
-You may choose to install a core set (Minimal installation), all of them
-(Full installation) or you select from the optional distribution sets.
-} /* XXX add 'minimal installation' */
+and there are some other sets that are optional.  You may choose to install
+a core set (Minimal installation), all of them (Full installation), or a custom
+group of sets (Custom installation).
+}
 
 message ftpsource
 {The following are the %s site, directory, user, and password that
@@ -472,11 +466,11 @@ message Available_cds
 {Available CDs }
 
 message ask_cd
-{Multiple CDs found, please select the one containing the install CD.}
+{Multiple CDs found.  Please select the one containing the install CD.}
 
 message cd_path_not_found
 {The installation sets have not been found at the default location on this
-CD. Please check device and path name.}
+CD.  Please check the device and path name.}
 
 message localfssource
 {Enter the unmounted local device and directory on that device where
@@ -606,7 +600,7 @@ You selected %d distribution sets.  %d sets couldn't be found
 and %d were skipped after an error occurred.  Of the %d
 that were attempted, %d unpacked without errors and %d with errors.
 
-The installation is aborted. Please recheck your distribution source
+Aborting installation.  Please recheck your distribution source
 and consider reinstalling sets from the main menu.}
 
 message abort
@@ -644,7 +638,7 @@ message badetcfstab
 
 message X_oldexists
 {I cannot save %s/bin/X as %s/bin/X.old, because the
-target disk already has an %s/bin/X.old. Please fix this before
+target disk already has an %s/bin/X.old.  Please fix this before
 continuing.
 
 One way is to start a shell from the Utilities menu, examine the
@@ -659,13 +653,13 @@ Aborting upgrade.}
 message netnotup
 {There was a problem in setting up the network.  Either your gateway
 or your nameserver was not reachable by a ping.  Do you want to
-configure your network again?  (No allows you to continue anyway
+configure your network again?  ("No" allows you to continue anyway
 or abort the install process.)
 }
 
 message netnotup_continueanyway
 {Would you like to continue the install process anyway, and assume
-that the network is working?  (No aborts the install process.)
+that the network is working?  ("No" aborts the install process.)
 }
 
 message makedev
@@ -683,7 +677,7 @@ message rootmissing
 
 message badroot
 {The completed new root file system failed a basic sanity check.
- Are you sure you installed all the required sets?
+Are you sure you installed all the required sets?
 }
 
 message fd_type
@@ -700,7 +694,7 @@ message fdremount
 message fdmount
 {Please load the floppy containing the file named "%s.%s".
 
-If the set's has no more disks, select "Set finished" to install the set.
+If the set has no more disks, select "Set finished" to install the set.
 Select "Abort fetch" to return to the install media selection menu.
 }
 
@@ -722,28 +716,28 @@ message set_base
 {Base}
 
 message set_system
-{System (/etc)}
+{Configuration files (/etc)}
 
 message set_compiler
-{Compiler Tools}
+{Compiler tools}
 
 message set_games
 {Games}
 
 message set_man_pages
-{Online Manual Pages}
+{Manual pages}
 
 message set_misc
 {Miscellaneous}
 
 message set_modules
-{Kernel Modules}
+{Kernel modules}
 
 message set_tests
 {Test programs}
 
 message set_text_tools
-{Text Processing Tools}
+{Text processing tools}
 
 message set_X11
 {X11 sets}
@@ -845,21 +839,21 @@ message tz_back
 
 message swapactive
 {The disk that you selected has a swap partition that may currently be
-in use if your system is low on memory. Because you are going to
-repartition this disk, this swap partition will be disabled now. Please
-beware that this might lead to out of swap errors. Should you get such
+in use if your system is low on memory.  Because you are going to
+repartition this disk, this swap partition will be disabled now.  Please
+beware that this might lead to out of swap errors.  Should you get such
 an error, please restart the system and try again.}
 
 message swapdelfailed
 {Sysinst failed to deactivate the swap partition on the disk that you
-chose for installation. Please reboot and try again.}
+chose for installation.  Please reboot and try again.}
 
 message rootpw
 {The root password of the newly installed system has not yet been initialized,
 and is thus empty.  Do you want to set a root password for the system now?}
 
 message rootsh
-{You can now select which shell to use for the root user. The default is
+{You can now select which shell to use for the root user.  The default is
 /bin/sh, but you may prefer another one.}
 
 message no_root_fs
@@ -962,12 +956,12 @@ message Green_on_black {Green on black}
 .if AOUT2ELF
 message aoutfail
 {The directory where the old a.out shared libraries should be moved to could
-not be created. Please try the upgrade procedure again and make sure you
+not be created.  Please try the upgrade procedure again and make sure you
 have mounted all file systems.}
 
 message emulbackup
 {Either the /emul/aout or /emul directory on your system was a symbolic link
-pointing to an unmounted file system. It has been given a '.old' extension.
+pointing to an unmounted file system.  It has been given a '.old' extension.
 Once you bring your upgraded system back up, you may need to take care
 of merging the newly created /emul/aout directory with the old one.
 }
@@ -975,14 +969,14 @@ of merging the newly created /emul/aout directory with the old one.
 
 message oldsendmail
 {Sendmail is no longer in this release of NetBSD, default MTA is
-postfix. The file /etc/mailer.conf still chooses the removed
-sendmail. Do you want to upgrade /etc/mailer.conf automatically for
+postfix.  The file /etc/mailer.conf still chooses the removed
+sendmail.  Do you want to upgrade /etc/mailer.conf automatically for
 postfix? If you choose "No" you will have to update /etc/mailer.conf
 yourself to ensure proper email delivery.}
 
 message license
 {To use the network interface %s, you must agree to the license in
-file %s. To view this file now, you can type ^Z, look at the contents of
+file %s.  To view this file now, you can type ^Z, look at the contents of
 the file and then type "fg" to resume.}
 
 message binpkg
@@ -996,7 +990,7 @@ The following are the host, directory, user, and password that
 will be used.  If "user" is "ftp", then the password is not needed.
 
 }
-message rcconf_backup_failed {Making backup of rc.conf failed. Continue?}
+message rcconf_backup_failed {Making backup of rc.conf failed.  Continue?}
 message rcconf_backup_succeeded {rc.conf backup saved to %s.}
 message rcconf_restore_failed {Restoring backup rc.conf failed.}
 message rcconf_delete_failed {Deleting old %s entry failed.}
@@ -1066,25 +1060,25 @@ message undo {Undo changes}
 message unconfig {Unconfigure}
 message edit {Edit}
 message doumount {Force umount}
-message fillzeros {Fill by zeros}
-message fillrandom {Fill by random data}
-message fillcrypto {Fill by crypto data}
+message fillzeros {Fill with zeros}
+message fillrandom {Fill with random data}
+message fillcrypto {Fill with crypto data}
 message raid0 {0 - No parity, only simple striping.}
 message raid1 {1 - Mirroring.  The parity is the mirror.}
 message raid4 {4 - Striping with parity stored on the last component.}
-message raid5 {5 - Striping with parity at the all components.}
+message raid5 {5 - Striping with distributed parity.}
 
 message fremove {REMOVE}
 message remove {Remove}
 message add {Add}
 message auto {auto}
 
-message removepartswarn {This remove all partitions on disk. Do you want to continue?}
+message removepartswarn {This removes all partitions on the disk.  Do you want to continue?}
 message saveprompt {Save changes before finishing?}
 message cantsave {Changes cannot be saved.}
-message noroot {No root partition defined, cannot continue\n}
+message noroot {No root partition defined.  Cannot continue\n}
 message wannaunblock {
-Device is blocked. It's editing may cause problems.
+Device is blocked.  Editing it may cause problems.
 Do you want to force unblock it and continue?}
 message wannatry {Do you want to try?}
 message create_cgd {Create cryptographic volume (CGD)}
@@ -1092,7 +1086,7 @@ message create_cnd {Create virtual disk image (VND)}
 message create_vg {Create volume group (LVM VG)}
 message create_lv {      Create logical volume}
 message create_raid {Create software RAID}
-message updpmlist {Update devices list}
+message updpmlist {Update device list}
 message savepm {Save changes}
 message pmblocked {BLOCKED}
 message pmunchanged {UNCHANGED}
@@ -1103,16 +1097,16 @@ message pmunused {(unused)}
 message pmgptdisk {GPT-labeled disk}
 
 message finishpm {Finish partitioning}
-message limitcount {Limit for the devices count was reached!}
+message limitcount {Limit for the device count was reached!}
 message invaliddev {Invalid device!}
 message avdisks {Available disks:}
 message nofreedev {Cannot allocate device node!}
 message partman_header
-{Partition manager. All disks, partitions and etc. displayed there.
-At first make MBR partitions, then make BSD label. If you want to use RAID,
-LVM or CGD, follow these steps: 1) Create BSD partitions with needed type;
-2) Create RAID/LVM VG/CGD using these partitions; 3) Save it;
-4) Create partitions for RAID/CGD or Logical Volumes for LVM.}
+{This is the extended partition manager.  All disks, partitions, etc. are
+listed below.  MBR partitions, if desired, must be created before editing
+the disklabel.  To use RAID, LVM, or CGD: 1) Create BSD partitions with the
+appropriate type; 2) Create RAID/LVM VG/CGD using these partitions; 3) Save
+changes; 4) Create partitions for RAID/CGD or Logical Volumes for LVM.}
 
 message raid_menufmt {   raid%d (level %1d) on %-34s %11uM}
 message raid_err_menufmt {   EMPTY RAID!}
