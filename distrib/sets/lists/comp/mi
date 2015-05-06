@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1956 2015/04/27 07:03:57 knakahara Exp $
+#	$NetBSD: mi,v 1.1957 2015/05/06 15:57:07 hannken Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2529,7 +2529,7 @@
 ./usr/include/miscfs/portal/portal.h		comp-obsolete		obsolete
 ./usr/include/miscfs/procfs/procfs.h		comp-c-include
 ./usr/include/miscfs/specfs/specdev.h		comp-c-include
-./usr/include/miscfs/syncfs/syncfs.h		comp-c-include
+./usr/include/miscfs/syncfs/syncfs.h		comp-obsolete		obsolete
 ./usr/include/miscfs/umapfs/umap.h		comp-c-include
 ./usr/include/miscfs/union/union.h		comp-c-include
 ./usr/include/mj.h				comp-c-include		crypto
