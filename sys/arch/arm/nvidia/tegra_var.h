@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.8 2015/05/03 16:40:12 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.9 2015/05/07 23:55:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -86,6 +86,27 @@ struct tegra_gpio_pin *tegra_gpio_acquire(const char *, u_int);
 void	tegra_gpio_release(struct tegra_gpio_pin *);
 int	tegra_gpio_read(struct tegra_gpio_pin *);
 void	tegra_gpio_write(struct tegra_gpio_pin *, int);
+
+struct tegra_mpio_padctlgrp {
+	int	preemp;
+	int	hsm;
+	int	schmt;
+	int	drv_type;
+	int	drvdn;
+	int	drvup;
+	int	slwr;
+	int	slwf;
+};
+void	tegra_mpio_padctlgrp_read(u_int, struct tegra_mpio_padctlgrp *);
+void	tegra_mpio_padctlgrp_write(u_int, const struct tegra_mpio_padctlgrp *);
+
+void	tegra_mpio_pinmux_set_config(u_int, int, const char *);
+void	tegra_mpio_pinmux_set_io_reset(u_int, bool);
+void	tegra_mpio_pinmux_set_rcv_sel(u_int, bool);
+void	tegra_mpio_pinmux_get_config(u_int, int *, const char **);
+const char *tegra_mpio_pinmux_get_pm(u_int);
+bool	tegra_mpio_pinmux_get_io_reset(u_int);
+bool	tegra_mpio_pinmux_get_rcv_sel(u_int);
 
 void	tegra_pmc_reset(void);
 void	tegra_pmc_power(u_int, bool);
