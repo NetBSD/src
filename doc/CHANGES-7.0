@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.281 2015/05/07 03:50:50 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.282 2015/05/07 20:42:48 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22854,4 +22854,9 @@ sys/miscfs/fdesc/fdesc_vfsops.c			1.90
 
 	Fix type of /dev/tty
 	[riz, ticket #737]
+
+distrib/evbarm/instkernel/sshramdisk/Makefile	patch
+
+	Bump ramdisk size.
+	[snj, ticket #738]
 
