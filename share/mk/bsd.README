@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.335.2.2 2015/03/18 08:12:16 snj Exp $
+#	$NetBSD: bsd.README,v 1.335.2.3 2015/05/07 03:48:27 snj Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -415,6 +415,10 @@ MKX11MOTIF:	If "yes" and ${X11FLAVOUR} is "Xorg", build the native X11
 MKX11RADEONKMS	If "no", build the xf86-video-ati 6.x driver (the last one
 		with user-mode switching support), otherwise build the
 		kernek-mode switching (KMS) requiring driver.
+		Default: yes on i386 and amd64, no elsewhere.
+
+MKRADEONFIRMWARE If "no", install the /libdata/firmware/radeon directory,
+		which is necessary for the radeon DRM driver.
 		Default: yes on i386 and amd64, no elsewhere.
 
 MKYP		If "no", disables building of YP (NIS)
