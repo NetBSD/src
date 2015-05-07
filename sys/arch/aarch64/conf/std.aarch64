@@ -1,4 +1,4 @@
-#	$NetBSD: std.aarch64,v 1.1 2014/08/10 05:47:37 matt Exp $
+#	$NetBSD: std.aarch64,v 1.2 2015/05/07 19:14:56 mrg Exp $
 #
 # standard NetBSD/aarch64 options
 
@@ -8,3 +8,6 @@ options 	MULTIPROCESSOR
 
 options 	EXEC_ELF64
 options 	EXEC_SCRIPT
+
+options 	CHILD_MAX=1024	# 160 is too few
+options 	OPEN_MAX=1024	# 128 is too few
