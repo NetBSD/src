@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.829.2.6 2015/04/11 05:36:13 snj Exp $
+#	$NetBSD: bsd.own.mk,v 1.829.2.7 2015/05/07 03:48:27 snj Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1287,6 +1287,12 @@ X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 MKX11RADEONKMS?=		yes
 .endif
 MKX11RADEONKMS?=		no
+
+# Only install the radeon firmware on DRM-happy systems.
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+MKRADEONFIRMWARE?=		yes
+.endif
+MKRADEONFIRMWARE?=		no
 
 .if ${X11FLAVOUR} == "Xorg"
 X11DRI?=			yes
