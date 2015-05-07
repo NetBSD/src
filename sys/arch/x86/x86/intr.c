@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.82 2015/05/02 14:30:27 roy Exp $	*/
+/*	$NetBSD: intr.c,v 1.83 2015/05/07 12:52:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.82 2015/05/02 14:30:27 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.83 2015/05/07 12:52:46 martin Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -177,6 +177,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.82 2015/05/02 14:30:27 roy Exp $");
 #endif
 
 #include <x86/pci/msipic.h>
+
+#if NPCI == 0
+#define msipic_is_msi_pic(PIC)	(false)
+#endif
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -468,6 +472,7 @@ create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t len)
 {
 	int ih;
 
+#if NPCI > 0
 	if ((pic->pic_type == PIC_MSI) || (pic->pic_type == PIC_MSIX)) {
 		uint64_t pih;
 		int dev, vec;
@@ -484,6 +489,7 @@ create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t len)
 
 		return pci_msi_string(NULL, pih, buf, len);
 	}
+#endif
 
 	/*
 	 * If the device is pci, "legacy_irq" is alway -1. Least 8 bit of "ih"
