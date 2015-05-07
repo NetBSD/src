@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.89.2.1 2015/01/17 12:10:53 martin Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.89.2.2 2015/05/07 03:50:01 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.89.2.1 2015/01/17 12:10:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.89.2.2 2015/05/07 03:50:01 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -201,7 +201,7 @@ fdesc_loadvnode(struct mount *mp, struct vnode *vp,
 		break;
 	case FD_CTTY:
 		fd->fd_type = Fctty;
-		vp->v_type = VNON;
+		vp->v_type = VCHR;
 		break;
 	case FD_STDIN:
 		fd->fd_type = Flink;
