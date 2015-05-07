@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.15 2015/05/07 01:35:35 pgoyette Exp $ */
+/*	$NetBSD: t_paths.c,v 1.16 2015/05/07 06:23:23 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.15 2015/05/07 01:35:35 pgoyette Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.16 2015/05/07 06:23:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -160,7 +160,7 @@ ATF_TC_BODY(paths, tc)
 
 					atf_tc_fail("UID %u failed to open %s, "
 					    "error %d", (uint32_t)uid,
-					     paths[i].path, error);
+					     paths[i].path, errno);
 				}
 
 			case EBUSY:	/* FALLTHROUGH */
