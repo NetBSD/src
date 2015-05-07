@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc64-32,v 1.3 2008/12/11 15:11:57 nakayama Exp $
+#	$NetBSD: std.sparc64-32,v 1.4 2015/05/07 19:14:56 mrg Exp $
 
 #
 # Unneeded NetBSD/sparc64 kernel options when building 32-bit kernels.
@@ -10,3 +10,6 @@ no makeoptions	LP64
 makeoptions	LP64="no"
 
 no options 	EXEC_ELF64
+
+options 	CHILD_MAX=1024	# 160 is too few
+options 	OPEN_MAX=1024	# 128 is too few
