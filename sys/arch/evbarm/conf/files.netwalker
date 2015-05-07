@@ -1,11 +1,7 @@
-#	$NetBSD: files.netwalker,v 1.8 2014/05/06 12:02:52 hkenken Exp $
+#	$NetBSD: files.netwalker,v 1.9 2015/05/07 04:13:47 hkenken Exp $
 #
 # Sharp Netwalker configuration info
 #
-
-file   arch/arm/arm32/arm32_boot.c
-file   arch/arm/arm32/arm32_kvminit.c
-file   arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/netwalker/netwalker_machdep.c
 

@@ -1,11 +1,7 @@
-#	$NetBSD: files.kobo,v 1.1 2014/07/25 11:22:50 hkenken Exp $
+#	$NetBSD: files.kobo,v 1.2 2015/05/07 04:13:47 hkenken Exp $
 #
 # KOBO evaluation board configuration info
 #
-
-file	arch/arm/arm32/arm32_boot.c
-file	arch/arm/arm32/arm32_kvminit.c
-file	arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/kobo/kobo_machdep.c
 
