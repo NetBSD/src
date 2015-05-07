@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.280 2015/05/06 23:38:00 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.281 2015/05/07 03:50:50 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22836,4 +22836,22 @@ usr.sbin/sysinst/msg.mi.en			1.8-1.9
 
 	English wording fixes for sysinst messages.
 	[snj, ticket #735]
+
+distrib/sets/lists/base/mi			1.1102
+distrib/sets/mkvars.mk				1.17
+etc/mtree/NetBSD.dist.base			1.144
+share/mk/bsd.README				1.341
+share/mk/bsd.own.mk				1.847
+sys/dev/microcode/radeon/Makefile		1.3
+
+	For radeon drm firmware:
+	- only install it by default on x86, set new MKRADEONFIRMWARE
+	  variable
+	- install in /libdata, so that separate /usr systems work
+	[mrg, ticket #736]
+
+sys/miscfs/fdesc/fdesc_vfsops.c			1.90
+
+	Fix type of /dev/tty
+	[riz, ticket #737]
 
