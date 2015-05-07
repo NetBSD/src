@@ -4,6 +4,7 @@
 
 #ifdef BFD64
 #if !defined (SELECT_VECS) || defined (HAVE_bfd_elf64_littleaarch64_vec)
+
 { "aarch64-*-elf",
 &bfd_elf64_littleaarch64_vec },
 #endif
@@ -32,6 +33,24 @@
 #if !defined (SELECT_VECS) || defined (HAVE_bfd_elf64_bigaarch64_vec)
 
 { "aarch64_be-*-linux*",
+&bfd_elf64_bigaarch64_vec },
+#endif
+
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_bfd_elf64_littleaarch64_vec)
+
+{ "aarch64-*-netbsd*",
+&bfd_elf64_littleaarch64_vec },
+#endif
+
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_bfd_elf64_bigaarch64_vec)
+
+{ "aarch64_be-*-netbsd*",
 &bfd_elf64_bigaarch64_vec },
 #endif
 
