@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.157 2015/04/17 12:40:17 martin Exp $
+# $NetBSD: HACKS,v 1.158 2015/05/08 07:44:59 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -801,6 +801,15 @@ port	mips
 		assembler warning on MIPS:
 			Warning: No .cprestore pseudo-op used in PIC code
 		Add COPTS.count.c+=-Wa,--no-warn to avoid -Wa,--fatal-warnings
+	kcah
+	hack	mips-kern-ksyms-size
+	cdate	Fri May  8 09:42:03 CEST 2015
+	who	martin
+	file	/src/sys/kern/kern_ksyms_buf.c : 1.2
+	descr
+		Woraround a bfd/ld/dbsym bug that miscalculates the neede
+		size of the symbol table, making COPY_SYMTAB fail due
+		to a slightly too small target buffer.
 	kcah
 
 port	i386
