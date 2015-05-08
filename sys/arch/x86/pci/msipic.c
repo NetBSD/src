@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.3 2015/04/28 06:23:57 martin Exp $	*/
+/*	$NetBSD: msipic.c,v 1.4 2015/05/08 04:27:48 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.3 2015/04/28 06:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.4 2015/05/08 04:27:48 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,11 +106,11 @@ struct dev_last_used_seq {
 /* Record devids to use the same devid when the device is re-attached. */
 static struct dev_last_used_seq dev_seqs[NUM_MSI_DEVS];
 
-static int msipic_allocate_common_msi_devid(struct pci_attach_args *);
+static int msipic_allocate_common_msi_devid(const struct pci_attach_args *);
 static void msipic_release_common_msi_devid(int);
 
 static struct pic *msipic_find_msi_pic_locked(int);
-static struct pic *msipic_construct_common_msi_pic(struct pci_attach_args *,
+static struct pic *msipic_construct_common_msi_pic(const struct pci_attach_args *,
 						   struct pic *);
 static void msipic_destruct_common_msi_pic(struct pic *);
 
@@ -132,7 +132,7 @@ static void msix_delroute(struct pic *, struct cpu_info *, int, int, int);
  * Return -1 if the number of attached MSI/MSI-X devices is over NUM_MSI_DEVS.
  */
 static int
-msipic_allocate_common_msi_devid(struct pci_attach_args *pa)
+msipic_allocate_common_msi_devid(const struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
@@ -227,7 +227,7 @@ msipic_find_msi_pic(int devid)
  * A common construct process of MSI and MSI-X.
  */
 static struct pic *
-msipic_construct_common_msi_pic(struct pci_attach_args *pa,
+msipic_construct_common_msi_pic(const struct pci_attach_args *pa,
     struct pic *pic_tmpl)
 {
 	struct pic *pic;
@@ -437,7 +437,7 @@ static struct pic msi_pic_tmpl = {
  * Create pseudo pic for a MSI device.
  */
 struct pic *
-msipic_construct_msi_pic(struct pci_attach_args *pa)
+msipic_construct_msi_pic(const struct pci_attach_args *pa)
 {
 	struct pic *msi_pic;
 	char pic_name_buf[MSIPICNAMEBUF];
@@ -605,7 +605,7 @@ static struct pic msix_pic_tmpl = {
 };
 
 struct pic *
-msipic_construct_msix_pic(struct pci_attach_args *pa)
+msipic_construct_msix_pic(const struct pci_attach_args *pa)
 {
 	struct pic *msix_pic;
 	pci_chipset_tag_t pc;

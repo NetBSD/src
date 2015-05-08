@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.h,v 1.1 2015/04/27 07:03:58 knakahara Exp $	*/
+/*	$NetBSD: msipic.h,v 1.2 2015/05/08 04:27:48 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -31,9 +31,9 @@
 
 #include <dev/pci/pcivar.h>
 
-struct pic	*msipic_construct_msi_pic(struct pci_attach_args *);
+struct pic	*msipic_construct_msi_pic(const struct pci_attach_args *);
 void		msipic_destruct_msi_pic(struct pic *);
-struct pic	*msipic_construct_msix_pic(struct pci_attach_args *);
+struct pic	*msipic_construct_msix_pic(const struct pci_attach_args *);
 void		msipic_destruct_msix_pic(struct pic *);
 struct pic	*msipic_find_msi_pic(int);
 int		msipic_set_msi_vectors(struct pic *, pci_intr_handle_t *, int);
