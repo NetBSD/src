@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.1 2015/04/27 07:03:58 knakahara Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.2 2015/05/08 04:27:48 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.1 2015/04/27 07:03:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.2 2015/05/08 04:27:48 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,7 +172,7 @@ pci_msi_free_vectors(struct pic *msi_pic, pci_intr_handle_t *pihs, int count)
 
 static int
 pci_msi_alloc_md_common(pci_intr_handle_t **ihps, int *count,
-    struct pci_attach_args *pa, bool exact)
+    const struct pci_attach_args *pa, bool exact)
 {
 	struct pic *msi_pic;
 	pci_intr_handle_t *vectors;
@@ -227,7 +227,7 @@ pci_msi_alloc_md_common(pci_intr_handle_t **ihps, int *count,
 
 static int
 pci_msi_alloc_md(pci_intr_handle_t **ihps, int *count,
-    struct pci_attach_args *pa)
+    const struct pci_attach_args *pa)
 {
 
 	return pci_msi_alloc_md_common(ihps, count, pa, false);
@@ -235,7 +235,7 @@ pci_msi_alloc_md(pci_intr_handle_t **ihps, int *count,
 
 static int
 pci_msi_alloc_exact_md(pci_intr_handle_t **ihps, int count,
-    struct pci_attach_args *pa)
+    const struct pci_attach_args *pa)
 {
 
 	return pci_msi_alloc_md_common(ihps, &count, pa, true);
@@ -282,7 +282,7 @@ pci_msi_common_disestablish(pci_chipset_tag_t pc, void *cookie)
 
 static int
 pci_msix_alloc_md_common(pci_intr_handle_t **ihps, u_int *table_indexes,
-    int *count, struct pci_attach_args *pa, bool exact)
+    int *count, const struct pci_attach_args *pa, bool exact)
 {
 	struct pic *msix_pic;
 	pci_intr_handle_t *vectors;
@@ -336,7 +336,7 @@ pci_msix_alloc_md_common(pci_intr_handle_t **ihps, u_int *table_indexes,
 
 static int
 pci_msix_alloc_md(pci_intr_handle_t **ihps, int *count,
-    struct pci_attach_args *pa)
+    const struct pci_attach_args *pa)
 {
 
 	return pci_msix_alloc_md_common(ihps, NULL, count, pa, false);
@@ -344,7 +344,7 @@ pci_msix_alloc_md(pci_intr_handle_t **ihps, int *count,
 
 static int
 pci_msix_alloc_exact_md(pci_intr_handle_t **ihps, int count,
-    struct pci_attach_args *pa)
+    const struct pci_attach_args *pa)
 {
 
 	return pci_msix_alloc_md_common(ihps, NULL, &count, pa, true);
@@ -352,7 +352,7 @@ pci_msix_alloc_exact_md(pci_intr_handle_t **ihps, int count,
 
 static int
 pci_msix_alloc_map_md(pci_intr_handle_t **ihps, u_int *table_indexes, int count,
-    struct pci_attach_args *pa)
+    const struct pci_attach_args *pa)
 {
 
 	return pci_msix_alloc_md_common(ihps, table_indexes, &count, pa, true);
@@ -383,7 +383,7 @@ pci_msix_release_md(pci_intr_handle_t **pihs, int count)
  * return 0 if the device does not support MSI
  */
 int
-pci_msi_count(struct pci_attach_args *pa)
+pci_msi_count(const struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
@@ -416,7 +416,8 @@ pci_msi_count(struct pci_attach_args *pa)
  * if count == 0, return non-zero value.
  */
 int
-pci_msi_alloc(struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *count)
+pci_msi_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count)
 {
 	int hw_max;
 
@@ -445,7 +446,7 @@ pci_msi_alloc(struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *count)
  * If "count" struct intrsources cannot be allocated, return non-zero value.
  */
 int
-pci_msi_alloc_exact(struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
     int count)
 {
 	int hw_max;
@@ -516,7 +517,7 @@ pci_msi_disestablish(pci_chipset_tag_t pc, void *cookie)
  * return 0 if the device does not support MSI-X
  */
 int
-pci_msix_count(struct pci_attach_args *pa)
+pci_msix_count(const struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
@@ -541,7 +542,8 @@ pci_msix_count(struct pci_attach_args *pa)
  * if count == 0, return non-zero value.
  */
 int
-pci_msix_alloc(struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *count)
+pci_msix_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count)
 {
 	int hw_max;
 
@@ -567,7 +569,7 @@ pci_msix_alloc(struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *count)
  * If "count" struct intrsource cannot be allocated, return non-zero value.
  */
 int
-pci_msix_alloc_exact(struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+pci_msix_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
     int count)
 {
 	int hw_max;
@@ -602,7 +604,7 @@ pci_msix_alloc_exact(struct pci_attach_args *pa, pci_intr_handle_t **ihps,
  *     3rd handle is bound to MSI-X index 0
  */
 int
-pci_msix_alloc_map(struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
     u_int *table_indexes, int count)
 {
 	int hw_max, i, j;
