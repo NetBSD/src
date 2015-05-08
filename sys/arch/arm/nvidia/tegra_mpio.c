@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_mpio.c,v 1.1 2015/05/07 23:55:11 jmcneill Exp $ */
+/* $NetBSD: tegra_mpio.c,v 1.2 2015/05/08 17:00:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_mpio.c,v 1.1 2015/05/07 23:55:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_mpio.c,v 1.2 2015/05/08 17:00:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -439,7 +439,20 @@ void
 tegra_mpio_pinmux_set_config(u_int reg, int flags, const char *func)
 {
 	struct tegra_mpio_softc * const sc = tegra_mpio_lookup_softc();
+	const struct tegra_mpio_pinmux *pm;
 	uint32_t val;
+	int funcno, n;
+
+	pm = tegra_mpio_lookup_pinmux(reg);
+	KASSERT(pm != NULL);
+
+	for (n = 0, funcno = -1; n < __arraycount(pm->pm_func); n++) {
+		if (strcmp(pm->pm_func[n], func) == 0) {
+			funcno = n;
+			break;
+		}
+	}
+	KASSERT(funcno != -1);
 
 	val = MPIO_READ(sc, reg);
 
@@ -472,6 +485,9 @@ tegra_mpio_pinmux_set_config(u_int reg, int flags, const char *func)
 	} else {
 		val &= ~PINMUX_AUX_OD;
 	}
+
+	val &= ~PINMUX_AUX_PM;
+	val |= __SHIFTIN(funcno, PINMUX_AUX_PM);
 
 	MPIO_WRITE(sc, reg, val);
 }
