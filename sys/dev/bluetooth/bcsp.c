@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.27 2015/04/30 16:01:51 christos Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.28 2015/05/08 11:47:53 christos Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.27 2015/04/30 16:01:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.28 2015/05/08 11:47:53 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1128,7 +1128,7 @@ bcsp_tx_reliable_pkt(struct bcsp_softc *sc, struct mbuf *m, u_int protocol_id)
 
 	for (pldlen = 0, _m = m; _m != NULL; _m = _m->m_next) {
 		if (_m->m_len < 0)
-			return false;
+			goto out;
 		pldlen += _m->m_len;
 	}
 	if (pldlen > 0xfff)
@@ -1367,7 +1367,7 @@ bcsp_tx_unreliable_pkt(struct bcsp_softc *sc, struct mbuf *m, u_int protocol_id)
 
 	for (pldlen = 0, _m = m; _m != NULL; _m = m->m_next) {
 		if (_m->m_len < 0)
-			return false;
+			goto out;
 		pldlen += _m->m_len;
 	}
 	DPRINTFN(1, (" pldlen=%d\n", pldlen));
