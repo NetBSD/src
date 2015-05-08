@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.10 2015/03/12 04:41:23 snj Exp $
+#	$NetBSD: Makefile.bootimage,v 1.11 2015/05/08 17:46:03 riastradh Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -381,7 +381,7 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 .endif
 	${TOOL_DISKLABEL} -R -F ${WORKIMG} ${WORKLABEL}
 .if !empty(PRIMARY_BOOT) && ${INSTALLBOOT_AFTER_DISKLABEL} != "no"
-	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${INSTALLBOOTOPTOINS} ${WORKIMG} \
+	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${INSTALLBOOTOPTIONS} ${WORKIMG} \
 	    ${WORKDIR}/usr/mdec/${PRIMARY_BOOT}
 .endif
 	mv ${WORKIMG} ${.TARGET}
