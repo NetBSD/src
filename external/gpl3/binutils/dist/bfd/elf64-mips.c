@@ -4154,9 +4154,8 @@ const struct elf_size_info mips_elf64_size_info =
 
 #define elf_backend_write_section	_bfd_mips_elf_write_section
 
-/* We don't set bfd_elf64_bfd_is_local_label_name because the 32-bit
-   MIPS-specific function only applies to IRIX5, which had no 64-bit
-   ABI.  */
+#define bfd_elf64_bfd_is_local_label_name \
+					mips_elf64_is_local_label_name
 #define bfd_elf64_bfd_is_target_special_symbol \
 					_bfd_mips_elf_is_target_special_symbol
 #define bfd_elf64_find_nearest_line	_bfd_mips_elf_find_nearest_line
