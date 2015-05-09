@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.41 2015/05/09 22:58:22 dholland Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.42 2015/05/09 23:12:57 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.41 2015/05/09 22:58:22 dholland Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.42 2015/05/09 23:12:57 dholland Exp $");
 #endif
 #endif
 
@@ -300,11 +300,11 @@ open_output(const char *infile, const char *outfile)
 		return;
 	}
 	if (infile != NULL && streq(outfile, infile)) {
-		errx(EXIT_FAILURE, "output would overwrite `%s'", infile);
+		errx(EXIT_FAILURE, "Output would overwrite `%s'", infile);
 	}
 	fout = fopen(outfile, "w");
 	if (fout == NULL) {
-		err(EXIT_FAILURE, "Can't to open `%s'", outfile);
+		err(EXIT_FAILURE, "Can't open `%s'", outfile);
 	}
 	record_open(outfile);
 
@@ -359,7 +359,7 @@ open_input(const char *infile, const char *define)
 
 		retval = spawnvp(P_WAIT, arglist[0], arglist);
 		if (retval != 0) {
-			err(EXIT_FAILURE, "C PreProcessor failed");
+			err(EXIT_FAILURE, "C preprocessor failed");
 		}
 		fnsplit(infile, drive, dir, name, ext);
 		fnmerge(cppfile, drive, dir, name, ".i");
@@ -832,7 +832,7 @@ static void
 addarg(const char *cp)
 {
 	if (argcount >= ARGLISTLEN) {
-		errx(EXIT_FAILURE, "too many defines");
+		errx(EXIT_FAILURE, "Internal error: too many defines");
 		/* NOTREACHED */
 	}
 	arglist[argcount++] = cp;
@@ -843,7 +843,7 @@ static void
 putarg(int pwhere, const char *cp)
 {
 	if (pwhere >= ARGLISTLEN) {
-		errx(EXIT_FAILURE, "arglist coding error");
+		errx(EXIT_FAILURE, "Internal error: arglist coding error");
 		/* NOTREACHED */
 	}
 	arglist[pwhere] = cp;
@@ -871,7 +871,7 @@ checkfiles(const char *infile, const char *outfile)
 			return;	/* file does not exist */
 		else {
 			errx(EXIT_FAILURE,
-			    "`%s' already exists and may be overwritten",
+			    "`%s' already exists and would be overwritten",
 			    outfile);
 		}
 	}
