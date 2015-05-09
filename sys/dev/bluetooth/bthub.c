@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.20 2014/07/25 08:10:36 dholland Exp $	*/
+/*	$NetBSD: bthub.c,v 1.21 2015/05/09 21:31:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.20 2014/07/25 08:10:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.21 2015/05/09 21:31:05 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -121,7 +121,15 @@ bthub_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL)) {
+		/*
+		 * XXX this should not be allowed to happen, but
+		 * avoiding it needs a pretty big rearrangement of
+		 * device attachments.
+		 */
+		printf("bthub_attach: pmf_device_register failed -- "
+		       "no power management for you!\n");
+	}
 }
 
 static int
