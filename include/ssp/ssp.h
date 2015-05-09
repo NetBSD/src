@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.10 2012/08/08 20:23:32 joerg Exp $	*/
+/*	$NetBSD: ssp.h,v 1.11 2015/05/09 15:41:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2011 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@ __ssp_inline rtype fun args { \
     __ssp_redirect_raw(rtype, fun, fun, args, call, __ssp_bos)
 #define __ssp_redirect0(rtype, fun, args, call) \
     __ssp_redirect_raw(rtype, fun, fun, args, call, __ssp_bos0)
+
+#define __ssp_overlap(a, b, l) \
+    (((a) <= (b) && (b) <= (a) + (l)) || ((b) <= (a) && (a) <= (b) + (l)))
 
 __BEGIN_DECLS
 void __stack_chk_fail(void) __dead;
