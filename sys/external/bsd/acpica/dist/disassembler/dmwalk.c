@@ -313,6 +313,8 @@ AcpiDmBlockType (
             return (BLOCK_NONE);
         }
 
+        /*lint -fallthrough */
+
     default:
 
         OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
