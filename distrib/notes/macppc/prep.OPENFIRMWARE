@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.17 2014/11/13 08:16:42 snj Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.18 2015/05/09 08:13:35 snj Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -16,7 +16,7 @@ The BootROM then loads Open Firmware, which boots your operating system.
 .Pp
 Go to the
 .Sq "Apple Support Downloads"
-web site at
+website at
 .Lk http://support.apple.com/downloads/
 and search for
 .Sq firmware
