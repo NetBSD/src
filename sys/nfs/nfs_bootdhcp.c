@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.53 2015/03/27 07:18:11 hikaru Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.54 2015/05/09 18:12:19 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.53 2015/03/27 07:18:11 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.54 2015/05/09 18:12:19 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -636,7 +636,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 #endif
 
 	error = nfs_boot_sendrecv(so, nam, bootpset, m,
-				  bootpcheck, 0, 0, &bpc, lwp);
+				  bootpcheck, NULL, NULL, &bpc, lwp);
 	if (error)
 		goto out;
 
@@ -663,7 +663,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 		bpc.expected_dhcpmsgtype = DHCPACK;
 
 		error = nfs_boot_sendrecv(so, nam, bootpset, m,
-					  bootpcheck, 0, 0, &bpc, lwp);
+					  bootpcheck, NULL, NULL, &bpc, lwp);
 		if (error)
 			goto out;
 	}
