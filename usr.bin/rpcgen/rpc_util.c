@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_util.c,v 1.15 2015/05/09 23:12:57 dholland Exp $	*/
+/*	$NetBSD: rpc_util.c,v 1.16 2015/05/09 23:16:51 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_util.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_util.c,v 1.15 2015/05/09 23:12:57 dholland Exp $");
+__RCSID("$NetBSD: rpc_util.c,v 1.16 2015/05/09 23:16:51 dholland Exp $");
 #endif
 #endif
 
@@ -432,8 +432,7 @@ make_argname(const char *pname, const char *vname)
 	len = strlen(pname) + strlen(vname) + strlen(ARGEXT) + 3;
 	name = malloc(len);
 	if (!name) {
-		fprintf(stderr, "failed in malloc");
-		exit(1);
+		errx(EXIT_FAILURE, "Out of memory");
 	}
 	snprintf(name, len, "%s_%s_%s", locase(pname), vname, ARGEXT);
 	return (name);
@@ -448,8 +447,7 @@ add_type(int len, const char *type)
 	bas_type *ptr;
 
 	if ((ptr = malloc(sizeof(bas_type))) == NULL) {
-		fprintf(stderr, "failed in malloc");
-		exit(1);
+		errx(EXIT_FAILURE, "Out of memory");
 	}
 	ptr->name = type;
 	ptr->length = len;
