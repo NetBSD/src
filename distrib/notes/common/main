@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.518 2015/04/27 12:26:35 hikaru Exp $
+.\"	$NetBSD: main,v 1.519 2015/05/09 08:13:35 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,15 +42,15 @@
 .nr FOR_RELEASE 1
 .nr DOC_XR 1
 .ds MACHINE_LIST acorn26 acorn32 algor alpha amd64 amiga amigappc arc atari
-.as MACHINE_LIST " bebox cats cesfic cobalt dreamcast evbarm evbmips evbppc
-.as MACHINE_LIST " evbsh3 ews4800mips hp300 hppa hpcarm hpcmips hpcsh i386
-.as MACHINE_LIST " ibmnws iyonix landisk luna68k mac68k macppc mipsco mmeye
-.as MACHINE_LIST " mvme68k mvmeppc netwinder news68k newsmips next68k ofppc
-.as MACHINE_LIST " playstation2 pmax prep rs6000 sandpoint sbmips
+.as MACHINE_LIST " bebox cats cesfic cobalt dreamcast emips evbarm evbmips
+.as MACHINE_LIST " evbppc evbsh3 ews4800mips hp300 hppa hpcarm hpcmips hpcsh
+.as MACHINE_LIST " i386 ibmnws iyonix landisk luna68k mac68k macppc mipsco
+.as MACHINE_LIST " mmeye mvme68k mvmeppc netwinder news68k newsmips next68k
+.as MACHINE_LIST " ofppc playstation2 pmax prep rs6000 sandpoint sbmips
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd August 17, 2012
+.Dd May 9, 2015
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -114,7 +114,7 @@ Fetch files needed to install
 .Nx .
 .if \n[i386]:\n[amd64] \{\
 .Pp
-Option 1: bootable CD-ROM images or USB memstick images containing the
+Option 1: bootable CD-ROM images or USB images containing the
 full distribution.
 .Pp
 These can be found
@@ -215,7 +215,7 @@ When you boot the install
 .if \n[sparc] floppies or CD-ROM,
 .if \n[sparc64] CD-ROM or installation kernel,
 the installation program
-can fetch these files for you (using e.g. ftp)
+can fetch these files for you (using, e.g., ftp)
 if you have a network connection.
 There are several other methods to get the binary sets onto
 your machine.
@@ -241,7 +241,23 @@ Write the boot images
 .Pp
 Many commercial and freeware programs are available to burn CD-ROMs.
 .Pp
-.if \n[i386] \{\
+If installing via USB, you must first uncompress the USB image, which
+is gzipped.
+.Dl $ Ic "gunzip NetBSD-\*V-\*M-install.img.gz"
+Next, write the USB image to a USB stick/drive.
+Note that this will overwrite any existing data on the device that you
+specify, so double check the device before running!
+On
+.Ul
+operating systems, use a command similar to the following,
+replacing
+.Pa /dev/rsd0d
+with the appropriate device for your system:
+.Dl # Ic "dd if=NetBSD-\*V-\*M-install.img of=/dev/rsd0d bs=32k"
+On Windows, you will need to use a program such as Win32 Disk Imager,
+which can be found at
+.Lk http://sourceforge.net/projects/win32diskimager/
+.if \n[amd64]:\n[i386] \{
 If you have problems writing a raw image to a floppy,
 the
 .Ic rawrite.exe
@@ -251,7 +267,7 @@ or the
 Windows32 program (installed by
 .Pa rawr32.exe )
 in the
-.Pa i386/installation/misc/
+.Pa \*M/installation/misc/
 directory may be of help.
 .\}
 .\}
@@ -287,7 +303,7 @@ or
 partition.
 .\}
 .Pp
-The disk(s) you just prepared will be used to boot the installation
+The media you just prepared will be used to boot the installation
 kernel, which contains all the tools required to install
 .Nx .
 .if \n[macppc] \{\
@@ -417,7 +433,8 @@ For third-party programs which are not part of the base
 .Nx
 distribution, you will want to explore the
 .Ic pkgsrc
-system with its many thousands of third party software applications.
+package management system, which contains thousands of third party software
+applications.
 .El
 .\}
 .Ss "What is NetBSD?"
@@ -431,17 +448,16 @@ Operating System is a fully functional
 operating system derived from the University of California, Berkeley
 Networking Release 2 (Net/2), 4.4BSD-Lite, and 4.4BSD-Lite2 sources.
 .Nx
-runs on 57 different system architectures (ports)
-across 15 distinct CPU families, and is being ported to more.
+runs on many different different system architectures (ports)
+across a variety of distinct CPU families, and is being ported to more.
 The
 .Nx
-\*V release contains complete binary releases for many different
-system architectures.
-(A few ports are not fully supported at this time 
-and are thus not part of the binary distribution.
+\*V release contains complete binary releases for most of these
+system architectures, with preliminary support for the others included in
+source form.
 Please see the
 .Nx
-web site at
+website at
 .Lk http://www.NetBSD.org/
 for information on them.)
 .Pp
@@ -459,19 +475,19 @@ and numerous other tools, all accompanied by full source code.
 .Nx
 is a creation of the members of the Internet community.
 Without the unique cooperation and coordination the net makes
-possible, it's likely that
+possible,
 .Nx
-wouldn't exist.
+would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 5.0 and 6.0 Releases
+.Ss Changes Between The NetBSD 6.0 and 7.0 Releases
 .Pp
 The
 .Nx
 \*V release
-provides numerous significant functional enhancements, including
-support for many new devices, integration of hundreds of bug fixes,
-new and updated kernel subsystems, and many user-land enhancements.
+provides many significant changes, including support for many new
+devices, hundreds of bug fixes, new and updated kernel subsystems, and
+numerous userland enhancements.
 The result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
@@ -481,11 +497,11 @@ went into the
 \*V release.
 The complete list of changes can be found in the
 CHANGES:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0/CHANGES
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0/CHANGES
 and
-CHANGES-6.0:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0/CHANGES-6.0
-files in the top level directory of the NetBSD 6.0 release tree.
+CHANGES-7.0:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0/CHANGES-7.0
+files in the top level directory of the NetBSD 7.0 release tree.
 .Pp
 .\" fill in with changes.mdoc
 .
@@ -500,23 +516,13 @@ in the future:
 in favor of
 .Xr dhcpcd 8 .
 .It
-.Xr groff 1
-is being phased out.
-Man pages are handled with
+.Xr groff 1 .
+Man pages are now handled with
 .Xr mandoc 1 ,
 and
 .Xr groff 1
 can still be found in pkgsrc as
 .Pa textproc/groff .
-.It
-.Xr kame_ipsec 4
-has been replaced by
-.Xr fast_ipsec 4 .
-The option to use the old implementation (see
-.Xr options 4 )
-will be removed in the next
-.Nx
-release.
 .bullet)
 .
 .Ss "The NetBSD Foundation"
@@ -556,9 +562,9 @@ The root directory of the
 .Pa .../NetBSD-\*V/
 .(tag README.files
 .It Li CHANGES
-Changes between the 5.0 and 6.0 releases.
-.It Li CHANGES-6.0
-Changes between the initial 6.0 branch and final release of 6.0.
+Changes between the 6.0 and 7.0 releases.
+.It Li CHANGES-7.0
+Changes between the initial 7.0 branch and final release of 7.0.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
@@ -567,6 +573,9 @@ releases.
 Last minute changes and notes about the release.
 .It Li README.files
 README describing the distribution's contents.
+.It Pa images/
+Images (ISO 9660 or USB) for installing NetBSD.
+Depending on your system, these may be bootable.
 .It Pa source/
 Source distribution sets; see below.
 .tag)
@@ -917,11 +926,9 @@ We'd like your input.
 There are various mailing lists available via the mailing list
 server at
 .Mt majordomo@NetBSD.org .
-To get help on using the mailing
-list server, send mail to that address with an empty body, and it will
-reply with instructions.  See
+See
 .Lk http://www.NetBSD.org/mailinglists/
-for a web interface.
+for details.
 .Pp
 There are various mailing lists set up to deal with comments and
 questions about this release.
@@ -951,15 +958,17 @@ port, you probably should contact the
 of that port (listed
 below).
 .Pp
-If you'd like to help with this effort, and have an idea as to how
-you could be useful, send us mail or subscribe to:
+If you'd like to help with
+.Nx ,
+and have an idea as to how you could be useful, send us mail or subscribe to:
 .Mt netbsd-users@NetBSD.org .
 .Pp
 As a favor, please avoid mailing huge documents or files to these
 mailing lists.
 Instead, put the material you would have sent up for FTP or WWW somewhere,
-then mail the appropriate list about it, or, if you'd rather not do that,
-mail the list saying you'll send the data to those who want it.
+then mail the appropriate list about it. 
+If you'd rather not do that, mail the list saying you'll send the data to
+those who want it.
 .
 .Ss Thanks go to
 .
@@ -991,9 +1000,6 @@ services server.
 .It
 The Columbia University Computer Science Department for hosting
 the NYC build cluster.
-.It
-The Western Washington University Computer Science Department
-for running the WWU build cluster.
 .It
 The many organizations that provide
 .Nx
@@ -1093,11 +1099,9 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Stephen Borrill Ta Mt sborrill@NetBSD.org
 .It Ta Manuel Bouyer Ta Mt bouyer@NetBSD.org
 .It Ta David Brownlee Ta Mt abs@NetBSD.org
-.It Ta James Chacon Ta Mt jmc@NetBSD.org
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta Alistair G. Crooks Ta Mt agc@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
-.It Ta John Heasley Ta Mt heas@NetBSD.org
 .It Ta Martin Husemann Ta Mt martin@NetBSD.org
 .It Ta Soren Jacobsen Ta Mt snj@NetBSD.org
 .It Ta Phil Nelson Ta Mt phil@NetBSD.org
