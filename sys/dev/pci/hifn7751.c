@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.59 2015/05/09 08:08:50 mrg Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.60 2015/05/09 21:57:56 riastradh Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.59 2015/05/09 08:08:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.60 2015/05/09 21:57:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,8 +538,7 @@ hifn_rng_get(size_t bytes, void *priv)
 
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_rng_need = bytes;
-
-	hifn_rng_locked(sc);
+	callout_reset(&sc->sc_rngto, 0, hifn_rng, sc);
 	mutex_exit(&sc->sc_mtx);
 }
 
