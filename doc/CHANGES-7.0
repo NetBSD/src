@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.283 2015/05/09 08:51:57 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.284 2015/05/09 08:59:12 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22887,6 +22887,12 @@ sys/arch/sparc64/conf/std.sparc64		1.19
 	Bump CHILD_MAX and OPEN_MAX defaults to 1024 on several platforms.
 	[mrg, ticket #741]
 
+distrib/evbarm/instkernel/sshramdisk/Makefile	patch
+sys/arch/evbarm/conf/RPI_INSTALL		patch
+
+	Increase ramdisk size.
+	[snj, ticket #742]
+
 libexec/httpd/bozohttpd.8			1.51
 libexec/httpd/bozohttpd.c			1.64
 libexec/httpd/bozohttpd.h			1.35
@@ -22896,4 +22902,3 @@ libexec/httpd/content-bozo.c			1.12
 	Fix content type handling to not hard code (wrong) values for
 	length, but just call strlen() as needed.
 	[mrg, ticket #743]
-
