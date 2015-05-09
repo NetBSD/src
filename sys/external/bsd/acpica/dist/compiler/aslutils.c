@@ -178,6 +178,26 @@ UtLocalCalloc (
     return (Allocated);
 }
 
+/*******************************************************************************
+ *
+ * FUNCTION:    UtLocalFree
+ *
+ * PARAMETERS:  Allocated           - Pointer to be released
+ * PARAMETERS:  Size                - Bytes to be released
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Free memory previously allocated
+ *
+ ******************************************************************************/
+void 
+UtLocalFree (
+	void *Allocated, UINT32 Size)
+{
+    ACPI_FREE (Allocated);
+    TotalAllocations--;
+    TotalAllocated -= Size;
+}
 
 /*******************************************************************************
  *
