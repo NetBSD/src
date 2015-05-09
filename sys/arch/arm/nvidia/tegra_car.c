@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.5 2015/05/09 11:17:59 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.6 2015/05/09 18:56:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.5 2015/05/09 11:17:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.6 2015/05/09 18:56:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -282,4 +282,92 @@ tegra_car_periph_sdmmc_set_div(u_int port, u_int div)
 	bus_space_write_4(bst, bsh, rst_reg+4, dev_bit);
 
 	return 0;
+}
+
+int
+tegra_car_periph_usb_enable(u_int port)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t rst_reg, enb_reg;
+	uint32_t dev_bit;
+
+	tegra_car_get_bs(&bst, &bsh);
+	switch (port) {
+	case 0:
+		rst_reg = CAR_RST_DEV_L_SET_REG;
+		enb_reg = CAR_CLK_ENB_L_SET_REG;
+		dev_bit = CAR_DEV_L_USBD;
+		break;
+	case 1:
+		rst_reg = CAR_RST_DEV_H_SET_REG;
+		enb_reg = CAR_CLK_ENB_H_SET_REG;
+		dev_bit = CAR_DEV_H_USB2;
+		break;
+	case 2:
+		rst_reg = CAR_RST_DEV_H_SET_REG;
+		enb_reg = CAR_CLK_ENB_H_SET_REG;
+		dev_bit = CAR_DEV_H_USB3;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	/* enter reset */
+	bus_space_write_4(bst, bsh, rst_reg, dev_bit);
+	/* enable clk */
+	bus_space_write_4(bst, bsh, enb_reg, dev_bit);
+
+	/* leave reset */
+	bus_space_write_4(bst, bsh, rst_reg+4, dev_bit);
+
+	return 0;
+}
+
+void
+tegra_car_utmip_init(void)
+{
+	const u_int enable_dly_count = 0x02;
+	const u_int stable_count = 0x33;
+	const u_int active_dly_count = 0x09;
+	const u_int xtal_freq_count = 0x7f;
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	tegra_reg_set_clear(bst, bsh, CAR_UTMIP_PLL_CFG2_REG,
+	    __SHIFTIN(stable_count, CAR_UTMIP_PLL_CFG2_STABLE_COUNT) |
+	    __SHIFTIN(active_dly_count, CAR_UTMIP_PLL_CFG2_ACTIVE_DLY_COUNT),
+	    CAR_UTMIP_PLL_CFG2_STABLE_COUNT |
+	    CAR_UTMIP_PLL_CFG2_ACTIVE_DLY_COUNT);
+
+	tegra_reg_set_clear(bst, bsh, CAR_UTMIP_PLL_CFG1_REG,
+	    __SHIFTIN(enable_dly_count, CAR_UTMIP_PLL_CFG1_ENABLE_DLY_COUNT) |
+	    __SHIFTIN(xtal_freq_count, CAR_UTMIP_PLL_CFG1_XTAL_FREQ_COUNT),
+	    CAR_UTMIP_PLL_CFG1_ENABLE_DLY_COUNT |
+	    CAR_UTMIP_PLL_CFG1_XTAL_FREQ_COUNT);
+
+	tegra_reg_set_clear(bst, bsh, CAR_UTMIP_PLL_CFG1_REG,
+	    0,
+	    CAR_UTMIP_PLL_CFG1_PLLU_POWERDOWN |
+	    CAR_UTMIP_PLL_CFG1_PLL_ENABLE_POWERDOWN);
+}
+
+void
+tegra_car_utmip_enable(u_int port)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	uint32_t bit = 0;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	switch (port) {
+	case 0:	bit = CAR_UTMIP_PLL_CFG2_PD_SAMP_A_POWERDOWN; break;
+	case 1:	bit = CAR_UTMIP_PLL_CFG2_PD_SAMP_B_POWERDOWN; break;
+	case 2:	bit = CAR_UTMIP_PLL_CFG2_PD_SAMP_C_POWERDOWN; break;
+	}
+
+	tegra_reg_set_clear(bst, bsh, CAR_UTMIP_PLL_CFG2_REG, 0, bit);
 }
