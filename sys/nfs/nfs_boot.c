@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.83 2015/04/03 20:01:07 rtr Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.84 2015/05/09 15:22:47 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.83 2015/04/03 20:01:07 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.84 2015/05/09 15:22:47 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -468,7 +468,8 @@ send_again:
 		error = ENOBUFS;
 		goto out;
 	}
-	error = (*so->so_send)(so, nam, NULL, m, NULL, 0, lwp);
+	error = (*so->so_send)(so, mtod(nam, struct sockaddr *), NULL,
+	    m, NULL, 0, lwp);
 	if (error) {
 		printf("nfs_boot: sosend: %d\n", error);
 		goto out;
