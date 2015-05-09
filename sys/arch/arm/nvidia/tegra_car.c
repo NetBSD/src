@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.4 2015/05/03 16:40:12 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.5 2015/05/09 11:17:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.4 2015/05/03 16:40:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.5 2015/05/09 11:17:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,6 +81,8 @@ tegra_car_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": CAR\n");
 
 	aprint_verbose_dev(self, "PLLX = %u Hz\n", tegra_car_pllx_rate());
+	aprint_verbose_dev(self, "PLLC = %u Hz\n", tegra_car_pllc_rate());
+	aprint_verbose_dev(self, "PLLU = %u Hz\n", tegra_car_pllu_rate());
 	aprint_verbose_dev(self, "PLLP0 = %u Hz\n", tegra_car_pllp0_rate());
 }
 
@@ -136,6 +138,26 @@ tegra_car_pllc_rate(void)
 {
 	return tegra_car_pll_rate(CAR_PLLC_BASE_REG, CAR_PLLC_BASE_DIVM,
 	    CAR_PLLC_BASE_DIVN, CAR_PLLC_BASE_DIVP);
+}
+
+u_int
+tegra_car_pllu_rate(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	uint64_t rate;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	rate = tegra_car_osc_rate();	
+	const uint32_t base = bus_space_read_4(bst, bsh, CAR_PLLU_BASE_REG);
+	const u_int divm = __SHIFTOUT(base, CAR_PLLU_BASE_DIVM);
+	const u_int divn = __SHIFTOUT(base, CAR_PLLU_BASE_DIVN);
+	const u_int divp = __SHIFTOUT(base, CAR_PLLU_BASE_VCO_FREQ) ? 0 : 1;
+
+	rate = (uint64_t)tegra_car_osc_rate() * divn;
+
+	return rate / (divm << divp);
 }
 
 u_int
