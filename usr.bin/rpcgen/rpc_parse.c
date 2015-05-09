@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.19 2015/05/09 23:12:57 dholland Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.20 2015/05/09 23:28:43 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.19 2015/05/09 23:12:57 dholland Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.20 2015/05/09 23:28:43 dholland Exp $");
 #endif
 #endif
 
@@ -377,21 +377,16 @@ static void
 check_type_name(const char *name, int new_type)
 {
 	int     i;
-	char    tmp[100];
 
 	for (i = 0; reserved_words[i] != NULL; i++) {
 		if (strcmp(name, reserved_words[i]) == 0) {
-			sprintf(tmp,
-			    "Illegal (reserved) name '%s' in type definition", name);
-			error(tmp);
+			error("Illegal (reserved) name '%s' in type definition", name);
 		}
 	}
 	if (new_type) {
 		for (i = 0; reserved_types[i] != NULL; i++) {
 			if (strcmp(name, reserved_types[i]) == 0) {
-				sprintf(tmp,
-				    "Illegal (reserved) name '%s' in type definition", name);
-				error(tmp);
+				error("Illegal (reserved) name '%s' in type definition", name);
 			}
 		}
 	}
