@@ -945,6 +945,11 @@ UtLocalCalloc (
     UINT32                  Size);
 
 void
+UtLocalFree (
+    void		    *Allocated,
+    UINT32                  Size);
+
+void
 UtPrintFormattedName (
     UINT16                  ParseOpcode,
     UINT32                  Level);
