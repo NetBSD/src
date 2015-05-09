@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_gpio.c,v 1.2 2015/05/02 17:06:53 jmcneill Exp $ */
+/* $NetBSD: tegra_gpio.c,v 1.3 2015/05/09 12:07:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.2 2015/05/02 17:06:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.3 2015/05/09 12:07:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -298,7 +298,7 @@ tegra_gpio_acquire(const char *pinname, u_int flags)
 
 	const uint32_t cnf = GPIO_READ(&bank, GPIO_CNF_REG);
 	if ((cnf & __BIT(pin)) == 0)
-		return NULL;
+		GPIO_WRITE(&bank, GPIO_CNF_REG, cnf | __BIT(pin));
 
 	gpin = kmem_alloc(sizeof(*gpin), KM_SLEEP);
 	gpin->pin_bank = bank;
