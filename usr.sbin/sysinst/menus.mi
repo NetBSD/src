@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.7 2014/10/15 21:38:39 snj Exp $	*/
+/*	$NetBSD: menus.mi,v 1.8 2015/05/09 12:55:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -391,6 +391,7 @@ menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 			config_network();
 		};
 	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
+	exit action { yesno = -1; };
 
 
 menu nfssource, y=-4, x=0, w=70, no box, no clear,
