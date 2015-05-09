@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.138 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.139 2015/05/09 18:46:25 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.138 2015/05/02 14:41:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.139 2015/05/09 18:46:25 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -680,7 +680,7 @@ icmp_reflect(struct mbuf *m)
 	struct ip *ip = mtod(m, struct ip *);
 	struct in_ifaddr *ia;
 	struct ifaddr *ifa;
-	struct sockaddr_in *sin = NULL;
+	struct sockaddr_in *sin;
 	struct in_addr t;
 	struct mbuf *opts = NULL;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
@@ -721,8 +721,7 @@ icmp_reflect(struct mbuf *m)
 		}
 	}
 
-	if (ia)
-		sin = &ia->ia_addr;
+	sin = ia ? &ia->ia_addr : NULL;
 
 	icmpdst.sin_addr = t;
 
