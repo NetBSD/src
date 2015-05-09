@@ -2538,7 +2538,7 @@ void
 AcpiDmDumpSlic (
     ACPI_TABLE_HEADER       *Table)
 {
-    AcpiDmDumpTable (Table->Length, sizeof (ACPI_TABLE_HEADER), Table,
+    (void)AcpiDmDumpTable (Table->Length, sizeof (ACPI_TABLE_HEADER), Table,
                 Table->Length - sizeof (*Table), AcpiDmTableInfoSlic);
 }
 
