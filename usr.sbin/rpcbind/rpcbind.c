@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.20 2015/05/09 13:10:50 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.21 2015/05/09 18:22:37 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -123,7 +123,9 @@ main(int argc, char *argv[])
 			rl.rlim_cur = rl.rlim_max;
 		else
 			rl.rlim_cur = 128;
-		setrlimit(RLIMIT_NOFILE, &rl);
+		if (setrlimit(RLIMIT_NOFILE, &rl) < 0) {
+			err(EXIT_FAILURE, "setrlimit(RLIMIT_NOFILE)");
+		}
 	}
 	nc_handle = setnetconfig(); 	/* open netconfig file */
 	if (nc_handle == NULL)
