@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.6 2015/01/02 19:43:13 abs Exp $	*/
+/*	$NetBSD: defs.h,v 1.7 2015/05/09 12:06:31 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -598,6 +598,13 @@ int pm_cgd_edit(void *, part_entry_t *);
 int pm_gpt_convert(pm_devs_t *);
 void pm_wedges_fill(pm_devs_t *);
 void pm_make_bsd_partitions(pm_devs_t *);
+void update_wedges(const char *);
+
+/* flags whether to offer the respective options (depending on helper
+   programs available on install media */
+int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
+/* initialize above variables */
+void check_available_binaries(void);
 
 /* from bsddisklabel.c */
 int	make_bsd_partitions(void);
