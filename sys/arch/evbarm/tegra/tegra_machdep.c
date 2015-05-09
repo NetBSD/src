@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.10 2015/05/03 17:24:45 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.11 2015/05/09 12:08:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.10 2015/05/03 17:24:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.11 2015/05/09 12:08:30 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -391,6 +391,16 @@ tegra_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict, "cd-gpio", "V2");
 			prop_dictionary_set_cstring(dict, "power-gpio", "R0");
 			prop_dictionary_set_cstring(dict, "wp-gpio", "Q4");
+		}
+	}
+
+	if (device_is_a(self, "ehci")
+	    && device_is_a(device_parent(self), "tegraio")) {
+		struct tegraio_attach_args * const tio = aux;
+		const struct tegra_locators * const loc = &tio->tio_loc;
+
+		if (loc->loc_port == 2) {
+			prop_dictionary_set_cstring(dict, "vbus-gpio", "N5");
 		}
 	}
 #endif
