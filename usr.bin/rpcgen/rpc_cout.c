@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.34 2015/05/09 23:12:57 dholland Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.35 2015/05/09 23:14:22 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.34 2015/05/09 23:12:57 dholland Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.35 2015/05/09 23:14:22 dholland Exp $");
 #endif
 #endif
 
@@ -479,8 +479,7 @@ emit_struct(definition *def)
 						nsizestr = (char *) realloc(sizestr, strlen(sizestr) + strlen(ptemp) + 1);
 						if (nsizestr == NULL) {
 
-							f_print(stderr, "Fatal error : no memory\n");
-							crash();
+							errx(EXIT_FAILURE, "Out of memory");
 						}
 						sizestr = nsizestr;
 						sizestr = strcat(sizestr, ptemp);	/* build up length of
