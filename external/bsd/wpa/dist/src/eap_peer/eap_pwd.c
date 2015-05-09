@@ -903,6 +903,7 @@ eap_pwd_process(struct eap_sm *sm, void *priv, struct eap_method_ret *ret,
 	 * we have output! Do we need to fragment it?
 	 */
 	len = wpabuf_len(data->outbuf);
+	lm_exch = EAP_PWD_GET_EXCHANGE(lm_exch);
 	if ((len + EAP_PWD_HDR_SIZE) > data->mtu) {
 		resp = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_PWD, data->mtu,
 				     EAP_CODE_RESPONSE, eap_get_id(reqData));
