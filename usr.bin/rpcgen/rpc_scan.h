@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.h,v 1.9 2013/08/11 08:03:10 dholland Exp $	*/
+/*	$NetBSD: rpc_scan.h,v 1.10 2015/05/09 21:44:47 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -99,10 +99,10 @@ typedef struct token token;
 /*
  * routine interface 
  */
-void scan __P((tok_kind, token *));
-void scan2 __P((tok_kind, tok_kind, token *));
-void scan3 __P((tok_kind, tok_kind, tok_kind, token *));
-void scan_num __P((token *));
-void peek __P((token *));
-int peekscan __P((tok_kind, token *));
-void get_token __P((token *));
+void scan(tok_kind, token *);
+void scan2(tok_kind, tok_kind, token *);
+void scan3(tok_kind, tok_kind, tok_kind, token *);
+void scan_num(token *);
+void peek(token *);
+int peekscan(tok_kind, token *);
+void get_token(token *);
