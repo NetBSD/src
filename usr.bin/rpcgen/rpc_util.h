@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_util.h,v 1.9 2015/05/09 21:44:47 christos Exp $	*/
+/*	$NetBSD: rpc_util.h,v 1.10 2015/05/09 23:19:34 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -35,8 +35,8 @@
  * rpc_util.h, Useful definitions for the RPC protocol compiler 
  */
 
-#define alloc(size)		(void *)malloc((unsigned)(size))
-#define ALLOC(object)   (object *) malloc(sizeof(object))
+#define alloc(size)		((char *)malloc((size_t)(size)))
+#define ALLOC(object)		((object *)malloc(sizeof(object)))
 
 #define s_print	(void) sprintf
 #define f_print (void) fprintf
