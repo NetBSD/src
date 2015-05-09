@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.20 2015/05/09 23:28:43 dholland Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.21 2015/05/09 23:29:51 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.20 2015/05/09 23:28:43 dholland Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.21 2015/05/09 23:29:51 dholland Exp $");
 #endif
 #endif
 
@@ -484,7 +484,7 @@ get_prog_declaration(declaration *dec, defkind dkind, int num /* arg number */)
 		sprintf(name, "%s%d", ARGNAME, num);	/* default name of
 							 * argument */
 
-	dec->name = (char *) strdup(name);
+	dec->name = strdup(name);
 
 	if (streq(dec->type, "void")) {
 		return;
@@ -498,7 +498,7 @@ get_prog_declaration(declaration *dec, defkind dkind, int num /* arg number */)
 		}
 		dec->rel = REL_POINTER;
 		if (peekscan(TOK_IDENT, &tok))	/* optional name of argument */
-			dec->name = (char *) strdup(tok.str);
+			dec->name = strdup(tok.str);
 	}
 	if (peekscan(TOK_LANGLE, &tok)) {
 		if (!streq(dec->type, "string")) {
