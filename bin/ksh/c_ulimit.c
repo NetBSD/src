@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ulimit.c,v 1.10 2012/06/09 02:51:50 christos Exp $	*/
+/*	$NetBSD: c_ulimit.c,v 1.11 2015/05/09 13:22:37 christos Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -20,7 +20,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ulimit.c,v 1.10 2012/06/09 02:51:50 christos Exp $");
+__RCSID("$NetBSD: c_ulimit.c,v 1.11 2015/05/09 13:22:37 christos Exp $");
 #endif
 
 
@@ -203,8 +203,9 @@ c_ulimit(wp)
 		for (l = limits; l->name; l++) {
 #ifdef HAVE_SETRLIMIT
 			if (l->which == RLIMIT) {
-				getrlimit(l->gcmd, &limit);
-				if (how & SOFT)
+				if (getrlimit(l->gcmd, &limit) == -1)
+					val = RLIM_INFINITY;
+				else if (how & SOFT)
 					val = limit.rlim_cur;
 				else if (how & HARD)
 					val = limit.rlim_max;
