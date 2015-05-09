@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.28 2015/05/09 18:48:14 dholland Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.29 2015/05/09 21:44:47 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.28 2015/05/09 18:48:14 dholland Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.29 2015/05/09 21:44:47 christos Exp $");
 #endif
 #endif
 
@@ -812,19 +812,15 @@ write_rpc_svc_fg(char *infile, const char *sp)
 		f_print(fout, "%sint pid, i;\n\n", sp);
 	f_print(fout, "%spid = fork();\n", sp);
 	f_print(fout, "%sif (pid < 0) {\n", sp);
-	f_print(fout, "%s\tperror(\"cannot fork\");\n", sp);
-	f_print(fout, "%s\texit(1);\n", sp);
+	f_print(fout, "%s\terr(EXIT_FAILURE, \"cannot fork\");\n", sp);
 	f_print(fout, "%s}\n", sp);
 	f_print(fout, "%sif (pid)\n", sp);
 	f_print(fout, "%s\texit(0);\n", sp);
 	/* get number of file descriptors */
 	if (tirpcflag) {
 		f_print(fout, "%srl.rlim_max = 0;\n", sp);
-		f_print(fout, "%sif (getrlimit(RLIMIT_NOFILE, &rl) == -1) {\n",
-			sp);
-		f_print(fout, "%s\tperror(\"getrlimit\");\n", sp);
-		f_print(fout, "%s\texit(1);\n", sp);
-		f_print(fout, "%s}\n", sp);
+		f_print(fout, "%sif (getrlimit(RLIMIT_NOFILE, &rl) == -1)\n", sp);
+		f_print(fout, "%s\terr(EXIT_FAILURE, \"getrlimit(RLIMIT_NOFILE)\");\n", sp);
 		f_print(fout, "%sif ((size = rl.rlim_max) == 0)\n", sp);
 		f_print(fout, "%s\texit(1);\n", sp);
 	} else {

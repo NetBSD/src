@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_util.h,v 1.8 2013/12/15 00:40:17 christos Exp $	*/
+/*	$NetBSD: rpc_util.h,v 1.9 2015/05/09 21:44:47 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -57,6 +57,7 @@ typedef struct list list;
 extern char curline[MAXLINESIZE];
 extern char *where;
 extern int linenum;
+extern int docleanup;
 
 extern const char *infilename;
 extern FILE *fout;
@@ -113,8 +114,8 @@ int isvectordef(const char *, relation);
 char *locase(const char *);
 void pvname_svc(const char *, const char *);
 void pvname(const char *, const char *);
-void error(const char *) __dead;
-void crash(void) __dead;
+void error(const char *);
+void crash(void);
 void record_open(const char *);
 void expected1(tok_kind) __dead;
 void expected2(tok_kind, tok_kind) __dead;
