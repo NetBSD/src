@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.45 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.46 2015/05/09 21:53:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.45 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.46 2015/05/09 21:53:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,8 @@ static const struct rtk_type rtk_pci_devs[] = {
 		RTK_8139, "Addtron Technology 8139 10/100BaseTX" },
 	{ PCI_VENDOR_SEGA, PCI_PRODUCT_SEGA_BROADBAND,
 		RTK_8139, "SEGA Broadband Adapter" },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE520TX,
+		RTK_8139, "D-Link Systems DFE 520TX" }, 
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS,
 		RTK_8139, "D-Link Systems DFE 530TX+" },
 	{ PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_BAYSTACK_21,
