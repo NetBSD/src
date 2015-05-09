@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126.2.8 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.9 2015/05/09 09:35:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.8 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.9 2015/05/09 09:35:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -464,7 +464,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 			for(i = 0; i < UGEN_NISOREQS; ++i) {
 				sce->isoreqs[i].sce = sce;
 				xfer = usbd_alloc_xfer(sc->sc_udev);
-				if (xfer == 0)
+				if (xfer == NULL)
 					goto bad;
 				sce->isoreqs[i].xfer = xfer;
 				tbuf = usbd_alloc_buffer
@@ -720,7 +720,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			break;
 		}
 		xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (xfer == 0)
+		if (xfer == NULL)
 			return ENOMEM;
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
 			DPRINTFN(1, ("ugenread: start transfer %d bytes\n",n));
@@ -934,7 +934,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 			break;
 		}
 		xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (xfer == 0)
+		if (xfer == NULL)
 			return EIO;
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
 			error = uiomove(sc->sc_buffer, n, uio);
@@ -957,7 +957,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 		break;
 	case UE_INTERRUPT:
 		xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (xfer == 0)
+		if (xfer == NULL)
 			return EIO;
 		while ((n = min(UGETW(sce->edesc->wMaxPacketSize),
 		    uio->uio_resid)) != 0) {
