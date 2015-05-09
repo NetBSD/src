@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.282 2015/05/07 20:42:48 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.283 2015/05/09 08:51:57 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22859,4 +22859,41 @@ distrib/evbarm/instkernel/sshramdisk/Makefile	patch
 
 	Bump ramdisk size.
 	[snj, ticket #738]
+
+sys/arch/x86/include/specialreg.h		1.82
+usr.sbin/cpuctl/arch/i386.c			1.66
+
+	From Intel SDM:
+	- Add the Silicon Debug bit in CPUID Fn00000001 %ecx
+	- Add CPUID Fn0000_0007 %ecx bits
+	- Add comments.
+	Update some Intel CPU models (Sky Lake, Broadwell and Atom X[357]).
+	[msaitoh, ticket #739]
+
+sys/dev/pci/if_bge.c				1.285
+sys/dev/pci/if_bgereg.h				1.90
+
+	Avoid a watchdog timeout that occurs every 25-30 minutes
+	on HP ML110 G6.  PR#49657.
+	[msaitoh, ticket #740]
+
+sys/arch/aarch64/conf/std.aarch64		1.2
+sys/arch/amd64/conf/std.amd64			1.10
+sys/arch/evbarm/conf/std.evbarm			1.4
+sys/arch/evbarm64/conf/std.evbarm64		1.2
+sys/arch/i386/conf/std.i386			1.34
+sys/arch/sparc64/conf/std.sparc64		1.19
+
+	Bump CHILD_MAX and OPEN_MAX defaults to 1024 on several platforms.
+	[mrg, ticket #741]
+
+libexec/httpd/bozohttpd.8			1.51
+libexec/httpd/bozohttpd.c			1.64
+libexec/httpd/bozohttpd.h			1.35
+libexec/httpd/cgi-bozo.c			1.27
+libexec/httpd/content-bozo.c			1.12
+
+	Fix content type handling to not hard code (wrong) values for
+	length, but just call strlen() as needed.
+	[mrg, ticket #743]
 
