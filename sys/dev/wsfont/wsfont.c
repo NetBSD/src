@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.58 2015/04/18 11:23:58 mlelstv Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.59 2015/05/09 16:40:37 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.58 2015/04/18 11:23:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.59 2015/05/09 16:40:37 mlelstv Exp $");
 
 #include "opt_wsfont.h"
 
@@ -570,7 +570,7 @@ int
 wsfont_matches(struct wsdisplay_font *font, const char *name,
 	       int width, int height, int stride, int flags)
 {
-	int score = 10000;
+	int score = 20000;
 
 	/* first weed out fonts the caller doesn't claim support for */
 	if (FONT_IS_ALPHA(font)) {
@@ -590,8 +590,9 @@ wsfont_matches(struct wsdisplay_font *font, const char *name,
 				return (0);
 		} else {
 			if (font->fontwidth > width)
-				return (0);
-			score -= min(width - font->fontwidth, 9999);
+				score -= 10000 + min(font->fontwidth - width, 9999);
+			else
+				score -= min(width - font->fontwidth, 9999);
 		}
 	}
 
