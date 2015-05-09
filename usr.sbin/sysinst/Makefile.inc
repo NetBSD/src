@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2014/08/06 12:16:12 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2015/05/09 06:15:42 martin Exp $
 #
 # Makefile for sysinst
 
@@ -55,7 +55,12 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DCATALOG_DIR=\"${CATALOGDIR}\"
 
 .if (defined(DEBUG))
-CPPFLAGS+=-DDEBUG -g -O0
+.if ${ACTIVE_CC} == "gcc"
+# make gcc run additional passes for better debug info (only needed
+# when compiling with -O0)
+O0TRACKING=	-fvar-tracking-assignments -fvar-tracking
+.endif
+CPPFLAGS+=-DDEBUG -g -O0 ${O0TRACKING}
 .endif
 
 .if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
