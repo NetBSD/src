@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.27 2015/05/09 15:12:12 christos Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.28 2015/05/09 18:48:14 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.27 2015/05/09 15:12:12 christos Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.28 2015/05/09 18:48:14 dholland Exp $");
 #endif
 #endif
 
@@ -820,7 +820,11 @@ write_rpc_svc_fg(char *infile, const char *sp)
 	/* get number of file descriptors */
 	if (tirpcflag) {
 		f_print(fout, "%srl.rlim_max = 0;\n", sp);
-		f_print(fout, "%sgetrlimit(RLIMIT_NOFILE, &rl);\n", sp);
+		f_print(fout, "%sif (getrlimit(RLIMIT_NOFILE, &rl) == -1) {\n",
+			sp);
+		f_print(fout, "%s\tperror(\"getrlimit\");\n", sp);
+		f_print(fout, "%s\texit(1);\n", sp);
+		f_print(fout, "%s}\n", sp);
 		f_print(fout, "%sif ((size = rl.rlim_max) == 0)\n", sp);
 		f_print(fout, "%s\texit(1);\n", sp);
 	} else {
