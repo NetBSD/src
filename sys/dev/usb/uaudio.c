@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.8 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.9 2015/05/09 09:35:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.8 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.9 2015/05/09 09:35:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2751,7 +2751,7 @@ uaudio_chan_alloc_buffers(struct uaudio_softc *sc, struct chan *ch)
 	size = (ch->bytes_per_frame + ch->sample_size) * UAUDIO_NFRAMES;
 	for (i = 0; i < UAUDIO_NCHANBUFS; i++) {
 		xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (xfer == 0)
+		if (xfer == NULL)
 			goto bad;
 		ch->chanbufs[i].xfer = xfer;
 		tbuf = usbd_alloc_buffer(xfer, size);
