@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1222 2015/05/04 21:18:22 ryo Exp $
+$NetBSD: pcidevs,v 1.1223 2015/05/09 21:53:45 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2085,9 +2085,10 @@ product DIGI NEO8_PCIE	0x00f0	Neo 8-port (PCIe)
 product DLINK DL1002		0x1002	DL-1002 10/100 Ethernet
 product DLINK DFE530TXPLUS	0x1300	DFE-530TXPLUS 10/100 Ethernet
 product DLINK DFE690TXD		0x1340	DFE-690TXD 10/100 Ethernet
-product	DLINK DWL610		0x3300	DWL-610 802.11b WLAN
+product DLINK DWL610		0x3300	DWL-610 802.11b WLAN
 product DLINK DL4000		0x4000	DL-4000 Gigabit Ethernet
 product DLINK DGE550SX		0x4001	DGE-550SX
+product DLINK DFE520TX		0x4200	DFE-520TX 10/100 Ethernet
 product DLINK DGE528T		0x4300	DGE-528T Gigabit Ethernet
 product DLINK DGE560T		0x4b00	DGE-560T Gigabit Ethernet
 product DLINK DGE560T_2		0x4b01	DGE-560T_2 Gigabit Ethernet
