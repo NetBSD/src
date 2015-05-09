@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 250108 2013-04-30 16:18:29Z luigi $*/
-/*$NetBSD: ixgbe.c,v 1.29 2015/05/06 09:21:22 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.30 2015/05/09 13:08:26 christos Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1977,8 +1977,6 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 		default:
 			adapter->other_tx_dma_setup.ev_count++;
 			return error;
-		case 0:
-			break;
 		}
 	}
 
