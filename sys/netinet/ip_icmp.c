@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.139 2015/05/09 18:46:25 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.140 2015/05/09 18:47:26 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.139 2015/05/09 18:46:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.140 2015/05/09 18:47:26 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -703,7 +703,7 @@ icmp_reflect(struct mbuf *m)
 
 	/* Look for packet addressed to us */
 	INADDR_TO_IA(t, ia);
-	if (ia->ia4_flags & IN_IFF_NOTREADY)
+	if (ia && (ia->ia4_flags & IN_IFF_NOTREADY))
 		ia = NULL;
 
 	/* look for packet sent to broadcast address */
