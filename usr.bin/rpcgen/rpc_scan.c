@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.c,v 1.14 2015/05/09 23:12:57 dholland Exp $	*/
+/*	$NetBSD: rpc_scan.c,v 1.15 2015/05/09 23:28:43 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_scan.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_scan.c,v 1.14 2015/05/09 23:12:57 dholland Exp $");
+__RCSID("$NetBSD: rpc_scan.c,v 1.15 2015/05/09 23:28:43 dholland Exp $");
 #endif
 #endif
 
@@ -283,17 +283,11 @@ get_token(token *tokp)
 
 	default:
 		if (!(isalpha((unsigned char)*where) || *where == '_')) {
-			char    buf[100];
-			char   *p;
-
-			s_print(buf, "Illegal character in file: ");
-			p = buf + strlen(buf);
 			if (isprint((unsigned char)*where)) {
-				s_print(p, "%c", *where);
+				error("Illegal character '%c' in file", *where);
 			} else {
-				s_print(p, "%d", *where);
+				error("Illegal character %d in file", *where);
 			}
-			error(buf);
 		}
 		findkind(&where, tokp);
 		break;

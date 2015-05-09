@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_util.c,v 1.16 2015/05/09 23:16:51 dholland Exp $	*/
+/*	$NetBSD: rpc_util.c,v 1.17 2015/05/09 23:28:43 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_util.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_util.c,v 1.16 2015/05/09 23:16:51 dholland Exp $");
+__RCSID("$NetBSD: rpc_util.c,v 1.17 2015/05/09 23:28:43 dholland Exp $");
 #endif
 #endif
 
@@ -254,11 +254,17 @@ pvname(const char *pname, const char *vnum)
 /*
  * print a useful (?) error message, and then die
  */
-void
-error(const char *msg)
+__printflike(1, 2) void
+error(const char *msg, ...)
 {
+	va_list ap;
+
 	printwhere();
-	f_print(stderr, "%s:%d: %s", infilename, linenum, msg);
+	fprintf(stderr, "%s:%d: ", infilename, linenum);
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+	fprintf(stderr, "\n");
 	errx(EXIT_FAILURE, "Cannot recover from this error");
 }
 /*
@@ -288,17 +294,13 @@ record_open(const char *file)
 	}
 }
 
-static char expectbuf[100];
-
 /*
  * error, token encountered was not the expected one
  */
 void
 expected1(tok_kind exp1)
 {
-	s_print(expectbuf, "Expected '%s'",
-	    toktostr(exp1));
-	error(expectbuf);
+	error("Expected '%s'", toktostr(exp1));
 }
 /*
  * error, token encountered was not one of two expected ones
@@ -306,10 +308,9 @@ expected1(tok_kind exp1)
 void
 expected2(tok_kind exp1, tok_kind exp2)
 {
-	s_print(expectbuf, "Expected '%s' or '%s'",
+	error("Expected '%s' or '%s'",
 	    toktostr(exp1),
 	    toktostr(exp2));
-	error(expectbuf);
 }
 /*
  * error, token encountered was not one of 3 expected ones
@@ -317,11 +318,10 @@ expected2(tok_kind exp1, tok_kind exp2)
 void
 expected3(tok_kind exp1, tok_kind exp2, tok_kind exp3)
 {
-	s_print(expectbuf, "Expected '%s', '%s', or '%s'",
+	error("Expected '%s', '%s', or '%s'",
 	    toktostr(exp1),
 	    toktostr(exp2),
 	    toktostr(exp3));
-	error(expectbuf);
 }
 
 void
