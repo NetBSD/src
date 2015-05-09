@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.40 2015/05/09 21:44:47 christos Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.41 2015/05/09 22:58:22 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.40 2015/05/09 21:44:47 christos Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.41 2015/05/09 22:58:22 dholland Exp $");
 #endif
 #endif
 
@@ -870,7 +870,8 @@ checkfiles(const char *infile, const char *outfile)
 		if (stat(outfile, &buf) < 0)
 			return;	/* file does not exist */
 		else {
-			errx("`%s' already exists and may be overwritten",
+			errx(EXIT_FAILURE,
+			    "`%s' already exists and may be overwritten",
 			    outfile);
 		}
 	}
