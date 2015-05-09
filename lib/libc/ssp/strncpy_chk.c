@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy_chk.c,v 1.5 2014/09/17 00:39:28 joerg Exp $	*/
+/*	$NetBSD: strncpy_chk.c,v 1.6 2015/05/09 15:42:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strncpy_chk.c,v 1.5 2014/09/17 00:39:28 joerg Exp $");
+__RCSID("$NetBSD: strncpy_chk.c,v 1.6 2015/05/09 15:42:21 christos Exp $");
 
 /*LINTLIBRARY*/
 
@@ -46,6 +46,9 @@ __strncpy_chk(char * __restrict dst, const char * __restrict src, size_t len,
     size_t slen)
 {
 	if (len > slen)
+		__chk_fail();
+
+	if (__ssp_overlap(src, dst, len))
 		__chk_fail();
 
 	return strncpy(dst, src, len);
