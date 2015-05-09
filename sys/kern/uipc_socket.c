@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.244 2015/05/03 04:18:45 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.245 2015/05/09 15:22:47 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.244 2015/05/03 04:18:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.245 2015/05/09 15:22:47 rtr Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -883,8 +883,8 @@ sodisconnect(struct socket *so)
  * Data and control buffers are freed on return.
  */
 int
-sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
-	struct mbuf *control, int flags, struct lwp *l)
+sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
+	struct mbuf *top, struct mbuf *control, int flags, struct lwp *l)
 {
 	struct mbuf	**mp, *m;
 	long		space, len, resid, clen, mlen;
@@ -1059,12 +1059,8 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(so,
 				    top, control);
 			} else {
-				struct sockaddr *sin = NULL;
-				if (addr) {
-					sin = mtod(addr, struct sockaddr *);
-				}
 				error = (*so->so_proto->pr_usrreqs->pr_send)(so,
-				    top, sin, control, l);
+				    top, addr, control, l);
 			}
 			if (dontroute)
 				so->so_options &= ~SO_DONTROUTE;

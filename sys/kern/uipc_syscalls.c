@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.177 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.178 2015/05/09 15:22:47 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.177 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.178 2015/05/09 15:22:47 rtr Exp $");
 
 #include "opt_pipe.h"
 
@@ -532,6 +532,7 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 {
 
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov = NULL;
+	struct sockaddr *sa = NULL;
 	struct mbuf	*to, *control;
 	struct uio	auio;
 	size_t		len, iovsz;
@@ -611,8 +612,12 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 	if (mp->msg_control)
 		MCLAIM(control, so->so_mowner);
 
+	if (to) {
+		sa = mtod(to, struct sockaddr *);
+	}
+
 	len = auio.uio_resid;
-	error = (*so->so_send)(so, to, &auio, NULL, control, flags, l);
+	error = (*so->so_send)(so, sa, &auio, NULL, control, flags, l);
 	/* Protocol is responsible for freeing 'control' */
 	control = NULL;
 
