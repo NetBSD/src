@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.62 2015/05/09 11:53:34 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.63 2015/05/09 13:07:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.62 2015/05/09 11:53:34 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.63 2015/05/09 13:07:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,8 +583,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 
 /* ARGSUSED */
 void
-dk_getdefaultlabel(struct dk_softc *dksc,
-		      struct disklabel *lp)
+dk_getdefaultlabel(struct dk_softc *dksc, struct disklabel *lp)
 {
 	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 
@@ -600,9 +599,9 @@ dk_getdefaultlabel(struct dk_softc *dksc,
 	lp->d_ncylinders = dg->dg_ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	strncpy(lp->d_typename, dksc->sc_xname, sizeof(lp->d_typename));
+	strlcpy(lp->d_typename, dksc->sc_xname, sizeof(lp->d_typename));
 	lp->d_type = dksc->sc_dtype;
-	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
+	strlcpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
@@ -669,7 +668,7 @@ dk_makedisklabel(struct dk_softc *dksc)
 	struct	disklabel *lp = dksc->sc_dkdev.dk_label;
 
 	lp->d_partitions[RAW_PART].p_fstype = FS_BSDFFS;
-	strncpy(lp->d_packname, "default label", sizeof(lp->d_packname));
+	strlcpy(lp->d_packname, "default label", sizeof(lp->d_packname));
 	lp->d_checksum = dkcksum(lp);
 }
 
