@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_util.c,v 1.13 2013/12/15 00:40:17 christos Exp $	*/
+/*	$NetBSD: rpc_util.c,v 1.14 2015/05/09 21:44:47 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_util.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_util.c,v 1.13 2013/12/15 00:40:17 christos Exp $");
+__RCSID("$NetBSD: rpc_util.c,v 1.14 2015/05/09 21:44:47 christos Exp $");
 #endif
 #endif
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: rpc_util.c,v 1.13 2013/12/15 00:40:17 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <err.h>
 #include <ctype.h>
 #include "rpc_scan.h"
 #include "rpc_parse.h"
@@ -257,9 +258,7 @@ void
 error(const char *msg)
 {
 	printwhere();
-	f_print(stderr, "%s, line %d: ", infilename, linenum);
-	f_print(stderr, "%s\n", msg);
-	crash();
+	errx(EXIT_FAILURE, "%s, line %d: %s", infilename, linenum, msg);
 }
 /*
  * Something went wrong, unlink any files that we may have created and then
@@ -270,10 +269,12 @@ crash(void)
 {
 	int     i;
 
+	if (!docleanup)
+		return;
+
 	for (i = 0; i < nfiles; i++) {
 		(void) unlink(outfiles[i]);
 	}
-	exit(1);
 }
 
 void
@@ -282,8 +283,7 @@ record_open(const char *file)
 	if (nfiles < NFILES) {
 		outfiles[nfiles++] = file;
 	} else {
-		f_print(stderr, "too many files!\n");
-		crash();
+		errx(EXIT_FAILURE, "too many files!");
 	}
 }
 

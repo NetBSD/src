@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.h,v 1.5 2013/08/11 08:03:10 dholland Exp $	*/
+/*	$NetBSD: rpc_parse.h,v 1.6 2015/05/09 21:44:47 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -156,7 +156,7 @@ struct definition {
 };
 typedef struct definition definition;
 
-definition *get_definition __P((void));
+definition *get_definition(void);
 
 struct bas_type
 {

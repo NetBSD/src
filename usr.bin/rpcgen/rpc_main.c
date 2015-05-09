@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.39 2013/12/15 09:18:31 wiz Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.40 2015/05/09 21:44:47 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.39 2013/12/15 09:18:31 wiz Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.40 2015/05/09 21:44:47 christos Exp $");
 #endif
 #endif
 
@@ -128,6 +128,7 @@ int     logflag;		/* Use syslog instead of fprintf for errors */
 int     tblflag;		/* Support for dispatch table file */
 int	BSDflag;		/* use BSD cplusplus macros */
 int     callerflag;		/* Generate svc_caller() function */
+int	docleanup = 1;		/* cause atexit to remove files */
 
 #define INLINE 3
 /*length at which to start doing an inline */
@@ -187,6 +188,7 @@ main(int argc, char *argv[])
 
 	(void) memset((char *) &cmd, 0, sizeof(struct commandline));
 	clear_args();
+	atexit(crash);
 	if (!parseargs(argc, argv, &cmd))
 		usage();
 
@@ -255,6 +257,7 @@ main(int argc, char *argv[])
 		(void) unlink(dos_cppfile);
 	}
 #endif
+	docleanup = 0;
 	exit(nonfatalerrors);
 	/* NOTREACHED */
 }
@@ -297,15 +300,11 @@ open_output(const char *infile, const char *outfile)
 		return;
 	}
 	if (infile != NULL && streq(outfile, infile)) {
-		f_print(stderr, "%s: output would overwrite %s\n", cmdname,
-		    infile);
-		crash();
+		errx(EXIT_FAILURE, "output would overwrite `%s'", infile);
 	}
 	fout = fopen(outfile, "w");
 	if (fout == NULL) {
-		f_print(stderr, "%s: unable to open ", cmdname);
-		perror(outfile);
-		crash();
+		err(EXIT_FAILURE, "Can't to open `%s'", outfile);
 	}
 	record_open(outfile);
 
@@ -360,22 +359,18 @@ open_input(const char *infile, const char *define)
 
 		retval = spawnvp(P_WAIT, arglist[0], arglist);
 		if (retval != 0) {
-			fprintf(stderr, "%s: C PreProcessor failed\n", cmdname);
-			crash();
+			err(EXIT_FAILURE, "C PreProcessor failed");
 		}
 		fnsplit(infile, drive, dir, name, ext);
 		fnmerge(cppfile, drive, dir, name, ".i");
 
 		fin = fopen(cppfile, "r");
 		if (fin == NULL) {
-			f_print(stderr, "%s: ", cmdname);
-			perror(cppfile);
-			crash();
+			err(EXIT_FAILURE, "Can't open `%s'", cppfile);
 		}
 		dos_cppfile = strdup(cppfile);
 		if (dos_cppfile == NULL) {
-			fprintf(stderr, "%s: out of memory\n", cmdname);
-			crash();
+			err(EXIT_FAILURE, "Can't copy `%s'", cppfile);
 		}
 	}
 #else
@@ -391,17 +386,15 @@ open_input(const char *infile, const char *define)
 		(void) dup2(pd[1], 1);
 		(void) close(pd[0]);
 		execvp(arglist[0], __UNCONST(arglist));
-		err(1, "$RPCGEN_CPP: %s", CPP);
+		err(EXIT_FAILURE, "$RPCGEN_CPP: %s", CPP);
 	case -1:
-		err(1, "fork");
+		err(EXIT_FAILURE, "fork");
 	}
 	(void) close(pd[1]);
 	fin = fdopen(pd[0], "r");
 #endif
 	if (fin == NULL) {
-		f_print(stderr, "%s: ", cmdname);
-		perror(infilename);
-		crash();
+		err(EXIT_FAILURE, "Can't open `%s'", infilename);
 	}
 }
 /* valid tirpc nettypes */
@@ -543,7 +536,7 @@ h_output(const char *infile, const char *define, int extend,
 	else {
 		guard = strdup("STDIN_");
 		if (guard == NULL) {
-			err(1, "strdup");
+			err(EXIT_FAILURE, "strdup");
 		}
 	}
 
@@ -608,6 +601,7 @@ s_output(int argc, char *argv[], char *infile,
 	f_print(fout, "#include <sys/ioctl.h>\n");
 	f_print(fout, "#include <fcntl.h>\n");
 	f_print(fout, "#include <stdio.h>\n");
+	f_print(fout, "#include <err.h>\n");
 	f_print(fout, "#include <stdlib.h>\n");
 	f_print(fout, "#include <unistd.h>\n");
 	f_print(fout, "#include <rpc/pmap_clnt.h>\n");
@@ -780,6 +774,7 @@ clnt_output(const char *infile, const char *define, int extend,
 	open_output(infile, outfilename);
 	add_sample_msg();
 	f_print(fout, "#include <stdio.h>\n");
+	f_print(fout, "#include <err.h>\n");
 	if (infile && (include = extendfile(infile, ".h"))) {
 		f_print(fout, "#include \"%s\"\n", include);
 		free(include);
@@ -837,8 +832,7 @@ static void
 addarg(const char *cp)
 {
 	if (argcount >= ARGLISTLEN) {
-		f_print(stderr, "rpcgen: too many defines\n");
-		crash();
+		errx(EXIT_FAILURE, "too many defines");
 		/* NOTREACHED */
 	}
 	arglist[argcount++] = cp;
@@ -849,8 +843,7 @@ static void
 putarg(int pwhere, const char *cp)
 {
 	if (pwhere >= ARGLISTLEN) {
-		f_print(stderr, "rpcgen: arglist coding error\n");
-		crash();
+		errx(EXIT_FAILURE, "arglist coding error");
 		/* NOTREACHED */
 	}
 	arglist[pwhere] = cp;
@@ -870,17 +863,15 @@ checkfiles(const char *infile, const char *outfile)
 
 	if (infile)		/* infile ! = NULL */
 		if (stat(infile, &buf) < 0) {
-			perror(infile);
-			crash();
+			err(EXIT_FAILURE, "Can't stat `%s'", infile);
 		};
 #if 0
 	if (outfile) {
 		if (stat(outfile, &buf) < 0)
 			return;	/* file does not exist */
 		else {
-			f_print(stderr,
-			    "file '%s' already exists and may be overwritten\n", outfile);
-			crash();
+			errx("`%s' already exists and may be overwritten",
+			    outfile);
 		}
 	}
 #endif
