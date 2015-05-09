@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.79 2014/04/12 18:30:39 snj Exp $
+.\"	$NetBSD: postinstall,v 1.80 2015/05/09 08:13:35 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,6 +29,9 @@ things you need to do in order to bring the system into a properly
 configured state.
 The most important steps are described below.
 .(enum
+Before all else, read
+.Xr postinstall 8 .
+.It
 Configuring
 .Pa /etc/rc.conf
 .Pp
@@ -263,7 +266,7 @@ Logging in
 After reboot, you can log in as
 .Li root
 at the login prompt.
-Unless you've set a password in
+If you didn't set a password in
 .Ic sysinst ,
 there
 is no initial password.
@@ -332,7 +335,7 @@ pkgsrc automatically handles any changes necessary to make the
 software run on
 .Nx .
 This includes the retrieval and installation of any other
-packages on which the software may depend.
+packages the software may depend upon.
 .Pp
 .(bullet
 More information on the package system is available at

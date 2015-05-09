@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.92 2012/01/21 04:43:54 isaki Exp $
+.\"	$NetBSD: legal.common,v 1.93 2015/05/09 08:13:34 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@ This product includes software developed by The NetBSD
 Foundation, Inc. and its contributors.
 .It
 This product includes software developed for the
-NetBSD Project.  See http://www.netbsd.org/ for
+NetBSD Project.  See http://www.NetBSD.org/ for
 information about NetBSD.
 .It
 This product includes software developed by Intel Corporation and
@@ -99,13 +99,12 @@ Hannum.
 .It
 This product includes software developed by Adam Glass.
 .It
-This product includes software developed by Advanced Risc Machines
-Ltd.
-.It
 This product includes software developed by Alex Zepeda, and
 Colin Wood for the NetBSD Projet.
 .It
 This product includes software developed by Alex Zepeda.
+.It
+This product includes software developed by Allen Briggs
 .It
 This product includes software developed by Amancio Hasty and
 Roger Hardiman
@@ -164,21 +163,19 @@ and Michael L. Hitch.
 This product includes software developed by Daniel Widenfalk
 for the NetBSD Project.
 .It
+This product includes software developed by David Miller.
+.It
 This product includes software developed by Dean Huxley.
+.It
+This product includes software developed by Emmanuel Dreyfus
 .It
 This product includes software developed by Eric S. Hvozda.
 .It
 This product includes software developed by Eric S. Raymond
 .It
-This product includes software developed by Eric Young (eay@@mincom.oz.au)
-.It
 This product includes software developed by Eric Young (eay@cryptsoft.com)
 .It
 This product includes software developed by Eric Young (eay@mincom.oz.au)
-.It
-This product includes software developed by K. Kobayashi.
-.It
-This product includes software developed by K. Kobayashi and H. Shimokawa.
 .It
 This product includes software developed by Ezra Story and  by Kari
 Mettinen.
@@ -193,8 +190,6 @@ This product includes software developed by Ezra Story, by Kari
 Mettinen, and Michael Teske.
 .It
 This product includes software developed by Ezra Story.
-.It
-This product includes software developed by Florian Stoehr.
 .It
 This product includes software developed by Frank van der Linden for
 the NetBSD Project.
@@ -218,15 +213,17 @@ This product includes software developed by Herb Peyerl.
 .It
 This product includes software developed by Hidetoshi Shimokawa.
 .It
-This product includes software developed by Ian W. Dall.
+This product includes software developed by Hubert Feyrer for
+the NetBSD Project.
 .It
-This product includes software developed by Ignatios Souvatzis
-for the NetBSD Project.
+This product includes software developed by Ian W. Dall.
 .It
 This product includes software developed by Internet
 Initiative Japan Inc.
 .It
 This product includes software developed by James R. Maynard III.
+.It
+This product includes software developed by Jared D. McNeill.
 .It
 This product includes software developed by Jason L. Wright
 .It
@@ -254,7 +251,14 @@ and Jason R. Thorpe for the NetBSD Project.
 .It
 This product includes software developed by Jonathan Stone.
 .It
+This product includes software developed by Jonathan Stone for
+the NetBSD Project.
+.It
 This product includes software developed by Julian Highfield.
+.It
+This product includes software developed by K. Kobayashi.
+.It
+This product includes software developed by K. Kobayashi and H. Shimokawa.
 .It
 This product includes software developed by Kazuhisa Shimizu.
 .It
@@ -267,9 +271,6 @@ This product includes software developed by Kiyoshi Ikehara.
 This product includes software developed by Klaus Burkert,by Bernd
 Ernesti, by Michael van Elst, and by the University of California,
 Berkeley and its contributors.
-.It
-This product includes software developed by LAN Media Corporation
-and its contributors.
 .It
 This product includes software developed by Lloyd Parkes.
 .It
@@ -290,6 +291,8 @@ This product includes software developed by Mark Brinicombe.
 This product includes software developed by Mark Tinguely and Jim Lowe
 .It
 This product includes software developed by Markus Wild.
+.It
+This product includes software developed by Marshall M. Midden.
 .It
 This product includes software developed by Masanobu Saitoh.
 .It
@@ -313,6 +316,8 @@ Brandon Creighton and Job de Haas.
 .It
 This product includes software developed by Niklas Hallqvist.
 .It
+This product includes software developed by Paolo Abeni.
+.It
 This product includes software developed by Paul Kranenburg.
 .It
 This product includes software developed by Paul Mackerras.
@@ -324,6 +329,8 @@ This product includes software developed by Peter Galbavy.
 This product includes software developed by Phase One, Inc.
 .It
 This product includes software developed by Philip A. Nelson.
+.It
+This product includes software developed by QUALCOMM Incorporated.
 .It
 This product includes software developed by RiscBSD.
 .It
@@ -362,6 +369,9 @@ for the NetBSD Project.
 .It
 This product includes software developed by Terrence R. Lambert.
 .It
+This product includes software developed by Texas A&M University
+and its contributors.
+.It
 This product includes software developed by TooLs GmbH.
 .It
 This product includes software developed by Trimble Navigation, Ltd.
@@ -371,14 +381,7 @@ its contributors.
 .It
 This product includes software developed by Waldi Ravens.
 .It
-This product includes software developed by Wasabi Systems for
-Zembu Labs, Inc. http://www.zembu.com/
-.It
 This product includes software developed by Winning Strategies, Inc.
-.It
-This product includes software developed by Wolfgang Solfrank.
-.It
-This product includes software developed by Yasushi Yamasaki.
 .It
 This product includes software developed by Yen Yen Lim and
 North Dakota State University.
@@ -387,13 +390,6 @@ This product includes software developed by Zembu Labs, Inc.
 .It
 This product includes software developed by the Alice Group.
 .It
-This product includes software developed by the Center
-for Software Science at the University of Utah.
-.It
-This product includes software developed by the Charles D. Cranor,
-Washington University, University of California, Berkeley and
-its contributors.
-.It
 This product includes software developed by the Computer Systems
 Engineering Group at Lawrence Berkeley Laboratory.
 .It
@@ -401,6 +397,9 @@ This product includes software developed by the David Muir Sharnoff.
 .It
 This product includes software developed by the Harvard
 University and its contributors.
+.It
+This product includes software developed by the Kungliga Tekniska
+H\(:ogskolan and its contributors.
 .It
 This product includes software developed by the Network Research
 Group at Lawrence Berkeley Laboratory.
@@ -451,13 +450,7 @@ This product includes software developed for the NetBSD Project
 by Christopher G. Demetriou.
 .It
 This product includes software developed for the NetBSD Project
-by Emmanuel Dreyfus.
-.It
-This product includes software developed for the NetBSD Project
 by Frank van der Linden
-.It
-This product includes software developed for the NetBSD Project
-by Ignatios Souvatzis.
 .It
 This product includes software developed for the NetBSD Project
 by Jason R. Thorpe.
@@ -481,6 +474,9 @@ by Scott Bartram and Frank van der Linden
 .It
 This product includes software developed for the NetBSD Project by
 Allegro Networks, Inc., and Wasabi Systems, Inc.
+.It
+This product includes software developed for the NetBSD Project by
+Eiji Kawauchi.
 .It
 This product includes software developed for the NetBSD Project by
 Genetec Corporation.
@@ -520,8 +516,6 @@ Laboratory at the University of Utah.
 .It
 This product includes software developed by Computing Services
 at Carnegie Mellon University (http://www.cmu.edu/computing/).
-.It
-This product includes software developed by Marshall M. Midden.
 .It
 This product includes software developed or owned by Caldera
 International, Inc.
