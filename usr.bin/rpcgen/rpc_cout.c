@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.33 2013/12/15 00:40:17 christos Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.34 2015/05/09 23:12:57 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.33 2013/12/15 00:40:17 christos Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.34 2015/05/09 23:12:57 dholland Exp $");
 #endif
 #endif
 
@@ -112,7 +112,7 @@ emit(definition *def)
 		break;
 	case DEF_PROGRAM:
 	case DEF_CONST:
-		errx(1, "Internal error %s, %d: Case %d not handled",
+		errx(1, "Internal error at %s:%d: Case %d not handled",
 		    __FILE__, __LINE__, def->def_kind);
 		break;
 	}
@@ -660,7 +660,7 @@ emit_inline(declaration *decl, int flag)
 		break;
 	case REL_ARRAY:
 	case REL_POINTER:
-		errx(1, "Internal error %s, %d: Case %d not handled",
+		errx(1, "Internal error at %s:%d: Case %d not handled",
 		    __FILE__, __LINE__, decl->rel);
 	}
 }

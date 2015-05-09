@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_util.c,v 1.14 2015/05/09 21:44:47 christos Exp $	*/
+/*	$NetBSD: rpc_util.c,v 1.15 2015/05/09 23:12:57 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_util.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_util.c,v 1.14 2015/05/09 21:44:47 christos Exp $");
+__RCSID("$NetBSD: rpc_util.c,v 1.15 2015/05/09 23:12:57 dholland Exp $");
 #endif
 #endif
 
@@ -258,7 +258,8 @@ void
 error(const char *msg)
 {
 	printwhere();
-	errx(EXIT_FAILURE, "%s, line %d: %s", infilename, linenum, msg);
+	f_print(stderr, "%s:%d: %s", infilename, linenum, msg);
+	errx(EXIT_FAILURE, "Cannot recover from this error");
 }
 /*
  * Something went wrong, unlink any files that we may have created and then
@@ -283,7 +284,7 @@ record_open(const char *file)
 	if (nfiles < NFILES) {
 		outfiles[nfiles++] = file;
 	} else {
-		errx(EXIT_FAILURE, "too many files!");
+		errx(EXIT_FAILURE, "Too many files!");
 	}
 }
 
@@ -295,7 +296,7 @@ static char expectbuf[100];
 void
 expected1(tok_kind exp1)
 {
-	s_print(expectbuf, "expected '%s'",
+	s_print(expectbuf, "Expected '%s'",
 	    toktostr(exp1));
 	error(expectbuf);
 }
@@ -305,7 +306,7 @@ expected1(tok_kind exp1)
 void
 expected2(tok_kind exp1, tok_kind exp2)
 {
-	s_print(expectbuf, "expected '%s' or '%s'",
+	s_print(expectbuf, "Expected '%s' or '%s'",
 	    toktostr(exp1),
 	    toktostr(exp2));
 	error(expectbuf);
@@ -316,7 +317,7 @@ expected2(tok_kind exp1, tok_kind exp2)
 void
 expected3(tok_kind exp1, tok_kind exp2, tok_kind exp3)
 {
-	s_print(expectbuf, "expected '%s', '%s' or '%s'",
+	s_print(expectbuf, "Expected '%s', '%s', or '%s'",
 	    toktostr(exp1),
 	    toktostr(exp2),
 	    toktostr(exp3));
