@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.21 2015/05/09 21:31:05 dholland Exp $	*/
+/*	$NetBSD: bthub.c,v 1.22 2015/05/09 22:23:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.21 2015/05/09 21:31:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.22 2015/05/09 22:23:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -127,8 +127,7 @@ bthub_attach(device_t parent, device_t self, void *aux)
 		 * avoiding it needs a pretty big rearrangement of
 		 * device attachments.
 		 */
-		printf("bthub_attach: pmf_device_register failed -- "
-		       "no power management for you!\n");
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	}
 }
 
