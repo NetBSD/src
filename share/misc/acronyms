@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.235 2015/04/24 18:03:38 riastradh Exp $
+$NetBSD: acronyms,v 1.236 2015/05/09 18:18:32 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -212,6 +212,7 @@ IC	I see
 ICBW	I could be {worse,wrong}
 ICCL	I couldn't care less
 ICUR	I see you are
+ICYMI	in case you missed it
 IDC	I don't care
 IDGI	I don't get it
 IDGW	in a good way
