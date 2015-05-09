@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1216 2015/05/04 21:18:34 ryo Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1217 2015/05/09 21:54:35 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1221 2015/05/03 06:29:21 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1223 2015/05/09 21:53:45 christos Exp
  */
 
 /*
@@ -2095,6 +2095,7 @@
 #define	PCI_PRODUCT_DLINK_DWL610	0x3300		/* DWL-610 802.11b WLAN */
 #define	PCI_PRODUCT_DLINK_DL4000	0x4000		/* DL-4000 Gigabit Ethernet */
 #define	PCI_PRODUCT_DLINK_DGE550SX	0x4001		/* DGE-550SX */
+#define	PCI_PRODUCT_DLINK_DFE520TX	0x4200		/* DFE-520TX 10/100 Ethernet */
 #define	PCI_PRODUCT_DLINK_DGE528T	0x4300		/* DGE-528T Gigabit Ethernet */
 #define	PCI_PRODUCT_DLINK_DGE560T	0x4b00		/* DGE-560T Gigabit Ethernet */
 #define	PCI_PRODUCT_DLINK_DGE560T_2	0x4b01		/* DGE-560T_2 Gigabit Ethernet */
