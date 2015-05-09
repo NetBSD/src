@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.2 2015/04/26 17:14:24 jmcneill Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.3 2015/05/09 12:07:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.2 2015/04/26 17:14:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.3 2015/05/09 12:07:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,6 +55,8 @@ static void	tegra_ehci_attach(device_t, device_t, void *);
 struct tegra_ehci_softc {
 	struct ehci_softc	sc;
 	void			*sc_ih;
+
+	struct tegra_gpio_pin	*sc_pin_vbus;
 };
 
 CFATTACH_DECL2_NEW(tegra_ehci, sizeof(struct tegra_ehci_softc),
@@ -73,6 +75,8 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	struct tegra_ehci_softc * const sc = device_private(self);
 	struct tegraio_attach_args * const tio = aux;
 	const struct tegra_locators * const loc = &tio->tio_loc;
+	prop_dictionary_t prop = device_properties(self);
+	const char *pin;
 	int error;
 
 	sc->sc.sc_dev = self;
@@ -90,6 +94,13 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": USB%d\n", loc->loc_port + 1);
+
+	if (prop_dictionary_get_cstring_nocopy(prop, "vbus-gpio", &pin)) {
+		sc->sc_pin_vbus = tegra_gpio_acquire(pin,
+		    GPIO_PIN_OUTPUT | GPIO_PIN_OPENDRAIN);
+		if (sc->sc_pin_vbus)
+			tegra_gpio_write(sc->sc_pin_vbus, 1);
+        }
 
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 
