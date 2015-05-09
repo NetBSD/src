@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.8 2015/01/02 19:43:13 abs Exp $ */
+/*	$NetBSD: partman.c,v 1.9 2015/05/09 12:06:31 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -46,7 +46,7 @@
 
 /* flags whether to offer the respective options (depending on helper
    programs available on install media */
-static int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
+int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
 
 /* XXX: replace all MAX_* defines with vars that depend on kernel settings */
 #define MAX_ENTRIES 96
@@ -2692,6 +2692,23 @@ pm_menuout(menudesc *m, void *arg)
 	cursel = m->cursel;
 }
 
+/* initialize have_* variables */
+void
+check_available_binaries()
+{
+	static int did_test = false;
+
+	if (did_test) return;
+	did_test = 1;
+
+	have_raid = binary_available("raidctl");
+	have_vnd = binary_available("vnconfig");
+	have_cgd = binary_available("cgdconfig");
+	have_lvm = binary_available("lvm");
+	have_gpt = binary_available("gpt");
+	have_dk = binary_available("dkctl");
+}
+
 /* Main partman function */
 int
 partman(void)
@@ -2702,12 +2719,7 @@ partman(void)
 	part_entry_t args[MAX_ENTRIES];
 
 	if (firstrun) {
-		have_raid = binary_available("raidctl");
-		have_vnd = binary_available("vnconfig");
-		have_cgd = binary_available("cgdconfig");
-		have_lvm = binary_available("lvm");
-		have_gpt = binary_available("gpt");
-		have_dk = binary_available("dkctl");
+		check_available_binaries();
 
 		if (!have_raid)
 			remove_raid_options();
@@ -2800,4 +2812,16 @@ partman(void)
 	
 	/* retvalue <0 - error, retvalue ==0 - user quits, retvalue >0 - all ok */
 	return (args[0].retvalue >= 0)?0:-1;
+}
+
+void
+update_wedges(const char *disk)
+{
+	check_available_binaries();
+
+	if (!have_dk)
+		return;
+
+	run_program(RUN_SILENT | RUN_ERROR_OK,
+	    "dkctl %s makewedges", disk);
 }
