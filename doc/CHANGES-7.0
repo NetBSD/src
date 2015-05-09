@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.284 2015/05/09 08:59:12 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.285 2015/05/09 13:56:41 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22902,3 +22902,17 @@ libexec/httpd/content-bozo.c			1.12
 	Fix content type handling to not hard code (wrong) values for
 	length, but just call strlen() as needed.
 	[mrg, ticket #743]
+
+usr.sbin/sysinst/defs.h				1.7
+usr.sbin/sysinst/disks.c			1.8
+usr.sbin/sysinst/partman.c			1.9
+
+	All auto-discovered wedges go away after we changed the
+	partitioning (and are not using GPT). Fixes PR#49665.
+	[martin, ticket #744]
+
+usr.sbin/sysinst/menus.mi			1.8
+
+	Fix a bug that a loop occured when we select "get the distribution".
+	Fixes PR#49440.
+	[martin, ticket #745]
