@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.83 2015/05/07 12:52:46 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.84 2015/05/09 13:05:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.83 2015/05/07 12:52:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.84 2015/05/09 13:05:51 christos Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -560,7 +560,7 @@ intr_allocate_io_intrsource(const char *intrid)
 		pep->cpuid = ci->ci_cpuid;
 		pep++;
 	}
-	strncpy(isp->is_intrid, intrid, sizeof(isp->is_intrid));
+	strlcpy(isp->is_intrid, intrid, sizeof(isp->is_intrid));
 
 	SIMPLEQ_INSERT_TAIL(&io_interrupt_sources, isp, is_list);
 
