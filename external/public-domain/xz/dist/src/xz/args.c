@@ -107,6 +107,8 @@ parse_block_list(char *str)
 			}
 		}
 
+		if (p == NULL)
+			break;
 		str = p + 1;
 	}
 
