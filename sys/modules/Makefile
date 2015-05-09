@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.150 2015/05/03 02:54:07 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.151 2015/05/09 14:19:13 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -202,6 +202,10 @@ SUBDIR+=	wmidell
 SUBDIR+=	wmieeepc
 SUBDIR+=	wmihp
 SUBDIR+=	wmimsi
+.endif
+
+.if ${MACHINE_CPU} == "arm" || !empty(MACHINE_ARCH:Mmips64*)
+SUBDIR+=	compat_netbsd32
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
