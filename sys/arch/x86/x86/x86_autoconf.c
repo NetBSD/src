@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.72 2014/09/21 16:52:26 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.73 2015/05/10 22:18:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.72 2014/09/21 16:52:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.73 2015/05/10 22:18:58 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,6 +324,7 @@ findroot(void)
 	struct btinfo_biosgeom *big;
 	device_t dv;
 	deviter_t di;
+	static char bootspecbuf[sizeof(biv->devname)+1];
 
 	if (booted_device)
 		return;
@@ -365,6 +366,12 @@ findroot(void)
 		deviter_release(&di);
 		if (dv != NULL)
 			return;
+
+		if (biv->devname[0] != '\0') {
+			strlcpy(bootspecbuf, biv->devname, sizeof(bootspecbuf));
+			bootspec = bootspecbuf;
+			return;
+		}
 	}
 
 	bid = lookup_bootinfo(BTINFO_BOOTDISK);
