@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.73 2015/05/10 22:18:58 mlelstv Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.74 2015/05/10 22:21:38 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.73 2015/05/10 22:18:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.74 2015/05/10 22:21:38 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,9 +235,11 @@ match_bootwedge(device_t dv, struct btinfo_bootwedge *biw)
 		    sizeof(bf), blk * DEV_BSIZE, UIO_SYSSPACE,
 		    0, NOCRED, NULL, NULL);
 		if (error) {
-			printf("%s: unable to read block %" PRId64 " "
-			    "of dev %s (%d)\n", __func__,
-			    blk, device_xname(dv), error);
+			if (error != EINVAL) {
+				aprint_error("%s: unable to read block %"
+				    PRId64 " " "of dev %s (%d)\n", __func__,
+				    blk, device_xname(dv), error);
+			}
 			goto closeout;
 		}
 		MD5Update(&ctx, bf, sizeof(bf));
