@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.9 2015/05/10 23:50:21 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.10 2015/05/10 23:56:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.9 2015/05/10 23:50:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.10 2015/05/10 23:56:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,7 +81,6 @@ tegra_car_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": CAR\n");
 
-	printf("CAR_PLLE_BASE_REG = %#x\n", bus_space_read_4(sc->sc_bst, sc->sc_bsh, CAR_PLLE_BASE_REG));
 	aprint_verbose_dev(self, "PLLX = %u Hz\n", tegra_car_pllx_rate());
 	aprint_verbose_dev(self, "PLLC = %u Hz\n", tegra_car_pllc_rate());
 	aprint_verbose_dev(self, "PLLE = %u Hz\n", tegra_car_plle_rate());
