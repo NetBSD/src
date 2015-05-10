@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.12 2015/05/10 11:04:59 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.13 2015/05/10 15:31:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -75,6 +75,7 @@ void	tegra_dma_bootstrap(psize_t);
 
 u_int	tegra_car_osc_rate(void);
 u_int	tegra_car_pllc_rate(void);
+u_int	tegra_car_plle_rate(void);
 u_int	tegra_car_pllx_rate(void);
 u_int	tegra_car_pllu_rate(void);
 u_int	tegra_car_pllp0_rate(void);
@@ -83,6 +84,7 @@ u_int	tegra_car_periph_sdmmc_rate(u_int);
 int	tegra_car_periph_sdmmc_set_div(u_int, u_int);
 int	tegra_car_periph_usb_enable(u_int);
 void	tegra_car_periph_hda_enable(void);
+void	tegra_car_periph_sata_enable(void);
 void	tegra_car_utmip_init(void);
 void	tegra_car_utmip_enable(u_int);
 
