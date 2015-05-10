@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_carreg.h,v 1.10 2015/05/10 15:31:48 jmcneill Exp $ */
+/* $NetBSD: tegra_carreg.h,v 1.11 2015/05/10 23:50:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -100,6 +100,22 @@
 
 #define CAR_PLLE_MISC_REG	0xec
 
+#define CAR_CLKSRC_I2C1_REG		0x124
+#define CAR_CLKSRC_I2C2_REG		0x198
+#define CAR_CLKSRC_I2C3_REG		0x1b8
+#define CAR_CLKSRC_I2C4_REG		0x3c4
+#define CAR_CLKSRC_I2C5_REG		0x128
+#define CAR_CLKSRC_I2C6_REG		0x65c
+
+#define CAR_CLKSRC_I2C_SRC		__BITS(31,29)
+#define CAR_CLKSRC_I2C_SRC_PLLP_OUT0	0
+#define CAR_CLKSRC_I2C_SRC_PLLC2_OUT0	1
+#define CAR_CLKSRC_I2C_SRC_PLLC_OUT0	2
+#define CAR_CLKSRC_I2C_SRC_PLLC3_OUT0	3
+#define CAR_CLKSRC_I2C_SRC_PLLM_OUT0	4
+#define CAR_CLKSRC_I2C_SRC_CLK_M	6
+#define CAR_CLKSRC_I2C_DIV		__BITS(15,0)
+
 #define CAR_CLKSRC_UARTA_REG		0x178
 #define CAR_CLKSRC_UARTB_REG		0x17c
 #define CAR_CLKSRC_UARTC_REG		0x1a0
@@ -140,6 +156,8 @@
 #define CAR_RST_DEV_V_CLR_REG		0x434
 #define CAR_RST_DEV_W_SET_REG		0x438
 #define CAR_RST_DEV_W_CLR_REG		0x43c
+#define CAR_RST_DEV_X_SET_REG		0x290
+#define CAR_RST_DEV_X_CLR_REG		0x294
 
 #define CAR_CLK_ENB_L_SET_REG		0x320
 #define CAR_CLK_ENB_L_CLR_REG		0x324
@@ -151,6 +169,8 @@
 #define CAR_CLK_ENB_V_CLR_REG		0x444
 #define CAR_CLK_ENB_W_SET_REG		0x448
 #define CAR_CLK_ENB_W_CLR_REG		0x44c
+#define CAR_CLK_ENB_X_SET_REG		0x284
+#define CAR_CLK_ENB_X_CLR_REG		0x288
 
 #define CAR_DEV_L_CACHE2		__BIT(31)
 #define CAR_DEV_L_I2S0			__BIT(30)
@@ -260,6 +280,21 @@
 #define CAR_DEV_W_CEC			__BIT(8)
 #define CAR_DEV_W_SATACOLD		__BIT(1)
 #define CAR_DEV_W_HDA2HDMICODEC		__BIT(0)
+
+#define CAR_DEV_X_AMX1			__BIT(25)
+#define CAR_DEV_X_GPU			__BIT(24)
+#define CAR_DEV_X_SOR0			__BIT(22)
+#define CAR_DEV_X_DPAUX			__BIT(21)
+#define CAR_DEV_X_ADX1			__BIT(20)
+#define CAR_DEV_X_VIC			__BIT(18)
+#define CAR_DEV_X_CLK72MHZ		__BIT(17)
+#define CAR_DEV_X_HDMI_AUDIO		__BIT(16)
+#define CAR_DEV_X_EMC_DLL		__BIT(14)
+#define CAR_DEV_X_VIM2_CLK		__BIT(11)
+#define CAR_DEV_X_I2C6			__BIT(6)
+#define CAR_DEV_X_CAM_MCLK2		__BIT(5)
+#define CAR_DEV_X_CAM_MCLK		__BIT(4)
+#define CAR_DEV_X_SPARE			__BIT(0)
 
 #define CAR_UTMIP_PLL_CFG0_REG		0x480
 

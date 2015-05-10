@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.8 2015/05/07 23:55:11 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.9 2015/05/10 23:50:21 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -49,6 +49,11 @@ file	arch/arm/nvidia/tegra_mpio.c		tegra_mpio
 # UART
 attach	com at tegraio with tegra_com
 file	arch/arm/nvidia/tegra_com.c		tegra_com needs-flag
+
+# I2C
+device	tegrai2c: i2cbus, i2cexec
+attach	tegrai2c at tegraio with tegra_i2c
+file	arch/arm/nvidia/tegra_i2c.c		tegra_i2c
 
 # RTC
 device	tegrartc
