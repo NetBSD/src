@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.14 2015/03/27 07:18:11 hikaru Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.15 2015/05/10 18:55:22 rtr Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.14 2015/03/27 07:18:11 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.15 2015/05/10 18:55:22 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -320,7 +320,7 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	 * we do not want to free it ourselves.
 	 * Ignore errors, as we already have the whole file.
 	 */
-	if ((error = (*so->so_send)(so, m_serv, NULL, 
+	if ((error = (*so->so_send)(so, mtod(m_serv, struct sockaddr *), NULL,
 	    m_outbuf, NULL, 0, l)) != 0)
 		DPRINTF(("%s():%d tftproot: sosend returned %d\n", 
 		    __func__, __LINE__, error));
