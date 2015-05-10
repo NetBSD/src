@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:39 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.3 2015/05/10 10:14:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -167,9 +167,8 @@ md_post_extract(void)
 	strlcpy(ldr_path, target_expand("/boot.emips"), sizeof ldr_path);
 
 	msg_display(MSG_dobootblks, "");
-	process_menu(MENU_noyes, NULL);
 
-	if (yesno) {
+	if (ask_noyes(NULL)) {
 		if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
 		    "/bin/dd if=%s of=/dev/reflash0c bs=512", ldr_path))
 			process_menu(MENU_ok, deconst("Warning: the system "

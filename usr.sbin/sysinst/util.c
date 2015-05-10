@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 2014/10/14 16:35:20 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.6 2015/05/10 10:14:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -363,9 +363,10 @@ floppy_fetch(const char *set_name)
 int
 get_via_floppy(void)
 {
-	yesno = -1;
-	process_menu(MENU_floppysource, NULL);
-	if (yesno == SET_RETRY)
+	int rv = -1;
+
+	process_menu(MENU_floppysource, &rv);
+	if (rv == SET_RETRY)
 		return SET_RETRY;
 
 	fetch_fn = floppy_fetch;
@@ -527,7 +528,7 @@ get_via_cdrom(void)
 {
 	menu_ent cd_menu[MAX_CD_INFOS];
 	struct stat sb;
-	int num_cds, menu_cd, i, selected_cd = 0;
+	int rv, num_cds, menu_cd, i, selected_cd = 0;
 	bool silent = false;
 	int mib[2];
 	char rootdev[SSTRSIZE] = "";
@@ -584,9 +585,9 @@ get_via_cdrom(void)
 	}
 
 	/* ask for paths on the CD */
-	yesno = -1;
-	process_menu(MENU_cdromsource, NULL);
-	if (yesno == SET_RETRY)
+	rv = -1;
+	process_menu(MENU_cdromsource, &rv);
+	if (rv == SET_RETRY)
 		return SET_RETRY;
 
 	if (cd_has_sets())
@@ -603,10 +604,11 @@ get_via_cdrom(void)
 int
 get_via_localfs(void)
 {
+	int rv = -1;
+
 	/* Get device, filesystem, and filepath */
-	yesno = -1;
-	process_menu (MENU_localfssource, NULL);
-	if (yesno == SET_RETRY)
+	process_menu (MENU_localfssource, &rv);
+	if (rv == SET_RETRY)
 		return SET_RETRY;
 
 	/* Mount it */
@@ -631,10 +633,11 @@ get_via_localfs(void)
 int
 get_via_localdir(void)
 {
+	int rv = -1;
+
 	/* Get filepath */
-	yesno = -1;
-	process_menu(MENU_localdirsource, NULL);
-	if (yesno == SET_RETRY)
+	process_menu(MENU_localdirsource, &rv);
+	if (rv == SET_RETRY)
 		return SET_RETRY;
 
 	/*
@@ -1084,8 +1087,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 					  "/usr/sbin/postinstall -s /.sysinst -d / check mailerconf");
 		if (oldsendmail == 1) {
 			msg_display(MSG_oldsendmail);
-			process_menu(MENU_yesno, NULL);
-			if (yesno) {
+			if (ask_yesno(NULL)) {
 				run_program(RUN_DISPLAY | RUN_CHROOT,
 					    "/usr/sbin/postinstall -s /.sysinst -d / fix mailerconf");
 			}
@@ -1560,8 +1562,7 @@ del_rc_conf(const char *value)
 	if (done) {
 		if (rename(rcconf, bakname)) {
 			msg_display(MSG_rcconf_backup_failed);
-			process_menu(MENU_noyes, NULL);
-			if (!yesno) {
+			if (!ask_noyes(NULL)) {
 				retval = -1;
 				goto done;
 			}
@@ -1716,4 +1717,28 @@ safectime(time_t *t)
 	    (intmax_t)*t, strerror(errno));
 	      /*123456789012345678901234*/
 	return "preposterous clock time\n";
+}
+
+int
+ask_yesno(void* arg)
+{
+	arg_rv p;
+
+	p.arg = arg;
+	p.rv = -1;
+
+	process_menu(MENU_yesno, &p);
+	return p.rv;
+}
+
+int
+ask_noyes(void* arg)
+{
+	arg_rv p;
+
+	p.arg = arg;
+	p.rv = -1;
+
+	process_menu(MENU_noyes, &p);
+	return p.rv;
 }

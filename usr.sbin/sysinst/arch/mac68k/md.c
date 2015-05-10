@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $ */
+/*	$NetBSD: md.c,v 1.3 2015/05/10 10:14:03 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1141,8 +1141,7 @@ edit_diskmap(void)
 	if (usefull) {
 	    if (map.usable_cnt > (map.root_cnt+map.swap_cnt+map.usr_cnt)) {
 		msg_display (MSG_ovrwrite);
-		process_menu (MENU_noyes, NULL);
-		if (!yesno) {
+		if (!ask_noyes(NULL)) {
 			endwin();
 			return 0;
 		}
