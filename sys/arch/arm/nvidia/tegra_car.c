@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.7 2015/05/10 11:04:59 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.8 2015/05/10 15:31:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.7 2015/05/10 11:04:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.8 2015/05/10 15:31:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.7 2015/05/10 11:04:59 jmcneill Exp $
 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_carreg.h>
+#include <arm/nvidia/tegra_pmcreg.h>
 #include <arm/nvidia/tegra_var.h>
 
 static int	tegra_car_match(device_t, cfdata_t, void *);
@@ -80,8 +81,10 @@ tegra_car_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": CAR\n");
 
+	printf("CAR_PLLE_BASE_REG = %#x\n", bus_space_read_4(sc->sc_bst, sc->sc_bsh, CAR_PLLE_BASE_REG));
 	aprint_verbose_dev(self, "PLLX = %u Hz\n", tegra_car_pllx_rate());
 	aprint_verbose_dev(self, "PLLC = %u Hz\n", tegra_car_pllc_rate());
+	aprint_verbose_dev(self, "PLLE = %u Hz\n", tegra_car_plle_rate());
 	aprint_verbose_dev(self, "PLLU = %u Hz\n", tegra_car_pllu_rate());
 	aprint_verbose_dev(self, "PLLP0 = %u Hz\n", tegra_car_pllp0_rate());
 }
@@ -138,6 +141,13 @@ tegra_car_pllc_rate(void)
 {
 	return tegra_car_pll_rate(CAR_PLLC_BASE_REG, CAR_PLLC_BASE_DIVM,
 	    CAR_PLLC_BASE_DIVN, CAR_PLLC_BASE_DIVP);
+}
+
+u_int
+tegra_car_plle_rate(void)
+{
+	return tegra_car_pll_rate(CAR_PLLE_BASE_REG, CAR_PLLE_BASE_DIVM,
+	    CAR_PLLE_BASE_DIVN, CAR_PLLE_BASE_DIVP_CML);
 }
 
 u_int
@@ -400,4 +410,30 @@ tegra_car_periph_hda_enable(void)
 	    CAR_DEV_W_HDA2HDMICODEC);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_W_CLR_REG,
 	    CAR_DEV_W_HDA2HDMICODEC);
+}
+
+void
+tegra_car_periph_sata_enable(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	/* Enable CML clock for SATA */
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG,
+	    CAR_PLLE_AUX_CML1_OEN, 0);
+
+	/* De-assert reset to SATA PADPLL */
+	tegra_reg_set_clear(bst, bsh, CAR_SATA_PLL_CFG0_REG,
+	    0, CAR_SATA_PLL_CFG0_PADPLL_RESET_OVERRIDE_VALUE);
+	delay(15);
+
+	/* Ungate SAX partition in the PMC */
+	tegra_pmc_power(PMC_PARTID_SAX, true);
+
+	/* Turn on the clocks to SATA and de-assert resets */
+	bus_space_write_4(bst, bsh, CAR_CLK_ENB_V_SET_REG, CAR_DEV_V_SATA);
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_W_CLR_REG, CAR_DEV_W_SATACOLD);
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_CLR_REG, CAR_DEV_V_SATA);
 }
