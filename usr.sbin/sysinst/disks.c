@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.8 2015/05/09 12:06:31 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.9 2015/05/10 10:14:02 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1010,8 +1010,7 @@ foundffs(struct data *list, size_t num)
 	error = target_mount("", list[0].u.s_val, ' '-'a', list[1].u.s_val);
 	if (error != 0) {
 		msg_display(MSG_mount_failed, list[0].u.s_val);
-		process_menu(MENU_noyes, NULL);
-		if (!yesno)
+		if (!ask_noyes(NULL))
 			return error;
 	}
 	return 0;
@@ -1061,8 +1060,7 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 	free(prog);
 	if (error != 0) {
 		msg_display(MSG_badfs, disk, ptn, error);
-		process_menu(MENU_noyes, NULL);
-		if (yesno)
+		if (ask_noyes(NULL))
 			error = 0;
 		/* XXX at this point maybe we should run a full fsck? */
 	}

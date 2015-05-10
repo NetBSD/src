@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2015/01/02 19:43:13 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2015/05/10 10:14:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -148,8 +148,7 @@ md_check_partitions(void)
 		} else {
 			if (start > pm->bsdlabel[part].pi_offset) {
 				msg_display(MSG_ordering, part+'a');
-				process_menu(MENU_yesno, NULL);
-				if (yesno)
+				if (ask_yesno(NULL))
 					return 0;
 			}
 			start = pm->bsdlabel[part].pi_offset;
