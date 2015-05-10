@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.8 2015/05/10 15:31:48 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.9 2015/05/10 23:50:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.8 2015/05/10 15:31:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.9 2015/05/10 23:50:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -436,4 +436,71 @@ tegra_car_periph_sata_enable(void)
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_V_SET_REG, CAR_DEV_V_SATA);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_W_CLR_REG, CAR_DEV_W_SATACOLD);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_CLR_REG, CAR_DEV_V_SATA);
+}
+
+int
+tegra_car_periph_i2c_enable(u_int port, u_int rate)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t rst_reg, enb_reg, clksrc_reg;
+	uint32_t dev_bit;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	switch (port) {
+	case 0:
+		rst_reg = CAR_RST_DEV_L_SET_REG;
+		enb_reg = CAR_CLK_ENB_L_SET_REG;
+		dev_bit = CAR_DEV_L_I2C1;
+		clksrc_reg = CAR_CLKSRC_I2C1_REG;
+		break;
+	case 1:
+		rst_reg = CAR_RST_DEV_H_SET_REG;
+		enb_reg = CAR_CLK_ENB_H_SET_REG;
+		dev_bit = CAR_DEV_H_I2C2;
+		clksrc_reg = CAR_CLKSRC_I2C2_REG;
+		break;
+	case 2:
+		rst_reg = CAR_RST_DEV_U_SET_REG;
+		enb_reg = CAR_CLK_ENB_U_SET_REG;
+		dev_bit = CAR_DEV_U_I2C3;
+		clksrc_reg = CAR_CLKSRC_I2C3_REG;
+		break;
+	case 3:
+		rst_reg = CAR_RST_DEV_V_SET_REG;
+		enb_reg = CAR_CLK_ENB_V_SET_REG;
+		dev_bit = CAR_DEV_V_I2C4;
+		clksrc_reg = CAR_CLKSRC_I2C4_REG;
+		break;
+	case 4:
+		rst_reg = CAR_RST_DEV_H_SET_REG;
+		enb_reg = CAR_CLK_ENB_V_SET_REG;
+		dev_bit = CAR_DEV_H_I2C5;
+		clksrc_reg = CAR_CLKSRC_I2C5_REG;
+		break;
+	case 5:
+		rst_reg = CAR_RST_DEV_X_SET_REG;
+		enb_reg = CAR_CLK_ENB_X_SET_REG;
+		dev_bit = CAR_DEV_X_I2C6;
+		clksrc_reg = CAR_CLKSRC_I2C6_REG;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	/* Enter reset, enable clock */
+	bus_space_write_4(bst, bsh, rst_reg, dev_bit);
+	bus_space_write_4(bst, bsh, enb_reg, dev_bit);
+
+	/* Set clock source to PLLP */
+	const u_int div = howmany(tegra_car_pllp0_rate() / 1000, rate / 1000);
+	bus_space_write_4(bst, bsh, clksrc_reg,
+	    __SHIFTIN(CAR_CLKSRC_I2C_SRC_PLLP_OUT0, CAR_CLKSRC_I2C_SRC) |
+	    __SHIFTIN(div - 1, CAR_CLKSRC_I2C_DIV));
+
+	/* Leave reset */
+	bus_space_write_4(bst, bsh, rst_reg+4, dev_bit);
+
+	return 0;
 }
