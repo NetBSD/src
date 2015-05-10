@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc.powerpc,v 1.7 2015/04/23 23:22:39 pgoyette Exp $
+# $NetBSD: md.evbppc.powerpc,v 1.8 2015/05/10 07:50:31 pgoyette Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -32,6 +32,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/coda5/coda5.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/compat				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/compat/compat.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/compat_sysv			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/compat_sysv/compat_sysv.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/compat_ossaudio			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/coredump			base-kernel-modules	kmod,compatmodules
@@ -285,6 +287,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/coda5/coda5.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/compat				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/compat/compat.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/compat_sysv			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/compat_sysv/compat_sysv.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/compat_ossaudio			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/coredump				base-kernel-modules	kmod,compatmodules

@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.64 2015/05/03 21:59:23 pgoyette Exp $
+# $NetBSD: md.i386,v 1.65 2015/05/10 07:50:31 pgoyette Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -262,6 +262,8 @@
 ./stand/i386-xen/@OSRELEASE@/modules/coda5/coda5.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/compat				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/compat/compat.kmod			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/compat_sysv			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/compat_sysv/compat_sysv.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/compat_freebsd			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/compat_freebsd/compat_freebsd.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/compat_ibcs2			base-kernel-modules	kmod,compatmodules
@@ -686,6 +688,8 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/coda5/coda5.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/compat				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/compat/compat.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/compat_sysv			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/compat_sysv/compat_sysv.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/compat_freebsd			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/compat_freebsd/compat_freebsd.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/compat_ibcs2			base-kernel-modules	kmod,compatmodules

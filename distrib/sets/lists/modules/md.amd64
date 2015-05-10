@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.59 2015/05/03 02:55:04 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.60 2015/05/10 07:50:31 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -236,6 +236,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/coda5/coda5.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/compat				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/compat/compat.kmod		base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/compat_sysv			base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/compat_sysv/compat_sysv.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/compat_linux			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/compat_linux/compat_linux.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/compat_linux32			base-kernel-modules	kmod,compatmodules
