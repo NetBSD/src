@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.13 2013/04/30 00:03:53 pooka Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.14 2015/05/10 14:00:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.13 2013/04/30 00:03:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.14 2015/05/10 14:00:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -85,8 +85,11 @@ readthread(void *arg)
 
 		off = 0;
 		fp = fd_getfile(pap->fpfd);
-		error = dofileread(pap->fpfd, fp, buf, BUFSIZE,
-		    &off, 0, &rv);
+		if (fp == NULL)
+			error = EINVAL;
+		else
+			error = dofileread(pap->fpfd, fp, buf, BUFSIZE,
+			    &off, 0, &rv);
 		if (error) {
 			if (error == ENOENT && inited == 0)
 				goto retry;
@@ -161,8 +164,11 @@ writethread(void *arg)
 		off = 0;
 		rv = 0;
 		fp = fd_getfile(pap->fpfd);
-		error = dofilewrite(pap->fpfd, fp, buf, phdr->pth_framelen,
-		    &off, 0, &rv);
+		if (fp == NULL)
+			error = EINVAL;
+		else
+			error = dofilewrite(pap->fpfd, fp, buf,
+			    phdr->pth_framelen, &off, 0, &rv);
 		if (error == ENXIO)
 			goto out;
 		KASSERT(rv == phdr->pth_framelen);
