@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.3 2015/05/10 10:14:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -433,8 +433,7 @@ md_pre_update(void)
 			    part->mbrp_size < (MIN_FAT12_BOOT/512)) {
 				msg_display(MSG_boottoosmall);
 				msg_display_add(MSG_nobootpartdisklabel, 0);
-				process_menu(MENU_yesno, NULL);
-				if (!yesno)
+				if (!ask_yesno(NULL))
 					return 0;
 				nobootfix = 1;
 			}
@@ -498,8 +497,7 @@ md_check_mbr(mbr_info_t *mbri)
 		    bprepsize >= (MIN_PREP_BOOT/512)))) {
 		msg_display(MSG_bootnotright);
 		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
+		if (!ask_yesno(NULL))
 			return 0;
 		return 1;
 	}
@@ -510,8 +508,7 @@ md_check_mbr(mbr_info_t *mbri)
 		bprepsize < (MIN_PREP_BOOT/512))) {
 		msg_display(MSG_preptoosmall);
 		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
+		if (!ask_yesno(NULL))
 			return 0;
 		return 1;
 	}
@@ -520,8 +517,7 @@ md_check_mbr(mbr_info_t *mbri)
 	if (pm->bootsize > 0 && pm->bootsize < (MIN_FAT12_BOOT/512)) {
 		msg_display(MSG_boottoosmall);
 		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
+		if (!ask_yesno(NULL))
 			return 0;
 		return 1;
 	}
@@ -532,8 +528,7 @@ md_check_mbr(mbr_info_t *mbri)
 		bprepsize == 0 || bprepstart == 0)) {
 		msg_display(MSG_nobootpart);
 		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
+		if (!ask_yesno(NULL))
 			return 0;
 		return 1;
 	}

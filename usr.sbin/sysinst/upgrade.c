@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.3 2015/01/02 19:43:13 abs Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.4 2015/05/10 10:14:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,8 +58,7 @@ do_upgrade(void)
 	partman_go = 0;
 
 	msg_display(MSG_upgradeusure);
-	process_menu(MENU_noyes, NULL);
-	if (!yesno)
+	if (!ask_noyes(NULL))
 		return;
 
 	get_ramsize();
@@ -182,8 +181,7 @@ do_reinstall_sets(void)
 
 	unwind_mounts();
 	msg_display(MSG_reinstallusure);
-	process_menu(MENU_noyes, NULL);
-	if (!yesno)
+	if (!ask_noyes(NULL))
 		return;
 
 	if (find_disks(msg_string(MSG_reinstall)) < 0)
