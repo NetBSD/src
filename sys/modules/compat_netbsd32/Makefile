@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/12/05 22:22:21 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2015/05/10 06:33:28 matt Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -19,7 +19,7 @@ CPPFLAGS+=	-DCOMPAT_30 -DCOMPAT_40 -DCOMPAT_50
 CPPFLAGS+=	-DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
 CPPFLAGS+=	-DCOMPAT_43
 CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVMSG -DCOMPAT_NETBSD32
-CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64 -DEXEC_AOUT -DCOMPAT_NOMID
+CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64
 CPPFLAGS+=	-DCOREDUMP -DNTP
 
 .PATH:	${S}/compat/netbsd32
@@ -29,7 +29,7 @@ SRCS+=	netbsd32_compat_14.c netbsd32_compat_20.c
 SRCS+=	netbsd32_compat_30.c netbsd32_compat_43.c
 SRCS+=	netbsd32_compat_50.c netbsd32_compat_60.c
 SRCS+=	netbsd32_core.c netbsd32_event.c
-SRCS+=	netbsd32_exec_aout.c netbsd32_exec_elf32.c
+SRCS+=	netbsd32_exec_elf32.c
 SRCS+=	netbsd32_execve.c netbsd32_fs.c
 SRCS+=	netbsd32_ioctl.c netbsd32_ipc.c
 SRCS+=	netbsd32_lwp.c netbsd32_netbsd.c
@@ -39,6 +39,11 @@ SRCS+=	netbsd32_socket.c netbsd32_syscalls.c
 SRCS+=	netbsd32_sysctl.c netbsd32_sysent.c
 SRCS+=	netbsd32_time.c netbsd32_wait.c
 SRCS+=	netbsd32_mod.c
+
+.if ${MACHINE_CPU} != "mips" && ${MACHINE_CPU} != "powerpc"
+CPPFLAGS+=	-DEXEC_AOUT -DCOMPAT_NOMID
+SRCS+=	netbsd32_exec_aout.c
+.endif
 
 .if ${MACHINE_ARCH} == "x86_64"
 .PATH:	${S}/arch/amd64/amd64
