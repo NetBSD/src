@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.14 2015/05/10 14:00:42 christos Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.15 2015/05/10 14:05:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.14 2015/05/10 14:00:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.15 2015/05/10 14:05:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -197,8 +197,15 @@ rump_syspuffs_glueinit(int fd, int *newfd)
 	pap->fpfd = curlwp->l_dupfd;
 	pap->fdp = curlwp->l_proc->p_fd;
 
-	kthread_create(PRI_NONE, 0, NULL, readthread, pap, NULL, "rputter");
-	kthread_create(PRI_NONE, 0, NULL, writethread, pap, NULL, "wputter");
+	rv = kthread_create(PRI_NONE, 0, NULL, readthread, pap, NULL,
+	    "rputter");
+	if (rv)
+		return rv;
+
+	rv = kthread_create(PRI_NONE, 0, NULL, writethread, pap, NULL,
+	    "wputter");
+	if (rv)
+		return rv;
 
 	*newfd = curlwp->l_dupfd;
 	return 0;
