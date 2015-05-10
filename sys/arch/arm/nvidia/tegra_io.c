@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_io.c,v 1.7 2015/05/07 23:55:11 jmcneill Exp $ */
+/* $NetBSD: tegra_io.c,v 1.8 2015/05/10 23:50:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.7 2015/05/07 23:55:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.8 2015/05/10 23:50:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,18 @@ static const struct tegra_locators tegra_apb_locators[] = {
     TEGRA_PMC_OFFSET, TEGRA_PMC_SIZE, NOPORT, NOINTR },
   { "tegrampio",
     TEGRA_MPIO_OFFSET, TEGRA_MPIO_SIZE, NOPORT, NOINTR },
+  { "tegrai2c",
+    TEGRA_I2C1_OFFSET, TEGRA_I2C1_SIZE, 0, TEGRA_INTR_I2C1 },
+  { "tegrai2c",
+    TEGRA_I2C2_OFFSET, TEGRA_I2C2_SIZE, 1, TEGRA_INTR_I2C2 },
+  { "tegrai2c",
+    TEGRA_I2C3_OFFSET, TEGRA_I2C3_SIZE, 2, TEGRA_INTR_I2C3 },
+  { "tegrai2c",
+    TEGRA_I2C4_OFFSET, TEGRA_I2C4_SIZE, 3, TEGRA_INTR_I2C4 },
+  { "tegrai2c",
+    TEGRA_I2C5_OFFSET, TEGRA_I2C5_SIZE, 4, TEGRA_INTR_I2C5 },
+  { "tegrai2c",
+    TEGRA_I2C6_OFFSET, TEGRA_I2C6_SIZE, 5, TEGRA_INTR_I2C6 },
   { "com",
     TEGRA_UARTA_OFFSET, TEGRA_UARTA_SIZE, 0, TEGRA_INTR_UARTA },
   { "com",
