@@ -1,13 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.6 2015/05/09 06:15:42 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2015/05/10 09:13:15 martin Exp $
 #
 # Makefile for sysinst
 
 .if exists(${.CURDIR}/../../../Makefile.inc)
 .include "${.CURDIR}/../../../Makefile.inc"
-.endif
-
-.if empty(DBG:M-g)
-COPTS += -Os
 .endif
 
 PROG=		sysinst
@@ -60,7 +56,12 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 # when compiling with -O0)
 O0TRACKING=	-fvar-tracking-assignments -fvar-tracking
 .endif
-CPPFLAGS+=-DDEBUG -g -O0 ${O0TRACKING}
+CPPFLAGS+=-DDEBUG
+DBG +=-g -O0 ${O0TRACKING}
+.endif
+
+.if empty(DBG:M-g)
+COPTS += -Os
 .endif
 
 .if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
