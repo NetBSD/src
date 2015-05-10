@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.3 2015/01/02 19:43:13 abs Exp $	*/
+/*	$NetBSD: install.c,v 1.4 2015/05/10 10:14:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,8 +51,7 @@ do_install(void)
 
 #ifndef DEBUG
 	msg_display(MSG_installusure);
-	process_menu(MENU_noyes, NULL);
-	if (!yesno)
+	if (!ask_noyes(NULL))
 		return;
 #endif
 
@@ -95,8 +94,7 @@ do_install(void)
 		clear();
 		refresh();
 		msg_display(MSG_lastchance, pm->diskdev);
-		process_menu(MENU_noyes, NULL);
-		if (!yesno)
+		if (!ask_noyes(NULL))
 			return;
 
 		if (md_pre_disklabel() != 0 ||
