@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.2 2015/04/26 16:41:04 jmcneill Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.3 2015/05/10 15:31:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.2 2015/04/26 16:41:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.3 2015/05/10 15:31:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,14 +42,21 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.2 2015/04/26 16:41:04 jmcneill 
 #include <dev/ic/ahcisatavar.h>
 
 #include <arm/nvidia/tegra_var.h>
+#include <arm/nvidia/tegra_ahcisatareg.h>
+
+#define TEGRA_AHCISATA_OFFSET	0x7000
 
 static int	tegra_ahcisata_match(device_t, cfdata_t, void *);
 static void	tegra_ahcisata_attach(device_t, device_t, void *);
 
 struct tegra_ahcisata_softc {
 	struct ahci_softc	sc;
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
 };
+
+static void	tegra_ahcisata_init(struct tegra_ahcisata_softc *);
 
 CFATTACH_DECL_NEW(tegra_ahcisata, sizeof(struct tegra_ahcisata_softc),
 	tegra_ahcisata_match, tegra_ahcisata_attach, NULL, NULL);
@@ -67,16 +74,25 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 	struct tegraio_attach_args * const tio = aux;
 	const struct tegra_locators * const loc = &tio->tio_loc;
 
+	sc->sc_bst = tio->tio_bst;
+	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
+	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+
 	sc->sc.sc_atac.atac_dev = self;
 	sc->sc.sc_dmat = tio->tio_dmat;
 	sc->sc.sc_ahcit = tio->tio_bst;
 	sc->sc.sc_ahcis = loc->loc_size;
 	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc.sc_ahcih);
+	    loc->loc_offset + TEGRA_AHCISATA_OFFSET,
+	    loc->loc_size - TEGRA_AHCISATA_OFFSET, &sc->sc.sc_ahcih);
 	sc->sc.sc_ahci_ports = 1;
 
 	aprint_naive("\n");
 	aprint_normal(": SATA\n");
+
+	tegra_car_periph_sata_enable();
+
+	tegra_ahcisata_init(sc);
 
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_BIO, IST_LEVEL,
 	    ahci_intr, &sc->sc);
@@ -88,4 +104,42 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
 	ahci_attach(&sc->sc);
+}
+
+static void
+tegra_ahcisata_init(struct tegra_ahcisata_softc *sc)
+{
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+
+	/* Enable IFPS device block */
+	tegra_reg_set_clear(bst, bsh, TEGRA_SATA_CONFIGURATION_REG,
+	    TEGRA_SATA_CONFIGURATION_EN_FPCI, 0);
+
+	/* Backdoor update the programming interface field and class code */
+	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CFG_SATA_REG,
+	    TEGRA_T_SATA0_CFG_SATA_BACKDOOR_PROG_IF_EN, 0);
+	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_BKDOOR_CC_REG,
+	    __SHIFTIN(0x1016, TEGRA_T_SATA0_BKDOOR_CC_CLASS_CODE) |
+	    __SHIFTIN(0x1, TEGRA_T_SATA0_BKDOOR_CC_PROG_IF));
+	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CFG_SATA_REG,
+	    0, TEGRA_T_SATA0_CFG_SATA_BACKDOOR_PROG_IF_EN);
+
+	/* Enable access and bus mastering */
+	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CFG1_REG,
+	    TEGRA_T_SATA0_CFG1_SERR |
+	    TEGRA_T_SATA0_CFG1_BUS_MASTER |
+	    TEGRA_T_SATA0_CFG1_MEM_SPACE |
+	    TEGRA_T_SATA0_CFG1_IO_SPACE,
+	    0);
+
+	/* MMIO setup */
+	bus_space_write_4(bst, bsh, TEGRA_SATA_FPCI_BAR5_REG,
+	    __SHIFTIN(0x10000, TEGRA_SATA_FPCI_BAR_START));
+	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_CFG9_REG,
+	    __SHIFTIN(0x8000, TEGRA_T_SATA0_CFG9_BASE_ADDRESS));
+
+	/* Enable interrupts */
+	tegra_reg_set_clear(bst, bsh, TEGRA_SATA_INTR_MASK_REG,
+	    TEGRA_SATA_INTR_MASK_IP_INT, 0);
 }
