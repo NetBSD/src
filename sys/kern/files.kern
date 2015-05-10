@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.5 2015/05/06 15:57:08 hannken Exp $
+#	$NetBSD: files.kern,v 1.6 2015/05/10 07:41:15 pgoyette Exp $
 
 #
 # kernel sources
@@ -6,6 +6,8 @@
 define	kern:	machdep, uvm
 defflag	opt_kern.h			KERN
 file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
+file	compat/common/compat_sysv_mod.c	(compat_netbsd | compat_netbsd32) &
+					(sysvshm | sysvsem | sysvmsg)
 file	conf/debugsyms.c		kern
 file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd
