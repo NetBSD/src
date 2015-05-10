@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_carreg.h,v 1.8 2015/05/10 11:04:59 jmcneill Exp $ */
+/* $NetBSD: tegra_carreg.h,v 1.9 2015/05/10 11:12:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -87,7 +87,7 @@
 #define CAR_PLLX_BASE_DIVN		__BITS(15,8)
 #define CAR_PLLX_BASE_DIVM		__BITS(7,0)
 
-#define CAR_PLLX_MISC_REG	0xe8
+#define CAR_PLLX_MISC_REG	0xe4
 
 #define CAR_CLKSRC_UARTA_REG		0x178
 #define CAR_CLKSRC_UARTB_REG		0x17c
