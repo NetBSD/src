@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.275 2015/05/09 06:04:13 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.276 2015/05/10 07:41:15 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -351,7 +351,7 @@
 168	UNIMPL
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVSEM) || !defined(_KERNEL_OPT)) && !defined(_LP64)
-169	COMPAT_10 MODULAR compat	\
+169	COMPAT_10 MODULAR compat_sysv	\
 		{ int|sys||semsys(int which, int a2, int a3, int a4, \
 			    int a5); } osemsys
 #else
@@ -359,7 +359,7 @@
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVMSG) || !defined(_KERNEL_OPT)) && !defined(_LP64)
-170	COMPAT_10 MODULAR compat	\
+170	COMPAT_10 MODULAR compat_sysv	\
 		{ int|sys||msgsys(int which, int a2, int a3, int a4, \
 			    int a5, int a6); } omsgsys
 #else
@@ -367,7 +367,7 @@
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVSHM) || !defined(_KERNEL_OPT)) && !defined(_LP64)
-171	COMPAT_10 MODULAR compat	\
+171	COMPAT_10 MODULAR compat_sysv	\
 		{ int|sys||shmsys(int which, int a2, int a3, int a4); } \
 			    oshmsys
 #else
@@ -454,7 +454,7 @@
 219	UNIMPL
 ; System calls 220-300 are reserved for use by NetBSD
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
-220	COMPAT_14 MODULAR compat	\
+220	COMPAT_14 MODULAR compat_sysv	\
 		{ int|sys||__semctl(int semid, int semnum, int cmd, \
 			    union __semun *arg); }
 221	STD 		{ int|sys||semget(key_t key, int nsems, int semflg); }
@@ -468,7 +468,7 @@
 223	EXCL		semconfig
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
-224	COMPAT_14 MODULAR compat { int|sys||msgctl(int msqid, int cmd, \
+224	COMPAT_14 MODULAR compat_sysv { int|sys||msgctl(int msqid, int cmd, \
 			    struct msqid_ds14 *buf); }
 225	STD 		{ int|sys||msgget(key_t key, int msgflg); }
 226	STD 		{ int|sys||msgsnd(int msqid, const void *msgp, \
@@ -484,7 +484,7 @@
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 228	STD 		{ void *|sys||shmat(int shmid, const void *shmaddr, \
 			    int shmflg); }
-229	COMPAT_14 MODULAR compat { int|sys||shmctl(int shmid, int cmd, \
+229	COMPAT_14 MODULAR compat_sysv { int|sys||shmctl(int shmid, int cmd, \
 			    struct shmid_ds14 *buf); }
 230	STD 		{ int|sys||shmdt(const void *shmaddr); }
 231	STD 		{ int|sys||shmget(key_t key, size_t size, int shmflg); }
@@ -629,20 +629,20 @@
 		{ int|sys||fhstatfs(const struct compat_30_fhandle *fhp, \
 			    struct statfs12 *buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
-301	COMPAT_50 MODULAR compat	\
+301	COMPAT_50 MODULAR compat_sysv	\
 		{ int|sys|13|__semctl(int semid, int semnum, int cmd, \
 			    ... union __semun *arg); }
 #else
 301	EXCL		____semctl13
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
-302	COMPAT_50 MODULAR compat { int|sys|13|msgctl(int msqid, int cmd, \
+302	COMPAT_50 MODULAR compat_sysv { int|sys|13|msgctl(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
 #else
 302	EXCL		__msgctl13
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
-303	COMPAT_50 MODULAR compat { int|sys|13|shmctl(int shmid, int cmd, \
+303	COMPAT_50 MODULAR compat_sysv { int|sys|13|shmctl(int shmid, int cmd, \
 			    struct shmid_ds13 *buf); }
 #else
 303	EXCL		__shmctl13
