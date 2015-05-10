@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_carreg.h,v 1.7 2015/05/09 18:56:51 jmcneill Exp $ */
+/* $NetBSD: tegra_carreg.h,v 1.8 2015/05/10 11:04:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -125,6 +125,10 @@
 #define CAR_RST_DEV_H_CLR_REG		0x30c
 #define CAR_RST_DEV_U_SET_REG		0x310
 #define CAR_RST_DEV_U_CLR_REG		0x314
+#define CAR_RST_DEV_V_SET_REG		0x430
+#define CAR_RST_DEV_V_CLR_REG		0x434
+#define CAR_RST_DEV_W_SET_REG		0x438
+#define CAR_RST_DEV_W_CLR_REG		0x43c
 
 #define CAR_CLK_ENB_L_SET_REG		0x320
 #define CAR_CLK_ENB_L_CLR_REG		0x324
@@ -132,6 +136,10 @@
 #define CAR_CLK_ENB_H_CLR_REG		0x32c
 #define CAR_CLK_ENB_U_SET_REG		0x330
 #define CAR_CLK_ENB_U_CLR_REG		0x334
+#define CAR_CLK_ENB_V_SET_REG		0x440
+#define CAR_CLK_ENB_V_CLR_REG		0x444
+#define CAR_CLK_ENB_W_SET_REG		0x448
+#define CAR_CLK_ENB_W_CLR_REG		0x44c
 
 #define CAR_DEV_L_CACHE2		__BIT(31)
 #define CAR_DEV_L_I2S0			__BIT(30)
@@ -212,6 +220,35 @@
 #define CAR_DEV_H_APBDMA		__BIT(2)
 #define CAR_DEV_H_AHBDMA		__BIT(1)
 #define CAR_DEV_H_MEM			__BIT(0)
+
+#define CAR_DEV_V_HDA			__BIT(29)
+#define CAR_DEV_V_SATA			__BIT(28)
+#define CAR_DEV_V_ACTMON		__BIT(23)
+#define CAR_DEV_V_ATOMICS		__BIT(16)
+#define CAR_DEV_V_HDA2CODEC_2X		__BIT(15)
+#define CAR_DEV_V_DAM2			__BIT(14)
+#define CAR_DEV_V_DAM1			__BIT(13)
+#define CAR_DEV_V_DAM0			__BIT(12)
+#define CAR_DEV_V_APBIF			__BIT(11)
+#define CAR_DEV_V_AUDIO			__BIT(10)
+#define CAR_DEV_V_SPI6			__BIT(9)
+#define CAR_DEV_V_SPI5			__BIT(8)
+#define CAR_DEV_V_I2C4			__BIT(7)
+#define CAR_DEV_V_I2S4			__BIT(6)
+#define CAR_DEV_V_I2S3			__BIT(5)
+#define CAR_DEV_V_MSELECT		__BIT(3)
+#define CAR_DEV_V_CPULP			__BIT(1)
+#define CAR_DEV_V_CPUG			__BIT(0)
+
+#define CAR_DEV_W_XUSB_SS		__BIT(28)
+#define CAR_DEV_W_DVFS			__BIT(27)
+#define CAR_DEV_W_ADX0			__BIT(26)
+#define CAR_DEV_W_AMX0			__BIT(25)
+#define CAR_DEV_W_ENTROPY		__BIT(21)
+#define CAR_DEV_W_XUSB_PADCTL		__BIT(14)
+#define CAR_DEV_W_CEC			__BIT(8)
+#define CAR_DEV_W_SATACOLD		__BIT(1)
+#define CAR_DEV_W_HDA2HDMICODEC		__BIT(0)
 
 #define CAR_UTMIP_PLL_CFG0_REG		0x480
 
