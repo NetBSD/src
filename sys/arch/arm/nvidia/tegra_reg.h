@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_reg.h,v 1.8 2015/05/07 23:55:11 jmcneill Exp $ */
+/* $NetBSD: tegra_reg.h,v 1.9 2015/05/10 23:50:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -78,6 +78,18 @@
 #define TEGRA_UARTC_SIZE	0x100
 #define TEGRA_UARTD_OFFSET	0x00006300
 #define TEGRA_UARTD_SIZE	0x100
+#define TEGRA_I2C1_OFFSET	0x0000c000
+#define TEGRA_I2C1_SIZE		0x100
+#define TEGRA_I2C2_OFFSET	0x0000c400
+#define TEGRA_I2C2_SIZE		0x100
+#define TEGRA_I2C3_OFFSET	0x0000c500
+#define TEGRA_I2C3_SIZE		0x100
+#define TEGRA_I2C4_OFFSET	0x0000c700
+#define TEGRA_I2C4_SIZE		0x100
+#define TEGRA_I2C5_OFFSET	0x0000d000
+#define TEGRA_I2C5_SIZE		0x100
+#define TEGRA_I2C6_OFFSET	0x0000d100
+#define TEGRA_I2C6_SIZE		0x100
 #define TEGRA_RTC_OFFSET	0x0000e000
 #define TEGRA_RTC_SIZE		0x100
 #define TEGRA_KBC_OFFSET	0x0000e200
