@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1223 2015/05/09 21:53:45 christos Exp $
+$NetBSD: pcidevs,v 1.1224 2015/05/11 10:42:00 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5372,6 +5372,7 @@ product SAFENET SAFEXCEL	0x1141 SafeXcel
 
 /* Samsung Electronics products */
 product SAMSUNGELEC3	XP941	0xa800	XP941 M.2 SSD
+product SAMSUNGELEC3	SM951	0xa801	SM951 M.2 SSD
 
 /* Samsung Semiconductor products */
 product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
