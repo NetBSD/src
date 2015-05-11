@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.285 2015/05/09 13:56:41 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.286 2015/05/11 03:33:46 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22916,3 +22916,8 @@ usr.sbin/sysinst/menus.mi			1.8
 	Fix a bug that a loop occured when we select "get the distribution".
 	Fixes PR#49440.
 	[martin, ticket #745]
+
+sys/dev/pci/hifn7751.c				1.60
+
+	Defer to a callout in hifn_rng_get.  Fixes lock-against-self.
+	[riastradh, ticket #748]
