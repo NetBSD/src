@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.4 2015/05/10 10:14:02 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.5 2015/05/11 13:07:57 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ add_new_user(struct menudesc *menu, void *arg)
 	msg_prompt(MSG_addusername, NULL, username, sizeof username -1);
 	if (strlen(username) == 0)
 		return 0;
-	inwheel = ask_yesno(deconst(MSG_addusertowheel));
+	inwheel = ask_yesno(MSG_addusertowheel);
 	ushell = "/bin/csh";
 	process_menu(MENU_usersh, NULL);
 	if (inwheel)
@@ -354,7 +354,7 @@ set_pkgsrc(struct menudesc *menu, void *arg)
 			confp[menu->cursel]->setting = MSG_abandoned;
 			return 0;
 		}
-		if (!ask_yesno(deconst(MSG_retry_pkgsrc_network))) {
+		if (!ask_yesno(MSG_retry_pkgsrc_network)) {
 			confp[menu->cursel]->setting = MSG_abandoned;
 			return 1;
 		}
