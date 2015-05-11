@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.21 2015/05/10 07:41:15 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.22 2015/05/11 10:32:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.21 2015/05/10 07:41:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.22 2015/05/11 10:32:13 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -60,17 +60,15 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.21 2015/05/10 07:41:15 pgoyette Exp
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
-#ifdef _MODULE
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
 static struct sysctllog *compat_clog = NULL;
-#endif
 #endif
  
 MODULE(MODULE_CLASS_EXEC, compat, NULL);
 
-#ifdef _MODULE
 int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 
+#ifdef _MODULE
 #ifdef COMPAT_16
 #if !defined(__amd64__) || defined(COMPAT_NETBSD32)
 #define COMPAT_SIGCONTEXT
@@ -78,6 +76,7 @@ extern char sigcode[], esigcode[];
 struct uvm_object *emul_netbsd_object;
 #endif
 #endif
+#endif /* _MODULE */
 
 extern krwlock_t exec_lock;
 extern krwlock_t ttcompat_lock;
@@ -230,12 +229,10 @@ static const struct syscall_package compat_syscalls[] = {
 #endif
 	{ 0, 0, NULL },
 };
-#endif /* _MODULE */
 
 static int
 compat_modcmd(modcmd_t cmd, void *arg)
 {
-#ifdef _MODULE
 #ifdef COMPAT_16
 	proc_t *p;
 #endif
@@ -326,18 +323,8 @@ compat_modcmd(modcmd_t cmd, void *arg)
 	default:
 		return ENOTTY;
 	}
-#else /* _MODULE */
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-	case MODULE_CMD_FINI:
-		return 0;
-	default:
-		return ENOTTY;
-	}
-#endif
 }
 
-#ifdef _MODULE
 void
 compat_sysctl_init(void)
 {
@@ -358,4 +345,3 @@ compat_sysctl_fini(void)
         sysctl_teardown(&compat_clog);
 #endif
 }
-#endif
