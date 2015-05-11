@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.618 2015/05/05 21:51:48 sjg Exp $
+# $NetBSD: mi,v 1.619 2015/05/11 17:22:37 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3728,6 +3728,7 @@
 ./usr/tests/usr.bin/xlint/lint1/d_alignof.c			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_complex_num.c		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_complex_split.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_compound_literal_comma.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt2.c	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt3.c	tests-usr.bin-tests	atf
