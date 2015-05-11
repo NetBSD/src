@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 2015/05/10 10:14:02 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.7 2015/05/11 13:07:57 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1720,11 +1720,11 @@ safectime(time_t *t)
 }
 
 int
-ask_yesno(void* arg)
+ask_yesno(const char* msgtxt)
 {
 	arg_rv p;
 
-	p.arg = arg;
+	p.arg = deconst(msgtxt);
 	p.rv = -1;
 
 	process_menu(MENU_yesno, &p);
@@ -1732,11 +1732,11 @@ ask_yesno(void* arg)
 }
 
 int
-ask_noyes(void* arg)
+ask_noyes(const char *msgtxt)
 {
 	arg_rv p;
 
-	p.arg = arg;
+	p.arg = deconst(msgtxt);
 	p.rv = -1;
 
 	process_menu(MENU_noyes, &p);
