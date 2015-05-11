@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.19 2015/05/03 14:38:09 hsuenaga Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.20 2015/05/11 05:49:48 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013, 2014 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.19 2015/05/03 14:38:09 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.20 2015/05/11 05:49:48 hsuenaga Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -348,6 +348,7 @@ static struct {
 	{ ARMADAXP(MV78160),	1, "MV78160",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78230),	1, "MV78260",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78260),	1, "MV78260",	"A0",  "Armada XP" },
+	{ ARMADAXP(MV78260),	2, "MV78260",	"B0",  "Armada XP" },
 	{ ARMADAXP(MV78460),	1, "MV78460",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78460),	2, "MV78460",	"B0",  "Armada XP" },
 
@@ -433,6 +434,7 @@ static struct {
 	{ ARMADAXP(MV78160),	1, ddr3_tags },
 	{ ARMADAXP(MV78230),	1, ddr3_tags },
 	{ ARMADAXP(MV78260),	1, ddr3_tags },
+	{ ARMADAXP(MV78260),	2, ddr3_tags },
 	{ ARMADAXP(MV78460),	1, ddr3_tags },
 	{ ARMADAXP(MV78460),	2, ddr3_tags },
 
