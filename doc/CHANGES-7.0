@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.289 2015/05/11 07:27:07 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.290 2015/05/11 11:02:42 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22940,3 +22940,46 @@ usr.sbin/sysinst/Makefile.inc			1.6-1.7
 
 	Make gcc generate better debug info when building with DEBUG set.
 	[martin, ticket #746]
+
+sys/arch/arm/conf/majors.arm32			1.36
+sys/arch/arm/zynq/files.zynq			1.1
+sys/arch/arm/zynq/zynq7000_board.c		1.1
+sys/arch/arm/zynq/zynq7000_intr.h		1.1
+sys/arch/arm/zynq/zynq7000_reg.h		1.1
+sys/arch/arm/zynq/zynq7000_sdhc.c		1.1
+sys/arch/arm/zynq/zynq7000_uart.c		1.1
+sys/arch/arm/zynq/zynq7000_usb.c		1.1
+sys/arch/arm/zynq/zynq7000_var.h		1.1
+sys/arch/arm/zynq/zynq_axi.c			1.1
+sys/arch/arm/zynq/zynq_cemac.c			1.1
+sys/arch/arm/zynq/zynq_dma.c			1.1
+sys/arch/arm/zynq/zynq_slcr.c			1.1
+sys/arch/arm/zynq/zynq_slcrreg.h		1.1
+sys/arch/arm/zynq/zynq_slcrvar.h		1.1
+sys/arch/arm/zynq/zynq_space.c			1.1
+sys/arch/arm/zynq/zynq_uart.c			1.1
+sys/arch/arm/zynq/zynq_uartreg.h		1.1
+sys/arch/arm/zynq/zynq_uartvar.h		1.1
+sys/arch/arm/zynq/zynq_usb.c			1.1
+sys/arch/arm/zynq/zynq_usbreg.h			1.1
+sys/arch/arm/zynq/zynq_usbvar.h			1.1
+sys/arch/evbarm/Makefile			1.10
+sys/arch/evbarm/conf/PARALLELLA			1.1
+sys/arch/evbarm/conf/PARALLELLA_INSTALL		1.1
+sys/arch/evbarm/conf/ZEDBOARD			1.1
+sys/arch/evbarm/conf/ZEDBOARD_INSTALL		1.1
+sys/arch/evbarm/conf/files.parallella		1.1
+sys/arch/evbarm/conf/files.zedboard		1.1
+sys/arch/evbarm/conf/files.zynq			1.1
+sys/arch/evbarm/conf/mk.zynq			1.1
+sys/arch/evbarm/conf/std.zynq			1.1
+sys/arch/evbarm/zynq/genassym.cf		1.1
+sys/arch/evbarm/zynq/platform.h			1.1
+sys/arch/evbarm/zynq/zynq_machdep.c		1.1
+sys/arch/evbarm/zynq/zynq_start.S		1.1
+sys/dev/cadence/cemacreg.h			1.1
+sys/dev/cadence/if_cemac.c			1.1
+sys/dev/cadence/if_cemacvar.h			1.1
+
+	Initial Zynq (Xilinx) support.
+	[nonaka, ticket #751]
