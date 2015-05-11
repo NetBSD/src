@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2015/04/03 21:37:26 christos Exp $
+# $NetBSD: Makefile,v 1.7 2015/05/11 17:21:32 christos Exp $
 
 NOMAN=		# defined
 
@@ -12,6 +12,7 @@ FILESDIR=	${TESTSDIR}
 FILES+=		d_alignof.c
 FILES+=		d_c99_complex_num.c
 FILES+=		d_c99_complex_split.c
+FILES+=		d_c99_compound_literal_comma.c
 FILES+=		d_c99_decls_after_stmt.c
 FILES+=		d_c99_decls_after_stmt2.c
 FILES+=		d_c99_decls_after_stmt3.c
