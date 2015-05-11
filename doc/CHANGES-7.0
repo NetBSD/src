@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.287 2015/05/11 05:43:52 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.288 2015/05/11 06:17:16 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22929,3 +22929,9 @@ external/bsd/wpa/dist/src/wps/httpread.c	1.2
 
 	Fix buffer overflow, DoS attack and memory leak.
 	[christos, ticket #749]
+
+sys/dev/pci/hifn7751.c				1.59
+
+	Initialise sc_mtx slightly earlier, before it is used on systems with
+	rng.
+	[mrg, ticket #750]
