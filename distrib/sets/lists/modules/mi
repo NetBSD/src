@@ -1,10 +1,12 @@
-# $NetBSD: mi,v 1.76 2015/05/10 07:50:31 pgoyette Exp $
+# $NetBSD: mi,v 1.77 2015/05/11 01:05:16 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 # IMPORTANT:	When you add a module here, you have to add it twice to
 #		md.evbppc as well. evbppc does not use mi, because
 #		powerpc-4xx and powerpc-booke modules are incompatible.
+#		Additionally, you may have to add it once more in md.amd64
+#		(for xen) and twice more for i386 (xen and xen-pae).
 #		Sorry for any inconvenience this may cause, the management.
 #
 ./@MODULEDIR@					base-kernel-modules	kmod
