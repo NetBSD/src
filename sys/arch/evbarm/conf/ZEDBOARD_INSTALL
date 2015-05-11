@@ -1,0 +1,11 @@
+#	$NetBSD: ZEDBOARD_INSTALL,v 1.1.4.2 2015/05/11 11:00:33 msaitoh Exp $
+#
+#	ZEDBOARD_INSTALL -- ZEDBOARD kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/ZEDBOARD"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG

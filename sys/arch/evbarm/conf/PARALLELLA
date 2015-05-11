@@ -1,0 +1,293 @@
+#
+#	$NetBSD: PARALLELLA,v 1.2.2.2 2015/05/11 11:00:33 msaitoh Exp $
+#
+#	Parallella -- Xilinx Zynq Eval Board Kernel
+#
+
+include	"arch/evbarm/conf/std.zynq"
+include "arch/evbarm/conf/files.parallella"
+
+# estimated number of users
+
+maxusers	32
+
+# CPU options
+
+makeoptions	BOARDTYPE="parallella"
+options 	EVBARM_BOARDTYPE=parallella
+
+options 	ZYNQ7000
+options 	ZYNQ7010
+options 	MULTIPROCESSOR
+options 	CPU_CORTEX
+options 	CPU_CORTEXA9
+options		MEMSIZE=1024
+options 	PMAPCOUNTERS
+
+#makeoptions	DEFCOPTS="-O0"
+#options 	UVMHIST
+#options 	UVMHIST_PRINT,A9WDT_PERIOD_DEFAULT=30
+
+# Standard system options
+
+options 	INSECURE	# disable kernel security levels - X needs this
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	NTP		# NTP phase/frequency locked loop
+
+# Architecture options
+
+# File systems
+file-system	FFS		# UFS
+file-system	MFS		# memory file system
+file-system	NFS		# Network File System client
+file-system	TMPFS		# Efficient memory file-system
+file-system	EXT2FS		# second extended file system (linux)
+file-system	LFS		# log-structured file system
+file-system	NTFS		# Windows/NT file system (experimental)
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	OVERLAY		# overlay file system
+file-system	PROCFS		# /proc
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	UMAPFS		# NULLFS + uid and gid remapping
+file-system	UNION		# union file system
+file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	PTYFS		# /dev/ptm support
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
+#file-system	NILFS		# experimental - NTT's NiLFS(2)
+
+# File system options
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
+options 	FFS_EI		# FFS Endian Independent support
+options 	WAPBL		# File system journaling support
+# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
+# It is not recommended for general use.
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options 	NFSSERVER	# Network File System server
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	NETATALK	# AppleTalk networking
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
+#options		NFS_BOOT_BOOTSTATIC
+#options		NFS_BOOTSTATIC_MYIP="\"192.168.1.4\""
+#options		NFS_BOOTSTATIC_GWIP="\"192.168.1.1\""
+#options		NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
+#options		NFS_BOOTSTATIC_SERVADDR="\"192.168.1.1\""
+#options		NFS_BOOTSTATIC_SERVER="\"192.168.1.1:/nfs/sdp2430\""
+
+options		NFS_BOOT_RWSIZE=1024
+
+# Compatibility options
+options 	COMPAT_NETBSD32 # allow running arm (e.g. non-earm) binaries
+#options 	COMPAT_43	# 4.3BSD compatibility.
+#options 	COMPAT_09	# NetBSD 0.9,
+#options 	COMPAT_10	# NetBSD 1.0,
+#options 	COMPAT_11	# NetBSD 1.1,
+#options 	COMPAT_12	# NetBSD 1.2,
+#options 	COMPAT_13	# NetBSD 1.3,
+#options 	COMPAT_14	# NetBSD 1.4,
+#options 	COMPAT_15	# NetBSD 1.5,
+#options 	COMPAT_16	# NetBSD 1.6,
+#options 	COMPAT_20	# NetBSD 2.0,
+#options 	COMPAT_30	# NetBSD 3.0,
+options 	COMPAT_40	# NetBSD 4.0,
+options 	COMPAT_50	# NetBSD 5.0,
+options 	COMPAT_60	# NetBSD 6.0, and
+options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+
+options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
+#options 	COMPAT_NDIS	# NDIS network driver
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Shared memory options
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+
+# Device options
+
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
+#options 	MEMORY_DISK_DYNAMIC
+#options 	MINIROOTSIZE=1000	# Size in blocks
+#options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+
+# Miscellaneous kernel options
+options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	IRQSTATS	# manage IRQ statistics
+#options 	KMEMSTATS	# kernel memory statistics
+options 	PCIVERBOSE	# Verbose PCI autoconfiguration messages
+#options 	PCI_CONFIG_DUMP	# Verbose PCI autoconfiguration messages
+options 	PCI_NETBSD_CONFIGURE # perform PCI configuration
+options 	RNDVERBOSE	# Verbose rnd messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	SCSIVERBOSE	# Verbose SCSI errors
+options 	MIIVERBOSE	# Verbose MII autoconfiguration messages
+#options 	DDB_KEYCODE=0x40
+options 	USERCONF	# userconf(4) support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+options 	NO_POWERSAVE	# uncomment this to run under ICE
+
+# Development and Debugging options
+
+#options 	PERFCTRS	# performance counters
+options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	LOCKDEBUG	# Enable lock debugging
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	DDB		# in-kernel debugger
+options		DDB_ONPANIC=1
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	DDB_VERBOSE_HELP
+options 	DDB_COMMANDONENTER="bt"
+options 	DB_MAX_LINE=INT_MAX
+
+# Console options.    also need IMXUARTCONSOLE
+options 	CONSDEVNAME="\"zynquart\"",CONADDR=0xe0001000
+options 	CONSPEED=115200	# Console speed
+
+#options 	KGDB
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+## USB Debugging options
+options USB_DEBUG
+options EHCI_DEBUG
+options OHCI_DEBUG
+options UHUB_DEBUG
+
+
+# Valid options for BOOT_ARGS:
+#  single		Boot to single user only
+#  kdb			Give control to kernel debugger
+#  ask			Ask for file name to reboot from
+#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
+#  memorydisk=<n>	Set memorydisk size to <n> KB
+#  quiet		Show aprint_naive output
+#  verbose		Show aprint_normal and aprint_verbose output
+options		BOOT_ARGS="\"verbose\""
+
+# Kernel root file system and dump configuration.
+config		netbsd		root on ? type ?
+#config		netbsd-sd0	root on sd0 type ffs
+
+#
+# Device configuration
+#
+
+mainbus0	at root
+
+cpu*		at mainbus?
+
+# The MPCore interrupt controller and global timer
+armperiph0	at mainbus?		# A9 On-Chip Peripherals
+armgic0 	at armperiph?		# ARM Generic Interrupt Controller
+arml2cc0	at armperiph? flags 0	# ARM PL310 L2CC
+a9tmr0		at armperiph?		# A9 Global Timer
+#a9wdt0		at armperiph? flags 0	# A9 Watchdog Timer
+
+axi0		at mainbus?
+
+# System Level Control Module
+zynqslcr0	at axi? addr 0xf8000000
+
+# UART
+zynquart0	at axi? addr 0xe0000000 irq 59
+zynquart1	at axi? addr 0xe0001000 irq 82
+options		ZYNQUARTCONSOLE
+
+# SD/MMC
+#sdhc0    	at axi? addr 0xe0100000 irq 56	     # SDIO0
+sdhc1   	at axi? addr 0xe0101000 irq 79	     # SDIO1
+sdmmc*		at sdhc?
+ld*		at sdmmc?			# MMC/SD card
+#options 	SDHC_DEBUG
+#options 	SDMMC_DEBUG
+
+# USB Host/Device/OTG
+ehci0		at axi? addr 0xe0002000 irq 53
+#ehci1		at axi? addr 0xe0003000 irq 76
+
+usb*		at ehci?
+
+# USB device drivers
+include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
+
+cemac0		at axi? addr 0xe000b000 irq 54
+#cemac1		at axi? addr 0xe000c000 irq 77
+
+# MII/PHY support
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+#pseudo-device	md			# memory disk device (ramdisk)
+pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
+#pseudo-device	fss			# file system snapshot device
+pseudo-device	putter			# for puffs and pud
+pseudo-device	drvctl			# driver control
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	loop			# network loopback
+#pseudo-device	kttcp			# network loopback
+#pseudo-device	vlan
+#pseudo-device	bridge
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+#options	RND_COM
+#pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+pseudo-device	vcoda			# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
