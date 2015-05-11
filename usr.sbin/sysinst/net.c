@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.18 2015/05/10 10:14:02 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.19 2015/05/11 06:58:13 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -490,10 +490,9 @@ config_network(void)
 	int menu_no;
 	int num_devs;
 	int selected_net;
-
-	int i, rv;
+	int i;
 #ifdef INET6
-	int v6config = 1;
+	int v6config = 1, rv;
 #endif
 
 	FILE *f;
