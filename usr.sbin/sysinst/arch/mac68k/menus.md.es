@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.es,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
+/*	$NetBSD: menus.md.es,v 1.3 2015/05/11 12:57:55 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -152,8 +152,8 @@ menu ok2, title "¿Abortar?", y=17;
        option "OK", exit, action { };
 
 menu okabort, title "¿Que quiere hacer?", y=17;
-	option "Continuar", exit, action { yesno = 1; };
-	option "Abortar instalacion", exit, action { yesno = 0; };
+	option "Continuar", exit, action { *((int*)arg) = 1; };
+	option "Abortar instalacion", exit,  { *((int*)arg) = 0; };
 
 menu chooseid, title  "¿Tipo de particion?";
 	option "NetBSD Root", exit, action {
@@ -321,9 +321,9 @@ menu mount_point, title  "¿Punto de montaje?";
 menu sanity, title "Escoja una opcion";
 	display action {msg_display (MSG_sanity_check);
 		report_errors(); };
-	option "Abortar instalacion", exit, action {yesno = -1; };
-	option "Ignorar avisos y continuar", exit, action {yesno = 1;};
-	option "Re-editar Mapa de Particiones de Disco", exit, action {yesno = 0; };
+	option "Abortar instalacion", exit, action { *((int*)arg) = -1; };
+	option "Ignorar avisos y continuar", exit, action { *((int*)arg) = 1;};
+	option "Re-editar Mapa de Particiones de Disco", exit, action { *((int*)arg) = 0; };
 
 /*
  * This menu shouldn't be used in the mac68k port, but it needs to be
