@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.3 2015/05/11 12:57:55 martin Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.4 2015/05/11 21:07:56 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.13 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -46,12 +46,12 @@ menu nodiskmap, title "Wybierz opcje", y=16;
 		endwin();  exit(1);
 	};
        option "Zainicjuj Mape partycji Dysku", exit, action {
-		int i;
+		int i, rv;
 
 		msg_clear();
 		msg_display (MSG_okwritediskmap);
-		process_menu (MENU_okabort, NULL);
-		if (!yesno) {
+		process_menu (MENU_okabort, &rv);
+		if (!rv) {
 		    endwin();
 		    return 0;
 		}
@@ -79,7 +79,7 @@ menu editparttable, title  "Wybierz swoje partycje", exit, y=14;
        option "Zmien wybrana partycje", sub menu chooseid;
        option "Ustaw punkt montazu dla partycji", sub menu mount_point;
        option "Podziel wybrana partycje", action {
-		int i, j, k, size, free_size;
+		int i, j, k, size, free_size, rv;
 		char buf[40];
 		EBZB *bzb;
 
@@ -114,8 +114,8 @@ menu editparttable, title  "Wybierz swoje partycje", exit, y=14;
 			sortmerge();
 		    } else {
 			msg_display (MSG_diskfull);
-			process_menu (MENU_okabort, NULL);
-			if (!yesno) {
+			process_menu (MENU_okabort, &rv);
+			if (!rv) {
 			    free (map.blk);
 			    map.size = NEW_MAP_SIZE;
 			    map.in_use_cnt = new_map[0].pmMapBlkCnt;
