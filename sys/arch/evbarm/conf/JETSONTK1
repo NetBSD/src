@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.14 2015/05/10 23:51:08 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.15 2015/05/11 21:46:50 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -62,6 +62,10 @@ pci*		at ppb?
 re*		at pci? dev ? function ?	# Realtek RTL8111GS
 rgephy*		at mii? phy ?
 ukphy*		at mii? phy ?
+
+# Mini-PCIe Wireless
+ath*		at pci? dev ? function ?	# Atheros IEEE 802.11
+include "external/isc/atheros_hal/conf/std.ath_hal"
 
 # UART
 com3		at tegraio? port 3	# UART-D
