@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.3 2015/05/11 12:57:55 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.13 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -154,8 +154,8 @@ menu ok2, title "Przerwac?", y=17;
        option "OK", exit, action { };
 
 menu okabort, title "Co chcesz zrobic?";
-       option "OK", exit, action { yesno = 1; };
-       option "Przerwac instalacje", exit, action { yesno = 0; };
+       option "OK", exit, action { *((int*)arg) = 1; };
+       option "Przerwac instalacje", exit, action { *((int*)arg) = 0; };
 
 menu chooseid, title  "Rodzaj partycji?";
        option "NetBSD Root", exit, action {
@@ -323,9 +323,9 @@ menu mount_point, title  "Punkt montazu?";
 menu sanity, title "Wybierz opcje";
        display action {msg_display (MSG_sanity_check);
 		report_errors(); };
-       option "Przerwij instalacje", exit, action {yesno = -1; };
-       option "Zignoruj ostrzezenia i kontynuuj", exit, action {yesno = 1;};
-       option "Ponownie wyedytuj mape partycji dysku", exit, action {yesno = 0; };
+       option "Przerwij instalacje", exit, action { *((int*)arg) = -1; };
+       option "Zignoruj ostrzezenia i kontynuuj", exit, action { *((int*)arg) = 1;};
+       option "Ponownie wyedytuj mape partycji dysku", exit, action { *((int*)arg) = 0; };
 
 /*
  * This menu shouldn't be used in the mac68k port, but it needs to be

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2015/05/10 10:14:03 martin Exp $ */
+/*	$NetBSD: md.c,v 1.4 2015/05/11 12:57:55 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -239,7 +239,7 @@ int
 md_make_bsd_partitions(void)
 {
 	FILE *f;
-	int i, j, pl;
+	int i, j, pl, rv;
 	EBZB *bzb;
 
 	/*
@@ -250,10 +250,10 @@ md_make_bsd_partitions(void)
 	 */
 	while (1) {
 	    if (check_for_errors()) {
-	        process_menu (MENU_sanity, NULL);
-	        if (yesno < 0)
+	        process_menu (MENU_sanity, &rv);
+	        if (rv < 0)
 		    return 0;
-	        else if (yesno)
+	        else if (rv)
 		    break;
 	        edit_diskmap();
 	    } else
@@ -1166,7 +1166,7 @@ md_debug_dump(title)
 {
 	char buf[96], type;
 	char fstyp[16], use[16], name[64];
-	int i, j;
+	int i, j, rv;
 	EBZB *bzb;
 
 	msg_clear();
@@ -1187,9 +1187,9 @@ md_debug_dump(title)
 		map.blk[i].pmPyPartStart, fstyp, use, name);
            msg_table_add(MSG_dump_line, buf);
 	}
-	process_menu(MENU_okabort, NULL);
+	process_menu(MENU_okabort, &rv);
 	msg_clear();
-	return(yesno);
+	return rv;
 }
 #endif /* MD_DEBUG_SORT_MERGE */
 
