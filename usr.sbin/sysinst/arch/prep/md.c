@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2015/05/10 10:14:03 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2015/05/11 13:01:08 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,13 +138,14 @@ int
 md_post_extract(void)
 {
 	char rawdev[100], bootpart[100], bootloader[100];
+	int contype;
 
 	/* if we can't make it bootable, just punt */
 	if (prep_nobootfix)
 		return 0;
 
-	process_menu(MENU_prepconsole, NULL);
-	if (yesno == 1)
+	process_menu(MENU_prepconsole, &contype);
+	if (contype == 1)
 		snprintf(bootloader, 100, "/usr/mdec/boot_com0");
 	else
 		snprintf(bootloader, 100, "/usr/mdec/boot");
