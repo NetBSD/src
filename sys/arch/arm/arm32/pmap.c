@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.320 2015/04/13 16:19:42 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.321 2015/05/11 22:28:22 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.320 2015/04/13 16:19:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.321 2015/05/11 22:28:22 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6167,9 +6167,11 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	 */
 	virtual_avail = (virtual_avail + arm_cache_prefer_mask) & ~arm_cache_prefer_mask;
 	nptes = (arm_cache_prefer_mask >> L2_S_SHIFT) + 1;
+	nptes = roundup(nptes, PAGE_SIZE / L2_S_SIZE);
 	if (arm_pcache.icache_type != CACHE_TYPE_PIPT
 	    && arm_pcache.icache_way_size > nptes * L2_S_SIZE) {
 		nptes = arm_pcache.icache_way_size >> L2_S_SHIFT;
+		nptes = roundup(nptes, PAGE_SIZE / L2_S_SIZE);
 	}
 #else
 	nptes = PAGE_SIZE / L2_S_SIZE;
