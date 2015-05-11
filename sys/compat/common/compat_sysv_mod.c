@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysv_mod.c,v 1.1 2015/05/10 07:41:15 pgoyette Exp $	*/
+/*	$NetBSD: compat_sysv_mod.c,v 1.2 2015/05/11 10:32:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysv_mod.c,v 1.1 2015/05/10 07:41:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysv_mod.c,v 1.2 2015/05/11 10:32:13 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_sysv_mod.c,v 1.1 2015/05/10 07:41:15 pgoyette
 
 MODULE(MODULE_CLASS_EXEC, compat_sysv, NULL);
 
-#ifdef _MODULE
 static const struct syscall_package compat_sysv_syscalls[] = {
 #if defined(COMPAT_10) && !defined(_LP64)
 # if defined(SYSVMSG)
@@ -89,7 +88,6 @@ static const struct syscall_package compat_sysv_syscalls[] = {
 #endif
 	{ 0, 0, NULL },
 };
-#endif
 
 int sysctl_kern_sysvipc50(SYSCTLFN_ARGS);
 
@@ -100,20 +98,16 @@ compat_sysv_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-#ifdef _MODULE
 		/* Link the system calls */
 		error = syscall_establish(NULL, compat_sysv_syscalls);
-#endif
 #ifdef COMPAT_50
 		sysvipc50_set_compat_sysctl(sysctl_kern_sysvipc50);
 #endif
 		return error;
 
 	case MODULE_CMD_FINI:
-#ifdef _MODULE
 		/* Unlink the system calls. */
 		error = syscall_disestablish(NULL, compat_sysv_syscalls);
-#endif
 #ifdef COMPAT_50
 		sysvipc50_set_compat_sysctl(NULL);
 #endif
