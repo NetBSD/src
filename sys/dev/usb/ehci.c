@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.238 2015/03/01 09:53:36 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.239 2015/05/11 06:44:36 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.238 2015/03/01 09:53:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.239 2015/05/11 06:44:36 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2095,7 +2095,7 @@ ehci_rem_free_itd_chain(ehci_softc_t *sc, struct ehci_xfer *exfer)
 	prev = NULL;
 
 	if (exfer->itdstart == NULL || exfer->itdend == NULL)
-		panic("ehci isoc xfer being freed, but with no itd chain\n");
+		panic("ehci isoc xfer being freed, but with no itd chain");
 
 	for (itd = exfer->itdstart; itd != NULL; itd = itd->xfer_next) {
 		prev = itd->u.frame_list.prev;
@@ -4175,7 +4175,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->rqflags & URQ_REQUEST)
-		panic("ehci_device_isoc_start: request\n");
+		panic("ehci_device_isoc_start: request");
 
 	if (!exfer->isdone) {
 		USBHIST_LOG(ehcidebug, "marked not done, ex = %p", exfer,
@@ -4344,7 +4344,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	itd = start;
 	for (j = 0; j < frames; j++) {
 		if (itd == NULL)
-			panic("ehci: unexpectedly ran out of isoc itds, isoc_start\n");
+			panic("ehci: unexpectedly ran out of isoc itds, isoc_start");
 
 		itd->itd.itd_next = sc->sc_flist[frindex];
 		if (itd->itd.itd_next == 0)
