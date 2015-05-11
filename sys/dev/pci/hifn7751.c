@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.56.2.1 2015/05/11 03:14:29 msaitoh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.56.2.2 2015/05/11 06:15:46 msaitoh Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.56.2.1 2015/05/11 03:14:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.56.2.2 2015/05/11 06:15:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,12 +432,12 @@ hifn_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_VM);
+
 	if (sc->sc_flags & (HIFN_HAS_PUBLIC | HIFN_HAS_RNG)) {
 		hifn_init_pubrng(sc);
 		sc->sc_rng_need = RND_POOLBITS / NBBY;
 	}
-
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_VM);
 
 #ifdef	__OpenBSD__
 	timeout_set(&sc->sc_tickto, hifn_tick, sc);
