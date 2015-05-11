@@ -301,6 +301,23 @@ eap_pwd_perform_commit_exchange(struct eap_sm *sm, struct eap_pwd_data *data,
 	BIGNUM *mask = NULL, *x = NULL, *y = NULL, *cofactor = NULL;
 	u16 offset;
 	u8 *ptr, *scalar = NULL, *element = NULL;
+	size_t prime_len, order_len;
+
+	if (data->state != PWD_Commit_Req) {
+		ret->ignore = TRUE;
+		goto fin;
+	}
+
+	prime_len = BN_num_bytes(data->grp->prime);
+	order_len = BN_num_bytes(data->grp->order);
+
+	if (payload_len != 2 * prime_len + order_len) {
+		wpa_printf(MSG_INFO,
+			   "EAP-pwd: Unexpected Commit payload length %u (expected %u)",
+			   (unsigned int) payload_len,
+			   (unsigned int) (2 * prime_len + order_len));
+		goto fin;
+	}
 
 	if (((data->private_value = BN_new()) == NULL) ||
 	    ((data->my_element = EC_POINT_new(data->grp->group)) == NULL) ||
@@ -783,11 +800,23 @@ eap_pwd_process(struct eap_sm *sm, void *priv, struct eap_method_ret *ret,
 	 * if it's the first fragment there'll be a length field
 	 */
 	if (EAP_PWD_GET_LENGTH_BIT(lm_exch)) {
+		if (len < 2) {
+			wpa_printf(MSG_DEBUG,
+				   "EAP-pwd: Frame too short to contain Total-Length field");
+			ret->ignore = TRUE;
+			return NULL;
+		}
 		tot_len = WPA_GET_BE16(pos);
 		wpa_printf(MSG_DEBUG, "EAP-pwd: Incoming fragments whose "
 			   "total length = %d", tot_len);
 		if (tot_len > 15000)
 			return NULL;
+		if (data->inbuf) {
+			wpa_printf(MSG_DEBUG,
+				   "EAP-pwd: Unexpected new fragment start when previous fragment is still in use");
+			ret->ignore = TRUE;
+			return NULL;
+		}
 		data->inbuf = wpabuf_alloc(tot_len);
 		if (data->inbuf == NULL) {
 			wpa_printf(MSG_INFO, "Out of memory to buffer "
@@ -874,6 +903,7 @@ eap_pwd_process(struct eap_sm *sm, void *priv, struct eap_method_ret *ret,
 	 * we have output! Do we need to fragment it?
 	 */
 	len = wpabuf_len(data->outbuf);
+	lm_exch = EAP_PWD_GET_EXCHANGE(lm_exch);
 	if ((len + EAP_PWD_HDR_SIZE) > data->mtu) {
 		resp = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_PWD, data->mtu,
 				     EAP_CODE_RESPONSE, eap_get_id(reqData));
