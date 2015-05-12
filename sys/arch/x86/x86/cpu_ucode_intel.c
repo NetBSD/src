@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.7 2015/05/11 08:24:50 msaitoh Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.8 2015/05/12 00:00:35 msaitoh Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.7 2015/05/11 08:24:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.8 2015/05/12 00:00:35 msaitoh Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -131,8 +131,7 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 			printf("%s: memory allocation failed\n", __func__);
 			return EINVAL;
 		}
-		uh = (struct intel1_ucode_header *)
-		    (((unsigned long)uh + 15) & ~0x0000000f);
+		uh = (struct intel1_ucode_header *)roundup2((uintptr_t)uh, 16);
 		/* Copy to the new area */
 		memcpy(uh, sc->sc_blob, sc->sc_blobsize);
 	}
