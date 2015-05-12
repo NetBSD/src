@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.20 2014/10/23 10:01:53 msaitoh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.21 2015/05/12 19:24:57 msaitoh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20 2014/10/23 10:01:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.21 2015/05/12 19:24:57 msaitoh Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>
@@ -66,6 +66,15 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20 2014/10/23 10:01:53 msaitoh Exp $
 #define	EXTR	6
 #define	SDEP	7
 #define	NONE	8
+
+/*
+ * REX prefix and bits
+ */
+#define REX_B	1
+#define REX_X	2
+#define REX_R	4
+#define REX_W	8
+#define REX	0x40
 
 /*
  * Addressing modes
@@ -106,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20 2014/10/23 10:01:53 msaitoh Exp $
 #define	XA	34			/* for 'fstcw %ax' */
 #define	Ed	35			/* address, double size */
 #define	Iq	36			/* word immediate, maybe 64bits */
+#define	Rv	40			/* register in 'r/m' field */
 
 struct inst {
 	const char *i_name;		/* name */
@@ -171,6 +181,17 @@ const char * const db_Grp9[] = {
 	"vmptrst"
 };
 
+const struct inst db_Grp9b[] = {
+	{ "",      true, NONE, 0,	 0 },
+	{ "",      true, NONE, 0,	 0 },
+	{ "",      true, NONE, 0,	 0 },
+	{ "",      true, NONE, 0,	 0 },
+	{ "",      true, NONE, 0,	 0 },
+	{ "",      true, NONE, 0,	 0 },
+	{ "rdrand",true, LONG, op1(Rv),	 0 },
+	{ "rdseed",true, LONG, op1(Rv),	 0 }
+};
+
 const struct inst db_inst_0f0x[] = {
 /*00*/	{ "",	   true,  NONE,  op1(Ew),     db_Grp6 },
 /*01*/	{ "",	   true,  NONE,  op1(Ew),     db_Grp7 },
@@ -189,6 +210,26 @@ const struct inst db_inst_0f0x[] = {
 /*0d*/	{ "prefetch",true,NONE,  op2(E,R),    0 },  /* Not 'R' really */
 /*0e*/	{ "",      false, NONE,  0,	      0 },  /* FEMMS (3DNow) */
 /*0f*/	{ "",      false, NONE,  0,	      0 },  /* 3DNow */
+};
+
+const struct inst db_inst_0f1x[] = {
+/*10*/	{ "",      FALSE, NONE,  0,	      0 },
+/*11*/	{ "",      FALSE, NONE,  0,	      0 },
+/*12*/	{ "",      FALSE, NONE,  0,	      0 },
+/*13*/	{ "",      FALSE, NONE,  0,	      0 },
+/*14*/	{ "",      FALSE, NONE,  0,	      0 },
+/*15*/	{ "",      FALSE, NONE,  0,	      0 },
+/*16*/	{ "",      FALSE, NONE,  0,	      0 },
+/*17*/	{ "",      FALSE, NONE,  0,	      0 },
+
+/*18*/	{ "",      FALSE, NONE,  0,	      0 },
+/*19*/	{ "",      FALSE, NONE,  0,	      0 },
+/*1a*/	{ "",      FALSE, NONE,  0,	      0 },
+/*1b*/	{ "",      FALSE, NONE,  0,	      0 },
+/*1c*/	{ "",      FALSE, NONE,  0,	      0 },
+/*1d*/	{ "",      FALSE, NONE,  0,	      0 },
+/*1e*/	{ "",      FALSE, NONE,  0,	      0 },
+/*1f*/	{ "nopl",  TRUE,  SDEP,  0,	      "nopw" },
 };
 
 const struct inst db_inst_0f2x[] = {
@@ -352,7 +393,7 @@ const struct inst db_inst_0fcx[] = {
 
 const struct inst * const db_inst_0f[] = {
 	db_inst_0f0x,
-	NULL,
+	db_inst_0f1x,
 	db_inst_0f2x,
 	db_inst_0f3x,
 	db_inst_0f4x,
@@ -852,13 +893,13 @@ const struct inst db_bad_inst =
 	{ "???",   false, NONE,  0,	      0 }
 ;
 
-#define	f_mod(byte)	((byte)>>6)
-#define	f_reg(byte)	(((byte)>>3)&0x7)
-#define	f_rm(byte)	((byte)&0x7)
+#define	f_mod(rex, byte)	((byte)>>6)
+#define	f_reg(rex, byte)	((((byte)>>3)&0x7) | (rex & REX_R ? 0x8 : 0x0))
+#define	f_rm(rex, byte)		(((byte)&0x7) | (rex & REX_B ? 0x8 : 0x0))
 
-#define	sib_ss(byte)	((byte)>>6)
-#define	sib_index(byte)	(((byte)>>3)&0x7)
-#define	sib_base(byte)	((byte)&0x7)
+#define	sib_ss(rex, byte)	((byte)>>6)
+#define	sib_index(rex, byte)	((((byte)>>3)&0x7) | (rex & REX_X ? 0x8 : 0x0))
+#define	sib_base(rex, byte)	(((byte)&0x7) | (rex & REX_B ? 0x8 : 0x0))
 
 struct i_addr {
 	int		is_reg;	/* if reg, reg number is in 'disp' */
@@ -882,18 +923,25 @@ const char * const db_index_reg_32[8] = {
 #define DB_REG_DFLT	0
 #define DB_REG_REX	1
 
-const char * const db_reg[2][4][8] = {
-{
-    { "%al",  "%cl",  "%dl",  "%bl",  "%ah",  "%ch",  "%dh",  "%bh" },
-    { "%ax",  "%cx",  "%dx",  "%bx",  "%sp",  "%bp",  "%si",  "%di" },
-    { "%eax", "%ecx", "%edx", "%ebx", "%esp", "%ebp", "%esi", "%edi" },
-    { "%rax", "%rcx", "%rdx", "%rbx", "%rsp", "%rbp", "%rsi", "%rdi" }
-}, {
-    { "%r8b", "%r9b", "%r10b", "%r11b", "%r12b", "%r13b", "%r14b", "%r15b" },
-    { "%r8w", "%r9w", "%r10w", "%r11w", "%r12w", "%r13w", "%r14w", "%r15w" },
-    { "%r8d", "%r9d", "%r10d", "%r11d", "%r12d", "%r13d", "%r14d", "%r15d" },
-    { "%r8",  "%r9",  "%r10",  "%r11",  "%r12",  "%r13",  "%r14",  "%r15" }
-}};
+const char * const db_reg[2][4][16] = {
+	{{"%al",  "%cl",  "%dl",  "%bl",  "%ah",  "%ch",  "%dh",  "%bh",
+	  "%r8b", "%r9b", "%r10b", "%r11b", "%r12b", "%r13b", "%r14b", "%r15b"},
+	 {"%ax",  "%cx",  "%dx",  "%bx",  "%sp",  "%bp",  "%si",  "%di",
+	  "%r8w", "%r9w", "%r10w", "%r11w", "%r12w", "%r13w", "%r14w", "%r15w"},
+	 {"%eax", "%ecx", "%edx", "%ebx", "%esp", "%ebp", "%esi", "%edi",
+	  "%r8d", "%r9d", "%r10d", "%r11d", "%r12d", "%r13d", "%r14d", "%r15d"},
+	 {"%rax", "%rcx", "%rdx", "%rbx", "%rsp", "%rbp", "%rsi", "%rdi",
+	  "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15" }},
+
+	{{"%al",  "%cl",  "%dl",  "%bl",  "%spl",  "%bpl",  "%sil",  "%dil",
+	  "%r8b", "%r9b", "%r10b", "%r11b", "%r12b", "%r13b", "%r14b", "%r15b"},
+	 {"%ax",  "%cx",  "%dx",  "%bx",  "%sp",  "%bp",  "%si",  "%di",
+	  "%r8w", "%r9w", "%r10w", "%r11w", "%r12w", "%r13w", "%r14w", "%r15w" },
+	 {"%eax", "%ecx", "%edx", "%ebx", "%esp", "%ebp", "%esi", "%edi",
+	  "%r8d", "%r9d", "%r10d", "%r11d", "%r12d", "%r13d", "%r14d", "%r15d" },
+	 {"%rax", "%rcx", "%rdx", "%rbx", "%rsp", "%rbp", "%rsi", "%rdi",
+	  "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15" }}
+};
 
 const char * const db_seg_reg[8] = {
 	"%es", "%cs", "%ss", "%ds", "%fs", "%gs", "", ""
@@ -911,23 +959,6 @@ const int db_lengths[] = {
 	8,	/* DBLR */
 	10,	/* EXTR */
 };
-
-#define	REX      	0x00
-#define	REX_b    	0x01
-#define	REX_x    	0x02
-#define	REX_xb   	0x03
-#define	REX_r    	0x04
-#define	REX_rb   	0x05
-#define	REX_rx   	0x06
-#define	REX_rxb  	0x07
-#define	REX_w    	0x08
-#define	REX_wb   	0x09
-#define	REX_wx   	0x0a
-#define	REX_wxb  	0x0b
-#define	REX_wr   	0x0c
-#define	REX_wrb  	0x0d
-#define	REX_wrx  	0x0e
-#define	REX_wrxb 	0x0f
 
 const char * const rex_str[0x10] = {
 	"rex      ",    /* 0x40 */
@@ -955,7 +986,7 @@ const char * const rex_str[0x10] = {
 	} while (0)
 
 
-db_addr_t db_read_address(db_addr_t, u_int, int, int, struct i_addr *);
+db_addr_t db_read_address(db_addr_t, int, u_int, int, struct i_addr *);
 void db_print_address(const char *, u_int, int, struct i_addr *);
 db_addr_t db_disasm_esc(db_addr_t, int, u_int, int, int, const char *);
 
@@ -963,14 +994,15 @@ db_addr_t db_disasm_esc(db_addr_t, int, u_int, int, int, const char *);
  * Read address at location and return updated location.
  */
 db_addr_t
-db_read_address(db_addr_t loc, u_int rex, int short_addr, int regmodrm,
+db_read_address(db_addr_t loc, int short_addr, u_int rex, int regmodrm,
     struct i_addr *addrp)
 	/* addrp:		 out */
 {
-	int		mod, rm, sib, index, disp, ext;
+	int		mod, rm, sib, index, disp, size, have_sib;
 
-	mod = f_mod(regmodrm);
-	rm  = f_rm(regmodrm);
+	size = (short_addr ? LONG : QUAD);
+	mod = f_mod(rex, regmodrm);
+	rm  = f_rm(rex, regmodrm);
 
 	if (mod == 3) {
 		addrp->is_reg = true;
@@ -980,76 +1012,42 @@ db_read_address(db_addr_t loc, u_int rex, int short_addr, int regmodrm,
 	addrp->is_reg = false;
 	addrp->index = 0;
 
-	if (short_addr) {
-		/* x86_64 32 bit address mode */
-		if (mod != 3 && rm == 4) {
-			ext = ((rex & REX_x) != 0);
-			get_value_inc(sib, loc, 1, false);
-			rm = sib_base(sib);
-			index = sib_index(sib);
-			if (index != 4)
-				addrp->index = db_reg[ext][LONG][index];
-			addrp->ss = sib_ss(sib);
-		}
+	if ((rm & 0x7) == 4) {
+		get_value_inc(sib, loc, 1, false);
+		rm = sib_base(rex, sib);
+		index = sib_index(rex, sib);
+		if (index != 4)
+			addrp->index = db_reg[1][size][index];
+		addrp->ss = sib_ss(rex, sib);
+		have_sib = 1;
+	} else
+		have_sib = 0;
 
-		ext = ((rex & REX_b) != 0);
-		switch (mod) {
-		case 0:
-			if (rm == 5) {
-				get_value_inc(addrp->disp, loc, 4, false);
+	switch (mod) {
+	case 0:
+		if (rm == 5) {
+			get_value_inc(addrp->disp, loc, 4, false);
+			if (have_sib)
 				addrp->base = 0;
-			} else {
-				addrp->disp = 0;
-				addrp->base = db_reg[ext][LONG][rm];
-			}
-			break;
-		case 1:
-			get_value_inc(disp, loc, 1, true);
-			addrp->disp = disp;
-			addrp->base = db_reg[ext][LONG][rm];
-			break;
-		case 2:
-			get_value_inc(disp, loc, 4, false);
-			addrp->disp = disp;
-			addrp->base = db_reg[ext][LONG][rm];
-			break;
-		}
-	} else {
-		/* x86_64 64 bit address mode */
-
-		if (mod != 3 && rm == 4) {
-			ext = ((rex & REX_x) != 0);
-			get_value_inc(sib, loc, 1, false);
-			rm = sib_base(sib);
-			index = sib_index(sib);
-			if (index != 4)
-				addrp->index = db_reg[ext][QUAD][index];
-			addrp->ss = sib_ss(sib);
-		}
-
-		ext = ((rex & REX_b) != 0);
-		switch (mod) {
-		case 0:
-			if (rm == 5) {
-				/* x86_64 RIP-relative addressing */
-				get_value_inc(addrp->disp, loc, 4, false);
+			else if (short_addr)
+				addrp->base = "%eip";
+			else
 				addrp->base = "%rip";
-			} else {
-				addrp->disp = 0;
-				addrp->base = db_reg[ext][QUAD][rm];
-			}
-			break;
-		case 1:
-			get_value_inc(disp, loc, 1, true);
-			addrp->disp = disp;
-			addrp->base = db_reg[ext][QUAD][rm];
-			break;
-		case 2:
-			get_value_inc(disp, loc, 4, false);
-			addrp->disp = disp;
-			addrp->base = db_reg[ext][QUAD][rm];
-			break;
+		} else {
+			addrp->disp = 0;
+			addrp->base = db_reg[1][size][rm];
 		}
+		break;
+	case 1:
+		get_value_inc(disp, loc, 1, true);
+		addrp->disp = disp;
+		addrp->base = db_reg[1][size][rm];
+		break;
+	case 2:
+		get_value_inc(disp, loc, 4, false);
+		addrp->disp = disp;
+		addrp->base = db_reg[1][size][rm];
+		break;
 	}
 	return (loc);
 }
@@ -1058,7 +1056,7 @@ void
 db_print_address(const char * seg, u_int rex, int size, struct i_addr *addrp)
 {
 	if (addrp->is_reg) {
-		int ext = ((rex & REX_b) != 0);
+		int ext = ((rex & REX_B) != 0);
 		db_printf("%s", db_reg[ext][size][addrp->disp]);
 		return;
 	}
@@ -1093,13 +1091,17 @@ db_disasm_esc(db_addr_t loc, int inst, u_int rex, int short_addr, int size,
 	const char *	name;
 
 	get_value_inc(regmodrm, loc, 1, false);
-	fp = &db_Esc_inst[inst - 0xd8][f_reg(regmodrm)];
-	mod = f_mod(regmodrm);
+	fp = &db_Esc_inst[inst - 0xd8][f_reg(rex, regmodrm)];
+	mod = f_mod(rex, regmodrm);
 	if (mod != 3) {
+		if (*fp->f_name == '\0') {
+			db_printf("<bad instruction>");
+			return (loc);
+		}
 		/*
 		 * Normal address modes.
 		 */
-		loc = db_read_address(loc, rex, short_addr, regmodrm, &address);
+		loc = db_read_address(loc, short_addr, rex, regmodrm, &address);
 		db_printf("%s", fp->f_name);
 		switch (fp->f_size) {
 		case SNGL:
@@ -1132,24 +1134,30 @@ db_disasm_esc(db_addr_t loc, int inst, u_int rex, int short_addr, int size,
 		switch (fp->f_rrmode) {
 		case op2(ST,STI):
 			name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-			db_printf("%s\t%%st,%%st(%d)", name, f_rm(regmodrm));
+			db_printf("%s\t%%st,%%st(%d)", name, f_rm(rex, regmodrm));
 			break;
 		case op2(STI,ST):
 			name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-			db_printf("%s\t%%st(%d),%%st", name, f_rm(regmodrm));
+			db_printf("%s\t%%st(%d),%%st", name, f_rm(rex, regmodrm));
 			break;
 		case op1(STI):
 			name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-			db_printf("%s\t%%st(%d)", name, f_rm(regmodrm));
+			db_printf("%s\t%%st(%d)", name, f_rm(rex, regmodrm));
 			break;
 		case op1(X):
-			db_printf("%s", ((const char * const *)fp->f_rrname)[f_rm(regmodrm)]);
+			name = ((const char * const *)fp->f_rrname)[f_rm(rex, regmodrm)];
+			if (*name == '\0')
+				goto bad;
+			db_printf("%s", name);
 			break;
 		case op1(XA):
-			db_printf("%s\t%%ax",
-			    ((const char * const *)fp->f_rrname)[f_rm(regmodrm)]);
+			name = ((const char * const *)fp->f_rrname)[f_rm(rex, regmodrm)];
+			if (*name == '\0')
+				goto bad;
+			db_printf("%s\t%%ax", name);
 			break;
 		default:
+		bad:
 			db_printf("<bad instruction>");
 			break;
 		}
@@ -1216,9 +1224,6 @@ db_disasm(db_addr_t loc, bool altfmt)
 	 */
 	prefix = true;
 	do {
-		if ((inst & 0xf0) == 0x40) {
-			rex |= inst;
-		} else
 		switch (inst) {
 		case 0x66:		/* data16 */
 			size = WORD;
@@ -1257,12 +1262,16 @@ db_disasm(db_addr_t loc, bool altfmt)
 			prefix = false;
 			break;
 		}
+		if (inst >= 0x40 && inst <= 0x4f) {
+			rex = inst;
+			prefix = true;
+		}
 		if (prefix)
 			get_value_inc(inst, loc, 1, false);
 	} while (prefix);
 
 	if (rex != 0) {
-		if (rex & REX_w)
+		if (rex & REX_W)
 			size = QUAD;
 		if (altfmt == true)				/* XXX */
 			db_printf("%s", rex_str[rex & 0x0f]);
@@ -1287,14 +1296,19 @@ db_disasm(db_addr_t loc, bool altfmt)
 
 	if (ip->i_has_modrm) {
 		get_value_inc(regmodrm, loc, 1, false);
-		loc = db_read_address(loc, rex, short_addr, regmodrm, &address);
+		loc = db_read_address(loc, short_addr, rex, regmodrm, &address);
 	}
 
 	i_name = ip->i_name;
 	i_size = ip->i_size;
 	i_mode = ip->i_mode;
 
-	if (ip->i_extra == (const char *)db_Grp1 ||
+	if (ip->i_extra == db_Grp9 && f_mod(rex, regmodrm) == 3) {
+		ip = &db_Grp9b[f_reg(rex, regmodrm)];
+		i_name = ip->i_name;
+		i_size = ip->i_size;
+		i_mode = ip->i_mode;
+	} else if (ip->i_extra == (const char *)db_Grp1 ||
 	    ip->i_extra == (const char *)db_Grp2 ||
 	    ip->i_extra == (const char *)db_Grp6 ||
 	    ip->i_extra == (const char *)db_Grp7 ||
@@ -1305,24 +1319,24 @@ db_disasm(db_addr_t loc, bool altfmt)
 			i_mode = 0;
 		} else {
 			i_name = ((const char * const *)ip->i_extra)
-			    [f_reg(regmodrm)];
+			    [f_reg(rex, regmodrm)];
 		}
 	} else if (ip->i_extra == (const char *)db_Grp3) {
 		ip = (const struct inst *)ip->i_extra;
-		ip = &ip[f_reg(regmodrm)];
+		ip = &ip[f_reg(rex, regmodrm)];
 		i_name = ip->i_name;
 		i_mode = ip->i_mode;
 	} else if (ip->i_extra == (const char *)db_Grp4 ||
-		   ip->i_extra == (const char *)db_Grp5) {
+	    ip->i_extra == (const char *)db_Grp5) {
 		ip = (const struct inst *)ip->i_extra;
-		ip = &ip[f_reg(regmodrm)];
+		ip = &ip[f_reg(rex, regmodrm)];
 		i_name = ip->i_name;
 		i_mode = ip->i_mode;
 		i_size = ip->i_size;
 	}
 
 	if (i_size == SDEP) {
-		if (size == WORD)
+		if (size == LONG)
 			db_printf("%s", i_name);
 		else
 			db_printf("%s", (const char *)ip->i_extra);
@@ -1348,9 +1362,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 		}
 	}
 	db_printf("\t");
-	for (first = true;
-	     i_mode != 0;
-	     i_mode >>= 8, first = false) {
+	for (first = true; i_mode != 0; i_mode >>= 8, first = false) {
 		char tbuf[24];
 
 		if (!first)
@@ -1374,25 +1386,24 @@ db_disasm(db_addr_t loc, bool altfmt)
 			db_print_address(seg, rex, BYTE, &address);
 			break;
 		case R: {
-			int ext = ((rex & REX_r) != 0);
-			db_printf("%s", db_reg[ext][size][f_reg(regmodrm)]);
+			int ext = ((rex & REX_R) != 0);
+			db_printf("%s", db_reg[ext][size][f_reg(rex, regmodrm)]);
 			break;
 		    }
 		case Rw: {
-			int ext = ((rex & REX_r) != 0);
-			db_printf("%s", db_reg[ext][WORD][f_reg(regmodrm)]);
+			int ext = ((rex & REX_R) != 0);
+			db_printf("%s", db_reg[ext][WORD][f_reg(rex, regmodrm)]);
 			break;
 		    }
 		case Ri: {
-			int ext = ((rex & REX_b) != 0);
-			db_printf("%s", db_reg[ext][size][f_rm(inst)]);
+			db_printf("%s", db_reg[0][size][f_rm(rex, inst)]);
 			break;
 		    }
 		case S:
-			db_printf("%s", db_seg_reg[f_reg(regmodrm)]);
+			db_printf("%s", db_seg_reg[f_reg(rex, regmodrm)]);
 			break;
 		case Si:
-			db_printf("%s", db_seg_reg[f_reg(inst)]);
+			db_printf("%s", db_seg_reg[f_reg(rex, inst)]);
 			break;
 		case A:
 			db_printf("%s", db_reg[0][size][0]);	/* acc */
@@ -1417,13 +1428,13 @@ db_disasm(db_addr_t loc, bool altfmt)
 			db_printf("%%es:(%s)", short_addr ? "%edi" : "%rdi");
 			break;
 		case CR:
-			db_printf("%%cr%d", f_reg(regmodrm));
+			db_printf("%%cr%d", f_reg(rex, regmodrm));
 			break;
 		case DR:
-			db_printf("%%dr%d", f_reg(regmodrm));
+			db_printf("%%dr%d", f_reg(rex, regmodrm));
 			break;
 		case TR:
-			db_printf("%%tr%d", f_reg(regmodrm));
+			db_printf("%%tr%d", f_reg(rex, regmodrm));
 			break;
 		case Iq:
 			if (size == QUAD) {
