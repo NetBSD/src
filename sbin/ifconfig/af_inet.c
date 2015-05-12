@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.16 2015/05/02 14:43:51 roy Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.17 2015/05/12 14:05:29 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.16 2015/05/02 14:43:51 roy Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.17 2015/05/12 14:05:29 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -232,7 +232,7 @@ in_addr_tentative(struct ifaddrs *ifa)
 	ifr.ifr_addr = *ifa->ifa_addr;
 	if ((s = getsock(AF_INET)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
-	if (ioctl(s, SIOCGIFAFLAG_IN, &ifr) == -1)
+	if (prog_ioctl(s, SIOCGIFAFLAG_IN, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGIFAFLAG_IN");
 	return ifr.ifr_addrflags & IN_IFF_TENTATIVE ? true : false;
 #else
