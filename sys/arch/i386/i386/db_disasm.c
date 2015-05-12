@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.44 2014/10/23 10:01:53 msaitoh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.45 2015/05/12 05:18:50 msaitoh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.44 2014/10/23 10:01:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.45 2015/05/12 05:18:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1212,7 +1212,8 @@ db_disasm(
 	    ip->i_extra == (const char *)db_Grp2 ||
 	    ip->i_extra == (const char *)db_Grp6 ||
 	    ip->i_extra == (const char *)db_Grp7 ||
-	    ip->i_extra == (const char *)db_Grp8) {
+	    ip->i_extra == (const char *)db_Grp8 ||
+	    ip->i_extra == (const char *)db_Grp9) {
 		i_name = ((const char *const*)ip->i_extra)[f_reg(regmodrm)];
 	} else if (ip->i_extra == (const char *)db_Grp3) {
 		ip = (const struct inst *)ip->i_extra;
