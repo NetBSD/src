@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.847 2015/04/26 21:37:22 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.848 2015/05/12 08:25:28 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -990,9 +990,9 @@ MKGCCCMDS?=	${MKGCC}
 #
 # Exceptions to the above:
 #
-#.if ${MACHINE} == "evbppc"
-#MKKMOD=		no
-#.endif
+.if ${MACHINE} == "acorn26"	# page size is prohibitive
+MKKMOD=		no
+.endif
 
 #
 # MK* options which default to "no".  Note that MKZFS has a different
