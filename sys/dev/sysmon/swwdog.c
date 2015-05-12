@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.18 2015/05/12 02:38:00 pgoyette Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.19 2015/05/12 10:20:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.18 2015/05/12 02:38:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.19 2015/05/12 10:20:14 pgoyette Exp $");
 
 /*
  *
@@ -309,7 +309,8 @@ swwdog_init(void *arg)
 	 * Merge the driver info into the kernel tables and attach the
 	 * pseudo-device
 	 */
-	int error;
+	int error = 0;
+
 
 #ifdef _MODULE
 	error = config_cfdriver_attach(&swwdog_cd);
@@ -318,9 +319,7 @@ swwdog_init(void *arg)
 		    swwdog_cd.cd_name);
 		return error;
 	}
-#endif
 	error = swwdogattach(1);
-#ifdef _MODULE
 	if (error) {
 		aprint_error("%s: device attach failed\n", swwdog_cd.cd_name);
 		config_cfdriver_detach(&swwdog_cd);
