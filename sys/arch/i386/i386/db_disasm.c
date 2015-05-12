@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.45 2015/05/12 05:18:50 msaitoh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.46 2015/05/12 19:24:57 msaitoh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.45 2015/05/12 05:18:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.46 2015/05/12 19:24:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.45 2015/05/12 05:18:50 msaitoh Exp $
 #define	EXTR	6
 #define	SDEP	7
 #define	NONE	8
+#define	RDEP	9
 
 /*
  * Addressing modes
@@ -94,6 +95,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.45 2015/05/12 05:18:50 msaitoh Exp $
 #define	STI	32			/* FP stack */
 #define	X	33			/* extended FP op */
 #define	XA	34			/* for 'fstcw %ax' */
+#define	El	35			/* address, long size */
+#define	Ril	36			/* long register in instruction */
+#define	Iba	37			/* byte immediate, don't print if 0xa */
+#define	MEx	38			/* memory, or an extension op */
 
 struct inst {
 	const char *i_name;		/* name */
@@ -126,15 +131,15 @@ const char * const db_Grp6[] = {
 	""
 };
 
-const char * const db_Grp7[] = {
-	"sgdt",
-	"sidt",
-	"lgdt",
-	"lidt",
-	"smsw",
-	"",
-	"lmsw",
-	"invlpg"
+struct inst db_Grp7[] = {
+	{ "sgdt",   FALSE, NONE, op1(E),     0 },
+	{ "sidt",   FALSE, NONE, op2(MEx,4), "monitor\0mwait\0clac\0stac"},
+	{ "lgdt",   FALSE, NONE, op2(MEx,2), "xgetbv\0xsetbv" },
+	{ "lidt",   FALSE, NONE, op1(E),     0 },
+	{ "smsw",   FALSE, NONE, op1(E),     0 },
+	{ "",       FALSE, NONE, 0,          0 },
+	{ "lmsw",   FALSE, NONE, op1(E),     0 },
+	{ "invlpg", FALSE, NONE, op2(MEx,2), "swapgs\0rdtscp" },
 };
 
 const char * const db_Grp8[] = {
@@ -148,20 +153,35 @@ const char * const db_Grp8[] = {
 	"btc"
 };
 
-const char * const db_Grp9[] = {
-	"",
-	"cmpxchg8b",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
+struct inst db_Grp9[] = {
+	{ "fxsave",   FALSE, NONE, op1(E),     0 },
+	{ "fxrstor",  FALSE, NONE, op1(E),     0 },
+	{ "ldmxcsr",  FALSE, NONE, op1(E),     0 },
+	{ "stmxcsr",  FALSE, NONE, op1(E),     0 },
+	{ "xsave",    FALSE, NONE, op1(E),     0 },
+	{ "xrstor",   FALSE, NONE, op2(MEx,1), "lfence" },
+	{ "xsaveopt", FALSE, NONE, op2(MEx,1), "mfence" },
+	{ "clflush",  FALSE, NONE, op2(MEx,1), "sfence" },
+};
+
+const char * db_GrpA[] = {
+	"",		"cmpxchg8b",	"",		"",
+	"",		"",		"rdrand",	"rdseed"
+};
+
+const char * db_GrpB[] = {
+	"xstore-rng",	"xcrypt-ecb",	"xcrypt-cbc",	"xcrypt-ctr",
+	"xcrypt-cfb",	"xcrypt-ofb",	"",		""
+};
+
+const char * db_GrpC[] = {
+	"montmul",	"xsha1",	"xsha256",	"",
+	"",		"",		"",		""
 };
 
 const struct inst db_inst_0f0x[] = {
-/*00*/	{ "",	   true,  NONE,  op1(Ew),     db_Grp6 },
-/*01*/	{ "",	   true,  NONE,  op1(Ew),     db_Grp7 },
+/*00*/	{ NULL,	   true,  NONE,  op1(Ew),     db_Grp6 },
+/*01*/	{ "",	   true,  RDEP,  op1(Ew),     db_Grp7 },
 /*02*/	{ "lar",   true,  LONG,  op2(E,R),    0 },
 /*03*/	{ "lsl",   true,  LONG,  op2(E,R),    0 },
 /*04*/	{ "",      false, NONE,  0,	      0 },
@@ -180,13 +200,13 @@ const struct inst db_inst_0f0x[] = {
 };
 
 const struct inst db_inst_0f2x[] = {
-/*20*/	{ "mov",   true,  LONG,  op2(CR,E),   0 }, /* use E for reg */
-/*21*/	{ "mov",   true,  LONG,  op2(DR,E),   0 }, /* since mod == 11 */
-/*22*/	{ "mov",   true,  LONG,  op2(E,CR),   0 },
-/*23*/	{ "mov",   true,  LONG,  op2(E,DR),   0 },
-/*24*/	{ "mov",   true,  LONG,  op2(TR,E),   0 },
+/*20*/	{ "mov",   true,  LONG,  op2(CR,El),  0 },
+/*21*/	{ "mov",   true,  LONG,  op2(DR,El),  0 },
+/*22*/	{ "mov",   true,  LONG,  op2(El,CR),  0 },
+/*23*/	{ "mov",   true,  LONG,  op2(El,DR),  0 },
+/*24*/	{ "mov",   true,  LONG,  op2(TR,El),  0 },
 /*25*/	{ "",      false, NONE,  0,	      0 },
-/*26*/	{ "mov",   true,  LONG,  op2(E,TR),   0 },
+/*26*/	{ "mov",   true,  LONG,  op2(El,TR),  0 },
 /*27*/	{ "",      false, NONE,  0,	      0 },
 
 /*28*/	{ "",      false, NONE,  0,	      0 },
@@ -286,8 +306,8 @@ const struct inst db_inst_0fax[] = {
 /*a3*/	{ "bt",    true,  LONG,  op2(R,E),    0 },
 /*a4*/	{ "shld",  true,  LONG,  op3(Ib,R,E), 0 },
 /*a5*/	{ "shld",  true,  LONG,  op3(CL,R,E), 0 },
-/*a6*/	{ "",      false, NONE,  0,	      0 },
-/*a7*/	{ "",      false, NONE,  0,	      0 },
+/*a6*/	{ NULL,    true,  NONE,  0,	      db_GrpC },
+/*a7*/	{ NULL,    true,  NONE,  0,	      db_GrpB },
 
 /*a8*/	{ "push",  false, NONE,  op1(Si),     0 },
 /*a9*/	{ "pop",   false, NONE,  op1(Si),     0 },
@@ -295,7 +315,7 @@ const struct inst db_inst_0fax[] = {
 /*ab*/	{ "bts",   true,  LONG,  op2(R,E),    0 },
 /*ac*/	{ "shrd",  true,  LONG,  op3(Ib,R,E), 0 },
 /*ad*/	{ "shrd",  true,  LONG,  op3(CL,R,E), 0 },
-/*ae*/	{ "fxsave",true,  LONG,  0,	      0 },
+/*ae*/	{ "",      TRUE,  RDEP,  op1(E),      db_Grp9 },
 /*af*/	{ "imul",  true,  LONG,  op2(E,R),    0 },
 };
 
@@ -311,7 +331,7 @@ const struct inst db_inst_0fbx[] = {
 
 /*b8*/	{ "",      false, NONE,  0,	      0 },
 /*b9*/	{ "",      false, NONE,  0,	      0 },
-/*ba*/	{ "",      true,  LONG,  op2(Ib, E),  db_Grp8 },
+/*ba*/	{ NULL,    true,  LONG,  op2(Ib, E),  db_Grp8 },
 /*bb*/	{ "btc",   true,  LONG,  op2(R, E),   0 },
 /*bc*/	{ "bsf",   true,  LONG,  op2(E, R),   0 },
 /*bd*/	{ "bsr",   true,  LONG,  op2(E, R),   0 },
@@ -327,16 +347,16 @@ const struct inst db_inst_0fcx[] = {
 /*c4*/	{ "",	   false, NONE,	 0,	      0 },
 /*c5*/	{ "",	   false, NONE,	 0,	      0 },
 /*c6*/	{ "",	   false, NONE,	 0,	      0 },
-/*c7*/	{ "",	   true,  NONE,	 op1(E),      db_Grp9 },
+/*c7*/	{ NULL,	   true,  NONE,	 op1(E),      db_GrpA },
 
-/*c8*/	{ "bswap", false, LONG,  op1(Ri),     0 },
-/*c9*/	{ "bswap", false, LONG,  op1(Ri),     0 },
-/*ca*/	{ "bswap", false, LONG,  op1(Ri),     0 },
-/*cb*/	{ "bswap", false, LONG,  op1(Ri),     0 },
-/*cc*/	{ "bswap", false, LONG,  op1(Ri),     0 },
-/*cd*/	{ "bswap", false, LONG,  op1(Ri),     0 },
-/*ce*/	{ "bswap", false, LONG,  op1(Ri),     0 },
-/*cf*/	{ "bswap", false, LONG,  op1(Ri),     0 },
+/*c8*/	{ "bswap", false, LONG,  op1(Ril),     0 },
+/*c9*/	{ "bswap", false, LONG,  op1(Ril),     0 },
+/*ca*/	{ "bswap", false, LONG,  op1(Ril),     0 },
+/*cb*/	{ "bswap", false, LONG,  op1(Ril),     0 },
+/*cc*/	{ "bswap", false, LONG,  op1(Ril),     0 },
+/*cd*/	{ "bswap", false, LONG,  op1(Ril),     0 },
+/*ce*/	{ "bswap", false, LONG,  op1(Ril),     0 },
+/*cf*/	{ "bswap", false, LONG,  op1(Ril),     0 },
 };
 
 const struct inst * const db_inst_0f[] = {
@@ -592,7 +612,7 @@ const struct inst db_inst_table[256] = {
 /*29*/	{ "sub",   true,  LONG,  op2(R, E),  0 },
 /*2a*/	{ "sub",   true,  BYTE,  op2(E, R),  0 },
 /*2b*/	{ "sub",   true,  LONG,  op2(E, R),  0 },
-/*2c*/	{ "sub",   false, BYTE,  op2(Is, A), 0 },
+/*2c*/	{ "sub",   false, BYTE,  op2(I, A), 0 },
 /*2d*/	{ "sub",   false, LONG,  op2(Is, A), 0 },
 /*2e*/	{ "",      false, NONE,  0,	     0 },
 /*2f*/	{ "das",   false, NONE,  0,	     0 },
@@ -687,10 +707,10 @@ const struct inst db_inst_table[256] = {
 /*7e*/	{ "jle",   false, NONE,  op1(Db),     0 },
 /*7f*/	{ "jnle",  false, NONE,  op1(Db),     0 },
 
-/*80*/  { "",	   true,  BYTE,  op2(I, E),   db_Grp1 },
-/*81*/  { "",	   true,  LONG,  op2(I, E),   db_Grp1 },
-/*82*/  { "",	   true,  BYTE,  op2(Is,E),   db_Grp1 },
-/*83*/  { "",	   true,  LONG,  op2(Ibs,E),  db_Grp1 },
+/*80*/  { NULL,	   true,  BYTE,  op2(I, E),   db_Grp1 },
+/*81*/  { NULL,	   true,  LONG,  op2(I, E),   db_Grp1 },
+/*82*/  { NULL,	   true,  BYTE,  op2(I,E),    db_Grp1 },
+/*83*/  { NULL,	   true,  LONG,  op2(Ibs,E),  db_Grp1 },
 /*84*/	{ "test",  true,  BYTE,  op2(R, E),   0 },
 /*85*/	{ "test",  true,  LONG,  op2(R, E),   0 },
 /*86*/	{ "xchg",  true,  BYTE,  op2(R, E),   0 },
@@ -759,8 +779,8 @@ const struct inst db_inst_table[256] = {
 /*be*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
 /*bf*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
 
-/*c0*/	{ "",	   true,  BYTE,  op2(Ib, E),  db_Grp2 },
-/*c1*/	{ "",	   true,  LONG,  op2(Ib, E),  db_Grp2 },
+/*c0*/	{ NULL,	   true,  BYTE,  op2(Ib, E),  db_Grp2 },
+/*c1*/	{ NULL,	   true,  LONG,  op2(Ib, E),  db_Grp2 },
 /*c2*/	{ "ret",   false, NONE,  op1(Iw),     0 },
 /*c3*/	{ "ret",   false, NONE,  0,	      0 },
 /*c4*/	{ "les",   true,  LONG,  op2(E, R),   0 },
@@ -777,13 +797,13 @@ const struct inst db_inst_table[256] = {
 /*ce*/	{ "into",  false, NONE,  0,	      0 },
 /*cf*/	{ "iret",  false, NONE,  0,	      0 },
 
-/*d0*/	{ "",	   true,  BYTE,  op2(o1, E),  db_Grp2 },
-/*d1*/	{ "",	   true,  LONG,  op2(o1, E),  db_Grp2 },
-/*d2*/	{ "",	   true,  BYTE,  op2(CL, E),  db_Grp2 },
-/*d3*/	{ "",	   true,  LONG,  op2(CL, E),  db_Grp2 },
-/*d4*/	{ "aam",   true,  NONE,  0,	      0 },
-/*d5*/	{ "aad",   true,  NONE,  0,	      0 },
-/*d6*/	{ "",      false, NONE,  0,	      0 },
+/*d0*/	{ NULL,	   true,  BYTE,  op2(o1, E),  db_Grp2 },
+/*d1*/	{ NULL,	   true,  LONG,  op2(o1, E),  db_Grp2 },
+/*d2*/	{ NULL,	   true,  BYTE,  op2(CL, E),  db_Grp2 },
+/*d3*/	{ NULL,	   true,  LONG,  op2(CL, E),  db_Grp2 },
+/*d4*/	{ "aam",   true,  NONE,  op1(Iba),    0 },
+/*d5*/	{ "aad",   true,  NONE,  op1(Iba),    0 },
+/*d6*/	{ ".byte\t0xd6",FALSE, NONE, 0,       0 },
 /*d7*/	{ "xlat",  false, BYTE,  op1(BX),     0 },
 
 /*d8*/  { "",      true,  NONE,  0,	      db_Esc8 },
@@ -828,8 +848,8 @@ const struct inst db_inst_table[256] = {
 /*fb*/	{ "sti",   false, NONE,  0,	     0 },
 /*fc*/	{ "cld",   false, NONE,  0,	     0 },
 /*fd*/	{ "std",   false, NONE,  0,	     0 },
-/*fe*/	{ "",	   true,  NONE,  0,	     db_Grp4 },
-/*ff*/	{ "",	   true,  NONE,  0,	     db_Grp5 },
+/*fe*/	{ "",	   true,  RDEP,  0,	     db_Grp4 },
+/*ff*/	{ "",	   true,  RDEP,  0,	     db_Grp5 },
 };
 
 const struct inst db_bad_inst =
@@ -923,7 +943,7 @@ db_read_address(db_addr_t loc, int short_addr, int regmodrm, struct i_addr *addr
 		switch (mod) {
 		case 0:
 			if (rm == 6) {
-				get_value_inc(disp, loc, 2, true);
+				get_value_inc(disp, loc, 2, false);
 				addrp->disp = disp;
 				addrp->base = 0;
 			} else {
@@ -937,7 +957,7 @@ db_read_address(db_addr_t loc, int short_addr, int regmodrm, struct i_addr *addr
 			addrp->base = db_index_reg_16[rm];
 			break;
 		case 2:
-			get_value_inc(disp, loc, 2, true);
+			get_value_inc(disp, loc, 2, false);
 			addrp->disp = disp;
 			addrp->base = db_index_reg_16[rm];
 			break;
@@ -1004,12 +1024,7 @@ db_print_address(const char * seg, int size, struct i_addr *addrp)
  * and return updated location.
  */
 db_addr_t
-db_disasm_esc(
-    db_addr_t	loc,
-    int		inst,
-    int		short_addr,
-    int		size,
-    const char *seg)
+db_disasm_esc(db_addr_t loc, int inst, int short_addr, int size, const char *seg)
 {
 	int		regmodrm;
 	const struct finst	*fp;
@@ -1021,6 +1036,11 @@ db_disasm_esc(
 	fp = &db_Esc_inst[inst - 0xd8][f_reg(regmodrm)];
 	mod = f_mod(regmodrm);
 	if (mod != 3) {
+		if (*fp->f_name == '\0') {
+			db_printf("<bad instruction>");
+			return (loc);
+		}
+
 		/*
 		 * Normal address modes.
 		 */
@@ -1068,13 +1088,17 @@ db_disasm_esc(
 			db_printf("%s\t%%st(%d)", name, f_rm(regmodrm));
 			break;
 		case op1(X):
-			db_printf("%s", ((const char *const*)fp->f_rrname)[f_rm(regmodrm)]);
+			name = ((const char *const*)fp->f_rrname)[f_rm(regmodrm)];
+			if (*name == '\0')
+				goto bad;
+			db_printf("%s", name);
 			break;
 		case op1(XA):
 			db_printf("%s\t%%ax",
 			    ((const char *const*)fp->f_rrname)[f_rm(regmodrm)]);
 			break;
 		default:
+		bad:
 			db_printf("<bad instruction>");
 			break;
 		}
@@ -1089,9 +1113,7 @@ db_disasm_esc(
  * next instruction.
  */
 db_addr_t
-db_disasm(
-    db_addr_t	loc,
-    bool	altfmt)
+db_disasm(db_addr_t loc, bool altfmt)
 {
 	int	inst;
 	int	size;
@@ -1208,25 +1230,40 @@ db_disasm(
 	i_size = ip->i_size;
 	i_mode = ip->i_mode;
 
-	if (ip->i_extra == (const char *)db_Grp1 ||
-	    ip->i_extra == (const char *)db_Grp2 ||
-	    ip->i_extra == (const char *)db_Grp6 ||
-	    ip->i_extra == (const char *)db_Grp7 ||
-	    ip->i_extra == (const char *)db_Grp8 ||
-	    ip->i_extra == (const char *)db_Grp9) {
+	if (i_size == RDEP) {
+		/* sub-table to handle dependency on reg from ModR/M byte */
+		ip = (const struct inst *)ip->i_extra;
+		ip = &ip[f_reg(regmodrm)];
+		i_name = ip->i_name;
+		i_mode = ip->i_mode;
+		i_size = ip->i_size;
+	} else if (i_name == NULL) {
 		i_name = ((const char *const*)ip->i_extra)[f_reg(regmodrm)];
 	} else if (ip->i_extra == (const char *)db_Grp3) {
 		ip = (const struct inst *)ip->i_extra;
 		ip = &ip[f_reg(regmodrm)];
 		i_name = ip->i_name;
 		i_mode = ip->i_mode;
-	} else if (ip->i_extra == (const char *)db_Grp4 ||
-		   ip->i_extra == (const char *)db_Grp5) {
-		ip = (const struct inst *)ip->i_extra;
-		ip = &ip[f_reg(regmodrm)];
-		i_name = ip->i_name;
-		i_mode = ip->i_mode;
-		i_size = ip->i_size;
+	}
+
+	/* ModR/M-specific operation? */
+	if ((i_mode & 0xFF) == MEx) {
+		if (f_mod(regmodrm) != 3)
+			i_mode = op1(E);
+		else {
+			/* unknown extension? */
+			if (f_rm(regmodrm) > (i_mode >> 8))
+				i_name = "";
+			else {
+				/* skip to the specific op */
+				int i = f_rm(regmodrm);
+				i_name = ip->i_extra;
+				while (i-- > 0)
+					while (*i_name++)
+						;
+			}
+			i_mode = 0;
+		}
 	}
 
 	if (i_size == SDEP) {
@@ -1267,6 +1304,9 @@ db_disasm(
 			db_printf("*");
 			db_print_address(seg, size, &address);
 			break;
+		case El:
+			db_print_address(seg, LONG, &address);
+			break;
 		case Ew:
 			db_print_address(seg, WORD, &address);
 			break;
@@ -1281,6 +1321,9 @@ db_disasm(
 			break;
 		case Ri:
 			db_printf("%s", db_reg[size][f_rm(inst)]);
+			break;
+		case Ril:
+			db_printf("%s", db_reg[LONG][f_rm(inst)]);
 			break;
 		case S:
 			db_printf("%s", db_seg_reg[f_reg(regmodrm)]);
@@ -1335,6 +1378,13 @@ db_disasm(
 			get_value_inc(imm, loc, 1, false);	/* unsigned */
 			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
+			break;
+		case Iba:
+			get_value_inc(imm, loc, 1, false);
+			if (imm != 0x0a) {
+				db_format_radix(tbuf, 24, (unsigned int)imm, true);
+				db_printf("$%s", tbuf);
+			}
 			break;
 		case Ibs:
 			get_value_inc(imm, loc, 1, true);	/* signed */
