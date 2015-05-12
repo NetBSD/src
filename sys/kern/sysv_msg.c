@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.66 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.67 2015/05/12 05:19:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,9 +50,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.66 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.67 2015/05/12 05:19:20 pgoyette Exp $");
 
-#define SYSVMSG
+#ifdef _KERNEL_OPT
+#include "opt_sysv.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
