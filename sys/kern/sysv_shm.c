@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.125 2014/05/27 21:00:46 njoly Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.126 2015/05/12 05:19:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,9 +61,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.125 2014/05/27 21:00:46 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.126 2015/05/12 05:19:20 pgoyette Exp $");
 
-#define SYSVSHM
+#ifdef _KERNEL_OPT
+#include "opt_sysv.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
