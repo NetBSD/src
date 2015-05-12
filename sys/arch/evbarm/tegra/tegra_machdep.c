@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.12 2015/05/09 18:57:30 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.13 2015/05/12 10:37:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.12 2015/05/09 18:57:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.13 2015/05/12 10:37:20 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.12 2015/05/09 18:57:30 jmcneill 
 #endif
 
 BootConfig bootconfig;
-static char bootargs[TEGRA_MAX_BOOT_STRING];
+char bootargs[TEGRA_MAX_BOOT_STRING] = "";
 char *boot_args = NULL;
 u_int uboot_args[4] = { 0 };	/* filled in by tegra_start.S (not in bss) */
 
@@ -302,14 +302,6 @@ initarm(void *arg)
 	    KERNEL_BASE_PHYS);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
 	    mapallmem_p);
-
-	if (mapallmem_p) {
-		if (uboot_args[3] < ram_size) {
-			const char * const args = (const char *)
-			    (uboot_args[3] + KERNEL_BASE_VOFFSET);
-			strlcpy(bootargs, args, sizeof(bootargs));
-		}
-	}
 
 	DPRINTF("bootargs: %s\n", bootargs);
 
