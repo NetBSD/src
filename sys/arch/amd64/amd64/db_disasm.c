@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.21 2015/05/12 19:24:57 msaitoh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.22 2015/05/12 23:16:47 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.21 2015/05/12 19:24:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.22 2015/05/12 23:16:47 christos Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>
@@ -213,23 +213,23 @@ const struct inst db_inst_0f0x[] = {
 };
 
 const struct inst db_inst_0f1x[] = {
-/*10*/	{ "",      FALSE, NONE,  0,	      0 },
-/*11*/	{ "",      FALSE, NONE,  0,	      0 },
-/*12*/	{ "",      FALSE, NONE,  0,	      0 },
-/*13*/	{ "",      FALSE, NONE,  0,	      0 },
-/*14*/	{ "",      FALSE, NONE,  0,	      0 },
-/*15*/	{ "",      FALSE, NONE,  0,	      0 },
-/*16*/	{ "",      FALSE, NONE,  0,	      0 },
-/*17*/	{ "",      FALSE, NONE,  0,	      0 },
+/*10*/	{ "",      false, NONE,  0,	      0 },
+/*11*/	{ "",      false, NONE,  0,	      0 },
+/*12*/	{ "",      false, NONE,  0,	      0 },
+/*13*/	{ "",      false, NONE,  0,	      0 },
+/*14*/	{ "",      false, NONE,  0,	      0 },
+/*15*/	{ "",      false, NONE,  0,	      0 },
+/*16*/	{ "",      false, NONE,  0,	      0 },
+/*17*/	{ "",      false, NONE,  0,	      0 },
 
-/*18*/	{ "",      FALSE, NONE,  0,	      0 },
-/*19*/	{ "",      FALSE, NONE,  0,	      0 },
-/*1a*/	{ "",      FALSE, NONE,  0,	      0 },
-/*1b*/	{ "",      FALSE, NONE,  0,	      0 },
-/*1c*/	{ "",      FALSE, NONE,  0,	      0 },
-/*1d*/	{ "",      FALSE, NONE,  0,	      0 },
-/*1e*/	{ "",      FALSE, NONE,  0,	      0 },
-/*1f*/	{ "nopl",  TRUE,  SDEP,  0,	      "nopw" },
+/*18*/	{ "",      false, NONE,  0,	      0 },
+/*19*/	{ "",      false, NONE,  0,	      0 },
+/*1a*/	{ "",      false, NONE,  0,	      0 },
+/*1b*/	{ "",      false, NONE,  0,	      0 },
+/*1c*/	{ "",      false, NONE,  0,	      0 },
+/*1d*/	{ "",      false, NONE,  0,	      0 },
+/*1e*/	{ "",      false, NONE,  0,	      0 },
+/*1f*/	{ "nopl",  true,  SDEP,  0,	      "nopw" },
 };
 
 const struct inst db_inst_0f2x[] = {
