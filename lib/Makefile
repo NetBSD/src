@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.221 2015/04/17 22:17:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.222 2015/05/12 19:43:50 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -143,13 +143,14 @@ SUBDIR+=	../external/bsd/libc++
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 .endif
+
+#==================== 2nd library dependency barrier ====================
+SUBDIR+=	.WAIT
+
 SANITIZER_DIR=../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libasan
 .if exists(${SANITIZER_DIR})
 SUBDIR+=	${SANITIZER_DIR}
 .endif
-
-#==================== 2nd library dependency barrier ====================
-SUBDIR+=	.WAIT
 
 SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz
 
