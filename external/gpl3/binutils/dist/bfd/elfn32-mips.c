@@ -3377,6 +3377,9 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define elf_backend_write_section	_bfd_mips_elf_write_section
 #define elf_backend_mips_irix_compat	elf_n32_mips_irix_compat
 #define elf_backend_mips_rtype_to_howto	mips_elf_n32_rtype_to_howto
+
+#define bfd_elf32_bfd_is_local_label_name \
+					mips_elf_n32_is_local_label_name
 #define bfd_elf32_bfd_is_target_special_symbol \
 					_bfd_mips_elf_is_target_special_symbol
 #define bfd_elf32_find_nearest_line	_bfd_mips_elf_find_nearest_line
