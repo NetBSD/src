@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc.powerpc,v 1.8 2015/05/10 07:50:31 pgoyette Exp $
+# $NetBSD: md.evbppc.powerpc,v 1.9 2015/05/13 02:17:13 pgoyette Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -228,6 +228,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sysmon_taskq/sysmon_taskq.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sysmon_wdog			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sysmon_wdog/sysmon_wdog.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/sysv_ipc			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/sysv_ipc/sysv_ipc.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sysvbfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/tmpfs				base-kernel-modules	kmod,compatmodules
@@ -483,6 +485,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/sysmon_taskq/sysmon_taskq.kmod base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/sysmon_wdog			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/sysmon_wdog/sysmon_wdog.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/sysv_ipc			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/sysv_ipc/sysv_ipc.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/sysvbfs			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/tmpfs				base-kernel-modules	kmod,compatmodules
