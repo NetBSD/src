@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.1 2015/05/13 07:07:36 pgoyette Exp $
+	$NetBSD: README,v 1.2 2015/05/13 22:41:48 pgoyette Exp $
 
                            Kernel Developer's Manual
 
@@ -10,7 +10,7 @@ DESCRIPTION
      * properties      - handle incoming properties during the module load
      * readhappy       - basic implementation of read(9) with happy numbers
      * ping            - basic ioctl(9)
-     * hellolua        - the simplest `hello world' Lua module
+     * luahello        - the simplest `hello world' Lua module
 
      To build the examples you need a local copy of NetBSD sources. You also
      need the comp set with toolchain. To build the module just enter a
@@ -52,7 +52,7 @@ HISTORY
      Husemann, Adam Hamsik, John Nemeth and Mindaugas Rasiukevicius.
 
      This document and additional modules (hello, readhappy, properties,
-     and ping, hellolua) first appeared in NetBSD 8.0 and they were written
+     ping, and luahello) first appeared in NetBSD 8.0; they were written
      by Kamil Rytarowski.
 
 AUTHORS
