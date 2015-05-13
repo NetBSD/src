@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.290 2015/05/11 11:02:42 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.291 2015/05/13 13:35:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22983,3 +22983,16 @@ sys/dev/cadence/if_cemacvar.h			1.1
 
 	Initial Zynq (Xilinx) support.
 	[nonaka, ticket #751]
+
+lib/libedit/Makefile				1.53  
+lib/libedit/chartype.h				1.13
+lib/libedit/editline.3				1.83-1.84
+lib/libedit/editrc.5				1.28-1.29
+lib/libedit/eln.c				1.18
+lib/libedit/filecomplete.c			1.33-1.34
+lib/libedit/readline.c				1.112-1.115
+
+	Man page improvements, fix overlapping strcpy,
+	improve readline compatibility, clang build fix.
+	[christos, #753]
+
