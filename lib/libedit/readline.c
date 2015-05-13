@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.111 2014/07/06 18:09:04 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.111.2.1 2015/05/13 13:33:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.111 2014/07/06 18:09:04 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.111.2.1 2015/05/13 13:33:55 martin Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -338,7 +338,7 @@ rl_initialize(void)
 	el_set(e, EL_SIGNAL, rl_catch_signals);
 
 	/* set default mode to "emacs"-style and read setting afterwards */
-	/* so this can be overriden */
+	/* so this can be overridden */
 	el_set(e, EL_EDITOR, "emacs");
 	if (rl_terminal_name != NULL)
 		el_set(e, EL_TERMINAL, rl_terminal_name);
@@ -362,6 +362,37 @@ rl_initialize(void)
 	    _el_rl_tstp);
 	el_set(e, EL_BIND, "^Z", "rl_tstp", NULL);
 		
+	/*
+	 * Set some readline compatible key-bindings.
+	 */
+	el_set(e, EL_BIND, "^R", "em-inc-search-prev", NULL);
+
+	/*
+	 * Allow the use of Home/End keys.
+	 */
+	el_set(e, EL_BIND, "\\e[1~", "ed-move-to-beg", NULL);
+	el_set(e, EL_BIND, "\\e[4~", "ed-move-to-end", NULL);
+	el_set(e, EL_BIND, "\\e[7~", "ed-move-to-beg", NULL);
+	el_set(e, EL_BIND, "\\e[8~", "ed-move-to-end", NULL);
+	el_set(e, EL_BIND, "\\e[H", "ed-move-to-beg", NULL);
+	el_set(e, EL_BIND, "\\e[F", "ed-move-to-end", NULL);
+
+	/*
+	 * Allow the use of the Delete/Insert keys.
+	 */
+	el_set(e, EL_BIND, "\\e[3~", "ed-delete-next-char", NULL);
+	el_set(e, EL_BIND, "\\e[2~", "ed-quoted-insert", NULL);
+
+	/*
+	 * Ctrl-left-arrow and Ctrl-right-arrow for word moving.
+	 */
+	el_set(e, EL_BIND, "\\e[1;5C", "em-next-word", NULL);
+	el_set(e, EL_BIND, "\\e[1;5D", "ed-prev-word", NULL);
+	el_set(e, EL_BIND, "\\e[5C", "em-next-word", NULL);
+	el_set(e, EL_BIND, "\\e[5D", "ed-prev-word", NULL);
+	el_set(e, EL_BIND, "\\e\\e[C", "em-next-word", NULL);
+	el_set(e, EL_BIND, "\\e\\e[D", "ed-prev-word", NULL);
+
 	/* read settings from configuration file */
 	el_source(e, NULL);
 
@@ -634,7 +665,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
  * returns 0 if data was not modified, 1 if it was and 2 if the string
  * should be only printed and not executed; in case of error,
  * returns -1 and *result points to NULL
- * it's callers responsibility to free() string returned in *result
+ * it's the caller's responsibility to free() the string returned in *result
  */
 static int
 _history_expand_command(const char *command, size_t offs, size_t cmdlen,
@@ -948,7 +979,8 @@ loop:
 		for (; str[j]; j++) {
 			if (str[j] == '\\' &&
 			    str[j + 1] == history_expansion_char) {
-				(void)strcpy(&str[j], &str[j + 1]);
+				len = strlen(&str[j + 1]) + 1;
+				memmove(&str[j], &str[j + 1], len);
 				continue;
 			}
 			if (!loop_again) {
@@ -1694,7 +1726,7 @@ filename_completion_function(const char *name, int state)
  * which starts with supplied text
  * text contains a partial username preceded by random character
  * (usually '~'); state resets search from start (??? should we do that anyway)
- * it's callers responsibility to free returned value
+ * it's the caller's responsibility to free the returned value
  */
 char *
 username_completion_function(const char *text, int state)
