@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.619 2015/05/11 17:22:37 christos Exp $
+# $NetBSD: mi,v 1.620 2015/05/13 10:04:44 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3164,6 +3164,7 @@
 ./usr/tests/net/net				tests-net-tests
 ./usr/tests/net/net/Atffile			tests-net-tests		atf
 ./usr/tests/net/net/Kyuafile			tests-net-tests		atf,kyua
+./usr/tests/net/net/t_forwarding		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_pktinfo		tests-net-tests		atf
 ./usr/tests/net/net/t_raw		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_tcp		tests-net-tests		atf

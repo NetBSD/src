@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2014/06/10 04:28:40 he Exp $
+# $NetBSD: Makefile,v 1.9 2015/05/13 10:04:44 ozaki-r Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,5 +15,7 @@ TESTS_C+=	t_raw
 
 LDADD.t_raw+=	-lrumpnet_local -lrumpnet_netinet -lrumpnet_net
 LDADD.t_raw+=	-lrumpnet -lrumpvfs -lrump -lrumpuser -lrump -lpthread
+
+TESTS_SH=	t_forwarding
 
 .include <bsd.test.mk>
