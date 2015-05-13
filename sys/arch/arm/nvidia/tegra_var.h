@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.14 2015/05/10 23:50:21 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.15 2015/05/13 11:06:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -72,11 +72,13 @@ u_int	tegra_chip_id(void);
 const char *tegra_chip_name(void);
 void	tegra_bootstrap(void);
 void	tegra_dma_bootstrap(psize_t);
+void	tegra_cpuinit(void);
 
 u_int	tegra_car_osc_rate(void);
 u_int	tegra_car_pllc_rate(void);
 u_int	tegra_car_plle_rate(void);
 u_int	tegra_car_pllx_rate(void);
+void	tegra_car_pllx_set_rate(u_int, u_int, u_int);
 u_int	tegra_car_pllu_rate(void);
 u_int	tegra_car_pllp0_rate(void);
 u_int	tegra_car_uart_rate(u_int);
@@ -121,7 +123,17 @@ void	tegra_pmc_power(u_int, bool);
 
 psize_t	tegra_mc_memsize(void);
 
+#define TEGRA_CPUFREQ_MAX	16
+struct tegra_cpufreq_func {
+	u_int (*set_rate)(u_int);
+	u_int (*get_rate)(void);
+	size_t (*get_available)(u_int *, size_t);
+};
+void	tegra_cpufreq_register(const struct tegra_cpufreq_func *);
+void	tegra_cpufreq_init(void);
+
 #if defined(SOC_TEGRA124)
+void	tegra124_cpuinit(void);
 void	tegra124_mpinit(void);
 #endif
 

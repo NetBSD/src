@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.9 2015/05/10 23:50:21 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.10 2015/05/13 11:06:13 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -14,6 +14,7 @@ file	arch/arm/arm32/armv7_generic_space.c
 file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/nvidia/tegra_soc.c
+file	arch/arm/nvidia/tegra_cpufreq.c
 file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
 
 # On-board I/O
@@ -88,6 +89,9 @@ defparam opt_tegra.h			CONMODE
 
 # Memory parameters
 defparam opt_tegra.h			MEMSIZE
+
+# CPU parameters
+defparam opt_tegra.h			CPUFREQ_BOOT
 
 # SOC parameters
 defflag	opt_tegra.h			SOC_TEGRAK1
