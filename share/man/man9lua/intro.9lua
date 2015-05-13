@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.9lua,v 1.4 2014/01/06 13:03:01 wiz Exp $
+.\"	$NetBSD: intro.9lua,v 1.5 2015/05/13 22:31:16 pgoyette Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
 .\"
@@ -36,6 +36,10 @@
 .Sh DESCRIPTION
 This section provides an overview of the Lua kernel bindings, their
 functions, error returns and other common definitions and concepts.
+.Sh EXAMPLES
+An example module is available in the
+.Pa src/sys/modules/examples/
+directory hierarchy.
 .Sh SEE ALSO
 .Xr lua 1 ,
 .Xr luac 1 ,
