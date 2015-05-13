@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_chk.c,v 1.6 2015/05/09 15:42:21 christos Exp $	*/
+/*	$NetBSD: memcpy_chk.c,v 1.7 2015/05/13 19:57:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: memcpy_chk.c,v 1.6 2015/05/09 15:42:21 christos Exp $");
+__RCSID("$NetBSD: memcpy_chk.c,v 1.7 2015/05/13 19:57:16 joerg Exp $");
 
 /*LINTLIBRARY*/
 
@@ -47,7 +47,7 @@ __memcpy_chk(void * __restrict dst, const void * __restrict src, size_t len,
 	if (len > slen)
 		__chk_fail();
 
-	if (__ssp_overlap(src, dst, len))
+	if (__ssp_overlap((const char *)src, (const char *)dst, len))
 		__chk_fail();
 
 	return memcpy(dst, src, len);
