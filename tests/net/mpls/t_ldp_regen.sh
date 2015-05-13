@@ -1,4 +1,4 @@
-# $NetBSD: t_ldp_regen.sh,v 1.5 2015/05/04 10:57:17 martin Exp $
+# $NetBSD: t_ldp_regen.sh,v 1.6 2015/05/13 12:01:24 martin Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -57,6 +57,8 @@ newaddr_and_ping() {
 	# Add new address on R4
 	RUMP_SERVER=${RUMP_SERVER4} atf_check -s exit:0 \
 		rump.ifconfig shmif1 10.0.5.1/24 alias
+	RUMP_SERVER=${RUMP_SERVER4} atf_check -s exit:0 \
+		rump.ifconfig -w 60
 
 	# Now ldpd on R5 should take notice of the new route and announce it
 	# to R4's ldpd. ldpd on R4 should verify that the next hop
@@ -144,6 +146,8 @@ create_servers() {
 
 wait_ldp_ok() {
 
+	RUMP_SERVER=${RUMP_SERVER1} atf_check -s exit:0 -o ignore -e ignore \
+		rump.ifconfig -w 60
 	RUMP_SERVER=${RUMP_SERVER1} atf_check -s exit:0 -o ignore -e ignore \
 		rump.ping -o -w 60 10.0.4.1
 }
