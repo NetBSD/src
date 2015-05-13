@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.13 2015/05/12 10:37:20 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.14 2015/05/13 11:07:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.13 2015/05/12 10:37:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.14 2015/05/13 11:07:02 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -371,6 +371,10 @@ tegra_device_register(device_t self, void *aux)
 	if (device_is_a(self, "armgtmr")) {
                 prop_dictionary_set_uint32(dict, "frequency", TEGRA_REF_FREQ);
 		return;
+	}
+
+	if (device_is_a(self, "cpu") && device_unit(self) == 0) {
+		tegra_cpuinit();
 	}
 
 #ifdef BOARD_JETSONTK1
