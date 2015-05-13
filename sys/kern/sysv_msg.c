@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.67 2015/05/12 05:19:20 pgoyette Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.68 2015/05/13 01:00:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.67 2015/05/12 05:19:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.68 2015/05/13 01:00:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -88,6 +88,8 @@ static bool	msg_realloc_state;
 static kcondvar_t msg_realloc_cv;
 
 static void msg_freehdr(struct __msg *);
+
+extern int kern_has_sysvmsg;
 
 void
 msginit(void)
@@ -156,6 +158,8 @@ msginit(void)
 	mutex_init(&msgmutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&msg_realloc_cv, "msgrealc");
 	msg_realloc_state = false;
+
+	kern_has_sysvmsg = 1;
 
 	sysvipcinit();
 }
