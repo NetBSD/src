@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.121 2014/07/25 08:20:52 dholland Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.121.2.1 2015/05/13 19:16:14 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.121 2014/07/25 08:20:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.121.2.1 2015/05/13 19:16:14 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,6 +295,8 @@ bad:
 good:
 	KASSERT(ix != -1);
 	error = vcache_get(dvp->v_mount, &ix, sizeof(ix), vpp);
+	if (error == 0 && ix == FD_CTTY)
+		(*vpp)->v_type = VCHR;
 	return error;
 }
 
