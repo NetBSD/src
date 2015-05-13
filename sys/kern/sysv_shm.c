@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.127 2015/05/13 01:00:16 pgoyette Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.128 2015/05/13 01:16:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.127 2015/05/13 01:00:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.128 2015/05/13 01:16:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -991,6 +991,39 @@ shminit(void)
 	kern_has_sysvshm = 1;
 
 	sysvipcinit();
+}
+
+int
+shmfini(void)
+{
+	size_t sz;
+	int i;
+	vaddr_t v = (vaddr_t)shmsegs;
+
+	mutex_enter(&shm_lock);
+	if (shm_nused) {
+		mutex_exit(&shm_lock);
+		return 1;
+	}
+
+	/* Destroy all condvars */
+	for (i = 0; i < shminfo.shmmni; i++)
+		cv_destroy(&shm_cv[i]);
+	cv_destroy(&shm_realloc_cv);
+
+	/* Free the allocated/wired memory */
+	sz = ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)) +
+	    ALIGN(shminfo.shmmni * sizeof(kcondvar_t));
+	sz = round_page(sz);
+	uvm_km_free(kernel_map, v, sz, UVM_KMF_WIRED);
+
+	/* Release and destroy our mutex */
+	mutex_exit(&shm_lock);
+	mutex_destroy(&shm_lock);
+
+	kern_has_sysvshm = 0;
+
+	return 0;
 }
 
 static int
