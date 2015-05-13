@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.152 2015/05/10 07:41:16 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.153 2015/05/13 02:15:34 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -96,6 +96,7 @@ SUBDIR+=	sysmon_power
 SUBDIR+=	sysmon_taskq
 SUBDIR+=	sysmon_wdog
 SUBDIR+=	sysvbfs
+SUBDIR+=	sysv_ipc
 SUBDIR+=	suser
 SUBDIR+=	swcrypto
 SUBDIR+=	swsensor
