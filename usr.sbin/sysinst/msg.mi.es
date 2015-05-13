@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.2.4.1 2015/01/20 09:42:31 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.2.4.2 2015/05/13 17:04:27 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -972,7 +972,7 @@ message Abandon {Abandonar instalación}
 message Abort_fetch {Abortar lectura}
 message Device {Dispositivo}
 message File_system {Sistema de archivos}
-message Select_IPv6_DNS_server {  Seleccione servidor DNS de IPv6}
+message Select_DNS_server {  Seleccione servidor DNS}
 message other {otro }
 message Perform_IPv6_autoconfiguration {¿Realizar autoconfiguración IPv6?}
 message Perform_DHCP_autoconfiguration {¿Realizar autoconfiguración DHCP ?}
