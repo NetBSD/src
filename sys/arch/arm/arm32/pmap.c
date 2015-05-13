@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.321 2015/05/11 22:28:22 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.322 2015/05/13 15:33:47 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.321 2015/05/11 22:28:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322 2015/05/13 15:33:47 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -1569,7 +1569,7 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 		    | L1_C_DOM(pmap_domain(pm));
 		KASSERT(*pdep == 0);
 		l1pte_setone(pdep, npde);
-		PTE_SYNC(pdep);
+		PDE_SYNC(pdep);
 #endif
 	}
 
@@ -3359,7 +3359,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				    | L1_C_DOM(pmap_domain(pm));
 				if (*pdep != pde) {
 					l1pte_setone(pdep, pde);
-					PTE_SYNC(pdep);
+					PDE_SYNC(pdep);
 				}
 			}
 		}
@@ -4546,7 +4546,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	pd_entry_t pde = L1_C_PROTO | l2b->l2b_pa | L1_C_DOM(pmap_domain(pm));
 	if (*pdep != pde) {
 		l1pte_setone(pdep, pde);
-		PTE_SYNC(pdep);
+		PDE_SYNC(pdep);
 		rv = 1;
 		PMAPCOUNT(fixup_pdes);
 	}
