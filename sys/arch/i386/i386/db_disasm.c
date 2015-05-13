@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.46 2015/05/12 19:24:57 msaitoh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.47 2015/05/13 02:37:41 msaitoh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.46 2015/05/12 19:24:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.47 2015/05/13 02:37:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -132,14 +132,14 @@ const char * const db_Grp6[] = {
 };
 
 struct inst db_Grp7[] = {
-	{ "sgdt",   FALSE, NONE, op1(E),     0 },
-	{ "sidt",   FALSE, NONE, op2(MEx,4), "monitor\0mwait\0clac\0stac"},
-	{ "lgdt",   FALSE, NONE, op2(MEx,2), "xgetbv\0xsetbv" },
-	{ "lidt",   FALSE, NONE, op1(E),     0 },
-	{ "smsw",   FALSE, NONE, op1(E),     0 },
-	{ "",       FALSE, NONE, 0,          0 },
-	{ "lmsw",   FALSE, NONE, op1(E),     0 },
-	{ "invlpg", FALSE, NONE, op2(MEx,2), "swapgs\0rdtscp" },
+	{ "sgdt",   false, NONE, op1(E),     0 },
+	{ "sidt",   false, NONE, op2(MEx,4), "monitor\0mwait\0clac\0stac"},
+	{ "lgdt",   false, NONE, op2(MEx,2), "xgetbv\0xsetbv" },
+	{ "lidt",   false, NONE, op1(E),     0 },
+	{ "smsw",   false, NONE, op1(E),     0 },
+	{ "",       false, NONE, 0,          0 },
+	{ "lmsw",   false, NONE, op1(E),     0 },
+	{ "invlpg", false, NONE, op2(MEx,2), "swapgs\0rdtscp" },
 };
 
 const char * const db_Grp8[] = {
@@ -154,14 +154,14 @@ const char * const db_Grp8[] = {
 };
 
 struct inst db_Grp9[] = {
-	{ "fxsave",   FALSE, NONE, op1(E),     0 },
-	{ "fxrstor",  FALSE, NONE, op1(E),     0 },
-	{ "ldmxcsr",  FALSE, NONE, op1(E),     0 },
-	{ "stmxcsr",  FALSE, NONE, op1(E),     0 },
-	{ "xsave",    FALSE, NONE, op1(E),     0 },
-	{ "xrstor",   FALSE, NONE, op2(MEx,1), "lfence" },
-	{ "xsaveopt", FALSE, NONE, op2(MEx,1), "mfence" },
-	{ "clflush",  FALSE, NONE, op2(MEx,1), "sfence" },
+	{ "fxsave",   false, NONE, op1(E),     0 },
+	{ "fxrstor",  false, NONE, op1(E),     0 },
+	{ "ldmxcsr",  false, NONE, op1(E),     0 },
+	{ "stmxcsr",  false, NONE, op1(E),     0 },
+	{ "xsave",    false, NONE, op1(E),     0 },
+	{ "xrstor",   false, NONE, op2(MEx,1), "lfence" },
+	{ "xsaveopt", false, NONE, op2(MEx,1), "mfence" },
+	{ "clflush",  false, NONE, op2(MEx,1), "sfence" },
 };
 
 const char * db_GrpA[] = {
@@ -315,7 +315,7 @@ const struct inst db_inst_0fax[] = {
 /*ab*/	{ "bts",   true,  LONG,  op2(R,E),    0 },
 /*ac*/	{ "shrd",  true,  LONG,  op3(Ib,R,E), 0 },
 /*ad*/	{ "shrd",  true,  LONG,  op3(CL,R,E), 0 },
-/*ae*/	{ "",      TRUE,  RDEP,  op1(E),      db_Grp9 },
+/*ae*/	{ "",      true,  RDEP,  op1(E),      db_Grp9 },
 /*af*/	{ "imul",  true,  LONG,  op2(E,R),    0 },
 };
 
@@ -803,7 +803,7 @@ const struct inst db_inst_table[256] = {
 /*d3*/	{ NULL,	   true,  LONG,  op2(CL, E),  db_Grp2 },
 /*d4*/	{ "aam",   true,  NONE,  op1(Iba),    0 },
 /*d5*/	{ "aad",   true,  NONE,  op1(Iba),    0 },
-/*d6*/	{ ".byte\t0xd6",FALSE, NONE, 0,       0 },
+/*d6*/	{ ".byte\t0xd6",false, NONE, 0,       0 },
 /*d7*/	{ "xlat",  false, BYTE,  op1(BX),     0 },
 
 /*d8*/  { "",      true,  NONE,  0,	      db_Esc8 },
