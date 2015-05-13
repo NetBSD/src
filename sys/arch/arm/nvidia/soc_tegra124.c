@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.2 2015/04/26 22:04:28 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.3 2015/05/13 11:06:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.2 2015/04/26 22:04:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.3 2015/05/13 11:06:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,80 @@ __KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.2 2015/04/26 22:04:28 jmcneill Ex
 #include <arm/nvidia/tegra_var.h>
 
 #define EVP_RESET_VECTOR_0_REG	0x100
+
+static u_int	tegra124_cpufreq_set_rate(u_int);
+static u_int	tegra124_cpufreq_get_rate(void);
+static size_t	tegra124_cpufreq_get_available(u_int *, size_t);
+
+static const struct tegra_cpufreq_func tegra124_cpufreq_func = {
+	.set_rate = tegra124_cpufreq_set_rate,
+	.get_rate = tegra124_cpufreq_get_rate,
+	.get_available = tegra124_cpufreq_get_available,
+};
+
+static struct tegra124_cpufreq_rate {
+	u_int rate;
+	u_int divm;
+	u_int divn;
+	u_int divp;
+} tegra124_cpufreq_rates[] = {
+	{ 2292, 1, 191, 0 },
+	{ 2100, 1, 175, 0 },
+	{ 1896, 1, 158, 0 },
+	{ 1692, 1, 141, 0 },
+	{ 1500, 1, 125, 0 },
+	{ 1296, 1, 108, 0 },
+	{ 1092, 1, 91, 0 },
+	{ 900, 1, 75, 0 },
+	{ 696, 1, 58, 0 }
+};
+
+void
+tegra124_cpuinit(void)
+{
+	tegra_cpufreq_register(&tegra124_cpufreq_func);
+}
+
+static u_int
+tegra124_cpufreq_set_rate(u_int rate)
+{
+	const u_int nrates = __arraycount(tegra124_cpufreq_rates);
+	const struct tegra124_cpufreq_rate *r = NULL;
+
+	for (int i = 0; i < nrates; i++) {
+		if (tegra124_cpufreq_rates[i].rate == rate) {
+			r = &tegra124_cpufreq_rates[i];
+			break;
+		}
+	}
+	if (r == NULL)
+		return EINVAL;
+
+	tegra_car_pllx_set_rate(r->divm, r->divn, r->divp);
+
+	return 0;
+}
+
+static u_int
+tegra124_cpufreq_get_rate(void)
+{
+	return tegra_car_pllx_rate() / 1000000;
+}
+
+static size_t
+tegra124_cpufreq_get_available(u_int *pavail, size_t maxavail)
+{
+	const u_int nrates = __arraycount(tegra124_cpufreq_rates);
+	u_int n;
+
+	KASSERT(nrates <= maxavail);
+
+	for (n = 0; n < nrates; n++) {
+		pavail[n] = tegra124_cpufreq_rates[n].rate;
+	}
+
+	return nrates;
+}
 
 void
 tegra124_mpinit(void)

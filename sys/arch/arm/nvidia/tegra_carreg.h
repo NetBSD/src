@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_carreg.h,v 1.11 2015/05/10 23:50:21 jmcneill Exp $ */
+/* $NetBSD: tegra_carreg.h,v 1.12 2015/05/13 11:06:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -88,6 +88,10 @@
 #define CAR_PLLX_BASE_DIVM		__BITS(7,0)
 
 #define CAR_PLLX_MISC_REG	0xe4
+#define CAR_PLLX_MISC_FO_LP_DISABLE	__BIT(29)
+#define CAR_PLLX_MISC_FO_G_DISABLE	__BIT(28)
+#define CAR_PLLX_MISC_PTS		__BITS(23,22)
+#define CAR_PLLX_MISC_LOCK_ENABLE	__BIT(18)
 
 #define CAR_PLLE_BASE_REG	0xe8
 #define CAR_PLLE_BASE_ENABLE		__BIT(30)
@@ -295,6 +299,14 @@
 #define CAR_DEV_X_CAM_MCLK2		__BIT(5)
 #define CAR_DEV_X_CAM_MCLK		__BIT(4)
 #define CAR_DEV_X_SPARE			__BIT(0)
+
+#define CAR_CCLKG_BURST_POLICY_REG	0x368
+#define CAR_CCLKG_BURST_POLICY_CPU_STATE	__BITS(31,28)
+#define CAR_CCLKG_BURST_POLICY_CPU_STATE_IDLE			1
+#define CAR_CCLKG_BURST_POLICY_CPU_STATE_RUN			2
+#define CAR_CCLKG_BURST_POLICY_CWAKEUP_IDLE_SOURCE __BITS(3,0)
+#define CAR_CCLKG_BURST_POLICY_CWAKEUP_SOURCE_CLKM		0
+#define CAR_CCLKG_BURST_POLICY_CWAKEUP_SOURCE_PLLX_OUT0_LJ	8
 
 #define CAR_UTMIP_PLL_CFG0_REG		0x480
 
