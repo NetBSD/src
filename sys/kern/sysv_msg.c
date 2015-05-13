@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.68 2015/05/13 01:00:16 pgoyette Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.69 2015/05/13 01:16:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.68 2015/05/13 01:00:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.69 2015/05/13 01:16:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -162,6 +162,40 @@ msginit(void)
 	kern_has_sysvmsg = 1;
 
 	sysvipcinit();
+}
+
+int
+msgfini(void)
+{
+	int i, sz;
+	vaddr_t v = (vaddr_t)msgpool;
+
+	mutex_enter(&msgmutex);
+	for (i = 0; i < msginfo.msgmni; i++) {
+		if (msqs[i].msq_u.msg_qbytes != 0) {
+			mutex_exit(&msgmutex);
+			return 1; /* queue not available, prevent unload! */
+		}
+	}
+/*
+ * Destroy all condvars and free the memory we're using
+ */
+	for (i = 0; i < msginfo.msgmni; i++) {
+		cv_destroy(&msqs[i].msq_cv);
+	}
+	sz = ALIGN(msginfo.msgmax) +
+	    ALIGN(msginfo.msgseg * sizeof(struct msgmap)) +
+	    ALIGN(msginfo.msgtql * sizeof(struct __msg)) +
+	    ALIGN(msginfo.msgmni * sizeof(kmsq_t));
+	sz = round_page(sz);
+	uvm_km_free(kernel_map, v, sz, UVM_KMF_WIRED);
+
+	mutex_exit(&msgmutex);
+	mutex_destroy(&msgmutex);
+
+	kern_has_sysvmsg = 0;
+
+	return 0;
 }
 
 static int
