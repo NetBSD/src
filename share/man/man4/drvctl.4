@@ -1,4 +1,4 @@
-.\"        $NetBSD: drvctl.4,v 1.1 2015/05/13 07:28:49 mlelstv Exp $
+.\"        $NetBSD: drvctl.4,v 1.2 2015/05/13 09:15:21 wiz Exp $
 .\"
 .\" Copyright (c) 2015 Michael van Elst
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 The
 .Nm
 driver allows to control some
-.Xr autoconfig 9
+.Xr autoconf 9
 operations from userland through the
 .Pa /dev/drvctl
 device and the
@@ -124,7 +124,7 @@ Send a command formatted as a property list.
 The property list includes all arguments like the driver name,
 the result is again a property list.
 Currently the only supported command is "get-properties",
-the property list is contructed like:
+the property list is constructed like:
 .Bd -literal -offset indent
 const char *device = "sd0";
 const char *command = "get-properties";
@@ -182,7 +182,7 @@ otherwise it waits for the next event.
 All names used in the ioctl arguments are zero-terminated strings.
 A driver name is the name of a driver instance with the appended
 unit number like
-.Dv sd0, atabus3, ...
+.Dv sd0 , atabus3 , ...
 .Sh FILES
 .Bl -tag
 .It Pa /dev/drvctl
@@ -191,10 +191,10 @@ access device
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr proplib 3 ,
 .Xr prop_send_ioctl 3 ,
-.Xr drvctl 8 ,
+.Xr proplib 3 ,
 .Xr devpubd 8 ,
+.Xr drvctl 8 ,
 .Xr autoconf 9
 .Sh HISTORY
 The
