@@ -1,4 +1,4 @@
-#	$NetBSD: luahello.lua,v 1.1 2015/05/13 07:07:36 pgoyette Exp $
+#	$NetBSD: luahello.lua,v 1.2 2015/05/13 22:37:53 pgoyette Exp $
 #
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #    luactl require state1 systm
 #
 # 4. Load our code in state1
-#    luactl load state1 ./hellolua.lua
+#    luactl load state1 ./luahello.lua
 #
 # NB. The path with our code must contain at least single '/' character
 
