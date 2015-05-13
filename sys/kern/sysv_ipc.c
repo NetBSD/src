@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.26 2015/05/10 07:41:15 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.27 2015/05/13 01:23:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.26 2015/05/10 07:41:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.27 2015/05/13 01:23:10 pgoyette Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -149,6 +149,14 @@ ipcperm(kauth_cred_t cred, struct ipc_perm *perm, int mode)
 		error = EACCES;
 
 	return error;
+}
+
+void
+sysvipcfini(void)
+{
+
+	KASSERT(sysvipc_listener != NULL);
+	kauth_unlisten_scope(sysvipc_listener);
 }
 
 void

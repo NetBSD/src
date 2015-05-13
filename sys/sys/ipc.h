@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.34 2015/05/10 07:41:16 pgoyette Exp $	*/
+/*	$NetBSD: ipc.h,v 1.35 2015/05/13 01:23:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -115,6 +115,7 @@ struct kauth_cred;
 int	ipcperm(struct kauth_cred *, struct ipc_perm *, int);
 
 void	sysvipcinit(void);
+void	sysvipcfini(void);
 
 /*
  * sysctl helper routine for kern.ipc.sysvipc_info subtree.
