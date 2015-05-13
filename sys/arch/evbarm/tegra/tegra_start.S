@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_start.S,v 1.4 2015/05/12 10:37:20 jmcneill Exp $ */
+/* $NetBSD: tegra_start.S,v 1.5 2015/05/13 11:21:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <arm/nvidia/tegra_reg.h>
 #include <evbarm/tegra/platform.h>  
 
-RCSID("$NetBSD: tegra_start.S,v 1.4 2015/05/12 10:37:20 jmcneill Exp $")
+RCSID("$NetBSD: tegra_start.S,v 1.5 2015/05/13 11:21:04 skrll Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -116,10 +116,6 @@ _C_LABEL(tegra_start):
 	teq	r0, #0
 	bne	2b
 1:
-
-        /*
-         * Turn on the SMP bit
-         */
 
 	/*
 	 * Turn on the SMP bit
