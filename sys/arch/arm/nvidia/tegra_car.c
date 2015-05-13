@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.10 2015/05/10 23:56:21 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.11 2015/05/13 11:06:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.10 2015/05/10 23:56:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.11 2015/05/13 11:06:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -117,7 +117,6 @@ tegra_car_pll_rate(u_int base_reg, u_int divm_mask, u_int divn_mask,
 
 	tegra_car_get_bs(&bst, &bsh);
 
-	rate = tegra_car_osc_rate();	
 	const uint32_t base = bus_space_read_4(bst, bsh, base_reg);
 	const u_int divm = __SHIFTOUT(base, divm_mask);
 	const u_int divn = __SHIFTOUT(base, divn_mask);
@@ -126,6 +125,50 @@ tegra_car_pll_rate(u_int base_reg, u_int divm_mask, u_int divn_mask,
 	rate = (uint64_t)tegra_car_osc_rate() * divn;
 
 	return rate / (divm << divp);
+}
+
+void
+tegra_car_pllx_set_rate(u_int divm, u_int divn, u_int divp)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	uint32_t base, bp;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	bp = bus_space_read_4(bst, bsh, CAR_CCLKG_BURST_POLICY_REG);
+	bp &= ~CAR_CCLKG_BURST_POLICY_CPU_STATE;
+	bp |= __SHIFTIN(CAR_CCLKG_BURST_POLICY_CPU_STATE_IDLE,
+			CAR_CCLKG_BURST_POLICY_CPU_STATE);
+	bp &= ~CAR_CCLKG_BURST_POLICY_CWAKEUP_IDLE_SOURCE;
+	bp |= __SHIFTIN(CAR_CCLKG_BURST_POLICY_CWAKEUP_SOURCE_CLKM,
+			CAR_CCLKG_BURST_POLICY_CWAKEUP_IDLE_SOURCE);
+	bus_space_write_4(bst, bsh, CAR_CCLKG_BURST_POLICY_REG, bp);
+
+	base = bus_space_read_4(bst, bsh, CAR_PLLX_BASE_REG);
+	base &= ~CAR_PLLX_BASE_DIVM;
+	base &= ~CAR_PLLX_BASE_DIVN;
+	base &= ~CAR_PLLX_BASE_DIVP;
+	base |= __SHIFTIN(divm, CAR_PLLX_BASE_DIVM);
+	base |= __SHIFTIN(divn, CAR_PLLX_BASE_DIVN);
+	base |= __SHIFTIN(divp, CAR_PLLX_BASE_DIVP);
+	bus_space_write_4(bst, bsh, CAR_PLLX_BASE_REG, base);
+
+	tegra_reg_set_clear(bst, bsh, CAR_PLLX_MISC_REG,
+	    CAR_PLLX_MISC_LOCK_ENABLE, 0);
+	do {
+		delay(2);
+		base = bus_space_read_4(bst, bsh, CAR_PLLX_BASE_REG);
+	} while ((base & CAR_PLLX_BASE_LOCK) == 0);
+	delay(100);
+
+	bp &= ~CAR_CCLKG_BURST_POLICY_CPU_STATE;
+	bp |= __SHIFTIN(CAR_CCLKG_BURST_POLICY_CPU_STATE_RUN,
+			CAR_CCLKG_BURST_POLICY_CPU_STATE);
+	bp &= ~CAR_CCLKG_BURST_POLICY_CWAKEUP_IDLE_SOURCE;
+	bp |= __SHIFTIN(CAR_CCLKG_BURST_POLICY_CWAKEUP_SOURCE_PLLX_OUT0_LJ,
+			CAR_CCLKG_BURST_POLICY_CWAKEUP_IDLE_SOURCE);
+	bus_space_write_4(bst, bsh, CAR_CCLKG_BURST_POLICY_REG, bp);
 }
 
 u_int
