@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.77 2015/05/11 01:05:16 pgoyette Exp $
+# $NetBSD: mi,v 1.78 2015/05/13 02:17:13 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -244,6 +244,8 @@
 ./@MODULEDIR@/sysmon_wdog/sysmon_wdog.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs				base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/sysv_ipc				base-kernel-modules	kmod
+./@MODULEDIR@/sysv_ipc/sysv_ipc.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/tmpfs				base-kernel-modules	kmod
 ./@MODULEDIR@/tmpfs/tmpfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/tprof				base-kernel-modules	kmod

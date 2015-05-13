@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.65 2015/05/10 07:50:31 pgoyette Exp $
+# $NetBSD: md.i386,v 1.66 2015/05/13 02:17:13 pgoyette Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -547,6 +547,8 @@
 ./stand/i386-xen/@OSRELEASE@/modules/sysmon_taskq/sysmon_taskq.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/sysmon_wdog			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/sysmon_wdog/sysmon_wdog.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysv_ipc				base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/sysv_ipc/sysv_ipc.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/sysvbfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/tco				base-kernel-modules	kmod,compatmodules
@@ -972,6 +974,8 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_taskq/sysmon_taskq.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_wdog			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/sysmon_wdog/sysmon_wdog.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysv_ipc			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/sysv_ipc/sysv_ipc.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/sysvbfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/tco				base-kernel-modules	kmod,compatmodules
