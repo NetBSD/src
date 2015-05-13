@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soc.c,v 1.5 2015/05/03 01:07:44 jmcneill Exp $ */
+/* $NetBSD: tegra_soc.c,v 1.6 2015/05/13 11:06:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.5 2015/05/03 01:07:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.6 2015/05/13 11:06:13 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -106,6 +106,20 @@ void
 tegra_dma_bootstrap(psize_t psize)
 {
 	tegra_coherent_dma_ranges[0].dr_len = psize;
+}
+
+void
+tegra_cpuinit(void)
+{
+	switch (tegra_chip_id()) {
+#ifdef SOC_TEGRA124
+	case CHIP_ID_TEGRA124:
+		tegra124_cpuinit();
+		break;
+#endif
+	}
+
+	tegra_cpufreq_init();
 }
 
 static void
