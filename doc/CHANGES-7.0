@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.291 2015/05/13 13:35:25 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.292 2015/05/13 14:14:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -22995,4 +22995,9 @@ lib/libedit/readline.c				1.112-1.115
 	Man page improvements, fix overlapping strcpy,
 	improve readline compatibility, clang build fix.
 	[christos, #753]
+
+sys/arch/vax/vax/ka660.c			1.11
+
+	Fixes bug introduced in earlier cleanup.
+	[ragge, ticket #757]
 
