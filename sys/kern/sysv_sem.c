@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.92 2015/05/12 05:19:20 pgoyette Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.93 2015/05/13 01:00:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.92 2015/05/12 05:19:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.93 2015/05/13 01:00:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -87,6 +87,10 @@ static u_int		sem_waiters		__cacheline_aligned;
 #define SEM_PRINTF(a)
 #endif
 
+void *hook;	/* cookie from exithook_establish() */
+
+extern int kern_has_sysvsem;
+
 struct sem_undo *semu_alloc(struct proc *);
 int semundo_adjust(struct proc *, struct sem_undo **, int, int, int);
 void semundo_clear(int, int);
@@ -131,6 +135,8 @@ seminit(void)
 	}
 	semu_list = NULL;
 	exithook_establish(semexit, NULL);
+
+	kern_has_sysvsem = 1;
 
 	sysvipcinit();
 }

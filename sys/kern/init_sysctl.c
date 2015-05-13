@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.205 2015/04/22 16:42:24 pooka Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.206 2015/05/13 01:00:16 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.205 2015/04/22 16:42:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.206 2015/05/13 01:00:16 pgoyette Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -74,6 +74,16 @@ char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
 gid_t security_setidcore_group = 0;
 mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
+
+/*
+ * Current status of SysV IPC capability.  Initially, these are
+ * 0 if the capability is not built-in to the kernel, but can
+ * be updated if the appropriate kernel module is (auto)loaded.
+ */
+
+int kern_has_sysvmsg = 0;
+int kern_has_sysvshm = 0;
+int kern_has_sysvsem = 0;
 
 static const u_int sysctl_lwpprflagmap[] = {
 	LPR_DETACHED, L_DETACHED,
@@ -276,38 +286,25 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_SYSVIPC, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "sysvmsg",
 		       SYSCTL_DESCR("System V style message support available"),
-		       NULL,
-#ifdef SYSVMSG
-		       1,
-#else /* SYSVMSG */
-		       0,
-#endif /* SYSVMSG */
-		       NULL, 0, CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_MSG, CTL_EOL);
+		       NULL, 0, &kern_has_sysvmsg, sizeof(int),
+		       CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_MSG, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "sysvsem",
 		       SYSCTL_DESCR("System V style semaphore support "
-				    "available"), NULL,
-#ifdef SYSVSEM
-		       1,
-#else /* SYSVSEM */
-		       0,
-#endif /* SYSVSEM */
-		       NULL, 0, CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SEM, CTL_EOL);
+				    "available"),
+		       NULL, 0, &kern_has_sysvsem, sizeof(int),
+		       CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SEM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "sysvshm",
 		       SYSCTL_DESCR("System V style shared memory support "
-				    "available"), NULL,
-#ifdef SYSVSHM
-		       1,
-#else /* SYSVSHM */
-		       0,
-#endif /* SYSVSHM */
-		       NULL, 0, CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHM, CTL_EOL);
+				    "available"),
+		       NULL, 0, &kern_has_sysvshm, sizeof(int),
+		       CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "synchronized_io",

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.126 2015/05/12 05:19:20 pgoyette Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.127 2015/05/13 01:00:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.126 2015/05/12 05:19:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.127 2015/05/13 01:00:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -107,6 +107,8 @@ struct shmmap_state {
 	unsigned int nrefs;
 	SLIST_HEAD(, shmmap_entry) entries;
 };
+
+extern int kern_has_sysvshm;
 
 #ifdef SHMDEBUG
 #define SHMPRINTF(a) printf a
@@ -985,6 +987,8 @@ shminit(void)
 	shm_committed = 0;
 	shm_realloc_disable = 0;
 	shm_realloc_state = false;
+
+	kern_has_sysvshm = 1;
 
 	sysvipcinit();
 }
