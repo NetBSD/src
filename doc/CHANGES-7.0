@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.292 2015/05/13 14:14:10 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.293 2015/05/13 17:30:57 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23000,4 +23000,17 @@ sys/arch/vax/vax/ka660.c			1.11
 
 	Fixes bug introduced in earlier cleanup.
 	[ragge, ticket #757]
+
+usr.sbin/sysinst/menus.mi			1.6
+usr.sbin/sysinst/msg.mi.de			1.5
+usr.sbin/sysinst/msg.mi.en			1.5
+usr.sbin/sysinst/msg.mi.es			1.5
+usr.sbin/sysinst/msg.mi.fr			1.5
+usr.sbin/sysinst/msg.mi.pl			1.5
+
+	Change the IPv6 DNS selection to use DNS selection and add the
+	Google Public V4 DNS servers to the list.
+	The other field can take an IPv4 or IPv6 name server of choice.
+	Fixes PR install/49231.
+	[martin, ticket #754]
 
