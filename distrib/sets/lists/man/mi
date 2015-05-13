@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1500 2015/05/04 02:43:45 pgoyette Exp $
+# $NetBSD: mi,v 1.1501 2015/05/13 07:28:49 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4064,6 +4064,7 @@
 ./usr/share/man/html4/dreamcast/pvr.html	man-sys-htmlman		html
 ./usr/share/man/html4/drm.html			man-sys-htmlman		html
 ./usr/share/man/html4/drum.html			man-sys-htmlman		html
+./usr/share/man/html4/drvctl.html		man-sys-htmlman		html
 ./usr/share/man/html4/dtide.html		man-sys-htmlman		html
 ./usr/share/man/html4/dtv.html			man-sys-htmlman		html
 ./usr/share/man/html4/dtviic.html		man-sys-htmlman		html
@@ -6897,6 +6898,7 @@
 ./usr/share/man/man4/dreamcast/pvr.4		man-sys-man		.man
 ./usr/share/man/man4/drm.4			man-sys-man		.man
 ./usr/share/man/man4/drum.4			man-sys-man		.man
+./usr/share/man/man4/drvctl.4			man-sys-man		.man
 ./usr/share/man/man4/dtide.4			man-sys-man		.man
 ./usr/share/man/man4/dtv.4			man-sys-man		.man
 ./usr/share/man/man4/dtviic.4			man-sys-man		.man
