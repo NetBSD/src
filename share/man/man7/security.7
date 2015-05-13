@@ -1,4 +1,4 @@
-.\" $NetBSD: security.7,v 1.11 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: security.7,v 1.12 2015/05/13 11:36:12 shm Exp $
 .\"
 .\" Copyright (c) 2006, 2011 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -351,8 +351,7 @@ In
 .Nx
 it is possible to restrict whether user processes are
 allowed to make mappings at the zero address.
-By default, address 0 mappings are restricted
-on the i386 and amd64 architectures.
+By default, address 0 mappings are restricted on all architectures.
 It is however known that some third-party programs
 may not function properly with the restriction.
 Such mappings can be allowed either by using the
