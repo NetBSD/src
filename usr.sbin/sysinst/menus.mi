@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.4.4.2 2015/05/09 13:52:37 msaitoh Exp $	*/
+/*	$NetBSD: menus.mi,v 1.4.4.3 2015/05/13 17:04:27 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -477,8 +477,28 @@ menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, 60); };
 	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
 
-menu namesrv6, title MSG_Select_IPv6_DNS_server;
-	option "google-public-dns-a.google.com", exit, action
+menu namesrv6, title MSG_Select_DNS_server;
+	option "google-public-dns-a.google.com (IPv4)", exit, action
+		{
+#ifdef INET6
+		  strlcpy(net_namesvr, "8.8.8.8",
+		      sizeof(net_namesvr));
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
+	option "google-public-dns-b.google.com (IPv4)", exit, action
+		{
+#ifdef INET6
+		  strlcpy(net_namesvr, "8.8.4.4",
+		      sizeof(net_namesvr));
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
+	option "google-public-dns-a.google.com (IPv6)", exit, action
 		{
 #ifdef INET6
 		  strlcpy(net_namesvr6, "2001:4860:4860::8888",
@@ -488,7 +508,7 @@ menu namesrv6, title MSG_Select_IPv6_DNS_server;
 		  yesno = 0;
 #endif
 		}; 
-	option "google-public-dns-b.google.com", exit, action
+	option "google-public-dns-b.google.com (IPv6)", exit, action
 		{
 #ifdef INET6
 		  strlcpy(net_namesvr6, "2001:4860:4860::8844",

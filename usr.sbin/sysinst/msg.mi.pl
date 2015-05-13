@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.2.4.3 2015/04/06 01:41:50 snj Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.2.4.4 2015/05/13 17:04:27 snj Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -944,7 +944,7 @@ message Abandon {Przerwij instalacje}
 message Abort_fetch {Przerwij pobieranie}
 message Device {Urzadzenie}
 message File_system {SystemPlikow}
-message Select_IPv6_DNS_server {  Wybierz serwer nazw IPv6}
+message Select_DNS_server {  Wybierz serwer nazw}
 message other {inny  }
 message Perform_IPv6_autoconfiguration {Wykonac autokonfiguracje IPv6?}
 message Perform_DHCP_autoconfiguration {Wykonac autkonfiguracje DHCP?}
