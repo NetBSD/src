@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysv_mod.c,v 1.2 2015/05/11 10:32:13 pgoyette Exp $	*/
+/*	$NetBSD: compat_sysv_mod.c,v 1.3 2015/05/13 02:08:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysv_mod.c,v 1.2 2015/05/11 10:32:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysv_mod.c,v 1.3 2015/05/13 02:08:20 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_sysv_mod.c,v 1.2 2015/05/11 10:32:13 pgoyette
 #include <sys/syscallvar.h>
 #include <sys/ipc.h>
 
-MODULE(MODULE_CLASS_EXEC, compat_sysv, NULL);
+MODULE(MODULE_CLASS_EXEC, compat_sysv, "sysv_ipc");
 
 static const struct syscall_package compat_sysv_syscalls[] = {
 #if defined(COMPAT_10) && !defined(_LP64)
