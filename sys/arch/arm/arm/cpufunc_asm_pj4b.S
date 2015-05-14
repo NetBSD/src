@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.8 2015/05/14 05:39:32 hsuenaga Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.9 2015/05/14 17:15:56 matt Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -40,9 +40,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "assym.h"
 #include <arm/asm.h>
 #include <arm/locore.h>
-
-.Lpj4b_l2_barrier_reg:
-	.word	_C_LABEL(armadaxp_l2_barrier_reg)
 
 /* LINTSTUB: void pj4b_cpu_sleep(int); */
 ENTRY(pj4b_cpu_sleep)
@@ -92,7 +89,8 @@ END(pj4b_config)
 
 /* LINTSTUB: void pj4b_io_coherency_barrier(vaddr_t, paddr_t, vsize_t); */
 ENTRY_NP(pj4b_io_coherency_barrier)
-	ldr	r0, .Lpj4b_l2_barrier_reg
+	movw	r0, #:lower16:_C_LABEL(armadaxp_l2_barrier_reg)
+	movt	r0, #:upper16:_C_LABEL(armadaxp_l2_barrier_reg)
 	ldr	r0, [r0]	@ MVSOC_MLMB_CIB_BARRIER
 	mov	r1, #1		@ MVSOC_MLMB_CIB_BARRIER_TRIGGER
 	str	r1, [r0]
