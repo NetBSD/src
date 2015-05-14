@@ -1,4 +1,4 @@
-/*	$NetBSD: toolcontext.c,v 1.7 2009/12/05 01:52:44 haad Exp $	*/
+/*	$NetBSD: toolcontext.c,v 1.7.24.1 2015/05/14 08:15:47 snj Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -992,12 +992,14 @@ static int _init_backup(struct cmd_context *cmd)
 	char default_dir[PATH_MAX];
 	const char *dir;
 
+#if 0
 	if (!cmd->system_dir) {
 		log_warn("WARNING: Metadata changes will NOT be backed up");
 		backup_init(cmd, "", 0);
 		archive_init(cmd, "", 0, 0, 0);
 		return 1;
 	}
+#endif
 
 	/* set up archiving */
 	cmd->default_settings.archive =

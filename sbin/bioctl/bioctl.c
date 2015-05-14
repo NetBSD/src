@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.15 2011/08/29 14:34:58 joerg Exp $ */
+/* $NetBSD: bioctl.c,v 1.15.20.1 2015/05/14 08:15:48 snj Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.15 2011/08/29 14:34:58 joerg Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.15.20.1 2015/05/14 08:15:48 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -292,7 +292,7 @@ bio_show_volumes(struct biotmp *bt)
 	}
 
 	snprintf(bt->volname, sizeof(bt->volname), "%u", bv.bv_volid);
-	if (bv.bv_vendor)
+	if (bv.bv_vendor[0])
 		snprintf(tmp, sizeof(tmp), "%s %s", bv.bv_dev, bv.bv_vendor);
 	else
 		snprintf(tmp, sizeof(tmp), "%s", bv.bv_dev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.122 2014/04/20 22:48:59 dholland Exp $	*/
+/*	$NetBSD: print.c,v 1.122.2.1 2015/05/14 08:15:47 snj Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.122 2014/04/20 22:48:59 dholland Exp $");
+__RCSID("$NetBSD: print.c,v 1.122.2.1 2015/05/14 08:15:47 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -947,7 +947,7 @@ wchan(void *arg, VARENT *ve, enum mode mode)
 	l = arg;
 	v = ve->var;
 	if (l->l_wchan) {
-		if (l->l_wmesg) {
+		if (l->l_wmesg[0]) {
 			strprintorsetwidth(v, l->l_wmesg, mode);
 			v->width = min(v->width, KI_WMESGLEN);
 		} else {
@@ -1464,7 +1464,7 @@ lname(void *arg, VARENT *ve, enum mode mode)
 
 	l = arg;
 	v = ve->var;
-	if (l->l_name && l->l_name[0] != '\0') {
+	if (l->l_name[0] != '\0') {
 		strprintorsetwidth(v, l->l_name, mode);
 		v->width = min(v->width, KI_LNAMELEN);
 	} else {
