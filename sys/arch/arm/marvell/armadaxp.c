@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.12 2015/05/03 06:29:31 hsuenaga Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.13 2015/05/14 05:39:32 hsuenaga Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.12 2015/05/03 06:29:31 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.13 2015/05/14 05:39:32 hsuenaga Exp $");
 
 #define _INTR_PRIVATE
 
@@ -89,6 +89,7 @@ int l2cache_state = 0;
 int iocc_state = 0;
 #define read_miscreg(r)		(*(volatile uint32_t *)(misc_base + (r)))
 vaddr_t misc_base;
+vaddr_t armadaxp_l2_barrier_reg;
 
 extern void (*mvsoc_intr_init)(void);
 static void armadaxp_intr_init(void);
@@ -432,11 +433,18 @@ armadaxp_l2_init(bus_addr_t pbase)
 		return (-1);
 	}
 
+	/* Variables for cpufunc_asm_pj4b.S */
+	armadaxp_l2_barrier_reg = mlmb_base + MVSOC_MLMB_CIB_BARRIER_TRIGGER;
+
 	/* Set L2 policy */
 	reg = L2_READ(ARMADAXP_L2_AUX_CTRL);
-	reg &= ~(L2_WBWT_MODE_MASK);
-	reg &= ~(L2_REP_STRAT_MASK);
-	reg |= L2_REP_STRAT_SEMIPLRU;
+	reg &= ~(L2_AUX_WBWT_MODE_MASK);
+	reg &= ~(L2_AUX_REP_STRAT_MASK);
+	reg |= L2_AUX_WBWT_MODE_WB;
+	reg |= L2_AUX_ECC_ENABLE;
+	reg |= L2_AUX_PARITY_ENABLE;
+	reg |= L2_AUX_FORCE_WA;
+	reg |= L2_AUX_REP_STRAT_SEMIPLRU;
 	L2_WRITE(ARMADAXP_L2_AUX_CTRL, reg);
 
 	/* Invalidate L2 cache */
@@ -460,7 +468,7 @@ armadaxp_l2_init(bus_addr_t pbase)
 
 	/* Enable L2 cache */
 	reg = L2_READ(ARMADAXP_L2_CTRL);
-	L2_WRITE(ARMADAXP_L2_CTRL, reg | L2_ENABLE);
+	L2_WRITE(ARMADAXP_L2_CTRL, reg | L2_CTRL_ENABLE);
 
 	/* Mark as enabled */
 	l2cache_state = 1;
@@ -497,39 +505,88 @@ armadaxp_sdcache_wbinv_all(void)
 	__asm__ __volatile__("dsb");
 }
 
-void
-armadaxp_sdcache_inv_range(vaddr_t va, paddr_t pa, psize_t sz)
+static paddr_t
+armadaxp_sdcache_wbalign_base(vaddr_t va, paddr_t pa, psize_t sz)
 {
-	paddr_t pa_base = pa;
-	paddr_t pa_end  = pa + sz - 1;
+	paddr_t line_start = pa & ~ARMADAXP_L2_ALIGN;
+	vaddr_t save_start;
+	uint8_t save_buf[ARMADAXP_L2_LINE_SIZE];
+	size_t unalign;
 
-	/* need write back if boundary is not aligned */
-	if (pa_base & 0x1f)
-		L2_WRITE(ARMADAXP_L2_WB_PHYS, (pa_base & ~0x1f));
-	if (pa_end & 0x1f)
-		L2_WRITE(ARMADAXP_L2_WB_PHYS, (pa_end & ~0x1f));
+	unalign = va & ARMADAXP_L2_ALIGN;
+	if (unalign == 0)
+		return line_start;  /* request is aligned to cache line size */
+
+	/* save data that is not intended to invalidate */
+	save_start = va & ~ARMADAXP_L2_ALIGN;
+	memcpy(save_buf, (void *)save_start, unalign);
+
+	/* invalidate include saved data */
+	L2_WRITE(ARMADAXP_L2_INV_PHYS, line_start);
+
+	/* write back saved data */
+	memcpy((void *)save_start, save_buf, unalign);
+	L2_WRITE(ARMADAXP_L2_WB_PHYS, line_start);
 	L2_WRITE(ARMADAXP_L2_SYNC, 0);
 	__asm__ __volatile__("dsb");
 
+	return line_start;
+}
+
+static paddr_t
+armadaxp_sdcache_wbalign_end(vaddr_t va, paddr_t pa, psize_t sz)
+{
+	paddr_t line_start = (pa + sz - 1) & ~ARMADAXP_L2_ALIGN;
+	vaddr_t save_start = va + sz;
+	uint8_t save_buf[ARMADAXP_L2_LINE_SIZE];
+	size_t save_len;
+	size_t unalign;
+
+	unalign = save_start & ARMADAXP_L2_ALIGN;
+	if (unalign == 0)
+		return line_start; /* request is aligned to cache line size */
+
+	/* save data that is not intended to invalidate */
+	save_len = ARMADAXP_L2_LINE_SIZE - unalign;
+	memcpy(save_buf, (void *)save_start, save_len);
+
+	/* invalidate include saved data */
+	L2_WRITE(ARMADAXP_L2_INV_PHYS, line_start);
+
+	/* write back saved data */
+	memcpy((void *)save_start, save_buf, save_len);
+	L2_WRITE(ARMADAXP_L2_WB_PHYS, line_start);
+	__asm__ __volatile__("dsb");
+
+	return line_start;
+}
+
+void
+armadaxp_sdcache_inv_range(vaddr_t va, paddr_t pa, psize_t sz)
+{
+	paddr_t pa_base;
+	paddr_t pa_end;
+
+	/* align and write-back the boundary */
+	pa_base = armadaxp_sdcache_wbalign_base(va, pa, sz);
+	pa_end = armadaxp_sdcache_wbalign_end(va, pa, sz);
+
 	/* invalidate other cache */
-	pa_base &= ~0x1f;
-	pa_end &= ~0x1f;
-	if (pa_base == pa_end)
+	if (pa_base == pa_end) {
 		L2_WRITE(ARMADAXP_L2_INV_PHYS, pa_base);
-	else {
-		L2_WRITE(ARMADAXP_L2_RANGE_BASE, pa_base);
-		L2_WRITE(ARMADAXP_L2_INV_RANGE, pa_end);
+		return;
 	}
+
+	L2_WRITE(ARMADAXP_L2_RANGE_BASE, pa_base);
+	L2_WRITE(ARMADAXP_L2_INV_RANGE, pa_end);
 }
 
 void
 armadaxp_sdcache_wb_range(vaddr_t va, paddr_t pa, psize_t sz)
 {
-	paddr_t pa_base = pa;
-	paddr_t pa_end  = pa + sz - 1;
+	paddr_t pa_base = pa & ~ARMADAXP_L2_ALIGN;
+	paddr_t pa_end  = (pa + sz - 1) & ~ARMADAXP_L2_ALIGN;
 
-	pa_base &= ~0x1f;
-	pa_end &= ~0x1f;
 	if (pa_base == pa_end)
 		L2_WRITE(ARMADAXP_L2_WB_PHYS, pa_base);
 	else {
@@ -543,11 +600,9 @@ armadaxp_sdcache_wb_range(vaddr_t va, paddr_t pa, psize_t sz)
 void
 armadaxp_sdcache_wbinv_range(vaddr_t va, paddr_t pa, psize_t sz)
 {
-	paddr_t pa_base = pa;
-	paddr_t pa_end  = pa + sz - 1;
+	paddr_t pa_base = pa & ~ARMADAXP_L2_ALIGN;;
+	paddr_t pa_end  = (pa + sz - 1) & ~ARMADAXP_L2_ALIGN;
 
-	pa_base &= ~0x1f;
-	pa_end &= ~0x1f;
 	if (pa_base == pa_end)
 		L2_WRITE(ARMADAXP_L2_WBINV_PHYS, pa_base);
 	else {
@@ -565,19 +620,22 @@ armadaxp_io_coherency_init(void)
 
 	/* set CIB read snoop command to ReadUnique */
 	reg = read_mlmbreg(MVSOC_MLMB_CIB_CTRL_CFG);
-	reg &= ~(7 << 16);
-	reg |= (7 << 16);
+	reg |= MVSOC_MLMB_CIB_CTRL_CFG_WB_EN;
 	write_mlmbreg(MVSOC_MLMB_CIB_CTRL_CFG, reg);
-	/* enable CPUs in SMP group on Fabric coherency */
-	reg = read_mlmbreg(MVSOC_MLMB_COHERENCY_FABRIC_CTRL);
-	reg &= ~(0x3 << 24);
-	reg |= (1 << 24);
-	write_mlmbreg(MVSOC_MLMB_COHERENCY_FABRIC_CTRL, reg);
 
-	reg = read_mlmbreg(MVSOC_MLMB_COHERENCY_FABRIC_CFG);
-	reg &= ~(0x3 << 24);
-	reg |= (1 << 24);
-	write_mlmbreg(MVSOC_MLMB_COHERENCY_FABRIC_CFG, reg);
+	/* enable CPUs in SMP group on Fabric coherency */
+	reg = read_mlmbreg(MVSOC_MLMB_CFU_CTRL);
+	reg |= MVSOC_MLMB_CFU_CTRL_SNOOP_CPU0;
+	write_mlmbreg(MVSOC_MLMB_CFU_CTRL, reg);
+
+	/* send all snoop request to L2 cache */
+	reg = read_mlmbreg(MVSOC_MLMB_CFU_CFG);
+#ifdef L2CACHE_ENABLE
+	reg |= MVSOC_MLMB_CFU_CFG_L2_NOTIFY;
+#else
+	reg &= ~MVSOC_MLMB_CFU_CFG_L2_NOTIFY;
+#endif
+	write_mlmbreg(MVSOC_MLMB_CFU_CFG, reg);
 
 	/* Mark as enabled */
 	iocc_state = 1;

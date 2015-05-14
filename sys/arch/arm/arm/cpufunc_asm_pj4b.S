@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.7 2015/04/15 10:52:18 hsuenaga Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.8 2015/05/14 05:39:32 hsuenaga Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -41,9 +41,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-.Lpj4b_cache_line_size:
-	.word	_C_LABEL(arm_dcache_align)
+.Lpj4b_l2_barrier_reg:
+	.word	_C_LABEL(armadaxp_l2_barrier_reg)
 
+/* LINTSTUB: void pj4b_cpu_sleep(int); */
 ENTRY(pj4b_cpu_sleep)
 	dsb
 	wfi				@ wait for an interrupt
@@ -51,6 +52,7 @@ ENTRY(pj4b_cpu_sleep)
 	b	irq_idle_entry		@ assume we got an interrupt
 END(pj4b_cpu_sleep)
 
+/* LINTSTUB: void pj4b_config(void); */
 ENTRY(pj4b_config)
 	/* Set Auxiliary Debug Modes Control 0 register */
 	mrc	p15, 1, r0, c15, c1, 0
@@ -87,3 +89,21 @@ ENTRY(pj4b_config)
 
 	RET
 END(pj4b_config)
+
+/* LINTSTUB: void pj4b_io_coherency_barrier(vaddr_t, paddr_t, vsize_t); */
+ENTRY_NP(pj4b_io_coherency_barrier)
+	ldr	r0, .Lpj4b_l2_barrier_reg
+	ldr	r0, [r0]	@ MVSOC_MLMB_CIB_BARRIER
+	mov	r1, #1		@ MVSOC_MLMB_CIB_BARRIER_TRIGGER
+	str	r1, [r0]
+1:
+	ldr	r1, [r0]
+	tst	r1, #1
+	beq	1b
+	dsb
+	RET
+END(pj4b_io_coherency_barrier)
+
+STRONG_ALIAS(pj4b_dcache_cfu_wbinv_range, pj4b_io_coherency_barrier)
+STRONG_ALIAS(pj4b_dcache_cfu_inv_range, pj4b_io_coherency_barrier)
+STRONG_ALIAS(pj4b_dcache_cfu_wb_range, pj4b_io_coherency_barrier)

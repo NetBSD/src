@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.153 2015/04/17 13:39:01 hsuenaga Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.154 2015/05/14 05:39:32 hsuenaga Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.153 2015/04/17 13:39:01 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.154 2015/05/14 05:39:32 hsuenaga Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1371,8 +1371,7 @@ struct cpu_functions pj4bv7_cpufuncs = {
 	.cf_tlb_flushD		= armv7_tlb_flushID,
 	.cf_tlb_flushD_SE	= armv7_tlb_flushID_SE,
 
-	/* Cache operations */
-
+	/* Cache operations (see also pj4bv7_setup) */
 	.cf_icache_sync_all	= armv7_idcache_wbinv_all,
 	.cf_icache_sync_range	= armv7_icache_sync_range,
 
@@ -1380,18 +1379,6 @@ struct cpu_functions pj4bv7_cpufuncs = {
 	.cf_dcache_wbinv_range	= armv7_dcache_wbinv_range,
 	.cf_dcache_inv_range	= armv7_dcache_inv_range,
 	.cf_dcache_wb_range	= armv7_dcache_wb_range,
-
-#if defined(L2CACHE_ENABLE) && \
-    !defined(AURORA_IO_CACHE_COHERENCY) && \
-    defined(ARMADAXP)
-	.cf_sdcache_wbinv_range	= armadaxp_sdcache_wbinv_range,
-	.cf_sdcache_inv_range	= armadaxp_sdcache_inv_range,
-	.cf_sdcache_wb_range	= armadaxp_sdcache_wb_range,
-#else
-	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
-	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
-	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
-#endif
 
 	.cf_idcache_wbinv_all	= armv7_idcache_wbinv_all,
 	.cf_idcache_wbinv_range	= armv7_idcache_wbinv_range,
@@ -3096,6 +3083,36 @@ pj4bv7_setup(char *args)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 #endif
 
+#ifdef L2CACHE_ENABLE
+	/* Setup L2 cache */
+	arm_scache.cache_type = CPU_CT_CTYPE_WT;
+	arm_scache.cache_unified = 1;
+	arm_scache.dcache_type = arm_scache.icache_type = CACHE_TYPE_PIPT;
+	arm_scache.dcache_size = arm_scache.icache_size = ARMADAXP_L2_SIZE;
+	arm_scache.dcache_ways = arm_scache.icache_ways = ARMADAXP_L2_WAYS;
+	arm_scache.dcache_way_size = arm_scache.icache_way_size =
+	    ARMADAXP_L2_WAY_SIZE;
+	arm_scache.dcache_line_size = arm_scache.icache_line_size =
+	    ARMADAXP_L2_LINE_SIZE;
+	arm_scache.dcache_sets = arm_scache.icache_sets =
+	    ARMADAXP_L2_SETS;
+
+	cpufuncs.cf_sdcache_wbinv_range	= armadaxp_sdcache_wbinv_range;
+	cpufuncs.cf_sdcache_inv_range	= armadaxp_sdcache_inv_range;
+	cpufuncs.cf_sdcache_wb_range	= armadaxp_sdcache_wb_range;
+#endif
+
+#ifdef AURORA_IO_CACHE_COHERENCY
+	/* use AMBA and I/O Coherency Fabric to maintain cache */
+	cpufuncs.cf_dcache_wbinv_range	= pj4b_dcache_cfu_wbinv_range;
+	cpufuncs.cf_dcache_inv_range	= pj4b_dcache_cfu_inv_range;
+	cpufuncs.cf_dcache_wb_range	= pj4b_dcache_cfu_wb_range;
+
+	cpufuncs.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop;
+	cpufuncs.cf_sdcache_inv_range	= (void *)cpufunc_nullop;
+	cpufuncs.cf_sdcache_wb_range	= (void *)cpufunc_nullop;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -3104,6 +3121,9 @@ pj4bv7_setup(char *args)
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
+#ifdef L2CACHE_ENABLE
+	armadaxp_sdcache_wbinv_all();
+#endif
 
 	curcpu()->ci_ctrl = cpuctrl;
 }
