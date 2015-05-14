@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.14 2015/05/13 11:07:02 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.15 2015/05/14 00:02:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.14 2015/05/13 11:07:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.15 2015/05/14 00:02:00 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -388,6 +388,11 @@ tegra_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict, "power-gpio", "R0");
 			prop_dictionary_set_cstring(dict, "wp-gpio", "Q4");
 		}
+	}
+
+	if (device_is_a(self, "ahcisata")
+	    && device_is_a(device_parent(self), "tegraio")) {
+		prop_dictionary_set_cstring(dict, "power-gpio", "EE2");
 	}
 
 	if (device_is_a(self, "ehci")
