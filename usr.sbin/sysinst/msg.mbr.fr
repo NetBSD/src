@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.2.4.1 2015/05/14 07:27:47 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@ sur une partie de celui-ci.
 Une installation sur une partie du disque crée une partition, ou `slice', pour
 NetBSD dans le secteur de démarrage (Master Boot Record, alias MBR) de votre
 disque. Une installation sur la totalité du disque est `dangereusement
-dédiée' : elle réinitialise complétement le MBR, ce qui efface tout système
+dédiée' : elle réinitialise complètement le MBR, ce qui efface tout système
 d'exploitation ou données existants sur le disque. Cela rend également
 impossible l'installation ultérieure d'un deuxième système d'exploitation,
 sauf si vous réinstallez complètement NetBSD en utilisant uniquement une
@@ -93,7 +93,7 @@ BIOS pour votre disque.
 La géométrie physique est %d cylindres %d secteurs %d têtes\n}
 
 message biosguess
-{En utilisant les informations déja présentes sur le disque, il semble que
+{En utilisant les informations déjà présentes sur le disque, il semble que
 la géométrie utilisée par le BIOS soit de %d cylindres, %d secteurs et %d têtes\n}
 
 message realgeom
