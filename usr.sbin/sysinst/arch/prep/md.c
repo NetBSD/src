@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.2.4.1 2015/05/14 07:58:50 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,13 +138,14 @@ int
 md_post_extract(void)
 {
 	char rawdev[100], bootpart[100], bootloader[100];
+	int contype;
 
 	/* if we can't make it bootable, just punt */
 	if (prep_nobootfix)
 		return 0;
 
-	process_menu(MENU_prepconsole, NULL);
-	if (yesno == 1)
+	process_menu(MENU_prepconsole, &contype);
+	if (contype == 1)
 		snprintf(bootloader, 100, "/usr/mdec/boot_com0");
 	else
 		snprintf(bootloader, 100, "/usr/mdec/boot");
@@ -191,8 +192,7 @@ md_pre_update(void)
 			if (part->mbrp_size < (MIN_PREP_BOOT/512)) {
 				msg_display(MSG_preptoosmall);
 				msg_display_add(MSG_prepnobootpart, 0);
-				process_menu(MENU_yesno, NULL);
-				if (!yesno)
+				if (!ask_yesno(NULL))
 					return 0;
 				prep_nobootfix = 1;
 			}
@@ -233,16 +233,14 @@ md_check_mbr(mbr_info_t *mbri)
 	if (pm->bootsize < (MIN_PREP_BOOT/512)) {
 		msg_display(MSG_preptoosmall);
 		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
+		if (!ask_yesno(NULL))
 			return 0;
 		return 1;
 	}
 	if (pm->bootstart == 0 || pm->bootsize == 0) {
 		msg_display(MSG_nopreppart);
 		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
+		if (!ask_yesno(NULL))
 			return 0;
 		return 1;
 	}

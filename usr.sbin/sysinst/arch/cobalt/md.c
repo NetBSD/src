@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2.4.1 2015/01/11 04:32:38 snj Exp $ */
+/*	$NetBSD: md.c,v 1.2.4.2 2015/05/14 07:58:49 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -317,8 +317,7 @@ md_pre_update(void)
 			if (part->mbrp_size < (MIN_EXT2FS_BOOT / 512)) {
 				msg_display(MSG_boottoosmall);
 				msg_display_add(MSG_nobootpart, 0);
-				process_menu(MENU_yesno, NULL);
-				if (!yesno)
+				if (!ask_yesno(NULL))
 					return 0;
 				nobootfs = 1;
 			}
@@ -357,16 +356,14 @@ md_check_mbr(mbr_info_t *mbri)
 	if (pm->bootsize < (MIN_EXT2FS_BOOT / 512)) {
 		msg_display(MSG_boottoosmall);
 		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
+		if (!ask_yesno(NULL))
 			return 0;
 		return 1;
 	}
 	if (pm->bootstart == 0 || pm->bootsize == 0) {
 		msg_display(MSG_nobootpart);
 		msg_display_add(MSG_reeditpart, 0);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
+		if (!ask_yesno(NULL))
 			return 0;
 		return 1;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3.2.2 2015/02/16 13:52:43 martin Exp $ */
+/*	$NetBSD: md.c,v 1.3.2.3 2015/05/14 07:58:49 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -110,8 +110,7 @@ edit:
 	if (biosdisk != NULL && (biosdisk->bi_flags & BIFLAG_EXTINT13) == 0) {
 		if (mbr_root_above_chs()) {
 			msg_display(MSG_partabovechs);
-			process_menu(MENU_noyes, NULL);
-			if (!yesno)
+			if (!ask_noyes(NULL))
 				goto edit;
 			/* The user is shooting themselves in the foot here...*/
 		} else
@@ -169,8 +168,7 @@ edit:
 		 * don't all have bootmenu texts.
 		 */
 		msg_display(MSG_missing_bootmenu_text);
-		process_menu(MENU_yesno, NULL);
-		if (yesno)
+		if (ask_yesno(NULL))
 			goto edit;
 	}
 
@@ -178,8 +176,7 @@ edit:
 	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
 		/* Need unsupported LBA reads to read boot sectors */
 		msg_display(MSG_no_extended_bootmenu);
-		process_menu(MENU_noyes, NULL);
-		if (!yesno)
+		if (!ask_noyes(NULL))
 			goto edit;
 	}
 
@@ -215,8 +212,7 @@ edit:
 		/* Existing code would (probably) be ok */
 		msg_display(MSG_updatembr);
 
-	process_menu(MENU_yesno, NULL);
-	if (!yesno)
+	if (!ask_yesno(NULL))
 		/* User doesn't want to update mbr code */
 		return 1;
 
@@ -226,7 +222,7 @@ edit:
 
 	/* This shouldn't happen since the files are in the floppy fs... */
 	msg_display("Can't find %s", bootcode);
-	process_menu(MENU_yesno, NULL);
+	ask_yesno(NULL);
 
 	return 1;
 }

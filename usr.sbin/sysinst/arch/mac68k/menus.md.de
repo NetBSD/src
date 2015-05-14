@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.de,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
+/*	$NetBSD: menus.md.de,v 1.2.4.1 2015/05/14 07:58:49 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,12 +44,12 @@ menu nodiskmap, title "Bitte wählen Sie", y=16;
 		endwin();  exit(1);
 	};
 	option "Initialisiere Festplatten Partition Übersicht", exit, action {
-		int i;
+		int i, rv;
 
 		msg_clear();
 		msg_display (MSG_okwritediskmap);
-		process_menu (MENU_okabort, NULL);
-		if (!yesno) {
+		process_menu (MENU_okabort, &rv);
+		if (!rv) {
 		    endwin();
 		    return 0;
 		}
@@ -77,7 +77,7 @@ menu editparttable, title  "Wählen Sie eine Partition", exit, y=14;
 	option "Ausgewählte Partition bearbeiten", sub menu chooseid;
 	option "Mount Point festlegen", sub menu mount_point;
 	option "Gewählte Partition unterteilen", action {
-		int i, j, k, size, free_size;
+		int i, j, k, size, free_size, rv;
 		char buf[40];
 		EBZB *bzb;
 
@@ -112,8 +112,8 @@ menu editparttable, title  "Wählen Sie eine Partition", exit, y=14;
 			sortmerge();
 		    } else {
 			msg_display (MSG_diskfull);
-			process_menu (MENU_okabort, NULL);
-			if (!yesno) {
+			process_menu (MENU_okabort, &rv);
+			if (!rv) {
 			    free (map.blk);
 			    map.size = NEW_MAP_SIZE;
 			    map.in_use_cnt = new_map[0].pmMapBlkCnt;
@@ -152,8 +152,8 @@ menu ok2, title "Abbrechen?", y=17;
        option "OK", exit, action { };
 
 menu okabort, title "Was möchten Sie?", y=17;
-	option "Fortfahren", exit, action { yesno = 1; };
-	option "Installation abbrechen", exit, action { yesno = 0; };
+	option "Fortfahren", exit, action { *((int*)arg) = 1; };
+	option "Installation abbrechen", exit, action { *((int*)arg) = 0; };
 
 menu chooseid, title  "Partitionstyp?";
 	option "NetBSD Root", exit, action {
@@ -321,9 +321,9 @@ menu mount_point, title  "Mount Point?";
 menu sanity, title "Bitte wählen Sie";
 	display action {msg_display (MSG_sanity_check);
 		report_errors(); };
-	option "Installation abbrechen", exit, action {yesno = -1; };
-	option "Warnungen ignorieren und fortfahren", exit, action {yesno = 1;};
-	option "Festplatten Partitions Übersicht erneut ändern", exit, action {yesno = 0; };
+	option "Installation abbrechen", exit, action { *((int*)arg) = -1; };
+	option "Warnungen ignorieren und fortfahren", exit, action { *((int*)arg) = 1;};
+	option "Festplatten Partitions Übersicht erneut ändern", exit, action { *((int*)arg) = 0; };
 
 /*
  * This menu shouldn't be used in the mac68k port, but it needs to be

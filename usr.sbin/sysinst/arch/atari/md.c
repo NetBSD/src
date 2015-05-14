@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:39 martin Exp $ */
+/*	$NetBSD: md.c,v 1.2.4.1 2015/05/14 07:58:49 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,8 +69,7 @@ int
 md_make_bsd_partitions(void)
 {
 	msg_display(MSG_infoahdilabel, pm->diskdev);
-	process_menu(MENU_noyes, NULL);
-	if (yesno) {
+	if (ask_noyes(NULL)) {
 		run_program(RUN_DISPLAY, "ahdilabel /dev/r%sc", pm->diskdev);
 	}
 	if (!make_bsd_partitions())

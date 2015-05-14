@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.2.4.1 2015/01/23 10:06:30 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.2.4.2 2015/05/14 07:58:49 snj Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -258,8 +258,7 @@ add_new_user(struct menudesc *menu, void *arg)
 	msg_prompt(MSG_addusername, NULL, username, sizeof username -1);
 	if (strlen(username) == 0)
 		return 0;
-	process_menu(MENU_yesno, deconst(MSG_addusertowheel));
-	inwheel = yesno;
+	inwheel = ask_yesno(MSG_addusertowheel);
 	ushell = "/bin/csh";
 	process_menu(MENU_usersh, NULL);
 	if (inwheel)
@@ -280,8 +279,7 @@ change_root_password(struct menudesc *menu, void *arg)
 	configinfo **confp = arg;
 
 	msg_display(MSG_rootpw);
-	process_menu(MENU_yesno, NULL);
-	if (yesno) {
+	if (ask_yesno(NULL)) {
 		if (run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
 			"passwd -l root") == 0)
 			confp[menu->cursel]->setting = MSG_password_set;
@@ -298,11 +296,13 @@ set_binpkg(struct menudesc *menu, void *arg)
 	char additional_pkgs[STRSIZE] = {0};
 	char pattern[STRSIZE];
 	int allok = 0;
+	arg_rv parm;
 
 	do {
-		yesno = -1;
-		process_menu(MENU_binpkg, additional_pkgs);
-		if (yesno == SET_SKIP) {
+		parm.rv = -1;
+		parm.arg = additional_pkgs;
+		process_menu(MENU_binpkg, &parm);
+		if (parm.rv == SET_SKIP) {
 			confp[menu->cursel]->setting = MSG_abandoned;
 			return 0;
 		}
@@ -354,8 +354,7 @@ set_pkgsrc(struct menudesc *menu, void *arg)
 			confp[menu->cursel]->setting = MSG_abandoned;
 			return 0;
 		}
-		process_menu(MENU_yesno, deconst(MSG_retry_pkgsrc_network));
-		if (!yesno) {
+		if (!ask_yesno(MSG_retry_pkgsrc_network)) {
 			confp[menu->cursel]->setting = MSG_abandoned;
 			return 1;
 		}

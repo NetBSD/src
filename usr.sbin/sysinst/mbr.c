@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.2.4.2 2014/10/22 12:28:30 sborrill Exp $ */
+/*	$NetBSD: mbr.c,v 1.2.4.3 2015/05/14 07:58:49 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1294,8 +1294,7 @@ edit_mbr(mbr_info_t *mbri)
 		/* Ask if we really want to blow away non-NetBSD stuff */
 		if (numbsd > 1) {
 			msg_display(MSG_ovrwrite);
-			process_menu(MENU_noyes, NULL);
-			if (!yesno) {
+			if (!ask_noyes(NULL)) {
 				if (logfp)
 					(void)fprintf(logfp, "User answered no to destroy other data, aborting.\n");
 				return 0;
@@ -1356,16 +1355,14 @@ edit_mbr(mbr_info_t *mbri)
 			else
 				msg_display(MSG_multbsdpart, 0);
 			msg_display_add(MSG_reeditpart, 0);
-			process_menu(MENU_yesno, NULL);
-			if (!yesno)
+			if (!ask_yesno(NULL))
 				return 0;
 			continue;
 		}
 
 		if (activepart == 0) {
 			msg_display(MSG_noactivepart);
-			process_menu(MENU_yesno, NULL);
-			if (yesno)
+			if (ask_yesno(NULL))
 				continue;
 		}
 		/* the md_check_mbr function has 3 ret codes to deal with

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.es,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
+/*	$NetBSD: menus.md.es,v 1.2.4.1 2015/05/14 07:58:49 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,12 +44,12 @@ menu nodiskmap, title "Escoja una opcion", y=16;
 		endwin();  exit(1);
 	};
 	option "Inicializar Mapa de particiones de Disco", exit, action {
-		int i;
+		int i, rv;
 
 		msg_clear();
 		msg_display (MSG_okwritediskmap);
-		process_menu (MENU_okabort, NULL);
-		if (!yesno) {
+		process_menu (MENU_okabort, &rv);
+		if (!rv) {
 		    endwin();
 		    return 0;
 		}
@@ -77,7 +77,7 @@ menu editparttable, title  "Escoja su particion", exit, y=14;
 	option "Cambiar particion seleccionada", sub menu chooseid;
 	option "Ajustar punto de montaje para particion", sub menu mount_point;
 	option "Partir particion seleccionada", action {
-		int i, j, k, size, free_size;
+		int i, j, k, size, free_size, rv;
 		char buf[40];
 		EBZB *bzb;
 
@@ -112,8 +112,8 @@ menu editparttable, title  "Escoja su particion", exit, y=14;
 			sortmerge();
 		    } else {
 			msg_display (MSG_diskfull);
-			process_menu (MENU_okabort, NULL);
-			if (!yesno) {
+			process_menu (MENU_okabort, &rv);
+			if (!rv) {
 			    free (map.blk);
 			    map.size = NEW_MAP_SIZE;
 			    map.in_use_cnt = new_map[0].pmMapBlkCnt;
@@ -152,8 +152,8 @@ menu ok2, title "¿Abortar?", y=17;
        option "OK", exit, action { };
 
 menu okabort, title "¿Que quiere hacer?", y=17;
-	option "Continuar", exit, action { yesno = 1; };
-	option "Abortar instalacion", exit, action { yesno = 0; };
+	option "Continuar", exit, action { *((int*)arg) = 1; };
+	option "Abortar instalacion", exit,  { *((int*)arg) = 0; };
 
 menu chooseid, title  "¿Tipo de particion?";
 	option "NetBSD Root", exit, action {
@@ -321,9 +321,9 @@ menu mount_point, title  "¿Punto de montaje?";
 menu sanity, title "Escoja una opcion";
 	display action {msg_display (MSG_sanity_check);
 		report_errors(); };
-	option "Abortar instalacion", exit, action {yesno = -1; };
-	option "Ignorar avisos y continuar", exit, action {yesno = 1;};
-	option "Re-editar Mapa de Particiones de Disco", exit, action {yesno = 0; };
+	option "Abortar instalacion", exit, action { *((int*)arg) = -1; };
+	option "Ignorar avisos y continuar", exit, action { *((int*)arg) = 1;};
+	option "Re-editar Mapa de Particiones de Disco", exit, action { *((int*)arg) = 0; };
 
 /*
  * This menu shouldn't be used in the mac68k port, but it needs to be

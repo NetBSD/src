@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.2.4.1 2015/05/14 07:58:49 snj Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.2 2014/08/03 16:09:38 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.2.4.1 2015/05/14 07:58:49 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -672,8 +672,7 @@ edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 
 		/*XXX ???*/
 		msg_display_add(MSG_edit_partitions_again);
-		process_menu(MENU_yesno, NULL);
-		if (!yesno)
+		if (!ask_yesno(NULL))
 			return(0);
 	}
 

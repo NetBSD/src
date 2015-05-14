@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3.4.4 2015/05/14 00:30:50 riz Exp $	*/
+/*	$NetBSD: defs.h,v 1.3.4.5 2015/05/14 07:58:49 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -188,6 +188,13 @@ enum {
 #define CD_NAMES "cd0a"
 
 /* Types */
+
+/* pass a void* argument into a menu and also provide a int return value */
+typedef struct arg_rv {
+	void *arg;
+	int rv;
+} arg_rv;
+
 typedef struct distinfo {
 	const char	*name;
 	uint		set;
@@ -250,7 +257,6 @@ int debug;		/* set by -D option */
 char rel[SSTRSIZE];
 char machine[SSTRSIZE];
 
-int yesno;
 int ignorerror;
 int ttysig_ignore;
 pid_t ttysig_forward;
@@ -510,6 +516,8 @@ void	do_reinstall_sets(void);
 void	restore_etc(void);
 
 /* from util.c */
+int	ask_yesno(const char *);
+int	ask_noyes(const char *);
 int	dir_exists_p(const char *);
 int	file_exists_p(const char *);
 int	file_mode_match(const char *, unsigned int);
