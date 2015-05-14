@@ -1,4 +1,4 @@
-$NetBSD: TODO.clang,v 1.16 2015/03/19 19:27:14 joerg Exp $
+$NetBSD: TODO.clang,v 1.17 2015/05/14 19:27:23 joerg Exp $
 
 Hacks for the clang integration
 -------------------------------
@@ -11,6 +11,3 @@ g++ otherwise crashes on trivial input.
 
 src/external/mit/xorg/lib/pixman uses -fno-integrated-as on ARM for the
 macro (ab)use.
-
-src/crypto/external/bsd/openssl/lib/libcrypto/arch/arm
-uses -fno-integrated-as to work-around a bug in the relaxation handling.
