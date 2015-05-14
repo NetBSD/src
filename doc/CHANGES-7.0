@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.294 2015/05/13 19:20:30 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.295 2015/05/14 00:32:45 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23003,12 +23003,14 @@ sys/arch/vax/vax/ka660.c			1.11
 	Fixes bug introduced in earlier cleanup.
 	[ragge, ticket #757]
 
-usr.sbin/sysinst/menus.mi			1.6
+usr.sbin/sysinst/defs.h				1.4
+usr.sbin/sysinst/menus.mi			1.5-1.6
 usr.sbin/sysinst/msg.mi.de			1.5
 usr.sbin/sysinst/msg.mi.en			1.5
 usr.sbin/sysinst/msg.mi.es			1.5
 usr.sbin/sysinst/msg.mi.fr			1.5
 usr.sbin/sysinst/msg.mi.pl			1.5
+usr.sbin/sysinst/net.c				1.9-1.10
 
 	Change the IPv6 DNS selection to use DNS selection and add the
 	Google Public V4 DNS servers to the list.
@@ -23023,4 +23025,12 @@ usr.sbin/syslogd/syslogd.c			1.120
 	  hostname
 	- don't truncate IP addresses when reading syslogd.conf
 	[jnemeth, ticket #760]
+
+
+rtsol is no longer used.
+
+
+Only prompt for one nameserver, let the user decide if it's a
+pre-determined google server other another one.
+[riz, ticket #754]
 
