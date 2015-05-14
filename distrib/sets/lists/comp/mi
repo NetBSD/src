@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1957 2015/05/06 15:57:07 hannken Exp $
+#	$NetBSD: mi,v 1.1958 2015/05/14 00:09:54 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9871,6 +9871,8 @@
 ./usr/share/man/cat9/bcdtobin.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bcmp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bcopy.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bdevsw_lookup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/bdevsw_lookup_major.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bdevvp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bdwrite.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/be16dec.0			comp-sys-catman		.cat
@@ -10010,6 +10012,8 @@
 ./usr/share/man/cat9/cardbus_make_tag.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cardbus_mapreg_map.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cardbus_mapreg_unmap.0	comp-sys-catman		.cat
+./usr/share/man/cat9/cdevsw_lookup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cdevsw_lookup_major.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cdevvp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/checkalias.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/child_return.0		comp-sys-catman		.cat
@@ -10158,6 +10162,8 @@
 ./usr/share/man/cat9/deviter_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter_next.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter_release.0		comp-sys-catman		.cat
+./usr/share/man/cat9/devsw_attach.0		comp-sys-catman		.cat
+./usr/share/man/cat9/devsw_detach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_attach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_begindetach.0		comp-sys-catman		.cat
@@ -16673,6 +16679,8 @@
 ./usr/share/man/html9/bcdtobin.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bcmp.html			comp-sys-htmlman	html
 ./usr/share/man/html9/bcopy.html		comp-sys-htmlman	html
+./usr/share/man/html9/bdevsw_lookup.html	comp-sys-htmlman	html
+./usr/share/man/html9/bdevsw_lookup_major.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bdevvp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bdwrite.html		comp-sys-htmlman	html
 ./usr/share/man/html9/be16dec.html		comp-sys-htmlman	html
@@ -16810,6 +16818,8 @@
 ./usr/share/man/html9/cardbus_make_tag.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cardbus_mapreg_map.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cardbus_mapreg_unmap.html	comp-sys-htmlman	html
+./usr/share/man/html9/cdevsw_lookup.html	comp-sys-htmlman	html
+./usr/share/man/html9/cdevsw_lookup_major.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cdevvp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/checkalias.html		comp-obsolete	obsolete
 ./usr/share/man/html9/child_return.html		comp-sys-htmlman	html
@@ -16942,6 +16952,8 @@
 ./usr/share/man/html9/deviter_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/deviter_next.html		comp-sys-htmlman	html
 ./usr/share/man/html9/deviter_release.html	comp-sys-htmlman	html
+./usr/share/man/html9/devsw_attach.html		comp-sys-htmlman	html
+./usr/share/man/html9/devsw_detach.html		comp-sys-htmlman	html
 ./usr/share/man/html9/disk.html			comp-sys-htmlman	html
 ./usr/share/man/html9/disk_attach.html		comp-sys-htmlman	html
 ./usr/share/man/html9/disk_begindetach.html	comp-sys-htmlman	html
@@ -23601,6 +23613,8 @@
 ./usr/share/man/man9/bcdtobin.9			comp-sys-man		.man
 ./usr/share/man/man9/bcmp.9			comp-sys-man		.man
 ./usr/share/man/man9/bcopy.9			comp-sys-man		.man
+./usr/share/man/man9/bdevsw_lookup.9		comp-sys-man		.man
+./usr/share/man/man9/bdevsw_lookup_major.9	comp-sys-man		.man
 ./usr/share/man/man9/bdevvp.9			comp-sys-man		.man
 ./usr/share/man/man9/bdwrite.9			comp-sys-man		.man
 ./usr/share/man/man9/be16dec.9			comp-sys-man		.man
@@ -23740,6 +23754,8 @@
 ./usr/share/man/man9/cardbus_make_tag.9		comp-sys-man		.man
 ./usr/share/man/man9/cardbus_mapreg_map.9	comp-sys-man		.man
 ./usr/share/man/man9/cardbus_mapreg_unmap.9	comp-sys-man		.man
+./usr/share/man/man9/cdevsw_lookup.9		comp-sys-man		.man
+./usr/share/man/man9/cdevsw_lookup_major.9	comp-sys-man		.man
 ./usr/share/man/man9/cdevvp.9			comp-sys-man		.man
 ./usr/share/man/man9/checkalias.9		comp-obsolete		obsolete
 ./usr/share/man/man9/child_return.9		comp-sys-man		.man
@@ -23882,6 +23898,8 @@
 ./usr/share/man/man9/dbtob.9			comp-sys-man		.man
 ./usr/share/man/man9/ddc.9			comp-sys-man		.man
 ./usr/share/man/man9/delay.9			comp-sys-man		.man
+./usr/share/man/man9/devsw_attach.9		comp-sys-man		.man
+./usr/share/man/man9/devsw_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/device_printf.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter.9			comp-sys-man		.man
 ./usr/share/man/man9/deviter_first.9		comp-sys-man		.man
