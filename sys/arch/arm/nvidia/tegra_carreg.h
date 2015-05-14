@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_carreg.h,v 1.13 2015/05/14 00:00:44 jmcneill Exp $ */
+/* $NetBSD: tegra_carreg.h,v 1.14 2015/05/14 10:23:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -258,6 +258,7 @@
 
 #define CAR_DEV_V_HDA			__BIT(29)
 #define CAR_DEV_V_SATA			__BIT(28)
+#define CAR_DEV_V_SATA_OOB		__BIT(27)
 #define CAR_DEV_V_ACTMON		__BIT(23)
 #define CAR_DEV_V_ATOMICS		__BIT(16)
 #define CAR_DEV_V_HDA2CODEC_2X		__BIT(15)
