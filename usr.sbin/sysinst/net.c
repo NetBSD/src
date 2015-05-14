@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2.4.2 2015/02/27 11:29:44 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.2.4.3 2015/05/14 00:30:50 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,7 +76,7 @@ static char net_host[STRSIZE];
 static char net_ip[SSTRSIZE];
 static char net_srv_ip[SSTRSIZE];
 static char net_mask[SSTRSIZE];
-static char net_namesvr[STRSIZE];
+char net_namesvr[STRSIZE];
 static char net_defroute[STRSIZE];
 static char net_media[STRSIZE];
 static char sl_flags[STRSIZE];
@@ -87,8 +87,6 @@ static int net_dhcpconf;
 #define DHCPCONF_DOMAIN         0x08
 #ifdef INET6
 static char net_ip6[STRSIZE];
-char net_namesvr6[STRSIZE];
-static int net_ip6conf;
 #define IP6CONF_AUTOHOST        0x01
 #endif
 
@@ -108,8 +106,6 @@ static void get_dhcp_value(char *, size_t, const char *);
 
 #ifdef INET6
 static int is_v6kernel (void);
-static void init_v6kernel (int);
-static int get_v6wait (void);
 #endif
 
 /*
@@ -435,41 +431,6 @@ is_v6kernel(void)
 	close(s);
 	return 1;
 }
-
-/*
- * initialize as v6 client.
- * we are sure that we will never become router with boot floppy :-)
- * (include and use sysctl(8) if you are willing to)
- */
-static void
-init_v6kernel(int autoconf)
-{
-	int v;
-	int mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, 0};
-
-	mib[3] = IPV6CTL_FORWARDING;
-	v = 0;
-	(void)sysctl(mib, 4, NULL, NULL, (void *)&v, sizeof(v));
-
-	mib[3] = IPV6CTL_ACCEPT_RTADV;
-	v = autoconf ? 1 : 0;
-	(void)sysctl(mib, 4, NULL, NULL, (void *)&v, sizeof(v));
-}
-
-static int
-get_v6wait(void)
-{
-	size_t len = sizeof(int);
-	int v;
-	int mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DAD_COUNT};
-
-	len = sizeof(v);
-	if (sysctl(mib, 4, (void *)&v, &len, NULL, 0) < 0) {
-		/* warn("sysctl(net.inet6.ip6.dadcount)"); */
-		return 1;	/* guess */
-	}
-	return v;
-}
 #endif
 
 static int
@@ -731,27 +692,18 @@ again:
 		    sizeof net_defroute);
 	}
 
-	if (!dhcp_config || net_namesvr[0] == 0)
+	if (!(net_dhcpconf & DHCPCONF_NAMESVR)) {
+#ifdef INET6
+		if (v6config) {
+			process_menu(MENU_namesrv6, NULL);
+			if (!yesno)
+				msg_prompt_add(MSG_net_namesrv, net_namesvr,
+				    net_namesvr, sizeof net_namesvr);
+		} else
+#endif
 		msg_prompt_add(MSG_net_namesrv, net_namesvr, net_namesvr,
 		    sizeof net_namesvr);
-
-#ifdef INET6
-	/* IPv6 autoconfiguration */
-	if (!is_v6kernel())
-		v6config = 0;
-	else if (v6config) {
-		process_menu(MENU_noyes, deconst(MSG_Perform_IPv6_autoconfiguration));
-		v6config = yesno ? 1 : 0;
-		net_ip6conf |= yesno ? IP6CONF_AUTOHOST : 0;
 	}
-
-	if (v6config) {
-		process_menu(MENU_namesrv6, NULL);
-		if (!yesno)
-			msg_prompt_add(MSG_net_namesrv6, net_namesvr6,
-			    net_namesvr6, sizeof net_namesvr6);
-	}
-#endif
 
 	/* confirm the setting */
 	if (slip)
@@ -772,8 +724,7 @@ again:
 #ifdef INET6
 	msg_display_add(MSG_netokv6,
 		     !is_v6kernel() ? "<not supported>" :
-			(v6config ? "yes" : "no"),
-		     *net_namesvr6 == '\0' ? "<none>" : net_namesvr6);
+			(v6config ? "yes" : "no"));
 #endif
 done:
 	process_menu(MENU_yesno, deconst(MSG_netok_ok));
@@ -787,11 +738,7 @@ done:
 	 */
 
 	/* Create /etc/resolv.conf if a nameserver was given */
-	if (net_namesvr[0] != '\0'
-#ifdef INET6
-	    || net_namesvr6[0] != '\0'
-#endif
-		) {
+	if (net_namesvr[0] != '\0') {
 		f = fopen("/etc/resolv.conf", "w");
 		if (f == NULL) {
 			if (logfp)
@@ -808,26 +755,12 @@ done:
 			scripting_fprintf(f, "search %s\n", net_domain);
 		if (net_namesvr[0] != '\0')
 			scripting_fprintf(f, "nameserver %s\n", net_namesvr);
-#ifdef INET6
-		if (net_namesvr6[0] != '\0')
-			scripting_fprintf(f, "nameserver %s\n", net_namesvr6);
-#endif
 		scripting_fprintf(NULL, "EOF\n");
 		fflush(NULL);
 		fclose(f);
 	}
 
 	run_program(0, "/sbin/ifconfig lo0 127.0.0.1");
-
-#ifdef INET6
-	if (v6config && !nfs_root) {
-		init_v6kernel(1);
-		run_program(0, "/sbin/ifconfig %s up", net_dev);
-		sleep(get_v6wait() + 1);
-		run_program(RUN_DISPLAY, "/sbin/rtsol -D %s", net_dev);
-		sleep(get_v6wait() + 1);
-	}
-#endif
 
 	if (net_ip[0] != '\0') {
 		if (slip) {
@@ -893,16 +826,19 @@ done:
 	if (v6config && network_up) {
 		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
 		    "/sbin/ping6 -v -c 3 -n -I %s ff02::2", net_dev);
-
-		if (net_namesvr6[0] != '\0')
-			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
-			    "/sbin/ping6 -v -c 3 -n %s", net_namesvr6);
 	}
 #endif
 
-	if (net_namesvr[0] != '\0' && network_up)
-		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
-		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_namesvr);
+	if (net_namesvr[0] != '\0' && network_up) {
+#ifdef INET6
+		if (strchr(net_namesvr, ':'))
+			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
+			    "/sbin/ping6 -v -c 3 -n %s", net_namesvr);
+		else
+#endif
+			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
+			    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_namesvr);
+	}
 
 	if (net_defroute[0] != '\0' && network_up)
 		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
@@ -1119,17 +1055,8 @@ mnt_net_config(void)
 
 	/* Copy resolv.conf to target.  If DHCP was used to create it,
 	 * it will be replaced on next boot anyway. */
-#ifndef INET6
 	if (net_namesvr[0] != '\0')
 		dup_file_into_target("/etc/resolv.conf");
-#else
-	/*
-	 * not sure if it is a good idea, to allow dhcp config to
-	 * override IPv6 configuration
-	 */
-	if (net_namesvr[0] != '\0' || net_namesvr6[0] != '\0')
-		dup_file_into_target("/etc/resolv.conf");
-#endif
 
 	/*
 	 * bring the interface up, it will be necessary for IPv6, and
@@ -1186,19 +1113,6 @@ mnt_net_config(void)
 			add_rc_conf("ifconfig_%s=dhcp\n", net_dev);
 		}
         }
-
-#ifdef INET6
-	if ((net_ip6conf & IP6CONF_AUTOHOST) != 0) {
-		if (del_rc_conf("ip6mode") == 0)
-			add_rc_conf("ip6mode=autohost\n");
-		if (ifconf != NULL) {
-			scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
-			    target_prefix(), ifconfig_fn);
-			scripting_fprintf(ifconf, "!rtsol $int\n");
-			scripting_fprintf(NULL, "EOF\n");
-		}
-	}
-#endif
 
 	if (ifconf)
 		fclose(ifconf);
