@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.2.4.3 2015/05/14 07:11:53 snj Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.2.4.4 2015/05/14 07:27:47 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,7 +95,8 @@ procédure va effectuer les actions suivantes :
 
 (Une fois le partitionnement configuré, le système d'installation vous
 demandera de confirmer avant d'appliquer toute modification sur votre
-disque dur.
+disque dur.)
+
 Souhaitez-vous continuer ?
 }
 
@@ -107,24 +108,22 @@ Vous devriez faire une sauvegarde complète de celui-ci avant de
 continuer la procédure de mise à jour.
 Voulez-vous vraiment mettre à jour NetBSD ?
 (Ceci est le dernier avertissement avant que cette
-procédure ne modifie votre disque).
+procédure ne modifie votre disque.)
 }
 
 message reinstallusure
 {Décompressons maintenant les composants de NetBSD sur un disque dur
-démarrable.
-Cette procédure va rapatrier et décompresser les composants
-sur un disque démarrable déjà partitionnné.
-Elle n'inscrit pas de "label" sur le disque,
-n'installe pas de nouveaux secteurs d'amorçage et ne modifie
-pas les fichiers de configuration existants
-(Quittez et choisissez `installer' ou `mettre à jour').
-Vous devriez déjà avoir fait une installation
-ou une mise à jour avant de démarrer cette procédure !
+démarrable. Cette procédure va rapatrier et décompresser les composants
+sur un disque démarrable déjà partitionnné. Elle n'inscrit pas de "label" sur
+le disque, n'installe pas de nouveaux secteurs d'amorçage et ne modifie
+pas les fichiers de configuration existants. (Quittez et choisissez `installer'
+ou `mettre à jour' si vous désirez ces options.)
+Vous devriez déjà avoir fait une installation ou une mise à jour avant de
+démarrer cette procédure !
 
 Voulez-vous réellement réinstaller les composants NetBSD ?
 (Ceci est le dernier avertissement avant que cette procédure ne commence à
-modifier vos disques).
+modifier vos disques.)
 }
 
 message mount_failed
@@ -188,7 +187,7 @@ choix possible, arrondi au cylindre-près.
 Si vous choisissez "Secteurs", vous pourrez choisir précisément
 les tailles.
 Sur les disques modernes, la taille réelle des cylindres est variable
-et il y a peu d'intéret à aligner les partitions sur les cylindres.
+et il y a peu d'intérêt à aligner les partitions sur les cylindres.
 Pour les disques plus anciens, il est recommandé de choisir des tailles
 de partitions arrondies au cylindre-près, pour plus de performance.
 
@@ -233,7 +232,7 @@ message add_another_ptn
 {Ajouter manuellement une nouvelle partition}
 
 message fssizesok
-{Taille de la partition acceptée. Libre : espace %d %s, %d partition}
+{Taille de la partition acceptée. Libre : %d %s et %d partitions}
 
 message fssizesbad
 {Réduire la taille de la partition de %d %s (%u secteurs).}
@@ -299,7 +298,7 @@ message end_fmt
 {                        fin : %9u %8u%c %9u}
 
 message bsize_fmt
-{            taille de bloc : %9d bytes}
+{             taille de bloc : %9d bytes}
 
 message fsize_fmt
 {         taille de fragment : %9d bytes}
@@ -367,6 +366,7 @@ message lastchance
 Aucune modification n'a été effectuée pour l'instant.
 Ceci est votre dernière opportunité pour quitter cette
 procédure en laissant votre disque intact.
+
 Souhaitez-vous vraiment continuer ?
 }
 
@@ -420,7 +420,7 @@ Vous devez éditer /etc/rc.conf et ajouter la ligne
 }
 
 message upgrcomplete
-{ L'installation des composants supplémentaires de NetBSD-@@VERSION@@ est
+{L'installation des composants supplémentaires de NetBSD-@@VERSION@@ est
 terminée.
 Veuillez consulter le document d'installation (INSTALL) pour apprendre
 à bien configurer votre système.
@@ -431,11 +431,10 @@ Vous devez éditer /etc/rc.conf et ajouter la ligne
 
 message distmedium
 {Votre disque est maintenant prêt à recevoir le coeur du système
-et ses différents composants annexes.
-Comme indiqué dans le document d'installation, vous avez
-plusieurs possibilités.
-Pour une installation via NFS ou FTP, vous devez être
-connecté à un réseau et avoir accès au serveur requis.
+et ses différents composants annexes. Comme indiqué dans le document
+d'installation, vous avez plusieurs possibilités. Pour une installation via
+NFS ou FTP, vous devez être connecté à un réseau et avoir accès au serveur
+requis.
 
 Composant sélectionné : %d, traité : %d. Prochain composant : %s.
 
@@ -480,7 +479,7 @@ de chaque disquette.
 }
 
 message cdromsource
-{Veuillez spéficier le nom du lecteur CD-ROM à utiliser,
+{Veuillez spécifier le nom du lecteur CD-ROM à utiliser,
 ainsi que le nom du répertoire contenant les fichiers d'installation.
 Ils doivent être placés à sa racine, sous la forme de fichiers
 tgz.
@@ -567,26 +566,26 @@ message netok
 
 Nom de domaine (DNS) :		%s 
 Nom d'ordinateur :		%s 
-Adresse du serveur de noms :	%s
-Interface réseau :		%s
+Adresse du serveur de noms :	%s 
+Interface réseau :		%s 
 Type de réseau (média)		%s 
-Adresse IPv4 :			%s
-Masque de sous-réseau :		%s
-Adresse IPv4 de la passerelle : %s
+Adresse IPv4 :			%s 
+Masque de sous-réseau :		%s 
+Adresse IPv4 de la passerelle : %s 
 }
 
 message netok_slip
 {Vous avez spécifié les valeurs suivantes. Êtes-vous d'accord ?
 
-Nom de domaine (DNS) :		%s
-Nom d'ordinateur :		%s
-Adresse du serveur de noms :	%s
-Interface réseau :		%s
-Type de réseau (média) :	%s
-Adresse IPv4 :			%s
-Adresse IPv4 du serveur :	%s
-Masque de sous-réseau :		%s
-Adresse IPv4 de la passerelle :	%s
+Nom de domaine (DNS) :		%s 
+Nom d'ordinateur :		%s 
+Adresse du serveur de noms :	%s 
+Interface réseau :		%s 
+Type de réseau (média) :	%s 
+Adresse IPv4 :			%s 
+Adresse IPv4 du serveur :	%s 
+Masque de sous-réseau :		%s 
+Adresse IPv4 de la passerelle :	%s 
 }
 
 message netokv6
@@ -778,10 +777,8 @@ de sélection du média d'installation.
 }
 
 message mntnetconfig
-{
-Souhaitez-vous conserver les réglages réseaux après le redémarrage
-du système que nous venons d'installer ?
-}
+{Souhaitez-vous conserver les réglages réseaux après le redémarrage
+du système que nous venons d'installer ? }
 
 message cur_distsets
 {
@@ -930,7 +927,7 @@ message tz_back
 message swapactive
 {
 Le disque sélectionné dispose d'une partition d'échange (swap) qui
-est peut être en cours d'utilisation, en particulier si votre système
+est peut-être en cours d'utilisation, en particulier si votre système
 dispose de peu de mémoire.
 Le repartitionnement de votre disque requiert la désactivation de cette
 partition. Prenez garde ! Cette opération peut entraîner des erreurs.
@@ -947,7 +944,7 @@ sur le disque cible pour l'installation. Vous devez redémarrer et tenter
 message rootpw
 {
 Aucun mot de passe pour le compte "root" n'a été défini.
-Nous vous recommandons de spéficier un mot de passe maintenant.
+Nous vous recommandons de spécifier un mot de passe maintenant.
 
 Le souhaitez-vous ?
 }
@@ -992,7 +989,7 @@ message NetBSD_VERSION_Utilities {Utilitaires NetBSD-@@VERSION@@}
 message Run_bin_sh {Exécuter /bin/sh}
 message Set_timezone {Configurer le fuseau horaire}
 message Configure_network {Configurer le réseau}
-message Partition_a_disk {Partitioner un disque}
+message Partition_a_disk {Partitionner un disque}
 message Logging_functions {Journaux}
 message Halt_the_system {Arrêter le système}
 message yes_or_no {oui ou non?}
@@ -1056,7 +1053,7 @@ message aoutfail
 {
 Le répertoire où se situent les anciennes librairies a.out doit être
 déplacé. Veuillez suivre la procédure de mise à jour et bien
-vérifier que tous les sytèmes de fichiers sont montés.
+vérifier que tous les systèmes de fichiers sont montés.
 }
 
 message emulbackup
@@ -1072,7 +1069,7 @@ vous devrez fusionner manuellement le nouveau répertoire avec l'ancien
 message oldsendmail
 {
 Sendmail n'est plus distribué dans cette version de NetBSD, le MTA par défaut
-etant maintenant postfix. Toutefois, le fichier /etc/mailer.conf est toujours
+étant maintenant postfix. Toutefois, le fichier /etc/mailer.conf est toujours
 configuré pour utiliser sendmail. Voulez-vous mettre à jour le fichier
 /etc/mailer.conf automatiquement pour utiliser postfix à la place ? Si vous
 choisissez "Non", vous devrez mettre à jour /etc/mailer.conf manuellement
@@ -1100,7 +1097,7 @@ un mot de passe n'est pas requis.
 message rcconf_backup_failed {La copie de rc.conf a échoué. Continuer ?}
 message rcconf_backup_succeeded {La copie de rc.conf a été sauvegardée jusqu'à %s.}
 message rcconf_restore_failed {La restauration de la sauvegarde de rc.conf a échoué.}
-message rcconf_delete_failed {La suppresion de l'ancien fichier %s a échoué.}
+message rcconf_delete_failed {La suppression de l'ancien fichier %s a échoué.}
 message Pkg_dir {Dossier de paquetages}
 message configure_prior {configurer une installation existante de}
 message configure {configurer}
@@ -1116,14 +1113,14 @@ message change_rootpw {Changer le mot de passe "root"}
 message enable_binpkg {Activer l'installation de paquetages binaires}
 message enable_sshd {Activer sshd}
 message enable_ntpd {Activer ntpd}
-message run_ntpdate {Executer ntpdate au démarrage}
+message run_ntpdate {Exécuter ntpdate au démarrage}
 message enable_mdnsd {Activer mdnsd}
 message enable_xdm {Activer xdm}
 message enable_cgd {Activer cgd}
 message enable_lvm {Activer lvm}
 message enable_raid {Activer raidframe}
-message add_a_user {Add a user}
-message configmenu {Configurer les items suivants si nécéssaire.}
+message add_a_user {Ajouter un utilisateur}
+message configmenu {Configurer les items suivants si nécessaire.}
 message doneconfig {Configuration terminée}
 message Install_pkgin {Installer pkgin et mettre à jour le sommaire des paquetages}
 message binpkg_installed 
@@ -1135,7 +1132,7 @@ pkgin install <packagename>
 à partir d'un shell "root".  Consultez le manuel pkgin(1) pour plus de détails.}
 message Install_pkgsrc {Obtenir et extraire pkgsrc}
 message pkgsrc
-{L'installation de pkgsrc nécéssite l'extraction d'une archive obtenue
+{L'installation de pkgsrc nécessite l'extraction d'une archive obtenue
 par le réseau.
 Voici les configurations actuelles pour : serveur, répertoire, utilisateur et
 mot de passe qui seront utilisés.  Si "utilisateur" est "ftp", un mot de passe
@@ -1156,7 +1153,7 @@ message failed {Échoué}
 
 message notsupported {Le fonctionnement n'est pas pris en charge!}
 message askfsmountadv {Point de montage ou de 'raid' ou 'cgd' ou 'lvm'?}
-message partman {Partitionnement étendue}
+message partman {Partitionnement étendu}
 message editbsdpart {Modifier les partitions BSD}
 message editmbr {Modifiez et enregistrez MBR}
 message switchgpt {Mettre à GPT}
@@ -1298,8 +1295,8 @@ message lvmlv_regsiz_ask {MirrorLogRegionSize?}
 message lvmlv_readahsect_ask {ReadAheadSectors?}
 message lvmlv_stripes_ask {Stripes?}
 
-message addusername {8 character username to add}
-message addusertowheel {Do you wish to add this user to group wheel?}
+message addusername {Nom d'utilisateur (8 caractères)}
+message addusertowheel {Ajouter cet utilisateur au groupe "wheel" ?}
 message Delete_partition
 {Supprimer la partition}
 
