@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.153 2015/05/13 02:15:34 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.154 2015/05/14 01:34:31 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -330,5 +330,7 @@ SUBDIR+=	emdtv
 .if (${MKISCSI} != "no")
 SUBDIR+=	iscsi
 .endif
+
+SUBDIR+=	examples	# build these regularly to avoid bit-rot
 
 .include <bsd.subdir.mk>
