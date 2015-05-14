@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.307 2015/04/20 23:03:09 riastradh Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.308 2015/05/14 17:35:54 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.307 2015/04/20 23:03:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.308 2015/05/14 17:35:54 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1311,7 +1311,7 @@ retry:
 	byte_count = 0; /* count of bytes actually written */
 	while (tsiz > 0) {
 		uint32_t datalen; /* data bytes need to be allocated in mbuf */
-		uint32_t backup;
+		size_t backup;
 		bool stalewriteverf = false;
 
 		nfsstats.rpccnt[NFSPROC_WRITE]++;
