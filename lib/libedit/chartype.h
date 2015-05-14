@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.13 2015/02/22 02:16:19 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.14 2015/05/14 10:44:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #define FUN(prefix,rest)	prefix ## _w ## rest
 #define FUNW(type)		type ## _w
 #define TYPE(type)		type ## W
+#define FCHAR			"%lc"
 #define FSTR			"%ls"
 #define STR(x) 			L ## x
 #define UC(c)			c
@@ -126,6 +127,7 @@ Width(wchar_t c)
 #define FUN(prefix,rest)	prefix ## _ ## rest
 #define FUNW(type)		type
 #define TYPE(type)		type
+#define FCHAR			"%c"
 #define FSTR			"%s"
 #define STR(x) 			x
 #define UC(c)			(unsigned char)(c)
