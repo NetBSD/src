@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.4.4.3 2015/05/13 17:04:27 snj Exp $	*/
+/*	$NetBSD: menus.mi,v 1.4.4.4 2015/05/14 00:30:50 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -501,8 +501,8 @@ menu namesrv6, title MSG_Select_DNS_server;
 	option "google-public-dns-a.google.com (IPv6)", exit, action
 		{
 #ifdef INET6
-		  strlcpy(net_namesvr6, "2001:4860:4860::8888",
-		      sizeof(net_namesvr6));
+		  strlcpy(net_namesvr, "2001:4860:4860::8888",
+		      sizeof(net_namesvr));
 		  yesno = 1;
 #else
 		  yesno = 0;
@@ -511,8 +511,8 @@ menu namesrv6, title MSG_Select_DNS_server;
 	option "google-public-dns-b.google.com (IPv6)", exit, action
 		{
 #ifdef INET6
-		  strlcpy(net_namesvr6, "2001:4860:4860::8844",
-		      sizeof(net_namesvr6));
+		  strlcpy(net_namesvr, "2001:4860:4860::8844",
+		      sizeof(net_namesvr));
 		  yesno = 1;
 #else
 		  yesno = 0;
