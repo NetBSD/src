@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.112 2015/05/05 22:09:24 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.113 2015/05/14 17:31:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.112 2015/05/05 22:09:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.113 2015/05/14 17:31:24 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -314,7 +314,18 @@ bounds_check_with_mediasize(struct buf *bp, int secsize, uint64_t mediasize)
 {
 	int64_t sz;
 
-	sz = howmany(bp->b_bcount, secsize);
+	if (bp->b_blkno < 0) {
+		/* Reject negative offsets immediately. */
+		bp->b_error = EINVAL;
+		return 0;
+	}
+
+	sz = howmany((int64_t)bp->b_bcount, secsize);
+
+	/*
+	 * bp->b_bcount is a 32-bit value, and we rejected a negative
+	 * bp->b_blkno already, so "bp->b_blkno + sz" cannot overflow.
+	 */
 
 	if (bp->b_blkno + sz > mediasize) {
 		sz = mediasize - bp->b_blkno;
@@ -348,6 +359,12 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 	uint64_t p_size, p_offset, labelsector;
 	int64_t sz;
 
+	if (bp->b_blkno < 0) {
+		/* Reject negative offsets immediately. */
+		bp->b_error = EINVAL;
+		return -1;
+	}
+
 	/* Protect against division by zero. XXX: Should never happen?!?! */
 	if (lp->d_secpercyl == 0) {
 		bp->b_error = EINVAL;
@@ -363,8 +380,14 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 #endif
 	labelsector = (labelsector + dk->dk_labelsector) << dk->dk_blkshift;
 
-	sz = howmany(bp->b_bcount, DEV_BSIZE);
-	if ((bp->b_blkno + sz) > p_size) {
+	sz = howmany((int64_t)bp->b_bcount, DEV_BSIZE);
+
+	/*
+	 * bp->b_bcount is a 32-bit value, and we rejected a negative
+	 * bp->b_blkno already, so "bp->b_blkno + sz" cannot overflow.
+	 */
+
+	if (bp->b_blkno + sz > p_size) {
 		sz = p_size - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
