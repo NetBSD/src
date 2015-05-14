@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.2.4.4 2015/05/13 17:04:27 snj Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.2.4.5 2015/05/14 07:11:53 snj Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -523,9 +523,6 @@ message net_srv_ip
 message net_mask
 {Maska podsieci IPv4}
 
-message net_namesrv6
-{Serwer nazw IPv6}
-
 message net_namesrv
 {Serwer nazw IPv4}
 
@@ -540,12 +537,12 @@ message netok
 
 Domena DNS:		%s 
 Nazwa hosta:		%s 
+Serwer nazw:		%s 
 Podstawowy interfejs:	%s 
+Medium sieciowe:	%s
 Twoj adres IP:		%s 
 Maska podsieci:		%s 
-Serwer nazw IPv4:	%s 
 Bramka IPv4:		%s 
-Medium sieciowe:	%s
 }
 
 message netok_slip
@@ -553,18 +550,17 @@ message netok_slip
 
 Domena DNS:		%s 
 Nazwa hosta:		%s 
+Serwer nazw:		%s 
 Podstawowy interfejs:	%s 
+Medium sieciowe:	%s
 Twoj adres IP:		%s 
 Adres IP serwera:	%s
 Maska podsieci:		%s 
-Serwer nazw IPv4:	%s 
 Bramka IPv4:		%s 
-Medium sieciowe:	%s
 }
 
 message netokv6
 {Autkonfiguracja IPv6:	%s 
-Serwer nazw IPv6:	%s 
 }
 
 message netok_ok
@@ -946,8 +942,7 @@ message Device {Urzadzenie}
 message File_system {SystemPlikow}
 message Select_DNS_server {  Wybierz serwer nazw}
 message other {inny  }
-message Perform_IPv6_autoconfiguration {Wykonac autokonfiguracje IPv6?}
-message Perform_DHCP_autoconfiguration {Wykonac autkonfiguracje DHCP?}
+message Perform_autoconfiguration {Wykonac autkonfiguracje?}
 message Root_shell {Powloka root'a}
 message Color_scheme {Kolorystyka}
 message White_on_black {Bia³y na czarnym}

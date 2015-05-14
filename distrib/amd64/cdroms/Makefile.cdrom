@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.10.2.1 2014/08/15 10:23:22 martin Exp $
+# $NetBSD: Makefile.cdrom,v 1.10.2.2 2015/05/14 07:11:53 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -65,9 +65,6 @@ CDRUNTIME+=	./usr/share/misc/terminfo.cdb
 CDRUNTIME+=	./usr/share/locale
 
 image_md_pre:
-	${MKDIR} cdrom/libexec/dhcpcd-hooks
-	${INSTALL} ${COPY} ${.CURDIR}/../../../common/10-resolv.conf cdrom/libexec/dhcpcd-hooks
-	${INSTALL} ${COPY} ${.CURDIR}/../../../common/99-print-sysinst cdrom/libexec/dhcpcd-hooks
 	${MKDIR} cdrom/etc
 	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
 	${INSTALL} ${COPY} ${.CURDIR}/../etc.ttys cdrom/etc/ttys

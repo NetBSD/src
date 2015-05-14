@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2.4.3 2015/05/14 00:30:50 riz Exp $	*/
+/*	$NetBSD: net.c,v 1.2.4.4 2015/05/14 07:11:53 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -102,7 +102,6 @@ static void write_etc_hosts(FILE *f);
 #define DHCPCD "/sbin/dhcpcd"
 #include <signal.h>
 static int config_dhcp(char *);
-static void get_dhcp_value(char *, size_t, const char *);
 
 #ifdef INET6
 static int is_v6kernel (void);
@@ -494,7 +493,6 @@ config_network(void)
 	int selected_net;
 
 	int i;
-	char dhcp_host[STRSIZE];
 #ifdef INET6
 	int v6config = 1;
 #endif
@@ -534,6 +532,7 @@ again:
 	    return 0;
 
 	network_up = 1;
+	dhcp_config = 0;
 
 	strncpy(net_dev, net_devs[selected_net].if_dev, STRSIZE);
 
@@ -546,13 +545,10 @@ again:
 	/* If root is on NFS do not reconfigure the interface. */
 	if (statvfs("/", &sb) == 0 && strcmp(sb.f_fstypename, "nfs") == 0) {
 		nfs_root = 1;
-		dhcp_config = 0;
 		get_ifinterface_info();
 		get_if6interface_info();
 		get_host_info();
-	} else if (slip) {
-		dhcp_config = 0;
-	} else {
+	} else if (!slip) {
 		/* Preload any defaults we can find */
 		get_ifinterface_info();
 		get_if6interface_info();
@@ -606,6 +602,8 @@ again:
 		/* try a dhcp configuration */
 		dhcp_config = config_dhcp(net_dev);
 		if (dhcp_config) {
+			char *nline;
+
 			/* Get newly configured data off interface. */
 			get_ifinterface_info();
 			get_if6interface_info();
@@ -618,50 +616,72 @@ again:
 			 * 'route -n show'
 			 */
 			if (collect(T_OUTPUT, &textbuf,
-				    "/sbin/route -n show | "
-				    "while read dest gateway flags;"
-				    " do [ \"$dest\" = default ] && {"
-					" echo $gateway; break; };"
-				    " done" ) > 0)
+			    "/sbin/route -n show | "
+			    "while read dest gateway flags;"
+			    " do [ \"$dest\" = default ] && {"
+			    " echo \"$gateway\"; break; };"
+			    " done" ) > 0)
 				strlcpy(net_defroute, textbuf,
 				    sizeof net_defroute);
 			free(textbuf);
+			if ((nline = strchr(net_defroute, '\n')))
+				*nline = '\0';
 
 			/* pull nameserver info out of /etc/resolv.conf */
 			if (collect(T_OUTPUT, &textbuf,
-				    "cat /etc/resolv.conf 2>/dev/null |"
-				    " while read keyword address rest;"
-				    " do [ \"$keyword\" = nameserver "
-					" -a \"${address#*:}\" = "
-					"\"${address}\" ] && {"
-					    " echo $address; break; };"
-				    " done" ) > 0)
+			    "cat /etc/resolv.conf 2>/dev/null |"
+			    " while read keyword address rest;"
+			    " do [ \"$keyword\" = nameserver ] &&"
+			    " { echo \"$address\"; break; };"
+			    " done" ) > 0)
 				strlcpy(net_namesvr, textbuf,
 				    sizeof net_namesvr);
 			free(textbuf);
+			if ((nline = strchr(net_namesvr, '\n')))
+				*nline = '\0';
 			if (net_namesvr[0] != '\0')
 				net_dhcpconf |= DHCPCONF_NAMESVR;
 
-			/* pull domainname out of leases file */
-			get_dhcp_value(net_domain, sizeof(net_domain),
-			    "domain-name");
+			/* pull domain info out of /etc/resolv.conf */
+			if (collect(T_OUTPUT, &textbuf,
+			    "cat /etc/resolv.conf 2>/dev/null |"
+			    " while read keyword domain rest;"
+			    " do [ \"$keyword\" = domain ] &&"
+			    " { echo \"$domain\"; break; };"
+			    " done" ) > 0)
+				strlcpy(net_domain, textbuf,
+				    sizeof net_domain);
+			free(textbuf);
+			if (net_domain[0] == '\0') {
+				/* pull domain info out of /etc/resolv.conf */
+				if (collect(T_OUTPUT, &textbuf,
+				    "cat /etc/resolv.conf 2>/dev/null |"
+				    " while read keyword search rest;"
+				    " do [ \"$keyword\" = search ] &&"
+				    " { echo \"$search\"; break; };"
+				    " done" ) > 0)
+					strlcpy(net_domain, textbuf,
+					    sizeof net_domain);
+				free(textbuf);
+			}
+			if ((nline = strchr(net_domain, '\n')))
+				*nline = '\0';
 			if (net_domain[0] != '\0')
 				net_dhcpconf |= DHCPCONF_DOMAIN;
 
-			/* pull hostname out of leases file */
-			dhcp_host[0] = 0;
-			get_dhcp_value(dhcp_host, sizeof(dhcp_host),
-			    "host-name");
-			if (dhcp_host[0] != '\0') {
+			if (gethostname(net_host, sizeof(net_host)) == 0 &&
+			    net_host[0] != 0)
 				net_dhcpconf |= DHCPCONF_HOST;
-				strlcpy(net_host, dhcp_host, sizeof net_host);
-			}
 		}
 	}
 
-	msg_prompt_add(MSG_net_domain, net_domain, net_domain,
-	    sizeof net_domain);
-	msg_prompt_add(MSG_net_host, net_host, net_host, sizeof net_host);
+	if (!(net_dhcpconf & DHCPCONF_HOST))
+		msg_prompt_add(MSG_net_host, net_host, net_host,
+		    sizeof net_host);
+
+	if (!(net_dhcpconf & DHCPCONF_DOMAIN))
+		msg_prompt_add(MSG_net_domain, net_domain, net_domain,
+		    sizeof net_domain);
 
 	if (!dhcp_config) {
 		/* Manually configure IPv4 */
@@ -707,30 +727,40 @@ again:
 
 	/* confirm the setting */
 	if (slip)
-		msg_display(MSG_netok_slip, net_domain, net_host, net_dev,
-			*net_ip == '\0' ? "<none>" : net_ip,
-			*net_srv_ip == '\0' ? "<none>" : net_srv_ip,
-			*net_mask == '\0' ? "<none>" : net_mask,
-			*net_namesvr == '\0' ? "<none>" : net_namesvr,
-			*net_defroute == '\0' ? "<none>" : net_defroute,
-			*net_media == '\0' ? "<default>" : net_media);
+		msg_display(MSG_netok_slip, net_domain, net_host,
+		    *net_namesvr == '\0' ? "<none>" : net_namesvr,
+		    net_dev,
+		    *net_media == '\0' ? "<default>" : net_media,
+		    *net_ip == '\0' ? "<none>" : net_ip,
+		    *net_srv_ip == '\0' ? "<none>" : net_srv_ip,
+		    *net_mask == '\0' ? "<none>" : net_mask,
+		    *net_defroute == '\0' ? "<none>" : net_defroute);
 	else
-		msg_display(MSG_netok, net_domain, net_host, net_dev,
-			*net_ip == '\0' ? "<none>" : net_ip,
-			*net_mask == '\0' ? "<none>" : net_mask,
-			*net_namesvr == '\0' ? "<none>" : net_namesvr,
-			*net_defroute == '\0' ? "<none>" : net_defroute,
-			*net_media == '\0' ? "<default>" : net_media);
+		msg_display(MSG_netok, net_domain, net_host,
+		    *net_namesvr == '\0' ? "<none>" : net_namesvr,
+		    net_dev,
+		    *net_media == '\0' ? "<default>" : net_media,
+		    *net_ip == '\0' ? "<none>" : net_ip,
+		    *net_mask == '\0' ? "<none>" : net_mask,
+		    *net_defroute == '\0' ? "<none>" : net_defroute);
 #ifdef INET6
 	msg_display_add(MSG_netokv6,
-		     !is_v6kernel() ? "<not supported>" :
-			(v6config ? "yes" : "no"));
+		     !is_v6kernel() ? "<not supported>" : net_ip6);
 #endif
 done:
 	process_menu(MENU_yesno, deconst(MSG_netok_ok));
 
 	if (!yesno)
 		goto again;
+
+	run_program(0, "/sbin/ifconfig lo0 127.0.0.1");
+
+	/* dhcpcd will have configured it all for us */
+	if (dhcp_config) {
+		fflush(NULL);
+		network_up = 1;
+		return network_up;
+	}
 
 	/*
 	 * we may want to perform checks against inconsistent configuration,
@@ -1039,7 +1069,6 @@ void
 mnt_net_config(void)
 {
 	char ifconfig_fn[STRSIZE];
-	char ifconfig_str[STRSIZE];
 	FILE *ifconf = NULL;
 
 	if (!network_up)
@@ -1107,11 +1136,12 @@ mnt_net_config(void)
 		if (del_rc_conf("defaultroute") == 0)
 			add_rc_conf("defaultroute=\"%s\"\n", net_defroute);
 	} else {
-		if (snprintf(ifconfig_str, sizeof ifconfig_str,
-		    "ifconfig_%s", net_dev) > 0 &&
-		    del_rc_conf(ifconfig_str) == 0) {
-			add_rc_conf("ifconfig_%s=dhcp\n", net_dev);
-		}
+		/*
+		 * Start dhcpcd quietly and in master mode, but restrict
+		 * it to our interface
+		 */
+		add_rc_conf("dhcpcd=YES\n");
+		add_rc_conf("dhcpcd_flags=\"-qM %s\"\n", net_dev);
         }
 
 	if (ifconf)
@@ -1133,7 +1163,7 @@ config_dhcp(char *inter)
 
 	if (!file_mode_match(DHCPCD, S_IFREG))
 		return 0;
-	process_menu(MENU_yesno, deconst(MSG_Perform_DHCP_autoconfiguration));
+	process_menu(MENU_yesno, deconst(MSG_Perform_autoconfiguration));
 	if (yesno) {
 		/* spawn off dhcpcd and wait for parent to exit */
 		dhcpautoconf = run_program(RUN_DISPLAY | RUN_PROGRESS,
@@ -1141,38 +1171,4 @@ config_dhcp(char *inter)
 		return dhcpautoconf ? 0 : 1;
 	}
 	return 0;
-}
-
-static void
-get_dhcp_value(char *targ, size_t l, const char *var)
-{
-	static const char *lease_data = "/tmp/dhcpcd-lease";
-	FILE *fp;
-	char *line;
-	size_t len, var_len;
-
-	if ((fp = fopen(lease_data, "r")) == NULL) {
-		warn("Could not open %s", lease_data);
-		*targ = '\0';
-		return;
-	}
-
-	var_len = strlen(var);
-
-	while ((line = fgetln(fp, &len)) != NULL) {
-		if (line[len - 1] == '\n')
-			--len;
-		if (len <= var_len)
-			continue;
-		if (memcmp(line, var, var_len))
-			continue;
-		if (line[var_len] != '=')
-			continue;
-		line += var_len + 1;
-		len -= var_len + 1;
-		strlcpy(targ, line, l > len ? len + 1: l);
-		break;
-	}
-
-	fclose(fp);
 }

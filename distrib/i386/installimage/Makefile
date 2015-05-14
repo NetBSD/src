@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.2 2015/03/12 19:06:22 snj Exp $
+#	$NetBSD: Makefile,v 1.4.2.3 2015/05/14 07:11:53 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -26,8 +26,6 @@ SYSINSTDIR!= cd ${.CURDIR}/../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTO
 
 SPEC_EXTRA=		${.CURDIR}/spec.inst
 IMGFILE_EXTRA=								\
-	${DISTRIBDIR}/common/10-resolv.conf	libexec/dhcpcd-hooks	\
-	${DISTRIBDIR}/common/99-print-sysinst	libexec/dhcpcd-hooks	\
 	${.CURDIR}/etc.ttys		etc/ttys			\
 	${.CURDIR}/etc.rc		etc/rc				\
 	${.CURDIR}/install.sh		.				\
