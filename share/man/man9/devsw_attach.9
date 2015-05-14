@@ -1,4 +1,4 @@
-.\"	$NetBSD: devsw_attach.9,v 1.1 2015/05/14 00:08:44 pgoyette Exp $
+.\"	$NetBSD: devsw_attach.9,v 1.2 2015/05/14 13:59:15 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,14 +103,14 @@ should be set to
 and
 .Em bmajor
 to
-.Dv -1 .
+.Dv \-1 .
 The
 .Em devname ,
 major number, and device type
 (character or block)
 must correspond to the device file which will be opened by user programs.
 By passing
-.Dv -1
+.Dv \-1
 to the function for the
 .Em cmajor
 or
