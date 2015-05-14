@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.72 2015/04/09 10:55:23 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.73 2015/05/14 00:59:03 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -99,6 +99,8 @@ EVBARM_BOARDS.armv7hf+=		HUMMINGBIRD_A31
 EVBARM_BOARDS.armv7+=		ALLWINNER_A80
 EVBARM_BOARDS.armv7hf+=		ALLWINNER_A80
 #EVBARM_BOARDS.armv7+=		IGEPV2
+EVBARM_BOARDS.armv7+=		JETSONTK1
+EVBARM_BOARDS.armv7hf+=		JETSONTK1
 EVBARM_BOARDS.armv7+=		MIRABOX
 EVBARM_BOARDS.armv7hf+=		MIRABOX
 #EVBARM_BOARDS.armv7+=		N900
