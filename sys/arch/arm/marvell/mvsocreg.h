@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.9 2014/02/17 05:05:46 kiyohara Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.10 2015/05/14 05:39:32 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -129,11 +129,23 @@
 #define MVSOC_MLMB_WINCR_SIZE_MASK		0xff000000
 
 /* Coherent Fabric Control and Status */
-#define MVSOC_MLMB_COHERENCY_FABRIC_CTRL  0x200
-#define MVSOC_MLMB_COHERENCY_FABRIC_CFG	  0x204
+#define MVSOC_MLMB_CFU_CTRL		0x200
+#define MVSOC_MLMB_CFU_CTRL_PROP_ERR	(0x1 << 8)
+#define MVSOC_MLMB_CFU_CTRL_SNOOP_CPU0	(0x1 << 24)
+
+#define MVSOC_MLMB_CFU_CFG		0x228
+#define MVSOC_MLMB_CFU_CFG_L2_NOTIFY	(0x1 << 16)
 
 /* CIB registers offsets */
-#define MVSOC_MLMB_CIB_CTRL_CFG		  0x280
+#define MVSOC_MLMB_CIB_CTRL_CFG			0x280
+#define MVSOC_MLMB_CIB_CTRL_CFG_WB_EN		(0x1 << 0)
+#define MVSOC_MLMB_CIB_CTRL_CFG_STOP		(0x1 << 9)
+#define MVSOC_MLMB_CIB_CTRL_CFG_IGN_SHARE	(0x2 << 10)
+#define MVSOC_MLMB_CIB_CTRL_CFG_EMPTY		(0x1 << 13)
+
+/* CIB barrier register */
+#define MVSOC_MLMB_CIB_BARRIER			0x1810
+#define MVSOC_MLMB_CIB_BARRIER_TRIGGER		(0x1 << 0)
 
 #define MVSOC_TMR_BASE		(MVSOC_MLMB_BASE + 0x0300)
 
