@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.60 2015/05/09 21:57:56 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.61 2015/05/14 07:27:14 maxv Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.60 2015/05/09 21:57:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.61 2015/05/14 07:27:14 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3106,8 +3106,10 @@ hifn_mkmbuf_chain(int totlen, struct mbuf *mtemplate)
 	if (len == MHLEN)
 		M_DUP_PKTHDR(m0, mtemplate);
 	MCLGET(m0, M_DONTWAIT);
-	if (!(m0->m_flags & M_EXT))
-		m_freem(m0);
+	if (!(m0->m_flags & M_EXT)) {
+ 		m_freem(m0);
+		return (NULL);
+	}
 	len = MCLBYTES;
 
 	totlen -= len;
