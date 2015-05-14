@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.386 2015/04/27 07:03:57 knakahara Exp $
+#       $NetBSD: Makefile,v 1.387 2015/05/14 00:08:44 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -16,7 +16,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	cpu_startup.9 cpu_switchto.9 cpufreq.9 \
 	csf.9 ctod.9 \
 	curproc.9 \
-	delay.9 disk.9 ddc.9 disklabel.9 dofileread.9 \
+	delay.9 devsw_attach.9 disk.9 ddc.9 disklabel.9 dofileread.9 \
 	dopowerhooks.9 do_setresuid.9 doshutdownhooks.9 driver.9 \
 	edid.9 errno.9 ethersubr.9 evcnt.9 extattr.9 extent.9 \
 	fetch.9 file.9 fileassoc.9 filedesc.9 firmload.9 flash.9 \
@@ -278,6 +278,11 @@ MLINKS+=ctod.9 dtoc.9 \
 	ctod.9 btodb.9
 MLINKS+=curproc.9 curcpu.9 curproc.9 curlwp.9
 MLINKS+=delay.9 DELAY.9
+MLINKS+=devsw_attach.9 devsw_detach.9 \
+	devsw_attach.9 bdevsw_lookup.9 \
+	devsw_attach.9 cdevsw_lookup.9 \
+	devsw_attach.9 bdevsw_lookup_major.9 \
+	devsw_attach.9 cdevsw_lookup_major.9
 MLINKS+=disk.9 disk_attach.9 disk.9 disk_detach.9 \
 	disk.9 disk_busy.9 disk.9 disk_unbusy.9 disk.9 disk_find.9 \
 	disk.9 disk_init.9 disk.9 disk_destroy.9 disk.9 disk_begindetach.9
