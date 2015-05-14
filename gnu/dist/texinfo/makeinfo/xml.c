@@ -1,4 +1,4 @@
-/*	$NetBSD: xml.c,v 1.1.1.5 2008/09/02 07:50:51 christos Exp $	*/
+/*	$NetBSD: xml.c,v 1.1.1.5.38.1 2015/05/14 08:15:47 snj Exp $	*/
 
 /* xml.c -- xml output.
    Id: xml.c,v 1.52 2004/12/19 17:02:23 karl Exp
@@ -870,7 +870,7 @@ xml_insert_element_with_attribute (elt, arg, format, va_alist)
       return;
     }
 
-  if (!xml_element_list[elt].name || !strlen (xml_element_list[elt].name))
+  if (!strlen (xml_element_list[elt].name))
     {
       /*printf ("Warning: Inserting empty element %d\n", elt);*/
       return;

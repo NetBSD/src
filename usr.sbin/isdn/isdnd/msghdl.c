@@ -27,7 +27,7 @@
  *	i4b daemon - message from kernel handling routines
  *	--------------------------------------------------
  *
- *	$Id: msghdl.c,v 1.11 2009/04/16 05:56:32 lukem Exp $ 
+ *	$Id: msghdl.c,v 1.11.24.1 2015/05/14 08:15:48 snj Exp $ 
  *
  * $FreeBSD$
  *
@@ -149,7 +149,7 @@ msg_connect_ind(msg_connect_ind_t *mp, int len)
 		decr_free_channels(find_ctrl_state(mp->controller));
 		if (cep->alert)
 		{
-			if (mp->display)
+			if (mp->display[0])
 			{
 				logit(LL_CHD, "%05d %s alerting: incoming call from %s to %s (%s)",
 					mp->header.cdid, cep->name, SRC, DST, mp->display);
@@ -163,7 +163,7 @@ msg_connect_ind(msg_connect_ind_t *mp, int len)
 		}
 		else
 		{
-			if (mp->display)
+			if (mp->display[0])
 			{				
 				logit(LL_CHD, "%05d %s answering: incoming call from %s to %s (%s)",
 					mp->header.cdid, cep->name, SRC, DST, mp->display);

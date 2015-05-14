@@ -1,4 +1,4 @@
-/*	$NetBSD: import-export.c,v 1.1.1.2 2009/12/02 00:26:49 haad Exp $	*/
+/*	$NetBSD: import-export.c,v 1.1.1.2.24.1 2015/05/14 08:15:47 snj Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -187,7 +187,7 @@ int export_pv(struct cmd_context *cmd, struct dm_pool *mem __attribute((unused))
 	}
 
 	/* Generate system_id if PV is in VG */
-	if (!pvd->system_id || !*pvd->system_id)
+	if (!pvd->system_id[0])
 		if (!_system_id(cmd, (char *)pvd->system_id, ""))
 			return_0;
 

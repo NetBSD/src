@@ -764,8 +764,7 @@ text_command_t(target_session_t * sess, uint8_t *header)
 			return -1;
 		}
 		if (ptr->rx_offer) {
-			if (ptr->offer_rx &&
-			    strcmp(ptr->offer_rx, "All") == 0 &&
+			if (strcmp(ptr->offer_rx, "All") == 0 &&
 			    !param_equiv(sess->params, "SessionType",
 			    	"Discovery")) {
 				iscsi_trace(TRACE_ISCSI_DEBUG,
