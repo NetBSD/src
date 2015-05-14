@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.295 2015/05/14 00:32:45 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.296 2015/05/14 06:44:57 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23016,6 +23016,9 @@ usr.sbin/sysinst/net.c				1.9-1.10
 	Google Public V4 DNS servers to the list.
 	The other field can take an IPv4 or IPv6 name server of choice.
 	Fixes PR install/49231.
+	rtsol is no longer used.
+	Only prompt for one nameserver, let the user decide if it's a
+	pre-determined google server other another one.
 	[martin, ticket #754]
 
 usr.sbin/syslogd/syslogd.c			1.120
@@ -23025,12 +23028,4 @@ usr.sbin/syslogd/syslogd.c			1.120
 	  hostname
 	- don't truncate IP addresses when reading syslogd.conf
 	[jnemeth, ticket #760]
-
-
-rtsol is no longer used.
-
-
-Only prompt for one nameserver, let the user decide if it's a
-pre-determined google server other another one.
-[riz, ticket #754]
 
