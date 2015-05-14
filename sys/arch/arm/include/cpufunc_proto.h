@@ -326,6 +326,10 @@ void	armv7_setup(char *string);
 void	pj4b_cpu_sleep(int);
 void	pj4bv7_setup(char *string);
 void	pj4b_config(void);
+void	pj4b_io_coherency_barrier(vaddr_t, paddr_t, vsize_t);
+void	pj4b_dcache_cfu_inv_range(vaddr_t, vsize_t);
+void	pj4b_dcache_cfu_wb_range(vaddr_t, vsize_t);
+void	pj4b_dcache_cfu_wbinv_range(vaddr_t, vsize_t);
 #endif /* CPU_PJ4B */
 
 #if defined(CPU_ARM1136) || defined(CPU_ARM1176)

@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.30 2014/08/30 13:19:52 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.31 2015/05/14 05:39:32 hsuenaga Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.30 2014/08/30 13:19:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.31 2015/05/14 05:39:32 hsuenaga Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.30 2014/08/30 13:19:52 kiyohar
 #include <arm/marvell/kirkwoodreg.h>
 #include <arm/marvell/mv78xx0reg.h>
 #include <arm/marvell/armadaxpreg.h>
+#include <arm/marvell/armadaxpvar.h>
 #include <arm/marvell/mvsocgppvar.h>
 
 #include <evbarm/marvell/marvellreg.h>
@@ -345,11 +346,7 @@ initarm(void *arg)
 
 #ifdef L2CACHE_ENABLE
 		/* Initialize L2 Cache */
-		{
-			extern int armadaxp_l2_init(bus_addr_t);
-
-			(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
-		}
+		armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
 #endif
 
 #ifdef AURORA_IO_CACHE_COHERENCY
