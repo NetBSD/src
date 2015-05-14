@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.4.4.4 2015/05/14 00:30:50 riz Exp $	*/
+/*	$NetBSD: menus.mi,v 1.4.4.5 2015/05/14 07:58:49 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -286,14 +286,16 @@ menu colors, title MSG_Color_scheme, exit,
 
 
 menu yesno, y=-10;
-	display action { menu->title = arg ? arg : MSG_yes_or_no; };
-	option MSG_Yes, exit, action  {yesno = 1;};
-	option MSG_No,  exit, action  {yesno = 0;};
+	display action { arg_rv *p = arg;
+		menu->title = p->arg ? p->arg : MSG_yes_or_no; };
+	option MSG_Yes, exit, action  { ((arg_rv*)arg)->rv = 1; };
+	option MSG_No,  exit, action  { ((arg_rv*)arg)->rv = 0; };
 
 menu noyes, y=-10;
-	display action { menu->title = arg ? arg : MSG_yes_or_no; };
-	option MSG_No,  exit, action  {yesno = 0;};
-	option MSG_Yes, exit, action  {yesno = 1;};
+	display action { arg_rv *p = arg;
+		menu->title = p->arg ? p->arg : MSG_yes_or_no; };
+	option MSG_No,  exit, action  { ((arg_rv*)arg)->rv = 0; };
+	option MSG_Yes, exit, action  { ((arg_rv*)arg)->rv = 1; };
 
 menu ok, no shortcut, y=-10;
 	display action { menu->title = arg; };
@@ -345,7 +347,7 @@ menu distset, title MSG_Select_your_distribution, exit,
 
 menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Get_Distribution;
-	display action { msg_display(MSG_ftpsource, arg); };
+	display action { msg_display(MSG_ftpsource, ((arg_rv*)arg)->arg); };
 	option {src_legend(menu, MSG_Host, ftp.host);},
 		action { src_prompt(MSG_Host, ftp.host, sizeof ftp.host); };
 	option {src_legend(menu, MSG_Base_dir, ftp.dir);},
@@ -382,16 +384,14 @@ menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 		action { src_prompt(MSG_Xfer_dir, xfer_dir, sizeof xfer_dir); };
 	option {src_legend(menu, MSG_delete_xfer_file,
 			clean_xfer_dir ? MSG_Yes : MSG_No);},
-		action {process_menu(MENU_yesno, deconst(MSG_delete_xfer_file));
-			clean_xfer_dir = yesno; };
+		action {clean_xfer_dir = ask_yesno(MSG_delete_xfer_file); };
 	option MSG_Configure_network,
 		action {
 			extern int network_up;
 			network_up = 0;
 			config_network();
 		};
-	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
-	exit action { yesno = -1; };
+	option MSG_exit_menu_generic, exit, action { ((arg_rv*)arg)->rv = SET_RETRY; };
 
 
 menu nfssource, y=-4, x=0, w=70, no box, no clear,
@@ -411,7 +411,7 @@ menu nfssource, y=-4, x=0, w=70, no box, no clear,
 			network_up = 0;
 			config_network();
 		};
-	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
+	option MSG_exit_menu_generic, exit, action { *((int*)arg) = SET_RETRY; };
 
 menu fdremount, title MSG_What_do_you_want_to_do;
 	option MSG_Try_again, exit, action { *(int *)arg = SET_CONTINUE; };
@@ -439,9 +439,8 @@ menu floppysource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Xfer_dir, xfer_dir, sizeof xfer_dir); };
 	option {src_legend(menu, MSG_delete_xfer_file,
 			clean_xfer_dir ? MSG_Yes : MSG_No);},
-		action {process_menu(MENU_yesno, deconst(MSG_delete_xfer_file));
-			clean_xfer_dir = yesno; };
-	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
+		action {clean_xfer_dir = ask_yesno(MSG_delete_xfer_file); };
+	option MSG_exit_menu_generic, exit, action { *((int*)arg) = SET_RETRY; };
 
 menu cdromsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 	display action { msg_display(MSG_cdromsource); };
@@ -451,7 +450,7 @@ menu cdromsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
-	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
+	option MSG_exit_menu_generic, exit, action { *((int*)arg) = SET_RETRY; };
 
 menu localfssource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 	display action { msg_display(MSG_localfssource); };
@@ -465,7 +464,7 @@ menu localfssource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, sizeof set_dir_bin); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, sizeof set_dir_src); };
-	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
+	option MSG_exit_menu_generic, exit, action { *((int*)arg) = SET_RETRY; };
 
 menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 	display action { msg_display(MSG_localdir); };
@@ -475,7 +474,7 @@ menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir_bin, set_dir_bin, 60); };
 	option {src_legend(menu, MSG_Set_dir_src, set_dir_src);},
 		action { src_prompt(MSG_Set_dir_src, set_dir_src, 60); };
-	option MSG_exit_menu_generic, exit, action { yesno = SET_RETRY; };
+	option MSG_exit_menu_generic, exit, action { *((int*)arg) = SET_RETRY; };
 
 menu namesrv6, title MSG_Select_DNS_server;
 	option "google-public-dns-a.google.com (IPv4)", exit, action
@@ -483,9 +482,9 @@ menu namesrv6, title MSG_Select_DNS_server;
 #ifdef INET6
 		  strlcpy(net_namesvr, "8.8.8.8",
 		      sizeof(net_namesvr));
-		  yesno = 1;
+		  *((int*)arg) = 1;
 #else
-		  yesno = 0;
+		  *((int*)arg) = 0;
 #endif
 		}; 
 	option "google-public-dns-b.google.com (IPv4)", exit, action
@@ -493,9 +492,9 @@ menu namesrv6, title MSG_Select_DNS_server;
 #ifdef INET6
 		  strlcpy(net_namesvr, "8.8.4.4",
 		      sizeof(net_namesvr));
-		  yesno = 1;
+		  *((int*)arg) = 1;
 #else
-		  yesno = 0;
+		  *((int*)arg) = 0;
 #endif
 		}; 
 	option "google-public-dns-a.google.com (IPv6)", exit, action
@@ -503,9 +502,9 @@ menu namesrv6, title MSG_Select_DNS_server;
 #ifdef INET6
 		  strlcpy(net_namesvr, "2001:4860:4860::8888",
 		      sizeof(net_namesvr));
-		  yesno = 1;
+		  *((int*)arg) = 1;
 #else
-		  yesno = 0;
+		  *((int*)arg) = 0;
 #endif
 		}; 
 	option "google-public-dns-b.google.com (IPv6)", exit, action
@@ -513,13 +512,13 @@ menu namesrv6, title MSG_Select_DNS_server;
 #ifdef INET6
 		  strlcpy(net_namesvr, "2001:4860:4860::8844",
 		      sizeof(net_namesvr));
-		  yesno = 1;
+		  *((int*)arg) = 1;
 #else
-		  yesno = 0;
+		  *((int*)arg) = 0;
 #endif
 		}; 
 	option MSG_other, exit, action
-		{ yesno = 0; };
+		{ *((int*)arg) = 0; };
 
 menu rootsh, title MSG_Root_shell, no clear;
 	option "/bin/sh",  exit, action {*(const char **)arg = "/bin/sh";}; 
@@ -564,8 +563,8 @@ menu binpkg, y=-4, x=0, w=70, no box, no clear,
 			setenv("http_proxy", pkg.proxy, 1);
 		  }
 		};
-	option {src_legend(menu, "Additional packages", (char*)arg); }, /*TODO*/
-		action { src_prompt("Additional packages", (char*)arg,
+	option {src_legend(menu, "Additional packages", (char*)(((arg_rv*)arg)->arg)); }, /*TODO*/
+		action { src_prompt("Additional packages", (char*)(((arg_rv*)arg)->arg),
 			 sizeof(char) * STRSIZE); };
 	option MSG_Configure_network,
 		action {
@@ -574,7 +573,7 @@ menu binpkg, y=-4, x=0, w=70, no box, no clear,
 			config_network();
 			mnt_net_config();
 		};
-	option MSG_quit_pkgs_install, exit, action { yesno = SET_SKIP; };
+	option MSG_quit_pkgs_install, exit, action { ((arg_rv*)arg)->rv = SET_SKIP; };
 
 menu pkgsrc, y=-4, x=0, w=70, no box, no clear,
 	    exit, exitstring MSG_Install_pkgsrc;
@@ -612,9 +611,8 @@ menu pkgsrc, y=-4, x=0, w=70, no box, no clear,
 		action { src_prompt(MSG_Xfer_dir, xfer_dir, sizeof xfer_dir); };
 	option {src_legend(menu, MSG_delete_xfer_file,
 			clean_xfer_dir ? MSG_Yes : MSG_No);},
-		action {process_menu(MENU_yesno, deconst(MSG_delete_xfer_file));
-			clean_xfer_dir = yesno; };
-	option MSG_quit_pkgsrc, exit, action { yesno = SET_SKIP;};
+		action {clean_xfer_dir = ask_yesno(MSG_delete_xfer_file); };
+	option MSG_quit_pkgsrc, exit, action { *((int*)arg) = SET_SKIP;};
 
 menu usersh, title MSG_User_shell, no clear;
 	option "/bin/sh",  exit, action { ushell = "/bin/sh";}; 

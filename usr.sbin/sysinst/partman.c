@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.4.4.3 2015/05/09 13:50:15 msaitoh Exp $ */
+/*	$NetBSD: partman.c,v 1.4.4.4 2015/05/14 07:58:49 snj Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -1695,8 +1695,7 @@ pm_gpt_convert(pm_devs_t *pm_cur)
 	int i, error = 0;
 
 	msg_display(MSG_removepartswarn);
-	process_menu(MENU_noyes, NULL);
-	if (! yesno)
+	if (!ask_noyes(NULL))
 		return -1;
 
 	if (! pm_cur->gpt)
@@ -2266,8 +2265,7 @@ pm_needsave(void)
 			/* Oops, we have unsaved changes */
 			changed = 1;
 			msg_display(MSG_saveprompt);
-			process_menu(MENU_yesno, NULL);
-			return (yesno);
+			return ask_yesno(NULL);
 		}
 	return 0;
 }
@@ -2402,8 +2400,7 @@ pm_submenu(menudesc *m, void *arg)
 					return -1;
 				if (pm_cur->blocked) {
 					msg_display(MSG_wannaunblock);
-					process_menu(MENU_noyes, NULL);
-					if (!yesno)
+					if (!ask_noyes(NULL))
 						return -2;
 					pm_cur->blocked = 0;
 				}
@@ -2804,8 +2801,7 @@ partman(void)
 				pm_lastcheck() != 0 ||
 				pm_savebootsector() != 0) {
 					msg_display(MSG_wannatry);
-					process_menu(MENU_yesno, NULL);
-					args[0].retvalue = (yesno) ? 1:-1;
+					args[0].retvalue = (ask_yesno(NULL)) ? 1:-1;
 			}
 		}
 	} while (args[0].retvalue > 0);

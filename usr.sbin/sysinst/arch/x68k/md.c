@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2.4.1 2015/01/11 04:32:39 snj Exp $ */
+/*	$NetBSD: md.c,v 1.2.4.2 2015/05/14 07:58:50 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -176,8 +176,7 @@ md_check_partitions(void)
 		} else {
 			if (start >= pm->bsdlabel[part].pi_offset) {
 				msg_display(MSG_ordering, part+'a');
-				process_menu(MENU_yesno, NULL);
-				if (yesno)
+				if (ask_yesno(NULL))
 					return 0;
 			}
 			start = pm->bsdlabel[part].pi_offset;
@@ -200,8 +199,7 @@ md_check_partitions(void)
 			break;
 		if (memcmp(md_disklabel.dosparts[i].dp_typename, "Human68k", 8)) {
 			msg_display(MSG_existing);
-			process_menu(MENU_noyes);
-			preserve = yesno;
+			preserve = ask_noyes(NULL);
 			break;
 		}
 	}
