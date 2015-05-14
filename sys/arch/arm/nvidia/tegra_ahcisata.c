@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.3 2015/05/10 15:31:48 jmcneill Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.4 2015/05/14 00:00:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.3 2015/05/10 15:31:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.4 2015/05/14 00:00:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,6 +54,8 @@ struct tegra_ahcisata_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
+
+	struct tegra_gpio_pin	*sc_pin_power;
 };
 
 static void	tegra_ahcisata_init(struct tegra_ahcisata_softc *);
@@ -73,6 +75,8 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 	struct tegra_ahcisata_softc * const sc = device_private(self);
 	struct tegraio_attach_args * const tio = aux;
 	const struct tegra_locators * const loc = &tio->tio_loc;
+	prop_dictionary_t prop = device_properties(self);
+	const char *pin;
 
 	sc->sc_bst = tio->tio_bst;
 	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
@@ -81,7 +85,7 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_atac.atac_dev = self;
 	sc->sc.sc_dmat = tio->tio_dmat;
 	sc->sc.sc_ahcit = tio->tio_bst;
-	sc->sc.sc_ahcis = loc->loc_size;
+	sc->sc.sc_ahcis = loc->loc_size - TEGRA_AHCISATA_OFFSET;
 	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
 	    loc->loc_offset + TEGRA_AHCISATA_OFFSET,
 	    loc->loc_size - TEGRA_AHCISATA_OFFSET, &sc->sc.sc_ahcih);
@@ -89,6 +93,12 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": SATA\n");
+
+	if (prop_dictionary_get_cstring_nocopy(prop, "power-gpio", &pin)) {
+		sc->sc_pin_power = tegra_gpio_acquire(pin, GPIO_PIN_OUTPUT);
+		if (sc->sc_pin_power)
+			tegra_gpio_write(sc->sc_pin_power, 1);
+	}
 
 	tegra_car_periph_sata_enable();
 

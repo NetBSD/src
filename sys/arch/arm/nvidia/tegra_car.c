@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.11 2015/05/13 11:06:13 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.12 2015/05/14 00:00:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.11 2015/05/13 11:06:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.12 2015/05/14 00:00:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -462,6 +462,23 @@ tegra_car_periph_sata_enable(void)
 
 	tegra_car_get_bs(&bst, &bsh);
 
+	const u_int pllp_rate = tegra_car_pllp0_rate();
+
+	/* Set SATA_OOB clock source to PLLP, 204MHz */
+	const u_int sataoob_div = pllp_rate / 200000000;
+	bus_space_write_4(bst, bsh, CAR_CLKSRC_SATA_OOB_REG,
+	    __SHIFTIN(CAR_CLKSRC_SATA_SRC_PLLP_OUT0,
+		      CAR_CLKSRC_SATA_SRC) |
+	    __SHIFTIN(sataoob_div - 1, CAR_CLKSRC_SATA_OOB_DIV));
+
+	/* Set SATA clock source to PLLP, 102MHz */
+	const u_int sata_div = pllp_rate / 100000000;
+	bus_space_write_4(bst, bsh, CAR_CLKSRC_SATA_REG,
+	    CAR_CLKSRC_SATA_AUX_CLK_ENB |
+	    __SHIFTIN(CAR_CLKSRC_SATA_SRC_PLLP_OUT0,
+		      CAR_CLKSRC_SATA_SRC) |
+	    __SHIFTIN(sata_div - 1, CAR_CLKSRC_SATA_DIV));
+
 	/* Enable CML clock for SATA */
 	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG,
 	    CAR_PLLE_AUX_CML1_OEN, 0);
@@ -475,6 +492,7 @@ tegra_car_periph_sata_enable(void)
 	tegra_pmc_power(PMC_PARTID_SAX, true);
 
 	/* Turn on the clocks to SATA and de-assert resets */
+	bus_space_write_4(bst, bsh, CAR_CLK_ENB_W_SET_REG, CAR_DEV_W_SATACOLD);
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_V_SET_REG, CAR_DEV_V_SATA);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_W_CLR_REG, CAR_DEV_W_SATACOLD);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_CLR_REG, CAR_DEV_V_SATA);
