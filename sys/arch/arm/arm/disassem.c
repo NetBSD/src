@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.24.4.2 2015/01/04 11:43:53 martin Exp $	*/
+/*	$NetBSD: disassem.c,v 1.24.4.3 2015/05/15 04:12:07 snj Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.24.4.2 2015/01/04 11:43:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.24.4.3 2015/05/15 04:12:07 snj Exp $");
 
 #include <sys/systm.h>
 
@@ -321,7 +321,7 @@ static void disassemble_printaddr(u_int address);
 vaddr_t
 disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 {
-	struct arm32_insn *i_ptr = (struct arm32_insn *)&arm32_i;
+	const struct arm32_insn *i_ptr = (const struct arm32_insn *)&arm32_i;
 
 	u_int insn;
 	int matchp;
