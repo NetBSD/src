@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.7 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.8 2015/05/15 16:24:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -328,13 +328,6 @@ typedef struct ccb_list_s ccb_list_t;
 /*
    Per connection data: the connection structure
 */
-#if (__NetBSD_Version__ >= 399000900)
-typedef struct lwp *PTHREADOBJ;
-#else
-typedef struct proc *PTHREADOBJ;
-#endif
-
-
 struct connection_s {
 	TAILQ_ENTRY(connection_s)	connections;
 
@@ -374,7 +367,7 @@ struct connection_s {
 
 	conn_state_t			state; /* State of connection */
 
-	PTHREADOBJ			threadobj;
+	struct lwp			*threadobj;
 		/* proc/thread pointer of socket owner */
 	struct file			*sock;	/* the connection's socket */
 	session_t			*session;
@@ -681,45 +674,20 @@ sn_a_le_b(uint32_t a, uint32_t b)
 
 
 /* Version dependencies */
-
-
-#if (__NetBSD_Version__ >= 399000900)
-#define PROCP(obj)	(obj->l_proc)
-#else
-#define PROCP(obj)	obj
-#define UIO_SETUP_SYSSPACE(uio) (uio)->uio_segflg = UIO_SYSSPACE
-#endif
-
-#if (__NetBSD_Version__ >= 106000000)
-#  ifdef ISCSI_TEST_MODE
+#ifdef ISCSI_TEST_MODE
 #define SET_CCB_TIMEOUT(conn, ccb, tout) do {				\
 	if (test_ccb_timeout (conn)) {					\
 		callout_schedule(&ccb->timeout, tout);			\
 	}								\
 } while (/*CONSTCOND*/ 0)
-#  else
-#define SET_CCB_TIMEOUT(conn, ccb, tout) callout_schedule(&ccb->timeout, tout)
-#  endif
-#else
-/* no test mode for 1.5 */
-#define SET_CCB_TIMEOUT(conn, ccb, tout)				\
-	callout_reset(&ccb->timeout, tout, ccb_timeout, ccb)
-#endif
-
-#if (__NetBSD_Version__ >= 106000000)
-#  ifdef ISCSI_TEST_MODE
 #define SET_CONN_TIMEOUT(conn, tout) do {				\
 	if (test_conn_timeout (conn)) {					\
 		callout_schedule(&conn->timeout, tout);			\
 	}								\
-} while (/*CONSTCOND*/0)
-#  else
-#define SET_CONN_TIMEOUT(conn, tout) callout_schedule(&conn->timeout, tout)
-#  endif
+} while (/*CONSTCOND*/ 0)
 #else
-/* no test mode for 1.5 */
-#define SET_CONN_TIMEOUT(conn, tout)					\
-	callout_reset(&conn->timeout, tout, connection_timeout, conn)
+#define SET_CCB_TIMEOUT(conn, ccb, tout) callout_schedule(&ccb->timeout, tout)
+#define SET_CONN_TIMEOUT(conn, tout) callout_schedule(&conn->timeout, tout)
 #endif
 
 /* in iscsi_ioctl.c */
@@ -742,7 +710,7 @@ void iscsi_cleanup_thread(void *);
 uint32_t map_databuf(struct proc *, void **, uint32_t);
 void unmap_databuf(struct proc *, void *, uint32_t);
 #endif
-int iscsiioctl(dev_t, u_long, void *, int, PTHREADOBJ);
+int iscsiioctl(dev_t, u_long, void *, int, struct lwp *);
 
 session_t *find_session(uint32_t);
 connection_t *find_connection(session_t *, uint32_t);
