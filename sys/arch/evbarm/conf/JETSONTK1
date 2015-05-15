@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.17 2015/05/13 11:07:28 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.18 2015/05/15 11:49:58 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -52,6 +52,9 @@ gpio*		at gpiobus?
 
 # MPIO / Pinmux
 tegrampio0	at tegraio?		# MPIO
+
+# XUSB PADCTL
+tegraxusbpad0	at tegraio?		# XUSB PADCTL
 
 # PCIE
 tegrapcie0	at tegraio?		# PCIE
