@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.55 2015/05/15 06:58:59 ozaki-r Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.56 2015/05/15 14:26:02 joerg Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.55 2015/05/15 06:58:59 ozaki-r Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.56 2015/05/15 14:26:02 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -74,8 +74,10 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.55 2015/05/15 06:58:59 ozaki-r Exp $");
 #include "servent.h"
 #include "hostent.h"
 
+#ifndef RUMP_ACTION
 #ifdef __weak_alias
 __weak_alias(getnameinfo,_getnameinfo)
+#endif
 #endif
 
 static const struct afd {
