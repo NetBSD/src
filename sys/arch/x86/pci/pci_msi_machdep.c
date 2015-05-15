@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.4 2015/05/15 08:29:33 knakahara Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.5 2015/05/15 08:36:41 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.4 2015/05/15 08:29:33 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5 2015/05/15 08:36:41 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,28 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.4 2015/05/15 08:29:33 knakahar
 #else
 #define DPRINTF(msg)
 #endif
-
-/*
- * Return intrid for a MSI/MSI-X device.
- * "buf" must be allocated by caller.
- */
-const char *
-pci_msi_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
-    size_t len)
-{
-	int dev, vec;
-
-	KASSERT(INT_VIA_MSI(ih));
-
-	dev = MSI_INT_DEV(ih);
-	vec = MSI_INT_VEC(ih);
-	if (MSI_INT_IS_MSIX(ih))
-		snprintf(buf, len, "msix%d vec %d", dev, vec);
-	else
-		snprintf(buf, len, "msi%d vec %d", dev, vec);
-
-	return buf;
-}
 
 static pci_intr_handle_t
 pci_msi_calculate_handle(struct pic *msi_pic, int vector)
@@ -134,7 +112,7 @@ pci_msi_alloc_vectors(struct pic *msi_pic, uint *table_indexes, int *count)
 
 		pih = pci_msi_calculate_handle(msi_pic, table_index);
 
-		intrstr = pci_msi_string(NULL, pih, intrstr_buf,
+		intrstr = x86_pci_msi_string(NULL, pih, intrstr_buf,
 		    sizeof(intrstr_buf));
 		isp = intr_allocate_io_intrsource(intrstr);
 		if (isp == NULL) {
@@ -162,7 +140,7 @@ pci_msi_free_vectors(struct pic *msi_pic, pci_intr_handle_t *pihs, int count)
 	mutex_enter(&cpu_lock);
 	for (i = 0; i < count; i++) {
 		pih = pci_msi_calculate_handle(msi_pic, i);
-		intrstr = pci_msi_string(NULL, pih, intrstr_buf,
+		intrstr = x86_pci_msi_string(NULL, pih, intrstr_buf,
 		    sizeof(intrstr_buf));
 		intr_free_io_intrsource(intrstr);
 	}
@@ -372,8 +350,30 @@ x86_pci_msix_release_internal(pci_intr_handle_t *pihs, int count)
 
 /*****************************************************************************/
 /*
- * extern for pci_intr_machdep.c
+ * extern for MD code.
  */
+
+/*
+ * Return intrid for a MSI/MSI-X device.
+ * "buf" must be allocated by caller.
+ */
+const char *
+x86_pci_msi_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
+{
+	int dev, vec;
+
+	KASSERT(INT_VIA_MSI(ih));
+
+	dev = MSI_INT_DEV(ih);
+	vec = MSI_INT_VEC(ih);
+	if (MSI_INT_IS_MSIX(ih))
+		snprintf(buf, len, "msix%d vec %d", dev, vec);
+	else
+		snprintf(buf, len, "msi%d vec %d", dev, vec);
+
+	return buf;
+}
 
 /*
  * Release MSI handles.
@@ -467,7 +467,7 @@ x86_pci_msix_disestablish(pci_chipset_tag_t pc, void *cookie)
 
 /*****************************************************************************/
 /*
- * these APIs may be MI code.
+ * extern for MI code.
  */
 
 /*
