@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.74 2015/05/15 06:11:06 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.75 2015/05/15 06:51:24 matt Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -17,6 +17,8 @@ EVBARM_BOARDS.${i}=
 KERNEL_SETS.armv4+=		IXM1200
 EVBARM_BOARDS.xscale+=		ADI_BRH
 KERNEL_SETS.xscale+=		NSLU2
+EVBARM_BOARDS.armv7+=		ALLWINNER_A80
+EVBARM_BOARDS.armv7hf+=		ALLWINNER_A80
 EVBARM_BOARDS.armv7+=		BCM5301X
 EVBARM_BOARDS.armv7hf+=		BCM5301X
 #EVBARM_BOARDS.armv7+=		BCM56340
@@ -29,8 +31,6 @@ EVBARM_BOARDS.armv7+=		CUBIETRUCK
 EVBARM_BOARDS.armv7hf+=		CUBIETRUCK
 EVBARM_BOARDS.armv7+=		HUMMINGBIRD_A31
 EVBARM_BOARDS.armv7hf+=		HUMMINGBIRD_A31
-EVBARM_BOARDS.armv7+=		ALLWINNER_A80
-EVBARM_BOARDS.armv7hf+=		ALLWINNER_A80
 .else
 # little endian boards
 #EVBARM_BOARDS.armv4+=		ARMADILLO210
