@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.10 2014/09/25 00:30:45 tls Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.11 2015/05/15 16:24:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -59,11 +59,7 @@ my_soo_write(connection_t *conn, struct uio *u)
 
 	assert(resid != 0);
 
-#if (__NetBSD_Version__ >= 300000000)
 	ret = sosend(so, NULL, u, NULL, NULL, 0, conn->threadobj);
-#else
-	ret = sosend(so, NULL, u, NULL, NULL, 0);
-#endif
 
 	DEB(99, ("soo_write done: len = %zu\n", u->uio_resid));
 

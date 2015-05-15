@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.5 2012/12/29 11:05:30 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.6 2015/05/15 16:24:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -316,9 +316,7 @@ create_ccbs(session_t *sess)
 		ccb->session = sess;
 
 		callout_init(&ccb->timeout, 0);
-#if (__NetBSD_Version__ >= 106000000)
 		callout_setfunc(&ccb->timeout, ccb_timeout, ccb);
-#endif
 
 		/*DEB (9, ("Create_ccbs: ccb %x itt %x\n", ccb, ccb->ITT)); */
 		TAILQ_INSERT_HEAD(&sess->ccb_pool, ccb, chain);
