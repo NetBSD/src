@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.13 2015/04/20 02:55:14 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.14 2015/05/15 08:44:24 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.13 2015/04/20 02:55:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.14 2015/05/15 08:44:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -763,6 +763,19 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 		    s->sm_ddr3.ddr3_tCKmin);
 
 #undef	__DDR3_CYCLES
+
+	/* For DDR3, Voltage is written in another area */
+	if (!s->sm_ddr3.ddr3_NOT15V || s->sm_ddr3.ddr3_135V
+	    || s->sm_ddr3.ddr3_125V) {
+		aprint_verbose("%s:", device_xname(self));
+		if (!s->sm_ddr3.ddr3_NOT15V)
+			aprint_verbose(" 1.5V");
+		if (s->sm_ddr3.ddr3_135V)
+			aprint_verbose(" 1.35V");
+		if (s->sm_ddr3.ddr3_125V)
+			aprint_verbose(" 1.25V");
+		aprint_verbose(" operable\n");
+	}
 }
 
 static void
