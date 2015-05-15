@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.6 2015/04/28 15:38:02 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.7 2015/05/15 08:44:15 knakahara Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.7 2015/03/02 13:51:10 jsg Exp 	*/
 
 /*
@@ -363,11 +363,6 @@ struct iwm_bf_data {
 	int last_cqm_event;
 };
 
-enum iwm_intr_type {
-	IWM_INTR_INTX,
-	IWM_INTR_MSI
-};
-
 struct iwm_softc {
 	device_t sc_dev;
 	struct ethercom sc_ec;
@@ -381,7 +376,6 @@ struct iwm_softc {
 
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
-	enum iwm_intr_type sc_intr_type;
 #ifdef __HAVE_PCI_MSI_MSIX
 	pci_intr_handle_t *sc_pihp;
 #endif

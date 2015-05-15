@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.32 2015/04/29 03:35:09 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.33 2015/05/15 08:44:15 knakahara Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.39 2015/03/23 00:35:19 jsg Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.32 2015/04/29 03:35:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.33 2015/05/15 08:44:15 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -6679,14 +6679,10 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Install interrupt handler. */
-	sc->sc_intr_type = IWM_INTR_INTX;
 #ifdef __HAVE_PCI_MSI_MSIX
 	error = ENODEV;
-	if (pci_msi_count(pa) > 0) {
+	if (pci_msi_count(pa) > 0)
 		error = pci_msi_alloc_exact(pa, &sc->sc_pihp, 1);
-		if (error == 0)
-			sc->sc_intr_type = IWM_INTR_MSI;
-	}
 	if (error != 0) {
 		if (pci_intx_alloc(pa, &sc->sc_pihp)) {
 			aprint_error_dev(self, "can't map interrupt\n");
@@ -6704,17 +6700,8 @@ iwm_attach(device_t parent, device_t self, void *aux)
 #ifdef __HAVE_PCI_MSI_MSIX
 	intrstr = pci_intr_string(sc->sc_pct, sc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
-	switch (sc->sc_intr_type) {
-	case IWM_INTR_MSI:
-		sc->sc_ih = pci_msi_establish(sc->sc_pct, sc->sc_pihp[0],
-		    IPL_NET, iwm_intr, sc);
-		break;
-
-	case IWM_INTR_INTX:
-		sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0],
-		    IPL_NET, iwm_intr, sc);
-		break;
-	}
+	sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0], IPL_NET,
+	    iwm_intr, sc);
 #else	/* !__HAVE_PCI_MSI_MSIX */
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwm_intr, sc);
