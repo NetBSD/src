@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_msi.9,v 1.2 2015/04/27 10:37:20 wiz Exp $
+.\" $NetBSD: pci_msi.9,v 1.3 2015/05/15 08:39:14 knakahara Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 8, 2015
+.Dd May 11, 2015
 .Dt PCI_MSI 9
 .Os
 .Sh NAME
@@ -33,19 +33,12 @@
 .Nm pci_msi_count ,
 .Nm pci_msi_alloc ,
 .Nm pci_msi_alloc_exact ,
-.Nm pci_msi_release ,
-.Nm pci_msi_establish ,
-.Nm pci_msi_disestablish ,
-.Nm pci_msi_string
 .Nm pci_msix_count ,
 .Nm pci_msix_alloc ,
 .Nm pci_msix_alloc_exact ,
 .Nm pci_msix_alloc_map ,
-.Nm pci_msix_release ,
-.Nm pci_msix_establish ,
-.Nm pci_msix_disestablish ,
 .Nm pci_intx_alloc ,
-.Nm pci_intx_release
+.Nm pci_intr_release
 .Nd PCI MSI{,-X} manipulation functions
 .Sh SYNOPSIS
 .Ft int
@@ -56,16 +49,6 @@
 .Ft int
 .Fn pci_msi_alloc_exect "struct pci_attach_args *pa" \
 "pci_intr_handle_t **ihps" "int count"
-.Ft void
-.Fn pci_msi_release "pci_intr_handle_t **pihs" "int count"
-.Ft void *
-.Fn pci_msi_establish "pci_chipset_tag_t pc" "pci_intr_handle_t ih" \
-"int level" "int (*func)(void *)" "void *arg"
-.Ft void
-.Fn pci_msi_disestablish "pci_chipset_tag_t pc" "void *cookie"
-.Ft const char *
-.Ft pci_msi_string "pci_chipset_tag_t pc" \
-"pci_intr_handle_t, char *buf" "size_t len"
 .Ft int
 .Fn pci_msix_count "struct pci_attach_args *pa"
 .Ft int
@@ -77,17 +60,12 @@
 .Ft int
 .Fn pci_msix_alloc_map "struct pci_attach_args *pa" \
 "pci_intr_handle_t **ihps" "u_int *table_indexes" "int count"
-.Ft void
-.Fn pci_msix_release "pci_intr_handle_t **pihs" "int count"
-.Ft void *
-.Fn pci_msix_establish "pci_chipset_tag_t pc" "pci_intr_handle_t ih" \
-"int level" "int (*func)(void *)" "void *arg"
-.Fn pci_msix_disestablish "pci_chipset_tag_t pc" "void *cookie"
 .Ft int
 .Fn pci_intx_alloc  "struct pci_attach_args *pa" \
 "pci_intr_handle_t **ihp"
 .Ft void
-.Fn pci_intx_release "pci_intr_handle_t *pih"
+.Fn pci_intr_release "pci_chipset_tag_t pc" \
+"pci_intr_handle_t *pih" "int count"
 .Sh DESCRIPTION
 The
 .Nm
@@ -142,34 +120,34 @@ can not decrement
 .Pp
 If the driver wishes to refer to the MSI source in an attach or
 error message, it should use the value returned by
-.Fn pci_msi_string .
+.Fn pci_intr_string
+the same as INTx.
 The buffer passed to
-.Fn pci_msi_string
+.Fn pci_intr_string
 should be at least
 .Dv PCI_INTRSTR_LEN
 bytes long.
 .Pp
 Subsequently, when the driver is prepared to receive MSIs, it
 should call
-.Fn pci_msi_establish
-to actually establish the handler; when the device interrupts,
+.Fn pci_intr_establish
+the same as INTx to actually establish the handler;
+when the device interrupts,
 .Fa intrhand
 will be called with a single argument
 .Fa intrarg ,
 and will run at the interrupt priority level
 .Fa ipl .
-This is the same as
-.Fn pci_intr_establish .
 .Pp
 The return value of
-.Fn pci_msi_establish
+.Fn pci_intr_establish
 may be saved and passed to
-.Fn pci_msi_disestablish
-to disable the interrupt handler
+.Fn pci_intr_disestablish
+to disable the interrupt handler the same as INTx
 when the driver is no longer interested in MSIs from the device.
 After that, the driver should also call
-.Fn pci_msi_release
-to free resources about MSI.
+.Fn pci_intr_release
+to free resources about MSI as well as INTx and MSI-X.
 .Pp
 If a driver wishes to establish an MSI-X handler for the device,
 it is almost the same as MSI.
@@ -195,7 +173,7 @@ this way:
 If the driver wants to fall back to INTx, the driver should use
 .Fn pci_intx_alloc
 and
-.Fn pci_intx_release
+.Fn pci_intr_release
 instead of
 .Fn pci_intr_map
 to resolve contradiction of the interrupt handler ownership.
@@ -207,3 +185,5 @@ in contrast,
 and
 .Fn pci_msix_alloc
 have (the functions allocate memory for interrupt handlers).
+.Sh SEE ALSO
+.Xr pci_intr 9
