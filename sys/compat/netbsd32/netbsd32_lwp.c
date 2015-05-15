@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.15 2013/03/29 01:04:30 christos Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.16 2015/05/15 07:45:15 matt Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.15 2013/03/29 01:04:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.16 2015/05/15 07:45:15 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -280,9 +280,15 @@ netbsd32__lwp_ctl(struct lwp *l, const struct netbsd32__lwp_ctl_args *uap, regis
 		syscallarg(int) features;
 		syscallarg(netbsd32_pointer_t) address;
 	} */
-	struct sys__lwp_ctl_args ua;
+	int error, features;
+	vaddr_t vaddr;
 
-	NETBSD32TO64_UAP(features);
-	NETBSD32TOP_UAP(address, struct lwpctl *);
-	return sys__lwp_ctl(l, &ua, retval);
+	features = SCARG(uap, features);
+	features &= ~(LWPCTL_FEATURE_CURCPU | LWPCTL_FEATURE_PCTR);
+	if (features != 0)
+		return ENODEV;
+	if ((error = lwp_ctl_alloc(&vaddr)) != 0)
+		return error;
+	return copyout(&vaddr, SCARG_P32(uap, address),
+	    sizeof(netbsd32_pointer_t));
 }
