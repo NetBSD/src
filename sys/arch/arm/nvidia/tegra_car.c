@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.13 2015/05/14 10:23:03 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.14 2015/05/15 11:50:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.13 2015/05/14 10:23:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.14 2015/05/15 11:50:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -462,39 +462,51 @@ tegra_car_periph_sata_enable(void)
 
 	tegra_car_get_bs(&bst, &bsh);
 
-	const u_int pllp_rate = tegra_car_pllp0_rate();
+	/* Assert resets */
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_SET_REG, CAR_DEV_V_SATA);
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_W_SET_REG, CAR_DEV_W_SATACOLD);
+
+	/* Disable software control of SATA PLL */
+	tegra_reg_set_clear(bst, bsh, CAR_SATA_PLL_CFG0_REG,
+	    0, CAR_SATA_PLL_CFG0_PADPLL_RESET_SWCTL);
 
 	/* Set SATA_OOB clock source to PLLP, 204MHz */
-	const u_int sataoob_div = pllp_rate / 200000000;
+	const u_int sataoob_div = 2;
 	bus_space_write_4(bst, bsh, CAR_CLKSRC_SATA_OOB_REG,
-	    __SHIFTIN(CAR_CLKSRC_SATA_SRC_PLLP_OUT0,
-		      CAR_CLKSRC_SATA_SRC) |
+	    __SHIFTIN(CAR_CLKSRC_SATA_OOB_SRC_PLLP_OUT0,
+		      CAR_CLKSRC_SATA_OOB_SRC) |
 	    __SHIFTIN(sataoob_div - 1, CAR_CLKSRC_SATA_OOB_DIV));
 
 	/* Set SATA clock source to PLLP, 102MHz */
-	const u_int sata_div = pllp_rate / 100000000;
+	const u_int sata_div = 4;
 	bus_space_write_4(bst, bsh, CAR_CLKSRC_SATA_REG,
 	    CAR_CLKSRC_SATA_AUX_CLK_ENB |
 	    __SHIFTIN(CAR_CLKSRC_SATA_SRC_PLLP_OUT0,
 		      CAR_CLKSRC_SATA_SRC) |
 	    __SHIFTIN(sata_div - 1, CAR_CLKSRC_SATA_DIV));
 
-	/* Enable CML clock for SATA */
-	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG,
-	    CAR_PLLE_AUX_CML1_OEN, 0);
+	/* Ungate SAX partition in the PMC */
+	tegra_pmc_power(PMC_PARTID_SAX, true);
+	delay(20);
+
+	/* Remove clamping from SAX partition in the PMC */
+	tegra_pmc_remove_clamping(PMC_PARTID_SAX);
+	delay(20);
 
 	/* De-assert reset to SATA PADPLL */
 	tegra_reg_set_clear(bst, bsh, CAR_SATA_PLL_CFG0_REG,
 	    0, CAR_SATA_PLL_CFG0_PADPLL_RESET_OVERRIDE_VALUE);
 	delay(15);
 
-	/* Ungate SAX partition in the PMC */
-	tegra_pmc_power(PMC_PARTID_SAX, true);
+	/* Enable CML clock for SATA */
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_AUX_REG,
+	    CAR_PLLE_AUX_CML1_OEN, 0);
 
 	/* Turn on the clocks to SATA and de-assert resets */
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_W_SET_REG, CAR_DEV_W_SATACOLD);
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_V_SET_REG, CAR_DEV_V_SATA);
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_V_SET_REG, CAR_DEV_V_SATA_OOB);
+
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_W_CLR_REG, CAR_DEV_W_SATACOLD);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_CLR_REG, CAR_DEV_V_SATA);
 }
