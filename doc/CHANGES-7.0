@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.297 2015/05/14 08:18:58 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.298 2015/05/15 04:16:23 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23109,4 +23109,90 @@ usr.sbin/isdn/isdnd/msghdl.c			1.12
 
 	Fix various clang warnings.
 	[joerg, ticket #758]
+
+share/man/man4/options.4			1.442
+sys/arch/amd64/conf/ALL				1.18
+sys/arch/amd64/conf/GENERIC			1.396
+sys/arch/dreamcast/conf/GENERIC			1.119
+sys/arch/epoc32/conf/GENERIC			1.6
+sys/arch/evbarm/conf/BCM5301X			1.24
+sys/arch/evbarm/conf/BCM56340			1.9
+sys/arch/evbarm/conf/IMX23_OLINUXINO		1.9
+sys/arch/evbarm/conf/std.beagle			1.13
+sys/arch/evbarm/conf/std.cubie			1.4
+sys/arch/evbarm/conf/std.kobo			1.2
+sys/arch/evbarm/conf/std.netwalker		1.10
+sys/arch/evbarm/conf/std.odroid			1.4
+sys/arch/evbarm/conf/std.rpi			1.15
+sys/arch/evbppc/conf/P2020DS			1.25
+sys/arch/evbppc/conf/RB800			1.30
+sys/arch/evbppc/conf/TWRP1025			1.18
+sys/arch/hp300/conf/GENERIC			1.187
+sys/arch/hpcsh/conf/GENERIC			1.104
+sys/arch/i386/conf/GENERIC			1.1111
+sys/arch/i386/conf/MONOLITHIC			1.17
+sys/arch/landisk/conf/GENERIC			1.43
+sys/arch/luna68k/conf/GENERIC			1.117
+sys/arch/macppc/conf/GENERIC			1.316
+sys/arch/macppc/conf/GENERIC_601		1.5
+sys/arch/mmeye/conf/MMEYE_WLF			1.16
+sys/arch/news68k/conf/GENERIC			1.123
+sys/arch/sandpoint/conf/GENERIC			1.85
+sys/arch/shark/conf/GENERIC			1.119
+sys/arch/sparc/conf/GENERIC			1.246
+sys/arch/sparc64/conf/GENERIC			1.174
+sys/arch/sun3/conf/GENERIC			1.169
+sys/arch/sun3/conf/GENERIC3X			1.125
+sys/arch/x68k/conf/GENERIC			1.177
+sys/arch/zaurus/conf/GENERIC			1.62
+sys/conf/files					1.1099
+sys/kern/kern_module.c				1.98, 1.99
+
+	Create an "options MODULAR_DEFAULT_AUTOLOAD" config option and add
+	it to all kernel configs that contain "options MODULAR".  This
+	option turns on module autoloading by default (which is the current
+	default).  This allows people who don't want module autoloading on
+	by default to disable it by simply removing/commentting this line.
+	[jnemeth, ticket #762]
+
+sys/dev/pci/hifn7751.c				1.58, 1.61
+
+	Fix a memory leak and a use-after-free.
+	[maxv, ticket #763]
+
+sys/sys/ctype_inline.h				1.4
+
+	Fix spelling of feature test macro: _ISOC99_SOURCE, not
+	_ISO_C99_SOURCE.
+	[joerg, ticket #767]
+
+external/historical/nawk/bin/awk.1		1.4
+
+	Fix important typo.
+	[wiz, ticket #768]
+
+sys/netinet6/scope6.c				1.10
+
+	Drop impossible check.
+	[joerg, ticket #770]
+
+external/bsd/iscsi/dist/src/lib/disk.c		1.9
+external/bsd/iscsi/dist/src/lib/target.c	1.8
+
+	iscsi:
+	- Set scsi_cmd.send_data unconditionally.
+	- Make seek test routine work with the configured block size.
+	[joerg, ticket #771]
+
+sys/arch/arm/amlogic/amlogic_genfb.c		1.4
+sys/arch/arm/arm/disassem.c			1.25
+sys/arch/arm/omap/am335x_cm_padconf.c		1.3
+sys/arch/arm/omap/sitara_cm.h			1.2
+sys/dev/ic/i82557var.h				1.51
+sys/dev/ic/rtl8169.c				1.143
+sys/dev/ieee1394/fwcrom.c			1.17
+sys/external/bsd/dwc2/dwc2.c			1.32
+
+	Fix various clang warnings.
+	[joerg, ticket #772]
 
