@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.3 2015/05/15 08:26:44 knakahara Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.4 2015/05/15 08:29:33 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.3 2015/05/15 08:26:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.4 2015/05/15 08:29:33 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,7 +172,7 @@ pci_msi_free_vectors(struct pic *msi_pic, pci_intr_handle_t *pihs, int count)
 }
 
 static int
-pci_msi_alloc_md_common(pci_intr_handle_t **ihps, int *count,
+pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count,
     const struct pci_attach_args *pa, bool exact)
 {
 	struct pic *msi_pic;
@@ -226,35 +226,6 @@ pci_msi_alloc_md_common(pci_intr_handle_t **ihps, int *count,
 	return 0;
 }
 
-static int
-pci_msi_alloc_md(pci_intr_handle_t **ihps, int *count,
-    const struct pci_attach_args *pa)
-{
-
-	return pci_msi_alloc_md_common(ihps, count, pa, false);
-}
-
-static int
-pci_msi_alloc_exact_md(pci_intr_handle_t **ihps, int count,
-    const struct pci_attach_args *pa)
-{
-
-	return pci_msi_alloc_md_common(ihps, &count, pa, true);
-}
-
-static void
-pci_msi_release_md(pci_intr_handle_t *pihs, int count)
-{
-	struct pic *pic;
-
-	pic = msipic_find_msi_pic(MSI_INT_DEV(pihs[0]));
-	if (pic == NULL)
-		return;
-
-	pci_msi_free_vectors(pic, pihs, count);
-	msipic_destruct_msi_pic(pic);
-}
-
 static void *
 pci_msi_common_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg, struct pic *pic)
@@ -280,7 +251,7 @@ pci_msi_common_disestablish(pci_chipset_tag_t pc, void *cookie)
 }
 
 static int
-pci_msix_alloc_md_common(pci_intr_handle_t **ihps, u_int *table_indexes,
+pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes,
     int *count, const struct pci_attach_args *pa, bool exact)
 {
 	struct pic *msix_pic;
@@ -334,31 +305,60 @@ pci_msix_alloc_md_common(pci_intr_handle_t **ihps, u_int *table_indexes,
 }
 
 static int
-pci_msix_alloc_md(pci_intr_handle_t **ihps, int *count,
+x86_pci_msi_alloc(pci_intr_handle_t **ihps, int *count,
     const struct pci_attach_args *pa)
 {
 
-	return pci_msix_alloc_md_common(ihps, NULL, count, pa, false);
+	return pci_msi_alloc_common(ihps, count, pa, false);
 }
 
 static int
-pci_msix_alloc_exact_md(pci_intr_handle_t **ihps, int count,
+x86_pci_msi_alloc_exact(pci_intr_handle_t **ihps, int count,
     const struct pci_attach_args *pa)
 {
 
-	return pci_msix_alloc_md_common(ihps, NULL, &count, pa, true);
-}
-
-static int
-pci_msix_alloc_map_md(pci_intr_handle_t **ihps, u_int *table_indexes, int count,
-    const struct pci_attach_args *pa)
-{
-
-	return pci_msix_alloc_md_common(ihps, table_indexes, &count, pa, true);
+	return pci_msi_alloc_common(ihps, &count, pa, true);
 }
 
 static void
-pci_msix_release_md(pci_intr_handle_t *pihs, int count)
+x86_pci_msi_release_internal(pci_intr_handle_t *pihs, int count)
+{
+	struct pic *pic;
+
+	pic = msipic_find_msi_pic(MSI_INT_DEV(pihs[0]));
+	if (pic == NULL)
+		return;
+
+	pci_msi_free_vectors(pic, pihs, count);
+	msipic_destruct_msi_pic(pic);
+}
+
+static int
+x86_pci_msix_alloc(pci_intr_handle_t **ihps, int *count,
+    const struct pci_attach_args *pa)
+{
+
+	return pci_msix_alloc_common(ihps, NULL, count, pa, false);
+}
+
+static int
+x86_pci_msix_alloc_exact(pci_intr_handle_t **ihps, int count,
+    const struct pci_attach_args *pa)
+{
+
+	return pci_msix_alloc_common(ihps, NULL, &count, pa, true);
+}
+
+static int
+x86_pci_msix_alloc_map(pci_intr_handle_t **ihps, u_int *table_indexes,
+    int count, const struct pci_attach_args *pa)
+{
+
+	return pci_msix_alloc_common(ihps, table_indexes, &count, pa, true);
+}
+
+static void
+x86_pci_msix_release_internal(pci_intr_handle_t *pihs, int count)
 {
 	struct pic *pic;
 
@@ -368,6 +368,101 @@ pci_msix_release_md(pci_intr_handle_t *pihs, int count)
 
 	pci_msi_free_vectors(pic, pihs, count);
 	msipic_destruct_msix_pic(pic);
+}
+
+/*****************************************************************************/
+/*
+ * extern for pci_intr_machdep.c
+ */
+
+/*
+ * Release MSI handles.
+ */
+void
+x86_pci_msi_release(pci_chipset_tag_t pc, pci_intr_handle_t *pihs, int count)
+{
+
+	if (count < 1)
+		return;
+
+	return x86_pci_msi_release_internal(pihs, count);
+}
+
+/*
+ * Establish a MSI handle.
+ * If multiple MSI handle is requied to establish, device driver must call
+ * this function for each handle.
+ */
+void *
+x86_pci_msi_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg)
+{
+	struct pic *pic;
+
+	pic = msipic_find_msi_pic(MSI_INT_DEV(ih));
+	if (pic == NULL) {
+		DPRINTF(("pci_intr_handler has no msi_pic\n"));
+		return NULL;
+	}
+
+	return pci_msi_common_establish(pc, ih, level, func, arg, pic);
+}
+
+/*
+ * Disestablish a MSI handle.
+ * If multiple MSI handle is requied to disestablish, device driver must call
+ * this function for each handle.
+ */
+void
+x86_pci_msi_disestablish(pci_chipset_tag_t pc, void *cookie)
+{
+
+	pci_msi_common_disestablish(pc, cookie);
+}
+
+/*
+ * Release MSI-X handles.
+ */
+void
+x86_pci_msix_release(pci_chipset_tag_t pc, pci_intr_handle_t *pihs, int count)
+{
+
+	if (count < 1)
+		return;
+
+	return x86_pci_msix_release_internal(pihs, count);
+}
+
+/*
+ * Establish a MSI-X handle.
+ * If multiple MSI-X handle is requied to establish, device driver must call
+ * this function for each handle.
+ */
+void *
+x86_pci_msix_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg)
+{
+	struct pic *pic;
+
+	pic = msipic_find_msi_pic(MSI_INT_DEV(ih));
+	if (pic == NULL) {
+		DPRINTF(("pci_intr_handler has no msi_pic\n"));
+		return NULL;
+	}
+
+	return pci_msi_common_establish(pc, ih, level, func, arg, pic);
+}
+
+/*
+ * Disestablish a MSI-X handle.
+ * If multiple MSI-X handle is requied to disestablish, device driver must call
+ * this function for each handle.
+ */
+void
+x86_pci_msix_disestablish(pci_chipset_tag_t pc, void *cookie)
+{
+
+	pci_msi_common_disestablish(pc, cookie);
 }
 
 /*****************************************************************************/
@@ -431,7 +526,7 @@ pci_msi_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 		*count = hw_max; /* cut off hw_max */
 	}
 
-	return pci_msi_alloc_md(ihps, count, pa);
+	return x86_pci_msi_alloc(ihps, count, pa);
 }
 
 /*
@@ -461,52 +556,7 @@ pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 		return EINVAL;
 	}
 
-	return pci_msi_alloc_exact_md(ihps, count, pa);
-}
-
-/*
- * Release MSI handles.
- */
-void
-x86_pci_msi_release(pci_chipset_tag_t pc, pci_intr_handle_t *pihs, int count)
-{
-
-	if (count < 1)
-		return;
-
-	return pci_msi_release_md(pihs, count);
-}
-
-/*
- * Establish a MSI handle.
- * If multiple MSI handle is requied to establish, device driver must call
- * this function for each handle.
- */
-void *
-x86_pci_msi_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
-    int level, int (*func)(void *), void *arg)
-{
-	struct pic *pic;
-
-	pic = msipic_find_msi_pic(MSI_INT_DEV(ih));
-	if (pic == NULL) {
-		DPRINTF(("pci_intr_handler has no msi_pic\n"));
-		return NULL;
-	}
-
-	return pci_msi_common_establish(pc, ih, level, func, arg, pic);
-}
-
-/*
- * Disestablish a MSI handle.
- * If multiple MSI handle is requied to disestablish, device driver must call
- * this function for each handle.
- */
-void
-x86_pci_msi_disestablish(pci_chipset_tag_t pc, void *cookie)
-{
-
-	pci_msi_common_disestablish(pc, cookie);
+	return x86_pci_msi_alloc_exact(ihps, count, pa);
 }
 
 /*
@@ -555,7 +605,7 @@ pci_msix_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 		*count = hw_max; /* cut off hw_max */
 	}
 
-	return pci_msix_alloc_md(ihps, count, pa);
+	return x86_pci_msix_alloc(ihps, count, pa);
 }
 
 /*
@@ -582,9 +632,8 @@ pci_msix_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 		return EINVAL;
 	}
 
-	return pci_msix_alloc_exact_md(ihps, count, pa);
+	return x86_pci_msix_alloc_exact(ihps, count, pa);
 }
-
 
 /*
  * This function is used by device drivers like pci_intr_map().
@@ -636,50 +685,5 @@ pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 		}
 	}
 
-	return pci_msix_alloc_map_md(ihps, table_indexes, count, pa);
-}
-
-/*
- * Release MSI-X handles.
- */
-void
-x86_pci_msix_release(pci_chipset_tag_t pc, pci_intr_handle_t *pihs, int count)
-{
-
-	if (count < 1)
-		return;
-
-	return pci_msix_release_md(pihs, count);
-}
-
-/*
- * Establish a MSI-X handle.
- * If multiple MSI-X handle is requied to establish, device driver must call
- * this function for each handle.
- */
-void *
-x86_pci_msix_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
-    int level, int (*func)(void *), void *arg)
-{
-	struct pic *pic;
-
-	pic = msipic_find_msi_pic(MSI_INT_DEV(ih));
-	if (pic == NULL) {
-		DPRINTF(("pci_intr_handler has no msi_pic\n"));
-		return NULL;
-	}
-
-	return pci_msi_common_establish(pc, ih, level, func, arg, pic);
-}
-
-/*
- * Disestablish a MSI-X handle.
- * If multiple MSI-X handle is requied to disestablish, device driver must call
- * this function for each handle.
- */
-void
-x86_pci_msix_disestablish(pci_chipset_tag_t pc, void *cookie)
-{
-
-	pci_msi_common_disestablish(pc, cookie);
+	return x86_pci_msix_alloc_map(ihps, table_indexes, count, pa);
 }
