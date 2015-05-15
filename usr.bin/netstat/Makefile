@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2015/02/07 19:36:06 christos Exp $
+#	$NetBSD: Makefile,v 1.42 2015/05/15 06:58:59 ozaki-r Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -25,7 +25,7 @@ COPTS.show.c += -Wno-format-nonliteral
 .PATH:  ${.CURDIR}/../../sbin/route
 CPPFLAGS+= -DRUMP_ACTION
 RUMPSRCS+= sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c
-RUMPSRCS+= if_indextoname.c getifaddrs.c
+RUMPSRCS+= if_indextoname.c getifaddrs.c getnameinfo.c
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+= -DINET6
