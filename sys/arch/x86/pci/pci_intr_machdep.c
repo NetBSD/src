@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.31 2015/05/15 08:26:44 knakahara Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.32 2015/05/15 08:29:33 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.31 2015/05/15 08:26:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.32 2015/05/15 08:29:33 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -350,6 +350,20 @@ pci_intr_distribute(void *cookie, const kcpuset_t *newset, kcpuset_t *oldset)
 }
 
 #if NIOAPIC > 0
+static void
+x86_pci_intx_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih)
+{
+	char intrstr_buf[INTRIDBUF];
+	const char *intrstr;
+
+	intrstr = pci_intr_string(NULL, *pih, intrstr_buf, sizeof(intrstr_buf));
+	mutex_enter(&cpu_lock);
+	intr_free_io_intrsource(intrstr);
+	mutex_exit(&cpu_lock);
+
+	kmem_free(pih, sizeof(*pih));
+}
+
 int
 pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **pih)
 {
@@ -388,20 +402,6 @@ pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **pih)
 error:
 	kmem_free(handle, sizeof(*handle));
 	return error;
-}
-
-static void
-x86_pci_intx_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih)
-{
-	char intrstr_buf[INTRIDBUF];
-	const char *intrstr;
-
-	intrstr = pci_intr_string(NULL, *pih, intrstr_buf, sizeof(intrstr_buf));
-	mutex_enter(&cpu_lock);
-	intr_free_io_intrsource(intrstr);
-	mutex_exit(&cpu_lock);
-
-	kmem_free(pih, sizeof(*pih));
 }
 
 void
