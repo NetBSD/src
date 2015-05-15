@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.36 2015/05/03 16:18:51 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.37 2015/05/15 10:57:55 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -450,7 +450,7 @@ cortex_init:
 	XPUTC(#'2')
 #endif /* CORTEXA5 || CORTEXA9 */
 
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA17)
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
 	//
 	// The MMU is off.  Make sure the TLB is invalidated before
 	// turning on SMP.
@@ -461,8 +461,8 @@ cortex_init:
 
 	// For the A7, SMP must be on ldrex/strex to work.
 	//
-#if defined(MULTIPROCESSOR) || defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA17)
-#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA17)
+#if defined(MULTIPROCESSOR) || defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
+#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
 	//
 	// Step 4a, set ACTLR.SMP=1
 	//
@@ -485,7 +485,7 @@ cortex_init:
 	mcr	p15, 0, r0, c1, c0, 1		// ACTLR write
 	isb
 	dsb
-#endif	/* A5 || A7 || A9 || A17 */
+#endif	/* A5 || A7 || A9 || A15 || A17 */
 #endif	/* MULTIPROCESSOR */
 
 	//
