@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.620 2015/05/13 10:04:44 ozaki-r Exp $
+# $NetBSD: mi,v 1.621 2015/05/15 10:53:58 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3176,9 +3176,9 @@
 ./usr/tests/net/npf/npftest.conf	tests-net-tests		atf,rump
 ./usr/tests/net/npf/t_npf		tests-net-tests		atf,rump
 ./usr/tests/net/route				tests-net-tests
-./usr/tests/net/route/Atffile			tests-net-tests		atf
-./usr/tests/net/route/Kyuafile			tests-net-tests		atf,kyua
-./usr/tests/net/route/t_change		tests-net-tests		atf
+./usr/tests/net/route/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/route/Kyuafile			tests-net-tests		atf,rump,kyua
+./usr/tests/net/route/t_change			tests-net-tests		atf,rump
 ./usr/tests/net/sys				tests-net-tests
 ./usr/tests/net/sys/Atffile			tests-net-tests		atf
 ./usr/tests/net/sys/Kyuafile			tests-net-tests		atf,kyua
