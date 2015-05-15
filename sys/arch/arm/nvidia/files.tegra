@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.10 2015/05/13 11:06:13 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.11 2015/05/15 11:49:10 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -46,6 +46,11 @@ file	arch/arm/nvidia/tegra_gpio.c		tegra_gpio
 device	tegrampio
 attach	tegrampio at tegraio with tegra_mpio
 file	arch/arm/nvidia/tegra_mpio.c		tegra_mpio
+
+# XUSB PADCTL
+device	tegraxusbpad
+attach	tegraxusbpad at tegraio with tegra_xusbpad
+file	arch/arm/nvidia/tegra_xusbpad.c		tegra_xusbpad
 
 # UART
 attach	com at tegraio with tegra_com
