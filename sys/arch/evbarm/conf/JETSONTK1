@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.18 2015/05/15 11:49:58 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.19 2015/05/15 12:18:48 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -102,10 +102,10 @@ sdmmc2		at sdhc2
 ld1		at sdmmc2		# SD card
 
 # SATA
-#ahcisata0	at tegraio?		# SATA
-#atabus*		at ata?
-#atapibus*	at atapi?
-#wd*		at atabus? drive ?
+ahcisata0	at tegraio?		# SATA
+atabus*		at ata?
+atapibus*	at atapi?
+wd*		at atabus? drive ?
 #cd*		at atapibus? drive ?
 
 # HDA
