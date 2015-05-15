@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.16 2015/05/08 04:27:48 knakahara Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.17 2015/05/15 08:26:44 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -127,7 +127,6 @@ int		pci_intr_distribute(void *, const kcpuset_t *, kcpuset_t *);
  */
 int		pci_intx_alloc(const struct pci_attach_args *,
 		    pci_intr_handle_t **);
-void		pci_intx_release(pci_chipset_tag_t, pci_intr_handle_t *);
 
 /* experimental MSI support */
 const char	*pci_msi_string(pci_chipset_tag_t, pci_intr_handle_t, char *, size_t);
@@ -136,10 +135,6 @@ int		pci_msi_alloc(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int *);
 int		pci_msi_alloc_exact(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int);
-void		pci_msi_release(pci_chipset_tag_t, pci_intr_handle_t **, int);
-void		*pci_msi_establish(pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *);
-void		pci_msi_disestablish(pci_chipset_tag_t, void *);
 
 /* experimental MSI-X support */
 int		pci_msix_count(const struct pci_attach_args *);
@@ -149,10 +144,9 @@ int		pci_msix_alloc_exact(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int);
 int		pci_msix_alloc_map(const struct pci_attach_args *,
 		    pci_intr_handle_t **, u_int *, int);
-void		pci_msix_release(pci_chipset_tag_t, pci_intr_handle_t **, int);
-void		*pci_msix_establish(pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *);
-void		pci_msix_disestablish(pci_chipset_tag_t, void *);
+
+void		pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *,
+		    int);
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
