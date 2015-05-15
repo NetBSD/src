@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.339 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.340 2015/05/15 18:03:45 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.339 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.340 2015/05/15 18:03:45 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1394,6 +1394,12 @@ tcp_input(struct mbuf *m, ...)
 	tiflags = th->th_flags;
 
 	/*
+	 * Checksum extended TCP header and data
+	 */
+	if (tcp_input_checksum(af, m, th, toff, off, tlen))
+		goto badcsum;
+
+	/*
 	 * Locate pcb for segment.
 	 */
 findpcb:
@@ -1563,12 +1569,6 @@ findpcb:
 
 	KASSERT(so->so_lock == softnet_lock);
 	KASSERT(solocked(so));
-
-	/*
-	 * Checksum extended TCP header and data.
-	 */
-	if (tcp_input_checksum(af, m, th, toff, off, tlen))
-		goto badcsum;
 
 	tcp_fields_to_host(th);
 
