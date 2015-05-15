@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.69 2015/05/04 10:10:42 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.70 2015/05/15 07:59:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -315,7 +315,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_SPD_BYPS	(1U << 15) /* speed select bypass */
 #define	CTRL_EXT_IPS1		(1U << 16) /* invert power state bit 1 */
 #define	CTRL_EXT_RO_DIS		(1U << 17) /* relaxed ordering disabled */
-#define	CTRL_EXT_DMA_DYN_CLK	(1U << 19) /* DMA Dymamic Gating Enable */
+#define	CTRL_EXT_DMA_DYN_CLK	(1U << 19) /* DMA Dynamic Gating Enable */
 #define	CTRL_EXT_LINK_MODE_MASK		0x00C00000
 #define	CTRL_EXT_LINK_MODE_GMII		0x00000000
 #define	CTRL_EXT_LINK_MODE_KMRN		0x00000000
