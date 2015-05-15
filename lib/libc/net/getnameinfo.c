@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.54 2013/08/16 15:27:12 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.55 2015/05/15 06:58:59 ozaki-r Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,10 +47,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.54 2013/08/16 15:27:12 christos Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.55 2015/05/15 06:58:59 ozaki-r Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef RUMP_ACTION
 #include "namespace.h"
+#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
