@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.19 2014/08/03 08:53:56 martin Exp $
+#	$NetBSD: BCM5301X,v 1.19.2.1 2015/05/15 03:44:18 snj Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -125,6 +125,7 @@ options 	DKWEDGE_METHOD_GPT
 
 # Miscellaneous kernel options
 options 	MODULAR		# support dynamically loaded kernel modules
+options 	MODULAR_DEFAULT_AUTOLOAD
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	KMEMSTATS	# kernel memory statistics
 options 	PCIVERBOSE	# Verbose PCI autoconfiguration messages
