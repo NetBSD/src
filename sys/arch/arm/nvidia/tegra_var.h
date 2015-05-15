@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.15 2015/05/13 11:06:13 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.16 2015/05/15 11:50:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -120,8 +120,11 @@ bool	tegra_mpio_pinmux_get_rcv_sel(u_int);
 
 void	tegra_pmc_reset(void);
 void	tegra_pmc_power(u_int, bool);
+void	tegra_pmc_remove_clamping(u_int);
 
 psize_t	tegra_mc_memsize(void);
+
+void	tegra_xusbpad_sata_enable(void);
 
 #define TEGRA_CPUFREQ_MAX	16
 struct tegra_cpufreq_func {
