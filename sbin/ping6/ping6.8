@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping6.8,v 1.29 2015/04/24 00:42:56 christos Exp $
+.\"	$NetBSD: ping6.8,v 1.30 2015/05/15 08:02:39 kefren Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -55,6 +55,8 @@ packets to network hosts
 .Op Fl P Ar policy
 .Op Fl S Ar sourceaddr
 .Op Fl s Ar packetsize
+.Op Fl x Ar maxwait
+.Op Fl X Ar deadline
 .Op Ar hops ...
 .Ar host
 .Sh DESCRIPTION
@@ -269,6 +271,11 @@ This option is present for backward compatibility.
 has no effect if
 .Fl w
 is specified.
+.It Fl x Ar maxwait
+Time in milliseconds to wait for a reply for each packet sent.
+.It Fl X Ar deadline
+Specify a timeout, in seconds, before ping exits regardless of
+how many packets have been received.
 .It Ar hops
 IPv6 addresses for intermediate nodes,
 which will be put into type 0 routing header.

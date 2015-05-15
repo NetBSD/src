@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.86 2015/04/24 00:42:56 christos Exp $	*/
+/*	$NetBSD: ping6.c,v 1.87 2015/05/15 08:02:39 kefren Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.86 2015/04/24 00:42:56 christos Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.87 2015/05/15 08:02:39 kefren Exp $");
 #endif
 #endif
 
@@ -235,6 +235,8 @@ static double tmin = 999999999.0;	/* minimum round trip time */
 static double tmax = 0.0;		/* maximum round trip time */
 static double tsum = 0.0;		/* sum of all times, for doing average */
 static double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
+static double maxwait = 0.0;		/* maxwait for reply in ms */
+static double deadline = 0.0;		/* max running time in seconds */
 
 /* for node addresses */
 static u_short naflags;
@@ -278,6 +280,7 @@ static void	 summary(void);
 static void	 tvsub(struct timeval *, struct timeval *);
 static int	 setpolicy(int, char *);
 static char	*nigroup(char *);
+static double	timespec_to_sec(const struct timespec *tp);
 __dead static void	 usage(void);
 
 int
@@ -311,6 +314,8 @@ main(int argc, char *argv[])
 #ifdef IPV6_USE_MIN_MTU
 	int mflag = 0;
 #endif
+	struct timespec now;
+	double exitat = 0.0;
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(smsghdr));
@@ -328,7 +333,7 @@ main(int argc, char *argv[])
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dfHg:h:I:i:l:mnNop:qRS:s:tvwW" ADDOPTS)) != -1) {
+	    "a:b:c:dfHg:h:I:i:l:mnNop:qRS:s:tvwWx:X:" ADDOPTS)) != -1) {
 #undef ADDOPTS
 		switch (ch) {
 		case 'a':
@@ -532,6 +537,18 @@ main(int argc, char *argv[])
 			options &= ~F_NOUSERDATA;
 			options |= F_FQDNOLD;
 			break;
+		case 'x':
+			maxwait = strtod(optarg, &e);
+			if (*e != '\0' || maxwait <= 0)
+				errx(EXIT_FAILURE, "Bad/invalid maxwait time: "
+				    "%s", optarg);
+			break;
+		case 'X':
+			deadline = strtod(optarg, &e);
+			if (*e != '\0' || deadline <= 0)
+				errx(EXIT_FAILURE, "Bad/invalid deadline time: "
+				    "%s", optarg);
+                        break;
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
 		case 'P':
@@ -790,7 +807,7 @@ main(int argc, char *argv[])
     }
 #endif /*ICMP6_FILTER*/
 
-	/* let the kerel pass extension headers of incoming packets */
+	/* let the kernel pass extension headers of incoming packets */
 	if ((options & F_VERBOSE) != 0) {
 		int opton = 1;
 
@@ -1019,6 +1036,11 @@ main(int argc, char *argv[])
 			retransmit();
 	}
 
+	if (deadline > 0) {
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		exitat = timespec_to_sec(&now) + deadline;
+	}
+
 	seenalrm = seenint = 0;
 #ifdef SIGINFO
 	seeninfo = 0;
@@ -1028,6 +1050,13 @@ main(int argc, char *argv[])
 		struct msghdr m;
 		u_char buf[1024];
 		struct iovec iov[2];
+
+		/* check deadline */
+		if (exitat > 0) {
+			clock_gettime(CLOCK_MONOTONIC, &now);
+			if (exitat <= timespec_to_sec(&now))
+				break;
+		}
 
 		/* signal handling */
 		if (seenalrm) {
@@ -1047,10 +1076,11 @@ main(int argc, char *argv[])
 			continue;
 		}
 #endif
-
 		if (options & F_FLOOD) {
 			(void)pinger();
 			timeout = 10;
+		} else if (deadline > 0) {
+			timeout = (int)floor(deadline * 1000);
 		} else {
 			timeout = INFTIM;
 		}
@@ -1442,6 +1472,10 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			tvsub(&tv, &tp);
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
+			if (maxwait > 0 && triptime > maxwait) {
+				nreceived--;
+				return;	/* DISCARD */
+			}
 			tsum += triptime;
 			tsumsq += triptime * triptime;
 			if (triptime < tmin)
@@ -2589,6 +2623,12 @@ nigroup(char *name)
 	return strdup(hbuf);
 }
 
+static double
+timespec_to_sec(const struct timespec *tp)
+{
+	return tp->tv_sec + tp->tv_nsec / 1000000000.0;
+}
+
 static void
 usage(void)
 {
@@ -2608,9 +2648,11 @@ usage(void)
 	    "AE"
 #endif
 #endif
-	    "] [-a [aAclsg]] [-b sockbufsiz] [-c count] \n"
+	    "] [-a [aAclsg]] [-b sockbufsiz] [-c count]\n"
             "\t[-I interface] [-i wait] [-l preload] [-p pattern] "
-	    "[-S sourceaddr]\n"
-            "\t[-s packetsize] [-h hoplimit] [-g gateway] [hops...] host\n");
+	    "[-X deadline]\n"
+	    "\t[-x maxwait] [-S sourceaddr] "
+            "[-s packetsize] [-h hoplimit]\n"
+	    "\t[-g gateway] [hops...] host\n");
 	exit(1);
 }
