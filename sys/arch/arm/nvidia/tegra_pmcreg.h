@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmcreg.h,v 1.2 2015/04/26 22:04:28 jmcneill Exp $ */
+/* $NetBSD: tegra_pmcreg.h,v 1.3 2015/05/15 11:50:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,6 +57,8 @@
 
 #define PMC_PWRGATE_TOGGLE_0_START	__BIT(8)
 #define PMC_PWRGATE_TOGGLE_0_PARTID	__BITS(4,0)
+
+#define PMC_REMOVE_CLAMPING_CMD_0_REG	0x34
 
 #define PMC_PWRGATE_STATUS_0_REG	0x38
 
