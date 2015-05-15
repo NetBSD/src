@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.7 2014/03/28 02:15:56 christos Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.8 2015/05/15 16:25:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -33,9 +33,6 @@
 #include "base64.h"
 #include <sys/md5.h>
 #include <sys/cprng.h>
-
-/* define to send T_BIGNUM in hex format instead of base64 */
-/* #define ISCSI_HEXBIGNUMS */
 
 #define isdigit(x) ((x) >= '0' && (x) <= '9')
 #define toupper(x) ((x) & ~0x20)
@@ -639,22 +636,7 @@ my_strcpy(uint8_t *dest, const uint8_t *src)
 STATIC unsigned
 put_bignumval(negotiation_parameter_t *par, uint8_t *buf)
 {
-#ifdef ISCSI_HEXBIGNUMS
-	int k, c;
-
-	my_strcpy(buf, "0x");
-	for (k=0; k<par->list_num; ++k) {
-		c = par->val.sval[k] >> 4;
-		buf[2+2*k] = c < 10 ? '0' + c : 'a' + (c-10);
-		c = par->val.sval[k] & 0xf;
-		buf[2+2*k+1] = c < 10 ? '0' + c : 'a' + (c-10);
-	}
-	buf[2+2*k] = '\0';
-
-	return 2+2*par->list_num;
-#else
 	return base64_encode(par->val.sval, par->list_num, buf);
-#endif
 }
 
 /*
@@ -835,11 +817,7 @@ parameter_size(negotiation_parameter_t *par)
 
 		case T_BIGNUM:
 			/* list_num holds value size */
-#ifdef ISCSI_HEXBIGNUMS
-			size += 2 + 2*par->list_num;
-#else
 			size += base64_enclen(par->list_num);
-#endif
 			i = par->list_num;
 			break;
 
