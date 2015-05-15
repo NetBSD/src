@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.14.4.1 2014/10/30 12:04:46 martin Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.14.4.2 2015/05/15 04:12:07 snj Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.14.4.1 2014/10/30 12:04:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.14.4.2 2015/05/15 04:12:07 snj Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -172,7 +172,7 @@ crom_parse_text(struct crom_context *cc, char *buf, int len)
 	struct csrtext *textleaf;
 	uint32_t *bp;
 	int i, qlen;
-	static char *nullstr = (char *)&"(null)";
+	static const char nullstr[] = "(null)";
 
 	if (cc->depth < 0)
 		return;

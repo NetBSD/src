@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.50 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.50.22.1 2015/05/15 04:12:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -323,8 +323,8 @@ do {									\
 	/* NOTE: the RFA is misaligned, so we must copy. */		\
 	/* BIG_ENDIAN: no need to swap to store 0xffffffff */		\
 	__v = 0xffffffff;						\
-	memcpy((void *)&__rfa->link_addr, &__v, sizeof(__v));		\
-	memcpy((void *)&__rfa->rbd_addr, &__v, sizeof(__v));		\
+	memcpy(__UNVOLATILE(&__rfa->link_addr), &__v, sizeof(__v));	\
+	memcpy(__UNVOLATILE(&__rfa->rbd_addr), &__v, sizeof(__v));	\
 									\
 	FXP_RFASYNC((sc), (m),						\
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);			\
@@ -337,7 +337,7 @@ do {									\
 		    RFA_ALIGNMENT_FUDGE);				\
 		FXP_RFASYNC((sc), __p_m,				\
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);	\
-		memcpy((void *)&__p_rfa->link_addr, &__v,		\
+		memcpy(__UNVOLATILE(&__p_rfa->link_addr), &__v,		\
 		    sizeof(__v));					\
 		__p_rfa->rfa_control &= htole16(~(FXP_RFA_CONTROL_EL|	\
 		    FXP_RFA_CONTROL_S));				\
