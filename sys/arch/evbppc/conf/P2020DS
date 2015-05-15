@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.21 2014/08/10 17:56:23 joerg Exp $
+#	$NetBSD: P2020DS,v 1.21.2.1 2015/05/15 03:44:18 snj Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.21 $"
+ident 		"P2020DS-$Revision: 1.21.2.1 $"
 
 maxusers	32
 
@@ -30,6 +30,7 @@ options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores

@@ -1,4 +1,4 @@
-# $NetBSD: MMEYE_WLF,v 1.13 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: MMEYE_WLF,v 1.13.6.1 2015/05/15 03:44:18 snj Exp $
 #
 # MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.13.6.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -50,6 +50,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

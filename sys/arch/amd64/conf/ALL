@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.13.2.2 2015/03/18 03:57:15 snj Exp $
+# $NetBSD: ALL,v 1.13.2.3 2015/05/15 03:44:17 snj Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.13.2.2 $"
+#ident 		"ALL-$Revision: 1.13.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -90,6 +90,7 @@ options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
