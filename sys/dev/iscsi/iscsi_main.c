@@ -121,7 +121,7 @@ STATIC void iscsi_minphys(struct buf *);
 *******************************************************************************/
 
 int
-iscsiopen(dev_t dev, int flag, int mode, PTHREADOBJ p)
+iscsiopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	DEB(99, ("ISCSI Open\n"));
@@ -129,7 +129,7 @@ iscsiopen(dev_t dev, int flag, int mode, PTHREADOBJ p)
 }
 
 int
-iscsiclose(dev_t dev, int flag, int mode, PTHREADOBJ p)
+iscsiclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	DEB(99, ("ISCSI Close\n"));

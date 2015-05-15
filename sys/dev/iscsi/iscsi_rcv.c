@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.6 2014/09/05 09:27:34 matt Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.7 2015/05/15 16:24:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -90,11 +90,7 @@ try_resynch_receive(connection_t *conn)
 	int rc;
 
 	uio.uio_rw = UIO_READ;
-#if (__NetBSD_Version__ >= 399000900)
 	UIO_SETUP_SYSSPACE(&uio);
-#else
-	uio.uio_segflg = UIO_SYSSPACE;
-#endif
 
 	do {
 		io_vec.iov_base = buffer;
@@ -199,11 +195,7 @@ read_pdu_data(pdu_t *pdu, uint8_t *data, uint32_t offset)
 	uio->uio_iovcnt = 1;
 	uio->uio_rw = UIO_READ;
 	uio->uio_resid = len;
-#if (__NetBSD_Version__ >= 399000900)
 	UIO_SETUP_SYSSPACE(uio);
-#else
-	uio->uio_segflg = UIO_SYSSPACE;
-#endif
 
 	if (pad) {
 		uio->uio_iovcnt++;
