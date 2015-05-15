@@ -321,9 +321,7 @@ scsi_command_t(target_session_t *sess, uint8_t *header)
 	* there is input data and set the length of the input to
 	* either scsi_cmd.trans_len or scsi_cmd.bidi_trans_len,
 	* depending on whether scsi_cmd.output was set.  */
-	if (scsi_cmd.input) {
-		scsi_cmd.send_data = sess->buff;
-	}
+	scsi_cmd.send_data = sess->buff;
 	scsi_cmd.input = 0;
 	cmd.scsi_cmd = &scsi_cmd;
 	cmd.callback = NULL;
