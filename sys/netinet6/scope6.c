@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.9 2014/05/17 21:26:20 rmind Exp $	*/
+/*	$NetBSD: scope6.c,v 1.9.2.1 2015/05/15 03:58:06 snj Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.9 2014/05/17 21:26:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.9.2.1 2015/05/15 03:58:06 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -410,9 +410,6 @@ in6_setscope(struct in6_addr *in6, const struct ifnet *ifp, uint32_t *ret_id)
 	}
 
 	scope = in6_addrscope(in6);
-
-	if (!sid->s6id_list)
-		return 0;
 
 	switch (scope) {
 	case IPV6_ADDR_SCOPE_INTFACELOCAL: /* should be interface index */
