@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.2 2015/05/08 04:27:48 knakahara Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.3 2015/05/15 08:26:44 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.2 2015/05/08 04:27:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.3 2015/05/15 08:26:44 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.2 2015/05/08 04:27:48 knakahar
 #include <machine/pic.h>
 
 #include <x86/pci/msipic.h>
+#include <x86/pci/pci_msi_machdep.h>
 
 #ifdef INTRDEBUG
 #define MSIDEBUG
@@ -242,17 +243,15 @@ pci_msi_alloc_exact_md(pci_intr_handle_t **ihps, int count,
 }
 
 static void
-pci_msi_release_md(pci_intr_handle_t **pihs, int count)
+pci_msi_release_md(pci_intr_handle_t *pihs, int count)
 {
 	struct pic *pic;
-	pci_intr_handle_t *vectors;
 
-	vectors = *pihs;
-	pic = msipic_find_msi_pic(MSI_INT_DEV(vectors[0]));
+	pic = msipic_find_msi_pic(MSI_INT_DEV(pihs[0]));
 	if (pic == NULL)
 		return;
 
-	pci_msi_free_vectors(pic, vectors, count);
+	pci_msi_free_vectors(pic, pihs, count);
 	msipic_destruct_msi_pic(pic);
 }
 
@@ -359,17 +358,15 @@ pci_msix_alloc_map_md(pci_intr_handle_t **ihps, u_int *table_indexes, int count,
 }
 
 static void
-pci_msix_release_md(pci_intr_handle_t **pihs, int count)
+pci_msix_release_md(pci_intr_handle_t *pihs, int count)
 {
 	struct pic *pic;
-	pci_intr_handle_t *vectors;
 
-	vectors = *pihs;
-	pic = msipic_find_msi_pic(MSI_INT_DEV(vectors[0]));
+	pic = msipic_find_msi_pic(MSI_INT_DEV(pihs[0]));
 	if (pic == NULL)
 		return;
 
-	pci_msi_free_vectors(pic, vectors, count);
+	pci_msi_free_vectors(pic, pihs, count);
 	msipic_destruct_msix_pic(pic);
 }
 
@@ -471,7 +468,7 @@ pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
  * Release MSI handles.
  */
 void
-pci_msi_release(pci_chipset_tag_t pc, pci_intr_handle_t **pihs, int count)
+x86_pci_msi_release(pci_chipset_tag_t pc, pci_intr_handle_t *pihs, int count)
 {
 
 	if (count < 1)
@@ -486,7 +483,7 @@ pci_msi_release(pci_chipset_tag_t pc, pci_intr_handle_t **pihs, int count)
  * this function for each handle.
  */
 void *
-pci_msi_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+x86_pci_msi_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg)
 {
 	struct pic *pic;
@@ -506,7 +503,7 @@ pci_msi_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
  * this function for each handle.
  */
 void
-pci_msi_disestablish(pci_chipset_tag_t pc, void *cookie)
+x86_pci_msi_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
 	pci_msi_common_disestablish(pc, cookie);
@@ -646,7 +643,7 @@ pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
  * Release MSI-X handles.
  */
 void
-pci_msix_release(pci_chipset_tag_t pc, pci_intr_handle_t **pihs, int count)
+x86_pci_msix_release(pci_chipset_tag_t pc, pci_intr_handle_t *pihs, int count)
 {
 
 	if (count < 1)
@@ -661,7 +658,7 @@ pci_msix_release(pci_chipset_tag_t pc, pci_intr_handle_t **pihs, int count)
  * this function for each handle.
  */
 void *
-pci_msix_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+x86_pci_msix_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg)
 {
 	struct pic *pic;
@@ -681,7 +678,7 @@ pci_msix_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
  * this function for each handle.
  */
 void
-pci_msix_disestablish(pci_chipset_tag_t pc, void *cookie)
+x86_pci_msix_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
 	pci_msi_common_disestablish(pc, cookie);
