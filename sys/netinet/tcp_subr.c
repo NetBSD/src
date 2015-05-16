@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.260 2015/04/27 02:59:44 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.261 2015/05/16 10:09:20 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.260 2015/04/27 02:59:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.261 2015/05/16 10:09:20 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2189,7 +2189,6 @@ tcp_rmx_rtt(struct tcpcb *tp)
 }
 
 tcp_seq	 tcp_iss_seq = 0;	/* tcp initial seq # */
-u_int8_t tcp_iss_secret[16];	/* 128 bits; should be plenty */
 
 /*
  * Get a new sequence value given a tcp control block
@@ -2227,21 +2226,23 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 {
 	tcp_seq tcp_iss;
 
+	/* RFC1948 specifics */
 	static bool tcp_iss_gotten_secret;
-
-	/*
-	 * If we haven't been here before, initialize our cryptographic
-	 * hash secret.
-	 */
-	if (tcp_iss_gotten_secret == false) {
-		cprng_strong(kern_cprng,
-			     tcp_iss_secret, sizeof(tcp_iss_secret), 0);
-		tcp_iss_gotten_secret = true;
-	}
+	static u_int8_t tcp_iss_secret[16];	/* 128 bits; should be plenty */
 
 	if (tcp_do_rfc1948) {
 		MD5_CTX ctx;
 		u_int8_t hash[16];	/* XXX MD5 knowledge */
+
+		/*
+		 * If we haven't been here before, initialize our cryptographic
+		 * hash secret.
+		 */
+		if (tcp_iss_gotten_secret == false) {
+			cprng_strong(kern_cprng,
+			    tcp_iss_secret, sizeof(tcp_iss_secret), 0);
+			tcp_iss_gotten_secret = true;
+		}
 
 		/*
 		 * Compute the base value of the ISS.  It is a hash
