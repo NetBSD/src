@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.82 2014/01/04 08:58:51 martin Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.83 2015/05/16 02:33:12 matt Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.82 2014/01/04 08:58:51 martin Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.83 2015/05/16 02:33:12 matt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1003,7 +1003,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
 #define MAKECMD \
-    "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" LDSTATIC=\"${LDSTATIC}\" "
+    "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=${DBG:Q} LDSTATIC=${LDSTATIC:Q} "
 	fprintf(outmk, MAKECMD "depend");
 	fprintf(outmk, " )\n");
 	fprintf(outmk, "\t( cd %s; printf '.PATH: ${%s_SRCDIR}\\n"
