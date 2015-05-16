@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.320 2015/05/04 10:10:42 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.321 2015/05/16 22:41:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.320 2015/05/04 10:10:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.321 2015/05/16 22:41:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -667,10 +667,14 @@ static int32_t	wm_read_ich8_data(struct wm_softc *, uint32_t, uint32_t,
 static int32_t	wm_read_ich8_byte(struct wm_softc *, uint32_t, uint8_t *);
 static int32_t	wm_read_ich8_word(struct wm_softc *, uint32_t, uint16_t *);
 static int	wm_nvm_read_ich8(struct wm_softc *, int, int, uint16_t *);
+/* iNVM */
+static int	wm_nvm_read_word_invm(struct wm_softc *, uint16_t, uint16_t *);
+static int	wm_nvm_read_invm(struct wm_softc *, int, int, uint16_t *);
 /* Lock, detecting NVM type, validate checksum and read */
 static int	wm_nvm_acquire(struct wm_softc *);
 static void	wm_nvm_release(struct wm_softc *);
 static int	wm_nvm_is_onboard_eeprom(struct wm_softc *);
+static int	wm_nvm_get_flash_presence_i210(struct wm_softc *);
 static int	wm_nvm_validate_checksum(struct wm_softc *);
 static int	wm_nvm_read(struct wm_softc *, int, int, uint16_t *);
 
@@ -1841,9 +1845,15 @@ wm_attach(device_t parent, device_t self, void *aux)
 		break;
 	case WM_T_I210:
 	case WM_T_I211:
-		wm_nvm_set_addrbits_size_eecd(sc);
-		sc->sc_flags |= WM_F_EEPROM_FLASH_HW;
-		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_LOCK_SWFW;
+		if (wm_nvm_get_flash_presence_i210(sc)) {
+			wm_nvm_set_addrbits_size_eecd(sc);
+			sc->sc_flags |= WM_F_EEPROM_FLASH_HW;
+			sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_LOCK_SWFW;
+		} else {
+			sc->sc_nvm_wordsize = INVM_SIZE;
+			sc->sc_flags |= WM_F_EEPROM_INVM;
+			sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_LOCK_SWFW;
+		}
 		break;
 	default:
 		break;
@@ -1903,11 +1913,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 	else {
 		aprint_verbose_dev(sc->sc_dev, "%u words ",
 		    sc->sc_nvm_wordsize);
-		if (sc->sc_flags & WM_F_EEPROM_FLASH_HW) {
+		if (sc->sc_flags & WM_F_EEPROM_INVM)
+			aprint_verbose("iNVM\n");
+		else if (sc->sc_flags & WM_F_EEPROM_FLASH_HW)
 			aprint_verbose("FLASH(HW)\n");
-		} else if (sc->sc_flags & WM_F_EEPROM_FLASH) {
+		else if (sc->sc_flags & WM_F_EEPROM_FLASH)
 			aprint_verbose("FLASH\n");
-		} else {
+		else {
 			if (sc->sc_flags & WM_F_EEPROM_SPI)
 				eetype = "SPI";
 			else
@@ -8568,6 +8580,102 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	return error;
 }
 
+/* iNVM */
+
+static int
+wm_nvm_read_word_invm(struct wm_softc *sc, uint16_t address, uint16_t *data)
+{
+	int32_t  rv = 0;
+	uint32_t invm_dword;
+	uint16_t i;
+	uint8_t record_type, word_address;
+
+	for (i = 0; i < INVM_SIZE; i++) {
+		invm_dword = CSR_READ(sc, E1000_INVM_DATA_REG(i));
+		/* Get record type */
+		record_type = INVM_DWORD_TO_RECORD_TYPE(invm_dword);
+		if (record_type == INVM_UNINITIALIZED_STRUCTURE)
+			break;
+		if (record_type == INVM_CSR_AUTOLOAD_STRUCTURE)
+			i += INVM_CSR_AUTOLOAD_DATA_SIZE_IN_DWORDS;
+		if (record_type == INVM_RSA_KEY_SHA256_STRUCTURE)
+			i += INVM_RSA_KEY_SHA256_DATA_SIZE_IN_DWORDS;
+		if (record_type == INVM_WORD_AUTOLOAD_STRUCTURE) {
+			word_address = INVM_DWORD_TO_WORD_ADDRESS(invm_dword);
+			if (word_address == address) {
+				*data = INVM_DWORD_TO_WORD_DATA(invm_dword);
+				rv = 0;
+				break;
+			}
+		}
+	}
+
+	return rv;
+}
+
+static int
+wm_nvm_read_invm(struct wm_softc *sc, int offset, int words, uint16_t *data)
+{
+	int rv = 0;
+	int i;
+
+	for (i = 0; i < words; i++) {
+		switch (offset + i) {
+		case NVM_OFF_MACADDR:
+		case NVM_OFF_MACADDR1:
+		case NVM_OFF_MACADDR2:
+			rv = wm_nvm_read_word_invm(sc, offset + i, &data[i]);
+			if (rv != 0) {
+				data[i] = 0xffff;
+				rv = -1;
+			}
+			break;
+		case NVM_OFF_CFG2:
+			rv = wm_nvm_read_word_invm(sc, offset, data);
+			if (rv != 0) {
+				*data = NVM_INIT_CTRL_2_DEFAULT_I211;
+				rv = 0;
+			}
+			break;
+		case NVM_OFF_CFG4:
+			rv = wm_nvm_read_word_invm(sc, offset, data);
+			if (rv != 0) {
+				*data = NVM_INIT_CTRL_4_DEFAULT_I211;
+				rv = 0;
+			}
+			break;
+		case NVM_OFF_LED_1_CFG:
+			rv = wm_nvm_read_word_invm(sc, offset, data);
+			if (rv != 0) {
+				*data = NVM_LED_1_CFG_DEFAULT_I211;
+				rv = 0;
+			}
+			break;
+		case NVM_OFF_LED_0_2_CFG:
+			rv = wm_nvm_read_word_invm(sc, offset, data);
+			if (rv != 0) {
+				*data = NVM_LED_0_2_CFG_DEFAULT_I211;
+				rv = 0;
+			}
+			break;
+		case NVM_OFF_ID_LED_SETTINGS:
+			rv = wm_nvm_read_word_invm(sc, offset, data);
+			if (rv != 0) {
+				*data = ID_LED_RESERVED_FFFF;
+				rv = 0;
+			}
+			break;
+		default:
+			DPRINTF(WM_DEBUG_NVM,
+			    ("NVM word 0x%02x is not mapped.\n", offset));
+			*data = NVM_RESERVED_WORD;
+			break;
+		}
+	}
+
+	return rv;
+}
+
 /* Lock, detecting NVM type, validate checksum and read */
 
 /*
@@ -8680,6 +8788,18 @@ wm_nvm_is_onboard_eeprom(struct wm_softc *sc)
 	return 1;
 }
 
+static int
+wm_nvm_get_flash_presence_i210(struct wm_softc *sc)
+{
+	uint32_t eec;
+
+	eec = CSR_READ(sc, WMREG_EEC);
+	if ((eec & EEC_FLASH_DETECTED) != 0)
+		return 1;
+
+	return 0;
+}
+
 /*
  * wm_nvm_validate_checksum
  *
@@ -8773,6 +8893,8 @@ wm_nvm_read(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
 	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT))
 		rv = wm_nvm_read_ich8(sc, word, wordcnt, data);
+	else if (sc->sc_flags & WM_F_EEPROM_INVM)
+		rv = wm_nvm_read_invm(sc, word, wordcnt, data);
 	else if (sc->sc_flags & WM_F_EEPROM_EERDEEWR)
 		rv = wm_nvm_read_eerd(sc, word, wordcnt, data);
 	else if (sc->sc_flags & WM_F_EEPROM_SPI)
