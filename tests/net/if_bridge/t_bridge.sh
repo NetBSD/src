@@ -1,5 +1,5 @@
 #! /usr/bin/atf-sh
-#	$NetBSD: t_bridge.sh,v 1.3 2015/01/08 06:33:11 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.4 2015/05/16 14:29:37 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -90,7 +90,7 @@ test_endpoint()
 	atf_check -s exit:0 -o match:shmif0 rump.ifconfig
 	if [ $mode = "ipv6" ]; then
 		export LD_PRELOAD=/usr/lib/librumphijack.so
-		atf_check -s exit:0 -o ignore ping6 -n -c 1 ${addr}
+		atf_check -s exit:0 -o ignore ping6 -n -c 1 -X 1 ${addr}
 		unset LD_PRELOAD
 	else
 		atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 ${addr}
@@ -245,9 +245,9 @@ test_ping6_failure()
 {
 	export LD_PRELOAD=/usr/lib/librumphijack.so
 	export RUMP_SERVER=$SOCK1
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 $IP62
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP62
 	export RUMP_SERVER=$SOCK3
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 $IP61
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP61
 	unset LD_PRELOAD
 }
 
@@ -256,14 +256,14 @@ test_ping6_success()
 	export RUMP_SERVER=$SOCK1
 	rump.ifconfig -v shmif0
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 $IP62
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP62
 	unset LD_PRELOAD
 	rump.ifconfig -v shmif0
 
 	export RUMP_SERVER=$SOCK3
 	rump.ifconfig -v shmif0
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 $IP61
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP61
 	unset LD_PRELOAD
 	rump.ifconfig -v shmif0
 }
@@ -333,9 +333,11 @@ basic_body()
 	setup
 	test_setup
 
-	setup_bridge
-	test_setup_bridge
+	test_ping_failure
 
+	setup_bridge
+	sleep 1
+	test_setup_bridge
 	test_ping_success
 
 	teardown_bridge
@@ -347,17 +349,15 @@ basic6_body()
 	setup6
 	test_setup6
 
-	# TODO: enable once ping6 implements timeout feature
-	#test_ping6_failure
+	test_ping6_failure
 
 	setup_bridge
+	sleep 1
 	test_setup_bridge
-
 	test_ping6_success
 
 	teardown_bridge
-	# TODO: enable once ping6 implements timeout feature
-	#test_ping6_failure
+	test_ping6_failure
 }
 
 rtable_body()
