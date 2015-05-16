@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.2 2015/05/16 21:31:39 jmcneill Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.3 2015/05/16 23:09:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.2 2015/05/16 21:31:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.3 2015/05/16 23:09:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -125,7 +125,7 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
 	/* Recommended setting for standard mode */
-	tegra_car_periph_i2c_enable(loc->loc_port, 204000000);
+	tegra_car_periph_i2c_enable(loc->loc_port, 20400000);
 
 	tegra_i2c_init(sc);
 
@@ -149,6 +149,8 @@ tegra_i2c_init(struct tegra_i2c_softc *sc)
 	I2C_WRITE(sc, I2C_CNFG_REG,
 	    I2C_CNFG_NEW_MASTER_FSM | I2C_CNFG_PACKET_MODE_EN);
 	I2C_SET_CLEAR(sc, I2C_SL_CNFG_REG, I2C_SL_CNFG_NEWSL, 0);
+	I2C_WRITE(sc, I2C_BUS_CONFIG_LOAD_REG,
+	    I2C_BUS_CONFIG_LOAD_MSTR_CONFIG_LOAD);
 }
 
 static int
@@ -239,6 +241,11 @@ done:
 	if ((flags & I2C_F_POLL) == 0) {
 		I2C_WRITE(sc, I2C_INTERRUPT_MASK_REG, 0);
 	}
+
+	if (error) {
+		tegra_i2c_init(sc);
+	}
+
 	return error;
 }
 
@@ -349,7 +356,7 @@ tegra_i2c_read(struct tegra_i2c_softc *sc, i2c_addr_t addr, uint8_t *buf,
 	uint8_t *p = buf;
 	size_t n, resid = buflen;
 	uint32_t data;
-	int error, retry;
+	int retry;
 
 	const uint32_t istatus = I2C_READ(sc, I2C_INTERRUPT_STATUS_REG);
 	I2C_WRITE(sc, I2C_INTERRUPT_STATUS_REG, istatus);
@@ -371,10 +378,6 @@ tegra_i2c_read(struct tegra_i2c_softc *sc, i2c_addr_t addr, uint8_t *buf,
 	I2C_WRITE(sc, I2C_TX_PACKET_FIFO_REG,
 	    I2C_IOPACKET_XMITHDR_IE | I2C_IOPACKET_XMITHDR_READ |
 	    __SHIFTIN((addr << 1) | 1, I2C_IOPACKET_XMITHDR_SLAVE_ADDR));
-
-	if ((error = tegra_i2c_wait(sc, flags)) != 0) {
-		return error;
-	}
 
 	while (resid > 0) {
 		retry = 10000;
@@ -399,5 +402,5 @@ tegra_i2c_read(struct tegra_i2c_softc *sc, i2c_addr_t addr, uint8_t *buf,
 		p += min(resid, 4);
 	}
 
-	return 0;
+	return tegra_i2c_wait(sc, flags);
 }
