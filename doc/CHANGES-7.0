@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.300 2015/05/16 14:18:37 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.301 2015/05/16 18:15:33 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23226,4 +23226,51 @@ src/sys/compat/netbsd32/netbsd32_lwp.c		1.15-1.18
 
 	Fix _lwp_ctl for big endian 64-bit platforms.
 	[matt, #776]
+
+lib/libc/sys/intro.2				1.56, 1.57
+
+	Mention EWOULDBLOCK too since a lot of the source code and
+	documentation still refers to it.
+	[christos, ticket #780]
+
+common/lib/libc/stdlib/strtoi.c			1.2
+common/lib/libc/stdlib/strtou.c			1.2
+distrib/sets/lists/debug/mi			1.113
+distrib/sets/lists/tests/mi			1.617
+lib/libc/include/namespace.h			1.178
+lib/libc/stdlib/Makefile.inc			1.90
+lib/libc/stdlib/strtoi.3			1.1
+lib/libc/stdlib/strtoi.3			1.2
+lib/libc/stdlib/strtol.3			1.32
+lib/libc/stdlib/strtou.3			1.1
+lib/libc/stdlib/strtou.3			1.2
+lib/libc/stdlib/strtoul.3			1.30
+lib/libc/stdlib/strtoul.3			1.31
+tests/lib/libc/stdlib/Makefile			1.25
+tests/lib/libc/stdlib/t_strtoi.c		1.1
+
+	- new test for strtoi
+	- namespace protection for strto{i,u}
+	- separate manpages for strto{i,u} from the ones for strto{u,}l
+	[christos, ticket #781]
+
+common/lib/libprop/prop_kern.c			1.19
+common/lib/libprop/prop_object.c		1.30
+common/lib/libprop/prop_object_impl.h		1.32
+
+	- Limit size of xml buffer for userland requests. From Mateusz
+	  Kocielski.
+	- Don't treat NUL (EOF) as SPACE. All the code that uses
+	  _PROP_ISSPACE() checks explicitly for _PROP_EOF() anyway, and
+	  this can be abused to cause run beyond the end of buffer DoS
+	  From Mateusz Kocielski.
+	- Now that _PROP_ISSPACE does not include the EOF check, put the
+	  check for EOF inside the loop. Also fix another unbounded loop
+	  that did not check for EOF. From Mateusz Kocielski
+	[christos, ticket #782]
+
+crypto/external/bsd/openssh/dist/compat.c	1.10
+
+	Pass the correct length to match_patter_list. From Hanno Boeck.
+	[christos, ticket #783]
 
