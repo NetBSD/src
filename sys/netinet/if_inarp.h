@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.45 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.46 2015/05/16 12:12:46 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -84,9 +84,6 @@ void arp_init(void);
 void arp_drain(void);
 int arpioctl(u_long, void *);
 void arpwhohas(struct ifnet *, struct in_addr *);
-
-void arp_dad_start(struct ifaddr *);
-void arp_dad_stop(struct ifaddr *);
 
 void revarpinput(struct mbuf *);
 void in_revarpinput(struct mbuf *);
