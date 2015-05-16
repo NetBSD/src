@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.8 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.9 2015/05/16 23:31:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -79,6 +79,8 @@ dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 		printf(" ip6address");
 	else if (opt->type & FLAG)
 		printf(" flag");
+	else if (opt->type & BITFLAG)
+		printf(" bitflags");
 	else if (opt->type & RFC3397)
 		printf(" domain");
 	else if (opt->type & DOMAIN)
@@ -89,9 +91,9 @@ dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 		printf(" raw");
 	else if (opt->type & BINHEX)
 		printf(" binhex");
-	else if (opt->type & STRING)	
+	else if (opt->type & STRING)
 		printf(" string");
-	if (opt->type & RFC3361)	
+	if (opt->type & RFC3361)
 		printf(" rfc3361");
 	if (opt->type & RFC3442)
 		printf(" rfc3442");
@@ -562,7 +564,7 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 		sz = sizeof(uint32_t);
 	else if (opt->type & UINT16)
 		sz = sizeof(uint16_t);
-	else if (opt->type & UINT8)
+	else if (opt->type & (UINT8 | BITFLAG))
 		sz = sizeof(uint8_t);
 	else if (opt->type & ADDRIPV6)
 		sz = ADDR6SZ;
@@ -572,15 +574,9 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 	return (dl < sz ? 0 : sz);
 }
 
-#ifdef INET6
-#define PO_IFNAME
-#else
-#define PO_IFNAME __unused
-#endif
-
-ssize_t
-print_option(char *s, size_t len, int type, const uint8_t *data, size_t dl,
-    PO_IFNAME const char *ifname)
+static ssize_t
+print_option(char *s, size_t len, const struct dhcp_opt *opt,
+    const uint8_t *data, size_t dl, const char *ifname)
 {
 	const uint8_t *e, *t;
 	uint16_t u16;
@@ -592,7 +588,11 @@ print_option(char *s, size_t len, int type, const uint8_t *data, size_t dl,
 	size_t l;
 	char *tmp;
 
-	if (type & RFC3397) {
+#ifndef INET6
+	UNUSED(ifname);
+#endif
+
+	if (opt->type & RFC3397) {
 		sl = decode_rfc3397(NULL, 0, data, dl);
 		if (sl == 0 || sl == -1)
 			return sl;
@@ -601,32 +601,32 @@ print_option(char *s, size_t len, int type, const uint8_t *data, size_t dl,
 		if (tmp == NULL)
 			return -1;
 		decode_rfc3397(tmp, l, data, dl);
-		sl = print_string(s, len, type, (uint8_t *)tmp, l - 1);
+		sl = print_string(s, len, opt->type, (uint8_t *)tmp, l - 1);
 		free(tmp);
 		return sl;
 	}
 
 #ifdef INET
-	if (type & RFC3361) {
+	if (opt->type & RFC3361) {
 		if ((tmp = decode_rfc3361(data, dl)) == NULL)
 			return -1;
 		l = strlen(tmp);
-		sl = print_string(s, len, type, (uint8_t *)tmp, l);
+		sl = print_string(s, len, opt->type, (uint8_t *)tmp, l);
 		free(tmp);
 		return sl;
 	}
 
-	if (type & RFC3442)
+	if (opt->type & RFC3442)
 		return decode_rfc3442(s, len, data, dl);
 
-	if (type & RFC5969)
+	if (opt->type & RFC5969)
 		return decode_rfc5969(s, len, data, dl);
 #endif
 
-	if (type & STRING)
-		return print_string(s, len, type, data, dl);
+	if (opt->type & STRING)
+		return print_string(s, len, opt->type, data, dl);
 
-	if (type & FLAG) {
+	if (opt->type & FLAG) {
 		if (s) {
 			*s++ = '1';
 			*s = '\0';
@@ -634,27 +634,50 @@ print_option(char *s, size_t len, int type, const uint8_t *data, size_t dl,
 		return 1;
 	}
 
+	if (opt->type & BITFLAG) {
+		/* bitflags are a string, MSB first, such as ABCDEFGH
+		 * where A is 10000000, B is 01000000, etc. */
+		bytes = 0;
+		for (l = 0, sl = sizeof(opt->bitflags) - 1;
+		    l < sizeof(opt->bitflags);
+		    l++, sl--)
+		{
+			/* Don't print NULL or 0 flags */
+			if (opt->bitflags[l] != '\0' &&
+			    opt->bitflags[l] != '0' &&
+			    *data & (1 << sl))
+			{
+				if (s)
+					*s++ = opt->bitflags[l];
+				bytes++;
+			}
+		}
+		if (s)
+			*s = '\0';
+		return bytes;
+	}
+
 	if (!s) {
-		if (type & UINT8)
+		if (opt->type & UINT8)
 			l = 3;
-		else if (type & UINT16) {
+		else if (opt->type & UINT16) {
 			l = 5;
 			dl /= 2;
-		} else if (type & SINT16) {
+		} else if (opt->type & SINT16) {
 			l = 6;
 			dl /= 2;
-		} else if (type & UINT32) {
+		} else if (opt->type & UINT32) {
 			l = 10;
 			dl /= 4;
-		} else if (type & SINT32) {
+		} else if (opt->type & SINT32) {
 			l = 11;
 			dl /= 4;
-		} else if (type & ADDRIPV4) {
+		} else if (opt->type & ADDRIPV4) {
 			l = 16;
 			dl /= 4;
 		}
 #ifdef INET6
-		else if (type & ADDRIPV6) {
+		else if (opt->type & ADDRIPV6) {
 			e = data + dl;
 			l = 0;
 			while (data < e) {
@@ -683,36 +706,36 @@ print_option(char *s, size_t len, int type, const uint8_t *data, size_t dl,
 			bytes++;
 			len--;
 		}
-		if (type & UINT8) {
+		if (opt->type & UINT8) {
 			sl = snprintf(s, len, "%u", *data);
 			data++;
-		} else if (type & UINT16) {
+		} else if (opt->type & UINT16) {
 			memcpy(&u16, data, sizeof(u16));
 			u16 = ntohs(u16);
 			sl = snprintf(s, len, "%u", u16);
 			data += sizeof(u16);
-		} else if (type & SINT16) {
+		} else if (opt->type & SINT16) {
 			memcpy(&u16, data, sizeof(u16));
 			s16 = (int16_t)ntohs(u16);
 			sl = snprintf(s, len, "%d", s16);
 			data += sizeof(u16);
-		} else if (type & UINT32) {
+		} else if (opt->type & UINT32) {
 			memcpy(&u32, data, sizeof(u32));
 			u32 = ntohl(u32);
 			sl = snprintf(s, len, "%u", u32);
 			data += sizeof(u32);
-		} else if (type & SINT32) {
+		} else if (opt->type & SINT32) {
 			memcpy(&u32, data, sizeof(u32));
 			s32 = (int32_t)ntohl(u32);
 			sl = snprintf(s, len, "%d", s32);
 			data += sizeof(u32);
-		} else if (type & ADDRIPV4) {
+		} else if (opt->type & ADDRIPV4) {
 			memcpy(&addr.s_addr, data, sizeof(addr.s_addr));
 			sl = snprintf(s, len, "%s", inet_ntoa(addr));
 			data += sizeof(addr.s_addr);
 		}
 #ifdef INET6
-		else if (type & ADDRIPV6) {
+		else if (opt->type & ADDRIPV6) {
 			ssize_t r;
 
 			r = ipv6_printaddr(s, len, data, ifname);
@@ -776,7 +799,7 @@ dhcp_envoption1(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 
 	if (opt->len && opt->len < ol)
 		ol = opt->len;
-	len = print_option(NULL, 0, opt->type, od, ol, ifname);
+	len = print_option(NULL, 0, opt, od, ol, ifname);
 	if (len < 0)
 		return 0;
 	if (vname)
@@ -798,7 +821,7 @@ dhcp_envoption1(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 	else
 		v += snprintf(val, e, "%s=", prefix);
 	if (len != 0)
-		print_option(v, (size_t)len + 1, opt->type, od, ol, ifname);
+		print_option(v, (size_t)len + 1, opt, od, ol, ifname);
 	return e;
 }
 
@@ -819,7 +842,8 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 
 	/* If no embedded or encapsulated options, it's easy */
 	if (opt->embopts_len == 0 && opt->encopts_len == 0) {
-		if (dhcp_envoption1(ctx, env == NULL ? NULL : &env[0],
+		if (!(opt->type & RESERVED) &&
+		    dhcp_envoption1(ctx, env == NULL ? NULL : &env[0],
 		    prefix, opt, 1, od, ol, ifname))
 			return 1;
 		return 0;
@@ -860,10 +884,12 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		/* Use the option prefix if the embedded option
 		 * name is different.
 		 * This avoids new_fqdn_fqdn which would be silly. */
-		ov = strcmp(opt->var, eopt->var);
-		if (dhcp_envoption1(ctx, env == NULL ? NULL : &env[n],
-		    pfx, eopt, ov, od, e, ifname))
-			n++;
+		if (!(eopt->type & RESERVED)) {
+			ov = strcmp(opt->var, eopt->var);
+			if (dhcp_envoption1(ctx, env == NULL ? NULL : &env[n],
+			    pfx, eopt, ov, od, e, ifname))
+				n++;
+		}
 		od += e;
 		ol -= e;
 	}
