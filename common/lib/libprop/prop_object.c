@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.29 2013/10/18 18:26:20 martin Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.29.4.1 2015/05/16 18:02:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -416,10 +416,11 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 
 	ctx->poic_tagname = cp;
 
-	while (!_PROP_ISSPACE(*cp) && *cp != '/' && *cp != '>')
+	while (!_PROP_ISSPACE(*cp) && *cp != '/' && *cp != '>') {
+		if (_PROP_EOF(*cp))
+			return (false);
 		cp++;
-	if (_PROP_EOF(*cp))
-		return (false);
+	}
 
 	ctx->poic_tagname_len = cp - ctx->poic_tagname;
 
@@ -462,10 +463,11 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 
 	ctx->poic_tagattr = cp;
 
-	while (!_PROP_ISSPACE(*cp) && *cp != '=')
+	while (!_PROP_ISSPACE(*cp) && *cp != '=') {
+		if (_PROP_EOF(*cp))
+			return (false);
 		cp++;
-	if (_PROP_EOF(*cp))
-		return (false);
+	}
 
 	ctx->poic_tagattr_len = cp - ctx->poic_tagattr;
 	
@@ -477,10 +479,11 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 		return (false);
 	
 	ctx->poic_tagattrval = cp;
-	while (*cp != '\"')
+	while (*cp != '\"') {
+		if (_PROP_EOF(*cp))
+			return (false);
 		cp++;
-	if (_PROP_EOF(*cp))
-		return (false);
+	}
 	ctx->poic_tagattrval_len = cp - ctx->poic_tagattrval;
 	
 	cp++;
