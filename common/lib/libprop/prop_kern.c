@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.17.22.1 2014/12/31 06:44:00 snj Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.17.22.2 2015/05/16 18:02:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -406,6 +406,9 @@ _prop_object_copyin(const struct plistref *pref, const prop_type_t type,
 	prop_object_t obj = NULL;
 	char *buf;
 	int error;
+
+	if (pref->pref_len >= prop_object_copyin_limit)
+		return EINVAL;
 
 	/*
 	 * Allocate an extra byte so we can guarantee NUL-termination.
