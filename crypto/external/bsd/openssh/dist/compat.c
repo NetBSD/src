@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.9 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.10 2015/05/16 14:17:28 christos Exp $	*/
 /* $OpenBSD: compat.c,v 1.87 2015/01/19 20:20:20 markus Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compat.c,v 1.9 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.10 2015/05/16 14:17:28 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -242,7 +242,7 @@ filter_proposal(const char *proposal, const char *filter)
 	buffer_init(&b);
 	tmp = orig_prop = xstrdup(proposal);
 	while ((cp = strsep(&tmp, ",")) != NULL) {
-		if (match_pattern_list(cp, filter, strlen(cp), 0) != 1) {
+		if (match_pattern_list(cp, filter, strlen(filter), 0) != 1) {
 			if (buffer_len(&b) > 0)
 				buffer_append(&b, ",", 1);
 			buffer_append(&b, cp, strlen(cp));
