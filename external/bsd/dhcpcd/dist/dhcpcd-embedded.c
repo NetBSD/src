@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.8 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.9 2015/05/16 23:31:32 roy Exp $");
 
 /*
  * DO NOT EDIT!
@@ -122,7 +122,7 @@ const char * const dhcpcd_embedded_conf[] = {
 "embed ascii scope_list",
 "define 80 norequest flag rapid_commit",
 "define 81 embed fqdn",
-"embed byte flags",
+"embed bitflags=0000NEOS flags",
 "embed byte rcode1",
 "embed byte rcode2",
 "embed domain fqdn",
@@ -201,6 +201,26 @@ const char * const dhcpcd_embedded_conf[] = {
 "encap 0 string nvt",
 "encap 1 binhex vpn_id",
 "encap 255 flag global",
+"definend 1 binhex source_address",
+"definend 2 binhex target_address",
+"definend 3 index embed prefix_information",
+"embed byte length",
+"embed bitflags=LA flags",
+"embed uint32 vltime",
+"embed uint32 pltime",
+"embed uint32 reserved",
+"embed array ip6address prefix",
+"definend 5 embed mtu",
+"embed uint16 reserved",
+"embed uint32 mtu",
+"definend 25 index embed rdnss",
+"embed uint16 reserved",
+"embed uint32 lifetime",
+"embed array ip6address servers",
+"definend 31 index embed dnssl",
+"embed uint16 reserved",
+"embed uint32 lifetime",
+"embed domain search",
 "define6 1 binhex client_id",
 "define6 2 binhex server_id",
 "define6 3 norequest index embed ia_na",
@@ -272,7 +292,7 @@ const char * const dhcpcd_embedded_conf[] = {
 "embed binhex remote_id",
 "define6 38 binhex subscriber_id",
 "define6 39 embed fqdn",
-"embed byte flags",
+"embed bitflags=00000NOS flags",
 "embed domain fqdn",
 "define6 40 array ip6address pana_agent",
 "define6 41 string posix_timezone",

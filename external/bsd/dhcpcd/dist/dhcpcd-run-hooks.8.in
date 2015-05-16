@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.13 2015/01/30 09:47:05 roy Exp $
+.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.14 2015/05/16 23:31:32 roy Exp $
 .\" Copyright (c) 2006-2015 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 3, 2014
+.Dd May 14, 2015
 .Dt DHCPCD-RUN-HOOKS 8
 .Os
 .Sh NAME
@@ -187,11 +187,6 @@ is down, otherwise
 .It Ev $if_oneup
 .Dv true
 if any interface is up, otherwise false.
-.It Ev $if_ipwaited
-.Dv true
-if any interface has been assigned an IP address which matches any wait
-requirements specified in
-.Xr dhcpcd.conf 5 .
 .It Ev $profile
 the name of the profile selected from
 .Xr dhcpcd.conf 5 .

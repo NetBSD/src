@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.20 2015/05/02 15:18:37 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.21 2015/05/16 23:31:32 roy Exp $
 .\" Copyright (c) 2006-2015 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 6, 2015
+.Dd May 15, 2015
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -463,14 +463,39 @@ You can specify more
 separated by commas, spaces or more
 .Ic option
 lines.
+.Ar option
 Prepend dhcp6_ to
 .Ar option
 to request a DHCPv6 option.
 DHCPv4 options are mapped to DHCPv6 where applicable.
+.Pp
+Prepend nd_ to
+.Ar option
+to handle ND options, but this only works for the
+.Ic nooption ,
+.Ic reject
+and
+.Ic require
+options.
 .It Ic nooption Ar option
-Remove the option from the DHCP message.
-This should only be used when a DHCP server sends a non requested option
-that should not be processed.
+Remove the option from the message before it's processed.
+.It Ic require Ar option
+Requires the
+.Ar option
+to be present in all messages, otherwise the message is ignored.
+To enforce that
+.Nm dhcpcd
+only responds to DHCP servers and not BOOTP servers, you can
+.Ic require
+.Ar dhcp_message_type .
+This isn't an exact science though because a BOOTP server can send DHCP like
+options.
+.It Ic reject Ar option
+Reject a message that contains the
+.Ar option .
+This is useful when you cannot use
+.Ic require
+to select / de-select BOOTP messages.
 .It Ic destination Ar option
 If
 .Nm
@@ -500,27 +525,6 @@ will timeout before moving back to the DISCOVER phase.
 .It Ic release
 .Nm dhcpcd
 will release the lease prior to stopping the interface.
-.It Ic require Ar option
-Requires the
-.Ar option
-to be present in all DHCP messages, otherwise the message is ignored.
-It can be a variable to be used in
-.Xr dhcpcd-run-hooks 8
-or the numerical value.
-You can specify more options separated by commas, spaces or more require lines.
-To enforce that
-.Nm dhcpcd
-only responds to DHCP servers and not BOOTP servers, you can
-.Ic require
-.Ar dhcp_message_type .
-This isn't an exact science though because a BOOTP server can send DHCP like
-options.
-.It Ic reject Ar option
-Reject a DHCP message that contains the
-.Ar option .
-This is useful when you cannot use
-.Ic require
-to select / de-select BOOTP messages.
 .It Ic script Ar script
 Use
 .Ar script
@@ -631,9 +635,10 @@ Use the last four bytes of the hardware address as the DHCP xid instead
 of a randomly generated number.
 .El
 .Ss Defining new options
-DHCP allows for the use of custom options.
+DHCP, ND and DHCPv6 allow for the use of custom options.
 Each option needs to be started with the
-.Ic define
+.Ic define ,
+.If definend
 or
 .Ic define6
 directive.
@@ -656,6 +661,17 @@ with a name of
 .Ar variable
 exported to
 .Xr dhcpcd-run-hooks 8 .
+.It Ic definend Ar code Ar type Ar variable
+Defines the ND option
+.Ar code
+of
+.Ar type
+with a name of
+.Ar variable
+exported to
+.Xr dhcpcd-run-hooks 8 ,
+with a prefix of
+.Va _nd .
 .It Ic define6 Ar code Ar type Ar variable
 Defines the DHCPv6 option
 .Ar code
@@ -688,6 +704,11 @@ is not the same as defined in the parent option,
 it is prefixed with the parent
 .Ar variable
 first with an underscore.
+If the
+.Ar variable
+has the name of
+.Ar reserved
+then it is not processed.
 .It Ic encap Ar code Ar type Ar variable
 Defines an encapsulated variable within the defined option.
 The length is determined by the
@@ -721,35 +742,42 @@ Lengths can be specified for string and binhex types, but this is generally
 with other data embedded afterwards in the same option.
 .Bl -tag -width indent
 .It Ic ipaddress
-An IPv4 address, 4 bytes
+An IPv4 address, 4 bytes.
 .It Ic ip6address
-An IPv6 address, 16 bytes
+An IPv6 address, 16 bytes.
 .It Ic string Op : Ic length
 A NVT ASCII string of printable characters.
 .It Ic byte
-A byte
+A byte.
+.It Ic bitflags : Ic flags
+A byte represented as a string of flags, most significant bit first.
+For example, using ABCDEFGH then A would equal 10000000, B 01000000,
+C 00100000, etc.
+If the bit is not set, the flag is not printed.
+A flag of 0 is not printed even if the bit postition is set.
+This is to allow reservation of the first bits while assinging the last bits.
 .It Ic int16
-A signed 16bit integer, 2 bytes
+A signed 16bit integer, 2 bytes.
 .It Ic uint16
-An unsigned 16bit integer, 2 bytes
+An unsigned 16bit integer, 2 bytes.
 .It Ic int32
-A signed 32bit integer, 4 bytes
+A signed 32bit integer, 4 bytes.
 .It Ic uint32
-An unsigned 32bit integer, 4 bytes
-.It Ic flag 
-A fixed value (1) to indicate that the option is present, 0 bytes
+An unsigned 32bit integer, 4 bytes.
+.It Ic flag
+A fixed value (1) to indicate that the option is present, 0 bytes.
 .It Ic domain
-A RFC 3397 encoded string
+A RFC 3397 encoded string.
 .It Ic dname
-A RFC 1035 validated string
+A RFC 1035 validated string.
 .It Ic binhex Op : Ic length
-Binary data expressed as hexadecimal
+Binary data expressed as hexadecimal.
 .It Ic embed
-Contains embedded options (implies encap as well)
+Contains embedded options (implies encap as well).
 .It Ic encap
-Contains encapsulated options (implies embed as well)
+Contains encapsulated options (implies embed as well).
 .It Ic option
-References an option from the global definition
+References an option from the global definition.
 .El
 .Ss Example definition
 .D1 # DHCP option 81, Fully Qualified Domain Name, RFC4702

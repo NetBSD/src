@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.19 2015/05/02 15:18:37 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.20 2015/05/16 23:31:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -94,8 +94,9 @@ exec_script(const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
 {
 	pid_t pid;
 	posix_spawnattr_t attr;
-	int i;
+	int r;
 #ifdef USE_SIGNALS
+	size_t i;
 	short flags;
 	sigset_t defsigs;
 #else
@@ -110,15 +111,15 @@ exec_script(const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
 	flags = POSIX_SPAWN_SETSIGMASK | POSIX_SPAWN_SETSIGDEF;
 	posix_spawnattr_setflags(&attr, flags);
 	sigemptyset(&defsigs);
-	for (i = 0; dhcpcd_handlesigs[i]; i++)
-		sigaddset(&defsigs, dhcpcd_handlesigs[i]);
+	for (i = 0; i < dhcpcd_signals_len; i++)
+		sigaddset(&defsigs, dhcpcd_signals[i]);
 	posix_spawnattr_setsigdefault(&attr, &defsigs);
 	posix_spawnattr_setsigmask(&attr, &ctx->sigset);
 #endif
 	errno = 0;
-	i = posix_spawn(&pid, argv[0], NULL, &attr, argv, env);
-	if (i) {
-		errno = i;
+	r = posix_spawn(&pid, argv[0], NULL, &attr, argv, env);
+	if (r) {
+		errno = r;
 		return -1;
 	}
 	return pid;
@@ -287,7 +288,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	if (ifp->ctx->options & DHCPCD_DUMPLEASE)
 		elen = 2;
 	else
-		elen = 13;
+		elen = 12;
 
 #define EMALLOC(i, l) if ((env[(i)] = malloc((l))) == NULL) goto eexit;
 	/* Make our env + space for profile, wireless and debug */
@@ -373,12 +374,6 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	else
 		env[11] = strdup("if_oneup=false");
 	if (env[11] == NULL)
-		goto eexit;
-	if (dhcpcd_ipwaited(ifp->ctx))
-		env[12] = strdup("if_ipwaited=true");
-	else
-		env[12] = strdup("if_ipwaited=false");
-	if (env[12] == NULL)
 		goto eexit;
 	if (ifo->options & DHCPCD_DEBUG) {
 		e = strlen("syslog_debug=true") + 1;

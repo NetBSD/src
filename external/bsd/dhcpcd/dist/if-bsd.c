@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.20 2015/05/02 15:18:37 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.21 2015/05/16 23:31:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1128,7 +1128,7 @@ if_getlifetime6(struct ipv6_addr *ia)
 				    (uint32_t)(lifetime->ia6t_expire -
 				    MIN(t, lifetime->ia6t_expire));
 				/* Calculate the created time */
-				get_monotonic(&ia->created);
+				clock_gettime(CLOCK_MONOTONIC, &ia->created);
 				ia->created.tv_sec -=
 				    lifetime->ia6t_vltime - ia->prefix_vltime;
 			} else

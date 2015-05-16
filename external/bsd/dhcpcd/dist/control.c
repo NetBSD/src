@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: control.c,v 1.8 2015/03/26 10:26:37 roy Exp $");
+ __RCSID("$NetBSD: control.c,v 1.9 2015/05/16 23:31:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -95,7 +95,7 @@ control_delete(struct fd_list *fd)
 {
 
 	TAILQ_REMOVE(&fd->ctx->control_fds, fd, next);
-	eloop_event_delete(fd->ctx->eloop, fd->fd, 0);
+	eloop_event_delete(fd->ctx->eloop, fd->fd);
 	close(fd->fd);
 	control_queue_free(fd);
 	free(fd);
@@ -306,14 +306,14 @@ control_stop(struct dhcpcd_ctx *ctx)
 
 	if (ctx->control_fd == -1)
 		return 0;
-	eloop_event_delete(ctx->eloop, ctx->control_fd, 0);
+	eloop_event_delete(ctx->eloop, ctx->control_fd);
 	close(ctx->control_fd);
 	ctx->control_fd = -1;
 	if (unlink(ctx->control_sock) == -1)
 		retval = -1;
 
 	if (ctx->control_unpriv_fd != -1) {
-		eloop_event_delete(ctx->eloop, ctx->control_unpriv_fd, 0);
+		eloop_event_delete(ctx->eloop, ctx->control_unpriv_fd);
 		close(ctx->control_unpriv_fd);
 		ctx->control_unpriv_fd = -1;
 		if (unlink(UNPRIVSOCKET) == -1)
@@ -323,7 +323,7 @@ control_stop(struct dhcpcd_ctx *ctx)
 freeit:
 	while ((l = TAILQ_FIRST(&ctx->control_fds))) {
 		TAILQ_REMOVE(&ctx->control_fds, l, next);
-		eloop_event_delete(ctx->eloop, l->fd, 0);
+		eloop_event_delete(ctx->eloop, l->fd);
 		close(l->fd);
 		control_queue_free(l);
 		free(l);
@@ -402,7 +402,7 @@ control_writeone(void *arg)
 	TAILQ_INSERT_TAIL(&fd->free_queue, data, next);
 
 	if (TAILQ_FIRST(&fd->queue) == NULL)
-		eloop_event_delete(fd->ctx->eloop, fd->fd, 1);
+		eloop_event_remove_writecb(fd->ctx->eloop, fd->fd);
 }
 
 int

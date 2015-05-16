@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.12 2015/05/02 15:18:36 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.13 2015/05/16 23:31:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -297,17 +297,19 @@ arp_probe(struct arp_state *astate)
 	arp_probe1(astate);
 }
 
-static struct arp_state *
+struct arp_state *
 arp_find(struct interface *ifp, const struct in_addr *addr)
 {
 	struct arp_state *astate;
 	struct dhcp_state *state;
 
-	state = D_STATE(ifp);
+	if ((state = D_STATE(ifp)) == NULL)
+		goto out;
 	TAILQ_FOREACH(astate, &state->arp_states, next) {
 		if (astate->addr.s_addr == addr->s_addr && astate->iface == ifp)
 			return astate;
 	}
+out:
 	errno = ESRCH;
 	return NULL;
 }
@@ -380,7 +382,7 @@ arp_close(struct interface *ifp)
 		return;
 
 	if (state->arp_fd != -1) {
-		eloop_event_delete(ifp->ctx->eloop, state->arp_fd, 0);
+		eloop_event_delete(ifp->ctx->eloop, state->arp_fd);
 		close(state->arp_fd);
 		state->arp_fd = -1;
 	}
