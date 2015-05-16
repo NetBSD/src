@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1225 2015/05/13 02:23:10 nonaka Exp $
+$NetBSD: pcidevs,v 1.1226 2015/05/16 09:39:22 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2977,6 +2977,13 @@ product INTEL I218_LM2		0x15a0	I218-LM Ethernet Connection
 product INTEL I218_V2		0x15a1	I218-V Ethernet Connection
 product INTEL I218_LM3		0x15a2	I218-LM Ethernet Connection
 product INTEL I218_V3		0x15a3	I218-V Ethernet Connection
+product INTEL CORE5G_HB_1	0x1604	Core 5G Host Bridge
+product INTEL CORE5G_HDA_1	0x160c	Core 5G HD Audio
+product INTEL CORE5G_M_GT1	0x1606	HD Graphics (GT1)
+product INTEL CORE5G_M_GT2_1	0x1616	HD Graphics 5500
+product INTEL CORE5G_M_GT2_2	0x161e	HD Graphics 5300
+product INTEL CORE5G_M_GT3_15W	0x1626	HD Graphics 6000
+product INTEL CORE5G_M_GT3_28W	0x162b	Iris Graphics 6100
 product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 80960RM_2		0x1962	i960 RM PCI-PCI
 product INTEL 82840_HB		0x1a21	82840 Host
@@ -5279,6 +5286,7 @@ product REALTEK RT8169SC	0x8167	8169SC/8110SC 10/100/1000 Ethernet
 product REALTEK RT8168		0x8168	8168/8111 10/100/1000 Ethernet
 product REALTEK RT8169		0x8169	8169/8110 10/100/1000 Ethernet
 product REALTEK RTL8188CE	0x8176	RTL8188CE Wireless LAN 802.11n PCI-E NIC
+product REALTEK RTL8188EE	0x8179	RTL8188EE Wireless LAN 802.11n PCI-E NIC
 product REALTEK RT8180		0x8180	8180 802.11b
 product REALTEK RT8185		0x8185	8185 802.11a/b/g
 
