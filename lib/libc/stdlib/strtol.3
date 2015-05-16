@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.26.24.1 2015/04/22 07:18:58 snj Exp $
+.\"	$NetBSD: strtol.3,v 1.26.24.2 2015/05/16 17:58:46 snj Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,11 +33,10 @@
 .\"
 .\"     from: @(#)strtol.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 10, 2015
+.Dd April 30, 2015
 .Dt STRTOL 3
 .Os
 .Sh NAME
-.Nm strtoi ,
 .Nm strtol ,
 .Nm strtoll ,
 .Nm strtoimax ,
@@ -54,8 +53,6 @@
 .Fn strtoll "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Pp
 .In inttypes.h
-.Ft intmax_t
-.Fn strtoi "const char * restrict nptr" "char ** restrict endptr" "int base" "intmax_t lo" "intmax_t hi" "int *rstatus"
 .Ft intmax_t
 .Fn strtoimax "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Pp
@@ -90,30 +87,6 @@ to an
 .Ft intmax_t
 value.
 The
-.Fn strtoi
-function
-uses internally
-.Fn strtoimax
-and ensures that the result is always in the range [
-.Fa lo ..
-.Fa hi
-].
-In adddition it always places
-.Dv 0
-on success or a conversion status in the
-.Fa rstatus
-argument, avoiding the
-.Dv errno
-gymnastics the other functions require.
-The
-.Fn strtoi
-function doesn't affect errno on exit.
-The
-.Fa rstatus
-argument can be
-.Dv NULL
-if conversion status is to be ignored.
-The
 .Fn strtoq
 function
 converts the string in
@@ -121,6 +94,7 @@ converts the string in
 to a
 .Ft quad_t
 value.
+.Pp
 The conversion is done according to the given
 .Fa base ,
 which must be between 2 and 36 inclusive,
@@ -146,11 +120,9 @@ is taken as 10 (decimal) unless the next character is
 .Ql 0 ,
 in which case it is taken as 8 (octal).
 .Pp
-The remainder of the string is converted to a
-.Em long
-value in the obvious manner,
-stopping at the first character which is not a valid digit
-in the given base.
+The remainder of the string is converted to an appropriate value
+in the obvious manner,
+stopping at the first character which is not a valid digit in the given base.
 (In bases above 10, the letter
 .Ql A
 in either upper or lower case
@@ -162,13 +134,10 @@ representing 35.)
 .Pp
 If
 .Fa endptr
-is non-nil,
-.Fn strtol
-stores the address of the first invalid character in
+is non-nil, the functions store the address of the first invalid character in
 .Fa *endptr .
 If there were no digits at all, however,
-.Fn strtol
-stores the original value of
+the functions store the original value of
 .Fa nptr
 in
 .Fa *endptr .
@@ -182,15 +151,6 @@ is
 .Ql \e0
 on return, the entire string was valid.)
 .Sh RETURN VALUES
-The
-.Fn strtoi
-function
-always returns the closest value in the range specified by
-the
-.Fa lo
-and
-.Fa hi
-arguments.
 The
 .Fn strtol
 function
@@ -236,21 +196,6 @@ is left unchanged.
 This behavior (which is unlike most library functions) is guaranteed
 by the pertinent standards.
 .Sh EXAMPLES
-The
-.Fn strtoi
-function is the simplest to use:
-.Bd -literal -offset indent
-int e;
-intmax_t lval = strtoi(buf, NULL, 0, 1, 99, &e);
-if (e)
-	warnc(e, "conversion of `%s' to a number failed, using %jd",
-	    buf, lval);
-.Ed
-.Pp
-This will always return a number in
-.Dv [1..99]
-range no matter what the input is, and warn if the conversion failed.
-.Pp
 Because the return value of
 .Fn strtol
 cannot be used unambiguously to detect an error,
@@ -320,24 +265,6 @@ is not between 2 and 36 and does not contain the special value 0.
 .It Bq Er ERANGE
 The given string was out of range; the value converted has been clamped.
 .El
-.Pp
-In addition to the above errors
-.Fn strtoi
-returns:
-.Bl -tag -width Er
-.It Bq Er ECANCELED
-The string did not contain any characters that were converted.
-.It Bq Er ENOTSUP
-The string contained non-numeric characters that did not get converted.
-In this case,
-.Fa endptr
-points to the first unconverted character.
-.It Bq Er ERANGE
-The range given was invalid, i.e.
-.Fa lo
-\*[Gt]
-.Fa hi .
-.El
 .Sh SEE ALSO
 .Xr atof 3 ,
 .Xr atoi 3 ,
@@ -360,9 +287,13 @@ and
 .Fn strtoimax
 functions conform to
 .St -isoC-99 .
+.Pp
 The
-.Fn strtoi
-function appeared in
-.Nx 8 .
+.Fn strtoq
+function is a
+.Bx
+legacy function equivalent to
+.Fn strtoll
+and should not be used in a new code.
 .Sh BUGS
 Ignores the current locale.
