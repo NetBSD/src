@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.182 2015/04/27 16:50:17 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.183 2015/05/16 01:15:34 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.182 2015/04/27 16:50:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.183 2015/05/16 01:15:34 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1238,7 +1238,10 @@ send:
 		*bp++ = TCPOPT_NOP;
 		*bp++ = TCPOPT_EOL;
  		optlen += 2;
- 	}
+ 	} else if ((tp->t_flags & TF_SIGNATURE) != 0) {
+		error = ECONNABORTED;
+		goto out;
+	}
 #endif /* TCP_SIGNATURE */
 
 	hdrlen += optlen;
