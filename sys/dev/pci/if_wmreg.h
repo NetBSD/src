@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.70 2015/05/15 07:59:00 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.71 2015/05/16 22:41:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -891,6 +891,11 @@ struct livengood_tcpip_ctxdesc {
 
 #define WMREG_CRC_OFFSET 0x5f50
 
+#define WMREG_EEC	0x12010
+#define EEC_FLASH_DETECTED (1U << 19)	/* FLASH */
+#define EEC_FLUPD	(1U << 23)	/* Update FLASH */
+
+
 /*
  * NVM related values.
  *  Microwire, SPI, and flash
@@ -918,15 +923,21 @@ struct livengood_tcpip_ctxdesc {
 #define NVM_SIZE		0x0040
 #define NVM_WORD_SIZE_BASE_SHIFT 6
 
-#define	NVM_OFF_MACADDR		0x0000	/* MAC address offset */
+#define	NVM_OFF_MACADDR		0x0000	/* MAC address offset 0 */
+#define	NVM_OFF_MACADDR1	0x0001	/* MAC address offset 1 */
+#define	NVM_OFF_MACADDR2	0x0002	/* MAC address offset 2 */
 #define NVM_OFF_COMPAT		0x0003
+#define NVM_OFF_ID_LED_SETTINGS	0x0004
 #define	NVM_OFF_CFG1		0x000a	/* config word 1 */
 #define	NVM_OFF_CFG2		0x000f	/* config word 2 */
 #define	NVM_OFF_EEPROM_SIZE	0x0012	/* NVM SIZE */
+#define	NVM_OFF_CFG4		0x0013	/* config word 4 */
 #define	NVM_OFF_CFG3_PORTB	0x0014	/* config word 3 */
 #define NVM_OFF_FUTURE_INIT_WORD1 0x0019
 #define	NVM_OFF_INIT_3GIO_3	0x001a	/* PCIe Initial Configuration Word 3 */
 #define	NVM_OFF_K1_CONFIG	0x001b	/* NVM K1 Config */
+#define	NVM_OFF_LED_1_CFG	0x001c
+#define	NVM_OFF_LED_0_2_CFG	0x001f
 #define	NVM_OFF_SWDPIN		0x0020	/* SWD Pins (Cordova) */
 #define	NVM_OFF_CFG3_PORTA	0x0024	/* config word 3 */
 #define NVM_OFF_ALT_MAC_ADDR_PTR 0x0037	/* to the alternative MAC addresses */
@@ -988,6 +999,34 @@ struct livengood_tcpip_ctxdesc {
  * in 82580's datasheet.
  */
 #define NVM_OFF_LAN_FUNC_82580(x)	((x) ? (0x40 + (0x40 * (x))) : 0)
+
+/* iNVM Registers for i21[01] */
+#define E1000_INVM_DATA_REG(reg)	(0x12120 + 4*(reg))
+#define INVM_SIZE			64 /* Number of INVM Data Registers */
+
+/* iNVM default vaule */
+#define NVM_INIT_CTRL_2_DEFAULT_I211	0x7243
+#define NVM_INIT_CTRL_4_DEFAULT_I211	0x00c1
+#define NVM_LED_1_CFG_DEFAULT_I211	0x0184
+#define NVM_LED_0_2_CFG_DEFAULT_I211	0x200c
+#define NVM_RESERVED_WORD		0xffff
+
+#define INVM_DWORD_TO_RECORD_TYPE(dword)	((dword) & 0x7)
+#define INVM_DWORD_TO_WORD_ADDRESS(dword)	(((dword) & 0x0000FE00) >> 9)
+#define INVM_DWORD_TO_WORD_DATA(dword)		(((dword) & 0xFFFF0000) >> 16)
+
+#define INVM_UNINITIALIZED_STRUCTURE		0x0
+#define INVM_WORD_AUTOLOAD_STRUCTURE		0x1
+#define INVM_CSR_AUTOLOAD_STRUCTURE		0x2
+#define INVM_PHY_REGISTER_AUTOLOAD_STRUCTURE	0x3
+#define INVM_RSA_KEY_SHA256_STRUCTURE		0x4
+#define INVM_INVALIDATED_STRUCTURE		0x5
+
+#define INVM_RSA_KEY_SHA256_DATA_SIZE_IN_DWORDS	8
+#define INVM_CSR_AUTOLOAD_DATA_SIZE_IN_DWORDS	1
+
+/* Word definitions for ID LED Settings */
+#define ID_LED_RESERVED_FFFF 0xFFFF
 
 /* ich8 flash control */
 #define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */
