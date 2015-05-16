@@ -73,6 +73,7 @@ struct arp_state *arp_new(struct interface *, const struct in_addr *);
 void arp_cancel(struct arp_state *);
 void arp_free(struct arp_state *);
 void arp_free_but(struct arp_state *);
+struct arp_state *arp_find(struct interface *, const struct in_addr *);
 void arp_close(struct interface *);
 
 void arp_handleifa(int, struct interface *, const struct in_addr *, int);

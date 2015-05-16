@@ -1019,6 +1019,9 @@ dhcp6_sendmessage(struct interface *ifp, void (*callback)(void *))
 	const char *broad_uni;
 	const struct in6_addr alldhcp = IN6ADDR_LINKLOCAL_ALLDHCP_INIT;
 
+	if (!callback && ifp->carrier == LINK_DOWN)
+		return 0;
+
 	memset(&dst, 0, sizeof(dst));
 	dst.sin6_family = AF_INET6;
 	dst.sin6_port = htons(DHCP6_SERVER_PORT);
@@ -1106,16 +1109,17 @@ dhcp6_sendmessage(struct interface *ifp, void (*callback)(void *))
 		}
 
 logsend:
-		logger(ifp->ctx, LOG_DEBUG,
-		    "%s: %s %s (xid 0x%02x%02x%02x),"
-		    " next in %0.1f seconds",
-		    ifp->name,
-		    broad_uni,
-		    dhcp6_get_op(state->send->type),
-		    state->send->xid[0],
-		    state->send->xid[1],
-		    state->send->xid[2],
-		    timespec_to_double(&state->RT));
+		if (ifp->carrier != LINK_DOWN)
+			logger(ifp->ctx, LOG_DEBUG,
+			    "%s: %s %s (xid 0x%02x%02x%02x),"
+			    " next in %0.1f seconds",
+			    ifp->name,
+			    broad_uni,
+			    dhcp6_get_op(state->send->type),
+			    state->send->xid[0],
+			    state->send->xid[1],
+			    state->send->xid[2],
+			    timespec_to_double(&state->RT));
 
 		/* Wait the initial delay */
 		if (state->IMD) {
@@ -1125,6 +1129,9 @@ logsend:
 			return 0;
 		}
 	}
+
+	if (ifp->carrier == LINK_DOWN)
+		return 0;
 
 	/* Update the elapsed time */
 	dhcp6_updateelapsed(ifp, state->send, state->send_len);
@@ -2106,7 +2113,7 @@ dhcp6_validatelease(struct interface *ifp,
 	state->renew = state->rebind = state->expire = 0;
 	state->lowpl = ND6_INFINITE_LIFETIME;
 	if (!acquired) {
-		get_monotonic(&aq);
+		clock_gettime(CLOCK_MONOTONIC, &aq);
 		acquired = &aq;
 	}
 	nia = dhcp6_findia(ifp, m, len, sfrom, acquired);
@@ -2181,7 +2188,7 @@ dhcp6_readlease(struct interface *ifp, int validate)
 	if ((now = time(NULL)) == -1)
 		goto ex;
 
-	get_monotonic(&acquired);
+	clock_gettime(CLOCK_MONOTONIC, &acquired);
 	acquired.tv_sec -= now - st.st_mtime;
 
 	/* Check to see if the lease is still valid */
@@ -2615,7 +2622,7 @@ dhcp6_handledata(void *arg)
 	if (bytes == -1) {
 		logger(dctx, LOG_ERR, "%s: recvmsg: %m", __func__);
 		close(ctx->dhcp_fd);
-		eloop_event_delete(dctx->eloop, ctx->dhcp_fd, 0);
+		eloop_event_delete(dctx->eloop, ctx->dhcp_fd);
 		ctx->dhcp_fd = -1;
 		return;
 	}
@@ -3391,7 +3398,7 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 	}
 	if (ifp == NULL && ctx->ipv6) {
 		if (ctx->ipv6->dhcp_fd != -1) {
-			eloop_event_delete(ctx->eloop, ctx->ipv6->dhcp_fd, 0);
+			eloop_event_delete(ctx->eloop, ctx->ipv6->dhcp_fd);
 			close(ctx->ipv6->dhcp_fd);
 			ctx->ipv6->dhcp_fd = -1;
 		}

@@ -54,8 +54,8 @@
 #define USEC_PER_SEC		1000000L
 #define USEC_PER_NSEC		1000L
 #define NSEC_PER_SEC		1000000000L
+#define NSEC_PER_MSEC		1000000L
 #define MSEC_PER_SEC		1000L
-#define MSEC_PER_NSEC		1000000L
 
 /* Some systems don't define timespec macros */
 #ifndef timespecclear
@@ -95,12 +95,12 @@
 } while (0 /* CONSTCOND */);
 #define ts_to_ms(ms, tv) do {						     \
 	ms = (tv)->tv_sec * MSEC_PER_SEC;				     \
-	ms += (tv)->tv_nsec / MSEC_PER_NSEC;				     \
+	ms += (tv)->tv_nsec / NSEC_PER_MSEC;				     \
 } while (0 /* CONSTCOND */);
 #define ms_to_ts(tv, ms) do {						     \
 	(tv)->tv_sec = ms / MSEC_PER_SEC;				     \
 	(tv)->tv_nsec = (suseconds_t)(ms - ((tv)->tv_sec * MSEC_PER_SEC))    \
-	    * MSEC_PER_NSEC;						     \
+	    * NSEC_PER_MSEC;						     \
 } while (0 /* CONSTCOND */);
 
 #ifndef TIMEVAL_TO_TIMESPEC
@@ -136,6 +136,10 @@
 # ifndef __unused
 #  define __unused
 # endif
+#endif
+
+#ifndef __arraycount
+#define __arraycount(__x)       (sizeof(__x) / sizeof(__x[0]))
 #endif
 
 /* We don't really need this as our supported systems define __restrict
@@ -180,8 +184,12 @@ void logger_close(struct dhcpcd_ctx *);
 #endif
 
 ssize_t setvar(struct dhcpcd_ctx *,
-    char ***, const char *, const char *, const char *);
+    char **, const char *, const char *, const char *);
 ssize_t setvard(struct dhcpcd_ctx *,
+    char **, const char *, const char *, size_t);
+ssize_t addvar(struct dhcpcd_ctx *,
+    char ***, const char *, const char *, const char *);
+ssize_t addvard(struct dhcpcd_ctx *,
     char ***, const char *, const char *, size_t);
 time_t uptime(void);
 

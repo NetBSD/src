@@ -32,6 +32,7 @@
 #include <arpa/inet.h>
 #include <net/route.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -153,6 +154,15 @@ ipv4_findaddr(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
 			return ap;
 	}
 	return NULL;
+}
+
+int
+ipv4_ifaddrexists(const struct interface *ifp)
+{
+	const struct dhcp_state *state;
+
+	state = D_CSTATE(ifp);
+	return (state && state->addr.s_addr != INADDR_ANY);
 }
 
 int
@@ -741,6 +751,7 @@ ipv4_deladdr(struct interface *ifp,
 	int r;
 	struct ipv4_state *state;
 	struct ipv4_addr *ap;
+	struct arp_state *astate;
 
 	logger(ifp->ctx, LOG_DEBUG, "%s: deleting IP address %s/%d",
 	    ifp->name, inet_ntoa(*addr), inet_ntocidr(*net));
@@ -750,14 +761,8 @@ ipv4_deladdr(struct interface *ifp,
 	    errno != ENODEV)
 		logger(ifp->ctx, LOG_ERR, "%s: %s: %m", ifp->name, __func__);
 
-	dstate = D_STATE(ifp);
-	if (dstate->addr.s_addr == addr->s_addr &&
-	    dstate->net.s_addr == net->s_addr)
-	{
-		dstate->added = 0;
-		dstate->addr.s_addr = 0;
-		dstate->net.s_addr = 0;
-	}
+	if ((astate = arp_find(ifp, addr)) != NULL)
+		arp_free(astate);
 
 	state = IPV4_STATE(ifp);
 	TAILQ_FOREACH(ap, &state->addrs, next) {
@@ -768,6 +773,18 @@ ipv4_deladdr(struct interface *ifp,
 			free(ap);
 			break;
 		}
+	}
+
+	/* Have to do this last incase the function arguments
+	 * were these very pointers. */
+	dstate = D_STATE(ifp);
+	if (dstate &&
+	    dstate->addr.s_addr == addr->s_addr &&
+	    dstate->net.s_addr == net->s_addr)
+	{
+		dstate->added = 0;
+		dstate->addr.s_addr = 0;
+		dstate->net.s_addr = 0;
 	}
 	return r;
 }
@@ -812,6 +829,7 @@ ipv4_addaddr(struct interface *ifp, const struct dhcp_lease *lease)
 {
 	struct ipv4_state *state;
 	struct ipv4_addr *ia;
+	struct dhcp_state *dstate;
 
 	if ((state = ipv4_getstate(ifp)) == NULL) {
 		logger(ifp->ctx, LOG_ERR, "%s: ipv4_getstate: %m", __func__);
@@ -849,6 +867,17 @@ ipv4_addaddr(struct interface *ifp, const struct dhcp_lease *lease)
 	ia->addr_flags = IN_IFF_TENTATIVE;
 #endif
 	TAILQ_INSERT_TAIL(&state->addrs, ia, next);
+
+	dstate = D_STATE(ifp);
+#ifdef IN_IFF_TENTATIVE
+	dstate->added |= STATE_ADDED;
+#else
+	dstate->added = STATE_ADDED;
+#endif
+	dstate->defend = 0;
+	dstate->addr.s_addr = lease->addr.s_addr;
+	dstate->net.s_addr = lease->net.s_addr;
+
 	return 0;
 }
 
@@ -856,6 +885,8 @@ static void
 ipv4_finalisert(struct interface *ifp)
 {
 	const struct dhcp_state *state = D_CSTATE(ifp);
+
+	assert(state != NULL);
 
 	/* Find any freshly added routes, such as the subnet route.
 	 * We do this because we cannot rely on recieving the kernel
@@ -881,11 +912,46 @@ ipv4_finaliseaddr(struct interface *ifp)
 	    ipv4_iffindaddr(ifp, &lease->addr, NULL))
 		delete_address(ifp);
 
-	state->added = STATE_ADDED;
-	state->defend = 0;
-	state->addr.s_addr = lease->addr.s_addr;
-	state->net.s_addr = lease->net.s_addr;
+	state->added &= (uint8_t)~(STATE_FAKE | STATE_TENTATIVE);
 	ipv4_finalisert(ifp);
+}
+
+int
+ipv4_preferanother(struct interface *ifp)
+{
+	struct dhcp_state *state = D_STATE(ifp), *nstate;
+	struct interface *ifn;
+	int preferred;
+
+	if (state == NULL)
+		return 0;
+
+	preferred = 0;
+	if (!state->added)
+		goto out;
+
+	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
+		if (ifn == ifp || strcmp(ifn->name, ifp->name) == 0)
+			break; /* We are already the most preferred */
+		nstate = D_STATE(ifn);
+		if (nstate && !nstate->added &&
+		    nstate->lease.addr.s_addr == state->addr.s_addr)
+		{
+			preferred = 1;
+			delete_address(ifp);
+			if (ifn->options->options & DHCPCD_ARP)
+				dhcp_bind(ifn, NULL);
+			else {
+				ipv4_addaddr(ifn, &nstate->lease);
+				nstate->added = STATE_ADDED;
+			}
+			break;
+		}
+	}
+
+out:
+	ipv4_buildroutes(ifp->ctx);
+	return preferred;
 }
 
 void
@@ -904,38 +970,15 @@ ipv4_applyaddr(void *arg)
 	dhcp = state->new;
 	lease = &state->lease;
 
+	if_sortinterfaces(ifp->ctx);
 	if (dhcp == NULL) {
 		if ((ifo->options & (DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
 		    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
 		{
-			if (state->added) {
-				struct in_addr addr;
-
-				addr = state->addr;
+			if (state->added && !ipv4_preferanother(ifp)) {
 				delete_address(ifp);
-				TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
-					if (ifn == ifp ||
-					    strcmp(ifn->name, ifp->name) == 0)
-						continue;
-					nstate = D_STATE(ifn);
-					if (nstate && !nstate->added &&
-					    nstate->addr.s_addr == addr.s_addr)
-					{
-						if (ifn->options->options &
-						    DHCPCD_ARP)
-						{
-							dhcp_bind(ifn, NULL);
-						} else {
-							ipv4_addaddr(ifn,
-							    &nstate->lease);
-							nstate->added =
-							    STATE_ADDED;
-						}
-						break;
-					}
-				}
+				ipv4_buildroutes(ifp->ctx);
 			}
-			ipv4_buildroutes(ifp->ctx);
 			script_runreason(ifp, state->reason);
 		} else
 			ipv4_buildroutes(ifp->ctx);
@@ -943,29 +986,30 @@ ipv4_applyaddr(void *arg)
 	}
 
 	/* Ensure only one interface has the address */
+	r = 0;
 	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
-		if (ifn == ifp || strcmp(ifn->name, ifp->name) == 0)
+		if (ifn == ifp || strcmp(ifn->name, ifp->name) == 0) {
+			r = 1; /* past ourselves */
 			continue;
+		}
 		nstate = D_STATE(ifn);
 		if (nstate && nstate->added &&
 		    nstate->addr.s_addr == lease->addr.s_addr)
 		{
-			if (ifn->metric <= ifp->metric) {
+			if (r == 0) {
 				logger(ifp->ctx, LOG_INFO,
 				    "%s: preferring %s on %s",
 				    ifp->name,
 				    inet_ntoa(lease->addr),
 				    ifn->name);
-				state->addr.s_addr = lease->addr.s_addr;
-				state->net.s_addr = lease->net.s_addr;
-				ipv4_finalisert(ifp);
+				state->added &= (uint8_t)~STATE_TENTATIVE;
+				return;
 			}
 			logger(ifp->ctx, LOG_INFO, "%s: preferring %s on %s",
 			    ifn->name,
 			    inet_ntoa(lease->addr),
 			    ifp->name);
 			ipv4_deladdr(ifn, &nstate->addr, &nstate->net);
-			nstate->added = 0;
 			break;
 		}
 	}

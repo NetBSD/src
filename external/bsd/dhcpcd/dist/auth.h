@@ -30,6 +30,10 @@
 
 #include "config.h"
 
+#ifdef HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
+
 #define DHCPCD_AUTH_SEND	(1 << 0)
 #define DHCPCD_AUTH_REQUIRE	(1 << 1)
 #define DHCPCD_AUTH_RDM_COUNTER	(1 << 2)

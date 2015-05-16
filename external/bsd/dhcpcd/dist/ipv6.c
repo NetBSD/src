@@ -35,19 +35,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#ifndef __linux__
-#  ifndef __QNX__
-#    include <sys/endian.h>
-#  endif
-#  include <net/if.h>
-#  ifdef __FreeBSD__ /* Needed so that including netinet6/in6_var.h works */
-#    include <net/if_var.h>
-#  endif
-#  ifndef __sun
-#    include <netinet6/in6_var.h>
-#  endif
-#endif
-
 #include <errno.h>
 #include <ifaddrs.h>
 #include <inttypes.h>
@@ -685,24 +672,36 @@ ipv6_addaddr(struct ipv6_addr *ap, const struct timespec *now)
 		struct timespec n;
 
 		if (now == NULL) {
-			get_monotonic(&n);
+			clock_gettime(CLOCK_MONOTONIC, &n);
 			now = &n;
 		}
 		timespecsub(now, &ap->acquired, &n);
-		if (ap->prefix_pltime != ND6_INFINITE_LIFETIME)
+		if (ap->prefix_pltime != ND6_INFINITE_LIFETIME) {
 			ap->prefix_pltime -= (uint32_t)n.tv_sec;
+			/* This can happen when confirming a
+			 * deprecated but still valid lease. */
+			if (ap->prefix_pltime > pltime)
+				ap->prefix_pltime = 0;
+		}
 		if (ap->prefix_vltime != ND6_INFINITE_LIFETIME)
 			ap->prefix_vltime -= (uint32_t)n.tv_sec;
-	}
 
-	if (if_addaddress6(ap) == -1) {
-		logger(ap->iface->ctx, LOG_ERR, "if_addaddress6: %m");
 #if 0
+		logger(ap->iface->ctx, LOG_DEBUG,
+		    "%s: acquired %lld.%.9ld, now %lld.%.9ld, diff %lld.%.9ld",
+		    ap->iface->name,
+		    (long long)ap->acquired.tv_sec, ap->acquired.tv_nsec,
+		    (long long)now->tv_sec, now->tv_nsec,
+		    (long long)n.tv_sec, n.tv_nsec);
 		logger(ap->iface->ctx, LOG_DEBUG,
 		    "%s: adj pltime %"PRIu32" seconds, "
 		    "vltime %"PRIu32" seconds",
 		    ap->iface->name, ap->prefix_pltime, ap->prefix_vltime);
 #endif
+	}
+
+	if (if_addaddress6(ap) == -1) {
+		logger(ap->iface->ctx, LOG_ERR, "if_addaddress6: %m");
 		/* Restore real pltime and vltime */
 		ap->prefix_pltime = pltime;
 		ap->prefix_vltime = vltime;
@@ -826,7 +825,7 @@ ipv6_addaddrs(struct ipv6_addrhead *addrs)
 			if (ap->flags & IPV6_AF_NEW)
 				i++;
 			if (!timespecisset(&now))
-				get_monotonic(&now);
+				clock_gettime(CLOCK_MONOTONIC, &now);
 			ipv6_addaddr(ap, &now);
 		}
 	}
@@ -872,7 +871,7 @@ ipv6_freedrop_addrs(struct ipv6_addrhead *addrs, int drop,
 			    DHCPCD_EXITING) && apf)
 			{
 				if (!timespecisset(&now))
-					get_monotonic(&now);
+					clock_gettime(CLOCK_MONOTONIC, &now);
 				ipv6_addaddr(apf, &now);
 			}
 			if (drop == 2)
@@ -1463,7 +1462,7 @@ ipv6_tempdadcallback(void *arg)
 			    ia->iface->name);
 			return;
 		}
-		get_monotonic(&tv);
+		clock_gettime(CLOCK_MONOTONIC, &tv);
 		if ((ia1 = ipv6_createtempaddr(ia, &tv)) == NULL)
 			logger(ia->iface->ctx, LOG_ERR,
 			    "ipv6_createtempaddr: %m");
@@ -1568,9 +1567,7 @@ again:
 	cbp = inet_ntop(AF_INET6, &ia->addr, buf, sizeof(buf));
 	if (cbp)
 		snprintf(ia->saddr, sizeof(ia->saddr), "%s/%d",
-		    cbp, ia->prefix_len);
-	else
-		ia->saddr[0] = '\0';
+		    cbp, ia->prefix_len); else ia->saddr[0] = '\0';
 
 	TAILQ_INSERT_TAIL(&state->addrs, ia, next);
 	return ia;
@@ -1689,7 +1686,7 @@ ipv6_regentempaddr(void *arg)
 
 	logger(ia->iface->ctx, LOG_DEBUG, "%s: regen temp addr %s",
 	    ia->iface->name, ia->saddr);
-	get_monotonic(&tv);
+	clock_gettime(CLOCK_MONOTONIC, &tv);
 	ia1 = ipv6_createtempaddr(ia, &tv);
 	if (ia1)
 		ipv6_addaddr(ia1, &tv);

@@ -34,13 +34,6 @@
 #include "dhcpcd.h"
 #include "ipv6.h"
 
-struct ra_opt {
-	TAILQ_ENTRY(ra_opt) next;
-	uint16_t type;
-	struct timespec expire;
-	char *option;
-};
-
 struct ra {
 	TAILQ_ENTRY(ra) next;
 	struct interface *iface;
@@ -48,14 +41,14 @@ struct ra {
 	char sfrom[INET6_ADDRSTRLEN];
 	unsigned char *data;
 	size_t data_len;
-	struct timespec received;
+	struct timespec acquired;
 	unsigned char flags;
 	uint32_t lifetime;
 	uint32_t reachable;
 	uint32_t retrans;
 	uint32_t mtu;
 	struct ipv6_addrhead addrs;
-	TAILQ_HEAD(, ra_opt) options;
+	uint8_t hasdns;
 	uint8_t expired;
 	uint8_t no_public_warned;
 };
@@ -70,6 +63,17 @@ struct rs_state {
 
 #define RS_STATE(a) ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
 #define RS_STATE_RUNNING(a) (ipv6nd_hasra((a)) && ipv6nd_dadcompleted((a)))
+
+#define ND_CFIRST_OPTION(m)						       \
+    ((const struct nd_opt_hdr *)					       \
+        ((const uint8_t *)(m)->data + sizeof(struct nd_router_advert)))
+#define ND_OPTION_LEN(o) ((size_t)((o)->nd_opt_len * 8) -		       \
+    sizeof(struct nd_opt_hdr))
+#define ND_CNEXT_OPTION(o)						       \
+    ((const struct nd_opt_hdr *)((const uint8_t *)(o) +			       \
+    (size_t)((o)->nd_opt_len * 8)))
+#define ND_COPTION_DATA(o)						       \
+    ((const uint8_t *)(o) + sizeof(struct nd_opt_hdr))
 
 #define MAX_RTR_SOLICITATION_DELAY	1	/* seconds */
 #define MAX_UNICAST_SOLICIT		3	/* 3 transmissions */
@@ -91,6 +95,8 @@ struct rs_state {
 #define IPV6ND_ROUTER			(1 << 1)
 
 #ifdef INET6
+void ipv6nd_printoptions(const struct dhcpcd_ctx *,
+    const struct dhcp_opt *, size_t);
 void ipv6nd_startrs(struct interface *);
 ssize_t ipv6nd_env(char **, const char *, const struct interface *);
 struct ipv6_addr *ipv6nd_findaddr(struct dhcpcd_ctx *,
@@ -111,7 +117,6 @@ void ipv6nd_drop(struct interface *);
 void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, int);
 #else
 #define ipv6nd_startrs(a) {}
-#define ipv6nd_findaddr(a, b, c) (0)
 #define ipv6nd_free(a) {}
 #define ipv6nd_hasra(a) (0)
 #define ipv6nd_dadcompleted(a) (0)

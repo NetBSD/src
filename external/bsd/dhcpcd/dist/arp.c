@@ -294,17 +294,19 @@ arp_probe(struct arp_state *astate)
 	arp_probe1(astate);
 }
 
-static struct arp_state *
+struct arp_state *
 arp_find(struct interface *ifp, const struct in_addr *addr)
 {
 	struct arp_state *astate;
 	struct dhcp_state *state;
 
-	state = D_STATE(ifp);
+	if ((state = D_STATE(ifp)) == NULL)
+		goto out;
 	TAILQ_FOREACH(astate, &state->arp_states, next) {
 		if (astate->addr.s_addr == addr->s_addr && astate->iface == ifp)
 			return astate;
 	}
+out:
 	errno = ESRCH;
 	return NULL;
 }
@@ -377,7 +379,7 @@ arp_close(struct interface *ifp)
 		return;
 
 	if (state->arp_fd != -1) {
-		eloop_event_delete(ifp->ctx->eloop, state->arp_fd, 0);
+		eloop_event_delete(ifp->ctx->eloop, state->arp_fd);
 		close(state->arp_fd);
 		state->arp_fd = -1;
 	}

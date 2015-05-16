@@ -100,6 +100,7 @@
 #define O_REJECT		O_BASE + 40
 #define O_IPV6RA_ACCEPT_NOPUBLIC	O_BASE + 41
 #define O_BOOTP			O_BASE + 42
+#define O_DEFINEND		O_BASE + 43
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -175,6 +176,7 @@ const struct option cf_options[] = {
 	{"dev",             required_argument, NULL, O_DEV},
 	{"nodev",           no_argument,       NULL, O_NODEV},
 	{"define",          required_argument, NULL, O_DEFINE},
+	{"definend",        required_argument, NULL, O_DEFINEND},
 	{"define6",         required_argument, NULL, O_DEFINE6},
 	{"embed",           required_argument, NULL, O_EMBED},
 	{"encap",           required_argument, NULL, O_ENCAP},
@@ -519,11 +521,22 @@ set_option_space(struct dhcpcd_ctx *ctx,
 {
 
 #if !defined(INET) && !defined(INET6)
-	/* Satisfy use */
-	ctx = NULL;
+	UNUSED(ctx);
 #endif
 
 #ifdef INET6
+	if (strncmp(arg, "nd_", strlen("nd_")) == 0) {
+		*d = ctx->nd_opts;
+		*dl = ctx->nd_opts_len;
+		*od = ifo->nd_override;
+		*odl = ifo->nd_override_len;
+		*request = ifo->requestmasknd;
+		*require = ifo->requiremasknd;
+		*no = ifo->nomasknd;
+		*reject = ifo->rejectmasknd;
+		return arg + strlen("nd_");
+	}
+
 	if (strncmp(arg, "dhcp6_", strlen("dhcp6_")) == 0) {
 		*d = ctx->dhcp6_opts;
 		*dl = ctx->dhcp6_opts_len;
@@ -633,7 +646,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	int e, i, t;
 	long l;
 	unsigned long u;
-	char *p = NULL, *fp, *np, **nconf;
+	char *p = NULL, *bp, *fp, *np, **nconf;
 	ssize_t s;
 	struct in_addr addr, addr2;
 	in_addr_t *naddr;
@@ -1466,6 +1479,12 @@ err_sla:
 		dop = &ifo->dhcp_override;
 		dop_len = &ifo->dhcp_override_len;
 		/* FALLTHROUGH */
+	case O_DEFINEND:
+		if (dop == NULL) {
+			dop = &ifo->nd_override;
+			dop_len = &ifo->nd_override_len;
+		}
+		/* FALLTHROUGH */
 	case O_DEFINE6:
 		if (dop == NULL) {
 			dop = &ifo->dhcp6_override;
@@ -1535,13 +1554,18 @@ err_sla:
 		/* length */
 		if (np) {
 			*np++ = '\0';
+			bp = NULL; /* No bitflag */
 			l = (long)strtou(np, NULL, 0, 0, LONG_MAX, &e);
 			if (e) {
-				logger(ctx, LOG_ERR, "failed to convert length");
+				logger(ctx,LOG_ERR, "failed to convert length");
 				return -1;
 			}
-		} else
+		} else {
 			l = 0;
+			bp = strchr(arg, '='); /* bitflag assignment */
+			if (bp)
+				*bp++ = '\0';
+		}
 		t = 0;
 		if (strcasecmp(arg, "request") == 0) {
 			t |= REQUEST;
@@ -1590,6 +1614,8 @@ err_sla:
 			t |= STRING;
 		else if (strcasecmp(arg, "byte") == 0)
 			t |= UINT8;
+		else if (strcasecmp(arg, "bitflags") == 0)
+			t |= BITFLAG;
 		else if (strcasecmp(arg, "uint16") == 0)
 			t |= UINT16;
 		else if (strcasecmp(arg, "int16") == 0)
@@ -1637,6 +1663,11 @@ err_sla:
 			logger(ctx, LOG_WARNING, "ignoring array for strings");
 			t &= ~ARRAY;
 		}
+		if (t & BITFLAG) {
+			if (bp == NULL)
+				logger(ctx, LOG_WARNING,
+				    "missing bitflag assignment");
+		}
 		/* variable */
 		if (!fp) {
 			if (!(t & OPTION)) {
@@ -1650,10 +1681,16 @@ err_sla:
 			fp = strwhite(arg);
 			if (fp)
 				*fp++ = '\0';
-			np = strdup(arg);
-			if (np == NULL) {
-				logger(ctx, LOG_ERR, "%s: %m", __func__);
-				return -1;
+			if (strcasecmp(arg, "reserved")) {
+				np = strdup(arg);
+				if (np == NULL) {
+					logger(ctx, LOG_ERR,
+					    "%s: %m", __func__);
+					return -1;
+				}
+			} else {
+				np = NULL;
+				t |= RESERVED;
 			}
 		}
 		if (opt != O_EMBED) {
@@ -1688,11 +1725,25 @@ err_sla:
 		ndop->type = t;
 		ndop->len = (size_t)l;
 		ndop->var = np;
+		if (bp) {
+			dl = strlen(bp);
+			memcpy(ndop->bitflags, bp, dl);
+			memset(ndop->bitflags + dl, 0,
+			    sizeof(ndop->bitflags) - dl);
+		} else
+			memset(ndop->bitflags, 0, sizeof(ndop->bitflags));
 		/* Save the define for embed and encap options */
-		if (opt == O_DEFINE || opt == O_DEFINE6 || opt == O_VENDOPT)
+		switch (opt) {
+		case O_DEFINE:
+		case O_DEFINEND:
+		case O_DEFINE6:
+		case O_VENDOPT:
 			*ldop = ndop;
-		else if (opt == O_ENCAP)
+			break;
+		case O_ENCAP:
 			*edop = ndop;
+			break;
+		}
 		break;
 	case O_VENDCLASS:
 		fp = strwhite(arg);
@@ -2100,6 +2151,14 @@ read_config(struct dhcpcd_ctx *ctx,
 			ifo->dhcp_override_len = INITDEFINES;
 #endif
 
+#if defined(INET6) && defined(INITDEFINENDS)
+		ifo->nd_override =
+		    calloc(INITDEFINENDS, sizeof(*ifo->nd_override));
+		if (ifo->nd_override == NULL)
+			logger(ctx, LOG_ERR, "%s: %m", __func__);
+		else
+			ifo->nd_override_len = INITDEFINENDS;
+#endif
 #if defined(INET6) && defined(INITDEFINE6S)
 		ifo->dhcp6_override =
 		    calloc(INITDEFINE6S, sizeof(*ifo->dhcp6_override));
@@ -2172,15 +2231,24 @@ read_config(struct dhcpcd_ctx *ctx,
 		ifo->dhcp_override_len = 0;
 
 #ifdef INET6
+		ctx->nd_opts = ifo->nd_override;
+		ctx->nd_opts_len = ifo->nd_override_len;
 		ctx->dhcp6_opts = ifo->dhcp6_override;
 		ctx->dhcp6_opts_len = ifo->dhcp6_override_len;
 #else
+		for (i = 0, opt = ifo->nd_override;
+		    i < ifo->nd_override_len;
+		    i++, opt++)
+			free_dhcp_opt_embenc(opt);
+		free(ifo->nd_override);
 		for (i = 0, opt = ifo->dhcp6_override;
 		    i < ifo->dhcp6_override_len;
 		    i++, opt++)
 			free_dhcp_opt_embenc(opt);
 		free(ifo->dhcp6_override);
 #endif
+		ifo->nd_override = NULL;
+		ifo->nd_override_len = 0;
 		ifo->dhcp6_override = NULL;
 		ifo->dhcp6_override_len = 0;
 
@@ -2334,6 +2402,11 @@ free_options(struct if_options *ifo)
 		    opt++, ifo->dhcp_override_len--)
 			free_dhcp_opt_embenc(opt);
 		free(ifo->dhcp_override);
+		for (opt = ifo->nd_override;
+		    ifo->nd_override_len > 0;
+		    opt++, ifo->nd_override_len--)
+			free_dhcp_opt_embenc(opt);
+		free(ifo->nd_override);
 		for (opt = ifo->dhcp6_override;
 		    ifo->dhcp6_override_len > 0;
 		    opt++, ifo->dhcp6_override_len--)
