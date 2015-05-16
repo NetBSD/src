@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.298 2015/05/15 04:16:23 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.299 2015/05/16 04:40:31 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23195,4 +23195,30 @@ sys/external/bsd/dwc2/dwc2.c			1.32
 
 	Fix various clang warnings.
 	[joerg, ticket #772]
+
+usr.sbin/postinstall/postinstall		1.184, 1.187
+
+	Handle removing obsolete modules from /stand for directories
+	other than the main ones for an architechure.
+	[jnemeth, ticket #773]
+
+sys/arch/sgimips/dev/scn.c			1.8
+sys/arch/sgimips/mace/macekbc.c			1.8
+sys/dev/hpc/hpcfb.c				1.59
+sys/dev/i2c/i2c.c				1.47
+sys/dev/ic/mfi.c				1.57
+sys/dev/if_ndis/if_ndis_pci.c			1.21
+sys/dev/sysmon/sysmon_power.c			1.50-1.52
+sys/dev/usb/umass_isdata.c			1.31
+
+	Fix 8 memory leaks and 1 double free.
+	[maxv, ticket #761]
+
+etc/rc.d/modules				1.2
+
+	Parse /etc/modules.conf like ifconfig.if(5).  First word is
+	always the module name, followed by options.
+	Load modules right after root filesystem is checked and before
+	it becomes writable.
+	[mlelstv, ticket #779]
 
