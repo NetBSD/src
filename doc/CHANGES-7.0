@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.299 2015/05/16 04:40:31 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.300 2015/05/16 14:18:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23221,4 +23221,9 @@ etc/rc.d/modules				1.2
 	Load modules right after root filesystem is checked and before
 	it becomes writable.
 	[mlelstv, ticket #779]
+
+src/sys/compat/netbsd32/netbsd32_lwp.c		1.15-1.18
+
+	Fix _lwp_ctl for big endian 64-bit platforms.
+	[matt, #776]
 
