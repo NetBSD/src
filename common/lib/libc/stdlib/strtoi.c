@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoi.c,v 1.1.2.2 2015/04/22 07:18:57 snj Exp $	*/
+/*	$NetBSD: strtoi.c,v 1.1.2.3 2015/05/16 17:58:46 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -35,7 +35,11 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoi.c,v 1.1.2.2 2015/04/22 07:18:57 snj Exp $");
+__RCSID("$NetBSD: strtoi.c,v 1.1.2.3 2015/05/16 17:58:46 snj Exp $");
+
+#ifdef _LIBC
+#include "namespace.h"
+#endif
 
 #if defined(_KERNEL)
 #include <sys/param.h>
@@ -57,6 +61,9 @@ __RCSID("$NetBSD: strtoi.c,v 1.1.2.2 2015/04/22 07:18:57 snj Exp $");
 #define	__TYPE		intmax_t
 #define	__WRAPPED	strtoimax
 
-#if !HAVE_STRTOI
 #include "_strtoi.h"
+
+#ifdef _LIBC
+__weak_alias(strtoi, _strtoi)
+__weak_alias(strtoi_l, _strtoi_l)
 #endif

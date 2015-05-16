@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.584.2.1 2015/03/16 18:59:54 snj Exp $
+# $NetBSD: mi,v 1.584.2.2 2015/05/16 17:58:46 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2599,6 +2599,7 @@
 ./usr/tests/lib/libc/stdlib/t_posix_memalign	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_random		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtod		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_strtoi		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtol		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtox		tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdlib/t_system		tests-lib-tests		atf
