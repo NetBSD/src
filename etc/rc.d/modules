@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: modules,v 1.1.2.2 2015/03/26 10:54:35 martin Exp $
+# $NetBSD: modules,v 1.1.2.3 2015/05/16 04:37:04 snj Exp $
 #
 
 # PROVIDE: modules
-# BEFORE:  securelevel
+# REQUIRE: fsck_root
+# BEFORE: root
 
 $_rc_subr_loaded . /etc/rc.subr
 
@@ -17,12 +18,19 @@ modules_start()
 {
 	if [ -f /etc/modules.conf ]; then
 		echo "Loading modules."
-		cat /etc/modules.conf |
-		while read -r args; do
-			args=${args%%#*}		# strip comments
-			test -z "$args" && continue
-			/sbin/modload $args
-		done
+		while read name args; do
+			case $name in
+			''|"#"*)
+				;;
+			*)
+				(
+					set -o noglob
+					eval set -- $args
+					modload "$@" "$name"
+				)
+				;;
+			esac
+		done < /etc/modules.conf
 	fi
 }
 
