@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.33 2015/05/15 08:44:15 knakahara Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.34 2015/05/16 07:58:19 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.39 2015/03/23 00:35:19 jsg Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.33 2015/05/15 08:44:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.34 2015/05/16 07:58:19 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -500,6 +500,7 @@ iwm_firmload(struct iwm_softc *sc)
 static void
 iwm_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 {
+	struct iwm_softc *sc = ic->ic_ifp->if_softc;
 	struct ieee80211_frame *wh;
 	uint8_t subtype;
 	uint8_t *frm, *efrm;
@@ -514,6 +515,13 @@ iwm_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 	if (subtype != IEEE80211_FC0_SUBTYPE_BEACON &&
 	    subtype != IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 		return;
+
+	if (sc->sc_scanband == IEEE80211_CHAN_5GHZ) {
+		int chan = le32toh(sc->sc_last_phy_info.channel);
+		if (chan < __arraycount(ic->ic_channels))
+			ic->ic_curchan = &ic->ic_channels[chan];
+		return;
+	}
 
 	frm = (uint8_t *)(wh + 1);
 	efrm = mtod(m, uint8_t *) + m->m_len;
