@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.1 2015/05/13 10:04:44 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.2 2015/05/16 14:29:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -287,9 +287,9 @@ test_ping6_failure()
 {
 	export LD_PRELOAD=/usr/lib/librumphijack.so
 	export RUMP_SERVER=$SOCKSRC
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 $IP6DST
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6DST
 	export RUMP_SERVER=$SOCKDST
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 $IP6SRC
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6SRC
 	unset LD_PRELOAD
 }
 
@@ -298,16 +298,16 @@ test_ping6_success()
 	export RUMP_SERVER=$SOCKSRC
 	$DEBUG && rump.ifconfig -v shmif0
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 $IP6SRCGW
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 $IP6DST
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6SRCGW
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6DST
 	unset LD_PRELOAD
 	$DEBUG && rump.ifconfig -v shmif0
 
 	export RUMP_SERVER=$SOCKDST
 	$DEBUG && rump.ifconfig -v shmif0
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 $IP6DSTGW
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 $IP6SRC
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6DSTGW
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6SRC
 	unset LD_PRELOAD
 	$DEBUG && rump.ifconfig -v shmif0
 }
@@ -317,10 +317,9 @@ test_hoplimit()
 	export RUMP_SERVER=$SOCKSRC
 	$DEBUG && rump.ifconfig -v shmif0
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -h 1 $IP6SRCGW
-	# TODO: enable once ping6 implements timeout feature
-	#atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -h 1 $IP6DST
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -h 2 $IP6DST
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -h 1 -X 1 $IP6SRCGW
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -h 1 -X 1 $IP6DST
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -h 2 -X 1 $IP6DST
 	unset LD_PRELOAD
 	$DEBUG && rump.ifconfig -v shmif0
 }
@@ -352,8 +351,7 @@ basic6_body()
 
 	teardown_forwarding6
 	test_teardown_forwarding6
-	# TODO: enable once ping6 implements timeout feature
-	#test_ping6_failure
+	test_ping6_failure
 }
 
 basic_cleanup()
