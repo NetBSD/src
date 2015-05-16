@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 17, 2015
+.Dd May 9, 2015
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -417,7 +417,7 @@ If
 fails to contact a DHCP server then it returns a failure instead of falling
 back on IPv4LL.
 .It Fl S, Fl Fl static Ar value
-Configures a static
+Configures a static DHCP
 .Ar value .
 If you set
 .Ic ip_address
@@ -431,6 +431,11 @@ Here is an example which configures a static address, routes and dns.
 .D1 -S routers=192.168.0.1 \e
 .D1 -S domain_name_servers=192.168.0.1 \e
 .D1 eth0
+.Pp
+You cannot presently set static DHCPv6 values.
+Use the
+.Fl e , Fl Fl env
+option instead.
 .It Fl t , Fl Fl timeout Ar seconds
 Timeout after
 .Ar seconds ,
