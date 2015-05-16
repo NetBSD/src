@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp-common.h,v 1.8 2015/03/26 10:26:37 roy Exp $ */
+/* $NetBSD: dhcp-common.h,v 1.9 2015/05/16 23:31:32 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -68,6 +68,8 @@
 #define RAW		(1 << 23)
 #define ESCSTRING	(1 << 24)
 #define ESCFILE		(1 << 25)
+#define BITFLAG		(1 << 26)
+#define RESERVED	(1 << 27)
 
 struct dhcp_opt {
 	uint32_t option; /* Also used for IANA Enterpise Number */
@@ -76,6 +78,7 @@ struct dhcp_opt {
 	char *var;
 
 	int index; /* Index counter for many instances of the same option */
+	char bitflags[8];
 
 	/* Embedded options.
 	 * The option code is irrelevant here. */
@@ -105,8 +108,6 @@ int make_option_mask(const struct dhcp_opt *, size_t,
 size_t encode_rfc1035(const char *src, uint8_t *dst);
 ssize_t decode_rfc3397(char *, size_t, const uint8_t *, size_t);
 ssize_t print_string(char *, size_t, int, const uint8_t *, size_t);
-ssize_t print_option(char *, size_t, int, const uint8_t *, size_t,
-    const char *);
 int dhcp_set_leasefile(char *, size_t, int,
     const struct interface *, const char *);
 

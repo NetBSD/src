@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.10 2015/03/26 10:26:37 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.11 2015/05/16 23:31:32 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -34,6 +34,10 @@
 #include <net/if.h>
 
 #include "config.h"
+#ifdef HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
+
 #include "defs.h"
 #include "control.h"
 #include "if-options.h"
@@ -107,7 +111,7 @@ struct dhcpcd_ctx {
 #ifdef USE_SIGNALS
 	sigset_t sigset;
 #endif
-	struct eloop_ctx *eloop;
+	struct eloop *eloop;
 
 	int control_fd;
 	int control_unpriv_fd;
@@ -137,6 +141,8 @@ struct dhcpcd_ctx {
 	unsigned char secret[SECRET_LEN];
 	size_t secret_len;
 
+	struct dhcp_opt *nd_opts;
+	size_t nd_opts_len;
 	struct dhcp_opt *dhcp6_opts;
 	size_t dhcp6_opts_len;
 	struct ipv6_ctx *ipv6;
@@ -154,16 +160,11 @@ struct dhcpcd_ctx {
 };
 
 #ifdef USE_SIGNALS
-struct dhcpcd_siginfo {
-	int signo;
-};
-
-extern const int dhcpcd_handlesigs[];
-void dhcpcd_handle_signal(void *);
+extern const int dhcpcd_signals[];
+extern const size_t dhcpcd_signals_len;
 #endif
 
 int dhcpcd_oneup(struct dhcpcd_ctx *);
-int dhcpcd_ipwaited(struct dhcpcd_ctx *);
 pid_t dhcpcd_daemonise(struct dhcpcd_ctx *);
 
 int dhcpcd_handleargs(struct dhcpcd_ctx *, struct fd_list *, int, char **);
