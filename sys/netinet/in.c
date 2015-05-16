@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.155 2015/05/05 08:52:51 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.156 2015/05/16 12:12:46 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.155 2015/05/05 08:52:51 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.156 2015/05/16 12:12:46 roy Exp $");
 
 #include "arp.h"
 #include "opt_inet.h"
@@ -664,10 +664,9 @@ in_purgeaddr(struct ifaddr *ifa)
 	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in_ifaddr *ia = (void *) ifa;
 
-#if NARP
 	/* stop DAD processing */
-	arp_dad_stop(ifa);
-#endif
+	if (ia->ia_dad_stop != NULL)
+		ia->ia_dad_stop(ifa);
 
 	in_ifscrub(ifp, ia);
 	in_ifremlocal(ifa);
@@ -905,14 +904,13 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	ia->ia_addr = *sin;
 	LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr), ia, ia_hash);
 
-	/* Set IN_IFF flags early for arp_ifinit() */
+	/* Set IN_IFF flags early for if_addr_init() */
 	if (hostIsNew && if_do_dad(ifp) && !in_nullhost(ia->ia_addr.sin_addr)) {
 		if (ifp->if_link_state == LINK_STATE_DOWN)
 			ia->ia4_flags |= IN_IFF_DETACHED;
-#if NARP
 		else
-			ia->ia4_flags |= IN_IFF_TENTATIVE;
-#endif
+			/* State the intent to try DAD if possible */
+			ia->ia4_flags |= IN_IFF_TRYTENTATIVE;
 	}
 
 	/*
@@ -922,7 +920,10 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 */
 	if ((error = if_addr_init(ifp, &ia->ia_ifa, true)) != 0)
 		goto bad;
+	/* Now clear the try tentative flag, it's job is done. */
+	ia->ia4_flags &= ~IN_IFF_TRYTENTATIVE;
 	splx(s);
+
 	if (scrub) {
 		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);
 		in_ifscrub(ifp, ia);
@@ -984,12 +985,10 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
 
-#if NARP
 	if (hostIsNew && if_do_dad(ifp) &&
 	    !in_nullhost(ia->ia_addr.sin_addr) &&
 	    ia->ia4_flags & IN_IFF_TENTATIVE)
-		arp_dad_start((struct ifaddr *)ia);
-#endif
+		ia->ia_dad_start((struct ifaddr *)ia);
 
 	return (error);
 bad:
@@ -1179,22 +1178,17 @@ in_if_link_up(struct ifnet *ifp)
 		/* If detached then mark as tentative */
 		if (ia->ia4_flags & IN_IFF_DETACHED) {
 			ia->ia4_flags &= ~IN_IFF_DETACHED;
-#if NARP
-			if (if_do_dad(ifp))
+			if (if_do_dad(ifp) && ia->ia_dad_start != NULL)
 				ia->ia4_flags |= IN_IFF_TENTATIVE;
-			else
-#endif
-			if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0)
+			else if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0)
 				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		}
 
-#if NARP
 		if (ia->ia4_flags & IN_IFF_TENTATIVE) {
 			/* Clear the duplicated flag as we're starting DAD. */
 			ia->ia4_flags &= ~IN_IFF_DUPLICATED;
-			arp_dad_start(ifa);
+			ia->ia_dad_start(ifa);
 		}
-#endif
 	}
 }
 
@@ -1220,10 +1214,9 @@ in_if_link_down(struct ifnet *ifp)
 			continue;
 		ia = (struct in_ifaddr *)ifa;
 
-#if NARP
 		/* Stop DAD processing */
-		arp_dad_stop(ifa);
-#endif
+		if (ia->ia_dad_stop != NULL)
+			ia->ia_dad_stop(ifa);
 
 		/*
 		 * Mark the address as detached.
