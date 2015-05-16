@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.71 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: in_var.h,v 1.72 2015/05/16 12:12:46 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,9 +69,11 @@
 #define IN_IFF_TENTATIVE	0x01	/* tentative address */
 #define IN_IFF_DUPLICATED	0x02	/* DAD detected duplicate */
 #define IN_IFF_DETACHED		0x04	/* may be detached from the link */
+#define IN_IFF_TRYTENTATIVE	0x08	/* intent to try DAD */
 
 /* do not input/output */
-#define IN_IFF_NOTREADY (IN_IFF_TENTATIVE | IN_IFF_DUPLICATED)
+#define IN_IFF_NOTREADY \
+    (IN_IFF_TRYTENTATIVE | IN_IFF_TENTATIVE | IN_IFF_DUPLICATED)
 
 /*
  * Interface address, Internet version.  One of these structures
@@ -100,6 +102,8 @@ struct in_ifaddr {
 					   the allhosts multicast group */
 	uint16_t ia_idsalt;		/* ip_id salt for this ia */
 	int	ia4_flags;		/* address flags */
+	void	(*ia_dad_start) (struct ifaddr *);	/* DAD start function */
+	void	(*ia_dad_stop) (struct ifaddr *);	/* DAD stop function */
 };
 
 struct	in_aliasreq {
