@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.129 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.130 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -11434,7 +11434,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	amiga: Add minimal support for Thylacine USB card using slhci(4).
 		Works at least with some keyboards and mice. [rkujawa 20130428]
 	epoc32: Add new port NetBSD/epoc32. [kiyohara 20130428]
-	arm: Make all arm ports with a command MACHINE_ARCH generate the same
+	arm: Make all arm ports with a common MACHINE_ARCH generate the same
 		userspace.  All sets are the same except for etc.tgz.
 		[matt 20130501]
 	disklabel(8): This is now a MI tool like installboot.  [matt 20130503]
