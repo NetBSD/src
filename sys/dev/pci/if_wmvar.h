@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.23 2014/11/27 11:42:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.24 2015/05/16 22:41:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -96,6 +96,7 @@
 #define WM_F_WOL		0x00200000
 #define WM_F_EEE		0x00400000 /* Energy Efficiency Ethernet */
 #define WM_F_ATTACHED		0x00800000 /* attach() finished successfully */
+#define	WM_F_EEPROM_INVM	0x01000000 /* NVM is iNVM */
 
 
 /*
