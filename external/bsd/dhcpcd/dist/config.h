@@ -1,4 +1,4 @@
-/* $NetBSD: config.h,v 1.8 2015/03/26 10:26:37 roy Exp $ */
+/* $NetBSD: config.h,v 1.9 2015/05/16 23:31:32 roy Exp $ */
 
 /* netbsd */
 #define SYSCONFDIR	"/etc"
@@ -7,7 +7,7 @@
 #define LIBEXECDIR	"/libexec"
 #define DBDIR		"/var/db"
 #define RUNDIR		"/var/run"
-#include		<sys/queue.h>
+#define HAVE_SYS_QUEUE_H
 #define HAVE_SPAWN_H
 #define HAVE_KQUEUE
 #define HAVE_KQUEUE1

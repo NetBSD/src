@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.12 2015/05/02 15:18:37 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.13 2015/05/16 23:31:32 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -32,6 +32,19 @@
 
 #include <sys/uio.h>
 #include <netinet/in.h>
+
+#ifndef __linux__
+#  ifndef __QNX__
+#    include <sys/endian.h>
+#  endif
+#  include <net/if.h>
+#  ifdef __FreeBSD__ /* Needed so that including netinet6/in6_var.h works */
+#    include <net/if_var.h>
+#  endif
+#  ifndef __sun
+#    include <netinet6/in6_var.h>
+#  endif
+#endif
 
 #include "config.h"
 #include "dhcpcd.h"
@@ -268,6 +281,7 @@ void ipv6_buildroutes(struct dhcpcd_ctx *);
 #else
 #define ipv6_init(a) (NULL)
 #define ipv6_start(a) (-1)
+#define ipv6_iffindaddr(a, b) (NULL)
 #define ipv6_free_ll_callbacks(a) {}
 #define ipv6_free(a) {}
 #define ipv6_drop(a) {}
