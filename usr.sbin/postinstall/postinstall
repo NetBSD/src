@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.175.2.4 2015/04/18 09:39:17 martin Exp $
+# $NetBSD: postinstall,v 1.175.2.5 2015/05/16 03:45:21 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -641,7 +641,7 @@ obsolete_stand()
 	local dir="$1"
 	local subdir
 
-	if ! [ -d "${DEST_DIR}/${dir}" ]; then
+	if ! [ -d "${DEST_DIR}${dir}" ]; then
 		msg "${DEST_DIR}${dir} doesn't exist; can't check for obsolete files"
 		return 1
 	fi
@@ -652,7 +652,7 @@ obsolete_stand()
 	| tail -n +2 \
 	| while read subdir ; do
 		subdir="${subdir%/.}"
-		find "${DEST_DIR}/${dir#/}/${subdir}" -depth -print
+		find "${DEST_DIR}${dir}/${subdir}" -depth -print
 	done \
 	| unprefix "${DEST_DIR}"
 }
@@ -2008,7 +2008,15 @@ do_obsolete_stand()
 	op="$1"
 	failed=0
 
-	obsolete_stand "/stand/${MACHINE}" | obsolete_paths "${op}"
+	for dir in \
+	    /stand/${MACHINE} \
+	    /stand/${MACHINE}-4xx \
+	    /stand/${MACHINE}-booke \
+	    /stand/${MACHINE}-xen \
+	    /stand/${MACHINE}pae-xen
+	do
+		[ -d "${DESTDIR}${dir}" ] && obsolete_stand "${dir}"
+	done | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
