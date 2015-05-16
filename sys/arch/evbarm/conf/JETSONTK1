@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.19 2015/05/15 12:18:48 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.20 2015/05/16 11:49:01 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -84,8 +84,9 @@ tegrai2c1	at tegraio? port 1	# I2C2
 iic1		at tegrai2c1
 tegrai2c2	at tegraio? port 2	# I2C3
 iic2		at tegrai2c2
-tegrai2c3	at tegraio? port 3	# I2C4 (HDMI DDC)
+tegrai2c3	at tegraio? port 3	# I2C4
 iic3		at tegrai2c3
+ddc0		at iic3 addr 0x50		# HDMI DDC
 tegrai2c4	at tegraio? port 4	# I2C5
 iic4		at tegrai2c4
 
