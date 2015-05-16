@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.444 2014/12/26 19:15:04 dholland Exp $
+.\"	$NetBSD: options.4,v 1.445 2015/05/16 17:13:55 snj Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 25, 2014
+.Dd May 16, 2015
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1914,21 +1914,6 @@ may perform better with
 .Em MCLSHIFT
 set to 12 or 13, giving mbuf cluster sizes of 4096 and 8192 bytes,
 respectively.
-.It Cd options ISO,TPIP
-Include support for the ubiquitous
-.Tn OSI
-protocol stack.
-See
-.Xr iso 4
-for details.
-This option assumes
-.Em INET .
-.It Cd options EON
-Include support for tunneling
-.Tn OSI
-protocols over
-.Tn IP .
-Known to be broken, or at least very fragile, and undocumented.
 .It Cd options NETATALK
 Include support for the
 .Tn AppleTalk
