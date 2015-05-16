@@ -108,8 +108,15 @@ END(armv7_tlb_flushD)
 
 STRONG_ALIAS(armv7_tlb_flushI, armv7_tlb_flushID)
 ENTRY(armv7_tlb_flushID)
+	dsb
 	mov	r0, #0
+#ifdef MULTIPROCESSOR
+	mcr	p15, 0, r0, c8, c3, 0	@ flush entire I+D tlb, IS
+	mcr	p15, 0, r0, c7, c1, 6	@ branch predictor invalidate, IS
+#else
 	mcr	p15, 0, r0, c8, c7, 0	@ flush entire I+D tlb
+	mcr	p15, 0, r0, c7, c5, 6	@ branch predictor invalidate
+#endif
 	dsb				@ data synchronization barrier
 	isb
 	bx      lr
