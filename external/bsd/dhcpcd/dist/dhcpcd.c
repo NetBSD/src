@@ -66,19 +66,16 @@ const char dhcpcd_copyright[] = "Copyright (c) 2006-2015 Roy Marples";
 #include "script.h"
 
 #ifdef USE_SIGNALS
-const int dhcpcd_handlesigs[] = {
+const int dhcpcd_signals[] = {
 	SIGTERM,
 	SIGINT,
 	SIGALRM,
 	SIGHUP,
 	SIGUSR1,
 	SIGUSR2,
-	SIGPIPE,
-	0
+	SIGPIPE
 };
-
-/* Handling signals needs *some* context */
-static struct dhcpcd_ctx *dhcpcd_ctx;
+const size_t dhcpcd_signals_len = __arraycount(dhcpcd_signals);
 #endif
 
 #if defined(USE_SIGNALS) || !defined(THERE_IS_NO_FORK)
@@ -167,6 +164,14 @@ free_globals(struct dhcpcd_ctx *ctx)
 	}
 #endif
 #ifdef INET6
+	if (ctx->nd_opts) {
+		for (opt = ctx->nd_opts;
+		    ctx->nd_opts_len > 0;
+		    opt++, ctx->nd_opts_len--)
+			free_dhcp_opt_embenc(opt);
+		free(ctx->nd_opts);
+		ctx->nd_opts = NULL;
+	}
 	if (ctx->dhcp6_opts) {
 		for (opt = ctx->dhcp6_opts;
 		    ctx->dhcp6_opts_len > 0;
@@ -215,24 +220,48 @@ dhcpcd_oneup(struct dhcpcd_ctx *ctx)
 	return 0;
 }
 
-int
-dhcpcd_ipwaited(struct dhcpcd_ctx *ctx)
+static int
+dhcpcd_ifipwaited(struct interface *ifp, unsigned long long opts)
 {
 
-	if (ctx->options & DHCPCD_WAITIP4 &&
-	    !ipv4_addrexists(ctx, NULL))
+	if (opts & DHCPCD_WAITIP4 && !ipv4_ifaddrexists(ifp))
 		return 0;
-	if (ctx->options & DHCPCD_WAITIP6 &&
-	    !ipv6nd_findaddr(ctx, NULL, 0) &&
-	    !dhcp6_findaddr(ctx, NULL, 0))
+	if (opts & DHCPCD_WAITIP6 && !ipv6_iffindaddr(ifp, NULL))
 		return 0;
-	if (ctx->options & DHCPCD_WAITIP &&
-	    !(ctx->options & (DHCPCD_WAITIP4 | DHCPCD_WAITIP6)) &&
-	    !ipv4_addrexists(ctx, NULL) &&
-	    !ipv6nd_findaddr(ctx, NULL, 0) &&
-	    !dhcp6_findaddr(ctx, NULL, 0))
+	if (opts & DHCPCD_WAITIP &&
+	    !(opts & (DHCPCD_WAITIP4 | DHCPCD_WAITIP6)) &&
+	    !ipv4_ifaddrexists(ifp) &&
+	    !ipv6_iffindaddr(ifp, NULL))
 		return 0;
 	return 1;
+}
+
+static int
+dhcpcd_ipwaited(struct dhcpcd_ctx *ctx)
+{
+	struct interface *ifp;
+
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+		if (ifp->options->options & DHCPCD_WAITOPTS) {
+			if (!dhcpcd_ifipwaited(ifp, ifp->options->options)) {
+				logger(ctx, LOG_DEBUG,
+				    "%s: waiting for an ip address",
+				    ifp->name);
+				return 0;
+			}
+		}
+	}
+
+	if (!(ctx->options & DHCPCD_WAITOPTS))
+		return 1;
+
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+		if (dhcpcd_ifipwaited(ifp, ctx->options))
+			return 1;
+	}
+
+	logger(ctx, LOG_DEBUG, "waiting for an ip address");
+	return 0;
 }
 
 /* Returns the pid of the child, otherwise 0. */
@@ -587,7 +616,7 @@ dhcpcd_pollup(void *arg)
 		struct timespec tv;
 
 		tv.tv_sec = 0;
-		tv.tv_nsec = IF_POLL_UP * MSEC_PER_NSEC;
+		tv.tv_nsec = IF_POLL_UP * NSEC_PER_MSEC;
 		eloop_timeout_add_tv(ifp->ctx->eloop, &tv, dhcpcd_pollup, ifp);
 		return;
 	}
@@ -640,7 +669,8 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 			script_runreason(ifp, "NOCARRIER");
 #ifdef NOCARRIER_PRESERVE_IP
 			arp_close(ifp);
-			ipv4_buildroutes(ifp->ctx);
+			if_sortinterfaces(ctx);
+			ipv4_preferanother(ifp);
 			ipv6nd_expire(ifp, 0);
 #else
 			dhcpcd_drop(ifp, 0);
@@ -754,7 +784,7 @@ dhcpcd_startinterface(void *arg)
 			 * Loop until both IFF_UP and IFF_RUNNING are set */
 			if ((carrier = if_carrier(ifp)) == LINK_UNKNOWN) {
 				tv.tv_sec = 0;
-				tv.tv_nsec = IF_POLL_UP * MSEC_PER_NSEC;
+				tv.tv_nsec = IF_POLL_UP * NSEC_PER_MSEC;
 				eloop_timeout_add_tv(ifp->ctx->eloop,
 				    &tv, dhcpcd_startinterface, ifp);
 			} else
@@ -874,7 +904,7 @@ handle_link(void *arg)
 	ctx = arg;
 	if (if_managelink(ctx) == -1) {
 		logger(ctx, LOG_ERR, "if_managelink: %m");
-		eloop_event_delete(ctx->eloop, ctx->link_fd, 0);
+		eloop_event_delete(ctx->eloop, ctx->link_fd);
 		close(ctx->link_fd);
 		ctx->link_fd = -1;
 	}
@@ -1116,21 +1146,17 @@ stop_all_interfaces(struct dhcpcd_ctx *ctx, int do_release)
 }
 
 #ifdef USE_SIGNALS
-struct dhcpcd_siginfo dhcpcd_siginfo;
 #define sigmsg "received %s, %s"
-void
-dhcpcd_handle_signal(void *arg)
+static void
+signal_cb(int sig, void *arg)
 {
-	struct dhcpcd_ctx *ctx;
-	struct dhcpcd_siginfo *si;
+	struct dhcpcd_ctx *ctx = arg;
 	struct interface *ifp;
-	int do_release, exit_code;;
+	int do_release, exit_code;
 
-	ctx = dhcpcd_ctx;
-	si = arg;
 	do_release = 0;
 	exit_code = EXIT_FAILURE;
-	switch (si->signo) {
+	switch (sig) {
 	case SIGINT:
 		logger(ctx, LOG_INFO, sigmsg, "SIGINT", "stopping");
 		break;
@@ -1169,54 +1195,13 @@ dhcpcd_handle_signal(void *arg)
 		logger(ctx, LOG_ERR,
 		    "received signal %d, "
 		    "but don't know what to do with it",
-		    si->signo);
+		    sig);
 		return;
 	}
 
 	if (!(ctx->options & DHCPCD_TEST))
 		stop_all_interfaces(ctx, do_release);
 	eloop_exit(ctx->eloop, exit_code);
-}
-
-#ifndef HAVE_KQUEUE
-static void
-handle_signal(int sig, __unused siginfo_t *siginfo, __unused void *context)
-{
-
-	/* So that we can operate safely under a signal we instruct
-	 * eloop to pass a copy of the siginfo structure to handle_signal1
-	 * as the very first thing to do. */
-	dhcpcd_siginfo.signo = sig;
-	eloop_timeout_add_now(dhcpcd_ctx->eloop,
-	    dhcpcd_handle_signal, &dhcpcd_siginfo);
-}
-#endif
-
-static int
-signal_init(sigset_t *oldset)
-{
-	sigset_t newset;
-#ifndef HAVE_KQUEUE
-	int i;
-	struct sigaction sa;
-#endif
-
-	sigfillset(&newset);
-	if (sigprocmask(SIG_SETMASK, &newset, oldset) == -1)
-		return -1;
-
-#ifndef HAVE_KQUEUE
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_sigaction = handle_signal;
-	sa.sa_flags = SA_SIGINFO;
-	sigemptyset(&sa.sa_mask);
-
-	for (i = 0; dhcpcd_handlesigs[i]; i++) {
-		if (sigaction(dhcpcd_handlesigs[i], &sa, NULL) == -1)
-			return -1;
-	}
-#endif
-	return 0;
 }
 #endif
 
@@ -1239,7 +1224,7 @@ dhcpcd_getinterfaces(void *arg)
 	}
 	if (write(fd->fd, &len, sizeof(len)) != sizeof(len))
 		return;
-	eloop_event_delete(fd->ctx->eloop, fd->fd, 1);
+	eloop_event_remove_writecb(fd->ctx->eloop, fd->fd);
 	TAILQ_FOREACH(ifp, fd->ctx->ifaces, next) {
 		if (send_interface(fd, ifp) == -1)
 			logger(ifp->ctx, LOG_ERR,
@@ -1341,7 +1326,7 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 
 	reload_config(ctx);
 	/* XXX: Respect initial commandline options? */
-	reconf_reboot(ctx, do_reboot, argc, argv, optind);
+	reconf_reboot(ctx, do_reboot, argc, argv, optind - 1);
 	return 0;
 }
 
@@ -1359,8 +1344,8 @@ main(int argc, char **argv)
 	pid_t pid;
 #endif
 #ifdef USE_SIGNALS
-	int sig;
-	const char *siga;
+	int sig = 0;
+	const char *siga = NULL;
 #endif
 
 	/* Test for --help and --version */
@@ -1375,11 +1360,6 @@ main(int argc, char **argv)
 	}
 
 	memset(&ctx, 0, sizeof(ctx));
-#ifdef USE_SIGNALS
-	dhcpcd_ctx = &ctx;
-	sig = 0;
-	siga = NULL;
-#endif
 	closefrom(3);
 
 	ctx.log_fd = -1;
@@ -1483,6 +1463,9 @@ main(int argc, char **argv)
 #endif
 #ifdef INET6
 		if (family == 0 || family == AF_INET6) {
+			printf("\nND options:\n");
+			ipv6nd_printoptions(&ctx,
+			    ifo->nd_override, ifo->nd_override_len);
 			printf("\nDHCPv6 options:\n");
 			dhcp6_printoptions(&ctx,
 			    ifo->dhcp6_override, ifo->dhcp6_override_len);
@@ -1555,8 +1538,7 @@ main(int argc, char **argv)
 
 	/* Freeing allocated addresses from dumping leases can trigger
 	 * eloop removals as well, so init here. */
-	ctx.eloop = eloop_init(&ctx);
-	if (ctx.eloop == NULL) {
+	if ((ctx.eloop = eloop_new()) == NULL) {
 		logger(&ctx, LOG_ERR, "%s: eloop_init: %m", __func__);
 		goto exit_failure;
 	}
@@ -1744,9 +1726,16 @@ main(int argc, char **argv)
 	logger(&ctx, LOG_DEBUG, PACKAGE "-" VERSION " starting");
 	ctx.options |= DHCPCD_STARTED;
 #ifdef USE_SIGNALS
+	if (eloop_signal_set_cb(ctx.eloop,
+	    dhcpcd_signals, dhcpcd_signals_len,
+	    signal_cb, &ctx) == -1)
+	{
+		logger(&ctx, LOG_ERR, "eloop_signal_mask: %m");
+		goto exit_failure;
+	}
 	/* Save signal mask, block and redirect signals to our handler */
-	if (signal_init(&ctx.sigset) == -1) {
-		logger(&ctx, LOG_ERR, "signal_setup: %m");
+	if (eloop_signal_mask(ctx.eloop, &ctx.sigset) == -1) {
+		logger(&ctx, LOG_ERR, "eloop_signal_mask: %m");
 		goto exit_failure;
 	}
 #endif
@@ -1843,7 +1832,11 @@ main(int argc, char **argv)
 		    dhcpcd_prestartinterface, ifp);
 	}
 
-	i = eloop_start(ctx.eloop);
+	i = eloop_start(ctx.eloop, &ctx.sigset);
+	if (i < 0) {
+		syslog(LOG_ERR, "eloop_start: %m");
+		goto exit_failure;
+	}
 	goto exit1;
 
 exit_success:
@@ -1864,7 +1857,7 @@ exit1:
 	}
 	free(ctx.duid);
 	if (ctx.link_fd != -1) {
-		eloop_event_delete(ctx.eloop, ctx.link_fd, 0);
+		eloop_event_delete(ctx.eloop, ctx.link_fd);
 		close(ctx.link_fd);
 	}
 

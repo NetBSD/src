@@ -1274,35 +1274,35 @@ dhcp_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 		/* Set some useful variables that we derive from the DHCP
 		 * message but are not necessarily in the options */
 		addr.s_addr = dhcp->yiaddr ? dhcp->yiaddr : dhcp->ciaddr;
-		setvar(ifp->ctx, &ep, prefix, "ip_address", inet_ntoa(addr));
+		addvar(ifp->ctx, &ep, prefix, "ip_address", inet_ntoa(addr));
 		if (get_option_addr(ifp->ctx, &net,
 		    dhcp, DHO_SUBNETMASK) == -1) {
 			net.s_addr = ipv4_getnetmask(addr.s_addr);
-			setvar(ifp->ctx, &ep, prefix,
+			addvar(ifp->ctx, &ep, prefix,
 			    "subnet_mask", inet_ntoa(net));
 		}
 		snprintf(cidr, sizeof(cidr), "%d", inet_ntocidr(net));
-		setvar(ifp->ctx, &ep, prefix, "subnet_cidr", cidr);
+		addvar(ifp->ctx, &ep, prefix, "subnet_cidr", cidr);
 		if (get_option_addr(ifp->ctx, &brd,
 		    dhcp, DHO_BROADCAST) == -1) {
 			brd.s_addr = addr.s_addr | ~net.s_addr;
-			setvar(ifp->ctx, &ep, prefix,
+			addvar(ifp->ctx, &ep, prefix,
 			    "broadcast_address", inet_ntoa(brd));
 		}
 		addr.s_addr = dhcp->yiaddr & net.s_addr;
-		setvar(ifp->ctx, &ep, prefix,
+		addvar(ifp->ctx, &ep, prefix,
 		    "network_number", inet_ntoa(addr));
 	}
 
 	if (*dhcp->bootfile && !(overl & 1)) {
 		print_string(safe, sizeof(safe), STRING,
 		    dhcp->bootfile, sizeof(dhcp->bootfile));
-		setvar(ifp->ctx, &ep, prefix, "filename", safe);
+		addvar(ifp->ctx, &ep, prefix, "filename", safe);
 	}
 	if (*dhcp->servername && !(overl & 2)) {
 		print_string(safe, sizeof(safe), STRING | DOMAIN,
 		    dhcp->servername, sizeof(dhcp->servername));
-		setvar(ifp->ctx, &ep, prefix, "server_name", safe);
+		addvar(ifp->ctx, &ep, prefix, "server_name", safe);
 	}
 
 	/* Zero our indexes */
@@ -1437,7 +1437,7 @@ dhcp_close(struct interface *ifp)
 		return;
 
 	if (state->raw_fd != -1) {
-		eloop_event_delete(ifp->ctx->eloop, state->raw_fd, 0);
+		eloop_event_delete(ifp->ctx->eloop, state->raw_fd);
 		close(state->raw_fd);
 		state->raw_fd = -1;
 	}
@@ -1593,12 +1593,16 @@ send_message(struct interface *ifp, uint8_t type,
 	struct ipv4_addr *ia;
 #endif
 
-	if (!callback)
+	s = -1;
+	if (!callback) {
+		/* No carrier? Don't bother sending the packet. */
+		if (ifp->carrier == LINK_DOWN)
+			return;
 		logger(ifp->ctx, LOG_DEBUG, "%s: sending %s with xid 0x%x",
 		    ifp->name,
 		    ifo->options & DHCPCD_BOOTP ? "BOOTP" : get_dhcp_op(type),
 		    state->xid);
-	else {
+	} else {
 		if (state->interval == 0)
 			state->interval = 4;
 		else {
@@ -1610,6 +1614,10 @@ send_message(struct interface *ifp, uint8_t type,
 		tv.tv_nsec = (suseconds_t)arc4random_uniform(
 		    (DHCP_RAND_MAX - DHCP_RAND_MIN) * NSEC_PER_SEC);
 		timespecnorm(&tv);
+		/* No carrier? Don't bother sending the packet.
+		 * However, we do need to advance the timeout. */
+		if (ifp->carrier == LINK_DOWN)
+			goto fail;
 		logger(ifp->ctx, LOG_DEBUG,
 		    "%s: sending %s (xid 0x%x), next in %0.1f seconds",
 		    ifp->name,
@@ -1635,8 +1643,7 @@ send_message(struct interface *ifp, uint8_t type,
 		if (s == -1 && errno != EADDRINUSE)
 			logger(ifp->ctx, LOG_ERR,
 			    "%s: dhcp_openudp: %m", ifp->name);
-	} else
-		s = -1;
+	}
 
 	/* If we couldn't open a UDP port for our IP address
 	 * then we cannot renew.
@@ -1859,6 +1866,104 @@ dhcp_rebind(void *arg)
 	send_rebind(ifp);
 }
 
+static void
+dhcp_arp_probed(struct arp_state *astate)
+{
+	struct dhcp_state *state;
+	struct if_options *ifo;
+
+	/* We didn't find a profile for this
+	 * address or hwaddr, so move to the next
+	 * arping profile */
+	state = D_STATE(astate->iface);
+	ifo = astate->iface->options;
+	if (state->arping_index < ifo->arping_len) {
+		if (++state->arping_index < ifo->arping_len) {
+			astate->addr.s_addr =
+			    ifo->arping[state->arping_index - 1];
+			arp_probe(astate);
+		}
+		dhcpcd_startinterface(astate->iface);
+		return;
+	}
+	dhcp_close(astate->iface);
+	eloop_timeout_delete(astate->iface->ctx->eloop, NULL, astate->iface);
+#ifdef IN_IFF_TENTATIVE
+	ipv4_finaliseaddr(astate->iface);
+	arp_close(astate->iface);
+#else
+	dhcp_bind(astate->iface, astate);
+#endif
+}
+
+static void
+dhcp_arp_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
+{
+	struct dhcp_state *state;
+	struct if_options *ifo;
+
+	state = D_STATE(astate->iface);
+	ifo = astate->iface->options;
+	if (state->arping_index &&
+	    state->arping_index <= ifo->arping_len &&
+	    amsg &&
+	    (amsg->sip.s_addr == ifo->arping[state->arping_index - 1] ||
+	    (amsg->sip.s_addr == 0 &&
+	    amsg->tip.s_addr == ifo->arping[state->arping_index - 1])))
+	{
+		char buf[HWADDR_LEN * 3];
+
+		astate->failed.s_addr = ifo->arping[state->arping_index - 1];
+		arp_report_conflicted(astate, amsg);
+		hwaddr_ntoa(amsg->sha, astate->iface->hwlen, buf, sizeof(buf));
+		if (dhcpcd_selectprofile(astate->iface, buf) == -1 &&
+		    dhcpcd_selectprofile(astate->iface,
+		        inet_ntoa(astate->failed)) == -1)
+		{
+			/* We didn't find a profile for this
+			 * address or hwaddr, so move to the next
+			 * arping profile */
+			dhcp_arp_probed(astate);
+			return;
+		}
+		dhcp_close(astate->iface);
+		arp_close(astate->iface);
+		eloop_timeout_delete(astate->iface->ctx->eloop, NULL,
+		    astate->iface);
+		dhcpcd_startinterface(astate->iface);
+	}
+
+	/* RFC 2131 3.1.5, Client-server interaction
+	 * NULL amsg means IN_IFF_DUPLICATED */
+	if (amsg == NULL || (state->offer &&
+	    (amsg->sip.s_addr == state->offer->yiaddr ||
+	    (amsg->sip.s_addr == 0 &&
+	    amsg->tip.s_addr == state->offer->yiaddr))))
+	{
+#ifdef IN_IFF_DUPLICATED
+		struct ipv4_addr *ia;
+#endif
+
+		if (amsg)
+			astate->failed.s_addr = state->offer->yiaddr;
+		else
+			astate->failed = astate->addr;
+		arp_report_conflicted(astate, amsg);
+		unlink(state->leasefile);
+		if (!state->lease.frominfo)
+			dhcp_decline(astate->iface);
+#ifdef IN_IFF_DUPLICATED
+		ia = ipv4_iffindaddr(astate->iface, &astate->addr, NULL);
+		if (ia)
+			ipv4_deladdr(astate->iface, &ia->addr, &ia->net);
+#endif
+		eloop_timeout_delete(astate->iface->ctx->eloop, NULL,
+		    astate->iface);
+		eloop_timeout_add_sec(astate->iface->ctx->eloop,
+		    DHCP_RAND_MAX, dhcp_discover, astate->iface);
+	}
+}
+
 void
 dhcp_bind(struct interface *ifp, struct arp_state *astate)
 {
@@ -1869,6 +1974,9 @@ dhcp_bind(struct interface *ifp, struct arp_state *astate)
 
 	if (state->state == DHS_BOUND)
 		goto applyaddr;
+#ifdef IN_IFF_TENTATIVE
+	state->added |= STATE_TENTATIVE;
+#endif
 	state->reason = NULL;
 	free(state->old);
 	state->old = state->new;
@@ -1986,6 +2094,16 @@ dhcp_bind(struct interface *ifp, struct arp_state *astate)
 			    "%s: write_lease: %m", __func__);
 
 applyaddr:
+#ifdef IN_IFF_TENTATIVE
+	if (astate == NULL) {
+		astate = arp_new(ifp, &lease->addr);
+		if (astate) {
+			astate->probed_cb = dhcp_arp_probed;
+			astate->conflicted_cb = dhcp_arp_conflicted;
+		}
+	}
+#endif
+
 	ipv4_applyaddr(ifp);
 	if (ifo->options & DHCPCD_ARP &&
 	    !(ifp->ctx->options & DHCPCD_FORKED))
@@ -2342,104 +2460,6 @@ whitelisted_ip(const struct if_options *ifo, in_addr_t addr)
 }
 
 static void
-dhcp_arp_probed(struct arp_state *astate)
-{
-	struct dhcp_state *state;
-	struct if_options *ifo;
-
-	/* We didn't find a profile for this
-	 * address or hwaddr, so move to the next
-	 * arping profile */
-	state = D_STATE(astate->iface);
-	ifo = astate->iface->options;
-	if (state->arping_index < ifo->arping_len) {
-		if (++state->arping_index < ifo->arping_len) {
-			astate->addr.s_addr =
-			    ifo->arping[state->arping_index - 1];
-			arp_probe(astate);
-		}
-		dhcpcd_startinterface(astate->iface);
-		return;
-	}
-	dhcp_close(astate->iface);
-	eloop_timeout_delete(astate->iface->ctx->eloop, NULL, astate->iface);
-#ifdef IN_IFF_TENTATIVE
-	ipv4_finaliseaddr(astate->iface);
-	arp_close(astate->iface);
-#else
-	dhcp_bind(astate->iface, astate);
-#endif
-}
-
-static void
-dhcp_arp_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
-{
-	struct dhcp_state *state;
-	struct if_options *ifo;
-
-	state = D_STATE(astate->iface);
-	ifo = astate->iface->options;
-	if (state->arping_index &&
-	    state->arping_index <= ifo->arping_len &&
-	    amsg &&
-	    (amsg->sip.s_addr == ifo->arping[state->arping_index - 1] ||
-	    (amsg->sip.s_addr == 0 &&
-	    amsg->tip.s_addr == ifo->arping[state->arping_index - 1])))
-	{
-		char buf[HWADDR_LEN * 3];
-
-		astate->failed.s_addr = ifo->arping[state->arping_index - 1];
-		arp_report_conflicted(astate, amsg);
-		hwaddr_ntoa(amsg->sha, astate->iface->hwlen, buf, sizeof(buf));
-		if (dhcpcd_selectprofile(astate->iface, buf) == -1 &&
-		    dhcpcd_selectprofile(astate->iface,
-		        inet_ntoa(astate->failed)) == -1)
-		{
-			/* We didn't find a profile for this
-			 * address or hwaddr, so move to the next
-			 * arping profile */
-			dhcp_arp_probed(astate);
-			return;
-		}
-		dhcp_close(astate->iface);
-		arp_close(astate->iface);
-		eloop_timeout_delete(astate->iface->ctx->eloop, NULL,
-		    astate->iface);
-		dhcpcd_startinterface(astate->iface);
-	}
-
-	/* RFC 2131 3.1.5, Client-server interaction
-	 * NULL amsg means IN_IFF_DUPLICATED */
-	if (amsg == NULL || (state->offer &&
-	    (amsg->sip.s_addr == state->offer->yiaddr ||
-	    (amsg->sip.s_addr == 0 &&
-	    amsg->tip.s_addr == state->offer->yiaddr))))
-	{
-#ifdef IN_IFF_DUPLICATED
-		struct ipv4_addr *ia;
-#endif
-
-		if (amsg)
-			astate->failed.s_addr = state->offer->yiaddr;
-		else
-			astate->failed = astate->addr;
-		arp_report_conflicted(astate, amsg);
-		unlink(state->leasefile);
-		if (!state->lease.frominfo)
-			dhcp_decline(astate->iface);
-#ifdef IN_IFF_DUPLICATED
-		ia = ipv4_iffindaddr(astate->iface, &astate->addr, NULL);
-		if (ia)
-			ipv4_deladdr(astate->iface, &ia->addr, &ia->net);
-#endif
-		eloop_timeout_delete(astate->iface->ctx->eloop, NULL,
-		    astate->iface);
-		eloop_timeout_add_sec(astate->iface->ctx->eloop,
-		    DHCP_RAND_MAX, dhcp_discover, astate->iface);
-	}
-}
-
-static void
 dhcp_handledhcp(struct interface *ifp, struct dhcp_message **dhcpp,
     const struct in_addr *from)
 {
@@ -2759,28 +2779,22 @@ dhcp_handledhcp(struct interface *ifp, struct dhcp_message **dhcpp,
 #ifndef IN_IFF_TENTATIVE
 	if (ifo->options & DHCPCD_ARP
 	    && state->addr.s_addr != state->offer->yiaddr)
-#endif
 	{
 		addr.s_addr = state->offer->yiaddr;
-#ifndef IN_IFF_TENTATIVE
 		/* If the interface already has the address configured
 		 * then we can't ARP for duplicate detection. */
 		ia = ipv4_findaddr(ifp->ctx, &addr);
 		if (ia) {
-#endif
 			astate = arp_new(ifp, &addr);
 			if (astate) {
 				astate->probed_cb = dhcp_arp_probed;
 				astate->conflicted_cb = dhcp_arp_conflicted;
-#ifndef IN_IFF_TENTATIVE
 				arp_probe(astate);
-#endif
 			}
-#ifndef IN_IFF_TENTATIVE
 			return;
 		}
-#endif
 	}
+#endif
 
 	dhcp_bind(ifp, astate);
 }
@@ -2951,7 +2965,7 @@ dhcp_handleudp(void *arg)
 	 * from the raw fd */
 	if (read(ctx->udp_fd, buffer, sizeof(buffer)) == -1) {
 		logger(ctx, LOG_ERR, "%s: %m", __func__);
-		eloop_event_delete(ctx->eloop, ctx->udp_fd, 0);
+		eloop_event_delete(ctx->eloop, ctx->udp_fd);
 		close(ctx->udp_fd);
 		ctx->udp_fd = -1;
 	}
@@ -3046,7 +3060,7 @@ dhcp_free(struct interface *ifp)
 	}
 	if (ifp == NULL) {
 		if (ctx->udp_fd != -1) {
-			eloop_event_delete(ctx->eloop, ctx->udp_fd, 0);
+			eloop_event_delete(ctx->eloop, ctx->udp_fd);
 			close(ctx->udp_fd);
 			ctx->udp_fd = -1;
 		}
