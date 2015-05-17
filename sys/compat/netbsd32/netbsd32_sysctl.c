@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.35 2014/06/13 10:42:26 joerg Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.36 2015/05/17 18:52:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.35 2014/06/13 10:42:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.36 2015/05/17 18:52:37 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -108,7 +108,9 @@ void
 netbsd32_sysctl_init(void)
 {
 	const struct sysctlnode *_root = &netbsd32_sysctl_root;
+#ifndef __mips__
 	extern const char machine_arch32[];
+#endif
 	extern const char machine32[];
 
 	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
@@ -150,11 +152,19 @@ netbsd32_sysctl_init(void)
 		       CTLTYPE_STRING, "machine", NULL,
 		       NULL, 0, __UNCONST(&machine32), 0,
 		       CTL_HW, HW_MACHINE, CTL_EOL);
+#ifdef __mips__
+	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "machine_arch", NULL,
+		       cpu_machinearch32, 0, NULL, 0,
+		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
+#else
 	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine_arch", NULL,
 		       NULL, 0, __UNCONST(&machine_arch32), 0,
 		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
+#endif
 }
 
 void
