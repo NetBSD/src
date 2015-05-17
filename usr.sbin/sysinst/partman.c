@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.10 2015/05/10 10:14:02 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.11 2015/05/17 10:13:24 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -734,7 +734,7 @@ pm_vnd_edit_menufmt(menudesc *m, int opt, void *arg)
 			break;
 		case PMV_MENU_EXIST:
 			wprintw(m->mw, msg_string(MSG_vnd_assgn_fmt),
-				dev_ptr->is_exist? msg_string(MSG_Yes) : msg_string(MSG_No));
+				dev_ptr->is_exist? msg_string(MSG_No) : msg_string(MSG_Yes));
 			break;
 		case PMV_MENU_SIZE:
 			if (!dev_ptr->is_exist)
