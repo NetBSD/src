@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.288 2015/05/17 12:06:26 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.289 2015/05/17 14:23:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.288 2015/05/17 12:06:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.289 2015/05/17 14:23:15 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,9 @@ static int bge_rxthresh_nodenum;
 typedef int (*bge_eaddr_fcn_t)(struct bge_softc *, uint8_t[]);
 
 static uint32_t bge_chipid(const struct pci_attach_args *);
+#ifdef __HAVE_PCI_MSI_MSIX
 static int bge_can_use_msi(struct bge_softc *);
+#endif
 static int bge_probe(device_t, cfdata_t, void *);
 static void bge_attach(device_t, device_t, void *);
 static int bge_detach(device_t, int);
@@ -3279,6 +3281,7 @@ bge_chipid(const struct pci_attach_args *pa)
 	return id;
 }
 
+#ifdef __HAVE_PCI_MSI_MSIX
 /*
  * Return true if MSI can be used with this device.
  */
@@ -3306,6 +3309,7 @@ bge_can_use_msi(struct bge_softc *sc)
 	}
 	return (can_use_msi);
 }
+#endif
 
 /*
  * Probe for a Broadcom chip. Check the PCI vendor and device IDs
@@ -3352,7 +3356,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 	int			capmask;
 	int			mii_flags;
 	int			map_flags;
+#ifdef __HAVE_PCI_MSI_MSIX
 	int			rv;
+#endif
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	bp = bge_lookup(pa);
