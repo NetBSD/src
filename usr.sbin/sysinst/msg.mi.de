@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.5 2014/09/22 19:01:02 roy Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.6 2015/05/17 10:13:24 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1199,10 +1199,10 @@ message vnd_err_menufmt {   PATH nicht definiert!}
 message vnd_assgn_menufmt {   vnd%1d auf %-50s ASSIGN}
 message vnd_menufmt {   vnd%1d auf %-44s %11uM}
 message vnd_path_fmt {Dateipfad: %29s}
-message vnd_assgn_fmt {Weisen Sie existieren Bild: %12s}
+message vnd_assgn_fmt {Neue Image-Datei erstellen: %12s}
 message vnd_size_fmt {Größe:           %22sM}
 message vnd_ro_fmt {Nur lesen:        %22s}
-message vnd_geom_fmt {Stellen Sie Geometrie von Hand: %8s}
+message vnd_geom_fmt {Manuelle Geometrie: %8s}
 message vnd_bps_fmt {Byte pro Sektor:      %18s}
 message vnd_spt_fmt {Sektoren pro Spur:    %18s}
 message vnd_tpc_fmt {Spuren pro Zylinder:  %18s}

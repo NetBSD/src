@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.5 2014/09/22 19:01:02 roy Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.6 2015/05/17 10:13:24 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1180,7 +1180,7 @@ message vnd_err_menufmt {   CAMINO NO DEFINIDO!}
 message vnd_assgn_menufmt {   vnd%1d en %-51s ASSIGN}
 message vnd_menufmt {   vnd%1d en %-45s %11uM}
 message vnd_path_fmt {Ruta del archivo: %22s}
-message vnd_assgn_fmt {Asignar existe la imagen: %14s}
+message vnd_assgn_fmt {Create new image: %14s}
 message vnd_size_fmt {Tamaño:          %22sM}
 message vnd_ro_fmt {Sólo lectura:     %22s}
 message vnd_geom_fmt {Establecer la geometría de la mano: %4s}
