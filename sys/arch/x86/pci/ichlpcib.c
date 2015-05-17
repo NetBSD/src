@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.49 2015/05/03 02:50:59 pgoyette Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.50 2015/05/17 04:59:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.49 2015/05/03 02:50:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.50 2015/05/17 04:59:43 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -257,6 +257,8 @@ static struct lpcib_device {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Z97_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X99_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X99_LPC_2, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE5G_M_LPC_4, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE5G_M_LPC_7, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C222_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C224_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C226_LPC, 1, 0 },
