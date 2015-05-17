@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.154 2015/05/14 01:34:31 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.155 2015/05/17 05:21:38 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -325,6 +325,7 @@ SUBDIR+=	auvitek
 SUBDIR+=	coram
 SUBDIR+=	cxdtv
 SUBDIR+=	emdtv
+SUBDIR+=	spkr
 .endif
 
 .if (${MKISCSI} != "no")
