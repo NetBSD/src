@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.37 2015/05/15 10:57:55 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.38 2015/05/17 06:12:40 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -350,7 +350,7 @@ cortex_init:
 #endif
 
 	mrc	p15, 0, r4, c1, c0, 0		// SCTLR read
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA17)
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
 	//
 	// Before turning on SMP, turn off the caches and the MMU.
 	//
