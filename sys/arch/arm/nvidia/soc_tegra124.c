@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.3 2015/05/13 11:06:13 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.4 2015/05/17 06:15:50 matt Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.3 2015/05/13 11:06:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.4 2015/05/17 06:15:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,7 +128,6 @@ tegra124_mpinit(void)
 	extern void cortex_mpstart(void);
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
-	u_int i;
 
 	bus_space_subregion(bst, tegra_ppsb_bsh,
 	    TEGRA_EVP_OFFSET, TEGRA_EVP_SIZE, &bsh);
@@ -139,14 +138,15 @@ tegra124_mpinit(void)
 	bus_space_write_4(bst, bsh, EVP_RESET_VECTOR_0_REG, (uint32_t)cortex_mpstart);
 	bus_space_barrier(bst, bsh, EVP_RESET_VECTOR_0_REG, 4,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	uint32_t started = 0;
 
-	tegra_pmc_power(PMC_PARTID_CPU1, true);
-	tegra_pmc_power(PMC_PARTID_CPU2, true);
-	tegra_pmc_power(PMC_PARTID_CPU3, true);
+	tegra_pmc_power(PMC_PARTID_CPU1, true); started |= __BIT(1);
+	tegra_pmc_power(PMC_PARTID_CPU2, true); started |= __BIT(2);
+	tegra_pmc_power(PMC_PARTID_CPU3, true); started |= __BIT(3);
 
-	for (i = 0x10000000; i > 0; i--) {
+	for (u_int i = 0x10000000; i > 0; i--) {
 		__asm __volatile("dmb" ::: "memory");
-		if (arm_cpu_hatched == 0xe)
+		if (arm_cpu_hatched == started)
 			break;
 	}
 #endif
