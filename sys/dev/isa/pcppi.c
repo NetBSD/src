@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.43 2014/12/08 16:16:45 msaitoh Exp $ */
+/* $NetBSD: pcppi.c,v 1.44 2015/05/17 05:20:37 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.43 2014/12/08 16:16:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.44 2015/05/17 05:20:37 pgoyette Exp $");
 
 #include "attimer.h"
 
@@ -61,10 +61,11 @@ void	pcppi_pckbd_bell(void *, u_int, u_int, u_int, int);
 int	pcppi_match(device_t, cfdata_t, void *);
 void	pcppi_isa_attach(device_t, device_t, void *);
 void	pcppi_childdet(device_t, device_t);
+int	pcppi_rescan(device_t, const char *, const int *);
 
 CFATTACH_DECL3_NEW(pcppi, sizeof(struct pcppi_softc),
-    pcppi_match, pcppi_isa_attach, pcppi_detach, NULL, NULL, pcppi_childdet,
-    DVF_DETACH_SHUTDOWN);
+    pcppi_match, pcppi_isa_attach, pcppi_detach, NULL, pcppi_rescan,
+    pcppi_childdet, DVF_DETACH_SHUTDOWN);
 
 static int pcppisearch(device_t, cfdata_t, const int *, void *);
 static void pcppi_bell_stop(struct pcppi_softc *);
@@ -214,7 +215,6 @@ pcppi_detach(device_t self, int flags)
 void
 pcppi_attach(struct pcppi_softc *sc)
 {
-        struct pcppi_attach_args pa;
 	device_t self = sc->sc_dv;
 
 	callout_init(&sc->sc_bell_ch, CALLOUT_MPSAFE);
@@ -233,8 +233,22 @@ pcppi_attach(struct pcppi_softc *sc)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+	pcppi_rescan(self, "pcppi", NULL);
+}
+
+int
+pcppi_rescan(device_t self, const char *ifattr, const int *flags)
+{
+	struct pcppi_softc *sc = device_private(self);
+        struct pcppi_attach_args pa;
+
+	if (!ifattr_match(ifattr, "pcppi"))
+		return 0;
+
 	pa.pa_cookie = sc;
 	config_search_loc(pcppisearch, sc->sc_dv, "pcppi", NULL, &pa);
+
+	return 0;
 }
 
 static int
