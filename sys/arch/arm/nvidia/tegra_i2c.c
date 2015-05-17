@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.3 2015/05/16 23:09:08 jmcneill Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.4 2015/05/17 01:26:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.3 2015/05/16 23:09:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.4 2015/05/17 01:26:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -141,6 +141,8 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 static void
 tegra_i2c_init(struct tegra_i2c_softc *sc)
 {
+	int retry = 10000;
+
 	I2C_WRITE(sc, I2C_CLK_DIVISOR_REG,
 	    __SHIFTIN(0x19, I2C_CLK_DIVISOR_STD_FAST_MODE) |
 	    __SHIFTIN(0x1, I2C_CLK_DIVISOR_HSMODE));
@@ -149,8 +151,20 @@ tegra_i2c_init(struct tegra_i2c_softc *sc)
 	I2C_WRITE(sc, I2C_CNFG_REG,
 	    I2C_CNFG_NEW_MASTER_FSM | I2C_CNFG_PACKET_MODE_EN);
 	I2C_SET_CLEAR(sc, I2C_SL_CNFG_REG, I2C_SL_CNFG_NEWSL, 0);
+	I2C_WRITE(sc, I2C_FIFO_CONTROL_REG,
+	    __SHIFTIN(7, I2C_FIFO_CONTROL_TX_FIFO_TRIG) |
+	    __SHIFTIN(0, I2C_FIFO_CONTROL_RX_FIFO_TRIG));
+
 	I2C_WRITE(sc, I2C_BUS_CONFIG_LOAD_REG,
 	    I2C_BUS_CONFIG_LOAD_MSTR_CONFIG_LOAD);
+	while (--retry > 0) {
+		if (I2C_READ(sc, I2C_BUS_CONFIG_LOAD_REG) == 0)
+			break;
+		delay(10);
+	}
+	if (retry == 0) {
+		device_printf(sc->sc_dev, "config load timeout\n");
+	}
 }
 
 static int
