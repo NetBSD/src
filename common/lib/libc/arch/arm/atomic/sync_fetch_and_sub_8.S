@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_fetch_and_sub_8.S,v 1.3 2014/06/23 21:53:45 joerg Exp $	*/
+/*	$NetBSD: sync_fetch_and_sub_8.S,v 1.4 2015/05/17 20:57:11 justin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6) && !defined(_RUMPKERNEL)
 
 ENTRY_NP(__sync_fetch_and_sub_8)
 	push	{r4-r7}
