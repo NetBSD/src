@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_space.c,v 1.3 2014/08/22 14:28:58 pooka Exp $	*/
+/*	$NetBSD: rumpdev_bus_space.c,v 1.4 2015/05/17 13:45:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -127,6 +127,39 @@ bus_space_read_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 }
 
 void
+bus_space_read_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, uint8_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		*datap++ = bus_space_read_1(bst, bsh, offset);
+		bus_space_barrier(bst, bst, offset, 1, BUS_SPACE_BARRIER_READ);
+	}
+}
+
+void
+bus_space_read_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, uint16_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		*datap++ = bus_space_read_2(bst, bsh, offset);
+		bus_space_barrier(bst, bst, offset, 2, BUS_SPACE_BARRIER_READ);
+	}
+}
+
+void
+bus_space_read_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, uint32_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		*datap++ = bus_space_read_4(bst, bsh, offset);
+		bus_space_barrier(bst, bst, offset, 4, BUS_SPACE_BARRIER_READ);
+	}
+}
+
+void
 bus_space_write_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_size_t offset, uint8_t v)
 {
@@ -177,6 +210,45 @@ bus_space_write_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 	}
 }
 
+void
+bus_space_write_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, const uint8_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		const uint8_t value = *datap++;
+
+		bus_space_write_1(bst, bsh, offset, value);
+		bus_space_barrier(bst, bst, offset, 1, BUS_SPACE_BARRIER_WRITE);
+	}
+}
+
+void
+bus_space_write_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, const uint16_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		const uint16_t value = *datap++;
+
+		bus_space_write_2(bst, bsh, offset, value);
+		bus_space_barrier(bst, bst, offset, 2, BUS_SPACE_BARRIER_WRITE);
+	}
+}
+
+void
+bus_space_write_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, const uint32_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		const uint32_t value = *datap++;
+
+		bus_space_write_4(bst, bsh, offset, value);
+		bus_space_barrier(bst, bst, offset, 4, BUS_SPACE_BARRIER_WRITE);
+	}
+}
+
 paddr_t
 bus_space_mmap(bus_space_tag_t bst, bus_addr_t addr, off_t off,
 	int prot, int flags)
@@ -190,7 +262,8 @@ bus_space_subregion(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_size_t offset, bus_size_t size, bus_space_handle_t *nhandlep)
 {
 
-	panic("%s: unimplemented", __func__);
+	*nhandlep = bsh + offset;
+	return 0;
 }
 
 void
