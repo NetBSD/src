@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_reg.h,v 1.9 2015/05/10 23:50:21 jmcneill Exp $ */
+/* $NetBSD: tegra_reg.h,v 1.10 2015/05/17 01:28:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -53,6 +53,8 @@
 
 #define TEGRA_HOST1X_BASE	0x50000000
 #define TEGRA_HOST1X_SIZE	0x00100000
+#define TEGRA_GHOST_BASE	0x54000000
+#define TEGRA_GHOST_SIZE	0x01000000
 #define TEGRA_PPSB_BASE		0x60000000
 #define TEGRA_PPSB_SIZE		0x01000000
 #define TEGRA_APB_BASE		0x70000000
@@ -132,5 +134,13 @@
 #define TEGRA_USB2_SIZE		0x1800
 #define TEGRA_USB3_OFFSET	0x01008000
 #define TEGRA_USB3_SIZE		0x1800
+
+/* Graphics Host (GHOST) */
+#define TEGRA_DISPLAYA_OFFSET	0x00200000
+#define TEGRA_DISPLAYA_SIZE	0x00040000
+#define TEGRA_DISPLAYB_OFFSET	0x00240000
+#define TEGRA_DISPLAYB_SIZE	0x00040000
+#define TEGRA_HDMI_OFFSET	0x00280000
+#define TEGRA_HDMI_SIZE		0x00040000
 
 #endif /* _ARM_TEGRA_REG_H */
