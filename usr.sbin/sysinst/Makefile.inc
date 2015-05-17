@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2015/05/10 09:13:15 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2015/05/17 10:22:20 martin Exp $
 #
 # Makefile for sysinst
 
@@ -47,8 +47,11 @@ CATALOGDIR=	/usr/share/sysinst/catalog
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\" \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
-		${NODISKLABEL:D-DNO_DISKLABEL} \
-		-DCATALOG_DIR=\"${CATALOGDIR}\"
+		${NODISKLABEL:D-DNO_DISKLABEL}
+
+.if !defined(DEBUG)
+CPPFLAGS+=	-DCATALOG_DIR=\"${CATALOGDIR}\"
+.endif
 
 .if (defined(DEBUG))
 .if ${ACTIVE_CC} == "gcc"
