@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.8 2015/05/17 20:57:12 justin Exp $	*/
+/*	$NetBSD: ffs.S,v 1.9 2015/05/17 22:14:38 justin Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.8 2015/05/17 20:57:12 justin Exp $")
+RCSID("$NetBSD: ffs.S,v 1.9 2015/05/17 22:14:38 justin Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
@@ -46,6 +46,7 @@ RCSID("$NetBSD: ffs.S,v 1.8 2015/05/17 20:57:12 justin Exp $")
  */
 #ifndef _RUMPKERNEL
 STRONG_ALIAS(__ffssi2,ffs)
+#endif
 #if (defined(_ARM_ARCH_5) && !defined(__thumb__)) || defined(_ARM_ARCH_T2)
 #if defined(_ARM_ARCH_T2)
 ENTRY(ffs)
@@ -91,4 +92,3 @@ ARM_ENTRY(ffs)
 	.byte   30,  0, 23, 19, 29, 18, 17,  0  /* 56-63 */
 END(ffs)
 #endif
-#endif /* _RUMPKERNEL */
