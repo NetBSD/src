@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.66 2015/05/13 02:17:13 pgoyette Exp $
+# $NetBSD: md.i386,v 1.67 2015/05/17 05:22:43 pgoyette Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -145,6 +145,8 @@
 ./@MODULEDIR@/sisdrm/sisdrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/sljit				base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod,sljit
+./@MODULEDIR@/spkr				base-kernel-modules	kmod
+./@MODULEDIR@/spkr/spkr.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu/syscallemu.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/tco				base-kernel-modules	kmod
@@ -521,6 +523,8 @@
 ./stand/i386-xen/@OSRELEASE@/modules/skipjack/skipjack.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/sljit				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/sljit/sljit.kmod			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/spkr				base-kernel-modules	kmod
+./stand/i386-xen/@OSRELEASE@/modules/spkr/spkr.kmod			base-kernel-modules	kmod
 ./stand/i386-xen/@OSRELEASE@/modules/smbfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/smbfs/smbfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/solaris				base-kernel-modules	kmod,compatmodules,solaris
@@ -948,6 +952,8 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/skipjack/skipjack.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/sljit				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/sljit/sljit.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/spkr				base-kernel-modules	kmod
+./stand/i386pae-xen/@OSRELEASE@/modules/spkr/spkr.kmod			base-kernel-modules	kmod
 ./stand/i386pae-xen/@OSRELEASE@/modules/smbfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/smbfs/smbfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/solaris				base-kernel-modules	kmod,compatmodules,solaris

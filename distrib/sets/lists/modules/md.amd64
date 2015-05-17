@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.61 2015/05/13 02:17:13 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.62 2015/05/17 05:22:43 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -129,6 +129,8 @@
 ./@MODULEDIR@/pwdog/pwdog.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/sljit				base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod,sljit
+./@MODULEDIR@/spkr				base-kernel-modules	kmod
+./@MODULEDIR@/spkr/spkr.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu/syscallemu.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/tco				base-kernel-modules	kmod
@@ -488,6 +490,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/skipjack/skipjack.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/sljit				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/sljit/sljit.kmod			base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/spkr				base-kernel-modules	kmod
+./stand/amd64-xen/@OSRELEASE@/modules/spkr/spkr.kmod			base-kernel-modules	kmod
 ./stand/amd64-xen/@OSRELEASE@/modules/smbfs				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/smbfs/smbfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/solaris				base-kernel-modules	kmod,compatmodules,solaris
