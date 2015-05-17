@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_bool_compare_and_swap_4.S,v 1.2 2015/05/17 20:57:11 justin Exp $	*/
+/*	$NetBSD: sync_bool_compare_and_swap_4.S,v 1.3 2015/05/17 22:08:24 justin Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include "atomic_op_asm.h"
 
-#if defined(_ARM_ARCH_6) && !defined(_RUMPKERNEL)
+#if defined(_ARM_ARCH_6)
 /*
  * ARMv6 has load-exclusive/store-exclusive which works for both user
  * and kernel.
