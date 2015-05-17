@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.11 2015/02/27 13:15:49 martin Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.12 2015/05/17 15:48:57 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.11 2015/02/27 13:15:49 martin Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.12 2015/05/17 15:48:57 ozaki-r Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -186,7 +186,7 @@ getsocket(const char *host, const char *port,
     int (*f)(int, const struct sockaddr *, socklen_t), socklen_t *slen,
     bool bug)
 {
-	int e, s;
+	int e, s, lasterrno = 0;
 	struct addrinfo hints, *ai0, *ai;
 	const char *cause = "?";
 
@@ -202,6 +202,7 @@ getsocket(const char *host, const char *port,
 	for (ai = ai0; ai; ai = ai->ai_next) {
 		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (s == -1) {
+			lasterrno = errno;
 			cause = "socket";
 			continue;
 		}
@@ -220,13 +221,14 @@ getsocket(const char *host, const char *port,
 		*slen = ai->ai_addrlen;
 		break;
 out:
+		lasterrno = errno;
 		close(s);
 		s = -1;
 		continue;
 	}
 	freeaddrinfo(ai0);
 	if (s == -1)
-		ERRX(1, "%s (%s)", cause, strerror(errno));
+		ERRX(1, "%s (%s)", cause, strerror(lasterrno));
 	return s;
 }
 
