@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.9 2015/05/01 13:48:05 gson Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.10 2015/05/17 10:13:24 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1039,7 +1039,7 @@ exist.  Please check the package path and try again.}
 message failed {Failed}
 
 message notsupported {Operation not supported!}
-message askfsmountadv {Mountpoint or 'raid' or 'cgd' or 'lvm'?}
+message askfsmountadv {Mountpoint (or 'raid', 'cgd', 'lvm')?}
 message partman {Extended partitioning}
 message editbsdpart {Edit BSD partitions}
 message editmbr {Edit and save MBR}
@@ -1058,7 +1058,7 @@ message doumount {Force umount}
 message fillzeros {Fill with zeros}
 message fillrandom {Fill with random data}
 message fillcrypto {Fill with crypto data}
-message raid0 {0 - No parity, only simple striping.}
+message raid0 {0 - No parity, simple striping.}
 message raid1 {1 - Mirroring.  The parity is the mirror.}
 message raid4 {4 - Striping with parity stored on the last component.}
 message raid5 {5 - Striping with distributed parity.}
@@ -1126,7 +1126,7 @@ message vnd_err_menufmt {   PATH NOT DEFINED!}
 message vnd_assgn_menufmt {   vnd%1d on %-51s ASSIGN}
 message vnd_menufmt {   vnd%1d on %-45s %11uM}
 message vnd_path_fmt {File path: %29s}
-message vnd_assgn_fmt {Assign exist image: %20s}
+message vnd_assgn_fmt {Create new image: %20s}
 message vnd_size_fmt {Size:            %22sM}
 message vnd_ro_fmt {Read-only:        %22s}
 message vnd_geom_fmt {Set geometry by hand: %18s}
