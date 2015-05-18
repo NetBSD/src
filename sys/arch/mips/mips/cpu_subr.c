@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.17 2014/05/19 22:47:53 rmind Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.18 2015/05/18 01:32:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.17 2014/05/19 22:47:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.18 2015/05/18 01:32:52 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -291,6 +291,7 @@ cpu_startup_common(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
