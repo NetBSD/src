@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.289 2015/05/17 14:23:15 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.290 2015/05/18 01:06:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.289 2015/05/17 14:23:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.290 2015/05/18 01:06:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4146,6 +4146,9 @@ bge_release_resources(struct bge_softc *sc)
 	/* Disestablish the interrupt handler */
 	if (sc->bge_intrhand != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->bge_intrhand);
+#ifdef __HAVE_PCI_MSI_MSIX
+		pci_intr_release(sc->sc_pc, sc->bge_pihp, 1);
+#endif
 		sc->bge_intrhand = NULL;
 	}
 
