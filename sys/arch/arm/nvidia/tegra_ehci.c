@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.4 2015/05/09 18:56:51 jmcneill Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.5 2015/05/18 09:56:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.4 2015/05/09 18:56:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.5 2015/05/18 09:56:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,6 +66,8 @@ struct tegra_ehci_softc {
 };
 
 static void	tegra_ehci_utmip_init(struct tegra_ehci_softc *);
+static int	tegra_ehci_port_status(struct ehci_softc *sc, uint32_t v,
+		    int i);
 
 CFATTACH_DECL2_NEW(tegra_ehci, sizeof(struct tegra_ehci_softc),
 	tegra_ehci_match, tegra_ehci_attach, NULL,
@@ -96,7 +98,9 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_bus.hci_private = &sc->sc;
 	sc->sc.sc_bus.dmatag = tio->tio_dmat;
 	sc->sc.sc_bus.usbrev = USBREV_2_0;
-	sc->sc.sc_flags = 0;	/* XXX EHCIF_ETTF */
+	sc->sc.sc_vendor_port_status = tegra_ehci_port_status;
+	sc->sc.sc_ncomp = 0;
+	sc->sc.sc_flags = EHCIF_ETTF;
 	sc->sc.sc_id_vendor = 0x10de;
 	strlcpy(sc->sc.sc_vendor, "Tegra", sizeof(sc->sc.sc_vendor));
 	sc->sc.sc_size = loc->loc_size;
@@ -310,4 +314,31 @@ tegra_ehci_utmip_init(struct tegra_ehci_softc *sc)
 		tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_BIAS_CFG1_REG,
 		    0, TEGRA_EHCI_UTMIP_BIAS_CFG1_PDTRK_POWERDOWN);
 	}
+}
+
+
+static int
+tegra_ehci_port_status(struct ehci_softc *sc, uint32_t v, int i)
+{
+	bus_space_tag_t iot = sc->iot;
+	bus_space_handle_t ioh = sc->ioh;
+
+	i &= ~UPS_HIGH_SPEED;
+
+	uint32_t val = bus_space_read_4(iot, ioh,
+	    TEGRA_EHCI_HOSTPC1_DEVLC_REG);
+
+	switch (__SHIFTOUT(val, TEGRA_EHCI_HOSTPC1_DEVLC_PSPD)) {
+	case TEGRA_EHCI_HOSTPC1_DEVLC_PSPD_FS:
+		i |= UPS_FULL_SPEED;
+		break;
+	case TEGRA_EHCI_HOSTPC1_DEVLC_PSPD_LS:
+		i |= UPS_LOW_SPEED;
+		break;
+	case TEGRA_EHCI_HOSTPC1_DEVLC_PSPD_HS:
+	default:
+		i |= UPS_HIGH_SPEED;
+		break;
+	}
+	return i;
 }
