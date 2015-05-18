@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.47 2013/11/15 08:47:55 msaitoh Exp $	*/
+/*	$NetBSD: lapic.c,v 1.48 2015/05/18 13:04:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.47 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.48 2015/05/18 13:04:21 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -182,11 +182,10 @@ lapic_set_lvt(void)
 		mpi = &mp_intrs[i];
 		if (mpi->ioapic == NULL && (mpi->cpu_id == MPS_ALL_APICS ||
 		    mpi->cpu_id == ci->ci_cpuid)) {
-#ifdef DIAGNOSTIC
 			if (mpi->ioapic_pin > 1)
-				panic("lapic_set_lvt: bad pin value %d",
-				    mpi->ioapic_pin);
-#endif
+				aprint_error_dev(ci->ci_dev,
+				    "%s: WARNING: bad pin value %d\n",
+				    __func__, mpi->ioapic_pin);
 			if (mpi->ioapic_pin == 0)
 				i82489_writereg(LAPIC_LVINT0, mpi->redir);
 			else
