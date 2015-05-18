@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.17 2015/05/18 20:36:42 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.18 2015/05/18 21:32:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.17 2015/05/18 20:36:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.18 2015/05/18 21:32:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -641,6 +641,7 @@ tegra_car_dc_enable(u_int port)
 	bus_space_handle_t bsh;
 	bus_size_t src_reg;
 	uint32_t dev_bit;
+	u_int partid;
 
 	tegra_car_get_bs(&bst, &bsh);
 
@@ -648,10 +649,12 @@ tegra_car_dc_enable(u_int port)
 	case 0:
 		dev_bit = CAR_DEV_L_DISP1;
 		src_reg = CAR_CLKSRC_DISP1_REG;
+		partid = PMC_PARTID_DIS;
 		break;
 	case 1:
 		dev_bit = CAR_DEV_L_DISP2;
 		src_reg = CAR_CLKSRC_DISP2_REG;
+		partid = PMC_PARTID_DISB;
 		break;
 	default:
 		return EINVAL;
@@ -660,6 +663,10 @@ tegra_car_dc_enable(u_int port)
 	/* Enter reset, enable clock */
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_L_SET_REG, dev_bit);
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_L_SET_REG, dev_bit);
+
+	/* Turn on power to display partition */
+	tegra_pmc_power(partid, true);
+	tegra_pmc_remove_clamping(partid);
 
 	/* Select PLLP for clock source */
 	bus_space_write_4(bst, bsh, src_reg,
