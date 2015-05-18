@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmc.c,v 1.4 2015/05/15 11:50:30 jmcneill Exp $ */
+/* $NetBSD: tegra_pmc.c,v 1.5 2015/05/18 21:03:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.4 2015/05/15 11:50:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.5 2015/05/18 21:03:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -142,4 +142,18 @@ tegra_pmc_remove_clamping(u_int partid)
 
 	bus_space_write_4(bst, bsh, PMC_REMOVE_CLAMPING_CMD_0_REG,
 	    __BIT(partid));
+}
+
+void
+tegra_pmc_hdmi_enable(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_pmc_get_bs(&bst, &bsh);
+
+	tegra_reg_set_clear(bst, bsh, PMC_IO_DPD_STATUS_REG,
+	    0, PMC_IO_DPD_STATUS_HDMI);
+	tegra_reg_set_clear(bst, bsh, PMC_IO_DPD2_STATUS_REG,
+	    0, PMC_IO_DPD2_STATUS_HV);
 }
