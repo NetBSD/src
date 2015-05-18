@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.69 2014/01/24 12:16:10 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.70 2015/05/18 06:38:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.69 2014/01/24 12:16:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.70 2015/05/18 06:38:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -898,6 +898,17 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 
 	case ATAIOCCOMMAND32:
 		IOCTL_STRUCT_CONV_TO(ATAIOCCOMMAND, atareq);
+
+	case SIOCIFGCLONERS32:
+		{
+			struct netbsd32_if_clonereq *req =
+			    (struct netbsd32_if_clonereq *)data32;
+			char *buf = NETBSD32PTR64(req->ifcr_buffer);
+
+			error = if_clone_list(req->ifcr_count,
+			    buf, &req->ifcr_total);
+			break;
+		}
 
 /*
  * only a few ifreq syscalls need conversion and those are
