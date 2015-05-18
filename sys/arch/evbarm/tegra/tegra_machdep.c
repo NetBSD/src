@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.15 2015/05/14 00:02:00 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.16 2015/05/18 19:32:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.15 2015/05/14 00:02:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.16 2015/05/18 19:32:48 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -356,6 +356,17 @@ consinit(void)
 #endif
 }
 
+static bool
+tegra_bootconf_match(const char *key, const char *val)
+{
+	char *s;
+
+	if (!get_bootconf_option(boot_args, key, BOOTOPT_TYPE_STRING, &s))
+		return false;
+
+	return strncmp(s, val, strlen(val)) == 0;
+}
+
 void
 tegra_device_register(device_t self, void *aux)
 {
@@ -375,6 +386,14 @@ tegra_device_register(device_t self, void *aux)
 
 	if (device_is_a(self, "cpu") && device_unit(self) == 0) {
 		tegra_cpuinit();
+	}
+
+	if (device_is_a(self, "tegradc")
+	    && tegra_bootconf_match("console", "fb")) {
+		prop_dictionary_set_bool(dict, "is_console", true);
+#if NUKBD > 0
+		ukbd_cnattach();
+#endif
 	}
 
 #ifdef BOARD_JETSONTK1
@@ -405,6 +424,14 @@ tegra_device_register(device_t self, void *aux)
 		} else if (loc->loc_port == 2) {
 			prop_dictionary_set_cstring(dict, "vbus-gpio", "N5");
 		}
+	}
+
+	if (device_is_a(self, "tegrahdmi")) {
+		prop_dictionary_set_cstring(dict, "hpd-gpio", "N7");
+		prop_dictionary_set_cstring(dict, "pll-gpio", "H7");
+		prop_dictionary_set_cstring(dict, "power-gpio", "K6");
+		prop_dictionary_set_cstring(dict, "ddc-device", "ddc0");
+		prop_dictionary_set_cstring(dict, "display-device", "tegradc1");
 	}
 #endif
 }
