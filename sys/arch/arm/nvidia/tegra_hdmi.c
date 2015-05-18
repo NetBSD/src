@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdmi.c,v 1.1 2015/05/18 19:32:48 jmcneill Exp $ */
+/* $NetBSD: tegra_hdmi.c,v 1.2 2015/05/18 21:03:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.1 2015/05/18 19:32:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.2 2015/05/18 21:03:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -243,6 +243,8 @@ tegra_hdmi_enable(struct tegra_hdmi_softc *sc)
 	u_int n;
 
 	KASSERT(sc->sc_curmode != NULL);
+
+	tegra_pmc_hdmi_enable();
 
 	tegra_car_hdmi_enable(mode->dot_clock * 1000);
 

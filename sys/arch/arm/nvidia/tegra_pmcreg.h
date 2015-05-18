@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmcreg.h,v 1.3 2015/05/15 11:50:30 jmcneill Exp $ */
+/* $NetBSD: tegra_pmcreg.h,v 1.4 2015/05/18 21:03:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -86,5 +86,11 @@
 #define PMC_PARTID_VE			2
 #define PMC_PARTID_TD			1
 #define PMC_PARTID_CPU0			0
+
+#define PMC_IO_DPD_STATUS_REG		0x1bc
+#define PMC_IO_DPD_STATUS_HDMI		__BIT(28)
+
+#define PMC_IO_DPD2_STATUS_REG		0x1c4
+#define PMC_IO_DPD2_STATUS_HV		__BIT(6)
 
 #endif /* _ARM_TEGRA_PMCREG_H */
