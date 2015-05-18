@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.114 2015/05/18 13:04:21 msaitoh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.115 2015/05/18 13:09:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.114 2015/05/18 13:04:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.115 2015/05/18 13:09:55 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -76,23 +76,18 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.114 2015/05/18 13:04:21 msaitoh Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/cpufreq.h>
 #include <sys/idle.h>
 #include <sys/atomic.h>
 #include <sys/reboot.h>
-#include <sys/cprng.h>
-#include <sys/rndpool.h>
-#include <sys/rndsource.h>
 
 #include <uvm/uvm.h>
 
 #include "acpica.h"		/* for NACPICA, for mp_verbose */
 
 #include <machine/cpufunc.h>
-#include <machine/cputypes.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
@@ -140,9 +135,6 @@ struct cpu_softc {
 	device_t sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 	bool sc_wasonline;
-	callout_t	sc_rnd_callout;
-	krndsource_t	sc_rnd_source;
-	size_t		sc_rnd_need;
 };
 
 #ifdef MULTIPROCESSOR
@@ -487,89 +479,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	(void)config_defer(self, cpu_defer);
 }
 
-void rdrand(size_t, void *);
-
-void
-rdrand(size_t bytes, void *priv)
-{
-	struct cpu_softc *sc = priv;
-#ifdef i386
-	uint32_t r, valid;
-#else
-	uint64_t r, valid;
-#endif
-	uint32_t len = sizeof(r);
-	int i;
-
-	while (bytes > 0) {
-		for (i = 0; i < 4; i++) {
-			__asm volatile(
-				"xor	%1, %1\n\t"
-				"rdrand	%0\n\t"
-				"rcl	$1, %1\n"
-				: "=r" (r), "=r" (valid) : : "cc");
-
-			if (valid) {
-#if 0
-#ifdef i386
-				printf("RND 0x%08x\n", r);
-#else
-				printf("RND 0x%016" PRIx64 "\n", r);
-#endif
-#endif
-				rnd_add_data(&sc->sc_rnd_source, &r, len,
-				    len * NBBY);
-				bytes -= len;
-				break;
-			}
-		}
-	}
-}
-
-static void x86_rnd_get(void *);
-void x86_rnd_callback(size_t, void *);
-
-/* Callback */
-void
-x86_rnd_callback(size_t bytes, void *priv)
-{
-	struct cpu_softc *sc = priv;
-
-	sc->sc_rnd_need = bytes;
-	callout_reset(&sc->sc_rnd_callout, 0, x86_rnd_get, sc);
-}
-
-/* Callout */
-static void
-x86_rnd_get(void *priv)
-{
-	struct cpu_softc *sc = priv;
-
-	rdrand(sc->sc_rnd_need, sc);
-	sc->sc_rnd_need = 16; /* By default */
-	callout_reset(&sc->sc_rnd_callout, hz, x86_rnd_get, sc);
-}
-
 static void
 cpu_defer(device_t self)
 {
-	struct cpu_softc *sc = device_private(self);
-	char rnd_name[sizeof(sc->sc_rnd_source.name)];
-
-	if ((cpu_vendor == CPUVENDOR_INTEL)
-	    && (cpu_feature[1] & CPUID2_RDRAND)) {
-		aprint_normal_dev(sc->sc_dev, "have rdrand\n");
-		sc->sc_rnd_need = 16; /* By default */
-		rndsource_setcb(&sc->sc_rnd_source, x86_rnd_callback, sc);
-		snprintf(rnd_name, sizeof(rnd_name), "rdrand-%s",
-		    device_xname(sc->sc_dev));
-		rnd_attach_source(&sc->sc_rnd_source, rnd_name,
-				  RND_TYPE_RNG,
-				  RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-		callout_init(&sc->sc_rnd_callout, CALLOUT_MPSAFE);
-		callout_reset(&sc->sc_rnd_callout, hz, x86_rnd_get, sc);
-	}
-
 	cpu_rescan(self, NULL, NULL);
 }
 
