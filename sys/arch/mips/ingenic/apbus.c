@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.14 2015/05/04 12:23:15 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.15 2015/05/18 15:07:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.14 2015/05/04 12:23:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.15 2015/05/18 15:07:52 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -68,29 +68,30 @@ typedef struct apbus_dev {
 	uint32_t irq;		/* interrupt */
 	uint32_t clk0;		/* bit(s) in CLKGR0 */
 	uint32_t clk1;		/* bit(s) in CLKGR1 */
+	uint32_t clkreg;	/* CGU register */
 } apbus_dev_t;
 
 static const apbus_dev_t apbus_devs[] = {
-	{ "dwctwo",	JZ_DWC2_BASE,   21, CLK_OTG0 | CLK_UHC, CLK_OTG1},
-	{ "ohci",	JZ_OHCI_BASE,    5, CLK_UHC, 0},
-	{ "ehci",	JZ_EHCI_BASE,   20, CLK_UHC, 0},
-	{ "dme",	JZ_DME_BASE,    -1, 0, 0},
-	{ "jzgpio",	JZ_GPIO_A_BASE, 17, 0, 0},
-	{ "jzgpio",	JZ_GPIO_B_BASE, 16, 0, 0},
-	{ "jzgpio",	JZ_GPIO_C_BASE, 15, 0, 0},
-	{ "jzgpio",	JZ_GPIO_D_BASE, 14, 0, 0},
-	{ "jzgpio",	JZ_GPIO_E_BASE, 13, 0, 0},
-	{ "jzgpio",	JZ_GPIO_F_BASE, 12, 0, 0},
-	{ "jziic",	JZ_SMB0_BASE,   60, CLK_SMB0, 0},
-	{ "jziic",	JZ_SMB1_BASE,   59, CLK_SMB1, 0},
-	{ "jziic",	JZ_SMB2_BASE,   58, CLK_SMB2, 0},
-	{ "jziic",	JZ_SMB3_BASE,   57, 0, CLK_SMB3},
-	{ "jziic",	JZ_SMB4_BASE,   56, 0, CLK_SMB4},
-	{ "jzmmc",	JZ_MSC0_BASE,   37, CLK_MSC0, 0},
-	{ "jzmmc",	JZ_MSC1_BASE,   36, CLK_MSC1, 0},
-	{ "jzmmc",	JZ_MSC2_BASE,   35, CLK_MSC2, 0},
-	{ "jzfb",	JZ_LCDC0_BASE,  31, CLK_LCD, CLK_HDMI},
-	{ NULL,		-1,             -1, 0, 0}
+	{ "dwctwo",	JZ_DWC2_BASE,   21, CLK_OTG0 | CLK_UHC, CLK_OTG1, 0},
+	{ "ohci",	JZ_OHCI_BASE,    5, CLK_UHC, 0, 0},
+	{ "ehci",	JZ_EHCI_BASE,   20, CLK_UHC, 0, 0},
+	{ "dme",	JZ_DME_BASE,    -1, 0, 0, 0},
+	{ "jzgpio",	JZ_GPIO_A_BASE, 17, 0, 0, 0},
+	{ "jzgpio",	JZ_GPIO_B_BASE, 16, 0, 0, 0},
+	{ "jzgpio",	JZ_GPIO_C_BASE, 15, 0, 0, 0},
+	{ "jzgpio",	JZ_GPIO_D_BASE, 14, 0, 0, 0},
+	{ "jzgpio",	JZ_GPIO_E_BASE, 13, 0, 0, 0},
+	{ "jzgpio",	JZ_GPIO_F_BASE, 12, 0, 0, 0},
+	{ "jziic",	JZ_SMB0_BASE,   60, CLK_SMB0, 0, 0},
+	{ "jziic",	JZ_SMB1_BASE,   59, CLK_SMB1, 0, 0},
+	{ "jziic",	JZ_SMB2_BASE,   58, CLK_SMB2, 0, 0},
+	{ "jziic",	JZ_SMB3_BASE,   57, 0, CLK_SMB3, 0},
+	{ "jziic",	JZ_SMB4_BASE,   56, 0, CLK_SMB4, 0},
+	{ "jzmmc",	JZ_MSC0_BASE,   37, CLK_MSC0, 0, JZ_MSC0CDR},
+	{ "jzmmc",	JZ_MSC1_BASE,   36, CLK_MSC1, 0, JZ_MSC1CDR},
+	{ "jzmmc",	JZ_MSC2_BASE,   35, CLK_MSC2, 0, JZ_MSC2CDR},
+	{ "jzfb",	JZ_LCDC0_BASE,  31, CLK_LCD, CLK_HDMI, 0},
+	{ NULL,		-1,             -1, 0, 0, 0}
 };
 
 void
@@ -179,10 +180,15 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	/* these are supposed to be connected to the RTC */
 	gpio_as_dev1(4, 12);
 	gpio_as_dev1(4, 13);
-	/* these can be DDC2 or SMB4, set them to DDC2 */
+	/* these can be DDC2 or SMB4 */
+#if 1
+	/* DDC2 devices show up at SMB4 */
+	gpio_as_dev1(5, 24);
+	gpio_as_dev1(5, 25);
+#else
 	gpio_as_dev0(5, 24);
 	gpio_as_dev0(5, 25);
-
+#endif
 	/* MSC0 */
 	gpio_as_dev1(0, 4);
 	gpio_as_dev1(0, 5);
@@ -232,6 +238,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 		aa.aa_bst = apbus_memt;
 		aa.aa_pclk = pclk;
 		aa.aa_mclk = mclk;
+		aa.aa_clockreg = adv->clkreg;
 
 		/* enable clocks as needed */
 		if (adv->clk0 != 0) {
