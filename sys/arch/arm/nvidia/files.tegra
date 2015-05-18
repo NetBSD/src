@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.12 2015/05/18 19:32:48 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.13 2015/05/18 20:36:42 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -86,6 +86,11 @@ file	arch/arm/nvidia/tegra_ahcisata.c	tegra_ahcisata
 # HDA
 attach	hdaudio at tegraio with tegra_hdaudio
 file	arch/arm/nvidia/tegra_hdaudio.c		tegra_hdaudio
+
+# Host1x subsystem
+device	tegrahost1x
+attach	tegrahost1x at tegraio with tegra_host1x
+file	arch/arm/nvidia/tegra_host1x.c		tegra_host1x
 
 # Display controller
 device	tegradc { }

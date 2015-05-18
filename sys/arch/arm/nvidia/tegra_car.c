@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.16 2015/05/18 19:32:48 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.17 2015/05/18 20:36:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.16 2015/05/18 19:32:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.17 2015/05/18 20:36:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -670,4 +670,28 @@ tegra_car_dc_enable(u_int port)
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_L_CLR_REG, dev_bit);
 
 	return 0;
+}
+
+void
+tegra_car_host1x_enable(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	/* Enter reset, enable clock */
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_L_SET_REG, CAR_DEV_L_HOST1X);
+	bus_space_write_4(bst, bsh, CAR_CLK_ENB_L_SET_REG, CAR_DEV_L_HOST1X);
+
+	/* Select PLLP for clock source, 408 MHz */
+	bus_space_write_4(bst, bsh, CAR_CLKSRC_HOST1X_REG,
+	    __SHIFTIN(CAR_CLKSRC_HOST1X_SRC_PLLP_OUT0,
+		      CAR_CLKSRC_HOST1X_SRC) |
+	    __SHIFTIN(0, CAR_CLKSRC_HOST1X_CLK_DIVISOR));
+
+	delay(2);
+
+	/* Leave reset */
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_L_CLR_REG, CAR_DEV_L_HOST1X);
 }
