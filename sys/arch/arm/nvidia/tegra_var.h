@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.17 2015/05/18 19:32:48 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.18 2015/05/18 20:36:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -105,6 +105,7 @@ void	tegra_car_utmip_init(void);
 void	tegra_car_utmip_enable(u_int);
 void	tegra_car_hdmi_enable(u_int);
 int	tegra_car_dc_enable(u_int);
+void	tegra_car_host1x_enable(void);
 
 struct tegra_gpio_pin;
 struct tegra_gpio_pin *tegra_gpio_acquire(const char *, u_int);
