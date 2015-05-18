@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2015/05/18 01:32:18 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,12 +112,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2015/05/18 01:32:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
@@ -136,7 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
 #include <ddb/db_extern.h>
 #endif
 
-#include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/locore.h>
 
@@ -205,6 +205,17 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 
 	octeon_cal_timer(corefreq);
 
+	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
+	case 0: cpu_setmodel("Cavium Octeon CN38XX/CN36XX"); break;
+	case 1: cpu_setmodel("Cavium Octeon CN31XX/CN3020"); break;
+	case 2: cpu_setmodel("Cavium Octeon CN3005/CN3010"); break;
+	case 3: cpu_setmodel("Cavium Octeon CN58XX"); break;
+	case 4: cpu_setmodel("Cavium Octeon CN5[4-7]XX"); break;
+	case 6: cpu_setmodel("Cavium Octeon CN50XX"); break;
+	case 7: cpu_setmodel("Cavium Octeon CN52XX"); break;
+	default: cpu_setmodel("Cavium Octeon"); break;
+	}
+	
 	mach_init_vector();
 
 	/* set the VM page size */
