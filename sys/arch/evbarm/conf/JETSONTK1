@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.20 2015/05/16 11:49:01 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.21 2015/05/18 19:32:48 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -115,6 +115,28 @@ wd*		at atabus? drive ?
 #audio*		at audiobus?
 #options 	HDAUDIO_ENABLE_HDMI
 #options 	HDAUDIO_ENABLE_DISPLAYPORT
+
+# Display controller
+tegradc0	at tegraio? port 0	# DISPLAYA
+tegradc1	at tegraio? port 1	# DISPLAYB
+genfb*		at tegradc?
+wsdisplay*	at genfb?
+options 	VCONS_DRAW_INTR
+options 	WSEMUL_VT100
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_DEFAULTSCREENS=4
+pseudo-device	wsmux
+pseudo-device	wsfont
+
+# HDMI
+tegrahdmi0	at tegraio?		# HDMI
 
 # USB 2.0
 ehci0		at tegraio? port 0	# USB1
