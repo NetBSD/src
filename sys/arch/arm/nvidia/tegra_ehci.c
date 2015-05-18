@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.5 2015/05/18 09:56:43 skrll Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.6 2015/05/18 11:07:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.5 2015/05/18 09:56:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.6 2015/05/18 11:07:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,7 +98,6 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_bus.hci_private = &sc->sc;
 	sc->sc.sc_bus.dmatag = tio->tio_dmat;
 	sc->sc.sc_bus.usbrev = USBREV_2_0;
-	sc->sc.sc_vendor_port_status = tegra_ehci_port_status;
 	sc->sc.sc_ncomp = 0;
 	sc->sc.sc_flags = EHCIF_ETTF;
 	sc->sc.sc_id_vendor = 0x10de;
@@ -109,6 +108,7 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	    loc->loc_offset + TEGRA_EHCI_REG_OFFSET,
 	    loc->loc_size - TEGRA_EHCI_REG_OFFSET, &sc->sc.ioh);
 	sc->sc.sc_vendor_init = tegra_ehci_init;
+	sc->sc.sc_vendor_port_status = tegra_ehci_port_status;
 
 	aprint_naive("\n");
 	aprint_normal(": USB%d\n", loc->loc_port + 1);
@@ -316,14 +316,14 @@ tegra_ehci_utmip_init(struct tegra_ehci_softc *sc)
 	}
 }
 
-
 static int
-tegra_ehci_port_status(struct ehci_softc *sc, uint32_t v, int i)
-{
-	bus_space_tag_t iot = sc->iot;
-	bus_space_handle_t ioh = sc->ioh;
-
-	i &= ~UPS_HIGH_SPEED;
+tegra_ehci_port_status(struct ehci_softc *ehci_sc, uint32_t v, int i)
+ {
+	struct tegra_ehci_softc * const sc = device_private(ehci_sc->sc_dev);
+	bus_space_tag_t iot = sc->sc_bst;
+	bus_space_handle_t ioh = sc->sc_bsh;
+ 
+	i &= ~(UPS_HIGH_SPEED|UPS_LOW_SPEED);
 
 	uint32_t val = bus_space_read_4(iot, ioh,
 	    TEGRA_EHCI_HOSTPC1_DEVLC_REG);
