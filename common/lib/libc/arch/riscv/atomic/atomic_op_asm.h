@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.1 2014/09/19 17:36:24 matt Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.2 2015/05/18 08:24:10 justin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,9 +37,6 @@
 #if defined(_KERNEL) || defined(_STANDALONE)
 
 #define	ATOMIC_OP_ALIAS(a,s)	STRONG_ALIAS(a,s)
-#ifdef _RUMPKERNEL
-#define	CRT_ALIAS(a,s)		STRONG_ALIAS(a,s)
-#endif
 
 #else /* _KERNEL */
 
