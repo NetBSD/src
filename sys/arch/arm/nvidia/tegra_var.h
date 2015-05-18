@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.16 2015/05/15 11:50:30 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.17 2015/05/18 19:32:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -53,6 +53,18 @@ struct tegraio_attach_args {
 	bus_dma_tag_t tio_coherent_dmat;
 };
 
+struct tegrafb_attach_args {
+	bool tfb_console;
+	bus_dma_tag_t tfb_dmat;
+	bus_dmamap_t tfb_dmamap;
+	void *tfb_dmap;
+	u_int tfb_width;
+	u_int tfb_height;
+	u_int tfb_depth;
+	u_int tfb_stride;
+	device_t tfb_outputdev;
+};
+
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
 extern bus_space_handle_t tegra_host1x_bsh;
@@ -81,6 +93,7 @@ u_int	tegra_car_pllx_rate(void);
 void	tegra_car_pllx_set_rate(u_int, u_int, u_int);
 u_int	tegra_car_pllu_rate(void);
 u_int	tegra_car_pllp0_rate(void);
+u_int	tegra_car_plld2_rate(void);
 u_int	tegra_car_uart_rate(u_int);
 u_int	tegra_car_periph_sdmmc_rate(u_int);
 int	tegra_car_periph_sdmmc_set_div(u_int, u_int);
@@ -90,6 +103,8 @@ void	tegra_car_periph_sata_enable(void);
 int	tegra_car_periph_i2c_enable(u_int, u_int);
 void	tegra_car_utmip_init(void);
 void	tegra_car_utmip_enable(u_int);
+void	tegra_car_hdmi_enable(u_int);
+int	tegra_car_dc_enable(u_int);
 
 struct tegra_gpio_pin;
 struct tegra_gpio_pin *tegra_gpio_acquire(const char *, u_int);
@@ -125,6 +140,11 @@ void	tegra_pmc_remove_clamping(u_int);
 psize_t	tegra_mc_memsize(void);
 
 void	tegra_xusbpad_sata_enable(void);
+
+struct videomode;
+int	tegra_dc_port(device_t);
+int	tegra_dc_enable(device_t, device_t, const struct videomode *);
+void	tegra_dc_hdmi_start(device_t);
 
 #define TEGRA_CPUFREQ_MAX	16
 struct tegra_cpufreq_func {
