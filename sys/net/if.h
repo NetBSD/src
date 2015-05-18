@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.189 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: if.h,v 1.190 2015/05/18 06:38:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -884,6 +884,7 @@ int	if_addr_init(ifnet_t *, struct ifaddr *, bool);
 int	if_do_dad(struct ifnet *);
 int	if_mcast_op(ifnet_t *, const unsigned long, const struct sockaddr *);
 int	if_flags_set(struct ifnet *, const short);
+int	if_clone_list(int, char *, int *);
 
 void ifa_insert(struct ifnet *, struct ifaddr *);
 void ifa_remove(struct ifnet *, struct ifaddr *);
