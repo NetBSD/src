@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.58.34.1 2015/05/16 04:06:04 snj Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.58.34.2 2015/05/18 01:56:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.58.34.1 2015/05/16 04:06:04 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.58.34.2 2015/05/18 01:56:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -472,7 +472,7 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 	}
 
 	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {
-		aprint_error_dev(dc->dc_sc->sc_dev, "rasops_init() failed!")
+		aprint_error_dev(dc->dc_sc->sc_dev, "rasops_init() failed!");
 		return -1;
 	}
 
