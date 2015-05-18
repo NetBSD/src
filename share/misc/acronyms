@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.236 2015/05/09 18:18:32 dholland Exp $
+$NetBSD: acronyms,v 1.237 2015/05/18 11:56:20 pooka Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -352,6 +352,7 @@ O2W	off to work
 OAO	over and out
 OBV	obviously
 OBVS	obviously
+ODTW	others do the work (cf. "otdw source")
 OFC	of course
 OH	other half
 OIC	oh, I see
