@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dwctwo.c,v 1.10 2015/04/28 15:07:07 macallan Exp $ */
+/*	$NetBSD: ingenic_dwctwo.c,v 1.11 2015/05/18 15:11:47 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.10 2015/04/28 15:07:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.11 2015/05/18 15:11:47 macallan Exp $");
 
 /*
  * adapted from bcm2835_dwctwo.c
@@ -154,6 +154,10 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	reg = readreg(JZ_USBPCR1);
+#ifdef INGENIC_DEBUG
+	printf("JZ_USBPCR1 %08x\n", reg);
+#endif
+	reg &= ~0xf0000000;
 	reg |= PCR_SYNOPSYS;
 	reg |= PCR_REFCLK_CORE;
 	reg &= ~PCR_CLK_M;
@@ -166,6 +170,7 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 	printf("JZ_USBRDT  %08x\n", readreg(JZ_USBRDT));
 #endif
 
+	writereg(JZ_USBVBFIL, 0);
 	delay(10000);
 
 	reg = readreg(JZ_USBPCR);
@@ -176,6 +181,11 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 	writereg(JZ_USBPCR, reg);
 
 	delay(10000);
+
+	/* wake up the USB part */
+	reg = readreg(JZ_OPCR);
+	reg |= OPCR_SPENDN0;
+	writereg(JZ_OPCR, reg);
 
 	sc->sc_ih = evbmips_intr_establish(aa->aa_irq, dwc2_intr, &sc->sc_dwc2);
 
