@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.17 2015/05/04 12:16:24 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.18 2015/05/18 15:03:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -269,6 +269,7 @@ MFC0(uint32_t r, uint32_t s)
 	#define PCR_TXHSXVTUNE		0x00000030
 	#define PCR_TXVREFTUNE		0x0000000f
 #define JZ_USBRDT	0x10000040	/* Reset Detect Timer Register */
+#define JZ_USBVBFIL	0x10000044
 #define JZ_USBPCR1	0x10000048
 	#define PCR_SYNOPSYS	0x10000000	/* Mentor mode otherwise */
 	#define PCR_REFCLK_CORE	0x0c000000
@@ -305,6 +306,27 @@ MFC0(uint32_t r, uint32_t s)
 #define JZ_SPCR0	0x100000b8	/* SRAM Power Control Registers */
 #define JZ_SPCR1	0x100000bc
 #define JZ_SRBC		0x100000c4	/* Soft Reset & Bus Control */
+
+/* clock divider registers */
+#define JZ_MSC0CDR	0x10000068
+	#define MSCCDR_SCLK_A	0x40000000
+	#define MSCCDR_MPLL	0x80000000
+	#define MSCCDR_CE	0x20000000
+	#define MSCCDR_BUSY	0x10000000
+	#define MSCCDR_STOP	0x08000000
+	#define MSCCDR_PHASE	0x00008000	/* 0 - 90deg phase, 1 - 180 */
+	#define MSCCDR_DIV_M	0x000000ff	/* src / ((div + 1) * 2) */
+#define JZ_UHCCDR	0x1000006c	/* UHC Clock Divider Register */
+	#define UHCCDR_SCLK_A	0x00000000
+	#define UHCCDR_MPLL	0x40000000
+	#define UHCCDR_EPLL	0x80000000
+	#define UHCCDR_OTG_PHY	0xc0000000
+	#define UHCCDR_CE	0x20000000
+	#define UHCCDR_BUSY	0x10000000
+	#define UHCCDR_STOP	0x08000000
+	#define UHCCDR_DIV_M	0x000000ff
+#define JZ_MSC1CDR	0x100000a4
+#define JZ_MSC2CDR	0x100000a8
 
 /* interrupt controller */
 #define JZ_ICSR0	0x10001000	/* raw IRQ line status */
