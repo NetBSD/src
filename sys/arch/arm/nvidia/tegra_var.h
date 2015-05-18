@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.18 2015/05/18 20:36:42 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.19 2015/05/18 21:03:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -137,6 +137,7 @@ bool	tegra_mpio_pinmux_get_rcv_sel(u_int);
 void	tegra_pmc_reset(void);
 void	tegra_pmc_power(u_int, bool);
 void	tegra_pmc_remove_clamping(u_int);
+void	tegra_pmc_hdmi_enable(void);
 
 psize_t	tegra_mc_memsize(void);
 
