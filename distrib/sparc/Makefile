@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2015/05/18 06:25:05 martin Exp $
+#	$NetBSD: Makefile,v 1.10 2015/05/19 06:58:52 martin Exp $
 
-SUBDIR=		instfs ramdisk .WAIT bootfs instkern .WAIT cdroms liveimage
+SUBDIR=		instfs ramdisk .WAIT bootfs .WAIT cdroms liveimage
 TARGETS+=	release
 
 iso_image:
