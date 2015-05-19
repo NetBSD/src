@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.20 2011/05/28 06:00:12 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.21 2015/05/19 19:30:29 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,12 +67,12 @@ kernel containing code for everything supported in this release.
 .
 A gzipped
 .Nx
-kernel containing code for everything supported in this release.  This 
+kernel containing code for everything supported in this release.  This
 kernel supports SMP on systems with more than one CPU.
 .
 .			It Pa netbsd-GENERIC_SCSI3.gz
 .
-A kernel with SCSI ID 3 explicitly mapped to 
+A kernel with SCSI ID 3 explicitly mapped to
 .Li sd0 .
 .
 .			It Pa netbsd-KRUPS.gz
@@ -89,8 +89,8 @@ A kernel for JavaStation-1 (Mr. Coffee) machines using OpenFirmware.
 .
 .			It Pa netbsd-GENERIC_SUN4U.gz
 .
-A kernel which supports sparc64 hardware in 32-bit mode only.  See the 
-sparc64 INSTALL notes for help installing this kernel on your sparc64 
+A kernel which supports sparc64 hardware in 32-bit mode only.  See the
+sparc64 INSTALL notes for help installing this kernel on your sparc64
 hardware.
 .
 .		tag) \" binary/kernel/
@@ -219,7 +219,7 @@ This set contains a
 .Nx*M
 \*V
 .Li GENERIC_SCSI3
-kernel, which will set SCSI ID 3 to 
+kernel, which will set SCSI ID 3 to
 .Li sd0 ,
 named
 .Pa /netbsd .
@@ -267,6 +267,9 @@ This set includes the system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
 .
+.It Sy modules
+This set includes kernel modules to add functionality to a running system.
+.
 .It Sy text
 This set includes
 .Nx Ns 's
@@ -306,7 +309,7 @@ Fonts needed by the X server and by X clients.
 Configuration files for X which could be locally modified.
 .
 .It Sy xserver
-The X server. 
+The X server.
 This includes Xsun, Xsun24, XsunMono and Xvfb servers with man pages.
 .
 .tag) \" x sets
@@ -336,7 +339,7 @@ Therefore, if you want to extract the binaries into your system, i.e.
 replace the system binaries with them, you have to run the
 .Ic "tar -xzpf"
 command from the root directory (
-.Pa / 
+.Pa /
 ) of your system.
 .
 .
