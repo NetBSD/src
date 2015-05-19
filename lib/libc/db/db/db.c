@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.16 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: db.c,v 1.16.40.1 2015/05/19 05:11:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.16 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: db.c,v 1.16.40.1 2015/05/19 05:11:58 snj Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -59,7 +59,7 @@ dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
 #define	DB_FLAGS	(DB_LOCK | DB_SHMEM | DB_TXN)
 #define	USE_OPEN_FLAGS							\
 	(O_CREAT | O_EXCL | O_EXLOCK | O_NONBLOCK | O_RDONLY |		\
-	 O_RDWR | O_SHLOCK | O_TRUNC)
+	 O_RDWR | O_SHLOCK | O_TRUNC | O_CLOEXEC)
 
 	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)
 		switch (type) {
