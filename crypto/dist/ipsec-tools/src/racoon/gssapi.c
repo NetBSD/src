@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.c,v 1.5 2015/05/19 15:14:25 christos Exp $	*/
+/*	$NetBSD: gssapi.c,v 1.6 2015/05/19 15:16:00 christos Exp $	*/
 
 /*	$KAME: gssapi.c,v 1.19 2001/04/03 15:51:55 thorpej Exp $	*/
 
@@ -192,6 +192,11 @@ gssapi_init(struct ph1handle *iph1)
 	gss_name_t princ, canon_princ;
 	OM_uint32 maj_stat, min_stat;
 
+	if (iph1->rmconf == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "no remote config\n");
+		return -1;
+	}
+
 	gps = racoon_calloc(1, sizeof (struct gssapi_ph1_state));
 	if (gps == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL, "racoon_calloc failed\n");
@@ -202,10 +207,6 @@ gssapi_init(struct ph1handle *iph1)
 
 	gssapi_set_state(iph1, gps);
 
-	if (iph1->rmconf == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL, "no remote config\n");
-		return -1;
-	}
 	if (iph1->rmconf->proposal->gssid != NULL) {
 		id_token.length = iph1->rmconf->proposal->gssid->l;
 		id_token.value = iph1->rmconf->proposal->gssid->v;
