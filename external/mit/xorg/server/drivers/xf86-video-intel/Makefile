@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.2.2 2015/01/21 11:32:07 martin Exp $
+#	$NetBSD: Makefile,v 1.15.2.3 2015/05/19 05:17:47 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -144,7 +144,7 @@ CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/xvmc
 
 # Use the Intel-style __sync_* atomic primitives.
 
-CPPFLAGS+=	-DDEFAULT_ACCEL_METHOD=UXA
+CPPFLAGS+=	-DDEFAULT_ACCEL_METHOD=SNA
 CPPFLAGS+=	-DENABLE_XVMC=1
 CPPFLAGS+=	-DHAS_PIXMAN_GLYPHS=1
 CPPFLAGS+=	-DHAS_PIXMAN_TRIANGLES=1
