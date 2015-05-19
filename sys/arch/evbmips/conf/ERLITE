@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.6 2015/05/17 14:17:52 martin Exp $
+#	$NetBSD: ERLITE,v 1.7 2015/05/19 02:30:57 matt Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.6 $"
+#ident 		"ERLITE-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -70,7 +70,7 @@ file-system	KERNFS		# kernel data-structure filesystem
 file-system	PROCFS		# /proc
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	UNION		# union file system
-#file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
+file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
 
