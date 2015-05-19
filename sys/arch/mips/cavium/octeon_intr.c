@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.1 2015/04/29 08:32:00 hikaru Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.2 2015/05/19 05:51:16 matt Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.1 2015/04/29 08:32:00 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.2 2015/05/19 05:51:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -78,7 +78,7 @@ static const struct ipl_sr_map octeon_ipl_sr_map = {
 
 #define	NIRQS		64
 
-const char *octeon_intrnames[NIRQS] = {
+const char * const octeon_intrnames[NIRQS] = {
 	"workq 0",
 	"workq 1",
 	"workq 2",
@@ -156,6 +156,7 @@ struct octeon_intrhand {
 
 struct octeon_intrhead {
 	LIST_HEAD(, octeon_intrhand) intr_list;
+	struct evcnt intr_count;
 	int intr_refcnt;
 };
 
@@ -169,7 +170,7 @@ struct octeon_cpuintr {
 #define	NINTRS		5	/* MIPS INT0 - INT4 */
 
 struct octeon_cpuintr octeon_cpuintrs[NINTRS];
-const char *octeon_cpuintrnames[NINTRS] = {
+const char * const octeon_cpuintrnames[NINTRS] = {
 	"int 0 (IP2)",
 	"int 1 (IP3)",
 	"int 2 ",
@@ -286,6 +287,8 @@ octeon_intr_init(void)
 	for (size_t i = 0; i < NIRQS; i++) {
 		LIST_INIT(&octeon_ciu_intrtab[i].intr_list);
 		octeon_ciu_intrtab[i].intr_refcnt = 0;
+		evcnt_attach_dynamic(&octeon_ciu_intrtab[i].intr_count,
+		    EVCNT_TYPE_INTR, NULL, "octeon", octeon_intrnames[i]);
 	}
 }
 
@@ -414,7 +417,7 @@ octeon_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 	int level, irq;
 	uint64_t hwpend = 0;
 
-	asm (".set mips64; clz %0,%1; .set mips0" : "=r"(level) : "r"(ipending));
+	level = __builtin_clz(ipending);
 	switch (level = 21 - level) {
 	case 0: // MIPS_INT_MASK_0
 		hwpend = octeon_read_csr(CIU_INT0_SUM0) & int0_enable0;
@@ -429,6 +432,7 @@ octeon_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 	}
 	if ((irq = ffs64(hwpend) - 1) < 0)
 		return;
+	octeon_ciu_intrtab[irq].intr_count.ev_count++;
 	LIST_FOREACH(ih, &octeon_ciu_intrtab[irq].intr_list, ih_q) {
 		(*ih->ih_func)(ih->ih_arg);
 	}
