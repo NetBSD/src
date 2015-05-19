@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.41 2015/05/09 08:13:34 snj Exp $
+.\"	$NetBSD: macros,v 1.42 2015/05/19 19:45:57 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -163,31 +163,6 @@
 .de Ul
 .Ux Ns -like
 ..
-.
-.\" setsize <G> <U>
-.\"	Remember <G> and <U> for the next showsize
-.\" showsize [<G> <U>]
-.\"	Display "<G> MB gzipped, <U> MB uncompressed" on a new line,
-.\"	and then reset the values of <G> and <U> to '-unset-'.
-.\"	Values can be generated with something like this:
-.\"		gzip -l *.tgz | \
-.\"		awk '/\.tar/ { printf ".if \\n[%s] .setsize %d %d\n", \
-.\"		    substr($4,0,index($4, "/")-1), \
-.\"		    ( $1+1048575 ) /1048576, \
-.\"		    ( $2 + 1048575) / 1048576 } '
-.\"
-.
-.de setsize
-\.ds set_gzip \\$[1]
-\.ds set_gunzip \\$[2]
-..
-.de showsize
-.br
-.if \\n(.$==2 .setsize \\$*
-.Em \\*[set_gzip] MB gzipped, \\*[set_gunzip] MB uncompressed
-.setsize -unset- -unset-
-..
-.setsize -unset- -unset-
 .
 .\" .Bc/.Ec; begin/end two-column mode. This may not work in all
 .\" cases, but was designed for common/donations. There is no
