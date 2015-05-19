@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.9 2015/05/14 17:15:56 matt Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.10 2015/05/19 09:20:19 hsuenaga Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -41,6 +41,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arm/asm.h>
 #include <arm/locore.h>
 
+#define MV_FMC0_SMP		(1 << 1) /* SMP/nAMP enable */
+#define MV_FMC0_PARITY		(1 << 2) /* Enable L1 Cache Parity */
+#define MV_FMC0_LFDIS		(1 << 7) /* Disable DC Speculative linefill*/
+#define MV_FMC0_FW		(1 << 8) /* Cache & TLB maintenance broadcast */
+
+#define MPIDR_CPUID_MASK	(0x3 << 0) /* CPUID */
+#define MPIDR_CLUSTERID_MASK	(0xf << 8) /* CLUSTERID */
+#define MPIDR_UNI_PROCESSOR	(1 << 30)  /* Uni-Processor System */
+#define MPIDR_MPCORE		(1 << 31)  /* New Style MPCore like CortexA9 */
+
 /* LINTSTUB: void pj4b_cpu_sleep(int); */
 ENTRY(pj4b_cpu_sleep)
 	dsb
@@ -51,21 +61,21 @@ END(pj4b_cpu_sleep)
 
 /* LINTSTUB: void pj4b_config(void); */
 ENTRY(pj4b_config)
-	/* Set Auxiliary Debug Modes Control 0 register */
+	/* Set Marvell Auxiliary Debug Modes Control 0 register */
 	mrc	p15, 1, r0, c15, c1, 0
 	bic	r0, r0, #(1 << 12)	@ Erratum#ARM-CPU-6136
 					@ LDSTM 1st issue is single word
 	orr	r0, r0, #(1 << 22)	@ DVM_WAKEUP enable
 	mcr	p15, 1, r0, c15, c1, 0
 
-	/* Set Auxiliary Debug Modes Control 1 register */
+	/* Set Marvell Auxiliary Debug Modes Control 1 register */
 	mrc	p15, 1, r0, c15, c1, 1
 	bic	r0, r0, #(1 << 2)	@ Erratum#ARM-CPU-6409
 					@ Disable static branch prediction
 	orr	r0, r0, #(1 << 5)	@ STREX backoff disable
 	mcr	p15, 1, r0, c15, c1, 1
 
-	/* Set Auxiliary Debug Modes Control 2 register */
+	/* Set Marvell Auxiliary Debug Modes Control 2 register */
 	mrc	p15, 1, r0, c15, c1, 2
 	bic	r0, r0, #(1 << 23)	@ Enable fast LDR
 	orr	r0, r0, #(1 << 25)	@ Intervention Interleave disable
@@ -75,13 +85,18 @@ ENTRY(pj4b_config)
 	orr	r0, r0, #(1 << 31)	@ Enable write evict
 	mcr	p15, 1, r0, c15, c1, 2
 
-	/* Set Auxiliary FUnction Modes Control 0 register */
-	mrc	p15, 1, r0, c15, c2, 0
-#ifdef MULTIPROCESSOR
-	orr	r0, r0, #(1 << 1)	@ SMP/nAMP enable
-#endif
-	orr	r0, r0, #(1 << 2)	@ L2 parity enable
-	orr	r0, r0, #(1 << 8)	@ Cache & TLB maintenance broadcast
+	/* Set Marvell Auxiliary Function Modes Control 0 register */
+	mrc	p15, 1, r0, c15, c2, 0		@ get FMC0
+	mrc	p15, 0, ip, c0, c0, 5		@ get MPIDR
+	tst	ip, #MPIDR_MPCORE
+	beq	1f				@ if not set, not a MPCORE
+	tst	ip, #MPIDR_UNI_PROCESSOR
+	bne	1f				@ if set, uni-processor system 
+	orr	r0, r0, #(MV_FMC0_SMP)		@ enable SMP/nAMP
+	orr	r0, r0, #(MV_FMC0_FW)		@ enable maintenance bcast
+1:
+	bic	r0, r0, #(MV_FMC0_LFDIS)	@ enable speculative linefill
+	orr	r0, r0, #(MV_FMC0_PARITY)	@ enable L1 parity
 	mcr	p15, 1, r0, c15, c2, 0
 
 	RET
@@ -97,7 +112,7 @@ ENTRY_NP(pj4b_io_coherency_barrier)
 1:
 	ldr	r1, [r0]
 	tst	r1, #1
-	beq	1b
+	bne	1b		@ if set, CIB is busy.
 	dsb
 	RET
 END(pj4b_io_coherency_barrier)
