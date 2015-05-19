@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.17 2014/12/22 17:01:42 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.18 2015/05/19 13:20:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.17 2014/12/22 17:01:42 christos Exp $");
+__RCSID("$NetBSD: db.c,v 1.18 2015/05/19 13:20:52 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -49,6 +49,10 @@ static int __dberr(void);
 
 #ifdef __weak_alias
 __weak_alias(dbopen,_dbopen)
+#endif
+
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
 #endif
 
 DB *
