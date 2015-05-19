@@ -1,33 +1,26 @@
-.\"	$NetBSD: hardware,v 1.27 2009/01/26 00:14:42 snj Exp $
+.\"	$NetBSD: hardware,v 1.28 2015/05/19 19:30:29 snj Exp $
 .
 .Ss2 Supported machines
-The minimal configuration requires 32 MB of RAM and ~120 MB of disk space.
+The minimal configuration requires 32 MB of RAM and ~180 MB of disk space.
 To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended, as
-.Nx
-with 32 MB of RAM feels like
-.Tn Solaris
-with 32 MB of RAM - slow.
+X or compile the system, more RAM is recommended.
 Note that until you have at least 64 MB of RAM, getting more RAM is more
 important than getting a faster CPU.
 .Pp
-Not all of the machines listed here have been tested.  Often Sun will use 
-the same motherboard design in multiple models.  For example, they'll 
-release a Blade ("workstation") model, Enterprise or Fire ("server") 
-model, and Netra or ft ("telco") model with essentially the same devices, 
-as far as
+Not all of the machines listed here have been tested.
+Often Sun used the same motherboard design in multiple models.
+For example, there might be a Blade ("workstation") model, Enterprise
+or Fire ("server") model, and Netra or ft ("telco") model with essentially
+the same devices, as far as
 .Nx
-is concerned.  If one model in this scheme works, it is highly likely 
-another will work.  
+is concerned.
+If one model in this scheme works, it is highly likely another will work.  
 .Pp
 Sun has also released a few models with names that 
 might imply the systems are UltraSPARC-based but actually have an
-i386 class CPU.  These systems might be supported by the i386 port of
+i386/amd64 class CPU.
+These systems might be supported by the i386 or amd64 ports of
 .Nx .
-See the following site for more info on what system boards are in which 
-models.
-.Lk http://sunsolve.sun.com/handbook_pub/Devices/System_Board/SYSBD_TOC.html
-(requires a SunSolve login with a valid Sun Service Plan)
 .(bullet -offset indent
 Sbus-based UltraSPARC I or II systems 
 .(bullet -compact
@@ -40,7 +33,7 @@ Enterprise (3000, 3500, 4000, 4500, 500x, 5500, 600x, 6500, 10000)
 .\" SPARCengine Ultra AX
 .bullet)
 .It
-PCI-based UltraSPARC II, IIi, or IIe systems
+PCI-based UltraSPARC II, IIi, IIe, III, or IIIi systems
 .(bullet -compact
 Ultra 5/10 family (Ultra 5, Ultra 10, Enterprise 5, Enterprise 10)
 .It
@@ -54,7 +47,7 @@ Ultra 250 family (Enterprise 250 and E250R)
 .It
 Ultra 450 family (Ultra 450, Enterprise 450, Netra ft 1800)
 .It
-Blade 100 and 150
+SunBlade 100 and 150
 .It
 SPARCengine CP1400 or SPARCengine CP1500 system boards (Netra T1 
 (models 100 and 105), CT400, CT800, CT1600)
@@ -63,6 +56,14 @@ SPARCengine Ultra AXi family (Netra X1, Fire v100, Fire v120, Netra 120,
 Netra AC 200, Netra DC 200)
 .It
 SPARCengine Ultra AXe system board
+.It
+SunBlade 1000 and 2000
+.It
+SunBlade 1500, 2500 (Red and Silver)
+.It
+Ultra 25 and 45
+.It
+Sun Fire v125, v210, v215, v240, v245, v250, v440, v445, v480
 .\" UltraSPARC II
 .\" SPARCengine Ultra AXdp
 .\"
@@ -78,27 +79,20 @@ SPARCengine Ultra AXe system board
 .
 .Ss2 Unsupported machines
 .(bullet -offset indent
-Systems with an UltraSPARC III CPU
-.\" Blade 1000 and 2000 
+.\"Systems with an UltraSPARC III CPU
 .\" Fire 280R and Netra 20 (T4)
-.\" Fire v480 and Fire v880
+.\" Fire v880
 .\" Netra T12 (Fire v1280 and Netra 1280)
 .\" Fire (3800, 4800, 4810, 6800), Fire 12K and Fire 15K
-.It
-Systems with an UltraSPARC IIIi CPU
-.\" Blade 1500
-.\" Blade 2500
-.\" Fire v210
-.\" Fire v240 and Netra 240
-.\" Fire v250
-.\" Fire v440
-.It
+.\".It
 Systems with an UltraSPARC IV CPU
 .\" Fire E2900
 .\" Fire E4900
 .\" Fire E6900
 .It
-Systems with an UltraSPARC T1 or T2
+Systems with an UltraSPARC T1-T5 CPU
+.It
+Systems with a Fujitsu SPARC64 CPU
 .bullet)
 .
 .Ss2 Supported devices
