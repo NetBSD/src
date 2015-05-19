@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: gssapi.c,v 1.5 2015/05/19 15:14:25 christos Exp $	*/
 
 /*	$KAME: gssapi.c,v 1.19 2001/04/03 15:51:55 thorpej Exp $	*/
 
@@ -202,6 +202,10 @@ gssapi_init(struct ph1handle *iph1)
 
 	gssapi_set_state(iph1, gps);
 
+	if (iph1->rmconf == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "no remote config\n");
+		return -1;
+	}
 	if (iph1->rmconf->proposal->gssid != NULL) {
 		id_token.length = iph1->rmconf->proposal->gssid->l;
 		id_token.value = iph1->rmconf->proposal->gssid->v;
