@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.301 2015/05/16 18:15:33 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.302 2015/05/19 04:19:49 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23204,7 +23204,7 @@ usr.sbin/postinstall/postinstall		1.184, 1.187
 
 sys/arch/sgimips/dev/scn.c			1.8
 sys/arch/sgimips/mace/macekbc.c			1.8
-sys/dev/hpc/hpcfb.c				1.59
+sys/dev/hpc/hpcfb.c				1.59, 1.60
 sys/dev/i2c/i2c.c				1.47
 sys/dev/ic/mfi.c				1.57
 sys/dev/if_ndis/if_ndis_pci.c			1.21
