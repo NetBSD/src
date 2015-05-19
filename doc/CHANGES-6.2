@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.217 2015/05/02 16:22:10 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.218 2015/05/19 05:45:56 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11487,12 +11487,17 @@ sys/dev/pci/if_wmvar.h				1.20 via patch
 	  check the flag in wm_detach(). It will avoid to panic in wm_detach().
 	  Fixes PR#49102.
 	- Support DH89xxCC device.
-	- Add extra delay for 82580 and newer devices except DH89XXCC SGMII device.
-	  Same as FreeBSD.
+	- Add extra delay for 82580 and newer devices except DH89XXCC SGMII
+	  device.  Same as FreeBSD.
 	[msaitoh, ticket #1296]
 
 distrib/sparc64/liveimage/emuimage/Makefile	1.4
 
 	Don't forget to put /ofwboot into the image otherwise boot fails.
 	[tsutsui, ticket #1297]
+
+sys/arch/vax/vax/ka660.c			1.11
+
+	Make VAX 4000/200 boot again.  PR port-vax/49884
+	[ragge, ticket #1298]
 
