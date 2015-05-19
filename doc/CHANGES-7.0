@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.302 2015/05/19 04:19:49 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.303 2015/05/19 05:37:18 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23273,4 +23273,72 @@ crypto/external/bsd/openssh/dist/compat.c	1.10
 
 	Pass the correct length to match_patter_list. From Hanno Boeck.
 	[christos, ticket #783]
+
+sbin/veriexecctl/veriexecctl.c			1.38
+share/man/man9/veriexec.9			1.10
+sys/conf/files					1.1128
+sys/dev/verified_exec.c				1.70, 1.71
+sys/kern/kern_veriexec.c			1.1-1.8
+sys/kern/kern_verifiedexec.c			delete
+
+	Sync Veriexec with HEAD: mostly cleanup and consistency.
+	[maxv, ticket #764]
+
+sys/kern/subr_disk.c				1.113
+
+	in bounds_check_with_*, reject negative block numbers and avoid
+	a potential overflow in calculating the size of the request.
+	[chs, ticket #766]
+
+sys/nfs/nfs_vnops.c				1.308
+
+	in nfs_writerpc(), avoid a signed/unsigned problem in computing
+	the number of bytes to back up in the uio when we need to
+	resend a write RPC (eg. after a server crash) on a 64-bit
+	platform.  PR 35448.
+	[chs, ticket #769]
+
+sys/arch/arm/arm32/pmap.c			1.308
+
+	pmap_tlb_flushD is for !ARM_MMU_EXTENDED only now
+	[joerg, ticket #777]
+
+lib/libm/compiler_rt/Makefile.inc		1.7-1.9
+
+	- Complex division for long double uses different function
+	  names on PPC.
+	- PPC64 uses the double-double code too
+	- Add missing muldc3.c.
+	[joerg, ticket #778]
+
+sys/dev/pci/if_wm.c				1.321
+sys/dev/pci/if_wmreg.h				1.71
+sys/dev/pci/if_wmvar.h				1.24 via patch
+
+	Add support iNVM (integrated Non-Volatile Memory) for I21[01].
+	This change fixes a bug that a MAC address is wrongly set on
+	iNVM machines/NICs.
+	[msaitoh, ticket #784]
+
+lib/libc/db/db/db.c				1.17
+
+	Whitelist O_CLOEXEC flag.
+	[christos, ticket #785]
+
+external/mit/xorg/server/drivers/xf86-video-intel/Makefile 1.21
+
+	For xf86-video-intel, switch the default method to SNA.
+	[mrg, ticket #786]
+
+sys/external/bsd/drm2/dist/drm/radeon/radeon_display.c 1.4
+
+	Don't apply the "don't set CLUT" to RV280.
+	[mrg, ticket #787]
+
+xsrc/external/mit/xf86-video-intel/dist/src/sna/kgem.c 1.5
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_display.c 1.4
+
+	Remove differences with upstream xf86-video-intel which
+	are no longer necessary.
+	[mrg, ticket #788]
 
