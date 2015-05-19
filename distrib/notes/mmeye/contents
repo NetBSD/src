@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.2 2012/08/17 20:10:54 riz Exp $
+.\"	$NetBSD: contents,v 1.3 2015/05/19 19:30:28 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -177,8 +177,8 @@ This set includes the system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
 .
-.It Sy modules 
-This set includes kernel modules to add functionality to a running system. 
+.It Sy modules
+This set includes kernel modules to add functionality to a running system.
 .
 .It Sy text
 This set includes
@@ -248,7 +248,7 @@ Therefore, if you want to extract the binaries into your system, i.e.
 replace the system binaries with them, you have to run the
 .Ic "tar -xzpf"
 command from the root directory (
-.Pa / 
+.Pa /
 ) of your system.
 .
 .
