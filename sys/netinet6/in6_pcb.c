@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.140 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.141 2015/05/19 01:14:40 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.140 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.141 2015/05/19 01:14:40 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -229,7 +229,7 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 			bcopy(&sin6->sin6_addr.s6_addr32[3],
 			    &sin.sin_addr, sizeof(sin.sin_addr));
 			if (!IN_MULTICAST(sin.sin_addr.s_addr) &&
-			    ifa_ifwithaddr((struct sockaddr *)&sin) == 0)
+			    ifa_ifwithaddr((struct sockaddr *)&sin) == NULL)
 				return EADDRNOTAVAIL;
 		}
 	} else if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
@@ -238,7 +238,7 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 		struct ifaddr *ia = NULL;
 
 		if ((in6p->in6p_flags & IN6P_FAITH) == 0 &&
-		    (ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == 0)
+		    (ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == NULL)
 			return (EADDRNOTAVAIL);
 
 		/*
@@ -504,7 +504,7 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 			sizeof(sin.sin_addr));
 		sinp = in_selectsrc(&sin, &in6p->in6p_route,
 			in6p->in6p_socket->so_options, NULL, &error);
-		if (sinp == 0) {
+		if (sinp == NULL) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
 			return (error);
@@ -531,7 +531,7 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 			return(error);
 		}
 
-		if (in6a == 0) {
+		if (in6a == NULL) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
 			return (error);
@@ -802,7 +802,7 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 			goto do_notify;
 		else if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr,
 					     &sa6_dst->sin6_addr) ||
-		    in6p->in6p_socket == 0 ||
+		    in6p->in6p_socket == NULL ||
 		    (lport && in6p->in6p_lport != lport) ||
 		    (!IN6_IS_ADDR_UNSPECIFIED(&sa6_src.sin6_addr) &&
 		     !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr,
@@ -931,7 +931,7 @@ in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6,
 {
 	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
-	struct in6pcb *in6p, *match = 0;
+	struct in6pcb *in6p, *match = NULL;
 	int matchwild = 3, wildcard;
 	u_int16_t lport = lport_arg;
 
@@ -1175,7 +1175,7 @@ in6_pcblookup_connect(struct inpcbtable *table, const struct in6_addr *faddr6,
 	if (vp && table->vestige) {
 		if ((*table->vestige->lookup6)(faddr6, fport_arg,
 					       laddr6, lport_arg, vp))
-			return 0;
+			return NULL;
 	}
 
 	return NULL;
