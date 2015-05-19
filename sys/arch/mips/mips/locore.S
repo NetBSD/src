@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.190 2013/03/01 18:25:47 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.191 2015/05/19 00:00:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,6 +90,28 @@ _C_LABEL(kernel_text):
 #else
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
+#endif
+#ifdef MIPS64_OCTEON
+	//
+	// U-boot on the erlite starts all cpus at the kernel entry point.
+	// Use EBASE to find our CPU number and if it's not 0, call
+	// octeon_cpu_spinup if MP or loop using the wait instruction since
+	// non-primary CPUs can't do anything useful.
+	//
+	mfc0	a0, $15, 1			# EBASE
+	COP0_SYNC
+	and	a0, 0x1ff			# get CPU number
+	beqz	a0, 2f				# normal startup if 0
+	nop
+#ifdef MULTIPROCESSOR
+	j	_C_LABEL(octeon_cpu_spinup)
+	nop
+#else
+1:	wait
+	b	1b
+	nop
+#endif /* MIPS64_OCTEON */
+2:
 #endif
 /*
  * Initialize stack and call machine startup.
