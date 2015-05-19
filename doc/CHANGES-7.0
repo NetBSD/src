@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.303 2015/05/19 05:37:18 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.304 2015/05/19 14:16:33 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23341,4 +23341,9 @@ xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_display.c 1.4
 	Remove differences with upstream xf86-video-intel which
 	are no longer necessary.
 	[mrg, ticket #788]
+
+lib/libc/db/db/db.c				1.18
+
+	Fix the build for ancient (rhel5) systems that don't have O_CLOEXEC
+	[christos, ticket #791]
 
