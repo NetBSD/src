@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.13 2015/05/14 05:39:32 hsuenaga Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.14 2015/05/19 09:20:19 hsuenaga Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.13 2015/05/14 05:39:32 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.14 2015/05/19 09:20:19 hsuenaga Exp $");
 
 #define _INTR_PRIVATE
 
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.13 2015/05/14 05:39:32 hsuenaga Exp $
 
 #include <machine/intr.h>
 
-#include <arm/pic/picvar.h>
 #include <arm/pic/picvar.h>
 
 #include <arm/armreg.h>
@@ -434,7 +433,8 @@ armadaxp_l2_init(bus_addr_t pbase)
 	}
 
 	/* Variables for cpufunc_asm_pj4b.S */
-	armadaxp_l2_barrier_reg = mlmb_base + MVSOC_MLMB_CIB_BARRIER_TRIGGER;
+	/* XXX: per cpu register. need to support SMP */
+	armadaxp_l2_barrier_reg = mlmb_base + MVSOC_MLMB_CIB_BARRIER(0);
 
 	/* Set L2 policy */
 	reg = L2_READ(ARMADAXP_L2_AUX_CTRL);
@@ -624,9 +624,9 @@ armadaxp_io_coherency_init(void)
 	write_mlmbreg(MVSOC_MLMB_CIB_CTRL_CFG, reg);
 
 	/* enable CPUs in SMP group on Fabric coherency */
-	reg = read_mlmbreg(MVSOC_MLMB_CFU_CTRL);
-	reg |= MVSOC_MLMB_CFU_CTRL_SNOOP_CPU0;
-	write_mlmbreg(MVSOC_MLMB_CFU_CTRL, reg);
+	reg = read_mlmbreg(MVSOC_MLMB_CFU_FAB_CTRL);
+	reg |= MVSOC_MLMB_CFU_FAB_CTRL_SNOOP_CPU0;
+	write_mlmbreg(MVSOC_MLMB_CFU_FAB_CTRL, reg);
 
 	/* send all snoop request to L2 cache */
 	reg = read_mlmbreg(MVSOC_MLMB_CFU_CFG);
