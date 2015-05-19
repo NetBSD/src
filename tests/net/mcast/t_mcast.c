@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.13 2015/05/18 00:55:09 ozaki-r Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.14 2015/05/19 03:19:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.13 2015/05/18 00:55:09 ozaki-r Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.14 2015/05/19 03:19:27 ozaki-r Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -228,7 +228,7 @@ out:
 	}
 	freeaddrinfo(ai0);
 	if (s == -1)
-		ERRX(1, "%s (%s)", cause, strerror(lasterrno));
+		ERRX(EXIT_FAILURE, "%s (%s)", cause, strerror(lasterrno));
 	return s;
 }
 
