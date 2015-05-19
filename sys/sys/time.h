@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.68 2015/04/29 12:55:23 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.69 2015/05/19 23:35:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -203,31 +203,34 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 static __inline struct bintime
 ms2bintime(uint64_t ms)
 {
+	struct bintime bt;
 
-	return (struct bintime) {
-		.sec = ms / 1000U,
-		.frac = (((ms % 1000U) >> 32)/1000U) >> 32,
-	};
+	bt.sec = ms / 1000U;
+	bt.frac = (((ms % 1000U) >> 32)/1000U) >> 32;
+
+	return bt;
 }
 
 static __inline struct bintime
 us2bintime(uint64_t us)
 {
+	struct bintime bt;
 
-	return (struct bintime) {
-		.sec = us / 1000000U,
-		.frac = (((us % 1000000U) >> 32)/1000000U) >> 32,
-	};
+	bt.sec = us / 1000000U;
+	bt.frac = (((us % 1000000U) >> 32)/1000000U) >> 32;
+
+	return bt;
 }
 
 static __inline struct bintime
 ns2bintime(uint64_t ns)
 {
+	struct bintime bt;
 
-	return (struct bintime) {
-		.sec = ns / 1000000000U,
-		.frac = (((ns % 1000000000U) >> 32)/1000000000U) >> 32,
-	};
+	bt.sec = ns / 1000000000U;
+	bt.frac = (((ns % 1000000000U) >> 32)/1000000000U) >> 32;
+
+	return bt;
 }
 #endif /* !defined(_STANDALONE) */
 
