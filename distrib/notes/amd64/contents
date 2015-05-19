@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.4 2015/05/09 08:13:34 snj Exp $
+.\"	$NetBSD: contents,v 1.5 2015/05/19 19:30:26 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,7 +75,7 @@ see below.
 .
 .		It Pa cdrom/
 .
-\*M bootable cdrom images; see below.
+\*M bootable CD-ROM images; see below.
 .
 .		It Pa misc/
 .
@@ -210,7 +210,7 @@ Fonts needed by the X server and by X clients.
 Configuration files for X which could be locally modified.
 .
 .It Sy xserver
-The X server. 
+The X server.
 This includes the modular X.Org server.
 .
 .tag) \" x sets
@@ -238,7 +238,7 @@ Therefore, if you want to extract the binaries into your system, i.e.,
 replace the system binaries with them, you have to run the
 .Ic "tar -xzpf"
 command from the root directory (
-.Pa / 
+.Pa /
 ) of your system.
 .
 .

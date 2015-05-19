@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.4 2011/05/28 06:00:12 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.5 2015/05/19 19:30:29 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,14 +60,15 @@ conventions for indicating italic and bold display.
 .			It Pa netbsd-GENERIC.gz
 A gzipped
 .Nx
-kernel containing code for everything supported in this release.
+kernel containing code for every system supported in this release.
+This kernel supports SMP on systems with more than one CPU.
 .
-.			It Pa netbsd-GENERIC.MP.gz
+.			It Pa netbsd-GENERIC.UP.gz
 .
 A gzipped
 .Nx
-kernel containing code for everything supported in this release.  This 
-kernel supports SMP on systems with more than one CPU.
+kernel containing code for every system supported in this release.
+This kernel disables SMP support.
 .
 .			It Pa netbsd-INSTALL.gz
 .
@@ -126,15 +127,15 @@ of the
 \*V
 .\" XXX sparc64 specific ---------------------------------------------
 .ie \n[sparc64] \{\
-distribution tree.  
+distribution tree.
 .(Note
-If you want to install 32-bit only binaries, you will 
+If you want to install 32-bit only binaries, you will
 still need to boot using the sparc64 installation tools.  When sysinst
 asks you for the distribution set to install, provide the
 .Nx Ns /sparc
 .Pa binary/sets .
 Be sure to use the 32 bit sparc
-.Pa kern-GENERIC_SUN4U.tgz 
+.Pa kern-GENERIC_SUN4U.tgz
 kernel distribution.  Otherwise, continue to follow the \*M installation
 procedure, not the sparc instructions.
 .Note)
@@ -196,14 +197,15 @@ kernel named
 .Pa /netbsd .
 You
 .Em must
-install this or the kern-GENERIC.MP distribution set.
-.It Sy kern-GENERIC.MP
+install this or the kern-GENERIC.UP distribution set.
+.It Sy kern-GENERIC.UP
 This set contains a
 .Nx*M
 \*V
-.Li GENERIC.MP
-kernel, which will use multiple processors (if present), named
-.Pa /netbsd .
+.Li GENERIC.UP
+kernel named
+.Pa /netbsd ,
+with SMP support disabled.
 .
 .\" ------------------------------------------------------------------
 .
@@ -219,6 +221,9 @@ that are included in the other sets.
 This set includes the system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
+.
+.It Sy modules
+This set includes kernel modules to add functionality to a running system.
 .
 .It Sy text
 This set includes
@@ -259,7 +264,7 @@ Fonts needed by the X server and by X clients.
 Configuration files for X which could be locally modified.
 .
 .It Sy xserver
-The X server. 
+The X server.
 This includes the modular Xorg and Xvfb servers.
 .
 .tag) \" x sets
@@ -275,7 +280,7 @@ This includes the modular Xorg and Xvfb servers.
 The \*M binary distribution sets are distributed as gzipped tar files
 named with the extension
 .Sy .tgz ,
-e.g.
+e.g.,
 .Pa base.tgz .
 .
 .
@@ -285,11 +290,11 @@ well for the binary sets, but it is worth noting that if you use that
 method, the filenames stored in the sets are relative and therefore
 the files are extracted
 .Em below the current directory .
-Therefore, if you want to extract the binaries into your system, i.e.
+Therefore, if you want to extract the binaries into your system, i.e.,
 replace the system binaries with them, you have to run the
 .Ic "tar -xzpf"
 command from the root directory (
-.Pa / 
+.Pa /
 ) of your system.
 .
 .

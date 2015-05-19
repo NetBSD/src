@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.15 2011/05/28 06:00:06 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.16 2015/05/19 19:30:26 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@ kernel containing code for everything supported in this release.
 .			It Pa netbsd-GENERIC.MP.gz
 A gzipped
 .Nx
-kernel containing code for everything supported in this release.  This 
+kernel containing code for everything supported in this release.  This
 kernel supports SMP on systems with more than one CPU.
 .
 .		tag) \" binary/kernel/
@@ -238,6 +238,9 @@ This set includes the system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
 .
+.It Sy modules
+This set includes kernel modules to add functionality to a running system.
+.
 .It Sy text
 This set includes
 .Nx Ns 's
@@ -277,7 +280,7 @@ Fonts needed by the X server and by X clients.
 Configuration files for X which could be locally modified.
 .
 .It Sy xserver
-The X server. 
+The X server.
 .
 .tag) \" x sets
 .
@@ -305,7 +308,7 @@ Therefore, if you want to extract the binaries into your system, i.e.
 replace the system binaries with them, you have to run the
 .Ic "tar -xzpf"
 command from the root directory (
-.Pa / 
+.Pa /
 ) of your system.
 .
 .
