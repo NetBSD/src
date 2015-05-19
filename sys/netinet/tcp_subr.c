@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.261 2015/05/16 10:09:20 kefren Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.262 2015/05/19 17:33:43 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.261 2015/05/16 10:09:20 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.262 2015/05/19 17:33:43 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -240,6 +240,7 @@ int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
 struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
 
 int	tcp_freeq(struct tcpcb *);
+static int	tcp_iss_secret_init(void);
 
 #ifdef INET
 static void	tcp_mtudisc_callback(struct in_addr);
@@ -2217,6 +2218,20 @@ tcp_new_iss(struct tcpcb *tp, tcp_seq addin)
 	panic("tcp_new_iss");
 }
 
+static u_int8_t tcp_iss_secret[16];	/* 128 bits; should be plenty */
+
+/*
+ * Initialize RFC 1948 ISS Secret
+ */
+static int
+tcp_iss_secret_init(void)
+{
+	cprng_strong(kern_cprng,
+	    tcp_iss_secret, sizeof(tcp_iss_secret), 0);
+
+	return 0;
+}
+
 /*
  * This routine actually generates a new TCP initial sequence number.
  */
@@ -2226,23 +2241,16 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 {
 	tcp_seq tcp_iss;
 
-	/* RFC1948 specifics */
-	static bool tcp_iss_gotten_secret;
-	static u_int8_t tcp_iss_secret[16];	/* 128 bits; should be plenty */
-
 	if (tcp_do_rfc1948) {
 		MD5_CTX ctx;
 		u_int8_t hash[16];	/* XXX MD5 knowledge */
+		static ONCE_DECL(tcp_iss_secret_control);
 
 		/*
 		 * If we haven't been here before, initialize our cryptographic
 		 * hash secret.
 		 */
-		if (tcp_iss_gotten_secret == false) {
-			cprng_strong(kern_cprng,
-			    tcp_iss_secret, sizeof(tcp_iss_secret), 0);
-			tcp_iss_gotten_secret = true;
-		}
+		RUN_ONCE(&tcp_iss_secret_control, tcp_iss_secret_init);
 
 		/*
 		 * Compute the base value of the ISS.  It is a hash
