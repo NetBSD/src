@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.6 2014/06/13 01:17:45 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.6.2.1 2015/05/19 05:03:15 snj Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
-.if ${MACHINE_ARCH} == "powerpc"
+.if ${MACHINE_CPU} == "powerpc"
 COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
 COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
 .else
@@ -16,11 +16,18 @@ COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${MACHINE_ARCH}
 
 # Needs scaling support
 GENERIC_SRCS+= \
-	mulxc3.c \
+	muldc3.c \
 	mulsc3.c \
-	divxc3.c \
+	mulxc3.c \
 	divdc3.c \
-	divsc3.c
+	divsc3.c \
+	divxc3.c
+
+.if ${MACHINE_CPU} == "powerpc"
+GENERIC_SRCS+= \
+	divtc3.c \
+	multc3.c
+.endif
 
 .for src in ${GENERIC_SRCS}
 .  if exists(${COMPILER_RT_CPU_DIR}/${src:R}.S) || \
