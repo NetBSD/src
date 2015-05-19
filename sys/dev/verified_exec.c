@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.69 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.69.2.1 2015/05/19 04:42:32 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.69 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.69.2.1 2015/05/19 04:42:32 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -42,15 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.69 2014/07/25 08:10:35 dholland 
 #include <sys/syslog.h>
 #include <sys/proc.h>
 
-#ifdef __FreeBSD__
-#include <sys/kernel.h>
-#include <sys/device_port.h>
-#include <sys/ioccom.h>
-#else
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #define DEVPORT_DEVICE struct device
-#endif
 
 #include <prop/proplib.h>
 
@@ -60,39 +54,22 @@ static dev_type_close(veriexecclose);
 static dev_type_ioctl(veriexecioctl);
 
 struct veriexec_softc {
-        DEVPORT_DEVICE veriexec_dev;
+	DEVPORT_DEVICE veriexec_dev;
 };
 
-#if defined(__FreeBSD__)
-# define CDEV_MAJOR 216
-# define BDEV_MAJOR -1
-#endif
-
 const struct cdevsw veriexec_cdevsw = {
-        .d_open = veriexecopen,
+	.d_open = veriexecopen,
 	.d_close = veriexecclose,
 	.d_read = noread,
 	.d_write = nowrite,
-        .d_ioctl = veriexecioctl,
-#ifdef __NetBSD__
+	.d_ioctl = veriexecioctl,
 	.d_stop = nostop,
 	.d_tty = notty,
-#endif
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_discard = nodiscard,
-#if defined(__NetBSD__)
-       .d_kqfilter = nokqfilter,
-       .d_flag = D_OTHER,
-#elif defined(__FreeBSD__)
-       nostrategy,
-       "veriexec",
-       CDEV_MAJOR,
-       nodump,
-       nopsize,
-       0,                              /* flags */
-       BDEV_MAJOR
-#endif
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_OTHER,
 };
 
 /* count of number of times device is open (we really only allow one open) */
@@ -291,14 +268,3 @@ veriexecioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	return (error);
 }
 
-#if defined(__FreeBSD__)
-static void
-veriexec_drvinit(void *unused)
-{
-	make_dev(&verifiedexec_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
-	    "veriexec");
-	verifiedexecattach(0, 0, 0);
-}
-
-SYSINIT(veriexec, SI_SUB_PSEUDO, SI_ORDER_ANY, veriexec_drvinit, NULL);
-#endif
