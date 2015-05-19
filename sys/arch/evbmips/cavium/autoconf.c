@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2015/05/19 00:09:02 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2015/05/19 00:09:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ findroot(void)
 		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
 		     dv = deviter_next(&di)) {
 			if (device_class(dv) == DV_DISK &&
-			    device_is_a(dv, "wd"))
+			    device_is_a(dv, "sd"))
 				    booted_device = dv;
 		}
 		deviter_release(&di);
