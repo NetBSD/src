@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.14 2015/05/19 03:19:27 ozaki-r Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.15 2015/05/19 04:14:04 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.14 2015/05/19 03:19:27 ozaki-r Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.15 2015/05/19 04:14:04 ozaki-r Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -316,9 +316,25 @@ run(const char *host, const char *port, size_t n, bool conn, bool bug)
 				    strerror(errno));
 			goto again;
 		default:
-			if (status != 0)
-				ERRX(EXIT_FAILURE, "pid exited with %d",
+			if (WIFSIGNALED(status)) {
+				if (WTERMSIG(status) == SIGTERM)
+					ERRX(EXIT_FAILURE,
+					    "receiver got terminated due to " \
+					    "deadline (%d usec)", 100);
+				else
+					ERRX(EXIT_FAILURE,
+					    "receiver got signaled (%s)",
+					    strsignal(WTERMSIG(status)));
+			} else if (WIFEXITED(status)) {
+				if (WEXITSTATUS(status) != 0)
+					ERRX(EXIT_FAILURE,
+					    "receiver exited with status %d",
+					    WEXITSTATUS(status));
+			} else {
+				ERRX(EXIT_FAILURE,
+				    "receiver exited with unexpected status %d",
 				    status);
+			}
 			break;
 		}
 		return;
