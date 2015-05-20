@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2015/05/13 10:04:44 ozaki-r Exp $
+# $NetBSD: Makefile,v 1.10 2015/05/20 17:39:04 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,11 +11,10 @@ TESTS_C+=	t_udp
 TESTS_C+=	t_pktinfo
 .if (${MKRUMP} != "no")
 TESTS_C+=	t_raw
+TESTS_SH=	t_forwarding
 .endif
 
 LDADD.t_raw+=	-lrumpnet_local -lrumpnet_netinet -lrumpnet_net
 LDADD.t_raw+=	-lrumpnet -lrumpvfs -lrump -lrumpuser -lrump -lpthread
-
-TESTS_SH=	t_forwarding
 
 .include <bsd.test.mk>
