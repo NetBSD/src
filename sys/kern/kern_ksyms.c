@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.75 2014/12/15 13:50:10 christos Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.76 2015/05/20 02:45:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.75 2014/12/15 13:50:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.76 2015/05/20 02:45:20 matt Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1065,10 +1065,15 @@ ksymswrite(dev_t dev, struct uio *uio, int ioflag)
 	return EROFS;
 }
 
+__CTASSERT(offsetof(struct ksyms_ogsymbol, kg_name) == offsetof(struct ksyms_gsymbol, kg_name));
+__CTASSERT(offsetof(struct ksyms_gvalue, kv_name) == offsetof(struct ksyms_gsymbol, kg_name));
+
 static int
 ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 {
+	struct ksyms_ogsymbol *okg = (struct ksyms_ogsymbol *)data;
 	struct ksyms_gsymbol *kg = (struct ksyms_gsymbol *)data;
+	struct ksyms_gvalue *kv = (struct ksyms_gvalue *)data;
 	struct ksyms_symtab *st;
 	Elf_Sym *sym = NULL, copy;
 	unsigned long val;
@@ -1079,7 +1084,8 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 	/* Read ksyms_maxlen only once while not holding the lock. */
 	len = ksyms_maxlen;
 
-	if (cmd == KIOCGVALUE || cmd == KIOCGSYMBOL) {
+	if (cmd == OKIOCGVALUE || cmd == OKIOCGSYMBOL
+	    || cmd == KIOCGVALUE || cmd == KIOCGSYMBOL) {
 		str = kmem_alloc(len, KM_SLEEP);
 		if ((error = copyinstr(kg->kg_name, str, len, NULL)) != 0) {
 			kmem_free(str, len);
@@ -1088,6 +1094,48 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 	}
 
 	switch (cmd) {
+	case OKIOCGVALUE:
+		/*
+		 * Use the in-kernel symbol lookup code for fast
+		 * retreival of a value.
+		 */
+		error = ksyms_getval(NULL, str, &val, KSYMS_EXTERN);
+		if (error == 0)
+			error = copyout(&val, okg->kg_value, sizeof(long));
+		kmem_free(str, len);
+		break;
+
+	case OKIOCGSYMBOL:
+		/*
+		 * Use the in-kernel symbol lookup code for fast
+		 * retreival of a symbol.
+		 */
+		mutex_enter(&ksyms_lock);
+		TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+			if (st->sd_gone)
+				continue;
+			if ((sym = findsym(str, st, KSYMS_ANY)) == NULL)
+				continue;
+#ifdef notdef
+			/* Skip if bad binding */
+			if (ELF_ST_BIND(sym->st_info) != STB_GLOBAL) {
+				sym = NULL;
+				continue;
+			}
+#endif
+			break;
+		}
+		if (sym != NULL) {
+			memcpy(&copy, sym, sizeof(copy));
+			mutex_exit(&ksyms_lock);
+			error = copyout(&copy, okg->kg_sym, sizeof(Elf_Sym));
+		} else {
+			mutex_exit(&ksyms_lock);
+			error = ENOENT;
+		}
+		kmem_free(str, len);
+		break;
+
 	case KIOCGVALUE:
 		/*
 		 * Use the in-kernel symbol lookup code for fast
@@ -1095,7 +1143,7 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		 */
 		error = ksyms_getval(NULL, str, &val, KSYMS_EXTERN);
 		if (error == 0)
-			error = copyout(&val, kg->kg_value, sizeof(long));
+			kv->kv_value = val;
 		kmem_free(str, len);
 		break;
 
@@ -1120,13 +1168,11 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 			break;
 		}
 		if (sym != NULL) {
-			memcpy(&copy, sym, sizeof(copy));
-			mutex_exit(&ksyms_lock);
-			error = copyout(&copy, kg->kg_sym, sizeof(Elf_Sym));
+			kg->kg_sym = *sym;
 		} else {
-			mutex_exit(&ksyms_lock);
 			error = ENOENT;
 		}
+		mutex_exit(&ksyms_lock);
 		kmem_free(str, len);
 		break;
 
