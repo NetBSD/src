@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.25 2015/04/23 23:23:00 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.26 2015/05/20 00:43:28 msaitoh Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.25 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.26 2015/05/20 00:43:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,8 @@ sdtemp_dev_table[] = {
 	"STmicroelectronics STTS3000" }, 
     { CAT_MANUFACTURER_ID,   CAT_34TS02_DEVICE_ID,  CAT_34TS02_MASK, 4,
 	"Catalyst CAT34TS02/CAT6095" },
+    { CAT_MANUFACTURER_ID,   CAT_34TS02C_DEVICE_ID,  CAT_34TS02C_MASK, 4,
+	"Catalyst CAT34TS02C" },
     { IDT_MANUFACTURER_ID,   IDT_TS3000B3_DEVICE_ID, IDT_TS3000B3_MASK, 4,
 	"Integrated Device Technology TS3000B3/TSE2002B3" },
     { 0, 0, 0, 2, "Unknown" }
