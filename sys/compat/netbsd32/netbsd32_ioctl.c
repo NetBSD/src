@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.70 2015/05/18 06:38:59 martin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.71 2015/05/20 02:45:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.70 2015/05/18 06:38:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.71 2015/05/20 02:45:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.70 2015/05/18 06:38:59 martin E
 #include <sys/envsys.h>
 #include <sys/wdog.h>
 #include <sys/clockctl.h>
+#include <sys/ksyms.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -390,6 +391,26 @@ netbsd32_to_clockctl_ntp_adjtime(
 	p->retval = s32p->retval;
 }
 
+static inline void
+netbsd32_to_ksyms_gsymbol(
+    const struct netbsd32_ksyms_gsymbol *s32p,
+    struct ksyms_gsymbol *p,
+    u_long cmd)
+{
+
+	p->kg_name = NETBSD32PTR64(s32p->kg_name);
+}
+
+static inline void
+netbsd32_to_ksyms_gvalue(
+    const struct netbsd32_ksyms_gvalue *s32p,
+    struct ksyms_gvalue *p,
+    u_long cmd)
+{
+
+	p->kv_name = NETBSD32PTR64(s32p->kv_name);
+}
+
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
@@ -709,6 +730,28 @@ netbsd32_from_clockctl_ntp_adjtime(
 
 	NETBSD32PTR32(s32p->tp, p->tp);
 	s32p->retval = p->retval;
+}
+
+static inline void
+netbsd32_from_ksyms_gsymbol(
+    const struct ksyms_gsymbol *p,
+    struct netbsd32_ksyms_gsymbol *s32p,
+    u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->kg_name, p->kg_name);
+	s32p->kg_sym = p->kg_sym;
+}
+
+static inline void
+netbsd32_from_ksyms_gvalue(
+    const struct ksyms_gvalue *p,
+    struct netbsd32_ksyms_gvalue *s32p,
+    u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->kv_name, p->kv_name);
+	s32p->kv_value = p->kv_value;
 }
 
 /*
@@ -1074,6 +1117,11 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case CLOCKCTL_NTP_ADJTIME32:
 		IOCTL_STRUCT_CONV_TO(CLOCKCTL_NTP_ADJTIME,
 		    clockctl_ntp_adjtime);
+
+	case KIOCGSYMBOL32:
+		IOCTL_STRUCT_CONV_TO(KIOCGSYMBOL, ksyms_gsymbol);
+	case KIOCGVALUE32:
+		IOCTL_STRUCT_CONV_TO(KIOCGVALUE, ksyms_gvalue);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
