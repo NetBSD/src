@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.41 2014/11/16 16:20:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.42 2015/05/20 09:17:18 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.41 2014/11/16 16:20:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.42 2015/05/20 09:17:18 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -191,7 +191,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			} else
 				senderr(EHOSTUNREACH);
 		}
-		if ((rt->rt_flags & RTF_GATEWAY) && dst->sa_family != AF_NS) {
+		if ((rt->rt_flags & RTF_GATEWAY)) {
 			if (rt->rt_gwroute == 0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
