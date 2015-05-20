@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.10 2015/05/19 09:20:19 hsuenaga Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.11 2015/05/20 02:59:57 hsuenaga Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -88,15 +88,15 @@ ENTRY(pj4b_config)
 	/* Set Marvell Auxiliary Function Modes Control 0 register */
 	mrc	p15, 1, r0, c15, c2, 0		@ get FMC0
 	mrc	p15, 0, ip, c0, c0, 5		@ get MPIDR
-	tst	ip, #MPIDR_MPCORE
+	tst	ip, #PJ4B_MPIDR_MP
 	beq	1f				@ if not set, not a MPCORE
-	tst	ip, #MPIDR_UNI_PROCESSOR
+	tst	ip, #PJ4B_MPIDR_U
 	bne	1f				@ if set, uni-processor system 
-	orr	r0, r0, #(MV_FMC0_SMP)		@ enable SMP/nAMP
-	orr	r0, r0, #(MV_FMC0_FW)		@ enable maintenance bcast
+	orr	r0, r0, #(PJ4B_AUXFMC0_SMPNAMP)	@ enable SMP/nAMP
+	orr	r0, r0, #(PJ4B_AUXFMC0_FW)	@ enable maintenance bcast
 1:
-	bic	r0, r0, #(MV_FMC0_LFDIS)	@ enable speculative linefill
-	orr	r0, r0, #(MV_FMC0_PARITY)	@ enable L1 parity
+	bic	r0, r0, #(PJ4B_AUXFMC0_DCSLFD)	@ enable speculative linefill
+	orr	r0, r0, #(PJ4B_AUXFMC0_L1PARITY)	@ enable L1 parity
 	mcr	p15, 1, r0, c15, c2, 0
 
 	RET
