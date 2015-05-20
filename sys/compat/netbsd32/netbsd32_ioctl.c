@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.71 2015/05/20 02:45:20 matt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.72 2015/05/20 04:37:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.71 2015/05/20 02:45:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.72 2015/05/20 04:37:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.71 2015/05/20 02:45:20 matt Exp
 #include <sys/envsys.h>
 #include <sys/wdog.h>
 #include <sys/clockctl.h>
+#include <sys/exec_elf.h>
 #include <sys/ksyms.h>
 
 #ifdef __sparc__
