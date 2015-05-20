@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.53 2014/07/25 08:10:40 dholland Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.54 2015/05/20 11:17:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.53 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.54 2015/05/20 11:17:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.53 2014/07/25 08:10:40 dholland Exp $
 #include <sys/select.h>
 #include <sys/poll.h> 
 #include <sys/intr.h>
+#include <sys/sysctl.h>
+#include <sys/ktrace.h>
+
+static int sysctl_msgbuf(SYSCTLFN_PROTO);
 
 static void	logsoftintr(void *);
 
@@ -129,12 +133,26 @@ initmsgbuf(void *bf, size_t bufsize)
 void
 loginit(void)
 {
+	struct sysctllog *log = NULL;
 
 	mutex_init(&log_lock, MUTEX_DEFAULT, IPL_VM);
 	selinit(&log_selp);
 	cv_init(&log_cv, "klog");
 	log_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
 	    logsoftintr, NULL);
+
+	sysctl_createv(&log, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "msgbufsize",
+		       SYSCTL_DESCR("Size of the kernel message buffer"),
+		       sysctl_msgbuf, 0, NULL, 0,
+		       CTL_KERN, KERN_MSGBUFSIZE, CTL_EOL);
+	sysctl_createv(&log, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "msgbuf",
+		       SYSCTL_DESCR("Kernel message buffer"),
+		       sysctl_msgbuf, 0, NULL, 0,
+		       CTL_KERN, KERN_MSGBUF, CTL_EOL);
 }
 
 /*ARGSUSED*/
@@ -412,6 +430,84 @@ logputchar(int c)
 	}
 	if (!cold)
 		mutex_spin_exit(&log_lock);
+}
+
+/*
+ * sysctl helper routine for kern.msgbufsize and kern.msgbuf. For the
+ * former it merely checks the message buffer is set up. For the latter,
+ * it also copies out the data if necessary.
+ */
+static int
+sysctl_msgbuf(SYSCTLFN_ARGS)
+{
+	char *where = oldp;
+	size_t len, maxlen;
+	long beg, end;
+	extern kmutex_t log_lock;
+	int error;
+
+	if (!msgbufenabled || msgbufp->msg_magic != MSG_MAGIC) {
+		msgbufenabled = 0;
+		return (ENXIO);
+	}
+
+	switch (rnode->sysctl_num) {
+	case KERN_MSGBUFSIZE: {
+		struct sysctlnode node = *rnode;
+		int msg_bufs = (int)msgbufp->msg_bufs;
+		node.sysctl_data = &msg_bufs;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+	case KERN_MSGBUF:
+		break;
+	default:
+		return (EOPNOTSUPP);
+	}
+
+	if (newp != NULL)
+		return (EPERM);
+
+	if (oldp == NULL) {
+		/* always return full buffer size */
+		*oldlenp = msgbufp->msg_bufs;
+		return (0);
+	}
+
+	sysctl_unlock();
+
+	/*
+	 * First, copy from the write pointer to the end of
+	 * message buffer.
+	 */
+	error = 0;
+	mutex_spin_enter(&log_lock);
+	maxlen = MIN(msgbufp->msg_bufs, *oldlenp);
+	beg = msgbufp->msg_bufx;
+	end = msgbufp->msg_bufs;
+	mutex_spin_exit(&log_lock);
+
+	while (maxlen > 0) {
+		len = MIN(end - beg, maxlen);
+		if (len == 0)
+			break;
+		/* XXX unlocked, but hardly matters. */
+		error = copyout(&msgbufp->msg_bufc[beg], where, len);
+		ktrmibio(-1, UIO_READ, where, len, error);
+		if (error)
+			break;
+		where += len;
+		maxlen -= len;
+
+		/*
+		 * ... then, copy from the beginning of message buffer to
+		 * the write pointer.
+		 */
+		beg = 0;
+		end = msgbufp->msg_bufx;
+	}
+
+	sysctl_relock();
+	return (error);
 }
 
 const struct cdevsw log_cdevsw = {
