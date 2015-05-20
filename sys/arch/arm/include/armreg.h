@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.104 2015/04/27 06:56:53 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.105 2015/05/20 02:59:57 hsuenaga Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -434,8 +434,17 @@
 #define	MPCORE_AUXCTL_EX	0x00000010 /* exclusive L1/L2 cache */
 #define	MPCORE_AUXCTL_SA	0x00000020 /* SMP/AMP */
 
-/* Marvell PJ4B Auxillary Control Register */
-#define PJ4B_AUXCTL_SMPNAMP	0x00000040 /* SMP/AMP */
+/* Marvell PJ4B Auxillary Control Register (CP15.0.R1.c0.1) */
+#define PJ4B_AUXCTL_FW		__BIT(0)   /* Cache and TLB updates broadcast */
+#define PJ4B_AUXCTL_SMPNAMP	__BIT(6)   /* 0 = AMP, 1 = SMP */
+#define PJ4B_AUXCTL_L1PARITY	__BIT(9)   /* L1 parity checking */
+
+/* Marvell PJ4B Auxialiary Function Modes Control 0 (CP15.1.R15.c2.0) */
+#define PJ4B_AUXFMC0_L2EN	__BIT(0)  /* Tightly-Coupled L2 cache enable */
+#define PJ4B_AUXFMC0_SMPNAMP	__BIT(1)  /* 0 = AMP, 1 = SMP */
+#define PJ4B_AUXFMC0_L1PARITY	__BIT(2)  /* alias of PJ4B_AUXCTL_L1PARITY */
+#define PJ4B_AUXFMC0_DCSLFD	__BIT(2)  /* Disable DC Speculative linefill */
+#define PJ4B_AUXFMC0_FW		__BIT(8)  /* alias of PJ4B_AUXCTL_FW*/
 
 /* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
 #define	CORTEXA9_AUXCTL_FW	0x00000001 /* Cache and TLB updates broadcast */
@@ -670,6 +679,27 @@
 #define PRRR_TR_STRONG	0		// Strongly Ordered
 #define PRRR_TR_DEVICE	1		// Device
 #define PRRR_TR_NORMAL	2		// Normal Memory
+
+/* ARMv7 MPIDR, Multiprocessor Affinity Register generic format  */
+#define MPIDR_MP		__BIT(31)	/* 1 = Have MP Extention */
+#define MPIDR_U			__BIT(30)	/* 1 = Uni-Processor System */
+#define MPIDR_MT		__BIT(24)	/* 1 = SMT(AFF0 is logical) */
+#define MPIDR_AFF2		__BITS(23,16)	/* Affinity Level 2 */
+#define MPIDR_AFF1		__BITS(15,8)	/* Affinity Level 1 */
+#define MPIDR_AFF0		__BITS(7,0)	/* Affinity Level 0 */
+
+/* MPIDR implementation of ARM Cortex A9: SMT and AFF2 is not used */
+#define CORTEXA9_MPIDR_MP	MPIDR_MP
+#define CORTEXA9_MPIDR_U	MPIDR_U
+#define	CORTEXA9_MPIDR_CLID	__BITS(11,8)	/* AFF1 = cluster id */
+#define CORTEXA9_MPIDR_CPUID	__BITS(0,1)	/* AFF0 = phisycal core id */
+
+/* MPIDR implementation of Marvell PJ4B-MP: AFF2 is not used */
+#define PJ4B_MPIDR_MP		MPIDR_MP
+#define PJ4B_MPIDR_U		MPIDR_U
+#define PJ4B_MPIDR_MT		MPIDR_MT	/* 1 = SMT(AFF0 is logical) */
+#define PJ4B_MPIDR_CLID		__BITS(11,8)	/* AFF1 = cluster id */
+#define PJ4B_MPIDR_CPUID	__BITS(0,3)	/* AFF0 = core id */
 
 /* Defines for ARM Generic Timer */
 #define ARM_CNTCTL_ENABLE		__BIT(0) // Timer Enabled
@@ -1017,13 +1047,5 @@ ARMREG_READ_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control re
 ARMREG_WRITE_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control register */
 
 #endif /* !__ASSEMBLER__ */
-
-
-#define	MPIDR_31		0x80000000
-#define	MPIDR_U			0x40000000	// 1 = Uniprocessor
-#define	MPIDR_MT		0x01000000	// AFF0 for SMT
-#define	MPIDR_AFF2		0x00ff0000
-#define	MPIDR_AFF1		0x0000ff00
-#define	MPIDR_AFF0		0x000000ff
 
 #endif	/* _ARM_ARMREG_H */
