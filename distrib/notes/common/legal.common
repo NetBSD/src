@@ -1,4 +1,3 @@
-.\"	$NetBSD: legal.common,v 1.93 2015/05/09 08:13:34 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,7 +103,7 @@ Colin Wood for the NetBSD Projet.
 .It
 This product includes software developed by Alex Zepeda.
 .It
-This product includes software developed by Allen Briggs
+This product includes software developed by Allen Briggs.
 .It
 This product includes software developed by Amancio Hasty and
 Roger Hardiman
@@ -300,7 +299,11 @@ This product includes software developed by Masaru Oki.
 .It
 This product includes software developed by Matthew Fredette.
 .It
+This product includes software developed by Matt DeBergalis.
+.It
 This product includes software developed by Michael Smith.
+.It
+This product includes software developed by Microsoft.
 .It
 This product includes software developed by Mike Pritchard.
 .It
@@ -372,6 +375,8 @@ This product includes software developed by Terrence R. Lambert.
 This product includes software developed by Texas A&M University
 and its contributors.
 .It
+This product includes software developed by Thomas Gerner.
+.It
 This product includes software developed by TooLs GmbH.
 .It
 This product includes software developed by Trimble Navigation, Ltd.
@@ -382,6 +387,8 @@ its contributors.
 This product includes software developed by Waldi Ravens.
 .It
 This product includes software developed by Winning Strategies, Inc.
+.It
+This product includes software developed by Yasushi Yamasaki.
 .It
 This product includes software developed by Yen Yen Lim and
 North Dakota State University.
@@ -410,7 +417,7 @@ for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)
 This product includes software developed by the PocketBSD project
 and its contributors.
 .It
-This product includes software developed by the RiscBSD kernel team
+This product includes software developed by the RiscBSD kernel team.
 .It
 This product includes software developed by the RiscBSD team.
 .It
@@ -502,9 +509,6 @@ Per Fogelstrom Opsycon AB for RTMX Inc, North Carolina, USA.
 This product includes software developed under OpenBSD by
 Per Fogelstrom.
 .It
-This software is a component of "386BSD" developed by
-William F. Jolitz, TeleMuse.
-.It
 This software was developed by Holger Veit and Brian Moore
 for use with "386BSD" and similar operating systems.
 "Similar operating systems" includes mainly non-profit oriented
@@ -542,4 +546,128 @@ Standard is the referee document.
 The original Standard can be obtained online at
 http://www.opengroup.org/unix/online.html.
 .Pp
-This notice shall appear on any product containing this material
+This notice shall appear on any product containing this material.
+.Pp
+In the following statement, "This software" refers to the parallel port driver:
+.(item -offset indent -compact
+This software is a component of "386BSD" developed by
+William F. Jolitz, TeleMuse.
+.item)
+.Pp
+Some files have the following copyright:
+.(item -offset indent -compact
+Mach Operating System
+.br
+Copyright (c) 1991,1990,1989 Carnegie Mellon University
+.br
+All Rights Reserved.
+.Pp
+Permission to use, copy, modify and distribute this software and its
+documentation is hereby granted, provided that both the copyright
+notice and this permission notice appear in all copies of the
+software, derivative works or modified versions, and any portions
+thereof, and that both notices appear in supporting documentation.
+.Pp
+CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS
+CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+.Pp
+Carnegie Mellon requests users of this software to return to
+.br
+Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+.br
+School of Computer Science
+.br
+Carnegie Mellon University
+.br
+Pittsburgh PA 15213-3890
+.Pp
+any improvements or extensions that they make and grant Carnegie the
+rights to redistribute these changes.
+.item)
+.Pp
+Some files have the following copyright:
+.(item -offset indent -compact
+Copyright (c) 1994, 1995 Carnegie-Mellon University.
+.br
+All rights reserved.
+.Pp
+Author: Chris G. Demetriou
+.Pp
+Permission to use, copy, modify and distribute this software and
+its documentation is hereby granted, provided that both the copyright
+notice and this permission notice appear in all copies of the
+software, derivative works or modified versions, and any portions
+thereof, and that both notices appear in supporting documentation.
+.br
+CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
+FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+.Pp
+Carnegie Mellon requests users of this software to return to
+.br
+Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+.br
+School of Computer Science
+.br
+Carnegie Mellon University
+.br
+Pittsburgh PA 15213-3890
+.Pp
+any improvements or extensions that they make and grant Carnegie the
+rights to redistribute these changes.
+.item)
+.if \n[mipseb]:\n[mipsel] \{\
+.Pp
+Some files have the following copyright:
+.(item -offset indent -compact
+      Copyright (C) 1989 Digital Equipment Corporation.
+.br
+Permission to use, copy, modify, and distribute this software and
+its documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appears in all copies.
+Digital Equipment Corporation makes no representations about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+.item)
+.\}
+.if \n[pmax] \{\
+.Pp
+Some files have the following copyright:
+.(item -offset indent -compact
+Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts,
+and the Massachusetts Institute of Technology, Cambridge, Massachusetts.
+.Pp
+                 All Rights Reserved
+.Pp
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation, and that the names of Digital or MIT not be
+used in advertising or publicity pertaining to distribution of the
+software without specific, written prior permission.
+.Pp
+DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+DIGITAL BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+SOFTWARE.
+.item)
+.\}
+.Pp
+Some files have the following copyright:
+.(item -offset indent -compact
+Copyright 1996 The Board of Trustees of The Leland Stanford
+Junior University. All Rights Reserved.
+.Pp
+Permission to use, copy, modify, and distribute this
+software and its documentation for any purpose and without
+fee is hereby granted, provided that the above copyright
+notice appear in all copies.  Stanford University
+makes no representations about the suitability of this
+software for any purpose.  It is provided "as is"
+without express or implied warranty.
+.item)
