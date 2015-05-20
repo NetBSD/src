@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.30 2014/12/14 18:14:15 christos Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.31 2015/05/20 02:45:20 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -30,10 +30,10 @@
 #ifndef _SYS_KSYMS_H_
 #define _SYS_KSYMS_H_
 
+#include <sys/exec_elf.h>
+
 #ifdef _KSYMS_PRIVATE
 
-#define	ELFSIZE	ARCH_ELFSIZE
-#include <sys/exec_elf.h>
 #include <sys/queue.h>
 
 struct ksyms_symtab {
@@ -82,7 +82,7 @@ struct ksyms_hdr {
 /*
  * Do a lookup of a symbol using the in-kernel lookup algorithm.
  */
-struct ksyms_gsymbol {
+struct ksyms_ogsymbol {
 	const char *kg_name;
 	union {
 		void *ku_sym;		 /* Normally Elf_Sym */
@@ -92,9 +92,23 @@ struct ksyms_gsymbol {
 #define	kg_value _un.ku_value
 };
 
-#define	KIOCGSYMBOL	_IOW('l', 1, struct ksyms_gsymbol)
-#define	KIOCGVALUE	_IOW('l', 2, struct ksyms_gsymbol)
+struct ksyms_gsymbol {
+	const char *kg_name;
+	union {
+		Elf_Sym ku_sym;
+	} _un;
+};
+
+struct ksyms_gvalue {
+	const char *kv_name;
+	uint64_t kv_value;
+};
+
+#define	OKIOCGSYMBOL	_IOW('l', 1, struct ksyms_ogsymbol)
+#define	OKIOCGVALUE	_IOW('l', 2, struct ksyms_ogsymbol)
 #define	KIOCGSIZE	_IOR('l', 3, int)
+#define	KIOCGVALUE	_IOWR('l', 4, struct ksyms_gvalue)
+#define	KIOCGSYMBOL	_IOWR('l', 5, struct ksyms_gsymbol)
 
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
