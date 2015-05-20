@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.37 2015/05/20 02:45:20 matt Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.38 2015/05/20 04:37:45 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_elf32.c,v 1.37 2015/05/20 02:45:20 matt Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.38 2015/05/20 04:37:45 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: nlist_elf32.c,v 1.37 2015/05/20 02:45:20 matt Exp $");
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/ksyms.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -63,6 +62,8 @@ __RCSID("$NetBSD: nlist_elf32.c,v 1.37 2015/05/20 02:45:20 matt Exp $");
 #if defined(NLIST_ELF32) || defined(NLIST_ELF64)
 #include <sys/exec_elf.h>
 #endif
+
+#include <sys/ksyms.h>		/* after sys/exec_elf.h */
 
 #if (defined(NLIST_ELF32) && (ELFSIZE == 32)) || \
     (defined(NLIST_ELF64) && (ELFSIZE == 64))

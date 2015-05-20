@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.31 2015/05/20 02:45:20 matt Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.32 2015/05/20 04:37:45 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -30,10 +30,8 @@
 #ifndef _SYS_KSYMS_H_
 #define _SYS_KSYMS_H_
 
-#include <sys/exec_elf.h>
-
 #ifdef _KSYMS_PRIVATE
-
+#include <sys/exec_elf.h>
 #include <sys/queue.h>
 
 struct ksyms_symtab {
@@ -92,12 +90,14 @@ struct ksyms_ogsymbol {
 #define	kg_value _un.ku_value
 };
 
+#ifdef ELFSIZE
 struct ksyms_gsymbol {
 	const char *kg_name;
 	union {
 		Elf_Sym ku_sym;
 	} _un;
 };
+#endif
 
 struct ksyms_gvalue {
 	const char *kv_name;
