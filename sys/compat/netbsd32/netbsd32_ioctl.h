@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.46 2015/05/20 02:45:20 matt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.47 2015/05/20 04:09:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -533,6 +533,7 @@ struct netbsd32_clockctl_ntp_adjtime {
 #define CLOCKCTL_NTP_ADJTIME32 _IOWR('C', 0x8, \
     struct netbsd32_clockctl_ntp_adjtime)
 
+#ifdef KIOCGSYMBOL
 struct netbsd32_ksyms_gsymbol {
 	netbsd32_charp kg_name;
 	union {
@@ -547,3 +548,4 @@ struct netbsd32_ksyms_gvalue {
 
 #define	KIOCGVALUE32	_IOWR('l', 4, struct netbsd32_ksyms_gvalue)
 #define	KIOCGSYMBOL32	_IOWR('l', 5, struct netbsd32_ksyms_gsymbol)
+#endif /* KIOCGSYMBOL */
