@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.42 2015/02/06 20:08:23 christos Exp $
+#	$NetBSD: mkioctls,v 1.43 2015/05/20 07:16:15 matt Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -60,6 +60,7 @@ echo "#include <sys/dkbad.h>"
 echo "#include <sys/mount.h>"
 echo "#include <sys/termios.h>"
 echo "#include <sys/disklabel.h>"
+echo "#include <sys/exec_elf.h>"
 echo "#include <net/if.h>"
 echo "#include <net/if_ether.h>"
 echo "#include <net/route.h>"
