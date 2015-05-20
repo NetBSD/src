@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_at_ugenhc.c,v 1.3 2010/03/26 15:51:55 pooka Exp $	*/
+/*	$NetBSD: usb_at_hc.c,v 1.1 2015/05/20 11:53:08 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -11,8 +11,6 @@
 
 #include "rump_private.h"
 #include "rump_dev_private.h"
-
-void tty_init(void);
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
