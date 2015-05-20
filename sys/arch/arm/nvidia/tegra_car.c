@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.18 2015/05/18 21:32:05 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.19 2015/05/20 00:05:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.18 2015/05/18 21:32:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.19 2015/05/20 00:05:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -609,6 +609,8 @@ tegra_car_hdmi_enable(u_int rate)
 {
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
+	uint32_t base;
+	int retry = 10000;
 
 	tegra_car_get_bs(&bst, &bsh);
 
@@ -620,12 +622,25 @@ tegra_car_hdmi_enable(u_int rate)
 	tegra_reg_set_clear(bst, bsh, CAR_PLLD2_BASE_REG,
 	    0, CAR_PLLD2_BASE_IDDQ);
 	delay(2);
+	/* Enable lock */
+	tegra_reg_set_clear(bst, bsh, CAR_PLLD2_MISC_REG,
+	    CAR_PLLD2_MISC_LOCK_ENABLE, 0);
 	/* Enable PLLD2 */
 	tegra_reg_set_clear(bst, bsh, CAR_PLLD2_BASE_REG,
 	    CAR_PLLD2_BASE_ENABLE, 0);
 
+	/* Wait for lock */
+	do {
+		delay(2);
+		base = bus_space_read_4(bst, bsh, CAR_PLLD2_BASE_REG);
+	} while ((base & CAR_PLLD2_BASE_LOCK) == 0 && --retry > 0);
+	delay(100);
+	if (retry == 0) {
+		printf("WARNING: timeout waiting for PLLD2 lock\n");
+	}
+
 	/* Set clock source to PLLD2 */
-	const u_int div = howmany(tegra_car_plld2_rate(), rate);;
+	const u_int div = howmany(tegra_car_plld2_rate(), rate);
 	bus_space_write_4(bst, bsh, CAR_CLKSRC_HDMI_REG,
 	    __SHIFTIN(CAR_CLKSRC_HDMI_SRC_PLLD2_OUT0, CAR_CLKSRC_HDMI_SRC) |
 	    __SHIFTIN(div - 1, CAR_CLKSRC_HDMI_DIV));
