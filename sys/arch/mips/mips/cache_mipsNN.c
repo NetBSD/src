@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.14 2011/04/29 22:19:30 matt Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.15 2015/05/20 07:04:49 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.14 2011/04/29 22:19:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.15 2015/05/20 07:04:49 matt Exp $");
 
 #include <sys/param.h>
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.14 2011/04/29 22:19:30 matt Exp $
 
 #ifdef __mips_o32
 __asm(".set mips32");
-#else
+#elif !defined(__mips64)
 __asm(".set mips64");
 #endif
 
