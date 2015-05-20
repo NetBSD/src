@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.41 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.42 2015/05/20 09:17:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.41 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.42 2015/05/20 09:17:18 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -112,7 +112,7 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			} else
 				senderr(EHOSTUNREACH);
 		}
-		if ((rt->rt_flags & RTF_GATEWAY) && dst->sa_family != AF_NS) {
+		if ((rt->rt_flags & RTF_GATEWAY)) {
 			if (rt->rt_gwroute == 0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
