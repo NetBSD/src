@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.1 2015/05/18 06:27:04 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.2 2015/05/20 01:30:42 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -332,20 +332,48 @@ test_announce()
 	# TODO test its behavior
 }
 
+test_xresolve_rtm()
+{
+	local ip=$1
+	local rtm=$2
+	local pid=
+
+	rump.route -n monitor > ./mon.log &
+	pid=$!
+
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $ip
+	$DEBUG && rump.netstat -rn -f inet
+	$DEBUG && cat ./mon.log
+
+	atf_check -s exit:0 grep -q $rtm ./mon.log
+
+	kill $pid
+}
+
 test_xresolve()
 {
+
 	export RUMP_SERVER=$SOCK_LOCAL
+
+	# For a normal route, a RTM_ADD message is emitted on a route cloning
+	test_xresolve_rtm 10.0.0.1 RTM_ADD
+	# Up, Host, LLINFO, cloned
+	check_entry_flags 10.0.0.1 UHLc
 
 	# Delete an existing route first
 	atf_check -s exit:0 -o ignore rump.route delete -net 10.0.0.0/24
-
-	atf_check -s exit:0 -o ignore rump.route add -net 10.0.0.0/24 10.0.0.1 -xresolve
+	# Create a connected route with XRESOLVE flag for the interface
+	atf_check -s exit:0 -o ignore rump.route add -net 10.0.0.0/24 10.0.0.2 \
+	    -interface -xresolve
 	$DEBUG && rump.netstat -rn -f inet
 
-	# Up, Gateway, Xresolve, Static
-	check_entry_flags 10.0.0/24 UGXS
+	# Up, Cloning, Xresolve, Static
+	check_entry_flags 10.0.0/24 UCXS
 
-	# TODO test its behavior
+	# If XRESOLVE flag is set, a RTM_RESOLVE message is emitted
+	test_xresolve_rtm 10.0.0.1 RTM_RESOLVE
+	# Up, Host, Xresolve, LLINFO, cloned
+	check_entry_flags 10.0.0.1 UHXLc
 }
 
 cleanup()
