@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: gssapi.c,v 1.4.66.1 2015/05/20 02:45:17 msaitoh Exp $	*/
 
 /*	$KAME: gssapi.c,v 1.19 2001/04/03 15:51:55 thorpej Exp $	*/
 
@@ -191,6 +191,11 @@ gssapi_init(struct ph1handle *iph1)
 	gss_buffer_t cred = &cred_token;
 	gss_name_t princ, canon_princ;
 	OM_uint32 maj_stat, min_stat;
+
+	if (iph1->rmconf == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "no remote config\n");
+		return -1;
+	}
 
 	gps = racoon_calloc(1, sizeof (struct gssapi_ph1_state));
 	if (gps == NULL) {
