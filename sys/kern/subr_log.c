@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.54 2015/05/20 11:17:24 pooka Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.55 2015/05/20 11:18:36 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.54 2015/05/20 11:17:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.55 2015/05/20 11:18:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,6 @@ initmsgbuf(void *bf, size_t bufsize)
 void
 loginit(void)
 {
-	struct sysctllog *log = NULL;
 
 	mutex_init(&log_lock, MUTEX_DEFAULT, IPL_VM);
 	selinit(&log_selp);
@@ -141,13 +140,13 @@ loginit(void)
 	log_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
 	    logsoftintr, NULL);
 
-	sysctl_createv(&log, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "msgbufsize",
 		       SYSCTL_DESCR("Size of the kernel message buffer"),
 		       sysctl_msgbuf, 0, NULL, 0,
 		       CTL_KERN, KERN_MSGBUFSIZE, CTL_EOL);
-	sysctl_createv(&log, 0, NULL, NULL,
+	sysctl_createv(NULL, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "msgbuf",
 		       SYSCTL_DESCR("Kernel message buffer"),
