@@ -822,6 +822,7 @@ radeon_vga_detect(struct drm_connector *connector, bool force)
 		}
 	}
 
+	/* XXX Can encoder be null if the connector is connected here?  */
 	if (ret == connector_status_connected && encoder)
 		ret = radeon_connector_analog_encoder_conflict_solve(connector, encoder, ret, true);
 
