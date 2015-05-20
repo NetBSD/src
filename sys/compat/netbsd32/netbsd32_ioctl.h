@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.47 2015/05/20 04:09:37 matt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.48 2015/05/20 07:24:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -537,7 +537,7 @@ struct netbsd32_clockctl_ntp_adjtime {
 struct netbsd32_ksyms_gsymbol {
 	netbsd32_charp kg_name;
 	union {
-		Elf64_Sym ku_sym;
+		Elf_Sym ku_sym;
 	} _un;
 };
 
