@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.66 2014/11/28 08:29:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.67 2015/05/20 09:17:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.66 2014/11/28 08:29:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.67 2015/05/20 09:17:18 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -451,7 +451,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 	l = (struct llc *)(mtod(m, uint8_t *) + lan_hdr_len);
 
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(NS) || defined(DECNET)
+#if defined(INET) || defined(DECNET)
 	case LLC_SNAP_LSAP:
 	{
 		uint16_t etype;
@@ -501,7 +501,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 	default:
 		/* printf("token_input: unknown dsap 0x%x\n", l->llc_dsap); */
 		ifp->if_noproto++;
-#if defined(INET) || defined(NS) || defined(DECNET)
+#if defined(INET) || defined(DECNET)
 	dropanyway:
 #endif
 		m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.55 2010/04/05 07:19:32 joerg Exp $ */
+/*	$NetBSD: if_ie.c,v 1.56 2015/05/20 09:17:17 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55 2010/04/05 07:19:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.56 2015/05/20 09:17:17 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -128,11 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55 2010/04/05 07:19:32 joerg Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -1520,23 +1515,6 @@ ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, ETHER_ADDR_LEN);
-			/* Set new address. */
-			ieinit(sc);
-			break;
-		    }
-#endif /* NS */
 		default:
 			ieinit(sc);
 			break;

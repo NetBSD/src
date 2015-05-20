@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.88 2014/06/07 09:34:02 martin Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.89 2015/05/20 09:17:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88 2014/06/07 09:34:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.89 2015/05/20 09:17:18 ozaki-r Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -462,10 +462,8 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 #if defined(INET) || defined(INET6)
 	pktqueue_t *pktq = NULL;
 #endif
-#if defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+#if defined(DECNET) || defined(IPX) || defined(NETATALK)
 	struct ifqueue *inq = NULL;
-#endif
-#if defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	int isr = 0;
 	int s;
 #endif
@@ -508,7 +506,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 
 	l = (struct llc *)(fh+1);
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+#if defined(INET) || defined(INET6) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	case LLC_SNAP_LSAP:
 	{
 		uint16_t etype;
@@ -559,7 +557,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 
 		case ETHERTYPE_ARP:
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
-#if defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+#if defined(DECNET) || defined(IPX) || defined(NETATALK)
 			isr = NETISR_ARP;
 			inq = &arpintrq;
 #endif
@@ -611,7 +609,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 
 	default:
 		ifp->if_noproto++;
-#if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+#if defined(INET) || defined(INET6) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	dropanyway:
 #endif
 		m_freem(m);
@@ -626,7 +624,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 #endif
-#if defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+#if defined(DECNET) || defined(IPX) || defined(NETATALK)
 	if (!inq) {
 		m_freem(m);
 	}

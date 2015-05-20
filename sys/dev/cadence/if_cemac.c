@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.2 2015/05/20 09:17:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.2 2015/05/20 09:17:18 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,11 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $")
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <net/bpf.h>

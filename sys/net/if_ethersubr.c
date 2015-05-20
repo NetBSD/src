@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.207 2015/04/13 22:46:57 riastradh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.208 2015/05/20 09:17:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.207 2015/04/13 22:46:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.208 2015/05/20 09:17:18 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -255,7 +255,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			} else
 				senderr(EHOSTUNREACH);
 		}
-		if ((rt->rt_flags & RTF_GATEWAY) && dst->sa_family != AF_NS) {
+		if ((rt->rt_flags & RTF_GATEWAY)) {
 			if (rt->rt_gwroute == NULL)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
