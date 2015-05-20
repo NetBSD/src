@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.24 2015/02/27 16:08:17 nonaka Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.25 2015/05/20 13:09:34 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.24 2015/02/27 16:08:17 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.25 2015/05/20 13:09:34 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -271,7 +271,9 @@ sdmmc_task_thread(void *arg)
 		if (task != NULL) {
 			sdmmc_del_task1(sc, task);
 			mutex_exit(&sc->sc_tskq_mtx);
+			KERNEL_LOCK(1, curlwp);
 			(*task->func)(task->arg);
+			KERNEL_UNLOCK_ONE(curlwp);
 			mutex_enter(&sc->sc_tskq_mtx);
 		} else {
 			/* Check for the exit condition. */
