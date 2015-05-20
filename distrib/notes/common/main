@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.520 2015/05/19 19:30:27 snj Exp $
+.\"	$NetBSD: main,v 1.521 2015/05/20 05:19:20 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1455,7 +1455,6 @@ the software that we have mentioned in this document:
 .Ht <font size=-1>
 .(item -compact
 .so ../common/legal.common -----------------------------------------------
-.so legal -----------------------------------------------
 .item)
 .Ht </font>
 .ps
