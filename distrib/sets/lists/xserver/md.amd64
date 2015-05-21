@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.76 2015/03/01 07:46:04 mrg Exp $
+# $NetBSD: md.amd64,v 1.77 2015/05/21 00:12:10 rjs Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -425,6 +425,8 @@
 ./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/intel_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/intel_drv.so.2		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/intel_drv_old.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/intel_drv_old.so.2	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ivch_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/ivch_drv.so.2		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
