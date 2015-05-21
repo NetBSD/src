@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixv.c,v 1.8 2015/04/24 07:00:51 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.9 2015/05/21 00:45:27 rtr Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2829,7 +2829,6 @@ ixv_refresh_mbufs(struct rx_ring *rxr, int limit)
 			if (mh == NULL)
 				goto update;
 			mh->m_pkthdr.len = mh->m_len = MHLEN;
-			mh->m_len = MHLEN;
 			mh->m_flags |= M_PKTHDR;
 			m_adj(mh, ETHER_ALIGN);
 			/* Get the memory mapping */
