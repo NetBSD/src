@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.165 2015/05/16 12:12:46 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.166 2015/05/21 09:26:18 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.165 2015/05/16 12:12:46 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.166 2015/05/21 09:26:18 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -152,6 +152,8 @@ static int	arp_debug = 0;
 #endif
 #define arplog(x)	do { if (arp_debug) log x; } while (/*CONSTCOND*/ 0)
 
+static	void arp_init(void);
+
 static	struct sockaddr *arp_setgate(struct rtentry *, struct sockaddr *,
 	    const struct sockaddr *);
 static	void arptfree(struct llinfo_arp *);
@@ -161,6 +163,9 @@ static	struct llinfo_arp *arplookup1(struct mbuf *, const struct in_addr *,
 static	struct llinfo_arp *arplookup(struct mbuf *, const struct in_addr *,
 					  int, int);
 static	void in_arpinput(struct mbuf *);
+static	void in_revarpinput(struct mbuf *);
+static	void revarprequest(struct ifnet *);
+
 static	void arp_drainstub(void);
 
 static void arp_dad_timer(struct ifaddr *);
