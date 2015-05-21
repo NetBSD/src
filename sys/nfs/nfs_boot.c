@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.84 2015/05/09 15:22:47 rtr Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.85 2015/05/21 02:04:22 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.84 2015/05/09 15:22:47 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.85 2015/05/21 02:04:22 rtr Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -425,7 +425,7 @@ nfs_boot_sobind_ipport(struct socket *so, uint16_t port, struct lwp *l)
 #define TOTAL_TIMEOUT   30	/* seconds */
 
 int
-nfs_boot_sendrecv(struct socket *so, struct mbuf *nam,
+nfs_boot_sendrecv(struct socket *so, struct sockaddr_in *nam,
 		int (*sndproc)(struct mbuf *, void *, int),
 		struct mbuf *snd,
 		int (*rcvproc)(struct mbuf **, void *),
@@ -468,7 +468,7 @@ send_again:
 		error = ENOBUFS;
 		goto out;
 	}
-	error = (*so->so_send)(so, mtod(nam, struct sockaddr *), NULL,
+	error = (*so->so_send)(so, (struct sockaddr *)nam, NULL,
 	    m, NULL, 0, lwp);
 	if (error) {
 		printf("nfs_boot: sosend: %d\n", error);
