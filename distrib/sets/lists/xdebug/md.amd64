@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.11 2015/03/01 07:46:04 mrg Exp $
+# $NetBSD: md.amd64,v 1.12 2015/05/21 18:03:09 htodd Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg
@@ -83,8 +83,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7017_drv.so.2.debug	-unknown-		xorg,debug,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2.debug	-unknown-		xorg,debug,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7017_drv.so.2.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/chips_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	-unknown-		xorg,debug
@@ -92,8 +92,9 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i128_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i740_drv.so.1.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/intel_drv_old.so.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/intel_drv.so.2.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ivch_drv.so.2.debug	-unknown-		xorg,debug,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ivch_drv.so.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libapm_drv.so.1.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libark_drv.so.0.debug	obsolete		xorg,obsolete
@@ -152,11 +153,11 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3virge_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/savage_drv.so.2.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/sil164_drv.so.2.debug	-unknown-		xorg,debug,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/sil164_drv.so.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/siliconmotion_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/sis_drv.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tdfx_drv.so.1.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tfp410_drv.so.2.debug	-unknown-		xorg,debug,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tfp410_drv.so.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tga_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/trident_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tseng_drv.so.1.debug	-unknown-		xorg,debug
