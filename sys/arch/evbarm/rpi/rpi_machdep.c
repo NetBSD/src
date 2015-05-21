@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.63 2015/05/21 10:35:08 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.64 2015/05/21 20:50:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.63 2015/05/21 10:35:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.64 2015/05/21 20:50:57 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -502,6 +502,8 @@ rpi_bootstrap(void)
 #endif
 
 	extern void cortex_mpstart(void);
+
+	cpu_dcache_wbinv_all();
 
 	for (size_t i = 1; i < arm_cpu_max; i++) {
 		bus_space_tag_t iot = &bcm2835_bs_tag;
