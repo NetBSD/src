@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.8 2014/07/25 08:10:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.9 2015/05/21 12:00:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -307,12 +307,15 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		mutex_enter(proc_lock);
 		tp = proc_find(*((pid_t *) data));
 		mutex_exit(proc_lock);
+		if (tp == NULL) {
+			error = ESRCH;
+			break;
+		}
 		error = kauth_authorize_process(curproc->p_cred,
 		    KAUTH_PROCESS_CANSEE, tp,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 		if (!error) {
 			filemon->fm_pid = tp->p_pid;
-
 		}
 		break;
 
