@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.166 2015/05/21 09:26:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.167 2015/05/21 09:27:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.166 2015/05/21 09:26:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.167 2015/05/21 09:27:10 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -393,7 +393,7 @@ arp_drain(void)
 		nla = LIST_NEXT(la, la_list);
 
 		mold = la->la_hold;
-		la->la_hold = 0;
+		la->la_hold = NULL;
 
 		if (mold) {
 			m_freem(mold);
@@ -742,7 +742,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 
 		s = splnet();
 		mold = la->la_hold;
-		la->la_hold = 0;
+		la->la_hold = NULL;
 		splx(s);
 
 		if (mold)
@@ -923,7 +923,7 @@ arpintr(void)
 		s = splnet();
 		IF_DEQUEUE(&arpintrq, m);
 		splx(s);
-		if (m == 0 || (m->m_flags & M_PKTHDR) == 0)
+		if (m == NULL || (m->m_flags & M_PKTHDR) == 0)
 			panic("arpintr");
 
 		MCLAIM(m, &arpdomain.dom_mowner);
@@ -1243,7 +1243,7 @@ in_arpinput(struct mbuf *m)
 
 		s = splnet();
 		mold = la->la_hold;
-		la->la_hold = 0;
+		la->la_hold = NULL;
 		splx(s);
 
 		if (mold) {
