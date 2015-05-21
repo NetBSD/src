@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.46 2015/05/16 12:12:46 roy Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.47 2015/05/21 09:26:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -80,14 +80,11 @@ int arpresolve(struct ifnet *, struct rtentry *, struct mbuf *,
 void arpintr(void);
 void arprequest(struct ifnet *, const struct in_addr *, const struct in_addr *,
     const u_int8_t *);
-void arp_init(void);
 void arp_drain(void);
 int arpioctl(u_long, void *);
 void arpwhohas(struct ifnet *, struct in_addr *);
 
 void revarpinput(struct mbuf *);
-void in_revarpinput(struct mbuf *);
-void revarprequest(struct ifnet *);
 int revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
 #endif
 
