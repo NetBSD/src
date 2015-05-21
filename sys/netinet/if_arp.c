@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.167 2015/05/21 09:27:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.168 2015/05/21 09:29:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.167 2015/05/21 09:27:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.168 2015/05/21 09:29:51 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -378,7 +378,7 @@ arp_drainstub(void)
 void
 arp_drain(void)
 {
-	struct llinfo_arp *la, *nla;
+	struct llinfo_arp *la;
 	int count = 0;
 	struct mbuf *mold;
 
@@ -389,9 +389,7 @@ arp_drain(void)
 		return;
 	}
 
-	for (la = LIST_FIRST(&llinfo_arp); la != NULL; la = nla) {
-		nla = LIST_NEXT(la, la_list);
-
+	LIST_FOREACH(la, &llinfo_arp, la_list) {
 		mold = la->la_hold;
 		la->la_hold = NULL;
 
@@ -426,10 +424,9 @@ arptimer(void *arg)
 	}
 
 	callout_reset(&arptimer_ch, arpt_prune * hz, arptimer, NULL);
-	for (la = LIST_FIRST(&llinfo_arp); la != NULL; la = nla) {
+	LIST_FOREACH_SAFE(la, &llinfo_arp, la_list, nla) {
 		struct rtentry *rt = la->la_rt;
 
-		nla = LIST_NEXT(la, la_list);
 		if (rt->rt_expire == 0)
 			continue;
 		if ((rt->rt_expire - time_second) < arpt_refresh &&
