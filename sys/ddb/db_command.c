@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.144 2015/02/08 19:41:39 christos Exp $	*/
+/*	$NetBSD: db_command.c,v 1.145 2015/05/21 08:23:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.144 2015/02/08 19:41:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.145 2015/05/21 08:23:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -549,8 +549,13 @@ db_command_loop(void)
 	db_recover = &db_jmpbuf;
 	(void) setjmp(&db_jmpbuf);
 
-	/* Execute default ddb start commands */
-	db_execute_commandlist(db_cmd_on_enter);
+	/*
+	 * Execute default ddb start commands only if this is the
+	 * first entry into DDB, in case the start commands fault
+	 * and we recurse into here.
+	 */
+	if (!savejmp)
+		db_execute_commandlist(db_cmd_on_enter);
 
 	(void) setjmp(&db_jmpbuf);
 	while (!db_cmd_loop_done) {
