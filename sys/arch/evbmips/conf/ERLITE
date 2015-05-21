@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.7 2015/05/19 02:30:57 matt Exp $
+#	$NetBSD: ERLITE,v 1.8 2015/05/21 09:53:05 jmcneill Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.7 $"
+#ident 		"ERLITE-$Revision: 1.8 $"
 
 maxusers	32
 
@@ -174,6 +174,7 @@ pseudo-device	loop				# network loopback
 pseudo-device	pty				# pseudo-terminals
 pseudo-device	clockctl			# user control of clock subsystem
 pseudo-device	ksyms				# /dev/ksyms
+pseudo-device	drvctl				# driver control
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda				# coda minicache <-> venus comm.
