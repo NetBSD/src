@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.71 2015/05/16 22:41:59 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.72 2015/05/22 03:15:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -639,6 +639,7 @@ struct livengood_tcpip_ctxdesc {
 #define EEER_EEER_TX_LPI_STATUS	0x80000000 /* EEER Tx in LPI state */
 #define WMREG_EEE_SU	0x0e34	/* EEE Setup */
 #define WMREG_IPCNFG	0x0e38	/* Internal PHY Configuration */
+#define IPCNFG_10BASE_TE	0x00000002 /* IPCNFG 10BASE-Te low power op. */
 #define IPCNFG_EEE_100M_AN	0x00000004 /* IPCNFG EEE Ena 100M AN */
 #define IPCNFG_EEE_1G_AN	0x00000008 /* IPCNFG EEE Ena 1G AN */
 
