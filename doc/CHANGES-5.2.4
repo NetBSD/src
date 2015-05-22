@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.4,v 1.1.2.27 2015/04/26 12:53:34 msaitoh Exp $
+# $NetBSD: CHANGES-5.2.4,v 1.1.2.28 2015/05/22 11:45:01 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2.3 release to the NetBSD 5.2.4
 release:
@@ -2565,13 +2565,13 @@ xsrc/xfree/xc/lib/font/bitmap/bdfread.c 	patch
 	(bdfReadCharacters: ensure metrics fit into xCharInfo struct)
 	[mrg, ticket #1953]
 
-crypto/dist/openssl/dist/crypto/asn1/a_type.c 1.2
-crypto/dist/openssl/dist/crypto/asn1/tasn_dec.c 1.2
-crypto/dist/openssl/dist/crypto/pkcs7/pk7_doit.c 1.2
-crypto/dist/openssl/dist/crypto/pkcs7/pk7_lib.c 1.2
-crypto/dist/openssl/dist/doc/crypto/d2i_X509.pod 1.2
-crypto/dist/openssl/dist/ssl/s2_lib.c	1.3
-crypto/dist/openssl/dist/ssl/s2_srvr.c	1.2
+crypto/dist/openssl/dist/crypto/asn1/a_type.c	1.2
+crypto/dist/openssl/dist/crypto/asn1/tasn_dec.c	1.2
+crypto/dist/openssl/dist/crypto/pkcs7/pk7_doit.c	1.2
+crypto/dist/openssl/dist/crypto/pkcs7/pk7_lib.c	1.2
+crypto/dist/openssl/dist/doc/crypto/d2i_X509.pod	1.2
+crypto/dist/openssl/dist/ssl/s2_lib.c		1.3
+crypto/dist/openssl/dist/ssl/s2_srvr.c		1.2
 
 	Address OpenSSL Security Advisory [19 Mar 2015]:
 	RSA silently downgrades to EXPORT_RSA [Client] (CVE-2015-0204)
@@ -2606,3 +2606,9 @@ sys/kern/sys_select.c				patch
 	exceeded, then return EINVAL instead of silently truncating the list.
 	Addresses PR/17507.
 	[prlw1, ticket #1957]
+
+sys/arch/xen/xen/xenevt.c			1.42
+
+	Fix off by one error, addresses port-xen/49919.
+	[bouyer, ticket #1965]
+
