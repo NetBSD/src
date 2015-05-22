@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.305 2015/05/20 02:47:17 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.306 2015/05/22 17:33:15 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23353,3 +23353,29 @@ crypto/dist/ipsec-tools/src/racoon/gssapi.c	1.5-1.6
 	  https://www.altsci.com/ipsec/
 	- Detect error earlier to avoid memory leak.
 	[christos, ticket #792]
+
+sys/arch/x86/x86/lapic.c			1.48
+
+	Workaround for "lapic_set_lvt: bad pin value %d" panic on
+	some (broken?) BIOS systems. Don't panic when a local APIC's
+	interrput input pin number (LINTx) > 1.  Instead, print a
+	warning message and continue. The default is pin 1.
+	[msaitoh, ticket #795]
+
+sys/arch/xen/xen/xenevt.c			1.42
+
+	Fix off by one error.  PR port-xen/49919.
+	[bouyer, ticket #796]
+
+lib/libpam/libpam/Makefile			1.18
+
+	When building with clang, make warnings about NULL checks of
+	parameters with attribute nonnull non-fatal.
+	[joerg, ticket #789]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_gem_gtt.c 1.4
+
+	Fix kassert: npdp may be GEN8_LEGACY_PDPS exactly.
+	Gets Broadwell booting.
+	[riastradh, ticket #797]
+
