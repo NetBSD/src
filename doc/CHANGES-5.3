@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.114 2015/04/30 20:04:33 snj Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.115 2015/05/22 11:05:57 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3891,4 +3891,9 @@ sys/dev/pci/pcidevs_data.h			regen
 	- Cleanup comments.
 	- Fix debug message.
 	[msaitoh, ticket #1962]
+
+sys/arch/xen/xen/xenevt.c			1.42
+
+	Fix off by one error, addresses port-xen/49919.
+	[bouyer, ticket #1965]
 
