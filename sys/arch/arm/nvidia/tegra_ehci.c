@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.6 2015/05/18 11:07:34 skrll Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.7 2015/05/22 06:27:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.6 2015/05/18 11:07:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.7 2015/05/22 06:27:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -318,11 +318,11 @@ tegra_ehci_utmip_init(struct tegra_ehci_softc *sc)
 
 static int
 tegra_ehci_port_status(struct ehci_softc *ehci_sc, uint32_t v, int i)
- {
+{
 	struct tegra_ehci_softc * const sc = device_private(ehci_sc->sc_dev);
 	bus_space_tag_t iot = sc->sc_bst;
 	bus_space_handle_t ioh = sc->sc_bsh;
- 
+
 	i &= ~(UPS_HIGH_SPEED|UPS_LOW_SPEED);
 
 	uint32_t val = bus_space_read_4(iot, ioh,
