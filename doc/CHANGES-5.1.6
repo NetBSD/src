@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.6,v 1.1.2.26 2015/04/26 12:55:28 msaitoh Exp $
+# $NetBSD: CHANGES-5.1.6,v 1.1.2.27 2015/05/22 11:22:34 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1.5 release to the NetBSD 5.1.6
 release:
@@ -2606,3 +2606,9 @@ sys/kern/sys_select.c				patch
 	exceeded, then return EINVAL instead of silently truncating the list.
 	Addresses PR/17507.
 	[prlw1, ticket #1957]
+
+sys/arch/xen/xen/xenevt.c			1.42
+
+	Fix off by one error, addresses port-xen/49919.
+	[bouyer, ticket #1965]
+
