@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwm.c,v 1.34 2015/05/16 07:58:19 nonaka Exp $	*/
-/*	OpenBSD: if_iwm.c,v 1.39 2015/03/23 00:35:19 jsg Exp	*/
+/*	$NetBSD: if_iwm.c,v 1.35 2015/05/22 15:32:21 nonaka Exp $	*/
+/*	OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.34 2015/05/16 07:58:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.35 2015/05/22 15:32:21 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1224,7 +1224,7 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 		paddr += sizeof(struct iwm_device_cmd);
 
 		error = bus_dmamap_create(sc->sc_dmat, IWM_RBUF_SIZE,
-		    IWM_NUM_OF_TBS, IWM_RBUF_SIZE, 0, BUS_DMA_NOWAIT,
+		    IWM_NUM_OF_TBS - 2, IWM_RBUF_SIZE, 0, BUS_DMA_NOWAIT,
 		    &data->map);
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
