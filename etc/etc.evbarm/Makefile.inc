@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.75 2015/05/15 06:51:24 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.76 2015/05/22 01:18:05 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -132,6 +132,7 @@ __mkimage: .USE
 	TOOL_GZIP=${TOOL_GZIP} \
 	TOOL_MKNOD=${TOOL_MKNOD} \
 	TOOL_PAX=${TOOL_PAX} \
+	TOOL_MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE} \
 	TOOL_MTREE=${TOOL_MTREE} \
 	HOST_SH=${HOST_SH} \
 	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
