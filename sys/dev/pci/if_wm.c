@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.321 2015/05/16 22:41:59 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.322 2015/05/22 03:15:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.321 2015/05/16 22:41:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.322 2015/05/22 03:15:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3807,7 +3807,7 @@ wm_reset(struct wm_softc *sc)
 	/* reload sc_ctrl */
 	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 
-	if (sc->sc_type == WM_T_I350)
+	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type <= WM_T_I211))
 		wm_set_eee_i350(sc);
 
 	/* dummy read from WUC */
@@ -9592,6 +9592,7 @@ wm_set_eee_i350(struct wm_softc *sc)
 		    | EEER_LPI_FC);
 	} else {
 		ipcnfg &= ~(IPCNFG_EEE_1G_AN | IPCNFG_EEE_100M_AN);
+		ipcnfg &= ~IPCNFG_10BASE_TE;
 		eeer &= ~(EEER_TX_LPI_EN | EEER_RX_LPI_EN
 		    | EEER_LPI_FC);
 	}
