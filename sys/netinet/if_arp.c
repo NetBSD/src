@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.168 2015/05/21 09:29:51 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.169 2015/05/22 07:44:46 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.168 2015/05/21 09:29:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.169 2015/05/22 07:44:46 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -555,7 +555,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				rt->rt_rmx.rmx_mtu = FDDIIPMTU;
 			break;
 #endif
-#if NARC > 0
+#if NARCNET > 0
 		case IFT_ARCNET:
 		    {
 			int arcipifmtu;
@@ -603,7 +603,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 					rt->rt_rmx.rmx_mtu = FDDIIPMTU;
 				break;
 #endif
-#if NARC > 0
+#if NARCNET > 0
 			case IFT_ARCNET:
 			    {
 				int arcipifmtu;
