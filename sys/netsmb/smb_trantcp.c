@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.48 2015/05/02 17:18:04 rtr Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.49 2015/05/22 22:05:32 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.48 2015/05/02 17:18:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.49 2015/05/22 22:05:32 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,6 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct lwp *l)
 {
 	struct socket *so;
 	int error;
-	struct mbuf *m;
 
 	error = socreate(AF_INET, &so, SOCK_STREAM, IPPROTO_TCP, l, NULL);
 	if (error)
@@ -181,12 +180,8 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct lwp *l)
 		goto bad;
 	nb_setsockopt_int(so, SOL_SOCKET, SO_KEEPALIVE, 1);
 	nb_setsockopt_int(so, IPPROTO_TCP, TCP_NODELAY, 1);
-	m = m_get(M_WAIT, MT_SONAME);
-	*mtod(m, struct sockaddr *) = *(struct sockaddr *)to;
-	m->m_len = sizeof(struct sockaddr);
 	solock(so);
-	error = soconnect(so, mtod(m, struct sockaddr*), l);
-	m_free(m);
+	error = soconnect(so, (struct sockaddr *)to, l);
 	if (error) {
 		sounlock(so);
 		goto bad;
