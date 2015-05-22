@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2013/12/28 18:04:18 christos Exp $
+# $NetBSD: Makefile,v 1.16.4.1 2015/05/22 16:58:47 snj Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -203,6 +203,8 @@ STATIC_MODULE_LIBS:= ${STATIC_MODULE_LIBS} ${MODOBJDIR}/lib${MOD}.a
 openpam_static_modules.o: openpam_static.o ${STATIC_MODULE_LIBS}
 	${CC} ${LDFLAGS} -nostdlib -o ${.TARGET} -r -Wl,--whole-archive \
 	    openpam_static.o ${STATIC_MODULE_LIBS}
+
+CWARNFLAGS.clang+=	-Wno-error=tautological-pointer-compare
 
 .include <bsd.lib.mk>
 .PATH.h: ${DIST}/include
