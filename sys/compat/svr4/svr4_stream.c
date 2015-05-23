@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.85 2015/05/02 17:18:03 rtr Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.86 2015/05/23 15:27:55 rtr Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.85 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.86 2015/05/23 15:27:55 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1366,16 +1366,14 @@ int
 svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_t *retval)
 {
 	struct proc *p = l->l_proc;
+	struct sockaddr *skp;
 	file_t	*fp;
 	struct svr4_strbuf dat, ctl;
 	struct svr4_strmcmd sc;
 	struct sockaddr_in sain;
 	struct sockaddr_un saun;
-	void *skp;
-	int sasize;
 	struct svr4_strm *st;
 	int error;
-	struct mbuf *nam;
 	struct msghdr msg;
 	struct iovec aiov;
 
@@ -1454,8 +1452,7 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 			goto out;
 		}
 		netaddr_to_sockaddr_in(&sain, &sc);
-		skp = &sain;
-		sasize = sizeof(sain);
+		skp = (struct sockaddr *)&sain;
 		error = sain.sin_family != st->s_family;
 		break;
 
@@ -1471,13 +1468,14 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 			/* Maybe we've been given a device/inode pair */
 			dev_t *dev = SVR4_ADDROF(&sc);
 			svr4_ino_t *ino = (svr4_ino_t *) &dev[1];
-			skp = svr4_find_socket(p, fp, *dev, *ino);
+			skp = (struct sockaddr *)svr4_find_socket(
+			    p, fp, *dev, *ino);
 			if (skp == NULL) {
-				skp = &saun;
+				skp = (struct sockaddr *)&saun;
 				/* I guess we have it by name */
-				netaddr_to_sockaddr_un(skp, &sc);
+				netaddr_to_sockaddr_un(
+				    (struct sockaddr_un *)skp, &sc);
 			}
-			sasize = sizeof(saun);
 		}
 		break;
 
@@ -1488,24 +1486,19 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 		goto out;
 	}
 
-	nam = m_get(M_WAIT, MT_SONAME);
-	nam->m_len = sasize;
-	memcpy(mtod(nam, void *), skp, sasize);
-
  	switch (st->s_cmd = sc.cmd) {
 	case SVR4_TI_CONNECT_REQUEST:	/* connect 	*/
 	 	KERNEL_UNLOCK_ONE(NULL);
-		return do_sys_connect(l, SCARG(uap, fd),
-		    mtod(nam, struct sockaddr *));
+		return do_sys_connect(l, SCARG(uap, fd), skp);
 
 	case SVR4_TI_SENDTO_REQUEST:	/* sendto 	*/
 	 	KERNEL_UNLOCK_ONE(NULL);
-		msg.msg_name = nam;
-		msg.msg_namelen = sasize;
+		msg.msg_name = skp;
+		msg.msg_namelen = skp->sa_len;
 		msg.msg_iov = &aiov;
 		msg.msg_iovlen = 1;
 		msg.msg_control = NULL;
-		msg.msg_flags = MSG_NAMEMBUF;
+		msg.msg_flags = 0;
 		aiov.iov_base = NETBSD32PTR(dat.buf);
 		aiov.iov_len = dat.len;
 		error = do_sys_sendmsg(l, SCARG(uap, fd), &msg,
@@ -1513,9 +1506,7 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 
 		*retval = 0;
 		return error;
-  
 	default:
-		m_free(nam);
 		DPRINTF(("putmsg: Unimplemented command %lx\n", sc.cmd));
 		error = ENOSYS;
 		goto out;
