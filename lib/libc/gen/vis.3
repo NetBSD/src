@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.42 2014/09/26 02:30:27 wiz Exp $
+.\"	$NetBSD: vis.3,v 1.43 2015/05/23 11:47:56 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)vis.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd September 26, 2014
+.Dd May 23, 2015
 .Dt VIS 3
 .Os
 .Sh NAME
@@ -435,6 +435,11 @@ The encoding conversion is influenced by the setting of the
 .Ev LC_CTYPE
 environment variable which defines the set of characters
 that can be copied without encoding.
+.Pp
+If
+.Dv VIS_NOLOCALE
+is set, processing is done assuming the C locale and overriding
+any other environment settings.
 .Pp
 When 8-bit data is present in the input,
 .Ev LC_CTYPE
