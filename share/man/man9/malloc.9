@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.51 2014/12/27 20:45:08 wiz Exp $
+.\"	$NetBSD: malloc.9,v 1.52 2015/05/23 17:05:03 maxv Exp $
 .\"
 .\" Copyright (c) 1996, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,15 +27,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 27, 2014
+.Dd May 23, 2015
 .Dt MALLOC 9
 .Os
 .Sh NAME
 .Nm malloc ,
-.Nm MALLOC ,
 .Nm realloc ,
 .Nm free ,
-.Nm FREE ,
 .Nm malloc_type_attach ,
 .Nm malloc_type_detach ,
 .Nm MALLOC_DEFINE ,
@@ -268,50 +266,6 @@ and can be examined by using
 .Fn malloc
 returns a kernel virtual address that is suitably aligned for storage of
 any type of object.
-.Sh DIAGNOSTICS
-A kernel compiled with the
-.Dv DIAGNOSTIC
-configuration option attempts to detect memory corruption caused by
-such things as writing outside the allocated area and imbalanced calls to the
-.Fn malloc
-and
-.Fn free
-functions.
-Failing consistency checks will cause a panic or a system console message:
-.Pp
-.Bl -bullet -offset indent -compact
-.It
-panic:
-.Dq malloc - bogus type
-.It
-panic:
-.Dq malloc: out of space in kmem_map
-.It
-panic:
-.Dq malloc: allocation too large
-.It
-panic:
-.Dq malloc: wrong bucket
-.It
-panic:
-.Dq malloc: lost data
-.It
-panic:
-.Dq free: unaligned addr
-.It
-panic:
-.Dq free: duplicated free
-.It
-panic:
-.Dq free: multiple frees
-.It
-panic:
-.Dq init: minbucket too small/struct freelist too big
-.It
-.Dq multiply freed item Aq addr
-.It
-.Dq Data modified on freelist: Aq data object description
-.El
 .Sh SEE ALSO
 .Xr vmstat 1 ,
 .Xr memoryallocators 9
