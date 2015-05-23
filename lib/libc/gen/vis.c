@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.68 2015/05/23 14:01:07 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.69 2015/05/23 14:21:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.68 2015/05/23 14:01:07 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.69 2015/05/23 14:21:11 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -101,6 +101,10 @@ static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
 #if defined(__NetBSD__) && defined(_CTYPE_G)
 #define iscgraph(c)      ((int)((_C_ctype_tab_ + 1)[(c)] & _CTYPE_G)) 
 #else
+/* Keep it simple for now, no locale stuff */
+#define iscgraph(c)	isgraph(c)
+#ifdef notyet
+#include <locale.h>
 static int
 iscgraph(int c) {
 	int rv;
@@ -112,6 +116,7 @@ iscgraph(int c) {
 		setlocale(LC_CTYPE, ol);
 	return rv;
 }
+#endif
 #endif
 
 #define ISGRAPH(flags, c) \
