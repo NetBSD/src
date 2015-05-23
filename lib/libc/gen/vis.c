@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.67 2015/05/23 11:47:56 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.68 2015/05/23 14:01:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.67 2015/05/23 11:47:56 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.68 2015/05/23 14:01:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -97,6 +97,25 @@ static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
 
 #undef BELL
 #define BELL L'\a'
+ 
+#if defined(__NetBSD__) && defined(_CTYPE_G)
+#define iscgraph(c)      ((int)((_C_ctype_tab_ + 1)[(c)] & _CTYPE_G)) 
+#else
+static int
+iscgraph(int c) {
+	int rv;
+	char *ol;
+
+	ol = setlocale(LC_CTYPE, "C");
+	rv = isgraph(c);
+	if (ol)
+		setlocale(LC_CTYPE, ol);
+	return rv;
+}
+#endif
+
+#define ISGRAPH(flags, c) \
+    (((flags) & VIS_NOLOCALE) ? iscgraph(c) : iswgraph(c))
 
 #define iswoctal(c)	(((u_char)(c)) >= L'0' && ((u_char)(c)) <= L'7')
 #define iswwhite(c)	(c == L' ' || c == L'\t' || c == L'\n')
@@ -232,7 +251,7 @@ do_mbyte(wchar_t *dst, wint_t c, int flags, wint_t nextc, int iswextra)
 		case L'$': /* vis(1) -l */
 			break;
 		default:
-			if (iswgraph(c) && !iswoctal(c)) {
+			if (ISGRAPH(flags, c) && !iswoctal(c)) {
 				*dst++ = L'\\';
 				*dst++ = c;
 				return dst;
@@ -284,7 +303,7 @@ do_svis(wchar_t *dst, wint_t c, int flags, wint_t nextc, const wchar_t *extra)
 	uint64_t bmsk, wmsk;
 
 	iswextra = wcschr(extra, c) != NULL;
-	if (!iswextra && (iswgraph(c) || iswwhite(c) ||
+	if (!iswextra && (ISGRAPH(flags, c) || iswwhite(c) ||
 	    ((flags & VIS_SAFE) && iswsafe(c)))) {
 		*dst++ = c;
 		return dst;
