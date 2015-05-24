@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.58 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.59 2015/05/24 15:43:45 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -133,7 +133,6 @@ void	in_losing(struct inpcb *);
 int	in_pcballoc(struct socket *, void *);
 int	in_pcbbind(void *, struct sockaddr_in *, struct lwp *);
 int	in_pcbconnect(void *, struct sockaddr_in *, struct lwp *);
-int	in_pcbconnect_m(void *, struct mbuf *, struct lwp *);
 void	in_pcbdetach(void *);
 void	in_pcbdisconnect(void *);
 void	in_pcbinit(struct inpcbtable *, int, int);

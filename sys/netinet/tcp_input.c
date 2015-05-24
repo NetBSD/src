@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.340 2015/05/15 18:03:45 kefren Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.341 2015/05/24 15:43:45 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.340 2015/05/15 18:03:45 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.341 2015/05/24 15:43:45 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3918,7 +3918,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	struct in6pcb *in6p = NULL;
 #endif
 	struct tcpcb *tp = 0;
-	struct mbuf *am;
 	int s;
 	struct socket *oso;
 
@@ -4069,45 +4068,36 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	}
 #endif
 
-	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
-	if (am == NULL)
-		goto resetandabort;
-	MCLAIM(am, &tcp_mowner);
-	am->m_len = src->sa_len;
-	bcopy(src, mtod(am, void *), src->sa_len);
 	if (inp) {
-		if (in_pcbconnect_m(inp, am, &lwp0)) {
-			(void) m_free(am);
+		struct sockaddr_in sin;
+		memcpy(&sin, src, src->sa_len);
+		if (in_pcbconnect(inp, &sin, &lwp0)) {
 			goto resetandabort;
 		}
 	}
 #ifdef INET6
 	else if (in6p) {
+		struct sockaddr_in6 sin6;
+		memcpy(&sin6, src, src->sa_len);
 		if (src->sa_family == AF_INET) {
 			/* IPv4 packet to AF_INET6 socket */
-			struct sockaddr_in6 *sin6;
-			sin6 = mtod(am, struct sockaddr_in6 *);
-			am->m_len = sizeof(*sin6);
-			memset(sin6, 0, sizeof(*sin6));
-			sin6->sin6_family = AF_INET6;
-			sin6->sin6_len = sizeof(*sin6);
-			sin6->sin6_port = ((struct sockaddr_in *)src)->sin_port;
-			sin6->sin6_addr.s6_addr16[5] = htons(0xffff);
+			memset(&sin6, 0, sizeof(sin6));
+			sin6.sin6_family = AF_INET6;
+			sin6.sin6_len = sizeof(sin6);
+			sin6.sin6_port = ((struct sockaddr_in *)src)->sin_port;
+			sin6.sin6_addr.s6_addr16[5] = htons(0xffff);
 			bcopy(&((struct sockaddr_in *)src)->sin_addr,
-				&sin6->sin6_addr.s6_addr32[3],
-				sizeof(sin6->sin6_addr.s6_addr32[3]));
+				&sin6.sin6_addr.s6_addr32[3],
+				sizeof(sin6.sin6_addr.s6_addr32[3]));
 		}
-		if (in6_pcbconnect_m(in6p, am, NULL)) {
-			(void) m_free(am);
+		if (in6_pcbconnect(in6p, &sin6, NULL)) {
 			goto resetandabort;
 		}
 	}
 #endif
 	else {
-		(void) m_free(am);
 		goto resetandabort;
 	}
-	(void) m_free(am);
 
 	if (inp)
 		tp = intotcpcb(inp);
