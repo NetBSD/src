@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.53 2014/12/04 21:50:29 joerg Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.54 2015/05/24 22:30:05 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.53 2014/12/04 21:50:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.54 2015/05/24 22:30:05 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -708,6 +708,10 @@ again:
 	if (drive > 0) {
 		KASSERT(sc->sc_ahci_cap & AHCI_CAP_SPM);
 	}
+
+	if (sc->sc_ahci_quirks & AHCI_QUIRK_SKIP_RESET)
+		goto skip_reset;
+
 	/* polled command, assume interrupts are disabled */
 	/* use slot 0 to send reset, the channel is idle */
 	cmd_h = &achp->ahcic_cmdh[0];
@@ -759,6 +763,8 @@ again:
 	default:
 		break;
 	}
+
+skip_reset:
 	/*
 	 * wait 31s for BSY to clear
 	 * This should not be needed, but some controllers clear the
