@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.14 2009/04/23 01:56:48 snj Exp $
+.\"	$NetBSD: prep,v 1.14.26.1 2015/05/24 11:14:42 martin Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -14,7 +14,7 @@ We recommend that you get David Pilling's !SparkPlug.
 A self-extracting version of this
 can be found in the distribution directory at
 .Pa installation/misc/splug.bas
-or at David Pilling's web site:
+or at David Pilling's website:
 .Lk http://www.davidpilling.net/free.html
 .It
 A program to report your disk's geometry:

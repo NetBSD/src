@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.1 2006/04/05 18:37:00 garbled Exp $
+.\"	$NetBSD: upgrade,v 1.1.66.1 2015/05/24 11:14:45 martin Exp $
 .
 When upgrading from a version of
 .Nx*M
@@ -32,7 +32,8 @@ rather than attempt upgrade of
 you instead reinstall from scratch.  Future versions of
 .Nx*M
 will allow simple upgrade without these additional steps.
-Sysinst can upgrade any machine which has a PReP boot partition of at least
+.Ic sysinst
+can upgrade any machine which has a PReP boot partition of at least
 2 MB in size, offset by at least 2 sectors from the beginning of the disk, and
 has a matching disklabel partition of type boot.
 .

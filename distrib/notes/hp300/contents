@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.16 2012/08/17 20:10:53 riz Exp $
+.\"	$NetBSD: contents,v 1.16.12.1 2015/05/24 11:14:43 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,7 +69,7 @@ A gzipped
 .Nx
 kernel containing code for all of the hardware supported in this release
 with an embedded ramdisk-based installer.  This is the same kernel
-that is present on the miniroot filesystem, but uses a newer more 
+that is present on the miniroot filesystem, but uses a newer more
 user-friendly installation program.
 .			It Pa netbsd-RAMDISK.symbols.gz
 Symbols for
@@ -105,7 +105,7 @@ A file containing geometry for some HB-IB disk drives.
 .
 .			It Pa SYS_INST.gz
 .
-A gzipped copy of the SYS_INST miniroot installation program.  This is 
+A gzipped copy of the SYS_INST miniroot installation program.  This is
 only necessary if you can't use the RAMDISK based installer.
 .
 .			It Pa SYS_UBOOT.gz
@@ -215,8 +215,11 @@ This set includes the system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
 .
-.It Sy modules 
-This set includes kernel modules to add functionality to a running system. 
+.It Sy modules
+This set includes kernel modules to add functionality to a running system.
+.
+.It Sy modules
+This set includes kernel modules to add functionality to a running system.
 .
 .It Sy text
 This set includes
@@ -257,7 +260,7 @@ Fonts needed by the X server and by X clients.
 Configuration files for X which could be locally modified.
 .
 .It Sy xserver
-The X server. 
+The X server.
 .
 .tag) \" x sets
 .
@@ -286,7 +289,7 @@ Therefore, if you want to extract the binaries into your system, i.e.
 replace the system binaries with them, you have to run the
 .Ic "tar -xzpf"
 command from the root directory (
-.Pa / 
+.Pa /
 ) of your system.
 .
 .

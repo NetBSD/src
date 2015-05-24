@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.73 2012/01/10 01:57:27 snj Exp $
+.\"	$NetBSD: xfer,v 1.73.20.1 2015/05/24 11:14:43 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -247,29 +247,27 @@ If you're making the tape on a
 system, the easiest way
 to do so is probably something like:
 .Pp
-.Dl # Ic "tar -cf" Ar "tape_device dist_directories"
+.Dl # Ic "tar -cf" Ar "tape_device dist_sets"
 .Pp
 where
 .Ar tape_device
 is the name of the tape device that
-describes the tape drive you're using; possibly
+represents the tape drive you're using.
+This might be
 .Pa /dev/rst0 ,
 or something similar, but it will vary from system to system.
-(If you can't figure it out, ask your system administrator.)
 In the above example,
-.Ar dist_directories
-are the
-distribution sets' directories, for the distribution sets you
+.Ar dist_sets
+is a list of filenames corresponding to the distribution sets that you
 wish to place on the tape.
 For instance, to put the
 .Sy kern-GENERIC, base, No and Sy etc
-distributions on tape (in
-order to do the absolute minimum installation to a new disk),
+distributions on tape (the absolute minimum required for installation),
 you would do the following:
 .Pp
 .Dl # Ic "cd \&.../NetBSD-\*V"
 .Dl # Ic "cd \*M/binary"
-.Dl # Ic "tar -cf" Ar tape_device Ic "kern-GENERIC base etc"
+.Dl # Ic "tar -cf" Ar tape_device Ic "kern-GENERIC.tgz base.tgz etc.tgz"
 .Pp
 .(Note
 You still need to fill in

@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.17 2008/09/07 05:09:12 tsutsui Exp $
+.\"	$NetBSD: xfer,v 1.17.40.1 2015/05/24 11:14:44 martin Exp $
 .
 Installation is supported from several media types, including:
 .(bullet
@@ -170,7 +170,7 @@ work required to mount the CD-ROM and extract the files.
 .Ss2 Install/Upgrade via FTP
 .
 This method requires that you boot from another device
-(i.e. tape or network, as described above).
+(i.e., tape or network, as described above).
 You may need to make a boot tape on another machine using the files
 in .../install (which you get via FTP).
 Once you have booted netbsd-RAMDISK (the RAM-disk kernel) and loaded the
@@ -182,7 +182,7 @@ automates the work required to configure the network interface and
 transfer the files.
 .Pp
 This method, of course, requires network access to an FTP server.
-This might be a local system, or it might even be ftp.NetBSD.org itself.
+This might be a local system, or it might be ftp.NetBSD.org itself.
 If you wish to use ftp.NetBSD.org as your FTP file
 server, you may want to keep the following information handy:
 .Pp
@@ -192,8 +192,3 @@ Login: anonymous
 Password: \*[Lt]your e-mail address\*[Gt]
 Server path: /pub/NetBSD/NetBSD-\*V/\*M/binary
 .disp)
-.(Note
-If you're not using a nameserver during installation,
-you might find 204.152.184.75 handy; it's the IP address of
-ftp.NetBSD.org as of October, 2000.
-.Note)

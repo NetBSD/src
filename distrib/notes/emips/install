@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.1 2011/01/26 01:18:45 pooka Exp $
+.\"	$NetBSD: install,v 1.1.26.1 2015/05/24 11:14:43 martin Exp $
 .\"
 .\" Copyright (c) 2010 Microsoft Corp.
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ A good initial size for the swap partition is twice the
 amount of physical memory in your machine.
 The default swap size is 64 MB, which
 is adequate for doing a full system build.
-A full binary installation, with X11R6 takes about 700 MB in
+A full binary installation, with X11R7 takes about 700 MB in
 .Pa /usr ;
 a 1 GB
 .Pa /usr

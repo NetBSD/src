@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2002/07/21 08:14:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.78.1 2015/05/24 11:14:45 martin Exp $
 
-MERGED_SRCS+=	${.CURDIR}/../sparc/legal ${COMMON}/xfer
+MERGED_SRCS+=	${COMMON}/xfer
 
 .include <bsd.man.mk>

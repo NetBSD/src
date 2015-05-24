@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.26 2009/04/23 01:56:50 snj Exp $
+.\"	$NetBSD: prep,v 1.26.26.1 2015/05/24 11:14:45 martin Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -417,7 +417,7 @@ on.
 .Pp
 A minimal installation of
 .Nx
-requires about 100 MB.
+requires about 140 MB.
 A full installation requires considerably more.
 A good initial size for the swap partition is twice the amount
 of physical memory in your machine (unlike

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1 2011/01/26 01:18:45 pooka Exp $
+.\"	$NetBSD: hardware,v 1.1.26.1 2015/05/24 11:14:43 martin Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -10,7 +10,7 @@ BEE3 system with four Xilinx Virtex-5 FPGAs.
 .bullet)
 .
 .Pp
-The minimal configuration requires 8 MB of RAM and ~60 MB of disk space.
+The minimal configuration requires 8 MB of RAM and ~170 MB of disk space.
 To install the entire system requires in excess of 800 MB of disk space,
 for any serious work at least 64 MB of RAM is recommended.
 The processor can address the full 4 GB of physical space, but configurations with
