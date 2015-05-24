@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1960 2015/05/24 22:22:23 christos Exp $
+#	$NetBSD: mi,v 1.1961 2015/05/24 22:23:01 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -397,9 +397,9 @@
 ./usr/include/dev/eisa/eisavar.h		comp-obsolete		obsolete
 ./usr/include/dev/filemon/filemon.h		comp-c-include
 ./usr/include/dev/fssvar.h			comp-c-include
-./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/dev/hdaudio/hdaudioio.h		comp-c-include
 ./usr/include/dev/hdaudio/hdaudioreg.h		comp-c-include
+./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/dev/i2c/i2c_bus.h			comp-obsolete		obsolete
 ./usr/include/dev/i2c/i2c_eeprom.h		comp-obsolete		obsolete
 ./usr/include/dev/i2c/i2c_io.h			comp-c-include
@@ -8788,9 +8788,9 @@
 ./usr/share/man/cat3/re_exec.0			comp-c-catman		.cat
 ./usr/share/man/cat3/readdir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/readdir_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/realloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/reallocarr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/reallocarray.0		comp-c-catman		.cat
-./usr/share/man/cat3/realloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/realpath.0			comp-c-catman		.cat
 ./usr/share/man/cat3/recno.0			comp-c-catman		.cat
 ./usr/share/man/cat3/refresh.0			comp-c-catman		.cat
@@ -10819,7 +10819,6 @@
 ./usr/share/man/cat9/ratecheck.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/readdisklabel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/realloc.0			comp-sys-catman		.cat
-./usr/share/man/cat9/realloc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/relookup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/remrunqueue.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/resettodr.0		comp-sys-catman		.cat
@@ -11220,22 +11219,22 @@
 ./usr/share/man/cat9/vtruncbuf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vwakeup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wakeup.0			comp-sys-catman		.cat
-./usr/share/man/cat9/wdc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wapbl.0			comp-sys-catman		.cat
-./usr/share/man/cat9/wapbl_start.0		comp-sys-catman		.cat
-./usr/share/man/cat9/wapbl_stop.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_add_buf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wapbl_begin.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_discard.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wapbl_end.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wapbl_flush.0		comp-sys-catman		.cat
-./usr/share/man/cat9/wapbl_discard.0		comp-sys-catman		.cat
-./usr/share/man/cat9/wapbl_add_buf.0		comp-sys-catman		.cat
-./usr/share/man/cat9/wapbl_remove_buf.0		comp-sys-catman		.cat
-./usr/share/man/cat9/wapbl_resize_buf.0		comp-sys-catman		.cat
-./usr/share/man/cat9/wapbl_register_inode.0	comp-sys-catman		.cat
-./usr/share/man/cat9/wapbl_unregister_inode.0	comp-sys-catman		.cat
-./usr/share/man/cat9/wapbl_register_deallocation.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/wapbl_jlock_assert.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/wapbl_junlock_assert.0	comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_register_deallocation.0	comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_register_inode.0	comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_remove_buf.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_resize_buf.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_start.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_stop.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wapbl_unregister_inode.0	comp-sys-catman		.cat
+./usr/share/man/cat9/wdc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/workqueue.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/workqueue_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/workqueue_destroy.0	comp-sys-catman		.cat
@@ -15671,9 +15670,9 @@
 ./usr/share/man/html3/re_exec.html		comp-c-htmlman		html
 ./usr/share/man/html3/readdir.html		comp-c-htmlman		html
 ./usr/share/man/html3/readdir_r.html		comp-c-htmlman		html
+./usr/share/man/html3/realloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/reallocarr.html		comp-c-htmlman		html
 ./usr/share/man/html3/reallocarray.html		comp-c-htmlman		html
-./usr/share/man/html3/realloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/realpath.html		comp-c-htmlman		html
 ./usr/share/man/html3/recno.html		comp-c-htmlman		html
 ./usr/share/man/html3/refresh.html		comp-c-htmlman		html
@@ -17179,7 +17178,6 @@
 ./usr/share/man/html9/in_getifa.html		comp-sys-htmlman	html
 ./usr/share/man/html9/incore.html		comp-sys-htmlman	html
 ./usr/share/man/html9/inittodr.html		comp-sys-htmlman	html
-./usr/share/man/html9/pci_intr_distribute.html	comp-sys-htmlman	html
 ./usr/share/man/html9/intro.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ioasic.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ioasic_attach_devs.html	comp-sys-htmlman	html
@@ -17411,6 +17409,7 @@
 ./usr/share/man/html9/pci_get_powerstate.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_disestablish.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_intr_distribute.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_establish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_evcnt.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_map.html		comp-sys-htmlman	html
@@ -17971,22 +17970,22 @@
 ./usr/share/man/html9/vtruncbuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vwakeup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wakeup.html		comp-sys-htmlman	html
-./usr/share/man/html9/wdc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/wapbl.html		comp-sys-htmlman	html
-./usr/share/man/html9/wapbl_start.html		comp-sys-htmlman	html
-./usr/share/man/html9/wapbl_stop.html		comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_add_buf.html	comp-sys-htmlman	html
 ./usr/share/man/html9/wapbl_begin.html		comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_discard.html	comp-sys-htmlman	html
 ./usr/share/man/html9/wapbl_end.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wapbl_flush.html		comp-sys-htmlman	html
-./usr/share/man/html9/wapbl_discard.html	comp-sys-htmlman	html
-./usr/share/man/html9/wapbl_add_buf.html	comp-sys-htmlman	html
-./usr/share/man/html9/wapbl_remove_buf.html	comp-sys-htmlman	html
-./usr/share/man/html9/wapbl_resize_buf.html	comp-sys-htmlman	html
-./usr/share/man/html9/wapbl_register_inode.html comp-sys-htmlman	html
-./usr/share/man/html9/wapbl_unregister_inode.html	comp-sys-htmlman	html
-./usr/share/man/html9/wapbl_register_deallocation.html	comp-sys-htmlman	html
 ./usr/share/man/html9/wapbl_jlock_assert.html	comp-sys-htmlman	html
 ./usr/share/man/html9/wapbl_junlock_assert.html comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_register_deallocation.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_register_inode.html comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_remove_buf.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_resize_buf.html	comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_start.html		comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_stop.html		comp-sys-htmlman	html
+./usr/share/man/html9/wapbl_unregister_inode.html	comp-sys-htmlman	html
+./usr/share/man/html9/wdc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/workqueue.html		comp-sys-htmlman	html
 ./usr/share/man/html9/workqueue_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/workqueue_destroy.html	comp-sys-htmlman	html
@@ -22553,9 +22552,9 @@
 ./usr/share/man/man3/re_exec.3			comp-c-man		.man
 ./usr/share/man/man3/readdir.3			comp-c-man		.man
 ./usr/share/man/man3/readdir_r.3		comp-c-man		.man
+./usr/share/man/man3/realloc.3			comp-c-man		.man
 ./usr/share/man/man3/reallocarr.3		comp-c-man		.man
 ./usr/share/man/man3/reallocarray.3		comp-c-man		.man
-./usr/share/man/man3/realloc.3			comp-c-man		.man
 ./usr/share/man/man3/realpath.3			comp-c-man		.man
 ./usr/share/man/man3/recno.3			comp-c-man		.man
 ./usr/share/man/man3/refresh.3			comp-c-man		.man
@@ -23934,14 +23933,14 @@
 ./usr/share/man/man9/dbtob.9			comp-sys-man		.man
 ./usr/share/man/man9/ddc.9			comp-sys-man		.man
 ./usr/share/man/man9/delay.9			comp-sys-man		.man
-./usr/share/man/man9/devsw_attach.9		comp-sys-man		.man
-./usr/share/man/man9/devsw_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/device_printf.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter.9			comp-sys-man		.man
 ./usr/share/man/man9/deviter_first.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter_init.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter_next.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter_release.9		comp-sys-man		.man
+./usr/share/man/man9/devsw_attach.9		comp-sys-man		.man
+./usr/share/man/man9/devsw_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/disk.9			comp-sys-man		.man
 ./usr/share/man/man9/disk_attach.9		comp-sys-man		.man
 ./usr/share/man/man9/disk_begindetach.9		comp-sys-man		.man
@@ -24135,7 +24134,6 @@
 ./usr/share/man/man9/in_getifa.9		comp-sys-man		.man
 ./usr/share/man/man9/incore.9			comp-sys-man		.man
 ./usr/share/man/man9/inittodr.9			comp-sys-man		.man
-./usr/share/man/man9/pci_intr_distribute.9	comp-sys-man		.man
 ./usr/share/man/man9/intro.9			comp-sys-man		.man
 ./usr/share/man/man9/ioasic.9			comp-sys-man		.man
 ./usr/share/man/man9/ioasic_attach_devs.9	comp-sys-man		.man
@@ -24373,6 +24371,7 @@
 ./usr/share/man/man9/pci_get_powerstate.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_intr.9			comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_disestablish.9	comp-sys-man		.man
+./usr/share/man/man9/pci_intr_distribute.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_evcnt.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_map.9		comp-sys-man		.man
@@ -24979,22 +24978,22 @@
 ./usr/share/man/man9/vtruncbuf.9		comp-sys-man		.man
 ./usr/share/man/man9/vwakeup.9			comp-sys-man		.man
 ./usr/share/man/man9/wakeup.9			comp-sys-man		.man
-./usr/share/man/man9/wdc.9			comp-sys-man		.man
 ./usr/share/man/man9/wapbl.9			comp-sys-man		.man
-./usr/share/man/man9/wapbl_start.9		comp-sys-man		.man
-./usr/share/man/man9/wapbl_stop.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_add_buf.9		comp-sys-man		.man
 ./usr/share/man/man9/wapbl_begin.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_discard.9		comp-sys-man		.man
 ./usr/share/man/man9/wapbl_end.9		comp-sys-man		.man
 ./usr/share/man/man9/wapbl_flush.9		comp-sys-man		.man
-./usr/share/man/man9/wapbl_discard.9		comp-sys-man		.man
-./usr/share/man/man9/wapbl_add_buf.9		comp-sys-man		.man
-./usr/share/man/man9/wapbl_remove_buf.9		comp-sys-man		.man
-./usr/share/man/man9/wapbl_resize_buf.9		comp-sys-man		.man
-./usr/share/man/man9/wapbl_register_inode.9	comp-sys-man		.man
-./usr/share/man/man9/wapbl_unregister_inode.9	comp-sys-man		.man
-./usr/share/man/man9/wapbl_register_deallocation.9	comp-sys-man	.man
 ./usr/share/man/man9/wapbl_jlock_assert.9	comp-sys-man		.man
 ./usr/share/man/man9/wapbl_junlock_assert.9	comp-sys-man		.man
+./usr/share/man/man9/wapbl_register_deallocation.9	comp-sys-man	.man
+./usr/share/man/man9/wapbl_register_inode.9	comp-sys-man		.man
+./usr/share/man/man9/wapbl_remove_buf.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_resize_buf.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_start.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_stop.9		comp-sys-man		.man
+./usr/share/man/man9/wapbl_unregister_inode.9	comp-sys-man		.man
+./usr/share/man/man9/wdc.9			comp-sys-man		.man
 ./usr/share/man/man9/workqueue.9		comp-sys-man		.man
 ./usr/share/man/man9/workqueue_create.9		comp-sys-man		.man
 ./usr/share/man/man9/workqueue_destroy.9	comp-sys-man		.man
