@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.15 2015/05/19 06:58:52 martin Exp $
+# $NetBSD: Makefile.cdrom,v 1.16 2015/05/24 09:33:20 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -16,10 +16,7 @@ CDRUNTIME+=	./dev/MAKEDEV
 CDRUNTIME+=	./etc
 CDRUNTIME+=	./lib
 CDRUNTIME+=	./libdata
-CDRUNTIME+=	./libexec/ld.elf_so
-CDRUNTIME+=	./libexec/lfs_cleanerd
-CDRUNTIME+=	./libexec/dhcpcd-run-hooks
-CDRUNTIME+=	./libexec/resolvconf/
+CDRUNTIME+=	./libexec
 CDRUNTIME+=	./mnt
 CDRUNTIME+=	./sbin
 CDRUNTIME+=	./stand
