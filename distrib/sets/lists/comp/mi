@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1958 2015/05/14 00:09:54 pgoyette Exp $
+#	$NetBSD: mi,v 1.1959 2015/05/24 22:21:51 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5726,24 +5726,32 @@
 ./usr/share/man/cat3/bzero.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cabs.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cabsf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/cabsl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacos.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacosf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacosh.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacoshf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/cacoshl.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/cacosl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/calloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/callrpc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/can_change_color.0		comp-c-catman		.cat
 ./usr/share/man/cat3/can_change_colors.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/carg.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cargf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/cargl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/casin.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/casinf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/casinh.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/casinhf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/casinhl.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/casinl.0		       comp-c-catman	       complex,.cat
 ./usr/share/man/cat3/catan.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/catanf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/catanh.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/catanhf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/catanhl.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/catanl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/catclose.0			comp-c-catman		.cat
 ./usr/share/man/cat3/catgets.0			comp-c-catman		.cat
 ./usr/share/man/cat3/catopen.0			comp-c-catman		.cat
@@ -5755,6 +5763,8 @@
 ./usr/share/man/cat3/ccosf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/ccosh.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/ccoshf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/ccoshl.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/ccosl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cdbr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cdbr_close.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cdbr_entries.0		comp-c-catman		.cat
@@ -5802,6 +5812,7 @@
 ./usr/share/man/cat3/ceill.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cexp.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cexpf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/cexpl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cfgetispeed.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cfgetospeed.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cfmakeraw.0		comp-c-catman		.cat
@@ -5865,6 +5876,7 @@
 ./usr/share/man/cat3/clock.0			comp-c-catman		.cat
 ./usr/share/man/cat3/clog.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/clogf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/clogl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/closedir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/closefrom.0		comp-c-catman		.cat
 ./usr/share/man/cat3/closelog.0			comp-c-catman		.cat
@@ -5892,6 +5904,7 @@
 ./usr/share/man/cat3/coshf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cpow.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cpowf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/cpowl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cproj.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cprojf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cprojl.0			comp-c-catman		complex,.cat
@@ -5914,12 +5927,17 @@
 ./usr/share/man/cat3/csinf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/csinh.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/csinhf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/csinhl.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/csinl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/csqrt.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/csqrtf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/csqrtl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/ctan.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/ctanf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/ctanh.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/ctanhf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/ctanhl.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/ctanl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/ctermid.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ctime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ctime_r.0			comp-c-catman		.cat
@@ -10594,14 +10612,32 @@
 ./usr/share/man/cat9/pci_get_powerstate.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_disestablish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pci_intr_distribute.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_evcnt.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_map.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_string.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pci_intx_alloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pci_intx_release.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_make_tag.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_mapreg_info.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_mapreg_map.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_mapreg_type.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msi.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msi_alloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msi_alloc_exact.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msi_count.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msi_disestablish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msi_establish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msi_release.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msix.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msix_alloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msix_alloc_exact.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msix_alloc_map.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msix_count.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msix_disestablish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msix_establish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pci_msix_release.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_set_powerstate.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_vpd_read.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_vpd_write.0		comp-sys-catman		.cat
