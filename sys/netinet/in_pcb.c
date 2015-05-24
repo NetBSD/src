@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.160 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.161 2015/05/24 15:43:45 rtr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.160 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.161 2015/05/24 15:43:45 rtr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -440,21 +440,6 @@ in_pcbbind(void *v, struct sockaddr_in *sin, struct lwp *l)
 	}
 
 	return (0);
-}
-
-/*
- * adapter function that accepts nam as mbuf for in_pcbconnect()
- */
-int
-in_pcbconnect_m(void *v, struct mbuf *nam, struct lwp *l)
-{
-	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
-
-	if (sizeof (*sin) != nam->m_len) {
-		return EINVAL;
-	}
-
-	return in_pcbconnect(v, sin, l);
 }
 
 /*
