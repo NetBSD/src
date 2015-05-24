@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.146 2015/05/24 14:55:12 christos Exp $	*/
+/*	$NetBSD: auich.c,v 1.147 2015/05/24 14:56:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.146 2015/05/24 14:55:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.147 2015/05/24 14:56:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1706,6 +1706,13 @@ auich_calibrate(struct auich_softc *sc)
 	if (nciv == ociv) {
 		aprint_error_dev(sc->sc_dev, "ac97 link rate calibration "
 		    "timed out after %" PRIu64 " us\n", wait_us);
+		return;
+	}
+
+	if (wait_us == 0) {
+		/* Can happen with emulated hardware */
+		aprint_error_dev(sc->sc_dev, "abnormal zero delay during "
+		    "calibration\n");
 		return;
 	}
 
