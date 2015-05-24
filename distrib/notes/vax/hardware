@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.10 2009/04/23 01:56:51 snj Exp $
+.\"	$NetBSD: hardware,v 1.10.26.1 2015/05/24 11:14:45 martin Exp $
 .
 .Ss2 Supported hardware
 .(bullet -offset indent
@@ -96,7 +96,7 @@ RX50 on VAX 8200
 .bullet)
 .bullet)
 .Pp
-The minimal configuration requires 2 MB of RAM and ~40 MB of disk space,
+The minimal configuration requires 2 MB of RAM and ~130 MB of disk space,
 but the installation really requires 6 MB RAM unless you plan on
 using Jedi powers.
 .Pp

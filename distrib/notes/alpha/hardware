@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.17 2009/04/25 21:21:47 snj Exp $
+.\"	$NetBSD: hardware,v 1.17.26.1 2015/05/24 11:14:42 martin Exp $
 .
 .Nx*M
 \*V runs on most of the
@@ -31,8 +31,8 @@ More information on supported platforms and devices can be found on the
 .Lk http://www.NetBSD.org/
 .Pp
 A basic system will fit on a 200 MB disk (including swap) without too
-much difficulty, but you will probably want at least 500 MB of disk
-to have any level of comfort.
+much difficulty, but you will want considerably more space to have any
+level of comfort.
 .Pp
 Although
 it is actually possible to boot and install

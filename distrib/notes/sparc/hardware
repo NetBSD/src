@@ -1,7 +1,7 @@
-.\"	$NetBSD: hardware,v 1.36 2009/04/23 23:54:10 snj Exp $
+.\"	$NetBSD: hardware,v 1.36.26.1 2015/05/24 11:14:45 martin Exp $
 .
 .Pp
-The minimum configuration requires 4 MB of RAM and 100 MB of disk space.
+The minimum configuration requires 4 MB of RAM and 140 MB of disk space.
 To install the entire system requires considerably more space, and more
 RAM to achieve reasonable performance.
 .Nx
@@ -10,12 +10,6 @@ with 4 MB of RAM feels like
 with 4 MB of RAM \(em slow.
 Note that until you have around 16 MB of RAM, getting more RAM is more
 important than getting a faster CPU.
-.(Note
-The sparc port does not have functional SMP support in this release.
-We expect this to be fixed in the next release, but in the meantime,
-.Nx
-4.0.1 has working SMP support.
-.Note)
 .
 .Ss2 Supported machines
 .(bullet -offset indent

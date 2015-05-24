@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.17 2009/04/23 01:56:51 snj Exp $
+.\"	$NetBSD: hardware,v 1.17.26.1 2015/05/24 11:14:45 martin Exp $
 .
 .Nx*M
 \*V runs on the Sharp X68030 series PCs with a
@@ -31,7 +31,7 @@ incomplete.
 For 68030 systems, installing MC68881 or MC68882 FPCP is highly recommended
 but not required.
 .Pp
-The minimal configuration requires 4 MB of RAM and about 100 MB of
+The minimal configuration requires 4 MB of RAM and about 130 MB of
 disk space.
 To install the entire system requires much more disk space,
 and to run X or compile the system, more RAM is recommended.

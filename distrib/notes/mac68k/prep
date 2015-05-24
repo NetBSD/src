@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.16 2009/04/23 01:56:49 snj Exp $
+.\"	$NetBSD: prep,v 1.16.26.1 2015/05/24 11:14:44 martin Exp $
 .
 No matter which installation method you use, there is some planning
 and preparation that is required beforehand.  First and foremost,
@@ -120,7 +120,7 @@ how much space to allocate to each partition. A minimal install of
 .Pa base.tgz , etc.tgz, No and either
 .Pa kern-GENERIC.tgz No or
 .Pa kern-GENERICSBC.tgz )
-requires about 100MB.
+requires about 140MB.
 A general rule of thumb for sizing the swap partition is to allocate
 twice as much swap space as you have real memory.
 Having your swap + real memory total at least 20 MB is also a good idea.

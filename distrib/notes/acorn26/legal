@@ -1,8 +1,0 @@
-.\"	$NetBSD: legal,v 1.4 2009/10/23 02:56:01 snj Exp $
-.
-.\" db_disasm.c locore.S disklabel.h disklabel_acorn.h fp.h frame.h signal.h
-.\" undefined.h iocreg.h iic.h rtc.c podulebus.h
-.
-.It
-.\" param.h
-This product includes software developed by the RiscBSD team.

@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.22 2009/04/26 16:58:30 sborrill Exp $
+	$NetBSD: prep.RISCOS,v 1.22.26.1 2015/05/24 11:14:42 martin Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISC OS platforms
 (RiscPC/A7000/A7000+/NC).
@@ -24,7 +24,7 @@ ought to help with the RISC OS installation specifically.
 
 1.1 Hardware
 
-Refer to the NetBSD installation notes and/or the web site
+Refer to the NetBSD installation notes and/or the website
 http://www.NetBSD.org/ports/acorn32/ for a list of supported hardware.
 
 
@@ -34,7 +34,7 @@ You will need the following RISC OS software:
 
 	A program that will unpack sparchives. We recommend that you
 	get David Pilling's !SparkPlug. A self-extracting version of this
-	can be found at David Pilling's web site
+	can be found at David Pilling's website
 	(http://www.davidpilling.net/free.html).
 
 	A program to report your disk's geometry:

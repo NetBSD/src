@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.79 2014/04/12 18:30:39 snj Exp $
+.\"	$NetBSD: postinstall,v 1.79.2.1 2015/05/24 11:14:43 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,13 +29,16 @@ things you need to do in order to bring the system into a properly
 configured state.
 The most important steps are described below.
 .(enum
+Before all else, read
+.Xr postinstall 8 .
+.It
 Configuring
 .Pa /etc/rc.conf
 .Pp
 If you or the installation software haven't done any configuration of
 .Pa /etc/rc.conf
 .Ic ( sysinst
-usually will),
+normally will),
 the system will drop you into single user mode on first reboot with the
 message
 .Pp
@@ -197,31 +200,19 @@ See
 or
 .Xr named 8
 for more information.
-Instead of manually configuring network and naming service,
+.Pp
+Instead of manually configuring networking,
 DHCP can be used by setting
 .Li dhcpcd=YES
 in
 .Pa /etc/rc.conf .
+.if \n[shark] \{\
+.It
+Select the proper terminal devices
 .Pp
-Other files in
-.Pa /etc
-that may require modification or setting up include
-.ie \n[sgimips] \{\
-.Pa /etc/mailer.conf
-and
-.Pa /etc/nsswitch.conf .
-.\}
-.el \{\
-.Pa /etc/mailer.conf ,
-.Pa /etc/nsswitch.conf ,
-and
-.Pa /etc/wscons.conf .
-.\}
-.ie \n[shark] \{\
-.Pp
-For Digital DNARD machines you will need to edit
+You will have to edit the
 .Pa /etc/ttys
-and change the console terminal type from vt100 to pc3.
+file and change the console terminal type from vt100 to pc3.
 .\}
 .if \n[atari] \{\
 .It
@@ -252,7 +243,7 @@ Select the proper terminal devices
 .Pp
 If you are using a serial console, you will have to edit the
 .Pa /etc/ttys
-file and change 
+file and change
 .if \n[sparc] sun
 .if \n[sparc64] sun-ss5
 to the appropriate terminal type, such as vt220.
@@ -263,7 +254,7 @@ Logging in
 After reboot, you can log in as
 .Li root
 at the login prompt.
-Unless you've set a password in
+If you didn't set a password in
 .Ic sysinst ,
 there
 is no initial password.
@@ -332,7 +323,7 @@ pkgsrc automatically handles any changes necessary to make the
 software run on
 .Nx .
 This includes the retrieval and installation of any other
-packages on which the software may depend.
+packages the software may depend upon.
 .Pp
 .(bullet
 More information on the package system is available at
@@ -347,7 +338,7 @@ usually in the
 .Pa \*M/\*V/All
 subdir.
 If you installed
-.Xr pkgin 1 
+.Xr pkgin 1
 in the
 .Ic sysinst
 post-installation configuration menu, you can use it to automatically install
@@ -373,10 +364,10 @@ directory.
 .Pp
 The above commands will install the Tenex-csh and Bourne Again shells,
 the Perl programming language, Apache web server, KDE desktop
-environment and the Firefox web browser 
+environment and the Firefox web browser
 as well as all the packages they depend on.
 .It
-If you did not install it from the 
+If you did not install it from the
 .Ic sysinst
 post-installation configuration menu, the
 .Xr pkgsrc 7
@@ -405,13 +396,6 @@ to forward root mail to the right place.
 Don't forget to run
 .Xr newaliases 1
 afterwards.
-.It
-The
-.Pa /etc/postfix/main.cf
-file will almost definitely need to be adjusted.
-If you prefer a different MTA, then install it using
-pkgsrc or by hand and adjust
-.Pa /etc/mailer.conf .
 .It
 Edit
 .Pa /etc/rc.local

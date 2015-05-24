@@ -1,10 +1,10 @@
-.\"	$NetBSD: hardware,v 1.24 2009/04/23 01:56:49 snj Exp $
+.\"	$NetBSD: hardware,v 1.24.26.1 2015/05/24 11:14:44 martin Exp $
 .
 .Nx*M
 \*V runs on several of the older Macintosh computers.
 About 4 MB of RAM is sufficient to boot a stripped-down custom kernel, and a
 subset of the system can be squeezed onto a 40 MB hard disk with considerable
-creativity and persistence. However, 100 MB of disk should be considered a
+creativity and persistence. However, 140 MB of disk should be considered a
 practical minimum, and to do anything more interesting than booting at least
 8 MB of RAM and more disk space is recommended.
 .Pp
