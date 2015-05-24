@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.7 2015/05/24 17:08:50 matt Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.8 2015/05/24 17:19:29 matt Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.7 2015/05/24 17:08:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.8 2015/05/24 17:19:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -606,7 +606,7 @@ ar5008_rx_alloc(struct athn_softc *sc)
 	if (error != 0)
 		goto fail;
 
-	error = bus_dmamap_load(sc->sc_dmat, rxq->map, &rxq->descs,
+	error = bus_dmamap_load(sc->sc_dmat, rxq->map, rxq->descs,
 	    size, NULL, BUS_DMA_NOWAIT);
 	if (error != 0)
 		goto fail;
