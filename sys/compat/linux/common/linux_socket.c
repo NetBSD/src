@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.124 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.125 2015/05/24 17:07:26 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.124 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.125 2015/05/24 17:07:26 rtr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -119,9 +119,7 @@ int linux_to_bsd_udp_sockopt(int);
 int linux_getifname(struct lwp *, register_t *, void *);
 int linux_getifconf(struct lwp *, register_t *, void *);
 int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
-static int linux_get_sa(struct lwp *, int, struct mbuf **,
-		const struct osockaddr *, unsigned int);
-static int linux_get_sa_sb(struct lwp *, int, struct sockaddr_big *,
+static int linux_get_sa(struct lwp *, int, struct sockaddr_big *,
 		const struct osockaddr *, socklen_t);
 static int linux_sa_put(struct osockaddr *osa);
 static int linux_to_bsd_msg_flags(int);
@@ -401,7 +399,7 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 	} */
 	struct msghdr   msg;
 	struct iovec    aiov;
-	struct mbuf *nam;
+	struct sockaddr_big nam;
 	int bflags;
 	int error;
 
@@ -421,8 +419,7 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 		    SCARG(uap, tolen));
 		if (error)
 			return (error);
-		msg.msg_flags |= MSG_NAMEMBUF;
-		msg.msg_name = nam;
+		msg.msg_name = &nam;
 		msg.msg_namelen = SCARG(uap, tolen);
 	}
 
@@ -470,7 +467,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 	struct linux_msghdr lmsg;
 	int		error;
 	int		bflags;
-	struct mbuf     *nam;
+	struct sockaddr_big nam;
 	u_int8_t	*control;
 	struct mbuf     *ctl_mbuf = NULL;
 
@@ -495,8 +492,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 		    msg.msg_namelen);
 		if (error)
 			return (error);
-		msg.msg_flags |= MSG_NAMEMBUF;
-		msg.msg_name = nam;
+		msg.msg_name = &nam;
 	}
 
 	/*
@@ -1404,7 +1400,7 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 	int		error;
 	struct sockaddr_big sb;
 
-	error = linux_get_sa_sb(l, SCARG(uap, s), &sb, SCARG(uap, name),
+	error = linux_get_sa(l, SCARG(uap, s), &sb, SCARG(uap, name),
 	    SCARG(uap, namelen));
 	if (error)
 		return (error);
@@ -1449,7 +1445,7 @@ linux_sys_bind(struct lwp *l, const struct linux_sys_bind_args *uap, register_t 
 	int		error;
 	struct sockaddr_big sb;
 
-	error = linux_get_sa_sb(l, SCARG(uap, s), &sb, SCARG(uap, name),
+	error = linux_get_sa(l, SCARG(uap, s), &sb, SCARG(uap, name),
 	    SCARG(uap, namelen));
 	if (error)
 		return (error);
@@ -1495,8 +1491,12 @@ linux_sys_getpeername(struct lwp *l, const struct linux_sys_getpeername_args *ua
 	return (0);
 }
 
+/*
+ * Copy the osockaddr structure pointed to by name to sb, adjust
+ * family and convert to sockaddr.
+ */
 static int
-linux_get_sa_sb(struct lwp *l, int s, struct sockaddr_big *sb,
+linux_get_sa(struct lwp *l, int s, struct sockaddr_big *sb,
     const struct osockaddr *name, socklen_t namelen)
 {
 	int error, bdom;
@@ -1564,122 +1564,6 @@ linux_get_sa_sb(struct lwp *l, int s, struct sockaddr_big *sb,
 	sb->sb_len = namelen;
 	ktrkuser("mbsoname", sb, namelen);
 	return 0;
-}
-
-/*
- * Copy the osockaddr structure pointed to by osa to mbuf, adjust
- * family and convert to sockaddr.
- */
-static int
-linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
-    const struct osockaddr *osa, unsigned int salen)
-{
-	int error, bdom;
-	struct sockaddr *sa;
-	struct osockaddr *kosa;
-	struct mbuf *m;
-
-	if (salen == 1 || salen > UCHAR_MAX) {
-		DPRINTF(("bad osa=%p salen=%d\n", osa, salen));
-		return EINVAL;
-	}
-
-	/* We'll need the address in an mbuf later, so copy into one here */
-	m = m_get(M_WAIT, MT_SONAME);
-	if (salen > MLEN)
-		MEXTMALLOC(m, salen, M_WAITOK);
-
-	m->m_len = salen;
-
-	if (salen == 0) {
-		*mp = m;
-		return 0;
-	}
-
-	kosa = mtod(m, void *);
-	if ((error = copyin(osa, kosa, salen))) {
-		DPRINTF(("error %d copying osa %p len %d\n",
-				error, osa, salen));
-		goto bad;
-	}
-
-	ktrkuser("linux/sockaddr", kosa, salen);
-
-	bdom = linux_to_bsd_domain(kosa->sa_family);
-	if (bdom == -1) {
-		DPRINTF(("bad linux family=%d\n", kosa->sa_family));
-		error = EINVAL;
-		goto bad;
-	}
-
-	/*
-	 * If the family is unspecified, use address family of the socket.
-	 * This avoid triggering strict family checks in netinet/in_pcb.c et.al.
-	 */
-	if (bdom == AF_UNSPEC) {
-		struct socket *so;
-
-		/* fd_getsock() will use the descriptor for us */
-		if ((error = fd_getsock(s, &so)) != 0)
-			goto bad;
-
-		bdom = so->so_proto->pr_domain->dom_family;
-		fd_putfile(s);
-
-		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
-	}
-
-	/*
-	 * Older Linux IPv6 code uses obsolete RFC2133 struct sockaddr_in6,
-	 * which lacks the scope id compared with RFC2553 one. If we detect
-	 * the situation, reject the address and write a message to system log.
-	 *
-	 * Still accept addresses for which the scope id is not used.
-	 */
-	if (bdom == AF_INET6 && salen == sizeof (struct sockaddr_in6) - sizeof (u_int32_t)) {
-		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)kosa;
-		if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) &&
-		    (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
-		     IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr) ||
-		     IN6_IS_ADDR_V4COMPAT(&sin6->sin6_addr) ||
-		     IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ||
-		     IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
-			struct proc *p = l->l_proc;
-			int uid = l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1;
-
-			log(LOG_DEBUG,
-			    "pid %d (%s), uid %d: obsolete pre-RFC2553 "
-			    "sockaddr_in6 rejected",
-			    p->p_pid, p->p_comm, uid);
-			error = EINVAL;
-			goto bad;
-		}
-		salen = sizeof (struct sockaddr_in6);
-		sin6->sin6_scope_id = 0;
-	}
-
-	if (bdom == AF_INET)
-		salen = sizeof(struct sockaddr_in);
-
-	sa = (struct sockaddr *) kosa;
-	sa->sa_family = bdom;
-	sa->sa_len = salen;
-	m->m_len = salen;
-	ktrkuser("mbsoname", kosa, salen);
-
-#ifdef DEBUG_LINUX
-	DPRINTF(("family %d, len = %d [ ", sa->sa_family, sa->sa_len));
-	for (bdom = 0; bdom < sizeof(sa->sa_data); bdom++)
-	    DPRINTF(("%02x ", (unsigned char) sa->sa_data[bdom]));
-	DPRINTF(("\n"));
-#endif
-
-	*mp = m;
-	return 0;
-
-    bad:
-	m_free(m);
-	return error;
 }
 
 static int
