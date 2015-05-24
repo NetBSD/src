@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.58 2015/04/19 17:56:57 hubertf Exp $
+# $NetBSD: mkimage,v 1.59 2015/05/24 17:08:21 christos Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,6 +56,7 @@ FDISK=${TOOL_FDISK:-fdisk}
 MAKEFS=${TOOL_MAKEFS:-makefs}
 MTREE=${TOOL_MTREE:-mtree}
 INSTALLBOOT=${TOOL_INSTALLBOOT:-installboot}
+MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE:-mkubootimage}
 GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
 
 src="/usr/src"
