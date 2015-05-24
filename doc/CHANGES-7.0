@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.306 2015/05/22 17:33:15 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.307 2015/05/24 11:16:19 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23378,4 +23378,125 @@ sys/external/bsd/drm2/dist/drm/i915/i915_gem_gtt.c 1.4
 	Fix kassert: npdp may be GEN8_LEGACY_PDPS exactly.
 	Gets Broadwell booting.
 	[riastradh, ticket #797]
+
+share/man/man4/options.4			1.445
+
+	The OSI options are long gone.
+	[798, ticket #snj]
+
+distrib/notes/Makefile.inc			1.43
+distrib/notes/acorn26/contents			1.2
+distrib/notes/acorn26/legal			delete
+distrib/notes/acorn32/contents			1.2
+distrib/notes/acorn32/hardware			1.3
+distrib/notes/acorn32/legal			delete
+distrib/notes/acorn32/prep			1.15
+distrib/notes/acorn32/prep.RISCOS		1.23
+distrib/notes/alpha/contents			1.16
+distrib/notes/alpha/hardware			1.18
+distrib/notes/alpha/legal			delete
+distrib/notes/amd64/contents			1.4, 1.5
+distrib/notes/amd64/legal			delete
+distrib/notes/amiga/contents			1.20
+distrib/notes/amiga/legal			delete
+distrib/notes/arc/contents			1.2
+distrib/notes/arc/legal				delete
+distrib/notes/atari/contents			1.20
+distrib/notes/atari/legal			delete
+distrib/notes/bebox/contents			1.2
+distrib/notes/bebox/hardware			1.2
+distrib/notes/bebox/legal			delete
+distrib/notes/cats/contents			1.2
+distrib/notes/cats/legal			delete
+distrib/notes/common/legal.common		1.93-1.96
+distrib/notes/common/list-setsizes.sh		delete
+distrib/notes/common/macros			1.41, 1.42
+distrib/notes/common/main			1.519-1.521
+distrib/notes/common/netboot			1.36
+distrib/notes/common/postinstall		1.80, 1.81
+distrib/notes/common/sysinst			1.105, 1.106
+distrib/notes/common/upgrade			1.29, 1.30
+distrib/notes/common/xfer			1.74
+distrib/notes/emips/contents			1.2
+distrib/notes/emips/hardware			1.2
+distrib/notes/emips/install			1.2
+distrib/notes/emips/legal			delete
+distrib/notes/evbarm/contents			1.2
+distrib/notes/evbarm/legal			delete
+distrib/notes/evbppc/contents			1.3
+distrib/notes/evbppc/legal			delete
+distrib/notes/ews4800mips/contents		1.2
+distrib/notes/ews4800mips/legal			delete
+distrib/notes/hp300/contents			1.17
+distrib/notes/hp300/legal			delete
+distrib/notes/hpcarm/contents			1.3
+distrib/notes/hpcarm/legal			delete
+distrib/notes/hpcmips/contents			1.10
+distrib/notes/hpcmips/legal			delete
+distrib/notes/hpcsh/contents			1.3
+distrib/notes/hpcsh/legal			delete
+distrib/notes/hppa/contents			1.2
+distrib/notes/hppa/legal			delete
+distrib/notes/i386/contents			1.29
+distrib/notes/i386/legal			delete
+distrib/notes/landisk/contents			1.3
+distrib/notes/landisk/legal			delete
+distrib/notes/mac68k/contents			1.20
+distrib/notes/mac68k/hardware			1.25
+distrib/notes/mac68k/legal			delete
+distrib/notes/mac68k/prep			1.17
+distrib/notes/macppc/contents			1.11
+distrib/notes/macppc/hardware			1.48
+distrib/notes/macppc/legal			delete
+distrib/notes/macppc/prep.OPENFIRMWARE		1.18
+distrib/notes/mmeye/contents			1.3
+distrib/notes/mmeye/legal			delete
+distrib/notes/mvme68k/contents			1.13
+distrib/notes/mvme68k/legal			delete
+distrib/notes/mvme68k/xfer			1.18
+distrib/notes/news68k/contents			1.6
+distrib/notes/news68k/legal			delete
+distrib/notes/newsmips/contents			1.2
+distrib/notes/newsmips/legal			delete
+distrib/notes/next68k/contents			1.7
+distrib/notes/next68k/legal			delete
+distrib/notes/ofppc/contents			1.3
+distrib/notes/ofppc/legal			delete
+distrib/notes/pmax/contents			1.17
+distrib/notes/pmax/hardware			1.18
+distrib/notes/pmax/legal			delete
+distrib/notes/prep/contents			1.2
+distrib/notes/prep/hardware			1.5
+distrib/notes/prep/legal			delete
+distrib/notes/prep/upgrade			1.2
+distrib/notes/rs6000/contents			1.2
+distrib/notes/rs6000/legal			delete
+distrib/notes/sandpoint/contents		1.2
+distrib/notes/sandpoint/legal			delete
+distrib/notes/sgimips/contents			1.2
+distrib/notes/sgimips/legal			delete
+distrib/notes/shark/contents			1.2
+distrib/notes/shark/legal			delete
+distrib/notes/sparc/contents			1.21
+distrib/notes/sparc/hardware			1.37
+distrib/notes/sparc/legal			delete
+distrib/notes/sparc/prep			1.27
+distrib/notes/sparc64/Makefile			1.4
+distrib/notes/sparc64/contents			1.5
+distrib/notes/sparc64/hardware			1.28
+distrib/notes/sparc64/legal			delete
+distrib/notes/sun2/contents			1.2
+distrib/notes/sun2/legal			delete
+distrib/notes/sun3/contents			1.16
+distrib/notes/sun3/legal			delete
+distrib/notes/vax/contents			1.11
+distrib/notes/vax/hardware			1.11
+distrib/notes/vax/legal				delete
+distrib/notes/x68k/contents			1.17
+distrib/notes/x68k/hardware			1.18
+distrib/notes/x68k/legal			delete
+distrib/notes/xen/legal				delete
+
+	Update and clean up the INSTALL notes a bit.
+	[snj, ticket #799]
 
