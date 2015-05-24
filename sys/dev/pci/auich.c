@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.147 2015/05/24 14:56:57 christos Exp $	*/
+/*	$NetBSD: auich.c,v 1.148 2015/05/24 22:03:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.147 2015/05/24 14:56:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.148 2015/05/24 22:03:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,6 +233,8 @@ struct auich_softc {
 	struct audio_format sc_modem_formats[AUICH_MODEM_NFORMATS];
 	struct audio_encoding_set *sc_encodings;
 	struct audio_encoding_set *sc_spdif_encodings;
+
+	int sc_cas_been_used;
 };
 
 /* Debug */
@@ -788,6 +790,18 @@ auich_read_codec(void *v, uint8_t reg, uint16_t *val)
 		ICH_CAS + sc->sc_modem_offset) & 1;
 	    DELAY(ICH_CODECIO_INTERVAL));
 
+	/*
+	 * Be permissive in first attempt. If previous instances of
+	 * this routine were interrupted precisely at this point (after
+	 * access is granted by CAS but before a command is sent),
+	 * they could have left hardware in an inconsistent state where
+	 * a command is expected and therefore semaphore wait would hit
+	 * the timeout.
+	 */
+	if (!sc->sc_cas_been_used && i <= 0)
+		i = 1;
+	sc->sc_cas_been_used = 1;
+
 	if (i > 0) {
 		*val = bus_space_read_2(sc->iot, sc->mix_ioh,
 		    reg + (sc->sc_codecnum * ICH_CODEC_OFFSET));
@@ -831,6 +845,11 @@ auich_write_codec(void *v, uint8_t reg, uint16_t val)
 	    bus_space_read_1(sc->iot, sc->aud_ioh,
 		ICH_CAS + sc->sc_modem_offset) & 1;
 	    DELAY(ICH_CODECIO_INTERVAL));
+
+	/* Be permissive in first attempt (see comments in auich_read_codec) */
+	if (!sc->sc_cas_been_used && i <= 0)
+		i = 1;
+	sc->sc_cas_been_used = 1;
 
 	if (i > 0) {
 		bus_space_write_2(sc->iot, sc->mix_ioh,
