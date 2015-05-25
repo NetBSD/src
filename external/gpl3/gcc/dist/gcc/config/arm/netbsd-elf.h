@@ -30,9 +30,12 @@
 	(ARM_DEFAULT_ABI != ARM_ABI_APCS && ARM_DEFAULT_ABI != ARM_ABI_ATPCS \
 	    ? TARGET_CPU_arm926ejs : TARGET_CPU_arm6)
 
-/* This defaults us to little-endian.  */
-#ifndef TARGET_ENDIAN_DEFAULT
-#define TARGET_ENDIAN_DEFAULT 0
+/* TARGET_BIG_ENDIAN_DEFAULT is set in
+   config.gcc for big endian configurations.  */
+#if TARGET_BIG_ENDIAN_DEFAULT
+#define TARGET_ENDIAN_DEFAULT    MASK_BIG_END
+#else
+#define TARGET_ENDIAN_DEFAULT    0
 #endif
 
 #undef MULTILIB_DEFAULTS
