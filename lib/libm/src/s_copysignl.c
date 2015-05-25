@@ -1,4 +1,4 @@
-/*	$NetBSD: s_copysignl.c,v 1.2 2010/09/17 20:39:39 christos Exp $	*/
+/*	$NetBSD: s_copysignl.c,v 1.2.24.1 2015/05/25 09:05:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,10 +26,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_copysignl.c,v 1.2 2010/09/17 20:39:39 christos Exp $");
+__RCSID("$NetBSD: s_copysignl.c,v 1.2.24.1 2015/05/25 09:05:25 msaitoh Exp $");
+#include "namespace.h"
 
 #include <math.h>
 #include <machine/ieee.h>
+
+#if defined(__HAVE_LONG_DOUBLE) || defined(__HAVE_IBM_LONGDOUBLE)
+
+#ifdef __weak_alias
+__weak_alias(copysignl, _copysignl)
+#endif
 
 /*
  * copysignl(long double x, long double y)
@@ -48,4 +55,18 @@ copysignl(long double x, long double y)
 
 	return (ux.extu_ld);
 }
+#elif defined(__HAVE_IBM_LONGDOUBLE)
+long double
+copysignl(long double x, long double y)
+{
+	union ldbl_u ux, uy;
+
+	ux.ldblu_ld = x;
+	uy.ldblu_ld = y;
+	ux.ldblu_d[0] = copysign(ux.ldblu_d[0], uy.ldblu_d[0]);
+	ux.ldblu_d[1] = copysign(ux.ldblu_d[1], uy.ldblu_d[1]);
+
+	return ux.ldblu_ld;
+}
 #endif
+#endif /* __HAVE_LONG_DOUBLE || __HAVE_IBM_LONGDOUBLE */

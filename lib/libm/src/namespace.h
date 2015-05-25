@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.11 2014/06/16 12:54:43 joerg Exp $ */
+/* $NetBSD: namespace.h,v 1.11.2.1 2015/05/25 09:05:25 msaitoh Exp $ */
 
 #define atan2 _atan2
 #define atan2f _atan2f
@@ -46,6 +46,7 @@
 #define scalblnf _scalblnf
 #define scalblnl _scalblnl
 
+#define copysignl _copysignl
 #define sqrtl _sqrtl
 #define cbrtl _cbrtl
 #define ceill _ceill
