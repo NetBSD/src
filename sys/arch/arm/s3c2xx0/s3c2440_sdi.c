@@ -1,3 +1,4 @@
+/*	$NetBSD: s3c2440_sdi.c,v 1.4 2015/05/25 15:04:01 christos Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_sdi.c,v 1.4 2015/05/25 15:04:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -135,30 +137,30 @@ void sssdi_perform_pio_write(struct sssdi_softc *sc, struct sdmmc_command *cmd);
 /* SDMMC function structure */
 struct sdmmc_chip_functions sssdi_functions = {
 	/* host controller reset */
-	sssdi_host_reset,
+	.host_reset = sssdi_host_reset,
 
 	/* host capabilities */
-	sssdi_host_ocr,
-	sssdi_maxblklen,
+	.host_ocr = sssdi_host_ocr,
+	.host_maxblklen = sssdi_maxblklen,
 
 	/* card detection */
-	sssdi_card_detect,
+	.card_detect = sssdi_card_detect,
 
 	/* write protect */
-	sssdi_write_protect,
+	.write_protect = sssdi_write_protect,
 
 	/* bus power, clock frequency and width */
-	sssdi_bus_power,
-	sssdi_bus_clock,
-	sssdi_bus_width,
-	sssdi_bus_rod,
+	.bus_power = sssdi_bus_power,
+	.bus_clock = sssdi_bus_clock,
+	.bus_width = sssdi_bus_width,
+	.bus_rod = sssdi_bus_rod,
 
 	/* command execution */
-	sssdi_exec_command,
+	.exec_command = sssdi_exec_command,
 
 	/* card interrupt */
-	sssdi_card_enable_intr,
-	sssdi_card_intr_ack
+	.card_enable_intr = sssdi_card_enable_intr,
+	.card_intr_ack = sssdi_card_intr_ack,
 };
 
 int
