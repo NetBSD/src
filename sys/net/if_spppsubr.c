@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.133 2015/05/02 14:41:32 roy Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.134 2015/05/25 08:29:01 ozaki-r Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,11 +41,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.133 2015/05/02 14:41:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.134 2015/05/25 08:29:01 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
-#include "opt_ipx.h"
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #endif
@@ -83,11 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.133 2015/05/02 14:41:32 roy Exp $"
 
 #ifdef INET6
 #include <netinet6/scope6_var.h>
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #endif
 
 #include <net/if_sppp.h>
@@ -548,12 +542,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				pktq = ip6_pktq;
 				break;
 #endif
-#ifdef IPX
-			case ETHERTYPE_IPX:
-				isr = NETISR_IPX;
-				inq = &ipxintrq;
-				break;
-#endif
 			}
 			goto queue_pkt;
 		default:        /* Invalid PPP packet. */
@@ -621,15 +609,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
 			sp->pp_last_activity = time_uptime;
 			pktq = ip6_pktq;
-		}
-		break;
-#endif
-#ifdef IPX
-	case PPP_IPX:
-		/* IPX IPXCP not implemented yet */
-		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
-			isr = NETISR_IPX;
-			inq = &ipxintrq;
 		}
 		break;
 #endif
@@ -827,12 +806,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if (sp->state[IDX_IPV6CP] != STATE_OPENED)
 				error = ENETDOWN;
 		}
-		break;
-#endif
-#ifdef IPX
-	case AF_IPX:     /* Novell IPX Protocol */
-		protocol = htons((sp->pp_flags & PP_CISCO) ?
-			ETHERTYPE_IPX : PPP_IPX);
 		break;
 #endif
 	default:
