@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.208 2015/05/20 09:17:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.209 2015/05/25 08:29:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,11 +61,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.208 2015/05/20 09:17:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.209 2015/05/25 08:29:01 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
-#include "opt_ipx.h"
 #include "opt_mbuftrace.h"
 #include "opt_mpls.h"
 #include "opt_gateway.h"
@@ -151,11 +150,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.208 2015/05/20 09:17:18 ozaki-r E
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #endif
 
 #ifdef NETATALK
@@ -370,17 +364,6 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		}
 		break;
 #endif /* NETATALK */
-#ifdef IPX
-	case AF_IPX:
-		etype = htons(ETHERTYPE_IPX);
- 		memcpy(edst,
-		    &(((const struct sockaddr_ipx *)dst)->sipx_addr.x_host),
-		    sizeof(edst));
-		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		break;
-#endif
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
 		memcpy(esrc,
@@ -854,12 +837,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				return;
 #endif
 			pktq = ip6_pktq;
-			break;
-#endif
-#ifdef IPX
-		case ETHERTYPE_IPX:
-			isr = NETISR_IPX;
-			inq = &ipxintrq;
 			break;
 #endif
 #ifdef NETATALK
