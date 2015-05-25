@@ -1,4 +1,4 @@
-#	$NetBSD: archdirs.mk,v 1.8 2014/09/19 17:38:46 matt Exp $
+#	$NetBSD: archdirs.mk,v 1.9 2015/05/25 12:42:26 martin Exp $
 
 # list of subdirs used per-platform
 
@@ -10,16 +10,12 @@ ARCHDIR_SUBDIR=	sparc64/sparc
 ARCHDIR_SUBDIR=	amd64/i386
 .endif
 
-.if (${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb")
-ARCHDIR_SUBDIR=	arm/eabi
-.endif
-
-.if (${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb")
-ARCHDIR_SUBDIR=	arm/oabi
-.endif
-
-.if (${MACHINE_ARCH} == "earmhf" || ${MACHINE_ARCH} == "earmhfeb")
+.if !empty(MACHINE_ARCH:Mearmhf*) || !empty(MACHINE_ARCH:Mearmv?hf*)
 ARCHDIR_SUBDIR=	arm/oabi arm/eabi
+.elif !empty(MACHINE_ARCH:Mearm*)
+ARCHDIR_SUBDIR=	arm/oabi
+.elif !empty(MACHINE_ARCH:Marm)
+ARCHDIR_SUBDIR=	arm/eabi
 .endif
 
 .if (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el")
