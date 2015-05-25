@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.15 2015/05/19 04:14:04 ozaki-r Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.16 2015/05/25 07:17:17 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.15 2015/05/19 04:14:04 ozaki-r Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.16 2015/05/25 07:17:17 ozaki-r Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -132,12 +132,12 @@ addmc(int s, struct addrinfo *ai, bool bug)
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
 		    &ifc, sizeof(ifc)) == -1)
 			return -1;
-		ifc = 1;
+		ifc = 1; /* XXX should pick a proper interface */
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifc,
 		    sizeof(ifc)) == -1)
 			return -1;
 #else
-		ifc = 1;
+		ifc = 0; /* Let pick an appropriate interface */
 #endif
 		m6.ipv6mr_interface = ifc;
 		m6.ipv6mr_multiaddr = s6->sin6_addr;
