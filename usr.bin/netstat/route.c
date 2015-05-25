@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.83 2014/11/06 21:30:09 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.84 2015/05/25 03:56:20 manu Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.83 2014/11/06 21:30:09 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.84 2015/05/25 03:56:20 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,6 +262,7 @@ p_krtentry(struct rtentry *rt)
 		printf("%6s", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
 	if (tagflag == 1) {
+#ifndef SMALL
 		if (rt->rt_tag != NULL) {
 			const struct sockaddr *tagsa = kgetsa(rt->rt_tag);
 			char *tagstr;
@@ -276,6 +277,7 @@ p_krtentry(struct rtentry *rt)
 			else
 				printf("%7s", "-");
 		} else
+#endif
 			printf("%7s", "-");
 	}
 	if (rt->rt_ifp) {
@@ -287,8 +289,10 @@ p_krtentry(struct rtentry *rt)
 			rt->rt_nodes[0].rn_dupedkey ? " =>" : "");
 	}
 	putchar('\n');
+#ifndef SMALL
 	if (vflag)
 		p_rtrmx(&rt->rt_rmx);
+#endif
 }
 
 /*
