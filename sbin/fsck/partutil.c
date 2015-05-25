@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.12 2013/04/13 22:08:57 jakllsch Exp $	*/
+/*	$NetBSD: partutil.c,v 1.12.6.1 2015/05/25 09:10:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.12 2013/04/13 22:08:57 jakllsch Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.12.6.1 2015/05/25 09:10:48 msaitoh Exp $");
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/ioctl.h>
@@ -135,8 +136,10 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 		    "DIOCGDINFO for disk device %s", s);
 	}
 
-	/* DIOCGDINFO didn't fail */
+	if (dkw == NULL)
+		return 0;
 
+	/* DIOCGDINFO didn't fail */
 	(void)memset(dkw, 0, sizeof(*dkw));
 
 	if (stat(s, &sb) == -1)
@@ -159,5 +162,25 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	strlcpy(dkw->dkw_ptype, getfstypename(pp->p_fstype),
 	    sizeof(dkw->dkw_ptype));
 
+	return 0;
+}
+
+int
+getdisksize(const char *name, u_int *secsize, off_t *mediasize)
+{
+	char buf[MAXPATHLEN];
+	struct disk_geom geo;
+	int fd, error;
+
+	if ((fd = opendisk(name, O_RDONLY, buf, sizeof(buf), 0)) == -1)
+		return -1;
+
+	error = getdiskinfo(name, fd, NULL, &geo, NULL);
+	close(fd);
+	if (error)
+		return error;
+
+	*secsize = geo.dg_secsize;
+	*mediasize = geo.dg_secsize * geo.dg_secperunit;
 	return 0;
 }
