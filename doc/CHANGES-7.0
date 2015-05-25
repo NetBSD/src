@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.307 2015/05/24 11:16:19 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.308 2015/05/25 09:24:37 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23500,3 +23500,24 @@ distrib/notes/xen/legal				delete
 	Update and clean up the INSTALL notes a bit.
 	[snj, ticket #799]
 
+lib/libm/arch/vax/n_support.S			1.10
+lib/libm/src/namespace.h			1.13
+lib/libm/src/s_copysign.c			1.12-1.13
+lib/libm/src/s_copysignl.c			1.3-1.5
+sys/arch/powerpc/include/ieee.h			1.6
+sys/arch/powerpc/include/math.h			1.5
+
+	Support copysignl on PowerPC.
+	[joerg, ticket #790]
+
+sbin/fsck/partutil.c				1.13
+sbin/fsck/partutil.h				1.3
+
+	Provide a simple getdisksize() api for gpt(8).
+	[jnemeth, ticket #793]
+
+distrib/amd64/cdroms/Makefile.cdrom		1.16
+distrib/i386/cdroms/Makefile.cdrom		1.36
+
+	Add full libexec contents to the CD image - this makes dhcpcd happy.
+	[martin, ticket #801]
