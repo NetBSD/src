@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.67 2015/05/20 09:17:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.68 2015/05/25 08:31:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.67 2015/05/20 09:17:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.68 2015/05/25 08:31:34 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -133,10 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.67 2015/05/20 09:17:18 ozaki-r Ex
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
-#endif
-
-#ifdef DECNET
-#include <netdnet/dn.h>
 #endif
 
 #define senderr(e) { error = (e); goto bad;}
@@ -451,7 +447,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 	l = (struct llc *)(mtod(m, uint8_t *) + lan_hdr_len);
 
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(DECNET)
+#if defined(INET)
 	case LLC_SNAP_LSAP:
 	{
 		uint16_t etype;
@@ -481,12 +477,6 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 			inq = &arpintrq;
 			break;
 #endif
-#ifdef DECNET
-		case ETHERTYPE_DECNET:
-			isr = NETISR_DECNET;
-			inq = &decnetintrq;
-			break;
-#endif
 		default:
 			/*
 			printf("token_input: unknown protocol 0x%x\n", etype);
@@ -496,12 +486,12 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		}
 		break;
 	}
-#endif /* INET || NS || DECNET */
+#endif /* INET */
 
 	default:
 		/* printf("token_input: unknown dsap 0x%x\n", l->llc_dsap); */
 		ifp->if_noproto++;
-#if defined(INET) || defined(DECNET)
+#if defined(INET)
 	dropanyway:
 #endif
 		m_freem(m);

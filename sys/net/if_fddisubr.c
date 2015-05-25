@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.90 2015/05/25 08:29:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.91 2015/05/25 08:31:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.90 2015/05/25 08:29:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.91 2015/05/25 08:31:34 ozaki-r Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -146,10 +146,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.90 2015/05/25 08:29:01 ozaki-r Exp
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
-#endif
-
-#ifdef DECNET
-#include <netdnet/dn.h>
 #endif
 
 #ifdef NETATALK
@@ -446,7 +442,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 #if defined(INET) || defined(INET6)
 	pktqueue_t *pktq = NULL;
 #endif
-#if defined(DECNET) || defined(NETATALK)
+#if defined(NETATALK)
 	struct ifqueue *inq = NULL;
 	int isr = 0;
 	int s;
@@ -490,7 +486,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 
 	l = (struct llc *)(fh+1);
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(INET6) || defined(DECNET) || defined(NETATALK)
+#if defined(INET) || defined(INET6) || defined(NETATALK)
 	case LLC_SNAP_LSAP:
 	{
 		uint16_t etype;
@@ -541,7 +537,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 
 		case ETHERTYPE_ARP:
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
-#if defined(DECNET) || defined(NETATALK)
+#if defined(NETATALK)
 			isr = NETISR_ARP;
 			inq = &arpintrq;
 #endif
@@ -560,12 +556,6 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			pktq = ip6_pktq;
 			break;
 
-#endif
-#ifdef DECNET
-		case ETHERTYPE_DECNET:
-			isr = NETISR_DECNET;
-			inq = &decnetintrq;
-			break;
 #endif
 #ifdef NETATALK
 		case ETHERTYPE_ATALK:
@@ -587,7 +577,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 
 	default:
 		ifp->if_noproto++;
-#if defined(INET) || defined(INET6) || defined(DECNET) || defined(NETATALK)
+#if defined(INET) || defined(INET6) || defined(NETATALK)
 	dropanyway:
 #endif
 		m_freem(m);
@@ -602,7 +592,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 #endif
-#if defined(DECNET) || defined(NETATALK)
+#if defined(NETATALK)
 	if (!inq) {
 		m_freem(m);
 	}
