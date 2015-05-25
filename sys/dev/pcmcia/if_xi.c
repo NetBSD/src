@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.74 2014/08/10 16:44:36 tls Exp $ */
+/*	$NetBSD: if_xi.c,v 1.75 2015/05/25 08:29:01 ozaki-r Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,10 +55,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.74 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.75 2015/05/25 08:29:01 ozaki-r Exp $");
 
 #include "opt_inet.h"
-#include "opt_ipx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,12 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.74 2014/08/10 16:44:36 tls Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
-#endif
-
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
