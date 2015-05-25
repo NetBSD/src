@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.244 2015/05/25 20:57:18 prlw1 Exp $	*/
+/*	$NetBSD: vnd.c,v 1.245 2015/05/25 21:02:37 prlw1 Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.244 2015/05/25 20:57:18 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.245 2015/05/25 21:02:37 prlw1 Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -743,7 +743,7 @@ vnode_has_op(const struct vnode *vp, int opoffset)
 }
 
 /*
- * Handes the read/write request given in 'bp' using the vnode's VOP_READ
+ * Handles the read/write request given in 'bp' using the vnode's VOP_READ
  * and VOP_WRITE operations.
  *
  * 'obp' is a pointer to the original request fed to the vnd device.
