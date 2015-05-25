@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.263 2015/04/29 08:32:00 hikaru Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.264 2015/05/25 23:45:54 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.263 2015/04/29 08:32:00 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.264 2015/05/25 23:45:54 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -643,7 +643,7 @@ static const struct pridtab cputab[] = {
 	{ MIPS_PRID_CID_CAVIUM, MIPS_CN50XX, -1, -1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR,
 	  MIPS_CP0FL_USE |
-	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG | MIPS_CP0FL_HWRENA |
 	  MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 | MIPS_CP0FL_CONFIG3,
 	  0,
 	  "CN50xx"		},
@@ -1167,11 +1167,9 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 			case CPU_ARCH_MIPS32:
 				opts->mips_cpu_arch = CPU_ARCH_MIPS32R2;
 				break;
-#ifdef notyet
 			case CPU_ARCH_MIPS64:
 				opts->mips_cpu_arch = CPU_ARCH_MIPS64R2;
 				break;
-#endif
 			default:
 				printf("WARNING: MIPS32/64 arch %d revision %d "
 				    "unknown!\n", opts->mips_cpu_arch,
