@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.34 2013/05/28 00:10:34 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.35 2015/05/26 19:59:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ extern int		 max_input_history;
 extern char		*rl_basic_word_break_characters;
 extern char		*rl_completer_word_break_characters;
 extern char		*rl_completer_quote_characters;
-extern Function		*rl_completion_entry_function;
+extern CPFunction	*rl_completion_entry_function;
 extern char		*(*rl_completion_word_break_hook)(void);
 extern CPPFunction	*rl_attempted_completion_function;
 extern int		 rl_attempted_completion_over;
@@ -194,7 +194,7 @@ int		 rl_read_init_file(const char *);
 int		 rl_parse_and_bind(const char *);
 int		 rl_variable_bind(const char *, const char *);
 void		 rl_stuff_char(int);
-int		 rl_add_defun(const char *, Function *, int);
+int		 rl_add_defun(const char *, rl_command_func_t *, int);
 HISTORY_STATE	*history_get_history_state(void);
 void		 rl_get_screen_size(int *, int *);
 void		 rl_set_screen_size(int, int);
