@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.114 2014/06/01 17:46:06 christos Exp $
+.\"	$NetBSD: sh.1,v 1.115 2015/05/26 21:35:15 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd June 1, 2014
+.Dd May 26, 2015
 .Dt SH 1
 .Os
 .Sh NAME
@@ -53,8 +53,8 @@
 .Nm
 .Fl c
 .Bk -words
-.Op Fl aCefnuvxIimqVEb
-.Op Cm +aCefnuvxIimqVEb
+.Op Fl abCEefnuvxIimpqV
+.Op Cm +abCEefnuvxIimpqV
 .Ek
 .Bk -words
 .Op Fl o Ar option_name
@@ -67,8 +67,8 @@
 .Nm
 .Fl s
 .Bk -words
-.Op Fl aCefnuvxIimqVEb
-.Op Cm +aCefnuvxIimqVEb
+.Op Fl abCEefnuvxIimpqV
+.Op Cm +abCEefnuvxIimpqV
 .Ek
 .Bk -words
 .Op Fl o Ar option_name
@@ -299,6 +299,13 @@ section below.)
 .It Fl b Em notify
 Enable asynchronous notification of background job completion.
 (Not implemented.)
+.It Fl p Em nopriv
+Do not attempt to reset effective uid if it does not match uid.
+This is not set by default to help avoid incorrect usage by setuid
+root programs via
+.Xr system 3
+or
+.Xr popen 3 .
 .It "\ \ " Em cdprint
 Make an interactive shell always print the new directory name when
 changed by the
