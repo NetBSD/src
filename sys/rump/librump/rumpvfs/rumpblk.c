@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.59 2015/01/02 19:42:07 christos Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.60 2015/05/26 16:48:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.59 2015/01/02 19:42:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.60 2015/05/26 16:48:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -437,6 +437,10 @@ rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 	/* it's synced enough along the write path */
 	case DIOCCACHESYNC:
+		break;
+
+	case DIOCGMEDIASIZE:
+		*(off_t *)addr = (off_t)rblk->rblk_size;
 		break;
 
 	default:
