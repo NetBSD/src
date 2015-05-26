@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.4 2015/03/21 11:33:37 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.5 2015/05/26 12:02:26 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.4 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.5 2015/05/26 12:02:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,7 +729,7 @@ urndis_encap(struct urndis_softc *sc, struct mbuf *m, int idx)
 {
 	struct urndis_chain		*c;
 	usbd_status			 err;
-	struct urndis_packet_msg		*msg;
+	struct urndis_packet_msg	*msg;
 
 	c = &sc->sc_data.sc_tx_chain[idx];
 
