@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.22.4.2 2015/03/09 09:29:33 snj Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.22.4.3 2015/05/26 01:29:53 msaitoh Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.22.4.2 2015/03/09 09:29:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.22.4.3 2015/05/26 01:29:53 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -217,7 +217,7 @@ sdmmc_doattach(device_t dev)
 {
 	struct sdmmc_softc *sc = device_private(dev);
 
-	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+	if (kthread_create(PRI_BIO, 0, NULL,
 	    sdmmc_task_thread, sc, &sc->sc_tskq_lwp, "%s", device_xname(dev))) {
 		aprint_error_dev(dev, "couldn't create task thread\n");
 	}
