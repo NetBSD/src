@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.18 2015/05/18 01:32:52 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.19 2015/05/26 02:09:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.18 2015/05/18 01:32:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.19 2015/05/26 02:09:34 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -243,9 +243,6 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	evcnt_attach_dynamic(&ci->ci_ev_tlbmisses,
 		EVCNT_TYPE_TRAP, NULL, xname,
 		"tlb misses");
-
-	if (ci == &cpu_info_store)
-		pmap_tlb_info_evcnt_attach(ci->ci_tlb_info);
 
 #ifdef MULTIPROCESSOR
 	if (ci != &cpu_info_store) {

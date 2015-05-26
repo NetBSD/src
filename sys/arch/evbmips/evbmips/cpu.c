@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 2011/02/20 07:48:34 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4 2015/05/26 02:09:34 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2011/02/20 07:48:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2015/05/26 02:09:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,4 +71,5 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("%s: ", device_xname(self));
 	cpu_identify(self);
+	cpu_attach_common(self, ci);
 }
