@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.295.2.5 2015/05/19 04:58:31 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.295.2.6 2015/05/26 01:34:40 msaitoh Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -186,6 +186,7 @@
 
 /* Include header files */
 
+#include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 #include "opt_ddb.h"
@@ -216,7 +217,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295.2.5 2015/05/19 04:58:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295.2.6 2015/05/26 01:34:40 msaitoh Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -1582,7 +1583,7 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 		    | L1_C_DOM(pmap_domain(pm));
 		KASSERT(*pdep == 0);
 		l1pte_setone(pdep, npde);
-		PTE_SYNC(pdep);
+		PDE_SYNC(pdep);
 #endif
 	}
 
@@ -3370,7 +3371,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				    | L1_C_DOM(pmap_domain(pm));
 				if (*pdep != pde) {
 					l1pte_setone(pdep, pde);
-					PTE_SYNC(pdep);
+					PDE_SYNC(pdep);
 				}
 			}
 		}
@@ -3682,6 +3683,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 
 	pmap_t kpm = pmap_kernel();
+	pmap_acquire_pmap_lock(kpm);
 	struct l2_bucket * const l2b = pmap_get_l2_bucket(kpm, va);
 	const size_t l1slot __diagused = l1pte_index(va);
 	KASSERTMSG(l2b != NULL,
@@ -3729,6 +3731,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			cpu_cpwait();
 		}
 	}
+	pmap_release_pmap_lock(kpm);
 
 	pt_entry_t npte = L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot)
 	    | ((flags & PMAP_NOCACHE)
@@ -3823,6 +3826,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 	const vaddr_t eva = va + len;
 
+	pmap_acquire_pmap_lock(pmap_kernel());
+
 	while (va < eva) {
 		vaddr_t next_bucket = L2_NEXT_BUCKET_VA(va);
 		if (next_bucket > eva)
@@ -3884,6 +3889,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		total_mappings += mappings;
 #endif
 	}
+	pmap_release_pmap_lock(pmap_kernel());
 	cpu_cpwait();
 	UVMHIST_LOG(maphist, "  <--- done (%u mappings removed)",
 	    total_mappings, 0, 0, 0);
@@ -4550,7 +4556,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	pd_entry_t pde = L1_C_PROTO | l2b->l2b_pa | L1_C_DOM(pmap_domain(pm));
 	if (*pdep != pde) {
 		l1pte_setone(pdep, pde);
-		PTE_SYNC(pdep);
+		PDE_SYNC(pdep);
 		rv = 1;
 		PMAPCOUNT(fixup_pdes);
 	}
@@ -6163,9 +6169,11 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	 */
 	virtual_avail = (virtual_avail + arm_cache_prefer_mask) & ~arm_cache_prefer_mask;
 	nptes = (arm_cache_prefer_mask >> L2_S_SHIFT) + 1;
+	nptes = roundup(nptes, PAGE_SIZE / L2_S_SIZE);
 	if (arm_pcache.icache_type != CACHE_TYPE_PIPT
 	    && arm_pcache.icache_way_size > nptes * L2_S_SIZE) {
 		nptes = arm_pcache.icache_way_size >> L2_S_SHIFT;
+		nptes = roundup(nptes, PAGE_SIZE / L2_S_SIZE);
 	}
 #else
 	nptes = PAGE_SIZE / L2_S_SIZE;
