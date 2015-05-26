@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.16 2015/05/25 07:17:17 ozaki-r Exp $	*/
+/*	$NetBSD: mcast.c,v 1.1 2015/05/26 00:42:07 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.16 2015/05/25 07:17:17 ozaki-r Exp $");
+__RCSID("$NetBSD: mcast.c,v 1.1 2015/05/26 00:42:07 ozaki-r Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -55,7 +55,7 @@ extern const char *__progname;
 #include <poll.h>
 #include <stdbool.h>
 
-#ifndef TEST
+#ifdef ATF
 #include <atf-c.h>
 
 #define ERRX(ev, msg, ...)	ATF_REQUIRE_MSG(0, msg, __VA_ARGS__)
@@ -341,7 +341,7 @@ run(const char *host, const char *port, size_t n, bool conn, bool bug)
 	}
 }
 
-#ifdef TEST
+#ifndef ATF
 int
 main(int argc, char *argv[])
 {
