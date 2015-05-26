@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.56 2012/02/19 21:06:18 rmind Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.57 2015/05/26 02:18:20 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1095,11 +1095,12 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	_MFC0	v0, MIPS_COP_0_EXC_PC
 	PTR_ADDIU v0, 4
 	_MTC0	v0, MIPS_COP_0_EXC_PC
+	COP0_SYNC
 
 	PTR_L	v1, L_PRIVATE(k1)		# rdhwr $3,$29 updates v1
+
 	REG_L	AT, CALLFRAME_SIZ+TF_REG_AST(k0)# restore reg
 	REG_L	v0, CALLFRAME_SIZ+TF_REG_V0(k0) # restore reg
-	sll	$0,$0,3				# just in case
 	eret
 END(MIPSX(user_reserved_insn))
 
