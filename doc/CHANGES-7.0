@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.308 2015/05/25 09:24:37 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.309 2015/05/26 01:37:06 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23521,3 +23521,15 @@ distrib/i386/cdroms/Makefile.cdrom		1.36
 
 	Add full libexec contents to the CD image - this makes dhcpcd happy.
 	[martin, ticket #801]
+
+sys/dev/sdmmc/ld_sdmmc.c			1.13, 1.16
+sys/dev/sdmmc/sdmmc.c				1.25-1.26
+
+	Fixes an issue where the ld@sdmmc layer was erroneously calling back
+	into the disk subsystem without kernel_lock held.
+	[jmcneill, ticket #794]
+
+sys/arch/arm/arm32/pmap.c			1.319-1.322
+
+	arm32 pmax lock and PDE sync fixes.
+	[skrll, ticket #800]
