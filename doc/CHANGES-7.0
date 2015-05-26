@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.309 2015/05/26 01:37:06 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.310 2015/05/26 02:29:44 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23533,3 +23533,13 @@ sys/arch/arm/arm32/pmap.c			1.319-1.322
 
 	arm32 pmax lock and PDE sync fixes.
 	[skrll, ticket #800]
+
+sys/arch/amiga/conf/Makefile.amiga		1.108
+
+	Don't use conflicting parameters for compiler and assembler.
+	[mlelstv, ticket #804]
+
+sys/arch/amiga/conf/files.amiga			1.177
+
+	amidisplaycc requires vcons.
+	[mlelstv, ticket #806]
