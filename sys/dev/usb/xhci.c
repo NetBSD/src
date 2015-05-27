@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.23 2015/05/27 07:03:18 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.24 2015/05/27 07:06:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.23 2015/05/27 07:03:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.24 2015/05/27 07:06:58 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1702,7 +1702,10 @@ xhci_handle_event(struct xhci_softc * const sc,
 		xs = &sc->sc_slots[slot];
 		xr = &xs->xs_ep[dci].xe_tr;
 		/* sanity check */
-		KASSERT(xs->xs_idx != 0);
+		if (xs->xs_idx == 0 || xs->xs_idx >= sc->sc_maxslots) {
+			DPRINTFN(1, "invalid slot %u", xs->xs_idx, 0, 0, 0);
+			break;
+		}
 
 		if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0) {
 			bus_addr_t trbp = xhci_ring_trbp(xr, 0);
@@ -1722,8 +1725,24 @@ xhci_handle_event(struct xhci_softc * const sc,
 		} else {
 			xx = (void *)(uintptr_t)(trb_0 & ~0x3);
 		}
+		/* XXX this may not happen */
+		if (xx == NULL) {
+			DPRINTFN(1, "xfer done: xx is NULL", 0, 0, 0, 0);
+			break;
+		}
 		xfer = &xx->xx_xfer;
+		/* XXX this may happen when detaching */
+		if (xfer == NULL) {
+			DPRINTFN(1, "xfer done: xfer is NULL", 0, 0, 0, 0);
+			break;
+		}
 		DPRINTFN(14, "xfer %p", xfer, 0, 0, 0);
+		/* XXX I dunno why this happens */
+		if (!xfer->ux_pipe->up_repeat &&
+		    SIMPLEQ_EMPTY(&xfer->ux_pipe->up_queue)) {
+			DPRINTFN(1, "xfer done: xfer not started", 0, 0, 0, 0);
+			break;
+		}
 
 		if ((trb_3 & XHCI_TRB_3_ED_BIT) != 0) {
 			DPRINTFN(14, "transfer event data: "
