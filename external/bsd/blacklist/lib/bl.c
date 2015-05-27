@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.24 2015/02/03 01:22:08 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.25 2015/05/27 22:37:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.24 2015/02/03 01:22:08 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.25 2015/05/27 22:37:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -199,6 +199,7 @@ bl_init(bl_t b, bool srv)
 	}
 
 	b->b_connected = 0;
+#define GOT_FD		1
 #if defined(LOCAL_CREDS)
 #define CRED_LEVEL	0
 #define	CRED_NAME	LOCAL_CREDS
@@ -207,6 +208,7 @@ bl_init(bl_t b, bool srv)
 #define CRED_MESSAGE	SCM_CREDS
 #define CRED_SIZE	SOCKCREDSIZE(NGROUPS_MAX)
 #define CRED_TYPE	struct sockcred
+#define GOT_CRED	2
 #elif defined(SO_PASSCRED)
 #define CRED_LEVEL	SOL_SOCKET
 #define	CRED_NAME	SO_PASSCRED
@@ -215,7 +217,9 @@ bl_init(bl_t b, bool srv)
 #define CRED_MESSAGE	SCM_CREDENTIALS
 #define CRED_SIZE	sizeof(struct ucred)
 #define CRED_TYPE	struct ucred
+#define GOT_CRED	2
 #else
+#define GOT_CRED	0
 /*
  * getpeereid() and LOCAL_PEERCRED don't help here
  * because we are not a stream socket!
@@ -395,8 +399,12 @@ bl_recv(bl_t b)
 		bl_message_t bl;
 		char buf[512];
 	} ub;
+	int got;
 	ssize_t rlen;
 	bl_info_t *bi = &b->b_info;
+
+	got = 0;
+	memset(bi, 0, sizeof(*bi));
 
 	iov.iov_base = ub.buf;
 	iov.iov_len = sizeof(ub);
@@ -433,12 +441,14 @@ bl_recv(bl_t b)
 				continue;
 			}
 			memcpy(&bi->bi_fd, CMSG_DATA(cmsg), sizeof(bi->bi_fd));
+			got |= GOT_FD;
 			break;
 #ifdef CRED_MESSAGE
 		case CRED_MESSAGE:
 			sc = (void *)CMSG_DATA(cmsg);
 			bi->bi_uid = sc->CRED_SC_UID;
 			bi->bi_gid = sc->CRED_SC_GID;
+			got |= GOT_CRED;
 			break;
 #endif
 		default:
@@ -448,6 +458,16 @@ bl_recv(bl_t b)
 			continue;
 		}
 
+	}
+
+	if (got != (GOT_CRED|GOT_FD)) {
+		bl_log(b->b_fun, LOG_ERR, "message missing %s %s", 
+#if GOT_CRED != 0
+		    (got & GOT_CRED) == 0 ? "cred" :
+#endif
+		    "", (got & GOT_FD) == 0 ? "fd" : "");
+			
+		return NULL;
 	}
 
 	if ((size_t)rlen <= sizeof(ub.bl)) {
@@ -463,10 +483,6 @@ bl_recv(bl_t b)
 	bi->bi_type = ub.bl.bl_type;
 	bi->bi_slen = ub.bl.bl_salen;
 	bi->bi_ss = ub.bl.bl_ss;
-#ifndef CRED_MESSAGE
-	bi->bi_uid = -1;
-	bi->bi_gid = -1;
-#endif
 	strlcpy(bi->bi_msg, ub.bl.bl_data, MIN(sizeof(bi->bi_msg),
 	    ((size_t)rlen - sizeof(ub.bl) + 1)));
 	return bi;
