@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.73 2015/05/27 21:42:43 matt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.74 2015/05/27 21:56:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.73 2015/05/27 21:42:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.74 2015/05/27 21:56:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,9 @@ static inline void
 netbsd32_to_ifdrv(struct netbsd32_ifdrv *s32p, struct ifdrv *p, u_long cmd)
 {
 
-	memcpy(p, s32p, sizeof *s32p);
+	memcpy(p->ifd_name, s32p->ifd_name, sizeof s32p->ifd_name);
+	p->ifd_cmd = s32p->ifd_cmd;
+	p->ifd_len = s32p->ifd_len;
 	p->ifd_data = (void *)NETBSD32PTR64(s32p->ifd_data);
 }
 
@@ -502,12 +504,10 @@ netbsd32_from_ifmediareq(struct ifmediareq *p, struct netbsd32_ifmediareq *s32p,
 static inline void
 netbsd32_from_ifdrv(struct ifdrv *p, struct netbsd32_ifdrv *s32p, u_long cmd)
 {
-
-	memcpy(s32p, p, sizeof *p);
-/* filled in? */
-#if 0
-	s32p->ifm_data = (netbsd32_u_longp_t)p->ifm_data;
-#endif
+	memcpy(p->ifd_name, s32p->ifd_name, sizeof s32p->ifd_name);
+	s32p->ifd_cmd = p->ifd_cmd;
+	s32p->ifd_len = p->ifd_len;
+	NETBSD32PTR32(s32p->ifd_data, p->ifd_data);
 }
 
 static inline void
