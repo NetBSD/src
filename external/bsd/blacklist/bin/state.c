@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.15 2015/01/27 19:40:37 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.16 2015/05/27 22:37:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.15 2015/01/27 19:40:37 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.16 2015/05/27 22:37:37 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -115,6 +115,9 @@ dumpkey(const struct conf *k)
 			z = sizeof(buf);
 	}
 	(*lfun)(LOG_DEBUG, "%s", buf);
+	(*lfun)(LOG_DEBUG, "%s: %s", __func__,
+	    conf_print(buf, sizeof(buf), "", "", k));
+
 }
 
 int
