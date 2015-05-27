@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.39 2011/12/03 22:41:40 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.39.10.1 2015/05/27 05:57:14 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.39 2011/12/03 22:41:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.39.10.1 2015/05/27 05:57:14 msaitoh Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -479,7 +479,7 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
 	if (uio->uio_resid == 0)
 		return (0);
 	nentries = uio->uio_resid / sizeof(uint16_t);
-	if (nentries > NR_EVENT_CHANNELS)
+	if (nentries >= NR_EVENT_CHANNELS)
 		return EMSGSIZE;
 	chans = kmem_alloc(nentries * sizeof(uint16_t), KM_SLEEP);
 	if (chans == NULL)
@@ -572,7 +572,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	{
 		struct ioctl_evtchn_unbind *unbind = addr;
 		
-		if (unbind->port > NR_EVENT_CHANNELS)
+		if (unbind->port >= NR_EVENT_CHANNELS)
 			return EINVAL;
 		mutex_enter(&devevent_lock);
 		if (devevent[unbind->port] != d) {
@@ -593,7 +593,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	{
 		struct ioctl_evtchn_notify *notify = addr;
 		
-		if (notify->port > NR_EVENT_CHANNELS)
+		if (notify->port >= NR_EVENT_CHANNELS)
 			return EINVAL;
 		mutex_enter(&devevent_lock);
 		if (devevent[notify->port] != d) {
