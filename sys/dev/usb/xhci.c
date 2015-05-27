@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.21 2015/05/27 06:54:18 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.22 2015/05/27 06:56:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.21 2015/05/27 06:54:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.22 2015/05/27 06:56:16 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -116,6 +116,7 @@ fail:
 
 struct xhci_pipe {
 	struct usbd_pipe xp_pipe;
+	struct usb_task xp_async_task;
 };
 
 #define XHCI_COMMAND_RING_TRBS 256
@@ -1620,6 +1621,7 @@ static usbd_status
 xhci_clear_endpoint_stall_async(struct usbd_xfer *xfer)
 {
 	struct xhci_softc * const sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct xhci_pipe * const xp = (struct xhci_pipe *)xfer->ux_pipe;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(4, "xfer %p", xfer, 0, 0, 0);
@@ -1628,11 +1630,9 @@ xhci_clear_endpoint_stall_async(struct usbd_xfer *xfer)
 		return USBD_IOERROR;
 	}
 
-	/* XXX never use up_async_task for incompatible type of function */
-	usb_init_task(&xfer->ux_pipe->up_async_task,
+	usb_init_task(&xp->xp_async_task,
 	    xhci_clear_endpoint_stall_async_task, xfer, USB_TASKQ_MPSAFE);
-	usb_add_task(xfer->ux_pipe->up_dev, &xfer->ux_pipe->up_async_task,
-	    USB_TASKQ_HC);
+	usb_add_task(xfer->ux_pipe->up_dev, &xp->xp_async_task, USB_TASKQ_HC);
 	DPRINTFN(4, "ends", 0, 0, 0, 0);
 
 	return USBD_NORMAL_COMPLETION;
