@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.22 2015/05/27 06:56:16 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.23 2015/05/27 07:03:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.22 2015/05/27 06:56:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.23 2015/05/27 07:03:18 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2065,6 +2065,14 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		err = xhci_init_slot(dev, slot, route, rhport);
 		if (err) {
 			dev->ud_hcpriv = NULL;
+			/*
+			 * We have to disable_slot here because
+			 * xs->xs_idx == 0 when xhci_init_slot fails,
+			 * in that case usbd_remove_dev won't work.
+			 */
+			mutex_enter(&sc->sc_lock);
+			xhci_disable_slot(sc, slot);
+			mutex_exit(&sc->sc_lock);
 			goto bad;
 		}
 
