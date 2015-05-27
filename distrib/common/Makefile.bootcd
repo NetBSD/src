@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.30 2015/05/27 09:44:40 martin Exp $
+#	$NetBSD: Makefile.bootcd,v 1.31 2015/05/27 15:17:59 martin Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -76,7 +76,7 @@ _CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER}
 
 .if ${MKUNPRIVED} == "no"
 CD_METALOG.unpriv=
-mtunpriv=""
+mtunpriv=
 .else
 CD_METALOG.unpriv=-M ${METALOG}.sanitised
 mtunpriv="-U"
@@ -95,7 +95,6 @@ CDIMAGE=	${CDBASE}.iso
 CDIMAGE=	NetBSD-${DISTRIBVER}-${CDBASE:S/cd$//}.iso
 .endif
 WORKSPEC=	fs.spec
-CDMAKEFSEXTRAOPTS+=-F ${WORKSPEC}
 
 CLEANFILES+=	${CDIMAGE}
 CLEANFILES+=	bootxx.${MACHINE}
@@ -260,11 +259,16 @@ copy-releasedir:
 image:
 	@echo Preparing spec files for makefs...
 	${RM} -f ${WORKSPEC}
-	cat cdrom/etc/mtree/* |					\
-	    ${TOOL_SED} -e 's/ size=[0-9]*//'				\
-	     -e '/^\.\/etc\/gettytab/d' > ${WORKSPEC}
-	${HOST_SH} cdrom/dev/MAKEDEV -s all |			\
-	    ${TOOL_SED} -e '/^\. type=dir/d' -e 's,^\.,./dev,' >> ${WORKSPEC}
+	if [ -d cdrom/etc/mtree ]; then				\
+		cat cdrom/etc/mtree/* |				\
+		    ${TOOL_SED} -e 's/ size=[0-9]*//'		\
+		     -e '/^\.\/etc\/gettytab/d' > ${WORKSPEC};	\
+	fi
+	if [ -r cdrom/dev/MAKEDEV ]; then			\
+		${HOST_SH} cdrom/dev/MAKEDEV -s all |		\
+		    ${TOOL_SED} -e '/^\. type=dir/d' 		\
+			-e 's,^\.,./dev,' >> ${WORKSPEC};	\
+	fi
 .if defined(SPEC_IN)
 	cat ${SPEC_IN} >> ${WORKSPEC}
 .endif
@@ -275,7 +279,9 @@ image:
 .if defined(SPEC_EXTRA)
 	cat ${SPEC_EXTRA} >> ${WORKSPEC}
 .endif
-	${TOOL_MAKEFS} -N ${NETBSDSRCDIR}/etc -t cd9660 ${CDMAKEFSEXTRAOPTS} -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
+	if [ -s ${WORKSPEC} ]; then specarg="-F ${WORKSPEC}"; fi;	\
+	${TOOL_MAKEFS} -N ${NETBSDSRCDIR}/etc -t cd9660 $${specarg} 	\
+		${CDMAKEFSEXTRAOPTS} -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
 
 .if ${CDRELEASE} == false
 release: prepare .WAIT prepare_md_post .WAIT copy-releasedir .WAIT image_md_pre .WAIT image .WAIT image_md_post
