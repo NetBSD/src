@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.24 2015/05/25 15:38:33 martin Exp $
+#	$NetBSD: Makefile,v 1.25 2015/05/27 09:44:40 martin Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd
+CD_SETS=	base etc modules
 
 # for PRINTOBJDIR
 .include <bsd.own.mk>
