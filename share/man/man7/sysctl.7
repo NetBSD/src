@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.86 2014/11/13 16:10:21 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.87 2015/05/27 07:52:02 matt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1493,7 +1493,7 @@ Perform TCP checksum on loopback.
 .It Li tcp.init_win
 A value indicating the TCP initial congestion window.
 The valid range
-is 0 to 10 (maximum specified by draft-ietf-tcpm-initcwnd-08.txt),
+is 0 to 10 (maximum specified by RFC6928),
 with a default of 4 (approximately 4K per RFC3390).
 .It Li tcp.init_win_local
 Like
