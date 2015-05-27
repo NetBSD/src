@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 2015/01/28 00:42:15 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 2015/05/27 22:39:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.18 2015/01/28 00:42:15 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.19 2015/05/27 22:39:01 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -882,6 +882,7 @@ conf_apply(struct conf *c, const struct conf *sc)
 		    conf_print(buf, sizeof(buf), "to:\t", "", c));
 	}
 	memcpy(c->c_name, sc->c_name, CONFNAMESZ);
+	c->c_uid = sc->c_uid;
 	c->c_rmask = sc->c_rmask;
 	c->c_nfail = sc->c_nfail;
 	c->c_duration = sc->c_duration;
@@ -908,6 +909,8 @@ conf_merge(struct conf *c, const struct conf *sc)
 	
 	if (sc->c_name[0])
 		memcpy(c->c_name, sc->c_name, CONFNAMESZ);
+	if (sc->c_uid != -2)
+		c->c_uid = sc->c_uid;
 	if (sc->c_rmask != -2)
 		c->c_lmask = c->c_rmask = sc->c_rmask;
 	if (sc->c_nfail != -2)
