@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.2 2015/05/16 14:29:37 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.3 2015/05/27 01:12:04 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -94,7 +94,7 @@ test_endpoint()
 	atf_check -s exit:0 -o match:shmif0 rump.ifconfig
 	if [ $mode = "ipv6" ]; then
 		export LD_PRELOAD=/usr/lib/librumphijack.so
-		atf_check -s exit:0 -o ignore ping6 -n -c 1 ${addr}
+		atf_check -s exit:0 -o ignore ping6 -n -c 1 -X 1 ${addr}
 		unset LD_PRELOAD
 	else
 		atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 ${addr}
@@ -178,8 +178,8 @@ test_setup6()
 	atf_check -s exit:0 -o match:shmif1 rump.ifconfig
 
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -n -c 1 ${IP6SRCGW}
-	atf_check -s exit:0 -o ignore ping6 -n -c 1 ${IP6DSTGW}
+	atf_check -s exit:0 -o ignore ping6 -n -c 1 -X 1 ${IP6SRCGW}
+	atf_check -s exit:0 -o ignore ping6 -n -c 1 -X 1 ${IP6DSTGW}
 	unset LD_PRELOAD
 }
 
