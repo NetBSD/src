@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.17 2014/08/08 07:34:02 skrll Exp $	*/
+/*	$NetBSD: mutex.h,v 1.17.2.1 2015/05/27 05:33:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct kmutex {
  */
 #ifdef MULTIPROCESSOR
 #ifdef _ARM_ARCH_7
-#define	MUTEX_RECEIVE(mtx)		__asm __volatile("dmb")
+#define	MUTEX_RECEIVE(mtx)		__asm __volatile("dmb" ::: "memory")
 #else
 #define	MUTEX_RECEIVE(mtx)		membar_consumer()
 #endif
@@ -103,7 +103,7 @@ struct kmutex {
  */
 #ifdef MULTIPROCESSOR
 #ifdef _ARM_ARCH_7
-#define	MUTEX_GIVE(mtx)			__asm __volatile("dsb")
+#define	MUTEX_GIVE(mtx)			__asm __volatile("dsb" ::: "memory")
 #else
 #define	MUTEX_GIVE(mtx)			membar_producer()
 #endif

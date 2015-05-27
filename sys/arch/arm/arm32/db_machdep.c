@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.21.4.1 2014/11/09 16:05:25 martin Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.21.4.2 2015/05/27 05:33:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.21.4.1 2014/11/09 16:05:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.21.4.2 2015/05/27 05:33:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -385,7 +385,7 @@ db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 			armreg_tlbdataop_write(
 			    __SHIFTIN(va_index, dti->dti_index)
 			    | __SHIFTIN(way, ARM_TLBDATAOP_WAY));
-			__asm("isb");
+			arm_isb();
 			const uint32_t d0 = armreg_tlbdata0_read();
 			const uint32_t d1 = armreg_tlbdata1_read();
 			if ((d0 & ARM_TLBDATA_VALID)
@@ -406,7 +406,7 @@ db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 			armreg_tlbdataop_write(
 			    __SHIFTIN(way, ARM_TLBDATAOP_WAY)
 			    | __SHIFTIN(va_index, dti->dti_index));
-			__asm("isb");
+			arm_isb();
 			const uint32_t d0 = armreg_tlbdata0_read();
 			const uint32_t d1 = armreg_tlbdata1_read();
 			if (d0 & ARM_TLBDATA_VALID) {

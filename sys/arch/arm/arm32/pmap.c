@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.295.2.6 2015/05/26 01:34:40 msaitoh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.295.2.7 2015/05/27 05:33:29 msaitoh Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295.2.6 2015/05/26 01:34:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295.2.7 2015/05/27 05:33:29 msaitoh Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -974,9 +974,7 @@ pmap_pte_sync_current(pmap_t pm, pt_entry_t *ptep)
 {
 	if (PMAP_NEEDS_PTE_SYNC && pmap_is_cached(pm))
 		PTE_SYNC(ptep);
-#if ARM_MMU_V7 > 0
-	__asm("dsb":::"memory");
-#endif
+	arm_dsb();
 }
 
 #ifdef PMAP_INCLUDE_PTE_SYNC
