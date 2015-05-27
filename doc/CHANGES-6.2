@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.218 2015/05/19 05:45:56 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.219 2015/05/27 05:56:27 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11501,3 +11501,7 @@ sys/arch/vax/vax/ka660.c			1.11
 	Make VAX 4000/200 boot again.  PR port-vax/49884
 	[ragge, ticket #1298]
 
+sys/arch/xen/xen/xenevt.c			1.42
+
+	Fix off by one error, pointed out by Wei Liu in port-xen/49919.
+	[bouyer, ticket #1299]
