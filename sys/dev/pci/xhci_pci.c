@@ -1,4 +1,5 @@
-/*	$NetBSD: xhci_pci.c,v 1.4.2.2 2015/04/06 12:17:30 skrll Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.4.2.3 2015/05/27 07:22:51 skrll Exp $	*/
+/*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.2 2015/04/06 12:17:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.3 2015/05/27 07:22:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.2 2015/04/06 12:17:30 skrll Exp $
 #include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -52,11 +54,34 @@ __KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.2 2015/04/06 12:17:30 skrll Exp $
 #include <dev/usb/xhcireg.h>
 #include <dev/usb/xhcivar.h>
 
+struct xhci_pci_quirk {
+	pci_vendor_id_t		vendor;
+	pci_product_id_t	product;
+	int			quirks;
+};
+
+static const struct xhci_pci_quirk xhci_pci_quirks[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_M_XHCI,
+	    XHCI_QUIRK_FORCE_INTR },
+};
+
 struct xhci_pci_softc {
 	struct xhci_softc	sc_xhci;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 };
+
+static int
+xhci_pci_has_quirk(pci_vendor_id_t vendor, pci_product_id_t product)
+{
+	int i;
+
+	for (i = 0; i < __arraycount(xhci_pci_quirks); i++)
+		if (vendor == xhci_pci_quirks[i].vendor &&
+		    product == xhci_pci_quirks[i].product)
+			return xhci_pci_quirks[i].quirks;
+	return 0;
+}
 
 static int
 xhci_pci_match(device_t parent, cfdata_t match, void *aux)
@@ -67,6 +92,42 @@ xhci_pci_match(device_t parent, cfdata_t match, void *aux)
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_XHCI)
 		return 1;
+
+	return 0;
+}
+
+static int
+xhci_pci_port_route(struct xhci_pci_softc *psc)
+{
+	struct xhci_softc * const sc = &psc->sc_xhci;
+
+	pcireg_t val;
+
+	/*
+	 * Check USB3 Port Routing Mask register that indicates the ports
+	 * can be changed from OS, and turn on by USB3 Port SS Enable register.
+	 */
+	val = pci_conf_read(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_USB3PRM);
+	aprint_debug_dev(sc->sc_dev,
+	    "USB3PRM / USB3.0 configurable ports: 0x%08x\n", val);
+
+	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_USB3_PSSEN, val);
+	val = pci_conf_read(psc->sc_pc, psc->sc_tag,PCI_XHCI_INTEL_USB3_PSSEN);
+	aprint_debug_dev(sc->sc_dev,
+	    "USB3_PSSEN / Enabled USB3.0 ports under xHCI: 0x%08x\n", val);
+
+	/*
+	 * Check USB2 Port Routing Mask register that indicates the USB2.0
+	 * ports to be controlled by xHCI HC, and switch them to xHCI HC.
+	 */
+	val = pci_conf_read(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_USB2PRM);
+	aprint_debug_dev(sc->sc_dev,
+	    "XUSB2PRM / USB2.0 ports can switch from EHCI to xHCI:"
+	    "0x%08x\n", val);
+	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_XUSB2PR, val);
+	val = pci_conf_read(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_XUSB2PR);
+	aprint_debug_dev(sc->sc_dev,
+	    "XUSB2PR / USB2.0 ports under xHCI: 0x%08x\n", val);
 
 	return 0;
 }
@@ -91,6 +152,10 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus.ub_hcpriv = sc;
 
 	pci_aprint_devinfo(pa, "USB Controller");
+
+	/* Check for quirks */
+	sc->sc_quirks = xhci_pci_has_quirk(PCI_VENDOR(pa->pa_id),
+						PCI_PRODUCT(pa->pa_id));
 
 	/* check if memory space access is enabled */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
@@ -122,9 +187,9 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_pc = pc;
 	psc->sc_tag = tag;
 
-	hccparams = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 0x10);
+	hccparams = bus_space_read_4(sc->sc_iot, sc->sc_ioh, XHCI_HCCPARAMS);
 
-	if (pci_dma64_available(pa) && ((hccparams&1)==1))
+	if (pci_dma64_available(pa) && (XHCI_HCC_AC64(hccparams) != 0))
 		sc->sc_bus.ub_dmatag = pa->pa_dmat64;
 	else
 		sc->sc_bus.ub_dmatag = pa->pa_dmat;
@@ -160,11 +225,23 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_id_vendor);
 #endif
 
+	/* Intel chipset requires SuperSpeed enable and USB2 port routing */
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_INTEL:
+		sc->sc_quirks |= XHCI_QUIRK_INTEL;
+		break;
+	default:
+		break;
+	}
+
 	err = xhci_init(sc);
 	if (err) {
 		aprint_error_dev(self, "init failed, error=%d\n", err);
 		goto fail;
 	}
+
+	if ((sc->sc_quirks & XHCI_QUIRK_INTEL) != 0)
+		xhci_pci_port_route(psc);
 
 	if (!pmf_device_register1(self, xhci_suspend, xhci_resume,
 	                          xhci_shutdown))
