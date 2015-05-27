@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.311 2015/05/27 05:37:13 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.312 2015/05/27 10:00:24 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23568,3 +23568,9 @@ external/gpl3/gcc/dist/gcc/config/arm/netbsd-elf.h 1.8
 
 	Fix up TARGET_ENDIAN_DEFAULT for BE oabi.
 	[skrll, ticket #807]
+
+lib/libm/arch/alpha/s_copysign.S		1.6-1.7
+lib/libm/arch/m68k/s_copysign.S			1.8-1.9
+
+	Add copysignl aliases.
+	[joerg, ticket #808]
