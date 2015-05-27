@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.28 2015/05/25 15:38:33 martin Exp $
+#	$NetBSD: Makefile.bootcd,v 1.29 2015/05/27 09:27:40 martin Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -78,8 +78,10 @@ _CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER}
 
 .if ${MKUNPRIVED} == "no"
 CD_METALOG.unpriv=
+mtunpriv=""
 .else
 CD_METALOG.unpriv=-M ${METALOG}.sanitised
+mtunpriv="-U"
 .endif
 
 # Stuff that should come from elsewhere - XXX where? - HF
@@ -248,7 +250,7 @@ copy-releasedir:
 		${CHMOD} +w ${CUROBJDIR:Q}/cdrom/etc/mtree/set.${set};	\
 	fi;								\
 	${CDSETSCMD} ./maketars -i "${CUROBJDIR}/cdrom"			\
-	    ${CD_METALOG.unpriv} -N ${NETBSDSRCDIR}/etc			\
+	    ${CD_METALOG.unpriv} ${mtunpriv} -N ${NETBSDSRCDIR}/etc	\
 	    -F "${CUROBJDIR}/cdrom/etc/mtree"				\
 	    -d "${DESTDIR:S,^$,/,}" ${set}
 .endfor
