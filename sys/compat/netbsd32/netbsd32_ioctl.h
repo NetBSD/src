@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.48 2015/05/20 07:24:49 matt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.49 2015/05/27 21:42:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -434,7 +434,8 @@ struct  netbsd32_ifdrv {
 	netbsd32_voidp	ifd_data;
 };
 /* from <sys/sockio.h> */
-#define SIOCSDRVSPEC32	_IOW('i', 123, struct netbsd32_ifdrv)   /* set driver-specific */
+#define SIOCSDRVSPEC32	_IOW('i', 123, struct netbsd32_ifdrv)	/* set driver-specific */
+#define SIOCGDRVSPEC32	_IOWR('i', 123, struct netbsd32_ifdrv)	/* get driver-specific */
 
 /* from <netinet/ip_mroute.h> */
 struct netbsd32_sioc_vif_req {
@@ -450,9 +451,9 @@ struct netbsd32_sioc_vif_req {
 struct netbsd32_sioc_sg_req {
 	struct	in_addr src;
 	struct	in_addr grp;
-	u_long	pktcnt;
-	u_long	bytecnt;
-	u_long	wrong_if;
+	netbsd32_u_long	pktcnt;
+	netbsd32_u_long	bytecnt;
+	netbsd32_u_long	wrong_if;
 };
 /* from <sys/sockio.h> */
 #define	SIOCGETSGCNT32	_IOWR('u', 52, struct netbsd32_sioc_sg_req) /* sg pkt cnt */
