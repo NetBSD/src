@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.20 2015/04/07 06:52:03 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.21 2015/05/27 06:54:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -26,8 +26,17 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * USB rev 3.1 specification
+ *  http://www.usb.org/developers/docs/usb_31_040315.zip
+ * USB rev 2.0 specification
+ *  http://www.usb.org/developers/docs/usb20_docs/usb_20_031815.zip
+ * xHCI rev 1.1 specification
+ *  http://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/extensible-host-controler-interface-usb-xhci.pdf
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.20 2015/04/07 06:52:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.21 2015/05/27 06:54:18 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1374,7 +1383,7 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
 /*
  * Set TR Dequeue Pointer.
  * xCHI 1.1  4.6.10  6.4.3.9
- * Purge all of transfer requests in ring.
+ * Purge all of the transfer requests on ring.
  * EPSTATE of endpoint must be ERROR or STOPPED, or CONTEXT_STATE error.
  */
 static usbd_status
@@ -1578,7 +1587,13 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 }
 
 #if 1 /* XXX experimental */
-/* issue reset_ep and set_dequeue in thread context */
+/*
+ * Recover STALLed endpoint.
+ * xHCI 1.1 sect 4.10.2.1
+ * Issue RESET_EP to recover halt condition and SET_TR_DEQUEUE to remove
+ * all transfers on transfer ring.
+ * These are done in thread context asynchronously.
+ */
 static void
 xhci_clear_endpoint_stall_async_task(void *cookie)
 {
@@ -2765,8 +2780,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		break;
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
-	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
-	{
+	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER): {
 		int optval = (index >> 8) & 0xff;
 		index &= 0xff;
 		if (index < 1 || index > sc->sc_maxports) {
