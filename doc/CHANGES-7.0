@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.310 2015/05/26 02:29:44 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.311 2015/05/27 05:37:13 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23543,3 +23543,28 @@ sys/arch/amiga/conf/files.amiga			1.177
 
 	amidisplaycc requires vcons.
 	[mlelstv, ticket #806]
+
+sys/arch/arm/allwinner/awin_space.c		1.4
+sys/arch/arm/amlogic/amlogic_space.c		1.2
+sys/arch/arm/arm/cpufunc.c			1.151
+sys/arch/arm/arm32/bus_dma.c			1.90-1.91
+sys/arch/arm/arm32/db_machdep.c			1.23
+sys/arch/arm/arm32/pmap.c			1.317
+sys/arch/arm/broadcom/bcm2835_space.c		1.7
+sys/arch/arm/broadcom/bcm53xx_pax.c		1.14
+sys/arch/arm/broadcom/bcmgen_space.c		1.5
+sys/arch/arm/include/arm32/pmap.h		1.138
+sys/arch/arm/include/lock.h			1.31-1.32
+sys/arch/arm/include/locore.h			1.19
+sys/arch/arm/include/mutex.h			1.20
+sys/arch/arm/include/rwlock.h			1.9
+sys/arch/arm/samsung/exynos_space.c		1.2
+sys/arch/arm/zynq/zynq_space.c			1.2
+
+	Improve inline asm around dsb/dmb/isb.
+	[skrll, ticket #805]
+
+external/gpl3/gcc/dist/gcc/config/arm/netbsd-elf.h 1.8
+
+	Fix up TARGET_ENDIAN_DEFAULT for BE oabi.
+	[skrll, ticket #807]
