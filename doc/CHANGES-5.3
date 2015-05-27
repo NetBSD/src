@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.115 2015/05/22 11:05:57 sborrill Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.116 2015/05/27 06:19:25 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3897,3 +3897,7 @@ sys/arch/xen/xen/xenevt.c			1.42
 	Fix off by one error, addresses port-xen/49919.
 	[bouyer, ticket #1965]
 
+sys/dev/usb/uftdi.c				1.53
+
+	Use as large a packet size as the ftdi endpoint specifies.
+	[riastradh, ticket #1964]
