@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.82 2014/09/05 09:24:21 matt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.83 2015/05/27 19:43:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.82 2014/09/05 09:24:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.83 2015/05/27 19:43:40 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -581,6 +581,10 @@ again_faultbusy:
 		    &npages, 0, VM_PROT_READ | VM_PROT_WRITE, advice, gpflags);
 		UVMHIST_LOG(ubchist, "faultbusy getpages %d", error, 0, 0, 0);
 		if (error) {
+			/*
+			 * Flush: the mapping above might have been removed.
+			 */
+			pmap_update(pmap_kernel());
 			goto out;
 		}
 		for (i = 0; i < npages; i++) {
