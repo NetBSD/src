@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.72 2015/05/20 04:37:45 matt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.73 2015/05/27 21:42:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.72 2015/05/20 04:37:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.73 2015/05/27 21:42:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1041,6 +1041,8 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 
 	case SIOCSDRVSPEC32:
 		IOCTL_STRUCT_CONV_TO(SIOCSDRVSPEC, ifdrv);
+	case SIOCGDRVSPEC32:
+		IOCTL_STRUCT_CONV_TO(SIOCGDRVSPEC, ifdrv);
 
 	case SIOCGETVIFCNT32:
 		IOCTL_STRUCT_CONV_TO(SIOCGETVIFCNT, sioc_vif_req);
