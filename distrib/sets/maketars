@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.83 2015/05/27 09:26:46 martin Exp $
+# $NetBSD: maketars,v 1.84 2015/05/27 15:18:29 martin Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -121,7 +121,7 @@ while getopts L:bxyi:a:m:qs:F:SM:N:Ud:t: ch; do
 		etcdir="${OPTARG}"
 		;;
 	U)
-		preserve=""
+		preserve=
 		;;
 	d)
 		dest="${OPTARG}"
