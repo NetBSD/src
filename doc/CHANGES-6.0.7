@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.42 2015/05/02 17:25:37 martin Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.43 2015/05/27 05:57:31 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -5994,3 +5994,7 @@ distrib/sparc64/liveimage/emuimage/Makefile	1.4
 	Don't forget to put /ofwboot into the image otherwise boot fails.
 	[tsutsui, ticket #1297]
 
+sys/arch/xen/xen/xenevt.c			1.42
+
+	Fix off by one error, pointed out by Wei Liu in port-xen/49919.
+	[bouyer, ticket #1299]
