@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.22 2015/05/26 16:08:01 msaitoh Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.23 2015/05/27 00:08:50 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.22 2015/05/26 16:08:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.23 2015/05/27 00:08:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			    "unable to determine bus speed");
 			goto print_msr;
 		}
-		bus = (msr >> 0) & 0xf;
+		bus = (msr >> 0) & 0x1f;
 		switch (bus) {
 		case 0:
 			bus_clock =  8333;
@@ -313,6 +313,9 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		case 15:
 			bus_clock =  8888;
+			break;
+		case 20:
+			bus_clock =  8750;
 			break;
 		default:
 			aprint_debug("%s: unknown Airmont FSB_FREQ value %d",
