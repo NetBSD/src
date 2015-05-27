@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.25 2015/05/27 07:08:16 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.26 2015/05/27 07:22:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.25 2015/05/27 07:08:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.26 2015/05/27 07:22:51 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -910,13 +910,13 @@ xhci_init(struct xhci_softc *sc)
 #endif
 
 	xhci_rt_write_4(sc, XHCI_IMAN(0), XHCI_IMAN_INTR_ENA);
-#ifdef XHCI_QUIRK_INTEL
 	if ((sc->sc_quirks & XHCI_QUIRK_INTEL) != 0)
 		/* Intel xhci needs interrupt rate moderated. */
 		xhci_rt_write_4(sc, XHCI_IMOD(0), XHCI_IMOD_DEFAULT_LP);
 	else
-#endif /* XHCI_QUIRK_INTEL */
 		xhci_rt_write_4(sc, XHCI_IMOD(0), 0);
+	aprint_debug_dev(sc->sc_dev, "setting IMOD %u\n",
+	    xhci_rt_read_4(sc, XHCI_IMOD(0)));
 
 	xhci_op_write_4(sc, XHCI_USBCMD, XHCI_CMD_INTE|XHCI_CMD_RS); /* Go! */
 	aprint_debug_dev(sc->sc_dev, "USBCMD %08"PRIx32"\n",
@@ -977,7 +977,6 @@ xhci_intr1(struct xhci_softc * const sc)
 
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
 	DPRINTFN(16, "IMAN0 %08x", iman, 0, 0, 0);
-#ifdef XHCI_QUIRK_FORCE_INTR
 
 	if (!(sc->sc_quirks & XHCI_QUIRK_FORCE_INTR)) {
 		if ((iman & XHCI_IMAN_INTR_PEND) == 0) {
@@ -985,11 +984,6 @@ xhci_intr1(struct xhci_softc * const sc)
 		}
 	}
 
-#else
-	if ((iman & XHCI_IMAN_INTR_PEND) == 0) {
-		return 0;
-	}
-#endif /* XHCI_QUIRK_FORCE_INTR */
 	xhci_rt_write_4(sc, XHCI_IMAN(0), iman);
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
 	DPRINTFN(16, "IMAN0 %08x", iman, 0, 0, 0);
