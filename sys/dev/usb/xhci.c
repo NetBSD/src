@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.24 2015/05/27 07:06:58 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.25 2015/05/27 07:08:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.24 2015/05/27 07:06:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.25 2015/05/27 07:08:16 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1754,17 +1754,19 @@ xhci_handle_event(struct xhci_softc * const sc,
 			}
 		}
 
-		if (trberr == XHCI_TRB_ERROR_SUCCESS ||
-		    trberr == XHCI_TRB_ERROR_SHORT_PKT) {
+		switch (trberr) {
+		case XHCI_TRB_ERROR_SHORT_PKT:
+		case XHCI_TRB_ERROR_SUCCESS:
 			xfer->ux_actlen =
 			    xfer->ux_length - XHCI_TRB_2_REM_GET(trb_2);
 			err = USBD_NORMAL_COMPLETION;
-		} else if (trberr == XHCI_TRB_ERROR_STALL ||
-			   trberr == XHCI_TRB_ERROR_BABBLE) {
-			err = USBD_STALLED;
-			xr->is_halted = true;
+			break;
+		case XHCI_TRB_ERROR_STALL:
+		case XHCI_TRB_ERROR_BABBLE:
 			DPRINTFN(1, "evh: xfer done: ERR %u slot %u dci %u",
 			    trberr, slot, dci, 0);
+			xr->is_halted = true;
+			err = USBD_STALLED;
 #if 1 /* XXX experimental */
 			/*
 			 * Stalled endpoints can be recoverd by issuing
@@ -1781,12 +1783,22 @@ xhci_handle_event(struct xhci_softc * const sc,
 			 */
 			xfer->ux_status = err;
 			xhci_clear_endpoint_stall_async(xfer);
+			return;
+#else
 			break;
 #endif
-		} else {
+		case XHCI_TRB_ERROR_CMD_ABORTED:
+		case XHCI_TRB_ERROR_STOPPED:
+			err = USBD_CANCELLED;
+			break;
+		case XHCI_TRB_ERROR_NO_SLOTS:
+			err = USBD_NO_ADDR;
+			break;
+		default:
 			DPRINTFN(1, "evh: xfer done: ERR %u slot %u dci %u",
 			    trberr, slot, dci, 0);
 			err = USBD_IOERROR;
+			break;
 		}
 		xfer->ux_status = err;
 
