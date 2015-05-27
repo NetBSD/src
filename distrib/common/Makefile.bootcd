@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.29 2015/05/27 09:27:40 martin Exp $
+#	$NetBSD: Makefile.bootcd,v 1.30 2015/05/27 09:44:40 martin Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -32,7 +32,6 @@
 #				source	name_on_cd
 #	CDRUNTIME	files/directories to copy from $DESTDIR onto the CD
 #	CD_SETS		sets to be extracted onto the CD
-#			(default: base modules etc)
 #	SETS_DIR	where the CD_SETS are found (default provided)
 # source kernels are copied from ${CDINSTKERNEL} (or its obj dir)
 # note that as of yet, bootxx_cd9660 can't load kernel names of more than
@@ -59,7 +58,6 @@ CDRELEASE_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'
 CDRELEASE_EXCLUDE+=	-s ',./installation/installimage.*,,gp'
 .endif
 
-CD_SETS?=	base modules etc
 SETS_DIR?=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
 
 .include <bsd.own.mk> 		# For PRINTOBJDIR
