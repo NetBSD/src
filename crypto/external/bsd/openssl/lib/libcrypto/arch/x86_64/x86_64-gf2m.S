@@ -203,7 +203,7 @@ _mul_1x1:
 .align	16
 bn_GF2m_mul_2x2:
 	movq	OPENSSL_ia32cap_P@GOTPCREL(%rip),%rax
-	btq	$33,%rax
+	bt	$1,4(%rax)
 	jnc	.Lvanilla_mul_2x2
 
 .byte	102,72,15,110,198
