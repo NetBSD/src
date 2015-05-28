@@ -1,4 +1,4 @@
-/*	$NetBSD: mcast.c,v 1.2 2015/05/28 08:32:53 ozaki-r Exp $	*/
+/*	$NetBSD: mcast.c,v 1.3 2015/05/28 10:19:17 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: mcast.c,v 1.2 2015/05/28 08:32:53 ozaki-r Exp $");
+__RCSID("$NetBSD: mcast.c,v 1.3 2015/05/28 10:19:17 ozaki-r Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -59,6 +59,7 @@ extern const char *__progname;
 #include <atf-c.h>
 
 #define ERRX(ev, msg, ...)	ATF_REQUIRE_MSG(0, msg, __VA_ARGS__)
+#define ERRX0(ev, msg)		ATF_REQUIRE_MSG(0, msg)
 
 #define SKIPX(ev, msg, ...)	do {			\
 	atf_tc_skip(msg, __VA_ARGS__);			\
@@ -67,6 +68,7 @@ extern const char *__progname;
 
 #else
 #define ERRX(ev, msg, ...)	errx(ev, msg, __VA_ARGS__)
+#define ERRX0(ev, msg)		errx(ev, msg)
 #define SKIPX(ev, msg, ...)	errx(ev, msg, __VA_ARGS__)
 #endif
 
@@ -232,8 +234,38 @@ out:
 	return s;
 }
 
-static void
-sender(const char *host, const char *port, size_t n, bool conn, bool bug)
+static int
+synchronize(const int fd, bool waiter)
+{
+	int syncmsg = 0;
+	int r;
+	struct pollfd pfd;
+
+	if (waiter) {
+		pfd.fd = fd;
+		pfd.events = POLLIN;
+
+		/* We use poll to avoid lock up when the peer died unexpectedly */
+		r = poll(&pfd, 1, 10000);
+		if (r == -1)
+			ERRX(EXIT_FAILURE, "poll (%s)", strerror(errno));
+		if (r == 0)
+			/* Timed out */
+			return -1;
+
+		if (read(fd, &syncmsg, sizeof(syncmsg)) == -1)
+			ERRX(EXIT_FAILURE, "read (%s)", strerror(errno));
+	} else {
+		if (write(fd, &syncmsg, sizeof(syncmsg)) == -1)
+			ERRX(EXIT_FAILURE, "write (%s)", strerror(errno));
+	}
+
+	return 0;
+}
+
+static int
+sender(const int fd, const char *host, const char *port, size_t n, bool conn,
+    bool bug)
 {
 	int s;
 	ssize_t l;
@@ -242,6 +274,11 @@ sender(const char *host, const char *port, size_t n, bool conn, bool bug)
 	socklen_t slen;
 
 	s = getsocket(host, port, conn ? connect : connector, &slen, bug);
+
+	/* Wait until receiver gets ready. */
+	if (synchronize(fd, true) == -1)
+		return -1;
+
 	for (msg.seq = 0; msg.seq < n; msg.seq++) {
 #ifdef CLOCK_MONOTONIC
 		if (clock_gettime(CLOCK_MONOTONIC, &msg.ts) == -1)
@@ -261,10 +298,17 @@ sender(const char *host, const char *port, size_t n, bool conn, bool bug)
 			ERRX(EXIT_FAILURE, "send (%s)", strerror(errno));
 		usleep(100);
 	}
+
+	/* Wait until receiver finishes its work. */
+	if (synchronize(fd, true) == -1)
+		return -1;
+
+	return 0;
 }
 
 static void
-receiver(const char *host, const char *port, size_t n, bool conn, bool bug)
+receiver(const int fd, const char *host, const char *port, size_t n, bool conn,
+    bool bug)
 {
 	int s;
 	ssize_t l;
@@ -276,6 +320,10 @@ receiver(const char *host, const char *port, size_t n, bool conn, bool bug)
 	s = getsocket(host, port, bind, &slen, bug);
 	pfd.fd = s;
 	pfd.events = POLLIN;
+
+	/* Tell I'm ready */
+	synchronize(fd, false);
+
 	for (seq = 0; seq < n; seq++) {
 		if (poll(&pfd, 1, 10000) == -1)
 			ERRX(EXIT_FAILURE, "poll (%s)", strerror(errno));
@@ -289,6 +337,9 @@ receiver(const char *host, const char *port, size_t n, bool conn, bool bug)
 			ERRX(EXIT_FAILURE, "seq: expect=%zu actual=%zu",
 			    seq, msg.seq);
 	}
+
+	/* Tell I'm finished */
+	synchronize(fd, false);
 }
 
 static void
@@ -296,22 +347,32 @@ run(const char *host, const char *port, size_t n, bool conn, bool bug)
 {
 	pid_t pid;
 	int status;
+	int syncfds[2];
+	int error;
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, syncfds) == -1)
+		ERRX(EXIT_FAILURE, "socketpair (%s)", strerror(errno));
 
 	switch ((pid = fork())) {
 	case 0:
-		receiver(host, port, n, conn, bug);
+		receiver(syncfds[0], host, port, n, conn, bug);
 		return;
 	case -1:
 		ERRX(EXIT_FAILURE, "fork (%s)", strerror(errno));
 	default:
-		usleep(1000);
-		sender(host, port, n, conn, bug);
-		usleep(100);
+		error = sender(syncfds[1], host, port, n, conn, bug);
 	again:
 		switch (waitpid(pid, &status, WNOHANG)) {
 		case -1:
 			ERRX(EXIT_FAILURE, "wait (%s)", strerror(errno));
 		case 0:
+			if (error == 0)
+				/*
+				 * Receiver is still alive, but we know
+				 * it will exit soon.
+				 */
+				goto again;
+
 			if (kill(pid, SIGTERM) == -1)
 				ERRX(EXIT_FAILURE, "kill (%s)",
 				    strerror(errno));
@@ -319,9 +380,9 @@ run(const char *host, const char *port, size_t n, bool conn, bool bug)
 		default:
 			if (WIFSIGNALED(status)) {
 				if (WTERMSIG(status) == SIGTERM)
-					ERRX(EXIT_FAILURE,
-					    "receiver got terminated due to " \
-					    "deadline (%d usec)", 100);
+					ERRX0(EXIT_FAILURE,
+					    "receiver failed and was killed" \
+					    "by sender");
 				else
 					ERRX(EXIT_FAILURE,
 					    "receiver got signaled (%s)",
