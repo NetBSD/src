@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.110 2015/05/02 17:39:31 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.111 2015/05/28 04:16:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -232,7 +232,7 @@ extern struct cpu_info cpu_info_store;
 register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 
 #define	curlwp			mips_curlwp
-#define	curcpu()		(curlwp->l_cpu)
+#define	curcpu()		lwp_getcpu(curlwp)
 #define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 #ifdef MULTIPROCESSOR
 #define	cpu_number()		(curcpu()->ci_index)
