@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.38 2015/05/17 06:12:40 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.39 2015/05/28 02:23:18 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -468,6 +468,14 @@ cortex_init:
 	//
 	mrc	p15, 0, r0, c1, c0, 1		// ACTLR read
 	orr	r0, r0, #CORTEXA9_AUXCTL_SMP	// enable SMP
+
+#if defined(CPU_CORTEXA15)
+	// The A15 requires snoop-delayed exclusive handling to be set
+	// if there are 3 or more CPUs.
+	mrc	p15, 1, r2, c9, c0, 2		// L2CTRL read
+	ubfx	r2, r2, #25, #1			// bit 25 is set when 3+ CPUs
+	bfi	r0, r2, #31, #1			// copy it to bit 31 in ACTRL
+#endif
 
 #if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA9)
 	//
