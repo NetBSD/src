@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2015/05/21 00:12:10 rjs Exp $
+#	$NetBSD: Makefile,v 1.67 2015/05/28 14:36:45 rjs Exp $
 
 # xf86-input drivers
 
@@ -22,13 +22,6 @@ SUBDIR+= \
 # xf86-video drivers
 
 .include <bsd.own.mk>
-
-# Set this to "no" to build the UMS-happy 6.x driver, vs KMS 7.x
-.if ${MKX11RADEONKMS} != "no"
-RADEON_SUBDIR=radeon-kms
-.else
-RADEON_SUBDIR=radeon
-.endif
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
@@ -57,7 +50,8 @@ SUBDIR+= \
 	xf86-video-nv \
 	xf86-video-openchrome \
 	xf86-video-r128 \
-	xf86-video-${RADEON_SUBDIR} \
+	xf86-video-radeon \
+	xf86-video-radeon-kms \
 	xf86-video-radeonhd \
 	xf86-video-s3 \
 	xf86-video-s3virge \
@@ -98,7 +92,7 @@ SUBDIR+= \
 	xf86-video-mga \
 	xf86-video-nv \
 	xf86-video-r128 \
-	xf86-video-${RADEON_SUBDIR} \
+	xf86-video-radeon \
 	xf86-video-radeonhd \
 	xf86-video-s3 \
 	xf86-video-s3virge \
@@ -138,7 +132,7 @@ SUBDIR+= \
 	xf86-video-mga \
 	xf86-video-neomagic \
 	xf86-video-nv \
-	xf86-video-${RADEON_SUBDIR} \
+	xf86-video-radeon \
 	xf86-video-radeonhd \
 	xf86-video-s3 \
 	xf86-video-s3virge \
@@ -198,7 +192,7 @@ SUBDIR+= \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
-	xf86-video-${RADEON_SUBDIR} \
+	xf86-video-radeon \
 	xf86-video-r128 \
 	xf86-video-tdfx \
 	xf86-video-wsfb
@@ -223,7 +217,7 @@ SUBDIR+= \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
-	xf86-video-${RADEON_SUBDIR} \
+	xf86-video-radeon \
 	xf86-video-r128 \
 	xf86-video-tdfx \
 	xf86-video-wsfb
@@ -260,7 +254,7 @@ SUBDIR+= \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-r128 \
-	xf86-video-${RADEON_SUBDIR} \
+	xf86-video-radeon \
 	xf86-video-suncg6 \
 	xf86-video-sunffb \
 	xf86-video-sunleo \
