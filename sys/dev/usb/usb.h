@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.111.2.6 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.111.2.7 2015/05/28 06:15:47 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -561,7 +561,9 @@ typedef struct {
 #define UPS_OVERCURRENT_INDICATOR	0x0008
 #define UPS_RESET			0x0010
 #define UPS_PORT_L1			0x0020
-#define UPS_PORT_LS_GET(x)		__SHIFTOUT(x, __BITS(8,5))
+#define UPS_PORT_LS_MASK		__BITS(8,5)
+#define UPS_PORT_LS_GET(x)		__SHIFTOUT(x, UPS_PORT_LS_MASK)
+#define UPS_PORT_LS_SET(x)		__SHIFTIN(x, UPS_PORT_LS_MASK)
 #define UPS_PORT_LS_U0			0x00
 #define UPS_PORT_LS_U1			0x01
 #define UPS_PORT_LS_U2			0x02
@@ -580,9 +582,9 @@ typedef struct {
 #define UPS_FULL_SPEED			0x0000	/* for completeness */
 #define UPS_LOW_SPEED			0x0200
 #define UPS_HIGH_SPEED			0x0400
-#define UPS_SUPER_SPEED			0x0800
 #define UPS_PORT_TEST			0x0800
 #define UPS_PORT_INDICATOR		0x1000
+#define UPS_OTHER_SPEED			0x2000	/* currently NetBSD specific */
 	uWord		wPortChange;
 #define UPS_C_CONNECT_STATUS		0x0001
 #define UPS_C_PORT_ENABLED		0x0002
@@ -852,6 +854,7 @@ struct usb_device_info {
 #define USB_SPEED_FULL 2
 #define USB_SPEED_HIGH 3
 #define USB_SPEED_SUPER 4
+#define USB_IS_SS(X) ((X) == USB_SPEED_SUPER)
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];

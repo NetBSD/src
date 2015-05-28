@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.26 2015/05/27 07:22:51 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.27 2015/05/28 06:15:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.26 2015/05/27 07:22:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.27 2015/05/28 06:15:47 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1004,31 +1004,52 @@ xhci_intr1(struct xhci_softc * const sc)
  *	ioctl interface uses these values too.
  * port_status speed
  *	definition: UPS_*_SPEED in usb.h
- *	They are used in usb_port_status_t.
- *	Some 3.0 values overlap with 2.0 values.
+ *	They are used in usb_port_status_t and valid only for USB 2.0.
+ *	Speed value is 0 for Super Speed or more.
+ *	Note that some 3.0 values overlap with 2.0 values.
  *	(e.g. 0x200 means UPS_POER_POWER_SS in SS and
  *	            means UPS_LOW_SPEED in HS.)
  *	port status sent from hub also uses these values.
- *	(but I've never seen UPS_SUPER_SPEED in port_status from hub.)
  * xspeed:
  *	definition: Protocol Speed ID (PSI) (xHCI 1.1 7.2.1)
  *	They are used in only slot context and PORTSC reg of xhci.
- *	The difference between usbdi speed and them are that
- *	FS and LS values are swapped.
+ *	The difference between usbdi speed and xspeed is
+ *	that FS and LS values are swapped.
  */
 
+/* convert usbdi speed to xspeed */
 static int
 xhci_speed2xspeed(int speed)
 {
 	switch (speed) {
 	case USB_SPEED_LOW:	return 2;
 	case USB_SPEED_FULL:	return 1;
-	case USB_SPEED_HIGH:	return 3;
-	case USB_SPEED_SUPER:	return 4;
-	default:
-		break;
+	default:		return speed;
 	}
-	return 0;
+}
+
+/* convert xspeed to usbdi speed */
+static int
+xhci_xspeed2speed(int xspeed)
+{
+	switch (xspeed) {
+	case 1: return USB_SPEED_FULL;
+	case 2: return USB_SPEED_LOW;
+	default: return xspeed;
+	}
+}
+
+/* convert xspeed to port status speed */
+static int
+xhci_xspeed2psspeed(int xspeed)
+{
+	switch (xspeed) {
+	case 0: return 0;
+	case 1: return UPS_FULL_SPEED;
+	case 2: return UPS_LOW_SPEED;
+	case 3: return UPS_HIGH_SPEED;
+	default: return UPS_OTHER_SPEED;
+	}
 }
 
 /* construct slot context */
@@ -1179,7 +1200,7 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 	if (xfertype != UE_ISOCHRONOUS)
 		cp[1] |= htole32(XHCI_EPCTX_1_CERR_SET(3));
 
-	if (speed == USB_SPEED_SUPER) {
+	if (USB_IS_SS(speed)) {
 		usbd_desc_iter_t iter;
 		const usb_cdc_descriptor_t *cdcd;
 		const usb_endpoint_ss_comp_descriptor_t * esscd = NULL;
@@ -1233,7 +1254,7 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 		} else {
 			ival = ival > 15 ? 15 : ival;
 		}
-		if (speed == USB_SPEED_SUPER) {
+		if (USB_IS_SS(speed)) {
 			if (maxb > 0)
 				mps = 1024;
 		} else {
@@ -1246,7 +1267,7 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 		    );
 		break;
 	case UE_CONTROL:
-		if (speed == USB_SPEED_SUPER)
+		if (USB_IS_SS(speed))
 			mps = 512;
 		else
 			mps = mps ? mps : 8;
@@ -1261,7 +1282,7 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 		} else {
 			ival = ival > 15 ? 15 : ival;
 		}
-		if (speed == USB_SPEED_SUPER) {
+		if (USB_IS_SS(speed)) {
 			mps = 1024;
 		} else {
 			mps = mps ? mps : 1024;
@@ -1271,7 +1292,7 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 		break;
 #endif
 	default:
-		if (speed == USB_SPEED_SUPER)
+		if (USB_IS_SS(speed))
 			mps = 1024;
 		else
 			mps = mps ? mps : 512;
@@ -1985,10 +2006,10 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 	dev->ud_ep0desc.bEndpointAddress = USB_CONTROL_ENDPOINT;
 	dev->ud_ep0desc.bmAttributes = UE_CONTROL;
 	/* 4.3,  4.8.2.1 */
-	switch (speed) {
-	case USB_SPEED_SUPER:
+	if (USB_IS_SS(speed)) {
 		USETW(dev->ud_ep0desc.wMaxPacketSize, USB_3_MAX_CTRL_PACKET);
-		break;
+	} else
+	switch (speed) {
 	case USB_SPEED_FULL:
 		/* XXX using 64 as initial mps of ep0 in FS */
 	case USB_SPEED_HIGH:
@@ -2119,7 +2140,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		if (err)
 			goto bad;
 		/* 4.8.2.1 */
-		if (speed == USB_SPEED_SUPER) {
+		if (USB_IS_SS(speed)) {
 			if (dd->bMaxPacketSize != 9) {
 				printf("%s: invalid mps 2^%u for SS ep0,"
 				    " using 512\n",
@@ -2766,34 +2787,20 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		}
 		v = xhci_op_read_4(sc, XHCI_PORTSC(index));
 		DPRINTFN(4, "getrhportsc %d %08x", index, v, 0, 0);
-		switch (XHCI_PS_SPEED_GET(v)) {
-		case 1:
-			i = UPS_FULL_SPEED;
-			break;
-		case 2:
-			i = UPS_LOW_SPEED;
-			break;
-		case 3:
-			i = UPS_HIGH_SPEED;
-			break;
-		case 4:
-			i = UPS_SUPER_SPEED;
-			break;
-		default:
-			i = 0;
-			break;
-		}
+		i = xhci_xspeed2psspeed(XHCI_PS_SPEED_GET(v));
 		if (v & XHCI_PS_CCS)	i |= UPS_CURRENT_CONNECT_STATUS;
 		if (v & XHCI_PS_PED)	i |= UPS_PORT_ENABLED;
 		if (v & XHCI_PS_OCA)	i |= UPS_OVERCURRENT_INDICATOR;
 		//if (v & XHCI_PS_SUSP)	i |= UPS_SUSPEND;
 		if (v & XHCI_PS_PR)	i |= UPS_RESET;
 		if (v & XHCI_PS_PP) {
-			if (i & UPS_SUPER_SPEED)
+			if (i & UPS_OTHER_SPEED)
 					i |= UPS_PORT_POWER_SS;
 			else
 					i |= UPS_PORT_POWER;
 		}
+		if (i & UPS_OTHER_SPEED)
+			i |= UPS_PORT_LS_SET(XHCI_PS_PLS_GET(v));
 		USETW(ps.wPortStatus, i);
 		i = 0;
 		if (v & XHCI_PS_CSC)    i |= UPS_C_CONNECT_STATUS;
@@ -2853,7 +2860,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			xhci_op_write_4(sc, port, v | XHCI_PS_PRC);
 			break;
 		case UHF_PORT_U1_TIMEOUT:
-			if (XHCI_PS_SPEED_GET(v) != 4) {
+			if (USB_IS_SS(xhci_xspeed2speed(XHCI_PS_SPEED_GET(v)))){
 				return -1;
 			}
 			port = XHCI_PORTPMSC(index);
@@ -2863,7 +2870,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			xhci_op_write_4(sc, port, v);
 			break;
 		case UHF_PORT_U2_TIMEOUT:
-			if (XHCI_PS_SPEED_GET(v) != 4) {
+			if (USB_IS_SS(xhci_xspeed2speed(XHCI_PS_SPEED_GET(v)))){
 				return -1;
 			}
 			port = XHCI_PORTPMSC(index);
