@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.11 2014/02/21 22:22:48 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.12 2015/05/28 02:22:05 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,10 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.11 2014/02/21 22:22:48 matt Exp $")
-
-#undef VERBOSE_INIT_ARM
-#define VERBOSE_INIT_ARM
+RCSID("$NetBSD: bcm53xx_start.S,v 1.12 2015/05/28 02:22:05 matt Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
