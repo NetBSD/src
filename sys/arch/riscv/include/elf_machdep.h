@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.4 2015/04/01 21:59:01 matt Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.5 2015/05/28 02:19:05 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _RISCV_ELF_MACHDEP_H_
 
 #define	ELF32_MACHDEP_ID		EM_RISCV
+#define	ELF64_MACHDEP_ID		EM_RISCV
 
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
