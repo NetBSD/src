@@ -1,4 +1,4 @@
-/*	$NetBSD: mcast.c,v 1.1 2015/05/26 00:42:07 ozaki-r Exp $	*/
+/*	$NetBSD: mcast.c,v 1.2 2015/05/28 08:32:53 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: mcast.c,v 1.1 2015/05/26 00:42:07 ozaki-r Exp $");
+__RCSID("$NetBSD: mcast.c,v 1.2 2015/05/28 08:32:53 ozaki-r Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -286,7 +286,8 @@ receiver(const char *host, const char *port, size_t n, bool conn, bool bug)
 		if (debug)
 			show("got", &msg);
 		if (seq != msg.seq)
-			ERRX(EXIT_FAILURE, "seq %zu != %zu", seq, msg.seq);
+			ERRX(EXIT_FAILURE, "seq: expect=%zu actual=%zu",
+			    seq, msg.seq);
 	}
 }
 
