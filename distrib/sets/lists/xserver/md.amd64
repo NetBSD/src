@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.77 2015/05/21 00:12:10 rjs Exp $
+# $NetBSD: md.amd64,v 1.78 2015/05/28 14:36:44 rjs Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -447,9 +447,10 @@
 ./usr/X11R7/lib/modules/drivers/openchrome_drv.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so.6		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/radeon_drv_old.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/radeon_drv_old.so.6	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/radeon_drv.so.6		-unknown-	xorg,!x11radeonkms
-./usr/X11R7/lib/modules/drivers/radeon_drv.so.7		-unknown-	xorg,x11radeonkms
+./usr/X11R7/lib/modules/drivers/radeon_drv.so.7		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeonhd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/s3_drv.so		-unknown-	xorg
