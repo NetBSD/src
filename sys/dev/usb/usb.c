@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.7 2015/04/03 21:22:33 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.8 2015/05/28 11:55:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.7 2015/04/03 21:22:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.8 2015/05/28 11:55:44 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -75,10 +75,12 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.7 2015/04/03 21:22:33 skrll Exp $");
 
 #if defined(USBHIST)
 
-USBHIST_DEFINE(usbhist);
 #ifndef USBHIST_SIZE
 #define USBHIST_SIZE 50000
 #endif
+
+static struct kern_history_ent usbhistbuf[USBHIST_SIZE];
+USBHIST_DEFINE(usbhist) = KERNHIST_INITIALIZER(usbhist, usbhistbuf);
 
 #endif
 
@@ -273,8 +275,6 @@ usb_once_init(void)
 {
 	struct usb_taskq *taskq;
 	int i;
-
-	USBHIST_INIT(usbhist, USBHIST_SIZE);
 
 	selinit(&usb_selevent);
 	mutex_init(&usb_event_lock, MUTEX_DEFAULT, IPL_NONE);
