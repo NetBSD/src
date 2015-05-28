@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.850 2015/05/28 04:08:48 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.851 2015/05/28 14:36:45 rjs Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1307,12 +1307,6 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 	tdfx tga trident tseng vesa vga vmware wsfb xgi
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
-
-# Build the ati 6.x (UMS supported) or 7.x (KMS demanded) drivers
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
-MKX11RADEONKMS?=		yes
-.endif
-MKX11RADEONKMS?=		no
 
 # Only install the radeon firmware on DRM-happy systems.
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
