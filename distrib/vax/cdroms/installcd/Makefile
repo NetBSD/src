@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2015/05/25 15:38:33 martin Exp $
+#	$NetBSD: Makefile,v 1.15 2015/05/28 09:51:31 martin Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
@@ -21,10 +21,7 @@ image_md_pre:
 	${INSTALL} ${COPY} ${.CURDIR}/etc.rc cdrom/etc/rc
 	${INSTALL} ${COPY} -m 0555 ${.CURDIR}/install.sh cdrom/install.sh
 	${MKDIR} cdrom/mnt2 cdrom/targetroot
-	${INSTALL} ${COPY} -m 0555 ${SYSINSTDIR}/sysinst cdrom
-	for f in ${SYSINSTDIR}/sysinstmsgs.??; do \
-		${INSTALL} ${COPY} $$f cdrom; \
-	done
+	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinstmsgs.?? cdrom/usr/share/sysinst/catalog/
 	${TOOL_GZIP} -d -f cdrom/netbsd.gz
 
 # make the CD bootable

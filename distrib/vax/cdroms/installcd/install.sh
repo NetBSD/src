@@ -1,5 +1,5 @@
 #! /bin/sh -m
-# $NetBSD: install.sh,v 1.1 2014/05/21 14:21:35 martin Exp $
+# $NetBSD: install.sh,v 1.2 2015/05/28 09:51:31 martin Exp $
 #
 # -
 #  Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ fi
 
 # run the installation or upgrade script.
 cd /
-cmd=./sysinst
+cmd=/usr/sbin/sysinst
 
 while [ -n "${cmd}" ]
 do

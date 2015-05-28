@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.38 2015/05/27 09:44:40 martin Exp $
+# $NetBSD: Makefile.cdrom,v 1.39 2015/05/28 09:51:31 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,5 @@ image_md_pre:
 	${INSTALL} ${COPY} ${.CURDIR}/../etc.rc cdrom/etc/rc
 	${INSTALL} ${COPY} -m 0555 ${.CURDIR}/../install.sh cdrom/install.sh
 	${MKDIR} cdrom/mnt2 cdrom/targetroot
-	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinst cdrom
-	${CHMOD} ugo+rx cdrom/sysinst
-	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinstmsgs.?? cdrom
+	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinstmsgs.?? cdrom/usr/share/sysinst/catalog/
 	${MKDIR} cdrom/var
