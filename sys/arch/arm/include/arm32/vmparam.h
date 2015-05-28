@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.36 2015/02/24 22:02:40 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.37 2015/05/28 02:24:23 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -61,18 +61,18 @@
  * Note that MAXTSIZ can't be larger than 32M, otherwise the compiler
  * would have to be changed to not generate "bl" instructions.
  */
-#define	MAXTSIZ		(64*1024*1024)		/* max text size */
+#define	MAXTSIZ		(128*1024*1024)		/* max text size */
 #ifndef	DFLDSIZ
-#define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(384*1024*1024)		/* initial data size limit */
 #endif
 #ifndef	MAXDSIZ
-#define	MAXDSIZ		(1024*1024*1024)	/* max data size */
+#define	MAXDSIZ		(1856*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
+#define	DFLSSIZ		(4*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
+#define	MAXSSIZ		(64*1024*1024)		/* max stack size */
 #endif
 
 /*
