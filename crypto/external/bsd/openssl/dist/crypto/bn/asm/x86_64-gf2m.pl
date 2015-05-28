@@ -168,7 +168,7 @@ $code.=<<___;
 .align	16
 bn_GF2m_mul_2x2:
 	mov	OPENSSL_ia32cap_P(%rip),%rax
-	bt	\$33,%rax
+	bt	\$1,4(%rax)
 	jnc	.Lvanilla_mul_2x2
 
 	movq		$a1,%xmm0
