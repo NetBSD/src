@@ -6,15 +6,12 @@
 .type	sha1_block_data_order,@function
 .align	16
 sha1_block_data_order:
-	movl	OPENSSL_ia32cap_P+0@GOTPCREL(%rip),%r9d
-	movl	OPENSSL_ia32cap_P+4@GOTPCREL(%rip),%r8d
-	testl	$512,%r8d
-	jz	.Lialu
-	andl	$268435456,%r8d
-	andl	$1073741824,%r9d
-	orl	%r9d,%r8d
-	cmpl	$1342177280,%r8d
-	je	_avx_shortcut
+	movq	OPENSSL_ia32cap_P+0@GOTPCREL(%rip),%r8
+	movl	4(%r8),%r8d
+	btl	$9,%r8d
+	jnc	.Lialu
+	btl	$28,%r8d
+	jc	_avx_shortcut
 	jmp	_ssse3_shortcut
 
 .align	16
