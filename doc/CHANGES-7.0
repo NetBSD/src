@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.312 2015/05/27 10:00:24 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.313 2015/05/28 10:03:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23574,3 +23574,10 @@ lib/libm/arch/m68k/s_copysign.S			1.8-1.9
 
 	Add copysignl aliases.
 	[joerg, ticket #808]
+
+
+lib/libm/arch/m68k/s_copysign.S			1.10
+
+	Deal with the potential pressence of long double support.
+	[joerg, ticket #812]
+
