@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.22 2015/05/28 02:22:37 matt Exp $	*/
+/*	$NetBSD: locore.h,v 1.23 2015/05/28 21:52:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -226,8 +226,10 @@ read_thumb_insn(vaddr_t va, bool user_p)
 	va &= ~1;
 	uint32_t insn;
 	if (user_p) {
-#ifdef _ARM_ARCH_T2
-		__asm __volatile("ldrht %0, [%1]" : "=&r"(insn) : "r"(va));
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+		__asm __volatile("ldrht %0, [%1, #0]" : "=&r"(insn) : "r"(va));
+#elif defined(_ARM_ARCH_7)
+		__asm __volatile("ldrht %0, [%1], #0" : "=&r"(insn) : "r"(va));
 #else
 		__asm __volatile("ldrt %0, [%1]" : "=&r"(insn) : "r"(va & ~3));
 #ifdef __ARMEB__
