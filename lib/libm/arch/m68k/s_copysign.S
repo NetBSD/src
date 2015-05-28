@@ -1,4 +1,4 @@
-/*	$NetBSD: s_copysign.S,v 1.7.74.1 2015/05/27 09:22:56 msaitoh Exp $	*/
+/*	$NetBSD: s_copysign.S,v 1.7.74.2 2015/05/28 10:00:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,14 +34,17 @@
  */
 
 #include <machine/asm.h>
+#include <machine/math.h>
 
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_copysign.S,v 1.7.74.1 2015/05/27 09:22:56 msaitoh Exp $")
+RCSID("$NetBSD: s_copysign.S,v 1.7.74.2 2015/05/28 10:00:08 martin Exp $")
 
+#if !defined(__HAVE_LONG_DOUBLE)
 STRONG_ALIAS(_copysignl, copysign)
 WEAK_ALIAS(copysignl, _copysignl)
+#endif
 
 | copysign(x,y)
 | returns x with the sign of y.
