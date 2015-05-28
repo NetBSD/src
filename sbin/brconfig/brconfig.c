@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.14 2012/08/23 12:06:32 drochner Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.15 2015/05/28 01:35:31 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: brconfig.c,v 1.14 2012/08/23 12:06:32 drochner Exp $");
+__RCSID("$NetBSD: brconfig.c,v 1.15 2015/05/28 01:35:31 matt Exp $");
 #endif
 
 
@@ -411,7 +411,7 @@ show_config(int sock, const char *bridge, const char *prefix)
 static void
 show_interfaces(int sock, const char *bridge, const char *prefix)
 {
-	static const char *stpstates[] = {
+	static const char const stpstates[][11] = {
 		"disabled",
 		"listening",
 		"learning",
