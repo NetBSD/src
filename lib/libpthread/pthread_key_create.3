@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_key_create.3,v 1.6 2010/07/09 10:55:11 wiz Exp $
+.\" $NetBSD: pthread_key_create.3,v 1.7 2015/05/29 07:37:31 manu Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -151,6 +151,13 @@ Also
 .Fn pthread_key_delete
 will return zero upon success.
 Upon failure both functions return an error number to indicate the cause.
+.Sh ENVIRONMENT
+.Bl -tag -width PTHREAD_KEYS_MAX
+.It Ev PTHREAD_KEYS_MAX
+Maximum per process thread-specific data keys. This cannot be set
+below 
+.Dv _POSIX_THREAD_KEYS_MAX .
+.El
 .Sh ERRORS
 The
 .Fn pthread_key_create
