@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1962 2015/05/29 12:38:18 pooka Exp $
+#	$NetBSD: mi,v 1.1963 2015/05/29 17:40:41 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -350,6 +350,7 @@
 ./usr/include/cdk/swindow.h			comp-obsolete		obsolete
 ./usr/include/cdk/template.h			comp-obsolete		obsolete
 ./usr/include/cdk/viewer.h			comp-obsolete		obsolete
+./usr/include/clang-3.6/stdatomic.h	comp-c-include		llvm
 ./usr/include/complex.h				comp-c-include
 ./usr/include/cpio.h				comp-c-include
 ./usr/include/crypto/cryptodev.h		comp-c-include
