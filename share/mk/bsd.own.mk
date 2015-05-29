@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.851 2015/05/28 14:36:45 rjs Exp $
+#	$NetBSD: bsd.own.mk,v 1.852 2015/05/29 14:15:14 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -899,7 +899,7 @@ MK${var}:=	yes
     || ${MACHINE_ARCH} == "riscv64"
 MKCOMPAT?=	yes
 .elif !empty(MACHINE_ARCH:Mearm*)
-MKCOMPAT?=	no
+MKCOMPAT?=	yes
 .else
 # Don't let this build where it really isn't supported.
 MKCOMPAT:=	no
