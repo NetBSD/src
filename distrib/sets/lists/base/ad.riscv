@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.18 2015/04/17 19:35:25 christos Exp $
+# $NetBSD: ad.riscv,v 1.19 2015/05/29 12:28:08 christos Exp $
 ./lib/rv32					base-compat-shlib	compat,arch64
 ./lib/rv32/npf					base-npf-shlib		compat,arch64
 ./lib/rv32/npf/ext_log.so			base-npf-shlib		compat,pic,arch64
@@ -144,7 +144,7 @@
 ./usr/lib/rv32/libhx509.so.5			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/rv32/libhx509.so.5.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/rv32/libintl.so.1			base-compat-shlib	compat,pic,arch64
-./usr/lib/rv32/libintl.so.1.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/rv32/libintl.so.1.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libipsec.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libipsec.so.3.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libirs.so.8			base-compat-shlib	compat,pic,arch64

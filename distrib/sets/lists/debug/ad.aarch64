@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.21 2015/04/17 19:35:25 christos Exp $
+# $NetBSD: ad.aarch64,v 1.22 2015/05/29 12:28:08 christos Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -102,7 +102,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libheimbase.so.1.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabi/libheimntlm.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabi/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/eabi/libintl.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libintl.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libipsec.so.3.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libirs.so.8.1.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libisc.so.8.1.debug		comp-bind-debug	debug,compat
@@ -256,7 +256,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/libheimbase.so.1.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabihf/libheimntlm.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabihf/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/eabihf/libintl.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libintl.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libipsec.so.3.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libirs.so.8.1.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libisc.so.8.1.debug		comp-bind-debug	debug,compat
@@ -410,7 +410,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libheimbase.so.1.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libheimntlm.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libhx509.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libintl.so.1.0.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libintl.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libipsec.so.3.0.debug		comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libirs.so.8.1.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisc.so.8.1.debug		comp-bind-debug	debug,compat

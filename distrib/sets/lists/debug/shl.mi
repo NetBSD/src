@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.97 2015/04/17 19:35:25 christos Exp $
+# $NetBSD: shl.mi,v 1.98 2015/05/29 12:28:08 christos Exp $
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libc.so.12.197.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
@@ -100,7 +100,7 @@
 ./usr/libdata/debug/usr/lib/libheimbase.so.1.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libheimntlm.so.4.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug
-./usr/libdata/debug/usr/lib/libintl.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libintl.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libipsec.so.3.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libirs.so.8.1.debug		comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libisc.so.6.0.debug		comp-bind-debug	debug,obsolete
