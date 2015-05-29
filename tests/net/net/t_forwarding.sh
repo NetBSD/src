@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.3 2015/05/27 01:12:04 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.4 2015/05/29 02:06:46 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,6 +41,7 @@ IP6DSTGW=fc00:0:0:2::1
 IP6DST=fc00:0:0:2::2
 
 DEBUG=false
+TIMEOUT=5
 
 atf_test_case basic cleanup
 atf_test_case basic6 cleanup
@@ -94,10 +95,10 @@ test_endpoint()
 	atf_check -s exit:0 -o match:shmif0 rump.ifconfig
 	if [ $mode = "ipv6" ]; then
 		export LD_PRELOAD=/usr/lib/librumphijack.so
-		atf_check -s exit:0 -o ignore ping6 -n -c 1 -X 1 ${addr}
+		atf_check -s exit:0 -o ignore ping6 -n -c 1 -X $TIMEOUT ${addr}
 		unset LD_PRELOAD
 	else
-		atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 ${addr}
+		atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 ${addr}
 	fi
 }
 
@@ -164,8 +165,8 @@ test_setup()
 	atf_check -s exit:0 -o match:shmif0 rump.ifconfig
 	atf_check -s exit:0 -o match:shmif1 rump.ifconfig
 
-	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 ${IP4SRCGW}
-	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 ${IP4DSTGW}
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 ${IP4SRCGW}
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 ${IP4DSTGW}
 }
 
 test_setup6()
@@ -178,8 +179,8 @@ test_setup6()
 	atf_check -s exit:0 -o match:shmif1 rump.ifconfig
 
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -n -c 1 -X 1 ${IP6SRCGW}
-	atf_check -s exit:0 -o ignore ping6 -n -c 1 -X 1 ${IP6DSTGW}
+	atf_check -s exit:0 -o ignore ping6 -n -c 1 -X $TIMEOUT ${IP6SRCGW}
+	atf_check -s exit:0 -o ignore ping6 -n -c 1 -X $TIMEOUT ${IP6DSTGW}
 	unset LD_PRELOAD
 }
 
@@ -253,23 +254,23 @@ dump()
 test_ping_failure()
 {
 	export RUMP_SERVER=$SOCKSRC
-	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w 1 -c 1 $IP4DST
+	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4DST
 	export RUMP_SERVER=$SOCKDST
-	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w 1 -c 1 $IP4SRC
+	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4SRC
 }
 
 test_ping_success()
 {
 	export RUMP_SERVER=$SOCKSRC
 	$DEBUG && rump.ifconfig -v shmif0
-	atf_check -s exit:0 -o ignore rump.ping -q -n -w 1 -c 1 $IP4SRCGW
-	atf_check -s exit:0 -o ignore rump.ping -q -n -w 1 -c 1 $IP4DST
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4SRCGW
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4DST
 	$DEBUG && rump.ifconfig -v shmif0
 
 	export RUMP_SERVER=$SOCKDST
 	$DEBUG && rump.ifconfig -v shmif0
-	atf_check -s exit:0 -o ignore rump.ping -q -n -w 1 -c 1 $IP4DSTGW
-	atf_check -s exit:0 -o ignore rump.ping -q -n -w 1 -c 1 $IP4SRC
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4DSTGW
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4SRC
 	$DEBUG && rump.ifconfig -v shmif0
 }
 
@@ -277,9 +278,9 @@ test_ttl()
 {
 	export RUMP_SERVER=$SOCKSRC
 	$DEBUG && rump.ifconfig -v shmif0
-	atf_check -s exit:0 -o ignore rump.ping -q -n -w 1 -c 1 -T 1 $IP4SRCGW
-	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w 1 -c 1 -T 1 $IP4DST
-	atf_check -s exit:0 -o ignore rump.ping -q -n -w 1 -c 1 -T 2 $IP4DST
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 -T 1 $IP4SRCGW
+	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 -T 1 $IP4DST
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 -T 2 $IP4DST
 	$DEBUG && rump.ifconfig -v shmif0
 }
 
@@ -287,9 +288,9 @@ test_ping6_failure()
 {
 	export LD_PRELOAD=/usr/lib/librumphijack.so
 	export RUMP_SERVER=$SOCKSRC
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6DST
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6DST
 	export RUMP_SERVER=$SOCKDST
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6SRC
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6SRC
 	unset LD_PRELOAD
 }
 
@@ -298,16 +299,16 @@ test_ping6_success()
 	export RUMP_SERVER=$SOCKSRC
 	$DEBUG && rump.ifconfig -v shmif0
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6SRCGW
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6DST
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6SRCGW
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6DST
 	unset LD_PRELOAD
 	$DEBUG && rump.ifconfig -v shmif0
 
 	export RUMP_SERVER=$SOCKDST
 	$DEBUG && rump.ifconfig -v shmif0
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6DSTGW
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP6SRC
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6DSTGW
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6SRC
 	unset LD_PRELOAD
 	$DEBUG && rump.ifconfig -v shmif0
 }
@@ -317,9 +318,9 @@ test_hoplimit()
 	export RUMP_SERVER=$SOCKSRC
 	$DEBUG && rump.ifconfig -v shmif0
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -h 1 -X 1 $IP6SRCGW
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -h 1 -X 1 $IP6DST
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -h 2 -X 1 $IP6DST
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -h 1 -X $TIMEOUT $IP6SRCGW
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -h 1 -X $TIMEOUT $IP6DST
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -h 2 -X $TIMEOUT $IP6DST
 	unset LD_PRELOAD
 	$DEBUG && rump.ifconfig -v shmif0
 }
