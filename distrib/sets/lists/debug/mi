@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.115 2015/05/26 22:04:32 htodd Exp $
+# $NetBSD: mi,v 1.116 2015/05/29 12:38:18 pooka Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -217,6 +217,7 @@
 ./usr/lib/librumpnet_npf_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_shmif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_sockin_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpnet_tap_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_virtif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpuser_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpvfs_aio_g.a			comp-c-debuglib		debuglib,rump
