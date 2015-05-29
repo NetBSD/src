@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.74 2015/03/05 14:02:55 nakayama Exp $	*/
+/*	$NetBSD: cons.c,v 1.75 2015/05/29 16:26:45 macallan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.74 2015/03/05 14:02:55 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.75 2015/05/29 16:26:45 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -321,6 +321,13 @@ cnputc(int c)
 	if (cn_tab == NULL)
 		return;
 
+/*
+ * XXX
+ * for some reason this causes ARCS firmware to output an endless stream of
+ * whitespaces with n32 kernels, so use the pre-1.74 code for now until I can
+ * figure out why this happens
+ */
+#ifndef sgimips
 	if (c) {
 		if (c == '\n') {
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
@@ -328,6 +335,15 @@ cnputc(int c)
 		}
 		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
 	}
+#else
+	if (c) {
+		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
+		if (c == '\n') {
+			docritpollhooks();
+			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
+		}
+	}
+#endif
 }
 
 void
