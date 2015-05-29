@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.31 2015/05/27 15:17:59 martin Exp $
+#	$NetBSD: Makefile.bootcd,v 1.32 2015/05/29 06:28:50 martin Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -265,7 +265,7 @@ image:
 		     -e '/^\.\/etc\/gettytab/d' > ${WORKSPEC};	\
 	fi
 	if [ -r cdrom/dev/MAKEDEV ]; then			\
-		${HOST_SH} cdrom/dev/MAKEDEV -s all |		\
+		${HOST_SH} cdrom/dev/MAKEDEV -s init |		\
 		    ${TOOL_SED} -e '/^\. type=dir/d' 		\
 			-e 's,^\.,./dev,' >> ${WORKSPEC};	\
 	fi
