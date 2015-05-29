@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.91 2015/05/29 07:37:31 manu Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.92 2015/05/29 16:05:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -292,7 +292,7 @@ pthread__self(void)
 	} 								\
         } while (/*CONSTCOND*/0)
 
-int	pthread_tsd_init(void) PTHREAD_HIDE;
+void 	*pthread_tsd_init(size_t *) PTHREAD_HIDE;
 void	pthread__destroy_tsd(pthread_t) PTHREAD_HIDE;
 __dead void	pthread__assertfunc(const char *, int, const char *, const char *)
 			    PTHREAD_HIDE;

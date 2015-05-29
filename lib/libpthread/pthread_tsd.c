@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.12 2015/05/29 07:37:31 manu Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.13 2015/05/29 16:05:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.12 2015/05/29 07:37:31 manu Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.13 2015/05/29 16:05:13 christos Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
+#include <sys/mman.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -59,13 +60,14 @@ null_destructor(void *p)
 #include <stdlib.h>
 #include <stdio.h>
 
-int
-pthread_tsd_init(void)
+void *
+pthread_tsd_init(size_t *tlen)
 {
 	char *pkm;
-	size_t len;
+	size_t alen;
+	char *arena;
 
-	if ((pkm = getenv("PTHREAD_KEYS_MAX")) != NULL) {
+	if ((pkm = pthread__getenv("PTHREAD_KEYS_MAX")) != NULL) {
 		pthread_keys_max = (int)strtol(pkm, NULL, 0);
 		if (pthread_keys_max < _POSIX_THREAD_KEYS_MAX)
 			pthread_keys_max = _POSIX_THREAD_KEYS_MAX;
@@ -73,22 +75,27 @@ pthread_tsd_init(void)
 		pthread_keys_max = PTHREAD_KEYS_MAX;
 	}
 
-	len = sizeof(*pthread__tsd_list);
-	if ((pthread__tsd_list = calloc(pthread_keys_max, len)) == NULL)
-		goto out1;
+	/*
+	 * Can't use malloc here yet, because malloc will use the fake
+	 * libc thread functions to initialize itself, so mmap the space.
+	 */
+	*tlen = sizeof(struct __pthread_st)
+	    + pthread_keys_max * sizeof(struct pt_specific);
+	alen = *tlen
+	    + sizeof(*pthread__tsd_list) * pthread_keys_max
+	    + sizeof(*pthread__tsd_destructors) * pthread_keys_max;
 
-	len = sizeof(*pthread__tsd_destructors);
-	if ((pthread__tsd_destructors = calloc(pthread_keys_max, len)) == NULL) 
-		goto out2;
+	arena = mmap(NULL, alen, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
+	if (arena == MAP_FAILED) {
+		pthread_keys_max = 0;
+		return NULL;
+	}
 
-	return 0;
-
-out2:
-	free(pthread__tsd_list);
-out1:
-	pthread_keys_max = 0;
-
-	return -1;
+	pthread__tsd_list = (void *)arena;
+	arena += sizeof(*pthread__tsd_list) * pthread_keys_max;
+	pthread__tsd_destructors = (void *)arena;
+	arena += sizeof(*pthread__tsd_destructors) * pthread_keys_max;
+	return arena;
 }
 
 int

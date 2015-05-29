@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.146 2015/05/29 07:37:31 manu Exp $	*/
+/*	$NetBSD: pthread.c,v 1.147 2015/05/29 16:05:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.146 2015/05/29 07:37:31 manu Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.147 2015/05/29 16:05:13 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -173,14 +173,9 @@ pthread__init(void)
 	 * while pthread_keys descriptors are not 
 	 * yet allocated.
 	 */
-	if (pthread_tsd_init() != 0)
-		err(EXIT_FAILURE, "Cannot allocate pthread_keys descriptors");
-
-	__pthread_st_size = sizeof(*pthread__main)
-		 + pthread_keys_max * sizeof(pthread__main->pt_specific[0]);
-
-	if ((pthread__main = calloc(1, __pthread_st_size)) == NULL)
-		err(EXIT_FAILURE, "Cannot allocate pthread__specific");
+	pthread__main = pthread_tsd_init(&__pthread_st_size);
+	if (pthread__main == NULL)
+		err(EXIT_FAILURE, "Cannot allocate pthread storage");
 
 	__uselibcstub = 0;
 
