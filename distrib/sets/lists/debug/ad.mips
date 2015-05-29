@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.57 2015/04/17 19:35:25 christos Exp $
+# $NetBSD: ad.mips,v 1.58 2015/05/29 12:28:08 christos Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -111,7 +111,7 @@
 ./usr/libdata/debug/usr/lib/64/libheimntlm.so.3.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/64/libheimntlm.so.4.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libintl.so.1.0.debug	comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libintl.so.1.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libipsec.so.3.0.debug	comp-net-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libirs.so.8.1.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libisc.so.6.0.debug		comp-bind-debug	debug,compat,arch64,obsolete
@@ -290,7 +290,7 @@
 ./usr/libdata/debug/usr/lib/o32/libheimntlm.so.3.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/o32/libheimntlm.so.4.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libintl.so.1.0.debug	comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libintl.so.1.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libipsec.so.3.0.debug	comp-net-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libirs.so.8.1.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libisc.so.6.0.debug		comp-bind-debug	debug,compat,arch64,obsolete
