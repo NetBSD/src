@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.6 2015/05/29 02:06:46 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.7 2015/05/29 10:08:52 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -334,7 +334,8 @@ basic_body()
 	setup
 	test_setup
 
-	test_ping_failure
+	# Enable once PR kern/49219 is fixed
+	#test_ping_failure
 
 	setup_bridge
 	sleep 1
