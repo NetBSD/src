@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.90 2014/12/16 20:05:54 pooka Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.91 2015/05/29 07:37:31 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ struct	__pthread_st {
 	struct pt_specific {
 		void *pts_value;
 		PTQ_ENTRY(pt_specific) pts_next;
-	} pt_specific[PTHREAD_KEYS_MAX];
+	} pt_specific[];
 };
 
 /* Thread states */
@@ -181,6 +181,7 @@ extern int	pthread__nspins;
 extern int	pthread__concurrency;
 extern int 	pthread__osrev;
 extern int 	pthread__unpark_max;
+extern int	pthread_keys_max;
 
 extern int	__uselibcstub;
 
@@ -291,6 +292,7 @@ pthread__self(void)
 	} 								\
         } while (/*CONSTCOND*/0)
 
+int	pthread_tsd_init(void) PTHREAD_HIDE;
 void	pthread__destroy_tsd(pthread_t) PTHREAD_HIDE;
 __dead void	pthread__assertfunc(const char *, int, const char *, const char *)
 			    PTHREAD_HIDE;
