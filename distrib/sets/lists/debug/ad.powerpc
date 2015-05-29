@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.37 2015/04/17 19:35:25 christos Exp $
+# $NetBSD: ad.powerpc,v 1.38 2015/05/29 12:28:08 christos Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasan_g.a			comp-c-debuglib		compat,arch64,debuglib,gcc=48
@@ -188,7 +188,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libheimbase.so.1.0.debug	comp-compat-shlib	 compat,arch64,debug,pic,kerberos
 ./usr/libdata/debug/usr/lib/powerpc/libheimntlm.so.4.0.debug	comp-compat-shlib	 compat,arch64,debug,pic,kerberos
 ./usr/libdata/debug/usr/lib/powerpc/libhx509.so.5.0.debug			comp-compat-shlib	compat,arch64,debug,pic,kerberos
-./usr/libdata/debug/usr/lib/powerpc/libintl.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libintl.so.1.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libipsec.so.3.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libirs.so.8.1.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libisc.so.8.1.debug			comp-compat-shlib	compat,arch64,debug,pic
