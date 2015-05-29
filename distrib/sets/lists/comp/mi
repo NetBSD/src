@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1961 2015/05/24 22:23:01 christos Exp $
+#	$NetBSD: mi,v 1.1962 2015/05/29 12:38:18 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3914,6 +3914,8 @@
 ./usr/lib/librumpnet_shmif_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpnet_sockin.a			comp-c-lib		rump
 ./usr/lib/librumpnet_sockin_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_tap.a			comp-c-lib		rump
+./usr/lib/librumpnet_tap_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpnet_virtif.a			comp-c-lib		rump
 ./usr/lib/librumpnet_virtif_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpuser.a				comp-c-lib		rump
