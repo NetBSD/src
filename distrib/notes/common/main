@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.521 2015/05/20 05:19:20 snj Exp $
+.\"	$NetBSD: main,v 1.522 2015/05/29 09:13:49 youri Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1303,6 +1303,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Simas Mockevicius Ta Mt symka@NetBSD.org
 .It Ta Ryosuke Moro Ta Mt szptvlfn@NetBSD.org
 .It Ta der Mouse Ta Mt mouse@NetBSD.org
+.It Ta Youri Mouton Ta Mt youri@NetBSD.org
 .It Ta Constantine A. Murenin Ta Mt cnst@NetBSD.org
 .It Ta Joseph Myers Ta Mt jsm@NetBSD.org
 .It Ta Tuomo M\(:akinen Ta Mt tjam@NetBSD.org
