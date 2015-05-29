@@ -163,6 +163,11 @@ along with GCC; see the file COPYING3.  If not see
       else							\
 	builtin_define ("__MIPSEL__");				\
 								\
+      if (TARGET_OCTEON)					\
+	builtin_define ("__OCTEON__");				\
+								\
+      if (ISA_HAS_POP)						\
+	builtin_define ("__mips_popcount");			\
       /* No language dialect defines.  */			\
 								\
       /* ABIs handled in TARGET_OS_CPP_BUILTINS.  */		\
