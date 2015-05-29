@@ -1,5 +1,4 @@
-#! /usr/bin/atf-sh
-#	$NetBSD: t_bridge.sh,v 1.4 2015/05/16 14:29:37 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.5 2015/05/29 01:54:56 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
