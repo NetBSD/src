@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_gpio.c,v 1.1 2015/04/25 14:41:33 jmcneill Exp $ */
+/* $NetBSD: amlogic_gpio.c,v 1.2 2015/05/29 12:41:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_gpio.c,v 1.1 2015/04/25 14:41:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_gpio.c,v 1.2 2015/05/29 12:41:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,26 +66,26 @@ const struct amlogic_gpio_pingrp {
 	  _C(PREG_PAD_GPIO0_EN_N_REG), 0,
 	  _C(PREG_PAD_GPIO0_OUT_REG), 0,
 	  _C(PREG_PAD_GPIO0_IN_REG), 0,
-	  _C(PREG_PAD_GPIO0_PUPD_EN_REG), 0,
-	  _C(PREG_PAD_GPIO0_PUPD_REG), 0 },
+	  _C(PAD_PULL_UP_EN_4_REG), 0,
+	  _C(PAD_PULL_UP_4_REG), 0 },
 	{ "GPIOY", 0x7fff,
 	  _C(PREG_PAD_GPIO1_EN_N_REG), 0,
 	  _C(PREG_PAD_GPIO1_OUT_REG), 0,
 	  _C(PREG_PAD_GPIO1_IN_REG), 0,
-	  _C(PREG_PAD_GPIO1_PUPD_EN_REG), 0,
-	  _C(PREG_PAD_GPIO1_PUPD_REG), 0 },
+	  _C(PAD_PULL_UP_EN_3_REG), 0,
+	  _C(PAD_PULL_UP_3_REG), 0 },
 	{ "GPIODV", 0x3f000200,
-	  _C(PREG_PAD_GPIO1_EN_N_REG), 0,
-	  _C(PREG_PAD_GPIO1_OUT_REG), 0,
-	  _C(PREG_PAD_GPIO1_IN_REG), 0,
-	  _C(PREG_PAD_GPIO1_PUPD_EN_REG), 0,
-	  _C(PREG_PAD_GPIO1_PUPD_REG), 0 },
+	  _C(PREG_PAD_GPIO2_EN_N_REG), 0,
+	  _C(PREG_PAD_GPIO2_OUT_REG), 0,
+	  _C(PREG_PAD_GPIO2_IN_REG), 0,
+	  _C(PAD_PULL_UP_EN_0_REG), 0,
+	  _C(PAD_PULL_UP_0_REG), 0 },
 	{ "GPIOH", 0x3f,
 	  _C(PREG_PAD_GPIO3_EN_N_REG), 19,
 	  _C(PREG_PAD_GPIO3_OUT_REG), 19,
 	  _C(PREG_PAD_GPIO3_IN_REG), 19,
-	  _C(PREG_PAD_GPIO3_PUPD_EN_REG), 16,
-	  _C(PREG_PAD_GPIO3_PUPD_REG), 16 },
+	  _C(PAD_PULL_UP_EN_1_REG), 16,
+	  _C(PAD_PULL_UP_1_REG), 16 },
 	{ "GPIOAO", 0x3fff,
 	  _AO(AMLOGIC_GPIOAO_EN_N_REG), 0,
 	  _AO(AMLOGIC_GPIOAO_OUT_REG), 16,
@@ -96,14 +96,14 @@ const struct amlogic_gpio_pingrp {
 	  _C(PREG_PAD_GPIO3_EN_N_REG), 0,
 	  _C(PREG_PAD_GPIO3_OUT_REG), 0,
 	  _C(PREG_PAD_GPIO3_IN_REG), 0,
-	  _C(PREG_PAD_GPIO3_PUPD_EN_REG), 0,
-	  _C(PREG_PAD_GPIO3_PUPD_REG), 0 },
+	  _C(PAD_PULL_UP_EN_2_REG), 0,
+	  _C(PAD_PULL_UP_2_REG), 0 },
 	{ "CARD", 0x7f,
 	  _C(PREG_PAD_GPIO0_EN_N_REG), 22,
 	  _C(PREG_PAD_GPIO0_OUT_REG), 22,
 	  _C(PREG_PAD_GPIO0_IN_REG), 22,
-	  _C(PREG_PAD_GPIO0_PUPD_EN_REG), 20,
-	  _C(PREG_PAD_GPIO0_PUPD_REG), 20 }
+	  _C(PAD_PULL_UP_EN_2_REG), 20,
+	  _C(PAD_PULL_UP_2_REG), 20 }
 };
 #undef _C
 #undef _AO
@@ -245,7 +245,7 @@ amlogic_gpio_pin_write(void *priv, int pin, int val)
 	struct amlogic_gpio_softc *sc = grp->grp_sc;
 	const bus_size_t reg = grp->grp_pg->out_reg;
 	const u_int shift = grp->grp_pg->out_shift;
-	const uint32_t mask = grp->grp_pg->mask;
+	const uint32_t mask __diagused = grp->grp_pg->mask;
 	uint32_t v;
 
 	KASSERT(mask & (1 << pin));
@@ -270,7 +270,7 @@ amlogic_gpio_pin_ctl(void *priv, int pin, int flags)
 	const u_int en_shift = grp->grp_pg->en_shift;
 	const u_int pupd_en_shift = grp->grp_pg->pupd_en_shift;
 	const u_int pupd_shift = grp->grp_pg->pupd_shift;
-	const uint32_t mask = grp->grp_pg->mask;
+	const uint32_t mask __diagused = grp->grp_pg->mask;
 	uint32_t v, pupd_en, pupd;
 
 	KASSERT(mask & (1 << pin));
