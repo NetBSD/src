@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.273 2015/01/25 15:50:30 christos Exp $
+# $NetBSD: shl.mi,v 1.274 2015/05/29 12:38:18 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -229,6 +229,7 @@
 ./usr/lib/librumpnet_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpnet_shmif_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpnet_sockin_pic.a		comp-c-piclib		rump,picinstall
+./usr/lib/librumpnet_tap_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpnet_virtif_pic.a		comp-c-piclib		rump,picinstall
 ./usr/lib/librumpuser_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpvfs_aio_pic.a		comp-c-piclib		rump,picinstall
