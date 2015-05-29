@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.119 2015/05/09 18:49:36 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.120 2015/05/29 19:38:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -443,11 +443,20 @@ int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
 		   void *);
 uint32_t crc32(uint32_t, const uint8_t *, size_t);
+#if __GNUC_PREREQ__(4, 5) \
+    && (defined(__alpha_cix__) || defined(__mips_popcount))
+#define	popcount	__builtin_popcount
+#define	popcountl	__builtin_popcountl
+#define	popcountll	__builtin_popcountll
+#define	popcount32	__builtin_popcount
+#define	popcount64	__builtin_popcountll
+#else
 unsigned int	popcount(unsigned int) __constfunc;
 unsigned int	popcountl(unsigned long) __constfunc;
 unsigned int	popcountll(unsigned long long) __constfunc;
 unsigned int	popcount32(uint32_t) __constfunc;
 unsigned int	popcount64(uint64_t) __constfunc;
+#endif
 
 void	*explicit_memset(void *, int, size_t);
 int	consttime_memequal(const void *, const void *, size_t);
