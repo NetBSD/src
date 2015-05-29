@@ -1,4 +1,4 @@
-/*	$NetBSD: popcount64.c,v 1.7 2012/03/09 15:41:16 christos Exp $	*/
+/*	$NetBSD: popcount64.c,v 1.8 2015/05/29 19:39:41 matt Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: popcount64.c,v 1.7 2012/03/09 15:41:16 christos Exp $");
+__RCSID("$NetBSD: popcount64.c,v 1.8 2015/05/29 19:39:41 matt Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <limits.h>
@@ -43,9 +43,11 @@ __RCSID("$NetBSD: popcount64.c,v 1.7 2012/03/09 15:41:16 christos Exp $");
 #include <machine/limits.h>
 #endif
 
+#ifndef popcount64	// might be defined to use a __builtin
+
 /*
  * If uint64_t is larger than size_t, the follow assumes that
- * splitting into 32bit halfes is faster.
+ * splitting into 32bit halves is faster.
  *
  * The native pocount64 version is based on the same ideas as popcount32(3),
  * see popcount32.c for comments.
@@ -83,3 +85,4 @@ __strong_alias(popcountl, popcount64)
 __strong_alias(popcountll, popcount64)
 #endif
 
+#endif /* !popcount64 */
