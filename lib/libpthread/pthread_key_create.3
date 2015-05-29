@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_key_create.3,v 1.7 2015/05/29 07:37:31 manu Exp $
+.\" $NetBSD: pthread_key_create.3,v 1.8 2015/05/29 18:00:51 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_key_create.3,v 1.12 2002/09/16 19:29:28 mini Exp $
 .\"
-.Dd July 9, 2010
+.Dd May 29, 2015
 .Dt PTHREAD_KEY_CREATE 3
 .Os
 .Sh NAME
@@ -154,8 +154,8 @@ Upon failure both functions return an error number to indicate the cause.
 .Sh ENVIRONMENT
 .Bl -tag -width PTHREAD_KEYS_MAX
 .It Ev PTHREAD_KEYS_MAX
-Maximum per process thread-specific data keys. This cannot be set
-below 
+Maximum per-process thread-specific data keys.
+This cannot be set below
 .Dv _POSIX_THREAD_KEYS_MAX .
 .El
 .Sh ERRORS
@@ -165,7 +165,7 @@ may fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
 The system lacked the necessary resources to create another thread-specific
-data key, or the system-imposed limit on the total number of keys per process
+data key, or the system-imposed limit on the total number of keys per-process
 .Dv PTHREAD_KEYS_MAX
 would be exceeded.
 .It Bq Er ENOMEM
