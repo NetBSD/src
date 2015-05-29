@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.22 2015/04/17 19:35:25 christos Exp $
+# $NetBSD: ad.aarch64,v 1.23 2015/05/29 12:28:08 christos Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -172,7 +172,7 @@
 ./usr/lib/eabi/libhx509.so.5			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabi/libhx509.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabi/libintl.so.1			base-compat-shlib	compat,pic
-./usr/lib/eabi/libintl.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/eabi/libintl.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libirs.so.8			base-compat-shlib	compat,pic
@@ -490,7 +490,7 @@
 ./usr/lib/eabihf/libhx509.so.5			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabihf/libhx509.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabihf/libintl.so.1			base-compat-shlib	compat,pic
-./usr/lib/eabihf/libintl.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/eabihf/libintl.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libirs.so.8			base-compat-shlib	compat,pic
@@ -806,7 +806,7 @@
 ./usr/lib/oabi/libhx509.so.5			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libhx509.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libintl.so.1			base-compat-shlib	compat,pic
-./usr/lib/oabi/libintl.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libintl.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libirs.so.8			base-compat-shlib	compat,pic
