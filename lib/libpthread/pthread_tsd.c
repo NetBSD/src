@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.11 2013/03/21 16:49:12 christos Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.12 2015/05/29 07:37:31 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.11 2013/03/21 16:49:12 christos Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.12 2015/05/29 07:37:31 manu Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -39,13 +39,12 @@ __RCSID("$NetBSD: pthread_tsd.c,v 1.11 2013/03/21 16:49:12 christos Exp $");
 #include "pthread_int.h"
 #include "reentrant.h"
 
-
+int pthread_keys_max;
 static pthread_mutex_t tsd_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int nextkey;
 
-PTQ_HEAD(pthread__tsd_list, pt_specific)
-    pthread__tsd_list[PTHREAD_KEYS_MAX];
-void (*pthread__tsd_destructors[PTHREAD_KEYS_MAX])(void *);
+PTQ_HEAD(pthread__tsd_list, pt_specific) *pthread__tsd_list = NULL;
+void (**pthread__tsd_destructors)(void *) = NULL;
 
 __strong_alias(__libc_thr_keycreate,pthread_key_create)
 __strong_alias(__libc_thr_keydelete,pthread_key_delete)
@@ -58,6 +57,40 @@ null_destructor(void *p)
 
 #include <err.h>
 #include <stdlib.h>
+#include <stdio.h>
+
+int
+pthread_tsd_init(void)
+{
+	char *pkm;
+	size_t len;
+
+	if ((pkm = getenv("PTHREAD_KEYS_MAX")) != NULL) {
+		pthread_keys_max = (int)strtol(pkm, NULL, 0);
+		if (pthread_keys_max < _POSIX_THREAD_KEYS_MAX)
+			pthread_keys_max = _POSIX_THREAD_KEYS_MAX;
+	} else {
+		pthread_keys_max = PTHREAD_KEYS_MAX;
+	}
+
+	len = sizeof(*pthread__tsd_list);
+	if ((pthread__tsd_list = calloc(pthread_keys_max, len)) == NULL)
+		goto out1;
+
+	len = sizeof(*pthread__tsd_destructors);
+	if ((pthread__tsd_destructors = calloc(pthread_keys_max, len)) == NULL) 
+		goto out2;
+
+	return 0;
+
+out2:
+	free(pthread__tsd_list);
+out1:
+	pthread_keys_max = 0;
+
+	return -1;
+}
+
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 {
@@ -75,11 +108,11 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	 * our own internal destructor to satisfy the non NULL condition.
 	 */
 	/* 1. Search from "nextkey" to the end of the list. */
-	for (i = nextkey; i < PTHREAD_KEYS_MAX; i++)
+	for (i = nextkey; i < pthread_keys_max; i++)
 		if (pthread__tsd_destructors[i] == NULL)
 			break;
 
-	if (i == PTHREAD_KEYS_MAX) {
+	if (i == pthread_keys_max) {
 		/* 2. If that didn't work, search from the start
 		 *    of the list back to "nextkey".
 		 */
@@ -100,7 +133,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	pthread__assert(PTQ_EMPTY(&pthread__tsd_list[i]));
 	pthread__tsd_destructors[i] = destructor ? destructor : null_destructor;
 
-	nextkey = (i + 1) % PTHREAD_KEYS_MAX;
+	nextkey = (i + 1) % pthread_keys_max;
 	pthread_mutex_unlock(&tsd_mutex);
 	*key = i;
 
@@ -108,7 +141,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 }
 
 /*
- * Each thread holds an array of PTHREAD_KEYS_MAX pt_specific list
+ * Each thread holds an array of pthread_keys_max pt_specific list
  * elements. When an element is used it is inserted into the appropriate
  * key bucket of pthread__tsd_list. This means that ptqe_prev == NULL,
  * means that the element is not threaded, ptqe_prev != NULL it is
@@ -130,7 +163,7 @@ pthread__add_specific(pthread_t self, pthread_key_t key, const void *value)
 {
 	struct pt_specific *pt;
 
-	pthread__assert(key >= 0 && key < PTHREAD_KEYS_MAX);
+	pthread__assert(key >= 0 && key < pthread_keys_max);
 
 	pthread_mutex_lock(&tsd_mutex);
 	pthread__assert(pthread__tsd_destructors[key] != NULL);
@@ -237,7 +270,7 @@ pthread_key_delete(pthread_key_t key)
 	if (__predict_false(__uselibcstub))
 		return __libc_thr_keydelete_stub(key);
 
-	pthread__assert(key >= 0 && key < PTHREAD_KEYS_MAX);
+	pthread__assert(key >= 0 && key < pthread_keys_max);
 
 	pthread_mutex_lock(&tsd_mutex);
 
@@ -295,7 +328,7 @@ pthread__destroy_tsd(pthread_t self)
 	iterations = 4; /* We're not required to try very hard */
 	do {
 		done = 1;
-		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
+		for (i = 0; i < pthread_keys_max; i++) {
 			struct pt_specific *pt = &self->pt_specific[i];
 			if (pt->pts_next.ptqe_prev == NULL)
 				continue;
