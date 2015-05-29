@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.5 2015/05/29 01:54:56 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.6 2015/05/29 02:06:46 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,8 @@ IP1=10.0.0.1
 IP2=10.0.0.2
 IP61=fc00::1
 IP62=fc00::2
+
+TIMEOUT=5
 
 atf_test_case basic cleanup
 atf_test_case basic6 cleanup
@@ -89,10 +91,10 @@ test_endpoint()
 	atf_check -s exit:0 -o match:shmif0 rump.ifconfig
 	if [ $mode = "ipv6" ]; then
 		export LD_PRELOAD=/usr/lib/librumphijack.so
-		atf_check -s exit:0 -o ignore ping6 -n -c 1 -X 1 ${addr}
+		atf_check -s exit:0 -o ignore ping6 -n -c 1 -X $TIMEOUT ${addr}
 		unset LD_PRELOAD
 	else
-		atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 ${addr}
+		atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 ${addr}
 	fi
 }
 
@@ -222,21 +224,21 @@ down_up_interfaces()
 test_ping_failure()
 {
 	export RUMP_SERVER=$SOCK1
-	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w 1 -c 1 $IP2
+	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP2
 	export RUMP_SERVER=$SOCK3
-	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w 1 -c 1 $IP1
+	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP1
 }
 
 test_ping_success()
 {
 	export RUMP_SERVER=$SOCK1
 	rump.ifconfig -v shmif0
-	atf_check -s exit:0 -o ignore rump.ping -q -n -w 1 -c 1 $IP2
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP2
 	rump.ifconfig -v shmif0
 
 	export RUMP_SERVER=$SOCK3
 	rump.ifconfig -v shmif0
-	atf_check -s exit:0 -o ignore rump.ping -q -n -w 1 -c 1 $IP1
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP1
 	rump.ifconfig -v shmif0
 }
 
@@ -244,9 +246,9 @@ test_ping6_failure()
 {
 	export LD_PRELOAD=/usr/lib/librumphijack.so
 	export RUMP_SERVER=$SOCK1
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP62
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP62
 	export RUMP_SERVER=$SOCK3
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP61
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP61
 	unset LD_PRELOAD
 }
 
@@ -255,14 +257,14 @@ test_ping6_success()
 	export RUMP_SERVER=$SOCK1
 	rump.ifconfig -v shmif0
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP62
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP62
 	unset LD_PRELOAD
 	rump.ifconfig -v shmif0
 
 	export RUMP_SERVER=$SOCK3
 	rump.ifconfig -v shmif0
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X 1 $IP61
+	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP61
 	unset LD_PRELOAD
 	rump.ifconfig -v shmif0
 }
@@ -288,7 +290,7 @@ test_brconfig_maxaddr()
 
 	# Refill the MAC addresses of the endpoints.
 	export RUMP_SERVER=$SOCK1
-	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP2
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP2
 	export RUMP_SERVER=$SOCK2
 	export LD_PRELOAD=/usr/lib/librumphijack.so
 	/sbin/brconfig bridge0
@@ -318,7 +320,7 @@ test_brconfig_maxaddr()
 
 	# Test we can cache two addresses again
 	export RUMP_SERVER=$SOCK1
-	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP2
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP2
 	export RUMP_SERVER=$SOCK2
 	export LD_PRELOAD=/usr/lib/librumphijack.so
 	/sbin/brconfig bridge0
@@ -383,7 +385,7 @@ rtable_body()
 
 	# Make the bridge learn the MAC addresses of the endpoints.
 	export RUMP_SERVER=$SOCK1
-	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP2
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP2
 	unset RUMP_SERVER
 
 	# Tests the addresses are in the cache.
@@ -402,7 +404,7 @@ rtable_body()
 
 	# Refill the MAC addresses of the endpoints.
 	export RUMP_SERVER=$SOCK1
-	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP2
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP2
 	unset RUMP_SERVER
 	export RUMP_SERVER=$SOCK2
 	export LD_PRELOAD=/usr/lib/librumphijack.so
