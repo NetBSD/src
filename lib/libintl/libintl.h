@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl.h,v 1.4 2011/10/14 22:42:01 joerg Exp $	*/
+/*	$NetBSD: libintl.h,v 1.5 2015/05/29 12:26:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -31,16 +31,41 @@
 
 #include <sys/cdefs.h>
 
+#define pgettext_expr(msgctxt, msgid) pgettext((msgctxt), (msgid))
+#define dpggettext_expr(domainname, msgctxt, msgid) \
+    dpgettext((domainname), (msgctxt), (msgid))
+#define dcpgettext_expr(domainname, msgctxt, msgid, category) \
+    dcpgettext((domainname), (msgctxt), (msgid), (category))
+#define npgettext_expr(msgctxt, msgid1, msgid2, n) \
+    npgettext((msgctxt), (msgid1), (msgid2), (n))
+#define dnpgettext_expr(domainname, msgctxt, msgid1, n) \
+    dnpgettext((domainname), (msgctxt), (msgid1), (msgid2), (n))
+#define dcnpgettext_expr(domainname, msgctxt, msgid1, msgid2, n, category) \
+    dcnpgettext((domainname), (msgctxt), (msgid1), (msgid2), (n), (category))
+
 __BEGIN_DECLS
 char *gettext(const char *) __format_arg(1);
 char *dgettext(const char *, const char *) __format_arg(2);
 char *dcgettext(const char *, const char *, int) __format_arg(2);
 char *ngettext(const char *, const char *, unsigned long int)
-    __format_arg(1) __format_arg(2);
+	       __format_arg(1) __format_arg(2);
 char *dngettext(const char *, const char *, const char *, unsigned long int)
-    __format_arg(2) __format_arg(3);
+		__format_arg(2) __format_arg(3);
 char *dcngettext(const char *, const char *, const char *, unsigned long int,
-    int) __format_arg(2) __format_arg(3);
+		 int) __format_arg(2) __format_arg(3);
+const char *pgettext(const char *, const char *) __format_arg(2);
+const char *dpgettext(const char *, const char *, const char *)
+		      __format_arg(3);
+const char *dcpgettext(const char *, const char *, const char *, int)
+		       __format_arg(3);
+const char *npgettext(const char *, const char *, const char *,
+		      unsigned long int) __format_arg(2) __format_arg(3);
+const char *dnpgettext(const char *, const char *, const char *,
+		       const char *, unsigned long int) __format_arg(3)
+		       __format_arg(4);
+const char *dcnpgettext(const char *, const char *, const char *,
+			const char *, unsigned long int, int) __format_arg(3)
+			__format_arg(4);
 
 char *textdomain(const char *);
 char *bindtextdomain(const char *, const char *);
