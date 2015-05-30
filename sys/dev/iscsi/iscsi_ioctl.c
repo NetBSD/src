@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.9 2015/05/30 16:12:34 joerg Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.10 2015/05/30 18:00:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1656,20 +1656,6 @@ iscsiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case ISCSI_POLL_EVENT:
 		check_event((iscsi_wait_event_parameters_t *) addr, FALSE);
 		break;
-
-#ifdef ISCSI_PERFTEST
-	case ISCSI_PERFDATA_START:
-		perf_start((iscsi_perf_startstop_parameters_t *) addr);
-		break;
-
-	case ISCSI_PERFDATA_STOP:
-		perf_stop((iscsi_perf_startstop_parameters_t *) addr);
-		break;
-
-	case ISCSI_PERFDATA_GET:
-		perf_get((iscsi_perf_get_parameters_t *) addr);
-		break;
-#endif
 
 	default:
 		DEBOUT(("Invalid IO-Control Code\n"));
