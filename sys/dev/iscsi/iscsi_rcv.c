@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.7 2015/05/15 16:24:30 joerg Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.8 2015/05/30 16:12:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -210,11 +210,6 @@ read_pdu_data(pdu_t *pdu, uint8_t *data, uint32_t offset)
 		pdu->io_vec[i].iov_len = 4;
 		uio->uio_resid += 4;
 	}
-#ifdef ISCSI_TEST_MODE
-	/* save data pointer and size */
-	pdu->save_uio.uio_iov = (struct iovec *) data;
-	pdu->save_uio.uio_resid = len;
-#endif
 
 	/* get the data */
 	if (my_soo_read(conn, &pdu->uio, MSG_WAITALL) != 0) {
@@ -546,9 +541,6 @@ receive_logout_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 
 		callout_stop(&conn->timeout);
 
-#ifdef ISCSI_TEST_MODE
-		test_remove_connection(conn);
-#endif
 		/* let send thread take over next step of cleanup */
 		wakeup(&conn->pdus_to_send);
 	}
@@ -1009,9 +1001,6 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 		if (digest != pdu->pdu.HeaderDigest) {
 			DEBOUT(("Header Digest Error: comp = %08x, rx = %08x\n",
 					digest, pdu->pdu.HeaderDigest));
-#ifdef ISCSI_TEST_MODE
-			test_mode_rx(conn, pdu, TEST_INVALID_HEADER_CRC);
-#endif
 			/* try to skip to next PDU */
 			try_resynch_receive(conn);
 			free_pdu(pdu);
@@ -1044,12 +1033,6 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 	} else {
 		rc = read_pdu_data(pdu, NULL, 0);
 	}
-#ifdef ISCSI_TEST_MODE
-	if (test_mode_rx(conn, pdu, rc)) {
-		free_pdu(pdu);
-		return rc;
-	}
-#endif
 	if (!rc && (conn->state <= ST_WINDING_DOWN ||
 		(pdu->pdu.Opcode & OPCODE_MASK) == TOP_Logout_Response)) {
 
