@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.11 2015/05/15 16:24:30 joerg Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.12 2015/05/30 16:12:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -311,25 +311,13 @@ iscsi_send_thread(void *par)
 #endif
 				/*DEB (99,("Send thread woke up, pdu = %x)\n", (int)pdu)); */
 
-#ifdef ISCSI_TEST_MODE
-				if (!test_mode_tx(conn, pdu)) {
-					 if (!(pdu->flags & PDUF_NOUPDATE)) {
-#endif
-						 /* update ExpStatSN here to avoid discontinuities */
-						 /* and delays in updating target */
-						 pdu->pdu.p.command.ExpStatSN =
-							 htonl(conn->StatSN_buf.ExpSN);
+				/* update ExpStatSN here to avoid discontinuities */
+				/* and delays in updating target */
+				pdu->pdu.p.command.ExpStatSN = htonl(conn->StatSN_buf.ExpSN);
 
-						 if (conn->HeaderDigest)
-							 pdu->pdu.HeaderDigest =
-								gen_digest(&pdu->pdu, BHS_SIZE);
-#ifdef ISCSI_TEST_MODE
-					 }
-#endif
-					 my_soo_write(conn, &pdu->uio);
-#ifdef ISCSI_TEST_MODE
-				}
-#endif
+				if (conn->HeaderDigest)
+					pdu->pdu.HeaderDigest = gen_digest(&pdu->pdu, BHS_SIZE);
+				my_soo_write(conn, &pdu->uio);
 				PERF_PDUSNAPE(pdu);
 
 				if (pdu->disp <= PDUDISP_FREE) {
