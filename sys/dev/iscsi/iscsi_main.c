@@ -44,10 +44,6 @@ extern struct cfdriver iscsi_cd;
 int iscsi_debug_level = ISCSI_DEBUG;
 #endif
 
-#if defined(ISCSI_PERFTEST)
-int iscsi_perf_level = 0;
-#endif
-
 /* Device Structure */
 iscsi_softc_t *sc = NULL;
 

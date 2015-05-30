@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.8 2015/05/30 16:12:34 joerg Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.9 2015/05/30 18:00:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -698,8 +698,6 @@ receive_command_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 		return -1;
 	}
 
-	PERF_SNAP(req_ccb, PERF_PDURCVSTS);
-
 	if (req_ccb->pdu_waiting != NULL) {
 		SET_CCB_TIMEOUT(conn, req_ccb, COMMAND_TIMEOUT);
 		req_ccb->num_timeouts = 0;
@@ -1027,9 +1025,7 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 			("Received Data in PDU - CCB = %p, Datalen = %d, Offset = %d\n",
 			req_ccb, dsl, offset));
 
-		PERF_SNAPC(req_ccb, PERF_BEGIN_PDURCVDATA);
 		rc = read_pdu_data(pdu, req_ccb->data_ptr, offset);
-		PERF_SNAP(req_ccb, PERF_END_PDURCVDATA);
 	} else {
 		rc = read_pdu_data(pdu, NULL, 0);
 	}
