@@ -3,8 +3,7 @@
 PROG=	iscsictl
 BINDIR=	/sbin
 
-SRCS=	iscsic_main.c iscsic_driverif.c iscsic_daemonif.c iscsic_parse.c \
-	iscsic_test.c
+SRCS=	iscsic_main.c iscsic_driverif.c iscsic_daemonif.c iscsic_parse.c
 
 CPPFLAGS+= -I${DESTDIR}/usr/include/dev/iscsi
 
@@ -13,7 +12,5 @@ CPPFLAGS+=	-I${.CURDIR}/../../sys
 CPPFLAGS+=	-I${.CURDIR}/../iscsid
 
 MAN=	iscsictl.8
-
-# CPPFLAGS+= -DISCSI_TEST_MODE -DISCSI_DEBUG
 
 .include <bsd.prog.mk>
