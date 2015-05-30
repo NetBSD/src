@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.10 2015/05/30 18:00:09 joerg Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.11 2015/05/30 18:09:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -477,7 +477,7 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 		/* of logging in */
 		if (logout >= 0) {
 			conn->state = ST_WINDING_DOWN;
-			SET_CONN_TIMEOUT(conn, CONNECTION_TIMEOUT);
+			callout_schedule(&conn->timeout, CONNECTION_TIMEOUT);
 
 			if (sess->ErrorRecoveryLevel < 2 &&
 			    logout == RECOVER_CONNECTION) {
@@ -850,7 +850,7 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 			}
 			resend_pdu(ccb);
 		} else {
-			SET_CCB_TIMEOUT(connection, ccb, COMMAND_TIMEOUT);
+			callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
 		}
 	}
 
