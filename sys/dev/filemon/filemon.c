@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.9 2015/05/21 12:00:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.10 2015/05/30 19:14:46 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -213,7 +213,7 @@ filemon_open(dev_t dev, int oflags __unused, int mode __unused,
 	struct file *fp;
 	int error, fd;
 
-	/* falloc() will use the descriptor for us. */
+	/* falloc() will fill in the descriptor for us. */
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 
