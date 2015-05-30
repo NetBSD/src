@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.58 2015/05/03 22:37:27 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.59 2015/05/30 17:52:07 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.58 2015/05/03 22:37:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.59 2015/05/30 17:52:07 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1029,8 +1029,14 @@ sdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
 			reg |= SDHC_ESDHC_8BIT_MODE;
 	} else {
 		reg &= ~SDHC_4BIT_MODE;
-		if (width == 4)
+		if (hp->specver >= SDHC_SPEC_VERS_300) {
+			reg &= ~SDHC_8BIT_MODE;
+		}
+		if (width == 4) {
 			reg |= SDHC_4BIT_MODE;
+		} else if (width == 8 && hp->specver >= SDHC_SPEC_VERS_300) {
+			reg |= SDHC_8BIT_MODE;
+		}
 	}
 	HWRITE1(hp, SDHC_HOST_CTL, reg);
 	mutex_exit(&hp->host_mtx);
