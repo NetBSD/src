@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.8 2015/05/15 16:24:30 joerg Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.9 2015/05/30 16:12:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@
 /* #define ISCSI_DEBUG      1 */
 
 #include "iscsi_perf.h"
-#include "iscsi_test.h"
 
 /* -------------------------  Global Constants  ----------------------------- */
 
@@ -195,10 +194,6 @@ typedef struct session_s session_t;
 typedef struct ccb_s ccb_t;
 typedef struct pdu_s pdu_t;
 
-
-#include "iscsi_testlocal.h"
-
-
 /* the serial number management structure (a circular buffer) */
 
 typedef struct {
@@ -239,11 +234,6 @@ struct pdu_s {
 				/* the ccb this PDU belongs to (if any) */
 	connection_t		*connection;
 				/* the connection this PDU belongs to */
-
-#ifdef ISCSI_TEST_MODE
-	pdu_header_t		mod_pdu;
-	/* Buffer for modified PDU header (test mode) */
-#endif
 
 #ifdef ISCSI_PERFTEST
 	int			perf_index;
@@ -398,11 +388,6 @@ struct connection_s {
 					/* only valid during login */
 
 	pdu_t				pdu[PDUS_PER_CONNECTION]; /* PDUs */
-
-#ifdef ISCSI_TEST_MODE
-	test_pars_t			*test_pars;
-	/* connection in test mode if non-NULL */
-#endif
 };
 
 /* the connection list type */
@@ -674,21 +659,9 @@ sn_a_le_b(uint32_t a, uint32_t b)
 
 
 /* Version dependencies */
-#ifdef ISCSI_TEST_MODE
-#define SET_CCB_TIMEOUT(conn, ccb, tout) do {				\
-	if (test_ccb_timeout (conn)) {					\
-		callout_schedule(&ccb->timeout, tout);			\
-	}								\
-} while (/*CONSTCOND*/ 0)
-#define SET_CONN_TIMEOUT(conn, tout) do {				\
-	if (test_conn_timeout (conn)) {					\
-		callout_schedule(&conn->timeout, tout);			\
-	}								\
-} while (/*CONSTCOND*/ 0)
-#else
+/* XXX */
 #define SET_CCB_TIMEOUT(conn, ccb, tout) callout_schedule(&ccb->timeout, tout)
 #define SET_CONN_TIMEOUT(conn, tout) callout_schedule(&conn->timeout, tout)
-#endif
 
 /* in iscsi_ioctl.c */
 
