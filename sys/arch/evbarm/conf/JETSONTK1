@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.25 2015/05/30 13:47:17 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.26 2015/05/30 14:13:12 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -116,6 +116,7 @@ wd*		at atabus? drive ?
 hdaudio*	at tegraio?		# HDA
 hdafg*		at hdaudiobus?
 audio*		at audiobus?
+options 	HDAUDIOVERBOSE
 options 	HDAUDIO_32BIT_ACCESS
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
