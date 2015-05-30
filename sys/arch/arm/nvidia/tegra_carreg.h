@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_carreg.h,v 1.16 2015/05/18 20:36:42 jmcneill Exp $ */
+/* $NetBSD: tegra_carreg.h,v 1.17 2015/05/30 11:10:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,6 +32,9 @@
 #define CAR_CLK_OUT_ENB_L_REG	0x10
 #define CAR_CLK_OUT_ENB_H_REG	0x14
 #define CAR_CLK_OUT_ENB_U_REG	0x18
+
+#define CAR_PLL_LFSR_REG	0x54
+#define CAR_PLL_LFSR_RND		__BITS(15,0)
 
 #define CAR_PLLP_BASE_REG	0xa0
 #define CAR_PLLP_BASE_BYPASS		__BIT(31)
