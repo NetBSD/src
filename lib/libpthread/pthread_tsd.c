@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.13 2015/05/29 16:05:13 christos Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.14 2015/05/30 14:42:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.13 2015/05/29 16:05:13 christos Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.14 2015/05/30 14:42:26 christos Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -60,6 +60,9 @@ null_destructor(void *p)
 #include <stdlib.h>
 #include <stdio.h>
 
+/* Can't use mmap directly so early in the process because rump hijacks it */
+void *_mmap(void *, size_t, int, int, int, off_t);
+
 void *
 pthread_tsd_init(size_t *tlen)
 {
@@ -85,7 +88,7 @@ pthread_tsd_init(size_t *tlen)
 	    + sizeof(*pthread__tsd_list) * pthread_keys_max
 	    + sizeof(*pthread__tsd_destructors) * pthread_keys_max;
 
-	arena = mmap(NULL, alen, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
+	arena = _mmap(NULL, alen, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
 	if (arena == MAP_FAILED) {
 		pthread_keys_max = 0;
 		return NULL;
