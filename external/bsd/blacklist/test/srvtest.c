@@ -1,4 +1,4 @@
-/*	$NetBSD: srvtest.c,v 1.9 2015/01/22 05:35:55 christos Exp $	*/
+/*	$NetBSD: srvtest.c,v 1.10 2015/05/30 22:40:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: srvtest.c,v 1.9 2015/01/22 05:35:55 christos Exp $");
+__RCSID("$NetBSD: srvtest.c,v 1.10 2015/05/30 22:40:38 christos Exp $");
 
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -49,6 +49,10 @@ __RCSID("$NetBSD: srvtest.c,v 1.9 2015/01/22 05:35:55 christos Exp $");
 #include <err.h>
 
 #include "blacklist.h"
+#ifdef BLDEBUG
+#include "bl.h"
+static void *b;
+#endif
 
 #ifndef INFTIM
 #define INFTIM -1
@@ -66,7 +70,11 @@ process_tcp(int afd)
 		err(1, "read");
 	buffer[sizeof(buffer) - 1] = '\0';
 	printf("%s: sending %d %s\n", getprogname(), afd, buffer);
+#ifdef BLDEBUG
+	blacklist_r(b, 1, afd, buffer);
+#else
 	blacklist(1, afd, buffer);
+#endif
 	exit(0);
 }
 
@@ -176,6 +184,10 @@ main(int argc, char *argv[])
 	in_port_t port = 6161;
 
 	signal(SIGCHLD, SIG_IGN);
+
+#ifdef BLDEBUG
+	b = bl_create(false, "blsock", vsyslog);
+#endif
 
 	while ((c = getopt(argc, argv, "up:")) != -1)
 		switch (c) {
