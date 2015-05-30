@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_globals.h,v 1.4 2011/11/17 16:20:47 joerg Exp $	*/
+/*	$NetBSD: iscsic_globals.h,v 1.5 2015/05/30 15:57:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -79,25 +79,7 @@ uint8_t buf[BUF_SIZE];			/* buffer for daemon comm and driver I/O */
 
 #define min(a,b) ((a < b) ? a : b)
 
-/* Debugging stuff */
-
-#ifdef ISCSI_DEBUG
-
-int debug_level;				/* How much info to display */
-
-#define DEBOUT(x) printf x
-#define DEB(lev,x) {if (debug_level >= lev) printf x ;}
-
 #define STATIC static
-
-#else
-
-#define DEBOUT(x)
-#define DEB(lev,x)
-
-#define STATIC static
-
-#endif
 
 /*
  * Convert uint64 to 6-byte string in network byte order (for ISID field)
@@ -189,9 +171,6 @@ int remove_initiator(int, char **);
 int list_initiators(int, char **);
 int list_sessions(int, char **);
 int get_version(int, char **);
-#ifdef ISCSI_DEBUG
-int kill_daemon(int, char **);
-#endif
 
 /* iscsic_driverif.c */
 
@@ -220,10 +199,5 @@ char cl_get_char(char, int, char **);
 int cl_get_int(char, int, char **);
 int cl_get_uint(char, int, char **);
 uint64_t cl_get_longlong(char, int, char **);
-
-#ifdef ISCSI_TEST_MODE
-int test(int, char **);
-#endif
-
 
 #endif /* !_ISCSIC_GLOBALS_H */
