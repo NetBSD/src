@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.42 2015/05/22 10:34:13 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.43 2015/05/30 19:14:46 joerg Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.42 2015/05/22 10:34:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.43 2015/05/30 19:14:46 joerg Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -300,7 +300,7 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	switch(minor(dev)) {
 	case DEV_EVT:
-		/* falloc() will use the descriptor for us. */
+		/* falloc() will fill in the descriptor for us. */
 		if ((error = fd_allocfile(&fp, &fd)) != 0)
 			return error;
 
