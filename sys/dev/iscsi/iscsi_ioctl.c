@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.11 2015/05/30 18:09:31 joerg Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.12 2015/05/30 20:09:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1593,8 +1593,9 @@ iscsi_cleanup_thread(void *par)
  */
 
 int
-iscsiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
+iscsiioctl(struct file *fp, u_long cmd, void *addr)
 {
+	struct lwp *l = curlwp;
 
 	DEB(1, ("ISCSI Ioctl cmd = %x\n", (int) cmd));
 
