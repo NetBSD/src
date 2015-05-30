@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.190 2014/12/29 13:38:13 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.191 2015/05/30 19:14:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.190 2014/12/29 13:38:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.191 2015/05/30 19:14:46 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -437,7 +437,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct file *fp;
 	int error, fd;
 
-	/* falloc() will use the descriptor for us. */
+	/* falloc() will fill in the descriptor for us. */
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 
