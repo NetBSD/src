@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.9 2015/05/30 16:12:34 joerg Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.10 2015/05/30 18:00:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@
 /* ------------------------ Code selection constants ------------------------ */
 
 /* #define ISCSI_DEBUG      1 */
-
-#include "iscsi_perf.h"
 
 /* -------------------------  Global Constants  ----------------------------- */
 
@@ -234,12 +232,6 @@ struct pdu_s {
 				/* the ccb this PDU belongs to (if any) */
 	connection_t		*connection;
 				/* the connection this PDU belongs to */
-
-#ifdef ISCSI_PERFTEST
-	int			perf_index;
-	/* performance counter index */
-	perfpoint_t		perf_which;	/* performance point */
-#endif
 };
 
 
@@ -302,10 +294,6 @@ struct ccb_s {
 	int			flags;
 	connection_t		*connection; /* connection for CCB */
 	session_t		*session; /* session for CCB */
-
-#ifdef ISCSI_PERFTEST
-	int			perf_index; /* performance counter index */
-#endif
 };
 
 
@@ -532,28 +520,11 @@ extern uint8_t iscsi_InitiatorName[ISCSI_STRING_LENGTH];
 extern uint8_t iscsi_InitiatorAlias[ISCSI_STRING_LENGTH];
 extern login_isid_t iscsi_InitiatorISID;
 
-/* Debugging and profiling stuff */
-
-#include "iscsi_profile.h"
+/* Debugging stuff */
 
 #ifndef DDB
 #define Debugger() panic("should call debugger here (iscsi.c)")
 #endif /* ! DDB */
-
-#if defined(ISCSI_PERFTEST)
-
-extern int iscsi_perf_level;				/* How much info to display */
-
-#define PDEBOUT(x) printf x
-#define PDEB(lev,x) { if (iscsi_perf_level >= lev) printf x ;}
-#define PDEBC(conn,lev,x) { if (iscsi_perf_level >= lev) { printf("S%dC%d: ", \
-				conn ? conn->session->id : -1, \
-				conn ? conn->id : -1); printf x ;}}
-#else
-#define PDEBOUT(x)
-#define PDEB(lev,x)
-#define PDEBC(conn,lev,x)
-#endif
 
 #ifdef ISCSI_DEBUG
 

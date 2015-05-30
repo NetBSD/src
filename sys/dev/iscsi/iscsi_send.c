@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.12 2015/05/30 16:12:34 joerg Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.13 2015/05/30 18:00:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -300,8 +300,6 @@ iscsi_send_thread(void *par)
 				pdu->flags &= ~PDUF_INQUEUE;
 				splx(s);
 
-				PERF_PDUSNAPB(pdu);
-
 #ifdef ISCSI_DEBUG
 				if (!pdu->uio.uio_resid) {
 					DEBOUT(("uio.resid = 0 in iscsi_send_thread! pdu=%p\n",
@@ -318,7 +316,6 @@ iscsi_send_thread(void *par)
 				if (conn->HeaderDigest)
 					pdu->pdu.HeaderDigest = gen_digest(&pdu->pdu, BHS_SIZE);
 				my_soo_write(conn, &pdu->uio);
-				PERF_PDUSNAPE(pdu);
 
 				if (pdu->disp <= PDUDISP_FREE) {
 					free_pdu(pdu);
@@ -1006,9 +1003,6 @@ snack_missing(connection_t *conn, ccb_t *ccb, uint8_t type,
 	pdu_t *ppdu;
 	pdu_header_t *pdu;
 
-	PDEBC(conn, 1, ("SNACK Missing type = %d, BegRun %d RunLength %d\n",
-			 type, BegRun, RunLength));
-
 	ppdu = get_pdu(conn, TRUE);
 	if (ppdu == NULL)
 		return;
@@ -1046,8 +1040,6 @@ send_snack(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb, uint8_t type)
 {
 	pdu_t *ppdu;
 	pdu_header_t *pdu;
-
-	PDEBC(conn, 1, ("Send SNACK type = %d\n", type));
 
 	ppdu = get_pdu(conn, TRUE);
 	if (ppdu == NULL)
@@ -1323,8 +1315,6 @@ send_data_out(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb,
 		pdu->p.data_out.BufferOffset = htonl(offs);
 		pdu->p.data_out.DataSN = htonl(sn);
 
-		PERF_PDUSET(tx_pdu, tx_ccb, PERF_BEGIN_PDUWRITEDATA);
-
 		DEBC(conn, 10, ("Send DataOut: DataSN %d, len %d offs %x totlen %d\n",
 				sn, len, offs, totlen));
 
@@ -1358,8 +1348,6 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 	pdu_header_t *pdu;
 	int s;
 
-	PERF_BEGIN(ccb, !waitok);
-
 	s = splbio();
 	while (/*CONSTCOND*/ISCSI_THROTTLING_ENABLED &&
 	    /*CONSTCOND*/!ISCSI_SERVER_TRUSTED &&
@@ -1370,8 +1358,6 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 			ccb->flags |= CCBF_WAITING;
 		throttle_ccb(ccb, TRUE);
 
-		PDEBOUT(("Throttling S - CmdSN = %d, MaxCmdSN = %d\n",
-				 sess->CmdSN, sess->MaxCmdSN));
 		if (!waitok) {
 			splx(s);
 			return;
@@ -1434,8 +1420,6 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 
 	DEBC(conn, 10, ("Send Command: CmdSN %d, data_in %d, len %d, totlen %d\n",
 			ccb->CmdSN, ccb->data_in, len, totlen));
-
-	PERF_PDUSET(ppdu, ccb, PERF_BEGIN_PDUWRITECMD);
 
 	setup_tx_uio(ppdu, len, ccb->data_ptr, ccb->data_in);
 	send_pdu(ccb, ppdu, (totlen) ? CCBDISP_DEFER : disp, PDUDISP_WAIT);
@@ -1601,9 +1585,6 @@ connection_timeout(void *par)
 {
 	connection_t *conn = (connection_t *) par;
 
-	PDEBC(conn, 1, ("Connection Timeout, num_timeouts=%d\n",
-					conn->num_timeouts));
-
 	if (++conn->num_timeouts > MAX_CONN_TIMEOUTS)
 		handle_connection_error(conn, ISCSI_STATUS_TIMEOUT, NO_LOGOUT);
 	else {
@@ -1627,8 +1608,6 @@ ccb_timeout(void *par)
 {
 	ccb_t *ccb = (ccb_t *) par;
 	connection_t *conn = ccb->connection;
-	PDEBC(conn, 1, ("CCB Timeout, ccb=%x, num_timeouts=%d\n",
-			 (int) ccb, ccb->num_timeouts));
 
 	ccb->total_tries++;
 
