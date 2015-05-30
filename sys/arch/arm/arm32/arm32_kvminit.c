@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.33 2015/05/04 00:44:12 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.34 2015/05/30 23:59:33 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -124,7 +124,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.33 2015/05/04 00:44:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.34 2015/05/30 23:59:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -195,6 +195,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	if (physical_end == 0) {
 		physical_end = -PAGE_SIZE;
 		memsize -= PAGE_SIZE;
+		bmi->bmi_end -= PAGE_SIZE;
 #ifdef VERBOSE_INIT_ARM
 		printf("%s: memsize shrunk by a page to avoid ending at 4GB\n",
 		    __func__);
@@ -441,8 +442,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * from TTBR0 to map some of the physical memory.  But try to use as
 	 * much high memory space as possible.
 	 */
-	if (kernel_vm_base - KERNEL_BASE < physical_size) {
-		pmap_directbase = kernel_vm_base - physical_size;
+	pmap_directlimit = kernel_vm_base;
+	if (kernel_vm_base - KERNEL_BASE < physical_size
+	    && kernel_vm_base - physical_size >= physical_start) {
+		pmap_directbase -= KERNEL_BASE_VOFFSET;
 		printf("%s: changing pmap_directbase to %#lx\n", __func__,
 		    pmap_directbase);
 	}
@@ -838,6 +841,9 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		    && cur_pv.pv_cache == PTE_CACHE) {
 			cur_pv.pv_size = bmi->bmi_end - cur_pv.pv_pa;
 		} else {
+			KASSERTMSG(cur_pv.pv_va + cur_pv.pv_size <= kernel_vm_base,
+			    "%#lx >= %#lx", cur_pv.pv_va + cur_pv.pv_size,
+			    kernel_vm_base);
 #ifdef VERBOSE_INIT_ARM
 			printf("%s: mapping chunk VA %#lx..%#lx "
 			    "(PA %#lx, prot %d, cache %d)\n",
@@ -852,6 +858,13 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 			cur_pv.pv_prot = VM_PROT_READ | VM_PROT_WRITE;
 			cur_pv.pv_cache = PTE_CACHE;
 		}
+	}
+
+	// The amount we can direct is limited by the start of the
+	// virtual part of the kernel address space.  Don't overrun
+	// into it.
+	if (mapallmem_p && cur_pv.pv_va + cur_pv.pv_size > kernel_vm_base) {
+		cur_pv.pv_size = kernel_vm_base - cur_pv.pv_va;
 	}
 
 	/*
