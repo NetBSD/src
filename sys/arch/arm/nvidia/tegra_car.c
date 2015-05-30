@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.19 2015/05/20 00:05:53 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.20 2015/05/30 11:10:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.19 2015/05/20 00:05:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.20 2015/05/30 11:10:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.19 2015/05/20 00:05:53 jmcneill Exp 
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/rndpool.h>
+#include <sys/rndsource.h>
 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_carreg.h>
@@ -50,9 +52,18 @@ struct tegra_car_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
+
+	kmutex_t		sc_intr_lock;
+	kmutex_t		sc_rnd_lock;
+	u_int			sc_bytes_wanted;
+	void			*sc_sih;
+	krndsource_t		sc_rndsource;
 };
 
 static void	tegra_car_init(struct tegra_car_softc *);
+static void	tegra_car_rnd_attach(device_t);
+static void	tegra_car_rnd_intr(void *);
+static void	tegra_car_rnd_callback(size_t, void *);
 
 static struct tegra_car_softc *pmc_softc = NULL;
 
@@ -91,6 +102,8 @@ tegra_car_attach(device_t parent, device_t self, void *aux)
 	aprint_verbose_dev(self, "PLLU = %u Hz\n", tegra_car_pllu_rate());
 	aprint_verbose_dev(self, "PLLP0 = %u Hz\n", tegra_car_pllp0_rate());
 	aprint_verbose_dev(self, "PLLD2 = %u Hz\n", tegra_car_plld2_rate());
+
+	config_interrupts(self, tegra_car_rnd_attach);
 }
 
 static void
@@ -105,6 +118,68 @@ tegra_car_init(struct tegra_car_softc *sc)
 	    __SHIFTIN(2, CAR_PLLD2_BASE_PLDIV),
 	    CAR_PLLD2_BASE_REF_SRC_SEL |
 	    CAR_PLLD2_BASE_PLDIV | CAR_PLLD2_BASE_NDIV | CAR_PLLD2_BASE_MDIV);
+}
+
+static void
+tegra_car_rnd_attach(device_t self)
+{
+	struct tegra_car_softc * const sc = device_private(self);
+
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SERIAL);
+	mutex_init(&sc->sc_rnd_lock, MUTEX_DEFAULT, IPL_SERIAL);
+	sc->sc_bytes_wanted = 0;
+	sc->sc_sih = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
+	    tegra_car_rnd_intr, sc);
+	if (sc->sc_sih == NULL) {
+		aprint_error_dev(sc->sc_dev, "couldn't establish softint\n");
+		return;
+	}
+
+	rndsource_setcb(&sc->sc_rndsource, tegra_car_rnd_callback, sc);
+	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
+	    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
+}
+
+static void
+tegra_car_rnd_intr(void *priv)
+{
+	struct tegra_car_softc * const sc = priv;
+	uint16_t buf[512];
+	uint32_t cnt;
+
+	mutex_enter(&sc->sc_intr_lock);
+	while (sc->sc_bytes_wanted) {
+		const u_int nbytes = MIN(sc->sc_bytes_wanted, 1024);
+		for (cnt = 0; cnt < sc->sc_bytes_wanted / 2; cnt++) {
+			buf[cnt] = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+			    CAR_PLL_LFSR_REG) & 0xffff;
+		}
+		mutex_exit(&sc->sc_intr_lock);
+		mutex_enter(&sc->sc_rnd_lock);
+		rnd_add_data(&sc->sc_rndsource, buf, nbytes, nbytes * NBBY);
+		mutex_exit(&sc->sc_rnd_lock);
+		mutex_enter(&sc->sc_intr_lock);
+		sc->sc_bytes_wanted -= MIN(sc->sc_bytes_wanted, nbytes);
+	}
+	explicit_memset(buf, 0, sizeof(buf));
+	mutex_exit(&sc->sc_intr_lock);
+}
+
+static void
+tegra_car_rnd_callback(size_t bytes_wanted, void *priv)
+{
+	struct tegra_car_softc * const sc = priv;
+
+	mutex_enter(&sc->sc_intr_lock);
+	if (sc->sc_bytes_wanted == 0) {
+		softint_schedule(sc->sc_sih);
+	}
+	if (bytes_wanted > (UINT_MAX - sc->sc_bytes_wanted)) {
+		sc->sc_bytes_wanted = UINT_MAX;
+	} else {
+		sc->sc_bytes_wanted += bytes_wanted;
+	}
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
