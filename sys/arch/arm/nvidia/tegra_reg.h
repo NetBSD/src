@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_reg.h,v 1.11 2015/05/18 20:36:42 jmcneill Exp $ */
+/* $NetBSD: tegra_reg.h,v 1.12 2015/05/30 13:25:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -120,6 +120,8 @@
 #define TEGRA_XUSB_DEV_SIZE	0xa000
 
 /* PPSB */
+#define TEGRA_TIMER_OFFSET	0x00005000
+#define TEGRA_TIMER_SIZE	0x400
 #define TEGRA_CAR_OFFSET	0x00006000
 #define TEGRA_CAR_SIZE		0x1000
 #define TEGRA_GPIO_OFFSET	0x0000d000

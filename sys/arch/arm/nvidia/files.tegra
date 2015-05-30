@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.13 2015/05/18 20:36:42 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.14 2015/05/30 13:25:55 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -41,6 +41,11 @@ file	arch/arm/nvidia/tegra_car.c		tegra_car
 device	tegragpio: gpiobus
 attach	tegragpio at tegraio with tegra_gpio
 file	arch/arm/nvidia/tegra_gpio.c		tegra_gpio
+
+# Timers
+device	tegratimer: sysmon_wdog
+attach	tegratimer at tegraio with tegra_timer
+file	arch/arm/nvidia/tegra_timer.c		tegra_timer
 
 # MPIO / Pinmux
 device	tegrampio
