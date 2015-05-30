@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.12 2015/05/30 18:12:09 joerg Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.13 2015/05/30 20:09:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -500,6 +500,10 @@ typedef struct event_handler_s {
 TAILQ_HEAD(event_handler_list_s, event_handler_s);
 typedef struct event_handler_list_s event_handler_list_t;
 
+/* /dev/iscsi0 state */
+struct iscsifd {
+	char dummy;
+};
 
 /* -------------------------  Global Variables  ----------------------------- */
 
@@ -648,7 +652,7 @@ void iscsi_cleanup_thread(void *);
 uint32_t map_databuf(struct proc *, void **, uint32_t);
 void unmap_databuf(struct proc *, void *, uint32_t);
 #endif
-int iscsiioctl(dev_t, u_long, void *, int, struct lwp *);
+int iscsiioctl(struct file *, u_long, void *);
 
 session_t *find_session(uint32_t);
 connection_t *find_connection(session_t *, uint32_t);
