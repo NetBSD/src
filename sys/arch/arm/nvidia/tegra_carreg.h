@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_carreg.h,v 1.17 2015/05/30 11:10:24 jmcneill Exp $ */
+/* $NetBSD: tegra_carreg.h,v 1.18 2015/05/30 13:25:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,13 @@
 
 #ifndef _ARM_TEGRA_CARREG_H
 #define _ARM_TEGRA_CARREG_H
+
+#define CAR_RST_SOURCE_REG	0x00
+#define CAR_RST_SOURCE_WDT_EN		__BIT(5)
+#define CAR_RST_SOURCE_WDT_SEL		__BIT(4)
+#define CAR_RST_SOURCE_WDT_SYS_RST_EN	__BIT(2)
+#define CAR_RST_SOURCE_WDT_COP_RST_EN	__BIT(1)
+#define CAR_RST_SOURCE_WDT_CPU_RST_EN	__BIT(0)
 
 #define CAR_CLK_OUT_ENB_L_REG	0x10
 #define CAR_CLK_OUT_ENB_H_REG	0x14

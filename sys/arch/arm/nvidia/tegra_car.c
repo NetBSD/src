@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.20 2015/05/30 11:10:24 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.21 2015/05/30 13:25:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.20 2015/05/30 11:10:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.21 2015/05/30 13:25:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -791,4 +791,26 @@ tegra_car_host1x_enable(void)
 
 	/* Leave reset */
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_L_CLR_REG, CAR_DEV_L_HOST1X);
+}
+
+void
+tegra_car_wdt_enable(u_int timer, bool enable)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	uint32_t enable_bits;
+
+	KASSERT(timer == 1 || timer == 2);
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	enable_bits = enable ?
+	    (CAR_RST_SOURCE_WDT_EN|CAR_RST_SOURCE_WDT_SYS_RST_EN) : 0;
+
+	tegra_reg_set_clear(bst, bsh, CAR_RST_SOURCE_REG,
+	    __SHIFTIN(timer - 1, CAR_RST_SOURCE_WDT_SEL) |
+	    enable_bits,
+	    CAR_RST_SOURCE_WDT_SYS_RST_EN |
+	    CAR_RST_SOURCE_WDT_SEL |
+	    CAR_RST_SOURCE_WDT_EN);
 }
