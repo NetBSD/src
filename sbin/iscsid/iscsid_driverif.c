@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_driverif.c,v 1.6 2012/12/29 08:28:20 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_driverif.c,v 1.7 2015/05/30 16:00:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -69,11 +69,6 @@ set_node_name(iscsid_set_node_name_req_t * par)
 		gethostname((char *)node_name.InitiatorAlias, sizeof(node_name.InitiatorAlias));
 
 	node_name = *par;
-
-#ifdef ISCSI_DEBUG				/* DEBUG ONLY: Allow op without driver present */
-	if (driver < 0)
-		return ISCSID_STATUS_SUCCESS;
-#endif
 
 	strlcpy((char *)snp.InitiatorName, (char *)par->InitiatorName,
 		sizeof(snp.InitiatorName));
@@ -850,10 +845,6 @@ get_version(iscsid_response_t ** prsp, int *prsp_temp)
 	ver->minor = VERSION_MINOR;
 	strlcpy ((char *)ver->version_string, VERSION_STRING, sizeof(ver->version_string));
 
-#ifdef ISCSI_DEBUG				/* DEBUG ONLY: Allow op without driver present */
-	if (driver < 0)
-		return;
-#endif
 	ioctl(driver, ISCSI_GET_VERSION, &drv_ver);
 	ver->driver_interface_version = drv_ver.interface_version;
 	ver->driver_major = drv_ver.major;
