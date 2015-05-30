@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.10 2015/05/30 18:00:09 joerg Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.11 2015/05/30 18:09:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -627,12 +627,6 @@ sn_a_le_b(uint32_t a, uint32_t b)
 	return (a <= b && !((b - a) & 0x80000000)) ||
 	       (a >= b && ((a - b) & 0x80000000));
 }
-
-
-/* Version dependencies */
-/* XXX */
-#define SET_CCB_TIMEOUT(conn, ccb, tout) callout_schedule(&ccb->timeout, tout)
-#define SET_CONN_TIMEOUT(conn, tout) callout_schedule(&conn->timeout, tout)
 
 /* in iscsi_ioctl.c */
 

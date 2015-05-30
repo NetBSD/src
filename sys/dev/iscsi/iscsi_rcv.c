@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.9 2015/05/30 18:00:09 joerg Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.10 2015/05/30 18:09:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -468,7 +468,7 @@ receive_text_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	}
 
 	if (req_ccb->pdu_waiting != NULL) {
-		SET_CCB_TIMEOUT(conn, req_ccb, COMMAND_TIMEOUT);
+		callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
 		req_ccb->num_timeouts = 0;
 	}
 
@@ -575,7 +575,7 @@ receive_data_in_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	req_ccb->flags |= CCBF_GOT_RSP;
 
 	if (req_ccb->pdu_waiting != NULL) {
-		SET_CCB_TIMEOUT(conn, req_ccb, COMMAND_TIMEOUT);
+		callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
 		req_ccb->num_timeouts = 0;
 	}
 
@@ -656,7 +656,7 @@ receive_r2t_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 
 	if (req_ccb != NULL) {
 		if (req_ccb->pdu_waiting != NULL) {
-			SET_CCB_TIMEOUT(conn, req_ccb, COMMAND_TIMEOUT);
+			callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
 			req_ccb->num_timeouts = 0;
 		}
 		send_data_out(conn, pdu, req_ccb, CCBDISP_NOWAIT, TRUE);
@@ -699,7 +699,7 @@ receive_command_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	}
 
 	if (req_ccb->pdu_waiting != NULL) {
-		SET_CCB_TIMEOUT(conn, req_ccb, COMMAND_TIMEOUT);
+		callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
 		req_ccb->num_timeouts = 0;
 	}
 
@@ -1090,11 +1090,11 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 	MaxCmdSN = ntohl(pdu->pdu.p.nop_in.MaxCmdSN);
 
 	/* received a valid frame, reset timeout */
-
-	SET_CONN_TIMEOUT(conn,
-			(((pdu->pdu.Opcode & OPCODE_MASK) == TOP_NOP_In) &&
-			(TAILQ_FIRST(&conn->ccbs_waiting) == NULL)) ?
-			conn->idle_timeout_val : CONNECTION_TIMEOUT);
+	if ((pdu->pdu.Opcode & OPCODE_MASK) == TOP_NOP_In &&
+	    TAILQ_EMPTY(&conn->ccbs_waiting))
+		callout_schedule(&conn->timeout, conn->idle_timeout_val);
+	else
+		callout_schedule(&conn->timeout, CONNECTION_TIMEOUT);
 	conn->num_timeouts = 0;
 
 	/*
