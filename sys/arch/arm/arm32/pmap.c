@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.322 2015/05/13 15:33:47 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.323 2015/05/30 23:59:33 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322 2015/05/13 15:33:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.323 2015/05/30 23:59:33 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -517,6 +517,7 @@ bool pmap_initialized;
  * Start of direct-mapped memory
  */
 vaddr_t pmap_directbase = KERNEL_BASE;
+vaddr_t pmap_directlimit;
 #endif
 
 /*
@@ -7859,7 +7860,7 @@ pmap_direct_mapped_phys(paddr_t pa, bool *ok_p, vaddr_t va)
 	if (physical_start <= pa && pa < physical_end) {
 #ifdef ARM_MMU_EXTENDED
 		const vaddr_t newva = pmap_directbase + pa - physical_start;
-		if (newva >= KERNEL_BASE) {
+		if (newva >= KERNEL_BASE && newva < pmap_directlimit) {
 			va = newva;
 			ok = true;
 		}
