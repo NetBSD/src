@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_daemonif.c,v 1.2 2011/10/30 18:40:06 christos Exp $	*/
+/*	$NetBSD: iscsic_daemonif.c,v 1.3 2015/05/30 15:57:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1171,24 +1171,3 @@ get_version(int argc, char **argv)
 
 	return 0;
 }
-
-
-#ifdef ISCSI_DEBUG
-/*
- * kill_daemon:
- *    Handle kill_daemon command.
- *
- *    Parameter:  argc, argv (shifted)
- *
- *    Returns:    Always 0.
-*/
-
-int
-kill_daemon(int argc, char **argv)
-{
-	check_extra_args(argc, argv);
-
-	send_request(ISCSID_DAEMON_TERMINATE, 0, NULL);
-	return 0;
-}
-#endif

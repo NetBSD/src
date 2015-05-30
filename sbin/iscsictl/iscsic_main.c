@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_main.c,v 1.5 2011/11/20 01:14:17 agc Exp $	*/
+/*	$NetBSD: iscsic_main.c,v 1.6 2015/05/30 15:57:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 #include <sys/un.h>
 
 #include "iscsic_globals.h"
-#include "iscsi_test.h"
 
 #include <err.h>
 #include <errno.h>
@@ -78,12 +77,6 @@ static command_t cmds[] = {
 	{"list_initiators", list_initiators},
 	{"list_sessions", list_sessions},
 	{"set_node_name", set_node_name},
-#ifdef ISCSI_DEBUG
-	{"kill_daemon", kill_daemon},
-#endif
-#ifdef ISCSI_TEST_MODE
-	{"test", test},
-#endif
 	{NULL, NULL}
 };
 
@@ -175,16 +168,6 @@ static status_msg_t status_msg[] = {
 	{ISCSID_STATUS_INVALID_INITIATOR_ID, "Initiator ID not found"},
 	{ISCSID_STATUS_INITIATOR_BIND_ERROR, "Bind to initiator portal failed"},
 
-#ifdef ISCSI_TEST_MODE
-	{ISCSI_STATUS_TEST_INACTIVE, "Test not assigned to connection"},
-	{ISCSI_STATUS_TEST_CANCELED, "Test was cancelled"},
-	{ISCSI_STATUS_TEST_CONNECTION_CLOSED, "Connection closed"},
-	{ISCSI_STATUS_TEST_MODIFICATION_SKIPPED, "Modification skipped due to bad offset"},
-	{ISCSI_STATUS_TEST_HEADER_CRC_ERROR, "Received PDU had bad header CRC"},
-	{ISCSI_STATUS_TEST_DATA_CRC_ERROR, "Received PDU had bad data CRC"},
-	{ISCSI_STATUS_TEST_DATA_READ_ERROR, "Error while receiving PDU"},
-#endif
-
 	{0, NULL}
 };
 
@@ -204,10 +187,6 @@ static char *cmdname;			/* pointer to command name for error msgs */
 uint8_t buf[BUF_SIZE];			/* buffer for daemon comm and driver I/O */
 
 int driver;						/* driver handle */
-
-#ifdef ISCSI_DEBUG
-int debug_level = ISCSI_DEBUG;			/* How much info to display */
-#endif
 
 /* -------------------------------------------------------------------------- */
 
@@ -429,8 +408,6 @@ get_response(int temp)
 	if ((size_t)ret != len)
 		io_error("Receiving daemon data");
 
-	DEB(9, ("Status %d, parlen %d\n", rsp->status, rsp->parameter_length));
-
 	len += rsp->parameter_length;
 
 	/*
@@ -569,13 +546,8 @@ main(int argc, char **argv)
 	if (c->cmd == NULL) {
 		errx(EXIT_FAILURE, "Unknown command: '%s'", cmdname);
 	}
-	if ((driver = open(DEVICE, O_RDONLY)) < 0) {
-		warn("Opening " DEVICE);
-#ifndef ISCSI_DEBUG
-		/* DEBUG ONLY: Allow CLI to operate w/o driver */
-		return EXIT_FAILURE;
-#endif
-	}
+	if ((driver = open(DEVICE, O_RDONLY)) < 0)
+		err(EXIT_FAILURE, "Opening " DEVICE);
 
 	sock = socket(AF_UNIX, SOCK_DGRAM, 0);
 	if (sock < 0)
