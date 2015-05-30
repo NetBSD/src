@@ -340,7 +340,7 @@ ENTRY_NP(armv7_icache_inv_all)
 END(armv7_icache_inv_all)
 
 /* * LINTSTUB: void armv7_dcache_l1inv_all(void); */
-ENTRY_NP(armv7_cache_l1inv_all)
+ENTRY_NP(armv7_dcache_l1inv_all)
 	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
 	and	r0, r0, #0x7		@ check L1
 	bxeq	lr			@ return if no L1 cache
