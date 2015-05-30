@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.7 2015/05/30 18:00:09 joerg Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.8 2015/05/30 18:12:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -600,7 +600,7 @@ add_sernum(sernum_buffer_t *buff, uint32_t num)
 
 	for (i = 0; i < diff; i++) {
 		buff->sernum[t] = n++;
-		buff->ack[t] = 0;
+		buff->ack[t] = false;
 		t = (t + 1) % SERNUM_BUFFER_LENGTH;
 		if (t == b) {
 			DEB(1, ("AddSernum: Buffer Full! num %d, diff %d\n", num, diff));
@@ -648,7 +648,7 @@ ack_sernum(sernum_buffer_t *buff, uint32_t num)
 			if (b == buff->bottom)
 				buff->bottom = (b + 1) % SERNUM_BUFFER_LENGTH;
 			else
-				buff->ack[b] = 1;
+				buff->ack[b] = true;
 		}
 
 		for (b = buff->bottom, num = buff->sernum[b] - 1;
