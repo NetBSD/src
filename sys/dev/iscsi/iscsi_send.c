@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.13 2015/05/30 18:00:09 joerg Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.14 2015/05/30 18:09:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -260,7 +260,7 @@ reassign_tasks(connection_t *oldconn)
 			}
 			resend_pdu(ccb);
 		} else {
-			SET_CCB_TIMEOUT(conn, ccb, COMMAND_TIMEOUT);
+			callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
 		}
 		DEBC(conn, 1, ("Reassign ccb %p, no_tm=%d, rc=%d\n",
 					   ccb, no_tm, rc));
@@ -482,7 +482,7 @@ send_pdu(ccb_t *ccb, pdu_t *pdu, ccb_disp_t cdisp, pdu_disp_t pdisp)
 	wakeup(&conn->pdus_to_send);
 
 	if (cdisp != CCBDISP_NOWAIT) {
-		SET_CCB_TIMEOUT(conn, ccb, COMMAND_TIMEOUT);
+		callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
 
 		if (prev_cdisp <= CCBDISP_NOWAIT)
 			suspend_ccb(ccb, TRUE);
@@ -533,7 +533,7 @@ resend_pdu(ccb_t *ccb)
 	} else {
 		TAILQ_INSERT_TAIL(&conn->pdus_to_send, pdu, send_chain);
 	}
-	SET_CCB_TIMEOUT(conn, ccb, COMMAND_TIMEOUT);
+	callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
 	splx (s);
 
 	wakeup(&conn->pdus_to_send);
@@ -1591,7 +1591,7 @@ connection_timeout(void *par)
 		if (conn->state == ST_FULL_FEATURE)
 			send_nop_out(conn, NULL);
 
-		SET_CONN_TIMEOUT(conn, CONNECTION_TIMEOUT);
+		callout_schedule(&conn->timeout, CONNECTION_TIMEOUT);
 	}
 }
 
@@ -1626,6 +1626,6 @@ ccb_timeout(void *par)
 			/* request resend of all missing status */
 			snack_missing(conn, NULL, SNACK_STATUS_NAK, 0, 0);
 		}
-		SET_CCB_TIMEOUT(conn, ccb, COMMAND_TIMEOUT);
+		callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
 	}
 }
