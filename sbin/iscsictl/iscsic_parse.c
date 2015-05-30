@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_parse.c,v 1.2 2011/10/30 18:40:06 christos Exp $	*/
+/*	$NetBSD: iscsic_parse.c,v 1.3 2015/05/30 15:57:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -262,7 +262,6 @@ cl_get_target(iscsid_add_target_req_t ** ptarg, int argc, char **argv, int nreq)
 	}
 	targ->num_portals = p + 1;
 
-	DEB(9, ("cl_get_target returns %zu\n", len));
 	return (int)len;
 }
 
@@ -400,7 +399,6 @@ cl_get_auth_opts(iscsid_set_target_authentication_req_t *auth,
 		argv[i] = NULL;
 		found = TRUE;
 	}
-	DEB(9, ("cl_get_auth_opts returns %d\n", found));
 	return found;
 }
 
@@ -479,7 +477,6 @@ cl_get_target_opts(iscsid_get_set_target_options_t * opt, int argc, char **argv)
 		argv[i] = NULL;
 		found = TRUE;
 	}
-	DEB(9, ("cl_get_target_opts returns %d\n", found));
 	return found;
 }
 
@@ -552,7 +549,6 @@ cl_get_portal(iscsid_add_portal_req_t * port, int argc, char **argv)
 
 		argv[i] = NULL;
 	}
-	DEB(9, ("cl_get_portal returns %d\n", found));
 	return found;
 }
 
@@ -603,7 +599,6 @@ cl_get_id(char ident, iscsid_sym_id_t * sid, int argc, char **argv)
 			found = TRUE;
 		}
 	}
-	DEB(9, ("cl_get_id returns %d\n", found));
 	return found;
 }
 
@@ -653,7 +648,6 @@ cl_get_symname(uint8_t * sn, int argc, char **argv)
 			found = TRUE;
 		}
 	}
-	DEB(9, ("cl_get_symname returns %d\n", found));
 	return found;
 }
 
@@ -697,7 +691,6 @@ cl_get_string(char ident, char *pstr, int argc, char **argv)
 			found = TRUE;
 		}
 	}
-	DEB(9, ("cl_get_string returns %d\n", found));
 	return found;
 }
 
@@ -730,7 +723,6 @@ cl_get_opt(char ident, int argc, char **argv)
 			found = TRUE;
 		}
 	}
-	DEB(9, ("cl_get_opt returns %d\n", found));
 	return found;
 }
 
@@ -777,7 +769,6 @@ cl_get_char(char ident, int argc, char **argv)
 			found = TRUE;
 		}
 	}
-	DEB(9, ("cl_get_charopt returns %c\n", ch));
 
 	return ch;
 }
@@ -824,7 +815,6 @@ cl_get_int(char ident, int argc, char **argv)
 			found = TRUE;
 		}
 	}
-	DEB(9, ("cl_get_int returns %d\n", val));
 
 	return val;
 }
@@ -872,7 +862,6 @@ cl_get_uint(char ident, int argc, char **argv)
 			found = TRUE;
 		}
 	}
-	DEB(9, ("cl_get_uint returns %d\n", val));
 
 	return val;
 }
@@ -920,7 +909,6 @@ cl_get_longlong(char ident, int argc, char **argv)
 			found = TRUE;
 		}
 	}
-	DEB(9, ("cl_get_longlong returns %qd\n", val));
 
 	return val;
 }
