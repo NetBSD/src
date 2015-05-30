@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.26 2015/05/30 14:13:12 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.27 2015/05/30 15:36:27 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -49,7 +49,8 @@ tegracar0	at tegraio?		# CAR
 # GPIO controller
 tegragpio0	at tegraio?		# GPIO
 gpio*		at gpiobus?
-gpiorfkill0	at gpio23 offset 7 mask 1	# WF_EN
+gpiobutton0	at gpio16 offset 0 mask 1 flag 0x01	# Power button
+gpiorfkill0	at gpio23 offset 7 mask 1		# WiFi enable
 
 # Timers
 tegratimer0	at tegraio?		# Timers
