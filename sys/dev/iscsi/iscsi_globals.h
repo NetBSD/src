@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.11 2015/05/30 18:09:31 joerg Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.12 2015/05/30 18:12:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -200,7 +200,7 @@ typedef struct {
 	int		top;	/* top of buffer (newest element) */
 	int		bottom;	/* bottom of buffer (oldest element) */
 	uint32_t	sernum[SERNUM_BUFFER_LENGTH];	/* the serial numbers */
-	int		ack[SERNUM_BUFFER_LENGTH];	/* acknowledged? */
+	bool		ack[SERNUM_BUFFER_LENGTH];	/* acknowledged? */
 } sernum_buffer_t;
 
 
