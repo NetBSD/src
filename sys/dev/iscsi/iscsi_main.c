@@ -32,6 +32,8 @@
 
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kmem.h>
 #include <sys/socketvar.h>
 
@@ -83,14 +85,19 @@ CFATTACH_DECL_NEW(iscsi, sizeof(struct iscsi_softc), iscsi_match, iscsi_attach,
 
 
 static dev_type_open(iscsiopen);
-static dev_type_close(iscsiclose);
+static int iscsiclose(struct file *);
+
+static const struct fileops iscsi_fileops = {
+	.fo_ioctl = iscsiioctl,
+	.fo_close = iscsiclose,
+};
 
 struct cdevsw iscsi_cdevsw = {
 	.d_open = iscsiopen,
-	.d_close = iscsiclose,
+	.d_close = noclose,
 	.d_read = noread,
 	.d_write = nowrite,
-	.d_ioctl = iscsiioctl,
+	.d_ioctl = noioctl,
 	.d_stop = nostop,
 	.d_tty = notty,
 	.d_poll = nopoll,
@@ -119,14 +126,27 @@ STATIC void iscsi_minphys(struct buf *);
 int
 iscsiopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	struct iscsifd *d;
+	struct file *fp;
+	int error, fd;
 
 	DEB(99, ("ISCSI Open\n"));
-	return 0;
+
+	if ((error = fd_allocfile(&fp, &fd)) != 0)
+		return error;
+
+	d = kmem_alloc(sizeof(*d), KM_SLEEP);
+
+	return fd_clone(fp, fd, flag, &iscsi_fileops, d);
 }
 
-int
-iscsiclose(dev_t dev, int flag, int mode, struct lwp *l)
+static int
+iscsiclose(struct file *fp)
 {
+	struct iscsifd *d = fp->f_iscsi;
+
+	kmem_free(d, sizeof(*d));
+	fp->f_iscsi = NULL;
 
 	DEB(99, ("ISCSI Close\n"));
 	return 0;
