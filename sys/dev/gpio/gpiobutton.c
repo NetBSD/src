@@ -1,4 +1,4 @@
-/* $NetBSD: gpiobutton.c,v 1.1 2015/05/30 15:35:51 jmcneill Exp $ */
+/* $NetBSD: gpiobutton.c,v 1.2 2015/05/30 17:12:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiobutton.c,v 1.1 2015/05/30 15:35:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiobutton.c,v 1.2 2015/05/30 17:12:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,7 +90,7 @@ gpiobutton_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	const u_int type = __SHIFTOUT(ga->ga_flags, GPIOBUTTON_TYPE_MASK);
-	printf("%s: type is %u, flags %#x\n", __func__, type, ga->ga_flags);
+
 	switch (type) {
 	case GPIOBUTTON_TYPE_POWER:
 	case GPIOBUTTON_TYPE_SLEEP:
