@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.64 2015/05/29 13:41:39 martin Exp $
+# $NetBSD: ad.arm,v 1.65 2015/05/30 17:39:56 joerg Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -154,8 +154,6 @@
 ./usr/lib/oabi/liby_g.a				comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libz_g.a				comp-c-debuglib		compat,debuglib
 ./usr/libdata/debug/lib/libc_vfp.so.0.0.debug	comp-sys-debug		debug,pic,softfloat
-./usr/libdata/debug/lib/oabi			-unknown-		debug,compat
-./usr/libdata/debug/lib/oabi/npf		-unknown-		debug,compat
 ./usr/libdata/debug/lib/oabi/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/oabi/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/oabi/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -165,8 +163,6 @@
 ./usr/libdata/debug/usr/lib/libarm.so.0.0.debug	comp-sys-debug		debug,pic
 ./usr/libdata/debug/usr/lib/libc_vfp.so.0.0.debug	comp-sys-debug		debug,pic,softfloat
 ./usr/libdata/debug/usr/lib/libpmc.so.1.0.debug	comp-sys-debug		debug,pic
-./usr/libdata/debug/usr/lib/oabi		-unknown-	debug,compat
-./usr/libdata/debug/usr/lib/oabi/i18n		-unknown-	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug,compat

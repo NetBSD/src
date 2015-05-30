@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.74 2015/05/29 12:28:08 christos Exp $
+# $NetBSD: ad.arm,v 1.75 2015/05/30 17:39:56 joerg Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -375,6 +375,10 @@
 ./usr/lib/oabi/security/pam_skey.so.4		base-compat-shlib	compat,pic,skey,pam
 ./usr/lib/oabi/security/pam_ssh.so.4		base-compat-shlib	compat,pic,crypto,pam
 ./usr/lib/oabi/security/pam_unix.so.4		base-compat-shlib	compat,pic,pam
+./usr/libdata/debug/lib/oabi			base-compat-lib		compat
+./usr/libdata/debug/lib/oabi/npf		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/oabi		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/oabi/i18n		base-compat-lib		compat
 ./usr/libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
 ./usr/libexec/ld.so				base-sys-shlib		pic,endian=1234
 ./usr/mdec/BBBB					base-obsolete		obsolete

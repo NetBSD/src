@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.66 2015/01/25 15:50:30 christos Exp $
+# $NetBSD: ad.arm,v 1.67 2015/05/30 17:39:56 joerg Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -941,16 +941,13 @@
 ./usr/lib/oabi/libform.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libform_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libform_pic.a			comp-c-piclib		compat,pic,picinstall
-./usr/lib/oabi/libgcc.a				comp-c-lib		compat
 ./usr/lib/oabi/libgcc.a				comp-c-lib		compat,gcccmds
-./usr/lib/oabi/libgcc_eh.a			comp-c-lib		compat,pic
 ./usr/lib/oabi/libgcc_eh.a			comp-c-lib		compat,pic,gcccmds
 ./usr/lib/oabi/libgcc_eh_p.a			comp-c-proflib		obsolete
 ./usr/lib/oabi/libgcc_eh_pic.a			comp-c-piclib		obsolete
 ./usr/lib/oabi/libgcc_p.a			comp-c-proflib		obsolete
 ./usr/lib/oabi/libgcc_pic.a			comp-c-piclib		obsolete
 ./usr/lib/oabi/libgcc_s.a			comp-obsolete		obsolete
-./usr/lib/oabi/libgcc_s.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libgcc_s.so			base-sys-shlib		compat,pic,gcccmds
 ./usr/lib/oabi/libgcc_s_p.a			comp-obsolete		obsolete
 ./usr/lib/oabi/libgcc_s_pic.a			comp-obsolete		obsolete
