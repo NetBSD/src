@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.139 2015/05/12 07:07:16 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.140 2015/05/30 23:59:33 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -431,6 +431,7 @@ extern vaddr_t	pmap_curmaxkvaddr;
  * Starting VA of direct mapped memory (usually KERNEL_BASE).
  */
 extern vaddr_t pmap_directbase;
+extern vaddr_t pmap_directlimit;
 #endif
 
 /*
