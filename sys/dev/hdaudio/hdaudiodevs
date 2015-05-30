@@ -1,4 +1,4 @@
-$NetBSD: hdaudiodevs,v 1.1 2015/03/28 14:09:59 jmcneill Exp $
+$NetBSD: hdaudiodevs,v 1.2 2015/05/30 14:12:42 jmcneill Exp $
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -58,6 +58,7 @@ product	NVIDIA		GT21x_HDMI	0x000b	GT21x HDMI
 product	NVIDIA		MCP89_HDMI	0x000c	MCP89 HDMI
 product	NVIDIA		GT240_HDMI	0x000d	GT240 HDMI
 product	NVIDIA		GT5xx_HDMI_DP	0x0015	GT5xx HDMI/DP
+product	NVIDIA		TEGRA124_HDMI	0x0028	Tegra124 HDMI
 product	NVIDIA		MCP67_HDMI	0x0067	MCP67 HDMI
 product	NVIDIA		MCP73_HDMI	0x8001	MCP73 HDMI
 
