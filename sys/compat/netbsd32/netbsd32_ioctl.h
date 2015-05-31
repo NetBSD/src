@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.50 2015/05/31 22:16:16 roy Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.51 2015/05/31 22:19:41 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -425,6 +425,18 @@ struct netbsd32_ifmediareq {
 };
 /* from <sys/sockio.h> */
 #define	SIOCGIFMEDIA32	_IOWR('i', 54, struct netbsd32_ifmediareq) /* get net media */
+
+/* from net/if_pppoe.h */
+struct netbsd32_pppoediscparms {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	char	eth_ifname[IFNAMSIZ];	/* external ethernet interface name */
+	netbsd32_charp ac_name;		/* access concentrator name (or NULL) */
+	netbsd32_size_t	ac_name_len;		/* on write: length of buffer for ac_name */
+	netbsd32_charp service_name;	/* service name (or NULL) */
+	netbsd32_size_t	service_name_len;	/* on write: length of buffer for service name */
+};
+#define	PPPOESETPARMS32	_IOW('i', 110, struct netbsd32_pppoediscparms)
+#define	PPPOEGETPARMS32	_IOWR('i', 111, struct netbsd32_pppoediscparms)
 
 /* from net/if_sppp.h */
 struct netbsd32_spppauthcfg {
