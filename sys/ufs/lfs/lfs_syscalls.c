@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.157 2015/04/20 13:44:16 riastradh Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.158 2015/05/31 15:44:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.157 2015/04/20 13:44:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.158 2015/05/31 15:44:31 hannken Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -937,8 +937,8 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	if (sup->su_flags & SEGUSE_SUPERBLOCK)
 		fs->lfs_avail -= lfs_btofsb(fs, LFS_SBPAD);
 	if (fs->lfs_version > 1 && segnum == 0 &&
-	    fs->lfs_start < lfs_btofsb(fs, LFS_LABELPAD))
-		fs->lfs_avail -= lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
+	    fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD))
+		fs->lfs_avail -= lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_s0addr;
 	mutex_enter(&lfs_lock);
 	fs->lfs_bfree += sup->su_nsums * lfs_btofsb(fs, fs->lfs_sumsize) +
 		lfs_btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
