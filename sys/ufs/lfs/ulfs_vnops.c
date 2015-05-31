@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.25 2015/04/20 23:03:09 riastradh Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.26 2015/05/31 15:48:03 hannken Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.25 2015/04/20 23:03:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.26 2015/05/31 15:48:03 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1174,39 +1174,27 @@ ulfs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
  * Allocate a new inode.
  */
 int
-ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ulr,
+ulfs_makeinode(struct vattr *vap, struct vnode *dvp,
+	const struct ulfs_lookup_results *ulr,
 	struct vnode **vpp, struct componentname *cnp)
 {
-	struct inode	*ip, *pdir;
+	struct inode	*ip;
 	struct lfs_direct	*newdir;
 	struct vnode	*tvp;
 	int		error;
 
-	pdir = VTOI(dvp);
-
-	if ((mode & LFS_IFMT) == 0)
-		mode |= LFS_IFREG;
-
-	if ((error = lfs_valloc(dvp, mode, cnp->cn_cred, vpp)) != 0) {
-		return (error);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
+	if (error)
+		return error;
+	error = vn_lock(tvp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(tvp);
+		return error;
 	}
-	tvp = *vpp;
+	lfs_mark_vnode(tvp);
+	*vpp = tvp;
 	ip = VTOI(tvp);
-	ip->i_gid = pdir->i_gid;
-	DIP_ASSIGN(ip, gid, ip->i_gid);
-	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
-	DIP_ASSIGN(ip, uid, ip->i_uid);
-#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
-		lfs_vfree(tvp, ip->i_number, mode);
-		vput(tvp);
-		return (error);
-	}
-#endif
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	ip->i_mode = mode;
-	DIP_ASSIGN(ip, mode, mode);
-	tvp->v_type = IFTOVT(mode);	/* Rest init'd in getnewvnode(). */
 	ip->i_nlink = 1;
 	DIP_ASSIGN(ip, nlink, 1);
 
@@ -1214,7 +1202,7 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	if (ip->i_mode & ISGID) {
 		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
 		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
-		    ip->i_gid, mode));
+		    ip->i_gid, MAKEIMODE(vap->va_type, vap->va_mode)));
 		if (error) {
 			ip->i_mode &= ~ISGID;
 			DIP_ASSIGN(ip, mode, ip->i_mode);
@@ -1250,7 +1238,6 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	ip->i_flag |= IN_CHANGE;
 	/* If IN_ADIROP, account for it */
 	lfs_unmark_vnode(tvp);
-	tvp->v_type = VNON;		/* explodes later if VBLK */
 	vput(tvp);
 	return (error);
 }

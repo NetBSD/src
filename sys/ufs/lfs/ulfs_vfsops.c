@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.8 2013/06/08 02:12:56 dholland Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.9 2015/05/31 15:48:03 hannken Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.52 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.8 2013/06/08 02:12:56 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.9 2015/05/31 15:48:03 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -221,6 +221,8 @@ ulfs_fhtovp(struct mount *mp, struct ulfs_ufid *ufhp, struct vnode **vpp)
 	int error;
 
 	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
+		if (error == ENOENT)
+			error = ESTALE;
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -247,7 +249,6 @@ ulfs_init(void)
 	ulfs_direct_cache = pool_cache_init(sizeof(struct lfs_direct), 0, 0, 0,
 	    "ulfsdir", NULL, IPL_NONE, NULL, NULL, NULL);
 
-	ulfs_ihashinit();
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	lfs_dqinit();
 #endif
@@ -262,7 +263,7 @@ ulfs_init(void)
 void
 ulfs_reinit(void)
 {
-	ulfs_ihashreinit();
+
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	lfs_dqreinit();
 #endif
@@ -277,7 +278,6 @@ ulfs_done(void)
 	if (--ulfs_initcount > 0)
 		return;
 
-	ulfs_ihashdone();
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	lfs_dqdone();
 #endif
