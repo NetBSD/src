@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.60 2012/06/28 13:58:21 abs Exp $ */
+/*	$NetBSD: vsbus.c,v 1.61 2015/05/31 07:04:18 abs Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.60 2012/06/28 13:58:21 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.61 2015/05/31 07:04:18 abs Exp $");
 
 #include "opt_cputype.h"
 
@@ -138,6 +138,7 @@ vsbus_attach(device_t parent, device_t self, void *aux)
 		sc->sc_intclr = (char *)sc->sc_vsregs + 15;
 		sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
 		vsbus_dma_init(sc, 32768);
+		break;
 #endif
 
 	default:
