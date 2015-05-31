@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.322 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.323 2015/05/31 15:44:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.322 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.323 2015/05/31 15:44:31 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -119,8 +119,6 @@ MODULE(MODULE_CLASS_VFS, lfs, NULL);
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
-static int lfs_extattrctl(struct mount *, int, struct vnode *, int,
-			  const char *);
 
 static struct sysctllog *lfs_sysctl_log;
 
@@ -953,7 +951,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (fs->lfs_version < 2) {
 		fs->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
 		fs->lfs_ibsize = fs->lfs_bsize;
-		fs->lfs_start = fs->lfs_sboffs[0];
+		fs->lfs_s0addr = fs->lfs_sboffs[0];
 		fs->lfs_tstamp = fs->lfs_otstamp;
 		fs->lfs_fsbtodb = 0;
 	}
@@ -2321,7 +2319,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 /*
  * Extended attribute dispatch
  */
-static int
+int
 lfs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
 	       int attrnamespace, const char *attrname)
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.45 2015/03/29 19:35:58 chopps Exp $ */
+/* $NetBSD: setup.c,v 1.46 2015/05/31 15:44:30 hannken Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -240,7 +240,7 @@ setup(const char *dev)
 				(unsigned long)idaddr);
 		tdaddr = lfs_sntod(fs, lfs_dtosn(fs, idaddr));
 		if (lfs_sntod(fs, lfs_dtosn(fs, tdaddr)) == tdaddr) {
-			if (tdaddr == fs->lfs_start)
+			if (tdaddr == fs->lfs_s0addr)
 				tdaddr += lfs_btofsb(fs, LFS_LABELPAD);
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
 				if (fs->lfs_sboffs[i] == tdaddr)
