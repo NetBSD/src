@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.104 2015/05/31 15:45:18 hannken Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.105 2015/05/31 15:48:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -122,12 +122,11 @@ extern kcondvar_t lfs_writing_cv;
 extern kcondvar_t locked_queue_cv;
 
 /* lfs_alloc.c */
-void lfs_vcreate(struct mount *, ino_t, struct vnode *);
-int lfs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
+int lfs_valloc(struct vnode *, int, kauth_cred_t, ino_t *, int *);
+int lfs_valloc_fixed(struct lfs *, ino_t, int);
 int lfs_vfree(struct vnode *, ino_t, int);
 void lfs_order_freelist(struct lfs *);
 int lfs_extend_ifile(struct lfs *, kauth_cred_t);
-int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int, struct vnode **);
 void lfs_orphan(struct lfs *, ino_t);
 
 /* lfs_balloc.c */
@@ -195,9 +194,6 @@ int lfs_match_indir(struct lfs *, struct buf *);
 int lfs_match_dindir(struct lfs *, struct buf *);
 int lfs_match_tindir(struct lfs *, struct buf *);
 void lfs_callback(struct buf *);
-int lfs_vref(struct vnode *);
-void lfs_vunref(struct vnode *);
-void lfs_vunref_head(struct vnode *);
 void lfs_acquire_finfo(struct lfs *fs, ino_t, int);
 void lfs_release_finfo(struct lfs *fs);
 
