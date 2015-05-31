@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.40 2015/05/30 21:44:38 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.41 2015/05/31 00:02:16 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,6 +38,18 @@
 #include "assym.h"
 
 //#define MPDEBUG
+
+// Marco to call routines in .text
+#if defined(KERNEL_BASES_EQUAL)
+#define CALL(f)		bl	_C_LABEL(f)
+#else
+#define	CALL(f)	\
+	movw	ip, #:lower16:_C_LABEL(f); \
+	movt	ip, #:upper16:_C_LABEL(f); \
+	sub	ip, ip, #KERNEL_BASE_VOFFSET; \
+	blx	ip
+#endif
+
 
 // We'll modify va and pa at run time so we can use relocatable addresses.
 #define MMU_INIT(va,pa,n_sec,attr) \
@@ -413,14 +425,7 @@ cortex_init:
 	// Step 1b, invalidate the data cache
 	//
 	XPUTC(#'B')
-#if defined(KERNEL_BASES_EQUAL)
-	bl	_C_LABEL(armv7_dcache_wbinv_all)
-#else
-	movw	ip, #:lower16:_C_LABEL(armv7_dcache_wbinv_all)
-	movt	ip, #:upper16:_C_LABEL(armv7_dcache_wbinv_all)
-	sub	ip, ip, #KERNEL_BASE_VOFFSET
-	blx	ip				// writeback & toss d-cache
-#endif
+	CALL(armv7_dcache_wbinv_all)
 	XPUTC(#'C')
 
 	//
@@ -566,19 +571,8 @@ cortex_mpstart:
 	// L1 cache without fear of losing valuable data.  Afterwards, we can
 	// flush icache without worrying about anything getting written back
 	// to memory.
-#if defined(KERNEL_BASES_EQUAL)
-	bl	_C_LABEL(armv7_dcache_l1inv_all)// toss-dcache
-	bl	_C_LABEL(armv7_icache_inv_all)	// toss i-cache after d-cache
-#else
-	movw	ip, #:lower16:_C_LABEL(armv7_dcache_l1inv_all)
-	movt	ip, #:upper16:_C_LABEL(armv7_dcache_l1inv_all)
-	sub	ip, ip, #KERNEL_BASE_VOFFSET
-	blx	ip				// toss d-cache
-	movw	ip, #:lower16:_C_LABEL(armv7_icache_inv_all)
-	movt	ip, #:upper16:_C_LABEL(armv7_icache_inv_all)
-	sub	ip, ip, #KERNEL_BASE_VOFFSET
-	blx	ip				// toss i-cache after d-cache
-#endif
+	CALL(armv7_dcache_l1inv_all)		// toss-dcache
+	CALL(armv7_icache_inv_all)		// toss i-cache after d-cache
 
 #if 0
 	mrc	p15, 0, r0, c1, c1, 2		// NSACR read
