@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.119 2013/07/28 01:25:05 dholland Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.120 2015/05/31 15:48:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.119 2013/07/28 01:25:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.120 2015/05/31 15:48:03 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -191,14 +191,12 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 /* VOP_BWRITE 2i times */
 int
 lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
-    struct vnode **vpp)
+    ino_t *ino, int *gen)
 {
 	struct lfs *fs;
 	struct buf *bp, *cbp;
 	struct ifile *ifp;
-	ino_t new_ino;
 	int error;
-	int new_gen;
 	CLEANERINFO *cip;
 
 	fs = VTOI(pvp)->i_lfs;
@@ -210,32 +208,32 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	lfs_seglock(fs, SEGM_PROT);
 
 	/* Get the head of the freelist. */
-	LFS_GET_HEADFREE(fs, cip, cbp, &new_ino);
-	KASSERT(new_ino != LFS_UNUSED_INUM && new_ino != LFS_IFILE_INUM);
+	LFS_GET_HEADFREE(fs, cip, cbp, ino);
+	KASSERT(*ino != LFS_UNUSED_INUM && *ino != LFS_IFILE_INUM);
 
-	DLOG((DLOG_ALLOC, "lfs_valloc: allocate inode %lld\n",
-	     (long long)new_ino));
+	DLOG((DLOG_ALLOC, "lfs_valloc: allocate inode %" PRId64 "\n",
+	     *ino));
 
 	/*
 	 * Remove the inode from the free list and write the new start
 	 * of the free list into the superblock.
 	 */
-	CLR_BITMAP_FREE(fs, new_ino);
-	LFS_IENTRY(ifp, fs, new_ino, bp);
+	CLR_BITMAP_FREE(fs, *ino);
+	LFS_IENTRY(ifp, fs, *ino, bp);
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
-		panic("lfs_valloc: inuse inode %llu on the free list",
-		    (unsigned long long)new_ino);
+		panic("lfs_valloc: inuse inode %" PRId64 " on the free list",
+		    *ino);
 	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
-	DLOG((DLOG_ALLOC, "lfs_valloc: headfree %lld -> %lld\n",
-	     (long long)new_ino, (long long)ifp->if_nextfree));
+	DLOG((DLOG_ALLOC, "lfs_valloc: headfree %" PRId64 " -> %u\n",
+	     *ino, ifp->if_nextfree));
 
-	new_gen = ifp->if_version; /* version was updated by vfree */
+	*gen = ifp->if_version; /* version was updated by vfree */
 	brelse(bp, 0);
 
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_freehd == LFS_UNUSED_INUM) {
 		if ((error = lfs_extend_ifile(fs, cred)) != 0) {
-			LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
+			LFS_PUT_HEADFREE(fs, cip, cbp, *ino);
 			lfs_segunlock(fs);
 			return error;
 		}
@@ -253,94 +251,54 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 
 	lfs_segunlock(fs);
 
-	return lfs_ialloc(fs, pvp, new_ino, new_gen, vpp);
+	return 0;
 }
 
 /*
- * Finish allocating a new inode, given an inode and generation number.
+ * Allocate a new inode with given inode number and version.
  */
 int
-lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
-	   struct vnode **vpp)
+lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 {
-	struct inode *ip;
-	struct vnode *vp;
+	IFILE *ifp;
+	struct buf *bp, *cbp;
+	ino_t tino, oldnext;
+	CLEANERINFO *cip;
 
-	ASSERT_NO_SEGLOCK(fs);
-
-	vp = *vpp;
-	mutex_enter(&ulfs_hashlock);
-	/* Create an inode to associate with the vnode. */
-	lfs_vcreate(pvp->v_mount, new_ino, vp);
-
-	ip = VTOI(vp);
-	mutex_enter(&lfs_lock);
-	LFS_SET_UINO(ip, IN_CHANGE);
-	mutex_exit(&lfs_lock);
-	/* on-disk structure has been zeroed out by lfs_vcreate */
-	ip->i_din.ffs1_din->di_inumber = new_ino;
-
-	/* Note no blocks yet */
-	ip->i_lfs_hiblk = -1;
-
-	/* Set a new generation number for this inode. */
-	if (new_gen) {
-		ip->i_gen = new_gen;
-		ip->i_ffs1_gen = new_gen;
+	/* If the Ifile is too short to contain this inum, extend it */
+	while (VTOI(fs->lfs_ivnode)->i_size <= (ino /
+		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz)
+		<< fs->lfs_bshift) {
+		lfs_extend_ifile(fs, NOCRED);
 	}
 
-	/* Insert into the inode hash table. */
-	ulfs_ihashins(ip);
-	mutex_exit(&ulfs_hashlock);
+	LFS_IENTRY(ifp, fs, ino, bp);
+	oldnext = ifp->if_nextfree;
+	ifp->if_version = vers;
+	brelse(bp, 0);
 
-	ulfs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, vpp);
-	vp = *vpp;
-	ip = VTOI(vp);
+	LFS_GET_HEADFREE(fs, cip, cbp, &ino);
+	if (ino) {
+		LFS_PUT_HEADFREE(fs, cip, cbp, oldnext);
+	} else {
+		tino = ino;
+		while (1) {
+			LFS_IENTRY(ifp, fs, tino, bp);
+			if (ifp->if_nextfree == ino ||
+			    ifp->if_nextfree == LFS_UNUSED_INUM)
+				break;
+			tino = ifp->if_nextfree;
+			brelse(bp, 0);
+		}
+		if (ifp->if_nextfree == LFS_UNUSED_INUM) {
+			brelse(bp, 0);
+			return ENOENT;
+		}
+		ifp->if_nextfree = oldnext;
+		LFS_BWRITE_LOG(bp);
+	}
 
-	memset(ip->i_lfs_fragsize, 0, ULFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
-
-	uvm_vnp_setsize(vp, 0);
-	lfs_mark_vnode(vp);
-	genfs_node_init(vp, &lfs_genfsops);
-	vref(ip->i_devvp);
-	return (0);
-}
-
-/* Create a new vnode/inode pair and initialize what fields we can. */
-void
-lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
-{
-	struct inode *ip;
-	struct ulfs1_dinode *dp;
-	struct ulfsmount *ump;
-
-	/* Get a pointer to the private mount structure. */
-	ump = VFSTOULFS(mp);
-
-	ASSERT_NO_SEGLOCK(ump->um_lfs);
-
-	/* Initialize the inode. */
-	ip = pool_get(&lfs_inode_pool, PR_WAITOK);
-	memset(ip, 0, sizeof(*ip));
-	dp = pool_get(&lfs_dinode_pool, PR_WAITOK);
-	memset(dp, 0, sizeof(*dp));
-	ip->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
-	memset(ip->inode_ext.lfs, 0, sizeof(*ip->inode_ext.lfs));
-	vp->v_data = ip;
-	ip->i_din.ffs1_din = dp;
-	ip->i_ump = ump;
-	ip->i_vnode = vp;
-	ip->i_devvp = ump->um_devvp;
-	ip->i_dev = ump->um_dev;
-	ip->i_number = dp->di_inumber = ino;
-	ip->i_lfs = ump->um_lfs;
-	ip->i_lfs_effnblks = 0;
-	SPLAY_INIT(&ip->i_lfs_lbtree);
-	ip->i_lfs_nbtree = 0;
-	LIST_INIT(&ip->i_lfs_segdhd);
-#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	ulfsquota_init(ip);
-#endif
+	return 0;
 }
 
 #if 0
@@ -449,7 +407,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		wakeup(&fs->lfs_dirvcount);
 		wakeup(&lfs_dirvcount);
 		mutex_exit(&lfs_lock);
-		lfs_vunref(vp);
+		vrele(vp);
 
 		/*
 		 * If this inode is not going to be written any more, any

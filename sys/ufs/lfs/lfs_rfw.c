@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.19 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.20 2015/05/31 15:48:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.19 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.20 2015/05/31 15:48:03 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -101,13 +101,10 @@ int
 lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 	      struct vnode **vpp)
 {
-	IFILE *ifp;
-	struct buf *bp, *cbp;
+	struct vattr va;
 	struct vnode *vp;
 	struct inode *ip;
-	ino_t tino, oldnext;
 	int error;
-	CLEANERINFO *cip;
 
 	ASSERT_SEGLOCK(fs); /* XXX it doesn't, really */
 
@@ -138,70 +135,25 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		}
 	}
 
-	/*
-	 * The inode is not in use.  Find it on the free list.
-	 */
-	/* If the Ifile is too short to contain this inum, extend it */
-	while (VTOI(fs->lfs_ivnode)->i_size <= (ino /
-		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz)
-		<< fs->lfs_bshift) {
-		lfs_extend_ifile(fs, NOCRED);
+	/* Not found, create as regular file. */
+	vattr_null(&va);
+	va.va_type = VREG;
+	va.va_mode = 0;
+	va.va_fileid = ino;
+	va.va_gen = vers;
+	error = vcache_new(fs->lfs_ivnode->v_mount, NULL, &va, NOCRED, &vp);
+	if (error)
+		return error;
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(vp);
+		*vpp = NULLVP;
+		return error;
 	}
-
-	LFS_IENTRY(ifp, fs, ino, bp);
-	oldnext = ifp->if_nextfree;
-	ifp->if_version = vers;
-	brelse(bp, 0);
-
-	LFS_GET_HEADFREE(fs, cip, cbp, &ino);
-	if (ino) {
-		LFS_PUT_HEADFREE(fs, cip, cbp, oldnext);
-	} else {
-		tino = ino;
-		while (1) {
-			LFS_IENTRY(ifp, fs, tino, bp);
-			if (ifp->if_nextfree == ino ||
-			    ifp->if_nextfree == LFS_UNUSED_INUM)
-				break;
-			tino = ifp->if_nextfree;
-			brelse(bp, 0);
-		}
-		if (ifp->if_nextfree == LFS_UNUSED_INUM) {
-			brelse(bp, 0);
-			return ENOENT;
-		}
-		ifp->if_nextfree = oldnext;
-		LFS_BWRITE_LOG(bp);
-	}
-
-	error = lfs_ialloc(fs, fs->lfs_ivnode, ino, vers, &vp);
-	if (error == 0) {
-		/*
-		 * Make it VREG so we can put blocks on it.  We will change
-		 * this later if it turns out to be some other kind of file.
-		 */
-		ip = VTOI(vp);
-		ip->i_mode = ip->i_ffs1_mode = LFS_IFREG;
-		ip->i_nlink = ip->i_ffs1_nlink = 1;
-		ulfs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
-		ip = VTOI(vp);
-
-		DLOG((DLOG_RF, "lfs_rf_valloc: ino %d vp %p\n", ino, vp));
-
-		/* The dirop-nature of this vnode is past */
-		lfs_unmark_vnode(vp);
-		(void)lfs_vunref(vp);
-		vp->v_uflag &= ~VU_DIROP;
-		mutex_enter(&lfs_lock);
-		--lfs_dirvcount;
-		--fs->lfs_dirvcount;
-		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
-		wakeup(&lfs_dirvcount);
-		wakeup(&fs->lfs_dirvcount);
-		mutex_exit(&lfs_lock);
-	}
+	ip = VTOI(vp);
+	ip->i_nlink = ip->i_ffs1_nlink = 1;
 	*vpp = vp;
-	return error;
+	return 0;
 }
 
 /*
