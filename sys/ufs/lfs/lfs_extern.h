@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.102 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.103 2015/05/31 15:44:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -223,17 +223,7 @@ int lfs_bmapv(struct proc *, fsid_t *, struct block_info *, int);
 int lfs_markv(struct proc *, fsid_t *, struct block_info *, int);
 
 /* lfs_vfsops.c */
-void lfs_init(void);
-void lfs_reinit(void);
-void lfs_done(void);
-int lfs_mountroot(void);
-int lfs_mount(struct mount *, const char *, void *, size_t *);
-int lfs_unmount(struct mount *, int);
-int lfs_statvfs(struct mount *, struct statvfs *);
-int lfs_sync(struct mount *, int, kauth_cred_t);
-int lfs_vget(struct mount *, ino_t, struct vnode **);
-int lfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int lfs_vptofh(struct vnode *, struct fid *, size_t *);
+VFS_PROTOS(lfs);
 void lfs_vinit(struct mount *, struct vnode **);
 int lfs_resize_fs(struct lfs *, int);
 
