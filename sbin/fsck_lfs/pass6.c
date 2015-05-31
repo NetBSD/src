@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.33 2015/03/29 19:35:58 chopps Exp $	 */
+/* $NetBSD: pass6.c,v 1.34 2015/05/31 15:44:30 hannken Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -596,7 +596,7 @@ pass6(void)
 
 		/* Could be a superblock */
 		if (lfs_sntod(fs, lfs_dtosn(fs, daddr)) == daddr) {
-			if (daddr == fs->lfs_start) {
+			if (daddr == fs->lfs_s0addr) {
 				++hassuper;
 				daddr += lfs_btofsb(fs, LFS_LABELPAD);
 			}
@@ -825,7 +825,7 @@ pass6(void)
 
 		/* Could be a superblock */
 		if (lfs_sntod(fs, lfs_dtosn(fs, daddr)) == daddr) {
-			if (daddr == fs->lfs_start)
+			if (daddr == fs->lfs_s0addr)
 				daddr += lfs_btofsb(fs, LFS_LABELPAD);
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
 				if (daddr == fs->lfs_sboffs[i]) {
@@ -863,7 +863,7 @@ pass6(void)
 
 	/* Final address could also be a superblock */
 	if (lfs_sntod(fs, lfs_dtosn(fs, lastgood)) == lastgood) {
-		if (lastgood == fs->lfs_start)
+		if (lastgood == fs->lfs_s0addr)
 			lastgood += lfs_btofsb(fs, LFS_LABELPAD);
 		for (i = 0; i < LFS_MAXNUMSB; i++) {
 			if (lastgood == fs->lfs_sboffs[i])
