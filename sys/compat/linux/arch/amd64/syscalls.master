@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.54 2015/03/07 03:25:19 christos Exp $
+	$NetBSD: syscalls.master,v 1.55 2015/05/31 10:49:27 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -66,7 +66,7 @@
 
 0	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
 1	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
-			    int nbyte); }
+			    size_t nbyte); }
 2	STD		{ int|linux_sys||open(const char *path, int flags, \
 			    linux_umode_t mode); }
 3	NOARGS		{ int|sys||close(int fd); }
