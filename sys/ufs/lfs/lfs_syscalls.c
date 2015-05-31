@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.158 2015/05/31 15:44:31 hannken Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.159 2015/05/31 15:45:18 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.158 2015/05/31 15:44:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.159 2015/05/31 15:45:18 hannken Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.158 2015/05/31 15:44:31 hannken E
 
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
 int lfs_fasthashget(dev_t, ino_t, struct vnode **);
+int lfs_fastvget(struct mount *, ino_t, BLOCK_INFO *, int, struct vnode **);
 
 pid_t lfs_cleaner_pid = 0;
 
@@ -230,9 +231,10 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 	struct inode *ip = NULL;
 	struct lfs *fs;
 	struct mount *mntp;
-	struct vnode *vp = NULL;
+	struct ulfsmount *ump;
+	struct vnode *vp;
 	ino_t lastino;
-	daddr_t b_daddr, v_daddr;
+	daddr_t b_daddr;
 	int cnt, error;
 	int do_again = 0;
 	int numrefed = 0;
@@ -245,7 +247,8 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);
 
-	fs = VFSTOULFS(mntp)->um_lfs;
+	ump = VFSTOULFS(mntp);
+	fs = ump->um_lfs;
 
 	if (fs->lfs_ronly)
 		return EROFS;
@@ -273,7 +276,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 	error = 0;
 
 	/* these were inside the initialization for the for loop */
-	v_daddr = LFS_UNUSED_DADDR;
+	vp = NULL;
 	lastino = LFS_UNUSED_INUM;
 	nblkwritten = ninowritten = 0;
 	for (blkp = blkiov; cnt--; ++blkp)
@@ -289,11 +292,12 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 		 */
 		if (lastino != blkp->bi_inode) {
 			/*
-			 * Finish the old file, if there was one.  The presence
-			 * of a usable vnode in vp is signaled by a valid v_daddr.
+			 * Finish the old file, if there was one.
 			 */
-			if (v_daddr != LFS_UNUSED_DADDR) {
+			if (vp != NULL) {
+				VOP_UNLOCK(vp);
 				lfs_vunref(vp);
+				vp = NULL;
 				numrefed--;
 			}
 
@@ -301,27 +305,10 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 			 * Start a new file
 			 */
 			lastino = blkp->bi_inode;
-			if (blkp->bi_inode == LFS_IFILE_INUM)
-				v_daddr = fs->lfs_idaddr;
-			else {
-				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
-				/* XXX fix for force write */
-				v_daddr = ifp->if_daddr;
-				brelse(bp, 0);
-			}
-			if (v_daddr == LFS_UNUSED_DADDR)
-				continue;
 
 			/* Get the vnode/inode. */
-			error = lfs_fastvget(mntp, blkp->bi_inode, v_daddr,
-					   &vp,
-					   (blkp->bi_lbn == LFS_UNUSED_LBN
-					    ? blkp->bi_bp
-					    : NULL));
-
-			if (!error) {
-				numrefed++;
-			}
+			error = lfs_fastvget(mntp, blkp->bi_inode, blkp,
+			    LK_EXCLUSIVE | LK_NOWAIT, &vp);
 			if (error) {
 				DLOG((DLOG_CLEAN, "lfs_markv: lfs_fastvget"
 				      " failed with %d (ino %d, segment %d)\n",
@@ -335,28 +322,22 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 				 * again with another.	(When the
 				 * cleaner runs again, this segment will
 				 * sort high on the list, since it is
-				 * now almost entirely empty.) But, we
-				 * still set v_daddr = LFS_UNUSED_ADDR
-				 * so as not to test this over and over
-				 * again.
+				 * now almost entirely empty.)
 				 */
 				if (error == EAGAIN) {
 					error = 0;
 					do_again++;
-				}
-#ifdef DIAGNOSTIC
-				else if (error != ENOENT)
-					panic("lfs_markv VFS_VGET FAILED");
-#endif
-				/* lastino = LFS_UNUSED_INUM; */
-				v_daddr = LFS_UNUSED_DADDR;
-				vp = NULL;
+				} else
+					KASSERT(error == ENOENT);
+				KASSERT(vp == NULL);
 				ip = NULL;
 				continue;
 			}
+
 			ip = VTOI(vp);
+			numrefed++;
 			ninowritten++;
-		} else if (v_daddr == LFS_UNUSED_DADDR) {
+		} else if (vp == NULL) {
 			/*
 			 * This can only happen if the vnode is dead (or
 			 * in any case we can't get it...e.g., it is
@@ -484,8 +465,10 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 	/*
 	 * Finish the old file, if there was one
 	 */
-	if (v_daddr != LFS_UNUSED_DADDR) {
+	if (vp != NULL) {
+		VOP_UNLOCK(vp);
 		lfs_vunref(vp);
+		vp = NULL;
 		numrefed--;
 	}
 
@@ -528,8 +511,10 @@ err3:
 	 * XXX should do segwrite here anyway?
 	 */
 
-	if (v_daddr != LFS_UNUSED_DADDR) {
+	if (vp != NULL) {
+		VOP_UNLOCK(vp);
 		lfs_vunref(vp);
+		vp = NULL;
 		--numrefed;
 	}
 
@@ -673,19 +658,15 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	struct inode *ip = NULL;
 	struct lfs *fs;
 	struct mount *mntp;
-	struct ulfsmount *ump;
 	struct vnode *vp;
 	ino_t lastino;
 	daddr_t v_daddr;
 	int cnt, error;
 	int numrefed = 0;
 
-	lfs_cleaner_pid = p->p_pid;
-
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);
 
-	ump = VFSTOULFS(mntp);
 	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
@@ -696,6 +677,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	error = 0;
 
 	/* these were inside the initialization for the for loop */
+	vp = NULL;
 	v_daddr = LFS_UNUSED_DADDR;
 	lastino = LFS_UNUSED_INUM;
 	for (blkp = blkiov; cnt--; ++blkp)
@@ -706,20 +688,12 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		 */
 		if (lastino != blkp->bi_inode) {
 			/*
-			 * Finish the old file, if there was one.  The presence
-			 * of a usable vnode in vp is signaled by a valid
-			 * v_daddr.
+			 * Finish the old file, if there was one.
 			 */
-			if (v_daddr != LFS_UNUSED_DADDR) {
+			if (vp != NULL) {
+				VOP_UNLOCK(vp);
 				lfs_vunref(vp);
-				if (VTOI(vp)->i_lfs_iflags & LFSI_BMAP) {
-					mutex_enter(vp->v_interlock);
-					if (vget(vp, LK_NOWAIT,
-						false /* !wait */) == 0) {
-						if (! vrecycle(vp))
-							vrele(vp);
-					}
-				}
+				vp = NULL;
 				numrefed--;
 			}
 
@@ -738,50 +712,20 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				blkp->bi_daddr = LFS_UNUSED_DADDR;
 				continue;
 			}
-			/*
-			 * A regular call to VFS_VGET could deadlock
-			 * here.  Instead, we try an unlocked access.
-			 */
-			mutex_enter(&ulfs_ihash_lock);
-			vp = ulfs_ihashlookup(ump->um_dev, blkp->bi_inode);
-			if (vp != NULL)
-				mutex_enter(vp->v_interlock);
-			if (vp != NULL && vdead_check(vp, VDEAD_NOWAIT) == 0) {
-				ip = VTOI(vp);
-				mutex_exit(&ulfs_ihash_lock);
-				if (lfs_vref(vp)) {
-					v_daddr = LFS_UNUSED_DADDR;
-					continue;
-				}
-				numrefed++;
+			error = lfs_fastvget(mntp, blkp->bi_inode, NULL,
+			    LK_SHARED, &vp);
+			if (error) {
+				DLOG((DLOG_CLEAN, "lfs_bmapv: lfs_fastvget ino"
+				      "%d failed with %d",
+				      blkp->bi_inode,error));
+				KASSERT(vp == NULL);
+				continue;
 			} else {
-				if (vp != NULL)
-					mutex_exit(vp->v_interlock);
-				mutex_exit(&ulfs_ihash_lock);
-				/*
-				 * Don't VFS_VGET if we're being unmounted,
-				 * since we hold vfs_busy().
-				 */
-				if (mntp->mnt_iflag & IMNT_UNMOUNT) {
-					v_daddr = LFS_UNUSED_DADDR;
-					continue;
-				}
-				error = VFS_VGET(mntp, blkp->bi_inode, &vp);
-				if (error) {
-					DLOG((DLOG_CLEAN, "lfs_bmapv: vget ino"
-					      "%d failed with %d",
-					      blkp->bi_inode,error));
-					v_daddr = LFS_UNUSED_DADDR;
-					continue;
-				} else {
-					KASSERT(VOP_ISLOCKED(vp));
-					VTOI(vp)->i_lfs_iflags |= LFSI_BMAP;
-					VOP_UNLOCK(vp);
-					numrefed++;
-				}
+				KASSERT(VOP_ISLOCKED(vp));
+				numrefed++;
 			}
 			ip = VTOI(vp);
-		} else if (v_daddr == LFS_UNUSED_DADDR) {
+		} else if (vp == NULL) {
 			/*
 			 * This can only happen if the vnode is dead.
 			 * Keep going.	Note that we DO NOT set the
@@ -792,7 +736,6 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 * lfs_markv will throw them out if we are
 			 * wrong.
 			 */
-			/* blkp->bi_daddr = LFS_UNUSED_DADDR; */
 			continue;
 		}
 
@@ -825,19 +768,12 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	}
 
 	/*
-	 * Finish the old file, if there was one.  The presence
-	 * of a usable vnode in vp is signaled by a valid v_daddr.
+	 * Finish the old file, if there was one.
 	 */
-	if (v_daddr != LFS_UNUSED_DADDR) {
+	if (vp != NULL) {
+		VOP_UNLOCK(vp);
 		lfs_vunref(vp);
-		/* Recycle as above. */
-		if (ip->i_lfs_iflags & LFSI_BMAP) {
-			mutex_enter(vp->v_interlock);
-			if (vget(vp, LK_NOWAIT, false /* !wait */) == 0) {
-				if (! vrecycle(vp))
-					vrele(vp);
-			}
-		}
+		vp = NULL;
 		numrefed--;
 	}
 
@@ -1076,13 +1012,15 @@ lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 }
 
 int
-lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
-	     struct ulfs1_dinode *dinp)
+lfs_fastvget(struct mount *mp, ino_t ino, BLOCK_INFO *blkp, int lk_flags,
+    struct vnode **vpp)
 {
+	IFILE *ifp;
 	struct inode *ip;
-	struct ulfs1_dinode *dip;
+	struct ulfs1_dinode *dip, *dinp;
 	struct vnode *vp;
 	struct ulfsmount *ump;
+	daddr_t daddr;
 	dev_t dev;
 	int error, retries;
 	struct buf *bp;
@@ -1110,8 +1048,33 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 	 */
 
 	error = lfs_fasthashget(dev, ino, vpp);
-	if (error != 0 || *vpp != NULL)
-		return (error);
+	if (error != 0)
+		return error;
+	else if (*vpp != NULL) {
+		error = vn_lock(*vpp, lk_flags);
+		if (error == EBUSY)
+			error = EAGAIN;
+		if (error) {
+			lfs_vunref(*vpp);
+			*vpp = NULL;
+			return error;
+		}
+	}
+
+	if (blkp != NULL && blkp->bi_lbn == LFS_UNUSED_LBN)
+		dinp = blkp->bi_bp;
+	else
+		dinp = NULL;
+
+	if (ino == LFS_IFILE_INUM)
+		daddr = fs->lfs_idaddr;
+	else {
+		LFS_IENTRY(ifp, fs, ino, bp);
+		daddr = ifp->if_daddr;
+		brelse(bp, 0);
+	}
+	if (daddr == LFS_UNUSED_DADDR)
+		return ENOENT;
 
 	/*
 	 * getnewvnode(9) will call vfs_busy, which will block if the
@@ -1219,7 +1182,6 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 	*vpp = vp;
 
 	KASSERT(VOP_ISLOCKED(vp));
-	VOP_UNLOCK(vp);
 
 	return (0);
 }
