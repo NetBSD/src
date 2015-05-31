@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.49 2015/05/27 21:42:43 matt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.50 2015/05/31 22:16:16 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -425,6 +425,25 @@ struct netbsd32_ifmediareq {
 };
 /* from <sys/sockio.h> */
 #define	SIOCGIFMEDIA32	_IOWR('i', 54, struct netbsd32_ifmediareq) /* get net media */
+
+/* from net/if_sppp.h */
+struct netbsd32_spppauthcfg {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	u_int	hisauth;		/* one of SPPP_AUTHPROTO_* above */
+	u_int	myauth;			/* one of SPPP_AUTHPROTO_* above */
+	u_int	myname_length;		/* includes terminating 0 */
+	u_int	mysecret_length;	/* includes terminating 0 */
+	u_int	hisname_length;		/* includes terminating 0 */
+	u_int	hissecret_length;	/* includes terminating 0 */
+	u_int	myauthflags;
+	u_int	hisauthflags;
+	netbsd32_charp	myname;
+	netbsd32_charp	mysecret;
+	netbsd32_charp	hisname;
+	netbsd32_charp	hissecret;
+};
+#define SPPPGETAUTHCFG32 _IOWR('i', 120, struct netbsd32_spppauthcfg)
+#define SPPPSETAUTHCFG32 _IOW('i', 121, struct netbsd32_spppauthcfg)
 
 /* from <net/if.h> */
 struct  netbsd32_ifdrv {
