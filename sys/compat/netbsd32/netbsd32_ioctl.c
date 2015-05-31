@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.76 2015/05/31 22:16:16 roy Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.77 2015/05/31 22:19:41 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,8 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.76 2015/05/31 22:16:16 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.77 2015/05/31 22:19:41 roy Exp $");
 
+#include "pppoe.h"
 #include "sppp.h"
 
 #include <sys/param.h>
@@ -67,6 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.76 2015/05/31 22:16:16 roy Exp 
 #include <net/if.h>
 #include <net/route.h>
 
+#if NPPPOE > 0
+#include <net/if_pppoe.h>
+#endif
 #if NSPPP > 0
 #include <net/if_sppp.h>
 #endif
@@ -164,6 +168,21 @@ netbsd32_to_ifmediareq(struct netbsd32_ifmediareq *s32p, struct ifmediareq *p, u
 	memcpy(p, s32p, sizeof *s32p);
 	p->ifm_ulist = (int *)NETBSD32PTR64(s32p->ifm_ulist);
 }
+
+#if NPPPOE > 0
+static inline void
+netbsd32_to_pppoediscparms(struct netbsd32_pppoediscparms *s32p,
+    struct pppoediscparms *p, u_long cmd)
+{
+
+	memcpy(p->ifname, s32p->ifname, sizeof p->ifname);
+	memcpy(p->eth_ifname, s32p->eth_ifname, sizeof p->eth_ifname);
+	p->ac_name = (char *)NETBSD32PTR64(s32p->ac_name);
+	p->ac_name_len = s32p->ac_name_len;
+	p->service_name = (char *)NETBSD32PTR64(s32p->service_name);
+	p->service_name_len = s32p->service_name_len;
+}
+#endif
 
 #if NSPPP > 0
 static inline void
@@ -528,6 +547,21 @@ netbsd32_from_ifmediareq(struct ifmediareq *p, struct netbsd32_ifmediareq *s32p,
 	s32p->ifm_ulist = (netbsd32_intp_t)p->ifm_ulist;
 #endif
 }
+
+#if NPPPOE > 0
+static inline void
+netbsd32_from_pppoediscparms(struct pppoediscparms *p,
+    struct netbsd32_pppoediscparms *s32p, u_long cmd)
+{
+
+	memcpy(s32p->ifname, p->ifname, sizeof s32p->ifname);
+	memcpy(s32p->eth_ifname, p->eth_ifname, sizeof s32p->eth_ifname);
+	NETBSD32PTR32(s32p->ac_name, p->ac_name);
+	s32p->ac_name_len = p->ac_name_len;
+	NETBSD32PTR32(s32p->service_name, p->service_name);
+	s32p->service_name_len = p->service_name_len;
+}
+#endif
 
 #if NSPPP > 0
 static inline void
@@ -1090,6 +1124,12 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case SIOCGIFMEDIA32:
 		IOCTL_STRUCT_CONV_TO(SIOCGIFMEDIA, ifmediareq);
 
+#if NPPPOE > 0
+	case PPPOESETPARMS32:
+		IOCTL_STRUCT_CONV_TO(PPPOESETPARMS, pppoediscparms);
+	case PPPOEGETPARMS32:
+		IOCTL_STRUCT_CONV_TO(PPPOEGETPARMS, pppoediscparms);
+#endif
 #if NSPPP > 0
 	case SPPPGETAUTHCFG32:
 		IOCTL_STRUCT_CONV_TO(SPPPGETAUTHCFG, spppauthcfg);
