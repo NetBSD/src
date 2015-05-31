@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.44 2015/03/29 19:35:58 chopps Exp $ */
+/* $NetBSD: lfs.c,v 1.45 2015/05/31 15:44:30 hannken Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -528,7 +528,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	if (fs->lfs_version < 2) {
 		fs->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
 		fs->lfs_ibsize = fs->lfs_bsize;
-		fs->lfs_start = fs->lfs_sboffs[0];
+		fs->lfs_s0addr = fs->lfs_sboffs[0];
 		fs->lfs_tstamp = fs->lfs_otstamp;
 		fs->lfs_fsbtodb = 0;
 	}
@@ -586,7 +586,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 		 * Don't mistakenly read a superblock, if there is one here.
 		 */
 		if (lfs_sntod(osb, lfs_dtosn(osb, daddr)) == daddr) {
-			if (daddr == osb->lfs_start)
+			if (daddr == osb->lfs_s0addr)
 				daddr += lfs_btofsb(osb, LFS_LABELPAD);
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
 				if (osb->lfs_sboffs[i] < daddr)

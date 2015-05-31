@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.238 2015/04/20 13:44:16 riastradh Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.239 2015/05/31 15:44:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.238 2015/04/20 13:44:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.239 2015/05/31 15:44:31 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -1784,11 +1784,11 @@ lfs_initseg(struct lfs *fs)
 		brelse(bp, 0);
 		/* Segment zero could also contain the labelpad */
 		if (fs->lfs_version > 1 && sp->seg_number == 0 &&
-		    fs->lfs_start < lfs_btofsb(fs, LFS_LABELPAD)) {
+		    fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD)) {
 			fs->lfs_offset +=
-			    lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
+			    lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_s0addr;
 			sp->seg_bytes_left -=
-			    LFS_LABELPAD - lfs_fsbtob(fs, fs->lfs_start);
+			    LFS_LABELPAD - lfs_fsbtob(fs, fs->lfs_s0addr);
 		}
 	} else {
 		sp->seg_number = lfs_dtosn(fs, fs->lfs_curseg);
