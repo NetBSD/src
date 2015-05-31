@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.3 2015/05/31 22:09:38 roy Exp $
+#	$NetBSD: files.net,v 1.4 2015/05/31 23:01:04 roy Exp $
 
 # XXX CLEANUP
 define	net
@@ -29,7 +29,7 @@ file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
 file	net/if_stf.c			stf & inet & inet6	needs-flag
 file	net/if_sl.c			sl			needs-flag
-file	net/if_spppsubr.c		sppp			needs-flag
+file	net/if_spppsubr.c		sppp
 file	net/if_strip.c			strip			needs-flag
 file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tap.c			tap
