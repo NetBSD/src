@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.103 2015/05/31 15:44:31 hannken Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.104 2015/05/31 15:45:18 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -215,7 +215,6 @@ void lfs_writer_leave(struct lfs *);
 void lfs_wakeup_cleaner(struct lfs *);
 
 /* lfs_syscalls.c */
-int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ulfs1_dinode *);
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
 int lfs_do_segclean(struct lfs *, unsigned long);
 int lfs_segwait(fsid_t *, struct timeval *);
