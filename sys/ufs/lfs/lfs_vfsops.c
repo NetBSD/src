@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.323 2015/05/31 15:44:31 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.324 2015/05/31 15:48:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.323 2015/05/31 15:44:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.324 2015/05/31 15:48:03 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.323 2015/05/31 15:44:31 hannken Exp
 #include <ufs/lfs/ulfs_quotacommon.h>
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_bswap.h>
 #include <ufs/lfs/ulfs_extern.h>
 
 #include <uvm/uvm.h>
@@ -151,6 +152,8 @@ struct vfsops lfs_vfsops = {
 	.vfs_statvfs = lfs_statvfs,
 	.vfs_sync = lfs_sync,
 	.vfs_vget = lfs_vget,
+	.vfs_loadvnode = lfs_loadvnode,
+	.vfs_newvnode = lfs_newvnode,
 	.vfs_fhtovp = lfs_fhtovp,
 	.vfs_vptofh = lfs_vptofh,
 	.vfs_init = lfs_init,
@@ -983,6 +986,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	ump->um_lfs = fs;
 	ump->um_fstype = ULFS1;
+	/* ump->um_cleaner_thread = NULL; */
 	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
 		brelse(bp, BC_INVAL);
 		brelse(abp, BC_INVAL);
@@ -1437,22 +1441,94 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 int
 lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
+	int error;
+
+	error = vcache_get(mp, &ino, sizeof(ino), vpp);
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+
+	return 0;
+}
+
+/*
+ * Create a new vnode/inode pair and initialize what fields we can.
+ */
+static void
+lfs_init_vnode(struct ulfsmount *ump, ino_t ino, struct vnode *vp)
+{
+	struct inode *ip;
+	struct ulfs1_dinode *dp;
+
+	ASSERT_NO_SEGLOCK(ump->um_lfs);
+
+	/* Initialize the inode. */
+	ip = pool_get(&lfs_inode_pool, PR_WAITOK);
+	memset(ip, 0, sizeof(*ip));
+	dp = pool_get(&lfs_dinode_pool, PR_WAITOK);
+	memset(dp, 0, sizeof(*dp));
+	ip->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
+	memset(ip->inode_ext.lfs, 0, sizeof(*ip->inode_ext.lfs));
+	ip->i_din.ffs1_din = dp;
+	ip->i_ump = ump;
+	ip->i_vnode = vp;
+	ip->i_dev = ump->um_dev;
+	ip->i_number = dp->di_inumber = ino;
+	ip->i_lfs = ump->um_lfs;
+	ip->i_lfs_effnblks = 0;
+	SPLAY_INIT(&ip->i_lfs_lbtree);
+	ip->i_lfs_nbtree = 0;
+	LIST_INIT(&ip->i_lfs_segdhd);
+
+	vp->v_tag = VT_LFS;
+	vp->v_op = lfs_vnodeop_p;
+	vp->v_data = ip;
+}
+
+/*
+ * Undo lfs_init_vnode().
+ */
+static void
+lfs_deinit_vnode(struct ulfsmount *ump, struct vnode *vp)
+{
+	struct inode *ip = VTOI(vp);
+
+	pool_put(&lfs_inoext_pool, ip->inode_ext.lfs);
+	pool_put(&lfs_dinode_pool, ip->i_din.ffs1_din);
+	pool_put(&lfs_inode_pool, ip);
+	vp->v_data = NULL;
+}
+
+/*
+ * Read an inode from disk and initialize this vnode / inode pair.
+ * Caller assures no other thread will try to load this inode.
+ */
+int
+lfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
 	struct lfs *fs;
 	struct ulfs1_dinode *dip;
 	struct inode *ip;
 	struct buf *bp;
 	struct ifile *ifp;
-	struct vnode *vp;
 	struct ulfsmount *ump;
+	ino_t ino;
 	daddr_t daddr;
-	dev_t dev;
 	int error, retries;
 	struct timespec ts;
+
+	KASSERT(key_len == sizeof(ino));
+	memcpy(&ino, key, key_len);
 
 	memset(&ts, 0, sizeof ts);	/* XXX gcc */
 
 	ump = VFSTOULFS(mp);
-	dev = ump->um_dev;
 	fs = ump->um_lfs;
 
 	/*
@@ -1464,23 +1540,6 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		mtsleep(&fs->lfs_flags, PRIBIO+1, "lfs_notyet", 0,
 			&lfs_lock);
 	mutex_exit(&lfs_lock);
-
-retry:
-	if ((*vpp = ulfs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
-		return (0);
-
-	error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, NULL, &vp);
-	if (error) {
-		*vpp = NULL;
-		 return (error);
-	}
-
-	mutex_enter(&ulfs_hashlock);
-	if (ulfs_ihashget(dev, ino, 0) != NULL) {
-		mutex_exit(&ulfs_hashlock);
-		ungetnewvnode(vp);
-		goto retry;
-	}
 
 	/* Translate the inode number to a disk address. */
 	if (ino == LFS_IFILE_INUM)
@@ -1495,51 +1554,37 @@ retry:
 		}
 
 		brelse(bp, 0);
-		if (daddr == LFS_UNUSED_DADDR) {
-			*vpp = NULLVP;
-			mutex_exit(&ulfs_hashlock);
-			ungetnewvnode(vp);
+		if (daddr == LFS_UNUSED_DADDR)
 			return (ENOENT);
-		}
 	}
 
 	/* Allocate/init new vnode/inode. */
-	lfs_vcreate(mp, ino, vp);
-
-	/*
-	 * Put it onto its hash chain and lock it so that other requests for
-	 * this inode will block if they arrive while we are sleeping waiting
-	 * for old data structures to be purged or for the contents of the
-	 * disk portion of this inode to be read.
-	 */
+	lfs_init_vnode(ump, ino, vp);
 	ip = VTOI(vp);
-	ulfs_ihashins(ip);
-	mutex_exit(&ulfs_hashlock);
 
-	/*
-	 * XXX
-	 * This may not need to be here, logically it should go down with
-	 * the i_devvp initialization.
-	 * Ask Kirk.
-	 */
-	ip->i_lfs = ump->um_lfs;
+	/* If the cleaner supplied the inode, use it. */
+	if (curlwp == ump->um_cleaner_thread && ump->um_cleaner_hint != NULL &&
+	    ump->um_cleaner_hint->bi_lbn == LFS_UNUSED_LBN) {
+		dip = ump->um_cleaner_hint->bi_bp;
+		error = copyin(dip, ip->i_din.ffs1_din,
+		    sizeof(struct ulfs1_dinode));
+		if (error) {
+			lfs_deinit_vnode(ump, vp);
+			return error;
+		}
+		KASSERT(ip->i_number == ino);
+		goto out;
+	}
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	retries = 0;
-    again:
+again:
 	error = bread(ump->um_devvp, LFS_FSBTODB(fs, daddr),
 		(fs->lfs_version == 1 ? fs->lfs_bsize : fs->lfs_ibsize),
 		0, &bp);
 	if (error) {
-		/*
-		 * The inode does not contain anything useful, so it would
-		 * be misleading to leave it on its hash chain. With mode
-		 * still zero, it will be unlinked and returned to the free
-		 * list by vput().
-		 */
-		vput(vp);
-		*vpp = NULL;
-		return (error);
+		lfs_deinit_vnode(ump, vp);
+		return error;
 	}
 
 	dip = lfs_ifind(fs, ino, bp);
@@ -1547,48 +1592,53 @@ retry:
 		/* Assume write has not completed yet; try again */
 		brelse(bp, BC_INVAL);
 		++retries;
-		if (retries > LFS_IFIND_RETRIES) {
-#ifdef DEBUG
-			/* If the seglock is held look at the bpp to see
-			   what is there anyway */
+		if (retries <= LFS_IFIND_RETRIES) {
 			mutex_enter(&lfs_lock);
-			if (fs->lfs_seglock > 0) {
-				struct buf **bpp;
-				struct ulfs1_dinode *dp;
-				int i;
+			if (fs->lfs_iocount) {
+				DLOG((DLOG_VNODE,
+				    "%s: dinode %d not found, retrying...\n",
+				    __func__, ino));
+				(void)mtsleep(&fs->lfs_iocount, PRIBIO + 1,
+					      "lfs ifind", 1, &lfs_lock);
+			} else
+				retries = LFS_IFIND_RETRIES;
+			mutex_exit(&lfs_lock);
+			goto again;
+		}
+#ifdef DEBUG
+		/* If the seglock is held look at the bpp to see
+		   what is there anyway */
+		mutex_enter(&lfs_lock);
+		if (fs->lfs_seglock > 0) {
+			struct buf **bpp;
+			struct ulfs1_dinode *dp;
+			int i;
 
-				for (bpp = fs->lfs_sp->bpp;
-				     bpp != fs->lfs_sp->cbpp; ++bpp) {
-					if ((*bpp)->b_vp == fs->lfs_ivnode &&
-					    bpp != fs->lfs_sp->bpp) {
-						/* Inode block */
-						printf("lfs_vget: block 0x%" PRIx64 ": ",
-						       (*bpp)->b_blkno);
-						dp = (struct ulfs1_dinode *)(*bpp)->b_data;
-						for (i = 0; i < LFS_INOPB(fs); i++)
-							if (dp[i].di_inumber)
-								printf("%d ", dp[i].di_inumber);
-						printf("\n");
-					}
+			for (bpp = fs->lfs_sp->bpp;
+			     bpp != fs->lfs_sp->cbpp; ++bpp) {
+				if ((*bpp)->b_vp == fs->lfs_ivnode &&
+				    bpp != fs->lfs_sp->bpp) {
+					/* Inode block */
+					printf("%s: block 0x%" PRIx64 ": ",
+					       __func__, (*bpp)->b_blkno);
+					dp = (struct ulfs1_dinode *)
+					    (*bpp)->b_data;
+					for (i = 0; i < LFS_INOPB(fs); i++)
+						if (dp[i].di_inumber)
+							printf("%d ",
+							    dp[i].di_inumber);
+					printf("\n");
 				}
 			}
-			mutex_exit(&lfs_lock);
-#endif /* DEBUG */
-			panic("lfs_vget: dinode not found");
 		}
-		mutex_enter(&lfs_lock);
-		if (fs->lfs_iocount) {
-			DLOG((DLOG_VNODE, "lfs_vget: dinode %d not found, retrying...\n", ino));
-			(void)mtsleep(&fs->lfs_iocount, PRIBIO + 1,
-				      "lfs ifind", 1, &lfs_lock);
-		} else
-			retries = LFS_IFIND_RETRIES;
 		mutex_exit(&lfs_lock);
-		goto again;
+#endif /* DEBUG */
+		panic("lfs_loadvnode: dinode not found");
 	}
 	*ip->i_din.ffs1_din = *dip;
 	brelse(bp, 0);
 
+out:	
 	if (fs->lfs_version > 1) {
 		ip->i_ffs1_atime = ts.tv_sec;
 		ip->i_ffs1_atimensec = ts.tv_nsec;
@@ -1596,11 +1646,107 @@ retry:
 
 	lfs_vinit(mp, &vp);
 
-	*vpp = vp;
+	*new_key = &ip->i_number;
+	return 0;
+}
 
-	KASSERT(VOP_ISLOCKED(vp));
+/*
+ * Create a new inode and initialize this vnode / inode pair.
+ */
+int
+lfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
+    struct vattr *vap, kauth_cred_t cred,
+    size_t *key_len, const void **new_key)
+{
+	ino_t ino;
+	struct inode *ip;
+	struct ulfsmount *ump;
+	struct lfs *fs;
+	int error, mode, gen;
 
-	return (0);
+	KASSERT(dvp != NULL || vap->va_fileid > 0);
+	KASSERT(dvp != NULL && dvp->v_mount == mp);
+	KASSERT(vap->va_type != VNON);
+
+	*key_len = sizeof(ino);
+	ump = VFSTOULFS(mp);
+	fs = ump->um_lfs;
+	mode = MAKEIMODE(vap->va_type, vap->va_mode);
+
+	/*
+	 * Allocate fresh inode.  With "dvp == NULL" take the inode number
+	 * and version from "vap".
+	*/
+	if (dvp == NULL) {
+		ino = vap->va_fileid;
+		gen = vap->va_gen;
+		error = lfs_valloc_fixed(fs, ino, gen);
+	} else {
+		error = lfs_valloc(dvp, mode, cred, &ino, &gen);
+	}
+	if (error)
+		return error;
+
+	/* Attach inode to vnode. */
+	lfs_init_vnode(ump, ino, vp);
+	ip = VTOI(vp);
+
+	mutex_enter(&lfs_lock);
+	LFS_SET_UINO(ip, IN_CHANGE);
+	mutex_exit(&lfs_lock);
+
+	/* Note no blocks yet */
+	ip->i_lfs_hiblk = -1;
+
+	/* Set a new generation number for this inode. */
+	ip->i_gen = gen;
+	ip->i_ffs1_gen = gen;
+
+	memset(ip->i_lfs_fragsize, 0,
+	    ULFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
+
+	/* Set uid / gid. */
+	if (cred == NOCRED || cred == FSCRED) {
+		ip->i_gid = 0;
+		ip->i_uid = 0;
+	} else {
+		ip->i_gid = VTOI(dvp)->i_gid;
+		ip->i_uid = kauth_cred_geteuid(cred);
+	}
+	DIP_ASSIGN(ip, gid, ip->i_gid);
+	DIP_ASSIGN(ip, uid, ip->i_uid);
+
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
+	error = lfs_chkiq(ip, 1, cred, 0);
+	if (error) {
+		lfs_vfree(dvp, ino, mode);
+		ffs_deinit_vnode(ump, vp);
+
+		return error;
+	}
+#endif
+
+	/* Set type and finalize. */
+	ip->i_flags = 0;
+	DIP_ASSIGN(ip, flags, 0);
+	ip->i_mode = mode;
+	DIP_ASSIGN(ip, mode, mode);
+	if (vap->va_rdev != VNOVAL) {
+		/*
+		 * Want to be able to use this to make badblock
+		 * inodes, so don't truncate the dev number.
+		 */
+		if (ump->um_fstype == ULFS1)
+			ip->i_ffs1_rdev = ulfs_rw32(vap->va_rdev,
+			    ULFS_MPNEEDSWAP(ump));
+		else
+			ip->i_ffs2_rdev = ulfs_rw64(vap->va_rdev,
+			    ULFS_MPNEEDSWAP(ump));
+	}
+	lfs_vinit(mp, &vp);
+
+	*new_key = &ip->i_number;
+	return 0;
 }
 
 /*
@@ -1610,11 +1756,7 @@ int
 lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct lfid lfh;
-	struct buf *bp;
-	IFILE *ifp;
-	int32_t daddr;
 	struct lfs *fs;
-	vnode_t *vp;
 
 	if (fhp->fid_len != sizeof(struct lfid))
 		return EINVAL;
@@ -1631,17 +1773,6 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	    ((VTOI(fs->lfs_ivnode)->i_ffs1_size >> fs->lfs_bshift) -
 	     fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb)
 		return ESTALE;
-
-	mutex_enter(&ulfs_ihash_lock);
-	vp = ulfs_ihashlookup(VFSTOULFS(mp)->um_dev, lfh.lfid_ino);
-	mutex_exit(&ulfs_ihash_lock);
-	if (vp == NULL) {
-		LFS_IENTRY(ifp, fs, lfh.lfid_ino, bp);
-		daddr = ifp->if_daddr;
-		brelse(bp, 0);
-		if (daddr == LFS_UNUSED_DADDR)
-			return ESTALE;
-	}
 
 	return (ulfs_fhtovp(mp, &lfh.lfid_ufid, vpp));
 }
@@ -2038,7 +2169,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 
 /*
  * finish vnode/inode initialization.
- * used by lfs_vget and lfs_fastvget.
+ * used by lfs_vget.
  */
 void
 lfs_vinit(struct mount *mp, struct vnode **vpp)

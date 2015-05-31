@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.159 2015/05/31 15:45:18 hannken Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.160 2015/05/31 15:48:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.159 2015/05/31 15:45:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.160 2015/05/31 15:48:03 hannken Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -85,11 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.159 2015/05/31 15:45:18 hannken E
 #include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
+static int lfs_fastvget(struct mount *, ino_t, BLOCK_INFO *, int,
+    struct vnode **);
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
-int lfs_fasthashget(dev_t, ino_t, struct vnode **);
-int lfs_fastvget(struct mount *, ino_t, BLOCK_INFO *, int, struct vnode **);
-
-pid_t lfs_cleaner_pid = 0;
 
 /*
  * sys_lfs_markv:
@@ -295,8 +293,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 			 * Finish the old file, if there was one.
 			 */
 			if (vp != NULL) {
-				VOP_UNLOCK(vp);
-				lfs_vunref(vp);
+				vput(vp);
 				vp = NULL;
 				numrefed--;
 			}
@@ -466,8 +463,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 	 * Finish the old file, if there was one
 	 */
 	if (vp != NULL) {
-		VOP_UNLOCK(vp);
-		lfs_vunref(vp);
+		vput(vp);
 		vp = NULL;
 		numrefed--;
 	}
@@ -512,8 +508,7 @@ err3:
 	 */
 
 	if (vp != NULL) {
-		VOP_UNLOCK(vp);
-		lfs_vunref(vp);
+		vput(vp);
 		vp = NULL;
 		--numrefed;
 	}
@@ -658,6 +653,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	struct inode *ip = NULL;
 	struct lfs *fs;
 	struct mount *mntp;
+	struct ulfsmount *ump;
 	struct vnode *vp;
 	ino_t lastino;
 	daddr_t v_daddr;
@@ -667,8 +663,13 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);
 
+	ump = VFSTOULFS(mntp);
 	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
+
+	if (ump->um_cleaner_thread == NULL)
+		ump->um_cleaner_thread = curlwp;
+	KASSERT(ump->um_cleaner_thread == curlwp);
 
 	cnt = blkcnt;
 
@@ -691,8 +692,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 * Finish the old file, if there was one.
 			 */
 			if (vp != NULL) {
-				VOP_UNLOCK(vp);
-				lfs_vunref(vp);
+				vput(vp);
 				vp = NULL;
 				numrefed--;
 			}
@@ -771,8 +771,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	 * Finish the old file, if there was one.
 	 */
 	if (vp != NULL) {
-		VOP_UNLOCK(vp);
-		lfs_vunref(vp);
+		vput(vp);
 		vp = NULL;
 		numrefed--;
 	}
@@ -972,218 +971,36 @@ sys___lfs_segwait50(struct lwp *l, const struct sys___lfs_segwait50_args *uap,
 }
 
 /*
- * VFS_VGET call specialized for the cleaner.  The cleaner already knows the
- * daddr from the ifile, so don't look it up again.  If the cleaner is
+ * VFS_VGET call specialized for the cleaner.  If the cleaner is
  * processing IINFO structures, it may have the ondisk inode already, so
  * don't go retrieving it again.
  *
- * we lfs_vref, and it is the caller's responsibility to lfs_vunref
- * when finished.
+ * Return the vnode referenced and locked.
  */
 
-int
-lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
-{
-	struct vnode *vp;
-
-	mutex_enter(&ulfs_ihash_lock);
-	if ((vp = ulfs_ihashlookup(dev, ino)) != NULL) {
-		mutex_enter(vp->v_interlock);
-		mutex_exit(&ulfs_ihash_lock);
-		if (vdead_check(vp, VDEAD_NOWAIT) != 0) {
-			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d dead\n",
-			      ino));
-			lfs_stats.clean_vnlocked++;
-			mutex_exit(vp->v_interlock);
-			return EAGAIN;
-		}
-		if (lfs_vref(vp)) {
-			DLOG((DLOG_CLEAN, "lfs_fastvget: lfs_vref failed"
-			      " for ino %d\n", ino));
-			lfs_stats.clean_inlocked++;
-			return EAGAIN;
-		}
-	} else {
-		mutex_exit(&ulfs_ihash_lock);
-	}
-	*vpp = vp;
-
-	return (0);
-}
-
-int
+static int
 lfs_fastvget(struct mount *mp, ino_t ino, BLOCK_INFO *blkp, int lk_flags,
     struct vnode **vpp)
 {
-	IFILE *ifp;
-	struct inode *ip;
-	struct ulfs1_dinode *dip, *dinp;
-	struct vnode *vp;
 	struct ulfsmount *ump;
-	daddr_t daddr;
-	dev_t dev;
-	int error, retries;
-	struct buf *bp;
-	struct lfs *fs;
+	int error;
 
 	ump = VFSTOULFS(mp);
-	dev = ump->um_dev;
-	fs = ump->um_lfs;
-
-	/*
-	 * Wait until the filesystem is fully mounted before allowing vget
-	 * to complete.	 This prevents possible problems with roll-forward.
-	 */
-	mutex_enter(&lfs_lock);
-	while (fs->lfs_flags & LFS_NOTYET) {
-		mtsleep(&fs->lfs_flags, PRIBIO+1, "lfs_fnotyet", 0,
-			&lfs_lock);
-	}
-	mutex_exit(&lfs_lock);
-
-	/*
-	 * This is playing fast and loose.  Someone may have the inode
-	 * locked, in which case they are going to be distinctly unhappy
-	 * if we trash something.
-	 */
-
-	error = lfs_fasthashget(dev, ino, vpp);
-	if (error != 0)
+	ump->um_cleaner_hint = blkp;
+	error = vcache_get(mp, &ino, sizeof(ino), vpp);
+	ump->um_cleaner_hint = NULL;
+	if (error)
 		return error;
-	else if (*vpp != NULL) {
-		error = vn_lock(*vpp, lk_flags);
+	error = vn_lock(*vpp, lk_flags);
+	if (error) {
 		if (error == EBUSY)
 			error = EAGAIN;
-		if (error) {
-			lfs_vunref(*vpp);
-			*vpp = NULL;
-			return error;
-		}
-	}
-
-	if (blkp != NULL && blkp->bi_lbn == LFS_UNUSED_LBN)
-		dinp = blkp->bi_bp;
-	else
-		dinp = NULL;
-
-	if (ino == LFS_IFILE_INUM)
-		daddr = fs->lfs_idaddr;
-	else {
-		LFS_IENTRY(ifp, fs, ino, bp);
-		daddr = ifp->if_daddr;
-		brelse(bp, 0);
-	}
-	if (daddr == LFS_UNUSED_DADDR)
-		return ENOENT;
-
-	/*
-	 * getnewvnode(9) will call vfs_busy, which will block if the
-	 * filesystem is being unmounted; but umount(9) is waiting for
-	 * us because we're already holding the fs busy.
-	 * XXXMP
-	 */
-	if (mp->mnt_iflag & IMNT_UNMOUNT) {
+		vrele(*vpp);
 		*vpp = NULL;
-		return EDEADLK;
-	}
-	error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, NULL, &vp);
-	if (error) {
-		*vpp = NULL;
-		return (error);
+		return error;
 	}
 
-	mutex_enter(&ulfs_hashlock);
-	error = lfs_fasthashget(dev, ino, vpp);
-	if (error != 0 || *vpp != NULL) {
-		mutex_exit(&ulfs_hashlock);
-		ungetnewvnode(vp);
-		return (error);
-	}
-
-	/* Allocate new vnode/inode. */
-	lfs_vcreate(mp, ino, vp);
-
-	/*
-	 * Put it onto its hash chain and lock it so that other requests for
-	 * this inode will block if they arrive while we are sleeping waiting
-	 * for old data structures to be purged or for the contents of the
-	 * disk portion of this inode to be read.
-	 */
-	ip = VTOI(vp);
-	ulfs_ihashins(ip);
-	mutex_exit(&ulfs_hashlock);
-
-#ifdef notyet
-	/* Not found in the cache => this vnode was loaded only for cleaning. */
-	ip->i_lfs_iflags |= LFSI_BMAP;
-#endif
-
-	/*
-	 * XXX
-	 * This may not need to be here, logically it should go down with
-	 * the i_devvp initialization.
-	 * Ask Kirk.
-	 */
-	ip->i_lfs = fs;
-
-	/* Read in the disk contents for the inode, copy into the inode. */
-	if (dinp) {
-		error = copyin(dinp, ip->i_din.ffs1_din, sizeof (struct ulfs1_dinode));
-		if (error) {
-			DLOG((DLOG_CLEAN, "lfs_fastvget: dinode copyin failed"
-			      " for ino %d\n", ino));
-			ulfs_ihashrem(ip);
-
-			/* Unlock and discard unneeded inode. */
-			VOP_UNLOCK(vp);
-			lfs_vunref(vp);
-			*vpp = NULL;
-			return (error);
-		}
-		if (ip->i_number != ino)
-			panic("lfs_fastvget: I was fed the wrong inode!");
-	} else {
-		retries = 0;
-	    again:
-		error = bread(ump->um_devvp, LFS_FSBTODB(fs, daddr), fs->lfs_ibsize,
-			      0, &bp);
-		if (error) {
-			DLOG((DLOG_CLEAN, "lfs_fastvget: bread failed (%d)\n",
-			      error));
-			/*
-			 * The inode does not contain anything useful, so it
-			 * would be misleading to leave it on its hash chain.
-			 * Iput() will return it to the free list.
-			 */
-			ulfs_ihashrem(ip);
-
-			/* Unlock and discard unneeded inode. */
-			VOP_UNLOCK(vp);
-			lfs_vunref(vp);
-			*vpp = NULL;
-			return (error);
-		}
-		dip = lfs_ifind(ump->um_lfs, ino, bp);
-		if (dip == NULL) {
-			/* Assume write has not completed yet; try again */
-			brelse(bp, BC_INVAL);
-			++retries;
-			if (retries > LFS_IFIND_RETRIES)
-				panic("lfs_fastvget: dinode not found");
-			DLOG((DLOG_CLEAN, "lfs_fastvget: dinode not found,"
-			      " retrying...\n"));
-			goto again;
-		}
-		*ip->i_din.ffs1_din = *dip;
-		brelse(bp, 0);
-	}
-	lfs_vinit(mp, &vp);
-
-	*vpp = vp;
-
-	KASSERT(VOP_ISLOCKED(vp));
-
-	return (0);
+	return 0;
 }
 
 /*
