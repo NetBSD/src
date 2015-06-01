@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.10 2011/11/09 17:05:50 matt Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.11 2015/06/01 22:55:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10 2011/11/09 17:05:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.11 2015/06/01 22:55:13 matt Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -44,19 +44,15 @@ __KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10 2011/11/09 17:05:50 matt Exp $")
 #include <mips/regnum.h>
 #include <mips/mips_opcode.h>
 
-#define	INSN_LUI_P(insn)	(((insn) >> 26) == OP_LUI)
-#define	INSN_LW_P(insn)		(((insn) >> 26) == OP_LW)
-#define	INSN_SW_P(insn)		(((insn) >> 26) == OP_SW)
-#define	INSN_LD_P(insn)		(((insn) >> 26) == OP_LD)
-#define	INSN_SD_P(insn)		(((insn) >> 26) == OP_SD)
-
-#define INSN_LOAD_P(insn)	(INSN_LD_P(insn) || INSN_LW_P(insn))
-#define INSN_STORE_P(insn)	(INSN_SD_P(insn) || INSN_SW_P(insn))
-
 bool
-mips_fixup_exceptions(mips_fixup_callback_t callback)
+mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 {
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+	uint32_t * const start =
+	    (uint32_t *)(intptr_t)(mipsNN_cp0_ebase_read() & ~MIPS_EBASE_CPUNUM);
+#else
 	uint32_t * const start = (uint32_t *)MIPS_KSEG0_START;
+#endif
 	uint32_t * const end = start + (5 * 128) / sizeof(uint32_t);
 	const int32_t addr = (intptr_t)&cpu_info_store;
 	const size_t size = sizeof(cpu_info_store);
@@ -121,7 +117,7 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 #endif
 				new_insns[0] = lui_insn;
 				new_insns[1] = *insnp;
-				if ((callback)(load_addr, new_insns)) {
+				if ((callback)(load_addr, new_insns, arg)) {
 					if (lui_insnp) {
 						*lui_insnp = new_insns[0];
 						*insnp = new_insns[1];
