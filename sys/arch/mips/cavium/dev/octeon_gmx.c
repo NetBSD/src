@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
 
 #include "opt_octeon.h"
 
@@ -241,7 +241,7 @@ octeon_gmx_attach(device_t parent, device_t self, void *aux)
 	octeon_gmx_intr_evcnt_attach(sc);
 	if (octeon_gmx_intr_drop_ih == NULL)
 		octeon_gmx_intr_drop_ih = octeon_intr_establish(
-		   ffs64(CIU_INTX_SUM0_GMX_DRP) - 1, 0, IPL_NET,
+		   ffs64(CIU_INTX_SUM0_GMX_DRP) - 1, IPL_NET,
 		   octeon_gmx_intr_drop, NULL);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_iobus.c,v 1.1 2015/04/29 08:32:00 hikaru Exp $	*/
+/*	$NetBSD: octeon_iobus.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.1 2015/04/29 08:32:00 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
 
 #include "locators.h"
 
@@ -132,7 +132,7 @@ iobus_print(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s", aa->aa_name, pnp);
 
-	aprint_normal(": address=0x%016" PRIx64, aa->aa_unit->addr);
+	aprint_normal(" address 0x%016" PRIx64, aa->aa_unit->addr);
 
 	return UNCONF;
 }

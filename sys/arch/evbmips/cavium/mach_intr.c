@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_intr.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: mach_intr.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,12 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/lwp.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
@@ -56,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $")
 void
 evbmips_intr_init(void)
 {
-	octeon_intr_init();
+	octeon_intr_init(curcpu());
 }
 
 void

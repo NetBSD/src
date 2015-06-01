@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ipd.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_ipd.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_ipd.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_ipd.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
 
 #include "opt_octeon.h"
 
@@ -97,7 +97,7 @@ octeon_ipd_init(struct octeon_ipd_attach_args *aa,
 	octeon_ipd_intr_evcnt_attach(sc);
 	if (octeon_ipd_intr_drop_ih == NULL)
 		octeon_ipd_intr_drop_ih = octeon_intr_establish(
-		   ffs64(CIU_INTX_SUM0_IPD_DRP) - 1, 0, IPL_NET,
+		   ffs64(CIU_INTX_SUM0_IPD_DRP) - 1, IPL_NET,
 		   octeon_ipd_intr_drop, NULL);
 	__octeon_ipd_softc[sc->sc_port] = sc;
 #endif /* OCTEON_ETH_DEBUG */

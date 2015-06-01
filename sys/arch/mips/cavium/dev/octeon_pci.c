@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pci.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_pci.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pci.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pci.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
 
 #include "opt_octeon.h"
 
@@ -66,7 +66,7 @@ octeon_pci_init(void)
 {
 #ifdef OCTEON_ETH_DEBUG
 	octeon_pci_intr_rml_ih = octeon_intr_establish(
-	    ffs64(CIU_INTX_SUM0_RML) - 1, 0, IPL_NET, octeon_pci_intr_rml, NULL);
+	    ffs64(CIU_INTX_SUM0_RML) - 1, IPL_NET, octeon_pci_intr_rml, NULL);
 #endif
 }
 

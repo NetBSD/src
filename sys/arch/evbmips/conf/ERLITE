@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.8 2015/05/21 09:53:05 jmcneill Exp $
+#	$NetBSD: ERLITE,v 1.9 2015/06/01 22:55:12 matt Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.8 $"
+#ident 		"ERLITE-$Revision: 1.9 $"
 
 maxusers	32
 
@@ -24,9 +24,9 @@ maxusers	32
 
 # Standard system options
 options 	KTRACE		# system call tracing support
-#options 	SYSVMSG		# System V message queues
-#options 	SYSVSEM		# System V semaphores
-#options 	SYSVSHM		# System V shared memory
+options 	SYSVMSG		# System V message queues
+options 	SYSVSEM		# System V semaphores
+options 	SYSVSHM		# System V shared memory
 options 	NTP		# network time protocol
 
 # Debugging options
@@ -119,7 +119,8 @@ config		netbsd	root on ? type ?
 #config		netbsd	root on cnmac0 type nfs
 
 mainbus0	at root
-cpu0		at mainbus?
+cpunode0	at mainbus?
+cpu*		at cpunode? core ?
 
 iobus0		at mainbus?
 bootbus0	at mainbus?

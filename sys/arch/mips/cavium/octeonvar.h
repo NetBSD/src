@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.1 2015/04/29 08:32:00 hikaru Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _MIPS_OCTEON_OCTEONVAR_H_
 
 #include <sys/bus.h>
+#include <sys/evcnt.h>
 #include <mips/locore.h>
 #include <dev/pci/pcivar.h>
 
@@ -74,6 +75,36 @@ struct octeon_config {
 	struct extent *mc_mem_ex;
 
 	int	mc_mallocsafe;
+};
+
+#define NIRQS	64
+
+struct cpu_softc {
+	struct cpu_info *cpu_ci;
+	uint64_t cpu_int0_sum0;
+	uint64_t cpu_int1_sum0;
+	uint64_t cpu_int2_sum0;
+
+	uint64_t cpu_int0_en0;
+	uint64_t cpu_int1_en0;
+	uint64_t cpu_int2_en0;
+
+	uint64_t cpu_int0_en1;
+	uint64_t cpu_int1_en1;
+	uint64_t cpu_int2_en1;
+
+	uint64_t cpu_int32_en;
+
+	struct evcnt cpu_intr_evs[NIRQS];
+
+	uint64_t cpu_int0_enable0;
+	uint64_t cpu_int1_enable0;
+	uint64_t cpu_int2_enable0;
+
+#ifdef MULTIPROCESSOR
+	uint64_t cpu_mbox_set;
+	uint64_t cpu_mbox_clr;
+#endif
 };
 
 /*
@@ -187,17 +218,23 @@ struct octeon_fau_map {
 
 #ifdef _KERNEL
 extern struct octeon_config	octeon_configuration;
+#ifdef MULTIPROCESSOR
+extern struct cpu_softc		octeon_cpu1_softc;
+#endif
 
 void	octeon_bus_io_init(bus_space_tag_t, void *);
 void	octeon_bus_mem_init(bus_space_tag_t, void *);
 void	octeon_cal_timer(int);
 void	octeon_dma_init(struct octeon_config *);
-void	octeon_intr_init(void);
-int	octeon_intr_check_masks(void);
+void	octeon_intr_init(struct cpu_info *);
 void	octeon_iointr(int, vaddr_t, uint32_t);
 void	octeon_pci_init(pci_chipset_tag_t, struct octeon_config *);
-void	*octeon_intr_establish(int, int, int, int (*)(void *), void *);
+void	*octeon_intr_establish(int, int, int (*)(void *), void *);
 void	octeon_intr_disestablish(void *cookie);
+
+uint64_t mips_cp0_cvmctl_read(void);
+void	 mips_cp0_cvmctl_write(uint64_t);
+
 #endif /* _KERNEL */
 
 #if defined(__mips_n32)

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.8 2014/05/19 22:47:53 rmind Exp $ */
+/* $NetBSD: intr.h,v 1.9 2015/06/01 22:55:12 matt Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -63,6 +63,8 @@
 #define	IST_LEVEL	3		/* level-triggered */
 #define	IST_LEVEL_HIGH	4		/* level triggered, active high */
 #define	IST_LEVEL_LOW	5		/* level triggered, active low */
+
+#define IST_MPSAFE	0x100		/* interrupt is MPSAFE */
 
 #define	IPI_NOP		0		/* do nothing, interrupt only */
 #define	IPI_AST		1		/* force ast */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.90 2015/04/29 08:32:00 hikaru Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.91 2015/06/01 22:55:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -773,7 +773,7 @@
 #endif
 
 /*
- * Bits defined for for the HWREna (CP0 register 7, select 0).
+ * Bits defined for HWREna (CP0 register 7, select 0).
  */
 #define	MIPS_HWRENA_IMPL31		__BIT(31)
 #define	MIPS_HWRENA_IMPL30		__BIT(30)
@@ -782,6 +782,11 @@
 #define	MIPS_HWRENA_CC			__BIT(2)
 #define	MIPS_HWRENA_SYNCI_STEP		__BIT(1)
 #define	MIPS_HWRENA_CPUNUM		__BIT(0)
+
+/*
+ * Bits defined for EBASE (CP0 register 15, select 1).
+ */
+#define	MIPS_EBASE_CPUNUM		__BITS(9, 0)
 
 /*
  * Hints for the prefetch instruction

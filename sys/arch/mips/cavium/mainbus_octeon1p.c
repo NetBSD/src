@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_octeon1p.c,v 1.1 2015/04/29 08:32:00 hikaru Exp $	*/
+/*	$NetBSD: mainbus_octeon1p.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus_octeon1p.c,v 1.1 2015/04/29 08:32:00 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus_octeon1p.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
 
 #include <sys/param.h>
 
 #include <mips/cavium/include/mainbusvar.h>
 
 const char * const mainbus_devs[] = {
-	"cpu",
+	"cpunode",
 #if 1
 /* XXX board-specific, not cpu-specific... */
 	"flash",
@@ -48,4 +48,4 @@ const char * const mainbus_devs[] = {
 	"iobus",
 	"bootbus"
 };
-const size_t mainbus_ndevs = sizeof(mainbus_devs) / sizeof(mainbus_devs[0]);
+const size_t mainbus_ndevs = __arraycount(mainbus_devs);

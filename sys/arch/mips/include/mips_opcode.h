@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.18 2011/08/18 21:04:23 matt Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.19 2015/06/01 22:55:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,6 +33,9 @@
  *
  *	@(#)mips_opcode.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _MIPS_MIPS_OPCODE_H_
+#define _MIPS_MIPS_OPCODE_H_
 
 /*
  * Define the instruction formats and opcode values for the
@@ -317,3 +320,14 @@ typedef union {
 #define COPz_BCL_TF_MASK	0x02		/* MIPS-II, for r4000 port */
 #define COPz_BCL_TRUE	0x02		/* MIPS-II, for r4000 port */
 #define COPz_BCL_FALSE	0x00		/* MIPS-II, for r4000 port */
+
+#define	INSN_LUI_P(insn)	(((insn) >> 26) == OP_LUI)
+#define	INSN_LW_P(insn)		(((insn) >> 26) == OP_LW)
+#define	INSN_SW_P(insn)		(((insn) >> 26) == OP_SW)
+#define	INSN_LD_P(insn)		(((insn) >> 26) == OP_LD)
+#define	INSN_SD_P(insn)		(((insn) >> 26) == OP_SD)
+
+#define INSN_LOAD_P(insn)	(INSN_LD_P(insn) || INSN_LW_P(insn))
+#define INSN_STORE_P(insn)	(INSN_SD_P(insn) || INSN_SW_P(insn))
+
+#endif /* _MIPS_MIPS_OPCODE_H_ */
