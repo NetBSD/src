@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.264 2015/05/25 23:45:54 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.265 2015/06/01 22:55:13 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.264 2015/05/25 23:45:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.265 2015/06/01 22:55:13 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -239,7 +239,6 @@ extern const mips_locore_jumpvec_t mips64_locore_vec;
 #endif
 
 #if defined(MIPS64R2)
-static void	mips64r2_vector_init(const struct splsw *);
 extern const struct locoresw mips64r2_locoresw;
 extern const mips_locore_jumpvec_t mips64r2_locore_vec;
 #endif
@@ -1005,7 +1004,7 @@ mips64_vector_init(const struct splsw *splsw)
 #endif /* MIPS64 */
 
 #if defined(MIPS64R2)
-static void
+void
 mips64r2_vector_init(const struct splsw *splsw)
 {
 	/* r4000 exception handler address */
@@ -1041,7 +1040,13 @@ mips64r2_vector_init(const struct splsw *splsw)
 		panic("startup: %s vector code too large",
 		    "interrupt exception");
 
-	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips64r2_tlb_miss,
+	const intptr_t ebase = (intptr_t)mipsNN_cp0_ebase_read();
+	const int cpunum = ebase & MIPS_EBASE_CPUNUM;
+
+	// This may need to be on CPUs other CPU0 so use EBASE to fetch
+	// the appropriate address for exception code.  EBASE also contains
+	// the cpunum so remove that.
+	memcpy((void *)(ebase & ~MIPS_EBASE_CPUNUM), mips64r2_tlb_miss,
 	      mips64r2_intr_end - mips64r2_tlb_miss);
 
 	/*
@@ -1062,7 +1067,7 @@ mips64r2_vector_init(const struct splsw *splsw)
 	 * If this CPU doesn't have a COP0 USERLOCAL register, at the end
 	 * of cpu_switch resume overwrite the instructions which update it.
 	 */
-	if (!(cp0flags & MIPS_CP0FL_USERLOCAL)) {
+	if (!(cp0flags & MIPS_CP0FL_USERLOCAL) && cpunum == 0) {
 		extern uint32_t mips64r2_cpu_switch_resume[];
 		for (uint32_t *insnp = mips64r2_cpu_switch_resume;; insnp++) {
 			KASSERT(insnp[0] != JR_RA);
@@ -1078,7 +1083,8 @@ mips64r2_vector_init(const struct splsw *splsw)
 	/*
 	 * Copy locore-function vector.
 	 */
-	mips_locore_jumpvec = mips64r2_locore_vec;
+	if (cpunum == 0)
+		mips_locore_jumpvec = mips64r2_locore_vec;
 
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();

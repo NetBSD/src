@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_mpi.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_mpi.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_mpi.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_mpi.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
 
 #include "opt_octeon.h"
 
@@ -146,7 +146,7 @@ octeon_mpi_attach(device_t parent, device_t self, void *aux)
 	    (0x7d << MPI_CFG_CLKDIV_SHIFT) | MPI_CFG_CSENA | MPI_CFG_ENABLE | MPI_CFG_INT_ENA);
 	/* Enable device interrupts */
 	sc->sc_ih = octeon_intr_establish(ffs64(CIU_INTX_SUM0_MPI) - 1,
-		0, IPL_SERIAL, octeon_mpi_intr, sc);
+		IPL_SERIAL, octeon_mpi_intr, sc);
 	if (sc->sc_ih == NULL)
 		panic("l2sw: can't establish interrupt\n");
 #else

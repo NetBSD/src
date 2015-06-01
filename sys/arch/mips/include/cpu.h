@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.111 2015/05/28 04:16:50 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.112 2015/06/01 22:55:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ void		  cpuwatch_clr(cpu_watchpoint_t *);
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cpu_info *ci_next;	/* Next CPU in list */
+	void *ci_xnext;			/* unused */
 	struct cpu_softc *ci_softc;	/* chip-dependent hook */
 	device_t ci_dev;		/* owning device */
 	cpuid_t ci_cpuid;		/* Machine-level identifier */
@@ -148,9 +148,15 @@ struct cpu_info {
 
 };
 
+#ifdef MULTIPROCESSOR
 #define	CPU_INFO_ITERATOR		int __unused
 #define	CPU_INFO_FOREACH(cii, ci)	\
-    ci = &cpu_info_store; ci != NULL; ci = ci->ci_next
+    ci = &cpu_info_store; ci != NULL; ci = NULL
+#else
+#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	\
+    cii = 0; cii < MAXCPUS && (ci = cpu_infos[cii]) != NULL; cii++
+#endif
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
@@ -229,6 +235,9 @@ struct cpu_info {
 #ifndef _LOCORE
 
 extern struct cpu_info cpu_info_store;
+#ifdef MULTIPROCESSOR
+extern struct cpu_info *cpuid_infos[];
+#endif
 register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 
 #define	curlwp			mips_curlwp
