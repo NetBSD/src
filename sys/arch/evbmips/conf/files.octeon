@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.3 2015/05/18 01:53:50 matt Exp $
+#	$NetBSD: files.octeon,v 1.4 2015/06/01 22:55:12 matt Exp $
 
 file	arch/evbmips/cavium/autoconf.c
 file	arch/evbmips/cavium/machdep.c
@@ -9,9 +9,9 @@ file	arch/evbmips/evbmips/interrupt.c
 
 file	kern/subr_disk_mbr.c
 
-device	cpu
-attach	cpu at mainbus
-file	arch/evbmips/evbmips/cpu.c		cpu
+#device	cpu
+#attach	cpu at mainbus
+#file	arch/evbmips/evbmips/cpu.c		cpu
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
