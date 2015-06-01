@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_intr.h,v 1.2 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imx6_intr.h,v 1.3 2015/06/01 09:49:36 ryo Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,6 +33,7 @@
 
 #define	PIC_MAXSOURCES			256
 #define	PIC_MAXMAXSOURCES		(256 + 6 * 32)
+#define	__HAVE_PIC_PENDING_INTRS	/* for imxgpio */
 
 /*
  * The BCM53xx uses a generic interrupt controller so pull that stuff.
