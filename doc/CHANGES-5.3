@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.118 2015/06/01 15:48:07 sborrill Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.119 2015/06/01 15:54:58 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3911,7 +3911,7 @@ sys/arch/i386/i386/cpufunc.S			1.16-1.17, 1.21 via patch
 
 sys/arch/x86/include/specialreg.h		1.72 via patch
 
-	Add CPUID_TO_*() macros to avoid bug. Old macros are kept for
+	Backport CPUID_TO_*() macros. Old macros are kept for
 	compatibility.
 	[msaitoh, ticket #1968]
 
