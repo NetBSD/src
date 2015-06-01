@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
 
 #include "opt_octeon.h"	/* OCTEON_ETH_DEBUG */
 
@@ -328,7 +328,6 @@ octeon_pow_intr_establish(int group, int level,
 
 	pow_ih->pi_ih = octeon_intr_establish(
 	    ffs64(CIU_INTX_SUM0_WORKQ_0) - 1 + group,
-	    0/* XXX */,
 	    level,
 	    octeon_pow_intr, pow_ih);
 	KASSERT(pow_ih->pi_ih != NULL);
