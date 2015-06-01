@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.116 2015/05/27 06:19:25 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.117 2015/06/01 14:44:31 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3901,3 +3901,11 @@ sys/dev/usb/uftdi.c				1.53
 
 	Use as large a packet size as the ftdi endpoint specifies.
 	[riastradh, ticket #1964]
+
+sys/arch/x86/include/cpufunc.h			1.13
+sys/arch/amd64/amd64/cpufunc.S			1.20-1.21 via patch
+sys/arch/i386/i386/cpufunc.S			1.16-1.17, 1.21 via patch
+
+	Backport rdmsr_safe() to access MSR safely.
+	[msaitoh, ticket #1969]
+
