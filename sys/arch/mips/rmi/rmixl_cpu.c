@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.6 2013/11/25 03:01:58 christos Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.7 2015/06/01 22:55:13 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.6 2013/11/25 03:01:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.7 2015/06/01 22:55:13 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -321,10 +321,9 @@ cpu_rmixl_hatch(struct cpu_info *ci)
 
 	(void)splhigh();
 
-#ifdef DEBUG
-	uint32_t ebase;
-	asm volatile("dmfc0 %0, $15, 1;" : "=r"(ebase));
-	KASSERT((ebase & __BITS(9,0)) == ci->ci_cpuid);
+#ifdef DIAGNOSTIC
+	uint32_t ebase = mipsNN_cp0_ebase_read();
+	KASSERT((ebase & MIPS_EBASE_CPUNUM) == ci->ci_cpuid);
 	KASSERT(curcpu() == ci);
 #endif
 
