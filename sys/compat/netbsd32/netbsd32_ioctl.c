@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.80 2015/06/01 00:15:08 roy Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.81 2015/06/01 16:07:27 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.80 2015/06/01 00:15:08 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.81 2015/06/01 16:07:27 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.80 2015/06/01 00:15:08 roy Exp 
 
 #include <net/if_pppoe.h>
 #include <net/if_sppp.h>
+
+#include <net/npf/npf.h>
 
 #include <net/bpf.h>
 #include <netinet/in.h>
@@ -290,6 +292,13 @@ netbsd32_to_u_long(netbsd32_u_long *s32p, u_long *p, u_long cmd)
 }
 
 static inline void
+netbsd32_to_voidp(netbsd32_voidp *s32p, voidp *p, u_long cmd)
+{
+
+	*p = (void *)NETBSD32PTR64(*s32p);
+}
+
+static inline void
 netbsd32_to_wdog_conf(struct netbsd32_wdog_conf *s32p, struct wdog_conf *p, u_long cmd)
 {
 
@@ -448,6 +457,30 @@ netbsd32_to_ksyms_gvalue(
 {
 
 	p->kv_name = NETBSD32PTR64(s32p->kv_name);
+}
+
+static inline void
+netbsd32_to_npf_ioctl_table(
+    const struct netbsd32_npf_ioctl_table *s32p,
+    struct npf_ioctl_table *p,
+    u_long cmd)
+{
+
+	p->nct_cmd = s32p->nct_cmd;
+	p->nct_name = NETBSD32PTR64(s32p->nct_name);
+	switch (s32p->nct_cmd) {
+	case NPF_CMD_TABLE_LOOKUP:
+	case NPF_CMD_TABLE_ADD:
+	case NPF_CMD_TABLE_REMOVE:
+		p->nct_data.ent.alen = s32p->nct_data.ent.alen;
+		p->nct_data.ent.addr = s32p->nct_data.ent.addr;
+		p->nct_data.ent.mask = s32p->nct_data.ent.mask;
+		break;
+	case NPF_CMD_TABLE_LIST:
+		p->nct_data.buf.buf = NETBSD32PTR64(s32p->nct_data.buf.buf);
+		p->nct_data.buf.len = s32p->nct_data.buf.len;
+		break;
+	}
 }
 
 /*
@@ -760,6 +793,14 @@ netbsd32_from_u_long(u_long *p, netbsd32_u_long *s32p, u_long cmd)
 }
 
 static inline void
+netbsd32_from_voidp(voidp *p, netbsd32_voidp *s32p, u_long cmd)
+{
+
+	NETBSD32PTR32(*s32p, *p);
+}
+
+
+static inline void
 netbsd32_from_clockctl_settimeofday(
     const struct clockctl_settimeofday *p,
     struct netbsd32_clockctl_settimeofday *s32p,
@@ -823,6 +864,30 @@ netbsd32_from_ksyms_gvalue(
 
 	NETBSD32PTR32(s32p->kv_name, p->kv_name);
 	s32p->kv_value = p->kv_value;
+}
+
+static inline void
+netbsd32_from_npf_ioctl_table(
+    const struct npf_ioctl_table *p,
+    struct netbsd32_npf_ioctl_table *s32p,
+    u_long cmd)
+{
+
+	s32p->nct_cmd = p->nct_cmd;
+	NETBSD32PTR32(s32p->nct_name, p->nct_name);
+	switch (p->nct_cmd) {
+	case NPF_CMD_TABLE_LOOKUP:
+	case NPF_CMD_TABLE_ADD:
+	case NPF_CMD_TABLE_REMOVE:
+		s32p->nct_data.ent.alen = p->nct_data.ent.alen;
+		s32p->nct_data.ent.addr = p->nct_data.ent.addr;
+		s32p->nct_data.ent.mask = p->nct_data.ent.mask;
+		break;
+	case NPF_CMD_TABLE_LIST:
+		NETBSD32PTR32(s32p->nct_data.buf.buf, p->nct_data.buf.buf);
+		s32p->nct_data.buf.len = p->nct_data.buf.len;
+		break;
+	}
 }
 
 /*
@@ -1204,6 +1269,17 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(KIOCGSYMBOL, ksyms_gsymbol);
 	case KIOCGVALUE32:
 		IOCTL_STRUCT_CONV_TO(KIOCGVALUE, ksyms_gvalue);
+
+	case IOC_NPF_LOAD32:
+		IOCTL_STRUCT_CONV_TO(IOC_NPF_LOAD, plistref);
+	case IOC_NPF_TABLE32:
+		IOCTL_STRUCT_CONV_TO(IOC_NPF_TABLE, npf_ioctl_table);
+	case IOC_NPF_STATS32:
+		IOCTL_CONV_TO(IOC_NPF_STATS, voidp);
+	case IOC_NPF_SAVE32:
+		IOCTL_STRUCT_CONV_TO(IOC_NPF_SAVE, plistref);
+	case IOC_NPF_RULE32:
+		IOCTL_STRUCT_CONV_TO(IOC_NPF_RULE, plistref);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL

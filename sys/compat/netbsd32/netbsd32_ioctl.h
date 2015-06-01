@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.51 2015/05/31 22:19:41 roy Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.52 2015/06/01 16:07:27 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -581,3 +581,33 @@ struct netbsd32_ksyms_gvalue {
 #define	KIOCGVALUE32	_IOWR('l', 4, struct netbsd32_ksyms_gvalue)
 #define	KIOCGSYMBOL32	_IOWR('l', 5, struct netbsd32_ksyms_gsymbol)
 #endif /* KIOCGSYMBOL */
+
+/* From net/npf/npf.h */
+typedef struct in6_addr		netbsd32_npf_addr_t;
+typedef uint8_t			netbsd32_npf_netmask_t;
+
+typedef struct netbsd32_npf_ioctl_ent {
+	int			alen;
+	netbsd32_npf_addr_t	addr;
+	netbsd32_npf_netmask_t	mask;
+} netbsd32_npf_ioctl_ent_t;
+
+typedef struct netbsd32_npf_ioctl_buf {
+	netbsd32_voidp		buf;
+	netbsd32_size_t		len;
+} netbsd32_npf_ioctl_buf_t;
+
+typedef struct netbsd32_npf_ioctl_table {
+	int			nct_cmd;
+	netbsd32_charp		nct_name;
+	union {
+		netbsd32_npf_ioctl_ent_t ent;
+		netbsd32_npf_ioctl_buf_t buf;
+	} nct_data;
+} netbsd32_npf_ioctl_table_t;
+
+#define IOC_NPF_LOAD32          _IOWR('N', 102, struct netbsd32_plistref)
+#define IOC_NPF_TABLE32         _IOW('N', 103, struct netbsd32_npf_ioctl_table)
+#define IOC_NPF_STATS32         _IOW('N', 104, netbsd32_voidp)
+#define IOC_NPF_SAVE32          _IOR('N', 105, struct netbsd32_plistref)
+#define IOC_NPF_RULE32          _IOWR('N', 107, struct netbsd32_plistref)
