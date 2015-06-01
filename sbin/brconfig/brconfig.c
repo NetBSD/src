@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.16 2015/05/28 20:14:00 joerg Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.17 2015/06/01 06:15:18 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: brconfig.c,v 1.16 2015/05/28 20:14:00 joerg Exp $");
+__RCSID("$NetBSD: brconfig.c,v 1.17 2015/06/01 06:15:18 matt Exp $");
 #endif
 
 
@@ -141,7 +141,8 @@ static void	show_config(int, const char *, const char *);
 static void	show_interfaces(int, const char *, const char *);
 static void	show_addresses(int, const char *, const char *);
 static int	get_val(const char *, u_long *);
-static int	do_cmd(int, const char *, u_long, void *, size_t, int);
+#define	do_cmd(a,b,c,d,e,f)	do_cmd2((a),(b),(c),(d),(e),NULL,(f))
+static int	do_cmd2(int, const char *, u_long, void *, size_t, size_t *, int);
 static void	do_ifflag(int, const char *, int, int);
 static void	do_bridgeflag(int, const char *, const char *, int, int);
 
@@ -418,26 +419,22 @@ show_interfaces(int sock, const char *bridge, const char *prefix)
 		"forwarding",
 		"blocking",
 	};
-	struct ifbifconf bifc;
 	struct ifbreq *req;
 	char *inbuf = NULL, *ninbuf;
-	uint32_t i, len = 8192;
+	size_t len = 8192, nlen;
 
-	for (;;) {
-		ninbuf = realloc(inbuf, len);
+	do {
+		nlen = len;
+		ninbuf = realloc(inbuf, nlen);
 		if (ninbuf == NULL)
 			err(1, "unable to allocate interface buffer");
-		bifc.ifbic_len = len;
-		bifc.ifbic_buf = inbuf = ninbuf;
-		if (do_cmd(sock, bridge, BRDGGIFS, &bifc, sizeof(bifc), 0) < 0)
+		inbuf = ninbuf;
+		if (do_cmd2(sock, bridge, BRDGGIFS, inbuf, nlen, &len, 0) < 0)
 			err(1, "unable to get interface list");
-		if ((bifc.ifbic_len + sizeof(*req)) < len)
-			break;
-		len *= 2;
-	}
+	} while (len > nlen);
 
-	for (i = 0; i < bifc.ifbic_len / sizeof(*req); i++) {
-		req = bifc.ifbic_req + i;
+	for (size_t i = 0; i < len / sizeof(*req); i++) {
+		req = (struct ifbreq *)inbuf + i;
 		printf("%s%s ", prefix, req->ifbr_ifsname);
 		printb("flags", req->ifbr_ifsflags, IFBIFBITS);
 		printf("\n");
@@ -462,31 +459,27 @@ show_interfaces(int sock, const char *bridge, const char *prefix)
 static void
 show_addresses(int sock, const char *bridge, const char *prefix)
 {
-	struct ifbaconf ifbac;
 	struct ifbareq *ifba;
 	char *inbuf = NULL, *ninbuf;
-	uint32_t i, len = 8192;
 	struct ether_addr ea;
+	size_t len = 8192, nlen;
 
-	for (;;) {
-		ninbuf = realloc(inbuf, len);
+	do {
+		nlen = len;
+		ninbuf = realloc(inbuf, nlen);
 		if (ninbuf == NULL)
 			err(1, "unable to allocate address buffer");
-		ifbac.ifbac_len = len;
-		ifbac.ifbac_buf = inbuf = ninbuf;
-		if (do_cmd(sock, bridge, BRDGRTS, &ifbac, sizeof(ifbac), 0) < 0)
+		inbuf = ninbuf;
+		if (do_cmd2(sock, bridge, BRDGRTS, inbuf, nlen, &len, 0) < 0)
 			err(1, "unable to get address cache");
-		if ((ifbac.ifbac_len + sizeof(*ifba)) < len)
-			break;
-		len *= 2;
-	}
+	} while (len > nlen);
 
-	for (i = 0; i < ifbac.ifbac_len / sizeof(*ifba); i++) {
-		ifba = ifbac.ifbac_req + i;
+	for (size_t i = 0; i < len / sizeof(*ifba); i++) {
+		ifba = (struct ifbareq *)inbuf + i;
 		memcpy(ea.ether_addr_octet, ifba->ifba_dst,
 		    sizeof(ea.ether_addr_octet));
-		printf("%s%s %s %ld ", prefix, ether_ntoa(&ea),
-		    ifba->ifba_ifsname, ifba->ifba_expire);
+		printf("%s%s %s %jd ", prefix, ether_ntoa(&ea),
+		    ifba->ifba_ifsname, (uintmax_t)ifba->ifba_expire);
 		printb("flags", ifba->ifba_flags, IFBAFBITS);
 		printf("\n");
 	}
@@ -510,10 +503,11 @@ get_val(const char *cp, u_long *valp)
 }
 
 static int
-do_cmd(int sock, const char *bridge, u_long op, void *arg, size_t argsize,
-    int set)
+do_cmd2(int sock, const char *bridge, u_long op, void *arg, size_t argsize,
+    size_t *outsizep, int set)
 {
 	struct ifdrv ifd;
+	int error;
 
 	memset(&ifd, 0, sizeof(ifd));
 
@@ -522,7 +516,12 @@ do_cmd(int sock, const char *bridge, u_long op, void *arg, size_t argsize,
 	ifd.ifd_len = argsize;
 	ifd.ifd_data = arg;
 
-	return (ioctl(sock, set ? SIOCSDRVSPEC : SIOCGDRVSPEC, &ifd));
+	error = ioctl(sock, set ? SIOCSDRVSPEC : SIOCGDRVSPEC, &ifd);
+
+	if (outsizep)
+		*outsizep = ifd.ifd_len;
+
+	return error;
 }
 
 static void
