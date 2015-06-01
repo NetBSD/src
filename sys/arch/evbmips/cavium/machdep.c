@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2015/05/18 01:32:18 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2015/06/01 22:55:12 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2015/05/18 01:32:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2015/06/01 22:55:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,6 +318,7 @@ mach_init_console(void)
 void
 mach_init_memory(u_quad_t memsize)
 {
+	extern char kernel_text[];
 	extern char end[];
 
 	physmem = btoc(memsize);
@@ -342,10 +343,16 @@ mach_init_memory(u_quad_t memsize)
 		mem_cluster_cnt = 3;
 	}
 
+	
+#ifdef MULTIPROCESSOR
+	const u_int cores = mipsNN_cp0_ebase_read() & MIPS_EBASE_CPUNUM;
+	mem_clusters[0].start = cores * 4096;
+#endif
+
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
-	mips_page_physload(MIPS_KSEG0_START, mips_round_page(end),
+	mips_page_physload(mips_trunc_page(kernel_text), mips_round_page(end),
 	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
