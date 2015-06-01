@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.313 2015/05/28 10:03:27 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.314 2015/06/01 19:40:04 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23580,4 +23580,37 @@ lib/libm/arch/m68k/s_copysign.S			1.10
 
 	Deal with the potential pressence of long double support.
 	[joerg, ticket #812]
+
+share/man/man9/disk.9				1.37
+sys/dev/dksubr.c				1.56
+sys/kern/subr_disk.c				1.104, 1.105
+sys/sys/dkio.h					1.21
+
+	Implement DIOCGMEDIASIZE and DIOCGSECTORSIZE.
+	[jnemeth, ticket #775]
+
+usr.bin/netstat/route.c				1.84
+
+	Make sure netstat builds with -DSMALL.
+	[manu, ticket #809]
+
+usr.bin/make/targ.c				1.60
+
+	Fix uninitialized variable warning.
+	[manu, ticket #810]
+
+lib/libcurses/unctrl.h				1.5
+
+	Fix quoting in macro.
+	[wiz, ticket #811]
+
+compat/archdirs.mk				1.7, 1.9, 1.10
+compat/arm/eabihf/bsd.eabihf.mk			1.2
+external/gpl3/gcc/dist/gcc/config.gcc		1.33
+external/gpl3/gcc/dist/gcc/config/arm/netbsd-eabi.h 1.14
+external/gpl3/gcc/dist/gcc/config/arm/t-netbsdeabi 1.1
+
+	Fix build infrastructure and gcc for providing OABI compat
+	libraries on earm* machines.
+	[martin, ticket #816]
 
