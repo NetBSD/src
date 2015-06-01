@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.103.4.1 2015/05/19 04:53:02 snj Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.103.4.2 2015/06/01 19:19:44 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.103.4.1 2015/05/19 04:53:02 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.103.4.2 2015/06/01 19:19:44 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -510,7 +510,7 @@ int
 disk_ioctl(struct disk *diskp, u_long cmd, void *data, int flag,
 	   struct lwp *l)
 {
-	int error;
+	int error = 0;
 
 	switch (cmd) {
 	case DIOCGDISKINFO:
@@ -524,6 +524,15 @@ disk_ioctl(struct disk *diskp, u_long cmd, void *data, int flag,
 							diskp->dk_info);
 		break;
 	    }
+
+	case DIOCGSECTORSIZE:
+		*(u_int *)data = diskp->dk_geom.dg_secsize;
+		break;
+
+	case DIOCGMEDIASIZE:
+		*(off_t *)data = (off_t)diskp->dk_geom.dg_secsize *
+		    diskp->dk_geom.dg_secperunit;
+		break;
 
 	default:
 		error = EPASSTHROUGH;
