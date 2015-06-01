@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.2 2015/05/20 01:30:42 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.3 2015/06/01 01:36:30 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -341,9 +341,15 @@ test_xresolve_rtm()
 	rump.route -n monitor > ./mon.log &
 	pid=$!
 
+	# Give route monitor a chance to setup a routing socket
+	sleep 1
+
 	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $ip
 	$DEBUG && rump.netstat -rn -f inet
-	$DEBUG && cat ./mon.log
+
+	# Give route monitor a chance to output a routing message
+	sleep 1
+	cat ./mon.log
 
 	atf_check -s exit:0 grep -q $rtm ./mon.log
 
