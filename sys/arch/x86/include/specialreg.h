@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.31.4.1 2009/06/16 02:23:31 snj Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.31.4.1.2.1 2015/06/01 15:49:47 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -240,13 +240,39 @@
 			"\11TM2\12SSSE3\13CID\16CX16\17xTPR\20PDCM\23DCA" \
 			"\24SSE41\25SSE42\26X2APIC\30POPCNT"
 
-#define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 0xf)
-#define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 0xf)
-#define CPUID2STEPPING(cpuid)	((cpuid) & 0xf)
+/* CPUID Fn00000001 %eax */
 
-/* Extended family and model are defined on amd64 processors */
-#define CPUID2EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
-#define CPUID2EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
+#define CPUID_TO_BASEFAMILY(cpuid)	(((cpuid) >> 8) & 0xf)
+#define CPUID_TO_BASEMODEL(cpuid)	(((cpuid) >> 4) & 0xf)
+#define CPUID_TO_STEPPING(cpuid)	((cpuid) & 0xf)
+
+/* Old macros for compatibility */
+#define CPUID2FAMILY(cpuid)	CPUID_TO_BASEFAMILY(cpuid)
+#define CPUID2MODEL(cpuid)	CPUID_TO_BASEMODEL(cpuid)
+#define CPUID2STEPPING(cpuid)	CPUID_TO_STEPPING(cpuid)
+
+/*
+ * The Extended family bits should only be inspected when CPUID_TO_BASEFAMILY()
+ * returns 15. They are use to encode family value 16 to 270 (add 15).
+ * The Extended model bits are the high 4 bits of the model.
+ * They are only valid for family >= 15 or family 6 (intel, but all amd
+ * family 6 are documented to return zero bits for them).
+ */
+#define CPUID_TO_EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
+#define CPUID_TO_EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
+
+/* Old macros for compatibility */
+#define CPUID2EXTFAMILY(cpuid)	CPUID_TO_EXTFAMILY(cpuid)
+#define CPUID2EXTMODEL(cpuid)	CPUID_TO_EXTMODEL(cpuid)
+
+/* The macros for the Display Family and the Display Model */
+#define CPUID_TO_FAMILY(cpuid)	(CPUID_TO_BASEFAMILY(cpuid)	\
+	    + ((CPUID_TO_BASEFAMILY(cpuid) != 0x0f)		\
+		? 0 : CPUID_TO_EXTFAMILY(cpuid)))
+#define CPUID_TO_MODEL(cpuid)	(CPUID_TO_BASEMODEL(cpuid)	\
+	    | ((CPUID_TO_BASEFAMILY(cpuid) != 0x0f)		\
+		&& (CPUID_TO_BASEFAMILY(cpuid) != 0x06)		\
+		? 0 : (CPUID_TO_EXTMODEL(cpuid) << 4)))
 
 /*
  * Model-specific registers for the i386 family
