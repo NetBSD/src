@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.57 2012/06/12 19:21:51 joerg Exp $	*/
+/*	$NetBSD: targ.c,v 1.57.10.1 2015/06/01 19:24:47 snj Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.57 2012/06/12 19:21:51 joerg Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.57.10.1 2015/06/01 19:24:47 snj Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.57 2012/06/12 19:21:51 joerg Exp $");
+__RCSID("$NetBSD: targ.c,v 1.57.10.1 2015/06/01 19:24:47 snj Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -334,7 +334,7 @@ GNode *
 Targ_FindNode(const char *name, int flags)
 {
     GNode         *gn;	      /* node in that element */
-    Hash_Entry	  *he;	      /* New or used hash entry for node */
+    Hash_Entry	  *he = NULL; /* New or used hash entry for node */
     Boolean	  isNew;      /* Set TRUE if Hash_CreateEntry had to create */
 			      /* an entry for the node */
 
