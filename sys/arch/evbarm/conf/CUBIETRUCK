@@ -1,4 +1,4 @@
-#	$NetBSD: CUBIETRUCK,v 1.7 2015/04/19 21:28:37 matt Exp $
+#	$NetBSD: CUBIETRUCK,v 1.8 2015/06/01 23:17:47 matt Exp $
 #
 #	CUBIETRUCK - Cubieboard3 (mostly cubieboard2 with 2GB)
 #
@@ -26,5 +26,7 @@ makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 # We need this too.
 #
 options 	PMAP_NEED_ALLOC_POOLPAGE
+
+cinclude	"arch/evbarm/conf/CUBIETRUCK.local"
 
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
