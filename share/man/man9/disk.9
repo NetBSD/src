@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.36 2010/12/02 12:54:13 wiz Exp $
+.\"	$NetBSD: disk.9,v 1.36.24.1 2015/06/01 19:19:44 snj Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -299,6 +299,10 @@ Get disk buffer queue strategy.
 Set disk buffer queue strategy.
 .It Dv DIOCGDISKINFO "struct plistref"
 Get disk-info dictionary.
+.It Dv DIOCGMEDIASIZE "off_t"
+Get disk size in bytes.
+.It Dv DIOCGSECTORSIZE "u_int"
+Get sector size in bytes.
 .El
 .Sh USING THE FRAMEWORK
 This section includes a description on basic use of the framework
