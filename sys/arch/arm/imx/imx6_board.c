@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_board.c,v 1.3 2015/01/09 09:50:46 ryo Exp $	*/
+/*	$NetBSD: imx6_board.c,v 1.4 2015/06/01 10:10:56 ryo Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.3 2015/01/09 09:50:46 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.4 2015/06/01 10:10:56 ryo Exp $");
 
 #include "opt_imx.h"
 #include "arml2cc.h"
@@ -143,6 +143,16 @@ imx6_memprobe(void)
 	/* bank */
 	bitwidth += __SHIFTOUT(ctrl, MMDC1_MDCTL_SDE_1);
 	bitwidth += (misc & MMDC1_MDMISC_DDR_4_BANK) ? 2 : 3;
+
+	/* over 4GB ? limit 3840MB (SoC design limitation) */
+	if (bitwidth >= 32) {
+		/*
+		 * XXX: bus_dma and uvm cannot treat 0xffffffff as high address
+		 *      correctly because of 0xffffffff + 1 = 0x00000000.
+		 *      therefore use 0xffffefff.
+		 */
+		return (psize_t)IMX6_MEM_SIZE - PAGE_SIZE;
+	}
 
 	return (psize_t)1 << bitwidth;
 }
