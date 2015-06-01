@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.6,v 1.1.2.28 2015/06/01 14:45:27 sborrill Exp $
+# $NetBSD: CHANGES-5.1.6,v 1.1.2.29 2015/06/01 15:52:03 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1.5 release to the NetBSD 5.1.6
 release:
@@ -2618,4 +2618,10 @@ sys/arch/i386/i386/cpufunc.S			1.16-1.17, 1.21 via patch
 
 	Backport rdmsr_safe() to access MSR safely.
 	[msaitoh, ticket #1969]
+
+sys/arch/x86/include/specialreg.h		1.72 via patch
+
+	Add CPUID_TO_*() macros to avoid bug. Old macros are kept for
+	compatibility.
+	[msaitoh, ticket #1968]
 
