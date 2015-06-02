@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.11 2015/06/01 22:55:13 matt Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.12 2015/06/02 05:08:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.11 2015/06/01 22:55:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.12 2015/06/02 05:08:21 matt Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -58,6 +58,7 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 	const size_t size = sizeof(cpu_info_store);
 	uint32_t new_insns[2];
 	uint32_t *lui_insnp = NULL;
+	int32_t lui_offset = 0;
 	bool fixed = false;
 	size_t lui_reg = 0;
 	/*
@@ -66,9 +67,12 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 	 * to compensate for using a negative offset for the lower half of
 	 * the value.
 	 */
-	const int32_t upper_addr = (addr + 32768) & ~0xffff;
+	const int32_t upper_start = (addr + 32768) & ~0xffff;
+	const int32_t upper_end = (addr + size - 1 + 32768) & ~0xffff;
 
+#ifndef MIPS64_OCTEON
 	KASSERT((addr & ~0xfff) == ((addr + size - 1) & ~0xfff));
+#endif
 
 	uint32_t lui_insn = 0;
 	for (uint32_t *insnp = start; insnp < end; insnp++) {
@@ -82,15 +86,17 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 			    insn, lui_reg, offset);
 #endif
 			KASSERT(lui_reg == _R_K0 || lui_reg == _R_K1);
-			if (upper_addr == offset) {
+			if (upper_start == offset || upper_end == offset) {
 				lui_insnp = insnp;
 				lui_insn = insn;
+				lui_offset = offset;
 #ifdef DEBUG_VERBOSE
 				printf(" (maybe)");
 #endif
 			} else {
 				lui_insnp = NULL;
 				lui_insn = 0;
+				lui_offset = 0;
 			}
 #ifdef DEBUG_VERBOSE
 			printf("\n");
@@ -101,7 +107,7 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 #if defined(DIAGNOSTIC) || defined(DEBUG_VERBOSE)
 			size_t rt = (insn >> 16) & 31;
 #endif
-			int32_t load_addr = upper_addr + (int16_t)insn;
+			int32_t load_addr = lui_offset + (int16_t)insn;
 			if (addr <= load_addr
 			    && load_addr < addr + size
 			    && base == lui_reg) {
