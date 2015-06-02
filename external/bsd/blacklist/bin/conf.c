@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18.2.2 2015/04/30 06:07:33 riz Exp $	*/
+/*	$NetBSD: conf.c,v 1.18.2.3 2015/06/02 20:32:44 snj Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.18.2.2 2015/04/30 06:07:33 riz Exp $");
+__RCSID("$NetBSD: conf.c,v 1.18.2.3 2015/06/02 20:32:44 snj Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -83,20 +83,38 @@ advance(char **p)
 }
 
 static int
-getnum(const char *f, size_t l, void *r, const char *p)
+getnum(const char *f, size_t l, bool local, void *rp, const char *name,
+    const char *p)
 {
 	int e;
 	intmax_t im;
+	int *r = rp;
+
+	if (strcmp(p, "*") == 0) {
+		*r = -1;
+		return 0;
+	}
+	if (strcmp(p, "=") == 0) {
+		if (local)
+			goto out;
+		*r = -2;
+		return 0;
+	}
 
 	im = strtoi(p, NULL, 0, 0, INT_MAX, &e);
 	if (e == 0) {
-		*(int *)r = (int)im;
+		*r = (int)im;
 		return 0;
 	}
 
 	if (f == NULL)
 		return -1;
-	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad number [%s]", __func__, f, l, p);
+	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad number for %s [%s]", __func__, f, l,
+	   name,  p);
+	return -1;
+out:
+	(*lfun)(LOG_ERR, "%s: %s, %zu: `=' for %s not allowed in local config",
+	    __func__, f, l, name);
 	return -1;
 
 }
@@ -104,25 +122,7 @@ getnum(const char *f, size_t l, void *r, const char *p)
 static int
 getnfail(const char *f, size_t l, bool local, struct conf *c, const char *p)
 {
-	if (strcmp(p, "*") == 0) {
-		c->c_nfail = -1;
-		return 0;
-	}
-	if (strcmp(p, "=") == 0) {
-		if (local)
-			goto out;
-		c->c_nfail = -2;
-		return 0;
-	}
-	if (getnum(NULL, 0, &c->c_nfail, p) == 0)
-		return 0;
-
-	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad nfail [%s]", __func__, f, l, p);
-	return -1;
-out:
-	(*lfun)(LOG_ERR, "%s: %s, %zu: `=' nfail not allowed in local config",
-	    __func__, f, l);
-	return -1;
+	return getnum(f, l, local, &c->c_nfail, "nfail", p);
 }
 
 static int
@@ -186,7 +186,7 @@ out:
 }
 
 static int
-getport(const char *f, size_t l, void *r, const char *p)
+getport(const char *f, size_t l, bool local, void *r, const char *p)
 {
 	struct servent *sv;
 
@@ -200,11 +200,7 @@ getport(const char *f, size_t l, void *r, const char *p)
 		return 0;
 	}
 
-	if (getnum(NULL, 0, r, p) == 0)
-		return 0;
-
-	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad service [%s]", __func__, f, l, p);
-	return -1;
+	return getnum(f, l, local, r, "service", p);
 }
 
 static int
@@ -317,7 +313,7 @@ gethostport(const char *f, size_t l, bool local, struct conf *c, const char *p)
 
 	if (strcmp(pstr, "*") == 0)
 		c->c_port = -1;
-	else if (getport(f, l, &c->c_port, pstr) == -1)
+	else if (getport(f, l, local, &c->c_port, pstr) == -1)
 		return -1;
 
 	if (port && c->c_port != -1)
@@ -336,10 +332,6 @@ static int
 getproto(const char *f, size_t l, bool local __unused, struct conf *c,
     const char *p)
 {
-	if (strcmp(p, "*") == 0) {
-		c->c_proto = -1;
-		return 0;
-	}
 	if (strcmp(p, "stream") == 0) {
 		c->c_proto = IPPROTO_TCP;
 		return 0;
@@ -348,31 +340,18 @@ getproto(const char *f, size_t l, bool local __unused, struct conf *c,
 		c->c_proto = IPPROTO_UDP;
 		return 0;
 	}
-	if (getnum(NULL, 0, &c->c_proto, p) == 0)
-		return 0;
-
-	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad protocol [%s]", __func__, f, l, p);
-	return -1;
+	return getnum(f, l, local, &c->c_proto, "protocol", p);
 }
 
 static int
 getfamily(const char *f, size_t l, bool local __unused, struct conf *c,
     const char *p)
 {
-	if (strcmp(p, "*") == 0) {
-		c->c_family = -1;
-		return 0;
-	}
-
 	if (strncmp(p, "tcp", 3) == 0 || strncmp(p, "udp", 3) == 0) {
 		c->c_family = p[3] == '6' ? AF_INET6 : AF_INET;
 		return 0;
 	}
-	if (getnum(NULL, 0, &c->c_family, p) == 0)
-		return 0;
-
-	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad family [%s]", __func__, f, l, p);
-	return -1;
+	return getnum(f, l, local, &c->c_family, "family", p);
 }
 
 static int
@@ -381,21 +360,12 @@ getuid(const char *f, size_t l, bool local __unused, struct conf *c,
 {
 	struct passwd *pw;
 
-	if (strcmp(p, "*") == 0) {
-		c->c_uid = -1;
-		return 0;
-	}
-
 	if ((pw = getpwnam(p)) != NULL) {
 		c->c_uid = (int)pw->pw_uid;
 		return 0;
 	}
 
-	if (getnum(NULL, 0, &c->c_uid, p) == 0)
-		return 0;
-
-	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad user [%s]", __func__, f, l, p);
-	return -1;
+	return getnum(f, l, local, &c->c_uid, "user", p);
 }
 
 
@@ -720,7 +690,7 @@ conf_eq(const struct conf *c1, const struct conf *c2)
 		return 0;
 
 #define CMP(a, b, f) \
-	if ((a)->f != (b)->f && (b)->f != -1) { \
+	if ((a)->f != (b)->f && (b)->f != -1 && (b)->f != -2) { \
 		if (debug > 1) \
 			(*lfun)(LOG_DEBUG, "%s: %s fail %d != %d", __func__, \
 			    __STRING(f), (a)->f, (b)->f); \
@@ -882,6 +852,7 @@ conf_apply(struct conf *c, const struct conf *sc)
 		    conf_print(buf, sizeof(buf), "to:\t", "", c));
 	}
 	memcpy(c->c_name, sc->c_name, CONFNAMESZ);
+	c->c_uid = sc->c_uid;
 	c->c_rmask = sc->c_rmask;
 	c->c_nfail = sc->c_nfail;
 	c->c_duration = sc->c_duration;
@@ -908,6 +879,8 @@ conf_merge(struct conf *c, const struct conf *sc)
 	
 	if (sc->c_name[0])
 		memcpy(c->c_name, sc->c_name, CONFNAMESZ);
+	if (sc->c_uid != -2)
+		c->c_uid = sc->c_uid;
 	if (sc->c_rmask != -2)
 		c->c_lmask = c->c_rmask = sc->c_rmask;
 	if (sc->c_nfail != -2)
