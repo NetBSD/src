@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.103 2015/06/01 22:55:13 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.104 2015/06/02 05:09:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -729,8 +729,6 @@ NESTED_NOPROFILE(cpu_trampoline, 0, ra)
 	 nop
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(a0)
 
-	PTR_L	sp, L_MD_UTF(MIPS_CURLWP)	# fetch KSP
-
 #ifdef _LP64
 	li	v0, MIPS_SR_KX | MIPS_SR_UX	# allow 64bit addressing
 #else
@@ -738,6 +736,8 @@ NESTED_NOPROFILE(cpu_trampoline, 0, ra)
 #endif
 	mtc0	v0, MIPS_COP_0_STATUS		# reset to known state
 	COP0_SYNC
+
+	PTR_L	sp, L_MD_UTF(MIPS_CURLWP)	# fetch KSP
 
 	/*
 	 * Indicate that no one has called us.
@@ -750,6 +750,13 @@ NESTED_NOPROFILE(cpu_trampoline, 0, ra)
 	 * New execution constant needs GP to be loaded.
 	 */
 	PTR_LA	gp, _C_LABEL(_gp)
+#endif
+
+#if 0
+	LONG_L	t0, CPU_INFO_FLAGS(a0)
+	or	t0, t0, CPUF_PRESENT
+	LONG_S	t0, CPU_INFO_FLAGS(a0)
+	sync
 #endif
 
 	/*
