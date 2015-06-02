@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.315 2015/06/02 10:14:45 sborrill Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.316 2015/06/02 14:51:11 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23619,4 +23619,10 @@ sys/arch/vax/vsa/vsbus.c			1.61
 	Fix VAX46 and VAX48 vsbus attach config. Addresses PR
 	port-vax/49935.
 	[abs, ticket #817]
+
+sys/external/bsd/drm2/radeon/radeon_pci.c	1.10
+
+	Disable drmkms on R100 and most R200 cards. Works around
+	PR#49744.
+	[mrg, ticket #818]
 
