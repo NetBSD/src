@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.166 2015/04/18 15:49:18 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.167 2015/06/02 14:07:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.166 2015/04/18 15:49:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.167 2015/06/02 14:07:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1176,7 +1176,7 @@ uvm_pageout(void *arg)
 		    uvmexp.paging == 0) {
 			rumpuser_dprintf("pagedaemoness: failed to reclaim "
 			    "memory ... sleeping (deadlock?)\n");
-			cv_timedwait(&pdaemoncv, &pdaemonmtx, hz);
+			kpause("pddlk", false, hz, &pdaemonmtx);
 		}
 	}
 
