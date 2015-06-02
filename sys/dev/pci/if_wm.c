@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.322 2015/05/22 03:15:43 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.323 2015/06/02 03:49:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.322 2015/05/22 03:15:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.323 2015/06/02 03:49:10 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7297,13 +7297,13 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 {
 	int rv;
 
-	if (sc->sc_flags == WM_F_LOCK_SWFW) {
+	if (sc->sc_flags & WM_F_LOCK_SWFW) {
 		if (wm_get_swfw_semaphore(sc, SWFW_MAC_CSR_SM)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n", __func__);
 			return 0;
 		}
-	} else if (sc->sc_flags == WM_F_LOCK_EXTCNF) {
+	} else if (sc->sc_flags & WM_F_LOCK_EXTCNF) {
 		if (wm_get_swfwhw_semaphore(sc)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n", __func__);
@@ -7319,9 +7319,9 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 
 	rv = CSR_READ(sc, WMREG_KUMCTRLSTA) & KUMCTRLSTA_MASK;
 
-	if (sc->sc_flags == WM_F_LOCK_SWFW)
+	if (sc->sc_flags & WM_F_LOCK_SWFW)
 		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
-	else if (sc->sc_flags == WM_F_LOCK_EXTCNF)
+	else if (sc->sc_flags & WM_F_LOCK_EXTCNF)
 		wm_put_swfwhw_semaphore(sc);
 
 	return rv;
@@ -7336,13 +7336,13 @@ static void
 wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
 {
 
-	if (sc->sc_flags == WM_F_LOCK_SWFW) {
+	if (sc->sc_flags & WM_F_LOCK_SWFW) {
 		if (wm_get_swfw_semaphore(sc, SWFW_MAC_CSR_SM)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n", __func__);
 			return;
 		}
-	} else if (sc->sc_flags == WM_F_LOCK_EXTCNF) {
+	} else if (sc->sc_flags & WM_F_LOCK_EXTCNF) {
 		if (wm_get_swfwhw_semaphore(sc)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n", __func__);
@@ -7354,9 +7354,9 @@ wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
 	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
 	    (val & KUMCTRLSTA_MASK));
 
-	if (sc->sc_flags == WM_F_LOCK_SWFW)
+	if (sc->sc_flags & WM_F_LOCK_SWFW)
 		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
-	else if (sc->sc_flags == WM_F_LOCK_EXTCNF)
+	else if (sc->sc_flags & WM_F_LOCK_EXTCNF)
 		wm_put_swfwhw_semaphore(sc);
 }
 
