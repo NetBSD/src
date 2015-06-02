@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.72 2015/05/22 03:15:43 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.73 2015/06/02 14:19:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -798,6 +798,28 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_TLPIC	0x4148	/* EEE Tx LPI Count */
 #define WMREG_RLPIC	0x414c	/* EEE Rx LPI Count */
 
+#define	WMREG_PCS_CFG	0x4200	/* PCS Configuration */
+#define	PCS_CFG_PCS_EN	__BIT(3)
+
+#define	WMREG_PCS_LCTL	0x4208	/* PCS Link Control */
+#define	PCS_LCTL_FSV_1000 __BIT(2)	/* AN Timeout Enable */
+#define	PCS_LCTL_FDV_FULL __BIT(3)	/* AN Timeout Enable */
+#define	PCS_LCTL_FSD __BIT(4)	/* AN Timeout Enable */
+#define	PCS_LCTL_FORCE_FC __BIT(7)	/* AN Timeout Enable */
+#define	PCS_LCTL_AN_ENABLE __BIT(16)	/* AN Timeout Enable */
+#define	PCS_LCTL_AN_RESTART __BIT(17)	/* AN Timeout Enable */
+#define	PCS_LCTL_AN_TIMEOUT __BIT(18)	/* AN Timeout Enable */
+
+#define	WMREG_PCS_LSTS	0x420c	/* PCS Link Status */
+#define PCS_LSTS_LINKOK	__BIT(0)
+#define PCS_LSTS_SPEED_100  __BIT(1)
+#define PCS_LSTS_SPEED_1000 __BIT(2)
+#define PCS_LSTS_FDX	__BIT(3)
+#define PCS_LSTS_AN_COMP __BIT(16)
+
+#define	WMREG_PCS_ANADV	0x4218	/* AN Advertsement */
+#define	WMREG_PCS_LPAB	0x421c	/* Link Partnet Ability */
+
 #define	WMREG_RXCSUM	0x5000	/* Receive Checksum register */
 #define	RXCSUM_PCSS	0x000000ff	/* Packet Checksum Start */
 #define	RXCSUM_IPOFL	(1U << 8)	/* IP checksum offload */
@@ -981,6 +1003,8 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_CFG2_MNGM_NCSI	1
 #define	NVM_CFG2_MNGM_PT	2
 
+#define	NVM_COMPAT_SERDES_FORCE_MODE	__BIT(14) /* Don't use autonego */
+
 #define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
 
 #define	NVM_K1_CONFIG_ENABLE	0x01
@@ -992,6 +1016,8 @@ struct livengood_tcpip_ctxdesc {
 #define NVM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
 
 #define NVM_CFG3_APME		(1U << 10)	
+#define NVM_CFG3_PORTA_EXT_MDIO	(1U << 2)	/* External MDIO Interface */
+#define NVM_CFG3_PORTA_COM_MDIO	(1U << 3)	/* MDIO Interface is shared */
 
 #define	NVM_OFF_MACADDR_82571(x)	(3 * (x))
 
