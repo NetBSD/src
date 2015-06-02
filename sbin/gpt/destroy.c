@@ -24,12 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.4 2011/08/27 17:38:16 joerg Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.4.20.1 2015/06/02 19:49:38 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -76,12 +80,12 @@ destroy(int fd)
 	}
 
 	if (pri_hdr != NULL) {
-		bzero(pri_hdr->map_data, secsz);
+		memset(pri_hdr->map_data, 0, secsz);
 		gpt_write(fd, pri_hdr);
 	}
 
 	if (!recoverable && sec_hdr != NULL) {
-		bzero(sec_hdr->map_data, secsz);
+		memset(sec_hdr->map_data, 0, secsz);
 		gpt_write(fd, sec_hdr);
 	}
 }

@@ -24,12 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.8 2013/12/10 01:05:00 jnemeth Exp $");
+__RCSID("$NetBSD: resize.c,v 1.8.6.1 2015/06/02 19:49:38 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -40,7 +44,6 @@ __RCSID("$NetBSD: resize.c,v 1.8 2013/12/10 01:05:00 jnemeth Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <inttypes.h>
 
 #include "map.h"
 #include "gpt.h"
@@ -62,7 +65,6 @@ usage_resize(void)
 static void
 resize(int fd)
 {
-	uuid_t uuid;
 	map_t *gpt, *tpg;
 	map_t *tbl, *lbt;
 	map_t *map;
@@ -104,8 +106,7 @@ resize(int fd)
 	i = entry - 1;
 	ent = (void*)((char*)tbl->map_data + i *
 	    le32toh(hdr->hdr_entsz));
-	le_uuid_dec(ent->ent_type, &uuid);
-	if (uuid_is_nil(&uuid, NULL)) {
+	if (gpt_uuid_is_nil(ent->ent_type)) {
 		warnx("%s: error: entry at index %u is unused",
 		    device_name, entry);
 		return;
