@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.356 2014/12/01 01:34:30 erh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.357 2015/06/02 23:00:25 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -641,7 +641,8 @@ ${_LIB.so.debug}: ${_LIB.so.full}
 	${_MKTARGET_CREATE}
 	(  ${OBJCOPY} --only-keep-debug ${_LIB.so.full} ${_LIB.so.debug} \
 	&& ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
-		--add-gnu-debuglink=${_LIB.so.debug} ${_LIB.so.full} \
+	    --add-gnu-debuglink=${_LIB.so.debug} ${_LIB.so.full} \
+	    ${_LIB.so.full}.tmp && mv -f ${_LIB.so.full}.tmp ${_LIB.so.full} \
 	) || (rm -f ${.TARGET}; false)
 .endif
 
