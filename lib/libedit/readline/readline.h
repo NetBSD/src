@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.35 2015/05/26 19:59:21 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.36 2015/06/02 15:35:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,9 +39,9 @@
 /* typedefs */
 typedef int	  Function(const char *, int);
 typedef void	  VFunction(void);
-typedef void	  VCPFunction(char *);
-typedef char	 *CPFunction(const char *, int);
-typedef char	**CPPFunction(const char *, int, int);
+typedef void	  rl_vcpfunc_t(char *);
+typedef char	 *rl_compentry_func_t(const char *, int);
+typedef char	**rl_completion_func_t(const char *, int, int);
 typedef char     *rl_compentry_func_t(const char *, int);
 typedef int	  rl_command_func_t(int, int);
 
@@ -108,9 +108,9 @@ extern int		 max_input_history;
 extern char		*rl_basic_word_break_characters;
 extern char		*rl_completer_word_break_characters;
 extern char		*rl_completer_quote_characters;
-extern CPFunction	*rl_completion_entry_function;
+extern rl_compentry_func_t *rl_completion_entry_function;
 extern char		*(*rl_completion_word_break_hook)(void);
-extern CPPFunction	*rl_attempted_completion_function;
+extern rl_completion_func_t *rl_attempted_completion_function;
 extern int		 rl_attempted_completion_over;
 extern int		rl_completion_type;
 extern int		rl_completion_query_items;
@@ -175,7 +175,7 @@ char		*filename_completion_function(const char *, int);
 char		*username_completion_function(const char *, int);
 int		 rl_complete(int, int);
 int		 rl_read_key(void);
-char	       **completion_matches(const char *, CPFunction *);
+char	       **completion_matches(const char *, rl_compentry_func_t *);
 void		 rl_display_match_list(char **, int, int);
 
 int		 rl_insert(int, int);
@@ -184,7 +184,7 @@ void		 rl_reset_terminal(const char *);
 int		 rl_bind_key(int, rl_command_func_t *);
 int		 rl_newline(int, int);
 void		 rl_callback_read_char(void);
-void		 rl_callback_handler_install(const char *, VCPFunction *);
+void		 rl_callback_handler_install(const char *, rl_vcpfunc_t *);
 void		 rl_callback_handler_remove(void);
 void		 rl_redisplay(void);
 int		 rl_get_previous_history(int, int);
