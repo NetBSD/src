@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.324 2015/06/02 13:26:36 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.325 2015/06/02 14:19:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.324 2015/06/02 13:26:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.325 2015/06/02 14:19:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -392,8 +392,8 @@ struct wm_softc {
 	uint32_t sc_pba;		/* prototype PBA register */
 
 	int sc_tbi_linkup;		/* TBI link status */
-	int sc_tbi_anegticks;		/* autonegotiation ticks */
-	int sc_tbi_ticks;		/* tbi ticks */
+	int sc_tbi_serdes_anegticks;	/* autonegotiation ticks */
+	int sc_tbi_serdes_ticks;	/* tbi ticks */
 
 	int sc_mchash_type;		/* multicast filter offset */
 
@@ -595,6 +595,7 @@ static void	wm_txintr(struct wm_softc *);
 static void	wm_rxintr(struct wm_softc *);
 static void	wm_linkintr_gmii(struct wm_softc *, uint32_t);
 static void	wm_linkintr_tbi(struct wm_softc *, uint32_t);
+static void	wm_linkintr_serdes(struct wm_softc *, uint32_t);
 static void	wm_linkintr(struct wm_softc *, uint32_t);
 static int	wm_intr(void *);
 
@@ -602,6 +603,8 @@ static int	wm_intr(void *);
  * Media related.
  * GMII, SGMII, TBI, SERDES and SFP.
  */
+/* Common */
+static void	wm_tbi_serdes_set_linkled(struct wm_softc *);
 /* GMII related */
 static void	wm_gmii_reset(struct wm_softc *);
 static int	wm_get_phy_id_82575(struct wm_softc *);
@@ -631,12 +634,16 @@ static bool	wm_sgmii_uses_mdio(struct wm_softc *);
 static int	wm_sgmii_readreg(device_t, int, int);
 static void	wm_sgmii_writereg(device_t, int, int, int);
 /* TBI related */
-static int	wm_check_for_link(struct wm_softc *);
 static void	wm_tbi_mediainit(struct wm_softc *);
 static int	wm_tbi_mediachange(struct ifnet *);
 static void	wm_tbi_mediastatus(struct ifnet *, struct ifmediareq *);
-static void	wm_tbi_set_linkled(struct wm_softc *);
-static void	wm_tbi_check_link(struct wm_softc *);
+static int	wm_check_for_link(struct wm_softc *);
+static void	wm_tbi_tick(struct wm_softc *);
+/* SERDES related */
+static void	wm_serdes_power_up_link_82575(struct wm_softc *);
+static int	wm_serdes_mediachange(struct ifnet *);
+static void	wm_serdes_mediastatus(struct ifnet *, struct ifmediareq *);
+static void	wm_serdes_tick(struct wm_softc *);
 /* SFP related */
 static int	wm_sfp_read_data_byte(struct wm_softc *, uint16_t, uint8_t *);
 static uint32_t	wm_sfp_get_media_type(struct wm_softc *);
@@ -728,6 +735,7 @@ static void	wm_k1_gig_workaround_hv(struct wm_softc *, int);
 static void	wm_set_mdio_slow_mode_hv(struct wm_softc *);
 static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 static void	wm_reset_init_script_82575(struct wm_softc *);
+static void	wm_reset_mdicnfg_82580(struct wm_softc *);
 
 CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, wm_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -1366,7 +1374,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	prop_data_t ea;
 	prop_number_t pn;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	uint16_t cfg1, cfg2, swdpin, io3;
+	uint16_t cfg1, cfg2, swdpin, nvmword;
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
 	bool force_clear_smbi;
@@ -2046,6 +2054,14 @@ wm_attach(device_t parent, device_t self, void *aux)
 		printf("WOL\n");
 #endif
 
+	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)) {
+		/* Check NVM for autonegotiation */
+		if (wm_nvm_read(sc, NVM_OFF_COMPAT, 1, &nvmword) == 0) {
+			if ((nvmword & NVM_COMPAT_SERDES_FORCE_MODE) != 0)
+				sc->sc_flags |= WM_F_PCS_DIS_AUTONEGO;
+		}
+	}
+
 	/*
 	 * XXX need special handling for some multiple port cards
 	 * to disable a paticular port.
@@ -2067,17 +2083,37 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	if (cfg1 & NVM_CFG1_ILOS)
 		sc->sc_ctrl |= CTRL_ILOS;
-	if (sc->sc_type >= WM_T_82544) {
-		sc->sc_ctrl |=
-		    ((swdpin >> NVM_SWDPIN_SWDPIO_SHIFT) & 0xf) <<
-		    CTRL_SWDPIO_SHIFT;
-		sc->sc_ctrl |=
-		    ((swdpin >> NVM_SWDPIN_SWDPIN_SHIFT) & 0xf) <<
-		    CTRL_SWDPINS_SHIFT;
-	} else {
-		sc->sc_ctrl |=
-		    ((cfg1 >> NVM_CFG1_SWDPIO_SHIFT) & 0xf) <<
-		    CTRL_SWDPIO_SHIFT;
+
+	/*
+	 * XXX
+	 * This code isn't correct because pin 2 and 3 are located
+	 * in different position on newer chips. Check all datasheet.
+	 *
+	 * Until resolve this problem, check if a chip < 82580
+	 */
+	if (sc->sc_type <= WM_T_82580) {
+		if (sc->sc_type >= WM_T_82544) {
+			sc->sc_ctrl |=
+			    ((swdpin >> NVM_SWDPIN_SWDPIO_SHIFT) & 0xf) <<
+			    CTRL_SWDPIO_SHIFT;
+			sc->sc_ctrl |=
+			    ((swdpin >> NVM_SWDPIN_SWDPIN_SHIFT) & 0xf) <<
+			    CTRL_SWDPINS_SHIFT;
+		} else {
+			sc->sc_ctrl |=
+			    ((cfg1 >> NVM_CFG1_SWDPIO_SHIFT) & 0xf) <<
+			    CTRL_SWDPIO_SHIFT;
+		}
+	}
+
+	/* XXX For other than 82580? */
+	if (sc->sc_type == WM_T_82580) {
+		wm_nvm_read(sc, NVM_OFF_CFG3_PORTA, 1, &nvmword);
+		printf("CFG3 = %08x\n", (uint32_t)nvmword);
+		if (nvmword & __BIT(13)) {
+			printf("SET ILOS\n");
+			sc->sc_ctrl |= CTRL_ILOS;
+		}
 	}
 
 #if 0
@@ -2255,8 +2291,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	switch (sc->sc_type) {
 	case WM_T_82573:
 		/* XXX limited to 9234 if ASPM is disabled */
-		wm_nvm_read(sc, NVM_OFF_INIT_3GIO_3, 1, &io3);
-		if ((io3 & NVM_3GIO_3_ASPM_MASK) != 0)
+		wm_nvm_read(sc, NVM_OFF_INIT_3GIO_3, 1, &nvmword);
+		if ((nvmword & NVM_3GIO_3_ASPM_MASK) != 0)
 			sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 		break;
 	case WM_T_82571:
@@ -2655,8 +2691,11 @@ wm_tick(void *arg)
 
 	if (sc->sc_flags & WM_F_HAS_MII)
 		mii_tick(&sc->sc_mii);
+	else if ((sc->sc_type >= WM_T_82575)
+	    && (sc->sc_mediatype == WM_MEDIATYPE_SERDES))
+		wm_serdes_tick(sc);
 	else
-		wm_tbi_check_link(sc);
+		wm_tbi_tick(sc);
 
 out:
 	WM_TX_UNLOCK(sc);
@@ -3772,9 +3811,7 @@ wm_reset(struct wm_softc *sc)
 	switch (sc->sc_type) {
 	case WM_T_82575:
 	case WM_T_82576:
-#if 0 /* XXX */
 	case WM_T_82580:
-#endif
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_ICH8:
@@ -3782,11 +3819,7 @@ wm_reset(struct wm_softc *sc)
 		if ((CSR_READ(sc, WMREG_EECD) & EECD_EE_PRES) == 0) {
 			/* Not found */
 			sc->sc_flags |= WM_F_EEPROM_INVALID;
-			if ((sc->sc_type == WM_T_82575)
-			    || (sc->sc_type == WM_T_82576)
-			    || (sc->sc_type == WM_T_82580)
-			    || (sc->sc_type == WM_T_I350)
-			    || (sc->sc_type == WM_T_I354))
+			if (sc->sc_type == WM_T_82575)
 				wm_reset_init_script_82575(sc);
 		}
 		break;
@@ -3824,7 +3857,7 @@ wm_reset(struct wm_softc *sc)
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
 		CSR_WRITE(sc, WMREG_WUC, 0);
 
-	/* XXX need special handling for 82580 */
+	wm_reset_mdicnfg_82580(sc);
 }
 
 /*
@@ -6015,8 +6048,79 @@ wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 			    device_xname(sc->sc_dev)));
 			sc->sc_tbi_linkup = 0;
 		}
-		wm_tbi_set_linkled(sc);
+		/* Update LED */
+		wm_tbi_serdes_set_linkled(sc);
 	} else if (icr & ICR_RXSEQ) {
+		DPRINTF(WM_DEBUG_LINK,
+		    ("%s: LINK: Receive sequence error\n",
+		    device_xname(sc->sc_dev)));
+	}
+}
+
+/*
+ * wm_linkintr_serdes:
+ *
+ *	Helper; handle link interrupts for TBI mode.
+ */
+static void
+wm_linkintr_serdes(struct wm_softc *sc, uint32_t icr)
+{
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	uint32_t pcs_adv, pcs_lpab, reg;
+
+	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
+		__func__));
+
+	if (icr & ICR_LSC) {
+		/* Check PCS */
+		reg = CSR_READ(sc, WMREG_PCS_LSTS);
+		if ((reg & PCS_LSTS_LINKOK) != 0) {
+			mii->mii_media_status |= IFM_ACTIVE;
+			sc->sc_tbi_linkup = 1;
+		} else {
+			mii->mii_media_status |= IFM_NONE;
+			sc->sc_tbi_linkup = 0;
+			wm_tbi_serdes_set_linkled(sc);
+			return;
+		}
+		mii->mii_media_active |= IFM_1000_SX;
+		if ((reg & PCS_LSTS_FDX) != 0)
+			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+			/* Check flow */
+			reg = CSR_READ(sc, WMREG_PCS_LSTS);
+			if ((reg & PCS_LSTS_AN_COMP) == 0) {
+				DPRINTF(WM_DEBUG_LINK,
+				    ("XXX LINKOK but not ACOMP\n"));
+				return;
+			}
+			pcs_adv = CSR_READ(sc, WMREG_PCS_ANADV);
+			pcs_lpab = CSR_READ(sc, WMREG_PCS_LPAB);
+			DPRINTF(WM_DEBUG_LINK,
+			    ("XXX AN result %08x, %08x\n", pcs_adv, pcs_lpab));
+			if ((pcs_adv & TXCW_SYM_PAUSE)
+			    && (pcs_lpab & TXCW_SYM_PAUSE)) {
+				mii->mii_media_active |= IFM_FLOW
+				    | IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+			} else if (((pcs_adv & TXCW_SYM_PAUSE) == 0)
+			    && (pcs_adv & TXCW_ASYM_PAUSE)
+			    && (pcs_lpab & TXCW_SYM_PAUSE)
+			    && (pcs_lpab & TXCW_ASYM_PAUSE))
+				mii->mii_media_active |= IFM_FLOW
+				    | IFM_ETH_TXPAUSE;
+			else if ((pcs_adv & TXCW_SYM_PAUSE)
+			    && (pcs_adv & TXCW_ASYM_PAUSE)
+			    && ((pcs_lpab & TXCW_SYM_PAUSE) == 0)
+			    && (pcs_lpab & TXCW_ASYM_PAUSE))
+				mii->mii_media_active |= IFM_FLOW
+				    | IFM_ETH_RXPAUSE;
+		}
+		/* Update LED */
+		wm_tbi_serdes_set_linkled(sc);
+	} else {
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: Receive sequence error\n",
 		    device_xname(sc->sc_dev)));
@@ -6034,6 +6138,9 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 
 	if (sc->sc_flags & WM_F_HAS_MII)
 		wm_linkintr_gmii(sc, icr);
+	else if ((sc->sc_mediatype == WM_MEDIATYPE_SERDES)
+	    && (sc->sc_type >= WM_T_82575))	
+		wm_linkintr_serdes(sc, icr);
 	else
 		wm_linkintr_tbi(sc, icr);
 }
@@ -6117,6 +6224,28 @@ wm_intr(void *arg)
  * Media related.
  * GMII, SGMII, TBI (and SERDES)
  */
+
+/* Common */
+
+/*
+ * wm_tbi_serdes_set_linkled:
+ *
+ *	Update the link LED on TBI and SERDES devices.
+ */
+static void
+wm_tbi_serdes_set_linkled(struct wm_softc *sc)
+{
+
+	if (sc->sc_tbi_linkup)
+		sc->sc_ctrl |= CTRL_SWDPIN(0);
+	else
+		sc->sc_ctrl &= ~CTRL_SWDPIN(0);
+
+	/* 82540 or newer devices are active low */
+	sc->sc_ctrl ^= (sc->sc_type >= WM_T_82540) ? CTRL_SWDPIN(0) : 0;
+
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+}
 
 /* GMII related */
 
@@ -7498,14 +7627,19 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	else
 		sc->sc_tipg = TIPG_LG_DFLT;
 
-	sc->sc_tbi_anegticks = 5;
+	sc->sc_tbi_serdes_anegticks = 5;
 
 	/* Initialize our media structures */
 	sc->sc_mii.mii_ifp = ifp;
-
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_tbi_mediachange,
-	    wm_tbi_mediastatus);
+
+	if ((sc->sc_type >= WM_T_82575)
+	    && (sc->sc_mediatype == WM_MEDIATYPE_SERDES))
+		ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK,
+		    wm_serdes_mediachange, wm_serdes_mediastatus);
+	else
+		ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK,
+		    wm_tbi_mediachange, wm_tbi_mediastatus);
 
 	/*
 	 * SWD Pins:
@@ -7514,7 +7648,11 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	 *	1 = Loss Of Signal (input)
 	 */
 	sc->sc_ctrl |= CTRL_SWDPIO(0);
-	sc->sc_ctrl &= ~CTRL_SWDPIO(1);
+
+	/* XXX Perhaps this is only for TBI */
+	if (sc->sc_mediatype != WM_MEDIATYPE_SERDES)
+		sc->sc_ctrl &= ~CTRL_SWDPIO(1);
+
 	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES)
 		sc->sc_ctrl &= ~CTRL_LRST;
 
@@ -7558,14 +7696,15 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	uint32_t status;
 	int i;
 
-	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES)
-		return 0;
+	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES) {
+		/* XXX need some work for >= 82571 and < 82575 */
+		if (sc->sc_type < WM_T_82575)
+			return 0;
+	}
 
 	if ((sc->sc_type == WM_T_82571) || (sc->sc_type == WM_T_82572)
 	    || (sc->sc_type >= WM_T_82575))
 		CSR_WRITE(sc, WMREG_SCTL, SCTL_DISABLE_SERDES_LOOPBACK);
-
-	/* XXX power_up_serdes_link_82575() */
 
 	sc->sc_ctrl &= ~CTRL_LRST;
 	sc->sc_txcw = TXCW_ANE;
@@ -7650,7 +7789,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
 		sc->sc_tbi_linkup = 0;
 	}
 
-	wm_tbi_set_linkled(sc);
+	wm_tbi_serdes_set_linkled(sc);
 
 	return 0;
 }
@@ -7692,7 +7831,7 @@ wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
 }
 
-/* XXX Currently TBI only */
+/* XXX TBI only */
 static int
 wm_check_for_link(struct wm_softc *sc)
 {
@@ -7703,8 +7842,11 @@ wm_check_for_link(struct wm_softc *sc)
 	uint32_t sig;
 
 	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES) {
-		sc->sc_tbi_linkup = 1;
-		return 0;
+		/* XXX need some work for >= 82571 */
+		if (sc->sc_type >= WM_T_82571) {
+			sc->sc_tbi_linkup = 1;
+			return 0;
+		}
 	}
 
 	rxcw = CSR_READ(sc, WMREG_RXCW);
@@ -7769,42 +7911,19 @@ wm_check_for_link(struct wm_softc *sc)
 }
 
 /*
- * wm_tbi_set_linkled:
+ * wm_tbi_tick:
  *
- *	Update the link LED on 1000BASE-X devices.
+ *	Check the link on TBI devices.
+ *	This function acts as mii_tick().
  */
 static void
-wm_tbi_set_linkled(struct wm_softc *sc)
+wm_tbi_tick(struct wm_softc *sc)
 {
-
-	if (sc->sc_tbi_linkup)
-		sc->sc_ctrl |= CTRL_SWDPIN(0);
-	else
-		sc->sc_ctrl &= ~CTRL_SWDPIN(0);
-
-	/* 82540 or newer devices are active low */
-	sc->sc_ctrl ^= (sc->sc_type >= WM_T_82540) ? CTRL_SWDPIN(0) : 0;
-
-	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-}
-
-/*
- * wm_tbi_check_link:
- *
- *	Check the link on 1000BASE-X devices.
- */
-static void
-wm_tbi_check_link(struct wm_softc *sc)
-{
-	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t status;
 
 	KASSERT(WM_TX_LOCKED(sc));
-
-	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES) {
-		sc->sc_tbi_linkup = 1;
-		return;
-	}
 
 	status = CSR_READ(sc, WMREG_STATUS);
 
@@ -7824,36 +7943,225 @@ wm_tbi_check_link(struct wm_softc *sc)
 			device_xname(sc->sc_dev),
 			(status & STATUS_FD) ? "FDX" : "HDX"));
 		sc->sc_tbi_linkup = 1;
+		sc->sc_tbi_serdes_ticks = 0;
 	}
 
-	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP)
-	    && ((status & STATUS_LU) == 0)) {
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP) == 0)
+		goto setled;
+
+	if ((status & STATUS_LU) == 0) {
 		sc->sc_tbi_linkup = 0;
-		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-			/* If the timer expired, retry autonegotiation */
-			if (++sc->sc_tbi_ticks >= sc->sc_tbi_anegticks) {
-				DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
-				sc->sc_tbi_ticks = 0;
-				/*
-				 * Reset the link, and let autonegotiation do
-				 * its thing
-				 */
-				sc->sc_ctrl |= CTRL_LRST;
-				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-				CSR_WRITE_FLUSH(sc);
-				delay(1000);
-				sc->sc_ctrl &= ~CTRL_LRST;
-				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-				CSR_WRITE_FLUSH(sc);
-				delay(1000);
-				CSR_WRITE(sc, WMREG_TXCW,
-				    sc->sc_txcw & ~TXCW_ANE);
-				CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
-			}
+		/* If the timer expired, retry autonegotiation */
+		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+		    && (++sc->sc_tbi_serdes_ticks
+			>= sc->sc_tbi_serdes_anegticks)) {
+			DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
+			sc->sc_tbi_serdes_ticks = 0;
+			/*
+			 * Reset the link, and let autonegotiation do
+			 * its thing
+			 */
+			sc->sc_ctrl |= CTRL_LRST;
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			CSR_WRITE_FLUSH(sc);
+			delay(1000);
+			sc->sc_ctrl &= ~CTRL_LRST;
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			CSR_WRITE_FLUSH(sc);
+			delay(1000);
+			CSR_WRITE(sc, WMREG_TXCW,
+			    sc->sc_txcw & ~TXCW_ANE);
+			CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 		}
 	}
 
-	wm_tbi_set_linkled(sc);
+setled:
+	wm_tbi_serdes_set_linkled(sc);
+}
+
+/* SERDES related */
+static void
+wm_serdes_power_up_link_82575(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	if ((sc->sc_mediatype != WM_MEDIATYPE_SERDES)
+	    && ((sc->sc_flags & WM_F_SGMII) == 0))
+		return;
+
+	reg = CSR_READ(sc, WMREG_PCS_CFG);
+	reg |= PCS_CFG_PCS_EN;
+	CSR_WRITE(sc, WMREG_PCS_CFG, reg);
+
+	reg = CSR_READ(sc, WMREG_CTRL_EXT);
+	reg &= ~CTRL_EXT_SWDPIN(3);
+	CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+	CSR_WRITE_FLUSH(sc);
+}
+
+static int
+wm_serdes_mediachange(struct ifnet *ifp)
+{
+	struct wm_softc *sc = ifp->if_softc;
+	bool pcs_autoneg = true; /* XXX */
+	uint32_t ctrl_ext, pcs_lctl, reg;
+
+	/* XXX Currently, this function is not called on 8257[12] */
+	if ((sc->sc_type == WM_T_82571) || (sc->sc_type == WM_T_82572)
+	    || (sc->sc_type >= WM_T_82575))
+		CSR_WRITE(sc, WMREG_SCTL, SCTL_DISABLE_SERDES_LOOPBACK);
+
+	wm_serdes_power_up_link_82575(sc);
+
+	sc->sc_ctrl |= CTRL_SLU;
+
+	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576))
+		sc->sc_ctrl |= CTRL_SWDPIN(0) | CTRL_SWDPIN(1);
+
+	ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
+	pcs_lctl = CSR_READ(sc, WMREG_PCS_LCTL);
+	switch (ctrl_ext & CTRL_EXT_LINK_MODE_MASK) {
+	case CTRL_EXT_LINK_MODE_SGMII:
+		pcs_autoneg = true;
+		pcs_lctl &= ~PCS_LCTL_AN_TIMEOUT;
+		break;
+	case CTRL_EXT_LINK_MODE_1000KX:
+		pcs_autoneg = false;
+		/* FALLTHROUGH */
+	default:
+		if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)){
+			if ((sc->sc_flags & WM_F_PCS_DIS_AUTONEGO) != 0)
+				pcs_autoneg = false;
+		}
+		sc->sc_ctrl |= CTRL_SPEED_1000 | CTRL_FRCSPD | CTRL_FD
+		    | CTRL_FRCFDX;
+		pcs_lctl |= PCS_LCTL_FSV_1000 | PCS_LCTL_FDV_FULL;
+	}
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+
+	if (pcs_autoneg) {
+		pcs_lctl |= PCS_LCTL_AN_ENABLE | PCS_LCTL_AN_RESTART;
+		pcs_lctl &= ~PCS_LCTL_FORCE_FC;
+
+		reg = CSR_READ(sc, WMREG_PCS_ANADV);
+		reg &= ~(TXCW_ASYM_PAUSE | TXCW_SYM_PAUSE);
+		reg |= TXCW_ASYM_PAUSE | TXCW_SYM_PAUSE;
+		CSR_WRITE(sc, WMREG_PCS_ANADV, reg);
+	} else
+		pcs_lctl |= PCS_LCTL_FSD | PCS_LCTL_FORCE_FC;
+
+	CSR_WRITE(sc, WMREG_PCS_LCTL, pcs_lctl);
+
+
+	return 0;
+}
+
+static void
+wm_serdes_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
+	struct wm_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	uint32_t pcs_adv, pcs_lpab, reg;
+
+	ifmr->ifm_status = IFM_AVALID;
+	ifmr->ifm_active = IFM_ETHER;
+
+	/* Check PCS */
+	reg = CSR_READ(sc, WMREG_PCS_LSTS);
+	if ((reg & PCS_LSTS_LINKOK) == 0) {
+		ifmr->ifm_active |= IFM_NONE;
+		sc->sc_tbi_linkup = 0;
+		goto setled;
+	}
+
+	sc->sc_tbi_linkup = 1;
+	ifmr->ifm_status |= IFM_ACTIVE;
+	ifmr->ifm_active |= IFM_1000_SX; /* XXX */
+	if ((reg & PCS_LSTS_FDX) != 0)
+		ifmr->ifm_active |= IFM_FDX;
+	else
+		ifmr->ifm_active |= IFM_HDX;
+	mii->mii_media_active &= ~IFM_ETH_FMASK;
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+		/* Check flow */
+		reg = CSR_READ(sc, WMREG_PCS_LSTS);
+		if ((reg & PCS_LSTS_AN_COMP) == 0) {
+			printf("XXX LINKOK but not ACOMP\n");
+			goto setled;
+		}
+		pcs_adv = CSR_READ(sc, WMREG_PCS_ANADV);
+		pcs_lpab = CSR_READ(sc, WMREG_PCS_LPAB);
+			printf("XXX AN result(2) %08x, %08x\n", pcs_adv, pcs_lpab);
+		if ((pcs_adv & TXCW_SYM_PAUSE)
+		    && (pcs_lpab & TXCW_SYM_PAUSE)) {
+			mii->mii_media_active |= IFM_FLOW
+			    | IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+		} else if (((pcs_adv & TXCW_SYM_PAUSE) == 0)
+		    && (pcs_adv & TXCW_ASYM_PAUSE)
+		    && (pcs_lpab & TXCW_SYM_PAUSE)
+		    && (pcs_lpab & TXCW_ASYM_PAUSE)) {
+			mii->mii_media_active |= IFM_FLOW
+			    | IFM_ETH_TXPAUSE;
+		} else if ((pcs_adv & TXCW_SYM_PAUSE)
+		    && (pcs_adv & TXCW_ASYM_PAUSE)
+		    && ((pcs_lpab & TXCW_SYM_PAUSE) == 0)
+		    && (pcs_lpab & TXCW_ASYM_PAUSE)) {
+			mii->mii_media_active |= IFM_FLOW
+			    | IFM_ETH_RXPAUSE;
+		} else {
+		}
+	}
+	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK)
+	    | (mii->mii_media_active & IFM_ETH_FMASK);
+setled:
+	wm_tbi_serdes_set_linkled(sc);
+}
+
+/*
+ * wm_serdes_tick:
+ *
+ *	Check the link on serdes devices.
+ */
+static void
+wm_serdes_tick(struct wm_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	uint32_t reg;
+
+	KASSERT(WM_TX_LOCKED(sc));
+
+	mii->mii_media_status = IFM_AVALID;
+	mii->mii_media_active = IFM_ETHER;
+
+	/* Check PCS */
+	reg = CSR_READ(sc, WMREG_PCS_LSTS);
+	if ((reg & PCS_LSTS_LINKOK) != 0) {
+		mii->mii_media_status |= IFM_ACTIVE;
+		sc->sc_tbi_linkup = 1;
+		sc->sc_tbi_serdes_ticks = 0;
+		mii->mii_media_active |= IFM_1000_SX; /* XXX */
+		if ((reg & PCS_LSTS_FDX) != 0)
+			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
+	} else {
+		mii->mii_media_status |= IFM_NONE;
+		sc->sc_tbi_linkup = 0;
+		    /* If the timer expired, retry autonegotiation */
+		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+		    && (++sc->sc_tbi_serdes_ticks
+			>= sc->sc_tbi_serdes_anegticks)) {
+			DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
+			sc->sc_tbi_serdes_ticks = 0;
+			/* XXX */
+			wm_serdes_mediachange(ifp);
+		}
+	}
+
+	wm_tbi_serdes_set_linkled(sc);
 }
 
 /* SFP related */
@@ -9813,4 +10121,30 @@ wm_reset_init_script_82575(struct wm_softc *sc)
 	wm_82575_write_8bit_ctlr_reg(sc, WMREG_SCCTL, 0x02, 0x47);
 	wm_82575_write_8bit_ctlr_reg(sc, WMREG_SCCTL, 0x14, 0x00);
 	wm_82575_write_8bit_ctlr_reg(sc, WMREG_SCCTL, 0x10, 0x00);
+}
+
+static void
+wm_reset_mdicnfg_82580(struct wm_softc *sc)
+{
+	uint32_t reg;
+	uint16_t nvmword;
+	int rv;
+
+	if ((sc->sc_flags & WM_F_SGMII) == 0)
+		return;
+
+	rv = wm_nvm_read(sc, NVM_OFF_LAN_FUNC_82580(sc->sc_funcid)
+	    + NVM_OFF_CFG3_PORTA, 1, &nvmword);
+	if (rv != 0) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to read NVM\n",
+		    __func__);
+		return;
+	}
+
+	reg = CSR_READ(sc, WMREG_MDICNFG);
+	if (nvmword & NVM_CFG3_PORTA_EXT_MDIO)
+		reg |= MDICNFG_DEST;
+	if (nvmword & NVM_CFG3_PORTA_COM_MDIO)
+		reg |= MDICNFG_COM_MDIO;
+	CSR_WRITE(sc, WMREG_MDICNFG, reg);
 }
