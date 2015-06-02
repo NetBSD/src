@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.36 2015/06/02 15:35:31 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.37 2015/06/02 15:36:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 typedef int	  Function(const char *, int);
 typedef void	  VFunction(void);
 typedef void	  rl_vcpfunc_t(char *);
-typedef char	 *rl_compentry_func_t(const char *, int);
 typedef char	**rl_completion_func_t(const char *, int, int);
 typedef char     *rl_compentry_func_t(const char *, int);
 typedef int	  rl_command_func_t(int, int);
