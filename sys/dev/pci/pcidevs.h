@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1220 2015/05/16 09:39:47 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1221 2015/06/02 02:11:22 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1226 2015/05/16 09:39:22 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1227 2015/06/02 02:07:54 nonaka Exp
  */
 
 /*
@@ -2639,7 +2639,7 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_7260_1	0x08b1		/* Dual Band Wireless AC 7260 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_7260_2	0x08b2		/* Dual Band Wireless AC 7260 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_3160_1	0x08b3		/* Dual Band Wireless AC 3160 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_3160_2	0x08b4		/* Dual Band Wirelsss AC 3160 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_3160_2	0x08b4		/* Dual Band Wireless AC 3160 */
 #define	PCI_PRODUCT_INTEL_X1000_I2C_GPIO	0x0934		/* Quark X1000 I2C and GPIO */
 #define	PCI_PRODUCT_INTEL_X1000_SPI	0x0935		/* Quark X1000 SPI */
 #define	PCI_PRODUCT_INTEL_X1000_HS_UART	0x0936		/* Quark X1000 HS-UART */
