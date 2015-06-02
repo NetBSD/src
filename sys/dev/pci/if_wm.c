@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.323 2015/06/02 03:49:10 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.324 2015/06/02 13:26:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.323 2015/06/02 03:49:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.324 2015/06/02 13:26:36 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -606,8 +606,8 @@ static int	wm_intr(void *);
 static void	wm_gmii_reset(struct wm_softc *);
 static int	wm_get_phy_id_82575(struct wm_softc *);
 static void	wm_gmii_mediainit(struct wm_softc *, pci_product_id_t);
-static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 static int	wm_gmii_mediachange(struct ifnet *);
+static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 static void	wm_i82543_mii_sendbits(struct wm_softc *, uint32_t, int);
 static uint32_t	wm_i82543_mii_recvbits(struct wm_softc *);
 static int	wm_gmii_i82543_readreg(device_t, int, int);
@@ -633,8 +633,8 @@ static void	wm_sgmii_writereg(device_t, int, int, int);
 /* TBI related */
 static int	wm_check_for_link(struct wm_softc *);
 static void	wm_tbi_mediainit(struct wm_softc *);
-static void	wm_tbi_mediastatus(struct ifnet *, struct ifmediareq *);
 static int	wm_tbi_mediachange(struct ifnet *);
+static void	wm_tbi_mediastatus(struct ifnet *, struct ifmediareq *);
 static void	wm_tbi_set_linkled(struct wm_softc *);
 static void	wm_tbi_check_link(struct wm_softc *);
 /* SFP related */
@@ -6628,21 +6628,6 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 }
 
 /*
- * wm_gmii_mediastatus:	[ifmedia interface function]
- *
- *	Get the current interface media status on a 1000BASE-T device.
- */
-static void
-wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct wm_softc *sc = ifp->if_softc;
-
-	ether_mediastatus(ifp, ifmr);
-	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK)
-	    | sc->sc_flowflags;
-}
-
-/*
  * wm_gmii_mediachange:	[ifmedia interface function]
  *
  *	Set hardware to newly-selected media on a 1000BASE-T device.
@@ -6689,6 +6674,21 @@ wm_gmii_mediachange(struct ifnet *ifp)
 	if ((rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
 		return 0;
 	return rc;
+}
+
+/*
+ * wm_gmii_mediastatus:	[ifmedia interface function]
+ *
+ *	Get the current interface media status on a 1000BASE-T device.
+ */
+static void
+wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
+	struct wm_softc *sc = ifp->if_softc;
+
+	ether_mediastatus(ifp, ifmr);
+	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK)
+	    | sc->sc_flowflags;
 }
 
 #define	MDI_IO		CTRL_SWDPIN(2)
@@ -7482,82 +7482,6 @@ wm_sgmii_writereg(device_t self, int phy, int reg, int val)
 
 /* TBI related */
 
-/* XXX Currently TBI only */
-static int
-wm_check_for_link(struct wm_softc *sc)
-{
-	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
-	uint32_t rxcw;
-	uint32_t ctrl;
-	uint32_t status;
-	uint32_t sig;
-
-	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES) {
-		sc->sc_tbi_linkup = 1;
-		return 0;
-	}
-
-	rxcw = CSR_READ(sc, WMREG_RXCW);
-	ctrl = CSR_READ(sc, WMREG_CTRL);
-	status = CSR_READ(sc, WMREG_STATUS);
-
-	sig = (sc->sc_type > WM_T_82544) ? CTRL_SWDPIN(1) : 0;
-
-	DPRINTF(WM_DEBUG_LINK, ("%s: %s: sig = %d, status_lu = %d, rxcw_c = %d\n",
-		device_xname(sc->sc_dev), __func__,
-		((ctrl & CTRL_SWDPIN(1)) == sig),
-		((status & STATUS_LU) != 0),
-		((rxcw & RXCW_C) != 0)
-		    ));
-
-	/*
-	 * SWDPIN   LU RXCW
-	 *      0    0    0
-	 *      0    0    1	(should not happen)
-	 *      0    1    0	(should not happen)
-	 *      0    1    1	(should not happen)
-	 *      1    0    0	Disable autonego and force linkup
-	 *      1    0    1	got /C/ but not linkup yet
-	 *      1    1    0	(linkup)
-	 *      1    1    1	If IFM_AUTO, back to autonego
-	 *
-	 */
-	if (((ctrl & CTRL_SWDPIN(1)) == sig)
-	    && ((status & STATUS_LU) == 0)
-	    && ((rxcw & RXCW_C) == 0)) {
-		DPRINTF(WM_DEBUG_LINK, ("%s: force linkup and fullduplex\n",
-			__func__));
-		sc->sc_tbi_linkup = 0;
-		/* Disable auto-negotiation in the TXCW register */
-		CSR_WRITE(sc, WMREG_TXCW, (sc->sc_txcw & ~TXCW_ANE));
-
-		/*
-		 * Force link-up and also force full-duplex.
-		 *
-		 * NOTE: CTRL was updated TFCE and RFCE automatically,
-		 * so we should update sc->sc_ctrl
-		 */
-		sc->sc_ctrl = ctrl | CTRL_SLU | CTRL_FD;
-		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-	} else if (((status & STATUS_LU) != 0)
-	    && ((rxcw & RXCW_C) != 0)
-	    && (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)) {
-		sc->sc_tbi_linkup = 1;
-		DPRINTF(WM_DEBUG_LINK, ("%s: go back to autonego\n",
-			__func__));
-		CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
-		CSR_WRITE(sc, WMREG_CTRL, (ctrl & ~CTRL_SLU));
-	} else if (((ctrl & CTRL_SWDPIN(1)) == sig)
-	    && ((rxcw & RXCW_C) != 0)) {
-		DPRINTF(WM_DEBUG_LINK, ("/C/"));
-	} else {
-		DPRINTF(WM_DEBUG_LINK, ("%s: %x,%x,%x\n", __func__, rxcw, ctrl,
-			status));
-	}
-
-	return 0;
-}
-
 /*
  * wm_tbi_mediainit:
  *
@@ -7619,43 +7543,6 @@ do {									\
 #undef ADD
 
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
-}
-
-/*
- * wm_tbi_mediastatus:	[ifmedia interface function]
- *
- *	Get the current interface media status on a 1000BASE-X device.
- */
-static void
-wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct wm_softc *sc = ifp->if_softc;
-	uint32_t ctrl, status;
-
-	ifmr->ifm_status = IFM_AVALID;
-	ifmr->ifm_active = IFM_ETHER;
-
-	status = CSR_READ(sc, WMREG_STATUS);
-	if ((status & STATUS_LU) == 0) {
-		ifmr->ifm_active |= IFM_NONE;
-		return;
-	}
-
-	ifmr->ifm_status |= IFM_ACTIVE;
-	/* Only 82545 is LX */
-	if (sc->sc_type == WM_T_82545)
-		ifmr->ifm_active |= IFM_1000_LX;
-	else
-		ifmr->ifm_active |= IFM_1000_SX;
-	if (CSR_READ(sc, WMREG_STATUS) & STATUS_FD)
-		ifmr->ifm_active |= IFM_FDX;
-	else
-		ifmr->ifm_active |= IFM_HDX;
-	ctrl = CSR_READ(sc, WMREG_CTRL);
-	if (ctrl & CTRL_RFCE)
-		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
-	if (ctrl & CTRL_TFCE)
-		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
 }
 
 /*
@@ -7764,6 +7651,119 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	}
 
 	wm_tbi_set_linkled(sc);
+
+	return 0;
+}
+
+/*
+ * wm_tbi_mediastatus:	[ifmedia interface function]
+ *
+ *	Get the current interface media status on a 1000BASE-X device.
+ */
+static void
+wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
+	struct wm_softc *sc = ifp->if_softc;
+	uint32_t ctrl, status;
+
+	ifmr->ifm_status = IFM_AVALID;
+	ifmr->ifm_active = IFM_ETHER;
+
+	status = CSR_READ(sc, WMREG_STATUS);
+	if ((status & STATUS_LU) == 0) {
+		ifmr->ifm_active |= IFM_NONE;
+		return;
+	}
+
+	ifmr->ifm_status |= IFM_ACTIVE;
+	/* Only 82545 is LX */
+	if (sc->sc_type == WM_T_82545)
+		ifmr->ifm_active |= IFM_1000_LX;
+	else
+		ifmr->ifm_active |= IFM_1000_SX;
+	if (CSR_READ(sc, WMREG_STATUS) & STATUS_FD)
+		ifmr->ifm_active |= IFM_FDX;
+	else
+		ifmr->ifm_active |= IFM_HDX;
+	ctrl = CSR_READ(sc, WMREG_CTRL);
+	if (ctrl & CTRL_RFCE)
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
+	if (ctrl & CTRL_TFCE)
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
+}
+
+/* XXX Currently TBI only */
+static int
+wm_check_for_link(struct wm_softc *sc)
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	uint32_t rxcw;
+	uint32_t ctrl;
+	uint32_t status;
+	uint32_t sig;
+
+	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES) {
+		sc->sc_tbi_linkup = 1;
+		return 0;
+	}
+
+	rxcw = CSR_READ(sc, WMREG_RXCW);
+	ctrl = CSR_READ(sc, WMREG_CTRL);
+	status = CSR_READ(sc, WMREG_STATUS);
+
+	sig = (sc->sc_type > WM_T_82544) ? CTRL_SWDPIN(1) : 0;
+
+	DPRINTF(WM_DEBUG_LINK, ("%s: %s: sig = %d, status_lu = %d, rxcw_c = %d\n",
+		device_xname(sc->sc_dev), __func__,
+		((ctrl & CTRL_SWDPIN(1)) == sig),
+		((status & STATUS_LU) != 0),
+		((rxcw & RXCW_C) != 0)
+		    ));
+
+	/*
+	 * SWDPIN   LU RXCW
+	 *      0    0    0
+	 *      0    0    1	(should not happen)
+	 *      0    1    0	(should not happen)
+	 *      0    1    1	(should not happen)
+	 *      1    0    0	Disable autonego and force linkup
+	 *      1    0    1	got /C/ but not linkup yet
+	 *      1    1    0	(linkup)
+	 *      1    1    1	If IFM_AUTO, back to autonego
+	 *
+	 */
+	if (((ctrl & CTRL_SWDPIN(1)) == sig)
+	    && ((status & STATUS_LU) == 0)
+	    && ((rxcw & RXCW_C) == 0)) {
+		DPRINTF(WM_DEBUG_LINK, ("%s: force linkup and fullduplex\n",
+			__func__));
+		sc->sc_tbi_linkup = 0;
+		/* Disable auto-negotiation in the TXCW register */
+		CSR_WRITE(sc, WMREG_TXCW, (sc->sc_txcw & ~TXCW_ANE));
+
+		/*
+		 * Force link-up and also force full-duplex.
+		 *
+		 * NOTE: CTRL was updated TFCE and RFCE automatically,
+		 * so we should update sc->sc_ctrl
+		 */
+		sc->sc_ctrl = ctrl | CTRL_SLU | CTRL_FD;
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	} else if (((status & STATUS_LU) != 0)
+	    && ((rxcw & RXCW_C) != 0)
+	    && (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)) {
+		sc->sc_tbi_linkup = 1;
+		DPRINTF(WM_DEBUG_LINK, ("%s: go back to autonego\n",
+			__func__));
+		CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
+		CSR_WRITE(sc, WMREG_CTRL, (ctrl & ~CTRL_SLU));
+	} else if (((ctrl & CTRL_SWDPIN(1)) == sig)
+	    && ((rxcw & RXCW_C) != 0)) {
+		DPRINTF(WM_DEBUG_LINK, ("/C/"));
+	} else {
+		DPRINTF(WM_DEBUG_LINK, ("%s: %x,%x,%x\n", __func__, rxcw, ctrl,
+			status));
+	}
 
 	return 0;
 }
