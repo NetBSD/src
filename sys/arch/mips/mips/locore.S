@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.192 2015/06/01 22:55:13 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.193 2015/06/02 05:06:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,16 +100,16 @@ _C_LABEL(kernel_text):
 	//
 	mfc0	a0, MIPS_COP_0_PRID, 1		# EBASE
 	COP0_SYNC
-	and	a1, a0, 0x1ff			# get CPU number
+	ext	a1, a0, 0, 10			# get CPU number
 	beqz	a1, 2f				# normal startup if 0
-	nop
+	 nop
 #ifdef MULTIPROCESSOR
 	j	_C_LABEL(octeon_cpu_spinup)
-	nop
+	 nop
 #else
 1:	wait
 	b	1b
-	nop
+	 nop
 #endif /* MIPS64_OCTEON */
 2:
 #endif
