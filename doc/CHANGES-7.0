@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.316 2015/06/02 14:51:11 sborrill Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.317 2015/06/02 20:43:40 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23625,4 +23625,59 @@ sys/external/bsd/drm2/radeon/radeon_pci.c	1.10
 	Disable drmkms on R100 and most R200 cards. Works around
 	PR#49744.
 	[mrg, ticket #818]
+
+sbin/gpt/Makefile				1.9-1.13
+sbin/gpt/add.c					1.25-1.27
+sbin/gpt/backup.c				1.2-1.8
+sbin/gpt/biosboot.c				1.8-1.14
+sbin/gpt/create.c				1.8-1.12
+sbin/gpt/destroy.c				1.5, 1.6
+sbin/gpt/drvctl.c				1.1
+sbin/gpt/gpt.8					1.29-1.36
+sbin/gpt/gpt.c					1.29-1.40
+sbin/gpt/gpt.h					1.12-1.18
+sbin/gpt/gpt_uuid.c				1.1-1.10
+sbin/gpt/gpt_uuid.h				1.1-1.3
+sbin/gpt/label.c				1.15-1.18
+sbin/gpt/map.c					1.7
+sbin/gpt/migrate.c				1.15-1.21
+sbin/gpt/recover.c				1.5
+sbin/gpt/remove.c				1.13-1.16
+sbin/gpt/resize.c				1.9-1.11
+sbin/gpt/resizedisk.c				1.1-1.6
+sbin/gpt/restore.c				1.2-1.7
+sbin/gpt/set.c					1.3-1.5
+sbin/gpt/show.c					1.16-1.21
+sbin/gpt/type.c					1.1-1.6
+sbin/gpt/unset.c				1.3-1.5
+
+	gpt(8): Complete overhaul, including adding follwing subcommands:
+                resize, set, unset, backup, restore, and resizedisk.
+        gpt(8): added type subcommand to modify partition type.
+	[jnemeth, ticket #774]
+
+sys/arch/arm/include/profile.h			1.17 via patch
+
+	ARM has deprecated using both PC and LR in the register list of
+	pop with ARMv6T2, so split the instructions up.
+	[joerg, ticket #813]
+
+external/bsd/blacklist/bin/conf.c		1.19, 1.20
+external/bsd/blacklist/etc/blacklistd.conf	1.4
+external/bsd/blacklist/lib/bl.c			1.25, 1.26
+external/bsd/blacklist/test/Makefile		1.3
+external/bsd/blacklist/test/srvtest.c		1.10
+
+	blacklistd(8):
+	- Centralize and fix =/* parsing, now =/24 works again.
+	- Fix example in blacklistd.conf
+	- srvtest: add ability to test using a local socket.
+	- Put back setting uid and gid to -1 if they are not available.
+	- Merge the uid data too, so that we don't end up with multiple
+	  entries when we don't care about the uid in the config file. In
+	  this case sshd returns either uid=root|sshd depending on how we
+	  failed, so we used to get two entries.
+	- Make sure that we get the socket messages we expect, otherwise
+	  return NULL.
+	[christos, ticket #815]
 
