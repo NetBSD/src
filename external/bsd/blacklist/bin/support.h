@@ -1,4 +1,4 @@
-/*	$NetBSD: support.h,v 1.5 2015/01/25 22:22:54 christos Exp $	*/
+/*	$NetBSD: support.h,v 1.6 2015/06/02 14:02:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@ void vdlog(int, const char *, va_list)
     __attribute__((__format__(__printf__, 2, 0)));
 void dlog(int, const char *, ...)
     __attribute__((__format__(__printf__, 2, 3)));
+ssize_t hexdump(char *, size_t, const char *, const void *, size_t);
 __END_DECLS
 
 #endif /* _SUPPORT_H */
