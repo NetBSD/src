@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.116 2015/05/26 19:59:21 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.117 2015/06/02 15:35:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.116 2015/05/26 19:59:21 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.117 2015/06/02 15:35:31 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ FILE *rl_outstream = NULL;
 int rl_point = 0;
 int rl_end = 0;
 char *rl_line_buffer = NULL;
-VCPFunction *rl_linefunc = NULL;
+rl_vcpfunc_t *rl_linefunc = NULL;
 int rl_done = 0;
 VFunction *rl_event_hook = NULL;
 KEYMAP_ENTRY_ARRAY emacs_standard_keymap,
@@ -107,9 +107,9 @@ int rl_attempted_completion_over = 0;
 char *rl_basic_word_break_characters = break_chars;
 char *rl_completer_word_break_characters = NULL;
 char *rl_completer_quote_characters = NULL;
-CPFunction *rl_completion_entry_function = NULL;
+rl_compentry_func_t *rl_completion_entry_function = NULL;
 char *(*rl_completion_word_break_hook)(void) = NULL;
-CPPFunction *rl_attempted_completion_function = NULL;
+rl_completion_func_t *rl_attempted_completion_function = NULL;
 Function *rl_pre_input_hook = NULL;
 Function *rl_startup1_hook = NULL;
 int (*rl_getc_function)(FILE *) = NULL;
@@ -1831,7 +1831,7 @@ rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 
 	/* Just look at how many global variables modify this operation! */
 	return fn_complete(e,
-	    (CPFunction *)rl_completion_entry_function,
+	    (rl_compentry_func_t *)rl_completion_entry_function,
 	    rl_attempted_completion_function,
 	    ct_decode_string(rl_basic_word_break_characters, &wbreak_conv),
 	    ct_decode_string(breakchars, &sprefix_conv),
@@ -2009,7 +2009,7 @@ rl_callback_read_char(void)
 }
 
 void 
-rl_callback_handler_install(const char *prompt, VCPFunction *linefunc)
+rl_callback_handler_install(const char *prompt, rl_vcpfunc_t *linefunc)
 {
 	if (e == NULL) {
 		rl_initialize();
