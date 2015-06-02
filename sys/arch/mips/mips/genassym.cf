@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.54 2011/04/06 05:38:19 matt Exp $
+#	$NetBSD: genassym.cf,v 1.55 2015/06/02 05:10:57 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -292,7 +292,10 @@ define	CPU_INFO_DIVISOR_DELAY	offsetof(struct cpu_info, ci_divisor_delay)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 ifdef MULTIPROCESSOR
+define	CPU_INFO_FLAGS		offsetof(struct cpu_info, ci_flags)
 define	CPU_INFO_KSP_TLB_SLOT	offsetof(struct cpu_info, ci_ksp_tlb_slot)
+
+define	CPUF_PRESENT		CPUF_PRESENT
 endif
 
 define	IPL_NONE		IPL_NONE
