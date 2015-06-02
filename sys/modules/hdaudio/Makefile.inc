@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2015/03/28 14:09:59 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2015/06/02 00:38:37 pooka Exp $
 
-.PATH:	${S}/dev/hdaudio
-SRCS=	hdaudio.c
+.PATH:	${NETBSDSRCDIR}/sys/dev/hdaudio
+SRCS+=	hdaudio.c
