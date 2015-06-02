@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_uart.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: octeon_uart.c,v 1.3 2015/06/02 05:11:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.3 2015/06/02 05:11:34 matt Exp $");
 
 #include "opt_octeon.h"
 
@@ -121,7 +121,7 @@ octeon_uart_iobus_attach(device_t parent, device_t self, void *aux)
 	int status;
 
 	sc_com->sc_dev = self;
-	(void)memcpy(&sc_com->sc_regs, &octeon_uart_com_regs, sizeof(sc_com->sc_regs));
+	sc_com->sc_regs = octeon_uart_com_regs;
 	sc_com->sc_regs.cr_iot = aa->aa_bust;
 	sc_com->sc_regs.cr_iobase = aa->aa_unit->addr;
 
