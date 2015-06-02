@@ -29,17 +29,14 @@
 #ifndef _GPT_H_
 #define	_GPT_H_
 
-#include <sys/endian.h>
-#include <sys/disklabel_gpt.h>
-#define GPT_SIZE GPT_HDR_SIZE
-#define hdr_uuid hdr_guid
-#define ent_uuid ent_guid
+#ifndef HAVE_NBTOOL_CONFIG_H
+#include <util.h>
+#else
+#include "opendisk.h"
+#include "namespace.h"
+#endif
 
-#include <uuid.h>
-
-#define le_uuid_dec uuid_dec_le
-#define le_uuid_enc uuid_enc_le
-int	parse_uuid(const char *, uuid_t *);
+#include "gpt_uuid.h"
 
 struct mbr_part {
 	uint8_t		part_flag;		/* bootstrap flags */
@@ -64,7 +61,7 @@ struct mbr {
 };
 
 extern const char *device_arg;
-extern char *device_name;
+extern const char *device_name;
 extern off_t mediasz;
 extern u_int parts;
 extern u_int secsz;
@@ -72,6 +69,7 @@ extern int readonly, verbose;
 
 uint32_t crc32(const void *, size_t);
 void	gpt_close(int);
+int	gpt_gpt(int, off_t, int);
 int	gpt_open(const char *);
 void*	gpt_read(int, off_t, size_t);
 int	gpt_write(int, map_t *);
@@ -89,9 +87,21 @@ int	cmd_migrate(int, char *[]);
 int	cmd_recover(int, char *[]);
 int	cmd_remove(int, char *[]);
 int	cmd_resize(int, char *[]);
+int	cmd_resizedisk(int, char *[]);
 int	cmd_restore(int, char *[]);
 int	cmd_set(int, char *[]);
 int	cmd_show(int, char *[]);
+int	cmd_type(int, char *[]);
 int	cmd_unset(int, char *[]);
+
+#ifndef HAVE_NBTOOL_CONFIG_H
+# ifdef USE_DRVCTL
+int	getdisksize(const char *, u_int *, off_t *);
+# else
+#  include "partutil.h"
+# endif
+#else
+# define getdisksize(a, b, c) 0
+#endif
 
 #endif /* _GPT_H_ */

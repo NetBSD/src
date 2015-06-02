@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.28 2013/12/19 07:49:50 wiz Exp $
+.\" $NetBSD: gpt.8,v 1.28.4.1 2015/06/02 19:49:38 snj Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd December 19, 2013
+.Dd December 6, 2014
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -68,6 +68,12 @@ Not all commands use all default settings, so some general options may not
 have an effect on all commands.
 .Pp
 The
+.Fl m Ar mediasize
+option overrides the default media size for the device (obtained
+from the kernel if possible) or defaulting to the file size for
+plain files.
+.Pp
+The
 .Fl p Ar partitions
 option allows the user to change the number of partitions the GPT can
 accommodate.
@@ -85,6 +91,13 @@ Currently this option is primarily useful for the
 .Ic show
 command, but the intent
 is to use it to implement dry-run behaviour.
+.Pp
+The
+.Fl s Ar sectorsize
+option overrides the default sector size for the device (obtained
+from the kernel if possible) or
+.Dv 512
+for plain files.
 .Pp
 The
 .Fl v
@@ -145,11 +158,50 @@ option allows the user to specify the partition type.
 The type is given as an UUID, but
 .Nm
 accepts
-.Cm efi , swap , ufs , hfs , linux ,
-.Cm raid , lfs , ccd , cgd , bios ,
-.Cm ffs ,
-and
-.Cm windows
+.Bl -tag -width "windows-reserved" -compact -offset indent
+.It Cm apple
+Apple HFS
+.It Cm apple-ufs
+Apple UFS
+.It Cm bios
+BIOS Boot
+.It Cm efi
+EFI System
+.It Cm fbsd-legacy
+FreeBSD legacy
+.It Cm fbsd-swap
+FreeBSD swap
+.It Cm fbsd-ufs
+FreeBSD UFS/UFS2
+.It Cm fbsd-vinum
+FreeBSD vinum
+.It Cm fbsd-zfs
+FreeBSD ZFS
+.It Cm linux-data
+Linux data
+.It Cm linux-raid
+Linux RAID
+.It Cm linux-swap
+Linux swap
+.It Cm linux-lvm
+Linux LVM
+.It Cm windows
+Windows basic data
+.It Cm windows-reserved
+Windows reserved
+.It Cm ccd
+NetBSD ccd component
+.It Cm cgd
+NetBSD Cryptographic Disk
+.It Cm ffs
+NetBSD FFSv1/FFSv2
+.It Cm lfs
+NetBSD LFS
+.It Cm raid
+NetBSD RAIDFrame component
+.It Cm swap
+NetBSD swap
+.El
 as aliases for the most commonly used partition types.
 .\" ==== backup ====
 .It Nm Ic backup Ar device ...
@@ -162,7 +214,8 @@ command.
 The format is a plist.
 It should not be modified.
 .\" ==== biosboot ====
-.It Nm Ic biosboot Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc Ar device ...
+.It Nm Ic biosboot Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc \
+Oo Fl L Ar label Oc Ar device ...
 The
 .Ic biosboot
 command allows the user to configure the partition that contains the
@@ -182,6 +235,11 @@ The
 option selects the partition that should contain the primary
 bootstrap code, as installed via
 .Xr installboot 8 .
+The
+.Fl L
+option selects the partition by label.
+If there are multiple partitions with the same label, it will use the
+first one found.
 .\" ==== create ====
 .It Nm Ic create Oo Fl fp Oc Ar device ...
 The
@@ -216,7 +274,7 @@ to destroy the table in a way that it can be recovered.
 .\" ==== label ====
 .It Nm Ic label Oo Fl a Oc Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
 .It Nm Ic label Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
-Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
 Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
 The
 .Ic label
@@ -235,6 +293,11 @@ option selects the partition that starts at the given block number.
 The
 .Fl i Ar index
 option selects the partition with the given partition number.
+.Pp
+The
+.Fl L Ar label
+option selects all partitions that have the given label.
+This can cause multiple partitions to be relabeled.
 .Pp
 The
 .Fl s Ar sectors
@@ -320,7 +383,7 @@ It is very useful in case the primary label was deleted.
 .\" ==== remove ====
 .It Nm Ic remove Oo Fl a Oc Ar device ...
 .It Nm Ic remove Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
-Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc Ar device ...
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc Ar device ...
 The
 .Ic remove
 command allows the user to remove any and all partitions that match the
@@ -354,6 +417,52 @@ If the
 .Fl a
 option is specified then the size will be adjusted to be a multiple of
 alignment if possible.
+.\" ==== resizedisk ====
+.It Nm Ic resizedisk Oo Fl s Ar size Oc Ar device ...
+The
+.Ic resizedisk
+command allows the user to resize a disk.
+With GPTs, a backup copy is stored at the end of the disk.
+If the underlying medium changes size
+.Pq or is going to change size ,
+then the backup copy needs to be moved to the new end of the disk,
+and the last sector available for data storage needs to be adjusted.
+This command does that.
+If the backup copy no longer exists due to the medium shrinking, then
+a new backup copy will be created using the primary copy.
+.Pp
+The
+.Fl s
+option allows the new size to be specified, otherwise the backup copy
+will automatically be placed at the current end of the disk.
+If there is no suffix, or the suffix is
+.Sq s
+or
+.Sq S
+then size is in sectors, otherwise size is in bytes which must be
+a multiple of the device's sector size.
+Using the
+.Fl s
+option allows you to move the backup copy prior to resizing the medium.
+This is primarily useful when shrinking the medium.
+.\" ==== restore ====
+.It Nm Ic restore Oo Fl F Oc Ar device ...
+The
+.Ic restore
+command restores a partition table that was previously saved using the
+.Ic backup
+command.
+The partition table is read from standard input and is expected to be in
+the format of a plist.
+It assumes an empty disk.
+The
+.Fl F
+option can be used to blank the disk.
+The new disk does not have to be the same size as the old disk as long as all
+the partitions fit, as
+.Ic restore
+will automatically adjust.
+However, the new disk must use the same sector size as the old disk.
 .\" ==== set ====
 .It Nm Ic set Fl a Ar attribute Fl i Ar index Ar device ...
 The
@@ -411,6 +520,19 @@ The order of precedence for the options are:
 .Fl l ,
 .Fl g ,
 .Fl u .
+.\" ==== type ====
+.It Nm Ic type Oo Fl a Oc Fl T Ar newtype Ar device ...
+.It Nm Ic type Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
+Fl T Ar newtype Ar device ...
+The
+.Ic type
+command allows the user to change the type of any and all partitions
+that match the selection.
+It uses the same selection options as the
+.Ic label
+command.
+See above for a description of these options.
 .\" ==== unset ====
 .It Nm Ic unset Fl a Ar attribute Fl i Ar index Ar device ...
 The

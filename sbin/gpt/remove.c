@@ -24,12 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.12 2013/11/28 01:37:14 jnemeth Exp $");
+__RCSID("$NetBSD: remove.c,v 1.12.4.1 2015/06/02 19:49:38 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -45,13 +49,14 @@ __RCSID("$NetBSD: remove.c,v 1.12 2013/11/28 01:37:14 jnemeth Exp $");
 #include "gpt.h"
 
 static int all;
-static uuid_t type;
+static gpt_uuid_t type;
 static off_t block, size;
 static unsigned int entry;
+static uint8_t *label;
 
 const char removemsg1[] = "remove -a device ...";
-const char removemsg2[] = "remove [-b blocknr] [-i index] [-s sectors] "
-	"[-t type] device ...";
+const char removemsg2[] = "remove [-b blocknr] [-i index] [-L label] "
+	"[-s sectors] [-t type] device ...";
 
 __dead static void
 usage_remove(void)
@@ -67,7 +72,6 @@ usage_remove(void)
 static void
 rem(int fd)
 {
-	uuid_t uuid;
 	map_t *gpt, *tpg;
 	map_t *tbl, *lbt;
 	map_t *m;
@@ -112,14 +116,18 @@ rem(int fd)
 		hdr = gpt->map_data;
 		ent = (void*)((char*)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
-		le_uuid_dec(ent->ent_type, &uuid);
-		if (!uuid_is_nil(&type, NULL) &&
-		    !uuid_equal(&type, &uuid, NULL))
+
+		if (label != NULL)
+			if (strcmp((char *)label,
+			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
+				continue;
+
+		if (!gpt_uuid_is_nil(type) &&
+		    !gpt_uuid_equal(type, ent->ent_type))
 			continue;
 
 		/* Remove the primary entry by clearing the partition type. */
-		uuid_create_nil(&uuid, NULL);
-		le_uuid_enc(ent->ent_type, &uuid);
+		gpt_uuid_copy(ent->ent_type, gpt_uuid_nil);
 
 		hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -134,7 +142,7 @@ rem(int fd)
 		    le32toh(hdr->hdr_entsz));
 
 		/* Remove the secondary entry. */
-		le_uuid_enc(ent->ent_type, &uuid);
+		gpt_uuid_copy(ent->ent_type, gpt_uuid_nil);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -156,7 +164,7 @@ cmd_remove(int argc, char *argv[])
 	int64_t human_num;
 
 	/* Get the remove options */
-	while ((ch = getopt(argc, argv, "ab:i:s:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "ab:i:L:s:t:")) != -1) {
 		switch(ch) {
 		case 'a':
 			if (all > 0)
@@ -179,6 +187,11 @@ cmd_remove(int argc, char *argv[])
 			if (*p != 0 || entry < 1)
 				usage_remove();
 			break;
+		case 'L':
+			if (label != NULL)
+				usage_remove();
+			label = (uint8_t *)strdup(optarg);
+			break;
 		case 's':
 			if (size > 0)
 				usage_remove();
@@ -187,9 +200,9 @@ cmd_remove(int argc, char *argv[])
 				usage_remove();
 			break;
 		case 't':
-			if (!uuid_is_nil(&type, NULL))
+			if (!gpt_uuid_is_nil(type))
 				usage_remove();
-			if (parse_uuid(optarg, &type) != 0)
+			if (gpt_uuid_parse(optarg, type) != 0)
 				usage_remove();
 			break;
 		default:
@@ -198,7 +211,8 @@ cmd_remove(int argc, char *argv[])
 	}
 
 	if (!all ^
-	    (block > 0 || entry > 0 || size > 0 || !uuid_is_nil(&type, NULL)))
+	    (block > 0 || entry > 0 || label != NULL || size > 0 ||
+	    !gpt_uuid_is_nil(type)))
 		usage_remove();
 
 	if (argc == optind)

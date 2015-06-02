@@ -24,12 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.24 2013/12/10 01:05:00 jnemeth Exp $");
+__RCSID("$NetBSD: add.c,v 1.24.4.1 2015/06/02 19:49:38 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -40,12 +44,11 @@ __RCSID("$NetBSD: add.c,v 1.24 2013/12/10 01:05:00 jnemeth Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <inttypes.h>
 
 #include "map.h"
 #include "gpt.h"
 
-static uuid_t type;
+static gpt_uuid_t type;
 static off_t alignment, block, sectors, size;
 static unsigned int entry;
 static uint8_t *name;
@@ -67,7 +70,6 @@ usage_add(void)
 static void
 add(int fd)
 {
-	uuid_t uuid;
 	map_t *gpt, *tpg;
 	map_t *tbl, *lbt;
 	map_t *map;
@@ -110,8 +112,7 @@ add(int fd)
 		i = entry - 1;
 		ent = (void*)((char*)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
-		le_uuid_dec(ent->ent_type, &uuid);
-		if (!uuid_is_nil(&uuid, NULL)) {
+		if (!gpt_uuid_is_nil(ent->ent_type)) {
 			warnx("%s: error: entry at index %u is not free",
 			    device_name, entry);
 			return;
@@ -121,8 +122,7 @@ add(int fd)
 		for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 			ent = (void*)((char*)tbl->map_data + i *
 			    le32toh(hdr->hdr_entsz));
-			le_uuid_dec(ent->ent_type, &uuid);
-			if (uuid_is_nil(&uuid, NULL))
+			if (gpt_uuid_is_nil(ent->ent_type))
 				break;
 		}
 		if (i == le32toh(hdr->hdr_entries)) {
@@ -149,7 +149,7 @@ add(int fd)
 		}
 	}
 
-	le_uuid_enc(ent->ent_type, &type);
+	gpt_uuid_copy(ent->ent_type, type);
 	ent->ent_lba_start = htole64(map->map_start);
 	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
 	if (name != NULL)
@@ -166,7 +166,7 @@ add(int fd)
 	hdr = tpg->map_data;
 	ent = (void*)((char*)lbt->map_data + i * le32toh(hdr->hdr_entsz));
 
-	le_uuid_enc(ent->ent_type, &type);
+	gpt_uuid_copy(ent->ent_type, type);
 	ent->ent_lba_start = htole64(map->map_start);
 	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
 	if (name != NULL)
@@ -253,9 +253,9 @@ cmd_add(int argc, char *argv[])
 			sectors = 0;
 			break;
 		case 't':
-			if (!uuid_is_nil(&type, NULL))
+			if (!gpt_uuid_is_nil(type))
 				usage_add();
-			if (parse_uuid(optarg, &type) != 0)
+			if (gpt_uuid_parse(optarg, type) != 0)
 				usage_add();
 			break;
 		default:
@@ -267,9 +267,8 @@ cmd_add(int argc, char *argv[])
 		usage_add();
 
 	/* Create NetBSD FFS partitions by default. */
-	if (uuid_is_nil(&type, NULL)) {
-		static const uuid_t nb_ffs = GPT_ENT_TYPE_NETBSD_FFS;
-		type = nb_ffs;
+	if (gpt_uuid_is_nil(type)) {
+		gpt_uuid_create(GPT_TYPE_NETBSD_FFS, type, NULL, 0);
 	}
 
 	while (optind < argc) {

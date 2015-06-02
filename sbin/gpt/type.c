@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2005 Marcel Moolenaar
+ * Copyright (c) 2004 Marcel Moolenaar
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FBSDID
-__FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
+__FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.14.4.1 2015/06/02 19:49:38 snj Exp $");
+__RCSID("$NetBSD: type.c,v 1.6.2.2 2015/06/02 19:49:38 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,32 +47,32 @@ __RCSID("$NetBSD: label.c,v 1.14.4.1 2015/06/02 19:49:38 snj Exp $");
 
 #include "map.h"
 #include "gpt.h"
-#include "gpt_uuid.h"
 
 static int all;
-static gpt_uuid_t type;
+static gpt_uuid_t type, newtype;
 static off_t block, size;
 static unsigned int entry;
-static uint8_t *name, *xlabel;
+static uint8_t *label;
 
-const char labelmsg1[] = "label -a <-l label | -f file> device ...";
-const char labelmsg2[] = "label [-b blocknr] [-i index] [-L label] "
-	"[-s sectors]";
-const char labelmsg3[] = "      [-t uuid] <-l label | -f file> device ...";
+const char typemsg1[] = "type -a -T newtype device ...";
+const char typemsg2[] = "type [-b blocknr] [-i index] [-L label] "
+	"[-s sectors] [-t type]";
+const char typemsg3[] = "     -T newtype device ...";
 
 __dead static void
-usage_label(void)
+usage_type(void)
 {
+
 	fprintf(stderr,
-	    "usage: %s %s\n"
-	    "       %s %s\n"
-	    "       %*s %s\n", getprogname(), labelmsg1,
-	    getprogname(), labelmsg2, (int)strlen(getprogname()), "", labelmsg3);
+            "usage: %s %s\n"
+            "       %s %s\n"
+            "       %*s %s\n", getprogname(), typemsg1,
+            getprogname(), typemsg2, (int)strlen(getprogname()), "", typemsg3);
 	exit(1);
 }
 
 static void
-label(int fd)
+chtype(int fd)
 {
 	map_t *gpt, *tpg;
 	map_t *tbl, *lbt;
@@ -102,7 +102,7 @@ label(int fd)
 		return;
 	}
 
-	/* Relabel all matching entries in the map. */
+	/* Change type of all matching entries in the map. */
 	for (m = map_first(); m != NULL; m = m->map_next) {
 		if (m->map_type != MAP_TYPE_GPT_PART || m->map_index < 1)
 			continue;
@@ -119,8 +119,8 @@ label(int fd)
 		ent = (void*)((char*)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 
-		if (xlabel != NULL)
-			if (strcmp((char *)xlabel,
+		if (label != NULL)
+			if (strcmp((char *)label,
 			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
 				continue;
 
@@ -128,8 +128,8 @@ label(int fd)
 		    !gpt_uuid_equal(type, ent->ent_type))
 			continue;
 
-		/* Label the primary entry. */
-		utf8_to_utf16(name, ent->ent_name, 36);
+		/* Change the primary entry. */
+		gpt_uuid_copy(ent->ent_type, newtype);
 
 		hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -143,8 +143,8 @@ label(int fd)
 		ent = (void*)((char*)lbt->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 
-		/* Label the secondary entry. */
-		utf8_to_utf16(name, ent->ent_name, 36);
+		/* Change the secondary entry. */
+		gpt_uuid_copy(ent->ent_type, newtype);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -153,110 +153,79 @@ label(int fd)
 
 		gpt_write(fd, lbt);
 		gpt_write(fd, tpg);
-
-		printf("partition %d on %s labeled %s\n", m->map_index,
-		    device_name, name);
+		printf("partition %d type changed\n", m->map_index);
 	}
 }
 
-static void
-name_from_file(const char *fn)
-{
-	FILE *f;
-	char *p;
-	size_t maxlen = 1024;
-	size_t len;
-
-	if (strcmp(fn, "-") != 0) {
-		f = fopen(fn, "r");
-		if (f == NULL)
-			err(1, "unable to open file %s", fn);
-	} else
-		f = stdin;
-	name = malloc(maxlen);
-	len = fread(name, 1, maxlen - 1, f);
-	if (ferror(f))
-		err(1, "unable to read label from file %s", fn);
-	if (f != stdin)
-		fclose(f);
-	name[len] = '\0';
-	/* Only keep the first line, excluding the newline character. */
-	p = strchr((const char *)name, '\n');
-	if (p != NULL)
-		*p = '\0';
-}
-
 int
-cmd_label(int argc, char *argv[])
+cmd_type(int argc, char *argv[])
 {
 	char *p;
 	int ch, fd;
 	int64_t human_num;
 
-	/* Get the label options */
-	while ((ch = getopt(argc, argv, "ab:f:i:L:l:s:t:")) != -1) {
+	/* Get the type options */
+	while ((ch = getopt(argc, argv, "ab:i:L:s:t:T:")) != -1) {
 		switch(ch) {
 		case 'a':
 			if (all > 0)
-				usage_label();
+				usage_type();
 			all = 1;
 			break;
 		case 'b':
 			if (block > 0)
-				usage_label();
+				usage_type();
 			if (dehumanize_number(optarg, &human_num) < 0)
-				usage_label();
+				usage_type();
 			block = human_num;
 			if (block < 1)
-				usage_label();
-			break;
-		case 'f':
-			if (name != NULL)
-				usage_label();
-			name_from_file(optarg);
+				usage_type();
 			break;
 		case 'i':
 			if (entry > 0)
-				usage_label();
+				usage_type();
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
-				usage_label();
+				usage_type();
 			break;
-		case 'L':
-			if (xlabel != NULL)
-				usage_label();
-			xlabel = (uint8_t *)strdup(optarg);
-			break;
-		case 'l':
-			if (name != NULL)
-				usage_label();
-			name = (uint8_t *)strdup(optarg);
-			break;
+                case 'L':
+                        if (label != NULL)
+                                usage_type();
+                        label = (uint8_t *)strdup(optarg);
+                        break;
 		case 's':
 			if (size > 0)
-				usage_label();
+				usage_type();
 			size = strtoll(optarg, &p, 10);
 			if (*p != 0 || size < 1)
-				usage_label();
+				usage_type();
 			break;
 		case 't':
 			if (!gpt_uuid_is_nil(type))
-				usage_label();
+				usage_type();
 			if (gpt_uuid_parse(optarg, type) != 0)
-				usage_label();
+				usage_type();
+			break;
+		case 'T':
+			if (!gpt_uuid_is_nil(newtype))
+				usage_type();
+			if (gpt_uuid_parse(optarg, newtype) != 0)
+				usage_type();
 			break;
 		default:
-			usage_label();
+			usage_type();
 		}
 	}
 
 	if (!all ^
-	    (block > 0 || entry > 0 || xlabel != NULL || size > 0 ||
+	    (block > 0 || entry > 0 || label != NULL || size > 0 ||
 	    !gpt_uuid_is_nil(type)))
-		usage_label();
+		usage_type();
+	if (gpt_uuid_is_nil(newtype))
+		usage_type();
 
-	if (name == NULL || argc == optind)
-		usage_label();
+	if (argc == optind)
+		usage_type();
 
 	while (optind < argc) {
 		fd = gpt_open(argv[optind++]);
@@ -265,7 +234,7 @@ cmd_label(int argc, char *argv[])
 			continue;
 		}
 
-		label(fd);
+		chtype(fd);
 
 		gpt_close(fd);
 	}
