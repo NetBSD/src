@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.2 2015/06/01 22:55:13 matt Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.3 2015/06/02 05:10:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.2 2015/06/01 22:55:13 matt Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.3 2015/06/02 05:10:18 matt Exp $")
 
 #include "opt_cputype.h"
 #include "opt_multiprocessor.h"
@@ -116,16 +116,17 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	// must has its own exception vector page.  The exceptions will be
 	// modified to refer to that CPU's cpu_info structure.
 	//
-	mfc0	a0, MIPS_COP_0_PRID, 1	# get EBASE
-	ext	s0, a0, 0, 10		# fetch cpunum (MIPSNNR2)
-	ins	a0, zero, 0, 10		# clear it (MIPSNNR2)
-	ins	a0, v0, 12, 10		# insert cpunum as exception address
-	mtc0	a0, MIPS_COP_0_PRID, 1	# set EBASE
+	mfc0	s1, MIPS_COP_0_PRID, 1	# get EBASE
+	ext	s0, s1, 0, 10		# fetch cpunum (MIPSNNR2)
+	ins	s1, zero, 0, 10		# clear it (MIPSNNR2)
+	ins	s1, s0, 12, 10		# insert cpunum as exception address
+	ehb
+	mtc0	s1, MIPS_COP_0_PRID, 1	# set EBASE
 	COP0_SYNC
 
 	// we only can deal with 2 cores
 	li	v0, 1
-	bne	s0, v0, 2f
+	beq	s0, v0, 2f
 	 nop
 	// spin if this isn't cpu 1
 1:	wait
@@ -133,18 +134,21 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	 nop
 
 	// Indicate we've gotten this far
-	PTR_LA	a0, _C_LABEL(cpus_booted)
+2:	PTR_LA	a0, _C_LABEL(cpus_booted)
+	li	a1, 1
 	jal	_C_LABEL(atomic_or_64)
-	 sll	a1, v0, s0
+	 sllv	a1, a1, s0
 
 	// Wait until cpuid_infos[cpunum] is not NULL.
-2:	PTR_LA	a1, _C_LABEL(cpuid_infos)
-	dsll	s0, s0, PTR_SCALESHIFT	# cpunum -> array index
-	PTR_ADD	t0, a1, s0		# add to array start
-3:	PTR_L	a1, (t0)		# get cpu_info pointer
+	PTR_LA	a1, _C_LABEL(cpuid_infos)
+	dsll	v0, s0, PTR_SCALESHIFT	# cpunum -> array index
+	PTR_ADD	t0, a1, v0		# add to array start
+3:	sync
+	PTR_L	a1, (t0)		# get cpu_info pointer
 	beqz	a1, 3b			# loop until non-NULL
 	 nop
-	j	_C_LABEL(cpu_hatch)
+
+	j	_C_LABEL(cpu_trampoline)
 	 nop
 END(octeon_cpu_spinup)
 #endif /* MULTIPROCESSOR */
