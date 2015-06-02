@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.314 2015/06/01 19:40:04 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.315 2015/06/02 10:14:45 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23613,4 +23613,10 @@ external/gpl3/gcc/dist/gcc/config/arm/t-netbsdeabi 1.1
 	Fix build infrastructure and gcc for providing OABI compat
 	libraries on earm* machines.
 	[martin, ticket #816]
+
+sys/arch/vax/vsa/vsbus.c			1.61
+
+	Fix VAX46 and VAX48 vsbus attach config. Addresses PR
+	port-vax/49935.
+	[abs, ticket #817]
 
