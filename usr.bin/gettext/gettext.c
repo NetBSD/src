@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.1 2015/06/03 14:32:17 christos Exp $	*/
+/*	$NetBSD: gettext.c,v 1.2 2015/06/03 23:15:22 enami Exp $	*/
 
 /*-
  * Copyright (c) 2015 William Orr <will@worrbase.com>
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.1 2015/06/03 14:32:17 christos Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.2 2015/06/03 23:15:22 enami Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -116,6 +116,7 @@ expand(char *str)
 				*sp++ = '\\';
 				break;
 			}
+			continue;
 		}
 		*sp++ = *fp++;
 	}
