@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxpvar.h,v 1.1 2015/04/15 10:40:36 hsuenaga Exp $	*/
+/*	$NetBSD: armadaxpvar.h,v 1.2 2015/06/03 02:53:19 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2015 SUENAGA Hiroki
  * All rights reserved.
@@ -26,6 +26,7 @@
  */
 #ifndef _ARMDAXPVAR_H_
 #define _ARMDAXPVAR_H_
+#include <arm/marvell/mvsocvar.h>
 #include <machine/bus_defs.h>
 
 /* device initalization */
@@ -40,5 +41,8 @@ extern void armadaxp_sdcache_inv_range(vaddr_t, paddr_t, psize_t);
 extern void armadaxp_sdcache_wb_range(vaddr_t, paddr_t, psize_t);
 extern void armadaxp_sdcache_wbinv_range(vaddr_t, paddr_t, psize_t);
 
-#endif /* _ARMDAXPVAR_H_ */
+/* mbus initialization */
+extern int armadaxp_init_mbus(void);
+extern int armadaxp_attr_dump(struct mvsoc_softc *, uint32_t, uint32_t);
 
+#endif /* _ARMDAXPVAR_H_ */
