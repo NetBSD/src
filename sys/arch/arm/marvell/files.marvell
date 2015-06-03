@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.14 2015/05/03 14:38:09 hsuenaga Exp $
+#       $NetBSD: files.marvell,v 1.15 2015/06/03 03:34:38 hsuenaga Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -27,6 +27,7 @@ file	arch/arm/marvell/armadaxp.c		armadaxp
 
 # Integrated peripherals
 include "dev/marvell/files.discovery"
+include "dev/marvell/files.armada"
 
 # Timers
 device	mvsoctmr: sysmon_wdog
@@ -58,10 +59,7 @@ attach	mvsata at mvsoc with mvsata_mbus
 attach	mvgbec at mvsoc with mvgbec_mbus
 
 # ARMADA XP Gigabit Ethernet Controller Interface
-define	mvxpe { [port = -1 ], [irq = -1] }
-device	mvxpe: ether, ifnet, arp, mii
 attach	mvxpe at mvsoc with mvxpe_mbus
-file	dev/marvell/if_mvxpe.c			mvxpe		needs-flag
 
 # USB 2.0 Interface
 attach	ehci at mvsoc with mvusb_mbus
