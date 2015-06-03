@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.154 2015/05/14 05:39:32 hsuenaga Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.155 2015/06/03 02:30:11 hsuenaga Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.154 2015/05/14 05:39:32 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.155 2015/06/03 02:30:11 hsuenaga Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1379,6 +1379,10 @@ struct cpu_functions pj4bv7_cpufuncs = {
 	.cf_dcache_wbinv_range	= armv7_dcache_wbinv_range,
 	.cf_dcache_inv_range	= armv7_dcache_inv_range,
 	.cf_dcache_wb_range	= armv7_dcache_wb_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= armv7_idcache_wbinv_all,
 	.cf_idcache_wbinv_range	= armv7_idcache_wbinv_range,
