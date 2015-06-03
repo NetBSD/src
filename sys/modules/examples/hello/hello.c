@@ -1,7 +1,7 @@
-/*	$NetBSD: example.c,v 1.7 2010/10/25 22:41:42 jnemeth Exp $	*/
+/*	$NetBSD: hello.c,v 1.1.2.2 2015/06/03 06:51:40 snj Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.7 2010/10/25 22:41:42 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hello.c,v 1.1.2.2 2015/06/03 06:51:40 snj Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/module.h>
 
 /*
@@ -39,42 +38,14 @@ __KERNEL_RCSID(0, "$NetBSD: example.c,v 1.7 2010/10/25 22:41:42 jnemeth Exp $");
  * then NULL should be passed.
  */
 
-MODULE(MODULE_CLASS_MISC, example, NULL);
-
-static
-void
-handle_props(prop_dictionary_t props)
-{
-	const char *msg;
-	prop_string_t str;
-
-	if (props != NULL) {
-		str = prop_dictionary_get(props, "msg");
-	} else {
-		printf("No property dictionary was provided.\n");
-		str = NULL;
-	}
-	if (str == NULL)
-		printf("The 'msg' property was not given.\n");
-	else if (prop_object_type(str) != PROP_TYPE_STRING)
-		printf("The 'msg' property is not a string.\n");
-	else {
-		msg = prop_string_cstring_nocopy(str);
-		if (msg == NULL)
-			printf("Failed to process the 'msg' property.\n");
-		else
-			printf("The 'msg' property is: %s\n", msg);
-	}
-}
+MODULE(MODULE_CLASS_MISC, hello, NULL);
 
 static int
-example_modcmd(modcmd_t cmd, void *arg)
+hello_modcmd(modcmd_t cmd, void *arg __unused)
 {
-
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		printf("Example module loaded.\n");
-		handle_props(arg);
 		break;
 
 	case MODULE_CMD_FINI:
@@ -83,7 +54,7 @@ example_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_STAT:
 		printf("Example module status queried.\n");
-		return ENOTTY;
+		break;
 
 	default:
 		return ENOTTY;
