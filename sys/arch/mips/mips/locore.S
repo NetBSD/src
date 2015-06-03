@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.193 2015/06/02 05:06:23 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.194 2015/06/03 17:55:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -184,9 +184,13 @@ _C_LABEL(kernel_text):
 	/*
 	 * Now enable interrupts (but they are all masked).
 	 */
+#if __mips_isa_rev >= 2
+	ei
+#else
 	mfc0	v0, MIPS_COP_0_STATUS
 	or	v0, MIPS_SR_INT_IE
 	mtc0	v0, MIPS_COP_0_STATUS
+#endif
 	COP0_SYNC
 
 	jal	_C_LABEL(main)			# main(void)
