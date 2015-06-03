@@ -9,6 +9,9 @@ void *rumpcomp_pci_irq_establish(unsigned, int (*)(void *), void *);
 
 /* XXX: needs work: support boundary-restricted allocations */
 int rumpcomp_pci_dmalloc(size_t, size_t, unsigned long *, unsigned long *);
+#ifdef rumpcomp_pci_free
+void rumpcomp_pci_free(unsigned long, size_t);
+#endif
 
 struct rumpcomp_pci_dmaseg {
 	unsigned long ds_pa;
