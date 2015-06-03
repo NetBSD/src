@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.83 2015/02/15 20:21:29 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.84 2015/06/03 14:07:05 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -651,13 +651,17 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 			struct puffs_node *pn;
 			struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
 
-			/* 
-			 * Avoid breaking out of fs 
-			 * by lookup to .. on root
-			 */
-			if ((strcmp(name, "..") == 0) && 
-			    (pnd->pnd_nodeid == FUSE_ROOT_ID)) {
-				fd->ino = FUSE_ROOT_ID;
+			if (strcmp(name, "..") == 0) {
+				/* 
+				 * Avoid breaking out of fs 
+				 * by lookup to .. on root
+				 */
+				if (pnd->pnd_nodeid == FUSE_ROOT_ID)
+					fd->ino = FUSE_ROOT_ID;
+				else
+					fd->ino = pnd->pnd_parent_nodeid;
+			} else if (strcmp(name, ".") == 0 ) {
+				fd->ino = pnd->pnd_nodeid;
 			} else {
 				int error;
 
