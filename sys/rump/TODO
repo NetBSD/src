@@ -1,4 +1,4 @@
-	$NetBSD: TODO,v 1.10 2014/01/15 15:10:31 pooka Exp $
+	$NetBSD: TODO,v 1.11 2015/06/03 10:23:08 pooka Exp $
 
 * integrate build framework with config(1) to stop the need to
   maintain a separate build infrastructure.  the remaining step
@@ -21,6 +21,3 @@
   the build system makes this quite difficult.  one option for "cheating"
   would be to put it into librumpuser which is always available for
   local clients (per definition of local client).
-* add autoconf support to librumpuser to clean up the #ifdef acrobatics
-  and fix some of the issues that cannot be handled purely with static
-  ifdefs (autoconf to be used for non-native builds only)
