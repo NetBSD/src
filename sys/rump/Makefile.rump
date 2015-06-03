@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.112 2015/06/03 10:49:14 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.113 2015/06/03 14:40:11 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -30,8 +30,8 @@ CPPFLAGS+=	-DMIPS1=1
 .endif
 
 # which NetBSD compat to build
-RUMP_NBCOMPAT?=all
-.if ${RUMP_NBCOMPAT} == "all"
+RUMP_NBCOMPAT?=default
+.if ${RUMP_NBCOMPAT} == "all" || ${RUMP_NBCOMPAT} == "default"
 RUMP_NBCOMPAT=	50 60 70
 .endif
 .if ${RUMP_NBCOMPAT} == "none"
