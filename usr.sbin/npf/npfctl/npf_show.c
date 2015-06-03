@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.18 2015/03/21 00:49:07 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.19 2015/06/03 23:36:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.18 2015/03/21 00:49:07 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.19 2015/06/03 23:36:05 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -214,14 +214,14 @@ print_portrange(npf_conf_info_t *ctx, const uint32_t *words)
 	char *p;
 
 	if (ctx->curmark == BM_SRC_PORTS && (ctx->flags & SEEN_SRC) == 0)
-		any_str = "to any ";
-	if (ctx->curmark == BM_DST_PORTS && (ctx->flags & SEEN_DST) == 0)
 		any_str = "from any ";
+	if (ctx->curmark == BM_DST_PORTS && (ctx->flags & SEEN_DST) == 0)
+		any_str = "to any ";
 
 	if (fport != tport) {
-		easprintf(&p, "%s%u:%u", any_str, fport, tport);
+		easprintf(&p, "%sport %u:%u", any_str, fport, tport);
 	} else {
-		easprintf(&p, "%s%u", any_str, fport);
+		easprintf(&p, "%sport %u", any_str, fport);
 	}
 	return p;
 }
@@ -271,11 +271,11 @@ static const struct mark_keyword_mapent {
 
 	{ BM_SRC_CIDR,	"from %s",	", ", SEEN_SRC,	print_address,	6 },
 	{ BM_SRC_TABLE,	"from <%s>",	NULL, SEEN_SRC,	print_table,	1 },
-	{ BM_SRC_PORTS,	"port %s",	", ", 0,	print_portrange,2 },
+	{ BM_SRC_PORTS,	"%s",		", ", 0,	print_portrange,2 },
 
 	{ BM_DST_CIDR,	"to %s",	", ", SEEN_DST,	print_address,	6 },
 	{ BM_DST_TABLE,	"to <%s>",	NULL, SEEN_DST,	print_table,	1 },
-	{ BM_DST_PORTS,	"port %s",	", ", 0,	print_portrange,2 },
+	{ BM_DST_PORTS,	"%s",		", ", 0,	print_portrange,2 },
 };
 
 static const char * __attribute__((format_arg(2)))
@@ -351,6 +351,7 @@ npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl)
 		    "pcap-filter \"...\"" : "unrecognized-bytecode");
 		return;
 	}
+	ctx->flags = 0;
 
 	/*
 	 * BPF filter criteria described by the byte-code marks.
