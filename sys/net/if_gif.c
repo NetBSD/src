@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.84 2015/04/20 10:19:54 roy Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.85 2015/06/03 02:17:51 hsuenaga Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.84 2015/04/20 10:19:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.85 2015/06/03 02:17:51 hsuenaga Exp $");
 
 #include "opt_inet.h"
 
@@ -344,12 +344,16 @@ gifintr(void *arg)
 		switch (sc->gif_psrc->sa_family) {
 #ifdef INET
 		case AF_INET:
+			mutex_enter(softnet_lock);
 			error = in_gif_output(ifp, family, m);
+			mutex_exit(softnet_lock);
 			break;
 #endif
 #ifdef INET6
 		case AF_INET6:
+			mutex_enter(softnet_lock);
 			error = in6_gif_output(ifp, family, m);
+			mutex_exit(softnet_lock);
 			break;
 #endif
 		default:
