@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.5 2015/05/31 14:42:56 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.6 2015/06/03 11:43:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.5 2015/05/31 14:42:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.6 2015/06/03 11:43:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -150,7 +150,7 @@ tegra124_mpinit(void)
 	tegra_pmc_power(PMC_PARTID_CPU3, true); started |= __BIT(3);
 
 	for (u_int i = 0x10000000; i > 0; i--) {
-		__asm __volatile("dmb" ::: "memory");
+		arm_dmb();
 		if (arm_cpu_hatched == started)
 			break;
 	}
