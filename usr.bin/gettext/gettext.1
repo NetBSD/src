@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettext.1,v 1.1 2015/06/03 14:32:17 christos Exp $
+.\"	$NetBSD: gettext.1,v 1.2 2015/06/03 14:38:38 wiz Exp $
 .\"
 .\" Copyright (c) 2015 William Orr <will@worrbase.com>,
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nm
 .Fl s
 .Op Fl n
-.Op Ar msgid...
+.Op Ar msgid ...
 .Sh DESCRIPTION
 .Nm
 attempts to translate a given
@@ -53,7 +53,7 @@ is not found, the original string will be echoed.
 If the
 .Ar textdomain
 is not provided as an argument, the
-.Ev textdomain
+.Ev TEXTDOMAIN
 environment variable will be consulted instead.
 .Pp
 By default
@@ -73,7 +73,8 @@ Print the usage information
 .It Fl n
 If
 .Fl s
-is used, do not add the trailing newline. If
+is used, do not add the trailing newline.
+If
 .Fl s
 is not provided, this flag will do nothing.
 .It Fl s
@@ -83,14 +84,16 @@ All
 .Ar msgid
 arguments will be translated, and a newline will be appended to the output
 string.
+.El
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev TEXTDOMAIN
 The domain to use when looking up
-.Ar msgids
+.Ar msgids .
 .It Ev TEXTDOMAINDIR
 The location of message catalogs to use, overriding
-.Pa /usr/share/locale
+.Pa /usr/share/locale .
+.El
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
@@ -99,6 +102,6 @@ $ LANG=es gettext grep 'writing output'
 escribiendo el resultado
 .Ed
 .Sh SEE ALSO
-.Xr gettext 3
-.Xr echo 1
+.Xr echo 1 ,
+.Xr gettext 3 ,
 .Xr environ 7
