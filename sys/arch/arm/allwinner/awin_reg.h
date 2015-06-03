@@ -1,4 +1,4 @@
-/* $NetBSD: awin_reg.h,v 1.76 2014/12/22 00:07:24 jmcneill Exp $ */
+/* $NetBSD: awin_reg.h,v 1.77 2015/06/03 11:38:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@
 #define AWIN_DE_BE0_OFFSET		0x00260000
 #define AWIN_MP_OFFSET			0x00280000
 #define AWIN_AVG_OFFSET			0x002A0000
-#define AWIN_SDRAM_PBASE		0x40000000
+#define AWIN_SDRAM_PBASE		0x20000000
 
 /* A10/A20 SRAM Controller */
 #define AWIN_SRAM_CTL0_REG		0x0000
