@@ -1,0 +1,7 @@
+#	$NetBSD: files.armada,v 1.1 2015/06/03 03:34:38 hsuenaga Exp $
+# Configuration info for Marvell ARMADA integrated peripherals
+
+# ARMADA XP Gigabit Ethernet Controller Interface
+define	mvxpe { [port = -1 ], [irq = -1] }
+device	mvxpe: ether, ifnet, arp, mii
+file	dev/marvell/if_mvxpe.c			mvxpe		needs-flag
