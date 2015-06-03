@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.15 2014/08/30 13:45:56 kiyohara Exp $
+#	$NetBSD: ARMADAXP,v 1.16 2015/06/03 04:31:46 hsuenaga Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -201,8 +201,12 @@ m25p0		at spi? slave 0
 # TWSI SDRAM Serial Presence Detect
 spdmem0		at iic? addr 0x56
 
-# On-chip Cryptographic Engines and Security Accelerator
+# On-chip Cryptographic Engines and Security Accelerator (S/W chaining)
 mvcesa* 	at mvsoc? offset ? irq ?
+
+# On-chip Cryptographic Engines and Security Accelerator (H/W chaining)
+#mvxpsec*	at mvsoc? offset ? irq ?
+#options 	MVXPSEC_DEBUG=MVXPSEC_DEBUG_ALL
 
 # On-chip USB 2.0 Interface
 ehci*		at mvsoc? offset ? irq ?
@@ -250,9 +254,15 @@ wd*		at atabus? drive ? flags 0x0000
 sd*		at atapibus? drive ? flags 0x0000       # ATAPI disk drives
 uk*		at atapibus? drive ? flags 0x0000       # ATAPI unknown
 
-# On-chip Gigabit Ethernet Controller Interface
+# On-chip Gigabit Ethernet Controller Interface (backward compatible mode)
 mvgbec* 	at mvsoc? offset ?
 mvgbe*		at mvgbec? port ? irq ?
+
+# On-chip Gigabit Ethernet Controller Interface (counter mode)
+#mvxpbm* 	at mvsoc? offset ?
+#mvxpe* 	at mvsoc? irq ?
+#options 	MVXPE_EVENT_COUNTERS
+#options 	MVXPE_DEBUG=0
 
 # On-chip RTC
 mvsocrtc*	at mvsoc? offset ? irq ?
