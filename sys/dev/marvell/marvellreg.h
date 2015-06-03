@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellreg.h,v 1.8 2014/03/15 10:40:39 kiyohara Exp $	*/
+/*	$NetBSD: marvellreg.h,v 1.9 2015/06/03 04:00:06 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -73,11 +73,13 @@
 #define MARVELL_DISCOVERY_REVB	0x20
 
 #define MARVELL_ATTR_MASK		0xff
+#define MARVELL_ATTR_SDRAM_CFU_SHARE	0x10 /* shared and snoop enabled.*/
+#define MARVELL_ATTR_SDRAM_CFU_L2_DEP	0x20 /* enable L2 deposit */
 #ifdef AURORA_IO_CACHE_COHERENCY
-#define MARVELL_ATTR_SDRAM_CS0		0x1e
-#define MARVELL_ATTR_SDRAM_CS1		0x1d
-#define MARVELL_ATTR_SDRAM_CS2		0x1b
-#define MARVELL_ATTR_SDRAM_CS3		0x17
+#define MARVELL_ATTR_SDRAM_CS0		(0x0e | MARVELL_ATTR_SDRAM_CFU_SHARE)
+#define MARVELL_ATTR_SDRAM_CS1		(0x0d | MARVELL_ATTR_SDRAM_CFU_SHARE)
+#define MARVELL_ATTR_SDRAM_CS2		(0x0b | MARVELL_ATTR_SDRAM_CFU_SHARE)
+#define MARVELL_ATTR_SDRAM_CS3		(0x07 | MARVELL_ATTR_SDRAM_CFU_SHARE)
 #else
 #define MARVELL_ATTR_SDRAM_CS0		0x0e
 #define MARVELL_ATTR_SDRAM_CS1		0x0d
