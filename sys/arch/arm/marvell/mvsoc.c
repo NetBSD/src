@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.20 2015/05/11 05:49:48 hsuenaga Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.21 2015/06/03 03:04:21 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013, 2014 KIYOHARA Takashi
  * All rights reserved.
@@ -26,13 +26,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.20 2015/05/11 05:49:48 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.21 2015/06/03 03:04:21 hsuenaga Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
+#ifdef ARMADAXP
 #include "mvxpe.h"
+#endif
 
 #include <sys/param.h>
+#include <sys/boot_flag.h>
+#include <sys/systm.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -47,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.20 2015/05/11 05:49:48 hsuenaga Exp $");
 #include <arm/marvell/orionreg.h>
 #include <arm/marvell/kirkwoodreg.h>
 #include <arm/marvell/mv78xx0reg.h>
+#include <arm/marvell/armadaxpvar.h>
 #include <arm/marvell/armadaxpreg.h>
 
 #include <uvm/uvm.h>
@@ -917,6 +922,9 @@ mvsoc_attach(device_t parent, device_t self, void *aux)
 		panic("unknown SoC: model 0x%04x, rev 0x%02x", model, rev);
 	tags = tagstbl[i].tags;
 
+	if (boothowto & (AB_VERBOSE | AB_DEBUG))
+		mvsoc_target_dump(sc);
+
 	for (i = 0; i < __arraycount(mvsoc_periphs); i++) {
 		if (mvsoc_periphs[i].model != model)
 			continue;
@@ -1246,4 +1254,44 @@ mvsoc_target_peripheral(uint32_t target, uint32_t attr, uint32_t *base,
 		break;
 	}
 	return i;
+}
+
+int
+mvsoc_target_dump(struct mvsoc_softc *sc)
+{
+	uint32_t reg, base, size, target, attr, enable;
+	int i, n;
+
+	for (i = 0, n = 0; i < nwindow; i++) {
+		reg = read_mlmbreg(MVSOC_MLMB_WCR(i));
+		enable = reg & MVSOC_MLMB_WCR_WINEN;
+		target = MVSOC_MLMB_WCR_GET_TARGET(reg);
+		attr = MVSOC_MLMB_WCR_GET_ATTR(reg);
+		size = MVSOC_MLMB_WCR_GET_SIZE(reg);
+
+		reg = read_mlmbreg(MVSOC_MLMB_WBR(i));
+		base = MVSOC_MLMB_WBR_GET_BASE(reg);
+
+		if (!enable)
+			continue;
+
+		aprint_verbose_dev(sc->sc_dev,
+		    "Mbus window %2d: Base 0x%08x Size 0x%08x ", i, base, size);
+#ifdef ARMADAXP
+		armadaxp_attr_dump(sc, target, attr);
+#else
+		mvsoc_attr_dump(sc, target, attr);
+#endif
+		printf("\n");
+		n++;
+	}
+
+	return n;
+}
+
+int
+mvsoc_attr_dump(struct mvsoc_softc *sc, uint32_t target, uint32_t attr)
+{
+	aprint_verbose_dev(sc->sc_dev, "target 0x%x(attr 0x%x)", target, attr);
+	return 0;
 }

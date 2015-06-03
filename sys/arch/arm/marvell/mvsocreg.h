@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.11 2015/05/19 09:20:19 hsuenaga Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.12 2015/06/03 03:04:21 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -86,15 +86,23 @@
 #define MVSOC_MLMB_WCR(w)		  ((w) < 8 ? ((w) << 4) + 0x0 :\
 						     (((w) - 8) << 3) + 0x90)
 #define MVSOC_MLMB_WCR_WINEN			(1 << 0)
+#define MVSOC_MLMB_WCR_SYNC			(1 << 1) /* sync barrier */
 #define MVSOC_MLMB_WCR_TARGET(t)		(((t) & 0xf) << 4)
+#define MVSOC_MLMB_WCR_GET_TARGET(reg)		(((reg) >> 4) & 0xf)
 #define MVSOC_MLMB_WCR_ATTR(a)			(((a) & 0xff) << 8)
+#define MVSOC_MLMB_WCR_GET_ATTR(reg)		(((reg) >> 8) & 0xff)
 #define MVSOC_MLMB_WCR_SIZE_MASK		0xffff0000
 #define MVSOC_MLMB_WCR_SIZE(s)		  (((s) - 1) & MVSOC_MLMB_WCR_SIZE_MASK)
+#define MVSOC_MLMB_WCR_GET_SIZE(reg) \
+    (((reg) & MVSOC_MLMB_WCR_SIZE_MASK) + (1 << 16))
 #define MVSOC_MLMB_WBR(w)		  ((w) < 8 ? ((w) << 4) + 0x4 :\
 						     (((w) - 8) << 3) + 0x94)
 #define MVSOC_MLMB_WBR_BASE_MASK		0xffff0000
+#define MVSOC_MLMB_WBR_GET_BASE(reg)		(reg & MVSOC_MLMB_WBR_BASE_MASK)
 #define MVSOC_MLMB_WRLR(w)		  (((w) << 4) + 0x8)
 #define MVSOC_MLMB_WRLR_REMAP_MASK		0xffff0000
+#define MVSOC_MLMB_WRLR_GET_REMAP(reg) \
+    (reg & MVSOC_MLMB_WRLR_REMAP_MASK)
 #define MVSOC_MLMB_WRHR(w)		  (((w) << 4) + 0xc)
 #define MVSOC_MLMB_IRBAR		  0x080 /* Internal regs Base Address */
 #define MVSOC_MLMB_IRBAR_BASE_MASK		0xfff00000
