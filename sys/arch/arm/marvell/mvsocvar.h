@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.9 2015/06/03 03:04:21 hsuenaga Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.10 2015/06/03 04:20:02 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -119,6 +119,8 @@ enum mvsoc_tags {
 	ARMADAXP_TAG_PEX2_IO,
 	ARMADAXP_TAG_PEX3_MEM,
 	ARMADAXP_TAG_PEX3_IO,
+	ARMADAXP_TAG_CRYPT0,
+	ARMADAXP_TAG_CRYPT1,
 };
 int mvsoc_target(int, uint32_t *, uint32_t *, uint32_t *, uint32_t *);
 int mvsoc_target_dump(struct mvsoc_softc *);
