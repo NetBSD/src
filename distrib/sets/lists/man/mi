@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1501 2015/05/13 07:28:49 mlelstv Exp $
+# $NetBSD: mi,v 1.1502 2015/06/03 23:09:49 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1006,6 +1006,7 @@
 ./usr/share/man/cat4/dreamcast/pvr.0		man-sys-catman		.cat
 ./usr/share/man/cat4/drm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/drum.0			man-sys-catman		.cat
+./usr/share/man/cat4/drvctl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dtide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dtv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dtviic.0			man-sys-catman		.cat
@@ -2012,6 +2013,7 @@
 ./usr/share/man/cat5/ar.0			man-sys-catman		.cat
 ./usr/share/man/cat5/atf-formats.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat5/audit-packages.conf.0	man-obsolete		obsolete
+./usr/share/man/cat5/blacklistd.conf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat5/bluetooth.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/body_checks.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/boot.cfg.0			man-sys-catman		.cat
@@ -2322,6 +2324,8 @@
 ./usr/share/man/cat8/bebox/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bebox/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bioctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/blacklistctl.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/blacklistd.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/boot.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bootparamd.0		man-bootserver-catman	.cat
 ./usr/share/man/cat8/bootpd.0			man-bootserver-catman	.cat
