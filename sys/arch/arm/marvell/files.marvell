@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.16 2015/06/03 03:55:47 hsuenaga Exp $
+#       $NetBSD: files.marvell,v 1.17 2015/06/03 04:20:02 hsuenaga Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -69,6 +69,9 @@ attach	ehci at mvsoc with mvusb_mbus
 
 # Cryptographic Engines and Security Accelerator
 attach	mvcesa at mvsoc with mvcesa_mbus
+
+# ARMADA XP Cryptographic Engines and Security Accelerator
+attach	mvxpsec at mvsoc with mvxpsec_mbus
 
 # TWSI Two-Wire Serial Interface
 attach	gttwsi at mvsoc with gttwsi_mbus
