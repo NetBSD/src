@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.22 2015/06/02 20:52:00 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.23 2015/06/03 15:11:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.22 2015/06/02 20:52:00 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.23 2015/06/03 15:11:40 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -271,6 +271,8 @@ gethostport(const char *f, size_t l, bool local, struct conf *c, const char *p)
 			(*lfun)(LOG_DEBUG, "%s: host4 %s", __func__, p);
 		if (strcmp(p, "*") != 0) {
 			if (conf_is_interface(p)) {
+				if (!local)
+					goto out2;
 				if (debug)
 					(*lfun)(LOG_DEBUG, "%s: interface %s",
 					    __func__, p);
@@ -307,6 +309,10 @@ out:
 out1:
 	(*lfun)(LOG_ERR, "%s: %s, %zu: Can't specify mask %d with "
 	    "interface [%s]", __func__, f, l, c->c_lmask, p);
+	return -1;
+out2:
+	(*lfun)(LOG_ERR, "%s: %s, %zu: Interface spec does not make sense "
+	    "with remote config [%s]", __func__, f, l, p);
 	return -1;
 }
 
@@ -490,7 +496,7 @@ out:
 		char b1[256], b2[256];
 		len <<= 2;
 		hexdump(b1, sizeof(b1), "a1", v1, len);
-		hexdump(b2, sizeof(b2), "a1", v2, len);
+		hexdump(b2, sizeof(b2), "a2", v2, len);
 		(*lfun)(LOG_DEBUG, "%s: %s != %s [0x%x]", __func__,
 		    b1, b2, omask);
 	}
