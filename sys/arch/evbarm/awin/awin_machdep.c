@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.40 2015/04/20 01:33:22 matt Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.41 2015/06/03 10:01:32 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.40 2015/04/20 01:33:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.41 2015/06/03 10:01:32 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -660,7 +660,7 @@ awin_device_register(device_t self, void *aux)
 		} else {
 			prop_dictionary_set_bool(dict, "no-awge", true);
 		}
-#elif AWIN_board == AWIN_bpi
+#elif AWIN_board == AWIN_bpi || AWIN_board == AWIN_olimexlime2
 		prop_dictionary_set_bool(dict, "no-awe", true);
 #endif
 		return;
@@ -725,7 +725,7 @@ awin_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict, "emacpwren", ">PH19");
 		}
 #endif
-#if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck
+#if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck || AWIN_board == AWIN_olimexlime2
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH1");
 #elif AWIN_board == AWIN_bpi
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH10");
