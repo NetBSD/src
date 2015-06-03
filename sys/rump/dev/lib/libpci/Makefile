@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2014/08/22 14:28:58 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2015/06/03 13:41:56 pooka Exp $
 #
 
 RUMPTOP= ${TOPRUMP}
+
+.include <bsd.own.mk>
 
 .PATH:	${RUMPTOP}/../dev/pci
 
@@ -27,11 +29,17 @@ CPPFLAGS+= -I${RUMPTOP}/librump/rumpvfs
 CPPFLAGS+=-DRUMP_PCI_IOSPACE
 .endif
 
-.if defined(RUMP_PCI_USER)
-RUMPCOMP_USER_SRCS=	${RUMP_PCI_USER}
-RUMPCOMP_INCS_DIR:=	${.PARSEDIR}
-RUMPCOMP_USER_CPPFLAGS=-I${RUMPCOMP_INCS_DIR}
-.endif
+.PATH:			${RUMPCOMP_USER_PATH.rumpdev_pci}
+RUMPCOMP_USER_SRCS=	${RUMPCOMP_USER_SRCS.rumpdev_pci}
+MYDIR:=			${.PARSEDIR}
+RUMPCOMP_USER_CPPFLAGS=	-I${MYDIR}
+RUMPCOMP_USER_CPPFLAGS+=${RUMPCOMP_USER_CPPFLAGS.rumpdev_pci}
+RUMPCOMP_USER_CFLAGS=	${RUMPCOMP_USER_CFLAGS.rumpdev_pci}
+
+CPPFLAGS+=		${RUMPCOMP_CPPFLAGS.rumpdev_pci}
+
+# XXX: messy
+.undef RUMPKERN_ONLY
 
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>
