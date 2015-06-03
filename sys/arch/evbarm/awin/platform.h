@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.5 2014/12/11 23:35:11 jmcneill Exp $	*/
+/*	$NetBSD: platform.h,v 1.6 2015/06/03 10:01:32 jmcneill Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -36,6 +36,7 @@
 #define AWIN_bpi		3
 #define AWIN_hummingbird_a31	4
 #define AWIN_allwinner_a80	5
+#define AWIN_olimexlime2	6
 
 #include <arm/allwinner/awin_reg.h>
 
