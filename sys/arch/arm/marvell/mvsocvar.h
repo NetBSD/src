@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.8 2014/03/15 10:54:40 kiyohara Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.9 2015/06/03 03:04:21 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -121,6 +121,8 @@ enum mvsoc_tags {
 	ARMADAXP_TAG_PEX3_IO,
 };
 int mvsoc_target(int, uint32_t *, uint32_t *, uint32_t *, uint32_t *);
+int mvsoc_target_dump(struct mvsoc_softc *);
+int mvsoc_attr_dump(struct mvsoc_softc *, uint32_t, uint32_t);
 
 extern int (*mvsoc_clkgating)(struct marvell_attach_args *);
 
