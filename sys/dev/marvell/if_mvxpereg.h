@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpereg.h,v 1.1 2015/05/03 14:38:10 hsuenaga Exp $	*/
+/*	$NetBSD: if_mvxpereg.h,v 1.2 2015/06/03 03:55:47 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -705,12 +705,15 @@
 /* Port RX_TX Threshold Interrupt Cause/Mask (MVXPE_PRXTXTIC/MVXPE_PRXTXTIM) */
 #define MVXPE_PRXTXTI_TBTCQ(q)		(1 << ((q) + 0))
 #define MVXPE_PRXTXTI_TBTCQ_MASK	(0xff << 0)
+#define MVXPE_PRXTXTI_GET_TBTCQ(reg)	(((reg) >> 0) & 0xff)
 					/* Tx Buffer Threshold Cross Queue*/
 #define MVXPE_PRXTXTI_RBICTAPQ(q)	(1 << ((q) + 8))
 #define MVXPE_PRXTXTI_RBICTAPQ_MASK	(0xff << 8)
+#define MVXPE_PRXTXTI_GET_RBICTAPQ(reg)	(((reg) >> 8) & 0xff)
 				/* Rx Buffer Int. Coaleasing Th. Pri. Alrt Q */
 #define MVXPE_PRXTXTI_RDTAQ(q)		(1 << ((q) + 16))
 #define MVXPE_PRXTXTI_RDTAQ_MASK	(0xff << 16)
+#define MVXPE_PRXTXTI_GET_RDTAQ(reg)	(((reg) >> 16) & 0xff)
 					/* Rx Descriptor Threshold Alert Queue*/
 #define MVXPE_PRXTXTI_PRXTXICSUMMARY	(1 << 29)	/* PRXTXI summary */
 #define MVXPE_PRXTXTI_PTXERRORSUMMARY	(1 << 30)	/* PTEXERROR summary */
@@ -719,10 +722,13 @@
 /* Port RX_TX Interrupt Cause/Mask (MVXPE_PRXTXIC/MVXPE_PRXTXIM) */
 #define MVXPE_PRXTXI_TBRQ(q)		(1 << ((q) + 0))
 #define MVXPE_PRXTXI_TBRQ_MASK		(0xff << 0)
+#define MVXPE_PRXTXI_GET_TBRQ(reg)	(((reg) >> 0) & 0xff)
 #define MVXPE_PRXTXI_RPQ(q)		(1 << ((q) + 8))
 #define MVXPE_PRXTXI_RPQ_MASK		(0xff << 8)
+#define MVXPE_PRXTXI_GET_RPQ(reg)	(((reg) >> 8) & 0xff)
 #define MVXPE_PRXTXI_RREQ(q)		(1 << ((q) + 16))
 #define MVXPE_PRXTXI_RREQ_MASK		(0xff << 16)
+#define MVXPE_PRXTXI_GET_RREQ(reg)	(((reg) >> 16) & 0xff)
 #define MVXPE_PRXTXI_PRXTXTHICSUMMARY	(1 << 29)
 #define MVXPE_PRXTXI_PTXERRORSUMMARY	(1 << 30)
 #define MVXPE_PRXTXI_PMISCICSUMMARY	(1 << 31)
@@ -854,18 +860,16 @@ struct mvxpe_rx_desc {
 #define MVXPE_TX_CMD_L			(1 << 20) /* Last buffer */
 #define MVXPE_TX_CMD_PADDING		(1 << 19) /* Pad short frame */
 #define MVXPE_TX_CMD_IP4_CHECKSUM	(1 << 18) /* Do IPv4 Checksum */
-#define MVXPE_TX_CMD_L3_TYPE		(1 << 17) /* L3 Type 0:IP4, 1:IP6 */
 #define MVXPE_TX_CMD_L3_IP4		(0 << 17)
-#define MVXPE_TX_CMD_L3_IP6		(0 << 17)
-#define MVXPE_TX_CMD_L4_TYPE		(1 << 16) /* L4 Type 0:TCP, 1:UDP */
+#define MVXPE_TX_CMD_L3_IP6		(1 << 17)
 #define MVXPE_TX_CMD_L4_TCP		(0 << 16)
 #define MVXPE_TX_CMD_L4_UDP		(1 << 16)
 /* bit 15:13 reserved */
 #define MVXPE_TX_CMD_IP_HEADER_LEN_MASK	(0x1f << 8) /* IP header len >> 2 */
-#define MVXPE_TX_CMD_W_IP_HEADER_LEN(v)	(((v) & 0x1f) << 8)
+#define MVXPE_TX_CMD_IP_HEADER_LEN(v)	(((v) & 0x1f) << 8)
 /* bit 7 reserved */
 #define MVXPE_TX_CMD_L3_OFFSET_MASK	(0x7f << 0) /* offset of L3 hdr. */
-#define MVXPE_TX_CMD_W_L3_OFFSET(v)	(((v) & 0x7f) << 0) 
+#define MVXPE_TX_CMD_L3_OFFSET(v)	(((v) & 0x7f) << 0) 
 
 /*
  * Transmit pakcet extra attributes
