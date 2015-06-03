@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.14 2014/12/29 16:35:38 christos Exp $	*/
+/*	$NetBSD: partutil.c,v 1.15 2015/06/03 17:53:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.14 2014/12/29 16:35:38 christos Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.15 2015/06/03 17:53:23 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,7 +99,7 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	prop_dictionary_t disk_dict, geom_dict;
 	struct stat sb;
 	const struct partition *pp;
-	int ptn;
+	int ptn, error;
 
 	if (dt) {
 		lp = getdiskbyname(dt);
@@ -108,7 +108,13 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	}
 
 	/* Get disk description dictionary */
-	if (prop_dictionary_recv_ioctl(fd, DIOCGDISKINFO, &disk_dict)) {
+	error = prop_dictionary_recv_ioctl(fd, DIOCGDISKINFO, &disk_dict);
+
+	/* fail quickly if the device does not exist at all */
+	if (error == ENXIO)
+		return -1;
+
+	if (error) {
 		/*
 		 * Ask for disklabel if DIOCGDISKINFO failed. This is
 		 * compatibility call and can be removed when all devices
@@ -116,7 +122,8 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 		 * cgd, ccd pseudo disk drives doesn't support DIOCGDDISKINFO
 		 */
 		if (ioctl(fd, DIOCGDINFO, lp) == -1) {
-			warn("DIOCGDINFO on %s failed", s);
+			if (errno != ENXIO)
+				warn("DIOCGDINFO on %s failed", s);
 			return -1;
 		}
 		label2geom(geo, lp);
