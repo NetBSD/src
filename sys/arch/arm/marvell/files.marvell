@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.15 2015/06/03 03:34:38 hsuenaga Exp $
+#       $NetBSD: files.marvell,v 1.16 2015/06/03 03:55:47 hsuenaga Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -57,6 +57,9 @@ attach	mvsata at mvsoc with mvsata_mbus
 
 # Gigabit Ethernet Controller Interface
 attach	mvgbec at mvsoc with mvgbec_mbus
+
+# ARMADA XP Buffer Manager
+attach	mvxpbm at mvsoc with mvxpbm_mbus
 
 # ARMADA XP Gigabit Ethernet Controller Interface
 attach	mvxpe at mvsoc with mvxpe_mbus
