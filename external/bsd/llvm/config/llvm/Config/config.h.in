@@ -97,7 +97,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the <fenv.h> header file. */
-  #ifndef __powerpc
+  #ifndef __powerpc__
 #define HAVE_FENV_H 1
   #endif
 
