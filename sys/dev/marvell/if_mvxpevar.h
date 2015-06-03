@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpevar.h,v 1.1 2015/05/03 14:38:10 hsuenaga Exp $	*/
+/*	$NetBSD: if_mvxpevar.h,v 1.2 2015/06/03 03:55:47 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,12 +26,8 @@
  */
 #ifndef _IF_MVXPEVAR_H_
 #define _IF_MVXPEVAR_H_
-/*
- * Comple options
- * XXX: use kernel config
- */
-#define MVXPE_DEBUG 0
-#define MVXPE_EVENT_COUNTERS
+#include <net/if.h>
+#include <dev/marvell/mvxpbmvar.h>
 
 /*
  * Limit of packet sizes.
@@ -48,23 +44,28 @@
  *
  * XXX: packet classifier is not implement yet
  */
-#define MVXPE_RX_QUEUE_LIMIT_0 8
-#define MVXPE_RX_QUEUE_LIMIT_1 8
-#define MVXPE_RX_QUEUE_LIMIT_2 8
-#define MVXPE_RX_QUEUE_LIMIT_3 8
-#define MVXPE_RX_QUEUE_LIMIT_4 8
-#define MVXPE_RX_QUEUE_LIMIT_5 8
-#define MVXPE_RX_QUEUE_LIMIT_6 8
-#define MVXPE_RX_QUEUE_LIMIT_7 256
+#define MVXPE_RX_QUEUE_LIMIT_0	8
+#define MVXPE_RX_QUEUE_LIMIT_1	8
+#define MVXPE_RX_QUEUE_LIMIT_2	8
+#define MVXPE_RX_QUEUE_LIMIT_3	8
+#define MVXPE_RX_QUEUE_LIMIT_4	8
+#define MVXPE_RX_QUEUE_LIMIT_5	8
+#define MVXPE_RX_QUEUE_LIMIT_6	8
+#define MVXPE_RX_QUEUE_LIMIT_7	IFQ_MAXLEN
 
-#define MVXPE_TX_QUEUE_LIMIT_0 256
-#define MVXPE_TX_QUEUE_LIMIT_1 8
-#define MVXPE_TX_QUEUE_LIMIT_2 8
-#define MVXPE_TX_QUEUE_LIMIT_3 8
-#define MVXPE_TX_QUEUE_LIMIT_4 8
-#define MVXPE_TX_QUEUE_LIMIT_5 8
-#define MVXPE_TX_QUEUE_LIMIT_6 8
-#define MVXPE_TX_QUEUE_LIMIT_7 8
+#define MVXPE_TX_QUEUE_LIMIT_0	IFQ_MAXLEN
+#define MVXPE_TX_QUEUE_LIMIT_1	8
+#define MVXPE_TX_QUEUE_LIMIT_2	8
+#define MVXPE_TX_QUEUE_LIMIT_3	8
+#define MVXPE_TX_QUEUE_LIMIT_4	8
+#define MVXPE_TX_QUEUE_LIMIT_5	8
+#define MVXPE_TX_QUEUE_LIMIT_6	8
+#define MVXPE_TX_QUEUE_LIMIT_7	8
+
+/* interrupt is triggered when corossing (queuelen / RATIO) */
+#define MVXPE_RXTH_RATIO	8
+#define MVXPE_RXTH_REFILL_RATIO	2
+#define MVXPE_TXTH_RATIO	8
 
 /*
  * Device Register access
@@ -85,6 +86,9 @@
 #define MVXPE_IS_LINKUP(sc) \
 	(MVXPE_READ((sc), MVXPE_PSR) & MVXPE_PSR_LINKUP)
 
+#define MVXPE_IS_QUEUE_BUSY(queues, q) \
+	((((queues) >> (q)) & 0x1))
+
 /*
  * EEE: Lower Power Idle config
  * Default timer is duration of MTU sized frame transmission.
@@ -101,10 +105,10 @@
  * the ethernet device has 8 rx/tx DMA queues. each of queue has its own
  * decriptor list. descriptors are simply index by counter inside the device.
  */
-#define MVXPE_TX_RING_CNT	256
+#define MVXPE_TX_RING_CNT	IFQ_MAXLEN
 #define MVXPE_TX_RING_MSK	(MVXPE_TX_RING_CNT - 1)
 #define MVXPE_TX_RING_NEXT(x)	(((x) + 1) & MVXPE_TX_RING_MSK)
-#define MVXPE_RX_RING_CNT	256
+#define MVXPE_RX_RING_CNT	IFQ_MAXLEN
 #define MVXPE_RX_RING_MSK	(MVXPE_RX_RING_CNT - 1)
 #define MVXPE_RX_RING_NEXT(x)	(((x) + 1) & MVXPE_RX_RING_MSK)
 #define MVXPE_TX_SEGLIMIT	32
@@ -118,7 +122,7 @@ struct mvxpe_rx_ring {
 	struct mvxpe_rx_handle {
 		struct mvxpe_rx_desc	*rxdesc_va;
 		off_t			rxdesc_off; /* from rx_descriptors[0] */
-		struct mvxpe_bm_chunk	*chunk;
+		struct mvxpbm_chunk	*chunk;
 	} rx_handle[MVXPE_RX_RING_CNT];
 
 	/* locks */
@@ -152,7 +156,7 @@ struct mvxpe_tx_ring {
 	kmutex_t			tx_ring_mtx;
 
 	/* Index */
-	int				tx_free_cnt;
+	int				tx_used;
 	int				tx_dma;
 	int				tx_cpu;
 
@@ -182,14 +186,6 @@ rx_counter_adv(int ctr, int n)
 
 	return ctr;
 }
-
-/*
- * Buffer alignement
- */
-#define MVXPE_RXBUF_ALIGN	32	/* Cache line size */
-#define MVXPE_RXBUF_MASK	(MVXPE_RXBUF_ALIGN - 1)
-#define MVXPE_BM_ADDR_ALIGN	32
-#define MVXPE_BM_ADDR_MASK	(MVXPE_BM_ADDR_ALIGN - 1)
 
 /*
  * Timeout control
@@ -389,67 +385,6 @@ struct mvxpe_sysctl_mib {
 };
 
 /*
- * Packet Buffer Header
- *
- * this chunks may be managed by H/W Buffer Manger(BM) device,
- * but there is no device driver yet.
- *
- *                            +----------------+ bm_buf
- *                            |chunk header    | |
- * +----------------+         |                | |chunk->buf_off
- * |mbuf (M_EXT set)|<--------|struct mbuf *m  | V
- * +----------------+         +----------------+ chunk->buf_va/buf_pa
- * |   m_ext.ext_buf|-------->|packet buffer   | |
- * +----------------+         |                | |chunk->buf_size
- *                            |                | V
- *                            +----------------+
- *                            |chunk header    |
- *                            |....            |
- */
-#define MVXPE_BM_SLOTS \
-    (MVXPE_RX_RING_CNT * (MVXPE_QUEUE_SIZE + 1))
-#define MVXPE_BM_SIZE \
-    (MVXPE_MRU + MVXPE_HWHEADER_SIZE)
-
-struct mvxpe_bm_chunk {
-	struct mbuf	*m;		/* back pointer to  mbuf header */
-	void		*sc;		/* back pointer to softc */
-	off_t		off;		/* offset of chunk */
-	paddr_t		pa;		/* physical address of chunk */
-
-	off_t		buf_off;	/* offset of packet from sc_bm_buf */
-	paddr_t		buf_pa;		/* physical address of packet */
-	vaddr_t		buf_va;		/* virtual addres of packet */
-	size_t		buf_size;	/* size of buffer (exclude hdr) */
-
-	LIST_ENTRY(mvxpe_bm_chunk) link;
-	/* followed by packet buffer */
-};
-
-struct mvxpe_bm_softc {
-	bus_dma_tag_t bm_dmat;
-	bus_dmamap_t bm_map;
-	kmutex_t bm_mtx;
-
-	/* DMA MAP for entire buffer */
-	char *bm_buf;
-
-	/* memory chunk properties */
-	size_t	bm_slotsize;		/* size of bm_slots include header */
-	size_t	bm_chunk_count;		/* number of chunks */
-	size_t	bm_chunk_size;		/* size of packet buffer */
-	off_t	bm_chunk_header_size;	/* size of hader + padding */ 
-	off_t	bm_chunk_packet_offset;	/* allocate m_leading_space */
-	struct mvxpe_bm_chunk *bm_slots[MVXPE_BM_SLOTS];
-
-	/* for software based management */
-	LIST_HEAD(__mvxpe_bm_freehead, mvxpe_bm_chunk) bm_free;
-	LIST_HEAD(__mvxpe_bm_inusehead, mvxpe_bm_chunk) bm_inuse;
-} sc_bm;
-
-#define BM_SYNC_ALL	0
-
-/*
  * Ethernet Device main context
  */
 struct mvxpe_softc {
@@ -495,9 +430,8 @@ struct mvxpe_softc {
 
 	/*
 	 * Software Buffer Manager
-	 * XXX: to be writtten the independent device driver.
 	 */
-	struct mvxpe_bm_softc sc_bm;
+	struct mvxpbm_softc *sc_bm;
 
 	/*
 	 * Maintance clock
