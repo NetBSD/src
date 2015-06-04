@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 2014/07/05 23:13:41 dholland Exp $
+#	$NetBSD: Makefile,v 1.100.2.1 2015/06/04 07:35:25 msaitoh Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -42,6 +42,9 @@ CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 
 .ifdef SMALLPROG
 CPPFLAGS+=-DSMALL
+.endif
+.ifdef TINYPROG
+CPPFLAGS+=-DTINY
 .else
 SRCS+=printf.c
 .endif
