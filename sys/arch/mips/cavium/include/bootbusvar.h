@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbusvar.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: bootbusvar.h,v 1.2 2015/06/04 05:22:11 matt Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -57,7 +57,7 @@ struct bootbus_attach_args {
 	bus_dma_tag_t	aa_dmat;
 };
 
-extern const struct bootbus_dev *bootbus_devs[];
+extern const struct bootbus_dev * const bootbus_devs[];
 extern const size_t bootbus_ndevs;
 
 void		bootbus_bootstrap(struct octeon_config *);
