@@ -1,4 +1,4 @@
-.\" $NetBSD: blacklistd.8,v 1.13 2015/06/04 16:01:09 christos Exp $
+.\" $NetBSD: blacklistd.8,v 1.14 2015/06/04 16:11:48 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -111,7 +111,6 @@ seconds (default
 .Dv 15 )
 and removes entries and block rules using the control program as necessary.
 .Pp
-.Pp
 The following options are available:
 .Bl -tag -width indent
 .It Fl C Ar controlprog
@@ -120,13 +119,13 @@ Use
 to communicate with the packet filter, usually
 .Pa /libexec/blacklistd-helper .
 The following arguments are passed to the control program:
-.Bl -tag -width protocol indent
+.Bl -tag -width protocol
 .It action
-The action to perform: 
+The action to perform:
 .Dv add ,
 .Dv rem ,
 or
-.Dv flush 
+.Dv flush
 to add, remove or flush a firewall rule.
 .It name
 The rule name.
