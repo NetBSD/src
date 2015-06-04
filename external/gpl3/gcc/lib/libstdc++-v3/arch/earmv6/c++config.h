@@ -1257,7 +1257,7 @@ namespace std
 
 /* Define if C99 functions in <fenv.h> should be imported in <tr1/cfenv> in
    namespace std::tr1. */
-/* #undef _GLIBCXX_USE_C99_FENV_TR1 */
+#define _GLIBCXX_USE_C99_FENV_TR1 1
 
 /* Define if C99 functions in <inttypes.h> should be imported in
    <tr1/cinttypes> in namespace std::tr1. */
