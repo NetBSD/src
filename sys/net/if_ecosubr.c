@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.42 2015/05/20 09:17:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.43 2015/06/04 09:19:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.42 2015/05/20 09:17:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.43 2015/06/04 09:19:59 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -161,12 +161,11 @@ eco_stop(struct ifnet *ifp, int disable)
 
 static int
 eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt0)
+    struct rtentry *rt)
 {
 	struct eco_header ehdr, *eh;
 	int error;
 	struct mbuf *m = m0, *mcopy = NULL;
-	struct rtentry *rt;
 	int hdrcmplt;
 	int retry_delay, retry_count;
 	struct m_tag *mtag;
@@ -181,38 +180,6 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	if ((rt = rt0) != NULL) {
-		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL) {
-				rt->rt_refcnt--;
-				if (rt->rt_ifp != ifp)
-					return (*rt->rt_ifp->if_output)
-							(ifp, m0, dst, rt);
-			} else
-				senderr(EHOSTUNREACH);
-		}
-		if ((rt->rt_flags & RTF_GATEWAY)) {
-			if (rt->rt_gwroute == 0)
-				goto lookup;
-			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
-				if ((rt = rt->rt_gwroute) == 0)
-					senderr(EHOSTUNREACH);
-				/* the "G" test below also prevents rt == rt0 */
-				if ((rt->rt_flags & RTF_GATEWAY) ||
-				    (rt->rt_ifp != ifp)) {
-					rt->rt_refcnt--;
-					rt0->rt_gwroute = 0;
-					senderr(EHOSTUNREACH);
-				}
-			}
-		}
-		if (rt->rt_flags & RTF_REJECT)
-			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time_second < rt->rt_rmx.rmx_expire)
-				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
-	}
 	/*
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
