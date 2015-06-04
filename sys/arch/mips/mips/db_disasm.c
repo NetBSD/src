@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.25 2015/06/04 02:26:49 matt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.26 2015/06/04 05:23:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.25 2015/06/04 02:26:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.26 2015/06/04 05:23:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -697,7 +697,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 	case OP_J:
 	case OP_JAL:
 		db_printf("%s\t", op_name[i.JType.op]);
-		print_addr((loc & 0xF0000000) | (i.JType.target << 2));
+		print_addr((loc & ~0x0FFFFFFFL) | (i.JType.target << 2));
 		bdslot = true;
 		break;
 
