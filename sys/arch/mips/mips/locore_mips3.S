@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.105 2015/06/04 05:58:17 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.106 2015/06/04 22:44:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -235,10 +235,10 @@ END(mips3_cp0_config_write)
 
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	.set push
-#ifdef _LP64
-	.set mips64
-#else
+#ifdef __mips_o32
 	.set mips32
+#else
+	.set mips64
 #endif
 /*
  * uint32_t mipsNN_cp0_config1_read(void)
@@ -498,6 +498,7 @@ LEAF(mips3_cp0_pg_mask_write)
 	JR_HB_RA
 END(mips3_cp0_pg_mask_write)
 
+#if __mips != 32
 LEAF(mips3_ld)
 #if defined(__mips_o32)
 	mfc0	t0, MIPS_COP_0_STATUS		# turn off interrupts
@@ -695,6 +696,7 @@ LEAF(mips3_cp0_tlb_entry_lo_probe)
 	jr	ra
 	 nop
 END(mips3_cp0_tlb_entry_lo_probe)
+#endif /* __mips != 32 */
 
 /*
  * uint32_t mips3_cp0_tlb_page_mask_probe(void);
