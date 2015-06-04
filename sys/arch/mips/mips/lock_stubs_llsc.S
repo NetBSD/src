@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.2 2011/07/10 23:21:59 matt Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.3 2015/06/04 02:28:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,8 +45,13 @@
 #endif
 
 #if defined(MULTIPROCESSOR)
+#if defined(__OCTEON__)
+#define	SYNC		syncw
+#define	BDSYNC		syncw
+#else
 #define	SYNC		sync
 #define	BDSYNC		sync
+#endif
 #else
 #define	SYNC		/* nothing */
 #define	BDSYNC		nop
