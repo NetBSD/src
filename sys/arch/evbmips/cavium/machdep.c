@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2015/06/04 05:21:09 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2015/06/04 05:21:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,11 @@ mach_init_vector(void)
 	 * first printf() after that is called).
 	 * Also clears the I+D caches.
 	 */
+#if MULTIPROCESSOR
+	mips_vector_init(NULL, true);
+#else
 	mips_vector_init(NULL, false);
+#endif
 }
 
 void
@@ -439,9 +443,10 @@ haltsys:
 	delay(80000);
 
 	/* initiate chip soft-reset */
-	octeon_write_csr(CIU_SOFT_BIST, 0x0000000000000001ULL);
+	uint64_t fuse = octeon_read_csr(CIU_FUSE);
+	octeon_write_csr(CIU_SOFT_BIST, fuse);
 	octeon_read_csr(CIU_SOFT_RST);
-	octeon_write_csr(CIU_SOFT_RST, 0x0000000000000001ULL);
+	octeon_write_csr(CIU_SOFT_RST, fuse);
 
 	delay(1000000);
 
