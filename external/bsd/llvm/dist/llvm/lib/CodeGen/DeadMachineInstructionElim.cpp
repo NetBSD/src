@@ -19,7 +19,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
@@ -58,6 +57,10 @@ bool DeadMachineInstructionElim::isDead(const MachineInstr *MI) const {
   // be deleted. But there is so much bad inline asm code out there, we should
   // let them be.
   if (MI->isInlineAsm())
+    return false;
+
+  // Don't delete frame allocation labels.
+  if (MI->getOpcode() == TargetOpcode::FRAME_ALLOC)
     return false;
 
   // Don't delete instructions with side effects.
@@ -124,19 +127,10 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
       if (isDead(MI)) {
         DEBUG(dbgs() << "DeadMachineInstructionElim: DELETING: " << *MI);
         // It is possible that some DBG_VALUE instructions refer to this
-        // instruction.  Examine each def operand for such references;
-        // if found, mark the DBG_VALUE as undef (but don't delete it).
-        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-          const MachineOperand &MO = MI->getOperand(i);
-          if (!MO.isReg() || !MO.isDef())
-            continue;
-          unsigned Reg = MO.getReg();
-          if (!TargetRegisterInfo::isVirtualRegister(Reg))
-            continue;
-          MRI->markUsesInDebugValueAsUndef(Reg);
-        }
+        // instruction.  They get marked as undef and will be deleted
+        // in the live debug variable analysis.
+        MI->eraseFromParentAndMarkDBGValuesForRemoval();
         AnyChanges = true;
-        MI->eraseFromParent();
         ++NumDeletes;
         MIE = MBB->rend();
         // MII is now pointing to the next instruction to process,

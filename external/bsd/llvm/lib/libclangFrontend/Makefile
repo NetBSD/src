@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/08/10 17:34:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2015/06/04 20:05:45 snj Exp $
 
 LIB=	clangFrontend
 
@@ -12,6 +12,7 @@ SRCS+=	ASTConsumers.cpp \
 	CacheTokens.cpp \
 	ChainedDiagnosticConsumer.cpp \
 	ChainedIncludesSource.cpp \
+	CodeGenOptions.cpp \
 	CompilerInstance.cpp \
 	CompilerInvocation.cpp \
 	CreateInvocationFromCommandLine.cpp \
@@ -31,6 +32,7 @@ SRCS+=	ASTConsumers.cpp \
 	MultiplexConsumer.cpp \
 	PrintPreprocessedOutput.cpp \
 	SerializedDiagnosticPrinter.cpp \
+	SerializedDiagnosticReader.cpp \
 	TextDiagnostic.cpp \
 	TextDiagnosticBuffer.cpp \
 	TextDiagnosticPrinter.cpp \

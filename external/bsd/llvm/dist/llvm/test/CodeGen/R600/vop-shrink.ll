@@ -1,9 +1,10 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs< %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 ; Test that we correctly commute a sub instruction
-; FUNC-LABEL: @sub_rev
-; SI-NOT: V_SUB_I32_e32 v{{[0-9]+}}, s
-; SI: V_SUBREV_I32_e32 v{{[0-9]+}}, s
+; FUNC-LABEL: {{^}}sub_rev:
+; SI-NOT: v_sub_i32_e32 v{{[0-9]+}}, s
+; SI: v_subrev_i32_e32 v{{[0-9]+}}, s
 
 ; ModuleID = 'vop-shrink.ll'
 
@@ -32,8 +33,8 @@ endif:                                            ; preds = %else, %if
 ; Test that we fold an immediate that was illegal for a 64-bit op into the
 ; 32-bit op when we shrink it.
 
-; FUNC-LABEL: @add_fold
-; SI: V_ADD_F32_e32 v{{[0-9]+}}, 0x44800000
+; FUNC-LABEL: {{^}}add_fold:
+; SI: v_add_f32_e32 v{{[0-9]+}}, 0x44800000
 define void @add_fold(float addrspace(1)* %out) {
 entry:
   %tmp = call i32 @llvm.r600.read.tidig.x()

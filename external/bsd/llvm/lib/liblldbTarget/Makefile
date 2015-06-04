@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/08/10 17:35:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2015/06/04 20:05:47 snj Exp $
 
 LIB=	lldbTarget
 
@@ -11,6 +11,8 @@ CPPFLAGS.Thread.cpp+=	-I${LLDB_SRCDIR}/source/Plugins/Process/Utility
 SRCS+=	ABI.cpp \
 	CPPLanguageRuntime.cpp \
 	ExecutionContext.cpp \
+	InstrumentationRuntime.cpp \
+	InstrumentationRuntimeStopInfo.cpp \
 	JITLoader.cpp \
 	JITLoaderList.cpp \
 	LanguageRuntime.cpp \
@@ -43,6 +45,7 @@ SRCS+=	ABI.cpp \
 	ThreadPlanBase.cpp \
 	ThreadPlanCallFunction.cpp \
 	ThreadPlanCallUserExpression.cpp \
+	ThreadPlanPython.cpp \
 	ThreadPlanRunToAddress.cpp \
 	ThreadPlanShouldStopHere.cpp \
 	ThreadPlanStepInRange.cpp \

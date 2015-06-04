@@ -63,6 +63,12 @@ class SCOPED_LOCKABLE ReleasableMutexLock {
   void Release() UNLOCK_FUNCTION();
 };
 
+class __attribute__((scoped_lockable)) DoubleMutexLock {
+public:
+  DoubleMutexLock(Mutex *mu1, Mutex *mu2)
+      __attribute__((exclusive_lock_function(mu1, mu2)));
+  ~DoubleMutexLock() __attribute__((unlock_function));
+};
 
 // The universal lock, written "*", allows checking to be selectively turned
 // off for a particular piece of code.
@@ -98,10 +104,34 @@ public:
 };
 
 
+// For testing operator overloading
 template <class K, class T>
 class MyMap {
 public:
   T& operator[](const K& k);
+};
+
+
+// For testing handling of containers.
+template <class T>
+class MyContainer {
+public:
+  MyContainer();
+
+  typedef T* iterator;
+  typedef const T* const_iterator;
+
+  T* begin();
+  T* end();
+
+  const T* cbegin();
+  const T* cend();
+
+  T&       operator[](int i);
+  const T& operator[](int i) const;
+
+private:
+  T* ptr_;
 };
 
 
@@ -1637,6 +1667,12 @@ struct TestScopedLockable {
     MutexLock mulock1(&mu1), mulock2(&mu2);
     a = b+1;
     b = a+1;
+  }
+
+  void foo5() {
+    DoubleMutexLock mulock(&mu1, &mu2);
+    a = b + 1;
+    b = a + 1;
   }
 };
 
@@ -4644,4 +4680,171 @@ class Foo {
 
 } // end namespace AssertSharedExclusive
 
+
+namespace RangeBasedForAndReferences {
+
+class Foo {
+  struct MyStruct {
+    int a;
+  };
+
+  Mutex mu;
+  int a GUARDED_BY(mu);
+  MyContainer<int>  cntr  GUARDED_BY(mu);
+  MyStruct s GUARDED_BY(mu);
+  int arr[10] GUARDED_BY(mu);
+
+  void nonref_test() {
+    int b = a;             // expected-warning {{reading variable 'a' requires holding mutex 'mu'}}
+    b = 0;                 // no warning
+  }
+
+  void auto_test() {
+    auto b = a;            // expected-warning {{reading variable 'a' requires holding mutex 'mu'}}
+    b = 0;                 // no warning
+    auto &c = a;           // no warning
+    c = 0;                 // expected-warning {{writing variable 'a' requires holding mutex 'mu' exclusively}}
+  }
+
+  void ref_test() {
+    int &b = a;
+    int &c = b;
+    int &d = c;
+    b = 0;                 // expected-warning {{writing variable 'a' requires holding mutex 'mu' exclusively}}
+    c = 0;                 // expected-warning {{writing variable 'a' requires holding mutex 'mu' exclusively}}
+    d = 0;                 // expected-warning {{writing variable 'a' requires holding mutex 'mu' exclusively}}
+
+    MyStruct &rs = s;
+    rs.a = 0;              // expected-warning {{writing variable 's' requires holding mutex 'mu' exclusively}}
+
+    int (&rarr)[10] = arr;
+    rarr[2] = 0;           // expected-warning {{writing variable 'arr' requires holding mutex 'mu' exclusively}}
+  }
+
+  void ptr_test() {
+    int *b = &a;
+    *b = 0;                // no expected warning yet
+  }
+
+  void for_test() {
+    int total = 0;
+    for (int i : cntr) {   // expected-warning2 {{reading variable 'cntr' requires holding mutex 'mu'}}
+      total += i;
+    }
+  }
+};
+
+
+} // end namespace RangeBasedForAndReferences
+
+
+
+namespace PassByRefTest {
+
+class Foo {
+public:
+  Foo() : a(0), b(0) { }
+
+  int a;
+  int b;
+
+  void operator+(const Foo& f);
+
+  void operator[](const Foo& g);
+};
+
+template<class T>
+T&& mymove(T& f);
+
+
+// test top-level functions
+void copy(Foo f);
+void write1(Foo& f);
+void write2(int a, Foo& f);
+void read1(const Foo& f);
+void read2(int a, const Foo& f);
+void destroy(Foo&& f);
+
+void operator/(const Foo& f, const Foo& g);
+void operator*(const Foo& f, const Foo& g);
+
+
+
+
+class Bar {
+public:
+  Mutex mu;
+  Foo           foo   GUARDED_BY(mu);
+  Foo           foo2  GUARDED_BY(mu);
+  Foo*          foop  PT_GUARDED_BY(mu);
+  SmartPtr<Foo> foosp PT_GUARDED_BY(mu);
+
+  // test methods.
+  void mwrite1(Foo& f);
+  void mwrite2(int a, Foo& f);
+  void mread1(const Foo& f);
+  void mread2(int a, const Foo& f);
+
+  // static methods
+  static void smwrite1(Foo& f);
+  static void smwrite2(int a, Foo& f);
+  static void smread1(const Foo& f);
+  static void smread2(int a, const Foo& f);
+
+  void operator<<(const Foo& f);
+
+  void test1() {
+    copy(foo);             // expected-warning {{reading variable 'foo' requires holding mutex 'mu'}}
+    write1(foo);           // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    write2(10, foo);       // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    read1(foo);            // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    read2(10, foo);        // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    destroy(mymove(foo));  // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+
+    mwrite1(foo);           // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    mwrite2(10, foo);       // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    mread1(foo);            // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    mread2(10, foo);        // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+
+    smwrite1(foo);           // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    smwrite2(10, foo);       // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    smread1(foo);            // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    smread2(10, foo);        // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+
+    foo + foo2;              // expected-warning {{reading variable 'foo' requires holding mutex 'mu'}} \
+                             // expected-warning {{passing variable 'foo2' by reference requires holding mutex 'mu'}}
+    foo / foo2;              // expected-warning {{reading variable 'foo' requires holding mutex 'mu'}} \
+                             // expected-warning {{passing variable 'foo2' by reference requires holding mutex 'mu'}}
+    foo * foo2;              // expected-warning {{reading variable 'foo' requires holding mutex 'mu'}} \
+                             // expected-warning {{passing variable 'foo2' by reference requires holding mutex 'mu'}}
+    foo[foo2];               // expected-warning {{reading variable 'foo' requires holding mutex 'mu'}} \
+                             // expected-warning {{passing variable 'foo2' by reference requires holding mutex 'mu'}}
+    (*this) << foo;          // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+
+    copy(*foop);             // expected-warning {{reading the value pointed to by 'foop' requires holding mutex 'mu'}}
+    write1(*foop);           // expected-warning {{passing the value that 'foop' points to by reference requires holding mutex 'mu'}}
+    write2(10, *foop);       // expected-warning {{passing the value that 'foop' points to by reference requires holding mutex 'mu'}}
+    read1(*foop);            // expected-warning {{passing the value that 'foop' points to by reference requires holding mutex 'mu'}}
+    read2(10, *foop);        // expected-warning {{passing the value that 'foop' points to by reference requires holding mutex 'mu'}}
+    destroy(mymove(*foop));  // expected-warning {{passing the value that 'foop' points to by reference requires holding mutex 'mu'}}
+
+    copy(*foosp);             // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+    write1(*foosp);           // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+    write2(10, *foosp);       // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+    read1(*foosp);            // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+    read2(10, *foosp);        // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+    destroy(mymove(*foosp));  // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+
+    // TODO -- these requires better smart pointer handling.
+    copy(*foosp.get());
+    write1(*foosp.get());
+    write2(10, *foosp.get());
+    read1(*foosp.get());
+    read2(10, *foosp.get());
+    destroy(mymove(*foosp.get()));
+  }
+};
+
+
+}  // end namespace PassByRefTest
 

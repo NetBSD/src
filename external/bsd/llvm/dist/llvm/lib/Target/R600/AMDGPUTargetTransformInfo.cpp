@@ -74,16 +74,14 @@ public:
 
   bool hasBranchDivergence() const override;
 
-  void getUnrollingPreferences(Loop *L,
+  void getUnrollingPreferences(const Function *F, Loop *L,
                                UnrollingPreferences &UP) const override;
 
   PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const override;
 
   unsigned getNumberOfRegisters(bool Vector) const override;
   unsigned getRegisterBitWidth(bool Vector) const override;
-  unsigned getMaximumUnrollFactor() const override;
-
-  /// @}
+  unsigned getMaxInterleaveFactor() const override;
 };
 
 } // end anonymous namespace
@@ -99,10 +97,10 @@ llvm::createAMDGPUTargetTransformInfoPass(const AMDGPUTargetMachine *TM) {
 
 bool AMDGPUTTI::hasBranchDivergence() const { return true; }
 
-void AMDGPUTTI::getUnrollingPreferences(Loop *L,
+void AMDGPUTTI::getUnrollingPreferences(const Function *, Loop *L,
                                         UnrollingPreferences &UP) const {
   UP.Threshold = 300; // Twice the default.
-  UP.Count = UINT_MAX;
+  UP.MaxCount = UINT_MAX;
   UP.Partial = true;
 
   // TODO: Do we want runtime unrolling?
@@ -153,7 +151,7 @@ unsigned AMDGPUTTI::getRegisterBitWidth(bool) const {
   return 32;
 }
 
-unsigned AMDGPUTTI::getMaximumUnrollFactor() const {
+unsigned AMDGPUTTI::getMaxInterleaveFactor() const {
   // Semi-arbitrary large amount.
   return 64;
 }

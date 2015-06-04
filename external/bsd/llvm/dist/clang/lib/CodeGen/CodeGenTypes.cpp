@@ -81,7 +81,7 @@ void CodeGenTypes::addRecordTypeName(const RecordDecl *RD,
 /// ConvertType in that it is used to convert to the memory representation for
 /// a type.  For example, the scalar representation for _Bool is i1, but the
 /// memory representation is usually i8 or i32, depending on the target.
-llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T){
+llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
   llvm::Type *R = ConvertType(T);
 
   // If this is a non-bool type, don't map it.
@@ -115,8 +115,9 @@ isSafeToConvert(const RecordDecl *RD, CodeGenTypes &CGT,
                 llvm::SmallPtrSet<const RecordDecl*, 16> &AlreadyChecked) {
   // If we have already checked this type (maybe the same type is used by-value
   // multiple times in multiple structure fields, don't check again.
-  if (!AlreadyChecked.insert(RD)) return true;
-  
+  if (!AlreadyChecked.insert(RD).second)
+    return true;
+
   const Type *Key = CGT.getContext().getTagDeclType(RD).getTypePtr();
   
   // If this type is already laid out, converting it is a noop.
@@ -358,9 +359,10 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
 
     case BuiltinType::Half:
       // Half FP can either be storage-only (lowered to i16) or native.
-      ResultType = getTypeForFormat(getLLVMContext(),
-          Context.getFloatTypeSemantics(T),
-          Context.getLangOpts().NativeHalfType);
+      ResultType =
+          getTypeForFormat(getLLVMContext(), Context.getFloatTypeSemantics(T),
+                           Context.getLangOpts().NativeHalfType ||
+                               Context.getLangOpts().HalfArgsAndReturns);
       break;
     case BuiltinType::Float:
     case BuiltinType::Double:
@@ -404,7 +406,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     llvm_unreachable("Unexpected undeduced auto type!");
   case Type::Complex: {
     llvm::Type *EltTy = ConvertType(cast<ComplexType>(Ty)->getElementType());
-    ResultType = llvm::StructType::get(EltTy, EltTy, NULL);
+    ResultType = llvm::StructType::get(EltTy, EltTy, nullptr);
     break;
   }
   case Type::LValueReference:
@@ -499,7 +501,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // While we're converting the parameter types for a function, we don't want
     // to recursively convert any pointed-to structs.  Converting directly-used
     // structs is ok though.
-    if (!RecordsBeingLaidOut.insert(Ty)) {
+    if (!RecordsBeingLaidOut.insert(Ty).second) {
       ResultType = llvm::StructType::get(getLLVMContext());
       
       SkippedLayout = true;
@@ -586,6 +588,8 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   }
 
   case Type::MemberPointer: {
+    if (!getCXXABI().isMemberPointerConvertible(cast<MemberPointerType>(Ty)))
+      return llvm::StructType::create(getLLVMContext());
     ResultType = 
       getCXXABI().ConvertMemberPointerType(cast<MemberPointerType>(Ty));
     break;
@@ -653,7 +657,8 @@ llvm::StructType *CodeGenTypes::ConvertRecordDeclType(const RecordDecl *RD) {
   }
 
   // Okay, this is a definition of a type.  Compile the implementation now.
-  bool InsertResult = RecordsBeingLaidOut.insert(Key); (void)InsertResult;
+  bool InsertResult = RecordsBeingLaidOut.insert(Key).second;
+  (void)InsertResult;
   assert(InsertResult && "Recursively compiling a struct?");
   
   // Force conversion of non-virtual base classes recursively.

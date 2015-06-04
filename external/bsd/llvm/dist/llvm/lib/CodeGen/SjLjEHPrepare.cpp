@@ -99,7 +99,7 @@ bool SjLjEHPrepare::doInitialization(Module &M) {
                                       VoidPtrTy, // __personality
                                       VoidPtrTy, // __lsda
                                       ArrayType::get(VoidPtrTy, 5), // __jbuf
-                                      NULL);
+                                      nullptr);
   RegisterFn = M.getOrInsertFunction(
       "_Unwind_SjLj_Register", Type::getVoidTy(M.getContext()),
       PointerType::getUnqual(FunctionContextTy), (Type *)nullptr);
@@ -139,8 +139,8 @@ void SjLjEHPrepare::insertCallSiteStore(Instruction *I, int Number) {
 /// MarkBlocksLiveIn - Insert BB and all of its predescessors into LiveBBs until
 /// we reach blocks we've already seen.
 static void MarkBlocksLiveIn(BasicBlock *BB,
-                             SmallPtrSet<BasicBlock *, 64> &LiveBBs) {
-  if (!LiveBBs.insert(BB))
+                             SmallPtrSetImpl<BasicBlock *> &LiveBBs) {
+  if (!LiveBBs.insert(BB).second)
     return; // already been here.
 
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
@@ -351,10 +351,8 @@ void SjLjEHPrepare::lowerAcrossUnwindEdges(Function &F,
       continue;
 
     // Demote the PHIs to the stack.
-    for (SmallPtrSet<PHINode *, 8>::iterator I = PHIsToDemote.begin(),
-                                             E = PHIsToDemote.end();
-         I != E; ++I)
-      DemotePHIToStack(*I);
+    for (PHINode *PN : PHIsToDemote)
+      DemotePHIToStack(PN);
 
     // Move the landingpad instruction back to the top of the landing pad block.
     LPI->moveBefore(UnwindBlock->begin());

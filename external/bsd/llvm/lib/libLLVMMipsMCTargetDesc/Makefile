@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/08/10 17:34:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2015/06/04 20:05:44 snj Exp $
 
 LIB=	LLVMMipsMCTargetDesc
 
@@ -10,6 +10,7 @@ CPPFLAGS+=	-I${MIPS_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/Mips
 .PATH: ${LLVM_SRCDIR}/lib/Target/Mips/MCTargetDesc
 
 SRCS+=	MipsABIFlagsSection.cpp \
+	MipsABIInfo.cpp \
 	MipsAsmBackend.cpp \
 	MipsELFObjectWriter.cpp \
 	MipsELFStreamer.cpp \

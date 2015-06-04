@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/08/10 17:34:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2015/06/04 20:05:43 snj Exp $
 
 LIB=	LLVMAArch64CodeGen
 
@@ -8,13 +8,15 @@ LIB=	LLVMAArch64CodeGen
 
 CPPFLAGS+=	-I${LLVM_SRCDIR}/lib/Target/AArch64
 
-SRCS+=	AArch64A57FPLoadBalancing.cpp \
+SRCS+=	AArch64A53Fix835769.cpp \
+	AArch64A57FPLoadBalancing.cpp \
 	AArch64AddressTypePromotion.cpp \
 	AArch64AdvSIMDScalarPass.cpp \
 	AArch64AsmPrinter.cpp \
 	AArch64BranchRelaxation.cpp \
 	AArch64CleanupLocalDynamicTLSPass.cpp \
 	AArch64CollectLOH.cpp \
+	AArch64ConditionOptimizer.cpp \
 	AArch64ConditionalCompares.cpp \
 	AArch64DeadRegisterDefinitionsPass.cpp \
 	AArch64ExpandPseudoInsts.cpp \
@@ -25,6 +27,7 @@ SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64ISelLowering.cpp \
 	AArch64LoadStoreOptimizer.cpp \
 	AArch64MCInstLower.cpp \
+	AArch64PBQPRegAlloc.cpp \
 	AArch64PromoteConstant.cpp \
 	AArch64RegisterInfo.cpp \
 	AArch64SelectionDAGInfo.cpp \
@@ -45,7 +48,7 @@ TABLEGEN_OUTPUT= \
 	AArch64GenDisassemblerTables.inc|-gen-disassembler \
 	AArch64GenFastISel.inc|-gen-fast-isel \
 	AArch64GenInstrInfo.inc|-gen-instr-info \
-	AArch64GenMCCodeEmitter.inc|-gen-emitter^-mc-emitter \
+	AArch64GenMCCodeEmitter.inc|-gen-emitter \
 	AArch64GenMCPseudoLowering.inc|-gen-pseudo-lowering \
 	AArch64GenRegisterInfo.inc|-gen-register-info \
 	AArch64GenSubtargetInfo.inc|-gen-subtarget

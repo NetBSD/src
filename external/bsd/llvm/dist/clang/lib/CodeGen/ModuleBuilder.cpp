@@ -52,15 +52,22 @@ namespace {
     std::unique_ptr<llvm::Module> M;
     std::unique_ptr<CodeGen::CodeGenModule> Builder;
 
+  private:
+    SmallVector<CXXMethodDecl *, 8> DeferredInlineMethodDefinitions;
+
   public:
     CodeGeneratorImpl(DiagnosticsEngine &diags, const std::string& ModuleName,
                       const CodeGenOptions &CGO, llvm::LLVMContext& C,
                       CoverageSourceInfo *CoverageInfo = nullptr)
-      : Diags(diags), CodeGenOpts(CGO), HandlingTopLevelDecls(0),
+      : Diags(diags), Ctx(nullptr), CodeGenOpts(CGO), HandlingTopLevelDecls(0),
         CoverageInfo(CoverageInfo),
         M(new llvm::Module(ModuleName, C)) {}
 
-    virtual ~CodeGeneratorImpl() {}
+    virtual ~CodeGeneratorImpl() {
+      // There should normally not be any leftover inline method definitions.
+      assert(DeferredInlineMethodDefinitions.empty() ||
+             Diags.hasErrorOccurred());
+    }
 
     llvm::Module* GetModule() override {
       return M.get();
@@ -117,10 +124,14 @@ namespace {
     }
 
     void EmitDeferredDecls() {
+      if (DeferredInlineMethodDefinitions.empty())
+        return;
+
       // Emit any deferred inline method definitions. Note that more deferred
       // methods may be added during this loop, since ASTConsumer callbacks
       // can be invoked if AST inspection results in declarations being added.
-      for (unsigned I = 0; I < DeferredInlineMethodDefinitions.size(); ++I)
+      HandlingTopLevelDeclRAII HandlingDecl(*this);
+      for (unsigned I = 0; I != DeferredInlineMethodDefinitions.size(); ++I)
         Builder->EmitTopLevelDecl(DeferredInlineMethodDefinitions[I]);
       DeferredInlineMethodDefinitions.clear();
     }
@@ -141,9 +152,11 @@ namespace {
       //   } A;
       DeferredInlineMethodDefinitions.push_back(D);
 
-      // Always provide some coverage mapping
-      // even for the methods that aren't emitted.
-      Builder->AddDeferredUnusedCoverageMapping(D);
+      // Provide some coverage mapping even for methods that aren't emitted.
+      // Don't do this for templated classes though, as they may not be
+      // instantiable.
+      if (!D->getParent()->getDescribedClassTemplate())
+        Builder->AddDeferredUnusedCoverageMapping(D);
     }
 
     /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
@@ -217,9 +230,6 @@ namespace {
     void HandleDependentLibrary(llvm::StringRef Lib) override {
       Builder->AddDependentLib(Lib);
     }
-
-  private:
-    std::vector<CXXMethodDecl *> DeferredInlineMethodDefinitions;
   };
 }
 

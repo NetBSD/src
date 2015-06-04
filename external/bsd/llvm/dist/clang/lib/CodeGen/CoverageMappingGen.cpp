@@ -15,10 +15,10 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Lexer.h"
-#include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/ProfileData/CoverageMapping.h"
-#include "llvm/ProfileData/CoverageMappingWriter.h"
 #include "llvm/ProfileData/CoverageMappingReader.h"
+#include "llvm/ProfileData/CoverageMappingWriter.h"
+#include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/FileSystem.h"
 
 using namespace clang;
@@ -32,7 +32,8 @@ void CoverageSourceInfo::SourceRangeSkipped(SourceRange Range) {
 namespace {
 
 /// \brief A region of source code that can be mapped to a counter.
-struct SourceMappingRegion {
+class SourceMappingRegion {
+public:
   enum RegionFlags {
     /// \brief This region won't be emitted if it wasn't extended.
     /// This is useful so that we won't emit source ranges for single tokens
@@ -41,6 +42,7 @@ struct SourceMappingRegion {
     IgnoreIfNotExtended = 0x0001,
   };
 
+private:
   FileID File, MacroArgumentFile;
 
   Counter Count;
@@ -68,18 +70,28 @@ struct SourceMappingRegion {
   /// \brief The region's ending location.
   SourceLocation LocEnd, AlternativeLocEnd;
   unsigned Flags;
-  CounterMappingRegion::RegionKind Kind;
 
+public:
   SourceMappingRegion(FileID File, FileID MacroArgumentFile, Counter Count,
                       const Stmt *UnreachableInitiator, const Stmt *Group,
                       SourceLocation LocStart, SourceLocation LocEnd,
-                      unsigned Flags = 0,
-                      CounterMappingRegion::RegionKind Kind =
-                          CounterMappingRegion::CodeRegion)
+                      unsigned Flags = 0)
       : File(File), MacroArgumentFile(MacroArgumentFile), Count(Count),
         UnreachableInitiator(UnreachableInitiator), Group(Group),
         LocStart(LocStart), LocEnd(LocEnd), AlternativeLocEnd(LocStart),
-        Flags(Flags), Kind(Kind) {}
+        Flags(Flags) {}
+
+  const FileID &getFile() const { return File; }
+
+  const Counter &getCounter() const { return Count; }
+
+  const SourceLocation &getStartLoc() const { return LocStart; }
+
+  const SourceLocation &getEndLoc(const SourceManager &SM) const {
+    if (SM.getFileID(LocEnd) != File)
+      return AlternativeLocEnd;
+    return LocEnd;
+  }
 
   bool hasFlag(RegionFlags Flag) const { return (Flags & Flag) != 0; }
 
@@ -89,32 +101,20 @@ struct SourceMappingRegion {
 
   /// \brief Return true if two regions can be merged together.
   bool isMergeable(SourceMappingRegion &R) {
+    // FIXME: We allow merging regions with a gap in between them. Should we?
     return File == R.File && MacroArgumentFile == R.MacroArgumentFile &&
            Count == R.Count && UnreachableInitiator == R.UnreachableInitiator &&
-           Group == R.Group && Kind == R.Kind;
+           Group == R.Group;
   }
 
-  /// \brief Merge two regions by extending the 'this' region to cover the
-  /// given region.
-  void mergeByExtendingTo(SourceMappingRegion &R) {
-    LocEnd = R.LocEnd;
-    AlternativeLocEnd = R.LocStart;
-    if (hasFlag(IgnoreIfNotExtended))
-      clearFlag(IgnoreIfNotExtended);
+  /// \brief A comparison that sorts such that mergeable regions are adjacent.
+  friend bool operator<(const SourceMappingRegion &LHS,
+                        const SourceMappingRegion &RHS) {
+    return std::tie(LHS.File, LHS.MacroArgumentFile, LHS.Count,
+                    LHS.UnreachableInitiator, LHS.Group) <
+           std::tie(RHS.File, RHS.MacroArgumentFile, RHS.Count,
+                    RHS.UnreachableInitiator, RHS.Group);
   }
-};
-
-/// \brief The state of the coverage mapping builder.
-struct SourceMappingState {
-  Counter CurrentRegionCount;
-  const Stmt *CurrentSourceGroup;
-  const Stmt *CurrentUnreachableRegionInitiator;
-
-  SourceMappingState(Counter CurrentRegionCount, const Stmt *CurrentSourceGroup,
-                     const Stmt *CurrentUnreachableRegionInitiator)
-      : CurrentRegionCount(CurrentRegionCount),
-        CurrentSourceGroup(CurrentSourceGroup),
-        CurrentUnreachableRegionInitiator(CurrentUnreachableRegionInitiator) {}
 };
 
 /// \brief Provides the common functionality for the different
@@ -149,7 +149,7 @@ public:
   /// \brief The coverage mapping regions for this function
   llvm::SmallVector<CounterMappingRegion, 32> MappingRegions;
   /// \brief The source mapping regions for this function.
-  llvm::SmallVector<SourceMappingRegion, 32> SourceRegions;
+  std::vector<SourceMappingRegion> SourceRegions;
 
   CoverageMappingBuilder(CoverageMappingModuleGen &CVM, SourceManager &SM,
                          const LangOptions &LangOpts)
@@ -307,25 +307,6 @@ public:
   /// \brief Exit the current source region group.
   void endSourceRegionGroup() { CurrentSourceGroup = nullptr; }
 
-  /// \brief Brings a region that has the same counter and file to the back
-  /// of the source regions array.
-  void bringSimilarRegionBack(Counter Count, FileID File,
-                              FileID MacroArgumentFile,
-                              const Stmt *UnreachableInitiator,
-                              const Stmt *SourceGroup) {
-    for (size_t I = SourceRegions.size(); I != 0;) {
-      --I;
-      if (SourceRegions[I].Count == Count && SourceRegions[I].File == File &&
-          SourceRegions[I].MacroArgumentFile == MacroArgumentFile &&
-          SourceRegions[I].UnreachableInitiator == UnreachableInitiator &&
-          SourceRegions[I].Group == SourceGroup) {
-        if (I != SourceRegions.size() - 1)
-          std::swap(SourceRegions[I], SourceRegions.back());
-        return;
-      }
-    }
-  }
-
   /// \brief Associate a counter with a given source code range.
   void mapSourceCodeRange(SourceLocation LocStart, SourceLocation LocEnd,
                           Counter Count, const Stmt *UnreachableInitiator,
@@ -352,15 +333,9 @@ public:
     // Make sure that the file id is valid.
     if (File.isInvalid())
       return;
-    bringSimilarRegionBack(Count, File, MacroArgumentFile, UnreachableInitiator,
-                           SourceGroup);
-    SourceMappingRegion R(File, MacroArgumentFile, Count, UnreachableInitiator,
-                          SourceGroup, LocStart, LocEnd, Flags);
-    if (SourceRegions.empty() || !SourceRegions.back().isMergeable(R)) {
-      SourceRegions.push_back(R);
-      return;
-    }
-    SourceRegions.back().mergeByExtendingTo(R);
+    SourceRegions.emplace_back(File, MacroArgumentFile, Count,
+                               UnreachableInitiator, SourceGroup, LocStart,
+                               LocEnd, Flags);
   }
 
   void mapSourceCodeRange(SourceLocation LocStart, SourceLocation LocEnd,
@@ -370,42 +345,44 @@ public:
                        Flags);
   }
 
-  void mapSourceCodeRange(const SourceMappingState &State,
-                          SourceLocation LocStart, SourceLocation LocEnd,
-                          unsigned Flags = 0) {
-    mapSourceCodeRange(LocStart, LocEnd, State.CurrentRegionCount,
-                       State.CurrentUnreachableRegionInitiator,
-                       State.CurrentSourceGroup, Flags);
-  }
-
   /// \brief Generate the coverage counter mapping regions from collected
   /// source regions.
   void emitSourceRegions() {
-    for (const auto &R : SourceRegions) {
-      SourceLocation LocStart = R.LocStart;
-      SourceLocation LocEnd = R.LocEnd;
-      if (SM.getFileID(LocEnd) != R.File)
-        LocEnd = R.AlternativeLocEnd;
+    std::sort(SourceRegions.begin(), SourceRegions.end());
 
-      if (R.hasFlag(SourceMappingRegion::IgnoreIfNotExtended) &&
-          LocStart == LocEnd)
+    for (auto I = SourceRegions.begin(), E = SourceRegions.end(); I != E; ++I) {
+      // Keep the original start location of this region.
+      SourceLocation LocStart = I->getStartLoc();
+      SourceLocation LocEnd = I->getEndLoc(SM);
+
+      bool Ignore = I->hasFlag(SourceMappingRegion::IgnoreIfNotExtended);
+      // We need to handle mergeable regions together.
+      for (auto Next = I + 1; Next != E && Next->isMergeable(*I); ++Next) {
+        ++I;
+        LocStart = std::min(LocStart, I->getStartLoc());
+        LocEnd = std::max(LocEnd, I->getEndLoc(SM));
+        // FIXME: Should we && together the Ignore flag of multiple regions?
+        Ignore = false;
+      }
+      if (Ignore)
         continue;
 
+      // Find the spilling locations for the mapping region.
       LocEnd = getPreciseTokenLocEnd(LocEnd);
       unsigned LineStart = SM.getSpellingLineNumber(LocStart);
       unsigned ColumnStart = SM.getSpellingColumnNumber(LocStart);
       unsigned LineEnd = SM.getSpellingLineNumber(LocEnd);
       unsigned ColumnEnd = SM.getSpellingColumnNumber(LocEnd);
 
-      auto SpellingFile = SM.getDecomposedSpellingLoc(R.LocStart).first;
+      auto SpellingFile = SM.getDecomposedSpellingLoc(LocStart).first;
       unsigned CovFileID;
-      if (getCoverageFileID(R.LocStart, R.File, SpellingFile, CovFileID))
+      if (getCoverageFileID(LocStart, I->getFile(), SpellingFile, CovFileID))
         continue;
 
       assert(LineStart <= LineEnd);
       MappingRegions.push_back(CounterMappingRegion(
-          R.Count, CovFileID, LineStart, ColumnStart, LineEnd, ColumnEnd,
-          false, CounterMappingRegion::CodeRegion));
+          I->getCounter(), CovFileID, LineStart, ColumnStart, LineEnd,
+          ColumnEnd, false, CounterMappingRegion::CodeRegion));
     }
   }
 };
@@ -430,8 +407,7 @@ struct EmptyCoverageMappingBuilder : public CoverageMappingBuilder {
     SmallVector<unsigned, 16> FileIDMapping;
     createFileIDMapping(FileIDMapping);
 
-    CoverageMappingWriter Writer(
-        FileIDMapping, ArrayRef<CounterExpression>(), MappingRegions);
+    CoverageMappingWriter Writer(FileIDMapping, None, MappingRegions);
     Writer.write(OS);
   }
 };
@@ -584,11 +560,9 @@ struct CounterCoverageMappingBuilder
 
   CounterCoverageMappingBuilder(
       CoverageMappingModuleGen &CVM,
-      llvm::DenseMap<const Stmt *, unsigned> &CounterMap,
-      unsigned NumRegionCounters, SourceManager &SM,
+      llvm::DenseMap<const Stmt *, unsigned> &CounterMap, SourceManager &SM,
       const LangOptions &LangOpts)
-      : CoverageMappingBuilder(CVM, SM, LangOpts), CounterMap(CounterMap),
-        Builder(NumRegionCounters) {}
+      : CoverageMappingBuilder(CVM, SM, LangOpts), CounterMap(CounterMap) {}
 
   /// \brief Write the mapping data to the output stream
   void write(llvm::raw_ostream &OS) {
@@ -600,12 +574,6 @@ struct CounterCoverageMappingBuilder
     CoverageMappingWriter Writer(
         VirtualFileMapping, Builder.getExpressions(), MappingRegions);
     Writer.write(OS);
-  }
-
-  /// \brief Return the current source mapping state.
-  SourceMappingState getCurrentState() const {
-    return SourceMappingState(CurrentRegionCount, CurrentSourceGroup,
-                              CurrentUnreachableRegionInitiator);
   }
 
   /// \brief Associate the source code range with the current region count.
@@ -630,33 +598,12 @@ struct CounterCoverageMappingBuilder
         SourceMappingRegion::IgnoreIfNotExtended);
   }
 
-  void mapToken(const SourceMappingState &State, SourceLocation LocStart) {
-    CoverageMappingBuilder::mapSourceCodeRange(
-        State, LocStart, LocStart, SourceMappingRegion::IgnoreIfNotExtended);
-  }
-
   void VisitStmt(const Stmt *S) {
     mapSourceCodeRange(S->getLocStart());
     for (Stmt::const_child_range I = S->children(); I; ++I) {
       if (*I)
         this->Visit(*I);
     }
-  }
-
-  /// \brief If the given statement is a compound statement,
-  /// map '}' with the same count as '{'.
-  void VisitSubStmtRBraceState(const Stmt *S) {
-    if (!isa<CompoundStmt>(S))
-      return Visit(S);
-    const auto *CS = cast<CompoundStmt>(S);
-    auto State = getCurrentState();
-    mapSourceCodeRange(CS->getLBracLoc());
-    for (Stmt::const_child_range I = S->children(); I; ++I) {
-      if (*I)
-        this->Visit(*I);
-    }
-    CoverageMappingBuilder::mapSourceCodeRange(State, CS->getRBracLoc(),
-                                               CS->getRBracLoc());
   }
 
   void VisitDecl(const Decl *D) {
@@ -666,7 +613,7 @@ struct CounterCoverageMappingBuilder
     auto Body = D->getBody();
     RegionMapper Cnt(this, Body);
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(Body);
+    Visit(Body);
   }
 
   void VisitDeclStmt(const DeclStmt *S) {
@@ -680,11 +627,11 @@ struct CounterCoverageMappingBuilder
 
   void VisitCompoundStmt(const CompoundStmt *S) {
     mapSourceCodeRange(S->getLBracLoc());
+    mapSourceCodeRange(S->getRBracLoc());
     for (Stmt::const_child_range I = S->children(); I; ++I) {
       if (*I)
         this->Visit(*I);
     }
-    mapSourceCodeRange(S->getRBracLoc(), S->getRBracLoc());
   }
 
   void VisitReturnStmt(const ReturnStmt *S) {
@@ -733,7 +680,7 @@ struct CounterCoverageMappingBuilder
     // Visit the body region first so the break/continue adjustments can be
     // included when visiting the condition.
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getBody());
+    Visit(S->getBody());
     Cnt.adjustForControlFlow();
 
     // ...then go back and propagate counts through the condition. The count
@@ -757,7 +704,7 @@ struct CounterCoverageMappingBuilder
     RegionMapper Cnt(this, S);
     BreakContinueStack.push_back(BreakContinue());
     Cnt.beginRegion(/*AddIncomingFallThrough=*/true);
-    VisitSubStmtRBraceState(S->getBody());
+    Visit(S->getBody());
     Cnt.adjustForControlFlow();
 
     BreakContinue BC = BreakContinueStack.pop_back_val();
@@ -785,7 +732,7 @@ struct CounterCoverageMappingBuilder
     // Visit the body region first. (This is basically the same as a while
     // loop; see further comments in VisitWhileStmt.)
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getBody());
+    Visit(S->getBody());
     Cnt.adjustForControlFlow();
 
     // The increment is essentially part of the body but it needs to include
@@ -824,7 +771,7 @@ struct CounterCoverageMappingBuilder
     // Visit the body region first. (This is basically the same as a while
     // loop; see further comments in VisitWhileStmt.)
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getBody());
+    Visit(S->getBody());
     Cnt.adjustForControlFlow();
     BreakContinue BC = BreakContinueStack.pop_back_val();
     Cnt.applyAdjustmentsToRegion(addCounters(BC.BreakCount, BC.ContinueCount));
@@ -836,7 +783,8 @@ struct CounterCoverageMappingBuilder
     // Counter tracks the body of the loop.
     RegionMapper Cnt(this, S);
     BreakContinueStack.push_back(BreakContinue());
-    VisitSubStmtRBraceState(S->getBody());
+    Cnt.beginRegion();
+    Visit(S->getBody());
     BreakContinue BC = BreakContinueStack.pop_back_val();
     Cnt.adjustForControlFlow();
     Cnt.applyAdjustmentsToRegion(addCounters(BC.BreakCount, BC.ContinueCount));
@@ -903,12 +851,12 @@ struct CounterCoverageMappingBuilder
     // the "else" part, if it exists, will be calculated from this counter.
     RegionMapper Cnt(this, S);
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getThen());
+    Visit(S->getThen());
     Cnt.adjustForControlFlow();
 
     if (S->getElse()) {
       Cnt.beginElseRegion();
-      VisitSubStmtRBraceState(S->getElse());
+      Visit(S->getElse());
       Cnt.adjustForControlFlow();
     }
     Cnt.applyAdjustmentsToRegion();
@@ -929,13 +877,13 @@ struct CounterCoverageMappingBuilder
     // Counter tracks the catch statement's handler block.
     RegionMapper Cnt(this, S);
     Cnt.beginRegion();
-    VisitSubStmtRBraceState(S->getHandlerBlock());
+    Visit(S->getHandlerBlock());
   }
 
   void VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
     Visit(E->getCond());
     mapToken(E->getQuestionLoc());
-    auto State = getCurrentState();
+    mapToken(E->getColonLoc());
 
     // Counter tracks the "true" part of a conditional operator. The
     // count in the "false" part will be calculated from this counter.
@@ -943,8 +891,6 @@ struct CounterCoverageMappingBuilder
     Cnt.beginRegion();
     Visit(E->getTrueExpr());
     Cnt.adjustForControlFlow();
-
-    mapToken(State, E->getColonLoc());
 
     Cnt.beginElseRegion();
     Visit(E->getFalseExpr());
@@ -1042,6 +988,16 @@ struct CounterCoverageMappingBuilder
   void VisitImaginaryLiteral(const ImaginaryLiteral *E) {
     mapToken(E->getLocStart());
   }
+
+  void VisitObjCMessageExpr(const ObjCMessageExpr *E) {
+    mapToken(E->getLeftLoc());
+    for (Stmt::const_child_range I = static_cast<const Stmt*>(E)->children(); I;
+         ++I) {
+      if (*I)
+        this->Visit(*I);
+    }
+    mapToken(E->getRightLoc());
+  }
 };
 }
 
@@ -1083,12 +1039,13 @@ static void dump(llvm::raw_ostream &OS, const CoverageMappingRecord &Function) {
 
 void CoverageMappingModuleGen::addFunctionMappingRecord(
     llvm::GlobalVariable *FunctionName, StringRef FunctionNameValue,
-    const std::string &CoverageMapping) {
+    uint64_t FunctionHash, const std::string &CoverageMapping) {
   llvm::LLVMContext &Ctx = CGM.getLLVMContext();
   auto *Int32Ty = llvm::Type::getInt32Ty(Ctx);
+  auto *Int64Ty = llvm::Type::getInt64Ty(Ctx);
   auto *Int8PtrTy = llvm::Type::getInt8PtrTy(Ctx);
   if (!FunctionRecordTy) {
-    llvm::Type *FunctionRecordTypes[] = {Int8PtrTy, Int32Ty, Int32Ty};
+    llvm::Type *FunctionRecordTypes[] = {Int8PtrTy, Int32Ty, Int32Ty, Int64Ty};
     FunctionRecordTy =
         llvm::StructType::get(Ctx, makeArrayRef(FunctionRecordTypes));
   }
@@ -1096,7 +1053,8 @@ void CoverageMappingModuleGen::addFunctionMappingRecord(
   llvm::Constant *FunctionRecordVals[] = {
       llvm::ConstantExpr::getBitCast(FunctionName, Int8PtrTy),
       llvm::ConstantInt::get(Int32Ty, FunctionNameValue.size()),
-      llvm::ConstantInt::get(Int32Ty, CoverageMapping.size())};
+      llvm::ConstantInt::get(Int32Ty, CoverageMapping.size()),
+      llvm::ConstantInt::get(Int64Ty, FunctionHash)};
   FunctionRecords.push_back(llvm::ConstantStruct::get(
       FunctionRecordTy, makeArrayRef(FunctionRecordVals)));
   CoverageMappings += CoverageMapping;
@@ -1203,8 +1161,7 @@ unsigned CoverageMappingModuleGen::getFileID(const FileEntry *File) {
 void CoverageMappingGen::emitCounterMapping(const Decl *D,
                                             llvm::raw_ostream &OS) {
   assert(CounterMap);
-  CounterCoverageMappingBuilder Walker(CVM, *CounterMap, NumRegionCounters, SM,
-                                       LangOpts);
+  CounterCoverageMappingBuilder Walker(CVM, *CounterMap, SM, LangOpts);
   Walker.VisitDecl(D);
   Walker.write(OS);
 }

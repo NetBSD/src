@@ -68,12 +68,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
   if (GV->hasDLLImportStorageClass())
     return X86II::MO_DLLIMPORT;
 
-  // Determine whether this is a reference to a definition or a declaration.
-  // Materializable GVs (in JIT lazy compilation mode) do not require an extra
-  // load from stub.
-  bool isDecl = GV->hasAvailableExternallyLinkage();
-  if (GV->isDeclaration() && !GV->isMaterializable())
-    isDecl = true;
+  bool isDecl = GV->isDeclarationForLinker();
 
   // X86-64 in PIC mode.
   if (isPICStyleRIPRel()) {
@@ -183,23 +178,7 @@ bool X86Subtarget::IsLegalToCallImmediateAddr(const TargetMachine &TM) const {
   return isTargetELF() || TM.getRelocationModel() == Reloc::Static;
 }
 
-void X86Subtarget::resetSubtargetFeatures(const MachineFunction *MF) {
-  AttributeSet FnAttrs = MF->getFunction()->getAttributes();
-  Attribute CPUAttr =
-      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-cpu");
-  Attribute FSAttr =
-      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-features");
-  std::string CPU =
-      !CPUAttr.hasAttribute(Attribute::None) ? CPUAttr.getValueAsString() : "";
-  std::string FS =
-      !FSAttr.hasAttribute(Attribute::None) ? FSAttr.getValueAsString() : "";
-  if (!FS.empty()) {
-    initializeEnvironment();
-    resetSubtargetFeatures(CPU, FS);
-  }
-}
-
-void X86Subtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
+void X86Subtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "generic";
@@ -281,18 +260,23 @@ void X86Subtarget::initializeEnvironment() {
   HasSGX = false;
   HasPRFCHW = false;
   HasRDSEED = false;
+  HasSMAP = false;
   IsBTMemSlow = false;
   IsSHLDSlow = false;
   IsUAMemFast = false;
-  HasVectorUAMem = false;
+  IsUAMem32Slow = false;
+  HasSSEUnalignedMem = false;
   HasCmpxchg16b = false;
   UseLeaForSP = false;
-  HasSlowDivide = false;
+  HasSlowDivide32 = false;
+  HasSlowDivide64 = false;
   PadShortFunctions = false;
   CallRegIndirect = false;
   LEAUsesAG = false;
   SlowLEA = false;
   SlowIncDec = false;
+  UseSqrtEst = false;
+  UseReciprocalEst = false;
   stackAlignment = 4;
   // FIXME: this is a known good value for Yonah. How about others?
   MaxInlineSizeThreshold = 128;
@@ -330,7 +314,7 @@ static std::string computeDataLayout(const Triple &TT) {
     Ret += "-n8:16:32";
 
   // The stack is aligned to 32 bits on some ABIs and 128 bits on others.
-  if (!TT.isArch64Bit() && TT.isOSWindows())  
+  if (!TT.isArch64Bit() && TT.isOSWindows())
     Ret += "-S32";
   else
     Ret += "-S128";
@@ -341,12 +325,12 @@ static std::string computeDataLayout(const Triple &TT) {
 X86Subtarget &X86Subtarget::initializeSubtargetDependencies(StringRef CPU,
                                                             StringRef FS) {
   initializeEnvironment();
-  resetSubtargetFeatures(CPU, FS);
+  initSubtargetFeatures(CPU, FS);
   return *this;
 }
 
 X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS, X86TargetMachine &TM,
+                           const std::string &FS, const X86TargetMachine &TM,
                            unsigned StackAlignOverride)
     : X86GenSubtargetInfo(TT, CPU, FS), X86ProcFamily(Others),
       PICStyle(PICStyles::None), TargetTriple(TT),
@@ -359,8 +343,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
                   TargetTriple.getEnvironment() == Triple::CODE16),
       TSInfo(DL), InstrInfo(initializeSubtargetDependencies(CPU, FS)),
       TLInfo(TM), FrameLowering(TargetFrameLowering::StackGrowsDown,
-                                getStackAlignment(), is64Bit() ? -8 : -4),
-      JITInfo(hasSSE1()) {
+                                getStackAlignment(), is64Bit() ? -8 : -4) {
   // Determine the PICStyle based on the target selected.
   if (TM.getRelocationModel() == Reloc::Static) {
     // Unless we're in PIC or DynamicNoPIC mode, set the PIC style to None.

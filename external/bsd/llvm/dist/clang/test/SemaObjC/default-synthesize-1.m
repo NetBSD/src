@@ -127,12 +127,12 @@
 
 // rdar://17774815
 @interface ZXParsedResult
-@property (nonatomic, copy, readonly) NSString *description;
+@property (nonatomic, copy, readonly) NSString *description; // expected-note {{property declared here}}
 @end
 
 @interface ZXCalendarParsedResult : ZXParsedResult
 
-@property (nonatomic, copy, readonly) NSString *description; // expected-warning {{auto property synthesis will not synthesize property 'description' because it will be implemented by its superclass}}
+@property (nonatomic, copy, readonly) NSString *description; // expected-warning {{auto property synthesis will not synthesize property 'description'; it will be implemented by its superclass}}
 
 @end
 

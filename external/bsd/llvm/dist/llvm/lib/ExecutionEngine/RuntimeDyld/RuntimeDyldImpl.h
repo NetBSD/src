@@ -11,14 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_RUNTIME_DYLD_IMPL_H
-#define LLVM_RUNTIME_DYLD_IMPL_H
+#ifndef LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_RUNTIMEDYLDIMPL_H
+#define LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_RUNTIMEDYLDIMPL_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/ExecutionEngine/RuntimeDyldChecker.h"
 #include "llvm/Object/ObjectFile.h"
@@ -37,7 +36,6 @@ using namespace llvm::object;
 
 namespace llvm {
 
-class ObjectBuffer;
 class Twine;
 
 /// SectionEntry - represents a section emitted into memory by the dynamic
@@ -70,7 +68,7 @@ public:
   SectionEntry(StringRef name, uint8_t *address, size_t size,
                uintptr_t objAddress)
       : Name(name), Address(address), Size(size),
-        LoadAddress((uintptr_t)address), StubOffset(size),
+        LoadAddress(reinterpret_cast<uintptr_t>(address)), StubOffset(size),
         ObjAddress(objAddress) {}
 };
 
@@ -159,15 +157,8 @@ public:
 };
 
 class RuntimeDyldImpl {
+  friend class RuntimeDyld::LoadedObjectInfo;
   friend class RuntimeDyldCheckerImpl;
-private:
-
-  uint64_t getAnySymbolRemoteAddress(StringRef Symbol) {
-    if (uint64_t InternalSymbolAddr = getSymbolLoadAddress(Symbol))
-      return InternalSymbolAddr;
-    return MemMgr->getSymbolAddress(Symbol);
-  }
-
 protected:
   // The MemoryManager to load objects into.
   RTDyldMemoryManager *MemMgr;
@@ -249,11 +240,11 @@ protected:
     return true;
   }
 
-  uint64_t getSectionLoadAddress(unsigned SectionID) {
+  uint64_t getSectionLoadAddress(unsigned SectionID) const {
     return Sections[SectionID].LoadAddress;
   }
 
-  uint8_t *getSectionAddress(unsigned SectionID) {
+  uint8_t *getSectionAddress(unsigned SectionID) const {
     return (uint8_t *)Sections[SectionID].Address;
   }
 
@@ -286,17 +277,25 @@ protected:
     *(Addr + 7) = Value & 0xFF;
   }
 
+  /// Endian-aware read Read the least significant Size bytes from Src.
+  uint64_t readBytesUnaligned(uint8_t *Src, unsigned Size) const;
+
+  /// Endian-aware write. Write the least significant Size bytes from Value to
+  /// Dst.
+  void writeBytesUnaligned(uint64_t Value, uint8_t *Dst, unsigned Size) const;
+
   /// \brief Given the common symbols discovered in the object file, emit a
   /// new section for them and update the symbol mappings in the object and
   /// symbol table.
-  void emitCommonSymbols(ObjectImage &Obj, const CommonSymbolMap &CommonSymbols,
+  void emitCommonSymbols(const ObjectFile &Obj,
+                         const CommonSymbolMap &CommonSymbols,
                          uint64_t TotalSize, SymbolTableMap &SymbolTable);
 
   /// \brief Emits section data from the object file to the MemoryManager.
   /// \param IsCode if it's true then allocateCodeSection() will be
   ///        used for emits, else allocateDataSection() will be used.
   /// \return SectionID.
-  unsigned emitSection(ObjectImage &Obj, const SectionRef &Section,
+  unsigned emitSection(const ObjectFile &Obj, const SectionRef &Section,
                        bool IsCode);
 
   /// \brief Find Section in LocalSections. If the secton is not found - emit
@@ -304,7 +303,7 @@ protected:
   /// \param IsCode if it's true then allocateCodeSection() will be
   ///        used for emmits, else allocateDataSection() will be used.
   /// \return SectionID.
-  unsigned findOrEmitSection(ObjectImage &Obj, const SectionRef &Section,
+  unsigned findOrEmitSection(const ObjectFile &Obj, const SectionRef &Section,
                              bool IsCode, ObjSectionToIDMap &LocalSections);
 
   // \brief Add a relocation entry that uses the given section.
@@ -332,8 +331,8 @@ protected:
   /// \return Iterator to the next relocation that needs to be parsed.
   virtual relocation_iterator
   processRelocationRef(unsigned SectionID, relocation_iterator RelI,
-                       ObjectImage &Obj, ObjSectionToIDMap &ObjSectionToID,
-                       const SymbolTableMap &Symbols, StubMap &Stubs) = 0;
+                       const ObjectFile &Obj, ObjSectionToIDMap &ObjSectionToID,
+                       StubMap &Stubs) = 0;
 
   /// \brief Resolve relocations to external symbols.
   void resolveExternalSymbols();
@@ -344,12 +343,15 @@ protected:
 
   // \brief Compute an upper bound of the memory that is required to load all
   // sections
-  void computeTotalAllocSize(ObjectImage &Obj, uint64_t &CodeSize,
+  void computeTotalAllocSize(const ObjectFile &Obj, uint64_t &CodeSize,
                              uint64_t &DataSizeRO, uint64_t &DataSizeRW);
 
   // \brief Compute the stub buffer size required for a section
-  unsigned computeSectionStubBufSize(ObjectImage &Obj,
+  unsigned computeSectionStubBufSize(const ObjectFile &Obj,
                                      const SectionRef &Section);
+
+  // \brief Implementation of the generic part of the loadObject algorithm.
+  std::pair<unsigned, unsigned> loadObjectImpl(const object::ObjectFile &Obj);
 
 public:
   RuntimeDyldImpl(RTDyldMemoryManager *mm)
@@ -366,9 +368,10 @@ public:
     this->Checker = Checker;
   }
 
-  ObjectImage *loadObject(ObjectImage *InputObject);
+  virtual std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
+  loadObject(const object::ObjectFile &Obj) = 0;
 
-  uint8_t* getSymbolAddress(StringRef Name) {
+  uint8_t* getSymbolAddress(StringRef Name) const {
     // FIXME: Just look up as a function for now. Overly simple of course.
     // Work in progress.
     SymbolTableMap::const_iterator pos = GlobalSymbolTable.find(Name);
@@ -378,7 +381,7 @@ public:
     return getSectionAddress(Loc.first) + Loc.second;
   }
 
-  uint64_t getSymbolLoadAddress(StringRef Name) {
+  uint64_t getSymbolLoadAddress(StringRef Name) const {
     // FIXME: Just look up as a function for now. Overly simple of course.
     // Work in progress.
     SymbolTableMap::const_iterator pos = GlobalSymbolTable.find(Name);
@@ -403,14 +406,14 @@ public:
   // Get the error message.
   StringRef getErrorString() { return ErrorStr; }
 
-  virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const = 0;
-  virtual bool isCompatibleFile(const ObjectFile *Obj) const = 0;
+  virtual bool isCompatibleFile(const ObjectFile &Obj) const = 0;
 
   virtual void registerEHFrames();
 
   virtual void deregisterEHFrames();
 
-  virtual void finalizeLoad(ObjectImage &ObjImg, ObjSectionToIDMap &SectionMap) {}
+  virtual void finalizeLoad(const ObjectFile &ObjImg,
+                            ObjSectionToIDMap &SectionMap) {}
 };
 
 } // end namespace llvm

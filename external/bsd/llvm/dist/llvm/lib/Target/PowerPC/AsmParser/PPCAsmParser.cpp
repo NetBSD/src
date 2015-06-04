@@ -32,9 +32,7 @@
 
 using namespace llvm;
 
-namespace {
-
-static unsigned RRegs[32] = {
+static const MCPhysReg RRegs[32] = {
   PPC::R0,  PPC::R1,  PPC::R2,  PPC::R3,
   PPC::R4,  PPC::R5,  PPC::R6,  PPC::R7,
   PPC::R8,  PPC::R9,  PPC::R10, PPC::R11,
@@ -44,7 +42,7 @@ static unsigned RRegs[32] = {
   PPC::R24, PPC::R25, PPC::R26, PPC::R27,
   PPC::R28, PPC::R29, PPC::R30, PPC::R31
 };
-static unsigned RRegsNoR0[32] = {
+static const MCPhysReg RRegsNoR0[32] = {
   PPC::ZERO,
             PPC::R1,  PPC::R2,  PPC::R3,
   PPC::R4,  PPC::R5,  PPC::R6,  PPC::R7,
@@ -55,7 +53,7 @@ static unsigned RRegsNoR0[32] = {
   PPC::R24, PPC::R25, PPC::R26, PPC::R27,
   PPC::R28, PPC::R29, PPC::R30, PPC::R31
 };
-static unsigned XRegs[32] = {
+static const MCPhysReg XRegs[32] = {
   PPC::X0,  PPC::X1,  PPC::X2,  PPC::X3,
   PPC::X4,  PPC::X5,  PPC::X6,  PPC::X7,
   PPC::X8,  PPC::X9,  PPC::X10, PPC::X11,
@@ -65,7 +63,7 @@ static unsigned XRegs[32] = {
   PPC::X24, PPC::X25, PPC::X26, PPC::X27,
   PPC::X28, PPC::X29, PPC::X30, PPC::X31
 };
-static unsigned XRegsNoX0[32] = {
+static const MCPhysReg XRegsNoX0[32] = {
   PPC::ZERO8,
             PPC::X1,  PPC::X2,  PPC::X3,
   PPC::X4,  PPC::X5,  PPC::X6,  PPC::X7,
@@ -76,7 +74,7 @@ static unsigned XRegsNoX0[32] = {
   PPC::X24, PPC::X25, PPC::X26, PPC::X27,
   PPC::X28, PPC::X29, PPC::X30, PPC::X31
 };
-static unsigned FRegs[32] = {
+static const MCPhysReg FRegs[32] = {
   PPC::F0,  PPC::F1,  PPC::F2,  PPC::F3,
   PPC::F4,  PPC::F5,  PPC::F6,  PPC::F7,
   PPC::F8,  PPC::F9,  PPC::F10, PPC::F11,
@@ -86,7 +84,7 @@ static unsigned FRegs[32] = {
   PPC::F24, PPC::F25, PPC::F26, PPC::F27,
   PPC::F28, PPC::F29, PPC::F30, PPC::F31
 };
-static unsigned VRegs[32] = {
+static const MCPhysReg VRegs[32] = {
   PPC::V0,  PPC::V1,  PPC::V2,  PPC::V3,
   PPC::V4,  PPC::V5,  PPC::V6,  PPC::V7,
   PPC::V8,  PPC::V9,  PPC::V10, PPC::V11,
@@ -96,7 +94,7 @@ static unsigned VRegs[32] = {
   PPC::V24, PPC::V25, PPC::V26, PPC::V27,
   PPC::V28, PPC::V29, PPC::V30, PPC::V31
 };
-static unsigned VSRegs[64] = {
+static const MCPhysReg VSRegs[64] = {
   PPC::VSL0,  PPC::VSL1,  PPC::VSL2,  PPC::VSL3,
   PPC::VSL4,  PPC::VSL5,  PPC::VSL6,  PPC::VSL7,
   PPC::VSL8,  PPC::VSL9,  PPC::VSL10, PPC::VSL11,
@@ -115,7 +113,7 @@ static unsigned VSRegs[64] = {
   PPC::VSH24, PPC::VSH25, PPC::VSH26, PPC::VSH27,
   PPC::VSH28, PPC::VSH29, PPC::VSH30, PPC::VSH31
 };
-static unsigned VSFRegs[64] = {
+static const MCPhysReg VSFRegs[64] = {
   PPC::F0,  PPC::F1,  PPC::F2,  PPC::F3,
   PPC::F4,  PPC::F5,  PPC::F6,  PPC::F7,
   PPC::F8,  PPC::F9,  PPC::F10, PPC::F11,
@@ -134,7 +132,7 @@ static unsigned VSFRegs[64] = {
   PPC::VF24, PPC::VF25, PPC::VF26, PPC::VF27,
   PPC::VF28, PPC::VF29, PPC::VF30, PPC::VF31
 };
-static unsigned CRBITRegs[32] = {
+static const MCPhysReg CRBITRegs[32] = {
   PPC::CR0LT, PPC::CR0GT, PPC::CR0EQ, PPC::CR0UN,
   PPC::CR1LT, PPC::CR1GT, PPC::CR1EQ, PPC::CR1UN,
   PPC::CR2LT, PPC::CR2GT, PPC::CR2EQ, PPC::CR2UN,
@@ -144,7 +142,7 @@ static unsigned CRBITRegs[32] = {
   PPC::CR6LT, PPC::CR6GT, PPC::CR6EQ, PPC::CR6UN,
   PPC::CR7LT, PPC::CR7GT, PPC::CR7EQ, PPC::CR7UN
 };
-static unsigned CRRegs[8] = {
+static const MCPhysReg CRRegs[8] = {
   PPC::CR0, PPC::CR1, PPC::CR2, PPC::CR3,
   PPC::CR4, PPC::CR5, PPC::CR6, PPC::CR7
 };
@@ -210,20 +208,18 @@ EvaluateCRExpr(const MCExpr *E) {
   llvm_unreachable("Invalid expression kind!");
 }
 
+namespace {
+
 struct PPCOperand;
 
 class PPCAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
-  MCAsmParser &Parser;
   const MCInstrInfo &MII;
   bool IsPPC64;
   bool IsDarwin;
 
-  MCAsmParser &getParser() const { return Parser; }
-  MCAsmLexer &getLexer() const { return Parser.getLexer(); }
-
-  void Warning(SMLoc L, const Twine &Msg) { Parser.Warning(L, Msg); }
-  bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
+  void Warning(SMLoc L, const Twine &Msg) { getParser().Warning(L, Msg); }
+  bool Error(SMLoc L, const Twine &Msg) { return getParser().Error(L, Msg); }
 
   bool isPPC64() const { return IsPPC64; }
   bool isDarwin() const { return IsDarwin; }
@@ -250,7 +246,7 @@ class PPCAsmParser : public MCTargetAsmParser {
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
-                               unsigned &ErrorInfo,
+                               uint64_t &ErrorInfo,
                                bool MatchingInlineAsm) override;
 
   void ProcessInstruction(MCInst &Inst, const OperandVector &Ops);
@@ -266,9 +262,8 @@ class PPCAsmParser : public MCTargetAsmParser {
 
 public:
   PPCAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
-               const MCInstrInfo &_MII,
-               const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(_STI), Parser(_Parser), MII(_MII) {
+               const MCInstrInfo &_MII, const MCTargetOptions &Options)
+      : MCTargetAsmParser(), STI(_STI), MII(_MII) {
     // Check for 64-bit vs. 32-bit pointer mode.
     Triple TheTriple(STI.getTargetTriple());
     IsPPC64 = (TheTriple.getArch() == Triple::ppc64 ||
@@ -662,9 +657,9 @@ public:
     // explicitly.
     void *Mem = ::operator new(sizeof(PPCOperand) + Str.size());
     std::unique_ptr<PPCOperand> Op(new (Mem) PPCOperand(Token));
-    Op->Tok.Data = (const char *)(Op.get() + 1);
+    Op->Tok.Data = reinterpret_cast<const char *>(Op.get() + 1);
     Op->Tok.Length = Str.size();
-    std::memcpy((void *)Op->Tok.Data, Str.data(), Str.size());
+    std::memcpy(const_cast<char *>(Op->Tok.Data), Str.data(), Str.size());
     Op->StartLoc = S;
     Op->EndLoc = S;
     Op->IsPPC64 = IsPPC64;
@@ -1053,12 +1048,11 @@ void PPCAsmParser::ProcessInstruction(MCInst &Inst,
 
 bool PPCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                            OperandVector &Operands,
-                                           MCStreamer &Out, unsigned &ErrorInfo,
+                                           MCStreamer &Out, uint64_t &ErrorInfo,
                                            bool MatchingInlineAsm) {
   MCInst Inst;
 
   switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm)) {
-  default: break;
   case Match_Success:
     // Post-process instructions (typically extended mnemonics)
     ProcessInstruction(Inst, Operands);
@@ -1068,10 +1062,10 @@ bool PPCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_MissingFeature:
     return Error(IDLoc, "instruction use requires an option to be enabled");
   case Match_MnemonicFail:
-      return Error(IDLoc, "unrecognized instruction mnemonic");
+    return Error(IDLoc, "unrecognized instruction mnemonic");
   case Match_InvalidOperand: {
     SMLoc ErrorLoc = IDLoc;
-    if (ErrorInfo != ~0U) {
+    if (ErrorInfo != ~0ULL) {
       if (ErrorInfo >= Operands.size())
         return Error(IDLoc, "too few operands for instruction");
 
@@ -1127,6 +1121,7 @@ MatchRegisterName(const AsmToken &Tok, unsigned &RegNo, int64_t &IntVal) {
 
 bool PPCAsmParser::
 ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) {
+  MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
   StartLoc = Tok.getLoc();
   EndLoc = Tok.getEndLoc();
@@ -1308,6 +1303,7 @@ ParseExpression(const MCExpr *&EVal) {
 /// for this to be done at a higher level.
 bool PPCAsmParser::
 ParseDarwinExpression(const MCExpr *&EVal) {
+  MCAsmParser &Parser = getParser();
   PPCMCExpr::VariantKind Variant = PPCMCExpr::VK_PPC_None;
   switch (getLexer().getKind()) {
   default:
@@ -1350,6 +1346,7 @@ ParseDarwinExpression(const MCExpr *&EVal) {
 /// This handles registers in the form 'NN', '%rNN' for ELF platforms and
 /// rNN for MachO.
 bool PPCAsmParser::ParseOperand(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
   SMLoc S = Parser.getTok().getLoc();
   SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
   const MCExpr *EVal;
@@ -1558,6 +1555,7 @@ bool PPCAsmParser::ParseDirective(AsmToken DirectiveID) {
 /// ParseDirectiveWord
 ///  ::= .word [ expression (, expression)* ]
 bool PPCAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
@@ -1582,6 +1580,7 @@ bool PPCAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
 /// ParseDirectiveTC
 ///  ::= .tc [ symbol (, expression)* ]
 bool PPCAsmParser::ParseDirectiveTC(unsigned Size, SMLoc L) {
+  MCAsmParser &Parser = getParser();
   // Skip TC symbol, which is only used with XCOFF.
   while (getLexer().isNot(AsmToken::EndOfStatement)
          && getLexer().isNot(AsmToken::Comma))
@@ -1602,6 +1601,7 @@ bool PPCAsmParser::ParseDirectiveTC(unsigned Size, SMLoc L) {
 /// ParseDirectiveMachine (ELF platforms)
 ///  ::= .machine [ cpu | "push" | "pop" ]
 bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::Identifier) &&
       getLexer().isNot(AsmToken::String)) {
     Error(L, "unexpected token in directive");
@@ -1636,6 +1636,7 @@ bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
 /// ParseDarwinDirectiveMachine (Mach-o platforms)
 ///  ::= .machine cpu-identifier
 bool PPCAsmParser::ParseDarwinDirectiveMachine(SMLoc L) {
+  MCAsmParser &Parser = getParser();
   if (getLexer().isNot(AsmToken::Identifier) &&
       getLexer().isNot(AsmToken::String)) {
     Error(L, "unexpected token in directive");

@@ -58,7 +58,7 @@ bool MachineTraceMetrics::runOnMachineFunction(MachineFunction &Func) {
   Loops = &getAnalysis<MachineLoopInfo>();
   const TargetSubtargetInfo &ST =
     MF->getTarget().getSubtarget<TargetSubtargetInfo>();
-  SchedModel.init(*ST.getSchedModel(), &ST, TII);
+  SchedModel.init(ST.getSchedModel(), &ST, TII);
   BlockInfo.resize(MF->getNumBlockIDs());
   ProcResourceCycles.resize(MF->getNumBlockIDs() *
                             SchedModel.getNumProcResourceKinds());
@@ -135,8 +135,7 @@ MachineTraceMetrics::getProcResourceCycles(unsigned MBBNum) const {
          "getResources() must be called before getProcResourceCycles()");
   unsigned PRKinds = SchedModel.getNumProcResourceKinds();
   assert((MBBNum+1) * PRKinds <= ProcResourceCycles.size());
-  return ArrayRef<unsigned>(ProcResourceCycles.data() + MBBNum * PRKinds,
-                            PRKinds);
+  return makeArrayRef(ProcResourceCycles.data() + MBBNum * PRKinds, PRKinds);
 }
 
 
@@ -256,8 +255,7 @@ MachineTraceMetrics::Ensemble::
 getProcResourceDepths(unsigned MBBNum) const {
   unsigned PRKinds = MTM.SchedModel.getNumProcResourceKinds();
   assert((MBBNum+1) * PRKinds <= ProcResourceDepths.size());
-  return ArrayRef<unsigned>(ProcResourceDepths.data() + MBBNum * PRKinds,
-                            PRKinds);
+  return makeArrayRef(ProcResourceDepths.data() + MBBNum * PRKinds, PRKinds);
 }
 
 /// Get an array of processor resource heights for MBB. Indexed by processor
@@ -270,8 +268,7 @@ MachineTraceMetrics::Ensemble::
 getProcResourceHeights(unsigned MBBNum) const {
   unsigned PRKinds = MTM.SchedModel.getNumProcResourceKinds();
   assert((MBBNum+1) * PRKinds <= ProcResourceHeights.size());
-  return ArrayRef<unsigned>(ProcResourceHeights.data() + MBBNum * PRKinds,
-                            PRKinds);
+  return makeArrayRef(ProcResourceHeights.data() + MBBNum * PRKinds, PRKinds);
 }
 
 //===----------------------------------------------------------------------===//
@@ -452,7 +449,7 @@ public:
     }
     // To is a new block. Mark the block as visited in case the CFG has cycles
     // that MachineLoopInfo didn't recognize as a natural loop.
-    return LB.Visited.insert(To);
+    return LB.Visited.insert(To).second;
   }
 };
 }

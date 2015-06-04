@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "MipsSEISelLowering.h"
+#include "MipsMachineFunction.h"
 #include "MipsRegisterInfo.h"
 #include "MipsTargetMachine.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -34,7 +35,7 @@ static cl::opt<bool> NoDPLoadStore("mno-ldc1-sdc1", cl::init(false),
                                             "stores to their single precision "
                                             "counterparts"));
 
-MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM,
+MipsSETargetLowering::MipsSETargetLowering(const MipsTargetMachine &TM,
                                            const MipsSubtarget &STI)
     : MipsTargetLowering(TM, STI) {
   // Set up the register classes
@@ -45,17 +46,13 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM,
 
   if (Subtarget.hasDSP() || Subtarget.hasMSA()) {
     // Expand all truncating stores and extending loads.
-    unsigned FirstVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-    unsigned LastVT = (unsigned)MVT::LAST_VECTOR_VALUETYPE;
-
-    for (unsigned VT0 = FirstVT; VT0 <= LastVT; ++VT0) {
-      for (unsigned VT1 = FirstVT; VT1 <= LastVT; ++VT1)
-        setTruncStoreAction((MVT::SimpleValueType)VT0,
-                            (MVT::SimpleValueType)VT1, Expand);
-
-      setLoadExtAction(ISD::SEXTLOAD, (MVT::SimpleValueType)VT0, Expand);
-      setLoadExtAction(ISD::ZEXTLOAD, (MVT::SimpleValueType)VT0, Expand);
-      setLoadExtAction(ISD::EXTLOAD, (MVT::SimpleValueType)VT0, Expand);
+    for (MVT VT0 : MVT::vector_valuetypes()) {
+      for (MVT VT1 : MVT::vector_valuetypes()) {
+        setTruncStoreAction(VT0, VT1, Expand);
+        setLoadExtAction(ISD::SEXTLOAD, VT0, VT1, Expand);
+        setLoadExtAction(ISD::ZEXTLOAD, VT0, VT1, Expand);
+        setLoadExtAction(ISD::EXTLOAD, VT0, VT1, Expand);
+      }
     }
   }
 
@@ -125,8 +122,12 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM,
     setOperationAction(ISD::MUL,              MVT::i64, Custom);
 
   if (Subtarget.isGP64bit()) {
+    setOperationAction(ISD::SMUL_LOHI,        MVT::i64, Custom);
+    setOperationAction(ISD::UMUL_LOHI,        MVT::i64, Custom);
     setOperationAction(ISD::MULHS,            MVT::i64, Custom);
     setOperationAction(ISD::MULHU,            MVT::i64, Custom);
+    setOperationAction(ISD::SDIVREM,          MVT::i64, Custom);
+    setOperationAction(ISD::UDIVREM,          MVT::i64, Custom);
   }
 
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::i64, Custom);
@@ -134,8 +135,6 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM,
 
   setOperationAction(ISD::SDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
-  setOperationAction(ISD::SDIVREM, MVT::i64, Custom);
-  setOperationAction(ISD::UDIVREM, MVT::i64, Custom);
   setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Custom);
   setOperationAction(ISD::LOAD,               MVT::i32, Custom);
   setOperationAction(ISD::STORE,              MVT::i32, Custom);
@@ -203,6 +202,8 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM,
   if (Subtarget.hasMips64r6()) {
     // MIPS64r6 replaces the accumulator-based multiplies with a three register
     // instruction
+    setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
+    setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
     setOperationAction(ISD::MUL, MVT::i64, Legal);
     setOperationAction(ISD::MULHS, MVT::i64, Legal);
     setOperationAction(ISD::MULHU, MVT::i64, Legal);
@@ -227,7 +228,7 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM,
 }
 
 const MipsTargetLowering *
-llvm::createMipsSETargetLowering(MipsTargetMachine &TM,
+llvm::createMipsSETargetLowering(const MipsTargetMachine &TM,
                                  const MipsSubtarget &STI) {
   return new MipsSETargetLowering(TM, STI);
 }
@@ -1166,15 +1167,14 @@ MipsSETargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   }
 }
 
-bool MipsSETargetLowering::
-isEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
-                                  unsigned NextStackOffset,
-                                  const MipsFunctionInfo& FI) const {
+bool MipsSETargetLowering::isEligibleForTailCallOptimization(
+    const CCState &CCInfo, unsigned NextStackOffset,
+    const MipsFunctionInfo &FI) const {
   if (!EnableMipsTailCalls)
     return false;
 
   // Return false if either the callee or caller has a byval argument.
-  if (MipsCCInfo.hasByValArg() || FI.hasByvalArg())
+  if (CCInfo.getInRegsParamsCount() > 0 || FI.hasByvalArg())
     return false;
 
   // Return true if the callee's argument area is no larger than the
@@ -1186,10 +1186,12 @@ void MipsSETargetLowering::
 getOpndList(SmallVectorImpl<SDValue> &Ops,
             std::deque< std::pair<unsigned, SDValue> > &RegsToPass,
             bool IsPICCall, bool GlobalOrExternal, bool InternalLinkage,
-            CallLoweringInfo &CLI, SDValue Callee, SDValue Chain) const {
+            bool IsCallReloc, CallLoweringInfo &CLI, SDValue Callee,
+            SDValue Chain) const {
   Ops.push_back(Callee);
   MipsTargetLowering::getOpndList(Ops, RegsToPass, IsPICCall, GlobalOrExternal,
-                                  InternalLinkage, CLI, Callee, Chain);
+                                  InternalLinkage, IsCallReloc, CLI, Callee,
+                                  Chain);
 }
 
 SDValue MipsSETargetLowering::lowerLOAD(SDValue Op, SelectionDAG &DAG) const {
@@ -2881,10 +2883,21 @@ emitCOPY_FW(MachineInstr *MI, MachineBasicBlock *BB) const{
   unsigned Ws = MI->getOperand(1).getReg();
   unsigned Lane = MI->getOperand(2).getImm();
 
-  if (Lane == 0)
-    BuildMI(*BB, MI, DL, TII->get(Mips::COPY), Fd).addReg(Ws, 0, Mips::sub_lo);
-  else {
-    unsigned Wt = RegInfo.createVirtualRegister(&Mips::MSA128WRegClass);
+  if (Lane == 0) {
+    unsigned Wt = Ws;
+    if (!Subtarget.useOddSPReg()) {
+      // We must copy to an even-numbered MSA register so that the
+      // single-precision sub-register is also guaranteed to be even-numbered.
+      Wt = RegInfo.createVirtualRegister(&Mips::MSA128WEvensRegClass);
+
+      BuildMI(*BB, MI, DL, TII->get(Mips::COPY), Wt).addReg(Ws);
+    }
+
+    BuildMI(*BB, MI, DL, TII->get(Mips::COPY), Fd).addReg(Wt, 0, Mips::sub_lo);
+  } else {
+    unsigned Wt = RegInfo.createVirtualRegister(
+        Subtarget.useOddSPReg() ? &Mips::MSA128WRegClass :
+                                  &Mips::MSA128WEvensRegClass);
 
     BuildMI(*BB, MI, DL, TII->get(Mips::SPLATI_W), Wt).addReg(Ws).addImm(Lane);
     BuildMI(*BB, MI, DL, TII->get(Mips::COPY), Fd).addReg(Wt, 0, Mips::sub_lo);
@@ -2946,7 +2959,9 @@ MipsSETargetLowering::emitINSERT_FW(MachineInstr *MI,
   unsigned Wd_in = MI->getOperand(1).getReg();
   unsigned Lane = MI->getOperand(2).getImm();
   unsigned Fs = MI->getOperand(3).getReg();
-  unsigned Wt = RegInfo.createVirtualRegister(&Mips::MSA128WRegClass);
+  unsigned Wt = RegInfo.createVirtualRegister(
+      Subtarget.useOddSPReg() ? &Mips::MSA128WRegClass :
+                                &Mips::MSA128WEvensRegClass);
 
   BuildMI(*BB, MI, DL, TII->get(Mips::SUBREG_TO_REG), Wt)
       .addImm(0)

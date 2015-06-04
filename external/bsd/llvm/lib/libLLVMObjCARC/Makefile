@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/02/04 15:00:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.14.1 2015/06/04 20:05:44 snj Exp $
 
 LIB=	LLVMObjCARC
 
@@ -14,7 +14,8 @@ SRCS+=	DependencyAnalysis.cpp \
 	ObjCARCExpand.cpp \
 	ObjCARCOpts.cpp \
 	ObjCARCUtil.cpp \
-	ProvenanceAnalysis.cpp
+	ProvenanceAnalysis.cpp \
+	ProvenanceAnalysisEvaluator.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
