@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.320 2015/06/04 07:36:25 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.321 2015/06/04 09:45:43 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23745,3 +23745,9 @@ bin/sh/builtins.def				1.23
 	dhcpcd and as such required by most ramdisk images. Allow turning it
 	off again by TINYPROG.
 	[martin, ticket #821]
+
+sys/net/if_gif.c				1.85-1.86
+
+	Obtain softnet_lock before entering IP networking stack from gif
+	software interrupt.
+	[hsuenaga, ticket #822]
