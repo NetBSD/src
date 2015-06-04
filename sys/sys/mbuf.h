@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.157 2015/03/02 16:16:08 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.158 2015/06/04 09:19:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -912,6 +912,8 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 						    * protocol callback, for
 						    * loop detection/recovery
 						    */
+
+#define	PACKET_TAG_MPLS				29 /* Indicate it's for MPLS */
 
 /*
  * Return the number of bytes in the mbuf chain, m.
