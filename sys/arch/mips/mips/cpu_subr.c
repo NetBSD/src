@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.20 2015/06/01 22:55:13 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.21 2015/06/04 05:32:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,8 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.20 2015/06/01 22:55:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.21 2015/06/04 05:32:05 matt Exp $");
 
+#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
@@ -118,19 +119,16 @@ struct cpu_info *
 cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	cpuid_t cpu_core_id, cpuid_t cpu_smt_id)
 {
-	struct pglist pglist;
-	int error;
-
 	KASSERT(cpu_id < MAXCPUS);
 
-#ifdef MIPS64O_OCTEON
+#ifdef MIPS64_OCTEON
 	const vaddr_t cpu_info_offset = 0x800;
 	vaddr_t exc_page = MIPS_UTLB_MISS_EXC_VEC + 0x1000*cpu_id;
 	__CTASSERT(sizeof(struct cpu_info) <= 0x800);
 	__CTASSERT(sizeof(struct pmap_tlb_info) <= 0x400);
 	
-	struct cpu_info * const ci = (void *) (va + cpu_info_offset);
-	memset((void *)va, 0, PAGE_SIZE);
+	struct cpu_info * const ci = (void *) (exc_page + cpu_info_offset);
+	memset((void *)exc_page, 0, PAGE_SIZE);
 
 	if (ti == NULL) {
 		ti = ((struct pmap_tlb_info *)ci) - 1;
@@ -138,6 +136,8 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	}
 #else
 	const vaddr_t cpu_info_offset = (vaddr_t)&cpu_info_store & PAGE_MASK; 
+	struct pglist pglist;
+	int error;
 
 	/*
 	* Grab a page from the first 512MB (mappable by KSEG0) to use to store
@@ -179,6 +179,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 #endif
 #endif /* MIPS64_OCTEON */
 
+	KASSERT(cpu_id != 0);
 	ci->ci_cpuid = cpu_id;
 	ci->ci_data.cpu_package_id = cpu_package_id;
 	ci->ci_data.cpu_core_id = cpu_core_id;
@@ -279,6 +280,7 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 		cpuid_infos[ci->ci_cpuid] = ci;
 		membar_producer();
 	}
+	KASSERT(cpuid_infos[ci->ci_cpuid] != NULL);
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_activate_rqst,
 	    EVCNT_TYPE_MISC, NULL, xname,
 	    "syncicache activate request");
@@ -860,9 +862,6 @@ cpu_hatch(struct cpu_info *ci)
 	tlb_invalidate_all();
 	mips3_cp0_wired_write(ti->ti_wired);
 
-	// Show this CPU as present.
-	atomic_or_ulong(&ci->ci_flags, CPUF_PRESENT);
-
 	/*
 	 * Setup HWRENA and USERLOCAL COP0 registers (MIPSxxR2).
 	 */
@@ -889,6 +888,9 @@ cpu_hatch(struct cpu_info *ci)
 	 * done on the local CPU).
 	 */
 	(*mips_locoresw.lsw_cpu_init)(ci);
+
+	// Show this CPU as present.
+	atomic_or_ulong(&ci->ci_flags, CPUF_PRESENT);
 
 	/*
 	 * Announce we are hatched
@@ -933,6 +935,8 @@ cpu_boot_secondary_processors(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
+	aprint_verbose("Booting secondary processors (%#"PRIx64")",
+	    cpus_hatched);
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (CPU_IS_PRIMARY(ci))
 			continue;
@@ -944,10 +948,12 @@ cpu_boot_secondary_processors(void)
 		if (! CPUSET_HAS_P(cpus_hatched, cpu_index(ci)))
 			continue;
 
+		aprint_verbose(" %s", cpu_name(ci));
 		ci->ci_data.cpu_cc_skew = mips3_cp0_count_read();
 		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
 		CPUSET_ADD(cpus_running, cpu_index(ci));
 	}
+	aprint_verbose("\n");
 }
 
 void
