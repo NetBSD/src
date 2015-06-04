@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.104 2015/06/02 05:09:15 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.105 2015/06/04 05:58:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -122,7 +122,9 @@
  *============================================================================
  */
 	.set	noreorder
+#if __mips < 3
 	.set	mips3
+#endif
 
 #ifdef _LP64
 #define	_MFC0	dmfc0
@@ -639,8 +641,12 @@ END(baderr64)
 LEAF(mips3_cp0_tlb_entry_hi_probe)
 	dmfc0	t0, MIPS_COP_0_TLB_HI
 	li	v0, -1		/* all 1s */
+#if defined(__mips_isa_rev) && __mips_isa_rev >= 2
+	dinsu	v0, zero, 62, 2
+#else
 	dsll	v0, v0, 2	/* except the top 2 */
 	dsrl	v0, v0, 2
+#endif
 	dmtc0	v0, MIPS_COP_0_TLB_HI
 	COP0_SYNC
 	dmfc0	v0, MIPS_COP_0_TLB_HI
