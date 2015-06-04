@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.149 2014/08/10 17:32:54 joerg Exp $
+# $NetBSD: md.i386,v 1.149.2.1 2015/06/04 20:29:49 snj Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -63,12 +63,17 @@
 ./usr/include/clang-3.6/__wmmintrin_aes.h	comp-c-include		llvm
 ./usr/include/clang-3.6/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-3.6/ammintrin.h		comp-c-include		llvm
+./usr/include/clang-3.6/adxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.6/avx2intrin.h		comp-c-include		llvm
+./usr/include/clang-3.6/avx512bwintrin.h	comp-c-include		llvm
 ./usr/include/clang-3.6/avx512erintrin.h	comp-c-include		llvm
 ./usr/include/clang-3.6/avx512fintrin.h		comp-c-include		llvm
+./usr/include/clang-3.6/avx512vlbwintrin.h	comp-c-include		llvm
+./usr/include/clang-3.6/avx512vlintrin.h	comp-c-include		llvm
 ./usr/include/clang-3.6/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.6/bmi2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.6/bmiintrin.h		comp-c-include		llvm
+./usr/include/clang-3.6/cpuid.h			comp-c-include		llvm
 ./usr/include/clang-3.6/emmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.6/f16cintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.6/fma4intrin.h		comp-c-include		llvm
