@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.318 2015/06/03 06:53:37 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.319 2015/06/04 05:42:38 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23700,4 +23700,36 @@ sys/modules/examples/readhappy/readhappy.c	1.1
 
 	Provide a more comprehensive set of example kernel modules.
 	[pgoyette, ticket #752]
+
+ lib/libstdc++-v3/arch/earm/c++config.h		(patch)
+lib/libstdc++-v3/arch/earmeb/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmhf/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmhfeb/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmv4/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmv4eb/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmv6/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmv6eb/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmv6hf/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmv6hfeb/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmv7/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmv7eb/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmv7hf/c++config.h	(patch)
+lib/libstdc++-v3/arch/earmv7hfeb/c++config.h	(patch)
+usr.bin/gcc/arch/earm/multilib.h		(patch)
+usr.bin/gcc/arch/earmeb/multilib.h		(patch)
+usr.bin/gcc/arch/earmhf/multilib.h		(patch)
+usr.bin/gcc/arch/earmhfeb/multilib.h		(patch)
+usr.bin/gcc/arch/earmv4/multilib.h		(patch)
+usr.bin/gcc/arch/earmv4eb/multilib.h		(patch)
+usr.bin/gcc/arch/earmv6/multilib.h		(patch)
+usr.bin/gcc/arch/earmv6eb/multilib.h		(patch)
+usr.bin/gcc/arch/earmv6hf/multilib.h		(patch)
+usr.bin/gcc/arch/earmv6hfeb/multilib.h		(patch)
+usr.bin/gcc/arch/earmv7/multilib.h		(patch)
+usr.bin/gcc/arch/earmv7eb/multilib.h		(patch)
+usr.bin/gcc/arch/earmv7hf/multilib.h		(patch)
+usr.bin/gcc/arch/earmv7hfeb/multilib.h		(patch)
+
+	Regen for arm OABI compat changes.
+	[mrg, #819]
 
