@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.319 2015/06/04 05:42:38 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.320 2015/06/04 07:36:25 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23733,3 +23733,15 @@ usr.bin/gcc/arch/earmv7hfeb/multilib.h		(patch)
 	Regen for arm OABI compat changes.
 	[mrg, #819]
 
+usr.sbin/npf/npfctl/npf_show.c			1.19
+
+	npfctl: fix the from/to port mess up when showing the rules.
+	[rmind, ticket #820]
+
+bin/sh/Makefile					1.101
+bin/sh/builtins.def				1.23
+
+	Include printf by default even for SMALL builds. It is used e.g. by
+	dhcpcd and as such required by most ramdisk images. Allow turning it
+	off again by TINYPROG.
+	[martin, ticket #821]
