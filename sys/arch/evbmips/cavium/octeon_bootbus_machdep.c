@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_bootbus_machdep.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_bootbus_machdep.c,v 1.2 2015/06/04 05:22:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_bootbus_machdep.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_bootbus_machdep.c,v 1.2 2015/06/04 05:22:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_bootbus_machdep.c,v 1.1 2015/04/29 08:32:01 h
 
 #include <mips/cavium/include/bootbusvar.h>
 
-const struct bootbus_dev	*bootbus_devs[] = {
+const struct bootbus_dev * const bootbus_devs[] = {
 };
 
 const size_t bootbus_ndevs = __arraycount(bootbus_devs);
