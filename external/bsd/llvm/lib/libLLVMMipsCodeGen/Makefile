@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2014/08/10 17:34:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2015/06/04 20:05:44 snj Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -15,7 +15,7 @@ SRCS+=	Mips16ISelDAGToDAG.cpp \
 	Mips16RegisterInfo.cpp \
 	MipsAnalyzeImmediate.cpp \
 	MipsAsmPrinter.cpp \
-	MipsCodeEmitter.cpp \
+	MipsCCState.cpp \
 	MipsConstantIslandPass.cpp \
 	MipsDelaySlotFiller.cpp \
 	MipsFastISel.cpp \
@@ -23,7 +23,6 @@ SRCS+=	Mips16ISelDAGToDAG.cpp \
 	MipsInstrInfo.cpp \
 	MipsISelDAGToDAG.cpp \
 	MipsISelLowering.cpp \
-	MipsJITInfo.cpp \
 	MipsLongBranch.cpp \
 	MipsMachineFunction.cpp \
 	MipsModuleISelDAGToDAG.cpp \
@@ -54,7 +53,7 @@ TABLEGEN_OUTPUT= \
 	MipsGenDAGISel.inc|-gen-dag-isel \
 	MipsGenDisassemblerTables.inc|-gen-disassembler \
 	MipsGenFastISel.inc|-gen-fast-isel \
-	MipsGenMCCodeEmitter.inc|-gen-emitter^-mc-emitter \
+	MipsGenMCCodeEmitter.inc|-gen-emitter \
 	MipsGenMCPseudoLowering.inc|-gen-pseudo-lowering \
 	MipsGenSubtargetInfo.inc|-gen-subtarget
 

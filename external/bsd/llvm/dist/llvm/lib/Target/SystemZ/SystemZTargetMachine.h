@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef SYSTEMZTARGETMACHINE_H
-#define SYSTEMZTARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZTARGETMACHINE_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZTARGETMACHINE_H
 
 #include "SystemZSubtarget.h"
 #include "llvm/Target/TargetMachine.h"
@@ -23,6 +23,7 @@ namespace llvm {
 class TargetFrameLowering;
 
 class SystemZTargetMachine : public LLVMTargetMachine {
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   SystemZSubtarget        Subtarget;
 
 public:
@@ -30,6 +31,7 @@ public:
                        StringRef FS, const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
+  ~SystemZTargetMachine() override;
 
   // Override TargetMachine.
   const SystemZSubtarget *getSubtargetImpl() const override {
@@ -37,6 +39,9 @@ public:
   }
   // Override LLVMTargetMachine
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+  TargetLoweringObjectFile *getObjFileLowering() const override {
+    return TLOF.get();
+  }
 };
 
 } // end namespace llvm

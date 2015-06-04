@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.74 2014/08/10 17:34:19 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.74.2.1 2015/06/04 20:04:21 snj Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -6,9 +6,9 @@ LLVM_TOPLEVEL_MK=
 .include <bsd.own.mk>
 
 SVN_ROOT=		http://llvm.org/svn/llvm-project
-SVN_BRANCH=		trunk
+SVN_BRANCH=		branches/release_36
 
-COMMON_REVISION=	215315
+COMMON_REVISION=	237755
 CLANG_REVISION=		${COMMON_REVISION}
 LLD_REVISION=		${COMMON_REVISION}
 LLDB_REVISION=		${COMMON_REVISION}
@@ -17,8 +17,9 @@ LLVM_REVISION=		${COMMON_REVISION}
 MCLINKER_REVISION=	deeb2a77b4165827316f88e0a7ba4ba6b743a080
 MCLINKER_ROOT=		https://code.google.com/p/mclinker/
 
-LLVM_VERSION=		3.6
-CLANG_VERSION=		3.6
+LLVM_VERSION=		3.6.1
+CLANG_VERSION=		3.6.1
+LLD_VERSION=		3.6.1
 
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang
 LLD_SRCDIR:=	${.PARSEDIR}/dist/lld
@@ -48,10 +49,10 @@ CLANG_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 MCLINKER_INCLUDE_CONFIG= ${LLVM_TOPLEVEL}/config/mclinker
 LLVM_INCLUDE_OBJDIR!=	cd ${LLVM_TOPLEVEL}/include && ${PRINTOBJDIR}
 
-CPPFLAGS+=	-std=c++11
 .if ${MKLLDB:Uno} == "yes"
 CPPFLAGS+=	-DLLDB_DISABLE_PYTHON
 .endif
+CXXFLAGS+=	-std=c++11
 CXXFLAGS+=	-fno-rtti -fno-exceptions
 CXXFLAGS+=	-ffunction-sections -fdata-sections
 LDFLAGS+=	-Wl,--gc-sections
@@ -63,11 +64,11 @@ LLVM_PLATFORM=${MACHINE_GNU_ARCH}--netbsd
 
 LLVM_CONFIGURE_ARGS=	\
 	--enable-targets=x86,powerpc,sparc,aarch64,arm,mips \
-	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION}:/usr/include \
+	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION:R}:/usr/include \
 	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
 	--with-clang-srcdir=${CLANG_SRCDIR} \
 	--host=${LLVM_PLATFORM} --disable-compiler-version-checks \
-	llvm_cv_gnu_make_command=${MAKE}
+	--disable-bindings llvm_cv_gnu_make_command=${MAKE}
 
 .for tool in circo dot dotty fdp neato twopi xdot
 LLVM_CONFIGURE_ARGS+= ac_cv_path_${tool:tu}="echo ${tool}"

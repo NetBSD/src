@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2014/08/10 17:34:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.29.2.1 2015/06/04 20:05:43 snj Exp $
 
 LIB=	LLVMCodeGen
 
@@ -9,7 +9,7 @@ LIB=	LLVMCodeGen
 SRCS+=	AggressiveAntiDepBreaker.cpp \
 	AllocationOrder.cpp \
 	Analysis.cpp \
-	AtomicExpandLoadLinkedPass.cpp \
+	AtomicExpandPass.cpp \
 	BasicTargetTransformInfo.cpp \
 	BranchFolding.cpp \
 	CalcSpillWeights.cpp \
@@ -26,6 +26,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
 	ExpandPostRAPseudos.cpp \
+	ForwardControlFlowIntegrity.cpp \
 	GCMetadata.cpp \
 	GCMetadataPrinter.cpp \
 	GCStrategy.cpp \
@@ -34,7 +35,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	InlineSpiller.cpp \
 	InterferenceCache.cpp \
 	IntrinsicLowering.cpp \
-	JITCodeEmitter.cpp \
 	JumpInstrTables.cpp \
 	LLVMTargetMachine.cpp \
 	LatencyPriorityQueue.cpp \
@@ -54,7 +54,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineBranchProbabilityInfo.cpp \
 	MachineBlockFrequencyInfo.cpp \
 	MachineBlockPlacement.cpp \
-	MachineCodeEmitter.cpp \
 	MachineCopyPropagation.cpp \
 	MachineCSE.cpp \
 	MachineCombiner.cpp \
@@ -105,7 +104,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	ShadowStackGC.cpp \
 	SjLjEHPrepare.cpp \
 	SlotIndexes.cpp \
-	Spiller.cpp \
 	SpillPlacement.cpp \
 	SplitKit.cpp \
 	StackColoring.cpp \
@@ -113,6 +111,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	StackMaps.cpp \
 	StackProtector.cpp \
 	StackSlotColoring.cpp \
+	StatepointExampleGC.cpp \
 	TailDuplication.cpp \
 	TargetFrameLoweringImpl.cpp \
 	TargetInstrInfo.cpp \

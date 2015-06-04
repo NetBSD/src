@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCTargetDesc/AArch64AddressingModes.h"
+#include "MCTargetDesc/AArch64MCExpr.h"
 #include "AArch64.h"
 #include "AArch64MCInstLower.h"
 #include "AArch64MachineFunctionInfo.h"
@@ -54,7 +56,7 @@ public:
   AArch64AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : AsmPrinter(TM, Streamer),
         Subtarget(&TM.getSubtarget<AArch64Subtarget>()),
-        MCInstLowering(OutContext, *Mang, *this), SM(*this), AArch64FI(nullptr),
+        MCInstLowering(OutContext, *this), SM(*this), AArch64FI(nullptr),
         LOHLabelCounter(0) {}
 
   const char *getPassName() const override {
@@ -381,8 +383,23 @@ void AArch64AsmPrinter::LowerSTACKMAP(MCStreamer &OutStreamer, StackMaps &SM,
   unsigned NumNOPBytes = MI.getOperand(1).getImm();
 
   SM.recordStackMap(MI);
-  // Emit padding.
   assert(NumNOPBytes % 4 == 0 && "Invalid number of NOP bytes requested!");
+
+  // Scan ahead to trim the shadow.
+  const MachineBasicBlock &MBB = *MI.getParent();
+  MachineBasicBlock::const_iterator MII(MI);
+  ++MII;
+  while (NumNOPBytes > 0) {
+    if (MII == MBB.end() || MII->isCall() ||
+        MII->getOpcode() == AArch64::DBG_VALUE ||
+        MII->getOpcode() == TargetOpcode::PATCHPOINT ||
+        MII->getOpcode() == TargetOpcode::STACKMAP)
+      break;
+    ++MII;
+    NumNOPBytes -= 4;
+  }
+
+  // Emit nops.
   for (unsigned i = 0; i < NumNOPBytes; i += 4)
     EmitToStreamer(OutStreamer, MCInstBuilder(AArch64::HINT).addImm(0));
 }
@@ -479,24 +496,57 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     EmitToStreamer(OutStreamer, TmpInst);
     return;
   }
-  case AArch64::TLSDESC_BLR: {
-    MCOperand Callee, Sym;
-    MCInstLowering.lowerOperand(MI->getOperand(0), Callee);
-    MCInstLowering.lowerOperand(MI->getOperand(1), Sym);
+  case AArch64::TLSDESC_CALLSEQ: {
+    /// lower this to:
+    ///    adrp  x0, :tlsdesc:var
+    ///    ldr   x1, [x0, #:tlsdesc_lo12:var]
+    ///    add   x0, x0, #:tlsdesc_lo12:var
+    ///    .tlsdesccall var
+    ///    blr   x1
+    ///    (TPIDR_EL0 offset now in x0)
+    const MachineOperand &MO_Sym = MI->getOperand(0);
+    MachineOperand MO_TLSDESC_LO12(MO_Sym), MO_TLSDESC(MO_Sym);
+    MCOperand Sym, SymTLSDescLo12, SymTLSDesc;
+    MO_TLSDESC_LO12.setTargetFlags(AArch64II::MO_TLS | AArch64II::MO_PAGEOFF |
+                                   AArch64II::MO_NC);
+    MO_TLSDESC.setTargetFlags(AArch64II::MO_TLS | AArch64II::MO_PAGE);
+    MCInstLowering.lowerOperand(MO_Sym, Sym);
+    MCInstLowering.lowerOperand(MO_TLSDESC_LO12, SymTLSDescLo12);
+    MCInstLowering.lowerOperand(MO_TLSDESC, SymTLSDesc);
 
-    // First emit a relocation-annotation. This expands to no code, but requests
+    MCInst Adrp;
+    Adrp.setOpcode(AArch64::ADRP);
+    Adrp.addOperand(MCOperand::CreateReg(AArch64::X0));
+    Adrp.addOperand(SymTLSDesc);
+    EmitToStreamer(OutStreamer, Adrp);
+
+    MCInst Ldr;
+    Ldr.setOpcode(AArch64::LDRXui);
+    Ldr.addOperand(MCOperand::CreateReg(AArch64::X1));
+    Ldr.addOperand(MCOperand::CreateReg(AArch64::X0));
+    Ldr.addOperand(SymTLSDescLo12);
+    Ldr.addOperand(MCOperand::CreateImm(0));
+    EmitToStreamer(OutStreamer, Ldr);
+
+    MCInst Add;
+    Add.setOpcode(AArch64::ADDXri);
+    Add.addOperand(MCOperand::CreateReg(AArch64::X0));
+    Add.addOperand(MCOperand::CreateReg(AArch64::X0));
+    Add.addOperand(SymTLSDescLo12);
+    Add.addOperand(MCOperand::CreateImm(AArch64_AM::getShiftValue(0)));
+    EmitToStreamer(OutStreamer, Add);
+
+    // Emit a relocation-annotation. This expands to no code, but requests
     // the following instruction gets an R_AARCH64_TLSDESC_CALL.
     MCInst TLSDescCall;
     TLSDescCall.setOpcode(AArch64::TLSDESCCALL);
     TLSDescCall.addOperand(Sym);
     EmitToStreamer(OutStreamer, TLSDescCall);
 
-    // Other than that it's just a normal indirect call to the function loaded
-    // from the descriptor.
-    MCInst BLR;
-    BLR.setOpcode(AArch64::BLR);
-    BLR.addOperand(Callee);
-    EmitToStreamer(OutStreamer, BLR);
+    MCInst Blr;
+    Blr.setOpcode(AArch64::BLR);
+    Blr.addOperand(MCOperand::CreateReg(AArch64::X1));
+    EmitToStreamer(OutStreamer, Blr);
 
     return;
   }

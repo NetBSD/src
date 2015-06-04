@@ -17,8 +17,8 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <vector>
@@ -40,7 +40,7 @@ public:
   };
 
 private:
-  const TargetMachine &TM;
+  const MachineFunction *MF;
   Delegate *TheDelegate;
 
   /// IsSSA - True when the machine function is in SSA form and virtual
@@ -51,6 +51,9 @@ private:
   /// Basic block live-in lists, kill flags, and implicit defs may not be
   /// accurate when after this flag is cleared.
   bool TracksLiveness;
+
+  /// True if subregister liveness is tracked.
+  bool TracksSubRegLiveness;
 
   /// VRegInfo - Information we keep for each virtual register.
   ///
@@ -70,7 +73,7 @@ private:
 
   /// PhysRegUseDefLists - This is an array of the head of the use/def list for
   /// physical registers.
-  MachineOperand **PhysRegUseDefLists;
+  std::vector<MachineOperand *> PhysRegUseDefLists;
 
   /// getRegUseDefListHead - Return the head pointer for the register use/def
   /// list for the specified virtual or physical register.
@@ -123,11 +126,10 @@ private:
   MachineRegisterInfo(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
   void operator=(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
 public:
-  explicit MachineRegisterInfo(const TargetMachine &TM);
-  ~MachineRegisterInfo();
+  explicit MachineRegisterInfo(const MachineFunction *MF);
 
   const TargetRegisterInfo *getTargetRegisterInfo() const {
-    return TM.getSubtargetImpl()->getRegisterInfo();
+    return MF->getSubtarget().getRegisterInfo();
   }
 
   void resetDelegate(Delegate *delegate) {
@@ -179,6 +181,12 @@ public:
   /// This should be called by late passes that invalidate the liveness
   /// information.
   void invalidateLiveness() { TracksLiveness = false; }
+
+  bool tracksSubRegLiveness() const { return TracksSubRegLiveness; }
+
+  void enableSubRegLiveness(bool Enable = true) {
+    TracksSubRegLiveness = Enable;
+  }
 
   //===--------------------------------------------------------------------===//
   // Register Info
@@ -768,6 +776,10 @@ public:
   void EmitLiveInCopies(MachineBasicBlock *EntryMBB,
                         const TargetRegisterInfo &TRI,
                         const TargetInstrInfo &TII);
+
+  /// Returns a mask covering all bits that can appear in lane masks of
+  /// subregisters of the virtual register @p Reg.
+  unsigned getMaxLaneMaskForVReg(unsigned Reg) const;
 
   /// defusechain_iterator - This class provides iterator support for machine
   /// operands in the function that use or define a specific register.  If

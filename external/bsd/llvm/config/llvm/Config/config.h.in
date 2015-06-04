@@ -10,6 +10,9 @@
 /* Define if we have libxml2 */
 /* #undef CLANG_HAVE_LIBXML */
 
+/* Multilib suffix for libdir. */
+#define CLANG_LIBDIR_SUFFIX ""
+
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR ""
 
@@ -420,6 +423,9 @@
 /* Have host's __chkstk */
 /* #undef HAVE___CHKSTK */
 
+/* Have host's __chkstk_ms */
+/* #undef HAVE___CHKSTK_MS */
+
 /* Have host's __cmpdi2 */
 /* #undef HAVE___CMPDI2 */
 
@@ -455,6 +461,9 @@
 
 /* Have host's ___chkstk */
 /* #undef HAVE____CHKSTK */
+
+/* Have host's ___chkstk_ms */
+/* #undef HAVE____CHKSTK_MS */
 
 /* Linker version detected at compile time. */
 #define HOST_LINK_VERSION "1"
@@ -544,7 +553,10 @@
 #define LLVM_VERSION_MINOR 6
 
 /* Patch version of the LLVM API */
-#define LLVM_VERSION_PATCH 0
+#define LLVM_VERSION_PATCH 1
+
+/* LLVM version string */
+#define LLVM_VERSION_STRING "3.6.1"
 
 /* The shared library extension */
 #define LTDL_SHLIB_EXT ".so"
@@ -560,13 +572,13 @@
 #define PACKAGE_NAME "LLVM"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LLVM 3.6.0svn"
+#define PACKAGE_STRING "LLVM 3.6.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "llvm"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.6.0svn"
+#define PACKAGE_VERSION "3.6.1"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void

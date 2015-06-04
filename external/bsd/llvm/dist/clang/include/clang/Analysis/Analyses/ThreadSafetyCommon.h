@@ -19,15 +19,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_THREAD_SAFETY_COMMON_H
-#define LLVM_CLANG_THREAD_SAFETY_COMMON_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYCOMMON_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYCOMMON_H
 
 #include "clang/Analysis/Analyses/PostOrderCFGView.h"
 #include "clang/Analysis/Analyses/ThreadSafetyTIL.h"
 #include "clang/Analysis/Analyses/ThreadSafetyTraverse.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/OperatorKinds.h"
-
 #include <memory>
 #include <ostream>
 #include <sstream>
@@ -477,9 +476,9 @@ private:
                                            // Indexed by clang BlockID.
 
   LVarDefinitionMap CurrentLVarMap;
-  std::vector<til::Variable*> CurrentArguments;
-  std::vector<til::Variable*> CurrentInstructions;
-  std::vector<til::Variable*> IncompleteArgs;
+  std::vector<til::Phi*>   CurrentArguments;
+  std::vector<til::SExpr*> CurrentInstructions;
+  std::vector<til::Phi*>   IncompleteArgs;
   til::BasicBlock *CurrentBB;
   BlockInfo *CurrentBlockInfo;
 };

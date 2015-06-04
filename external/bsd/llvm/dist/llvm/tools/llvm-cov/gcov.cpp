@@ -17,7 +17,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/GCOV.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
@@ -84,7 +83,7 @@ void reportCoverage(StringRef SourceFile, StringRef ObjectDir,
   FI.print(SourceFile, GCNO, GCDA);
 }
 
-int gcov_main(int argc, const char **argv) {
+int gcovMain(int argc, const char *argv[]) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);

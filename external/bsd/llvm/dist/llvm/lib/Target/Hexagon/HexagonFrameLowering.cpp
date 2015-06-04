@@ -122,17 +122,17 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (NumBytes >= ALLOCFRAME_MAX) {
       // Emit allocframe(#0).
-      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::ALLOCFRAME)).addImm(0);
+      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::S2_allocframe)).addImm(0);
 
       // Subtract offset from frame pointer.
       BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::CONST32_Int_Real),
                                       HEXAGON_RESERVED_REG_1).addImm(NumBytes);
-      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::SUB_rr),
+      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::A2_sub),
                                       QRI->getStackRegister()).
                                       addReg(QRI->getStackRegister()).
                                       addReg(HEXAGON_RESERVED_REG_1);
     } else {
-      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::ALLOCFRAME)).addImm(NumBytes);
+      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::S2_allocframe)).addImm(NumBytes);
     }
   }
 }
@@ -161,8 +161,8 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
     // Handle EH_RETURN.
     if (MBBI->getOpcode() == Hexagon::EH_RETURN_JMPR) {
       assert(MBBI->getOperand(0).isReg() && "Offset should be in register!");
-      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::DEALLOCFRAME));
-      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::ADD_rr),
+      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::L2_deallocframe));
+      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::A2_add),
               Hexagon::R29).addReg(Hexagon::R29).addReg(Hexagon::R28);
       return;
     }
@@ -183,7 +183,7 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
 
       // Add dealloc_return.
       MachineInstrBuilder MIB =
-        BuildMI(MBB, MBBI_end, dl, TII.get(Hexagon::DEALLOC_RET_V4));
+        BuildMI(MBB, MBBI_end, dl, TII.get(Hexagon::L4_return));
       // Transfer the function live-out registers.
       MIB->copyImplicitOps(*MBB.getParent(), &*MBBI);
       // Remove the JUMPR node.
@@ -198,7 +198,7 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
           I->getOpcode() == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4)
         return;
 
-      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::DEALLOCFRAME));
+      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::L2_deallocframe));
     }
   }
 }

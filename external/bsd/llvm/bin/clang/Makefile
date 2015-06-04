@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2014/08/10 17:34:19 joerg Exp $
+#	$NetBSD: Makefile,v 1.32.2.1 2015/06/04 20:04:22 snj Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -78,12 +78,12 @@ LLVM_LIBS+= \
 	SelectionDAG \
 	AsmPrinter \
 	CodeGen \
-	ProfileData \
 	Vectorize \
 	Target \
 	InstCombine \
 	Instrumentation \
 	ScalarOpts \
+	ProfileData \
 	Analysis \
 	MCDisassembler \
 	MCParser \

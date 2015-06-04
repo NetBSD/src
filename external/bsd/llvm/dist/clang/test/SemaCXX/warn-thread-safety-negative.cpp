@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wthread-safety -Wthread-safety-beta -fcxx-exceptions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wthread-safety -Wthread-safety-beta -Wthread-safety-negative -fcxx-exceptions %s
 
 // FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety -std=c++11 -Wc++98-compat %s
 // FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety %s
@@ -102,3 +102,20 @@ public:
 };
 
 }  // end namespace SimpleTest
+
+namespace DoubleAttribute {
+
+struct Foo {
+  Mutex &mutex();
+};
+
+template <typename A>
+class TemplateClass {
+  template <typename B>
+  static void Function(Foo *F)
+      EXCLUSIVE_LOCKS_REQUIRED(F->mutex()) UNLOCK_FUNCTION(F->mutex()) {}
+};
+
+void test() { TemplateClass<int> TC; }
+
+}  // end namespace DoubleAttribute

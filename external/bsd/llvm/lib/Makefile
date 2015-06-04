@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.41 2014/08/10 17:34:21 joerg Exp $
+# $NetBSD: Makefile,v 1.41.2.1 2015/06/04 20:05:43 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -86,8 +86,6 @@ SUBDIR+= \
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && (${LLVM_DEVELOPER:U} == "yes" || ${MKLLDB} == "yes")
 SUBDIR+= \
 	libLLVMExecutionEngine \
-	libLLVMJIT \
-	libLLVMMCAnalysis \
 	libLLVMMCJIT \
 	libLLVMRuntimeDyld
 .endif
@@ -134,16 +132,19 @@ SUBDIR+= \
 	libclangASTMatchersDynamic \
 	libclangFormat \
 	libclangIndex \
-	libclangTooling
+	libclangTooling \
+	libclangToolingCore
 .endif
 
 .if ${MKLLD} != "no"
 SUBDIR+= \
+	liblldConfig \
 	liblldCore \
 	liblldDriver \
 	liblldPasses \
 	liblldReaderWriter \
 	liblldReaderWriterELF \
+	liblldReaderWriterELFAArch64 \
 	liblldReaderWriterELFHexagon \
 	liblldReaderWriterELFMips \
 	liblldReaderWriterELFPPC \
@@ -192,6 +193,8 @@ SUBDIR+= \
 	liblldbPluginABIMacOSX_arm64 \
 	liblldbPluginABIMacOSX_i386 \
 	liblldbPluginABISysV_hexagon \
+	liblldbPluginABISysV_ppc \
+	liblldbPluginABISysV_ppc64 \
 	liblldbPluginABISysV_x86_64 \
 	liblldbPluginAppleObjCRuntime \
 	liblldbPluginCXXItaniumABI \

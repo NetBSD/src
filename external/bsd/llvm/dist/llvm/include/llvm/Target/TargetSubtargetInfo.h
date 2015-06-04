@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_TARGETSUBTARGETINFO_H
 #define LLVM_TARGET_TARGETSUBTARGETINFO_H
 
+#include "llvm/CodeGen/PBQPRAConstraint.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CodeGen.h"
 
@@ -26,7 +27,6 @@ class SDep;
 class SUnit;
 class TargetFrameLowering;
 class TargetInstrInfo;
-class TargetJITInfo;
 class TargetLowering;
 class TargetRegisterClass;
 class TargetRegisterInfo;
@@ -79,11 +79,6 @@ public:
   ///
   virtual const TargetRegisterInfo *getRegisterInfo() const { return nullptr; }
 
-  /// getJITInfo - If this target supports a JIT, return information for it,
-  /// otherwise return null.
-  ///
-  virtual TargetJITInfo *getJITInfo() { return nullptr; }
-
   /// getInstrItineraryData - Returns instruction itinerary data for the target
   /// or specific subtarget.
   ///
@@ -118,7 +113,7 @@ public:
   virtual bool enablePostMachineScheduler() const;
 
   /// \brief True if the subtarget should run the atomic expansion pass.
-  virtual bool enableAtomicExpandLoadLinked() const;
+  virtual bool enableAtomicExpand() const;
 
   /// \brief Override generic scheduling policy within a region.
   ///
@@ -167,9 +162,17 @@ public:
   /// \brief Enable the use of the early if conversion pass.
   virtual bool enableEarlyIfConversion() const { return false; }
 
-  /// \brief Reset the features for the subtarget.
-  virtual void resetSubtargetFeatures(const MachineFunction *MF) { }
+  /// \brief Return PBQPConstraint(s) for the target.
+  ///
+  /// Override to provide custom PBQP constraints.
+  virtual std::unique_ptr<PBQPRAConstraint> getCustomPBQPConstraints() const {
+    return nullptr;
+  }
 
+  /// Enable tracking of subregister liveness in register allocator.
+  virtual bool enableSubRegLiveness() const {
+    return false;
+  }
 };
 
 } // End llvm namespace

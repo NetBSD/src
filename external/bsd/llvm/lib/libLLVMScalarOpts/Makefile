@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2014/08/10 17:34:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2015/06/04 20:05:44 snj Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -7,6 +7,7 @@ LIB=	LLVMScalarOpts
 .PATH: ${LLVM_SRCDIR}/lib/Transforms/Scalar
 
 SRCS+=	ADCE.cpp \
+	AlignmentFromAssumptions.cpp \
 	ConstantHoisting.cpp \
 	ConstantProp.cpp \
 	CorrelatedValuePropagation.cpp \

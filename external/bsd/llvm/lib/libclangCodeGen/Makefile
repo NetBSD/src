@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2014/08/10 17:34:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2015/06/04 20:05:45 snj Exp $
 
 LIB=	clangCodeGen
 
@@ -50,7 +50,6 @@ SRCS+=	BackendUtil.cpp \
 	ItaniumCXXABI.cpp \
 	MicrosoftCXXABI.cpp \
 	ModuleBuilder.cpp \
-	SanitizerBlacklist.cpp \
 	SanitizerMetadata.cpp \
 	TargetInfo.cpp
 

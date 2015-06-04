@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_THREADSAFETY_H
-#define LLVM_CLANG_THREADSAFETY_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETY_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETY_H
 
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/SourceLocation.h"
@@ -31,7 +31,9 @@ namespace threadSafety {
 enum ProtectedOperationKind {
   POK_VarDereference, ///< Dereferencing a variable (e.g. p in *p = 5;)
   POK_VarAccess, ///< Reading or writing a variable (e.g. x in x = 5;)
-  POK_FunctionCall ///< Making a function call (e.g. fool())
+  POK_FunctionCall, ///< Making a function call (e.g. fool())
+  POK_PassByRef, ///< Passing a guarded variable by reference.
+  POK_PtPassByRef,  ///< Passing a pt-guarded variable by reference.
 };
 
 /// This enum distinguishes between different kinds of lock actions. For
@@ -180,6 +182,13 @@ public:
   /// \param Loc -- The location of the function call.
   virtual void handleFunExcludesLock(StringRef Kind, Name FunName,
                                      Name LockName, SourceLocation Loc) {}
+
+  /// Called by the analysis when starting analysis of a function.
+  /// Used to issue suggestions for changes to annotations.
+  virtual void enterFunction(const FunctionDecl *FD) {}
+
+  /// Called by the analysis when finishing analysis of a function.
+  virtual void leaveFunction(const FunctionDecl *FD) {}
 
   bool issueBetaWarnings() { return IssueBetaWarnings; }
   void setIssueBetaWarnings(bool b) { IssueBetaWarnings = b; }

@@ -511,7 +511,9 @@ entry:
 ; CHECK: str {{w[0-9]+}}, [sp]
 ; FAST-LABEL: i64_split
 ; FAST: ldr x7, [{{x[0-9]+}}]
-; FAST: str {{w[0-9]+}}, [sp]
+; FAST: mov x[[R0:[0-9]+]], sp
+; FAST: orr w[[R1:[0-9]+]], wzr, #0x8
+; FAST: str w[[R1]], {{\[}}x[[R0]]{{\]}}
   %0 = load i64* bitcast (%struct.s41* @g41 to i64*), align 16
   %call = tail call i32 @callee_i64(i32 1, i32 2, i32 3, i32 4, i32 5,
                                     i32 6, i32 7, i64 %0, i32 8) #5
@@ -525,8 +527,8 @@ attributes #3 = { nounwind "fp-contract-model"="standard" "relocation-model"="pi
 attributes #4 = { nounwind }
 attributes #5 = { nobuiltin }
 
-!0 = metadata !{metadata !"int", metadata !1}
-!1 = metadata !{metadata !"omnipotent char", metadata !2}
-!2 = metadata !{metadata !"Simple C/C++ TBAA"}
-!3 = metadata !{metadata !"short", metadata !1}
-!4 = metadata !{i64 0, i64 4, metadata !0, i64 4, i64 2, metadata !3, i64 8, i64 4, metadata !0, i64 12, i64 2, metadata !3, i64 16, i64 4, metadata !0, i64 20, i64 2, metadata !3}
+!0 = !{!"int", !1}
+!1 = !{!"omnipotent char", !2}
+!2 = !{!"Simple C/C++ TBAA"}
+!3 = !{!"short", !1}
+!4 = !{i64 0, i64 4, !0, i64 4, i64 2, !3, i64 8, i64 4, !0, i64 12, i64 2, !3, i64 16, i64 4, !0, i64 20, i64 2, !3}

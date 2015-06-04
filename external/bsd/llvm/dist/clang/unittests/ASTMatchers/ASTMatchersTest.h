@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_UNITTESTS_AST_MATCHERS_AST_MATCHERS_TEST_H
-#define LLVM_CLANG_UNITTESTS_AST_MATCHERS_AST_MATCHERS_TEST_H
+#ifndef LLVM_CLANG_UNITTESTS_ASTMATCHERS_ASTMATCHERSTEST_H
+#define LLVM_CLANG_UNITTESTS_ASTMATCHERS_ASTMATCHERSTEST_H
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Frontend/ASTUnit.h"
@@ -22,6 +22,7 @@ using clang::tooling::buildASTFromCodeWithArgs;
 using clang::tooling::newFrontendActionFactory;
 using clang::tooling::runToolOnCodeWithArgs;
 using clang::tooling::FrontendActionFactory;
+using clang::tooling::FileContentMappings;
 
 class BoundNodesCallback {
 public:
@@ -39,7 +40,7 @@ public:
   VerifyMatch(BoundNodesCallback *FindResultVerifier, bool *Verified)
       : Verified(Verified), FindResultReviewer(FindResultVerifier) {}
 
-  virtual void run(const MatchFinder::MatchResult &Result) {
+  virtual void run(const MatchFinder::MatchResult &Result) override {
     if (FindResultReviewer != nullptr) {
       *Verified |= FindResultReviewer->run(&Result.Nodes, Result.Context);
     } else {
@@ -58,10 +59,10 @@ private:
 };
 
 template <typename T>
-testing::AssertionResult matchesConditionally(const std::string &Code,
-                                              const T &AMatcher,
-                                              bool ExpectMatch,
-                                              llvm::StringRef CompileArg) {
+testing::AssertionResult matchesConditionally(
+    const std::string &Code, const T &AMatcher, bool ExpectMatch,
+    llvm::StringRef CompileArg,
+    const FileContentMappings &VirtualMappedFiles = FileContentMappings()) {
   bool Found = false, DynamicFound = false;
   MatchFinder Finder;
   VerifyMatch VerifyFound(nullptr, &Found);
@@ -73,7 +74,8 @@ testing::AssertionResult matchesConditionally(const std::string &Code,
       newFrontendActionFactory(&Finder));
   // Some tests use typeof, which is a gnu extension.
   std::vector<std::string> Args(1, CompileArg);
-  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args)) {
+  if (!runToolOnCodeWithArgs(Factory->create(), Code, Args, "input.cc",
+                             VirtualMappedFiles)) {
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
   }
   if (Found != DynamicFound) {

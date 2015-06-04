@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/08/10 17:35:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2015/06/04 20:05:46 snj Exp $
 
 LIB=	lldbAPI
 
@@ -20,6 +20,7 @@ SRCS+=	SBAddress.cpp \
 	SBDeclaration.cpp \
 	SBError.cpp \
 	SBEvent.cpp \
+	SBExecutionContext.cpp \
 	SBExpressionOptions.cpp \
 	SBFileSpec.cpp \
 	SBFileSpecList.cpp \
@@ -42,6 +43,7 @@ SRCS+=	SBAddress.cpp \
 	SBSymbolContextList.cpp \
 	SBTarget.cpp \
 	SBThread.cpp \
+	SBThreadPlan.cpp \
 	SBType.cpp \
 	SBTypeCategory.cpp \
 	SBTypeEnumMember.cpp \

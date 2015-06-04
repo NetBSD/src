@@ -11,15 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_COVERAGEMAPPINGGEN_H
-#define CLANG_CODEGEN_COVERAGEMAPPINGGEN_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_COVERAGEMAPPINGGEN_H
+#define LLVM_CLANG_LIB_CODEGEN_COVERAGEMAPPINGGEN_H
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Lex/PPCallbacks.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "llvm/ADT/StringMap.h"
+#include "clang/Lex/PPCallbacks.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -69,6 +69,7 @@ public:
   /// function mapping records.
   void addFunctionMappingRecord(llvm::GlobalVariable *FunctionName,
                                 StringRef FunctionNameValue,
+                                uint64_t FunctionHash,
                                 const std::string &CoverageMapping);
 
   /// \brief Emit the coverage mapping data for a translation unit.
@@ -86,20 +87,16 @@ class CoverageMappingGen {
   SourceManager &SM;
   const LangOptions &LangOpts;
   llvm::DenseMap<const Stmt *, unsigned> *CounterMap;
-  unsigned NumRegionCounters;
 
 public:
   CoverageMappingGen(CoverageMappingModuleGen &CVM, SourceManager &SM,
                      const LangOptions &LangOpts)
-      : CVM(CVM), SM(SM), LangOpts(LangOpts), CounterMap(nullptr),
-        NumRegionCounters(0) {}
+      : CVM(CVM), SM(SM), LangOpts(LangOpts), CounterMap(nullptr) {}
 
   CoverageMappingGen(CoverageMappingModuleGen &CVM, SourceManager &SM,
                      const LangOptions &LangOpts,
-                     llvm::DenseMap<const Stmt *, unsigned> *CounterMap,
-                     unsigned NumRegionCounters)
-      : CVM(CVM), SM(SM), LangOpts(LangOpts), CounterMap(CounterMap),
-        NumRegionCounters(NumRegionCounters) {}
+                     llvm::DenseMap<const Stmt *, unsigned> *CounterMap)
+      : CVM(CVM), SM(SM), LangOpts(LangOpts), CounterMap(CounterMap) {}
 
   /// \brief Emit the coverage mapping data which maps the regions of
   /// code to counters that will be used to find the execution

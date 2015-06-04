@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTXISELLOWERING_H
-#define NVPTXISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXISELLOWERING_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXISELLOWERING_H
 
 #include "NVPTX.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -505,9 +505,9 @@ public:
 
   bool allowFMA(MachineFunction &MF, CodeGenOpt::Level OptLevel) const;
 
-  virtual bool isFMAFasterThanFMulAndFAdd(EVT) const {
-    return true;
-  }
+  bool isFMAFasterThanFMulAndFAdd(EVT) const override { return true; }
+
+  bool enableAggressiveFMAFusion(EVT VT) const override { return true; }
 
 private:
   const NVPTXSubtarget &nvptxSubtarget; // cache the subtarget here
@@ -538,4 +538,4 @@ private:
 };
 } // namespace llvm
 
-#endif // NVPTXISELLOWERING_H
+#endif

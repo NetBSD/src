@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/09/02 14:34:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.4.6.1 2015/06/04 20:05:45 snj Exp $
 
 LIB=	clangFormat
 
@@ -11,6 +11,7 @@ SRCS+=	BreakableToken.cpp \
 	Format.cpp \
 	FormatToken.cpp \
 	TokenAnnotator.cpp \
+	UnwrappedLineFormatter.cpp \
 	UnwrappedLineParser.cpp \
 	WhitespaceManager.cpp
 

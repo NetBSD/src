@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/02 14:34:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2015/06/04 20:05:46 snj Exp $
 
 LIB=	lldReaderWriterELFX86
 
@@ -9,6 +9,7 @@ LIB=	lldReaderWriterELFX86
 CPPFLAGS+=	-I${LLD_SRCDIR}/lib/ReaderWriter/ELF
 
 SRCS+=	X86LinkingContext.cpp \
+	X86RelocationHandler.cpp \
 	X86TargetHandler.cpp
 
 .if defined(HOSTLIB)
