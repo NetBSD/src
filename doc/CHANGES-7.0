@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.321 2015/06/04 09:45:43 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.322 2015/06/04 16:35:14 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -23751,3 +23751,11 @@ sys/net/if_gif.c				1.85-1.86
 	Obtain softnet_lock before entering IP networking stack from gif
 	software interrupt.
 	[hsuenaga, ticket #822]
+
+share/mk/bsd.own.mk				1.852, 1.853 via patch
+distrib/sets/lists/base/ad.arm			1.75 via patch
+distrib/sets/lists/debug/ad.arm			1.64, 1.65 via patch
+
+	Fix setlists and enable MKCOMPAT for OABI on earm platforms.
+	[martin, ticket #823]
+
