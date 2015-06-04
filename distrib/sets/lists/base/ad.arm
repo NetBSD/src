@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.54.2.7 2015/04/30 06:07:31 riz Exp $
+# $NetBSD: ad.arm,v 1.54.2.8 2015/06/04 16:33:03 snj Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -10,6 +10,10 @@
 ./lib/oabi/npf/ext_rndblock.so			base-npf-shlib		compat,pic
 ./lib/oabi/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
 ./lib/oabi/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
+./usr/libdata/debug/lib/oabi			base-compat-lib		compat
+./usr/libdata/debug/lib/oabi/npf		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/oabi		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/oabi/i18n		base-compat-lib		compat
 ./libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
 ./sbin/ldconfig					base-sysutil-root	pic,endian=1234
 ./usr/bin/fdformat				base-util-bin
