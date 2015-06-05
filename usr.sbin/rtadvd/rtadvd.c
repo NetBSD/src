@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.48 2015/06/05 14:15:41 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.49 2015/06/05 15:41:59 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -336,8 +336,7 @@ main(int argc, char *argv[])
 		{
 			/* EINTR would occur upon SIGUSR1 for status dump */
 			if (errno != EINTR)
-				syslog(LOG_ERR, "<%s> poll: %s",
-				    __func__, strerror(errno));
+				syslog(LOG_ERR, "<%s> poll: %m", __func__);
 			continue;
 		}
 		if (i == 0)	/* timeout */
@@ -1500,7 +1499,7 @@ sock_open(void)
 				CMSG_SPACE(sizeof(int));
 	rcvcmsgbuf = malloc(rcvcmsgbuflen);
 	if (rcvcmsgbuf == NULL) {
-		syslog(LOG_ERR, "<%s> not enough core", __func__);
+		syslog(LOG_ERR, "<%s> malloc: %m", __func__);
 		exit(1);
 	}
 
@@ -1508,13 +1507,12 @@ sock_open(void)
 				CMSG_SPACE(sizeof(int));
 	sndcmsgbuf = malloc(sndcmsgbuflen);
 	if (sndcmsgbuf == NULL) {
-		syslog(LOG_ERR, "<%s> not enough core", __func__);
+		syslog(LOG_ERR, "<%s> malloc: %m", __func__);
 		exit(1);
 	}
 
 	if ((sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
-		syslog(LOG_ERR, "<%s> socket: %s", __func__,
-		       strerror(errno));
+		syslog(LOG_ERR, "<%s> socket: %m", __func__);
 		exit(1);
 	}
 
@@ -1531,15 +1529,13 @@ sock_open(void)
 #ifdef IPV6_RECVPKTINFO
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 		       sizeof(on)) < 0) {
-		syslog(LOG_ERR, "<%s> IPV6_RECVPKTINFO: %s",
-		       __func__, strerror(errno));
+		syslog(LOG_ERR, "<%s> IPV6_RECVPKTINFO: %m", __func__);
 		exit(1);
 	}
 #else  /* old adv. API */
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
 		       sizeof(on)) < 0) {
-		syslog(LOG_ERR, "<%s> IPV6_PKTINFO: %s",
-		       __func__, strerror(errno));
+		syslog(LOG_ERR, "<%s> IPV6_PKTINFO: %m", __func__);
 		exit(1);
 	}
 #endif 
@@ -1549,15 +1545,13 @@ sock_open(void)
 #ifdef IPV6_RECVHOPLIMIT
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
 		       sizeof(on)) < 0) {
-		syslog(LOG_ERR, "<%s> IPV6_RECVHOPLIMIT: %s",
-		       __func__, strerror(errno));
+		syslog(LOG_ERR, "<%s> IPV6_RECVHOPLIMIT: %m", __func__);
 		exit(1);
 	}
 #else  /* old adv. API */
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
 		       sizeof(on)) < 0) {
-		syslog(LOG_ERR, "<%s> IPV6_HOPLIMIT: %s",
-		       __func__, strerror(errno));
+		syslog(LOG_ERR, "<%s> IPV6_HOPLIMIT: %m", __func__);
 		exit(1);
 	}
 #endif
@@ -1569,8 +1563,7 @@ sock_open(void)
 		ICMP6_FILTER_SETPASS(ICMP6_ROUTER_RENUMBERING, &filt);
 	if (setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
 		       sizeof(filt)) < 0) {
-		syslog(LOG_ERR, "<%s> IICMP6_FILTER: %s",
-		       __func__, strerror(errno));
+		syslog(LOG_ERR, "<%s> IICMP6_FILTER: %m", __func__);
 		exit(1);
 	}
 
@@ -1588,8 +1581,8 @@ sock_open(void)
 		mreq.ipv6mr_interface = ra->ifindex;
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
 			       sizeof(mreq)) < 0) {
-			syslog(LOG_ERR, "<%s> IPV6_JOIN_GROUP(link) on %s: %s",
-			       __func__, ra->ifname, strerror(errno));
+			syslog(LOG_ERR, "<%s> IPV6_JOIN_GROUP(link) on %s: %m",
+			       __func__, ra->ifname);
 			exit(1);
 		}
 	}
@@ -1620,10 +1613,9 @@ sock_open(void)
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 			       &mreq, sizeof(mreq)) < 0) {
 			syslog(LOG_ERR,
-			       "<%s> IPV6_JOIN_GROUP(site) on %s: %s",
+			       "<%s> IPV6_JOIN_GROUP(site) on %s: %m",
 			       __func__,
-			       mcastif ? mcastif : ra->ifname,
-			       strerror(errno));
+			       mcastif ? mcastif : ra->ifname);
 			exit(1);
 		}
 	}
@@ -1653,8 +1645,7 @@ static void
 rtsock_open(void)
 {
 	if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
-		syslog(LOG_ERR,
-		       "<%s> socket: %s", __func__, strerror(errno));
+		syslog(LOG_ERR, "<%s> socket: %m", __func__);
 		exit(1);
 	}
 }
@@ -1709,9 +1700,8 @@ ra_output(struct rainfo *rai)
 
 	if (i < 0 || (size_t)i != rai->ra_datalen)  {
 		if (i < 0) {
-			syslog(LOG_ERR, "<%s> sendmsg on %s: %s",
-			       __func__, rai->ifname,
-			       strerror(errno));
+			syslog(LOG_ERR, "<%s> sendmsg on %s: %m",
+			       __func__, rai->ifname);
 		}
 	}
 
@@ -1727,9 +1717,8 @@ ra_output(struct rainfo *rai)
 		if (i < 0 || i != rai->ra_datalen)  {
 			if (i < 0) {
 				syslog(LOG_ERR,
-				    "<%s> unicast sendmsg on %s: %s",
-				    __func__, rai->ifname,
-				    strerror(errno));
+				    "<%s> unicast sendmsg on %s: %m",
+				    __func__, rai->ifname);
 			}
 		}
 #endif
