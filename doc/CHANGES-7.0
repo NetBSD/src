@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.324 2015/06/05 16:46:05 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.325 2015/06/05 17:05:12 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -31758,4 +31758,18 @@ tools/llvm/Makefile				1.20
 
 	Update LLVM to 3.6.1.
 	[joerg, ticket #824]
+
+sys/arch/i386/conf/GENERIC			1.1125
+sys/arch/i386/conf/XEN3_DOM0			1.95
+sys/arch/i386/conf/XEN3_DOMU			1.67
+
+	Disable COMPAT_FREEBSD. The implementation is poor, not well
+	tested and almost irrelevant. People who need it (for tw_cli
+	for example) can still recompile their kernels with this option.
+	[maxv, ticket #814]
+
+share/mk/bsd.lib.mk				1.358 via patch
+
+	Fix MKDEBUG vs parallel builds.
+	[riz, ticket #825]
 
