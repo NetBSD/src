@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.22 2012/12/13 15:36:36 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.23 2015/06/05 15:41:59 roy Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -134,8 +134,7 @@ if_getflags(int ifindex, int oifflags)
 	int s;
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "<%s> socket: %s", __func__,
-		       strerror(errno));
+		syslog(LOG_ERR, "<%s> socket: %m", __func__);
 		return (oifflags & ~IFF_UP);
 	}
 
