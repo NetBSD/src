@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2014/02/24 07:23:44 skrll Exp $
+#	$NetBSD: Makefile,v 1.49 2015/06/05 05:03:21 mlelstv Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,7 +6,6 @@
 PROG=	installboot
 MAN=	installboot.8
 SRCS=	installboot.c sum.c machines.c fstypes.c
-
 
 ARCH_XLAT= amd64-i386.c news68k-news.c newsmips-news.c
 ARCH_XLAT+= sun2-sun68k.c sun3-sun68k.c
@@ -48,5 +47,8 @@ CPPFLAGS+=	-I${.CURDIR} -I.
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
 .endif
+
+LDADD+= -lutil
+DPADD+= ${LIBUTIL}
 
 .include <bsd.prog.mk>
