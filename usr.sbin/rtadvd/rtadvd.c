@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.47 2015/06/05 14:09:20 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.48 2015/06/05 14:15:41 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1518,6 +1518,14 @@ sock_open(void)
 		exit(1);
 	}
 
+	/* RFC 4861 Section 4.2 */
+	on = 255;
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &on,
+		       sizeof(on)) == -1) {
+		syslog(LOG_ERR, "<%s> IPV6_MULTICAST_HOPS: %m", __func__);
+		exit(1);
+	}
+
 	/* specify to tell receiving interface */
 	on = 1;
 #ifdef IPV6_RECVPKTINFO
@@ -1692,17 +1700,6 @@ ra_output(struct rainfo *rai)
 	pi = (struct in6_pktinfo *)CMSG_DATA(cm);
 	memset(&pi->ipi6_addr, 0, sizeof(pi->ipi6_addr));	/*XXX*/
 	pi->ipi6_ifindex = rai->ifindex;
-
-	/* specify the hop limit of the packet */
-	{
-		int hoplimit = 255;
-
-		cm = CMSG_NXTHDR(&sndmhdr, cm);
-		cm->cmsg_level = IPPROTO_IPV6;
-		cm->cmsg_type = IPV6_HOPLIMIT;
-		cm->cmsg_len = CMSG_LEN(sizeof(int));
-		memcpy(CMSG_DATA(cm), &hoplimit, sizeof(int));
-	}
 
 	syslog(LOG_DEBUG,
 	       "<%s> send RA on %s, # of waitings = %d",
