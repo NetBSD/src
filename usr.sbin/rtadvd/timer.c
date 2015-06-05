@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.11 2012/12/13 15:36:36 roy Exp $	*/
+/*	$NetBSD: timer.c,v 1.12 2015/06/05 14:09:20 roy Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 
+#include <limits.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <stdlib.h>
@@ -41,13 +42,8 @@
 #include "timer.h"
 
 struct rtadvd_timer_head_t ra_timer = TAILQ_HEAD_INITIALIZER(ra_timer);
-
-#define MILLION 1000000
-#define TIMEVAL_EQUAL(t1,t2) ((t1)->tv_sec == (t2)->tv_sec &&\
- (t1)->tv_usec == (t2)->tv_usec)
-
-static struct timeval tm_limit = {0x7fffffff, 0x7fffffff};
-static struct timeval tm_max;
+static struct timespec tm_limit = { LONG_MAX, 1000000000L - 1 };
+static struct timespec tm_max;
 
 void
 rtadvd_timer_init(void)
@@ -59,7 +55,7 @@ rtadvd_timer_init(void)
 
 struct rtadvd_timer *
 rtadvd_add_timer(struct rtadvd_timer *(*timeout) (void *),
-    void (*update) (void *, struct timeval *),
+    void (*update) (void *, struct timespec *),
     void *timeodata, void *updatedata)
 {
 	struct rtadvd_timer *newtimer;
@@ -101,20 +97,17 @@ rtadvd_remove_timer(struct rtadvd_timer **timer)
 }
 
 void
-rtadvd_set_timer(struct timeval *tm, struct rtadvd_timer *timer)
+rtadvd_set_timer(struct timespec *tm, struct rtadvd_timer *timer)
 {
-	struct timeval now;
+	struct timespec now;
 
 	/* reset the timer */
-	gettimeofday(&now, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	timespecadd(&now, tm, &timer->tm);
 
-	TIMEVAL_ADD(&now, tm, &timer->tm);
-
-	/* update the next expiration time */
-	if (TIMEVAL_LT(timer->tm, tm_max))
+	/* upate the next expiration time */
+	if (timespeccmp(&timer->tm, &tm_max, <))
 		tm_max = timer->tm;
-
-	return;
 }
 
 /*
@@ -122,89 +115,54 @@ rtadvd_set_timer(struct timeval *tm, struct rtadvd_timer *timer)
  * call the expire function for the timer and update the timer.
  * Return the next interval for select() call.
  */
-struct timeval *
+struct timespec *
 rtadvd_check_timer(void)
 {
-	static struct timeval returnval;
-	struct timeval now;
+	static struct timespec returnval;
+	struct timespec now;
 	struct rtadvd_timer *tm, *tmn;
 
-	gettimeofday(&now, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	tm_max = tm_limit;
 
 	TAILQ_FOREACH_SAFE(tm, &ra_timer, next, tmn) {
-		if (TIMEVAL_LEQ(tm->tm, now)) {
+		if (timespeccmp(&tm->tm, &now, <=)) {
 			if ((*tm->expire)(tm->expire_data) == NULL)
 				continue; /* the timer was removed */
 			if (tm->update)
 				(*tm->update)(tm->update_data, &tm->tm);
-			TIMEVAL_ADD(&tm->tm, &now, &tm->tm);
+			timespecadd(&tm->tm, &now, &tm->tm);
 		}
-
-		if (TIMEVAL_LT(tm->tm, tm_max))
+		if (timespeccmp(&tm->tm, &tm_max, <))
 			tm_max = tm->tm;
 	}
 
-	if (TIMEVAL_EQUAL(&tm_max, &tm_limit)) {
-		/* no need to timeout */
+	if (timespeccmp(&tm_max, &tm_limit, ==))
 		return(NULL);
-	} else if (TIMEVAL_LT(tm_max, now)) {
+	if (timespeccmp(&tm_max, &now, <)) {
 		/* this may occur when the interval is too small */
-		returnval.tv_sec = returnval.tv_usec = 0;
+		timespecclear(&returnval);
 	} else
-		TIMEVAL_SUB(&tm_max, &now, &returnval);
+		timespecsub(&tm_max, &now, &returnval);
 	return(&returnval);
 }
 
-struct timeval *
+struct timespec *
 rtadvd_timer_rest(struct rtadvd_timer *timer)
 {
-	static struct timeval returnval, now;
+	static struct timespec returnval;
+	struct timespec now;
 
-	gettimeofday(&now, NULL);
-	if (TIMEVAL_LEQ(timer->tm, now)) {
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	if (timespeccmp(&timer->tm, &now, <=)) {
 		syslog(LOG_DEBUG,
 		       "<%s> a timer must be expired, but not yet",
 		       __func__);
-		returnval.tv_sec = returnval.tv_usec = 0;
+		returnval.tv_sec = 0;
+		returnval.tv_nsec = 0;
 	}
 	else
-		TIMEVAL_SUB(&timer->tm, &now, &returnval);
+		timespecsub(&timer->tm, &now, &returnval);
 
 	return(&returnval);
-}
-
-/* result = a + b */
-void
-TIMEVAL_ADD(struct timeval *a, struct timeval *b, struct timeval *result)
-{
-	long l;
-
-	if ((l = a->tv_usec + b->tv_usec) < MILLION) {
-		result->tv_usec = l;
-		result->tv_sec = a->tv_sec + b->tv_sec;
-	}
-	else {
-		result->tv_usec = l - MILLION;
-		result->tv_sec = a->tv_sec + b->tv_sec + 1;
-	}
-}
-
-/*
- * result = a - b
- * XXX: this function assumes that a >= b.
- */
-void
-TIMEVAL_SUB(struct timeval *a, struct timeval *b, struct timeval *result)
-{
-	long l;
-
-	if ((l = a->tv_usec - b->tv_usec) >= 0) {
-		result->tv_usec = l;
-		result->tv_sec = a->tv_sec - b->tv_sec;
-	}
-	else {
-		result->tv_usec = MILLION + l;
-		result->tv_sec = a->tv_sec - b->tv_sec - 1;
-	}
 }
