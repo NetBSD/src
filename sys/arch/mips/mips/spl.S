@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5 2011/04/06 05:48:35 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.6 2015/06/05 16:16:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.5 2011/04/06 05:48:35 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.6 2015/06/05 16:16:18 matt Exp $")
 
 #include "assym.h"
 
@@ -86,7 +86,12 @@ _splraise:
 	or	v1, MIPS_INT_MASK		# enable all interrupts
 	xor	a0, v1				# disable ipl's masked bits
 	DYNAMIC_STATUS_MASK(a0,v0)		# machine dependent masking
+#ifdef _LP64
+	li	v1, MIPS3_SR_KX | MIPS3_SR_UX	# keep 64-bit addressing on
+	mtc0	v1, MIPS_COP_0_STATUS		## disable interrupts
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+#endif
 	COP0_SYNC
 #ifdef MULTIPROCESSOR
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		## make sure curcpu is correct
@@ -138,7 +143,12 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	or	v1, MIPS_INT_MASK		# set all INT bits
 	xor	v1, a1				# clear any bits for this IPL
 	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
+#ifdef _LP64
+	li	v1, MIPS3_SR_KX | MIPS3_SR_UX	# keep 64-bit addressing on
+	mtc0	v1, MIPS_COP_0_STATUS		## disable interrupts
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+#endif
 	COP0_SYNC
 	INT_S	a0, CPU_INFO_CPL(a3)		## save IPL in cpu_info (KSEG0)
 	mtc0	v1, MIPS_COP_0_STATUS		## store back
@@ -173,7 +183,12 @@ STATIC_LEAF(_splsw_spl0)
 	NOP_L					# load delay
 	or	v0, a0, v1
 	DYNAMIC_STATUS_MASK(v0,t0)		# machine dependent masking
+#ifdef _LP64
+	li	v1, MIPS3_SR_KX | MIPS3_SR_UX	# keep 64-bit addressing on
+	mtc0	v1, MIPS_COP_0_STATUS		## disable interrupts
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+#endif
 	COP0_SYNC
 #if IPL_NONE == 0
 	INT_S	zero, CPU_INFO_CPL(a3)		## set ipl to 0
