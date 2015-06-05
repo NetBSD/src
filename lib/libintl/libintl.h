@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl.h,v 1.5 2015/05/29 12:26:28 christos Exp $	*/
+/*	$NetBSD: libintl.h,v 1.6 2015/06/05 20:12:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -26,11 +26,17 @@
  * SUCH DAMAGE.
  */
 
-#ifndef __LIBINTL_H_DEFINED__
-#define __LIBINTL_H_DEFINED__
+#ifndef _LIBINTL_H_
+#define _LIBINTL_H_
 
 #include <sys/cdefs.h>
 
+#ifndef _LIBGETTEXT_H
+/*
+ * Avoid defining these if the GNU gettext compatibility header includes
+ * us, since it re-defines those unconditionally and creates inline functions
+ * for some of them. This is horrible.
+ */
 #define pgettext_expr(msgctxt, msgid) pgettext((msgctxt), (msgid))
 #define dpggettext_expr(domainname, msgctxt, msgid) \
     dpgettext((domainname), (msgctxt), (msgid))
@@ -42,6 +48,7 @@
     dnpgettext((domainname), (msgctxt), (msgid1), (msgid2), (n))
 #define dcnpgettext_expr(domainname, msgctxt, msgid1, msgid2, n, category) \
     dcnpgettext((domainname), (msgctxt), (msgid1), (msgid2), (n), (category))
+#endif
 
 __BEGIN_DECLS
 char *gettext(const char *) __format_arg(1);
@@ -72,4 +79,4 @@ char *bindtextdomain(const char *, const char *);
 char *bind_textdomain_codeset(const char *, const char *);
 __END_DECLS
 
-#endif /*__LIBINTL_H_DEFINED__*/
+#endif /* _LIBINTL_H_ */
