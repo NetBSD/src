@@ -1,4 +1,4 @@
-/*	$NetBSD: rrenum.c,v 1.16 2013/05/17 07:53:05 skrll Exp $	*/
+/*	$NetBSD: rrenum.c,v 1.17 2015/06/05 14:09:20 roy Exp $	*/
 /*	$KAME: rrenum.c,v 1.14 2004/06/14 05:36:00 itojun Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 				continue; /* non-advertising IF */
 
 			TAILQ_FOREACH(pp, &rai->prefix, next) {
-				struct timeval now;
+				struct timespec now;
 
 				if (prefix_match(&pp->prefix, pp->prefixlen,
 						 &rpm->rpm_prefix,
@@ -218,13 +218,15 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 					pp->validlifetime = ntohl(rpu->rpu_vltime);
 					pp->preflifetime = ntohl(rpu->rpu_pltime);
 					if (irr->irr_rrf_decrvalid) {
-						gettimeofday(&now, 0);
+						clock_gettime(CLOCK_MONOTONIC,
+						    &now);
 						pp->vltimeexpire =
 							now.tv_sec + pp->validlifetime;
 					} else
 						pp->vltimeexpire = 0;
 					if (irr->irr_rrf_decrprefd) {
-						gettimeofday(&now, 0);
+						clock_gettime(CLOCK_MONOTONIC,
+						    &now);
 						pp->pltimeexpire =
 							now.tv_sec + pp->preflifetime;
 					} else
