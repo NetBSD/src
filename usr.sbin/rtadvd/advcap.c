@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.c,v 1.14 2012/12/13 15:36:35 roy Exp $	*/
+/*	$NetBSD: advcap.c,v 1.15 2015/06/05 15:41:59 roy Exp $	*/
 /*	$KAME: advcap.c,v 1.11 2003/05/19 09:46:50 keiichi Exp $	*/
 
 /*
@@ -136,8 +136,7 @@ getent(char *bp, char *name, char *cp)
 		tf = open(RM = cp, O_RDONLY);
 	}
 	if (tf < 0) {
-		syslog(LOG_INFO,
-		       "<%s> open: %s", __func__, strerror(errno));
+		syslog(LOG_INFO, "<%s> open: %m", __func__);
 		return (-2);
 	}
 	for (;;) {
