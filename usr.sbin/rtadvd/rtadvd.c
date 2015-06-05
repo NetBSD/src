@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.46 2014/02/27 17:43:02 joerg Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.47 2015/06/05 14:09:20 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ int
 main(int argc, char *argv[])
 {
 	struct pollfd set[2];
-	struct timeval *timeout;
+	struct timespec *timeout;
 	int i, ch;
 	int fflag = 0, logopt;
 	struct passwd *pw;
@@ -311,20 +311,20 @@ main(int argc, char *argv[])
 				getconfig(*argv++, 0);
 		}
 
+		/* timer expiration check and reset the timer */
+		timeout = rtadvd_check_timer();
+
 		if (do_die) {
 			die();
 			/*NOTREACHED*/
 		}
-
-		/* timer expiration check and reset the timer */
-		timeout = rtadvd_check_timer();
 
 		if (timeout != NULL) {
 			syslog(LOG_DEBUG,
 			    "<%s> set timer to %ld:%ld. waiting for "
 			    "inputs or timeout", __func__,
 			    (long int)timeout->tv_sec,
-			    (long int)timeout->tv_usec);
+			    (long int)timeout->tv_nsec);
 		} else {
 			syslog(LOG_DEBUG,
 			    "<%s> there's no timer. waiting for inputs",
@@ -332,7 +332,8 @@ main(int argc, char *argv[])
 		}
 
 		if ((i = poll(set, 2, timeout ? (timeout->tv_sec * 1000 +
-		    timeout->tv_usec / 1000) : INFTIM)) < 0) {
+		    (timeout->tv_nsec + 999999) / 1000000) : INFTIM)) < 0)
+		{
 			/* EINTR would occur upon SIGUSR1 for status dump */
 			if (errno != EINTR)
 				syslog(LOG_ERR, "<%s> poll: %s",
@@ -991,7 +992,7 @@ void
 ra_timer_set_short_delay(struct rainfo *rai)
 {
 	long delay;	/* must not be greater than 1000000 */
-	struct timeval interval, now, min_delay, tm_tmp, *rest;
+	struct timespec interval, now, min_delay, tm_tmp, *rest;
 
 	/*
 	 * Compute a random delay. If the computed value
@@ -1002,9 +1003,9 @@ ra_timer_set_short_delay(struct rainfo *rai)
 	 */
 	delay = arc4random() % MAX_RA_DELAY_TIME;
 	interval.tv_sec = 0;
-	interval.tv_usec = delay;
+	interval.tv_nsec = delay;
 	rest = rtadvd_timer_rest(rai->timer);
-	if (TIMEVAL_LT(*rest, interval)) {
+	if (timespeccmp(rest, &interval, <)) {
 		syslog(LOG_DEBUG, "<%s> random delay is larger than "
 		    "the rest of current timer", __func__);
 		interval = *rest;
@@ -1017,13 +1018,13 @@ ra_timer_set_short_delay(struct rainfo *rai)
 	 * MIN_DELAY_BETWEEN_RAS plus the random value after the
 	 * previous advertisement was sent.
 	 */
-	gettimeofday(&now, NULL);
-	TIMEVAL_SUB(&now, &rai->lastsent, &tm_tmp);
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	timespecsub(&now, &rai->lastsent, &tm_tmp);
 	min_delay.tv_sec = MIN_DELAY_BETWEEN_RAS;
-	min_delay.tv_usec = 0;
-	if (TIMEVAL_LT(tm_tmp, min_delay)) {
-		TIMEVAL_SUB(&min_delay, &tm_tmp, &min_delay);
-		TIMEVAL_ADD(&min_delay, &interval, &interval);
+	min_delay.tv_nsec = 0;
+	if (timespeccmp(&tm_tmp, &min_delay, <)) {
+		timespecsub(&min_delay, &tm_tmp, &min_delay);
+		timespecadd(&min_delay, &interval, &interval);
 	}
 	rtadvd_set_timer(&interval, rai->timer);
 }
@@ -1199,7 +1200,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 	struct prefix *pp;
 	int inconsistent = 0;
 	char ntopbuf[INET6_ADDRSTRLEN], prefixbuf[INET6_ADDRSTRLEN];
-	struct timeval now;
+	struct timespec now;
 
 #if 0				/* impossible */
 	if (pinfo->nd_opt_pi_type != ND_OPT_PREFIX_INFORMATION)
@@ -1245,7 +1246,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		 * XXX: can we really expect that all routers on the link
 		 * have synchronized clocks?
 		 */
-		gettimeofday(&now, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &now);
 		preferred_time += now.tv_sec;
 
 		if (!pp->timer && rai->clockskew &&
@@ -1281,7 +1282,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 
 	valid_time = ntohl(pinfo->nd_opt_pi_valid_time);
 	if (pp->vltimeexpire) {
-		gettimeofday(&now, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &now);
 		valid_time += now.tv_sec;
 
 		if (!pp->timer && rai->clockskew &&
@@ -1767,7 +1768,7 @@ ra_output(struct rainfo *rai)
 	rai->raoutput++;
 
 	/* update timestamp */
-	gettimeofday(&rai->lastsent, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &rai->lastsent);
 
 	/* reset waiting conter */
 	rai->waiting = 0;
@@ -1796,7 +1797,7 @@ ra_timeout(void *data)
 
 /* update RA timer */
 void
-ra_timer_update(void *data, struct timeval *tm)
+ra_timer_update(void *data, struct timespec *tm)
 {
 	struct rainfo *rai = (struct rainfo *)data;
 	long interval;
@@ -1823,12 +1824,12 @@ ra_timer_update(void *data, struct timeval *tm)
 		interval = MAX_INITIAL_RTR_ADVERT_INTERVAL;
 
 	tm->tv_sec = interval;
-	tm->tv_usec = 0;
+	tm->tv_nsec = 0;
 
 	syslog(LOG_DEBUG,
 	       "<%s> RA timer on %s is set to %ld:%ld",
 	       __func__, rai->ifname,
-	       (long int)tm->tv_sec, (long int)tm->tv_usec);
+	       (long int)tm->tv_sec, (long int)tm->tv_nsec);
 
 	return;
 }
