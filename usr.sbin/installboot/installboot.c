@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.37 2015/06/05 05:03:21 mlelstv Exp $	*/
+/*	$NetBSD: installboot.c,v 1.38 2015/06/05 07:44:39 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.37 2015/06/05 05:03:21 mlelstv Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.38 2015/06/05 07:44:39 mlelstv Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -51,7 +51,9 @@ __RCSID("$NetBSD: installboot.c,v 1.37 2015/06/05 05:03:21 mlelstv Exp $");
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
+#if !HAVE_NBTOOL_CONFIG_H
 #include <util.h>
+#endif
 
 #include "installboot.h"
 
@@ -107,9 +109,11 @@ main(int argc, char *argv[])
 	char 		*p;
 	const char	*op;
 	ib_flags	unsupported_flags;
+#if !HAVE_NBTOOL_CONFIG_H
 	char		specname[MAXPATHLEN];
 	char		rawname[MAXPATHLEN];
 	const char	*special, *raw;
+#endif
 
 	setprogname(argv[0]);
 	params = &installboot_params;
@@ -234,12 +238,16 @@ main(int argc, char *argv[])
 		params->stage2 = argv[2];
 	}
 
+#if !HAVE_NBTOOL_CONFIG_H
 	special = getfsspecname(specname, sizeof(specname), argv[0]);
 	raw = getdiskrawname(rawname, sizeof(rawname), special);
 	if (raw != NULL)
 		special = raw;
-
 	params->filesystem = special;
+#else
+	params->filesystem = argv[0];
+#endif
+
 	if (params->flags & IB_NOWRITE) {
 		op = "only";
 		mode = O_RDONLY;
