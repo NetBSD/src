@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.13 2013/07/09 09:34:59 roy Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.14 2015/06/05 14:09:20 roy Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ extern struct sockaddr_in6 sin6_sitelocal_allrouters;
 #define MAX_INITIAL_RTR_ADVERTISEMENTS    3
 #define MAX_FINAL_RTR_ADVERTISEMENTS      3
 #define MIN_DELAY_BETWEEN_RAS             3
-#define MAX_RA_DELAY_TIME                 500000 /* usec */
+#define MAX_RA_DELAY_TIME                500000000 /* nsec */
 
 #define PREFIX_FROM_KERNEL 1
 #define PREFIX_FROM_CONFIG 2
@@ -137,7 +137,7 @@ struct	rainfo {
 	/* timer related parameters */
 	struct rtadvd_timer *timer;
 	int initcounter; /* counter for the first few advertisements */
-	struct timeval lastsent; /* timestamp when the latest RA was sent */
+	struct timespec lastsent; /* timestamp when the latest RA was sent */
 	int waiting;		/* number of RS waiting for RA */
 	struct rainfo *leaving;		/* the config which is leaving */
 	struct rainfo *leaving_for;	/* the new config to activate */
@@ -188,7 +188,7 @@ struct	rainfo {
 extern TAILQ_HEAD(ralist_head_t, rainfo) ralist;
 
 struct rtadvd_timer *ra_timeout(void *);
-void ra_timer_update(void *, struct timeval *);
+void ra_timer_update(void *, struct timespec *);
 void ra_timer_set_short_delay(struct rainfo *);
 
 int prefix_match(struct in6_addr *, int, struct in6_addr *, int);
