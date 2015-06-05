@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.7 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: timer.h,v 1.8 2015/06/05 14:09:20 roy Exp $	*/
 /*	$KAME: timer.h,v 1.5 2002/05/31 13:30:38 jinmei Exp $	*/
 
 /*
@@ -30,36 +30,22 @@
  * SUCH DAMAGE.
  */
 
-/* a < b */
-#define TIMEVAL_LT(a, b) (((a).tv_sec < (b).tv_sec) ||\
-			  (((a).tv_sec == (b).tv_sec) && \
-			    ((a).tv_usec < (b).tv_usec)))
-
-/* a <= b */
-#define TIMEVAL_LEQ(a, b) (((a).tv_sec < (b).tv_sec) ||\
-			   (((a).tv_sec == (b).tv_sec) &&\
- 			    ((a).tv_usec <= (b).tv_usec)))
-
 extern TAILQ_HEAD(rtadvd_timer_head_t, rtadvd_timer) ra_timer;
 struct rtadvd_timer {
 	TAILQ_ENTRY(rtadvd_timer) next;
 	struct rainfo *rai;
-	struct timeval tm;
+	struct timespec tm;
 
 	struct rtadvd_timer *(*expire) (void *); /* expiration function */
 	void *expire_data;
-	void (*update) __P((void *, struct timeval *));	/* update function */
+	void (*update)(void *, struct timespec *);	/* update function */
 	void *update_data;
 };
 
 void rtadvd_timer_init(void);
 struct rtadvd_timer *rtadvd_add_timer(struct rtadvd_timer *(*) (void *),
-		void (*) (void *, struct timeval *), void *, void *);
-void rtadvd_set_timer(struct timeval *, struct rtadvd_timer *);
+		void (*) (void *, struct timespec *), void *, void *);
+void rtadvd_set_timer(struct timespec *, struct rtadvd_timer *);
 void rtadvd_remove_timer(struct rtadvd_timer **);
-struct timeval * rtadvd_check_timer(void);
-struct timeval * rtadvd_timer_rest(struct rtadvd_timer *);
-void TIMEVAL_ADD(struct timeval *, struct timeval *,
-		      struct timeval *);
-void TIMEVAL_SUB(struct timeval *, struct timeval *,
-		      struct timeval *);
+struct timespec * rtadvd_check_timer(void);
+struct timespec * rtadvd_timer_rest(struct rtadvd_timer *);
