@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.36 2011/11/03 20:46:41 martin Exp $	*/
+/*	$NetBSD: installboot.c,v 1.37 2015/06/05 05:03:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,9 +35,10 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.36 2011/11/03 20:46:41 martin Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.37 2015/06/05 05:03:21 mlelstv Exp $");
 #endif	/* !__lint */
 
+#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
 
@@ -50,6 +51,7 @@ __RCSID("$NetBSD: installboot.c,v 1.36 2011/11/03 20:46:41 martin Exp $");
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "installboot.h"
 
@@ -105,6 +107,9 @@ main(int argc, char *argv[])
 	char 		*p;
 	const char	*op;
 	ib_flags	unsupported_flags;
+	char		specname[MAXPATHLEN];
+	char		rawname[MAXPATHLEN];
+	const char	*special, *raw;
 
 	setprogname(argv[0]);
 	params = &installboot_params;
@@ -229,7 +234,12 @@ main(int argc, char *argv[])
 		params->stage2 = argv[2];
 	}
 
-	params->filesystem = argv[0];
+	special = getfsspecname(specname, sizeof(specname), argv[0]);
+	raw = getdiskrawname(rawname, sizeof(rawname), special);
+	if (raw != NULL)
+		special = raw;
+
+	params->filesystem = special;
 	if (params->flags & IB_NOWRITE) {
 		op = "only";
 		mode = O_RDONLY;
