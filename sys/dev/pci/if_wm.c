@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.329 2015/06/06 04:39:12 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.330 2015/06/06 07:44:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.329 2015/06/06 04:39:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.330 2015/06/06 07:44:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9290,20 +9290,16 @@ wm_nvm_version(struct wm_softc *sc)
 	uint16_t uid0, uid1;
 	uint16_t nvm_data;
 	uint16_t off;
+	bool check_version = false;
+	bool check_optionrom = false;
 
 	wm_nvm_read(sc, NVM_OFF_IMAGE_UID1, 1, &uid1);
 	switch (sc->sc_type) {
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-		if ((uid1 & NVM_MAJOR_MASK) != NVM_UID_VALID) {
-			/* Major, Minor and build in UID words */
-			wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data);
-			major = (nvm_data & NVM_MAJOR_MASK) >> NVM_MAJOR_SHIFT;
-			minor = (nvm_data & NVM_MINOR_MASK) >> NVM_MINOR_SHIFT;
-			build = nvm_data & NVM_BUILD_MASK;
-			goto printver;
-		}
+		if ((uid1 & NVM_MAJOR_MASK) != NVM_UID_VALID)
+			check_version = true;
 		break;
 	case WM_T_I211:
 		/* XXX wm_nvm_version_invm(sc); */
@@ -9316,6 +9312,32 @@ wm_nvm_version(struct wm_softc *sc)
 		/* FALLTHROUGH */
 	case WM_T_I350:
 	case WM_T_I354:
+		check_version = true;
+		check_optionrom = true;
+		break;
+	default:
+		/* XXX Should we print PXE boot agent's version? */
+		return;
+	}
+	if (check_version) {
+		wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data);
+		major = (nvm_data & NVM_MAJOR_MASK) >> NVM_MAJOR_SHIFT;
+		if ((nvm_data & 0x0f00) == 0x0000)
+			minor = nvm_data & 0x00ff;
+		else {
+			minor = (nvm_data & NVM_MINOR_MASK) >> NVM_MINOR_SHIFT;
+			build = nvm_data & NVM_BUILD_MASK;
+		}
+		/* Decimal */
+		minor = (minor / 16) * 10 + (minor % 16);
+
+		aprint_verbose(", version %d.%d", major, minor);
+		if (build != -1)
+			aprint_verbose(" build %d", build);
+		sc->sc_nvm_ver_major = major;
+		sc->sc_nvm_ver_minor = minor;
+	}
+	if (check_optionrom) {
 		wm_nvm_read(sc, NVM_OFF_COMB_VER_PTR, 1, &off);
 		/* Option ROM Version */
 		if ((off != 0x0000) && (off != 0xffff)) {
@@ -9324,32 +9346,13 @@ wm_nvm_version(struct wm_softc *sc)
 			wm_nvm_read(sc, off, 1, &uid0);
 			if ((uid0 != 0) && (uid0 != 0xffff)
 			    && (uid1 != 0) && (uid1 != 0xffff)) {
-				aprint_verbose(" option ROM Version %d.%d.%d",
+				aprint_verbose(", option ROM Version %d.%d.%d",
 				    uid0 >> 8,
 				    (uid0 << 8) | (uid1 >> 8),
 				    uid1 & 0x00ff);
 			}
 		}
-		break;
-	default:
-		/* XXX Should we print PXE boot agent's version? */
-		return;
 	}
-	wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data);
-	major = (nvm_data & NVM_MAJOR_MASK) >> NVM_MAJOR_SHIFT;
-	if ((nvm_data & 0x0f00) == 0x0000)
-		minor = nvm_data & 0x00ff;
-	else 
-		minor = (nvm_data & NVM_MINOR_MASK) >> NVM_MINOR_SHIFT;
-	/* Decimal */
-	minor = (minor / 16) * 10 + (minor % 16);
-
-printver:
-	aprint_verbose(", version %d.%d", major, minor);
-	if (build != -1)
-		aprint_verbose(" build %d", build);
-	sc->sc_nvm_ver_major = major;
-	sc->sc_nvm_ver_minor = minor;
 
 	wm_nvm_read(sc, NVM_OFF_IMAGE_UID0, 1, &uid0);
 	aprint_verbose(", Image Unique ID %08x", (uid1 << 16) | uid0);
