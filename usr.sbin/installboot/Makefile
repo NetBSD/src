@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2015/06/05 05:03:21 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.50 2015/06/06 15:45:47 joerg Exp $
 #
 
 .include <bsd.own.mk>
@@ -46,9 +46,9 @@ CPPFLAGS+=	-I${.CURDIR} -I.
 .for f in i386 macppc
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
-.endif
 
 LDADD+= -lutil
 DPADD+= ${LIBUTIL}
+.endif
 
 .include <bsd.prog.mk>
