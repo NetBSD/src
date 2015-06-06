@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.330 2015/06/06 07:44:22 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.331 2015/06/06 17:36:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.330 2015/06/06 07:44:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.331 2015/06/06 17:36:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9285,8 +9285,7 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 static void
 wm_nvm_version(struct wm_softc *sc)
 {
-	int major, minor;
-	int build = -1;
+	uint16_t major, minor, build, patch;
 	uint16_t uid0, uid1;
 	uint16_t nvm_data;
 	uint16_t off;
@@ -9320,6 +9319,7 @@ wm_nvm_version(struct wm_softc *sc)
 		return;
 	}
 	if (check_version) {
+		bool have_build = false;
 		wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data);
 		major = (nvm_data & NVM_MAJOR_MASK) >> NVM_MAJOR_SHIFT;
 		if ((nvm_data & 0x0f00) == 0x0000)
@@ -9327,12 +9327,13 @@ wm_nvm_version(struct wm_softc *sc)
 		else {
 			minor = (nvm_data & NVM_MINOR_MASK) >> NVM_MINOR_SHIFT;
 			build = nvm_data & NVM_BUILD_MASK;
+			have_build = true;
 		}
 		/* Decimal */
 		minor = (minor / 16) * 10 + (minor % 16);
 
 		aprint_verbose(", version %d.%d", major, minor);
-		if (build != -1)
+		if (have_build)
 			aprint_verbose(" build %d", build);
 		sc->sc_nvm_ver_major = major;
 		sc->sc_nvm_ver_minor = minor;
@@ -9346,10 +9347,12 @@ wm_nvm_version(struct wm_softc *sc)
 			wm_nvm_read(sc, off, 1, &uid0);
 			if ((uid0 != 0) && (uid0 != 0xffff)
 			    && (uid1 != 0) && (uid1 != 0xffff)) {
+				/* 16bits */
+				major = uid0 >> 8;
+				build = (uid0 << 8) | (uid1 >> 8);
+				patch = uid1 & 0x00ff;
 				aprint_verbose(", option ROM Version %d.%d.%d",
-				    uid0 >> 8,
-				    (uid0 << 8) | (uid1 >> 8),
-				    uid1 & 0x00ff);
+				    major, build, patch);
 			}
 		}
 	}
