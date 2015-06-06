@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecvar.h,v 1.9 2014/04/19 12:29:24 bad Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.9.4.1 2015/06/06 14:40:12 skrll Exp $	*/
 /*	$OpenBSD: ubsecvar.h,v 1.38 2009/03/27 13:31:30 reyk Exp $	*/
 
 /*
@@ -31,6 +31,12 @@
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  *
  */
+
+#ifndef	_DEV_PCI_UBSECVAR_H
+#define	_DEV_PCI_UBSECVAR_H
+
+#include <sys/types.h>
+#include <sys/rndsource.h>
 
 /* Maximum queue length */
 #ifndef UBS_MAX_NQUEUE
@@ -240,3 +246,5 @@ struct ubsec_stats {
 	u_int32_t hst_modexp;		/* MOD EXP requests */
 	u_int32_t hst_modexpcrt;	/* MOD EXP CRT requests */
 };
+
+#endif	/* _DEV_PCI_UBSECVAR_H */

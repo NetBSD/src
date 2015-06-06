@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.131 2012/12/02 01:05:16 chs Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.131.14.1 2015/06/06 14:40:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,11 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.131 2012/12/02 01:05:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.131.14.1 2015/06/06 14:40:21 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
-#include "opt_ntp.h"
 #include "opt_perfctrs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.131 2012/12/02 01:05:16 chs Exp $")
 
 cyclic_clock_func_t	cyclic_clock_func[MAXCPUS];
 #endif
+
+static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
 
 /*
  * Clock handling routines.
@@ -161,6 +164,7 @@ get_intr_timecount(struct timecounter *tc)
 void
 initclocks(void)
 {
+	static struct sysctllog *clog;
 	int i;
 
 	/*
@@ -190,6 +194,19 @@ initclocks(void)
 			panic("hardscheddiv");
 	}
 
+	sysctl_createv(&clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "clockrate",
+		       SYSCTL_DESCR("Kernel clock rates"),
+		       sysctl_kern_clockrate, 0, NULL,
+		       sizeof(struct clockinfo),
+		       CTL_KERN, KERN_CLOCKRATE, CTL_EOL);
+	sysctl_createv(&clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "hardclock_ticks",
+		       SYSCTL_DESCR("Number of hardclock ticks"),
+		       NULL, 0, &hardclock_ticks, sizeof(hardclock_ticks),
+		       CTL_KERN, KERN_HARDCLOCK_TICKS, CTL_EOL);
 }
 
 /*
@@ -448,4 +465,25 @@ statclock(struct clockframe *frame)
 		atomic_inc_uint(&l->l_cpticks);
 		mutex_spin_exit(&p->p_stmutex);
 	}
+}
+
+/*
+ * sysctl helper routine for kern.clockrate. Assembles a struct on
+ * the fly to be returned to the caller.
+ */
+static int
+sysctl_kern_clockrate(SYSCTLFN_ARGS)
+{
+	struct clockinfo clkinfo;
+	struct sysctlnode node;
+
+	clkinfo.tick = tick;
+	clkinfo.tickadj = tickadj;
+	clkinfo.hz = hz;
+	clkinfo.profhz = profhz;
+	clkinfo.stathz = stathz ? stathz : hz;
+
+	node = *rnode;
+	node.sysctl_data = &clkinfo;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }

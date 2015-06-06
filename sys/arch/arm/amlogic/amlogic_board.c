@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.11.2.2 2015/04/06 15:17:51 skrll Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.11.2.3 2015/06/06 14:39:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.11.2.2 2015/04/06 15:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.11.2.3 2015/06/06 14:39:55 skrll Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -82,7 +82,7 @@ uint32_t
 amlogic_get_rate_xtal(void)
 {
 	uint32_t ctlreg0;
-	
+
 	ctlreg0 = CBUS_READ(PREG_CTLREG0_ADDR_REG);
 
 	return __SHIFTOUT(ctlreg0, PREG_CTLREG0_ADDR_CLKRATE) * 1000000;
@@ -106,6 +106,31 @@ amlogic_get_rate_sys(void)
 	clk >>= od;
 
 	return (uint32_t)clk;
+}
+
+uint32_t
+amlogic_get_rate_clk81(void)
+{
+	uint32_t cc, rate;
+
+	rate = amlogic_get_rate_fixed();
+	cc = CBUS_READ(HHI_MPEG_CLK_CNTL_REG);
+
+	switch (__SHIFTOUT(cc, HHI_MPEG_CLK_CNTL_DIV_SRC)) {
+	case 7:
+		rate /= 5;
+		break;
+	case 6:
+		rate /= 3;
+		break;
+	case 5:
+		rate /= 4;
+		break;
+	default:
+		panic("CLK81: unknown rate, HHI_MPEG_CLK_CNTL_REG = %#x", cc);
+	}
+
+	return rate / (__SHIFTOUT(cc, HHI_MPEG_CLK_CNTL_DIV_N) + 1);
 }
 
 uint32_t
@@ -216,6 +241,11 @@ amlogic_sdhc_select_port(int port)
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0, 0x0000fc00);
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_8_REG, 0, 0x00000600);
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0x000000f0, 0);
+
+		/* XXX ODROID-C1 */
+		CBUS_SET_CLEAR(PREG_PAD_GPIO5_EN_N_REG, 0x20000000, 0);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO5_OUT_REG, 0, 0x80000000);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO5_EN_N_REG, 0, 0x80000000);
 		break;
 	case AMLOGIC_SDHC_PORT_C:
 		/* BOOT -> SDHC pin mux settings */
@@ -224,6 +254,93 @@ amlogic_sdhc_select_port(int port)
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_6_REG, 0, 0xff000000);
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_4_REG, 0x70000000, 0);
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_7_REG, 0x000c0000, 0);
+
+		/* XXX ODROID-C1 */
+		CBUS_SET_CLEAR(PAD_PULL_UP_3_REG, 0, 0x000000ff);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+void
+amlogic_sdhc_reset_port(int port)
+{
+	switch (port) {
+	case AMLOGIC_SDHC_PORT_C:
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0, 0x01000000);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO3_EN_N_REG, 0, 0x00000200);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO3_OUT_REG, 0x00000200, 0);
+		delay(1000);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO3_OUT_REG, 0, 0x00000200);
+		delay(2000);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO3_OUT_REG, 0x00000200, 0);
+		delay(1000);
+		break;
+	}
+}
+
+bool
+amlogic_sdhc_is_removable(int port)
+{
+	switch (port) {
+	case AMLOGIC_SDHC_PORT_B:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool
+amlogic_sdhc_is_card_present(int port)
+{
+	switch (port) {
+	case AMLOGIC_SDHC_PORT_B:
+		/* GPIO CARD_6 */
+		return !(CBUS_READ(PREG_PAD_GPIO0_IN_REG) & __BIT(28));
+	default:
+		return true;
+	}
+}
+
+void
+amlogic_sdio_init(void)
+{
+	/* enable SDIO clk */
+	CBUS_WRITE(EE_CLK_GATING0_REG,
+	    CBUS_READ(EE_CLK_GATING0_REG) | EE_CLK_GATING0_SDIO);
+
+	/* reset */
+	CBUS_SET_CLEAR(RESET6_REG, RESET6_SDIO, 0);
+}
+
+int
+amlogic_sdio_select_port(int port)
+{
+	switch (port) {
+	case AMLOGIC_SDIO_PORT_B:
+		/* CARD -> SDIO pin mux settings */
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_6_REG, 0, 0x3f000000);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_8_REG, 0, 0x0000063f);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0, 0x000000f0);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0x0000fc00, 0);
+
+		/* XXX ODROID-C1 */
+		CBUS_SET_CLEAR(PREG_PAD_GPIO5_EN_N_REG, 0x20000000, 0);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO5_OUT_REG, 0, 0x80000000);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO5_EN_N_REG, 0, 0x80000000);
+		break;
+	case AMLOGIC_SDIO_PORT_C:
+		/* BOOT -> SDIO pin mux settings */
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0, 0x06c2fc00);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_8_REG, 0, 0x0000003f);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_4_REG, 0, 0x6c000000);
+		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_6_REG, 0xfc000000, 0);
+
+		/* XXX ODROID-C1 */
+		CBUS_SET_CLEAR(PAD_PULL_UP_3_REG, 0, 0x000000ff);
 		break;
 	default:
 		return EINVAL;
@@ -292,7 +409,7 @@ amlogic_usbphy_init(int port)
 	}
 
 	if (port == 0) {
-		CBUS_WRITE(RESET1_REG, RESET1_USB);
+		CBUS_SET_CLEAR(RESET1_REG, RESET1_USB, 0);
 	}
 
 	amlogic_usbphy_clkgate_enable(port);

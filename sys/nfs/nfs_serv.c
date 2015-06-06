@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.170 2014/01/23 10:13:57 hannken Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.170.6.1 2015/06/06 14:40:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.170 2014/01/23 10:13:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.170.6.1 2015/06/06 14:40:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1930,7 +1930,7 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	saved_uid = kauth_cred_geteuid(cred);
 	fromnd.ni_cnd.cn_cred = cred;
 	fromnd.ni_cnd.cn_nameiop = DELETE;
-	fromnd.ni_cnd.cn_flags = LOCKPARENT | INRENAME;
+	fromnd.ni_cnd.cn_flags = LOCKPARENT;
 	error = nfs_namei(&fromnd, &fnsfh, len, slp, nam, &md,
 		&dpos, &fdirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (error == 0 && fdirp && v3) {
@@ -2006,7 +2006,7 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	kauth_cred_seteuid(cred, saved_uid);
 	tond.ni_cnd.cn_cred = cred;
 	tond.ni_cnd.cn_nameiop = RENAME;
-	tond.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | NOCACHE | INRENAME;
+	tond.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | NOCACHE;
 	error = nfs_namei(&tond, &tnsfh, len2, slp, nam, &md,
 		&dpos, &tdirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (tdirp && v3) {
@@ -2222,6 +2222,9 @@ out:
 		nqsrv_getl(vp, ND_WRITE);
 		nqsrv_getl(xp, ND_WRITE);
 		error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
+		if (nd.ni_dvp != nd.ni_vp)
+			VOP_UNLOCK(nd.ni_dvp);
+		vrele(nd.ni_dvp);
 	} else {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)

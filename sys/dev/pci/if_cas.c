@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.22 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.22.4.1 2015/06/06 14:40:09 skrll Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.22 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.22.4.1 2015/06/06 14:40:09 skrll Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.22 2014/08/10 16:44:36 tls Exp $");
 
 #include <sys/bus.h>
 #include <sys/intr.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2014, Intel Corp.
+ * Copyright (C) 2000 - 2015, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __CMCLIB_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -477,28 +475,25 @@ AcpiUtStrstr (
     char                    *String1,
     char                    *String2)
 {
-    char                    *String;
+    UINT32                  Length;
 
 
-    if (AcpiUtStrlen (String2) > AcpiUtStrlen (String1))
+    Length = AcpiUtStrlen (String2);
+    if (!Length)
     {
-        return (NULL);
+        return (String1);
     }
 
-    /* Walk entire string, comparing the letters */
-
-    for (String = String1; *String2; )
+    while (AcpiUtStrlen (String1) >= Length)
     {
-        if (*String2 != *String)
+        if (AcpiUtMemcmp (String1, String2, Length) == 0)
         {
-            return (NULL);
+            return (String1);
         }
-
-        String2++;
-        String++;
+        String1++;
     }
 
-    return (String1);
+    return (NULL);
 }
 
 

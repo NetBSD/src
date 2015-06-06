@@ -1,9 +1,10 @@
-/*	$NetBSD: imx51var.h,v 1.2 2010/11/30 13:05:27 bsh Exp $ */
+/*	$NetBSD: imx51var.h,v 1.2.38.1 2015/06/06 14:39:55 skrll Exp $ */
 
 #ifndef _ARM_IMX_IMX51VAR_H
 #define	_ARM_IMX_IMX51VAR_H
 
-extern struct bus_space imx_bs_tag;
+extern struct bus_space armv7_generic_bs_tag;
+extern struct bus_space armv7_generic_a4x_bs_tag;
 extern struct arm32_bus_dma_tag imx_bus_dma_tag;
 
 void gpio_set_direction(uint32_t, uint32_t);

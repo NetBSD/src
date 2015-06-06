@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.93 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.93.4.1 2015/06/06 14:40:08 skrll Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.93 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.93.4.1 2015/06/06 14:40:08 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.93 2014/08/10 16:44:35 tls Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/endian.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

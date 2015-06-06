@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.249.4.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.249.4.2 2015/06/06 14:40:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -206,8 +206,6 @@ typedef struct vnode vnode_t;
 #ifdef _VFS_VNODE_PRIVATE
 #define	VI_MARKER	0x00008000	/* Dummy marker vnode */
 #endif	/* _VFS_VNODE_PRIVATE */
-#define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
-#define	VI_LOCKSHARE	0x00040000	/* v_interlock is shared */
 #ifdef _VFS_VNODE_PRIVATE
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_CHANGING	0x00100000	/* vnode changes state */
@@ -221,7 +219,7 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\22LAYER\24CLEAN\25CHANGING\31DIROP"
+    "\24CLEAN\25CHANGING\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -385,12 +383,6 @@ extern struct vnode	*rootvnode;	/* root (i.e. "/") vnode */
 extern int		desiredvnodes;	/* number of vnodes desired */
 extern u_int		numvnodes;	/* current number of vnodes */
 
-/*
- * Macro/function to check for client cache inconsistency w.r.t. leasing.
- */
-#define	LEASE_READ	0x1		/* Check lease for readers */
-#define	LEASE_WRITE	0x2		/* Check lease for modifiers */
-
 #endif /* _KERNEL */
 
 
@@ -539,7 +531,7 @@ void	vdevgone(int, int, int, enum vtype);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);
 int	vflushbuf(struct vnode *, int);
-int 	vget(struct vnode *, int);
+int 	vget(struct vnode *, int, bool);
 void 	vgone(struct vnode *);
 int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, bool, int);
 void	vprint(const char *, struct vnode *);
@@ -593,9 +585,9 @@ int	vn_fifo_bypass(void *);
 void	vntblinit(void);
 
 /* misc stuff */
+void	sched_sync(void *);
 void	vn_syncer_add_to_worklist(struct vnode *, int);
 void	vn_syncer_remove_from_worklist(struct vnode *);
-int	speedup_syncer(void);
 int	dorevoke(struct vnode *, kauth_cred_t);
 int	rawdev_mounted(struct vnode *, struct vnode **);
 uint8_t	vtype2dt(enum vtype);

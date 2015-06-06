@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_reg.h,v 1.10.2.2 2015/04/06 15:17:52 skrll Exp $ */
+/* $NetBSD: amlogic_reg.h,v 1.10.2.3 2015/06/06 14:39:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,6 +57,12 @@
 
 #define AMLOGIC_AO_RTI_PIN_MUX_OFFSET 0x08100014
 #define AMLOGIC_GPIOAO_OFFSET	0x08100024
+
+#define AMLOGIC_GPIOAO_EN_N_REG		0x00	/* [15:0] */
+#define AMLOGIC_GPIOAO_OUT_REG		0x00	/* [31:16] */
+#define AMLOGIC_GPIOAO_IN_REG		0x04
+#define AMLOGIC_GPIOAO_PUPD_EN_REG	0x08	/* [15:0] */
+#define AMLOGIC_GPIOAO_PUPD_REG		0x08	/* [31:16] */
 
 #define AMLOGIC_UART0AO_OFFSET	0x081004c0
 #define AMLOGIC_UART2AO_OFFSET	0x081004e0

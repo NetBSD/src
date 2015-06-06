@@ -1,4 +1,4 @@
-;       $NetBSD: rumpvfs.ifspec,v 1.9 2014/04/25 13:10:42 pooka Exp $
+;       $NetBSD: rumpvfs.ifspec,v 1.9.4.1 2015/06/06 14:40:29 skrll Exp $
 
 NAME|vfs
 PUBHDR|include/rump/rumpvfs_if_pub.h
@@ -51,5 +51,5 @@ int		|syspuffs_glueinit	|int, int *	|WEAK
 
 ; Other compat glue (for sniffing purposes)
 ; XXX: (lack of) types
-void		|vattr50_to_vattr	|const struct vattr *, struct vattr *
-void		|vattr_to_vattr50	|const struct vattr *, struct vattr *
+void		|vattr50_to_vattr|const struct vattr *, struct vattr *|COMPAT_50
+void		|vattr_to_vattr50|const struct vattr *, struct vattr *|COMPAT_50

@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.12.2.1 2015/04/06 15:17:54 skrll Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.12.2.2 2015/06/06 14:39:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.12.2.1 2015/04/06 15:17:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.12.2.2 2015/06/06 14:39:57 skrll Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.12.2.1 2015/04/06 15:17:54 skrll Ex
 #include <sys/lock.h>
 #include <sys/queue.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include "locators.h"
 #include <prop/proplib.h>
@@ -579,7 +579,7 @@ static void PrintStatus(uint8_t Status)
     printf("[status %x =",Status);
     for (i = 0; i < 8; i++) {
         if (Status & (1<<i)) {
-            printf("%c%s", 
+            printf("%c%s",
                      (OneSet) ? '|' : ' ',
                      BitNames[i]);
             OneSet = TRUE;
@@ -591,7 +591,7 @@ static void PrintStatus(uint8_t Status)
 #define PrintStatus(x)
 #endif
 
-/* 
+/*
  * The device can lock up under certain conditions.
  * There is no software workaround [must toggle RP# to GND]
  * Check if it seems that we are in that state.
@@ -603,7 +603,7 @@ static int  IsIrresponsive(struct eflash_softc *sc)
     if (Status & ST_READY)
         return FALSE;
 
-    if ((Status & ST_ERASE_MASK) == 
+    if ((Status & ST_ERASE_MASK) ==
         (ST_LOCK_BIT_ERROR|ST_ERASE_SUSPENDED|ST_ERASE_ERROR)) {
         /* yes, looks that way */
         return TRUE;
@@ -614,7 +614,7 @@ static int  IsIrresponsive(struct eflash_softc *sc)
     ClearStatusRegister(sc);
     PrintStatus(ReadStatusRegister(sc));
 
-    if ((Status & ST_MASK) == 
+    if ((Status & ST_MASK) ==
         (ST_LOCK_BIT_ERROR|ST_ERASE_SUSPENDED|ST_ERASE_ERROR)) {
         /* yes, looks that way */
         return TRUE;
@@ -626,7 +626,7 @@ static int  IsIrresponsive(struct eflash_softc *sc)
 
 /* Write one 16bit word
  */
-static int 
+static int
 single_program_word(struct eflash_softc *sc, volatile void *Offset, uint16_t *Values,
                   int  Verify, int *nWritten)
 {
@@ -641,7 +641,7 @@ single_program_word(struct eflash_softc *sc, volatile void *Offset, uint16_t *Va
         sc->sc_ops->read_uint16(sc,Offset,&Data16);
 #ifdef Verbose
         if (Verbose) {
-            printf("Location %p was x%x\n", 
+            printf("Location %p was x%x\n",
                    Offset, Data16);
         }
 #endif
@@ -670,13 +670,13 @@ single_program_word(struct eflash_softc *sc, volatile void *Offset, uint16_t *Va
         sc->sc_ops->read_uint16(sc,Offset,&Data16);
 #ifdef Verbose
         if (Verbose) {
-            printf("Location %p is now x%x\n", 
+            printf("Location %p is now x%x\n",
                    Offset, Data16);
         }
 #endif
         if ((Data16 != Value)) {
             PrintStatus(Status);
-            printf(". That didnt work, try again.. [%x != %x]\n", 
+            printf(". That didnt work, try again.. [%x != %x]\n",
                    Data16, Value);
             ClearStatusRegister(sc);
             return FALSE;
@@ -689,7 +689,7 @@ single_program_word(struct eflash_softc *sc, volatile void *Offset, uint16_t *Va
 
 /* Write one buffer, 16bit words at a time
  */
-static int 
+static int
 single_program_buffer(struct eflash_softc *sc, volatile void *Offset, uint16_t *Values,
                   int  Verify, int *nWritten)
 {
@@ -706,7 +706,7 @@ single_program_buffer(struct eflash_softc *sc, volatile void *Offset, uint16_t *
             sc->sc_ops->read_uint16(sc,Where+i,&Data16);
 #ifdef Verbose
             if (Verbose) {
-                printf("Location %p was x%x\n", 
+                printf("Location %p was x%x\n",
                        Where+i, Data16);
             }
 #endif
@@ -724,7 +724,7 @@ single_program_buffer(struct eflash_softc *sc, volatile void *Offset, uint16_t *
         if ((Status & ST_READY)) break;
     }
     if (0 == (Status & ST_READY)) {
-        printf("FAILED program_buffer at Location %p, Status= x%x\n", 
+        printf("FAILED program_buffer at Location %p, Status= x%x\n",
                  Offset, Status);
         return FALSE;
     }
@@ -763,15 +763,15 @@ single_program_buffer(struct eflash_softc *sc, volatile void *Offset, uint16_t *
             sc->sc_ops->read_uint16(sc,Where+i,&Data16);
 #ifdef Verbose
             if (Verbose) {
-                printf("Location %p is now x%x\n", 
+                printf("Location %p is now x%x\n",
                        Where+i, Data16);
             }
-#endif             
+#endif
             Value = Values[i/2];
 
             if ((Data16 != Value)) {
                 PrintStatus(Status);
-                printf(". That didnt work, try again.. [%x != %x]\n", 
+                printf(". That didnt work, try again.. [%x != %x]\n",
                        Data16, Value);
                 ClearStatusRegister(sc);
                 return FALSE;
@@ -785,7 +785,7 @@ single_program_buffer(struct eflash_softc *sc, volatile void *Offset, uint16_t *
 
 /* Write one 32bit word
  */
-static int 
+static int
 twin_program_word(struct eflash_softc *sc, volatile void *Offset, uint16_t *Values,
                 int  Verify, int *nWritten)
 {
@@ -804,7 +804,7 @@ twin_program_word(struct eflash_softc *sc, volatile void *Offset, uint16_t *Valu
         sc->sc_ops->read_uint32(sc,Offset,&Data32);
 #ifdef Verbose
         if (Verbose) {
-            printf("Location %p was x%x\n", 
+            printf("Location %p was x%x\n",
                    Offset, Data32);
         }
 #endif
@@ -833,13 +833,13 @@ twin_program_word(struct eflash_softc *sc, volatile void *Offset, uint16_t *Valu
         sc->sc_ops->read_uint32(sc,Offset,&Data32);
 #ifdef Verbose
         if (Verbose) {
-            printf("Location %p is now x%x\n", 
+            printf("Location %p is now x%x\n",
                    Offset, Data32);
         }
-#endif             
+#endif
         if ((Data32 != Value)) {
             PrintStatus(Status);
-            printf(". That didnt work, try again.. [%x != %x]\n", 
+            printf(". That didnt work, try again.. [%x != %x]\n",
                    Data32, Value);
             ClearStatusRegister(sc);
             return FALSE;
@@ -852,7 +852,7 @@ twin_program_word(struct eflash_softc *sc, volatile void *Offset, uint16_t *Valu
 
 /* Write one buffer, 32bit words at a time
  */
-static int 
+static int
 twin_program_buffer(struct eflash_softc *sc, volatile void *Offset, uint16_t *Values,
                 int  Verify, int *nWritten)
 {
@@ -870,7 +870,7 @@ twin_program_buffer(struct eflash_softc *sc, volatile void *Offset, uint16_t *Va
             sc->sc_ops->read_uint32(sc,Where+i,&Data32);
 #ifdef Verbose
             if (Verbose) {
-                printf("Location %p was x%x\n", 
+                printf("Location %p was x%x\n",
                        Where+i, Data32);
             }
 #endif
@@ -887,7 +887,7 @@ twin_program_buffer(struct eflash_softc *sc, volatile void *Offset, uint16_t *Va
         if ((Status & ST_READY)) break;
     }
     if (0 == (Status & ST_READY)) {
-        printf("FAILED program_buffer at Location %p, Status= x%x\n", 
+        printf("FAILED program_buffer at Location %p, Status= x%x\n",
                  Offset, Status);
         return FALSE;
     }
@@ -930,7 +930,7 @@ twin_program_buffer(struct eflash_softc *sc, volatile void *Offset, uint16_t *Va
             sc->sc_ops->read_uint32(sc,Where+i,&Data32);
 #ifdef Verbose
             if (Verbose) {
-                printf("Location %p is now x%x\n", 
+                printf("Location %p is now x%x\n",
                        Where+i, Data32);
             }
 #endif
@@ -942,7 +942,7 @@ twin_program_buffer(struct eflash_softc *sc, volatile void *Offset, uint16_t *Va
 
             if ((Data32 != Value)) {
                 PrintStatus(Status);
-                printf(". That didnt work, try again.. [%x != %x]\n", 
+                printf(". That didnt work, try again.. [%x != %x]\n",
                        Data32, Value);
                 ClearStatusRegister(sc);
                 return FALSE;
@@ -1204,7 +1204,7 @@ static int eflash_validate(struct eflash_softc *sc, daddr_t start, size_t *pSize
         /* map new */
         error = ioaccess((vaddr_t)sc->sc_sector,
                          secstart + sc->sc_base,
-                         secsize);   
+                         secsize);
         DBGME(DEBUG_FUNCS,printf("%s: mapped %p %zx -> %zx %d\n",
 	    device_xname(sc->sc_dev),
 	    sc->sc_sector, secsize, secstart + sc->sc_base,error));
@@ -1220,7 +1220,7 @@ static int eflash_validate(struct eflash_softc *sc, daddr_t start, size_t *pSize
      */
     Size = start + *pSize; /* last sector */
     if (Size > sc->sc_capacity) {
-        /* At most this many sectors 
+        /* At most this many sectors
          */
         Size = sc->sc_capacity - start;
         *pSize = (size_t)Size;
@@ -1431,7 +1431,10 @@ int   eflashactivate(device_t, enum devact);
 void  eflashdone(struct eflash_softc *);
 static void eflash_set_geometry(struct eflash_softc *sc);
 
-struct dkdriver eflashdkdriver = { eflashstrategy, minphys };
+struct dkdriver eflashdkdriver = {
+	.d_strategy = eflashstrategy,
+	.d_minphys = minphys
+};
 
 #ifdef HAS_BAD144_HANDLING
 static void bad144intern(struct eflash_softc *);
@@ -1623,10 +1626,10 @@ eflash_thread(void *arg)
                 if (sc->sc_bio.flags & ATA_SINGLE) bnow = 1;
 
                 if (sc->sc_bio.flags & ATA_READ) {
-                    sc->sc_bio.error = 
+                    sc->sc_bio.error =
                         eflash_read_at(sc, sc->sc_bio.blkno, sc->sc_bio.databuf, bnow, &sz);
                 } else {
-                    sc->sc_bio.error = 
+                    sc->sc_bio.error =
                         eflash_write_at(sc, sc->sc_bio.blkno, sc->sc_bio.databuf, bnow, &sz);
                 }
 
@@ -2167,7 +2170,7 @@ eflashioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 		return 0;
 	    }
-	
+
 	case DIOCSSTRATEGY:
 	    {
 		struct disk_strategy *dks = (void *)addr;

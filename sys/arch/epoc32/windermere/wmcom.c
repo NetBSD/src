@@ -1,4 +1,4 @@
-/*      $NetBSD: wmcom.c,v 1.5 2014/11/15 19:20:01 christos Exp $      */
+/*      $NetBSD: wmcom.c,v 1.5.2.1 2015/06/06 14:39:57 skrll Exp $      */
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.5 2014/11/15 19:20:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.5.2.1 2015/06/06 14:39:57 skrll Exp $");
 
 #include "rnd.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.5 2014/11/15 19:20:01 christos Exp $");
 #include <dev/cons.h>
 
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include "ioconf.h"

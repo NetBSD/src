@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.3.4.1 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.3.4.2 2015/06/06 14:40:13 skrll Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -31,6 +31,8 @@
  */
 #ifndef _IF_SMSCVAR_H_
 #define _IF_SMSCVAR_H_
+
+#include <sys/rndsource.h>
 
 struct smsc_chain {
 	struct smsc_softc	*sc_sc;

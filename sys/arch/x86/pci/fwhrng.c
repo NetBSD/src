@@ -1,4 +1,4 @@
-/*	$NetBSD: fwhrng.c,v 1.8 2014/11/16 16:20:00 ozaki-r Exp $	*/
+/*	$NetBSD: fwhrng.c,v 1.8.2.1 2015/06/06 14:40:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -29,13 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.8 2014/11/16 16:20:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.8.2.1 2015/06/06 14:40:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/time.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/bus.h>
 

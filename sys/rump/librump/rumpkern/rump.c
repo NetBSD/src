@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.312.2.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: rump.c,v 1.312.2.2 2015/06/06 14:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312.2.1 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312.2.2 2015/06/06 14:40:29 skrll Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312.2.1 2015/04/06 15:18:30 skrll Exp $")
 #include <sys/vmem.h>
 #include <sys/xcall.h>
 #include <sys/cprng.h>
+#include <sys/rnd.h>
 #include <sys/ktrace.h>
 
 #include <rump/rumpuser.h>
@@ -316,7 +317,6 @@ rump_init(void)
 
 	kprintf_init();
 	pserialize_init();
-	loginit();
 
 	kauth_init();
 
@@ -353,6 +353,8 @@ rump_init(void)
 
 	lwpinit_specificdata();
 	lwp_initspecific(&lwp0);
+
+	loginit();
 
 	rump_biglock_init();
 
@@ -491,6 +493,7 @@ rump_init(void)
 	mutex_exit(proc_lock);
 	if (initproc == NULL)
 		panic("where in the world is initproc?");
+	strlcpy(initproc->p_comm, "rumplocal", sizeof(initproc->p_comm));
 
 	rump_component_init(RUMP_COMPONENT_POSTINIT);
 
@@ -531,7 +534,7 @@ static void
 rump_component_addlocal(void)
 {
 	struct modinfo_chain *mc;
-	
+
 	while ((mc = LIST_FIRST(&modinfo_boot_chain)) != NULL) {
 		LIST_REMOVE(mc, mc_entries);
 		module_builtin_add(&mc->mc_info, 1, false);
@@ -683,17 +686,6 @@ rump_getversion(void)
 }
 /* compat */
 __strong_alias(rump_pub_getversion,rump_getversion);
-
-int
-rump_nativeabi_p(void)
-{
-
-#ifdef _RUMP_NATIVE_ABI
-	return 1;
-#else
-	return 0;
-#endif
-}
 
 /*
  * Note: may be called unscheduled.  Not fully safe since no locking

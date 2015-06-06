@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.21.4.1 2015/04/06 15:18:33 skrll Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.21.4.2 2015/06/06 14:40:30 skrll Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.21.4.1 2015/04/06 15:18:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.21.4.2 2015/06/06 14:40:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -138,8 +138,7 @@ ulfs_lookup(void *v)
 	int numdirpasses;		/* strategy for directory search */
 	doff_t endsearch;		/* offset to end directory search */
 	doff_t prevoff;			/* previous value of ulr_offset */
-	struct vnode *pdp;		/* saved dp during symlink work */
-	struct vnode *tdp;		/* returned by VFS_VGET */
+	struct vnode *tdp;		/* returned by vcache_get */
 	doff_t enduseful;		/* pointer past last used dir slot.
 					   used for directory truncation. */
 	u_long bmask;			/* block offset mask */
@@ -566,11 +565,8 @@ found:
 			vref(vdp);
 			tdp = vdp;
 		} else {
-			if (flags & ISDOTDOT)
-				VOP_UNLOCK(vdp); /* race to get the inode */
-			error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-			if (flags & ISDOTDOT)
-				vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+			error = vcache_get(vdp->v_mount,
+			    &foundino, sizeof(foundino), &tdp);
 			if (error)
 				goto out;
 		}
@@ -579,10 +575,7 @@ found:
 		 */
 		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error) {
-			if (dp->i_number == foundino)
-				vrele(tdp);
-			else
-				vput(tdp);
+			vrele(tdp);
 			goto out;
 		}
 		/*
@@ -596,10 +589,7 @@ found:
 			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
 			    VTOI(tdp)->i_uid));
 			if (error) {
-				if (dp->i_number == foundino)
-					vrele(tdp);
-				else
-					vput(tdp);
+				vrele(tdp);
 				error = EPERM;
 				goto out;
 			}
@@ -627,11 +617,8 @@ found:
 			error = EISDIR;
 			goto out;
 		}
-		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		if (flags & ISDOTDOT)
-			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+		error = vcache_get(vdp->v_mount,
+		    &foundino, sizeof(foundino), &tdp);
 		if (error)
 			goto out;
 		*vpp = tdp;
@@ -639,39 +626,12 @@ found:
 		goto out;
 	}
 
-	/*
-	 * Step through the translation in the name.  We do not `vput' the
-	 * directory because we may need it again if a symbolic link
-	 * is relative to the current directory.  Instead we save it
-	 * unlocked as "pdp".  We must get the target inode before unlocking
-	 * the directory to insure that the inode will not be removed
-	 * before we get it.  We prevent deadlock by always fetching
-	 * inodes from the root, moving down the directory tree. Thus
-	 * when following backward pointers ".." we must unlock the
-	 * parent directory before getting the requested directory.
-	 * There is a potential race condition here if both the current
-	 * and parent directories are removed before the VFS_VGET for the
-	 * inode associated with ".." returns.  We hope that this occurs
-	 * infrequently since we cannot avoid this race condition without
-	 * implementing a sophisticated deadlock detection algorithm.
-	 * Note also that this simple deadlock detection scheme will not
-	 * work if the file system has any hard links other than ".."
-	 * that point backwards in the directory structure.
-	 */
-	pdp = vdp;
-	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
-		if (error) {
-			goto out;
-		}
-		*vpp = tdp;
-	} else if (dp->i_number == foundino) {
+	if (dp->i_number == foundino) {
 		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
+		error = vcache_get(vdp->v_mount,
+		    &foundino, sizeof(foundino), &tdp);
 		if (error)
 			goto out;
 		*vpp = tdp;
@@ -684,8 +644,6 @@ found:
 	error = 0;
 
 out:
-	if (error == 0 && *vpp != vdp)
-		VOP_UNLOCK(*vpp);
 	fstrans_done(vdp->v_mount);
 	return error;
 }

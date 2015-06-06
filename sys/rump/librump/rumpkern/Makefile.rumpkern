@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.150.2.1 2015/04/06 15:18:30 skrll Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.150.2.2 2015/06/06 14:40:29 skrll Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -24,7 +24,7 @@ MAN=		rump.3 rump_lwproc.3
 
 #
 # Source modules, first the ones specifically implemented for librump.
-# 
+#
 SRCS+=	rump.c rumpcopy.c cons.c emul.c etfs_wrap.c intr.c	\
 	lwproc.c klock.c kobj_rename.c ltsleep.c scheduler.c	\
 	signals.c sleepq.c threads.c vm.c hyperentropy.c	\
@@ -38,9 +38,6 @@ RUMPOBJ_NORENAME= rump_syscalls.o rump_syscalls.pico rump_syscalls.po
 .ifdef RUMP_KERNEL_IS_LIBC
 CPPFLAGS+= -DRUMP_KERNEL_IS_LIBC
 .endif
-
-# optional hypervisor interfaces
-#SRCS+=	hyperstubs.c
 
 # Multiprocessor or uniprocessor locking.  TODO: select right
 # locking at runtime.
@@ -71,6 +68,7 @@ SRCS+=	devsw.c
 SRCS+=	init_sysctl_base.c	\
 	kern_auth.c		\
 	kern_cfglock.c		\
+	kern_clock.c		\
 	kern_descrip.c		\
 	kern_event.c		\
 	kern_hook.c		\
@@ -152,8 +150,11 @@ SRCS+=	rijndael.c
 SRCS+=	cprng_fast.c
 
 # compat
+.if !empty(RUMP_NBCOMPAT:M50)
 SRCS+=	kern_select_50.c
 SRCS+=	kern_time_50.c
+SRCS+=	rndpseudo_50.c
+.endif
 
 # Set RUMP_UNREAL_ALLOCATORS to "yes" to use memory allocation hypercalls
 # directly instead of the kmem/pool allocators backed by hypercalls.

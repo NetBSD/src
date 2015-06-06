@@ -108,8 +108,15 @@ END(armv7_tlb_flushD)
 
 STRONG_ALIAS(armv7_tlb_flushI, armv7_tlb_flushID)
 ENTRY(armv7_tlb_flushID)
+	dsb
 	mov	r0, #0
+#ifdef MULTIPROCESSOR
+	mcr	p15, 0, r0, c8, c3, 0	@ flush entire I+D tlb, IS
+	mcr	p15, 0, r0, c7, c1, 6	@ branch predictor invalidate, IS
+#else
 	mcr	p15, 0, r0, c8, c7, 0	@ flush entire I+D tlb
+	mcr	p15, 0, r0, c7, c5, 6	@ branch predictor invalidate
+#endif
 	dsb				@ data synchronization barrier
 	isb
 	bx      lr
@@ -331,6 +338,53 @@ ENTRY_NP(armv7_icache_inv_all)
 	isb				@ instruction sync barrier
 	bx	lr			@ return
 END(armv7_icache_inv_all)
+
+/* * LINTSTUB: void armv7_dcache_l1inv_all(void); */
+ENTRY_NP(armv7_dcache_l1inv_all)
+	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
+	and	r0, r0, #0x7		@ check L1
+	bxeq	lr			@ return if no L1 cache
+	mov	r3, #0			@ start with L1
+	mcr	p15, 2, r3, c0, c0, 0	@ select cache level
+	isb
+	mrc	p15, 1, r0, c0, c0, 0	@ read CCSIDR
+
+	ubfx	ip, r0, #0, #3		@ get linesize from CCSIDR
+	add	ip, ip, #4		@ apply bias
+	ubfx	r2, r0, #13, #15	@ get numsets - 1 from CCSIDR
+	lsl	r2, r2, ip		@ shift to set position
+	orr	r3, r3, r2		@ merge set into way/set/level
+	mov	r1, #1
+	lsl	r1, r1, ip		@ r1 = set decr
+
+	ubfx	ip, r0, #3, #10		@ get numways - 1 from [to be discarded] CCSIDR
+	clz	r2, ip			@ number of bits to MSB of way
+	lsl	ip, ip, r2		@ shift by that into way position
+	mov	r0, #1			@
+	lsl	r2, r0, r2		@ r2 now contains the way decr
+	mov	r0, r3 			@ get sets/level (no way yet)
+	orr	r3, r3, ip		@ merge way into way/set/level
+	bfc	r0, #0, #4		@ clear low 4 bits (level) to get numset - 1
+	sub	r2, r2, r0		@ subtract from way decr
+
+	/* r3 = ways/sets/level, r2 = way decr, r1 = set decr, r0 and ip are free */
+1:	mcr	p15, 0, r3, c7, c6, 2	@ invalidate line
+	cmp	r3, #15			@ are we done with this level (way/set == 0)
+	bls	.Ldone_l1inv		@ yes, we've finished
+	ubfx	r0, r3, #4, #18		@ extract set bits
+	cmp	r0, #0			@ compare
+	subne	r3, r3, r1		@ non-zero?, decrement set #
+	subeq	r3, r3, r2		@ zero?, decrement way # and restore set count
+	b	1b
+
+.Ldone_l1inv:
+	dsb
+	mov	r0, #0			@ default back to cache level 0
+	mcr	p15, 2, r0, c0, c0, 0	@ select cache level
+	dsb
+	isb
+	bx	lr
+END(armv7_dcache_l1inv_all)
 
 /* * LINTSTUB: void armv7_dcache_inv_all(void); */
 ENTRY_NP(armv7_dcache_inv_all)

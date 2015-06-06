@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.42.4.1 2015/04/06 15:18:18 skrll Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.42.4.2 2015/06/06 14:40:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.42.4.1 2015/04/06 15:18:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.42.4.2 2015/06/06 14:40:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,14 +419,13 @@ filecore_readlink(void *v)
 int
 filecore_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.19.4.1 2015/04/06 15:18:04 skrll Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.19.4.2 2015/06/06 14:40:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.19.4.1 2015/04/06 15:18:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.19.4.2 2015/06/06 14:40:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,15 +95,13 @@ p3_get_bus_clock(struct cpu_info *ci)
 	uint32_t model;
 
 	model = CPUID_TO_MODEL(ci->ci_signature);
-		
+
 	switch (model) {
 	case 0x9: /* Pentium M (130 nm, Banias) */
 		bus_clock = 10000;
 		break;
 	case 0xc: /* Core i7, Atom, model 1 */
 		/*
-		 * XXX (See also case 0xe)
-		 * Some core i7 CPUs can report model 0xc.
 		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
 		 * In the long-term, use ACPI instead of all this.
 		 */
@@ -278,7 +276,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			    "unable to determine bus speed");
 			goto print_msr;
 		}
-		bus = (msr >> 0) & 0xf;
+		bus = (msr >> 0) & 0x1f;
 		switch (bus) {
 		case 0:
 			bus_clock =  8333;
@@ -315,6 +313,9 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		case 15:
 			bus_clock =  8888;
+			break;
+		case 20:
+			bus_clock =  8750;
 			break;
 		default:
 			aprint_debug("%s: unknown Airmont FSB_FREQ value %d",

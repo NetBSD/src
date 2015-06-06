@@ -1,4 +1,4 @@
-# $NetBSD: majors.std,v 1.1 2014/09/19 17:32:34 matt Exp $
+# $NetBSD: majors.std,v 1.1.2.1 2015/06/06 14:40:05 skrll Exp $
 #
 # MI major assignments for standard devices
 #
@@ -12,5 +12,5 @@ device-major	log		char 246
 device-major	filedesc	char 247
 device-major	rnd		char 248		rnd
 device-major	clockctl	char 249		clockctl
-device-major	sysmon		char 250		sysmon_envsys | sysmon_wdog
+device-major	sysmon		char 250		sysmon
 device-major	ksyms		char 251		ksyms

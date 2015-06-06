@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.31 2014/03/08 18:08:48 skrll Exp $	*/
+/*	$NetBSD: epe.c,v 1.31.6.1 2015/06/06 14:39:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.31 2014/03/08 18:08:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.31.6.1 2015/06/06 14:39:55 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,11 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.31 2014/03/08 18:08:48 skrll Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <net/bpf.h>

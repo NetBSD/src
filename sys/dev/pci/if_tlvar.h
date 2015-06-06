@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.16 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.16.24.1 2015/06/06 14:40:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  * available from www.ti.com
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/i2c/i2cvar.h>
 

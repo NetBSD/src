@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.134.4.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.134.4.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134.4.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134.4.2 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -373,7 +373,7 @@ static struct sockaddr_in icmpgw = {
 	.sin_len = sizeof (struct sockaddr_in),
 	.sin_family = AF_INET,
 };
-struct sockaddr_in icmpmask = { 
+struct sockaddr_in icmpmask = {
 	.sin_len = 8,
 	.sin_family = 0,
 };
@@ -680,9 +680,9 @@ icmp_reflect(struct mbuf *m)
 	struct ip *ip = mtod(m, struct ip *);
 	struct in_ifaddr *ia;
 	struct ifaddr *ifa;
-	struct sockaddr_in *sin = 0;
+	struct sockaddr_in *sin;
 	struct in_addr t;
-	struct mbuf *opts = 0;
+	struct mbuf *opts = NULL;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
 
 	if (!in_canforward(ip->ip_src) &&
@@ -703,6 +703,8 @@ icmp_reflect(struct mbuf *m)
 
 	/* Look for packet addressed to us */
 	INADDR_TO_IA(t, ia);
+	if (ia && (ia->ia4_flags & IN_IFF_NOTREADY))
+		ia = NULL;
 
 	/* look for packet sent to broadcast address */
 	if (ia == NULL && m->m_pkthdr.rcvif &&
@@ -712,13 +714,14 @@ icmp_reflect(struct mbuf *m)
 				continue;
 			if (in_hosteq(t,ifatoia(ifa)->ia_broadaddr.sin_addr)) {
 				ia = ifatoia(ifa);
-				break;
+				if ((ia->ia4_flags & IN_IFF_NOTREADY) == 0)
+					break;
+				ia = NULL;
 			}
 		}
 	}
 
-	if (ia)
-		sin = &ia->ia_addr;
+	sin = ia ? &ia->ia_addr : NULL;
 
 	icmpdst.sin_addr = t;
 
@@ -805,7 +808,7 @@ icmp_reflect(struct mbuf *m)
 		 * add on any record-route or timestamp options.
 		 */
 		cp = (u_char *) (ip + 1);
-		if ((opts = ip_srcroute()) == 0 &&
+		if ((opts = ip_srcroute()) == NULL &&
 		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
 			MCLAIM(opts, m->m_owner);
 			opts->m_len = sizeof(struct in_addr);
@@ -1054,7 +1057,7 @@ sysctl_netinet_icmp_setup(struct sysctllog **clog)
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
-		       SYSCTL_DESCR("ICMP statistics"), 
+		       SYSCTL_DESCR("ICMP statistics"),
 		       sysctl_net_inet_icmp_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS,
 		       CTL_EOL);
@@ -1093,7 +1096,7 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 	int    error;
 
 	rt = rtalloc1(dst, 1);
-	if (rt == 0)
+	if (rt == NULL)
 		return;
 
 	/* If we didn't get a host route, allocate one */
@@ -1209,8 +1212,8 @@ ip_next_mtu(u_int mtu, int dir)	/* XXX */
 static void
 icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
-	if (rt == NULL)
-		panic("icmp_mtudisc_timeout:  bad route to timeout");
+	KASSERT(rt != NULL);
+
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, rt_getkey(rt),
@@ -1225,8 +1228,8 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 static void
 icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
-	if (rt == NULL)
-		panic("icmp_redirect_timeout:  bad route to timeout");
+	KASSERT(rt != NULL);
+
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, rt_getkey(rt),

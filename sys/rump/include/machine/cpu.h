@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2014/03/15 15:15:26 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.6.1 2015/06/06 14:40:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -86,6 +86,9 @@ extern struct cpu_info *rumpcpu_info_list;
 					_ci_ != NULL; _ci_ = _ci_->ci_next
 #define CPU_IS_PRIMARY(_ci_)		(_ci_->ci_index == 0)
 
+#define CLKF_USERMODE(framep)	0
+#define CLKF_PC(framep)		0
+#define CLKF_INTR(framep)	0
 
 #endif /* !_LOCORE */
 

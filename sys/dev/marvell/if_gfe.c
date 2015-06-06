@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.43.2.1 2015/04/06 15:18:09 skrll Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.43.2.2 2015/06/06 14:40:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.43.2.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.43.2.2 2015/06/06 14:40:08 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.43.2.1 2015/04/06 15:18:09 skrll Exp $"
 #include <netinet/if_inarp.h>
 #endif
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

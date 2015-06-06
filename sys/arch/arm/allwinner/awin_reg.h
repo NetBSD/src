@@ -1,4 +1,4 @@
-/* $NetBSD: awin_reg.h,v 1.55.2.1 2015/04/06 15:17:51 skrll Exp $ */
+/* $NetBSD: awin_reg.h,v 1.55.2.2 2015/06/06 14:39:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -164,7 +164,11 @@
 #define AWIN_DE_BE0_OFFSET		0x00260000
 #define AWIN_MP_OFFSET			0x00280000
 #define AWIN_AVG_OFFSET			0x002A0000
+#if defined(ALLWINNER_A80)
+#define AWIN_SDRAM_PBASE		0x20000000
+#else
 #define AWIN_SDRAM_PBASE		0x40000000
+#endif
 
 /* A10/A20 SRAM Controller */
 #define AWIN_SRAM_CTL0_REG		0x0000
@@ -1281,8 +1285,8 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_PIO_SDR_PAD_PUL_REG	0x0224
 
 #define AWIN_PIO_CFG_PINMASK(pin)	(7 << (4*((pin) & 7)))
-#define AWIN_PIO_DRV_MASK(pin)		((x) << (2*((pin) & 15))) 
-#define AWIN_PIO_PULn(v, pin)		((v) << (2*((pin) & 15))) 
+#define AWIN_PIO_DRV_MASK(pin)		((x) << (2*((pin) & 15)))
+#define AWIN_PIO_PULn(v, pin)		((v) << (2*((pin) & 15)))
 
 #define AWIN_PIO_FUNC_INPUT		0x0
 #define AWIN_PIO_FUNC_OUTPUT		0x1

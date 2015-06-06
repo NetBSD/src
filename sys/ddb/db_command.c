@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.143.6.1 2015/04/06 15:18:07 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.143.6.2 2015/06/06 14:40:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.143.6.1 2015/04/06 15:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.143.6.2 2015/06/06 14:40:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -448,7 +448,7 @@ int
 db_register_tbl(uint8_t type, const struct db_command *cmd_tbl)
 {
 	struct db_cmd_tbl_en *list_ent;
-	
+
 	/* empty list - ignore */
 	if (cmd_tbl->name == 0)
 		return 0;
@@ -549,8 +549,13 @@ db_command_loop(void)
 	db_recover = &db_jmpbuf;
 	(void) setjmp(&db_jmpbuf);
 
-	/* Execute default ddb start commands */
-	db_execute_commandlist(db_cmd_on_enter);
+	/*
+	 * Execute default ddb start commands only if this is the
+	 * first entry into DDB, in case the start commands fault
+	 * and we recurse into here.
+	 */
+	if (!savejmp)
+		db_execute_commandlist(db_cmd_on_enter);
 
 	(void) setjmp(&db_jmpbuf);
 	while (!db_cmd_loop_done) {
@@ -793,12 +798,12 @@ db_command(const struct db_command **last_cmdp)
 	static db_expr_t last_count = 0;
 	db_expr_t	addr, count;
 	char		modif[TOK_STRING_SIZE];
-	
+
 	int			t;
 	bool		have_addr = false;
 
 	command = NULL;
-	
+
 	t = db_read_token();
 	if ((t == tEOL) || (t == tCOMMA)) {
 		/*

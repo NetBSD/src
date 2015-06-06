@@ -29,15 +29,15 @@
 
 /*
  * IST-AG P14 calibrated Hygro-/Temperature sensor module
- * Devices: HYT-271, HYT-221 and HYT-939 
+ * Devices: HYT-271, HYT-221 and HYT-939
  *
  * see:
  * http://www.ist-ag.com/eh/ist-ag/resource.nsf/imgref/Download_AHHYTM_E2.1.pdf/
  *      $FILE/AHHYTM_E2.1.pdf
- */ 
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.2.8.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.2.8.2 2015/06/06 14:40:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,18 +124,18 @@ hytp14_attach(device_t parent, device_t self, void *aux)
 		    "unable to create sysmon structure\n");
 		return;
 	}
-	
+
 	for (i = 0; i < sc->sc_numsensors; i++) {
 		strlcpy(sc->sc_sensors[i].desc,
 			hytp14_sensors[i].desc,
 			sizeof sc->sc_sensors[i].desc);
-		
+
 		sc->sc_sensors[i].units = hytp14_sensors[i].type;
 		sc->sc_sensors[i].state = ENVSYS_SINVALID;
-		
+
 		DPRINTF(2, ("hytp14_attach: registering sensor %d (%s)\n", i,
 			    sc->sc_sensors[i].desc));
-		
+
 		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensors[i])) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to attach sensor\n");
@@ -168,7 +168,7 @@ static int hytp14_detach(device_t self, int flags)
 		sysmon_envsys_unregister(sc->sc_sme);
 		sc->sc_sme = NULL;
 	}
-	
+
 	return 0;
 }
 
@@ -181,7 +181,7 @@ hytp14_refresh_sensor(struct hytp14_sc *sc)
 	/* no more than once per second */
 	if (hardclock_ticks - sc->sc_refresh < hz)
 		return sc->sc_valid;
-	
+
 	DPRINTF(2, ("hytp14_refresh_sensor(%s)\n", device_xname(sc->sc_dev)));
 
 	if ((error = iic_acquire_bus(sc->sc_tag, 0)) == 0) {
@@ -217,22 +217,22 @@ hytp14_refresh_sensor(struct hytp14_sc *sc)
 				    sc->sc_addr, error));
 		}
 
-		iic_release_bus(sc->sc_tag, 0);	
+		iic_release_bus(sc->sc_tag, 0);
 		DPRINTF(3, ("hytp14_refresh_sensor(%s): bus released\n", device_xname(sc->sc_dev)));
 	} else {
 		DPRINTF(2, ("%s: %s: failed read from 0x%02x - error %d\n",
 			    device_xname(sc->sc_dev), __func__, sc->sc_addr, error));
 	}
-			
+
 	sc->sc_refresh = hardclock_ticks;
-	
+
 	/* skip data if sensor is in command mode */
 	if (error == 0 && (sc->sc_data[0] & HYTP14_RESP_CMDMODE) == 0) {
 		sc->sc_valid = ENVSYS_SVALID;
 	} else {
 		sc->sc_valid = ENVSYS_SINVALID;
 	}
-	
+
 	return sc->sc_valid;
 }
 
@@ -242,12 +242,12 @@ hytp14_refresh_humidity(struct hytp14_sc *sc, envsys_data_t *edata)
 {
 	uint16_t hyg;
 	int status;
-	
+
 	status = hytp14_refresh_sensor(sc);
-	
+
 	if (status == ENVSYS_SVALID) {
 		hyg = (sc->sc_data[0] << 8) | sc->sc_data[1];
-		
+
 		edata->value_cur = (1000000000 / HYTP14_HYG_SCALE) * (int32_t)HYTP14_HYG_RAWVAL(hyg);
 		edata->value_cur /= 10;
 	}
@@ -260,9 +260,9 @@ hytp14_refresh_temp(struct hytp14_sc *sc, envsys_data_t *edata)
 {
 	uint16_t temp;
 	int status;
-	
+
 	status = hytp14_refresh_sensor(sc);
-	
+
 	if (status == ENVSYS_SVALID) {
 		temp = HYTP14_TEMP_RAWVAL((sc->sc_data[2] << 8) | sc->sc_data[3]);
 
@@ -278,12 +278,12 @@ static void
 hytp14_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct hytp14_sc *sc = sme->sme_cookie;
-	
+
 	hytp14_sensors[edata->sensor].refresh(sc, edata);
 }
 
 
-MODULE(MODULE_CLASS_DRIVER, hythygtemp, "i2cexec");
+MODULE(MODULE_CLASS_DRIVER, hythygtemp, "i2cexec,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.98.4.1 2015/04/06 15:17:57 skrll Exp $	*/
+/*	$NetBSD: rd.c,v 1.98.4.2 2015/06/06 14:39:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.98.4.1 2015/04/06 15:17:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.98.4.2 2015/06/06 14:39:59 skrll Exp $");
 
 #include "opt_useleds.h"
 
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.98.4.1 2015/04/06 15:17:57 skrll Exp $");
 #include <sys/proc.h>
 #include <sys/stat.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <hp300/dev/hpibvar.h>
 

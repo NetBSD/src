@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.37 2014/02/07 11:51:00 msaitoh Exp $	*/
+/*	$NetBSD: puc.c,v 1.37.6.1 2015/06/06 14:40:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.37 2014/02/07 11:51:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.37.6.1 2015/06/06 14:40:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,8 @@ puc_attach(device_t parent, device_t self, void *aux)
 
 	/* SB16C10xx board specific initialization */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SYSTEMBASE &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYSTEMBASE_SB16C1054 ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYSTEMBASE_SB16C1050 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYSTEMBASE_SB16C1054 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYSTEMBASE_SB16C1058)) {
 		if (!sc->sc_bar_mappings[1].mapped) {
 			aprint_error_dev(self,

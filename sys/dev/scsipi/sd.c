@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.310.2.1 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: sd.c,v 1.310.2.2 2015/06/06 14:40:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.310.2.1 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.310.2.2 2015/06/06 14:40:13 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -69,8 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.310.2.1 2015/04/06 15:18:13 skrll Exp $");
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <sys/rnd.h>
-#include <sys/cprng.h>
+#include <sys/rndsource.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -182,7 +181,10 @@ const struct cdevsw sd_cdevsw = {
 	.d_flag = D_DISK
 };
 
-static struct dkdriver sddkdriver = { sdstrategy, sdminphys };
+static struct dkdriver sddkdriver = {
+	.d_strategy = sdstrategy,
+	.d_minphys = sdminphys
+};
 
 static const struct scsipi_periphsw sd_switch = {
 	sd_interpret_sense,	/* check our error handler first */
@@ -1053,7 +1055,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 	}
 
-	error = disk_ioctl(&sd->sc_dk, dev, cmd, addr, flag, l); 
+	error = disk_ioctl(&sd->sc_dk, dev, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -1237,7 +1239,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		sd->buf_queue = new_bufq;
 		splx(s);
 		bufq_free(old_bufq);
-		
+
 		return 0;
 	    }
 
@@ -1649,7 +1651,7 @@ sd_mode_select(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
 /*
  * sd_validate_blksize:
  *
- *	Validate the block size.  Print error if periph is specified, 
+ *	Validate the block size.  Print error if periph is specified,
  */
 static int
 sd_validate_blksize(struct scsipi_periph *periph, int len)

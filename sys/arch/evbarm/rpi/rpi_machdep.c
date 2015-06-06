@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.55.2.1 2015/04/06 15:17:56 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.55.2.2 2015/06/06 14:39:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.55.2.1 2015/04/06 15:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.55.2.2 2015/06/06 14:39:58 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -491,17 +491,22 @@ rpi_bootstrap(void)
 #if defined(BCM2836)
 	arm_cpu_max = 4;
 	extern int cortex_mmuinfo;
-	bus_space_tag_t iot = &bcm2835_bs_tag;
-	bus_space_handle_t ioh = BCM2836_ARM_LOCAL_VBASE;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("%s: %d cpus present\n", __func__, arm_cpu_max);
 #endif
 
-	extern void cortex_mpstart(void);
 	cortex_mmuinfo = armreg_ttbr_read();
+#ifdef VERBOSE_INIT_ARM
+	printf("%s: cortex_mmuinfo %x\n", __func__, cortex_mmuinfo);
+#endif
+
+	extern void cortex_mpstart(void);
 
 	for (size_t i = 1; i < arm_cpu_max; i++) {
+		bus_space_tag_t iot = &bcm2835_bs_tag;
+		bus_space_handle_t ioh = BCM2836_ARM_LOCAL_VBASE;
+
 		bus_space_write_4(iot, ioh,
 		    BCM2836_LOCAL_MAILBOX3_SETN(i),
 		    (uint32_t)cortex_mpstart);

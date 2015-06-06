@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.14 2014/10/02 21:49:22 jmcneill Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.14.2.1 2015/06/06 14:40:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.14 2014/10/02 21:49:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.14.2.1 2015/06/06 14:40:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.14 2014/10/02 21:49:22 jmcneill Exp $
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/kthread.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/ldvar.h>
 
@@ -118,7 +118,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	    sa->sf->cid.rev, sa->sf->cid.psn, sa->sf->cid.mdt);
 	aprint_naive("\n");
 
-	callout_init(&sc->sc_task.task_callout, CALLOUT_MPSAFE);
+	callout_init(&sc->sc_task.task_callout, 0);
 
 	sc->sc_hwunit = 0;	/* always 0? */
 	sc->sc_sf = sa->sf;
@@ -216,7 +216,9 @@ ld_sdmmc_dobio(void *arg)
 		    bp->b_rawblkno, sc->sc_sf->csd.capacity);
 		bp->b_error = EINVAL;
 		bp->b_resid = bp->b_bcount;
+		s = splbio();
 		lddone(&sc->sc_ld, bp);
+		splx(s);
 		return;
 	}
 
@@ -235,9 +237,9 @@ ld_sdmmc_dobio(void *arg)
 	} else {
 		bp->b_resid = 0;
 	}
-	splx(s);
 
 	lddone(&sc->sc_ld, bp);
+	splx(s);
 }
 
 static void
@@ -256,11 +258,11 @@ ld_sdmmc_timeout(void *arg)
 	bp->b_error = EIO;	/* XXXX */
 	bp->b_resid = bp->b_bcount;
 	sdmmc_del_task(&task->task);
-	splx(s);
 
 	aprint_error_dev(sc->sc_ld.sc_dv, "task timeout");
 
 	lddone(&sc->sc_ld, bp);
+	splx(s);
 }
 
 static int

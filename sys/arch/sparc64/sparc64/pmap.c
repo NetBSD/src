@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.292.2.1 2015/04/06 15:18:03 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.292.2.2 2015/06/06 14:40:03 skrll Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292.2.1 2015/04/06 15:18:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292.2.2 2015/06/06 14:40:03 skrll Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -170,7 +170,7 @@ pmap_has_ctx(struct pmap *p)
 		if (p->pm_ctx[i] > 0)
 			return true;
 
-	return false;	
+	return false;
 }
 
 #ifdef MULTIPROCESSOR
@@ -554,7 +554,7 @@ pmap_mp_init(void)
 		else
 			if (CPU_ISSUN4V)
 				tp[i].data |= SUN4V_TLB_X;
-			
+
 		DPRINTF(PDB_BOOT1, ("xtlb[%d]: Tag: %" PRIx64 " Data: %"
 				PRIx64 "\n", i, tp[i].tag, tp[i].data));
 	}
@@ -1288,7 +1288,7 @@ cpu_pmap_init(struct cpu_info *ci)
 	 */
 	ci->ci_pmap_next_ctx = 1;
 	/* all SUN4U use 13 bit contexts - SUN4V use at least 13 bit contexts */
-	ci->ci_numctx = 0x2000; 
+	ci->ci_numctx = 0x2000;
 	ctxsize = sizeof(paddr_t)*ci->ci_numctx;
 	ci->ci_ctxbusy = (paddr_t *)kdata_alloc(ctxsize, sizeof(uint64_t));
 	memset(ci->ci_ctxbusy, 0, ctxsize);
@@ -2634,12 +2634,12 @@ pmap_clear_reference(struct vm_page *pg)
 	pv_entry_t pv;
 	int rv;
 	int changed = 0;
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	int referenced = 0;
 #endif
 
 	mutex_enter(&pmap_lock);
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	DPRINTF(PDB_CHANGEPROT|PDB_REF, ("pmap_clear_reference(%p)\n", pg));
 	referenced = pmap_is_referenced_locked(pg);
 #endif
@@ -2695,7 +2695,7 @@ pmap_clear_reference(struct vm_page *pg)
 	}
 	dcache_flush_page_all(VM_PAGE_TO_PHYS(pg));
 	pv_check();
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	if (pmap_is_referenced_locked(pg)) {
 		pv = &md->mdpg_pvh;
 		printf("pmap_clear_reference(): %p still referenced "

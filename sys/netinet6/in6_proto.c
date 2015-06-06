@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.103.4.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.103.4.2 2015/06/06 14:40:26 skrll Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.103.4.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.103.4.2 2015/06/06 14:40:26 skrll Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -397,7 +397,9 @@ struct domain inet6domain = {
 	.dom_rtattach = rt_inithead,
 	.dom_rtoffset = offsetof(struct sockaddr_in6, sin6_addr) << 3,
 	.dom_maxrtkey = sizeof(struct ip_pack6),
+	.dom_if_up = in6_if_up, .dom_if_down = in6_if_down,
 	.dom_ifattach = in6_domifattach, .dom_ifdetach = in6_domifdetach,
+	.dom_if_link_state_change = in6_if_link_state_change,
 	.dom_ifqueues = { NULL, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),

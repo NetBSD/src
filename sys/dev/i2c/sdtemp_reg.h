@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.7 2014/01/09 16:51:05 mlelstv Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.7.6.1 2015/06/06 14:40:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -136,5 +136,7 @@
 #define	CAT_MANUFACTURER_ID		0x1B09
 #define	CAT_34TS02_DEVICE_ID		0x0800
 #define	CAT_34TS02_MASK			0xFFE0
+#define	CAT_34TS02C_DEVICE_ID		0x0a00
+#define	CAT_34TS02C_MASK		0xFFFF
 
 #endif	/* _DEV_I2C_SDTEMPREG_H */

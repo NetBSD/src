@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.92.4.1 2015/04/06 15:17:51 skrll Exp $ */
+/*	$NetBSD: fd.c,v 1.92.4.2 2015/06/06 14:39:54 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.92.4.1 2015/04/06 15:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.92.4.2 2015/06/06 14:39:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,9 @@ const struct cdevsw fd_cdevsw = {
 	.d_flag = D_DISK
 };
 
-struct dkdriver fddkdriver = { fdstrategy };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy
+};
 
 CFATTACH_DECL_NEW(fdc, 0,
     fdcmatch, fdcattach, NULL, NULL);

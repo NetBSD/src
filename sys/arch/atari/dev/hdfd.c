@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.78.4.1 2015/04/06 15:17:54 skrll Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.78.4.2 2015/06/06 14:39:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.78.4.1 2015/04/06 15:17:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.78.4.2 2015/06/06 14:39:57 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -313,7 +313,9 @@ const struct cdevsw fd_cdevsw = {
 
 void	fdstart(struct fd_softc *);
 
-struct dkdriver fddkdriver = { fdstrategy };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy
+};
 
 void	fd_set_motor(struct fdc_softc *, int);
 void	fd_motor_off(void *);
@@ -1450,7 +1452,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			fd_formb->fd_formb_secno(i) = il[i+1];
 			fd_formb->fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
-		
+
 		error = fdformat(dev, fd_formb, l->l_proc);
 		free(fd_formb, M_TEMP);
 		return error;
@@ -1516,7 +1518,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 			break;
 	}
 	mutex_exit(bp->b_objlock);
-       
+
 	if (rv == EWOULDBLOCK) {
 		/* timed out */
 		rv = EIO;

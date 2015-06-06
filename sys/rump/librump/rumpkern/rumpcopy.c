@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.18.6.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.18.6.2 2015/06/06 14:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.18.6.1 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.18.6.2 2015/06/06 14:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -49,7 +49,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 	if (RUMP_LOCALPROC_P(curproc)) {
 		memcpy(kaddr, uaddr, len);
 	} else if (len) {
-		error = rump_sysproxy_copyin(curproc->p_vmspace->vm_map.pmap,
+		error = rump_sysproxy_copyin(RUMP_SPVM2CTL(curproc->p_vmspace),
 		    uaddr, kaddr, len);
 	}
 
@@ -68,7 +68,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 	if (RUMP_LOCALPROC_P(curproc)) {
 		memcpy(uaddr, kaddr, len);
 	} else if (len) {
-		error = rump_sysproxy_copyout(curproc->p_vmspace->vm_map.pmap,
+		error = rump_sysproxy_copyout(RUMP_SPVM2CTL(curproc->p_vmspace),
 		    kaddr, uaddr, len);
 	}
 	return error;
@@ -82,7 +82,7 @@ subyte(void *uaddr, int byte)
 	if (RUMP_LOCALPROC_P(curproc))
 		*(char *)uaddr = byte;
 	else
-		error = rump_sysproxy_copyout(curproc->p_vmspace->vm_map.pmap,
+		error = rump_sysproxy_copyout(RUMP_SPVM2CTL(curproc->p_vmspace),
 		    &byte, uaddr, 1);
 
 	return error;
@@ -122,7 +122,7 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	if (RUMP_LOCALPROC_P(curproc))
 		return copystr(uaddr, kaddr, len, done);
 
-	if ((rv = rump_sysproxy_copyinstr(curproc->p_vmspace->vm_map.pmap,
+	if ((rv = rump_sysproxy_copyinstr(RUMP_SPVM2CTL(curproc->p_vmspace),
 	    uaddr, kaddr, &len)) != 0)
 		return rv;
 
@@ -159,7 +159,7 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 	if (slen > len)
 		return ENAMETOOLONG;
 
-	error = rump_sysproxy_copyoutstr(curproc->p_vmspace->vm_map.pmap,
+	error = rump_sysproxy_copyoutstr(RUMP_SPVM2CTL(curproc->p_vmspace),
 	    kaddr, uaddr, &slen);
 	if (done)
 		*done = slen;
@@ -194,11 +194,11 @@ uvm_io(struct vm_map *vm, struct uio *uio)
 			continue;
 
 		if (uio->uio_rw == UIO_READ) {
-			error = rump_sysproxy_copyin(vm->pmap,
+			error = rump_sysproxy_copyin(RUMP_SPVM2CTL(vm),
 			    (void *)(vaddr_t)uio->uio_offset, iov->iov_base,
 			    curlen);
 		} else {
-			error = rump_sysproxy_copyout(vm->pmap,
+			error = rump_sysproxy_copyout(RUMP_SPVM2CTL(vm),
 			    iov->iov_base, (void *)(vaddr_t)uio->uio_offset,
 			    curlen);
 		}

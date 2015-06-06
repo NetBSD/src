@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2014, Intel Corp.
+ * Copyright (C) 2000 - 2015, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,6 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-#define __DTCOMPILE_C__
 #define _DECLARE_DT_GLOBALS
 
 #include "aslcompiler.h"
@@ -103,13 +102,18 @@ DtDoCompile (
 
     /* Preprocessor */
 
-    Event = UtBeginEvent ("Preprocess input file");
-    PrDoPreprocess ();
-    UtEndEvent (Event);
-
-    if (Gbl_PreprocessOnly)
+    if (Gbl_PreprocessFlag)
     {
-        return (AE_OK);
+        /* Preprocessor */
+
+        Event = UtBeginEvent ("Preprocess input file");
+        PrDoPreprocess ();
+        UtEndEvent (Event);
+
+        if (Gbl_PreprocessOnly)
+        {
+            return (AE_OK);
+        }
     }
 
     /*

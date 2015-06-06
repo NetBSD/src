@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmc.c,v 1.2.2.2 2015/04/06 15:17:53 skrll Exp $ */
+/* $NetBSD: tegra_pmc.c,v 1.2.2.3 2015/06/06 14:39:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.2.2.2 2015/04/06 15:17:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.2.2.3 2015/06/06 14:39:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,6 +81,19 @@ tegra_pmc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PMC\n");
 }
 
+static void
+tegra_pmc_get_bs(bus_space_tag_t *pbst, bus_space_handle_t *pbsh)
+{
+	if (pmc_softc) {
+		*pbst = pmc_softc->sc_bst;
+		*pbsh = pmc_softc->sc_bsh;
+	} else {
+		*pbst = &armv7_generic_bs_tag;
+		bus_space_subregion(*pbst, tegra_apb_bsh,
+		    TEGRA_PMC_OFFSET, TEGRA_PMC_SIZE, pbsh);
+	}
+}
+
 void
 tegra_pmc_reset(void)
 {
@@ -88,14 +101,7 @@ tegra_pmc_reset(void)
 	bus_space_handle_t bsh;
 	uint32_t cntrl;
 
-	if (pmc_softc) {
-		bst = pmc_softc->sc_bst;
-		bsh = pmc_softc->sc_bsh;
-	} else {
-		bst = &armv7_generic_bs_tag;
-		bus_space_subregion(bst, tegra_apb_bsh,
-		    TEGRA_PMC_OFFSET, TEGRA_PMC_SIZE, &bsh);
-	}
+	tegra_pmc_get_bs(&bst, &bsh);
 
 	cntrl = bus_space_read_4(bst, bsh, PMC_CNTRL_0_REG);
 	cntrl |= PMC_CNTRL_0_MAIN_RST;
@@ -104,4 +110,62 @@ tegra_pmc_reset(void)
 	for (;;) {
 		__asm("wfi");
 	}
+}
+
+void
+tegra_pmc_power(u_int partid, bool enable)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	uint32_t status, toggle;
+	bool state;
+	int retry = 10000;
+
+	tegra_pmc_get_bs(&bst, &bsh);
+
+	status = bus_space_read_4(bst, bsh, PMC_PWRGATE_STATUS_0_REG);
+	state = !!(status & __BIT(partid));
+	if (state == enable)
+		return;
+
+	while (--retry > 0) {
+		toggle = bus_space_read_4(bst, bsh, PMC_PWRGATE_TOGGLE_0_REG);
+		if ((toggle & PMC_PWRGATE_TOGGLE_0_START) == 0)
+			break;
+		delay(1);
+	}
+	if (retry == 0) {
+		printf("ERROR: Couldn't enable PMC partition %#x\n", partid);
+		return;
+	}
+
+	bus_space_write_4(bst, bsh, PMC_PWRGATE_TOGGLE_0_REG,
+	    __SHIFTIN(partid, PMC_PWRGATE_TOGGLE_0_PARTID) |
+	    PMC_PWRGATE_TOGGLE_0_START);
+}
+
+void
+tegra_pmc_remove_clamping(u_int partid)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_pmc_get_bs(&bst, &bsh);
+
+	bus_space_write_4(bst, bsh, PMC_REMOVE_CLAMPING_CMD_0_REG,
+	    __BIT(partid));
+}
+
+void
+tegra_pmc_hdmi_enable(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_pmc_get_bs(&bst, &bsh);
+
+	tegra_reg_set_clear(bst, bsh, PMC_IO_DPD_STATUS_REG,
+	    0, PMC_IO_DPD_STATUS_HDMI);
+	tegra_reg_set_clear(bst, bsh, PMC_IO_DPD2_STATUS_REG,
+	    0, PMC_IO_DPD2_STATUS_HV);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.17 2014/05/19 22:47:53 rmind Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.17.4.1 2015/06/06 14:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,8 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.17 2014/05/19 22:47:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.17.4.1 2015/06/06 14:40:02 skrll Exp $");
 
+#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
@@ -67,8 +68,12 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.17 2014/05/19 22:47:53 rmind Exp $");
 #endif
 #endif
 
+#ifdef MIPS64_OCTEON
+extern struct cpu_softc octeon_cpu0_softc;
+#endif
+
 struct cpu_info cpu_info_store
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && !defined(MIPS64_OCTEON)
 	__section(".data1")
 	__aligned(1LU << ilog2((2*sizeof(struct cpu_info)-1)))
 #endif
@@ -84,6 +89,9 @@ struct cpu_info cpu_info_store
 #ifdef MULTIPROCESSOR
 	.ci_flags = CPUF_PRIMARY|CPUF_PRESENT|CPUF_RUNNING,
 #endif
+#ifdef MIPS64_OCTEON
+	.ci_softc = &octeon_cpu0_softc,
+#endif
 };
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
@@ -94,6 +102,9 @@ const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 };
 
 #ifdef MULTIPROCESSOR
+struct cpu_info * cpuid_infos[MAXCPUS] = {
+	[0] = &cpu_info_store,
+};
 
 volatile __cpuset_t cpus_running = 1;
 volatile __cpuset_t cpus_hatched = 1;
@@ -104,13 +115,27 @@ volatile __cpuset_t cpus_halted = 0;
 static int  cpu_ipi_wait(volatile __cpuset_t *, u_long);
 static void cpu_ipi_error(const char *, __cpuset_t, __cpuset_t);
 
-static struct cpu_info *cpu_info_last = &cpu_info_store;
-
 struct cpu_info *
 cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	cpuid_t cpu_core_id, cpuid_t cpu_smt_id)
 {
-	vaddr_t cpu_info_offset = (vaddr_t)&cpu_info_store & PAGE_MASK; 
+	KASSERT(cpu_id < MAXCPUS);
+
+#ifdef MIPS64_OCTEON
+	const vaddr_t cpu_info_offset = 0x800;
+	vaddr_t exc_page = MIPS_UTLB_MISS_EXC_VEC + 0x1000*cpu_id;
+	__CTASSERT(sizeof(struct cpu_info) <= 0x800);
+	__CTASSERT(sizeof(struct pmap_tlb_info) <= 0x400);
+	
+	struct cpu_info * const ci = (void *) (exc_page + cpu_info_offset);
+	memset((void *)exc_page, 0, PAGE_SIZE);
+
+	if (ti == NULL) {
+		ti = ((struct pmap_tlb_info *)ci) - 1;
+		pmap_tlb_info_init(ti);
+	}
+#else
+	const vaddr_t cpu_info_offset = (vaddr_t)&cpu_info_store & PAGE_MASK; 
 	struct pglist pglist;
 	int error;
 
@@ -144,6 +169,17 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 		pmap_tlb_info_init(ti);
 	}
 
+	/*
+	 * Attach its TLB info (which must be direct-mapped)
+	 */
+#ifdef _LP64
+	KASSERT(MIPS_KSEG0_P(ti) || MIPS_XKPHYS_P(ti));
+#else
+	KASSERT(MIPS_KSEG0_P(ti));
+#endif
+#endif /* MIPS64_OCTEON */
+
+	KASSERT(cpu_id != 0);
 	ci->ci_cpuid = cpu_id;
 	ci->ci_data.cpu_package_id = cpu_package_id;
 	ci->ci_data.cpu_core_id = cpu_core_id;
@@ -154,15 +190,6 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
         ci->ci_divisor_delay = cpu_info_store.ci_divisor_delay;
         ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
 	ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
-
-	/*
-	 * Attach its TLB info (which must be direct-mapped)
-	 */
-#ifdef _LP64
-	KASSERT(MIPS_KSEG0_P(ti) || MIPS_XKPHYS_P(ti));
-#else
-	KASSERT(MIPS_KSEG0_P(ti));
-#endif
 
 #ifndef _LP64
 	/*
@@ -244,19 +271,16 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 		EVCNT_TYPE_TRAP, NULL, xname,
 		"tlb misses");
 
-	if (ci == &cpu_info_store)
-		pmap_tlb_info_evcnt_attach(ci->ci_tlb_info);
-
 #ifdef MULTIPROCESSOR
 	if (ci != &cpu_info_store) {
 		/*
 		 * Tail insert this onto the list of cpu_info's.
 		 */
-		KASSERT(ci->ci_next == NULL);
-		KASSERT(cpu_info_last->ci_next == NULL);
-		cpu_info_last->ci_next = ci;
-		cpu_info_last = ci;
+		KASSERT(cpuid_infos[ci->ci_cpuid] == NULL);
+		cpuid_infos[ci->ci_cpuid] = ci;
+		membar_producer();
 	}
+	KASSERT(cpuid_infos[ci->ci_cpuid] != NULL);
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_activate_rqst,
 	    EVCNT_TYPE_MISC, NULL, xname,
 	    "syncicache activate request");
@@ -291,6 +315,7 @@ cpu_startup_common(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -864,6 +889,9 @@ cpu_hatch(struct cpu_info *ci)
 	 */
 	(*mips_locoresw.lsw_cpu_init)(ci);
 
+	// Show this CPU as present.
+	atomic_or_ulong(&ci->ci_flags, CPUF_PRESENT);
+
 	/*
 	 * Announce we are hatched
 	 */
@@ -905,10 +933,13 @@ cpu_hatch(struct cpu_info *ci)
 void
 cpu_boot_secondary_processors(void)
 {
-	for (struct cpu_info *ci = cpu_info_store.ci_next;
-	     ci != NULL;
-	     ci = ci->ci_next) {
-		KASSERT(!CPU_IS_PRIMARY(ci));
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	aprint_verbose("Booting secondary processors (%#"PRIx64")",
+	    cpus_hatched);
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (CPU_IS_PRIMARY(ci))
+			continue;
 		KASSERT(ci->ci_data.cpu_idlelwp);
 
 		/*
@@ -917,10 +948,12 @@ cpu_boot_secondary_processors(void)
 		if (! CPUSET_HAS_P(cpus_hatched, cpu_index(ci)))
 			continue;
 
+		aprint_verbose(" %s", cpu_name(ci));
 		ci->ci_data.cpu_cc_skew = mips3_cp0_count_read();
 		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
 		CPUSET_ADD(cpus_running, cpu_index(ci));
 	}
+	aprint_verbose("\n");
 }
 
 void

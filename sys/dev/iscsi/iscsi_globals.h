@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.6 2012/12/29 11:05:29 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.6.14.1 2015/06/06 14:40:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
-#include <sys/rnd.h>
 #include <sys/device.h>
 
 #include <dev/scsipi/scsi_all.h>
@@ -60,9 +59,6 @@
 /* ------------------------ Code selection constants ------------------------ */
 
 /* #define ISCSI_DEBUG      1 */
-
-#include "iscsi_perf.h"
-#include "iscsi_test.h"
 
 /* -------------------------  Global Constants  ----------------------------- */
 
@@ -196,10 +192,6 @@ typedef struct session_s session_t;
 typedef struct ccb_s ccb_t;
 typedef struct pdu_s pdu_t;
 
-
-#include "iscsi_testlocal.h"
-
-
 /* the serial number management structure (a circular buffer) */
 
 typedef struct {
@@ -208,7 +200,7 @@ typedef struct {
 	int		top;	/* top of buffer (newest element) */
 	int		bottom;	/* bottom of buffer (oldest element) */
 	uint32_t	sernum[SERNUM_BUFFER_LENGTH];	/* the serial numbers */
-	int		ack[SERNUM_BUFFER_LENGTH];	/* acknowledged? */
+	bool		ack[SERNUM_BUFFER_LENGTH];	/* acknowledged? */
 } sernum_buffer_t;
 
 
@@ -240,17 +232,6 @@ struct pdu_s {
 				/* the ccb this PDU belongs to (if any) */
 	connection_t		*connection;
 				/* the connection this PDU belongs to */
-
-#ifdef ISCSI_TEST_MODE
-	pdu_header_t		mod_pdu;
-	/* Buffer for modified PDU header (test mode) */
-#endif
-
-#ifdef ISCSI_PERFTEST
-	int			perf_index;
-	/* performance counter index */
-	perfpoint_t		perf_which;	/* performance point */
-#endif
 };
 
 
@@ -313,10 +294,6 @@ struct ccb_s {
 	int			flags;
 	connection_t		*connection; /* connection for CCB */
 	session_t		*session; /* session for CCB */
-
-#ifdef ISCSI_PERFTEST
-	int			perf_index; /* performance counter index */
-#endif
 };
 
 
@@ -329,13 +306,6 @@ typedef struct ccb_list_s ccb_list_t;
 /*
    Per connection data: the connection structure
 */
-#if (__NetBSD_Version__ >= 399000900)
-typedef struct lwp *PTHREADOBJ;
-#else
-typedef struct proc *PTHREADOBJ;
-#endif
-
-
 struct connection_s {
 	TAILQ_ENTRY(connection_s)	connections;
 
@@ -375,7 +345,7 @@ struct connection_s {
 
 	conn_state_t			state; /* State of connection */
 
-	PTHREADOBJ			threadobj;
+	struct lwp			*threadobj;
 		/* proc/thread pointer of socket owner */
 	struct file			*sock;	/* the connection's socket */
 	session_t			*session;
@@ -406,11 +376,6 @@ struct connection_s {
 					/* only valid during login */
 
 	pdu_t				pdu[PDUS_PER_CONNECTION]; /* PDUs */
-
-#ifdef ISCSI_TEST_MODE
-	test_pars_t			*test_pars;
-	/* connection in test mode if non-NULL */
-#endif
 };
 
 /* the connection list type */
@@ -535,6 +500,10 @@ typedef struct event_handler_s {
 TAILQ_HEAD(event_handler_list_s, event_handler_s);
 typedef struct event_handler_list_s event_handler_list_t;
 
+/* /dev/iscsi0 state */
+struct iscsifd {
+	char dummy;
+};
 
 /* -------------------------  Global Variables  ----------------------------- */
 
@@ -555,28 +524,11 @@ extern uint8_t iscsi_InitiatorName[ISCSI_STRING_LENGTH];
 extern uint8_t iscsi_InitiatorAlias[ISCSI_STRING_LENGTH];
 extern login_isid_t iscsi_InitiatorISID;
 
-/* Debugging and profiling stuff */
-
-#include "iscsi_profile.h"
+/* Debugging stuff */
 
 #ifndef DDB
 #define Debugger() panic("should call debugger here (iscsi.c)")
 #endif /* ! DDB */
-
-#if defined(ISCSI_PERFTEST)
-
-extern int iscsi_perf_level;				/* How much info to display */
-
-#define PDEBOUT(x) printf x
-#define PDEB(lev,x) { if (iscsi_perf_level >= lev) printf x ;}
-#define PDEBC(conn,lev,x) { if (iscsi_perf_level >= lev) { printf("S%dC%d: ", \
-				conn ? conn->session->id : -1, \
-				conn ? conn->id : -1); printf x ;}}
-#else
-#define PDEBOUT(x)
-#define PDEB(lev,x)
-#define PDEBC(conn,lev,x)
-#endif
 
 #ifdef ISCSI_DEBUG
 
@@ -680,49 +632,6 @@ sn_a_le_b(uint32_t a, uint32_t b)
 	       (a >= b && ((a - b) & 0x80000000));
 }
 
-
-/* Version dependencies */
-
-
-#if (__NetBSD_Version__ >= 399000900)
-#define PROCP(obj)	(obj->l_proc)
-#else
-#define PROCP(obj)	obj
-#define UIO_SETUP_SYSSPACE(uio) (uio)->uio_segflg = UIO_SYSSPACE
-#endif
-
-#if (__NetBSD_Version__ >= 106000000)
-#  ifdef ISCSI_TEST_MODE
-#define SET_CCB_TIMEOUT(conn, ccb, tout) do {				\
-	if (test_ccb_timeout (conn)) {					\
-		callout_schedule(&ccb->timeout, tout);			\
-	}								\
-} while (/*CONSTCOND*/ 0)
-#  else
-#define SET_CCB_TIMEOUT(conn, ccb, tout) callout_schedule(&ccb->timeout, tout)
-#  endif
-#else
-/* no test mode for 1.5 */
-#define SET_CCB_TIMEOUT(conn, ccb, tout)				\
-	callout_reset(&ccb->timeout, tout, ccb_timeout, ccb)
-#endif
-
-#if (__NetBSD_Version__ >= 106000000)
-#  ifdef ISCSI_TEST_MODE
-#define SET_CONN_TIMEOUT(conn, tout) do {				\
-	if (test_conn_timeout (conn)) {					\
-		callout_schedule(&conn->timeout, tout);			\
-	}								\
-} while (/*CONSTCOND*/0)
-#  else
-#define SET_CONN_TIMEOUT(conn, tout) callout_schedule(&conn->timeout, tout)
-#  endif
-#else
-/* no test mode for 1.5 */
-#define SET_CONN_TIMEOUT(conn, tout)					\
-	callout_reset(&conn->timeout, tout, connection_timeout, conn)
-#endif
-
 /* in iscsi_ioctl.c */
 
 /* Parameter for logout is reason code in logout PDU, -1 for don't send logout */
@@ -743,7 +652,7 @@ void iscsi_cleanup_thread(void *);
 uint32_t map_databuf(struct proc *, void **, uint32_t);
 void unmap_databuf(struct proc *, void *, uint32_t);
 #endif
-int iscsiioctl(dev_t, u_long, void *, int, PTHREADOBJ);
+int iscsiioctl(struct file *, u_long, void *);
 
 session_t *find_session(uint32_t);
 connection_t *find_connection(session_t *, uint32_t);

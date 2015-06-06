@@ -1,16 +1,16 @@
-/*	$NetBSD: bwi.c,v 1.24.6.1 2015/04/06 15:18:09 skrll Exp $	*/
+/*	$NetBSD: bwi.c,v 1.24.6.2 2015/06/06 14:40:07 skrll Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The DragonFly Project
  * by Sepherosa Ziehau <sepherosa@gmail.com>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -20,7 +20,7 @@
  * 3. Neither the name of The DragonFly Project nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific, prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -33,7 +33,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * $DragonFly: src/sys/dev/netif/bwi/bwimac.c,v 1.1 2007/09/08 06:15:54 sephe Exp $
  */
 
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.24.6.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.24.6.2 2015/06/06 14:40:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -1967,7 +1967,7 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	uint16_t fw_rev;
 	size_t fw_len, i;
 
-	/* 
+	/*
 	 * Load ucode image
 	 */
 	fw = (const uint32_t *)(mac->mac_ucode + BWI_FWHDR_SZ);
@@ -4739,7 +4739,7 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	int16_t pa_params[3];
 	int error = 0, i, ant_gain, reg_txpower_max;
 #ifdef BWI_DEBUG
-	int debug = sc->sc_debug & 
+	int debug = sc->sc_debug &
 	    (BWI_DBG_RF | BWI_DBG_TXPOWER | BWI_DBG_ATTACH);
 #endif
 
@@ -7182,7 +7182,7 @@ bwi_init_statechg(struct bwi_softc *sc, int statechg)
 		goto back;
 
 	bwi_bbp_power_on(sc, BWI_CLOCK_MODE_DYN);
-	
+
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 
 	bwi_set_bssid(sc, bwi_zero_addr);	/* Clear BSSID */
@@ -8847,7 +8847,7 @@ bwi_ieee80211_ack_rate(struct ieee80211_node *ni, uint8_t rate)
 
 	for (i = 0; i < rs->rs_nrates; ++i) {
 		uint8_t rate1 = rs->rs_rates[i] & IEEE80211_RATE_VAL;
-		
+
 		if (rate1 > rate) {
 			if (ack_rate != 0)
 				return (ack_rate);
@@ -8907,7 +8907,7 @@ bwi_ieee80211_ack_rate(struct ieee80211_node *ni, uint8_t rate)
 #define IEEE80211_OFDM_SIGNAL_TIME		4
 
 #define IEEE80211_OFDM_PLCP_SERVICE_NBITS	16
-#define IEEE80211_OFDM_TAIL_NBITS		6	
+#define IEEE80211_OFDM_TAIL_NBITS		6
 
 #define IEEE80211_OFDM_NBITS(frmlen)		\
 	(IEEE80211_OFDM_PLCP_SERVICE_NBITS +	\
@@ -9140,7 +9140,6 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			m_freem(m);
 			error = ENOBUFS;
 			aprint_error_dev(sc->sc_dev,
 			    "can't defrag TX buffer (1)\n");
@@ -9151,12 +9150,11 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
-				m_freem(m);
 				m_freem(m_new);
 				error = ENOBUFS;
 			}
 		}
-		
+
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "can't defrag TX buffer (2)\n");
@@ -9167,7 +9165,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		m_freem(m);
 		m_new->m_len = m_new->m_pkthdr.len;
 		m = m_new;
-		
+
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
 		    BUS_DMA_NOWAIT);
 		if (error) {

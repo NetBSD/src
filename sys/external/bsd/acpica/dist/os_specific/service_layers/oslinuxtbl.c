@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2014, Intel Corp.
+ * Copyright (C) 2000 - 2015, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1319,7 +1319,7 @@ OslTableNameFromFile (
 
     if (isdigit ((int) Filename[ACPI_NAME_SIZE]))
     {
-        sscanf (&Filename[ACPI_NAME_SIZE], "%d", Instance);
+        sscanf (&Filename[ACPI_NAME_SIZE], "%u", Instance);
     }
     else if (strlen (Filename) != ACPI_NAME_SIZE)
     {

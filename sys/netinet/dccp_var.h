@@ -1,8 +1,8 @@
 /*	$KAME: dccp_var.h,v 1.29 2005/11/03 14:59:28 nishida Exp $	*/
-/*	$NetBSD: dccp_var.h,v 1.1.2.2 2015/04/06 15:18:22 skrll Exp $ */
+/*	$NetBSD: dccp_var.h,v 1.1.2.3 2015/06/06 14:40:25 skrll Exp $ */
 
 /*
- * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
+ * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -111,7 +111,7 @@ struct dccpcb {
 	u_char *av_hp;	/* head ptr for ackvector */
 	u_int16_t av_size;
 	dccp_seq av_hs, av_ts; /* highest/lowest seq no in ackvector */
-	
+
 	u_int8_t remote_ackvector; /* Is recv side using AckVector? */
 	u_char      shortseq; /* use short seq number */
 	u_int32_t	scode;    /* service core */
@@ -181,14 +181,14 @@ struct	dccpstat {
 	u_long	tcplikes_send_missack;	/* Ack packets assumed lost */
 	u_long	tcplikes_send_badseq;	/* Bad sequence number on outgoing packet */
 	u_long	tcplikes_send_memerr;	/* Memory allocation errors */
-	
+
 	/* TCPlike Receiver */
 	u_long	tcplikes_recv_conn;	/* Connections established */
 	u_long	tcplikes_recv_datarecv; /* Number of data packets received */
 	u_long	tcplikes_recv_ackack;	/* Ack-on-acks received */
 	u_long	tcplikes_recv_acksent;	/* Acknowledgement (w/ Ack Vector) packets sent */
 	u_long	tcplikes_recv_memerr;	/* Memory allocation errors */
-	
+
 	/*	Some CCID statistic should also be here */
 
 	u_long	dccps_opackets;		/* Total output packets */
@@ -214,8 +214,8 @@ struct	dccpstat {
 /*
  * Names for DCCP sysctl objects
  */
-#define DCCPCTL_LOGINVAIN       	1 
-#define DCCPCTL_DOFEATURENEGO       2 
+#define DCCPCTL_LOGINVAIN       	1
+#define DCCPCTL_DOFEATURENEGO       2
 
 /*
  *	DCCP States
@@ -288,7 +288,7 @@ extern u_long	dccp_recvspace;
 extern struct	dccpstat dccpstat; /* dccp statistics */
 extern int	dccp_log_in_vain; /* if we should log connections to
 				     ports w/o listeners */
-extern int	dccp_do_feature_nego; 
+extern int	dccp_do_feature_nego;
 
 extern struct inpcbtable dccpbtable;
 
@@ -299,21 +299,21 @@ void	dccp_input(struct mbuf *, ...);
 void*	dccp_ctlinput(int, const struct sockaddr *, void *);
 int	dccp_ctloutput(int , struct socket *, struct sockopt *);
 int	dccp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-int	dccp_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *); 
+int	dccp_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 
 void	dccp_notify(struct inpcb *, int);
 struct dccpcb *
 	dccp_newdccpcb(int, void *);
 int	dccp_shutdown(struct socket *);
 int	dccp_output(struct dccpcb *, u_int8_t);
-int	dccp_doconnect(struct socket *, struct mbuf *, struct lwp *, int);
+int	dccp_doconnect(struct socket *, struct sockaddr *, struct lwp *, int);
 int	dccp_add_option(struct dccpcb *, u_int8_t, char *, u_int8_t);
 int	dccp_add_feature(struct dccpcb *, u_int8_t, u_int8_t,  char *, u_int8_t);
 int	dccp_detach(struct socket *);
 int	dccp_attach(struct socket *, int);
 int	dccp_abort(struct socket *);
 int	dccp_disconnect(struct socket *);
-int	dccp_send(struct socket *, struct mbuf *, struct mbuf *,
+int	dccp_send(struct socket *, struct mbuf *, struct sockaddr *,
 		  struct mbuf *, struct lwp *);
 void	dccp_retrans_t(void *);
 void	dccp_connect_t(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.23 2014/11/27 11:42:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.23.2.1 2015/06/06 14:40:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -96,7 +96,9 @@
 #define WM_F_WOL		0x00200000
 #define WM_F_EEE		0x00400000 /* Energy Efficiency Ethernet */
 #define WM_F_ATTACHED		0x00800000 /* attach() finished successfully */
-
+#define	WM_F_EEPROM_INVM	0x01000000 /* NVM is iNVM */
+#define	WM_F_PCS_DIS_AUTONEGO	0x02000000 /* PCS Disable Autonego */
+#define	WM_F_PLL_WA_I210	0x04000000 /* I21[01] PLL workaround */
 
 /*
  * Variations of Intel gigabit Ethernet controller:
@@ -170,5 +172,6 @@ typedef enum {
 #define WM_PHY_CFG_TIMEOUT	100
 #define	WM_ICH8_LAN_INIT_TIMEOUT 1500
 #define	WM_MDIO_OWNERSHIP_TIMEOUT 10
+#define	WM_MAX_PLL_TRIES	5
 
 #endif /* _DEV_PCI_IF_WMVAR_H_ */

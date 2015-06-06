@@ -1,10 +1,10 @@
-/*	$NetBSD: hdaudiodevs.h,v 1.1.2.2 2015/04/06 15:18:08 skrll Exp $	*/
+/*	$NetBSD: hdaudiodevs.h,v 1.1.2.3 2015/06/06 14:40:07 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: hdaudiodevs,v 1.2 2015/01/19 14:31:32 njoly Exp
+ *	NetBSD: hdaudiodevs,v 1.2 2015/05/30 14:12:42 jmcneill Exp
  */
 
 /*
@@ -65,6 +65,7 @@
 #define	HDAUDIO_PRODUCT_NVIDIA_MCP89_HDMI	0x000c		/* MCP89 HDMI */
 #define	HDAUDIO_PRODUCT_NVIDIA_GT240_HDMI	0x000d		/* GT240 HDMI */
 #define	HDAUDIO_PRODUCT_NVIDIA_GT5xx_HDMI_DP	0x0015		/* GT5xx HDMI/DP */
+#define	HDAUDIO_PRODUCT_NVIDIA_TEGRA124_HDMI	0x0028		/* Tegra124 HDMI */
 #define	HDAUDIO_PRODUCT_NVIDIA_MCP67_HDMI	0x0067		/* MCP67 HDMI */
 #define	HDAUDIO_PRODUCT_NVIDIA_MCP73_HDMI	0x8001		/* MCP73 HDMI */
 

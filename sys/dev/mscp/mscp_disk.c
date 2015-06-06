@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.82.2.1 2015/04/06 15:18:10 skrll Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.82.2.2 2015/06/06 14:40:08 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.82.2.1 2015/04/06 15:18:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.82.2.2 2015/06/06 14:40:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -183,7 +183,8 @@ const struct cdevsw ra_cdevsw = {
 };
 
 static struct dkdriver radkdriver = {
-	rastrategy, minphys
+	.d_strategy = rastrategy,
+	.d_minphys = minphys
 };
 
 /*
@@ -683,18 +684,18 @@ raattach(device_t parent, device_t self, void *aux)
 
 #if NRX
 	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) == 'X' - '@')
-		disk_init((struct disk *)&rx->ra_disk, device_xname(rx->ra_dev), 
+		disk_init((struct disk *)&rx->ra_disk, device_xname(rx->ra_dev),
 		    &rxdkdriver);
 #endif
 #if NRACD
 	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) == 'R' - '@')
-		disk_init((struct disk *)&rx->ra_disk, device_xname(rx->ra_dev), 
+		disk_init((struct disk *)&rx->ra_disk, device_xname(rx->ra_dev),
 		    &racddkdriver);
 #endif
 #if NRA
 	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) != 'X' - '@' &&
 	    MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) != 'R' - '@')
-		disk_init((struct disk *)&rx->ra_disk, device_xname(rx->ra_dev), 
+		disk_init((struct disk *)&rx->ra_disk, device_xname(rx->ra_dev),
 		    &radkdriver);
 #endif
 	disk_attach(&rx->ra_disk);

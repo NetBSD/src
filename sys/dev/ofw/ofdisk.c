@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.48.2.1 2015/04/06 15:18:10 skrll Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.48.2.2 2015/06/06 14:40:08 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.48.2.1 2015/04/06 15:18:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.48.2.2 2015/06/06 14:40:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -108,7 +108,10 @@ const struct cdevsw ofdisk_cdevsw = {
 
 static void ofminphys(struct buf *);
 
-struct dkdriver ofdisk_dkdriver = { ofdisk_strategy, ofminphys };
+struct dkdriver ofdisk_dkdriver = {
+	.d_strategy = ofdisk_strategy,
+	.d_minphys = ofminphys
+};
 
 void ofdisk_getdefaultlabel (struct ofdisk_softc *, struct disklabel *);
 void ofdisk_getdisklabel (dev_t);
@@ -293,7 +296,7 @@ ofdisk_strategy(struct buf *bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
-	OF_io = bp->b_flags & B_READ ? OF_read : 
+	OF_io = bp->b_flags & B_READ ? OF_read :
 		(int(*)(int, void*, int))OF_write;
 
 	if (DISKPART(bp->b_dev) != RAW_PART) {

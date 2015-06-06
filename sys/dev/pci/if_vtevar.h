@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vtevar.h,v 1.3 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_vtevar.h,v 1.3.24.1 2015/06/06 14:40:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -31,6 +31,8 @@
 
 #ifndef	_IF_VTEVAR_H
 #define	_IF_VTEVAR_H
+
+#include <sys/rndsource.h>
 
 #define	VTE_TX_RING_CNT		64
 #define	VTE_TX_RING_ALIGN	16

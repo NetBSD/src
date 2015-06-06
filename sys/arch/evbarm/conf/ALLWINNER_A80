@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.15.2.2 2015/04/06 15:17:55 skrll Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.15.2.3 2015/06/06 14:39:58 skrll Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -16,7 +16,6 @@ makeoptions 	KERNEL_BASE_PHYS="0x80000000"
 makeoptions 	KERNEL_BASE_VIRT="0x80000000"
 options 	PMAP_NEED_ALLOC_POOLPAGE
 
-options 	CPU_CORTEXA7
 options 	ALLWINNER_A80
 options 	MULTIPROCESSOR
 options 	MEMSIZE=2048
@@ -52,7 +51,7 @@ sdmmc2		at awinmmc2
 ld2		at sdmmc2
 
 # Interrupt Controller
-awinicu0	at awinio0 
+awinicu0	at awinio0
 
 # DMA Controller
 awindma0	at awinio0

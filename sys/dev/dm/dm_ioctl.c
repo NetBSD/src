@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.29 2014/10/02 21:29:44 justin Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.29.2.1 2015/06/06 14:40:07 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -774,7 +774,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		prop_dictionary_get_cstring(target_dict,
 		    DM_TABLE_PARAMS, (char **) &str);
 
-		if (SLIST_EMPTY(tbl))
+		if (SLIST_EMPTY(tbl) || last_table == NULL)
 			/* insert this table to head */
 			SLIST_INSERT_HEAD(tbl, table_en, next);
 		else

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.55.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.55.2.2 2015/06/06 14:40:26 skrll Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.55.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.55.2.2 2015/06/06 14:40:26 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -170,8 +170,8 @@ static struct in6_addrpolicy *match_addrsel_policy(struct sockaddr_in6 *);
 #endif
 
 struct in6_addr *
-in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts, 
-	struct ip6_moptions *mopts, struct route *ro, struct in6_addr *laddr, 
+in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+	struct ip6_moptions *mopts, struct route *ro, struct in6_addr *laddr,
 	struct ifnet **ifpp, int *errorp)
 {
 	struct in6_addr dst;
@@ -422,7 +422,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 				/* XXX breaks stat */
 				REPLACE(0);
 			}
-		}			
+		}
 	skip_rule4:
 #endif /* MIP6 && NMIP > 0 */
 
@@ -556,8 +556,8 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 #undef NEXT
 
 static int
-selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts, 
-	struct ip6_moptions *mopts, struct route *ro, struct ifnet **retifp, 
+selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+	struct ip6_moptions *mopts, struct route *ro, struct ifnet **retifp,
 	struct rtentry **retrt, int clone, int norouteok)
 {
 	int error = 0;
@@ -712,7 +712,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 }
 
 static int
-in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts, 
+in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	struct ip6_moptions *mopts, struct route *ro, struct ifnet **retifp)
 {
 	int error, clone;
@@ -762,8 +762,8 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
  */
 
 int
-in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts, 
-	struct ip6_moptions *mopts, struct route *ro, struct ifnet **retifp, 
+in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+	struct ip6_moptions *mopts, struct route *ro, struct ifnet **retifp,
 	struct rtentry **retrt, int clone)
 {
 	return selectroute(dstsock, opts, mopts, ro, retifp,
@@ -788,6 +788,21 @@ in6_selecthlim(struct in6pcb *in6p, struct ifnet *ifp)
 		return (ip6_defhlim);
 }
 
+int
+in6_selecthlim_rt(struct in6pcb *in6p)
+{
+	struct rtentry *rt;
+
+	if (in6p == NULL)
+		return in6_selecthlim(in6p, NULL);
+
+	rt = rtcache_validate(&in6p->in6p_route);
+	if (rt != NULL)
+		return in6_selecthlim(in6p, rt->rt_ifp);
+	else
+		return in6_selecthlim(in6p, NULL);
+}
+
 /*
  * Find an empty port and set it to the specified PCB.
  */
@@ -799,7 +814,7 @@ in6_pcbsetport(struct sockaddr_in6 *sin6, struct in6pcb *in6p, struct lwp *l)
 	u_int16_t lport, *lastport;
 	enum kauth_network_req req;
 	int error = 0;
-	
+
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
 		req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
@@ -825,7 +840,7 @@ in6_pcbsetport(struct sockaddr_in6 *sin6, struct in6pcb *in6p, struct lwp *l)
 	error = portalgo_randport(&lport, &in6p->in6p_head, l->l_cred);
 	if (error)
 		return error;
-	
+
 	in6p->in6p_flags |= IN6P_ANONPORT;
 	*lastport = lport;
 	in6p->in6p_lport = htons(lport);

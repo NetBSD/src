@@ -135,10 +135,11 @@ via_map_blit_for_device(struct pci_dev *pdev,
 
 			if (mode == 1) {
 #ifdef __NetBSD__
+				const vaddr_t cur_va = (vaddr_t)cur_mem;
 				const bus_dma_segment_t *const seg =
-				    &vsg->dmamap->dm_segs[atop(cur_mem)];
+				    &vsg->dmamap->dm_segs[atop(cur_va)];
 				desc_ptr->mem_addr =
-				    seg->ds_addr + trunc_page((vaddr_t)cur_mem);
+				    seg->ds_addr + trunc_page(cur_va);
 #else
 				desc_ptr->mem_addr =
 					dma_map_page(&pdev->dev,

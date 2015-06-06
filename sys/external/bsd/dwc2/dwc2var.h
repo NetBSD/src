@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.3.12.4 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.3.12.5 2015/06/06 14:40:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ typedef struct dwc2_softc {
  	bus_space_handle_t	sc_ioh;
  	bus_dma_tag_t		sc_dmat;
 	struct dwc2_core_params *sc_params;
+	int			(*sc_set_dma_addr)(device_t, bus_addr_t, int);
 
 	/*
 	 * Private

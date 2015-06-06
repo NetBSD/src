@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.8 2014/03/29 15:00:07 matt Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.8.8.1 2015/06/06 14:39:57 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.8 2014/03/29 15:00:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.8.8.1 2015/06/06 14:39:57 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.8 2014/03/29 15:00:07 matt Ex
 #include <dev/cons.h>
 #include <dev/md.h>
 
+#include <dev/marvell/marvellreg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <machine/pci_machdep.h>
@@ -92,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.8 2014/03/29 15:00:07 matt Ex
 
 #include <evbarm/marvell/marvellreg.h>
 #include <evbarm/marvell/marvellvar.h>
+#include <dev/marvell/marvellreg.h>
 
 #include "mvpex.h"
 #include "com.h"
@@ -99,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.8 2014/03/29 15:00:07 matt Ex
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
+
+#include <net/if_ether.h>
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -109,6 +113,13 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.8 2014/03/29 15:00:07 matt Ex
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
+
+/*
+ * U-Boot argument buffer
+ */
+extern unsigned int uboot_regs_pa[]; /* saved r0, r1, r2, r3 */
+unsigned int *uboot_regs_va;
+char boot_argbuf[MAX_BOOT_STRING];
 
 extern int KERNEL_BASE_phys[];
 
@@ -335,7 +346,21 @@ initarm(void *arg)
 	/* Get CPU, system and timebase frequencies */
 	extern vaddr_t misc_base;
 	misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
-	armadaxp_getclks();
+	switch (mvsoc_model()) {
+	case MARVELL_ARMADA370_MV6707:
+	case MARVELL_ARMADA370_MV6710:
+	case MARVELL_ARMADA370_MV6W11:
+		armada370_getclks();
+		break;
+	case MARVELL_ARMADAXP_MV78130:
+	case MARVELL_ARMADAXP_MV78160:
+	case MARVELL_ARMADAXP_MV78230:
+	case MARVELL_ARMADAXP_MV78260:
+	case MARVELL_ARMADAXP_MV78460:
+	default:
+		armadaxp_getclks();
+		break;
+	}
 	mvsoc_clkgating = armadaxp_clkgating;
 
 	/* Preconfigure interrupts */
@@ -392,6 +417,13 @@ initarm(void *arg)
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = axp_device_register;
+
+	/* copy U-Boot args from U-Boot heap to kernel memory */
+	uboot_regs_va = (int *)((unsigned int)uboot_regs_pa + KERNEL_BASE);
+	boot_args = (char *)(uboot_regs_va[3] + KERNEL_BASE);
+	strlcpy(boot_argbuf, (char *)boot_args, sizeof(boot_argbuf));
+	boot_args = boot_argbuf;
+	parse_mi_bootargs(boot_args);
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
@@ -583,6 +615,56 @@ axp_device_register(device_t dev, void *aux)
 		prop_dictionary_set_uint64(dict, "memend", end);
 		prop_dictionary_set_uint32(dict,
 		    "cache-line-size", arm_dcache_align);
+	}
+	if (device_is_a(dev, "mvgbec")) {
+		uint8_t enaddr[ETHER_ADDR_LEN];
+		char optname[9];
+		int unit = device_unit(dev);
+
+		if (unit > 9)
+			return;
+		switch (unit) {
+		case 0:
+			strlcpy(optname, "ethaddr", sizeof(optname));
+			break;
+		default:
+			/* eth1addr ... eth9addr */
+			snprintf(optname, sizeof(optname),
+			    "eth%daddr", unit);
+			break;
+		}
+		if (get_bootconf_option(boot_args, optname,
+		    BOOTOPT_TYPE_MACADDR, enaddr)) {
+			prop_data_t pd =
+			    prop_data_create_data(enaddr, sizeof(enaddr));
+
+			prop_dictionary_set(dict, "mac-address", pd);
+		}
+	}
+	if (device_is_a(dev, "mvxpe")) {
+		uint8_t enaddr[ETHER_ADDR_LEN];
+		char optname[9];
+		int unit = device_unit(dev);
+
+		if (unit > 9)
+			return;
+		switch (unit) {
+		case 0:
+			strlcpy(optname, "ethaddr", sizeof(optname));
+			break;
+		default:
+			/* eth1addr ... eth9addr */
+			snprintf(optname, sizeof(optname),
+			    "eth%daddr", unit);
+			break;
+		}
+		if (get_bootconf_option(boot_args, optname,
+		    BOOTOPT_TYPE_MACADDR, enaddr)) {
+			prop_data_t pd =
+			    prop_data_create_data(enaddr, sizeof(enaddr));
+
+			prop_dictionary_set(dict, "mac-address", pd);
+		}
 	}
 #endif
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.12 2013/06/24 04:21:20 riastradh Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.12.10.1 2015/06/06 14:40:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.12 2013/06/24 04:21:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.12.10.1 2015/06/06 14:40:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,8 @@ static void
 cgd_cipher_uio_cbc(void *privdata, cipher_func cipher,
     struct uio *dstuio, struct uio *srcuio)
 {
-	struct iovec	*dst;
-	struct iovec	*src;
+	const struct iovec	*dst;
+	const struct iovec	*src;
 	int		 dstnum;
 	int		 dstoff = 0;
 	int		 srcnum;
@@ -140,7 +140,7 @@ cgd_cipher_uio_cbc(void *privdata, cipher_func cipher,
 	for (;;) {
 		int	  l = MIN(dst->iov_len - dstoff, src->iov_len - srcoff);
 		u_int8_t *d = (u_int8_t *)dst->iov_base + dstoff;
-		u_int8_t *s = (u_int8_t *)src->iov_base + srcoff;
+		const u_int8_t *s = (const u_int8_t *)src->iov_base + srcoff;
 
 		cipher(privdata, d, s, l);
 
@@ -238,7 +238,7 @@ aes_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 
 static void
 cgd_cipher_aes_cbc(void *privdata, struct uio *dstuio,
-    struct uio *srcuio, void *iv, int dir)
+    struct uio *srcuio, const void *iv, int dir)
 {
 	struct aes_privdata	*apd = privdata;
 	struct aes_encdata	 encd;
@@ -334,7 +334,7 @@ c3des_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 
 static void
 cgd_cipher_3des_cbc(void *privdata, struct uio *dstuio,
-	struct uio *srcuio, void *iv, int dir)
+	struct uio *srcuio, const void *iv, int dir)
 {
 	struct	c3des_privdata *cp = privdata;
 	struct	c3des_encdata ce;
@@ -417,7 +417,7 @@ bf_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 
 static void
 cgd_cipher_bf_cbc(void *privdata, struct uio *dstuio,
-    struct uio *srcuio, void *iv, int dir)
+    struct uio *srcuio, const void *iv, int dir)
 {
 	struct	bf_privdata *bp = privdata;
 	struct	bf_encdata be;

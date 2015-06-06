@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.48 2011/11/24 04:17:11 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.48.26.1 2015/06/06 14:40:02 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.48 2011/11/24 04:17:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.48.26.1 2015/06/06 14:40:02 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -98,6 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.48 2011/11/24 04:17:11 matt Exp $");
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 #include <mips/mipsNN.h>		/* MIPS32/MIPS64 registers */
 #include <mips/cache_mipsNN.h>
+#ifdef MIPS64_OCTEON
+#include <mips/cache_octeon.h>
+#endif
 #endif
 
 struct mips_cache_info mips_cache_info;
@@ -1030,8 +1033,19 @@ mips_config_cache_modern(uint32_t cpu_id)
 	/* figure out Dcache params. */
 	switch (MIPSNN_GET(CFG1_DL, cfg1)) {
 	case MIPSNN_CFG1_DL_NONE:
+#ifdef MIPS64_OCTEON
+		mci->mci_pdcache_line_size = 128;
+		mci->mci_pdcache_way_size = 256;
+		mci->mci_pdcache_ways = 64;
+
+		mci->mci_pdcache_size =
+		    mci->mci_pdcache_way_size * mci->mci_pdcache_ways;
+		mci->mci_pdcache_way_mask = mci->mci_pdcache_way_size - 1;
+		uvmexp.ncolors = atop(mci->mci_pdcache_size) / mci->mci_pdcache_ways;
+#else
 		mci->mci_pdcache_line_size = mci->mci_pdcache_way_size =
 		    mci->mci_pdcache_ways = 0;
+#endif
 		break;
 	case MIPSNN_CFG1_DL_RSVD:
 		panic("reserved MIPS32/64 Dcache line size");
@@ -1134,6 +1148,13 @@ mips_config_cache_modern(uint32_t cpu_id)
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 		break;
 #endif
+#ifdef MIPS64_OCTEON
+	case 128:
+		mco->mco_icache_sync_all = octeon_icache_sync_all;
+		mco->mco_icache_sync_range = octeon_icache_sync_range;
+		mco->mco_icache_sync_range_index = octeon_icache_sync_range_index;
+		break;
+#endif
 	default:
 		panic("no Icache ops for %d byte lines",
 		    mci->mci_picache_line_size);
@@ -1170,6 +1191,23 @@ mips_config_cache_modern(uint32_t cpu_id)
 		    mco->mco_intern_pdcache_wb_range =
 		    mipsNN_pdcache_wb_range_32;
 		break;
+#ifdef MIPS64_OCTEON
+	case 128:
+		mco->mco_pdcache_wbinv_all =
+		    mco->mco_intern_pdcache_wbinv_all =
+		    octeon_pdcache_inv_all;
+		mco->mco_pdcache_wbinv_range =
+		    octeon_pdcache_inv_range;
+		mco->mco_pdcache_wbinv_range_index =
+		    mco->mco_intern_pdcache_wbinv_range_index =
+		    octeon_pdcache_inv_range_index;
+		mco->mco_pdcache_inv_range =
+		    (void (*)(vaddr_t, vsize_t))cache_noop;
+		mco->mco_pdcache_wb_range =
+		    mco->mco_intern_pdcache_wb_range =
+		    octeon_pdcache_inv_range;
+		break;
+#endif
 #ifdef MIPS_DISABLE_L1_CACHE
 	case 0:
 		mco->mco_pdcache_wbinv_all = cache_noop;

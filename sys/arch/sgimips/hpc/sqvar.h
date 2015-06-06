@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.14 2012/02/02 19:43:00 tls Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.14.24.1 2015/06/06 14:40:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>

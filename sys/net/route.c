@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.133.2.1 2015/04/06 15:18:22 skrll Exp $	*/
+/*	$NetBSD: route.c,v 1.133.2.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.1 2015/04/06 15:18:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.2 2015/06/06 14:40:25 skrll Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -144,9 +144,13 @@ static kauth_listener_t route_listener;
 static int rtdeletemsg(struct rtentry *);
 static int rtflushclone1(struct rtentry *, void *);
 static void rtflushclone(sa_family_t family, struct rtentry *);
+static void rtflushall(int);
 
 static void rt_maskedcopy(const struct sockaddr *,
     struct sockaddr *, const struct sockaddr *);
+
+static void rtcache_clear(struct route *);
+static void rtcache_invalidate(struct dom_rtlist *);
 
 #ifdef RTFLUSH_DEBUG
 static void sysctl_net_rtcache_setup(struct sysctllog **);
@@ -167,6 +171,32 @@ sysctl_net_rtcache_setup(struct sysctllog **clog)
 		return;
 }
 #endif /* RTFLUSH_DEBUG */
+
+static inline void
+rt_destroy(struct rtentry *rt)
+{
+	if (rt->_rt_key != NULL)
+		sockaddr_free(rt->_rt_key);
+	if (rt->rt_gateway != NULL)
+		sockaddr_free(rt->rt_gateway);
+	if (rt_gettag(rt) != NULL)
+		sockaddr_free(rt_gettag(rt));
+	rt->_rt_key = rt->rt_gateway = rt->rt_tag = NULL;
+}
+
+static inline const struct sockaddr *
+rt_setkey(struct rtentry *rt, const struct sockaddr *key, int flags)
+{
+	if (rt->_rt_key == key)
+		goto out;
+
+	if (rt->_rt_key != NULL)
+		sockaddr_free(rt->_rt_key);
+	rt->_rt_key = sockaddr_dup(key, flags);
+out:
+	rt->rt_nodes->rn_key = (const char *)rt->_rt_key;
+	return rt->_rt_key;
+}
 
 struct ifaddr *
 rt_get_ifa(struct rtentry *rt)
@@ -291,7 +321,7 @@ rt_init(void)
 	    route_listener_cb, NULL);
 }
 
-void
+static void
 rtflushall(int family)
 {
 	struct domain *dom;
@@ -1385,7 +1415,7 @@ rtcache_copy(struct route *new_ro, const struct route *old_ro)
 
 static struct dom_rtlist invalid_routes = LIST_HEAD_INITIALIZER(dom_rtlist);
 
-void
+static void
 rtcache_invalidate(struct dom_rtlist *rtlist)
 {
 	struct route *ro;
@@ -1400,7 +1430,7 @@ rtcache_invalidate(struct dom_rtlist *rtlist)
 	}
 }
 
-void
+static void
 rtcache_clear(struct route *ro)
 {
 	rtcache_invariants(ro);
@@ -1468,15 +1498,16 @@ rtcache_setdst(struct route *ro, const struct sockaddr *sa)
 	KASSERT(sa != NULL);
 
 	rtcache_invariants(ro);
-	if (ro->ro_sa != NULL && ro->ro_sa->sa_family == sa->sa_family) {
-		rtcache_clear(ro);
-		if (sockaddr_copy(ro->ro_sa, ro->ro_sa->sa_len, sa) != NULL) {
+	if (ro->ro_sa != NULL) {
+		if (ro->ro_sa->sa_family == sa->sa_family) {
+			rtcache_clear(ro);
+			sockaddr_copy(ro->ro_sa, ro->ro_sa->sa_len, sa);
 			rtcache_invariants(ro);
 			return 0;
 		}
-		sockaddr_free(ro->ro_sa);
-	} else if (ro->ro_sa != NULL)
-		rtcache_free(ro);	/* free ro_sa, wrong family */
+		/* free ro_sa, wrong family */
+		rtcache_free(ro);
+	}
 
 	KASSERT(ro->_ro_rt == NULL);
 
@@ -1496,7 +1527,7 @@ rt_settag(struct rtentry *rt, const struct sockaddr *tag)
 			sockaddr_free(rt->rt_tag);
 		rt->rt_tag = sockaddr_dup(tag, M_ZERO | M_NOWAIT);
 	}
-	return rt->rt_tag; 
+	return rt->rt_tag;
 }
 
 struct sockaddr *

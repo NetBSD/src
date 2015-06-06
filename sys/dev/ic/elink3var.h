@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.38 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.38.24.1 2015/06/06 14:40:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 /*
  * Ethernet software status per interface.

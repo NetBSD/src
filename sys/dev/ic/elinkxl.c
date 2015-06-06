@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.116 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.116.4.1 2015/06/06 14:40:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.116 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.116.4.1 2015/06/06 14:40:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.116 2014/08/10 16:44:35 tls Exp $");
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

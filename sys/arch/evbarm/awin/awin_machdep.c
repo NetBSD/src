@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.29.2.1 2015/04/06 15:17:55 skrll Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.29.2.2 2015/06/06 14:39:57 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.29.2.1 2015/04/06 15:17:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.29.2.2 2015/06/06 14:39:57 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -540,7 +540,7 @@ static const int conmode = CONMODE;
 void
 consinit(void)
 {
-	bus_space_tag_t bst = &awin_a4x_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_a4x_bs_tag;
 #if NCOM > 0
 	bus_space_handle_t bh;
 #endif
@@ -635,13 +635,13 @@ awin_device_register(device_t self, void *aux)
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
 		 * addresses by 2.  The simpliest remedy is to replace with our
-		 * bus space used for the armcore regisers (which armperiph uses). 
+		 * bus space used for the armcore regisers (which armperiph uses).
 		 */
 		struct mainbus_attach_args * const mb = aux;
-		mb->mb_iot = &awin_bs_tag;
+		mb->mb_iot = &armv7_generic_bs_tag;
 		return;
 	}
- 
+
 #if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
 	if (device_is_a(self, "armgtmr")) {
 		/*
@@ -660,7 +660,7 @@ awin_device_register(device_t self, void *aux)
 		} else {
 			prop_dictionary_set_bool(dict, "no-awge", true);
 		}
-#elif AWIN_board == AWIN_bpi
+#elif AWIN_board == AWIN_bpi || AWIN_board == AWIN_olimexlime2
 		prop_dictionary_set_bool(dict, "no-awe", true);
 #endif
 		return;
@@ -725,7 +725,7 @@ awin_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict, "emacpwren", ">PH19");
 		}
 #endif
-#if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck
+#if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck || AWIN_board == AWIN_olimexlime2
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH1");
 #elif AWIN_board == AWIN_bpi
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH10");

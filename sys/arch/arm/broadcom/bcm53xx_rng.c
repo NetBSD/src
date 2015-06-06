@@ -33,14 +33,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.7 2014/08/10 16:44:33 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.7.4.1 2015/06/06 14:39:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/intr.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #include <sys/systm.h>
 
 #include <arm/broadcom/bcm53xx_reg.h>

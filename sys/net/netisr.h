@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.42 2013/03/01 18:25:57 joerg Exp $ */
+/* $NetBSD: netisr.h,v 1.42.14.1 2015/06/06 14:40:25 skrll Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -102,10 +102,8 @@
  * on the lowest level routine of each protocol.
  */
 #define	NETISR_IP	2		/* same as AF_INET */
-#define	NETISR_NS	6		/* same as AF_NS */
 #define	NETISR_CCITT	10		/* same as AF_CCITT */
 #define	NETISR_ATALK	16		/* same as AF_APPLETALK */
-#define	NETISR_IPX	23		/* same as AF_IPX */
 #define	NETISR_IPV6	24		/* same as AF_INET6 */
 #define	NETISR_ISDN	26		/* same as AF_E164 */
 #define	NETISR_NATM	27		/* same as AF_NATM */

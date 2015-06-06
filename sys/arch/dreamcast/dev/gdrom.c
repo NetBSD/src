@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.40 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.40.4.1 2015/06/06 14:39:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.40 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.40.4.1 2015/06/06 14:39:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,9 @@ struct gdrom_softc {
 CFATTACH_DECL_NEW(gdrom, sizeof(struct gdrom_softc),
     gdrommatch, gdromattach, NULL, NULL);
 
-struct dkdriver gdromdkdriver = { gdromstrategy };
+struct dkdriver gdromdkdriver = {
+	.d_strategy = gdromstrategy
+};
 
 
 struct gd_toc {

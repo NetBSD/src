@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.17.4.1 2015/04/06 15:18:09 skrll Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.17.4.2 2015/06/06 14:40:07 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.17.4.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.17.4.2 2015/06/06 14:40:07 skrll Exp $");
 
 /*
  * The LAN9118 Family
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.17.4.1 2015/04/06 15:18:09 skrll Exp $
 #include <dev/mii/miivar.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/ic/lan9118reg.h>
 #include <dev/ic/lan9118var.h>
@@ -168,10 +168,6 @@ lan9118_attach(struct lan9118_softc *sc)
 		aprint_error(": failed to detect chip\n");
 		return EINVAL;
 	}
-
-	/* Configure interrupt polarity */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_IRQ_CFG,
-	    LAN9118_IRQ_CFG_IRQ_TYPE | LAN9118_IRQ_CFG_IRQ_POL);
 
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_ID_REV);
 	sc->sc_id = LAN9118_ID_REV_ID(val);

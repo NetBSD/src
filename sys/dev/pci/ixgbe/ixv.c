@@ -1,37 +1,37 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2012, Intel Corporation 
+  Copyright (c) 2001-2013, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixv.c 238149 2012-07-05 20:51:44Z jfv $*/
-/*$NetBSD: ixv.c,v 1.2.6.1 2015/04/06 15:18:12 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixv.c 247822 2013-03-04 23:07:40Z jfv $*/
+/*$NetBSD: ixv.c,v 1.2.6.2 2015/06/06 14:40:12 skrll Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -182,7 +182,7 @@ static device_method_t ixv_methods[] = {
 	DEVMETHOD(device_attach, ixv_attach),
 	DEVMETHOD(device_detach, ixv_detach),
 	DEVMETHOD(device_shutdown, ixv_shutdown),
-	{0, 0}
+	DEVMETHOD_END
 };
 #endif
 
@@ -442,9 +442,9 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		error = EIO;
 		goto err_late;
 	}
-	
-	error = ixv_allocate_msix(adapter); 
-	if (error) 
+
+	error = ixv_allocate_msix(adapter);
+	if (error)
 		goto err_late;
 
 	/* Setup OS specific network interface */
@@ -499,7 +499,7 @@ ixv_detach(device_t dev, int flags)
 
 	/* Make sure VLANS are not using driver */
 	if (!VLAN_ATTACHED(&adapter->osdep.ec))
-		;	/* nothing to do: no VLANs */ 
+		;	/* nothing to do: no VLANs */
 	else if ((flags & (DETACH_SHUTDOWN|DETACH_FORCE)) != 0)
 		vlan_ifdetach(adapter->ifp);
 	else {
@@ -597,7 +597,7 @@ ixv_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 		if (rc == EFBIG) {
 			struct mbuf *mtmp;
 
-			if ((mtmp = m_defrag(m_head, M_DONTWAIT)) != NULL) {
+			if ((mtmp = m_defrag(m_head, M_NOWAIT)) != NULL) {
 				m_head = mtmp;
 				rc = ixv_xmit(txr, m_head);
 				if (rc != 0)
@@ -690,23 +690,26 @@ ixv_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr, struct mbuf *m)
 
 	enqueued = 0;
 	if (m == NULL) {
-		next = drbr_dequeue(ifp, txr->br);
-	} else if (drbr_needs_enqueue(ifp, txr->br)) {
-		if ((err = drbr_enqueue(ifp, txr->br, m)) != 0)
-			return (err);
-		next = drbr_dequeue(ifp, txr->br);
-	} else
-		next = m;
-
+		err = drbr_dequeue(ifp, txr->br, m);
+		if (err) {
+ 			return (err);
+		}
+	}
 	/* Process the queue */
-	while (next != NULL) {
+	while ((next = drbr_peek(ifp, txr->br)) != NULL) {
 		if ((err = ixv_xmit(txr, next)) != 0) {
-			if (next != NULL)
-				err = drbr_enqueue(ifp, txr->br, next);
+			if (next != NULL) {
+				drbr_advance(ifp, txr->br);
+			} else {
+				drbr_putback(ifp, txr->br, next);
+			}
 			break;
 		}
+		drbr_advance(ifp, txr->br);
 		enqueued++;
-		drbr_stats_update(ifp, next->m_pkthdr.len, next->m_flags);
+		ifp->if_obytes += next->m_pkthdr.len;
+		if (next->m_flags & M_MCAST)
+			ifp->if_omcasts++;
 		/* Send a copy of the frame to the BPF listener */
 		ETHER_BPF_MTAP(ifp, next);
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
@@ -715,7 +718,6 @@ ixv_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr, struct mbuf *m)
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
-		next = drbr_dequeue(ifp, txr->br);
 	}
 
 	if (enqueued > 0) {
@@ -730,7 +732,7 @@ ixv_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr, struct mbuf *m)
 /*
 ** Flush all ring buffers
 */
-static void     
+static void
 ixv_qflush(struct ifnet *ifp)
 {
 	struct adapter  *adapter = ifp->if_softc;
@@ -936,7 +938,7 @@ ixv_init_locked(struct adapter *adapter)
 #endif
 	}
 #endif
-	
+
 	/* Set MTU size */
 	if (ifp->if_mtu > ETHERMTU) {
 		mhadd = IXGBE_READ_REG(hw, IXGBE_MHADD);
@@ -1107,13 +1109,13 @@ ixv_msix_que(void *arg)
                 IXGBE_WRITE_REG(&adapter->hw,
                     IXGBE_VTEITR(que->msix),
 		    que->eitr_setting);
- 
+
         que->eitr_setting = 0;
 
         /* Idle, do nothing */
         if ((txr->bytes == 0) && (rxr->bytes == 0))
                 goto no_calc;
-                                
+
 	if ((txr->bytes) && (txr->packets))
                	newitr = txr->bytes/txr->packets;
 	if ((rxr->bytes) && (rxr->packets))
@@ -1131,7 +1133,7 @@ ixv_msix_que(void *arg)
 		newitr = (newitr / 2);
 
 	newitr |= newitr << 16;
-                 
+
         /* save for next interrupt */
         que->eitr_setting = newitr;
 
@@ -1245,7 +1247,7 @@ ixv_media_change(struct ifnet * ifp)
 /*********************************************************************
  *
  *  This routine maps the mbufs to tx descriptors, allowing the
- *  TX engine to transmit the packets. 
+ *  TX engine to transmit the packets.
  *  	- return 0 on success, positive on failure
  *
  **********************************************************************/
@@ -1316,7 +1318,7 @@ ixv_xmit(struct tx_ring *txr, struct mbuf *m_head)
 
 	/*
 	** Set up the appropriate offload context
-	** this becomes the first descriptor of 
+	** this becomes the first descriptor of
 	** a packet.
 	*/
 	if (m_head->m_pkthdr.csum_flags & (M_CSUM_TSOv4|M_CSUM_TSOv6)) {
@@ -1536,7 +1538,7 @@ ixv_update_link_status(struct adapter *adapter)
 	device_t dev = adapter->dev;
 
 
-	if (adapter->link_up){ 
+	if (adapter->link_up){
 		if (adapter->link_active == FALSE) {
 			if (bootverbose)
 				device_printf(dev,"Link is up %d Gbps %s \n",
@@ -1652,7 +1654,7 @@ ixv_identify_hardware(struct adapter *adapter)
 
 /*********************************************************************
  *
- *  Setup MSIX Interrupt resources and handlers 
+ *  Setup MSIX Interrupt resources and handlers
  *
  **********************************************************************/
 static int
@@ -1774,7 +1776,7 @@ ixv_setup_msix(struct adapter *adapter)
 		goto out;
 	}
 
-	vectors = pci_msix_count(dev); 
+	vectors = pci_msix_count(dev);
 	if (vectors < 2) {
 		bus_release_resource(dev, SYS_RES_MEMORY,
 		    rid, adapter->msix_mem);
@@ -1988,13 +1990,12 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 
 	return;
 }
-	
+
 static void
 ixv_config_link(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32	autoneg, err = 0;
-	bool	negotiate = TRUE;
 
 	if (hw->mac.ops.check_link)
 		err = hw->mac.ops.check_link(hw, &autoneg,
@@ -2003,8 +2004,8 @@ ixv_config_link(struct adapter *adapter)
 		goto out;
 
 	if (hw->mac.ops.setup_link)
-               	err = hw->mac.ops.setup_link(hw, autoneg,
-		    negotiate, adapter->link_up);
+               	err = hw->mac.ops.setup_link(hw,
+		    autoneg, adapter->link_up);
 out:
 	return;
 }
@@ -2146,7 +2147,7 @@ ixv_allocate_queues(struct adapter *adapter)
 	 * Now set up the TX queues, txconf is needed to handle the
 	 * possibility that things fail midcourse and we need to
 	 * undo memory gracefully
-	 */ 
+	 */
 	for (int i = 0; i < adapter->num_queues; i++, txconf++) {
 		/* Set up some basics */
 		txr = &adapter->tx_rings[i];
@@ -2190,7 +2191,7 @@ ixv_allocate_queues(struct adapter *adapter)
 
 	/*
 	 * Next the RX queues...
-	 */ 
+	 */
 	rsize = roundup2(adapter->num_rx_desc *
 	    sizeof(union ixgbe_adv_rx_desc), DBA_ALIGN);
 	for (int i = 0; i < adapter->num_queues; i++, rxconf++) {
@@ -2515,7 +2516,7 @@ ixv_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	TXD = (struct ixgbe_adv_tx_context_desc *) &txr->tx_base[ctxd];
 
 	/*
-	** In advanced descriptors the vlan tag must 
+	** In advanced descriptors the vlan tag must
 	** be placed into the descriptor itself.
 	*/
 	if ((mtag = VLAN_OUTPUT_TAG(ec, mp)) != NULL) {
@@ -2629,7 +2630,7 @@ ixv_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *paylen)
 	 * Jump over vlan headers if already present
 	 */
 	eh = mtod(mp, struct ether_vlan_header *);
-	if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN)) 
+	if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN))
 		ehdrlen = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 	else
 		ehdrlen = ETHER_HDR_LEN;
@@ -2824,11 +2825,10 @@ ixv_refresh_mbufs(struct rx_ring *rxr, int limit)
 	while (j != limit) {
 		rxbuf = &rxr->rx_buffers[i];
 		if ((rxbuf->m_head == NULL) && (rxr->hdr_split)) {
-			mh = m_gethdr(M_DONTWAIT, MT_DATA);
+			mh = m_gethdr(M_NOWAIT, MT_DATA);
 			if (mh == NULL)
 				goto update;
 			mh->m_pkthdr.len = mh->m_len = MHLEN;
-			mh->m_len = MHLEN;
 			mh->m_flags |= M_PKTHDR;
 			m_adj(mh, ETHER_ALIGN);
 			/* Get the memory mapping */
@@ -2848,7 +2848,7 @@ ixv_refresh_mbufs(struct rx_ring *rxr, int limit)
 		}
 
 		if (rxbuf->m_pack == NULL) {
-			mp = ixgbe_getjcl(&adapter->jcl_head, M_DONTWAIT,
+			mp = ixgbe_getjcl(&adapter->jcl_head, M_NOWAIT,
 			    MT_DATA, M_PKTHDR, adapter->rx_mbuf_sz);
 			if (mp == NULL) {
 				rxr->no_jmbuf.ev_count++;
@@ -2958,9 +2958,9 @@ fail:
 	return (error);
 }
 
-static void     
+static void
 ixv_free_receive_ring(struct rx_ring *rxr)
-{ 
+{
 	struct  adapter         *adapter;
 	struct ixv_rx_buf       *rxbuf;
 	int i;
@@ -3042,7 +3042,7 @@ ixv_setup_receive_ring(struct rx_ring *rxr)
 		/*
 		** Dont allocate mbufs if not
 		** doing header split, its wasteful
-		*/ 
+		*/
 		if (rxr->hdr_split == FALSE)
 			goto skip_head;
 
@@ -3345,7 +3345,7 @@ static __inline void
 ixv_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype)
 {
 	int s;
-                 
+
 #ifdef LRO
 	struct adapter	*adapter = ifp->if_softc;
 	struct ethercom *ec = &adapter->osdep.ec;
@@ -3451,7 +3451,7 @@ ixv_rxeof(struct ix_queue *que, int count)
 		u32		ptype;
 		u16		hlen, plen, hdr, vtag;
 		bool		eop;
- 
+
 		/* Sync the ring. */
 		ixgbe_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -3500,8 +3500,8 @@ ixv_rxeof(struct ix_queue *que, int count)
 			prefetch(nbuf);
 		}
 		/*
-		** The header mbuf is ONLY used when header 
-		** split is enabled, otherwise we get normal 
+		** The header mbuf is ONLY used when header
+		** split is enabled, otherwise we get normal
 		** behavior, ie, both header and payload
 		** are DMA'd into the payload buffer.
 		**
@@ -3539,7 +3539,7 @@ ixv_rxeof(struct ix_queue *que, int count)
 			}
 			/*
 			** Now create the forward
-			** chain so when complete 
+			** chain so when complete
 			** we wont have to.
 			*/
                         if (eop == 0) {
@@ -3703,7 +3703,7 @@ ixv_rx_checksum(u32 staterr, struct mbuf * mp, u32 ptype,
 		} else {
 			stats->l4cs_bad.ev_count++;
 			mp->m_pkthdr.csum_flags |= type | M_CSUM_TCP_UDP_BAD;
-		} 
+		}
 	}
 	return;
 }
@@ -3929,12 +3929,12 @@ ixv_save_stats(struct adapter *adapter)
 		    adapter->stats.vfmprc - adapter->stats.base_vfmprc;
 	}
 }
- 
+
 static void
 ixv_init_stats(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
- 
+
 	adapter->stats.last_vfgprc = IXGBE_READ_REG(hw, IXGBE_VFGPRC);
 	adapter->stats.last_vfgorc = IXGBE_READ_REG(hw, IXGBE_VFGORC_LSB);
 	adapter->stats.last_vfgorc |=

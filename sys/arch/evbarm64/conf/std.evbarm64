@@ -1,4 +1,7 @@
-#	$NetBSD: std.evbarm64,v 1.1 2014/08/10 05:47:38 matt Exp $
+#	$NetBSD: std.evbarm64,v 1.1.6.1 2015/06/06 14:39:59 skrll Exp $
 
 include		"conf/std"
 include		"arch/aarch64/conf/std.aarch64"	# arch standard options
+
+options 	CHILD_MAX=1024	# 160 is too few
+options 	OPEN_MAX=1024	# 128 is too few

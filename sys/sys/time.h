@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.67 2014/08/08 07:40:35 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.67.4.1 2015/06/06 14:40:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -145,6 +145,11 @@ bintime_sub(struct bintime *bt, const struct bintime *bt2)
 	bt->sec -= bt2->sec;
 }
 
+#define	bintimecmp(bta, btb, cmp)					\
+	(((bta)->sec == (btb)->sec) ?					\
+	    ((bta)->frac cmp (btb)->frac) :				\
+	    ((bta)->sec cmp (btb)->sec))
+
 /*-
  * Background information:
  *
@@ -193,6 +198,39 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 	bt->sec = tv->tv_sec;
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)18446744073709ULL;
+}
+
+static __inline struct bintime
+ms2bintime(uint64_t ms)
+{
+	struct bintime bt;
+
+	bt.sec = ms / 1000U;
+	bt.frac = (((ms % 1000U) >> 32)/1000U) >> 32;
+
+	return bt;
+}
+
+static __inline struct bintime
+us2bintime(uint64_t us)
+{
+	struct bintime bt;
+
+	bt.sec = us / 1000000U;
+	bt.frac = (((us % 1000000U) >> 32)/1000000U) >> 32;
+
+	return bt;
+}
+
+static __inline struct bintime
+ns2bintime(uint64_t ns)
+{
+	struct bintime bt;
+
+	bt.sec = ns / 1000000000U;
+	bt.frac = (((ns % 1000000000U) >> 32)/1000000000U) >> 32;
+
+	return bt;
 }
 #endif /* !defined(_STANDALONE) */
 

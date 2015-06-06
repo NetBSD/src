@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.72 2014/08/18 03:59:27 riastradh Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.72.2.1 2015/06/06 14:40:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.72 2014/08/18 03:59:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.72.2.1 2015/06/06 14:40:12 skrll Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -181,57 +181,6 @@ void	rasops_make_box_chars_alpha(struct rasops_info *);
 extern int cold;
 
 /*
- * Rate a font based on how many character cells we would get out of it in the
- * current video mode. Lower is better.
- */
-static void
-rasops_matches(struct wsdisplay_font *font, void *cookie, int ident)
-{
-	struct rasops_matchdata *md = cookie;
-	struct rasops_info *ri = md->ri;
-	int cols, score = 1;
-
-	/* first weed out fonts the caller doesn't claim support for */
-	if (FONT_IS_ALPHA(font)) {
-		/*
-		 * If we end up with a bitmap font and an alpha font with
-		 * otherwise identical scores, prefer alpha
-		 */
-		score = 0;
-		if ((ri->ri_flg & RI_ENABLE_ALPHA) == 0)
-			return;
-	}
-	cols = ri->ri_width / font->fontwidth;
-	/*
-	 * if the font is too small to allow 80 columns give those closer to
-	 * 80 a better score but with a huge penalty compared to fonts that
-	 * give us 80 columns or more
-	 */ 
-	if (cols < md->wantcols) {
-		score += 100000 + 2 * (md->wantcols - cols);
-	} else 
-		score += 2 * cols;
-	DPRINTF("%s: %d\n", font->name, score);
-	if (score < md->bestscore) {
-		md->bestscore = score;
-		md->pick = font;
-		md->ident = ident;
-	}
-}
-
-static int
-rasops_find(struct rasops_info *ri, int wantrows, int wantcols)
-{
-	struct rasops_matchdata md =
-	    { ri, wantcols, wantrows, 1000000, NULL, 0};
-
-	wsfont_walk(rasops_matches, &md);
-	if (md.pick == NULL)
-		return -1;
-	return (wsfont_make_cookie(md.ident, WSDISPLAY_FONTORDER_L2R,
-			    WSDISPLAY_FONTORDER_L2R));
-}
-/*
  * Initialize a 'rasops_info' descriptor.
  */
 int
@@ -243,6 +192,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 	/* Select a font if the caller doesn't care */
 	if (ri->ri_font == NULL) {
 		int cookie = -1;
+		int flags;
 
 		wsfont_init();
 
@@ -254,7 +204,18 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 			wantrows = RASOPS_DEFAULT_HEIGHT;
 		if (wantcols == 0)
 			wantcols = RASOPS_DEFAULT_WIDTH;
-		cookie = rasops_find(ri, wantrows, wantcols);
+
+		flags = WSFONT_FIND_BESTWIDTH | WSFONT_FIND_BITMAP;
+		if ((ri->ri_flg & RI_ENABLE_ALPHA) != 0)
+			flags |= WSFONT_FIND_ALPHA;
+
+		cookie = wsfont_find(NULL,
+			ri->ri_width / wantcols,
+			0,
+			0,
+			WSDISPLAY_FONTORDER_L2R,
+			WSDISPLAY_FONTORDER_L2R,
+			flags);
 
 		/*
 		 * this means there is no supported font in the list

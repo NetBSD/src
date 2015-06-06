@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.113.4.1 2015/04/06 15:18:09 skrll Exp $	*/
+/*	$NetBSD: mcd.c,v 1.113.4.2 2015/06/06 14:40:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.113.4.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.113.4.2 2015/06/06 14:40:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,9 @@ int	mcd_get_parms(struct mcd_softc *);
 void	mcdstart(struct mcd_softc *);
 void	mcd_pseudointr(void *);
 
-struct dkdriver mcddkdriver = { mcdstrategy, NULL, };
+struct dkdriver mcddkdriver = {
+	.d_strategy = mcdstrategy
+};
 
 #define MCD_RETRIES	3
 #define MCD_RDRETRIES	3
@@ -408,7 +410,7 @@ mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct mcd_softc *sc = device_lookup_private(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
-	
+
 	MCD_TRACE("close: partition=%d\n", part);
 
 	mutex_enter(&sc->sc_lock);
@@ -573,7 +575,7 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
-	
+
 	MCD_TRACE("ioctl: cmd=0x%lx\n", cmd);
 
 	if ((sc->flags & MCDF_LOADED) == 0)
@@ -1205,7 +1207,7 @@ mcdintr(void *arg)
 		sc->lastmode = mbx->mode;
 
 	firstblock:
-		MCD_TRACE("doread: read blkno=%d for bp=0x%p\n", 
+		MCD_TRACE("doread: read blkno=%d for bp=0x%p\n",
 		    (int) mbx->blkno, bp);
 
 		/* Build parameter block. */

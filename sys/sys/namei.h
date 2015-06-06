@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.90.2.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: namei.h,v 1.90.2.2 2015/06/06 14:40:30 skrll Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
- *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.35 2015/01/16 21:38:26 dennis Exp 
+ *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp
+ *   from: NetBSD: namei.src,v 1.37 2015/04/21 03:18:21 riastradh Exp
  */
 
 /*
@@ -173,9 +173,7 @@ struct nameidata {
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
-#define	INRENAME	0x0400000	/* operation is a part of ``rename'' */
-#define	INRELOOKUP	0x0800000	/* set while inside relookup() */
-#define	PARAMASK	0x0eee300	/* mask of parameter descriptors */
+#define	PARAMASK	0x02ee300	/* mask of parameter descriptors */
 
 /*
  * Initialization of a nameidata structure.
@@ -259,7 +257,7 @@ extern const namei_simple_flags_t
  *
  * namei_simple_kernel takes a kernel-space path as the first argument.
  * namei_simple_user takes a user-space path as the first argument.
- * The nameiat_simple_* variants handle relative path using the given 
+ * The nameiat_simple_* variants handle relative path using the given
  * directory vnode instead of current directory.
  *
  * A namei call can be converted to namei_simple_* if:
@@ -272,7 +270,7 @@ int namei_simple_kernel(const char *, namei_simple_flags_t, struct vnode **);
 int namei_simple_user(const char *, namei_simple_flags_t, struct vnode **);
 int nameiat_simple_kernel(struct vnode *, const char *, namei_simple_flags_t,
     struct vnode **);
-int nameiat_simple_user(struct vnode *, const char *, namei_simple_flags_t, 
+int nameiat_simple_user(struct vnode *, const char *, namei_simple_flags_t,
     struct vnode **);
 
 int	namei(struct nameidata *);
@@ -354,8 +352,6 @@ struct	nchstats _NAMEI_CACHE_STATS(uint64_t);
 #define NAMEI_DOWHITEOUT	0x0040000
 #define NAMEI_REQUIREDIR	0x0080000
 #define NAMEI_CREATEDIR	0x0200000
-#define NAMEI_INRENAME	0x0400000
-#define NAMEI_INRELOOKUP	0x0800000
-#define NAMEI_PARAMASK	0x0eee300
+#define NAMEI_PARAMASK	0x02ee300
 
 #endif /* !_SYS_NAMEI_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.6 2014/04/05 18:43:09 christos Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.6.6.1 2015/06/06 14:40:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6 2014/04/05 18:43:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.6.1 2015/06/06 14:40:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 
 		freq = (ci->ci_data.cpu_cc_freq + 4999) / 1000000;
 		fraq = ((ci->ci_data.cpu_cc_freq + 4999) / 10000) % 100;
-		l = snprintf(p, left, "cpu MHz\t\t: %" PRIu64 ".%" PRIu64 "\n",
+		l = snprintf(p, left, "cpu MHz\t\t: %" PRIu64 ".%02" PRIu64 "\n",
 		    freq, fraq);
 	} else
 		l = snprintf(p, left, "cpu MHz\t\t: unknown\n");

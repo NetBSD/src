@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.6 2014/09/05 09:27:34 matt Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.6.2.1 2015/06/06 14:40:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -90,11 +90,7 @@ try_resynch_receive(connection_t *conn)
 	int rc;
 
 	uio.uio_rw = UIO_READ;
-#if (__NetBSD_Version__ >= 399000900)
 	UIO_SETUP_SYSSPACE(&uio);
-#else
-	uio.uio_segflg = UIO_SYSSPACE;
-#endif
 
 	do {
 		io_vec.iov_base = buffer;
@@ -199,11 +195,7 @@ read_pdu_data(pdu_t *pdu, uint8_t *data, uint32_t offset)
 	uio->uio_iovcnt = 1;
 	uio->uio_rw = UIO_READ;
 	uio->uio_resid = len;
-#if (__NetBSD_Version__ >= 399000900)
 	UIO_SETUP_SYSSPACE(uio);
-#else
-	uio->uio_segflg = UIO_SYSSPACE;
-#endif
 
 	if (pad) {
 		uio->uio_iovcnt++;
@@ -218,11 +210,6 @@ read_pdu_data(pdu_t *pdu, uint8_t *data, uint32_t offset)
 		pdu->io_vec[i].iov_len = 4;
 		uio->uio_resid += 4;
 	}
-#ifdef ISCSI_TEST_MODE
-	/* save data pointer and size */
-	pdu->save_uio.uio_iov = (struct iovec *) data;
-	pdu->save_uio.uio_resid = len;
-#endif
 
 	/* get the data */
 	if (my_soo_read(conn, &pdu->uio, MSG_WAITALL) != 0) {
@@ -481,7 +468,7 @@ receive_text_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	}
 
 	if (req_ccb->pdu_waiting != NULL) {
-		SET_CCB_TIMEOUT(conn, req_ccb, COMMAND_TIMEOUT);
+		callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
 		req_ccb->num_timeouts = 0;
 	}
 
@@ -554,9 +541,6 @@ receive_logout_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 
 		callout_stop(&conn->timeout);
 
-#ifdef ISCSI_TEST_MODE
-		test_remove_connection(conn);
-#endif
 		/* let send thread take over next step of cleanup */
 		wakeup(&conn->pdus_to_send);
 	}
@@ -591,7 +575,7 @@ receive_data_in_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	req_ccb->flags |= CCBF_GOT_RSP;
 
 	if (req_ccb->pdu_waiting != NULL) {
-		SET_CCB_TIMEOUT(conn, req_ccb, COMMAND_TIMEOUT);
+		callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
 		req_ccb->num_timeouts = 0;
 	}
 
@@ -672,7 +656,7 @@ receive_r2t_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 
 	if (req_ccb != NULL) {
 		if (req_ccb->pdu_waiting != NULL) {
-			SET_CCB_TIMEOUT(conn, req_ccb, COMMAND_TIMEOUT);
+			callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
 			req_ccb->num_timeouts = 0;
 		}
 		send_data_out(conn, pdu, req_ccb, CCBDISP_NOWAIT, TRUE);
@@ -714,10 +698,8 @@ receive_command_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 		return -1;
 	}
 
-	PERF_SNAP(req_ccb, PERF_PDURCVSTS);
-
 	if (req_ccb->pdu_waiting != NULL) {
-		SET_CCB_TIMEOUT(conn, req_ccb, COMMAND_TIMEOUT);
+		callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
 		req_ccb->num_timeouts = 0;
 	}
 
@@ -1017,9 +999,6 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 		if (digest != pdu->pdu.HeaderDigest) {
 			DEBOUT(("Header Digest Error: comp = %08x, rx = %08x\n",
 					digest, pdu->pdu.HeaderDigest));
-#ifdef ISCSI_TEST_MODE
-			test_mode_rx(conn, pdu, TEST_INVALID_HEADER_CRC);
-#endif
 			/* try to skip to next PDU */
 			try_resynch_receive(conn);
 			free_pdu(pdu);
@@ -1046,18 +1025,10 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 			("Received Data in PDU - CCB = %p, Datalen = %d, Offset = %d\n",
 			req_ccb, dsl, offset));
 
-		PERF_SNAPC(req_ccb, PERF_BEGIN_PDURCVDATA);
 		rc = read_pdu_data(pdu, req_ccb->data_ptr, offset);
-		PERF_SNAP(req_ccb, PERF_END_PDURCVDATA);
 	} else {
 		rc = read_pdu_data(pdu, NULL, 0);
 	}
-#ifdef ISCSI_TEST_MODE
-	if (test_mode_rx(conn, pdu, rc)) {
-		free_pdu(pdu);
-		return rc;
-	}
-#endif
 	if (!rc && (conn->state <= ST_WINDING_DOWN ||
 		(pdu->pdu.Opcode & OPCODE_MASK) == TOP_Logout_Response)) {
 
@@ -1119,11 +1090,11 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 	MaxCmdSN = ntohl(pdu->pdu.p.nop_in.MaxCmdSN);
 
 	/* received a valid frame, reset timeout */
-
-	SET_CONN_TIMEOUT(conn,
-			(((pdu->pdu.Opcode & OPCODE_MASK) == TOP_NOP_In) &&
-			(TAILQ_FIRST(&conn->ccbs_waiting) == NULL)) ?
-			conn->idle_timeout_val : CONNECTION_TIMEOUT);
+	if ((pdu->pdu.Opcode & OPCODE_MASK) == TOP_NOP_In &&
+	    TAILQ_EMPTY(&conn->ccbs_waiting))
+		callout_schedule(&conn->timeout, conn->idle_timeout_val);
+	else
+		callout_schedule(&conn->timeout, CONNECTION_TIMEOUT);
 	conn->num_timeouts = 0;
 
 	/*

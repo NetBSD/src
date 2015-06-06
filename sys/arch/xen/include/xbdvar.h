@@ -1,4 +1,4 @@
-/* $NetBSD: xbdvar.h,v 1.15 2014/03/20 06:48:54 skrll Exp $ */
+/* $NetBSD: xbdvar.h,v 1.15.6.1 2015/06/06 14:40:05 skrll Exp $ */
 
 /*
  *
@@ -30,11 +30,12 @@
 #ifndef _XEN_XBDVAR_H_
 #define _XEN_XBDVAR_H_
 
+#include <sys/rndsource.h>
+
 struct xbd_softc {
 	device_t		sc_dev;		/* base device glue */
 	struct dk_softc		sc_dksc;	/* generic disk interface */
 	unsigned long		sc_xd_device;	/* cookie identifying device */
-	struct dk_intf		*sc_di;		/* pseudo-disk interface */
 	int			sc_shutdown;	/* about to be removed */
 	krndsource_t	sc_rnd_source;
 };
@@ -42,7 +43,6 @@ struct xbd_softc {
 struct xbd_attach_args {
 	const char 		*xa_device;
 	vdisk_t			*xa_xd;
-	struct dk_intf		*xa_dkintf;
 	struct sysctlnode	*xa_diskcookies;
 };
 

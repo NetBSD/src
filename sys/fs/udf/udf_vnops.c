@@ -1,9 +1,9 @@
-/* $NetBSD: udf_vnops.c,v 1.94.4.1 2015/04/06 15:18:19 skrll Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.94.4.2 2015/06/06 14:40:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,7 +23,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Generic parts are derived from software contributed to The NetBSD Foundation
  * by Julio M. Merino Vidal, developed as part of Google's Summer of Code
  * 2005 program.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.94.4.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.94.4.2 2015/06/06 14:40:21 skrll Exp $");
 #endif /* not lint */
 
 
@@ -174,7 +174,7 @@ udf_reclaim(void *v)
 		tsleep(&udf_node->outstanding_nodedscr, PRIBIO, "recl wait", hz/8);
 	}
 
-	vcache_remove(vp->v_mount, &udf_node->loc.loc, 
+	vcache_remove(vp->v_mount, &udf_node->loc.loc,
 	    sizeof(udf_node->loc.loc));
 
 	/* dispose all node knowledge */
@@ -611,7 +611,7 @@ udf_readdir(void *v)
 			if (error)
 				break;
 
-			/* 
+			/*
 			 * If there isn't enough space in the uio to return a
 			 * whole dirent, break off read
 			 */
@@ -719,7 +719,7 @@ udf_lookup(void *v)
 	/*
 	 * Obviously, the file is not (anymore) in the namecache, we have to
 	 * search for it. There are three basic cases: '.', '..' and others.
-	 * 
+	 *
 	 * Following the guidelines of VOP_LOOKUP manpage and tmpfs.
 	 */
 	error = 0;
@@ -894,7 +894,7 @@ udf_getattr(void *v)
 
 	DPRINTF(CALL, ("udf_getattr called\n"));
 
-	/* update times before we returning values */ 
+	/* update times before we returning values */
 	udf_itimes(udf_node, NULL, NULL, NULL);
 
 	/* get descriptor information */
@@ -1593,7 +1593,7 @@ udf_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 int
 udf_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1609,7 +1609,6 @@ udf_link(void *v)
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 
 	return error;
 }
@@ -2209,7 +2208,7 @@ const struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 	{ &vop_remove_desc, udf_remove },	/* remove */
 	{ &vop_link_desc, udf_link },		/* link */	/* TODO */
 	{ &vop_rename_desc, udf_rename },	/* rename */ 	/* TODO */
-	{ &vop_mkdir_desc, udf_mkdir },		/* mkdir */ 
+	{ &vop_mkdir_desc, udf_mkdir },		/* mkdir */
 	{ &vop_rmdir_desc, udf_rmdir },		/* rmdir */
 	{ &vop_symlink_desc, udf_symlink },	/* symlink */	/* TODO */
 	{ &vop_readdir_desc, udf_readdir },	/* readdir */

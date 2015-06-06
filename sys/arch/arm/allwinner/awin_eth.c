@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.7.2.1 2015/04/06 15:17:51 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.7.2.2 2015/06/06 14:39:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.7.2.1 2015/04/06 15:17:51 skrll Exp $
 #include <sys/intr.h>
 #include <sys/ioctl.h>
 #include <sys/mutex.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #include <sys/systm.h>
 
 #include <net/if.h>
@@ -242,8 +242,8 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
 
         mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY,
 	    MIIF_DOPAUSE);
-                
-        if (LIST_EMPTY(&mii->mii_phys)) { 
+
+        if (LIST_EMPTY(&mii->mii_phys)) {
                 aprint_error_dev(self, "no PHY found!\n");
                 ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
                 ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_MANUAL);
@@ -251,11 +251,11 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
                 ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
         }
 
-	/*      
+	/*
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
-	ether_ifattach(ifp, enaddr); 
+	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 }
@@ -307,8 +307,8 @@ awin_eth_miibus_statchg(struct ifnet *ifp)
 
 	/*
 	 * Set MII interface based on the speed
-	 * negotiated by the PHY.                                           
-	 */                                                                 
+	 * negotiated by the PHY.
+	 */
 	switch (IFM_SUBTYPE(media)) {
 	case IFM_10_T:
 		sc->sc_reg.reg_mac_supp &= ~AWIN_EMAC_MAC_SUPP_100M;
@@ -376,7 +376,7 @@ awin_eth_rxfifo_transfer(struct awin_eth_softc *sc, struct mbuf *m)
 {
 	uint32_t *dp32 = (uint32_t *)(m->m_data);
 
-	bus_space_read_multi_4(sc->sc_bst, sc->sc_bsh, 
+	bus_space_read_multi_4(sc->sc_bst, sc->sc_bsh,
 	    AWIN_EMAC_RX_IO_DATA_REG, dp32, m->m_len >> 2);
 
 	/*
@@ -490,7 +490,7 @@ awin_eth_txfifo_transfer(struct awin_eth_softc *sc, struct mbuf *m, u_int slot)
 
 		if (leftover > 0) {
 			/*
-			 * We do a memcpy instead of dereferencing an uint32_t 
+			 * We do a memcpy instead of dereferencing an uint32_t
 			 * in case these are the last bytes of a page which is
 			 * followed by an unmapped page.
 			 */
@@ -503,7 +503,7 @@ awin_eth_txfifo_transfer(struct awin_eth_softc *sc, struct mbuf *m, u_int slot)
 			}
 			dp += (32 - leftover) / 8;
 			len -= (32 - leftover) / 8;
-			awin_eth_write(sc, io_data_reg, v | (uv << leftover)); 
+			awin_eth_write(sc, io_data_reg, v | (uv << leftover));
 			v = 0;
 			leftover = 0;
 			if (len == 0)
@@ -533,7 +533,7 @@ awin_eth_txfifo_transfer(struct awin_eth_softc *sc, struct mbuf *m, u_int slot)
 			leftover += bits;
 			continue;
 		}
-		awin_eth_write(sc, io_data_reg, v | (uv << leftover)); 
+		awin_eth_write(sc, io_data_reg, v | (uv << leftover));
 		if (bits + leftover == 32) {
 			v = 0;
 			leftover = 0;
@@ -549,7 +549,7 @@ awin_eth_txfifo_transfer(struct awin_eth_softc *sc, struct mbuf *m, u_int slot)
 	 * Be sure to subtract the extra zeroes from the pad bytes.
 	 */
 	if (leftover) {
-		awin_eth_write(sc, io_data_reg, v); 
+		awin_eth_write(sc, io_data_reg, v);
 		pad -= 32 - leftover / 8;
 	}
 
@@ -557,7 +557,7 @@ awin_eth_txfifo_transfer(struct awin_eth_softc *sc, struct mbuf *m, u_int slot)
 	 * Pad the packet out to minimum packet size.
 	 */
 	for (; pad > 4; pad -= 4) {
-		awin_eth_write(sc, io_data_reg, 0); 
+		awin_eth_write(sc, io_data_reg, 0);
 	}
 }
 
@@ -671,8 +671,8 @@ awin_eth_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 	mutex_enter(&sc->sc_intr_lock);
 
 	switch (cmd) {
-	case SIOCGIFMEDIA: 
-	case SIOCSIFMEDIA:     
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 	default:
@@ -751,7 +751,7 @@ awin_eth_rx_hash(struct awin_eth_softc *sc)
 			 * the range.  (At this time, the only use of address
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
-			 */ 
+			 */
 			sc->sc_reg.reg_rx_hash[0] = sc->sc_reg.reg_rx_hash[1] = ~0;
 			ifp->if_flags |= IFF_ALLMULTI;
 			return;
@@ -762,10 +762,10 @@ awin_eth_rx_hash(struct awin_eth_softc *sc)
 #else
 		u_int crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 #endif
-		 
+
 		/* Just want the 6 most significant bits. */
-		crc >>= 26; 
-                
+		crc >>= 26;
+
 		/* Set the corresponding bit in the filter. */
 		sc->sc_reg.reg_rx_hash[crc >> 5] |= __BIT(crc & 31);
                 ETHER_NEXT_MULTI(step, enm);

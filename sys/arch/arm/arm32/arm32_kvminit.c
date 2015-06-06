@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.32 2014/10/29 14:14:14 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.32.2.1 2015/06/06 14:39:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -124,7 +124,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.32 2014/10/29 14:14:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.32.2.1 2015/06/06 14:39:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,11 +166,6 @@ extern char _end[];
 	((paddr_t)((vaddr_t)(va) - KERNEL_BASE_VOFFSET))
 #define KERN_PHYSTOV(bmi, pa) \
 	((vaddr_t)((paddr_t)(pa) + KERNEL_BASE_VOFFSET))
-#elif defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
-#define KERN_VTOPHYS(bmi, va) \
-	((paddr_t)((vaddr_t)(va) - pmap_directbase + (bmi)->bmi_start))
-#define KERN_PHYSTOV(bmi, pa) \
-	((vaddr_t)((paddr_t)(pa) - (bmi)->bmi_start + pmap_directbase))
 #else
 #define KERN_VTOPHYS(bmi, va) \
 	((paddr_t)((vaddr_t)(va) - KERNEL_BASE + (bmi)->bmi_start))
@@ -191,6 +186,17 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 
 	physical_start = bmi->bmi_start = memstart;
 	physical_end = bmi->bmi_end = memstart + memsize;
+#ifndef ARM_HAS_LPAE
+	if (physical_end == 0) {
+		physical_end = -PAGE_SIZE;
+		memsize -= PAGE_SIZE;
+		bmi->bmi_end -= PAGE_SIZE;
+#ifdef VERBOSE_INIT_ARM
+		printf("%s: memsize shrunk by a page to avoid ending at 4GB\n",
+		    __func__);
+#endif
+	}
+#endif
 	physmem = memsize / PAGE_SIZE;
 
 	/*
@@ -222,12 +228,8 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	 */
 	if (bmi->bmi_start < bmi->bmi_kernelstart) {
 		pv->pv_pa = bmi->bmi_start;
-#if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
-		pv->pv_va = pmap_directbase;
-#else
-		pv->pv_va = KERNEL_BASE;
-#endif
-		pv->pv_size = bmi->bmi_kernelstart - bmi->bmi_start;
+		pv->pv_va = KERN_PHYSTOV(bmi, pv->pv_pa);
+		pv->pv_size = bmi->bmi_kernelstart - pv->pv_pa;
 		bmi->bmi_freepages += pv->pv_size / PAGE_SIZE;
 #ifdef VERBOSE_INIT_ARM
 		printf("%s: adding %lu free pages: [%#lx..%#lx] (VA %#lx)\n",
@@ -405,22 +407,9 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	KASSERT(mapallmem_p);
 #ifdef ARM_MMU_EXTENDED
 	/*
-	 * We can only use address beneath kernel_vm_base to map physical
-	 * memory.
+	 * The direct map VA space ends at the start of the kernel VM space.
 	 */
-	const psize_t physical_size =
-	    roundup(physical_end - physical_start, L1_SS_SIZE);
-	KASSERT(kernel_vm_base >= physical_size);
-	/*
-	 * If we don't have enough memory via TTBR1, we have use addresses
-	 * from TTBR0 to map some of the physical memory.  But try to use as
-	 * much high memory space as possible.
-	 */
-	if (kernel_vm_base - KERNEL_BASE < physical_size) {
-		pmap_directbase = kernel_vm_base - physical_size;
-		printf("%s: changing pmap_directbase to %#lx\n", __func__,
-		    pmap_directbase);
-	}
+	pmap_directlimit = kernel_vm_base;
 #else
 	KASSERT(kernel_vm_base - KERNEL_BASE >= physical_end - physical_start);
 #endif /* ARM_MMU_EXTENDED */
@@ -735,15 +724,12 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	pv_addr_t *pv = SLIST_FIRST(&bmi->bmi_chunks);
 	if (!mapallmem_p || pv->pv_pa == bmi->bmi_start) {
 		cur_pv = *pv;
+		KASSERTMSG(cur_pv.pv_va >= KERNEL_BASE, "%#lx", cur_pv.pv_va);
 		pv = SLIST_NEXT(pv, pv_list);
 	} else {
-#if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
-		cur_pv.pv_va = pmap_directbase;
-#else
 		cur_pv.pv_va = KERNEL_BASE;
-#endif
-		cur_pv.pv_pa = bmi->bmi_start;
-		cur_pv.pv_size = pv->pv_pa - bmi->bmi_start;
+		cur_pv.pv_pa = KERN_VTOPHYS(bmi, cur_pv.pv_va);
+		cur_pv.pv_size = pv->pv_pa - cur_pv.pv_pa;
 		cur_pv.pv_prot = VM_PROT_READ | VM_PROT_WRITE;
 		cur_pv.pv_cache = PTE_CACHE;
 	}
@@ -813,6 +799,9 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		    && cur_pv.pv_cache == PTE_CACHE) {
 			cur_pv.pv_size = bmi->bmi_end - cur_pv.pv_pa;
 		} else {
+			KASSERTMSG(cur_pv.pv_va + cur_pv.pv_size <= kernel_vm_base,
+			    "%#lx >= %#lx", cur_pv.pv_va + cur_pv.pv_size,
+			    kernel_vm_base);
 #ifdef VERBOSE_INIT_ARM
 			printf("%s: mapping chunk VA %#lx..%#lx "
 			    "(PA %#lx, prot %d, cache %d)\n",
@@ -829,6 +818,13 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		}
 	}
 
+	// The amount we can direct is limited by the start of the
+	// virtual part of the kernel address space.  Don't overrun
+	// into it.
+	if (mapallmem_p && cur_pv.pv_va + cur_pv.pv_size > kernel_vm_base) {
+		cur_pv.pv_size = kernel_vm_base - cur_pv.pv_va;
+	}
+
 	/*
 	 * Now we map the final chunk.
 	 */
@@ -843,7 +839,6 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	/*
 	 * Now we map the stuff that isn't directly after the kernel
 	 */
-
 	if (map_vectors_p) {
 		/* Map the vector page. */
 		pmap_map_entry(l1pt_va, systempage.pv_va, systempage.pv_pa,

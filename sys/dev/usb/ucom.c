@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.5 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.6 2015/06/06 14:40:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.5 2015/03/19 17:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.6 2015/06/06 14:40:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.5 2015/03/19 17:26:43 skrll Exp $")
 #include <sys/queue.h>
 #include <sys/kauth.h>
 #include <sys/timepps.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/usb/usb.h>
 

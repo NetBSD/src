@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.22.6.1 2015/04/06 15:17:52 skrll Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.22.6.2 2015/06/06 14:39:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.22.6.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.22.6.2 2015/06/06 14:39:55 skrll Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.22.6.1 2015/04/06 15:17:52 skrll E
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/termios.h>
+#include <sys/lwp.h>
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -50,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.22.6.1 2015/04/06 15:17:52 skrll E
 
 #include <arm/locore.h>
 
-#include <arm/ep93xx/ep93xxreg.h> 
-#include <arm/ep93xx/ep93xxvar.h> 
+#include <arm/ep93xx/ep93xxreg.h>
+#include <arm/ep93xx/ep93xxvar.h>
 
 /* Interrupt handler queues. */
 struct intrq intrq[NIRQ];

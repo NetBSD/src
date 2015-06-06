@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.146 2014/07/01 15:03:58 msaitoh Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.146.4.1 2015/06/06 14:40:25 skrll Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146 2014/07/01 15:03:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.1 2015/06/06 14:40:25 skrll Exp $");
 
 #include "ppp.h"
 
@@ -767,6 +767,7 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EAFNOSUPPORT;
 			break;
 		}
+		ifa->ifa_rtrequest = p2p_rtrequest;
 		break;
 
 	case SIOCADDMULTI:

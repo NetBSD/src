@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.16 2012/02/02 19:43:04 tls Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.16.24.1 2015/06/06 14:40:08 skrll Exp $ */
 
 /*
  * Copyright 1997
@@ -36,15 +36,13 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.16 2012/02/02 19:43:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.16.24.1 2015/06/06 14:40:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-
-#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

@@ -341,7 +341,7 @@ END(_ZNK7_Unwind17Registers_aarch646jumptoEv)
 #if defined(__arm__)
 	.fpu vfpv3
 	.hidden _ZN7_Unwind15Registers_arm32C1Ev
-ENTRY(_ZN7_Unwind15Registers_arm32C1Ev)
+ARM_ENTRY(_ZN7_Unwind15Registers_arm32C1Ev)
 	stmia	r0, {r0-r14}
 	str	lr, [r0, #60]	/* PC */
 	mrs	r1, cpsr
@@ -352,21 +352,21 @@ ENTRY(_ZN7_Unwind15Registers_arm32C1Ev)
 END(_ZN7_Unwind15Registers_arm32C1Ev)
 
 	.hidden _ZN7_Unwind15Registers_arm328lazyVFP1Ev
-ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
+ARM_ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
 	add	r0, #72
 	vstmia	r0, {d0-d15}
 	RET
 END(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
 
 	.hidden _ZN7_Unwind15Registers_arm328lazyVFP3Ev
-ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
+ARM_ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
 	add	r0, #200
 	vstmia	r0, {d16-d31}
 	RET
 END(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
 
 	.hidden _ZNK7_Unwind15Registers_arm326jumptoEv
-ENTRY(_ZNK7_Unwind15Registers_arm326jumptoEv)
+ARM_ENTRY(_ZNK7_Unwind15Registers_arm326jumptoEv)
 	ldrb	r1, [r0, #68]
 	tst	r1, #1
 	beq	.Lnovfp1

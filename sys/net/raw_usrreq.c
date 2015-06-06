@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.52 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.52.4.1 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.52 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.52.4.1 2015/06/06 14:40:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -138,23 +138,21 @@ raw_ctlinput(int cmd, const struct sockaddr *arg, void *d)
 }
 
 void
-raw_setsockaddr(struct rawcb *rp, struct mbuf *nam)
+raw_setsockaddr(struct rawcb *rp, struct sockaddr *nam)
 {
 
-	nam->m_len = rp->rcb_laddr->sa_len;
-	memcpy(mtod(nam, void *), rp->rcb_laddr, (size_t)nam->m_len);
+	memcpy(nam, rp->rcb_laddr, rp->rcb_laddr->sa_len);
 }
 
 void
-raw_setpeeraddr(struct rawcb *rp, struct mbuf *nam)
+raw_setpeeraddr(struct rawcb *rp, struct sockaddr *nam)
 {
 
-	nam->m_len = rp->rcb_faddr->sa_len;
-	memcpy(mtod(nam, void *), rp->rcb_faddr, (size_t)nam->m_len);
+	memcpy(nam, rp->rcb_faddr, rp->rcb_faddr->sa_len);
 }
 
 int
-raw_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+raw_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct rawcb *rp = sotorawcb(so);

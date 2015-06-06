@@ -1,31 +1,31 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2012, Intel Corporation 
+  Copyright (c) 2001-2012, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 234620 2012-04-23 22:05:09Z bz $*/
-/*$NetBSD: ixgbe.h,v 1.1.30.1 2015/04/06 15:18:12 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 244514 2012-12-20 22:26:03Z luigi $*/
+/*$NetBSD: ixgbe.h,v 1.1.30.2 2015/06/06 14:40:12 skrll Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -106,10 +106,7 @@
 #include <sys/sysctl.h>
 #include <sys/endian.h>
 #include <sys/workqueue.h>
-
-#ifdef IXGBE_IEEE1588
-#include <sys/ieee1588.h>
-#endif
+#include <sys/cpu.h>
 
 #include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"
@@ -132,9 +129,9 @@
  * RxDescriptors Valid Range: 64-4096 Default Value: 256 This value is the
  * number of receive descriptors allocated for each RX queue. Increasing this
  * value allows the driver to buffer more incoming packets. Each descriptor
- * is 16 bytes.  A receive buffer is also allocated for each descriptor. 
- * 
- * Note: with 8 rings and a dual port card, it is possible to bump up 
+ * is 16 bytes.  A receive buffer is also allocated for each descriptor.
+ *
+ * Note: with 8 rings and a dual port card, it is possible to bump up
  *	against the system mbuf pool limit, you can tune nmbclusters
  *	to adjust for this.
  */
@@ -173,6 +170,19 @@
 #define IXGBE_FC_HI		0x20000
 #define IXGBE_FC_LO		0x10000
 
+/*
+ * Used for optimizing small rx mbufs.  Effort is made to keep the copy
+ * small and aligned for the CPU L1 cache.
+ *
+ * MHLEN is typically 168 bytes, giving us 8-byte alignment.  Getting
+ * 32 byte alignment needed for the fast bcopy results in 8 bytes being
+ * wasted.  Getting 64 byte alignment, which _should_ be ideal for
+ * modern Intel CPUs, results in 40 bytes wasted and a significant drop
+ * in observed efficiency of the optimization, 97.9% -> 81.8%.
+ */
+#define IXGBE_RX_COPY_LEN	160
+#define IXGBE_RX_COPY_ALIGN	(MHLEN - IXGBE_RX_COPY_LEN)
+
 /* Keep older OS drivers building... */
 #if !defined(SYSCTL_ADD_UQUAD)
 #define SYSCTL_ADD_UQUAD SYSCTL_ADD_QUAD
@@ -204,17 +214,16 @@
 #define IXGBE_VFTA_SIZE			128
 #define IXGBE_BR_SIZE			4096
 #define IXGBE_QUEUE_MIN_FREE		32
-#define IXGBE_QUEUE_IDLE		1
-#define IXGBE_QUEUE_WORKING		2
-#define IXGBE_QUEUE_HUNG		4
-#define IXGBE_QUEUE_DEPLETED		8
+
+/* IOCTL define to gather SFP+ Diagnostic data */
+#define SIOCGI2C	SIOCGIFGENERIC
 
 /* Offload bits in mbuf flag */
 #define	M_CSUM_OFFLOAD	\
     (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4|M_CSUM_UDPv6|M_CSUM_TCPv6)
 
 /*
- * Interrupt Moderation parameters 
+ * Interrupt Moderation parameters
  */
 #define IXGBE_LOW_LATENCY	128
 #define IXGBE_AVE_LATENCY	400
@@ -224,10 +233,10 @@
 /*
  *****************************************************************************
  * vendor_info_array
- * 
+ *
  * This array contains the list of Subvendor/Subdevice IDs on which the driver
  * should load.
- * 
+ *
  *****************************************************************************
  */
 typedef struct _ixgbe_vendor_info_t {
@@ -238,19 +247,27 @@ typedef struct _ixgbe_vendor_info_t {
 	unsigned int    index;
 } ixgbe_vendor_info_t;
 
+/* This is used to get SFP+ module data */
+struct ixgbe_i2c_req {
+        u8 dev_addr;
+        u8 offset;
+        u8 len;
+        u8 data[8];
+};
 
 struct ixgbe_tx_buf {
-	u32		eop_index;
+	union ixgbe_adv_tx_desc	*eop;
 	struct mbuf	*m_head;
 	bus_dmamap_t	map;
 };
 
 struct ixgbe_rx_buf {
-	struct mbuf	*m_head;
-	struct mbuf	*m_pack;
+	struct mbuf	*buf;
 	struct mbuf	*fmp;
-	bus_dmamap_t	hmap;
 	bus_dmamap_t	pmap;
+	u_int		flags;
+#define IXGBE_RX_COPY	0x01
+	uint64_t	addr;
 };
 
 /*
@@ -291,19 +308,26 @@ struct tx_ring {
         struct adapter		*adapter;
 	kmutex_t		tx_mtx;
 	u32			me;
-	int			queue_status;
 	struct timeval		watchdog_time;
 	union ixgbe_adv_tx_desc	*tx_base;
-	struct ixgbe_dma_alloc	txdma;
-	u32			next_avail_desc;
-	u32			next_to_clean;
 	struct ixgbe_tx_buf	*tx_buffers;
+	struct ixgbe_dma_alloc	txdma;
 	volatile u16		tx_avail;
+	u16			next_avail_desc;
+	u16			next_to_clean;
+	u32			process_limit;
+	u16			num_desc;
+	enum {
+	    IXGBE_QUEUE_IDLE,
+	    IXGBE_QUEUE_WORKING,
+	    IXGBE_QUEUE_HUNG,
+	}			queue_status;
 	u32			txd_cmd;
 	ixgbe_dma_tag_t		*txtag;
 	char			mtx_name[16];
-#if __FreeBSD_version >= 800000
+#ifndef IXGBE_LEGACY_TX
 	struct buf_ring		*br;
+	void			*txq_si;
 #endif
 #ifdef IXGBE_FDIR
 	u16			atr_sample;
@@ -312,6 +336,8 @@ struct tx_ring {
 	u32			bytes;  /* used for AIM */
 	u32			packets;
 	/* Soft Stats */
+	struct evcnt	   	tso_tx;
+	struct evcnt	   	no_tx_map_avail;
 	struct evcnt		no_desc_avail;
 	struct evcnt		total_packets;
 };
@@ -330,15 +356,16 @@ struct rx_ring {
 	struct lro_ctrl		lro;
 #endif /* LRO */
 	bool			lro_enabled;
-	bool			hdr_split;
 	bool			hw_rsc;
 	bool			discard;
 	bool			vtag_strip;
-        u32			next_to_refresh;
-        u32 			next_to_check;
+        u16			next_to_refresh;
+        u16 			next_to_check;
+	u16			num_desc;
+	u16			mbuf_sz;
+	u32			process_limit;
 	char			mtx_name[16];
 	struct ixgbe_rx_buf	*rx_buffers;
-	ixgbe_dma_tag_t		*htag;
 	ixgbe_dma_tag_t		*ptag;
 
 	u32			bytes; /* Used for AIM calc */
@@ -346,7 +373,7 @@ struct rx_ring {
 
 	/* Soft stats */
 	struct evcnt		rx_irq;
-	struct evcnt		rx_split_packets;
+	struct evcnt		rx_copies;
 	struct evcnt		rx_packets;
 	struct evcnt 		rx_bytes;
 	struct evcnt 		rx_discarded;
@@ -418,7 +445,7 @@ struct adapter {
 #endif
 
 	/*
-	** Queues: 
+	** Queues:
 	**   This is the irq holder, it has
 	**   and RX/TX pair or rings associated
 	**   with it.
@@ -430,16 +457,15 @@ struct adapter {
 	 *	Allocated at run time, an array of rings.
 	 */
 	struct tx_ring		*tx_rings;
-	int			num_tx_desc;
+	u32			num_tx_desc;
 
 	/*
 	 * Receive rings:
 	 *	Allocated at run time, an array of rings.
 	 */
 	struct rx_ring		*rx_rings;
-	int			num_rx_desc;
 	u64			que_mask;
-	u32			rx_process_limit;
+	u32			num_rx_desc;
 
 	/* Multicast array memory */
 	u8			*mta;
@@ -449,7 +475,6 @@ struct adapter {
 	struct evcnt   		mbuf_defrag_failed;
 	struct evcnt	   	mbuf_header_failed;
 	struct evcnt	   	mbuf_packet_failed;
-	struct evcnt	   	no_tx_map_avail;
 	struct evcnt	   	efbig_tx_dma_setup;
 	struct evcnt	   	efbig2_tx_dma_setup;
 	struct evcnt	   	m_defrag_failed;
@@ -459,7 +484,6 @@ struct adapter {
 	struct evcnt	   	enomem_tx_dma_setup;
 	struct evcnt	   	watchdog_events;
 	struct evcnt	   	tso_err;
-	struct evcnt	   	tso_tx;
 	struct evcnt		link_irq;
 	struct evcnt		morerx;
 	struct evcnt		moretx;
@@ -529,14 +553,12 @@ drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
 */
 static inline u16
 ixgbe_rx_unrefreshed(struct rx_ring *rxr)
-{       
-	struct adapter  *adapter = rxr->adapter;
-        
+{
 	if (rxr->next_to_check > rxr->next_to_refresh)
 		return (rxr->next_to_check - rxr->next_to_refresh - 1);
 	else
-		return ((adapter->num_rx_desc + rxr->next_to_check) -
+		return ((rxr->num_desc + rxr->next_to_check) -
 		    rxr->next_to_refresh - 1);
-}       
+}
 
 #endif /* _IXGBE_H_ */

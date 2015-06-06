@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.23 2012/02/02 19:43:02 tls Exp $	*/
+/*	$NetBSD: am79900.c,v 1.23.24.1 2015/06/06 14:40:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.23 2012/02/02 19:43:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.23.24.1 2015/06/06 14:40:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.23 2012/02/02 19:43:02 tls Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

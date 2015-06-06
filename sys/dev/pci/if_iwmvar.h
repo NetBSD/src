@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.5.2.2 2015/04/06 15:18:10 skrll Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.5.2.3 2015/06/06 14:40:09 skrll Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.7 2015/03/02 13:51:10 jsg Exp 	*/
 
 /*
@@ -376,6 +376,9 @@ struct iwm_softc {
 
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
+#ifdef __HAVE_PCI_MSI_MSIX
+	pci_intr_handle_t *sc_pihp;
+#endif
 
 	bus_size_t sc_sz;
 	bus_dma_tag_t sc_dmat;

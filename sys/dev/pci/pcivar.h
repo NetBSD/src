@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.100.2.1 2015/04/06 15:18:12 skrll Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.100.2.2 2015/06/06 14:40:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -270,7 +270,7 @@ int	pci_mapreg_map(const struct pci_attach_args *, int, pcireg_t, int,
 	    bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
 	    bus_size_t *);
 int	pci_mapreg_submap(const struct pci_attach_args *, int, pcireg_t, int,
-	    bus_size_t, bus_size_t, bus_space_tag_t *, bus_space_handle_t *, 
+	    bus_size_t, bus_size_t, bus_space_tag_t *, bus_space_handle_t *,
 	    bus_addr_t *, bus_size_t *);
 
 
@@ -279,6 +279,7 @@ int pci_find_rom(const struct pci_attach_args *, bus_space_tag_t,
 	    int, bus_space_handle_t *, bus_size_t *);
 
 int pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
+int pci_get_ht_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
 
 /*
  * Helper functions for autoconfiguration.

@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.102 2014/11/27 04:07:13 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.102.2.1 2015/06/06 14:39:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -43,7 +43,7 @@
  * ARM Process Status Register
  *
  * The picture in the ARM manuals looks like this:
- *       3 3 2 2 2 2                            
+ *       3 3 2 2 2 2
  *       1 0 9 8 7 6                                   8 7 6 5 4       0
  *      +-+-+-+-+-+-------------------------------------+-+-+-+---------+
  *      |N|Z|C|V|Q|                reserved             |I|F|T|M M M M M|
@@ -303,7 +303,7 @@
 #define ARM3_CP15_CONTROL	2
 #define ARM3_CP15_CACHEABLE	3
 #define ARM3_CP15_UPDATEABLE	4
-#define ARM3_CP15_DISRUPTIVE	5	
+#define ARM3_CP15_DISRUPTIVE	5
 
 /* ARM3 Control register bits */
 #define ARM3_CTL_CACHE_ON	0x00000001
@@ -412,7 +412,7 @@
 					    * in r0 steppings. See errata
 					    * 364296.
 					    */
-/* ARM1176 Auxiliary Control Register (CP15 register 1, opcode2 1) */   
+/* ARM1176 Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	ARM1176_AUXCTL_PHD	0x10000000 /* inst. prefetch halting disable */
 #define	ARM1176_AUXCTL_BFD	0x20000000 /* branch folding disable */
 #define	ARM1176_AUXCTL_FSD	0x40000000 /* force speculative ops disable */
@@ -434,8 +434,17 @@
 #define	MPCORE_AUXCTL_EX	0x00000010 /* exclusive L1/L2 cache */
 #define	MPCORE_AUXCTL_SA	0x00000020 /* SMP/AMP */
 
-/* Marvell PJ4B Auxillary Control Register */
-#define PJ4B_AUXCTL_SMPNAMP	0x00000040 /* SMP/AMP */
+/* Marvell PJ4B Auxillary Control Register (CP15.0.R1.c0.1) */
+#define PJ4B_AUXCTL_FW		__BIT(0)   /* Cache and TLB updates broadcast */
+#define PJ4B_AUXCTL_SMPNAMP	__BIT(6)   /* 0 = AMP, 1 = SMP */
+#define PJ4B_AUXCTL_L1PARITY	__BIT(9)   /* L1 parity checking */
+
+/* Marvell PJ4B Auxialiary Function Modes Control 0 (CP15.1.R15.c2.0) */
+#define PJ4B_AUXFMC0_L2EN	__BIT(0)  /* Tightly-Coupled L2 cache enable */
+#define PJ4B_AUXFMC0_SMPNAMP	__BIT(1)  /* 0 = AMP, 1 = SMP */
+#define PJ4B_AUXFMC0_L1PARITY	__BIT(2)  /* alias of PJ4B_AUXCTL_L1PARITY */
+#define PJ4B_AUXFMC0_DCSLFD	__BIT(2)  /* Disable DC Speculative linefill */
+#define PJ4B_AUXFMC0_FW		__BIT(8)  /* alias of PJ4B_AUXCTL_FW*/
 
 /* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
 #define	CORTEXA9_AUXCTL_FW	0x00000001 /* Cache and TLB updates broadcast */
@@ -490,10 +499,10 @@
 #define	CPU_CT4_CWG(x)		(((x) >> 24) & 0xf)	/* Exclusive Resv. Granule */
 
 /* Cache size identifaction register definitions 1, Rd, c0, c0, 0 */
-#define	CPU_CSID_CTYPE_WT	0x80000000	/* write-through avail */ 
-#define	CPU_CSID_CTYPE_WB	0x40000000	/* write-back avail */ 
-#define	CPU_CSID_CTYPE_RA	0x20000000	/* read-allocation avail */ 
-#define	CPU_CSID_CTYPE_WA	0x10000000	/* write-allocation avail */ 
+#define	CPU_CSID_CTYPE_WT	0x80000000	/* write-through avail */
+#define	CPU_CSID_CTYPE_WB	0x40000000	/* write-back avail */
+#define	CPU_CSID_CTYPE_RA	0x20000000	/* read-allocation avail */
+#define	CPU_CSID_CTYPE_WA	0x10000000	/* write-allocation avail */
 #define	CPU_CSID_NUMSETS(x)	(((x) >> 13) & 0x7fff)
 #define	CPU_CSID_ASSOC(x)	(((x) >> 3) & 0x1ff)
 #define	CPU_CSID_LEN(x)		((x) & 0x07)
@@ -553,7 +562,7 @@
 /*
  * ARM Instructions
  *
- *       3 3 2 2 2                              
+ *       3 3 2 2 2
  *       1 0 9 8 7                                                     0
  *      +-------+-------------------------------------------------------+
  *      | cond  |              instruction dependent                    |
@@ -671,6 +680,27 @@
 #define PRRR_TR_DEVICE	1		// Device
 #define PRRR_TR_NORMAL	2		// Normal Memory
 
+/* ARMv7 MPIDR, Multiprocessor Affinity Register generic format  */
+#define MPIDR_MP		__BIT(31)	/* 1 = Have MP Extention */
+#define MPIDR_U			__BIT(30)	/* 1 = Uni-Processor System */
+#define MPIDR_MT		__BIT(24)	/* 1 = SMT(AFF0 is logical) */
+#define MPIDR_AFF2		__BITS(23,16)	/* Affinity Level 2 */
+#define MPIDR_AFF1		__BITS(15,8)	/* Affinity Level 1 */
+#define MPIDR_AFF0		__BITS(7,0)	/* Affinity Level 0 */
+
+/* MPIDR implementation of ARM Cortex A9: SMT and AFF2 is not used */
+#define CORTEXA9_MPIDR_MP	MPIDR_MP
+#define CORTEXA9_MPIDR_U	MPIDR_U
+#define	CORTEXA9_MPIDR_CLID	__BITS(11,8)	/* AFF1 = cluster id */
+#define CORTEXA9_MPIDR_CPUID	__BITS(0,1)	/* AFF0 = phisycal core id */
+
+/* MPIDR implementation of Marvell PJ4B-MP: AFF2 is not used */
+#define PJ4B_MPIDR_MP		MPIDR_MP
+#define PJ4B_MPIDR_U		MPIDR_U
+#define PJ4B_MPIDR_MT		MPIDR_MT	/* 1 = SMT(AFF0 is logical) */
+#define PJ4B_MPIDR_CLID		__BITS(11,8)	/* AFF1 = cluster id */
+#define PJ4B_MPIDR_CPUID	__BITS(0,3)	/* AFF0 = core id */
+
 /* Defines for ARM Generic Timer */
 #define ARM_CNTCTL_ENABLE		__BIT(0) // Timer Enabled
 #define ARM_CNTCTL_IMASK		__BIT(1) // Mask Interrupt
@@ -768,7 +798,7 @@
 #define ARM_A5_TLBDATAOP_INDEX		__BITS(5,0)
 #define ARM_A7_TLBDATAOP_INDEX		__BITS(6,0)
 
-#if !defined(__ASSEMBLER__) && defined(_KERNEL) 
+#if !defined(__ASSEMBLER__) && defined(_KERNEL)
 static inline bool
 arm_cond_ok_p(uint32_t insn, uint32_t psr)
 {
@@ -870,6 +900,7 @@ ARMREG_READ_INLINE(midr, "p15,0,%0,c0,c0,0") /* Main ID Register */
 ARMREG_READ_INLINE(ctr, "p15,0,%0,c0,c0,1") /* Cache Type Register */
 ARMREG_READ_INLINE(tlbtr, "p15,0,%0,c0,c0,3") /* TLB Type Register */
 ARMREG_READ_INLINE(mpidr, "p15,0,%0,c0,c0,5") /* Multiprocess Affinity Register */
+ARMREG_READ_INLINE(revidr, "p15,0,%0,c0,c0,6") /* Revision ID Register */
 ARMREG_READ_INLINE(pfr0, "p15,0,%0,c0,c1,0") /* Processor Feature Register 0 */
 ARMREG_READ_INLINE(pfr1, "p15,0,%0,c0,c1,1") /* Processor Feature Register 1 */
 ARMREG_READ_INLINE(mmfr0, "p15,0,%0,c0,c1,4") /* Memory Model Feature Register 0 */
@@ -887,8 +918,8 @@ ARMREG_READ_INLINE(clidr, "p15,1,%0,c0,c0,1") /* Cache Level ID Register */
 ARMREG_READ_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
 ARMREG_WRITE_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
 /* cp15 c1 registers */
-ARMREG_READ_INLINE(sctrl, "p15,0,%0,c1,c0,0") /* System Control Register */
-ARMREG_WRITE_INLINE(sctrl, "p15,0,%0,c1,c0,0") /* System Control Register */
+ARMREG_READ_INLINE(sctlr, "p15,0,%0,c1,c0,0") /* System Control Register */
+ARMREG_WRITE_INLINE(sctlr, "p15,0,%0,c1,c0,0") /* System Control Register */
 ARMREG_READ_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
 ARMREG_WRITE_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
 ARMREG_READ_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
@@ -1017,13 +1048,5 @@ ARMREG_READ_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control re
 ARMREG_WRITE_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control register */
 
 #endif /* !__ASSEMBLER__ */
-
-
-#define	MPIDR_31		0x80000000
-#define	MPIDR_U			0x40000000	// 1 = Uniprocessor
-#define	MPIDR_MT		0x01000000	// AFF0 for SMT
-#define	MPIDR_AFF2		0x00ff0000
-#define	MPIDR_AFF1		0x0000ff00
-#define	MPIDR_AFF0		0x000000ff
 
 #endif	/* _ARM_ARMREG_H */

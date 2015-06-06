@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.6 2014/02/23 15:29:12 christos Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.6.8.1 2015/06/06 14:40:07 skrll Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.6 2014/02/23 15:29:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.6.8.1 2015/06/06 14:40:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -655,8 +655,8 @@ ar9003_tx_alloc(struct athn_softc *sc)
 	if (error != 0)
 		goto fail;
 
-	error = bus_dmamap_load_raw(sc->sc_dmat, sc->sc_txsmap, &sc->sc_txsseg,
-	    1, size, BUS_DMA_NOWAIT | BUS_DMA_READ);
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_txsmap, sc->sc_txsring,
+	     size, NULL, BUS_DMA_NOWAIT | BUS_DMA_READ);
 	if (error != 0)
 		goto fail;
 
@@ -681,8 +681,8 @@ ar9003_tx_alloc(struct athn_softc *sc)
 	if (error != 0)
 		goto fail;
 
-	error = bus_dmamap_load_raw(sc->sc_dmat, sc->sc_map, &sc->sc_seg, 1, size,
-	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_map, sc->sc_descs, size,
+	    NULL, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (error != 0)
 		goto fail;
 

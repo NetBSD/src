@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.39 2014/02/26 01:56:51 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.39.6.1 2015/06/06 14:39:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -150,6 +150,28 @@ void validate_trapframe(trapframe_t *, int);
 	msr	cpsr_c, ra		/* Restore interrupts */
 #endif
 
+#ifdef __HAVE_PREEMPTION
+#define DO_CLEAR_ASTPENDING						\
+	mvn	r1, #1			/* complement of 1 */		;\
+	add	r0, r4, #CI_ASTPENDING	/* address of astpending */	;\
+	bl	_C_LABEL(atomic_and_uint) /* clear AST */
+#else
+#define DO_CLEAR_ASTPENDING						\
+	mov	r0, #0							;\
+	str	r0, [r4, #CI_ASTPENDING] /* clear AST */
+#endif
+
+#define DO_PENDING_AST(lbl)						;\
+1:	ldr	r1, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
+	tst	r1, #0x00000001						;\
+	beq	lbl			/* Nope. Just bail */		;\
+	DO_CLEAR_ASTPENDING						;\
+	CPSIE_I(r5, r5)			/* Restore interrupts */	;\
+	mov	r0, sp							;\
+	bl	_C_LABEL(ast)		/* ast(frame) */		;\
+	CPSID_I(r0, r5)			/* Disable interrupts */	;\
+	b	1b			/* test again */
+
 /*
  * AST_ALIGNMENT_FAULT_LOCALS and ENABLE_ALIGNMENT_FAULTS
  * These are used in order to support dynamic enabling/disabling of
@@ -174,7 +196,7 @@ void validate_trapframe(trapframe_t *, int);
  */
 #define	ENABLE_ALIGNMENT_FAULTS						\
 	and	r7, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
-	teq	r7, #(PSR_USR32_MODE)					;\
+	cmp	r7, #(PSR_USR32_MODE)					;\
 	GET_CURCPU(r4)			/* r4 = cpuinfo */		;\
 	bne	1f			/* Not USR mode skip AFLT */	;\
 	ldr	r1, [r4, #CI_CURLWP]	/* get curlwp from cpu_info */	;\
@@ -197,12 +219,10 @@ void validate_trapframe(trapframe_t *, int);
 	DO_PENDING_SOFTINTS						;\
 	GET_CPSR(r5)			/* save CPSR */			;\
 	CPSID_I(r1, r5)			/* Disable interrupts */	;\
-	teq	r7, #(PSR_USR32_MODE)	/* Returning to USR mode? */	;\
+	cmp	r7, #(PSR_USR32_MODE)	/* Returning to USR mode? */	;\
 	bne	3f			/* Nope, get out now */		;\
-1:	ldr	r1, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
-	teq	r1, #0x00000000						;\
-	bne	2f			/* Yup. Go deal with it */	;\
-	ldr	r1, [r4, #CI_CURLWP]	/* get curlwp from cpu_info */	;\
+	DO_PENDING_AST(2f)		/* Pending AST? */		;\
+2:	ldr	r1, [r4, #CI_CURLWP]	/* get curlwp from cpu_info */	;\
 	ldr	r0, [r1, #L_MD_FLAGS]	/* get md_flags from lwp */	;\
 	tst	r0, #MDLWP_NOALIGNFLT					;\
 	beq	3f			/* Keep AFLTs enabled */	;\
@@ -210,16 +230,7 @@ void validate_trapframe(trapframe_t *, int);
 	ldr	r2, .Laflt_cpufuncs					;\
 	mov	r0, #-1							;\
 	bic	r1, r1, #CPU_CONTROL_AFLT_ENABLE  /* Disable AFLTs */	;\
-	adr	lr, 3f							;\
-	B_CF_CONTROL(r2)		/* Set new CTRL reg value */	;\
-	/* NOTREACHED */						\
-2:	mov	r1, #0x00000000						;\
-	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
-	CPSIE_I(r5, r5)			/* Restore interrupts */	;\
-	mov	r0, sp							;\
-	bl	_C_LABEL(ast)		/* ast(frame) */		;\
-	CPSID_I(r0, r5)			/* Disable interrupts */	;\
-	b	1b			/* Back around again */		;\
+	BL_CF_CONTROL(r2)		/* Set new CTRL reg value */	;\
 3:	/* done */
 
 #else	/* !EXEC_AOUT */
@@ -235,18 +246,9 @@ void validate_trapframe(trapframe_t *, int);
 	DO_PENDING_SOFTINTS						;\
 	GET_CPSR(r5)			/* save CPSR */			;\
 	CPSID_I(r1, r5)			/* Disable interrupts */	;\
-	teq	r7, #(PSR_USR32_MODE)					;\
+	cmp	r7, #(PSR_USR32_MODE)					;\
 	bne	2f			/* Nope, get out now */		;\
-1:	ldr	r1, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
-	teq	r1, #0x00000000						;\
-	beq	2f			/* Nope. Just bail */		;\
-	mov	r1, #0x00000000						;\
-	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
-	CPSIE_I(r5, r5)			/* Restore interrupts */	;\
-	mov	r0, sp							;\
-	bl	_C_LABEL(ast)		/* ast(frame) */		;\
-	CPSID_I(r0, r5)			/* Disable interrupts */	;\
-	b	1b							;\
+	DO_PENDING_AST(2f)		/* Pending AST? */		;\
 2:	/* done */
 #endif /* EXEC_AOUT */
 
@@ -288,7 +290,7 @@ LOCK_CAS_DEBUG_LOCALS
 #define	LOCK_CAS_CHECK							 \
 	ldr	r0, [sp]		/* get saved PSR */		;\
 	and	r0, r0, #(PSR_MODE)	/* check for SVC32 mode */	;\
-	teq	r0, #(PSR_SVC32_MODE)					;\
+	cmp	r0, #(PSR_SVC32_MODE)					;\
 	bne	99f			/* nope, get out now */		;\
 	ldr	r0, [sp, #(TF_PC)]					;\
 	ldr	r1, .L_lock_cas_end					;\

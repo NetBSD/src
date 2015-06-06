@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.93.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: in.h,v 1.93.2.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -467,7 +467,8 @@ struct ip_mreq {
 #define	IPCTL_RANDOMID	       22	/* use random IP ids (if configured) */
 #define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
 #define	IPCTL_STATS		24	/* IP statistics */
-#define	IPCTL_MAXID	       25
+#define	IPCTL_DAD_COUNT        25	/* DAD packets to send */
+#define	IPCTL_MAXID	       26
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -495,6 +496,7 @@ struct ip_mreq {
 	{ "random_id", CTLTYPE_INT }, \
 	{ "do_loopback_cksum", CTLTYPE_INT }, \
 	{ "stats", CTLTYPE_STRUCT }, \
+	{ "dad_count", CTLTYPE_INT }, \
 }
 #endif /* _NETBSD_SOURCE */
 
@@ -563,6 +565,12 @@ int	in4_cksum(struct mbuf *, u_int8_t, int, int);
 void	in_delayed_cksum(struct mbuf *);
 int	in_localaddr(struct in_addr);
 void	in_socktrim(struct sockaddr_in *);
+
+void	in_if_link_up(struct ifnet *);
+void	in_if_link_down(struct ifnet *);
+void	in_if_up(struct ifnet *);
+void	in_if_down(struct ifnet *);
+void	in_if_link_state_change(struct ifnet *, int);
 
 struct route;
 struct ip_moptions;

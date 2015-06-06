@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.8 2014/02/25 18:30:09 pooka Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.8.6.1 2015/06/06 14:40:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.8 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.8.6.1 2015/06/06 14:40:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -677,7 +677,7 @@ wmi_hp_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	    WMI_HP_METHOD_CMD_DOCK);
 }
 
-MODULE(MODULE_CLASS_DRIVER, wmihp, "acpiwmi");
+MODULE(MODULE_CLASS_DRIVER, wmihp, "acpiwmi,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

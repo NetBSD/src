@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.25.2.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.25.2.2 2015/06/06 14:39:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.25.2.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.25.2.2 2015/06/06 14:39:55 skrll Exp $");
 
 #include <sys/systm.h>
 
@@ -247,6 +247,18 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0ff00000, 0x03000000, "movw", 	"dZ" },
     { 0x0ff00000, 0x03400000, "movt", 	"dZ" },
 
+    /* A5.2.10 Synchronisation primitives */
+    { 0x0ff00ff0, 0x01000090, "swp",	"dmo" },
+    { 0x0ff00ff0, 0x01400090, "swpb",	"dmo" },
+    { 0x0ff00fff, 0x01900f9f, "ldrex",	"da" },
+    { 0x0ff00fff, 0x01b00f9f, "ldrexd",	"da" },
+    { 0x0ff00fff, 0x01d00f9f, "ldrexb",	"da" },
+    { 0x0ff00fff, 0x01f00f9f, "ldrexh",	"da" },
+    { 0x0ff00ff0, 0x01800f90, "strex",	"dma" },
+    { 0x0ff00ff0, 0x01a00f90, "strexd",	"dma" },
+    { 0x0ff00ff0, 0x01c00f90, "strexb",	"dma" },
+    { 0x0ff00ff0, 0x01e00f90, "strexh",	"dma" },
+
     /* A5.2 non-exceptions */
 
     /* A5.2.1, A5.2.2, and A5.2.3 Data-processing */
@@ -274,18 +286,6 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fe000f0, 0x00c00090, "smull",	"Sdnms" },
     { 0x0fe000f0, 0x00a00090, "umlal",	"Sdnms" },
     { 0x0fe000f0, 0x00e00090, "smlal",	"Sdnms" },
-
-    /* A5.2.10 Synchronisation primitives */
-    { 0x0ff00ff0, 0x01000090, "swp",	"dmo" },
-    { 0x0ff00ff0, 0x01400090, "swpb",	"dmo" },
-    { 0x0ff00fff, 0x01900f9f, "ldrex",	"da" },
-    { 0x0ff00fff, 0x01b00f9f, "ldrexd",	"da" },
-    { 0x0ff00fff, 0x01d00f9f, "ldrexb",	"da" },
-    { 0x0ff00fff, 0x01f00f9f, "ldrexh",	"da" },
-    { 0x0ff00ff0, 0x01800f90, "strex",	"dma" },
-    { 0x0ff00ff0, 0x01a00f90, "strexd",	"dma" },
-    { 0x0ff00ff0, 0x01c00f90, "strexb",	"dma" },
-    { 0x0ff00ff0, 0x01e00f90, "strexh",	"dma" },
 
     /* */
     { 0x0ff08f10, 0x0e000100, "adf",	"PRfgh" },

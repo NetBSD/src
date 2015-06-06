@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.20.2.1 2015/04/06 15:17:55 skrll Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.20.2.2 2015/06/06 14:39:58 skrll Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -12,7 +12,6 @@ no makeoptions	BOARDTYPE
 makeoptions	BOARDTYPE="hummingbird_a31"
 
 # CPU options
-options 	CPU_CORTEXA7
 options 	MULTIPROCESSOR
 options 	MEMSIZE=1024
 options 	ALLWINNER_A31
@@ -44,7 +43,7 @@ sdmmc*		at awinmmc?
 ld*		at sdmmc?
 
 # Interrupt Controller
-awinicu0	at awinio0 
+awinicu0	at awinio0
 
 # DMA Controller
 awindma0	at awinio0
@@ -68,7 +67,7 @@ pcf8563rtc0	at iic2 addr 0x51	# PCF8563 RTC
 # P2WI
 awinp2wi0	at awinio0
 iic1		at awinp2wi0
-axp22x0		at iic1 addr 0x34	# AXP221 Power Management Unit	
+axp22x0		at iic1 addr 0x34	# AXP221 Power Management Unit
 
 # On-board 16550 UARTs
 com0		at awinio? port 0			# UART0 (console)

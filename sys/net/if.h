@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.181.2.1 2015/04/06 15:18:22 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.181.2.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -346,7 +346,7 @@ typedef struct ifnet {
 	struct callout *if_slowtimo_ch;
 #endif
 } ifnet_t;
- 
+
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
 #define	if_addrlen	if_data.ifi_addrlen
@@ -469,7 +469,7 @@ typedef struct ifnet {
 		(m)->m_nextpkt = 0; \
 		(ifq)->ifq_len--; \
 	} \
-} while (/*CONSTCOND*/0) 
+} while (/*CONSTCOND*/0)
 #define	IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
 #define	IF_PURGE(ifq)							\
 do {									\
@@ -594,6 +594,7 @@ struct	ifreq {
 		struct	sockaddr ifru_broadaddr;
 		struct	sockaddr_storage ifru_space;
 		short	ifru_flags;
+		int	ifru_addrflags;
 		int	ifru_metric;
 		int	ifru_mtu;
 		int	ifru_dlt;
@@ -609,6 +610,7 @@ struct	ifreq {
 #define	ifr_broadaddr	ifr_ifru.ifru_broadaddr	/* broadcast address */
 #define	ifr_space	ifr_ifru.ifru_space	/* sockaddr_storage */
 #define	ifr_flags	ifr_ifru.ifru_flags	/* flags */
+#define	ifr_addrflags	ifr_ifru.ifru_addrflags	/* addr flags */
 #define	ifr_metric	ifr_ifru.ifru_metric	/* metric */
 #define	ifr_mtu		ifr_ifru.ifru_mtu	/* mtu */
 #define	ifr_dlt		ifr_ifru.ifru_dlt	/* data link type (DLT_*) */
@@ -879,8 +881,10 @@ int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);
 struct	ifnet *ifunit(const char *);
 int	if_addr_init(ifnet_t *, struct ifaddr *, bool);
+int	if_do_dad(struct ifnet *);
 int	if_mcast_op(ifnet_t *, const unsigned long, const struct sockaddr *);
 int	if_flags_set(struct ifnet *, const short);
+int	if_clone_list(int, char *, int *);
 
 void ifa_insert(struct ifnet *, struct ifaddr *);
 void ifa_remove(struct ifnet *, struct ifaddr *);
@@ -898,6 +902,7 @@ struct	ifaddr *ifa_ifwithroute(int, const struct sockaddr *,
 struct	ifaddr *ifaof_ifpforaddr(const struct sockaddr *, struct ifnet *);
 void	ifafree(struct ifaddr *);
 void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
+void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);

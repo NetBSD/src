@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.17 2014/03/20 06:48:54 skrll Exp $	*/
+/*	$NetBSD: edvar.h,v 1.17.6.1 2015/06/06 14:40:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include <sys/mutex.h>
+#include <sys/rndsource.h>
 
 struct edc_mca_softc;
 

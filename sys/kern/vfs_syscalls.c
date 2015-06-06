@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.492.2.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.492.2.2 2015/06/06 14:40:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.492.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.492.2.2 2015/06/06 14:40:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.492.2.1 2015/04/06 15:18:20 skrll
 #include <sys/buf.h>
 
 #include <miscfs/genfs/genfs.h>
-#include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <nfs/rpcv2.h>
@@ -164,7 +163,7 @@ const char * const mountcompatnames[] = {
 
 const int nmountcompatnames = __arraycount(mountcompatnames);
 
-static int 
+static int
 fd_nameiat(struct lwp *l, int fdat, struct nameidata *ndp)
 {
 	file_t *dfp;
@@ -182,7 +181,7 @@ fd_nameiat(struct lwp *l, int fdat, struct nameidata *ndp)
 	if (fdat != AT_FDCWD)
 		fd_putfile(fdat);
 out:
-	return error;	
+	return error;
 }
 
 static int
@@ -207,7 +206,7 @@ fd_nameiat_simple_user(struct lwp *l, int fdat, const char *path,
 	if (fdat != AT_FDCWD)
 		fd_putfile(fdat);
 out:
-	return error;	
+	return error;
 }
 
 static int
@@ -328,18 +327,18 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mp->mnt_iflag &= ~IMNT_WANTRDWR;
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0) {
-		if (mp->mnt_syncer == NULL)
-			error = vfs_allocate_syncvnode(mp);
+		if ((mp->mnt_iflag & IMNT_ONWORKLIST) == 0)
+			vfs_syncer_add_to_worklist(mp);
 	} else {
-		if (mp->mnt_syncer != NULL)
-			vfs_deallocate_syncvnode(mp);
+		if ((mp->mnt_iflag & IMNT_ONWORKLIST) != 0)
+			vfs_syncer_remove_from_worklist(mp);
 	}
 	mutex_exit(&mp->mnt_updating);
 	vfs_unbusy(mp, false, NULL);
 
-	if ((error == 0) && !(saved_flags & MNT_EXTATTR) && 
+	if ((error == 0) && !(saved_flags & MNT_EXTATTR) &&
 	    (flags & MNT_EXTATTR)) {
-		if (VFS_EXTATTRCTL(mp, EXTATTR_CMD_START, 
+		if (VFS_EXTATTRCTL(mp, EXTATTR_CMD_START,
 				   NULL, 0, NULL) != 0) {
 			printf("%s: failed to start extattr, error = %d",
 			       mp->mnt_stat.f_mntonname, error);
@@ -347,9 +346,9 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		}
 	}
 
-	if ((error == 0) && (saved_flags & MNT_EXTATTR) && 
+	if ((error == 0) && (saved_flags & MNT_EXTATTR) &&
 	    !(flags & MNT_EXTATTR)) {
-		if (VFS_EXTATTRCTL(mp, EXTATTR_CMD_STOP, 
+		if (VFS_EXTATTRCTL(mp, EXTATTR_CMD_STOP,
 				   NULL, 0, NULL) != 0) {
 			printf("%s: failed to stop extattr, error = %d",
 			       mp->mnt_stat.f_mntonname, error);
@@ -412,7 +411,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	mp = vp->v_mount;
 
-	/* XXX: probably some notion of "can see" here if we want isolation. */ 
+	/* XXX: probably some notion of "can see" here if we want isolation. */
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 	    KAUTH_REQ_SYSTEM_MOUNT_GET, mp, data, NULL);
 	if (error)
@@ -1546,7 +1545,7 @@ chdir_lookup(const char *path, int where, struct vnode **vpp, struct lwp *l)
  * like posix_spawn post-processing).
  */
 int
-do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags, 
+do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags,
 	int open_mode, int *fd)
 {
 	struct proc *p = l->l_proc;
@@ -1574,7 +1573,7 @@ do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags,
 	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, pb);
 	if (dvp != NULL)
 		NDAT(&nd, dvp);
-	
+
 	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
 		fd_abort(p, fp, indx);
@@ -2171,7 +2170,7 @@ sys_mknodat(struct lwp *l, const struct sys_mknodat_args *uap,
 		syscallarg(dev_t) dev;
 	} */
 
-	return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path), 
+	return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path),
 	    SCARG(uap, mode), SCARG(uap, dev), retval, UIO_USERSPACE);
 }
 
@@ -2309,7 +2308,7 @@ sys_mkfifo(struct lwp *l, const struct sys_mkfifo_args *uap, register_t *retval)
 }
 
 int
-sys_mkfifoat(struct lwp *l, const struct sys_mkfifoat_args *uap, 
+sys_mkfifoat(struct lwp *l, const struct sys_mkfifoat_args *uap,
     register_t *retval)
 {
 	/* {
@@ -2318,7 +2317,7 @@ sys_mkfifoat(struct lwp *l, const struct sys_mkfifoat_args *uap,
 		syscallarg(int) mode;
 	} */
 
-	return do_sys_mkfifoat(l, SCARG(uap, fd), SCARG(uap, path), 
+	return do_sys_mkfifoat(l, SCARG(uap, fd), SCARG(uap, path),
 	    SCARG(uap, mode));
 }
 
@@ -2369,7 +2368,7 @@ do_sys_mkfifoat(struct lwp *l, int fdat, const char *path, mode_t mode)
 /* ARGSUSED */
 int
 do_sys_linkat(struct lwp *l, int fdpath, const char *path, int fdlink,
-    const char *link, int follow, register_t *retval) 
+    const char *link, int follow, register_t *retval)
 {
 	struct vnode *vp;
 	struct pathbuf *linkpb;
@@ -2407,6 +2406,8 @@ do_sys_linkat(struct lwp *l, int fdpath, const char *path, int fdlink,
 		goto abortop;
 	}
 	error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
+	VOP_UNLOCK(nd.ni_dvp);
+	vrele(nd.ni_dvp);
 out2:
 	pathbuf_destroy(linkpb);
 out1:
@@ -2541,7 +2542,7 @@ sys_symlink(struct lwp *l, const struct sys_symlink_args *uap, register_t *retva
 }
 
 int
-sys_symlinkat(struct lwp *l, const struct sys_symlinkat_args *uap, 
+sys_symlinkat(struct lwp *l, const struct sys_symlinkat_args *uap,
     register_t *retval)
 {
 	/* {
@@ -2707,7 +2708,7 @@ do_sys_unlinkat(struct lwp *l, int fdat, const char *arg, int flags,
 		goto abort;
 	}
 #endif /* NVERIEXEC > 0 */
-	
+
 #ifdef FILEASSOC
 	(void)fileassoc_file_delete(vp);
 #endif /* FILEASSOC */
@@ -2956,7 +2957,7 @@ do_sys_accessat(struct lwp *l, int fdat, const char *path,
 		nd_flag &= ~FOLLOW;
 
 	error = pathbuf_copyin(path, &pb);
-	if (error) 
+	if (error)
 		return error;
 
 	NDINIT(&nd, LOOKUP, nd_flag, pb);
@@ -3023,7 +3024,7 @@ do_sys_stat(const char *userpath, unsigned int nd_flag,
 
 int
 do_sys_statat(struct lwp *l, int fdat, const char *userpath,
-    unsigned int nd_flag, struct stat *sb) 
+    unsigned int nd_flag, struct stat *sb)
 {
 	int error;
 	struct pathbuf *pb;
@@ -3108,7 +3109,7 @@ sys_fstatat(struct lwp *l, const struct sys_fstatat_args *uap,
 	else
 		nd_flag = FOLLOW;
 
-	error = do_sys_statat(l, SCARG(uap, fd), SCARG(uap, path), nd_flag, 
+	error = do_sys_statat(l, SCARG(uap, fd), SCARG(uap, path), nd_flag,
 	    &sb);
 	if (error)
 		return error;
@@ -3767,7 +3768,7 @@ sys_utimensat(struct lwp *l, const struct sys_utimensat_args *uap,
 	tptr = SCARG(uap, tptr);
 	follow = (SCARG(uap, flag) & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 
-	error = do_sys_utimensat(l, SCARG(uap, fd), NULL, 
+	error = do_sys_utimensat(l, SCARG(uap, fd), NULL,
 	    SCARG(uap, path), follow, tptr, UIO_USERSPACE);
 
 	return error;
@@ -3795,7 +3796,7 @@ do_sys_utimensat(struct lwp *l, int fdat, struct vnode *vp,
 
 	KASSERT(l != NULL || fdat == AT_FDCWD);
 
-	/* 
+	/*
 	 * I have checked all callers and they pass either FOLLOW,
 	 * NOFOLLOW, or 0 (when they don't pass a path), and NOFOLLOW
 	 * is 0. More to the point, they don't pass anything else.
@@ -3803,7 +3804,7 @@ do_sys_utimensat(struct lwp *l, int fdat, struct vnode *vp,
 	 * are fully sanitized.
 	 */
 	KASSERT(flag == NOFOLLOW || flag == FOLLOW);
-	sflags = (flag == FOLLOW) ? 
+	sflags = (flag == FOLLOW) ?
 		NSM_FOLLOW_TRYEMULROOT : NSM_NOFOLLOW_TRYEMULROOT;
 
 	if (tptr == NULL) {
@@ -3871,7 +3872,7 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	struct timespec ts[2];
 	struct timespec *tsptr = NULL;
 	int error;
-	
+
 	if (tptr != NULL) {
 		struct timeval tv[2];
 
@@ -3882,19 +3883,19 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 			tptr = tv;
 		}
 
-		if ((tv[0].tv_usec == UTIME_NOW) || 
+		if ((tv[0].tv_usec == UTIME_NOW) ||
 		    (tv[0].tv_usec == UTIME_OMIT))
 			ts[0].tv_nsec = tv[0].tv_usec;
 		else
 			TIMEVAL_TO_TIMESPEC(&tptr[0], &ts[0]);
 
-		if ((tv[1].tv_usec == UTIME_NOW) || 
+		if ((tv[1].tv_usec == UTIME_NOW) ||
 		    (tv[1].tv_usec == UTIME_OMIT))
 			ts[1].tv_nsec = tv[1].tv_usec;
 		else
 			TIMEVAL_TO_TIMESPEC(&tptr[1], &ts[1]);
 
-		tsptr = &ts[0];	
+		tsptr = &ts[0];
 	}
 
 	return do_sys_utimens(l, vp, path, flag, tsptr, UIO_SYSSPACE);
@@ -4113,12 +4114,12 @@ sys_rename(struct lwp *l, const struct sys_rename_args *uap, register_t *retval)
 		syscallarg(const char *) to;
 	} */
 
-	return (do_sys_renameat(l, AT_FDCWD, SCARG(uap, from), AT_FDCWD, 
+	return (do_sys_renameat(l, AT_FDCWD, SCARG(uap, from), AT_FDCWD,
 	    SCARG(uap, to), UIO_USERSPACE, 0));
 }
 
 int
-sys_renameat(struct lwp *l, const struct sys_renameat_args *uap, 
+sys_renameat(struct lwp *l, const struct sys_renameat_args *uap,
     register_t *retval)
 {
 	/* {
@@ -4196,7 +4197,7 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	 * locked yet, but (a) namei is insane, and (b) VOP_RENAME is
 	 * insane, so for the time being we need to leave it like this.
 	 */
-	NDINIT(&fnd, DELETE, (LOCKPARENT | TRYEMULROOT | INRENAME), fpb);
+	NDINIT(&fnd, DELETE, (LOCKPARENT | TRYEMULROOT), fpb);
 	if ((error = fd_nameiat(l, fromfd, &fnd)) != 0)
 		goto out2;
 
@@ -4249,7 +4250,7 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	 * XXX Why not pass CREATEDIR always?
 	 */
 	NDINIT(&tnd, RENAME,
-	    (LOCKPARENT | NOCACHE | TRYEMULROOT | INRENAME |
+	    (LOCKPARENT | NOCACHE | TRYEMULROOT |
 		((fvp->v_type == VDIR)? CREATEDIR : 0)),
 	    tpb);
 	if ((error = fd_nameiat(l, tofd, &tnd)) != 0)
@@ -4281,12 +4282,14 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	 * until the VOP_RENAME protocol changes, because file systems
 	 * will no doubt begin to depend on this check.
 	 */
-	if (((tnd.ni_cnd.cn_namelen == 1) &&
-		(tnd.ni_cnd.cn_nameptr[0] == '.')) ||
-	    ((tnd.ni_cnd.cn_namelen == 2) &&
-		(tnd.ni_cnd.cn_nameptr[0] == '.') &&
-		(tnd.ni_cnd.cn_nameptr[1] == '.'))) {
-		error = EINVAL;	/* XXX EISDIR?  */
+	if ((tnd.ni_cnd.cn_namelen == 1) && (tnd.ni_cnd.cn_nameptr[0] == '.')) {
+		error = EISDIR;
+		goto abort1;
+	}
+	if ((tnd.ni_cnd.cn_namelen == 2) &&
+	    (tnd.ni_cnd.cn_nameptr[0] == '.') &&
+	    (tnd.ni_cnd.cn_nameptr[1] == '.')) {
+		error = EINVAL;
 		goto abort1;
 	}
 
@@ -4714,12 +4717,12 @@ sys_posix_fallocate(struct lwp *l, const struct sys_posix_fallocate_args *uap,
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
 	len = SCARG(uap, len);
-	
+
 	if (pos < 0 || len < 0 || len > OFF_T_MAX - pos) {
 		*retval = EINVAL;
 		return 0;
 	}
-	
+
 	error = fd_getvnode(fd, &fp);
 	if (error) {
 		*retval = error;
@@ -4772,7 +4775,7 @@ sys_fdiscard(struct lwp *l, const struct sys_fdiscard_args *uap,
 	if (pos < 0 || len < 0 || len > OFF_T_MAX - pos) {
 		return EINVAL;
 	}
-	
+
 	error = fd_getvnode(fd, &fp);
 	if (error) {
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.179.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.179.2.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.179.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.179.2.2 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -756,12 +756,12 @@ again:
 		long cwin;
 		if (!TCP_SACK_ENABLED(tp))
 			break;
-		if (tp->t_partialacks < 0) 
+		if (tp->t_partialacks < 0)
 			break;
 		p = tcp_sack_output(tp, &sack_bytes_rxmt);
 		if (p == NULL)
 			break;
-		
+
 		cwin = min(tp->snd_wnd, tp->snd_cwnd) - sack_bytes_rxmt;
 		if (cwin < 0)
 			cwin = 0;
@@ -851,14 +851,14 @@ again:
 			/*
 			 * From FreeBSD:
 			 *  Don't remove this (len > 0) check !
-			 *  We explicitly check for len > 0 here (although it 
-			 *  isn't really necessary), to work around a gcc 
+			 *  We explicitly check for len > 0 here (although it
+			 *  isn't really necessary), to work around a gcc
 			 *  optimization issue - to force gcc to compute
 			 *  len above. Without this check, the computation
 			 *  of len is bungled by the optimizer.
 			 */
 			if (len > 0) {
-				cwin = tp->snd_cwnd - 
+				cwin = tp->snd_cwnd -
 				    (tp->snd_nxt - tp->sack_newdata) -
 				    sack_bytes_rxmt;
 				if (cwin < 0)
@@ -1020,11 +1020,19 @@ again:
 		long adv = min(win, (long)TCP_MAXWIN << tp->rcv_scale) -
 			(tp->rcv_adv - tp->rcv_nxt);
 
+		/*
+		 * If the new window size ends up being the same as the old
+		 * size when it is scaled, then don't force a window update.
+		 */
+		if ((tp->rcv_adv - tp->rcv_nxt) >> tp->rcv_scale ==
+		    (adv + tp->rcv_adv - tp->rcv_nxt) >> tp->rcv_scale)
+			goto dontupdate;
 		if (adv >= (long) (2 * rxsegsize))
 			goto send;
 		if (2 * adv >= (long) so->so_rcv.sb_hiwat)
 			goto send;
 	}
+dontupdate:
 
 	/*
 	 * Send if we owe peer an ACK.
@@ -1230,7 +1238,10 @@ send:
 		*bp++ = TCPOPT_NOP;
 		*bp++ = TCPOPT_EOL;
  		optlen += 2;
- 	}
+ 	} else if ((tp->t_flags & TF_SIGNATURE) != 0) {
+		error = ECONNABORTED;
+		goto out;
+	}
 #endif /* TCP_SIGNATURE */
 
 	hdrlen += optlen;
@@ -1355,7 +1366,7 @@ send:
 		if (tp->t_flags & TF_ECN_SND_CWR) {
 			flags |= TH_CWR;
 			tp->t_flags &= ~TF_ECN_SND_CWR;
-		} 
+		}
 		if (tp->t_flags & TF_ECN_SND_ECE) {
 			flags |= TH_ECE;
 		}
@@ -1579,9 +1590,7 @@ timer:
 			 * setsockopt. Also, desired default hop limit might
 			 * be changed via Neighbor Discovery.
 			 */
-			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb,
-				(rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
-				                                    : NULL);
+			ip6->ip6_hlim = in6_selecthlim_rt(tp->t_in6pcb);
 		}
 		ip6->ip6_flow |= htonl(ecn_tos << 20);
 		/* ip6->ip6_flow = ??? (from template) */
@@ -1659,7 +1668,7 @@ out:
 
 	if (packetlen > tp->t_pmtud_mtu_sent)
 		tp->t_pmtud_mtu_sent = packetlen;
-	
+
 	tcps = TCP_STAT_GETREF();
 	tcps[TCP_STAT_SNDTOTAL]++;
 	if (tp->t_flags & TF_DELACK)

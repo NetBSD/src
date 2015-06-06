@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.183 2014/11/15 12:56:28 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.183.2.1 2015/06/06 14:40:05 skrll Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -315,6 +315,12 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh \
 	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 	${COMPILE_CTFCONVERT}
+.endif
+
+# Option for embedding a splashscreen image.
+.if defined(SPLASHSCREEN_IMAGE) 
+.include "${S}/dev/splash/splash.mk"
+init_main.o: splash_image.o
 .endif
 
 .if defined(MEMORY_DISK_IMAGE)

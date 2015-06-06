@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.56 2012/02/19 21:06:18 rmind Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.56.16.1 2015/06/06 14:40:02 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -997,9 +997,13 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 * Interrupts handled, restore registers and return from the interrupt.
 	 * First, clear interrupt enable
 	 */
+#if __mips_isa_rev >= 2
+	di	v0				# disable interrupts
+#else
 	mfc0	v0, MIPS_COP_0_STATUS		# read it
 	xor	v0, MIPS_SR_INT_IE		# disable interrupts
 	mtc0	v0, MIPS_COP_0_STATUS		# write it
+#endif
 	COP0_SYNC
 
 	or	v0, MIPS_SR_EXL			# set exception mode
@@ -1095,11 +1099,12 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	_MFC0	v0, MIPS_COP_0_EXC_PC
 	PTR_ADDIU v0, 4
 	_MTC0	v0, MIPS_COP_0_EXC_PC
+	COP0_SYNC
 
 	PTR_L	v1, L_PRIVATE(k1)		# rdhwr $3,$29 updates v1
+
 	REG_L	AT, CALLFRAME_SIZ+TF_REG_AST(k0)# restore reg
 	REG_L	v0, CALLFRAME_SIZ+TF_REG_V0(k0) # restore reg
-	sll	$0,$0,3				# just in case
 	eret
 END(MIPSX(user_reserved_insn))
 
@@ -1347,10 +1352,14 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	/*
 	 * Disable interrupts
 	 */
+#if __mips_isa_rev >= 2
+	di					# disable interrupts
+#else
 	mfc0	v1, MIPS_COP_0_STATUS
 	and	v0, v1, MIPS_SR_INT_IE		# clear interrupt enable
 	xor	v0, v1
 	mtc0	v0, MIPS_COP_0_STATUS		# interrupts are disabled
+#endif
 	COP0_SYNC
 
 	/*
@@ -1381,10 +1390,14 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_S	s6, CALLFRAME_SIZ+TF_REG_S6(sp)	# $22
 	REG_S	s7, CALLFRAME_SIZ+TF_REG_S7(sp)	# $23
 	REG_S	s8, CALLFRAME_SIZ+TF_REG_S8(sp)	# $30
+#if !defined(MIPS_DYNAMIC_STATUS_MASK) && __mips_isa_rev > 2
+	ei					# enable interrupts
+#else
 	mfc0	t0, MIPS_COP_0_STATUS		#
 	or	t0, MIPS_SR_INT_IE 		# enable interrupts
 	DYNAMIC_STATUS_MASK(t0, t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
+#endif
 	COP0_SYNC
 
 	PTR_LA	ra, MIPSX(user_return)
@@ -2180,6 +2193,9 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	li	ta3, 1
 	move	v0, zero			# start at zero ASIDs
 
+#if __mips_isa_rev >= 2
+	di	v1				# disable interrupts
+#else
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 #ifdef _LP64
 	and	t0, v1, MIPS_SR_INT_IE
@@ -2187,6 +2203,7 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	mtc0	t0, MIPS_COP_0_STATUS		# disable interrupts
 #else
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+#endif
 #endif
 	COP0_SYNC
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy.c,v 1.2.2.2 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: sysproxy.c,v 1.2.2.3 2015/06/06 14:40:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.2.2.2 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.2.2.3 2015/06/06 14:40:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
@@ -76,9 +76,12 @@ hyp_syscall(int num, void *arg, long *retval)
 	return rv;
 }
 
+static struct pmap remotepmap;
+
 static int
 hyp_rfork(void *priv, int flags, const char *comm)
 {
+	struct rump_spctl *spctl;
 	struct vmspace *vm;
 	struct proc *p;
 	struct lwp *l;
@@ -97,10 +100,12 @@ hyp_rfork(void *priv, int flags, const char *comm)
 	}
 
 	/*
-	 * Since it's a proxy proc, we need create a vmspace for it.
+	 * Since it's a proxy proc, we create a vmspace for it.
 	 */
-	vm = kmem_zalloc(sizeof(*vm), KM_SLEEP);
-	uvmspace_init(vm, priv, 0, 0, false);
+	spctl = kmem_zalloc(sizeof(*spctl), KM_SLEEP);
+	vm = &spctl->spctl_vm;
+	uvmspace_init(vm, &remotepmap, 0, 0, false);
+	spctl->spctl = priv;
 
 	if ((error = rump_lwproc_rfork_vmspace(vm, flags)) != 0) {
 		kmem_free(vm, sizeof(*vm));

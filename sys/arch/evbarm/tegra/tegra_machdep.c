@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.3.2.2 2015/04/06 15:17:56 skrll Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.3.2.3 2015/06/06 14:39:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.2 2015/04/06 15:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.3 2015/06/06 14:39:58 skrll Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.2 2015/04/06 15:17:56 skrll 
 #endif
 
 BootConfig bootconfig;
-static char bootargs[TEGRA_MAX_BOOT_STRING];
+char bootargs[TEGRA_MAX_BOOT_STRING] = "";
 char *boot_args = NULL;
 u_int uboot_args[4] = { 0 };	/* filled in by tegra_start.S (not in bss) */
 
@@ -116,9 +116,23 @@ static const struct pmap_devmap devmap[] = {
 		.pd_cache = PTE_NOCACHE
 	},
 	{
+		.pd_va = _A(TEGRA_PPSB_VBASE),
+		.pd_pa = _A(TEGRA_PPSB_BASE),
+		.pd_size = _S(TEGRA_PPSB_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
 		.pd_va = _A(TEGRA_APB_VBASE),
 		.pd_pa = _A(TEGRA_APB_BASE),
 		.pd_size = _S(TEGRA_APB_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
+		.pd_va = _A(TEGRA_AHB_A2_VBASE),
+		.pd_pa = _A(TEGRA_AHB_A2_BASE),
+		.pd_size = _S(TEGRA_AHB_A2_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
@@ -127,6 +141,15 @@ static const struct pmap_devmap devmap[] = {
 
 #undef	_A
 #undef	_S
+
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+static struct boot_physmem bp_lowgig = {
+	.bp_start = TEGRA_EXTMEM_BASE / NBPG,
+	.bp_pages = (KERNEL_VM_BASE - KERNEL_BASE) / NBPG,
+	.bp_freelist = VM_FREELIST_ISADMA,
+	.bp_flags = 0
+};
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 static void
@@ -154,12 +177,31 @@ tegra_putstr(const char *s)
 		tegra_putchar(*p);
 	}
 }
+
+static void
+tegra_printn(u_int n, int base)
+{
+	char *p, buf[(sizeof(u_int) * NBBY / 3) + 1 + 2 /* ALT + SIGN */];
+
+	p = buf;
+	do {
+		*p++ = hexdigits[n % base];
+	} while (n /= base);
+
+	do {
+		tegra_putchar(*--p);
+	} while (p > buf);
+}
 #define DPRINTF(...)		printf(__VA_ARGS__)
 #define DPRINT(x)		tegra_putstr(x)
+#define DPRINTN(x,b)		tegra_printn((x), (b))
 #else
 #define DPRINTF(...)
 #define DPRINT(x)
+#define DPRINTN(x,b)
 #endif
+
+extern void cortex_mpstart(void);
 
 /*
  * u_int initarm(...)
@@ -179,6 +221,10 @@ initarm(void *arg)
 {
 	psize_t ram_size = 0;
 	DPRINT("initarm:");
+
+	DPRINT(" mpstart<0x");
+	DPRINTN((uint32_t)cortex_mpstart, 16);
+	DPRINT(">");
 
 	DPRINT(" devmap");
 	pmap_devmap_register(devmap);
@@ -217,12 +263,17 @@ initarm(void *arg)
 	ram_size = tegra_mc_memsize();
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
 	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
 		printf("%s: dropping RAM size from %luMB to %uMB\n",
-		    __func__, (unsigned long) (ram_size >> 20),     
+		    __func__, (unsigned long) (ram_size >> 20),
 		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
 		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
 	}
+#endif
+#else
+	const bool mapallmem_p = false;
 #endif
 
 	/*
@@ -237,17 +288,14 @@ initarm(void *arg)
 	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
 #endif
 
+	/* DMA tag setup */
+	tegra_dma_bootstrap(ram_size);
+
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = TEGRA_EXTMEM_BASE; /* DDR PHY addr */
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
 
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	const bool mapallmem_p = true;
-	KASSERT(ram_size <= KERNEL_VM_BASE - KERNEL_BASE);
-#else
-	const bool mapallmem_p = false;
-#endif
 	KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
 
 	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
@@ -255,20 +303,20 @@ initarm(void *arg)
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
 	    mapallmem_p);
 
-	if (mapallmem_p) {
-		if (uboot_args[3] < ram_size) {
-			const char * const args = (const char *)
-			    (uboot_args[3] + KERNEL_BASE_VOFFSET);
-			strlcpy(bootargs, args, sizeof(bootargs));
-		}
-	}
-
 	DPRINTF("bootargs: %s\n", bootargs);
 
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 
 	evbarm_device_register = tegra_device_register;
+
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+	if (atop(ram_size) > bp_lowgig.bp_pages) {
+		arm_poolpage_vmfreelist = bp_lowgig.bp_freelist;
+		return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
+		    &bp_lowgig, 1);
+	}
+#endif
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
@@ -297,13 +345,25 @@ consinit(void)
 
 #if NCOM > 0
 	const bus_space_tag_t bst = &armv7_generic_a4x_bs_tag;
-	if (comcnattach(bst, CONSADDR, CONSPEED, TEGRA_UART_FREQ,
-			COM_TYPE_NORMAL, CONMODE)) {
+	const u_int freq = tegra_car_uart_rate(3);
+	if (comcnattach(bst, CONSADDR, CONSPEED, freq,
+			COM_TYPE_TEGRA, CONMODE)) {
 		panic("Serial console cannot be initialized.");
 	}
 #else
 #error only COM console is supported
 #endif
+}
+
+static bool
+tegra_bootconf_match(const char *key, const char *val)
+{
+	char *s;
+
+	if (!get_bootconf_option(boot_args, key, BOOTOPT_TYPE_STRING, &s))
+		return false;
+
+	return strncmp(s, val, strlen(val)) == 0;
 }
 
 void
@@ -322,4 +382,55 @@ tegra_device_register(device_t self, void *aux)
                 prop_dictionary_set_uint32(dict, "frequency", TEGRA_REF_FREQ);
 		return;
 	}
+
+	if (device_is_a(self, "cpu") && device_unit(self) == 0) {
+		tegra_cpuinit();
+	}
+
+	if (device_is_a(self, "tegradc")
+	    && tegra_bootconf_match("console", "fb")) {
+		prop_dictionary_set_bool(dict, "is_console", true);
+#if NUKBD > 0
+		ukbd_cnattach();
+#endif
+	}
+
+#ifdef BOARD_JETSONTK1
+	if (device_is_a(self, "sdhc")
+	    && device_is_a(device_parent(self), "tegraio")) {
+		struct tegraio_attach_args * const tio = aux;
+		const struct tegra_locators * const loc = &tio->tio_loc;
+
+		if (loc->loc_port == 2) {
+			prop_dictionary_set_cstring(dict, "cd-gpio", "V2");
+			prop_dictionary_set_cstring(dict, "power-gpio", "R0");
+			prop_dictionary_set_cstring(dict, "wp-gpio", "Q4");
+		}
+	}
+
+	if (device_is_a(self, "ahcisata")
+	    && device_is_a(device_parent(self), "tegraio")) {
+		prop_dictionary_set_cstring(dict, "power-gpio", "EE2");
+	}
+
+	if (device_is_a(self, "ehci")
+	    && device_is_a(device_parent(self), "tegraio")) {
+		struct tegraio_attach_args * const tio = aux;
+		const struct tegra_locators * const loc = &tio->tio_loc;
+
+		if (loc->loc_port == 0) {
+			prop_dictionary_set_cstring(dict, "vbus-gpio", "N4");
+		} else if (loc->loc_port == 2) {
+			prop_dictionary_set_cstring(dict, "vbus-gpio", "N5");
+		}
+	}
+
+	if (device_is_a(self, "tegrahdmi")) {
+		prop_dictionary_set_cstring(dict, "hpd-gpio", "N7");
+		prop_dictionary_set_cstring(dict, "pll-gpio", "H7");
+		prop_dictionary_set_cstring(dict, "power-gpio", "K6");
+		prop_dictionary_set_cstring(dict, "ddc-device", "ddc0");
+		prop_dictionary_set_cstring(dict, "display-device", "tegradc1");
+	}
+#endif
 }

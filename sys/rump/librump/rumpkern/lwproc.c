@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.31.4.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.31.4.2 2015/06/06 14:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.31.4.1 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.31.4.2 2015/06/06 14:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -132,8 +132,9 @@ lwproc_proc_free(struct proc *p)
 
 	/* non-local vmspaces are not shared */
 	if (!RUMP_LOCALPROC_P(p)) {
+		struct rump_spctl *ctl = (struct rump_spctl *)p->p_vmspace;
 		KASSERT(p->p_vmspace->vm_refcnt == 1);
-		kmem_free(p->p_vmspace, sizeof(*p->p_vmspace));
+		kmem_free(ctl, sizeof(*ctl));
 	}
 
 	proc_free_mem(p);
@@ -266,7 +267,7 @@ lwproc_freelwp(struct lwp *l)
 	kmem_free(l, sizeof(*l));
 
 	if (p->p_stat == SDEAD)
-		lwproc_proc_free(p);	
+		lwproc_proc_free(p);
 }
 
 extern kmutex_t unruntime_lock;
@@ -327,7 +328,7 @@ rump__lwproc_alloclwp(struct proc *p)
 	bool newproc = false;
 
 	if (p == NULL) {
-		p = lwproc_newproc(&proc0, rump_vmspace_local, 0);
+		p = lwproc_newproc(&proc0, rump_vmspace_local, RUMP_RFCFDG);
 		newproc = true;
 	}
 

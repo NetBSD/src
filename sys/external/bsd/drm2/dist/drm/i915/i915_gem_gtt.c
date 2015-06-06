@@ -575,7 +575,7 @@ gen8_ppgtt_allocate_page_directories(struct i915_hw_ppgtt *ppgtt,
 
 	ppgtt->u.gen8->npdp = npdp;
 
-	KASSERT(nsegs < GEN8_LEGACY_PDPS);
+	KASSERT(nsegs <= GEN8_LEGACY_PDPS);
 	CTASSERT(GEN8_LEGACY_PDPS == __arraycount(ppgtt->u.gen8->pd_segs));
 
 	/* XXX errno NetBSD->Linux */

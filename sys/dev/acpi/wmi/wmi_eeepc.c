@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_eeepc.c,v 1.3 2011/07/22 15:53:02 jakllsch Exp $ */
+/*	$NetBSD: wmi_eeepc.c,v 1.3.30.1 2015/06/06 14:40:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_eeepc.c,v 1.3 2011/07/22 15:53:02 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_eeepc.c,v 1.3.30.1 2015/06/06 14:40:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -333,7 +333,7 @@ out:
 		    "event 0x%02X: %s\n", evt, AcpiFormatException(rv));
 }
 
-MODULE(MODULE_CLASS_DRIVER, wmieeepc, "acpiwmi");
+MODULE(MODULE_CLASS_DRIVER, wmieeepc, "acpiwmi,sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"

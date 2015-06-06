@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.13.2.1 2015/04/06 15:18:20 skrll Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.13.2.2 2015/06/06 14:40:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -14,14 +14,14 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Emmanuel Dreyfus
- * 4. The name of the author may not be used to endorse or promote 
- *    products derived from this software without specific prior written 
+ * 4. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
  *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS'' 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.13.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.13.2.2 2015/06/06 14:40:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.13.2.1 2015/04/06 15:18:20 skrll
 
 extern void       mdattach(int);
 
-/* 
- * Copied from <lib/libsa/tftp.h> 
+/*
+ * Copied from <lib/libsa/tftp.h>
  */
 
 #define SEGSIZE         512             /* data segment size */
@@ -134,7 +134,7 @@ tftproot_dhcpboot(device_t bootdv)
 		IFNET_FOREACH(ifp)
 			if (strcmp(rootspec, ifp->if_xname) == 0)
 				break;
-	} 
+	}
 
 	if ((ifp == NULL) &&
 	    (bootdv != NULL && device_class(bootdv) == DV_IFNET)) {
@@ -165,12 +165,12 @@ tftproot_dhcpboot(device_t bootdv)
 	nd->nd_nomount = 1;
 
 	if ((error = nfs_boot_init(nd, l)) != 0) {
-		DPRINTF(("%s():%d nfs_boot_init returned %d\n", 
+		DPRINTF(("%s():%d nfs_boot_init returned %d\n",
 		    __func__, __LINE__, error));
 		goto out;
 	}
 
-	/* 
+	/*
 	 * Strip leading "tftp:"
 	 */
 #define PREFIX "tftp:"
@@ -187,7 +187,7 @@ tftproot_dhcpboot(device_t bootdv)
 	trh.trh_block = 1;
 
 	if ((error = tftproot_getfile(&trh, l)) != 0) {
-		DPRINTF(("%s():%d tftproot_getfile returned %d\n", 
+		DPRINTF(("%s():%d tftproot_getfile returned %d\n",
 		    __func__, __LINE__, error));
 		goto out;
 	}
@@ -201,22 +201,22 @@ out:
 	return error;
 }
 
-static int 
+static int
 tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 {
 	struct socket *so = NULL;
 	struct mbuf *m_serv = NULL;
 	struct mbuf *m_outbuf = NULL;
-	struct sockaddr_in *sin;
+	struct sockaddr_in sin;
 	struct tftphdr *tftp;
 	size_t packetlen, namelen;
 	int error = -1;
 	const char octetstr[] = "octet";
 	size_t hdrlen = sizeof(*tftp) - sizeof(tftp->th_data);
 	char *cp;
-	
+
 	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0, l, NULL)) != 0) {
-		DPRINTF(("%s():%d socreate returned %d\n", 
+		DPRINTF(("%s():%d socreate returned %d\n",
 		    __func__, __LINE__, error));
 		goto out;
 	}
@@ -225,7 +225,7 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	 * Set timeout
 	 */
 	if ((error = nfs_boot_setrecvtimo(so))) {
-		DPRINTF(("%s():%d SO_RCVTIMEO failed %d\n", 
+		DPRINTF(("%s():%d SO_RCVTIMEO failed %d\n",
 		    __func__, __LINE__, error));
 		goto out;
 	}
@@ -233,11 +233,8 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	/*
 	 * Set server address and port
 	 */
-	m_serv = m_get(M_WAIT, MT_SONAME);
-	m_serv->m_len = sizeof(*sin);
-	sin = mtod(m_serv, struct sockaddr_in *);
-	memcpy(sin, &trh->trh_nd->nd_root.ndm_saddr, sizeof(*sin));
-	sin->sin_port = htons(IPPORT_TFTP);
+	memcpy(&sin, &trh->trh_nd->nd_root.ndm_saddr, sizeof(sin));
+	sin.sin_port = htons(IPPORT_TFTP);
 
 	/*
 	 * Set send buffer, prepare the TFTP packet
@@ -245,7 +242,7 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	namelen = strlen(trh->trh_nd->nd_bootfile) + 1;
 	packetlen = sizeof(tftp->th_opcode) + namelen + sizeof(octetstr);
 	if (packetlen > MSIZE) {
-		DPRINTF(("%s():%d boot filename too long (%ld bytes)\n", 
+		DPRINTF(("%s():%d boot filename too long (%ld bytes)\n",
 		    __func__, __LINE__, (long)namelen));
 		goto out;
 	}
@@ -265,12 +262,11 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	cp += namelen;
 	(void)strncpy(cp, octetstr, sizeof(octetstr));
 
-	/* 
+	/*
 	 * Perform the file transfer
 	 */
-	sin = (struct sockaddr_in *)&trh->trh_nd->nd_root.ndm_saddr;
-	printf("tftproot: download %s:%s ", 
-	    inet_ntoa(sin->sin_addr), trh->trh_nd->nd_bootfile);
+	printf("tftproot: download %s:%s ",
+	    inet_ntoa(sin.sin_addr), trh->trh_nd->nd_bootfile);
 
 	do {
 		/*
@@ -282,19 +278,19 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 		if ((trh->trh_block % TFTPROOT_PROGRESS) == 0)
 			twiddle();
 
-		/* 
-		 * Send the packet and receive the answer. 
+		/*
+		 * Send the packet and receive the answer.
 		 * We get the sender address here, which should be
 		 * the same server with a different port
 		 */
-		if ((error = nfs_boot_sendrecv(so, m_serv, NULL, m_outbuf,
+		if ((error = nfs_boot_sendrecv(so, &sin, NULL, m_outbuf,
 		    tftproot_recv, NULL, &m_serv, trh, l)) != 0) {
-			DPRINTF(("%s():%d sendrecv failed %d\n", 
+			DPRINTF(("%s():%d sendrecv failed %d\n",
 			    __func__, __LINE__, error));
 			goto out;
 		}
 
-		/* 
+		/*
 		 * Accomodate the packet length for acks.
 		 * This is really needed only on first pass
 		 */
@@ -320,17 +316,17 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	 * we do not want to free it ourselves.
 	 * Ignore errors, as we already have the whole file.
 	 */
-	if ((error = (*so->so_send)(so, m_serv, NULL, 
+	if ((error = (*so->so_send)(so, mtod(m_serv, struct sockaddr *), NULL,
 	    m_outbuf, NULL, 0, l)) != 0)
-		DPRINTF(("%s():%d tftproot: sosend returned %d\n", 
+		DPRINTF(("%s():%d tftproot: sosend returned %d\n",
 		    __func__, __LINE__, error));
 	else
 		m_outbuf = NULL;
 
-	/* 
-	 * And use it as the root ramdisk. 
+	/*
+	 * And use it as the root ramdisk.
 	 */
-	DPRINTF(("%s():%d RAMdisk loaded: %ld@%p\n", 
+	DPRINTF(("%s():%d RAMdisk loaded: %ld@%p\n",
 	    __func__, __LINE__, trh->trh_len, trh->trh_base));
 	md_root_setconf(trh->trh_base, trh->trh_len);
 	mdattach(0);
@@ -362,7 +358,7 @@ tftproot_recv(struct mbuf **mp, void *ctx)
 	 * Check for short packet
 	 */
 	if (m->m_pkthdr.len < hdrlen) {
-		DPRINTF(("%s():%d short reply (%d bytes)\n", 
+		DPRINTF(("%s():%d short reply (%d bytes)\n",
 		    __func__, __LINE__, m->m_pkthdr.len));
 		return -1;
 	}
@@ -371,7 +367,7 @@ tftproot_recv(struct mbuf **mp, void *ctx)
 	 * Check for packet too large for being a TFTP packet
 	 */
 	if (m->m_pkthdr.len > hdrlen + SEGSIZE) {
-		DPRINTF(("%s():%d packet too big (%d bytes)\n", 
+		DPRINTF(("%s():%d packet too big (%d bytes)\n",
 		    __func__, __LINE__, m->m_pkthdr.len));
 		return -1;
 	}
@@ -395,7 +391,7 @@ tftproot_recv(struct mbuf **mp, void *ctx)
 	switch(ntohs(tftp->th_opcode)) {
 	case DATA:
 		break;
-		
+
 	case ERROR: {
 		char errbuf[SEGSIZE + 1];
 		int i;
@@ -418,7 +414,7 @@ tftproot_recv(struct mbuf **mp, void *ctx)
 	}
 
 	default:
-		DPRINTF(("%s():%d unexpected tftp reply opcode %d\n", 
+		DPRINTF(("%s():%d unexpected tftp reply opcode %d\n",
 		    __func__, __LINE__, ntohs(tftp->th_opcode)));
 		return -1;
 		break;
@@ -428,7 +424,7 @@ tftproot_recv(struct mbuf **mp, void *ctx)
 	 * Check for last packet, which does not fill the whole space
 	 */
 	if (m->m_pkthdr.len < hdrlen + SEGSIZE) {
-		DPRINTF(("%s():%d last chunk (%d bytes)\n", 
+		DPRINTF(("%s():%d last chunk (%d bytes)\n",
 		    __func__, __LINE__, m->m_pkthdr.len));
 		trh->trh_flags |= TRH_FINISHED;
 	}
@@ -440,13 +436,13 @@ tftproot_recv(struct mbuf **mp, void *ctx)
 		return -1;
 	}
 
-	/* 
+	/*
 	 * Grow the receiving buffer to accommodate new data
 	 */
 	newlen = trh->trh_len + (m->m_pkthdr.len - hdrlen);
-	if ((trh->trh_base = realloc(trh->trh_base, 
+	if ((trh->trh_base = realloc(trh->trh_base,
 	    newlen, M_TEMP, M_WAITOK)) == NULL) {
-		DPRINTF(("%s():%d failed to realloc %ld bytes\n", 
+		DPRINTF(("%s():%d failed to realloc %ld bytes\n",
 		    __func__, __LINE__, (long)newlen));
 		return -1;
 	}

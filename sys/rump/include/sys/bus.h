@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2014/04/14 21:31:00 pooka Exp $	*/
+/*	$NetBSD: bus.h,v 1.5.4.1 2015/06/06 14:40:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -48,6 +48,7 @@ typedef struct {
 	bus_addr_t	ds_addr;
 	bus_size_t	ds_len;
 	vaddr_t		_ds_vacookie;
+	bus_size_t	_ds_sizecookie;
 } bus_dma_segment_t;
 
 typedef struct {

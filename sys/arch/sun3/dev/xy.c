@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.76.4.1 2015/04/06 15:18:03 skrll Exp $	*/
+/*	$NetBSD: xy.c,v 1.76.4.2 2015/06/06 14:40:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.76.4.1 2015/04/06 15:18:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.76.4.2 2015/06/06 14:40:04 skrll Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -246,7 +246,9 @@ const struct cdevsw xy_cdevsw = {
  * dkdriver
  */
 
-struct dkdriver xydkdriver = { xystrategy };
+struct dkdriver xydkdriver = {
+	.d_strategy = xystrategy
+};
 
 /*
  * start: disk label fix code (XXX)
@@ -254,7 +256,7 @@ struct dkdriver xydkdriver = { xystrategy };
 
 static void *xy_labeldata;
 
-static void 
+static void
 xydummystrat(struct buf *bp)
 {
 
@@ -265,7 +267,7 @@ xydummystrat(struct buf *bp)
 	bp->b_cflags &= ~BC_BUSY;
 }
 
-int 
+int
 xygetdisklabel(struct xy_softc *xy, void *b)
 {
 	const char *err;
@@ -319,7 +321,7 @@ xygetdisklabel(struct xy_softc *xy, void *b)
  * xycmatch: determine if xyc is present or not.   we do a
  * soft reset to detect the xyc.
  */
-static int 
+static int
 xycmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
@@ -342,7 +344,7 @@ xycmatch(device_t parent, cfdata_t cf, void *aux)
 /*
  * xycattach: attach controller
  */
-static void 
+static void
 xycattach(device_t parent, device_t self, void *aux)
 {
 	struct xyc_softc *xyc = device_private(self);
@@ -454,7 +456,7 @@ xycattach(device_t parent, device_t self, void *aux)
 	callout_reset(&xyc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xyc);
 }
 
-static int 
+static int
 xyc_print(void *aux, const char *name)
 {
 	struct xyc_attach_args *xa = aux;
@@ -476,7 +478,7 @@ xyc_print(void *aux, const char *name)
  * call xyattach!).  Also, wire down the relationship between the
  * xy* and xyc* devices, to simplify boot device identification.
  */
-static int 
+static int
 xymatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct xyc_attach_args *xa = aux;
@@ -493,7 +495,7 @@ xymatch(device_t parent, cfdata_t cf, void *aux)
 /*
  * xyattach: attach a disk.
  */
-static void 
+static void
 xyattach(device_t parent, device_t self, void *aux)
 {
 	struct xy_softc *xy = device_private(self);
@@ -533,7 +535,7 @@ xyattach(device_t parent, device_t self, void *aux)
  * Initialize a disk.  This can be called from both autoconf and
  * also from xyopen/xystrategy.
  */
-static void 
+static void
 xy_init(struct xy_softc *xy)
 {
 	struct xyc_softc *xyc;
@@ -704,7 +706,7 @@ xy_init(struct xy_softc *xy)
 /*
  * xyclose: close device
  */
-int 
+int
 xyclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xy_softc *xy = device_lookup_private(&xy_cd, DISKUNIT(dev));
@@ -728,7 +730,7 @@ xyclose(dev_t dev, int flag, int fmt, struct lwp *l)
 /*
  * xydump: crash dump system
  */
-int 
+int
 xydump(dev_t dev, daddr_t blkno, void *va, size_t sz)
 {
 	int unit, part;
@@ -805,7 +807,7 @@ xy_getkauthreq(u_char cmd)
 /*
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
-int 
+int
 xyioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct xy_softc *xy;
@@ -894,7 +896,7 @@ xyioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 /*
  * xyopen: open drive
  */
-int 
+int
 xyopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int err, unit, part, s;
@@ -953,14 +955,14 @@ xyopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	return err;
 }
 
-int 
+int
 xyread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return physio(xystrategy, NULL, dev, B_READ, minphys, uio);
 }
 
-int 
+int
 xywrite(dev_t dev, struct uio *uio, int flags)
 {
 
@@ -972,7 +974,7 @@ xywrite(dev_t dev, struct uio *uio, int flags)
  * xysize: return size of a partition for a dump
  */
 
-int 
+int
 xysize(dev_t dev)
 {
 	struct xy_softc *xysc;
@@ -1004,7 +1006,7 @@ xysize(dev_t dev)
 /*
  * xystrategy: buffering system interface to xy.
  */
-void 
+void
 xystrategy(struct buf *bp)
 {
 	struct xy_softc *xy;
@@ -1092,7 +1094,7 @@ xystrategy(struct buf *bp)
  *
  * xycintr: hardware interrupt.
  */
-int 
+int
 xycintr(void *v)
 {
 	struct xyc_softc *xycsc = v;
@@ -1120,7 +1122,7 @@ xycintr(void *v)
  * xyc_rqinit: fill out the fields of an I/O request
  */
 
-inline void 
+inline void
 xyc_rqinit(struct xy_iorq *rq, struct xyc_softc *xyc, struct xy_softc *xy,
     int md, u_long blk, int cnt, void *db, struct buf *bp)
 {
@@ -1140,7 +1142,7 @@ xyc_rqinit(struct xy_iorq *rq, struct xyc_softc *xyc, struct xy_softc *xy,
  * xyc_rqtopb: load up an IOPB based on an iorq
  */
 
-void 
+void
 xyc_rqtopb(struct xy_iorq *iorq, struct xy_iopb *iopb, int cmd, int subfun)
 {
 	u_long  block, dp;
@@ -1187,7 +1189,7 @@ xyc_rqtopb(struct xy_iorq *iorq, struct xy_iopb *iopb, int cmd, int subfun)
  * xyc_unbusy: wait for the xyc to go unbusy, or timeout.
  */
 
-int 
+int
 xyc_unbusy(struct xyc *xyc, int del)
 {
 
@@ -1203,7 +1205,7 @@ xyc_unbusy(struct xyc *xyc, int del)
  * xyc_cmd: front end for POLL'd and WAIT'd commands.  Returns 0 or error.
  * note that NORM requests are handled separately.
  */
-int 
+int
 xyc_cmd(struct xyc_softc *xycsc, int cmd, int subfn, int unit, int block,
     int scnt, char *dptr, int fullmode)
 {
@@ -1249,7 +1251,7 @@ xyc_cmd(struct xyc_softc *xycsc, int cmd, int subfn, int unit, int block,
  * start a buffer for running
  */
 
-int 
+int
 xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
 {
 	struct xy_iorq *iorq;
@@ -1352,7 +1354,7 @@ xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
  * on the iorq free list until some iopbs are available.
  */
 
-int 
+int
 xyc_submit_iorq(struct xyc_softc *xycsc, struct xy_iorq *iorq, int type)
 {
 	struct xy_iopb *iopb;
@@ -1494,7 +1496,7 @@ xyc_chain(struct xyc_softc *xycsc, struct xy_iorq *iorq)
  * and drains off the polled i/o request.   it returns the status of the iorq
  * the caller is interesting in.
  */
-int 
+int
 xyc_piodriver(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 {
 	int nreset = 0;
@@ -1552,7 +1554,7 @@ xyc_piodriver(struct xyc_softc *xycsc, struct xy_iorq *iorq)
  * xyc_xyreset: reset one drive.   NOTE: assumes xyc was just reset.
  * we steal iopb[XYC_CTLIOPB] for this, but we put it back when we are done.
  */
-void 
+void
 xyc_xyreset(struct xyc_softc *xycsc, struct xy_softc *xysc)
 {
 	struct xy_iopb tmpiopb;
@@ -1592,7 +1594,7 @@ xyc_xyreset(struct xyc_softc *xycsc, struct xy_softc *xysc)
  * xyc_reset: reset everything: requests are marked as errors except
  * a polled request (which is resubmitted)
  */
-int 
+int
 xyc_reset(struct xyc_softc *xycsc, int quiet, struct xy_iorq *blastmode,
     int error, struct xy_softc *xysc)
 {
@@ -1669,7 +1671,7 @@ xyc_reset(struct xyc_softc *xycsc, int quiet, struct xy_iorq *blastmode,
  * xyc_start: start waiting buffers
  */
 
-void 
+void
 xyc_start(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 {
 	int lcv;
@@ -1693,7 +1695,7 @@ xyc_start(struct xyc_softc *xycsc, struct xy_iorq *iorq)
  * xyc_remove_iorq: remove "done" IOPB's.
  */
 
-int 
+int
 xyc_remove_iorq(struct xyc_softc *xycsc)
 {
 	int errno, rq, comm, errs;
@@ -1838,7 +1840,7 @@ xyc_remove_iorq(struct xyc_softc *xycsc)
  *   is in lasterror. also, if iorq->errno == 0, then we recovered
  *   from that error (otherwise iorq->errno == iorq->lasterror).
  */
-void 
+void
 xyc_perror(struct xy_iorq *iorq, struct xy_iopb *iopb, int still_trying)
 {
 	int error = iorq->lasterror;
@@ -1866,7 +1868,7 @@ xyc_perror(struct xy_iorq *iorq, struct xy_iopb *iopb, int still_trying)
  * xyc_error: non-fatal error encountered... recover.
  * return AOK if resubmitted, return FAIL if this iopb is done
  */
-int 
+int
 xyc_error(struct xyc_softc *xycsc, struct xy_iorq *iorq, struct xy_iopb *iopb,
     int comm)
 {
@@ -1931,7 +1933,7 @@ xyc_error(struct xyc_softc *xycsc, struct xy_iorq *iorq, struct xy_iopb *iopb,
 /*
  * xyc_tick: make sure xy is still alive and ticking (err, kicking).
  */
-void 
+void
 xyc_tick(void *arg)
 {
 	struct xyc_softc *xycsc = arg;
@@ -1966,7 +1968,7 @@ xyc_tick(void *arg)
  *
  * XXX missing a few commands (see the 7053 driver for ideas)
  */
-int 
+int
 xyc_ioctlcmd(struct xy_softc *xy, dev_t dev, struct xd_iocmd *xio)
 {
 	int s, err, rqno;
@@ -2103,7 +2105,7 @@ xyc_e2str(int no)
 	}
 }
 
-int 
+int
 xyc_entoact(int errno)
 {
 

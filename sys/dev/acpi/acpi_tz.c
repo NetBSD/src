@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.87 2012/07/29 02:58:27 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.87.16.1 2015/06/06 14:40:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.87 2012/07/29 02:58:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.87.16.1 2015/06/06 14:40:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -864,7 +864,7 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, acpitz, NULL);
+MODULE(MODULE_CLASS_DRIVER, acpitz, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

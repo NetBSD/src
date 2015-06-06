@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.18.2.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.18.2.2 2015/06/06 14:39:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -79,7 +79,7 @@
 	mrs	r0, cpsr ; \
 	bic	r0, r0, #(I32_bit) ; \
 	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}		
+	ldmfd	sp!, {r0}
 #else
 /* Not yet used in 26-bit code */
 #endif
@@ -93,7 +93,7 @@
 #define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
 #elif defined(_ARM_ARCH_7)
 #define GET_CURCPU(rX)		movw rX, #:lower16:cpu_info_store; movt rX, #:upper16:cpu_info_store
-#else 
+#else
 #define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
 #endif
 #elif !defined(MULTIPROCESSOR)
@@ -226,7 +226,9 @@ read_thumb_insn(vaddr_t va, bool user_p)
 	va &= ~1;
 	uint32_t insn;
 	if (user_p) {
-#ifdef _ARM_ARCH_T2
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+		__asm __volatile("ldrht %0, [%1, #0]" : "=&r"(insn) : "r"(va));
+#elif defined(_ARM_ARCH_7)
 		__asm __volatile("ldrht %0, [%1], #0" : "=&r"(insn) : "r"(va));
 #else
 		__asm __volatile("ldrt %0, [%1]" : "=&r"(insn) : "r"(va & ~3));

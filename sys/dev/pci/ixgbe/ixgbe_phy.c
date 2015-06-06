@@ -1,37 +1,37 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2012, Intel Corporation 
+  Copyright (c) 2001-2013, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_phy.c 238149 2012-07-05 20:51:44Z jfv $*/
-/*$NetBSD: ixgbe_phy.c,v 1.2.4.1 2015/04/06 15:18:12 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_phy.c 247822 2013-03-04 23:07:40Z jfv $*/
+/*$NetBSD: ixgbe_phy.c,v 1.2.4.2 2015/06/06 14:40:12 skrll Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -48,6 +48,8 @@ static void ixgbe_raise_i2c_clk(struct ixgbe_hw *hw, u32 *i2cctl);
 static void ixgbe_lower_i2c_clk(struct ixgbe_hw *hw, u32 *i2cctl);
 static s32 ixgbe_set_i2c_data(struct ixgbe_hw *hw, u32 *i2cctl, bool data);
 static bool ixgbe_get_i2c_data(u32 *i2cctl);
+static s32 ixgbe_read_i2c_sff8472_generic(struct ixgbe_hw *hw, u8 byte_offset,
+					  u8 *sff8472_data);
 
 /**
  *  ixgbe_init_phy_ops_generic - Inits PHY function ptrs
@@ -72,6 +74,7 @@ s32 ixgbe_init_phy_ops_generic(struct ixgbe_hw *hw)
 	phy->ops.get_firmware_version = ixgbe_get_phy_firmware_version_generic;
 	phy->ops.read_i2c_byte = &ixgbe_read_i2c_byte_generic;
 	phy->ops.write_i2c_byte = &ixgbe_write_i2c_byte_generic;
+	phy->ops.read_i2c_sff8472 = &ixgbe_read_i2c_sff8472_generic;
 	phy->ops.read_i2c_eeprom = &ixgbe_read_i2c_eeprom_generic;
 	phy->ops.write_i2c_eeprom = &ixgbe_write_i2c_eeprom_generic;
 	phy->ops.i2c_bus_clear = &ixgbe_i2c_bus_clear;
@@ -564,14 +567,12 @@ s32 ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw)
  *  ixgbe_setup_phy_link_speed_generic - Sets the auto advertised capabilities
  *  @hw: pointer to hardware structure
  *  @speed: new link speed
- *  @autoneg: TRUE if autonegotiation enabled
  **/
 s32 ixgbe_setup_phy_link_speed_generic(struct ixgbe_hw *hw,
 				       ixgbe_link_speed speed,
-				       bool autoneg,
 				       bool autoneg_wait_to_complete)
 {
-	UNREFERENCED_2PARAMETER(autoneg, autoneg_wait_to_complete);
+	UNREFERENCED_1PARAMETER(autoneg_wait_to_complete);
 
 	DEBUGFUNC("ixgbe_setup_phy_link_speed_generic");
 
@@ -970,9 +971,7 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 					     IXGBE_SFF_IDENTIFIER,
 					     &identifier);
 
-	if (status == IXGBE_ERR_SWFW_SYNC ||
-	    status == IXGBE_ERR_I2C ||
-	    status == IXGBE_ERR_SFP_NOT_PRESENT)
+	if (status != IXGBE_SUCCESS)
 		goto err_read_i2c_eeprom;
 
 	/* LAN ID is needed for sfp_type determination */
@@ -986,26 +985,20 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 						     IXGBE_SFF_1GBE_COMP_CODES,
 						     &comp_codes_1g);
 
-		if (status == IXGBE_ERR_SWFW_SYNC ||
-		    status == IXGBE_ERR_I2C ||
-		    status == IXGBE_ERR_SFP_NOT_PRESENT)
+		if (status != IXGBE_SUCCESS)
 			goto err_read_i2c_eeprom;
 
 		status = hw->phy.ops.read_i2c_eeprom(hw,
 						     IXGBE_SFF_10GBE_COMP_CODES,
 						     &comp_codes_10g);
 
-		if (status == IXGBE_ERR_SWFW_SYNC ||
-		    status == IXGBE_ERR_I2C ||
-		    status == IXGBE_ERR_SFP_NOT_PRESENT)
+		if (status != IXGBE_SUCCESS)
 			goto err_read_i2c_eeprom;
 		status = hw->phy.ops.read_i2c_eeprom(hw,
 						     IXGBE_SFF_CABLE_TECHNOLOGY,
 						     &cable_tech);
 
-		if (status == IXGBE_ERR_SWFW_SYNC ||
-		    status == IXGBE_ERR_I2C ||
-		    status == IXGBE_ERR_SFP_NOT_PRESENT)
+		if (status != IXGBE_SUCCESS)
 			goto err_read_i2c_eeprom;
 
 		 /* ID Module
@@ -1103,27 +1096,21 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 						    IXGBE_SFF_VENDOR_OUI_BYTE0,
 						    &oui_bytes[0]);
 
-			if (status == IXGBE_ERR_SWFW_SYNC ||
-			    status == IXGBE_ERR_I2C ||
-			    status == IXGBE_ERR_SFP_NOT_PRESENT)
+			if (status != IXGBE_SUCCESS)
 				goto err_read_i2c_eeprom;
 
 			status = hw->phy.ops.read_i2c_eeprom(hw,
 						    IXGBE_SFF_VENDOR_OUI_BYTE1,
 						    &oui_bytes[1]);
 
-			if (status == IXGBE_ERR_SWFW_SYNC ||
-			    status == IXGBE_ERR_I2C ||
-			    status == IXGBE_ERR_SFP_NOT_PRESENT)
+			if (status != IXGBE_SUCCESS)
 				goto err_read_i2c_eeprom;
 
 			status = hw->phy.ops.read_i2c_eeprom(hw,
 						    IXGBE_SFF_VENDOR_OUI_BYTE2,
 						    &oui_bytes[2]);
 
-			if (status == IXGBE_ERR_SWFW_SYNC ||
-			    status == IXGBE_ERR_I2C ||
-			    status == IXGBE_ERR_SFP_NOT_PRESENT)
+			if (status != IXGBE_SUCCESS)
 				goto err_read_i2c_eeprom;
 
 			vendor_oui =
@@ -1334,6 +1321,22 @@ s32 ixgbe_read_i2c_eeprom_generic(struct ixgbe_hw *hw, u8 byte_offset,
 }
 
 /**
+ *  ixgbe_read_i2c_sff8472_generic - Reads 8 bit word over I2C interface
+ *  @hw: pointer to hardware structure
+ *  @byte_offset: byte offset at address 0xA2
+ *  @eeprom_data: value read
+ *
+ *  Performs byte read operation to SFP module's SFF-8472 data over I2C
+ **/
+static s32 ixgbe_read_i2c_sff8472_generic(struct ixgbe_hw *hw, u8 byte_offset,
+					  u8 *sff8472_data)
+{
+	return hw->phy.ops.read_i2c_byte(hw, byte_offset,
+					 IXGBE_I2C_EEPROM_DEV_ADDR2,
+					 sff8472_data);
+}
+
+/**
  *  ixgbe_write_i2c_eeprom_generic - Writes 8 bit EEPROM word over I2C interface
  *  @hw: pointer to hardware structure
  *  @byte_offset: EEPROM byte offset to write
@@ -1426,9 +1429,9 @@ s32 ixgbe_read_i2c_byte_generic(struct ixgbe_hw *hw, u8 byte_offset,
 		break;
 
 fail:
+		ixgbe_i2c_bus_clear(hw);
 		hw->mac.ops.release_swfw_sync(hw, swfw_mask);
 		msec_delay(100);
-		ixgbe_i2c_bus_clear(hw);
 		retry++;
 		if (retry < max_retry)
 			DEBUGOUT("I2C byte read error - Retrying.\n");

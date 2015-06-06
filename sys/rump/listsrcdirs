@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.22.2.1 2015/04/06 15:18:24 skrll Exp $
+#	$NetBSD: listsrcdirs,v 1.22.2.2 2015/06/06 14:40:26 skrll Exp $
 #
 
 #
@@ -92,7 +92,7 @@ lsrc posix /usr.bin/		rump_server rump_allserver shmif_dumpbus
 # NOTE! libc++ is handled below as a special case due to the NetBSD
 # dist directory consisting ~90% (50+MB) of tests unnecessary to us
 lsrc usr /lib/			i18n_module
-lsrc usr /lib/lib		crypt ipsec m npf pci prop
+lsrc usr /lib/lib		crypt ipsec kvm m npf pci prop
 lsrc usr /lib/lib		pthread rmt y z
 lsrc usr /libexec/		ld.elf_so
 lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
@@ -106,7 +106,7 @@ lsrc usr /sbin/			mount_ext2fs mount_ffs mount_msdos mount_tmpfs
 lsrc usr /sbin/			newfs newfs_ext2fs newfs_msdos
 lsrc usr /sbin/			ping ping6 raidctl reboot
 lsrc usr /sbin/			rndctl route setkey sysctl umount
-lsrc usr /usr.bin/		kdump ktrace
+lsrc usr /usr.bin/		kdump ktrace sockstat
 lsrc usr /usr.sbin/		arp dumpfs mdconfig ndp npf pcictl
 lsrc usr /usr.sbin/		rtadvd vnconfig wlanctl
 lsrc usr /external/bsd/		libelf libpcap tcpdump wpa

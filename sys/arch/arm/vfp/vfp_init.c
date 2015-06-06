@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.41.4.1 2015/04/06 15:17:53 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.41.4.2 2015/06/06 14:39:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -211,7 +211,7 @@ vfp_fpscr_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	}
 
 	curcpu()->ci_vfp_evs[0].ev_count++;
-		
+
 	frame->tf_pc += INSN_SIZE;
 	return 0;
 }
@@ -264,6 +264,8 @@ vfp_attach(struct cpu_info *ci)
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp);
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp2);
 		armreg_cpacr_write(cpacr);
+
+		arm_isb();
 
 		/*
 		 * If we could enable them, then they exist.
@@ -403,7 +405,7 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	if (!vfp_fpscr_handler(address, insn, frame, fault_code))
 		return 0;
 
-	/* 
+	/*
 	 * If we already own the FPU and it's enabled (and no exception), raise
 	 * SIGILL.  If there is an exception, drop through to raise a SIGFPE.
 	 */

@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.44 2013/03/30 19:05:20 christos Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.44.12.1 2015/06/06 14:40:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.44 2013/03/30 19:05:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.44.12.1 2015/06/06 14:40:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -769,7 +769,7 @@ thinkpad_resume(device_t dv, const pmf_qual_t *qual)
 	return true;
 }
 
-MODULE(MODULE_CLASS_DRIVER, thinkpad, NULL);
+MODULE(MODULE_CLASS_DRIVER, thinkpad, "sysmon_envsys,sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"

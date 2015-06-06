@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.35.4.1 2015/04/06 15:17:52 skrll Exp $
+#	$NetBSD: majors.arm32,v 1.35.4.2 2015/06/06 14:39:55 skrll Exp $
 #
 # Device majors for arm32
 #
@@ -94,7 +94,7 @@ device-major	radio		char 97			radio
 device-major	ctcom		char 98			ctcom
 device-major	kttcp		char 99			kttcp
 device-major	ixpcom		char 100		ixpcom
-device-major	sysmon		char 101		sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 101		sysmon
 device-major	dmoverio	char 102		dmoverio
 device-major	apm		char 103		apm
 device-major	sscom		char 104		sscom
@@ -109,5 +109,5 @@ device-major	vchiq		char 111		vchiq
 device-major	zynquart	char 112		zynquart
 
 # Majors up to 143 are reserved for machine-dependent drivers.
-# New machine-independent driver majors are assigned in 
+# New machine-independent driver majors are assigned in
 # sys/conf/majors.

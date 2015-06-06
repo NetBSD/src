@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.316.2.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.316.2.2 2015/06/06 14:39:55 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -186,6 +186,7 @@
 
 /* Include header files */
 
+#include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 #include "opt_ddb.h"
@@ -215,7 +216,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.316.2.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.316.2.2 2015/06/06 14:39:55 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -513,9 +514,9 @@ bool pmap_initialized;
 
 #if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
 /*
- * Start of direct-mapped memory
+ * Virtual end of direct-mapped memory
  */
-vaddr_t pmap_directbase = KERNEL_BASE;
+vaddr_t pmap_directlimit;
 #endif
 
 /*
@@ -924,9 +925,18 @@ static inline bool
 pmap_is_cached(pmap_t pm)
 {
 #ifdef ARM_MMU_EXTENDED
-	struct pmap_tlb_info * const ti = cpu_tlb_info(curcpu());
-	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(PMAP_PAI(pm, ti), ti))
+	if (pm == pmap_kernel())
 		return true;
+#ifdef MULTIPROCESSOR
+	// Is this pmap active on any CPU?
+	if (!kcpuset_iszero(pm->pm_active))
+		return true;
+#else
+	struct pmap_tlb_info * const ti = cpu_tlb_info(curcpu());
+	// Is this pmap active?
+	if (PMAP_PAI_ASIDVALID_P(PMAP_PAI(pm, ti), ti))
+		return true;
+#endif
 #else
 	struct cpu_info * const ci = curcpu();
 	if (pm == pmap_kernel() || ci->ci_pmap_lastuser == NULL
@@ -1559,7 +1569,7 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 		    | L1_C_DOM(pmap_domain(pm));
 		KASSERT(*pdep == 0);
 		l1pte_setone(pdep, npde);
-		PTE_SYNC(pdep);
+		PDE_SYNC(pdep);
 #endif
 	}
 
@@ -3349,7 +3359,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				    | L1_C_DOM(pmap_domain(pm));
 				if (*pdep != pde) {
 					l1pte_setone(pdep, pde);
-					PTE_SYNC(pdep);
+					PDE_SYNC(pdep);
 				}
 			}
 		}
@@ -3661,6 +3671,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 
 	pmap_t kpm = pmap_kernel();
+	pmap_acquire_pmap_lock(kpm);
 	struct l2_bucket * const l2b = pmap_get_l2_bucket(kpm, va);
 	const size_t l1slot __diagused = l1pte_index(va);
 	KASSERTMSG(l2b != NULL,
@@ -3708,6 +3719,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			cpu_cpwait();
 		}
 	}
+	pmap_release_pmap_lock(kpm);
 
 	pt_entry_t npte = L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot)
 	    | ((flags & PMAP_NOCACHE)
@@ -3804,6 +3816,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 	const vaddr_t eva = va + len;
 
+	pmap_acquire_pmap_lock(pmap_kernel());
+
 	while (va < eva) {
 		vaddr_t next_bucket = L2_NEXT_BUCKET_VA(va);
 		if (next_bucket > eva)
@@ -3865,6 +3879,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		total_mappings += mappings;
 #endif
 	}
+	pmap_release_pmap_lock(pmap_kernel());
 	cpu_cpwait();
 	UVMHIST_LOG(maphist, "  <--- done (%u mappings removed)",
 	    total_mappings, 0, 0, 0);
@@ -4012,7 +4027,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 					pmap_acquire_page_lock(md);
 #ifndef ARM_MMU_EXTENDED
-					f = 
+					f =
 #endif
 					    pmap_modify_pv(md, pa, pm, sva,
 					       clr_mask, 0);
@@ -4531,7 +4546,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	pd_entry_t pde = L1_C_PROTO | l2b->l2b_pa | L1_C_DOM(pmap_domain(pm));
 	if (*pdep != pde) {
 		l1pte_setone(pdep, pde);
-		PTE_SYNC(pdep);
+		PDE_SYNC(pdep);
 		rv = 1;
 		PMAPCOUNT(fixup_pdes);
 	}
@@ -4937,6 +4952,7 @@ pmap_deactivate(struct lwp *l)
 	pmap_tlb_asid_deactivate(pm);
 	cpu_setttb(pmap_kernel()->pm_l1_pa, KERNEL_PID);
 	ci->ci_pmap_cur = pmap_kernel();
+	ci->ci_pmap_asid_cur = KERNEL_PID;
 	kpreempt_enable();
 #else
 	/*
@@ -6151,9 +6167,11 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	 */
 	virtual_avail = (virtual_avail + arm_cache_prefer_mask) & ~arm_cache_prefer_mask;
 	nptes = (arm_cache_prefer_mask >> L2_S_SHIFT) + 1;
+	nptes = roundup(nptes, PAGE_SIZE / L2_S_SIZE);
 	if (arm_pcache.icache_type != CACHE_TYPE_PIPT
 	    && arm_pcache.icache_way_size > nptes * L2_S_SIZE) {
 		nptes = arm_pcache.icache_way_size >> L2_S_SHIFT;
+		nptes = roundup(nptes, PAGE_SIZE / L2_S_SIZE);
 	}
 #else
 	nptes = PAGE_SIZE / L2_S_SIZE;
@@ -7801,13 +7819,7 @@ arm_pmap_alloc_poolpage(int flags)
 	 */
 	if (arm_poolpage_vmfreelist != VM_FREELIST_DEFAULT) {
 		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
-#if defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS) && defined(ARM_MMU_EXTENDED)
-		    (pmap_directbase < KERNEL_BASE
-			? UVM_PGA_STRAT_ONLY
-			: UVM_PGA_STRAT_FALLBACK),
-#else
 		    UVM_PGA_STRAT_FALLBACK,
-#endif
 		    arm_poolpage_vmfreelist);
 	}
 
@@ -7839,15 +7851,18 @@ pmap_direct_mapped_phys(paddr_t pa, bool *ok_p, vaddr_t va)
 {
 	bool ok = false;
 	if (physical_start <= pa && pa < physical_end) {
+#ifdef KERNEL_BASE_VOFFSET
+		const vaddr_t newva = pa + KERNEL_BASE_VOFFSET;
+#else
+		const vaddr_t newva = KERNEL_BASE + pa - physical_start;
+#endif
 #ifdef ARM_MMU_EXTENDED
-		const vaddr_t newva = pmap_directbase + pa - physical_start;
-		if (newva >= KERNEL_BASE) {
+		if (newva >= KERNEL_BASE && newva < pmap_directlimit) {
+#endif
 			va = newva;
 			ok = true;
+#ifdef ARM_MMU_EXTENDED
 		}
-#else
-		va = KERNEL_BASE + pa - physical_start;
-		ok = true;
 #endif
 	}
 	KASSERT(ok_p);
@@ -7877,12 +7892,12 @@ paddr_t
 pmap_unmap_poolpage(vaddr_t va)
 {
 	KASSERT(va >= KERNEL_BASE);
-#if defined(ARM_MMU_EXTENDED)
-	return va - pmap_directbase + physical_start;
-#else
 #ifdef PMAP_CACHE_VIVT
 	cpu_idcache_wbinv_range(va, PAGE_SIZE);
 #endif
+#if defined(KERNEL_BASE_VOFFSET)
+        return va - KERNEL_BASE_VOFFSET;
+#else
         return va - KERNEL_BASE + physical_start;
 #endif
 }

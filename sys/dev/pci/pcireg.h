@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.100.2.1 2015/04/06 15:18:12 skrll Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.100.2.2 2015/06/06 14:40:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -653,6 +653,9 @@ typedef u_int8_t pci_revision_t;
  * MSI Pending Bits (32 bit field)
  */
 
+ /* Max number of MSI vectors. See PCI-SIG specification. */
+#define	PCI_MSI_MAX_VECTORS	32
+
 /*
  * Capability ID: 0x07
  * PCI-X capability.
@@ -1068,6 +1071,9 @@ struct pci_msix_table_entry {
 	uint32_t pci_msix_vector_control;
 };
 #define	PCI_MSIX_VECTCTL_HWMASK_MASK	0x00000001
+
+ /* Max number of MSI-X vectors. See PCI-SIG specification. */
+#define	PCI_MSIX_MAX_VECTORS		2048
 
 /*
  * Capability ID: 0x12

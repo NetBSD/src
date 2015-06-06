@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.11 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.11.6.1 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.11 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.11.6.1 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -300,6 +300,7 @@ in_getifa(struct ifaddr *ifa, const struct sockaddr *dst0)
 	struct in_ifsysctl *isc;
 	struct in_ifselsrc *iss;
 	int best_score[IN_SCORE_SRC_MAX], score[IN_SCORE_SRC_MAX];
+	struct in_ifaddr *ia;
 
 	if (ifa->ifa_addr->sa_family != AF_INET ||
 	    dst0 == NULL || dst0->sa_family != AF_INET) {	/* Possible. */
@@ -346,6 +347,9 @@ in_getifa(struct ifaddr *ifa, const struct sockaddr *dst0)
 
 		if (alt_ifa == ifa || src->sin_family != AF_INET)
 			continue;
+		ia = (struct in_ifaddr *)alt_ifa;
+		if (ia->ia4_flags & IN_IFF_NOTREADY)
+			continue;
 
 		in_score(score_src, score, NULL, &src->sin_addr,
 		         alt_ifa->ifa_preference, idx, &dst->sin_addr);
@@ -363,6 +367,13 @@ in_getifa(struct ifaddr *ifa, const struct sockaddr *dst0)
 			best_ifa = alt_ifa;
 		}
 	}
+
+	ia = (struct in_ifaddr *)best_ifa;
+	if (ia->ia4_flags & IN_IFF_NOTREADY) {
+		errno = EADDRNOTAVAIL;
+		return NULL;
+	}
+
 #ifdef GETIFA_DEBUG
 	if (in_selsrc_debug) {
 		printf("%s: choose src %#" PRIx32 " score ", __func__,

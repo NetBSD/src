@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2014/07/28 23:09:06 rjs Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2015/06/06 14:40:08 skrll Exp $
 
 NOMAN=	# defined
+
+.include <bsd.own.mk>
+
+.if ${MKRADEONFIRMWARE} != "no"
 
 FILES=	\
 	R100_cp.bin \
@@ -60,8 +64,10 @@ FILES=	\
 	VERDE_ce.bin VERDE_mc.bin VERDE_mc2.bin VERDE_me.bin VERDE_pfp.bin \
 	VERDE_rlc.bin VERDE_smc.bin
 
-# DRM isn't necessary before /usr!
-FIRMWAREDIR=	/usr/libdata/firmware
+# radeondrmks needs these after mountroot, but before starting init.
+FIRMWAREDIR=	/libdata/firmware
+
+.endif
 
 # XXX
 includes:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.98 2013/11/08 03:12:48 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.98.6.1 2015/06/06 14:40:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.98 2013/11/08 03:12:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.98.6.1 2015/06/06 14:40:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.98 2013/11/08 03:12:48 christos Exp $"
 #include <arch/x86/pci/pci_addr_fixup.h>
 #endif
 #endif
+#include <arch/x86/pci/msipic.h>
 #endif
 
 void	mainbus_childdetached(device_t, device_t);
@@ -227,6 +228,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NPCI > 0
+	msipic_init();
+
 	/*
 	 * ACPI needs to be able to access PCI configuration space.
 	 */

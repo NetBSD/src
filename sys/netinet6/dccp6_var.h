@@ -1,5 +1,5 @@
 /*	$KAME: dccp6_var.h,v 1.3 2003/11/18 04:55:43 ono Exp $	*/
-/*	$NetBSD: dccp6_var.h,v 1.2.2.2 2015/04/06 15:18:23 skrll Exp $ */
+/*	$NetBSD: dccp6_var.h,v 1.2.2.3 2015/06/06 14:40:25 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark
@@ -45,8 +45,8 @@ int	dccp6_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 		     struct mbuf *, struct lwp *);
 int	dccp6_bind(struct socket *, struct sockaddr *, struct lwp *);
 int	dccp6_listen(struct socket *, struct lwp *);
-int	dccp6_connect(struct socket *, struct mbuf *, struct lwp *);
-int	dccp6_accept(struct socket *, struct mbuf *);
+int	dccp6_connect(struct socket *, struct sockaddr *, struct lwp *);
+int	dccp6_accept(struct socket *, struct sockaddr *);
 
 #endif
 #endif

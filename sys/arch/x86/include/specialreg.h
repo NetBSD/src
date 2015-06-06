@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.80.2.1 2015/04/06 15:18:04 skrll Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.80.2.2 2015/06/06 14:40:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -189,7 +189,7 @@
 #define	CPUID2_TM2	0x00000100	/* Thermal Monitor 2 */
 #define CPUID2_SSSE3	0x00000200	/* Supplemental SSE3 */
 #define	CPUID2_CID	0x00000400	/* Context ID */
-/* bit 11 unused	0x00000800 */
+#define	CPUID2_SDBG	0x00000800	/* Silicon Debug */
 #define	CPUID2_FMA	0x00001000	/* has Fused Multiply Add */
 #define	CPUID2_CX16	0x00002000	/* has CMPXCHG16B instruction */
 #define	CPUID2_xTPR	0x00004000	/* Task Priority Messages disabled? */
@@ -214,7 +214,7 @@
 #define CPUID2_FLAGS1	"\20" \
 	"\1" "SSE3"	"\2" "PCLMULQDQ" "\3" "DTES64"	"\4" "MONITOR" \
 	"\5" "DS-CPL"	"\6" "VMX"	"\7" "SMX"	"\10" "EST" \
-	"\11" "TM2"	"\12" "SSSE3"	"\13" "CID"	"\14" "B11" \
+	"\11" "TM2"	"\12" "SSSE3"	"\13" "CID"	"\14" "SDBG" \
 	"\15" "FMA"	"\16" "CX16"	"\17" "xTPR"	"\20" "PDCM" \
 	"\21" "B16"	"\22" "PCID"	"\23" "DCA"	"\24" "SSE41" \
 	"\25" "SSE42"	"\26" "X2APIC"	"\27" "MOVBE"	"\30" "POPCNT" \
@@ -300,9 +300,14 @@
 #define CPUID_DSPM_FLAGS1	"\20" "\1" "HWF" "\4" "EPB"
 
 /*
- * Intel Structured Extended Feature leaf
- * Fn0000_0007 main leaf - %ebx.
+ * Intel Structured Extended Feature leaf Fn0000_0007
+ * %eax == 0: Subleaf 0
+ *	%eax: The Maximun input value for supported subleaf.
+ *	%ebx: Feature bits.
+ *	%ecx: Feature bits.
  */
+
+/* %ebx */
 #define CPUID_SEF_FSGSBASE	__BIT(0)
 #define CPUID_SEF_TSC_ADJUST	__BIT(1)
 #define CPUID_SEF_BMI1		__BIT(3)
@@ -337,17 +342,29 @@
 			"\32" "PT"	"\33" "AVX512PF""\34" "AVX512ER"\
 	"\35" "AVX512CD""\36" "SHA"
 
+/* %ecx */
+#define CPUID_SEF_PREFETCHWT1	__BIT(0)
+#define CPUID_SEF_PKU		__BIT(3)
+#define CPUID_SEF_OSPKE		__BIT(4)
+
+#define CPUID_SEF_FLAGS1	"\20" \
+	"\1" "PREFETCHWT1"				"\4" "PKU"	\
+	"\5" "OSPKE"
+
 /*
  * CPUID Processor extended state Enumeration Fn0000000d
  *
  * %ecx == 0: supported features info:
  *	%eax: Valid bits of lower 32bits of XCR0
- *	%ebx Save area size for features enabled in XCR0
- *	%ecx Maximim save area size for all cpu features
+ *	%ebx: Maximum save area size for features enabled in XCR0
+ *	%ecx: Maximim save area size for all cpu features
  *	%edx: Valid bits of upper 32bits of XCR0
  *
  * %ecx == 1:
  *	%eax: Bit 0 => xsaveopt instruction avalaible (sandy bridge onwards)
+ *	%ebx: Save area size for features enabled by XCR0 | IA32_XSS
+ *	%ecx: Valid bits of lower 32bits of IA32_XSS
+ *	%edx: Valid bits of upper 32bits of IA32_XSS
  *
  * %ecx >= 2: Save area details for XCR0 bit n
  *	%eax: size of save area for this feature
@@ -356,6 +373,7 @@
  *	All of %eax, %ebx, %ecx and %edx are zero for unsupported features.
  */
 
+/* %ecx=1 %eax */
 #define	CPUID_PES1_XSAVEOPT	0x00000001	/* xsaveopt instruction */
 #define	CPUID_PES1_XSAVEC	0x00000002	/* xsavec & compacted XRSTOR */
 #define	CPUID_PES1_XGETBV	0x00000004	/* xgetbv with ECX = 1 */
@@ -733,7 +751,7 @@
  * NCRx+0: A31-A24 of starting address
  * NCRx+1: A23-A16 of starting address
  * NCRx+2: A15-A12 of starting address | NCR_SIZE_xx.
- * 
+ *
  * The non-cacheable region's starting address must be aligned to the
  * size indicated by the NCR_SIZE_xx field.
  */

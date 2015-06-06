@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdaudio.c,v 1.1.2.2 2015/04/06 15:17:53 skrll Exp $ */
+/* $NetBSD: tegra_hdaudio.c,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.1.2.2 2015/04/06 15:17:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,16 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.1.2.2 2015/04/06 15:17:53 skrll 
 #include <dev/hdaudio/hdaudiovar.h>
 
 #include <arm/nvidia/tegra_var.h>
+#include <arm/nvidia/tegra_pmcreg.h>
+#include <arm/nvidia/tegra_hdaudioreg.h>
+
+#define TEGRA_HDAUDIO_OFFSET	0x8000
+
+#define TEGRA_HDA_IFPS_BAR0_REG		0x0080
+#define TEGRA_HDA_IFPS_CONFIG_REG	0x0180
+#define TEGRA_HDA_IFPS_INTR_REG		0x0188
+#define TEGRA_HDA_CFG_CMD_REG		0x1004
+#define TEGRA_HDA_CFG_BAR0_REG		0x1010
 
 static int	tegra_hdaudio_match(device_t, cfdata_t, void *);
 static void	tegra_hdaudio_attach(device_t, device_t, void *);
@@ -53,8 +63,12 @@ static int	tegra_hdaudio_intr(void *);
 
 struct tegra_hdaudio_softc {
 	struct hdaudio_softc	sc;
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
 };
+
+static void	tegra_hdaudio_init(struct tegra_hdaudio_softc *);
 
 CFATTACH_DECL2_NEW(tegra_hdaudio, sizeof(struct tegra_hdaudio_softc),
 	tegra_hdaudio_match, tegra_hdaudio_attach, tegra_hdaudio_detach, NULL,
@@ -73,14 +87,19 @@ tegra_hdaudio_attach(device_t parent, device_t self, void *aux)
 	struct tegraio_attach_args * const tio = aux;
 	const struct tegra_locators * const loc = &tio->tio_loc;
 
+	sc->sc_bst = tio->tio_bst;
+	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
+	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+
 	sc->sc.sc_memt = tio->tio_bst;
 	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc.sc_memh);
+	    loc->loc_offset + TEGRA_HDAUDIO_OFFSET,
+	    loc->loc_size - TEGRA_HDAUDIO_OFFSET, &sc->sc.sc_memh);
 	sc->sc.sc_memvalid = true;
 	sc->sc.sc_dmat = tio->tio_dmat;
 
 	aprint_naive("\n");
-	aprint_normal(": SATA\n");
+	aprint_normal(": HDA\n");
 
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_AUDIO, IST_LEVEL,
 	    tegra_hdaudio_intr, sc);
@@ -91,7 +110,32 @@ tegra_hdaudio_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
+	tegra_pmc_power(PMC_PARTID_DISB, true);
+	tegra_car_periph_hda_enable();
+	tegra_hdaudio_init(sc);
+
 	hdaudio_attach(self, &sc->sc);
+}
+
+static void
+tegra_hdaudio_init(struct tegra_hdaudio_softc *sc)
+{
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, TEGRA_HDA_IFPS_CONFIG_REG,
+	    TEGRA_HDA_IFPS_CONFIG_FPCI_EN, 0);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, TEGRA_HDA_CFG_CMD_REG,
+	    TEGRA_HDA_CFG_CMD_ENABLE_SERR |
+	    TEGRA_HDA_CFG_CMD_BUS_MASTER |
+	    TEGRA_HDA_CFG_CMD_MEM_SPACE |
+	    TEGRA_HDA_CFG_CMD_IO_SPACE,
+	    TEGRA_HDA_CFG_CMD_DISABLE_INTR);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TEGRA_HDA_CFG_BAR0_REG,
+	    0xffffffff);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TEGRA_HDA_CFG_BAR0_REG,
+	    0x00004000);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TEGRA_HDA_IFPS_BAR0_REG,
+	    TEGRA_HDA_CFG_BAR0_START);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, TEGRA_HDA_IFPS_INTR_REG,
+	    TEGRA_HDA_IFPS_INTR_EN, 0);
 }
 
 static int

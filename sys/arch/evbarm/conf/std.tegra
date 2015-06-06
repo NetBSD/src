@@ -1,4 +1,4 @@
-#	$NetBSD: std.tegra,v 1.1.2.2 2015/04/06 15:17:55 skrll Exp $
+#	$NetBSD: std.tegra,v 1.1.2.3 2015/06/06 14:39:58 skrll Exp $
 #
 
 machine	evbarm arm
@@ -12,10 +12,13 @@ options 	__HAVE_CPU_COUNTER
 options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	ARM_HAS_VBAR
-options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#options 	PMAP_NEED_ALLOC_POOLPAGE
 options 	TPIDRPRW_IS_CURCPU
 options 	KERNEL_BASE_EXT=0x80000000
 options 	FPU_VFP
+options 	PCI_NETBSD_CONFIGURE
+options 	__HAVE_PCI_CONF_HOOK
 
 makeoptions	KERNEL_BASE_PHYS="0x81000000"
 makeoptions	KERNEL_BASE_VIRT="0x81000000"

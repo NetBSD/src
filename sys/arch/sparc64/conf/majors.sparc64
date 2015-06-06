@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.32 2011/06/30 20:09:36 wiz Exp $
+#	$NetBSD: majors.sparc64,v 1.32.30.1 2015/06/06 14:40:03 skrll Exp $
 #
 # Device majors for sparc64
 #
@@ -109,7 +109,7 @@ device-major	dmoverio	char 129		dmoverio
 device-major	dpt		char 132		dpt
 device-major	twe		char 133		twe
 device-major	nsmb		char 134		nsmb		
-device-major	sysmon		char 135		sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 135		sysmon
 
 device-major	ksyms		char 136		ksyms
 

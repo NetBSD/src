@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.334.4.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.334.4.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334.4.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334.4.2 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -174,7 +174,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334.4.1 2015/04/06 15:18:23 skrll Ex
 #include <sys/cprng.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>
@@ -1395,6 +1394,12 @@ tcp_input(struct mbuf *m, ...)
 	tiflags = th->th_flags;
 
 	/*
+	 * Checksum extended TCP header and data
+	 */
+	if (tcp_input_checksum(af, m, th, toff, off, tlen))
+		goto badcsum;
+
+	/*
 	 * Locate pcb for segment.
 	 */
 findpcb:
@@ -1564,12 +1569,6 @@ findpcb:
 
 	KASSERT(so->so_lock == softnet_lock);
 	KASSERT(solocked(so));
-
-	/*
-	 * Checksum extended TCP header and data.
-	 */
-	if (tcp_input_checksum(af, m, th, toff, off, tlen))
-		goto badcsum;
 
 	tcp_fields_to_host(th);
 
@@ -2469,14 +2468,14 @@ after_listen:
 	/*
 	 * If last ACK falls within this segment's sequence numbers,
 	 *  record the timestamp.
-	 * NOTE: 
+	 * NOTE:
 	 * 1) That the test incorporates suggestions from the latest
 	 *    proposal of the tcplw@cray.com list (Braden 1993/04/26).
 	 * 2) That updating only on newer timestamps interferes with
 	 *    our earlier PAWS tests, so this check should be solely
 	 *    predicated on the sequence space of this segment.
-	 * 3) That we modify the segment boundary check to be 
-	 *        Last.ACK.Sent <= SEG.SEQ + SEG.Len  
+	 * 3) That we modify the segment boundary check to be
+	 *        Last.ACK.Sent <= SEG.SEQ + SEG.Len
 	 *    instead of RFC1323's
 	 *        Last.ACK.Sent < SEG.SEQ + SEG.Len,
 	 *    This modified check allows us to overcome RFC1323's
@@ -3482,7 +3481,7 @@ tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 		 * (3) to obtain 1/8 of the difference.
 		 */
 		delta = (rtt << 2) - (tp->t_srtt >> TCP_RTT_SHIFT);
-		/* 
+		/*
 		 * This can never happen, because delta's lowest
 		 * possible value is 1/8 of t_srtt.  But if it does,
 		 * set srtt to some reasonable value, here chosen
@@ -3919,7 +3918,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	struct in6pcb *in6p = NULL;
 #endif
 	struct tcpcb *tp = 0;
-	struct mbuf *am;
 	int s;
 	struct socket *oso;
 
@@ -4070,45 +4068,36 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	}
 #endif
 
-	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
-	if (am == NULL)
-		goto resetandabort;
-	MCLAIM(am, &tcp_mowner);
-	am->m_len = src->sa_len;
-	bcopy(src, mtod(am, void *), src->sa_len);
 	if (inp) {
-		if (in_pcbconnect(inp, am, &lwp0)) {
-			(void) m_free(am);
+		struct sockaddr_in sin;
+		memcpy(&sin, src, src->sa_len);
+		if (in_pcbconnect(inp, &sin, &lwp0)) {
 			goto resetandabort;
 		}
 	}
 #ifdef INET6
 	else if (in6p) {
+		struct sockaddr_in6 sin6;
+		memcpy(&sin6, src, src->sa_len);
 		if (src->sa_family == AF_INET) {
 			/* IPv4 packet to AF_INET6 socket */
-			struct sockaddr_in6 *sin6;
-			sin6 = mtod(am, struct sockaddr_in6 *);
-			am->m_len = sizeof(*sin6);
-			memset(sin6, 0, sizeof(*sin6));
-			sin6->sin6_family = AF_INET6;
-			sin6->sin6_len = sizeof(*sin6);
-			sin6->sin6_port = ((struct sockaddr_in *)src)->sin_port;
-			sin6->sin6_addr.s6_addr16[5] = htons(0xffff);
+			memset(&sin6, 0, sizeof(sin6));
+			sin6.sin6_family = AF_INET6;
+			sin6.sin6_len = sizeof(sin6);
+			sin6.sin6_port = ((struct sockaddr_in *)src)->sin_port;
+			sin6.sin6_addr.s6_addr16[5] = htons(0xffff);
 			bcopy(&((struct sockaddr_in *)src)->sin_addr,
-				&sin6->sin6_addr.s6_addr32[3],
-				sizeof(sin6->sin6_addr.s6_addr32[3]));
+				&sin6.sin6_addr.s6_addr32[3],
+				sizeof(sin6.sin6_addr.s6_addr32[3]));
 		}
-		if (in6_pcbconnect(in6p, am, NULL)) {
-			(void) m_free(am);
+		if (in6_pcbconnect(in6p, &sin6, NULL)) {
 			goto resetandabort;
 		}
 	}
 #endif
 	else {
-		(void) m_free(am);
 		goto resetandabort;
 	}
-	(void) m_free(am);
 
 	if (inp)
 		tp = intotcpcb(inp);
@@ -4683,7 +4672,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		 *
 		 * "[...] a TCP node MAY respond to an ECN-setup
 		 * SYN packet by setting ECT in the responding
-		 * ECN-setup SYN/ACK packet, indicating to routers 
+		 * ECN-setup SYN/ACK packet, indicating to routers
 		 * that the SYN/ACK packet is ECN-Capable.
 		 * This allows a congested router along the path
 		 * to mark the packet instead of dropping the
@@ -4797,8 +4786,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_hlim = in6_selecthlim(NULL,
-				(rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
-				                                    : NULL);
+		    (rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp : NULL);
 
 		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
 		break;

@@ -1,37 +1,37 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2012, Intel Corporation 
+  Copyright (c) 2001-2013, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixgbe_mbx.h,v 1.1 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_mbx.h,v 1.1.30.1 2015/04/06 15:18:12 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.h 247822 2013-03-04 23:07:40Z jfv $*/
+/*$NetBSD: ixgbe_mbx.h,v 1.1.30.2 2015/06/06 14:40:12 skrll Exp $*/
 
 #ifndef _IXGBE_MBX_H_
 #define _IXGBE_MBX_H_
@@ -85,8 +85,20 @@
 #define IXGBE_VF_SET_MAC_ADDR	0x02 /* VF requests PF to set MAC addr */
 #define IXGBE_VF_SET_MULTICAST	0x03 /* VF requests PF to set MC addr */
 #define IXGBE_VF_SET_VLAN	0x04 /* VF requests PF to set VLAN */
+
+/* mailbox API, version 1.0 VF requests */
 #define IXGBE_VF_SET_LPE	0x05 /* VF requests PF to set VMOLR.LPE */
 #define IXGBE_VF_SET_MACVLAN	0x06 /* VF requests PF for unicast filter */
+#define IXGBE_VF_API_NEGOTIATE	0x08 /* negotiate API version */
+
+/* mailbox API, version 1.1 VF requests */
+#define IXGBE_VF_GET_QUEUES	0x09 /* get queue configuration */
+
+/* GET_QUEUES return data indices within the mailbox */
+#define IXGBE_VF_TX_QUEUES	1	/* number of Tx queues supported */
+#define IXGBE_VF_RX_QUEUES	2	/* number of Rx queues supported */
+#define IXGBE_VF_TRANS_VLAN	3	/* Indication of port vlan */
+#define IXGBE_VF_DEF_QUEUE	4	/* Default queue offset */
 
 /* length of permanent address message returned from PF */
 #define IXGBE_VF_PERMADDR_MSG_LEN	4

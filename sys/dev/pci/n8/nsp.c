@@ -82,7 +82,6 @@
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>
-#include <sys/rnd.h>
 #include <sys/md5.h>
 #include <sys/sha1.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.95 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.95.4.1 2015/06/06 14:40:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.95 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.95.4.1 2015/06/06 14:40:07 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.95 2014/08/10 16:44:35 tls Exp $");
 #include <net/if_media.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/bus.h>
 #include <machine/endian.h>

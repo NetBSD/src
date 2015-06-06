@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.71.4.1 2015/04/06 15:18:08 skrll Exp $	*/
+/*	$NetBSD: md.c,v 1.71.4.2 2015/06/06 14:40:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.71.4.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.71.4.2 2015/06/06 14:40:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -132,7 +132,9 @@ const struct cdevsw md_cdevsw = {
 	.d_flag = D_DISK
 };
 
-static struct dkdriver mddkdriver = { mdstrategy, NULL };
+static struct dkdriver mddkdriver = {
+	.d_strategy = mdstrategy
+};
 
 extern struct cfdriver md_cd;
 CFATTACH_DECL3_NEW(md, sizeof(struct md_softc),
@@ -481,7 +483,7 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	mutex_enter(&sc->sc_lock);
 	if (sc->sc_type != MD_UNCONFIGURED) {
-		error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l); 
+		error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l);
 		if (error != EPASSTHROUGH) {
 			mutex_exit(&sc->sc_lock);
 			return 0;

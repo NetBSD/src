@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.56.2.1 2015/04/06 15:18:14 skrll Exp $ */
+/*	$NetBSD: genfb.c,v 1.56.2.2 2015/06/06 14:40:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.56.2.1 2015/04/06 15:18:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.56.2.2 2015/06/06 14:40:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	genfb_restore_palette(sc);
 
 	sc->sc_splash.si_depth = sc->sc_depth;
-	sc->sc_splash.si_bits = sc->sc_console_screen.scr_ri.ri_bits;
+	sc->sc_splash.si_bits = sc->sc_console_screen.scr_ri.ri_origbits;
 	sc->sc_splash.si_hwbits = sc->sc_fbaddr;
 	sc->sc_splash.si_width = sc->sc_width;
 	sc->sc_splash.si_height = sc->sc_height;
@@ -401,7 +401,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
-		
+
 		case WSDISPLAYIO_SSPLASH:
 #if defined(SPLASHSCREEN)
 			if(*(int *)data == 1) {
@@ -459,7 +459,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				return sc->sc_backlight->gpc_set_parameter(
 				    sc->sc_backlight->gpc_cookie, val);
 			}
-			return EPASSTHROUGH;		
+			return EPASSTHROUGH;
 	}
 	ret = EPASSTHROUGH;
 	if (sc->sc_ops.genfb_ioctl)
@@ -474,11 +474,11 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	 */
 	switch (cmd) {
 		case WSDISPLAYIO_GET_EDID: {
-			
+
 			struct wsdisplayio_edid_info *d = data;
 			return wsdisplayio_get_edid(sc->sc_dev, d);
 		}
-	
+
 		case WSDISPLAYIO_GET_FBINFO: {
 			struct wsdisplayio_fbinfo *fbi = data;
 			return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);

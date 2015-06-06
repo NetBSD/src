@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.18 2014/03/15 11:48:37 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.18.6.1 2015/06/06 14:39:56 skrll Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013, 2014 KIYOHARA Takashi
  * All rights reserved.
@@ -26,12 +26,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.18 2014/03/15 11:48:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.18.6.1 2015/06/06 14:39:56 skrll Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
+#ifdef ARMADAXP
+#include "mvxpe.h"
+#include "mvxpsec.h"
+#endif
 
 #include <sys/param.h>
+#include <sys/boot_flag.h>
+#include <sys/systm.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -46,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.18 2014/03/15 11:48:37 kiyohara Exp $");
 #include <arm/marvell/orionreg.h>
 #include <arm/marvell/kirkwoodreg.h>
 #include <arm/marvell/mv78xx0reg.h>
+#include <arm/marvell/armadaxpvar.h>
 #include <arm/marvell/armadaxpreg.h>
 
 #include <uvm/uvm.h>
@@ -268,6 +275,10 @@ static struct {
 	  ARMADAXP_ATTR_PEX3_MEM,	ARMADAXP_UNITID_PEX3 },
 	{ ARMADAXP_TAG_PEX3_IO,
 	  ARMADAXP_ATTR_PEX3_IO,	ARMADAXP_UNITID_PEX3 },
+	{ ARMADAXP_TAG_CRYPT0,
+	  ARMADAXP_ATTR_CRYPT0_NOSWAP,	ARMADAXP_UNITID_CRYPT },
+	{ ARMADAXP_TAG_CRYPT1,
+	  ARMADAXP_ATTR_CRYPT1_NOSWAP,	ARMADAXP_UNITID_CRYPT },
 #endif
 };
 
@@ -347,6 +358,7 @@ static struct {
 	{ ARMADAXP(MV78160),	1, "MV78160",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78230),	1, "MV78260",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78260),	1, "MV78260",	"A0",  "Armada XP" },
+	{ ARMADAXP(MV78260),	2, "MV78260",	"B0",  "Armada XP" },
 	{ ARMADAXP(MV78460),	1, "MV78460",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78460),	2, "MV78460",	"B0",  "Armada XP" },
 
@@ -432,6 +444,7 @@ static struct {
 	{ ARMADAXP(MV78160),	1, ddr3_tags },
 	{ ARMADAXP(MV78230),	1, ddr3_tags },
 	{ ARMADAXP(MV78260),	1, ddr3_tags },
+	{ ARMADAXP(MV78260),	2, ddr3_tags },
 	{ ARMADAXP(MV78460),	1, ddr3_tags },
 	{ ARMADAXP(MV78460),	2, ddr3_tags },
 
@@ -675,11 +688,22 @@ static const struct mvsoc_periph {
     { ARMADAXP(MV78130), "mvsata", 0, ARMADAXP_SATAHC_BASE,ARMADAXP_IRQ_SATA0 },
     { ARMADAXP(MV78130), "mvspi",  0, ARMADAXP_SPI_BASE,ARMADAXP_IRQ_SPI },
     { ARMADAXP(MV78130), "mvsdio", 0, ARMADAXP_SDIO_BASE,ARMADAXP_IRQ_SDIO },
-    { ARMADAXP(MV78130), "mvgbec", 0, ARMADAXP_GBE0_BASE,IRQ_DEFAULT },
+    { ARMADAXP(MV78130), "mvxpe", 0, ARMADAXP_GBE0_BASE,ARMADAXP_IRQ_GBE0_TH_RXTX },
+#if NMVXPE > 0
+    { ARMADAXP(MV78130), "mvxpbm", 0, MVA_OFFSET_DEFAULT,IRQ_DEFAULT },
+    { ARMADAXP(MV78130), "mvxpe", 1, ARMADAXP_GBE1_BASE,ARMADAXP_IRQ_GBE1_TH_RXTX },
+    { ARMADAXP(MV78130), "mvxpe", 2, ARMADAXP_GBE2_BASE,ARMADAXP_IRQ_GBE2_TH_RXTX },
+#else
     { ARMADAXP(MV78130), "mvgbec", 1, ARMADAXP_GBE1_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78130), "mvgbec", 2, ARMADAXP_GBE2_BASE,IRQ_DEFAULT },
+#endif
+#if NMVXPSEC > 0
+    { ARMADAXP(MV78130), "mvxpsec", 0, ARMADAXP_XPSEC0_BASE,ARMADAXP_IRQ_CESA0 },
+    { ARMADAXP(MV78130), "mvxpsec", 1, ARMADAXP_XPSEC1_BASE,ARMADAXP_IRQ_CESA1 },
+#else
     { ARMADAXP(MV78130), "mvcesa", 0, ARMADAXP_CESA0_BASE,ARMADAXP_IRQ_CESA0 },
     { ARMADAXP(MV78130), "mvcesa", 1, ARMADAXP_CESA1_BASE,ARMADAXP_IRQ_CESA1 },
+#endif
 
     { ARMADAXP(MV78160), "mvsoctmr",0,MVSOC_TMR_BASE,	ARMADAXP_IRQ_TIMER0 },
     { ARMADAXP(MV78160), "com",    0, MVSOC_COM0_BASE,	ARMADAXP_IRQ_UART0 },
@@ -702,12 +726,25 @@ static const struct mvsoc_periph {
     { ARMADAXP(MV78160), "mvsata", 0, ARMADAXP_SATAHC_BASE,ARMADAXP_IRQ_SATA0 },
     { ARMADAXP(MV78160), "mvspi",  0, ARMADAXP_SPI_BASE,ARMADAXP_IRQ_SPI },
     { ARMADAXP(MV78160), "mvsdio", 0, ARMADAXP_SDIO_BASE,ARMADAXP_IRQ_SDIO },
+#if NMVXPE > 0
+    { ARMADAXP(MV78160), "mvxpbm", 0, MVA_OFFSET_DEFAULT,IRQ_DEFAULT },
+    { ARMADAXP(MV78160), "mvxpe", 0, ARMADAXP_GBE0_BASE,ARMADAXP_IRQ_GBE0_TH_RXTX },
+    { ARMADAXP(MV78160), "mvxpe", 1, ARMADAXP_GBE1_BASE,ARMADAXP_IRQ_GBE1_TH_RXTX },
+    { ARMADAXP(MV78160), "mvxpe", 2, ARMADAXP_GBE2_BASE,ARMADAXP_IRQ_GBE2_TH_RXTX },
+    { ARMADAXP(MV78160), "mvxpe", 3, ARMADAXP_GBE3_BASE,ARMADAXP_IRQ_GBE3_TH_RXTX },
+#else
     { ARMADAXP(MV78160), "mvgbec", 0, ARMADAXP_GBE0_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78160), "mvgbec", 1, ARMADAXP_GBE1_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78160), "mvgbec", 2, ARMADAXP_GBE2_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78160), "mvgbec", 3, ARMADAXP_GBE3_BASE,IRQ_DEFAULT },
+#endif
+#if NMVXPSEC > 0
+    { ARMADAXP(MV78160), "mvxpsec", 0, ARMADAXP_XPSEC0_BASE,ARMADAXP_IRQ_CESA0 },
+    { ARMADAXP(MV78160), "mvxpsec", 1, ARMADAXP_XPSEC1_BASE,ARMADAXP_IRQ_CESA1 },
+#else
     { ARMADAXP(MV78160), "mvcesa", 0, ARMADAXP_CESA0_BASE,ARMADAXP_IRQ_CESA0 },
     { ARMADAXP(MV78160), "mvcesa", 1, ARMADAXP_CESA1_BASE,ARMADAXP_IRQ_CESA1 },
+#endif
 
     { ARMADAXP(MV78230), "mvsoctmr",0,MVSOC_TMR_BASE,	ARMADAXP_IRQ_TIMER0 },
     { ARMADAXP(MV78230), "com",    0, MVSOC_COM0_BASE,	ARMADAXP_IRQ_UART0 },
@@ -730,11 +767,23 @@ static const struct mvsoc_periph {
     { ARMADAXP(MV78230), "mvsata", 0, ARMADAXP_SATAHC_BASE,ARMADAXP_IRQ_SATA0 },
     { ARMADAXP(MV78230), "mvspi",  0, ARMADAXP_SPI_BASE,ARMADAXP_IRQ_SPI },
     { ARMADAXP(MV78230), "mvsdio", 0, ARMADAXP_SDIO_BASE,ARMADAXP_IRQ_SDIO },
+#if NMVXPE > 0
+    { ARMADAXP(MV78230), "mvxpbm", 0, MVA_OFFSET_DEFAULT,IRQ_DEFAULT },
+    { ARMADAXP(MV78230), "mvxpe", 0, ARMADAXP_GBE0_BASE,ARMADAXP_IRQ_GBE0_TH_RXTX },
+    { ARMADAXP(MV78230), "mvxpe", 1, ARMADAXP_GBE1_BASE,ARMADAXP_IRQ_GBE1_TH_RXTX },
+    { ARMADAXP(MV78230), "mvxpe", 2, ARMADAXP_GBE2_BASE,ARMADAXP_IRQ_GBE2_TH_RXTX },
+#else
     { ARMADAXP(MV78230), "mvgbec", 0, ARMADAXP_GBE0_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78230), "mvgbec", 1, ARMADAXP_GBE1_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78230), "mvgbec", 2, ARMADAXP_GBE2_BASE,IRQ_DEFAULT },
+#endif
+#if NMVXPSEC > 0
+    { ARMADAXP(MV78230), "mvxpsec", 0, ARMADAXP_XPSEC0_BASE,ARMADAXP_IRQ_CESA0 },
+    { ARMADAXP(MV78230), "mvxpsec", 1, ARMADAXP_XPSEC1_BASE,ARMADAXP_IRQ_CESA1 },
+#else
     { ARMADAXP(MV78230), "mvcesa", 0, ARMADAXP_CESA0_BASE,ARMADAXP_IRQ_CESA0 },
     { ARMADAXP(MV78230), "mvcesa", 1, ARMADAXP_CESA1_BASE,ARMADAXP_IRQ_CESA1 },
+#endif
 
     { ARMADAXP(MV78260), "mvsoctmr",0,MVSOC_TMR_BASE,	ARMADAXP_IRQ_TIMER0 },
     { ARMADAXP(MV78260), "com",    0, MVSOC_COM0_BASE,	ARMADAXP_IRQ_UART0 },
@@ -757,12 +806,25 @@ static const struct mvsoc_periph {
     { ARMADAXP(MV78260), "mvsata", 0, ARMADAXP_SATAHC_BASE,ARMADAXP_IRQ_SATA0 },
     { ARMADAXP(MV78260), "mvspi",  0, ARMADAXP_SPI_BASE,ARMADAXP_IRQ_SPI },
     { ARMADAXP(MV78260), "mvsdio", 0, ARMADAXP_SDIO_BASE,ARMADAXP_IRQ_SDIO },
+#if NMVXPE > 0
+    { ARMADAXP(MV78260), "mvxpbm", 0, MVA_OFFSET_DEFAULT,IRQ_DEFAULT },
+    { ARMADAXP(MV78260), "mvxpe", 0, ARMADAXP_GBE0_BASE,ARMADAXP_IRQ_GBE0_TH_RXTX },
+    { ARMADAXP(MV78260), "mvxpe", 1, ARMADAXP_GBE1_BASE,ARMADAXP_IRQ_GBE1_TH_RXTX },
+    { ARMADAXP(MV78260), "mvxpe", 2, ARMADAXP_GBE2_BASE,ARMADAXP_IRQ_GBE2_TH_RXTX },
+    { ARMADAXP(MV78260), "mvxpe", 3, ARMADAXP_GBE3_BASE,ARMADAXP_IRQ_GBE3_TH_RXTX },
+#else
     { ARMADAXP(MV78260), "mvgbec", 0, ARMADAXP_GBE0_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78260), "mvgbec", 1, ARMADAXP_GBE1_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78260), "mvgbec", 2, ARMADAXP_GBE2_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78260), "mvgbec", 3, ARMADAXP_GBE3_BASE,IRQ_DEFAULT },
+#endif
+#if NMVXPSEC > 0
+    { ARMADAXP(MV78260), "mvxpsec", 0, ARMADAXP_XPSEC0_BASE,ARMADAXP_IRQ_CESA0 },
+    { ARMADAXP(MV78260), "mvxpsec", 1, ARMADAXP_XPSEC1_BASE,ARMADAXP_IRQ_CESA1 },
+#else
     { ARMADAXP(MV78260), "mvcesa", 0, ARMADAXP_CESA0_BASE,ARMADAXP_IRQ_CESA0 },
     { ARMADAXP(MV78260), "mvcesa", 1, ARMADAXP_CESA1_BASE,ARMADAXP_IRQ_CESA1 },
+#endif
 
     { ARMADAXP(MV78460), "mvsoctmr",0,MVSOC_TMR_BASE,	ARMADAXP_IRQ_TIMER0 },
     { ARMADAXP(MV78460), "com",    0, MVSOC_COM0_BASE,	ARMADAXP_IRQ_UART0 },
@@ -786,12 +848,25 @@ static const struct mvsoc_periph {
     { ARMADAXP(MV78460), "mvsata", 0, ARMADAXP_SATAHC_BASE,ARMADAXP_IRQ_SATA0 },
     { ARMADAXP(MV78460), "mvspi",  0, ARMADAXP_SPI_BASE,ARMADAXP_IRQ_SPI },
     { ARMADAXP(MV78460), "mvsdio", 0, ARMADAXP_SDIO_BASE,ARMADAXP_IRQ_SDIO },
+#if NMVXPE > 0
+    { ARMADAXP(MV78460), "mvxpbm", 0, MVA_OFFSET_DEFAULT,IRQ_DEFAULT },
+    { ARMADAXP(MV78460), "mvxpe", 0, ARMADAXP_GBE0_BASE,ARMADAXP_IRQ_GBE0_TH_RXTX },
+    { ARMADAXP(MV78460), "mvxpe", 1, ARMADAXP_GBE1_BASE,ARMADAXP_IRQ_GBE1_TH_RXTX },
+    { ARMADAXP(MV78460), "mvxpe", 2, ARMADAXP_GBE2_BASE,ARMADAXP_IRQ_GBE2_TH_RXTX },
+    { ARMADAXP(MV78460), "mvxpe", 3, ARMADAXP_GBE3_BASE,ARMADAXP_IRQ_GBE3_TH_RXTX },
+#else
     { ARMADAXP(MV78460), "mvgbec", 0, ARMADAXP_GBE0_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78460), "mvgbec", 1, ARMADAXP_GBE1_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78460), "mvgbec", 2, ARMADAXP_GBE2_BASE,IRQ_DEFAULT },
     { ARMADAXP(MV78460), "mvgbec", 3, ARMADAXP_GBE3_BASE,IRQ_DEFAULT },
+#endif
+#if NMVXPSEC > 0
+    { ARMADAXP(MV78460), "mvxpsec", 0, ARMADAXP_XPSEC0_BASE,ARMADAXP_IRQ_CESA0 },
+    { ARMADAXP(MV78460), "mvxpsec", 1, ARMADAXP_XPSEC1_BASE,ARMADAXP_IRQ_CESA1 },
+#else
     { ARMADAXP(MV78460), "mvcesa", 0, ARMADAXP_CESA0_BASE,ARMADAXP_IRQ_CESA0 },
     { ARMADAXP(MV78460), "mvcesa", 1, ARMADAXP_CESA1_BASE,ARMADAXP_IRQ_CESA1 },
+#endif
 
     { ARMADA370(MV6710), "mvsoctmr",0,MVSOC_TMR_BASE,	ARMADAXP_IRQ_TIMER0 },
     { ARMADA370(MV6710), "com",    0, MVSOC_COM0_BASE,	ARMADAXP_IRQ_UART0 },
@@ -808,9 +883,19 @@ static const struct mvsoc_periph {
     { ARMADA370(MV6710), "mvspi",  0, ARMADAXP_SPI_BASE,ARMADAXP_IRQ_SPI },
     { ARMADA370(MV6710), "mvspi",  1, ARMADAXP_SPI_BASE,ARMADAXP_IRQ_SPI },
     { ARMADA370(MV6710), "mvsdio", 0, ARMADAXP_SDIO_BASE,ARMADAXP_IRQ_SDIO },
+#if NMVXPE > 0
+    { ARMADA370(MV6710), "mvxpbm", 0, MVA_OFFSET_DEFAULT,IRQ_DEFAULT },
+    { ARMADA370(MV6710), "mvxpe", 0, ARMADAXP_GBE0_BASE,ARMADAXP_IRQ_GBE0_TH_RXTX },
+    { ARMADA370(MV6710), "mvxpe", 1, ARMADAXP_GBE1_BASE,ARMADAXP_IRQ_GBE1_TH_RXTX },
+#else
     { ARMADA370(MV6710), "mvgbec", 0, ARMADAXP_GBE0_BASE,IRQ_DEFAULT },
     { ARMADA370(MV6710), "mvgbec", 1, ARMADAXP_GBE1_BASE,IRQ_DEFAULT },
+#endif
+#if NMVXPSEC > 0
+    { ARMADA370(MV6710), "mvxpsec", 0, ARMADAXP_XPSEC0_BASE,ARMADAXP_IRQ_CESA0 },
+#else
     { ARMADA370(MV6710), "mvcesa", 0, ARMADAXP_CESA0_BASE,ARMADAXP_IRQ_CESA0 },
+#endif
 #endif
 };
 
@@ -876,6 +961,9 @@ mvsoc_attach(device_t parent, device_t self, void *aux)
 	if (i >= __arraycount(tagstbl))
 		panic("unknown SoC: model 0x%04x, rev 0x%02x", model, rev);
 	tags = tagstbl[i].tags;
+
+	if (boothowto & (AB_VERBOSE | AB_DEBUG))
+		mvsoc_target_dump(sc);
 
 	for (i = 0; i < __arraycount(mvsoc_periphs); i++) {
 		if (mvsoc_periphs[i].model != model)
@@ -1206,4 +1294,44 @@ mvsoc_target_peripheral(uint32_t target, uint32_t attr, uint32_t *base,
 		break;
 	}
 	return i;
+}
+
+int
+mvsoc_target_dump(struct mvsoc_softc *sc)
+{
+	uint32_t reg, base, size, target, attr, enable;
+	int i, n;
+
+	for (i = 0, n = 0; i < nwindow; i++) {
+		reg = read_mlmbreg(MVSOC_MLMB_WCR(i));
+		enable = reg & MVSOC_MLMB_WCR_WINEN;
+		target = MVSOC_MLMB_WCR_GET_TARGET(reg);
+		attr = MVSOC_MLMB_WCR_GET_ATTR(reg);
+		size = MVSOC_MLMB_WCR_GET_SIZE(reg);
+
+		reg = read_mlmbreg(MVSOC_MLMB_WBR(i));
+		base = MVSOC_MLMB_WBR_GET_BASE(reg);
+
+		if (!enable)
+			continue;
+
+		aprint_verbose_dev(sc->sc_dev,
+		    "Mbus window %2d: Base 0x%08x Size 0x%08x ", i, base, size);
+#ifdef ARMADAXP
+		armadaxp_attr_dump(sc, target, attr);
+#else
+		mvsoc_attr_dump(sc, target, attr);
+#endif
+		printf("\n");
+		n++;
+	}
+
+	return n;
+}
+
+int
+mvsoc_attr_dump(struct mvsoc_softc *sc, uint32_t target, uint32_t attr)
+{
+	aprint_verbose_dev(sc->sc_dev, "target 0x%x(attr 0x%x)", target, attr);
+	return 0;
 }

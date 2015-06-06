@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5 2011/04/06 05:48:35 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.5.32.1 2015/06/06 14:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include "opt_multiprocessor.h"	/* MP kernel? */
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
+#include "opt_ddb.h"
 
 #include <sys/cdefs.h>
 
@@ -38,7 +39,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.5 2011/04/06 05:48:35 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.5.32.1 2015/06/06 14:40:02 skrll Exp $")
 
 #include "assym.h"
 
@@ -86,7 +87,12 @@ _splraise:
 	or	v1, MIPS_INT_MASK		# enable all interrupts
 	xor	a0, v1				# disable ipl's masked bits
 	DYNAMIC_STATUS_MASK(a0,v0)		# machine dependent masking
+#if defined(_LP64) && MULTIPROCESSOR
+	li	v1, MIPS3_SR_KX | MIPS3_SR_UX	# keep 64-bit addressing on
+	mtc0	v1, MIPS_COP_0_STATUS		## disable interrupts
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+#endif
 	COP0_SYNC
 #ifdef MULTIPROCESSOR
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		## make sure curcpu is correct
@@ -166,7 +172,8 @@ END(_splsw_splx)
 STATIC_LEAF(_splsw_spl0)
 	INT_L	v1, _C_LABEL(ipl_sr_map) + 4*IPL_NONE
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
-	xor	v1, MIPS_INT_MASK | MIPS_SR_INT_IE # invert and or in IE
+	or	v1, MIPS_SR_INT_IE		# mask sure interrupts are on
+	xor	v1, MIPS_INT_MASK		# invert
 	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
 	COP0_SYNC
 	mfc0	a0, MIPS_COP_0_STATUS
@@ -211,6 +218,9 @@ STATIC_LEAF(_splsw_clrsoftintr)
 END(_splsw_clrsoftintr)
 
 STATIC_LEAF(_splsw_splraise)
+#if defined(DDB) && __mips >= 32
+	tgeiu	a0, IPL_HIGH+1
+#endif
 	move	a1, a0
 	PTR_LA	v1, _C_LABEL(ipl_sr_map)
 	sll	a2, a0, INT_SCALESHIFT

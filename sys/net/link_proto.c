@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.24.4.1 2015/04/06 15:18:22 skrll Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.24.4.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.24.4.1 2015/04/06 15:18:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.24.4.2 2015/06/06 14:40:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -50,26 +50,24 @@ __KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.24.4.1 2015/04/06 15:18:22 skrll Ex
 static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
 static int link_attach(struct socket *, int);
 static void link_detach(struct socket *);
-static int link_accept(struct socket *, struct mbuf *);
+static int link_accept(struct socket *, struct sockaddr *);
 static int link_bind(struct socket *, struct sockaddr *, struct lwp *);
 static int link_listen(struct socket *, struct lwp *);
-static int link_connect(struct socket *, struct mbuf *, struct lwp *);
+static int link_connect(struct socket *, struct sockaddr *, struct lwp *);
 static int link_connect2(struct socket *, struct socket *);
 static int link_disconnect(struct socket *);
 static int link_shutdown(struct socket *);
 static int link_abort(struct socket *);
 static int link_ioctl(struct socket *, u_long, void *, struct ifnet *);
 static int link_stat(struct socket *, struct stat *);
-static int link_peeraddr(struct socket *, struct mbuf *);
-static int link_sockaddr(struct socket *, struct mbuf *);
+static int link_peeraddr(struct socket *, struct sockaddr *);
+static int link_sockaddr(struct socket *, struct sockaddr *);
 static int link_rcvd(struct socket *, int, struct lwp *);
 static int link_recvoob(struct socket *, struct mbuf *, int);
-static int link_send(struct socket *, struct mbuf *, struct mbuf *,
+static int link_send(struct socket *, struct mbuf *, struct sockaddr *,
     struct mbuf *, struct lwp *);
 static int link_sendoob(struct socket *, struct mbuf *, struct mbuf *);
 static int link_purgeif(struct socket *, struct ifnet *);
-static int link_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
-    struct mbuf *, struct lwp *);
 static void link_init(void);
 
 /*
@@ -98,7 +96,6 @@ static const struct pr_usrreqs link_usrreqs = {
 	.pr_send	= link_send,
 	.pr_sendoob	= link_sendoob,
 	.pr_purgeif	= link_purgeif,
-	.pr_generic	= link_usrreq,
 };
 
 const struct protosw linksw[] = {
@@ -266,7 +263,7 @@ link_detach(struct socket *so)
 }
 
 static int
-link_accept(struct socket *so, struct mbuf *nam)
+link_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -290,7 +287,7 @@ link_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-link_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+link_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
  	KASSERT(solocked(so));
 
@@ -344,7 +341,7 @@ link_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-link_peeraddr(struct socket *so, struct mbuf *nam)
+link_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -352,7 +349,7 @@ link_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-link_sockaddr(struct socket *so, struct mbuf *nam)
+link_sockaddr(struct socket *so, struct sockaddr *nam)
 {
  	KASSERT(solocked(so));
 
@@ -376,7 +373,7 @@ link_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-link_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+link_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	KASSERT(solocked(so));
@@ -395,33 +392,6 @@ link_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 static int
 link_purgeif(struct socket *so, struct ifnet *ifp)
 {
-
-	return EOPNOTSUPP;
-}
-
-static int
-link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct lwp *l)
-{
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
 
 	return EOPNOTSUPP;
 }

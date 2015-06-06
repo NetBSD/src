@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.91.2.1 2015/04/06 15:18:22 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.91.2.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.1 2015/04/06 15:18:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.2 2015/06/06 14:40:25 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -142,6 +142,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.1 2015/04/06 15:18:22 skrll Exp
 #include <netinet/in_var.h>
 #include <netinet/ip_carp.h>
 #endif
+
+__CTASSERT(sizeof(struct ifbifconf) == sizeof(struct ifbaconf));
+__CTASSERT(offsetof(struct ifbifconf, ifbic_len) == offsetof(struct ifbaconf, ifbac_len));
+__CTASSERT(offsetof(struct ifbifconf, ifbic_buf) == offsetof(struct ifbaconf, ifbac_buf));
 
 /*
  * Maximum number of addresses to cache.
@@ -306,49 +310,54 @@ struct bridge_control {
 #define	BC_F_COPYIN		0x01	/* copy arguments in */
 #define	BC_F_COPYOUT		0x02	/* copy arguments out */
 #define	BC_F_SUSER		0x04	/* do super-user check */
+#define BC_F_XLATEIN		0x08	/* xlate arguments in */
+#define BC_F_XLATEOUT		0x10	/* xlate arguments out */
 
 static const struct bridge_control bridge_control_table[] = {
 [BRDGADD] = {bridge_ioctl_add, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER},
-[BRDGDEL] = {bridge_ioctl_del, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGDEL] = {bridge_ioctl_del, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER},
 
-[BRDGGIFFLGS] = {bridge_ioctl_gifflags, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_COPYOUT}, 
-[BRDGSIFFLGS] = {bridge_ioctl_sifflags, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGGIFFLGS] = {bridge_ioctl_gifflags, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_COPYOUT},
+[BRDGSIFFLGS] = {bridge_ioctl_sifflags, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER},
 
-[BRDGSCACHE] = {bridge_ioctl_scache, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER}, 
-[BRDGGCACHE] = {bridge_ioctl_gcache, sizeof(struct ifbrparam), BC_F_COPYOUT}, 
+[BRDGSCACHE] = {bridge_ioctl_scache, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER},
+[BRDGGCACHE] = {bridge_ioctl_gcache, sizeof(struct ifbrparam), BC_F_COPYOUT},
 
-[BRDGGIFS] = {bridge_ioctl_gifs, sizeof(struct ifbifconf), BC_F_COPYIN|BC_F_COPYOUT}, 
-[BRDGRTS] = {bridge_ioctl_rts, sizeof(struct ifbaconf), BC_F_COPYIN|BC_F_COPYOUT}, 
+[OBRDGGIFS] = {bridge_ioctl_gifs, sizeof(struct ifbifconf), BC_F_COPYIN|BC_F_COPYOUT},
+[OBRDGRTS] = {bridge_ioctl_rts, sizeof(struct ifbaconf), BC_F_COPYIN|BC_F_COPYOUT},
 
-[BRDGSADDR] = {bridge_ioctl_saddr, sizeof(struct ifbareq), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGSADDR] = {bridge_ioctl_saddr, sizeof(struct ifbareq), BC_F_COPYIN|BC_F_SUSER},
 
-[BRDGSTO] = {bridge_ioctl_sto, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER}, 
-[BRDGGTO] = {bridge_ioctl_gto, sizeof(struct ifbrparam), BC_F_COPYOUT}, 
+[BRDGSTO] = {bridge_ioctl_sto, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER},
+[BRDGGTO] = {bridge_ioctl_gto, sizeof(struct ifbrparam), BC_F_COPYOUT},
 
-[BRDGDADDR] = {bridge_ioctl_daddr, sizeof(struct ifbareq), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGDADDR] = {bridge_ioctl_daddr, sizeof(struct ifbareq), BC_F_COPYIN|BC_F_SUSER},
 
-[BRDGFLUSH] = {bridge_ioctl_flush, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGFLUSH] = {bridge_ioctl_flush, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER},
 
-[BRDGGPRI] = {bridge_ioctl_gpri, sizeof(struct ifbrparam), BC_F_COPYOUT}, 
-[BRDGSPRI] = {bridge_ioctl_spri, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGGPRI] = {bridge_ioctl_gpri, sizeof(struct ifbrparam), BC_F_COPYOUT},
+[BRDGSPRI] = {bridge_ioctl_spri, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER},
 
-[BRDGGHT] = {bridge_ioctl_ght, sizeof(struct ifbrparam), BC_F_COPYOUT}, 
-[BRDGSHT] = {bridge_ioctl_sht, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGGHT] = {bridge_ioctl_ght, sizeof(struct ifbrparam), BC_F_COPYOUT},
+[BRDGSHT] = {bridge_ioctl_sht, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER},
 
-[BRDGGFD] = {bridge_ioctl_gfd, sizeof(struct ifbrparam), BC_F_COPYOUT}, 
-[BRDGSFD] = {bridge_ioctl_sfd, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGGFD] = {bridge_ioctl_gfd, sizeof(struct ifbrparam), BC_F_COPYOUT},
+[BRDGSFD] = {bridge_ioctl_sfd, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER},
 
-[BRDGGMA] = {bridge_ioctl_gma, sizeof(struct ifbrparam), BC_F_COPYOUT}, 
-[BRDGSMA] = {bridge_ioctl_sma, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGGMA] = {bridge_ioctl_gma, sizeof(struct ifbrparam), BC_F_COPYOUT},
+[BRDGSMA] = {bridge_ioctl_sma, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER},
 
-[BRDGSIFPRIO] = {bridge_ioctl_sifprio, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGSIFPRIO] = {bridge_ioctl_sifprio, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER},
 
-[BRDGSIFCOST] = {bridge_ioctl_sifcost, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER}, 
+[BRDGSIFCOST] = {bridge_ioctl_sifcost, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER},
 #if defined(BRIDGE_IPF)
 [BRDGGFILT] = {bridge_ioctl_gfilt, sizeof(struct ifbrparam), BC_F_COPYOUT},
 [BRDGSFILT] = {bridge_ioctl_sfilt, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER},
 #endif /* BRIDGE_IPF */
+[BRDGGIFS] = {bridge_ioctl_gifs, sizeof(struct ifbifconf), BC_F_XLATEIN|BC_F_XLATEOUT},
+[BRDGRTS] = {bridge_ioctl_rts, sizeof(struct ifbaconf), BC_F_XLATEIN|BC_F_XLATEOUT},
 };
+
 static const int bridge_control_table_size = __arraycount(bridge_control_table);
 
 static LIST_HEAD(, bridge_softc) bridge_list;
@@ -474,8 +483,10 @@ bridge_clone_destroy(struct ifnet *ifp)
 
 	bridge_stop(ifp, 1);
 
+	BRIDGE_LOCK(sc);
 	while ((bif = LIST_FIRST(&sc->sc_iflist)) != NULL)
 		bridge_delete_member(sc, bif);
+	BRIDGE_UNLOCK(sc);
 
 	mutex_enter(&bridge_list_lock);
 	LIST_REMOVE(sc, sc_list);
@@ -619,12 +630,11 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCGDRVSPEC:
 	case SIOCSDRVSPEC:
-		if (ifd->ifd_cmd >= bridge_control_table_size) {
+		if (ifd->ifd_cmd >= bridge_control_table_size
+		    || (bc = &bridge_control_table[ifd->ifd_cmd]) == NULL) {
 			error = EINVAL;
 			return error;
 		}
-
-		bc = &bridge_control_table[ifd->ifd_cmd];
 
 		/* We only care about BC_F_SUSER at this point. */
 		if ((bc->bc_flags & BC_F_SUSER) == 0)
@@ -649,20 +659,21 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSDRVSPEC:
 		KASSERT(bc != NULL);
 		if (cmd == SIOCGDRVSPEC &&
-		    (bc->bc_flags & BC_F_COPYOUT) == 0) {
+		    (bc->bc_flags & (BC_F_COPYOUT|BC_F_XLATEOUT)) == 0) {
 			error = EINVAL;
 			break;
 		}
 		else if (cmd == SIOCSDRVSPEC &&
-		    (bc->bc_flags & BC_F_COPYOUT) != 0) {
+		    (bc->bc_flags & (BC_F_COPYOUT|BC_F_XLATEOUT)) != 0) {
 			error = EINVAL;
 			break;
 		}
 
 		/* BC_F_SUSER is checked above, before splnet(). */
 
-		if (ifd->ifd_len != bc->bc_argsize ||
-		    ifd->ifd_len > sizeof(args)) {
+		if ((bc->bc_flags & (BC_F_XLATEIN|BC_F_XLATEOUT)) == 0
+		    && (ifd->ifd_len != bc->bc_argsize
+			|| ifd->ifd_len > sizeof(args))) {
 			error = EINVAL;
 			break;
 		}
@@ -672,15 +683,21 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = copyin(ifd->ifd_data, &args, ifd->ifd_len);
 			if (error)
 				break;
+		} else if (bc->bc_flags & BC_F_XLATEIN) {
+			args.ifbifconf.ifbic_len = ifd->ifd_len;
+			args.ifbifconf.ifbic_buf = ifd->ifd_data;
 		}
 
 		error = (*bc->bc_func)(sc, &args);
 		if (error)
 			break;
 
-		if (bc->bc_flags & BC_F_COPYOUT)
+		if (bc->bc_flags & BC_F_COPYOUT) {
 			error = copyout(&args, ifd->ifd_data, ifd->ifd_len);
-
+		} else if (bc->bc_flags & BC_F_XLATEOUT) {
+			ifd->ifd_len = args.ifbifconf.ifbic_len;
+			ifd->ifd_data = args.ifbifconf.ifbic_buf;
+		}
 		break;
 
 	case SIOCSIFFLAGS:
@@ -815,7 +832,7 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	struct ifnet *ifs = bif->bif_ifp;
 
-	BRIDGE_LOCK(sc);
+	KASSERT(BRIDGE_LOCKED(sc));
 
 	ifs->if_input = ether_input;
 	ifs->if_bridge = NULL;
@@ -840,6 +857,8 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 #endif
 
 	kmem_free(bif, sizeof(*bif));
+
+	BRIDGE_LOCK(sc);
 }
 
 static int
@@ -940,10 +959,9 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 		return ENOENT;
 	}
 
-	BRIDGE_UNLOCK(sc);
-
 	bridge_delete_member(sc, bif);
 
+	BRIDGE_UNLOCK(sc);
 
 	switch (ifs->if_type) {
 	case IFT_ETHER:

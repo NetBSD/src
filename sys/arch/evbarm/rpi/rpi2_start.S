@@ -38,7 +38,7 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: rpi2_start.S,v 1.1.4.2 2015/04/06 15:17:56 skrll Exp $")
+RCSID("$NetBSD: rpi2_start.S,v 1.1.4.3 2015/06/06 14:39:58 skrll Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl plputc
@@ -117,7 +117,7 @@ _C_LABEL(rpi_start):
 	sub	r8, r8, #KERNEL_BASE_VOFFSET
 #endif
 	bl	arm_boot_l1pt_init
-	XPUTC(#68)
+	XPUTC(#'D')
 
 	/*
 	 * Turn on the MMU, Caches, etc.  Return to new enabled address space.
@@ -142,17 +142,17 @@ _C_LABEL(rpi_start):
 	.pushsection .text,"ax",%progbits
 1:
 #endif
-	XPUTC2(#90)
+	XPUTC2(#'Z')
 
 #if defined(MULTIPROCESSOR)
 	// Now spin up the second processors into the same state we are now.
-	XPUTC2(#77)		// 'M'
-	XPUTC2(#80)		// 'P'
-	XPUTC2(#60)		// '<'
+	XPUTC2(#'M')
+	XPUTC2(#'P')		// 'P'
+	XPUTC2(#'<')		// '<'
 	// Make sure the cache is flushed out to RAM for the other CPUs
 	bl	_C_LABEL(armv7_dcache_wbinv_all)
 
-	XPUTC2(#62)		// '>'
+	XPUTC2(#'>')		// '>'
 #endif /* MULTIPROCESSOR */
 	XPUTC2(#13)
 	XPUTC2(#10)

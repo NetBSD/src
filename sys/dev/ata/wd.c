@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.415.2.1 2015/04/06 15:18:08 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.415.2.2 2015/06/06 14:40:06 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.415.2.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.415.2.2 2015/06/06 14:40:06 skrll Exp $");
 
 #include "opt_ata.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.415.2.1 2015/04/06 15:18:08 skrll Exp $");
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/vnode.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -202,7 +202,10 @@ bool  wd_shutdown(device_t, int);
 int   wd_getcache(struct wd_softc *, int *);
 int   wd_setcache(struct wd_softc *, int);
 
-struct dkdriver wddkdriver = { wdstrategy, wdminphys };
+struct dkdriver wddkdriver = {
+	.d_strategy = wdstrategy,
+	.d_minphys = wdminphys
+};
 
 #ifdef HAS_BAD144_HANDLING
 static void bad144intern(struct wd_softc *);
@@ -241,7 +244,7 @@ static const struct wd_quirk {
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ "ST380023AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
-	{ "ST360015AS",	
+	{ "ST360015AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ NULL,
 	  0 }
@@ -1004,7 +1007,7 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	return error;
 }
 
-/* 
+/*
  * Caller must hold wd->sc_dk.dk_openlock.
  */
 static int
@@ -1469,7 +1472,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 		return 0;
 	    }
-	
+
 	case DIOCSSTRATEGY:
 	    {
 		struct disk_strategy *dks = (void *)addr;
@@ -1679,7 +1682,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		err = 0;
 		break;
 	default:
-		panic("wddump: unknown error type %d", err); 
+		panic("wddump: unknown error type %d", err);
 	}
 	if (err != 0) {
 		printf("\n");

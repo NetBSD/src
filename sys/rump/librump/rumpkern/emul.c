@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.168.2.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: emul.c,v 1.168.2.2 2015/06/06 14:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.168.2.1 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.168.2.2 2015/06/06 14:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -85,7 +85,6 @@ struct vnode *rootvp;
 dev_t rootdev = NODEV;
 
 const int schedppq = 1;
-int hardclock_ticks;
 bool mp_online = false;
 struct timeval boottime;
 int cold = 1;
@@ -362,7 +361,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("rump kernel halting...\n");
 
 	if (!RUMP_LOCALPROC_P(curproc))
-		finiarg = curproc->p_vmspace->vm_map.pmap;
+		finiarg = RUMP_SPVM2CTL(curproc->p_vmspace);
 	else
 		finiarg = NULL;
 

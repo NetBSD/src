@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.137.2.1 2015/04/06 15:17:53 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.137.2.2 2015/06/06 14:39:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -428,9 +428,9 @@ extern vaddr_t	pmap_curmaxkvaddr;
 
 #if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
 /*
- * Starting VA of direct mapped memory (usually KERNEL_BASE).
+ * Ending VA of direct mapped memory (usually KERNEL_VM_BASE).
  */
-extern vaddr_t pmap_directbase;
+extern vaddr_t pmap_directlimit;
 #endif
 
 /*
@@ -567,10 +567,12 @@ static inline void
 l2pte_set(pt_entry_t *ptep, pt_entry_t pte, pt_entry_t opte)
 {
 	if (l1pte_lpage_p(pte)) {
+		KASSERTMSG((((uintptr_t)ptep / sizeof(pte)) & (L2_L_SIZE / L2_S_SIZE - 1)) == 0, "%p", ptep);
 		for (size_t k = 0; k < L2_L_SIZE / L2_S_SIZE; k++) {
 			*ptep++ = pte;
 		}
 	} else {
+		KASSERTMSG((((uintptr_t)ptep / sizeof(pte)) & (PAGE_SIZE / L2_S_SIZE - 1)) == 0, "%p", ptep);
 		for (size_t k = 0; k < PAGE_SIZE / L2_S_SIZE; k++) {
 			KASSERTMSG(*ptep == opte, "%#x [*%p] != %#x", *ptep, ptep, opte);
 			*ptep++ = pte;
@@ -584,6 +586,7 @@ l2pte_set(pt_entry_t *ptep, pt_entry_t pte, pt_entry_t opte)
 static inline void
 l2pte_reset(pt_entry_t *ptep)
 {
+	KASSERTMSG((((uintptr_t)ptep / sizeof(*ptep)) & (PAGE_SIZE / L2_S_SIZE - 1)) == 0, "%p", ptep);
 	*ptep = 0;
 	for (vsize_t k = 1; k < PAGE_SIZE / L2_S_SIZE; k++) {
 		ptep[k] = 0;

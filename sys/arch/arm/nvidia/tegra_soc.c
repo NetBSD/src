@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soc.c,v 1.2.2.2 2015/04/06 15:17:53 skrll Exp $ */
+/* $NetBSD: tegra_soc.c,v 1.2.2.3 2015/06/06 14:39:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.2.2.2 2015/04/06 15:17:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.2.2.3 2015/06/06 14:39:56 skrll Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.2.2.2 2015/04/06 15:17:53 skrll Exp 
 #include <arm/nvidia/tegra_var.h>
 
 bus_space_handle_t tegra_host1x_bsh;
+bus_space_handle_t tegra_ppsb_bsh;
 bus_space_handle_t tegra_apb_bsh;
 bus_space_handle_t tegra_ahb_a2_bsh;
 
@@ -58,34 +59,73 @@ struct arm32_bus_dma_tag tegra_dma_tag = {
 	_BUS_DMATAG_FUNCS,
 };
 
-#if defined(MULTIPROCESSOR)
+static struct arm32_dma_range tegra_coherent_dma_ranges[] = {
+	[0] = {
+		.dr_sysbase = TEGRA_EXTMEM_BASE,
+		.dr_busbase = TEGRA_EXTMEM_BASE,
+		.dr_flags = _BUS_DMAMAP_COHERENT,
+	},
+};
+
+struct arm32_bus_dma_tag tegra_coherent_dma_tag = {
+	._ranges = tegra_coherent_dma_ranges,
+	._nranges = __arraycount(tegra_coherent_dma_ranges),
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
+};
+
 static void	tegra_mpinit(void);
-#endif
 
 void
 tegra_bootstrap(void)
 {
-	bus_space_map(&armv7_generic_bs_tag,
+	if (bus_space_map(&armv7_generic_bs_tag,
 	    TEGRA_HOST1X_BASE, TEGRA_HOST1X_SIZE, 0,
-	    &tegra_host1x_bsh);
-	bus_space_map(&armv7_generic_bs_tag,
+	    &tegra_host1x_bsh) != 0)
+		panic("couldn't map HOST1X");
+	if (bus_space_map(&armv7_generic_bs_tag,
+	    TEGRA_PPSB_BASE, TEGRA_PPSB_SIZE, 0,
+	    &tegra_ppsb_bsh) != 0)
+		panic("couldn't map PPSB");
+	if (bus_space_map(&armv7_generic_bs_tag,
 	    TEGRA_APB_BASE, TEGRA_APB_SIZE, 0,
-	    &tegra_apb_bsh);
-	bus_space_map(&armv7_generic_bs_tag,
+	    &tegra_apb_bsh) != 0)
+		panic("couldn't map APB");
+	if (bus_space_map(&armv7_generic_bs_tag,
 	    TEGRA_AHB_A2_BASE, TEGRA_AHB_A2_SIZE, 0,
-	    &tegra_ahb_a2_bsh);
+	    &tegra_ahb_a2_bsh) != 0)
+		panic("couldn't map AHB A2");
 
-	curcpu()->ci_data.cpu_cc_freq = 696000000; /* XXX */
+	curcpu()->ci_data.cpu_cc_freq = tegra_car_pllx_rate();
 
-#if defined(MULTIPROCESSOR)
 	tegra_mpinit();
-#endif
 }
 
-#if defined(MULTIPROCESSOR)
+void
+tegra_dma_bootstrap(psize_t psize)
+{
+	tegra_coherent_dma_ranges[0].dr_len = psize;
+}
+
+void
+tegra_cpuinit(void)
+{
+	switch (tegra_chip_id()) {
+#ifdef SOC_TEGRA124
+	case CHIP_ID_TEGRA124:
+		tegra124_cpuinit();
+		break;
+#endif
+	}
+
+	tegra_cpufreq_init();
+}
+
 static void
 tegra_mpinit(void)
 {
+#if defined(MULTIPROCESSOR)
 	switch (tegra_chip_id()) {
 #ifdef SOC_TEGRA124
 	case CHIP_ID_TEGRA124:
@@ -95,8 +135,8 @@ tegra_mpinit(void)
 	default:
 		panic("Unsupported SOC ID %#x", tegra_chip_id());
 	}
-}
 #endif
+}
 
 u_int
 tegra_chip_id(void)

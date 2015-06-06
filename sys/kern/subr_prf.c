@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.156.2.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.156.2.2 2015/06/06 14:40:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.156.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.156.2.2 2015/06/06 14:40:22 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.156.2.1 2015/04/06 15:18:20 skrll Exp
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <sys/sha2.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/cons.h>
 
@@ -696,7 +696,7 @@ static void
 kprintf_internal(const char *fmt, int oflags, void *vp, char *sbuf, ...)
 {
 	va_list ap;
-	
+
 	va_start(ap, sbuf);
 	(void)kprintf(fmt, oflags, vp, sbuf, ap);
 	va_end(ap);

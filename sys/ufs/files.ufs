@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.38.2.1 2015/04/06 15:18:32 skrll Exp $
+#	$NetBSD: files.ufs,v 1.38.2.2 2015/06/06 14:40:30 skrll Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -77,7 +77,6 @@ file	ufs/lfs/lfs_vnops.c		lfs
 file	ufs/lfs/ulfs_bmap.c		lfs
 file	ufs/lfs/ulfs_dirhash.c		lfs & lfs_dirhash
 file	ufs/lfs/ulfs_extattr.c		lfs & lfs_extattr
-file	ufs/lfs/ulfs_ihash.c		lfs
 file	ufs/lfs/ulfs_inode.c		lfs
 file	ufs/lfs/ulfs_lookup.c		lfs
 file	ufs/lfs/ulfs_quota.c		lfs & (lfs_quota | lfs_quota2)

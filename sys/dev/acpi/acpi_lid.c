@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.43 2011/02/16 08:35:51 jruoho Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.43.32.1 2015/06/06 14:40:06 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.43 2011/02/16 08:35:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.43.32.1 2015/06/06 14:40:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -173,7 +173,7 @@ acpilid_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, acpilid, NULL);
+MODULE(MODULE_CLASS_DRIVER, acpilid, "sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"

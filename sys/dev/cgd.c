@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.91.2.1 2015/04/06 15:18:08 skrll Exp $ */
+/* $NetBSD: cgd.c,v 1.91.2.2 2015/06/06 14:40:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.91.2.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.91.2.2 2015/06/06 14:40:06 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,7 +104,7 @@ static int cgd_destroy(device_t);
 
 /* Internal Functions */
 
-static void	cgdstart(struct dk_softc *);
+static void	cgd_start(device_t);
 static void	cgdiodone(struct buf *);
 
 static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
@@ -115,21 +115,15 @@ static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
 static void	cgd_cipher(struct cgd_softc *, void *, void *,
 			   size_t, daddr_t, size_t, int);
 
-/* Pseudo-disk Interface */
-
-static struct dk_intf the_dkintf = {
-	DKTYPE_CGD,
-	"cgd",
-	cgdopen,
-	cgdclose,
-	cgdstrategy,
-	cgdstart,
-};
-static struct dk_intf *di = &the_dkintf;
-
 static struct dkdriver cgddkdriver = {
-	.d_strategy = cgdstrategy,
-	.d_minphys = minphys,
+        .d_minphys  = minphys,
+        .d_open = cgdopen,
+        .d_close = cgdclose,
+        .d_strategy = cgdstrategy,
+        .d_iosize = NULL,
+        .d_diskstart = cgd_start,
+        .d_dumpblocks = NULL,
+        .d_lastclose = NULL
 };
 
 CFATTACH_DECL3_NEW(cgd, sizeof(struct cgd_softc),
@@ -205,11 +199,10 @@ cgd_attach(device_t parent, device_t self, void *aux)
 	struct cgd_softc *sc = device_private(self);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_BIO);
-	dk_sc_init(&sc->sc_dksc, device_xname(self));
-	sc->sc_dksc.sc_dev = self;
+	dk_init(&sc->sc_dksc, self, DKTYPE_CGD);
 	disk_init(&sc->sc_dksc.sc_dkdev, sc->sc_dksc.sc_xname, &cgddkdriver);
 
-	 if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "unable to register power management hooks\n");
 }
 
@@ -225,7 +218,7 @@ cgd_detach(device_t self, int flags)
 	if (DK_BUSY(dksc, pmask))
 		return EBUSY;
 
-	if ((dksc->sc_flags & DKF_INITED) != 0 &&
+	if (DK_ATTACHED(dksc) &&
 	    (ret = cgd_ioctl_clr(sc, curlwp)) != 0)
 		return ret;
 
@@ -281,7 +274,7 @@ cgdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	DPRINTF_FOLLOW(("cgdopen(0x%"PRIx64", %d)\n", dev, flags));
 	GETCGD_SOFTC(cs, dev);
-	return dk_open(di, &cs->sc_dksc, dev, flags, fmt, l);
+	return dk_open(&cs->sc_dksc, dev, flags, fmt, l);
 }
 
 static int
@@ -294,10 +287,10 @@ cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	DPRINTF_FOLLOW(("cgdclose(0x%"PRIx64", %d)\n", dev, flags));
 	GETCGD_SOFTC(cs, dev);
 	dksc = &cs->sc_dksc;
-	if ((error =  dk_close(di, dksc, dev, flags, fmt, l)) != 0)
+	if ((error =  dk_close(dksc, dev, flags, fmt, l)) != 0)
 		return error;
 
-	if ((dksc->sc_flags & DKF_INITED) == 0) {
+	if (!DK_ATTACHED(dksc)) {
 		if ((error = cgd_destroy(cs->sc_dksc.sc_dev)) != 0) {
 			aprint_error_dev(dksc->sc_dev,
 			    "unable to detach instance\n");
@@ -330,7 +323,7 @@ cgdstrategy(struct buf *bp)
 	}
 
 	/* XXXrcd: Should we test for (cs != NULL)? */
-	dk_strategy(di, &cs->sc_dksc, bp);
+	dk_strategy(&cs->sc_dksc, bp);
 	return;
 }
 
@@ -342,7 +335,7 @@ cgdsize(dev_t dev)
 	DPRINTF_FOLLOW(("cgdsize(0x%"PRIx64")\n", dev));
 	if (!cs)
 		return -1;
-	return dk_size(di, &cs->sc_dksc, dev);
+	return dk_size(&cs->sc_dksc, dev);
 }
 
 /*
@@ -387,9 +380,10 @@ cgd_putdata(struct dk_softc *dksc, void *data)
 }
 
 static void
-cgdstart(struct dk_softc *dksc)
+cgd_start(device_t dev)
 {
-	struct	cgd_softc *cs = (struct cgd_softc *)dksc;
+	struct	cgd_softc *cs = device_private(dev);
+	struct	dk_softc *dksc = &cs->sc_dksc;
 	struct	buf *bp, *nbp;
 #ifdef DIAGNOSTIC
 	struct	buf *qbp;
@@ -401,7 +395,7 @@ cgdstart(struct dk_softc *dksc)
 
 	while ((bp = bufq_peek(dksc->sc_bufq)) != NULL) {
 
-		DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
+		DPRINTF_FOLLOW(("cgd_start(%p, %p)\n", dksc, bp));
 		disk_busy(&dksc->sc_dkdev);
 
 		bn = bp->b_rawblkno;
@@ -506,7 +500,7 @@ cgdiodone(struct buf *nbp)
 	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid,
 	    (obp->b_flags & B_READ));
 	biodone(obp);
-	cgdstart(dksc);
+	cgd_start(dksc->sc_dev);
 	splx(s);
 }
 
@@ -521,7 +515,7 @@ cgdread(dev_t dev, struct uio *uio, int flags)
 	    (unsigned long long)dev, uio, flags));
 	GETCGD_SOFTC(cs, dev);
 	dksc = &cs->sc_dksc;
-	if ((dksc->sc_flags & DKF_INITED) == 0)
+	if (!DK_ATTACHED(dksc))
 		return ENXIO;
 	return physio(cgdstrategy, NULL, dev, B_READ, minphys, uio);
 }
@@ -536,7 +530,7 @@ cgdwrite(dev_t dev, struct uio *uio, int flags)
 	DPRINTF_FOLLOW(("cgdwrite(0x%"PRIx64", %p, %d)\n", dev, uio, flags));
 	GETCGD_SOFTC(cs, dev);
 	dksc = &cs->sc_dksc;
-	if ((dksc->sc_flags & DKF_INITED) == 0)
+	if (!DK_ATTACHED(dksc))
 		return ENXIO;
 	return physio(cgdstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
@@ -568,7 +562,7 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case CGDIOCSET:
-		if (dksc->sc_flags & DKF_INITED)
+		if (DK_ATTACHED(dksc))
 			return EBUSY;
 		return cgd_ioctl_set(cs, data, l);
 	case CGDIOCCLR:
@@ -588,7 +582,7 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		return VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
 	default:
-		return dk_ioctl(di, dksc, dev, cmd, data, flag, l);
+		return dk_ioctl(dksc, dev, cmd, data, flag, l);
 	case CGDIOCGET:
 		KASSERT(0);
 		return EINVAL;
@@ -603,7 +597,7 @@ cgddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	DPRINTF_FOLLOW(("cgddump(0x%"PRIx64", %" PRId64 ", %p, %lu)\n",
 	    dev, blkno, va, (unsigned long)size));
 	GETCGD_SOFTC(cs, dev);
-	return dk_dump(di, &cs->sc_dksc, dev, blkno, va, size);
+	return dk_dump(&cs->sc_dksc, dev, blkno, va, size);
 }
 
 /*
@@ -705,7 +699,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	 * and encblkno8.
 	 */
 	cs->sc_cdata.cf_blocksize /= encblkno[i].d;
-	(void)memset(inbuf, 0, MAX_KEYSIZE);
+	(void)explicit_memset(inbuf, 0, MAX_KEYSIZE);
 	if (!cs->sc_cdata.cf_priv) {
 		ret = EINVAL;		/* XXX is this the right error? */
 		goto bail;
@@ -717,15 +711,14 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	cs->sc_data = malloc(MAXPHYS, M_DEVBUF, M_WAITOK);
 	cs->sc_data_used = 0;
 
-	dksc->sc_flags |= DKF_INITED;
+	/* Attach the disk. */
+	dk_attach(dksc);
+	disk_attach(&dksc->sc_dkdev);
 
 	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, NULL);
 
-	/* Attach the disk. */
-	disk_attach(&dksc->sc_dkdev);
-
 	/* Try and read the disklabel. */
-	dk_getdisklabel(di, dksc, 0 /* XXX ? (cause of PR 41704) */);
+	dk_getdisklabel(dksc, 0 /* XXX ? (cause of PR 41704) */);
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&dksc->sc_dkdev);
@@ -745,7 +738,7 @@ cgd_ioctl_clr(struct cgd_softc *cs, struct lwp *l)
 	int	s;
 	struct	dk_softc *dksc = &cs->sc_dksc;
 
-	if ((dksc->sc_flags & DKF_INITED) == 0)
+	if (!DK_ATTACHED(dksc))
 		return ENXIO;
 
 	/* Delete all of our wedges. */
@@ -762,7 +755,7 @@ cgd_ioctl_clr(struct cgd_softc *cs, struct lwp *l)
 	free(cs->sc_tpath, M_DEVBUF);
 	free(cs->sc_data, M_DEVBUF);
 	cs->sc_data_used = 0;
-	dksc->sc_flags &= ~DKF_INITED;
+	dk_detach(dksc);
 	disk_detach(&dksc->sc_dkdev);
 
 	return 0;
@@ -789,7 +782,7 @@ cgd_ioctl_get(dev_t dev, void *data, struct lwp *l)
 		return EINVAL;	/* XXX: should this be ENXIO? */
 
 	cs = device_lookup_private(&cgd_cd, unit);
-	if (cs == NULL || (dksc->sc_flags & DKF_INITED) == 0) {
+	if (cs == NULL || !DK_ATTACHED(dksc)) {
 		cgu->cgu_dev = 0;
 		cgu->cgu_alg[0] = '\0';
 		cgu->cgu_blocksize = 0;

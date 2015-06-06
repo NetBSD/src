@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.22.2.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.22.2.2 2015/06/06 14:39:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.22.2.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.22.2.2 2015/06/06 14:39:55 skrll Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -38,10 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.22.2.1 2015/04/06 15:17:52 skrll 
 #include "opt_bcm283x.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-
 #include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835var.h>
@@ -262,7 +262,6 @@ obio_attach(device_t parent, device_t self, void *aux)
 				.mpcaa_irq = ad->ad_intr,
 			};
 
-
 			config_found(self, &mpcaa, NULL);
 			continue;
 		}
@@ -314,5 +313,9 @@ obio_print(void *aux, const char *name)
 void
 bcm2836_cpu_hatch(struct cpu_info *ci)
 {
+
+	bcm2836mp_intr_init(ci);
+
+	gtmr_init_cpu_clock(ci);
 }
 #endif

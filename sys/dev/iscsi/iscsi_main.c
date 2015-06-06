@@ -32,6 +32,8 @@
 
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kmem.h>
 #include <sys/socketvar.h>
 
@@ -42,10 +44,6 @@ extern struct cfdriver iscsi_cd;
 
 #if defined(ISCSI_DEBUG)
 int iscsi_debug_level = ISCSI_DEBUG;
-#endif
-
-#if defined(ISCSI_PERFTEST)
-int iscsi_perf_level = 0;
 #endif
 
 /* Device Structure */
@@ -87,14 +85,19 @@ CFATTACH_DECL_NEW(iscsi, sizeof(struct iscsi_softc), iscsi_match, iscsi_attach,
 
 
 static dev_type_open(iscsiopen);
-static dev_type_close(iscsiclose);
+static int iscsiclose(struct file *);
+
+static const struct fileops iscsi_fileops = {
+	.fo_ioctl = iscsiioctl,
+	.fo_close = iscsiclose,
+};
 
 struct cdevsw iscsi_cdevsw = {
 	.d_open = iscsiopen,
-	.d_close = iscsiclose,
+	.d_close = noclose,
 	.d_read = noread,
 	.d_write = nowrite,
-	.d_ioctl = iscsiioctl,
+	.d_ioctl = noioctl,
 	.d_stop = nostop,
 	.d_tty = notty,
 	.d_poll = nopoll,
@@ -121,16 +124,29 @@ STATIC void iscsi_minphys(struct buf *);
 *******************************************************************************/
 
 int
-iscsiopen(dev_t dev, int flag, int mode, PTHREADOBJ p)
+iscsiopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	struct iscsifd *d;
+	struct file *fp;
+	int error, fd;
 
 	DEB(99, ("ISCSI Open\n"));
-	return 0;
+
+	if ((error = fd_allocfile(&fp, &fd)) != 0)
+		return error;
+
+	d = kmem_alloc(sizeof(*d), KM_SLEEP);
+
+	return fd_clone(fp, fd, flag, &iscsi_fileops, d);
 }
 
-int
-iscsiclose(dev_t dev, int flag, int mode, PTHREADOBJ p)
+static int
+iscsiclose(struct file *fp)
 {
+	struct iscsifd *d = fp->f_iscsi;
+
+	kmem_free(d, sizeof(*d));
+	fp->f_iscsi = NULL;
 
 	DEB(99, ("ISCSI Close\n"));
 	return 0;
@@ -228,28 +244,19 @@ iscsi_detach(device_t self, int flags)
 
 typedef struct quirktab_t {
 	const char	*tgt;
-	size_t		 tgtlen;
 	const char	*iqn;
-	size_t		 iqnlen;
 	uint32_t	 quirks;
 } quirktab_t;
 
 static const quirktab_t	quirktab[] = {
-	{ "StarWind",	8,
-		"iqn.2008-08.com.starwindsoftware",	32,
-		PQUIRK_ONLYBIG	},
-	{ "UNH",	3,
-		"iqn.2002-10.edu.unh.",	20,
-		PQUIRK_NOBIGMODESENSE |
-		PQUIRK_NOMODESENSE |
-		PQUIRK_NOSYNCCACHE },
-	{ "NetBSD",	6,
-		"iqn.1994-04.org.netbsd.",	23,
-		0	},
-	{ "Unknown",	7,
-		"unknown",	7,
-		0	},
-	{ NULL,		0,	NULL,	0,	0	}
+	{ "StarWind", "iqn.2008-08.com.starwindsoftware", PQUIRK_ONLYBIG },
+	{ "UNH", "iqn.2002-10.edu.unh.",
+	    PQUIRK_NOBIGMODESENSE |
+	    PQUIRK_NOMODESENSE |
+	    PQUIRK_NOSYNCCACHE },
+	{ "NetBSD", "iqn.1994-04.org.netbsd.", 0 },
+	{ "Unknown", "unknown", 0 },
+	{ NULL, NULL, 0 }
 };
 
 /* loop through the quirktab looking for a match on target name */
@@ -257,14 +264,17 @@ static const quirktab_t *
 getquirks(const char *iqn)
 {
 	const quirktab_t	*qp;
+	size_t iqnlen, quirklen;
 
-	if (iqn == NULL) {
+	if (iqn == NULL)
 		iqn = "unknown";
-	}
+	iqnlen = strlen(iqn);
 	for (qp = quirktab ; qp->iqn ; qp++) {
-		if (strncmp(qp->iqn, iqn, qp->iqnlen) == 0) {
+		quirklen = strlen(qp->iqn);
+		if (quirklen > iqnlen)
+			continue;
+		if (memcmp(qp->iqn, iqn, quirklen) == 0)
 			break;
-		}
 	}
 	return qp;
 }

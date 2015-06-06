@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.159.4.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: vm.c,v 1.159.4.2 2015/06/06 14:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.1 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.2 2015/06/06 14:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -80,13 +80,15 @@ const int * const uvmexp_pagemask = &uvmexp.pagemask;
 const int * const uvmexp_pageshift = &uvmexp.pageshift;
 #endif
 
-struct vm_map rump_vmmap;
-
 static struct vm_map kernel_map_store;
 struct vm_map *kernel_map = &kernel_map_store;
 
 static struct vm_map module_map_store;
 extern struct vm_map *module_map;
+
+static struct pmap pmap_kernel;
+struct pmap rump_pmap_local;
+struct pmap *const kernel_pmap_ptr = &pmap_kernel;
 
 vmem_t *kmem_arena;
 vmem_t *kmem_va_arena;
@@ -117,7 +119,7 @@ static unsigned long dddlim;		/* 90% of memory limit used */
  * Keep a list of least recently used pages.  Since the only way a
  * rump kernel can "access" a page is via lookup, we put the page
  * at the back of queue every time a lookup for it is done.  If the
- * page is in front of this global queue and we're short of memory, 
+ * page is in front of this global queue and we're short of memory,
  * it's a candidate for pageout.
  */
 static struct pglist vmpage_lruqueue;
@@ -152,7 +154,7 @@ const rb_tree_ops_t uvm_page_tree_ops = {
 };
 
 /*
- * vm pages 
+ * vm pages
  */
 
 static int
@@ -395,7 +397,7 @@ uvm_init(void)
 
 	/* create vmspace used by local clients */
 	rump_vmspace_local = kmem_zalloc(sizeof(*rump_vmspace_local), KM_SLEEP);
-	uvmspace_init(rump_vmspace_local, RUMP_PMAP_LOCAL, 0, 0, false);
+	uvmspace_init(rump_vmspace_local, &rump_pmap_local, 0, 0, false);
 }
 
 void
@@ -455,7 +457,7 @@ uvm_mmap_anon(struct proc *p, void **addrp, size_t size)
 	if (RUMP_LOCALPROC_P(curproc)) {
 		error = rumpuser_anonmmap(NULL, size, 0, 0, addrp);
 	} else {
-		error = rump_sysproxy_anonmmap(p->p_vmspace->vm_map.pmap,
+		error = rump_sysproxy_anonmmap(RUMP_SPVM2CTL(p->p_vmspace),
 		    size, addrp);
 	}
 	return error;
@@ -731,7 +733,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	 * anywhere except the lowest or highest 2GB, it will not
 	 * work.  Since userspace does not have access to the highest
 	 * 2GB, use the lowest 2GB.
-	 * 
+	 *
 	 * Note: this assumes the rump kernel resides in
 	 * the lowest 2GB as well.
 	 *
@@ -1174,7 +1176,7 @@ uvm_pageout(void *arg)
 		    uvmexp.paging == 0) {
 			rumpuser_dprintf("pagedaemoness: failed to reclaim "
 			    "memory ... sleeping (deadlock?)\n");
-			cv_timedwait(&pdaemoncv, &pdaemonmtx, hz);
+			kpause("pddlk", false, hz, &pdaemonmtx);
 		}
 	}
 

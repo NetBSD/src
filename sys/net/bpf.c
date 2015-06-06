@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.189.2.1 2015/04/06 15:18:22 skrll Exp $	*/
+/*	$NetBSD: bpf.c,v 1.189.2.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.189.2.1 2015/04/06 15:18:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.189.2.2 2015/06/06 14:40:25 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -437,7 +437,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct file *fp;
 	int error, fd;
 
-	/* falloc() will use the descriptor for us. */
+	/* falloc() will fill in the descriptor for us. */
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 
@@ -709,7 +709,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 		/* Set M_PROMISC for outgoing packets to be discarded. */
 		if (1 /*d->bd_direction == BPF_D_INOUT*/)
 			m->m_flags |= M_PROMISC;
-	} else  
+	} else
 		mc = NULL;
 
 	s = splsoftnet();
@@ -2114,10 +2114,10 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 		/*
 		 * While there is no reference counting for bpf callers,
-		 * unload could at least in theory be done similarly to 
+		 * unload could at least in theory be done similarly to
 		 * system call disestablishment.  This should even be
 		 * a little simpler:
-		 * 
+		 *
 		 * 1) replace op vector with stubs
 		 * 2) post update to all cpus with xc
 		 * 3) check that nobody is in bpf anymore

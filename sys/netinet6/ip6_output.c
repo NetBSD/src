@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.160.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.160.2.2 2015/06/06 14:40:26 skrll Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.160.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.160.2.2 2015/06/06 14:40:26 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -167,7 +167,7 @@ ip6_output(
 	bool tso;
 	struct route ip6route;
 	struct rtentry *rt = NULL;
-	const struct sockaddr_in6 *dst = NULL;
+	const struct sockaddr_in6 *dst;
 	struct sockaddr_in6 src_sa, dst_sa;
 	int error = 0;
 	struct in6_ifaddr *ia = NULL;
@@ -243,7 +243,7 @@ ip6_output(
 #ifdef IPSEC
 	if (ipsec_used) {
 		/* Check the security policy (SP) for the packet */
-	    
+
 		sp = ipsec6_check_policy(m, so, flags, &needipsec, &error);
 		if (error != 0) {
 			/*
@@ -252,7 +252,7 @@ ip6_output(
 			 * because we asked key management for an SA and
 			 * it was delayed (e.g. kicked up to IKE).
 			 */
-			if (error == -EINVAL) 
+			if (error == -EINVAL)
 				error = 0;
 			goto freehdrs;
 		}
@@ -480,7 +480,7 @@ ip6_output(
 		splx(s);
 		goto done;
 	}
-#endif /* IPSEC */    
+#endif /* IPSEC */
 
 	/* adjust pointer */
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -543,8 +543,7 @@ ip6_output(
 	/* scope check is done. */
 
 	if (rt == NULL || IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-		if (dst == NULL)
-			dst = satocsin6(rtcache_getdst(ro));
+		dst = satocsin6(rtcache_getdst(ro));
 		KASSERT(dst != NULL);
 	} else if (opt && rtcache_validate(&opt->ip6po_nextroute) != NULL) {
 		/*
@@ -555,7 +554,7 @@ ip6_output(
 		dst = (struct sockaddr_in6 *)opt->ip6po_nexthop;
 	} else if ((rt->rt_flags & RTF_GATEWAY))
 		dst = (struct sockaddr_in6 *)rt->rt_gateway;
-	else if (dst == NULL)
+	else
 		dst = satocsin6(rtcache_getdst(ro));
 
 	/*
@@ -1146,13 +1145,13 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 
 /*
  * Insert fragment header and copy unfragmentable header portions.
- * 
+ *
  * *frghdrp will not be read, and it is guaranteed that either an
  * error is returned or that *frghdrp will point to space allocated
  * for the fragment header.
  */
 static int
-ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen, 
+ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 	struct ip6_frag **frghdrp)
 {
 	struct mbuf *n, *mlast;
@@ -2334,7 +2333,9 @@ ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp, void *v,
 			sockaddr_in_init(&u.dst4, ia4, 0);
 		else
 			sockaddr_in6_init(&u.dst6, ia, 0, 0, 0);
-		rtcache_setdst(&ro, &u.dst);
+		error = rtcache_setdst(&ro, &u.dst);
+		if (error != 0)
+			return error;
 		*ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp : NULL;
 		rtcache_free(&ro);
 	} else {
@@ -2529,7 +2530,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 			 * we check it explicitly for safety.
 			 */
 			error = EADDRNOTAVAIL;
-			break;	    
+			break;
 		} else {	/* ipv6mr_interface == 0 */
 			struct sockaddr_in6 sa6_mc;
 
@@ -2660,7 +2661,7 @@ ip6_freemoptions(struct ip6_moptions *im6o)
  * Set IPv6 outgoing packet options based on advanced API.
  */
 int
-ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt, 
+ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
 	struct ip6_pktopts *stickyopt, kauth_cred_t cred, int uproto)
 {
 	struct cmsghdr *cm = 0;
@@ -3135,7 +3136,7 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
  * pointer that might NOT be lo0ifp -- easier than replicating that code here.
  */
 void
-ip6_mloopback(struct ifnet *ifp, struct mbuf *m, 
+ip6_mloopback(struct ifnet *ifp, struct mbuf *m,
 	const struct sockaddr_in6 *dst)
 {
 	struct mbuf *copym;

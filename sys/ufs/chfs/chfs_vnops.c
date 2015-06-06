@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.22.4.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.22.4.2 2015/06/06 14:40:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1075,9 +1075,9 @@ out:
 int
 chfs_link(void *v)
 {
-	struct vnode *dvp = ((struct vop_link_args *) v)->a_dvp;
-	struct vnode *vp = ((struct vop_link_args *) v)->a_vp;
-	struct componentname *cnp = ((struct vop_link_args *) v)->a_cnp;
+	struct vnode *dvp = ((struct vop_link_v2_args *) v)->a_dvp;
+	struct vnode *vp = ((struct vop_link_v2_args *) v)->a_vp;
+	struct componentname *cnp = ((struct vop_link_v2_args *) v)->a_cnp;
 
 	struct chfs_inode *ip, *parent;
 	int error = 0;
@@ -1106,7 +1106,6 @@ chfs_link(void *v)
 	if (dvp != vp)
 		VOP_UNLOCK(vp);
 out:
-	vput(dvp);
 	return error;
 }
 

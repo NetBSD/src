@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.66.4.1 2015/04/06 15:18:04 skrll Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.66.4.2 2015/06/06 14:40:05 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.1 2015/04/06 15:18:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.2 2015/06/06 14:40:05 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.1 2015/04/06 15:18:04 skrll Ex
 
 #include <uvm/uvm.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.1 2015/04/06 15:18:04 skrll Ex
 #define XBD_MAX_XFER (PAGE_SIZE * BLKIF_MAX_SEGMENTS_PER_REQUEST)
 
 #define XEN_BSHIFT      9               /* log2(XEN_BSIZE) */
-#define XEN_BSIZE       (1 << XEN_BSHIFT) 
+#define XEN_BSIZE       (1 << XEN_BSHIFT)
 
 struct xbd_req {
 	SLIST_ENTRY(xbd_req) req_next;
@@ -168,7 +168,7 @@ static bool xbd_xenbus_suspend(device_t, const pmf_qual_t *);
 static bool xbd_xenbus_resume(device_t, const pmf_qual_t *);
 
 static int  xbd_handler(void *);
-static void xbdstart(struct dk_softc *);
+static void xbdstart(device_t);
 static void xbd_backend_changed(void *, XenbusState);
 static void xbd_connect(struct xbd_xenbus_softc *);
 
@@ -218,19 +218,12 @@ const struct cdevsw xbd_cdevsw = {
 
 extern struct cfdriver xbd_cd;
 
-/* Pseudo-disk Interface */
-static struct dk_intf dkintf_esdi = {
-        DKTYPE_ESDI,
-	"Xen Virtual ESDI",
-	xbdopen,
-	xbdclose,
-	xbdstrategy,
-	xbdstart,
-}, *di = &dkintf_esdi;
-
 static struct dkdriver xbddkdriver = {
         .d_strategy = xbdstrategy,
 	.d_minphys = xbdminphys,
+	.d_open = xbdopen,
+	.d_close = xbdclose,
+	.d_diskstart = xbdstart,
 };
 
 static int
@@ -265,8 +258,8 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	config_pending_incr(self);
 	aprint_normal(": Xen Virtual Block Device Interface\n");
 
-	dk_sc_init(&sc->sc_dksc, device_xname(self));
-	sc->sc_dksc.sc_dev = self;
+	dk_init(&sc->sc_dksc, self, DKTYPE_ESDI);
+	disk_init(&sc->sc_dksc.sc_dkdev, device_xname(self), &xbddkdriver);
 
 #ifdef XBD_DEBUG
 	printf("path: %s\n", xa->xa_xbusd->xbusd_path);
@@ -293,7 +286,6 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_xbusd = xa->xa_xbusd;
 	sc->sc_xbusd->xbusd_otherend_changed = xbd_backend_changed;
 
-	disk_init(&sc->sc_dksc.sc_dkdev, device_xname(self), &xbddkdriver);
 	/* initialize free requests list */
 	SLIST_INIT(&sc->sc_xbdreq_head);
 	for (i = 0; i < XBD_RING_SIZE; i++) {
@@ -380,6 +372,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 		/* detach disk */
 		disk_detach(&sc->sc_dksc.sc_dkdev);
 		disk_destroy(&sc->sc_dksc.sc_dkdev);
+		dk_detach(&sc->sc_dksc);
 		/* Unhook the entropy source. */
 		rnd_detach_source(&sc->sc_rnd_source);
 	}
@@ -570,7 +563,7 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		sc->sc_xbdsize =
 		    sc->sc_sectors * (uint64_t)sc->sc_secsize / DEV_BSIZE;
 		dg = &sc->sc_dksc.sc_dkdev.dk_geom;
-		memset(dg, 0, sizeof(*dg));	
+		memset(dg, 0, sizeof(*dg));
 
 		dg->dg_secperunit = sc->sc_xbdsize;
 		dg->dg_secsize = DEV_BSIZE;
@@ -580,13 +573,13 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		dg->dg_ncylinders = dg->dg_secperunit / dg->dg_nsectors;
 
 		bufq_alloc(&sc->sc_dksc.sc_bufq, "fcfs", 0);
-		sc->sc_dksc.sc_flags |= DKF_INITED;
+		dk_attach(&sc->sc_dksc);
 		disk_attach(&sc->sc_dksc.sc_dkdev);
 
 		sc->sc_backend_status = BLKIF_STATE_CONNECTED;
 
 		/* try to read the disklabel */
-		dk_getdisklabel(di, &sc->sc_dksc, 0 /* XXX ? */);
+		dk_getdisklabel(&sc->sc_dksc, 0 /* XXX ? */);
 		format_bytes(buf, sizeof(buf), sc->sc_sectors * sc->sc_secsize);
 		aprint_verbose_dev(sc->sc_dksc.sc_dev,
 				"%s, %d bytes/sect x %" PRIu64 " sectors\n",
@@ -614,13 +607,13 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_path, "virtual-device", &sc->sc_handle, 10);
 	if (err)
-		panic("%s: can't read number from %s/virtual-device\n", 
+		panic("%s: can't read number from %s/virtual-device\n",
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
 	err = xenbus_read_ull(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "sectors", &sectors, 10);
 	if (err)
-		panic("%s: can't read number from %s/sectors\n", 
+		panic("%s: can't read number from %s/sectors\n",
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
 	sc->sc_sectors = sectors;
@@ -628,13 +621,13 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "info", &sc->sc_info, 10);
 	if (err)
-		panic("%s: can't read number from %s/info\n", 
+		panic("%s: can't read number from %s/info\n",
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "sector-size", &sc->sc_secsize, 10);
 	if (err)
-		panic("%s: can't read number from %s/sector-size\n", 
+		panic("%s: can't read number from %s/sector-size\n",
 		    device_xname(sc->sc_dksc.sc_dev),
 		    sc->sc_xbusd->xbusd_otherend);
 
@@ -727,7 +720,7 @@ done:
 	if (sc->sc_xbdreq_wait)
 		wakeup(&sc->sc_xbdreq_wait);
 	else
-		xbdstart(&sc->sc_dksc);
+		xbdstart(sc->sc_dksc.sc_dev);
 	return 1;
 }
 
@@ -752,7 +745,7 @@ xbdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 		return EROFS;
 
 	DPRINTF(("xbdopen(0x%04x, %d)\n", dev, flags));
-	return dk_open(di, &sc->sc_dksc, dev, flags, fmt, l);
+	return dk_open(&sc->sc_dksc, dev, flags, fmt, l);
 }
 
 int
@@ -763,7 +756,7 @@ xbdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	sc = device_lookup_private(&xbd_cd, DISKUNIT(dev));
 
 	DPRINTF(("xbdclose(%d, %d)\n", dev, flags));
-	return dk_close(di, &sc->sc_dksc, dev, flags, fmt, l);
+	return dk_close(&sc->sc_dksc, dev, flags, fmt, l);
 }
 
 void
@@ -788,7 +781,7 @@ xbdstrategy(struct buf *bp)
 		return;
 	}
 
-	dk_strategy(di, &sc->sc_dksc, bp);
+	dk_strategy(&sc->sc_dksc, bp);
 	return;
 }
 
@@ -802,17 +795,17 @@ xbdsize(dev_t dev)
 	sc = device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	if (sc == NULL || sc->sc_shutdown != BLKIF_SHUTDOWN_RUN)
 		return -1;
-	return dk_size(di, &sc->sc_dksc, dev);
+	return dk_size(&sc->sc_dksc, dev);
 }
 
 int
 xbdread(dev_t dev, struct uio *uio, int flags)
 {
-	struct xbd_xenbus_softc *sc = 
+	struct xbd_xenbus_softc *sc =
 	    device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	struct  dk_softc *dksc = &sc->sc_dksc;
 
-	if ((dksc->sc_flags & DKF_INITED) == 0)
+	if (!DK_ATTACHED(dksc))
 		return ENXIO;
 	return physio(xbdstrategy, NULL, dev, B_READ, xbdminphys, uio);
 }
@@ -824,7 +817,7 @@ xbdwrite(dev_t dev, struct uio *uio, int flags)
 	    device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	struct  dk_softc *dksc = &sc->sc_dksc;
 
-	if ((dksc->sc_flags & DKF_INITED) == 0)
+	if (!DK_ATTACHED(dksc))
 		return ENXIO;
 	if (__predict_false(sc->sc_info & VDISK_READONLY))
 		return EROFS;
@@ -904,7 +897,7 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 	default:
-		error = dk_ioctl(di, dksc, dev, cmd, data, flag, l);
+		error = dk_ioctl(dksc, dev, cmd, data, flag, l);
 		break;
 	}
 
@@ -922,16 +915,17 @@ xbddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 
 	DPRINTF(("xbddump(%d, %" PRId64 ", %p, %lu)\n", dev, blkno, va,
 	    (unsigned long)size));
-	return dk_dump(di, &sc->sc_dksc, dev, blkno, va, size);
+	return dk_dump(&sc->sc_dksc, dev, blkno, va, size);
 }
 
 static void
-xbdstart(struct dk_softc *dksc)
+xbdstart(device_t self)
 {
-	struct xbd_xenbus_softc *sc = (struct xbd_xenbus_softc *)dksc;
+	struct xbd_xenbus_softc *sc = device_private(self);
+	struct dk_softc *dksc = &sc->sc_dksc;
 	struct buf *bp;
 #ifdef DIAGNOSTIC
-	struct  buf *qbp; 
+	struct  buf *qbp;
 #endif
 	struct xbd_req *xbdreq;
 	blkif_request_t *req;
@@ -960,7 +954,7 @@ xbdstart(struct dk_softc *dksc)
 		if (bp->b_rawblkno == sc->sc_xbdsize) {
 			/* at end of disk; return short read */
 			bp->b_resid = bp->b_bcount;
-#ifdef DIAGNOSTIC 
+#ifdef DIAGNOSTIC
 			qbp = bufq_get(dksc->sc_bufq);
 			KASSERT(bp == qbp);
 #else
@@ -998,7 +992,7 @@ xbdstart(struct dk_softc *dksc)
 			}
 		}
 		/* now we're sure we'll send this buf */
-#ifdef DIAGNOSTIC 
+#ifdef DIAGNOSTIC
 		qbp = bufq_get(dksc->sc_bufq);
 		KASSERT(bp == qbp);
 #else
@@ -1065,7 +1059,7 @@ out:
 	return;
 
 err:
-#ifdef DIAGNOSTIC 
+#ifdef DIAGNOSTIC
 	qbp = bufq_get(dksc->sc_bufq);
 	KASSERT(bp == qbp);
 #else

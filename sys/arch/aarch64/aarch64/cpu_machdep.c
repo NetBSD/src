@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.1.6.1 2015/06/06 14:39:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.1.6.1 2015/06/06 14:39:53 skrll Exp $");
 
 #include "opt_pic.h"
 
@@ -112,7 +112,7 @@ dosoftints(void)
 		KASSERT((softints != 0) == ((ci->ci_softints >> opl) != 0));
 		KASSERT(opl == IPL_NONE || (softints & (1 << (opl - IPL_SOFTCLOCK))) == 0);
 		if (softints == 0) {
-#ifdef __HAVE_PREEEMPTION
+#ifdef __HAVE_PREEMPTION
 			if (ci->ci_want_resched & RESCHED_KPREEMPT) {
 				ci->ci_want_resched &= ~RESCHED_KPREEMPT;
 				splsched();
@@ -332,7 +332,7 @@ cpu_kpreempt_enter(uintptr_t where, int s)
 		KASSERT(curcpu()->ci_mtx_count == 0);
 		return true;
 	}
-	atomic_or_uint(curcpu()->ci_want_resched, RESCHED_KPREEEMPT);
+	atomic_or_uint(curcpu()->ci_want_resched, RESCHED_KPREEMPT);
 #endif
 	return false;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.111.4.1 2015/04/06 15:18:04 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.111.4.2 2015/06/06 14:40:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111.4.1 2015/04/06 15:18:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111.4.2 2015/06/06 14:40:04 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -138,7 +138,7 @@ struct cpu_softc {
 };
 
 #ifdef MULTIPROCESSOR
-int mp_cpu_start(struct cpu_info *, paddr_t); 
+int mp_cpu_start(struct cpu_info *, paddr_t);
 void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };
@@ -799,7 +799,7 @@ cpu_hatch(void *v)
 	cpu_probe(ci);
 
 	ci->ci_data.cpu_cc_freq = cpu_info_primary.ci_data.cpu_cc_freq;
-	/* cpu_get_tsc_freq(ci); */ 
+	/* cpu_get_tsc_freq(ci); */
 
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 
@@ -815,7 +815,7 @@ cpu_hatch(void *v)
 	/*
 	 * Wait to be brought online.  Use 'monitor/mwait' if available,
 	 * in order to make the TSC drift as much as possible. so that
-	 * we can detect it later.  If not available, try 'pause'. 
+	 * we can detect it later.  If not available, try 'pause'.
 	 * We'd like to use 'hlt', but we have interrupts off.
 	 */
 	while ((ci->ci_flags & CPUF_GO) == 0) {
@@ -922,7 +922,7 @@ cpu_copy_trampoline(void)
 	 */
 	extern u_char cpu_spinup_trampoline[];
 	extern u_char cpu_spinup_trampoline_end[];
-	
+
 	vaddr_t mp_trampoline_vaddr;
 
 	mp_trampoline_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,

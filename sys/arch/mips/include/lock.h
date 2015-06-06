@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.18 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.18.32.1 2015/06/06 14:40:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -184,8 +184,13 @@ static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *lp)
 {
 
+#ifndef _MIPS_ARCH_OCTEONP
 	mb_memory();
+#endif
 	*lp = __SIMPLELOCK_UNLOCKED;
+#ifdef _MIPS_ARCH_OCTEONP
+	mb_write();
+#endif
 }
 
 #endif /* _MIPS_LOCK_H_ */

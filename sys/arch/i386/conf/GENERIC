@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1118.2.1 2015/04/06 15:17:57 skrll Exp $
+# $NetBSD: GENERIC,v 1.1118.2.2 2015/06/06 14:40:00 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1118.2.1 $"
+#ident 		"GENERIC-$Revision: 1.1118.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -149,7 +149,7 @@ options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
-options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_NDIS	# NDIS network driver
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -451,9 +451,10 @@ amdtemp* at amdnb_misc?			# AMD CPU Temperature sensors
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet*	at amdpcib?
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-LPC w/ timecounter,
-					# watchdog, SpeedStep and HPET
+					# watchdog, gpio, SpeedStep and HPET
 fwhrng* at ichlpcib?		# Intel 82802 FWH Random Number Generator
 #hpet*	at ichlpcib?
+tco*	at ichlpcib?		# TCO watchdog timer
 tcpcib* at pci? dev ? function ?	# Intel Atom E6xx PCI-LPC
 hpet* at tcpcib?
 gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
@@ -570,6 +571,7 @@ sysbeep0	at pcppi?
 #tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
 #viadrm* 	at drm?		# VIA DRM driver
 
+# DRMKMS drivers
 i915drmkms* 	at pci? dev ? function ?
 intelfb* 	at intelfbbus?
 
@@ -578,6 +580,9 @@ radeondrmkmsfb* at radeonfbbus?
 
 #nouveau*	at pci? dev ? function ?
 #nouveaufb*	at nouveaufbbus?
+
+# DRMUMS drivers
+#viadrmums* 	at drm?
 
 # Serial Devices
 

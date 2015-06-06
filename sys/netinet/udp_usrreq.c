@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.217.4.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.217.4.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217.4.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217.4.2 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -620,8 +620,8 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 
 			case 0: 	/* plain UDP */
 			default: 	/* Unexpected */
-				/* 
-				 * Normal UDP processing will take place 
+				/*
+				 * Normal UDP processing will take place
 				 * m may have changed.
 				 */
 				m = *mp;
@@ -754,7 +754,7 @@ udp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 				break;
 			}
 			break;
-		
+
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -895,7 +895,7 @@ udp_detach(struct socket *so)
 }
 
 static int
-udp_accept(struct socket *so, struct mbuf *nam)
+udp_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -932,7 +932,7 @@ udp_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-udp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+udp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
@@ -943,7 +943,7 @@ udp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	error = in_pcbconnect(inp, nam, l);
+	error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 	if (! error)
 		soisconnected(so);
 	splx(s);
@@ -1018,7 +1018,7 @@ udp_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-udp_peeraddr(struct socket *so, struct mbuf *nam)
+udp_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	int s;
 
@@ -1027,14 +1027,14 @@ udp_peeraddr(struct socket *so, struct mbuf *nam)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	in_setpeeraddr(sotoinpcb(so), nam);
+	in_setpeeraddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	splx(s);
 
 	return 0;
 }
 
 static int
-udp_sockaddr(struct socket *so, struct mbuf *nam)
+udp_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	int s;
 
@@ -1043,7 +1043,7 @@ udp_sockaddr(struct socket *so, struct mbuf *nam)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	in_setsockaddr(sotoinpcb(so), nam);
+	in_setsockaddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	splx(s);
 
 	return 0;
@@ -1066,7 +1066,7 @@ udp_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-udp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
@@ -1093,7 +1093,7 @@ udp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			goto die;
 		}
-		error = in_pcbconnect(inp, nam, l);
+		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 		if (error)
 			goto die;
 	} else {
@@ -1140,40 +1140,6 @@ udp_purgeif(struct socket *so, struct ifnet *ifp)
 	in_pcbpurgeif(&udbtable, ifp);
 	mutex_exit(softnet_lock);
 	splx(s);
-
-	return 0;
-}
-
-static int
-udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
-{
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	KASSERT(solocked(so));
-
-	if (sotoinpcb(so) == NULL)
-		return EINVAL;
-
-	panic("udp_usrreq");
 
 	return 0;
 }
@@ -1332,7 +1298,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	}
 
 	/*
-	 * Get the UDP ports. They are handled in network 
+	 * Get the UDP ports. They are handled in network
 	 * order everywhere in IPSEC_NAT_T code.
 	 */
 	udphdr = (struct udphdr *)((char *)data - skip);
@@ -1364,12 +1330,12 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 
 	/*
 	 * We have modified the packet - it is now ESP, so we should not
-	 * return to UDP processing ... 
+	 * return to UDP processing ...
 	 *
 	 * Add a PACKET_TAG_IPSEC_NAT_T_PORT tag to remember
 	 * the source UDP port. This is required if we want
-	 * to select the right SPD for multiple hosts behind 
-	 * same NAT 
+	 * to select the right SPD for multiple hosts behind
+	 * same NAT
 	 */
 	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
 	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
@@ -1415,7 +1381,6 @@ PR_WRAP_USRREQS(udp)
 #define	udp_send	udp_send_wrapper
 #define	udp_sendoob	udp_sendoob_wrapper
 #define	udp_purgeif	udp_purgeif_wrapper
-#define	udp_usrreq	udp_usrreq_wrapper
 
 const struct pr_usrreqs udp_usrreqs = {
 	.pr_attach	= udp_attach,
@@ -1437,5 +1402,4 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pr_send	= udp_send,
 	.pr_sendoob	= udp_sendoob,
 	.pr_purgeif	= udp_purgeif,
-	.pr_generic	= udp_usrreq,
 };

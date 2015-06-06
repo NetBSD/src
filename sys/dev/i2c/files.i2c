@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.58.2.1 2015/04/06 15:18:09 skrll Exp $
+#	$NetBSD: files.i2c,v 1.58.2.2 2015/06/06 14:40:07 skrll Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -245,3 +245,8 @@ file	dev/i2c/ac100.c				ac100ic		needs-flag
 device	act8846pm
 attach	act8846pm at iic
 file	dev/i2c/act8846.c			act8846pm	needs-flag
+
+# Texas Instruments TMP451 Temperature Sensor
+device	titemp: sysmon_envsys
+attach	titemp at iic
+file	dev/i2c/titemp.c			titemp

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142.2.1 2015/04/06 15:18:20 skrll Exp $
+#	$NetBSD: Makefile,v 1.142.2.2 2015/06/06 14:40:23 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,7 @@ SUBDIR+=	crypto
 SUBDIR+=	coda
 SUBDIR+=	coda5
 SUBDIR+=	compat
+SUBDIR+=	compat_sysv
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
 SUBDIR+=	dbcool
@@ -89,10 +90,17 @@ SUBDIR+=	securelevel
 SUBDIR+=	skipjack
 SUBDIR+=	smbfs
 SUBDIR+=	spdmem
+SUBDIR+=	sysmon
+SUBDIR+=	sysmon_envsys
+SUBDIR+=	sysmon_power
+SUBDIR+=	sysmon_taskq
+SUBDIR+=	sysmon_wdog
 SUBDIR+=	sysvbfs
+SUBDIR+=	sysv_ipc
 SUBDIR+=	suser
 SUBDIR+=	swcrypto
 SUBDIR+=	swsensor
+SUBDIR+=	swwdog
 SUBDIR+=	tmpfs
 SUBDIR+=	uatp
 SUBDIR+=	udf
@@ -141,6 +149,7 @@ SUBDIR+=	hdaudioverbose
 SUBDIR+=	hpet
 SUBDIR+=	odcm
 SUBDIR+=	powernow
+SUBDIR+=	tco
 SUBDIR+=	tprof_pmi
 SUBDIR+=	tprof_amdpmi
 SUBDIR+=	vmt
@@ -197,6 +206,10 @@ SUBDIR+=	wmihp
 SUBDIR+=	wmimsi
 .endif
 
+.if ${MACHINE_CPU} == "arm" || !empty(MACHINE_ARCH:Mmips64*)
+SUBDIR+=	compat_netbsd32
+.endif
+
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
@@ -218,6 +231,7 @@ SUBDIR+=	sisdrm
 SUBDIR+=	tdfxdrm
 SUBDIR+=	viac7temp
 SUBDIR+=	viadrm
+SUBDIR+=	viadrmums
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
@@ -311,10 +325,13 @@ SUBDIR+=	auvitek
 SUBDIR+=	coram
 SUBDIR+=	cxdtv
 SUBDIR+=	emdtv
+SUBDIR+=	spkr
 .endif
 
 .if (${MKISCSI} != "no")
 SUBDIR+=	iscsi
 .endif
+
+SUBDIR+=	examples	# build these regularly to avoid bit-rot
 
 .include <bsd.subdir.mk>

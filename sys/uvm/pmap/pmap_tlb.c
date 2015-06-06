@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.10 2014/10/29 10:53:41 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.10.2.1 2015/06/06 14:40:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.10 2014/10/29 10:53:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.10.2.1 2015/06/06 14:40:31 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -196,7 +196,7 @@ pmap_pai_check(struct pmap_tlb_info *ti)
 }
 
 #ifdef MULTIPROCESSOR
-static inline bool
+__unused static inline bool
 pmap_tlb_intersecting_active_p(pmap_t pm, struct pmap_tlb_info *ti)
 {
 #if PMAP_TLB_MAX == 1

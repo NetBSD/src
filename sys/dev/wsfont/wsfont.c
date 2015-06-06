@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.56.2.1 2015/04/06 15:18:14 skrll Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.56.2.2 2015/06/06 14:40:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.56.2.1 2015/04/06 15:18:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.56.2.2 2015/06/06 14:40:14 skrll Exp $");
 
 #include "opt_wsfont.h"
 
@@ -523,7 +523,7 @@ wsfont_rotate(int cookie, int rotate)
 		return (-1);
 	}
 	/* rotation works only with bitmap fonts so far */
-	ncookie = wsfont_find(font->name, font->fontwidth, font->fontheight, 
+	ncookie = wsfont_find(font->name, font->fontwidth, font->fontheight,
 	    font->stride, 0, 0, WSFONT_FIND_BITMAP);
 
 	return (ncookie);
@@ -570,6 +570,7 @@ int
 wsfont_matches(struct wsdisplay_font *font, const char *name,
 	       int width, int height, int stride, int flags)
 {
+	int score = 20000;
 
 	/* first weed out fonts the caller doesn't claim support for */
 	if (FONT_IS_ALPHA(font)) {
@@ -583,8 +584,17 @@ wsfont_matches(struct wsdisplay_font *font, const char *name,
 	if (height != 0 && font->fontheight != height)
 		return (0);
 
-	if (width != 0 && font->fontwidth != width)
-		return (0);
+	if (width != 0) {
+		if ((flags & WSFONT_FIND_BESTWIDTH) == 0) {
+			if (font->fontwidth != width)
+				return (0);
+		} else {
+			if (font->fontwidth > width)
+				score -= 10000 + min(font->fontwidth - width, 9999);
+			else
+				score -= min(width - font->fontwidth, 9999);
+		}
+	}
 
 	if (stride != 0 && font->stride != stride)
 		return (0);
@@ -592,18 +602,26 @@ wsfont_matches(struct wsdisplay_font *font, const char *name,
 	if (name != NULL && strcmp(font->name, name) != 0)
 		return (0);
 
-	return (1);
+	return (score);
 }
 
 int
 wsfont_find(const char *name, int width, int height, int stride, int bito, int byteo, int flags)
 {
-	struct font *ent;
+	struct font *ent, *bestent = NULL;
+	int score, bestscore = 0;
 
 	TAILQ_FOREACH(ent, &list, chain) {
-		if (wsfont_matches(ent->font, name, width, height, stride, flags))
-			return (wsfont_make_cookie(ent->cookie, bito, byteo));
+		score = wsfont_matches(ent->font, name,
+				width, height, stride, flags);
+		if (score > bestscore) {
+			bestscore = score;
+			bestent = ent;
+		}
 	}
+
+	if (bestent != NULL)
+		return (wsfont_make_cookie(bestent->cookie, bito, byteo));
 
 	return (-1);
 }
@@ -917,7 +935,7 @@ static const u_int8_t iso7_chars_3[] = {
 	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 181
 };
 
-/* 
+/*
  * map all variants of the box drawing characters to the same basic shapes for
  * now, encoded like this:
  *
@@ -1026,7 +1044,7 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 	/* so we don't need an identical level 2 table for hi == 0 */
 	if (hi == 0 && font->encoding == WSDISPLAY_FONTENC_ISO)
 		return lo;
- 
+
 	if (map2 == NULL || lo < map2->base || lo >= map2->base + map2->size)
 		return (-1);
 

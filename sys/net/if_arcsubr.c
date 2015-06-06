@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.66 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.66.4.1 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66.4.1 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -111,10 +111,9 @@ static	void arc_input(struct ifnet *, struct mbuf *);
  */
 static int
 arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt0)
+    struct rtentry *rt)
 {
 	struct mbuf		*m, *m1, *mcopy;
-	struct rtentry		*rt;
 	struct arccom		*ac;
 	const struct arc_header	*cah;
 	struct arc_header	*ah;
@@ -133,29 +132,6 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	mcopy = m1 = NULL;
 
 	myself = *CLLADDR(ifp->if_sadl);
-
-	if ((rt = rt0)) {
-		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1(dst, 1)))
-				rt->rt_refcnt--;
-			else
-				senderr(EHOSTUNREACH);
-		}
-		if (rt->rt_flags & RTF_GATEWAY) {
-			if (rt->rt_gwroute == 0)
-				goto lookup;
-			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
-				if ((rt = rt->rt_gwroute) == 0)
-					senderr(EHOSTUNREACH);
-			}
-		}
-		if (rt->rt_flags & RTF_REJECT)
-			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time_second < rt->rt_rmx.rmx_expire)
-				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
-	}
 
 	/*
 	 * if the queueing discipline needs packet classification,

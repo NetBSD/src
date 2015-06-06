@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.145 2014/10/23 08:55:32 martin Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.145.2.1 2015/06/06 14:40:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1285,6 +1285,7 @@ struct elf_args {
 struct ps_strings;
 struct coredump_iostate;
 struct note_state;
+struct exec_package;
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds(struct lwp *, struct exec_package *);

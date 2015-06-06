@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.71.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.71.2.2 2015/06/06 14:40:26 skrll Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -546,7 +546,7 @@ struct	in6_multi {
 	struct timeval in6m_timer_expire; /* when the timer expires */
 	callout_t in6m_timer_ch;
 };
- 
+
 #define IN6M_TIMER_UNDEF -1
 
 
@@ -621,10 +621,10 @@ in6_next_multi(struct in6_multistep *step)
 
 static inline struct in6_multi *
 in6_first_multi(struct in6_multistep *step)
-{						
-	step->i_ia = in6_ifaddr;		
-	step->i_in6m = NULL;			
-	return in6_next_multi(step);		
+{
+	step->i_ia = in6_ifaddr;
+	step->i_in6m = NULL;
+	return in6_next_multi(step);
 }
 
 #define IN6_NEXT_MULTI(__step, __in6m)		\
@@ -685,7 +685,6 @@ int	in6_control(struct socket *, u_long, void *, struct ifnet *);
 int	in6_update_ifa(struct ifnet *, struct in6_aliasreq *,
 	struct in6_ifaddr *, int);
 void	in6_purgeaddr(struct ifaddr *);
-int	in6if_do_dad(struct ifnet *);
 void	in6_purgeif(struct ifnet *);
 void	in6_savemkludge(struct in6_ifaddr *);
 void	in6_setmaxmtu  (void);
