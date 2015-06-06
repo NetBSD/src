@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.462.2.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.462.2.2 2015/06/06 14:40:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	799000900	/* NetBSD 7.99.9 */
+#define	__NetBSD_Version__	799001800	/* NetBSD 7.99.18 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -130,13 +130,12 @@
 #endif /* (MAXUPRC - 0) < CHILD_MAX */
 #endif /* !defined(MAXUPRC) */
 
+/* Macros for min/max. */
 #define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
 #define	MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
 
 /* More types and definitions used throughout the kernel. */
 #ifdef _KERNEL
-/* Macros for min/max. */
-
 #include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/time.h>
@@ -375,7 +374,25 @@
 #endif
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
 #define	rounddown(x,y)	(((x)/(y))*(y))
-#define	roundup2(x, m)	(((x) + (m) - 1) & ~((m) - 1))
+
+/*
+ * Rounding to powers of two.  The naive definitions of roundup2 and
+ * rounddown2,
+ *
+ *	#define	roundup2(x,m)	(((x) + ((m) - 1)) & ~((m) - 1))
+ *	#define	rounddown2(x,m)	((x) & ~((m) - 1)),
+ *
+ * exhibit a quirk of integer arithmetic in C because the complement
+ * happens in the type of m, not in the type of x.  So if unsigned int
+ * is 32-bit, and m is an unsigned int while x is a uint64_t, then
+ * roundup2 and rounddown2 would have the unintended effect of clearing
+ * the upper 32 bits of the result(!).  These definitions avoid the
+ * pitfalls of C arithmetic depending on the types of x and m, and
+ * additionally avoid multiply evaluating their arguments.
+ */
+#define	roundup2(x,m)	((((x) - 1) | ((m) - 1)) + 1)
+#define	rounddown2(x,m)	((x) & ~((__typeof__(x))((m) - 1)))
+
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /*

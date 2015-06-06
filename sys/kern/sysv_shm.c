@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.125 2014/05/27 21:00:46 njoly Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.125.4.1 2015/06/06 14:40:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,9 +61,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.125 2014/05/27 21:00:46 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.125.4.1 2015/06/06 14:40:22 skrll Exp $");
 
-#define SYSVSHM
+#ifdef _KERNEL_OPT
+#include "opt_sysv.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -105,6 +107,8 @@ struct shmmap_state {
 	unsigned int nrefs;
 	SLIST_HEAD(, shmmap_entry) entries;
 };
+
+extern int kern_has_sysvshm;
 
 #ifdef SHMDEBUG
 #define SHMPRINTF(a) printf a
@@ -984,7 +988,42 @@ shminit(void)
 	shm_realloc_disable = 0;
 	shm_realloc_state = false;
 
+	kern_has_sysvshm = 1;
+
 	sysvipcinit();
+}
+
+int
+shmfini(void)
+{
+	size_t sz;
+	int i;
+	vaddr_t v = (vaddr_t)shmsegs;
+
+	mutex_enter(&shm_lock);
+	if (shm_nused) {
+		mutex_exit(&shm_lock);
+		return 1;
+	}
+
+	/* Destroy all condvars */
+	for (i = 0; i < shminfo.shmmni; i++)
+		cv_destroy(&shm_cv[i]);
+	cv_destroy(&shm_realloc_cv);
+
+	/* Free the allocated/wired memory */
+	sz = ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)) +
+	    ALIGN(shminfo.shmmni * sizeof(kcondvar_t));
+	sz = round_page(sz);
+	uvm_km_free(kernel_map, v, sz, UVM_KMF_WIRED);
+
+	/* Release and destroy our mutex */
+	mutex_exit(&shm_lock);
+	mutex_destroy(&shm_lock);
+
+	kern_has_sysvshm = 0;
+
+	return 0;
 }
 
 static int

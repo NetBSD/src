@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.110.4.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.110.4.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110.4.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110.4.2 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -335,7 +335,7 @@ const struct protosw inetsw[] = {
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_IGMP,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = igmp_input, 
+	.pr_input = igmp_input,
 	.pr_output = rip_output,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_ctlinput = rip_ctlinput,
@@ -349,7 +349,7 @@ const struct protosw inetsw[] = {
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_PIM,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = pim_input, 
+	.pr_input = pim_input,
 	.pr_output = rip_output,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_ctlinput = rip_ctlinput,
@@ -360,7 +360,7 @@ const struct protosw inetsw[] = {
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = rip_input, 
+	.pr_input = rip_input,
 	.pr_output = rip_output,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_ctlinput = rip_ctlinput,
@@ -384,6 +384,8 @@ struct domain inetdomain = {
 	.dom_rtattach = rt_inithead,
 	.dom_rtoffset = 32,
 	.dom_maxrtkey = sizeof(struct ip_pack4),
+	.dom_if_up = in_if_up,
+	.dom_if_down = in_if_down,
 #ifdef IPSELSRC
 	.dom_ifattach = in_domifattach,
 	.dom_ifdetach = in_domifdetach,
@@ -391,6 +393,7 @@ struct domain inetdomain = {
 	.dom_ifattach = NULL,
 	.dom_ifdetach = NULL,
 #endif
+	.dom_if_link_state_change = in_if_link_state_change,
 	.dom_ifqueues = { NULL, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),

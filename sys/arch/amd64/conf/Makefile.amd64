@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.46 2014/11/15 12:42:56 uebayasi Exp $
+#	$NetBSD: Makefile.amd64,v 1.46.2.1 2015/06/06 14:39:54 skrll Exp $
 
 # Makefile for NetBSD
 #

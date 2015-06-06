@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.46.4.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.46.4.2 2015/06/06 14:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008-2010, 2015 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.46.4.1 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.46.4.2 2015/06/06 14:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -80,25 +80,14 @@ static struct rumpuser_cv *sicpucv;
 
 kcondvar_t lbolt; /* Oh Kath Ra */
 
-static u_int ticks;
 static int ncpu_final;
 
-static u_int
-rumptc_get(struct timecounter *tc)
-{
-
-	KASSERT(rump_threads);
-	return ticks;
-}
-
-static struct timecounter rumptc = {
-	.tc_get_timecount	= rumptc_get,
-	.tc_poll_pps 		= NULL,
-	.tc_counter_mask	= ~0,
-	.tc_frequency		= 0,
-	.tc_name		= "rumpclk",
-	.tc_quality		= 0,
-};
+void noclock(void); void noclock(void) {return;}
+__strong_alias(sched_schedclock,noclock);
+__strong_alias(cpu_initclocks,noclock);
+__strong_alias(addupc_intr,noclock);
+__strong_alias(sched_tick,noclock);
+__strong_alias(setstatclockrate,noclock);
 
 /*
  * clock "interrupt"
@@ -107,11 +96,11 @@ static void
 doclock(void *noarg)
 {
 	struct timespec thetick, curclock;
+	struct clockframe *clkframe;
 	int64_t sec;
 	long nsec;
 	int error;
-	int cpuindx = curcpu()->ci_index;
-	extern int hz;
+	struct cpu_info *ci = curcpu();
 
 	error = rumpuser_clock_gettime(RUMPUSER_CLOCK_ABSMONO, &sec, &nsec);
 	if (error)
@@ -122,21 +111,24 @@ doclock(void *noarg)
 	thetick.tv_sec = 0;
 	thetick.tv_nsec = 1000000000/hz;
 
+	/* generate dummy clockframe for hardclock to consume */
+	clkframe = rump_cpu_makeclockframe();
+
 	for (;;) {
-		callout_hardclock();
+		int lbolt_ticks = 0;
+
+		hardclock(clkframe);
+		if (CPU_IS_PRIMARY(ci)) {
+			if (++lbolt_ticks >= hz) {
+				lbolt_ticks = 0;
+				cv_broadcast(&lbolt);
+			}
+		}
 
 		error = rumpuser_clock_sleep(RUMPUSER_CLOCK_ABSMONO,
 		    curclock.tv_sec, curclock.tv_nsec);
 		KASSERT(!error);
 		timespecadd(&curclock, &thetick, &curclock);
-
-		if (cpuindx != 0)
-			continue;
-
-		if ((++ticks % hz) == 0) {
-			cv_broadcast(&lbolt);
-		}
-		tc_ticktock();
 	}
 }
 
@@ -306,8 +298,12 @@ softint_init(struct cpu_info *ci)
 	if (ci->ci_index == 0) {
 		int sithr_swap;
 
-		rumptc.tc_frequency = hz;
-		tc_init(&rumptc);
+		/* pretend that we have our own for these */
+		stathz = 1;
+		schedhz = 1;
+		profhz = 1;
+
+		initclocks();
 
 		/* create deferred softint threads */
 		mutex_enter(&sithr_emtx);

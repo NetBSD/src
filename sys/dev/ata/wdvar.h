@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.41 2014/09/10 07:04:48 matt Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.41.2.1 2015/06/06 14:40:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
 #include "opt_wd_softbadsect.h"
 #endif
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 struct wd_softc {
 	/* General disk infos */

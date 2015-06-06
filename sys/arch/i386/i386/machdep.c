@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.752.6.1 2015/04/06 15:17:57 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.752.6.2 2015/06/06 14:40:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.1 2015/04/06 15:17:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.2 2015/06/06 14:40:00 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -567,7 +567,7 @@ i386_tls_switch(lwp_t *l)
 	/* Update TLS segment pointers */
 	update_descriptor(&ci->ci_gdt[GUFS_SEL],
 			  (union descriptor *) &pcb->pcb_fsd);
-	update_descriptor(&ci->ci_gdt[GUGS_SEL], 
+	update_descriptor(&ci->ci_gdt[GUGS_SEL],
 			  (union descriptor *) &pcb->pcb_gsd);
 
 }
@@ -760,10 +760,6 @@ haltsys:
 	doshutdownhooks();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-#ifdef XEN
-		HYPERVISOR_shutdown();
-		for (;;);
-#endif
 #if NACPICA > 0
 		if (s != IPL_NONE)
 			splx(s);
@@ -771,6 +767,10 @@ haltsys:
 		acpi_enter_sleep_state(ACPI_STATE_S5);
 #else
 		__USE(s);
+#endif
+#ifdef XEN
+		HYPERVISOR_shutdown();
+		for (;;);
 #endif
 	}
 
@@ -936,7 +936,7 @@ int xen_idt_idx;
 extern union descriptor tmpgdt[];
 #endif
 
-void 
+void
 cpu_init_idt(void)
 {
 #ifndef XEN
@@ -954,7 +954,7 @@ void
 initgdt(union descriptor *tgdt)
 {
 	KASSERT(tgdt != NULL);
-	
+
 	gdt = tgdt;
 #ifdef XEN
 	u_long	frames[16];
@@ -1232,7 +1232,7 @@ init386(paddr_t first_avail)
 #if NISA > 0 || NPCI > 0
 	x86_bus_space_init();
 #endif /* NISA > 0 || NPCI > 0 */
-	
+
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 #ifdef DEBUG_MEMLOAD
@@ -1497,7 +1497,7 @@ cpu_reset(void)
 	 * 2) Write 0xf to PCI Configuration Data Register (0xcfc)
 	 *    to reset IDE controller, IDE bus, and PCI bus, and
 	 *    to trigger a system-wide reset.
-	 * 
+	 *
 	 * See AMD Geode SC1100 Processor Data Book, Revision 2.0,
 	 * sections 6.3.1, 6.3.2, and 6.4.1.
 	 */

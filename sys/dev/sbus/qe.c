@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.62 2012/06/23 17:21:12 jdc Exp $	*/
+/*	$NetBSD: qe.c,v 1.62.16.1 2015/06/06 14:40:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.62 2012/06/23 17:21:12 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.62.16.1 2015/06/06 14:40:13 skrll Exp $");
 
 #define QEDEBUG
 
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.62 2012/06/23 17:21:12 jdc Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

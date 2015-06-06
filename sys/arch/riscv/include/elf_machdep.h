@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.1.2.1 2015/04/06 15:18:01 skrll Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.1.2.2 2015/06/06 14:40:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _RISCV_ELF_MACHDEP_H_
 
 #define	ELF32_MACHDEP_ID		EM_RISCV
+#define	ELF64_MACHDEP_ID		EM_RISCV
 
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
@@ -114,13 +115,13 @@
 #ifdef _KERNEL
 #ifdef ELFSIZE
 #define ELF_MD_PROBE_FUNC       ELFNAME2(cpu_netbsd,probe)
-#endif     
- 
+#endif
+
 struct exec_package;
- 
+
 int cpu_netbsd_elf32_probe(struct lwp *, struct exec_package *, void *, char *,
-        vaddr_t *); 
- 
+        vaddr_t *);
+
 int cpu_netbsd_elf64_probe(struct lwp *, struct exec_package *, void *, char *,
         vaddr_t *);
 

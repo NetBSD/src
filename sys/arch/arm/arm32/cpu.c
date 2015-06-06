@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.106.2.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.106.2.2 2015/06/06 14:39:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106.2.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106.2.2 2015/06/06 14:39:55 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -77,7 +77,7 @@ void identify_features(device_t);
 /*
  * Identify the master (boot) CPU
  */
-  
+
 void
 cpu_attach(device_t dv, cpuid_t id)
 {
@@ -324,7 +324,7 @@ static const char * const pxa2x0_steppings[16] = {
 };
 
 /* Steppings for PXA255/26x.
- * rev 5: PXA26x B0, rev 6: PXA255 A0  
+ * rev 5: PXA26x B0, rev 6: PXA255 A0
  */
 static const char * const pxa255_steppings[16] = {
 	"rev 0",	"rev 1",	"rev 2",	"step A-0",
@@ -602,7 +602,7 @@ print_cache_info(device_t dv, struct arm_cache_info *info, u_int level)
 		    info->icache_type & CACHE_TYPE_PIxx ? 'P' : 'V',
 		    info->icache_type & CACHE_TYPE_xxPT ? 'P' : 'V');
 		aprint_normal_dev(dv, "%dKB/%dB %d-way %s L%u %cI%cT Data cache\n",
-		    info->dcache_size / 1024, 
+		    info->dcache_size / 1024,
 		    info->dcache_line_size, info->dcache_ways,
 		    wtnames[info->cache_type], level + 1,
 		    info->dcache_type & CACHE_TYPE_PIxx ? 'P' : 'V',
@@ -745,7 +745,7 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 #endif
 #ifdef CPU_ARM7TDMI
 	case CPU_CLASS_ARM7TDMI:
-#endif		
+#endif
 #ifdef CPU_ARM8
 	case CPU_CLASS_ARM8:
 #endif
@@ -840,6 +840,10 @@ identify_features(device_t dv)
 	cpu_processor_features[0] = armreg_pfr0_read();
 	cpu_processor_features[1] = armreg_pfr1_read();
 
+	aprint_verbose_dev(dv, "revidr: %#x\n", armreg_revidr_read());
+#ifdef MULTIPROCESSOR
+	aprint_verbose_dev(dv, "mpidr: %#x\n", armreg_mpidr_read());
+#endif
 	aprint_verbose_dev(dv,
 	    "isar: [0]=%#x [1]=%#x [2]=%#x [3]=%#x, [4]=%#x, [5]=%#x\n",
 	    cpu_instruction_set_attributes[0],

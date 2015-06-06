@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.17 2014/08/10 16:44:34 tls Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.17.6.1 2015/06/06 14:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,11 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.17 2014/08/10 16:44:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.17.6.1 2015/06/06 14:40:02 skrll Exp $");
 
 #include "debug_playstation2.h"
-
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.17 2014/08/10 16:44:34 tls Exp $");
 
 #include <playstation2/ee/eevar.h>
 
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -113,9 +109,7 @@ struct smap_softc {
 	int tx_done_index, tx_start_index;
 	int rx_done_index;
 
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
+	krndsource_t rnd_source;
 };
 
 #define DEVNAME		(sc->emac3.dev.dv_xname)
@@ -258,10 +252,8 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	
 	spd_intr_establish(SPD_NIC, smap_intr, sc);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, DEVNAME,
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
-#endif
 }
 
 int
@@ -334,9 +326,7 @@ smap_intr(void *arg)
 	ifp = &sc->ethercom.ec_if;
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		smap_start(ifp);
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, cause | sc->tx_fifo_ptr << 16);
-#endif
 
 	return (1);
 }

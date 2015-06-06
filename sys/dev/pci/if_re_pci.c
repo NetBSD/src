@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.43 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.43.6.1 2015/06/06 14:40:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.43 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.43.6.1 2015/06/06 14:40:09 skrll Exp $");
 
 #include <sys/types.h>
 
@@ -201,8 +201,12 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		memh_valid = (pci_mapreg_map(pa, RTK_PCI_LOMEM,
-		    memtype, 0, &memt, &memh, NULL, &memsize) == 0);
+		memh_valid =
+		    (pci_mapreg_map(pa, RTK_PCI_LOMEM,
+		        memtype, 0, &memt, &memh, NULL, &memsize) == 0) ||
+		    (pci_mapreg_map(pa, RTK_PCI_LOMEM + 4,
+			PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT,
+			0, &memt, &memh, NULL, &memsize) == 0);
 		break;
 	default:
 		memh_valid = 0;

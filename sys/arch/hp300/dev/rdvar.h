@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.22 2012/02/02 19:42:59 tls Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.22.24.1 2015/06/06 14:39:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,6 +39,7 @@
  */
 
 #include <sys/callout.h>
+#include <sys/rndsource.h>
 
 struct	rdidentinfo {
 	short	ri_hwid;		/* 2 byte HW id */

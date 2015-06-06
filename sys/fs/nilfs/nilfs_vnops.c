@@ -1,9 +1,9 @@
-/* $NetBSD: nilfs_vnops.c,v 1.30.2.1 2015/04/06 15:18:19 skrll Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.30.2.2 2015/06/06 14:40:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,12 +23,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.30.2.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.30.2.2 2015/06/06 14:40:21 skrll Exp $");
 #endif /* not lint */
 
 
@@ -583,7 +583,7 @@ nilfs_readdir(void *v)
 			DPRINTF(READDIR, ("copying `%*.*s`\n", name_len,
 				name_len, dirent.d_name));
 
-			/* 
+			/*
 			 * If there isn't enough space in the uio to return a
 			 * whole dirent, break off read
 			 */
@@ -669,7 +669,7 @@ nilfs_lookup(void *v)
 	/*
 	 * Obviously, the file is not (anymore) in the namecache, we have to
 	 * search for it. There are three basic cases: '.', '..' and others.
-	 * 
+	 *
 	 * Following the guidelines of VOP_LOOKUP manpage and tmpfs.
 	 */
 	error = 0;
@@ -752,7 +752,7 @@ nilfs_lookup(void *v)
 
 			}
 		}
-	}	
+	}
 
 out:
 	/*
@@ -1189,7 +1189,7 @@ nilfs_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 int
 nilfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1205,7 +1205,6 @@ nilfs_link(void *v)
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 
 	return error;
 }
@@ -1370,7 +1369,7 @@ nilfs_rename(void *v)
 	}
 
 	/* remove existing entry if present */
-	if (tvp) 
+	if (tvp)
 		nilfs_dir_detach(tdnode->ump, tdnode, tnode, tcnp);
 
 	/* create new directory entry for the node */
@@ -1578,7 +1577,7 @@ const struct vnodeopv_entry_desc nilfs_vnodeop_entries[] = {
 	{ &vop_remove_desc, nilfs_remove },	/* remove */
 	{ &vop_link_desc, nilfs_link },		/* link */	/* TODO */
 	{ &vop_rename_desc, nilfs_rename },	/* rename */ 	/* TODO */
-	{ &vop_mkdir_desc, nilfs_mkdir },	/* mkdir */ 
+	{ &vop_mkdir_desc, nilfs_mkdir },	/* mkdir */
 	{ &vop_rmdir_desc, nilfs_rmdir },	/* rmdir */
 	{ &vop_symlink_desc, nilfs_symlink },	/* symlink */	/* TODO */
 	{ &vop_readdir_desc, nilfs_readdir },	/* readdir */

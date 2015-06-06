@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.145.4.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.145.4.2 2015/06/06 14:40:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145.4.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145.4.2 2015/06/06 14:40:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -309,7 +309,7 @@ spec_node_lookup_by_dev(enum vtype type, dev_t dev, vnode_t **vpp)
 		mutex_enter(vp->v_interlock);
 	}
 	mutex_exit(&device_lock);
-	error = vget(vp, 0);
+	error = vget(vp, 0, true /* wait */);
 	if (error != 0)
 		return error;
 	*vpp = vp;
@@ -344,7 +344,7 @@ spec_node_lookup_by_mount(struct mount *mp, vnode_t **vpp)
 	}
 	mutex_enter(vq->v_interlock);
 	mutex_exit(&device_lock);
-	error = vget(vq, 0);
+	error = vget(vq, 0, true /* wait */);
 	if (error != 0)
 		return error;
 	*vpp = vq;
@@ -502,7 +502,7 @@ spec_open(void *v)
 
 	u_int gen;
 	const char *name;
-	
+
 	l = curlwp;
 	vp = ap->a_vp;
 	dev = vp->v_rdev;
@@ -510,7 +510,7 @@ spec_open(void *v)
 	sd = sn->sn_dev;
 	name = NULL;
 	gen = 0;
-	
+
 	/*
 	 * Don't allow open if fs is mounted -nodev.
 	 */
@@ -557,7 +557,7 @@ spec_open(void *v)
 			error = cdev_open(dev, ap->a_mode, S_IFCHR, l);
 			if (error != ENXIO)
 				break;
-			
+
 			/* Check if we already have a valid driver */
 			mutex_enter(&device_lock);
 			cdev = cdevsw_lookup(dev);
@@ -568,7 +568,7 @@ spec_open(void *v)
 			/* Get device name from devsw_conv array */
 			if ((name = cdevsw_getname(major(dev))) == NULL)
 				break;
-			
+
 			/* Try to autoload device module */
 			(void) module_autoload(name, MODULE_CLASS_DRIVER);
 		} while (gen != module_gen);
@@ -622,7 +622,7 @@ spec_open(void *v)
 
                         /* Try to autoload device module */
 			(void) module_autoload(name, MODULE_CLASS_DRIVER);
-			
+
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		} while (gen != module_gen);
 

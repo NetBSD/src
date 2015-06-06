@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.39.2.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.39.2.2 2015/06/06 14:40:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  *	Vnode is considered active, if reference count (vnode_t::v_usecount)
  *	is non-zero.  It is maintained using: vref(9) and vrele(9), as well
  *	as vput(9), routines.  Common points holding references are e.g.
- *	file openings, current working directory, mount points, etc.  
+ *	file openings, current working directory, mount points, etc.
  *
  * Note on v_usecount and its locking
  *
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.39.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.39.2.2 2015/06/06 14:40:22 skrll Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -293,10 +293,6 @@ vnfree(vnode_t *vp)
 		mutex_exit(&vnode_free_list_lock);
 	}
 
-	/*
-	 * Note: the vnode interlock will either be freed, of reference
-	 * dropped (if VI_LOCKSHARE was in use).
-	 */
 	uvm_obj_destroy(&vp->v_uobj, true);
 	cv_destroy(&vp->v_cv);
 	pool_cache_put(vnode_cache, vp);
@@ -424,7 +420,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		mutex_obj_hold(slock);
 		uvm_obj_setlock(&vp->v_uobj, slock);
 		KASSERT(vp->v_interlock == slock);
-		vp->v_iflag |= VI_LOCKSHARE;
 	}
 
 	/* Finally, move vnode into the mount queue. */
@@ -518,13 +513,14 @@ vremfree(vnode_t *vp)
  * vnode is no longer usable.
  */
 int
-vget(vnode_t *vp, int flags)
+vget(vnode_t *vp, int flags, bool waitok)
 {
 	int error = 0;
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 	KASSERT(mutex_owned(vp->v_interlock));
-	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT)) == 0);
+	KASSERT((flags & ~LK_NOWAIT) == 0);
+	KASSERT(waitok == ((flags & LK_NOWAIT) == 0));
 
 	/*
 	 * Before adding a reference, we must remove the vnode
@@ -555,16 +551,10 @@ vget(vnode_t *vp, int flags)
 	}
 
 	/*
-	 * Ok, we got it in good shape.  Just locking left.
+	 * Ok, we got it in good shape.
 	 */
 	KASSERT((vp->v_iflag & VI_CLEAN) == 0);
 	mutex_exit(vp->v_interlock);
-	if (flags & (LK_EXCLUSIVE | LK_SHARED)) {
-		error = vn_lock(vp, flags);
-		if (error != 0) {
-			vrele(vp);
-		}
-	}
 	return error;
 }
 
@@ -698,7 +688,7 @@ vrelel(vnode_t *vp, int flags)
 			mutex_enter(&vrele_lock);
 			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
 			if (++vrele_pending > (desiredvnodes >> 8))
-				cv_signal(&vrele_cv); 
+				cv_signal(&vrele_cv);
 			mutex_exit(&vrele_lock);
 			mutex_exit(vp->v_interlock);
 			return;
@@ -1247,7 +1237,7 @@ again:
 		vp = node->vn_vnode;
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&vcache.lock);
-		error = vget(vp, 0);
+		error = vget(vp, 0, true /* wait */);
 		if (error == ENOENT)
 			goto again;
 		if (error == 0)

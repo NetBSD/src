@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_rng.c,v 1.2.2.2 2015/04/06 15:17:52 skrll Exp $ */
+/* $NetBSD: amlogic_rng.c,v 1.2.2.3 2015/06/06 14:39:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_rng.c,v 1.2.2.2 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_rng.c,v 1.2.2.3 2015/06/06 14:39:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,7 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_rng.c,v 1.2.2.2 2015/04/06 15:17:52 skrll Ex
 #include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/callout.h>
-#include <sys/rnd.h>
+#include <sys/rndpool.h>
+#include <sys/rndsource.h>
 
 #include <arm/amlogic/amlogic_reg.h>
 #include <arm/amlogic/amlogic_var.h>
@@ -89,7 +90,7 @@ amlogic_rng_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SERIAL);
 	mutex_init(&sc->sc_rnd_lock, MUTEX_DEFAULT, IPL_SERIAL);
-	
+
 	amlogic_rng_init();
 
 	aprint_naive("\n");

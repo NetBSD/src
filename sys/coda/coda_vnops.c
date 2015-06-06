@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.98.2.1 2015/04/06 15:18:05 skrll Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.98.2.2 2015/06/06 14:40:05 skrll Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98.2.1 2015/04/06 15:18:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98.2.2 2015/06/06 14:40:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ coda_open(void *v)
 		(unsigned long long)dev, (unsigned long long)inode, error));)
     }
 
-    /* 
+    /*
      * Obtain locked and referenced container vnode from container
      * device/inode.
      */
@@ -280,7 +280,7 @@ coda_open(void *v)
 	cp->c_flags &= ~C_VATTR;
     }
 
-    /* 
+    /*
      * Save the <device, inode> pair for the container file to speed
      * up subsequent reads while closed (mmap, program execution).
      * This is perhaps safe because venus will invalidate the node
@@ -291,7 +291,7 @@ coda_open(void *v)
 
     /* Open the container file. */
     error = VOP_OPEN(container_vp, flag, cred);
-    /* 
+    /*
      * Drop the lock on the container, after we have done VOP_OPEN
      * (which requires a locked vnode).
      */
@@ -324,7 +324,7 @@ coda_close(void *v)
 
     /*
      * XXX The IS_UNMOUNTING part of this is very suspect.
-     */ 
+     */
     if (IS_UNMOUNTING(cp)) {
 	if (cp->c_ovp) {
 #ifdef	CODA_VERBOSE
@@ -439,8 +439,8 @@ coda_rdwr(vnode_t *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
 		MARK_INT_FAIL(CODA_RDWR_STATS);
 		return(error);
 	    }
-	    /* 
-	     * Drop lock. 
+	    /*
+	     * Drop lock.
 	     * XXX Where is reference released.
 	     */
 	    VOP_UNLOCK(cfvp);
@@ -1147,7 +1147,7 @@ int
 coda_link(void *v)
 {
 /* true args */
-    struct vop_link_args *ap = v;
+    struct vop_link_v2_args *ap = v;
     vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     vnode_t *dvp = ap->a_dvp;
@@ -1208,7 +1208,6 @@ coda_link(void *v)
     CODADEBUG(CODA_LINK,	myprintf(("in link result %d\n",error)); )
 
 exit:
-    vput(dvp);
     return(error);
 }
 
@@ -1478,7 +1477,7 @@ coda_symlink(void *v)
     /* Check for symlink of control object. */
     if (IS_CTL_NAME(dvp, nm, len)) {
 	MARK_INT_FAIL(CODA_SYMLINK_STATS);
-	error = EACCES; 
+	error = EACCES;
 	goto exit;
     }
 

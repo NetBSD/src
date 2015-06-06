@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.3.4.2 2015/04/06 15:17:52 skrll Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.3.4.3 2015/06/06 14:39:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.3.4.2 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.3.4.3 2015/06/06 14:39:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,6 +64,10 @@ struct amlogic_sdhc_softc {
 	kcondvar_t		sc_intr_cv;
 
 	uint32_t		sc_intr_ista;
+
+	bus_dmamap_t		sc_dmamap;
+	bus_dma_segment_t	sc_segs[1];
+	void			*sc_bbuf;
 };
 
 CFATTACH_DECL_NEW(amlogic_sdhc, sizeof(struct amlogic_sdhc_softc),
@@ -86,6 +90,8 @@ static void	amlogic_sdhc_card_intr_ack(sdmmc_chipset_handle_t);
 static int	amlogic_sdhc_set_clock(struct amlogic_sdhc_softc *, u_int);
 static int	amlogic_sdhc_wait_idle(struct amlogic_sdhc_softc *);
 static int	amlogic_sdhc_wait_ista(struct amlogic_sdhc_softc *, uint32_t, int);
+
+static void	amlogic_sdhc_dmainit(struct amlogic_sdhc_softc *);
 
 static struct sdmmc_chip_functions amlogic_sdhc_chip_functions = {
 	.host_reset = amlogic_sdhc_host_reset,
@@ -110,6 +116,12 @@ static struct sdmmc_chip_functions amlogic_sdhc_chip_functions = {
 static int
 amlogic_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
+	struct amlogicio_attach_args * const aio = aux;
+	const struct amlogic_locators * const loc = &aio->aio_loc;
+
+	if (loc->loc_port == AMLOGICIOCF_PORT_DEFAULT)
+		return 0;
+
 	return 1;
 }
 
@@ -146,6 +158,8 @@ amlogic_sdhc_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
+	amlogic_sdhc_dmainit(sc);
+
 	config_interrupts(self, amlogic_sdhc_attach_i);
 }
 
@@ -165,12 +179,12 @@ amlogic_sdhc_attach_i(device_t self)
 	saa.saa_sch = sc;
 	saa.saa_clkmin = 400;
 	saa.saa_clkmax = 50000;
+	/* Do not advertise DMA capabilities, we handle DMA ourselves */
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|
 		       SMC_CAPS_8BIT_MODE|
 		       SMC_CAPS_SD_HIGHSPEED|
 		       SMC_CAPS_MMC_HIGHSPEED|
-		       SMC_CAPS_AUTO_STOP|
-		       SMC_CAPS_DMA;
+		       SMC_CAPS_AUTO_STOP;
 
 	sc->sc_sdmmc_dev = config_found(self, &saa, NULL);
 }
@@ -197,6 +211,35 @@ amlogic_sdhc_intr(void *priv)
 	mutex_exit(&sc->sc_intr_lock);
 
 	return 1;
+}
+
+static void
+amlogic_sdhc_dmainit(struct amlogic_sdhc_softc *sc)
+{
+	int error, rseg;
+
+	error = bus_dmamem_alloc(sc->sc_dmat, MAXPHYS, PAGE_SIZE, MAXPHYS,
+	    sc->sc_segs, 1, &rseg, BUS_DMA_WAITOK);
+	if (error) {
+		device_printf(sc->sc_dev, "bus_dmamem_alloc failed: %d\n", error);
+		return;
+	}
+	KASSERT(rseg == 1);
+
+	error = bus_dmamem_map(sc->sc_dmat, sc->sc_segs, rseg, MAXPHYS,
+	    &sc->sc_bbuf, BUS_DMA_WAITOK);
+	if (error) {
+		device_printf(sc->sc_dev, "bus_dmamem_map failed\n");
+		return;
+	}
+
+	error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1, MAXPHYS, 0,
+	    BUS_DMA_WAITOK, &sc->sc_dmamap);
+	if (error) {
+		device_printf(sc->sc_dev, "bus_dmamap_create failed\n");
+		return;
+	}
+
 }
 
 static int
@@ -431,6 +474,7 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct amlogic_sdhc_softc *sc = sch;
 	uint32_t cmdval = 0, cntl, srst, pdma, ictl;
+	bool use_bbuf = false;
 	int i;
 
 	KASSERT(cmd->c_blklen <= 512);
@@ -478,7 +522,7 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			++nblks;
 
 		cntl |= __SHIFTIN(cmd->c_blklen & 0x1ff, SD_CNTL_PACK_LEN);
-				    
+
 		cmdval |= __SHIFTIN(nblks - 1, SD_SEND_TOTAL_PACK);
 
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
@@ -510,9 +554,22 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 	if (cmd->c_datalen > 0) {
-		KASSERT(cmd->c_dmamap->dm_nsegs == 1);
-		KASSERT(cmd->c_dmamap->dm_segs[0].ds_len >= cmd->c_datalen);
-		SDHC_WRITE(sc, SD_ADDR_REG, cmd->c_dmamap->dm_segs[0].ds_addr);
+		cmd->c_error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap,
+		    sc->sc_bbuf, MAXPHYS, NULL, BUS_DMA_WAITOK);
+		if (cmd->c_error) {
+			device_printf(sc->sc_dev, "bus_dmamap_load failed\n");
+			goto done;
+		}
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+			    MAXPHYS, BUS_DMASYNC_PREREAD);
+		} else {
+			memcpy(sc->sc_bbuf, cmd->c_data, cmd->c_datalen);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+			    MAXPHYS, BUS_DMASYNC_PREWRITE);
+		}
+		SDHC_WRITE(sc, SD_ADDR_REG, sc->sc_dmamap->dm_segs[0].ds_addr);
+		use_bbuf = true;
 	}
 
 	cmd->c_resid = cmd->c_datalen;
@@ -556,7 +613,7 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 				pdma |= __SHIFTIN(i, SD_PDMA_PIO_RDRESP);
 				SDHC_WRITE(sc, SD_PDMA_REG, pdma);
 				cmd->c_resp[i - 1] = SDHC_READ(sc, SD_ARGU_REG);
-				
+
 			}
 			if (cmd->c_flags & SCF_RSP_CRC) {
 				cmd->c_resp[0] = (cmd->c_resp[0] >> 8) |
@@ -576,6 +633,20 @@ amlogic_sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 done:
+	if (use_bbuf) {
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+			    MAXPHYS, BUS_DMASYNC_POSTREAD);
+		} else {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+			    MAXPHYS, BUS_DMASYNC_POSTWRITE);
+		}
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap);
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			memcpy(cmd->c_data, sc->sc_bbuf, cmd->c_datalen);
+		}
+	}
+
 	cmd->c_flags |= SCF_ITSDONE;
 
 	SDHC_WRITE(sc, SD_ISTA_REG, SD_INT_CLEAR);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.99.4.1 2015/04/06 15:18:24 skrll Exp $
+#	$NetBSD: Makefile.rump,v 1.99.4.2 2015/06/06 14:40:26 skrll Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -13,7 +13,6 @@ NOLINT=		# kernel code
 # compile-time options may override this at a later date.
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 _RUMP_NATIVEABI= yes
-CPPFLAGS+=	-D_RUMP_NATIVE_ABI
 .else
 _RUMP_NATIVEABI= no
 CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
@@ -30,8 +29,18 @@ CPPFLAGS+=	-DMIPS1=1
 .endif
 .endif
 
+# which NetBSD compat to build
+RUMP_NBCOMPAT?=default
+.if ${RUMP_NBCOMPAT} == "all" || ${RUMP_NBCOMPAT} == "default"
+RUMP_NBCOMPAT=	50 60 70
+.endif
+.if ${RUMP_NBCOMPAT} == "none"
+RUMP_NBCOMPAT=
+.endif
+RUMP_NBCOMPAT:=	${RUMP_NBCOMPAT:S/,/ /g}
+CPPFLAGS+=	${RUMP_NBCOMPAT:C/[1-9]0/-DCOMPAT_&/g}
+
 CPPFLAGS+=	-DMAXUSERS=32
-CPPFLAGS+=	-DCOMPAT_50=1 -DCOMPAT_60=1
 
 CPPFLAGS+=	-nostdinc
 CFLAGS+=	-ffreestanding -fno-strict-aliasing
@@ -191,7 +200,7 @@ _SYMQUIRK="|PF_funcs"
 # complaints about symbols like 'rumpns_XrumpBLAH' or 'XrumpBLAH';
 # the 'X' part was added by the toolchain and will need to
 # be mentioned here.
-# 
+#
 .if ${MACHINE_ARCH} == "powerpc64"
 _PQ="\.?"
 .else

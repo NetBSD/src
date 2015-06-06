@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.7 2014/10/02 09:03:43 skrll Exp $ */
+/*	$NetBSD: sscom.c,v 1.7.2.1 2015/06/06 14:39:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.7 2014/10/02 09:03:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.7.2.1 2015/06/06 14:39:57 skrll Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -106,9 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.7 2014/10/02 09:03:43 skrll Exp $");
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
-#include "rnd.h"
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 /*

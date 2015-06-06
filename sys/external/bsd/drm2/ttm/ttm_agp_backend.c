@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_agp_backend.c,v 1.3 2014/08/14 16:50:22 riastradh Exp $	*/
+/*	$NetBSD: ttm_agp_backend.c,v 1.3.4.1 2015/06/06 14:40:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.3 2014/08/14 16:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.3.4.1 2015/06/06 14:40:20 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -156,7 +156,7 @@ ttm_agp_destroy(struct ttm_tt *ttm)
 	if (ttm_agp->bound)
 		ttm_agp_unbind(ttm);
 	ttm_tt_fini(ttm);
-	kmem_free(ttm, sizeof(*ttm));
+	kmem_free(ttm_agp, sizeof(*ttm_agp));
 }
 
 static const struct ttm_backend_func ttm_agp_backend_func = {

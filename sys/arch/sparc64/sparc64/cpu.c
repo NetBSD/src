@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.120.2.1 2015/04/06 15:18:03 skrll Exp $ */
+/*	$NetBSD: cpu.c,v 1.120.2.2 2015/06/06 14:40:03 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.120.2.1 2015/04/06 15:18:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.120.2.2 2015/06/06 14:40:03 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -129,9 +129,9 @@ cpuid_from_node(u_int cpu_node)
 	 *  cpuid
 	 *  reg (sun4v only)
 	 */
-	
+
 	int id;
-	 
+
 	id = prom_getpropint(cpu_node, "upa-portid", -1);
 	if (id == -1)
 		id = prom_getpropint(cpu_node, "portid", -1);
@@ -141,7 +141,7 @@ cpuid_from_node(u_int cpu_node)
 		int reg[4];
 		int* regp=reg;
 		int len = 4;
-		int rc = prom_getprop(cpu_node, "reg", sizeof(int), 
+		int rc = prom_getprop(cpu_node, "reg", sizeof(int),
 		    &len, &regp);
 		if ( rc != 0)
 			panic("No reg property found\n");
@@ -150,7 +150,7 @@ cpuid_from_node(u_int cpu_node)
 	}
 	if (id == -1)
 		panic("failed to determine cpuid");
-	
+
 	return id;
 }
 
@@ -188,7 +188,7 @@ cpu_icache_size(int node)
 {
 	if (CPU_ISSUN4V)
 		return cpu_cache_info_sun4v("instn", 1, "size");
-	else 
+	else
 		return prom_getpropint(node, "icache-size", 0);
 }
 
@@ -605,20 +605,20 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		if (err != H_EOK)
 			panic("Unable to set cpu mondo queue: %d", err);
 		pa += SUN4V_MONDO_QUEUE_SIZE * SUN4V_QUEUE_ENTRY_SIZE;
-		
+
 		ci->ci_devmq = pa;
 		err = hv_cpu_qconf(DEVICE_MONDO_QUEUE, ci->ci_devmq, SUN4V_MONDO_QUEUE_SIZE);
 		if (err != H_EOK)
 			panic("Unable to set device mondo queue: %d", err);
 		pa += SUN4V_MONDO_QUEUE_SIZE * SUN4V_QUEUE_ENTRY_SIZE;
-		
+
 		ci->ci_mondo = pa;
 		pa += 64; /* mondo message is 64 bytes */
-		
+
 		ci->ci_cpuset = pa;
 		pa += 64;
 	}
-	
+
 }
 
 int
@@ -669,6 +669,10 @@ cpu_boot_secondary_processors(void)
 		sparc_ncpus = ncpu = ncpuonline = 1;
 		return;
 	}
+
+	/* No MP for SUN4V yet */
+	if (CPU_ISSUN4V)
+		return;
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_cpuid == cpu_myid())

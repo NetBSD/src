@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.325.2.1 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: cd.c,v 1.325.2.2 2015/06/06 14:40:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325.2.1 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325.2.2 2015/06/06 14:40:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325.2.1 2015/04/06 15:18:13 skrll Exp $");
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -229,7 +229,10 @@ const struct cdevsw cd_cdevsw = {
 	.d_flag = D_DISK
 };
 
-static struct dkdriver cddkdriver = { cdstrategy, NULL };
+static struct dkdriver cddkdriver = {
+	.d_strategy = cdstrategy,
+	.d_minphys = cdminphys
+};
 
 static const struct scsipi_periphsw cd_switch = {
 	cd_interpret_sense,	/* use our error handler first */
@@ -1051,7 +1054,7 @@ cd_interpret_sense(struct scsipi_xfer *xs)
 	 * Ready, Operation In Progress" (Sense code 0x04, 0x07),
 	 * then wait for the specified time
 	 */
-	 
+
 	if ((SSD_SENSE_KEY(sense->flags) == SKEY_NOT_READY) &&
 	    (sense->asc == 0x04) && (sense->ascq == 0x07)) {
 		/*
@@ -1073,7 +1076,7 @@ cd_interpret_sense(struct scsipi_xfer *xs)
 	 * progress" (Sense code 0x04, 0x08), then wait for the specified
 	 * time
 	 */
-	 
+
 	if ((SSD_SENSE_KEY(sense->flags) == SKEY_NOT_READY) &&
 	    (sense->asc == 0x04) && (sense->ascq == 0x08)) {
 		/*
@@ -1321,7 +1324,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 	}
 
-	error = disk_ioctl(&cd->sc_dk, dev, cmd, addr, flag, l); 
+	error = disk_ioctl(&cd->sc_dk, dev, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -1396,7 +1399,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		error = scsipi_test_unit_ready(cd->sc_periph, XS_CTL_SILENT);
 		*((int*)addr) = (error == 0);
 		if (error == ENODEV || error == EIO || error == 0)
-			return 0;			
+			return 0;
 		return error;
 	}
 
@@ -3362,7 +3365,7 @@ out:
 }
 
 static int
-mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph, 
+mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 			struct mmc_trackinfo *trackinfo)
 {
 	struct scsipi_read_toc            gtoc_cmd;
@@ -3376,7 +3379,7 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	int size, req_size;
 	int error, flags;
 
-	
+
 	buffer = malloc(buffer_size, M_TEMP, M_WAITOK);
 	/*
 	 * Emulate read trackinfo for DVD-ROM. We can't use the raw-TOC as the
@@ -3495,7 +3498,7 @@ out:
 }
 
 static int
-mmc_gettrackinfo(struct scsipi_periph *periph, 
+mmc_gettrackinfo(struct scsipi_periph *periph,
 		 struct mmc_trackinfo *trackinfo)
 {
 	struct scsipi_read_trackinfo      ti_cmd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.7.2.1 2015/04/06 15:18:12 skrll Exp $	*/
+/*	$NetBSD: virtio.c,v 1.7.2.2 2015/06/06 14:40:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.7.2.1 2015/04/06 15:18:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.7.2.2 2015/06/06 14:40:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,7 +489,6 @@ virtio_vq_intr(struct virtio_softc *sc)
 				r |= (vq->vq_done)(vq);
 		}
 	}
-		
 
 	return r;
 }
@@ -558,7 +557,7 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, const bool reinit)
 	vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
 	vq->vq_queued++;
 }
-	       
+
 /*
  * Allocate/free a vq.
  */
@@ -773,7 +772,7 @@ vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
  *	  bus_dmamap_unload(dmat, dmamap_payload[slot]);
  *	  return r;
  *	}
- *	r = virtio_enqueue_reserve(sc, vq, slot, 
+ *	r = virtio_enqueue_reserve(sc, vq, slot,
  *				   dmamap_payload[slot]->dm_nsegs+1);
  *							// ^ +1 for command
  *	if (r) {	// currently 0 or EAGAIN

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.16.2.2 2015/04/06 15:17:55 skrll Exp $
+#	$NetBSD: ODROID-C1,v 1.16.2.3 2015/06/06 14:39:58 skrll Exp $
 #
 #	Hardkernel ODROID-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -35,6 +35,10 @@ amlogicio0	at mainbus?
 amlogiccom0	at amlogicio0 port 0
 options 	CONSADDR=0xc81004c0, CONSPEED=115200
 
+# GPIO
+amlogicgpio0	at amlogicio0
+gpio*		at gpiobus?
+
 # Framebuffer
 genfb0		at amlogicio0
 wsdisplay*	at genfb?
@@ -59,7 +63,7 @@ amlogicrng0	at amlogicio0
 amlogicrtc0	at amlogicio0
 
 # SDHC controller
-amlogicsdhc0	at amlogicio0
+amlogicsdhc0	at amlogicio0 port 1
 sdmmc*		at amlogicsdhc?
 ld*		at sdmmc?
 

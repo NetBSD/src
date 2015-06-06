@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.37.2.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.37.2.2 2015/06/06 14:40:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.37.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.37.2.2 2015/06/06 14:40:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.37.2.1 2015/04/06 15:18:20 skrll Exp
 #include <sys/device.h>
 #include <sys/timetc.h>
 #include <sys/intr.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
 
@@ -129,7 +129,7 @@ inittodr(time_t base)
 			deltat = -deltat;
 
 		if (!badbase && deltat >= 2 * SECS_PER_DAY) {
-			
+
 			if (tv.tv_sec < base) {
 				/*
 				 * The clock should never go backwards

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.43 2014/10/17 20:52:00 uebayasi Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.43.2.1 2015/06/06 14:40:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.43 2014/10/17 20:52:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.43.2.1 2015/06/06 14:40:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.43 2014/10/17 20:52:00 uebayasi Exp $
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
-
-#include <sys/rnd.h>
 
 #include <machine/endian.h>
 

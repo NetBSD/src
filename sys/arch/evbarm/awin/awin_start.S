@@ -39,9 +39,9 @@
 #include "assym.h"
 
 #include <arm/allwinner/awin_reg.h>
-#include <evbarm/awin/platform.h>  
+#include <evbarm/awin/platform.h>
 
-RCSID("$NetBSD: awin_start.S,v 1.6.2.1 2015/04/06 15:17:55 skrll Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.6.2.2 2015/06/06 14:39:57 skrll Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -117,7 +117,7 @@ _C_LABEL(awin_start):
 	movw	r1, #:lower16:.Lmmu_init_table
 	movt	r1, #:upper16:.Lmmu_init_table
 	bl	arm_boot_l1pt_init
-	XPUTC(#68)
+	XPUTC(#'D')
 
 	/*
 	 * Turn on the MMU, Caches, etc.  Return to new enabled address space.
@@ -141,13 +141,13 @@ _C_LABEL(awin_start):
 	.pushsection .text,"ax",%progbits
 1:
 #endif
-	XPUTC2(#90)
+	XPUTC2(#'Z')
 
 #if defined(MULTIPROCESSOR)
 	// Now spin up the second processors into the same state we are now.
-	XPUTC2(#77)
-	XPUTC2(#80)
-	XPUTC2(#60)
+	XPUTC2(#'M')
+	XPUTC2(#'P')
+	XPUTC2(#'<')
 	// Make sure the cache is flushed out to RAM for the other CPUs
 	bl	_C_LABEL(armv7_dcache_wbinv_all)
 
@@ -193,7 +193,7 @@ _C_LABEL(awin_start):
 	bl	a80_mpinit
 #endif
 
-	XPUTC2(#62)
+	XPUTC2(#'>')
 #endif /* MULTIPROCESSOR */
 	XPUTC2(#13)
 	XPUTC2(#10)
@@ -220,9 +220,9 @@ a20_mpinit:
 	movw	r5, #:lower16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
 	movt	r5, #:upper16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
 
-	XPUTC2(#65)
-	XPUTC2(#50)
-	XPUTC2(#48)
+	XPUTC2(#'A')
+	XPUTC2(#'2')
+	XPUTC2(#'0')
 
 #ifdef __ARMEB__
 	setend	le			// everything here is little-endian
@@ -240,13 +240,13 @@ a20_mpinit:
 	dsb
 
 	/* Ensure CPU1 reset also invalidates its L1 caches */
-	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG] 
+	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG]
 	bic	r1, r1, #(1 << 1)
 	str	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG]
 	dsb
 
 	/* Hold DBGPWRDUP signal low */
-	ldr	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG] 
+	ldr	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
 	bic	r1, r1, #(1 << 1)
 	str	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
 	dsb
@@ -263,7 +263,7 @@ a20_mpinit:
 	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
 
 	/* Clear power-off gating */
-	ldr	r1, [r5, #AWIN_CPUCFG_CPU1_PWROFF_REG] 
+	ldr	r1, [r5, #AWIN_CPUCFG_CPU1_PWROFF_REG]
 	bic	r1, r1, #(1 << 1)
 	str	r1, [r5, #AWIN_CPUCFG_CPU1_PWROFF_REG]
 	dsb
@@ -275,7 +275,7 @@ a20_mpinit:
 	dsb
 
 	/* Reassert DBGPWRDUP signal */
-	ldr	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG] 
+	ldr	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
 	orr	r1, r1, #(1 << 1)
 	str	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
 	dsb
@@ -285,7 +285,7 @@ a20_mpinit:
 #endif
 
 	//
-	// Wait up a second for CPU1 to hatch. 
+	// Wait up a second for CPU1 to hatch.
 	//
 	movw	r6, #:lower16:arm_cpu_hatched
 	movt	r6, #:upper16:arm_cpu_hatched
@@ -315,9 +315,9 @@ a31_mpinit:
 	movw	r6, #:lower16:(AWIN_CORE_PBASE+AWIN_A31_PRCM_OFFSET)
 	movt	r6, #:upper16:(AWIN_CORE_PBASE+AWIN_A31_PRCM_OFFSET)
 
-	XPUTC2(#65)
-	XPUTC2(#51)
-	XPUTC2(#49)
+	XPUTC2(#'A')
+	XPUTC2(#'3')
+	XPUTC2(#'1')
 
 #ifdef __ARMEB__
 	setend	le			// everything here is little-endian
@@ -327,7 +327,8 @@ a31_mpinit:
 
 a31_mpinit_cpu:
 
-	XPUTC2(r12)
+	add	r1, r12, #'0'
+	XPUTC2(r1)
 
 	/* Set where the other CPU(s) are going to execute */
 	movw	r1, #:lower16:cortex_mpstart
@@ -344,7 +345,7 @@ a31_mpinit_cpu:
 	dsb
 
 	/* Ensure CPUX reset also invalidates its L1 caches */
-	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG] 
+	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG]
 	mov	r0, #1
 	lsl	r0, r0, r12
 	bic	r1, r1, r0
@@ -390,9 +391,9 @@ a31_mpinit_cpu:
 	/* We need to wait (at least) 10ms */
 	mov	r0, #0x3b000			// 10.06ms
 	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
-	
+
 	/* Clear power-off gating */
-	ldr	r1, [r6, #AWIN_A31_PRCM_PWROFF_GATING_REG] 
+	ldr	r1, [r6, #AWIN_A31_PRCM_PWROFF_GATING_REG]
 	mov	r0, #1
 	lsl	r0, r0, r12
 	bic	r1, r1, r0
@@ -402,7 +403,7 @@ a31_mpinit_cpu:
 	/* We need to wait (at least) 10ms */
 	mov	r0, #0x3b000			// 10.06ms
 	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
-	
+
 	/* Bring CPUX out of reset */
 	mov	r1, #(AWIN_A31_CPUCFG_RST_CTRL_CPU_RESET|AWIN_A31_CPUCFG_RST_CTRL_CORE_RESET)
 	mov	r2, #0x40
@@ -421,7 +422,7 @@ a31_mpinit_cpu:
 #endif
 
 	//
-	// Wait up a second for CPU1-3 to hatch. 
+	// Wait up a second for CPU1-3 to hatch.
 	//
 	movw	r6, #:lower16:arm_cpu_hatched
 	movt	r6, #:upper16:arm_cpu_hatched
@@ -453,9 +454,9 @@ a80_mpinit:
 	movw	r6, #:lower16:(AWIN_A80_RCPUS_PBASE+AWIN_A80_RPRCM_OFFSET)
 	movt	r6, #:upper16:(AWIN_A80_RCPUS_PBASE+AWIN_A80_RPRCM_OFFSET)
 
-	XPUTC2(#65)
-	XPUTC2(#51)
-	XPUTC2(#49)
+	XPUTC2(#'A')
+	XPUTC2(#'8')
+	XPUTC2(#'0')
 
 #ifdef __ARMEB__
 	setend	le			// everything here is little-endian
@@ -465,7 +466,8 @@ a80_mpinit:
 
 a80_mpinit_cpu:
 
-	XPUTC2(r12)
+	add	r1, r12, #'0'
+	XPUTC2(r1)
 
 	/* Set where the other CPU(s) are going to execute */
 	movw	r1, #:lower16:cortex_mpstart
@@ -508,7 +510,7 @@ a80_mpinit_cpu:
 	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
 
 	/* Clear power-off gating */
-	ldr	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_PWR_GATING_REG] 
+	ldr	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_PWR_GATING_REG]
 	mov	r0, #1
 	lsl	r0, r0, r12
 	bic	r1, r1, r0
@@ -544,7 +546,7 @@ a80_mpinit_cpu:
 #endif
 
 	//
-	// Wait up a second for CPU1-3 to hatch. 
+	// Wait up a second for CPU1-3 to hatch.
 	//
 	movw	r6, #:lower16:arm_cpu_hatched
 	movt	r6, #:upper16:arm_cpu_hatched

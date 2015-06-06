@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.31.2.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.31.2.2 2015/06/06 14:40:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.31.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.31.2.2 2015/06/06 14:40:22 skrll Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.31.2.1 2015/04/06 15:18:20 skrll Exp
 #include <sys/vnode.h>
 
 #include <miscfs/genfs/genfs.h>
-#include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
 
 /* Root filesystem. */
@@ -170,7 +169,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 
 	mutex_enter(&vfs_list_lock);
 	LIST_FOREACH(vfsp, &vfs_list, vfs_list)
-		if (!strncmp(vfsp->vfs_name, fstypename, 
+		if (!strncmp(vfsp->vfs_name, fstypename,
 		    sizeof(mp->mnt_stat.f_fstypename)))
 			break;
 	if (vfsp == NULL) {
@@ -340,7 +339,7 @@ vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
 
 struct vnode_iterator {
 	struct vnode vi_vnode;
-}; 
+};
 
 void
 vfs_vnode_iterator_init(struct mount *mp, struct vnode_iterator **vip)
@@ -404,7 +403,7 @@ again:
 		TAILQ_INSERT_AFTER(&mp->mnt_vnodelist, vp, mvp, v_mntvnodes);
 		mvp->v_usecount = 1;
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, 0);
+		error = vget(vp, 0, true /* wait */);
 		KASSERT(error == 0 || error == ENOENT);
 	} while (error != 0);
 
@@ -626,7 +625,7 @@ start_extattr(struct mount *mp)
 	int error;
 
 	error = VFS_EXTATTRCTL(mp, EXTATTR_CMD_START, NULL, 0, NULL);
-	if (error) 
+	if (error)
 		printf("%s: failed to start extattr: error = %d\n",
 		       mp->mnt_stat.f_mntonname, error);
 
@@ -722,12 +721,9 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
-		error = vfs_allocate_syncvnode(mp);
-	if (error == 0)
-		vp->v_mountedhere = mp;
+		vfs_syncer_add_to_worklist(mp);
+	vp->v_mountedhere = mp;
 	vput(nd.ni_vp);
-	if (error != 0)
-		goto err_onmountlist;
 
 	mount_checkdirs(vp);
 	mutex_exit(&mp->mnt_updating);
@@ -745,12 +741,6 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	vfs_destroy(mp);
 	*vpp = NULL;
 	return error;
-
-err_onmountlist:
-	mutex_enter(&mountlist_lock);
-	TAILQ_REMOVE(&mountlist, mp, mnt_list);
-	mp->mnt_iflag |= IMNT_GONE;
-	mutex_exit(&mountlist_lock);
 
 err_mounted:
 	if (VFS_UNMOUNT(mp, MNT_FORCE) != 0)
@@ -808,7 +798,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return ENOENT;
 	}
 
-	used_syncer = (mp->mnt_syncer != NULL);
+	used_syncer = (mp->mnt_iflag & IMNT_ONWORKLIST) != 0;
 	used_extattr = mp->mnt_flag & MNT_EXTATTR;
 
 	/*
@@ -831,8 +821,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	async = mp->mnt_flag & MNT_ASYNC;
 	mp->mnt_flag &= ~MNT_ASYNC;
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
-	if (mp->mnt_syncer != NULL)
-		vfs_deallocate_syncvnode(mp);
+	if (used_syncer)
+		vfs_syncer_remove_from_worklist(mp);
 	error = 0;
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 		error = VFS_SYNC(mp, MNT_WAIT, l->l_cred);
@@ -844,7 +834,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mp->mnt_iflag &= ~IMNT_UNMOUNT;
 		mutex_exit(&mp->mnt_unmounting);
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
-			(void) vfs_allocate_syncvnode(mp);
+			vfs_syncer_add_to_worklist(mp);
 		mp->mnt_flag |= async;
 		mutex_exit(&mp->mnt_updating);
 		if (used_syncer)

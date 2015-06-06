@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.13 2014/03/29 19:28:30 christos Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.13.6.1 2015/06/06 14:40:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -40,6 +40,8 @@
 #ifndef XEN
 #define	__HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH
 #endif
+
+#include <sys/kcpuset.h>
 
 /*
  * x86-specific PCI structure and type definitions.
@@ -116,10 +118,34 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+int		pci_intr_distribute(void *, const kcpuset_t *, kcpuset_t *);
+
+/*
+ * If device drivers use MSI/MSI-X, they should use these API for INTx
+ * instead of pci_intr_map(), because of conforming the pci_intr_handle
+ * ownership to MSI/MSI-X.
+ */
+int		pci_intx_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **);
 
 /* experimental MSI support */
-void *pci_msi_establish(struct pci_attach_args *, int, int (*)(void *), void *);
-void pci_msi_disestablish(void *);
+int		pci_msi_count(const struct pci_attach_args *);
+int		pci_msi_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *);
+int		pci_msi_alloc_exact(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int);
+
+/* experimental MSI-X support */
+int		pci_msix_count(const struct pci_attach_args *);
+int		pci_msix_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *);
+int		pci_msix_alloc_exact(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int);
+int		pci_msix_alloc_map(const struct pci_attach_args *,
+		    pci_intr_handle_t **, u_int *, int);
+
+void		pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *,
+		    int);
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED

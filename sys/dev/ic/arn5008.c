@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.6 2014/02/23 15:29:11 christos Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.6.8.1 2015/06/06 14:40:07 skrll Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.6 2014/02/23 15:29:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.6.8.1 2015/06/06 14:40:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -518,8 +518,8 @@ ar5008_tx_alloc(struct athn_softc *sc)
 	if (error != 0)
 		goto fail;
 
-	error = bus_dmamap_load_raw(sc->sc_dmat, sc->sc_map, &sc->sc_seg, 1, size,
-	    BUS_DMA_NOWAIT);
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_map, sc->sc_descs,
+	    size, NULL, BUS_DMA_NOWAIT);
 	if (error != 0)
 		goto fail;
 
@@ -606,8 +606,8 @@ ar5008_rx_alloc(struct athn_softc *sc)
 	if (error != 0)
 		goto fail;
 
-	error = bus_dmamap_load_raw(sc->sc_dmat, rxq->map, &rxq->seg, 1,
-	    size, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load(sc->sc_dmat, rxq->map, rxq->descs,
+	    size, NULL, BUS_DMA_NOWAIT);
 	if (error != 0)
 		goto fail;
 
@@ -1257,8 +1257,9 @@ ar5008_intr(struct athn_softc *sc)
 
 		if ((sc->sc_flags & ATHN_FLAG_RFSILENT) &&
 		    (sync & AR_INTR_SYNC_GPIO_PIN(sc->sc_rfsilent_pin))) {
+			AR_WRITE(sc, AR_INTR_SYNC_ENABLE, 0);
+			(void)AR_READ(sc, AR_INTR_SYNC_ENABLE);
 			pmf_event_inject(sc->sc_dev, PMFE_RADIO_OFF);
-			return 1;
 		}
 
 		AR_WRITE(sc, AR_INTR_SYNC_CAUSE, sync);

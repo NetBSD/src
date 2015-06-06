@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.25 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.25.6.1 2015/06/06 14:40:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,10 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.25 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.25.6.1 2015/06/06 14:40:22 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_sysv.h"
-#include "opt_compat_netbsd.h"
+#endif
+
+#include <sys/syscall.h>
+#include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -49,15 +54,200 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.25 2014/02/25 18:30:11 pooka Exp $");
 #endif
 #include <sys/systm.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
 
-#ifdef COMPAT_50
-#include <compat/sys/ipc.h>
+static int (*kern_sysvipc50_sysctl_p)(SYSCTLFN_ARGS);
+
+/*
+ * Values in support of System V compatible shared memory.	XXX
+ * (originally located in sys/conf/param.c)
+ */
+#ifdef SYSVSHM
+#if !defined(SHMMAX) && defined(SHMMAXPGS)
+#define	SHMMAX	SHMMAXPGS	/* shminit() performs a `*= PAGE_SIZE' */
+#elif !defined(SHMMAX)
+#define SHMMAX 0
 #endif
+#ifndef	SHMMIN
+#define	SHMMIN	1
+#endif
+#ifndef	SHMMNI
+#define	SHMMNI	128		/* <64k, see IPCID_TO_IX in ipc.h */
+#endif
+#ifndef	SHMSEG
+#define	SHMSEG	128
+#endif
+
+struct	shminfo shminfo = {
+	SHMMAX,
+	SHMMIN,
+	SHMMNI,
+	SHMSEG,
+	0
+};
+#endif
+
+/*
+ * Values in support of System V compatible semaphores.
+ */
+#ifdef SYSVSEM
+struct	seminfo seminfo = {
+	SEMMAP,		/* # of entries in semaphore map */
+	SEMMNI,		/* # of semaphore identifiers */
+	SEMMNS,		/* # of semaphores in system */
+	SEMMNU,		/* # of undo structures in system */
+	SEMMSL,		/* max # of semaphores per id */
+	SEMOPM,		/* max # of operations per semop call */
+	SEMUME,		/* max # of undo entries per process */
+	SEMUSZ,		/* size in bytes of undo structure */
+	SEMVMX,		/* semaphore maximum value */
+	SEMAEM		/* adjust on exit max value */
+};
+#endif
+
+/*
+ * Values in support of System V compatible messages.
+ */
+#ifdef SYSVMSG
+struct	msginfo msginfo = {
+	MSGMAX,		/* max chars in a message */
+	MSGMNI,		/* # of message queue identifiers */
+	MSGMNB,		/* max chars in a queue */
+	MSGTQL,		/* max messages in system */
+	MSGSSZ,		/* size of a message segment */
+			/* (must be small power of 2 greater than 4) */
+	MSGSEG		/* number of message segments */
+};
+#endif
+
+MODULE(MODULE_CLASS_EXEC, sysv_ipc, NULL);
+ 
+#ifdef _MODULE
+SYSCTL_SETUP_PROTO(sysctl_ipc_setup);
+SYSCTL_SETUP_PROTO(sysctl_ipc_shm_setup);
+SYSCTL_SETUP_PROTO(sysctl_ipc_sem_setup);
+SYSCTL_SETUP_PROTO(sysctl_ipc_msg_setup);
+
+static struct sysctllog *sysctl_sysvipc_clog = NULL;
+#endif
+
+static const struct syscall_package sysvipc_syscalls[] = {
+	{ SYS___shmctl50, 0, (sy_call_t *)sys___shmctl50 },
+	{ SYS_shmat, 0, (sy_call_t *)sys_shmat },
+	{ SYS_shmdt, 0, (sy_call_t *)sys_shmdt },
+	{ SYS_shmget, 0, (sy_call_t *)sys_shmget },
+	{ SYS_____semctl50, 0, (sy_call_t *)sys_____semctl50 },
+	{ SYS_semget, 0, (sy_call_t *)sys_semget },
+	{ SYS_semop, 0, (sy_call_t *)sys_semop },
+	{ SYS_semconfig, 0, (sy_call_t *)sys_semconfig },
+	{ SYS___msgctl50, 0, (sy_call_t *)sys___msgctl50 },
+	{ SYS_msgget, 0, (sy_call_t *)sys_msgget },
+	{ SYS_msgsnd, 0, (sy_call_t *)sys_msgsnd },
+	{ SYS_msgrcv, 0, (sy_call_t *)sys_msgrcv },
+	{ 0, 0, NULL }
+};
+
+static int
+sysv_ipc_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		/* Link the system calls */
+		error = syscall_establish(NULL, sysvipc_syscalls);
+
+		/* Initialize all sysctl sub-trees */
+#ifdef _MODULE
+		sysctl_ipc_setup(&sysctl_sysvipc_clog);
+#ifdef	SYSVMSG
+		sysctl_ipc_msg_setup(&sysctl_sysvipc_clog);
+#endif
+#ifdef	SYSVSHM
+		sysctl_ipc_shm_setup(&sysctl_sysvipc_clog);
+#endif
+#ifdef	SYSVSEM
+		sysctl_ipc_sem_setup(&sysctl_sysvipc_clog);
+#endif
+		/* Assume no compat sysctl routine for now */
+		kern_sysvipc50_sysctl_p = NULL;
+
+		/* Initialize each sub-component */
+#ifdef SYSVSHM
+		shminit();
+#endif
+#ifdef SYSVSEM
+		seminit();
+#endif
+#ifdef SYSVMSG
+		msginit();
+#endif
+#endif /* _MODULE */
+		break;
+	case MODULE_CMD_FINI:
+		/*
+		 * Make sure no subcomponents are active.  Each one
+		 * tells us if it is busy, and if it was _not_ busy,
+		 * we assume it has already done its own clean-up.
+		 * So we might need to re-init any components that
+		 * are successfully fini'd if we find one that is 
+		 * still busy.
+		 */
+#ifdef SYSVSHM
+		if (shmfini()) {
+			return EBUSY;
+		}
+#endif
+#ifdef SYSVSEM
+		if (semfini()) {
+#ifdef SYSVSHM
+			shminit();
+#endif
+			return EBUSY;
+		}
+#endif
+#ifdef SYSVMSG
+		if (msgfini()) {
+#ifdef SYSVSEM
+			seminit();
+#endif
+#ifdef SYSVSHM
+			shminit();
+#endif
+			return EBUSY;
+		}
+#endif
+
+		/* Unlink the system calls. */
+		error = syscall_disestablish(NULL, sysvipc_syscalls);
+		if (error)
+			return error;
+
+#ifdef _MODULE
+		/* Remove the sysctl sub-trees */
+		sysctl_teardown(&sysctl_sysvipc_clog);
+#endif  
+
+		/* Remove the kauth listener */
+		sysvipcfini();
+		break;
+	default:
+		return ENOTTY;
+	}
+	return error;
+}
+
+void
+sysvipc50_set_compat_sysctl(int (*compat_sysctl)(SYSCTLFN_PROTO))
+{
+
+	kern_sysvipc50_sysctl_p = compat_sysctl;
+}
 
 static kauth_listener_t sysvipc_listener = NULL;
 
@@ -138,6 +328,14 @@ ipcperm(kauth_cred_t cred, struct ipc_perm *perm, int mode)
 }
 
 void
+sysvipcfini(void)
+{
+
+	KASSERT(sysvipc_listener != NULL);
+	kauth_unlisten_scope(sysvipc_listener);
+}
+
+void
 sysvipcinit(void)
 {
 
@@ -168,16 +366,17 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 	int32_t nds;
 	int i, error, ret;
 
-#ifdef COMPAT_50
-	switch ((error = sysctl_kern_sysvipc50(SYSCTLFN_CALL(rnode)))) {
-	case 0:
-		return 0;
-	case EPASSTHROUGH:
-		break;
-	default:
-		return error;
+/*
+ * If compat_sysv module has loaded the compat sysctl, call it.  If
+ * it handles the request completely (either success or error), just
+ * return.  Otherwise fallthrough to the non-compat_sysv sysctl code.
+ */
+	if (kern_sysvipc50_sysctl_p != NULL) {
+		error = (*kern_sysvipc50_sysctl_p)(SYSCTLFN_CALL(rnode));
+		if (error != EPASSTHROUGH)
+			return error;
 	}
-#endif
+
 	if (namelen != 1)
 		return EINVAL;
 

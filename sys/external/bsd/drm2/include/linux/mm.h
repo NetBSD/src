@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.3.6.1 2015/04/06 15:18:17 skrll Exp $	*/
+/*	$NetBSD: mm.h,v 1.3.6.2 2015/06/06 14:40:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,17 +32,11 @@
 #ifndef _LINUX_MM_H_
 #define _LINUX_MM_H_
 
-#include <sys/kauth.h>
-#include <sys/file.h>
-#include <sys/mman.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-
-#include <miscfs/specfs/specdev.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <asm/page.h>
+
+struct file;
 
 /* XXX Ugh bletch!  Whattakludge!  Linux's sense is reversed...  */
 #undef	PAGE_MASK
@@ -67,52 +61,13 @@ si_meminfo(struct sysinfo *si)
 	/* XXX Fill in more as needed.  */
 }
 
-/*
- * ###################################################################
- * ############### XXX THIS NEEDS SERIOUS SCRUTINY XXX ###############
- * ###################################################################
- */
-
-/*
- * XXX unsigned long is a loser but will probably work accidentally.
- * XXX struct file might not map quite right between Linux and NetBSD.
- * XXX This is large enough it should take its own file.
- */
-
 static inline unsigned long
-vm_mmap(struct file *file, unsigned long base, unsigned long size,
-    unsigned long prot, unsigned long flags, unsigned long token)
+vm_mmap(struct file *file __unused, unsigned long base __unused,
+    unsigned long size __unused, unsigned long prot __unused,
+    unsigned long flags __unused, unsigned long token __unused)
 {
-	struct vnode *vp;
-	void *addr;
-	int error;
 
-	/*
-	 * Cargo-culted from sys_mmap.  Various conditions kasserted
-	 * rather than checked for expedience and safey.
-	 */
-
-	KASSERT(base == 0);
-	KASSERT(prot == (PROT_READ | PROT_WRITE));
-	KASSERT(flags == MAP_SHARED);
-
-	KASSERT(file->f_type == DTYPE_VNODE);
-	vp = file->f_data;
-
-	KASSERT(vp->v_type == VCHR);
-	KASSERT((file->f_flag & (FREAD | FWRITE)) == (FREAD | FWRITE));
-
-	/* XXX pax_mprotect?  pax_aslr?  */
-
-	addr = NULL;
-	error = uvm_mmap_dev(curproc, &addr, size, vp->v_rdev, (off_t)base);
-	if (error)
-		goto out;
-
-	KASSERT((uintptr_t)addr <= -1024UL); /* XXX Kludgerosity!  */
-
-out:	/* XXX errno NetBSD->Linux (kludgerific) */
-	return (error? (-error) : (unsigned long)addr);
+	return -ENODEV;
 }
 
 #endif  /* _LINUX_MM_H_ */

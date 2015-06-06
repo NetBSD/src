@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.56.2.1 2015/04/06 15:17:50 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.56.2.2 2015/06/06 14:39:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56.2.1 2015/04/06 15:17:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56.2.2 2015/06/06 14:39:53 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -296,7 +296,9 @@ void fdgetdisklabel(struct fd_softc *);
 int fd_get_parms(struct fd_softc *);
 void fdstart(struct fd_softc *);
 
-struct dkdriver fddkdriver = { fdstrategy };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy
+};
 
 struct fd_type *fd_nvtotype(const char *, int, int);
 void fd_set_motor(struct fdc_softc *fdc, int reset);
@@ -402,7 +404,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	callout_init(&fdc->sc_timo_ch, 0); 
+	callout_init(&fdc->sc_timo_ch, 0);
 	callout_init(&fdc->sc_intr_ch, 0);
 
 	fdc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "fdc", fdcintr, fdc);
@@ -1017,7 +1019,7 @@ loop:
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
 			 printf("fdcintr: block %" PRId64
-			     " != blkno %" PRId64 "\n",	
+			     " != blkno %" PRId64 "\n",
 				block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
@@ -1395,11 +1397,11 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return EINVAL;
 		}
 
-		fd_formb = malloc(sizeof(struct ne7_fd_formb), 
+		fd_formb = malloc(sizeof(struct ne7_fd_formb),
 		    M_TEMP, M_NOWAIT);
 		if(fd_formb == 0)
 			return ENOMEM;
-		    
+
 
 		fd_formb->head = form_cmd->head;
 		fd_formb->cyl = form_cmd->cylinder;
@@ -1521,7 +1523,7 @@ load_memory_disc_from_floppy(struct md_conf *md, dev_t dev)
 	type = FDTYPE(dev) - 1;
 	if (type < 0) type = 0;
 	floppysize = fd_types[type].size << (fd_types[type].secsize + 7);
-        
+
 	if (md->md_size < floppysize) {
 		printf("Memory disc is not big enough for floppy image\n");
 		return(EINVAL);
@@ -1534,7 +1536,7 @@ load_memory_disc_from_floppy(struct md_conf *md, dev_t dev)
 /* obtain a buffer */
 
 	bp = geteblk(fd_types[type].sectrac * DEV_BSIZE);
-    
+
 /* request no partition relocation by driver on I/O operations */
 
 	bp->b_dev = dev;
@@ -1542,7 +1544,7 @@ load_memory_disc_from_floppy(struct md_conf *md, dev_t dev)
 	s = splbio();
 
 	if (fdopen(bp->b_dev, 0, 0, curlwp) != 0) {
-		brelse(bp, 0);		
+		brelse(bp, 0);
 		printf("Cannot open floppy device\n");
 			return(EINVAL);
 	}
@@ -1561,14 +1563,14 @@ load_memory_disc_from_floppy(struct md_conf *md, dev_t dev)
 
 		if (biowait(bp))
 			panic("Cannot load floppy image");
-                                                 
+
 		memcpy((char *)md->md_addr + loop * fd_types[type].sectrac
 		    * DEV_BSIZE, (void *)bp->b_data,
 		    fd_types[type].sectrac * DEV_BSIZE);
 	}
 	printf("\x08\x08\x08\x08\x08\x08%4dK done\n",
 	    loop * fd_types[type].sectrac * DEV_BSIZE / 1024);
-        
+
 	fdclose(bp->b_dev, 0, 0, curlwp);
 
 	brelse(bp, 0);

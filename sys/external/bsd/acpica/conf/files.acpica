@@ -1,11 +1,12 @@
-# $NetBSD: files.acpica,v 1.7 2014/10/25 21:00:06 christos Exp $
+# $NetBSD: files.acpica,v 1.7.2.1 2015/06/06 14:40:15 skrll Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
 
 # common/
 file	external/bsd/acpica/dist/common/ahids.c			acpica
-file	external/bsd/acpica/dist/common/ahuuids.c		acpica
+file	external/bsd/acpica/dist/common/ahuuids.c		acpica & acpi_debug & ddb
+
 
 # debugger/
 file	external/bsd/acpica/dist/debugger/dbcmds.c		acpica & acpi_debug & ddb
@@ -24,6 +25,7 @@ file	external/bsd/acpica/dist/debugger/dbxface.c		acpica & acpi_debug & ddb
 
 # disassembler/
 file	external/bsd/acpica/dist/disassembler/dmbuffer.c	acpica & acpi_debug & ddb
+file	external/bsd/acpica/dist/disassembler/dmcstyle.c	acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmdeferred.c	acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmnames.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmobject.c	acpica & acpi_debug & ddb

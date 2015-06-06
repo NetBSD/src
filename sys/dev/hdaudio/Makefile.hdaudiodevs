@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hdaudiodevs,v 1.1.2.2 2015/04/06 15:18:08 skrll Exp $
+#	$NetBSD: Makefile.hdaudiodevs,v 1.1.2.3 2015/06/06 14:40:07 skrll Exp $
 #
 # As per tron@NetBSD.org, the proper procedure is
 #
@@ -9,6 +9,6 @@
 
 .include <bsd.own.mk>
 
-hdaudiodevs.h hdaudiodevs_data.h: ${.CURDIR}/../../devlist2h.awk hdaudiodevs
+hdaudiodevs.h hdaudiodevs_data.h: ${.CURDIR}/../devlist2h.awk hdaudiodevs
 	/bin/rm -f hdaudiodevs.h hdaudiodevs_data.h
 	${TOOL_AWK} -f ${.ALLSRC}

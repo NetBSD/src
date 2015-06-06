@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.20 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.20.24.1 2015/06/06 14:40:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.20 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.20.24.1 2015/06/06 14:40:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.20 2012/02/02 19:43:03 tls Exp $");
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
-#include <sys/rnd.h>
 
 #include <machine/vmparam.h>
 #include <sys/bus.h>

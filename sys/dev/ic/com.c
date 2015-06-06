@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.329.2.1 2015/04/06 15:18:09 skrll Exp $ */
+/* $NetBSD: com.c,v 1.329.2.2 2015/06/06 14:40:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.2 2015/06/06 14:40:07 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -74,8 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.1 2015/04/06 15:18:09 skrll Exp $");
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_ntp.h"
-
-#include "rnd.h"
 
 /* The COM16650 option was renamed to COM_16650. */
 #ifdef COM16650
@@ -114,7 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.1 2015/04/06 15:18:09 skrll Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 
@@ -382,7 +380,8 @@ com_enable_debugport(struct com_softc *sc)
 	sc->sc_ier = IER_ERXRDY;
 	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier |= IER_EUART | IER_ERXTOUT;
-	if (sc->sc_type == COM_TYPE_INGENIC)
+	if (sc->sc_type == COM_TYPE_INGENIC ||
+	    sc->sc_type == COM_TYPE_TEGRA)
 		sc->sc_ier |= IER_ERXTOUT;
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
@@ -474,7 +473,7 @@ com_attach_subr(struct com_softc *sc)
 	/* look for a NS 16550AF UART with FIFOs */
 	if (sc->sc_type == COM_TYPE_INGENIC) {
 		CSR_WRITE_1(regsp, COM_REG_FIFO,
-		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | 
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 		    FIFO_TRIGGER_14 | FIFO_UART_ON);
 	} else
 		CSR_WRITE_1(regsp, COM_REG_FIFO,
@@ -815,7 +814,8 @@ com_shutdown(struct com_softc *sc)
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
 		if ((sc->sc_type == COM_TYPE_PXA2x0) ||
-		    (sc->sc_type == COM_TYPE_INGENIC))
+		    (sc->sc_type == COM_TYPE_INGENIC) ||
+		    (sc->sc_type == COM_TYPE_TEGRA))
 			sc->sc_ier |= IER_ERXTOUT;
 	} else
 		sc->sc_ier = 0;
@@ -897,7 +897,8 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		if (sc->sc_type == COM_TYPE_PXA2x0)
 			sc->sc_ier |= IER_EUART | IER_ERXTOUT;
-		else if (sc->sc_type == COM_TYPE_INGENIC)
+		else if (sc->sc_type == COM_TYPE_INGENIC ||
+			 sc->sc_type == COM_TYPE_TEGRA)
 			sc->sc_ier |= IER_ERXTOUT;
 		CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 
@@ -1906,8 +1907,10 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 				if (sc->sc_type == COM_TYPE_PXA2x0)
 					SET(sc->sc_ier, IER_ERXTOUT);
 #endif
-				if (sc->sc_type == COM_TYPE_INGENIC)
-					sc->sc_ier |= IER_ERXTOUT;
+				if (sc->sc_type == COM_TYPE_INGENIC ||
+				    sc->sc_type == COM_TYPE_TEGRA)
+					SET(sc->sc_ier, IER_ERXTOUT);
+
 				CSR_WRITE_1(&sc->sc_regs, COM_REG_IER,
 				    sc->sc_ier);
 			}
@@ -2111,9 +2114,11 @@ again:	do {
 					CLR(sc->sc_ier, IER_ERXRDY|IER_ERXTOUT);
 				else
 #endif
-				if (sc->sc_type == COM_TYPE_INGENIC)
-					sc->sc_ier |= IER_ERXRDY|IER_ERXTOUT;
-				else					
+				if (sc->sc_type == COM_TYPE_INGENIC ||
+				    sc->sc_type == COM_TYPE_TEGRA)
+					CLR(sc->sc_ier,
+					    IER_ERXRDY | IER_ERXTOUT);
+				else
 					CLR(sc->sc_ier, IER_ERXRDY);
 				CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
 			}
@@ -2330,7 +2335,7 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 			CSR_WRITE_2(regsp, COM_REG_DLBL, rate);
 		} else {
 			/* no EFR on alchemy */
-			if ((type != COM_TYPE_16550_NOERS) && 
+			if ((type != COM_TYPE_16550_NOERS) &&
 			    (type != COM_TYPE_INGENIC)) {
 				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
 				CSR_WRITE_1(regsp, COM_REG_EFR, 0);

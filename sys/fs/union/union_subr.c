@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.67.2.1 2015/04/06 15:18:19 skrll Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.67.2.2 2015/06/06 14:40:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.67.2.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.67.2.2 2015/06/06 14:40:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,19 +578,16 @@ union_loadvnode(struct mount *mp, struct vnode *vp,
 
 	mutex_obj_hold(svp->v_interlock);
 	uvm_obj_setlock(&vp->v_uobj, svp->v_interlock);
-	vp->v_iflag |= VI_LOCKSHARE;
 
 	/* detect the root vnode (and aliases) */
 	if ((un->un_uppervp == um->um_uppervp) &&
 	    ((un->un_lowervp == NULLVP) || un->un_lowervp == um->um_lowervp)) {
 		if (un->un_lowervp == NULLVP) {
 			un->un_lowervp = um->um_lowervp;
-			if (un->un_lowervp != NULLVP) 
+			if (un->un_lowervp != NULLVP)
 				vref(un->un_lowervp);
 		}
 		vp->v_vflag |= VV_ROOT;
-	} else {
-		vp->v_iflag |= VI_LAYER;
 	}
 
 	uppersz = lowersz = VNOVAL;
@@ -991,7 +988,7 @@ union_lowervp(struct vnode *vp)
 
 	if ((un->un_lowervp != NULLVP) &&
 	    (vp->v_type == un->un_lowervp->v_type)) {
-		if (vget(un->un_lowervp, 0) == 0)
+		if (vget(un->un_lowervp, 0, true /* wait */) == 0)
 			return (un->un_lowervp);
 	}
 

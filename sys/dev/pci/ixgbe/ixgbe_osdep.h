@@ -1,37 +1,37 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2012, Intel Corporation 
+  Copyright (c) 2001-2013, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 238149 2012-07-05 20:51:44Z jfv $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.3.6.1 2015/04/06 15:18:12 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 247822 2013-03-04 23:07:40Z jfv $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.3.6.2 2015/06/06 14:40:12 skrll Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -59,7 +59,7 @@
 #define usec_delay(x) DELAY(x)
 #define msec_delay(x) DELAY(1000*(x))
 
-#define DBG 0 
+#define DBG 0
 #define MSGOUT(S, A, B)     printf(S "\n", A, B)
 #define DEBUGFUNC(F)        DEBUGOUT(F);
 #if DBG
@@ -67,12 +67,17 @@
 	#define DEBUGOUT1(S,A)      printf(S "\n",A)
 	#define DEBUGOUT2(S,A,B)    printf(S "\n",A,B)
 	#define DEBUGOUT3(S,A,B,C)  printf(S "\n",A,B,C)
+	#define DEBUGOUT4(S,A,B,C,D)  printf(S "\n",A,B,C,D)
+	#define DEBUGOUT5(S,A,B,C,D,E)  printf(S "\n",A,B,C,D,E)
+	#define DEBUGOUT6(S,A,B,C,D,E,F)  printf(S "\n",A,B,C,D,E,F)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)  printf(S "\n",A,B,C,D,E,F,G)
 #else
 	#define DEBUGOUT(S)		do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT1(S,A)		do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT2(S,A,B)	do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT3(S,A,B,C)	do { } while (/*CONSTCOND*/false)
+	#define DEBUGOUT4(S,A,B,C,D)	do { } while (/*CONSTCOND*/false)
+	#define DEBUGOUT5(S,A,B,C,D,E)	do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT6(S,A,B,C,D,E,F)	\
 					do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)	\
@@ -85,6 +90,9 @@
 #define true                1
 #define CMD_MEM_WRT_INVALIDATE          0x0010  /* BIT_4 */
 #define PCI_COMMAND_REGISTER            PCIR_COMMAND
+
+/* Shared code dropped this define.. */
+#define IXGBE_INTEL_VENDOR_ID		0x8086
 
 /* Bunch of defines for shared code bogosity */
 #define UNREFERENCED_PARAMETER(_p)
@@ -108,7 +116,7 @@ typedef uint32_t	u32;
 typedef int32_t		s32;
 typedef uint64_t	u64;
 
-#define le16_to_cpu 
+#define le16_to_cpu
 
 #if __FreeBSD_version < 800000
 #if defined(__i386__) || defined(__amd64__)
@@ -132,6 +140,25 @@ void prefetch(void *x)
 #define prefetch(x)
 #endif
 
+/*
+ * Optimized bcopy thanks to Luigi Rizzo's investigative work.  Assumes
+ * non-overlapping regions and 32-byte padding on both src and dst.
+ */
+static __inline int
+ixgbe_bcopy(void *_src, void *_dst, int l)
+{
+	uint64_t *src = _src;
+	uint64_t *dst = _dst;
+
+	for (; l > 0; l -= 32) {
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = *src++;
+		*dst++ = *src++;
+	}
+	return (0);
+}
+
 struct ixgbe_osdep
 {
 	struct ethercom    ec;
@@ -147,7 +174,7 @@ struct ixgbe_osdep
 };
 
 /* These routines are needed by the shared code */
-struct ixgbe_hw; 
+struct ixgbe_hw;
 extern u16 ixgbe_read_pci_cfg(struct ixgbe_hw *, u32);
 #define IXGBE_READ_PCIE_WORD ixgbe_read_pci_cfg
 

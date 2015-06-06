@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casvar.h,v 1.4 2012/02/02 19:43:05 tls Exp $ */
+/*	$NetBSD: if_casvar.h,v 1.4.24.1 2015/06/06 14:40:09 skrll Exp $ */
 /*	$OpenBSD: if_casvar.h,v 1.6 2009/06/13 12:18:58 kettenis Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/rndsource.h>
 
 /*
  * Misc. definitions for Sun Cassini ethernet controllers.

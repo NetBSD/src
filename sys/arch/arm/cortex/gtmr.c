@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.8.4.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.8.4.2 2015/06/06 14:39:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8.4.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8.4.2 2015/06/06 14:39:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -246,11 +246,11 @@ gtmr_delay(unsigned int n)
 	const uint64_t incr_per_us = (freq >> 20) + (freq >> 24);
 
 	arm_isb();
-	const uint64_t base = armreg_cntv_ct_read();
+	const uint64_t base = armreg_cntp_ct_read();
 	const uint64_t delta = n * incr_per_us;
 	const uint64_t finish = base + delta;
 
-	while (armreg_cntv_ct_read() < finish) {
+	while (armreg_cntp_ct_read() < finish) {
 		arm_isb();	/* spin */
 	}
 }
@@ -298,7 +298,7 @@ gtmr_intr(void *arg)
 #endif
 
 #if 0
-	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n", 
+	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n",
 	     __func__, cf, ci->ci_data.cpu_name, now, delta);
 #endif
 	KASSERTMSG(delta > sc->sc_autoinc / 100,
@@ -306,12 +306,13 @@ gtmr_intr(void *arg)
 	    ci->ci_data.cpu_name, delta, sc->sc_autoinc);
 
 	/*
-	 * If we got interrupted too soon (delta < sc->sc_autoinc) or
-	 * we missed a tick (delta >= 2 * sc->sc_autoinc), don't try to
-	 * adjust for jitter.
+	 * If we got interrupted too soon (delta < sc->sc_autoinc)
+	 * or we missed (or almost missed) a tick
+	 * (delta >= 7 * sc->sc_autoinc / 4), don't try to adjust for jitter.
 	 */
-	delta -= sc->sc_autoinc;
-	if (delta >= sc->sc_autoinc) {
+	if (delta >= sc->sc_autoinc && delta <= 7 * sc->sc_autoinc / 4) {
+		delta -= sc->sc_autoinc;
+	} else {
 		delta = 0;
 	}
 	armreg_cntv_tval_write(sc->sc_autoinc - delta);

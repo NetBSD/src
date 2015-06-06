@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.30 2014/08/30 13:19:52 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.30.2.1 2015/06/06 14:39:58 skrll Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.30 2014/08/30 13:19:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.30.2.1 2015/06/06 14:39:58 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.30 2014/08/30 13:19:52 kiyohar
 #include <arm/marvell/kirkwoodreg.h>
 #include <arm/marvell/mv78xx0reg.h>
 #include <arm/marvell/armadaxpreg.h>
+#include <arm/marvell/armadaxpvar.h>
 #include <arm/marvell/mvsocgppvar.h>
 
 #include <evbarm/marvell/marvellreg.h>
@@ -129,6 +130,45 @@ static void marvell_device_register(device_t, void *);
 static void marvell_startend_by_tag(int, uint64_t *, uint64_t *);
 #endif
 
+static void
+marvell_fixup_mbus_pex(int memtag, int iotag)
+{
+	uint32_t target, attr;
+	int window;
+
+	/* Reset PCI-Express space to window register. */
+	window = mvsoc_target(memtag, &target, &attr, NULL, NULL);
+	write_mlmbreg(MVSOC_MLMB_WCR(window),
+	    MVSOC_MLMB_WCR_WINEN |
+	    MVSOC_MLMB_WCR_TARGET(target) |
+	    MVSOC_MLMB_WCR_ATTR(attr) |
+	    MVSOC_MLMB_WCR_SIZE(MARVELL_PEXMEM_SIZE));
+	write_mlmbreg(MVSOC_MLMB_WBR(window),
+	    MARVELL_PEXMEM_PBASE & MVSOC_MLMB_WBR_BASE_MASK);
+#ifdef PCI_NETBSD_CONFIGURE
+	if (window < nremap) {
+		write_mlmbreg(MVSOC_MLMB_WRLR(window),
+		    MARVELL_PEXMEM_PBASE & MVSOC_MLMB_WRLR_REMAP_MASK);
+		write_mlmbreg(MVSOC_MLMB_WRHR(window), 0);
+	}
+#endif
+	window = mvsoc_target(iotag, &target, &attr, NULL, NULL);
+	write_mlmbreg(MVSOC_MLMB_WCR(window),
+	    MVSOC_MLMB_WCR_WINEN |
+	    MVSOC_MLMB_WCR_TARGET(target) |
+	    MVSOC_MLMB_WCR_ATTR(attr) |
+	    MVSOC_MLMB_WCR_SIZE(MARVELL_PEXIO_SIZE));
+	write_mlmbreg(MVSOC_MLMB_WBR(window),
+	    MARVELL_PEXIO_PBASE & MVSOC_MLMB_WBR_BASE_MASK);
+#ifdef PCI_NETBSD_CONFIGURE
+	if (window < nremap) {
+		write_mlmbreg(MVSOC_MLMB_WRLR(window),
+		    MARVELL_PEXIO_PBASE & MVSOC_MLMB_WRLR_REMAP_MASK);
+		write_mlmbreg(MVSOC_MLMB_WRHR(window), 0);
+	}
+#endif
+}
+
 #if defined(ORION) || defined(KIRKWOOD) || defined(MV78XX0)
 static void
 marvell_system_reset(void)
@@ -145,7 +185,19 @@ marvell_system_reset(void)
 	cpu_reset();
 	/*NOTREACHED*/
 }
+
+static void
+marvell_fixup_mbus(int memtag, int iotag)
+{
+	/* assume u-boot initializes mbus registers correctly */
+
+	/* set marvell common PEX params */
+	marvell_fixup_mbus_pex(memtag, iotag);
+
+	/* other configurations? */
+}
 #endif
+
 
 #if defined(ARMADAXP)
 static void
@@ -164,6 +216,18 @@ armadaxp_system_reset(void)
 	while (1);
 
 	/*NOTREACHED*/
+}
+
+static void
+armadaxp_fixup_mbus(int memtag, int iotag)
+{
+	/* force set SoC default parameters */
+	armadaxp_init_mbus();
+
+	/* set marvell common PEX params */
+	marvell_fixup_mbus_pex(memtag, iotag);
+
+	/* other configurations? */
 }
 #endif
 
@@ -222,8 +286,7 @@ extern uint32_t *u_boot_args[];
 u_int
 initarm(void *arg)
 {
-	uint32_t target, attr, base, size;
-	int cs, cs_end, memtag = 0, iotag = 0, window;
+	int cs, cs_end, memtag = 0, iotag = 0;
 
 	mvsoc_bootstrap(MARVELL_INTERREGS_VBASE);
 
@@ -276,6 +339,7 @@ initarm(void *arg)
 		cs_end = MARVELL_TAG_SDRAM_CS3;
 
 		orion_getclks(MARVELL_INTERREGS_VBASE);
+		marvell_fixup_mbus(memtag, iotag);
 		break;
 #endif	/* ORION */
 
@@ -298,6 +362,7 @@ initarm(void *arg)
 
 		kirkwood_getclks(MARVELL_INTERREGS_VBASE);
 		mvsoc_clkgating = kirkwood_clkgating;
+		marvell_fixup_mbus(memtag, iotag);
 		break;
 #endif	/* KIRKWOOD */
 
@@ -317,6 +382,7 @@ initarm(void *arg)
 		cs_end = MARVELL_TAG_SDRAM_CS3;
 
 		mv78xx0_getclks(MARVELL_INTERREGS_VBASE);
+		marvell_fixup_mbus(memtag, iotag);
 		break;
 #endif	/* MV78XX0 */
 
@@ -342,14 +408,11 @@ initarm(void *arg)
 	        misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
 		armadaxp_getclks();
 		mvsoc_clkgating = armadaxp_clkgating;
+		armadaxp_fixup_mbus(memtag, iotag);
 
 #ifdef L2CACHE_ENABLE
 		/* Initialize L2 Cache */
-		{
-			extern int armadaxp_l2_init(bus_addr_t);
-
-			(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
-		}
+		armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
 #endif
 
 #ifdef AURORA_IO_CACHE_COHERENCY
@@ -377,14 +440,11 @@ initarm(void *arg)
 	        misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
 		armada370_getclks();
 		mvsoc_clkgating = armadaxp_clkgating;
+		armadaxp_fixup_mbus(memtag, iotag);
 
 #ifdef L2CACHE_ENABLE
 		/* Initialize L2 Cache */
-		{
-			extern int armadaxp_l2_init(bus_addr_t);
-
-			(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
-		}
+		(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
 #endif
 
 #ifdef AURORA_IO_CACHE_COHERENCY
@@ -411,38 +471,6 @@ initarm(void *arg)
 #define _BDSTR(s)	#s
 	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
-	/* Reset PCI-Express space to window register. */
-	window = mvsoc_target(memtag, &target, &attr, NULL, NULL);
-	write_mlmbreg(MVSOC_MLMB_WCR(window),
-	    MVSOC_MLMB_WCR_WINEN |
-	    MVSOC_MLMB_WCR_TARGET(target) |
-	    MVSOC_MLMB_WCR_ATTR(attr) |
-	    MVSOC_MLMB_WCR_SIZE(MARVELL_PEXMEM_SIZE));
-	write_mlmbreg(MVSOC_MLMB_WBR(window),
-	    MARVELL_PEXMEM_PBASE & MVSOC_MLMB_WBR_BASE_MASK);
-#ifdef PCI_NETBSD_CONFIGURE
-	if (window < nremap) {
-		write_mlmbreg(MVSOC_MLMB_WRLR(window),
-		    MARVELL_PEXMEM_PBASE & MVSOC_MLMB_WRLR_REMAP_MASK);
-		write_mlmbreg(MVSOC_MLMB_WRHR(window), 0);
-	}
-#endif
-	window = mvsoc_target(iotag, &target, &attr, NULL, NULL);
-	write_mlmbreg(MVSOC_MLMB_WCR(window),
-	    MVSOC_MLMB_WCR_WINEN |
-	    MVSOC_MLMB_WCR_TARGET(target) |
-	    MVSOC_MLMB_WCR_ATTR(attr) |
-	    MVSOC_MLMB_WCR_SIZE(MARVELL_PEXIO_SIZE));
-	write_mlmbreg(MVSOC_MLMB_WBR(window),
-	    MARVELL_PEXIO_PBASE & MVSOC_MLMB_WBR_BASE_MASK);
-#ifdef PCI_NETBSD_CONFIGURE
-	if (window < nremap) {
-		write_mlmbreg(MVSOC_MLMB_WRLR(window),
-		    MARVELL_PEXIO_PBASE & MVSOC_MLMB_WRLR_REMAP_MASK);
-		write_mlmbreg(MVSOC_MLMB_WRHR(window), 0);
-	}
-#endif
-
 	/* copy command line U-Boot gave us, if args is valid. */
 	if (u_boot_args[3] != 0)	/* XXXXX: need more check?? */
 		strncpy(bootargs, (char *)u_boot_args[3], sizeof(bootargs));
@@ -455,6 +483,8 @@ initarm(void *arg)
 	paddr_t segment_end;
 	segment_end = physmem = 0;
 	for ( ; cs <= cs_end; cs++) {
+		uint32_t target, attr, base, size;
+
 		mvsoc_target(cs, &target, &attr, &base, &size);
 		if (size == 0)
 			continue;

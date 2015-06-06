@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.2.2.2 2015/04/06 15:18:09 skrll Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.2.2.3 2015/06/06 14:40:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -40,18 +40,6 @@
 
 #define	HDAUDIO_MAX_CODECS	15
 
-#define	hda_read1(sc, off)		\
-	bus_space_read_1((sc)->sc_memt, (sc)->sc_memh, (off))
-#define	hda_read2(sc, off)		\
-	bus_space_read_2((sc)->sc_memt, (sc)->sc_memh, (off))
-#define	hda_read4(sc, off)		\
-	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (off))
-#define	hda_write1(sc, off, val)	\
-	bus_space_write_1((sc)->sc_memt, (sc)->sc_memh, (off), (val))
-#define	hda_write2(sc, off, val)	\
-	bus_space_write_2((sc)->sc_memt, (sc)->sc_memh, (off), (val))
-#define	hda_write4(sc, off, val)	\
-	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, (off), (val))
 #define	hda_print(sc, ...)		\
 	aprint_normal_dev((sc)->sc_dev, __VA_ARGS__)
 #define	hda_print1(sc, ...)		\
@@ -70,13 +58,13 @@
 #define	hda_delay(us)			\
 	delay((us))
 
-struct hdaudio_softc;
-
 enum function_group_type {
 	HDAUDIO_GROUP_TYPE_UNKNOWN = 0,
 	HDAUDIO_GROUP_TYPE_AFG,
 	HDAUDIO_GROUP_TYPE_VSM_FG,
 };
+
+struct hdaudio_softc;
 
 struct hdaudio_function_group {
 	device_t			fg_device;
@@ -99,7 +87,7 @@ struct hdaudio_codec {
 
 #define	DMA_KERNADDR(dma)	((dma)->dma_addr)
 #define DMA_DMAADDR(dma)	((dma)->dma_map->dm_segs[0].ds_addr)
-	
+
 struct hdaudio_dma {
 	bus_dmamap_t		dma_map;
 	void			*dma_addr;
@@ -195,5 +183,59 @@ void	hdaudio_stream_stop(struct hdaudio_stream *);
 void	hdaudio_stream_reset(struct hdaudio_stream *);
 int	hdaudio_stream_tag(struct hdaudio_stream *);
 uint16_t hdaudio_stream_param(struct hdaudio_stream *, const audio_params_t *);
+
+#ifdef HDAUDIO_32BIT_ACCESS
+static inline uint8_t
+_hda_read1(struct hdaudio_softc *sc, bus_size_t off)
+{
+	return bus_space_read_4(sc->sc_memt, sc->sc_memh, off & -4) >>
+	    (8 * (off & 3));
+}
+static inline uint16_t
+_hda_read2(struct hdaudio_softc *sc, bus_size_t off)
+{
+	return bus_space_read_4(sc->sc_memt, sc->sc_memh, off & -4) >>
+	    (8 * (off & 2));
+}
+#define hda_read1			_hda_read1
+#define hda_read2			_hda_read2
+#define	hda_read4(sc, off)		\
+	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (off))
+static inline void
+_hda_write1(struct hdaudio_softc *sc, bus_size_t off, uint8_t val)
+{
+	const size_t shift = 8 * (off & 3);
+	off &= -4;
+	uint32_t tmp = bus_space_read_4(sc->sc_memt, sc->sc_memh, off);
+	tmp = (val << shift) | (tmp & ~(0xff << shift));
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, off, tmp);
+}
+static inline void
+_hda_write2(struct hdaudio_softc *sc, bus_size_t off, uint16_t val)
+{
+	const size_t shift = 8 * (off & 2);
+	off &= -4;
+	uint32_t tmp = bus_space_read_4(sc->sc_memt, sc->sc_memh, off);
+	tmp = (val << shift) | (tmp & ~(0xffff << shift));
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, off, tmp);
+}
+#define hda_write1			_hda_write1
+#define hda_write2			_hda_write2
+#define	hda_write4(sc, off, val)	\
+	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, (off), (val))
+#else
+#define	hda_read1(sc, off)		\
+	bus_space_read_1((sc)->sc_memt, (sc)->sc_memh, (off))
+#define	hda_read2(sc, off)		\
+	bus_space_read_2((sc)->sc_memt, (sc)->sc_memh, (off))
+#define	hda_read4(sc, off)		\
+	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (off))
+#define	hda_write1(sc, off, val)	\
+	bus_space_write_1((sc)->sc_memt, (sc)->sc_memh, (off), (val))
+#define	hda_write2(sc, off, val)	\
+	bus_space_write_2((sc)->sc_memt, (sc)->sc_memh, (off), (val))
+#define	hda_write4(sc, off, val)	\
+	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, (off), (val))
+#endif
 
 #endif /* !_HDAUDIOVAR_H */

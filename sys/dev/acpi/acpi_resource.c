@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.35 2011/06/30 20:09:39 wiz Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.35.30.1 2015/06/06 14:40:06 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.35 2011/06/30 20:09:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.35.30.1 2015/06/06 14:40:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -240,7 +240,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 
 	case ACPI_RESOURCE_TYPE_ADDRESS32:
 		/* XXX Only fixed size supported for now */
-		if (res->Data.Address32.AddressLength == 0 ||
+		if (res->Data.Address32.Address.AddressLength == 0 ||
 		    res->Data.Address32.ProducerConsumer != ACPI_CONSUMER)
 			break;
 #define ADRRESS32_FIXED2(r)						\
@@ -251,30 +251,30 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 			if (ADRRESS32_FIXED2(res)) {
 				if (ops->memory)
 					(*ops->memory)(arg->dev, arg->context,
-					    res->Data.Address32.Minimum,
-					    res->Data.Address32.AddressLength);
+					    res->Data.Address32.Address.Minimum,
+					    res->Data.Address32.Address.AddressLength);
 			} else {
 				if (ops->memrange)
 					(*ops->memrange)(arg->dev, arg->context,
-					    res->Data.Address32.Minimum,
-					    res->Data.Address32.Maximum,
-					    res->Data.Address32.AddressLength,
-					    res->Data.Address32.Granularity);
+					    res->Data.Address32.Address.Minimum,
+					    res->Data.Address32.Address.Maximum,
+					    res->Data.Address32.Address.AddressLength,
+					    res->Data.Address32.Address.Granularity);
 			}
 			break;
 		case ACPI_IO_RANGE:
 			if (ADRRESS32_FIXED2(res)) {
 				if (ops->ioport)
 					(*ops->ioport)(arg->dev, arg->context,
-					    res->Data.Address32.Minimum,
-					    res->Data.Address32.AddressLength);
+					    res->Data.Address32.Address.Minimum,
+					    res->Data.Address32.Address.AddressLength);
 			} else {
 				if (ops->iorange)
 					(*ops->iorange)(arg->dev, arg->context,
-					    res->Data.Address32.Minimum,
-					    res->Data.Address32.Maximum,
-					    res->Data.Address32.AddressLength,
-					    res->Data.Address32.Granularity);
+					    res->Data.Address32.Address.Minimum,
+					    res->Data.Address32.Address.Maximum,
+					    res->Data.Address32.Address.AddressLength,
+					    res->Data.Address32.Address.Granularity);
 			}
 			break;
 		case ACPI_BUS_NUMBER_RANGE:

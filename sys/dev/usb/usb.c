@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.8 2015/05/28 11:55:44 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.9 2015/06/06 14:40:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.8 2015/05/28 11:55:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.9 2015/06/06 14:40:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -275,6 +275,8 @@ usb_once_init(void)
 {
 	struct usb_taskq *taskq;
 	int i;
+
+	USBHIST_LINK_STATIC(usbhist);
 
 	selinit(&usb_selevent);
 	mutex_init(&usb_event_lock, MUTEX_DEFAULT, IPL_NONE);

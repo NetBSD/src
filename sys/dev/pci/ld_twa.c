@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.16 2013/10/17 21:06:15 christos Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.16.6.1 2015/06/06 14:40:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.16 2013/10/17 21:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.16.6.1 2015/06/06 14:40:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.16 2013/10/17 21:06:15 christos Exp $")
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/proc.h>
-#include <sys/rnd.h>
 
 #include <sys/bus.h>
 

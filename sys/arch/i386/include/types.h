@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.79 2014/04/24 19:23:00 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.79.4.1 2015/06/06 14:40:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -109,12 +109,13 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
-#if defined(_KERNEL) && !defined(_RUMPKERNEL) && !defined(_RUMP_NATIVE_ABI)
+#if defined(_KERNEL)
 /*
  * Processors < i586 do not have cmpxchg8b, and we compile for i486
- * by default in userland. The kernel tsc driver uses them though,
- * and handles < i586 * by patching. We don't want to expose them in
- * userland, that is why we exclude rump.
+ * by default. The kernel tsc driver uses them though, and handles < i586
+ * by patching.  E.g. rump kernels and crash(8) and a selection of
+ * other run-in-userspace code defines _KERNEL, but is careful not to
+ * build anything using 64bit atomic ops by default.
  */
 #define __HAVE_ATOMIC64_OPS
 #endif
@@ -128,6 +129,10 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS
+
+#if !defined(XEN)
+#define __HAVE_PCI_MSI_MSIX
+#endif
 #endif
 
 #endif	/* _I386_MACHTYPES_H_ */

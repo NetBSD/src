@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.2.2.1 2015/04/06 15:18:20 skrll Exp $
+#	$NetBSD: files.kern,v 1.2.2.2 2015/06/06 14:40:21 skrll Exp $
 
 #
 # kernel sources
@@ -6,6 +6,8 @@
 define	kern:	machdep, uvm
 defflag	opt_kern.h			KERN
 file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
+file	compat/common/compat_sysv_mod.c	(compat_netbsd | compat_netbsd32) &
+					(sysvshm | sysvsem | sysvmsg)
 file	conf/debugsyms.c		kern
 file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd
@@ -13,7 +15,7 @@ file	dev/cgd.c			cgd
 file	dev/cgd_crypto.c		cgd
 file	dev/clock_subr.c		kern	# XXX
 file	dev/clockctl.c			clockctl
-file	dev/dksubr.c			cgd | xbd | ccd | raid | dm
+file	dev/dksubr.c			cgd | xbd | ccd | raid | dm | ld
 file	dev/dkwedge/dk.c		kern	# XXX
 file	dev/dkwedge/dkwedge_apple.c	dkwedge_method_apple
 file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
@@ -226,5 +228,3 @@ file	miscfs/genfs/layer_vfsops.c	layerfs
 file	miscfs/genfs/layer_vnops.c	layerfs
 
 file	miscfs/specfs/spec_vnops.c	vfs
-file	miscfs/syncfs/sync_subr.c	vfs
-file	miscfs/syncfs/sync_vnops.c	vfs

@@ -1,5 +1,5 @@
 /*	$OpenBSD: fins.c,v 1.1 2008/03/19 19:33:09 deraadt Exp $	*/
-/*	$NetBSD: finsio_isa.c,v 1.7 2011/07/31 18:23:46 jakllsch Exp $	*/
+/*	$NetBSD: finsio_isa.c,v 1.7.30.1 2015/06/06 14:40:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Juan Romero Pardines
@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.7 2011/07/31 18:23:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.7.30.1 2015/06/06 14:40:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,7 +689,7 @@ finsio_refresh_fanrpm(struct finsio_softc *sc, envsys_data_t *edata)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, finsio, NULL);
+MODULE(MODULE_CLASS_DRIVER, finsio, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

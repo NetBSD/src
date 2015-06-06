@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.24.4.1 2015/04/06 15:18:00 skrll Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.24.4.2 2015/06/06 14:40:02 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.24.4.1 2015/04/06 15:18:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.24.4.2 2015/06/06 14:40:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -449,7 +449,7 @@ const struct intrsw e500_intrsw = {
 
 static bool wdog_barked;
 
-static inline uint32_t 
+static inline uint32_t
 openpic_read(struct cpu_softc *cpu, bus_size_t offset)
 {
 
@@ -457,7 +457,7 @@ openpic_read(struct cpu_softc *cpu, bus_size_t offset)
 	    OPENPIC_BASE + offset);
 }
 
-static inline void 
+static inline void
 openpic_write(struct cpu_softc *cpu, bus_size_t offset, uint32_t val)
 {
 
@@ -898,12 +898,12 @@ e500_extintr(struct trapframe *tf)
 
 #if 0
 //	printf("%s(%p): idepth=%d enter\n", __func__, tf, ci->ci_idepth);
-	if ((register_t)tf >= (register_t)curlwp->l_addr + USPACE              
-	    || (register_t)tf < (register_t)curlwp->l_addr + NBPG) {            
-		printf("%s(entry): pid %d.%d (%s): srr0/srr1=%#lx/%#lx: invalid tf addr %p\n",  
+	if ((register_t)tf >= (register_t)curlwp->l_addr + USPACE
+	    || (register_t)tf < (register_t)curlwp->l_addr + NBPG) {
+		printf("%s(entry): pid %d.%d (%s): srr0/srr1=%#lx/%#lx: invalid tf addr %p\n",
 		    __func__, curlwp->l_proc->p_pid, curlwp->l_lid,
 		    curlwp->l_proc->p_comm, tf->tf_srr0, tf->tf_srr1, tf);
-	}       
+	}
 #endif
 
 
@@ -933,7 +933,7 @@ e500_extintr(struct trapframe *tf)
 		    "%s(%p): MSR[EE] left on (%#lx)!", __func__, tf, mfmsr());
 		if (IPL2CTPR(old_ipl) != openpic_read(cpu, OPENPIC_CTPR))
 			panic("%s(%p): %d: old_ipl(%u) + %u != OPENPIC_CTPR (%u)",
-			    __func__, tf, __LINE__, old_ipl, 
+			    __func__, tf, __LINE__, old_ipl,
 			    15 - IPL_HIGH, openpic_read(cpu, OPENPIC_CTPR));
 		const uint32_t iack = openpic_read(cpu, OPENPIC_IACK);
 #ifdef DIAGNOSTIC
@@ -948,11 +948,11 @@ e500_extintr(struct trapframe *tf)
 #endif
 		if (IPL2CTPR(old_ipl) != openpic_read(cpu, OPENPIC_CTPR))
 			panic("%s(%p): %d: old_ipl(%u) + %u != OPENPIC_CTPR (%u)",
-			    __func__, tf, __LINE__, old_ipl, 
+			    __func__, tf, __LINE__, old_ipl,
 			    15 - IPL_HIGH, openpic_read(cpu, OPENPIC_CTPR));
 		if (iack == IRQ_SPURIOUS)
 			break;
-		
+
 		struct intr_source * const is = &e500_intr_sources[irq];
 		if (__predict_true(is < e500_intr_last_source)) {
 			/*
@@ -1004,13 +1004,13 @@ e500_extintr(struct trapframe *tf)
 		    "%s(%p): MSR[EE] left on (%#lx)!", __func__, tf, mfmsr());
 		if (IPL2CTPR(old_ipl) != openpic_read(cpu, OPENPIC_CTPR))
 			panic("%s(%p): %d: old_ipl(%u) + %u != OPENPIC_CTPR (%u)",
-			    __func__, tf, __LINE__, old_ipl, 
+			    __func__, tf, __LINE__, old_ipl,
 			    15 - IPL_HIGH, openpic_read(cpu, OPENPIC_CTPR));
 
 		openpic_write(cpu, OPENPIC_EOI, 0);
 		if (IPL2CTPR(old_ipl) != openpic_read(cpu, OPENPIC_CTPR))
 			panic("%s(%p): %d: old_ipl(%u) + %u != OPENPIC_CTPR (%u)",
-			    __func__, tf, __LINE__, old_ipl, 
+			    __func__, tf, __LINE__, old_ipl,
 			    15 - IPL_HIGH, openpic_read(cpu, OPENPIC_CTPR));
 		if (ci->ci_idepth > 0)
 			break;
@@ -1139,7 +1139,7 @@ e500_intr_init(void)
 	/*
 	 * Initialize all the external interrupts as active low.
 	 */
-	for (u_int irq = 0; irq < e500_intr_info.ii_external_sources; irq++) { 
+	for (u_int irq = 0; irq < e500_intr_info.ii_external_sources; irq++) {
 		openpic_write(cpu, OPENPIC_EIVPR(irq),
 		    VPR_VECTOR_MAKE(irq) | VPR_LEVEL_LOW);
 	}
@@ -1155,7 +1155,7 @@ e500_intr_init_precpu(void)
 	/*
 	 * timer's DR is set to be delivered to cpu0 as initial value.
 	 */
-	for (u_int irq = 0; irq < e500_intr_info.ii_timer_sources; irq++) { 
+	for (u_int irq = 0; irq < e500_intr_info.ii_timer_sources; irq++) {
 		dr = OPENPIC_GTDR(ci->ci_cpuid, irq);
 		openpic_write(cpu, dr, 0);	/* stop delivery */
 	}
@@ -1279,7 +1279,7 @@ e500_intr_cpu_send_ipi(cpuid_t target, uint32_t ipimsg)
 
 typedef void (*ipifunc_t)(void);
 
-#ifdef __HAVE_PREEEMPTION
+#ifdef __HAVE_PREEMPTION
 static void
 e500_ipi_kpreempt(void)
 {
@@ -1322,7 +1322,7 @@ e500_ipi_intr(void *v)
 		KASSERT(e500_ipifuncs[ipi] != NULL);
 		(*e500_ipifuncs[ipi])();
 	}
-	
+
 	return 1;
 }
 

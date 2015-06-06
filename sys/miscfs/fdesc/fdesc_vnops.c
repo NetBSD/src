@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.125 2014/09/05 10:43:26 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.125.2.1 2015/06/06 14:40:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.125 2014/09/05 10:43:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.125.2.1 2015/06/06 14:40:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -922,14 +922,13 @@ fdesc_print(void *v)
 int
 fdesc_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 

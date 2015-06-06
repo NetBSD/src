@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.113.2.1 2015/04/06 15:18:08 skrll Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.113.2.2 2015/06/06 14:40:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.113.2.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.113.2.2 2015/06/06 14:40:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -851,7 +851,7 @@ acpibat_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	*props |= PROP_BATTCAP | PROP_BATTWARN | PROP_DRIVER_LIMITS;
 }
 
-MODULE(MODULE_CLASS_DRIVER, acpibat, NULL);
+MODULE(MODULE_CLASS_DRIVER, acpibat, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

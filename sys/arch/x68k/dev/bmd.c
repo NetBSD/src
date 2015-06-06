@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.21.4.1 2015/04/06 15:18:04 skrll Exp $	*/
+/*	$NetBSD: bmd.c,v 1.21.4.2 2015/06/06 14:40:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.21.4.1 2015/04/06 15:18:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.21.4.2 2015/06/06 14:40:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,9 @@ const struct cdevsw bmd_cdevsw = {
 	.d_flag = D_DISK
 };
 
-struct dkdriver bmddkdriver = { bmdstrategy };
+struct dkdriver bmddkdriver = {
+	.d_strategy = bmdstrategy
+};
 
 static int
 bmd_match(device_t parent, cfdata_t cf, void *aux)
@@ -354,7 +356,7 @@ bmdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 
-	error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l); 
+	error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.5 2014/11/06 01:42:01 pooka Exp $ */
+/* 	$NetBSD: viornd.c,v 1.5.2.1 2015/06/06 14:40:12 skrll Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #include <sys/mutex.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -137,7 +137,7 @@ viornd_attach( device_t parent, device_t self, void *aux)
 
 	vsc->sc_vqs = &sc->sc_vq;
 	vsc->sc_nvqs = 1;
-	vsc->sc_config_change = 0;
+	vsc->sc_config_change = NULL;
 	if (vsc->sc_child != NULL)
 		panic("already attached to something else");
 	vsc->sc_child = self;
@@ -205,6 +205,7 @@ viornd_attach( device_t parent, device_t self, void *aux)
 	viornd_get(VIORND_BUFSIZE, sc);
 	return;
 vio_failed:
+	bus_dmamap_unload(vsc->sc_dmat, sc->sc_dmamap);
 load_failed:
 	bus_dmamap_destroy(vsc->sc_dmat, sc->sc_dmamap);
 create_failed:

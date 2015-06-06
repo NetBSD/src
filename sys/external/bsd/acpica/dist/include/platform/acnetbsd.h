@@ -1,12 +1,12 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.11 $
+ *       $Revision: 1.11.2.1 $
  *
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2014, Intel Corp.
+ * Copyright (C) 2000 - 2015, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,9 +49,9 @@
 
 #include "acgcc.h"
 
-#define ACPI_UINTPTR_T		uintptr_t
+#define ACPI_UINTPTR_T          uintptr_t
 #define ACPI_USE_LOCAL_CACHE
-#define ACPI_CAST_PTHREAD_T(x)    ((ACPI_THREAD_ID) ACPI_TO_INTEGER (x))
+#define ACPI_CAST_PTHREAD_T(x)  ((ACPI_THREAD_ID) ACPI_TO_INTEGER (x))
 
 #ifdef _LP64
 #define ACPI_MACHINE_WIDTH      64
@@ -127,10 +127,10 @@
 
 #define __cli()
 #define __sti()
+#define __cdecl
 
 /* XXX */
 #define __inline inline
-
 #endif /* defined(_KERNEL) || defined(_STANDALONE) */
 
 /* Always use NetBSD code over our local versions */

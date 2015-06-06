@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.192 2014/09/05 09:26:16 matt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.192.2.1 2015/06/06 14:40:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.192 2014/09/05 09:26:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.192.2.1 2015/06/06 14:40:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,14 +516,13 @@ procfs_print(void *v)
 int
 procfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.202.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.202.2.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.202.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.202.2.2 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -155,8 +155,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.202.2.1 2015/04/06 15:18:23 skrll E
 
 #include "opt_tcp_space.h"
 
-static int  
-tcp_debug_capture(struct tcpcb *tp, int req)  
+static int
+tcp_debug_capture(struct tcpcb *tp, int req)
 {
 #ifdef KPROF
 	tcp_acounts[tp->t_state][req]++;
@@ -169,7 +169,7 @@ tcp_debug_capture(struct tcpcb *tp, int req)
 
 static inline void
 tcp_debug_trace(struct socket *so, struct tcpcb *tp, int ostate, int req)
-{        
+{
 #ifdef TCP_DEBUG
 	if (tp && (so->so_options & SO_DEBUG))
 		tcp_trace(TA_USER, ostate, tp, NULL, req);
@@ -214,42 +214,6 @@ tcp_getpcb(struct socket *so, struct inpcb **inp,
 	return 0;
 }
 
-/*
- * Process a TCP user request for TCP tb.  If this is a send request
- * then m is the mbuf chain of send data.  If this is a timer expiration
- * (called from the software clock routine), then timertype tells which timer.
- */
-static int
-tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
-{
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	KASSERT(solocked(so));
-
-	panic("tcp_usrreq");
-
-	return 0;
-}
-
 static void
 change_keepalive(struct socket *so, struct tcpcb *tp)
 {
@@ -260,7 +224,7 @@ change_keepalive(struct socket *so, struct tcpcb *tp)
 	if (tp->t_state == TCPS_SYN_RECEIVED ||
 	    tp->t_state == TCPS_SYN_SENT) {
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
-	} else if (so->so_options & SO_KEEPALIVE && 
+	} else if (so->so_options & SO_KEEPALIVE &&
 	    tp->t_state <= TCPS_CLOSE_WAIT) {
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepintvl);
 	} else {
@@ -674,7 +638,7 @@ tcp_detach(struct socket *so)
 }
 
 static int
-tcp_accept(struct socket *so, struct mbuf *nam)
+tcp_accept(struct socket *so, struct sockaddr *nam)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -696,12 +660,12 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 	s = splsoftnet();
 #ifdef INET
 	if (inp) {
-		in_setpeeraddr(inp, nam);
+		in_setpeeraddr(inp, (struct sockaddr_in *)nam);
 	}
 #endif
 #ifdef INET6
 	if (in6p) {
-		in6_setpeeraddr(in6p, nam);
+		in6_setpeeraddr(in6p, (struct sockaddr_in6 *)nam);
 	}
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_ACCEPT);
@@ -801,7 +765,7 @@ release:
 }
 
 static int
-tcp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+tcp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -830,7 +794,7 @@ tcp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			if (error)
 				goto release;
 		}
-		error = in_pcbconnect(inp, nam, l);
+		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 	}
 #endif
 #ifdef INET6
@@ -840,7 +804,7 @@ tcp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			if (error)
 				goto release;
 		}
-		error = in6_pcbconnect(in6p, nam, l);
+		error = in6_pcbconnect(in6p, (struct sockaddr_in6 *)nam, l);
 		if (!error) {
 			/* mapped addr case */
 			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))
@@ -1023,7 +987,7 @@ tcp_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-tcp_peeraddr(struct socket *so, struct mbuf *nam)
+tcp_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -1039,12 +1003,14 @@ tcp_peeraddr(struct socket *so, struct mbuf *nam)
 
 	s = splsoftnet();
 #ifdef INET
-	if (inp)
-		in_setpeeraddr(inp, nam);
+	if (inp) {
+		in_setpeeraddr(inp, (struct sockaddr_in *)nam);
+	}
 #endif
 #ifdef INET6
-	if (in6p)
-		in6_setpeeraddr(in6p, nam);
+	if (in6p) {
+		in6_setpeeraddr(in6p, (struct sockaddr_in6 *)nam);
+	}
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_PEERADDR);
 	splx(s);
@@ -1053,7 +1019,7 @@ tcp_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-tcp_sockaddr(struct socket *so, struct mbuf *nam)
+tcp_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	struct inpcb *inp = NULL;
 	struct in6pcb *in6p = NULL;
@@ -1069,12 +1035,14 @@ tcp_sockaddr(struct socket *so, struct mbuf *nam)
 
 	s = splsoftnet();
 #ifdef INET
-	if (inp)
-		in_setsockaddr(inp, nam);
+	if (inp) {
+		in_setsockaddr(inp, (struct sockaddr_in *)nam);
+	}
 #endif
 #ifdef INET6
-	if (in6p)
-		in6_setsockaddr(in6p, nam);
+	if (in6p) {
+		in6_setsockaddr(in6p, (struct sockaddr_in6 *)nam);
+	}
 #endif
 	tcp_debug_trace(so, tp, ostate, PRU_SOCKADDR);
 	splx(s);
@@ -1157,7 +1125,7 @@ tcp_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-tcp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+tcp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp = NULL;
@@ -1570,14 +1538,14 @@ inet4_ident_core(struct in_addr raddr, u_int rport,
 	struct socket *sockp;
 
 	inp = in_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0);
-	
+
 	if (inp == NULL || (sockp = inp->inp_socket) == NULL)
 		return ESRCH;
 
 	if (dodrop) {
 		struct tcpcb *tp;
 		int error;
-		
+
 		if (inp == NULL || (tp = intotcpcb(inp)) == NULL ||
 		    (inp->inp_socket->so_options & SO_ACCEPTCONN) != 0)
 			return ESRCH;
@@ -1586,7 +1554,7 @@ inet4_ident_core(struct in_addr raddr, u_int rport,
 		    KAUTH_REQ_NETWORK_SOCKET_DROP, inp->inp_socket, tp, NULL);
 		if (error)
 			return (error);
-		
+
 		(void)tcp_drop(tp, ECONNABORTED);
 		return 0;
 	}
@@ -1608,11 +1576,11 @@ inet6_ident_core(struct in6_addr *raddr, u_int rport,
 
 	if (in6p == NULL || (sockp = in6p->in6p_socket) == NULL)
 		return ESRCH;
-	
+
 	if (dodrop) {
 		struct tcpcb *tp;
 		int error;
-		
+
 		if (in6p == NULL || (tp = in6totcpcb(in6p)) == NULL ||
 		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) != 0)
 			return ESRCH;
@@ -1681,7 +1649,7 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		rport = (u_int)name[1];
 		laddr.s_addr = (uint32_t)name[2];
 		lport = (u_int)name[3];
-		
+
 		mutex_enter(softnet_lock);
 		error = inet4_ident_core(raddr, rport, laddr, lport,
 		    oldp, oldlenp, l, dodrop);
@@ -1745,7 +1713,7 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		if (si4[0]->sin_len != sizeof(*si4[0]) ||
 		    si4[0]->sin_len != sizeof(*si4[1]))
 			return EINVAL;
-	
+
 		mutex_enter(softnet_lock);
 		error = inet4_ident_core(si4[0]->sin_addr, si4[0]->sin_port,
 		    si4[1]->sin_addr, si4[1]->sin_port,
@@ -1954,14 +1922,14 @@ sysctl_tcp_congctl(SYSCTLFN_ARGS)
 	char newname[TCPCC_MAXLEN];
 
 	strlcpy(newname, tcp_congctl_global_name, sizeof(newname) - 1);
-	
+
 	node = *rnode;
 	node.sysctl_data = newname;
 	node.sysctl_size = sizeof(newname);
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	
-	if (error || 
+
+	if (error ||
 	    newp == NULL ||
 	    strncmp(newname, tcp_congctl_global_name, sizeof(newname)) == 0)
 		return error;
@@ -1996,7 +1964,7 @@ sysctl_tcp_init_win(SYSCTLFN_ARGS)
 
 static int
 sysctl_tcp_keep(SYSCTLFN_ARGS)
-{  
+{
 	int error;
 	u_int tmp;
 	struct sysctlnode node;
@@ -2343,7 +2311,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("Number of times to retry ECN setup "
 			       "before disabling ECN on the connection"),
 	    	       NULL, 0, &tcp_ecn_maxretries, 0, CTL_CREATE, CTL_EOL);
-	
+
 	/* SACK gets its own little subtree. */
 	sysctl_createv(clog, 0, NULL, &sack_node,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -2463,7 +2431,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 	sysctl_createv(clog, 0, &mslt_node, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "remote_threshold",
-		       SYSCTL_DESCR("RTT estimate value to promote local to remote"), 
+		       SYSCTL_DESCR("RTT estimate value to promote local to remote"),
 		       NULL, 0, &tcp_msl_remote_threshold, 0, CTL_CREATE, CTL_EOL);
 
 	/* vestigial TIME_WAIT tuning subtree */
@@ -2519,7 +2487,6 @@ PR_WRAP_USRREQS(tcp)
 #define	tcp_send	tcp_send_wrapper
 #define	tcp_sendoob	tcp_sendoob_wrapper
 #define	tcp_purgeif	tcp_purgeif_wrapper
-#define	tcp_usrreq	tcp_usrreq_wrapper
 
 const struct pr_usrreqs tcp_usrreqs = {
 	.pr_attach	= tcp_attach,
@@ -2541,5 +2508,4 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pr_send	= tcp_send,
 	.pr_sendoob	= tcp_sendoob,
 	.pr_purgeif	= tcp_purgeif,
-	.pr_generic	= tcp_usrreq,
 };

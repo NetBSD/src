@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.33.4.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: namei.src,v 1.33.4.2 2015/06/06 14:40:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -165,9 +165,7 @@ NAMEIFL	ISWHITEOUT	0x0020000	/* found whiteout */
 NAMEIFL	DOWHITEOUT	0x0040000	/* do whiteouts */
 NAMEIFL	REQUIREDIR	0x0080000	/* must be a directory */
 NAMEIFL	CREATEDIR	0x0200000	/* trailing slashes are ok */
-NAMEIFL	INRENAME	0x0400000	/* operation is a part of ``rename'' */
-NAMEIFL	INRELOOKUP	0x0800000	/* set while inside relookup() */
-NAMEIFL	PARAMASK	0x0eee300	/* mask of parameter descriptors */
+NAMEIFL	PARAMASK	0x02ee300	/* mask of parameter descriptors */
 
 /*
  * Initialization of a nameidata structure.
@@ -251,7 +249,7 @@ extern const namei_simple_flags_t
  *
  * namei_simple_kernel takes a kernel-space path as the first argument.
  * namei_simple_user takes a user-space path as the first argument.
- * The nameiat_simple_* variants handle relative path using the given 
+ * The nameiat_simple_* variants handle relative path using the given
  * directory vnode instead of current directory.
  *
  * A namei call can be converted to namei_simple_* if:
@@ -264,7 +262,7 @@ int namei_simple_kernel(const char *, namei_simple_flags_t, struct vnode **);
 int namei_simple_user(const char *, namei_simple_flags_t, struct vnode **);
 int nameiat_simple_kernel(struct vnode *, const char *, namei_simple_flags_t,
     struct vnode **);
-int nameiat_simple_user(struct vnode *, const char *, namei_simple_flags_t, 
+int nameiat_simple_user(struct vnode *, const char *, namei_simple_flags_t,
     struct vnode **);
 
 int	namei(struct nameidata *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.17 2013/10/31 04:26:40 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.17.6.1 2015/06/06 14:40:09 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -67,6 +67,7 @@
 #define _DEV_PCI_IF_BGEVAR_H_
 
 #include <sys/bus.h>
+#include <sys/rndsource.h>
 #include <net/if_ether.h>
 #include <dev/pci/pcivar.h>
 
@@ -265,6 +266,9 @@ struct bge_softc {
 	bus_space_tag_t		bge_apetag;
 	bus_size_t		bge_apesize;
 	void			*bge_intrhand;
+#ifdef __HAVE_PCI_MSI_MSIX
+	pci_intr_handle_t	*bge_pihp;
+#endif
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 
@@ -276,8 +280,10 @@ struct bge_softc {
 	bus_dma_tag_t		bge_dmatag;
 	uint32_t		bge_pcixcap;
 	uint32_t		bge_pciecap;
+	uint32_t		bge_msicap;
 	uint16_t		bge_mps;
 	int			bge_expmrq;
+	uint32_t		bge_lasttag;
 	u_int32_t		bge_mfw_flags;  /* Management F/W flags */
 #define	BGE_MFW_ON_RXCPU	0x00000001
 #define	BGE_MFW_ON_APE		0x00000002

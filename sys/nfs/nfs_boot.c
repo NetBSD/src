@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.81.6.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.81.6.2 2015/06/06 14:40:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.81.6.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.81.6.2 2015/06/06 14:40:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -161,7 +161,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct lwp *lwp)
 	 */
 	if (nd->nd_mtu >= IP_MIN_MTU )
 		nfs_boot_setmtu(nd->nd_ifp, nd->nd_mtu, lwp);
-	
+
 	/*
 	 * If the gateway address is set, add a default route.
 	 * (The mountd RPCs may go across a gateway.)
@@ -366,7 +366,7 @@ nfs_boot_deladdress(struct ifnet *ifp, struct lwp *lwp, uint32_t addr)
 	memcpy(ifr.ifr_name, ifp->if_xname, IFNAMSIZ);
 
 	sockaddr_in_init(&sin, &ia, 0);
-	ifreq_setaddr(SIOCDIFADDR, &ifr, sintocsa(&sin)); 
+	ifreq_setaddr(SIOCDIFADDR, &ifr, sintocsa(&sin));
 
 	error = ifioctl(so, SIOCDIFADDR, &ifr, lwp);
 	if (error) {
@@ -425,7 +425,7 @@ nfs_boot_sobind_ipport(struct socket *so, uint16_t port, struct lwp *l)
 #define TOTAL_TIMEOUT   30	/* seconds */
 
 int
-nfs_boot_sendrecv(struct socket *so, struct mbuf *nam,
+nfs_boot_sendrecv(struct socket *so, struct sockaddr_in *nam,
 		int (*sndproc)(struct mbuf *, void *, int),
 		struct mbuf *snd,
 		int (*rcvproc)(struct mbuf **, void *),
@@ -468,7 +468,8 @@ send_again:
 		error = ENOBUFS;
 		goto out;
 	}
-	error = (*so->so_send)(so, nam, NULL, m, NULL, 0, lwp);
+	error = (*so->so_send)(so, (struct sockaddr *)nam, NULL,
+	    m, NULL, 0, lwp);
 	if (error) {
 		printf("nfs_boot: sosend: %d\n", error);
 		goto out;

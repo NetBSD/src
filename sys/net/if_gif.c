@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.83 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.83.4.1 2015/06/06 14:40:25 skrll Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.4.1 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83 2014/06/05 23:48:16 rmind Exp $");
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/socketvar.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
@@ -344,12 +345,16 @@ gifintr(void *arg)
 		switch (sc->gif_psrc->sa_family) {
 #ifdef INET
 		case AF_INET:
+			mutex_enter(softnet_lock);
 			error = in_gif_output(ifp, family, m);
+			mutex_exit(softnet_lock);
 			break;
 #endif
 #ifdef INET6
 		case AF_INET6:
+			mutex_enter(softnet_lock);
 			error = in6_gif_output(ifp, family, m);
+			mutex_exit(softnet_lock);
 			break;
 #endif
 		default:
@@ -423,12 +428,14 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct gif_softc *sc  = ifp->if_softc;
 	struct ifreq     *ifr = (struct ifreq*)data;
+	struct ifaddr    *ifa = (struct ifaddr*)data;
 	int error = 0, size;
 	struct sockaddr *dst, *src;
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
+		ifa->ifa_rtrequest = p2p_rtrequest;
 		break;
 
 	case SIOCADDMULTI:

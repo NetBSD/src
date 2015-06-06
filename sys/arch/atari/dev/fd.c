@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.80.2.1 2015/04/06 15:17:54 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.80.2.2 2015/06/06 14:39:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80.2.1 2015/04/06 15:17:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80.2.2 2015/06/06 14:39:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ struct fd_types {
 
 /*
  * This is set only once at attach time. The value is determined by reading
- * the configuration switches and is one of the FLP_TYPE_*'s. 
+ * the configuration switches and is one of the FLP_TYPE_*'s.
  * This is simular to the way Atari handles the _FLP cookie.
  */
 static short	def_type = 0;		/* Reflects config-switches	*/
@@ -372,14 +372,16 @@ fdcprint(void *aux, const char *pnp)
 
 	if (pnp != NULL)
 		aprint_normal("fd%d at %s:", (int)aux, pnp);
-	
+
 	return UNCONF;
 }
 
 static int	fdmatch(device_t, cfdata_t, void *);
 static void	fdattach(device_t, device_t, void *);
 
-struct dkdriver fddkdriver = { fdstrategy };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy
+};
 
 CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);

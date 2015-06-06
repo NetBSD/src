@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.25.24.2 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.25.24.3 2015/06/06 14:40:13 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -46,6 +46,8 @@
  * transfer is denoted by having a length less that 64 bytes. For
  * the RX case, the data includes an optional RX status word.
  */
+
+#include <sys/rndsource.h>
 
 #define AUE_UR_READREG		0xF0
 #define AUE_UR_WRITEREG		0xF1

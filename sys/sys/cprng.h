@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.10 2014/08/10 16:44:36 tls Exp $ */
+/*	$NetBSD: cprng.h,v 1.10.4.1 2015/06/06 14:40:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -37,8 +37,6 @@
 #define _CPRNG_H
 
 #include <sys/types.h>
-#include <sys/fcntl.h>		/* XXX users bogusly transitively need this */
-#include <sys/rnd.h>		/* XXX users bogusly transitively need this */
 
 #include <crypto/nist_ctr_drbg/nist_ctr_drbg.h>
 #include <crypto/cprng_fast/cprng_fast.h>

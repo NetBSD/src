@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.404.2.1 2015/04/06 15:17:51 skrll Exp $
+# $NetBSD: GENERIC,v 1.404.2.2 2015/06/06 14:39:54 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.404.2.1 $"
+#ident 		"GENERIC-$Revision: 1.404.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -99,7 +99,7 @@ options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 #
 makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 options 	DDB		# in-kernel debugger
-#options	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
+#options 	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
 #options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
@@ -354,9 +354,10 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 pwdog*	at pci? dev ? function ?	# QUANCOM PWDOG1
 
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-LPC w/ timecounter,
-					# watchdog and Speedstep and HPET
+					# watchdog, gpio, Speedstep and HPET
 fwhrng* at ichlpcib?		# Intel 82802 FWH Random Number Generator
 #hpet*	at ichlpcib?
+tco*	at ichlpcib?		# TCO watch dog timer
 
 aapic*	at pci? dev ? function ?	# AMD 8131 IO apic
 
@@ -427,8 +428,8 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 # Trusted Platform Module
 tpm*   at isa? iomem 0xfed40000 irq 7
 #tpm*  at isa? port 0x02e
-#tpm*  at isa? port 0x04e 
-#tpm*  at isa? port 0x07e 
+#tpm*  at isa? port 0x04e
+#tpm*  at isa? port 0x07e
 #tpm*  at isa? port 0x0ee
 
 # Serial Devices

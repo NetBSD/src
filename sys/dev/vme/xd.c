@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.93.4.1 2015/04/06 15:18:14 skrll Exp $	*/
+/*	$NetBSD: xd.c,v 1.93.4.2 2015/06/06 14:40:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.93.4.1 2015/04/06 15:18:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.93.4.2 2015/06/06 14:40:14 skrll Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -327,7 +327,9 @@ struct xdc_attach_args {	/* this is the "aux" args to xdattach */
  * dkdriver
  */
 
-struct dkdriver xddkdriver = {xdstrategy};
+struct dkdriver xddkdriver = {
+	.d_strategy = xdstrategy
+};
 
 /*
  * start: disk label fix code (XXX)

@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.113.2.1 2015/04/06 15:18:13 skrll Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.113.2.2 2015/06/06 14:40:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.113.2.1 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.113.2.2 2015/06/06 14:40:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -165,7 +165,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	if ((props & PROP_VAL_LIMITS) && (edata->upropset & PROP_CAP_LIMITS))
 		props = 0;
 
-	/* 
+	/*
 	 * check if the event is already on the list and return
 	 * EEXIST if value provided hasn't been changed.
 	 */
@@ -178,7 +178,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			continue;
 
 		/*
-		 * We found an existing event for this sensor.  Make 
+		 * We found an existing event for this sensor.  Make
 		 * sure it references the correct edata
 		 */
 		KASSERT(edata == osee->see_edata);
@@ -250,7 +250,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			break;
 		case PENVSYS_EVENT_STATE_CHANGED:
 			if (edata->units == ENVSYS_BATTERY_CAPACITY)
-				see->see_evstate = 
+				see->see_evstate =
 				    ENVSYS_BATTERY_CAPACITY_NORMAL;
 			else if (edata->units == ENVSYS_DRIVE)
 				see->see_evstate = ENVSYS_DRIVE_EMPTY;
@@ -549,7 +549,7 @@ sme_event_drvadd(void *arg)
 		}
 	}
 
-	/* 
+	/*
 	 * we are done, free memory now.
 	 */
 	kmem_free(sed_t, sizeof(*sed_t));
@@ -692,7 +692,7 @@ sme_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
 		DPRINTF(("%s: array device failed\n", __func__));
 		return EINVAL;
 	}
-	
+
 	sdict = prop_array_get(array, edata->sensor);
 	if (sdict == NULL) {
 		return EINVAL;
@@ -772,7 +772,7 @@ sme_events_worker(struct work *wk, void *arg)
 
 	mutex_enter(&sme->sme_mtx);
 	see->see_flags |= SEE_EVENT_WORKING;
-	/* 
+	/*
 	 * sme_events_check marks the sensors to make us refresh them here.
 	 * sme_envsys_refresh_sensor will not call the driver if the driver
 	 * does its own setting of the sensor value.
@@ -784,7 +784,7 @@ sme_events_worker(struct work *wk, void *arg)
 	}
 
 	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d type=%d state=%d units=%d "
-	    "value_cur=%d upropset=%d\n", __func__, sme->sme_name, edata->desc,
+	    "value_cur=%d upropset=0x%04x\n", __func__, sme->sme_name, edata->desc,
 	    edata->sensor, see->see_type, edata->state, edata->units,
 	    edata->value_cur, edata->upropset));
 
@@ -843,7 +843,7 @@ out:
  *	  no event type is specified, deliver all events for the sensor.
  */
 void
-sysmon_envsys_sensor_event(struct sysmon_envsys *sme, envsys_data_t *edata, 
+sysmon_envsys_sensor_event(struct sysmon_envsys *sme, envsys_data_t *edata,
 			   int ev_type)
 {
 	sme_event_t *see;
@@ -941,7 +941,7 @@ sme_deliver_event(sme_event_t *see)
 	 * send the event...
 	 */
 	case PENVSYS_EVENT_STATE_CHANGED:
-		/* 
+		/*
 		 * the state has not been changed, just ignore the event.
 		 */
 		if (edata->value_cur == see->see_evvalue)
@@ -971,7 +971,7 @@ sme_deliver_event(sme_event_t *see)
 		if (sdt->type == -1)
 			break;
 
-		/* 
+		/*
 		 * copy current state description.
 		 */
 		(void)strlcpy(see->see_pes.pes_statedesc, sdt->desc,
@@ -991,7 +991,7 @@ sme_deliver_event(sme_event_t *see)
 
 		see->see_evvalue = edata->value_cur;
 
-		/* 
+		/*
 		 * There's no need to continue if it's a drive sensor.
 		 */
 		if (edata->units == ENVSYS_DRIVE)
@@ -1075,7 +1075,7 @@ sme_acadapter_check(void)
 	if (!sensor)
 		return false;
 
-	/* 
+	/*
 	 * AC adapter found and not connected.
 	 */
 	return true;

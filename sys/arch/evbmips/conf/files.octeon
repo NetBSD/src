@@ -1,0 +1,17 @@
+#	$NetBSD: files.octeon,v 1.4.2.2 2015/06/06 14:39:59 skrll Exp $
+
+file	arch/evbmips/cavium/autoconf.c
+file	arch/evbmips/cavium/machdep.c
+file	arch/evbmips/cavium/mach_intr.c
+file	arch/evbmips/cavium/octeon_bootbus_machdep.c	bootbus
+
+file	arch/evbmips/evbmips/interrupt.c
+
+file	kern/subr_disk_mbr.c
+
+#device	cpu
+#attach	cpu at mainbus
+#file	arch/evbmips/evbmips/cpu.c		cpu
+
+# Memory Disk
+file	dev/md_root.c				memory_disk_hooks

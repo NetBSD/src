@@ -1,4 +1,4 @@
-/*	$NetBSD: netbios.h,v 1.7 2005/12/11 06:25:32 christos Exp $	*/
+/*	$NetBSD: netbios.h,v 1.7.140.1 2015/06/06 14:40:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -41,12 +41,6 @@
  */
 #ifndef _NETINET_IN_H_
 #include <netinet/in.h>
-#endif
-
-#ifndef NetBSD
-#ifndef _NETIPX_IPX_H_
-#include <netipx/ipx.h>
-#endif
 #endif
 
 #define AF_NETBIOS	AF_NS		/* XXX: should go to socket.h */

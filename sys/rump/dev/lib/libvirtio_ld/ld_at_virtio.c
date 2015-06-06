@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_at_virtio.c,v 1.1 2014/08/22 09:57:05 pooka Exp $	*/
+/*	$NetBSD: ld_at_virtio.c,v 1.1.2.1 2015/06/06 14:40:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,13 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.1 2014/08/22 09:57:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.1.2.1 2015/06/06 14:40:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/bus.h>
 #include <sys/stat.h>
+#include <sys/disklabel.h>
 
 #include "rump_private.h"
 #include "rump_vfs_private.h"
@@ -46,21 +47,38 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	    cfattach_ioconf_virtio_ld, cfdata_ioconf_virtio_ld);
 }
 
-RUMP_COMPONENT(RUMP_COMPONENT_VFS)
+/*
+ * Pseudo-devfs.  Since creating device nodes is non-free, don't
+ * speculatively create hundreds of them (= milliseconds slower
+ * bootstrap).  Instead, after the probe is done, see which units
+ * were found and create nodes only for them.
+ */
+RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 {
 	extern const struct bdevsw ld_bdevsw;
 	extern const struct cdevsw ld_cdevsw;
 	devmajor_t bmaj = -1, cmaj = -1;
-	int error;
+	int error, i;
 
 	if ((error = devsw_attach("ld", &ld_bdevsw, &bmaj,
 	    &ld_cdevsw, &cmaj)) != 0)
 		panic("cannot attach ld: %d", error);
         
-	if ((error = rump_vfs_makedevnodes(S_IFBLK, "/dev/ld0", 'a',
-	    bmaj, 0, 7)) != 0)
-		panic("cannot create cooked ld dev nodes: %d", error);
-	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/rld0", 'a',
-	    cmaj, 0, 7)) != 0)
-		panic("cannot create raw ld dev nodes: %d", error);
+	for (i = 0; i < 10; i++) {
+		char bbase[] = "/dev/ldX";
+		char rbase[] = "/dev/rldX";
+
+		if (device_lookup(&ld_cd, i) == NULL)
+			break;
+
+		bbase[sizeof(bbase)-2] = '0' + i;
+		rbase[sizeof(rbase)-2] = '0' + i;
+
+		if ((error = rump_vfs_makedevnodes(S_IFBLK, bbase, 'a',
+		    bmaj, DISKMINOR(i, 0), 5)) != 0)
+			panic("cannot create cooked ld dev nodes: %d", error);
+		if ((error = rump_vfs_makedevnodes(S_IFCHR, rbase, 'a',
+		    cmaj, DISKMINOR(i, 0), 5)) != 0)
+			panic("cannot create raw ld dev nodes: %d", error);
+	}
 }

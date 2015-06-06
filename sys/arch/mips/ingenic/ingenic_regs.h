@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.1.2.1 2015/04/06 15:17:59 skrll Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.1.2.2 2015/06/06 14:40:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -26,10 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <mips/locore.h>
-
 #ifndef INGENIC_REGS_H
 #define INGENIC_REGS_H
+
+/* for wbflush() */
+#include <mips/locore.h>
 
 /* UARTs, mostly 16550 compatible with 32bit spaced registers */
 #define JZ_UART0 0x10030000
@@ -37,6 +38,10 @@
 #define JZ_UART2 0x10032000
 #define JZ_UART3 0x10033000
 #define JZ_UART4 0x10034000
+
+/* LCD controller base addresses, registers are in jzfb_regs.h */
+#define JZ_LCDC0_BASE 0x13050000
+#define JZ_LCDC1_BASE 0x130a0000
 
 /* watchdog */
 #define JZ_WDOG_TDR	0x10002000	/* compare */
@@ -58,15 +63,15 @@
 /* timers and PWMs */
 #define JZ_TC_TER	0x10002010	/* TC enable reg, ro */
 #define JZ_TC_TESR	0x10002014	/* TC enable set reg. */
-	#define TESR_TCST0	0x0001	/* enable counter 0 */ 
-	#define TESR_TCST1	0x0002	/* enable counter 1 */ 
-	#define TESR_TCST2	0x0004	/* enable counter 2 */ 
-	#define TESR_TCST3	0x0008	/* enable counter 3 */ 
-	#define TESR_TCST4	0x0010	/* enable counter 4 */ 
-	#define TESR_TCST5	0x0020	/* enable counter 5 */ 
-	#define TESR_TCST6	0x0040	/* enable counter 6 */ 
-	#define TESR_TCST7	0x0080	/* enable counter 7 */ 
-	#define TESR_OST	0x8000	/* enable OST */ 
+	#define TESR_TCST0	0x0001	/* enable counter 0 */
+	#define TESR_TCST1	0x0002	/* enable counter 1 */
+	#define TESR_TCST2	0x0004	/* enable counter 2 */
+	#define TESR_TCST3	0x0008	/* enable counter 3 */
+	#define TESR_TCST4	0x0010	/* enable counter 4 */
+	#define TESR_TCST5	0x0020	/* enable counter 5 */
+	#define TESR_TCST6	0x0040	/* enable counter 6 */
+	#define TESR_TCST7	0x0080	/* enable counter 7 */
+	#define TESR_OST	0x8000	/* enable OST */
 #define JZ_TC_TECR	0x10002018	/* TC enable clear reg. */
 #define JZ_TC_TFR	0x10002020
 	#define TFR_FFLAG0	0x00000001	/* channel 0 */
@@ -165,6 +170,8 @@ MFC0(uint32_t r, uint32_t s)
 #define JZ_CPCCR	0x10000000	/* Clock Control Register */
 	#define JZ_PDIV_M	0x000f0000	/* PCLK divider mask */
 	#define JZ_PDIV_S	16		/* PCLK divider shift */
+	#define JZ_CDIV_M	0x0000000f	/* CPU clock divider mask */
+	#define JZ_CDIV_S	0		/* CPU clock divider shift */
 #define JZ_CPMPCR	0x00000014	/* MPLL */
 	#define JZ_PLLM_S	19		/* PLL multiplier shift */
 	#define JZ_PLLM_M	0xfff80000	/* PLL multiplier mask */
@@ -176,6 +183,39 @@ MFC0(uint32_t r, uint32_t s)
 	#define JZ_PLLBP	0x00000002	/* PLL bypass */
 	#define JZ_PLLEN	0x00000001	/* PLL enable */
 #define JZ_CLKGR0	0x10000020	/* CLocK Gating Registers */
+	#define CLK_NEMC	(1 << 0)
+	#define CLK_BCH		(1 << 1)
+	#define CLK_OTG0	(1 << 2)
+	#define CLK_MSC0	(1 << 3)
+	#define CLK_SSI0	(1 << 4)
+	#define CLK_SMB0	(1 << 5)
+	#define CLK_SMB1	(1 << 6)
+	#define CLK_SCC		(1 << 7)
+	#define CLK_AIC		(1 << 8)
+	#define CLK_TSSI0	(1 << 9)
+	#define CLK_OWI		(1 << 10)
+	#define CLK_MSC1	(1 << 11)
+	#define CLK_MSC2	(1 << 12)
+	#define CLK_KBC		(1 << 13)
+	#define CLK_SADC	(1 << 14)
+	#define CLK_UART0	(1 << 15)
+	#define CLK_UART1	(1 << 16)
+	#define CLK_UART2	(1 << 17)
+	#define CLK_UART3	(1 << 18)
+	#define CLK_SSI1	(1 << 19)
+	#define CLK_SSI2	(1 << 20)
+	#define CLK_PDMA	(1 << 21)
+	#define CLK_GPS		(1 << 22)
+	#define CLK_MAC		(1 << 23)
+	#define CLK_UHC		(1 << 24)
+	#define CLK_SMB2	(1 << 25)
+	#define CLK_CIM		(1 << 26)
+	#define CLK_TVE		(1 << 27)
+	#define CLK_LCD		(1 << 28)
+	#define CLK_IPU		(1 << 29)
+	#define CLK_DDR0	(1 << 30)
+	#define CLK_DDR1	(1 << 31)
+
 #define JZ_OPCR		0x10000024	/* Oscillator Power Control Reg. */
 	#define OPCR_IDLE_DIS	0x80000000	/* don't stop CPU clk on idle */
 	#define OPCR_GPU_CLK_ST	0x40000000	/* stop GPU clock */
@@ -192,6 +232,23 @@ MFC0(uint32_t r, uint32_t s)
 	#define OPCR_CPU_MODE	0x00000002	/* 1 access 'accelerated' */
 	#define OPCR_OSE	0x00000001	/* disable EXTCLK */
 #define JZ_CLKGR1	0x10000028	/* CLocK Gating Registers */
+	#define CLK_SMB3	(1 << 0)
+	#define CLK_TSSI1	(1 << 1)
+	#define CLK_VPU		(1 << 2)
+	#define CLK_PCM		(1 << 3)
+	#define CLK_GPU		(1 << 4)
+	#define CLK_COMPRESS	(1 << 5)
+	#define CLK_AIC1	(1 << 6)
+	#define CLK_GPVLC	(1 << 7)
+	#define CLK_OTG1	(1 << 8)
+	#define CLK_HDMI	(1 << 9)
+	#define CLK_UART4	(1 << 10)
+	#define CLK_AHB_MON	(1 << 11)
+	#define CLK_SMB4	(1 << 12)
+	#define CLK_DES		(1 << 13)
+	#define CLK_X2D		(1 << 14)
+	#define CLK_P1		(1 << 15)
+
 #define JZ_USBPCR	0x1000003c
 	#define PCR_USB_MODE		0x80000000	/* 1 - otg */
 	#define PCR_AVLD_REG		0x40000000
@@ -212,6 +269,7 @@ MFC0(uint32_t r, uint32_t s)
 	#define PCR_TXHSXVTUNE		0x00000030
 	#define PCR_TXVREFTUNE		0x0000000f
 #define JZ_USBRDT	0x10000040	/* Reset Detect Timer Register */
+#define JZ_USBVBFIL	0x10000044
 #define JZ_USBPCR1	0x10000048
 	#define PCR_SYNOPSYS	0x10000000	/* Mentor mode otherwise */
 	#define PCR_REFCLK_CORE	0x0c000000
@@ -222,7 +280,7 @@ MFC0(uint32_t r, uint32_t s)
 	#define PCR_CLK_48	0x02000000	/* 48MHz */
 	#define PCR_CLK_24	0x01000000	/* 24MHz */
 	#define PCR_CLK_12	0x00000000	/* 12MHz */
-	#define PCR_DMPD1	0x00800000	/* pull down D- on port 1 */ 
+	#define PCR_DMPD1	0x00800000	/* pull down D- on port 1 */
 	#define PCR_DPPD1	0x00400000	/* pull down D+ on port 1 */
 	#define PCR_PORT0_RST	0x00200000	/* port 0 reset */
 	#define PCR_PORT1_RST	0x00100000	/* port 1 reset */
@@ -237,9 +295,38 @@ MFC0(uint32_t r, uint32_t s)
 	#define PCR_TXRISETUNE1	0x00000001	/* rise/fall wave adj. */
 
 #define JZ_UHCCDR	0x1000006c	/* UHC Clock Divider Register */
+	#define UHCCDR_SCLK_A	0x00000000
+	#define UHCCDR_MPLL	0x40000000
+	#define UHCCDR_EPLL	0x80000000
+	#define UHCCDR_OTG_PHY	0xc0000000
+	#define UHCCDR_CE	0x20000000
+	#define UHCCDR_BUSY	0x10000000
+	#define UHCCDR_STOP	0x08000000
+	#define UHCCDR_DIV_M	0x000000ff
 #define JZ_SPCR0	0x100000b8	/* SRAM Power Control Registers */
 #define JZ_SPCR1	0x100000bc
 #define JZ_SRBC		0x100000c4	/* Soft Reset & Bus Control */
+
+/* clock divider registers */
+#define JZ_MSC0CDR	0x10000068
+	#define MSCCDR_SCLK_A	0x40000000
+	#define MSCCDR_MPLL	0x80000000
+	#define MSCCDR_CE	0x20000000
+	#define MSCCDR_BUSY	0x10000000
+	#define MSCCDR_STOP	0x08000000
+	#define MSCCDR_PHASE	0x00008000	/* 0 - 90deg phase, 1 - 180 */
+	#define MSCCDR_DIV_M	0x000000ff	/* src / ((div + 1) * 2) */
+#define JZ_UHCCDR	0x1000006c	/* UHC Clock Divider Register */
+	#define UHCCDR_SCLK_A	0x00000000
+	#define UHCCDR_MPLL	0x40000000
+	#define UHCCDR_EPLL	0x80000000
+	#define UHCCDR_OTG_PHY	0xc0000000
+	#define UHCCDR_CE	0x20000000
+	#define UHCCDR_BUSY	0x10000000
+	#define UHCCDR_STOP	0x08000000
+	#define UHCCDR_DIV_M	0x000000ff
+#define JZ_MSC1CDR	0x100000a4
+#define JZ_MSC2CDR	0x100000a8
 
 /* interrupt controller */
 #define JZ_ICSR0	0x10001000	/* raw IRQ line status */
@@ -302,7 +389,7 @@ MFC0(uint32_t r, uint32_t s)
 /*
  * INT == 1: 0 - level triggered, 1 - edge triggered
  * INT == 0: 0 - device select, see below
- */ 
+ */
 #define JZ_GPIO_PAT1	0x00000030	/* pattern 1 register */
 #define JZ_GPIO_PAT1S	0x00000034	/* pattern 1 set register */
 #define JZ_GPIO_PAT1C	0x00000038	/* pattern 1 clear register */
@@ -371,7 +458,7 @@ gpio_as_dev0(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_PAT1C, mask);	/* select 0 */
 	writereg(reg + JZ_GPIO_PAT0C, mask);
 }
-	
+
 static inline void
 gpio_as_dev1(uint32_t g, int pin)
 {
@@ -383,7 +470,7 @@ gpio_as_dev1(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_PAT1C, mask);	/* select 1 */
 	writereg(reg + JZ_GPIO_PAT0S, mask);
 }
-	
+
 static inline void
 gpio_as_dev2(uint32_t g, int pin)
 {
@@ -395,7 +482,7 @@ gpio_as_dev2(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_PAT1S, mask);	/* select 2 */
 	writereg(reg + JZ_GPIO_PAT0C, mask);
 }
-	
+
 static inline void
 gpio_as_dev3(uint32_t g, int pin)
 {
@@ -407,7 +494,7 @@ gpio_as_dev3(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_PAT1S, mask);	/* select 3 */
 	writereg(reg + JZ_GPIO_PAT0S, mask);
 }
-	
+
 static inline void
 gpio_as_intr_level(uint32_t g, int pin)
 {
@@ -420,6 +507,32 @@ gpio_as_intr_level(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_PAT0S, mask);	/* trigger on high */
 	writereg(reg + JZ_GPIO_FLAGC, mask);	/* clear it */
 	writereg(reg + JZ_GPIO_MASKC, mask);	/* enable it */
+}
+
+static inline void
+gpio_as_intr_level_low(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	writereg(reg + JZ_GPIO_MASKS, mask);	/* mask it */
+	writereg(reg + JZ_GPIO_INTS, mask);	/* use as interrupt */
+	writereg(reg + JZ_GPIO_PAT1C, mask);	/* level trigger */
+	writereg(reg + JZ_GPIO_PAT0C, mask);	/* trigger on low */
+	writereg(reg + JZ_GPIO_FLAGC, mask);	/* clear it */
+	writereg(reg + JZ_GPIO_MASKC, mask);	/* enable it */
+}
+
+static inline void
+gpio_as_input(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	writereg(reg + JZ_GPIO_MASKS, mask);	/* mask it */
+	writereg(reg + JZ_GPIO_INTC, mask);	/* not an interrupt */
+	writereg(reg + JZ_GPIO_PAT1S, mask);	/* use as input */
+	writereg(reg + JZ_GPIO_FLAGC, mask);	/* clear it just in case */
 }
 
 /* I2C / SMBus */
@@ -459,7 +572,7 @@ gpio_as_intr_level(uint32_t g, int pin)
 	#define JZ_TXABT	0x40	/* ABORT occured */
 	#define JZ_TXEMP	0x10	/* TX FIFO is low */
 	#define JZ_TXOF		0x08	/* TX FIFO is high */
-	#define JZ_RXFL		0x04	/* RX FIFO is low */
+	#define JZ_RXFL		0x04	/* RX FIFO is at  JZ_SMBRXTL*/
 	#define JZ_RXOF		0x02	/* RX FIFO is high */
 	#define JZ_RXUF		0x01	/* RX FIFO underflow */
 #define JZ_SMBINTM	0x30 /* SMB Interrupt Mask */
@@ -496,5 +609,172 @@ gpio_as_intr_level(uint32_t g, int pin)
 #define JZ_SMBENBST	0x9C /* SMB Enable Status Register */
 #define JZ_SMBSDAHD	0xD0 /* SMB SDA HolD time Register */
 	#define JZ_HDENB	0x100	/* enable hold time */
+
+/* SD/MMC hosts */
+#define JZ_MSC0_BASE	0x13450000
+#define JZ_MSC1_BASE	0x13460000
+#define JZ_MSC2_BASE	0x13470000
+
+#define JZ_MSC_CTRL	0x00
+	#define JZ_SEND_CCSD		0x8000
+	#define JZ_SEND_AS_CCSD		0x4000
+	#define JZ_EXIT_MULTIPLE	0x0080
+	#define JZ_EXIT_TRANSFER	0x0040
+	#define JZ_START_READWAIT	0x0020
+	#define JZ_STOP_READWAIT	0x0010
+	#define JZ_RESET		0x0008
+	#define JZ_START_OP		0x0004
+	#define JZ_CLOCK_CTRL_M		0x0003
+	#define JZ_CLOCK_START		0x0002
+	#define JZ_CLOCK_STOP		0x0001
+#define JZ_MSC_STAT	0x04
+	#define JZ_AUTO_CMD12_DONE	0x80000000
+	#define JZ_AUTO_CMD23_DONE	0x40000000
+	#define JZ_SVS			0x20000000
+	#define JZ_PIN_LEVEL_M		0x1f000000
+	#define JZ_BCE			0x00100000 /* boot CRC error */
+	#define JZ_BDE			0x00080000 /* boot data end */
+	#define JZ_BAE			0x00040000 /* boot acknowledge error */
+	#define JZ_BAR			0x00020000 /* boot ack. received */
+	#define JZ_DMAEND		0x00010000
+	#define JZ_IS_RESETTING		0x00008000
+	#define JZ_SDIO_INT_ACTIVE	0x00004000
+	#define JZ_PRG_DONE		0x00002000
+	#define JZ_DATA_TRAN_DONE	0x00001000
+	#define JZ_END_CMD_RES		0x00000800
+	#define JZ_DATA_FIFO_AFULL	0x00000400
+	#define JZ_IS_READWAIT		0x00000200
+	#define JZ_CLK_EN		0x00000100
+	#define JZ_DATA_FIFO_FULL	0x00000080
+	#define JZ_DATA_FIFO_EMPTY	0x00000040
+	#define JZ_CRC_RES_ERR		0x00000020
+	#define JZ_CRC_READ_ERR		0x00000010
+	#define JZ_CRC_WRITE_ERR_M	0x0000000c
+	#define JZ_CRC_WRITE_OK		0x00000000
+	#define JZ_CRC_CARD_ERR		0x00000004
+	#define JZ_CRC_NO_STATUS	0x00000008
+	#define JZ_TIME_OUT_RES		0x00000002
+	#define JZ_TIME_OUT_READ	0x00000001
+#define JZ_MSC_CLKRT	0x08
+	#define JZ_DEV_CLK	0x0
+	#define JZ_DEV_CLK_2	0x1	/* DEV_CLK / 2 */
+	#define JZ_DEV_CLK_4	0x2	/* DEV_CLK / 4 */
+	#define JZ_DEV_CLK_8	0x3	/* DEV_CLK / 8 */
+	#define JZ_DEV_CLK_16	0x4	/* DEV_CLK / 16 */
+	#define JZ_DEV_CLK_32	0x5	/* DEV_CLK / 32 */
+	#define JZ_DEV_CLK_64	0x6	/* DEV_CLK / 64 */
+	#define JZ_DEV_CLK_128	0x7	/* DEV_CLK / 128 */
+#define JZ_MSC_CMDAT	0x0c
+	#define JZ_CCS_EXPECTED	0x80000000
+	#define JZ_READ_CEATA	0x40000000
+	#define JZ_DIS_BOOT	0x08000000
+	#define JZ_ENA_BOOT	0x04000000
+	#define JZ_EXP_BOOT_ACK	0x02000000
+	#define JZ_BOOT_MODE	0x01000000
+	#define JZ_AUTO_CMD23	0x00040000
+	#define JZ_SDIO_PRDT	0x00020000
+	#define JZ_AUTO_CMD12	0x00010000
+	#define JZ_RTRG_M	0x0000c000 /* receive FIFO trigger */
+	#define JZ_RTRG_16	0x00000000 /* >= 16 */
+	#define JZ_RTRG_32	0x00004000 /* >= 32 */
+	#define JZ_RTRG_64	0x00008000 /* >= 64 */
+	#define JZ_RTRG_96	0x0000c000 /* >= 96 */
+	#define JZ_TTRG_M	0x00003000 /* transmit FIFO trigger */
+	#define JZ_TTRG_16	0x00000000 /* >= 16 */
+	#define JZ_TTRG_32	0x00001000 /* >= 32 */
+	#define JZ_TTRG_64	0x00002000 /* >= 64 */
+	#define JZ_TTRG_96	0x00003000 /* >= 96 */
+	#define JZ_IO_ABORT	0x00000800
+	#define JZ_BUS_WIDTH_M	0x00000600
+	#define JZ_BUS_1BIT	0x00000000
+	#define JZ_BUS_4BIT	0x00000200
+	#define JZ_BUS_8BIT	0x00000300
+	#define JZ_INIT		0x00000080 /* send 80 clk init before cmd */
+	#define JZ_BUSY		0x00000040
+	#define JZ_STREAM	0x00000020
+	#define JZ_WRITE	0x00000010 /* read otherwise */
+	#define JZ_DATA_EN	0x00000008
+	#define JZ_RESPONSE_M	0x00000007 /* response format */
+	#define JZ_RES_NONE	0x00000000
+	#define JZ_RES_R1	0x00000001 /* R1 and R1b */
+	#define JZ_RES_R2	0x00000002
+	#define JZ_RES_R3	0x00000003
+	#define JZ_RES_R4	0x00000004
+	#define JZ_RES_R5	0x00000005
+	#define JZ_RES_R6	0x00000006
+	#define JZ_RES_R7	0x00000007
+#define JZ_MSC_RESTO	0x10 /* 16bit response timeout in MSC_CLK */
+#define JZ_MSC_RDTO RW	0x14 /* 32bit read timeout in MSC_CLK */
+#define JZ_MSC_BLKLEN	0x18 /* 16bit block length */
+#define JZ_MSC_NOB	0x1c /* 16bit block counter */
+#define JZ_MSC_SNOB	0x20 /* 16bit successful block counter */
+#define JZ_MSC_IMASK	0x24 /* interrupt mask */
+	#define JZ_INT_AUTO_CMD23_DONE	0x40000000
+	#define JZ_INT_SVS		0x20000000
+	#define JZ_INT_PIN_LEVEL_M	0x1f000000
+	#define JZ_INT_BCE		0x00100000
+	#define JZ_INT_BDE		0x00080000
+	#define JZ_INT_BAE		0x00040000
+	#define JZ_INT_BAR		0x00020000
+	#define JZ_INT_DMAEND		0x00010000
+	#define JZ_INT_AUTO_CMD12_DONE	0x00008000
+	#define JZ_INT_DATA_FIFO_FULL	0x00004000
+	#define JZ_INT_DATA_FIFO_EMPTY	0x00002000
+	#define JZ_INT_CRC_RES_ERR	0x00001000
+	#define JZ_INT_CRC_READ_ERR	0x00000800
+	#define JZ_INT_CRC_WRITE_ERR	0x00000400
+	#define JZ_INT_TIMEOUT_RES	0x00000200
+	#define JZ_INT_TIMEOUT_READ	0x00000100
+	#define JZ_INT_SDIO		0x00000080
+	#define JZ_INT_TXFIFO_WR_REQ	0x00000040
+	#define JZ_INT_RXFIFO_RD_REQ	0x00000020
+	#define JZ_INT_EMD_CMD_RES	0x00000004
+	#define JZ_INT_PRG_DONE		0x00000002
+	#define JZ_INT_DATA_TRAN_DONE	0x00000001
+#define JZ_MSC_IFLG	0x28 /* interrupt flags */
+#define JZ_MSC_CMD	0x2c /* 6bit CMD index */
+#define JZ_MSC_ARG	0x30 /* 32bit argument */
+#define JZ_MSC_RES	0x34 /* 8x16bit response data FIFO */
+#define JZ_MSC_RXFIFO	0x38
+#define JZ_MSC_TXFIFO	0x3c
+#define JZ_MSC_LPM	0x40
+	#define JZ_DRV_SEL_M	0xc0000000
+	#define JZ_FALLING_EDGE	0x00000000
+	#define JZ_RISING_1NS	0x40000000 /* 1ns delay */
+	#define JZ_RISING_4	0x80000000 /* 1/4 MSC_CLK delay */
+	#define JZ_SMP_SEL	0x20000000 /* 1 - rising edge */
+	#define JZ_LPM		0x00000001 /* low power mode */
+#define JZ_MSC_DMAC	0x44
+	#define JZ_MODE_SEL	0x80 /* 1 - specify transfer length */
+	#define JZ_AOFST_M	0x60 /* address offset in bytes */
+	#define JZ_ALIGNEN	0x10 /* allow non-32bit-aligned transfers */
+	#define JZ_INCR_M	0x0c /* burst type */
+	#define JZ_INCR_16	0x00
+	#define JZ_INCR_32	0x04
+	#define JZ_INCR_64	0x08
+	#define JZ_DMASEL	0x02 /* 1 - SoC DMAC, 0 - MSC built-in */
+	#define JZ_DMAEN	0x01 /* enable DMA */
+#define JZ_MSC_DMANDA	0x48 /* next descriptor paddr */
+#define JZ_MSC_DMADA	0x4c /* current descriptor */
+#define JZ_MSC_DMALEN	0x50 /* transfer tength */
+#define JZ_MSC_DMACMD	0x54
+	#define JZ_DMA_IDI_M	0xff000000
+	#define JZ_DMA_ID_M	0x00ff0000
+	#define JZ_DMA_AOFST_M	0x00000600
+	#define JZ_DMA_ALIGN	0x00000100
+	#define JZ_DMA_ENDI	0x00000002
+	#define JZ_DMA_LINK	0x00000001
+#define JZ_MSC_CTRL2	0x58
+	#define JZ_PIP		0x1f000000	/* 1 - intr trigger on high */
+	#define JZ_RST_EN	0x00800000
+	#define JZ_STPRM	0x00000010
+	#define JZ_SVC		0x00000008
+	#define JZ_SMS_M	0x00000007
+	#define JZ_SMS_DEF	0x00000000	/* default speed */
+	#define JZ_SMS_HIGH	0x00000001	/* high speed */
+	#define JZ_SMS_SDR12	0x00000002
+	#define JZ_SMS_SDR25	0x00000003
+	#define JZ_SMS_SDR50	0x00000004
+#define JZ_MSC_RTCNT	0x5c /* RT FIFO count */
 
 #endif /* INGENIC_REGS_H */

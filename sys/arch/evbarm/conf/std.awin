@@ -1,4 +1,4 @@
-#	$NetBSD: std.awin,v 1.5 2014/10/22 00:24:52 jmcneill Exp $
+#	$NetBSD: std.awin,v 1.5.2.1 2015/06/06 14:39:58 skrll Exp $
 #
 # standard NetBSD/evbarm for Allwinner based options
 

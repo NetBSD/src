@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.80 2013/06/09 09:23:35 msaitoh Exp $	*/
+/*	$NetBSD: be.c,v 1.80.10.1 2015/06/06 14:40:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.80 2013/06/09 09:23:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.80.10.1 2015/06/06 14:40:13 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.80 2013/06/09 09:23:35 msaitoh Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

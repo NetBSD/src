@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.107.10.1 2015/04/06 15:18:33 skrll Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.107.10.2 2015/06/06 14:40:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.107.10.1 2015/04/06 15:18:33 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.107.10.2 2015/06/06 14:40:31 skrll Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -518,7 +518,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	FS *fs;
 	int flags;
 	struct buf *bp;
-	off_t osize, origoff;
+	off_t osize;
 	int resid, xfersize, size, blkoffset;
 	daddr_t lbn;
 	int extended=0;
@@ -554,7 +554,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
-	origoff = uio->uio_offset;
 	resid = uio->uio_resid;
 	osize = ip->i_size;
 	error = 0;
@@ -567,9 +566,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #endif /* !LFS_READWRITE */
 
 	/* XXX Should never have pages cached here.  */
-	mutex_enter(vp->v_interlock);
-	VOP_PUTPAGES(vp, trunc_page(origoff), round_page(origoff + resid),
-	    PGO_CLEANIT | PGO_FREE | PGO_SYNCIO | PGO_JOURNALLOCKED);
+	KASSERT(vp->v_uobj.uo_npages == 0);
 	while (uio->uio_resid > 0) {
 		lbn = ufs_lblkno(fs, uio->uio_offset);
 		blkoffset = ufs_blkoff(fs, uio->uio_offset);

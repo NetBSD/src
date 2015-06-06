@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.94 2014/11/22 15:02:39 macallan Exp $ */
+/* $NetBSD: locore.h,v 1.94.2.1 2015/06/06 14:40:01 skrll Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -102,14 +102,14 @@ void	softint_fast_dispatch(struct lwp *, int);
  * offset, we shift left to clear the upper four bits and then right by 6.
  */
 #define	fixup_addr2offset(x)	((((uint32_t)(uintptr_t)(x)) << 4) >> 6)
-typedef bool (*mips_fixup_callback_t)(int32_t, uint32_t [2]);
+typedef bool (*mips_fixup_callback_t)(int32_t, uint32_t [2], void *);
 struct mips_jump_fixup_info {
 	uint32_t jfi_stub;
 	uint32_t jfi_real;
 };
  
 void	fixup_splcalls(void);				/* splstubs.c */
-bool	mips_fixup_exceptions(mips_fixup_callback_t);
+bool	mips_fixup_exceptions(mips_fixup_callback_t, void *);
 bool	mips_fixup_zero_relative(int32_t, uint32_t [2]);
 intptr_t
 	mips_fixup_addr(const uint32_t *);
@@ -154,6 +154,9 @@ intptr_t mipsNN_cp0_watchlo_read(u_int);
 void	mipsNN_cp0_watchlo_write(u_int, intptr_t);
 uint32_t mipsNN_cp0_watchhi_read(u_int);
 void	mipsNN_cp0_watchhi_write(u_int, uint32_t);
+
+int32_t mipsNN_cp0_ebase_read(void);
+void	mipsNN_cp0_ebase_write(int32_t);
 
 #if (MIPS32R2 + MIPS64R2) > 0
 void	mipsNN_cp0_hwrena_write(uint32_t);
@@ -317,6 +320,39 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 }
 #endif	/* (MIPS3 + MIPS4 + MIPS64 + MIPS64R2) > 0 */
 
+#if (MIPS64 + MIPS64R2) > 0 && !defined(__mips_o32)
+/* 64-bits address space accessor for n32, n64 ABI */
+
+static __inline uint64_t	mips64_ld_a64(uint64_t addr) __unused;
+static __inline void		mips64_sd_a64(uint64_t addr, uint64_t val) __unused;
+
+static __inline uint64_t
+mips64_ld_a64(uint64_t addr)
+{
+	uint64_t rv;
+#if defined(__mips_n32)
+	__asm volatile("ld	%0, 0(%1)" : "=r"(rv) : "d"(addr));
+#elif defined(_LP64)
+	rv = *(volatile uint64_t *)addr;
+#else
+#error unknown ABI
+#endif
+	return (rv);
+}
+
+static __inline void
+mips64_sd_a64(uint64_t addr, uint64_t val)
+{
+#if defined(__mips_n32)
+	__asm volatile("sd	%1, 0(%0)" :: "d"(addr), "r"(val));
+#elif defined(_LP64)
+	*(volatile uint64_t *)addr = val;
+#else
+#error unknown ABI
+#endif
+}
+#endif	/* (MIPS64 + MIPS64R2) > 0 */
+
 /*
  * A vector with an entry for each mips-ISA-level dependent
  * locore function, and macros which jump through it.
@@ -386,6 +422,7 @@ struct splsw;
 struct mips_vmfreelist;
 struct phys_ram_seg;
 
+void	mips64r2_vector_init(const struct splsw *);
 void	mips_vector_init(const struct splsw *, bool);
 void	mips_init_msgbuf(void);
 void	mips_init_lwp0_uarea(void);
@@ -421,6 +458,7 @@ void	mips_page_physload(vaddr_t, vaddr_t,
 				/*	0x0a	unannounced */
 #define     MIPS_PRID_CID_LEXRA		0x0b	/* Lexra */
 #define     MIPS_PRID_CID_RMI		0x0c	/* RMI / NetLogic */
+#define     MIPS_PRID_CID_CAVIUM	0x0d	/* Cavium */
 #define     MIPS_PRID_CID_INGENIC	0xe1
 #define MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
 

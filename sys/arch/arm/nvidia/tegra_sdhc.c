@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.1.2.2 2015/04/06 15:17:53 skrll Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.1.2.2 2015/04/06 15:17:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,16 +50,23 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.1.2.2 2015/04/06 15:17:53 skrll Exp
 static int	tegra_sdhc_match(device_t, cfdata_t, void *);
 static void	tegra_sdhc_attach(device_t, device_t, void *);
 
-static void	tegra_sdhc_attach_i(device_t);
+static int	tegra_sdhc_card_detect(struct sdhc_softc *);
+static int	tegra_sdhc_write_protect(struct sdhc_softc *);
 
 struct tegra_sdhc_softc {
 	struct sdhc_softc	sc;
+
+	u_int			sc_port;
 
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	bus_size_t		sc_bsz;
 	struct sdhc_host	*sc_host;
 	void			*sc_ih;
+
+	struct tegra_gpio_pin	*sc_pin_cd;
+	struct tegra_gpio_pin	*sc_pin_power;
+	struct tegra_gpio_pin	*sc_pin_wp;
 };
 
 CFATTACH_DECL_NEW(tegra_sdhc, sizeof(struct tegra_sdhc_softc),
@@ -77,10 +84,16 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	struct tegra_sdhc_softc * const sc = device_private(self);
 	struct tegraio_attach_args * const tio = aux;
 	const struct tegra_locators * const loc = &tio->tio_loc;
+	prop_dictionary_t prop = device_properties(self);
+	const char *pin;
+	int error;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = tio->tio_dmat;
 	sc->sc.sc_flags = SDHC_FLAG_32BIT_ACCESS |
+			  SDHC_FLAG_NO_PWR0 |
+			  SDHC_FLAG_NO_CLKBASE |
+			  SDHC_FLAG_SINGLE_POWER_WRITE |
 			  SDHC_FLAG_USE_DMA;
 	if (SDMMC_8BIT_P(loc->loc_port)) {
 		sc->sc.sc_flags |= SDHC_FLAG_8BIT_MODE;
@@ -91,12 +104,31 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 	sc->sc_bsz = loc->loc_size;
+	sc->sc_port = loc->loc_port;
+
+	if (prop_dictionary_get_cstring_nocopy(prop, "power-gpio", &pin)) {
+		sc->sc_pin_power = tegra_gpio_acquire(pin, GPIO_PIN_OUTPUT);
+		if (sc->sc_pin_power)
+			tegra_gpio_write(sc->sc_pin_power, 1);
+	}
+
+	if (prop_dictionary_get_cstring_nocopy(prop, "cd-gpio", &pin))
+		sc->sc_pin_cd = tegra_gpio_acquire(pin, GPIO_PIN_INPUT);
+	if (prop_dictionary_get_cstring_nocopy(prop, "wp-gpio", &pin))
+		sc->sc_pin_wp = tegra_gpio_acquire(pin, GPIO_PIN_INPUT);
+
+	if (sc->sc_pin_cd)
+		sc->sc.sc_vendor_card_detect = tegra_sdhc_card_detect;
+	if (sc->sc_pin_wp)
+		sc->sc.sc_vendor_write_protect = tegra_sdhc_write_protect;
 
 #if notyet
-	sc->sc.sc_clkbase = tegra_sdhc_get_freq(loc->loc_port) / 1000;
+	tegra_car_periph_sdmmc_set_div(sc->sc_port, 1);
 #else
-	sc->sc.sc_clkbase = 0;
+	const u_int div = howmany(tegra_car_pllp0_rate() / 1000, 50000);
+	tegra_car_periph_sdmmc_set_div(sc->sc_port, div);
 #endif
+	sc->sc.sc_clkbase = tegra_car_periph_sdmmc_rate(sc->sc_port) / 1000;
 
 	aprint_naive("\n");
 	aprint_normal(": SDMMC%d\n", loc->loc_port + 1);
@@ -115,15 +147,6 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
-	config_interrupts(self, tegra_sdhc_attach_i);
-}
-
-static void
-tegra_sdhc_attach_i(device_t self)
-{
-	struct tegra_sdhc_softc * const sc = device_private(self);
-	int error;
-
 	error = sdhc_host_found(&sc->sc, sc->sc_bst, sc->sc_bsh, sc->sc_bsz);
 	if (error) {
 		aprint_error_dev(self, "couldn't initialize host, error = %d\n",
@@ -132,4 +155,24 @@ tegra_sdhc_attach_i(device_t self)
 		sc->sc_ih = NULL;
 		return;
 	}
+}
+
+static int
+tegra_sdhc_card_detect(struct sdhc_softc *ssc)
+{
+	struct tegra_sdhc_softc *sc = device_private(ssc->sc_dev);
+
+	KASSERT(sc->sc_pin_cd != NULL);
+
+	return !tegra_gpio_read(sc->sc_pin_cd);
+}
+
+static int
+tegra_sdhc_write_protect(struct sdhc_softc *ssc)
+{
+	struct tegra_sdhc_softc *sc = device_private(ssc->sc_dev);
+
+	KASSERT(sc->sc_pin_wp != NULL);
+
+	return tegra_gpio_read(sc->sc_pin_wp);
 }

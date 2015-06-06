@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.20 2012/10/27 17:18:36 chs Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.20.14.1 2015/06/06 14:40:12 skrll Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,15 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.20 2012/10/27 17:18:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.20.14.1 2015/06/06 14:40:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
-
-#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

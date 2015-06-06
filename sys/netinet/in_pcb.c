@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.155.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.155.2.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.155.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.155.2.2 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -287,6 +287,8 @@ in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 			ia = ifatoia(ifa_ifwithaddr(sintosa(sin)));
 		if (ia == NULL)
 			return (EADDRNOTAVAIL);
+		if (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
+			return (EADDRNOTAVAIL);
 	}
 
 	inp->inp_laddr = sin->sin_addr;
@@ -312,7 +314,7 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 		 */
 		if (so->so_options & (SO_REUSEADDR | SO_REUSEPORT))
 			reuseport = SO_REUSEADDR|SO_REUSEPORT;
-	} 
+	}
 
 	if (sin->sin_port == 0) {
 		error = in_pcbsetport(sin, inp, cred);
@@ -447,19 +449,18 @@ in_pcbbind(void *v, struct sockaddr_in *sin, struct lwp *l)
  * then pick one.
  */
 int
-in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
+in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 {
 	struct inpcb *inp = v;
 	struct in_ifaddr *ia = NULL;
 	struct sockaddr_in *ifaddr = NULL;
-	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
 	vestigial_inpcb_t vestige;
 	int error;
 
 	if (inp->inp_af != AF_INET)
 		return (EINVAL);
 
-	if (nam->m_len != sizeof (*sin))
+	if (sin->sin_len != sizeof (*sin))
 		return (EINVAL);
 	if (sin->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
@@ -611,29 +612,23 @@ in_pcbdetach(void *v)
 }
 
 void
-in_setsockaddr(struct inpcb *inp, struct mbuf *nam)
+in_setsockaddr(struct inpcb *inp, struct sockaddr_in *sin)
 {
-	struct sockaddr_in *sin;
 
 	if (inp->inp_af != AF_INET)
 		return;
 
-	sin = mtod(nam, struct sockaddr_in *);
 	sockaddr_in_init(sin, &inp->inp_laddr, inp->inp_lport);
-	nam->m_len = sin->sin_len;
 }
 
 void
-in_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
+in_setpeeraddr(struct inpcb *inp, struct sockaddr_in *sin)
 {
-	struct sockaddr_in *sin;
 
 	if (inp->inp_af != AF_INET)
 		return;
 
-	sin = mtod(nam, struct sockaddr_in *);
 	sockaddr_in_init(sin, &inp->inp_faddr, inp->inp_fport);
-	nam->m_len = sin->sin_len;
 }
 
 /*

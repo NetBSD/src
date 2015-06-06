@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.4 2014/08/25 14:58:48 pooka Exp $	*/
+/*	$NetBSD: cons.c,v 1.4.2.1 2015/06/06 14:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.4 2014/08/25 14:58:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.4.2.1 2015/06/06 14:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.4 2014/08/25 14:58:48 pooka Exp $");
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/termios.h>
@@ -56,13 +57,14 @@ static int rumpcons_write(struct file *, off_t *, struct uio *,
 			  kauth_cred_t, int);
 static int rumpcons_ioctl(struct file *, u_long, void *);
 static int rumpcons_stat(struct file *, struct stat *);
+static int rumpcons_poll(struct file *, int events);
 
 static const struct fileops rumpcons_fileops = {
 	.fo_read = (void *)nullop,
 	.fo_write = rumpcons_write,
 	.fo_ioctl = rumpcons_ioctl,
 	.fo_fcntl = fnullop_fcntl,
-	.fo_poll = fnullop_poll,
+	.fo_poll = rumpcons_poll,
 	.fo_stat = rumpcons_stat,
 	.fo_close = (void *)nullop,
 	.fo_kqfilter = fnullop_kqfilter,
@@ -141,4 +143,15 @@ rumpcons_stat(struct file *fp, struct stat *sb)
 	sb->st_birthtimespec = boottime;
 
 	return 0;
+}
+
+static int
+rumpcons_poll(struct file *fp, int events)
+{
+	int revents = 0;
+
+	if (events & (POLLOUT | POLLWRNORM))
+		revents |= events & (POLLOUT | POLLWRNORM);
+
+	return revents;
 }
