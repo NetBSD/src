@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.14 2015/06/06 15:21:57 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.15 2015/06/06 15:26:15 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.14 2015/06/06 15:21:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.15 2015/06/06 15:26:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -529,6 +529,7 @@ usbd_status
 usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 {
 	usb_config_descriptor_t cd, *cdp;
+	usb_bos_descriptor_t bd, *bdp = NULL;
 	usbd_status err;
 	int i, ifcidx, nifc, len, selfpowered, power;
 
@@ -552,8 +553,12 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 			usbd_free_iface_data(dev, ifcidx);
 		kmem_free(dev->ud_ifaces, nifc * sizeof(struct usbd_interface));
 		kmem_free(dev->ud_cdesc, UGETW(dev->ud_cdesc->wTotalLength));
+		if (dev->ud_bdesc != NULL)
+			kmem_free(dev->ud_bdesc,
+			    UGETW(dev->ud_bdesc->wTotalLength));
 		dev->ud_ifaces = NULL;
 		dev->ud_cdesc = NULL;
+		dev->ud_bdesc = NULL;
 		dev->ud_config = USB_UNCONFIG_NO;
 	}
 
@@ -595,6 +600,41 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		err = USBD_INVAL;
 		goto bad;
 	}
+
+	if (USB_IS_SS(dev->ud_speed)) {
+		int blen;
+
+		/* get short bos desc */
+		err = usbd_get_bos_desc(dev, index, &bd);
+		if (err) {
+			DPRINTF("get_bos_desc=%d", err, 0, 0, 0);
+			goto bad;
+		}
+		blen = UGETW(bd.wTotalLength);
+		bdp = kmem_alloc(blen, KM_SLEEP);
+		if (bdp == NULL) {
+			err = USBD_NOMEM;
+			goto bad;
+		}
+
+		/* Get the full desc */
+		for (i = 0; i < 3; i++) {
+			err = usbd_get_desc(dev, UDESC_BOS, index, blen, bdp);
+			if (!err)
+				break;
+			usbd_delay_ms(dev, 200);
+		}
+		if (err) {
+			DPRINTF("get_bos_desc=%d", err, 0, 0, 0);
+			goto bad;
+		}
+		if (bdp->bDescriptorType != UDESC_BOS) {
+			DPRINTF("bad desc %d", bdp->bDescriptorType, 0, 0, 0);
+			err = USBD_INVAL;
+			goto bad;
+		}
+	}
+	dev->ud_bdesc = bdp;
 
 	/*
 	 * Figure out if the device is self or bus powered.
@@ -687,6 +727,10 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 
  bad:
 	kmem_free(cdp, len);
+	if (bdp != NULL) {
+		kmem_free(bdp, UGETW(bdp->wTotalLength));
+		dev->ud_bdesc = NULL;
+	}
 	return err;
 }
 
@@ -1533,6 +1577,8 @@ usb_free_device(struct usbd_device *dev)
 	}
 	if (dev->ud_cdesc != NULL)
 		kmem_free(dev->ud_cdesc, UGETW(dev->ud_cdesc->wTotalLength));
+	if (dev->ud_bdesc != NULL)
+		kmem_free(dev->ud_bdesc, UGETW(dev->ud_bdesc->wTotalLength));
 	if (dev->ud_subdevlen > 0) {
 		kmem_free(dev->ud_subdevs,
 		    dev->ud_subdevlen * sizeof(device_t));
