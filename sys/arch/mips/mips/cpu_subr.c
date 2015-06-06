@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.22 2015/06/06 17:46:47 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.23 2015/06/06 21:03:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.22 2015/06/06 17:46:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.23 2015/06/06 21:03:45 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -122,12 +122,10 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	KASSERT(cpu_id < MAXCPUS);
 
 #ifdef MIPS64_OCTEON
-	const vaddr_t cpu_info_offset = 0x800;
 	vaddr_t exc_page = MIPS_UTLB_MISS_EXC_VEC + 0x1000*cpu_id;
-	__CTASSERT(sizeof(struct cpu_info) <= 0x800);
-	__CTASSERT(sizeof(struct pmap_tlb_info) <= 0x400);
+	__CTASSERT(sizeof(struct cpu_info) + sizeof(struct pmap_tlb_info) <= 0x1000 - 0x280);
 	
-	struct cpu_info * const ci = (void *) (exc_page + cpu_info_offset);
+	struct cpu_info * const ci = ((struct cpu_info *)(exc_page + 0x1000)) - 1;
 	memset((void *)exc_page, 0, PAGE_SIZE);
 
 	if (ti == NULL) {
@@ -686,7 +684,7 @@ cpu_ipi_error(const char *s, __cpuset_t succeeded, __cpuset_t expected)
 static int
 cpu_ipi_wait(volatile __cpuset_t *watchset, u_long mask)
 {
-	u_long limit = curcpu()->ci_cpu_freq;	/* some finite amount of time */
+	u_long limit = curcpu()->ci_cpu_freq/10;/* some finite amount of time */
 
 	while (limit--)
 		if (*watchset == mask)
@@ -920,9 +918,11 @@ cpu_hatch(struct cpu_info *ci)
 	(*mips_locoresw.lsw_cpu_run)(ci);
 
 	/*
-	 * Now turn on interrupts.
+	 * Now turn on interrupts (and verify they are on).
 	 */
 	spl0();
+	KASSERTMSG(ci->ci_cpl == IPL_NONE, "cpl %d", ci->ci_cpl);
+	KASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 
 	/*
 	 * And do a tail call to idle_loop
@@ -935,8 +935,6 @@ cpu_boot_secondary_processors(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	aprint_verbose("Booting secondary processors (%#"PRIxCPUSET")",
-	    cpus_hatched);
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (CPU_IS_PRIMARY(ci))
 			continue;
@@ -948,12 +946,16 @@ cpu_boot_secondary_processors(void)
 		if (! CPUSET_HAS_P(cpus_hatched, cpu_index(ci)))
 			continue;
 
-		aprint_verbose(" %s", cpu_name(ci));
 		ci->ci_data.cpu_cc_skew = mips3_cp0_count_read();
 		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
 		CPUSET_ADD(cpus_running, cpu_index(ci));
+		// Spin until the cpu calls idle_loop
+		for (u_int i = 0; i < 100; i++) {
+			if (kcpuset_isset(kcpuset_running, cpu_index(ci)))
+				break;
+			delay(1000);
+		}
 	}
-	aprint_verbose("\n");
 }
 
 void
