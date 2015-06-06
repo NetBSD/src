@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.31 2015/04/14 18:45:57 bouyer Exp $
+#	$NetBSD: BEAGLEBONE,v 1.32 2015/06/06 14:00:52 jmcneill Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -252,6 +252,9 @@ omapdmtimer2	at obio0 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
 
 # Watchdog timers
 omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
+
+# Random number generator
+trng*		at obio0 addr 0x48310000 size 0x2000 intr 111	# TRNG
 
 # onboard video, experimental. Video mode is hardcoded in the driver
 #tifb* 	at obio0 addr 0x4830E000 size 0x1000 intr 36
