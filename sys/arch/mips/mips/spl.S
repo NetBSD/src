@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.7 2015/06/05 19:58:01 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.8 2015/06/06 04:40:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include "opt_multiprocessor.h"	/* MP kernel? */
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
+#include "opt_ddb.h"
 
 #include <sys/cdefs.h>
 
@@ -38,7 +39,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.7 2015/06/05 19:58:01 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.8 2015/06/06 04:40:19 matt Exp $")
 
 #include "assym.h"
 
@@ -217,6 +218,9 @@ STATIC_LEAF(_splsw_clrsoftintr)
 END(_splsw_clrsoftintr)
 
 STATIC_LEAF(_splsw_splraise)
+#if defined(DDB) && __mips >= 32
+	tgeiu	a0, IPL_HIGH+1
+#endif
 	move	a1, a0
 	PTR_LA	v1, _C_LABEL(ipl_sr_map)
 	sll	a2, a0, INT_SCALESHIFT
