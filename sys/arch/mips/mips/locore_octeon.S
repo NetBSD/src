@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.3 2015/06/02 05:10:18 matt Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.4 2015/06/06 21:05:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,9 +27,11 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.3 2015/06/02 05:10:18 matt Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.4 2015/06/06 21:05:16 matt Exp $")
 
+#include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
+#include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
 #include <mips/cpuregs.h>
@@ -40,14 +42,15 @@ RCSID("$NetBSD: locore_octeon.S,v 1.3 2015/06/02 05:10:18 matt Exp $")
 #define	_CP0_READ64(_cp0)				\
 	dmfc0	v0, _cp0;				\
 	j	ra;					\
-	nop
+	 nop
 
 #define	_CP0_WRITE64(_cp0)				\
 	dmtc0	a0, _cp0;				\
 	j	ra;					\
-	nop
+	 nop
 
 	.set	noreorder
+	.set	noat
 	.set	arch=octeon
 
 	.text
@@ -151,4 +154,38 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	j	_C_LABEL(cpu_trampoline)
 	 nop
 END(octeon_cpu_spinup)
+
+#if NWDOG > 0 || defined(DDB)
+
+#define	UINT64_C(x)	(x)
+
+#include <mips/cavium/dev/octeon_ciureg.h>
+
+NESTED_NOPROFILE(octeon_reset_vector, 0, ra)
+	mfc0	k0, MIPS_COP_0_STATUS	# get cp0 status
+	bbit1	k0, V_MIPS3_SR_SR, 1f	# MIPS3_SR_SR
+	 ins	k0, zero, V_MIPS_SR_BEV, 1 # clear boot exception vectors
+	mtc0	k0, MIPS_COP_0_STATUS	# write cp0 status
+	ehb				# hazard barrier
+	mfc0	k0, MIPS_COP_0_PRID, 1	# get EBASE
+	ext	k0, k0, 0, 10		# select cpunum
+	dsll	k0, k0, PTR_SCALESHIFT	# cpunum -> array index
+	PTR_LA	k1, _C_LABEL(cpuid_infos)
+	PTR_ADDU k1, k1, k0		# add to array start
+	PTR_L	k0, (k1)		# get cpu_info
+	PTR_LA	k1, CIU_BASE		# CIU base
+	j	_C_LABEL(mips64r2_kern_nonmaskable_intr)
+	 sd	zero, CIU_NMI_OFFSET(k1)# clear NMI
+1:
+	PTR_LA	k1, CIU_BASE		# CIU base
+	ld	k0, CIU_FUSE_OFFSET(k1)	# get mask of CPUs
+	sd	k0, CIU_SOFT_RST_OFFSET(k1)	# reset them
+	ld	v0, CIU_SOFT_RST_OFFSET(k1)	# force a load
+	sd	k0, CIU_SOFT_RST_OFFSET(k1)	# do it again.
+2:
+	wait				# wait forever
+	b	2b			# and loop until reset
+	 nop
+END(octeon_reset_vector)
+#endif
 #endif /* MULTIPROCESSOR */
