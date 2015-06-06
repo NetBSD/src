@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.113 2015/06/02 05:05:28 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.114 2015/06/06 21:38:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ void		  cpuwatch_clr(cpu_watchpoint_t *);
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	void *ci_xnext;			/* unused */
+	void *ci_nmi_stack;		/* NMI exception stack */
 	struct cpu_softc *ci_softc;	/* chip-dependent hook */
 	device_t ci_dev;		/* owning device */
 	cpuid_t ci_cpuid;		/* Machine-level identifier */
