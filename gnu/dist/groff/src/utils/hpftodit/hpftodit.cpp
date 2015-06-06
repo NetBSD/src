@@ -1,4 +1,4 @@
-/*	$NetBSD: hpftodit.cpp,v 1.5 2006/02/06 18:25:48 wiz Exp $	*/
+/*	$NetBSD: hpftodit.cpp,v 1.6 2015/06/06 14:40:29 joerg Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1994, 2000, 2001, 2003, 2004 Free Software Foundation, Inc.
@@ -577,7 +577,7 @@ output_font_name(File &f)
     ;
   *(p + 1) = '\0';
   printf("# %s\n", font_name);
-  delete font_name;
+  delete[] font_name;
 }
 
 static void
