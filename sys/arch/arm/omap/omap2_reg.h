@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.29 2015/04/14 18:37:43 bouyer Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.30 2015/06/06 14:00:32 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -912,4 +912,10 @@
 #define AM335X_INT_TCERRINT0		112
 #define AM335X_INT_TCERRINT1		113
 #define AM335X_INT_TCERRINT2		114
+
+/* TRNG */
+#define AM335X_TRNG_BASE		0x48310000
+#define AM335X_TRNG_SIZE		0x2000
+#define AM335X_INT_TRNG			111
+
 #endif	/* _ARM_OMAP_OMAP2_REG_H_ */
