@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.9 2015/06/01 22:55:12 matt Exp $ */
+/* $NetBSD: intr.h,v 1.10 2015/06/06 04:31:52 matt Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -75,7 +75,8 @@
 #define	IPI_HALT	6		/* halt cpu */
 #define	IPI_XCALL	7		/* xcall */
 #define	IPI_GENERIC	8		/* generic IPI */
-#define	NIPIS		9
+#define	IPI_WDOG	9		/* tickle a wdog */
+#define	NIPIS		10
 
 #ifdef __INTR_PRIVATE
 struct splsw {
