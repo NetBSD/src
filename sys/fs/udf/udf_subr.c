@@ -1,9 +1,9 @@
-/* $NetBSD: udf_subr.c,v 1.127.2.1 2015/04/06 15:18:19 skrll Exp $ */
+/* $NetBSD: udf_subr.c,v 1.127.2.2 2015/06/06 14:40:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,13 +23,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.127.2.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.127.2.2 2015/06/06 14:40:21 skrll Exp $");
 #endif /* not lint */
 
 
@@ -811,7 +811,7 @@ udf_lock_node(struct udf_node *udf_node, int flag, char const *fname, const int 
 		if (ret == EWOULDBLOCK) {
 			DPRINTF(LOCKING, ( "udf_lock_node: udf_node %p would block "
 				"wanted at %s:%d, previously locked at %s:%d\n",
-				udf_node, fname, lineno, 
+				udf_node, fname, lineno,
 				udf_node->lock_fname, udf_node->lock_lineno));
 		}
 	}
@@ -984,7 +984,7 @@ udf_get_record_vpart(struct udf_mount *ump, int udf_c_type)
 }
 
 
-/* 
+/*
  * BUGALERT: some rogue implementations use random physical partition
  * numbers to break other implementations so lookup the number.
  */
@@ -1573,7 +1573,7 @@ udf_read_physical_partition_spacetables(struct udf_mount *ump)
 		if (partd == NULL)
 			continue;
 		parthdr = &partd->_impl_use.part_hdr;
-	
+
 		len     = udf_rw32(parthdr->unalloc_space_table.len);
 		if (len) {
 			printf("UDF mount: space tables not supported\n");
@@ -1632,7 +1632,7 @@ udf_read_physical_partition_spacetables(struct udf_mount *ump)
 		if (partd == NULL)
 			continue;
 		parthdr = &partd->_impl_use.part_hdr;
-	
+
 		len     = udf_rw32(parthdr->freed_space_table.len);
 		if (len) {
 			printf("UDF mount: space tables not supported\n");
@@ -1981,7 +1981,7 @@ udf_process_vds(struct udf_mount *ump) {
 
 		DPRINTF(VOLUMES, ("\t%d -> %d(%d) type %d\n", log_part,
 		    raw_phys_part, phys_part, pmap_type));
-	
+
 		if (phys_part == UDF_PARTITIONS)
 			return EINVAL;
 		if (pmap_type == UDF_VTOP_TYPE_UNKNOWN)
@@ -2097,7 +2097,7 @@ udf_process_vds(struct udf_mount *ump) {
 	snprintb(bits, sizeof(bits), UDFONERROR_BITS, ump->lvreadwrite);
 	DPRINTF(VOLUMES, ("\tactions on logvol errors %s\n", bits));
 
-	DPRINTF(VOLUMES, ("\tselected sheduler `%s`\n", 
+	DPRINTF(VOLUMES, ("\tselected sheduler `%s`\n",
 		(ump->strategy == &udf_strat_direct) ? "Direct" :
 		(ump->strategy == &udf_strat_sequential) ? "Sequential" :
 		(ump->strategy == &udf_strat_rmw) ? "RMW" : "UNKNOWN!"));
@@ -2281,12 +2281,12 @@ udf_create_parentfid(struct udf_mount *ump, struct fileid_desc *fid,
  * (a) inside the file's (e)fe in the length of the extended attribute area
  * before the allocation descriptors/filedata
  *
- * (b) in a file referenced by (e)fe->ext_attr_icb and 
+ * (b) in a file referenced by (e)fe->ext_attr_icb and
  *
  * (c) in the e(fe)'s associated stream directory that can hold various
  * sub-files. In the stream directory a few fixed named subfiles are reserved
  * for NT/Unix ACL's and OS/2 attributes.
- * 
+ *
  * NOTE: Extended attributes are read randomly but allways written
  * *atomicaly*. For ACL's this interface is propably different but not known
  * to me yet.
@@ -2554,7 +2554,7 @@ udf_extattr_insert_internal(struct udf_mount *ump, union dscrptr *dscr,
 
 /* --------------------------------------------------------------------- */
 
-static int 
+static int
 udf_update_lvid_from_vat_extattr(struct udf_node *vat_node)
 {
 	struct udf_mount       *ump;
@@ -2621,7 +2621,7 @@ udf_update_lvid_from_vat_extattr(struct udf_node *vat_node)
 }
 
 
-static int 
+static int
 udf_update_vat_extattr_from_lvid(struct udf_node *vat_node)
 {
 	struct udf_mount       *ump;
@@ -2974,7 +2974,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 		lvinfo->min_udf_readver  = vat->min_udf_readver;
 		lvinfo->min_udf_writever = vat->min_udf_writever;
 		lvinfo->max_udf_writever = vat->max_udf_writever;
-	
+
 		udf_update_logvolname(ump, vat->logvol_id);
 	}
 
@@ -3457,7 +3457,7 @@ udf_register_node(struct udf_node *udf_node)
 
 
 static void
-udf_deregister_node(struct udf_node *udf_node) 
+udf_deregister_node(struct udf_node *udf_node)
 {
 	struct udf_mount *ump = udf_node->ump;
 
@@ -4069,7 +4069,7 @@ static uint32_t
 unix_mode_to_udf_perm(mode_t mode)
 {
 	uint32_t perm;
-	
+
 	perm  = ((mode & S_IRWXO)     );
 	perm |= ((mode & S_IRWXG) << 2);
 	perm |= ((mode & S_IRWXU) << 4);
@@ -4373,7 +4373,7 @@ udf_getownership(struct udf_node *udf_node, uid_t *uidp, gid_t *gidp)
 		uid = (uid_t)udf_rw32(efe->uid);
 		gid = (gid_t)udf_rw32(efe->gid);
 	}
-	
+
 	/* do the uid/gid translation game */
 	if (uid == (uid_t) -1)
 		uid = ump->mount_args.anon_uid;
@@ -4501,7 +4501,7 @@ udf_dirhash_fill(struct udf_node *dir_node)
  *
  */
 
-int 
+int
 udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
        struct long_ad *icb_loc, int *found)
 {
@@ -4811,7 +4811,7 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 
 	/* write out */
 	error = vn_rdwr(UIO_WRITE, dir_node->vnode,
-			fid, fidsize, diroffset, 
+			fid, fidsize, diroffset,
 			UIO_SYSSPACE, IO_ALTSEMANTICS | IO_NODELOCKED,
 			FSCRED, NULL, NULL);
 	if (error)
@@ -4973,7 +4973,7 @@ udf_dir_update_rootentry(struct udf_mount *ump, struct udf_node *dir_node,
 
 	/* write out */
 	error = vn_rdwr(UIO_WRITE, dir_node->vnode,
-			fid, fidsize, diroffset, 
+			fid, fidsize, diroffset,
 			UIO_SYSSPACE, IO_ALTSEMANTICS | IO_NODELOCKED,
 			FSCRED, NULL, NULL);
 
@@ -5177,7 +5177,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 
 	/* writeout FID/update parent directory */
 	error = vn_rdwr(UIO_WRITE, dvp,
-			fid, chosen_size, chosen_fid_pos, 
+			fid, chosen_size, chosen_fid_pos,
 			UIO_SYSSPACE, IO_ALTSEMANTICS | IO_NODELOCKED,
 			FSCRED, NULL, NULL);
 
@@ -5362,7 +5362,7 @@ udf_loadvnode(struct mount *mp, struct vnode *vp,
 
 		/* choose this one */
 		last_fe_icb_loc = icb_loc;
-		
+
 		/* record and process/update (ext)fentry */
 		if (dscr_type == TAGID_FENTRY) {
 			if (udf_node->fe)
@@ -6361,11 +6361,19 @@ derailed:
 		}
 
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
+		error = vget(vp, LK_NOWAIT, false /* !wait */);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT)
 				goto derailed;
+			*ndirty += 1;
+			continue;
+		}
+		error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
+		if (error) {
+			KASSERT(error == EBUSY);
+			vrele(vp);
+			mutex_enter(&mntvnode_lock);
 			*ndirty += 1;
 			continue;
 		}
@@ -6422,7 +6430,7 @@ recount:
 		udf_sync_pass(ump, cred, waitfor, 3, &ndirty);
 		DPRINTF(SYNC, ("counted num dirty pending blocks %d\n",
 			ndirty));
-	
+
 		if (ndirty) {
 			/* 1/4 second wait */
 			cv_timedwait(&ump->dirtynodes_cv, &mntvnode_lock,

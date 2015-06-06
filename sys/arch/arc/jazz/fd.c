@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.45.4.1 2015/04/06 15:17:51 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.45.4.2 2015/06/06 14:39:54 skrll Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.45.4.1 2015/04/06 15:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.45.4.2 2015/06/06 14:39:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,9 @@ const struct cdevsw fd_cdevsw = {
 
 static void fdstart(struct fd_softc *);
 
-struct dkdriver fddkdriver = { fdstrategy };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy
+};
 
 static bool fd_shutdown(device_t, int);
 #if 0

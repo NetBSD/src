@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.91 2014/09/05 05:54:48 matt Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.91.2.1 2015/06/06 14:40:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,9 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.91 2014/09/05 05:54:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.91.2.1 2015/06/06 14:40:22 skrll Exp $");
 
-#define SYSVSEM
+#ifdef _KERNEL_OPT
+#include "opt_sysv.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,6 +86,10 @@ static u_int		sem_waiters		__cacheline_aligned;
 #else
 #define SEM_PRINTF(a)
 #endif
+
+void *hook;	/* cookie from exithook_establish() */
+
+extern int kern_has_sysvsem;
 
 struct sem_undo *semu_alloc(struct proc *);
 int semundo_adjust(struct proc *, struct sem_undo **, int, int, int);
@@ -128,9 +134,52 @@ seminit(void)
 		suptr->un_proc = NULL;
 	}
 	semu_list = NULL;
-	exithook_establish(semexit, NULL);
+	hook = exithook_establish(semexit, NULL);
+
+	kern_has_sysvsem = 1;
+
+	kern_has_sysvsem = 1;
 
 	sysvipcinit();
+}
+
+int
+semfini(void)
+{
+	int i, sz;
+	vaddr_t v = (vaddr_t)sema;
+
+	/* Don't allow module unload if we're busy */
+	mutex_enter(&semlock);
+	if (semtot) {
+		mutex_exit(&semlock);
+		return 1;
+	}
+
+	/* Remove the exit hook */
+	exithook_disestablish(hook);
+
+	/* Destroy all our condvars */
+	for (i = 0; i < seminfo.semmni; i++) {
+		cv_destroy(&semcv[i]);
+	}
+
+	/* Free the wired memory that we allocated */
+	sz = ALIGN(seminfo.semmni * sizeof(struct semid_ds)) +
+	    ALIGN(seminfo.semmns * sizeof(struct __sem)) +
+	    ALIGN(seminfo.semmni * sizeof(kcondvar_t)) +
+	    ALIGN(seminfo.semmnu * seminfo.semusz);
+	sz = round_page(sz);
+	uvm_km_free(kernel_map, v, sz, UVM_KMF_WIRED);
+
+	/* Destroy the last cv and mutex */
+	cv_destroy(&sem_realloc_cv);
+	mutex_exit(&semlock);
+	mutex_destroy(&semlock);
+
+	kern_has_sysvsem = 0;
+
+	return 0;
 }
 
 static int

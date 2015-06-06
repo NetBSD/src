@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.92 2011/02/10 14:46:45 pooka Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.92.32.1 2015/06/06 14:40:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.92 2011/02/10 14:46:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.92.32.1 2015/06/06 14:40:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,8 +231,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 	flags &= B_READ | B_WRITE;
 
-	if ((ps = kmem_zalloc(sizeof(*ps), KM_SLEEP)) == NULL)
-		return ENOMEM;
+	ps = kmem_zalloc(sizeof(*ps), KM_SLEEP);
 	/* ps->ps_running = 0; */
 	/* ps->ps_error = 0; */
 	/* ps->ps_failed = 0; */

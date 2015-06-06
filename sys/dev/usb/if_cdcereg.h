@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdcereg.h,v 1.7.24.2 2015/03/19 17:26:42 skrll Exp $ */
+/*	$NetBSD: if_cdcereg.h,v 1.7.24.3 2015/06/06 14:40:13 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -33,6 +33,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/rndsource.h>
 
 #define CDCE_RX_LIST_CNT	1
 #define CDCE_TX_LIST_CNT	1

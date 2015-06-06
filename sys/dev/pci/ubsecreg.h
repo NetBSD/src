@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecreg.h,v 1.4 2014/04/19 12:29:24 bad Exp $	*/
+/*	$NetBSD: ubsecreg.h,v 1.4.4.1 2015/06/06 14:40:12 skrll Exp $	*/
 /*	$OpenBSD: ubsecreg.h,v 1.29 2009/03/25 12:17:30 reyk Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  *
  */
+
+#ifndef	_DEV_PCI_UBSECREG_H
+#define	_DEV_PCI_UBSECREG_H
 
 /*
  * Register definitions for 5601 BlueSteel Networks Ubiquitous Broadband
@@ -251,3 +254,5 @@ struct ubsec_ctx_rsapriv {
 	u_int8_t		rpr_buf[5 * 1024 / 8];	/* parameters: */
 						/* p, q, dp, dq, pinv */
 };
+
+#endif	/* _DEV_PCI_UBSECREG_H */

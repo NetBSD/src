@@ -1,0 +1,13 @@
+#	$NetBSD: OLIMEXLIME2,v 1.1.2.2 2015/06/06 14:39:58 skrll Exp $
+#
+#	OLIMEXLIME2 - Olimex A20-OLinuXino-LIME2
+#
+
+include "arch/evbarm/conf/CUBIEBOARD"
+
+no makeoptions	BOARDTYPE
+makeoptions	BOARDTYPE="olimexlime2"
+
+no options 	ALLWINNER_A10
+no makeoptions	CPUFLAGS
+makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"

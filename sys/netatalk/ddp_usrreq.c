@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.63.4.1 2015/04/06 15:18:22 skrll Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.63.4.2 2015/06/06 14:40:25 skrll Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.63.4.1 2015/04/06 15:18:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.63.4.2 2015/06/06 14:40:25 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.63.4.1 2015/04/06 15:18:22 skrll Ex
 #include <netatalk/at_extern.h>
 
 static void at_pcbdisconnect(struct ddpcb *);
-static void at_sockaddr(struct ddpcb *, struct mbuf *);
+static void at_sockaddr(struct ddpcb *, struct sockaddr_at *);
 static int at_pcbsetaddr(struct ddpcb *, struct sockaddr_at *);
-static int at_pcbconnect(struct ddpcb *, struct mbuf *);
+static int at_pcbconnect(struct ddpcb *, struct sockaddr_at *);
 static void ddp_detach(struct socket *);
 
 struct ifqueue atintrq1, atintrq2;
@@ -75,70 +75,11 @@ struct mowner atalk_rx_mowner = MOWNER_INIT("atalk", "rx");
 struct mowner atalk_tx_mowner = MOWNER_INIT("atalk", "tx");
 #endif
 
-static int
-ddp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
-    struct mbuf *rights, struct lwp *l)
-{
-	struct ddpcb   *ddp;
-	int             error = 0;
-
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	ddp = sotoddpcb(so);
-
-	if (rights && rights->m_len) {
-		error = EINVAL;
-		goto release;
-	}
-	if (ddp == NULL) {
-		error = EINVAL;
-		goto release;
-	}
-	switch (req) {
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
-		error = EOPNOTSUPP;
-		break;
-
-	default:
-		error = EOPNOTSUPP;
-	}
-
-release:
-	if (m != NULL) {
-		m_freem(m);
-	}
-	return (error);
-}
-
 static void
-at_sockaddr(struct ddpcb *ddp, struct mbuf *addr)
+at_sockaddr(struct ddpcb *ddp, struct sockaddr_at *addr)
 {
-	struct sockaddr_at *sat;
 
-	addr->m_len = sizeof(struct sockaddr_at);
-	sat = mtod(addr, struct sockaddr_at *);
-	*sat = ddp->ddp_lsat;
+	*addr = ddp->ddp_lsat;
 }
 
 static int
@@ -234,18 +175,15 @@ at_pcbsetaddr(struct ddpcb *ddp, struct sockaddr_at *sat)
 }
 
 static int
-at_pcbconnect(struct ddpcb *ddp, struct mbuf *addr)
+at_pcbconnect(struct ddpcb *ddp, struct sockaddr_at *sat)
 {
 	struct rtentry *rt;
 	const struct sockaddr_at *cdst;
-	struct sockaddr_at *sat = mtod(addr, struct sockaddr_at *);
 	struct route *ro;
 	struct at_ifaddr *aa;
 	struct ifnet   *ifp;
 	u_short         hintnet = 0, net;
 
-	if (addr->m_len != sizeof(*sat))
-		return EINVAL;
 	if (sat->sat_family != AF_APPLETALK) {
 		return EAFNOSUPPORT;
 	}
@@ -402,7 +340,7 @@ ddp_detach(struct socket *so)
 }
 
 static int
-ddp_accept(struct socket *so, struct mbuf *nam)
+ddp_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -427,7 +365,7 @@ ddp_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-ddp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+ddp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct ddpcb *ddp = sotoddpcb(so);
 	int error = 0;
@@ -438,7 +376,7 @@ ddp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 
 	if (ddp->ddp_fsat.sat_port != ATADDR_ANYPORT)
 		return EISCONN;
-	error = at_pcbconnect(ddp, nam);
+	error = at_pcbconnect(ddp, (struct sockaddr_at *)nam);
 	if (error == 0)
 		soisconnected(so);
 
@@ -504,7 +442,7 @@ ddp_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-ddp_peeraddr(struct socket *so, struct mbuf *nam)
+ddp_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -512,13 +450,13 @@ ddp_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-ddp_sockaddr(struct socket *so, struct mbuf *nam)
+ddp_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotoddpcb(so) != NULL);
 	KASSERT(nam != NULL);
 
-	at_sockaddr(sotoddpcb(so), nam);
+	at_sockaddr(sotoddpcb(so), (struct sockaddr_at *)nam);
 	return 0;
 }
 
@@ -539,7 +477,7 @@ ddp_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-ddp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+ddp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct ddpcb *ddp = sotoddpcb(so);
@@ -553,7 +491,7 @@ ddp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		if (ddp->ddp_fsat.sat_port != ATADDR_ANYPORT)
 			return EISCONN;
 		s = splnet();
-		error = at_pcbconnect(ddp, nam);
+		error = at_pcbconnect(ddp, (struct sockaddr_at *)nam);
 		if (error) {
 			splx(s);
 			return error;
@@ -685,7 +623,6 @@ PR_WRAP_USRREQS(ddp)
 #define	ddp_send	ddp_send_wrapper
 #define	ddp_sendoob	ddp_sendoob_wrapper
 #define	ddp_purgeif	ddp_purgeif_wrapper
-#define	ddp_usrreq	ddp_usrreq_wrapper
 
 const struct pr_usrreqs ddp_usrreqs = {
 	.pr_attach	= ddp_attach,
@@ -707,7 +644,6 @@ const struct pr_usrreqs ddp_usrreqs = {
 	.pr_send	= ddp_send,
 	.pr_sendoob	= ddp_sendoob,
 	.pr_purgeif	= ddp_purgeif,
-	.pr_generic	= ddp_usrreq,
 };
 
 static int
@@ -734,7 +670,7 @@ SYSCTL_SETUP(sysctl_net_atalk_ddp_setup, "sysctl net.atalk.ddp subtree setup")
 		       SYSCTL_DESCR("DDP related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_APPLETALK, ATPROTO_DDP, CTL_EOL);
-	
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",

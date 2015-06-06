@@ -1,4 +1,4 @@
-#	$NetBSD: CUBIEBOARD_INSTALL,v 1.2 2014/05/01 18:43:45 martin Exp $
+#	$NetBSD: CUBIEBOARD_INSTALL,v 1.2.10.1 2015/06/06 14:39:58 skrll Exp $
 #
 #	CUBIEBOARD_INSTALL -- CUBIEBOARD kernel with installation-sized
 #	ramdisk
@@ -8,4 +8,3 @@ include "arch/evbarm/conf/CUBIEBOARD"
 include "arch/evbarm/conf/INSTALL"
 
 options BOOTHOWTO=RB_SINGLE
-no makeoptions	DEBUG

@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_var.h,v 1.9.2.2 2015/04/06 15:17:52 skrll Exp $ */
+/* $NetBSD: amlogic_var.h,v 1.9.2.3 2015/06/06 14:39:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -63,16 +63,27 @@ void	amlogic_usbphy_init(int);
 void	amlogic_eth_init(void);
 void	amlogic_rng_init(void);
 void	amlogic_sdhc_init(void);
+void	amlogic_sdio_init(void);
 
 int	amlogic_sdhc_select_port(int);
+void	amlogic_sdhc_reset_port(int);
+bool	amlogic_sdhc_is_removable(int);
+bool	amlogic_sdhc_is_card_present(int);
+#define AMLOGIC_SDHC_PORT_A	0
 #define AMLOGIC_SDHC_PORT_B	1
 #define AMLOGIC_SDHC_PORT_C	2
+
+int	amlogic_sdio_select_port(int);
+#define AMLOGIC_SDIO_PORT_A	0
+#define AMLOGIC_SDIO_PORT_B	1
+#define AMLOGIC_SDIO_PORT_C	2
 
 uint32_t amlogic_get_rate_xtal(void);
 uint32_t amlogic_get_rate_sys(void);
 uint32_t amlogic_get_rate_fixed(void);
 uint32_t amlogic_get_rate_a9(void);
 uint32_t amlogic_get_rate_a9periph(void);
+uint32_t amlogic_get_rate_clk81(void);
 
 void	amlogic_genfb_ddb_trap_callback(int);
 void	amlogic_genfb_set_console_dev(device_t);

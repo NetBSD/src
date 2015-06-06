@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.14.6.1 2015/04/06 15:17:53 skrll Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.14.6.2 2015/06/06 14:39:56 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,9 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.1 2015/04/06 15:17:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.2 2015/06/06 14:39:56 skrll Exp $");
 
 #include "opt_omap.h"
+#include "edma.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.1 2015/04/06 15:17:53 skrll Ex
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/bus.h>
 
 #include <arm/omap/omap2_obiovar.h>
@@ -51,8 +53,25 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.1 2015/04/06 15:17:53 skrll Ex
 #  include <arm/omap/omap2_prcm.h>
 #endif
 
+#if NEDMA > 0
+#  include <arm/omap/omap_edma.h>
+#endif
+
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
+#include <dev/sdmmc/sdmmcvar.h>
+
+#ifdef TI_AM335X
+#define EDMA_MAX_PARAMS		32
+#endif
+
+#ifdef OM3SDHC_DEBUG
+int om3sdhcdebug = 1;
+#define DPRINTF(n,s)    do { if ((n) <= om3sdhcdebug) device_printf s; } while (0)
+#else
+#define DPRINTF(n,s)    do {} while (0)
+#endif
+
 
 #define CLKD(kz)	(sc->sc.sc_clkbase / (kz))
 
@@ -77,7 +96,24 @@ struct obiosdhc_softc {
 	bus_space_handle_t	sc_sdhc_bsh;
 	struct sdhc_host	*sc_hosts[1];
 	void 			*sc_ih;		/* interrupt vectoring */
+
+#if NEDMA > 0
+	struct edma_channel	*sc_edma_tx;
+	struct edma_channel	*sc_edma_rx;
+	uint16_t		sc_edma_param_tx[EDMA_MAX_PARAMS];
+	uint16_t		sc_edma_param_rx[EDMA_MAX_PARAMS];
+	kmutex_t		sc_edma_lock;
+	kcondvar_t		sc_edma_cv;
+	bus_addr_t		sc_edma_fifo;
+	bool			sc_edma_pending;
+#endif
 };
+
+#if NEDMA > 0
+static void obiosdhc_edma_init(struct obiosdhc_softc *, unsigned int);
+static int obiosdhc_edma_xfer_data(struct sdhc_softc *, struct sdmmc_command *);
+static void obiosdhc_edma_done(void *);
+#endif
 
 #ifdef TI_AM335X
 struct am335x_sdhc {
@@ -147,6 +183,7 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	uint32_t clkd, stat;
 	int error, timo, clksft, n;
 	bool support8bit = false;
+	const char *transfer_mode = "PIO";
 #ifdef TI_AM335X
 	size_t i;
 #endif
@@ -155,7 +192,6 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc.sc_dmat = oa->obio_dmat;
 	sc->sc.sc_dev = self;
-	//sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
 	sc->sc.sc_flags |= SDHC_FLAG_32BIT_ACCESS;
 	sc->sc.sc_flags |= SDHC_FLAG_NO_LED_ON;
 	sc->sc.sc_flags |= SDHC_FLAG_RSP136_CRC;
@@ -192,8 +228,24 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(sc->sc_bst, sc->sc_bsh, OMAP3_SDMMC_SDHC_OFFSET,
 	    OMAP3_SDMMC_SDHC_SIZE, &sc->sc_sdhc_bsh);
 
-	aprint_naive(": SDHC controller\n");
-	aprint_normal(": SDHC controller\n");
+#if NEDMA > 0
+	if (oa->obio_edmabase != -1) {
+		mutex_init(&sc->sc_edma_lock, MUTEX_DEFAULT, IPL_SCHED);
+		cv_init(&sc->sc_edma_cv, "sdhcedma");
+		sc->sc_edma_fifo = oa->obio_addr +
+		    OMAP3_SDMMC_SDHC_OFFSET + SDHC_DATA;
+		obiosdhc_edma_init(sc, oa->obio_edmabase);
+		sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+		sc->sc.sc_flags |= SDHC_FLAG_EXTERNAL_DMA;
+		sc->sc.sc_flags |= SDHC_FLAG_EXTDMA_DMAEN;
+		sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
+		sc->sc.sc_vendor_transfer_data_dma = obiosdhc_edma_xfer_data;
+		transfer_mode = "EDMA";
+	}
+#endif
+
+	aprint_naive("\n");
+	aprint_normal(": SDHC controller (%s)\n", transfer_mode);
 
 #ifdef TI_AM335X
 	/* XXX Not really AM335X-specific.  */
@@ -380,3 +432,145 @@ obiosdhc_bus_clock(struct sdhc_softc *sc, int clk)
 
 	return 0;
 }
+
+#if NEDMA > 0
+static void
+obiosdhc_edma_init(struct obiosdhc_softc *sc, unsigned int edmabase)
+{
+	int i;
+
+	/* Request tx and rx DMA channels */
+	sc->sc_edma_tx = edma_channel_alloc(EDMA_TYPE_DMA, edmabase + 0,
+	    obiosdhc_edma_done, sc);
+	KASSERT(sc->sc_edma_tx != NULL);
+	sc->sc_edma_rx = edma_channel_alloc(EDMA_TYPE_DMA, edmabase + 1,
+	    obiosdhc_edma_done, sc);
+	KASSERT(sc->sc_edma_rx != NULL);
+
+	device_printf(sc->sc.sc_dev, "EDMA tx channel %d, rx channel %d\n",
+	    edma_channel_index(sc->sc_edma_tx),
+	    edma_channel_index(sc->sc_edma_rx));
+
+	/* Allocate some PaRAM pages */
+	for (i = 0; i < __arraycount(sc->sc_edma_param_tx); i++) {
+		sc->sc_edma_param_tx[i] = edma_param_alloc(sc->sc_edma_tx);
+		KASSERT(sc->sc_edma_param_tx[i] != 0xffff);
+	}
+	for (i = 0; i < __arraycount(sc->sc_edma_param_rx); i++) {
+		sc->sc_edma_param_rx[i] = edma_param_alloc(sc->sc_edma_rx);
+		KASSERT(sc->sc_edma_param_rx[i] != 0xffff);
+	}
+
+	return;
+}
+
+static int
+obiosdhc_edma_xfer_data(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
+{
+	struct obiosdhc_softc *sc = device_private(sdhc_sc->sc_dev);
+	struct edma_channel *edma;
+	uint16_t *edma_param;
+	struct edma_param ep;
+	size_t seg;
+	int error;
+	int blksize = MIN(cmd->c_datalen, cmd->c_blklen);
+
+	edma = ISSET(cmd->c_flags, SCF_CMD_READ) ?
+	    sc->sc_edma_rx : sc->sc_edma_tx;
+	edma_param = ISSET(cmd->c_flags, SCF_CMD_READ) ?
+	    sc->sc_edma_param_rx : sc->sc_edma_param_tx;
+
+	DPRINTF(1, (sc->sc.sc_dev, "edma xfer: nsegs=%d ch# %d\n",
+	    cmd->c_dmamap->dm_nsegs, edma_channel_index(edma)));
+
+	if (cmd->c_dmamap->dm_nsegs > EDMA_MAX_PARAMS) {
+		return ENOMEM;
+	}
+
+	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
+		ep.ep_opt = __SHIFTIN(2, EDMA_PARAM_OPT_FWID) /* 32-bit */;
+		ep.ep_opt |= __SHIFTIN(edma_channel_index(edma),
+				       EDMA_PARAM_OPT_TCC);
+		if (seg == cmd->c_dmamap->dm_nsegs - 1) {
+			ep.ep_opt |= EDMA_PARAM_OPT_TCINTEN;
+			ep.ep_link = 0xffff;
+		} else {
+			ep.ep_link = EDMA_PARAM_BASE(edma_param[seg+1]);
+		}
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			ep.ep_opt |= EDMA_PARAM_OPT_SAM;
+			ep.ep_src = sc->sc_edma_fifo;
+			ep.ep_dst = cmd->c_dmamap->dm_segs[seg].ds_addr;
+		} else {
+			ep.ep_opt |= EDMA_PARAM_OPT_DAM;
+			ep.ep_src = cmd->c_dmamap->dm_segs[seg].ds_addr;
+			ep.ep_dst = sc->sc_edma_fifo;
+		}
+
+		KASSERT(cmd->c_dmamap->dm_segs[seg].ds_len <= 65536 * 4);
+
+                /*
+		 * For unknown reason, the A-DMA transfers never completes for
+		 * transfers larger than 64 butes. So use a AB transfer,
+		 * with a 64 bytes A len
+		 */
+		ep.ep_bcntrld = 0;	/* not used for AB-synchronous mode */
+		ep.ep_opt |= EDMA_PARAM_OPT_SYNCDIM;
+		ep.ep_acnt = min(cmd->c_dmamap->dm_segs[seg].ds_len, 64);
+		ep.ep_bcnt = min(cmd->c_dmamap->dm_segs[seg].ds_len, blksize) /
+			     ep.ep_acnt;
+		ep.ep_ccnt = cmd->c_dmamap->dm_segs[seg].ds_len /
+			     (ep.ep_acnt * ep.ep_bcnt);
+		ep.ep_srcbidx = ep.ep_dstbidx = 0;
+		ep.ep_srccidx = ep.ep_dstcidx = 0;
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			ep.ep_dstbidx = ep.ep_acnt;
+			ep.ep_dstcidx = ep.ep_acnt * ep.ep_bcnt;
+		} else {
+			ep.ep_srcbidx = ep.ep_acnt;
+			ep.ep_srccidx = ep.ep_acnt * ep.ep_bcnt;
+		}
+
+		edma_set_param(edma, edma_param[seg], &ep);
+#ifdef OM3SDHC_DEBUG
+		if (om3sdhcdebug >= 1) {
+			printf("target OPT: %08x\n", ep.ep_opt);
+			edma_dump_param(edma, edma_param[seg]);
+		}
+#endif
+	}
+
+	mutex_enter(&sc->sc_edma_lock);
+	error = 0;
+	sc->sc_edma_pending = true;
+	edma_transfer_enable(edma, edma_param[0]);
+	while (sc->sc_edma_pending) {
+		error = cv_timedwait(&sc->sc_edma_cv, &sc->sc_edma_lock, hz*10);
+		if (error == EWOULDBLOCK) {
+			device_printf(sc->sc.sc_dev, "transfer timeout!\n");
+			edma_dump(edma);
+			edma_dump_param(edma, edma_param[0]);
+			edma_halt(edma);
+			sc->sc_edma_pending = false;
+			error = ETIMEDOUT;
+			break;
+		}
+	}
+	edma_halt(edma);
+	mutex_exit(&sc->sc_edma_lock);
+
+	return error;
+}
+
+static void
+obiosdhc_edma_done(void *priv)
+{
+	struct obiosdhc_softc *sc = priv;
+
+	mutex_enter(&sc->sc_edma_lock);
+	KASSERT(sc->sc_edma_pending == true);
+	sc->sc_edma_pending = false;
+	cv_broadcast(&sc->sc_edma_cv);
+	mutex_exit(&sc->sc_edma_lock);
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.154.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: nd6.c,v 1.154.2.2 2015/06/06 14:40:26 skrll Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154.2.2 2015/06/06 14:40:26 skrll Exp $");
+
+#include "opt_net_mpsafe.h"
 
 #include "bridge.h"
 #include "carp.h"
@@ -334,7 +336,7 @@ nd6_options(union nd_opts *ndopts)
 		panic("uninitialized ndopts in nd6_options");
 	if (ndopts->nd_opts_search == NULL)
 		return 0;
- 
+
 	while (1) {
 		nd_opt = nd6_option(ndopts);
 		if (nd_opt == NULL && ndopts->nd_opts_last == NULL) {
@@ -553,7 +555,7 @@ nd6_timer(void *ignored_arg)
 	KERNEL_LOCK(1, NULL);
 
 	/* expire default router list */
-	
+
 	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, next_dr) {
 		if (dr->expire && dr->expire < time_second) {
 			defrtrlist_del(dr, NULL);
@@ -1658,7 +1660,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		ND = *ND_IFINFO(ifp);
 		break;
 	case SIOCSIFINFO_IN6:
-		/* 
+		/*
 		 * used to change host variables from userland.
 		 * intented for a use on router to reflect RA configurations.
 		 */
@@ -1865,7 +1867,7 @@ nd6_llinfo_release_pkts(struct llinfo_nd6 *ln, struct ifnet *ifp,
 
 		/*
 		 * we assume ifp is not a p2p here, so
-		 * just set the 2nd argument as the 
+		 * just set the 2nd argument as the
 		 * 1st one.
 		 */
 		nd6_output(ifp, ifp, m_hold, satocsin6(rt_getkey(rt)), rt);
@@ -2329,12 +2331,16 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		goto bad;
 	}
 
+#ifndef NET_MPSAFE
 	KERNEL_LOCK(1, NULL);
+#endif
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
 		error = (*ifp->if_output)(origifp, m, sin6tocsa(dst), rt);
 	else
 		error = (*ifp->if_output)(ifp, m, sin6tocsa(dst), rt);
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
+#endif
 	return error;
 
   bad:
@@ -2406,7 +2412,7 @@ nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
 		char dbuf[LINK_ADDRSTRLEN];
 		sockaddr_format(rt->rt_gateway, gbuf, sizeof(gbuf));
 		printf("%s: bad gateway address type %s for dst %s"
-		    " through interface %s\n", __func__, gbuf, 
+		    " through interface %s\n", __func__, gbuf,
 		    IN6_PRINT(dbuf, &satocsin6(dst)->sin6_addr),
 		    if_name(ifp));
 		m_freem(m);
@@ -2429,7 +2435,7 @@ nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
 	return 1;
 }
 
-static void 
+static void
 clear_llinfo_pqueue(struct llinfo_nd6 *ln)
 {
 	struct mbuf *m_hold, *m_hold_next;
@@ -2443,7 +2449,7 @@ clear_llinfo_pqueue(struct llinfo_nd6 *ln)
 	ln->ln_hold = NULL;
 	return;
 }
- 
+
 int
 nd6_sysctl(
     int name,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.10 2011/11/09 17:05:50 matt Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.10.28.1 2015/06/06 14:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10 2011/11/09 17:05:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10.28.1 2015/06/06 14:40:02 skrll Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -44,24 +44,21 @@ __KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10 2011/11/09 17:05:50 matt Exp $")
 #include <mips/regnum.h>
 #include <mips/mips_opcode.h>
 
-#define	INSN_LUI_P(insn)	(((insn) >> 26) == OP_LUI)
-#define	INSN_LW_P(insn)		(((insn) >> 26) == OP_LW)
-#define	INSN_SW_P(insn)		(((insn) >> 26) == OP_SW)
-#define	INSN_LD_P(insn)		(((insn) >> 26) == OP_LD)
-#define	INSN_SD_P(insn)		(((insn) >> 26) == OP_SD)
-
-#define INSN_LOAD_P(insn)	(INSN_LD_P(insn) || INSN_LW_P(insn))
-#define INSN_STORE_P(insn)	(INSN_SD_P(insn) || INSN_SW_P(insn))
-
 bool
-mips_fixup_exceptions(mips_fixup_callback_t callback)
+mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 {
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+	uint32_t * const start =
+	    (uint32_t *)(intptr_t)(mipsNN_cp0_ebase_read() & ~MIPS_EBASE_CPUNUM);
+#else
 	uint32_t * const start = (uint32_t *)MIPS_KSEG0_START;
+#endif
 	uint32_t * const end = start + (5 * 128) / sizeof(uint32_t);
 	const int32_t addr = (intptr_t)&cpu_info_store;
 	const size_t size = sizeof(cpu_info_store);
 	uint32_t new_insns[2];
 	uint32_t *lui_insnp = NULL;
+	int32_t lui_offset = 0;
 	bool fixed = false;
 	size_t lui_reg = 0;
 	/*
@@ -70,9 +67,12 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 	 * to compensate for using a negative offset for the lower half of
 	 * the value.
 	 */
-	const int32_t upper_addr = (addr + 32768) & ~0xffff;
+	const int32_t upper_start = (addr + 32768) & ~0xffff;
+	const int32_t upper_end = (addr + size - 1 + 32768) & ~0xffff;
 
+#ifndef MIPS64_OCTEON
 	KASSERT((addr & ~0xfff) == ((addr + size - 1) & ~0xfff));
+#endif
 
 	uint32_t lui_insn = 0;
 	for (uint32_t *insnp = start; insnp < end; insnp++) {
@@ -86,15 +86,17 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 			    insn, lui_reg, offset);
 #endif
 			KASSERT(lui_reg == _R_K0 || lui_reg == _R_K1);
-			if (upper_addr == offset) {
+			if (upper_start == offset || upper_end == offset) {
 				lui_insnp = insnp;
 				lui_insn = insn;
+				lui_offset = offset;
 #ifdef DEBUG_VERBOSE
 				printf(" (maybe)");
 #endif
 			} else {
 				lui_insnp = NULL;
 				lui_insn = 0;
+				lui_offset = 0;
 			}
 #ifdef DEBUG_VERBOSE
 			printf("\n");
@@ -105,7 +107,7 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 #if defined(DIAGNOSTIC) || defined(DEBUG_VERBOSE)
 			size_t rt = (insn >> 16) & 31;
 #endif
-			int32_t load_addr = upper_addr + (int16_t)insn;
+			int32_t load_addr = lui_offset + (int16_t)insn;
 			if (addr <= load_addr
 			    && load_addr < addr + size
 			    && base == lui_reg) {
@@ -121,7 +123,7 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 #endif
 				new_insns[0] = lui_insn;
 				new_insns[1] = *insnp;
-				if ((callback)(load_addr, new_insns)) {
+				if ((callback)(load_addr, new_insns, arg)) {
 					if (lui_insnp) {
 						*lui_insnp = new_insns[0];
 						*insnp = new_insns[1];

@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.51 2014/11/15 19:20:01 christos Exp $	*/
+/*	$NetBSD: plcom.c,v 1.51.2.1 2015/06/06 14:39:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,15 +94,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.51 2014/11/15 19:20:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.51.2.1 2015/06/06 14:39:58 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
-
-#include "rnd.h"
 
 /*
  * Override cnmagic(9) macro before including <sys/systm.h>.
@@ -136,7 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.51 2014/11/15 19:20:01 christos Exp $");
 #include <sys/intr.h>
 #include <sys/bus.h>
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <evbarm/dev/plcomreg.h>

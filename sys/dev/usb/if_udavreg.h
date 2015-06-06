@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.9.16.2 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.9.16.3 2015/06/06 14:40:14 skrll Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -29,6 +29,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/rndsource.h>
 
 #define	UDAV_IFACE_INDEX	0
 #define	UDAV_CONFIG_NO		1

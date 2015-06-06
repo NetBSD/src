@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpmvar.h,v 1.10 2013/06/13 00:55:01 tls Exp $	*/
+/*	$NetBSD: amdpmvar.h,v 1.10.10.1 2015/06/06 14:40:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _DEV_PCI_AMDPMVAR_H_
 
 #include <sys/mutex.h>
+#include <sys/rndsource.h>
 
 struct amdpm_softc {
 	device_t sc_dev;

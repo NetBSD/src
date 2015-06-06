@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.11 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.11.4.1 2015/06/06 14:40:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.11 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.11.4.1 2015/06/06 14:40:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.11 2014/08/10 16:44:36 tls Exp $");
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include "opt_inet.h"
 #include <net/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.58.2.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.58.2.2 2015/06/06 14:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.58.2.1 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.58.2.2 2015/06/06 14:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -211,7 +211,7 @@ rumpblk_init(void)
 			sectshift = tmp;
 		else
 			printf("RUMP_BLKSECTSHIFT must be least %d (now %d), ",
-			   DEV_BSHIFT, tmp); 
+			   DEV_BSHIFT, tmp);
 		printf("using %d for sector shift (size %d)\n",
 		    sectshift, 1<<sectshift);
 	}
@@ -439,6 +439,10 @@ rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	case DIOCCACHESYNC:
 		break;
 
+	case DIOCGMEDIASIZE:
+		*(off_t *)addr = (off_t)rblk->rblk_size;
+		break;
+
 	default:
 		error = ENOTTY;
 		break;
@@ -576,7 +580,7 @@ rumpblk_strategy_fail(struct buf *bp)
 
 	if (gimmerand() % BLKFAIL_MAX >= blkfail) {
 		dostrategy(bp);
-	} else { 
+	} else {
 		printf("block fault injection: failing I/O on block %lld\n",
 		    (long long)bp->b_blkno);
 		bp->b_error = EIO;

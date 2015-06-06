@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_esdhc.c,v 1.2 2014/03/22 09:46:33 hkenken Exp $ */
+/*	$NetBSD: imx51_esdhc.c,v 1.2.6.1 2015/06/06 14:39:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_esdhc.c,v 1.2 2014/03/22 09:46:33 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_esdhc.c,v 1.2.6.1 2015/06/06 14:39:55 skrll Exp $");
 
 #include "opt_imx.h"
 
@@ -117,6 +117,7 @@ sdhc_attach(device_t parent, device_t self, void *aux)
 		break;;
 	}
 	sc->sc_sdhc.sc_clkbase = perclk / 1000;
+	sc->sc_sdhc.sc_flags |= SDHC_FLAG_USE_DMA;
 	sc->sc_sdhc.sc_flags |= SDHC_FLAG_HAVE_DVS |
 		SDHC_FLAG_NO_PWR0 |
 		SDHC_FLAG_32BIT_ACCESS |

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.69.4.1 2015/04/06 15:17:52 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.69.4.2 2015/06/06 14:39:55 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -66,6 +66,10 @@ ifdef __ARM_FIQ_INDIRECT
 define	__ARM_FIQ_INDIRECT	1
 endif
 
+ifdef __HAVE_PREEMPTION
+define	__HAVE_PREEMPTION	1
+endif
+
 ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS	1
 endif
@@ -76,10 +80,6 @@ endif
 
 ifdef __HAVE_PIC_FAST_SOFTINTS
 define	__HAVE_PIC_FAST_SOFTINTS	1
-endif
-
-ifdef __HAVE_UNNESTED_INTRS
-define	__HAVE_UNNESTED_INTRS	1
 endif
 
 ifdef ARM_MMU_EXTENDED
@@ -101,7 +101,7 @@ define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
 define	DOMAIN_CLIENT		DOMAIN_CLIENT
 ifdef ARM_MMU_EXTENDED
 define	DOMAIN_DEFAULT		((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | (DOMAIN_CLIENT << (PMAP_DOMAIN_USER*2)))
-else 
+else
 define	DOMAIN_DEFAULT		((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
 endif
 

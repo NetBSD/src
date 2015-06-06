@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.99.4.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.99.4.2 2015/06/06 14:40:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.99.4.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.99.4.2 2015/06/06 14:40:22 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -555,7 +555,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	/*
 	 * Unlocked except for the vnode interlock.  Call vget().
 	 */
-	error = vget(vp, LK_NOWAIT);
+	error = vget(vp, LK_NOWAIT, false /* !wait */);
 	if (error) {
 		KASSERT(error == EBUSY);
 		/*
@@ -636,7 +636,7 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 	/*
 	 * Unlocked except for the vnode interlock.  Call vget().
 	 */
-	error = vget(vp, LK_NOWAIT);
+	error = vget(vp, LK_NOWAIT, false /* !wait */);
 	if (error) {
 		KASSERT(error == EBUSY);
 		/*
@@ -722,9 +722,9 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 			}
 
 			mutex_enter(dvp->v_interlock);
-			mutex_exit(&ncp->nc_lock); 
+			mutex_exit(&ncp->nc_lock);
 			mutex_exit(namecache_lock);
-			error = vget(dvp, LK_NOWAIT);
+			error = vget(dvp, LK_NOWAIT, false /* !wait */);
 			if (error) {
 				KASSERT(error == EBUSY);
 				if (bufp)
@@ -858,7 +858,7 @@ nchinit(void)
 	int error;
 
 	TAILQ_INIT(&nclruhead);
-	namecache_cache = pool_cache_init(sizeof(struct namecache), 
+	namecache_cache = pool_cache_init(sizeof(struct namecache),
 	    coherency_unit, 0, 0, "ncache", NULL, IPL_NONE, cache_ctor,
 	    cache_dtor, NULL);
 	KASSERT(namecache_cache != NULL);
@@ -1040,7 +1040,7 @@ cache_purgevfs(struct mount *mp)
 }
 
 /*
- * Scan global list invalidating entries until we meet a preset target. 
+ * Scan global list invalidating entries until we meet a preset target.
  * Prefer to invalidate entries that have not scored a hit within
  * cache_hottime seconds.  We sort the LRU list only for this routine's
  * benefit.

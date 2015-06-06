@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_x86_pmap.c,v 1.1.12.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: rump_x86_pmap.c,v 1.1.12.2 2015/06/06 14:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,15 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_x86_pmap.c,v 1.1.12.1 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_x86_pmap.c,v 1.1.12.2 2015/06/06 14:40:29 skrll Exp $");
 
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
 
 #include "rump_private.h"
-
-struct pmap *const kernel_pmap_ptr = RUMP_PMAP_KERNEL;
 
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int fl)

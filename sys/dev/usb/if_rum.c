@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48.6.6 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.7 2015/06/06 14:40:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.6 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.7 2015/06/06 14:40:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -482,6 +482,9 @@ rum_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_dev);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 }
 
@@ -495,6 +498,8 @@ rum_detach(device_t self, int flags)
 
 	if (!ifp->if_softc)
 		return 0;
+
+	pmf_device_deregister(self);
 
 	s = splusb();
 

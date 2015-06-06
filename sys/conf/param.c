@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.64 2012/06/09 02:31:14 christos Exp $	*/
+/*	$NetBSD: param.c,v 1.64.16.1 2015/06/06 14:40:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.64 2012/06/09 02:31:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.64.16.1 2015/06/06 14:40:05 skrll Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -148,6 +148,7 @@ int	mblowat = MBLOWAT;
 #endif
 int	mcllowat = MCLLOWAT;
 
+#if XXX_PRG
 /*
  * Values in support of System V compatible shared memory.	XXX
  */
@@ -208,6 +209,7 @@ struct	msginfo msginfo = {
 	MSGSEG		/* number of message segments */
 };
 #endif
+#endif /* XXX_PRG */
 
 /*
  * Actual network mbuf sizes (read-only), for netstat.

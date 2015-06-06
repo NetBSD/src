@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.190 2013/03/01 18:25:47 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.190.14.1 2015/06/06 14:40:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,6 +91,28 @@ _C_LABEL(kernel_text):
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
 #endif
+#ifdef MIPS64_OCTEON
+	//
+	// U-boot on the erlite starts all cpus at the kernel entry point.
+	// Use EBASE to find our CPU number and if it's not 0, call
+	// octeon_cpu_spinup if MP or loop using the wait instruction since
+	// non-primary CPUs can't do anything useful.
+	//
+	mfc0	a0, MIPS_COP_0_PRID, 1		# EBASE
+	COP0_SYNC
+	ext	a1, a0, 0, 10			# get CPU number
+	beqz	a1, 2f				# normal startup if 0
+	 nop
+#ifdef MULTIPROCESSOR
+	j	_C_LABEL(octeon_cpu_spinup)
+	 nop
+#else
+1:	wait
+	b	1b
+	 nop
+#endif /* MIPS64_OCTEON */
+2:
+#endif
 /*
  * Initialize stack and call machine startup.
  */
@@ -162,9 +184,13 @@ _C_LABEL(kernel_text):
 	/*
 	 * Now enable interrupts (but they are all masked).
 	 */
+#if __mips_isa_rev >= 2
+	ei
+#else
 	mfc0	v0, MIPS_COP_0_STATUS
 	or	v0, MIPS_SR_INT_IE
 	mtc0	v0, MIPS_COP_0_STATUS
+#endif
 	COP0_SYNC
 
 	jal	_C_LABEL(main)			# main(void)

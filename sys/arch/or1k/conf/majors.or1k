@@ -1,4 +1,4 @@
-#	$NetBSD: majors.or1k,v 1.1 2014/09/03 19:34:26 matt Exp $
+#	$NetBSD: majors.or1k,v 1.1.2.1 2015/06/06 14:40:02 skrll Exp $
 #
 # Device majors for OpenRISC 1000
 #
@@ -14,7 +14,7 @@ device-major	pts		char 7			pty
 device-major	clockctl	char 8			clockctl
 device-major	rnd		char 9			rnd
 device-major	ksyms		char 10			ksyms
-device-major	sysmon		char 11			sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 11			sysmon
 device-major	kttcp		char 12			kttcp
 device-major	bpf		char 13			bpfilter
 device-major	tun		char 14			tun

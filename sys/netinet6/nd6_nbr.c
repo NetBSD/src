@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.102.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.102.2.2 2015/06/06 14:40:26 skrll Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102.2.2 2015/06/06 14:40:26 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -189,7 +189,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	 * Otherwise					MAY be omitted
 	 *
 	 * In this implementation, we omit the target link-layer address
-	 * in the "MAY" case. 
+	 * in the "MAY" case.
 	 */
 #if 0 /* too much! */
 	ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &daddr6);
@@ -927,7 +927,8 @@ nd6_na_output(
 	ip6->ip6_dst = daddr6;
 	sockaddr_in6_init(&u.dst6, &daddr6, 0, 0, 0);
 	dst = &u.dst;
-	rtcache_setdst(&ro, dst);
+	if (rtcache_setdst(&ro, dst) != 0)
+		goto bad;
 
 	/*
 	 * Select a source whose scope is the same as that of the dest.

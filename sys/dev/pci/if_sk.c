@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.78.4.1 2015/04/06 15:18:10 skrll Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.78.4.2 2015/06/06 14:40:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.78.4.1 2015/04/06 15:18:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.78.4.2 2015/06/06 14:40:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.78.4.1 2015/04/06 15:18:10 skrll Exp $")
 #include <net/if_media.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -2311,7 +2311,7 @@ sk_intr_yukon(struct sk_if_softc *sc_if)
 #ifdef SK_DEBUG
 	int status;
 
-	status = 
+	status =
 #endif
 		SK_IF_READ_2(sc_if, 0, SK_GMAC_ISR);
 

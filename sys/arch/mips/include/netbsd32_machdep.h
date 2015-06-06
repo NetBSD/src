@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.3 2012/02/19 21:06:16 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.3.16.1 2015/06/06 14:40:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -68,5 +68,7 @@ struct mips_cachectl_args32 {
 	netbsd32_size_t nbytes;
 	int ctl;
 };
+
+int cpu_machinearch32(SYSCTLFN_PROTO);
 
 #endif /* _MACHINE_NETBSD32_H_ */

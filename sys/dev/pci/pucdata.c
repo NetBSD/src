@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.93.6.1 2015/04/06 15:18:12 skrll Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.93.6.2 2015/06/06 14:40:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.93.6.1 2015/04/06 15:18:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.93.6.2 2015/06/06 14:40:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +477,7 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x00, COM_FREQ },
 	    },
 	},
- 
+
 	/* Lava Computers 2SP-PCI */
 	{   "Lava Computers 2SP-PCI parallel port",
 	    {	PCI_VENDOR_LAVA,	PCI_PRODUCT_LAVA_TWOSP_1P, 0, 0 },
@@ -1469,7 +1469,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/*
-	 * Nanjing QinHeng Electronics 
+	 * Nanjing QinHeng Electronics
 	 * Products based on CH353 chip which can be
 	 * configured to provide various combinations
 	 * including 2 serial ports and a parallel port
@@ -2780,6 +2780,16 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x3e8, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x3f8, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, PCI_BAR0, 0x000, 0x00 },
+	    },
+	},
+
+	/* SystemBase SB16C1050 UARTs */
+	{   "SystemBase SB16C1050",
+	    {	PCI_VENDOR_SYSTEMBASE, PCI_PRODUCT_SYSTEMBASE_SB16C1050, 0, 0 },
+	    {	0xffff, 0xffff,						 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x08, COM_FREQ * 8},
 	    },
 	},
 

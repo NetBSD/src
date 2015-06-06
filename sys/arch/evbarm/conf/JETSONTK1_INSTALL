@@ -1,0 +1,10 @@
+#	$NetBSD: JETSONTK1_INSTALL,v 1.1.2.2 2015/06/06 14:39:58 skrll Exp $
+#
+#       JETSONTK1_INSTALL -- NVIDIA JETSONTK1 kernel with
+#	installation-sized ramdisk
+#
+
+include "arch/evbarm/conf/JETSONTK1"
+include "arch/evbarm/conf/INSTALL"
+
+options 	BOOTHOWTO=RB_SINGLE

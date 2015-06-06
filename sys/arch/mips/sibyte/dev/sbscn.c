@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.40 2014/08/10 16:44:34 tls Exp $ */
+/* $NetBSD: sbscn.c,v 1.40.4.1 2015/06/06 14:40:02 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,16 +109,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.40 2014/08/10 16:44:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.40.4.1 2015/06/06 14:40:02 skrll Exp $");
 
 #define	SBSCN_DEBUG
 
 #include "opt_ddb.h"
 #include "ioconf.h"
 
-#include "rnd.h"
 #ifdef RND_SBSCN
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/param.h>

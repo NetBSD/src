@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.135.2.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.135.2.2 2015/06/06 14:40:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -127,6 +127,8 @@ struct so_accf {
 	char	*so_accept_filter_str;	/* saved user args */
 };
 
+struct sockaddr;
+
 struct socket {
 	kmutex_t * volatile so_lock;	/* pointer to lock on structure */
 	kcondvar_t	so_cv;		/* notifier */
@@ -167,7 +169,7 @@ struct socket {
 	void		*so_internal;	/* Space for svr4 stream data */
 	void		(*so_upcall) (struct socket *, void *, int, int);
 	void *		so_upcallarg;	/* Arg for above */
-	int		(*so_send) (struct socket *, struct mbuf *,
+	int		(*so_send) (struct socket *, struct sockaddr *,
 					struct uio *, struct mbuf *,
 					struct mbuf *, int, struct lwp *);
 	int		(*so_receive) (struct socket *,
@@ -241,7 +243,6 @@ extern int		sock_loan_thresh;
 extern kmutex_t		*softnet_lock;
 
 struct mbuf;
-struct sockaddr;
 struct lwp;
 struct msghdr;
 struct stat;
@@ -287,13 +288,13 @@ void	soinit(void);
 void	soinit1(void);
 void	soinit2(void);
 int	soabort(struct socket *);
-int	soaccept(struct socket *, struct mbuf *);
+int	soaccept(struct socket *, struct sockaddr *);
 int	sofamily(const struct socket *);
 int	sobind(struct socket *, struct sockaddr *, struct lwp *);
 void	socantrcvmore(struct socket *);
 void	socantsendmore(struct socket *);
 int	soclose(struct socket *);
-int	soconnect(struct socket *, struct mbuf *, struct lwp *);
+int	soconnect(struct socket *, struct sockaddr *, struct lwp *);
 int	soconnect2(struct socket *, struct socket *);
 int	socreate(int, struct socket **, int, int, struct lwp *,
 		 struct socket *);
@@ -315,7 +316,7 @@ int	soreceive(struct socket *, struct mbuf **, struct uio *,
 	    struct mbuf **, struct mbuf **, int *);
 int	soreserve(struct socket *, u_long, u_long);
 void	sorflush(struct socket *);
-int	sosend(struct socket *, struct mbuf *, struct uio *,
+int	sosend(struct socket *, struct sockaddr *, struct uio *,
 	    struct mbuf *, struct mbuf *, int, struct lwp *);
 int	sosetopt(struct socket *, struct sockopt *);
 int	so_setsockopt(struct lwp *, struct socket *, int, int, const void *, size_t);
@@ -348,15 +349,15 @@ int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
 void	free_control_mbuf(struct lwp *, struct mbuf *, struct mbuf *);
 
-int	do_sys_getpeername(int, struct mbuf **);
-int	do_sys_getsockname(int, struct mbuf **);
+int	do_sys_getpeername(int, struct sockaddr *);
+int	do_sys_getsockname(int, struct sockaddr *);
 int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int, register_t *);
 int	do_sys_recvmsg(struct lwp *, int, struct msghdr *, struct mbuf **,
 	    struct mbuf **, register_t *);
 
 int	do_sys_bind(struct lwp *, int, struct sockaddr *);
-int	do_sys_connect(struct lwp *, int, struct mbuf *);
-int	do_sys_accept(struct lwp *, int, struct mbuf **, register_t *,
+int	do_sys_connect(struct lwp *, int, struct sockaddr *);
+int	do_sys_accept(struct lwp *, int, struct sockaddr *, register_t *,
 	    const sigset_t *, int, int);
 
 /*
@@ -483,7 +484,7 @@ solock(struct socket *so)
 	if (__predict_false(lock != so->so_lock))
 		solockretry(so, lock);
 }
-	
+
 static inline void
 sounlock(struct socket *so)
 {

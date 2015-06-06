@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.128.2.1 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.128.2.2 2015/06/06 14:40:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.128.2.1 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.128.2.2 2015/06/06 14:40:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -76,7 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.128.2.1 2015/04/06 15:18:13 skrl
 #include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/kmem.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
+#include <sys/module.h>
+#include <sys/once.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
@@ -101,17 +103,59 @@ static void sme_initial_refresh(void *);
 static uint32_t sme_get_max_value(struct sysmon_envsys *,
      bool (*)(const envsys_data_t*), bool);
 
+MODULE(MODULE_CLASS_MISC, sysmon_envsys, "sysmon,sysmon_taskq,sysmon_power");
+
+static struct sysmon_opvec sysmon_envsys_opvec = {
+        sysmonopen_envsys, sysmonclose_envsys, sysmonioctl_envsys,
+        NULL, NULL, NULL
+};
+
+ONCE_DECL(once_envsys);
+
+static int
+sme_preinit(void)
+{
+
+	LIST_INIT(&sysmon_envsys_list);
+	mutex_init(&sme_global_mtx, MUTEX_DEFAULT, IPL_NONE);
+	sme_propd = prop_dictionary_create();
+
+	return 0;
+}
+
 /*
  * sysmon_envsys_init:
  *
  * 	+ Initialize global mutex, dictionary and the linked list.
  */
-void
+int
 sysmon_envsys_init(void)
 {
-	LIST_INIT(&sysmon_envsys_list);
-	mutex_init(&sme_global_mtx, MUTEX_DEFAULT, IPL_NONE);
-	sme_propd = prop_dictionary_create();
+	int error;
+
+	(void)RUN_ONCE(&once_envsys, sme_preinit);
+
+	error = sysmon_attach_minor(SYSMON_MINOR_ENVSYS, &sysmon_envsys_opvec);
+
+	return error;
+}
+
+int
+sysmon_envsys_fini(void)
+{
+	int error;
+
+	if ( ! LIST_EMPTY(&sysmon_envsys_list))
+		error = EBUSY;
+	else
+		error = sysmon_attach_minor(SYSMON_MINOR_ENVSYS, NULL);
+
+	if (error == 0)
+		mutex_destroy(&sme_global_mtx);
+
+	// XXX: prop_dictionary ???
+
+	return error;
 }
 
 /*
@@ -159,7 +203,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/*
 		 * Update dictionaries on all sysmon envsys devices
 		 * registered.
-		 */		
+		 */
 		mutex_enter(&sme_global_mtx);
 		LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
 			sysmon_envsys_acquire(sme, false);
@@ -222,7 +266,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				prop_object_release(udict);
 				return EINVAL;
 			}
-			
+
 			devname = prop_dictionary_keysym_cstring_nocopy(obj);
 			DPRINTF(("%s: processing the '%s' array requests\n",
 			    __func__, devname));
@@ -265,7 +309,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			 * process the list of sensors and properties.
 			 */
 			while ((obj2 = prop_object_iterator_next(iter2))) {
-				/* 
+				/*
 				 * do the real work now.
 				 */
 				error = sme_userset_dictionary(sme,
@@ -363,7 +407,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				mutex_exit(&sme->sme_mtx);
 			}
 
-			/* 
+			/*
 			 * copy required values to the old interface.
 			 */
 			tred->sensor = edata->sensor;
@@ -472,7 +516,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 /*
  * sysmon_envsys_create:
- * 
+ *
  * 	+ Allocates a new sysmon_envsys object and initializes the
  * 	  stuff for sensors and events.
  */
@@ -528,7 +572,7 @@ sysmon_envsys_sensor_attach(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	KASSERT(sme != NULL || edata != NULL);
 
-	/* 
+	/*
 	 * Find the correct units for this sensor.
 	 */
 	sdt_units = sme_find_table_entry(SME_DESC_UNITS, edata->units);
@@ -650,6 +694,8 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	KASSERT(sme != NULL);
 	KASSERT(sme->sme_name != NULL);
 
+	(void)RUN_ONCE(&once_envsys, sme_preinit);
+
 	/*
 	 * Check if requested sysmon_envsys device is valid
 	 * and does not exist already in the list.
@@ -657,8 +703,8 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	mutex_enter(&sme_global_mtx);
 	LIST_FOREACH(lsme, &sysmon_envsys_list, sme_list) {
 	       if (strcmp(lsme->sme_name, sme->sme_name) == 0) {
-		       mutex_exit(&sme_global_mtx);
-		       return EEXIST;
+			mutex_exit(&sme_global_mtx);
+			return EEXIST;
 	       }
 	}
 	mutex_exit(&sme_global_mtx);
@@ -680,7 +726,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 		return ENOTSUP;
 	}
 
-	/* 
+	/*
 	 * Initialize the singly linked list for driver events.
 	 */
 	SLIST_INIT(&sme_evdrv_list);
@@ -712,7 +758,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 		}
 	}
 
-	/* 
+	/*
 	 * If the array does not contain any object (sensor), there's
 	 * no need to attach the driver.
 	 */
@@ -749,6 +795,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	mutex_enter(&sme_global_mtx);
 	if (!prop_dictionary_set(sme_propd, sme->sme_name, array)) {
 		error = EINVAL;
+		mutex_exit(&sme_global_mtx);
 		DPRINTF(("%s: prop_dictionary_set for '%s'\n", __func__,
 		    sme->sme_name));
 		goto out;
@@ -771,7 +818,6 @@ out:
 	 */
 	if (error == 0) {
 		nevent = 0;
-		sysmon_task_queue_init();
 
 		if (sme->sme_flags & SME_INIT_REFRESH) {
 			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
@@ -1054,7 +1100,7 @@ sysmon_envsys_release(struct sysmon_envsys *sme, bool locked)
 
 /*
  * sme_initial_refresh:
- * 	
+ *
  * 	+ Do an initial refresh of the sensors in a device just after
  * 	  interrupts are enabled in the autoconf(9) process.
  *
@@ -1192,8 +1238,8 @@ sme_remove_userprops(void)
 			 * If there were any limit values removed, we
 			 * need to revert to initial limits.
 			 *
-			 * First, tell the driver that we need it to 
-			 * restore any h/w limits which may have been 
+			 * First, tell the driver that we need it to
+			 * restore any h/w limits which may have been
 			 * changed to stored, boot-time values.
 			 */
 			if (sme->sme_set_limits) {
@@ -1263,7 +1309,7 @@ sme_remove_userprops(void)
 
 /*
  * sme_add_property_dictionary:
- * 
+ *
  * 	+ Add global properties into a device.
  */
 static int
@@ -1377,7 +1423,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<key>monitoring-supported</key>
 	 * 		<true/>
 	 *		...
-	 * 
+	 *
 	 * always false on Battery {capacity,charge}, Drive and Indicator types.
 	 * They cannot be monitored.
 	 *
@@ -1490,7 +1536,7 @@ sme_get_max_value(struct sysmon_envsys *sme,
 	envsys_data_t *edata;
 	uint32_t maxv, v;
 
-	/* 
+	/*
 	 * Iterate over all sensors that match the predicate
 	 */
 	maxv = 0;
@@ -1498,7 +1544,7 @@ sme_get_max_value(struct sysmon_envsys *sme,
 		if (!(*predicate)(edata))
 			continue;
 
-		/* 
+		/*
 		 * refresh sensor data
 		 */
 		mutex_enter(&sme->sme_mtx);
@@ -1527,7 +1573,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	prop_object_t array, dict, obj, obj2;
 	int error = 0;
 
-	/* 
+	/*
 	 * Retrieve the array of dictionaries in device.
 	 */
 	array = prop_dictionary_get(sme_propd, sme->sme_name);
@@ -1557,7 +1603,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 					sme->sme_events_timeout))
 		return EINVAL;
 
-	/* 
+	/*
 	 * - iterate over all sensors.
 	 * - fetch new data.
 	 * - check if data in dictionary is different than new data.
@@ -1572,14 +1618,14 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	 * is going to be removed or added it will have to wait.
 	 */
 	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
-		/* 
+		/*
 		 * refresh sensor data via sme_envsys_refresh_sensor
 		 */
 		mutex_enter(&sme->sme_mtx);
 		sysmon_envsys_refresh_sensor(sme, edata);
 		mutex_exit(&sme->sme_mtx);
 
-		/* 
+		/*
 		 * retrieve sensor's dictionary.
 		 */
 		dict = prop_array_get(array, edata->sensor);
@@ -1589,7 +1635,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 			return EINVAL;
 		}
 
-		/* 
+		/*
 		 * update sensor's state.
 		 */
 		error = sme_update_sensor_dictionary(dict, edata, true);
@@ -1622,7 +1668,7 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 	if (error)
 		return (-error);
 
-	/* 
+	/*
 	 * update sensor's type.
 	 */
 	sdt = sme_find_table_entry(SME_DESC_UNITS, edata->units);
@@ -1635,7 +1681,7 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 		return (-error);
 
 	if (value_update) {
-		/* 
+		/*
 		 * update sensor's current value.
 		 */
 		error = sme_sensor_upint32(dict, "cur-value", edata->value_cur);
@@ -1651,7 +1697,7 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 	    edata->units == ENVSYS_BATTERY_CHARGE)
 		return error;
 
-	/* 
+	/*
 	 * update sensor flags.
 	 */
 	if (edata->flags & ENVSYS_FPERCENT) {
@@ -1678,7 +1724,7 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 				return error;
 		}
 
-		/* 
+		/*
 		 * update 'rpms' only for ENVSYS_SFANRPM sensors.
 		 */
 		if (edata->units == ENVSYS_SFANRPM) {
@@ -1687,7 +1733,7 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 				return error;
 		}
 
-		/* 
+		/*
 		 * update 'rfact' only for ENVSYS_SVOLTS_[AD]C sensors.
 		 */
 		if (edata->units == ENVSYS_SVOLTS_AC ||
@@ -1698,7 +1744,7 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 		}
 	}
 
-	/* 
+	/*
 	 * update 'drive-state' only for ENVSYS_DRIVE sensors.
 	 */
 	if (edata->units == ENVSYS_DRIVE) {
@@ -1709,7 +1755,7 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 			return error;
 	}
 
-	/* 
+	/*
 	 * update 'battery-capacity' only for ENVSYS_BATTERY_CAPACITY
 	 * sensors.
 	 */
@@ -1776,7 +1822,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		return error;
 
 	} else if (!obj) {
-		/* 
+		/*
 		 * Get sensor's index from userland dictionary.
 		 */
 		obj = prop_dictionary_get(udict, "index");
@@ -1802,7 +1848,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		dict = prop_array_get(array, edata->sensor);
 		obj1 = prop_dictionary_get(dict, "index");
 
-		/* 
+		/*
 		 * is it our sensor?
 		 */
 		if (!prop_string_equals(obj1, obj))
@@ -1852,7 +1898,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			mutex_exit(&sme->sme_mtx);
 		}
 
-		/* 
+		/*
 		 * did the user want to change the rfact?
 		 */
 		obj2 = prop_dictionary_get(udict, "rfact");
@@ -1873,7 +1919,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 
 		sdt = sme_find_table_entry(SME_DESC_UNITS, edata->units);
 
-		/* 
+		/*
 		 * did the user want to set a critical capacity event?
 		 */
 		obj2 = prop_dictionary_get(udict, "critical-capacity");
@@ -1883,7 +1929,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			props |= PROP_BATTCAP;
 		}
 
-		/* 
+		/*
 		 * did the user want to set a warning capacity event?
 		 */
 		obj2 = prop_dictionary_get(udict, "warning-capacity");
@@ -1893,7 +1939,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			props |= PROP_BATTWARN;
 		}
 
-		/* 
+		/*
 		 * did the user want to set a high capacity event?
 		 */
 		obj2 = prop_dictionary_get(udict, "high-capacity");
@@ -1903,7 +1949,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			props |= PROP_BATTHIGH;
 		}
 
-		/* 
+		/*
 		 * did the user want to set a maximum capacity event?
 		 */
 		obj2 = prop_dictionary_get(udict, "maximum-capacity");
@@ -1913,7 +1959,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			props |= PROP_BATTMAX;
 		}
 
-		/* 
+		/*
 		 * did the user want to set a critical max event?
 		 */
 		obj2 = prop_dictionary_get(udict, "critical-max");
@@ -1923,7 +1969,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			props |= PROP_CRITMAX;
 		}
 
-		/* 
+		/*
 		 * did the user want to set a warning max event?
 		 */
 		obj2 = prop_dictionary_get(udict, "warning-max");
@@ -1933,7 +1979,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			props |= PROP_WARNMAX;
 		}
 
-		/* 
+		/*
 		 * did the user want to set a critical min event?
 		 */
 		obj2 = prop_dictionary_get(udict, "critical-min");
@@ -1943,7 +1989,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			props |= PROP_CRITMIN;
 		}
 
-		/* 
+		/*
 		 * did the user want to set a warning min event?
 		 */
 		obj2 = prop_dictionary_get(udict, "warning-min");
@@ -1966,7 +2012,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 					sdt->crittype);
 			if (error == EEXIST)
 				error = 0;
-			if (error) 
+			if (error)
 				goto out;
 		}
 
@@ -1977,7 +2023,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 	}
 
 out:
-	/* 
+	/*
 	 * invalid target? return the error.
 	 */
 	if (!targetfound)
@@ -1993,7 +2039,7 @@ out:
  *	If the callback returns false, the remainder of the current
  *	device's sensors are skipped.
  */
-void   
+void
 sysmon_envsys_foreach_sensor(sysmon_envsys_callback_t func, void *arg,
 			     bool refresh)
 {
@@ -2033,4 +2079,27 @@ sysmon_envsys_refresh_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
 	    edata->value_prev != edata->value_cur)
 		rnd_add_uint32(&edata->rnd_src, edata->value_cur);
 	edata->value_prev = edata->value_cur;
+}
+
+static
+int
+sysmon_envsys_modcmd(modcmd_t cmd, void *arg)
+{
+        int ret;
+
+        switch (cmd) {
+        case MODULE_CMD_INIT:
+                ret = sysmon_envsys_init();
+                break;
+
+        case MODULE_CMD_FINI:
+                ret = sysmon_envsys_fini();
+                break;
+
+        case MODULE_CMD_STAT:
+        default:
+                ret = ENOTTY;
+        }
+
+        return ret;
 }

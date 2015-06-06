@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.4.8.1 2015/04/06 15:18:18 skrll Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.4.8.2 2015/06/06 14:40:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.4.8.1 2015/04/06 15:18:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.4.8.2 2015/06/06 14:40:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -105,6 +105,8 @@ static int	radeon_match(device_t, cfdata_t, void *);
 static void	radeon_attach(device_t, device_t, void *);
 static void	radeon_attach_real(device_t);
 static int	radeon_detach(device_t, int);
+static bool	radeon_do_suspend(device_t, const pmf_qual_t *);
+static bool	radeon_do_resume(device_t, const pmf_qual_t *);
 
 static void	radeon_task_work(struct work *, void *);
 
@@ -116,10 +118,14 @@ extern struct drm_driver *const radeon_drm_driver;
 extern const struct pci_device_id *const radeon_device_ids;
 extern const size_t radeon_n_device_ids;
 
+/* Set this to false if you want to match R100/R200 */
+bool radeon_pci_ignore_r100_r200 = true;
+
 static bool
 radeon_pci_lookup(const struct pci_attach_args *pa, unsigned long *flags)
 {
 	size_t i;
+	enum radeon_family fam;
 
 	for (i = 0; i < radeon_n_device_ids; i++) {
 		if ((PCI_VENDOR(pa->pa_id) == radeon_device_ids[i].vendor) &&
@@ -129,6 +135,11 @@ radeon_pci_lookup(const struct pci_attach_args *pa, unsigned long *flags)
 
 	/* Did we find it?  */
 	if (i == radeon_n_device_ids)
+		return false;
+
+	/* NetBSD drm2 fails on R100 and many R200 chipsets, disable for now  */
+	fam = radeon_device_ids[i].driver_data & RADEON_FAMILY_MASK;
+	if (radeon_pci_ignore_r100_r200 && fam < CHIP_RV280)
 		return false;
 
 	if (flags)
@@ -162,6 +173,9 @@ radeon_attach(device_t parent, device_t self, void *aux)
 	const struct pci_attach_args *const pa = aux;
 
 	pci_aprint_devinfo(pa, NULL);
+
+	if (!pmf_device_register(self, &radeon_do_suspend, &radeon_do_resume))
+		aprint_error_dev(self, "unable to establish power handler\n");
 
 	/*
 	 * Trivial initialization first; the rest will come after we
@@ -259,14 +273,14 @@ radeon_detach(device_t self, int flags)
 		return error;
 
 	if (sc->sc_task_state == RADEON_TASK_ATTACH)
-		return 0;
+		goto out;
 	if (sc->sc_task_u.workqueue != NULL) {
 		workqueue_destroy(sc->sc_task_u.workqueue);
 		sc->sc_task_u.workqueue = NULL;
 	}
 
 	if (sc->sc_drm_dev == NULL)
-		return 0;
+		goto out;
 	/* XXX errno Linux->NetBSD */
 	error = -drm_pci_detach(sc->sc_drm_dev, flags);
 	if (error)
@@ -274,7 +288,45 @@ radeon_detach(device_t self, int flags)
 		return error;
 	sc->sc_drm_dev = NULL;
 
+out:	pmf_device_deregister(self);
+
 	return 0;
+}
+
+static bool
+radeon_do_suspend(device_t self, const pmf_qual_t *qual)
+{
+	struct radeon_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
+	int ret;
+	bool is_console = true; /* XXX */
+
+	if (dev == NULL)
+		return true;
+
+	ret = radeon_suspend_kms(dev, true, is_console);
+	if (ret)
+		return false;
+
+	return true;
+}
+
+static bool
+radeon_do_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct radeon_softc *const sc = device_private(self);
+	struct drm_device *const dev = sc->sc_drm_dev;
+	int ret;
+	bool is_console = true; /* XXX */
+
+	if (dev == NULL)
+		return true;
+
+	ret = radeon_resume_kms(dev, true, is_console);
+	if (ret)
+		return false;
+
+	return true;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.7 2012/02/02 19:42:59 tls Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.7.24.1 2015/06/06 14:39:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,15 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.7 2012/02/02 19:42:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.7.24.1 2015/06/06 14:39:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/bus.h>
-
-#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

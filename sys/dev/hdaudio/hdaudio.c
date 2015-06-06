@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.1.2.2 2015/04/06 15:18:08 skrll Exp $ */
+/* $NetBSD: hdaudio.c,v 1.1.2.3 2015/06/06 14:40:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.1.2.2 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.1.2.3 2015/06/06 14:40:07 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,7 +198,7 @@ hdaudio_dma_alloc(struct hdaudio_softc *sc, struct hdaudio_dma *dma,
 	return 0;
 
 destroy:
-	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);	
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 unmap:
 	bus_dmamem_unmap(sc->sc_dmat, dma->dma_addr, dma->dma_size);
 free:
@@ -214,7 +214,7 @@ hdaudio_dma_free(struct hdaudio_softc *sc, struct hdaudio_dma *dma)
 	if (dma->dma_valid == false)
 		return;
 	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
-	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);	
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 	bus_dmamem_unmap(sc->sc_dmat, dma->dma_addr, dma->dma_size);
 	bus_dmamem_free(sc->sc_dmat, dma->dma_segs, dma->dma_nsegs);
 	dma->dma_valid = false;
@@ -1028,6 +1028,7 @@ hdaudio_stream_establish(struct hdaudio_softc *sc,
 	int i, err;
 
 	dma.dma_size = sizeof(struct hdaudio_bdl_entry) * HDAUDIO_BDL_MAX;
+	dma.dma_sizereg = 0;
 	err = hdaudio_dma_alloc(sc, &dma, BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
 	if (err)
 		return NULL;
@@ -1485,7 +1486,7 @@ hdaudio_dispatch_fgrp_ioctl(struct hdaudio_softc *sc, u_long cmd,
 	prop_dictionary_t fgrp_dict;
 	uint64_t info_fn;
 	int16_t codecid, nid;
-	void *fgrp_sc; 
+	void *fgrp_sc;
 	bool rv;
 	int err;
 

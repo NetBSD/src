@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.17.4.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.17.4.2 2015/06/06 14:40:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.17.4.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.17.4.2 2015/06/06 14:40:21 skrll Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -722,7 +722,7 @@ out:
 int
 v7fs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 				struct vnode *a_dvp;
 				struct vnode *a_vp;
 				struct componentname *a_cnp;
@@ -750,8 +750,6 @@ v7fs_link(void *v)
 
 	VOP_UNLOCK(vp);
 unlock:
-	vput(dvp);
-
 	return error;
 }
 

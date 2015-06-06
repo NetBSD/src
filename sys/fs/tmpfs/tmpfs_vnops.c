@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.121 2014/09/08 14:49:46 gson Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.121.2.1 2015/06/06 14:40:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.121 2014/09/08 14:49:46 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.121.2.1 2015/06/06 14:40:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -744,7 +744,7 @@ out:
 int
 tmpfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -801,7 +801,6 @@ tmpfs_link(void *v)
 	error = 0;
 out:
 	VOP_UNLOCK(vp);
-	vput(dvp);
 	return error;
 }
 

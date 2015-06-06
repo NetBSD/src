@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.12 2015/04/07 07:58:56 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.13 2015/06/06 14:40:14 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.12 2015/04/07 07:58:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.13 2015/06/06 14:40:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -899,7 +899,8 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 					 usbd_ifprint, config_stdsubmatch);
 		if (!dv)
 			continue;
-		ifaces[i] = 0; /* claim */
+		/* claim */
+		ifaces[i] = NULL;
 		/* account for ifaces claimed by the driver behind our back */
 		for (j = 0; j < nifaces; j++) {
 
@@ -1431,7 +1432,7 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 				 * UPS_PORT_POWER_SS is available only
 				 * if SS, otherwise it means UPS_LOW_SPEED.
 				 */
-				else if (dev->ud_speed == USB_SPEED_SUPER && 
+				else if (dev->ud_speed == USB_SPEED_SUPER &&
 				    (s & UPS_PORT_POWER_SS))
 					err = USB_PORT_POWERED;
 				else if (s & UPS_PORT_POWER)

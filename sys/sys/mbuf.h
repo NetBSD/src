@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.156.2.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.156.2.2 2015/06/06 14:40:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ struct	pkthdr {
  * M_CSUM_DATA_IPv6_HL: length of ip6_hdr + ext header.
  * ie. offset of UDP/TCP header in the packet.
  *
- * M_CSUM_DATA_IPv6_OFFSET: offset of the checksum field in UDP/TCP header. 
+ * M_CSUM_DATA_IPv6_OFFSET: offset of the checksum field in UDP/TCP header.
  */
 
 #define	M_CSUM_DATA_IPv6_HL(x)		((x) >> 16)
@@ -912,6 +912,8 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 						    * protocol callback, for
 						    * loop detection/recovery
 						    */
+
+#define	PACKET_TAG_MPLS				29 /* Indicate it's for MPLS */
 
 /*
  * Return the number of bytes in the mbuf chain, m.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.2.2.2 2015/04/06 15:17:53 skrll Exp $
+#	$NetBSD: files.tegra,v 1.2.2.3 2015/06/06 14:39:56 skrll Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -14,11 +14,12 @@ file	arch/arm/arm32/armv7_generic_space.c
 file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/nvidia/tegra_soc.c
+file	arch/arm/nvidia/tegra_cpufreq.c
 file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
 
 # On-board I/O
 device	tegraio { [port=-1] } : bus_space_generic
-attach	tegraio at mainbus with tegra_io 
+attach	tegraio at mainbus with tegra_io
 file	arch/arm/nvidia/tegra_io.c		tegra_io
 
 # Memory controller
@@ -31,9 +32,44 @@ device	tegrapmc
 attach	tegrapmc at tegraio with tegra_pmc
 file	arch/arm/nvidia/tegra_pmc.c		tegra_pmc
 
+# Clock and Reset controller
+device	tegracar
+attach	tegracar at tegraio with tegra_car
+file	arch/arm/nvidia/tegra_car.c		tegra_car
+
+# GPIO controller
+device	tegragpio: gpiobus
+attach	tegragpio at tegraio with tegra_gpio
+file	arch/arm/nvidia/tegra_gpio.c		tegra_gpio
+
+# Timers
+device	tegratimer: sysmon_wdog
+attach	tegratimer at tegraio with tegra_timer
+file	arch/arm/nvidia/tegra_timer.c		tegra_timer
+
+# MPIO / Pinmux
+device	tegrampio
+attach	tegrampio at tegraio with tegra_mpio
+file	arch/arm/nvidia/tegra_mpio.c		tegra_mpio
+
+# XUSB PADCTL
+device	tegraxusbpad
+attach	tegraxusbpad at tegraio with tegra_xusbpad
+file	arch/arm/nvidia/tegra_xusbpad.c		tegra_xusbpad
+
 # UART
 attach	com at tegraio with tegra_com
 file	arch/arm/nvidia/tegra_com.c		tegra_com needs-flag
+
+# I2C
+device	tegrai2c: i2cbus, i2cexec
+attach	tegrai2c at tegraio with tegra_i2c
+file	arch/arm/nvidia/tegra_i2c.c		tegra_i2c
+
+# RTC
+device	tegrartc
+attach	tegrartc at tegraio with tegra_rtc
+file	arch/arm/nvidia/tegra_rtc.c		tegra_rtc
 
 # USB 2.0
 attach	ehci at tegraio with tegra_ehci
@@ -43,6 +79,11 @@ file	arch/arm/nvidia/tegra_ehci.c		tegra_ehci
 attach	sdhc at tegraio with tegra_sdhc
 file	arch/arm/nvidia/tegra_sdhc.c		tegra_sdhc
 
+# PCIE
+device	tegrapcie: pcibus
+attach	tegrapcie at tegraio with tegra_pcie
+file	arch/arm/nvidia/tegra_pcie.c		tegra_pcie
+
 # SATA
 attach	ahcisata at tegraio with tegra_ahcisata
 file	arch/arm/nvidia/tegra_ahcisata.c	tegra_ahcisata
@@ -50,6 +91,25 @@ file	arch/arm/nvidia/tegra_ahcisata.c	tegra_ahcisata
 # HDA
 attach	hdaudio at tegraio with tegra_hdaudio
 file	arch/arm/nvidia/tegra_hdaudio.c		tegra_hdaudio
+
+# Host1x subsystem
+device	tegrahost1x
+attach	tegrahost1x at tegraio with tegra_host1x
+file	arch/arm/nvidia/tegra_host1x.c		tegra_host1x
+
+# Display controller
+device	tegradc { }
+attach	tegradc at tegraio with tegra_dc
+file	arch/arm/nvidia/tegra_dc.c		tegra_dc
+
+# Framebuffer console
+attach	genfb at tegradc with tegra_genfb
+file	arch/arm/nvidia/tegra_genfb.c		tegra_genfb
+
+# HDMI
+device	tegrahdmi: edid, ddc_read_edid, videomode
+attach	tegrahdmi at tegraio with tegra_hdmi
+file	arch/arm/nvidia/tegra_hdmi.c		tegra_hdmi
 
 # Console parameters
 defparam opt_tegra.h			CONADDR
@@ -59,6 +119,12 @@ defparam opt_tegra.h			CONMODE
 # Memory parameters
 defparam opt_tegra.h			MEMSIZE
 
+# CPU parameters
+defparam opt_tegra.h			CPUFREQ_BOOT
+
 # SOC parameters
 defflag	opt_tegra.h			SOC_TEGRAK1
 defflag	opt_tegra.h			SOC_TEGRA124: SOC_TEGRAK1
+
+# Board parameters
+defflag	opt_tegra.h			BOARD_JETSONTK1

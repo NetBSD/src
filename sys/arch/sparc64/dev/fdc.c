@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.42.2.1 2015/04/06 15:18:03 skrll Exp $	*/
+/*	$NetBSD: fdc.c,v 1.42.2.2 2015/06/06 14:40:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.42.2.1 2015/04/06 15:18:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.42.2.2 2015/06/06 14:40:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -370,7 +370,9 @@ void fdstrategy(struct buf *);
 void fdstart(struct fd_softc *);
 int fdprint(void *, const char *);
 
-struct dkdriver fddkdriver = { fdstrategy, NULL };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy
+};
 
 struct	fd_type *fd_nvtotype(char *, int, int);
 void	fd_set_motor(struct fdc_softc *);

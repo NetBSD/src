@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.20 2010/03/03 13:39:57 tsutsui Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.20.38.1 2015/06/06 14:40:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.20 2010/03/03 13:39:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.20.38.1 2015/06/06 14:40:04 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -57,11 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.20 2010/03/03 13:39:57 tsutsui E
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <machine/bus.h>

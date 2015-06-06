@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.233.2.1 2015/04/06 15:18:20 skrll Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.233.2.2 2015/06/06 14:40:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233.2.2 2015/06/06 14:40:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -110,7 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233.2.1 2015/04/06 15:18:20 skrl
 
 #include <sys/disk.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <machine/limits.h>
 
@@ -844,7 +844,7 @@ rescan_with_cfdata(const struct cfdata *cf)
 	device_t d;
 	const struct cfdata *cf1;
 	deviter_t di;
-  
+
 
 	/*
 	 * "alldevs" is likely longer than a modules's cfdata, so make it
@@ -2198,7 +2198,7 @@ config_alldevs_enter(struct alldevs_foray *af)
 	TAILQ_INIT(&af->af_garbage);
 	af->af_s = config_alldevs_lock();
 	config_collect_garbage(&af->af_garbage);
-} 
+}
 
 static void
 config_alldevs_exit(struct alldevs_foray *af)

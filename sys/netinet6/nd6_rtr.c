@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.94.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.94.2.2 2015/06/06 14:40:26 skrll Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.94.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.94.2.2 2015/06/06 14:40:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,8 +272,15 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	}
 	if (nd_ra->nd_ra_retransmit)
 		ndi->retrans = ntohl(nd_ra->nd_ra_retransmit);
-	if (nd_ra->nd_ra_curhoplimit)
-		ndi->chlim = nd_ra->nd_ra_curhoplimit;
+	if (nd_ra->nd_ra_curhoplimit) {
+		if (ndi->chlim < nd_ra->nd_ra_curhoplimit)
+			ndi->chlim = nd_ra->nd_ra_curhoplimit;
+		else if (ndi->chlim != nd_ra->nd_ra_curhoplimit)
+			log(LOG_ERR, "nd_ra_input: lower CurHopLimit sent from "
+			   "%s on %s (current=%d, received=%d), ignored\n",
+			   ip6_sprintf(&ip6->ip6_src),
+			   if_name(ifp), ndi->chlim, nd_ra->nd_ra_curhoplimit);
+	}
 	dr = defrtrlist_update(&drtr);
     }
 
@@ -917,7 +924,7 @@ purge_detached(struct ifnet *ifp)
 	}
 }
 int
-nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr, 
+nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr,
 	struct nd_prefix **newp)
 {
 	struct nd_prefix *newpr = NULL;
@@ -925,8 +932,8 @@ nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr,
 	int error;
 	struct in6_ifextra *ext = prc->ndprc_ifp->if_afdata[AF_INET6];
 
-	if (ip6_maxifprefixes >= 0) { 
-		if (ext->nprefixes >= ip6_maxifprefixes / 2) 
+	if (ip6_maxifprefixes >= 0) {
+		if (ext->nprefixes >= ip6_maxifprefixes / 2)
 			purge_detached(prc->ndprc_ifp);
 		if (ext->nprefixes >= ip6_maxifprefixes)
 			return ENOMEM;
@@ -1043,7 +1050,7 @@ prelist_remove(struct nd_prefix *pr)
 static int
 prelist_update(struct nd_prefixctl *newprc,
 	struct nd_defrouter *dr, /* may be NULL */
-	struct mbuf *m, 
+	struct mbuf *m,
 	int mcast)
 {
 	struct in6_ifaddr *ia6 = NULL, *ia6_match = NULL;
@@ -1923,7 +1930,7 @@ in6_ifadd(struct nd_prefixctl *prc, int mcast)
 int
 in6_tmpifadd(
 	const struct in6_ifaddr *ia0, /* corresponding public address */
-	int forcegen, 
+	int forcegen,
 	int dad_delay)
 {
 	struct ifnet *ifp = ia0->ia_ifa.ifa_ifp;

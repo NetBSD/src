@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005var.h,v 1.8 2012/10/10 22:17:44 skrll Exp $ */
+/* $NetBSD: seeq8005var.h,v 1.8.14.1 2015/06/06 14:40:08 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <net/if_media.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 /* Enumerate the possible cip variants */
 enum seeq_variant {

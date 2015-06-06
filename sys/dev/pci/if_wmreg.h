@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.65.2.1 2015/04/06 15:18:10 skrll Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.65.2.2 2015/06/06 14:40:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,32 +37,32 @@
 
 /******************************************************************************
 
-  Copyright (c) 2001-2012, Intel Corporation 
+  Copyright (c) 2001-2012, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
@@ -315,7 +315,8 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_SPD_BYPS	(1U << 15) /* speed select bypass */
 #define	CTRL_EXT_IPS1		(1U << 16) /* invert power state bit 1 */
 #define	CTRL_EXT_RO_DIS		(1U << 17) /* relaxed ordering disabled */
-#define	CTRL_EXT_DMA_DYN_CLK	(1U << 19) /* DMA Dymamic Gating Enable */
+#define	CTRL_EXT_SDLPE		(1U << 18) /* SerDes Low Power Enable */
+#define	CTRL_EXT_DMA_DYN_CLK	(1U << 19) /* DMA Dynamic Gating Enable */
 #define	CTRL_EXT_LINK_MODE_MASK		0x00C00000
 #define	CTRL_EXT_LINK_MODE_GMII		0x00000000
 #define	CTRL_EXT_LINK_MODE_KMRN		0x00000000
@@ -582,9 +583,6 @@ struct livengood_tcpip_ctxdesc {
 
 #define	DEFAULT_80003ES2LAN_TCTL_EXT_GCEX 0x00010000
 
-#define	WMREG_TQSA_LO	0x0408
-#define	WMREG_TQSA_HI	0x040c
-
 #define	WMREG_TIPG	0x0410	/* Transmit IPG Register */
 #define	TIPG_IPGT(x)	(x)		/* IPG transmit time */
 #define	TIPG_IPGR1(x)	((x) << 10)	/* IPG receive time 1 */
@@ -642,6 +640,7 @@ struct livengood_tcpip_ctxdesc {
 #define EEER_EEER_TX_LPI_STATUS	0x80000000 /* EEER Tx in LPI state */
 #define WMREG_EEE_SU	0x0e34	/* EEE Setup */
 #define WMREG_IPCNFG	0x0e38	/* Internal PHY Configuration */
+#define IPCNFG_10BASE_TE	0x00000002 /* IPCNFG 10BASE-Te low power op. */
 #define IPCNFG_EEE_100M_AN	0x00000004 /* IPCNFG EEE Ena 100M AN */
 #define IPCNFG_EEE_1G_AN	0x00000008 /* IPCNFG EEE Ena 1G AN */
 
@@ -655,7 +654,6 @@ struct livengood_tcpip_ctxdesc {
 #define EXTCNFCTR_MDIO_HW_OWNERSHIP	0x00000040
 #define EXTCNFCTR_GATE_PHY_CFG		0x00000080
 #define EXTCNFCTR_EXT_CNF_POINTER	0x0FFF0000
-#define E1000_EXTCNF_CTRL_SWFLAG	EXTCNFCTR_MDIO_SW_OWNERSHIP
 
 #define	WMREG_PHY_CTRL	0x0f10	/* PHY control */
 #define	PHY_CTRL_SPD_EN		(1 << 0)
@@ -670,6 +668,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_8K		0x0008
 #define	PBA_10K		0x000a
 #define	PBA_12K		0x000c
+#define	PBA_14K		0x000e
 #define	PBA_16K		0x0010		/* 16K, default Tx allocation */
 #define	PBA_20K		0x0014
 #define	PBA_22K		0x0016
@@ -739,6 +738,9 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_EITR(x)	(0x01680 + (0x4 * (x)))
 #define EITR_ITR_INT_MASK	0x0000ffff
 
+#define	WMREG_RXPBS	0x2404	/* Rx Packet Buffer Size  */
+#define RXPBS_SIZE_MASK_82576	0x0000007F
+
 #define	WMREG_RDFH	0x2410	/* Receive Data FIFO Head */
 #define	WMREG_RDFT	0x2418	/* Receive Data FIFO Tail */
 #define	WMREG_RDFHS	0x2420	/* Receive Data FIFO Head Saved */
@@ -795,6 +797,28 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_RNBC	0x40a0	/* Receive No Buffers Count */
 #define WMREG_TLPIC	0x4148	/* EEE Tx LPI Count */
 #define WMREG_RLPIC	0x414c	/* EEE Rx LPI Count */
+
+#define	WMREG_PCS_CFG	0x4200	/* PCS Configuration */
+#define	PCS_CFG_PCS_EN	__BIT(3)
+
+#define	WMREG_PCS_LCTL	0x4208	/* PCS Link Control */
+#define	PCS_LCTL_FSV_1000 __BIT(2)	/* AN Timeout Enable */
+#define	PCS_LCTL_FDV_FULL __BIT(3)	/* AN Timeout Enable */
+#define	PCS_LCTL_FSD __BIT(4)	/* AN Timeout Enable */
+#define	PCS_LCTL_FORCE_FC __BIT(7)	/* AN Timeout Enable */
+#define	PCS_LCTL_AN_ENABLE __BIT(16)	/* AN Timeout Enable */
+#define	PCS_LCTL_AN_RESTART __BIT(17)	/* AN Timeout Enable */
+#define	PCS_LCTL_AN_TIMEOUT __BIT(18)	/* AN Timeout Enable */
+
+#define	WMREG_PCS_LSTS	0x420c	/* PCS Link Status */
+#define PCS_LSTS_LINKOK	__BIT(0)
+#define PCS_LSTS_SPEED_100  __BIT(1)
+#define PCS_LSTS_SPEED_1000 __BIT(2)
+#define PCS_LSTS_FDX	__BIT(3)
+#define PCS_LSTS_AN_COMP __BIT(16)
+
+#define	WMREG_PCS_ANADV	0x4218	/* AN Advertsement */
+#define	WMREG_PCS_LPAB	0x421c	/* Link Partnet Ability */
 
 #define	WMREG_RXCSUM	0x5000	/* Receive Checksum register */
 #define	RXCSUM_PCSS	0x000000ff	/* Packet Checksum Start */
@@ -890,6 +914,12 @@ struct livengood_tcpip_ctxdesc {
 
 #define WMREG_CRC_OFFSET 0x5f50
 
+#define WMREG_EEC	0x12010
+#define EEC_FLASH_DETECTED (1U << 19)	/* FLASH */
+#define EEC_FLUPD	(1U << 23)	/* Update FLASH */
+
+#define WMREG_EEARBC_I210 0x12024
+
 /*
  * NVM related values.
  *  Microwire, SPI, and flash
@@ -917,18 +947,28 @@ struct livengood_tcpip_ctxdesc {
 #define NVM_SIZE		0x0040
 #define NVM_WORD_SIZE_BASE_SHIFT 6
 
-#define	NVM_OFF_MACADDR		0x0000	/* MAC address offset */
+#define	NVM_OFF_MACADDR		0x0000	/* MAC address offset 0 */
+#define	NVM_OFF_MACADDR1	0x0001	/* MAC address offset 1 */
+#define	NVM_OFF_MACADDR2	0x0002	/* MAC address offset 2 */
 #define NVM_OFF_COMPAT		0x0003
+#define NVM_OFF_ID_LED_SETTINGS	0x0004
+#define NVM_OFF_VERSION		0x0005
 #define	NVM_OFF_CFG1		0x000a	/* config word 1 */
 #define	NVM_OFF_CFG2		0x000f	/* config word 2 */
 #define	NVM_OFF_EEPROM_SIZE	0x0012	/* NVM SIZE */
+#define	NVM_OFF_CFG4		0x0013	/* config word 4 */
 #define	NVM_OFF_CFG3_PORTB	0x0014	/* config word 3 */
 #define NVM_OFF_FUTURE_INIT_WORD1 0x0019
 #define	NVM_OFF_INIT_3GIO_3	0x001a	/* PCIe Initial Configuration Word 3 */
 #define	NVM_OFF_K1_CONFIG	0x001b	/* NVM K1 Config */
+#define	NVM_OFF_LED_1_CFG	0x001c
+#define	NVM_OFF_LED_0_2_CFG	0x001f
 #define	NVM_OFF_SWDPIN		0x0020	/* SWD Pins (Cordova) */
 #define	NVM_OFF_CFG3_PORTA	0x0024	/* config word 3 */
 #define NVM_OFF_ALT_MAC_ADDR_PTR 0x0037	/* to the alternative MAC addresses */
+#define NVM_OFF_COMB_VER_PTR	0x003d
+#define NVM_OFF_IMAGE_UID0	0x0042
+#define NVM_OFF_IMAGE_UID1	0x0043
 
 #define NVM_COMPAT_VALID_CHECKSUM	0x0001
 
@@ -968,6 +1008,8 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_CFG2_MNGM_NCSI	1
 #define	NVM_CFG2_MNGM_PT	2
 
+#define	NVM_COMPAT_SERDES_FORCE_MODE	__BIT(14) /* Don't use autonego */
+
 #define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
 
 #define	NVM_K1_CONFIG_ENABLE	0x01
@@ -978,7 +1020,9 @@ struct livengood_tcpip_ctxdesc {
 
 #define NVM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
 
-#define NVM_CFG3_APME		(1U << 10)	
+#define NVM_CFG3_APME		(1U << 10)
+#define NVM_CFG3_PORTA_EXT_MDIO	(1U << 2)	/* External MDIO Interface */
+#define NVM_CFG3_PORTA_COM_MDIO	(1U << 3)	/* MDIO Interface is shared */
 
 #define	NVM_OFF_MACADDR_82571(x)	(3 * (x))
 
@@ -987,6 +1031,47 @@ struct livengood_tcpip_ctxdesc {
  * in 82580's datasheet.
  */
 #define NVM_OFF_LAN_FUNC_82580(x)	((x) ? (0x40 + (0x40 * (x))) : 0)
+
+#define NVM_COMBO_VER_OFF	0x0083
+
+#define NVM_MAJOR_MASK		0xf000
+#define NVM_MAJOR_SHIFT		12
+#define NVM_MINOR_MASK		0x0ff0
+#define NVM_MINOR_SHIFT		4
+#define NVM_BUILD_MASK		0x000f
+#define NVM_UID_VALID		0x8000
+
+/* iNVM Registers for i21[01] */
+#define WM_INVM_DATA_REG(reg)	(0x12120 + 4*(reg))
+#define INVM_SIZE			64 /* Number of INVM Data Registers */
+
+/* iNVM default vaule */
+#define NVM_INIT_CTRL_2_DEFAULT_I211	0x7243
+#define NVM_INIT_CTRL_4_DEFAULT_I211	0x00c1
+#define NVM_LED_1_CFG_DEFAULT_I211	0x0184
+#define NVM_LED_0_2_CFG_DEFAULT_I211	0x200c
+#define NVM_RESERVED_WORD		0xffff
+
+#define INVM_DWORD_TO_RECORD_TYPE(dword)	((dword) & 0x7)
+#define INVM_DWORD_TO_WORD_ADDRESS(dword)	(((dword) & 0x0000FE00) >> 9)
+#define INVM_DWORD_TO_WORD_DATA(dword)		(((dword) & 0xFFFF0000) >> 16)
+
+#define INVM_UNINITIALIZED_STRUCTURE		0x0
+#define INVM_WORD_AUTOLOAD_STRUCTURE		0x1
+#define INVM_CSR_AUTOLOAD_STRUCTURE		0x2
+#define INVM_PHY_REGISTER_AUTOLOAD_STRUCTURE	0x3
+#define INVM_RSA_KEY_SHA256_STRUCTURE		0x4
+#define INVM_INVALIDATED_STRUCTURE		0xf
+
+#define INVM_RSA_KEY_SHA256_DATA_SIZE_IN_DWORDS	8
+#define INVM_CSR_AUTOLOAD_DATA_SIZE_IN_DWORDS	1
+
+#define INVM_DEFAULT_AL		0x202f
+#define INVM_AUTOLOAD		0x0a
+#define INVM_PLL_WO_VAL		0x0010
+
+/* Word definitions for ID LED Settings */
+#define ID_LED_RESERVED_FFFF 0xFFFF
 
 /* ich8 flash control */
 #define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */
@@ -1058,6 +1143,13 @@ struct livengood_tcpip_ctxdesc {
 #define SFF_SFP_ETH_FLAGS_1000T		0x08
 #define SFF_SFP_ETH_FLAGS_100FX		0x10
 
+/* I21[01] PHY related definitions */
+#define GS40G_PAGE_SELECT	0x16
+#define GS40G_PAGE_SHIFT	16
+#define GS40G_OFFSET_MASK	0xffff
+#define GS40G_PHY_PLL_FREQ_PAGE	0xfc0000
+#define GS40G_PHY_PLL_FREQ_REG	0x000e
+#define GS40G_PHY_PLL_UNCONF	0xff
 
 /* advanced TX descriptor for 82575 and newer */
 typedef union nq_txdesc {

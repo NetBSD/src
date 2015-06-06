@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.43.4.5 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.43.4.6 2015/06/06 14:40:14 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.5 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.6 2015/06/06 14:40:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.5 2015/03/21 11:33:37 skrll Exp $
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>

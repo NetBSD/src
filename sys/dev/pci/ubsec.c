@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.41 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.41.4.1 2015/06/06 14:40:12 skrll Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.41 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.41.4.1 2015/06/06 14:40:12 skrll Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.41 2014/08/10 16:44:36 tls Exp $");
 #else
  #include <sys/cprng.h>
  #include <sys/md5.h>
+ #include <sys/rndpool.h>
+ #include <sys/rndsource.h>
 #endif
 #include <sys/sha1.h>
 

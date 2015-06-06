@@ -1,4 +1,4 @@
-/*	$NetBSD: z3rambd.c,v 1.2 2012/11/26 22:58:24 rkujawa Exp $ */
+/*	$NetBSD: z3rambd.c,v 1.2.18.1 2015/06/06 14:39:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z3rambd.c,v 1.2 2012/11/26 22:58:24 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z3rambd.c,v 1.2.18.1 2015/06/06 14:39:54 skrll Exp $");
 
 /*
  * Z3 RAM virtual block device. Supports ZorRAM, BigRamPlus and FastLane Z3 so 
@@ -132,10 +132,8 @@ z3rambd_altmem_strategy(void *aux, struct buf *bp)
 {
 	struct z3rambd_softc *sc = aux;
 	void *addr;
-	size_t off, bpos;
+	size_t off;
 	int s;
-
-	bpos = 0;
 
 	bp->b_resid = bp->b_bcount;
 	off = bp->b_blkno << DEV_BSHIFT;
@@ -162,4 +160,3 @@ z3rambd_altmem_getsize(void *aux)
 	struct z3rambd_softc *sc = aux;
 	return sc->sc_size;
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.4.6.1 2015/04/06 15:18:15 skrll Exp $	*/
+/*	$NetBSD: kernel.h,v 1.4.6.2 2015/06/06 14:40:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+
+#include <lib/libkern/libkern.h>
 
 #define	oops_in_progress	(panicstr != NULL)
 
@@ -93,16 +95,6 @@
  */
 #define	upper_32_bits(X)	((uint32_t) (((X) >> 16) >> 16))
 #define	lower_32_bits(X)	((uint32_t) ((X) & 0xffffffffUL))
-
-/*
- * Given x = &c->f, container_of(x, T, f) gives us back c, where T is
- * the type of c.
- */
-#define	container_of(PTR, TYPE, FIELD)					\
-	((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD) +		\
-	    0*sizeof((PTR) -						\
-		&((TYPE *)(((char *)(PTR)) -				\
-			offsetof(TYPE, FIELD)))->FIELD)))
 
 #define	ARRAY_SIZE(ARRAY)	__arraycount(ARRAY)
 

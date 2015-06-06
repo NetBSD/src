@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.45 2014/06/22 09:48:20 hannken Exp $ */
+/* $NetBSD: piixpm.c,v 1.45.4.1 2015/06/06 14:40:12 skrll Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.45 2014/06/22 09:48:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.45.4.1 2015/06/06 14:40:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,8 @@ struct piixpm_softc {
 	pcitag_t		sc_pcitag;
 	pcireg_t		sc_id;
 
+	int			sc_numbusses;
+	device_t		sc_i2c_device[4];
 	struct piixpm_smbus	sc_busses[4];
 	struct i2c_controller	sc_i2c_tags[4];
 
@@ -93,6 +95,8 @@ struct piixpm_softc {
 
 static int	piixpm_match(device_t, cfdata_t, void *);
 static void	piixpm_attach(device_t, device_t, void *);
+static int	piixpm_rescan(device_t, const char *, const int *);
+static void	piixpm_chdet(device_t, device_t);
 
 static bool	piixpm_suspend(device_t, const pmf_qual_t *);
 static bool	piixpm_resume(device_t, const pmf_qual_t *);
@@ -106,8 +110,8 @@ static int	piixpm_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 
 static int	piixpm_intr(void *);
 
-CFATTACH_DECL_NEW(piixpm, sizeof(struct piixpm_softc),
-    piixpm_match, piixpm_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(piixpm, sizeof(struct piixpm_softc),
+    piixpm_match, piixpm_attach, NULL, NULL, piixpm_rescan, piixpm_chdet, 0);
 
 static int
 piixpm_match(device_t parent, cfdata_t match, void *aux)
@@ -150,12 +154,11 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 {
 	struct piixpm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	struct i2cbus_attach_args iba;
 	pcireg_t base, conf;
 	pcireg_t pmmisc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	int i, numbusses = 1;
+	int i, flags;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
@@ -163,6 +166,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_id = pa->pa_id;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_numbusses = 1;
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -206,7 +210,7 @@ nopowermanagement:
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_SMB &&
 	    PCI_REVISION(pa->pa_class) >= 0x40) {
 		if (piixpm_sb800_init(sc) == 0) {
-			numbusses = 4;
+			sc->sc_numbusses = 4;
 			goto attach_i2c;
 		}
 		aprint_normal_dev(self, "SMBus disabled\n");
@@ -249,23 +253,59 @@ nopowermanagement:
 	aprint_normal("\n");
 
 attach_i2c:
+	for (i = 0; i < sc->sc_numbusses; i++)
+		sc->sc_i2c_device[i] = NULL;
+
+	flags = 0;
+	piixpm_rescan(self, "i2cbus", &flags);
+}
+
+static int
+piixpm_rescan(device_t self, const char *ifattr, const int *flags)
+{
+	struct piixpm_softc *sc = device_private(self);
+	struct i2cbus_attach_args iba;
+	int i;
+
+	if (!ifattr_match(ifattr, "i2cbus"))
+		return 0;
+
 	/* Attach I2C bus */
 	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 
-	for (i = 0; i < numbusses; i++) {
+	for (i = 0; i < sc->sc_numbusses; i++) {
+		if (sc->sc_i2c_device[i])
+			continue;
 		sc->sc_busses[i].sda = i;
 		sc->sc_busses[i].softc = sc;
 		sc->sc_i2c_tags[i].ic_cookie = &sc->sc_busses[i];
 		sc->sc_i2c_tags[i].ic_acquire_bus = piixpm_i2c_acquire_bus;
 		sc->sc_i2c_tags[i].ic_release_bus = piixpm_i2c_release_bus;
 		sc->sc_i2c_tags[i].ic_exec = piixpm_i2c_exec;
-
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_type = I2C_TYPE_SMBUS;
 		iba.iba_tag = &sc->sc_i2c_tags[i];
-		config_found_ia(self, "i2cbus", &iba, iicbus_print);
+		sc->sc_i2c_device[i] = config_found_ia(self, ifattr, &iba,
+						    iicbus_print);
+	}
+
+	return 0;
+}
+
+static void
+piixpm_chdet(device_t self, device_t child)
+{
+	struct piixpm_softc *sc = device_private(self);
+	int i;
+
+	for (i = 0; i < sc->sc_numbusses; i++) {
+		if (sc->sc_i2c_device[i] == child) {
+			sc->sc_i2c_device[i] = NULL;
+			break;
+		}
 	}
 }
+
 
 static bool
 piixpm_suspend(device_t dv, const pmf_qual_t *qual)

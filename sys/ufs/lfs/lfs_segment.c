@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.236.6.1 2015/04/06 15:18:33 skrll Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.236.6.2 2015/06/06 14:40:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.236.6.1 2015/04/06 15:18:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.236.6.2 2015/06/06 14:40:30 skrll Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -301,7 +301,7 @@ lfs_vflush(struct vnode *vp)
 		}
 		KASSERT(vp->v_numoutput == 0);
 		mutex_exit(vp->v_interlock);
-	
+
 		mutex_enter(&bufcache_lock);
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			nbp = LIST_NEXT(bp, b_vnbufs);
@@ -541,8 +541,8 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		}
 
 		mutex_exit(&mntvnode_lock);
-		if (lfs_vref(vp)) {
-			vndebug(vp,"vref");
+		if (vget(vp, LK_NOWAIT, false /* !wait */)) {
+			vndebug(vp,"vget");
 			mutex_enter(&mntvnode_lock);
 			continue;
 		}
@@ -558,7 +558,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			if (ip->i_number != LFS_IFILE_INUM) {
 				error = lfs_writefile(fs, sp, vp);
 				if (error) {
-					lfs_vunref(vp);
+					vrele(vp);
 					if (error == EAGAIN) {
 						/*
 						 * This error from lfs_putpages
@@ -583,7 +583,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 					mutex_enter(&mntvnode_lock);
 					continue;
 				}
-				
+
 				if (!VPISEMPTY(vp)) {
 					if (WRITEINPROG(vp)) {
 						ivndebug(vp,"writevnodes/write2");
@@ -599,9 +599,9 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		}
 
 		if (lfs_clean_vnhead && only_cleaning)
-			lfs_vunref_head(vp);
+			vrele(vp);
 		else
-			lfs_vunref(vp);
+			vrele(vp);
 
 		mutex_enter(&mntvnode_lock);
 	}
@@ -1191,7 +1191,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		ip->i_lfs_odnlink = cdp->di_nlink;
 		ip->i_lfs_osize = ip->i_size;
 	}
-		
+
 
 	/* We can finish the segment accounting for truncations now */
 	lfs_finalize_ino_seguse(fs, ip);
@@ -1784,11 +1784,11 @@ lfs_initseg(struct lfs *fs)
 		brelse(bp, 0);
 		/* Segment zero could also contain the labelpad */
 		if (fs->lfs_version > 1 && sp->seg_number == 0 &&
-		    fs->lfs_start < lfs_btofsb(fs, LFS_LABELPAD)) {
+		    fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD)) {
 			fs->lfs_offset +=
-			    lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
+			    lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_s0addr;
 			sp->seg_bytes_left -=
-			    LFS_LABELPAD - lfs_fsbtob(fs, fs->lfs_start);
+			    LFS_LABELPAD - lfs_fsbtob(fs, fs->lfs_s0addr);
 		}
 	} else {
 		sp->seg_number = lfs_dtosn(fs, fs->lfs_curseg);
@@ -2756,80 +2756,7 @@ lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 }
 
 /*
- * Call vget with LK_NOWAIT.  If we are the one who is dead,
- * however, we must press on.  Just fake success in that case.
- */
-int
-lfs_vref(struct vnode *vp)
-{
-	struct lfs *fs;
-
-	KASSERT(mutex_owned(vp->v_interlock));
-
-	fs = VTOI(vp)->i_lfs;
-
-	ASSERT_MAYBE_SEGLOCK(fs);
-
-	/*
-	 * If we return 1 here during a flush, we risk vinvalbuf() not
-	 * being able to flush all of the pages from this vnode, which
-	 * will cause it to panic.  So, return 0 if a flush is in progress.
-	 */
-	if (IS_FLUSHING(VTOI(vp)->i_lfs, vp)) {
- 		++fs->lfs_flushvp_fakevref;
-		mutex_exit(vp->v_interlock);
- 		return 0;
- 	}
-
-	return vget(vp, LK_NOWAIT);
-}
-
-/*
- * This is vrele except that we do not want to VOP_INACTIVE this vnode. We
- * inline vrele here to avoid the vn_lock and VOP_INACTIVE call at the end.
- */
-void
-lfs_vunref(struct vnode *vp)
-{
-	struct lfs *fs;
-
-	fs = VTOI(vp)->i_lfs;
-	ASSERT_MAYBE_SEGLOCK(fs);
-
-	/*
-	 * Analogous to lfs_vref, if the node is flushing, fake it.
-	 */
-	if (IS_FLUSHING(fs, vp) && fs->lfs_flushvp_fakevref) {
-		--fs->lfs_flushvp_fakevref;
-		return;
-	}
-
-	/* does not call inactive XXX sure it does XXX */
-	vrele(vp);
-}
-
-/*
- * We use this when we have vnodes that were loaded in solely for cleaning.
- * There is no reason to believe that these vnodes will be referenced again
- * soon, since the cleaning process is unrelated to normal filesystem
- * activity.  Putting cleaned vnodes at the tail of the list has the effect
- * of flushing the vnode LRU.  So, put vnodes that were loaded only for
- * cleaning at the head of the list, instead.
- */
-void
-lfs_vunref_head(struct vnode *vp)
-{
-
-	ASSERT_SEGLOCK(VTOI(vp)->i_lfs);
-
-	/* does not call inactive XXX sure it does XXX,
-	   inserts non-held vnode at head of freelist */
-	vrele(vp);
-}
-
-
-/*
- * Set up an FINFO entry for a new file.  The fip pointer is assumed to 
+ * Set up an FINFO entry for a new file.  The fip pointer is assumed to
  * point at uninitialized space.
  */
 void
@@ -2842,7 +2769,7 @@ lfs_acquire_finfo(struct lfs *fs, ino_t ino, int vers)
 	if (sp->seg_bytes_left < fs->lfs_bsize ||
 	    sp->sum_bytes_left < sizeof(struct finfo))
 		(void) lfs_writeseg(fs, fs->lfs_sp);
-	
+
 	sp->sum_bytes_left -= FINFOSIZE;
 	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
 	sp->fip->fi_nblocks = 0;

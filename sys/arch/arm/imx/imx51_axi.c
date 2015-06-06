@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_axi.c,v 1.4 2014/03/10 04:25:51 htodd Exp $	*/
+/*	$NetBSD: imx51_axi.c,v 1.4.6.1 2015/06/06 14:39:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.4 2014/03/10 04:25:51 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.4.6.1 2015/06/06 14:39:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,7 +76,7 @@ axi_attach(device_t parent __unused, device_t self, void *aux __unused)
 	aprint_naive("\n");
 
 	sc = device_private(self);
-	sc->sc_iot = &imx_bs_tag;
+	sc->sc_iot = &armv7_generic_bs_tag;
 #if NBUS_DMA_GENERIC > 0
 	sc->sc_dmat = &imx_bus_dma_tag;
 #else

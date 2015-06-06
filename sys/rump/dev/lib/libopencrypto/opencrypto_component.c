@@ -1,4 +1,4 @@
-/*	$NetBSD: opencrypto_component.c,v 1.1 2014/03/13 01:51:30 pooka Exp $ */
+/*	$NetBSD: opencrypto_component.c,v 1.1.12.1 2015/06/06 14:40:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,12 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.1 2014/03/13 01:51:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.1.12.1 2015/06/06 14:40:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
 #include <sys/stat.h>
 #include <sys/module.h>
 

@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.7.2.1 2015/04/06 15:18:03 skrll Exp $ */
+ /* $NetBSD: TODO,v 1.7.2.2 2015/06/06 14:40:03 skrll Exp $ */
 
 Things to be done:
 
@@ -24,3 +24,4 @@ sun4v:
 - replace constructs line "wrpr %g0, PSTATE_INTR, %pstate" with ALTERNATE_GOBALS
 - sun4v tsb no need to lock... per cpu... anyway...
 - ci_tsb_desc->td_ctxidx: -1 or 1?
+- MP support - currently bypassed in cpu_boot_secondary_processors() for sun4v

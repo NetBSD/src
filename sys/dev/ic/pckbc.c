@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.57 2014/08/10 16:44:35 tls Exp $ */
+/* $NetBSD: pckbc.c,v 1.57.4.1 2015/06/06 14:40:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.57 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.57.4.1 2015/06/06 14:40:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.57 2014/08/10 16:44:35 tls Exp $");
 
 #include "locators.h"
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 /* data per slave device */
 struct pckbc_slotdata {

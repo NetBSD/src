@@ -1,8 +1,18 @@
-# $NetBSD: Makefile.sys,v 1.1.2.2 2015/04/06 15:18:29 skrll Exp $
+# $NetBSD: Makefile.sys,v 1.1.2.3 2015/06/06 14:40:28 skrll Exp $
 
 SYS_MKSYSCALLS=${.CURDIR}/../../../../kern/makesyscalls.sh
-SYS_DST=${SYS_P}calls.c ${SYS_P}ent.c ${SYS_P}callargs.h ${SYS_P}call.h: 
-SYS_SRC=${SYS_MKSYSCALLS} syscalls.conf syscalls.master
 
-${SYS_DST}: ${SYS_SRC}
-	cd ${.CURDIR} && ${HOST_SH} ${.ALLSRC}
+SYS_DST=  ${SYS_P}calls.c ${SYS_P}ent.c ${SYS_P}callargs.h ${SYS_P}call.h
+SYS_SRC=${SYS_MKSYSCALLS} ${.CURDIR}/syscalls.conf ${.CURDIR}/syscalls.master
+
+${SYS_P}callargs.h: ${SYS_SRC}
+	cd ${.OBJDIR} && ${HOST_SH} ${.ALLSRC}
+
+${SYS_P}ent.c: ${SYS_P}callargs.h
+
+CPPFLAGS+= -I${.OBJDIR}
+
+DPSRCS+= ${SYS_P}callargs.h
+SRCS+= ${SYS_P}ent.c
+
+CLEANFILES+= ${SYS_DST}

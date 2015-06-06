@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.109 2013/11/10 17:18:32 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.109.6.1 2015/06/06 14:40:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ void		  cpuwatch_clr(cpu_watchpoint_t *);
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cpu_info *ci_next;	/* Next CPU in list */
+	void *ci_xnext;			/* unused */
 	struct cpu_softc *ci_softc;	/* chip-dependent hook */
 	device_t ci_dev;		/* owning device */
 	cpuid_t ci_cpuid;		/* Machine-level identifier */
@@ -148,9 +148,15 @@ struct cpu_info {
 
 };
 
+#ifdef MULTIPROCESSOR
+#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	\
+    cii = 0, ci = cpu_infos[0]; cii < ncpu && (ci = cpu_infos[cii]) != NULL; cii++
+#else
 #define	CPU_INFO_ITERATOR		int __unused
 #define	CPU_INFO_FOREACH(cii, ci)	\
-    ci = &cpu_info_store; ci != NULL; ci = ci->ci_next
+    ci = &cpu_info_store; ci != NULL; ci = NULL
+#endif
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
@@ -175,17 +181,21 @@ struct cpu_info {
 #ifdef _KERNEL
 #if defined(_MODULAR) || defined(_LKM) || defined(_STANDALONE)
 /* Assume all CPU architectures are valid for LKM's and standlone progs */
+#if !defined(__mips_n32) && !defined(__mips_n64)
 #define	MIPS1		1
+#endif
 #define	MIPS3		1
 #define	MIPS4		1
+#if !defined(__mips_n32) && !defined(__mips_n64)
 #define	MIPS32		1
 #define	MIPS32R2	1
+#endif
 #define	MIPS64		1
 #define	MIPS64R2	1
 #endif
 
 #if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 0
-#error at least one of MIPS1, MIPS3, MIPS4, MIPS32, MIPS32R2, MIPS64, or MIPS64RR2 must be specified
+#error at least one of MIPS1, MIPS3, MIPS4, MIPS32, MIPS32R2, MIPS64, or MIPS64R2 must be specified
 #endif
 
 /* Shortcut for MIPS3 or above defined */
@@ -225,10 +235,13 @@ struct cpu_info {
 #ifndef _LOCORE
 
 extern struct cpu_info cpu_info_store;
+#ifdef MULTIPROCESSOR
+extern struct cpu_info *cpuid_infos[];
+#endif
 register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 
 #define	curlwp			mips_curlwp
-#define	curcpu()		(curlwp->l_cpu)
+#define	curcpu()		lwp_getcpu(curlwp)
 #define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 #ifdef MULTIPROCESSOR
 #define	cpu_number()		(curcpu()->ci_index)

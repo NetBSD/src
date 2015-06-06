@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.59.2.1 2015/04/06 15:18:04 skrll Exp $ */
+/*	$NetBSD: ipmi.c,v 1.59.2.2 2015/06/06 14:40:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.59.2.1 2015/04/06 15:18:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.59.2.2 2015/06/06 14:40:04 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.59.2.1 2015/04/06 15:18:04 skrll Exp $");
 #include <sys/kthread.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
-#include <sys/rnd.h>
 
 #include <x86/smbiosvar.h>
 
@@ -89,7 +88,6 @@ struct ipmi_sensor {
 	uint32_t	i_props, i_defprops;
 	SLIST_ENTRY(ipmi_sensor) i_list;
 	int32_t		i_prevval;	/* feed rnd source on change */
-	krndsource_t	i_rnd;
 };
 
 int	ipmi_nintr;
@@ -1331,7 +1329,7 @@ static int64_t fixlog_a[] = {
 	0x0000000024924925ll /* 1.0/7.0 */,
 	0x0000000020000000ll /* -1.0/8.0 */,
 	0x000000001c71c71cll /* 1.0/9.0 */
-}; 
+};
 
 static int64_t fixexp_a[] = {
 	0x0000000100000000ll /* 1.0/1.0 */,
@@ -1339,17 +1337,17 @@ static int64_t fixexp_a[] = {
 	0x0000000080000000ll /* 1.0/2.0 */,
 	0x000000002aaaaaabll /* 1.0/6.0 */,
 	0x000000000aaaaaabll /* 1.0/24.0 */,
-	0x0000000002222222ll /* 1.0/120.0 */, 
+	0x0000000002222222ll /* 1.0/120.0 */,
 	0x00000000005b05b0ll /* 1.0/720.0 */,
 	0x00000000000d00d0ll /* 1.0/5040.0 */,
 	0x000000000001a01all /* 1.0/40320.0 */
-};      
+};
 
 static int64_t
 fixmul(int64_t x, int64_t y)
 {
 	int64_t z;
-	int64_t a,b,c,d; 
+	int64_t a,b,c,d;
 	int neg;
 
 	neg = 0;
@@ -1357,7 +1355,7 @@ fixmul(int64_t x, int64_t y)
 		x = -x;
 		neg = !neg;
 	}
-	if (y < 0) { 
+	if (y < 0) {
 		y = -y;
 		neg = !neg;
 	}
@@ -1389,7 +1387,7 @@ poly(int64_t x0, int64_t x, int64_t a[], int n)
 static int64_t
 logx(int64_t x, int64_t y)
 {
-	int64_t z; 
+	int64_t z;
 
 	if (x <= INT2FIX(0)) {
 		z = INT2FIX(-99999);
@@ -1818,7 +1816,7 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 	char			*e;
 	struct ipmi_sensor	*psensor;
 	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
-	
+
 	typ = ipmi_sensor_type(sensor_type, ext_type, entity);
 	if (typ == -1) {
 		dbg_printf(5, "Unknown sensor type:%.2x et:%.2x sn:%.2x "

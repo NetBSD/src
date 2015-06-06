@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.85.4.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.85.4.2 2015/06/06 14:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -118,10 +118,16 @@ do {									\
 extern unsigned long rump_physmemlimit;
 
 extern struct vmspace *rump_vmspace_local;
+extern struct pmap rump_pmap_local;
 #define RUMP_LOCALPROC_P(p) \
     (p->p_vmspace == vmspace_kernel() || p->p_vmspace == rump_vmspace_local)
-#define RUMP_PMAP_KERNEL ((struct pmap *const)-1)
-#define RUMP_PMAP_LOCAL ((struct pmap *)-2)
+
+/* vm bundle for remote clients.  the last member is the hypercall cookie */
+struct rump_spctl {
+	struct vmspace spctl_vm;
+	void *spctl;
+};
+#define RUMP_SPVM2CTL(vm) (((struct rump_spctl *)vm)->spctl)
 
 void		rump_component_load(const struct rump_component *);
 void		rump_component_init(enum rump_component_type);
@@ -166,6 +172,8 @@ void	rump_user_schedule(int, void *);
 void	rump_user_unschedule(int, int *, void *);
 
 void	rump_cpu_attach(struct cpu_info *);
+
+struct clockframe *rump_cpu_makeclockframe(void);
 
 void	rump_kernel_bigwrap(int *);
 void	rump_kernel_bigunwrap(int);

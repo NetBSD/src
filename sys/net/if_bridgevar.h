@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.20.4.1 2015/04/06 15:18:22 skrll Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.20.4.2 2015/06/06 14:40:25 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -90,8 +90,8 @@
 #define	BRDGSIFFLGS		3	/* set member if flags (ifbreq) */
 #define	BRDGSCACHE		4	/* set cache size (ifbrparam) */
 #define	BRDGGCACHE		5	/* get cache size (ifbrparam) */
-#define	BRDGGIFS		6	/* get member list (ifbifconf) */
-#define	BRDGRTS			7	/* get address list (ifbaconf) */
+#define	OBRDGGIFS		6	/* get member list (ifbifconf) */
+#define	OBRDGRTS		7	/* get address list (ifbaconf) */
 #define	BRDGSADDR		8	/* set static address (ifbareq) */
 #define	BRDGSTO			9	/* set cache timeout (ifbrparam) */
 #define	BRDGGTO			10	/* get cache timeout (ifbrparam) */
@@ -110,6 +110,9 @@
 #define BRDGSIFCOST		22	/* set if path cost (ifbreq) */
 #define BRDGGFILT	        23	/* get filter flags (ifbrparam) */
 #define BRDGSFILT	        24	/* set filter flags (ifbrparam) */
+
+#define	BRDGGIFS		25	/* get member list */
+#define	BRDGRTS			26	/* get address list */
 
 /*
  * Generic bridge control request.
@@ -163,8 +166,7 @@ struct ifbifconf {
  */
 struct ifbareq {
 	char		ifba_ifsname[IFNAMSIZ];	/* member if name */
-	/*XXX: time_t */
-	long		ifba_expire;		/* address expire time */
+	time_t		ifba_expire;		/* address expire time */
 	uint8_t		ifba_flags;		/* address flags */
 	uint8_t		ifba_dst[ETHER_ADDR_LEN];/* destination address */
 };

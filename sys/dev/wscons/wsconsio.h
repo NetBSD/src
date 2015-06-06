@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.109.2.1 2015/04/06 15:18:14 skrll Exp $ */
+/* $NetBSD: wsconsio.h,v 1.109.2.2 2015/06/06 14:40:14 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -336,7 +336,8 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_CLPS711X	59	/* CL PS-711x  */
 #define	WSDISPLAY_TYPE_ALLWINNER 60	/* Allwinner ARM SoC */
 #define	WSDISPLAY_TYPE_MGX	61	/* SSB 4096V-MGX */
-#define	WSDISPLAY_TYPE_MESON	62	/* Amlogic Meson ARM Soc */
+#define	WSDISPLAY_TYPE_MESON	62	/* Amlogic Meson ARM SoC */
+#define	WSDISPLAY_TYPE_TEGRA	63	/* NVIDIA Tegra ARM SoC */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -597,7 +598,7 @@ struct wsdisplayio_edid_info {
 };
 #define WSDISPLAYIO_GET_EDID	_IOWR('W', 102, struct wsdisplayio_edid_info)
 
-/* 
+/*
  * this is for enabling and disabling interrupt-driven drawing
  * pass 1 to enable polling, 0 to go back to normal
  * the kernel itself will call this on the console device when entering or
@@ -622,7 +623,7 @@ struct wsdisplayio_edid_info {
 
 struct wsdisplayio_fbinfo {
 	uint64_t fbi_fbsize;		/* framebuffer size in bytes */
-	uint64_t fbi_fboffset;		/* start of visible fb, in bytes */ 
+	uint64_t fbi_fboffset;		/* start of visible fb, in bytes */
 	uint32_t fbi_width;		/* in pixels */
 	uint32_t fbi_height;		/* in lines */
 	uint32_t fbi_stride;		/* in bytes */
@@ -643,7 +644,7 @@ struct wsdisplayio_fbinfo {
 		struct _fbi_cmapinfo {
 			uint32_t cmap_entries;
 		} fbi_cmapinfo;
-		/* 
+		/*
 		 * TODO:
 		 * add parameter blocks for greyscale, yuv etc.
 		 */

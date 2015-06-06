@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.48 2015/04/06 08:58:43 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.49 2015/06/06 14:40:13 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.48 2015/04/06 08:58:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.49 2015/06/06 14:40:13 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2170,7 +2170,7 @@ ehci_rem_free_itd_chain(ehci_softc_t *sc, struct ehci_xfer *exfer)
 	prev = NULL;
 
 	if (exfer->ex_itdstart == NULL || exfer->ex_itdend == NULL)
-		panic("ehci isoc xfer being freed, but with no itd chain\n");
+		panic("ehci isoc xfer being freed, but with no itd chain");
 
 	for (itd = exfer->ex_itdstart; itd != NULL; itd = itd->xfer_next) {
 		prev = itd->frame_list.prev;
@@ -4622,7 +4622,7 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	itd = start;
 	for (j = 0; j < frames; j++) {
 		if (itd == NULL)
-			panic("ehci: unexpectedly ran out of isoc itds, isoc_start\n");
+			panic("ehci: unexpectedly ran out of isoc itds, isoc_start");
 
 		usb_syncmem(&sc->sc_fldma,
 		    sizeof(ehci_link_t) * frindex,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.1.2.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.1.2.2 2015/06/06 14:39:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.2 2015/06/06 14:39:55 skrll Exp $");
 
 #include "imxocotp.h"
 #include "imxccm.h"
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.1 2015/04/06 15:17:52 skrll Exp $"
 #include <sys/device.h>
 #include <sys/sockio.h>
 #include <sys/kernel.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -1348,7 +1348,7 @@ enet_init_txring(struct enet_softc *sc)
 
 	/* build TX ring */
 	for (i = 0; i < ENET_TX_RING_CNT; i++) {
-		sc->sc_txdesc_ring[i].tx_flags1_len = 
+		sc->sc_txdesc_ring[i].tx_flags1_len =
 		    ((i == (ENET_TX_RING_CNT - 1)) ? TXFLAGS1_W : 0);
 		sc->sc_txdesc_ring[i].tx_databuf = 0;
 		sc->sc_txdesc_ring[i].tx_flags2 = TXFLAGS2_INT;
@@ -1413,11 +1413,13 @@ enet_alloc_rxbuf(struct enet_softc *sc, int idx)
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_rxsoft[idx].rxs_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
 	    BUS_DMA_READ | BUS_DMA_NOWAIT);
-	if (error)
+	if (error) {
+		m_freem(m);
 		return error;
+	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxsoft[idx].rxs_dmamap, 0,
-	    sc->sc_rxsoft[idx].rxs_dmamap->dm_mapsize, 
+	    sc->sc_rxsoft[idx].rxs_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	sc->sc_rxsoft[idx].rxs_mbuf = m;
@@ -2003,7 +2005,7 @@ enet_init_regs(struct enet_softc *sc, int init)
 	    sc->sc_rxdesc_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/* enable interrupts */
-	ENET_REG_WRITE(sc, ENET_EIMR, 
+	ENET_REG_WRITE(sc, ENET_EIMR,
 	    ENET_EIR_TXF |
 	    ENET_EIR_RXF |
 	    ENET_EIR_EBERR |

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.11.2.1 2015/04/06 15:18:10 skrll Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.11.2.2 2015/06/06 14:40:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11.2.1 2015/04/06 15:18:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11.2.2 2015/06/06 14:40:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -416,7 +416,7 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		C_L2(ctrl_cmd_dmamap, ctrl_cmd,
 		    sizeof(struct virtio_net_ctrl_cmd), 1, WRITE,
 		    "control command");
-	
+
 		/* control vq status */
 		C_L2(ctrl_status_dmamap, ctrl_status,
 		    sizeof(struct virtio_net_ctrl_status), 1, READ,
@@ -501,7 +501,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	vsc->sc_child = self;
 	vsc->sc_ipl = IPL_NET;
 	vsc->sc_vqs = &sc->sc_vq[0];
-	vsc->sc_config_change = 0;
+	vsc->sc_config_change = NULL;
 	vsc->sc_intrhand = virtio_vq_intr;
 	vsc->sc_flags = 0;
 

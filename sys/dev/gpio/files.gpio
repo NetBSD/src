@@ -1,4 +1,4 @@
-# $NetBSD: files.gpio,v 1.10 2011/11/13 12:33:00 mbalmer Exp $
+# $NetBSD: files.gpio,v 1.10.28.1 2015/06/06 14:40:07 skrll Exp $
 
 define	gpio {[offset = -1], [mask = 0], [flag = 0]}
 
@@ -29,3 +29,13 @@ file	dev/gpio/gpiolock.c			gpiolock
 device	gpiopwm: gpiobus
 attach	gpiopwm at gpio
 file	dev/gpio/gpiopwm.c			gpiopwm
+
+# RF kill
+device	gpiorfkill: gpiobus
+attach	gpiorfkill at gpio
+file	dev/gpio/gpiorfkill.c			gpiorfkill
+
+# Button
+device	gpiobutton: gpiobus, sysmon_power
+attach	gpiobutton at gpio
+file	dev/gpio/gpiobutton.c			gpiobutton

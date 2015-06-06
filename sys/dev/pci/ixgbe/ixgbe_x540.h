@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2012, Intel Corporation 
+  Copyright (c) 2001-2013, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,7 +30,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD$*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x540.h 247822 2013-03-04 23:07:40Z jfv $*/
 
 #ifndef _IXGBE_X540_H_
 #define _IXGBE_X540_H_
@@ -41,7 +41,7 @@ s32 ixgbe_get_link_capabilities_X540(struct ixgbe_hw *hw,
 				     ixgbe_link_speed *speed, bool *autoneg);
 enum ixgbe_media_type ixgbe_get_media_type_X540(struct ixgbe_hw *hw);
 s32 ixgbe_setup_mac_link_X540(struct ixgbe_hw *hw, ixgbe_link_speed speed,
-			      bool autoneg, bool link_up_wait_to_complete);
+			      bool link_up_wait_to_complete);
 s32 ixgbe_reset_hw_X540(struct ixgbe_hw *hw);
 s32 ixgbe_start_hw_X540(struct ixgbe_hw *hw);
 u32 ixgbe_get_supported_physical_layer_X540(struct ixgbe_hw *hw);

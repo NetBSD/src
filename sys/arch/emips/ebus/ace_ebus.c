@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.14.2.1 2015/04/06 15:17:54 skrll Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.14.2.2 2015/06/06 14:39:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.14.2.1 2015/04/06 15:17:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.14.2.2 2015/06/06 14:39:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.14.2.1 2015/04/06 15:17:54 skrll Exp 
 #include <sys/lock.h>
 #include <sys/queue.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -1585,7 +1585,10 @@ void  acestart(void *);
 void  __acestart(struct ace_softc*, struct buf *);
 void  acerestart(void *);
 
-struct dkdriver acedkdriver = { acestrategy, minphys };
+struct dkdriver acedkdriver = {
+	.d_strategy = acestrategy,
+	.d_minphys = minphys
+};
 
 #ifdef HAS_BAD144_HANDLING
 static void bad144intern(struct ace_softc *);
