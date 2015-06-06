@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.55 2015/06/02 05:10:57 matt Exp $
+#	$NetBSD: genassym.cf,v 1.56 2015/06/06 04:34:57 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -284,6 +284,7 @@ define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_EV_TLBMISSES	offsetof(struct cpu_info, ci_ev_tlbmisses.ev_count)
+define	CPU_INFO_NMI_STACK	offsetof(struct cpu_info, ci_xnext)
 define	CPU_INFO_PMAP_SEG0TAB	offsetof(struct cpu_info, ci_pmap_seg0tab)
 ifdef _LP64
 define	CPU_INFO_PMAP_SEGTAB	offsetof(struct cpu_info, ci_pmap_segtab)
