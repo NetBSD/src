@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.16 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.17 2015/06/06 15:26:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -195,6 +195,7 @@ struct usbd_device {
 	struct usbd_interface  *ud_ifaces;	/* array of all interfaces */
 	usb_device_descriptor_t ud_ddesc;	/* device descriptor */
 	usb_config_descriptor_t *ud_cdesc;	/* full config descr */
+	usb_bos_descriptor_t	*ud_bdesc;	/* full BOS descr */
 	const struct usbd_quirks     *ud_quirks;/* device quirks, always set */
 	struct usbd_hub	       *ud_hub;		/* only if this is a hub */
 	int			ud_subdevlen;	/* array length of following */
