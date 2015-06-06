@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2015/05/15 06:58:59 ozaki-r Exp $
+#	$NetBSD: Makefile,v 1.43 2015/06/06 13:48:37 joerg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -16,9 +16,6 @@ DPADD=	${LIBUTIL} ${LIBKVM}
 CPPFLAGS+= -DIPSEC -I${.CURDIR}
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys/dist/pf
 CPPFLAGS+= -I${NETBSDSRCDIR}/sbin/route
-
-CWARNFLAGS.clang+=	-Wno-format
-COPTS.show.c += -Wno-format-nonliteral
 
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 .PATH:  ${.CURDIR}/../../lib/libc/net
