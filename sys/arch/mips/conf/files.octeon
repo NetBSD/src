@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.3 2015/06/01 22:55:12 matt Exp $
+#	$NetBSD: files.octeon,v 1.4 2015/06/06 04:34:23 matt Exp $
 
 file	arch/mips/mips/locore_octeon.S
 file	arch/mips/mips/bus_dma.c
@@ -25,10 +25,14 @@ file	arch/mips/cavium/mainbus_octeon1p.c	mainbus
 
 device	cpunode { [core=-1] }
 attach	cpunode at mainbus
-file	arch/mips/cavium/octeon_cpunode.c	cpunode | cpu
 
-device	cpu
-attach	cpu at cpunode with cpunode_cpu
+device	cpu {}
+attach	cpu at cpunode with cpu_cpunode
+
+device	wdog: sysmon_wdog
+attach	wdog at cpunode with wdog_cpunode
+
+file	arch/mips/cavium/octeon_cpunode.c	cpunode | cpu | wdog needs-flag
 
 # I/O Bus
 
