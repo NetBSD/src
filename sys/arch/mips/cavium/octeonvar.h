@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.3 2015/06/06 20:52:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ struct octeon_config {
 
 struct cpu_softc {
 	struct cpu_info *cpu_ci;
+
 	uint64_t cpu_int0_sum0;
 	uint64_t cpu_int1_sum0;
 	uint64_t cpu_int2_sum0;
@@ -100,6 +101,10 @@ struct cpu_softc {
 	uint64_t cpu_int0_enable0;
 	uint64_t cpu_int1_enable0;
 	uint64_t cpu_int2_enable0;
+
+	void *cpu_wdog_sih;		// wdog softint handler
+	uint64_t cpu_wdog;
+	uint64_t cpu_pp_poke;
 
 #ifdef MULTIPROCESSOR
 	uint64_t cpu_mbox_set;
