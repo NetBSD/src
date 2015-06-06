@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63.2.8 2015/04/06 15:18:14 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.9 2015/06/06 15:27:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.8 2015/04/06 15:18:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.9 2015/06/06 15:27:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -238,6 +238,32 @@ usbd_set_port_feature(struct usbd_device *dev, int port, int sel)
 	req.bRequest = UR_SET_FEATURE;
 	USETW(req.wValue, sel);
 	USETW(req.wIndex, port);
+	USETW(req.wLength, 0);
+	return usbd_do_request(dev, &req, 0);
+}
+
+usbd_status
+usbd_set_port_u1_timeout(struct usbd_device *dev, int port, int timeout)
+{
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_WRITE_CLASS_OTHER;
+	req.bRequest = UR_SET_FEATURE;
+	USETW(req.wValue, UHF_PORT_U1_TIMEOUT);
+	USETW2(req.wIndex, timeout, port);
+	USETW(req.wLength, 0);
+	return usbd_do_request(dev, &req, 0);
+}
+
+usbd_status
+usbd_set_port_u2_timeout(struct usbd_device *dev, int port, int timeout)
+{
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_WRITE_CLASS_OTHER;
+	req.bRequest = UR_SET_FEATURE;
+	USETW(req.wValue, UHF_PORT_U2_TIMEOUT);
+	USETW2(req.wIndex, timeout, port);
 	USETW(req.wLength, 0);
 	return usbd_do_request(dev, &req, 0);
 }
