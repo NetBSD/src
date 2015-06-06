@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.76 2015/06/06 04:38:52 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.77 2015/06/06 22:19:07 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.76 2015/06/06 04:38:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.77 2015/06/06 22:19:07 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -290,7 +290,7 @@ db_kvtophys_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		 * Cast the physical address -- some platforms, while
 		 * being ILP32, may be using 64-bit paddr_t's.
 		 */
-		db_printf("0x%lx -> 0x%" PRIx64 "\n", addr,
+		db_printf("0x%" DDB_EXPR_FMT "x -> 0x%" PRIx64 "\n", addr,
 		    (uint64_t) kvtophys(addr));
 	} else
 		printf("not a kernel virtual address\n");
