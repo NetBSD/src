@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.21 2015/06/04 05:32:05 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.22 2015/06/06 17:46:47 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.21 2015/06/04 05:32:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.22 2015/06/06 17:46:47 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -935,7 +935,7 @@ cpu_boot_secondary_processors(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	aprint_verbose("Booting secondary processors (%#"PRIx64")",
+	aprint_verbose("Booting secondary processors (%#"PRIxCPUSET")",
 	    cpus_hatched);
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (CPU_IS_PRIMARY(ci))
