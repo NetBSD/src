@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.2.2.1 2015/04/06 15:18:14 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.2.2.2 2015/06/06 16:38:07 skrll Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -51,7 +51,7 @@
 #define	XHCI_HCIVERSION_1_0	0x0100	/* xHCI version 1.0 */
 #define	XHCI_HCSPARAMS1		0x04	/* RO structual parameters 1 */
 #define	XHCI_HCS1_MAXSLOTS(x)	((x) & 0xFF)
-#define	XHCI_HCS1_MAXINTRS(x)	(((x) >> 8) & 0x3FF)
+#define	XHCI_HCS1_MAXINTRS(x)	(((x) >> 8) & 0x7FF)
 #define	XHCI_HCS1_MAXPORTS(x)	(((x) >> 24) & 0xFF)
 #define	XHCI_HCSPARAMS2		0x08	/* RO structual parameters 2 */
 #define	XHCI_HCS2_IST(x)	((x) & 0xF)
