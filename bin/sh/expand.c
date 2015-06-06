@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.91 2014/01/20 14:05:51 roy Exp $	*/
+/*	$NetBSD: expand.c,v 1.92 2015/06/06 15:22:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.91 2014/01/20 14:05:51 roy Exp $");
+__RCSID("$NetBSD: expand.c,v 1.92 2015/06/06 15:22:58 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -451,7 +451,8 @@ expbackq(union node *cmd, int quoted, int flag)
 		if (--in.nleft < 0) {
 			if (in.fd < 0)
 				break;
-			while ((i = read(in.fd, buf, sizeof buf)) < 0 && errno == EINTR);
+			while ((i = read(in.fd, buf, sizeof buf)) < 0 && errno == EINTR)
+				continue;
 			TRACE(("expbackq: read returns %d\n", i));
 			if (i <= 0)
 				break;
