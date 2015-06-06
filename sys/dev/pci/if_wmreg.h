@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.75 2015/06/06 03:37:01 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.76 2015/06/06 03:38:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -951,6 +951,7 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_OFF_MACADDR2	0x0002	/* MAC address offset 2 */
 #define NVM_OFF_COMPAT		0x0003
 #define NVM_OFF_ID_LED_SETTINGS	0x0004
+#define NVM_OFF_VERSION		0x0005
 #define	NVM_OFF_CFG1		0x000a	/* config word 1 */
 #define	NVM_OFF_CFG2		0x000f	/* config word 2 */
 #define	NVM_OFF_EEPROM_SIZE	0x0012	/* NVM SIZE */
@@ -964,6 +965,9 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_OFF_SWDPIN		0x0020	/* SWD Pins (Cordova) */
 #define	NVM_OFF_CFG3_PORTA	0x0024	/* config word 3 */
 #define NVM_OFF_ALT_MAC_ADDR_PTR 0x0037	/* to the alternative MAC addresses */
+#define NVM_OFF_COMB_VER_PTR	0x003d
+#define NVM_OFF_IMAGE_UID0	0x0042
+#define NVM_OFF_IMAGE_UID1	0x0043
 
 #define NVM_COMPAT_VALID_CHECKSUM	0x0001
 
@@ -1026,6 +1030,15 @@ struct livengood_tcpip_ctxdesc {
  * in 82580's datasheet.
  */
 #define NVM_OFF_LAN_FUNC_82580(x)	((x) ? (0x40 + (0x40 * (x))) : 0)
+
+#define NVM_COMBO_VER_OFF	0x0083
+
+#define NVM_MAJOR_MASK		0xf000
+#define NVM_MAJOR_SHIFT		12
+#define NVM_MINOR_MASK		0x0ff0
+#define NVM_MINOR_SHIFT		4
+#define NVM_BUILD_MASK		0x000f
+#define NVM_UID_VALID		0x8000
 
 /* iNVM Registers for i21[01] */
 #define E1000_INVM_DATA_REG(reg)	(0x12120 + 4*(reg))
