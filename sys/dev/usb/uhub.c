@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.12 2015/05/28 06:15:47 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.13 2015/06/06 15:24:18 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.12 2015/05/28 06:15:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.13 2015/06/06 15:24:18 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -586,11 +586,17 @@ uhub_explore(struct usbd_device *dev)
 					    port);
 			}
 		}
-		int is_wrc = 0;
-		if (change & UPS_C_PORT_RESET)
+		if (change & UPS_C_PORT_RESET) {
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_RESET);
+		}
 		if (change & UPS_C_BH_PORT_RESET) {
-			is_wrc = 1;
+			/*
+			 * some xHCs set WarmResetChange instead of CSC
+			 * when port is reset.
+			 */
+			if ((status & UPS_CURRENT_CONNECT_STATUS) != 0) {
+				change |= UPS_C_CONNECT_STATUS;
+			}
 			usbd_clear_port_feature(dev, port,
 			    UHF_C_BH_PORT_RESET);
 		}
@@ -603,9 +609,7 @@ uhub_explore(struct usbd_device *dev)
 
 		/* XXX handle overcurrent and resume events! */
 
-		/* xHCI sets WRC instead of CSC when port is reset */
-		if (!reconnect && !(change & UPS_C_CONNECT_STATUS) &&
-		    !(is_wrc && (status & UPS_CURRENT_CONNECT_STATUS))) {
+		if (!reconnect && !(change & UPS_C_CONNECT_STATUS)) {
 			/* No status change, just do recursive explore. */
 			if (up->up_dev != NULL && up->up_dev->ud_hub != NULL)
 				up->up_dev->ud_hub->uh_explore(up->up_dev);
