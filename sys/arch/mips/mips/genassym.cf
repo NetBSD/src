@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.57 2015/06/06 04:36:15 matt Exp $
+#	$NetBSD: genassym.cf,v 1.58 2015/06/06 21:44:16 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -80,6 +80,7 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/mutex.h>
 include <sys/cpu.h>
+include <sys/bitops.h>
 
 include <uvm/uvm.h>
 
@@ -291,6 +292,8 @@ endif
 define	CPU_INFO_DIVISOR_DELAY	offsetof(struct cpu_info, ci_divisor_delay)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
+define	CPU_INFO_NMI_STACK	offsetof(struct cpu_info, ci_nmi_stack)
+
 ifdef MULTIPROCESSOR
 define	CPU_INFO_FLAGS		offsetof(struct cpu_info, ci_flags)
 define	CPU_INFO_KSP_TLB_SLOT	offsetof(struct cpu_info, ci_ksp_tlb_slot)
@@ -307,6 +310,9 @@ define	IPL_VM			IPL_VM
 define	IPL_SCHED		IPL_SCHED
 define	IPL_DDB			IPL_DDB
 define	IPL_HIGH		IPL_HIGH
+
+define	V_MIPS3_SR_SR		ilog2(MIPS3_SR_SR)
+define	V_MIPS_SR_BEV		ilog2(MIPS_SR_BEV)
 
 ifdef __HAVE_PREEMPTION
 define	__HAVE_PREEMPTION	1
