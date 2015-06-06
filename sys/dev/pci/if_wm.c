@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.327 2015/06/06 03:37:01 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.328 2015/06/06 03:38:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.327 2015/06/06 03:37:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.328 2015/06/06 03:38:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -299,8 +299,10 @@ struct wm_softc {
 	callout_t sc_tick_ch;		/* tick callout */
 	bool sc_stopping;
 
+	int sc_nvm_ver_major;
+	int sc_nvm_ver_minor;
 	int sc_nvm_addrbits;		/* NVM address bits */
-	unsigned int sc_nvm_wordsize;		/* NVM word size */
+	unsigned int sc_nvm_wordsize;	/* NVM word size */
 	int sc_ich8_flash_base;
 	int sc_ich8_flash_bank_size;
 	int sc_nvm_k1_enabled;
@@ -683,6 +685,7 @@ static void	wm_nvm_release(struct wm_softc *);
 static int	wm_nvm_is_onboard_eeprom(struct wm_softc *);
 static int	wm_nvm_get_flash_presence_i210(struct wm_softc *);
 static int	wm_nvm_validate_checksum(struct wm_softc *);
+static void	wm_nvm_version(struct wm_softc *);
 static int	wm_nvm_read(struct wm_softc *, int, int, uint16_t *);
 
 /*
@@ -1917,25 +1920,27 @@ wm_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
-		aprint_verbose_dev(sc->sc_dev, "No EEPROM\n");
+		aprint_verbose_dev(sc->sc_dev, "No EEPROM");
 	else {
 		aprint_verbose_dev(sc->sc_dev, "%u words ",
 		    sc->sc_nvm_wordsize);
 		if (sc->sc_flags & WM_F_EEPROM_INVM)
-			aprint_verbose("iNVM\n");
+			aprint_verbose("iNVM");
 		else if (sc->sc_flags & WM_F_EEPROM_FLASH_HW)
-			aprint_verbose("FLASH(HW)\n");
+			aprint_verbose("FLASH(HW)");
 		else if (sc->sc_flags & WM_F_EEPROM_FLASH)
-			aprint_verbose("FLASH\n");
+			aprint_verbose("FLASH");
 		else {
 			if (sc->sc_flags & WM_F_EEPROM_SPI)
 				eetype = "SPI";
 			else
 				eetype = "MicroWire";
-			aprint_verbose("(%d address bits) %s EEPROM\n",
+			aprint_verbose("(%d address bits) %s EEPROM",
 			    sc->sc_nvm_addrbits, eetype);
 		}
 	}
+	wm_nvm_version(sc);
+	aprint_verbose("\n");
 
 	switch (sc->sc_type) {
 	case WM_T_82571:
@@ -8984,7 +8989,7 @@ wm_nvm_read_invm(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	return rv;
 }
 
-/* Lock, detecting NVM type, validate checksum and read */
+/* Lock, detecting NVM type, validate checksum, version and read */
 
 /*
  * wm_nvm_acquire:
@@ -9179,6 +9184,79 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 	}
 
 	return 0;
+}
+
+static void
+wm_nvm_version(struct wm_softc *sc)
+{
+	int major, minor;
+	int build = -1;
+	uint16_t uid0, uid1;
+	uint16_t nvm_data;
+	uint16_t off;
+
+	wm_nvm_read(sc, NVM_OFF_IMAGE_UID1, 1, &uid1);
+	switch (sc->sc_type) {
+	case WM_T_82575:
+	case WM_T_82576:
+	case WM_T_82580:
+		if ((uid1 & NVM_MAJOR_MASK) != NVM_UID_VALID) {
+			/* Major, Minor and build in UID words */
+			wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data);
+			major = (nvm_data & NVM_MAJOR_MASK) >> NVM_MAJOR_SHIFT;
+			minor = (nvm_data & NVM_MINOR_MASK) >> NVM_MINOR_SHIFT;
+			build = nvm_data & NVM_BUILD_MASK;
+			goto printver;
+		}
+		break;
+	case WM_T_I211:
+		/* XXX wm_nvm_version_invm(sc); */
+		return;
+	case WM_T_I210:
+		if (!wm_nvm_get_flash_presence_i210(sc)) {
+			/* XXX wm_nvm_version_invm(sc); */
+			return;
+		}
+		/* FALLTHROUGH */
+	case WM_T_I350:
+	case WM_T_I354:
+		wm_nvm_read(sc, NVM_OFF_COMB_VER_PTR, 1, &off);
+		/* Option ROM Version */
+		if ((off != 0x0000) && (off != 0xffff)) {
+			off += NVM_COMBO_VER_OFF;
+			wm_nvm_read(sc, off + 1, 1, &uid1);
+			wm_nvm_read(sc, off, 1, &uid0);
+			if ((uid0 != 0) && (uid0 != 0xffff)
+			    && (uid1 != 0) && (uid1 != 0xffff)) {
+				aprint_verbose(" option ROM Version %d.%d.%d",
+				    uid0 >> 8,
+				    (uid0 << 8) | (uid1 >> 8),
+				    uid1 & 0x00ff);
+			}
+		}
+		break;
+	default:
+		/* XXX Should we print PXE boot agent's version? */
+		return;
+	}
+	wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data);
+	major = (nvm_data & NVM_MAJOR_MASK) >> NVM_MAJOR_SHIFT;
+	if ((nvm_data & 0x0f00) == 0x0000)
+		minor = nvm_data & 0x00ff;
+	else 
+		minor = (nvm_data & NVM_MINOR_MASK) >> NVM_MINOR_SHIFT;
+	/* Decimal */
+	minor = (minor / 16) * 10 + (minor % 16);
+
+printver:
+	aprint_verbose(", version %d.%d", major, minor);
+	if (build != -1)
+		aprint_verbose(" build %d", build);
+	sc->sc_nvm_ver_major = major;
+	sc->sc_nvm_ver_minor = minor;
+
+	wm_nvm_read(sc, NVM_OFF_IMAGE_UID0, 1, &uid0);
+	aprint_verbose(", Image Unique ID %08x", (uid1 << 16) | uid0);
 }
 
 /*
