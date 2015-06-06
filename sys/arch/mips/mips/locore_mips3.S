@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.106 2015/06/04 22:44:43 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.107 2015/06/06 21:45:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -174,19 +174,42 @@ END(mips3_wbflush)
 LEAF(mips_wait_idle)
 	mfc0	v0, MIPS_COP_0_STATUS
 	andi	v1, v0, MIPS_SR_INT_IE
+#if __mips >= 32
+	teqi	v1, 0
+#else
 	beqz	v1, 1f
 	 nop
+#endif
 	andi	v1, v0, MIPS_INT_MASK
+#if __mips >= 32
+	teqi	v1, 0
+#else
 	bnez	v1, 2f
 	 nop
 1:
 	move	a1, v0
 	PANIC("mips_wait_idle: interrupts disabled status=%#x")
+#endif
 
 2:	wait
 	nop
 	nop
 	nop
+	mfc0	v0, MIPS_COP_0_STATUS
+	andi	v1, v0, MIPS_SR_INT_IE
+#if __mips >= 32
+	teqi	v1, 0
+#else
+	beqz	v1, 1b
+	 nop
+#endif
+	andi	v1, v0, MIPS_INT_MASK
+#if __mips >= 32
+	teqi	v1, 0
+#else
+	bnez	v1, 2b
+	 nop
+#endif
 	jr	ra
 	 nop
 END(mips_wait_idle)
