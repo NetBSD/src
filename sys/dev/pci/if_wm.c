@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.325 2015/06/02 14:19:26 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.326 2015/06/06 03:33:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.325 2015/06/02 14:19:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.326 2015/06/06 03:33:37 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -135,6 +135,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.325 2015/06/02 14:19:26 msaitoh Exp $");
 #include <dev/pci/if_wmreg.h>
 #include <dev/pci/if_wmvar.h>
 
+// #define WM_DEBUG 1
+
 #ifdef WM_DEBUG
 #define	WM_DEBUG_LINK		0x01
 #define	WM_DEBUG_TX		0x02
@@ -142,8 +144,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.325 2015/06/02 14:19:26 msaitoh Exp $");
 #define	WM_DEBUG_GMII		0x08
 #define	WM_DEBUG_MANAGE		0x10
 #define	WM_DEBUG_NVM		0x20
+#if 0
 int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
     | WM_DEBUG_MANAGE | WM_DEBUG_NVM;
+#else
+int	wm_debug = WM_DEBUG_LINK;
+#endif
 
 #define	DPRINTF(x, y)	if (wm_debug & (x)) printf y
 #else
@@ -299,8 +305,10 @@ struct wm_softc {
 	callout_t sc_tick_ch;		/* tick callout */
 	bool sc_stopping;
 
+	int sc_nvm_ver_major;
+	int sc_nvm_ver_minor;
 	int sc_nvm_addrbits;		/* NVM address bits */
-	unsigned int sc_nvm_wordsize;		/* NVM word size */
+	unsigned int sc_nvm_wordsize;	/* NVM word size */
 	int sc_ich8_flash_base;
 	int sc_ich8_flash_bank_size;
 	int sc_nvm_k1_enabled;
@@ -626,6 +634,8 @@ static int	wm_gmii_hv_readreg(device_t, int, int);
 static void	wm_gmii_hv_writereg(device_t, int, int, int);
 static int	wm_gmii_82580_readreg(device_t, int, int);
 static void	wm_gmii_82580_writereg(device_t, int, int, int);
+static int	wm_gmii_gs40g_readreg(device_t, int, int);
+static void	wm_gmii_gs40g_writereg(device_t, int, int, int);
 static void	wm_gmii_statchg(struct ifnet *);
 static int	wm_kmrn_readreg(struct wm_softc *, int);
 static void	wm_kmrn_writereg(struct wm_softc *, int, int);
@@ -677,12 +687,13 @@ static int	wm_nvm_read_ich8(struct wm_softc *, int, int, uint16_t *);
 /* iNVM */
 static int	wm_nvm_read_word_invm(struct wm_softc *, uint16_t, uint16_t *);
 static int	wm_nvm_read_invm(struct wm_softc *, int, int, uint16_t *);
-/* Lock, detecting NVM type, validate checksum and read */
+/* Lock, detecting NVM type, validate checksum, version and read */
 static int	wm_nvm_acquire(struct wm_softc *);
 static void	wm_nvm_release(struct wm_softc *);
 static int	wm_nvm_is_onboard_eeprom(struct wm_softc *);
 static int	wm_nvm_get_flash_presence_i210(struct wm_softc *);
 static int	wm_nvm_validate_checksum(struct wm_softc *);
+static void	wm_nvm_version(struct wm_softc *);
 static int	wm_nvm_read(struct wm_softc *, int, int, uint16_t *);
 
 /*
@@ -736,6 +747,10 @@ static void	wm_set_mdio_slow_mode_hv(struct wm_softc *);
 static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 static void	wm_reset_init_script_82575(struct wm_softc *);
 static void	wm_reset_mdicnfg_82580(struct wm_softc *);
+static void	wm_pll_workaround_i210(struct wm_softc *);
+#ifdef WM_DEBUG
+static void	wm_regdump(struct wm_softc *);
+#endif
 
 CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, wm_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -1741,6 +1756,15 @@ wm_attach(device_t parent, device_t self, void *aux)
 	    || (sc->sc_type == WM_T_PCH_LPT))
 		wm_smbustopci(sc);
 
+#ifdef WM_DEBUG
+	wm_regdump(sc);
+#endif
+
+	printf("%s: SC_CTRL(0) = %08x (%s)\n", device_xname(sc->sc_dev),
+	    sc->sc_ctrl, __func__);
+	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
+	printf("%s: SC_CTRL(1) = %08x (%s)\n", device_xname(sc->sc_dev),
+	    sc->sc_ctrl, __func__);
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
 
@@ -1917,25 +1941,45 @@ wm_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
-		aprint_verbose_dev(sc->sc_dev, "No EEPROM\n");
+		aprint_verbose_dev(sc->sc_dev, "No EEPROM");
 	else {
 		aprint_verbose_dev(sc->sc_dev, "%u words ",
 		    sc->sc_nvm_wordsize);
 		if (sc->sc_flags & WM_F_EEPROM_INVM)
-			aprint_verbose("iNVM\n");
+			aprint_verbose("iNVM");
 		else if (sc->sc_flags & WM_F_EEPROM_FLASH_HW)
-			aprint_verbose("FLASH(HW)\n");
+			aprint_verbose("FLASH(HW)");
 		else if (sc->sc_flags & WM_F_EEPROM_FLASH)
-			aprint_verbose("FLASH\n");
+			aprint_verbose("FLASH");
 		else {
 			if (sc->sc_flags & WM_F_EEPROM_SPI)
 				eetype = "SPI";
 			else
 				eetype = "MicroWire";
-			aprint_verbose("(%d address bits) %s EEPROM\n",
+			aprint_verbose("(%d address bits) %s EEPROM",
 			    sc->sc_nvm_addrbits, eetype);
 		}
 	}
+	wm_nvm_version(sc);
+	aprint_verbose("\n");
+
+	if (sc->sc_type == WM_T_I210)
+		sc->sc_flags |= WM_F_PLL_WA_I210;
+	if ((sc->sc_type == WM_T_I210) && wm_nvm_get_flash_presence_i210(sc)) {
+		/* NVM image release 3.25 has a workaround */
+		if ((sc->sc_nvm_ver_major > 3)
+		    || ((sc->sc_nvm_ver_major == 3)
+			&& (sc->sc_nvm_ver_minor >= 25)))
+			return;
+		else {
+			aprint_verbose_dev(sc->sc_dev,
+			    "ROM image version %d.%d is older than 3.25\n",
+			    sc->sc_nvm_ver_major, sc->sc_nvm_ver_minor);
+			sc->sc_flags |= WM_F_PLL_WA_I210;
+		}
+	}
+	if ((sc->sc_flags & WM_F_PLL_WA_I210) != 0)
+		wm_pll_workaround_i210(sc);
 
 	switch (sc->sc_type) {
 	case WM_T_82571:
@@ -2451,6 +2495,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->sc_flags |= WM_F_ATTACHED;
+#ifdef WM_DEBUG
+	wm_regdump(sc);
+#endif
 	return;
 
 	/*
@@ -2478,6 +2525,9 @@ wm_attach(device_t parent, device_t self, void *aux)
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cd_seg, sc->sc_cd_rseg);
  fail_0:
+#ifdef WM_DEBUG
+	wm_regdump(sc);
+#endif
 	return;
 }
 
@@ -2757,8 +2807,11 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		WM_BOTH_LOCK(sc);
+		if (cmd == SIOCSIFMEDIA)
+			printf("%s: %s: ifr_media = %08x\n",
+			    device_xname(sc->sc_dev), __func__, ifr->ifr_media);
 		/* Flow control requires full-duplex mode. */
-		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
+		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO &&
 		    (ifr->ifr_media & IFM_FDX) == 0)
 			ifr->ifr_media &= ~IFM_ETH_FMASK;
 		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
@@ -2774,6 +2827,8 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		s = splnet();
 #endif
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
+		printf("%s: %s: rv = %d\n", device_xname(sc->sc_dev), __func__,
+		    error);
 #ifdef WM_MPSAFE
 		splx(s);
 #endif
@@ -3838,7 +3893,11 @@ wm_reset(struct wm_softc *sc)
 	reg = CSR_READ(sc, WMREG_ICR);
 
 	/* reload sc_ctrl */
+	printf("%s: SC_CTRL(2) = %08x (%s)\n", device_xname(sc->sc_dev),
+	    sc->sc_ctrl, __func__);
 	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
+	printf("%s: SC_CTRL(3) = %08x (%s)\n", device_xname(sc->sc_dev),
+	    sc->sc_ctrl, __func__);
 
 	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type <= WM_T_I211))
 		wm_set_eee_i350(sc);
@@ -3858,6 +3917,9 @@ wm_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_WUC, 0);
 
 	wm_reset_mdicnfg_82580(sc);
+
+	if ((sc->sc_flags & WM_F_PLL_WA_I210) != 0)
+		wm_pll_workaround_i210(sc);
 }
 
 /*
@@ -6027,7 +6089,11 @@ wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 			 * so we should update sc->sc_ctrl
 			 */
 
+			printf("%s: SC_CTRL(8) = %08x (%s)\n",
+			    device_xname(sc->sc_dev), sc->sc_ctrl, __func__);
 			sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
+			printf("%s: SC_CTRL(9) = %08x (%s)\n",
+			    device_xname(sc->sc_dev), sc->sc_ctrl, __func__);
 			sc->sc_tctl &= ~TCTL_COLD(0x3ff);
 			sc->sc_fcrtl &= ~FCRTL_XONE;
 			if (status & STATUS_FD)
@@ -6631,19 +6697,24 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	default:
 		if (((sc->sc_flags & WM_F_SGMII) != 0)
 		    && !wm_sgmii_uses_mdio(sc)){
+			/* SGMII */
 			mii->mii_readreg = wm_sgmii_readreg;
 			mii->mii_writereg = wm_sgmii_writereg;
 		} else if (sc->sc_type >= WM_T_80003) {
+			/* 80003 */
 			mii->mii_readreg = wm_gmii_i80003_readreg;
 			mii->mii_writereg = wm_gmii_i80003_writereg;
 		} else if (sc->sc_type >= WM_T_I210) {
-			mii->mii_readreg = wm_gmii_i82544_readreg;
-			mii->mii_writereg = wm_gmii_i82544_writereg;
+			/* I210 and I211 */
+			mii->mii_readreg = wm_gmii_gs40g_readreg;
+			mii->mii_writereg = wm_gmii_gs40g_writereg;
 		} else if (sc->sc_type >= WM_T_82580) {
+			/* 82580, I350 and I354 */
 			sc->sc_phytype = WMPHY_82580;
 			mii->mii_readreg = wm_gmii_82580_readreg;
 			mii->mii_writereg = wm_gmii_82580_writereg;
 		} else if (sc->sc_type >= WM_T_82544) {
+			/* 82544, 0, [56], [17], 8257[1234] and 82583 */
 			mii->mii_readreg = wm_gmii_i82544_readreg;
 			mii->mii_writereg = wm_gmii_i82544_writereg;
 		} else {
@@ -6662,8 +6733,8 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	wm_gmii_reset(sc);
 
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&mii->mii_media, IFM_IMASK, wm_gmii_mediachange,
-	    wm_gmii_mediastatus);
+	ifmedia_init(&mii->mii_media, IFM_IMASK|IFM_ETH_FMASK,
+	    wm_gmii_mediachange, wm_gmii_mediastatus);
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type == WM_T_82580)
@@ -6950,10 +7021,10 @@ wm_gmii_i82544_readreg(device_t self, int phy, int reg)
 	    MDIC_REGADD(reg));
 
 	for (i = 0; i < WM_GEN_POLL_TIMEOUT * 3; i++) {
+		delay(50);
 		mdic = CSR_READ(sc, WMREG_MDIC);
 		if (mdic & MDIC_READY)
 			break;
-		delay(50);
 	}
 
 	if ((mdic & MDIC_READY) == 0) {
@@ -6991,10 +7062,10 @@ wm_gmii_i82544_writereg(device_t self, int phy, int reg, int val)
 	    MDIC_REGADD(reg) | MDIC_DATA(val));
 
 	for (i = 0; i < WM_GEN_POLL_TIMEOUT * 3; i++) {
+		delay(50);
 		mdic = CSR_READ(sc, WMREG_MDIC);
 		if (mdic & MDIC_READY)
 			break;
-		delay(50);
 	}
 
 	if ((mdic & MDIC_READY) == 0)
@@ -7353,6 +7424,75 @@ wm_gmii_82580_writereg(device_t self, int phy, int reg, int val)
 }
 
 /*
+ * wm_gmii_gs40g_readreg:	[mii interface function]
+ *
+ *	Read a PHY register on the I2100 and I211.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static int
+wm_gmii_gs40g_readreg(device_t self, int phy, int reg)
+{
+	struct wm_softc *sc = device_private(self);
+	int sem;
+	int page, offset;
+	int rv;
+
+	/* Acquire semaphore */
+	sem = swfwphysem[sc->sc_funcid];
+	if (wm_get_swfw_semaphore(sc, sem)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return 0;
+	}
+
+	/* Page select */
+	page = reg >> GS40G_PAGE_SHIFT;
+	wm_gmii_i82544_writereg(self, phy, GS40G_PAGE_SELECT, page);
+
+	/* Read reg */
+	offset = reg & GS40G_OFFSET_MASK;
+	rv = wm_gmii_i82544_readreg(self, phy, offset);
+
+	wm_put_swfw_semaphore(sc, sem);
+	return rv;
+}
+
+/*
+ * wm_gmii_gs40g_writereg:	[mii interface function]
+ *
+ *	Write a PHY register on the I210 and I211.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static void
+wm_gmii_gs40g_writereg(device_t self, int phy, int reg, int val)
+{
+	struct wm_softc *sc = device_private(self);
+	int sem;
+	int page, offset;
+
+	/* Acquire semaphore */
+	sem = swfwphysem[sc->sc_funcid];
+	if (wm_get_swfw_semaphore(sc, sem)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return;
+	}
+
+	/* Page select */
+	page = reg >> GS40G_PAGE_SHIFT;
+	wm_gmii_i82544_writereg(self, phy, GS40G_PAGE_SELECT, page);
+
+	/* Write reg */
+	offset = reg & GS40G_OFFSET_MASK;
+	wm_gmii_i82544_writereg(self, phy, offset, val);
+
+	/* Release semaphore */
+	wm_put_swfw_semaphore(sc, sem);
+}
+
+/*
  * wm_gmii_statchg:	[mii interface function]
  *
  *	Callback from MII layer when media changes.
@@ -7635,10 +7775,10 @@ wm_tbi_mediainit(struct wm_softc *sc)
 
 	if ((sc->sc_type >= WM_T_82575)
 	    && (sc->sc_mediatype == WM_MEDIATYPE_SERDES))
-		ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK,
+		ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK | IFM_ETH_FMASK,
 		    wm_serdes_mediachange, wm_serdes_mediastatus);
 	else
-		ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK,
+		ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK | IFM_ETH_FMASK,
 		    wm_tbi_mediachange, wm_tbi_mediastatus);
 
 	/*
@@ -7715,7 +7855,9 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	else
 		sc->sc_txcw |= TXCW_HD;
 
-	if ((sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
+	printf("%s: %s: ifr_media = %08x\n",
+	    device_xname(sc->sc_dev), __func__, ife->ifm_media);
+	if ((ife->ifm_media & IFM_FLOW) != 0)
 		sc->sc_txcw |= TXCW_SYM_PAUSE | TXCW_ASYM_PAUSE;
 
 	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x after autoneg check\n",
@@ -7758,7 +7900,11 @@ wm_tbi_mediachange(struct ifnet *ifp)
 			 * NOTE: CTRL will update TFCE and RFCE automatically,
 			 * so we should update sc->sc_ctrl
 			 */
+			printf("%s: SC_CTRL(6) = %08x (%s)\n",
+			    device_xname(sc->sc_dev), sc->sc_ctrl, __func__);
 			sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
+			printf("%s: SC_CTRL(7) = %08x (%s)\n",
+			    device_xname(sc->sc_dev), sc->sc_ctrl, __func__);
 			sc->sc_tctl &= ~TCTL_COLD(0x3ff);
 			sc->sc_fcrtl &= ~FCRTL_XONE;
 			if (status & STATUS_FD)
@@ -7889,7 +8035,11 @@ wm_check_for_link(struct wm_softc *sc)
 		 * NOTE: CTRL was updated TFCE and RFCE automatically,
 		 * so we should update sc->sc_ctrl
 		 */
+		printf("%s: SC_CTRL(4) = %08x (%s)\n",
+		    device_xname(sc->sc_dev), sc->sc_ctrl, __func__);
 		sc->sc_ctrl = ctrl | CTRL_SLU | CTRL_FD;
+		printf("%s: SC_CTRL(5) = %08x (%s)\n",
+		    device_xname(sc->sc_dev), sc->sc_ctrl, __func__);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 	} else if (((status & STATUS_LU) != 0)
 	    && ((rxcw & RXCW_C) != 0)
@@ -8003,6 +8153,7 @@ static int
 wm_serdes_mediachange(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	bool pcs_autoneg = true; /* XXX */
 	uint32_t ctrl_ext, pcs_lctl, reg;
 
@@ -8045,7 +8196,10 @@ wm_serdes_mediachange(struct ifnet *ifp)
 
 		reg = CSR_READ(sc, WMREG_PCS_ANADV);
 		reg &= ~(TXCW_ASYM_PAUSE | TXCW_SYM_PAUSE);
-		reg |= TXCW_ASYM_PAUSE | TXCW_SYM_PAUSE;
+		printf("%s: %s: ifr_media = %08x\n",
+		    device_xname(sc->sc_dev), __func__, ife->ifm_media);
+		if ((sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
+			reg |= TXCW_ASYM_PAUSE | TXCW_SYM_PAUSE;
 		CSR_WRITE(sc, WMREG_PCS_ANADV, reg);
 	} else
 		pcs_lctl |= PCS_LCTL_FSD | PCS_LCTL_FORCE_FC;
@@ -8899,7 +9053,7 @@ wm_nvm_read_word_invm(struct wm_softc *sc, uint16_t address, uint16_t *data)
 	uint8_t record_type, word_address;
 
 	for (i = 0; i < INVM_SIZE; i++) {
-		invm_dword = CSR_READ(sc, E1000_INVM_DATA_REG(i));
+		invm_dword = CSR_READ(sc, WM_INVM_DATA_REG(i));
 		/* Get record type */
 		record_type = INVM_DWORD_TO_RECORD_TYPE(invm_dword);
 		if (record_type == INVM_UNINITIALIZED_STRUCTURE)
@@ -8984,7 +9138,7 @@ wm_nvm_read_invm(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	return rv;
 }
 
-/* Lock, detecting NVM type, validate checksum and read */
+/* Lock, detecting NVM type, validate checksum, version and read */
 
 /*
  * wm_nvm_acquire:
@@ -9181,6 +9335,79 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 	return 0;
 }
 
+static void
+wm_nvm_version(struct wm_softc *sc)
+{
+	int major, minor;
+	int build = -1;
+	uint16_t uid0, uid1;
+	uint16_t nvm_data;
+	uint16_t off;
+
+	wm_nvm_read(sc, NVM_OFF_IMAGE_UID1, 1, &uid1);
+	switch (sc->sc_type) {
+	case WM_T_82575:
+	case WM_T_82576:
+	case WM_T_82580:
+		if ((uid1 & NVM_MAJOR_MASK) != NVM_UID_VALID) {
+			/* Major, Minor and build in UID words */
+			wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data);
+			major = (nvm_data & NVM_MAJOR_MASK) >> NVM_MAJOR_SHIFT;
+			minor = (nvm_data & NVM_MINOR_MASK) >> NVM_MINOR_SHIFT;
+			build = nvm_data & NVM_BUILD_MASK;
+			goto printver;
+		}
+		break;
+	case WM_T_I211:
+		/* XXX wm_nvm_version_invm(sc); */
+		return;
+	case WM_T_I210:
+		if (!wm_nvm_get_flash_presence_i210(sc)) {
+			/* XXX wm_nvm_version_invm(sc); */
+			return;
+		}
+		/* FALLTHROUGH */
+	case WM_T_I350:
+	case WM_T_I354:
+		wm_nvm_read(sc, NVM_OFF_COMB_VER_PTR, 1, &off);
+		/* Option ROM Version */
+		if ((off != 0x0000) && (off != 0xffff)) {
+			off += NVM_COMBO_VER_OFF;
+			wm_nvm_read(sc, off + 1, 1, &uid1);
+			wm_nvm_read(sc, off, 1, &uid0);
+			if ((uid0 != 0) && (uid0 != 0xffff)
+			    && (uid1 != 0) && (uid1 != 0xffff)) {
+				aprint_verbose(" option ROM Version %d.%d.%d",
+				    uid0 >> 8,
+				    (uid0 << 8) | (uid1 >> 8),
+				    uid1 & 0x00ff);
+			}
+		}
+		break;
+	default:
+		/* XXX Should we print PXE boot agent's version? */
+		return;
+	}
+	wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data);
+	major = (nvm_data & NVM_MAJOR_MASK) >> NVM_MAJOR_SHIFT;
+	if ((nvm_data & 0x0f00) == 0x0000)
+		minor = nvm_data & 0x00ff;
+	else 
+		minor = (nvm_data & NVM_MINOR_MASK) >> NVM_MINOR_SHIFT;
+	/* Decimal */
+	minor = (minor / 16) * 10 + (minor % 16);
+
+printver:
+	aprint_verbose(", version %d.%d", major, minor);
+	if (build != -1)
+		aprint_verbose(" build %d", build);
+	sc->sc_nvm_ver_major = major;
+	sc->sc_nvm_ver_minor = minor;
+
+	wm_nvm_read(sc, NVM_OFF_IMAGE_UID0, 1, &uid0);
+	aprint_verbose(", Image Unique ID %08x", (uid1 << 16) | uid0);
+}
+
 /*
  * wm_nvm_read:
  *
@@ -9337,11 +9564,11 @@ wm_get_swfwhw_semaphore(struct wm_softc *sc)
 
 	for (timeout = 0; timeout < 200; timeout++) {
 		ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
-		ext_ctrl |= E1000_EXTCNF_CTRL_SWFLAG;
+		ext_ctrl |= EXTCNFCTR_MDIO_SW_OWNERSHIP;
 		CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
 
 		ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
-		if (ext_ctrl & E1000_EXTCNF_CTRL_SWFLAG)
+		if (ext_ctrl & EXTCNFCTR_MDIO_SW_OWNERSHIP)
 			return 0;
 		delay(5000);
 	}
@@ -9355,7 +9582,7 @@ wm_put_swfwhw_semaphore(struct wm_softc *sc)
 {
 	uint32_t ext_ctrl;
 	ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
-	ext_ctrl &= ~E1000_EXTCNF_CTRL_SWFLAG;
+	ext_ctrl &= ~EXTCNFCTR_MDIO_SW_OWNERSHIP;
 	CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
 }
 
@@ -10148,3 +10375,323 @@ wm_reset_mdicnfg_82580(struct wm_softc *sc)
 		reg |= MDICNFG_COM_MDIO;
 	CSR_WRITE(sc, WMREG_MDICNFG, reg);
 }
+
+/*
+ * I210 Errata 25 and I211 Errata 10
+ * Slow System Clock.
+ */
+static void
+wm_pll_workaround_i210(struct wm_softc *sc)
+{
+	uint32_t mdicnfg, wuc;
+	uint32_t reg;
+	pcireg_t pcireg;
+	uint32_t pmreg;
+	uint16_t nvmword, tmp_nvmword;
+	int phyval;
+	bool wa_done = false;
+	int i;
+
+	/* Save WUC and MDICNFG registers */
+	wuc = CSR_READ(sc, WMREG_WUC);
+	mdicnfg = CSR_READ(sc, WMREG_MDICNFG);
+
+	reg = mdicnfg & ~MDICNFG_DEST;
+	CSR_WRITE(sc, WMREG_MDICNFG, reg);
+
+	if (wm_nvm_read(sc, INVM_AUTOLOAD, 1, &nvmword) != 0)
+		nvmword = INVM_DEFAULT_AL;
+	tmp_nvmword = nvmword | INVM_PLL_WO_VAL;
+
+	/* Get Power Management cap offset */
+	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PWRMGMT,
+		&pmreg, NULL) == 0)
+		return;
+	for (i = 0; i < WM_MAX_PLL_TRIES; i++) {
+		phyval = wm_gmii_gs40g_readreg(sc->sc_dev, 1,
+		    GS40G_PHY_PLL_FREQ_PAGE | GS40G_PHY_PLL_FREQ_REG);
+		
+		if ((phyval & GS40G_PHY_PLL_UNCONF) != GS40G_PHY_PLL_UNCONF) {
+			break; /* OK */
+		}
+
+		wa_done = true;
+		/* Directly reset the internal PHY */
+		reg = CSR_READ(sc, WMREG_CTRL);
+		CSR_WRITE(sc, WMREG_CTRL, reg | CTRL_PHY_RESET);
+
+		reg = CSR_READ(sc, WMREG_CTRL_EXT);
+		reg |= CTRL_EXT_PHYPDEN | CTRL_EXT_SDLPE;
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+		CSR_WRITE(sc, WMREG_WUC, 0);
+		reg = (INVM_AUTOLOAD << 4) | (tmp_nvmword << 16);
+		CSR_WRITE(sc, WMREG_EEARBC_I210, reg);
+		
+		pcireg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+		    pmreg + PCI_PMCSR);
+		pcireg |= PCI_PMCSR_STATE_D3;
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
+		    pmreg + PCI_PMCSR, pcireg);
+		delay(1000);
+		pcireg &= ~PCI_PMCSR_STATE_D3;
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
+		    pmreg + PCI_PMCSR, pcireg);
+
+		reg = (INVM_AUTOLOAD << 4) | (nvmword << 16);
+		CSR_WRITE(sc, WMREG_EEARBC_I210, reg);
+		
+		/* Restore WUC register */
+		CSR_WRITE(sc, WMREG_WUC, wuc);
+	}
+	
+	/* Restore MDICNFG setting */
+	CSR_WRITE(sc, WMREG_MDICNFG, mdicnfg);
+	if (wa_done)
+		aprint_verbose_dev(sc->sc_dev, "I210 workaround done\n");
+}
+
+#ifdef WM_DEBUG
+static uint32_t wmregs[] = {
+	0x0000,
+	0x0004,
+	0x0008,
+	0x0010,
+	0x0014,
+	0x0018,
+	0x0020,
+	0x0024,
+	0x0028,
+	0x002c,
+	0x0030,
+	0x0034,
+	0x0038,
+	0x003c,
+	0x00c0,
+	0x00c4,
+	0x00c8,
+	0x00d0,
+	0x00d8,
+	0x00e4,
+	0x00f0,
+	0x00f4,
+	0x0100,
+	0x0170,
+	0x0178,
+	0x0180,
+	0x0400,
+	0x0404,
+	0x0410,
+	0x0800,
+	0x08d8,
+	0x08f0,
+	0x0c00,
+	0x0c40,
+	0x0c80,
+	0x0c88,
+	0x0e00,
+	0x0e04,
+	0x0e10,
+	0x0e30,
+	0x0e34,
+	0x0e38,
+	0x0f00,
+	0x0f08,
+	0x0f10,
+	0x0f14,
+	0x0f18,
+	0x0f34,
+	0x0f3c,
+	0x1000,
+	0x1008,
+	0x100c,
+	0x1010,
+	0x1028,
+	0x102c,
+	0x103c,
+	0x1100,
+	0x1500,
+	0x1514,
+	0x1520,
+	0x1524,
+	0x1528,
+	0x152c,
+	0x1530,
+	0x1600,
+	0x1680,
+	0x1700,
+	0x1740,
+	0x2160,
+	0x2168,
+	0x2170,
+	0x2404,
+	0x2508,
+	0x2514,
+	0x2800,
+	0x2804,
+	0x2808,
+	0x280c,
+	0x2810,
+	0x2818,
+	0x2820,
+	0x2828,
+	0x282c,
+	0x3004,
+	0x3410,
+	0x3418,
+	0x3420,
+	0x3428,
+	0x3430,
+	0x3500,
+	0x3550,
+	0x3800,
+	0x3804,
+	0x3808,
+	0x3810,
+	0x3818,
+	0x3820,
+	0x3828,
+	0x382c,
+	0x3840,
+	0x3928,
+	0x3940,
+	0x3f24,
+	0x4000,
+	0x4004,
+	0x4008,
+	0x400c,
+	0x4010,
+	0x4014,
+	0x4018,
+	0x401c,
+	0x4020,
+	0x4028,
+	0x402c,
+	0x4034,
+	0x4038,
+	0x403c,
+	0x4040,
+	0x4044,
+	0x4048,
+	0x404c,
+	0x4050,
+	0x4054,
+	0x4058,
+	0x405c,
+	0x4060,
+	0x4064,
+	0x4068,
+	0x406c,
+	0x4070,
+	0x4074,
+	0x4078,
+	0x407c,
+	0x4080,
+	0x4088,
+	0x408c,
+	0x4090,
+	0x4094,
+	0x40a0,
+	0x40a4,
+	0x40a8,
+	0x40ac,
+	0x40b0,
+	0x40b4,
+	0x40b8,
+	0x40bc,
+	0x40c0,
+	0x40c4,
+	0x40c8,
+	0x40cc,
+	0x40d8,
+	0x40dc,
+	0x40e0,
+	0x40e4,
+	0x40e8,
+	0x40ec,
+	0x40f0,
+	0x40f4,
+	0x40f8,
+	0x40fc,
+	0x4100,
+	0x4104,
+	0x4108,
+	0x410c,
+	0x4110,
+	0x4118,
+	0x411c,
+	0x4120,
+	0x4124,
+	0x4128,
+	0x412c,
+	0x4130,
+	0x4134,
+	0x4138,
+	0x4200,
+	0x4208,
+	0x420c,
+	0x4218,
+	0x421c,
+	0x4224,
+	0x4228,
+	0x5000,
+	0x5004,
+	0x5008,
+	0x5200,
+	0x5400,
+	0x5404,
+	0x5438,
+	0x543c,
+	0x5600,
+	0x5800,
+	0x5808,
+	0x5818,
+	0x581c,
+	0x5820,
+	0x5860,
+	0x5acc,
+	0x5b00,
+	0x5b30,
+//	0x5b50,
+	0x5b54,
+	0x5b58,
+	0x5b5c,
+	0x5b64,
+	0x5bb8,
+	0x5c00,
+	0x5dd0,
+	0x5f00,
+	0x5f04,
+	0x5f40,
+	0x5f50,
+	0x8110,
+	0x8800,
+	0x8f00,
+	0x8f40,
+	0xa000,
+	0xa018,
+	0x10010,
+	0x10014,
+	0x10018,
+	0x10034,
+	0x10038,
+	0x12018,
+	0x12024,
+	0x12120,
+};
+
+static void
+wm_regdump(struct wm_softc *sc)
+{
+	int i;
+	int last = 100;
+
+	printf("%s:\n", device_xname(sc->sc_dev));
+	for (i = 0; i < __arraycount(wmregs); i++) {
+		if (wmregs[i] == last)
+			printf("same %05x\n", wmregs[i]);
+		printf("%05x: %08x\n", wmregs[i], CSR_READ(sc, wmregs[i]));
+		last = wmregs[i];
+	}
+}
+#endif
