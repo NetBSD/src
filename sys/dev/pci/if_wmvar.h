@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.28 2015/06/06 03:38:40 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.29 2015/06/06 04:39:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -98,7 +98,7 @@
 #define WM_F_ATTACHED		0x00800000 /* attach() finished successfully */
 #define	WM_F_EEPROM_INVM	0x01000000 /* NVM is iNVM */
 #define	WM_F_PCS_DIS_AUTONEGO	0x02000000 /* PCS Disable Autonego */
-
+#define	WM_F_PLL_WA_I210	0x04000000 /* I21[01] PLL workaround */
 
 /*
  * Variations of Intel gigabit Ethernet controller:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.328 2015/06/06 03:38:40 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.329 2015/06/06 04:39:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.328 2015/06/06 03:38:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.329 2015/06/06 04:39:12 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -628,6 +628,8 @@ static int	wm_gmii_hv_readreg(device_t, int, int);
 static void	wm_gmii_hv_writereg(device_t, int, int, int);
 static int	wm_gmii_82580_readreg(device_t, int, int);
 static void	wm_gmii_82580_writereg(device_t, int, int, int);
+static int	wm_gmii_gs40g_readreg(device_t, int, int);
+static void	wm_gmii_gs40g_writereg(device_t, int, int, int);
 static void	wm_gmii_statchg(struct ifnet *);
 static int	wm_kmrn_readreg(struct wm_softc *, int);
 static void	wm_kmrn_writereg(struct wm_softc *, int, int);
@@ -739,6 +741,7 @@ static void	wm_set_mdio_slow_mode_hv(struct wm_softc *);
 static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 static void	wm_reset_init_script_82575(struct wm_softc *);
 static void	wm_reset_mdicnfg_82580(struct wm_softc *);
+static void	wm_pll_workaround_i210(struct wm_softc *);
 
 CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, wm_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -1941,6 +1944,25 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 	wm_nvm_version(sc);
 	aprint_verbose("\n");
+
+	/* Check for I21[01] PLL workaround */
+	if (sc->sc_type == WM_T_I210)
+		sc->sc_flags |= WM_F_PLL_WA_I210;
+	if ((sc->sc_type == WM_T_I210) && wm_nvm_get_flash_presence_i210(sc)) {
+		/* NVM image release 3.25 has a workaround */
+		if ((sc->sc_nvm_ver_major > 3)
+		    || ((sc->sc_nvm_ver_major == 3)
+			&& (sc->sc_nvm_ver_minor >= 25)))
+			return;
+		else {
+			aprint_verbose_dev(sc->sc_dev,
+			    "ROM image version %d.%d is older than 3.25\n",
+			    sc->sc_nvm_ver_major, sc->sc_nvm_ver_minor);
+			sc->sc_flags |= WM_F_PLL_WA_I210;
+		}
+	}
+	if ((sc->sc_flags & WM_F_PLL_WA_I210) != 0)
+		wm_pll_workaround_i210(sc);
 
 	switch (sc->sc_type) {
 	case WM_T_82571:
@@ -6636,19 +6658,24 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	default:
 		if (((sc->sc_flags & WM_F_SGMII) != 0)
 		    && !wm_sgmii_uses_mdio(sc)){
+			/* SGMII */
 			mii->mii_readreg = wm_sgmii_readreg;
 			mii->mii_writereg = wm_sgmii_writereg;
 		} else if (sc->sc_type >= WM_T_80003) {
+			/* 80003 */
 			mii->mii_readreg = wm_gmii_i80003_readreg;
 			mii->mii_writereg = wm_gmii_i80003_writereg;
 		} else if (sc->sc_type >= WM_T_I210) {
-			mii->mii_readreg = wm_gmii_i82544_readreg;
-			mii->mii_writereg = wm_gmii_i82544_writereg;
+			/* I210 and I211 */
+			mii->mii_readreg = wm_gmii_gs40g_readreg;
+			mii->mii_writereg = wm_gmii_gs40g_writereg;
 		} else if (sc->sc_type >= WM_T_82580) {
+			/* 82580, I350 and I354 */
 			sc->sc_phytype = WMPHY_82580;
 			mii->mii_readreg = wm_gmii_82580_readreg;
 			mii->mii_writereg = wm_gmii_82580_writereg;
 		} else if (sc->sc_type >= WM_T_82544) {
+			/* 82544, 0, [56], [17], 8257[1234] and 82583 */
 			mii->mii_readreg = wm_gmii_i82544_readreg;
 			mii->mii_writereg = wm_gmii_i82544_writereg;
 		} else {
@@ -7354,6 +7381,75 @@ wm_gmii_82580_writereg(device_t self, int phy, int reg, int val)
 
 	wm_gmii_i82544_writereg(self, phy, reg, val);
 
+	wm_put_swfw_semaphore(sc, sem);
+}
+
+/*
+ * wm_gmii_gs40g_readreg:	[mii interface function]
+ *
+ *	Read a PHY register on the I2100 and I211.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static int
+wm_gmii_gs40g_readreg(device_t self, int phy, int reg)
+{
+	struct wm_softc *sc = device_private(self);
+	int sem;
+	int page, offset;
+	int rv;
+
+	/* Acquire semaphore */
+	sem = swfwphysem[sc->sc_funcid];
+	if (wm_get_swfw_semaphore(sc, sem)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return 0;
+	}
+
+	/* Page select */
+	page = reg >> GS40G_PAGE_SHIFT;
+	wm_gmii_i82544_writereg(self, phy, GS40G_PAGE_SELECT, page);
+
+	/* Read reg */
+	offset = reg & GS40G_OFFSET_MASK;
+	rv = wm_gmii_i82544_readreg(self, phy, offset);
+
+	wm_put_swfw_semaphore(sc, sem);
+	return rv;
+}
+
+/*
+ * wm_gmii_gs40g_writereg:	[mii interface function]
+ *
+ *	Write a PHY register on the I210 and I211.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static void
+wm_gmii_gs40g_writereg(device_t self, int phy, int reg, int val)
+{
+	struct wm_softc *sc = device_private(self);
+	int sem;
+	int page, offset;
+
+	/* Acquire semaphore */
+	sem = swfwphysem[sc->sc_funcid];
+	if (wm_get_swfw_semaphore(sc, sem)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return;
+	}
+
+	/* Page select */
+	page = reg >> GS40G_PAGE_SHIFT;
+	wm_gmii_i82544_writereg(self, phy, GS40G_PAGE_SELECT, page);
+
+	/* Write reg */
+	offset = reg & GS40G_OFFSET_MASK;
+	wm_gmii_i82544_writereg(self, phy, offset, val);
+
+	/* Release semaphore */
 	wm_put_swfw_semaphore(sc, sem);
 }
 
@@ -8904,7 +9000,7 @@ wm_nvm_read_word_invm(struct wm_softc *sc, uint16_t address, uint16_t *data)
 	uint8_t record_type, word_address;
 
 	for (i = 0; i < INVM_SIZE; i++) {
-		invm_dword = CSR_READ(sc, E1000_INVM_DATA_REG(i));
+		invm_dword = CSR_READ(sc, WM_INVM_DATA_REG(i));
 		/* Get record type */
 		record_type = INVM_DWORD_TO_RECORD_TYPE(invm_dword);
 		if (record_type == INVM_UNINITIALIZED_STRUCTURE)
@@ -9415,11 +9511,11 @@ wm_get_swfwhw_semaphore(struct wm_softc *sc)
 
 	for (timeout = 0; timeout < 200; timeout++) {
 		ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
-		ext_ctrl |= E1000_EXTCNF_CTRL_SWFLAG;
+		ext_ctrl |= EXTCNFCTR_MDIO_SW_OWNERSHIP;
 		CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
 
 		ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
-		if (ext_ctrl & E1000_EXTCNF_CTRL_SWFLAG)
+		if (ext_ctrl & EXTCNFCTR_MDIO_SW_OWNERSHIP)
 			return 0;
 		delay(5000);
 	}
@@ -9433,7 +9529,7 @@ wm_put_swfwhw_semaphore(struct wm_softc *sc)
 {
 	uint32_t ext_ctrl;
 	ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
-	ext_ctrl &= ~E1000_EXTCNF_CTRL_SWFLAG;
+	ext_ctrl &= ~EXTCNFCTR_MDIO_SW_OWNERSHIP;
 	CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
 }
 
@@ -10225,4 +10321,79 @@ wm_reset_mdicnfg_82580(struct wm_softc *sc)
 	if (nvmword & NVM_CFG3_PORTA_COM_MDIO)
 		reg |= MDICNFG_COM_MDIO;
 	CSR_WRITE(sc, WMREG_MDICNFG, reg);
+}
+
+/*
+ * I210 Errata 25 and I211 Errata 10
+ * Slow System Clock.
+ */
+static void
+wm_pll_workaround_i210(struct wm_softc *sc)
+{
+	uint32_t mdicnfg, wuc;
+	uint32_t reg;
+	pcireg_t pcireg;
+	uint32_t pmreg;
+	uint16_t nvmword, tmp_nvmword;
+	int phyval;
+	bool wa_done = false;
+	int i;
+
+	/* Save WUC and MDICNFG registers */
+	wuc = CSR_READ(sc, WMREG_WUC);
+	mdicnfg = CSR_READ(sc, WMREG_MDICNFG);
+
+	reg = mdicnfg & ~MDICNFG_DEST;
+	CSR_WRITE(sc, WMREG_MDICNFG, reg);
+
+	if (wm_nvm_read(sc, INVM_AUTOLOAD, 1, &nvmword) != 0)
+		nvmword = INVM_DEFAULT_AL;
+	tmp_nvmword = nvmword | INVM_PLL_WO_VAL;
+
+	/* Get Power Management cap offset */
+	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PWRMGMT,
+		&pmreg, NULL) == 0)
+		return;
+	for (i = 0; i < WM_MAX_PLL_TRIES; i++) {
+		phyval = wm_gmii_gs40g_readreg(sc->sc_dev, 1,
+		    GS40G_PHY_PLL_FREQ_PAGE | GS40G_PHY_PLL_FREQ_REG);
+		
+		if ((phyval & GS40G_PHY_PLL_UNCONF) != GS40G_PHY_PLL_UNCONF) {
+			break; /* OK */
+		}
+
+		wa_done = true;
+		/* Directly reset the internal PHY */
+		reg = CSR_READ(sc, WMREG_CTRL);
+		CSR_WRITE(sc, WMREG_CTRL, reg | CTRL_PHY_RESET);
+
+		reg = CSR_READ(sc, WMREG_CTRL_EXT);
+		reg |= CTRL_EXT_PHYPDEN | CTRL_EXT_SDLPE;
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+		CSR_WRITE(sc, WMREG_WUC, 0);
+		reg = (INVM_AUTOLOAD << 4) | (tmp_nvmword << 16);
+		CSR_WRITE(sc, WMREG_EEARBC_I210, reg);
+		
+		pcireg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+		    pmreg + PCI_PMCSR);
+		pcireg |= PCI_PMCSR_STATE_D3;
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
+		    pmreg + PCI_PMCSR, pcireg);
+		delay(1000);
+		pcireg &= ~PCI_PMCSR_STATE_D3;
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
+		    pmreg + PCI_PMCSR, pcireg);
+
+		reg = (INVM_AUTOLOAD << 4) | (nvmword << 16);
+		CSR_WRITE(sc, WMREG_EEARBC_I210, reg);
+		
+		/* Restore WUC register */
+		CSR_WRITE(sc, WMREG_WUC, wuc);
+	}
+	
+	/* Restore MDICNFG setting */
+	CSR_WRITE(sc, WMREG_MDICNFG, mdicnfg);
+	if (wa_done)
+		aprint_verbose_dev(sc->sc_dev, "I210 workaround done\n");
 }
