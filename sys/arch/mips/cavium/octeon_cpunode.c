@@ -250,7 +250,7 @@ cpu_cpunode_attach_common(device_t self, struct cpu_info *ci)
 	KASSERT(pg != NULL);
 	const vaddr_t kva = mips_pmap_map_poolpage(VM_PAGE_TO_PHYS(pg));
 	KASSERT(kva != 0);
-	ci->ci_xnext = (void *)(kva + PAGE_SIZE - sizeof(struct kernframe));
+	ci->ci_nmi_stack = (void *)(kva + PAGE_SIZE - sizeof(struct kernframe));
 #endif
 
 #ifdef WDOG
