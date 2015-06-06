@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.65 2015/05/30 17:39:56 joerg Exp $
+# $NetBSD: ad.arm,v 1.66 2015/06/06 15:16:28 christos Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -30,8 +30,8 @@
 ./usr/lib/oabi/libarm_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libasan_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libasn1_g.a			comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/libatf-c++_g.a			comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/libatf-c_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/oabi/libatf-c++_g.a			comp-c-debuglib		compat,debuglib,atf
+./usr/lib/oabi/libatf-c_g.a			comp-c-debuglib		compat,debuglib,atf
 ./usr/lib/oabi/libbfd_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libbind9_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libblacklist_g.a			comp-c-debuglib		compat,debuglib
@@ -108,7 +108,7 @@
 ./usr/lib/oabi/libobjc_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libopcodes_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libossaudio_g.a			comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/libp2k_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/oabi/libp2k_g.a			comp-c-debuglib		compat,debuglib,rump
 ./usr/lib/oabi/libpam_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libpcap_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libpci_g.a			comp-c-debuglib		compat,debuglib
@@ -128,13 +128,13 @@
 ./usr/lib/oabi/libroken_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/librpcsvc_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/librt_g.a			comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/librump_g.a			comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/librumpclient_g.a		comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/librumpdev_g.a			comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/librumphijack_g.a		comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/librumpnet_g.a			comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/librumpuser_g.a			comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/librumpvfs_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/oabi/librump_g.a			comp-c-debuglib		compat,debuglib,rump
+./usr/lib/oabi/librumpclient_g.a		comp-c-debuglib		compat,debuglib,rump
+./usr/lib/oabi/librumpdev_g.a			comp-c-debuglib		compat,debuglib,rump
+./usr/lib/oabi/librumphijack_g.a		comp-c-debuglib		compat,debuglib,rump
+./usr/lib/oabi/librumpnet_g.a			comp-c-debuglib		compat,debuglib,rump
+./usr/lib/oabi/librumpuser_g.a			comp-c-debuglib		compat,debuglib,rump
+./usr/lib/oabi/librumpvfs_g.a			comp-c-debuglib		compat,debuglib,rump
 ./usr/lib/oabi/libsaslc_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libskey_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libsl_g.a			comp-c-debuglib		compat,debuglib
@@ -145,7 +145,7 @@
 ./usr/lib/oabi/libsupc++_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libterminfo_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libtre_g.a			comp-c-debuglib		compat,debuglib
-./usr/lib/oabi/libukfs_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/oabi/libukfs_g.a			comp-c-debuglib		compat,debuglib,rump
 ./usr/lib/oabi/libusbhid_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libutil_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/oabi/libvers_g.a			comp-c-debuglib		compat,debuglib
