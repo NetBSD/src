@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.26 2015/06/04 05:23:40 matt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.27 2015/06/06 04:32:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.26 2015/06/04 05:23:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.27 2015/06/06 04:32:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -487,6 +487,10 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 	case OP_REGIMM:
 		db_printf("%s\t%s,", regimm_name[i.IType.rt],
 		    reg_name[i.IType.rs]);
+		if (i.IType.rt >= OP_TGEI && i.IType.rt <= OP_TNEI) {
+			db_printf("%d",(int16_t)i.IType.imm);
+			break;
+		}
 		goto pr_displ;
 
 	case OP_BLEZ:
