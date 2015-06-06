@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.45.6.6 2015/04/06 15:18:14 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.45.6.7 2015/06/06 15:27:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@ usbd_status	usbd_set_hub_feature(struct usbd_device *, int);
 usbd_status	usbd_clear_hub_feature(struct usbd_device *, int);
 usbd_status	usbd_set_port_feature(struct usbd_device *, int, int);
 usbd_status	usbd_clear_port_feature(struct usbd_device *, int, int);
+usbd_status	usbd_set_port_u1_timeout(struct usbd_device *, int, int);
+usbd_status	usbd_set_port_u2_timeout(struct usbd_device *, int, int);
 usbd_status	usbd_get_device_status(struct usbd_device *, usb_status_t *);
 usbd_status	usbd_get_hub_status(struct usbd_device *, usb_hub_status_t *);
 usbd_status	usbd_get_protocol(struct usbd_interface *, uint8_t *);
