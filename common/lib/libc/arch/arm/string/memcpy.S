@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.7 2015/03/26 13:34:51 justin Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.8 2015/06/07 11:41:59 joerg Exp $	*/
 
 #include <arm/cdefs.h>
 
@@ -10,4 +10,6 @@
 
 #if defined(__ARM_EABI__) && !defined(_RUMPKERNEL)
 STRONG_ALIAS(__aeabi_memcpy, memcpy)
+STRONG_ALIAS(__aeabi_memcpy4, memcpy)
+STRONG_ALIAS(__aeabi_memcpy8, memcpy)
 #endif
