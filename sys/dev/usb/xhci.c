@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.27 2015/05/28 06:15:47 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.28 2015/06/07 08:04:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.27 2015/05/28 06:15:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.28 2015/06/07 08:04:52 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1005,11 +1005,14 @@ xhci_intr1(struct xhci_softc * const sc)
  * port_status speed
  *	definition: UPS_*_SPEED in usb.h
  *	They are used in usb_port_status_t and valid only for USB 2.0.
- *	Speed value is 0 for Super Speed or more.
+ *	Speed value is always 0 for Super Speed or more, and dwExtPortStatus
+ *	of usb_port_status_ext_t indicates port speed.
  *	Note that some 3.0 values overlap with 2.0 values.
  *	(e.g. 0x200 means UPS_POER_POWER_SS in SS and
  *	            means UPS_LOW_SPEED in HS.)
- *	port status sent from hub also uses these values.
+ *	port status returned from hub also uses these values.
+ *	On NetBSD UPS_OTHER_SPEED indicates port speed is super speed
+ *	or more.
  * xspeed:
  *	definition: Protocol Speed ID (PSI) (xHCI 1.1 7.2.1)
  *	They are used in only slot context and PORTSC reg of xhci.
