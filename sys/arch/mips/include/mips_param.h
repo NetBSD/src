@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.34 2013/05/23 21:39:49 christos Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.35 2015/06/07 06:07:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -25,10 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef _KERNEL
-#include <machine/cpu.h>
-#endif
-
 /*
  * No reason this can't be common
  */
