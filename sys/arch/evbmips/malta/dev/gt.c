@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.13 2011/06/06 17:13:05 matt Exp $	*/
+/*	$NetBSD: gt.c,v 1.14 2015/06/07 07:19:21 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,13 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.13 2011/06/06 17:13:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.14 2015/06/07 07:19:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcivar.h>
+
+#include <mips/cpuregs.h>
 
 #include <evbmips/malta/maltareg.h>
 #include <evbmips/malta/maltavar.h>
