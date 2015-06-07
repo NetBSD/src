@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.59 2015/06/06 21:48:45 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.60 2015/06/07 08:03:10 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2655,7 +2655,7 @@ MIPSX(resume):
 #endif /* !ENABLE_MIPS_16KB_PAGE */
 #if (MIPS32R2 + MIPS64R2) > 0
 	PTR_L	v0, L_PRIVATE(a0)		# get lwp private
-	_MTC0	v0, MIPS_COP_0_TLB_CONTEXT, 4	# make available for rdhwr
+	_MTC0	v0, MIPS_COP_0_USERLOCAL	# make available for rdhwr
 #endif
 	jr	ra
 	 nop
