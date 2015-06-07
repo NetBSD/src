@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_ras.S,v 1.4 2011/08/27 13:23:52 bouyer Exp $	*/
+/*	$NetBSD: lock_stubs_ras.S,v 1.5 2015/06/07 06:07:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-#include <machine/cpu.h>
 
 #include "assym.h"
 

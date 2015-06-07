@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.15 2011/08/16 06:55:11 matt Exp $	*/
+/*	$NetBSD: copy.S,v 1.16 2015/06/07 06:07:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,6 @@
 
 #include <sys/errno.h>
 #include <mips/asm.h>
-#include <mips/cpu.h>
 #include "assym.h"
 
 	.set	noreorder

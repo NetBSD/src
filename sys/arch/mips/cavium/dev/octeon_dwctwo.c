@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dwctwo.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: octeon_dwctwo.c,v 1.3 2015/06/07 06:07:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.3 2015/06/07 06:07:49 matt Exp $");
 
 #include "opt_octeon.h"
 #include "opt_usb.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.2 2015/06/01 22:55:12 matt Exp $
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/workqueue.h>
 
 #include <dev/usb/usb.h>

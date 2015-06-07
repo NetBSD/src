@@ -1,4 +1,4 @@
-/*	$NetBSD: bds_emul.S,v 1.6 2011/12/25 11:51:15 kiyohara Exp $	*/
+/*	$NetBSD: bds_emul.S,v 1.7 2015/06/07 06:07:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,6 @@
 #include <sys/cdefs.h>
 
 #include <mips/asm.h>
-#include <mips/cpu.h>			/* for MIPS_CURLWP */
 #include <mips/trap.h>			/* for T_RES_INST */
 
 #include "assym.h"
