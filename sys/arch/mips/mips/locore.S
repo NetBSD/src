@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.195 2015/06/06 20:55:45 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.196 2015/06/07 08:03:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,7 @@ _C_LABEL(kernel_text):
 	// octeon_cpu_spinup if MP or loop using the wait instruction since
 	// non-primary CPUs can't do anything useful.
 	//
-	mfc0	a0, MIPS_COP_0_PRID, 1		# EBASE
+	mfc0	a0, MIPS_COP_0_EBASE		# EBASE
 	COP0_SYNC
 	ext	a1, a0, 0, 10			# get CPU number
 	beqz	a1, 2f				# normal startup if 0
