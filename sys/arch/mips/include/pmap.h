@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.63 2014/05/11 07:53:28 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.64 2015/06/07 06:07:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,6 +77,8 @@
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #endif
+
+#include <sys/evcnt.h>
 
 #include <mips/cpuregs.h>	/* for KSEG0 below */
 //#include <mips/pte.h>
