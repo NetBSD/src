@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.91 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.92 2015/06/07 08:03:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -494,6 +494,7 @@
  *  4	MIPS_COP_0_TLB_CONTEXT	3636 TLB Context.
  *  4/2	MIPS_COP_0_USERLOCAL	..36 UserLocal.
  *  5	MIPS_COP_0_TLB_PG_MASK	.333 TLB Page Mask register.
+ *  5/1 MIPS_COP_0_PG_GRAIN	..33 PageGrain register
  *  6	MIPS_COP_0_TLB_WIRED	.333 Wired TLB number.
  *  7	MIPS_COP_0_HWRENA	..33 rdHWR Enable.
  *  8	MIPS_COP_0_BAD_VADDR	3636 Bad virtual address.
@@ -512,6 +513,8 @@
  * 16/1	MIPS_COP_0_CONFIG1	..33 Configuration register 1.
  * 16/2	MIPS_COP_0_CONFIG2	..33 Configuration register 2.
  * 16/3	MIPS_COP_0_CONFIG3	..33 Configuration register 3.
+ * 16/4	MIPS_COP_0_CONFIG4	..33 Configuration register 6.
+ * 16/5	MIPS_COP_0_CONFIG5	..33 Configuration register 7.
  * 16/6	MIPS_COP_0_CONFIG6	..33 Configuration register 6.
  * 16/7	MIPS_COP_0_CONFIG7	..33 Configuration register 7.
  * 17	MIPS_COP_0_LLADDR	.336 Load Linked Address.
@@ -580,8 +583,35 @@
 #define	MIPS_COP_0_ERROR_PC	_(30)
 
 /* MIPS32/64 */
+#define	MIPS_COP_0_CONTEXT	_(4)
+#define	MIPS_COP_0_CTXCONFIG	_(4), 1
+#define	MIPS_COP_0_USERLOCAL	_(4), 2
+#define	MIPS_COP_0_XCTXCONFIG	_(4), 3		/* MIPS64 */
+#define	MIPS_COP_0_PGGRAIN	_(5), 1
+#define	MIPS_COP_0_SEGCTL0	_(5), 2
+#define	MIPS_COP_0_SEGCTL1	_(5), 3
+#define	MIPS_COP_0_SEGCTL2	_(5), 4
+#define	MIPS_COP_0_PWBASE	_(5), 5
+#define	MIPS_COP_0_PWFIELD	_(5), 6
+#define	MIPS_COP_0_PWSIZE	_(5), 7
+#define MIPS_COP_0_PWCTL	_(6), 6
 #define	MIPS_COP_0_HWRENA	_(7)
-#define	MIPS_COP_0_OSSCRATCH	_(22)
+#define MIPS_COP_0_BADINSTR	_(8), 1
+#define MIPS_COP_0_BADINSTRP	_(8), 2
+#define	MIPS_COP_0_INTCTL	_(12), 1
+#define	MIPS_COP_0_SRSCTL	_(12), 2
+#define	MIPS_COP_0_SRSMAP	_(12), 3
+#define	MIPS_COP_0_NESTEDEXC	_(13), 5
+#define	MIPS_COP_0_NESTED_EPC	_(14), 2
+#define	MIPS_COP_0_EBASE	_(15), 1
+#define	MIPS_COP_0_CDMMBASE	_(15), 2
+#define	MIPS_COP_0_CMGCRBASE	_(15), 3
+#define MIPS_COP_0_CONFIG1	_(16), 1
+#define MIPS_COP_0_CONFIG2	_(16), 2
+#define MIPS_COP_0_CONFIG3	_(16), 3
+#define MIPS_COP_0_CONFIG4	_(16), 4
+#define MIPS_COP_0_CONFIG5	_(16), 5
+#define	MIPS_COP_0_OSSCRATCH	_(22)		/* RMI */
 #define	MIPS_COP_0_DIAG		_(22)
 #define	MIPS_COP_0_DEBUG	_(23)
 #define	MIPS_COP_0_DEPC		_(24)
