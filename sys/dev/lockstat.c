@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.22 2015/03/11 16:00:54 christos Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.23 2015/06/07 06:08:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.22 2015/03/11 16:00:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.23 2015/06/07 06:08:37 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.22 2015/03/11 16:00:54 christos Exp $
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/syslog.h>
 #include <sys/atomic.h>
 
