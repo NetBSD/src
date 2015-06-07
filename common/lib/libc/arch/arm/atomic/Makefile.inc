@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2015/06/07 11:46:56 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2015/06/07 15:06:24 matt Exp $
 
 .ifnmake obj
 .include "${NETBSDSRCDIR}/common/lib/libc/arch/arm/features.mk"
@@ -68,7 +68,6 @@ CPUFLAGS.atomic_simplelock.c+=	-marm
 .if "${FEAT_LDREX}" == "no"
 SRCS.atomic+=	atomic_init_testset.c
 SRCS.atomic+=	atomic_cas_up.S
-AFLAGS.atomic_cas_up.S+=	-march=armv5te
 CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_UP
 CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_16_UP
 CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_8_UP
