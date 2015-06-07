@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.111.2.7 2015/05/28 06:15:47 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.111.2.8 2015/06/07 07:55:30 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -395,15 +395,26 @@ typedef struct {
 } UPACKED usb_devcap_platform_descriptor_t;
 #define USB_DEVCAP_PLATFORM_DESCRIPTOR_SIZE 20
 
+/* usb 3.1 ch 9.6.2.5 */
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDevCapabilityType;
 	uByte		bReserved;
 	uDWord		bmAttributes;
+#define	USB_DEVCAP_SSP_SSAC(x)			__SHIFTOUT(x, __BITS(4,0))
+#define	USB_DEVCAP_SSP_SSIC(x)			__SHIFTOUT(x, __BITS(8,5))
 	uWord		wFunctionalitySupport;
+#define	USB_DEVCAP_SSP_SSID(x)			__SHIFTOUT(x, __BITS(3,0))
+#define	USB_DEVCAP_SSP_MIN_RXLANE_COUNT(x)	__SHIFTOUT(x, __BITS(11,8))
+#define	USB_DEVCAP_SSP_MIN_TXLANE_COUNT(x)	__SHIFTOUT(x, __BITS(15,12))
 	uWord		wReserved;
 	uDWord		bmSublinkSpeedAttr[0];
+#define	USB_DEVCAP_SSP_SSID(x)			__SHIFTOUT(x, __BITS(3,0))
+#define	USB_DEVCAP_SSP_LSE(x)			__SHIFTOUT(x, __BITS(5,4))
+#define	USB_DEVCAP_SSP_ST(x)			__SHIFTOUT(x, __BITS(7,6))
+#define	USB_DEVCAP_SSP_LP(x)			__SHIFTOUT(x, __BITS(15,14))
+#define	USB_DEVCAP_SSP_LSM(x)			__SHIFTOUT(x, __BITS(31,16))
 } UPACKED usb_devcap_ssp_descriptor_t;
 #define USB_DEVCAP_SSP_DESCRIPTOR_SIZE 12 /* variable length */
 
@@ -424,6 +435,10 @@ typedef struct {
 #define UR_STOP_TT		0x0b
 #define UR_SET_HUB_DEPTH	0x0c
 #define UR_GET_PORT_ERR_COUNT	0x0d
+/* Port Status Type for GET_STATUS,  USB 3.1 10.16.2.6 and Table 10-12 */
+#define  UR_PST_PORT_STATUS	0
+#define  UR_PST_PD_STATUS	1
+#define  UR_PST_EXT_PORT_STATUS	2
 
 /*
  * Hub features from USB 2.0 spec, table 11-17 and updated by the
@@ -596,6 +611,14 @@ typedef struct {
 #define UPS_C_PORT_LINK_STATE		0x0040
 #define UPS_C_PORT_CONFIG_ERROR		0x0080
 } UPACKED usb_port_status_t;
+
+/* 10.16.2.6 */
+/* Valid when port status type is UR_PST_EXT_PORT_STATUS. */
+typedef struct {
+	uWord		wPortStatus;
+	uWord		wPortChange;
+	uDWord		dwExtPortStatus;
+} UPACKED usb_port_status_ext_t;
 
 /* Device class codes */
 #define UDCLASS_IN_INTERFACE	0x00
@@ -854,7 +877,8 @@ struct usb_device_info {
 #define USB_SPEED_FULL 2
 #define USB_SPEED_HIGH 3
 #define USB_SPEED_SUPER 4
-#define USB_IS_SS(X) ((X) == USB_SPEED_SUPER)
+#define USB_SPEED_SUPER_PLUS 5
+#define USB_IS_SS(X) ((X) == USB_SPEED_SUPER || (X) == USB_SPEED_SUPER_PLUS)
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
