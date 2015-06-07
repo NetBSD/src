@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.4 2015/06/06 21:05:16 matt Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.5 2015/06/07 08:03:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.4 2015/06/06 21:05:16 matt Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.5 2015/06/07 08:03:10 matt Exp $")
 
 #include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
@@ -119,12 +119,12 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	// must has its own exception vector page.  The exceptions will be
 	// modified to refer to that CPU's cpu_info structure.
 	//
-	mfc0	s1, MIPS_COP_0_PRID, 1	# get EBASE
+	mfc0	s1, MIPS_COP_0_EBASE	# get EBASE
 	ext	s0, s1, 0, 10		# fetch cpunum (MIPSNNR2)
 	ins	s1, zero, 0, 10		# clear it (MIPSNNR2)
 	ins	s1, s0, 12, 10		# insert cpunum as exception address
 	ehb
-	mtc0	s1, MIPS_COP_0_PRID, 1	# set EBASE
+	mtc0	s1, MIPS_COP_0_EBASE	# set EBASE
 	COP0_SYNC
 
 	// we only can deal with 2 cores
@@ -167,7 +167,7 @@ NESTED_NOPROFILE(octeon_reset_vector, 0, ra)
 	 ins	k0, zero, V_MIPS_SR_BEV, 1 # clear boot exception vectors
 	mtc0	k0, MIPS_COP_0_STATUS	# write cp0 status
 	ehb				# hazard barrier
-	mfc0	k0, MIPS_COP_0_PRID, 1	# get EBASE
+	mfc0	k0, MIPS_COP_0_EBASE	# get EBASE
 	ext	k0, k0, 0, 10		# select cpunum
 	dsll	k0, k0, PTR_SCALESHIFT	# cpunum -> array index
 	PTR_LA	k1, _C_LABEL(cpuid_infos)
