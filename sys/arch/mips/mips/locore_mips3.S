@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.107 2015/06/06 21:45:40 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.108 2015/06/07 08:03:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -432,7 +432,7 @@ END(mipsNN_cp0_watchhi_write)
  */
 LEAF(mipsNN_cp0_ebase_read)
 	jr	ra
-	 mfc0	v0, MIPS_COP_0_PRID, 1
+	 mfc0	v0, MIPS_COP_0_EBASE
 END(mipsNN_cp0_ebase_read)
 
 /*
@@ -443,13 +443,13 @@ LEAF(mipsNN_cp0_ebase_write)
 	and	v0, v0, 0x1ff
 	xor	v0, v0, a0
 	jr	ra
-	 mtc0	v0, MIPS_COP_0_PRID, 1
+	 mtc0	v0, MIPS_COP_0_EBASE
 END(mipsNN_cp0_ebase_write)
 
 #if (MIPS32R2 + MIPS64R2) > 0
 /*
- * void mipsNN_cp0_userlocal_write(void *);
- *	Set the value of the CP0 USERLOCAL (TLB_CONTEXT, select 2) register.
+ * void mipsNN_cp0_hwrena_write(void *);
+ *	Set the value of the CP0 HWRENA register.
  */
 LEAF(mipsNN_cp0_hwrena_write)
 	jr	ra
@@ -462,7 +462,7 @@ END(mipsNN_cp0_hwrena_write)
  */
 LEAF(mipsNN_cp0_userlocal_write)
 	jr	ra
-	 _MTC0	a0, MIPS_COP_0_TLB_CONTEXT, 2
+	 _MTC0	a0, MIPS_COP_0_USERLOCAL
 END(mipsNN_cp0_userlocal_write)
 #endif /* (MIPS32R2 + MIPS64R2) > 0 */
 	.set	pop
