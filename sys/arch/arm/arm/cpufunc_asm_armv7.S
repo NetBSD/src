@@ -45,12 +45,31 @@ ENTRY(armv7_wait)
 	bx	lr
 END(armv7_wait)
 
+
+#define	TTBR_C			(1 << 0)
+#define	TTBR_S			(1 << 1)
+#define	TTBR_IMP		(1 << 2)
+#define	TTBR_RGN_MASK		(3 << 3)
+#define	 TTBR_RGN_NC		(0 << 3)
+#define	 TTBR_RGN_WBWA		(1 << 3)
+#define	 TTBR_RGN_WT		(2 << 3)
+#define	 TTBR_RGN_WBNWA		(3 << 3)
+#define	TTBR_NOS		(1 << 5)
+#define	TTBR_IRGN_MASK		((1 << 6) | (1 << 0))
+#define	 TTBR_IRGN_NC		((0 << 6) | (0 << 0))
+#define	 TTBR_IRGN_WBWA		((0 << 6) | (1 << 0))
+#define	 TTBR_IRGN_WT		((1 << 6) | (0 << 0))
+#define	 TTBR_IRGN_WBNWA	((1 << 6) | (1 << 0))
+
+#define	TTBR_UPATTR		(TTBR_S | TTBR_RGN_WBNWA | TTBR_C)
+#define	TTBR_MPATTR		(TTBR_S | TTBR_RGN_WBNWA /* | TTBR_NOS */ | TTBR_IRGN_WBNWA)
+
 ENTRY(armv7_context_switch)
 	dsb				@ data synchronization barrier
 	mrc	p15, 0, ip, c0, c0, 5	@ get MPIDR
 	cmp	ip, #0
-	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
-	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
+	orrlt	r0, r0, #TTBR_MPATTR	@ MP, cachable (Normal WB)
+	orrge	r0, r0, #TTBR_UPATTR	@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0 	@ set the new TTBR 0
 #ifdef ARM_MMU_EXTENDED
 	cmp	r1, #0
@@ -126,8 +145,8 @@ END(armv7_tlb_flushID)
 ENTRY_NP(armv7_setttb)
 	mrc	p15, 0, ip, c0, c0, 5	@ get MPIDR
 	cmp	ip, #0
-	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
-	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
+	orrlt	r0, r0, #TTBR_MPATTR	@ MP, cachable (Normal WB)
+	orrge	r0, r0, #TTBR_UPATTR	@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0   @ load new TTBR 0
 #ifdef ARM_MMU_EXTENDED
 	cmp	r1, #0
