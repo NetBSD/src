@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.272 2015/05/31 15:48:03 hannken Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.273 2015/06/07 13:39:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.272 2015/05/31 15:48:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.273 2015/06/07 13:39:48 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -784,10 +784,7 @@ lfs_mknod(void *v)
 	}
 
 	fstrans_done(ap->a_dvp->v_mount);
-	if (error != 0) {
-		*vpp = NULL;
-		return (error);
-	}
+	KASSERT(error == 0);
 	VOP_UNLOCK(*vpp);
 	return (0);
 }
@@ -1017,9 +1014,6 @@ lfs_mkdir(void *v)
 
 out:
 	fstrans_done(dvp->v_mount);
-#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-out2:
-#endif
 
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);

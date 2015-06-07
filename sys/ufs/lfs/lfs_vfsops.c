@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.324 2015/05/31 15:48:03 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.325 2015/06/07 13:39:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.324 2015/05/31 15:48:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.325 2015/06/07 13:39:48 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1720,7 +1720,7 @@ lfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	error = lfs_chkiq(ip, 1, cred, 0);
 	if (error) {
 		lfs_vfree(dvp, ino, mode);
-		ffs_deinit_vnode(ump, vp);
+		lfs_deinit_vnode(ump, vp);
 
 		return error;
 	}
@@ -1738,10 +1738,10 @@ lfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 		 */
 		if (ump->um_fstype == ULFS1)
 			ip->i_ffs1_rdev = ulfs_rw32(vap->va_rdev,
-			    ULFS_MPNEEDSWAP(ump));
+			    ULFS_MPNEEDSWAP(fs));
 		else
 			ip->i_ffs2_rdev = ulfs_rw64(vap->va_rdev,
-			    ULFS_MPNEEDSWAP(ump));
+			    ULFS_MPNEEDSWAP(fs));
 	}
 	lfs_vinit(mp, &vp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.240 2015/05/31 15:48:03 hannken Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.241 2015/06/07 13:39:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.240 2015/05/31 15:48:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.241 2015/06/07 13:39:48 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -479,7 +479,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 {
 	struct inode *ip;
 	struct vnode *vp;
-	int inodes_written = 0, only_cleaning;
+	int inodes_written = 0;
 	int error = 0;
 
 	ASSERT_SEGLOCK(fs);
@@ -547,14 +547,10 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			continue;
 		}
 
-		only_cleaning = 0;
 		/*
 		 * Write the inode/file if dirty and it's not the IFILE.
 		 */
 		if ((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp)) {
-			only_cleaning =
-			    ((ip->i_flag & IN_ALLMOD) == IN_CLEANING);
-
 			if (ip->i_number != LFS_IFILE_INUM) {
 				error = lfs_writefile(fs, sp, vp);
 				if (error) {
@@ -598,10 +594,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			}
 		}
 
-		if (lfs_clean_vnhead && only_cleaning)
-			vrele(vp);
-		else
-			vrele(vp);
+		vrele(vp);
 
 		mutex_enter(&mntvnode_lock);
 	}
