@@ -721,8 +721,7 @@ BUILDING
                    must have been performed with MKUNPRIVED=yes because ``make
                    install-image'' relies on information in DESTDIR/METALOG.
 
-     live-image    Create NetBSD live images in the
-                   RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage
+     live-image    Create NetBSD live images in the RELEASEDIR/images
                    directory.  The live image contains all necessary files to
                    boot NetBSD up to multi-user mode, including all files
                    which should be extracted during installation, NetBSD
