@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.57 2014/04/03 18:54:10 christos Exp $   */
+/*      $NetBSD: raidctl.c,v 1.57.4.1 2015/06/08 20:48:01 snj Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.57 2014/04/03 18:54:10 christos Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.57.4.1 2015/06/08 20:48:01 snj Exp $");
 #endif
 
 
@@ -85,6 +85,7 @@ static  void get_bar(char *, double, int);
 static  void get_time_string(char *, int);
 static  void rf_output_pmstat(int, int);
 static  void rf_pm_configure(int, int, char *, int[]);
+static  unsigned int _strtoud(char *);
 
 int verbose;
 
@@ -183,7 +184,7 @@ main(int argc,char *argv[])
 			break;
 		case 'I':
 			action = RAIDFRAME_INIT_LABELS;
-			serial_number = atoi(optarg);
+			serial_number = _strtoud(optarg);
 			num_options++;
 			break;
 		case 'm':
@@ -195,11 +196,11 @@ main(int argc,char *argv[])
 			action = RAIDFRAME_PARITYMAP_SET_DISABLE;
 			parityconf = strdup(optarg);
 			num_options++;
-			/* XXXjld: should rf_pm_configure do the atoi()s? */
+			/* XXXjld: should rf_pm_configure do the strtol()s? */
 			i = 0;
 			while (i < 3 && optind < argc &&
 			    isdigit((int)argv[optind][0]))
-				parityparams[i++] = atoi(argv[optind++]);
+				parityparams[i++] = _strtoud(argv[optind++]);
 			while (i < 3)
 				parityparams[i++] = 0;
 			break;
@@ -1157,4 +1158,27 @@ usage(void)
 	fprintf(stderr, "       %s [-v] -u dev\n", progname);
 	exit(1);
 	/* NOTREACHED */
+}
+
+static unsigned int
+_strtoud(char *str)
+{
+	long num;
+	char *ep;
+
+	errno = 0;
+	num = strtol(str, &ep, 10);
+	if (str[0] == '\0' || *ep != '\0')
+		errx(1, "Not a number: %s", str);
+
+	if (errno)
+		err(1, "Inavlid number %s", str);
+
+	if (num < 0)
+		errx(1, "Negative number: %s", str);
+
+	if (num > INT_MAX)
+		errx(1, "Number too large: %s", str);
+
+	return (unsigned int)num;
 }
