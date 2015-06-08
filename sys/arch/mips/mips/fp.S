@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.45 2015/06/07 06:07:49 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.46 2015/06/08 16:25:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,7 @@
 
 #include <mips/asm.h>
 #include <mips/trap.h>
+#include <mips/cpuregs.h>
 
 #include "assym.h"
 
