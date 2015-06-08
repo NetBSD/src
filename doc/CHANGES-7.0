@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.325 2015/06/05 17:05:12 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.326 2015/06/08 20:55:23 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -31772,4 +31772,293 @@ share/mk/bsd.lib.mk				1.358 via patch
 
 	Fix MKDEBUG vs parallel builds.
 	[riz, ticket #825]
+
+external/bsd/openpam/dist/CREDITS		up to 1.1.1.4
+external/bsd/openpam/dist/HISTORY		up to 1.1.1.4
+external/bsd/openpam/dist/INSTALL		up to 1.1.1.4
+external/bsd/openpam/dist/LICENSE		up to 1.1.1.4
+external/bsd/openpam/dist/Makefile.am		up to 1.1.1.4
+external/bsd/openpam/dist/Makefile.in		up to 1.1.1.4
+external/bsd/openpam/dist/README		up to 1.1.1.4
+external/bsd/openpam/dist/RELNOTES		up to 1.1.1.4
+external/bsd/openpam/dist/TODO			up to 1.1.1.3
+external/bsd/openpam/dist/aclocal.m4		up to 1.1.1.4
+external/bsd/openpam/dist/autogen.sh		up to 1.1.1.4
+external/bsd/openpam/dist/bin/Makefile.in	up to 1.1.1.4
+external/bsd/openpam/dist/bin/openpam_dump_policy/Makefile.in up to 1.1.1.3
+external/bsd/openpam/dist/bin/openpam_dump_policy/openpam_dump_policy.c up to 1.1.1.3
+external/bsd/openpam/dist/bin/pamtest/Makefile.in up to 1.1.1.4
+external/bsd/openpam/dist/bin/pamtest/pamtest.1	up to 1.7
+external/bsd/openpam/dist/bin/su/Makefile.in	up to 1.1.1.4
+external/bsd/openpam/dist/bin/su/su.1		up to 1.7
+external/bsd/openpam/dist/config.h.in		up to 1.1.1.4
+external/bsd/openpam/dist/configure		up to 1.1.1.4
+external/bsd/openpam/dist/configure.ac		up to 1.1.1.4
+external/bsd/openpam/dist/doc/Makefile.in	up to 1.1.1.4
+external/bsd/openpam/dist/doc/man/Makefile.in	up to 1.1.1.5
+external/bsd/openpam/dist/doc/man/openpam.3	up to 1.9
+external/bsd/openpam/dist/doc/man/openpam_borrow_cred.3 up to 1.6
+external/bsd/openpam/dist/doc/man/openpam_free_data.3 up to 1.6
+external/bsd/openpam/dist/doc/man/openpam_free_envlist.3 up to 1.7
+external/bsd/openpam/dist/doc/man/openpam_get_feature.3 up to 1.5
+external/bsd/openpam/dist/doc/man/openpam_get_option.3 up to 1.6
+external/bsd/openpam/dist/doc/man/openpam_log.3	up to 1.6
+external/bsd/openpam/dist/doc/man/openpam_nullconv.3 up to 1.6
+external/bsd/openpam/dist/doc/man/openpam_readline.3 up to 1.6
+external/bsd/openpam/dist/doc/man/openpam_readlinev.3 up to 1.5
+external/bsd/openpam/dist/doc/man/openpam_readword.3 up to 1.5
+external/bsd/openpam/dist/doc/man/openpam_restore_cred.3 up to 1.6
+external/bsd/openpam/dist/doc/man/openpam_set_feature.3 up to 1.5
+external/bsd/openpam/dist/doc/man/openpam_set_option.3 up to 1.6
+external/bsd/openpam/dist/doc/man/openpam_straddch.3 up to 1.5
+external/bsd/openpam/dist/doc/man/openpam_subst.3 up to 1.7
+external/bsd/openpam/dist/doc/man/openpam_ttyconv.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam.3		up to 1.9
+external/bsd/openpam/dist/doc/man/pam.conf.5	up to 1.8
+external/bsd/openpam/dist/doc/man/pam_acct_mgmt.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_authenticate.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_chauthtok.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_close_session.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_conv.3	up to 1.7
+external/bsd/openpam/dist/doc/man/pam_end.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_error.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_get_authtok.3 up to 1.7
+external/bsd/openpam/dist/doc/man/pam_get_data.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_get_item.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_get_user.3 up to 1.7
+external/bsd/openpam/dist/doc/man/pam_getenv.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_getenvlist.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_info.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_open_session.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_prompt.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_putenv.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_set_data.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_set_item.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_setcred.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_setenv.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_sm_acct_mgmt.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_sm_authenticate.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_sm_chauthtok.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_sm_close_session.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_sm_open_session.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_sm_setcred.3 up to 1.6
+external/bsd/openpam/dist/doc/man/pam_start.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_strerror.3 up to 1.7
+external/bsd/openpam/dist/doc/man/pam_verror.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_vinfo.3	up to 1.6
+external/bsd/openpam/dist/doc/man/pam_vprompt.3	up to 1.6
+external/bsd/openpam/dist/include/Makefile.in	up to 1.1.1.4
+external/bsd/openpam/dist/include/security/Makefile.in up to 1.1.1.4
+external/bsd/openpam/dist/include/security/openpam_version.h up to 1.5
+external/bsd/openpam/dist/lib/Makefile.am	up to 1.1.1.5
+external/bsd/openpam/dist/lib/Makefile.in	up to 1.1.1.5
+external/bsd/openpam/dist/lib/libpam/Makefile.am up to 1.1.1.1
+external/bsd/openpam/dist/lib/libpam/Makefile.in up to 1.1.1.1
+external/bsd/openpam/dist/lib/libpam/openpam_asprintf.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_asprintf.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_borrow_cred.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_check_owner_perms.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_configure.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_constants.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_constants.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_cred.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_ctype.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_debug.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_dis.c patchup to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_dlfunc.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_dynamic.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_features.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_features.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_findenv.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_free_data.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_free_envlist.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_get_feature.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_get_option.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_impl.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_load.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_log.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_nullconv.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_readline.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_readlinev.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_readword.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_restore_cred.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_set_feature.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_set_option.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_static.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_straddch.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_strlcat.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_strlcat.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_strlcmp.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_strlcpy.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_strlcpy.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_strlset.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_strlset.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_subst.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_ttyconv.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_vasprintf.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/openpam_vasprintf.h up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_acct_mgmt.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_authenticate.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_authenticate_secondary.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_chauthtok.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_close_session.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_end.c	up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_error.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_get_authtok.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_get_data.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_get_item.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_get_mapped_authtok.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_get_mapped_username.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_get_user.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_getenv.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_getenvlist.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_info.c	up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_open_session.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_prompt.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_putenv.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_set_data.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_set_item.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_set_mapped_authtok.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_set_mapped_username.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_setcred.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_setenv.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_acct_mgmt.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_authenticate.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_authenticate_secondary.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_chauthtok.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_close_session.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_get_mapped_authtok.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_get_mapped_username.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_open_session.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_set_mapped_authtok.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_set_mapped_username.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_sm_setcred.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_start.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_strerror.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_verror.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_vinfo.c up to 1.2
+external/bsd/openpam/dist/lib/libpam/pam_vprompt.c up to 1.2
+external/bsd/openpam/dist/lib/openpam_asprintf.c delete
+external/bsd/openpam/dist/lib/openpam_asprintf.h delete
+external/bsd/openpam/dist/lib/openpam_borrow_cred.c delete
+external/bsd/openpam/dist/lib/openpam_check_owner_perms.c delete
+external/bsd/openpam/dist/lib/openpam_configure.c delete
+external/bsd/openpam/dist/lib/openpam_constants.c delete
+external/bsd/openpam/dist/lib/openpam_constants.h delete
+external/bsd/openpam/dist/lib/openpam_cred.h	delete
+external/bsd/openpam/dist/lib/openpam_ctype.h	delete
+external/bsd/openpam/dist/lib/openpam_debug.h	delete
+external/bsd/openpam/dist/lib/openpam_dis.c patchdelete
+external/bsd/openpam/dist/lib/openpam_dlfunc.h	delete
+external/bsd/openpam/dist/lib/openpam_dynamic.c	delete
+external/bsd/openpam/dist/lib/openpam_features.c delete
+external/bsd/openpam/dist/lib/openpam_features.h delete
+external/bsd/openpam/dist/lib/openpam_findenv.c	delete
+external/bsd/openpam/dist/lib/openpam_free_data.c delete
+external/bsd/openpam/dist/lib/openpam_free_envlist.c delete
+external/bsd/openpam/dist/lib/openpam_get_feature.c delete
+external/bsd/openpam/dist/lib/openpam_get_option.c delete
+external/bsd/openpam/dist/lib/openpam_impl.h	delete
+external/bsd/openpam/dist/lib/openpam_load.c	delete
+external/bsd/openpam/dist/lib/openpam_log.c	delete
+external/bsd/openpam/dist/lib/openpam_nullconv.c delete
+external/bsd/openpam/dist/lib/openpam_readline.c delete
+external/bsd/openpam/dist/lib/openpam_readlinev.c delete
+external/bsd/openpam/dist/lib/openpam_readword.c delete
+external/bsd/openpam/dist/lib/openpam_restore_cred.c delete
+external/bsd/openpam/dist/lib/openpam_set_feature.c delete
+external/bsd/openpam/dist/lib/openpam_set_option.c delete
+external/bsd/openpam/dist/lib/openpam_static.c	delete
+external/bsd/openpam/dist/lib/openpam_straddch.c delete
+external/bsd/openpam/dist/lib/openpam_strlcat.c	delete
+external/bsd/openpam/dist/lib/openpam_strlcat.h	delete
+external/bsd/openpam/dist/lib/openpam_strlcmp.h	delete
+external/bsd/openpam/dist/lib/openpam_strlcpy.c	delete
+external/bsd/openpam/dist/lib/openpam_strlcpy.h	delete
+external/bsd/openpam/dist/lib/openpam_subst.c	delete
+external/bsd/openpam/dist/lib/openpam_ttyconv.c	delete
+external/bsd/openpam/dist/lib/openpam_vasprintf.c delete
+external/bsd/openpam/dist/lib/openpam_vasprintf.h delete
+external/bsd/openpam/dist/lib/pam_acct_mgmt.c	delete
+external/bsd/openpam/dist/lib/pam_authenticate.c delete
+external/bsd/openpam/dist/lib/pam_authenticate_secondary.c delete
+external/bsd/openpam/dist/lib/pam_chauthtok.c	delete
+external/bsd/openpam/dist/lib/pam_close_session.c delete
+external/bsd/openpam/dist/lib/pam_end.c		delete
+external/bsd/openpam/dist/lib/pam_error.c	delete
+external/bsd/openpam/dist/lib/pam_get_authtok.c	delete
+external/bsd/openpam/dist/lib/pam_get_data.c	delete
+external/bsd/openpam/dist/lib/pam_get_item.c	delete
+external/bsd/openpam/dist/lib/pam_get_mapped_authtok.c delete
+external/bsd/openpam/dist/lib/pam_get_mapped_username.c delete
+external/bsd/openpam/dist/lib/pam_get_user.c	delete
+external/bsd/openpam/dist/lib/pam_getenv.c	delete
+external/bsd/openpam/dist/lib/pam_getenvlist.c	delete
+external/bsd/openpam/dist/lib/pam_info.c	delete
+external/bsd/openpam/dist/lib/pam_open_session.c delete
+external/bsd/openpam/dist/lib/pam_prompt.c	delete
+external/bsd/openpam/dist/lib/pam_putenv.c	delete
+external/bsd/openpam/dist/lib/pam_set_data.c	delete
+external/bsd/openpam/dist/lib/pam_set_item.c	delete
+external/bsd/openpam/dist/lib/pam_set_mapped_authtok.c delete
+external/bsd/openpam/dist/lib/pam_set_mapped_username.c delete
+external/bsd/openpam/dist/lib/pam_setcred.c	delete
+external/bsd/openpam/dist/lib/pam_setenv.c	delete
+external/bsd/openpam/dist/lib/pam_sm_acct_mgmt.c delete
+external/bsd/openpam/dist/lib/pam_sm_authenticate.c delete
+external/bsd/openpam/dist/lib/pam_sm_authenticate_secondary.c delete
+external/bsd/openpam/dist/lib/pam_sm_chauthtok.c delete
+external/bsd/openpam/dist/lib/pam_sm_close_session.c delete
+external/bsd/openpam/dist/lib/pam_sm_get_mapped_authtok.c delete
+external/bsd/openpam/dist/lib/pam_sm_get_mapped_username.c delete
+external/bsd/openpam/dist/lib/pam_sm_open_session.c delete
+external/bsd/openpam/dist/lib/pam_sm_set_mapped_authtok.c delete
+external/bsd/openpam/dist/lib/pam_sm_set_mapped_username.c delete
+external/bsd/openpam/dist/lib/pam_sm_setcred.c	delete
+external/bsd/openpam/dist/lib/pam_start.c	delete
+external/bsd/openpam/dist/lib/pam_strerror.c	delete
+external/bsd/openpam/dist/lib/pam_verror.c	delete
+external/bsd/openpam/dist/lib/pam_vinfo.c	delete
+external/bsd/openpam/dist/lib/pam_vprompt.c	delete
+external/bsd/openpam/dist/ltmain.sh		up to 1.1.1.3
+external/bsd/openpam/dist/m4/libtool.m4		delete
+external/bsd/openpam/dist/m4/ltoptions.m4	delete
+external/bsd/openpam/dist/m4/ltsugar.m4		delete
+external/bsd/openpam/dist/m4/ltversion.m4	delete
+external/bsd/openpam/dist/m4/lt~obsolete.m4	delete
+external/bsd/openpam/dist/mkpkgng.in		up to 1.1.1.2
+external/bsd/openpam/dist/modules/Makefile.in	up to 1.1.1.4
+external/bsd/openpam/dist/modules/pam_deny/Makefile.in up to 1.1.1.4
+external/bsd/openpam/dist/modules/pam_permit/Makefile.in up to 1.1.1.4
+external/bsd/openpam/dist/modules/pam_unix/Makefile.in up to 1.1.1.4
+external/bsd/openpam/dist/pamgdb.in		up to 1.1.1.3
+external/bsd/openpam/dist/t/Makefile.am		up to 1.1.1.3
+external/bsd/openpam/dist/t/Makefile.in		up to 1.1.1.3
+external/bsd/openpam/dist/t/t.h			up to 1.1.1.3
+external/bsd/openpam/dist/t/t_file.c		up to 1.1.1.2
+external/bsd/openpam/dist/t/t_main.c		up to 1.1.1.3
+external/bsd/openpam/dist/t/t_openpam_ctype.c	up to 1.1.1.1
+external/bsd/openpam/dist/t/t_openpam_readlinev.c up to 1.2
+external/bsd/openpam/dist/t/t_openpam_readword.c up to 1.2
+external/bsd/openpam/openpam2netbsd		up to 1.3
+lib/libpam/libpam/Makefile			1.17
+
+	Update OpenPAM to Ourouparia (2014-09-12)
+	[christos, ticket #826]
+
+sys/arch/amiga/amiga/autoconf.c			1.117
+
+	Use RAW_PART to trigger read of disklabel, other units might by
+	busy due to discovered wedges.
+	[mlelstv, ticket #832]
+
+sbin/raidctl/raidctl.c				1.58
+
+	Better sanity checks on numbers given to raidctl(8).
+	[manu, ticket #827]
+
+lib/libperfuse/ops.c				1.84
+
+	Fix dot-lookup when readdir does not provide inodes
+	[manu, ticket #828]
 
