@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl.h,v 1.6 2015/06/05 20:12:56 christos Exp $	*/
+/*	$NetBSD: libintl.h,v 1.7 2015/06/08 15:02:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -31,24 +31,6 @@
 
 #include <sys/cdefs.h>
 
-#ifndef _LIBGETTEXT_H
-/*
- * Avoid defining these if the GNU gettext compatibility header includes
- * us, since it re-defines those unconditionally and creates inline functions
- * for some of them. This is horrible.
- */
-#define pgettext_expr(msgctxt, msgid) pgettext((msgctxt), (msgid))
-#define dpggettext_expr(domainname, msgctxt, msgid) \
-    dpgettext((domainname), (msgctxt), (msgid))
-#define dcpgettext_expr(domainname, msgctxt, msgid, category) \
-    dcpgettext((domainname), (msgctxt), (msgid), (category))
-#define npgettext_expr(msgctxt, msgid1, msgid2, n) \
-    npgettext((msgctxt), (msgid1), (msgid2), (n))
-#define dnpgettext_expr(domainname, msgctxt, msgid1, n) \
-    dnpgettext((domainname), (msgctxt), (msgid1), (msgid2), (n))
-#define dcnpgettext_expr(domainname, msgctxt, msgid1, msgid2, n, category) \
-    dcnpgettext((domainname), (msgctxt), (msgid1), (msgid2), (n), (category))
-#endif
 
 __BEGIN_DECLS
 char *gettext(const char *) __format_arg(1);
@@ -77,6 +59,56 @@ const char *dcnpgettext(const char *, const char *, const char *,
 char *textdomain(const char *);
 char *bindtextdomain(const char *, const char *);
 char *bind_textdomain_codeset(const char *, const char *);
+
+#ifndef _LIBGETTEXT_H
+/*
+ * Avoid defining these if the GNU gettext compatibility header includes
+ * us, since it re-defines those unconditionally and creates inline functions
+ * for some of them. This is horrible.
+ */
+static __inline __format_arg(2) const char *
+pgettext_expr(const char *_msgctxt, const char *_msgid)
+{
+	return pgettext(_msgctxt, _msgid);
+}
+
+static __inline __format_arg(3) const char *
+dpgettext_expr(const char *_domainname, const char *_msgctxt,
+    const char *_msgid)
+{
+	return dpgettext(_domainname, _msgctxt, _msgid);
+}
+
+static __inline __format_arg(3) const char *
+dcpgettext_expr(const char *_domainname, const char *_msgctxt,
+    const char *_msgid, int _category)
+{
+	return dcpgettext(_domainname, _msgctxt, _msgid, _category);
+}
+
+static __inline __format_arg(2) __format_arg(3) const char *
+npgettext_expr(const char *_msgctx, const char *_msgid1, const char *_msgid2,
+    long int _n)
+{
+	return npgettext(_msgctx, _msgid1, _msgid2, _n);
+}
+
+static __inline __format_arg(3) __format_arg(4) const char *
+dnpgettext_expr(const char *_domainname, const char *_msgctx,
+    const char *_msgid1, const char *_msgid2, long int _n)
+{
+	return dnpgettext(_domainname, _msgctx, _msgid1, _msgid2, _n);
+}
+
+static __inline __format_arg(3) __format_arg(4) const char *
+dcnpgettext_expr(const char *_domainname, const char *_msgctx,
+    const char *_msgid1, const char *_msgid2, long int _n, int _category)
+{
+	return dcnpgettext(_domainname, _msgctx, _msgid1, _msgid2, _n,
+	    _category);
+}
+#endif /* _LIBGETTEXT_H */
+
 __END_DECLS
 
 #endif /* _LIBINTL_H_ */
