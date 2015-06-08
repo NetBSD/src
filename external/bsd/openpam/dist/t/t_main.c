@@ -1,5 +1,3 @@
-/*	$NetBSD: t_main.c,v 1.1.1.2 2013/12/27 19:16:12 christos Exp $	*/
-
 /*-
  * Copyright (c) 2012 Dag-Erling Smørgrav
  * All rights reserved.

@@ -1,8 +1,8 @@
-.\"	$NetBSD: pam_strerror.3,v 1.4 2013/12/27 20:10:20 christos Exp $
+.\"	$NetBSD: pam_strerror.3,v 1.4.4.1 2015/06/08 20:33:19 snj Exp $
 .\"
 .\" Generated from pam_strerror.c by gendoc.pl
 .\" Id: pam_strerror.c 648 2013-03-05 17:54:27Z des 
-.Dd September 7, 2013
+.Dd September 12, 2014
 .Dt PAM_STRERROR 3
 .Os
 .Sh NAME
@@ -21,9 +21,8 @@ The
 function returns a pointer to a string containing a
 textual description of the error indicated by the
 .Fa error_number
-argument.
-argument, in the context of the PAM transaction described by the
-.Fa pamh
+argument in the context of the PAM transaction described by the
+.Fa pamh .
 The
 .Fa pamh
 argument is ignored.

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: openpam2netbsd,v 1.2 2013/04/06 02:20:24 christos Exp $
+#	$NetBSD: openpam2netbsd,v 1.2.8.1 2015/06/08 20:33:19 snj Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,33 +54,6 @@ cd $r
 
 ### Remove the $'s around RCS tags
 cleantags $r
-
-### Add our NetBSD RCS Id
-find $r -type f -name '*.[chly]' -print | while read c; do
-	sed 1q < $c | grep -q '\$NetBSD' || (
-echo "/*	\$NetBSD\$	*/" >/tmp/openp3n$$
-echo "" >>/tmp/openp3n$$
-cat $c  >> /tmp/openp3n$$
-mv /tmp/openp3n$$ $c && echo added NetBSD RCS tag to $c
-	)
-done
-
-find $r -type f -name '*.[0-9]' -print | while read m; do
-	sed 1q < $m | grep -q '\$NetBSD' || (
-echo ".\\\"	\$NetBSD\$" >/tmp/openp2m$$
-echo ".\\\"" >>/tmp/openp2m$$
-cat $m >> /tmp/openp2m$$
-mv /tmp/openp2m$$ $m && echo added NetBSD RCS tag to $m
-	)
-done
-
-find $r -type f -name '*.texi' -print | while read t; do
-        sed "2 s/^/@c \$NetBSD\$\\
-/" < $t > /tmp/openp4t$$
-	mv /tmp/openp4t$$ $t && echo added NetBSD RCS tag to $t
-done
-
-echo done
 
 ### Clean up any CVS directories that might be around.
 echo "cleaning up CVS residue."

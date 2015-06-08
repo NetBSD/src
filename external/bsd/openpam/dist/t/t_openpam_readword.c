@@ -1,5 +1,3 @@
-/*	$NetBSD: t_openpam_readword.c,v 1.1.1.2 2013/12/27 19:16:12 christos Exp $	*/
-
 /*-
  * Copyright (c) 2012 Dag-Erling Smørgrav
  * All rights reserved.
@@ -171,6 +169,19 @@ T_FUNC(multiple_whitespace, "multiple whitespace")
 	return (ret);
 }
 
+T_FUNC(line_continuation_in_whitespace, "line continuation in whitespace")
+{
+	struct t_file *tf;
+	int ret;
+
+	tf = t_fopen(NULL);
+	t_fprintf(tf, " \\\n \n");
+	t_frewind(tf);
+	ret = orw_expect(tf, NULL, 1 /*lines*/, 0 /*eof*/, 1 /*eol*/);
+	t_fclose(tf);
+	return (ret);
+}
+
 T_FUNC(comment, "comment")
 {
 	struct t_file *tf;
@@ -193,6 +204,45 @@ T_FUNC(whitespace_before_comment, "whitespace before comment")
 	t_fprintf(tf, " # comment\n");
 	t_frewind(tf);
 	ret = orw_expect(tf, NULL, 0 /*lines*/, 0 /*eof*/, 1 /*eol*/);
+	t_fclose(tf);
+	return (ret);
+}
+
+T_FUNC(single_quoted_comment, "single-quoted comment")
+{
+	struct t_file *tf;
+	int ret;
+
+	tf = t_fopen(NULL);
+	t_fprintf(tf, " '# comment'\n");
+	t_frewind(tf);
+	ret = orw_expect(tf, "# comment", 0 /*lines*/, 0 /*eof*/, 1 /*eol*/);
+	t_fclose(tf);
+	return (ret);
+}
+
+T_FUNC(double_quoted_comment, "double-quoted comment")
+{
+	struct t_file *tf;
+	int ret;
+
+	tf = t_fopen(NULL);
+	t_fprintf(tf, " \"# comment\"\n");
+	t_frewind(tf);
+	ret = orw_expect(tf, "# comment", 0 /*lines*/, 0 /*eof*/, 1 /*eol*/);
+	t_fclose(tf);
+	return (ret);
+}
+
+T_FUNC(comment_at_eof, "comment at end of file")
+{
+	struct t_file *tf;
+	int ret;
+
+	tf = t_fopen(NULL);
+	t_fprintf(tf, "# comment");
+	t_frewind(tf);
+	ret = orw_expect(tf, NULL, 0 /*lines*/, 1 /*eof*/, 0 /*eol*/);
 	t_fclose(tf);
 	return (ret);
 }
@@ -418,6 +468,33 @@ T_FUNC(escaped_letter, "escaped letter")
 
 
 /***************************************************************************
+T_FUNC(escaped_comment, "escaped comment")
+{
+	struct t_file *tf;
+	int ret;
+
+	tf = t_fopen(NULL);
+	t_fprintf(tf, " \\# comment\n");
+	t_frewind(tf);
+	ret = orw_expect(tf, "#", 0 /*lines*/, 0 /*eof*/, 0 /*eol*/) &&
+	    orw_expect(tf, "comment", 0 /*lines*/, 0 /*eof*/, 1 /*eol*/);
+	t_fclose(tf);
+	return (ret);
+}
+
+T_FUNC(escape_at_eof, "escape at end of file")
+{
+	struct t_file *tf;
+	int ret;
+
+	tf = t_fopen(NULL);
+	t_fprintf(tf, "z\\");
+	t_frewind(tf);
+	ret = orw_expect(tf, NULL, 0 /*lines*/, 1 /*eof*/, 0 /*eol*/);
+	t_fclose(tf);
+	return (ret);
+}
+
  * Quotes
  */
 
@@ -828,10 +905,15 @@ T_FUNC(escaped_double_quote_within_double_quotes,
 const struct t_test *t_plan[] = {
 	T(empty_input),
 	T(empty_line),
+	T(unterminated_line),
 	T(single_whitespace),
 	T(multiple_whitespace),
+	T(line_continuation_in_whitespace),
 	T(comment),
 	T(whitespace_before_comment),
+	T(single_quoted_comment),
+	T(double_quoted_comment),
+	T(comment_at_eof),
 
 	T(single_word),
 	T(single_whitespace_before_word),
@@ -849,6 +931,8 @@ const struct t_test *t_plan[] = {
 	T(escaped_newline_within_word),
 	T(escaped_newline_after_word),
 	T(escaped_letter),
+	T(escaped_comment),
+	T(escape_at_eof),
 
 	T(naked_single_quote),
 	T(naked_double_quote),
