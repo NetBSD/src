@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16.4.1 2015/05/22 16:58:47 snj Exp $
+# $NetBSD: Makefile,v 1.16.4.2 2015/06/08 20:33:21 snj Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -72,6 +72,7 @@ SRCS=	openpam_borrow_cred.c \
 	openpam_set_feature.c \
 	openpam_set_option.c \
 	openpam_straddch.c \
+	openpam_strlset.c \
 	openpam_subst.c \
 	openpam_ttyconv.c \
 	pam_acct_mgmt.c \
@@ -208,6 +209,6 @@ CWARNFLAGS.clang+=	-Wno-error=tautological-pointer-compare
 
 .include <bsd.lib.mk>
 .PATH.h: ${DIST}/include
-.PATH.c: ${DIST}/lib
+.PATH.c: ${DIST}/lib/libpam
 .PATH.3: ${DIST}/doc/man
 .PATH.5: ${DIST}/doc/man

@@ -1,5 +1,3 @@
-/*	$NetBSD: t_openpam_readlinev.c,v 1.1.1.2 2013/12/27 19:16:12 christos Exp $	*/
-
 /*-
  * Copyright (c) 2012 Dag-Erling Smørgrav
  * All rights reserved.
@@ -128,6 +126,23 @@ static const char *hello_world[] = {
 };
 
 
+static const char *numbers[] = {
+	"zero", "one", "two", "three", "four", "five", "six", "seven",
+	"eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
+	"fifteen", "sixteen", "seventeen", "nineteen", "twenty",
+	"twenty-one", "twenty-two", "twenty-three", "twenty-four",
+	"twenty-five", "twenty-six", "twenty-seven", "twenty-eight",
+	"twenty-nine", "thirty", "thirty-one", "thirty-two", "thirty-three",
+	"thirty-four", "thirty-five", "thirty-six", "thirty-seven",
+	"thirty-eight", "thirty-nine", "fourty", "fourty-one", "fourty-two",
+	"fourty-three", "fourty-four", "fourty-five", "fourty-six",
+	"fourty-seven", "fourty-eight", "fourty-nine", "fifty", "fifty-one",
+	"fifty-two", "fifty-three", "fifty-four", "fifty-five", "fifty-six",
+	"fifty-seven", "fifty-eight", "fifty-nine", "sixty", "sixty-one",
+	"sixty-two", "sixty-three",
+	NULL
+};
+
 /***************************************************************************
  * Lines without words
  */
@@ -239,6 +254,22 @@ T_FUNC(two_words, "two words")
 	return (ret);
 }
 
+T_FUNC(many_words, "many words")
+{
+	struct t_file *tf;
+	const char **word;
+	int ret;
+
+	tf = t_fopen(NULL);
+	for (word = numbers; *word; ++word)
+		t_fprintf(tf, " %s", *word);
+	t_fprintf(tf, "\n");
+	t_frewind(tf);
+	ret = orlv_expect(tf, numbers, 1 /*lines*/, 0 /*eof*/);
+	t_fclose(tf);
+	return (ret);
+}
+
 T_FUNC(unterminated_line, "unterminated line")
 {
 	struct t_file *tf;
@@ -267,6 +298,7 @@ const struct t_test *t_plan[] = {
 
 	T(one_word),
 	T(two_words),
+	T(many_words),
 	T(unterminated_line),
 
 	NULL
