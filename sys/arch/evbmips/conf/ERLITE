@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.9 2015/06/01 22:55:12 matt Exp $
+#	$NetBSD: ERLITE,v 1.10 2015/06/08 14:42:38 matt Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.9 $"
+#ident 		"ERLITE-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -121,6 +121,7 @@ config		netbsd	root on ? type ?
 mainbus0	at root
 cpunode0	at mainbus?
 cpu*		at cpunode? core ?
+wdog0		at cpunode0 flags 0		# flags 1 will enable it on boot
 
 iobus0		at mainbus?
 bootbus0	at mainbus?
