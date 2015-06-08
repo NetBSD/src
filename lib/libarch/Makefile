@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2014/08/10 23:25:49 matt Exp $
+#	$NetBSD: Makefile,v 1.29 2015/06/08 04:08:30 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ LIBC_MACHINE_CPU?=	${MACHINE_CPU}
 
 # Build the library if SRCS is now defined ...
 .if defined(SRCS)
-.if defined(MLIBDIR) && ${MLIBDIR} != "none" && ${LIBC_MACHINE_CPU} != "arm"
+.if defined(MLIBDIR) && ${LIBC_MACHINE_CPU} != "arm"
 LIB=	${MLIBDIR}
 .else
 LIB=	${LIBC_MACHINE_CPU}
