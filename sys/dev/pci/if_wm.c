@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.331 2015/06/06 17:36:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.332 2015/06/08 03:45:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.331 2015/06/06 17:36:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.332 2015/06/08 03:45:19 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3319,7 +3319,7 @@ void
 wm_initialize_hardware_bits(struct wm_softc *sc)
 {
 	uint32_t tarc0, tarc1, reg;
-	
+
 	/* For 82571 variant, 80003 and ICHs */
 	if (((sc->sc_type >= WM_T_82571) && (sc->sc_type <= WM_T_82583))
 	    || (sc->sc_type >= WM_T_80003)) {
@@ -3885,6 +3885,9 @@ wm_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_WUC, 0);
 
 	wm_reset_mdicnfg_82580(sc);
+
+	if ((sc->sc_flags & WM_F_PLL_WA_I210) != 0)
+		wm_pll_workaround_i210(sc);
 }
 
 /*
@@ -6166,7 +6169,7 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 	if (sc->sc_flags & WM_F_HAS_MII)
 		wm_linkintr_gmii(sc, icr);
 	else if ((sc->sc_mediatype == WM_MEDIATYPE_SERDES)
-	    && (sc->sc_type >= WM_T_82575))	
+	    && (sc->sc_type >= WM_T_82575))
 		wm_linkintr_serdes(sc, icr);
 	else
 		wm_linkintr_tbi(sc, icr);
@@ -8450,7 +8453,7 @@ wm_nvm_read_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 			delay(2);
 		}
 		/* XXX: end of workaround */
-	
+
 		/* Set CHIP SELECT. */
 		reg |= EECD_CS;
 		CSR_WRITE(sc, WMREG_EECD, reg);
@@ -9836,7 +9839,6 @@ wm_init_manageability(struct wm_softc *sc)
 			manc |= MANC_EN_MNG2HOST;
 			manc2h |= MANC2H_PORT_623| MANC2H_PORT_624;
 			CSR_WRITE(sc, WMREG_MANC2H, manc2h);
-		
 		}
 
 		CSR_WRITE(sc, WMREG_MANC, manc);
@@ -10363,7 +10365,7 @@ wm_pll_workaround_i210(struct wm_softc *sc)
 	for (i = 0; i < WM_MAX_PLL_TRIES; i++) {
 		phyval = wm_gmii_gs40g_readreg(sc->sc_dev, 1,
 		    GS40G_PHY_PLL_FREQ_PAGE | GS40G_PHY_PLL_FREQ_REG);
-		
+
 		if ((phyval & GS40G_PHY_PLL_UNCONF) != GS40G_PHY_PLL_UNCONF) {
 			break; /* OK */
 		}
@@ -10380,7 +10382,7 @@ wm_pll_workaround_i210(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_WUC, 0);
 		reg = (INVM_AUTOLOAD << 4) | (tmp_nvmword << 16);
 		CSR_WRITE(sc, WMREG_EEARBC_I210, reg);
-		
+
 		pcireg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 		    pmreg + PCI_PMCSR);
 		pcireg |= PCI_PMCSR_STATE_D3;
@@ -10393,11 +10395,11 @@ wm_pll_workaround_i210(struct wm_softc *sc)
 
 		reg = (INVM_AUTOLOAD << 4) | (nvmword << 16);
 		CSR_WRITE(sc, WMREG_EEARBC_I210, reg);
-		
+
 		/* Restore WUC register */
 		CSR_WRITE(sc, WMREG_WUC, wuc);
 	}
-	
+
 	/* Restore MDICNFG setting */
 	CSR_WRITE(sc, WMREG_MDICNFG, mdicnfg);
 	if (wa_done)
