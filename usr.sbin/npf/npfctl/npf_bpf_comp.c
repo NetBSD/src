@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf_comp.c,v 1.7 2014/06/29 00:05:24 rmind Exp $	*/
+/*	$NetBSD: npf_bpf_comp.c,v 1.8 2015/06/08 01:00:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.7 2014/06/29 00:05:24 rmind Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.8 2015/06/08 01:00:43 rmind Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -188,6 +188,10 @@ npfctl_bpf_complete(npf_bpf_t *ctx)
 {
 	struct bpf_program *bp = &ctx->prog;
 	const u_int retoff = bp->bf_len;
+
+	/* No instructions (optimised out). */
+	if (!bp->bf_len)
+		return NULL;
 
 	/* Add the return fragment (success and failure paths). */
 	struct bpf_insn insns_ret[] = {
