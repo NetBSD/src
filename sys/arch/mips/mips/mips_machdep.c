@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.265 2015/06/01 22:55:13 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.266 2015/06/08 18:22:23 macallan Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.265 2015/06/01 22:55:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.266 2015/06/08 18:22:23 macallan Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -172,10 +172,10 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.265 2015/06/01 22:55:13 matt Exp 
 
 #ifdef _LP64
 #define	_LOAD_V0_L_PRIVATE_A0	_MKINSN(OP_LD, _R_A0, _R_V0, 0, offsetof(lwp_t, l_private))
-#define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_DMT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 4)
+#define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_DMT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 2)
 #else
 #define	_LOAD_V0_L_PRIVATE_A0	_MKINSN(OP_LW, _R_A0, _R_V0, 0, offsetof(lwp_t, l_private))
-#define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_MT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 4)
+#define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_MT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 2)
 #endif
 #define	JR_RA			_MKINSN(OP_SPECIAL, _R_RA, 0, 0, OP_JR)
 
