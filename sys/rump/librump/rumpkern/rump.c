@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.320 2015/05/20 11:02:54 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.321 2015/06/08 12:16:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.320 2015/05/20 11:02:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.321 2015/06/08 12:16:47 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -125,6 +125,7 @@ int  (*rump_vfs_makeonedevnode)(dev_t, const char *,
 				devmajor_t, devminor_t) = (void *)nullop;
 int  (*rump_vfs_makedevnodes)(dev_t, const char *, char,
 			      devmajor_t, devminor_t, int) = (void *)nullop;
+int  (*rump_vfs_makesymlink)(const char *, const char *) = (void *)nullop;
 
 rump_proc_vfs_init_fn rump_proc_vfs_init = (void *)nullop;
 rump_proc_vfs_release_fn rump_proc_vfs_release = (void *)nullop;
