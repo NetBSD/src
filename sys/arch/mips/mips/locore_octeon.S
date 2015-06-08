@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.5 2015/06/07 08:03:10 matt Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.6 2015/06/08 14:24:20 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.5 2015/06/07 08:03:10 matt Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.6 2015/06/08 14:24:20 matt Exp $")
 
 #include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
@@ -154,6 +154,7 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	j	_C_LABEL(cpu_trampoline)
 	 nop
 END(octeon_cpu_spinup)
+#endif /* MULTIPROCESSOR */
 
 #if NWDOG > 0 || defined(DDB)
 
@@ -167,12 +168,16 @@ NESTED_NOPROFILE(octeon_reset_vector, 0, ra)
 	 ins	k0, zero, V_MIPS_SR_BEV, 1 # clear boot exception vectors
 	mtc0	k0, MIPS_COP_0_STATUS	# write cp0 status
 	ehb				# hazard barrier
+#ifdef MULTIPROCESSOR
 	mfc0	k0, MIPS_COP_0_EBASE	# get EBASE
 	ext	k0, k0, 0, 10		# select cpunum
 	dsll	k0, k0, PTR_SCALESHIFT	# cpunum -> array index
 	PTR_LA	k1, _C_LABEL(cpuid_infos)
 	PTR_ADDU k1, k1, k0		# add to array start
 	PTR_L	k0, (k1)		# get cpu_info
+#else
+	PTR_LA	k0, _C_LABEL(cpu_info_store) # get cpu_info
+#endif
 	PTR_LA	k1, CIU_BASE		# CIU base
 	j	_C_LABEL(mips64r2_kern_nonmaskable_intr)
 	 sd	zero, CIU_NMI_OFFSET(k1)# clear NMI
@@ -188,4 +193,3 @@ NESTED_NOPROFILE(octeon_reset_vector, 0, ra)
 	 nop
 END(octeon_reset_vector)
 #endif
-#endif /* MULTIPROCESSOR */
