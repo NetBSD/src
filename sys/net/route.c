@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.144 2015/04/30 09:57:38 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.145 2015/06/08 08:21:49 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.144 2015/04/30 09:57:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.145 2015/06/08 08:21:49 roy Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -213,6 +213,8 @@ rt_get_ifa(struct rtentry *rt)
 #endif
 	else {
 		ifa = (*ifa->ifa_getifa)(ifa, rt_getkey(rt));
+		if (ifa == NULL)
+			return NULL;
 		rt_replace_ifa(rt, ifa);
 		return ifa;
 	}
@@ -676,8 +678,11 @@ rt_getifa(struct rt_addrinfo *info)
 	}
 	if ((ifa = info->rti_ifa) == NULL)
 		return ENETUNREACH;
-	if (ifa->ifa_getifa != NULL)
+	if (ifa->ifa_getifa != NULL) {
 		info->rti_ifa = ifa = (*ifa->ifa_getifa)(ifa, dst);
+		if (ifa == NULL)
+			return ENETUNREACH;
+	}
 	if (info->rti_ifp == NULL)
 		info->rti_ifp = ifa->ifa_ifp;
 	return 0;
