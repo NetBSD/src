@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.240 2015/06/08 08:02:43 roy Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.241 2015/06/08 08:19:20 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.240 2015/06/08 08:02:43 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.241 2015/06/08 08:19:20 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -504,7 +504,7 @@ ip_output(struct mbuf *m0, ...)
 			if (xifa->ifa_getifa != NULL) {
 				xia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
 				if (xia == NULL) {
-					errno = EADDRNOTAVAIL;
+					error = EADDRNOTAVAIL;
 					goto bad;
 				}
 			}
