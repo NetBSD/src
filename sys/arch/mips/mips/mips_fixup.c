@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.12 2015/06/02 05:08:21 matt Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.13 2015/06/09 15:01:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.12 2015/06/02 05:08:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.13 2015/06/09 15:01:05 matt Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -48,8 +48,14 @@ bool
 mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 {
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
-	uint32_t * const start =
-	    (uint32_t *)(intptr_t)(mipsNN_cp0_ebase_read() & ~MIPS_EBASE_CPUNUM);
+	int32_t ebase = mipsNN_cp0_ebase_read();
+	uint32_t *start;
+	if (ebase == mips_options.mips_cpu_id
+	    || (ebase & __BITS(31,30)) != __BIT(31)) {
+		start = (uint32_t *)MIPS_KSEG0_START;
+	} else {
+		start = (uint32_t *)(intptr_t)(ebase & ~MIPS_EBASE_CPUNUM);
+	}
 #else
 	uint32_t * const start = (uint32_t *)MIPS_KSEG0_START;
 #endif
@@ -61,6 +67,9 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 	int32_t lui_offset = 0;
 	bool fixed = false;
 	size_t lui_reg = 0;
+#ifdef DEBUG_VERBOSE
+	printf("%s: fixing %p..%p\n", __func__, start, end);
+#endif
 	/*
 	 * If this was allocated so that bit 15 of the value/address is 1, then
 	 * %hi will add 1 to the immediate (or 0x10000 to the value loaded)
@@ -148,7 +157,7 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 
 #ifdef MIPS3_PLUS
 bool
-mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2])
+mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 {
 	struct cpu_info * const ci = curcpu();
 	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
