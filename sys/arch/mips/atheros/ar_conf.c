@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_conf.c,v 1.2 2011/07/10 06:26:02 matt Exp $	*/
+/*	$NetBSD: ar_conf.c,v 1.3 2015/06/09 22:50:50 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,9 +30,10 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ar_conf.c,v 1.2 2011/07/10 06:26:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar_conf.c,v 1.3 2015/06/09 22:50:50 matt Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 
 #include "opt_wisoc.h"
 
