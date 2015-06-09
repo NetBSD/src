@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.98 2015/06/01 22:55:13 matt Exp $ */
+/* $NetBSD: locore.h,v 1.99 2015/06/09 15:01:05 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -110,7 +110,7 @@ struct mips_jump_fixup_info {
  
 void	fixup_splcalls(void);				/* splstubs.c */
 bool	mips_fixup_exceptions(mips_fixup_callback_t, void *);
-bool	mips_fixup_zero_relative(int32_t, uint32_t [2]);
+bool	mips_fixup_zero_relative(int32_t, uint32_t [2], void *);
 intptr_t
 	mips_fixup_addr(const uint32_t *);
 void	mips_fixup_stubs(uint32_t *, uint32_t *);
