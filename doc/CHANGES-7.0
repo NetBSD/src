@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.326 2015/06/08 20:55:23 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.327 2015/06/09 20:50:57 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32052,10 +32052,10 @@ sys/arch/amiga/amiga/autoconf.c			1.117
 	busy due to discovered wedges.
 	[mlelstv, ticket #832]
 
-sbin/raidctl/raidctl.c				1.58
+sbin/raidctl/raidctl.c				1.58, 1.59
 
 	Better sanity checks on numbers given to raidctl(8).
-	[manu, ticket #827]
+	[manu/martin, ticket #827]
 
 lib/libperfuse/ops.c				1.84
 
