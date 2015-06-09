@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.18 2011/02/20 07:58:14 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.19 2015/06/09 22:46:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18 2011/02/20 07:58:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.19 2015/06/09 22:46:36 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18 2011/02/20 07:58:14 matt Exp $");
 #define __INTR_PRIVATE
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/malloc.h>
 #include <sys/intr.h>
 
