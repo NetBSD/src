@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r10k.c,v 1.5 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: cache_r10k.c,v 1.6 2015/06/09 17:53:25 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2003 Takao Shinohara.
@@ -61,6 +61,7 @@
 
 #include <sys/param.h>
 
+#include <mips/cpuregs.h>
 #include <mips/cache.h>
 #include <mips/cache_r4k.h>
 #include <mips/cache_r10k.h>
