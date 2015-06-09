@@ -1,4 +1,4 @@
-/*	$NetBSD: yeeloong_machdep.c,v 1.6 2014/03/29 19:28:28 christos Exp $	*/
+/*	$NetBSD: yeeloong_machdep.c,v 1.7 2015/06/09 16:29:01 macallan Exp $	*/
 /*	$OpenBSD: yeeloong_machdep.c,v 1.16 2011/04/15 20:40:06 deraadt Exp $	*/
 
 /*
@@ -23,13 +23,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.6 2014/03/29 19:28:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.7 2015/06/09 16:29:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/types.h>
 
+#include <mips/cpuregs.h>
 #include <evbmips/loongson/autoconf.h>
 #include <mips/pmon/pmon.h>
 #include <evbmips/loongson/loongson_intr.h>
