@@ -25,6 +25,7 @@
 #include <sys/device.h>
 #include <sys/types.h>
 
+#include <mips/cpuregs.h>
 #include <evbmips/loongson/autoconf.h>
 #include <evbmips/loongson/loongson_intr.h>
 
