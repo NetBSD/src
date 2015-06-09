@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.57.4.1 2015/06/08 20:48:01 snj Exp $   */
+/*      $NetBSD: raidctl.c,v 1.57.4.2 2015/06/09 20:49:28 snj Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.57.4.1 2015/06/08 20:48:01 snj Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.57.4.2 2015/06/09 20:49:28 snj Exp $");
 #endif
 
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: raidctl.c,v 1.57.4.1 2015/06/08 20:48:01 snj Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -85,7 +86,7 @@ static  void get_bar(char *, double, int);
 static  void get_time_string(char *, int);
 static  void rf_output_pmstat(int, int);
 static  void rf_pm_configure(int, int, char *, int[]);
-static  unsigned int _strtoud(char *);
+static  unsigned int xstrtouint(const char *);
 
 int verbose;
 
@@ -184,7 +185,7 @@ main(int argc,char *argv[])
 			break;
 		case 'I':
 			action = RAIDFRAME_INIT_LABELS;
-			serial_number = _strtoud(optarg);
+			serial_number = xstrtouint(optarg);
 			num_options++;
 			break;
 		case 'm':
@@ -200,7 +201,7 @@ main(int argc,char *argv[])
 			i = 0;
 			while (i < 3 && optind < argc &&
 			    isdigit((int)argv[optind][0]))
-				parityparams[i++] = _strtoud(argv[optind++]);
+				parityparams[i++] = xstrtouint(argv[optind++]);
 			while (i < 3)
 				parityparams[i++] = 0;
 			break;
@@ -1161,24 +1162,11 @@ usage(void)
 }
 
 static unsigned int
-_strtoud(char *str)
+xstrtouint(const char *str)
 {
-	long num;
-	char *ep;
-
-	errno = 0;
-	num = strtol(str, &ep, 10);
-	if (str[0] == '\0' || *ep != '\0')
-		errx(1, "Not a number: %s", str);
-
-	if (errno)
-		err(1, "Inavlid number %s", str);
-
-	if (num < 0)
-		errx(1, "Negative number: %s", str);
-
-	if (num > INT_MAX)
-		errx(1, "Number too large: %s", str);
-
-	return (unsigned int)num;
+	int e;
+	unsigned int num = (unsigned int)strtou(str, NULL, 10, 0, INT_MAX, &e);
+	if (e)
+		errc(EXIT_FAILURE, e, "Bad number `%s'", str);
+	return num;
 }
