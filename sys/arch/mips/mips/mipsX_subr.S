@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.60 2015/06/07 08:03:10 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.61 2015/06/09 14:40:42 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2482,7 +2482,7 @@ LEAF(MIPSX(tlb_enter))
 	tlbwi					# enter it into the TLB
 	COP0_SYNC
 
-	_MTC0	ta1, MIPS_COP_0_TLB_HI		# restore EntryHi
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# restore EntryHi
 #ifdef MIPS3_LOONGSON2
 	li	v0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
