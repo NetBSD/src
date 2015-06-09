@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.324 2015/06/01 19:16:44 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.325 2015/06/09 10:44:55 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.324 2015/06/01 19:16:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.325 2015/06/09 10:44:55 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -7206,9 +7206,9 @@ pmap_pte_init_xscale(void)
 	/*
 	 * Disable ECC protection of page table access, for now.
 	 */
-	__asm volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
+	auxctl = armreg_auxctl_read();
 	auxctl &= ~XSCALE_AUXCTL_P;
-	__asm volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
+	armreg_auxctl_write(auxctl);
 }
 
 /*
@@ -7261,9 +7261,9 @@ xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 
 	/* Invalidate data and mini-data. */
 	__asm volatile("mcr p15, 0, %0, c7, c6, 0" : : "r" (0));
-	__asm volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
+	auxctl = armreg_auxctl_read();
 	auxctl = (auxctl & ~XSCALE_AUXCTL_MD_MASK) | XSCALE_AUXCTL_MD_WB_RWA;
-	__asm volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
+	armreg_auxctl_write(auxctl);
 }
 
 /*
