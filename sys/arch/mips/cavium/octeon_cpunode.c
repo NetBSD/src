@@ -373,6 +373,7 @@ wdog_cpunode_setmode(struct sysmon_wdog *smw)
 		// doesn't overflow a 32-bit value, we are fine.  We write the
 		// 16-bits of the 32-bit period.
 		if ((wdog_len >> 32) != 0) {
+			kpreempt_enable();
 			return EINVAL;
 		}
 		sc->sc_wdog_period = smw->smw_period;
