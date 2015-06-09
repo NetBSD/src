@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.72 2015/04/15 15:44:19 matt Exp $
+#	$NetBSD: genassym.cf,v 1.73 2015/06/09 08:08:14 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -137,6 +137,9 @@ define	L2_C			L2_C
 define	L2_AP_KRW		L2_AP(AP_KRW)
 
 define	TTBCR_S_N_1		__SHIFTIN(1, TTBCR_S_N)
+
+define	TTBR_UPATTR		TTBR_UPATTR
+define	TTBR_MPATTR		TTBR_MPATTR
 
 ifdef PMAP_INCLUDE_PTE_SYNC
 define	PMAP_INCLUDE_PTE_SYNC	1
