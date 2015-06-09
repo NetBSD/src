@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.77 2015/06/06 22:19:07 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.78 2015/06/09 09:18:37 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.77 2015/06/06 22:19:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.78 2015/06/09 09:18:37 martin Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -696,7 +696,8 @@ db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		".set pop 			\n\t"			\
 	    : "=r"(value) : "r"(addr));
 	
-	db_printf("control reg 0x%lx = 0x%" PRIx64 "\n", addr, value);
+	db_printf("control reg 0x%" DDB_EXPR_FMT "x = 0x%" PRIx64 "\n",
+	    addr, value);
 }
 
 void
@@ -726,7 +727,8 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		".set pop 			\n\t"			\
 	    :: "r"(value), "r"(addr));
 
-	db_printf("control reg 0x%lx = 0x%lx\n", addr, value);
+	db_printf("control reg 0x%" DDB_EXPR_FMT "x = 0x%" DDB_EXPR_FMT "x\n",
+	    addr, value);
 }
 #endif /* MIPS64_XLS */
 
