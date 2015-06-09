@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.7 2015/05/29 10:08:52 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.8 2015/06/09 00:39:53 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,10 @@ IP1=10.0.0.1
 IP2=10.0.0.2
 IP61=fc00::1
 IP62=fc00::2
+IPBR1=10.0.0.11
+IPBR2=10.0.0.12
+IP6BR1=fc00::11
+IP6BR2=fc00::12
 
 TIMEOUT=5
 
@@ -57,6 +61,18 @@ basic6_head()
 rtable_head()
 {
 	atf_set "descr" "Tests route table operations of if_bridge"
+	atf_set "require.progs" "rump_server"
+}
+
+member_ip_head()
+{
+	atf_set "descr" "Tests if_bridge with members with an IP address"
+	atf_set "require.progs" "rump_server"
+}
+
+member_ip6_head()
+{
+	atf_set "descr" "Tests if_bridge with members with an IP address (IPv6)"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -175,6 +191,32 @@ setup_bridge()
 	rump.ifconfig shmif1
 }
 
+setup_member_ip()
+{
+	export RUMP_SERVER=$SOCK2
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	atf_check -s exit:0 rump.ifconfig shmif0 $IPBR1/24
+	atf_check -s exit:0 rump.ifconfig shmif1 $IPBR2/24
+	atf_check -s exit:0 rump.ifconfig -w 10
+	/sbin/brconfig bridge0
+	unset LD_PRELOAD
+	rump.ifconfig shmif0
+	rump.ifconfig shmif1
+}
+
+setup_member_ip6()
+{
+	export RUMP_SERVER=$SOCK2
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6BR1
+	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $IP6BR2
+	atf_check -s exit:0 rump.ifconfig -w 10
+	/sbin/brconfig bridge0
+	unset LD_PRELOAD
+	rump.ifconfig shmif0
+	rump.ifconfig shmif1
+}
+
 teardown_bridge()
 {
 	export RUMP_SERVER=$SOCK2
@@ -267,6 +309,49 @@ test_ping6_success()
 	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP61
 	unset LD_PRELOAD
 	rump.ifconfig -v shmif0
+}
+
+test_ping_member()
+{
+	export RUMP_SERVER=$SOCK1
+	rump.ifconfig -v shmif0
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IPBR1
+	rump.ifconfig -v shmif0
+	# It's known to fail. See PR#48104
+	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IPBR2
+	rump.ifconfig -v shmif0
+
+	export RUMP_SERVER=$SOCK3
+	rump.ifconfig -v shmif0
+	# It's known to fail. See PR#48104
+	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IPBR1
+	rump.ifconfig -v shmif0
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IPBR2
+	rump.ifconfig -v shmif0
+}
+
+test_ping6_member()
+{
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+
+	export RUMP_SERVER=$SOCK1
+	rump.ifconfig -v shmif0
+	atf_check -s exit:0 -o ignore ping6 -q -n -X $TIMEOUT -c 1 $IP6BR1
+	rump.ifconfig -v shmif0
+	# It's known to fail. See PR#48104
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -X $TIMEOUT -c 1 $IP6BR2
+	rump.ifconfig -v shmif0
+
+	export RUMP_SERVER=$SOCK3
+	rump.ifconfig -v shmif0
+	# It's known to fail. See PR#48104
+	atf_check -s not-exit:0 -o ignore ping6 -q -n -X $TIMEOUT -c 1 $IP6BR1
+	rump.ifconfig -v shmif0
+	# FIXME: it doesn't work for some reason
+	atf_check -s exit:0 -o ignore ping6 -q -n -X $TIMEOUT -c 1 $IP6BR2
+	rump.ifconfig -v shmif0
+
+	unset LD_PRELOAD
 }
 
 get_number_of_caches()
@@ -435,6 +520,45 @@ rtable_body()
 	#       wait here so long. Should we have a sysctl to change the period?
 }
 
+member_ip_body()
+{
+	setup
+	test_setup
+
+	# Enable once PR kern/49219 is fixed
+	#test_ping_failure
+
+	setup_bridge
+	sleep 1
+	test_setup_bridge
+	test_ping_success
+
+	setup_member_ip
+	test_ping_member
+
+	teardown_bridge
+	test_ping_failure
+}
+
+member_ip6_body()
+{
+	setup6
+	test_setup6
+
+	test_ping6_failure
+
+	setup_bridge
+	sleep 1
+	test_setup_bridge
+	test_ping6_success
+
+	setup_member_ip6
+	test_ping6_member
+
+	teardown_bridge
+	test_ping6_failure
+}
+
 basic_cleanup()
 {
 	dump_bus
@@ -453,9 +577,23 @@ rtable_cleanup()
 	cleanup
 }
 
+member_ip_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
+member_ip6_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
 	atf_add_test_case basic6
 	atf_add_test_case rtable
+	atf_add_test_case member_ip
+	atf_add_test_case member_ip6
 }
