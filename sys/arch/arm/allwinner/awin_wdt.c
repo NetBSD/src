@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_wdt.c,v 1.7 2015/04/20 01:33:22 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_wdt.c,v 1.8 2015/06/09 12:46:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -164,12 +164,14 @@ awin_wdt_setmode(struct sysmon_wdog *smw)
 		awin_wdt_tickle(smw);
 		return 0;
 	}
-	if (smw->smw_period > mapsize) {
-		return EINVAL;
-	}
 	if (smw->smw_period == WDOG_PERIOD_DEFAULT) {
 		smw->smw_period = AWIN_WDT_PERIOD_DEFAULT;
 		sc->sc_wdog_period = AWIN_WDT_PERIOD_DEFAULT;
+	} else {
+		if (smw->smw_period > mapsize) {
+			return EINVAL;
+		}
+		sc->sc_wdog_period = smw->smw_period;
 	}
 	sc->sc_wdog_mode = AWIN_WDOG_MODE_EN | map[sc->sc_wdog_period];
 	if (awin_chip_id() == AWIN_CHIP_ID_A20 ||
