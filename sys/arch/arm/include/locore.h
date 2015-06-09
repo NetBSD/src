@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.25 2015/06/09 08:09:24 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.26 2015/06/09 08:13:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -134,7 +134,8 @@
 #endif
 
 /*
- * Translation Table Base Register Share/Cache settings */
+ * Translation Table Base Register Share/Cache settings
+ */
 #define	TTBR_UPATTR	(TTBR_S | TTBR_RGN_WBNWA | TTBR_C)
 #define	TTBR_MPATTR	(TTBR_S | TTBR_RGN_WBNWA /* | TTBR_NOS */ | TTBR_IRGN_WBNWA)
 
