@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.327 2015/06/09 20:50:57 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.328 2015/06/10 17:21:06 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32061,4 +32061,66 @@ lib/libperfuse/ops.c				1.84
 
 	Fix dot-lookup when readdir does not provide inodes
 	[manu, ticket #828]
+
+sys/arch/arm/omap/am335x_prcm.h			1.9
+sys/arch/arm/omap/am335x_trng.c			1.1
+sys/arch/arm/omap/am335x_trngreg.h		1.1
+sys/arch/arm/omap/files.omap2			1.31
+sys/arch/arm/omap/omap2_reg.h			1.30
+sys/arch/evbarm/conf/BEAGLEBONE			1.32
+
+	Add driver for AM335x TRNG module.
+	[jmcneill, ticket #830]
+
+gnu/dist/groff/src/utils/hpftodit/hpftodit.cpp	1.6
+gnu/dist/texinfo/makeinfo/files.c		1.10
+usr.bin/netstat/atalk.c				1.16
+
+	Fix three clang warnings.
+	[joerg, ticket #831]
+
+sys/dev/pci/if_wm.c				1.322, 1.323
+sys/dev/pci/if_wmreg.h				1.72
+
+	wm(4):
+	- Fix a link negotiation problem on some old switches.
+	- Fix a bug that flags related to semaphores were incorrectly
+	  checked in wm_kmrn_{readreg,writereg}.  Affects i80003, ICH*
+	  and PCH*.
+	[msaitoh, ticket #833]
+
+sys/net/npf/npf_ctl.c				1.42
+usr.sbin/npf/npfctl/npf_bpf_comp.c		1.8
+usr.sbin/npf/npfctl/npf_build.c			1.40
+
+	- npfctl: fix the confusion in the parser (0/0 case with
+	  no other filter).
+	- Always populate the error dictionary, not only for
+	  DEBUG/DIAGNOSTIC.
+	[rmind, ticket #835]
+
+lib/libcurses/curses.h				1.107
+
+	mvgetnstr should have a length argument as its name implies.
+	[joerg, ticket #836]
+
+common/lib/libc/arch/arm/features.mk		1.2
+lib/libarch/Makefile				1.29
+lib/libarch/i386/Makefile.inc			1.15
+lib/libarch/x86_64/Makefile.inc			1.5
+share/mk/bsd.gcc.mk				1.11
+share/mk/bsd.prog.mk				1.292
+
+	- Make LIBCRT* depend on the right files if MLIBDIR from
+	  MKCOMPAT is defined.
+	- Use ${COPT} so it properly emits the right features doing
+	  MKCOMPAT.
+	- Avoid defining MLIBDIR.  Use ${MLIBDIR:Unone} instead.
+	[martin, ticket #837]
+
+sys/arch/amiga/amiga/machdep.c			1.244
+
+	Fix space calculation for dump header. Round up to clicks to
+	avoid disk alignment issues.
+	[mlelstv, ticket #838]
 
