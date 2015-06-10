@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/device.h>
 #include <sys/lwp.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 #include <sys/wdog.h>
 
 #include <uvm/uvm.h>
@@ -47,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <dev/sysmon/sysmonvar.h>
 
 #include <mips/cache.h>
-#include <mips/cpuset.h>
 #include <mips/mips_opcode.h>
 #include <mips/mips3_clock.h>
 
@@ -78,7 +78,7 @@ CFATTACH_DECL_NEW(cpunode, sizeof(struct cpunode_softc),
 CFATTACH_DECL_NEW(cpu_cpunode, 0,
     cpu_cpunode_match, cpu_cpunode_attach, NULL, NULL);
 
-volatile __cpuset_t cpus_booted = 1;
+kcpuset_t *cpus_booted;
 
 void octeon_reset_vector(void);
 
@@ -123,7 +123,9 @@ cpunode_mainbus_attach(device_t parent, device_t self, void *aux)
 	if (cvmctl & CP0_CVMCTL_REPUN)
 		aprint_normal(", unaligned-access ok");
 #ifdef MULTIPROCESSOR
-	aprint_normal(", booted %#" PRIx64, cpus_booted);
+	uint32_t booted[1];
+	kcpuset_export_u32(cpus_booted, booted, sizeof(booted));
+	aprint_normal(", booted %#" PRIx32, booted[0]);
 #endif
 	aprint_normal("\n");
 
@@ -290,7 +292,7 @@ cpu_cpunode_attach(device_t parent, device_t self, void *aux)
 	}
 #ifdef MULTIPROCESSOR
 	KASSERTMSG(cpunum == 1, "cpunum %d", cpunum);
-	if (!CPUSET_HAS_P(cpus_booted, cpunum)) {
+	if (!kcpuset_isset(cpus_booted, cpunum)) {
 		aprint_naive(" disabled\n");
 		aprint_normal(" disabled (unresponsive)\n");
 		return;
@@ -303,10 +305,10 @@ cpu_cpunode_attach(device_t parent, device_t self, void *aux)
 	cpu_cpunode_attach_common(self, ci);
 
 	KASSERT(ci->ci_data.cpu_idlelwp != NULL);
-	for (int i = 0; i < 100 && !CPUSET_HAS_P(cpus_hatched, cpunum); i++) {
+	for (int i = 0; i < 100 && !kcpuset_isset(cpus_hatched, cpunum); i++) {
 		delay(10000);
 	}
-	if (!CPUSET_HAS_P(cpus_hatched, cpunum)) {
+	if (!kcpuset_isset(cpus_hatched, cpunum)) {
 #ifdef DDB
 		aprint_verbose_dev(self, "hatch failed ci=%p flags=%#"PRIx64"\n", ci, ci->ci_flags);
 		cpu_Debugger();
