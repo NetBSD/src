@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2015/06/10 22:32:32 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2015/06/10 22:32:32 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -1018,7 +1018,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	savectx(curpcb);
+	savectx(lwp_getpcb(curlwp));
 
 	if (cold) {
 		howto |= RB_HALT;
