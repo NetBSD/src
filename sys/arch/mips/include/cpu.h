@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.115 2015/06/07 06:07:49 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.116 2015/06/10 22:31:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,6 +55,7 @@
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
+#include <sys/kcpuset.h>
 
 typedef struct cpu_watchpoint {
 	register_t	cw_addr;
@@ -460,9 +461,9 @@ extern struct mips_options mips_options;
 void cpu_broadcast_ipi(int);
 
 /*
- * Send an inter-processor interupt to CPUs in cpuset (excludes curcpu())
+ * Send an inter-processor interupt to CPUs in kcpuset (excludes curcpu())
  */
-void cpu_multicast_ipi(__cpuset_t, int);
+void cpu_multicast_ipi(const kcpuset_t *, int);
 
 /*
  * Send an inter-processor interupt to another CPU.
@@ -560,16 +561,16 @@ void	cpu_halt(void);
 void	cpu_halt_others(void);
 void	cpu_pause(struct reg *);
 void	cpu_pause_others(void);
-void	cpu_resume(int);
+void	cpu_resume(cpuid_t);
 void	cpu_resume_others(void);
-int	cpu_is_paused(int);
+bool	cpu_is_paused(cpuid_t);
 void	cpu_debug_dump(void);
 
-extern volatile __cpuset_t cpus_running;
-extern volatile __cpuset_t cpus_hatched;
-extern volatile __cpuset_t cpus_paused;
-extern volatile __cpuset_t cpus_resumed;
-extern volatile __cpuset_t cpus_halted;
+extern kcpuset_t *cpus_running;
+extern kcpuset_t *cpus_hatched;
+extern kcpuset_t *cpus_paused;
+extern kcpuset_t *cpus_resumed;
+extern kcpuset_t *cpus_halted;
 #endif
 
 /* copy.S */
