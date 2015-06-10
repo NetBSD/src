@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.8 2015/06/09 00:39:53 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.9 2015/06/10 03:29:37 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,6 +45,8 @@ TIMEOUT=5
 atf_test_case basic cleanup
 atf_test_case basic6 cleanup
 atf_test_case rtable cleanup
+atf_test_case member_ip cleanup
+atf_test_case member_ip6 cleanup
 
 basic_head()
 {
