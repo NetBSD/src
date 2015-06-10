@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.92 2015/06/07 08:03:10 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.93 2015/06/10 05:03:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -939,6 +939,7 @@
 #define	MIPS_24KE	0x96	/* MIPS 24KEc			ISA 32  Rel 2 */
 #define	MIPS_74K	0x97	/* MIPS 74Kc/74Kf		ISA 32  Rel 2 */
 #define	MIPS_1004K	0x99	/* MIPS 1004Kc/1004Kf		ISA 32  Rel 2 */
+#define	MIPS_1074K	0x9a	/* MIPS 1074Kc/1074Kf		ISA 32  Rel 2 */
 
 /*
  * CPU processor revision IDs for company ID == 2 (Broadcom)
