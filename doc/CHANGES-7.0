@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.328 2015/06/10 17:21:06 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.329 2015/06/10 20:59:55 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32123,4 +32123,10 @@ sys/arch/amiga/amiga/machdep.c			1.244
 	Fix space calculation for dump header. Round up to clicks to
 	avoid disk alignment issues.
 	[mlelstv, ticket #838]
+
+common/lib/libc/arch/arm/string/memcpy.S	1.8
+
+	Add ARM EABI __aeabi_memcpy4 and __aeabi_memcpy8 aliases
+	for memcpy.
+	[joerg, ticket #834]
 
