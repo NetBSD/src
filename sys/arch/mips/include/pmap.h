@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.64 2015/06/07 06:07:49 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.65 2015/06/10 22:31:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,9 +79,9 @@
 #endif
 
 #include <sys/evcnt.h>
+#include <sys/kcpuset.h>
 
 #include <mips/cpuregs.h>	/* for KSEG0 below */
-//#include <mips/pte.h>
 
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
@@ -174,8 +174,8 @@ struct pmap_asid_info {
  */
 struct pmap {
 #ifdef MULTIPROCESSOR
-	volatile uint32_t	pm_active;	/* pmap was active on ... */
-	volatile uint32_t	pm_onproc;	/* pmap is active on ... */
+	kcpuset_t		*pm_active;	/* pmap was active on ... */
+	kcpuset_t		*pm_onproc;	/* pmap is active on ... */
 	volatile u_int		pm_shootdown_pending;
 #endif
 	union segtab		*pm_segtab;	/* pointers to pages of PTEs */
@@ -207,7 +207,7 @@ struct pmap_tlb_info {
 #ifdef MULTIPROCESSOR
 	pmap_t ti_victim;
 	uint32_t ti_synci_page_bitmap;	/* page indices needing a syncicache */
-	uint32_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
+	kcpuset_t *ti_kcpuset;		/* bitmask of CPUs sharing this TLB */
 	enum tlb_invalidate_op ti_tlbinvop;
 	u_int ti_index;
 #define tlbinfo_index(ti)	((ti)->ti_index)
@@ -264,7 +264,7 @@ bool	pmap_tlb_shootdown_bystanders(pmap_t pmap);
 void	pmap_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
 void	pmap_tlb_syncicache_ast(struct cpu_info *);
 void	pmap_tlb_syncicache_wanted(struct cpu_info *);
-void	pmap_tlb_syncicache(vaddr_t, uint32_t);
+void	pmap_tlb_syncicache(vaddr_t, const kcpuset_t *);
 #endif
 void	pmap_tlb_info_init(struct pmap_tlb_info *);
 void	pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *);

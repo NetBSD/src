@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2015/06/04 05:21:09 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2015/06/10 22:31:00 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -111,8 +111,10 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2015/06/04 05:21:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2015/06/10 22:31:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,8 +174,6 @@ int	netboot;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-
-void	configure(void);
 void	mach_init(uint64_t, uint64_t, uint64_t, uint64_t);
 
 struct octeon_config octeon_configuration;
@@ -233,6 +233,7 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	mips_init_lwp0_uarea();
 
 	boothowto = RB_AUTOBOOT;
+	boothowto |= AB_VERBOSE;
 
 #if defined(DDB)
 	if (boothowto & RB_KDB)
@@ -266,7 +267,7 @@ mach_init_vector(void)
 {
 
 	/* Make sure exception base at 0 (MIPS_COP_0_EBASE) */
-	asm volatile("mtc0 %0, $15, 1" : : "r"(0x80000000) );
+	__asm __volatile("mtc0 %0, $15, 1" : : "r"(0x80000000) );
 
 	/*
 	 * Set up the exception vectors and CPU-specific function
@@ -275,11 +276,7 @@ mach_init_vector(void)
 	 * first printf() after that is called).
 	 * Also clears the I+D caches.
 	 */
-#if MULTIPROCESSOR
 	mips_vector_init(NULL, true);
-#else
-	mips_vector_init(NULL, false);
-#endif
 }
 
 void
@@ -380,6 +377,11 @@ int	waittime = -1;
 void
 cpu_startup(void)
 {
+#ifdef MULTIPROCESSOR
+	// Create a kcpuset so we can see on which CPUs the kernel was started.
+	kcpuset_create(&cpus_booted, true);
+#endif
+
 	/*
 	 * Do the common startup items.
 	 */

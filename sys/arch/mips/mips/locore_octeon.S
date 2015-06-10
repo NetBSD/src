@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.6 2015/06/08 14:24:20 matt Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.7 2015/06/10 22:31:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.6 2015/06/08 14:24:20 matt Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.7 2015/06/10 22:31:00 matt Exp $")
 
 #include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
@@ -136,19 +136,22 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	b	1b
 	 nop
 
-	// Indicate we've gotten this far
-2:	PTR_LA	a0, _C_LABEL(cpus_booted)
-	li	a1, 1
-	jal	_C_LABEL(atomic_or_64)
-	 sllv	a1, a1, s0
+	// Indicate this CPU was started by u-boot
+2:	PTR_LA	t0, _C_LABEL(cpus_booted) # get addr for kcpuset
+3:	sync
+	PTR_L	a0, (t0)		# get kcpuset
+	beqz	a0, 3b			# loop until not NULL
+	 nop
+	jal	_C_LABEL(kcpuset_atomic_set)
+	 move	a1, s1			# pass it our cpu number
 
 	// Wait until cpuid_infos[cpunum] is not NULL.
 	PTR_LA	a1, _C_LABEL(cpuid_infos)
 	dsll	v0, s0, PTR_SCALESHIFT	# cpunum -> array index
 	PTR_ADD	t0, a1, v0		# add to array start
-3:	sync
+4:	sync
 	PTR_L	a1, (t0)		# get cpu_info pointer
-	beqz	a1, 3b			# loop until non-NULL
+	beqz	a1, 4b			# loop until non-NULL
 	 nop
 
 	j	_C_LABEL(cpu_trampoline)

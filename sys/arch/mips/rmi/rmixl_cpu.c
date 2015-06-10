@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.7 2015/06/01 22:55:13 matt Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.8 2015/06/10 22:31:00 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.7 2015/06/01 22:55:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.8 2015/06/10 22:31:00 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -218,13 +218,12 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 
-		const u_long cpu_mask = 1L << cpu_index(ci);
 		for (size_t i=0; i < 10000; i++) {
-			if ((cpus_hatched & cpu_mask) != 0)
+			if (!kcpuset_isset(cpus_hatched, cpu_index(ci)))
 				 break;
 			DELAY(100);
 		}
-		if ((cpus_hatched & cpu_mask) == 0) {
+		if (!kcpuset_isset(cpus_hatched, cpu_index(ci))) {
 			aprint_error(": failed to hatch\n");
 			return;
 		}
