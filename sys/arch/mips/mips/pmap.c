@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.214 2014/05/11 07:53:28 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.215 2015/06/10 22:31:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214 2014/05/11 07:53:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2015/06/10 22:31:00 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -115,6 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214 2014/05/11 07:53:28 skrll Exp $");
 #include "opt_cputype.h"
 #include "opt_multiprocessor.h"
 #include "opt_mips_cache.h"
+
+#define __MUTEX_PRIVATE
 
 #ifdef MULTIPROCESSOR
 #define PMAP_NO_PV_UNCACHED
@@ -265,10 +267,6 @@ struct pmap_kernel kernel_pmap_store = {
 	.kernel_pmap = {
 		.pm_count = 1,
 		.pm_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
-#ifdef MULTIPROCESSOR
-		.pm_active = 1,
-		.pm_onproc = 1,
-#endif
 	},
 };
 struct pmap * const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
@@ -375,12 +373,14 @@ pmap_page_syncicache(struct vm_page *pg)
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 #ifdef MULTIPROCESSOR
 	pv_entry_t pv = &md->pvh_first;
-	uint32_t onproc = 0;
+	kcpuset_t *onproc;
+	kcpuset_create(&onproc, true);
+	KASSERT(onproc != NULL);
 	(void)PG_MD_PVLIST_LOCK(md, false);
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
-			onproc |= pv->pv_pmap->pm_onproc;
-			if (onproc == cpus_running)
+			kcpuset_merge(onproc, pv->pv_pmap->pm_onproc);
+			if (kcpuset_match(onproc, cpus_running))
 				break;
 		}
 	}
@@ -388,6 +388,7 @@ pmap_page_syncicache(struct vm_page *pg)
 	kpreempt_disable();
 	pmap_tlb_syncicache(trunc_page(md->pvh_first.pv_va), onproc);
 	kpreempt_enable();
+	kcpuset_destroy(onproc);
 #else
 	if (MIPS_HAS_R4K_MMU) {
 		if (PG_MD_CACHED_P(md)) {
@@ -485,6 +486,15 @@ pmap_bootstrap(void)
 
 	pmap_page_colormask = (uvmexp.ncolors -1) << PAGE_SHIFT;
 
+#ifdef MULTIPROCESSOR
+	pmap_t pm = pmap_kernel();
+	kcpuset_create(&pm->pm_onproc, true);
+	kcpuset_create(&pm->pm_active, true);
+	KASSERT(pm->pm_onproc != NULL);
+	KASSERT(pm->pm_active != NULL);
+	kcpuset_set(pm->pm_onproc, cpu_number());
+	kcpuset_set(pm->pm_active, cpu_number());
+#endif
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
 
 	/*
@@ -812,6 +822,12 @@ pmap_create(void)
 	memset(pmap, 0, PMAP_SIZE);
 
 	pmap->pm_count = 1;
+#ifdef MULTIPROCESSOR
+	kcpuset_create(&pmap->pm_onproc, true);
+	kcpuset_create(&pmap->pm_active, true);
+	KASSERT(pmap->pm_onproc != NULL);
+	KASSERT(pmap->pm_active != NULL);
+#endif
 
 	pmap_segtab_init(pmap);
 
@@ -840,6 +856,13 @@ pmap_destroy(pmap_t pmap)
 	kpreempt_disable();
 	pmap_tlb_asid_release_all(pmap);
 	pmap_segtab_destroy(pmap);
+
+#ifdef MULTIPROCESSOR
+	kcpuset_destroy(pmap->pm_onproc);
+	kcpuset_destroy(pmap->pm_active);
+	pmap->pm_onproc = NULL;
+	pmap->pm_active = NULL;
+#endif
 
 	pool_put(&pmap_pmap_pool, pmap);
 	kpreempt_enable();
@@ -1716,9 +1739,9 @@ pmap_remove_all(struct pmap *pmap)
 	 * tlb_invalidate_addrs().
 	 */
 #ifdef MULTIPROCESSOR
-	const uint32_t cpu_mask = 1 << cpu_index(curcpu());
-	KASSERT((pmap->pm_onproc & ~cpu_mask) == 0);
-	if (pmap->pm_onproc & cpu_mask)
+	// This should be the last CPU with this pmap onproc
+	KASSERT(!kcpuset_isotherset(pmap->pm_onproc, cpu_index(curcpu())));
+	if (kcpuset_isset(pmap->pm_onproc, cpu_index(curcpu())))
 		pmap_tlb_asid_deactivate(pmap);
 #endif
 	pmap_tlb_asid_release_all(pmap);
@@ -2408,6 +2431,7 @@ pmap_pvlist_lock_init(void)
 	if (sizeof(kmutex_t) > cache_line_size) {
 		cache_line_size = roundup2(sizeof(kmutex_t), cache_line_size);
 	}
+	memset((void *)lock_page, 0, PAGE_SIZE);
 	const size_t nlocks = PAGE_SIZE / cache_line_size;
 	KASSERT((nlocks & (nlocks - 1)) == 0);
 	/*
@@ -2415,7 +2439,7 @@ pmap_pvlist_lock_init(void)
 	 */
 	for (size_t i = 0; i < nlocks; lock_va += cache_line_size, i++) {
 		kmutex_t * const lock = (kmutex_t *)lock_va;
-		mutex_init(lock, MUTEX_DEFAULT, IPL_VM);
+		mutex_init(lock, MUTEX_DEFAULT, IPL_HIGH);
 		pli->pli_locks[i] = lock;
 	}
 	pli->pli_lock_mask = nlocks - 1;
@@ -2447,9 +2471,16 @@ pmap_pvlist_lock(struct vm_page_md *md, bool list_change)
 		}
 	}
 
+	KASSERTMSG(lock >= pli->pli_locks[0],
+	    "lock %p < start %p", lock, pli->pli_locks);
+	KASSERTMSG(lock <= pli->pli_locks[pli->pli_lock_mask],
+	    "lock %p > end %p", lock, &pli->pli_locks[pli->pli_lock_mask]);
+
 	/*
 	 * Now finally lock the pvlists.
 	 */
+	KASSERTMSG(lock->mtx_ipl._spl == IPL_HIGH,
+	    "%p ipl %d", lock, lock->mtx_ipl._spl);
 	mutex_spin_enter(lock);
 
 	/*
@@ -2469,7 +2500,7 @@ pmap_pvlist_lock(struct vm_page_md *md, bool list_change)
 static void
 pmap_pvlist_lock_init(void)
 {
-	mutex_init(&pmap_pvlist_mutex, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&pmap_pvlist_mutex, MUTEX_DEFAULT, IPL_HIGH);
 }
 #endif /* MULTIPROCESSOR */
 

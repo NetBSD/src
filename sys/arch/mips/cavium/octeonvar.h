@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.3 2015/06/06 20:52:16 matt Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.4 2015/06/10 22:31:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/bus.h>
 #include <sys/evcnt.h>
+#include <sys/kcpuset.h>
 #include <mips/locore.h>
 #include <dev/pci/pcivar.h>
 
@@ -224,6 +225,7 @@ struct octeon_fau_map {
 #ifdef _KERNEL
 extern struct octeon_config	octeon_configuration;
 #ifdef MULTIPROCESSOR
+extern kcpuset_t *cpus_booted;
 extern struct cpu_softc		octeon_cpu1_softc;
 #endif
 
