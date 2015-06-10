@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.93 2015/04/15 14:39:24 riastradh Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.94 2015/06/10 15:28:27 hannken Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.93 2015/04/15 14:39:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.94 2015/06/10 15:28:27 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -84,27 +84,31 @@ ufs_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct mount *transmp;
+	struct mount *mp = vp->v_mount;
 	mode_t mode;
 	int error = 0;
+	bool wapbl_locked = false;
 
-	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
+	UFS_WAPBL_JUNLOCK_ASSERT(mp);
 
-	transmp = vp->v_mount;
-	fstrans_start(transmp, FSTRANS_LAZY);
+	fstrans_start(mp, FSTRANS_LAZY);
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
 	if (ip->i_mode == 0)
 		goto out;
-	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+	if (ip->i_nlink <= 0 && (mp->mnt_flag & MNT_RDONLY) == 0) {
 #ifdef UFS_EXTATTR
 		ufs_extattr_vnode_inactive(vp, curlwp);
 #endif
 		if (ip->i_size != 0)
 			error = ufs_truncate(vp, 0, NOCRED);
 #if defined(QUOTA) || defined(QUOTA2)
-		(void)chkiq(ip, -1, NOCRED, 0);
+		error = UFS_WAPBL_BEGIN(mp);
+		if (error == 0) {
+			wapbl_locked = true;
+			(void)chkiq(ip, -1, NOCRED, 0);
+		}
 #endif
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
@@ -118,20 +122,24 @@ ufs_inactive(void *v)
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
-		if (error)
-			goto out;
+		if (! wapbl_locked) {
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error)
+				goto out;
+			wapbl_locked = true;
+		}
 		UFS_UPDATE(vp, NULL, NULL, 0);
-		UFS_WAPBL_END(vp->v_mount);
 	}
 out:
+	if (wapbl_locked)
+		UFS_WAPBL_END(mp);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
 	VOP_UNLOCK(vp);
-	fstrans_done(transmp);
+	fstrans_done(mp);
 	return (error);
 }
 
