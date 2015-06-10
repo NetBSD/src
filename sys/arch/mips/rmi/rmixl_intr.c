@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.8 2011/09/27 01:02:34 jym Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.9 2015/06/10 22:31:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.8 2011/09/27 01:02:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.9 2015/06/10 22:31:00 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.8 2011/09/27 01:02:34 jym Exp $");
 #include <sys/mutex.h>
 #include <sys/systm.h>
 
-#include <mips/cpuset.h>
 #include <mips/locore.h>
 
 #include <mips/rmi/rmixlreg.h>
@@ -958,7 +957,7 @@ rmixl_send_ipi(struct cpu_info *ci, int tag)
 	uint64_t req = 1 << tag;
 	uint32_t r;
 
-	if (! CPUSET_HAS_P(cpus_running, cpu_index(ci)))
+	if (!kcpuset_isset(cpus_running, cpu_index(ci)))
 		return -1;
 
 	KASSERT((tag >= 0) && (tag < NIPIS));
