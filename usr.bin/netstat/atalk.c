@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.15 2013/10/18 20:26:45 christos Exp $	*/
+/*	$NetBSD: atalk.c,v 1.15.4.1 2015/06/10 16:41:12 snj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.15 2013/10/18 20:26:45 christos Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.15.4.1 2015/06/10 16:41:12 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,7 +229,6 @@ atalk_print2(const struct sockaddr *sa, const struct sockaddr *mask, int what)
 void
 atalkprotopr(u_long off, const char *name)
 {
-	struct ddpcb cb;
 	struct ddpcb *next;
 	struct ddpcb *initial;
 	int width = 22;
@@ -237,7 +236,6 @@ atalkprotopr(u_long off, const char *name)
 		return;
 	if (kread(off, (char *)&initial, sizeof(struct ddpcb *)) < 0)
 		return;
-	ddpcb = cb;
 	for (next = initial; next != NULL;) {
 		u_long	ppcb = (u_long)next;
 
