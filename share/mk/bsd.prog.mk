@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.290 2014/03/25 09:52:55 ozaki-r Exp $
+#	$NetBSD: bsd.prog.mk,v 1.290.4.1 2015/06/10 17:16:24 snj Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -72,22 +72,22 @@ CTFMFLAGS+= -g
 
 # ELF platforms depend on crti.o, crtbegin.o, crtend.o, and crtn.o
 .ifndef LIBCRTBEGIN
-LIBCRTBEGIN=	${DESTDIR}/usr/lib/crti.o ${_GCC_CRTBEGIN}
+LIBCRTBEGIN=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o ${_GCC_CRTBEGIN}
 .MADE: ${LIBCRTBEGIN}
 .endif
 .ifndef LIBCRTEND
-LIBCRTEND=	${_GCC_CRTEND} ${DESTDIR}/usr/lib/crtn.o
+LIBCRTEND=	${_GCC_CRTEND} ${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crtn.o
 .MADE: ${LIBCRTEND}
 .endif
 _SHLINKER=	${SHLINKDIR}/ld.elf_so
 
 .ifndef LIBCRT0
-LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
+LIBCRT0=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crt0.o
 .MADE: ${LIBCRT0}
 .endif
 
 .ifndef LIBCRTI
-LIBCRTI=	${DESTDIR}/usr/lib/crti.o
+LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 .MADE: ${LIBCRTI}
 .endif
 
