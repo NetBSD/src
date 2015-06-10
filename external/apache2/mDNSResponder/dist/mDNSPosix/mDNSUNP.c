@@ -279,6 +279,15 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
             continue;   /* ignore if interface not up */
 
 	/* Skip addresses we can't use */
+#ifdef SIOCGIFAFLAG_IN
+	if (ifr->ifr_addr.sa_family == AF_INET) {
+		ifrcopy = *ifr;
+		if (ioctl(sockfd, SIOCGIFAFLAG_IN, &ifrcopy) < 0)
+			goto gotError;
+		if (ifrcopy.ifr_addrflags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
+			continue;
+	}
+#endif
 #ifdef SIOCGIFAFLAG_IN6
         if (ifr->ifr_addr.sa_family == AF_INET6) {
 		struct in6_ifreq ifr6;
