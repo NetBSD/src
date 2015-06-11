@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.35 2015/06/07 06:07:49 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.36 2015/06/11 07:30:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -92,10 +92,10 @@
 #endif
 
 #ifdef ENABLE_MIPS_16KB_PAGE
-#define	NBPG		16384		/* bytes/page */
+#define	NBPG		16384UL		/* bytes/page */
 #define	PGSHIFT		14		/* LOG2(NBPG) */
 #else
-#define	NBPG		4096		/* bytes/page */
+#define	NBPG		4096UL		/* bytes/page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #endif
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */

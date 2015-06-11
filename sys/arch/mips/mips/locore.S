@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.196 2015/06/07 08:03:10 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.197 2015/06/11 07:30:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,6 @@
 #include <sys/cdefs.h>
 #include <sys/errno.h>
 
-#include <machine/param.h>
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 #include <mips/trap.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8 2015/06/06 04:40:19 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.9 2015/06/11 07:30:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -35,11 +35,10 @@
 
 #include <sys/cdefs.h>
 
-#include <machine/param.h>
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.8 2015/06/06 04:40:19 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.9 2015/06/11 07:30:10 matt Exp $")
 
 #include "assym.h"
 
