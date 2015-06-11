@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.66 2015/06/11 08:22:09 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.67 2015/06/11 15:50:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,6 +108,7 @@
 #define pmap_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define pmap_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
 
+#define PMAP_INVALID_SEGTAB	NULL
 #ifdef _LP64
 #define PMAP_SEGTABSIZE		NSEGPG
 #else
@@ -116,16 +117,16 @@
 
 union pt_entry;
 
-union segtab {
+union pmap_segtab {
 #ifdef _LP64
-	union segtab	*seg_seg[PMAP_SEGTABSIZE];
+	union pmap_segtab	*seg_seg[PMAP_SEGTABSIZE];
 #else
-	union segtab	*seg_seg[1];
+	union pmap_segtab	*seg_seg[1];
 #endif
 	union pt_entry	*seg_tab[PMAP_SEGTABSIZE];
 };
 
-typedef union segtab pmap_segtab_t;
+typedef union pmap_segtab pmap_segtab_t;
 
 /*
  * Structure defining an tlb entry data set.
