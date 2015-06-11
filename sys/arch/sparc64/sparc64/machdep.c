@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.281 2015/03/15 10:38:58 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.282 2015/06/11 21:00:05 palle Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.281 2015/03/15 10:38:58 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282 2015/06/11 21:00:05 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2273,15 +2273,17 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	}
 
 #ifdef _LP64
-	/* If it's not LINEAR don't bother to map it.  Use phys accesses. */
-	if ((flags & BUS_SPACE_MAP_LINEAR) == 0) {
-		hp->_ptr = addr;
-		if (map_little)
-			hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
-		else
-			hp->_asi = ASI_PHYS_NON_CACHED;
-		hp->_sasi = ASI_PHYS_NON_CACHED;
-		return (0);
+	if (!CPU_ISSUN4V) {
+		/* If it's not LINEAR don't bother to map it.  Use phys accesses. */
+		if ((flags & BUS_SPACE_MAP_LINEAR) == 0) {
+			hp->_ptr = addr;
+			if (map_little)
+				hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
+			else
+				hp->_asi = ASI_PHYS_NON_CACHED;
+			hp->_sasi = ASI_PHYS_NON_CACHED;
+			return (0);
+		}
 	}
 #endif
 
