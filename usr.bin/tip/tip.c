@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.55 2014/07/27 04:32:23 dholland Exp $	*/
+/*	$NetBSD: tip.c,v 1.56 2015/06/11 18:12:00 gson Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.55 2014/07/27 04:32:23 dholland Exp $");
+__RCSID("$NetBSD: tip.c,v 1.56 2015/06/11 18:12:00 gson Exp $");
 #endif /* not lint */
 
 /*
@@ -264,7 +264,7 @@ cleanup(int dummy __unused)
 
 	if (odisc)
 		(void)ioctl(0, TIOCSETD, &odisc);
-	exit(0);
+	_exit(0);
 }
 
 /*
