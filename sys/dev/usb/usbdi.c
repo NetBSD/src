@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.26 2015/03/30 12:09:30 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.27 2015/06/11 07:12:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.26 2015/03/30 12:09:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.27 2015/06/11 07:12:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1055,43 +1055,6 @@ usbd_do_request_flags_pipe(struct usbd_device *dev, struct usbd_pipe *pipe,
 #endif
 	if (actlen != NULL)
 		*actlen = xfer->ux_actlen;
-	if (err == USBD_STALLED) {
-		/*
-		 * The control endpoint has stalled.  Control endpoints
-		 * should not halt, but some may do so anyway so clear
-		 * any halt condition.
-		 */
-		usb_device_request_t treq;
-		usb_status_t status;
-		uint16_t s;
-		usbd_status nerr;
-
-		treq.bmRequestType = UT_READ_ENDPOINT;
-		treq.bRequest = UR_GET_STATUS;
-		USETW(treq.wValue, 0);
-		USETW(treq.wIndex, 0);
-		USETW(treq.wLength, sizeof(usb_status_t));
-		usbd_setup_default_xfer(xfer, dev, 0, USBD_DEFAULT_TIMEOUT,
-					   &treq, &status,sizeof(usb_status_t),
-					   0, 0);
-		nerr = usbd_sync_transfer(xfer);
-		if (nerr)
-			goto bad;
-		s = UGETW(status.wStatus);
-		USBHIST_LOG(usbdebug, "status = 0x%04x", s, 0, 0, 0);
-		if (!(s & UES_HALT))
-			goto bad;
-		treq.bmRequestType = UT_WRITE_ENDPOINT;
-		treq.bRequest = UR_CLEAR_FEATURE;
-		USETW(treq.wValue, UF_ENDPOINT_HALT);
-		USETW(treq.wIndex, 0);
-		USETW(treq.wLength, 0);
-		usbd_setup_default_xfer(xfer, dev, 0, USBD_DEFAULT_TIMEOUT,
-					   &treq, &status, 0, 0, 0);
-		nerr = usbd_sync_transfer(xfer);
-		if (nerr)
-			goto bad;
-	}
 
  bad:
 	if (err) {
