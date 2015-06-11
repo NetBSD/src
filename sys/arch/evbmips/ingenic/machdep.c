@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2015/04/04 13:06:01 macallan Exp $ */
+/*	$NetBSD: machdep.c,v 1.7 2015/06/11 15:38:18 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2015/04/04 13:06:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2015/06/11 15:38:18 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -138,7 +138,7 @@ ingenic_send_ipi(struct cpu_info *ci, int tag)
 
 	msg = 1 << tag;
 
-	if (cpus_running & (1 << cpu_index(ci))) {
+	if (kcpuset_isset(cpus_running, cpu_index(ci))) {
 		if (cpu_index(ci) == 0) {
 			MTC0(msg, CP0_CORE_MBOX, 0);
 		} else {
