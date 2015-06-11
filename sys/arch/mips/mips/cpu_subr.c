@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.24 2015/06/10 22:31:00 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.25 2015/06/11 08:22:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.24 2015/06/10 22:31:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.25 2015/06/11 08:22:09 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -194,7 +194,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	 * allocate enough VA so we can map pages with the right color
 	 * (to avoid cache alias problems).
 	 */
-	if (mips_avail_end > MIPS_KSEG1_START - MIPS_KSEG0_START) {
+	if (pmap_limits.avail_end > MIPS_KSEG1_START - MIPS_KSEG0_START) {
 		ci->ci_pmap_dstbase = uvm_km_alloc(kernel_map,
 		    uvmexp.ncolors * PAGE_SIZE, 0, UVM_KMF_VAONLY);
 		KASSERT(ci->ci_pmap_dstbase);

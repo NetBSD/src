@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.215 2015/06/10 22:31:00 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.216 2015/06/11 08:22:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2015/06/10 22:31:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.216 2015/06/11 08:22:09 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -267,15 +267,15 @@ struct pmap_kernel kernel_pmap_store = {
 	.kernel_pmap = {
 		.pm_count = 1,
 		.pm_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+		.pm_minaddr = VM_MIN_KERNEL_ADDRESS,
+		.pm_maxaddr = VM_MAX_KERNEL_ADDRESS,
 	},
 };
 struct pmap * const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
 
-paddr_t mips_avail_start;	/* PA of first available physical page */
-paddr_t mips_avail_end;		/* PA of last available physical page */
-vaddr_t mips_virtual_end;	/* VA of last avail page (end of kernel AS) */
-vaddr_t iospace;		/* VA of start of I/O space, if needed  */
-vsize_t iospace_size = 0;	/* Size of (initial) range of I/O addresses */
+struct pmap_limits pmap_limits = {	/* VA and PA limits */
+	.virtual_start = VM_MIN_KERNEL_ADDRESS,
+};
 
 pt_entry_t	*Sysmap;		/* kernel pte table */
 unsigned int	Sysmapsize;		/* number of pte's in Sysmap */
@@ -513,7 +513,7 @@ pmap_bootstrap(void)
 	buf_setvalimit(bufsz);
 
 	Sysmapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
-	    bufsz + 16 * NCARGS + pager_map_size + iospace_size) / NBPG +
+	    bufsz + 16 * NCARGS + pager_map_size) / NBPG +
 	    (maxproc * UPAGES) + nkmempages;
 #ifdef DEBUG
 	{
@@ -551,40 +551,31 @@ pmap_bootstrap(void)
 	 * for us.  Must do this before uvm_pageboot_alloc()
 	 * can be called.
 	 */
-	mips_avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
-	mips_avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
-	mips_virtual_end = VM_MIN_KERNEL_ADDRESS + (vaddr_t)Sysmapsize * NBPG;
+	pmap_limits.avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
+	pmap_limits.avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
+	pmap_limits.virtual_end = pmap_limits.virtual_start + (vaddr_t)Sysmapsize * NBPG;
 
 #ifndef _LP64
 	/* Need space for I/O (not in K1SEG) ? */
 
-	if (mips_virtual_end > VM_MAX_KERNEL_ADDRESS) {
-		mips_virtual_end = VM_MAX_KERNEL_ADDRESS;
+	if (pmap_limits.virtual_end > VM_MAX_KERNEL_ADDRESS) {
+		pmap_limits.virtual_end = VM_MAX_KERNEL_ADDRESS;
 		Sysmapsize =
-		    (VM_MAX_KERNEL_ADDRESS -
-		     (VM_MIN_KERNEL_ADDRESS + iospace_size)) / NBPG;
-	}
-
-	if (iospace_size) {
-		iospace = mips_virtual_end - iospace_size;
-#ifdef DEBUG
-		printf("io: %#"PRIxVADDR".%#"PRIxVADDR" %#"PRIxVADDR"\n",
-		    iospace, iospace_size, mips_virtual_end);
-#endif
+		    (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NBPG;
 	}
 #endif
 	pmap_pvlist_lock_init();
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done
-	 * after mips_virtual_end is initialized).
+	 * after pmap_limits.virtual_end is initialized).
 	 */
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
 #ifdef PMAP_POOLPAGE_DEBUG
-	mips_virtual_end -= poolpage.size;
-	poolpage.base = mips_virtual_end;
+	pmap_limits.virtual_end -= poolpage.size;
+	poolpage.base = pmap_limits.virtual_end;
 	poolpage.sysmap = Sysmap + atop(poolpage.size);
 #endif
 	/*
@@ -622,8 +613,8 @@ void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 
-	*vstartp = VM_MIN_KERNEL_ADDRESS;	/* kernel is in K0SEG */
-	*vendp = trunc_page(mips_virtual_end);	/* XXX need pmap_growkernel() */
+	*vstartp = trunc_page(pmap_limits.virtual_start);
+	*vendp = trunc_page(pmap_limits.virtual_end);
 }
 
 /*
@@ -763,7 +754,7 @@ pmap_init(void)
 	 * allocate enough VA so we can map pages with the right color
 	 * (to avoid cache alias problems).
 	 */
-	if (mips_avail_end > MIPS_KSEG1_START - MIPS_KSEG0_START) {
+	if (pmap_limits.avail_end > MIPS_KSEG1_START - MIPS_KSEG0_START) {
 		curcpu()->ci_pmap_dstbase = uvm_km_alloc(kernel_map,
 		    uvmexp.ncolors * PAGE_SIZE, 0, UVM_KMF_VAONLY);
 		KASSERT(curcpu()->ci_pmap_dstbase);
@@ -822,14 +813,17 @@ pmap_create(void)
 	memset(pmap, 0, PMAP_SIZE);
 
 	pmap->pm_count = 1;
+	pmap->pm_minaddr = VM_MIN_ADDRESS;
+	pmap->pm_maxaddr = VM_MAXUSER_ADDRESS;
+
+	pmap_segtab_init(pmap);
+
 #ifdef MULTIPROCESSOR
 	kcpuset_create(&pmap->pm_onproc, true);
 	kcpuset_create(&pmap->pm_active, true);
 	KASSERT(pmap->pm_onproc != NULL);
 	KASSERT(pmap->pm_active != NULL);
 #endif
-
-	pmap_segtab_init(pmap);
 
 	return pmap;
 }
@@ -855,7 +849,7 @@ pmap_destroy(pmap_t pmap)
 	PMAP_COUNT(destroy);
 	kpreempt_disable();
 	pmap_tlb_asid_release_all(pmap);
-	pmap_segtab_destroy(pmap);
+	pmap_segtab_destroy(pmap, NULL, 0);
 
 #ifdef MULTIPROCESSOR
 	kcpuset_destroy(pmap->pm_onproc);
@@ -1003,7 +997,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		/* remove entries from kernel pmap */
 		PMAP_COUNT(remove_kernel_calls);
 #ifdef PARANOIADIAG
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= mips_virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= pmap_limits.virtual_end)
 			panic("pmap_remove: kva not in range");
 #endif
 		pt_entry_t *pte = kvtopte(sva);
@@ -1204,7 +1198,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		 * read-only.
 		 */
 #ifdef PARANOIADIAG
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= mips_virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= pmap_limits.virtual_end)
 			panic("pmap_protect: kva not in range");
 #endif
 		pte = kvtopte(sva);
@@ -1398,7 +1392,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (!good_color)
 			PMAP_COUNT(kernel_mappings_bad);
 #if defined(DEBUG) || defined(DIAGNOSTIC) || defined(PARANOIADIAG)
-		if (va < VM_MIN_KERNEL_ADDRESS || va >= mips_virtual_end)
+		if (va < VM_MIN_KERNEL_ADDRESS || va >= pmap_limits.virtual_end)
 			panic("pmap_enter: kva %#"PRIxVADDR"too big", va);
 #endif
 	} else {
@@ -1778,7 +1772,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	if (pmap == pmap_kernel()) {
 		/* change entries in kernel pmap */
 #ifdef PARANOIADIAG
-		if (va < VM_MIN_KERNEL_ADDRESS || va >= mips_virtual_end)
+		if (va < VM_MIN_KERNEL_ADDRESS || va >= pmap_limits.virtual_end)
 			panic("pmap_unwire");
 #endif
 		pte = kvtopte(va);
@@ -1841,7 +1835,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		if (MIPS_KSEG1_P(va))
 			panic("pmap_extract: kseg1 address %#"PRIxVADDR"", va);
 #endif
-		if (va >= mips_virtual_end)
+		if (va >= pmap_limits.virtual_end)
 			panic("pmap_extract: illegal kernel mapped address %#"PRIxVADDR"", va);
 		pte = kvtopte(va);
 		kpreempt_disable();
@@ -2710,8 +2704,12 @@ mips_pmap_unmap_poolpage(vaddr_t va)
 	return pa;
 }
 
-
-
-/******************** page table page management ********************/
-
-/* TO BE DONE */
+bool
+pmap_md_direct_mapped_vaddr_p(vaddr_t va)
+{
+#ifdef _LP64
+	if (MIPS_XKPHYS_P(va))
+		return true;
+#endif
+	return MIPS_KSEG0_P(va);
+}
