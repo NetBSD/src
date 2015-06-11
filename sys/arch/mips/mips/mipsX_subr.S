@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.61 2015/06/09 14:40:42 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.62 2015/06/11 07:30:10 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -131,8 +131,6 @@
 #include <mips/cache_r4k.h>
 #endif
 #include <mips/trap.h>
-
-#include <machine/param.h>
 
 #include "assym.h"
 
