@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.13 2012/10/02 23:54:52 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.14 2015/06/11 08:22:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2012/10/02 23:54:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.14 2015/06/11 08:22:08 matt Exp $");
 
 /* #define	BUS_DMA_DEBUG */
 #include <sys/param.h>
@@ -542,11 +542,11 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	extern paddr_t mips_avail_start, mips_avail_end;
 
-	return (_bus_dmamem_alloc_range_common(t, size, alignment, boundary,
+	return _bus_dmamem_alloc_range_common(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags,
-	    mips_avail_start /*low*/, mips_avail_end - PAGE_SIZE /*high*/));
+	    pmap_limits.avail_start /*low*/,
+	    pmap_limits.avail_end - PAGE_SIZE /*high*/);
 }
 
 /*
