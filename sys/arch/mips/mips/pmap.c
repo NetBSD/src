@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.216 2015/06/11 08:22:09 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.217 2015/06/11 15:13:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.216 2015/06/11 08:22:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217 2015/06/11 15:13:34 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1631,7 +1631,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
 			printf("pmap_enter: flush I cache va %#"PRIxVADDR" (%#"PRIxPADDR")\n",
-			    va - NBPG, pa);
+			    va - (vaddr_t)NBPG, pa);
 #endif
 		PMAP_COUNT(exec_mappings);
 		if (!PG_MD_EXECPAGE_P(md) && PG_MD_CACHED_P(md)) {
