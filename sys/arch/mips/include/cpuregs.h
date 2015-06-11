@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.93 2015/06/10 05:03:41 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.94 2015/06/11 05:15:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -748,6 +748,7 @@
 #define	MIPS1_TLB_PID_SHIFT		6
 
 #define	MIPS3_TLB_VPN2			0xffffe000
+#define	MIPS3_TLB_EHINV			0x00000400	/* mipsNN R3 */
 #define	MIPS3_TLB_ASID			0x000000ff
 
 #define	MIPS1_TLB_VIRT_PAGE_NUM		MIPS1_TLB_VPN
@@ -940,6 +941,7 @@
 #define	MIPS_74K	0x97	/* MIPS 74Kc/74Kf		ISA 32  Rel 2 */
 #define	MIPS_1004K	0x99	/* MIPS 1004Kc/1004Kf		ISA 32  Rel 2 */
 #define	MIPS_1074K	0x9a	/* MIPS 1074Kc/1074Kf		ISA 32  Rel 2 */
+#define	MIPS_interAptiv	0xa1	/* MIPS interAptiv		ISA 32  R3 MT */
 
 /*
  * CPU processor revision IDs for company ID == 2 (Broadcom)
