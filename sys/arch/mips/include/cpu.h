@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.116 2015/06/10 22:31:00 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.117 2015/06/11 15:50:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -115,9 +115,13 @@ struct cpu_info {
 	int ci_tlb_slot;		/* reserved tlb entry for cpu_info */
 	u_int ci_pmap_asid_cur;		/* current ASID */
 	struct pmap_tlb_info *ci_tlb_info; /* tlb information for this cpu */
-	union segtab *ci_pmap_seg0tab;
+	union pmap_segtab *ci_pmap_segtabs[2];
+#define ci_pmap_user_segtab	ci_pmap_segtabs[0]
+#define ci_pmap_kern_segtab	ci_pmap_segtabs[1]
 #ifdef _LP64
-	union segtab *ci_pmap_segtab;
+	union pmap_segtab *ci_pmap_seg0tabs[2];
+#define ci_pmap_user_seg0tab	ci_pmap_seg0tabs[0]
+#define ci_pmap_kern_seg0tab	ci_pmap_seg0tabs[1]
 #else
 	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */

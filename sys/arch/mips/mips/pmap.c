@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.217 2015/06/11 15:13:34 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.218 2015/06/11 15:50:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217 2015/06/11 15:13:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.218 2015/06/11 15:50:17 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -907,11 +907,9 @@ pmap_deactivate(struct lwp *l)
 
 	kpreempt_disable();
 	KASSERT(l == curlwp || l->l_cpu == curlwp->l_cpu);
+	curcpu()->ci_pmap_user_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
 #ifdef _LP64
-	curcpu()->ci_pmap_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
-	curcpu()->ci_pmap_seg0tab = NULL;
-#else
-	curcpu()->ci_pmap_seg0tab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
+	curcpu()->ci_pmap_user_seg0tab = NULL;
 #endif
 	pmap_tlb_asid_deactivate(l->l_proc->p_vmspace->vm_map.pmap);
 	kpreempt_enable();
@@ -1631,7 +1629,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
 			printf("pmap_enter: flush I cache va %#"PRIxVADDR" (%#"PRIxPADDR")\n",
-			    va - (vaddr_t)NBPG, pa);
+			    va - NBPG, pa);
 #endif
 		PMAP_COUNT(exec_mappings);
 		if (!PG_MD_EXECPAGE_P(md) && PG_MD_CACHED_P(md)) {
