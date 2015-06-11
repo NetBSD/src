@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.108 2015/06/07 08:03:10 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.109 2015/06/11 07:30:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -91,7 +91,6 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
-#include <machine/param.h>
 
 #include "assym.h"
 
