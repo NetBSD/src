@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.64 2015/01/16 03:45:53 christos Exp $	*/
+/*	$NetBSD: boot2.c,v 1.65 2015/06/11 15:56:53 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -413,6 +413,7 @@ command_help(char *arg)
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
+	       "splash {path_to_image_file}\n"
 	       "userconf {command}\n"
 	       "rndseed {path_to_rndseed_file}\n"
 	       "help|?\n"
