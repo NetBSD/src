@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.267 2015/06/10 05:03:59 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.268 2015/06/11 08:22:09 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.267 2015/06/10 05:03:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.268 2015/06/11 08:22:09 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2395,7 +2395,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	if (v < MIPS_XKPHYS_START) {
 		return EFAULT;
 	}
-	if (MIPS_XKPHYS_P(v) && v > MIPS_PHYS_TO_XKPHYS_CACHED(mips_avail_end +
+	if (MIPS_XKPHYS_P(v) && v > MIPS_PHYS_TO_XKPHYS_CACHED(pmap_limits.avail_end +
 	    mips_round_page(MSGBUFSIZE))) {
 		return EFAULT;
 	}
@@ -2410,7 +2410,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	if (v < MIPS_KSEG0_START) {
 		return EFAULT;
 	}
-	if (v < MIPS_PHYS_TO_KSEG0(mips_avail_end +
+	if (v < MIPS_PHYS_TO_KSEG0(pmap_limits.avail_end +
 	    mips_round_page(MSGBUFSIZE))) {
 		*handled = true;
 		return 0;
