@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2015/02/03 10:25:53 nonaka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2015/06/11 05:27:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2015/02/03 10:25:53 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2015/06/11 05:27:07 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -214,7 +214,9 @@ struct pmap_kernel kernel_pmap_store = {
 
 struct pmap * const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
 
-struct pmap_limits pmap_limits;
+struct pmap_limits pmap_limits = {
+	.virtual_start = VM_MIN_KERNEL_ADDRESS,
+};
 
 #ifdef UVMHIST
 static struct kern_history_ent pmapexechistbuf[10000];
@@ -351,8 +353,8 @@ void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 
-	*vstartp = VM_MIN_KERNEL_ADDRESS;
-	*vendp = VM_MAX_KERNEL_ADDRESS;
+	*vstartp = pmap_limits.virtual_start;
+	*vendp = pmap_limits.virtual_end;
 }
 
 vaddr_t
