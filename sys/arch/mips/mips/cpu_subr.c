@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.25 2015/06/11 08:22:09 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.26 2015/06/11 15:50:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.25 2015/06/11 08:22:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.26 2015/06/11 15:50:17 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -80,9 +80,9 @@ struct cpu_info cpu_info_store
     = {
 	.ci_curlwp = &lwp0,
 	.ci_tlb_info = &pmap_tlb0_info,
-	.ci_pmap_seg0tab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	.ci_pmap_user_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
 #ifdef _LP64
-	.ci_pmap_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	.ci_pmap_user_seg0tab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
 #endif
 	.ci_cpl = IPL_HIGH,
 	.ci_tlb_slot = -1,

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.237 2015/06/06 20:53:38 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.238 2015/06/11 15:50:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.237 2015/06/06 20:53:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.238 2015/06/11 15:50:17 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -381,9 +381,10 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		 */
 		struct cpu_info * const ci = curcpu();
 		if ((va >> XSEGSHIFT) == 0 &&
-		    __predict_false(ci->ci_pmap_seg0tab == NULL
-				&& ci->ci_pmap_segtab->seg_seg[0] != NULL)) {
-			ci->ci_pmap_seg0tab = ci->ci_pmap_segtab->seg_seg[0];
+		    __predict_false(ci->ci_pmap_user_seg0tab == NULL
+				&& ci->ci_pmap_user_segtab->seg_seg[0] != NULL)) {
+			ci->ci_pmap_user_seg0tab =
+			    ci->ci_pmap_user_segtab->seg_seg[0];
 			kpreempt_enable();
 			if (type & T_USER) {
 				userret(l);
