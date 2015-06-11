@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.268 2015/06/11 08:22:09 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.269 2015/06/11 15:48:57 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.268 2015/06/11 08:22:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.269 2015/06/11 15:48:57 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1816,7 +1816,6 @@ cpu_dump(void)
 		cpuhdrp->pg_v      = MIPS1_PG_V;
 	}
 	cpuhdrp->sysmappa   = MIPS_KSEG0_TO_PHYS(Sysmap);
-	cpuhdrp->sysmapsize = Sysmapsize;
 	cpuhdrp->nmemsegs   = mem_cluster_cnt;
 
 	/*
