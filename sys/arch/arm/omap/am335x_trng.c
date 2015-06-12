@@ -1,4 +1,4 @@
-/* $NetBSD: am335x_trng.c,v 1.1.2.2 2015/06/10 16:38:05 snj Exp $ */
+/* $NetBSD: am335x_trng.c,v 1.1.2.3 2015/06/12 16:32:05 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.1.2.2 2015/06/10 16:38:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.1.2.3 2015/06/12 16:32:05 snj Exp $");
 
 #include "opt_omap.h"
 
@@ -37,8 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.1.2.2 2015/06/10 16:38:05 snj Exp 
 #include <sys/intr.h>
 #include <sys/mutex.h>
 #include <sys/bus.h>
-#include <sys/rndpool.h>
-#include <sys/rndsource.h>
+#include <sys/rnd.h>
 
 #include <arm/omap/am335x_prcm.h>
 #include <arm/omap/omap2_prcm.h>
