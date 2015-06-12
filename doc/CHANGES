@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2076 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2077 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -160,3 +160,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	         IPV4 addresses now perform DAD using ARP as described in
 		 RFC 5227. [roy 20150502]
 	dhcpcd(8): Import dhcpcd-6.9.0. [roy 20150517]
+	openssl: Import openssl 1.0.1n [christos 20150612]
