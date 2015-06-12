@@ -115,19 +115,19 @@ static struct test_st {
     },
     {
         "", 0, "My test data", 12,
-        (unsigned char *)"61afdecb95429ef494d61fdee15990cabf0826fc"
+        (const unsigned char *)"61afdecb95429ef494d61fdee15990cabf0826fc"
     },
     {
         "", 0, "My test data", 12,
-        (unsigned char *)"2274b195d90ce8e03406f4b526a47e0787a88a65479938f1a5baa3ce0f079776"
+        (const unsigned char *)"2274b195d90ce8e03406f4b526a47e0787a88a65479938f1a5baa3ce0f079776"
     },
     {
         "123456", 6, "My test data", 12,
-        (unsigned char *)"bab53058ae861a7f191abe2d0145cbb123776a6369ee3f9d79ce455667e411dd"
+        (const unsigned char *)"bab53058ae861a7f191abe2d0145cbb123776a6369ee3f9d79ce455667e411dd"
     },
     {
         "12345", 5, "My test data again", 12,
-        (unsigned char *)"7dbe8c764c068e3bcd6e6b0fbcd5e6fc197b15bb"
+        (const unsigned char *)"7dbe8c764c068e3bcd6e6b0fbcd5e6fc197b15bb"
     }
 };
 # endif
@@ -227,7 +227,7 @@ test5:
         goto test6;
     }
     p = pt(buf, len);
-    if (strcmp(p, (char *)test[4].digest) != 0) {
+    if (strcmp(p, (const char *)test[4].digest) != 0) {
         printf("Error calculating interim HMAC on test 5\n");
         printf("got %s instead of %s\n", p, test[4].digest);
         err++;
@@ -249,7 +249,7 @@ test5:
         goto test6;
     }
     p = pt(buf, len);
-    if (strcmp(p, (char *)test[5].digest) != 0) {
+    if (strcmp(p, (const char *)test[5].digest) != 0) {
         printf("Error calculating 2nd interim HMAC on test 5\n");
         printf("got %s instead of %s\n", p, test[5].digest);
         err++;
@@ -271,7 +271,7 @@ test5:
         goto test6;
     }
     p = pt(buf, len);
-    if (strcmp(p, (char *)test[6].digest) != 0) {
+    if (strcmp(p, (const char *)test[6].digest) != 0) {
         printf("error calculating HMAC on test 5\n");
         printf("got %s instead of %s\n", p, test[6].digest);
         err++;
@@ -301,7 +301,7 @@ test6:
         goto end;
     }
     p = pt(buf, len);
-    if (strcmp(p, (char *)test[7].digest) != 0) {
+    if (strcmp(p, (const char *)test[7].digest) != 0) {
         printf("Error calculating HMAC on test 6\n");
         printf("got %s instead of %s\n", p, test[7].digest);
         err++;
