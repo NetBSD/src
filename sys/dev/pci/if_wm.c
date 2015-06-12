@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.333 2015/06/10 12:14:59 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.334 2015/06/12 04:40:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.333 2015/06/10 12:14:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.334 2015/06/12 04:40:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9291,9 +9291,34 @@ wm_nvm_version(struct wm_softc *sc)
 	uint16_t off;
 	bool check_version = false;
 	bool check_optionrom = false;
+	bool have_build = false;
 
+	/*
+	 * Version format:
+	 *
+	 * XYYZ
+	 * X0YZ
+	 * X0YY
+	 *
+	 * Example:
+	 *
+	 *	82571	0x50a2	5.10.2?	(the spec update notes about 5.6-5.10)
+	 *	82571	0x50a6	5.10.6?
+	 *	82572	0x506a	5.6.10?
+	 *	82572EI	0x5069	5.6.9?
+	 *	82574L	0x1080	1.8.0?	(the spec update notes about 2.1.4)
+	 *		0x2013	2.1.3?
+	 *	82583	0x10a0	1.10.0? (document says it's default vaule)
+	 */
 	wm_nvm_read(sc, NVM_OFF_IMAGE_UID1, 1, &uid1);
 	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82574:
+		check_version = true;
+		check_optionrom = true;
+		have_build = true;
+		break;
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
@@ -9315,26 +9340,24 @@ wm_nvm_version(struct wm_softc *sc)
 		check_optionrom = true;
 		break;
 	default:
-		/* XXX Should we print PXE boot agent's version? */
 		return;
 	}
 	if (check_version) {
-		bool have_build = false;
 		wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data);
 		major = (nvm_data & NVM_MAJOR_MASK) >> NVM_MAJOR_SHIFT;
-		if ((nvm_data & 0x0f00) == 0x0000)
-			minor = nvm_data & 0x00ff;
-		else {
+		if (have_build || ((nvm_data & 0x0f00) != 0x0000)) {
 			minor = (nvm_data & NVM_MINOR_MASK) >> NVM_MINOR_SHIFT;
 			build = nvm_data & NVM_BUILD_MASK;
 			have_build = true;
-		}
+		} else
+			minor = nvm_data & 0x00ff;
+
 		/* Decimal */
 		minor = (minor / 16) * 10 + (minor % 16);
 
 		aprint_verbose(", version %d.%d", major, minor);
 		if (have_build)
-			aprint_verbose(" build %d", build);
+			aprint_verbose(".%d", build);
 		sc->sc_nvm_ver_major = major;
 		sc->sc_nvm_ver_minor = minor;
 	}
