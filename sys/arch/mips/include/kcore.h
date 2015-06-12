@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.2 2015/06/11 15:36:26 matt Exp $	*/
+/*	$NetBSD: kcore.h,v 1.3 2015/06/12 16:28:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -37,6 +37,7 @@
 
 typedef struct cpu_kcore_hdr {
 	uint64_t	sysmappa;		/* PA of Sysmap */
+	uint32_t	sysmapsize;		/* size of Sysmap */
 	uint32_t	archlevel;		/* MIPS architecture level */
 	uint32_t	pg_shift;		/* PTE page frame num shift */
 	uint32_t	pg_frame;		/* PTE page frame num mask */
