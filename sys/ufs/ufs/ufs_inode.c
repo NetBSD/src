@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.94 2015/06/10 15:28:27 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.94 2015/06/10 15:28:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -86,7 +86,7 @@ ufs_inactive(void *v)
 	struct inode *ip = VTOI(vp);
 	struct mount *mp = vp->v_mount;
 	mode_t mode;
-	int error = 0;
+	int allerror = 0, error;
 	bool wapbl_locked = false;
 
 	UFS_WAPBL_JUNLOCK_ASSERT(mp);
@@ -102,10 +102,12 @@ ufs_inactive(void *v)
 		ufs_extattr_vnode_inactive(vp, curlwp);
 #endif
 		if (ip->i_size != 0)
-			error = ufs_truncate(vp, 0, NOCRED);
+			allerror = ufs_truncate(vp, 0, NOCRED);
 #if defined(QUOTA) || defined(QUOTA2)
 		error = UFS_WAPBL_BEGIN(mp);
-		if (error == 0) {
+		if (error) {
+			allerror = error;
+		} else {
 			wapbl_locked = true;
 			(void)chkiq(ip, -1, NOCRED, 0);
 		}
@@ -124,8 +126,10 @@ ufs_inactive(void *v)
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		if (! wapbl_locked) {
 			error = UFS_WAPBL_BEGIN(mp);
-			if (error)
+			if (error) {
+				allerror = error;
 				goto out;
+			}
 			wapbl_locked = true;
 		}
 		UFS_UPDATE(vp, NULL, NULL, 0);
@@ -140,7 +144,7 @@ out:
 	*ap->a_recycle = (ip->i_mode == 0);
 	VOP_UNLOCK(vp);
 	fstrans_done(mp);
-	return (error);
+	return (allerror);
 }
 
 /*
