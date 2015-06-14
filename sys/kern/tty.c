@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.263 2015/06/12 17:28:53 gson Exp $	*/
+/*	$NetBSD: tty.c,v 1.264 2015/06/14 16:19:31 gson Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.263 2015/06/12 17:28:53 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.264 2015/06/14 16:19:31 gson Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.263 2015/06/12 17:28:53 gson Exp $");
 #endif /* COMPAT_60 */
 
 static int	ttnread(struct tty *);
-static int	ttywait_timo(struct tty *, int timo);
 static void	ttyblock(struct tty *);
 static void	ttyecho(int, struct tty *);
 static void	ttyrubo(struct tty *, int);
@@ -1537,10 +1536,10 @@ ttnread(struct tty *tp)
 }
 
 /*
- * Wait for output to drain, or if this times out, flush it.
+ * Wait for output to drain.
  */
-static int
-ttywait_timo(struct tty *tp, int timo)
+int
+ttywait(struct tty *tp)
 {
 	int	error;
 
@@ -1550,24 +1549,13 @@ ttywait_timo(struct tty *tp, int timo)
 	while ((tp->t_outq.c_cc || ISSET(tp->t_state, TS_BUSY)) &&
 	    CONNECTED(tp) && tp->t_oproc) {
 		(*tp->t_oproc)(tp);
-		error = ttysleep(tp, &tp->t_outcv, true, timo);
-		if (error) {
-			ttyflush(tp, FWRITE);
+		error = ttysleep(tp, &tp->t_outcv, true, 0);
+		if (error)
 			break;
-		}
 	}
 	mutex_spin_exit(&tty_lock);
 
 	return (error);
-}
-
-/*
- * Wait for output to drain.
- */
-int
-ttywait(struct tty *tp)
-{
-	return ttywait_timo(tp, 0);
 }
 
 /*
@@ -1578,8 +1566,7 @@ ttywflush(struct tty *tp)
 {
 	int	error;
 
-	error = ttywait_timo(tp, 5 * hz);
-	if (error == 0 || error == EWOULDBLOCK) {
+	if ((error = ttywait(tp)) == 0) {
 		mutex_spin_enter(&tty_lock);
 		ttyflush(tp, FREAD);
 		mutex_spin_exit(&tty_lock);
