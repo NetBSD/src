@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.13 2014/04/21 18:10:40 palle Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.14 2015/06/14 16:20:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -136,13 +136,13 @@ kvamap_extract(vaddr_t va, vsize_t len, vaddr_t *new_va)
 		if (kvamap[i].start == NULL)
 			break;
 		if ((kvamap[i].start <= va) && (va < kvamap[i].end)) {
-			uint64_t va_len = kvamap[i].end - va + kvamap[i].start;
+			uint64_t va_len = kvamap[i].end - va;
 			len = (va_len < len) ? len - va_len : 0;
 			*new_va = kvamap[i].end;
 		}
 	}
 
-	return (len);
+	return len;
 }
 
 /*
