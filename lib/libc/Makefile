@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.168 2015/02/09 22:44:34 pooka Exp $
+#	$NetBSD: Makefile,v 1.169 2015/06/15 14:24:01 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -130,7 +130,7 @@ REGEX_SPECIALS=[][)(^$$.?*\\;]
 MKREPRO_SED=   -e 's;${NETBSDSRCDIR:C/${REGEX_SPECIALS}/\\\\&/g};/usr/src;'
 .endif
 
-.if ${RUMPRUN} != "yes"
+.if !defined(MLIBDIR) && ${RUMPRUN} != "yes"
 realall: tags
 tags: ${SRCS}
 	${_MKTARGET_CREATE}
