@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.295 2015/06/14 19:05:27 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.296 2015/06/15 07:48:08 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295 2015/06/14 19:05:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.296 2015/06/15 07:48:08 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -525,7 +525,8 @@ pmap_mp_init(void)
 	}
 
 	memcpy(v, mp_tramp_code, mp_tramp_code_len);
-	*(u_long *)(v + mp_tramp_tlb_slots) = kernel_dtlb_slots;
+	*(u_long *)(v + mp_tramp_dtlb_slots) = kernel_dtlb_slots;
+	*(u_long *)(v + mp_tramp_itlb_slots) = kernel_itlb_slots;
 	*(u_long *)(v + mp_tramp_func) = (u_long)cpu_mp_startup;
 	*(u_long *)(v + mp_tramp_ci) = (u_long)cpu_args;
 	tp = (pte_t *)(v + mp_tramp_code_len);
