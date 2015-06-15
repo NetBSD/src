@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.117 2014/07/06 20:54:47 apb Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.118 2015/06/15 07:05:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.117 2014/07/06 20:54:47 apb Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.118 2015/06/15 07:05:09 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,10 @@ __RCSID("$NetBSD: xinstall.c,v 1.117 2014/07/06 20:54:47 apb Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <vis.h>
+
+#ifdef HAVE_POSIX_SPAWN
+#include <spawn.h>
+#endif
 
 #include <md5.h>
 #include <rmd160.h>
@@ -965,9 +969,16 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 static void
 strip(char *to_name)
 {
+	int	status;
+#ifdef HAVE_POSIX_SPAWN
+	char	*args[4];
+	const char *stripprog;
+	int	rv;
+#else
 	static const char exec_failure[] = ": exec of strip failed: ";
-	int	serrno, status;
-	const char * volatile stripprog, *progname;
+	int	serrno;
+	const char * volatile *progname, *stripprog;
+#endif
 	char *cmd;
 
 	if ((stripprog = getenv("STRIP")) == NULL || *stripprog == '\0') {
@@ -992,6 +1003,26 @@ strip(char *to_name)
 			err(1, "asprintf failed");
 	}
 
+#ifdef HAVE_POSIX_SPAWN
+	status = -1;
+	if (stripArgs) {
+		args[0] = __UNCONST("sh");
+		args[1] = __UNCONST("-c");
+		args[2] = cmd;
+		args[3] = NULL;
+		rv = posix_spawn(NULL, _PATH_BSHELL, NULL, NULL, args, NULL);
+	} else {
+		args[0] = __UNCONST(strip);
+		args[1] = to_name;
+		args[2] = NULL;
+		rv = posix_spawnp(NULL, stripprog, NULL, NULL, args, NULL);
+	}
+
+	if (rv == 0)
+		wait(&status);
+	if (rv || status == -1)
+		unlink(to_name);
+#else
 	switch (vfork()) {
 	case -1:
 		serrno = errno;
@@ -1016,6 +1047,7 @@ strip(char *to_name)
 		if (wait(&status) == -1 || status)
 			(void)unlink(to_name);
 	}
+#endif
 
 	free(cmd);
 }
@@ -1028,9 +1060,33 @@ strip(char *to_name)
 static void
 afterinstall(const char *command, const char *to_name, int errunlink)
 {
-	int	serrno, status;
+#ifdef HAVE_POSIX_SPAWN
+	char	*args[4];
+	int	rv;
+#else
+	int	serrno;
+#endif
+	int	status;
 	char	*cmd;
 
+#ifdef HAVE_POSIX_SPAWN
+	/*
+	 * build up a command line and let /bin/sh
+	 * parse the arguments
+	 */
+	asprintf(&cmd, "%s %s", command, to_name);
+	args[0] = __UNCONST("sh");
+	args[1] = __UNCONST("-c");
+	args[2] = cmd;
+	args[3] = NULL;
+
+	rv = posix_spawn(NULL, _PATH_BSHELL, NULL, NULL, args, NULL);
+	if (rv == 0)
+		wait(&status);
+	if ((rv || status == -1) && errunlink)
+		(void)unlink(to_name);
+	free(cmd);
+#else
 	switch (vfork()) {
 	case -1:
 		serrno = errno;
@@ -1061,6 +1117,7 @@ afterinstall(const char *command, const char *to_name, int errunlink)
 		if ((wait(&status) == -1 || status) && errunlink)
 			(void)unlink(to_name);
 	}
+#endif
 }
 
 /*
