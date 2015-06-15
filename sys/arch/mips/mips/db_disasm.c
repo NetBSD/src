@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.28 2015/06/06 22:19:07 matt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.29 2015/06/15 02:55:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.28 2015/06/06 22:19:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.29 2015/06/15 02:55:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -243,11 +243,21 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			db_printf("nop");
 			break;
 		}
+		if (i.word == (3 << 6)) {
+			db_printf("ehb");
+			break;
+		}
 		/* XXX
 		 * "addu" is a "move" only in 32-bit mode.  What's the correct
 		 * answer - never decode addu/daddu as "move"?
 		 */
-		if (i.RType.func == OP_ADDU && i.RType.rt == 0) {
+		if (true
+#ifdef __mips_o32
+		    && i.RType.func == OP_ADDU
+#else
+		    && i.RType.func == OP_DADDU
+#endif
+		    && i.RType.rt == 0) {
 			db_printf("move\t%s,%s",
 			    reg_name[i.RType.rd],
 			    reg_name[i.RType.rs]);
@@ -260,7 +270,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 		    && i.RType.shamt == 1) {
 			name = (i.RType.func == OP_DSRL) ? "drotr" : "drotrv";
 		}
-		
+
 		db_printf("%s", name);
 		switch (i.RType.func) {
 		case OP_SLL:
@@ -422,15 +432,16 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			break;
 		}
 		if (i.RType.func <= OP_DINS) {
-			int lsb = i.RType.shamt
-			    + ((i.RType.func & 3) == 2) ? 32 : 0;
-			int msb = i.RType.rd
-			    + (((i.RType.func - 1) & 3) < 2) ? 32 : 0;
+			int pos = i.RType.shamt;
+			int size = i.RType.rd - pos + 1;
+			size += (((i.RType.func & 3) == 1) ? 32 : 0);
+			pos  += (((i.RType.func & 3) == 2) ? 32 : 0);
+			
 			db_printf("%s\t%s,%s,%d,%d",
 				spec3_name[i.RType.func],
 				reg_name[i.RType.rt],
 				reg_name[i.RType.rs],
-				lsb, msb - lsb + 1);
+				pos, size);
 			break;
 		}
 		if (i.RType.func == OP_RDHWR) {
