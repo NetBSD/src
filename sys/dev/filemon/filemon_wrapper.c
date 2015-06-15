@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.5 2014/03/27 18:27:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.6 2015/06/15 18:11:36 sjg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -151,6 +151,51 @@ filemon_wrapper_open(struct lwp * l, struct sys_open_args * uap,
 				filemon_printf(filemon,
 				    "%c %d %s\n",
 				    (SCARG(uap, flags) & O_ACCMODE) ? 'W' : 'R',
+				    curproc->p_pid, filemon->fm_fname1);
+			}
+			rw_exit(&filemon->fm_mtx);
+		}
+	}
+	return (ret);
+}
+
+static int
+filemon_wrapper_openat(struct lwp * l, struct sys_openat_args * uap,
+    register_t * retval)
+{
+	int ret;
+	int error;
+	size_t done;
+	struct filemon *filemon;
+
+	if ((ret = sys_openat(l, uap, retval)) == 0) {
+		filemon = filemon_lookup(curproc);
+
+		if (filemon) {
+			error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
+			    sizeof(filemon->fm_fname1), &done);
+			if (error == 0) {
+				if (filemon->fm_fname1[0] != '/' &&
+				    SCARG(uap, fd) != AT_FDCWD) {
+					/*
+					 * Rats we cannot just treat like open.
+					 * Output an 'A' record as a clue.
+					 */
+					filemon_printf(filemon,
+						"A %d %s\n",
+						curproc->p_pid,
+						filemon->fm_fname1);
+				}
+				if (SCARG(uap, oflags) & O_RDWR) {
+					/* we want a separate R record */
+					filemon_printf(filemon,
+						"R %d %s\n",
+						curproc->p_pid,
+						filemon->fm_fname1);
+				}			
+				filemon_printf(filemon,
+				    "%c %d %s\n",
+				    (SCARG(uap, oflags) & O_ACCMODE) ? 'W' : 'R',
 				    curproc->p_pid, filemon->fm_fname1);
 			}
 			rw_exit(&filemon->fm_mtx);
@@ -311,6 +356,7 @@ filemon_wrapper_install(void)
 	sv_table[SYS_fork].sy_call = (sy_call_t *) filemon_wrapper_fork;
 	sv_table[SYS_link].sy_call = (sy_call_t *) filemon_wrapper_link;
 	sv_table[SYS_open].sy_call = (sy_call_t *) filemon_wrapper_open;
+	sv_table[SYS_openat].sy_call = (sy_call_t *) filemon_wrapper_openat;
 	sv_table[SYS_rename].sy_call = (sy_call_t *) filemon_wrapper_rename;
 	sv_table[SYS_symlink].sy_call = (sy_call_t *) filemon_wrapper_symlink;
 	sv_table[SYS_unlink].sy_call = (sy_call_t *) filemon_wrapper_unlink;
@@ -330,6 +376,7 @@ filemon_wrapper_deinstall(void)
 	sv_table[SYS_fork].sy_call = (sy_call_t *) sys_fork;
 	sv_table[SYS_link].sy_call = (sy_call_t *) sys_link;
 	sv_table[SYS_open].sy_call = (sy_call_t *) sys_open;
+	sv_table[SYS_openat].sy_call = (sy_call_t *) sys_openat;
 	sv_table[SYS_rename].sy_call = (sy_call_t *) sys_rename;
 	sv_table[SYS_symlink].sy_call = (sy_call_t *) sys_symlink;
 	sv_table[SYS_unlink].sy_call = (sy_call_t *) sys_unlink;
