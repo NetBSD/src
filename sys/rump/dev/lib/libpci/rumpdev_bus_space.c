@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_space.c,v 1.4 2015/05/17 13:45:37 pooka Exp $	*/
+/*	$NetBSD: rumpdev_bus_space.c,v 1.5 2015/06/15 15:38:52 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,8 @@
 
 #include "pci_user.h"
 
-#if defined(RUMP_PCI_IOSPACE) && (defined(__i386__) || defined(__x86_64__))
+#if defined(RUMPCOMP_USERFEATURE_PCI_IOSPACE) \
+    && (defined(__i386__) || defined(__x86_64__))
 #define IOSPACE_SUPPORTED
 #endif
 
