@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.49 2015/06/05 15:41:59 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.50 2015/06/15 04:15:33 ozaki-r Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1503,8 +1503,7 @@ sock_open(void)
 		exit(1);
 	}
 
-	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
-				CMSG_SPACE(sizeof(int));
+	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo));
 	sndcmsgbuf = malloc(sndcmsgbuflen);
 	if (sndcmsgbuf == NULL) {
 		syslog(LOG_ERR, "<%s> malloc: %m", __func__);
