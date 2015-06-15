@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.31 2015/04/25 08:48:06 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.32 2015/06/15 11:20:18 pooka Exp $
 #
 
 #
@@ -106,7 +106,7 @@ lsrc usr /sbin/			mount_ext2fs mount_ffs mount_msdos mount_tmpfs
 lsrc usr /sbin/			newfs newfs_ext2fs newfs_msdos
 lsrc usr /sbin/			ping ping6 raidctl reboot
 lsrc usr /sbin/			rndctl route setkey sysctl umount
-lsrc usr /usr.bin/		kdump ktrace sockstat
+lsrc usr /usr.bin/		kdump ktrace mixerctl sockstat
 lsrc usr /usr.sbin/		arp dumpfs mdconfig ndp npf pcictl
 lsrc usr /usr.sbin/		rtadvd vnconfig wlanctl
 lsrc usr /external/bsd/		libelf libpcap tcpdump wpa
