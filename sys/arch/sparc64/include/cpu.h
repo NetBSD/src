@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.114 2015/01/03 11:22:14 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.115 2015/06/15 07:48:08 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -268,7 +268,7 @@ extern vaddr_t cpu_spinup_trampoline;
 
 extern  char   *mp_tramp_code;
 extern  u_long  mp_tramp_code_len;
-extern  u_long  mp_tramp_tlb_slots;
+extern  u_long  mp_tramp_dtlb_slots, mp_tramp_itlb_slots;
 extern  u_long  mp_tramp_func;
 extern  u_long  mp_tramp_ci;
 
