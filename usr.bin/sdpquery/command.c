@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.4 2011/02/08 18:14:00 plunky Exp $	*/
+/*	$NetBSD: command.c,v 1.5 2015/06/16 22:54:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: command.c,v 1.4 2011/02/08 18:14:00 plunky Exp $");
+__RCSID("$NetBSD: command.c,v 1.5 2015/06/16 22:54:10 christos Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -127,7 +127,7 @@ do_sdp_record(int argc, const char **argv)
 	for (; argc-- > 0; argv++) {
 		handle = strtoul(*argv, &ep, 0);
 		if (*argv[0] == '\0' || *ep != '\0' || handle > UINT32_MAX)
-			errx(EXIT_FAILURE, "Invalid handle: %s\n", *argv);
+			errx(EXIT_FAILURE, "Invalid handle: %s", *argv);
 
 		rv = sdp_service_attribute(ss, (uint32_t)handle, NULL, &rsp);
 		if (!rv)
