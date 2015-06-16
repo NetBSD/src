@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.102 2015/02/25 13:16:33 christos Exp $
+	$NetBSD: syscalls.master,v 1.103 2015/06/16 10:41:34 martin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1043,3 +1043,8 @@
 			    int flags, const netbsd32_timespecp_t ts, \
 			    lwpid_t unpark, netbsd32_voidp hint, \
 			    netbsd32_voidp unparkhint); }
+479	NOERR		{ int|netbsd32||posix_fallocate(int fd, int PAD, \
+			    netbsd32_off_t pos, netbsd32_off_t len); }
+480	STD		{ int|netbsd32||fdiscard(int fd, int PAD, \
+			    netbsd32_off_t pos, netbsd32_off_t len); }
+
