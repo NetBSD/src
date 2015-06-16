@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.9 2015/06/16 23:04:14 christos Exp $	*/
+/*	$NetBSD: crash.c,v 1.10 2015/06/16 23:48:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.9 2015/06/16 23:04:14 christos Exp $");
+__RCSID("$NetBSD: crash.c,v 1.10 2015/06/16 23:48:20 christos Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -39,7 +39,6 @@ __RCSID("$NetBSD: crash.c,v 1.9 2015/06/16 23:04:14 christos Exp $");
 #include <sys/fcntl.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
-#include <sys/kernhist.h>
 
 #include <machine/frame.h>
 
@@ -73,8 +72,6 @@ static struct nlist nl[] = {
 	{ .n_name = "_osrelease" },
 #define	X_PANICSTR	1
 	{ .n_name = "_panicstr" },
-#define	X_KERN_HISTORIES	2
-	{ .n_name = "_kern_histories" },
 	{ .n_name = NULL },
 };
 
@@ -302,50 +299,6 @@ cnputc(int c)
 {
 
 	putc(c, ofp);
-}
-
-#define FMTLEN 1024
-#define FNLEN 128
-
-void
-kernhist_dump(struct kern_history *l)
-{
-	unsigned int lcv;
-	struct kern_history kh;
-	struct kern_history_ent ke;
-	char fmt[FMTLEN];
-	char fn[FNLEN];
-
-	db_read_bytes((db_addr_t)l, sizeof(kh), (char *)&kh);
-	lcv = kh.f;
-	do {
-		db_read_bytes((db_addr_t)&kh.e[lcv], sizeof(ke), (char *)&ke);
-		if (ke.fmt) {
-			db_read_bytes((db_addr_t)ke.fmt, sizeof(fmt), fmt);
-			db_read_bytes((db_addr_t)ke.fn, sizeof(fn), fn);
-			fmt[sizeof(fmt) - 1] = '\0';
-			fn[sizeof(fmt) - 1] = '\0';
-			ke.fmt = fmt;
-			ke.fn = fn;
-			kernhist_entry_print(&ke);
-		}
-		lcv = (lcv + 1) % kh.n;
-	} while (lcv != kh.f);
-}
-
-void
-kernhist_print(void (*pr)(const char *, ...))
-{
-	struct kern_history_head khh;
-
-	if (nl[X_KERN_HISTORIES].n_value == 0) {
-		warnx("kernhist is not available");
-		return;
-	}
-
-	db_read_bytes(nl[X_KERN_HISTORIES].n_value, sizeof(khh), (char *)&khh);
-
-	kernhist_dump(LIST_FIRST(&khh));
 }
 
 __dead static void
