@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.74 2015/01/22 20:01:22 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.75 2015/06/16 21:12:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.74 2015/01/22 20:01:22 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.75 2015/06/16 21:12:19 christos Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -598,7 +598,7 @@ recreate(const char *p, const char *q)
 	int ret;
 
 	if ((ret = unlink(q)) == -1 && errno != ENOENT)
-		warn("unlink(%s)\n", q);
+		warn("unlink(%s)", q);
 	if ((ret = symlink(p, q)) == -1)
 		warn("symlink(%s -> %s)", q, p);
 	return ret;
