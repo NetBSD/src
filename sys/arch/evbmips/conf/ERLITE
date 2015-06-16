@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.10 2015/06/08 14:42:38 matt Exp $
+#	$NetBSD: ERLITE,v 1.11 2015/06/16 09:37:48 martin Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.10 $"
+#ident 		"ERLITE-$Revision: 1.11 $"
 
 maxusers	32
 
@@ -113,7 +113,6 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_NETBSD_ENABLE_IDE=0x1
 
 options 	NFS_BOOT_DHCP
-options 	NFS_V2_ONLY
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on cnmac0 type nfs
