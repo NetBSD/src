@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.330 2015/06/12 16:35:49 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.331 2015/06/16 06:11:01 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32134,4 +32134,11 @@ sys/arch/arm/omap/am335x_trng.c			patch
 
 	Fix build.
 	[jmcneill, ticket #839]
+
+lib/libc/Makefile				1.169 via patch
+
+	Only create and install the tags file for the normal libc (not any
+	of the compat copies), because we don't want it to be overwritten
+	by the compat copies.
+	[martin, ticket #843]
 
