@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.16 2013/12/19 23:00:50 joerg Exp $ */
+/* $NetBSD: udf.c,v 1.17 2015/06/16 23:04:14 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.16 2013/12/19 23:00:50 joerg Exp $");
+__RCSID("$NetBSD: udf.c,v 1.17 2015/06/16 23:04:14 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -995,7 +995,7 @@ udf_copy_file(struct stat *st, char *path, fsnode *cur, struct fileid_desc *fid,
 	while (chunk) {
 		rd = read(f, data, chunk);
 		if (rd != chunk) {
-			warn("Short read of file %s\n", cur->name);
+			warn("Short read of file %s", cur->name);
 			error = errno;
 			break;
 		}
