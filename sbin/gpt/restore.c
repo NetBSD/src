@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.7 2014/10/01 01:08:25 jnemeth Exp $");
+__RCSID("$NetBSD: restore.c,v 1.8 2015/06/16 23:18:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -146,7 +146,7 @@ restore(int fd)
 	PROP_ERR(propstr);
 	s = prop_string_cstring_nocopy(propstr);
 	if (gpt_uuid_parse(s, gpt_guid) != 0) {
-		warnx("%s: not able to convert to an UUID\n", s);
+		warnx("%s: not able to convert to an UUID", s);
 		return;
 	}
 	firstdata = gpt_size + 2;		/* PMBR and GPT header */
@@ -163,7 +163,7 @@ restore(int fd)
 		PROP_ERR(propstr);
 		s = prop_string_cstring_nocopy(propstr);
 		if (gpt_uuid_parse(s, uuid) != 0) {
-			warnx("%s: not able to convert to an UUID\n", s);
+			warnx("%s: not able to convert to an UUID", s);
 			return;
 		}
 		if (gpt_uuid_is_nil(uuid))
@@ -301,14 +301,14 @@ restore(int fd)
 		PROP_ERR(propstr);
 		s = prop_string_cstring_nocopy(propstr);
 		if (gpt_uuid_parse(s, ent.ent_type) != 0) {
-			warnx("%s: not able to convert to an UUID\n", s);
+			warnx("%s: not able to convert to an UUID", s);
 			return;
 		}
 		propstr = prop_dictionary_get(gpt_dict, "guid");
 		PROP_ERR(propstr);
 		s = prop_string_cstring_nocopy(propstr);
 		if (gpt_uuid_parse(s, ent.ent_guid) != 0) {
-			warnx("%s: not able to convert to an UUID\n", s);
+			warnx("%s: not able to convert to an UUID", s);
 			return;
 		}
 		propnum = prop_dictionary_get(gpt_dict, "start");

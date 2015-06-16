@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.150 2014/04/04 16:15:30 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.151 2015/06/16 23:18:54 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.150 2014/04/04 16:15:30 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.151 2015/06/16 23:18:54 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2246,7 +2246,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		errtext = check_overlap(part, sysid, start, size, 0);
 	if (errtext != NULL && !I_flag) {
 		if (f_flag)
-			errx(2, "%s\n", errtext);
+			errx(2, "%s", errtext);
 		printf("%s\n", errtext);
 		return 0;
 	}
@@ -2264,7 +2264,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		else
 			errtext = check_overlap(part, sysid, start, size, 1);
 		if (errtext)
-			errx(1, "%s\n", errtext);
+			errx(1, "%s", errtext);
 	}
 
 

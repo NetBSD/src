@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.124 2015/04/29 01:49:25 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.125 2015/06/16 23:18:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.124 2015/04/29 01:49:25 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.125 2015/06/16 23:18:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1573,7 +1573,7 @@ ilog2(int val)
 	for (n = 0; n < sizeof(n) * CHAR_BIT; n++)
 		if (1 << n == val)
 			return (n);
-	errx(1, "ilog2: %d is not a power of 2\n", val);
+	errx(1, "ilog2: %d is not a power of 2", val);
 }
 
 static void

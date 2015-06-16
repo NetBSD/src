@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.53 2015/03/29 19:35:58 chopps Exp $	 */
+/* $NetBSD: inode.c,v 1.54 2015/06/16 23:18:55 christos Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -396,7 +396,7 @@ getinoinfo(ino_t inumber)
 			continue;
 		return (inp);
 	}
-	err(EEXIT, "cannot find inode %llu\n", (unsigned long long)inumber);
+	err(EEXIT, "cannot find inode %llu", (unsigned long long)inumber);
 	return ((struct inoinfo *) 0);
 }
 
@@ -566,7 +566,7 @@ blkerror(ino_t ino, const char *type, daddr_t blk)
 		return;
 
 	default:
-		err(EEXIT, "BAD STATE %d TO BLKERR\n", statemap[ino]);
+		err(EEXIT, "BAD STATE %d TO BLKERR", statemap[ino]);
 		/* NOTREACHED */
 	}
 }

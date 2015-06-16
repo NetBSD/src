@@ -291,7 +291,7 @@ dmctl_get_device_info(int argc __unused, char *argv[] __unused, libdm_task_t tas
 	libdm_task_set_name(dvname, task);
 
 	if (libdm_task_run(task) != 0)
-		err(EXIT_FAILURE, "dmctl_get_device_info: libdm_task_run failed.\n");
+		err(EXIT_FAILURE, "%s: libdm_task_run failed", __func__);
 
 	printf("Printing Device info for:\n");
 	printf("Device name: \t\t%s\n", libdm_task_get_name(task));
@@ -559,7 +559,7 @@ parse_stdin(char *file_path)
 
 	if (file_path) {
 		if ((fp = fopen(file_path, "r")) == NULL)
-			err(ENOENT, "Cannot open table file\n");
+			err(ENOENT, "Cannot open table file");
 	} else
 		fp = stdin;
 

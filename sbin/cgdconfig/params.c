@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.25 2014/12/14 12:31:39 mlelstv Exp $ */
+/* $NetBSD: params.c,v 1.26 2015/06/16 23:18:54 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.25 2014/12/14 12:31:39 mlelstv Exp $");
+__RCSID("$NetBSD: params.c,v 1.26 2015/06/16 23:18:54 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -277,7 +277,7 @@ params_verify_method(string_t *in)
 
 	if (p->verify_method == VERIFY_UNKNOWN)
 		warnx("params_setverify_method: unrecognized "
-		    "verify method \"%s\"\n", vm);
+		    "verify method \"%s\"", vm);
 	return p;
 }
 
@@ -515,7 +515,7 @@ keygen_method(string_t *in)
 	string_free(in);
 
 	if (kg->kg_method == KEYGEN_UNKNOWN)
-		warnx("unrecognized key generation method \"%s\"\n", kgm);
+		warnx("unrecognized key generation method \"%s\"", kgm);
 	return kg;
 }
 

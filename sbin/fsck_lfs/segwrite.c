@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.29 2015/05/31 15:44:30 hannken Exp $ */
+/* $NetBSD: segwrite.c,v 1.30 2015/06/16 23:18:55 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -447,7 +447,8 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 
 	error = ulfs_bmaparray(fs, vp, lbn, &daddr, a, &num);
 	if (error)
-		errx(1, "lfs_updatemeta: ulfs_bmaparray returned %d looking up lbn %" PRId64 "\n", error, lbn);
+		errx(EXIT_FAILURE, "%s: ulfs_bmaparray returned %d looking up lbn %"
+		    PRId64 "", __func__, error, lbn);
 	if (daddr > 0)
 		daddr = LFS_DBTOFSB(fs, daddr);
 
@@ -473,7 +474,7 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 	default:
 		ap = &a[num - 1];
 		if (bread(vp, ap->in_lbn, fs->lfs_bsize, 0, &bp))
-			errx(1, "lfs_updatemeta: bread bno %" PRId64,
+			errx(EXIT_FAILURE, "%s: bread bno %" PRId64, __func__,
 			    ap->in_lbn);
 
 		ooff = ((ulfs_daddr_t *) bp->b_data)[ap->in_off];
@@ -576,7 +577,7 @@ lfs_updatemeta(struct segment * sp)
 		 * is of a smaller size!)
 		 */
 		if ((sbp->b_bcount & fs->lfs_bmask) && i != 0)
-			errx(1, "lfs_updatemeta: fragment is not last block");
+			errx(EXIT_FAILURE, "%s: fragment is not last block", __func__);
 
 		/*
 		 * For each subblock in this possibly oversized block,
@@ -709,7 +710,7 @@ lfs_newseg(struct lfs * fs)
 	for (sn = curseg = lfs_dtosn(fs, fs->lfs_curseg) + fs->lfs_interleave;;) {
 		sn = (sn + 1) % fs->lfs_nseg;
 		if (sn == curseg)
-			errx(1, "lfs_nextseg: no clean segments");
+			errx(EXIT_FAILURE, "%s: no clean segments", __func__);
 		LFS_SEGENTRY(sup, fs, sn, bp);
 		isdirty = sup->su_flags & SEGUSE_DIRTY;
 		brelse(bp, 0);
@@ -823,7 +824,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	    lfs_btofsb(fs, fs->lfs_sumsize));
 
 	if (devvp == NULL)
-		errx(1, "devvp is NULL");
+		errx(EXIT_FAILURE, "devvp is NULL");
 	for (bpp = sp->bpp, i = nblocks; i; bpp++, i--) {
 		bp = *bpp;
 #if 0
@@ -903,9 +904,8 @@ lfs_seglock(struct lfs * fs, unsigned long flags)
 	sp = fs->lfs_sp = emalloc(sizeof(*sp));
 	sp->bpp = emalloc(fs->lfs_ssize * sizeof(struct ubuf *));
 	if (!sp->bpp)
-		errx(!preen, "Could not allocate %zu bytes: %s",
-			(size_t)(fs->lfs_ssize * sizeof(struct ubuf *)),
-			strerror(errno));
+		err(!preen, "Could not allocate %zu bytes",
+		    (size_t)(fs->lfs_ssize * sizeof(struct ubuf *)))
 	sp->seg_flags = flags;
 	sp->vp = NULL;
 	sp->seg_iocount = 0;
@@ -954,7 +954,7 @@ lfs_segunlock(struct lfs * fs)
 		--fs->lfs_seglock;
 		fs->lfs_lockpid = 0;
 	} else if (fs->lfs_seglock == 0) {
-		errx(1, "Seglock not held");
+		errx(EXIT_FAILURE, "Seglock not held");
 	} else {
 		--fs->lfs_seglock;
 	}
