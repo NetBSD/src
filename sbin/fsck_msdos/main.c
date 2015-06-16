@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2011/06/09 21:23:29 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2015/06/16 23:18:55 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.23 2011/06/09 21:23:29 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2015/06/16 23:18:55 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -106,7 +106,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (snap_backup != NULL && (!alwaysno || alwaysyes)) {
-		warnx("Cannot use -x without -n\n");
+		warnx("Cannot use -x without -n");
 		snap_backup = NULL;
 	}
 	argc -= optind;

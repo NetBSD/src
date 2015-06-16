@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.35 2013/06/08 02:16:03 dholland Exp $	 */
+/* $NetBSD: utilities.c,v 1.36 2015/06/16 23:18:55 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -89,7 +89,7 @@ reply(const char *question)
 	char c;
 
 	if (preen)
-		err(1, "INTERNAL ERROR: GOT TO reply()");
+		err(EXIT_FAILURE, "INTERNAL ERROR: GOT TO reply()");
 	persevere = !strcmp(question, "CONTINUE");
 	pwarn("\n");
 	if (!persevere && nflag) {

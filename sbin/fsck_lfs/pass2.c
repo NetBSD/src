@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.23 2013/06/08 02:16:03 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.24 2015/06/16 23:18:55 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -82,7 +82,7 @@ pass2(void)
 		if (reply("REALLOCATE")) {
 			freeino(ULFS_ROOTINO);
 			if (allocdir(ULFS_ROOTINO, ULFS_ROOTINO, 0755) != ULFS_ROOTINO)
-				err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
+				err(EEXIT, "CANNOT ALLOCATE ROOT INODE");
 			break;
 		}
 		if (reply("CONTINUE") == 0)
@@ -95,7 +95,7 @@ pass2(void)
 		if (reply("REALLOCATE")) {
 			freeino(ULFS_ROOTINO);
 			if (allocdir(ULFS_ROOTINO, ULFS_ROOTINO, 0755) != ULFS_ROOTINO)
-				err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
+				err(EEXIT, "CANNOT ALLOCATE ROOT INODE");
 			break;
 		}
 		if (reply("FIX") == 0)
@@ -111,7 +111,7 @@ pass2(void)
 		break;
 
 	default:
-		errx(EEXIT, "BAD STATE %d FOR ROOT INODE\n", statemap[ULFS_ROOTINO]);
+		errx(EEXIT, "BAD STATE %d FOR ROOT INODE", statemap[ULFS_ROOTINO]);
 	}
 	statemap[ULFS_WINO] = FSTATE;
 	typemap[ULFS_WINO] = LFS_DT_WHT;
