@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.8 2015/06/16 23:42:08 christos Exp $	*/
+/*	$NetBSD: yacc.y,v 1.9 2015/06/16 23:44:44 christos Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: yacc.y,v 1.8 2015/06/16 23:42:08 christos Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.9 2015/06/16 23:44:44 christos Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -284,7 +284,7 @@ do_mkdb(FILE *in)
 	if (ret && output)
 		unlink(output); /* dump failure */
 	if (ret)
-		errc(EXIT_FAILURE, c, "");
+		errc(EXIT_FAILURE, ret, NULL);
 }
 
 __dead static void
