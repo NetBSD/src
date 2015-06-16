@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.28 2015/01/08 03:56:33 christos Exp $	*/
+/*	$NetBSD: cal.c,v 1.29 2015/06/16 22:54:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.28 2015/01/08 03:56:33 christos Exp $");
+__RCSID("$NetBSD: cal.c,v 1.29 2015/06/16 22:54:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,7 @@ monthrange(int month, int year, int before, int after, int yearly)
 	endmonth = (month + after) % 12;
 
 	if (startyear < 0 || endyear > 9999) {
-		errx(1, "year should be in 1-9999\n");
+		errx(1, "year should be in 1-9999");
 	}
 
 	year = startyear;
