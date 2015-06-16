@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.109 2015/06/11 07:30:10 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.110 2015/06/16 18:12:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -121,7 +121,7 @@
  *============================================================================
  */
 	.set	noreorder
-#if __mips < 3
+#if (__mips < 3) || __mips_o32
 	.set	mips3
 #endif
 
