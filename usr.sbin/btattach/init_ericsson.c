@@ -1,4 +1,4 @@
-/*	$NetBSD: init_ericsson.c,v 1.2 2009/04/15 00:32:23 lukem Exp $	*/
+/*	$NetBSD: init_ericsson.c,v 1.3 2015/06/16 23:04:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_ericsson.c,v 1.2 2009/04/15 00:32:23 lukem Exp $");
+__RCSID("$NetBSD: init_ericsson.c,v 1.3 2015/06/16 23:04:14 christos Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -78,7 +78,7 @@ init_ericsson(int fd, unsigned int speed)
 	case 300000:	rate = 0x27;	break;
 	case 400000:	rate = 0x2b;	break;
 	default:
-		errx(EXIT_FAILURE, "invalid speed for ericsson: %u\n", speed);
+		errx(EXIT_FAILURE, "invalid speed for ericsson: %u", speed);
 	}
 
 	uart_send_cmd(fd, HCI_CMD_ERICSSON_SET_UART_BAUD_RATE, &rate, sizeof(rate));

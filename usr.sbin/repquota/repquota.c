@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.44 2012/05/12 19:47:26 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.45 2015/06/16 23:04:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.44 2012/05/12 19:47:26 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.45 2015/06/16 23:04:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -522,7 +522,7 @@ addid(uint32_t id, int idtype, const char *name)
 				name = pw->pw_name;
 			break;
 		default:
-			errx(1, "Unknown quota ID type %d\n", idtype);
+			errx(1, "Unknown quota ID type %d", idtype);
 		}
 	}
 
