@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.48 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.49 2015/06/16 23:04:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.48 2013/06/23 07:28:37 dholland Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.49 2015/06/16 23:04:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,7 +268,7 @@ main(int argc, char *argv[])
 	endfsent();
 	for (i = 0; i < argc; i++)
 		if ((done & (1 << i)) == 0)
-			warnx("%s not found in %s\n", argv[i], FSTAB);
+			warnx("%s not found in %s", argv[i], FSTAB);
 	return errs;
 }
 

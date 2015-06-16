@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.12 2011/08/27 22:17:53 joerg Exp $	*/
+/*	$NetBSD: btattach.c,v 1.13 2015/06/16 23:04:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.12 2011/08/27 22:17:53 joerg Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.13 2015/06/16 23:04:14 christos Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -440,7 +440,7 @@ uart_recv_pkt(int fd, struct iovec *iov, int ioc)
 		break;
 
 	default: /* out of sync? */
-		errx(EXIT_FAILURE, "unknown packet type 0x%2.2x\n", type);
+		errx(EXIT_FAILURE, "unknown packet type 0x%2.2x", type);
 	}
 
 	while (want-- > 0)
