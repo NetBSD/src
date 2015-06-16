@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.9 2014/03/20 14:39:43 riastradh Exp $ */
+/* $NetBSD: acpi.c,v 1.10 2015/06/16 23:04:13 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.9 2014/03/20 14:39:43 riastradh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.10 2015/06/16 23:04:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -2480,6 +2480,6 @@ dsdt_from_fadt(ACPI_TABLE_FADT *fadt)
 	else
 		sdt = (ACPI_TABLE_HEADER *)acpi_map_sdt(fadt->XDsdt);
 	if (acpi_checksum(sdt, sdt->Length))
-		errx(EXIT_FAILURE, "DSDT is corrupt\n");
+		errx(EXIT_FAILURE, "DSDT is corrupt");
 	return (sdt);
 }

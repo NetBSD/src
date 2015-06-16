@@ -1,4 +1,4 @@
-/*	$NetBSD: init_unistone.c,v 1.1 2009/12/06 12:55:46 kiyohara Exp $	*/
+/*	$NetBSD: init_unistone.c,v 1.2 2015/06/16 23:04:14 christos Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_unistone.c,v 1.1 2009/12/06 12:55:46 kiyohara Exp $");
+__RCSID("$NetBSD: init_unistone.c,v 1.2 2015/06/16 23:04:14 christos Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -90,7 +90,7 @@ init_unistone(int fd, unsigned int speed)
 	case B1843200:	rate = 0x08;	break;
 #endif
 	default:
-		errx(EXIT_FAILURE, "invalid speed for infineon unistone: %u\n",
+		errx(EXIT_FAILURE, "invalid speed for infineon unistone: %u",
 		    speed);
 	}
 

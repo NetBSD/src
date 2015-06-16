@@ -1,4 +1,4 @@
-/* $NetBSD: pfs.c,v 1.1 2010/05/07 17:41:58 degroote Exp $ */
+/* $NetBSD: pfs.c,v 1.2 2015/06/16 23:04:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pfs.c,v 1.1 2010/05/07 17:41:58 degroote Exp $");
+__RCSID("$NetBSD: pfs.c,v 1.2 2015/06/16 23:04:14 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -370,7 +370,7 @@ dump_states_ascii(int fd, int verbose, const char* filename)
 	} else {
 		f = fopen(filename, "w");
 		if (f == NULL) 
-			err(EXIT_FAILURE, "Can't open %s\n", filename);
+			err(EXIT_FAILURE, "Can't open %s", filename);
 	}
 
 	print_states(fd, verbose, f);
@@ -390,7 +390,7 @@ restore_states_ascii(int fd, int verbose __unused, const char* filename)
 
 	f = fopen(filename, "r");
 	if (f == NULL)
-		err(EXIT_FAILURE, "Can't open %s\n", filename);
+		err(EXIT_FAILURE, "Can't open %s", filename);
 
 	parse(f, &ps);
 
@@ -428,7 +428,7 @@ test_ascii_dump(int verbose, const char* file1, const char *file2)
 	
 	f1 = fopen(file1, "r");
 	if (f1 == NULL)
-		err(EXIT_FAILURE, "Can't open %s\n", file1);
+		err(EXIT_FAILURE, "Can't open %s", file1);
 
 
 	f2 = fopen(file2, "w");
@@ -436,7 +436,7 @@ test_ascii_dump(int verbose, const char* file1, const char *file2)
 		errno_saved = errno;
 		fclose(f2);
 		errno = errno_saved;
-		err(EXIT_FAILURE, "Can't open %s\n", file2);
+		err(EXIT_FAILURE, "Can't open %s", file2);
 	}
 
 	parse(f1, &ps);

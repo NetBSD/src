@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.43 2014/06/05 16:06:49 roy Exp $	*/
+/*	$NetBSD: ndp.c,v 1.44 2015/06/16 23:04:14 christos Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ set(int argc, char **argv)
 	hints.ai_family = AF_INET6;
 	gai_error = getaddrinfo(host, NULL, &hints, &res);
 	if (gai_error) {
-		warnx("%s: %s\n", host, gai_strerror(gai_error));
+		warnx("%s: %s", host, gai_strerror(gai_error));
 		return 1;
 	}
 	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
@@ -420,7 +420,7 @@ get(char *host)
 	hints.ai_family = AF_INET6;
 	gai_error = getaddrinfo(host, NULL, &hints, &res);
 	if (gai_error) {
-		warnx("%s: %s\n", host, gai_strerror(gai_error));
+		warnx("%s: %s", host, gai_strerror(gai_error));
 		return;
 	}
 	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
@@ -454,7 +454,7 @@ delete(char *host)
 	hints.ai_family = AF_INET6;
 	gai_error = getaddrinfo(host, NULL, &hints, &res);
 	if (gai_error) {
-		warnx("%s: %s\n", host, gai_strerror(gai_error));
+		warnx("%s: %s", host, gai_strerror(gai_error));
 		return 1;
 	}
 	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;

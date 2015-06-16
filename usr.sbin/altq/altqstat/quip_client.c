@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_client.c,v 1.10 2013/10/19 17:16:37 christos Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.11 2015/06/16 23:04:14 christos Exp $	*/
 /*	$KAME: quip_client.c,v 1.9 2003/05/17 05:59:00 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -122,8 +122,7 @@ quip_openserver(void)
 	strlcpy(addr.sun_path, QUIP_PATH,sizeof(addr.sun_path));
 
 	if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		fprintf(stderr, "can't talk to altqd!\n"
-			"probably, altqd is not running\n");
+		warnx("can't talk to altqd;probably, altqd is not running");
 		return (-1);
 	}
 
