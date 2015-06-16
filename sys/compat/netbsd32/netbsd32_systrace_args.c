@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.1 2015/03/07 16:41:53 christos Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.2 2015/06/16 10:42:13 martin Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -3286,6 +3286,26 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[4] = (intptr_t) SCARG(p, hint).i32; /* netbsd32_voidp */
 		uarg[5] = (intptr_t) SCARG(p, unparkhint).i32; /* netbsd32_voidp */
 		*n_args = 6;
+		break;
+	}
+	/* netbsd32_posix_fallocate */
+	case 479: {
+		struct netbsd32_posix_fallocate_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		iarg[1] = SCARG(p, PAD); /* int */
+		iarg[2] = SCARG(p, pos); /* netbsd32_off_t */
+		iarg[3] = SCARG(p, len); /* netbsd32_off_t */
+		*n_args = 4;
+		break;
+	}
+	/* netbsd32_fdiscard */
+	case 480: {
+		struct netbsd32_fdiscard_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		iarg[1] = SCARG(p, PAD); /* int */
+		iarg[2] = SCARG(p, pos); /* netbsd32_off_t */
+		iarg[3] = SCARG(p, len); /* netbsd32_off_t */
+		*n_args = 4;
 		break;
 	}
 	default:
@@ -8819,6 +8839,44 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* netbsd32_posix_fallocate */
+	case 479:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "netbsd32_off_t";
+			break;
+		case 3:
+			p = "netbsd32_off_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_fdiscard */
+	case 480:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "netbsd32_off_t";
+			break;
+		case 3:
+			p = "netbsd32_off_t";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -10699,6 +10757,16 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* netbsd32____lwp_park60 */
 	case 478:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_posix_fallocate */
+	case 479:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_fdiscard */
+	case 480:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
