@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.7 2015/06/16 22:54:10 christos Exp $	*/
+/*	$NetBSD: yacc.y,v 1.8 2015/06/16 23:42:08 christos Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: yacc.y,v 1.7 2015/06/16 22:54:10 christos Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.8 2015/06/16 23:42:08 christos Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -290,7 +290,8 @@ do_mkdb(FILE *in)
 __dead static void
 usage(void)
 {
-	fprintf("Usage: %s [-m] [-o outfile] [infile]\n", getprogname());
+	fprintf(stderr, "Usage: %s [-m] [-o outfile] [infile]\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
 
