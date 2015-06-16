@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.82 2014/06/28 17:32:27 dholland Exp $	*/
+/*	$NetBSD: ps.c,v 1.83 2015/06/16 22:31:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.82 2014/06/28 17:32:27 dholland Exp $");
+__RCSID("$NetBSD: ps.c,v 1.83 2015/06/16 22:31:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -398,7 +398,7 @@ main(int argc, char *argv[])
 	parsesort("tdev,pid");
 	SIMPLEQ_FOREACH(vent, &sortlist, next) {
 		if (vent->var->flag & LWP || vent->var->type == UNSPECIFIED)
-			warnx("Cannot sort on %s, sort key ignored\n",
+			warnx("Cannot sort on %s, sort key ignored",
 				vent->var->name);
 	}
 
@@ -558,7 +558,7 @@ pick_representative_lwp(struct kinfo_proc2 *ki, struct kinfo_lwp *kl, int nlwps)
 		break;
 	}
 	/* Error condition! */
-	warnx("Inconsistent LWP state for process %d\n", ki->p_pid);
+	warnx("Inconsistent LWP state for process %d", ki->p_pid);
 	return kl;
 }
 
