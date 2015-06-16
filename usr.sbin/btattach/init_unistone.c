@@ -1,4 +1,4 @@
-/*	$NetBSD: init_unistone.c,v 1.2 2015/06/16 23:04:14 christos Exp $	*/
+/*	$NetBSD: init_unistone.c,v 1.3 2015/06/16 23:54:58 christos Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_unistone.c,v 1.2 2015/06/16 23:04:14 christos Exp $");
+__RCSID("$NetBSD: init_unistone.c,v 1.3 2015/06/16 23:54:58 christos Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -106,7 +106,7 @@ init_unistone(int fd, unsigned int speed)
 	if (n != sizeof(cs) ||
 	    cs.status != 0x00 ||
 	    cs.opcode != HCI_CMD_INFINEON_SET_UART_BAUDRATE)
-		errx(EXIT_FAILURE, "Set_UART_Baudrate failed\n");
+		errx(EXIT_FAILURE, "Set_UART_Baudrate failed");
 
 	if (cfsetspeed(&tio, speed) != 0 ||
 	    tcsetattr(fd, TCSANOW, &tio) != 0)
@@ -116,7 +116,7 @@ init_unistone(int fd, unsigned int speed)
 	if (n != sizeof(v) ||
 	    v[0] != 0x12 ||
 	    v[1] != 0x00)
-		errx(EXIT_FAILURE, "Set_UART_Baudrate not complete\n");
+		errx(EXIT_FAILURE, "Set_UART_Baudrate not complete");
 
 	infineon_manufacturer_mode(fd, 0);
 }
