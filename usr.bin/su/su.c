@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.71 2014/03/16 01:07:46 dholland Exp $	*/
+/*	$NetBSD: su.c,v 1.72 2015/06/16 22:54:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.71 2014/03/16 01:07:46 dholland Exp $");
+__RCSID("$NetBSD: su.c,v 1.72 2015/06/16 22:54:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,7 +231,7 @@ main(int argc, char **argv)
 		pwd->pw_class = class;
 	}
 	if ((lc = login_getclass(pwd->pw_class)) == NULL)
-		errx(EXIT_FAILURE, "Unknown class %s\n", pwd->pw_class);
+		errx(EXIT_FAILURE, "Unknown class %s", pwd->pw_class);
 
 	pw_warntime = (time_t)login_getcaptime(lc, "password-warn",
 	    _PASSWORD_WARNDAYS * SECSPERDAY,

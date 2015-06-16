@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.118 2014/04/30 11:51:51 njoly Exp $	*/
+/*	$NetBSD: kdump.c,v 1.119 2015/06/16 22:54:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.118 2014/04/30 11:51:51 njoly Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.119 2015/06/16 22:54:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -436,7 +436,7 @@ dumpheader(struct ktr_header *kth)
 				break;
 			default:
 			badversion:
-				err(1, "Unsupported ktrace version %x\n",
+				err(1, "Unsupported ktrace version %x",
 				    kth->ktr_version);
 			}
 		}

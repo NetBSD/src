@@ -1,4 +1,4 @@
-/*	$NetBSD: get_addrs.c,v 1.11 2012/12/29 23:44:22 christos Exp $	*/
+/*	$NetBSD: get_addrs.c,v 1.12 2015/06/16 22:54:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)get_addrs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_addrs.c,v 1.11 2012/12/29 23:44:22 christos Exp $");
+__RCSID("$NetBSD: get_addrs.c,v 1.12 2015/06/16 22:54:11 christos Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -75,7 +75,7 @@ get_addrs(const char *my_machine_name, const char *his_machine_name)
 	/* find the server's port */
 	sp = getservbyname("ntalk", "udp");
 	if (sp == 0)
-		errx(EXIT_FAILURE, "%s/%s: service is not registered.\n",
+		errx(EXIT_FAILURE, "%s/%s: service is not registered.",
 		     "ntalk", "udp");
 	daemon_port = sp->s_port;
 }

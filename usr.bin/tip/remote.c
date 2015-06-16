@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.19 2013/10/21 14:47:46 christos Exp $	*/
+/*	$NetBSD: remote.c,v 1.20 2015/06/16 22:54:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.19 2013/10/21 14:47:46 christos Exp $");
+__RCSID("$NetBSD: remote.c,v 1.20 2015/06/16 22:54:11 christos Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -128,12 +128,12 @@ getremcap(char *host)
 	else
 		DU = cgetflag("du");
 	if (DV == NULL) {
-		errx(3, "%s: missing device spec\n", host);
+		errx(3, "%s: missing device spec", host);
 	}
 	if (DU && CU == NULL)
 		CU = DV;
 	if (DU && PN == NULL) {
-		errx(3, "%s: missing phone number\n", host);
+		errx(3, "%s: missing phone number", host);
 	}
 
 	HD = cgetflag("hd");

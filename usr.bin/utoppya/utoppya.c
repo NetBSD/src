@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppya.c,v 1.5 2011/09/05 18:11:53 joerg Exp $	*/
+/*	$NetBSD: utoppya.c,v 1.6 2015/06/16 22:54:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ cmd_rename(int argc, char **argv)
 		;
 
 	if (strcmp(n, o) == 0)
-		errx(EX_DATAERR, "'%s' and '%s' refer to the same file\n",
+		errx(EX_DATAERR, "'%s' and '%s' refer to the same file",
 		    oldpath, newpath);
 
 	if (find_toppy_dirent(oldpath, &ud) == 0)
