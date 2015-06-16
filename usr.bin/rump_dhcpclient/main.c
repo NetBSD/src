@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2011/09/16 15:39:28 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2015/06/16 22:54:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@ __dead static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s ifname\n", getprogname());
+	fprintf(stderr, "Usage: %s ifname\n", getprogname());
 	exit(1);
 }
 
@@ -102,7 +102,7 @@ send_discover(struct interface *ifp)
 	mlen = make_message(&dhcp, ifp, DHCP_DISCOVER);
 	ulen = make_udp_packet(&udp, (void *)dhcp, mlen, ia, ia);
 	if (send_raw_packet(ifp, ETHERTYPE_IP, udp, ulen) == -1)
-		err(1, "sending discover failed");
+		err(EXIT_FAILURE, "sending discover failed");
 }
 
 static void
@@ -118,7 +118,7 @@ send_request(struct interface *ifp)
 	mlen = make_message(&dhcp, ifp, DHCP_REQUEST);
 	ulen = make_udp_packet(&udp, (void *)dhcp, mlen, ia, ia);
 	if (send_raw_packet(ifp, ETHERTYPE_IP, udp, ulen) == -1)
-		err(1, "sending discover failed");
+		err(EXIT_FAILURE, "sending discover failed");
 }
 
 /* wait for 5s by default */
@@ -140,9 +140,9 @@ get_network(struct interface *ifp, uint8_t **rawp,
 	for (;;) {
 		switch (rump_sys_poll(&pfd, 1, RESPWAIT)) {
 		case 0:
-			errx(1, "timed out waiting for response");
+			errx(EXIT_FAILURE, "timed out waiting for response");
 		case -1:
-			err(1, "poll failed");
+			err(EXIT_FAILURE, "poll failed");
 		default:
 			break;
 		}
@@ -197,9 +197,9 @@ get_offer(struct interface *ifp)
 	case DHCP_OFFER:
 		break;
 	case DHCP_NAK:
-		errx(1, "got NAK from dhcp server");
+		errx(EXIT_FAILURE, "got NAK from dhcp server");
 	default:
-		errx(1, "didn't receive offer");
+		errx(EXIT_FAILURE, "didn't receive offer");
 	}
 
 	ifp->state->offer = xzalloc(sizeof(*ifp->state->offer));
@@ -219,7 +219,7 @@ get_ack(struct interface *ifp)
 	get_network(ifp, &raw, &dhcp);
 	get_option_uint8(&type, dhcp, DHO_MESSAGETYPE);
 	if (type != DHCP_ACK)
-		errx(1, "didn't receive ack");
+		errx(EXIT_FAILURE, "didn't receive ack");
 
 	ifp->state->new = ifp->state->offer;
 	get_lease(&ifp->state->lease, ifp->state->new);
@@ -238,15 +238,15 @@ main(int argc, char *argv[])
 		usage();
 
 	if (rumpclient_init() == -1)
-		err(1, "init failed");
+		err(EXIT_FAILURE, "init failed");
 
 	if (init_sockets() == -1)
-		err(1, "failed to init sockets");
+		err(EXIT_FAILURE, "failed to init sockets");
 	if ((ifp = init_interface(argv[1])) == NULL)
-		err(1, "cannot init %s\n", argv[1]);
+		err(EXIT_FAILURE, "cannot init %s", argv[1]);
 	ifaces = ifp;
 	if (open_socket(ifp, ETHERTYPE_IP) == -1)
-		err(1, "bpf");
+		err(EXIT_FAILURE, "bpf");
 	up_interface(ifp);
 
 	ifp->state = xzalloc(sizeof(*ifp->state));
@@ -261,7 +261,7 @@ main(int argc, char *argv[])
 	ifo->options = DHCPCD_GATEWAY | DHCPCD_HOSTNAME;
 
 	if (get_hwaddr(ifp) == -1)
-		err(1, "failed to get hwaddr for %s", ifp->name);
+		err(EXIT_FAILURE, "failed to get hwaddr for %s", ifp->name);
 
 	send_discover(ifp);
 	get_offer(ifp);
