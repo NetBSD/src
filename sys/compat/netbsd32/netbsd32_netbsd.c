@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.194 2015/06/16 07:29:46 matt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.195 2015/06/16 10:42:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.194 2015/06/16 07:29:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.195 2015/06/16 10:42:38 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2761,6 +2761,44 @@ netbsd32_paccept(struct lwp *l, const struct netbsd32_paccept_args *uap,
 
 	return sys_paccept(l, &ua, retval);
 }
+
+int
+netbsd32_fdiscard(struct lwp *l, const struct netbsd32_fdiscard_args *uap,
+	register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(netbsd32_off_t) pos;
+		syscallarg(netbsd32_off_t) len;
+	} */
+	struct sys_fdiscard_args ua;
+
+	NETBSD32TO64_UAP(fd);
+	NETBSD32TO64_UAP(pos);
+	NETBSD32TO64_UAP(len);
+
+	return sys_fdiscard(l, &ua, retval);
+}
+
+int
+netbsd32_posix_fallocate(struct lwp *l, const struct netbsd32_posix_fallocate_args *uap,
+	register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(netbsd32_off_t) pos;
+		syscallarg(netbsd32_off_t) len;
+	} */
+	struct sys_posix_fallocate_args ua;
+
+	NETBSD32TO64_UAP(fd);
+	NETBSD32TO64_UAP(pos);
+	NETBSD32TO64_UAP(len);
+
+	return sys_posix_fallocate(l, &ua, retval);
+}
+
+
 
 /*
  * MI indirect system call support.
