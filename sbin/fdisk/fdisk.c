@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.151 2015/06/16 23:18:54 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.152 2015/06/16 23:58:30 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.151 2015/06/16 23:18:54 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.152 2015/06/16 23:58:30 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -1200,7 +1200,7 @@ get_extended_ptn(void)
 			break;
 	}
 
-	warnx("Extended partition table is corrupt\n");
+	warnx("Extended partition table is corrupt");
 	ext.is_corrupt = 1;
 	ext.num_ptn = 0;
 }

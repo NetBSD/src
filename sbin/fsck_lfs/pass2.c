@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.24 2015/06/16 23:18:55 christos Exp $	 */
+/* $NetBSD: pass2.c,v 1.25 2015/06/16 23:58:30 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -74,7 +74,7 @@ pass2(void)
 		if (reply("ALLOCATE") == 0)
 			err(EEXIT, "%s", "");
 		if (allocdir(ULFS_ROOTINO, ULFS_ROOTINO, 0755) != ULFS_ROOTINO)
-			err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
+			err(EEXIT, "CANNOT ALLOCATE ROOT INODE");
 		break;
 
 	case DCLEAR:
