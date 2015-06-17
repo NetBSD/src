@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.119 2015/06/15 16:33:38 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.120 2015/06/17 15:34:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.119 2015/06/15 16:33:38 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.120 2015/06/17 15:34:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.119 2015/06/15 16:33:38 christos Exp $");
 
 #include "pathnames.h"
 #include "mtree.h"
+#include "metachar.h"
 
 #define BACKUP_SUFFIX ".old"
 
@@ -969,6 +970,7 @@ static void
 run(const char *command, const char *flags, const char *to_name, int errunlink)
 {
 	char	*args[4];
+	char	*cmd;
 	int	status;
 	int	rv;
 	size_t	i;
@@ -976,10 +978,22 @@ run(const char *command, const char *flags, const char *to_name, int errunlink)
 	i = 1;
 	status = 0;
 
+	if (hasmeta(command)) {
+		rv = asprintf(&cmd, "%s %s%s%s", command, flags ? flags : "",
+		    flags ? " " : "", to_name);
+		if (rv < 0) {
+			warn("Cannot execute %s", command);
+			goto out;
+		}
+		command = _PATH_BSHELL;
+		flags = "-c";
+	} else
+		cmd = __UNCONST(to_name);
+
 	args[0] = __UNCONST(command);
 	if (flags)
 		args[i++] = __UNCONST(flags);
-	args[i++] = __UNCONST(to_name);
+	args[i++] = cmd;
 	args[i] = NULL;
 
 #ifdef HAVE_POSIX_SPAWN
@@ -1018,11 +1032,14 @@ run(const char *command, const char *flags, const char *to_name, int errunlink)
 		_exit(1);
 		/*NOTREACHED*/
 	default:
-		rv = wait(&status);
 		break;
 	}
 #endif
-	if ((rv == -1 || status) && errunlink)
+	rv = wait(&status);
+	if (cmd != to_name)
+		free(cmd);
+out:
+	if ((rv < 0 || status) && errunlink)
 		(void)unlink(to_name);
 }
 
