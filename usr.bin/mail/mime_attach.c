@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.17 2013/10/18 20:47:06 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.18 2015/06/17 00:03:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.17 2013/10/18 20:47:06 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.18 2015/06/17 00:03:42 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -529,7 +529,7 @@ fput_body(FILE *fi, FILE *fo, struct Content *Cp)
 
 	enc = mime_fio_encoder(Cp->C_encoding);
 	if (enc == NULL)
-		warnx("unknown transfer encoding type: %s\n", Cp->C_encoding);
+		warnx("unknown transfer encoding type: %s", Cp->C_encoding);
 	else
 		enc(fi, fo, 0);
 }
