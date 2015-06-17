@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.119 2015/06/16 22:54:10 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.120 2015/06/17 00:01:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.119 2015/06/16 22:54:10 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.120 2015/06/17 00:01:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -997,7 +997,7 @@ ktrpsig(void *v, int len)
 		}
 		/*NOTREACHED*/
 	default:
-		warnx("Unhandled size %d for ktrpsig\n", len);
+		warnx("Unhandled size %d for ktrpsig", len);
 		break;
 	}
 }
