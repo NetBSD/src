@@ -1,4 +1,4 @@
-	$NetBSD: README.compileopts,v 1.12 2015/06/17 11:46:33 pooka Exp $
+	$NetBSD: README.compileopts,v 1.13 2015/06/17 11:48:06 pooka Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
@@ -18,13 +18,15 @@ effect:	Iff "yes", build with -DDIAGNOSTIC.
 
     RUMP_DEBUG
 
-values:	defined / not defined
+values:	<defined> / <undefined>
+defval:	<undefined>
 effect:	Iff defined, build with -DDEBUG.
 
 
     RUMP_LOCKDEBUG
 
-values:	defined / not defined
+values:	<defined> / <undefined>
+defval:	<undefined>
 effect:	Iff defined, build with -DLOCKDEBUG.
 
 
