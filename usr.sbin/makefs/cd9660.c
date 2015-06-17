@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.48 2015/06/16 23:04:14 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.49 2015/06/17 01:05:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.48 2015/06/16 23:04:14 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.49 2015/06/17 01:05:41 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -499,7 +499,7 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 		    diskStructure->isoLevel);
 	if (diskStructure->isoLevel < 2 &&
 	    diskStructure->allow_multidot)
-		errx(1, "allow-multidot requires iso level of 2");
+		errx(EXIT_FAILURE, "allow-multidot requires iso level of 2");
 
 	assert(image != NULL);
 	assert(dir != NULL);
@@ -540,10 +540,10 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	    &numDirectories, &error);
 
 	if (TAILQ_EMPTY(&real_root->cn_children)) {
-		errx(1, "%s: converted directory is empty. ", __func__,
-		    "Tree conversion failed");
+		errx(EXIT_FAILURE, "%s: converted directory is empty. "
+		    "Tree conversion failed", __func__);
 	} else if (error != 0) {
-		errx(1, "cd9660_makefs: tree conversion failed");
+		errx(EXIT_FAILURE, "%s: tree conversion failed", __func__);
 	} else {
 		if (diskStructure->verbose_level > 0)
 			printf("%s: tree converted\n", __func__);
@@ -579,7 +579,7 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 		firstAvailableSector = cd9660_setup_boot(diskStructure,
 		    firstAvailableSector);
 		if (firstAvailableSector < 0)
-			errx(1, "setup_boot failed");
+			errx(EXIT_FAILURE, "setup_boot failed");
 	}
 	/* LE first, then BE */
 	diskStructure->primaryLittleEndianTableSector = firstAvailableSector;
@@ -1603,7 +1603,7 @@ cd9660_compute_full_filename(cd9660node *node, char *buf)
 	len = snprintf(buf, len, "%s/%s/%s", node->node->root,
 	    node->node->path, node->node->name);
 	if (len > CD9660MAXPATH)
-		errx(1, "Pathname too long.");
+		errx(EXIT_FAILURE, "Pathname too long.");
 }
 
 /* NEW filename conversion method */
