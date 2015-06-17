@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.48 2013/10/07 15:17:24 christos Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.49 2015/06/17 00:01:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.48 2013/10/07 15:17:24 christos Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.49 2015/06/17 00:01:59 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -306,7 +306,7 @@ main(int argc, char **argv)
 				}
 			} else {
 				cmd = CMD_QUIT;
-				warnx("\r\n");
+				fprintf(stderr, "\r\n");
 				arg = NULL;
 				break;
 			}
@@ -1463,7 +1463,7 @@ readaudio(int afd, int lba, int blocks, u_char *data)
 	rc = ioctl(afd, SCIOCCOMMAND, &sc);
 	if (rc < 0 || sc.retsts != SCCMD_OK) {
 		if (da.read_errors < 10) {
-			warnx("scsi cmd failed: retsts %d status %d\n",
+			warnx("scsi cmd failed: retsts %d status %d",
 			    sc.retsts, sc.status);
 		}
 		da.read_errors++;
