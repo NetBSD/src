@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.30 2015/06/16 23:18:55 christos Exp $ */
+/* $NetBSD: segwrite.c,v 1.31 2015/06/17 00:18:35 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -905,7 +905,7 @@ lfs_seglock(struct lfs * fs, unsigned long flags)
 	sp->bpp = emalloc(fs->lfs_ssize * sizeof(struct ubuf *));
 	if (!sp->bpp)
 		err(!preen, "Could not allocate %zu bytes",
-		    (size_t)(fs->lfs_ssize * sizeof(struct ubuf *)))
+		    (size_t)(fs->lfs_ssize * sizeof(struct ubuf *)));
 	sp->seg_flags = flags;
 	sp->vp = NULL;
 	sp->seg_iocount = 0;
