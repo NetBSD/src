@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.696 2015/04/06 17:15:32 bouyer Exp $
+$NetBSD: usbdevs,v 1.697 2015/06/17 14:20:14 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1979,8 +1979,9 @@ product LACIE HD		0xa601	Hard Disk
 product LACIE CDRW		0xa602	CD R/W
 
 /* Lenovo products */
-product LENOVO ETHERNET		0x7203	USB 2.0 Ethernet
 product LENOVO AX88179		0x304b	AX88179 USB 3.0 gigabit ethernet controller
+product LENOVO COMPACTKBDWTP	0x6047	ThinkPad Compact USB keyboard with TrackPoint
+product LENOVO ETHERNET		0x7203	USB 2.0 Ethernet
 
 /* Lexar products */
 product LEXAR JUMPSHOT		0x0001	jumpSHOT CompactFlash Reader
