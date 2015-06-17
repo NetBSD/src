@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.57 2015/06/16 22:54:11 christos Exp $	*/
+/*	$NetBSD: tip.c,v 1.58 2015/06/17 01:38:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.57 2015/06/16 22:54:11 christos Exp $");
+__RCSID("$NetBSD: tip.c,v 1.58 2015/06/17 01:38:02 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -87,12 +87,11 @@ main(int argc, char *argv[])
 		goto cucommon;
 	}
 
-	if (argc > 4) {
+	if (argc > 4)
 		tipusage();
-	}
-	if (!isatty(0)) {
-		errx(EXIT_FAILURE, must be interactive");
-	}
+
+	if (!isatty(0))
+		errx(EXIT_FAILURE, "must be interactive");
 
 	cmdlineBR = 0;
 	while((c = getopt(argc, argv, "v0123456789")) != -1) {
