@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.57 2014/07/05 19:22:05 dholland Exp $
+#	$NetBSD: Makefile,v 1.58 2015/06/17 17:43:23 christos Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
 SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c main.c \
-	make.c parse.c str.c suff.c targ.c trace.c var.c util.c 
+	make.c metachar.c parse.c str.c suff.c targ.c trace.c var.c util.c 
 SRCS+=  strlist.c
 SRCS+=  make_malloc.c
 SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
