@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.342 2015/05/28 14:36:45 rjs Exp $
+#	$NetBSD: bsd.README,v 1.343 2015/06/18 22:29:12 pooka Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1943,7 +1943,11 @@ OBJDUMP		Display information from object files.  [objdump]
 
 RANLIB		Generate index to archive.  [ranlib]
 
+READELF		Display information from ELF object files.  [readelf]
+
 SIZE		List section sizes and total size.  [size]
+
+STRINGS		Display printable character sequences in files.  [strings]
 
 STRIP		Discard symbols from object files.  [strip]
 
