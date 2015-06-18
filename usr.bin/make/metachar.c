@@ -1,4 +1,4 @@
-/*	$NetBSD: metachar.c,v 1.3 2015/06/18 15:51:57 christos Exp $	*/
+/*	$NetBSD: metachar.c,v 1.4 2015/06/18 19:49:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,13 +28,17 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: metachar.c,v 1.3 2015/06/18 15:51:57 christos Exp $";
-#else
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
+#if defined(MAKE_NATIVE) || defined(HAVE_NBTOOL_CONFIG_H)
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: metachar.c,v 1.3 2015/06/18 15:51:57 christos Exp $");
-#endif /* not lint */
+#endif
+
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: metachar.c,v 1.4 2015/06/18 19:49:08 christos Exp $");
 #endif
 
 #include "metachar.h"
