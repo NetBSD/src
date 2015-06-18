@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.277 2015/05/13 02:10:46 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.278 2015/06/18 15:16:12 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -573,11 +573,11 @@
 			    const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
 282	STD 		{ int|sys|14|vfork(void); }
-283	STD 		{ int|sys||__posix_chown(const char *path, uid_t uid, \
+283	STD 	RUMP	{ int|sys||__posix_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
-284	STD 		{ int|sys||__posix_fchown(int fd, uid_t uid, \
+284	STD 	RUMP	{ int|sys||__posix_fchown(int fd, uid_t uid, \
 			    gid_t gid); }
-285	STD 		{ int|sys||__posix_lchown(const char *path, uid_t uid, \
+285	STD 	RUMP	{ int|sys||__posix_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
 286	STD 	RUMP	{ pid_t|sys||getsid(pid_t pid); }
 287	STD 		{ pid_t|sys||__clone(int flags, void *stack); }
