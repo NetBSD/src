@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.103 2011/10/04 11:01:13 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.103.4.1 2015/06/19 17:16:11 snj Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -478,7 +478,7 @@ extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 #define	mvaddstr(y, x, s)		mvwaddstr(stdscr, y, x, s)
 #define	mvdelch(y, x)			mvwdelch(stdscr, y, x)
 #define	mvgetch(y, x)			mvwgetch(stdscr, y, x)
-#define	mvgetnstr(y, x, s)		mvwgetnstr(stdscr, y, x, s, n)
+#define	mvgetnstr(y, x, s, n)		mvwgetnstr(stdscr, y, x, s, n)
 #define	mvgetstr(y, x, s)		mvwgetstr(stdscr, y, x, s)
 #define	mvinch(y, x)			mvwinch(stdscr, y, x)
 #define	mvinchnstr(y, x, c, n)		mvwinchnstr(stdscr, y, x, c, n)
