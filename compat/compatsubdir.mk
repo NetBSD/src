@@ -1,4 +1,4 @@
-#	$NetBSD: compatsubdir.mk,v 1.8 2012/08/17 16:22:27 joerg Exp $
+#	$NetBSD: compatsubdir.mk,v 1.9 2015/06/19 18:17:49 matt Exp $
 
 # Build netbsd libraries.
 
@@ -25,6 +25,9 @@ SUBDIR=	${BOOTSTRAP_SUBDIRS}
 .else
 SUBDIR= ../../../lib .WAIT \
 	../../../libexec/ld.elf_so
+.if ${MKCOMPATTESTS} != "no"
+SUBDIR+= ../../../tests
+.endif
 .endif
 
 .include <bsd.subdir.mk>
