@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.y,v 1.11 2014/03/22 22:09:14 dholland Exp $	*/
+/*	$NetBSD: grammar.y,v 1.12 2015/06/19 06:02:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,16 +57,21 @@
 }
 
 %{
-#include "include.h"
-
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.11 2014/03/22 22:09:14 dholland Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.12 2015/06/19 06:02:31 dholland Exp $");
 #endif
 #endif /* not lint */
+
+#include <stdio.h>
+
+#include "def.h"
+#include "struct.h"
+#include "extern.h"
+#include "tunable.h"
 
 int line = 1;
 

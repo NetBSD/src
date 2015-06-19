@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.11 2009/08/12 04:48:03 dholland Exp $	*/
+/*	$NetBSD: extern.c,v 1.12 2015/06/19 06:02:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,11 +46,16 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.11 2009/08/12 04:48:03 dholland Exp $");
+__RCSID("$NetBSD: extern.c,v 1.12 2015/06/19 06:02:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "include.h"
+#include <termios.h>
+
+#include "def.h"
+#include "struct.h"
+#include "extern.h"
+#include "tunable.h"
 
 char		GAMES[] =	"Game_List";
 
