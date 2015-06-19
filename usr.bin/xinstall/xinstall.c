@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.123 2015/06/19 17:17:24 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.124 2015/06/19 17:20:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.123 2015/06/19 17:17:24 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.124 2015/06/19 17:20:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1038,7 +1038,6 @@ run(const char *command, const char *flags, const char *to_name, int errunlink)
 	}
 #endif
 	rv = wait(&status);
-out1:
 	if (cmd != to_name)
 		free(cmd);
 out:
