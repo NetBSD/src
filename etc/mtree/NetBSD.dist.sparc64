@@ -1,15 +1,4 @@
-#	$NetBSD: NetBSD.dist.sparc64,v 1.9 2014/07/19 18:38:33 lneto Exp $
+#	$NetBSD: NetBSD.dist.sparc64,v 1.10 2015/06/19 18:16:06 matt Exp $
 
-./lib/sparc
-./lib/sparc/npf
 ./usr/include/g++/bits/sparc
 ./usr/include/g++/bits/sparc64
-./usr/lib/sparc
-./usr/lib/sparc/i18n
-./usr/lib/sparc/lua
-./usr/lib/sparc/lua/5.3
-./usr/lib/sparc/security
-./usr/libdata/debug/lib/sparc
-./usr/libdata/debug/lib/sparc/npf
-./usr/libdata/debug/usr/lib/sparc
-./usr/libdata/debug/usr/lib/sparc/i18n
