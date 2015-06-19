@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.c,v 1.2 2015/03/02 17:34:23 riastradh Exp $	*/
+/*	$NetBSD: drm_vma_manager.c,v 1.3 2015/06/19 22:51:57 chs Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.2 2015/03/02 17:34:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.3 2015/06/19 22:51:57 chs Exp $");
 
 #include <sys/kmem.h>
 #include <sys/rbtree.h>
@@ -289,6 +289,8 @@ drm_vma_node_revoke(struct drm_vma_offset_node *node, struct file *file)
 	if (found != NULL)
 		rb_tree_remove_node(&node->von_files, found);
 	rw_exit(&node->von_lock);
+	if (found != NULL)
+		kmem_free(found, sizeof(*found));
 }
 
 bool
