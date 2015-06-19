@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.36 2015/03/07 03:19:06 christos Exp $	*/
+/*	$NetBSD: module.h,v 1.37 2015/06/19 14:23:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -227,5 +227,11 @@ typedef struct modstat {
 } modstat_t;
 
 int	modctl(int, void *);
+
+#ifdef _KERNEL
+/* attention: pointers passed are userland pointers!,
+   see modctl_load_t */
+int	handle_modctl_load(const char *, int, const char *, size_t);
+#endif
 
 #endif	/* !_SYS_MODULE_H_ */
