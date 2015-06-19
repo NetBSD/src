@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.219 2015/05/27 05:56:27 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.220 2015/06/19 17:51:18 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11505,3 +11505,30 @@ sys/arch/xen/xen/xenevt.c			1.42
 
 	Fix off by one error, pointed out by Wei Liu in port-xen/49919.
 	[bouyer, ticket #1299]
+
+lib/libcurses/curses.h				1.107
+
+	mvgetnstr should have a length argument as the name implies.
+	[joerg, ticket #1307]
+
+lib/libcurses/unctrl.h				1.5
+
+	Fix quoting in macro.
+	[wiz, ticket #1302]
+
+sys/arch/vax/vsa/vsbus.c			1.61
+
+	Fix VAX46 and VAX48 vsbus attach config.  PR port-vax/49935.
+	[abs, ticket #1303]
+
+lib/libperfuse/ops.c				1.60
+
+	When lookup returns a node with null inode number, it means
+	the ENOENT, with negative caching. We do not implement
+	negative caching yet, but we honour the ENOENT.
+	[manu, ticket #1305]
+
+lib/libperfuse/ops.c				1.84
+	Fix dot-lookup when readdir does not provide inodes
+	[manu, ticket #1306]
+
