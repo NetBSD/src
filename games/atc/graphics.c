@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.18 2014/03/22 22:33:35 dholland Exp $	*/
+/*	$NetBSD: graphics.c,v 1.19 2015/06/19 06:02:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,11 +46,20 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.18 2014/03/22 22:33:35 dholland Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.19 2015/06/19 06:02:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "include.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <curses.h>
+#include <errno.h>
+#include <err.h>
+
+#include "def.h"
+#include "struct.h"
+#include "extern.h"
+#include "tunable.h"
 
 #define C_TOPBOTTOM		'-'
 #define C_LEFTRIGHT		'|'
