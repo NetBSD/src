@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 2014/03/22 22:58:56 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 2015/06/19 06:02:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,6 +42,9 @@
  *
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
+
+#include <time.h>  /* for time_t */
+
 
 extern char		GAMES[];
 extern const char	*filename;
