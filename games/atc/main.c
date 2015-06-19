@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2014/03/22 22:58:56 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2015/06/19 06:02:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,12 +51,23 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 2014/03/22 22:58:56 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2015/06/19 06:02:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "include.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <signal.h>
+#include <termios.h>
+#include <getopt.h>
+#include <err.h>
+
 #include "pathnames.h"
+#include "def.h"
+#include "struct.h"
+#include "extern.h"
+#include "tunable.h"
 
 extern FILE	*yyin;
 
