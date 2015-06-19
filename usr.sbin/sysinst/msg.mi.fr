@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.8 2015/05/17 10:13:24 martin Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.9 2015/06/19 12:27:02 youri Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -112,7 +112,7 @@ procédure ne modifie votre disque.)
 }
 
 message reinstallusure
-{Décompressons maintenant les composants de NetBSD sur un disque dur
+{Les composants de NetBSD seront maintenant decompressés sur un disque dur
 démarrable. Cette procédure va rapatrier et décompresser les composants
 sur un disque démarrable déjà partitionnné. Elle n'inscrit pas de "label" sur
 le disque, n'installe pas de nouveaux secteurs d'amorçage et ne modifie
