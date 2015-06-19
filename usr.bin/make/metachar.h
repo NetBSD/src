@@ -1,4 +1,4 @@
-/*	$NetBSD: metachar.h,v 1.1 2015/06/17 15:34:55 christos Exp $	*/
+/*	$NetBSD: metachar.h,v 1.2 2015/06/19 14:25:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -42,6 +42,15 @@ static inline int
 hasmeta(const char *cmd)
 {
 	while (!ismeta(*cmd))
+		cmd++;
+
+	return *cmd != '\0';
+}
+
+static inline int
+needshell(const char *cmd)
+{
+	while (!ismeta(*cmd) && *cmd != ':' && *cmd != '=')
 		cmd++;
 
 	return *cmd != '\0';

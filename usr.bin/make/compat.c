@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.98 2015/06/19 08:03:35 mlelstv Exp $	*/
+/*	$NetBSD: compat.c,v 1.99 2015/06/19 14:25:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.98 2015/06/19 08:03:35 mlelstv Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.99 2015/06/19 14:25:34 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.98 2015/06/19 08:03:35 mlelstv Exp $");
+__RCSID("$NetBSD: compat.c,v 1.99 2015/06/19 14:25:34 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -280,7 +280,7 @@ CompatRunCommand(void *cmdp, void *gnp)
      * meta characters as documented in make(1).
      */
     
-    useShell = hasmeta(cmd) || strchr(cmd,'=') || strchr(cmd,':');
+    useShell = needshell(cmd);
 #endif
 
     /*
