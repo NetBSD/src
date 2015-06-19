@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: lex.l,v 1.8 2009/10/29 14:27:26 christos Exp $	*/
+/*	$NetBSD: lex.l,v 1.9 2015/06/19 06:02:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,11 +47,10 @@
 #if 0
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.l,v 1.8 2009/10/29 14:27:26 christos Exp $");
+__RCSID("$NetBSD: lex.l,v 1.9 2015/06/19 06:02:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "include.h"
 #undef ECHO		/* XXX: work around lex(1) vs termios lameness */
 #include "grammar.h"
 

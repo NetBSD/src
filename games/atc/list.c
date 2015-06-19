@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.8 2014/03/22 22:09:14 dholland Exp $	*/
+/*	$NetBSD: list.c,v 1.9 2015/06/19 06:02:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,11 +46,16 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: list.c,v 1.8 2014/03/22 22:09:14 dholland Exp $");
+__RCSID("$NetBSD: list.c,v 1.9 2015/06/19 06:02:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "include.h"
+#include <stdlib.h>
+
+#include "def.h"
+#include "struct.h"
+#include "extern.h"
+#include "tunable.h"
 
 PLANE *
 newplane(void)
