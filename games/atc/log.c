@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.21 2009/08/12 04:48:03 dholland Exp $	*/
+/*	$NetBSD: log.c,v 1.22 2015/06/19 06:02:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,12 +46,25 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.21 2009/08/12 04:48:03 dholland Exp $");
+__RCSID("$NetBSD: log.c,v 1.22 2015/06/19 06:02:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "include.h"
+#include <sys/types.h>
+#include <sys/utsname.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <err.h>
+
 #include "pathnames.h"
+#include "def.h"
+#include "struct.h"
+#include "extern.h"
+#include "tunable.h"
 
 static FILE *score_fp;
 
