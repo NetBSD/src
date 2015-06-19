@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.97 2015/06/17 17:43:23 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.98 2015/06/19 08:03:35 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.97 2015/06/17 17:43:23 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.98 2015/06/19 08:03:35 mlelstv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.97 2015/06/17 17:43:23 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.98 2015/06/19 08:03:35 mlelstv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -274,9 +274,13 @@ CompatRunCommand(void *cmdp, void *gnp)
      * Search for meta characters in the command. If there are no meta
      * characters, there's no need to execute a shell to execute the
      * command.
+     *
+     * Additionally variable assignments and empty commands
+     * go to the shell. Therefore treat '=' and ':' like shell
+     * meta characters as documented in make(1).
      */
     
-    useShell = hasmeta(cmd);
+    useShell = hasmeta(cmd) || strchr(cmd,'=') || strchr(cmd,':');
 #endif
 
     /*
