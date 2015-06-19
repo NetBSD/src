@@ -1,5 +1,6 @@
-#	$NetBSD: bsd.64.mk,v 1.9 2011/09/23 06:44:37 mrg Exp $
+#	$NetBSD: bsd.64.mk,v 1.10 2015/06/19 18:17:26 matt Exp $
 
+.ifndef MLIBDIR
 .if ${MACHINE_ARCH} == "mips64eb"
 LD+=		-m elf64btsmip
 .else
@@ -19,3 +20,4 @@ LDFLAGS+=	-mabi=64
 MKDEPFLAGS+=	-mabi=64
 
 .include "${.PARSEDIR}/../../Makefile.compat"
+.endif
