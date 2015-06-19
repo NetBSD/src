@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.331 2015/06/16 06:11:01 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.332 2015/06/19 02:45:51 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32141,4 +32141,9 @@ lib/libc/Makefile				1.169 via patch
 	of the compat copies), because we don't want it to be overwritten
 	by the compat copies.
 	[martin, ticket #843]
+
+usr.bin/midirecord/midirecord.1			1.4
+
+	midirecord first appears in netbsd 7.
+	[mrg, ticket #840]
 
