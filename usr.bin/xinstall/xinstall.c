@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.122 2015/06/19 14:32:56 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.123 2015/06/19 17:17:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.122 2015/06/19 14:32:56 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.123 2015/06/19 17:17:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1001,10 +1001,12 @@ run(const char *command, const char *flags, const char *to_name, int errunlink)
 		rv = posix_spawn(NULL, command, NULL, NULL, args, NULL);
 	else
 		rv = posix_spawnp(NULL, command, NULL, NULL, args, NULL);
-	if (rv != 0) {
+	if (rv != 0)
 		warnc(rv, "Cannot execute %s", command);
-		rv = -1;
-	}
+	/*
+	 * the wait below will fail if we did not create a child it will
+	 * make rv negative.
+	 */
 #else
 	switch (vfork()) {
 	case -1:
@@ -1036,6 +1038,7 @@ run(const char *command, const char *flags, const char *to_name, int errunlink)
 	}
 #endif
 	rv = wait(&status);
+out1:
 	if (cmd != to_name)
 		free(cmd);
 out:
