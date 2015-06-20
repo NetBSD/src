@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.103 2014/10/05 20:17:28 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.104 2015/06/20 19:58:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -143,6 +143,7 @@ typedef netbsd32_pointer_t netbsd32_u_charp;
 typedef netbsd32_pointer_t netbsd32_charpp;
 typedef netbsd32_pointer_t netbsd32_size_tp;
 typedef netbsd32_pointer_t netbsd32_intp;
+typedef netbsd32_pointer_t netbsd32_uintp;
 typedef netbsd32_pointer_t netbsd32_longp;
 typedef netbsd32_pointer_t netbsd32_caddrp;
 typedef netbsd32_pointer_t netbsd32_caddr;
@@ -1000,6 +1001,21 @@ struct netbsd32_posix_spawn_file_actions {
 	netbsd32_posix_spawn_file_actions_entryp fae;
 };
 
+struct netbsd32_modctl_load {
+	netbsd32_charp ml_filename;
+	int ml_flags;
+	netbsd32_charp ml_props;
+	netbsd32_size_t ml_propslen;
+};
+
+struct netbsd32_mq_attr {
+	netbsd32_long	mq_flags;
+	netbsd32_long	mq_maxmsg;
+	netbsd32_long	mq_msgsize;
+	netbsd32_long	mq_curmsgs;
+};
+typedef netbsd32_pointer_t netbsd32_mq_attrp_t;
+
 #if 0
 int	netbsd32_kevent(struct lwp *, void *, register_t *);
 #endif
@@ -1039,7 +1055,8 @@ vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
 void netbsd32_adjust_limits(struct proc *);
 
 void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
-void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
+void	netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32);
+
 
 void	startlwp32(void *);
 struct compat_50_netbsd32___semctl14_args;
