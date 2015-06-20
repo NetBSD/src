@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.103 2015/06/16 10:41:34 martin Exp $
+	$NetBSD: syscalls.master,v 1.104 2015/06/20 19:55:07 martin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -514,8 +514,9 @@
 244	COMPAT_50	{ int|netbsd32||__sigtimedwait(netbsd32_sigsetp_t set, \
 			    netbsd32_siginfop_t info, \
 			    netbsd32_timespec50p_t timeout); }
-245	UNIMPL
-246	UNIMPL
+245	STD		{ int|netbsd32||sigqueueinfo(pid_t pid, \
+			    const netbsd32_siginfop_t info); }
+246	STD		{ int|netbsd32||modctl(int cmd, netbsd32_voidp arg); }
 247	STD		{ int|netbsd32||_ksem_init(unsigned int value, \
 			    netbsd32_semidp_t idp); }
 248	STD		{ int|netbsd32||_ksem_open(netbsd32_charp name, \
@@ -531,16 +532,34 @@
 255	STD		{ int|netbsd32||_ksem_destroy(netbsd32_intptr_t id); }
 256	STD		{ int|netbsd32||_ksem_timedwait(intptr_t id, \
 				const netbsd32_timespecp_t abstime); }
-257	UNIMPL
-258	UNIMPL
-259	UNIMPL
-260	UNIMPL
-261	UNIMPL
-262	UNIMPL
-263	UNIMPL
-264	UNIMPL
-265	UNIMPL
-266	UNIMPL
+257	STD		{ mqd_t|netbsd32||mq_open(const netbsd32_charp name, \
+			    int oflag, mode_t mode, \
+			    netbsd32_mq_attrp_t attr); }
+258	STD 		{ int|netbsd32||mq_close(mqd_t mqdes); }
+259	STD 		{ int|netbsd32||mq_unlink(const netbsd32_charp name); }
+260	STD		{ int|netbsd32||mq_getattr(mqd_t mqdes, \
+			    netbsd32_mq_attrp_t mqstat); }
+261	STD 		{ int|netbsd32||mq_setattr(mqd_t mqdes, \
+			    const netbsd32_mq_attrp_t mqstat, \
+			    netbsd32_mq_attrp_t omqstat); }
+262	STD		{ int|netbsd32||mq_notify(mqd_t mqdes, \
+			    const netbsd32_sigeventp_t notification); }
+263	STD		{ int|netbsd32||mq_send(mqd_t mqdes, \
+			    const netbsd32_charp msg_ptr, \
+			    netbsd32_size_t msg_len, unsigned msg_prio); }
+264	STD		{ netbsd32_ssize_t|netbsd32||mq_receive(mqd_t mqdes, \
+			    netbsd32_charp msg_ptr, \
+			    netbsd32_size_t msg_len, netbsd32_uintp msg_prio); }
+265	COMPAT_50	{ int|netbsd32||mq_timedsend(mqd_t mqdes, \
+			    const netbsd32_charp msg_ptr, \
+			    netbsd32_size_t msg_len, \
+			    unsigned msg_prio, \
+			    const netbsd32_timespec50p_t abs_timeout); }
+266	COMPAT_50	{ netbsd32_ssize_t|netbsd32||mq_timedreceive( \
+			    mqd_t mqdes, \
+			    netbsd32_charp msg_ptr, netbsd32_size_t msg_len, \
+			    netbsd32_uintp msg_prio, \
+			    const netbsd32_timespec50p_t abs_timeout); }
 267	UNIMPL
 268	UNIMPL
 269	UNIMPL
