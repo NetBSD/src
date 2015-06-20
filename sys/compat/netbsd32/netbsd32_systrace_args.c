@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.2 2015/06/16 10:42:13 martin Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.3 2015/06/20 19:56:24 martin Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1698,6 +1698,22 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
+	/* netbsd32_sigqueueinfo */
+	case 245: {
+		struct netbsd32_sigqueueinfo_args *p = params;
+		iarg[0] = SCARG(p, pid); /* pid_t */
+		uarg[1] = (intptr_t) SCARG(p, info).i32; /* const netbsd32_siginfop_t */
+		*n_args = 2;
+		break;
+	}
+	/* netbsd32_modctl */
+	case 246: {
+		struct netbsd32_modctl_args *p = params;
+		iarg[0] = SCARG(p, cmd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, arg).i32; /* netbsd32_voidp */
+		*n_args = 2;
+		break;
+	}
 	/* netbsd32__ksem_init */
 	case 247: {
 		struct netbsd32__ksem_init_args *p = params;
@@ -1773,6 +1789,97 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[0] = SCARG(p, id); /* intptr_t */
 		uarg[1] = (intptr_t) SCARG(p, abstime).i32; /* const netbsd32_timespecp_t */
 		*n_args = 2;
+		break;
+	}
+	/* netbsd32_mq_open */
+	case 257: {
+		struct netbsd32_mq_open_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, name).i32; /* const netbsd32_charp */
+		iarg[1] = SCARG(p, oflag); /* int */
+		iarg[2] = SCARG(p, mode); /* mode_t */
+		uarg[3] = (intptr_t) SCARG(p, attr).i32; /* netbsd32_mq_attrp_t */
+		*n_args = 4;
+		break;
+	}
+	/* netbsd32_mq_close */
+	case 258: {
+		struct netbsd32_mq_close_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* mqd_t */
+		*n_args = 1;
+		break;
+	}
+	/* netbsd32_mq_unlink */
+	case 259: {
+		struct netbsd32_mq_unlink_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, name).i32; /* const netbsd32_charp */
+		*n_args = 1;
+		break;
+	}
+	/* netbsd32_mq_getattr */
+	case 260: {
+		struct netbsd32_mq_getattr_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, mqstat).i32; /* netbsd32_mq_attrp_t */
+		*n_args = 2;
+		break;
+	}
+	/* netbsd32_mq_setattr */
+	case 261: {
+		struct netbsd32_mq_setattr_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, mqstat).i32; /* const netbsd32_mq_attrp_t */
+		uarg[2] = (intptr_t) SCARG(p, omqstat).i32; /* netbsd32_mq_attrp_t */
+		*n_args = 3;
+		break;
+	}
+	/* netbsd32_mq_notify */
+	case 262: {
+		struct netbsd32_mq_notify_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, notification).i32; /* const netbsd32_sigeventp_t */
+		*n_args = 2;
+		break;
+	}
+	/* netbsd32_mq_send */
+	case 263: {
+		struct netbsd32_mq_send_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, msg_ptr).i32; /* const netbsd32_charp */
+		iarg[2] = SCARG(p, msg_len); /* netbsd32_size_t */
+		uarg[3] = SCARG(p, msg_prio); /* unsigned */
+		*n_args = 4;
+		break;
+	}
+	/* netbsd32_mq_receive */
+	case 264: {
+		struct netbsd32_mq_receive_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, msg_ptr).i32; /* netbsd32_charp */
+		iarg[2] = SCARG(p, msg_len); /* netbsd32_size_t */
+		uarg[3] = (intptr_t) SCARG(p, msg_prio).i32; /* netbsd32_uintp */
+		*n_args = 4;
+		break;
+	}
+	/* netbsd32_mq_timedsend */
+	case 265: {
+		struct compat_50_netbsd32_mq_timedsend_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, msg_ptr).i32; /* const netbsd32_charp */
+		iarg[2] = SCARG(p, msg_len); /* netbsd32_size_t */
+		uarg[3] = SCARG(p, msg_prio); /* unsigned */
+		uarg[4] = (intptr_t) SCARG(p, abs_timeout).i32; /* const netbsd32_timespec50p_t */
+		*n_args = 5;
+		break;
+	}
+	/* netbsd32_mq_timedreceive */
+	case 266: {
+		struct compat_50_netbsd32_mq_timedreceive_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, msg_ptr).i32; /* netbsd32_charp */
+		iarg[2] = SCARG(p, msg_len); /* netbsd32_size_t */
+		uarg[3] = (intptr_t) SCARG(p, msg_prio).i32; /* netbsd32_uintp */
+		uarg[4] = (intptr_t) SCARG(p, abs_timeout).i32; /* const netbsd32_timespec50p_t */
+		*n_args = 5;
 		break;
 	}
 	/* netbsd32___posix_rename */
@@ -6071,6 +6178,32 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* netbsd32_sigqueueinfo */
+	case 245:
+		switch(ndx) {
+		case 0:
+			p = "pid_t";
+			break;
+		case 1:
+			p = "const netbsd32_siginfop_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_modctl */
+	case 246:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "netbsd32_voidp";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* netbsd32__ksem_init */
 	case 247:
 		switch(ndx) {
@@ -6187,6 +6320,169 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 1:
 			p = "const netbsd32_timespecp_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_mq_open */
+	case 257:
+		switch(ndx) {
+		case 0:
+			p = "const netbsd32_charp";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "mode_t";
+			break;
+		case 3:
+			p = "netbsd32_mq_attrp_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_mq_close */
+	case 258:
+		switch(ndx) {
+		case 0:
+			p = "mqd_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_mq_unlink */
+	case 259:
+		switch(ndx) {
+		case 0:
+			p = "const netbsd32_charp";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_mq_getattr */
+	case 260:
+		switch(ndx) {
+		case 0:
+			p = "mqd_t";
+			break;
+		case 1:
+			p = "netbsd32_mq_attrp_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_mq_setattr */
+	case 261:
+		switch(ndx) {
+		case 0:
+			p = "mqd_t";
+			break;
+		case 1:
+			p = "const netbsd32_mq_attrp_t";
+			break;
+		case 2:
+			p = "netbsd32_mq_attrp_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_mq_notify */
+	case 262:
+		switch(ndx) {
+		case 0:
+			p = "mqd_t";
+			break;
+		case 1:
+			p = "const netbsd32_sigeventp_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_mq_send */
+	case 263:
+		switch(ndx) {
+		case 0:
+			p = "mqd_t";
+			break;
+		case 1:
+			p = "const netbsd32_charp";
+			break;
+		case 2:
+			p = "netbsd32_size_t";
+			break;
+		case 3:
+			p = "unsigned";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_mq_receive */
+	case 264:
+		switch(ndx) {
+		case 0:
+			p = "mqd_t";
+			break;
+		case 1:
+			p = "netbsd32_charp";
+			break;
+		case 2:
+			p = "netbsd32_size_t";
+			break;
+		case 3:
+			p = "netbsd32_uintp";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_mq_timedsend */
+	case 265:
+		switch(ndx) {
+		case 0:
+			p = "mqd_t";
+			break;
+		case 1:
+			p = "const netbsd32_charp";
+			break;
+		case 2:
+			p = "netbsd32_size_t";
+			break;
+		case 3:
+			p = "unsigned";
+			break;
+		case 4:
+			p = "const netbsd32_timespec50p_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_mq_timedreceive */
+	case 266:
+		switch(ndx) {
+		case 0:
+			p = "mqd_t";
+			break;
+		case 1:
+			p = "netbsd32_charp";
+			break;
+		case 2:
+			p = "netbsd32_size_t";
+			break;
+		case 3:
+			p = "netbsd32_uintp";
+			break;
+		case 4:
+			p = "const netbsd32_timespec50p_t";
 			break;
 		default:
 			break;
@@ -9872,6 +10168,16 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* netbsd32_sigqueueinfo */
+	case 245:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_modctl */
+	case 246:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* netbsd32__ksem_init */
 	case 247:
 		if (ndx == 0 || ndx == 1)
@@ -9921,6 +10227,56 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 256:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
+		break;
+	/* netbsd32_mq_open */
+	case 257:
+		if (ndx == 0 || ndx == 1)
+			p = "mqd_t";
+		break;
+	/* netbsd32_mq_close */
+	case 258:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_mq_unlink */
+	case 259:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_mq_getattr */
+	case 260:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_mq_setattr */
+	case 261:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_mq_notify */
+	case 262:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_mq_send */
+	case 263:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_mq_receive */
+	case 264:
+		if (ndx == 0 || ndx == 1)
+			p = "netbsd32_ssize_t";
+		break;
+	/* netbsd32_mq_timedsend */
+	case 265:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_mq_timedreceive */
+	case 266:
+		if (ndx == 0 || ndx == 1)
+			p = "netbsd32_ssize_t";
 		break;
 	/* netbsd32___posix_rename */
 	case 270:
