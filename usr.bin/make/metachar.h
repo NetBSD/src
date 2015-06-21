@@ -1,4 +1,4 @@
-/*	$NetBSD: metachar.h,v 1.3 2015/06/19 14:32:04 christos Exp $	*/
+/*	$NetBSD: metachar.h,v 1.4 2015/06/21 20:26:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -31,10 +31,8 @@
 #ifndef _METACHAR_H
 #define _METACHAR_H
 
-#include <sys/cdefs.h>
 #include <ctype.h>
 
-__BEGIN_DECLS
 extern unsigned char _metachar[];
 
 #define ismeta(c)	_metachar[(c) & 0x7f]
@@ -59,6 +57,5 @@ needshell(const char *cmd, int white)
 
 	return *cmd != '\0';
 }
-__END_DECLS
 
 #endif /* _METACHAR_H */
