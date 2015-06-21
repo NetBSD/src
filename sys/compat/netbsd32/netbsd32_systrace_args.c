@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.3 2015/06/20 19:56:24 martin Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.4 2015/06/21 08:29:52 martin Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -2991,6 +2991,28 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[1] = (intptr_t) SCARG(p, info).i32; /* netbsd32_siginfop_t */
 		uarg[2] = (intptr_t) SCARG(p, timeout).i32; /* netbsd32_timespecp_t */
 		*n_args = 3;
+		break;
+	}
+	/* netbsd32___mq_timedsend50 */
+	case 432: {
+		struct netbsd32___mq_timedsend50_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, msg_ptr).i32; /* const netbsd32_charp */
+		iarg[2] = SCARG(p, msg_len); /* netbsd32_size_t */
+		uarg[3] = SCARG(p, msg_prio); /* unsigned */
+		uarg[4] = (intptr_t) SCARG(p, abs_timeout).i32; /* const netbsd32_timespecp_t */
+		*n_args = 5;
+		break;
+	}
+	/* netbsd32___mq_timedreceive50 */
+	case 433: {
+		struct netbsd32___mq_timedreceive50_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, msg_ptr).i32; /* netbsd32_charp */
+		iarg[2] = SCARG(p, msg_len); /* netbsd32_size_t */
+		uarg[3] = (intptr_t) SCARG(p, msg_prio).i32; /* netbsd32_uintp */
+		uarg[4] = (intptr_t) SCARG(p, abs_timeout).i32; /* const netbsd32_timespecp_t */
+		*n_args = 5;
 		break;
 	}
 	/* netbsd32__lwp_park */
@@ -8404,6 +8426,50 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* netbsd32___mq_timedsend50 */
+	case 432:
+		switch(ndx) {
+		case 0:
+			p = "mqd_t";
+			break;
+		case 1:
+			p = "const netbsd32_charp";
+			break;
+		case 2:
+			p = "netbsd32_size_t";
+			break;
+		case 3:
+			p = "unsigned";
+			break;
+		case 4:
+			p = "const netbsd32_timespecp_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32___mq_timedreceive50 */
+	case 433:
+		switch(ndx) {
+		case 0:
+			p = "mqd_t";
+			break;
+		case 1:
+			p = "netbsd32_charp";
+			break;
+		case 2:
+			p = "netbsd32_size_t";
+			break;
+		case 3:
+			p = "netbsd32_uintp";
+			break;
+		case 4:
+			p = "const netbsd32_timespecp_t";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* netbsd32__lwp_park */
 	case 434:
 		switch(ndx) {
@@ -10898,6 +10964,16 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 431:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
+		break;
+	/* netbsd32___mq_timedsend50 */
+	case 432:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32___mq_timedreceive50 */
+	case 433:
+		if (ndx == 0 || ndx == 1)
+			p = "netbsd32_ssize_t";
 		break;
 	/* netbsd32__lwp_park */
 	case 434:
