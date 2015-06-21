@@ -1,5 +1,34 @@
 News for the tz database
 
+
+Release 2015e - 2015-06-13 10:56:02 -0700
+
+  Changes affecting future time stamps
+
+    Morocco will suspend DST from 2015-06-14 03:00 through 2015-07-19 02:00,
+    not 06-13 and 07-18 as we had guessed.  (Thanks to Milamber.)
+
+    Assume Cayman Islands will observe DST starting next year, using US rules.
+    Although it isn't guaranteed, it is the most likely.
+
+  Changes affecting data format
+
+    The file 'iso3166.tab' now uses UTF-8, so that its entries can better
+    spell the names of Åland Islands, Côte d'Ivoire, and Réunion.
+
+  Changes affecting code
+
+    When displaying data, tzselect converts it to the current locale's
+    encoding if the iconv command works.  (Problem reported by random832.)
+
+    tzselect no longer mishandles Dominica, fixing a bug introduced
+    in Release 2014f.  (Problem reported by Owen Leibman.)
+
+    zic -l no longer fails when compiled with -DTZDEFAULT=\"/etc/localtime\".
+    This fixes a bug introduced in Release 2014f.
+    (Problem reported by Leonardo Chiquitto.)
+
+
 Release 2015d - 2015-04-24 08:09:46 -0700
 
   Changes affecting future time stamps
