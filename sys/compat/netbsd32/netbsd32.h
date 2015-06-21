@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.105 2015/06/21 12:54:33 martin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.106 2015/06/21 14:03:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -1022,7 +1022,7 @@ int	netbsd32_kevent(struct lwp *, void *, register_t *);
 #endif
 
 /*
- * here are some macros to convert between netbsd32 and sparc64 types.
+ * here are some macros to convert between netbsd32 and native 64 bit types.
  * note that they do *NOT* act like good macros and put ()'s around all
  * arguments cuz this _breaks_ SCARG().
  */
