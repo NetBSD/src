@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.24 2013/01/13 19:53:16 mlelstv Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.25 2015/06/21 03:58:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.24 2013/01/13 19:53:16 mlelstv Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.25 2015/06/21 03:58:36 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: fsutil.c,v 1.24 2013/01/13 19:53:16 mlelstv Exp $");
 
 #include "fsutil.h"
 #include "exitvalues.h"
+
+volatile sig_atomic_t returntosingle;
 
 static const char *dev = NULL;
 static int hot = 0;
