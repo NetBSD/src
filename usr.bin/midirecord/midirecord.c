@@ -1,4 +1,4 @@
-/*	$NetBSD: midirecord.c,v 1.8 2015/03/04 13:34:49 christos Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.9 2015/06/21 06:04:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2014 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.8 2015/03/04 13:34:49 christos Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.9 2015/06/21 06:04:45 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -301,7 +301,7 @@ midi_event_local_to_output(seq_event_t e, u_char *buffer, size_t bufsize)
 {
 	size_t	size = 0;
 
-	LOG("UNHANDLED SEQ_COCAL");
+	LOG("UNHANDLED SEQ_LOCAL");
 
 	return size;
 }
