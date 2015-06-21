@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.1 2015/06/20 19:58:40 martin Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.2 2015/06/21 06:51:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.1 2015/06/20 19:58:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.2 2015/06/21 06:51:05 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 #include <sys/module.h>
 #include <sys/kobj.h>
 
