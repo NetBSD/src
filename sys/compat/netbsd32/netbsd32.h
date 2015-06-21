@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.104 2015/06/20 19:58:40 martin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.105 2015/06/21 12:54:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -157,6 +157,7 @@ typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actionsp;
 typedef netbsd32_pointer_t netbsd32_posix_spawnattrp;
 typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actions_entryp;
 typedef netbsd32_pointer_t netbsd32_pid_tp;
+typedef netbsd32_pointer_t netbsd32_psetidp_t;
 
 /*
  * now, the compatibility structures and their fake pointer types.
