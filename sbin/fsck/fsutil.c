@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.25 2015/06/21 03:58:36 dholland Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.26 2015/06/21 04:01:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,8 +31,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.25 2015/06/21 03:58:36 dholland Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.26 2015/06/21 04:01:40 dholland Exp $");
 #endif /* not lint */
+
+/*
+ * used by sbin/fsck
+ * used by sbin/fsck_ext2fs
+ * used by sbin/fsck_ffs
+ * used by sbin/fsck_lfs
+ * used by sbin/fsck_msdos
+ * used by sbin/fsck_v7fs
+ * used by sbin/fsdb
+ * used by usr.sbin/quotacheck
+ */
 
 #include <sys/param.h>
 
