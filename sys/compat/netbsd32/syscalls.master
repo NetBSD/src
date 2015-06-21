@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.105 2015/06/21 08:28:36 martin Exp $
+	$NetBSD: syscalls.master,v 1.106 2015/06/21 12:29:48 martin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -427,7 +427,8 @@
 			    netbsd32_charp bootstr); }
 209	STD		{ int|netbsd32||poll(netbsd32_pollfdp_t fds, \
 			    u_int nfds, int timeout); }
-210	UNIMPL
+210	UNIMPL		{ int|netbsd32||afssys(long id, long a1, long a2, \
+			    long a3, long a4, long a5, long a6); }
 211	UNIMPL
 212	UNIMPL
 213	UNIMPL
@@ -695,8 +696,8 @@
 			    netbsd32_sigactionp_t nsa, \
 			    netbsd32_sigactionp_t osa, \
 			    netbsd32_voidp tramp, int vers); }
-341	UNIMPL
-342	UNIMPL
+341	UNIMPL		{ int|netbsd32||pmc_get_info(int ctr, int op, void *args); }
+342	UNIMPL		{ int|netbsd32||pmc_control(int ctr, int op, void *args); }
 343	STD		{ int|netbsd32||rasctl(netbsd32_voidp addr, \
 			    netbsd32_size_t len, int op); }
 344	NOARGS		{ int|sys||kqueue(void); }
@@ -863,10 +864,12 @@
 			    netbsd32_voidp new_address, \
 			    netbsd32_size_t new_size, int flags); }
 
-412	UNIMPL
-413	UNIMPL
-414	UNIMPL
-415	UNIMPL
+412	UNIMPL		{ int|netbsd32||pset_create(psetid_t *psid); }
+413	UNIMPL		{ int|netbsd32||pset_destroy(psetid_t psid); }
+414	UNIMPL		{ int|netbsd32||pset_assign(psetid_t psid, cpuid_t cpuid, \
+			  psetid_t *opsid); }
+415	UNIMPL		{ int|netbsd32||_pset_bind(idtype_t idtype, id_t first_id, \
+			  id_t second_id, psetid_t psid, psetid_t *opsid); }
 
 416	STD 		{ int|netbsd32|50|posix_fadvise(int fd, int PAD, \
 			    netbsd32_off_t offset, netbsd32_off_t len, int advice); }
