@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.94 2015/03/24 20:01:18 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.95 2015/06/21 16:06:51 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.94 2015/03/24 20:01:18 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.95 2015/06/21 16:06:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -230,13 +230,24 @@ init_ttinfo(struct ttinfo *s, int_fast32_t gmtoff, bool isdst, int abbrind)
 static int_fast32_t
 detzcode(const char *const codep)
 {
-	int_fast32_t	result;
-	int		i;
+	int_fast32_t result;
+	int	i;
+	int_fast32_t one = 1;
+	int_fast32_t halfmaxval = one << (32 - 2);
+	int_fast32_t maxval = halfmaxval - 1 + halfmaxval;
+	int_fast32_t minval = -1 - maxval;
 
-	result = (codep[0] & 0x80) ? -1 : 0;
-	for (i = 0; i < 4; ++i)
+	result = codep[0] & 0x7f;
+	for (i = 1; i < 4; ++i)
 		result = (result << 8) | (codep[i] & 0xff);
-	return result;
+
+	if (codep[0] & 0x80) {
+	  /* Do two's-complement negation even on non-two's-complement machines.
+	     If the result would be minval - 1, return minval.  */
+	    result -= !TWOS_COMPLEMENT(int_fast32_t) && result != 0;
+	    result += minval;
+	}
+ 	return result;
 }
 
 static int_fast64_t
@@ -244,11 +255,22 @@ detzcode64(const char *const codep)
 {
 	int_fast64_t result;
 	int	i;
+	int_fast64_t one = 1;
+	int_fast64_t halfmaxval = one << (64 - 2);
+	int_fast64_t maxval = halfmaxval - 1 + halfmaxval;
+	int_fast64_t minval = -TWOS_COMPLEMENT(int_fast64_t) - maxval;
 
-	result = (codep[0] & 0x80) ? -1 : 0;
-	for (i = 0; i < 8; ++i)
+	result = codep[0] & 0x7f;
+	for (i = 1; i < 8; ++i)
 		result = (result << 8) | (codep[i] & 0xff);
-	return result;
+
+	if (codep[0] & 0x80) {
+	  /* Do two's-complement negation even on non-two's-complement machines.
+	     If the result would be minval - 1, return minval.  */
+	  result -= !TWOS_COMPLEMENT(int_fast64_t) && result != 0;
+	  result += minval;
+	}
+ 	return result;
 }
 
 const char *
