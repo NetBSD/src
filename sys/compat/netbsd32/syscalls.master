@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.106 2015/06/21 12:29:48 martin Exp $
+	$NetBSD: syscalls.master,v 1.107 2015/06/21 12:51:33 martin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -864,12 +864,13 @@
 			    netbsd32_voidp new_address, \
 			    netbsd32_size_t new_size, int flags); }
 
-412	UNIMPL		{ int|netbsd32||pset_create(psetid_t *psid); }
-413	UNIMPL		{ int|netbsd32||pset_destroy(psetid_t psid); }
-414	UNIMPL		{ int|netbsd32||pset_assign(psetid_t psid, cpuid_t cpuid, \
-			  psetid_t *opsid); }
-415	UNIMPL		{ int|netbsd32||_pset_bind(idtype_t idtype, id_t first_id, \
-			  id_t second_id, psetid_t psid, psetid_t *opsid); }
+412	STD		{ int|netbsd32||pset_create(netbsd32_psetidp_t psid); }
+413	STD		{ int|netbsd32||pset_destroy(psetid_t psid); }
+414	STD		{ int|netbsd32||pset_assign(psetid_t psid, \
+			  cpuid_t cpuid, netbsd32_psetidp_t opsid); }
+415	STD		{ int|netbsd32||_pset_bind(idtype_t idtype, \
+			  id_t first_id, id_t second_id, psetid_t psid, \
+			  netbsd32_psetidp_t opsid); }
 
 416	STD 		{ int|netbsd32|50|posix_fadvise(int fd, int PAD, \
 			    netbsd32_off_t offset, netbsd32_off_t len, int advice); }
