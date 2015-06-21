@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.104 2015/06/20 19:55:07 martin Exp $
+	$NetBSD: syscalls.master,v 1.105 2015/06/21 08:28:36 martin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -906,8 +906,15 @@
 			    const netbsd32_sigsetp_t set, \
 			    netbsd32_siginfop_t info, \
 			    netbsd32_timespecp_t timeout); }
-432	UNIMPL 		netbsd32___mq_timedsend50
-433	UNIMPL 		netbsd32___mq_timedreceive50
+432	STD		{ int|netbsd32|50|mq_timedsend(mqd_t mqdes, \
+			    const netbsd32_charp msg_ptr, \
+			    netbsd32_size_t msg_len, \
+			    unsigned msg_prio, \
+			    const netbsd32_timespecp_t abs_timeout); }
+433	STD		{ netbsd32_ssize_t|netbsd32|50|mq_timedreceive( \
+			    mqd_t mqdes, netbsd32_charp msg_ptr, \
+			    netbsd32_size_t msg_len, netbsd32_uintp msg_prio, \
+			    const netbsd32_timespecp_t abs_timeout); }
 434	COMPAT_60 	{ int|netbsd32||_lwp_park( \
 			    const netbsd32_timespecp_t ts, \
 			    lwpid_t unpark, const netbsd32_voidp hint, \
