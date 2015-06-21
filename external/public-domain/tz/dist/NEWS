@@ -1,5 +1,108 @@
 News for the tz database
 
+
+Release 2015e - 2015-06-13 10:56:02 -0700
+
+  Changes affecting future time stamps
+
+    Morocco will suspend DST from 2015-06-14 03:00 through 2015-07-19 02:00,
+    not 06-13 and 07-18 as we had guessed.  (Thanks to Milamber.)
+
+    Assume Cayman Islands will observe DST starting next year, using US rules.
+    Although it isn't guaranteed, it is the most likely.
+
+  Changes affecting data format
+
+    The file 'iso3166.tab' now uses UTF-8, so that its entries can better
+    spell the names of Åland Islands, Côte d'Ivoire, and Réunion.
+
+  Changes affecting code
+
+    When displaying data, tzselect converts it to the current locale's
+    encoding if the iconv command works.  (Problem reported by random832.)
+
+    tzselect no longer mishandles Dominica, fixing a bug introduced
+    in Release 2014f.  (Problem reported by Owen Leibman.)
+
+    zic -l no longer fails when compiled with -DTZDEFAULT=\"/etc/localtime\".
+    This fixes a bug introduced in Release 2014f.
+    (Problem reported by Leonardo Chiquitto.)
+
+
+Release 2015d - 2015-04-24 08:09:46 -0700
+
+  Changes affecting future time stamps
+
+    Egypt will not observe DST in 2015 and will consider canceling it
+    permanently.  For now, assume no DST indefinitely.
+    (Thanks to Ahmed Nazmy and Tim Parenti.)
+
+  Changes affecting past time stamps
+
+    America/Whitehorse switched from UTC-9 to UTC-8 on 1967-05-28, not
+    1966-07-01.  Also, Yukon's time zone history is documented better.
+    (Thanks to Brian Inglis and Dennis Ferguson.)
+
+  Change affecting past and future time zone abbreviations
+
+    The abbreviations for Hawaii-Aleutian standard and daylight times
+    have been changed from HAST/HADT to HST/HDT, as per US Government
+    Printing Office style.  This affects only America/Adak since 1983,
+    as America/Honolulu was already using the new style.
+
+  Changes affecting code
+
+   zic has some minor performance improvements.
+
+
+Release 2015c - 2015-04-11 08:55:55 -0700
+
+  Changes affecting future time stamps
+
+    Egypt's spring-forward transition is at 24:00 on April's last Thursday,
+    not 00:00 on April's last Friday.  2015's transition will therefore be on
+    Thursday, April 30 at 24:00, not Friday, April 24 at 00:00.  Similar fixes
+    apply to 2026, 2037, 2043, etc.  (Thanks to Steffen Thorsen.)
+
+  Changes affecting past time stamps
+
+    The following changes affect some pre-1991 Chile-related time stamps
+    in America/Santiago, Antarctica/Palmer, and Pacific/Easter.
+
+      The 1910 transition was January 10, not January 1.
+
+      The 1918 transition was September 10, not September 1.
+
+      The UTC-4 time observed from 1932 to 1942 is now considered to be
+      standard time, not year-round DST.
+
+      Santiago observed DST (UTC-3) from 1946-07-15 through 1946-08-31,
+      then reverted to standard time, then switched its time zone to
+      UTC-5 on 1947-04-01.
+
+      Assume transitions before 1968 were at 00:00, since we have no data
+      saying otherwise.
+
+      The spring 1988 transition was 1988-10-09, not 1988-10-02.
+      The fall 1990 transition was 1990-03-11, not 1990-03-18.
+
+      Assume no UTC offset change for Pacific/Easter on 1890-01-01,
+      and omit all transitions on Pacific/Easter from 1942 through 1946
+      since we have no data suggesting that they existed.
+
+    One more zone has been turned into a link, as it differed
+    from an existing zone only for older time stamps.  As usual,
+    this change affects UTC offsets in pre-1970 time stamps only.
+    The zone's old contents have been moved to the 'backzone' file.
+    The affected zone is America/Montreal.
+
+  Changes affecting commentary
+
+    Mention the TZUpdater tool.
+
+    Mention "The Time Now".  (Thanks to Brandon Ramsey.)
+
+
 Release 2015b - 2015-03-19 23:28:11 -0700
 
   Changes affecting future time stamps
