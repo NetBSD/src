@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.23 2014/12/30 01:22:09 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.24 2015/06/21 06:06:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: audio.c,v 1.23 2014/12/30 01:22:09 mrg Exp $");
+__RCSID("$NetBSD: audio.c,v 1.24 2015/06/21 06:06:01 mrg Exp $");
 #endif
 
 
@@ -137,83 +137,6 @@ audio_enc_to_val(const char *enc)
 		return (encs[i].eno);
 	else
 		return (AUDIO_ENOENT);
-}
-
-void
-decode_int(const char *arg, int *intp)
-{
-	char	*ep;
-	int	ret;
-
-	ret = (int)strtoul(arg, &ep, 10);
-
-	if (ep[0] == '\0') {
-		*intp = ret;
-		return;
-	}
-	errx(1, "argument `%s' not a valid integer", arg);
-}
-
-void
-decode_uint(const char *arg, unsigned *intp)
-{
-	char	*ep;
-	unsigned	ret;
-
-	ret = (unsigned)strtoul(arg, &ep, 10);
-
-	if (ep[0] == '\0') {
-		*intp = ret;
-		return;
-	}
-	errx(1, "argument `%s' not a valid integer", arg);
-}
-
-void
-decode_time(const char *arg, struct timeval *tvp)
-{
-	char	*s, *colon, *dot;
-	char	*copy = strdup(arg);
-	int	first;
-
-	if (copy == NULL)
-		err(1, "could not allocate a copy of %s", arg);
-
-	tvp->tv_sec = tvp->tv_usec = 0;
-	s = copy;
-	
-	/* handle [hh:]mm:ss.dd */
-	if ((colon = strchr(s, ':')) != NULL) {
-		*colon++ = '\0';
-		decode_int(s, &first);
-		tvp->tv_sec = first * 60;	/* minutes */
-		s = colon;
-
-		if ((colon = strchr(s, ':')) != NULL) {
-			*colon++ = '\0';
-			decode_int(s, &first);
-			tvp->tv_sec += first;	/* minutes and hours */
-			tvp->tv_sec *= 60;
-			s = colon;
-		}
-	}
-	if ((dot = strchr(s, '.')) != NULL) {
-		int 	i, base = 100000;
-
-		*dot++ = '\0';
-
-		for (i = 0; i < 6; i++, base /= 10) {
-			if (!dot[i])
-				break;
-			if (!isdigit((unsigned char)dot[i]))
-				errx(1, "argument `%s' is not a value time specification", arg);
-			tvp->tv_usec += base * (dot[i] - '0');
-		}
-	}
-	decode_int(s, &first);
-	tvp->tv_sec += first;
-
-	free(copy);
 }
 
 /*
