@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.40 2014/10/23 21:19:53 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.41 2015/06/21 16:06:51 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.40 2014/10/23 21:19:53 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.41 2015/06/21 16:06:51 christos Exp $");
 #endif /* !defined lint */
 
 /*
@@ -261,13 +261,15 @@ extern char *	optarg;
 extern int	optind;
 
 /* The minimum and maximum finite time values.  */
+enum { atime_shift = CHAR_BIT * sizeof (time_t) - 2 };
 static time_t	absolute_min_time =
   ((time_t) -1 < 0
-    ? (time_t) -1 << (CHAR_BIT * sizeof (time_t) - 1)
+    ? (- ((time_t) ~ (time_t) 0 < 0)
+       - (((time_t) 1 << atime_shift) - 1 + ((time_t) 1 << atime_shift)))
     : 0);
 static time_t	absolute_max_time =
   ((time_t) -1 < 0
-    ? - (~ 0 < 0) - ((time_t) -1 << (CHAR_BIT * sizeof (time_t) - 1))
+    ? (((time_t) 1 << atime_shift) - 1 + ((time_t) 1 << atime_shift))
    : -1);
 static size_t	longest;
 static char *	progname;
