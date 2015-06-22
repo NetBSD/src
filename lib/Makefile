@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.223 2015/06/22 00:06:38 matt Exp $
+#	$NetBSD: Makefile,v 1.224 2015/06/22 06:03:20 matt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -64,6 +64,13 @@ SUBDIR+=	../external/bsd/sljit/lib
 SUBDIR+=	libbpfjit
 .endif
 
+.if (${MKZFS} != "no")
+SUBDIR+=        ../external/cddl/osnet/lib/libavl
+SUBDIR+=        ../external/cddl/osnet/lib/libnvpair
+SUBDIR+=        ../external/cddl/osnet/lib/libumem
+SUBDIR+=        ../external/cddl/osnet/lib/libuutil
+.endif
+
 SUBDIR+=	../external/mit/expat/lib
 
 SUBDIR+=	../external/public-domain/sqlite/lib
@@ -127,6 +134,11 @@ SUBDIR+=	../external/bsd/file/lib	# depends on libz
 
 .if (${MKISCSI} != "no")
 SUBDIR+=	../external/bsd/iscsi/lib	# depends on libpthread
+.endif
+
+.if (${MKZFS} != "no")
+SUBDIR+=        ../external/cddl/osnet/lib/libzfs
+SUBDIR+=        ../external/cddl/osnet/lib/libzpool
 .endif
 
 .if (${MKLVM} != "no")
