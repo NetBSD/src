@@ -1,4 +1,4 @@
-/*	$NetBSD: t_db_hash_seq.c,v 1.1 2015/06/22 19:06:05 christos Exp $	*/
+/*	$NetBSD: t_db_hash_seq.c,v 1.2 2015/06/22 22:35:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_db_hash_seq.c,v 1.1 2015/06/22 19:06:05 christos Exp $");
+__RCSID("$NetBSD: t_db_hash_seq.c,v 1.2 2015/06/22 22:35:51 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -248,7 +248,7 @@ testdb(int skip)
 	struct conf c;
 	struct dbinfo d;
 
-	db = state_open("foo", O_RDWR|O_CREAT|O_TRUNC, 0600);
+	db = state_open(NULL, O_RDWR|O_CREAT|O_TRUNC, 0600);
 	if (db == NULL)
 		DO_ERR("%s: cannot open `%s'", __func__, "foo");
 
@@ -267,7 +267,7 @@ testdb(int skip)
 		if (flag[c.c_port])
 			DO_WARNX("Already visited %d", c.c_port);
 		flag[c.c_port] = 1;
-		if (c.c_port % skip == 0)
+		if (skip == 0 || c.c_port % skip != 0)
 			continue;
 		state_del(db, &c);
 	}
@@ -287,21 +287,56 @@ main(int argc, char *argv[])
 }
 #else
 
-ATF_TC(test_hash_seq6);
-ATF_TC_HEAD(test_hash_seq6, tc)
+ATF_TC(test_hash_del_none);
+ATF_TC_HEAD(test_hash_del_none, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Check sequential scan of hash tables with a skip factor of 6");
+	atf_tc_set_md_var(tc, "descr", "Check sequential scan of hash tables deleting none");
 }
 
-ATF_TC_BODY(test_hash_seq6, tc)
+ATF_TC_BODY(test_hash_del_none, tc)
 {
-	testdb(6);
+	testdb(0);
+}
+
+ATF_TC(test_hash_del_all);
+ATF_TC_HEAD(test_hash_del_all, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Check sequential scan of hash tables deleting all");
+}
+
+ATF_TC_BODY(test_hash_del_all, tc)
+{
+	testdb(1);
+}
+
+ATF_TC(test_hash_del_alt);
+ATF_TC_HEAD(test_hash_del_alt, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Check sequential scan of hash tables alternating deletets");
+}
+
+ATF_TC_BODY(test_hash_del_alt, tc)
+{
+	testdb(2);
+}
+
+ATF_TC(test_hash_del_every_7);
+ATF_TC_HEAD(test_hash_del_every_7, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Check sequential scan of hash tables deleting every 7 elements");
+}
+
+ATF_TC_BODY(test_hash_del_every_7, tc)
+{
+	testdb(7);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-	debug++;
-	ATF_TP_ADD_TC(tp, test_hash_seq6);
+	ATF_TP_ADD_TC(tp, test_hash_del_none);
+	ATF_TP_ADD_TC(tp, test_hash_del_all);
+	ATF_TP_ADD_TC(tp, test_hash_del_alt);
+	ATF_TP_ADD_TC(tp, test_hash_del_every_7);
 
 	return 0;
 }
