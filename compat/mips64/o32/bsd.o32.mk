@@ -1,11 +1,11 @@
-#	$NetBSD: bsd.o32.mk,v 1.11 2015/06/19 18:17:26 matt Exp $
+#	$NetBSD: bsd.o32.mk,v 1.12 2015/06/22 00:09:39 matt Exp $
 
-.ifndef MLIBDIR
 .if ${MACHINE_ARCH} == "mips64eb"
 LD+=		-m elf32btsmip
 .else
 LD+=		-m elf32ltsmip
 .endif
+.ifndef MLIBDIR
 MLIBDIR=	o32
 
 LIBGCC_MACHINE_ARCH=    ${MACHINE_ARCH:S/64//}
@@ -16,6 +16,6 @@ CPUFLAGS+=	-mabi=32 -march=mips3
 LDADD+=		-mabi=32 -march=mips3
 LDFLAGS+=	-mabi=32 -march=mips3
 MKDEPFLAGS+=	-mabi=32 -march=mips3
+.endif
 
 .include "${.PARSEDIR}/../../Makefile.compat"
-.endif
