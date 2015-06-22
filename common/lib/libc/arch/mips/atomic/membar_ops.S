@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.6 2015/06/01 23:16:54 matt Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.7 2015/06/22 06:06:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "atomic_op_asm.h"
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) && !defined(_RUMPKERNEL)
 
 #ifdef _KERNEL_OPT
 #include "opt_cputype.h"
@@ -39,8 +39,7 @@
 #include "opt_multiprocessor.h"
 #endif
 
-
-#include <machine/cpu.h>
+#include "assym.h"
 
 #if (MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR)) || !defined(__mips_o32)
 #define	SYNC		sync
