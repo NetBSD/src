@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.117 2015/06/22 06:02:02 matt Exp $
+# $NetBSD: mi,v 1.118 2015/06/22 19:10:13 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1820,6 +1820,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_unlinkat.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_utimensat.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/db/t_db_hash_seq.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/execve/t_execve.debug	tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_fileactions.debug	tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_spawn.debug		tests-kernel-tests	debug,atf,compattestfile
