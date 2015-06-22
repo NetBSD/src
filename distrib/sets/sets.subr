@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.165 2015/06/22 05:59:59 matt Exp $
+#	$NetBSD: sets.subr,v 1.166 2015/06/22 07:07:10 matt Exp $
 #
 
 #
@@ -179,7 +179,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.165 2015/06/22 05:59:59 matt Exp $
+# 	# $NetBSD: sets.subr,v 1.166 2015/06/22 07:07:10 matt Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -309,23 +309,27 @@ list_set_files()
 				sub(/^mk/, "", kw)
 				sub(/^have_/, "", kw)
 				sub(/^target_endianness/, "endian", kw)
-				if (kw == "compat" && ENVIRON[nv] != "no") {
-					doingcompat = 1;
-					split("'"${COMPATARCHDIRS}"'", compatarchdirs, ",");
+				if (nv != "HAVE_GCC" && nv != "HAVE_GDB" && ENVIRON[nv] != "no" && nv != "COMPATDIRS" && nv != "MODULEARCHDIRS")
 					wanted[kw] = 1 
-					compatdirkeywords["compatdir"] = 1
-					compatfilekeywords["compatfile"] = 1
-				} else if (kw == "compattests" && ENVIRON[nv] != "no") {
+			}
+
+			if (wanted["compat"]) {
+				doingcompat = 1;
+				split("'"${COMPATARCHDIRS}"'", compatarchdirs, ",");
+				compatdirkeywords["compatdir"] = 1
+				compatfilekeywords["compatfile"] = 1
+
+				if (wanted["compattests"]) {
 					doingcompattests = 1;
 					compatdirkeywords["compattestdir"] = 1
 					compatfilekeywords["compattestfile"] = 1
-				} else if (kw == "kmod" && ENVIRON[nv] != "no") {
-					split("'"${KMODARCHDIRS}"'", kmodarchdirs, ",");
-					wanted[kw] = 1
-					kmodpat = "./stand/" ENVIRON["MACHINE"]
-					l_kmodpat = length(kmodpat)
-				} else if (nv != "HAVE_GCC" && nv != "HAVE_GDB" && ENVIRON[nv] != "no" && nv != "COMPATDIRS" && nv != "MODULEARCHDIRS")
-					wanted[kw] = 1 
+				}
+			}
+
+			if (wanted["kmod"] && wanted["compatmodules"]) {
+				split("'"${KMODARCHDIRS}"'", kmodarchdirs, ",");
+				kmodpat = "./stand/" ENVIRON["MACHINE"]
+				l_kmodpat = length(kmodpat)
 			}
 
 			if ("'"${TOOLCHAIN_MISSING}"'" != "yes") {
