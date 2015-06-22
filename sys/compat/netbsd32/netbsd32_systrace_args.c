@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.5 2015/06/21 12:52:40 martin Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.6 2015/06/22 10:35:00 mrg Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1130,6 +1130,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[1] = (intptr_t) SCARG(p, asa).i32; /* netbsd32_voidp */
 		uarg[2] = (intptr_t) SCARG(p, alen).i32; /* netbsd32_intp */
 		*n_args = 3;
+		break;
+	}
+	/* netbsd32_nfssvc */
+	case 155: {
+		struct netbsd32_nfssvc_args *p = params;
+		iarg[0] = SCARG(p, flag); /* int */
+		uarg[1] = (intptr_t) SCARG(p, argp).i32; /* netbsd32_voidp */
+		*n_args = 2;
 		break;
 	}
 	/* netbsd32_ogetdirentries */
@@ -5278,6 +5286,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 2:
 			p = "netbsd32_intp";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_nfssvc */
+	case 155:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "netbsd32_voidp";
 			break;
 		default:
 			break;
@@ -9985,6 +10006,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 149:
 	/* netbsd32_ogetsockname */
 	case 150:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_nfssvc */
+	case 155:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

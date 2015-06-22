@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.114 2015/06/21 12:52:40 martin Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.115 2015/06/22 10:35:00 mrg Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.114 2015/06/21 12:52:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.115 2015/06/22 10:35:00 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -182,7 +182,7 @@ const char *const netbsd32_syscallnames[] = {
 	/* 152 */	"#152 (unimplemented)",
 	/* 153 */	"#153 (unimplemented)",
 	/* 154 */	"#154 (unimplemented)",
-	/* 155 */	"#155 (unimplemented netbsd32_nfssvc)",
+	/* 155 */	"netbsd32_nfssvc",
 	/* 156 */	"compat_43_netbsd32_ogetdirentries",
 	/* 157 */	"compat_20_netbsd32_statfs",
 	/* 158 */	"compat_20_netbsd32_fstatfs",
