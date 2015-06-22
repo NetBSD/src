@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.36 2014/08/10 16:44:37 tls Exp $
+# $NetBSD: Makefile,v 1.37 2015/06/22 00:05:23 matt Exp $
 
 NOMAN=		# defined
 
@@ -27,7 +27,7 @@ PROGS+=		h_ps_strings2
 LDADD.t_mqueue+= -lrt
 
 
-.if (${MKRUMP} != "no")
+.if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_SUBDIRS+=	tty
 
 TESTS_C+=	t_extattrctl
