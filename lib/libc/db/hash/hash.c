@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.33 2013/12/01 00:22:48 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.34 2015/06/22 18:50:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.33 2013/12/01 00:22:48 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.34 2015/06/22 18:50:06 christos Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -720,6 +720,7 @@ hash_seq(const DB *dbp, DBT *key, DBT *data, uint32_t flag)
 		hashp->cpage = NULL;
 	}
 
+next_bucket:
 	for (bp = NULL; !bp || !bp[0]; ) {
 		if (!(bufp = hashp->cpage)) {
 			for (bucket = hashp->cbucket;
@@ -738,8 +739,19 @@ hash_seq(const DB *dbp, DBT *key, DBT *data, uint32_t flag)
 				hashp->cbucket = -1;
 				return (ABNORMAL);
 			}
-		} else
+		} else {
 			bp = (uint16_t *)(void *)hashp->cpage->page;
+			if (flag == R_NEXT || flag == 0) {
+				hashp->cndx += 2;
+				if (hashp->cndx > bp[0]) {
+					hashp->cpage = NULL;
+					hashp->cbucket++;
+					hashp->cndx = 1;
+					goto next_bucket;
+				}
+			}
+		}
+
 
 		_DIAGASSERT(bp != NULL);
 		_DIAGASSERT(bufp != NULL);
@@ -768,13 +780,6 @@ hash_seq(const DB *dbp, DBT *key, DBT *data, uint32_t flag)
 		key->size = (ndx > 1 ? bp[ndx - 1] : hashp->BSIZE) - bp[ndx];
 		data->data = (uint8_t *)hashp->cpage->page + bp[ndx + 1];
 		data->size = bp[ndx] - bp[ndx + 1];
-		ndx += 2;
-		if (ndx > bp[0]) {
-			hashp->cpage = NULL;
-			hashp->cbucket++;
-			hashp->cndx = 1;
-		} else
-			hashp->cndx = ndx;
 	}
 	return (SUCCESS);
 }
