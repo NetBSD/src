@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1103 2015/05/06 15:57:07 hannken Exp $
+# $NetBSD: mi,v 1.1104 2015/06/22 06:02:01 matt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -124,10 +124,10 @@
 ./etc/systrace					base-obsolete		obsolete
 ./etc/uucp					base-obsolete		obsolete
 ./etc/zfs					base-zfs-root
-./lib						base-sys-root
+./lib						base-sys-root		compatdir
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
-./lib/npf					base-sys-root
+./lib/npf					base-sys-root		compatfile
 ./libdata					base-sys-root
 ./libdata/firmware				base-firmware-root
 ./libdata/firmware/if_athn			base-firmware-root
@@ -1184,15 +1184,15 @@
 ./usr/include/ufs/ufs				base-c-usr
 ./usr/include/uvm				base-c-usr
 ./usr/include/vm				base-obsolete		obsolete
-./usr/lib					base-sys-usr
-./usr/lib/i18n					base-i18n-root
+./usr/lib					base-sys-usr		compatdir
+./usr/lib/i18n					base-i18n-root		compatfile
 ./usr/lib/libntp.so				base-obsolete		obsolete
 ./usr/lib/libssp.so				base-obsolete		obsolete
 ./usr/lib/libusb.a				base-obsolete		obsolete
 ./usr/lib/libusb.so				base-obsolete		obsolete
-./usr/lib/lua					base-sys-usr
+./usr/lib/lua					base-sys-usr		compatfile
 ./usr/lib/lua/5.1				base-obsolete		obsolete
-./usr/lib/lua/5.3				base-sys-usr
+./usr/lib/lua/5.3				base-sys-usr		compatfile
 ./usr/lib/npf					base-obsolete		obsolete
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
@@ -1223,19 +1223,19 @@
 ./usr/lib/runemodule/libUTF8.so			base-obsolete		obsolete
 ./usr/lib/runemodule/libUTF8.so.3		base-obsolete		obsolete
 ./usr/lib/runemodule/libUTF8.so.3.0		base-obsolete		obsolete
-./usr/lib/security				base-sys-usr
+./usr/lib/security				base-sys-usr		compatfile
 ./usr/libdata					base-sys-usr
 ./usr/libdata/debug				base-sys-usr
 ./usr/libdata/debug/bin				base-sys-usr
-./usr/libdata/debug/lib				base-sys-usr
-./usr/libdata/debug/lib/npf			base-sys-usr
+./usr/libdata/debug/lib				base-sys-usr		compatdir
+./usr/libdata/debug/lib/npf			base-sys-usr		compatfile
 ./usr/libdata/debug/libexec			base-sys-usr
 ./usr/libdata/debug/sbin			base-sys-usr
 ./usr/libdata/debug/usr				base-sys-usr
 ./usr/libdata/debug/usr/bin			base-sys-usr
 ./usr/libdata/debug/usr/games			base-sys-usr
-./usr/libdata/debug/usr/lib			base-sys-usr
-./usr/libdata/debug/usr/lib/i18n		base-i18n-root
+./usr/libdata/debug/usr/lib			base-sys-usr		compatdir
+./usr/libdata/debug/usr/lib/i18n		base-i18n-root		compatfile
 ./usr/libdata/debug/usr/lib/npf			base-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
