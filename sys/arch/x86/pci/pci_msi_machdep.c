@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.5 2015/05/15 08:36:41 knakahara Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.6 2015/06/22 03:57:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5 2015/05/15 08:36:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.6 2015/06/22 03:57:01 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -236,8 +236,7 @@ pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes,
 	pci_intr_handle_t *vectors;
 	int error, i;
 
-	if (((pa->pa_flags & PCI_FLAGS_MSI_OKAY) == 0)
-	    || ((pa->pa_flags & PCI_FLAGS_MSIX_OKAY) == 0)) {
+	if ((pa->pa_flags & PCI_FLAGS_MSIX_OKAY) == 0) {
 		DPRINTF(("PCI host bridge does not support MSI-X.\n"));
 		return ENODEV;
 	}
