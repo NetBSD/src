@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.105 2015/03/08 01:17:42 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.106 2015/06/22 16:35:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.105 2015/03/08 01:17:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.106 2015/06/22 16:35:13 matt Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.105 2015/03/08 01:17:42 christos E
 #include <uvm/uvm_extern.h>
 
 struct vm_map *module_map;
-char	*module_machine;
+const char *module_machine;
 char	module_base[MODULE_BASE_SIZE];
 
 struct modlist        module_list = TAILQ_HEAD_INITIALIZER(module_list);
