@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.41 2015/06/21 16:06:51 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.42 2015/06/22 17:43:23 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -501,9 +501,11 @@ time_t time2posix_z(timezone_t __restrict, time_t) ATTRIBUTE_PURE;
 #define MINVAL(t, b)						\
   ((t) (TYPE_SIGNED(t) ? - TWOS_COMPLEMENT(t) - MAXVAL(t, b) : 0))
 
+#ifdef LOCALTIME_IMPLEMENTATION
 /* The minimum and maximum finite time values.  This assumes no padding.  */
 static time_t const time_t_min = MINVAL(time_t, TYPE_BIT(time_t));
 static time_t const time_t_max = MAXVAL(time_t, TYPE_BIT(time_t));
+#endif
 
 #ifndef INT_STRLEN_MAXIMUM
 /*
