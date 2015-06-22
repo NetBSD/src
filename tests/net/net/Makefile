@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2015/05/20 17:39:04 christos Exp $
+# $NetBSD: Makefile,v 1.11 2015/06/22 00:05:23 matt Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ TESTS_C=	t_unix
 TESTS_C+=	t_tcp
 TESTS_C+=	t_udp
 TESTS_C+=	t_pktinfo
-.if (${MKRUMP} != "no")
+.if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_C+=	t_raw
 TESTS_SH=	t_forwarding
 .endif
