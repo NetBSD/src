@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.21 2015/06/22 14:17:04 matt Exp $
+# $NetBSD: mkvars.mk,v 1.22 2015/06/22 19:04:21 matt Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -32,9 +32,7 @@ MKEXTRAVARS= \
 	MAKEVERBOSE \
 	TARGET_ENDIANNESS \
 	EABI \
-	ARCH64 \
-	COMPATARCHDIRS \
-	KMODARCHDIRS
+	ARCH64
 
 #####
 
@@ -98,9 +96,13 @@ mkextravars: .PHONY
 .endfor
 .if ${MKCOMPAT} != "no"
 	@echo COMPATARCHDIRS=${COMPATARCHDIRS} | ${TOOL_SED} -e's/ /,/'
+.else
+	@echo COMPATARCHDIRS=
 .endif
 .if ${MKKMOD} != "no" && ${MKCOMPATMODULES} != "no"
 	@echo KMODARCHDIRS=${KMODARCHDIRS} | ${TOOL_SED} -e's/ /,/'
+.else
+	@echo KMODARCHDIRS=
 .endif
 
 mksolaris: .PHONY
