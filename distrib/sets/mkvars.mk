@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.20 2015/06/22 08:51:42 martin Exp $
+# $NetBSD: mkvars.mk,v 1.21 2015/06/22 14:17:04 matt Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -53,7 +53,7 @@ ARCHDIR_SUBDIR:=
 COMPATARCHDIRS:=${ARCHDIR_SUBDIR:T}
 .endif
 
-.if ${MKKMOD} != "no"
+.if ${MKKMOD} != "no" && ${MKCOMPATMODULES} != "no"
 ARCHDIR_SUBDIR:=
 .include "${NETBSDSRCDIR}/sys/modules/arch/archdirs.mk"
 KMODARCHDIRS:=${ARCHDIR_SUBDIR:T}
@@ -99,7 +99,7 @@ mkextravars: .PHONY
 .if ${MKCOMPAT} != "no"
 	@echo COMPATARCHDIRS=${COMPATARCHDIRS} | ${TOOL_SED} -e's/ /,/'
 .endif
-.if ${MKKMOD} != "no"
+.if ${MKKMOD} != "no" && ${MKCOMPATMODULES} != "no"
 	@echo KMODARCHDIRS=${KMODARCHDIRS} | ${TOOL_SED} -e's/ /,/'
 .endif
 
