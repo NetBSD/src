@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1965 2015/05/30 18:00:09 joerg Exp $
+#	$NetBSD: mi,v 1.1966 2015/06/22 06:02:02 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3475,525 +3475,525 @@
 ./usr/include/wordexp.h				comp-c-include
 ./usr/include/zconf.h				comp-c-include
 ./usr/include/zlib.h				comp-c-include
-./usr/lib/crt0.o				comp-c-lib
-./usr/lib/gcrt0.o				comp-c-lib
-./usr/lib/i18n/libBIG5.a			comp-i18n-lib
-./usr/lib/i18n/libDECHanyu.a			comp-i18n-lib
-./usr/lib/i18n/libEUC.a				comp-i18n-lib
-./usr/lib/i18n/libEUCTW.a			comp-i18n-lib
-./usr/lib/i18n/libGBK2K.a			comp-i18n-lib
-./usr/lib/i18n/libHZ.a				comp-i18n-lib
-./usr/lib/i18n/libISO2022.a			comp-i18n-lib
-./usr/lib/i18n/libJOHAB.a			comp-i18n-lib
-./usr/lib/i18n/libMSKanji.a			comp-i18n-lib
-./usr/lib/i18n/libUES.a				comp-i18n-lib
-./usr/lib/i18n/libUTF1632.a			comp-i18n-lib
-./usr/lib/i18n/libUTF7.a			comp-i18n-lib
-./usr/lib/i18n/libUTF8.a			comp-i18n-lib
-./usr/lib/i18n/libVIQR.a			comp-i18n-lib
-./usr/lib/i18n/libZW.a				comp-i18n-lib
-./usr/lib/i18n/libiconv_none.a			comp-i18n-lib
-./usr/lib/i18n/libiconv_std.a			comp-i18n-lib
-./usr/lib/i18n/libmapper_646.a			comp-i18n-lib
-./usr/lib/i18n/libmapper_none.a			comp-i18n-lib
-./usr/lib/i18n/libmapper_parallel.a		comp-i18n-lib
-./usr/lib/i18n/libmapper_serial.a		comp-i18n-lib
-./usr/lib/i18n/libmapper_std.a			comp-i18n-lib
-./usr/lib/i18n/libmapper_zone.a			comp-i18n-lib
+./usr/lib/crt0.o				comp-c-lib		compatfile
+./usr/lib/gcrt0.o				comp-c-lib		compatfile
+./usr/lib/i18n/libBIG5.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libDECHanyu.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libEUC.a				comp-i18n-lib		compatfile
+./usr/lib/i18n/libEUCTW.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libGBK2K.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libHZ.a				comp-i18n-lib		compatfile
+./usr/lib/i18n/libISO2022.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libJOHAB.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libMSKanji.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libUES.a				comp-i18n-lib		compatfile
+./usr/lib/i18n/libUTF1632.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libUTF7.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libUTF8.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libVIQR.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libZW.a				comp-i18n-lib		compatfile
+./usr/lib/i18n/libiconv_none.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libiconv_std.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libmapper_646.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libmapper_none.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libmapper_parallel.a		comp-i18n-lib		compatfile
+./usr/lib/i18n/libmapper_serial.a		comp-i18n-lib		compatfile
+./usr/lib/i18n/libmapper_std.a			comp-i18n-lib		compatfile
+./usr/lib/i18n/libmapper_zone.a			comp-i18n-lib		compatfile
 ./usr/lib/libamu.a				comp-obsolete		obsolete
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
-./usr/lib/libarchive.a				comp-c-lib
-./usr/lib/libarchive_p.a			comp-c-proflib		profile
-./usr/lib/libasan.a				comp-c-lib		gcc=48
-./usr/lib/libasan_p.a				comp-c-proflib		profile,gcc=48
-./usr/lib/libasn1.a				comp-krb5-lib		kerberos
-./usr/lib/libasn1_p.a				comp-krb5-proflib	profile,kerberos
-./usr/lib/libatf-c++.a				comp-atf-lib		atf
-./usr/lib/libatf-c++_p.a			comp-atf-lib		atf,profile
-./usr/lib/libatf-c.a				comp-atf-lib		atf
-./usr/lib/libatf-c_p.a				comp-atf-lib		atf,profile
+./usr/lib/libarchive.a				comp-c-lib		compatfile
+./usr/lib/libarchive_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libasan.a				comp-c-lib		compatfile,gcc=48
+./usr/lib/libasan_p.a				comp-c-proflib		compatfile,gcc=48,profile
+./usr/lib/libasn1.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libasn1_p.a				comp-krb5-proflib	compatfile,kerberos,profile
+./usr/lib/libatf-c++.a				comp-atf-lib		compatfile,atf
+./usr/lib/libatf-c++_p.a			comp-atf-lib		compatfile,atf,profile
+./usr/lib/libatf-c.a				comp-atf-lib		compatfile,atf
+./usr/lib/libatf-c_p.a				comp-atf-lib		compatfile,atf,profile
 ./usr/lib/libatf.a				comp-obsolete		obsolete
 ./usr/lib/libatf_p.a				comp-obsolete		obsolete
-./usr/lib/libavl.a				comp-zfs-lib		zfs
-./usr/lib/libavl_p.a				comp-zfs-proflib	profile,zfs
+./usr/lib/libavl.a				comp-zfs-lib		compatfile,zfs
+./usr/lib/libavl_p.a				comp-zfs-proflib	compatfile,profile,zfs
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
-./usr/lib/libbind9.a				comp-bind-lib
-./usr/lib/libbind9_p.a				comp-bind-proflib	profile
-./usr/lib/libblacklist.a			comp-c-lib
-./usr/lib/libblacklist_p.a			comp-c-proflib		profile
-./usr/lib/libbluetooth.a			comp-c-lib
-./usr/lib/libbluetooth_p.a			comp-c-proflib		profile
-./usr/lib/libbsdmalloc.a			comp-c-lib
-./usr/lib/libbsdmalloc_p.a			comp-c-proflib		profile
-./usr/lib/libbz2.a				comp-c-lib
-./usr/lib/libbz2_p.a				comp-c-proflib		profile
-./usr/lib/libc++.a				comp-c-lib		libcxx
-./usr/lib/libc++_p.a				comp-c-proflib		libcxx,profile
-./usr/lib/libc.a				comp-c-lib
-./usr/lib/libc_p.a				comp-c-proflib		profile
+./usr/lib/libbind9.a				comp-bind-lib		compatfile
+./usr/lib/libbind9_p.a				comp-bind-proflib	compatfile,profile
+./usr/lib/libblacklist.a			comp-c-lib		compatfile
+./usr/lib/libblacklist_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libbluetooth.a			comp-c-lib		compatfile
+./usr/lib/libbluetooth_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libbsdmalloc.a			comp-c-lib		compatfile
+./usr/lib/libbsdmalloc_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libbz2.a				comp-c-lib		compatfile
+./usr/lib/libbz2_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libc++.a				comp-c-lib		compatfile,libcxx
+./usr/lib/libc++_p.a				comp-c-proflib		compatfile,libcxx,compatfile,profile
+./usr/lib/libc.a				comp-c-lib		compatfile
+./usr/lib/libc_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libcdk.a				comp-obsolete		obsolete
 ./usr/lib/libcdk_p.a				comp-obsolete		obsolete
-./usr/lib/libcom_err.a				comp-krb5-lib		kerberos
-./usr/lib/libcom_err_p.a			comp-krb5-proflib	profile,kerberos
-./usr/lib/libcompat.a				comp-c-lib
-./usr/lib/libcompat_p.a				comp-c-proflib		profile
-./usr/lib/libcrypt.a				comp-c-lib
-./usr/lib/libcrypt_p.a				comp-c-proflib		profile
-./usr/lib/libcrypto.a				comp-c-lib		crypto
+./usr/lib/libcom_err.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libcom_err_p.a			comp-krb5-proflib	compatfile,kerberos,profile
+./usr/lib/libcompat.a				comp-c-lib		compatfile
+./usr/lib/libcompat_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libcrypt.a				comp-c-lib		compatfile
+./usr/lib/libcrypt_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libcrypto.a				comp-c-lib		compatfile,crypto
 ./usr/lib/libcrypto_idea.a			comp-obsolete		obsolete
 ./usr/lib/libcrypto_idea_p.a			comp-obsolete		obsolete
 ./usr/lib/libcrypto_mdc2.a			comp-obsolete		obsolete
 ./usr/lib/libcrypto_mdc2_p.a			comp-obsolete		obsolete
-./usr/lib/libcrypto_p.a				comp-c-proflib		profile,crypto
-./usr/lib/libcrypto_rc5.a			comp-c-lib		crypto_rc5
-./usr/lib/libcrypto_rc5_p.a			comp-c-proflib		profile,crypto_rc5
-./usr/lib/libctf.a				comp-c-lib		dtrace
-./usr/lib/libctf_p.a				comp-c-proflib		dtrace,profile
-./usr/lib/libcurses.a				comp-c-lib
-./usr/lib/libcurses_p.a				comp-c-proflib		profile
-./usr/lib/libdes.a				comp-c-lib		crypto
-./usr/lib/libdes_p.a				comp-c-proflib		profile,crypto
-./usr/lib/libdevmapper.a			comp-lvm-lib		lvm
-./usr/lib/libdevmapper_p.a			comp-lvm-proflib	profile,lvm
-./usr/lib/libdm.a				comp-c-lib
-./usr/lib/libdm_p.a				comp-c-proflib		profile
-./usr/lib/libdns.a				comp-bind-lib
-./usr/lib/libdns_p.a				comp-bind-proflib	profile
-./usr/lib/libdns_sd.a				comp-mdns-lib		mdns
-./usr/lib/libdns_sd_p.a				comp-mdns-proflib	profile,mdns
-./usr/lib/libdtrace.a				comp-c-lib		dtrace
-./usr/lib/libdtrace_p.a				comp-c-proflib		dtrace,profile
-./usr/lib/libdwarf.a				comp-c-lib
-./usr/lib/libdwarf_p.a				comp-c-proflib		profile
-./usr/lib/libedit.a				comp-c-lib
-./usr/lib/libedit_p.a				comp-c-proflib		profile
-./usr/lib/libelf.a				comp-c-lib
-./usr/lib/libelf_p.a				comp-c-proflib		profile
-./usr/lib/libevent.a				comp-c-lib
-./usr/lib/libevent_openssl.a			comp-c-lib		crypto
-./usr/lib/libevent_openssl_p.a			comp-c-proflib		profile,crypto
-./usr/lib/libevent_p.a				comp-c-proflib		profile
-./usr/lib/libevent_pthreads.a			comp-c-lib
-./usr/lib/libevent_pthreads_p.a			comp-c-proflib		profile
-./usr/lib/libexecinfo.a				comp-c-lib
-./usr/lib/libexecinfo_p.a			comp-c-proflib		profile
-./usr/lib/libexpat.a				comp-c-lib
-./usr/lib/libexpat_p.a				comp-c-proflib		profile
-./usr/lib/libfetch.a				comp-c-lib
-./usr/lib/libfetch_p.a				comp-c-proflib		profile
-./usr/lib/libfl.a				comp-c-lib
-./usr/lib/libfl_p.a				comp-c-proflib		profile
-./usr/lib/libform.a				comp-c-lib
-./usr/lib/libform_p.a				comp-c-proflib		profile
-./usr/lib/libfrtbegin.a				comp-c-lib		gcc=3
-./usr/lib/libfrtbegin.a				comp-obsolete		gcc=4,obsolete
+./usr/lib/libcrypto_p.a				comp-c-proflib		compatfile,crypto,profile
+./usr/lib/libcrypto_rc5.a			comp-c-lib		compatfile,crypto_rc5
+./usr/lib/libcrypto_rc5_p.a			comp-c-proflib		compatfile,crypto_rc5,profile
+./usr/lib/libctf.a				comp-c-lib		compatfile,dtrace
+./usr/lib/libctf_p.a				comp-c-proflib		compatfile,dtrace,profile
+./usr/lib/libcurses.a				comp-c-lib		compatfile
+./usr/lib/libcurses_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libdes.a				comp-c-lib		compatfile,crypto
+./usr/lib/libdes_p.a				comp-c-proflib		compatfile,crypto,profile
+./usr/lib/libdevmapper.a			comp-lvm-lib		compatfile,lvm
+./usr/lib/libdevmapper_p.a			comp-lvm-proflib	compatfile,lvm,profile
+./usr/lib/libdm.a				comp-c-lib		compatfile
+./usr/lib/libdm_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libdns.a				comp-bind-lib		compatfile
+./usr/lib/libdns_p.a				comp-bind-proflib	compatfile,profile
+./usr/lib/libdns_sd.a				comp-mdns-lib		compatfile,mdns
+./usr/lib/libdns_sd_p.a				comp-mdns-proflib	compatfile,mdns,profile
+./usr/lib/libdtrace.a				comp-c-lib		compatfile,dtrace
+./usr/lib/libdtrace_p.a				comp-c-proflib		compatfile,dtrace,profile
+./usr/lib/libdwarf.a				comp-c-lib		compatfile
+./usr/lib/libdwarf_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libedit.a				comp-c-lib		compatfile
+./usr/lib/libedit_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libelf.a				comp-c-lib		compatfile
+./usr/lib/libelf_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libevent.a				comp-c-lib		compatfile
+./usr/lib/libevent_openssl.a			comp-c-lib		compatfile,crypto
+./usr/lib/libevent_openssl_p.a			comp-c-proflib		compatfile,crypto,profile
+./usr/lib/libevent_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libevent_pthreads.a			comp-c-lib		compatfile
+./usr/lib/libevent_pthreads_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libexecinfo.a				comp-c-lib		compatfile
+./usr/lib/libexecinfo_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libexpat.a				comp-c-lib		compatfile
+./usr/lib/libexpat_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libfetch.a				comp-c-lib		compatfile
+./usr/lib/libfetch_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libfl.a				comp-c-lib		compatfile
+./usr/lib/libfl_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libform.a				comp-c-lib		compatfile
+./usr/lib/libform_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libfrtbegin.a				comp-c-lib		compatfile,gcc=3
+./usr/lib/libfrtbegin.a				comp-obsolete		compatfile,gcc=4,obsolete
 ./usr/lib/libg++_p.a				comp-obsolete		obsolete
 ./usr/lib/libg++a				comp-obsolete		obsolete
-./usr/lib/libg2c.a				comp-fortran-lib	gcc=3
-./usr/lib/libg2c.a				comp-obsolete		gcc=4,obsolete
-./usr/lib/libg2c_p.a				comp-fortran-proflib	gcc=3,profile
-./usr/lib/libg2c_p.a				comp-obsolete		gcc=4,obsolete
-./usr/lib/libgcc.a				comp-c-lib		gcc=45
-./usr/lib/libgcc.a				comp-c-lib		gcc=48
+./usr/lib/libg2c.a				comp-fortran-lib	compatfile,gcc=3
+./usr/lib/libg2c.a				comp-obsolete		compatfile,gcc=4,obsolete
+./usr/lib/libg2c_p.a				comp-fortran-proflib	compatfile,gcc=3,profile
+./usr/lib/libg2c_p.a				comp-obsolete		compatfile,gcc=4,obsolete
+./usr/lib/libgcc.a				comp-c-lib		compatfile,gcc=45
+./usr/lib/libgcc.a				comp-c-lib		compatfile,gcc=48
 ./usr/lib/libgcc_p.a				comp-c-proflib		obsolete
 ./usr/lib/libgcc_s.a				comp-obsolete		obsolete
-./usr/lib/libgcov.a				comp-c-lib		gcc=45
-./usr/lib/libgcov.a				comp-c-lib		gcc=48
+./usr/lib/libgcov.a				comp-c-lib		compatfile,gcc=45
+./usr/lib/libgcov.a				comp-c-lib		compatfile,gcc=48
 ./usr/lib/libgmp.a				-unknown-		obsolete
 ./usr/lib/libgmp.a				comp-c-lib		obsolete
 ./usr/lib/libgmp_p.a				comp-c-proflib		obsolete
-./usr/lib/libgnumalloc.a			comp-c-lib
-./usr/lib/libgnumalloc_p.a			comp-c-proflib		profile
-./usr/lib/libgomp.a				comp-c-lib		gcc=45
-./usr/lib/libgomp.a				comp-c-lib		gcc=48
+./usr/lib/libgnumalloc.a			comp-c-lib		compatfile
+./usr/lib/libgnumalloc_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libgomp.a				comp-c-lib		compatfile,gcc=45
+./usr/lib/libgomp.a				comp-c-lib		compatfile,gcc=48
 ./usr/lib/libgomp.spec				comp-c-lib		gcc=45
 ./usr/lib/libgomp.spec				comp-c-lib		gcc=48
-./usr/lib/libgomp_p.a				comp-c-proflib		profile,gcc=45
-./usr/lib/libgomp_p.a				comp-c-proflib		profile,gcc=48
-./usr/lib/libgssapi.a				comp-krb5-lib		kerberos
-./usr/lib/libgssapi_p.a				comp-krb5-proflib	profile,kerberos
-./usr/lib/libhdb.a				comp-c-lib		kerberos
-./usr/lib/libhdb_p.a				comp-c-proflib		profile,kerberos
-./usr/lib/libheimbase.a				comp-krb5-lib		kerberos
-./usr/lib/libheimbase_p.a			comp-krb5-proflib	profile,kerberos
-./usr/lib/libheimntlm.a				comp-krb5-lib		kerberos
-./usr/lib/libheimntlm_p.a			comp-krb5-proflib	profile,kerberos
-./usr/lib/libhx509.a				comp-krb5-lib		kerberos
-./usr/lib/libhx509_p.a				comp-krb5-proflib	profile,kerberos
-./usr/lib/libintl.a				comp-c-lib
-./usr/lib/libintl_p.a				comp-c-proflib		profile
-./usr/lib/libipsec.a				comp-c-lib
-./usr/lib/libipsec_p.a				comp-c-proflib		profile
-./usr/lib/libirs.a				comp-bind-lib
-./usr/lib/libirs_p.a				comp-bind-lib		profile
-./usr/lib/libisc.a				comp-bind-lib
-./usr/lib/libisc_p.a				comp-bind-lib		profile
-./usr/lib/libisccc.a				comp-bind-lib
-./usr/lib/libisccc_p.a				comp-bind-proflib	profile
-./usr/lib/libisccfg.a				comp-bind-lib
-./usr/lib/libisccfg_p.a				comp-bind-proflib	profile
-./usr/lib/libiscsi.a				comp-iscsi-lib		iscsi
-./usr/lib/libiscsi_p.a				comp-iscsi-proflib	profile,iscsi
-./usr/lib/libisns.a		comp-isns-lib	
-./usr/lib/libisns_p.a		comp-isns-proflib	profile
+./usr/lib/libgomp_p.a				comp-c-proflib		compatfile,gcc=45,profile
+./usr/lib/libgomp_p.a				comp-c-proflib		compatfile,gcc=48,profile
+./usr/lib/libgssapi.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libgssapi_p.a				comp-krb5-proflib	compatfile,kerberos,profile
+./usr/lib/libhdb.a				comp-c-lib		compatfile,kerberos
+./usr/lib/libhdb_p.a				comp-c-proflib		compatfile,kerberos,profile
+./usr/lib/libheimbase.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libheimbase_p.a			comp-krb5-proflib	compatfile,kerberos,profile
+./usr/lib/libheimntlm.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libheimntlm_p.a			comp-krb5-proflib	compatfile,profile,kerberos
+./usr/lib/libhx509.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libhx509_p.a				comp-krb5-proflib	compatfile,profile,kerberos
+./usr/lib/libintl.a				comp-c-lib		compatfile
+./usr/lib/libintl_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libipsec.a				comp-c-lib		compatfile
+./usr/lib/libipsec_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libirs.a				comp-bind-lib		compatfile
+./usr/lib/libirs_p.a				comp-bind-lib		compatfile,profile
+./usr/lib/libisc.a				comp-bind-lib		compatfile
+./usr/lib/libisc_p.a				comp-bind-lib		compatfile,profile
+./usr/lib/libisccc.a				comp-bind-lib		compatfile
+./usr/lib/libisccc_p.a				comp-bind-proflib	compatfile,profile
+./usr/lib/libisccfg.a				comp-bind-lib		compatfile
+./usr/lib/libisccfg_p.a				comp-bind-proflib	compatfile,profile
+./usr/lib/libiscsi.a				comp-iscsi-lib		compatfile,iscsi
+./usr/lib/libiscsi_p.a				comp-iscsi-proflib	compatfile,iscsi,profile
+./usr/lib/libisns.a				comp-isns-lib		compatfile
+./usr/lib/libisns_p.a				comp-isns-proflib	compatfile,profile
 ./usr/lib/libkadm.a				comp-obsolete		obsolete
-./usr/lib/libkadm5clnt.a			comp-krb5-lib		kerberos
-./usr/lib/libkadm5clnt_p.a			comp-krb5-proflib	profile,kerberos
-./usr/lib/libkadm5srv.a				comp-krb5-lib		kerberos
-./usr/lib/libkadm5srv_p.a			comp-krb5-proflib	profile,kerberos
+./usr/lib/libkadm5clnt.a			comp-krb5-lib		compatfile,kerberos
+./usr/lib/libkadm5clnt_p.a			comp-krb5-proflib	compatfile,kerberos,profile
+./usr/lib/libkadm5srv.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libkadm5srv_p.a			comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libkadm_p.a				comp-obsolete		obsolete
-./usr/lib/libkafs.a				comp-krb5-lib		kerberos
-./usr/lib/libkafs_p.a				comp-krb5-proflib	profile,kerberos
+./usr/lib/libkafs.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libkafs_p.a				comp-krb5-proflib	compatfile,profile,kerberos
 ./usr/lib/libkdb.a				comp-obsolete		obsolete
 ./usr/lib/libkdb_p.a				comp-obsolete		obsolete
-./usr/lib/libkdc.a				comp-krb5-lib		kerberos
-./usr/lib/libkdc_p.a				comp-krb5-proflib	profile,kerberos
+./usr/lib/libkdc.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libkdc_p.a				comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libkrb.a				comp-obsolete		obsolete
-./usr/lib/libkrb5.a				comp-krb5-lib		kerberos
-./usr/lib/libkrb5_p.a				comp-krb5-proflib	profile,kerberos
+./usr/lib/libkrb5.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libkrb5_p.a				comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libkrb_p.a				comp-obsolete		obsolete
 ./usr/lib/libkstream.a				comp-obsolete		obsolete
 ./usr/lib/libkstream_p.a			comp-obsolete		obsolete
-./usr/lib/libkvm.a				comp-c-lib
-./usr/lib/libkvm_p.a				comp-c-proflib		profile
-./usr/lib/libl.a				comp-c-lib
-./usr/lib/libl_p.a				comp-c-proflib		profile
-./usr/lib/liblber.a				comp-ldap-lib		ldap
-./usr/lib/liblber_p.a				comp-ldap-proflib	profile,ldap
-./usr/lib/libldap.a				comp-ldap-lib		ldap
-./usr/lib/libldap_p.a				comp-ldap-proflib	profile,ldap
-./usr/lib/libldap_r.a				comp-ldap-lib		ldap
-./usr/lib/libldap_r_p.a				comp-ldap-proflib	profile,ldap
-./usr/lib/liblua.a				comp-c-lib
-./usr/lib/liblua_p.a				comp-c-proflib		profile
-./usr/lib/liblutok.a				comp-c-lib		kyua
-./usr/lib/liblutok_p.a				comp-c-proflib		profile,kyua
-./usr/lib/liblwres.a				comp-bind-lib
-./usr/lib/liblwres_p.a				comp-bind-proflib	profile
-./usr/lib/liblzf.a				comp-c-lib
-./usr/lib/liblzf_p.a				comp-c-proflib		profile
-./usr/lib/liblzma.a				comp-c-lib
-./usr/lib/liblzma_p.a				comp-c-proflib		profile
-./usr/lib/libm.a				comp-c-lib
-./usr/lib/libm_p.a				comp-c-proflib		profile
-./usr/lib/libmagic.a				comp-c-lib
-./usr/lib/libmagic_p.a				comp-c-proflib		profile
-./usr/lib/libmenu.a				comp-c-lib
-./usr/lib/libmenu_p.a				comp-c-proflib		profile
+./usr/lib/libkvm.a				comp-c-lib		compatfile
+./usr/lib/libkvm_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libl.a				comp-c-lib		compatfile
+./usr/lib/libl_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/liblber.a				comp-ldap-lib		compatfile,ldap
+./usr/lib/liblber_p.a				comp-ldap-proflib	compatfile,ldap,profile
+./usr/lib/libldap.a				comp-ldap-lib		compatfile,ldap
+./usr/lib/libldap_p.a				comp-ldap-proflib	compatfile,ldap,profile
+./usr/lib/libldap_r.a				comp-ldap-lib		compatfile,ldap
+./usr/lib/libldap_r_p.a				comp-ldap-proflib	compatfile,ldap,profile
+./usr/lib/liblua.a				comp-c-lib		compatfile
+./usr/lib/liblua_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/liblutok.a				comp-c-lib		compatfile,kyua
+./usr/lib/liblutok_p.a				comp-c-proflib		compatfile,kyua,profile
+./usr/lib/liblwres.a				comp-bind-lib		compatfile
+./usr/lib/liblwres_p.a				comp-bind-proflib	compatfile,profile
+./usr/lib/liblzf.a				comp-c-lib		compatfile
+./usr/lib/liblzf_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/liblzma.a				comp-c-lib		compatfile
+./usr/lib/liblzma_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libm.a				comp-c-lib		compatfile
+./usr/lib/libm_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libmagic.a				comp-c-lib		compatfile
+./usr/lib/libmagic_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libmenu.a				comp-c-lib		compatfile
+./usr/lib/libmenu_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libmilter.a				comp-obsolete		obsolete
-./usr/lib/libmj.a				comp-c-lib		crypto
-./usr/lib/libmj_p.a				comp-c-proflib		profile,crypto
+./usr/lib/libmj.a				comp-c-lib		compatfile,crypto
+./usr/lib/libmj_p.a				comp-c-proflib		compatfile,crypto,profile
 ./usr/lib/libmpc.a				-unknown-		obsolete
 ./usr/lib/libmpc.a				comp-c-lib		obsolete
 ./usr/lib/libmpc_p.a				comp-c-proflib		obsolete
 ./usr/lib/libmpfr.a				-unknown-		obsolete
 ./usr/lib/libmpfr.a				comp-c-lib		obsolete
 ./usr/lib/libmpfr_p.a				comp-c-proflib		obsolete
-./usr/lib/libmudflap.a				comp-c-lib		gcc=45
-./usr/lib/libmudflap.a				comp-c-lib		gcc=48
-./usr/lib/libmudflap_p.a			comp-c-proflib		gcc=45,profile
-./usr/lib/libmudflap_p.a			comp-c-proflib		gcc=48,profile
-./usr/lib/libmudflapth.a			comp-c-lib		gcc=45
-./usr/lib/libmudflapth.a			comp-c-lib		gcc=48
-./usr/lib/libmudflapth_p.a			comp-c-proflib		gcc=45,profile
-./usr/lib/libmudflapth_p.a			comp-c-proflib		gcc=48,profile
-./usr/lib/libnetpgp.a				comp-c-lib		crypto
-./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
-./usr/lib/libnetpgpverify.a			comp-c-lib		crypto
-./usr/lib/libnetpgpverify_p.a			comp-c-proflib		profile,crypto
-./usr/lib/libnpf.a				comp-npf-lib		npf
-./usr/lib/libnpf_p.a				comp-npf-proflib	profile,npf
+./usr/lib/libmudflap.a				comp-c-lib		compatfile,gcc=45
+./usr/lib/libmudflap.a				comp-c-lib		compatfile,gcc=48
+./usr/lib/libmudflap_p.a			comp-c-proflib		compatfile,gcc=45,profile
+./usr/lib/libmudflap_p.a			comp-c-proflib		compatfile,gcc=48,profile
+./usr/lib/libmudflapth.a			comp-c-lib		compatfile,gcc=45
+./usr/lib/libmudflapth.a			comp-c-lib		compatfile,gcc=48
+./usr/lib/libmudflapth_p.a			comp-c-proflib		compatfile,gcc=45,profile
+./usr/lib/libmudflapth_p.a			comp-c-proflib		compatfile,gcc=48,profile
+./usr/lib/libnetpgp.a				comp-c-lib		compatfile,crypto
+./usr/lib/libnetpgp_p.a				comp-c-proflib		compatfile,crypto,profile
+./usr/lib/libnetpgpverify.a			comp-c-lib		compatfile,crypto
+./usr/lib/libnetpgpverify_p.a			comp-c-proflib		compatfile,crypto,profile
+./usr/lib/libnpf.a				comp-npf-lib		compatfile,npf
+./usr/lib/libnpf_p.a				comp-npf-proflib	compatfile,npf,profile
 ./usr/lib/libntp.a				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
-./usr/lib/libnvpair.a				comp-zfs-lib		zfs
-./usr/lib/libnvpair_p.a				comp-zfs-proflib	profile,zfs
-./usr/lib/libobjc.a				comp-objc-lib		gcc=45
-./usr/lib/libobjc.a				comp-objc-lib		gcc=48
-./usr/lib/libobjc_p.a				comp-objc-proflib	profile,gcc=45
-./usr/lib/libobjc_p.a				comp-objc-proflib	profile,gcc=48
+./usr/lib/libnvpair.a				comp-zfs-lib		compatfile,zfs
+./usr/lib/libnvpair_p.a				comp-zfs-proflib	compatfile,zfs,profile
+./usr/lib/libobjc.a				comp-objc-lib		compatfile,gcc=45
+./usr/lib/libobjc.a				comp-objc-lib		compatfile,gcc=48
+./usr/lib/libobjc_p.a				comp-objc-proflib	compatfile,gcc=45,profile
+./usr/lib/libobjc_p.a				comp-objc-proflib	compatfile,gcc=48,profile
 ./usr/lib/libopenpgpsdk.a			comp-obsolete		obsolete
 ./usr/lib/libopenpgpsdk_p.a			comp-obsolete		obsolete
-./usr/lib/libossaudio.a				comp-c-lib
-./usr/lib/libossaudio_p.a			comp-c-proflib		profile
-./usr/lib/libp2k.a				comp-puffs-lib		rump
-./usr/lib/libp2k_p.a				comp-puffs-proflib	profile,rump
-./usr/lib/libpam.a				comp-c-lib		pam
-./usr/lib/libpcap.a				comp-c-lib
-./usr/lib/libpcap_p.a				comp-c-proflib		profile
+./usr/lib/libossaudio.a				comp-c-lib		compatfile
+./usr/lib/libossaudio_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libp2k.a				comp-puffs-lib		compatfile,rump
+./usr/lib/libp2k_p.a				comp-puffs-proflib	compatfile,rump,profile
+./usr/lib/libpam.a				comp-c-lib		compatfile,pam
+./usr/lib/libpcap.a				comp-c-lib		compatfile
+./usr/lib/libpcap_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libpcc.a				comp-obsolete		obsolete
 ./usr/lib/libpcc_p.a				comp-obsolete		obsolete
-./usr/lib/libpci.a				comp-c-lib
-./usr/lib/libpci_p.a				comp-c-proflib		profile
-./usr/lib/libperfuse.a				comp-perfuse-lib
-./usr/lib/libperfuse_p.a			comp-perfuse-proflib	profile
-./usr/lib/libposix.a				comp-c-lib
-./usr/lib/libposix_p.a				comp-c-proflib		profile
-./usr/lib/libppath.a				comp-c-lib
-./usr/lib/libppath_p.a				comp-c-proflib		profile
-./usr/lib/libprop.a				comp-c-lib
-./usr/lib/libprop_p.a				comp-c-proflib		profile
-./usr/lib/libpthread.a				comp-c-lib
-./usr/lib/libpthread_dbg.a			comp-c-lib
-./usr/lib/libpthread_dbg_p.a			comp-c-proflib		profile
-./usr/lib/libpthread_p.a			comp-c-proflib		profile
-./usr/lib/libpuffs.a				comp-puffs-lib
-./usr/lib/libpuffs_p.a				comp-puffs-proflib	profile
-./usr/lib/libquota.a				comp-c-lib
-./usr/lib/libquota_p.a				comp-c-proflib		profile
-./usr/lib/libradius.a				comp-c-lib
-./usr/lib/libradius_p.a				comp-c-proflib		profile
-./usr/lib/librefuse.a				comp-refuse-lib
-./usr/lib/librefuse_p.a				comp-refuse-proflib	profile
-./usr/lib/libresolv.a				comp-c-lib
-./usr/lib/libresolv_p.a				comp-c-proflib		profile
-./usr/lib/librmt.a				comp-c-lib
-./usr/lib/libroken.a				comp-krb5-lib		kerberos
-./usr/lib/libroken_p.a				comp-krb5-proflib	profile,kerberos
-./usr/lib/librpcsvc.a				comp-c-lib
-./usr/lib/librpcsvc_p.a				comp-c-proflib		profile
-./usr/lib/librt.a				comp-c-lib
-./usr/lib/librt_p.a				comp-c-proflib		profile
-./usr/lib/librump.a				comp-c-lib		rump
-./usr/lib/librump_p.a				comp-c-proflib		profile,rump
-./usr/lib/librumpclient.a			comp-c-lib		rump
-./usr/lib/librumpclient_p.a			comp-c-proflib		profile,rump
+./usr/lib/libpci.a				comp-c-lib		compatfile
+./usr/lib/libpci_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libperfuse.a				comp-perfuse-lib	compatfile
+./usr/lib/libperfuse_p.a			comp-perfuse-proflib	compatfile,profile
+./usr/lib/libposix.a				comp-c-lib		compatfile
+./usr/lib/libposix_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libppath.a				comp-c-lib		compatfile
+./usr/lib/libppath_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libprop.a				comp-c-lib		compatfile
+./usr/lib/libprop_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libpthread.a				comp-c-lib		compatfile
+./usr/lib/libpthread_dbg.a			comp-c-lib		compatfile
+./usr/lib/libpthread_dbg_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libpthread_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libpuffs.a				comp-puffs-lib		compatfile
+./usr/lib/libpuffs_p.a				comp-puffs-proflib	compatfile,profile
+./usr/lib/libquota.a				comp-c-lib		compatfile
+./usr/lib/libquota_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libradius.a				comp-c-lib		compatfile
+./usr/lib/libradius_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/librefuse.a				comp-refuse-lib		compatfile
+./usr/lib/librefuse_p.a				comp-refuse-proflib	compatfile,profile
+./usr/lib/libresolv.a				comp-c-lib		compatfile
+./usr/lib/libresolv_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/librmt.a				comp-c-lib		compatfile
+./usr/lib/libroken.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libroken_p.a				comp-krb5-proflib	compatfile,profile,kerberos
+./usr/lib/librpcsvc.a				comp-c-lib		compatfile
+./usr/lib/librpcsvc_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/librt.a				comp-c-lib		compatfile
+./usr/lib/librt_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/librump.a				comp-c-lib		compatfile,rump
+./usr/lib/librump_p.a				comp-c-proflib		compatfile,rump,profile
+./usr/lib/librumpclient.a			comp-c-lib		compatfile,rump
+./usr/lib/librumpclient_p.a			comp-c-proflib		compatfile,rump,profile
 ./usr/lib/librumpcrypto.a			comp-obsolete		obsolete
 ./usr/lib/librumpcrypto_p.a			comp-obsolete		obsolete
-./usr/lib/librumpdev.a				comp-c-lib		rump
+./usr/lib/librumpdev.a				comp-c-lib		compatfile,rump
 ./usr/lib/librumpdev_audio.a			comp-c-lib		rump
-./usr/lib/librumpdev_audio_ac97.a			comp-obsolete	obsolete
-./usr/lib/librumpdev_audio_ac97_p.a			comp-obsolete	obsolete
-./usr/lib/librumpdev_audio_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_audio_ac97.a		comp-obsolete		obsolete
+./usr/lib/librumpdev_audio_ac97_p.a		comp-obsolete		obsolete
+./usr/lib/librumpdev_audio_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_bpf.a			comp-c-lib		rump
-./usr/lib/librumpdev_bpf_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_bpf_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_cgd.a			comp-c-lib		rump
-./usr/lib/librumpdev_cgd_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_cgd_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_disk.a			comp-c-lib		rump
-./usr/lib/librumpdev_disk_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_disk_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_dm.a			comp-c-lib		rump
-./usr/lib/librumpdev_dm_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_dm_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_drvctl.a			comp-c-lib		rump
-./usr/lib/librumpdev_drvctl_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_drvctl_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_fss.a			comp-c-lib		rump
-./usr/lib/librumpdev_fss_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_fss_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_md.a			comp-c-lib		rump
-./usr/lib/librumpdev_md_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_md_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_netsmb.a			comp-c-lib		rump
-./usr/lib/librumpdev_netsmb_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_netsmb_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_opencrypto.a		comp-c-lib		rump
-./usr/lib/librumpdev_opencrypto_p.a		comp-c-proflib		profile,rump
-./usr/lib/librumpdev_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_opencrypto_p.a		comp-c-proflib		rump,profile
+./usr/lib/librumpdev_p.a			comp-c-proflib		compatfile,rump,profile
 ./usr/lib/librumpdev_pad.a			comp-c-lib		rump
-./usr/lib/librumpdev_pad_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_pad_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_pud.a			comp-c-lib		rump
-./usr/lib/librumpdev_pud_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_pud_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_putter.a			comp-c-lib		rump
-./usr/lib/librumpdev_putter_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_putter_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_raidframe.a		comp-c-lib		rump
-./usr/lib/librumpdev_raidframe_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpdev_raidframe_p.a		comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_rnd.a			comp-c-lib		rump
-./usr/lib/librumpdev_rnd_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_rnd_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_scsipi.a			comp-c-lib		rump
-./usr/lib/librumpdev_scsipi_p.a			comp-c-proflib		profile,rump
-./usr/lib/librumpdev_scsitest.a			comp-obsolete obsolete
-./usr/lib/librumpdev_scsitest_p.a		comp-obsolete obsolete
+./usr/lib/librumpdev_scsipi_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpdev_scsitest.a			comp-obsolete		obsolete
+./usr/lib/librumpdev_scsitest_p.a		comp-obsolete		obsolete
 ./usr/lib/librumpdev_sysmon.a			comp-c-lib		rump
-./usr/lib/librumpdev_sysmon_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_sysmon_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_ubt.a			comp-c-lib		rump
-./usr/lib/librumpdev_ubt_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_ubt_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_ucom.a			comp-c-lib		rump
-./usr/lib/librumpdev_ucom_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_ucom_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_ugenhc.a			comp-c-lib		rump
-./usr/lib/librumpdev_ugenhc_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_ugenhc_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_ulpt.a			comp-c-lib		rump
-./usr/lib/librumpdev_ulpt_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_ulpt_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_umass.a			comp-c-lib		rump
-./usr/lib/librumpdev_umass_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_umass_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_usb.a			comp-c-lib		rump
-./usr/lib/librumpdev_usb_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_usb_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_vnd.a			comp-c-lib		rump
-./usr/lib/librumpdev_vnd_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_vnd_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_wscons.a			comp-c-lib		rump
-./usr/lib/librumpdev_wscons_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_wscons_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_cd9660.a			comp-c-lib		rump
-./usr/lib/librumpfs_cd9660_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_cd9660_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_efs.a			comp-c-lib		rump
-./usr/lib/librumpfs_efs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_efs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_ext2fs.a			comp-c-lib		rump
-./usr/lib/librumpfs_ext2fs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_ext2fs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_fdesc.a			comp-c-lib		rump
-./usr/lib/librumpfs_fdesc_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_fdesc_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_ffs.a			comp-c-lib		rump
-./usr/lib/librumpfs_ffs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_ffs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_hfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_hfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_hfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_kernfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_kernfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_kernfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_lfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_lfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_lfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_mfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_mfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_mfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_msdos.a			comp-c-lib		rump
-./usr/lib/librumpfs_msdos_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_msdos_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_nfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_nfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_nfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_nfsserver.a			comp-c-lib		rump
-./usr/lib/librumpfs_nfsserver_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpfs_nfsserver_p.a		comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_nilfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_nilfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_nilfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_ntfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_null.a			comp-c-lib		rump
-./usr/lib/librumpfs_null_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_null_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_nullfs.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_nullfs_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_ptyfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_ptyfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_ptyfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_smbfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_smbfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_smbfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_syspuffs.a			comp-c-lib		rump
-./usr/lib/librumpfs_syspuffs_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpfs_syspuffs_p.a		comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_sysvbfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_sysvbfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_sysvbfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_tmpfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_tmpfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_tmpfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_udf.a			comp-c-lib		rump
-./usr/lib/librumpfs_udf_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_udf_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_ufs.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_ufs_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_umap.a			comp-c-lib		rump
-./usr/lib/librumpfs_umap_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_umap_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_umapfs.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_umapfs_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_union.a			comp-c-lib		rump
-./usr/lib/librumpfs_union_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_union_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_v7fs.a			comp-c-lib		rump
-./usr/lib/librumpfs_v7fs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_v7fs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_zfs.a			comp-c-lib		zfs,rump
-./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		zfs,profile,rump
+./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		zfs,rump,profile
 ./usr/lib/librumpkern_crypto.a			comp-c-lib		rump
-./usr/lib/librumpkern_crypto_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpkern_crypto_p.a		comp-c-proflib		rump,profile
 ./usr/lib/librumpkern_ksem.a			comp-obsolete		obsolete
 ./usr/lib/librumpkern_ksem_p.a			comp-obsolete		obsolete
-./usr/lib/librumpkern_sljit.a			comp-c-lib		sljit,rump
-./usr/lib/librumpkern_sljit_p.a			comp-c-proflib		profile,sljit,rump
-./usr/lib/librumpkern_solaris.a			comp-c-lib		zfs,rump
-./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		profile,zfs,rump
-./usr/lib/librumpkern_sysproxy.a			comp-c-lib		rump
-./usr/lib/librumpkern_sysproxy_p.a			comp-c-proflib		profile,rump
-./usr/lib/librumpkern_time.a			comp-obsolete obsolete
-./usr/lib/librumpkern_time_p.a			comp-obsolete obsolete
+./usr/lib/librumpkern_sljit.a			comp-c-lib		rump,sljit
+./usr/lib/librumpkern_sljit_p.a			comp-c-proflib		rump,sljit,profile
+./usr/lib/librumpkern_solaris.a			comp-c-lib		rump,zfs
+./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		rump,zfs,profile
+./usr/lib/librumpkern_sysproxy.a		comp-c-lib		rump
+./usr/lib/librumpkern_sysproxy_p.a		comp-c-proflib		rump,profile
+./usr/lib/librumpkern_time.a			comp-obsolete		obsolete
+./usr/lib/librumpkern_time_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpkern_tty.a			comp-c-lib		rump
-./usr/lib/librumpkern_tty_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpkern_tty_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpkern_z.a			comp-c-lib		rump
-./usr/lib/librumpkern_z_p.a			comp-c-proflib		profile,rump
-./usr/lib/librumpnet.a				comp-c-lib		rump
+./usr/lib/librumpkern_z_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpnet.a				comp-c-lib		compatfile,rump
 ./usr/lib/librumpnet_agr.a			comp-c-lib		rump
-./usr/lib/librumpnet_agr_p.a			comp-c-proflib		profile,rump
-./usr/lib/librumpnet_bpfjit.a			comp-c-lib		sljit,rump
-./usr/lib/librumpnet_bpfjit_p.a			comp-c-proflib		profile,sljit,rump
+./usr/lib/librumpnet_agr_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpnet_bpfjit.a			comp-c-lib		rump,sljit
+./usr/lib/librumpnet_bpfjit_p.a			comp-c-proflib		rump,sljit,profile
 ./usr/lib/librumpnet_bridge.a			comp-c-lib		rump
-./usr/lib/librumpnet_bridge_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_bridge_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_local.a			comp-c-lib		rump
-./usr/lib/librumpnet_local_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_local_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_net.a			comp-c-lib		rump
 ./usr/lib/librumpnet_net80211.a			comp-c-lib		rump
-./usr/lib/librumpnet_net80211_p.a		comp-c-proflib		profile,rump
-./usr/lib/librumpnet_net_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_net80211_p.a		comp-c-proflib		rump,profile
+./usr/lib/librumpnet_net_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_netbt.a			comp-c-lib		rump
-./usr/lib/librumpnet_netbt_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_netbt_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_netinet.a			comp-c-lib		rump
 ./usr/lib/librumpnet_netinet6.a			comp-c-lib		rump
-./usr/lib/librumpnet_netinet6_p.a		comp-c-proflib		profile,rump
-./usr/lib/librumpnet_netinet_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpnet_netinet6_p.a		comp-c-proflib		rump,profile
+./usr/lib/librumpnet_netinet_p.a		comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_netmpls.a			comp-c-lib		rump
-./usr/lib/librumpnet_netmpls_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpnet_netmpls_p.a		comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_npf.a			comp-c-lib		rump
-./usr/lib/librumpnet_npf_p.a			comp-c-lib		profile,rump
-./usr/lib/librumpnet_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_npf_p.a			comp-c-lib		rump,profile
+./usr/lib/librumpnet_p.a			comp-c-proflib		compatfile,rump,profile
 ./usr/lib/librumpnet_shmif.a			comp-c-lib		rump
-./usr/lib/librumpnet_shmif_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_shmif_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_sockin.a			comp-c-lib		rump
-./usr/lib/librumpnet_sockin_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_sockin_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_tap.a			comp-c-lib		rump
-./usr/lib/librumpnet_tap_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_tap_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_virtif.a			comp-c-lib		rump
-./usr/lib/librumpnet_virtif_p.a			comp-c-proflib		profile,rump
-./usr/lib/librumpuser.a				comp-c-lib		rump
-./usr/lib/librumpuser_p.a			comp-c-proflib		profile,rump
-./usr/lib/librumpvfs.a				comp-c-lib		rump
+./usr/lib/librumpnet_virtif_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpuser.a				comp-c-lib		compatfile,rump
+./usr/lib/librumpuser_p.a			comp-c-proflib		compatfile,rump,profile
+./usr/lib/librumpvfs.a				comp-c-lib		compatfile,rump
 ./usr/lib/librumpvfs_aio.a			comp-c-lib		rump
-./usr/lib/librumpvfs_aio_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpvfs_aio_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpvfs_fifofs.a			comp-c-lib		rump
-./usr/lib/librumpvfs_fifofs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpvfs_fifofs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpvfs_layerfs.a			comp-c-lib		rump
-./usr/lib/librumpvfs_layerfs_p.a		comp-c-proflib		profile,rump
-./usr/lib/librumpvfs_p.a			comp-c-proflib		profile,rump
-./usr/lib/libsaslc.a				comp-c-clib		crypto
-./usr/lib/libsaslc_p.a				comp-c-proflib		crypto,profile
+./usr/lib/librumpvfs_layerfs_p.a		comp-c-proflib		rump,profile
+./usr/lib/librumpvfs_p.a			comp-c-proflib		compatfile,rump,profile
+./usr/lib/libsaslc.a				comp-c-clib		compatfile,crypto
+./usr/lib/libsaslc_p.a				comp-c-proflib		compatfile,crypto,profile
 ./usr/lib/libsdp.a				comp-obsolete		obsolete
 ./usr/lib/libsdp_p.a				comp-obsolete		obsolete
-./usr/lib/libskey.a				comp-c-lib		skey
-./usr/lib/libskey_p.a				comp-c-proflib		profile,skey
-./usr/lib/libsl.a				comp-krb5-lib		kerberos
-./usr/lib/libsl_p.a				comp-krb5-proflib	profile,kerberos
+./usr/lib/libskey.a				comp-c-lib		compatfile,skey
+./usr/lib/libskey_p.a				comp-c-proflib		compatfile,skey,profile
+./usr/lib/libsl.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libsl_p.a				comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libsm.a				comp-obsolete		obsolete
-./usr/lib/libsqlite3.a				comp-c-clib
-./usr/lib/libsqlite3_p.a			comp-c-proflib		profile
+./usr/lib/libsqlite3.a				comp-c-clib		compatfile
+./usr/lib/libsqlite3_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libss.a				comp-obsolete		obsolete
 ./usr/lib/libss_p.a				comp-obsolete		obsolete
-./usr/lib/libssh.a				comp-c-lib		crypto
-./usr/lib/libssh_p.a				comp-c-proflib		profile,crypto
-./usr/lib/libssl.a				comp-c-lib		crypto
-./usr/lib/libssl_p.a				comp-c-proflib		profile,crypto
+./usr/lib/libssh.a				comp-c-lib		compatfile,crypto
+./usr/lib/libssh_p.a				comp-c-proflib		compatfile,crypto,profile
+./usr/lib/libssl.a				comp-c-lib		compatfile,crypto
+./usr/lib/libssl_p.a				comp-c-proflib		compatfile,crypto,profile
 ./usr/lib/libssp.a				comp-obsolete		obsolete
 ./usr/lib/libssp_p.a				comp-obsolete		obsolete
-./usr/lib/libstdc++.a				comp-cxx-lib		cxx,libstdcxx,gcc=45
-./usr/lib/libstdc++.a				comp-cxx-lib		cxx,libstdcxx,gcc=48
-./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile,cxx,libstdcxx,gcc=45
-./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile,cxx,libstdcxx,gcc=48
-./usr/lib/libsupc++.a				comp-cxx-lib		cxx,libstdcxx,gcc=45
-./usr/lib/libsupc++.a				comp-cxx-lib		cxx,libstdcxx,gcc=48
-./usr/lib/libtddl.a				comp-c-lib		tpm
-./usr/lib/libtddl_p.a				comp-c-proflib		tpm,profile
-./usr/lib/libtelnet.a				comp-obsolete		obsolete
-./usr/lib/libtelnet_p.a				comp-obsolete		obsolete
-./usr/lib/libtermcap.a				comp-c-lib
-./usr/lib/libtermcap_p.a			comp-c-proflib		profile
-./usr/lib/libterminfo.a				comp-c-lib
-./usr/lib/libterminfo_p.a			comp-c-proflib		profile
-./usr/lib/libtermlib.a				comp-c-lib
-./usr/lib/libtermlib_p.a			comp-c-proflib		profile
-./usr/lib/libtpm_unseal.a			comp-c-lib		tpm
-./usr/lib/libtpm_unseal_p.a			comp-c-proflib	tpm,profile
-./usr/lib/libtre.a				comp-c-lib
-./usr/lib/libtre_p.a				comp-c-proflib		profile
-./usr/lib/libtspi.a				comp-c-lib		tpm
-./usr/lib/libtspi_p.a				comp-c-proflib		tpm,profile
-./usr/lib/libukfs.a				comp-c-lib		rump
-./usr/lib/libukfs_p.a				comp-c-proflib		profile,rump
-./usr/lib/libumem.a				comp-zfs-lib		zfs
-./usr/lib/libumem_p.a				comp-zfs-proflib	profile,zfs
-./usr/lib/libusb.a				comp-obsolete		obsolete
-./usr/lib/libusb_p.a				comp-obsolete		obsolete
-./usr/lib/libusbhid.a				comp-c-lib
-./usr/lib/libusbhid_p.a				comp-c-proflib		profile
-./usr/lib/libutil.a				comp-c-lib
-./usr/lib/libutil_p.a				comp-c-proflib		profile
-./usr/lib/libuutil.a				comp-zfs-lib		zfs
-./usr/lib/libuutil_p.a				comp-zfs-proflib	profile,zfs
-./usr/lib/libwind.a				comp-krb5-lib		kerberos
-./usr/lib/libwind_p.a				comp-krb5-proflib	kerberos,profile
-./usr/lib/libwrap.a				comp-c-lib
-./usr/lib/libwrap_p.a				comp-c-proflib		profile
-./usr/lib/liby.a				comp-c-lib
-./usr/lib/liby_p.a				comp-c-proflib		profile
-./usr/lib/libz.a				comp-c-lib
-./usr/lib/libz_p.a				comp-c-proflib		profile
-./usr/lib/libzfs.a				comp-zfs-lib		zfs
-./usr/lib/libzfs_p.a				comp-zfs-proflib	profile,zfs
-./usr/lib/libzpool.a				comp-zfs-lib		zfs
-./usr/lib/libzpool_p.a				comp-zfs-proflib	profile,zfs
+./usr/lib/libstdc++.a				comp-cxx-lib		compatfile,cxx,libstdcxx,gcc=45
+./usr/lib/libstdc++.a				comp-cxx-lib		compatfile,cxx,libstdcxx,gcc=48
+./usr/lib/libstdc++_p.a				comp-cxx-proflib	compatfile,cxx,libstdcxx,gcc=45,profile
+./usr/lib/libstdc++_p.a				comp-cxx-proflib	compatfile,cxx,libstdcxx,gcc=48,profile
+./usr/lib/libsupc++.a				comp-cxx-lib		compatfile,cxx,libstdcxx,gcc=45
+./usr/lib/libsupc++.a				comp-cxx-lib		compatfile,cxx,libstdcxx,gcc=48
+./usr/lib/libtddl.a				comp-c-lib		compatfile,tpm
+./usr/lib/libtddl_p.a				comp-c-proflib		compatfile,tpm,profile
+./usr/lib/libtelnet.a				comp-obsolete		obsolete,compatfile
+./usr/lib/libtelnet_p.a				comp-obsolete		obsolete,compatfile
+./usr/lib/libtermcap.a				comp-c-lib		compatfile
+./usr/lib/libtermcap_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libterminfo.a				comp-c-lib		compatfile
+./usr/lib/libterminfo_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libtermlib.a				comp-c-lib		compatfile
+./usr/lib/libtermlib_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libtpm_unseal.a			comp-c-lib		compatfile,tpm
+./usr/lib/libtpm_unseal_p.a			comp-c-proflib		compatfile,tpm,profile
+./usr/lib/libtre.a				comp-c-lib		compatfile
+./usr/lib/libtre_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libtspi.a				comp-c-lib		compatfile,tpm
+./usr/lib/libtspi_p.a				comp-c-proflib		compatfile,tpm,profile
+./usr/lib/libukfs.a				comp-c-lib		compatfile,rump
+./usr/lib/libukfs_p.a				comp-c-proflib		compatfile,rump,profile
+./usr/lib/libumem.a				comp-zfs-lib		compatfile,zfs
+./usr/lib/libumem_p.a				comp-zfs-proflib	compatfile,zfs,profile
+./usr/lib/libusb.a				comp-obsolete		obsolete,compatfile
+./usr/lib/libusb_p.a				comp-obsolete		obsolete,compatfile
+./usr/lib/libusbhid.a				comp-c-lib		compatfile
+./usr/lib/libusbhid_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libutil.a				comp-c-lib		compatfile
+./usr/lib/libutil_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libuutil.a				comp-zfs-lib		compatfile,zfs
+./usr/lib/libuutil_p.a				comp-zfs-proflib	compatfile,zfs,profile
+./usr/lib/libwind.a				comp-krb5-lib		compatfile,kerberos
+./usr/lib/libwind_p.a				comp-krb5-proflib	compatfile,kerberos,profile
+./usr/lib/libwrap.a				comp-c-lib		compatfile
+./usr/lib/libwrap_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/liby.a				comp-c-lib		compatfile
+./usr/lib/liby_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libz.a				comp-c-lib		compatfile
+./usr/lib/libz_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libzfs.a				comp-zfs-lib		compatfile,zfs
+./usr/lib/libzfs_p.a				comp-zfs-proflib	compatfile,zfs,profile
+./usr/lib/libzpool.a				comp-zfs-lib		compatfile,zfs
+./usr/lib/libzpool_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/pkgconfig				comp-c-lib
 ./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib		atf,share
