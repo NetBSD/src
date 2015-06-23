@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126.2.9 2015/05/09 09:35:20 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.10 2015/06/23 12:03:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.9 2015/05/09 09:35:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.10 2015/06/23 12:03:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -461,7 +461,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				sce->ibuf = NULL;
 				return EIO;
 			}
-			for(i = 0; i < UGEN_NISOREQS; ++i) {
+			for (i = 0; i < UGEN_NISOREQS; ++i) {
 				sce->isoreqs[i].sce = sce;
 				xfer = usbd_alloc_xfer(sc->sc_udev);
 				if (xfer == NULL)
@@ -469,12 +469,12 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				sce->isoreqs[i].xfer = xfer;
 				tbuf = usbd_alloc_buffer
 					(xfer, isize * UGEN_NISORFRMS);
-				if (tbuf == 0) {
+				if (tbuf == NULL) {
 					i++;
 					goto bad;
 				}
 				sce->isoreqs[i].dmabuf = tbuf;
-				for(j = 0; j < UGEN_NISORFRMS; ++j)
+				for (j = 0; j < UGEN_NISORFRMS; ++j)
 					sce->isoreqs[i].sizes[j] = isize;
 				usbd_setup_isoc_xfer
 					(xfer, sce->pipeh, &sce->isoreqs[i],
