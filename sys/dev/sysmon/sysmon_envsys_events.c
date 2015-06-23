@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.115 2015/04/18 14:44:44 mlelstv Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.116 2015/06/23 10:41:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.115 2015/04/18 14:44:44 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.116 2015/06/23 10:41:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -768,7 +768,7 @@ sme_events_worker(struct work *wk, void *arg)
 	envsys_data_t *edata = see->see_edata;
 
 	KASSERT(wk == &see->see_wk);
-	KASSERT(sme != NULL || edata != NULL);
+	KASSERT(sme != NULL && edata != NULL);
 
 	mutex_enter(&sme->sme_mtx);
 	see->see_flags |= SEE_EVENT_WORKING;
