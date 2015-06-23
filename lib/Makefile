@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.224 2015/06/22 06:03:20 matt Exp $
+#	$NetBSD: Makefile,v 1.225 2015/06/23 16:33:21 matt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -62,6 +62,14 @@ SUBDIR+=	../external/bsd/libpcap/lib
 .if ${MKSLJIT} != "no"
 SUBDIR+=	../external/bsd/sljit/lib
 SUBDIR+=	libbpfjit
+.endif
+
+.if ${MKDTRACE} != "no"
+SUBDIR+=        ../external/cddl/osnet/lib/libdtrace
+.endif
+
+.if ${MKDTRACE} != "no" || ${MKCTF} != "no"
+SUBDIR+=        ../external/cddl/osnet/lib/libctf
 .endif
 
 .if (${MKZFS} != "no")
