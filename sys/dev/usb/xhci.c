@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.28 2015/06/07 08:04:52 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.29 2015/06/23 12:22:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.28 2015/06/07 08:04:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.29 2015/06/23 12:22:35 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1403,7 +1403,8 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
  * Set TR Dequeue Pointer.
  * xCHI 1.1  4.6.10  6.4.3.9
  * Purge all of the transfer requests on ring.
- * EPSTATE of endpoint must be ERROR or STOPPED, or CONTEXT_STATE error.
+ * EPSTATE of endpoint must be ERROR or STOPPED, otherwise CONTEXT_STATE
+ * error will be generated.
  */
 static usbd_status
 xhci_set_dequeue(struct usbd_pipe *pipe)
@@ -1743,7 +1744,10 @@ xhci_handle_event(struct xhci_softc * const sc,
 		} else {
 			xx = (void *)(uintptr_t)(trb_0 & ~0x3);
 		}
-		/* XXX this may not happen */
+		/*
+		 * stop_endpoint may cause ERR_STOPPED_LENGTH_INVALID,
+		 * in which case this condition may happen.
+		 */
 		if (xx == NULL) {
 			DPRINTFN(1, "xfer done: xx is NULL", 0, 0, 0, 0);
 			break;
@@ -2139,6 +2143,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		KASSERT(bus->ub_devices[dev->ud_addr] == NULL);
 		bus->ub_devices[dev->ud_addr] = dev;
 
+		/* read 64 bytes of device descriptor */
 		err = usbd_get_initial_ddesc(dev, dd);
 		if (err)
 			goto bad;
@@ -2340,6 +2345,10 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
  * (called from interrupt from xHCI), or timed-out.
  * Command validation is performed in xhci_handle_event by checking if
  * trb_0 in CMD_COMPLETE TRB and sc->sc_command_addr are identical.
+ * locked = 0: called without lock held
+ * locked = 1: allows called with lock held
+ * 'locked' is needed as some methods are called with sc_lock_held.
+ * (see usbdivar.h)
  */
 static usbd_status
 xhci_do_command1(struct xhci_softc * const sc, struct xhci_trb * const trb,
@@ -2357,7 +2366,7 @@ xhci_do_command1(struct xhci_softc * const sc, struct xhci_trb * const trb,
 	if (!locked)
 		mutex_enter(&sc->sc_lock);
 
-	/* XXX KASSERT may fire when cv_timedwait unlocks sc_lock */
+	/* XXX KASSERT may fail when cv_timedwait unlocks sc_lock */
 	KASSERT(sc->sc_command_addr == 0);
 	sc->sc_command_addr = xhci_ring_trbp(cr, cr->xr_ep);
 
