@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.42 2015/04/20 19:36:55 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.43 2015/06/23 10:40:36 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.42 2015/04/20 19:36:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.43 2015/06/23 10:40:36 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -956,7 +956,7 @@ static void
 vclean(vnode_t *vp)
 {
 	lwp_t *l = curlwp;
-	bool recycle, active, doclose;
+	bool recycle, active;
 	int error;
 
 	KASSERT(mutex_owned(vp->v_interlock));
@@ -969,8 +969,6 @@ vclean(vnode_t *vp)
 	}
 
 	active = (vp->v_usecount > 1);
-	doclose = ! (active && vp->v_type == VBLK &&
-	    spec_node_getmountedfs(vp) != NULL);
 	mutex_exit(vp->v_interlock);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -995,18 +993,16 @@ vclean(vnode_t *vp)
 	 * deactivated before being reclaimed. Note that the
 	 * VOP_INACTIVE will unlock the vnode.
 	 */
-	if (doclose) {
-		error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		if (error != 0) {
-			if (wapbl_vphaswapbl(vp))
-				WAPBL_DISCARD(wapbl_vptomp(vp));
-			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
-		}
-		KASSERT(error == 0);
-		KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
-		if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {
-			 spec_node_revoke(vp);
-		}
+	error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
+	if (error != 0) {
+		if (wapbl_vphaswapbl(vp))
+			WAPBL_DISCARD(wapbl_vptomp(vp));
+		error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
+	}
+	KASSERT(error == 0);
+	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
+	if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {
+		 spec_node_revoke(vp);
 	}
 	if (active) {
 		VOP_INACTIVE(vp, &recycle);
@@ -1041,14 +1037,9 @@ vclean(vnode_t *vp)
 
 	/* Done with purge, notify sleepers of the grim news. */
 	mutex_enter(vp->v_interlock);
-	if (doclose) {
-		vp->v_op = dead_vnodeop_p;
-		vp->v_vflag |= VV_LOCKSWORK;
-		vp->v_iflag |= VI_CLEAN;
-	} else {
-		vp->v_op = spec_vnodeop_p;
-		vp->v_vflag &= ~VV_LOCKSWORK;
-	}
+	vp->v_op = dead_vnodeop_p;
+	vp->v_vflag |= VV_LOCKSWORK;
+	vp->v_iflag |= VI_CLEAN;
 	vp->v_tag = VT_NON;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 	vp->v_iflag &= ~VI_XLOCK;
