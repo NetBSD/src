@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.166 2015/06/22 07:07:10 matt Exp $
+#	$NetBSD: sets.subr,v 1.167 2015/06/23 00:58:16 matt Exp $
 #
 
 #
@@ -179,7 +179,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.166 2015/06/22 07:07:10 matt Exp $
+# 	# $NetBSD: sets.subr,v 1.167 2015/06/23 00:58:16 matt Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -292,7 +292,6 @@ list_set_files()
 	print_set_lists "$@" | \
 	${AWK} -v obsolete=${obsolete} '
 		BEGIN {
-			x="tmp.out"
 			if (obsolete)
 				wanted["obsolete"] = 1
 		
@@ -309,11 +308,12 @@ list_set_files()
 				sub(/^mk/, "", kw)
 				sub(/^have_/, "", kw)
 				sub(/^target_endianness/, "endian", kw)
-				if (nv != "HAVE_GCC" && nv != "HAVE_GDB" && ENVIRON[nv] != "no" && nv != "COMPATDIRS" && nv != "MODULEARCHDIRS")
+				if (nv != "HAVE_GCC" && nv != "HAVE_GDB" && ENVIRON[nv] != "no" && nv != "COMPATARCHDIRS" && nv != "KMODARCHDIRS") {
 					wanted[kw] = 1 
+				}
 			}
 
-			if (wanted["compat"]) {
+			if ("compat" in wanted) {
 				doingcompat = 1;
 				split("'"${COMPATARCHDIRS}"'", compatarchdirs, ",");
 				compatdirkeywords["compatdir"] = 1
@@ -326,7 +326,7 @@ list_set_files()
 				}
 			}
 
-			if (wanted["kmod"] && wanted["compatmodules"]) {
+			if (("kmod" in wanted) && ("compatmodules" in wanted)) {
 				split("'"${KMODARCHDIRS}"'", kmodarchdirs, ",");
 				kmodpat = "./stand/" ENVIRON["MACHINE"]
 				l_kmodpat = length(kmodpat)
@@ -371,7 +371,7 @@ list_set_files()
 			split($3, keywords, ",")
 			show = 1
 			haveobs = 0
-			havecompat = 0
+			iscompatfile = 0
 			havekmod = 0
 			iscompatdir = 0
 			for (ki in keywords) {
@@ -386,14 +386,13 @@ list_set_files()
 				} else if (kw in compatdirkeywords) {
 					iscompatdir = 1
 				} else if (kw in compatfilekeywords) {
-					havecompat = 1
+					iscompatfile = 1
 				} else if (kw in ignoredkeywords) {
 					# ignore
-				} else {
-					if (! (kw in wanted))
-						show = 0
-					else if (kw == "kmod")
-						havekmod = 1
+				} else if (! (kw in wanted)) {
+					show = 0
+				} else if (kw == "kmod") {
+					havekmod = 1
 				}
 				if (kw == "obsolete")
 					haveobs = 1
@@ -414,10 +413,10 @@ list_set_files()
 				next
 			}
 
-			if (!doingcompat || !(havecompat || iscompatdir))
+			if (!doingcompat || !(iscompatfile || iscompatdir))
 				next
 
-			if (havecompat) {
+			if (iscompatfile) {
 				emitcompat[$1] = 1;
 				next;
 			}
