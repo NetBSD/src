@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.14 2015/06/11 08:22:08 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.15 2015/06/23 21:00:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,18 +31,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.14 2015/06/11 08:22:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 2015/06/23 21:00:23 matt Exp $");
 
+#define	_EWS4800MIPS_BUS_DMA_PRIVATE
 /* #define	BUS_DMA_DEBUG */
+
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
+#include <mips/locore.h>
 #include <mips/cache.h>
 
-#define	_EWS4800MIPS_BUS_DMA_PRIVATE
-#include <machine/bus.h>
 #include <machine/sbdvar.h>
 
 #include <dev/bus_dma/bus_dmamem_common.h>
