@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vfsops.c,v 1.2 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: dead_vfsops.c,v 1.3 2015/06/23 10:41:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,12 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vfsops.c,v 1.2 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vfsops.c,v 1.3 2015/06/23 10:41:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+
+#include <miscfs/specfs/specdev.h>
+
+VFS_PROTOS(dead);
+
+static void dead_panic(void);
 
 extern const struct vnodeopv_desc dead_vnodeop_opv_desc;
 
@@ -44,12 +50,7 @@ static const struct vnodeopv_desc * const dead_vnodeopv_descs[] = {
 	NULL
 };
 
-static void
-dead_panic(void)
-{
-
-	panic("dead fs operation used");
-}
+struct mount *dead_rootmount;
 
 struct vfsops dead_vfsops = {
 	.vfs_name = "dead",
@@ -76,3 +77,10 @@ struct vfsops dead_vfsops = {
 	.vfs_fsync = (void *)eopnotsupp,
 	.vfs_opv_descs = dead_vnodeopv_descs
 };
+
+static void
+dead_panic(void)
+{
+
+	panic("dead fs operation used");
+}
