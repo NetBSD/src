@@ -1,4 +1,4 @@
-/*	$NetBSD: sbd.c,v 1.3 2009/12/14 00:46:03 matt Exp $	*/
+/*	$NetBSD: sbd.c,v 1.4 2015/06/23 21:00:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbd.c,v 1.3 2009/12/14 00:46:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbd.c,v 1.4 2015/06/23 21:00:23 matt Exp $");
 
 /* System board */
 #include "opt_sbd.h"
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbd.c,v 1.3 2009/12/14 00:46:03 matt Exp $");
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <mips/locore.h>
 
 #include <machine/sbdvar.h>
 #include <machine/sbd.h>

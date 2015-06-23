@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdio.c,v 1.4 2009/12/14 00:46:03 matt Exp $	*/
+/*	$NetBSD: sbdio.c,v 1.5 2015/06/23 21:00:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,15 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdio.c,v 1.4 2009/12/14 00:46:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdio.c,v 1.5 2015/06/23 21:00:23 matt Exp $");
+
+#define _EWS4800MIPS_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/systm.h>
+
+#include <mips/locore.h>
 
 #include <machine/autoconf.h>
-#define _EWS4800MIPS_BUS_DMA_PRIVATE
-#include <machine/bus.h>
 #include <machine/sbdvar.h>
 #include <machine/sbdiovar.h>
 
