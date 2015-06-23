@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.85 2015/05/15 08:36:41 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.86 2015/06/23 10:00:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.85 2015/05/15 08:36:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.86 2015/06/23 10:00:13 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1096,8 +1096,18 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 	*p = q->ih_next;
 
 	intr_calculatemasks(ci);
-	(*pic->pic_delroute)(pic, ci, ih->ih_pin, idtvec, source->is_type);
-	(*pic->pic_hwunmask)(pic, ih->ih_pin);
+	/*
+	 * If there is no any handler, 1) do delroute because it has no
+	 * any source and 2) dont' hwunmask to prevent spurious interrupt.
+	 *
+	 * If there is any handler, 1) don't delroute because it has source
+	 * and 2) do hwunmask to be able to get interrupt again.
+	 *
+	 */
+	if (source->is_handlers == NULL)
+		(*pic->pic_delroute)(pic, ci, ih->ih_pin, idtvec, source->is_type);
+	else
+		(*pic->pic_hwunmask)(pic, ih->ih_pin);
 
 	/* Re-enable interrupts. */
 	x86_write_psl(psl);
