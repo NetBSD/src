@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.50 2014/08/21 06:40:35 maxv Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.51 2015/06/23 10:41:06 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.50 2014/08/21 06:40:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.51 2015/06/23 10:41:06 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,7 +242,8 @@ ptyfs_inactive(void *v)
 
 	if (ptyfs->ptyfs_type == PTYFSptc)
 		ptyfs_clr_active(vp->v_mount, ptyfs->ptyfs_pty);
-	return spec_inactive(v);
+	VOP_UNLOCK(vp);
+	return 0;
 }
 
 /*
