@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.39 2015/06/23 00:30:47 matt Exp $
-./libexec/ld.elf_so-powerpc			base-sysutil-bin	compat,arch64,pic
+# $NetBSD: ad.powerpc,v 1.40 2015/06/23 01:03:35 matt Exp $
+./libexec/ld.elf_so-powerpc			base-sysutil-bin	compat,pic
 ./usr/bin/fdformat				base-util-bin
-./usr/libexec/ld.elf_so-powerpc			base-sysutil-bin	compat,arch64,pic
+./usr/libexec/ld.elf_so-powerpc			base-sysutil-bin	compat,pic

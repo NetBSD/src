@@ -1,14 +1,14 @@
-# $NetBSD: ad.powerpc,v 1.78 2015/06/23 00:30:47 matt Exp $
+# $NetBSD: ad.powerpc,v 1.79 2015/06/23 01:03:35 matt Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
 ./usr/include/clang-3.4/altivec.h		comp-obsolete		obsolete
 ./usr/include/clang-3.5/altivec.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/altivec.h		comp-c-include		llvm
-./usr/include/g++/bits/powerpc			comp-c-include		compat,arch64
-./usr/include/g++/bits/powerpc/c++config.h	comp-c-include		compat,arch64,gcc=48
-./usr/include/g++/bits/powerpc64		comp-c-include		compat,arch64
-./usr/include/g++/bits/powerpc64/c++config.h	comp-c-include		compat,arch64,gcc=48
+./usr/include/g++/bits/powerpc			comp-c-include		compat
+./usr/include/g++/bits/powerpc/c++config.h	comp-c-include		compat,gcc=48
+./usr/include/g++/bits/powerpc64		comp-c-include		compat
+./usr/include/g++/bits/powerpc64/c++config.h	comp-c-include		compat,gcc=48
 ./usr/include/gcc-4.1/altivec.h			comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=48,obsolete
