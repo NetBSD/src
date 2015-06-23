@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.856 2015/06/22 06:47:26 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.857 2015/06/23 01:38:17 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -757,6 +757,10 @@ MKGDB.ia64=	no
     ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
 MKPICLIB:=	no
 .endif
+
+# PowerPC64 and AArch64 ABI's are PIC
+MKPICLIB.powerpc64=	no
+#MKPICLIB.aarch64=	no
 
 #
 # On VAX using ELF, all objects are PIC, not just shared libraries,
