@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.108 2015/06/22 10:35:00 mrg Exp $
+	$NetBSD: syscalls.master,v 1.109 2015/06/23 04:44:08 dholland Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -38,6 +38,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include "opt_nfsserver.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
@@ -317,7 +318,11 @@
 152	UNIMPL
 153	UNIMPL
 154	UNIMPL
+#if defined(NFSSERVER) || !defined(_KERNEL_OPT)
 155	STD		{ int|netbsd32||nfssvc(int flag, netbsd32_voidp argp); }
+#else
+155	EXCL		netbsd32_nfssvc
+#endif
 156	COMPAT_43	{ int|netbsd32||ogetdirentries(int fd, \
 			    netbsd32_charp buf, u_int count, \
 			    netbsd32_longp basep); }
