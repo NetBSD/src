@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.6 2015/06/22 10:35:00 mrg Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.7 2015/06/23 04:45:53 dholland Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1132,6 +1132,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
+#if defined(NFSSERVER) || !defined(_KERNEL_OPT)
 	/* netbsd32_nfssvc */
 	case 155: {
 		struct netbsd32_nfssvc_args *p = params;
@@ -1140,6 +1141,8 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
+#else
+#endif
 	/* netbsd32_ogetdirentries */
 	case 156: {
 		struct compat_43_netbsd32_ogetdirentries_args *p = params;
@@ -5291,6 +5294,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+#if defined(NFSSERVER) || !defined(_KERNEL_OPT)
 	/* netbsd32_nfssvc */
 	case 155:
 		switch(ndx) {
@@ -5304,6 +5308,8 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+#else
+#endif
 	/* netbsd32_ogetdirentries */
 	case 156:
 		switch(ndx) {
@@ -10009,11 +10015,14 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+#if defined(NFSSERVER) || !defined(_KERNEL_OPT)
 	/* netbsd32_nfssvc */
 	case 155:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+#else
+#endif
 	/* netbsd32_ogetdirentries */
 	case 156:
 		if (ndx == 0 || ndx == 1)
