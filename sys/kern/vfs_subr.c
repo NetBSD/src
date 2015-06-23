@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.446 2015/05/06 15:57:08 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.447 2015/06/23 10:42:34 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.446 2015/05/06 15:57:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.447 2015/06/23 10:42:34 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -117,11 +117,12 @@ const int	vttoif_tab[9] = {
 int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 
+extern struct mount *dead_rootmount;
+
 /*
  * Local declarations.
  */
 
-static int getdevvp(dev_t, vnode_t **, enum vtype);
 static void vn_initialize_syncerd(void);
 
 /*
@@ -342,8 +343,13 @@ loop:
 int
 bdevvp(dev_t dev, vnode_t **vpp)
 {
+	struct vattr va;
 
-	return (getdevvp(dev, vpp, VBLK));
+	vattr_null(&va);
+	va.va_type = VBLK;
+	va.va_rdev = dev;
+
+	return vcache_new(dead_rootmount, NULL, &va, NOCRED, vpp);
 }
 
 /*
@@ -353,8 +359,13 @@ bdevvp(dev_t dev, vnode_t **vpp)
 int
 cdevvp(dev_t dev, vnode_t **vpp)
 {
+	struct vattr va;
 
-	return (getdevvp(dev, vpp, VCHR));
+	vattr_null(&va);
+	va.va_type = VCHR;
+	va.va_rdev = dev;
+
+	return vcache_new(dead_rootmount, NULL, &va, NOCRED, vpp);
 }
 
 /*
@@ -476,36 +487,6 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 		}
 	}
 	bufinsvn(bp, listheadp);
-}
-
-/*
- * Create a vnode for a device.
- * Used by bdevvp (block device) for root file system etc.,
- * and by cdevvp (character device) for console and kernfs.
- */
-static int
-getdevvp(dev_t dev, vnode_t **vpp, enum vtype type)
-{
-	vnode_t *vp;
-	vnode_t *nvp;
-	int error;
-
-	if (dev == NODEV) {
-		*vpp = NULL;
-		return (0);
-	}
-	error = getnewvnode(VT_NON, NULL, spec_vnodeop_p, NULL, &nvp);
-	if (error) {
-		*vpp = NULL;
-		return (error);
-	}
-	vp = nvp;
-	vp->v_type = type;
-	vp->v_vflag |= VV_MPSAFE;
-	uvm_vnp_setsize(vp, 0);
-	spec_node_init(vp, dev);
-	*vpp = vp;
-	return (0);
 }
 
 /*
