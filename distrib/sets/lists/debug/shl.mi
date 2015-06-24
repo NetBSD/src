@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.100 2015/06/22 06:02:02 matt Exp $
+# $NetBSD: shl.mi,v 1.101 2015/06/24 16:10:54 matt Exp $
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.197.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug			comp-sys-debug	debug,dynamicroot
@@ -7,7 +7,7 @@
 ./usr/libdata/debug/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libedit.so.3.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libevent.so.4.0.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libgcc_s.so.1.0.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libgcc_s.so.1.0.debug			comp-sys-debug	debug,dynamicroot,gcc
 ./usr/libdata/debug/lib/libipsec.so.3.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libkvm.so.6.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/liblzf.so.1.0.debug			comp-sys-debug	debug,dynamicroot
