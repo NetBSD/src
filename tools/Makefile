@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.180 2015/01/07 20:42:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.181 2015/06/24 22:20:26 matt Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -212,7 +212,8 @@ SUBDIR+=	mkubootimage
 .endif
 
 .if ${MKX11} != "no" && ${X11FLAVOUR} == "Xorg"
-SUBDIR+=	../external/mit/xorg/tools/makestrs
+SUBDIR+=	makestrs
+SUBDIR+=	makekeys
 .endif
 
 .endif # TOOLCHAIN_BUILDRUMP

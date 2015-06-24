@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.115 2015/02/23 00:09:30 jmcneill Exp $
+#	$NetBSD: bsd.x11.mk,v 1.116 2015/06/24 22:20:26 matt Exp $
 
 .include <bsd.init.mk>
 
@@ -217,7 +217,7 @@ CLEANFILES+= ${CPPSCRIPTS}
 .if defined(PKGDIST) && !defined(PKGCONFIG)
 PKGCONFIG=	${PKGDIST:tl}
 .endif
-.if defined(PKGCONFIG)
+.if defined(PKGCONFIG) && !defined(MLIBDIR)
 
 .include <bsd.files.mk>
 

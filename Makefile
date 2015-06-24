@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.313 2015/05/03 15:13:13 martin Exp $
+#	$NetBSD: Makefile,v 1.314 2015/06/24 22:20:24 matt Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -485,6 +485,9 @@ do-x11: .PHONY .MAKE
 .if ${X11FLAVOUR} == "Xorg"
 	${MAKEDIRTARGET} external/mit/xorg/tools all
 	${MAKEDIRTARGET} external/mit/xorg/lib build_install
+.if ${MKCOMPAT} != "no"
+	${MAKEDIRTARGET} compat build_install BOOTSTRAP_SUBDIRS="../../../external/mit/xorg/lib"
+.endif
 .else
 	${MAKEDIRTARGET} x11 build
 .endif

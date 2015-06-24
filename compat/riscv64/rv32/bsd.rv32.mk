@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.rv32.mk,v 1.1 2014/09/19 17:36:24 matt Exp $
+#	$NetBSD: bsd.rv32.mk,v 1.2 2015/06/24 22:20:25 matt Exp $
 
 
 .if empty(LD:M-m)
@@ -16,6 +16,7 @@ CSU_MACHINE_ARCH=	riscv32
 CRYPTO_MACHINE_CPU=	riscv32
 LDELFSO_MACHINE_CPU=	riscv32
 GOMP_MACHINE_ARCH=	riscv32
+XORG_MACHINE_ARCH=	riscv32
 
 .include "${.PARSEDIR}/../../m32.mk"
 .endif

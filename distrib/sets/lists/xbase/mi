@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.124 2014/07/12 19:46:22 nakayama Exp $
+# $NetBSD: mi,v 1.125 2015/06/24 22:20:25 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1533,7 +1533,7 @@
 ./usr/X11R7/include/pixman-1				base-x11-root	xorg
 ./usr/X11R7/include/xcb					base-x11-root	xorg
 ./usr/X11R7/include/xorg				base-x11-root	xorg
-./usr/X11R7/lib						base-x11-root	xorg
+./usr/X11R7/lib						base-x11-root	xorg,compatdir
 ./usr/X11R7/lib/X11					base-x11-root	xorg
 ./usr/X11R7/lib/X11/XErrorDB				-unknown-	xorg
 ./usr/X11R7/lib/X11/XKeysymDB				-unknown-	xorg
@@ -2936,7 +2936,7 @@
 ./usr/libdata/debug/usr/X11R6/libexec			base-sys-usr	x11
 ./usr/libdata/debug/usr/X11R7				base-sys-usr	xorg
 ./usr/libdata/debug/usr/X11R7/bin			base-sys-usr	xorg
-./usr/libdata/debug/usr/X11R7/lib			base-sys-usr	xorg
+./usr/libdata/debug/usr/X11R7/lib			base-sys-usr	xorg,compatdir
 ./usr/libdata/debug/usr/X11R7/lib/X11			base-sys-usr	xorg
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale		base-sys-usr	xorg
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib	base-sys-usr	xorg
