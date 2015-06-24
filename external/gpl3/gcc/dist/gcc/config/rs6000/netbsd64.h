@@ -87,6 +87,17 @@ extern int dot_symbols;
 
 #define ELFv2_ABI_CHECK (rs6000_elf_abi == 2)                   
 
+#undef CC1_OS_NETBSD_SPEC
+#define CC1_OS_NETBSD_SPEC \
+  NETBSD_CC1_AND_CC1PLUS_SPEC \
+  "%{!m32: %{!mrelocatable: %{!fno-pie: %{!fno-pic: \
+     %{!fpie: %{!fpic: \
+       %{!fPIE: %{!fPIC:-fPIC}}}}}}}}"
+/* %{!m32: %{!mcmodel*: -mcmodel=medium}}" */
+
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC CC1_OS_NETBSD_SPEC
+
 #undef	SUBSUBTARGET_OVERRIDE_OPTIONS
 #define	SUBSUBTARGET_OVERRIDE_OPTIONS				\
   do								\
