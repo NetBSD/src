@@ -3651,6 +3651,14 @@ finish_bases (tree type, bool direct)
 tree
 finish_offsetof (tree expr)
 {
+  /* If we're processing a template, we can't finish the semantics yet.
+     Otherwise we can fold the entire expression now.  */
+  if (processing_template_decl)
+    {
+      expr = build1 (OFFSETOF_EXPR, size_type_node, expr);
+      return expr;
+    }
+
   if (TREE_CODE (expr) == PSEUDO_DTOR_EXPR)
     {
       error ("cannot apply %<offsetof%> to destructor %<~%T%>",
@@ -9625,8 +9633,9 @@ maybe_resolve_dummy (tree object)
       /* In a lambda, need to go through 'this' capture.  */
       tree lam = CLASSTYPE_LAMBDA_EXPR (current_class_type);
       tree cap = lambda_expr_this_capture (lam);
-      object = build_x_indirect_ref (EXPR_LOCATION (object), cap,
-				     RO_NULL, tf_warning_or_error);
+      if (cap && cap != error_mark_node)
+	object = build_x_indirect_ref (EXPR_LOCATION (object), cap,
+				       RO_NULL, tf_warning_or_error);
     }
 
   return object;
