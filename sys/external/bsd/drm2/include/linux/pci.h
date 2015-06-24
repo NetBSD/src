@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.18 2015/06/24 18:20:36 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.19 2015/06/24 19:46:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ struct pci_dev {
 	bus_space_handle_t	pd_rom_bsh;
 	bus_size_t		pd_rom_size;
 	bus_space_handle_t	pd_rom_found_bsh;
-	bus_space_handle_t	pd_rom_found_size;
+	bus_size_t		pd_rom_found_size;
 	void			*pd_rom_vaddr;
 	device_t		pd_dev;
 	struct drm_device	*pd_drm_dev; /* XXX Nouveau kludge!  */
