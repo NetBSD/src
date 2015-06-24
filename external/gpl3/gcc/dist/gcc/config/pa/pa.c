@@ -2203,11 +2203,11 @@ pa_emit_move_sequence (rtx *operands, enum machine_mode mode, rtx scratch_reg)
 					  gen_rtx_HIGH (mode, operand1)));
 		  emit_move_insn (temp, gen_rtx_LO_SUM (mode, temp, operand1));
 		  if (mode == DImode)
-		    emit_insn (gen_insvdi (operand0, GEN_INT (32),
-					   const0_rtx, temp));
+		    insn = emit_insn (gen_insvdi (operand0, GEN_INT (32),
+						  const0_rtx, temp));
 		  else
-		    emit_insn (gen_insvsi (operand0, GEN_INT (32),
-					   const0_rtx, temp));
+		    insn = emit_insn (gen_insvsi (operand0, GEN_INT (32),
+						  const0_rtx, temp));
 		}
 	      else
 		{
@@ -2229,11 +2229,15 @@ pa_emit_move_sequence (rtx *operands, enum machine_mode mode, rtx scratch_reg)
 			}
 
 		      if (mode == DImode)
-			emit_insn (gen_insvdi (operand0, GEN_INT (len),
-					       GEN_INT (pos), GEN_INT (v5)));
+			insn = emit_insn (gen_insvdi (operand0,
+						      GEN_INT (len),
+						      GEN_INT (pos),
+						      GEN_INT (v5)));
 		      else
-			emit_insn (gen_insvsi (operand0, GEN_INT (len),
-					       GEN_INT (pos), GEN_INT (v5)));
+			insn = emit_insn (gen_insvsi (operand0,
+						      GEN_INT (len),
+						      GEN_INT (pos),
+						      GEN_INT (v5)));
 
 		      len = pos > 0 && pos < 5 ? pos : 5;
 		      pos -= len;
@@ -2585,28 +2589,29 @@ pa_output_move_double (rtx *operands)
 	       && GET_CODE (XEXP (addr, 0)) == MULT)
 	{
 	  rtx xoperands[4];
-	  rtx high_reg = gen_rtx_SUBREG (SImode, operands[0], 0);
 
-	  if (!reg_overlap_mentioned_p (high_reg, addr))
-	    {
-	      xoperands[0] = high_reg;
-	      xoperands[1] = XEXP (addr, 1);
-	      xoperands[2] = XEXP (XEXP (addr, 0), 0);
-	      xoperands[3] = XEXP (XEXP (addr, 0), 1);
-	      output_asm_insn ("{sh%O3addl %2,%1,%0|shladd,l %2,%O3,%1,%0}",
-			       xoperands);
-	      return "ldw 4(%0),%R0\n\tldw 0(%0),%0";
-	    }
-	  else
-	    {
-	      xoperands[0] = high_reg;
-	      xoperands[1] = XEXP (addr, 1);
-	      xoperands[2] = XEXP (XEXP (addr, 0), 0);
-	      xoperands[3] = XEXP (XEXP (addr, 0), 1);
-	      output_asm_insn ("{sh%O3addl %2,%1,%R0|shladd,l %2,%O3,%1,%R0}",
-			       xoperands);
-	      return "ldw 0(%R0),%0\n\tldw 4(%R0),%R0";
-	    }
+	  /* Load address into left half of destination register.  */
+	  xoperands[0] = gen_rtx_SUBREG (SImode, operands[0], 0);
+	  xoperands[1] = XEXP (addr, 1);
+	  xoperands[2] = XEXP (XEXP (addr, 0), 0);
+	  xoperands[3] = XEXP (XEXP (addr, 0), 1);
+	  output_asm_insn ("{sh%O3addl %2,%1,%0|shladd,l %2,%O3,%1,%0}",
+			   xoperands);
+	  return "ldw 4(%0),%R0\n\tldw 0(%0),%0";
+	}
+      else if (GET_CODE (addr) == PLUS
+	       && REG_P (XEXP (addr, 0))
+	       && REG_P (XEXP (addr, 1)))
+	{
+	  rtx xoperands[3];
+
+	  /* Load address into left half of destination register.  */
+	  xoperands[0] = gen_rtx_SUBREG (SImode, operands[0], 0);
+	  xoperands[1] = XEXP (addr, 0);
+	  xoperands[2] = XEXP (addr, 1);
+	  output_asm_insn ("{addl|add,l} %1,%2,%0",
+			   xoperands);
+	  return "ldw 4(%0),%R0\n\tldw 0(%0),%0";
 	}
     }
 
@@ -5416,6 +5421,7 @@ pa_output_global_address (FILE *file, rtx x, int round_constant)
 
       switch (GET_CODE (XEXP (XEXP (x, 0), 0)))
 	{
+	case LABEL_REF:
 	case SYMBOL_REF:
 	  base = XEXP (XEXP (x, 0), 0);
 	  output_addr_const (file, base);
@@ -5429,6 +5435,7 @@ pa_output_global_address (FILE *file, rtx x, int round_constant)
 
       switch (GET_CODE (XEXP (XEXP (x, 0), 1)))
 	{
+	case LABEL_REF:
 	case SYMBOL_REF:
 	  base = XEXP (XEXP (x, 0), 1);
 	  output_addr_const (file, base);
