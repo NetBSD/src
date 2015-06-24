@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.739 2015/06/22 06:02:01 matt Exp $
+# $NetBSD: shl.mi,v 1.740 2015/06/24 13:58:29 matt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -37,9 +37,9 @@
 ./lib/libevent.so				base-sys-shlib		dynamicroot
 ./lib/libevent.so.4				base-sys-shlib		dynamicroot
 ./lib/libevent.so.4.0				base-sys-shlib		dynamicroot
-./lib/libgcc_s.so				base-sys-shlib		dynamicroot
-./lib/libgcc_s.so.1				base-sys-shlib		dynamicroot
-./lib/libgcc_s.so.1.0				base-sys-shlib		dynamicroot
+./lib/libgcc_s.so				base-sys-shlib		dynamicroot,gcc
+./lib/libgcc_s.so.1				base-sys-shlib		dynamicroot,gcc
+./lib/libgcc_s.so.1.0				base-sys-shlib		dynamicroot,gcc
 ./lib/libipsec.so				base-net-shlib		dynamicroot
 ./lib/libipsec.so.3				base-net-shlib		dynamicroot
 ./lib/libipsec.so.3.0				base-net-shlib		dynamicroot
