@@ -1,5 +1,5 @@
 This is doc/cppinternals.info, produced by makeinfo version 4.12 from
-/space/rguenther/gcc-4.8.3/gcc-4.8.3/gcc/doc/cppinternals.texi.
+/space/rguenther/gcc-4.8.5/gcc-4.8.5/gcc/doc/cppinternals.texi.
 
 INFO-DIR-SECTION Software development
 START-INFO-DIR-ENTRY
@@ -8,7 +8,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the internals of the GNU C Preprocessor.
 
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
