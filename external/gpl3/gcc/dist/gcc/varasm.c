@@ -91,11 +91,6 @@ tree last_assemble_variable_decl;
 
 bool first_function_block_is_cold;
 
-/* We give all constants their own alias set.  Perhaps redundant with
-   MEM_READONLY_P, but pre-dates it.  */
-
-static alias_set_type const_alias_set;
-
 /* Whether we saw any functions with no_split_stack.  */
 
 static bool saw_no_split_stack;
@@ -3139,7 +3134,6 @@ build_constant_desc (tree exp)
   rtl = gen_const_mem (TYPE_MODE (TREE_TYPE (exp)), symbol);
   set_mem_attributes (rtl, exp, 1);
   set_mem_alias_set (rtl, 0);
-  set_mem_alias_set (rtl, const_alias_set);
 
   /* We cannot share RTX'es in pool entries.
      Mark this piece of RTL as required for unsharing.  */
@@ -3770,8 +3764,12 @@ output_constant_pool_1 (struct constant_descriptor_rtx *desc,
   /* Output the label.  */
   targetm.asm_out.internal_label (asm_out_file, "LC", desc->labelno);
 
-  /* Output the data.  */
-  output_constant_pool_2 (desc->mode, x, align);
+  /* Output the data.
+     Pass actual alignment value while emitting string constant to asm code
+     as function 'output_constant_pool_1' explicitly passes the alignment as 1
+     assuming that the data is already aligned which prevents the generation 
+     of fix-up table entries.  */
+  output_constant_pool_2 (desc->mode, x, desc->align);
 
   /* Make sure all constants in SECTION_MERGE and not SECTION_STRINGS
      sections have proper size.  */
@@ -5865,7 +5863,6 @@ init_varasm_once (void)
   const_desc_htab = htab_create_ggc (1009, const_desc_hash,
 				     const_desc_eq, NULL);
 
-  const_alias_set = new_alias_set ();
   shared_constant_pool = create_constant_pool ();
 
 #ifdef TEXT_SECTION_ASM_OP
@@ -6858,7 +6855,13 @@ default_file_start (void)
     fputs (ASM_APP_OFF, asm_out_file);
 
   if (targetm.asm_file_start_file_directive)
-    output_file_directive (asm_out_file, main_input_filename);
+    {
+      /* LTO produced units have no meaningful main_input_filename.  */
+      if (in_lto_p)
+	output_file_directive (asm_out_file, "<artificial>");
+      else
+	output_file_directive (asm_out_file, main_input_filename);
+    }
 }
 
 /* This is a generic routine suitable for use as TARGET_ASM_FILE_END
@@ -7120,6 +7123,8 @@ output_object_block (struct object_block *block)
       if (CONSTANT_POOL_ADDRESS_P (symbol))
 	{
 	  desc = SYMBOL_REF_CONSTANT (symbol);
+	  /* Pass 1 for align as we have already laid out everything in the block.
+	     So aligning shouldn't be necessary.  */
 	  output_constant_pool_1 (desc, 1);
 	  offset += GET_MODE_SIZE (desc->mode);
 	}
