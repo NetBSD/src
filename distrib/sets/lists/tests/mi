@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.629 2015/06/22 19:10:14 christos Exp $
+# $NetBSD: mi,v 1.630 2015/06/24 01:39:24 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -30,23 +30,23 @@
 ./usr/libdata/debug/usr/tests/dev/scsipi				tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/dev/sysmon				tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug		compattestfile,atf
-./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug		compattestfile,atf,rump
+./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/fifofs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/hfs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/kernfs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/lfs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/msdosfs				tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/nfs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/nfs/nfsservice				tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/nullfs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/psshfs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/ptyfs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/puffs/h_dtfs				tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/umapfs					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/union					tests-fs-debug		compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/fs/vfs					tests-fs-debug		compattestfile,atf,rump
+./usr/libdata/debug/usr/tests/fs/hfs					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/kernfs					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/lfs					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/msdosfs				tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/nfs					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/nfs/nfsservice				tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/nullfs					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/psshfs					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/ptyfs					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/puffs/h_dtfs				tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/umapfs					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/union					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/vfs					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/include					tests-include-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/include/machine				tests-include-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/include/sys				tests-include-tests	compattestfile,atf
@@ -152,12 +152,12 @@
 ./usr/libdata/debug/usr/tests/net/mcast					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/net					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/sys					tests-net-debug		compattestfile,atf
-./usr/libdata/debug/usr/tests/rump					tests-syscall-debug	compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/rump/modautoload				tests-syscall-debug	compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/rump/rumpkern				tests-syscall-debug	compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/rump/rumpkern/h_client			tests-syscall-debug	compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/rump/rumpkern/h_server			tests-syscall-debug	compattestfile,atf,rump
-./usr/libdata/debug/usr/tests/rump/rumpvfs				tests-syscall-debug	compattestfile,atf,rump
+./usr/libdata/debug/usr/tests/rump					tests-syscall-debug	compattestfile,atf
+./usr/libdata/debug/usr/tests/rump/modautoload				tests-syscall-debug	compattestfile,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern				tests-syscall-debug	compattestfile,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_client			tests-syscall-debug	compattestfile,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_server			tests-syscall-debug	compattestfile,atf
+./usr/libdata/debug/usr/tests/rump/rumpvfs				tests-syscall-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/sbin					tests-sbin-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs				tests-sbin-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/sys					tests-sys-debug		compattestfile,atf
