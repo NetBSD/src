@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.62 2013/11/06 20:19:03 mrg Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.63 2015/06/24 11:09:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.62 2013/11/06 20:19:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.63 2015/06/24 11:09:26 msaitoh Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -243,7 +243,7 @@ mp_ioapicprint(void *aux, const char *pnp)
 }
 
 /*
- * Map a chunk of memory read-only and return an appropraitely
+ * Map a chunk of memory read-only and return an appropriately
  * const'ed pointer.
  */
 
@@ -300,12 +300,12 @@ mpbios_probe(device_t self)
 
 	/* see if EBDA exists */
 
-	mpbios_page = mpbios_map (0, PAGE_SIZE, &t);
+	mpbios_page = mpbios_map(0, PAGE_SIZE, &t);
 
-	ebda =   *(const uint16_t *) (&mpbios_page[0x40e]);
+	ebda = *(const uint16_t *)(&mpbios_page[0x40e]);
 	ebda <<= 4;
 
-	memtop = *(const uint16_t *) (&mpbios_page[0x413]);
+	memtop = *(const uint16_t *)(&mpbios_page[0x413]);
 	memtop <<= 10;
 
 	mpbios_page = NULL;
@@ -434,10 +434,9 @@ mpbios_search(device_t self, paddr_t start, int count,
 		if ((m->signature == MP_FP_SIG) &&
 		    ((len = m->length << 4) != 0) &&
 		    mpbios_cksum(m, (m->length << 4)) == 0) {
-
 			mpbios_unmap (&t);
 
-			return mpbios_map (start+i, len, map);
+			return mpbios_map(start + i, len, map);
 		}
 	}
 	mpbios_unmap(&t);
@@ -717,7 +716,7 @@ mpbios_scan(device_t self, int *ncpup)
 		mp_nintr = intr_cnt;
 
 		/* re-walk the table, recording info of interest */
-		position = (const uint8_t *) mp_cth + sizeof(*mp_cth);
+		position = (const uint8_t *)mp_cth + sizeof(*mp_cth);
 		count = mp_cth->entry_count;
 		cur_intr = 0;
 
@@ -1196,8 +1195,7 @@ mpbios_bus(const uint8_t *ent, device_t self)
 		mp_busses[bus_id].mb_intr_print = mp_print_eisa_intr;
 		mp_busses[bus_id].mb_intr_cfg = mp_cfg_eisa_intr;
 
-		mp_busses[bus_id].mb_data =
-		    inb(ELCR0) | (inb(ELCR1) << 8);
+		mp_busses[bus_id].mb_data = inb(ELCR0) | (inb(ELCR1) << 8);
 
 		if (mp_eisa_bus != -1)
 			aprint_error("oops: multiple isa busses?\n");
