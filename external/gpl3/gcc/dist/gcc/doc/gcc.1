@@ -132,7 +132,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GCC 1"
-.TH GCC 1 "2014-05-22" "gcc-4.8.3" "GNU"
+.TH GCC 1 "2015-06-23" "gcc-4.8.5" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -495,6 +495,7 @@ in the following sections.
 \&\-mstrict\-align 
 \&\-momit\-leaf\-frame\-pointer  \-mno\-omit\-leaf\-frame\-pointer 
 \&\-mtls\-dialect=desc  \-mtls\-dialect=traditional 
+\&\-mfix\-cortex\-a53\-835769  \-mno\-fix\-cortex\-a53\-835769 
 \&\-march=\fR\fIname\fR  \fB\-mcpu=\fR\fIname\fR  \fB\-mtune=\fR\fIname\fR
 .Sp
 \&\fIAdapteva Epiphany Options\fR
@@ -905,7 +906,7 @@ See \s-1RS/6000\s0 and PowerPC Options.
 \&\-m64  \-m31  \-mdebug  \-mno\-debug  \-mesa  \-mzarch 
 \&\-mtpf\-trace \-mno\-tpf\-trace  \-mfused\-madd  \-mno\-fused\-madd 
 \&\-mwarn\-framesize  \-mwarn\-dynamicstack  \-mstack\-size \-mstack\-guard 
-\&\-mhotpatch[=\fR\fIhalfwords\fR\fB] \-mno\-hotpatch\fR
+\&\-mhotpatch=\fR\fIhalfwords\fR\fB,\fR\fIhalfwords\fR
 .Sp
 \&\fIScore Options\fR
 \&\fB\-meb \-mel 
@@ -1028,6 +1029,7 @@ See S/390 and zSeries Options.
 \&\fB\-ffixed\-\fR\fIreg\fR  \fB\-fexceptions 
 \&\-fnon\-call\-exceptions  \-fdelete\-dead\-exceptions  \-funwind\-tables 
 \&\-fasynchronous\-unwind\-tables 
+\&\-fno\-gnu\-unique 
 \&\-finhibit\-size\-directive  \-finstrument\-functions 
 \&\-finstrument\-functions\-exclude\-function\-list=\fR\fIsym\fR\fB,\fR\fIsym\fR\fB,... 
 \&\-finstrument\-functions\-exclude\-file\-list=\fR\fIfile\fR\fB,\fR\fIfile\fR\fB,... 
@@ -10246,6 +10248,15 @@ of \s-1TLS\s0 variables.  This is the default.
 .IX Item "-mtls-dialect=traditional"
 Use traditional \s-1TLS\s0 as the thread-local storage mechanism for dynamic accesses
 of \s-1TLS\s0 variables.
+.IP "\fB\-mfix\-cortex\-a53\-835769\fR" 4
+.IX Item "-mfix-cortex-a53-835769"
+.PD 0
+.IP "\fB\-mno\-fix\-cortex\-a53\-835769\fR" 4
+.IX Item "-mno-fix-cortex-a53-835769"
+.PD
+Enable or disable the workaround for the \s-1ARM\s0 Cortex\-A53 erratum number 835769.
+This will involve inserting a \s-1NOP\s0 instruction between memory instructions and
+64\-bit integer multiply-accumulate instructions.
 .IP "\fB\-march=\fR\fIname\fR" 4
 .IX Item "-march=name"
 Specify the name of the target architecture, optionally suffixed by one or
@@ -10523,8 +10534,8 @@ of the \fB\-mcpu=\fR option.  Permissible names are: \fBarmv2\fR,
 .Sp
 \&\fB\-march=native\fR causes the compiler to auto-detect the architecture
 of the build computer.  At present, this feature is only supported on
-Linux, and not all architectures are recognized.  If the auto-detect is
-unsuccessful the option has no effect.
+GNU/Linux, and not all architectures are recognized.  If the auto-detect
+is unsuccessful the option has no effect.
 .IP "\fB\-mtune=\fR\fIname\fR" 4
 .IX Item "-mtune=name"
 This option specifies the name of the target \s-1ARM\s0 processor for
@@ -10568,7 +10579,7 @@ this option may change in future \s-1GCC\s0 versions as \s-1CPU\s0 models come a
 .Sp
 \&\fB\-mtune=native\fR causes the compiler to auto-detect the \s-1CPU\s0
 of the build computer.  At present, this feature is only supported on
-Linux, and not all architectures are recognized.  If the auto-detect is
+GNU/Linux, and not all architectures are recognized.  If the auto-detect is
 unsuccessful the option has no effect.
 .IP "\fB\-mcpu=\fR\fIname\fR" 4
 .IX Item "-mcpu=name"
@@ -10588,8 +10599,8 @@ See \fB\-mtune\fR for more information.
 .Sp
 \&\fB\-mcpu=native\fR causes the compiler to auto-detect the \s-1CPU\s0
 of the build computer.  At present, this feature is only supported on
-Linux, and not all architectures are recognized.  If the auto-detect is
-unsuccessful the option has no effect.
+GNU/Linux, and not all architectures are recognized.  If the auto-detect
+is unsuccessful the option has no effect.
 .IP "\fB\-mfpu=\fR\fIname\fR" 4
 .IX Item "-mfpu=name"
 This specifies what floating-point hardware (or hardware emulation) is
@@ -11755,7 +11766,7 @@ are compatible with as many systems and code bases as possible.
 .IP "\fB\-mkernel\fR" 4
 .IX Item "-mkernel"
 Enable kernel development mode.  The \fB\-mkernel\fR option sets
-\&\fB\-static\fR, \fB\-fno\-common\fR, \fB\-fno\-cxa\-atexit\fR,
+\&\fB\-static\fR, \fB\-fno\-common\fR, \fB\-fno\-use\-cxa\-atexit\fR,
 \&\fB\-fno\-exceptions\fR, \fB\-fno\-non\-call\-exceptions\fR,
 \&\fB\-fapple\-kext\fR, \fB\-fno\-weak\fR and \fB\-fno\-rtti\fR where
 applicable.  This mode also sets \fB\-mno\-altivec\fR,
@@ -16296,12 +16307,13 @@ Supported values for \fIcpu_type\fR are \fB401\fR, \fB403\fR,
 \&\fBe6500\fR, \fBec603e\fR, \fBG3\fR, \fBG4\fR, \fBG5\fR,
 \&\fBtitan\fR, \fBpower3\fR, \fBpower4\fR, \fBpower5\fR, \fBpower5+\fR,
 \&\fBpower6\fR, \fBpower6x\fR, \fBpower7\fR, \fBpower8\fR, \fBpowerpc\fR,
-\&\fBpowerpc64\fR, and \fBrs64\fR.
+\&\fBpowerpc64\fR, \fBpowerpc64le\fR, and \fBrs64\fR.
 .Sp
-\&\fB\-mcpu=powerpc\fR, and \fB\-mcpu=powerpc64\fR specify pure 32\-bit
-PowerPC and 64\-bit PowerPC architecture machine
-types, with an appropriate, generic processor model assumed for
-scheduling purposes.
+\&\fB\-mcpu=powerpc\fR, \fB\-mcpu=powerpc64\fR, and
+\&\fB\-mcpu=powerpc64le\fR specify pure 32\-bit PowerPC (either
+endian), 64\-bit big endian PowerPC and 64\-bit little endian PowerPC
+architecture machine types, with an appropriate, generic processor
+model assumed for scheduling purposes.
 .Sp
 The other options specify a specific processor.  Code generated under
 those options runs best on that processor, and may not run at all on
@@ -17604,7 +17616,7 @@ The default is to not print debug information.
 Generate code that runs on \fIcpu-type\fR, which is the name of a system
 representing a certain processor type.  Possible values for
 \&\fIcpu-type\fR are \fBg5\fR, \fBg6\fR, \fBz900\fR, \fBz990\fR,
-\&\fBz9\-109\fR, \fBz9\-ec\fR and \fBz10\fR.
+\&\fBz9\-109\fR, \fBz9\-ec\fR, \fBz10\fR, \fBz196\fR, and \fBzEC12\fR.
 When generating code using the instructions available on z/Architecture,
 the default is \fB\-march=z900\fR.  Otherwise, the default is
 \&\fB\-march=g5\fR.
@@ -17662,20 +17674,17 @@ values have to be exact powers of 2 and \fIstack-size\fR has to be greater than
 In order to be efficient the extra code makes the assumption that the stack starts
 at an address aligned to the value given by \fIstack-size\fR.
 The \fIstack-guard\fR option can only be used in conjunction with \fIstack-size\fR.
-.IP "\fB\-mhotpatch[=\fR\fIhalfwords\fR\fB]\fR" 4
-.IX Item "-mhotpatch[=halfwords]"
-.PD 0
-.IP "\fB\-mno\-hotpatch\fR" 4
-.IX Item "-mno-hotpatch"
-.PD
+.IP "\fB\-mhotpatch=\fR\fIpre-halfwords\fR\fB,\fR\fIpost-halfwords\fR" 4
+.IX Item "-mhotpatch=pre-halfwords,post-halfwords"
 If the hotpatch option is enabled, a \*(L"hot-patching\*(R" function
 prologue is generated for all functions in the compilation unit.
 The funtion label is prepended with the given number of two-byte
-Nop instructions (\fIhalfwords\fR, maximum 1000000) or 12 Nop
-instructions if no argument is present.  Functions with a
-hot-patching prologue are never inlined automatically, and a
-hot-patching prologue is never generated for functions functions
-that are explicitly inline.
+\&\s-1NOP\s0 instructions (\fIpre-halfwords\fR, maximum 1000000).  After
+the label, 2 * \fIpost-halfwords\fR bytes are appended, using the
+largest \s-1NOP\s0 like instructions the architecture allows (maximum
+1000000).
+.Sp
+If both arguments are zero, hotpatching is disabled.
 .Sp
 This option can be overridden for individual functions with the
 \&\f(CW\*(C`hotpatch\*(C'\fR attribute.
@@ -17761,6 +17770,58 @@ single-precision mode by default.
 .IP "\fB\-m4\fR" 4
 .IX Item "-m4"
 Generate code for the \s-1SH4\s0.
+.IP "\fB\-m4\-100\fR" 4
+.IX Item "-m4-100"
+Generate code for \s-1SH4\-100\s0.
+.IP "\fB\-m4\-100\-nofpu\fR" 4
+.IX Item "-m4-100-nofpu"
+Generate code for \s-1SH4\-100\s0 in such a way that the
+floating-point unit is not used.
+.IP "\fB\-m4\-100\-single\fR" 4
+.IX Item "-m4-100-single"
+Generate code for \s-1SH4\-100\s0 assuming the floating-point unit is in
+single-precision mode by default.
+.IP "\fB\-m4\-100\-single\-only\fR" 4
+.IX Item "-m4-100-single-only"
+Generate code for \s-1SH4\-100\s0 in such a way that no double-precision
+floating-point operations are used.
+.IP "\fB\-m4\-200\fR" 4
+.IX Item "-m4-200"
+Generate code for \s-1SH4\-200\s0.
+.IP "\fB\-m4\-200\-nofpu\fR" 4
+.IX Item "-m4-200-nofpu"
+Generate code for \s-1SH4\-200\s0 without in such a way that the
+floating-point unit is not used.
+.IP "\fB\-m4\-200\-single\fR" 4
+.IX Item "-m4-200-single"
+Generate code for \s-1SH4\-200\s0 assuming the floating-point unit is in
+single-precision mode by default.
+.IP "\fB\-m4\-200\-single\-only\fR" 4
+.IX Item "-m4-200-single-only"
+Generate code for \s-1SH4\-200\s0 in such a way that no double-precision
+floating-point operations are used.
+.IP "\fB\-m4\-300\fR" 4
+.IX Item "-m4-300"
+Generate code for \s-1SH4\-300\s0.
+.IP "\fB\-m4\-300\-nofpu\fR" 4
+.IX Item "-m4-300-nofpu"
+Generate code for \s-1SH4\-300\s0 without in such a way that the
+floating-point unit is not used.
+.IP "\fB\-m4\-300\-single\fR" 4
+.IX Item "-m4-300-single"
+Generate code for \s-1SH4\-300\s0 in such a way that no double-precision
+floating-point operations are used.
+.IP "\fB\-m4\-300\-single\-only\fR" 4
+.IX Item "-m4-300-single-only"
+Generate code for \s-1SH4\-300\s0 in such a way that no double-precision
+floating-point operations are used.
+.IP "\fB\-m4\-340\fR" 4
+.IX Item "-m4-340"
+Generate code for \s-1SH4\-340\s0 (no \s-1MMU\s0, no \s-1FPU\s0).
+.IP "\fB\-m4\-500\fR" 4
+.IX Item "-m4-500"
+Generate code for \s-1SH4\-500\s0 (no \s-1FPU\s0).  Passes \fB\-isa=sh4\-nofpu\fR to the
+assembler.
 .IP "\fB\-m4a\-nofpu\fR" 4
 .IX Item "-m4a-nofpu"
 Generate code for the SH4al\-dsp, or for a SH4a in such a way that the
@@ -17781,6 +17842,27 @@ Generate code for the SH4a.
 Same as \fB\-m4a\-nofpu\fR, except that it implicitly passes
 \&\fB\-dsp\fR to the assembler.  \s-1GCC\s0 doesn't generate any \s-1DSP\s0
 instructions at the moment.
+.IP "\fB\-m5\-32media\fR" 4
+.IX Item "-m5-32media"
+Generate 32\-bit code for SHmedia.
+.IP "\fB\-m5\-32media\-nofpu\fR" 4
+.IX Item "-m5-32media-nofpu"
+Generate 32\-bit code for SHmedia in such a way that the
+floating-point unit is not used.
+.IP "\fB\-m5\-64media\fR" 4
+.IX Item "-m5-64media"
+Generate 64\-bit code for SHmedia.
+.IP "\fB\-m5\-64media\-nofpu\fR" 4
+.IX Item "-m5-64media-nofpu"
+Generate 64\-bit code for SHmedia in such a way that the
+floating-point unit is not used.
+.IP "\fB\-m5\-compact\fR" 4
+.IX Item "-m5-compact"
+Generate code for SHcompact.
+.IP "\fB\-m5\-compact\-nofpu\fR" 4
+.IX Item "-m5-compact-nofpu"
+Generate code for SHcompact in such a way that the
+floating-point unit is not used.
 .IP "\fB\-mb\fR" 4
 .IX Item "-mb"
 Compile code for the processor in big-endian mode.
@@ -17807,9 +17889,6 @@ Enable the use of bit manipulation instructions on \s-1SH2A\s0.
 .IX Item "-mfmovd"
 Enable the use of the instruction \f(CW\*(C`fmovd\*(C'\fR.  Check \fB\-mdalign\fR for
 alignment constraints.
-.IP "\fB\-mhitachi\fR" 4
-.IX Item "-mhitachi"
-Comply with the calling conventions defined by Renesas.
 .IP "\fB\-mrenesas\fR" 4
 .IX Item "-mrenesas"
 Comply with the calling conventions defined by Renesas.
@@ -17821,7 +17900,7 @@ targets of the \s-1SH\s0 toolchain.
 .IP "\fB\-mnomacsave\fR" 4
 .IX Item "-mnomacsave"
 Mark the \f(CW\*(C`MAC\*(C'\fR register as call-clobbered, even if
-\&\fB\-mhitachi\fR is given.
+\&\fB\-mrenesas\fR is given.
 .IP "\fB\-mieee\fR" 4
 .IX Item "-mieee"
 .PD 0
@@ -17862,14 +17941,14 @@ separated list.  For details on the atomic built-in functions see
 .IP "\fBnone\fR" 4
 .IX Item "none"
 Disable compiler generated atomic sequences and emit library calls for atomic
-operations.  This is the default if the target is not \f(CW\*(C`sh\-*\-linux*\*(C'\fR.
+operations.  This is the default if the target is not \f(CW\*(C`sh*\-*\-linux*\*(C'\fR.
 .IP "\fBsoft-gusa\fR" 4
 .IX Item "soft-gusa"
 Generate GNU/Linux compatible gUSA software atomic sequences for the atomic
 built-in functions.  The generated atomic sequences require additional support
 from the interrupt/exception handling code of the system and are only suitable
 for SH3* and SH4* single-core systems.  This option is enabled by default when
-the target is \f(CW\*(C`sh\-*\-linux*\*(C'\fR and SH3* or SH4*.  When the target is \s-1SH4A\s0,
+the target is \f(CW\*(C`sh*\-*\-linux*\*(C'\fR and SH3* or SH4*.  When the target is \s-1SH4A\s0,
 this option will also partially utilize the hardware atomic instructions
 \&\f(CW\*(C`movli.l\*(C'\fR and \f(CW\*(C`movco.l\*(C'\fR to create more efficient code, unless
 \&\fBstrict\fR is specified.
@@ -17888,7 +17967,7 @@ setting \f(CW\*(C`SR.IMASK = 1111\*(C'\fR.  This model works only when the progr
 in privileged mode and is only suitable for single-core systems.  Additional
 support from the interrupt/exception handling code of the system is not
 required.  This model is enabled by default when the target is
-\&\f(CW\*(C`sh\-*\-linux*\*(C'\fR and SH1* or SH2*.
+\&\f(CW\*(C`sh*\-*\-linux*\*(C'\fR and SH1* or SH2*.
 .IP "\fBhard-llcs\fR" 4
 .IX Item "hard-llcs"
 Generate hardware atomic sequences using the \f(CW\*(C`movli.l\*(C'\fR and \f(CW\*(C`movco.l\*(C'\fR
@@ -17922,19 +18001,21 @@ this can degrade overall performance due to the operand cache line flushes
 that are implied by the \f(CW\*(C`tas.b\*(C'\fR instruction.  On multi-core \s-1SH4A\s0
 processors the \f(CW\*(C`tas.b\*(C'\fR instruction must be used with caution since it
 can result in data corruption for certain cache configurations.
-.IP "\fB\-mspace\fR" 4
-.IX Item "-mspace"
-Optimize for space instead of speed.  Implied by \fB\-Os\fR.
 .IP "\fB\-mprefergot\fR" 4
 .IX Item "-mprefergot"
 When generating position-independent code, emit function calls using
 the Global Offset Table instead of the Procedure Linkage Table.
 .IP "\fB\-musermode\fR" 4
 .IX Item "-musermode"
-Don't generate privileged mode only code.  This option
-implies \fB\-mno\-inline\-ic_invalidate\fR
-if the inlined code would not work in user mode.
-This is the default when the target is \f(CW\*(C`sh\-*\-linux*\*(C'\fR.
+.PD 0
+.IP "\fB\-mno\-usermode\fR" 4
+.IX Item "-mno-usermode"
+.PD
+Don't allow (allow) the compiler generating privileged mode code.  Specifying
+\&\fB\-musermode\fR also implies \fB\-mno\-inline\-ic_invalidate\fR if the
+inlined code would not work in user mode.  \fB\-musermode\fR is the default
+when the target is \f(CW\*(C`sh*\-*\-linux*\*(C'\fR.  If the target is SH1* or SH2*
+\&\fB\-musermode\fR has no effect, since there is no user mode.
 .IP "\fB\-multcost=\fR\fInumber\fR" 4
 .IX Item "-multcost=number"
 Set the cost to assume for a multiply insn.
@@ -18310,8 +18391,8 @@ the rules of the \s-1ABI\s0.
 Set the instruction set, register set, and instruction scheduling parameters
 for machine type \fIcpu_type\fR.  Supported values for \fIcpu_type\fR are
 \&\fBv7\fR, \fBcypress\fR, \fBv8\fR, \fBsupersparc\fR, \fBhypersparc\fR,
-\&\fBleon\fR, \fBleon3\fR, \fBsparclite\fR, \fBf930\fR, \fBf934\fR,
-\&\fBsparclite86x\fR, \fBsparclet\fR, \fBtsc701\fR, \fBv9\fR,
+\&\fBleon\fR, \fBleon3\fR, \fBleon3v7\fR, \fBsparclite\fR, \fBf930\fR,
+\&\fBf934\fR, \fBsparclite86x\fR, \fBsparclet\fR, \fBtsc701\fR, \fBv9\fR,
 \&\fBultrasparc\fR, \fBultrasparc3\fR, \fBniagara\fR, \fBniagara2\fR,
 \&\fBniagara3\fR and \fBniagara4\fR.
 .Sp
@@ -18329,7 +18410,7 @@ implementations.
 .RS 4
 .IP "v7" 4
 .IX Item "v7"
-cypress
+cypress, leon3v7
 .IP "v8" 4
 .IX Item "v8"
 supersparc, hypersparc, leon, leon3
@@ -18395,11 +18476,11 @@ option \fB\-mcpu=\fR\fIcpu_type\fR does.
 The same values for \fB\-mcpu=\fR\fIcpu_type\fR can be used for
 \&\fB\-mtune=\fR\fIcpu_type\fR, but the only useful values are those
 that select a particular \s-1CPU\s0 implementation.  Those are \fBcypress\fR,
-\&\fBsupersparc\fR, \fBhypersparc\fR, \fBleon\fR, \fBleon3\fR, \fBf930\fR,
-\&\fBf934\fR, \fBsparclite86x\fR, \fBtsc701\fR, \fBultrasparc\fR,
-\&\fBultrasparc3\fR, \fBniagara\fR, \fBniagara2\fR, \fBniagara3\fR and
-\&\fBniagara4\fR.  With native Solaris and GNU/Linux toolchains, \fBnative\fR
-can also be used.
+\&\fBsupersparc\fR, \fBhypersparc\fR, \fBleon\fR, \fBleon3\fR,
+\&\fBleon3v7\fR, \fBf930\fR, \fBf934\fR, \fBsparclite86x\fR, \fBtsc701\fR,
+\&\fBultrasparc\fR, \fBultrasparc3\fR, \fBniagara\fR, \fBniagara2\fR,
+\&\fBniagara3\fR and \fBniagara4\fR.  With native Solaris and GNU/Linux
+toolchains, \fBnative\fR can also be used.
 .IP "\fB\-mv8plus\fR" 4
 .IX Item "-mv8plus"
 .PD 0
@@ -19299,6 +19380,19 @@ that needs this handling enables it on your behalf.
 Generate unwind table in \s-1DWARF\s0 2 format, if supported by target machine.  The
 table is exact at each instruction boundary, so it can be used for stack
 unwinding from asynchronous events (such as debugger or garbage collector).
+.IP "\fB\-fno\-gnu\-unique\fR" 4
+.IX Item "-fno-gnu-unique"
+On systems with recent \s-1GNU\s0 assembler and C library, the \*(C+ compiler
+uses the \f(CW\*(C`STB_GNU_UNIQUE\*(C'\fR binding to make sure that definitions
+of template static data members and static local variables in inline
+functions are unique even in the presence of \f(CW\*(C`RTLD_LOCAL\*(C'\fR; this
+is necessary to avoid problems with a library used by two different
+\&\f(CW\*(C`RTLD_LOCAL\*(C'\fR plugins depending on a definition in one of them and
+therefore disagreeing with the other one about the binding of the
+symbol.  But this causes \f(CW\*(C`dlclose\*(C'\fR to be ignored for affected
+DSOs; if your program relies on reinitialization of a \s-1DSO\s0 via
+\&\f(CW\*(C`dlclose\*(C'\fR and \f(CW\*(C`dlopen\*(C'\fR, you can use
+\&\fB\-fno\-gnu\-unique\fR.
 .IP "\fB\-fpcc\-struct\-return\fR" 4
 .IX Item "-fpcc-struct-return"
 Return \*(L"short\*(R" \f(CW\*(C`struct\*(C'\fR and \f(CW\*(C`union\*(C'\fR values in memory like
@@ -19994,7 +20088,7 @@ See the Info entry for \fBgcc\fR, or
 for contributors to \s-1GCC\s0.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1988\-2013 Free Software Foundation, Inc.
+Copyright (c) 1988\-2015 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or
