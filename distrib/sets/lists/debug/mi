@@ -1,6 +1,7 @@
-# $NetBSD: mi,v 1.118 2015/06/22 19:10:13 christos Exp $
+# $NetBSD: mi,v 1.119 2015/06/25 05:30:48 matt Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
+./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/i18n/libDECHanyu_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/i18n/libEUCTW_g.a			comp-c-debuglib		debuglib,compatfile
