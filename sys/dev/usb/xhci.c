@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.29 2015/06/23 12:22:35 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.30 2015/06/25 06:30:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.29 2015/06/23 12:22:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.30 2015/06/25 06:30:13 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1250,13 +1250,30 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 
 	switch (xfertype) {
 	case UE_INTERRUPT:
-		/* 6.2.3.6  */
+		if (pipe->up_interval != USBD_DEFAULT_INTERVAL)
+			ival = pipe->up_interval;
+
+		/* xHCI 6.2.3.6 Table 65, USB 2.0 9.6.6 */
 		if (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) {
-			ival = ival > 10 ? 10 : ival;
-			ival = ival < 3 ? 3 : ival;
+			int i;
+
+			/*
+			 * round ival down to "the nearest base 2 multiple of
+			 * bInterval * 8".
+			 * bInterval is at most 255 as its type is uByte.
+			 * 255(ms) = 2040(x 125us) < 2^11, so start with 11.
+			 */
+			for (i = 11; i > 0; i--) {
+				if ((ival * 8) >= (1 << i))
+					break;
+			}
+			ival = i;
 		} else {
-			ival = ival > 15 ? 15 : ival;
+			/* Interval = bInterval-1 for SS/HS */
+			ival--;
 		}
+		DPRINTFN(4, "ival %u", ival, 0, 0, 0);
+
 		if (USB_IS_SS(speed)) {
 			if (maxb > 0)
 				mps = 1024;
@@ -1279,12 +1296,11 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 		break;
 #ifdef notyet
 	case UE_ISOCHRONOUS:
-		if (speed == USB_SPEED_FULL) {
-			ival = ival > 18 ? 18 : ival;
-			ival = ival < 3 ? 3 : ival;
-		} else {
-			ival = ival > 15 ? 15 : ival;
-		}
+		if (speed == USB_SPEED_FULL)
+			ival += 3; /* 1ms -> 125us */
+		ival--;
+		DPRINTFN(4, "ival %u", ival, 0, 0, 0);
+
 		if (USB_IS_SS(speed)) {
 			mps = 1024;
 		} else {
