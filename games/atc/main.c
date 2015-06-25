@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2015/06/19 06:02:31 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2015/06/25 05:33:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2015/06/19 06:02:31 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2015/06/25 05:33:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ static int read_file(const char *);
 static const char *default_game(void);
 static const char *okay_game(const char *);
 static int list_games(void);
+static void quit(int);
 
 int
 main(int argc, char *argv[])
@@ -326,4 +327,31 @@ list_games(void)
 		return (-1);
 	}
 	return (0);
+}
+
+/* ARGSUSED */
+static void
+quit(int dummy __unused)
+{
+	int c;
+#ifdef BSD
+	struct itimerval	itv;
+#endif
+	ioaskquit();
+	c = getAChar();
+	if (c == EOF || c == 'y') {
+		/* disable timer */
+#ifdef BSD
+		itv.it_value.tv_sec = 0;
+		itv.it_value.tv_usec = 0;
+		(void)setitimer(ITIMER_REAL, &itv, NULL);
+#endif
+#ifdef SYSV
+		alarm(0);
+#endif
+		shutdown_gr();
+		(void)log_score(0);
+		exit(0);
+	}
+	ionoquit();
 }

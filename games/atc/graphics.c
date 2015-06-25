@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.19 2015/06/19 06:02:31 dholland Exp $	*/
+/*	$NetBSD: graphics.c,v 1.20 2015/06/25 05:33:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.19 2015/06/19 06:02:31 dholland Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.20 2015/06/25 05:33:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,6 +133,15 @@ init_gr(void)
 	credit = newwin(INPUT_LINES, PLANE_COLS, LINES - INPUT_LINES, 
 		COLS - PLANE_COLS);
 	planes = newwin(LINES - INPUT_LINES, PLANE_COLS, 0, COLS - PLANE_COLS);
+}
+
+void
+shutdown_gr(void)
+{
+	(void)clear();	/* move to top of screen */
+	(void)refresh();
+	(void)fflush(stdout);
+	(void)endwin();
 }
 
 void
@@ -293,43 +302,25 @@ ioerror(int pos, int len, const char *str)
 	(void)fflush(stdout);
 }
 
-/* ARGSUSED */
-void
-quit(int dummy __unused)
-{
-	int			c, y, x;
-#ifdef BSD
-	struct itimerval	itv;
-#endif
+static int ioquit_x, ioquit_y;
 
-	getyx(input, y, x);
+void
+ioaskquit(void)
+{
+	getyx(input, ioquit_y, ioquit_x);
 	(void)wmove(input, 2, 0);
 	(void)waddstr(input, "Really quit? (y/n) ");
 	(void)wclrtobot(input);
 	(void)wrefresh(input);
 	(void)fflush(stdout);
+}
 
-	c = getchar();
-	if (c == EOF || c == 'y') {
-		/* disable timer */
-#ifdef BSD
-		itv.it_value.tv_sec = 0;
-		itv.it_value.tv_usec = 0;
-		(void)setitimer(ITIMER_REAL, &itv, NULL);
-#endif
-#ifdef SYSV
-		alarm(0);
-#endif
-		(void)fflush(stdout);
-		(void)clear();
-		(void)refresh();
-		(void)endwin();
-		(void)log_score(0);
-		exit(0);
-	}
+void
+ionoquit(void)
+{
 	(void)wmove(input, 2, 0);
 	(void)wclrtobot(input);
-	(void)wmove(input, y, x);
+	(void)wmove(input, ioquit_y, ioquit_x);
 	(void)wrefresh(input);
 	(void)fflush(stdout);
 }
@@ -378,42 +369,20 @@ planewin(void)
 }
 
 void
-loser(const PLANE *p, const char *s)
+losermsg(const PLANE *p, const char *msg)
 {
-	int			c;
-#ifdef BSD
-	struct itimerval	itv;
-#endif
-
-	/* disable timer */
-#ifdef BSD
-	itv.it_value.tv_sec = 0;
-	itv.it_value.tv_usec = 0;
-	(void)setitimer(ITIMER_REAL, &itv, NULL);
-#endif
-#ifdef SYSV
-	alarm(0);
-#endif
-
 	(void)wmove(input, 0, 0);
 	(void)wclrtobot(input);
 	/* p may be NULL if we ran out of memory */
 	if (p == NULL)
 		(void)wprintw(input, "%s\n\nHit space for top players list...",
-		    s);
+		    msg);
 	else {
-		(void)wprintw(input, "Plane '%c' %s\n\n", name(p), s);
+		(void)wprintw(input, "Plane '%c' %s\n\n", name(p), msg);
 		(void)wprintw(input, "Hit space for top players list...");
 	}
 	(void)wrefresh(input);
 	(void)fflush(stdout);
-	while ((c = getchar()) != EOF && c != ' ')
-		;
-	(void)clear();	/* move to top of screen */
-	(void)refresh();
-	(void)endwin();
-	(void)log_score(0);
-	exit(0);
 }
 
 void
