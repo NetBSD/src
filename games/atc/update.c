@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.26 2015/06/19 06:02:31 dholland Exp $	*/
+/*	$NetBSD: update.c,v 1.27 2015/06/25 05:33:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.26 2015/06/19 06:02:31 dholland Exp $");
+__RCSID("$NetBSD: update.c,v 1.27 2015/06/25 05:33:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,6 +230,32 @@ update(int dummy __unused)
 #ifdef SYSV
 	alarm(sp->update_secs);
 #endif
+}
+
+void
+loser(const PLANE *p, const char *s)
+{
+	int			c;
+#ifdef BSD
+	struct itimerval	itv;
+#endif
+
+	/* disable timer */
+#ifdef BSD
+	itv.it_value.tv_sec = 0;
+	itv.it_value.tv_usec = 0;
+	(void)setitimer(ITIMER_REAL, &itv, NULL);
+#endif
+#ifdef SYSV
+	alarm(0);
+#endif
+
+	losermsg(p, s);
+	while ((c = getAChar()) != EOF && c != ' ')
+		;
+	shutdown_gr();
+	(void)log_score(0);
+	exit(0);
 }
 
 const char *
