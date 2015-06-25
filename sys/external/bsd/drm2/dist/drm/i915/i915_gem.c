@@ -1869,6 +1869,15 @@ out:
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	if (ret == -ERESTART)
 		uvm_wait("i915flt");
+
+	/*
+	 * Remap EINTR to success, so that we return to userland.
+	 * On the way out, we'll deliver the signal, and if the signal
+	 * is not fatal then the user code which faulted will most likely
+	 * fault again, and we'll come back here for another try.
+	 */
+	if (ret == -EINTR)
+		ret = 0;
 	/* XXX Deal with GPU hangs here...  */
 	intel_runtime_pm_put(dev_priv);
 	/* XXX errno Linux->NetBSD */
