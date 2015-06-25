@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1966 2015/06/22 06:02:02 matt Exp $
+#	$NetBSD: mi,v 1.1967 2015/06/25 05:30:47 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3475,6 +3475,7 @@
 ./usr/include/wordexp.h				comp-c-include
 ./usr/include/zconf.h				comp-c-include
 ./usr/include/zlib.h				comp-c-include
+./usr/lib					base-sys-usr		compatdir
 ./usr/lib/crt0.o				comp-c-lib		compatfile
 ./usr/lib/gcrt0.o				comp-c-lib		compatfile
 ./usr/lib/i18n/libBIG5.a			comp-i18n-lib		compatfile
