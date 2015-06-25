@@ -1,4 +1,5 @@
-# $NetBSD: shl.mi,v 1.101 2015/06/24 16:10:54 matt Exp $
+# $NetBSD: shl.mi,v 1.102 2015/06/25 05:30:48 matt Exp $
+./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.197.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug			comp-sys-debug	debug,dynamicroot
@@ -26,6 +27,7 @@
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
 ./usr/libdata/debug/libexec/ld.elf_so.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/usr/lib					base-sys-usr	debug,compatdir
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug		comp-i18n-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug		comp-i18n-debug	debug,compatfile
