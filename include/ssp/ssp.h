@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.11 2015/05/09 15:41:47 christos Exp $	*/
+/*	$NetBSD: ssp.h,v 1.12 2015/06/25 18:41:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2011 The NetBSD Foundation, Inc.
@@ -64,18 +64,19 @@
 #define __ssp_check(buf, len, bos) \
 	if (bos(buf) != (size_t)-1 && len > bos(buf)) \
 		__chk_fail()
-#define __ssp_redirect_raw(rtype, fun, symbol, args, call, bos) \
+#define __ssp_redirect_raw(rtype, fun, symbol, args, call, cond, bos) \
 rtype __ssp_real_(fun) args __RENAME(symbol); \
 __ssp_inline rtype fun args __RENAME(__ssp_protected_ ## fun); \
 __ssp_inline rtype fun args { \
-	__ssp_check(__buf, __len, bos); \
+	if (cond) \
+		__ssp_check(__buf, __len, bos); \
 	return __ssp_real_(fun) call; \
 }
 
 #define __ssp_redirect(rtype, fun, args, call) \
-    __ssp_redirect_raw(rtype, fun, fun, args, call, __ssp_bos)
+    __ssp_redirect_raw(rtype, fun, fun, args, call, 1, __ssp_bos)
 #define __ssp_redirect0(rtype, fun, args, call) \
-    __ssp_redirect_raw(rtype, fun, fun, args, call, __ssp_bos0)
+    __ssp_redirect_raw(rtype, fun, fun, args, call, 1, __ssp_bos0)
 
 #define __ssp_overlap(a, b, l) \
     (((a) <= (b) && (b) <= (a) + (l)) || ((b) <= (a) && (a) <= (b) + (l)))
