@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 2015/06/19 06:02:31 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 2015/06/25 05:33:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -64,6 +64,13 @@ extern struct termios	tty_start, tty_new;
 
 extern DISPLACEMENT	displacement[MAXDIR];
 
+/* in graphics.c */
+void shutdown_gr(void);
+void ioaskquit(void);
+void ionoquit(void);
+void losermsg(const PLANE *p, const char *msg);
+
+/* misc */
 void		addplane(void);
 void		append(LIST *, PLANE *);
 void		check_adir(int, int, int);
@@ -88,7 +95,6 @@ char		name(const PLANE *);
 int		number(int);
 void		open_score_file(void);
 void		planewin(void);
-void		quit(int);
 void		redraw(void);
 void		setup_screen(const C_SCREEN *);
 void		update(int);
