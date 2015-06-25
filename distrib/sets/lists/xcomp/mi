@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.165 2015/06/24 22:20:25 matt Exp $
+#	 $NetBSD: mi,v 1.166 2015/06/25 05:30:48 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6050,6 +6050,7 @@
 ./usr/X11R7/include/xorg/xsha1.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xvdix.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xvmcext.h			-unknown-	xorg
+./usr/X11R7/lib						-unknown-	xorg,compatdir
 ./usr/X11R7/lib/X11/config/Amoeba.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/DGUX.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/FreeBSD.cf			-unknown-	xorg
