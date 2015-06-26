@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.5 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.6 2015/06/26 15:39:11 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.5 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.6 2015/06/26 15:39:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -2361,7 +2361,7 @@ upgt_free_cmd(struct upgt_softc *sc)
 
 static int
 upgt_bulk_xmit(struct upgt_softc *sc, struct upgt_data *data,
-    struct usbd_pipe * pipeh, uint32_t *size, int flags)
+    struct usbd_pipe *pipeh, uint32_t *size, int flags)
 {
         usbd_status status;
 
