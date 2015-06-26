@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.159 2015/05/08 09:44:45 martin Exp $
+# $NetBSD: HACKS,v 1.160 2015/06/26 10:25:41 pooka Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -379,6 +379,28 @@ descr
 
 	The compiler seems to get confused about the two filename variables
 	used in the link(2) system call.
+kcah
+
+hack	g++ 5.1 barfs on volatile in initializers
+cdata	26 Jun 2015
+who	pooka
+file	src/lib/libpthread/pthread_types.h	: 1.14
+file	src/lib/libpthread/pthread_types.h	: 1.15
+pr	lib/49989
+descr
+	Trying to use e.g. pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER
+	in C++ results in:
+		error: temporary of non-literal type '__pthread_mutex_st'
+		in a constant expression
+		constexpr mutex() _NOEXCEPT : __m_(PTHREAD_MUTEX_INITIALIZER) {}
+		[...]
+		include/pthread_types.h:101:8: note: '__pthread_mutex_st' is
+		not literal because:
+		struct __pthread_mutex_st {
+		^
+		include/pthread_types.h:103:17: note:   non-static data
+		member '__pthread_mutex_st::ptm_errorcheck' has volatile type
+		pthread_spin_t ptm_errorcheck;
 kcah
 
 port	vax
