@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.32 2015/06/26 15:43:46 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.33 2015/06/26 15:51:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.32 2015/06/26 15:43:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.33 2015/06/26 15:51:05 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -125,6 +125,7 @@ struct xhci_pipe {
 #define XHCI_TRB_3_ED_BIT XHCI_TRB_3_ISP_BIT
 
 static usbd_status xhci_open(struct usbd_pipe *);
+static void xhci_close_pipe(struct usbd_pipe *);
 static int xhci_intr1(struct xhci_softc * const);
 static void xhci_softintr(void *);
 static void xhci_poll(struct usbd_bus *);
@@ -1522,7 +1523,7 @@ xhci_open(struct usbd_pipe *pipe)
  * If the endpoint to be closed is ep0, disable_slot.
  * Should be called with sc_lock held.
  */
-static usbd_status
+static void
 xhci_close_pipe(struct usbd_pipe *pipe)
 {
 	struct xhci_softc * const sc = pipe->up_dev->ud_bus->ub_hcpriv;
@@ -1530,17 +1531,16 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
 	const u_int dci = xhci_ep_get_dci(ed);
 	struct xhci_trb trb;
-	usbd_status err;
 	uint32_t *cp;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	if (sc->sc_dying)
-		return USBD_IOERROR;
+		return;
 
 	if (xs == NULL || xs->xs_idx == 0)
 		/* xs is uninitialized before xhci_init_slot */
-		return USBD_IOERROR;
+		return;
 
 	DPRINTFN(4, "slot %u dci %u", xs->xs_idx, dci, 0, 0);
 
@@ -1548,11 +1548,12 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	if (pipe->up_dev->ud_depth == 0)
-		return USBD_NORMAL_COMPLETION;
+		return;
 
 	if (dci == XHCI_DCI_EP_CONTROL) {
 		DPRINTFN(4, "closing ep0", 0, 0, 0, 0);
-		return xhci_disable_slot(sc, xs->xs_idx);
+		xhci_disable_slot(sc, xs->xs_idx);
+		return;
 	}
 
 	/*
@@ -1582,10 +1583,8 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	trb.trb_3 = XHCI_TRB_3_SLOT_SET(xs->xs_idx) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_CONFIGURE_EP);
 
-	err = xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
+	(void)xhci_do_command(sc, &trb, USBD_DEFAULT_TIMEOUT);
 	usb_syncmem(&xs->xs_dc_dma, 0, sc->sc_pgsz, BUS_DMASYNC_POSTREAD);
-
-	return err;
 }
 
 /*
@@ -3143,7 +3142,7 @@ xhci_device_ctrl_close(struct usbd_pipe *pipe)
 {
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	(void)xhci_close_pipe(pipe);
+	xhci_close_pipe(pipe);
 }
 
 /* ------------------ */
@@ -3265,7 +3264,7 @@ xhci_device_bulk_close(struct usbd_pipe *pipe)
 {
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	(void)xhci_close_pipe(pipe);
+	xhci_close_pipe(pipe);
 }
 
 /* ---------------- */
@@ -3399,7 +3398,7 @@ xhci_device_intr_close(struct usbd_pipe *pipe)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(15, "%p", pipe, 0, 0, 0);
 
-	(void)xhci_close_pipe(pipe);
+	xhci_close_pipe(pipe);
 }
 
 /* ------------ */
