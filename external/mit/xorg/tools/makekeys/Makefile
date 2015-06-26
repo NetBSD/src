@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/06/25 01:38:09 matt Exp $
+#	$NetBSD: Makefile,v 1.4 2015/06/26 02:43:26 matt Exp $
 
 NOMAN=	1
 
@@ -14,14 +14,16 @@ CPPFLAGS+=	-I.
 XPINCS=		X.h Xarch.h Xos.h Xosdefs.h keysymdef.h
 X11INCS=	Xlib.h Xresource.h
 CLEANFILES+=	${XPINCS} ${X11INCS} Xfuncproto.h
+.if !make(clean) && !make(cleandir)
 .BEGIN:
-	@rm -f X11 && ln -s . X11
+	@rm -f ${.OBJDIR}/X11 && ln -s . X11
 .for i in ${XPINCS}
 	@rm -f $i && ln -s ${X11SRCDIR.xproto}/$i .
 .endfor
 .for i in ${X11INCS}
 	@rm -f $i && ln -s ${X11SRCDIR.X11}/include/X11/$i .
 .endfor
+.endif
 
 Xfuncproto.h: ${X11SRCDIR.xproto}/Xfuncproto.h.in
 	${TOOL_SED} -e 's/#undef NARROWPROTO/#define NARROWPROTO/'  \
