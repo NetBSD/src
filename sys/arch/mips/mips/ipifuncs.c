@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.10 2015/06/10 22:31:00 matt Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.11 2015/06/26 22:29:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10 2015/06/10 22:31:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.11 2015/06/26 22:29:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10 2015/06/10 22:31:00 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
+#include <mips/locore.h>
 #ifdef DDB
 #include <mips/db_machdep.h>
 #endif
