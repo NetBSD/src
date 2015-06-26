@@ -1,4 +1,4 @@
-#	$NetBSD: TWRP1025,v 1.20 2015/01/30 14:54:46 nonaka Exp $
+#	$NetBSD: TWRP1025,v 1.21 2015/06/26 21:54:41 matt Exp $
 #
 #	TWRP1025 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"TWRP1025-$Revision: 1.20 $"
+ident 		"TWRP1025-$Revision: 1.21 $"
 
 maxusers	32
 
@@ -231,3 +231,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	kttcp			# kernel ttcp
 pseudo-device	vlan			# 802.1Q VLANs
 pseudo-device	lockstat		# lock profiling
+
+cinclude	"arch/evbppc/conf/TWRP1025.local"
