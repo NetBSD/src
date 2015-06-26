@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.31 2015/06/26 15:39:55 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.32 2015/06/26 15:43:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.31 2015/06/26 15:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.32 2015/06/26 15:43:46 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1684,9 +1684,13 @@ xhci_rhpsc(struct xhci_softc * const sc, u_int port)
 	uint8_t *p;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "port %u status change", port, 0, 0, 0);
+	DPRINTFN(4, "xhci%d: port %u status change", device_unit(sc->sc_dev),
+	    port, 0, 0);
 
 	if (xfer == NULL)
+		return;
+
+	if (port > sc->sc_maxports)
 		return;
 
 	p = xfer->ux_buf;
@@ -1772,6 +1776,8 @@ xhci_handle_event(struct xhci_softc * const sc,
 		}
 		DPRINTFN(14, "xfer %p", xfer, 0, 0, 0);
 		/* XXX I dunno why this happens */
+		KASSERT(xfer->ux_pipe != NULL);
+
 		if (!xfer->ux_pipe->up_repeat &&
 		    SIMPLEQ_EMPTY(&xfer->ux_pipe->up_queue)) {
 			DPRINTFN(1, "xfer done: xfer not started", 0, 0, 0, 0);
