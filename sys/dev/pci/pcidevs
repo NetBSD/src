@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1227 2015/06/02 02:07:54 nonaka Exp $
+$NetBSD: pcidevs,v 1.1228 2015/06/26 07:31:18 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5077,6 +5077,7 @@ product PLANEX FNW_3800_TX	0xab07	FNW-3800-TX 10/100 Ethernet
 product PLX PCI_400	0x1077	VScom PCI-400 4 port serial
 product PLX PCI_800	0x1076	VScom PCI-800 8 port serial
 product PLX PCI_200	0x1103	VScom PCI-200 2 port serial
+product PLX PEX_8111	0x8111	PEX 8111 PCIe-to-PCI Bridge
 product PLX PEX_8112	0x8112	PEX 8112 PCIe-to-PCI Bridge
 product PLX PEX_8114	0x8114	PEX 8114 PCIe-to-PCI/PCI-X Bridge
 product PLX 9030	0x9030	9030 I/O Accelrator
