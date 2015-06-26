@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.13 2008/08/02 19:46:30 matt Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.14 2015/06/26 01:33:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -84,6 +84,23 @@ struct	__pthread_attr_st {
 };
 
 /*
+ * C++ (namely libc++) expects to be using PTHREAD_FOO_INITIALIZER as a
+ * member initializer. This does not work for volatile types. Since C++
+ * does not touch the guts of those types, we redefine them as non-volatile
+ */
+#ifdef __cplusplus
+# ifdef __CPU_SIMPLE_LOCK_PAD
+#  define __pthread_spin_t unsigned char
+# else
+#  define __pthread_spin_t unsigned int
+# endif
+# define __pthread_volatile
+#else /* __cplusplus */
+# define __pthread_spin_t pthread_spin_t
+# define __pthread_volatile volatile
+#endif /* __cplusplus */
+
+/*
  * ptm_owner is the actual lock field which is locked via CAS operation.
  * This structure's layout is designed to compatible with the previous
  * version used in SA pthreads.
@@ -100,16 +117,16 @@ struct	__pthread_attr_st {
 #endif
 struct	__pthread_mutex_st {
 	unsigned int	ptm_magic;
-	pthread_spin_t	ptm_errorcheck;
+	__pthread_spin_t ptm_errorcheck;
 #ifdef __CPU_SIMPLE_LOCK_PAD
 	uint8_t		ptm_pad1[3];
 #endif
-	pthread_spin_t	ptm_interlock;	/* unused - backwards compat */
+	__pthread_spin_t ptm_interlock;	/* unused - backwards compat */
 #ifdef __CPU_SIMPLE_LOCK_PAD
 	uint8_t		ptm_pad2[3];
 #endif
-	volatile pthread_t ptm_owner;
-	pthread_t * volatile ptm_waiters;
+	__pthread_volatile pthread_t ptm_owner;
+	pthread_t * __pthread_volatile ptm_waiters;
 	unsigned int	ptm_recursed;
 	void		*ptm_spare2;	/* unused - backwards compat */
 };
@@ -145,7 +162,7 @@ struct	__pthread_cond_st {
 	unsigned int	ptc_magic;
 
 	/* Protects the queue of waiters */
-	pthread_spin_t	ptc_lock;
+	__pthread_spin_t ptc_lock;
 	pthread_queue_t	ptc_waiters;
 
 	pthread_mutex_t	*ptc_mutex;	/* Current mutex */
@@ -179,7 +196,7 @@ struct	__pthread_once_st {
 
 struct	__pthread_spinlock_st {
 	unsigned int	pts_magic;
-	pthread_spin_t	pts_spin;
+	__pthread_spin_t pts_spin;
 	int		pts_flags;
 };
 	
@@ -197,12 +214,12 @@ struct	__pthread_rwlock_st {
 	unsigned int	ptr_magic;
 
 	/* Protects data below */
-	pthread_spin_t	ptr_interlock;
+	__pthread_spin_t ptr_interlock;
 
 	pthread_queue_t	ptr_rblocked;
 	pthread_queue_t	ptr_wblocked;
 	unsigned int	ptr_nreaders;
-	volatile pthread_t ptr_owner;
+	__pthread_volatile pthread_t ptr_owner;
 	void	*ptr_private;
 };
 
