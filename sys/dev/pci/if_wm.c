@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.335 2015/06/13 15:47:58 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.336 2015/06/26 06:57:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.335 2015/06/13 15:47:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.336 2015/06/26 06:57:17 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -295,6 +295,7 @@ struct wm_softc {
 	bus_size_t sc_ios;		/* I/O space size */
 	bus_space_tag_t sc_flasht;	/* flash registers space tag */
 	bus_space_handle_t sc_flashh;	/* flash registers space handle */
+	bus_size_t sc_flashs;		/* flash registers space size */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 
 	struct ethercom sc_ethercom;	/* ethernet common data */
@@ -2061,7 +2062,7 @@ int_failed:
 		sc->sc_nvm_wordsize = 2048;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_ICH8_FLASH);
 		if (pci_mapreg_map(pa, WM_ICH8_FLASH, memtype, 0,
-		    &sc->sc_flasht, &sc->sc_flashh, NULL, NULL)) {
+		    &sc->sc_flasht, &sc->sc_flashh, NULL, &sc->sc_flashs)) {
 			aprint_error_dev(sc->sc_dev,
 			    "can't map FLASH registers\n");
 			goto fail_5;
@@ -2807,10 +2808,13 @@ wm_detach(device_t self, int flags __unused)
 		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_ss);
 		sc->sc_ss = 0;
 	}
-
 	if (sc->sc_ios) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		sc->sc_ios = 0;
+	}
+	if (sc->sc_flashs) {
+		bus_space_unmap(sc->sc_flasht, sc->sc_flashh, sc->sc_flashs);
+		sc->sc_flashs = 0;
 	}
 
 	if (sc->sc_tx_lock)
