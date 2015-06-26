@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1221 2015/06/02 02:11:22 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1222 2015/06/26 07:31:44 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1227 2015/06/02 02:07:54 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1228 2015/06/26 07:31:18 msaitoh Exp
  */
 
 /*
@@ -5084,6 +5084,7 @@
 #define	PCI_PRODUCT_PLX_PCI_400	0x1077		/* VScom PCI-400 4 port serial */
 #define	PCI_PRODUCT_PLX_PCI_800	0x1076		/* VScom PCI-800 8 port serial */
 #define	PCI_PRODUCT_PLX_PCI_200	0x1103		/* VScom PCI-200 2 port serial */
+#define	PCI_PRODUCT_PLX_PEX_8111	0x8111		/* PEX 8111 PCIe-to-PCI Bridge */
 #define	PCI_PRODUCT_PLX_PEX_8112	0x8112		/* PEX 8112 PCIe-to-PCI Bridge */
 #define	PCI_PRODUCT_PLX_PEX_8114	0x8114		/* PEX 8114 PCIe-to-PCI/PCI-X Bridge */
 #define	PCI_PRODUCT_PLX_9030	0x9030		/* 9030 I/O Accelrator */
