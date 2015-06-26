@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.15 2015/06/06 15:26:15 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.16 2015/06/26 16:19:28 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.15 2015/06/06 15:26:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.16 2015/06/26 16:19:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -602,36 +602,30 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	}
 
 	if (USB_IS_SS(dev->ud_speed)) {
-		int blen;
-
 		/* get short bos desc */
 		err = usbd_get_bos_desc(dev, index, &bd);
-		if (err) {
-			DPRINTF("get_bos_desc=%d", err, 0, 0, 0);
-			goto bad;
-		}
-		blen = UGETW(bd.wTotalLength);
-		bdp = kmem_alloc(blen, KM_SLEEP);
-		if (bdp == NULL) {
-			err = USBD_NOMEM;
-			goto bad;
-		}
+		if (!err) {
+			int blen = UGETW(bd.wTotalLength);
+			bdp = kmem_alloc(blen, KM_SLEEP);
+			if (bdp == NULL) {
+				err = USBD_NOMEM;
+				goto bad;
+			}
 
-		/* Get the full desc */
-		for (i = 0; i < 3; i++) {
-			err = usbd_get_desc(dev, UDESC_BOS, index, blen, bdp);
-			if (!err)
-				break;
-			usbd_delay_ms(dev, 200);
-		}
-		if (err) {
-			DPRINTF("get_bos_desc=%d", err, 0, 0, 0);
-			goto bad;
-		}
-		if (bdp->bDescriptorType != UDESC_BOS) {
-			DPRINTF("bad desc %d", bdp->bDescriptorType, 0, 0, 0);
-			err = USBD_INVAL;
-			goto bad;
+			/* Get the full desc */
+			for (i = 0; i < 3; i++) {
+				err = usbd_get_desc(dev, UDESC_BOS, index, blen,
+				    bdp);
+				if (!err)
+					break;
+				usbd_delay_ms(dev, 200);
+			}
+			if (err || bdp->bDescriptorType != UDESC_BOS) {
+				DPRINTF("error %d or bad desc %d", err,
+				    bdp->bDescriptorType, 0, 0);
+				kmem_free(bdp, blen);
+				bdp = NULL;
+			}
 		}
 	}
 	dev->ud_bdesc = bdp;
