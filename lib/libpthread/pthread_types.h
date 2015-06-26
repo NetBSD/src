@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.14 2015/06/26 01:33:08 pooka Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.15 2015/06/26 10:05:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -89,11 +89,9 @@ struct	__pthread_attr_st {
  * does not touch the guts of those types, we redefine them as non-volatile
  */
 #ifdef __cplusplus
-# ifdef __CPU_SIMPLE_LOCK_PAD
-#  define __pthread_spin_t unsigned char
-# else
-#  define __pthread_spin_t unsigned int
-# endif
+# define __pthread_spin_t \
+    struct { unsigned char _simplelock[sizeof(__cpu_simple_lock_t)]; } \
+        __aligned(__alignof(__cpu_simple_lock_t))
 # define __pthread_volatile
 #else /* __cplusplus */
 # define __pthread_spin_t pthread_spin_t
