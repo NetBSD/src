@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.2 2015/03/29 09:43:26 matt Exp $ */
+/* $NetBSD: lock.h,v 1.3 2015/06/26 14:20:11 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *__ptr)
 static __inline int __unused
 __cpu_simple_lock_try(__cpu_simple_lock_t *__ptr)
 {
-	return __atomic_exchange_n(__ptr, __SIMPLELOCK_LOCKED, __ATOMIC_ACQUIRE) == __SIMPLELOCK_LOCKED;
+	return __atomic_exchange_n(__ptr, __SIMPLELOCK_LOCKED, __ATOMIC_ACQUIRE) == __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline void __unused
