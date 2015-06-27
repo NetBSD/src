@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.167 2015/06/27 16:21:08 matt Exp $
+#	 $NetBSD: mi,v 1.168 2015/06/27 17:07:58 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6271,18 +6271,18 @@
 ./usr/X11R7/lib/libglut_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/liblbxutil.a				-obsolete-	obsolete,compatx11file
 ./usr/X11R7/lib/liblbxutil_p.a				-obsolete-	obsolete,compatx11file
-./usr/X11R7/lib/liblisp.a				-unknown-	xorg
-./usr/X11R7/lib/liblisp_p.a				-unknown-	profile,xorg
-./usr/X11R7/lib/libmp.a					-unknown-	xorg
-./usr/X11R7/lib/libmp_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/liblisp.a				-obsolete-	obsolete
+./usr/X11R7/lib/liblisp_p.a				-obsolete-	obsolete
+./usr/X11R7/lib/libmp.a					-obsolete-	obsolete
+./usr/X11R7/lib/libmp_p.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libpciaccess.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libpciaccess_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libpixman-1.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libpixman-1_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libpthread-stubs.a			-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libpthread-stubs_p.a			-unknown-	profile,xorg,compatx11file
-./usr/X11R7/lib/libre.a					-unknown-	xorg
-./usr/X11R7/lib/libre_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libre.a					-obsolete-	obsolete
+./usr/X11R7/lib/libre_p.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libxcb-atom.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libxcb-atom_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-aux.a				-unknown-	xorg,compatx11file

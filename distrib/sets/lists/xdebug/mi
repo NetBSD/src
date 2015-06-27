@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.16 2015/06/27 16:21:08 matt Exp $
+# $NetBSD: mi,v 1.17 2015/06/27 17:07:59 matt Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R6/lib/libFS_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libGLU_g.a				-unknown-	debuglib,x11
@@ -104,12 +104,12 @@
 ./usr/X11R7/lib/libgbm_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libglut_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/liblbxutil_g.a				-obsolete-	obsolete
-./usr/X11R7/lib/liblisp_g.a				-unknown-	debuglib,xorg
-./usr/X11R7/lib/libmp_g.a				-unknown-	debuglib,xorg
+./usr/X11R7/lib/liblisp_g.a				-obsolete-	obsolete
+./usr/X11R7/lib/libmp_g.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libpciaccess_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libpixman-1_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libpthread-stubs_g.a			-unknown-	debuglib,xorg,compatx11file
-./usr/X11R7/lib/libre_g.a				-unknown-	debuglib,xorg
+./usr/X11R7/lib/libre_g.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libxcb-atom_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-aux_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-composite_g.a			-unknown-	debuglib,xorg,compatx11file
