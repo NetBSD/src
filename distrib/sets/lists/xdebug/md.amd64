@@ -1,9 +1,9 @@
-# $NetBSD: md.amd64,v 1.15 2015/06/24 22:20:25 matt Exp $
-./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg,compatfile
-./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg,compatfile
-./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg,compatfile
-./usr/X11R7/lib/libchromeXvMC_g.a			-unknown-	debuglib,xorg,compatfile
-./usr/X11R7/lib/libdrm_intel_g.a			-unknown-	debuglib,xorg,compatfile
+# $NetBSD: md.amd64,v 1.16 2015/06/27 16:21:08 matt Exp $
+./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg,compatx11file
+./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
+./usr/X11R7/lib/libdrm_intel_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	xorg,debuglib
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		-unknown-	xorg,debuglib
@@ -41,11 +41,11 @@
 ./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/xorgconfig.debug	-unknown-	obsolete
-./usr/libdata/debug/usr/X11R7/lib/libI810XvMC.so.1.0.debug	-unknown-		xorg,debug,compatfile
-./usr/libdata/debug/usr/X11R7/lib/libIntelXvMC.so.1.0.debug	-unknown-		xorg,debug,compatfile
-./usr/libdata/debug/usr/X11R7/lib/libchromeXvMC.so.1.0.debug	-unknown-		xorg,debug,compatfile
-./usr/libdata/debug/usr/X11R7/lib/libchromeXvMCPro.so.1.0.debug	-unknown-		xorg,debug,compatfile
-./usr/libdata/debug/usr/X11R7/lib/libdrm_intel.so.0.0.debug	-unknown-		xorg,debug,compatfile
+./usr/libdata/debug/usr/X11R7/lib/libI810XvMC.so.1.0.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libIntelXvMC.so.1.0.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libchromeXvMC.so.1.0.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libchromeXvMCPro.so.1.0.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libdrm_intel.so.0.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i810_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i915_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i965_dri.so.0.debug	-unknown-		xorg,debug

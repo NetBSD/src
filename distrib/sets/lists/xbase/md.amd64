@@ -1,17 +1,17 @@
-# $NetBSD: md.amd64,v 1.12 2015/06/24 22:20:25 matt Exp $
-./usr/X11R7/lib/libI810XvMC.so			-unknown-		xorg,compatfile
-./usr/X11R7/lib/libI810XvMC.so.1		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libI810XvMC.so.1.0		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libIntelXvMC.so			-unknown-		xorg,compatfile
-./usr/X11R7/lib/libIntelXvMC.so.1		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libIntelXvMC.so.1.0		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libchromeXvMC.so		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libchromeXvMC.so.1		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libchromeXvMC.so.1.0		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libchromeXvMCPro.so		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libchromeXvMCPro.so.1		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libchromeXvMCPro.so.1.0		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libdrm_intel.so			-unknown-		xorg,compatfile
-./usr/X11R7/lib/libdrm_intel.so.0		-unknown-		xorg,compatfile
-./usr/X11R7/lib/libdrm_intel.so.0.0		-unknown-		xorg,compatfile
+# $NetBSD: md.amd64,v 1.13 2015/06/27 16:21:07 matt Exp $
+./usr/X11R7/lib/libI810XvMC.so			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libI810XvMC.so.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libI810XvMC.so.1.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libIntelXvMC.so			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libIntelXvMC.so.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libIntelXvMC.so.1.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMC.so		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMC.so.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMC.so.1.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMCPro.so		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMCPro.so.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMCPro.so.1.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libdrm_intel.so			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libdrm_intel.so.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libdrm_intel.so.0.0		-unknown-		xorg,compatx11file
 ./usr/X11R7/share/pciids/pci.ids		-unknown-		obsolete
