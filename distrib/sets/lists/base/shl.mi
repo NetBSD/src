@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.740 2015/06/24 13:58:29 matt Exp $
+# $NetBSD: shl.mi,v 1.741 2015/06/27 15:42:08 matt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -857,6 +857,6 @@
 ./usr/lib/security/pam_securetty.so.4		base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_self.so.4		base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_skey.so.4		base-sys-shlib		compatfile,skey,pam
-./usr/lib/security/pam_ssh.so.4			base-sys-shlib		compatfile,crypto
+./usr/lib/security/pam_ssh.so.4			base-sys-shlib		compatfile,crypto,pam
 ./usr/lib/security/pam_unix.so.4		base-sys-shlib		compatfile,pam
 ./usr/libexec/ld.elf_so				base-sys-shlib
