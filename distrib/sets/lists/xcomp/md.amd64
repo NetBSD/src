@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.40 2015/06/24 22:20:25 matt Exp $
+# $NetBSD: md.amd64,v 1.41 2015/06/27 16:21:08 matt Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -71,21 +71,21 @@
 ./usr/X11R6/man/man3/XF86VidModeValidateModeLine.3	-unknown-	.man,x11
 ./usr/X11R6/man/man4/fpit.4				-unknown-	.man,x11
 ./usr/X11R7/include/intel_bufmgr.h			-unknown-	obsolete
-./usr/X11R7/lib/libI810XvMC.a				-unknown-	xorg,compatfile
-./usr/X11R7/lib/libI810XvMC_p.a				-unknown-	profile,xorg,compatfile
-./usr/X11R7/lib/libI810XvMC_pic.a			-unknown-	xorg,picinstall,compatfile
-./usr/X11R7/lib/libIntelXvMC.a				-unknown-	xorg,compatfile
-./usr/X11R7/lib/libIntelXvMC_p.a			-unknown-	profile,xorg,compatfile
-./usr/X11R7/lib/libIntelXvMC_pic.a			-unknown-	xorg,picinstall,compatfile
-./usr/X11R7/lib/libchromeXvMC.a				-unknown-	xorg,compatfile
-./usr/X11R7/lib/libchromeXvMCPro.a			-unknown-	xorg,compatfile
-./usr/X11R7/lib/libchromeXvMCPro_p.a			-unknown-	profile,xorg,compatfile
-./usr/X11R7/lib/libchromeXvMCPro_pic.a			-unknown-	xorg,picinstall,compatfile
-./usr/X11R7/lib/libchromeXvMC_p.a			-unknown-	profile,xorg,compatfile
-./usr/X11R7/lib/libchromeXvMC_pic.a			-unknown-	xorg,picinstall,compatfile
-./usr/X11R7/lib/libdrm_intel.a				-unknown-	xorg,compatfile
-./usr/X11R7/lib/libdrm_intel_p.a			-unknown-	profile,xorg,compatfile
-./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg,picinstall,compatfile
+./usr/X11R7/lib/libI810XvMC.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libI810XvMC_p.a				-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libI810XvMC_pic.a			-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libIntelXvMC.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libIntelXvMC_p.a			-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libIntelXvMC_pic.a			-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libchromeXvMC.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMCPro.a			-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMCPro_p.a			-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMCPro_pic.a			-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libchromeXvMC_p.a			-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libchromeXvMC_pic.a			-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libdrm_intel.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libdrm_intel_p.a			-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/pkgconfig/libdrm_intel.pc		-unknown-	xorg
 ./usr/libdata/lint/llib-lI810XvMC.ln			-unknown-	lint,xorg
 #./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
