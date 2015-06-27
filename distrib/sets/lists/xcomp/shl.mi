@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.41 2015/06/27 16:21:08 matt Exp $
+#	$NetBSD: shl.mi,v 1.42 2015/06/27 20:27:03 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -102,12 +102,12 @@
 ./usr/X11R7/lib/libgbm_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libglut_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/liblbxutil_pic.a			-obsolete-	obsolete
-./usr/X11R7/lib/liblisp_pic.a				-unknown-	xorg,picinstall
-./usr/X11R7/lib/libmp_pic.a				-unknown-	xorg,picinstall
+./usr/X11R7/lib/liblisp_pic.a				-obsolete-	obsolete
+./usr/X11R7/lib/libmp_pic.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libpciaccess_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libpixman-1_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libpthread-stubs_pic.a			-unknown-	xorg,picinstall,compatx11file
-./usr/X11R7/lib/libre_pic.a				-unknown-	xorg,picinstall
+./usr/X11R7/lib/libre_pic.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libxcb-atom_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-aux_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-composite_pic.a			-unknown-	xorg,picinstall,compatx11file
