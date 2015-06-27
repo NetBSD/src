@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.858 2015/06/24 22:20:26 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.859 2015/06/27 16:21:07 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -83,7 +83,8 @@ EXTERNAL_GCC_SUBDIR=	gcc
 .else
 EXTERNAL_GCC_SUBDIR=	/does/not/exist
 .endif
-
+.else
+MKGCCCMDS?=	no
 .endif
 
 .if !empty(MACHINE_ARCH:Mearm*)
@@ -914,6 +915,8 @@ MKCOMPAT?=	yes
 .else
 # Don't let this build where it really isn't supported.
 MKCOMPAT:=	no
+MKCOMPATTESTS:=	no
+MKCOMPATX11:=	no
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386" \
@@ -1013,7 +1016,7 @@ MKKMOD=		no
 #
 _MKVARS.no= \
 	MKBSDGREP MKBSDTAR \
-	MKCATPAGES MKCOMPATTESTS MKCRYPTO_RC5 MKCTF MKDEBUG \
+	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCRYPTO_RC5 MKCTF MKDEBUG \
 	MKDEBUGLIB MKDTRACE MKEXTSRC MKGROFFHTMLDOC \
 	MKKYUA MKLLD MKLLDB MKLINT \
 	MKMANZ MKMCLINKER MKOBJDIRS \
