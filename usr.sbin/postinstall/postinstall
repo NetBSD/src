@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.191 2015/03/31 07:57:57 martin Exp $
+# $NetBSD: postinstall,v 1.192 2015/06/27 09:56:54 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -500,7 +500,7 @@ file_exists_exact()
 	_path="${1#.}"
 	[ -h "${DEST_DIR}${_path}" ] || \
         	[ -e "${DEST_DIR}${_path}" ] || return 1
-	while [ "${_path}" != "/" ] ; do
+	while [ "${_path}" != "/" -a "${_path}" != "." ] ; do
 		_dirname="$(dirname "${_path}" 2>/dev/null)"
 		_basename="$(basename "${_path}" 2>/dev/null)"
 		ls -fa "${DEST_DIR}${_dirname}" 2> /dev/null \
