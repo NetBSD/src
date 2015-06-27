@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.29 2015/06/15 02:55:02 matt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.30 2015/06/27 03:31:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,14 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.29 2015/06/15 02:55:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.30 2015/06/27 03:31:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/systm.h>
 
-#include <mips/reg.h>
+#include <mips/locore.h>
 #include <mips/mips_opcode.h>
+#include <mips/reg.h>
 
 #include <machine/db_machdep.h>
 
@@ -118,8 +119,24 @@ static const char * const spec3_name[64] = {
 	[OP_DINSM] = "dinsm",
 	[OP_DINSU] = "dinsu",
 	[OP_DINS] = "dins",
+	[OP_LWLE] = "lwle",
+	[OP_LWRE] = "lwre",
+	[OP_CACHEE] = "cachee",
+	[OP_SBE] = "sbe",
+	[OP_SHE] = "she",
+	[OP_SCE] = "sce",
+	[OP_SWE] = "swe",
 	[OP_BSHFL] = "bshfl",
+	[OP_SWLE] = "swle",
+	[OP_SWRE] = "swre",
+	[OP_PREFE] = "prefe",
 	[OP_DBSHFL] = "dbshfl",
+	[OP_LBUE] = "lbue",
+	[OP_LHUE] = "lhue",
+	[OP_LBE] = "lbe",
+	[OP_LHE] = "lhe",
+	[OP_LLE] = "lle",
+	[OP_LWE] = "lwe",
 	[OP_RDHWR] = "rdhwr",
 };
 
@@ -202,7 +219,7 @@ static void print_addr(db_addr_t);
 db_addr_t
 db_disasm(db_addr_t loc, bool altfmt)
 {
-	u_int32_t instr;
+	uint32_t instr;
 
 	/*
 	 * Take some care with addresses to not UTLB here as it
@@ -217,7 +234,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 		}
 	}
 	else {
-		instr =  *(u_int32_t *)loc;
+		instr =  *(uint32_t *)loc;
 	}
 
 	return (db_disasm_insn(instr, loc, altfmt));
@@ -241,6 +258,10 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 		const char *name = spec_name[i.RType.func];
 		if (i.word == 0) {
 			db_printf("nop");
+			break;
+		}
+		if (i.word == (1 << 6)) {
+			db_printf("ssnop");
 			break;
 		}
 		if (i.word == (3 << 6)) {
@@ -277,7 +298,6 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 		case OP_SRL:
 		case OP_SRA:
 		case OP_DSLL:
-
 		case OP_DSRL:
 		case OP_DSRA:
 		case OP_DSLL32:
@@ -308,7 +328,8 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 		case OP_JR:
 		case OP_JALR:
-			db_printf("\t%s", reg_name[i.RType.rs]);
+			db_printf("\t%s%s", reg_name[i.RType.rs],
+			    (insn & __BIT(10)) ? ".hb" : "");
 			bdslot = true;
 			break;
 		case OP_MTLO:
@@ -711,6 +732,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 	case OP_J:
 	case OP_JAL:
+	case OP_JALX:
 		db_printf("%s\t", op_name[i.JType.op]);
 		print_addr((loc & ~0x0FFFFFFFL) | (i.JType.target << 2));
 		bdslot = true;
