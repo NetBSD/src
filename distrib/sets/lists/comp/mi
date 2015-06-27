@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1968 2015/06/26 14:40:31 matt Exp $
+#	$NetBSD: mi,v 1.1969 2015/06/27 15:47:29 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -76,7 +76,7 @@
 ./usr/bin/nm					comp-util-bin		binutils
 ./usr/bin/objcopy				comp-util-bin		binutils
 ./usr/bin/objdump				comp-util-bin		binutils
-./usr/bin/p++					comp-cxx-bin		pcc
+./usr/bin/p++					comp-cxx-bin		pcc,cxx
 ./usr/bin/pcc					comp-c-bin		pcc
 ./usr/bin/protoize				comp-c-bin		gcc=4,gcccmds
 ./usr/bin/protoize				comp-obsolete		gcc=45,obsolete
