@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.8 2015/06/10 22:31:00 matt Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.9 2015/06/28 22:14:38 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.8 2015/06/10 22:31:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.9 2015/06/28 22:14:38 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -474,9 +474,11 @@ rmixl_cpuinfo_print(u_int cpuindex)
 		printf("ci_tlb_slot %d\n", ci->ci_tlb_slot);
 		printf("ci_pmap_asid_cur %d\n", ci->ci_pmap_asid_cur);
 		printf("ci_tlb_info %p\n", ci->ci_tlb_info);
-		printf("ci_pmap_seg0tab %p\n", ci->ci_pmap_seg0tab);
+		printf("ci_pmap_kern_segtab %p\n", ci->ci_pmap_kern_segtab);
+		printf("ci_pmap_user_segtab %p\n", ci->ci_pmap_user_segtab);
 #ifdef _LP64
-		printf("ci_pmap_segtab %p\n", ci->ci_pmap_segtab);
+		printf("ci_pmap_kern_seg0tab %p\n", ci->ci_pmap_kern_seg0tab);
+		printf("ci_pmap_user_seg0tab %p\n", ci->ci_pmap_user_seg0tab);
 #else
 		printf("ci_pmap_srcbase %#"PRIxVADDR"\n", ci->ci_pmap_srcbase);
 		printf("ci_pmap_dstbase %#"PRIxVADDR"\n", ci->ci_pmap_dstbase);
