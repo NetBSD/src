@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.170 2015/06/27 16:21:07 matt Exp $
+#	$NetBSD: sets.subr,v 1.171 2015/06/28 23:49:33 matt Exp $
 #
 
 #
@@ -144,7 +144,7 @@ if [ "${MKATF}" = "no" ]; then
 else
 	testset="tests"
 fi
-if [ "${MKDEBUG}" = "no" ]; then
+if [ "${MKDEBUG}" = "no" -a "${MKDEBUGLIB}" = "no" ]; then
 	debugset=""
 	xdebugset=""
 else
@@ -179,7 +179,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.170 2015/06/27 16:21:07 matt Exp $
+# 	# $NetBSD: sets.subr,v 1.171 2015/06/28 23:49:33 matt Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
