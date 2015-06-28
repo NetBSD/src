@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.14 2015/06/03 04:31:46 hsuenaga Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.15 2015/06/28 12:58:52 kiyohara Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -220,10 +220,6 @@ mvpex*	at mvsoc? offset ? irq ?
 # On-chip IDMA Controller
 gtidmac* at mvsoc? offset ? irq ?
 
-# On-chip SD/MMC Interface
-mvsdio* at mvsoc? offset ? irq ?
-sdmmc*	at mvsdio?
-
 # On-chip Timers
 mvsoctmr* at mvsoc? offset ? irq ?
 
@@ -267,8 +263,6 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # USB Generic driver
 ugen*	at uhub? port ?
-
-ld*	at sdmmc?
 
 
 # Pseudo-Devices
