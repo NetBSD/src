@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.139 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.140 2015/06/28 10:04:32 maxv Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.139 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.140 2015/06/28 10:04:32 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -82,7 +82,7 @@ TAILQ_HEAD(inodelst, inode);			/* List of active snapshots */
 struct snap_info {
 	kmutex_t si_lock;			/* Lock this snapinfo */
 	kmutex_t si_snaplock;			/* Snapshot vnode common lock */
-	lwp_t *si_owner;			/* Sanplock owner */
+	lwp_t *si_owner;			/* Snaplock owner */
 	struct inodelst si_snapshots;		/* List of active snapshots */
 	daddr_t *si_snapblklist;		/* Snapshot block hints list */
 	uint32_t si_gen;			/* Incremented on change */
@@ -198,12 +198,12 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	/*
 	 * If the vnode already is a snapshot, return.
 	 */
-	if ((VTOI(vp)->i_flags & SF_SNAPSHOT)) {
-		if ((VTOI(vp)->i_flags & SF_SNAPINVAL))
+	if ((ip->i_flags & SF_SNAPSHOT)) {
+		if ((ip->i_flags & SF_SNAPINVAL))
 			return EINVAL;
 		if (ctime) {
-			ctime->tv_sec = DIP(VTOI(vp), mtime);
-			ctime->tv_nsec = DIP(VTOI(vp), mtimensec);
+			ctime->tv_sec = DIP(ip, mtime);
+			ctime->tv_nsec = DIP(ip, mtimensec);
 		}
 		return 0;
 	}
@@ -269,9 +269,9 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * Create a copy of the superblock and its summary information.
 	 */
 	error = snapshot_copyfs(mp, vp, &sbbuf);
-	copy_fs = (struct fs *)((char *)sbbuf + ffs_blkoff(fs, fs->fs_sblockloc));
 	if (error)
 		goto out;
+	copy_fs = (struct fs *)((char *)sbbuf + ffs_blkoff(fs, fs->fs_sblockloc));
 	/*
 	 * Expunge unlinked files from our view.
 	 */
