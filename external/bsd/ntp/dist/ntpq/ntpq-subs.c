@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.9 2015/04/07 17:34:19 christos Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.10 2015/06/28 15:37:37 kardel Exp $	*/
 
 /*
  * ntpq-subs.c - subroutines which are called to perform ntpq commands.
@@ -3101,7 +3101,7 @@ validate_ifnum(
 {
 	if (prow->ifnum == ifnum)
 		return;
-	if (prow->ifnum + 1 == ifnum) {
+	if (prow->ifnum + 1 <= ifnum) {
 		if (*pfields < IFSTATS_FIELDS)
 			fprintf(fp, "Warning: incomplete row with %d (of %d) fields",
 				*pfields, IFSTATS_FIELDS);
