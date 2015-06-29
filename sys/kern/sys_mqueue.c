@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.38 2015/06/20 14:41:54 martin Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.39 2015/06/29 15:44:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.38 2015/06/20 14:41:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.39 2015/06/29 15:44:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -618,8 +618,8 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 	struct mq_attr *attr = NULL, a;
 	int error;
 
-	if ((SCARG(uap, oflag) & O_CREAT) && (SCARG(uap,attr) != NULL)) {
-		error = copyin(&a, SCARG(uap,attr), sizeof(a));
+	if ((SCARG(uap, oflag) & O_CREAT) != 0 && SCARG(uap, attr) != NULL) {
+		error = copyin(SCARG(uap, attr), &a, sizeof(a));
 		if (error)
 			return error;
 		attr = &a;
