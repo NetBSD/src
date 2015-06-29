@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.4.20.1 2015/06/02 19:49:38 snj Exp $");
+__RCSID("$NetBSD: recover.c,v 1.4.20.2 2015/06/29 17:24:28 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ usage_recover(void)
 static void
 recover(int fd)
 {
-	off_t last;
+	uint64_t last;
 	map_t *gpt, *tpg;
 	map_t *tbl, *lbt;
 	struct gpt_hdr *hdr;
@@ -91,6 +91,13 @@ recover(int fd)
 	}
 
 	last = mediasz / secsz - 1LL;
+
+	if (gpt != NULL &&
+	    ((struct gpt_hdr *)(gpt->map_data))->hdr_lba_alt != last) {
+		warnx("%s: media size has changed, please use 'gpt resizedisk'",
+		   device_name);
+		return;
+	}
 
 	if (tbl != NULL && lbt == NULL) {
 		lbt = map_add(last - tbl->map_size, tbl->map_size,
