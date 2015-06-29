@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.148 2015/06/23 10:42:34 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.149 2015/06/29 15:39:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.148 2015/06/23 10:42:34 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.149 2015/06/29 15:39:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1097,7 +1097,7 @@ spec_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	KASSERT(vp->v_mount == dead_rootmount);
-	vcache_remove(vp->v_mount, vp, sizeof(vp));
+	vcache_remove(vp->v_mount, vp, sizeof(*vp));
 	return 0;
 }
 
