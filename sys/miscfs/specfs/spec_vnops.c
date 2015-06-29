@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.150 2015/06/29 16:25:49 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.151 2015/06/29 16:48:20 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.150 2015/06/29 16:25:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.151 2015/06/29 16:48:20 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1097,12 +1097,7 @@ spec_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	KASSERT(vp->v_mount == dead_rootmount);
-	/*
-	 * The key is the pointer itself, see:
-	 * miscfs/deadfs/dead_vfsops::dead_newvnode()
-	 * coverity[sizeof_mismatch]
-	 */
-	vcache_remove(vp->v_mount, vp, sizeof(struct vnode *));
+	vcache_remove(vp->v_mount, &vp->v_specnode, sizeof(vp->v_specnode));
 	return 0;
 }
 
