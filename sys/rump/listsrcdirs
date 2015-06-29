@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.32 2015/06/15 11:20:18 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.33 2015/06/29 08:40:52 pooka Exp $
 #
 
 #
@@ -97,7 +97,7 @@ lsrc usr /lib/lib		pthread rmt y z
 lsrc usr /libexec/		ld.elf_so
 lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
 lsrc usr /bin/			rm rmdir
-lsrc usr /sbin/			cgdconfig chown
+lsrc usr /sbin/			brconfig cgdconfig chown
 lsrc usr /sbin/			disklabel dump fdisk
 lsrc usr /sbin/			fsck fsck_ext2fs fsck_ffs fsck_msdos
 lsrc usr /sbin/			ifconfig mknod
