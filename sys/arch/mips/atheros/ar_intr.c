@@ -1,4 +1,4 @@
-/* $NetBSD: ar_intr.c,v 1.4 2015/06/09 22:50:50 matt Exp $ */
+/* $NetBSD: ar_intr.c,v 1.5 2015/06/29 16:36:17 maxv Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.4 2015/06/09 22:50:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.5 2015/06/29 16:36:17 maxv Exp $");
 
 #define __INTR_PRIVATE
 
@@ -116,9 +116,6 @@ genath_cpu_intr_establish(int intr, int (*func)(void *), void *arg)
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = intr;
-
-	if (ih == NULL)
-		return NULL;
 
 	const int s = splhigh();
 
