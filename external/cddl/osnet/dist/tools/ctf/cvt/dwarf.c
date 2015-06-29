@@ -1162,6 +1162,14 @@ die_sou_resolve(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
 			    continue;
 			}
 
+			/*
+			 * anonymous union members are OK.
+			 * XXX: we should consistently use NULL, instead of ""
+			 */
+			if (mt->t_type == UNION &&
+			    (mt->t_name == NULL || mt->t_name[0] == '\0'))
+			    continue;
+
 			printf("%s unresolved type = %d (%s)\n", tdesc_name(tdp),
 				mt->t_type, tdesc_name(mt));
 			dw->dw_nunres++;
