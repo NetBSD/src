@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.333 2015/06/19 02:56:02 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.334 2015/06/29 17:27:13 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32152,4 +32152,34 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 7.0_RC1!
 	[snj]
+
+sys/conf/copyright				1.13
+
+	Bump copyright date.
+	[mrg, ticket #849]
+
+external/cddl/osnet/dist/tools/ctf/cvt/dwarf.c	1.11
+
+	Don't fail for anonymous unions.  Fixes drm2 kernels with
+	MKCTF=yes.
+	[chs, ticket #855]
+
+usr.bin/ldd/Makefile.inc			1.6
+
+	Do not set MLIBDIR if MKCOMPAT=no
+	[roy, ticket #853]
+
+sys/arch/amiga/include/vmparam.h		1.43
+
+	Remove unused KUSER_AREA, SYSPTSIZE, USRPTSIZE.
+	Bump MAXTSIZ and MAXDSIZ to the same values atari is using.
+	This makes gcc 4.8 (/usr/libexec/cc1) load and execute.
+	[phx, ticket #841]
+
+sbin/gpt/recover.c				1.6
+
+	Instruct user to use resizedisk if media size has changed, as
+	resizedisk will adjust the media size in the headers, whereas
+	recover simply copies the existing header over the missing one.
+	[jnemeth, ticket #847]
 
