@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.52 2014/01/25 15:16:50 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.53 2015/06/30 03:41:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,8 @@
 /*
  * Machine dependent VM constants for MIPS.
  */
+#define MAX_PAGE_SIZE	16384
+#define MIN_PAGE_SIZE	4096
 
 /*
  * We normally use a 4K page but may use 16K on MIPS systems.
