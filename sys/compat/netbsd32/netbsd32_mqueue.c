@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mqueue.c,v 1.4 2015/06/30 06:01:04 martin Exp $	*/
+/*	$NetBSD: netbsd32_mqueue.c,v 1.5 2015/06/30 11:56:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mqueue.c,v 1.4 2015/06/30 06:01:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mqueue.c,v 1.5 2015/06/30 11:56:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -61,8 +61,8 @@ netbsd32_mq_open(struct lwp *l, const struct netbsd32_mq_open_args *uap,
 	struct mq_attr *attr = NULL, a;
 	int error;
 
-	if ((SCARG(uap, oflag) & O_CREAT) && (SCARG_P32(uap,attr) != NULL)) {
-		error = copyin(SCARG_P32(uap,attr), &attr32, sizeof(attr32));
+	if ((SCARG(uap, oflag) & O_CREAT) && SCARG_P32(uap, attr) != NULL) {
+		error = copyin(SCARG_P32(uap, attr), &attr32, sizeof(attr32));
 		if (error)
 			return error;
 		netbsd32_to_mq_attr(&attr32, &a);
