@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.68 2015/06/30 17:18:13 sborrill Exp $
+.\"     $NetBSD: raidctl.8,v 1.69 2015/06/30 22:16:12 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd April 3, 2014
+.Dd June 30, 2015
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -184,7 +184,7 @@ mode on earlier versions of
 For compatibility reasons,
 .Ic root
 can be used as an alias for
-.Ic forceroot.
+.Ic forceroot .
 .It Fl A Ic softroot Ar dev
 Like
 .Ic forceroot ,
@@ -1486,49 +1486,41 @@ Configure the RAID set with:
 .Bd -literal -offset indent
 raidctl -C raid0.conf raid0
 .Ed
-.Pp
 .It
 Initialize the component labels with:
 .Bd -literal -offset indent
 raidctl -I 123456 raid0
 .Ed
-.Pp
 .It
 Initialize other important parts of the set with:
 .Bd -literal -offset indent
 raidctl -i raid0
 .Ed
-.Pp
 .It
 Get the default label for the RAID set:
 .Bd -literal -offset indent
 disklabel raid0 \*[Gt] /tmp/label
 .Ed
-.Pp
 .It
 Edit the label:
 .Bd -literal -offset indent
 vi /tmp/label
 .Ed
-.Pp
 .It
 Put the new label on the RAID set:
 .Bd -literal -offset indent
 disklabel -R -r raid0 /tmp/label
 .Ed
-.Pp
 .It
 Create the file system:
 .Bd -literal -offset indent
 newfs /dev/rraid0e
 .Ed
-.Pp
 .It
 Mount the file system:
 .Bd -literal -offset indent
 mount /dev/raid0e /mnt
 .Ed
-.Pp
 .It
 Use:
 .Bd -literal -offset indent
