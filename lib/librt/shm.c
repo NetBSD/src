@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.c,v 1.1 2013/12/19 19:11:50 rmind Exp $	*/
+/*	$NetBSD: shm.c,v 1.2 2015/06/30 11:46:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: shm.c,v 1.1 2013/12/19 19:11:50 rmind Exp $");
+__RCSID("$NetBSD: shm.c,v 1.2 2015/06/30 11:46:47 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/mount.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: shm.c,v 1.1 2013/12/19 19:11:50 rmind Exp $");
 #define	MOUNT_SHMFS		MOUNT_TMPFS
 
 static const char *		_shmfs_path = NULL;
+static char			_shmfs_path_buf[PATH_MAX];
 
 static bool
 _shm_check_fs(void)
@@ -65,7 +66,15 @@ _shm_check_fs(void)
 	const char *shmfs = SHMFS_DIR_PATH;
 	struct statvfs sv;
 	struct stat st;
+	char buf[PATH_MAX];
+	ssize_t cnt;
 
+	if ((cnt = readlink(shmfs, buf, sizeof(buf))) > 0) {
+		if ((size_t)cnt >= sizeof(buf))
+			return false;
+		buf[cnt] = 0;
+		shmfs = buf;
+	}
 	if (statvfs1(shmfs, &sv, ST_NOWAIT) == -1) {
 		return false;
 	}
@@ -80,7 +89,12 @@ _shm_check_fs(void)
 		return false;
 	}
 
-	_shmfs_path = shmfs;
+	if (shmfs == buf) {
+		strcpy(_shmfs_path_buf, buf);
+		_shmfs_path = _shmfs_path_buf;
+	} else {
+		_shmfs_path = shmfs;
+	}
 	return true;
 }
 
