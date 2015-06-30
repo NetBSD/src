@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.110 2015/06/16 18:12:18 macallan Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.111 2015/06/30 13:30:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -206,7 +206,7 @@ LEAF(mips_wait_idle)
 #if __mips >= 32
 	teqi	v1, 0
 #else
-	bnez	v1, 2b
+	beqz	v1, 1b
 	 nop
 #endif
 	jr	ra
