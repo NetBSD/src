@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.99 2015/05/02 14:28:30 roy Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.100 2015/06/30 06:42:06 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.99 2015/05/02 14:28:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.100 2015/06/30 06:42:06 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,8 +568,8 @@ defrouter_delreq(struct nd_defrouter *dr)
 			 */
 			oldrt->rt_refcnt++;
 			rtfree(oldrt);
-			nd6_numroutes--;
 		}
+		nd6_numroutes--;
 	}
 
 	dr->installed = 0;
