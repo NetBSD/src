@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.60 2015/06/26 01:16:54 pooka Exp $   */
+/*      $NetBSD: raidctl.c,v 1.61 2015/06/30 17:02:14 sborrill Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.60 2015/06/26 01:16:54 pooka Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.61 2015/06/30 17:02:14 sborrill Exp $");
 #endif
 
 
@@ -812,7 +812,7 @@ set_autoconfig(int fd, int raidID, char *autoconf)
 
 	if (strncasecmp(autoconf, "root", 4) == 0 ||
 	    strncasecmp(autoconf, "hard", 4) == 0 ||
-	    strncasecmp(autoconf, "force", 4) == 0) {
+	    strncasecmp(autoconf, "force", 5) == 0) {
 		root_config = 1;
 	} else if (strncasecmp(autoconf, "soft", 4) == 0) {
 		root_config = 2;
