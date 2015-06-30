@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2014/12/31 15:25:08 martin Exp $ */
+/*	$NetBSD: clock.c,v 1.6 2015/06/30 04:10:10 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2014/12/31 15:25:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2015/06/30 04:10:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -194,7 +194,6 @@ ingenic_clockintr(uint32_t id)
 #ifdef USE_OST
 	uint32_t new_cnt;
 #endif
-	ci->ci_ev_count_compare.ev_count++;
 
 	/* clear flags */
 	writereg(JZ_TC_TFCR, TFR_OSTFLAG);
