@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.21 2015/02/18 16:47:59 macallan Exp $	*/
+/*	$NetBSD: mace.c,v 1.22 2015/06/30 03:55:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.21 2015/02/18 16:47:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.22 2015/06/30 03:55:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ mace_intr_establish(int intr, int level, int (*func)(void *), void *arg)
 			maceintrtab[i].intrmask = level;
 			snprintf(maceintrtab[i].evname,
 			    sizeof(maceintrtab[i].evname),
-			    "intr %d level 0x%x", intr, level);
+			    "intr %d lv 0x%x", intr, level);
 			evcnt_attach_dynamic(&maceintrtab[i].evcnt,
 			    EVCNT_TYPE_INTR, NULL,
 			    "mace", maceintrtab[i].evname);
