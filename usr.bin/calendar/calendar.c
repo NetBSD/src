@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.48 2009/12/08 13:49:08 wiz Exp $	*/
+/*	$NetBSD: calendar.c,v 1.48.8.1 2015/07/01 07:22:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.48 2009/12/08 13:49:08 wiz Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.48.8.1 2015/07/01 07:22:37 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: calendar.c,v 1.48 2009/12/08 13:49:08 wiz Exp $");
 #include <sys/uio.h>
 #include <sys/wait.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -112,6 +113,7 @@ static const char *months[] = {
 static void	 atodays(int, char *, unsigned short *);
 static void	 cal(void);
 static void	 closecal(FILE *);
+static void	 changeuser(void);
 static int	 getday(char *);
 static int	 getfield(char *, char **, int *);
 static void	 getmmdd(struct tm *, char *);
@@ -171,12 +173,24 @@ main(int argc, char **argv)
 		 * XXX - This ignores the user's CALENDAR_DIR variable.
 		 *       Run under user's login shell?
 		 */
+		if (setgroups(0, NULL) == -1) {
+			err(EXIT_FAILURE, "setgroups");
+		}
 		while ((pw = getpwent()) != NULL) {
-			(void)setegid(pw->pw_gid);
-			(void)seteuid(pw->pw_uid);
-			if (chdir(pw->pw_dir) != -1)
+			if (setegid(pw->pw_gid) == -1) {
+				warn("%s: setegid", pw->pw_name);
+				continue;
+			}
+			if (seteuid(pw->pw_uid) == -1) {
+				warn("%s: seteuid", pw->pw_name);
+				continue;
+			}
+			if (chdir(pw->pw_dir) != -1) {
 				cal();
-			(void)seteuid(0);
+			}
+			if (seteuid(0) == -1) {
+				warn("%s: seteuid back to 0", pw->pw_name);
+			}
 		}
 	} else if ((caldir = getenv("CALENDAR_DIR")) != NULL) {
 		if (chdir(caldir) != -1)
@@ -424,6 +438,10 @@ opencal(void)
 			(void)close(pdes[1]);
 		}
 		(void)close(pdes[0]);
+		if (doall) {
+			/* become the user properly */
+			changeuser();
+		}
 		/* tell CPP to only open regular files */
 		if(!cpp_restricted && setenv("CPP_RESTRICTED", "", 1) == -1)
 			err(EXIT_FAILURE, "Cannot restrict cpp");
@@ -488,6 +506,10 @@ closecal(FILE *fp)
 			(void)close(pdes[0]);
 		}
 		(void)close(pdes[1]);
+		if (doall) {
+			/* become the user properly */
+			changeuser();
+		}
 		(void)execl(_PATH_SENDMAIL, "sendmail", "-i", "-t", "-F",
 		    "\"Reminder Service\"", "-f", "root", NULL);
 		err(EXIT_FAILURE, "Cannot exec `%s'", _PATH_SENDMAIL);
@@ -509,6 +531,34 @@ done:	(void)fclose(fp);
 	(void)unlink(path);
 	while (wait(&status) != -1)
 		continue;
+}
+
+static void
+changeuser(void)
+{
+	uid_t uid;
+	gid_t gid;
+
+	uid = geteuid();
+	gid = getegid();
+	assert(uid == pw->pw_uid);
+	assert(gid == pw->pw_gid);
+
+	if (seteuid(0) == -1) {
+		err(EXIT_FAILURE, "%s: changing user: cannot reassert uid 0",
+		    pw->pw_name);
+	}
+	if (setgid(gid) == -1) {
+		err(EXIT_FAILURE, "%s: cannot assume gid %d",
+		    pw->pw_name, (int)gid);
+	}
+	if (initgroups(pw->pw_name, gid) == -1) {
+		err(EXIT_FAILURE, "%s: cannot initgroups", pw->pw_name);
+	}
+	if (setuid(uid) == -1) {
+		err(EXIT_FAILURE, "%s: cannot assume uid %d",
+		    pw->pw_name, (int)uid);
+	}
 }
 
 static int
