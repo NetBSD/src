@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.50.4.1 2015/07/01 07:26:42 bouyer Exp $	*/
+/*	$NetBSD: calendar.c,v 1.50.4.2 2015/07/01 07:30:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,10 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.50.4.1 2015/07/01 07:26:42 bouyer Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.50.4.2 2015/07/01 07:30:15 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -120,6 +121,7 @@ static void	 getmmdd(struct tm *, char *);
 static int	 getmonth(char *);
 static bool	 isnow(char *);
 static FILE	*opencal(FILE **);
+static int	 tryopen(const char *, int);
 static void	 settime(void);
 static void	 usage(void) __dead;
 
@@ -403,7 +405,7 @@ opencal(FILE **in)
 	/* open up calendar file as stdin */
 	if (fname == NULL) {
 		for (const char **name = defaultnames; *name != NULL; name++) {
-			if ((fd = open(*name, O_RDONLY)) == -1)
+			if ((fd = tryopen(*name, O_RDONLY)) == -1)
 				continue;
 			else
 				break;
@@ -413,7 +415,7 @@ opencal(FILE **in)
 				return NULL;
 			err(EXIT_FAILURE, "Cannot open calendar file");
 		}
-	} else if ((fd = open(fname, O_RDONLY)) == -1) {
+	} else if ((fd = tryopen(fname, O_RDONLY)) == -1) {
 		if (doall)
 			return NULL;
 		err(EXIT_FAILURE, "Cannot open `%s'", fname);
@@ -480,6 +482,74 @@ opencal(FILE **in)
 		return fdopen(fd, "w+");
 	}
 	/*NOTREACHED*/
+}
+
+static int
+tryopen(const char *pathname, int flags)
+{
+	int fd, serrno, zero;
+	struct stat st;
+
+	/*
+	 * XXX: cpp_restricted has inverted sense; it is false by default,
+	 * and -x sets it to true. CPP_RESTRICTED is set in the environment
+	 * if cpp_restricted is false... go figure. This should be fixed
+	 * later.
+	 */
+	if (doall && cpp_restricted == false) {
+		/*
+		 * We are running with the user's euid, so they can't
+		 * cause any mayhem (e.g. opening rewinding tape
+		 * devices) that they couldn't do easily enough on
+		 * their own. All we really need to worry about is opens
+		 * that hang, because that would DoS the calendar run.
+		 */
+		fd = open(pathname, flags | O_NONBLOCK);
+		if (fd == -1) {
+			return -1;
+		}
+		if (fstat(fd, &st) == -1) {
+			serrno = errno;
+			close(fd);
+			errno = serrno;
+			return -1;
+		}
+		if (S_ISCHR(st.st_mode) ||
+		    S_ISBLK(st.st_mode) ||
+		    S_ISFIFO(st.st_mode)) {
+			close(fd);
+
+			/* Call shenanigans in the daily output */
+			errno = EPERM;
+			warn("%s: %s", pw->pw_name, pathname);
+
+			errno = EPERM;
+			return -1;
+		}
+		if (S_ISDIR(st.st_mode)) {
+			/* Don't warn about this */
+			close(fd);
+			errno = EISDIR;
+			return -1;
+		}
+		if (!S_ISREG(st.st_mode)) {
+			/* There shouldn't be other cases to go here */
+			close(fd);
+			errno = EINVAL;
+			return -1;
+		}
+		zero = 0;
+		if (ioctl(fd, FIONBIO, &zero) == -1) {
+			serrno = errno;
+			warn("%s: %s: FIONBIO", pw->pw_name, pathname);
+			close(fd);
+			errno = serrno;
+			return -1;
+		}
+		return fd;
+	} else {
+		return open(pathname, flags);
+	}
 }
 
 static void
