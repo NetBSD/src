@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.193 2015/06/28 09:29:58 martin Exp $
+# $NetBSD: postinstall,v 1.194 2015/07/01 12:40:07 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1179,6 +1179,8 @@ do_mtree()
 		MTREE_DIR="${SRC_DIR}/etc/mtree"
 	else
 		env AWK={$AWK:Q} ${MAKE} -s -C "${SRC_DIR}/etc/mtree" emit_dist_file > \
+		    "${SCRATCHDIR}/NetBSD.dist"
+		${MAKE} -s -C "${SRC_DIR}/etc/mtree" clean >/dev/null 2>&1
 		    "${SCRATCHDIR}/NetBSD.dist"
 		MTREE_DIR="${SCRATCHDIR}"
 	fi
