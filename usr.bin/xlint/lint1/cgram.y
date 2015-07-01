@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.69 2015/05/11 17:20:06 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.70 2015/07/01 15:34:30 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.69 2015/05/11 17:20:06 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.70 2015/07/01 15:34:30 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1921,8 +1921,10 @@ toicon(tnode_t *tn, int required)
 	/*
 	 * Abstract declarations are used inside expression. To free
 	 * the memory would be a fatal error.
+	 * We don't free blocks that are inside casts because these
+	 * will be used later to match types.
 	 */
-	if (dcs->d_ctx != ABSTRACT)
+	if (tn->tn_op != CON && dcs->d_ctx != ABSTRACT)
 		tfreeblk();
 
 	if ((t = v->v_tspec) == FLOAT || t == DOUBLE || t == LDOUBLE) {
