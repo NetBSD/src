@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.220 2015/06/19 17:51:18 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.221 2015/07/01 07:24:22 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11531,4 +11531,18 @@ lib/libperfuse/ops.c				1.60
 lib/libperfuse/ops.c				1.84
 	Fix dot-lookup when readdir does not provide inodes
 	[manu, ticket #1306]
+
+usr.bin/calendar/calendar.c			1.51
+
+	Correct privilege handling problems in calendar -a (which runs as root
+	from /etc/daily); do not exec other programs while the real uid is
+	still 0.
+
+	Also, clear the supplementary groups list up front and call initgroups
+	when becoming another user, to avoid leaking any extra group
+	privileges that we might have.
+
+	And finally, don't silently ignore errors changing uid and gid; those
+	are serious if they happen.
+	[dholland, ticket #1309]
 
