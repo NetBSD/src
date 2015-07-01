@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.334 2015/06/29 17:27:13 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.335 2015/07/01 07:30:55 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32182,4 +32182,29 @@ sbin/gpt/recover.c				1.6
 	resizedisk will adjust the media size in the headers, whereas
 	recover simply copies the existing header over the missing one.
 	[jnemeth, ticket #847]
+
+usr.bin/calendar/calendar.c			1.51
+
+	Correct privilege handling problems in calendar -a (which runs as root
+	from /etc/daily); do not exec other programs while the real uid is
+	still 0.
+
+	Also, clear the supplementary groups list up front and call initgroups
+	when becoming another user, to avoid leaking any extra group
+	privileges that we might have.
+
+	And finally, don't silently ignore errors changing uid and gid; those
+	are serious if they happen.
+	[dholland, ticket #860]
+
+usr.bin/calendar/calendar.c			1.52
+
+	Repair accidental regression in -r1.49: for -a mode, don't allow
+	calendars to be other than regular files unless the -x option is in
+	effect.
+
+	(If not in -a mode, we're running purely as the user whose calendar it
+	is and if they want to DoS themselves with named pipes it's their own
+	lookout.)
+	[dholland, ticket #861]
 
