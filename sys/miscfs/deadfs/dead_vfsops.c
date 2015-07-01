@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vfsops.c,v 1.6 2015/06/30 06:19:22 hannken Exp $	*/
+/*	$NetBSD: dead_vfsops.c,v 1.7 2015/07/01 08:13:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vfsops.c,v 1.6 2015/06/30 06:19:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vfsops.c,v 1.7 2015/07/01 08:13:53 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,8 @@ dead_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	uvm_vnp_setsize(vp, 0);
 	spec_node_init(vp, vap->va_rdev);
 
-	vp->v_data = vp;
-	*key_len = sizeof(vp->v_data);
-	*new_key = &vp->v_data;
+	*key_len = sizeof(vp->v_interlock);
+	*new_key = &vp->v_interlock;
 
 	return 0;
 }
