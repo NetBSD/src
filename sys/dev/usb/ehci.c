@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.239 2015/05/11 06:44:36 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.240 2015/07/02 08:35:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.239 2015/05/11 06:44:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.240 2015/07/02 08:35:44 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -519,8 +519,8 @@ ehci_init(ehci_softc_t *sc)
 			    EHCI_LINK_QH);
 		}
 		sqh->qh.qh_endp = htole32(EHCI_QH_SET_EPS(EHCI_QH_SPEED_HIGH));
+		sqh->qh.qh_endphub = htole32(EHCI_QH_SET_MULT(1))
 		sqh->qh.qh_curqtd = EHCI_NULL;
-		sqh->next = NULL;
 		sqh->qh.qh_qtd.qtd_next = EHCI_NULL;
 		sqh->qh.qh_qtd.qtd_altnext = EHCI_NULL;
 		sqh->qh.qh_qtd.qtd_status = htole32(EHCI_QTD_HALTED);
