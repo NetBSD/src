@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.21 2015/03/22 21:45:12 joerg Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.22 2015/07/02 08:33:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.21 2015/03/22 21:45:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.22 2015/07/02 08:33:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,8 +170,9 @@ cpu_lwp_setprivate(lwp_t *l, void *addr)
 {
 #ifdef _ARM_ARCH_6
 	if (l == curlwp) {
+		u_int val = (u_int)addr;
 		kpreempt_disable();
-		__asm __volatile("mcr p15, 0, %0, c13, c0, 3" : : "r" (addr));
+		armreg_tpidruro_write(val);
 		kpreempt_enable();
 	}
 	return 0;
