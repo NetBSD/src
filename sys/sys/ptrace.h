@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.45 2014/01/04 00:10:03 dsl Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.46 2015/07/02 03:47:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -104,6 +104,7 @@ struct ptrace_io_desc {
 #define	PIOD_WRITE_D	2	/* write to D spcae */
 #define	PIOD_READ_I	3	/* read from I space */
 #define	PIOD_WRITE_I	4	/* write to I space */
+#define PIOD_READ_AUXV	5	/* Read from aux array */
 
 /*
  * Argument structure for PT_LWPINFO.
