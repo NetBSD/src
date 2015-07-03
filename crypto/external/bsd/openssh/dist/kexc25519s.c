@@ -1,5 +1,5 @@
-/*	$NetBSD: kexc25519s.c,v 1.3 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: kexc25519s.c,v 1.8 2015/01/26 06:10:03 djm Exp $ */
+/*	$NetBSD: kexc25519s.c,v 1.4 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: kexc25519s.c,v 1.9 2015/04/27 00:37:53 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -25,9 +25,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: kexc25519s.c,v 1.3 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: kexc25519s.c,v 1.4 2015/07/03 01:00:00 christos Exp $");
 
 #include <sys/types.h>
+#include <stdio.h>
 #include <string.h>
 #include <signal.h>
 

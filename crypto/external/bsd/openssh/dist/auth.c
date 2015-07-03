@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.c,v 1.12 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.110 2015/02/25 17:29:38 djm Exp $ */
+/*	$NetBSD: auth.c,v 1.13 2015/07/03 00:59:59 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.111 2015/05/01 04:17:51 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.12 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.13 2015/07/03 00:59:59 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -115,10 +115,8 @@ allowed_user(struct passwd * pw)
 	if (cap_hlist != NULL) {
 		hp = strtok(cap_hlist, ",");
 		while (hp != NULL) {
-			match_name = match_hostname(hostname,
-			    hp, strlen(hp));
-			match_ip = match_hostname(ipaddr,
-			    hp, strlen(hp));
+			match_name = match_hostname(hostname, hp);
+			match_ip = match_hostname(ipaddr, hp);
 			/*
 			 * Only a positive match here causes a "deny".
 			 */
@@ -146,10 +144,8 @@ allowed_user(struct passwd * pw)
 			return 0;
 		}
 		while (hp != NULL) {
-			match_name = match_hostname(hostname,
-			    hp, strlen(hp));
-			match_ip = match_hostname(ipaddr,
-			    hp, strlen(hp));
+			match_name = match_hostname(hostname, hp);
+			match_ip = match_hostname(ipaddr, hp);
 			/*
 			 * Negative match causes an immediate "deny".
 			 * Positive match causes us to break out
@@ -442,8 +438,7 @@ expand_authorized_keys(const char *filename, struct passwd *pw)
 char *
 authorized_principals_file(struct passwd *pw)
 {
-	if (options.authorized_principals_file == NULL ||
-	    strcasecmp(options.authorized_principals_file, "none") == 0)
+	if (options.authorized_principals_file == NULL)
 		return NULL;
 	return expand_authorized_keys(options.authorized_principals_file, pw);
 }
