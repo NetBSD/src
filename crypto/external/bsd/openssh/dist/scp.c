@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.11 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.181 2015/01/16 06:40:12 deraadt Exp $ */
+/*	$NetBSD: scp.c,v 1.12 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: scp.c,v 1.182 2015/04/24 01:36:00 deraadt Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.11 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.12 2015/07/03 01:00:00 christos Exp $");
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -1312,7 +1312,7 @@ allocbuf(BUF *bp, int fd, int blksize)
 	if (bp->buf == NULL)
 		bp->buf = xmalloc(size);
 	else
-		bp->buf = xrealloc(bp->buf, 1, size);
+		bp->buf = xreallocarray(bp->buf, 1, size);
 	memset(bp->buf, 0, size);
 	bp->cnt = size;
 	return (bp);

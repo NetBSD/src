@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.10 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.96 2015/01/16 06:40:12 deraadt Exp $ */
+/*	$NetBSD: misc.c,v 1.11 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.97 2015/04/24 01:36:00 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.10 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 2015/07/03 01:00:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -459,7 +459,7 @@ addargs(arglist *args, const char *fmt, ...)
 	} else if (args->num+2 >= nalloc)
 		nalloc *= 2;
 
-	args->list = xrealloc(args->list, nalloc, sizeof(char *));
+	args->list = xreallocarray(args->list, nalloc, sizeof(char *));
 	args->nalloc = nalloc;
 	args->list[args->num++] = cp;
 	args->list[args->num] = NULL;

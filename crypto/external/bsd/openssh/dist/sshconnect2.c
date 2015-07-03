@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.19 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.223 2015/01/30 11:43:14 djm Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.20 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.224 2015/05/04 06:10:48 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.19 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.20 2015/07/03 01:00:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -1647,8 +1647,7 @@ userauth_hostbased(Authctxt *authctxt)
 				continue;
 			if (match_pattern_list(
 			    sshkey_ssh_name(authctxt->sensitive->keys[i]),
-			    authctxt->active_ktype,
-			    strlen(authctxt->active_ktype), 0) != 1)
+			    authctxt->active_ktype, 0) != 1)
 				continue;
 			/* we take and free the key */
 			private = authctxt->sensitive->keys[i];
