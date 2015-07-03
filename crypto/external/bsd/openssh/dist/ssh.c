@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.c,v 1.16 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: ssh.c,v 1.416 2015/03/03 06:48:58 djm Exp $ */
+/*	$NetBSD: ssh.c,v 1.17 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: ssh.c,v 1.418 2015/05/04 06:10:48 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.16 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.17 2015/07/03 01:00:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -347,10 +347,8 @@ check_follow_cname(char **namep, const char *cname)
 	debug3("%s: check \"%s\" CNAME \"%s\"", __func__, *namep, cname);
 	for (i = 0; i < options.num_permitted_cnames; i++) {
 		rule = options.permitted_cnames + i;
-		if (match_pattern_list(*namep, rule->source_list,
-		    strlen(rule->source_list), 1) != 1 ||
-		    match_pattern_list(cname, rule->target_list,
-		    strlen(rule->target_list), 1) != 1)
+		if (match_pattern_list(*namep, rule->source_list, 1) != 1 ||
+		    match_pattern_list(cname, rule->target_list, 1) != 1)
 			continue;
 		verbose("Canonicalized DNS aliased hostname "
 		    "\"%s\" => \"%s\"", *namep, cname);
@@ -1634,6 +1632,8 @@ ssh_session(void)
 	}
 	/* Request X11 forwarding if enabled and DISPLAY is set. */
 	display = getenv("DISPLAY");
+	if (display == NULL && options.forward_x11)
+		debug("X11 forwarding requested but DISPLAY not set");
 	if (options.forward_x11 && display != NULL) {
 		char *proto, *data;
 		/* Get reasonable local authentication information. */
@@ -1735,6 +1735,8 @@ ssh_session2_setup(int id, int success, void *arg)
 		return; /* No need for error message, channels code sens one */
 
 	display = getenv("DISPLAY");
+	if (display == NULL && options.forward_x11)
+		debug("X11 forwarding requested but DISPLAY not set");
 	if (options.forward_x11 && display != NULL) {
 		char *proto, *data;
 		/* Get reasonable local authentication information. */

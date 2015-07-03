@@ -1,5 +1,5 @@
-/*	$NetBSD: xmalloc.c,v 1.5 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: xmalloc.c,v 1.31 2015/02/06 23:21:59 millert Exp $ */
+/*	$NetBSD: xmalloc.c,v 1.6 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: xmalloc.c,v 1.32 2015/04/24 01:36:01 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: xmalloc.c,v 1.5 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.6 2015/07/03 01:00:00 christos Exp $");
 #include <sys/param.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -56,22 +56,14 @@ xcalloc(size_t nmemb, size_t size)
 }
 
 void *
-xrealloc(void *ptr, size_t nmemb, size_t size)
+xreallocarray(void *ptr, size_t nmemb, size_t size)
 {
 	void *new_ptr;
-	size_t new_size = nmemb * size;
 
-	if (new_size == 0)
-		fatal("xrealloc: zero size");
-	if (SIZE_MAX / nmemb < size)
-		fatal("xrealloc: nmemb * size > SIZE_MAX");
-	if (ptr == NULL)
-		new_ptr = malloc(new_size);
-	else
-		new_ptr = realloc(ptr, new_size);
+	new_ptr = reallocarray(ptr, nmemb, size);
 	if (new_ptr == NULL)
-		fatal("xrealloc: out of memory (new_size %zu bytes)",
-		    new_size);
+		fatal("xreallocarray: out of memory (%zu elements of %zu bytes)",
+		    nmemb, size);
 	return new_ptr;
 }
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.10 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.111 2015/02/23 16:55:51 djm Exp $ */
+/*	$NetBSD: authfile.c,v 1.11 2015/07/03 00:59:59 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.114 2015/04/17 13:32:09 djm Exp $ */
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.10 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.11 2015/07/03 00:59:59 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -183,7 +183,7 @@ sshkey_perm_ok(int fd, const char *filename)
 		error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 		error("Permissions 0%3.3o for '%s' are too open.",
 		    (u_int)st.st_mode & 0777, filename);
-		error("It is recommended that your private key files are NOT accessible by others.");
+		error("It is required that your private key files are NOT accessible by others.");
 		error("This private key will be ignored.");
 		return SSH_ERR_KEY_BAD_PERMISSIONS;
 	}
@@ -356,6 +356,8 @@ sshkey_load_public(const char *filename, struct sshkey **keyp, char **commentp)
 	case 0:
 		return r;
 	}
+#else /* WITH_SSH1 */
+	close(fd);
 #endif /* WITH_SSH1 */
 
 	/* try ssh2 public key */
@@ -551,12 +553,10 @@ sshkey_check_revoked(struct sshkey *key, const char *revoked_keys_file)
 {
 	int r;
 
-#ifdef WITH_OPENSSL
 	r = ssh_krl_file_contains_key(revoked_keys_file, key);
 	/* If this was not a KRL to begin with then continue below */
 	if (r != SSH_ERR_KRL_BAD_MAGIC)
 		return r;
-#endif
 
 	/*
 	 * If the file is not a KRL or we can't handle KRLs then attempt to

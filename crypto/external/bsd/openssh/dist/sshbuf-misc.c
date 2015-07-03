@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-misc.c,v 1.3 2015/02/05 12:59:57 millert Exp $	*/
+/*	$OpenBSD: sshbuf-misc.c,v 1.4 2015/03/24 20:03:44 markus Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-misc.c,v 1.3 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: sshbuf-misc.c,v 1.4 2015/07/03 01:00:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -40,7 +40,7 @@ sshbuf_dump_data(const void *s, size_t len, FILE *f)
 	const u_char *p = (const u_char *)s;
 
 	for (i = 0; i < len; i += 16) {
-		fprintf(f, "%.4zd: ", i);
+		fprintf(f, "%.4zu: ", i);
 		for (j = i; j < i + 16; j++) {
 			if (j < len)
 				fprintf(f, "%02x ", p[j]);

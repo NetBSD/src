@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.7 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: auth2-hostbased.c,v 1.24 2015/01/28 22:36:00 djm Exp $ */
+/*	$NetBSD: auth2-hostbased.c,v 1.8 2015/07/03 00:59:59 christos Exp $	*/
+/* $OpenBSD: auth2-hostbased.c,v 1.25 2015/05/04 06:10:48 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.7 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.8 2015/07/03 00:59:59 christos Exp $");
 #include <sys/types.h>
 
 #include <pwd.h>
@@ -110,8 +110,7 @@ userauth_hostbased(Authctxt *authctxt)
 		goto done;
 	}
 	if (match_pattern_list(sshkey_ssh_name(key),
-	    options.hostbased_key_types,
-	    strlen(options.hostbased_key_types), 0) != 1) {
+	    options.hostbased_key_types, 0) != 1) {
 		logit("%s: key type %s not in HostbasedAcceptedKeyTypes",
 		    __func__, sshkey_type(key));
 		goto done;

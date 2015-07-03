@@ -1,8 +1,8 @@
-/*	$NetBSD: opacket.c,v 1.2 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: opacket.c,v 1.3 2015/07/03 01:00:00 christos Exp $	*/
 /* Written by Markus Friedl. Placed in the public domain.  */
 
 #include "includes.h"
-__RCSID("$NetBSD: opacket.c,v 1.2 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: opacket.c,v 1.3 2015/07/03 01:00:00 christos Exp $");
 
 #include "ssherr.h"
 #include "packet.h"
@@ -76,7 +76,7 @@ ssh_packet_put_raw(struct ssh *ssh, const void *buf, u_int len)
 		fatal("%s: %s", __func__, ssh_err(r));
 }
 
-#ifdef WITH_OPENSSL
+#ifdef WITH_SSH1
 void
 ssh_packet_put_bignum(struct ssh *ssh, BIGNUM * value)
 {
@@ -85,7 +85,9 @@ ssh_packet_put_bignum(struct ssh *ssh, BIGNUM * value)
 	if ((r = sshpkt_put_bignum1(ssh, value)) != 0)
 		fatal("%s: %s", __func__, ssh_err(r));
 }
+#endif
 
+#ifdef WITH_OPENSSL
 void
 ssh_packet_put_bignum2(struct ssh *ssh, BIGNUM * value)
 {
@@ -158,7 +160,7 @@ ssh_packet_get_int64(struct ssh *ssh)
 	return val;
 }
 
-#ifdef WITH_OPENSSL
+#ifdef WITH_SSH1
 void
 ssh_packet_get_bignum(struct ssh *ssh, BIGNUM * value)
 {
@@ -167,7 +169,9 @@ ssh_packet_get_bignum(struct ssh *ssh, BIGNUM * value)
 	if ((r = sshpkt_get_bignum1(ssh, value)) != 0)
 		fatal("%s: %s", __func__, ssh_err(r));
 }
+#endif
 
+#ifdef WITH_OPENSSL
 void
 ssh_packet_get_bignum2(struct ssh *ssh, BIGNUM * value)
 {

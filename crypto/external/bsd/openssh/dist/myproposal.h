@@ -1,5 +1,5 @@
-/*	$NetBSD: myproposal.h,v 1.10 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: myproposal.h,v 1.41 2014/07/11 13:54:34 tedu Exp $ */
+/*	$NetBSD: myproposal.h,v 1.11 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: myproposal.h,v 1.44 2015/05/27 23:51:10 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,16 +27,19 @@
 
 #ifdef WITH_OPENSSL
 
-#define KEX_SERVER_KEX		\
+#define KEX_COMMON_KEX		\
 	"curve25519-sha256@libssh.org," \
 	"ecdh-sha2-nistp256," \
 	"ecdh-sha2-nistp384," \
 	"ecdh-sha2-nistp521," \
-	"diffie-hellman-group-exchange-sha256," \
-	"diffie-hellman-group14-sha1" \
+	"diffie-hellman-group-exchange-sha256"
 
-#define KEX_CLIENT_KEX KEX_SERVER_KEX "," \
+#define KEX_SERVER_KEX KEX_COMMON_KEX "," \
+	"diffie-hellman-group14-sha1"
+
+#define KEX_CLIENT_KEX KEX_COMMON_KEX "," \
 	"diffie-hellman-group-exchange-sha1," \
+	"diffie-hellman-group14-sha1," \
 	"diffie-hellman-group1-sha1"
 
 #define	KEX_DEFAULT_PK_ALG	\
@@ -56,9 +59,9 @@
 	"ssh-dss"
 
 #define	KEX_SERVER_ENCRYPT \
+	"chacha20-poly1305@openssh.com," \
 	"aes128-ctr,aes192-ctr,aes256-ctr," \
-	"aes128-gcm@openssh.com,aes256-gcm@openssh.com," \
-	"chacha20-poly1305@openssh.com"
+	"aes128-gcm@openssh.com,aes256-gcm@openssh.com"
 
 #define KEX_CLIENT_ENCRYPT KEX_SERVER_ENCRYPT "," \
 	"arcfour256,arcfour128," \
@@ -96,8 +99,8 @@
 	"ssh-ed25519-cert-v01@openssh.com," \
 	"ssh-ed25519"
 #define	KEX_SERVER_ENCRYPT \
-	"aes128-ctr,aes192-ctr,aes256-ctr," \
-	"chacha20-poly1305@openssh.com"
+	"chacha20-poly1305@openssh.com," \
+	"aes128-ctr,aes192-ctr,aes256-ctr"
 #define	KEX_SERVER_MAC \
 	"umac-64-etm@openssh.com," \
 	"umac-128-etm@openssh.com," \
