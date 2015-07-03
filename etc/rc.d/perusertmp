@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: perusertmp,v 1.7 2007/12/04 22:09:01 mjf Exp $
+# $NetBSD: perusertmp,v 1.8 2015/07/03 18:36:54 dholland Exp $
 #
 
 # PROVIDE: perusertmp
@@ -36,7 +36,7 @@ perusertmp_start()
 	if [ ! -d ${per_user_tmp_dir} ]; then
 		/bin/mkdir -p ${per_user_tmp_dir}
 	fi
-	/usr/sbin/chown root:wheel ${per_user_tmp_dir}
+	/sbin/chown root:wheel ${per_user_tmp_dir}
 	/bin/chmod 0555 ${per_user_tmp_dir}
 
 	# Create magic link for /tmp.
