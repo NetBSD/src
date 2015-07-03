@@ -1,4 +1,4 @@
-.\" $NetBSD: btmagic.4,v 1.4 2015/04/06 21:10:31 wiz Exp $
+.\" $NetBSD: btmagic.4,v 1.5 2015/07/03 14:18:18 bouyer Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 6, 2015
+.Dd July 4, 2015
 .Dt BTMAGIC 4
 .Os
 .Sh NAME
@@ -76,7 +76,10 @@ The
 .Nm
 driver emulates 3 buttons by splitting the area at the bottom of the
 device in 3 equal zones and detects finger presence in one of these zones
-when the button is pressed.
+when the button is pressed. In addition, a tap in any area of the trackpad is interpreted as a left click. The timeout for tap detection defaults to 100ms
+and is adjustable with
+.Xr sysctl 8 .
+.Pp
 Pointer movement is reported for single-touch
 movements over the device, and scroll is reported for multi-touch movements.
 .Pp
