@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.11 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.259 2015/01/28 22:36:00 djm Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.12 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.262 2015/05/28 05:41:29 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.11 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.12 2015/07/03 01:00:00 christos Exp $");
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -921,7 +921,7 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 			    host_key, options.hash_known_hosts))
 				logit("Failed to add the %s host key for IP "
 				    "address '%.128s' to the list of known "
-				    "hosts (%.30s).", type, ip,
+				    "hosts (%.500s).", type, ip,
 				    user_hostfiles[0]);
 			else
 				logit("Warning: Permanently added the %s host "
@@ -1359,6 +1359,7 @@ ssh_login(Sensitive *sensitive, const char *orighost,
 
 	/* key exchange */
 	/* authenticate user */
+	debug("Authenticating to %s:%d as '%s'", host, port, server_user);
 	if (compat20) {
 		ssh_kex2(host, hostaddr, port);
 		ssh_userauth2(local_user, server_user, host, sensitive);
@@ -1367,7 +1368,7 @@ ssh_login(Sensitive *sensitive, const char *orighost,
 		ssh_kex(host, hostaddr);
 		ssh_userauth1(local_user, server_user, host, sensitive);
 #else
-		fatal("ssh1 is not unsupported");
+		fatal("ssh1 is not supported");
 #endif
 	}
 	free(local_user);
