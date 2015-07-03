@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-server.c,v 1.11 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: sftp-server.c,v 1.105 2015/01/20 23:14:00 deraadt Exp $ */
+/*	$NetBSD: sftp-server.c,v 1.12 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: sftp-server.c,v 1.106 2015/04/24 01:36:01 deraadt Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server.c,v 1.11 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.12 2015/07/03 01:00:00 christos Exp $");
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -301,7 +301,7 @@ handle_new(int use, const char *name, int fd, int flags, DIR *dirp)
 		if (num_handles + 1 <= num_handles)
 			return -1;
 		num_handles++;
-		handles = xrealloc(handles, num_handles, sizeof(Handle));
+		handles = xreallocarray(handles, num_handles, sizeof(Handle));
 		handle_unused(num_handles - 1);
 	}
 
@@ -1042,7 +1042,7 @@ process_readdir(u_int32_t id)
 		while ((dp = readdir(dirp)) != NULL) {
 			if (count >= nstats) {
 				nstats *= 2;
-				stats = xrealloc(stats, nstats, sizeof(Stat));
+				stats = xreallocarray(stats, nstats, sizeof(Stat));
 			}
 /* XXX OVERFLOW ? */
 			snprintf(pathname, sizeof pathname, "%s%s%s", path,
