@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: openssh2netbsd,v 1.6 2015/04/03 23:58:19 christos Exp $
+#	$NetBSD: openssh2netbsd,v 1.1 2015/07/03 00:59:59 christos Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.

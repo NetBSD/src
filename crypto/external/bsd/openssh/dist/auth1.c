@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.11 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: auth1.c,v 1.12 2015/07/03 00:59:59 christos Exp $	*/
 /* $OpenBSD: auth1.c,v 1.82 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth1.c,v 1.11 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.12 2015/07/03 00:59:59 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -426,16 +426,6 @@ do_authentication(Authctxt *authctxt)
 
 	if ((style = strchr(user, ':')) != NULL)
 		*style++ = '\0';
-
-#ifdef KRB5
-	/* XXX - SSH.com Kerberos v5 braindeath. */
-	if ((datafellows & SSH_BUG_K5USER) &&
-	    options.kerberos_authentication) {
-		char *p;
-		if ((p = strchr(user, '@')) != NULL)
-			*p = '\0';
-	}
-#endif
 
 	authctxt->user = user;
 	authctxt->style = style;

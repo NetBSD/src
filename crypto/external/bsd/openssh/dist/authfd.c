@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.c,v 1.8 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: authfd.c,v 1.94 2015/01/14 20:05:27 djm Exp $ */
+/*	$NetBSD: authfd.c,v 1.9 2015/07/03 00:59:59 christos Exp $	*/
+/* $OpenBSD: authfd.c,v 1.97 2015/03/26 19:32:19 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfd.c,v 1.8 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: authfd.c,v 1.9 2015/07/03 00:59:59 christos Exp $");
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -438,10 +438,8 @@ ssh_agent_sign(int sock, struct sshkey *key,
 	u_int flags = 0;
 	int r = SSH_ERR_INTERNAL_ERROR;
 
-	if (sigp != NULL)
-		*sigp = NULL;
-	if (lenp != NULL)
-		*lenp = 0;
+	*sigp = NULL;
+	*lenp = 0;
 
 	if (datalen > SSH_KEY_MAX_SIGN_DATA_SIZE)
 		return SSH_ERR_INVALID_ARGUMENT;
