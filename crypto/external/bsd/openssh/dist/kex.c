@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.c,v 1.10 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: kex.c,v 1.105 2015/01/30 00:22:25 djm Exp $ */
+/*	$NetBSD: kex.c,v 1.11 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: kex.c,v 1.106 2015/04/17 13:25:52 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.10 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.11 2015/07/03 01:00:00 christos Exp $");
 #include <sys/param.h>	/* MAX roundup */
 
 #include <signal.h>
@@ -214,6 +214,8 @@ kex_prop_free(char **proposal)
 {
 	u_int i;
 
+	if (proposal == NULL)
+		return;
 	for (i = 0; i < PROPOSAL_MAX; i++)
 		free(proposal[i]);
 	free(proposal);

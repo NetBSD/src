@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.13 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.117 2015/01/20 23:14:00 deraadt Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.14 2015/07/03 01:00:00 christos Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.120 2015/05/28 04:50:53 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -22,7 +22,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.13 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.14 2015/07/03 01:00:00 christos Exp $");
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -404,6 +404,7 @@ do_init(int fd_in, int fd_out, u_int transfer_buflen, u_int num_requests,
 		error("Invalid packet back from SSH2_FXP_INIT (type %u)",
 		    type);
 		sshbuf_free(msg);
+		free(ret);
 		return(NULL);
 	}
 	if ((r = sshbuf_get_u32(msg, &ret->version)) != 0)
@@ -617,7 +618,7 @@ do_lsreaddir(struct sftp_conn *conn, const char *path, int print_flag,
 				error("Server sent suspect path \"%s\" "
 				    "during readdir of \"%s\"", filename, path);
 			} else if (dir) {
-				*dir = xrealloc(*dir, ents + 2, sizeof(**dir));
+				*dir = xreallocarray(*dir, ents + 2, sizeof(**dir));
 				(*dir)[ents] = xcalloc(1, sizeof(***dir));
 				(*dir)[ents]->filename = xstrdup(filename);
 				(*dir)[ents]->longname = xstrdup(longname);
@@ -1381,9 +1382,9 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 			    "server reordered requests", local_path);
 		}
 		debug("truncating at %llu", (unsigned long long)highwater);
-		if (ftruncate(local_fd, highwater) == -1) {
-			error("Unable to truncate \"%s\"", local_path);
-		}
+		if (ftruncate(local_fd, highwater) == -1)
+			error("ftruncate \"%s\": %s", local_path,
+			    strerror(errno));
 	}
 	if (read_error) {
 		error("Couldn't read from remote file \"%s\" : %s",
