@@ -1,4 +1,4 @@
-/* $OpenBSD: uidswap.c,v 1.37 2015/01/16 06:40:12 deraadt Exp $ */
+/* $OpenBSD: uidswap.c,v 1.39 2015/06/24 01:49:19 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland

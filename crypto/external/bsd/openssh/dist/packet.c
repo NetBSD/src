@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.208 2015/02/13 18:57:00 markus Exp $ */
+/* $OpenBSD: packet.c,v 1.212 2015/05/01 07:10:01 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -284,6 +284,7 @@ ssh_packet_set_connection(struct ssh *ssh, int fd_in, int fd_out)
 	    (r = cipher_init(&state->receive_context, none,
 	    (const u_char *)"", 0, NULL, 0, CIPHER_DECRYPT)) != 0) {
 		error("%s: cipher_init failed: %s", __func__, ssh_err(r));
+		free(ssh);
 		return NULL;
 	}
 	state->newkeys[MODE_IN] = state->newkeys[MODE_OUT] = NULL;
@@ -777,10 +778,12 @@ ssh_packet_set_compress_hooks(struct ssh *ssh, void *ctx,
  * encrypted independently of each other.
  */
 
-#ifdef WITH_OPENSSL
 void
 ssh_packet_set_encryption_key(struct ssh *ssh, const u_char *key, u_int keylen, int number)
 {
+#ifndef WITH_SSH1
+	fatal("no SSH protocol 1 support");
+#else /* WITH_SSH1 */
 	struct session_state *state = ssh->state;
 	const struct sshcipher *cipher = cipher_by_number(number);
 	int r;
@@ -805,8 +808,8 @@ ssh_packet_set_encryption_key(struct ssh *ssh, const u_char *key, u_int keylen, 
 		error("Warning: %s", wmsg);
 		state->cipher_warning_done = 1;
 	}
+#endif /* WITH_SSH1 */
 }
-#endif
 
 /*
  * Finalizes and sends the packet.  If the encryption key has been set,
@@ -1268,7 +1271,7 @@ ssh_packet_read_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	 * been sent.
 	 */
 	if ((r = ssh_packet_write_wait(ssh)) != 0)
-		return r;
+		goto out;
 
 	/* Stay in the loop until we have received a complete packet. */
 	for (;;) {
@@ -1325,15 +1328,20 @@ ssh_packet_read_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			len = roaming_read(state->connection_in, buf,
 			    sizeof(buf), &cont);
 		} while (len == 0 && cont);
-		if (len == 0)
-			return SSH_ERR_CONN_CLOSED;
-		if (len < 0)
-			return SSH_ERR_SYSTEM_ERROR;
+		if (len == 0) {
+			r = SSH_ERR_CONN_CLOSED;
+			goto out;
+		}
+		if (len < 0) {
+			r = SSH_ERR_SYSTEM_ERROR;
+			goto out;
+		}
 
 		/* Append it to the buffer. */
 		if ((r = ssh_packet_process_incoming(ssh, buf, len)) != 0)
-			return r;
+			goto out;
 	}
+ out:
 	free(setp);
 	return r;
 }
@@ -1900,9 +1908,19 @@ sshpkt_fatal(struct ssh *ssh, const char *tag, int r)
 		logit("Connection closed by %.200s", ssh_remote_ipaddr(ssh));
 		cleanup_exit(255);
 	case SSH_ERR_CONN_TIMEOUT:
-		logit("Connection to %.200s timed out while "
-		    "waiting to write", ssh_remote_ipaddr(ssh));
+		logit("Connection to %.200s timed out", ssh_remote_ipaddr(ssh));
 		cleanup_exit(255);
+	case SSH_ERR_DISCONNECTED:
+		logit("Disconnected from %.200s",
+		    ssh_remote_ipaddr(ssh));
+		cleanup_exit(255);
+	case SSH_ERR_SYSTEM_ERROR:
+		if (errno == ECONNRESET) {
+			logit("Connection reset by %.200s",
+			    ssh_remote_ipaddr(ssh));
+			cleanup_exit(255);
+		}
+		/* FALLTHROUGH */
 	default:
 		fatal("%s%sConnection to %.200s: %s",
 		    tag != NULL ? tag : "", tag != NULL ? ": " : "",
@@ -2707,23 +2725,27 @@ sshpkt_put_stringb(struct ssh *ssh, const struct sshbuf *v)
 	return sshbuf_put_stringb(ssh->state->outgoing_packet, v);
 }
 
+#ifdef WITH_OPENSSL
 int
 sshpkt_put_ec(struct ssh *ssh, const EC_POINT *v, const EC_GROUP *g)
 {
 	return sshbuf_put_ec(ssh->state->outgoing_packet, v, g);
 }
 
+#ifdef WITH_SSH1
 int
 sshpkt_put_bignum1(struct ssh *ssh, const BIGNUM *v)
 {
 	return sshbuf_put_bignum1(ssh->state->outgoing_packet, v);
 }
+#endif /* WITH_SSH1 */
 
 int
 sshpkt_put_bignum2(struct ssh *ssh, const BIGNUM *v)
 {
 	return sshbuf_put_bignum2(ssh->state->outgoing_packet, v);
 }
+#endif /* WITH_OPENSSL */
 
 /* fetch data from the incoming packet */
 
@@ -2769,23 +2791,27 @@ sshpkt_get_cstring(struct ssh *ssh, char **valp, size_t *lenp)
 	return sshbuf_get_cstring(ssh->state->incoming_packet, valp, lenp);
 }
 
+#ifdef WITH_OPENSSL
 int
 sshpkt_get_ec(struct ssh *ssh, EC_POINT *v, const EC_GROUP *g)
 {
 	return sshbuf_get_ec(ssh->state->incoming_packet, v, g);
 }
 
+#ifdef WITH_SSH1
 int
 sshpkt_get_bignum1(struct ssh *ssh, BIGNUM *v)
 {
 	return sshbuf_get_bignum1(ssh->state->incoming_packet, v);
 }
+#endif /* WITH_SSH1 */
 
 int
 sshpkt_get_bignum2(struct ssh *ssh, BIGNUM *v)
 {
 	return sshbuf_get_bignum2(ssh->state->incoming_packet, v);
 }
+#endif /* WITH_OPENSSL */
 
 int
 sshpkt_get_end(struct ssh *ssh)

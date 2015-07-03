@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.444 2015/02/20 22:17:21 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.450 2015/05/24 23:39:16 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -891,6 +891,10 @@ notify_hostkeys(struct ssh *ssh)
 	int i, nkeys, r;
 	char *fp;
 
+	/* Some clients cannot cope with the hostkeys message, skip those. */
+	if (datafellows & SSH_BUG_HOSTKEYS)
+		return;
+
 	if ((buf = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new", __func__);
 	for (i = nkeys = 0; i < options.num_host_key_files; i++) {
@@ -1050,8 +1054,6 @@ recv_rexec_state(int fd, Buffer *conf)
 		    sensitive_data.server_key->rsa) != 0)
 			fatal("%s: rsa_generate_additional_parameters "
 			    "error", __func__);
-#else
-		fatal("ssh1 not supported");
 #endif
 	}
 	buffer_free(&m);
@@ -1387,7 +1389,7 @@ main(int ac, char **av)
 	int sock_in = -1, sock_out = -1, newsock = -1;
 	const char *remote_ip;
 	int remote_port;
-	char *fp, *line, *logfile = NULL;
+	char *fp, *line, *laddr, *logfile = NULL;
 	int config_s[2] = { -1 , -1 };
 	u_int n;
 	u_int64_t ibytes, obytes;
@@ -1409,7 +1411,8 @@ main(int ac, char **av)
 	initialize_server_options(&options);
 
 	/* Parse command-line arguments. */
-	while ((opt = getopt(ac, av, "f:p:b:k:h:g:u:o:C:dDeE:iqrtQRT46")) != -1) {
+	while ((opt = getopt(ac, av,
+	    "C:E:b:c:f:g:h:k:o:p:u:46DQRTdeiqrt")) != -1) {
 		switch (opt) {
 		case '4':
 			options.address_family = AF_INET;
@@ -1577,7 +1580,7 @@ main(int ac, char **av)
 	buffer_init(&cfg);
 	if (rexeced_flag)
 		recv_rexec_state(REEXEC_CONFIG_PASS_FD, &cfg);
-	else
+	else if (strcasecmp(config_file_name, "none") != 0)
 		load_server_config(config_file_name, &cfg);
 
 	parse_server_config(&options, rexeced_flag ? "rexec" : config_file_name,
@@ -1596,6 +1599,11 @@ main(int ac, char **av)
 	    strcasecmp(options.authorized_keys_command, "none") != 0))
 		fatal("AuthorizedKeysCommand set without "
 		    "AuthorizedKeysCommandUser");
+	if (options.authorized_principals_command_user == NULL &&
+	    (options.authorized_principals_command != NULL &&
+	    strcasecmp(options.authorized_principals_command, "none") != 0))
+		fatal("AuthorizedPrincipalsCommand set without "
+		    "AuthorizedPrincipalsCommandUser");
 
 	/*
 	 * Check whether there is any path through configured auth methods.
@@ -1984,9 +1992,10 @@ main(int ac, char **av)
 	remote_ip = get_remote_ipaddr();
 
 	/* Log the connection. */
+	laddr = get_local_ipaddr(sock_in);
 	verbose("Connection from %s port %d on %s port %d",
-	    remote_ip, remote_port,
-	    get_local_ipaddr(sock_in), get_local_port());
+	    remote_ip, remote_port, laddr,  get_local_port());
+	free(laddr);
 
 	/*
 	 * We don't want to listen forever unless the other side
