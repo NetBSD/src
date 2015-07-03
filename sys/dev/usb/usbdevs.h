@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.689 2015/06/17 14:21:22 nonaka Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.690 2015/07/03 13:17:20 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.697 2015/06/17 14:20:14 nonaka Exp
+ *	NetBSD: usbdevs,v 1.698 2015/07/03 13:15:54 skrll Exp
  */
 
 /*
@@ -2484,6 +2484,7 @@
 #define	USB_PRODUCT_PANASONIC_KXLCB20AN	0x0d0a		/* CD-R Drive KXL-CB20AN */
 #define	USB_PRODUCT_PANASONIC_KXLCB35AN	0x0d0e		/* DVD-ROM & CD-R/RW */
 #define	USB_PRODUCT_PANASONIC_SDCAAE	0x1b00		/* MultiMediaCard Adapter */
+#define	USB_PRODUCT_PANASONIC_DMCFS45	0x2372		/* Lumix Camera DMC-FS45 */
 #define	USB_PRODUCT_PANASONIC_TYTP50P6S	0x3900		/* TY-TP50P6-S 50in Touch Panel */
 
 /* PARA Industrial products */
