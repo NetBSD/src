@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.102 2015/06/25 05:30:48 matt Exp $
+# $NetBSD: shl.mi,v 1.103 2015/07/03 01:01:00 christos Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.197.debug			comp-sys-debug	debug,dynamicroot
@@ -255,7 +255,7 @@
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug		comp-sys-debug	debug,compatfile,skey
 ./usr/libdata/debug/usr/lib/libsl.so.5.0.debug			comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.2.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libssh.so.24.0.debug		comp-secsh-debug	debug,compatfile,crypto
+./usr/libdata/debug/usr/lib/libssh.so.25.0.debug		comp-secsh-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libssl.so.10.5.debug		comp-crypto-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug		comp-sys-debug	debug,compatfile,gcc=3,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug		comp-sys-debug	debug,compatfile,gcc=4,cxx,libstdcxx
