@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.252 2015/05/29 12:28:08 christos Exp $
+# $NetBSD: md.sparc64,v 1.253 2015/07/03 01:01:00 christos Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -292,8 +292,8 @@
 ./usr/lib/sparc/libsqlite3.so.1.2		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libss.so.6			base-compat-shlib	obsolete
 ./usr/lib/sparc/libss.so.6.0			base-compat-shlib	obsolete
-./usr/lib/sparc/libssh.so.24			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libssh.so.24.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssh.so.25			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssh.so.25.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libssl.so.10			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libssl.so.10.5			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds,libstdcxx
