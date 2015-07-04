@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.11 2015/07/04 06:56:29 isaki Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.12 2015/07/04 07:11:45 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,10 +66,10 @@ ENTRY(__sync_bool_compare_and_swap_4)
 	movl	8(%sp), %d0
 	movl	12(%sp), %d1
 	casl	%d0, %d1, (%a0)
-	beq	1f
+	beqs	1f
 	clrl	%d0	/* return false */
 	rts
-1:	movl	#1, %d0	/* return success */
+1:	movql	#1, %d0	/* return success */
 	rts
 END(__sync_bool_compare_and_swap_4)
 
@@ -91,10 +91,10 @@ ENTRY(__sync_bool_compare_and_swap_2)
 	movw	12+2(%sp), %d1		/* lower word */
 	casw	%d0, %d1, (%a0)
 	/* %d3 now contains the old value */
-	beq	1f
+	beqs	1f
 	clrl	%d0	/* return failure */
 	rts
-1:	movl	#1, %d0	/* return success */
+1:	movql	#1, %d0	/* return success */
 	rts
 END(__sync_bool_compare_and_swap_2)
 
@@ -117,10 +117,10 @@ ENTRY(__sync_bool_compare_and_swap_1)
 	movb	12+3(%sp), %d1		/* lower byte */
 	casb	%d0, %d1, (%a0)
 	/* %d3 now contains the old value */
-	beq	1f
+	beqs	1f
 	clrl	%d0	/* return failure */
 	rts
-1:	movl	#1, %d0	/* return success */
+1:	movql	#1, %d0	/* return success */
 	rts
 END(__sync_bool_compare_and_swap_1)
 
