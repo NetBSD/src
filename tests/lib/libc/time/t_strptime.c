@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.5 2015/04/28 16:06:09 ginsbach Exp $ */
+/* $NetBSD: t_strptime.c,v 1.6 2015/07/04 13:36:25 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.5 2015/04/28 16:06:09 ginsbach Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.6 2015/07/04 13:36:25 christos Exp $");
 
 #include <time.h>
 
@@ -92,17 +92,17 @@ ATF_TC_BODY(common, tc)
 {
 
 	h_pass("Tue Jan 20 23:27:46 1998", "%a %b %d %T %Y",
-		24, 46, 27, 23, 20, 0, 98, 2, -1);
+		24, 46, 27, 23, 20, 0, 98, 2, 19);
 	h_pass("Tue Jan 20 23:27:46 1998", "%a %b %d %H:%M:%S %Y",
-		24, 46, 27, 23, 20, 0, 98, 2, -1);
+		24, 46, 27, 23, 20, 0, 98, 2, 19);
 	h_pass("Tue Jan 20 23:27:46 1998", "%c",
-		24, 46, 27, 23, 20, 0, 98, 2, -1);
+		24, 46, 27, 23, 20, 0, 98, 2, 19);
 	h_pass("Fri Mar  4 20:05:34 2005", "%a %b %e %H:%M:%S %Y",
-		24, 34, 5, 20, 4, 2, 105, 5, -1);
+		24, 34, 5, 20, 4, 2, 105, 5, 62);
 	h_pass("5\t3  4 8pm:05:34 2005", "%w%n%m%t%d%n%k%p:%M:%S %Y",
-		21, 34, 5, 20, 4, 2, 105, 5, -1);
+		21, 34, 5, 20, 4, 2, 105, 5, 62);
 	h_pass("Fri Mar  4 20:05:34 2005", "%c",
-		24, 34, 5, 20, 4, 2, 105, 5, -1);
+		24, 34, 5, 20, 4, 2, 105, 5, 62);
 }
 
 ATF_TC(day);
