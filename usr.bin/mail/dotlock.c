@@ -1,4 +1,4 @@
-/*	$NetBSD: dotlock.c,v 1.12 2015/07/04 15:09:49 christos Exp $	*/
+/*	$NetBSD: dotlock.c,v 1.13 2015/07/04 22:45:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dotlock.c,v 1.12 2015/07/04 15:09:49 christos Exp $");
+__RCSID("$NetBSD: dotlock.c,v 1.13 2015/07/04 22:45:08 christos Exp $");
 #endif
 
 #include "rcv.h"
@@ -86,7 +86,7 @@ create_exclusive(const char *fname)
 			(void)close(fd);
 			break;
 		}
-		else if (errno == EEXIST || ntries < 5)
+		else if (errno == EEXIST && ntries < 5)
 			continue;
 		else
 			return -1;
