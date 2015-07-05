@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.67 2014/04/03 18:54:10 christos Exp $
+.\"     $NetBSD: raidctl.8,v 1.67.4.1 2015/07/05 20:22:34 snj Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd April 3, 2014
+.Dd June 30, 2015
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -175,6 +175,16 @@ in the disklabel.
 Note that only certain architectures
 .Pq currently alpha, amd64, i386, pmax, sandpoint, sparc, sparc64, and vax
 support booting a kernel directly from a RAID set.
+Please note that
+.Ic forceroot
+mode was referred to as
+.Ic root
+mode on earlier versions of
+.Nx .
+For compatibility reasons,
+.Ic root
+can be used as an alias for
+.Ic forceroot .
 .It Fl A Ic softroot Ar dev
 Like
 .Ic forceroot ,
@@ -1265,7 +1275,7 @@ partition of such a RAID set being used for
 .Pa / .
 To use raid0a as the root file system, simply use:
 .Bd -literal -offset indent
-raidctl -A root raid0
+raidctl -A forceroot raid0
 .Ed
 .Pp
 To return raid0a to be just an auto-configuring set simply use the
@@ -1476,49 +1486,41 @@ Configure the RAID set with:
 .Bd -literal -offset indent
 raidctl -C raid0.conf raid0
 .Ed
-.Pp
 .It
 Initialize the component labels with:
 .Bd -literal -offset indent
 raidctl -I 123456 raid0
 .Ed
-.Pp
 .It
 Initialize other important parts of the set with:
 .Bd -literal -offset indent
 raidctl -i raid0
 .Ed
-.Pp
 .It
 Get the default label for the RAID set:
 .Bd -literal -offset indent
 disklabel raid0 \*[Gt] /tmp/label
 .Ed
-.Pp
 .It
 Edit the label:
 .Bd -literal -offset indent
 vi /tmp/label
 .Ed
-.Pp
 .It
 Put the new label on the RAID set:
 .Bd -literal -offset indent
 disklabel -R -r raid0 /tmp/label
 .Ed
-.Pp
 .It
 Create the file system:
 .Bd -literal -offset indent
 newfs /dev/rraid0e
 .Ed
-.Pp
 .It
 Mount the file system:
 .Bd -literal -offset indent
 mount /dev/raid0e /mnt
 .Ed
-.Pp
 .It
 Use:
 .Bd -literal -offset indent
