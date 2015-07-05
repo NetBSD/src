@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.26 2014/08/10 16:44:33 tls Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.26.2.1 2015/07/05 20:34:51 snj Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.26 2014/08/10 16:44:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.26.2.1 2015/07/05 20:34:51 snj Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -602,8 +602,9 @@ npe_activate(struct npe_softc *sc)
 		return error;
 	}
 
-	if (bus_dmamap_load(sc->sc_dt, sc->sc_stats_map, sc->sc_stats,
-	    sizeof(struct npestats), NULL, BUS_DMA_NOWAIT) != 0) {
+	error = bus_dmamap_load(sc->sc_dt, sc->sc_stats_map, sc->sc_stats,
+	    sizeof(struct npestats), NULL, BUS_DMA_NOWAIT);
+	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to %s for %s, error %u\n",
 		    "load map", "stats block", error);
