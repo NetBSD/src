@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.32 2013/11/09 18:31:53 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.32.4.1 2015/07/05 20:25:15 snj Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -93,7 +93,7 @@ struct rpb bootrpb;
 void
 Xmain(void)
 {
-	int j, nu;
+	int j, nu, fd;
 	u_long marks[MARK_MAX];
 	extern const char bootprog_rev[];
 
@@ -133,14 +133,14 @@ Xmain(void)
 		int fileindex;
 		for (fileindex = 0; filelist[fileindex].name[0] != '\0';
 		    fileindex++) {
-			int err;
 			errno = 0;
 			if (!filelist[fileindex].quiet)
 				printf("> boot %s\n", filelist[fileindex].name);
 			marks[MARK_START] = 0;
-			err = loadfile(filelist[fileindex].name, marks,
+			fd = loadfile(filelist[fileindex].name, marks,
 			    LOAD_KERNEL|COUNT_KERNEL);
-			if (err == 0) {
+			if (fd >= 0) {
+				close(fd);
 				machdep_start((char *)marks[MARK_ENTRY],
 						      marks[MARK_NSYM],
 					      (void *)marks[MARK_START],
@@ -197,7 +197,7 @@ void
 boot(char *arg)
 {
 	char *fn = "netbsd";
-	int howto, fl, err;
+	int howto, fl, fd;
 	u_long marks[MARK_MAX];
 
 	if (arg) {
@@ -230,8 +230,9 @@ fail:			printf("usage: boot [filename] [-asdqv]\n");
 	}
 load:
 	marks[MARK_START] = 0;
-	err = loadfile(fn, marks, LOAD_KERNEL|COUNT_KERNEL);
-	if (err == 0) {
+	fd = loadfile(fn, marks, LOAD_KERNEL|COUNT_KERNEL);
+	if (fd >= 0) {
+		close(fd);
 		machdep_start((char *)marks[MARK_ENTRY],
 				      marks[MARK_NSYM],
 			      (void *)marks[MARK_START],
