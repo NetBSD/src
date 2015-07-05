@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.h,v 1.6 2008/04/28 20:23:39 martin Exp $ */
+/* $NetBSD: sgmap.h,v 1.7 2015/07/05 02:03:36 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@ void	vax_sgmap_init(bus_dma_tag_t, struct vax_sgmap *, const char *,
 
 int	vax_sgmap_alloc(bus_dmamap_t, bus_size_t, struct vax_sgmap *, int);
 void	vax_sgmap_free(bus_dmamap_t, struct vax_sgmap *);
+
+int	vax_sgmap_reserve(bus_addr_t, bus_size_t, struct vax_sgmap *);
 
 int     vax_sgmap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
 	    struct proc *, int, struct vax_sgmap *);
