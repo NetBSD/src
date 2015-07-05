@@ -1,10 +1,10 @@
-#	$NetBSD: bsd.eabi.mk,v 1.4 2015/06/24 22:20:24 matt Exp $
+#	$NetBSD: bsd.eabi.mk,v 1.5 2015/07/05 20:19:29 matt Exp $
 
 .if !defined(MLIBDIR)
 
 MLIBDIR=		eabi
 
-EARM_COMPAT_FLAGS=	-mfloat-abi=soft
+EARM_COMPAT_FLAGS=	-mfloat-abi=soft -mfpu=none
 EARM_COMPAT_FLAGS+=	-mabi=aapcs-linux
 MKSOFTFLOAT=yes
 
