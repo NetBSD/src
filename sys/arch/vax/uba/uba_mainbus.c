@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_mainbus.c,v 1.11 2015/07/05 03:03:00 matt Exp $	   */
+/*	$NetBSD: uba_mainbus.c,v 1.12 2015/07/05 04:53:26 matt Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.11 2015/07/05 03:03:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.12 2015/07/05 04:53:26 matt Exp $");
 
 #define _VAX_BUS_DMA_PRIVATE
 
@@ -163,7 +163,7 @@ qba_attach(device_t parent, device_t self, void *aux)
 		} else if (start >= 0) {
 			aprint_normal("sgmap exclusion at %#x - %#x\n", 
 			    start*VAX_NBPG, pgnum*VAX_NBPG - 1);
-			vax_sgmap_resserve(start*VAX_NBPG,
+			vax_sgmap_reserve(start*VAX_NBPG,
 			    (pgnum - start)*VAX_NBPG, &sc->uv_sgmap);
 			start = -1;
 		}
