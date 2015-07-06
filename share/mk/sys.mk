@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.127 2014/08/10 05:57:31 matt Exp $
+#	$NetBSD: sys.mk,v 1.128 2015/07/06 00:21:51 chs Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -46,8 +46,7 @@ LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 # C Type Format data is required for DTrace
 CTFFLAGS	?=	-g -L VERSION
-# Use only one thread for now.
-CTFMFLAGS	?=	-S 1 -g -t -L VERSION
+CTFMFLAGS	?=	-t -g -L VERSION
 
 CXX?=		c++
 CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu[0-9][0-9]:N-Wold-style-definition:N-Wno-format-zero-length}
