@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_rename.c,v 1.7 2015/07/06 10:07:12 hannken Exp $	*/
+/*	$NetBSD: tmpfs_rename.c,v 1.8 2015/07/06 10:24:59 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.7 2015/07/06 10:07:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.8 2015/07/06 10:24:59 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -446,7 +446,7 @@ tmpfs_gro_lookup(struct mount *mp, struct vnode *dvp,
 
 	/*
 	 * XXX Once namei is fixed, we can change the genfs_rename
-	 * protocol so that we have to lock vp her.
+	 * protocol so that we have to lock vp here.
 	 */
 
 	*dep_ret = dirent;
