@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.29 2015/07/06 02:30:22 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.30 2015/07/06 05:55:37 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,7 +66,8 @@ userret(struct lwp *l, struct trapframe *tf)
 	    "tf=%p: srr1 (%#lx): PSL_FP set but FPU curlwp %p is not curlwp %p!",
 	    tf, tf->tf_srr1, l->l_cpu->ci_data.cpu_pcu_curlwp[PCU_FPU], l);
 
-	tf->tf_srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
+	/* clear SRR1 status bits */
+	tf->tf_srr1 &= (PSL_USERSRR1|PSL_FP|PSL_VEC);
 
 #ifdef ALTIVEC
 	/*
