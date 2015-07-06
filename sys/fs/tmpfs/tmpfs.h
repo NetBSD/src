@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.50 2014/06/07 09:54:34 martin Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.51 2015/07/06 10:05:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -159,6 +159,8 @@ typedef struct tmpfs_node {
 } tmpfs_node_t;
 
 #if defined(_KERNEL)
+
+VFS_PROTOS(tmpfs);
 
 LIST_HEAD(tmpfs_node_list, tmpfs_node);
 
