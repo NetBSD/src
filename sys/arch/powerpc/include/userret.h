@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.28 2014/03/10 00:04:04 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.29 2015/07/06 02:30:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,6 +61,10 @@ userret(struct lwp *l, struct trapframe *tf)
 	KASSERTMSG((tf->tf_srr1 & PSL_PR) != 0,
 	    "tf=%p: srr1 (%#lx): PSL_PR isn't set!",
 	    tf, tf->tf_srr1);
+	KASSERTMSG((tf->tf_srr1 & PSL_FP) == 0
+	    || l->l_cpu->ci_data.cpu_pcu_curlwp[PCU_FPU] == l,
+	    "tf=%p: srr1 (%#lx): PSL_FP set but FPU curlwp %p is not curlwp %p!",
+	    tf, tf->tf_srr1, l->l_cpu->ci_data.cpu_pcu_curlwp[PCU_FPU], l);
 
 	tf->tf_srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
 
