@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.63 2014/06/10 16:10:59 martin Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.64 2015/07/06 10:05:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.63 2014/06/10 16:10:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.64 2015/07/06 10:05:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -62,20 +62,7 @@ MODULE(MODULE_CLASS_VFS, tmpfs, NULL);
 struct pool	tmpfs_dirent_pool;
 struct pool	tmpfs_node_pool;
 
-static int	tmpfs_mount(struct mount *, const char *, void *, size_t *);
-static int	tmpfs_start(struct mount *, int);
-static int	tmpfs_unmount(struct mount *, int);
-static int	tmpfs_root(struct mount *, vnode_t **);
-static int	tmpfs_vget(struct mount *, ino_t, vnode_t **);
-static int	tmpfs_fhtovp(struct mount *, struct fid *, vnode_t **);
-static int	tmpfs_vptofh(struct vnode *, struct fid *, size_t *);
-static int	tmpfs_statvfs(struct mount *, struct statvfs *);
-static int	tmpfs_sync(struct mount *, int, kauth_cred_t);
-static void	tmpfs_init(void);
-static void	tmpfs_done(void);
-static int	tmpfs_snapshot(struct mount *, vnode_t *, struct timespec *);
-
-static void
+void
 tmpfs_init(void)
 {
 
@@ -85,7 +72,7 @@ tmpfs_init(void)
 	    "tmpfs_node", &pool_allocator_nointr, IPL_NONE);
 }
 
-static void
+void
 tmpfs_done(void)
 {
 
@@ -93,7 +80,7 @@ tmpfs_done(void)
 	pool_destroy(&tmpfs_node_pool);
 }
 
-static int
+int
 tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct tmpfs_args *args = data;
@@ -216,14 +203,14 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	return error;
 }
 
-static int
+int
 tmpfs_start(struct mount *mp, int flags)
 {
 
 	return 0;
 }
 
-static int
+int
 tmpfs_unmount(struct mount *mp, int mntflags)
 {
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
@@ -280,7 +267,7 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 	return 0;
 }
 
-static int
+int
 tmpfs_root(struct mount *mp, vnode_t **vpp)
 {
 	tmpfs_node_t *node = VFS_TO_TMPFS(mp)->tm_root;
@@ -289,14 +276,14 @@ tmpfs_root(struct mount *mp, vnode_t **vpp)
 	return tmpfs_vnode_get(mp, node, vpp);
 }
 
-static int
+int
 tmpfs_vget(struct mount *mp, ino_t ino, vnode_t **vpp)
 {
 
 	return EOPNOTSUPP;
 }
 
-static int
+int
 tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 {
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
@@ -332,7 +319,7 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 	return 0;
 }
 
-static int
+int
 tmpfs_vptofh(vnode_t *vp, struct fid *fhp, size_t *fh_size)
 {
 	tmpfs_fid_t tfh;
@@ -354,7 +341,7 @@ tmpfs_vptofh(vnode_t *vp, struct fid *fhp, size_t *fh_size)
 	return 0;
 }
 
-static int
+int
 tmpfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	tmpfs_mount_t *tmp;
@@ -384,14 +371,14 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	return 0;
 }
 
-static int
+int
 tmpfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc)
 {
 
 	return 0;
 }
 
-static int
+int
 tmpfs_snapshot(struct mount *mp, vnode_t *vp, struct timespec *ctime)
 {
 
