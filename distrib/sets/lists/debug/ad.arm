@@ -1,10 +1,13 @@
-# $NetBSD: ad.arm,v 1.70 2015/07/06 08:25:43 martin Exp $
+# $NetBSD: ad.arm,v 1.71 2015/07/06 09:07:39 martin Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
+./usr/lib/oabi/libarm_g.a			comp-c-debuglib		compat
+./usr/lib/oabi/libc_vfp_g.a			comp-c-debuglib		compat
 ./usr/lib/oabi/libgmp_g.a			comp-c-debuglib		obsolete
 ./usr/lib/oabi/libmpc_g.a			comp-c-debuglib		obsolete
 ./usr/lib/oabi/libmpfr_g.a			comp-c-debuglib		obsolete
+./usr/lib/oabi/libpmc_g.a			comp-c-debuglib		compat
 ./usr/libdata/debug/lib/libc_vfp.so.0.0.debug	comp-sys-debug		debug,pic,softfloat
 ./usr/libdata/debug/libexec/ld.elf_so-oabi.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic,endian=1234
