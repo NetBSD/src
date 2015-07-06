@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.99 2015/07/06 05:03:56 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.100 2015/07/06 05:25:29 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99 2015/07/06 05:03:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100 2015/07/06 05:25:29 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -107,8 +107,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Setup the trap frame for the new process
 	 */
 	*l2->l_md.md_utf = *l1->l_md.md_utf;
-	l2->l_md.md_utf->tf_srr1 &= ~(PSL_FP|PSL_VEC);
-	l2->l_md.md_flags &= ~PSL_VEC;
 
 	/*
 	 * If specified, give the child a different stack.  Make sure to
