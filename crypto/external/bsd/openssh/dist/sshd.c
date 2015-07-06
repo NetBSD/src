@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.19 2015/07/03 01:00:00 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.20 2015/07/06 15:09:17 christos Exp $	*/
 /* $OpenBSD: sshd.c,v 1.450 2015/05/24 23:39:16 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.19 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.20 2015/07/06 15:09:17 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1572,9 +1572,11 @@ main(int ac, char **av)
 	if (!test_flag && (rexec_flag && (av[0] == NULL || *av[0] != '/')))
 		fatal("sshd re-exec requires execution with an absolute path");
 	if (rexeced_flag)
-		closefrom(REEXEC_MIN_FREE_FD);
+		r = closefrom(REEXEC_MIN_FREE_FD);
 	else
-		closefrom(REEXEC_DEVCRYPTO_RESERVED_FD);
+		r = closefrom(REEXEC_DEVCRYPTO_RESERVED_FD);
+	if (r == -1)
+		fatal("closefrom failed: %.200s", strerror(errno));
 
 #ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.12 2015/07/03 00:59:59 christos Exp $	*/
+/*	$NetBSD: auth2-pubkey.c,v 1.13 2015/07/06 15:09:17 christos Exp $	*/
 /* $OpenBSD: auth2-pubkey.c,v 1.53 2015/06/15 18:44:22 jsing Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.12 2015/07/03 00:59:59 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.13 2015/07/06 15:09:17 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -474,7 +474,10 @@ subprocess(const char *tag, struct passwd *pw, const char *command,
 			error("%s: dup2: %s", tag, strerror(errno));
 			_exit(1);
 		}
-		closefrom(STDERR_FILENO + 1);
+		if (closefrom(STDERR_FILENO + 1) == -1) {
+			error("closefrom: %s", strerror(errno));
+			_exit(1);
+		}
 
 		/* Don't use permanently_set_uid() here to avoid fatal() */
 		if (setgid(pw->pw_gid) == -1) {
