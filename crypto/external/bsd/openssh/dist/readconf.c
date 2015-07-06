@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.14 2015/07/03 01:00:00 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.15 2015/07/06 15:09:17 christos Exp $	*/
 /* $OpenBSD: readconf.c,v 1.237 2015/06/26 05:13:20 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.14 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.15 2015/07/06 15:09:17 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -467,7 +467,8 @@ execute_in_shell(const char *cmd)
 			fatal("dup2: %s", strerror(errno));
 		if (devnull > STDERR_FILENO)
 			close(devnull);
-		closefrom(STDERR_FILENO + 1);
+		if (closefrom(STDERR_FILENO + 1) == -1)
+			fatal("closefrom: %s", strerror(errno));
 
 		argv[0] = __UNCONST(shell);
 		argv[1] = __UNCONST("-c");

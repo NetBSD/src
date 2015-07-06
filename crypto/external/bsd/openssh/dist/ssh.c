@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.17 2015/07/03 01:00:00 christos Exp $	*/
+/*	$NetBSD: ssh.c,v 1.18 2015/07/06 15:09:17 christos Exp $	*/
 /* $OpenBSD: ssh.c,v 1.418 2015/05/04 06:10:48 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.17 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.18 2015/07/06 15:09:17 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -515,7 +515,8 @@ main(int ac, char **av)
 	 * Discard other fds that are hanging around. These can cause problem
 	 * with backgrounded ssh processes started by ControlPersist.
 	 */
-	closefrom(STDERR_FILENO + 1);
+	if (closefrom(STDERR_FILENO + 1) == -1)
+		fatal("closefrom failed: %.100s", strerror(errno));
 
 	/*
 	 * Save the original real uid.  It will be needed later (uid-swapping

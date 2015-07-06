@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.15 2015/07/03 01:00:00 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.16 2015/07/06 15:09:17 christos Exp $	*/
 /* $OpenBSD: session.c,v 1.278 2015/04/24 01:36:00 deraadt Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.15 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.16 2015/07/06 15:09:17 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -1557,7 +1557,7 @@ child_close_fds(void)
 	 * initgroups, because at least on Solaris 2.3 it leaves file
 	 * descriptors open.
 	 */
-	closefrom(STDERR_FILENO + 1);
+	(void)closefrom(STDERR_FILENO + 1);
 }
 
 /*
@@ -1688,7 +1688,7 @@ do_child(Session *s, const char *command)
 			exit(1);
 	}
 
-	closefrom(STDERR_FILENO + 1);
+	(void)closefrom(STDERR_FILENO + 1);
 
 	if (!options.use_login)
 		do_rc_files(s, shell);
