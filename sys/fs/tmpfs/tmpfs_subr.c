@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.99 2015/07/06 10:07:12 hannken Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.100 2015/07/07 09:30:24 justin Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.99 2015/07/06 10:07:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.100 2015/07/07 09:30:24 justin Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -222,7 +222,7 @@ tmpfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	} while (node->tn_gen == 0);
 
 	/* Generic initialization. */
-	KASSERT(vap->va_type != VNOVAL);
+	KASSERT((int)vap->va_type != VNOVAL);
 	node->tn_type = vap->va_type;
 	node->tn_size = 0;
 	node->tn_flags = 0;
