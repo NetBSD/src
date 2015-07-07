@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.321 2015/06/08 12:16:47 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.322 2015/07/07 12:38:02 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.321 2015/06/08 12:16:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.322 2015/07/07 12:38:02 justin Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.321 2015/06/08 12:16:47 pooka Exp $");
 #include "rump_dev_private.h"
 
 char machine[] = MACHINE;
+char machine_arch[] = MACHINE_ARCH;
 
 struct proc *initproc;
 
