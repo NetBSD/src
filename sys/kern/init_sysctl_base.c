@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl_base.c,v 1.4 2015/07/07 12:38:02 justin Exp $ */
+/*	$NetBSD: init_sysctl_base.c,v 1.5 2015/07/07 13:07:10 justin Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.4 2015/07/07 12:38:02 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.5 2015/07/07 13:07:10 justin Exp $");
 
-#include <sys/cpu.h>
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/disklabel.h>
 
