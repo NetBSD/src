@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2014/08/10 05:47:36 matt Exp $
+# $NetBSD: Makefile.inc,v 1.2 2015/07/07 21:40:19 matt Exp $
 
 SRCS+=	byte_swap_2.S byte_swap_4.S byte_swap_8.S
 SRCS+=	flt_rounds.c
@@ -6,6 +6,8 @@ SRCS+=	flt_rounds.c
 # Common ieee754 constants and functions
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c infinityl_ieee754.c
 SRCS+=	fpclassifyf_ieee754.c fpclassifyd_ieee754.c fpclassifyl_ieee754.c
+SRCS+=	fpgetmask.c fpgetround.c fpgetsticky.c
+SRCS+=	fpsetmask.c fpsetround.c fpsetsticky.c
 SRCS+=	isfinitef_ieee754.c isfinited_ieee754.c isfinitel_ieee754.c
 SRCS+=	isinff_ieee754.c isinfd_ieee754.c isinfl_ieee754.c
 SRCS+=	isnanf_ieee754.c isnand_ieee754.c isnanl_ieee754.c
