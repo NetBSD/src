@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.33 2015/06/29 08:40:52 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.34 2015/07/07 12:40:13 justin Exp $
 #
 
 #
@@ -79,7 +79,7 @@ lsrc sys /bin/			cat
 lsrc sys /usr.bin/		make xinstall config mktemp sed tsort
 lsrc sys /usr.bin/		lorder join cksum m4 mkdep Makefile.inc
 lsrc sys /usr.bin/		rpcgen rump_wmd
-lsrc sys /usr.bin/		genassym stat
+lsrc sys /usr.bin/		genassym stat uname
 lsrc sys /usr.sbin/		mtree
 
 # sources hosted in the NetBSD tree that are required/useful
