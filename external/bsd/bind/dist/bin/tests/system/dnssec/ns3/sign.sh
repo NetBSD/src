@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -14,8 +14,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-# Id: sign.sh,v 1.43 2011/11/04 05:36:28 each Exp 
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -175,7 +173,7 @@ cat $infile $keyname.key >$zonefile
 $SIGNER -P -g -3 - -A -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 
 #
-# A nsec3 zone (non-optout) with unknown hash algorithm.
+# A nsec3 zone (non-optout) with unknown nsec3 hash algorithm (-U).
 #
 zone=nsec3-unknown.example.
 infile=nsec3-unknown.example.db.in
@@ -188,7 +186,7 @@ cat $infile $keyname.key >$zonefile
 $SIGNER -P -3 - -U -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 
 #
-# A optout nsec3 zone.
+# A optout nsec3 zone with a unknown nsec3 hash algorithm (-U).
 #
 zone=optout-unknown.example.
 infile=optout-unknown.example.db.in
@@ -199,6 +197,42 @@ keyname=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 768 -n zone $zone`
 cat $infile $keyname.key >$zonefile
 
 $SIGNER -P -3 - -U -A -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# A zone with a unknown DNSKEY algorithm.
+# Algorithm 7 is replaced by 100 in the zone and dsset.
+#
+zone=dnskey-unknown.example.
+infile=dnskey-unknown.example.db.in
+zonefile=dnskey-unknown.example.db
+
+keyname=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 768 -n zone $zone`
+
+cat $infile $keyname.key >$zonefile
+
+$SIGNER -P -3 - -r $RANDFILE -o $zone -O full -f ${zonefile}.tmp $zonefile > /dev/null 2>&1
+
+awk '$4 == "DNSKEY" { $7 = 100; print } $4 == "RRSIG" { $6 = 100; print } { print }' ${zonefile}.tmp > ${zonefile}.signed
+
+$DSFROMKEY -A -f ${zonefile}.signed $zone > dsset-${zone}
+
+#
+# A zone with a unknown DNSKEY algorithm + unknown NSEC3 hash algorithm (-U).
+# Algorithm 7 is replaced by 100 in the zone and dsset.
+#
+zone=dnskey-nsec3-unknown.example.
+infile=dnskey-nsec3-unknown.example.db.in
+zonefile=dnskey-nsec3-unknown.example.db
+
+keyname=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 768 -n zone $zone`
+
+cat $infile $keyname.key >$zonefile
+
+$SIGNER -P -3 - -r $RANDFILE -o $zone -U -O full -f ${zonefile}.tmp $zonefile > /dev/null 2>&1
+
+awk '$4 == "DNSKEY" { $7 = 100; print } $4 == "RRSIG" { $6 = 100; print } { print }' ${zonefile}.tmp > ${zonefile}.signed
+
+$DSFROMKEY -A -f ${zonefile}.signed $zone > dsset-${zone}
 
 #
 # A multiple parameter nsec3 zone.
@@ -459,3 +493,15 @@ zonefile=siginterval.example.db
 kskname=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
 zskname=`$KEYGEN -q -3 -r $RANDFILE $zone`
 cp $infile $zonefile
+
+#
+# A zone with future signatures.
+#
+zone=future.example
+infile=future.example.db.in
+zonefile=future.example.db
+kskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
+zskname=`$KEYGEN -q -r $RANDFILE $zone`
+cat $infile $kskname.key $zskname.key >$zonefile
+$SIGNER -P -s +3600 -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+cp -f $kskname.key trusted-future.key
