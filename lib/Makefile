@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.225 2015/06/23 16:33:21 matt Exp $
+#	$NetBSD: Makefile,v 1.226 2015/07/08 01:08:24 matt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -33,7 +33,7 @@ SUBDIR+=	libarch \
 SUBDIR+=	libkern
 .endif
 
-.if (${MACHINE_CPU} == "arm")
+.if (${MACHINE_CPU} == "arm" || ${MACHINE_CPU} == "aarch64")
 LIBC_MACHINE_ARCH?=${MACHINE_ARCH}
 .if empty(LIBC_MACHINE_ARCH:M*hf*)
 SUBDIR+=	libc_vfp
