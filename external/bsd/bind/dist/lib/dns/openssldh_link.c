@@ -1,4 +1,4 @@
-/*	$NetBSD: openssldh_link.c,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.8 2015/07/08 17:28:58 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -95,7 +95,7 @@ openssldh_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 	if (r.length < len)
 		return (ISC_R_NOSPACE);
 	ret = DH_compute_key(r.base, dhpub->pub_key, dhpriv);
-	if (ret == 0)
+	if (ret <= 0)
 		return (dst__openssl_toresult2("DH_compute_key",
 					       DST_R_COMPUTESECRETFAILURE));
 	isc_buffer_add(secret, len);

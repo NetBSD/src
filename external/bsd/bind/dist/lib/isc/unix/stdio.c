@@ -1,7 +1,7 @@
-/*	$NetBSD: stdio.c,v 1.6 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: stdio.c,v 1.7 2015/07/08 17:29:00 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -56,7 +56,11 @@ isc_result_t
 isc_stdio_seek(FILE *f, off_t offset, int whence) {
 	int r;
 
+#ifdef HAVE_FSEEKO
 	r = fseeko(f, offset, whence);
+#else
+	r = fseek(f, offset, whence);
+#endif
 	if (r == 0)
 		return (ISC_R_SUCCESS);
 	else
@@ -69,7 +73,11 @@ isc_stdio_tell(FILE *f, off_t *offsetp) {
 
 	REQUIRE(offsetp != NULL);
 
+#ifdef HAVE_FTELLO
 	r = ftello(f);
+#else
+	r = ftell(f);
+#endif
 	if (r >= 0) {
 		*offsetp = r;
 		return (ISC_R_SUCCESS);

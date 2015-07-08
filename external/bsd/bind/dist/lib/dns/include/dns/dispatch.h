@@ -1,7 +1,7 @@
-/*	$NetBSD: dispatch.h,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.8 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -145,9 +145,13 @@ struct dns_dispatchset {
 #define DNS_DISPATCHATTR_NOLISTEN	0x00000020U
 #define DNS_DISPATCHATTR_MAKEQUERY	0x00000040U
 #define DNS_DISPATCHATTR_CONNECTED	0x00000080U
-/*#define DNS_DISPATCHATTR_RANDOMPORT	0x00000100U*/
+#define DNS_DISPATCHATTR_FIXEDID	0x00000100U
 #define DNS_DISPATCHATTR_EXCLUSIVE	0x00000200U
 /*@}*/
+
+/*
+ */
+#define DNS_DISPATCHOPT_FIXEDID		0x00000001U
 
 isc_result_t
 dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
@@ -370,6 +374,13 @@ dns_dispatch_starttcp(dns_dispatch_t *disp);
  * Requires:
  *\li	'disp' is valid.
  */
+
+isc_result_t
+dns_dispatch_addresponse3(dns_dispatch_t *disp, unsigned int options,
+			  isc_sockaddr_t *dest, isc_task_t *task,
+			  isc_taskaction_t action, void *arg,
+			  isc_uint16_t *idp, dns_dispentry_t **resp,
+			  isc_socketmgr_t *sockmgr);
 
 isc_result_t
 dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
