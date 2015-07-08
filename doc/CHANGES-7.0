@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.336 2015/07/05 21:34:32 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.337 2015/07/08 22:00:28 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32261,4 +32261,9 @@ sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.31
 
 	Fix Xorg coredumps that have started happening recently.
 	[chs, ticket #854]
+
+sys/arch/amd64/include/sljit_machdep.h		1.2
+
+	Fix build with MKPIE=yes.  PR toolchain/50008.
+	[alnsn, ticket #872]
 
