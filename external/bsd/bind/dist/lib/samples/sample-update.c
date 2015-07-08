@@ -1,4 +1,4 @@
-/*	$NetBSD: sample-update.c,v 1.1.1.4 2014/12/10 03:34:46 christos Exp $	*/
+/*	$NetBSD: sample-update.c,v 1.1.1.5 2015/07/08 15:38:07 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -187,7 +187,9 @@ main(int argc, char *argv[]) {
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
 		hints.ai_protocol = IPPROTO_UDP;
+#ifdef AI_NUMERICHOST
 		hints.ai_flags = AI_NUMERICHOST;
+#endif
 		gai_error = getaddrinfo(auth_server, "53", &hints, &res);
 		if (gai_error != 0) {
 			fprintf(stderr, "getaddrinfo failed: %s\n",
@@ -209,7 +211,9 @@ main(int argc, char *argv[]) {
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
 		hints.ai_protocol = IPPROTO_UDP;
+#ifdef AI_NUMERICHOST
 		hints.ai_flags = AI_NUMERICHOST;
+#endif
 		gai_error = getaddrinfo(recursive_server, "53", &hints, &res);
 		if (gai_error != 0) {
 			fprintf(stderr, "getaddrinfo failed: %s\n",

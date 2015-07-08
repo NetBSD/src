@@ -15,5 +15,9 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 rm -f ns2/named.conf
-rm -f ns2/example[1234567].db
+rm -f ns2/example*.db
 rm -f dig.out.* rndc.out.*
+rm -f data2/*dat
+[ -d data2 ] && rmdir data2
+rm -f ns?/named.run
+rm -f ns?/named.memstats

@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -107,6 +107,19 @@ $DIG 1.0.10.in-addr.arpa TXT @10.53.0.4 -p 5300 > dig.out.f2
 grep "status: NOERROR" dig.out.f2 > /dev/null || ret=1
 $DIG 2.0.10.in-addr.arpa TXT @10.53.0.4 -p 5300 > dig.out.f2
 grep "status: NXDOMAIN" dig.out.f2 > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that DS lookups for grafting forward zones are isolated"
+ret=0
+$DIG grafted A @10.53.0.4 -p 5300 > dig.out.q1
+$DIG grafted DS @10.53.0.4 -p 5300 > dig.out.q2
+$DIG grafted A @10.53.0.4 -p 5300 > dig.out.q3
+$DIG grafted AAAA @10.53.0.4 -p 5300 > dig.out.q4
+grep "status: NOERROR" dig.out.q1 > /dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.q2 > /dev/null || ret=1
+grep "status: NOERROR" dig.out.q3 > /dev/null || ret=1
+grep "status: NOERROR" dig.out.q4 > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

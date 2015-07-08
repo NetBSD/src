@@ -28,3 +28,5 @@ $TTL 5
 to-be-removed 		NS	ns.to-be-removed
 ns.to-be-removed	A	10.53.0.6
 fetch	10		TXT	A short ttl
+cname			CNAME	ns7
+ns7			A	10.53.0.7
