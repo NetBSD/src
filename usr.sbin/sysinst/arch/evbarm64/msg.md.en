@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2015/07/08 01:12:48 matt Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.1 2015/07/08 01:12:48 matt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -33,40 +33,16 @@
  *
  */
 
-/* md.h -- Machine specific definitions for evbarm */
+/* evbarm machine dependent messages, english */
 
-#include "mbr.h"
 
-/* Constants and defines */
-#define PART_BOOT		PART_E
-#define PART_BOOT_MSDOS		PART_BOOT
+message md_hello
+{
+}
 
-/* Megs required for a full X installation. */
-#define XNEEDMB 60
+message md_may_remove_boot_medium
+{If you booted from a floppy, you may now remove the disk.
+}
 
-#define HAVE_UFS2_BOOT
-
-/*
- *  Default filesets to fetch and install during installation
- *  or upgrade. The standard sets are:
- *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
- */
-#define SET_KERNEL_1_NAME	"kern-A64EMUL"
-
-#define MD_SETS_SELECTED SET_SYSTEM
-
-#define md_may_remove_boot_medium()	0
-
-/*
- * Machine-specific command to write a new label to a disk.
- * For example, shark uses "/sbin/disklabel -w -r".
- * Sun ports should probably use  DISKLABEL_CMD "/sbin/disklabel -w"
- * to get incore to ondisk inode translation for the Sun proms.
- * If not defined, we assume the port does not support disklabels and
- * hand-edited disklabel will NOT be written by MI code.
- */
-#define DISKLABEL_CMD "disklabel -w -r"
-
-/* Special board type routines need a switch */
-#define BOARD_TYPE_NORMAL	0
-int boardtype;
+message set_kernel_1
+{Kernel (A64EMUL)}

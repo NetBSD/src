@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2015/05/10 10:14:02 martin Exp $ */
+/*	$NetBSD: md.c,v 1.3 2015/07/08 01:12:48 matt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,13 +49,9 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-int boardtype = 0, rpi_bootpart = PART_A;
-
 void
 md_prelim_menu(void)
 {
-	/* get the boardtype from the user */
-	process_menu(MENU_prelim, NULL);
 }
 
 void
@@ -66,8 +62,6 @@ md_init(void)
 void
 md_init_set_status(int flags)
 {
-	if (boardtype == BOARD_TYPE_RPI)
-		set_kernel_set(SET_KERNEL_RPI);
 }
 
 int
@@ -77,24 +71,21 @@ md_get_info(void)
 	int fd;
 	char dev_name[100];
 
-	if (boardtype == BOARD_TYPE_RPI)
-		return set_bios_geom_with_mbr_guess();
-
-	if (no_mbr)
+	if (pm->no_mbr)
 		return 1;
 
-	if (read_mbr(diskdev, &mbr) < 0)
+	if (read_mbr(pm->diskdev, &mbr) < 0)
 		memset(&mbr.mbr, 0, sizeof(mbr.mbr)-2);
 
 	if (edit_mbr(&mbr) == 0)
 		return 0;
 
-	if (strncmp(diskdev, "wd", 2) == 0)
-		disktype = "ST506";
+	if (strncmp(pm->diskdev, "wd", 2) == 0)
+		pm->disktype = "ST506";
 	else
-		disktype = "SCSI";
+		pm->disktype = "SCSI";
 
-	snprintf(dev_name, 100, "/dev/r%sc", diskdev);
+	snprintf(dev_name, sizeof(dev_name), "/dev/r%sc", pm->diskdev);
 
 	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
@@ -110,11 +101,11 @@ md_get_info(void)
 	}
 	close(fd);
 
-	dlcyl = disklabel.d_ncylinders;
-	dlhead = disklabel.d_ntracks;
-	dlsec = disklabel.d_nsectors;
-	sectorsize = disklabel.d_secsize;
-	dlcylsize = disklabel.d_secpercyl;
+	pm->dlcyl = disklabel.d_ncylinders;
+	pm->dlhead = disklabel.d_ntracks;
+	pm->dlsec = disklabel.d_nsectors;
+	pm->sectorsize = disklabel.d_secsize;
+	pm->dlcylsize = disklabel.d_secpercyl;
 
 	/*
 	 * Compute whole disk size. Take max of (dlcyl*dlhead*dlsec)
@@ -122,9 +113,9 @@ md_get_info(void)
 	 * (If our new label's RAW_PART size ends up smaller than the
 	 * in-core RAW_PART size  value, updating the label will fail.)
 	 */
-	dlsize = dlcyl*dlhead*dlsec;
-	if (disklabel.d_secperunit > dlsize)
-		dlsize = disklabel.d_secperunit;
+	pm->dlsize = pm->dlcyl*pm->dlhead*pm->dlsec;
+	if (disklabel.d_secperunit > pm->dlsize)
+		pm->dlsize = disklabel.d_secperunit;
 
 	return 1;
 }
@@ -144,20 +135,6 @@ md_make_bsd_partitions(void)
 int
 md_check_partitions(void)
 {
-	int part;
-
-	if (boardtype == BOARD_TYPE_NORMAL)
-		return 1;
-	if (boardtype == BOARD_TYPE_RPI) {
-		for (part = PART_A; part < MAXPARTITIONS; part++)
-			if (bsdlabel[part].pi_fstype == FS_MSDOS) {
-				rpi_bootpart = part;
-				return 1;
-			}
-
-		msg_display(MSG_nomsdospart);
-		process_menu(MENU_ok, NULL);
-	}
 	return 0;
 }
 
@@ -167,13 +144,13 @@ md_check_partitions(void)
 int
 md_pre_disklabel(void)
 {
-	if (no_mbr)
+	if (pm->no_mbr)
 		return 0;
 
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
+	if (write_mbr(pm->diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
@@ -204,21 +181,6 @@ md_post_newfs(void)
 int
 md_post_extract(void)
 {
-	char kernelbin[100];
-
-	if (boardtype == BOARD_TYPE_NORMAL)
-		return 0;
-	if (boardtype == BOARD_TYPE_RPI) {
-		snprintf(kernelbin, 100, "%s/netbsd.bin", targetroot_mnt);
-		if (file_exists_p(kernelbin)) {
-			run_program(RUN_DISPLAY,
-			    "/bin/cp %s /targetroot/boot/kernel.img", kernelbin);
-		} else {
-			msg_display(MSG_rpikernelmissing);
-			process_menu(MENU_ok, NULL);
-			return 1;
-		}
-	}
 	return 0;
 }
 
@@ -255,68 +217,12 @@ md_pre_mount()
 int
 md_check_mbr(mbr_info_t *mbri)
 {
-	mbr_info_t *ext;
-	struct mbr_partition *part;
-	int i, hasboot=0;
-
-	if (boardtype == BOARD_TYPE_NORMAL)
-		return 2;
-	/* raspi code */
-	if (boardtype == BOARD_TYPE_RPI) {
-		for (ext = mbri; ext; ext = ext->extended) {
-			part = ext->mbr.mbr_parts;
-			for (i=0, hasboot=0; i < MBR_PART_COUNT; part++, i++) {
-				if (part->mbrp_type != MBR_PTYPE_FAT32L)
-					continue;
-				hasboot = 1;
-				break;
-			}
-		}
-		if (!hasboot) {
-			msg_display(MSG_nomsdospart);
-			msg_display_add(MSG_reeditpart, 0);
-			if (!ask_yesno(NULL))
-				return 0;
-			return 1;
-		}
-	}
 	return 2;
 }
 
 int
 md_mbr_use_wholedisk(mbr_info_t *mbri)
 {
-	struct mbr_sector *mbrs = &mbri->mbr;
-	struct mbr_partition *part;
-	int offset;
-
-	if (boardtype == BOARD_TYPE_NORMAL) {
-		/* this keeps it from creating /boot as msdos */
-		bootsize = 0;
-		return mbr_use_wholedisk(mbri);
-	}
-
-	/* raspi code */
-	if (boardtype == BOARD_TYPE_RPI) {
-		part = &mbrs->mbr_parts[0];
-		if (part[0].mbrp_type != MBR_PTYPE_FAT32L) {
-			/* It's hopelessly corrupt, punt for now */
-			msg_display(MSG_nomsdospart);
-			process_menu(MENU_ok, NULL);
-			return 0;
-		}
-		offset = part[0].mbrp_start + part[0].mbrp_size;
-		part[1].mbrp_type = MBR_PTYPE_NETBSD;
-		part[1].mbrp_size = dlsize - offset;
-		part[1].mbrp_start = offset;
-		part[1].mbrp_flag = 0;
-
-		ptstart = part[1].mbrp_start;
-		ptsize = part[1].mbrp_size;
-		bootstart = part[0].mbrp_start;
-		bootsize = part[0].mbrp_size;
-		return 1;
-	}
 
 	return mbr_use_wholedisk(mbri);
 }
