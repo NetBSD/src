@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec.c,v 1.10 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.11 2015/07/08 17:28:58 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -945,7 +945,6 @@ dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key) {
 	ISC_LIST_APPEND(datalist->rdata, rdata, link);
 	dataset = NULL;
 	RETERR(dns_message_gettemprdataset(msg, &dataset));
-	dns_rdataset_init(dataset);
 	RUNTIME_CHECK(dns_rdatalist_tordataset(datalist, dataset) == ISC_R_SUCCESS);
 	msg->sig0 = dataset;
 

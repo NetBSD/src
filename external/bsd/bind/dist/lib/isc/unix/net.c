@@ -1,7 +1,7 @@
-/*	$NetBSD: net.c,v 1.7 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.8 2015/07/08 17:29:00 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -328,6 +328,7 @@ initialize_ipv6only(void) {
 #endif /* WANT_IPV6 */
 
 #ifdef ISC_PLATFORM_HAVEIN6PKTINFO
+#ifdef WANT_IPV6
 static void
 try_ipv6pktinfo(void) {
 	int s, on;
@@ -379,6 +380,7 @@ initialize_ipv6pktinfo(void) {
 	RUNTIME_CHECK(isc_once_do(&once_ipv6pktinfo,
 				  try_ipv6pktinfo) == ISC_R_SUCCESS);
 }
+#endif /* WANT_IPV6 */
 #endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
 #endif /* ISC_PLATFORM_HAVEIPV6 */
 
@@ -519,6 +521,8 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 		return (ISC_FALSE);
 	}
 
+	memset(&control, 0, sizeof(control));
+
 	iovec.iov_base = buf;
 	iovec.iov_len = sizeof(buf);
 
@@ -622,7 +626,11 @@ try_dscp_v4(void) {
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
+#ifdef AI_NUMERICHOST
 	hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
+#else
+	hints.ai_flags = AI_PASSIVE;
+#endif
 
 	n = getaddrinfo("127.0.0.1", NULL, &hints, &res0);
 	if (n != 0 || res0 == NULL) {
@@ -691,7 +699,11 @@ try_dscp_v6(void) {
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
+#ifdef AI_NUMERICHOST
 	hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
+#else
+	hints.ai_flags = AI_PASSIVE;
+#endif
 
 	n = getaddrinfo("::1", NULL, &hints, &res0);
 	if (n != 0 || res0 == NULL) {

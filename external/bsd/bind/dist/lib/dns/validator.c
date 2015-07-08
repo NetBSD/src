@@ -1,7 +1,7 @@
-/*	$NetBSD: validator.c,v 1.12 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.13 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1424,7 +1424,6 @@ compute_keytag(dns_rdata_t *rdata, dns_rdata_dnskey_t *key) {
  */
 static isc_boolean_t
 isselfsigned(dns_validator_t *val) {
-	dns_fixedname_t fixed;
 	dns_rdataset_t *rdataset, *sigrdataset;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_t sigrdata = DNS_RDATA_INIT;
@@ -1480,8 +1479,7 @@ isselfsigned(dns_validator_t *val) {
 			result = dns_dnssec_verify3(name, rdataset, dstkey,
 						    ISC_TRUE,
 						    val->view->maxbits,
-						    mctx, &sigrdata,
-						    dns_fixedname_name(&fixed));
+						    mctx, &sigrdata, NULL);
 			dst_key_free(&dstkey);
 			if (result != ISC_R_SUCCESS)
 				continue;
@@ -2067,9 +2065,6 @@ validatezonekey(dns_validator_t *val) {
 				      "the DNSKEY RRset and also matches a "
 				      "trusted key for '%s'",
 				      namebuf);
-			validator_log(val, ISC_LOG_NOTICE,
-				      "please check the 'trusted-keys' for "
-				      "'%s' in named.conf.", namebuf);
 			return (DNS_R_NOVALIDKEY);
 		}
 

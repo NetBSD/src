@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1996-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -667,6 +667,7 @@ SO_CFLAGS
 SO
 BIND9_CONFIGARGS
 BIND9_SRCID
+BIND9_VERSIONSTRING
 BIND9_MAJOR
 BIND9_VERSION
 BIND9_DESCRIPTION
@@ -767,6 +768,7 @@ ISC_IPV6_C
 ISC_ISCIPV6_O
 ISC_IPV6_O
 ISC_IPV6_H
+ISC_PLATFORM_HAVESOCKADDRSTORAGE
 ISC_PLATFORM_FIXIN6ISADDR
 ISC_PLATFORM_HAVEIN6PKTINFO
 LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK
@@ -974,6 +976,7 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 enable_libbind
+enable_warn_shadow
 enable_warn_error
 enable_developer
 enable_seccomp
@@ -1001,6 +1004,7 @@ with_libxml2
 with_libjson
 enable_largefile
 with_purify
+with_gperftools_profiler
 enable_backtrace
 enable_symtable
 enable_ipv6
@@ -1665,9 +1669,10 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-libbind	  deprecated
+  --enable-warn-shadow	  turn on -Wshadow when compiling
   --enable-warn-error	  turn on -Werror when compiling
   --enable-developer      enable developer build settings
-  --enable-seccomp        enable support for libseccomp sysstem call filtering
+  --enable-seccomp        enable support for libseccomp system call filtering
                           [default=no]
   --enable-kqueue         use BSD kqueue when available [default=yes]
   --enable-epoll          use Linux epoll when available [default=auto]
@@ -1707,7 +1712,7 @@ Optional Packages:
   --with-geoip=PATH       Build with GeoIP support (yes|no|path)
   --with-gssapi=PATH      Specify path for system-supplied GSSAPI [default=yes]
   --with-randomdev=PATH   Specify path for random device
-  --with-locktype=ARG       Specify mutex lock type (adaptive or standard)
+  --with-locktype=ARG     Specify mutex lock type (adaptive or standard)
   --with-libtool          use GNU libtool
   --with-openssl=PATH     Build with OpenSSL yes|no|path.
 			  (Crypto is required for DNSSEC)
@@ -1720,6 +1725,7 @@ Optional Packages:
   --with-libxml2=PATH     build with libxml2 library yes|no|path
   --with-libjson=PATH     build with libjson0 library yes|no|path
   --with-purify=PATH      use Rational purify
+  --with-gperftools-profiler  use gperftools CPU profiler
   --with-kame=PATH	  use Kame IPv6 default path /usr/local/v6
   --with-readline=LIBSPEC    specify readline library default -lreadline
 
@@ -11407,6 +11413,12 @@ It is available from http://www.isc.org as a separate download." "$LINENO" 5
 		;;
 esac
 
+# Check whether --enable-warn_shadow was given.
+if test "${enable_warn_shadow+set}" = set; then :
+  enableval=$enable_warn_shadow;
+fi
+
+
 # Check whether --enable-warn_error was given.
 if test "${enable_warn_error+set}" = set; then :
   enableval=$enable_warn_error;
@@ -11428,6 +11440,7 @@ yes)
 	test "${enable_symtable+set}" = set || enable_symtable=all
 	test "${enable_sit+set}" = set || enable_sit=yes
 	test "${enable_warn_error+set}" = set || enable_warn_error=yes
+	test "${enable_warn_shadow+set}" = set || enable_warn_shadow=yes
 	;;
 esac
 
@@ -13013,6 +13026,20 @@ fi
 done
 
 for ac_func in setegid setresgid
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+
+# BSDI doesn't have ftello fseeko
+for ac_func in ftello fseeko
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -16164,6 +16191,43 @@ $as_echo "yes" >&6; }
 		ISC_PLATFORM_OPENSSLHASH="#define ISC_PLATFORM_OPENSSLHASH 1"
 		ISC_OPENSSL_INC="$DST_OPENSSL_INC"
 		ISC_OPENSSL_LIBS="$DST_OPENSSL_LIBS"
+		saved_cflags="$CFLAGS"
+		save_libs="$LIBS"
+		CFLAGS="$CFLAGS $ISC_OPENSSL_INC"
+		LIBS="$LIBS $ISC_OPENSSL_LIBS"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking HMAC_Init() return type" >&5
+$as_echo_n "checking HMAC_Init() return type... " >&6; }
+		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+		#include <openssl/hmac.h>
+int
+main ()
+{
+
+		HMAC_CTX ctx;
+		int n = HMAC_Init(&ctx, NULL, 0, NULL);
+		n += HMAC_Update(&ctx, NULL, 0);
+		n += HMAC_Final(&ctx, NULL, NULL);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: int" >&5
+$as_echo "int" >&6; }
+
+$as_echo "#define HMAC_RETURN_INT 1" >>confdefs.h
+
+else
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: void" >&5
+$as_echo "void" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+		CFLAGS="$saved_cflags"
+		LIBS="$save_libs"
 		;;
 	no)
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
@@ -16829,6 +16893,9 @@ $as_echo "no" >&6; }
 		BACKTRACECFLAGS="$BACKTRACECFLAGS -Wl,+vnocompatwarnings"
 		;;
 	esac
+	if test "X$enable_warn_shadow" = Xyes; then
+		STD_CWARNINGS="$STD_CWARNINGS -Wshadow"
+	fi
 	if test "X$enable_warn_error" = Xyes; then
 		STD_CWARNINGS="$STD_CWARNINGS -Werror"
 	fi
@@ -17106,6 +17173,34 @@ esac
 
 
 
+#
+# Google/Great Performance Tools CPU Profiler
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use gperftools profiler" >&5
+$as_echo_n "checking whether to use gperftools profiler... " >&6; }
+
+# Check whether --with-gperftools-profiler was given.
+if test "${with_gperftools_profiler+set}" = set; then :
+  withval=$with_gperftools_profiler; use_profiler="$withval"
+else
+  use_profiler="no"
+fi
+
+
+case $use_profiler in
+	yes)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_GPERFTOOLS_PROFILER 1" >>confdefs.h
+
+		LIBS="$LIBS -lprofiler"
+		;;
+	*)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		;;
+esac
 
 #
 # enable/disable dumping stack backtrace.  Also check if the system supports
@@ -17539,6 +17634,36 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 		ISC_IPV6_C="ipv6.c"
 		;;
 esac
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct sockaddr_storage" >&5
+$as_echo_n "checking for struct sockaddr_storage... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <sys/socket.h>
+$isc_netinetin6_hack
+$isc_netinet6in6_hack
+
+int
+main ()
+{
+struct sockaddr_storage storage; return (0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+ISC_PLATFORM_HAVESOCKADDRSTORAGE="#define ISC_PLATFORM_HAVESOCKADDRSTORAGE 1"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+ISC_PLATFORM_HAVESOCKADDRSTORAGE="#undef ISC_PLATFORM_HAVESOCKADDRSTORAGE"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
 
 
 
@@ -18077,6 +18202,9 @@ if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: socklen_t for buflen; u_int for flags" >&5
 $as_echo "socklen_t for buflen; u_int for flags" >&6; }
 
+$as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
+
+
 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T socklen_t" >>confdefs.h
 
 
@@ -18102,6 +18230,34 @@ _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: size_t for buflen; int for flags" >&5
 $as_echo "size_t for buflen; int for flags" >&6; }
+	 $as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
+
+	 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T size_t" >>confdefs.h
+
+	 $as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
+
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+int getnameinfo(const struct sockaddr *, size_t, char *,
+		size_t, char *, size_t, int);
+int
+main ()
+{
+ return (0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: size_t for buflen; int for flags" >&5
+$as_echo "size_t for buflen; int for flags" >&6; }
+	 $as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T size_t" >>confdefs.h
+
 	 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T size_t" >>confdefs.h
 
 	 $as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
@@ -18109,10 +18265,14 @@ $as_echo "size_t for buflen; int for flags" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not match any subspecies; assume standard definition" >&5
 $as_echo "not match any subspecies; assume standard definition" >&6; }
+$as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
+
 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T socklen_t" >>confdefs.h
 
 $as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
 
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
@@ -19107,7 +19267,9 @@ esac
 case $ac_cv_have_if_nametoindex in
 yes)
 	ISC_PLATFORM_HAVEIFNAMETOINDEX="#define ISC_PLATFORM_HAVEIFNAMETOINDEX 1"
-	$as_echo "#define HAVE_IF_NAMETOINDEX 1" >>confdefs.h
+
+$as_echo "#define HAVE_IF_NAMETOINDEX 1" >>confdefs.h
+
 
 	;;
 *)
@@ -20437,6 +20599,8 @@ BIND9_VERSION="VERSION=${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASE
 
 BIND9_MAJOR="MAJOR=${MAJORVER}.${MINORVER}"
 
+BIND9_VERSIONSTRING="${PRODUCT} ${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASETYPE}${RELEASEVER}${EXTENSIONS}${DESCRIPTION:+ }${DESCRIPTION}"
+
 
 BIND9_SRCID="SRCID=unset"
 if test -f "${srcdir}/srcid"; then
@@ -21645,7 +21809,7 @@ ac_config_commands="$ac_config_commands chmod"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delv/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/rndc/Makefile bin/tests/Makefile bin/tests/atomic/Makefile bin/tests/db/Makefile bin/tests/dst/Makefile bin/tests/dst/Kdh.+002+18602.key bin/tests/dst/Kdh.+002+18602.private bin/tests/dst/Kdh.+002+48957.key bin/tests/dst/Kdh.+002+48957.private bin/tests/dst/Ktest.+001+00002.key bin/tests/dst/Ktest.+001+54622.key bin/tests/dst/Ktest.+001+54622.private bin/tests/dst/Ktest.+003+23616.key bin/tests/dst/Ktest.+003+23616.private bin/tests/dst/Ktest.+003+49667.key bin/tests/dst/dst_2_data bin/tests/dst/t2_data_1 bin/tests/dst/t2_data_2 bin/tests/dst/t2_dsasig bin/tests/dst/t2_rsasig bin/tests/hashes/Makefile bin/tests/headerdep_test.sh bin/tests/master/Makefile bin/tests/mem/Makefile bin/tests/names/Makefile bin/tests/net/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/rbt/Makefile bin/tests/resolver/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/builtin/Makefile bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/named.conf bin/tests/system/dlzredir/prereq.sh bin/tests/system/filter-aaaa/Makefile bin/tests/system/geoip/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/sit/prereq.sh bin/tests/system/rpz/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/system/tsiggss/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-docbook-latex.xsl doc/xsl/isc-manpage.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/tests/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall unit/Makefile unit/unittest.sh"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delv/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/rndc/Makefile bin/tests/Makefile bin/tests/atomic/Makefile bin/tests/db/Makefile bin/tests/dst/Makefile bin/tests/dst/Kdh.+002+18602.key bin/tests/dst/Kdh.+002+18602.private bin/tests/dst/Kdh.+002+48957.key bin/tests/dst/Kdh.+002+48957.private bin/tests/dst/Ktest.+001+00002.key bin/tests/dst/Ktest.+001+54622.key bin/tests/dst/Ktest.+001+54622.private bin/tests/dst/Ktest.+003+23616.key bin/tests/dst/Ktest.+003+23616.private bin/tests/dst/Ktest.+003+49667.key bin/tests/dst/dst_2_data bin/tests/dst/t2_data_1 bin/tests/dst/t2_data_2 bin/tests/dst/t2_dsasig bin/tests/dst/t2_rsasig bin/tests/hashes/Makefile bin/tests/headerdep_test.sh bin/tests/master/Makefile bin/tests/mem/Makefile bin/tests/names/Makefile bin/tests/net/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/rbt/Makefile bin/tests/resolver/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/builtin/Makefile bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/named.conf bin/tests/system/dlzredir/prereq.sh bin/tests/system/filter-aaaa/Makefile bin/tests/system/geoip/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/sit/prereq.sh bin/tests/system/rpz/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/system/tsiggss/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-docbook-latex.xsl doc/xsl/isc-manpage.xsl doc/xsl/isc-notes-html.xsl doc/xsl/isc-notes-latex.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/tests/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall unit/Makefile unit/unittest.sh"
 
 
 #
@@ -22721,6 +22885,8 @@ do
     "doc/xsl/isc-docbook-html.xsl") CONFIG_FILES="$CONFIG_FILES doc/xsl/isc-docbook-html.xsl" ;;
     "doc/xsl/isc-docbook-latex.xsl") CONFIG_FILES="$CONFIG_FILES doc/xsl/isc-docbook-latex.xsl" ;;
     "doc/xsl/isc-manpage.xsl") CONFIG_FILES="$CONFIG_FILES doc/xsl/isc-manpage.xsl" ;;
+    "doc/xsl/isc-notes-html.xsl") CONFIG_FILES="$CONFIG_FILES doc/xsl/isc-notes-html.xsl" ;;
+    "doc/xsl/isc-notes-latex.xsl") CONFIG_FILES="$CONFIG_FILES doc/xsl/isc-notes-latex.xsl" ;;
     "isc-config.sh") CONFIG_FILES="$CONFIG_FILES isc-config.sh" ;;
     "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
     "lib/bind9/Makefile") CONFIG_FILES="$CONFIG_FILES lib/bind9/Makefile" ;;

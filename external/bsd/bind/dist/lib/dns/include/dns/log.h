@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.8 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -46,6 +46,7 @@ LIBDNS_EXTERNAL_DATA extern isc_logmodule_t dns_modules[];
 #define DNS_LOGCATEGORY_EDNS_DISABLED	(&dns_categories[11])
 #define DNS_LOGCATEGORY_RPZ		(&dns_categories[12])
 #define DNS_LOGCATEGORY_RRL		(&dns_categories[13])
+#define DNS_LOGCATEGORY_CNAME		(&dns_categories[14])
 
 /* Backwards compatibility. */
 #define DNS_LOGCATEGORY_GENERAL		ISC_LOGCATEGORY_GENERAL

@@ -339,11 +339,11 @@ sub handleTCP {
 	my $signer;
 	my $continuation = 0;
 	if ($Net::DNS::VERSION < 0.81) {
-	while (my $rr = $request->pop("additional")) {
-		if ($rr->type eq "TSIG") {
-			$prev_tsig = $rr;
+		while (my $rr = $request->pop("additional")) {
+			if ($rr->type eq "TSIG") {
+				$prev_tsig = $rr;
+			}
 		}
-	}
 	}
 
 	my @results = ();
@@ -360,7 +360,7 @@ sub handleTCP {
 			foreach $a (@{$r->{answer}}) {
 				$packet->push("answer", $a);
 			}
-			if(defined($key_name) && defined($key_data)) {
+			if (defined($key_name) && defined($key_data)) {
 				my $tsig;
 				# sign the packet
 				print "  Signing the data with " . 
@@ -411,7 +411,7 @@ sub handleTCP {
 					 ($Net::DNS::VERSION >= 0.71 &&
 					  $Net::DNS::VERSION <= 0.74 );
 				if ($Net::DNS::VERSION < 0.81) {
-				$packet->sign_tsig($tsig);
+					$packet->sign_tsig($tsig);
 				} elsif ($continuation) {
 					$opaque = $packet->sign_tsig($opaque);
 				} else {

@@ -1,7 +1,7 @@
-/*	$NetBSD: hash.c,v 1.8 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.9 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -296,7 +296,6 @@ static void
 destroy(isc_hash_t **hctxp) {
 	isc_hash_t *hctx;
 	isc_mem_t *mctx;
-	unsigned char canary0[4], canary1[4];
 
 	REQUIRE(hctxp != NULL && *hctxp != NULL);
 	hctx = *hctxp;
@@ -316,10 +315,7 @@ destroy(isc_hash_t **hctxp) {
 
 	DESTROYLOCK(&hctx->lock);
 
-	memmove(canary0, hctx + 1, sizeof(canary0));
 	memset(hctx, 0, sizeof(isc_hash_t));
-	memmove(canary1, hctx + 1, sizeof(canary1));
-	INSIST(memcmp(canary0, canary1, sizeof(canary0)) == 0);
 	isc_mem_put(mctx, hctx, sizeof(isc_hash_t));
 	isc_mem_detach(&mctx);
 }

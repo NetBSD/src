@@ -1,7 +1,7 @@
-/*	$NetBSD: gsstest.c,v 1.8 2014/12/10 04:37:53 christos Exp $	*/
+/*	$NetBSD: gsstest.c,v 1.9 2015/07/08 17:28:55 christos Exp $	*/
 
 /*
- * Copyright (C) 2006, 2007, 2009-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2007, 2009-2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -238,7 +238,6 @@ sendquery(isc_task_t *task, isc_event_t *event)
 
 	dns_name_init(qname, NULL);
 	dns_name_clone(dns_fixedname_name(&queryname), qname);
-	dns_rdataset_init(qrdataset);
 	dns_rdataset_makequestion(qrdataset, dns_rdataclass_in,
 				  dns_rdatatype_a);
 	ISC_LIST_APPEND(qname->list, qrdataset, link);

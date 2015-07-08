@@ -1,7 +1,7 @@
-/*	$NetBSD: rrsig_46.c,v 1.6 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.7 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -180,7 +180,6 @@ totext_rrsig(ARGS_TOTEXT) {
 	if (dns_rdatatype_isknown(covered) && covered != 0) {
 		RETERR(dns_rdatatype_totext(covered, target));
 	} else {
-		char buf[sizeof("TYPE65535")];
 		sprintf(buf, "TYPE%u", covered);
 		RETERR(str_totext(buf, target));
 	}

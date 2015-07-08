@@ -1,7 +1,7 @@
-/*	$NetBSD: win32os.h,v 1.4 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: win32os.h,v 1.5 2015/07/08 17:29:00 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -29,30 +29,6 @@ ISC_LANG_BEGINDECLS
 /*
  * Return the number of CPUs available on the system, or 1 if this cannot
  * be determined.
- */
-
-unsigned int
-isc_win32os_majorversion(void);
-/*
- * Major Version of the O/S.
- */
-
-unsigned int
-isc_win32os_minorversion(void);
-/*
- * Minor Version of the O/S.
- */
-
-unsigned int
-isc_win32os_servicepackmajor(void);
-/*
- * Major Version of the Service Pack for O/S.
- */
-
-unsigned int
-isc_win32os_servicepackminor(void);
-/*
- * Minor Version of the Service Pack for O/S.
  */
 
 int

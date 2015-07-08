@@ -1,7 +1,7 @@
-/*	$NetBSD: win32os.c,v 1.5 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: win32os.c,v 1.6 2015/07/08 17:29:00 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,87 +17,106 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: win32os.c,v 1.5 2007/06/19 23:47:19 tbox Exp  */
-
 #include <windows.h>
 
+#ifndef TESTVERSION
 #include <isc/win32os.h>
-
-static BOOL bInit = FALSE;
-static OSVERSIONINFOEX osVer;
-
-static void
-initialize_action(void) {
-	BOOL bSuccess;
-
-	if (bInit)
-		return;
-	/*
-	 * NOTE: VC++ 6.0 gets this function declaration wrong
-	 * so we compensate by casting the argument
-	 */
-	osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-	bSuccess = GetVersionEx((OSVERSIONINFO *) &osVer);
-
-	/*
-	 * Versions of NT before NT4.0 SP6 did not return the
-	 * extra info that the EX structure provides and returns
-	 * a failure so we need to retry with the old structure.
-	 */
-	if(!bSuccess) {
-		osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-		(void)GetVersionEx((OSVERSIONINFO *) &osVer);
-	}
-	bInit = TRUE;
-}
-
-unsigned int
-isc_win32os_majorversion(void) {
-	initialize_action();
-	return ((unsigned int)osVer.dwMajorVersion);
-}
-
-unsigned int
-isc_win32os_minorversion(void) {
-	initialize_action();
-	return ((unsigned int)osVer.dwMinorVersion);
-}
-
-unsigned int
-isc_win32os_servicepackmajor(void) {
-	initialize_action();
-	return ((unsigned int)osVer.wServicePackMajor);
-}
-
-unsigned int
-isc_win32os_servicepackminor(void) {
-	initialize_action();
-	return ((unsigned int)osVer.wServicePackMinor);
-}
+#else
+#include <stdio.h>
+#endif
 
 int
 isc_win32os_versioncheck(unsigned int major, unsigned int minor,
-		     unsigned int spmajor, unsigned int spminor) {
+			 unsigned int spmajor, unsigned int spminor)
+{
+	OSVERSIONINFOEX osVer;
+	DWORD typeMask;
+	ULONGLONG conditionMask;
 
-	initialize_action();
+	memset(&osVer, 0, sizeof(OSVERSIONINFOEX));
+	osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	typeMask = 0;
+	conditionMask = 0;
 
-	if (major < isc_win32os_majorversion())
+	/* Optimistic: likely greater */
+	osVer.dwMajorVersion = major;
+	typeMask |= VER_MAJORVERSION;
+	conditionMask = VerSetConditionMask(conditionMask,
+					    VER_MAJORVERSION,
+					    VER_GREATER);
+	osVer.dwMinorVersion = minor;
+	typeMask |= VER_MINORVERSION;
+	conditionMask = VerSetConditionMask(conditionMask,
+					    VER_MINORVERSION,
+					    VER_GREATER);
+	osVer.wServicePackMajor = spmajor;
+	typeMask |= VER_SERVICEPACKMAJOR;
+	conditionMask = VerSetConditionMask(conditionMask,
+					    VER_SERVICEPACKMAJOR,
+					    VER_GREATER);
+	osVer.wServicePackMinor = spminor;
+	typeMask |= VER_SERVICEPACKMINOR;
+	conditionMask = VerSetConditionMask(conditionMask,
+					    VER_SERVICEPACKMINOR,
+					    VER_GREATER);
+	if (VerifyVersionInfo(&osVer, typeMask, conditionMask))
 		return (1);
-	if (major > isc_win32os_majorversion())
-		return (-1);
-	if (minor < isc_win32os_minorversion())
-		return (1);
-	if (minor > isc_win32os_minorversion())
-		return (-1);
-	if (spmajor < isc_win32os_servicepackmajor())
-		return (1);
-	if (spmajor > isc_win32os_servicepackmajor())
-		return (-1);
-	if (spminor < isc_win32os_servicepackminor())
-		return (1);
-	if (spminor > isc_win32os_servicepackminor())
-		return (-1);
 
-	/* Exact */
-	return (0);
+	/* Failed: retry with equal */
+	conditionMask = 0;
+	conditionMask = VerSetConditionMask(conditionMask,
+					    VER_MAJORVERSION,
+					    VER_EQUAL);
+	conditionMask = VerSetConditionMask(conditionMask,
+					    VER_MINORVERSION,
+					    VER_EQUAL);
+	conditionMask = VerSetConditionMask(conditionMask,
+					    VER_SERVICEPACKMAJOR,
+					    VER_EQUAL);
+	conditionMask = VerSetConditionMask(conditionMask,
+					    VER_SERVICEPACKMINOR,
+					    VER_EQUAL);
+	if (VerifyVersionInfo(&osVer, typeMask, conditionMask))
+		return (0);
+	else
+		return (-1);
 }
+
+#ifdef TESTVERSION
+int
+main(int argc, char **argv) {
+	unsigned int major = 0;
+	unsigned int minor = 0;
+	unsigned int spmajor = 0;
+	unsigned int spminor = 0;
+	int ret;
+
+	if (argc > 1) {
+		--argc;
+		++argv;
+		major = (unsigned int) atoi(argv[0]);
+	}
+	if (argc > 1) {
+		--argc;
+		++argv;
+		minor = (unsigned int) atoi(argv[0]);
+	}
+	if (argc > 1) {
+		--argc;
+		++argv;
+		spmajor = (unsigned int) atoi(argv[0]);
+	}
+	if (argc > 1) {
+		--argc;
+		++argv;
+		spminor = (unsigned int) atoi(argv[0]);
+	}
+
+	ret = isc_win32os_versioncheck(major, minor, spmajor, spminor);
+
+	printf("%s major %u minor %u SP major %u SP minor %u\n",
+	       ret > 0 ? "greater" : (ret == 0 ? "equal" : "less"),
+	       major, minor, spmajor, spminor);
+	return (ret);
+}
+#endif

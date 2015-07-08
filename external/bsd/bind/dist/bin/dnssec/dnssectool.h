@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssectool.h,v 1.6 2014/12/10 04:37:51 christos Exp $	*/
+/*	$NetBSD: dnssectool.h,v 1.7 2015/07/08 17:28:55 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,7 +59,7 @@ sig_format(dns_rdata_rrsig_t *sig, char *cp, unsigned int size);
 #define SIG_FORMATSIZE (DNS_NAME_FORMATSIZE + DNS_SECALG_FORMATSIZE + sizeof("65535"))
 
 void
-setup_logging(int verbose, isc_mem_t *mctx, isc_log_t **logp);
+setup_logging(isc_mem_t *mctx, isc_log_t **logp);
 
 void
 cleanup_logging(isc_log_t **logp);

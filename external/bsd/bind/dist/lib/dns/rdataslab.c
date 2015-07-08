@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.10 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.11 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -460,6 +460,7 @@ static dns_rdatasetmethods_t rdataset_methods = {
 	rdataset_current,
 	rdataset_clone,
 	rdataset_count,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
