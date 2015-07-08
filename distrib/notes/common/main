@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.522 2015/05/29 09:13:49 youri Exp $
+.\"	$NetBSD: main,v 1.523 2015/07/08 08:48:19 kamil Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1352,6 +1352,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Steve Rumble Ta Mt rumble@NetBSD.org
 .It Ta Rumko Ta Mt rumko@NetBSD.org
 .It Ta Jukka Ruohonen Ta Mt jruoho@NetBSD.org
+.It Ta Kamil Rytarowski Ta Mt kamil@NetBSD.org
 .It Ta Blair J. Sadewitz Ta Mt bjs@NetBSD.org
 .It Ta David Sainty Ta Mt dsainty@NetBSD.org
 .It Ta SAITOH Masanobu Ta Mt msaitoh@NetBSD.org
