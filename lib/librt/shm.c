@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.c,v 1.2 2015/06/30 11:46:47 martin Exp $	*/
+/*	$NetBSD: shm.c,v 1.3 2015/07/08 07:14:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: shm.c,v 1.2 2015/06/30 11:46:47 martin Exp $");
+__RCSID("$NetBSD: shm.c,v 1.3 2015/07/08 07:14:38 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/mount.h>
@@ -57,45 +57,36 @@ __RCSID("$NetBSD: shm.c,v 1.2 2015/06/30 11:46:47 martin Exp $");
 
 #define	MOUNT_SHMFS		MOUNT_TMPFS
 
-static const char *		_shmfs_path = NULL;
-static char			_shmfs_path_buf[PATH_MAX];
+static bool			shm_ok = false;
 
 static bool
 _shm_check_fs(void)
 {
-	const char *shmfs = SHMFS_DIR_PATH;
+	int fd;
 	struct statvfs sv;
 	struct stat st;
-	char buf[PATH_MAX];
-	ssize_t cnt;
 
-	if ((cnt = readlink(shmfs, buf, sizeof(buf))) > 0) {
-		if ((size_t)cnt >= sizeof(buf))
-			return false;
-		buf[cnt] = 0;
-		shmfs = buf;
-	}
-	if (statvfs1(shmfs, &sv, ST_NOWAIT) == -1) {
+	fd = open(SHMFS_DIR_PATH, O_DIRECTORY|O_RDONLY);
+	if (fd == -1)
 		return false;
-	}
-	if (strncmp(sv.f_fstypename, MOUNT_SHMFS, sizeof(sv.f_fstypename))) {
-		return false;
-	}
 
-	if (lstat(shmfs, &st) == -1) {
-		return false;
-	}
-	if ((st.st_mode & SHMFS_DIR_MODE) != SHMFS_DIR_MODE) {
-		return false;
-	}
+	if (fstatvfs1(fd, &sv, ST_NOWAIT) == -1)
+		goto out;
 
-	if (shmfs == buf) {
-		strcpy(_shmfs_path_buf, buf);
-		_shmfs_path = _shmfs_path_buf;
-	} else {
-		_shmfs_path = shmfs;
-	}
-	return true;
+	if (strncmp(sv.f_fstypename, MOUNT_SHMFS, sizeof(sv.f_fstypename)))
+		goto out;
+
+	if (fstat(fd, &st) == -1)
+		goto out;
+
+	if ((st.st_mode & SHMFS_DIR_MODE) != SHMFS_DIR_MODE)
+		goto out;
+
+	shm_ok = true;
+
+out:
+	close(fd);
+	return shm_ok;
 }
 
 static bool
@@ -103,7 +94,7 @@ _shm_get_path(char *buf, size_t len, const char *name)
 {
 	int ret;
 
-	if (__predict_false(!_shmfs_path) && !_shm_check_fs()) {
+	if (__predict_false(!shm_ok) && !_shm_check_fs()) {
 		errno = ENOTSUP;
 		return false;
 	}
@@ -117,10 +108,10 @@ _shm_get_path(char *buf, size_t len, const char *name)
 		return false;
 	}
 
-	ret = snprintf(buf, len, "%s/%s%s",
-	    _shmfs_path, SHMFS_OBJ_PREFIX, name);
+	ret = snprintf(buf, len, SHMFS_DIR_PATH "/" SHMFS_OBJ_PREFIX "%s",
+	    name);
 
-	if ((size_t)ret >= PATH_MAX) {
+	if ((size_t)ret >= len) {
 		errno = ENAMETOOLONG;
 		return false;
 	}
@@ -130,7 +121,7 @@ _shm_get_path(char *buf, size_t len, const char *name)
 int
 shm_open(const char *name, int oflag, mode_t mode)
 {
-	char path[PATH_MAX + 1];
+	char path[PATH_MAX];
 
 	if (!_shm_get_path(path, sizeof(path), name)) {
 		return -1;
@@ -141,7 +132,7 @@ shm_open(const char *name, int oflag, mode_t mode)
 int
 shm_unlink(const char *name)
 {
-	char path[PATH_MAX + 1];
+	char path[PATH_MAX];
 
 	if (!_shm_get_path(path, sizeof(path), name)) {
 		return -1;
