@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdmi.c,v 1.2 2015/05/18 21:03:36 jmcneill Exp $ */
+/* $NetBSD: tegra_hdmi.c,v 1.3 2015/07/08 01:23:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.2 2015/05/18 21:03:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.3 2015/07/08 01:23:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,7 +92,7 @@ struct tegra_hdmi_softc {
 static void	tegra_hdmi_hpd(struct tegra_hdmi_softc *);
 static void	tegra_hdmi_connect(struct tegra_hdmi_softc *);
 static void	tegra_hdmi_disconnect(struct tegra_hdmi_softc *);
-static void	tegra_hdmi_enable(struct tegra_hdmi_softc *);
+static void	tegra_hdmi_enable(struct tegra_hdmi_softc *, const uint8_t *);
 static int	tegra_hdmi_sor_start(struct tegra_hdmi_softc *);
 
 CFATTACH_DECL_NEW(tegra_hdmi, sizeof(struct tegra_hdmi_softc),
@@ -190,13 +190,14 @@ static void
 tegra_hdmi_connect(struct tegra_hdmi_softc *sc)
 {
 	const struct videomode *mode;
-	char edid[128];
+	char edid[128], *pedid = NULL;
 	struct edid_info ei;
 	int retry = 4, error;
 
+	memset(&ei, 0, sizeof(ei));
+
 	if (sc->sc_ddcdev) {
 		memset(edid, 0, sizeof(edid));
-		memset(&ei, 0, sizeof(ei));
 
 		while (--retry > 0) {
 			error = ddc_dev_read_edid(sc->sc_ddcdev, edid,
@@ -212,10 +213,11 @@ tegra_hdmi_connect(struct tegra_hdmi_softc *sc)
 			if (edid_parse(edid, &ei) != 0) {
 				device_printf(sc->sc_dev,
 				    "failed to parse EDID\n");
-#ifdef TEGRA_HDMI_DEBUG
 			} else {
+#ifdef TEGRA_HDMI_DEBUG
 				edid_print(&ei);
 #endif
+				pedid = edid;
 			}
 		}
 	}
@@ -226,7 +228,7 @@ tegra_hdmi_connect(struct tegra_hdmi_softc *sc)
 	}
 
 	sc->sc_curmode = mode;
-	tegra_hdmi_enable(sc);
+	tegra_hdmi_enable(sc, pedid);
 }
 
 static void
@@ -235,7 +237,7 @@ tegra_hdmi_disconnect(struct tegra_hdmi_softc *sc)
 }
 
 static void
-tegra_hdmi_enable(struct tegra_hdmi_softc *sc)
+tegra_hdmi_enable(struct tegra_hdmi_softc *sc, const uint8_t *edid)
 {
 	const struct tegra_hdmi_tmds_config *tmds = NULL;
 	const struct videomode *mode = sc->sc_curmode;
@@ -266,7 +268,7 @@ tegra_hdmi_enable(struct tegra_hdmi_softc *sc)
 		    tmds->sor_pad_ctls0);
 	}
 
-	tegra_dc_enable(sc->sc_displaydev, sc->sc_dev, mode);
+	tegra_dc_enable(sc->sc_displaydev, sc->sc_dev, mode, edid);
 
 	const u_int div = (mode->dot_clock / 1000) * 4;
 	HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_REFCLK_REG,
