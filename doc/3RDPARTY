@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1231 2015/06/27 07:30:10 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.1232 2015/07/08 17:30:46 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -113,8 +113,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.10.1-P2
-Current Vers:	9.10.1-P2
+Version:	9.10.2-P2
+Current Vers:	9.10.2-P2
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
@@ -996,8 +996,8 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	6.8
-Current Vers:	6.8 / portable 6.8p1
+Version:	6.9
+Current Vers:	6.9 / portable 6.9p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
