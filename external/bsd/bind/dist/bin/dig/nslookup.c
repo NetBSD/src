@@ -1,7 +1,7 @@
-/*	$NetBSD: nslookup.c,v 1.10 2014/12/10 04:37:51 christos Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.11 2015/07/08 17:28:54 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -427,13 +427,12 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	puts("");
 
 	if (!short_form) {
-		isc_boolean_t headers = ISC_TRUE;
 		puts("------------");
 		/*		detailheader(query, msg);*/
-		detailsection(query, msg, headers, DNS_SECTION_QUESTION);
-		detailsection(query, msg, headers, DNS_SECTION_ANSWER);
-		detailsection(query, msg, headers, DNS_SECTION_AUTHORITY);
-		detailsection(query, msg, headers, DNS_SECTION_ADDITIONAL);
+		detailsection(query, msg, ISC_TRUE, DNS_SECTION_QUESTION);
+		detailsection(query, msg, ISC_TRUE, DNS_SECTION_ANSWER);
+		detailsection(query, msg, ISC_TRUE, DNS_SECTION_AUTHORITY);
+		detailsection(query, msg, ISC_TRUE, DNS_SECTION_ADDITIONAL);
 		puts("------------");
 	}
 
