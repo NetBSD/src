@@ -40,6 +40,7 @@ if NOT Exist ..\..\Build\Debug mkdir ..\..\Build\Debug
 echo Copying the ARM and the Installation Notes.
 
 copy ..\..\COPYRIGHT ..\..\Build\Release
+copy ..\..\COPYRIGHT ..\..\Build\Debug
 copy ..\..\README ..\..\Build\Release
 copy ..\..\HISTORY ..\..\Build\Release
 copy ..\readme1st.txt ..\..\Build\Release
@@ -95,6 +96,7 @@ echo Copying the OpenSSL DLL and LICENSE.
 copy @OPENSSL_DLL@ ..\..\Build\Release\
 copy @OPENSSL_DLL@ ..\..\Build\Debug\
 copy @OPENSSL_PATH@\LICENSE ..\..\Build\Release\OpenSSL-LICENSE
+copy @OPENSSL_PATH@\LICENSE ..\..\Build\Debug\OpenSSL-LICENSE
 @END OPENSSL
 
 @IF LIBXML2
