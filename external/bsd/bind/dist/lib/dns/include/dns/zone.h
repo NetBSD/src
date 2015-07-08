@@ -1,7 +1,7 @@
-/*	$NetBSD: zone.h,v 1.15 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.16 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -363,6 +363,15 @@ dns_zone_asyncload(dns_zone_t *zone, dns_zt_zoneloaded_t done, void *arg);
  * its first argument and 'zone' as its second.  (Normally, 'arg' is
  * expected to point to the zone table but is left undefined for testing
  * purposes.)
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ *
+ * Returns:
+ *\li	#ISC_R_ALREADYRUNNING
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_FAILURE
+ *\li	#ISC_R_NOMEMORY
  */
 
 isc_boolean_t
@@ -1637,8 +1646,8 @@ dns_zonemgr_managezone(dns_zonemgr_t *zmgr, dns_zone_t *zone);
 isc_result_t
 dns_zonemgr_forcemaint(dns_zonemgr_t *zmgr);
 /*%<
- * Force zone maintenance of all zones managed by 'zmgr' at its
- * earliest convenience.
+ * Force zone maintenance of all loaded zones managed by 'zmgr'
+ * to take place at the system's earliest convenience.
  */
 
 void

@@ -1,7 +1,7 @@
-/*	$NetBSD: rpz.c,v 1.8 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: rpz.c,v 1.9 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
-
-
 /*! \file */
 
 #include <config.h>
@@ -28,6 +25,7 @@
 #include <isc/net.h>
 #include <isc/netaddr.h>
 #include <isc/print.h>
+#include <isc/rwlock.h>
 #include <isc/stdlib.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -57,7 +55,7 @@
  *
  * Each leaf indicates that an IP address is listed in the IP address or the
  * name server IP address policy sub-zone (or both) of the corresponding
- * response response zone.  The policy data such as a CNAME or an A record
+ * response policy zone.  The policy data such as a CNAME or an A record
  * is kept in the policy zone.  After an IP address has been found in a radix
  * tree, the node in the policy zone's database is found by converting
  * the IP address to a domain name in a canonical form.
@@ -136,11 +134,6 @@ struct dns_rpz_cidr_node {
 };
 
 /*
- * The data in a RBT node has two pairs of bits for policy zones.
- * One pair is for the corresponding name of the node such as example.com
- * and the other pair is for a wildcard child such as *.example.com.
- */
-/*
  * A pair of arrays of bits flagging the existence of
  * QNAME and NSDNAME policy triggers.
  */
@@ -150,6 +143,11 @@ struct dns_rpz_nm_zbits {
 	dns_rpz_zbits_t		ns;
 };
 
+/*
+ * The data in a RBT node has two pairs of bits for policy zones.
+ * One pair is for the corresponding name of the node such as example.com
+ * and the other pair is for a wildcard child such as *.example.com.
+ */
 typedef struct dns_rpz_nm_data dns_rpz_nm_data_t;
 struct dns_rpz_nm_data {
 	dns_rpz_nm_zbits_t	set;
@@ -261,11 +259,15 @@ dns_rpz_policy2str(dns_rpz_policy_t policy) {
 	return (str);
 }
 
+/*
+ * Return the bit number of the highest set bit in 'zbit'.
+ * (for example, 0x01 returns 0, 0xFF returns 7, etc.)
+ */
 static int
 zbit_to_num(dns_rpz_zbits_t zbit) {
 	dns_rpz_num_t rpz_num;
 
-	INSIST(zbit != 0);
+	REQUIRE(zbit != 0);
 	rpz_num = 0;
 #if DNS_RPZ_MAX_ZONES > 32
 	if ((zbit & 0xffffffff00000000L) != 0) {
@@ -376,32 +378,176 @@ set_sum_pair(dns_rpz_cidr_node_t *cnode) {
 	} while (cnode != NULL);
 }
 
+/* Caller must hold rpzs->maint_lock */
 static void
 fix_qname_skip_recurse(dns_rpz_zones_t *rpzs) {
-	dns_rpz_zbits_t zbits;
+	dns_rpz_zbits_t mask;
+
+	/*
+	 * qname_wait_recurse and qname_skip_recurse are used to
+	 * implement the "qname-wait-recurse" config option.
+	 *
+	 * By default, "qname-wait-recurse" is yes, so no
+	 * processing happens without recursion. In this case,
+	 * qname_wait_recurse is true, and qname_skip_recurse
+	 * (a bit field indicating which policy zones can be
+	 * processed without recursion) is set to all 0's by
+	 * fix_qname_skip_recurse().
+	 *
+	 * When "qname-wait-recurse" is no, qname_skip_recurse may be
+	 * set to a non-zero value by fix_qname_skip_recurse(). The mask
+	 * has to have bits set for the policy zones for which
+	 * processing may continue without recursion, and bits cleared
+	 * for the rest.
+	 *
+	 * (1) The ARM says:
+	 *
+	 *   The "qname-wait-recurse no" option overrides that default
+	 *   behavior when recursion cannot change a non-error
+	 *   response. The option does not affect QNAME or client-IP
+	 *   triggers in policy zones listed after other zones
+	 *   containing IP, NSIP and NSDNAME triggers, because those may
+	 *   depend on the A, AAAA, and NS records that would be found
+	 *   during recursive resolution.
+	 *
+	 * Let's consider the following:
+	 *
+	 *     zbits_req = (rpzs->have.ipv4 | rpzs->have.ipv6 |
+	 *		    rpzs->have.nsdname |
+	 *		    rpzs->have.nsipv4 | rpzs->have.nsipv6);
+	 *
+	 * zbits_req now contains bits set for zones which require
+	 * recursion.
+	 *
+	 * But going by the description in the ARM, if the first policy
+	 * zone requires recursion, then all zones after that (higher
+	 * order bits) have to wait as well.  If the Nth zone requires
+	 * recursion, then (N+1)th zone onwards all need to wait.
+	 *
+	 * So mapping this, examples:
+	 *
+	 * zbits_req = 0b000  mask = 0xffffffff (no zones have to wait for
+	 *					 recursion)
+	 * zbits_req = 0b001  mask = 0x00000000 (all zones have to wait)
+	 * zbits_req = 0b010  mask = 0x00000001 (the first zone doesn't have to
+	 *					 wait, second zone onwards need
+	 *					 to wait)
+	 * zbits_req = 0b011  mask = 0x00000000 (all zones have to wait)
+	 * zbits_req = 0b100  mask = 0x00000011 (the 1st and 2nd zones don't
+	 *					 have to wait, third zone
+	 *					 onwards need to wait)
+	 *
+	 * More generally, we have to count the number of trailing 0
+	 * bits in zbits_req and only these can be processed without
+	 * recursion. All the rest need to wait.
+	 *
+	 * (2) The ARM says that "qname-wait-recurse no" option
+	 * overrides the default behavior when recursion cannot change a
+	 * non-error response. So, in the order of listing of policy
+	 * zones, within the first policy zone where recursion may be
+	 * required, we should first allow CLIENT-IP and QNAME policy
+	 * records to be attempted without recursion.
+	 */
 
 	/*
 	 * Get a mask covering all policy zones that are not subordinate to
 	 * other policy zones containing triggers that require that the
 	 * qname be resolved before they can be checked.
 	 */
-	if (rpzs->p.qname_wait_recurse) {
-		zbits = 0;
-	} else {
-		zbits = (rpzs->have.ipv4 || rpzs->have.ipv6 ||
-			 rpzs->have.nsdname ||
-			 rpzs->have.nsipv4 || rpzs->have.nsipv6);
-		if (zbits == 0) {
-			zbits = DNS_RPZ_ALL_ZBITS;
-		} else {
-			zbits = DNS_RPZ_ZMASK(zbit_to_num(zbits));
-		}
-	}
-	rpzs->have.qname_skip_recurse = zbits;
-
 	rpzs->have.client_ip = rpzs->have.client_ipv4 | rpzs->have.client_ipv6;
 	rpzs->have.ip = rpzs->have.ipv4 | rpzs->have.ipv6;
 	rpzs->have.nsip = rpzs->have.nsipv4 | rpzs->have.nsipv6;
+
+	if (rpzs->p.qname_wait_recurse) {
+		mask = 0;
+	} else {
+		dns_rpz_zbits_t zbits_req;
+		dns_rpz_zbits_t zbits_notreq;
+		dns_rpz_zbits_t mask2;
+		dns_rpz_zbits_t req_mask;
+
+		/*
+		 * Get the masks of zones with policies that
+		 * do/don't require recursion
+		 */
+
+		zbits_req = (rpzs->have.ipv4 | rpzs->have.ipv6 |
+			     rpzs->have.nsdname |
+			     rpzs->have.nsipv4 | rpzs->have.nsipv6);
+		zbits_notreq = (rpzs->have.client_ip | rpzs->have.qname);
+
+		if (zbits_req == 0) {
+			mask = DNS_RPZ_ALL_ZBITS;
+			goto set;
+		}
+
+		/*
+		 * req_mask is a mask covering used bits in
+		 * zbits_req. (For instance, 0b1 => 0b1, 0b101 => 0b111,
+		 * 0b11010101 => 0b11111111).
+		 */
+		req_mask = zbits_req;
+		req_mask |= req_mask >> 1;
+		req_mask |= req_mask >> 2;
+		req_mask |= req_mask >> 4;
+		req_mask |= req_mask >> 8;
+		req_mask |= req_mask >> 16;
+#if DNS_RPZ_MAX_ZONES > 32
+		req_mask |= req_mask >> 32;
+#endif
+
+		/*
+		 * There's no point in skipping recursion for a later
+		 * zone if it is required in a previous zone.
+		 */
+		if ((zbits_notreq & req_mask) == 0) {
+			mask = 0;
+			goto set;
+		}
+
+		/*
+		 * This bit arithmetic creates a mask of zones in which
+		 * it is okay to skip recursion. After the first zone
+		 * that has to wait for recursion, all the others have
+		 * to wait as well, so we want to create a mask in which
+		 * all the trailing zeroes in zbits_req are are 1, and
+		 * more significant bits are 0. (For instance,
+		 * 0x0700 => 0x00ff, 0x0007 => 0x0000)
+		 */
+		mask = ~(zbits_req | -zbits_req);
+
+		/*
+		 * As mentioned in (2) above, the zone corresponding to
+		 * the least significant zero could have its CLIENT-IP
+		 * and QNAME policies checked before recursion, if it
+		 * has any of those policies.  So if it does, we
+		 * can set its 0 to 1.
+		 *
+		 * Locate the least significant 0 bit in the mask (for
+		 * instance, 0xff => 0x100)...
+		 */
+		mask2 = (mask << 1) & ~mask;
+
+		/*
+		 * Also set the bit for zone 0, because if it's in
+		 * zbits_notreq then it's definitely okay to attempt to
+		 * skip recursion for zone 0...
+		 */
+		mask2 |= 1;
+
+		/* Clear any bits *not* in zbits_notreq... */
+		mask2 &= zbits_notreq;
+
+		/* And merge the result into the skip-recursion mask */
+		mask |= mask2;
+	}
+
+ set:
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_RPZ, DNS_LOGMODULE_RBTDB,
+		      DNS_RPZ_DEBUG_QUIET,
+		      "computed RPZ qname_skip_recurse mask=0x%llx",
+		      (isc_uint64_t) mask);
+	rpzs->have.qname_skip_recurse = mask;
 }
 
 static void
@@ -410,7 +556,7 @@ adj_trigger_cnt(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 		const dns_rpz_cidr_key_t *tgt_ip, dns_rpz_prefix_t tgt_prefix,
 		isc_boolean_t inc)
 {
-	int *cnt;
+	dns_rpz_trigger_counter_t *cnt;
 	dns_rpz_zbits_t *have;
 
 	switch (rpz_type) {
@@ -462,7 +608,7 @@ adj_trigger_cnt(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 			fix_qname_skip_recurse(rpzs);
 		}
 	} else {
-		REQUIRE(*cnt > 0);
+		REQUIRE(*cnt != 0);
 		if (--*cnt == 0) {
 			*have &= ~DNS_RPZ_ZBIT(rpz_num);
 			fix_qname_skip_recurse(rpzs);
@@ -685,7 +831,7 @@ name2ipkey(int log_level,
 	if (--ip_labels == 4 && !strchr(cp, 'z')) {
 		/*
 		 * Convert an IPv4 address
-		 * from the form "prefix.w.z.y.x"
+		 * from the form "prefix.z.y.x.w"
 		 */
 		if (prefix_num > 32U) {
 			badname(log_level, src_name,
@@ -768,6 +914,12 @@ name2ipkey(int log_level,
 		prefix -= i;
 		prefix += DNS_RPZ_CIDR_WORD_BITS;
 	}
+
+	/*
+	 * XXXMUKS: Should the following check be enabled in a
+	 * production build?  It can be expensive for large IP zones
+	 * from 3rd parties.
+	 */
 
 	/*
 	 * Convert the address back to a canonical domain name
@@ -868,13 +1020,14 @@ diff_keys(const dns_rpz_cidr_key_t *key1, dns_rpz_prefix_t prefix1,
 	dns_rpz_prefix_t maxbit, bit;
 	int i;
 
+	bit = 0;
 	maxbit = ISC_MIN(prefix1, prefix2);
 
 	/*
 	 * find the first differing words
 	 */
-	for (i = 0, bit = 0;
-	     bit <= maxbit;
+	for (i = 0;
+	     bit < maxbit;
 	     i++, bit += DNS_RPZ_CIDR_WORD_BITS) {
 		delta = key1->w[i] ^ key2->w[i];
 		if (delta != 0) {
@@ -950,7 +1103,7 @@ search(dns_rpz_zones_t *rpzs,
 			child->set.ip |= tgt_set->ip;
 			child->set.nsip |= tgt_set->nsip;
 			set_sum_pair(child);
-			*found = cur;
+			*found = child;
 			return (ISC_R_SUCCESS);
 		}
 
@@ -1043,8 +1196,8 @@ search(dns_rpz_zones_t *rpzs,
 				 */
 				find_result = DNS_R_PARTIALMATCH;
 				*found = cur;
-				set.client_ip = trim_zbits(set.ip,
-							cur->set.client_ip);
+				set.client_ip = trim_zbits(set.client_ip,
+							   cur->set.client_ip);
 				set.ip = trim_zbits(set.ip,
 						    cur->set.ip);
 				set.nsip = trim_zbits(set.nsip,
@@ -1240,7 +1393,7 @@ dns_rpz_new_zones(dns_rpz_zones_t **rpzsp, isc_mem_t *mctx) {
 		return (ISC_R_NOMEMORY);
 	memset(new, 0, sizeof(*new));
 
-	result = isc_mutex_init(&new->search_lock);
+	result = isc_rwlock_init(&new->search_lock, 0, 0);
 	if (result != ISC_R_SUCCESS) {
 		isc_mem_put(mctx, new, sizeof(*new));
 		return (result);
@@ -1248,7 +1401,7 @@ dns_rpz_new_zones(dns_rpz_zones_t **rpzsp, isc_mem_t *mctx) {
 
 	result = isc_mutex_init(&new->maint_lock);
 	if (result != ISC_R_SUCCESS) {
-		DESTROYLOCK(&new->search_lock);
+		isc_rwlock_destroy(&new->search_lock);
 		isc_mem_put(mctx, new, sizeof(*new));
 		return (result);
 	}
@@ -1256,7 +1409,7 @@ dns_rpz_new_zones(dns_rpz_zones_t **rpzsp, isc_mem_t *mctx) {
 	result = isc_refcount_init(&new->refs, 1);
 	if (result != ISC_R_SUCCESS) {
 		DESTROYLOCK(&new->maint_lock);
-		DESTROYLOCK(&new->search_lock);
+		isc_rwlock_destroy(&new->search_lock);
 		isc_mem_put(mctx, new, sizeof(*new));
 		return (result);
 	}
@@ -1266,7 +1419,7 @@ dns_rpz_new_zones(dns_rpz_zones_t **rpzsp, isc_mem_t *mctx) {
 		isc_refcount_decrement(&new->refs, NULL);
 		isc_refcount_destroy(&new->refs);
 		DESTROYLOCK(&new->maint_lock);
-		DESTROYLOCK(&new->search_lock);
+		isc_rwlock_destroy(&new->search_lock);
 		isc_mem_put(mctx, new, sizeof(*new));
 		return (result);
 	}
@@ -1385,7 +1538,7 @@ dns_rpz_detach_rpzs(dns_rpz_zones_t **rpzsp) {
 		cidr_free(rpzs);
 		dns_rbt_destroy(&rpzs->rbt);
 		DESTROYLOCK(&rpzs->maint_lock);
-		DESTROYLOCK(&rpzs->search_lock);
+		isc_rwlock_destroy(&rpzs->search_lock);
 		isc_refcount_destroy(&rpzs->refs);
 		isc_mem_putanddetach(&rpzs->mctx, rpzs, sizeof(*rpzs));
 	}
@@ -1415,8 +1568,10 @@ dns_rpz_beginload(dns_rpz_zones_t **load_rpzsp,
 	 *    reload the new zone data into a new blank summary database
 	 *    if the reload fails, discard the new summary database
 	 *    if the new zone data is acceptable, copy the records for the
-	 *	other zones into the new summary database and replace the
-	 *	old summary database with the new.
+	 *	other zones into the new summary CIDR and RBT databases
+	 *	and replace the old summary databases with the new, and
+	 *	correct the triggers and have values for the updated
+	 *	zone.
 	 *
 	 * At the first attempt to load a zone, there is no summary data
 	 * for the zone and so no records that need to be deleted.
@@ -1428,37 +1583,40 @@ dns_rpz_beginload(dns_rpz_zones_t **load_rpzsp,
 	 */
 	tgt = DNS_RPZ_ZBIT(rpz_num);
 	LOCK(&rpzs->maint_lock);
-	LOCK(&rpzs->search_lock);
+	RWLOCK(&rpzs->search_lock, isc_rwlocktype_write);
 	if ((rpzs->load_begun & tgt) == 0) {
 		/*
 		 * There is no existing version of the target zone.
 		 */
 		rpzs->load_begun |= tgt;
 		dns_rpz_attach_rpzs(rpzs, load_rpzsp);
-		UNLOCK(&rpzs->search_lock);
-		UNLOCK(&rpzs->maint_lock);
-
 	} else {
-		UNLOCK(&rpzs->search_lock);
-		UNLOCK(&rpzs->maint_lock);
-
+		/*
+		 * Setup the new RPZ struct with empty summary trees.
+		 */
 		result = dns_rpz_new_zones(load_rpzsp, rpzs->mctx);
 		if (result != ISC_R_SUCCESS)
 			return (result);
 		load_rpzs = *load_rpzsp;
+		/*
+		 * Initialize some members so that dns_rpz_add() works.
+		 */
 		load_rpzs->p.num_zones = rpzs->p.num_zones;
-		load_rpzs->total_triggers = rpzs->total_triggers;
-		memmove(load_rpzs->triggers, rpzs->triggers,
-			sizeof(load_rpzs->triggers));
-		memset(&load_rpzs->triggers[rpz_num], 0,
-		       sizeof(load_rpzs->triggers[rpz_num]));
+		memset(&load_rpzs->triggers, 0, sizeof(load_rpzs->triggers));
 		load_rpzs->zones[rpz_num] = rpz;
 		isc_refcount_increment(&rpz->refs, NULL);
 	}
 
+	RWUNLOCK(&rpzs->search_lock, isc_rwlocktype_write);
+	UNLOCK(&rpzs->maint_lock);
+
 	return (ISC_R_SUCCESS);
 }
 
+/*
+ * This function updates "have" bits and also the qname_skip_recurse
+ * mask. It must be called when holding a write lock on rpzs->search_lock.
+ */
 static void
 fix_triggers(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num) {
 	dns_rpz_num_t n;
@@ -1466,7 +1624,14 @@ fix_triggers(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num) {
 	dns_rpz_zbits_t zbit;
 	char namebuf[DNS_NAME_FORMATSIZE];
 
-#	define SET_TRIG(n, zbit, type)					\
+	/*
+	 * rpzs->total_triggers is only used to log a message below.
+	 */
+
+	memmove(&old_totals, &rpzs->total_triggers, sizeof(old_totals));
+	memset(&rpzs->total_triggers, 0, sizeof(rpzs->total_triggers));
+
+#define SET_TRIG(n, zbit, type)						\
 	if (rpzs->triggers[n].type == 0) {				\
 		rpzs->have.type &= ~zbit;				\
 	} else {							\
@@ -1474,8 +1639,6 @@ fix_triggers(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num) {
 		rpzs->have.type |= zbit;				\
 	}
 
-	memmove(&old_totals, &rpzs->total_triggers, sizeof(old_totals));
-	memset(&rpzs->total_triggers, 0, sizeof(rpzs->total_triggers));
 	for (n = 0; n < rpzs->p.num_zones; ++n) {
 		zbit = DNS_RPZ_ZBIT(n);
 		SET_TRIG(n, zbit, client_ipv4);
@@ -1488,6 +1651,8 @@ fix_triggers(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num) {
 		SET_TRIG(n, zbit, nsipv6);
 	}
 
+#undef SET_TRIG
+
 	fix_qname_skip_recurse(rpzs);
 
 	dns_name_format(&rpzs->zones[rpz_num]->origin,
@@ -1495,22 +1660,66 @@ fix_triggers(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num) {
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_RPZ,
 		      DNS_LOGMODULE_RBTDB, DNS_RPZ_INFO_LEVEL,
 		      "(re)loading policy zone '%s' changed from"
-		      " %d to %d qname, %d to %d nsdname,"
-		      " %d to %d IP, %d to %d NSIP entries",
+		      " %lu to %lu qname, %lu to %lu nsdname,"
+		      " %lu to %lu IP, %lu to %lu NSIP,"
+		      " %lu to %lu CLIENTIP entries",
 		      namebuf,
-		      old_totals.qname, rpzs->total_triggers.qname,
-		      old_totals.nsdname, rpzs->total_triggers.nsdname,
-		      old_totals.ipv4 + old_totals.ipv6,
-		      rpzs->total_triggers.ipv4 + rpzs->total_triggers.ipv6,
-		      old_totals.nsipv4 + old_totals.nsipv6,
-		      rpzs->total_triggers.nsipv4 + rpzs->total_triggers.nsipv6);
-
-#	undef SET_TRIG
+		      (unsigned long) old_totals.qname,
+		      (unsigned long) rpzs->total_triggers.qname,
+		      (unsigned long) old_totals.nsdname,
+		      (unsigned long) rpzs->total_triggers.nsdname,
+		      (unsigned long) old_totals.ipv4 + old_totals.ipv6,
+		      (unsigned long) (rpzs->total_triggers.ipv4 +
+				       rpzs->total_triggers.ipv6),
+		      (unsigned long) old_totals.nsipv4 + old_totals.nsipv6,
+		      (unsigned long) (rpzs->total_triggers.nsipv4 +
+				       rpzs->total_triggers.nsipv6),
+		      (unsigned long) old_totals.client_ipv4 +
+				      old_totals.client_ipv6,
+		      (unsigned long) (rpzs->total_triggers.client_ipv4 +
+				       rpzs->total_triggers.client_ipv6));
 }
 
 /*
- * Finish loading one zone.
- * The RBTDB write tree lock must be held.
+ * Finish loading one zone. This function is called during a commit when
+ * a RPZ zone loading is complete.  The RBTDB write tree lock must be
+ * held.
+ *
+ * Here, rpzs is a pointer to the view's common rpzs
+ * structure. *load_rpzsp is a rpzs structure that is local to the
+ * RBTDB, which is used during a single zone's load.
+ *
+ * During the zone load, i.e., between dns_rpz_beginload() and
+ * dns_rpz_ready(), only the zone that is being loaded updates
+ * *load_rpzsp. These updates in the summary databases inside load_rpzsp
+ * are made only for the rpz_num (and corresponding bit) of that
+ * zone. Nothing else reads or writes *load_rpzsp. The view's common
+ * rpzs is used during this time for queries.
+ *
+ * When zone loading is complete and we arrive here, the parts of the
+ * summary databases (CIDR and nsdname+qname RBT trees) from the view's
+ * common rpzs struct have to be merged into the summary databases of
+ * *load_rpzsp, as the summary databases of the view's common rpzs
+ * struct may have changed during the time the zone was being loaded.
+ *
+ * The function below carries out the merge. During the merge, it holds
+ * the maint_lock of the view's common rpzs struct so that it is not
+ * updated while the merging is taking place.
+ *
+ * After the merging is carried out, *load_rpzsp contains the most
+ * current state of the rpzs structure, i.e., the summary trees contain
+ * data for the new zone that was just loaded, as well as all other
+ * zones.
+ *
+ * Pointers to the summary databases of *load_rpzsp (CIDR and
+ * nsdname+qname RBT trees) are then swapped into the view's common rpz
+ * struct, so that the query path can continue using it. During the
+ * swap, the search_lock of the view's common rpz struct is acquired so
+ * that queries are paused while this swap occurs.
+ *
+ * The trigger counts for the new zone are also copied into the view's
+ * common rpz struct, and some other summary counts and masks are
+ * updated.
  */
 isc_result_t
 dns_rpz_ready(dns_rpz_zones_t *rpzs,
@@ -1536,17 +1745,19 @@ dns_rpz_ready(dns_rpz_zones_t *rpzs,
 
 	if (load_rpzs == rpzs) {
 		/*
-		 * This is a successful initial zone loading,
-		 * perhaps for a new instance of a view.
+		 * This is a successful initial zone loading, perhaps
+		 * for a new instance of a view.
 		 */
+		RWLOCK(&rpzs->search_lock, isc_rwlocktype_write);
 		fix_triggers(rpzs, rpz_num);
+		RWUNLOCK(&rpzs->search_lock, isc_rwlocktype_write);
 		UNLOCK(&rpzs->maint_lock);
 		dns_rpz_detach_rpzs(load_rpzsp);
 		return (ISC_R_SUCCESS);
 	}
 
 	LOCK(&load_rpzs->maint_lock);
-	LOCK(&load_rpzs->search_lock);
+	RWLOCK(&load_rpzs->search_lock, isc_rwlocktype_write);
 
 	/*
 	 * Unless there is only one policy zone, copy the other policy zones
@@ -1642,12 +1853,13 @@ dns_rpz_ready(dns_rpz_zones_t *rpzs,
 		}
 	}
 
-	fix_triggers(load_rpzs, rpz_num);
-
 	/*
 	 * Exchange the summary databases.
 	 */
-	LOCK(&rpzs->search_lock);
+	RWLOCK(&rpzs->search_lock, isc_rwlocktype_write);
+
+	rpzs->triggers[rpz_num] = load_rpzs->triggers[rpz_num];
+	fix_triggers(rpzs, rpz_num);
 
 	found = rpzs->cidr;
 	rpzs->cidr = load_rpzs->cidr;
@@ -1657,16 +1869,13 @@ dns_rpz_ready(dns_rpz_zones_t *rpzs,
 	rpzs->rbt = load_rpzs->rbt;
 	load_rpzs->rbt = rbt;
 
-	rpzs->total_triggers = load_rpzs->total_triggers;
-	rpzs->have = load_rpzs->have;
-
-	UNLOCK(&rpzs->search_lock);
+	RWUNLOCK(&rpzs->search_lock, isc_rwlocktype_write);
 
 	result = ISC_R_SUCCESS;
 
  unlock_and_detach:
 	UNLOCK(&rpzs->maint_lock);
-	UNLOCK(&load_rpzs->search_lock);
+	RWUNLOCK(&load_rpzs->search_lock, isc_rwlocktype_write);
 	UNLOCK(&load_rpzs->maint_lock);
 	dns_rpz_detach_rpzs(load_rpzsp);
 	return (result);
@@ -1689,7 +1898,7 @@ dns_rpz_add(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num, dns_name_t *src_name)
 	rpz_type = type_from_name(rpz, src_name);
 
 	LOCK(&rpzs->maint_lock);
-	LOCK(&rpzs->search_lock);
+	RWLOCK(&rpzs->search_lock, isc_rwlocktype_write);
 
 	switch (rpz_type) {
 	case DNS_RPZ_TYPE_QNAME:
@@ -1705,7 +1914,7 @@ dns_rpz_add(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num, dns_name_t *src_name)
 		break;
 	}
 
-	UNLOCK(&rpzs->search_lock);
+	RWUNLOCK(&rpzs->search_lock, isc_rwlocktype_write);
 	UNLOCK(&rpzs->maint_lock);
 	return (result);
 }
@@ -1895,7 +2104,7 @@ dns_rpz_delete(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 	rpz_type = type_from_name(rpz, src_name);
 
 	LOCK(&rpzs->maint_lock);
-	LOCK(&rpzs->search_lock);
+	RWLOCK(&rpzs->search_lock, isc_rwlocktype_write);
 
 	switch (rpz_type) {
 	case DNS_RPZ_TYPE_QNAME:
@@ -1911,7 +2120,7 @@ dns_rpz_delete(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 		break;
 	}
 
-	UNLOCK(&rpzs->search_lock);
+	RWUNLOCK(&rpzs->search_lock, isc_rwlocktype_write);
 	UNLOCK(&rpzs->maint_lock);
 }
 
@@ -1933,7 +2142,12 @@ dns_rpz_find_ip(dns_rpz_zones_t *rpzs, dns_rpz_type_t rpz_type,
 	dns_rpz_cidr_node_t *found;
 	isc_result_t result;
 	dns_rpz_num_t rpz_num;
+	dns_rpz_have_t have;
 	int i;
+
+	LOCK(&rpzs->maint_lock);
+	have = rpzs->have;
+	UNLOCK(&rpzs->maint_lock);
 
 	/*
 	 * Convert IP address to CIDR tree key.
@@ -1945,13 +2159,13 @@ dns_rpz_find_ip(dns_rpz_zones_t *rpzs, dns_rpz_type_t rpz_type,
 		tgt_ip.w[3] = ntohl(netaddr->type.in.s_addr);
 		switch (rpz_type) {
 		case DNS_RPZ_TYPE_CLIENT_IP:
-			zbits &= rpzs->have.client_ipv4;
+			zbits &= have.client_ipv4;
 			break;
 		case DNS_RPZ_TYPE_IP:
-			zbits &= rpzs->have.ipv4;
+			zbits &= have.ipv4;
 			break;
 		case DNS_RPZ_TYPE_NSIP:
-			zbits &= rpzs->have.nsipv4;
+			zbits &= have.nsipv4;
 			break;
 		default:
 			INSIST(0);
@@ -1971,13 +2185,13 @@ dns_rpz_find_ip(dns_rpz_zones_t *rpzs, dns_rpz_type_t rpz_type,
 		}
 		switch (rpz_type) {
 		case DNS_RPZ_TYPE_CLIENT_IP:
-			zbits &= rpzs->have.client_ipv6;
+			zbits &= have.client_ipv6;
 			break;
 		case DNS_RPZ_TYPE_IP:
-			zbits &= rpzs->have.ipv6;
+			zbits &= have.ipv6;
 			break;
 		case DNS_RPZ_TYPE_NSIP:
-			zbits &= rpzs->have.nsipv6;
+			zbits &= have.nsipv6;
 			break;
 		default:
 			INSIST(0);
@@ -1991,13 +2205,13 @@ dns_rpz_find_ip(dns_rpz_zones_t *rpzs, dns_rpz_type_t rpz_type,
 		return (DNS_RPZ_INVALID_NUM);
 	make_addr_set(&tgt_set, zbits, rpz_type);
 
-	LOCK(&rpzs->search_lock);
+	RWLOCK(&rpzs->search_lock, isc_rwlocktype_read);
 	result = search(rpzs, &tgt_ip, 128, &tgt_set, ISC_FALSE, &found);
 	if (result == ISC_R_NOTFOUND) {
 		/*
 		 * There are no eligible zones for this IP address.
 		 */
-		UNLOCK(&rpzs->search_lock);
+		RWUNLOCK(&rpzs->search_lock, isc_rwlocktype_read);
 		return (DNS_RPZ_INVALID_NUM);
 	}
 
@@ -2021,7 +2235,7 @@ dns_rpz_find_ip(dns_rpz_zones_t *rpzs, dns_rpz_type_t rpz_type,
 		break;
 	}
 	result = ip2name(&found->ip, found->prefix, dns_rootname, ip_name);
-	UNLOCK(&rpzs->search_lock);
+	RWUNLOCK(&rpzs->search_lock, isc_rwlocktype_read);
 	if (result != ISC_R_SUCCESS) {
 		/*
 		 * bin/tests/system/rpz/tests.sh looks for "rpz.*failed".
@@ -2054,7 +2268,7 @@ dns_rpz_find_name(dns_rpz_zones_t *rpzs, dns_rpz_type_t rpz_type,
 
 	found_zbits = 0;
 
-	LOCK(&rpzs->search_lock);
+	RWLOCK(&rpzs->search_lock, isc_rwlocktype_read);
 
 	nmnode = NULL;
 	result = dns_rbt_findnode(rpzs->rbt, trig_name, NULL, &nmnode, NULL,
@@ -2098,7 +2312,7 @@ dns_rpz_find_name(dns_rpz_zones_t *rpzs, dns_rpz_type_t rpz_type,
 		break;
 	}
 
-	UNLOCK(&rpzs->search_lock);
+	RWUNLOCK(&rpzs->search_lock, isc_rwlocktype_read);
 	return (zbits & found_zbits);
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: sdlz.c,v 1.8 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.9 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2005-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1417,6 +1417,7 @@ static dns_rdatasetmethods_t rdataset_methods = {
 	isc__rdatalist_count,
 	isc__rdatalist_addnoqname,
 	isc__rdatalist_getnoqname,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
