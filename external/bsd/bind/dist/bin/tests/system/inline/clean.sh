@@ -25,6 +25,8 @@ rm -f ns2/bits.db.jnl
 rm -f ns1/signer.out
 rm -f ns2/retransfer.db
 rm -f ns2/retransfer.db.jnl
+rm -f ns2/retransfer3.db
+rm -f ns2/retransfer3.db.jnl
 rm -f ns3/K*
 rm -f ns3/bits.bk
 rm -f ns3/bits.bk.jnl

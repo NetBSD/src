@@ -67,6 +67,7 @@ nsec01.example.		3600	IN	NSEC	a.secure.nil. NS SOA MX LOC RRSIG NSEC DNSKEY
 nsec02.example.		3600	IN	NSEC	. NSAP-PTR NSEC
 nsec03.example.		3600	IN	NSEC	. A
 nsec04.example.		3600	IN	NSEC	. TYPE127
+openpgpkey.example.	3600	IN	OPENPGPKEY  AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aRyzWZriO6i2od GWWQVucZqKVsENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esga60z yGW6LFe9r8n6paHrlG5ojqf0BaqHT+8=
 ptr01.example.		3600	IN	PTR	example.
 px01.example.		3600	IN	PX	65535 foo. bar.
 px02.example.		3600	IN	PX	65535 . .
@@ -90,6 +91,9 @@ txt09.example.		3600	IN	TXT	"foo\010bar"
 txt10.example.		3600	IN	TXT	"foo bar"
 txt11.example.		3600	IN	TXT	"\"foo\""
 txt12.example.		3600	IN	TXT	"\"foo\""
+txt13.example.		3600	IN	TXT	"foo;"
+txt14.example.		3600	IN	TXT	"foo;"
+txt15.example.		3600	IN	TXT	"bar\\;"
 uri01.example.		3600	IN	URI	10 20 "https://www.isc.org/"
 uri02.example.		3600	IN	URI	30 40 "https://www.isc.org/HolyCowThisSureIsAVeryLongURIRecordIDontEvenKnowWhatSomeoneWouldEverWantWithSuchAThingButTheSpecificationRequiresThatWesupportItSoHereWeGoTestingItLaLaLaLaLaLaLaSeriouslyThoughWhyWouldYouEvenConsiderUsingAURIThisLongItSeemsLikeASillyIdeaButEnhWhatAreYouGonnaDo/"
 uri03.example.		3600	IN	URI	30 40 ""

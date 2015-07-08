@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -66,11 +66,12 @@ RANDFILE=$TOP/bin/tests/system/random.data
 # v6synth
 SUBDIRS="acl additional allow_query addzone autosign builtin
 	 cacheclean case checkconf @CHECKDS@ checknames checkzone
-	 @COVERAGE@ database dlv dlvauto dlz dlzexternal dlzredir
-	 dname dns64 dnssec dsdigest dscp ecdsa emptyzones filter-aaaa
-	 formerr forward geoip glue gost ixfr inline limits logfileconfig
-	 lwresd masterfile masterformat metadata notify nslookup nsupdate
-	 pending @PKCS11_TEST@ redirect resolver rndc rpz rrl rrchecker
+	 @COVERAGE@ database delv dlv dlvauto dlz dlzexternal
+	 dlzredir dname dns64 dnssec dsdigest dscp ecdsa emptyzones
+	 filter-aaaa formerr forward geoip glue gost ixfr inline
+	 legacy limits logfileconfig lwresd masterfile masterformat
+	 metadata notify nslookup nsupdate pending @PKCS11_TEST@
+	 reclimit redirect resolver rndc rpz rpzrecurse rrl rrchecker
 	 rrsetorder rsabigexponent sit smartsign sortlist spf staticstub
 	 statistics stub tkey tsig tsiggss unknown upforwd verify
 	 views wildcard xfer xferquota zero zonechecks"
