@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.196 2015/07/02 09:53:12 martin Exp $
+# $NetBSD: postinstall,v 1.197 2015/07/08 05:00:15 jnemeth Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -991,7 +991,17 @@ do_fontconfig()
 		80-delicious.conf \
 		90-synthetic.conf
 	failed=$(( ${failed} + $? ))
+
+	if ! $SOURCEMODE; then
+		FONTS_DIR="${SRC_DIR}/etc/fonts"
+	else
+		FONTS_DIR="${SRC_DIR}/external/mit/xorg/lib/fontconfig/etc"
+	fi
 		
+	populate_dir "$op" false "${FONTS_DIR}" "${DEST_DIR}/etc/fonts" 444 \
+		fonts.conf
+	failed=$(( ${failed} + $? ))
+
 	# We can't modify conf.d easily; someone might have removed a file.
 
 	conf_d_failed=0
