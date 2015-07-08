@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.22 2015/06/22 19:04:21 matt Exp $
+# $NetBSD: mkvars.mk,v 1.23 2015/07/08 01:06:01 matt Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -95,12 +95,12 @@ mkextravars: .PHONY
 	@echo $i="${$i}"
 .endfor
 .if ${MKCOMPAT} != "no"
-	@echo COMPATARCHDIRS=${COMPATARCHDIRS} | ${TOOL_SED} -e's/ /,/'
+	@echo COMPATARCHDIRS=${COMPATARCHDIRS} | ${TOOL_SED} -e's/ /,/g'
 .else
 	@echo COMPATARCHDIRS=
 .endif
 .if ${MKKMOD} != "no" && ${MKCOMPATMODULES} != "no"
-	@echo KMODARCHDIRS=${KMODARCHDIRS} | ${TOOL_SED} -e's/ /,/'
+	@echo KMODARCHDIRS=${KMODARCHDIRS} | ${TOOL_SED} -e's/ /,/g'
 .else
 	@echo KMODARCHDIRS=
 .endif
