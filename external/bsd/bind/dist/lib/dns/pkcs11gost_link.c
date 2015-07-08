@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11gost_link.c,v 1.1.1.4 2014/12/10 03:34:40 christos Exp $	*/
+/*	$NetBSD: pkcs11gost_link.c,v 1.1.1.5 2015/07/08 15:38:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -75,6 +75,7 @@
 
 #define ISC_GOST_SIGNATURELENGTH	64
 #define ISC_GOST_PUBKEYLENGTH		64
+#define ISC_GOST_KEYSIZE		256
 
 /* HASH methods */
 
@@ -525,6 +526,7 @@ pkcs11gost_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 		DST_RET(ISC_R_NOMEMORY);
 	memset(gost, 0, sizeof(*gost));
 	key->keydata.pkey = gost;
+	key->key_size = ISC_GOST_KEYSIZE;
 	gost->repr = (CK_ATTRIBUTE *) isc_mem_get(key->mctx,
 						  sizeof(*attr) * 2);
 	if (gost->repr == NULL)
@@ -682,6 +684,7 @@ pkcs11gost_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 	isc_buffer_forward(data, ISC_GOST_PUBKEYLENGTH);
 	key->keydata.pkey = gost;
+	key->key_size = ISC_GOST_KEYSIZE;
 	return (ISC_R_SUCCESS);
 
  nomemory:
@@ -869,6 +872,7 @@ pkcs11gost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		DST_RET(ISC_R_NOMEMORY);
 	memset(gost, 0, sizeof(*gost));
 	key->keydata.pkey = gost;
+	key->key_size = ISC_GOST_KEYSIZE;
 
 	gost->repr = (CK_ATTRIBUTE *) isc_mem_get(key->mctx,
 						  sizeof(*attr) * 2);

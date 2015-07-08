@@ -21,7 +21,10 @@ $SHELL clean.sh
 
 cp ns2/named1.conf ns2/named.conf
 
-for i in 1 2 3 4 5 6 7; do
+for i in 1 2 3 4 5 6 7 other bogus; do
         cp ns2/example.db.in ns2/example${i}.db
         echo "@ IN TXT \"$i\"" >> ns2/example$i.db
 done
+
+mkdir -p data2
+cp data/GeoIPv6.dat data2/

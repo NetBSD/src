@@ -1,4 +1,4 @@
-# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,3 +13,4 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 rm -f ns1/named.conf
+rm -f dig.out.test*

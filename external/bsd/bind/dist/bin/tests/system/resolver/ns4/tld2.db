@@ -28,3 +28,5 @@ fetch  10              TXT     A short ttl
 fetchall  10              TXT     A short ttl
 fetchall  10              A     1.2.3.4
 fetchall  10              AAAA    ::1
+cname			CNAME	ns7
+ns7			A	10.53.0.7

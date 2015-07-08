@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -122,6 +122,21 @@ if [ "$two" != "$four" ]; then
 fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
+
+if $SHELL ../testcrypto.sh
+then
+	echo "I:verifying inline zones work with views"
+	ret=0
+	$DIG @10.53.0.2 -p 5300 -b 10.53.0.2 +dnssec DNSKEY inline > dig.out.internal
+	$DIG @10.53.0.2 -p 5300 -b 10.53.0.5 +dnssec DNSKEY inline > dig.out.external
+	grep "ANSWER: 4," dig.out.internal > /dev/null || ret=1
+	grep "ANSWER: 4," dig.out.external > /dev/null || ret=1
+	int=`awk '$4 == "DNSKEY" { print $8 }' dig.out.internal | sort`
+	ext=`awk '$4 == "DNSKEY" { print $8 }' dig.out.external | sort`
+	test "$int" != "$ext" || ret=1
+	if [ $ret != 0 ]; then echo "I:failed"; fi
+	status=`expr $status + $ret`
+fi
 
 echo "I:exit status: $status"
 exit $status

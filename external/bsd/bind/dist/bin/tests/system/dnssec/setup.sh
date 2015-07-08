@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -28,4 +28,8 @@ echo "a.bogus.example.	A	10.0.0.22" >>../ns3/bogus.example.db.signed
 
 cd ../ns3 && cp -f siginterval1.conf siginterval.conf
 cd ../ns4 && cp -f named1.conf named.conf
-cd ../ns5 && cp -f trusted.conf.bad trusted.conf
+cd ../ns5 && {
+    cp -f trusted.conf.bad trusted.conf
+    cp -f named1.conf named.conf
+    $SHELL sign.sh
+}

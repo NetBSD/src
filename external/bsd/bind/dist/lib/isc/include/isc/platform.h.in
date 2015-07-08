@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -130,6 +130,11 @@
  * IN6_IS_ADDR_* macros.
  */
 @ISC_PLATFORM_FIXIN6ISADDR@
+
+/*! \brief
+ * Define if the system has struct sockaddr_storage.
+ */
+@ISC_PLATFORM_HAVESOCKADDRSTORAGE@
 
 /*! \brief
  * Define if the system supports kqueue multiplexing

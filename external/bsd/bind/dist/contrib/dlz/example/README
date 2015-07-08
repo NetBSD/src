@@ -113,7 +113,7 @@ The DLZ dlopen driver provides a set of callback functions:
     Puts a DNS resource record into an AXFR response, which is
     referenced by the opaque structure 'allnodes' provided by named.
 
-  - isc_result_t writable_zone(dns_view_t *view, const char *zone_name);
+  - isc_result_t writeable_zone(dns_view_t *view, const char *zone_name);
 
     Allows the DLZ module to inform named that a given zone can recieve
     DDNS updates.  (Note: This is not currently supported for DLZ

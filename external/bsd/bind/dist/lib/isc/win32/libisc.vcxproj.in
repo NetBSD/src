@@ -81,10 +81,15 @@
 if NOT Exist ..\Build mkdir ..\Build
 if NOT Exist ..\Build\Debug mkdir ..\Build\Debug
 
+echo Copying COPYRIGHT notice.
+
+copy ..\COPYRIGHT ..\Build\Debug
+
 @IF OPENSSL
-echo Copying the OpenSSL DLL.
+echo Copying the OpenSSL DLL and LICENSE.
 
 copy @OPENSSL_DLL@ ..\Build\Debug\
+copy @OPENSSL_PATH@\LICENSE ..\Build\Debug\OpenSSL-LICENSE
 @END OPENSSL
 
 @IF LIBXML2
