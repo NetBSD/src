@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.742 2015/07/03 01:01:00 christos Exp $
+# $NetBSD: shl.mi,v 1.743 2015/07/08 17:29:56 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -191,7 +191,7 @@
 ./usr/lib/libbfd.so.13.0			base-sys-shlib		compatfile,binutils
 ./usr/lib/libbind9.so				base-bind-shlib		compatfile
 ./usr/lib/libbind9.so.8				base-bind-shlib		compatfile
-./usr/lib/libbind9.so.8.1			base-bind-shlib		compatfile
+./usr/lib/libbind9.so.8.2			base-bind-shlib		compatfile
 ./usr/lib/libblacklist.so			base-sys-shlib		compatfile
 ./usr/lib/libblacklist.so.0			base-sys-shlib		compatfile
 ./usr/lib/libblacklist.so.0.0			base-sys-shlib		compatfile
@@ -244,7 +244,7 @@
 ./usr/lib/libdm.so.0.0				base-sys-shlib		compatfile
 ./usr/lib/libdns.so				base-bind-shlib		compatfile
 ./usr/lib/libdns.so.8				base-bind-shlib		compatfile
-./usr/lib/libdns.so.8.1				base-bind-shlib		compatfile
+./usr/lib/libdns.so.8.2				base-bind-shlib		compatfile
 ./usr/lib/libdns_sd.so				base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		compatfile,mdns
@@ -319,16 +319,16 @@
 ./usr/lib/libipsec.so.3.0			base-net-shlib		compatfile
 ./usr/lib/libirs.so				base-bind-shlib		compatfile
 ./usr/lib/libirs.so.8				base-bind-shlib		compatfile
-./usr/lib/libirs.so.8.1				base-bind-shlib		compatfile
+./usr/lib/libirs.so.8.2				base-bind-shlib		compatfile
 ./usr/lib/libisc.so				base-bind-shlib		compatfile
 ./usr/lib/libisc.so.8				base-bind-shlib		compatfile
-./usr/lib/libisc.so.8.1				base-bind-shlib		compatfile
+./usr/lib/libisc.so.8.2				base-bind-shlib		compatfile
 ./usr/lib/libisccc.so				base-bind-shlib		compatfile
 ./usr/lib/libisccc.so.8				base-bind-shlib		compatfile
-./usr/lib/libisccc.so.8.1			base-bind-shlib		compatfile
+./usr/lib/libisccc.so.8.2			base-bind-shlib		compatfile
 ./usr/lib/libisccfg.so				base-bind-shlib		compatfile
 ./usr/lib/libisccfg.so.8			base-bind-shlib		compatfile
-./usr/lib/libisccfg.so.8.1			base-bind-shlib		compatfile
+./usr/lib/libisccfg.so.8.2			base-bind-shlib		compatfile
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi,compatfile
@@ -376,7 +376,7 @@
 ./usr/lib/liblutok.so.2.0			base-sys-shlib		kyua,compatfile
 ./usr/lib/liblwres.so				base-bind-shlib		compatfile
 ./usr/lib/liblwres.so.8				base-bind-shlib		compatfile
-./usr/lib/liblwres.so.8.1			base-bind-shlib		compatfile
+./usr/lib/liblwres.so.8.2			base-bind-shlib		compatfile
 ./usr/lib/liblzf.so				base-sys-shlib		compatfile
 ./usr/lib/liblzf.so.1				base-sys-shlib		compatfile
 ./usr/lib/liblzf.so.1.0				base-sys-shlib		compatfile
