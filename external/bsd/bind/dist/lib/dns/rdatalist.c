@@ -1,7 +1,7 @@
-/*	$NetBSD: rdatalist.c,v 1.5 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: rdatalist.c,v 1.6 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -46,6 +46,7 @@ static dns_rdatasetmethods_t methods = {
 	isc__rdatalist_getnoqname,
 	isc__rdatalist_addclosest,
 	isc__rdatalist_getclosest,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
