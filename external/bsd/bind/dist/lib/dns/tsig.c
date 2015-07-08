@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig.c,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.8 2015/07/08 17:28:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -277,12 +277,12 @@ keyring_add(dns_tsig_keyring_t *ring, dns_name_t *name,
 	}
 
 	result = dns_rbt_addname(ring->keys, name, tkey);
-	if (tkey->generated) {
+	if (result == ISC_R_SUCCESS && tkey->generated) {
 		/*
 		 * Add the new key to the LRU list and remove the least
 		 * recently used key if there are too many keys on the list.
 		 */
-		ISC_LIST_INITANDAPPEND(ring->lru, tkey, link);
+		ISC_LIST_APPEND(ring->lru, tkey, link);
 		if (ring->generated++ > ring->maxgenerated)
 			remove_fromring(ISC_LIST_HEAD(ring->lru));
 	}
@@ -421,6 +421,7 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 	tkey->expire = expire;
 	tkey->mctx = NULL;
 	isc_mem_attach(mctx, &tkey->mctx);
+	ISC_LINK_INIT(tkey, link);
 
 	tkey->magic = TSIG_MAGIC;
 
@@ -1139,7 +1140,6 @@ dns_tsig_sign(dns_message_t *msg) {
 	datalist->ttl = 0;
 	ISC_LIST_INIT(datalist->rdata);
 	ISC_LIST_APPEND(datalist->rdata, rdata, link);
-	dns_rdataset_init(dataset);
 	RUNTIME_CHECK(dns_rdatalist_tordataset(datalist, dataset)
 		      == ISC_R_SUCCESS);
 	msg->tsig = dataset;
