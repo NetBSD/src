@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.44 2014/12/27 18:00:13 martin Exp $
+# $NetBSD: Makefile,v 1.45 2015/07/08 01:09:25 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -17,10 +17,8 @@ TESTS_C+=	t_floatunditf
 TESTS_C+=	t_fmtcheck
 TESTS_C+=	t_fnmatch
 TESTS_C+=	t_fpclassify
-.if ${MACHINE_CPU} != "aarch64"
 TESTS_C+=	t_fpsetmask
 TESTS_C+=	t_fpsetround
-.endif
 TESTS_C+=	t_ftok
 TESTS_C+=	t_getcwd
 TESTS_C+=	t_getgrent
