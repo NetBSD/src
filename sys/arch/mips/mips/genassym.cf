@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.62 2015/07/08 14:53:07 matt Exp $
+#	$NetBSD: genassym.cf,v 1.63 2015/07/08 15:05:24 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -101,7 +101,7 @@ define	PGSHIFT			PGSHIFT
 define	NBPG			NBPG
 define	USPACE			USPACE
 define	UPAGES			UPAGES
-#endif
+endif
 
 ifdef __HAVE_FAST_SOFTINTS
 define	__HAVE_FAST_SOFTINTS	1
