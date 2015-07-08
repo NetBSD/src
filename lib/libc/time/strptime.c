@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.41 2015/07/08 18:44:09 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.42 2015/07/08 19:48:20 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.41 2015/07/08 18:44:09 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.42 2015/07/08 19:48:20 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -67,6 +67,12 @@ __weak_alias(strptime_l, _strptime_l)
 #define	S_YDAY		(1 << 2)
 #define	S_MDAY		(1 << 3)
 #define	S_WDAY		(1 << 4)
+
+#define HAVE_MDAY(s)	(s & S_MDAY)
+#define HAVE_MON(s)	(s & S_MON)
+#define HAVE_WDAY(s)	(s & S_WDAY)
+#define HAVE_YDAY(s)	(s & S_YDAY)
+#define HAVE_YEAR(s)	(s & S_YEAR)
 
 static char gmt[] = { "GMT" };
 static char utc[] = { "UTC" };
@@ -161,8 +167,7 @@ literal:
 		 */
 		case 'c':	/* Date and time, using the locale's format. */
 			new_fmt = _TIME_LOCALE(loc)->d_t_fmt;
-			state |= S_WDAY | S_MON | S_MDAY |
-			    S_YEAR;
+			state |= S_WDAY | S_MON | S_MDAY | S_YEAR;
 			goto recurse;
 
 		case 'D':	/* The date as "%m/%d/%y". */
@@ -475,8 +480,7 @@ literal:
 				continue;
 			case '+':
 				neg = 0;
-				state |= S_WDAY | S_MON |  S_MDAY |
-				    S_YEAR;
+				state |= S_WDAY | S_MON | S_MDAY | S_YEAR;
 				break;
 			case '-':
 				neg = 1;
@@ -581,8 +585,8 @@ literal:
 		}
 	}
 
-	if (!(state & S_YDAY) && (state & S_YEAR)) {
-		if ((state & (S_MON | S_MDAY)) == (S_MON | S_MDAY)) {
+	if (!HAVE_YDAY(state) && HAVE_YEAR(state)) {
+		if (HAVE_MON(state) && HAVE_MDAY(state)) {
 			tm->tm_yday =  start_of_month[is_leap_year(tm->tm_year +
 			    TM_YEAR_BASE)][tm->tm_mon] + (tm->tm_mday - 1);
 			state |= S_YDAY;
@@ -590,7 +594,7 @@ literal:
 			/* Set the date to the first Sunday (or Monday)
 			 * of the specified week of the year.
 			 */
-			if (!(state & S_WDAY)) {
+			if (!HAVE_WDAY(state)) {
 				tm->tm_wday = day_offset;
 				state |= S_WDAY;
 			}
@@ -602,9 +606,9 @@ literal:
 		}
 	}
 
-	if ((state & (S_YEAR | S_YDAY)) == (S_YEAR | S_YDAY)) {
+	if (HAVE_YDAY(state) && HAVE_YEAR(state)) {
 		int isleap;
-		if (!(state & S_MON)) {
+		if (!HAVE_MON(state)) {
 			i = 0;
 			isleap = is_leap_year(tm->tm_year + TM_YEAR_BASE);
 			while (tm->tm_yday >= start_of_month[isleap][i])
@@ -617,13 +621,13 @@ literal:
 			tm->tm_mon = i - 1;
 			state |= S_MON;
 		}
-		if (!(state & S_MDAY)) {
+		if (!HAVE_MDAY(state)) {
 			isleap = is_leap_year(tm->tm_year + TM_YEAR_BASE);
 			tm->tm_mday = tm->tm_yday -
 			    start_of_month[isleap][tm->tm_mon] + 1;
 			state |= S_MDAY;
 		}
-		if (!(state & S_WDAY)) {
+		if (!HAVE_WDAY(state)) {
 			i = 0;
 			week_offset = first_wday_of(tm->tm_year);
 			while (i++ <= tm->tm_yday) {
