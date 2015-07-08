@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.1.1.15 2014/12/10 03:34:24 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.16 2015/07/08 15:37:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -548,6 +548,17 @@ exit_check(ns_client_t *client) {
 		INSIST(client->recursionquota == NULL);
 		INSIST(!ISC_QLINK_LINKED(client, ilink));
 
+		if (manager != NULL) {
+			LOCK(&manager->listlock);
+			ISC_LIST_UNLINK(manager->clients, client, link);
+			LOCK(&manager->lock);
+			if (manager->exiting &&
+			    ISC_LIST_EMPTY(manager->clients))
+				destroy_manager = ISC_TRUE;
+			UNLOCK(&manager->lock);
+			UNLOCK(&manager->listlock);
+		}
+
 		ns_query_free(client);
 		isc_mem_put(client->mctx, client->recvbuf, RECV_BUFFER_SIZE);
 		isc_event_free((isc_event_t **)&client->sendevent);
@@ -567,16 +578,6 @@ exit_check(ns_client_t *client) {
 		}
 
 		dns_message_destroy(&client->message);
-		if (manager != NULL) {
-			LOCK(&manager->listlock);
-			ISC_LIST_UNLINK(manager->clients, client, link);
-			LOCK(&manager->lock);
-			if (manager->exiting &&
-			    ISC_LIST_EMPTY(manager->clients))
-				destroy_manager = ISC_TRUE;
-			UNLOCK(&manager->lock);
-			UNLOCK(&manager->listlock);
-		}
 
 		/*
 		 * Detaching the task must be done after unlinking from
@@ -597,6 +598,13 @@ exit_check(ns_client_t *client) {
 			isc_mem_stats(client->mctx, stderr);
 			INSIST(0);
 		}
+
+		/*
+		 * Destroy the fetchlock mutex that was created in
+		 * ns_query_init().
+		 */
+		DESTROYLOCK(&client->query.fetchlock);
+
 		isc_mem_putanddetach(&client->mctx, client, sizeof(*client));
 	}
 
@@ -1414,7 +1422,6 @@ ns_client_addopt(ns_client_t *client, dns_message_t *message,
 	    (ns_g_server->server_id != NULL ||
 	     ns_g_server->server_usehostname)) {
 		if (ns_g_server->server_usehostname) {
-			isc_result_t result;
 			result = ns_os_gethostname(nsid, sizeof(nsid));
 			if (result != ISC_R_SUCCESS) {
 				goto no_nsid;

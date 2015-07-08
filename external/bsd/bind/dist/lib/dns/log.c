@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.9 2014/12/10 03:34:39 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.10 2015/07/08 15:38:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -48,6 +48,7 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 	{ "edns-disabled", 0 },
 	{ "rpz",	0 },
 	{ "rate-limit",	0 },
+	{ "cname",	0 },
 	{ NULL, 	0 }
 };
 

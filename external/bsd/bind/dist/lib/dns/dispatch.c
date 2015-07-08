@@ -1,7 +1,7 @@
-/*	$NetBSD: dispatch.c,v 1.1.1.14 2014/12/10 03:34:39 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.1.1.15 2015/07/08 15:38:01 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -2996,6 +2996,8 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
+	disp->socktype = isc_sockettype_udp;
+
 	if ((attributes & DNS_DISPATCHATTR_EXCLUSIVE) == 0) {
 		result = get_udpsocket(mgr, disp, sockmgr, localaddr, &sock,
 				       dup_socket);
@@ -3045,7 +3047,6 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		isc_mempool_setname(disp->portpool, "disp_portpool");
 		isc_mempool_setfreemax(disp->portpool, 128);
 	}
-	disp->socktype = isc_sockettype_udp;
 	disp->socket = sock;
 	disp->local = *localaddr;
 
@@ -3191,6 +3192,17 @@ dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 			  dns_messageid_t *idp, dns_dispentry_t **resp,
 			  isc_socketmgr_t *sockmgr)
 {
+	return (dns_dispatch_addresponse3(disp, 0, dest, task, action, arg,
+					  idp, resp, sockmgr));
+}
+
+isc_result_t
+dns_dispatch_addresponse3(dns_dispatch_t *disp, unsigned int options,
+			  isc_sockaddr_t *dest, isc_task_t *task,
+			  isc_taskaction_t action, void *arg,
+			  dns_messageid_t *idp, dns_dispentry_t **resp,
+			  isc_socketmgr_t *sockmgr)
+{
 	dns_dispentry_t *res;
 	unsigned int bucket;
 	in_port_t localport = 0;
@@ -3278,10 +3290,14 @@ dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 	}
 
 	/*
-	 * Try somewhat hard to find an unique ID.
+	 * Try somewhat hard to find an unique ID unless FIXEDID is set
+	 * in which case we use the id passed in via *idp.
 	 */
 	LOCK(&qid->lock);
-	id = (dns_messageid_t)dispatch_random(DISP_ARC4CTX(disp));
+	if ((options & DNS_DISPATCHOPT_FIXEDID) != 0)
+		id = *idp;
+	else
+		id = (dns_messageid_t)dispatch_random(DISP_ARC4CTX(disp));
 	ok = ISC_FALSE;
 	i = 0;
 	do {
@@ -3290,6 +3306,8 @@ dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 			ok = ISC_TRUE;
 			break;
 		}
+		if ((disp->attributes & DNS_DISPATCHATTR_FIXEDID) != 0)
+			break;
 		id += qid->qid_increment;
 		id &= 0x0000ffff;
 	} while (i++ < 64);
@@ -3385,7 +3403,7 @@ dns_dispatch_addresponse(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 	REQUIRE(VALID_DISPATCH(disp));
 	REQUIRE((disp->attributes & DNS_DISPATCHATTR_EXCLUSIVE) == 0);
 
-	return (dns_dispatch_addresponse2(disp, dest, task, action, arg,
+	return (dns_dispatch_addresponse3(disp, 0, dest, task, action, arg,
 					  idp, resp, NULL));
 }
 

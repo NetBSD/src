@@ -1,7 +1,7 @@
-/*	$NetBSD: time.c,v 1.1.1.8 2014/12/10 03:34:44 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.9 2015/07/08 15:38:06 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -406,6 +406,9 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 
 	REQUIRE(len > 0);
 
+	/*
+	 * 5 spaces, 1 comma, 3 GMT, 2 %d, 4 %Y, 8 %H:%M:%S, 3+ %a, 3+ %b (29+)
+	 */
 	now = (time_t)t->seconds;
 	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT", gmtime(&now));
 	INSIST(flen < len);

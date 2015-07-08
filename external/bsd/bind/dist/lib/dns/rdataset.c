@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.c,v 1.1.1.10 2014/12/10 03:34:40 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.1.1.11 2015/07/08 15:38:02 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -82,6 +82,7 @@ dns_rdataset_init(dns_rdataset_t *rdataset) {
 	rdataset->privateuint4 = 0;
 	rdataset->private5 = NULL;
 	rdataset->private6 = NULL;
+	rdataset->private7 = NULL;
 	rdataset->resign = 0;
 }
 
@@ -199,6 +200,7 @@ static dns_rdatasetmethods_t question_methods = {
 	question_current,
 	question_clone,
 	question_count,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -417,7 +419,6 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			 * 'Random' order.
 			 */
 			for (i = 0; i < count; i++) {
-				dns_rdata_t rdata;
 				isc_uint32_t val;
 
 				isc_random_get(&val);
@@ -774,6 +775,15 @@ dns_rdataset_expire(dns_rdataset_t *rdataset) {
 
 	if (rdataset->methods->expire != NULL)
 		(rdataset->methods->expire)(rdataset);
+}
+
+void
+dns_rdataset_clearprefetch(dns_rdataset_t *rdataset) {
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
+
+	if (rdataset->methods->clearprefetch != NULL)
+		(rdataset->methods->clearprefetch)(rdataset);
 }
 
 void

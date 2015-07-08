@@ -1,7 +1,7 @@
-/*	$NetBSD: time.h,v 1.1.1.8 2014/12/10 03:34:45 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.1.1.9 2015/07/08 15:38:06 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2009, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -42,6 +42,13 @@ struct isc_interval {
 };
 
 LIBISC_EXTERNAL_DATA extern const isc_interval_t * const isc_interval_zero;
+
+/*
+ * ISC_FORMATHTTPTIMESTAMP_SIZE needs to be 30 in C locale and potentially
+ * more for other locales to handle longer national abbreviations when
+ * expanding strftime's %a and %b.
+ */
+#define ISC_FORMATHTTPTIMESTAMP_SIZE 50
 
 ISC_LANG_BEGINDECLS
 

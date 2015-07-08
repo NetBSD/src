@@ -1,7 +1,7 @@
-/*	$NetBSD: delv.c,v 1.1.1.3 2014/12/10 03:34:23 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.1.1.4 2015/07/08 15:37:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -446,8 +446,6 @@ printdata(dns_rdataset_t *rdataset, dns_name_t *owner,
 			     result == ISC_R_SUCCESS;
 			     result = dns_rdataset_next(rdataset))
 			{
-				isc_region_t r;
-
 				if ((rdataset->attributes &
 				     DNS_RDATASETATTR_NEGATIVE) != 0)
 					continue;
@@ -461,14 +459,12 @@ printdata(dns_rdataset_t *rdataset, dns_name_t *owner,
 				if (result != ISC_R_SUCCESS)
 					break;
 
-				isc_buffer_availableregion(&target, &r);
-				if (r.length < 1) {
+				if (isc_buffer_availablelength(&target) < 1) {
 					result = ISC_R_NOSPACE;
 					break;
 				}
 
-				r.base[0] = '\n';
-				isc_buffer_add(&target, 1);
+				isc_buffer_putstr(&target, "\n");
 
 				dns_rdata_reset(&rdata);
 			}
@@ -713,10 +709,17 @@ setup_dnsseckeys(dns_client_t *client) {
 #endif
 	}
 
-	if (trust_anchor == NULL)
+	if (trust_anchor == NULL) {
 		trust_anchor = isc_mem_strdup(mctx, ".");
-	if (dlv_anchor == NULL)
+		if (trust_anchor == NULL)
+			fatal("out of memory");
+	}
+
+	if (dlv_anchor == NULL) {
 		dlv_anchor = isc_mem_strdup(mctx, "dlv.isc.org");
+		if (dlv_anchor == NULL)
+			fatal("out of memory");
+	}
 
 	CHECK(convert_name(&afn, &anchor_name, trust_anchor));
 	CHECK(convert_name(&dfn, &dlv_name, dlv_anchor));
@@ -1028,8 +1031,11 @@ plus_option(char *option) {
 			if (state && no_sigs)
 				break;
 			dlv_validation = state;
-			if (value != NULL)
+			if (value != NULL) {
 				dlv_anchor = isc_mem_strdup(mctx, value);
+				if (dlv_anchor == NULL)
+					fatal("out of memory");
+			}
 			break;
 		case 'n': /* dnssec */
 			FULLCHECK("dnssec");
@@ -1061,8 +1067,11 @@ plus_option(char *option) {
 			if (state && no_sigs)
 				break;
 			root_validation = state;
-			if (value != NULL)
+			if (value != NULL) {
 				trust_anchor = isc_mem_strdup(mctx, value);
+				if (trust_anchor == NULL)
+					fatal("out of memory");
+			}
 			break;
 		case 'r': /* rrcomments */
 			FULLCHECK("rrcomments");
@@ -1233,6 +1242,8 @@ dash_option(char *option, char *next, isc_boolean_t *open_type_class) {
 	switch (opt) {
 	case 'a':
 		anchorfile = isc_mem_strdup(mctx, value);
+		if (anchorfile == NULL)
+			fatal("out of memory");
 		return (value_from_next);
 	case 'b':
 		hash = strchr(value, '#');
@@ -1291,11 +1302,13 @@ dash_option(char *option, char *next, isc_boolean_t *open_type_class) {
 		port = value;
 		return (value_from_next);
 	case 'q':
-		if (qname != NULL) {
+		if (curqname != NULL) {
 			warn("extra query name");
-			isc_mem_free(mctx, qname);
+			isc_mem_free(mctx, curqname);
 		}
-		curqname = value;
+		curqname = isc_mem_strdup(mctx, value);
+		if (curqname == NULL)
+			fatal("out of memory");
 		return (value_from_next);
 	case 't':
 		*open_type_class = ISC_FALSE;
@@ -1318,9 +1331,13 @@ dash_option(char *option, char *next, isc_boolean_t *open_type_class) {
 		result = get_reverse(textname, sizeof(textname), value,
 				     ISC_FALSE);
 		if (result == ISC_R_SUCCESS) {
-			if (curqname != NULL)
+			if (curqname != NULL) {
+				isc_mem_free(mctx, curqname);
 				warn("extra query name");
+			}
 			curqname = isc_mem_strdup(mctx, textname);
+			if (curqname == NULL)
+				fatal("out of memory");
 			if (typeset)
 				warn("extra query type");
 			qtype = dns_rdatatype_ptr;
@@ -1428,8 +1445,11 @@ parse_args(int argc, char **argv) {
 				}
 			}
 
-			if (curqname == NULL)
-				curqname = argv[0];
+			if (curqname == NULL) {
+				curqname = isc_mem_strdup(mctx, argv[0]);
+				if (curqname == NULL)
+					fatal("out of memory");
+			}
 		}
 	}
 
@@ -1442,10 +1462,13 @@ parse_args(int argc, char **argv) {
 
 	if (curqname == NULL) {
 		qname = isc_mem_strdup(mctx, ".");
+		if (qname == NULL)
+			fatal("out of memory");
+
 		if (!typeset)
 			qtype = dns_rdatatype_ns;
 	} else
-		qname = isc_mem_strdup(mctx, curqname);
+		qname = curqname;
 }
 
 static isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.17 2014/12/10 03:34:44 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.18 2015/07/08 15:38:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1390,7 +1390,7 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 			|| cmsgp->cmsg_type == IP_RECVTOS
 #endif
 			)) {
-			dev->dscp = (int) *(uint8_t *)CMSG_DATA(cmsgp);
+			dev->dscp = (int) *(unsigned char *)CMSG_DATA(cmsgp);
 			dev->dscp >>= 2;
 			dev->attributes |= ISC_SOCKEVENTATTR_DSCP;
 			goto next;
@@ -2415,6 +2415,62 @@ free_socket(isc__socket_t **socketp) {
 	*socketp = NULL;
 }
 
+#ifdef SO_RCVBUF
+static isc_once_t	rcvbuf_once = ISC_ONCE_INIT;
+static int		rcvbuf = RCVBUFSIZE;
+
+static void
+set_rcvbuf(void) {
+	int fd;
+	int max = rcvbuf, min;
+	ISC_SOCKADDR_LEN_T len;
+
+	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+#if defined(ISC_PLATFORM_HAVEIPV6)
+	if (fd == -1) {
+		switch (errno) {
+		case EPROTONOSUPPORT:
+		case EPFNOSUPPORT:
+		case EAFNOSUPPORT:
+		/*
+		 * Linux 2.2 (and maybe others) return EINVAL instead of
+		 * EAFNOSUPPORT.
+		 */
+		case EINVAL:
+			fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+			break;
+		}
+	}
+#endif
+	if (fd == -1)
+		return;
+
+	len = sizeof(min);
+	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (void *)&min, &len) >= 0 &&
+	    min < rcvbuf) {
+ again:
+		if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (void *)&rcvbuf,
+			       sizeof(rcvbuf)) == -1) {
+			if (errno == ENOBUFS && rcvbuf > min) {
+				max = rcvbuf - 1;
+				rcvbuf = (rcvbuf + min) / 2;
+				goto again;
+			} else {
+				rcvbuf = min;
+				goto cleanup;
+			}
+		} else
+			min = rcvbuf;
+		if (min != max) {
+			rcvbuf = max;
+			goto again;
+		}
+	}
+ cleanup:
+	close (fd);
+}
+#endif
+
 #ifdef SO_BSDCOMPAT
 /*
  * This really should not be necessary to do.  Having to workout
@@ -2787,15 +2843,15 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 #if defined(SO_RCVBUF)
 		optlen = sizeof(size);
 		if (getsockopt(sock->fd, SOL_SOCKET, SO_RCVBUF,
-			       (void *)&size, &optlen) >= 0 &&
-		     size < RCVBUFSIZE) {
-			size = RCVBUFSIZE;
+			       (void *)&size, &optlen) >= 0 && size < rcvbuf) {
+			RUNTIME_CHECK(isc_once_do(&rcvbuf_once,
+						  set_rcvbuf) == ISC_R_SUCCESS);
 			if (setsockopt(sock->fd, SOL_SOCKET, SO_RCVBUF,
-				       (void *)&size, sizeof(size)) == -1) {
+			       (void *)&rcvbuf, sizeof(rcvbuf)) == -1) {
 				isc__strerror(errno, strbuf, sizeof(strbuf));
 				UNEXPECTED_ERROR(__FILE__, __LINE__,
 					"setsockopt(%d, SO_RCVBUF, %d) %s: %s",
-					sock->fd, size,
+					sock->fd, rcvbuf,
 					isc_msgcat_get(isc_msgcat,
 						       ISC_MSGSET_GENERAL,
 						       ISC_MSG_FAILED,

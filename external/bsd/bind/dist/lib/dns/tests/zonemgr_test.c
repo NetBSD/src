@@ -1,7 +1,7 @@
-/*	$NetBSD: zonemgr_test.c,v 1.1.1.6 2014/12/10 03:34:43 christos Exp $	*/
+/*	$NetBSD: zonemgr_test.c,v 1.1.1.7 2015/07/08 15:38:04 christos Exp $	*/
 
 /*
- * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -44,7 +44,7 @@ ATF_TC_HEAD(zonemgr_create, tc) {
 	atf_tc_set_md_var(tc, "descr", "create zone manager");
 }
 ATF_TC_BODY(zonemgr_create, tc) {
-	dns_zonemgr_t *zonemgr = NULL;
+	dns_zonemgr_t *myzonemgr = NULL;
 	isc_result_t result;
 
 	UNUSED(tc);
@@ -53,12 +53,12 @@ ATF_TC_BODY(zonemgr_create, tc) {
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
-				    &zonemgr);
+				    &myzonemgr);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	dns_zonemgr_shutdown(zonemgr);
-	dns_zonemgr_detach(&zonemgr);
-	ATF_REQUIRE_EQ(zonemgr, NULL);
+	dns_zonemgr_shutdown(myzonemgr);
+	dns_zonemgr_detach(&myzonemgr);
+	ATF_REQUIRE_EQ(myzonemgr, NULL);
 
 	dns_test_end();
 }
@@ -69,7 +69,7 @@ ATF_TC_HEAD(zonemgr_managezone, tc) {
 	atf_tc_set_md_var(tc, "descr", "manage and release a zone");
 }
 ATF_TC_BODY(zonemgr_managezone, tc) {
-	dns_zonemgr_t *zonemgr = NULL;
+	dns_zonemgr_t *myzonemgr = NULL;
 	dns_zone_t *zone = NULL;
 	isc_result_t result;
 
@@ -79,35 +79,35 @@ ATF_TC_BODY(zonemgr_managezone, tc) {
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
-				    &zonemgr);
+				    &myzonemgr);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = dns_test_makezone("foo", &zone, NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	/* This should not succeed until the dns_zonemgr_setsize() is run */
-	result = dns_zonemgr_managezone(zonemgr, zone);
+	result = dns_zonemgr_managezone(myzonemgr, zone);
 	ATF_REQUIRE_EQ(result, ISC_R_FAILURE);
 
-	ATF_REQUIRE_EQ(dns_zonemgr_getcount(zonemgr, DNS_ZONESTATE_ANY), 0);
+	ATF_REQUIRE_EQ(dns_zonemgr_getcount(myzonemgr, DNS_ZONESTATE_ANY), 0);
 
-	result = dns_zonemgr_setsize(zonemgr, 1);
+	result = dns_zonemgr_setsize(myzonemgr, 1);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	/* Now it should succeed */
-	result = dns_zonemgr_managezone(zonemgr, zone);
+	result = dns_zonemgr_managezone(myzonemgr, zone);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	ATF_REQUIRE_EQ(dns_zonemgr_getcount(zonemgr, DNS_ZONESTATE_ANY), 1);
+	ATF_REQUIRE_EQ(dns_zonemgr_getcount(myzonemgr, DNS_ZONESTATE_ANY), 1);
 
-	dns_zonemgr_releasezone(zonemgr, zone);
+	dns_zonemgr_releasezone(myzonemgr, zone);
 	dns_zone_detach(&zone);
 
-	ATF_REQUIRE_EQ(dns_zonemgr_getcount(zonemgr, DNS_ZONESTATE_ANY), 0);
+	ATF_REQUIRE_EQ(dns_zonemgr_getcount(myzonemgr, DNS_ZONESTATE_ANY), 0);
 
-	dns_zonemgr_shutdown(zonemgr);
-	dns_zonemgr_detach(&zonemgr);
-	ATF_REQUIRE_EQ(zonemgr, NULL);
+	dns_zonemgr_shutdown(myzonemgr);
+	dns_zonemgr_detach(&myzonemgr);
+	ATF_REQUIRE_EQ(myzonemgr, NULL);
 
 	dns_test_end();
 }
@@ -117,7 +117,7 @@ ATF_TC_HEAD(zonemgr_createzone, tc) {
 	atf_tc_set_md_var(tc, "descr", "create and release a zone");
 }
 ATF_TC_BODY(zonemgr_createzone, tc) {
-	dns_zonemgr_t *zonemgr = NULL;
+	dns_zonemgr_t *myzonemgr = NULL;
 	dns_zone_t *zone = NULL;
 	isc_result_t result;
 
@@ -127,27 +127,27 @@ ATF_TC_BODY(zonemgr_createzone, tc) {
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
-				    &zonemgr);
+				    &myzonemgr);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	/* This should not succeed until the dns_zonemgr_setsize() is run */
-	result = dns_zonemgr_createzone(zonemgr, &zone);
+	result = dns_zonemgr_createzone(myzonemgr, &zone);
 	ATF_REQUIRE_EQ(result, ISC_R_FAILURE);
 
-	result = dns_zonemgr_setsize(zonemgr, 1);
+	result = dns_zonemgr_setsize(myzonemgr, 1);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	/* Now it should succeed */
-	result = dns_zonemgr_createzone(zonemgr, &zone);
+	result = dns_zonemgr_createzone(myzonemgr, &zone);
 	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
 	ATF_CHECK(zone != NULL);
 
 	if (zone != NULL)
 		dns_zone_detach(&zone);
 
-	dns_zonemgr_shutdown(zonemgr);
-	dns_zonemgr_detach(&zonemgr);
-	ATF_REQUIRE_EQ(zonemgr, NULL);
+	dns_zonemgr_shutdown(myzonemgr);
+	dns_zonemgr_detach(&myzonemgr);
+	ATF_REQUIRE_EQ(myzonemgr, NULL);
 
 	dns_test_end();
 }
@@ -157,7 +157,7 @@ ATF_TC_HEAD(zonemgr_unreachable, tc) {
 	atf_tc_set_md_var(tc, "descr", "manage and release a zone");
 }
 ATF_TC_BODY(zonemgr_unreachable, tc) {
-	dns_zonemgr_t *zonemgr = NULL;
+	dns_zonemgr_t *myzonemgr = NULL;
 	dns_zone_t *zone = NULL;
 	isc_sockaddr_t addr1, addr2;
 	struct in_addr in;
@@ -173,57 +173,57 @@ ATF_TC_BODY(zonemgr_unreachable, tc) {
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
-				    &zonemgr);
+				    &myzonemgr);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = dns_test_makezone("foo", &zone, NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	result = dns_zonemgr_setsize(zonemgr, 1);
+	result = dns_zonemgr_setsize(myzonemgr, 1);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	result = dns_zonemgr_managezone(zonemgr, zone);
+	result = dns_zonemgr_managezone(myzonemgr, zone);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	in.s_addr = inet_addr("10.53.0.1");
 	isc_sockaddr_fromin(&addr1, &in, 2112);
 	in.s_addr = inet_addr("10.53.0.2");
 	isc_sockaddr_fromin(&addr2, &in, 5150);
-	ATF_CHECK(! dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+	ATF_CHECK(! dns_zonemgr_unreachable(myzonemgr, &addr1, &addr2, &now));
 	/*
 	 * We require multiple unreachableadd calls to mark a server as
 	 * unreachable.
 	 */
-	dns_zonemgr_unreachableadd(zonemgr, &addr1, &addr2, &now);
-	ATF_CHECK(! dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
-	dns_zonemgr_unreachableadd(zonemgr, &addr1, &addr2, &now);
-	ATF_CHECK(dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+	dns_zonemgr_unreachableadd(myzonemgr, &addr1, &addr2, &now);
+	ATF_CHECK(! dns_zonemgr_unreachable(myzonemgr, &addr1, &addr2, &now));
+	dns_zonemgr_unreachableadd(myzonemgr, &addr1, &addr2, &now);
+	ATF_CHECK(dns_zonemgr_unreachable(myzonemgr, &addr1, &addr2, &now));
 
 	in.s_addr = inet_addr("10.53.0.3");
 	isc_sockaddr_fromin(&addr2, &in, 5150);
-	ATF_CHECK(! dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+	ATF_CHECK(! dns_zonemgr_unreachable(myzonemgr, &addr1, &addr2, &now));
 	/*
 	 * We require multiple unreachableadd calls to mark a server as
 	 * unreachable.
 	 */
-	dns_zonemgr_unreachableadd(zonemgr, &addr1, &addr2, &now);
-	dns_zonemgr_unreachableadd(zonemgr, &addr1, &addr2, &now);
-	ATF_CHECK(dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+	dns_zonemgr_unreachableadd(myzonemgr, &addr1, &addr2, &now);
+	dns_zonemgr_unreachableadd(myzonemgr, &addr1, &addr2, &now);
+	ATF_CHECK(dns_zonemgr_unreachable(myzonemgr, &addr1, &addr2, &now));
 
-	dns_zonemgr_unreachabledel(zonemgr, &addr1, &addr2);
-	ATF_CHECK(! dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+	dns_zonemgr_unreachabledel(myzonemgr, &addr1, &addr2);
+	ATF_CHECK(! dns_zonemgr_unreachable(myzonemgr, &addr1, &addr2, &now));
 
 	in.s_addr = inet_addr("10.53.0.2");
 	isc_sockaddr_fromin(&addr2, &in, 5150);
-	ATF_CHECK(dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
-	dns_zonemgr_unreachabledel(zonemgr, &addr1, &addr2);
-	ATF_CHECK(! dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+	ATF_CHECK(dns_zonemgr_unreachable(myzonemgr, &addr1, &addr2, &now));
+	dns_zonemgr_unreachabledel(myzonemgr, &addr1, &addr2);
+	ATF_CHECK(! dns_zonemgr_unreachable(myzonemgr, &addr1, &addr2, &now));
 
-	dns_zonemgr_releasezone(zonemgr, zone);
+	dns_zonemgr_releasezone(myzonemgr, zone);
 	dns_zone_detach(&zone);
-	dns_zonemgr_shutdown(zonemgr);
-	dns_zonemgr_detach(&zonemgr);
-	ATF_REQUIRE_EQ(zonemgr, NULL);
+	dns_zonemgr_shutdown(myzonemgr);
+	dns_zonemgr_detach(&myzonemgr);
+	ATF_REQUIRE_EQ(myzonemgr, NULL);
 
 	dns_test_end();
 }

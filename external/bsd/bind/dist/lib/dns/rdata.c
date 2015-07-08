@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.1.1.13 2014/12/10 03:34:40 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.14 2015/07/08 15:38:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1171,12 +1171,12 @@ txt_totext(isc_region_t *source, isc_boolean_t quote, isc_buffer_t *target) {
 			continue;
 		}
 		/*
-		 * Escape double quote, semi-colon, backslash.
-		 * If we are not enclosing the string in double
-		 * quotes also escape at sign.
+		 * Escape double quote and backslash.  If we are not
+		 * enclosing the string in double quotes also escape
+		 * at sign and semicolon.
 		 */
-		if (*sp == 0x22 || *sp == 0x3b || *sp == 0x5c ||
-		    (!quote && *sp == 0x40)) {
+		if (*sp == 0x22 || *sp == 0x5c ||
+		    (!quote && (*sp == 0x40 || *sp == 0x3b))) {
 			if (tl < 2)
 				return (ISC_R_NOSPACE);
 			*tp++ = '\\';

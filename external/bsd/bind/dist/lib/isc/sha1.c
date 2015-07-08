@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.1.1.9 2014/12/10 03:34:43 christos Exp $	*/
+/*	$NetBSD: sha1.c,v 1.1.1.10 2015/07/08 15:38:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -57,7 +57,7 @@ isc_sha1_init(isc_sha1_t *context)
 {
 	INSIST(context != NULL);
 
-	EVP_DigestInit(context, EVP_sha1());
+	RUNTIME_CHECK(EVP_DigestInit(context, EVP_sha1()) == 1);
 }
 
 void
@@ -72,7 +72,9 @@ isc_sha1_update(isc_sha1_t *context, const unsigned char *data,
 	INSIST(context != 0);
 	INSIST(data != 0);
 
-	EVP_DigestUpdate(context, (const void *) data, (size_t) len);
+	RUNTIME_CHECK(EVP_DigestUpdate(context,
+				       (const void *) data,
+				       (size_t) len) == 1);
 }
 
 void
@@ -80,7 +82,7 @@ isc_sha1_final(isc_sha1_t *context, unsigned char *digest) {
 	INSIST(digest != 0);
 	INSIST(context != 0);
 
-	EVP_DigestFinal(context, digest, NULL);
+	RUNTIME_CHECK(EVP_DigestFinal(context, digest, NULL) == 1);
 }
 
 #elif PKCS11CRYPTO

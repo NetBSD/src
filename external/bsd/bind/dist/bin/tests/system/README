@@ -1,4 +1,4 @@
-Copyright (C) 2004, 2010, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2004, 2010, 2011, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2000, 2001  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
@@ -19,6 +19,7 @@ involving a different DNS setup.  They are:
 		(not a complete resolver test suite)
   rrl/		query rate limiting
   rpz/		Tests of response policy zone (RPZ) rewriting
+  rpzrecurse/	Another set of RPZ tests to check recursion behavior
   stub/		Tests of stub zone functionality
   unknown/	Unknown type and class tests
   upforwd/	Update forwarding tests

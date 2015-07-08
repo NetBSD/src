@@ -51,13 +51,33 @@ BIND 9
 	For up-to-date release notes and errata, see
 	http://www.isc.org/software/bind9/releasenotes
 
+BIND 9.10.2-P2
+
+	BIND 9.10.2-P2 is a security release addressing the flaw
+	described in CVE-2015-4620.
+
+BIND 9.10.2-P1
+
+        BIND 9.10.2-P1 is a patch release addressing several
+        bugs recently found in the response-policy zones (RPZ)
+        implementation in BIND 9.10.  These mostly affect servers
+        that have multiple frequently-updated response-policy
+        zones. Operators who are not using RPZ need not upgrade.
+
+BIND 9.10.2
+
+	BIND 9.10.2 is a maintenance release and addresses bugs
+	found in BIND 9.10.1 and earlier, as well as the security
+	flaws described in CVE-2014-8500, CVE-2014-8680 and
+	CVE-2015-1349.
+
 BIND 9.10.1
 
 	BIND 9.10.1 is a maintenance release and addresses bugs
-        found in BIND 9.10.0 and earlier.
+	found in BIND 9.10.0 and earlier.
 
-        This release addresses the security flaws described in
-        CVE-2014-3214 and CVE-2014-3859.
+	This release addresses the security flaws described in
+	CVE-2014-3214 and CVE-2014-3859.
 
 BIND 9.10.0
 

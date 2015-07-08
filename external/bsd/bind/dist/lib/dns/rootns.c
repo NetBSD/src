@@ -1,7 +1,7 @@
-/*	$NetBSD: rootns.c,v 1.1.1.10 2014/12/10 03:34:40 christos Exp $	*/
+/*	$NetBSD: rootns.c,v 1.1.1.11 2015/07/08 15:38:02 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -213,7 +213,7 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
 			       rdclass, 0, NULL, &db);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto failure;
 
 	len = strlen(root_ns);
 	isc_buffer_init(&source, root_ns, len);
@@ -222,7 +222,7 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	dns_rdatacallbacks_init(&callbacks);
 	result = dns_db_beginload(db, &callbacks);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto failure;
 	if (filename != NULL) {
 		/*
 		 * Load the hints from the specified filename.
@@ -245,7 +245,7 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	if (result == ISC_R_SUCCESS || result == DNS_R_SEENINCLUDE)
 		result = eresult;
 	if (result != ISC_R_SUCCESS && result != DNS_R_SEENINCLUDE)
-		goto db_detach;
+		goto failure;
 	if (check_hints(db) != ISC_R_SUCCESS)
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_HINTS, ISC_LOG_WARNING,
@@ -254,8 +254,14 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	*target = db;
 	return (ISC_R_SUCCESS);
 
- db_detach:
-	dns_db_detach(&db);
+ failure:
+	isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_HINTS,
+		      ISC_LOG_ERROR, "could not configure root hints from "
+		      "'%s': %s", (filename != NULL) ? filename : "<BUILT-IN>",
+		      isc_result_totext(result));
+
+	if (db != NULL)
+		dns_db_detach(&db);
 
 	return (result);
 }

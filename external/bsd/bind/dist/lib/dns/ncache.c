@@ -1,7 +1,7 @@
-/*	$NetBSD: ncache.c,v 1.1.1.10 2014/12/10 03:34:40 christos Exp $	*/
+/*	$NetBSD: ncache.c,v 1.1.1.11 2015/07/08 15:38:01 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2010-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -505,6 +505,7 @@ static dns_rdatasetmethods_t rdataset_methods = {
 	NULL,
 	NULL,
 	rdataset_settrust,
+	NULL,
 	NULL
 };
 

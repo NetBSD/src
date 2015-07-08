@@ -1,7 +1,7 @@
-/*	$NetBSD: acache.c,v 1.1.1.7 2014/12/10 03:34:39 christos Exp $	*/
+/*	$NetBSD: acache.c,v 1.1.1.8 2015/07/08 15:38:00 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2012, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1507,7 +1507,6 @@ dns_acache_getentry(dns_acacheentry_t *entry, dns_zone_t **zonep,
 			 * trick to get the latest counter from the original
 			 * header.
 			 */
-			dns_rdataset_init(ardataset);
 			dns_rdataset_clone(erdataset, ardataset);
 			ISC_LIST_APPEND(fname->list, ardataset, link);
 		}

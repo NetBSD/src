@@ -1,4 +1,4 @@
-/*	$NetBSD: hmacsha.c,v 1.1.1.9 2014/12/10 03:34:43 christos Exp $	*/
+/*	$NetBSD: hmacsha.c,v 1.1.1.10 2015/07/08 15:38:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2005-2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -46,7 +46,12 @@ void
 isc_hmacsha1_init(isc_hmacsha1_t *ctx, const unsigned char *key,
 		  unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
+				(int) len, EVP_sha1()) == 1);
+#else
 	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha1());
+#endif
 }
 
 void
@@ -58,7 +63,11 @@ void
 isc_hmacsha1_update(isc_hmacsha1_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
+#else
 	HMAC_Update(ctx, buf, (int) len);
+#endif
 }
 
 void
@@ -67,7 +76,11 @@ isc_hmacsha1_sign(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA1_DIGESTLENGTH);
 
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Final(ctx, newdigest, NULL) == 1);
+#else
 	HMAC_Final(ctx, newdigest, NULL);
+#endif
 	HMAC_CTX_cleanup(ctx);
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
@@ -77,7 +90,12 @@ void
 isc_hmacsha224_init(isc_hmacsha224_t *ctx, const unsigned char *key,
 		    unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
+				(int) len, EVP_sha224()) == 1);
+#else
 	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha224());
+#endif
 }
 
 void
@@ -89,7 +107,11 @@ void
 isc_hmacsha224_update(isc_hmacsha224_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
+#else
 	HMAC_Update(ctx, buf, (int) len);
+#endif
 }
 
 void
@@ -98,7 +120,11 @@ isc_hmacsha224_sign(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA224_DIGESTLENGTH);
 
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Final(ctx, newdigest, NULL) == 1);
+#else
 	HMAC_Final(ctx, newdigest, NULL);
+#endif
 	HMAC_CTX_cleanup(ctx);
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
@@ -108,7 +134,12 @@ void
 isc_hmacsha256_init(isc_hmacsha256_t *ctx, const unsigned char *key,
 		    unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
+				(int) len, EVP_sha256()) == 1);
+#else
 	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha256());
+#endif
 }
 
 void
@@ -120,7 +151,11 @@ void
 isc_hmacsha256_update(isc_hmacsha256_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
+#else
 	HMAC_Update(ctx, buf, (int) len);
+#endif
 }
 
 void
@@ -129,7 +164,11 @@ isc_hmacsha256_sign(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA256_DIGESTLENGTH);
 
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Final(ctx, newdigest, NULL) == 1);
+#else
 	HMAC_Final(ctx, newdigest, NULL);
+#endif
 	HMAC_CTX_cleanup(ctx);
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
@@ -139,7 +178,12 @@ void
 isc_hmacsha384_init(isc_hmacsha384_t *ctx, const unsigned char *key,
 		    unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
+				(int) len, EVP_sha384()) == 1);
+#else
 	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha384());
+#endif
 }
 
 void
@@ -151,7 +195,11 @@ void
 isc_hmacsha384_update(isc_hmacsha384_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
+#else
 	HMAC_Update(ctx, buf, (int) len);
+#endif
 }
 
 void
@@ -160,7 +208,11 @@ isc_hmacsha384_sign(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA384_DIGESTLENGTH);
 
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Final(ctx, newdigest, NULL) == 1);
+#else
 	HMAC_Final(ctx, newdigest, NULL);
+#endif
 	HMAC_CTX_cleanup(ctx);
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
@@ -170,7 +222,12 @@ void
 isc_hmacsha512_init(isc_hmacsha512_t *ctx, const unsigned char *key,
 		    unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
+				(int) len, EVP_sha512()) == 1);
+#else
 	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha512());
+#endif
 }
 
 void
@@ -182,7 +239,11 @@ void
 isc_hmacsha512_update(isc_hmacsha512_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
+#else
 	HMAC_Update(ctx, buf, (int) len);
+#endif
 }
 
 void
@@ -191,7 +252,11 @@ isc_hmacsha512_sign(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA512_DIGESTLENGTH);
 
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Final(ctx, newdigest, NULL) == 1);
+#else
 	HMAC_Final(ctx, newdigest, NULL);
+#endif
 	HMAC_CTX_cleanup(ctx);
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));

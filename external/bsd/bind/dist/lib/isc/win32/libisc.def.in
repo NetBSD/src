@@ -39,10 +39,12 @@ isc__buffer_consumedregion
 isc__buffer_first
 isc__buffer_forward
 isc__buffer_init
+isc__buffer_initnull
 isc__buffer_invalidate
 isc__buffer_putmem
 isc__buffer_putstr
 isc__buffer_putuint16
+isc__buffer_putuint24
 isc__buffer_putuint32
 isc__buffer_putuint48
 isc__buffer_putuint8
@@ -157,6 +159,7 @@ isc_buffer_copyregion
 isc_buffer_free
 isc_buffer_getuint16
 isc_buffer_getuint32
+isc_buffer_getuint48
 isc_buffer_getuint8
 isc_buffer_reinit
 isc_bufferlist_availablecount
@@ -207,6 +210,7 @@ isc_error_setfatal
 isc_error_setunexpected
 isc_error_unexpected
 isc_event_allocate
+isc_event_constallocate
 isc_event_free
 isc_file_absolutepath
 isc_file_basename
@@ -257,6 +261,7 @@ isc_heap_create
 isc_heap_decreased
 isc_heap_delete
 isc_heap_destroy
+isc_heap_foreach
 isc_heap_element
 isc_heap_increased
 isc_heap_insert
@@ -294,6 +299,9 @@ isc_hmacsha512_invalidate
 isc_hmacsha512_sign
 isc_hmacsha512_update
 isc_hmacsha512_verify
+isc_httpd_addheader
+isc_httpd_addheaderuint
+isc_httpd_response
 isc_httpdmgr_addurl
 isc_httpdmgr_addurl2
 isc_httpdmgr_create
@@ -326,6 +334,7 @@ isc_lex_openbuffer
 isc_lex_openfile
 isc_lex_openstream
 isc_lex_setcomments
+isc_lex_setsourcename
 isc_lex_setspecials
 isc_lex_ungettoken
 isc_lfsr_generate
@@ -383,7 +392,12 @@ isc_mem_inuse
 isc_mem_isovermem
 isc_mem_maxinuse
 isc_mem_ondestroy
+isc_mem_printallactive
 isc_mem_references
+isc_mem_register
+@IF JSON
+isc_mem_renderjson
+@END JSON
 @IF LIBXML2
 isc_mem_renderxml
 @END LIBXML2
@@ -434,7 +448,10 @@ isc_netaddr_frompath
 isc_netaddr_fromsockaddr
 isc_netaddr_fromv4mapped
 isc_netaddr_getzone
+isc_netaddr_isexperimental
+isc_netaddr_islinklocal
 isc_netaddr_ismulticast
+isc_netaddr_issitelocal
 isc_netaddr_masktoprefixlen
 isc_netaddr_prefixok
 isc_netaddr_setzone
@@ -463,6 +480,11 @@ isc_portset_isset
 isc_portset_nports
 isc_portset_remove
 isc_portset_removerange
+@IF UNIXONLY
+isc_print_snprintf
+isc_print_sprintf
+isc_print_vsnprintf
+@END UNIXONLY
 isc_quota_attach
 isc_quota_destroy
 isc_quota_detach
@@ -482,11 +504,14 @@ isc_random_jitter
 isc_random_seed
 isc_ratelimiter_attach
 isc_ratelimiter_create
+isc_ratelimiter_dequeue
 isc_ratelimiter_detach
 isc_ratelimiter_enqueue
+isc_ratelimiter_release
 isc_ratelimiter_setinterval
 isc_ratelimiter_setpertic
 isc_ratelimiter_shutdown
+isc_ratelimiter_stall
 isc_refcount_init
 isc_regex_validate
 isc_region_compare
@@ -545,11 +570,49 @@ isc_sockaddr_frompath
 isc_sockaddr_getport
 isc_sockaddr_hash
 isc_sockaddr_isexperimental
+isc_sockaddr_islinklocal
 isc_sockaddr_ismulticast
+isc_sockaddr_issitelocal
 isc_sockaddr_pf
 isc_sockaddr_setport
 isc_sockaddr_totext
 isc_sockaddr_v6fromin
+@IF UNIXONLY
+isc_socket_accept
+isc_socket_attach
+isc_socket_bind
+isc_socket_cancel
+isc_socket_cleanunix
+isc_socket_close
+isc_socket_connect
+isc_socket_create
+isc_socket_detach
+isc_socket_dscp
+isc_socket_dup
+isc_socket_fdwatchcreate
+isc_socket_fdwatchpoke
+isc_socket_filter
+isc_socket_getpeername
+isc_socket_getsockname
+isc_socket_gettype
+isc_socket_ipv6only
+isc_socket_listen
+isc_socket_open
+isc_socket_permunix
+isc_socket_register
+isc_socket_recv
+isc_socket_recv2
+isc_socket_recvv
+isc_socket_send
+isc_socket_sendto
+isc_socket_sendto2
+isc_socket_sendtov
+isc_socket_sendtov2
+isc_socket_sendv
+isc_socketmgr_create
+isc_socketmgr_create2
+isc_socketmgr_destroy
+@END UNIXONLY
 isc_socket_socketevent
 isc_socketmgr_createinctx
 @IF LIBXML2
@@ -597,12 +660,14 @@ isc_task_create
 isc_task_destroy
 isc_task_detach
 isc_task_endexclusive
+isc_task_exiting
 isc_task_getcurrenttime
 isc_task_onshutdown
 isc_task_privilege
 isc_task_purge
 isc_task_purgeevent
 isc_task_purgerange
+isc_task_register
 isc_task_send
 isc_task_sendanddetach
 isc_task_setname
@@ -613,6 +678,10 @@ isc_taskmgr_create
 isc_taskmgr_createinctx
 isc_taskmgr_destroy
 isc_taskmgr_excltask
+isc_taskmgr_mode
+@IF JSON
+isc_taskmgr_renderjson
+@END JSON
 @IF LIBXML2
 isc_taskmgr_renderxml
 @END LIBXML2
@@ -650,6 +719,8 @@ isc_time_subtract
 isc_timer_attach
 isc_timer_create
 isc_timer_detach
+isc_timer_gettype
+isc_timer_register
 isc_timer_reset
 isc_timer_touch
 isc_timermgr_create
@@ -658,10 +729,6 @@ isc_timermgr_destroy
 isc_timermgr_poke
 isc_tm_timegm
 isc_tm_strptime
-isc_win32os_majorversion
-isc_win32os_minorversion
-isc_win32os_servicepackmajor
-isc_win32os_servicepackminor
 isc_win32os_versioncheck
 openlog
 @IF PKCS11

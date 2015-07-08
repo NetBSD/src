@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.1.1.14 2014/12/10 03:34:24 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.1.1.15 2015/07/08 15:37:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2007-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -333,7 +333,7 @@ main(int argc, char **argv) {
 		fatal("could not initialize dst: %s",
 		      isc_result_totext(ret));
 
-	setup_logging(verbose, mctx, &log);
+	setup_logging(mctx, &log);
 
 	if (predecessor == NULL) {
 		if (label == NULL)

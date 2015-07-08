@@ -1,4 +1,4 @@
-.\"	$NetBSD: dig.1,v 1.1.1.12 2014/12/10 03:34:23 christos Exp $
+.\"	$NetBSD: dig.1,v 1.1.1.13 2015/07/08 15:37:31 christos Exp $
 .\"
 .\" Copyright (C) 2004-2011, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
@@ -400,7 +400,10 @@ for it to be considered absolute. The default value is that defined using the nd
 or
 \fBdomain\fR
 directive in
-\fI/etc/resolv.conf\fR.
+\fI/etc/resolv.conf\fR
+if
+\fB+search\fR
+is set.
 .RE
 .PP
 \fB+[no]nsid\fR
@@ -459,6 +462,12 @@ Toggle the display of per\-record comments in the output (for example, human\-re
 Use [do not use] the search list defined by the searchlist or domain directive in
 \fIresolv.conf\fR
 (if any). The search list is not used by default.
+.sp
+\'ndots' from
+\fIresolv.conf\fR
+(default 1) which may be overridden by
+\fI+ndots\fR
+determines if the name will be treated as relative or not and hence whether a search is eventually performed or not.
 .RE
 .PP
 \fB+[no]short\fR

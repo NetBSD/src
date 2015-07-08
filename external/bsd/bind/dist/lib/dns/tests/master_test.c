@@ -1,7 +1,7 @@
-/*	$NetBSD: master_test.c,v 1.1.1.7 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: master_test.c,v 1.1.1.8 2015/07/08 15:38:04 christos Exp $	*/
 
 /*
- * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -559,29 +559,29 @@ ATF_TC_BODY(dumpraw, tc) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbversion_t *version = NULL;
-	char origin[sizeof(TEST_ORIGIN)];
-	dns_name_t dns_origin;
+	char myorigin[sizeof(TEST_ORIGIN)];
+	dns_name_t dnsorigin;
 	isc_buffer_t source, target;
-	unsigned char name_buf[BUFLEN];
+	unsigned char namebuf[BUFLEN];
 	int len;
 
 	UNUSED(tc);
 
-	strcpy(origin, TEST_ORIGIN);
-	len = strlen(origin);
-	isc_buffer_init(&source, origin, len);
+	strcpy(myorigin, TEST_ORIGIN);
+	len = strlen(myorigin);
+	isc_buffer_init(&source, myorigin, len);
 	isc_buffer_add(&source, len);
 	isc_buffer_setactive(&source, len);
-	isc_buffer_init(&target, name_buf, BUFLEN);
-	dns_name_init(&dns_origin, NULL);
-	result = dns_name_fromtext(&dns_origin, &source, dns_rootname,
+	isc_buffer_init(&target, namebuf, BUFLEN);
+	dns_name_init(&dnsorigin, NULL);
+	result = dns_name_fromtext(&dnsorigin, &source, dns_rootname,
 				   0, &target);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = dns_test_begin(NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	result = dns_db_create(mctx, "rbt", &dns_origin, dns_dbtype_zone,
+	result = dns_db_create(mctx, "rbt", &dnsorigin, dns_dbtype_zone,
 			       dns_rdataclass_in, 0, NULL, &db);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
@@ -626,11 +626,11 @@ static const char *warn_expect_value;
 static isc_boolean_t warn_expect_result;
 
 static void
-warn_expect(struct dns_rdatacallbacks *callbacks, const char *fmt, ...) {
+warn_expect(struct dns_rdatacallbacks *mycallbacks, const char *fmt, ...) {
 	char buf[4096];
 	va_list ap;
 
-	UNUSED(callbacks);
+	UNUSED(mycallbacks);
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
