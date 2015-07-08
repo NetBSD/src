@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.21 2015/05/31 14:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.22 2015/07/08 01:23:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -148,7 +148,8 @@ void	tegra_xusbpad_sata_enable(void);
 
 struct videomode;
 int	tegra_dc_port(device_t);
-int	tegra_dc_enable(device_t, device_t, const struct videomode *);
+int	tegra_dc_enable(device_t, device_t, const struct videomode *,
+			const uint8_t *);
 void	tegra_dc_hdmi_start(device_t);
 
 #define TEGRA_CPUFREQ_MAX	16
