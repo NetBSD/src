@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -25,3 +25,5 @@ rm -f dig.out.ns1 dig.out.ns2 dig.out.ns1 dig.out.ns3 dig.out.ns1.after
 rm -f ns1/*.jnl ns2/*.jnl ns3/*.jnl ns1/example.db ns2/*.bk ns3/*.bk
 rm -f ns3/nomaster1.db
 rm -f */named.memstats
+rm -f Ksig0.example2.*
+rm -f keyname

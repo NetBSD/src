@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2005, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2005, 2007, 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: isc-docbook-latex.xsl.in,v 1.9 2010/04/20 23:51:12 tbox Exp  -->
+<!-- Id -->
 
 <!-- ISC customizations for db2latex generator -->
 
@@ -133,6 +133,22 @@
       \end{titlepage}
     </xsl:text>
     <xsl:text>&#10;</xsl:text>
+  </xsl:param>
+
+  <!-- Add version in footer. -->
+  <xsl:param name="latex.book.preamble.post">
+    <xsl:text>
+      \pagestyle{fancy}
+      \fancyfoot[ce,co]{\thepage}
+      \fancyfoot[le,ro]{@BIND9_VERSIONSTRING@}
+      \renewcommand{\headrulewidth}{0.4 pt}
+      \fancypagestyle{plain}{%
+        \fancyhf{}%
+        \fancyfoot[ce,co]{\thepage}%
+        \fancyfoot[le,ro]{@BIND9_VERSIONSTRING@}%
+        \renewcommand{\headrulewidth}{0 pt}
+      }
+    </xsl:text>
   </xsl:param>
 
   <!--
