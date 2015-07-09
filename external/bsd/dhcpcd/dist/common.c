@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.13 2015/05/16 23:31:32 roy Exp $");
+ __RCSID("$NetBSD: common.c,v 1.14 2015/07/09 10:15:34 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -255,17 +255,6 @@ addvard(struct dhcpcd_ctx *ctx,
 
 	snprintf(buffer, sizeof(buffer), "%zu", value);
 	return addvar(ctx, e, prefix, var, buffer);
-}
-
-
-time_t
-uptime(void)
-{
-	struct timespec tv;
-
-	if (clock_gettime(CLOCK_MONOTONIC, &tv) == -1)
-		return -1;
-	return tv.tv_sec;
 }
 
 char *
