@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.61 2014/06/11 17:01:04 joerg Exp $	*/
+/*	$NetBSD: iostat.c,v 1.62 2015/07/09 13:26:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.61 2014/06/11 17:01:04 joerg Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.62 2015/07/09 13:26:52 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ __RCSID("$NetBSD: iostat.c,v 1.61 2014/06/11 17:01:04 joerg Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <fnmatch.h>
 
 #include "drvstats.h"
 
@@ -511,7 +512,7 @@ selectdrives(int argc, char *argv[])
 #endif
 		tried++;
 		for (i = 0; i < (int)ndrive; i++) {
-			if (strcmp(cur.name[i], *argv))
+			if (fnmatch(*argv, cur.name[i], 0))
 				continue;
 			cur.select[i] = 1;
 			++ndrives;
