@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.155 2015/05/17 05:21:38 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.156 2015/07/09 14:41:30 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -206,7 +206,8 @@ SUBDIR+=	wmihp
 SUBDIR+=	wmimsi
 .endif
 
-.if ${MACHINE_CPU} == "arm" || !empty(MACHINE_ARCH:Mmips64*)
+.if ${MACHINE_CPU} == "arm" \
+    || (!empty(MACHINE_ARCH:Mmips64*) && !defined(BSD_MK_COMPAT_FILE))
 SUBDIR+=	compat_netbsd32
 .endif
 
