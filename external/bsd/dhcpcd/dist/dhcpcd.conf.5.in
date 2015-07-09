@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.21 2015/05/16 23:31:32 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.22 2015/07/09 10:15:34 roy Exp $
 .\" Copyright (c) 2006-2015 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 15, 2015
+.Dd July 9, 2015
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -263,6 +263,8 @@ Unless a
 .Ar sla_id
 of 0 is assigned, a reject route is installed for the Delegated Prefix to
 stop unallocated addresses being resolved upstream.
+This reject route is in essence SLA 0, thus you need space within the prefix
+to assign a SLA per interface.
 If no
 .Ar interface
 is given then we will assign a prefix to every other interface with a
@@ -309,30 +311,23 @@ The DHCPv6 server is going to provide us with an IPv6 address, a default
 route and a /64 subnet to be delegated to the internal interface.
 The eth1 interface will be automatically configured
 for IPv6 using the first address (::1) from the delegated prefix.
+A second prefix is requested and assigned to two other interfaces.
 .Xr rtadvd 8
-can be used with an empty configuration file on eth1 to provide automatic
+can be used with an empty configuration file on eth1, eth2 and eth3,
+to provide automatic
 IPv6 address configuration for the internal network.
 .Bd -literal -indent
-noipv6rs            # disable routing solicitation
-denyinterfaces eth2 # Don't touch eth2 at all
+noipv6rs                 # disable routing solicitation
+denyinterfaces eth2      # Don't touch eth2 at all
 interface eth0
-    ipv6rs	    # enable routing solicitation get the
-		    # default IPv6 route
-    ia_na 1	    # request an IPv6 address
-    ia_pd 2 eth1/0  # get a /64 and assign it to eth1
+  ipv6rs                 # enable routing solicitation get the
+                         # default IPv6 route
+  ia_na 1                # request an IPv6 address
+  ia_pd 2 eth1/0         # request a PD and assign it to eth1
+  ia_pd 3 eth2/1 eth3/2  # req a PD and assign it to eth2 and eth3
+                         # we cannot use SLA 0 above because we are
+                         # assinging the PD to more than one interface
 .Ed
-.It Ic ia_pd_mix
-To be RFC compliant,
-.Nm dhcpcd
-cannot mix Prefix Delegation with other DHCPv6 address types in the same
-session.
-This has a number of issues: additional DHCP traffic and potential collisions
-between options.
-.Ic ia_pd_mix
-enables
-.Li draft-ietf-dhc-dhcpv6-stateful-issues-06
-support so that Prefix Delegation can be mixed with other address types in
-the same session.
 .It Ic ipv4only
 Only configure IPv4.
 .It Ic ipv6only
@@ -413,6 +408,8 @@ Don't send any ARP requests.
 This also disables IPv4LL.
 .It Ic noauthrequired
 Don't require authentication even though we requested it.
+.It Ic nodelay
+Don't delay for an initial randomised time when starting protocols.
 .It Ic nodev
 Don't load
 .Pa /dev
