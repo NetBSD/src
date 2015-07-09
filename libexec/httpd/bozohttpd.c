@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.64 2015/05/02 11:35:48 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.65 2015/07/09 12:32:16 shm Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1093,8 +1093,7 @@ check_virtual(bozo_httpreq_t *request)
 				}
 				debug((httpd, DEBUG_OBESE, "looking at dir``%s''",
 			 	   d->d_name));
-				if (d->d_namlen == len && strcmp(d->d_name,
-				    request->hr_host) == 0) {
+				if (strcmp(d->d_name, request->hr_host) == 0) {
 					/* found it, punch it */
 					debug((httpd, DEBUG_OBESE, "found it punch it"));
 					request->hr_virthostname =
