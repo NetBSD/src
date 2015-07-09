@@ -94,13 +94,14 @@
 #define O_CONTROLGRP		O_BASE + 34
 #define O_SLAAC			O_BASE + 35
 #define O_GATEWAY		O_BASE + 36
-#define O_PFXDLGMIX		O_BASE + 37
+// unassigned			O_BASE + 37
 #define O_IPV6RA_AUTOCONF	O_BASE + 38
 #define O_IPV6RA_NOAUTOCONF	O_BASE + 39
 #define O_REJECT		O_BASE + 40
 #define O_IPV6RA_ACCEPT_NOPUBLIC	O_BASE + 41
 #define O_BOOTP			O_BASE + 42
 #define O_DEFINEND		O_BASE + 43
+#define O_NODELAY		O_BASE + 44
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -192,9 +193,9 @@ const struct option cf_options[] = {
 	{"controlgroup",    required_argument, NULL, O_CONTROLGRP},
 	{"slaac",           required_argument, NULL, O_SLAAC},
 	{"gateway",         no_argument,       NULL, O_GATEWAY},
-	{"ia_pd_mix",       no_argument,       NULL, O_PFXDLGMIX},
 	{"reject",          required_argument, NULL, O_REJECT},
 	{"bootp",           no_argument,       NULL, O_BOOTP},
+	{"nodelay",         no_argument,       NULL, O_NODELAY},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -469,7 +470,6 @@ parse_addr(struct dhcpcd_ctx *ctx,
     struct in_addr *addr, struct in_addr *net, const char *arg)
 {
 	char *p;
-	int i;
 
 	if (arg == NULL || *arg == '\0') {
 		if (addr != NULL)
@@ -479,10 +479,13 @@ parse_addr(struct dhcpcd_ctx *ctx,
 		return 0;
 	}
 	if ((p = strchr(arg, '/')) != NULL) {
+		int e;
+		intmax_t i;
+
 		*p++ = '\0';
-		if (net != NULL &&
-		    (sscanf(p, "%d", &i) != 1 ||
-			inet_cidrtoaddr(i, net) != 0))
+		i = strtoi(p, NULL, 10, 0, 32, &e);
+		if (e != 0 ||
+		    (net != NULL && inet_cidrtoaddr((int)i, net) != 0))
 		{
 			logger(ctx, LOG_ERR, "`%s' is not a valid CIDR", p);
 			return -1;
@@ -1631,7 +1634,7 @@ err_sla:
 		else if (strcasecmp(arg, "ascii") == 0)
 			t |= STRING | ASCII;
 		else if (strcasecmp(arg, "domain") == 0)
-			t |= STRING | DOMAIN | RFC3397;
+			t |= STRING | DOMAIN | RFC1035;
 		else if (strcasecmp(arg, "dname") == 0)
 			t |= STRING | DOMAIN;
 		else if (strcasecmp(arg, "binhex") == 0)
@@ -1658,7 +1661,7 @@ err_sla:
 			l = 0;
 		}
 		if (t & ARRAY && t & (STRING | BINHEX) &&
-		    !(t & (RFC3397 | DOMAIN)))
+		    !(t & (RFC1035 | DOMAIN)))
 		{
 			logger(ctx, LOG_WARNING, "ignoring array for strings");
 			t &= ~ARRAY;
@@ -2008,11 +2011,11 @@ err_sla:
 		else
 			ifo->options &= ~DHCPCD_SLAACPRIVATE;
 		break;
-	case O_PFXDLGMIX:
-		ifo->options |= DHCPCD_PFXDLGMIX;
-		break;
 	case O_BOOTP:
 		ifo->options |= DHCPCD_BOOTP;
+		break;
+	case O_NODELAY:
+		ifo->options &= ~DHCPCD_INITIAL_DELAY;
 		break;
 	default:
 		return 0;
@@ -2096,7 +2099,7 @@ read_config(struct dhcpcd_ctx *ctx,
 	char *line, *buf, *option, *p;
 	size_t buflen;
 	ssize_t vlen;
-	int skip = 0, have_profile = 0;
+	int skip, have_profile, new_block, had_block;
 #ifndef EMBEDDED_CONFIG
 	const char * const *e;
 	size_t ol;
@@ -2113,7 +2116,7 @@ read_config(struct dhcpcd_ctx *ctx,
 		logger(ctx, LOG_ERR, "%s: %m", __func__);
 		return NULL;
 	}
-	ifo->options |= DHCPCD_DAEMONISE | DHCPCD_LINK;
+	ifo->options |= DHCPCD_DAEMONISE | DHCPCD_LINK | DHCPCD_INITIAL_DELAY;
 #ifdef PLUGIN_DEV
 	ifo->options |= DHCPCD_DEV;
 #endif
@@ -2270,6 +2273,8 @@ read_config(struct dhcpcd_ctx *ctx,
 		ifo->mtime = sb.st_mtime;
 
 	ldop = edop = NULL;
+	skip = have_profile = new_block = 0;
+	had_block = ifname == NULL ? 1 : 0;
 	while ((line = get_line(&buf, &buflen, fp))) {
 		option = strsep(&line, " \t");
 		if (line)
@@ -2282,10 +2287,16 @@ read_config(struct dhcpcd_ctx *ctx,
 			    *(p - 1) != '\\')
 				*p-- = '\0';
 		}
+		if (skip == 0 && new_block) {
+			had_block = 1;
+			new_block = 0;
+			ifo->options &= ~DHCPCD_WAITOPTS;
+		}
 		/* Start of an interface block, skip if not ours */
 		if (strcmp(option, "interface") == 0) {
 			char **n;
 
+			new_block = 1;
 			if (ifname && line && strcmp(line, ifname) == 0)
 				skip = 0;
 			else
@@ -2312,6 +2323,7 @@ read_config(struct dhcpcd_ctx *ctx,
 		}
 		/* Start of an ssid block, skip if not ours */
 		if (strcmp(option, "ssid") == 0) {
+			new_block = 1;
 			if (ssid && line && strcmp(line, ssid) == 0)
 				skip = 0;
 			else
@@ -2320,6 +2332,7 @@ read_config(struct dhcpcd_ctx *ctx,
 		}
 		/* Start of a profile block, skip if not ours */
 		if (strcmp(option, "profile") == 0) {
+			new_block = 1;
 			if (profile && line && strcmp(line, profile) == 0) {
 				skip = 0;
 				have_profile = 1;
@@ -2344,6 +2357,8 @@ read_config(struct dhcpcd_ctx *ctx,
 		return NULL;
 	}
 
+	if (!had_block)
+		ifo->options &= ~DHCPCD_WAITOPTS;
 	finish_config(ifo);
 	return ifo;
 }
@@ -2353,17 +2368,26 @@ add_options(struct dhcpcd_ctx *ctx, const char *ifname,
     struct if_options *ifo, int argc, char **argv)
 {
 	int oi, opt, r;
+	unsigned long long wait_opts;
 
 	if (argc == 0)
 		return 1;
 
 	optind = 0;
 	r = 1;
+	/* Don't apply the command line wait options to each interface,
+	 * only use the dhcpcd.conf entry for that. */
+	if (ifname != NULL)
+		wait_opts = ifo->options & DHCPCD_WAITOPTS;
 	while ((opt = getopt_long(argc, argv, IF_OPTS, cf_options, &oi)) != -1)
 	{
 		r = parse_option(ctx, ifname, ifo, opt, optarg, NULL, NULL);
 		if (r != 1)
 			break;
+	}
+	if (ifname != NULL) {
+		ifo->options &= ~DHCPCD_WAITOPTS;
+		ifo->options |= wait_opts;
 	}
 
 	finish_config(ifo);

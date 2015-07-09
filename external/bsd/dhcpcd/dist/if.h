@@ -83,14 +83,6 @@
 	    ((addr & IN_CLASSB_NET) == 0xc0a80000))
 #endif
 
-#define LINKLOCAL_ADDR	0xa9fe0000
-#define LINKLOCAL_MASK	IN_CLASSB_NET
-#define LINKLOCAL_BRDC	(LINKLOCAL_ADDR | ~LINKLOCAL_MASK)
-
-#ifndef IN_LINKLOCAL
-# define IN_LINKLOCAL(addr) ((addr & IN_CLASSB_NET) == LINKLOCAL_ADDR)
-#endif
-
 #define RAW_EOF			1 << 0
 #define RAW_PARTIALCSUM		2 << 0
 

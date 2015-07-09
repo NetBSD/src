@@ -415,7 +415,8 @@ get_next_rdm_monotonic_counter(struct auth *auth)
 	rdm++;
 	if (fseek(fp, 0, SEEK_SET) == -1 ||
 	    ftruncate(fileno(fp), 0) == -1 ||
-	    fprintf(fp, "0x%016" PRIu64 "\n", rdm) != 19)
+	    fprintf(fp, "0x%016" PRIu64 "\n", rdm) != 19 ||
+	    fflush(fp) == EOF)
 	{
 		if (!auth->last_replay_set) {
 			auth->last_replay = rdm;
@@ -424,7 +425,6 @@ get_next_rdm_monotonic_counter(struct auth *auth)
 			rdm = ++auth->last_replay;
 		/* report error? */
 	}
-	fflush(fp);
 #ifdef LOCK_EX
 	if (flocked == 0)
 		flock(fileno(fp), LOCK_UN);

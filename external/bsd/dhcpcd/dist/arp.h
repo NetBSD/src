@@ -57,6 +57,7 @@ struct arp_state {
 	void (*probed_cb)(struct arp_state *);
 	void (*announced_cb)(struct arp_state *);
 	void (*conflicted_cb)(struct arp_state *, const struct arp_msg *);
+	void (*free_cb)(struct arp_state *);
 
 	struct in_addr addr;
 	int probes;
@@ -64,6 +65,16 @@ struct arp_state {
 	struct in_addr failed;
 };
 TAILQ_HEAD(arp_statehead, arp_state);
+
+struct iarp_state {
+	int fd;
+	struct arp_statehead arp_states;
+};
+
+#define ARP_STATE(ifp)							       \
+	((struct iarp_state *)(ifp)->if_data[IF_DATA_ARP])
+#define ARP_CSTATE(ifp)							       \
+	((const struct iarp_state *)(ifp)->if_data[IF_DATA_ARP])
 
 #ifdef INET
 void arp_report_conflicted(const struct arp_state *, const struct arp_msg *);

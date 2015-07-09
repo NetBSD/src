@@ -140,7 +140,8 @@ duid_get(unsigned char *d, const struct interface *ifp)
 	}
 	len = duid_make(d, ifp, DUID_LLT);
 	x = fprintf(fp, "%s\n", hwaddr_ntoa(d, len, line, sizeof(line)));
-	fclose(fp);
+	if (fclose(fp) == EOF)
+		x = -1;
 	/* Failed to write the duid? scrub it, we cannot use it */
 	if (x < 1) {
 		logger(ifp->ctx, LOG_ERR, "error writing DUID: %s: %m", DUID);

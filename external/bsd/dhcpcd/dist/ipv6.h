@@ -249,6 +249,9 @@ int ipv6_handleifa_addrs(int, struct ipv6_addrhead *,
 int ipv6_publicaddr(const struct ipv6_addr *);
 const struct ipv6_addr *ipv6_iffindaddr(const struct interface *,
     const struct in6_addr *);
+int ipv6_hasaddr(const struct interface *);
+int ipv6_findaddrmatch(const struct ipv6_addr *, const struct in6_addr *,
+    short);
 struct ipv6_addr *ipv6_findaddr(struct dhcpcd_ctx *,
     const struct in6_addr *, short);
 #define ipv6_linklocal(ifp) ipv6_iffindaddr((ifp), NULL)
@@ -279,7 +282,7 @@ void ipv6_buildroutes(struct dhcpcd_ctx *);
 #else
 #define ipv6_init(a) (NULL)
 #define ipv6_start(a) (-1)
-#define ipv6_iffindaddr(a, b) (NULL)
+#define ipv6_hasaddr(a) (0)
 #define ipv6_free_ll_callbacks(a) {}
 #define ipv6_free(a) {}
 #define ipv6_drop(a) {}

@@ -99,6 +99,8 @@ void ipv6nd_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 void ipv6nd_startrs(struct interface *);
 ssize_t ipv6nd_env(char **, const char *, const struct interface *);
+const struct ipv6_addr *ipv6nd_iffindaddr(const struct interface *ifp,
+    const struct in6_addr *addr, short flags);
 struct ipv6_addr *ipv6nd_findaddr(struct dhcpcd_ctx *,
     const struct in6_addr *, short);
 void ipv6nd_freedrop_ra(struct ra *, int);
@@ -121,6 +123,7 @@ void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, int);
 #define ipv6nd_hasra(a) (0)
 #define ipv6nd_dadcompleted(a) (0)
 #define ipv6nd_drop(a) {}
+#define ipv6nd_expire(a, b) {}
 #endif
 
 #endif
