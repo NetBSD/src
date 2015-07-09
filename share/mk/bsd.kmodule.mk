@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.54 2015/06/24 13:42:53 matt Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.55 2015/07/09 14:50:08 matt Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -176,6 +176,7 @@ ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 .endif
 .else
 ${PROG}: ${OBJS} ${DPADD} ${KMODSCRIPT}
+	${_MKTARGET_LINK}
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-T,${KMODSCRIPT},-d \
 		-Wl,-Map=${.TARGET}.map \
 		-o ${.TARGET} ${OBJS}
