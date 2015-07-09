@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.10 2015/05/02 15:18:37 roy Exp $ */
+/* $NetBSD: if.h,v 1.11 2015/07/09 10:15:34 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -83,14 +83,6 @@
 # define IN_PRIVATE(addr) (((addr & IN_CLASSA_NET) == 0x0a000000) ||	      \
 	    ((addr & 0xfff00000)    == 0xac100000) ||			      \
 	    ((addr & IN_CLASSB_NET) == 0xc0a80000))
-#endif
-
-#define LINKLOCAL_ADDR	0xa9fe0000
-#define LINKLOCAL_MASK	IN_CLASSB_NET
-#define LINKLOCAL_BRDC	(LINKLOCAL_ADDR | ~LINKLOCAL_MASK)
-
-#ifndef IN_LINKLOCAL
-# define IN_LINKLOCAL(addr) ((addr & IN_CLASSB_NET) == LINKLOCAL_ADDR)
 #endif
 
 #define RAW_EOF			1 << 0
