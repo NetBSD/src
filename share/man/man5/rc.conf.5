@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.160 2015/07/09 10:24:27 roy Exp $
+.\"	$NetBSD: rc.conf.5,v 1.161 2015/07/09 11:38:05 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -193,7 +193,7 @@ The default is
 .Pa /etc/rc.d .
 All directories in
 .Ev rc_directories
-must be located in the root filesystem, otherwise they will be silently
+must be located in the root file system, otherwise they will be silently
 skipped.
 .It Sy rc_silent
 Boolean value.
@@ -247,7 +247,7 @@ If empty or not set, then the contents of
 (if it exists) are used.
 .It Sy force_down_interfaces
 A space separated list of interface names.
-These interfaces will be configured down when going from multiuser to singleuser
+These interfaces will be configured down when going from multiuser to single-user
 mode or on system shutdown.
 .Pp
 This is important for some stateful interfaces, for example PPP over ISDN
@@ -416,7 +416,7 @@ restored at start-up.
 Boolean value.
 Run
 .Nm newsyslog
-to trim logfiles before syslogd starts.
+to trim log files before syslogd starts.
 Intended for laptop users.
 Passes
 .Sy newsyslog_flags .
@@ -698,7 +698,7 @@ then this should be done in the configuration file - see
 for details.
 dhcpcd presently ignores the
 .Sy wpa_supplicant
-varaible in rc.conf and will start wpa_supplicant if a suitable
+variable in rc.conf and will start wpa_supplicant if a suitable
 wpa_supplicant.conf is found unless otherwise instructed in
 .Xr dhcpcd.conf 5 .
 .It Sy dhcpcd_flags
@@ -907,13 +907,13 @@ at network boot time:
 Load the initial configuration
 .Xr pf.boot.conf 5
 before the network is up.
-After the network has been configured, then load the final ruleset
+After the network has been configured, then load the final rule set
 .Xr pf.conf 5 .
 .It Sy pf_rules
 A string.
 The path of the
 .Xr pf.conf 5
-ruleset that will be used when loading the final ruleset.
+rule set that will be used when loading the final rule set.
 .It Sy pflogd
 Boolean value.
 Run
