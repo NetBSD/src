@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.11 2015/05/16 23:31:32 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.12 2015/07/09 10:15:34 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -106,19 +106,21 @@
 #define DHCPCD_IAID			(1ULL << 48)
 #define DHCPCD_DHCP			(1ULL << 49)
 #define DHCPCD_DHCP6			(1ULL << 50)
-#define DHCPCD_NOPFXDLG			(1ULL << 51)
-#define DHCPCD_PFXDLGONLY		(1ULL << 52)
-#define DHCPCD_PFXDLGMIX		(1ULL << 53)
+// unassigned				(1ULL << 51)
+// unassigned				(1ULL << 52)
+// unassinged				(1ULL << 53)
 #define DHCPCD_IPV6RA_AUTOCONF		(1ULL << 54)
 #define DHCPCD_ROUTER_HOST_ROUTE_WARNED	(1ULL << 55)
 #define DHCPCD_IPV6RA_ACCEPT_NOPUBLIC	(1ULL << 56)
 #define DHCPCD_BOOTP			(1ULL << 57)
+#define DHCPCD_INITIAL_DELAY		(1ULL << 58)
 
-#define DHCPCD_WAITOPTS (DHCPCD_WAITIP | DHCPCD_WAITIP4 | DHCPCD_WAITIP6)
+#define DHCPCD_NODROP	(DHCPCD_EXITING | DHCPCD_PERSISTENT)
 
-#define DHCPCD_WARNINGS (DHCPCD_CSR_WARNED | \
+#define DHCPCD_WAITOPTS	(DHCPCD_WAITIP | DHCPCD_WAITIP4 | DHCPCD_WAITIP6)
+
+#define DHCPCD_WARNINGS	(DHCPCD_CSR_WARNED | \
 		DHCPCD_ROUTER_HOST_ROUTE_WARNED)
-#define DHCPCD_CONF (DHCPCD_NOPFXDLG | DHCPCD_PFXDLGONLY)
 
 extern const struct option cf_options[];
 
