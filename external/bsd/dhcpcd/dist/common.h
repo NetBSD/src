@@ -56,6 +56,8 @@
 #define NSEC_PER_SEC		1000000000L
 #define NSEC_PER_MSEC		1000000L
 #define MSEC_PER_SEC		1000L
+#define CSEC_PER_SEC		100L
+#define NSEC_PER_CSEC		10000000L
 
 /* Some systems don't define timespec macros */
 #ifndef timespecclear
@@ -191,7 +193,6 @@ ssize_t addvar(struct dhcpcd_ctx *,
     char ***, const char *, const char *, const char *);
 ssize_t addvard(struct dhcpcd_ctx *,
     char ***, const char *, const char *, size_t);
-time_t uptime(void);
 
 char *hwaddr_ntoa(const unsigned char *, size_t, char *, size_t);
 size_t hwaddr_aton(unsigned char *, const char *);
