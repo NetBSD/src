@@ -254,17 +254,6 @@ addvard(struct dhcpcd_ctx *ctx,
 	return addvar(ctx, e, prefix, var, buffer);
 }
 
-
-time_t
-uptime(void)
-{
-	struct timespec tv;
-
-	if (clock_gettime(CLOCK_MONOTONIC, &tv) == -1)
-		return -1;
-	return tv.tv_sec;
-}
-
 char *
 hwaddr_ntoa(const unsigned char *hwaddr, size_t hwlen, char *buf, size_t buflen)
 {

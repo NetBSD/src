@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 9, 2015
+.Dd July 3, 2015
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -337,7 +337,10 @@ This causes an existing
 process running on the
 .Ar interface
 to release its lease and de-configure the
-.Ar interface .
+.Ar interface
+regardless of the
+.Fl p , Fl Fl persistent
+option.
 If no
 .Ar interface
 is specified then this applies to all interfaces.
@@ -498,10 +501,13 @@ This will signal an existing
 .Nm
 process running on the
 .Ar interface
-to de-configure the
-.Ar interface
-and exit.
+to exit.
 If no interface is specified, then the above is applied to all interfaces.
+See the
+.Fl p , Fl Fl persistent
+option to control configuration persistence on exit,
+which is enabled by default in
+.Xr dhcpcd.conf 5 .
 .Nm
 then waits until this process has exited.
 .It Fl y , Fl Fl reboot Ar seconds
@@ -608,9 +614,6 @@ Use the
 or
 .Fl 6
 flags to specify an address family.
-Pass a 2nd
-.Fl U, Fl Fl dumplease option to dump a secondary lease, such as
-DHCPv6 Prefix Delegation when not being mixed with another IA type.
 .It Fl V, Fl Fl variables
 Display a list of option codes, the associated variable and encoding for use in
 .Xr dhcpcd-run-hooks 8 .
@@ -717,7 +720,6 @@ running on the
 Control socket to the master daemon.
 .It Pa @RUNDIR@/dhcpcd.unpriv.sock
 Unpriviledged socket to the master daemon, only allows state retrieval.
-Control socket to the master daemon.
 .It Pa @RUNDIR@/dhcpcd\- Ns Ar interface Ns .sock
 Control socket to per interface daemon.
 .El
@@ -734,7 +736,7 @@ RFC\ 3004, RFC\ 3118, RFC\ 3203, RFC\ 3315, RFC\ 3361, RFC\ 3633, RFC\ 3396,
 RFC\ 3397, RFC\ 3442, RFC\ 3495, RFC\ 3925, RFC\ 3927, RFC\ 4039, RFC\ 4075,
 RFC\ 4242, RFC\ 4361, RFC\ 4390, RFC\ 4702, RFC\ 4074, RFC\ 4861, RFC\ 4833,
 RFC\ 4941, RFC\ 5227, RFC\ 5942, RFC\ 5969, RFC\ 6106, RFC\ 6334, RFC\ 6603,
-RFC\ 6704, RFC\ 7217.
+RFC\ 6704, RFC\ 7217, RFC\ 7550.
 .Sh AUTHORS
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS

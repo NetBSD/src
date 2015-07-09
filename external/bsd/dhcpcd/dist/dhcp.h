@@ -195,8 +195,7 @@ enum DHS {
 	DHS_REBOOT,
 	DHS_INFORM,
 	DHS_RENEW_REQUESTED,
-	DHS_IPV4LL_BOUND,
-	DHS_PROBE
+	DHS_RELEASE
 };
 
 struct dhcp_state {
@@ -213,29 +212,16 @@ struct dhcp_state {
 	int socket;
 
 	int raw_fd;
-	int arp_fd;
-	size_t buffer_size, buffer_len, buffer_pos;
-	unsigned char *buffer;
-
 	struct in_addr addr;
 	struct in_addr net;
 	struct in_addr dst;
 	uint8_t added;
 
 	char leasefile[sizeof(LEASEFILE) + IF_NAMESIZE + (IF_SSIDSIZE * 4)];
-	time_t start_uptime;
-
+	struct timespec started;
 	unsigned char *clientid;
-
 	struct authstate auth;
-	struct arp_statehead arp_states;
-
 	size_t arping_index;
-
-	struct arp_state *arp_ipv4ll;
-	unsigned int conflicts;
-	time_t defend;
-	char randomstate[128];
 };
 
 #define D_STATE(ifp)							       \
@@ -257,8 +243,7 @@ void dhcp_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 int get_option_addr(struct dhcpcd_ctx *,struct in_addr *,
     const struct dhcp_message *, uint8_t);
-#define IS_BOOTP(i, m) ((m) &&						    \
-	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			    \
+#define IS_BOOTP(i, m) ((m) != NULL &&						    \
 	    get_option_uint8((i)->ctx, NULL, (m), DHO_MESSAGETYPE) == -1)
 struct rt_head *get_option_routes(struct interface *,
     const struct dhcp_message *);
@@ -282,7 +267,7 @@ void dhcp_start(struct interface *);
 void dhcp_stop(struct interface *);
 void dhcp_discover(void *);
 void dhcp_inform(struct interface *);
-void dhcp_bind(struct interface *, struct arp_state *);
+void dhcp_bind(struct interface *);
 void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);

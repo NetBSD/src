@@ -50,11 +50,13 @@
 #define LINK_DOWN	-1
 
 #define IF_DATA_IPV4	0
-#define IF_DATA_DHCP	1
-#define IF_DATA_IPV6	2
-#define IF_DATA_IPV6ND	3
-#define IF_DATA_DHCP6	4
-#define IF_DATA_MAX	5
+#define IF_DATA_ARP	1
+#define IF_DATA_IPV4LL	2
+#define IF_DATA_DHCP	3
+#define IF_DATA_IPV6	4
+#define IF_DATA_IPV6ND	5
+#define IF_DATA_DHCP6	6
+#define IF_DATA_MAX	7
 
 /* If the interface does not support carrier status (ie PPP),
  * dhcpcd can poll it for the relevant flags periodically */
@@ -162,7 +164,8 @@ extern const int dhcpcd_signals[];
 extern const size_t dhcpcd_signals_len;
 #endif
 
-int dhcpcd_oneup(struct dhcpcd_ctx *);
+int dhcpcd_ifafwaiting(const struct interface *);
+int dhcpcd_afwaiting(const struct dhcpcd_ctx *);
 pid_t dhcpcd_daemonise(struct dhcpcd_ctx *);
 
 int dhcpcd_handleargs(struct dhcpcd_ctx *, struct fd_list *, int, char **);
