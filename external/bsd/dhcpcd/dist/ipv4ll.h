@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4ll.h,v 1.8 2015/03/26 10:26:37 roy Exp $ */
+/* $NetBSD: ipv4ll.h,v 1.9 2015/07/09 10:15:34 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,9 +30,41 @@
 #ifndef IPV4LL_H
 #define IPV4LL_H
 
+#include "arp.h"
+
+#define LINKLOCAL_ADDR	0xa9fe0000
+#define LINKLOCAL_MASK	IN_CLASSB_NET
+#define LINKLOCAL_BRDC	(LINKLOCAL_ADDR | ~LINKLOCAL_MASK)
+
+#ifndef IN_LINKLOCAL
+# define IN_LINKLOCAL(addr) ((addr & IN_CLASSB_NET) == LINKLOCAL_ADDR)
+#endif
+
+struct ipv4ll_state {
+	struct in_addr addr;
+	struct arp_state *arp;
+	unsigned int conflicts;
+	struct timespec defend;
+	char randomstate[128];
+	uint8_t down;
+};
+
+#define IPV4LL_STATE(ifp)						       \
+	((struct ipv4ll_state *)(ifp)->if_data[IF_DATA_IPV4LL])
+#define IPV4LL_CSTATE(ifp)						       \
+	((const struct ipv4ll_state *)(ifp)->if_data[IF_DATA_IPV4LL])
+#define IPV4LL_STATE_RUNNING(ifp)					       \
+	(IPV4LL_CSTATE((ifp)) && !IPV4LL_CSTATE((ifp))->down &&	       \
+	IN_LINKLOCAL(ntohl(IPV4LL_CSTATE((ifp))->addr.s_addr)))
+
+struct rt* ipv4ll_subnet_route(const struct interface *);
+ssize_t ipv4ll_env(char **, const char *, const struct interface *);
 void ipv4ll_start(void *);
 void ipv4ll_claimed(void *);
 void ipv4ll_handle_failure(void *);
-void ipv4ll_stop(struct interface *);
+
+#define ipv4ll_free(ifp) ipv4ll_freedrop((ifp), 0);
+#define ipv4ll_drop(ifp) ipv4ll_freedrop((ifp), 1);
+void ipv4ll_freedrop(struct interface *, int);
 
 #endif

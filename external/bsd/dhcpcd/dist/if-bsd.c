@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.21 2015/05/16 23:31:32 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.22 2015/07/09 10:15:34 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -296,7 +296,7 @@ const char *if_pfname = "Berkley Packet Filter";
 int
 if_openrawsocket(struct interface *ifp, uint16_t protocol)
 {
-	struct dhcp_state *state;
+	struct ipv4_state *state;
 	int fd = -1;
 	struct ifreq ifr;
 	int ibuf_len = 0;
@@ -321,8 +321,7 @@ if_openrawsocket(struct interface *ifp, uint16_t protocol)
 	if (fd == -1)
 		return -1;
 
-	state = D_STATE(ifp);
-
+	state = IPV4_STATE(ifp);
 	memset(&pv, 0, sizeof(pv));
 	if (ioctl(fd, BIOCVERSION, &pv) == -1)
 		goto eexit;
@@ -384,7 +383,6 @@ if_sendrawpacket(const struct interface *ifp, uint16_t protocol,
 	struct iovec iov[2];
 	struct ether_header hw;
 	int fd;
-	const struct dhcp_state *state;
 
 	memset(&hw, 0, ETHER_HDR_LEN);
 	memset(&hw.ether_dhost, 0xff, ETHER_ADDR_LEN);
@@ -393,11 +391,7 @@ if_sendrawpacket(const struct interface *ifp, uint16_t protocol,
 	iov[0].iov_len = ETHER_HDR_LEN;
 	iov[1].iov_base = UNCONST(data);
 	iov[1].iov_len = len;
-	state = D_CSTATE(ifp);
-	if (protocol == ETHERTYPE_ARP)
-		fd = state->arp_fd;
-	else
-		fd = state->raw_fd;
+	fd = ipv4_protocol_fd(ifp, protocol);
 	return writev(fd, iov, 2);
 }
 
@@ -411,13 +405,10 @@ if_readrawpacket(struct interface *ifp, uint16_t protocol,
 	struct bpf_hdr packet;
 	ssize_t bytes;
 	const unsigned char *payload;
-	struct dhcp_state *state;
+	struct ipv4_state *state;
 
-	state = D_STATE(ifp);
-	if (protocol == ETHERTYPE_ARP)
-		fd = state->arp_fd;
-	else
-		fd = state->raw_fd;
+	state = IPV4_STATE(ifp);
+	fd = ipv4_protocol_fd(ifp, protocol);
 
 	*flags = 0;
 	for (;;) {
@@ -518,6 +509,7 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, struct rt_msghdr *rtm)
 	else
 		rt->net.s_addr = INADDR_BROADCAST;
 	COPYOUT(rt->gate, rti_info[RTAX_GATEWAY]);
+	COPYOUT(rt->src, rti_info[RTAX_IFA]);
 
 	if (rtm->rtm_index)
 		rt->iface = if_findindex(ctx->ifaces, rtm->rtm_index);

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.9 2015/05/16 23:31:32 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.10 2015/07/09 10:15:34 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,6 +30,8 @@
 
 #include <sys/utsname.h>
 
+#include <arpa/nameser.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -45,6 +47,13 @@
 #include "dhcp.h"
 #include "if.h"
 #include "ipv6.h"
+
+/* Support very old arpa/nameser.h as found in OpenBSD */
+#ifndef NS_MAXDNAME
+#define NS_MAXCDNAME MAXCDNAME
+#define NS_MAXDNAME MAXDNAME
+#define NS_MAXLABEL MAXLABEL
+#endif
 
 void
 dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
@@ -81,7 +90,7 @@ dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 		printf(" flag");
 	else if (opt->type & BITFLAG)
 		printf(" bitflags");
-	else if (opt->type & RFC3397)
+	else if (opt->type & RFC1035)
 		printf(" domain");
 	else if (opt->type & DOMAIN)
 		printf(" dname");
@@ -267,18 +276,23 @@ encode_rfc1035(const char *src, uint8_t *dst)
 	return len;
 }
 
-/* Decode an RFC3397 DNS search order option into a space
+/* Decode an RFC1035 DNS search order option into a space
  * separated string. Returns length of string (including
  * terminating zero) or zero on error. out may be NULL
  * to just determine output length. */
 ssize_t
-decode_rfc3397(char *out, size_t len, const uint8_t *p, size_t pl)
+decode_rfc1035(char *out, size_t len, const uint8_t *p, size_t pl)
 {
 	const char *start;
 	size_t start_len, l, count;
 	const uint8_t *r, *q = p, *e;
 	int hops;
 	uint8_t ltype;
+
+	if (pl > NS_MAXCDNAME) {
+		errno = E2BIG;
+		return -1;
+	}
 
 	count = 0;
 	start = out;
@@ -292,8 +306,13 @@ decode_rfc3397(char *out, size_t len, const uint8_t *p, size_t pl)
 		 * the name isn't fully qualified (ie, not terminated) */
 		while (q < e && (l = (size_t)*q++)) {
 			ltype = l & 0xc0;
-			if (ltype == 0x80 || ltype == 0x40)
+			if (ltype == 0x80 || ltype == 0x40) {
+				/* Currently reserved for future use as noted
+				 * in RFC1035 4.1.4 as the 10 and 01
+				 * combinations. */
+				errno = ENOTSUP;
 				return -1;
+			}
 			else if (ltype == 0xc0) { /* pointer */
 				if (q == e) {
 					errno = ERANGE;
@@ -326,6 +345,10 @@ decode_rfc3397(char *out, size_t len, const uint8_t *p, size_t pl)
 						errno = ENOBUFS;
 						return -1;
 					}
+					if (l + 1 > NS_MAXLABEL) {
+						errno = EINVAL;
+						return -1;
+					}
 					memcpy(out, q, l);
 					out += l;
 					*out++ = '.';
@@ -353,6 +376,10 @@ decode_rfc3397(char *out, size_t len, const uint8_t *p, size_t pl)
 	if (count)
 		/* Don't count the trailing NUL */
 		count--;
+	if (count > NS_MAXDNAME) {
+		errno = E2BIG;
+		return -1;
+	}
 	return (ssize_t)count;
 }
 
@@ -402,7 +429,7 @@ valid_domainname(char *lbl, int type)
 		    !start && *lbl != ' ' && *lbl != '\0') ||
 		    isalnum(c))
 		{
-			if (++len > 63) {
+			if (++len > NS_MAXLABEL) {
 				errno = ERANGE;
 				errset = 1;
 				break;
@@ -529,35 +556,32 @@ print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
 
 #define ADDRSZ		4
 #define ADDR6SZ		16
-static size_t
+static ssize_t
 dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 {
 	size_t sz;
-
-	if (dl == 0)
-		return 0;
 
 	if (opt->type == 0 ||
 	    opt->type & (STRING | BINHEX | RFC3442 | RFC5969))
 	{
 		if (opt->len) {
 			if ((size_t)opt->len > dl)
-				return 0;
-			return (size_t)opt->len;
+				return -1;
+			return (ssize_t)opt->len;
 		}
-		return dl;
+		return (ssize_t)dl;
 	}
 
 	if ((opt->type & (ADDRIPV4 | ARRAY)) == (ADDRIPV4 | ARRAY)) {
 		if (dl < ADDRSZ)
-			return 0;
-		return dl - (dl % ADDRSZ);
+			return -1;
+		return (ssize_t)(dl - (dl % ADDRSZ));
 	}
 
 	if ((opt->type & (ADDRIPV6 | ARRAY)) == (ADDRIPV6 | ARRAY)) {
 		if (dl < ADDR6SZ)
-			return 0;
-		return dl - (dl % ADDR6SZ);
+			return -1;
+		return (ssize_t)(dl - (dl % ADDR6SZ));
 	}
 
 	if (opt->type & (UINT32 | ADDRIPV4))
@@ -570,8 +594,8 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 		sz = ADDR6SZ;
 	else
 		/* If we don't know the size, assume it's valid */
-		return dl;
-	return (dl < sz ? 0 : sz);
+		return (ssize_t)dl;
+	return dl < sz ? -1 : (ssize_t)sz;
 }
 
 static ssize_t
@@ -592,15 +616,15 @@ print_option(char *s, size_t len, const struct dhcp_opt *opt,
 	UNUSED(ifname);
 #endif
 
-	if (opt->type & RFC3397) {
-		sl = decode_rfc3397(NULL, 0, data, dl);
+	if (opt->type & RFC1035) {
+		sl = decode_rfc1035(NULL, 0, data, dl);
 		if (sl == 0 || sl == -1)
 			return sl;
 		l = (size_t)sl + 1;
 		tmp = malloc(l);
 		if (tmp == NULL)
 			return -1;
-		decode_rfc3397(tmp, l, data, dl);
+		decode_rfc1035(tmp, l, data, dl);
 		sl = print_string(s, len, opt->type, (uint8_t *)tmp, l - 1);
 		free(tmp);
 		return sl;
@@ -758,7 +782,7 @@ print_option(char *s, size_t len, const struct dhcp_opt *opt,
 
 int
 dhcp_set_leasefile(char *leasefile, size_t len, int family,
-    const struct interface *ifp, const char *extra)
+    const struct interface *ifp)
 {
 	char ssid[len];
 
@@ -785,7 +809,7 @@ dhcp_set_leasefile(char *leasefile, size_t len, int family,
 		ssid[0] = '\0';
 	return snprintf(leasefile, len,
 	    family == AF_INET ? LEASEFILE : LEASEFILE6,
-	    ifp->name, ssid, extra);
+	    ifp->name, ssid);
 }
 
 static size_t
@@ -834,6 +858,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
     const uint8_t *od, size_t ol)
 {
 	size_t e, i, n, eos, eol;
+	ssize_t eo;
 	unsigned int eoc;
 	const uint8_t *eod;
 	int ov;
@@ -877,21 +902,42 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 	 * is a fixed layout */
 	n = 0;
 	for (i = 0, eopt = opt->embopts; i < opt->embopts_len; i++, eopt++) {
-		e = dhcp_optlen(eopt, ol);
-		if (e == 0)
-			/* Report error? */
-			return 0;
+		eo = dhcp_optlen(eopt, ol);
+		if (eo == -1) {
+			if (env == NULL)
+				logger(ctx, LOG_ERR,
+				    "%s: %s: malformed embedded option %d:%d",
+				    ifname, __func__, opt->option,
+				    eopt->option);
+			goto out;
+		}
+		if (eo == 0) {
+			/* An option was expected, but there is no data
+			 * data for it.
+			 * This may not be an error as some options like
+			 * DHCP FQDN in RFC4702 have a string as the last
+			 * option which is optional.
+			 * FIXME: Add an flag to the options to indicate
+			 * wether this is allowable or not. */
+			if (env == NULL &&
+			    (ol != 0 || i + 1 < opt->embopts_len))
+				logger(ctx, LOG_ERR,
+				    "%s: %s: malformed embedded option %d:%d",
+				    ifname, __func__, opt->option,
+				    eopt->option);
+			goto out;
+		}
 		/* Use the option prefix if the embedded option
 		 * name is different.
 		 * This avoids new_fqdn_fqdn which would be silly. */
 		if (!(eopt->type & RESERVED)) {
 			ov = strcmp(opt->var, eopt->var);
 			if (dhcp_envoption1(ctx, env == NULL ? NULL : &env[n],
-			    pfx, eopt, ov, od, e, ifname))
+			    pfx, eopt, ov, od, (size_t)eo, ifname))
 				n++;
 		}
-		od += e;
-		ol -= e;
+		od += (size_t)eo;
+		ol -= (size_t)eo;
 	}
 
 	/* Enumerate our encapsulated options */
@@ -935,6 +981,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		}
 	}
 
+out:
 	if (env)
 		free(pfx);
 

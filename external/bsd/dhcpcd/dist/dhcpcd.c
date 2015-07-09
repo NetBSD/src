@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.25 2015/05/16 23:31:32 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.26 2015/07/09 10:15:34 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -64,6 +64,7 @@ const char dhcpcd_copyright[] = "Copyright (c) 2006-2015 Roy Marples";
 #include "if.h"
 #include "if-options.h"
 #include "ipv4.h"
+#include "ipv4ll.h"
 #include "ipv6.h"
 #include "ipv6nd.h"
 #include "script.h"
@@ -209,62 +210,94 @@ handle_exit_timeout(void *arg)
 	dhcpcd_daemonise(ctx);
 }
 
-int
-dhcpcd_oneup(struct dhcpcd_ctx *ctx)
+static const char *
+dhcpcd_af(int af)
 {
-	const struct interface *ifp;
 
-	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-		if (D_STATE_RUNNING(ifp) ||
-		    RS_STATE_RUNNING(ifp) ||
-		    D6_STATE_RUNNING(ifp))
-			return 1;
+	switch (af) {
+	case AF_UNSPEC:
+		return "IP";
+	case AF_INET:
+		return "IPv4";
+	case AF_INET6:
+		return "IPv6";
+	default:
+		return NULL;
 	}
-	return 0;
 }
 
-static int
-dhcpcd_ifipwaited(struct interface *ifp, unsigned long long opts)
+int
+dhcpcd_ifafwaiting(const struct interface *ifp)
 {
+	unsigned long long opts;
 
-	if (opts & DHCPCD_WAITIP4 && !ipv4_ifaddrexists(ifp))
-		return 0;
-	if (opts & DHCPCD_WAITIP6 && !ipv6_iffindaddr(ifp, NULL))
-		return 0;
+	opts = ifp->options->options;
+	if (opts & DHCPCD_WAITIP4 && !ipv4_hasaddr(ifp))
+		return AF_INET;
+	if (opts & DHCPCD_WAITIP6 && !ipv6_hasaddr(ifp))
+		return AF_INET6;
 	if (opts & DHCPCD_WAITIP &&
 	    !(opts & (DHCPCD_WAITIP4 | DHCPCD_WAITIP6)) &&
-	    !ipv4_ifaddrexists(ifp) &&
-	    !ipv6_iffindaddr(ifp, NULL))
-		return 0;
-	return 1;
+	    !ipv4_hasaddr(ifp) && !ipv6_hasaddr(ifp))
+		return AF_UNSPEC;
+	return AF_MAX;
+}
+
+int
+dhcpcd_afwaiting(const struct dhcpcd_ctx *ctx)
+{
+	unsigned long long opts;
+	const struct interface *ifp;
+	int af;
+
+	if (!(ctx->options & DHCPCD_WAITOPTS))
+		return AF_MAX;
+
+	opts = ctx->options;
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+		if (opts & (DHCPCD_WAITIP | DHCPCD_WAITIP4) &&
+		    ipv4_hasaddr(ifp))
+			opts &= ~(DHCPCD_WAITIP | DHCPCD_WAITIP4);
+		if (opts & (DHCPCD_WAITIP | DHCPCD_WAITIP6) &&
+		    ipv6_hasaddr(ifp))
+			opts &= ~(DHCPCD_WAITIP | DHCPCD_WAITIP6);
+		if (!(opts & DHCPCD_WAITOPTS))
+			break;
+	}
+	if (opts & DHCPCD_WAITIP)
+		af = AF_UNSPEC;
+	else if (opts & DHCPCD_WAITIP4)
+		af = AF_INET;
+	else if (opts & DHCPCD_WAITIP6)
+		af = AF_INET6;
+	else
+		return AF_MAX;
+	return af;
 }
 
 static int
 dhcpcd_ipwaited(struct dhcpcd_ctx *ctx)
 {
 	struct interface *ifp;
+	int af;
 
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-		if (ifp->options->options & DHCPCD_WAITOPTS) {
-			if (!dhcpcd_ifipwaited(ifp, ifp->options->options)) {
-				logger(ctx, LOG_DEBUG,
-				    "%s: waiting for an ip address",
-				    ifp->name);
-				return 0;
-			}
+		if ((af = dhcpcd_ifafwaiting(ifp)) != AF_MAX) {
+			logger(ctx, LOG_DEBUG,
+			    "%s: waiting for an %s address",
+			    ifp->name, dhcpcd_af(af));
+			return 0;
 		}
 	}
 
-	if (!(ctx->options & DHCPCD_WAITOPTS))
-		return 1;
-
-	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-		if (dhcpcd_ifipwaited(ifp, ctx->options))
-			return 1;
+	if ((af = dhcpcd_afwaiting(ctx)) != AF_MAX) {
+		logger(ctx, LOG_DEBUG,
+		    "waiting for an %s address",
+		    dhcpcd_af(af));
+		return 0;
 	}
 
-	logger(ctx, LOG_DEBUG, "waiting for an ip address");
-	return 0;
+	return 1;
 }
 
 /* Returns the pid of the child, otherwise 0. */
@@ -351,6 +384,7 @@ dhcpcd_drop(struct interface *ifp, int stop)
 	dhcp6_drop(ifp, stop ? NULL : "EXPIRE6");
 	ipv6nd_drop(ifp);
 	ipv6_drop(ifp);
+	ipv4ll_drop(ifp);
 	dhcp_drop(ifp, stop ? "STOP" : "EXPIRE");
 	arp_close(ifp);
 }
@@ -411,18 +445,15 @@ configure_interface1(struct interface *ifp)
 		ifp->metric = (unsigned int)ifo->metric;
 
 	if (!(ifo->options & DHCPCD_IPV4))
-		ifo->options &= ~(DHCPCD_DHCP | DHCPCD_IPV4LL);
+		ifo->options &= ~(DHCPCD_DHCP | DHCPCD_IPV4LL | DHCPCD_WAITIP4);
 
 	if (!(ifo->options & DHCPCD_IPV6))
-		ifo->options &= ~(DHCPCD_IPV6RS | DHCPCD_DHCP6);
+		ifo->options &=
+		    ~(DHCPCD_IPV6RS | DHCPCD_DHCP6 | DHCPCD_WAITIP6);
 
 	if (ifo->options & DHCPCD_SLAACPRIVATE &&
 	    !(ifp->ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST)))
 		ifo->options |= DHCPCD_IPV6RA_OWN;
-
-	/* If we're a psuedo interface, ensure we disable as much as we can */
-	if (ifp->options->options & DHCPCD_PFXDLGONLY)
-		ifp->options->options &= ~(DHCPCD_IPV4 | DHCPCD_IPV6RS);
 
 	/* We want to disable kernel interface RA as early as possible. */
 	if (ifo->options & DHCPCD_IPV6RS &&
@@ -731,8 +762,6 @@ warn_iaid_conflict(struct interface *ifp, uint8_t *iaid)
 	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
 		if (ifn == ifp)
 			continue;
-		if (ifn->options->options & DHCPCD_PFXDLGONLY)
-			continue;
 		if (memcmp(ifn->options->iaid, iaid,
 		    sizeof(ifn->options->iaid)) == 0)
 			break;
@@ -744,7 +773,7 @@ warn_iaid_conflict(struct interface *ifp, uint8_t *iaid)
 	}
 
 	/* This is only a problem if the interfaces are on the same network. */
-	if (ifn && strcmp(ifp->name, ifn->name))
+	if (ifn)
 		logger(ifp->ctx, LOG_ERR,
 		    "%s: IAID conflicts with one assigned to %s",
 		    ifp->name, ifn->name);
@@ -802,17 +831,14 @@ dhcpcd_startinterface(void *arg)
 		if (ifp->ctx->duid == NULL) {
 			if (duid_init(ifp) == 0)
 				return;
-			if (!(ifo->options & DHCPCD_PFXDLGONLY))
-				logger(ifp->ctx, LOG_INFO, "DUID %s",
-				    hwaddr_ntoa(ifp->ctx->duid,
-				    ifp->ctx->duid_len,
-				    buf, sizeof(buf)));
+			logger(ifp->ctx, LOG_INFO, "DUID %s",
+			    hwaddr_ntoa(ifp->ctx->duid,
+			    ifp->ctx->duid_len,
+			    buf, sizeof(buf)));
 		}
 	}
 
-	if (ifo->options & (DHCPCD_DUID | DHCPCD_IPV6) &&
-	    !(ifo->options & DHCPCD_PFXDLGONLY))
-	{
+	if (ifo->options & (DHCPCD_DUID | DHCPCD_IPV6)) {
 		/* Report IAIDs */
 		logger(ifp->ctx, LOG_INFO, "%s: IAID %s", ifp->name,
 		    hwaddr_ntoa(ifo->iaid, sizeof(ifo->iaid),
@@ -868,8 +894,11 @@ dhcpcd_startinterface(void *arg)
 		}
 	}
 
-	if (ifo->options & DHCPCD_IPV4)
-		dhcp_start(ifp);
+	if (ifo->options & DHCPCD_IPV4) {
+		/* Ensure we have an IPv4 state before starting DHCP */
+		if (ipv4_getstate(ifp) != NULL)
+			dhcp_start(ifp);
+	}
 }
 
 static void
@@ -1129,16 +1158,8 @@ stop_all_interfaces(struct dhcpcd_ctx *ctx, int do_release)
 {
 	struct interface *ifp;
 
-	/* drop_dhcp could change the order, so we do it like this. */
-	for (;;) {
-		/* Be sane and drop the last config first,
-		 * skipping any pseudo interfaces */
-		TAILQ_FOREACH_REVERSE(ifp, ctx->ifaces, if_head, next) {
-			if (!(ifp->options->options & DHCPCD_PFXDLGONLY))
-				break;
-		}
-		if (ifp == NULL)
-			break;
+	/* Drop the last interface first */
+	while ((ifp = TAILQ_LAST(ctx->ifaces, if_head)) != NULL) {
 		if (do_release) {
 			ifp->options->options |= DHCPCD_RELEASE;
 			ifp->options->options &= ~DHCPCD_PERSISTENT;
@@ -1219,6 +1240,8 @@ dhcpcd_getinterfaces(void *arg)
 	TAILQ_FOREACH(ifp, fd->ctx->ifaces, next) {
 		len++;
 		if (D_STATE_RUNNING(ifp))
+			len++;
+		if (IPV4LL_STATE_RUNNING(ifp))
 			len++;
 		if (RS_STATE_RUNNING(ifp))
 			len++;
@@ -1419,10 +1442,7 @@ main(int argc, char **argv)
 			i = 1;
 			break;
 		case 'U':
-			if (i == 3)
-				i = 4;
-			else if (i != 4)
-				i = 3;
+			i = 3;
 			break;
 		case 'V':
 			i = 2;
@@ -1482,8 +1502,6 @@ main(int argc, char **argv)
 			ctx.options |= DHCPCD_TEST;
 		else
 			ctx.options |= DHCPCD_DUMPLEASE;
-		if (i == 4)
-			ctx.options |= DHCPCD_PFXDLGONLY;
 		ctx.options |= DHCPCD_PERSISTENT;
 		ctx.options &= ~DHCPCD_DAEMONISE;
 	}
@@ -1578,8 +1596,6 @@ main(int argc, char **argv)
 			}
 		}
 		configure_interface(ifp, ctx.argc, ctx.argv, 0);
-		if (ctx.options & DHCPCD_PFXDLGONLY)
-			ifp->options->options |= DHCPCD_PFXDLGONLY;
 		if (family == 0 || family == AF_INET) {
 			if (dhcp_dump(ifp) == -1)
 				i = 1;
@@ -1624,10 +1640,6 @@ main(int argc, char **argv)
 #ifdef USE_SIGNALS
 	}
 #endif
-
-	if (geteuid())
-		logger(&ctx, LOG_WARNING,
-		    PACKAGE " will not work correctly unless run as root");
 
 #ifdef USE_SIGNALS
 	if (sig != 0) {
