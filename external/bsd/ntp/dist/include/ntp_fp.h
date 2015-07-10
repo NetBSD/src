@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_fp.h,v 1.6 2015/04/07 17:34:18 christos Exp $	*/
+/*	$NetBSD: ntp_fp.h,v 1.7 2015/07/10 14:20:29 christos Exp $	*/
 
 /*
  * ntp_fp.h - definitions for NTP fixed/floating-point arithmetic

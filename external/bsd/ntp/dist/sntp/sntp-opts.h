@@ -1,9 +1,9 @@
-/*	$NetBSD: sntp-opts.h,v 1.3 2015/04/07 17:34:19 christos Exp $	*/
+/*	$NetBSD: sntp-opts.h,v 1.4 2015/07/10 14:20:33 christos Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (sntp-opts.h)
  *
- *  It has been AutoGen-ed  April  7, 2015 at 04:17:22 AM by AutoGen 5.18.5pre4
+ *  It has been AutoGen-ed  June 29, 2015 at 04:23:19 PM by AutoGen 5.18.5
  *  From the definitions    sntp-opts.def
  *  and the template file   options
  *
@@ -93,9 +93,9 @@ typedef enum {
 /** count of all options for sntp */
 #define OPTION_CT    23
 /** sntp version */
-#define SNTP_VERSION       "4.2.8p2"
+#define SNTP_VERSION       "4.2.8p3"
 /** Full sntp version text */
-#define SNTP_FULL_VERSION  "sntp 4.2.8p2"
+#define SNTP_FULL_VERSION  "sntp 4.2.8p3"
 
 /**
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
