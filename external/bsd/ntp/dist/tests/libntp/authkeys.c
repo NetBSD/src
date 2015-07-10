@@ -1,3 +1,5 @@
+/*	$NetBSD: authkeys.c,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+
 /* This file contains test for both libntp/authkeys.c and libntp/authusekey.c */
 
 #include "config.h"

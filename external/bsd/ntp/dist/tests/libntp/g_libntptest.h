@@ -1,3 +1,5 @@
+/*	$NetBSD: g_libntptest.h,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+
 #include "tests_main.h"
 
 extern "C" {

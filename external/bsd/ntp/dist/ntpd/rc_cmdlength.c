@@ -1,3 +1,5 @@
+/*	$NetBSD: rc_cmdlength.c,v 1.1.1.2 2015/07/10 13:11:07 christos Exp $	*/
+
 #include <config.h>
 
 #if HAVE_UNISTD_H

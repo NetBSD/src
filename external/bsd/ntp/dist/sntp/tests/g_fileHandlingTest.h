@@ -1,3 +1,5 @@
+/*	$NetBSD: g_fileHandlingTest.h,v 1.1.1.2 2015/07/10 13:11:13 christos Exp $	*/
+
 #ifndef FILE_HANDLING_TEST_H
 #define FILE_HANDLING_TEST_H
 
