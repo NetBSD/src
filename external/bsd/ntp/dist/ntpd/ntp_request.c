@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.10 2015/04/07 17:34:19 christos Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.11 2015/07/10 14:20:32 christos Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests

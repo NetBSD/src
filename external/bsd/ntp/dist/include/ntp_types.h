@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_types.h,v 1.2 2014/12/19 20:43:14 christos Exp $	*/
+/*	$NetBSD: ntp_types.h,v 1.3 2015/07/10 14:20:29 christos Exp $	*/
 
 /*
  *  ntp_types.h - defines how int32 and u_int32 are treated.
@@ -19,6 +19,11 @@
 # include <inttypes.h>
 #elif defined(HAVE_STDINT_H)
 # include <stdint.h>
+#endif
+
+/* Bug 2813 */
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
 #endif
 
 #include "ntp_machine.h"

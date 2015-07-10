@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2014/12/20 16:52:21 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2015/07/10 14:20:28 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +29,7 @@ SRCS=	cmd_args.c				\
 	ntpd-opts.c				\
 	ntpd.c					\
 	ntpsim.c				\
+	rc_cmdlength.c				\
 	refclock_acts.c				\
 	refclock_arbiter.c			\
 	refclock_arc.c				\
