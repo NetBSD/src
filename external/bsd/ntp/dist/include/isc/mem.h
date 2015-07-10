@@ -1,3 +1,5 @@
+/*	$NetBSD: mem.h,v 1.1.1.5 2015/07/10 13:11:03 christos Exp $	*/
+
 /*
  * libntp local override of isc/mem.h to stub it out.
  *
@@ -26,7 +28,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mem.h,v 1.1.1.4 2015/07/10 13:02:58 christos Exp $ */
+/* Id: mem.h,v 1.78.120.3 2009/02/11 03:07:01 jinmei Exp  */
 
 #ifndef ISC_MEM_H
 #define ISC_MEM_H 1

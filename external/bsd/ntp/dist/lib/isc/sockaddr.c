@@ -1,3 +1,5 @@
+/*	$NetBSD: sockaddr.c,v 1.1.1.5 2015/07/10 13:11:02 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.1.1.4 2015/07/10 13:02:50 christos Exp $ */
+/* Id */
 
 /*! \file */
 

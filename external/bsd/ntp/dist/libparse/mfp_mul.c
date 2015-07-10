@@ -1,3 +1,5 @@
+/*	$NetBSD: mfp_mul.c,v 1.1.1.4 2015/07/10 13:11:04 christos Exp $	*/
+
 /*
  * /src/NTP/ntp4-dev/libparse/mfp_mul.c,v 4.9 2005/07/17 20:34:40 kardel RELEASE_20050717_A
  *

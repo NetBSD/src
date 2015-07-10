@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp-keygen-opts.c,v 1.1.1.7 2015/07/10 13:11:14 christos Exp $	*/
+
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntp-keygen-opts.c)
  *

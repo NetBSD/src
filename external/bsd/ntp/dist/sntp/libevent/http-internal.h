@@ -1,3 +1,5 @@
+/*	$NetBSD: http-internal.h,v 1.1.1.5 2015/07/10 13:11:10 christos Exp $	*/
+
 /*
  * Copyright 2001-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright 2007-2012 Niels Provos and Nick Mathewson

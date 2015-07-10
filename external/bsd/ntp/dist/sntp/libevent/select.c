@@ -1,3 +1,5 @@
+/*	$NetBSD: select.c,v 1.1.1.3 2015/07/10 13:11:11 christos Exp $	*/
+
 /*	$OpenBSD: select.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: crypto.c,v 1.1.1.6 2015/07/10 13:11:08 christos Exp $	*/
+
 #include <config.h>
 #include "crypto.h"
 #include <ctype.h>

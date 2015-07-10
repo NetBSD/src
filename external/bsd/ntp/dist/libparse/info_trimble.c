@@ -1,3 +1,5 @@
+/*	$NetBSD: info_trimble.c,v 1.1.1.6 2015/07/10 13:11:04 christos Exp $	*/
+
 /*
  * Automatically generated - do not modify
  */

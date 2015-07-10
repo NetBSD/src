@@ -1,3 +1,5 @@
+/*	$NetBSD: _Noreturn.h,v 1.1.1.3 2015/07/10 13:11:10 christos Exp $	*/
+
 #if !defined _Noreturn && __STDC_VERSION__ < 201112
 # if (3 <= __GNUC__ || (__GNUC__ == 2 && 8 <= __GNUC_MINOR__) \
       || 0x5110 <= __SUNPRO_C)

@@ -1,3 +1,5 @@
+/*	$NetBSD: socket.c,v 1.1.1.4 2015/07/10 13:11:03 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.c,v 1.1.1.3 2015/07/10 13:02:51 christos Exp $ */
+/* Id */
 
 /* This code uses functions which are only available on Server 2003 and
  * higher, and Windows XP and higher.

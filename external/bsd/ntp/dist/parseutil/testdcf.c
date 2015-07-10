@@ -1,3 +1,5 @@
+/*	$NetBSD: testdcf.c,v 1.1.1.5 2015/07/10 13:11:08 christos Exp $	*/
+
 /*
  * /src/NTP/ntp4-dev/parseutil/testdcf.c,v 4.10 2005/08/06 14:18:43 kardel RELEASE_20050806_A
  *

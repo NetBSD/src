@@ -1,3 +1,5 @@
+/*	$NetBSD: task_test.c,v 1.1.1.3 2015/07/10 13:11:03 christos Exp $	*/
+
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
@@ -14,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task_test.c,v 1.1.1.2 2015/07/10 13:02:51 christos Exp $ */
+/* Id */
 
 /*! \file */
 

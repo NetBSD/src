@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_util.c,v 1.1.1.7 2015/07/10 13:11:06 christos Exp $	*/
+
 /*
  * ntp_util.c - stuff I didn't have any other place for
  */

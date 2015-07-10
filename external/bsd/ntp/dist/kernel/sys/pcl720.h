@@ -1,3 +1,5 @@
+/*	$NetBSD: pcl720.h,v 1.1.1.3 2015/07/10 13:11:03 christos Exp $	*/
+
 /* Copyright (c) 1995 Vixie Enterprises
  *
  * Permission to use, copy, modify, and distribute this software for any

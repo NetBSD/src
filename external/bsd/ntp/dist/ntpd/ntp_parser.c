@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_parser.c,v 1.1.1.7 2015/07/10 13:11:06 christos Exp $	*/
+
 /* A Bison parser, made by GNU Bison 2.7.12-4996.  */
 
 /* Bison implementation for Yacc-like parsers in C

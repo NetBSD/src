@@ -1,3 +1,5 @@
+/*	$NetBSD: lex.c,v 1.1.1.4 2015/07/10 13:11:02 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.1.1.3 2015/07/10 13:02:50 christos Exp $ */
+/* Id: lex.c,v 1.86 2007/09/17 09:56:29 shane Exp  */
 
 /*! \file */
 

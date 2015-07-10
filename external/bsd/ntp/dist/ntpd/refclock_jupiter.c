@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_jupiter.c,v 1.1.1.7 2015/07/10 13:11:06 christos Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 2003
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_mx4200.c,v 1.1.1.5 2015/07/10 13:11:06 christos Exp $	*/
+
 /*
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66.

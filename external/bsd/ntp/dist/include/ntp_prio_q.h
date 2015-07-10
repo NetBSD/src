@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_prio_q.h,v 1.1.1.3 2015/07/10 13:11:03 christos Exp $	*/
+
 /* ntp_prio_q.h
  *
  * This file contains the structures and function prototypes for the

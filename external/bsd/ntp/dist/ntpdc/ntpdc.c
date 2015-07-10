@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpdc.c,v 1.1.1.6 2015/07/10 13:11:07 christos Exp $	*/
+
 /*
  * ntpdc - control and monitor your ntpd daemon
  */

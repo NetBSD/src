@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_prio_q.c,v 1.1.1.3 2015/07/10 13:11:06 christos Exp $	*/
+
 /* ntp_prio_q.c
  *
  * This file contains the priority queue implementation used by the

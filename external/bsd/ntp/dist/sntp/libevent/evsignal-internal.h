@@ -1,3 +1,5 @@
+/*	$NetBSD: evsignal-internal.h,v 1.1.1.3 2015/07/10 13:11:12 christos Exp $	*/
+
 /*
  * Copyright 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright 2007-2012 Niels Provos and Nick Mathewson

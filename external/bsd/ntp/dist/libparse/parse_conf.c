@@ -1,3 +1,5 @@
+/*	$NetBSD: parse_conf.c,v 1.1.1.5 2015/07/10 13:11:04 christos Exp $	*/
+
 /*
  * /src/NTP/ntp4-dev/libparse/parse_conf.c,v 4.9 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_chronolog.c,v 1.1.1.5 2015/07/10 13:11:04 christos Exp $	*/
+
 /*
  * refclock_chronolog - clock driver for Chronolog K-series WWVB receiver.
  */

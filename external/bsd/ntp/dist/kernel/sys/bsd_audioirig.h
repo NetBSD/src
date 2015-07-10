@@ -1,3 +1,5 @@
+/*	$NetBSD: bsd_audioirig.h,v 1.1.1.5 2015/07/10 13:11:03 christos Exp $	*/
+
 /*
  *	$Header: bsd_audioirig.h,v 1.0 93/08/02 12:42:00
  */

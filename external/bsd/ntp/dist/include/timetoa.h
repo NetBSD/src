@@ -1,3 +1,5 @@
+/*	$NetBSD: timetoa.h,v 1.1.1.3 2015/07/10 13:11:03 christos Exp $	*/
+
 /*
  * timetoa.h -- time_t related string formatting
  *

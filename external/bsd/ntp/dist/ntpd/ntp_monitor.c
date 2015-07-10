@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_monitor.c,v 1.1.1.6 2015/07/10 13:11:05 christos Exp $	*/
+
 /*
  * ntp_monitor - monitor ntpd statistics
  */

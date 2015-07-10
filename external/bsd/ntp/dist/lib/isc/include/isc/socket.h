@@ -1,3 +1,5 @@
+/*	$NetBSD: socket.h,v 1.1.1.5 2015/07/10 13:11:02 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.h,v 1.1.1.4 2015/07/10 13:02:51 christos Exp $ */
+/* Id */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_leapsec.c,v 1.1.1.5 2015/07/10 13:11:07 christos Exp $	*/
+
 /*
  * ntp_leapsec.c - leap second processing for NTPD
  *

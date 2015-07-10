@@ -1,3 +1,5 @@
+/*	$NetBSD: tests_main.h,v 1.1.1.3 2015/07/10 13:11:08 christos Exp $	*/
+
 #ifndef TESTS_MAIN_H
 #define TESTS_MAIN_H
 

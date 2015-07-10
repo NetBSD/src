@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_if.h,v 1.1.1.3 2015/07/10 13:11:03 christos Exp $	*/
+
 /*
  * Sockets are not standard.
  * So hide uglyness in include file.

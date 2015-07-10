@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_parser.y,v 1.1.1.7 2015/07/10 13:11:06 christos Exp $	*/
+
 /* ntp_parser.y
  *
  * The parser for the NTP configuration file.

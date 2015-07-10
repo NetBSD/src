@@ -1,3 +1,5 @@
+/*	$NetBSD: utilities.c,v 1.1.1.5 2015/07/10 13:11:09 christos Exp $	*/
+
 #include <config.h>
 #include "utilities.h"
 #include <assert.h>

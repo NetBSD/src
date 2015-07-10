@@ -1,3 +1,5 @@
+/*	$NetBSD: kern.c,v 1.1.1.3 2015/07/10 13:11:14 christos Exp $	*/
+
 /*
  * This program simulates a first-order, type-II phase-lock loop using
  * actual code segments from modified kernel distributions for SunOS,

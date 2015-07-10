@@ -1,3 +1,5 @@
+/*	$NetBSD: numtoa.c,v 1.1.1.4 2015/07/10 13:11:04 christos Exp $	*/
+
 /*
  * numtoa - return asciized network numbers store in local array space
  */

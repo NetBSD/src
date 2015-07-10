@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_parse.c,v 1.1.1.7 2015/07/10 13:11:06 christos Exp $	*/
+
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
  *

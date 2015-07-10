@@ -1,3 +1,5 @@
+/*	$NetBSD: intprops.h,v 1.1.1.3 2015/07/10 13:11:10 christos Exp $	*/
+
 /* intprops.h -- properties of integer types
 
    Copyright (C) 2001-2005, 2009-2015 Free Software Foundation, Inc.

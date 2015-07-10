@@ -1,3 +1,5 @@
+/*	$NetBSD: task_api.c,v 1.1.1.3 2015/07/10 13:11:02 christos Exp $	*/
+
 /*
  * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  *
@@ -14,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task_api.c,v 1.1.1.2 2015/07/10 13:02:50 christos Exp $ */
+/* Id */
 
 #include <config.h>
 

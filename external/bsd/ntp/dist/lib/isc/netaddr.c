@@ -1,3 +1,5 @@
+/*	$NetBSD: netaddr.c,v 1.1.1.6 2015/07/10 13:11:02 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2005, 2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.c,v 1.1.1.5 2015/07/10 13:02:51 christos Exp $ */
+/* Id */
 
 /*! \file */
 

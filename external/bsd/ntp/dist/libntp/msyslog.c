@@ -1,3 +1,5 @@
+/*	$NetBSD: msyslog.c,v 1.1.1.5 2015/07/10 13:11:04 christos Exp $	*/
+
 /*
  * msyslog - either send a message to the terminal or print it on
  *	     the standard output.

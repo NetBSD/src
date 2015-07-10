@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_atom.h,v 1.1.1.4 2015/07/10 13:11:03 christos Exp $	*/
+
 /*
  * Definitions for the atom driver and its friends
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: utilities.h,v 1.1.1.5 2015/07/10 13:11:08 christos Exp $	*/
+
 #ifndef UTILITIES_H
 #define UTILITIES_H
 

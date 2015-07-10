@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_proto.c,v 1.1.1.7 2015/07/10 13:11:06 christos Exp $	*/
+
 /*
  * ntp_proto.c - NTP version 4 protocol machinery
  *

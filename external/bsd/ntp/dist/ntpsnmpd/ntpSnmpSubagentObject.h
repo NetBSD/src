@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpSnmpSubagentObject.h,v 1.1.1.4 2015/07/10 13:11:07 christos Exp $	*/
+
 /*****************************************************************************
  *
  *  ntpSnmpSubAgentObject.h

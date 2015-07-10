@@ -1,3 +1,5 @@
+/*	$NetBSD: reset.c,v 1.1.1.7 2015/07/10 13:11:10 christos Exp $	*/
+
 
 /**
  * \file reset.c

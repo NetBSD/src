@@ -1,3 +1,5 @@
+/*	$NetBSD: app_api.c,v 1.1.1.3 2015/07/10 13:11:02 christos Exp $	*/
+
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
  *
@@ -14,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app_api.c,v 1.1.1.2 2015/07/10 13:02:51 christos Exp $ */
+/* Id: app_api.c,v 1.5 2009/09/02 23:48:02 tbox Exp  */
 
 #include <config.h>
 

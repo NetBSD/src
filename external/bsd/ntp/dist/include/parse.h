@@ -1,3 +1,5 @@
+/*	$NetBSD: parse.h,v 1.1.1.4 2015/07/10 13:11:03 christos Exp $	*/
+
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/include/parse.h,v 4.12 2007/01/14 08:36:03 kardel RELEASE_20070114_A
  *

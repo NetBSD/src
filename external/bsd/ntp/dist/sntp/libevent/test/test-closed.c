@@ -1,3 +1,5 @@
+/*	$NetBSD: test-closed.c,v 1.1.1.3 2015/07/10 13:11:13 christos Exp $	*/
+
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2013 Niels Provos and Nick Mathewson

@@ -1,3 +1,5 @@
+/*	$NetBSD: bufferevent_pair.c,v 1.1.1.5 2015/07/10 13:11:11 christos Exp $	*/
+
 /*
  * Copyright (c) 2009-2012 Niels Provos, Nick Mathewson
  *

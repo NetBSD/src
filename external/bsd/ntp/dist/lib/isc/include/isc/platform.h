@@ -1,3 +1,5 @@
+/*	$NetBSD: platform.h,v 1.1.1.4 2015/07/10 13:11:02 christos Exp $	*/
+
 /*
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
@@ -15,7 +17,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: platform.h,v 1.1.1.3 2015/07/10 13:02:51 christos Exp $ */
+/* Id: platform.h.in,v 1.28 2001/11/19 03:08:26 mayer Exp  */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
