@@ -1,4 +1,4 @@
-/*	$NetBSD: event-internal.h,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
+/*	$NetBSD: event-internal.h,v 1.3 2015/07/10 14:20:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>

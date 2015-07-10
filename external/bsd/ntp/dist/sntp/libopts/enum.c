@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.4 2015/04/07 17:34:20 christos Exp $	*/
+/*	$NetBSD: enum.c,v 1.5 2015/07/10 14:20:35 christos Exp $	*/
 
 
 /**
@@ -16,7 +16,7 @@
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -188,14 +188,14 @@ find_name(char const * name, tOptions * pOpts, tOptDesc * pOD,
 {
     /*
      *  Return the matching index as a pointer sized integer.
-     *  The result gets stashed in a char* pointer.
+     *  The result gets stashed in a char * pointer.
      */
     uintptr_t   res = name_ct;
-    size_t      len = strlen((const char*)name);
+    size_t      len = strlen(name);
     uintptr_t   idx;
 
     if (IS_DEC_DIGIT_CHAR(*name)) {
-        char * pz = (char *)(void *)(intptr_t)name;
+        char * pz = VOIDP(name);
         unsigned long val = strtoul(pz, &pz, 0);
         if ((*pz == NUL) && (val < name_ct))
             return (uintptr_t)val;
@@ -217,7 +217,7 @@ find_name(char const * name, tOptions * pOpts, tOptDesc * pOD,
      *  Multiple partial matches means we have an ambiguous match.
      */
     for (idx = 0; idx < name_ct; idx++) {
-        if (strncmp((char*)(intptr_t)paz_names[idx], (char*)(intptr_t)name, len) == 0) {
+        if (strncmp(paz_names[idx], (const char *)name, len) == 0) {
             if (paz_names[idx][len] == NUL)
                 return idx;  /* full match */
 
@@ -244,7 +244,7 @@ find_name(char const * name, tOptions * pOpts, tOptDesc * pOD,
  * what:  Convert between enumeration values and strings
  * private:
  *
- * arg:   tOptDesc*,     pOD,       enumeration option description
+ * arg:   tOptDesc *,    pOD,       enumeration option description
  * arg:   unsigned int,  enum_val,  the enumeration value to map
  *
  * ret_type:  char const *
@@ -267,8 +267,8 @@ optionKeywordName(tOptDesc * pOD, unsigned int enum_val)
  * what:  Convert from a string to an enumeration value
  * private:
  *
- * arg:   tOptions*,     pOpts,     the program options descriptor
- * arg:   tOptDesc*,     pOD,       enumeration option description
+ * arg:   tOptions *,    pOpts,     the program options descriptor
+ * arg:   tOptDesc *,    pOD,       enumeration option description
  * arg:   char const * const *,  paz_names, list of enumeration names
  * arg:   unsigned int,  name_ct,   number of names in list
  *
@@ -511,7 +511,7 @@ find_member_bit(tOptions * opts, tOptDesc * od, char const * pz, int len,
  *
  * arg:   tOptDesc *,  od,   the set membership option description
  *
- * ret_type: char*
+ * ret_type: char *
  * ret_desc: the names of the set bits
  *
  * doc:   This converts the OPT_VALUE_name mask value to a allocated string.
@@ -523,7 +523,7 @@ optionMemberList(tOptDesc * od)
     uintptr_t    sv = od->optArg.argIntptr;
     char * res;
     (*(od->pOptProc))(OPTPROC_RETURN_VALNAME, od);
-    res = (void *)(intptr_t)od->optArg.argString;
+    res = VOIDP(od->optArg.argString);
     od->optArg.argIntptr = sv;
     return res;
 }
@@ -532,8 +532,8 @@ optionMemberList(tOptDesc * od)
  * what:  Convert between bit flag values and strings
  * private:
  *
- * arg:   tOptions*,     opts,     the program options descriptor
- * arg:   tOptDesc*,     od,       the set membership option description
+ * arg:   tOptions *,     opts,     the program options descriptor
+ * arg:   tOptDesc *,     od,       the set membership option description
  * arg:   char const * const *,
  *                       nm_list,  list of enumeration names
  * arg:   unsigned int,  nm_ct,    number of names in list
@@ -636,12 +636,12 @@ optionSetMembers(tOptions * opts, tOptDesc * od,
         if (nm_ct < (8 * sizeof(uintptr_t)))
             res &= (1UL << nm_ct) - 1UL;
 
-        od->optCookie = (void *)res;
+        od->optCookie = VOIDP(res);
     }
     return;
 
 fail_return:
-    od->optCookie = (void *)0;
+    od->optCookie = VOIDP(0);
 }
 
 /** @}

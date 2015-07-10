@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.h,v 1.6 2014/12/19 20:43:18 christos Exp $	*/
+/*	$NetBSD: networking.h,v 1.7 2015/07/10 14:20:33 christos Exp $	*/
 
 #ifndef NETWORKING_H
 #define NETWORKING_H
