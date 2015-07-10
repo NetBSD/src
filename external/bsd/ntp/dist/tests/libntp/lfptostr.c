@@ -1,3 +1,5 @@
+/*	$NetBSD: lfptostr.c,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+
 /* 
  * This file contains test for both mfptoa and mfptoms (which uses dolfptoa),
  * since all these functions are very similar. It also tests ulfptoa, which is

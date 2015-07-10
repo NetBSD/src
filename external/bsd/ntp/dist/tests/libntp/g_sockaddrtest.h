@@ -1,3 +1,5 @@
+/*	$NetBSD: g_sockaddrtest.h,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+
 #ifndef TESTS_SOCKADDRTEST_H
 #define TESTS_SOCKADDRTEST_H
 
