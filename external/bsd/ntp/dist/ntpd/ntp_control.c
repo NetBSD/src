@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.12 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.13 2015/07/10 21:31:19 kardel Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -422,10 +422,10 @@ static const struct ctl_var sys_var[] = {
 	{ CS_TIMER_XMTS,	RO, "timer_xmts" },	/* 87 */
 	{ CS_FUZZ,		RO, "fuzz" },		/* 88 */
 	{ CS_WANDER_THRESH,	RO, "clk_wander_threshold" }, /* 89 */
-#ifdef LEAP_SMEAR
+
 	{ CS_LEAPSMEARINTV,	RO, "leapsmearinterval" },    /* 90 */
 	{ CS_LEAPSMEAROFFS,	RO, "leapsmearoffset" },      /* 91 */
-#endif	 /* LEAP_SMEAR */
+
 #ifdef AUTOKEY
 	{ CS_FLAGS,	RO, "flags" },		/* 1 + CS_MAX_NOAUTOKEY */
 	{ CS_HOST,	RO, "host" },		/* 2 + CS_MAX_NOAUTOKEY */
@@ -2404,6 +2404,9 @@ ctl_putsys(
 			    ntohl(hostval.tstamp));
 		break;
 #endif	/* AUTOKEY */
+
+	default:
+		break;
 	}
 }
 
