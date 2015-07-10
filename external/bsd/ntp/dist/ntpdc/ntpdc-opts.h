@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpdc-opts.h,v 1.3 2015/04/07 17:34:19 christos Exp $	*/
+/*	$NetBSD: ntpdc-opts.h,v 1.4 2015/07/10 14:20:33 christos Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntpdc-opts.h)
  *
- *  It has been AutoGen-ed  April  7, 2015 at 04:26:14 AM by AutoGen 5.18.5pre4
+ *  It has been AutoGen-ed  June 29, 2015 at 04:30:50 PM by AutoGen 5.18.5
  *  From the definitions    ntpdc-opts.def
  *  and the template file   options
  *
@@ -85,9 +85,9 @@ typedef enum {
 /** count of all options for ntpdc */
 #define OPTION_CT    15
 /** ntpdc version */
-#define NTPDC_VERSION       "4.2.8p2"
+#define NTPDC_VERSION       "4.2.8p3"
 /** Full ntpdc version text */
-#define NTPDC_FULL_VERSION  "ntpdc 4.2.8p2"
+#define NTPDC_FULL_VERSION  "ntpdc 4.2.8p3"
 
 /**
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
