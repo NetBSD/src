@@ -1,3 +1,5 @@
+/*	$NetBSD: g_timestructs.h,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+
 /*
  * timestructs.h -- test bed adaptors for time structs.
  *
