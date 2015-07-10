@@ -1,4 +1,4 @@
-/*	$NetBSD: pgusage.c,v 1.4 2015/04/07 17:34:20 christos Exp $	*/
+/*	$NetBSD: pgusage.c,v 1.5 2015/07/10 14:20:35 christos Exp $	*/
 
 
 /**
@@ -15,7 +15,7 @@
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -35,7 +35,7 @@
  */
 
 #if defined(HAVE_WORKING_FORK)
-static FILE *
+static inline FILE *
 open_tmp_usage(char ** buf)
 {
     char * bf;
@@ -66,7 +66,7 @@ open_tmp_usage(char ** buf)
     }
 }
 
-static char *
+static inline char *
 mk_pager_cmd(char const * fname)
 {
     /*
@@ -87,10 +87,10 @@ mk_pager_cmd(char const * fname)
         if (pager == NULL)
             pager = MORE_STR;
 
-        bfsz = strlen(fname) + strlen(pager) + PAGE_USAGE_FMT_LEN;
+        bfsz = 2 * strlen(fname) + strlen(pager) + PAGE_USAGE_FMT_LEN;
         res  = AGALOC(bfsz, "more cmd");
         snprintf(res, bfsz, PAGE_USAGE_FMT, pager, fname);
-        AGFREE((void*)(intptr_t)fname);
+        AGFREE(fname);
         return res;
     }
 }

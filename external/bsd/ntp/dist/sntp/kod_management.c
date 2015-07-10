@@ -1,4 +1,4 @@
-/*	$NetBSD: kod_management.c,v 1.5 2014/12/19 20:43:18 christos Exp $	*/
+/*	$NetBSD: kod_management.c,v 1.6 2015/07/10 14:20:33 christos Exp $	*/
 
 #include <config.h>
 #include <string.h>
@@ -37,7 +37,7 @@ search_entry(
 		return 0;
 	}
 
-	*dst = emalloc(resc * sizeof(**dst));
+	*dst = eallocarray(resc, sizeof(**dst));
 
 	b = 0;
 	for (a = 0; a < kod_db_cnt; a++)
@@ -248,7 +248,7 @@ kod_init_kod_db(
 
 	rewind(db_s);
 
-	kod_db = emalloc(sizeof(kod_db[0]) * kod_db_cnt);
+	kod_db = eallocarray(kod_db_cnt, sizeof(kod_db[0]));
 
 	/* Read contents of file */
 	for (b = 0; 

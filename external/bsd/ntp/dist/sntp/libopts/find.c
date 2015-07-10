@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.4 2015/04/07 17:34:20 christos Exp $	*/
+/*	$NetBSD: find.c,v 1.5 2015/07/10 14:20:35 christos Exp $	*/
 
 /**
  * @file check.c
@@ -14,7 +14,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -60,7 +60,7 @@ static tSuccess
 get_opt_arg_may(tOptions * pOpts, tOptState * o_st);
 
 static tSuccess
-get_opt_arg_none(tOptions * pOpts, tOptState* o_st);
+get_opt_arg_none(tOptions * pOpts, tOptState * o_st);
 /* = = = END-STATIC-FORWARD = = = */
 
 /**
@@ -82,7 +82,7 @@ parse_opt(char const ** nm_pp, char ** arg_pp, char * buf, size_t bufsz)
 
             buf[res] = NUL;
             *nm_pp   = buf;
-            *arg_pp  = (char *)(intptr_t)p;
+            *arg_pp  = VOIDP(p);
             return res;
 
         default:
@@ -411,9 +411,9 @@ opt_find_long(tOptions * opts, char const * opt_name, tOptState * state)
  * @param pOptState  state about current option
  */
 LOCAL tSuccess
-opt_find_short(tOptions* pOpts, uint_t optValue, tOptState* pOptState)
+opt_find_short(tOptions * pOpts, uint_t optValue, tOptState * pOptState)
 {
-    tOptDesc*  pRes = pOpts->pOptDesc;
+    tOptDesc * pRes = pOpts->pOptDesc;
     int        ct   = pOpts->optCt;
 
     /*
@@ -556,7 +556,7 @@ get_opt_arg_may(tOptions * pOpts, tOptState * o_st)
         if (*++pOpts->pzCurOpt != NUL)
             o_st->pzOptArg = pOpts->pzCurOpt;
         else {
-            char* pzLA = pOpts->origArgVect[ pOpts->curOptIdx ];
+            char * pzLA = pOpts->origArgVect[ pOpts->curOptIdx ];
 
             /*
              *  BECAUSE it is optional, we must make sure
@@ -579,7 +579,7 @@ get_opt_arg_may(tOptions * pOpts, tOptState * o_st)
          */
         if (  (o_st->pzOptArg == NULL)
            && (! NAMED_OPTS(pOpts))) {
-            char* pzLA = pOpts->origArgVect[ pOpts->curOptIdx ];
+            char * pzLA = pOpts->origArgVect[ pOpts->curOptIdx ];
 
             /*
              *  BECAUSE it is optional, we must make sure
@@ -618,7 +618,7 @@ get_opt_arg_may(tOptions * pOpts, tOptState * o_st)
  *  @returns SUCCESS or FAILURE
  */
 static tSuccess
-get_opt_arg_none(tOptions * pOpts, tOptState* o_st)
+get_opt_arg_none(tOptions * pOpts, tOptState * o_st)
 {
     /*
      *  No option argument.  Make sure next time around we find
@@ -713,7 +713,7 @@ find_opt(tOptions * opts, tOptState * o_st)
          *  strip off the "const" quality of the "default_opt" field.
          */
         while (*(++pz) == '-')   ;
-        def_opt  = (void *)(intptr_t)&(opts->specOptIdx.default_opt);
+        def_opt  = VOIDP(&(opts->specOptIdx.default_opt));
         def      = *def_opt;
         *def_opt = NO_EQUIVALENT;
         res      = opt_find_long(opts, pz, o_st);
