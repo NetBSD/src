@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.63 2015/06/24 11:09:26 msaitoh Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.64 2015/07/10 03:01:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.63 2015/06/24 11:09:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.64 2015/07/10 03:01:21 msaitoh Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -1313,8 +1313,25 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 		sc = NULL;
 #endif
 		if (sc == NULL) {
-			printf("mpbios: can't find ioapic %d\n", id);
+#if NIOAPIC > 0
+			/*
+			 * If we couldn't find an ioapic by given id, retry to
+			 * get it by a pin number.
+			 */
+			sc = ioapic_find_bybase(pin);
+			if (sc == NULL) {
+				aprint_error("mpbios: can't find ioapic by"
+				    " neither apid(%d) nor pin number(%d)\n",
+				    id, pin);
+				return;
+			}
+			aprint_verbose("mpbios: use apid %d instead of %d\n",
+			    sc->sc_pic.pic_apicid, id);
+			id = sc->sc_pic.pic_apicid;
+#else
+			aprint_error("mpbios: can't find ioapic %d\n", id);
 			return;
+#endif
 		}
 
 		/*
