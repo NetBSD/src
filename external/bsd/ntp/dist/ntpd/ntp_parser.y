@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.9 2015/04/07 17:34:19 christos Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.10 2015/07/10 14:20:32 christos Exp $	*/
 
 /* ntp_parser.y
  *
@@ -9,9 +9,6 @@
  *		Newark, DE 19711
  * Copyright (c) 2006
  */
-
-%parse-param {struct FILE_INFO *ip_file}
-%lex-param {struct FILE_INFO *ip_file}
 
 %{
   #ifdef HAVE_CONFIG_H
@@ -38,7 +35,7 @@
   #define YYFREE	free
   #define YYERROR_VERBOSE
   #define YYMAXDEPTH	1000	/* stop the madness sooner */
-  void yyerror(struct FILE_INFO *ip_file, const char *msg);
+  void yyerror(const char *msg);
 
   #ifdef SIM
   #  define ONLY_SIM(a)	(a)
@@ -47,7 +44,7 @@
   #endif
 %}
 
-/* 
+/*
  * Enable generation of token names array even without YYDEBUG.
  * We access via token_name() defined below.
  */
@@ -105,6 +102,7 @@
 %token	<Double>	T_Double		/* not a token */
 %token	<Integer>	T_Driftfile
 %token	<Integer>	T_Drop
+%token	<Integer>	T_Dscp
 %token	<Integer>	T_Ellipsis	/* "..." not "ellipsis" */
 %token	<Integer>	T_Enable
 %token	<Integer>	T_End
@@ -145,6 +143,7 @@
 %token	<Integer>	T_Kod
 %token	<Integer>	T_Mssntp
 %token	<Integer>	T_Leapfile
+%token	<Integer>	T_Leapsmearinterval
 %token	<Integer>	T_Limited
 %token	<Integer>	T_Link
 %token	<Integer>	T_Listen
@@ -304,6 +303,7 @@
 %type	<Attr_val>	log_config_command
 %type	<Attr_val_fifo>	log_config_list
 %type	<Integer>	misc_cmd_dbl_keyword
+%type	<Integer>	misc_cmd_int_keyword
 %type	<Integer>	misc_cmd_str_keyword
 %type	<Integer>	misc_cmd_str_lcl_keyword
 %type	<Attr_val>	mru_option
@@ -377,11 +377,12 @@ command_list
 			 * error messages. The following should suffice for
 			 * the time being.
 			 */
-			msyslog(LOG_ERR, 
+			struct FILE_INFO * ip_ctx = lex_current();
+			msyslog(LOG_ERR,
 				"syntax error in %s line %d, column %d",
-				ip_file->fname,
-				ip_file->err_line_no,
-				ip_file->err_col_no);
+				ip_ctx->fname,
+				ip_ctx->errpos.nline,
+				ip_ctx->errpos.ncol);
 		}
 	;
 
@@ -430,7 +431,7 @@ address
 	;
 
 ip_address
-	:	T_String 
+	:	T_String
 			{ $$ = create_address_node($1, AF_UNSPEC); }
 	;
 
@@ -444,7 +445,7 @@ address_fam
 option_list
 	:	/* empty list */
 			{ $$ = NULL; }
-	|	option_list option 
+	|	option_list option
 		{
 			$$ = $1;
 			APPEND_G_FIFO($$, $2);
@@ -507,18 +508,18 @@ unpeer_command
 	:	unpeer_keyword address
 		{
 			unpeer_node *my_node;
-			
+
 			my_node = create_unpeer_node($2);
 			if (my_node)
 				APPEND_G_FIFO(cfgt.unpeers, my_node);
 		}
-	;	
-unpeer_keyword	
+	;
+unpeer_keyword
 	:	T_Unconfig
 	|	T_Unpeer
 	;
-	
-	
+
+
 /* Other Modes
  * (broadcastclient manycastserver multicastclient)
  * ------------------------------------------------
@@ -545,14 +546,14 @@ authentication_command
 	:	T_Automax T_Integer
 		{
 			attr_val *atrv;
-			
+
 			atrv = create_attr_ival($1, $2);
 			APPEND_G_FIFO(cfgt.vars, atrv);
 		}
 	|	T_ControlKey T_Integer
 			{ cfgt.auth.control_key = $2; }
 	|	T_Crypto crypto_command_list
-		{ 
+		{
 			cfgt.auth.cryptosw++;
 			CONCAT_G_FIFOS(cfgt.auth.crypto_cmd_list, $2);
 		}
@@ -626,7 +627,7 @@ tos_option_list
 			APPEND_G_FIFO($$, $2);
 		}
 	|	tos_option
-		{	
+		{
 			$$ = NULL;
 			APPEND_G_FIFO($$, $1);
 		}
@@ -667,24 +668,24 @@ monitoring_command
 			{ CONCAT_G_FIFOS(cfgt.stats_list, $2); }
 	|	T_Statsdir T_String
 		{
-			if (input_from_file) {
+			if (lex_from_file()) {
 				cfgt.stats_dir = $2;
 			} else {
 				YYFREE($2);
-				yyerror(ip_file, "statsdir remote configuration ignored");
+				yyerror("statsdir remote configuration ignored");
 			}
 		}
 	|	T_Filegen stat filegen_option_list
 		{
 			filegen_node *fgn;
-			
+
 			fgn = create_filegen_node($2, $3);
 			APPEND_G_FIFO(cfgt.filegen_opts, fgn);
 		}
 	;
 
 stats_list
-	:	stats_list stat 
+	:	stats_list stat
 		{
 			$$ = $1;
 			APPEND_G_FIFO($$, create_int_node($2));
@@ -720,28 +721,28 @@ filegen_option_list
 filegen_option
 	:	T_File T_String
 		{
-			if (input_from_file) {
+			if (lex_from_file()) {
 				$$ = create_attr_sval($1, $2);
 			} else {
 				$$ = NULL;
 				YYFREE($2);
-				yyerror(ip_file, "filegen file remote config ignored");
+				yyerror("filegen file remote config ignored");
 			}
 		}
 	|	T_Type filegen_type
 		{
-			if (input_from_file) {
+			if (lex_from_file()) {
 				$$ = create_attr_ival($1, $2);
 			} else {
 				$$ = NULL;
-				yyerror(ip_file, "filegen type remote config ignored");
+				yyerror("filegen type remote config ignored");
 			}
 		}
 	|	link_nolink
 		{
 			const char *err;
-			
-			if (input_from_file) {
+
+			if (lex_from_file()) {
 				$$ = create_attr_ival(T_Flag, $1);
 			} else {
 				$$ = NULL;
@@ -749,7 +750,7 @@ filegen_option
 					err = "filegen link remote config ignored";
 				else
 					err = "filegen nolink remote config ignored";
-				yyerror(ip_file, err);
+				yyerror(err);
 			}
 		}
 	|	enable_disable
@@ -795,7 +796,7 @@ access_control_command
 			restrict_node *rn;
 
 			rn = create_restrict_node($2, NULL, $3,
-						  ip_file->line_no);
+						  lex_current()->curpos.nline);
 			APPEND_G_FIFO(cfgt.restrict_opts, rn);
 		}
 	|	T_Restrict ip_address T_Mask ip_address ac_flag_list
@@ -803,7 +804,7 @@ access_control_command
 			restrict_node *rn;
 
 			rn = create_restrict_node($2, $4, $5,
-						  ip_file->line_no);
+						  lex_current()->curpos.nline);
 			APPEND_G_FIFO(cfgt.restrict_opts, rn);
 		}
 	|	T_Restrict T_Default ac_flag_list
@@ -811,7 +812,7 @@ access_control_command
 			restrict_node *rn;
 
 			rn = create_restrict_node(NULL, NULL, $3,
-						  ip_file->line_no);
+						  lex_current()->curpos.nline);
 			APPEND_G_FIFO(cfgt.restrict_opts, rn);
 		}
 	|	T_Restrict T_Ipv4_flag T_Default ac_flag_list
@@ -820,28 +821,28 @@ access_control_command
 
 			rn = create_restrict_node(
 				create_address_node(
-					estrdup("0.0.0.0"), 
+					estrdup("0.0.0.0"),
 					AF_INET),
 				create_address_node(
-					estrdup("0.0.0.0"), 
+					estrdup("0.0.0.0"),
 					AF_INET),
-				$4, 
-				ip_file->line_no);
+				$4,
+				lex_current()->curpos.nline);
 			APPEND_G_FIFO(cfgt.restrict_opts, rn);
 		}
 	|	T_Restrict T_Ipv6_flag T_Default ac_flag_list
 		{
 			restrict_node *rn;
-			
+
 			rn = create_restrict_node(
 				create_address_node(
-					estrdup("::"), 
+					estrdup("::"),
 					AF_INET6),
 				create_address_node(
-					estrdup("::"), 
+					estrdup("::"),
 					AF_INET6),
-				$4, 
-				ip_file->line_no);
+				$4,
+				lex_current()->curpos.nline);
 			APPEND_G_FIFO(cfgt.restrict_opts, rn);
 		}
 	|	T_Restrict T_Source ac_flag_list
@@ -850,7 +851,7 @@ access_control_command
 
 			APPEND_G_FIFO($3, create_int_node($2));
 			rn = create_restrict_node(
-				NULL, NULL, $3, ip_file->line_no);
+				NULL, NULL, $3, lex_current()->curpos.nline);
 			APPEND_G_FIFO(cfgt.restrict_opts, rn);
 		}
 	;
@@ -889,7 +890,7 @@ discard_option_list
 			$$ = $1;
 			APPEND_G_FIFO($$, $2);
 		}
-	|	discard_option 
+	|	discard_option
 		{
 			$$ = NULL;
 			APPEND_G_FIFO($$, $1);
@@ -913,7 +914,7 @@ mru_option_list
 			$$ = $1;
 			APPEND_G_FIFO($$, $2);
 		}
-	|	mru_option 
+	|	mru_option
 		{
 			$$ = NULL;
 			APPEND_G_FIFO($$, $1);
@@ -944,7 +945,7 @@ fudge_command
 	:	T_Fudge address fudge_factor_list
 		{
 			addr_opts_node *aon;
-			
+
 			aon = create_addr_opts_node($2, $3);
 			APPEND_G_FIFO(cfgt.fudge, aon);
 		}
@@ -962,7 +963,7 @@ fudge_factor_list
 			APPEND_G_FIFO($$, $1);
 		}
 	;
-	
+
 fudge_factor
 	:	fudge_factor_dbl_keyword number
 			{ $$ = create_attr_dval($1, $2); }
@@ -1050,17 +1051,17 @@ system_option
 	:	system_option_flag_keyword
 			{ $$ = create_attr_ival(T_Flag, $1); }
 	|	system_option_local_flag_keyword
-		{ 
-			if (input_from_file) {
+		{
+			if (lex_from_file()) {
 				$$ = create_attr_ival(T_Flag, $1);
 			} else {
 				char err_str[128];
-				
+
 				$$ = NULL;
 				snprintf(err_str, sizeof(err_str),
 					 "enable/disable %s remote configuration ignored",
 					 keyword($1));
-				yyerror(ip_file, err_str);
+				yyerror(err_str);
 			}
 		}
 	;
@@ -1130,14 +1131,21 @@ miscellaneous_command
 	|	misc_cmd_dbl_keyword number
 		{
 			attr_val *av;
-			
+
 			av = create_attr_dval($1, $2);
+			APPEND_G_FIFO(cfgt.vars, av);
+		}
+	|	misc_cmd_int_keyword T_Integer
+		{
+			attr_val *av;
+
+			av = create_attr_ival($1, $2);
 			APPEND_G_FIFO(cfgt.vars, av);
 		}
 	|	misc_cmd_str_keyword T_String
 		{
 			attr_val *av;
-			
+
 			av = create_attr_sval($1, $2);
 			APPEND_G_FIFO(cfgt.vars, av);
 		}
@@ -1146,7 +1154,7 @@ miscellaneous_command
 			char error_text[64];
 			attr_val *av;
 
-			if (input_from_file) {
+			if (lex_from_file()) {
 				av = create_attr_sval($1, $2);
 				APPEND_G_FIFO(cfgt.vars, av);
 			} else {
@@ -1154,33 +1162,30 @@ miscellaneous_command
 				snprintf(error_text, sizeof(error_text),
 					 "%s remote config ignored",
 					 keyword($1));
-				yyerror(ip_file, error_text);
+				yyerror(error_text);
 			}
 		}
 	|	T_Includefile T_String command
 		{
-			if (!input_from_file) {
-				yyerror(ip_file, "remote includefile ignored");
+			if (!lex_from_file()) {
+				YYFREE($2); /* avoid leak */
+				yyerror("remote includefile ignored");
 				break;
 			}
-			if (curr_include_level >= MAXINCLUDELEVEL) {
+			if (lex_level() > MAXINCLUDELEVEL) {
 				fprintf(stderr, "getconfig: Maximum include file level exceeded.\n");
 				msyslog(LOG_ERR, "getconfig: Maximum include file level exceeded.");
 			} else {
-				fp[curr_include_level + 1] = F_OPEN(FindConfig($2), "r");
-				if (fp[curr_include_level + 1] == NULL) {
-					fprintf(stderr, "getconfig: Couldn't open <%s>\n", FindConfig($2));
-					msyslog(LOG_ERR, "getconfig: Couldn't open <%s>", FindConfig($2));
-				} else {
-					ip_file = fp[++curr_include_level];
+				const char * path = FindConfig($2); /* might return $2! */
+				if (!lex_push_file(path, "r")) {
+					fprintf(stderr, "getconfig: Couldn't open <%s>\n", path);
+					msyslog(LOG_ERR, "getconfig: Couldn't open <%s>", path);
 				}
 			}
+			YYFREE($2); /* avoid leak */
 		}
 	|	T_End
-		{
-			while (curr_include_level != -1)
-				FCLOSE(fp[curr_include_level--]);
-		}
+			{ lex_flush_stack(); }
 	|	T_Driftfile drift_parm
 			{ /* see drift_parm below for actions */ }
 	|	T_Logconfig log_config_list
@@ -1192,7 +1197,7 @@ miscellaneous_command
 	|	T_Trap ip_address trap_option_list
 		{
 			addr_opts_node *aon;
-			
+
 			aon = create_addr_opts_node($2, $3);
 			APPEND_G_FIFO(cfgt.trap, aon);
 		}
@@ -1204,6 +1209,19 @@ misc_cmd_dbl_keyword
 	:	T_Broadcastdelay
 	|	T_Nonvolatile
 	|	T_Tick
+	;
+
+misc_cmd_int_keyword
+	:	T_Dscp
+	;
+
+misc_cmd_int_keyword
+	:	T_Leapsmearinterval
+		{
+#ifndef LEAP_SMEAR
+			yyerror("Built without LEAP_SMEAR support.");
+#endif
+		}
 	;
 
 misc_cmd_str_keyword
@@ -1221,14 +1239,14 @@ drift_parm
 	:	T_String
 		{
 			attr_val *av;
-			
+
 			av = create_attr_sval(T_Driftfile, $1);
 			APPEND_G_FIFO(cfgt.vars, av);
 		}
 	|	T_String T_Double
 		{
 			attr_val *av;
-			
+
 			av = create_attr_sval(T_Driftfile, $1);
 			APPEND_G_FIFO(cfgt.vars, av);
 			av = create_attr_dval(T_WanderThreshold, $2);
@@ -1237,7 +1255,7 @@ drift_parm
 	|	/* Null driftfile,  indicated by empty string "" */
 		{
 			attr_val *av;
-			
+
 			av = create_attr_sval(T_Driftfile, "");
 			APPEND_G_FIFO(cfgt.vars, av);
 		}
@@ -1292,21 +1310,21 @@ log_config_command
 		{
 			char	prefix;
 			char *	type;
-			
+
 			switch ($1[0]) {
-			
+
 			case '+':
 			case '-':
 			case '=':
 				prefix = $1[0];
 				type = $1 + 1;
 				break;
-				
+
 			default:
 				prefix = '=';
 				type = $1;
-			}	
-			
+			}
+
 			$$ = create_attr_sval(prefix, estrdup(type));
 			YYFREE($1);
 		}
@@ -1316,14 +1334,14 @@ interface_command
 	:	interface_nic nic_rule_action nic_rule_class
 		{
 			nic_rule_node *nrn;
-			
+
 			nrn = create_nic_rule_node($3, NULL, $2);
 			APPEND_G_FIFO(cfgt.nic_rules, nrn);
 		}
 	|	interface_nic nic_rule_action T_String
 		{
 			nic_rule_node *nrn;
-			
+
 			nrn = create_nic_rule_node(0, $3, $2);
 			APPEND_G_FIFO(cfgt.nic_rules, nrn);
 		}
@@ -1448,7 +1466,7 @@ boolean
 	:	T_Integer
 		{
 			if ($1 != 0 && $1 != 1) {
-				yyerror(ip_file, "Integer value is not boolean (0 or 1). Assuming 1");
+				yyerror("Integer value is not boolean (0 or 1). Assuming 1");
 				$$ = 1;
 			} else {
 				$$ = $1;
@@ -1472,7 +1490,7 @@ simulate_command
 	:	sim_conf_start '{' sim_init_statement_list sim_server_list '}'
 		{
 			sim_node *sn;
-			
+
 			sn =  create_sim_node($3, $4);
 			APPEND_G_FIFO(cfgt.sim_details, sn);
 
@@ -1587,28 +1605,25 @@ sim_act_keyword
 
 %%
 
-void 
+void
 yyerror(
-	struct FILE_INFO *ip_file,
 	const char *msg
 	)
 {
 	int retval;
+	struct FILE_INFO * ip_ctx;
 
-	ip_file->err_line_no = ip_file->prev_token_line_no;
-	ip_file->err_col_no = ip_file->prev_token_col_no;
-	
-	msyslog(LOG_ERR, 
-		"line %d column %d %s", 
-		ip_file->err_line_no,
-		ip_file->err_col_no,
-		msg);
-	if (!input_from_file) {
+	ip_ctx = lex_current();
+	ip_ctx->errpos = ip_ctx->tokpos;
+
+	msyslog(LOG_ERR, "line %d column %d %s",
+		ip_ctx->errpos.nline, ip_ctx->errpos.ncol, msg);
+	if (!lex_from_file()) {
 		/* Save the error message in the correct buffer */
 		retval = snprintf(remote_config.err_msg + remote_config.err_pos,
 				  MAXLINE - remote_config.err_pos,
 				  "column %d %s",
-				  ip_file->err_col_no, msg);
+				  ip_ctx->errpos.ncol, msg);
 
 		/* Increment the value of err_pos */
 		if (retval > 0)

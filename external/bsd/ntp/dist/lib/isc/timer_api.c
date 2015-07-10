@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_api.c,v 1.2 2014/12/19 20:43:14 christos Exp $	*/
+/*	$NetBSD: timer_api.c,v 1.3 2015/07/10 14:20:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")

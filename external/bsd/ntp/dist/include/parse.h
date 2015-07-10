@@ -1,11 +1,11 @@
-/*	$NetBSD: parse.h,v 1.3 2015/04/07 17:34:18 christos Exp $	*/
+/*	$NetBSD: parse.h,v 1.4 2015/07/10 14:20:29 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/include/parse.h,v 4.12 2007/01/14 08:36:03 kardel RELEASE_20070114_A
  *
  * parse.h,v 4.12 2007/01/14 08:36:03 kardel RELEASE_20070114_A
  *
- * Copyright (c) 1995-2005 by Frank Kardel <kardel <AT> ntp.org>
+ * Copyright (c) 1995-2015 by Frank Kardel <kardel <AT> ntp.org>
  * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universitaet Erlangen-Nuernberg, Germany
  *
  * Redistribution and use in source and binary forms, with or without
@@ -143,7 +143,7 @@ extern unsigned int splclock (void);
  * feature information
  */
 #define PARSEB_S_LEAP		  0x00010000 /* supports LEAP */
-#define PARSEB_S_ANTENNA	  0x00020000 /* supports antenna information */
+#define PARSEB_S_CALLBIT	  0x00020000 /* supports callbit information */
 #define PARSEB_S_PPS     	  0x00040000 /* supports PPS time stamping */
 #define PARSEB_S_POSITION	  0x00080000 /* supports position information (GPS) */
 
@@ -169,7 +169,7 @@ extern unsigned int splclock (void);
 #define PARSE_LEAPSECOND(x)	(PARSE_SYNC(x) && ((x) & PARSEB_LEAP_SECOND))
 
 #define PARSE_S_LEAP(x)		((x) & PARSEB_S_LEAP)
-#define PARSE_S_ANTENNA(x)	((x) & PARSEB_S_ANTENNA)
+#define PARSE_S_CALLBIT(x)	((x) & PARSEB_S_CALLBIT)
 #define PARSE_S_PPS(x)		((x) & PARSEB_S_PPS)
 #define PARSE_S_POSITION(x)	((x) & PARSEB_S_POSITION)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: evrpc-internal.h,v 1.3 2015/04/07 17:34:20 christos Exp $	*/
+/*	$NetBSD: evrpc-internal.h,v 1.4 2015/07/10 14:20:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2006-2007 Niels Provos <provos@citi.umich.edu>
