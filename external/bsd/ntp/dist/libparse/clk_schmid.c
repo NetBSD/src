@@ -1,5 +1,3 @@
-/*	$NetBSD: clk_schmid.c,v 1.1.1.2 2015/04/07 16:49:05 christos Exp $	*/
-
 /*
  * /src/NTP/ntp4-dev/libparse/clk_schmid.c,v 4.9 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
@@ -8,7 +6,7 @@
  * Schmid clock support
  * based on information and testing from Adam W. Feigin et. al (Swisstime iis.ethz.ch)
  *
- * Copyright (c) 1995-2005 by Frank Kardel <kardel <AT> ntp.org>
+ * Copyright (c) 1995-2015 by Frank Kardel <kardel <AT> ntp.org>
  * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universitaet Erlangen-Nuernberg, Germany
  *
  * Redistribution and use in source and binary forms, with or without
@@ -186,7 +184,7 @@ cvt_schmid(
 				    }
 			    }
 
-			    clock_time->flags |= PARSEB_S_LEAP|PARSEB_S_ANTENNA;
+			    clock_time->flags |= PARSEB_S_LEAP|PARSEB_S_CALLBIT;
 
 			    return CVT_OK;
 		    }

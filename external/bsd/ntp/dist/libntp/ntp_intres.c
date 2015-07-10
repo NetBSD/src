@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_intres.c,v 1.1.1.2 2015/04/07 16:49:04 christos Exp $	*/
-
 /*
  * ntp_intres.c - Implements a generic blocking worker child or thread,
  *		  initially to provide a nonblocking solution for DNS

@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_zyfer.c,v 1.1.1.2 2013/12/27 23:30:56 christos Exp $	*/
-
 /*
  * refclock_zyfer - clock driver for the Zyfer GPSTarplus Clock
  *

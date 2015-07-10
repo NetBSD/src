@@ -1,5 +1,3 @@
-/*	$NetBSD: log.c,v 1.1.1.3 2013/12/27 23:31:14 christos Exp $	*/
-
 #include <config.h>
 
 #include "log.h"

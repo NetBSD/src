@@ -1,5 +1,3 @@
-/*	$NetBSD: strdup.c,v 1.1.1.2 2013/12/27 23:31:37 christos Exp $	*/
-
 /*
  * Platforms without strdup ?!?!?!
  */

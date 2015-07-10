@@ -1,5 +1,3 @@
-/*	$NetBSD: findconfig.c,v 1.1.1.3 2013/12/27 23:30:47 christos Exp $	*/
-
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

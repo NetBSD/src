@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp-keygen.c,v 1.1.1.5 2015/04/07 16:49:19 christos Exp $	*/
-
 /*
  * Program to generate cryptographic keys for ntp clients and servers
  *

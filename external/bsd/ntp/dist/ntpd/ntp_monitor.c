@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_monitor.c,v 1.1.1.4 2014/12/19 20:37:40 christos Exp $	*/
-
 /*
  * ntp_monitor - monitor ntpd statistics
  */
@@ -185,7 +183,7 @@ mon_getmoremem(void)
 		      : mru_incalloc;
 
 	if (entries) {
-		chunk = emalloc(entries * sizeof(*chunk));
+		chunk = eallocarray(entries, sizeof(*chunk));
 		mru_alloc += entries;
 		for (chunk += entries; entries; entries--)
 			mon_free_entry(--chunk);

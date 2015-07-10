@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_syslog.h,v 1.1.1.3 2013/12/27 23:30:46 christos Exp $	*/
-
 /*
  * A hack for platforms which require specially built syslog facilities
  */

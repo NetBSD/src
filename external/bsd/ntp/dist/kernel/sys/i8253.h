@@ -1,5 +1,3 @@
-/*	$NetBSD: i8253.h,v 1.1.1.1 2009/12/13 16:54:57 kardel Exp $	*/
-
 /* Copyright (c) 1995 Vixie Enterprises
  *
  * Permission to use, copy, modify, and distribute this software for any

@@ -1,5 +1,3 @@
-/*	$NetBSD: snprintf.c,v 1.1.1.2 2013/12/27 23:31:37 christos Exp $	*/
-
 
 #ifndef HAVE_VPRINTF
 #include "choke-me: no vprintf and no snprintf"

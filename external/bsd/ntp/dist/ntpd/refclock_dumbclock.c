@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_dumbclock.c,v 1.1.1.3 2013/12/27 23:30:51 christos Exp $	*/
-
 /*
  * refclock_dumbclock - clock driver for a unknown time distribution system
  * that only provides hh:mm:ss (in local time, yet!).

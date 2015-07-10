@@ -1,5 +1,3 @@
-/*	$NetBSD: visibility.h,v 1.1.1.1 2014/12/19 20:37:47 christos Exp $	*/
-
 /* -*- Mode: C; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson

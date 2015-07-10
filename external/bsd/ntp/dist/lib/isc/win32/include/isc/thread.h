@@ -1,5 +1,3 @@
-/*	$NetBSD: thread.h,v 1.1.1.2 2013/12/27 23:30:41 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: thread.h,v 1.25 2009/09/29 04:37:08 marka Exp  */
+/* $Id: thread.h,v 1.1.1.3 2015/07/10 13:02:52 christos Exp $ */
 
 #ifndef ISC_THREAD_H
 #define ISC_THREAD_H 1

@@ -1,5 +1,3 @@
-/*	$NetBSD: syslog.h,v 1.1.1.2 2013/12/27 23:30:41 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: syslog.h,v 1.5 2007/06/19 23:47:20 tbox Exp  */
+/* $Id: syslog.h,v 1.1.1.3 2015/07/10 13:02:51 christos Exp $ */
 
 #ifndef ISC_SYSLOG_H
 #define ISC_SYSLOG_H 1

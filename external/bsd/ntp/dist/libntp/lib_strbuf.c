@@ -1,5 +1,3 @@
-/*	$NetBSD: lib_strbuf.c,v 1.1.1.2 2013/12/27 23:30:47 christos Exp $	*/
-
 /*
  * lib_strbuf - library string storage
  */

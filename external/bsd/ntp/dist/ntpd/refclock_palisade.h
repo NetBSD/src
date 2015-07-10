@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_palisade.h,v 1.1.1.3 2015/04/07 16:49:06 christos Exp $	*/
-
 /*
  * This software was developed by the Software and Component Technologies
  * group of Trimble Navigation, Ltd.

@@ -1,5 +1,3 @@
-/*	$NetBSD: regress_thread.h,v 1.1.1.1 2014/12/19 20:37:48 christos Exp $	*/
-
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *

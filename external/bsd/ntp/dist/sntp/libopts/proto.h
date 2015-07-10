@@ -1,9 +1,7 @@
-/*	$NetBSD: proto.h,v 1.1.1.4 2014/12/19 20:37:45 christos Exp $	*/
-
 /* -*- buffer-read-only: t -*- vi: set ro:
  *
  * Prototypes for autoopts
- * Generated Fri Aug  8 16:09:18 PDT 2014
+ * Generated Sat Apr 25 09:53:18 PDT 2015
  */
 #ifndef AUTOOPTS_PROTO_H_GUARD
 #define AUTOOPTS_PROTO_H_GUARD 1
@@ -67,7 +65,7 @@ static tSuccess
 opt_find_long(tOptions * opts, char const * opt_name, tOptState * state);
 
 static tSuccess
-opt_find_short(tOptions* pOpts, uint_t optValue, tOptState* pOptState);
+opt_find_short(tOptions * pOpts, uint_t optValue, tOptState * pOptState);
 
 static tSuccess
 get_opt_arg(tOptions * opts, tOptState * o_st);

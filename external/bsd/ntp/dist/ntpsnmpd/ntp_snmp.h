@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_snmp.h,v 1.1.1.2 2015/04/07 16:49:10 christos Exp $	*/
-
 /*
  * ntp_snmp.h -- common net-snmp header includes and workaround
  *		 for Autoconf-related PACKAGE_* redefinitions between

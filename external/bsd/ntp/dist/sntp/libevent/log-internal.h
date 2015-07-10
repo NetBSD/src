@@ -1,5 +1,3 @@
-/*	$NetBSD: log-internal.h,v 1.1.1.2 2014/12/19 20:37:46 christos Exp $	*/
-
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson

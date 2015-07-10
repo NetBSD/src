@@ -1,5 +1,3 @@
-/*	$NetBSD: snprintf.c,v 1.1.1.2 2013/12/27 23:30:47 christos Exp $	*/
-
 /*
  * Modified by Dave Hart for integration into NTP 4.2.7 <hart@ntp.org>
  *
@@ -12,7 +10,7 @@
  * C99-compliant implementations.
  */
 
-/* Id: snprintf.c,v 1.9 2008/01/20 14:02:00 holger Exp  */
+/* $Id: snprintf.c,v 1.1.1.3 2015/07/10 13:02:58 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Patrick Powell.

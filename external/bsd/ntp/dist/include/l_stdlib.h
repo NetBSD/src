@@ -1,5 +1,3 @@
-/*	$NetBSD: l_stdlib.h,v 1.1.1.2 2013/12/27 23:30:45 christos Exp $	*/
-
 /*
  * Proto types for machines that are not ANSI and POSIX	 compliant.
  * This is optional

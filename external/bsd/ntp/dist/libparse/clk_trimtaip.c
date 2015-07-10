@@ -1,5 +1,3 @@
-/*	$NetBSD: clk_trimtaip.c,v 1.1.1.2 2015/04/07 16:49:05 christos Exp $	*/
-
 /*
  * /src/NTP/ntp4-dev/libparse/clk_trimtaip.c,v 4.11 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *

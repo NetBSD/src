@@ -1,5 +1,3 @@
-/*	$NetBSD: socket.c,v 1.1.1.1 2013/12/27 23:30:47 christos Exp $	*/
-
 /*
  * socket.c - low-level socket operations
  */

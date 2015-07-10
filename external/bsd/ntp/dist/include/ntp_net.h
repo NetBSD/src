@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_net.h,v 1.1.1.3 2013/12/27 23:30:46 christos Exp $	*/
-
 /*
  * ntp_net.h - definitions for NTP network stuff
  */

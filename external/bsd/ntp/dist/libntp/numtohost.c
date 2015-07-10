@@ -1,5 +1,3 @@
-/*	$NetBSD: numtohost.c,v 1.1.1.2 2013/12/27 23:30:48 christos Exp $	*/
-
 /*
  * numtohost - convert network number to host name.
  */

@@ -1,5 +1,3 @@
-/*	$NetBSD: sht.c,v 1.1.1.3 2014/12/19 20:37:49 christos Exp $	*/
-
 /* 
  * sht.c - Testprogram for shared memory refclock
  * read/write shared memory segment; see usage

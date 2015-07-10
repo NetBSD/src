@@ -1,5 +1,3 @@
-/*	$NetBSD: dns-example.c,v 1.1.1.2 2014/12/19 20:37:47 christos Exp $	*/
-
 /*
   This example code shows how to use the high-level, low-level, and
   server-level interfaces of evdns.

@@ -1,5 +1,3 @@
-/*	$NetBSD: bind_registry.h,v 1.1.1.2 2013/12/27 23:30:41 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: bind_registry.h,v 1.8 2007/06/19 23:47:20 tbox Exp  */
+/* $Id: bind_registry.h,v 1.1.1.3 2015/07/10 13:02:51 christos Exp $ */
 
 #ifndef ISC_BINDREGISTRY_H
 #define ISC_BINDREGISTRY_H

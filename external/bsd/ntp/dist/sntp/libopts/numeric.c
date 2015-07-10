@@ -1,5 +1,3 @@
-/*	$NetBSD: numeric.c,v 1.1.1.5 2015/04/07 16:49:13 christos Exp $	*/
-
 
 /**
  * \file numeric.c
@@ -12,7 +10,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -35,16 +33,16 @@
  * private:
  *
  * what:  Show info about range constraints
- * arg:   + tOptions* + pOpts     + program options descriptor  +
- * arg:   + tOptDesc* + pOptDesc  + the descriptor for this arg +
- * arg:   + void *    + rng_table + the value range tables      +
- * arg:   + int       + rng_count + the number of entries       +
+ * arg:   + tOptions * + pOpts     + program options descriptor  +
+ * arg:   + tOptDesc * + pOptDesc  + the descriptor for this arg +
+ * arg:   + void *     + rng_table + the value range tables      +
+ * arg:   + int        + rng_count + the number of entries       +
  *
  * doc:
  *   Show information about a numeric option with range constraints.
 =*/
 void
-optionShowRange(tOptions * pOpts, tOptDesc * pOD, const void * rng_table, int rng_ct)
+optionShowRange(tOptions * pOpts, tOptDesc * pOD, void * rng_table, int rng_ct)
 {
     const struct {long const rmin, rmax;} * rng = rng_table;
 
@@ -99,8 +97,8 @@ optionShowRange(tOptions * pOpts, tOptDesc * pOD, const void * rng_table, int rn
  * private:
  *
  * what:  process an option with a numeric value.
- * arg:   + tOptions* + opts + program options descriptor +
- * arg:   + tOptDesc* + od   + the descriptor for this arg +
+ * arg:   + tOptions * + opts + program options descriptor +
+ * arg:   + tOptDesc * + od   + the descriptor for this arg +
  *
  * doc:
  *  Decipher a numeric value.
@@ -108,8 +106,8 @@ optionShowRange(tOptions * pOpts, tOptDesc * pOD, const void * rng_table, int rn
 void
 optionNumericVal(tOptions * opts, tOptDesc * od)
 {
-    char* pz;
-    long  val;
+    char * pz;
+    long   val;
 
     /*
      *  Guard against all the different ways this procedure might get invoked

@@ -1,5 +1,3 @@
-/*	$NetBSD: evthread-internal.h,v 1.1.1.2 2015/04/07 16:49:15 christos Exp $	*/
-
 /*
  * Copyright (c) 2008-2012 Niels Provos, Nick Mathewson
  *

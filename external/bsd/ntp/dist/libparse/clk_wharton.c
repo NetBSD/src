@@ -1,5 +1,3 @@
-/*	$NetBSD: clk_wharton.c,v 1.1.1.3 2015/04/07 16:49:05 christos Exp $	*/
-
 /*
  * /src/NTP/ntp4-dev/libparse/clk_wharton.c,v 4.2 2004/11/14 15:29:41 kardel RELEASE_20050508_A
  *  

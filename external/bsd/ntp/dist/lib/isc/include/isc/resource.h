@@ -1,5 +1,3 @@
-/*	$NetBSD: resource.h,v 1.1.1.2 2013/12/27 23:30:43 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resource.h,v 1.13 2008/07/11 23:47:09 tbox Exp  */
+/* $Id: resource.h,v 1.1.1.3 2015/07/10 13:02:51 christos Exp $ */
 
 #ifndef ISC_RESOURCE_H
 #define ISC_RESOURCE_H 1

@@ -1,6 +1,4 @@
-/*	$NetBSD: jupiter.h,v 1.1.1.2 2012/01/31 21:25:30 kardel Exp $	*/
-
-/* @(#) Header (LBL) */
+/* @(#) $Header: /cvsroot/src/external/bsd/ntp/dist/ntpd/jupiter.h,v 1.1.1.3 2015/07/10 13:03:01 christos Exp $ (LBL) */
 
 /*
  * Rockwell Jupiter GPS receiver definitions

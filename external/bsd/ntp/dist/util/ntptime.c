@@ -1,5 +1,3 @@
-/*	$NetBSD: ntptime.c,v 1.1.1.3 2015/04/07 16:49:19 christos Exp $	*/
-
 /*
  * NTP test program
  *

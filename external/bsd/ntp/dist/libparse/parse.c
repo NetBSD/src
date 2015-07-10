@@ -1,5 +1,3 @@
-/*	$NetBSD: parse.c,v 1.1.1.3 2015/04/07 16:49:05 christos Exp $	*/
-
 /*
  * /src/NTP/ntp4-dev/libparse/parse.c,v 4.20 2005/08/06 17:39:40 kardel RELEASE_20050806_A
  *
@@ -699,14 +697,14 @@ timepacket(
 	{
 	case CVT_FAIL:
 		parseio->parse_badformat++;
-		break;
+		return cvtrtc;
 
 	case CVT_NONE:
 		/*
 		 * too bad - pretend bad format
 		 */
 		parseio->parse_badformat++;
-		break;
+		return CVT_NONE;
 
 	case CVT_OK:
 		break;

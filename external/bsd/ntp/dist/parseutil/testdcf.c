@@ -1,5 +1,3 @@
-/*	$NetBSD: testdcf.c,v 1.1.1.3 2015/04/07 16:49:10 christos Exp $	*/
-
 /*
  * /src/NTP/ntp4-dev/parseutil/testdcf.c,v 4.10 2005/08/06 14:18:43 kardel RELEASE_20050806_A
  *
@@ -7,7 +5,7 @@
  *
  * simple DCF77 100/200ms pulse test program (via 50Baud serial line)
  *
- * Copyright (c) 1995-2005 by Frank Kardel <kardel <AT> ntp.org>
+ * Copyright (c) 1995-2015 by Frank Kardel <kardel <AT> ntp.org>
  * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universitaet Erlangen-Nuernberg, Germany
  *
  * Redistribution and use in source and binary forms, with or without

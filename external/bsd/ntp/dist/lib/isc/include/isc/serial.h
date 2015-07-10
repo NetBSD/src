@@ -1,5 +1,3 @@
-/*	$NetBSD: serial.h,v 1.1.1.2 2013/12/27 23:30:43 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: serial.h,v 1.18 2009/01/18 23:48:14 tbox Exp  */
+/* $Id: serial.h,v 1.1.1.3 2015/07/10 13:02:51 christos Exp $ */
 
 #ifndef ISC_SERIAL_H
 #define ISC_SERIAL_H 1

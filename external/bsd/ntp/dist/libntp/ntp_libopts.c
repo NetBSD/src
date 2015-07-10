@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_libopts.c,v 1.1.1.2 2013/12/27 23:30:48 christos Exp $	*/
-
 /*
  * ntp_libopts.c
  *

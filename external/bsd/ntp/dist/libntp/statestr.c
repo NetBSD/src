@@ -1,5 +1,3 @@
-/*	$NetBSD: statestr.c,v 1.1.1.2 2013/12/27 23:30:49 christos Exp $	*/
-
 /*
  * pretty printing of status information
  */

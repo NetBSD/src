@@ -1,5 +1,3 @@
-/*	$NetBSD: declcond.h,v 1.1.1.1 2013/12/27 23:31:02 christos Exp $	*/
-
 /*
  * declcond.h - declarations conditionalized for ntpd
  *

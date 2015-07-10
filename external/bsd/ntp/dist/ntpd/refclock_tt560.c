@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_tt560.c,v 1.1.1.2 2013/12/27 23:31:02 christos Exp $	*/
-
 /*
  * refclock_tt560 - clock driver for the TrueTime 560 IRIG-B decoder
  */

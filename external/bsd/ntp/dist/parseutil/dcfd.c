@@ -1,5 +1,3 @@
-/*	$NetBSD: dcfd.c,v 1.1.1.3 2015/04/07 16:49:10 christos Exp $	*/
-
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/parseutil/dcfd.c,v 4.18 2005/10/07 22:08:18 kardel RELEASE_20051008_A
  *
@@ -15,7 +13,7 @@
  * Lacks:
  *  Leap second handling (at that level you should switch to NTP Version 4 - really!)
  *
- * Copyright (c) 1995-2005 by Frank Kardel <kardel <AT> ntp.org>
+ * Copyright (c) 1995-2015 by Frank Kardel <kardel <AT> ntp.org>
  * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universitaet Erlangen-Nuernberg, Germany
  *
  * Redistribution and use in source and binary forms, with or without

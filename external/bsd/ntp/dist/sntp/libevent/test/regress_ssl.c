@@ -1,5 +1,3 @@
-/*	$NetBSD: regress_ssl.c,v 1.1.1.3 2015/04/07 16:49:16 christos Exp $	*/
-
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *

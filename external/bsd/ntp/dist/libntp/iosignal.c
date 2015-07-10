@@ -1,5 +1,3 @@
-/*	$NetBSD: iosignal.c,v 1.1.1.2 2013/12/27 23:30:47 christos Exp $	*/
-
 /*
  * iosignal.c - input/output routines for ntpd.	The socket-opening code
  *		   was shamelessly stolen from ntpd.

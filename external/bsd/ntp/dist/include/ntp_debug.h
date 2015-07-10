@@ -1,7 +1,5 @@
-/*	$NetBSD: ntp_debug.h,v 1.1.1.3 2013/12/27 23:30:46 christos Exp $	*/
-
 /*
- * Header
+ * $Header: /cvsroot/src/external/bsd/ntp/dist/include/ntp_debug.h,v 1.1.1.4 2015/07/10 13:02:58 christos Exp $
  *
  * $Created: Sat Aug 20 14:23:01 2005 $
  *

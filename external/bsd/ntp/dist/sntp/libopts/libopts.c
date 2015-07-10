@@ -1,9 +1,9 @@
-/*	$NetBSD: libopts.c,v 1.1.1.3 2013/12/27 23:31:35 christos Exp $	*/
-
 #define  AUTOOPTS_INTERNAL 1
 #include "autoopts/project.h"
 #define  LOCAL static
 #include "ao-strs.h"
+static char const ao_ver_string[] =
+    "41:0:16\n";
 #include "autoopts/options.h"
 #include "autoopts/usage-txt.h"
 #include "genshell.h"

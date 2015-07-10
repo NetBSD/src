@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_malloc.h,v 1.1.1.2 2012/01/31 21:23:25 kardel Exp $	*/
-
 /*
  * Define malloc and friends.
  */

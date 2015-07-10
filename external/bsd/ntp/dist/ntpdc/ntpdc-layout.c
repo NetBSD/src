@@ -1,5 +1,3 @@
-/*	$NetBSD: ntpdc-layout.c,v 1.1.1.2 2013/12/27 23:31:04 christos Exp $	*/
-
 /*
  * ntpdc-layout - print layout of NTP mode 7 request/response packets
  */

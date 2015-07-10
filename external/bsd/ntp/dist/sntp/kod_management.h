@@ -1,5 +1,3 @@
-/*	$NetBSD: kod_management.h,v 1.1.1.2 2013/12/27 23:31:14 christos Exp $	*/
-
 #ifndef KOD_MANAGEMENT_H
 #define KOD_MANAGEMENT_H
 

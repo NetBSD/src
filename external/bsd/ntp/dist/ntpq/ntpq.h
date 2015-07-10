@@ -1,5 +1,3 @@
-/*	$NetBSD: ntpq.h,v 1.1.1.4 2015/04/07 16:49:09 christos Exp $	*/
-
 /*
  * ntpq.h - definitions of interest to ntpq
  */

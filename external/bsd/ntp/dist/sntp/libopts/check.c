@@ -1,5 +1,3 @@
-/*	$NetBSD: check.c,v 1.1.1.2 2014/12/19 20:37:45 christos Exp $	*/
-
 /**
  * @file check.c
  *
@@ -11,7 +9,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control

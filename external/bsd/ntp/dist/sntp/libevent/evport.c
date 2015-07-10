@@ -1,5 +1,3 @@
-/*	$NetBSD: evport.c,v 1.1.1.1 2013/12/27 23:31:21 christos Exp $	*/
-
 /*
  * Submitted by David Pacheco (dp.spambait@gmail.com)
  *

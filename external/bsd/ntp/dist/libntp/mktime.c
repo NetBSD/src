@@ -1,5 +1,3 @@
-/*	$NetBSD: mktime.c,v 1.1.1.4 2014/12/19 20:37:39 christos Exp $	*/
-
 /*
  * Copyright (c) 1987, 1989 Regents of the University of California.
  * All rights reserved.

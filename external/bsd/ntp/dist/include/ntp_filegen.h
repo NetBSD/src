@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_filegen.h,v 1.1.1.3 2015/04/07 16:49:04 christos Exp $	*/
-
 /*
  * ntp_filegen.h,v 3.9 1996/12/01 16:02:45 kardel Exp
  *

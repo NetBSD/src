@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_signd.c,v 1.1.1.2 2013/12/27 23:30:55 christos Exp $	*/
-
 /* Copyright 2008, Red Hat, Inc.
    Copyright 2008, Andrew Tridgell.
    Licenced under the same terms as NTP itself. 

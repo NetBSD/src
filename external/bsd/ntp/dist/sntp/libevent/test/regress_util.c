@@ -1,5 +1,3 @@
-/*	$NetBSD: regress_util.c,v 1.1.1.3 2015/04/07 16:49:16 christos Exp $	*/
-
 /*
  * Copyright (c) 2009-2012 Nick Mathewson and Niels Provos
  *

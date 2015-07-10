@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_tsyncpci.c,v 1.1.1.1 2013/12/27 23:30:52 christos Exp $	*/
-
 /*******************************************************************************
 *
 *  Module  : refclock_tsyncpci.c

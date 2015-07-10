@@ -1,5 +1,3 @@
-/*	$NetBSD: tinytest.h,v 1.1.1.2 2015/04/07 16:49:16 christos Exp $	*/
-
 /* tinytest.h -- Copyright 2009-2012 Nick Mathewson
  *
  * Redistribution and use in source and binary forms, with or without

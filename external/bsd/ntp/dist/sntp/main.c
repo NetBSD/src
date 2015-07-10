@@ -1,5 +1,3 @@
-/*	$NetBSD: main.c,v 1.1.1.5 2015/04/07 16:49:13 christos Exp $	*/
-
 #include <config.h>
 
 #include <event2/util.h>
@@ -1163,7 +1161,7 @@ handle_pkt(
 	int		stratum;
 	char *		ref;
 	char *		ts_str;
-	char *		leaptxt;
+	const char *	leaptxt;
 	double		offset;
 	double		precision;
 	double		synch_distance;

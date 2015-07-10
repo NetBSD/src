@@ -1,5 +1,3 @@
-/*	$NetBSD: strlcpy-internal.h,v 1.1.1.1 2013/12/27 23:31:17 christos Exp $	*/
-
 #ifndef STRLCPY_INTERNAL_H_INCLUDED_
 #define STRLCPY_INTERNAL_H_INCLUDED_
 

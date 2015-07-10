@@ -1,5 +1,3 @@
-/*	$NetBSD: regress_finalize.c,v 1.1.1.2 2015/04/07 16:49:16 christos Exp $	*/
-
 /*
  * Copyright (c) 2013 Niels Provos and Nick Mathewson
  *

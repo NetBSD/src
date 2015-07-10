@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_true.c,v 1.1.1.5 2015/04/07 16:49:07 christos Exp $	*/
-
 /*
  * refclock_true - clock driver for the Kinemetrics/TrueTime receivers
  *	Receiver Version 3.0C - tested plain, with CLKLDISC
@@ -242,7 +240,7 @@ true_debug(struct peer *peer, const char *fmt, ...)
 				 "/tmp/true%d.debug", up->unit);
 			fd = open(filename, O_CREAT | O_WRONLY | O_EXCL,
 				  0600);
-			if (fd >= 0 && (up->debug = fdopen(fd, "r+"))) {
+			if (fd >= 0 && (up->debug = fdopen(fd, "w"))) {
 #ifdef HAVE_SETVBUF
 				static char buf[BUFSIZ];
 

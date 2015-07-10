@@ -1,5 +1,3 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.1.1.3 2013/12/27 23:30:48 christos Exp $	*/
-
 /*
  *	digest support for NTP, MD5 and with OpenSSL more
  */

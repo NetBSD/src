@@ -1,5 +1,3 @@
-/*	$NetBSD: ascii.h,v 1.1.1.2 2013/12/27 23:30:46 christos Exp $	*/
-
 /*
  * /src/NTP/ntp4-dev/include/ascii.h,v 4.4 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *

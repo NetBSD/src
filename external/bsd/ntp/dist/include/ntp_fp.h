@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_fp.h,v 1.1.1.5 2015/04/07 16:49:04 christos Exp $	*/
-
 /*
  * ntp_fp.h - definitions for NTP fixed/floating-point arithmetic
  */

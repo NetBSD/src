@@ -1,5 +1,3 @@
-/*	$NetBSD: work_thread.c,v 1.1.1.2 2014/12/19 20:37:39 christos Exp $	*/
-
 /*
  * work_thread.c - threads implementation for blocking worker child.
  */

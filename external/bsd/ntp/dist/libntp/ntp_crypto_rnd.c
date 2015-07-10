@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_crypto_rnd.c,v 1.1.1.2 2015/04/07 16:49:04 christos Exp $	*/
-
 /*
  * Crypto-quality random number functions
  *

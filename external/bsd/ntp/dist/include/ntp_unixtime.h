@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_unixtime.h,v 1.1.1.2 2013/12/27 23:30:46 christos Exp $	*/
-
 /*
  * ntp_unixtime.h - much of what was here is now in timevalops.h
  */

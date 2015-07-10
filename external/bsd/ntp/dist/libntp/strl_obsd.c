@@ -1,5 +1,3 @@
-/*	$NetBSD: strl_obsd.c,v 1.1.1.1 2013/12/27 23:30:47 christos Exp $	*/
-
 /* 
  * Why use strlcpy()/strlcat() instead of standard strncpy()/strncat()?
  * To reduce likelihood of bugs and avoid wasteful zero fills.  See:

@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_random.c,v 1.1.1.3 2014/12/19 20:37:39 christos Exp $	*/
-
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.

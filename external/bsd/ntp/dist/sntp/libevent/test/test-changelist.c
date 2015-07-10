@@ -1,5 +1,3 @@
-/*	$NetBSD: test-changelist.c,v 1.1.1.2 2014/12/19 20:37:48 christos Exp $	*/
-
 /*
  * Copyright (c) 2010-2012 Niels Provos and Nick Mathewson
  *

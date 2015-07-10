@@ -1,4 +1,37 @@
-#!/usr/bin/perl
+#! /usr/local/bin/perl
+
+## mdoc2man.pl -- Convert mdoc tags to man tags
+##
+## Author:	Harlan Stenn <stenn@ntp.org>
+##		
+##
+##  This file is part of AutoOpts, a companion to AutoGen.
+##  AutoOpts is free software.
+##  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+##
+##  AutoOpts is available under any one of two licenses.  The license
+##  in use must be one of these two and the choice is under the control
+##  of the user of the license.
+##
+##   The GNU Lesser General Public License, version 3 or later
+##      See the files "COPYING.lgplv3" and "COPYING.gplv3"
+##
+##   The Modified Berkeley Software Distribution License
+##      See the file "COPYING.mbsd"
+##
+##  These files have the following sha256 sums:
+##
+##  8584710e9b04216a394078dc156b781d0b47e1729104d666658aecef8ee32e95  COPYING.gplv3
+##  4379e7444a0e2ce2b12dd6f5a52a27a4d02d39d247901d3285c88cf0d37f477b  COPYING.lgplv3
+##  13aa749a5b0a454917a944ed8fffc530b784f5ead522b1aacaf4ec8aa55a6239  COPYING.mbsd
+
+### ToDo
+# Properly implement -columns in the "my %lists" definition...
+#
+# .Xr requires at least 1 arg, the code here expects at least 2
+#
+###
+
 package mdoc2man;
 use strict;
 use warnings;
@@ -48,9 +81,9 @@ Mdoc::def_macro( '.Ar', sub { mapwords {"\\f\\*[I-Font]$_\\f[]"} @_ } );
 Mdoc::def_macro( '.Em', sub { mapwords {"\\fI$_\\f[]"} @_ } );
 Mdoc::def_macro( '.Va', sub { mapwords {"\\fI$_\\f[]"} @_ } );
 Mdoc::def_macro( '.Sx', sub { mapwords {"\\fI$_\\f[]"} @_ } );
-Mdoc::def_macro( '.Xr', sub { "\\fC".(shift)."\\fR(".(shift).")\\f[]", @_ } );
-Mdoc::def_macro( '.Fn', sub { "\\f\\*[B-Font]".(shift)."\\fR()\\f[]" } );
-Mdoc::def_macro( '.Fn', sub { "\\fB".(shift)."\\fR()\\f[]" } );
+Mdoc::def_macro( '.Xr', sub { "\\fC".(shift)."\\f[]\\fR(".(shift).")\\f[]", @_ } );
+Mdoc::def_macro( '.Fn', sub { "\\f\\*[B-Font]".(shift)."\\f[]\\fR()\\f[]" } );
+Mdoc::def_macro( '.Fn', sub { "\\fB".(shift)."\\f[]\\fR()\\f[]" } );
 Mdoc::def_macro( '.Fx', sub { "FreeBSD", @_ } );
 Mdoc::def_macro( '.Ux', sub { "UNIX", @_ } );
 
@@ -70,6 +103,10 @@ Mdoc::def_macro( '.Pa', sub { mapwords {"\\fI$_\\f[]"} @_; } );
 
 my %lists = (
     bullet => sub {
+        Mdoc::def_macro('.It', sub { '.IP \fB\(bu\fP 2' });
+    },
+
+    column => sub {
         Mdoc::def_macro('.It', sub { '.IP \fB\(bu\fP 2' });
     },
 
@@ -149,7 +186,8 @@ for (qw(Xr Em Ar Fl Ic Cm Qq Op Nm Pa Sq Li Va Brq Pq Fx Ux)) {
 }
 
 sub print_line {
-    print shift."\n";
+    print shift;
+    print "\n";
 }
 
 sub run {
