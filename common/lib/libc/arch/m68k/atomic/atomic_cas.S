@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.12 2015/07/04 07:11:45 isaki Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.13 2015/07/10 20:16:01 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ ENTRY(__sync_bool_compare_and_swap_2)
 	movw	8+2(%sp), %d0		/* lower word */
 	movw	12+2(%sp), %d1		/* lower word */
 	casw	%d0, %d1, (%a0)
-	/* %d3 now contains the old value */
+	/* %d0 now contains the old value */
 	beqs	1f
 	clrl	%d0	/* return failure */
 	rts
@@ -116,7 +116,7 @@ ENTRY(__sync_bool_compare_and_swap_1)
 	movb	8+3(%sp), %d0		/* lower byte */
 	movb	12+3(%sp), %d1		/* lower byte */
 	casb	%d0, %d1, (%a0)
-	/* %d3 now contains the old value */
+	/* %d0 now contains the old value */
 	beqs	1f
 	clrl	%d0	/* return failure */
 	rts
