@@ -1,4 +1,4 @@
-/*	$NetBSD: _Noreturn.h,v 1.2 2014/12/19 20:43:20 christos Exp $	*/
+/*	$NetBSD: _Noreturn.h,v 1.3 2015/07/10 14:20:35 christos Exp $	*/
 
 #if !defined _Noreturn && __STDC_VERSION__ < 201112
 # if (3 <= __GNUC__ || (__GNUC__ == 2 && 8 <= __GNUC_MINOR__) \

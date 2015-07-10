@@ -1,11 +1,11 @@
-/*	$NetBSD: compat.h,v 1.2 2014/12/19 20:43:20 christos Exp $	*/
+/*	$NetBSD: compat.h,v 1.3 2015/07/10 14:20:35 christos Exp $	*/
 
 /*  -*- Mode: C -*- 
  *
  *  compat.h is free software.
  *  This file is part of AutoGen and AutoOpts.
  *
- *  AutoGen Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoGen Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control

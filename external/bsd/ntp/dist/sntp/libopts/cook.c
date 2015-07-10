@@ -1,4 +1,4 @@
-/*	$NetBSD: cook.c,v 1.2 2014/12/19 20:43:19 christos Exp $	*/
+/*	$NetBSD: cook.c,v 1.3 2015/07/10 14:20:35 christos Exp $	*/
 
 /**
  * \file cook.c
@@ -12,7 +12,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -40,8 +40,8 @@ contiguous_quote(char ** pps, char * pq, int * lnct_p);
  * private:
  *
  * what:  escape-process a string fragment
- * arg:   + char const*  + pzScan  + points to character after the escape +
- * arg:   + char*        + pRes    + Where to put the result byte +
+ * arg:   + char const * + pzScan  + points to character after the escape +
+ * arg:   + char *       + pRes    + Where to put the result byte +
  * arg:   + unsigned int + nl_ch   + replacement char if scanned char is \n +
  *
  * ret-type: unsigned int
@@ -186,7 +186,7 @@ contiguous_quote(char ** pps, char * pq, int * lnct_p)
 
             case '*':
             {
-                char* p = strstr( ps+2, "*/" );
+                char * p = strstr( ps+2, "*/" );
                 /*
                  *  Skip to terminating star slash
                  */
@@ -220,10 +220,10 @@ contiguous_quote(char ** pps, char * pq, int * lnct_p)
  * private:
  *
  * what:  concatenate and escape-process strings
- * arg:   + char* + pzScan  + The *MODIFIABLE* input buffer +
- * arg:   + int*  + lnct_p  + The (possibly NULL) pointer to a line count +
+ * arg:   + char * + pzScan  + The *MODIFIABLE* input buffer +
+ * arg:   + int *  + lnct_p  + The (possibly NULL) pointer to a line count +
  *
- * ret-type: char*
+ * ret-type: char *
  * ret-desc: The address of the text following the processed strings.
  *           The return value is NULL if the strings are ill-formed.
  *
@@ -247,8 +247,8 @@ ao_string_cook(char * pzScan, int * lnct_p)
      *  It is a quoted string.  Process the escape sequence characters
      *  (in the set "abfnrtv") and make sure we find a closing quote.
      */
-    char* pzD = pzScan++;
-    char* pzS = pzScan;
+    char * pzD = pzScan++;
+    char * pzS = pzScan;
 
     if (lnct_p == NULL)
         lnct_p = &l;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.6 2015/04/07 17:34:18 christos Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.7 2015/07/10 14:20:29 christos Exp $	*/
 
 /*
  * ntpd.h - Prototypes and external variables for ntpd.
@@ -203,6 +203,7 @@ extern	keyid_t	session_key	(sockaddr_u *, sockaddr_u *, keyid_t,
 extern	int	make_keylist	(struct peer *, struct interface *);
 extern	void	key_expire	(struct peer *);
 extern	void	crypto_update	(void);
+extern	void	crypto_update_taichange(void);
 extern	void	crypto_config	(int, char *);
 extern	void	crypto_setup	(void);
 extern	u_int	crypto_ident	(struct peer *);
@@ -224,6 +225,7 @@ extern	void	receive 	(struct recvbuf *);
 extern	void	peer_clear	(struct peer *, const char *);
 extern	void 	process_packet	(struct peer *, struct pkt *, u_int);
 extern	void	clock_select	(void);
+extern	void	set_sys_leap	(u_char);
 
 extern	u_long	leapsec;	/* seconds to next leap (proximity class) */
 extern  int     leapdif;        /* TAI difference step at next leap second*/
@@ -534,6 +536,11 @@ extern u_long	current_time;		/* seconds since startup */
 extern u_long	timer_timereset;
 extern u_long	timer_overflows;
 extern u_long	timer_xmtcalls;
+extern int	leap_sec_in_progress;
+#ifdef LEAP_SMEAR
+extern struct leap_smear_info leap_smear;
+extern int	leap_smear_intv;
+#endif
 #ifdef SYS_WINNT
 HANDLE WaitableTimerHandle;
 #endif

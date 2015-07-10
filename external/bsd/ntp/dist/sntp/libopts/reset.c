@@ -1,4 +1,4 @@
-/*	$NetBSD: reset.c,v 1.5 2015/04/07 17:34:20 christos Exp $	*/
+/*	$NetBSD: reset.c,v 1.6 2015/07/10 14:20:35 christos Exp $	*/
 
 
 /**
@@ -12,7 +12,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -32,7 +32,7 @@
  */
 
 static void
-optionReset( tOptions* pOpts, tOptDesc* pOD )
+optionReset(tOptions * pOpts, tOptDesc * pOD)
 {
     pOD->fOptState &= OPTST_PERSISTENT_MASK;
     pOD->fOptState |= OPTST_RESET;
@@ -65,8 +65,8 @@ optionResetEverything(tOptions * pOpts)
  * private:
  *
  * what:  Reset the value of an option
- * arg:   + tOptions* + pOpts    + program options descriptor  +
- * arg:   + tOptDesc* + pOptDesc + the descriptor for this arg +
+ * arg:   + tOptions * + pOpts    + program options descriptor  +
+ * arg:   + tOptDesc * + pOptDesc + the descriptor for this arg +
  *
  * doc:
  *  This code will cause another option to be reset to its initial state.
@@ -115,7 +115,7 @@ optionResetOpt(tOptions * pOpts, tOptDesc * pOD)
             assert(0 == 1);
         }
     } else {
-        succ = opt_find_long(pOpts, (char *)(intptr_t)pzArg, &opt_state);
+        succ = opt_find_long(pOpts, pzArg, &opt_state);
         if (! SUCCESSFUL(succ)) {
             fprintf(stderr, zIllOptStr, pOpts->pzProgPath, pzArg);
             pOpts->pUsageProc(pOpts, EXIT_FAILURE);
