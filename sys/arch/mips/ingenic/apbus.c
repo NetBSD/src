@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.15 2015/05/18 15:07:52 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.16 2015/07/11 19:00:04 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.15 2015/05/18 15:07:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.16 2015/07/11 19:00:04 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -72,6 +72,11 @@ typedef struct apbus_dev {
 } apbus_dev_t;
 
 static const apbus_dev_t apbus_devs[] = {
+	{ "com",	JZ_UART0,	51, CLK_UART0, 0, 0},
+	{ "com",	JZ_UART1,	50, CLK_UART1, 0, 0},
+	{ "com",	JZ_UART2,	49, CLK_UART2, 0, 0},
+	{ "com",	JZ_UART3,	48, CLK_UART3, 0, 0},
+	{ "com",	JZ_UART4,	34, 0, CLK_UART4, 0},
 	{ "dwctwo",	JZ_DWC2_BASE,   21, CLK_OTG0 | CLK_UHC, CLK_OTG1, 0},
 	{ "ohci",	JZ_OHCI_BASE,    5, CLK_UHC, 0, 0},
 	{ "ehci",	JZ_EHCI_BASE,   20, CLK_UHC, 0, 0},
@@ -181,7 +186,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	gpio_as_dev1(4, 12);
 	gpio_as_dev1(4, 13);
 	/* these can be DDC2 or SMB4 */
-#if 1
+#if 0
 	/* DDC2 devices show up at SMB4 */
 	gpio_as_dev1(5, 24);
 	gpio_as_dev1(5, 25);
@@ -219,7 +224,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	gpio_as_dev0(1, 30);
 	gpio_as_dev0(1, 31);
 
-#ifdef INGENIC_DEBUG
+#ifndef INGENIC_DEBUG
 	printf("JZ_CLKGR0 %08x\n", readreg(JZ_CLKGR0));
 	printf("JZ_CLKGR1 %08x\n", readreg(JZ_CLKGR1));
 	printf("JZ_SPCR0  %08x\n", readreg(JZ_SPCR0));
