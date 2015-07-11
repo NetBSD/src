@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2014/04/18 18:32:00 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2015/07/11 10:32:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2014/04/18 18:32:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2015/07/11 10:32:46 kamil Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1883,7 +1883,7 @@ hppa_setvmspace(struct lwp *l)
 	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 =
 	tf->tf_iisq_head = tf->tf_iisq_tail = space;
 
-	/* Load the protection regsiters. */
+	/* Load the protection registers. */
 	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
 }
 
