@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.6.t,v 1.5 2013/10/06 05:45:19 dholland Exp $
+.\"	$NetBSD: 1.6.t,v 1.6 2015/07/11 09:21:23 kamil Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,6 +133,10 @@ RLIMIT_RSS	/* resident set size */
 RLIMIT_MEMLOCK	/* locked-in-memory address space */
 RLIMIT_NPROC	/* number of processes */
 RLIMIT_NOFILE	/* number of open files */
+RLIMIT_SBSIZE	/* maximum size of all socket buffers */
+RLIMIT_AS	/* virtual process size (inclusive of mmap) */
+RLIMIT_VMEM	/* alias of RLIMIT_AS */
+RLIMIT_NTHR	/* number of threads */
 .TE
 .DE
 .ne 1i
