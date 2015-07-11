@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.169 2015/07/01 18:18:00 christos Exp $
+#	 $NetBSD: mi,v 1.170 2015/07/11 16:40:13 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9337,7 +9337,7 @@
 ./usr/libdata/lint/llib-lpciaccess.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lpsres.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lpthread-stubs.ln		-unknown-	lint,xorg
-./usr/libdata/lint/llib-lre.ln				-unknown-	lint,xorg
+./usr/libdata/lint/llib-lre.ln				-obsolete-	obsolete
 ./usr/libdata/lint/llib-lxcb-composite.ln		-obsolete-	obsolete
 ./usr/libdata/lint/llib-lxcb-damage.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-dpms.ln			-unknown-	lint,xorg
