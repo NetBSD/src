@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.91 2015/07/11 17:24:13 kamil Exp $
+.\"	$NetBSD: sysctl.7,v 1.92 2015/07/11 17:36:09 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -188,7 +188,7 @@ level is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "hw.machine_arch" "integer" "Changeable" -offset indent
-.It Sy Second level name	Type	Changeable
+.It Sy Second level name	Sy Type	Sy Changeable
 .It hw.alignbytes	integer	no
 .It hw.byteorder	integer	no
 .It hw.cnmagic	string	yes
@@ -272,7 +272,7 @@ The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "kern.posix_reader_writer_locks" \
 "struct kinfo_drivers" "not applicable"
-.It Sy Second level name	Type	Changeable
+.It Sy Second level name	Sy Type	Sy Changeable
 .It kern.aio_listio_max	integer	yes
 .It kern.aio_max	integer	yes
 .It kern.arandom	integer	no
@@ -428,7 +428,7 @@ The third level name is
 .Dv kern.coredump.setid
 and fourth level variables are described below.
 .Bl -column "kern.coredump.setid.group" "integer" "Changeable" -offset indent
-.It Sy Fourth level name	Type	Changeable
+.It Sy Fourth level name	Sy Type	Sy Changeable
 .It kern.coredump.setid.dump	integer	yes
 .It kern.coredump.setid.group	integer	yes
 .It kern.coredump.setid.mode	integer	yes
@@ -566,7 +566,7 @@ and
 Return information about the SysV IPC parameters.
 The third level names for the ipc variables are detailed below.
 .Bl -column "kern.ipc.shm_use_phys" "integer" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It kern.ipc.sysvmsg	integer	no
 .It kern.ipc.sysvsem	integer	no
 .It kern.ipc.sysvshm	integer	no
@@ -599,7 +599,7 @@ otherwise\ 0.
 Return System V style IPC configuration and run-time information.
 The fourth level name selects the System V style IPC facility.
 .Bl -column "KERN_SYSVIPC_MSG_INFO" "struct shm_sysctl_info" -offset indent
-.It Sy Fourth level name	Type
+.It Sy Fourth level name	Sy Type
 .It KERN_SYSVIPC_MSG_INFO	struct msg_sysctl_info
 .It KERN_SYSVIPC_SEM_INFO	struct sem_sysctl_info
 .It KERN_SYSVIPC_SHM_INFO	struct shm_sysctl_info
@@ -700,7 +700,7 @@ The third level names for the mbuf variables are detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "kern.mbuf.nmbclusters" "integer" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .\" XXX Changeable? really?
 .It kern.mbuf.mblowat	integer	yes
 .It kern.mbuf.mclbytes	integer	yes
@@ -743,7 +743,7 @@ otherwise\ 0.
 Settings related to kernel modules.
 The third level names for the settings are described below.
 .Bl -column "kern.module.autoload" "integer" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It kern.module.autoload	integer	yes
 .It kern.module.autotime	integer	yes
 .It kern.module.verbose	integer	yes
@@ -778,7 +778,7 @@ This node is created dynamically when
 the corresponding kernel module is loaded.
 The third level names for the settings are described below.
 .Bl -column "kern.mqueue.mq_max_msgsize" "integer" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It kern.mqueue.mq_open_max	integer	yes
 .It kern.mqueue.mq_prio_max	integer	yes
 .It kern.mqueue.mq_max_msgsize	integer	yes
@@ -830,7 +830,7 @@ The third level names for the  integer pipe settings is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "kern.pipe.maxbigpipes" "integer" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It kern.pipe.kvasiz	integer	yes
 .It kern.pipe.maxbigpipes	integer	yes
 .It kern.pipe.maxkvasz	integer	yes
@@ -923,7 +923,7 @@ structures is returned,
 whose size depends on the current number of such objects in the system.
 The third and fourth level numeric names are as follows:
 .Bl -column "KERN_PROC_SESSION" "Fourth level is:" -offset indent
-.It Sy Third level name	Fourth level is:
+.It Sy Third level name	Sy Fourth level is:
 .It KERN_PROC_ALL	None
 .It KERN_PROC_GID	A group ID
 .It KERN_PROC_PID	A process ID
@@ -950,10 +950,10 @@ Multiple strings are returned separated by NUL characters.
 The third level name is the process ID.
 The fourth level name is as follows:
 .Bl -column "KERN_PROG_NARGV" "The number of environ strings" -offset indent
-.It KERN_PROC_ARGV	The argv strings
-.It KERN_PROC_ENV	The environ strings
-.It KERN_PROC_NARGV	The number of argv strings
-.It KERN_PROC_NENV	The number of environ strings
+.It Dv KERN_PROC_ARGV	The argv strings
+.It Dv KERN_PROC_ENV	The environ strings
+.It Dv KERN_PROC_NARGV	The number of argv strings
+.It Dv KERN_PROC_NENV	The number of environ strings
 .El
 .It Li kern.profiling ( Dv KERN_PROF )
 Return profiling information about the kernel.
@@ -967,7 +967,7 @@ is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "kern.profiling.gmonparam" "struct gmonparam" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It kern.profiling.count	u_short[\|]	yes
 .It kern.profiling.froms	u_short[\|]	yes
 .It kern.profiling.gmonparam	struct gmonparam	no
@@ -1028,7 +1028,7 @@ otherwise\ 0.
 .It Li kern.timecounter ( dynamic )
 Display and control the timecounter source of the system.
 .Bl -column "kern.timecounter.timestepwarnings" "integer" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It kern.timecounter.choice	string	no
 .It kern.timecounter.hardware	string	yes
 .It kern.timecounter.timestepwarnings	integer	yes
@@ -1052,7 +1052,7 @@ The third level names for the tty statistic variables are detailed below.
 The changeable column shows whether a process
 with appropriate privilege may change the value.
 .Bl -column "kern.tkstat.cancc" "quad" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It kern.tkstat.cancc	quad	no
 .It kern.tkstat.nin	quad	no
 .It kern.tkstat.nout	quad	no
@@ -1075,7 +1075,7 @@ The third level names for the tty setup variables are detailed below.
 The changeable column shows whether a process
 with appropriate privilege may change the value.
 .Bl -column "kern.tty.qsize" "int" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It kern.tty.qsize	int	yes
 .El
 .Pp
@@ -1092,7 +1092,7 @@ and
 .It Li kern.uidinfo
 Resource usage for the current user.
 .Bl -column "kern.uidinfo.proccnt" "integer" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It kern.uidinfo.proccnt	integer	no
 .It kern.uidinfo.lwpcnt	integer	no
 .It kern.uidinfo.lockcnt	integer	no
@@ -1127,7 +1127,7 @@ system.
 Runtime information for
 .Xr veriexec 8 .
 .Bl -column "kern.veriexec.algorithms" "integer" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It kern.veriexec.algorithms	string	no
 .It kern.veriexec.count	node	not applicable
 .It kern.veriexec.strict	integer	yes
@@ -1176,7 +1176,7 @@ followed by the vnode itself
 The set of variables defined is architecture dependent.
 Most architectures define at least the following variables.
 .Bl -column "machdep.booted_kernel" "Type" "Changeable" -offset indent
-.It Sy Second level name	Type	Changeable
+.It Sy Second level name	Sy Type	Sy Changeable
 .It Li machdep.booted_kernel	string	no
 .El
 .\" XXX: Document the above.
@@ -1189,7 +1189,7 @@ privilege may change the value.
 The second and third levels are typically the protocol family and
 protocol number, though this is not always the case.
 .Bl -column "Second level name" "IPsec key management values" "Changeable" -offset indent
-.It Sy Second level name	Type	Changeable
+.It Sy Second level name	Sy Type	Sy Changeable
 .It net.route	routing messages	no
 .It net.inet	IPv4 values	yes
 .It net.inet6	IPv6 values	yes
@@ -1209,7 +1209,7 @@ The fourth level name is an address family, which may be set to 0 to
 select all address families.
 The fifth and sixth level names are as follows:
 .Bl -column "Fifth level name" "Sixth level is:" -offset indent
-.It Sy Fifth level name	Sixth level is:
+.It Sy Fifth level name	Sy Sixth level is:
 .It NET_RT_FLAGS	rtflags
 .It NET_RT_DUMP	None
 .It NET_RT_IFLIST	None
@@ -1220,8 +1220,8 @@ Get or set various global information about the IPv4
 The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
-.Bl -column "Protocol name" "sack.globalmaxholes" "integer" "Changeable" -offset 4n
-.It Sy Protocol name	Variable name	Type	Changeable
+.Bl -column "Protocol" "anonportalgo.available" "integer" "Changeable" -offset indent
+.It Sy Protocol	Variable	Sy Type	Sy Changeable
 .It arp	down	integer	yes
 .It arp	keep	integer	yes
 .It arp	log_movements	integer	yes
@@ -1602,8 +1602,8 @@ Get or set various global information about the IPv6
 The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
-.Bl -column "Protocol name" "do_loopback_cksum" "integer" "Changeable" -offset indent
-.It Sy Protocol name	Variable name	Type	Changeable
+.Bl -column "Protocol" "anonportalgo.available" "integer" "Changeable" -offset indent
+.It Sy Protocol	Variable	Sy Type	Sy Changeable
 .It icmp6	errppslimit	integer	yes
 .It icmp6	mtudisc_hiwat	integer	yes
 .It icmp6	mtudisc_lowat	integer	yes
@@ -1899,7 +1899,7 @@ Get or set various global information about the IPsec key management.
 The third level name is the variable name.
 The currently defined variable and names are:
 .Bl -column "blockacq_lifetime" "integer" "Changeable" -offset indent
-.It Sy Variable name	Type	Changeable
+.It Sy Variable	Type	Sy Changeable
 .It debug	integer	yes
 .It enabled	integer	yes
 .It used	integer	no
@@ -1979,7 +1979,7 @@ value of PROC_PID_CORENAME is reset to the system default value.
 The second level name is either the magic value PROC_CURPROC, which
 points to the current process, or the PID of the target process.
 .Bl -column "proc.pid.corename" "string" "not applicable" -offset indent
-.It Sy Third level name	Type	Changeable
+.It Sy Third level name	Sy Type	Sy Changeable
 .It proc.pid.corename	string	yes
 .It proc.pid.rlimit	node	not applicable
 .It proc.pid.stopfork	int	yes
@@ -2113,7 +2113,7 @@ level is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "user.coll_weights_max" "integer" "Changeable" -offset indent
-.It Sy Second level name	Type	Changeable
+.It Sy Second level name	Sy Type	Sy Changeable
 .It user.atexit_max	integer	no
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
@@ -2218,7 +2218,7 @@ level is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "Second level name" "struct uvmexp_sysctl" "Changeable" -offset indent
-.It Sy Second level name	Type	Changeable
+.It Sy Second level name	Sy Type	Sy Changeable
 .It vm.anonmax	int	yes
 .It vm.anonmin	int	yes
 .It vm.bufcache	int	yes
@@ -2299,7 +2299,7 @@ The changeable column shows whether a process with appropriate
 privilege may change the value.
 .\" XXX sort
 .Bl -column "Second level name" "integer" "Changeable" -offset indent
-.It Sy Second level name	Type	Changeable
+.It Sy Second level name	Sy Type	Sy Changeable
 .It ddb.radix	integer	yes
 .It ddb.maxoff	integer	yes
 .It ddb.maxwidth	integer	yes
@@ -2354,7 +2354,7 @@ level contains various security-related settings for
 the system.
 The available second level names are:
 .Bl -column "Second level name" "integer" "Changeable" -offset indent
-.It Sy Second level name	Type	Changeable
+.It Sy Second level name	Sy Type	Sy Changeable
 .It Li security.curtain	integer	yes
 .It Li security.models	node	not applicable
 .It Li security.pax	node	not applicable
