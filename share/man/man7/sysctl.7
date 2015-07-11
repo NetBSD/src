@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.89 2015/07/11 09:55:21 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.90 2015/07/11 16:47:49 kamil Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -205,7 +205,6 @@ privilege may change the value.
 .It hw.usermem	integer	no
 .It hw.usermem64	quad	no
 .El
-.Pp
 .Bl -tag -width "123456"
 .It Li hw.alignbytes ( HW_ALIGNBYTES )
 Alignment constraint for all possible data types.
@@ -605,7 +604,6 @@ The fourth level name selects the System V style IPC facility.
 .It KERN_SYSVIPC_SEM_INFO	struct sem_sysctl_info
 .It KERN_SYSVIPC_SHM_INFO	struct shm_sysctl_info
 .El
-.Pp
 .Bl -tag -width "123456"
 .It Li KERN_SYSVIPC_MSG_INFO
 Return information on the System V style message facility.
@@ -1197,7 +1195,6 @@ protocol number, though this is not always the case.
 .It net.inet6	IPv6 values	yes
 .It net.key	IPsec key management values	yes
 .El
-.Pp
 .Bl -tag -width "123456"
 .It Li net.route ( PF_ROUTE )
 .\" XXX really?
@@ -1623,7 +1620,7 @@ The currently defined protocols and names are:
 .It ip6	accept_rtadv	integer	yes
 .It ip6	anonportalgo.selected	string	yes
 .It ip6	anonportalgo.available	string	yes
-.It ip6 anonportalgo.reserve	struct	yes
+.It ip6	anonportalgo.reserve	struct	yes
 .It ip6	anonportmax	integer	yes
 .It ip6	anonportmin	integer	yes
 .It ip6	auto_flowlabel	integer	yes
@@ -2240,7 +2237,6 @@ privilege may change the value.
 .It vm.uvmexp2	struct uvmexp_sysctl	no
 .It vm.vmmeter	struct vmtotal	no
 .El
-.Pp
 .Bl -tag -width "123456"
 .It Li vm.anonmax ( VM_ANONMAX )
 The percentage of physical memory which will be reclaimed
@@ -2314,7 +2310,6 @@ privilege may change the value.
 .It ddb.tee_msgbuf	integer	yes
 .It ddb.commandonenter	string	yes
 .El
-.Pp
 .Bl -tag -width "123456"
 .It Li ddb.radix ( DDBCTL_RADIX )
 The input and output radix.
@@ -2366,7 +2361,6 @@ The available second level names are:
 .El
 .Pp
 Available settings are detailed below.
-.Pp
 .Bl -tag -width "123456"
 .It Li security.curtain
 If non-zero, will filter return objects according to the user
@@ -2420,7 +2414,6 @@ The available third and fourth level names are:
 .It Li security.pax.segvguard.max_crashes	integer	yes
 .It Li security.pax.segvguard.suspend_timeout	integer	yes
 .El
-.Pp
 .Bl -tag -width "123456"
 .It Li security.pax.aslr.enabled
 Enable PaX ASLR (Address Space Layout Randomization).
