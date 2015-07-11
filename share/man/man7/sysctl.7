@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.90 2015/07/11 16:47:49 kamil Exp $
+.\"	$NetBSD: sysctl.7,v 1.91 2015/07/11 17:24:13 kamil Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -132,19 +132,19 @@ See
 for more information.
 .Ss The vfs.* subtree
 A distinguished second level name,
-.Li vfs.generic ( VFS_GENERIC ) ,
+.Li vfs.generic ( Dv VFS_GENERIC ) ,
 is used to get general information about all file systems.
 It has the following third level identifiers:
 .Bl -tag -width "123456"
-.It Li vfs.generic.maxtypenum ( VFS_MAXTYPENUM )
+.It Li vfs.generic.maxtypenum ( Dv VFS_MAXTYPENUM )
 The highest valid file system type number.
-.It Li vfs.generic.conf ( VFS_CONF )
+.It Li vfs.generic.conf ( Dv VFS_CONF )
 Returns configuration information about the file system type given as a fourth
 level identifier.
-.It Li vfs.generic.usermount ( VFS_USERMOUNT )
+.It Li vfs.generic.usermount ( Dv VFS_USERMOUNT )
 Determines if non superuser mounts are allowed, defaults to
 .Dv 0 .
-.It Li vfs.generic.magiclinks ( VFS_MAGICLINKS )
+.It Li vfs.generic.magiclinks ( Dv VFS_MAGICLINKS )
 Controls if expansion of variables is going to be performed on pathnames
 or not.
 Defaults to no variable expansion,
@@ -206,23 +206,23 @@ privilege may change the value.
 .It hw.usermem64	quad	no
 .El
 .Bl -tag -width "123456"
-.It Li hw.alignbytes ( HW_ALIGNBYTES )
+.It Li hw.alignbytes ( Dv HW_ALIGNBYTES )
 Alignment constraint for all possible data types.
 This shows the value
 .Dv ALIGNBYTES
 in
 .In machine/param.h ,
 at the kernel compilation time.
-.It Li hw.byteorder ( HW_BYTEORDER )
+.It Li hw.byteorder ( Dv HW_BYTEORDER )
 The byteorder (4321, or 1234).
-.It Li hw.cnmagic ( HW_CNMAGIC )
+.It Li hw.cnmagic ( Dv HW_CNMAGIC )
 The console magic key sequence.
-.It Li hw.disknames ( HW_DISKNAMES )
+.It Li hw.disknames ( Dv HW_DISKNAMES )
 The list of (space separated) disk device names on the system.
-.It Li hw.iostatnames ( HW_IOSTATNAMES )
+.It Li hw.iostatnames ( Dv HW_IOSTATNAMES )
 A space separated list of devices that will have I/O statistics
 collected on them.
-.It Li hw.iostats ( HW_IOSTATS )
+.It Li hw.iostats ( Dv HW_IOSTATS )
 Return statistical information on the NFS mounts, disk and tape
 devices on the system.
 An array of
@@ -242,25 +242,25 @@ Which can be
 (tape drive), or
 .Dv IOSTAT_NFS
 (NFS mount).
-.It Li hw.machine ( HW_MACHINE )
+.It Li hw.machine ( Dv HW_MACHINE )
 The machine class.
-.It Li hw.machine_arch ( HW_MACHINE_ARCH )
+.It Li hw.machine_arch ( Dv HW_MACHINE_ARCH )
 The machine CPU class.
-.It Li hw.model ( HW_MODEL )
+.It Li hw.model ( Dv HW_MODEL )
 The machine model.
-.It Li hw.ncpu ( HW_NCPU )
+.It Li hw.ncpu ( Dv HW_NCPU )
 The number of CPUs configured.
-.It Li hw.ncpuonline ( HW_NCPUONLINE )
+.It Li hw.ncpuonline ( Dv HW_NCPUONLINE )
 The number of CPUs online.
-.It Li hw.pagesize ( HW_PAGESIZE )
+.It Li hw.pagesize ( Dv HW_PAGESIZE )
 The software page size.
-.It Li hw.physmem ( HW_PHYSMEM )
+.It Li hw.physmem ( Dv HW_PHYSMEM )
 The bytes of physical memory as a 32-bit integer.
-.It Li hw.physmem64 ( HW_PHYSMEM64 )
+.It Li hw.physmem64 ( Dv HW_PHYSMEM64 )
 The bytes of physical memory as a 64-bit integer.
-.It Li hw.usermem ( HW_USERMEM )
+.It Li hw.usermem ( Dv HW_USERMEM )
 The bytes of non-kernel memory as a 32-bit integer.
-.It Li hw.usermem64 ( HW_USERMEM64 )
+.It Li hw.usermem64 ( Dv HW_USERMEM64 )
 The bytes of non-kernel memory as a 64-bit integer.
 .El
 .Ss The kern.* subtree
@@ -386,14 +386,14 @@ The used random number generator
 .Pf ( Tn RNG )
 is based on
 .Xr arc4random 3 .
-.It Li kern.argmax ( KERN_ARGMAX )
+.It Li kern.argmax ( Dv KERN_ARGMAX )
 The maximum bytes of argument to
 .Xr execve 2 .
 .It Li kern.boothowto
 Flags passed from the boot loader; see
 .Xr reboot 2
 for the meanings of the flags.
-.It Li kern.boottime ( KERN_BOOTTIME )
+.It Li kern.boottime ( Dv KERN_BOOTTIME )
 A
 .Vt struct timeval
 structure is returned.
@@ -403,9 +403,9 @@ When the kernel is built, the build environment may optionally provide
 arbitrary information to be stored in this variable.
 .\" .It Li kern.bufq
 .\" XXX: Undocumented.
-.It Li kern.ccpu ( KERN_CCPU )
+.It Li kern.ccpu ( Dv KERN_CCPU )
 The scheduler exponential decay value.
-.It Li kern.clockrate ( KERN_CLOCKRATE )
+.It Li kern.clockrate ( Dv KERN_CLOCKRATE )
 A
 .Vt struct clockinfo
 structure is returned.
@@ -415,7 +415,7 @@ skew rate.
 Refer to
 .Xr hz 9
 for additional details.
-.It Li kern.consdev ( KERN_CONSDEV )
+.It Li kern.consdev ( Dv KERN_CONSDEV )
 Console device.
 .It Li kern.coredump
 Settings related to set-id processes coredumps.
@@ -451,9 +451,9 @@ coredump.
 The path to which set-id processes' coredumps will be saved to.
 Same syntax as kern.defcorename.
 .El
-.It Li kern.cp_id ( KERN_CP_ID )
+.It Li kern.cp_id ( Dv KERN_CP_ID )
 Mapping of CPU number to CPU id.
-.It Li kern.cp_time ( KERN_CP_TIME )
+.It Li kern.cp_time ( Dv KERN_CP_TIME )
 Returns an array of
 .Dv CPUSTATES
 .Vt uint64_t Ns s.
@@ -478,7 +478,7 @@ non-accelerated transforms (handling the latter in software).
 .It Dv \*[Gt] 0
 Allow user requests only for transforms which are hardware-accelerated.
 .El
-.It Li kern.defcorename ( KERN_DEFCORENAME )
+.It Li kern.defcorename ( Dv KERN_DEFCORENAME )
 Default template for the name of core dump files (see also
 .Li proc.pid.corename
 in the per-process variables
@@ -495,9 +495,9 @@ and can be changed with the kernel configuration option
 ).
 .It Li kern.detachall
 Detach all devices at shutdown.
-.It Li kern.domainname ( KERN_DOMAINNAME )
+.It Li kern.domainname ( Dv KERN_DOMAINNAME )
 Get or set the YP domain name.
-.It Li kern.drivers ( KERN_DRIVERS )
+.It Li kern.drivers ( Dv KERN_DRIVERS )
 Return an array of
 .Vt struct kinfo_drivers
 that contains the name and major device numbers of all the device drivers
@@ -508,17 +508,17 @@ field is always a NUL terminated string.
 The
 .Va d_bmajor
 field will be set to \-1 if the driver doesn't have a block device.
-.It Li kern.dump_on_panic ( KERN_DUMP_ON_PANIC )
+.It Li kern.dump_on_panic ( Dv KERN_DUMP_ON_PANIC )
 Perform a crash dump on system
 .Xr panic 9 .
-.It Li kern.file ( KERN_FILE )
+.It Li kern.file ( Dv KERN_FILE )
 Return the entire file table.
 The returned data consists of a single
 .Vt struct filelist
 followed by an array of
 .Vt struct file ,
 whose size depends on the current number of such objects in the system.
-.It Li kern.forkfsleep ( KERN_FORKFSLEEP )
+.It Li kern.forkfsleep ( Dv KERN_FORKFSLEEP )
 If
 .Xr fork 2
 system call fails due to limit on number of processes (either
@@ -529,29 +529,29 @@ error to process.
 Useful to keep heavily forking runaway processes in bay.
 Default zero (no sleep).
 Maximum is 20 seconds.
-.It Li kern.fscale ( KERN_FSCALE )
+.It Li kern.fscale ( Dv KERN_FSCALE )
 The kernel fixed-point scale factor.
-.It Li kern.fsync ( KERN_FSYNC )
+.It Li kern.fsync ( Dv KERN_FSYNC )
 Return 1 if the
 .St -p1003.1b-93
 File Synchronization Option is available
 on this system,
 otherwise\ 0.
-.It Li kern.hardclock_ticks ( KERN_HARDCLOCK_TICKS )
+.It Li kern.hardclock_ticks ( Dv KERN_HARDCLOCK_TICKS )
 Returns the number of
 .Xr hardclock 9
 ticks.
-.It Li kern.hostid ( KERN_HOSTID )
+.It Li kern.hostid ( Dv KERN_HOSTID )
 Get or set the host identifier.
 This is aimed to replace the legacy
 .Xr gethostid 3
 and
 .Xr sethostid 3
 system calls.
-.It Li kern.hostname ( KERN_HOSTNAME )
+.It Li kern.hostname ( Dv KERN_HOSTNAME )
 Get or set the
 .Xr hostname 1 .
-.It Li kern.iov_max ( KERN_IOV_MAX )
+.It Li kern.iov_max ( Dv KERN_IOV_MAX )
 Return the maximum number of
 .Vt iovec
 structures that a process has available for use with
@@ -562,7 +562,7 @@ structures that a process has available for use with
 .Xr sendmsg 2
 and
 .Xr writev 2 .
-.It Li kern.ipc ( KERN_SYSVIPC )
+.It Li kern.ipc ( Dv KERN_SYSVIPC )
 Return information about the SysV IPC parameters.
 The third level names for the ipc variables are detailed below.
 .Bl -column "kern.ipc.shm_use_phys" "integer" "Changeable" -offset indent
@@ -583,19 +583,19 @@ The third level names for the ipc variables are detailed below.
 .It kern.ipc.semmnu	integer	yes
 .El
 .Bl -tag -width "123456"
-.It Li kern.ipc.sysvmsg ( KERN_SYSVIPC_MSG )
+.It Li kern.ipc.sysvmsg ( Dv KERN_SYSVIPC_MSG )
 Returns 1 if System V style message queue functionality is available
 on this system,
 otherwise\ 0.
-.It Li kern.ipc.sysvsem ( KERN_SYSVIPC_SEM )
+.It Li kern.ipc.sysvsem ( Dv KERN_SYSVIPC_SEM )
 Returns 1 if System V style semaphore functionality is available
 on this system,
 otherwise\ 0.
-.It Li kern.ipc.sysvshm ( KERN_SYSVIPC_SHM )
+.It Li kern.ipc.sysvshm ( Dv KERN_SYSVIPC_SHM )
 Returns 1 if System V style share memory functionality is available
 on this system,
 otherwise\ 0.
-.It Li kern.ipc.sysvipc_info ( KERN_SYSVIPC_INFO )
+.It Li kern.ipc.sysvipc_info ( Dv KERN_SYSVIPC_INFO )
 Return System V style IPC configuration and run-time information.
 The fourth level name selects the System V style IPC facility.
 .Bl -column "KERN_SYSVIPC_MSG_INFO" "struct shm_sysctl_info" -offset indent
@@ -624,15 +624,15 @@ The
 structure is defined in
 .In sys/shm.h .
 .El
-.It Li kern.ipc.shmmax ( KERN_SYSVIPC_SHMMAX )
+.It Li kern.ipc.shmmax ( Dv KERN_SYSVIPC_SHMMAX )
 Max shared memory segment size in bytes.
-.It Li kern.ipc.shmmni ( KERN_SYSVIPC_SHMMNI )
+.It Li kern.ipc.shmmni ( Dv KERN_SYSVIPC_SHMMNI )
 Max number of shared memory identifiers.
-.It Li kern.ipc.shmseg ( KERN_SYSVIPC_SHMSEG )
+.It Li kern.ipc.shmseg ( Dv KERN_SYSVIPC_SHMSEG )
 Max shared memory segments per process.
-.It Li kern.ipc.shmmaxpgs ( KERN_SYSVIPC_SHMMAXPGS )
+.It Li kern.ipc.shmmaxpgs ( Dv KERN_SYSVIPC_SHMMAXPGS )
 Max amount of shared memory in pages.
-.It Li kern.ipc.shm_use_phys ( KERN_SYSVIPC_SHMUSEPHYS )
+.It Li kern.ipc.shm_use_phys ( Dv KERN_SYSVIPC_SHMUSEPHYS )
 Locking of shared memory in physical memory.
 If 0, memory can be swapped
 out, otherwise it will be locked in physical memory.
@@ -647,51 +647,51 @@ Max number of number of semaphores in system.
 .It Li kern.ipc.semmnu
 Max number of undo structures in system.
 .El
-.It Li kern.job_control ( KERN_JOB_CONTROL )
+.It Li kern.job_control ( Dv KERN_JOB_CONTROL )
 Return 1 if job control is available on this system, otherwise\ 0.
-.It Li kern.labeloffset ( KERN_LABELOFFSET )
+.It Li kern.labeloffset ( Dv KERN_LABELOFFSET )
 The offset within the sector specified by
 .Dv KERN_LABELSECTOR
 of the
 .Xr disklabel 5 .
-.It Li kern.labelsector ( KERN_LABELSECTOR )
+.It Li kern.labelsector ( Dv KERN_LABELSECTOR )
 The sector number containing the
 .Xr disklabel 5 .
-.It Li kern.login_name_max ( KERN_LOGIN_NAME_MAX )
+.It Li kern.login_name_max ( Dv KERN_LOGIN_NAME_MAX )
 The size of the storage required for a login name, in bytes,
 including the terminating NUL.
-.It Li kern.logsigexit ( KERN_LOGSIGEXIT )
+.It Li kern.logsigexit ( Dv KERN_LOGSIGEXIT )
 If this flag is non-zero, the kernel will
 .Xr log 9
 all process exits due to signals which create a
 .Xr core 5
 file, and whether the coredump was created.
-.It Li kern.mapped_files ( KERN_MAPPED_FILES )
+.It Li kern.mapped_files ( Dv KERN_MAPPED_FILES )
 Returns 1 if the
 .St -p1003.1b-93
 Memory Mapped Files Option is available on this system,
 otherwise\ 0.
-.It Li kern.maxfiles ( KERN_MAXFILES )
+.It Li kern.maxfiles ( Dv KERN_MAXFILES )
 The maximum number of open files that may be open in the system.
-.It Li kern.maxpartitions ( KERN_MAXPARTITIONS )
+.It Li kern.maxpartitions ( Dv KERN_MAXPARTITIONS )
 The maximum number of partitions allowed per disk.
 .It Li kern.maxlwp
 The maximum number of Lightweight Processes (threads) the system allows
 per uid.
-.It Li kern.maxphys ( KERN_MAXPHYS )
+.It Li kern.maxphys ( Dv KERN_MAXPHYS )
 Maximum raw I/O transfer size.
-.It Li kern.maxproc ( KERN_MAXPROC )
+.It Li kern.maxproc ( Dv KERN_MAXPROC )
 The maximum number of simultaneous processes the system will allow.
-.It Li kern.maxptys ( KERN_MAXPTYS )
+.It Li kern.maxptys ( Dv KERN_MAXPTYS )
 The maximum number of pseudo terminals.
 This value can be both raised and lowered, though it cannot
 be set lower than number of currently used ptys.
 See also
 .Xr pty 4 .
-.It Li kern.maxvnodes ( KERN_MAXVNODES )
+.It Li kern.maxvnodes ( Dv KERN_MAXVNODES )
 The maximum number of vnodes available on the system.
 This can only be raised.
-.It Li kern.mbuf ( KERN_MBUF )
+.It Li kern.mbuf ( Dv KERN_MBUF )
 Return information about the mbuf control variables.
 Mbufs are data structures which store network packets and other data
 structures in the networking code, see
@@ -711,30 +711,30 @@ privilege may change the value.
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Li kern.mbuf.mblowat ( MBUF_MBLOWAT )
+.It Li kern.mbuf.mblowat ( Dv MBUF_MBLOWAT )
 The mbuf low water mark.
-.It Li kern.mbuf.mclbytes ( MBUF_MCLBYTES )
+.It Li kern.mbuf.mclbytes ( Dv MBUF_MCLBYTES )
 The mbuf cluster size.
-.It Li kern.mbuf.mcllowat ( MBUF_MCLLOWAT )
+.It Li kern.mbuf.mcllowat ( Dv MBUF_MCLLOWAT )
 The mbuf cluster low water mark.
-.It Li kern.mbuf.msize ( MBUF_MSIZE )
+.It Li kern.mbuf.msize ( Dv MBUF_MSIZE )
 The mbuf base size.
-.It Li kern.mbuf.nmbclusters ( MBUF_NMBCLUSTERS )
+.It Li kern.mbuf.nmbclusters ( Dv MBUF_NMBCLUSTERS )
 The limit on the number of mbuf clusters.
 The variable can only be increased, and only increased on machines with
 direct-mapped pool pages.
 .El
-.It Li kern.memlock ( KERN_MEMLOCK )
+.It Li kern.memlock ( Dv KERN_MEMLOCK )
 Returns 1 if the
 .St -p1003.1b-93
 Process Memory Locking Option is available on this system,
 otherwise\ 0.
-.It Li kern.memlock_range ( KERN_MEMLOCK_RANGE )
+.It Li kern.memlock_range ( Dv KERN_MEMLOCK_RANGE )
 Returns 1 if the
 .St -p1003.1b-93
 Range Memory Locking Option is available on this system,
 otherwise\ 0.
-.It Li kern.memory_protection ( KERN_MEMORY_PROTECTION )
+.It Li kern.memory_protection ( Dv KERN_MEMORY_PROTECTION )
 Returns 1 if the
 .St -p1003.1b-93
 Memory Protection Option is available on this system,
@@ -764,7 +764,7 @@ Setting this value to zero disables the auto-unload function.
 A boolean that enables or disables verbose
 debug messages related to kernel modules.
 .El
-.It Li kern.monotonic_clock ( KERN_MONOTONIC_CLOCK )
+.It Li kern.monotonic_clock ( Dv KERN_MONOTONIC_CLOCK )
 Returns the standard version the implementation of the
 .St -p1003.1b-93
 Monotonic Clock Option conforms to,
@@ -799,32 +799,32 @@ The default maximum message count.
 .It Li kern.mqueue.mq_max_maxmsg
 The maximum number of messages in a message queue.
 .El
-.It Li kern.msgbuf ( KERN_MSGBUF )
+.It Li kern.msgbuf ( Dv KERN_MSGBUF )
 The kernel message buffer, rotated so that the head of the circular kernel
 message buffer is at the start of the returned data.
 The returned data may contain NUL bytes.
-.It Li kern.msgbufsize ( KERN_MSGBUFSIZE )
+.It Li kern.msgbufsize ( Dv KERN_MSGBUFSIZE )
 The maximum number of characters that the kernel message buffer can hold.
-.It Li kern.ngroups ( KERN_NGROUPS )
+.It Li kern.ngroups ( Dv KERN_NGROUPS )
 The maximum number of supplemental groups.
 .\" .It Li kern.no_sa_support
 .\" XXX: Undocumented.
-.It Li kern.ntptime ( KERN_NTPTIME )
+.It Li kern.ntptime ( Dv KERN_NTPTIME )
 A
 .Vt struct ntptimeval
 structure is returned.
 This structure contains data used by the
 .Xr ntpd 8
 program.
-.It Li kern.osrelease ( KERN_OSRELEASE )
+.It Li kern.osrelease ( Dv KERN_OSRELEASE )
 The system release string.
-.It Li kern.osrevision ( KERN_OSREV )
+.It Li kern.osrevision ( Dv KERN_OSREV )
 The system revision string.
-.It Li kern.ostype ( KERN_OSTYPE )
+.It Li kern.ostype ( Dv KERN_OSTYPE )
 The system type string.
 .\".It Li kern.panic_now
 .\" XXX: Undocumented.
-.It Li kern.pipe ( KERN_PIPE )
+.It Li kern.pipe ( Dv KERN_PIPE )
 Pipe settings.
 The third level names for the  integer pipe settings is detailed below.
 The changeable column shows whether a process with appropriate
@@ -840,17 +840,17 @@ privilege may change the value.
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Li kern.pipe.kvasiz ( KERN_PIPE_KVASIZ )
+.It Li kern.pipe.kvasiz ( Dv KERN_PIPE_KVASIZ )
 Amount of kernel memory consumed by pipe buffers.
-.It Li kern.pipe.maxbigpipes ( KERN_PIPE_MAXBIGPIPES )
+.It Li kern.pipe.maxbigpipes ( Dv KERN_PIPE_MAXBIGPIPES )
 Maximum number of
 .Dq big
 pipes.
-.It Li kern.pipe.maxkvasz ( KERN_PIPE_MAXKVASZ )
+.It Li kern.pipe.maxkvasz ( Dv KERN_PIPE_MAXKVASZ )
 Maximum amount of kernel memory to be used for pipes.
-.It Li kern.pipe.limitkva ( KERN_PIPE_LIMITKVA )
+.It Li kern.pipe.limitkva ( Dv KERN_PIPE_LIMITKVA )
 Limit for direct transfers via page loan.
-.It Li kern.pipe.nbigpipes ( KERN_PIPE_NBIGPIPES )
+.It Li kern.pipe.nbigpipes ( Dv KERN_PIPE_NBIGPIPES )
 Number of
 .Dq big
 pipes.
@@ -863,7 +863,7 @@ and
 subsystems.
 .\" XXX: Undocumented .It Li kern.posix ( ? )
 .\"	 This is a node in which the only variable is semmax.
-.It Li kern.posix1version ( KERN_POSIX1 )
+.It Li kern.posix1version ( Dv KERN_POSIX1 )
 The version of ISO/IEC 9945
 .Pq St -p1003.1
 with which the system attempts to comply.
@@ -871,14 +871,14 @@ with which the system attempts to comply.
 The version of
 .St -p1003.1
 and its Asynchronous I/O option to which the system attempts to conform.
-.It Li kern.posix_barriers ( KERN_POSIX_BARRIERS )
+.It Li kern.posix_barriers ( Dv KERN_POSIX_BARRIERS )
 The version of
 .St -p1003.1
 and its
 Barriers
 option to which the system attempts to conform,
 otherwise\ 0.
-.It Li kern.posix_reader_writer_locks ( KERN_POSIX_READER_WRITER_LOCKS )
+.It Li kern.posix_reader_writer_locks ( Dv KERN_POSIX_READER_WRITER_LOCKS )
 The version of
 .St -p1003.1
 and its
@@ -887,35 +887,35 @@ option to which the system attempts to conform,
 otherwise\ 0.
 .\".It Li kern.posix_sched
 .\" XXX: Undocumented.
-.It Li kern.posix_semaphores ( KERN_POSIX_SEMAPHORES )
+.It Li kern.posix_semaphores ( Dv KERN_POSIX_SEMAPHORES )
 The version of
 .St -p1003.1
 and its
 Semaphores
 option to which the system attempts to conform,
 otherwise\ 0.
-.It Li kern.posix_spin_locks ( KERN_POSIX_SPIN_LOCKS )
+.It Li kern.posix_spin_locks ( Dv KERN_POSIX_SPIN_LOCKS )
 The version of
 .St -p1003.1
 and its
 Spin Locks
 option to which the system attempts to conform,
 otherwise\ 0.
-.It Li kern.posix_threads ( KERN_POSIX_THREADS )
+.It Li kern.posix_threads ( Dv KERN_POSIX_THREADS )
 The version of
 .St -p1003.1
 and its
 Threads
 option to which the system attempts to conform,
 otherwise\ 0.
-.It Li kern.posix_timers ( KERN_POSIX_TIMERS )
+.It Li kern.posix_timers ( Dv KERN_POSIX_TIMERS )
 The version of
 .St -p1003.1
 and its
 Timers
 option to which the system attempts to conform,
 otherwise\ 0.
-.It Li kern.proc ( KERN_PROC )
+.It Li kern.proc ( Dv KERN_PROC )
 Return the entire process table, or a subset of it.
 An array of
 .Vt struct kinfo_proc
@@ -934,7 +934,7 @@ The third and fourth level numeric names are as follows:
 .It KERN_PROC_TTY	A tty device
 .It KERN_PROC_UID	A user ID
 .El
-.It Li kern.proc2 ( KERN_PROC2 )
+.It Li kern.proc2 ( Dv KERN_PROC2 )
 As for
 .Dv KERN_PROC ,
 but an array of
@@ -943,7 +943,7 @@ structures are returned.
 The fifth level name is the size of the
 .Vt struct kinfo_proc2
 and the sixth level name is the number of structures to return.
-.It Li kern.proc_args ( KERN_PROC_ARGS )
+.It Li kern.proc_args ( Dv KERN_PROC_ARGS )
 Return the argv or environment strings (or the number thereof)
 of a process.
 Multiple strings are returned separated by NUL characters.
@@ -955,7 +955,7 @@ The fourth level name is as follows:
 .It KERN_PROC_NARGV	The number of argv strings
 .It KERN_PROC_NENV	The number of environ strings
 .El
-.It Li kern.profiling ( KERN_PROF )
+.It Li kern.profiling ( Dv KERN_PROF )
 Return profiling information about the kernel.
 If the kernel is not compiled for profiling,
 attempts to retrieve any of the
@@ -977,13 +977,13 @@ privilege may change the value.
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Li kern.profiling.count ( GPROF_COUNT )
+.It Li kern.profiling.count ( Dv GPROF_COUNT )
 Array of statistical program counter counts.
-.It Li kern.profiling.froms ( GPROF_FROMS )
+.It Li kern.profiling.froms ( Dv GPROF_FROMS )
 Array indexed by program counter of call-from points.
-.It Li kern.profiling.gmonparams ( GPROF_GMONPARAM )
+.It Li kern.profiling.gmonparams ( Dv GPROF_GMONPARAM )
 Structure giving the sizes of the above arrays.
-.It Li kern.profiling.state ( GPROF_STATE )
+.It Li kern.profiling.state ( Dv GPROF_STATE )
 Profiling state.
 If set to
 .Dv GMON_PROF_ON ,
@@ -991,36 +991,36 @@ starts profiling.
 If set to
 .Dv GMON_PROF_OFF ,
 stops profiling.
-.It Li kern.profiling.tos ( GPROF_TOS )
+.It Li kern.profiling.tos ( Dv GPROF_TOS )
 Array of
 .Vt struct tostruct
 describing destination of calls and their counts.
 .El
 .\" .It Li kern.pset
 .\" XXX: Undocumented.
-.It Li kern.rawpartition ( KERN_RAWPARTITION )
+.It Li kern.rawpartition ( Dv KERN_RAWPARTITION )
 The raw partition of a disk (a == 0).
-.It Li kern.root_device ( KERN_ROOT_DEVICE )
+.It Li kern.root_device ( Dv KERN_ROOT_DEVICE )
 The name of the root device (e.g.,
 .Dq wd0 ) .
-.It Li kern.root_partition ( KERN_ROOT_PARTITION )
+.It Li kern.root_partition ( Dv KERN_ROOT_PARTITION )
 The root partition on the root device (a == 0).
-.It Li kern.rtc_offset ( KERN_RTC_OFFSET )
+.It Li kern.rtc_offset ( Dv KERN_RTC_OFFSET )
 Return the offset of real time clock from UTC in minutes.
-.It Li kern.saved_ids ( KERN_SAVED_IDS )
+.It Li kern.saved_ids ( Dv KERN_SAVED_IDS )
 Returns 1 if saved set-group and saved set-user ID is available.
-.It Li kern.sbmax ( KERN_SBMAX )
+.It Li kern.sbmax ( Dv KERN_SBMAX )
 Maximum socket buffer size.
 .\" XXX units?
-.It Li kern.securelevel ( KERN_SECURELVL )
+.It Li kern.securelevel ( Dv KERN_SECURELVL )
 See
 .Xr secmodel_securelevel 9 .
 .\" .It Li kern.sched
 .\" XXX: Undocumented.
-.It Li kern.somaxkva ( KERN_SOMAXKVA )
+.It Li kern.somaxkva ( Dv KERN_SOMAXKVA )
 Maximum amount of kernel memory to be used for socket buffers.
 .\" XXX units?
-.It Li kern.synchronized_io ( KERN_SYNCHRONIZED_IO )
+.It Li kern.synchronized_io ( Dv KERN_SYNCHRONIZED_IO )
 Returns 1 if the
 .St -p1003.1b-93
 Synchronized I/O Option is available on this system,
@@ -1043,9 +1043,9 @@ The currently selected timecounter source.
 .It Li kern.timecounter.timestepwarnings ( dynamic )
 If non-zero display a message each time the time is stepped.
 .El
-.It Li kern.timex ( KERN_TIMEX )
+.It Li kern.timex ( Dv KERN_TIMEX )
 Not available.
-.It Li kern.tkstat ( KERN_TKSTAT )
+.It Li kern.tkstat ( Dv KERN_TKSTAT )
 Return information about the number of characters sent and received
 on ttys.
 The third level names for the tty statistic variables are detailed below.
@@ -1061,13 +1061,13 @@ with appropriate privilege may change the value.
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Li kern.tkstat.cancc ( KERN_TKSTAT_CANCC )
+.It Li kern.tkstat.cancc ( Dv KERN_TKSTAT_CANCC )
 The number of canonical input characters.
-.It Li kern.tkstat.nin ( KERN_TKSTAT_NIN )
+.It Li kern.tkstat.nin ( Dv KERN_TKSTAT_NIN )
 The total number of input characters.
-.It Li kern.tkstat.nout ( KERN_TKSTAT_NOUT )
+.It Li kern.tkstat.nout ( Dv KERN_TKSTAT_NOUT )
 The total number of output characters.
-.It Li kern.tkstat.rawcc ( KERN_TKSTAT_RAWCC )
+.It Li kern.tkstat.rawcc ( Dv KERN_TKSTAT_RAWCC )
 The number of raw input characters.
 .El
 .It Li kern.tty
@@ -1109,7 +1109,7 @@ Number of locks held by the current user.
 .It Li kern.uidinfo.sbsize
 Number of bytes in socket buffers allocated to the current user.
 .El
-.It Li kern.urandom ( KERN_URND )
+.It Li kern.urandom ( Dv KERN_URND )
 Random integer value.
 .It Li kern.usercrypto
 When enabled, allows userland to
@@ -1158,9 +1158,9 @@ If 1, more messages will be printed (ie., when a file with a valid
 fingerprint is accessed).
 Verbose level 2 is debug mode.
 .El
-.It Li kern.version ( KERN_VERSION )
+.It Li kern.version ( Dv KERN_VERSION )
 The system version string.
-.It Li kern.vnode ( KERN_VNODE )
+.It Li kern.vnode ( Dv KERN_VNODE )
 Return the entire vnode table.
 Note, the vnode table is not necessarily a consistent snapshot of
 the system.
@@ -1196,7 +1196,7 @@ protocol number, though this is not always the case.
 .It net.key	IPsec key management values	yes
 .El
 .Bl -tag -width "123456"
-.It Li net.route ( PF_ROUTE )
+.It Li net.route ( Dv PF_ROUTE )
 .\" XXX really?
 Return the entire routing table or a subset of it.
 The data is returned as a sequence of routing messages (see
@@ -1214,7 +1214,7 @@ The fifth and sixth level names are as follows:
 .It NET_RT_DUMP	None
 .It NET_RT_IFLIST	None
 .El
-.It Li net.inet ( PF_INET )
+.It Li net.inet ( Dv PF_INET )
 Get or set various global information about the IPv4
 .Pq Internet Protocol version 4 .
 The third level name is the protocol.
@@ -1596,7 +1596,7 @@ The default UDP send buffer size.
 .Pp
 For variables net.*.ipsec, please refer to
 .Xr ipsec 4 .
-.It Li net.inet6 ( PF_INET6 )
+.It Li net.inet6 ( Dv PF_INET6 )
 Get or set various global information about the IPv6
 .Pq Internet Protocol version 6 .
 The third level name is the protocol.
@@ -1894,7 +1894,7 @@ Please refer to
 section above.
 For variables net.*.ipsec6, please refer to
 .Xr ipsec 4 .
-.It Li net.key ( PF_KEY )
+.It Li net.key ( Dv PF_KEY )
 Get or set various global information about the IPsec key management.
 The third level name is the variable name.
 The currently defined variable and names are:
@@ -1987,7 +1987,7 @@ points to the current process, or the PID of the target process.
 .It proc.pid.stopexit	int	yes
 .El
 .Bl -tag -width "123456"
-.It Li proc.pid.corename ( PROC_PID_CORENAME )
+.It Li proc.pid.corename ( Dv PROC_PID_CORENAME )
 The template used for the core dump file name (see
 .Xr core 5
 for details).
@@ -1998,7 +1998,7 @@ or end with the suffix
 (the super-user may set arbitrary names).
 By default it points to
 .Dv KERN_DEFCORENAME .
-.It Li proc.pid.rlimit ( PROC_PID_LIMIT )
+.It Li proc.pid.rlimit ( Dv PROC_PID_LIMIT )
 Return resources limits, as defined for the
 .Xr getrlimit 2
 and
@@ -2006,39 +2006,39 @@ and
 system calls.
 The fourth level name is one of:
 .Bl -tag -width "123456"
-.It Li proc.pid.rlimit.cputime ( PROC_PID_LIMIT_CPU )
+.It Li proc.pid.rlimit.cputime ( Dv PROC_PID_LIMIT_CPU )
 The maximum amount of CPU time (in seconds) to be used by each process.
-.It Li proc.pid.rlimit.filesize ( PROC_PID_LIMIT_FSIZE )
+.It Li proc.pid.rlimit.filesize ( Dv PROC_PID_LIMIT_FSIZE )
 The largest size (in bytes) file that may be created.
-.It Li proc.pid.rlimit.datasize ( PROC_PID_LIMIT_DATA )
+.It Li proc.pid.rlimit.datasize ( Dv PROC_PID_LIMIT_DATA )
 The maximum size (in bytes) of the data segment for a process;
 this defines how far a program may extend its break with the
 .Xr sbrk 2
 system call.
-.It Li proc.pid.rlimit.stacksize ( PROC_PID_LIMIT_STACK )
+.It Li proc.pid.rlimit.stacksize ( Dv PROC_PID_LIMIT_STACK )
 The maximum size (in bytes) of the stack segment for a process;
 this defines how far a program's stack segment may be extended.
 Stack extension is performed automatically by the system.
-.It Li proc.pid.rlimit.coredumpsize ( PROC_PID_LIMIT_CORE )
+.It Li proc.pid.rlimit.coredumpsize ( Dv PROC_PID_LIMIT_CORE )
 The largest size (in bytes)
 .Pa core
 file that may be created.
-.It Li proc.pid.rlimit.memoryuse ( PROC_PID_LIMIT_RSS )
+.It Li proc.pid.rlimit.memoryuse ( Dv PROC_PID_LIMIT_RSS )
 The maximum size (in bytes) to which a process's resident set size may
 grow.
 This imposes a limit on the amount of physical memory to be given to
 a process; if memory is tight, the system will prefer to take memory
 from processes that are exceeding their declared resident set size.
-.It Li proc.pid.rlimit.memorylocked ( PROC_PID_LIMIT_MEMLOCK )
+.It Li proc.pid.rlimit.memorylocked ( Dv PROC_PID_LIMIT_MEMLOCK )
 The maximum size (in bytes) which a process may lock into memory
 using the
 .Xr mlock 2
 function.
-.It Li proc.pid.rlimit.maxproc ( PROC_PID_LIMIT_NPROC )
+.It Li proc.pid.rlimit.maxproc ( Dv PROC_PID_LIMIT_NPROC )
 The maximum number of simultaneous processes for this user id.
-.It Li proc.pid.rlimit.descriptors ( PROC_PID_LIMIT_NOFILE )
+.It Li proc.pid.rlimit.descriptors ( Dv PROC_PID_LIMIT_NOFILE )
 The maximum number of open files for this process.
-.It Li proc.pid.rlimit.sbsize ( PROC_PID_LIMIT_SBSIZE )
+.It Li proc.pid.rlimit.sbsize ( Dv PROC_PID_LIMIT_SBSIZE )
 The maximum size (in bytes) of the socket buffers
 set by the
 .Xr setsockopt 2
@@ -2046,21 +2046,21 @@ set by the
 and
 .Dv SO_SNDBUF
 options.
-.It Li proc.pid.rlimit.vmemoryuse ( PROC_PID_LIMIT_AS )
+.It Li proc.pid.rlimit.vmemoryuse ( Dv PROC_PID_LIMIT_AS )
 The maximum size (in bytes) which a process can obtain.
-.It Li proc.pid.rlimit.maxlwp ( PROC_PID_LIMIT_NTHR )
+.It Li proc.pid.rlimit.maxlwp ( Dv PROC_PID_LIMIT_NTHR )
 The maximum number of threads that cen be created and running at one time in
 the process.
 The first thread of each process is not counted against this.
 .El
 .Pp
 The fifth level name is one of
-.Li soft ( PROC_PID_LIMIT_TYPE_SOFT )
+.Li soft ( Dv PROC_PID_LIMIT_TYPE_SOFT )
 or
-.Li hard ( PROC_PID_LIMIT_TYPE_HARD ) ,
+.Li hard ( Dv PROC_PID_LIMIT_TYPE_HARD ) ,
 to select respectively the soft or hard limit.
 Both are of type integer.
-.It Li proc.pid.stopfork ( PROC_PID_STOPFORK )
+.It Li proc.pid.stopfork ( Dv PROC_PID_STOPFORK )
 If non zero, the process' children will be stopped after
 .Xr fork 2
 calls.
@@ -2075,7 +2075,7 @@ apply to emulation specific system calls that fork a new process, such as
 .Fn sproc
 or
 .Fn clone .
-.It Li proc.pid.stopexec ( PROC_PID_STOPEXEC )
+.It Li proc.pid.stopexec ( Dv PROC_PID_STOPEXEC )
 If non zero, the process will be stopped on next
 .Xr exec 3
 call.
@@ -2088,7 +2088,7 @@ This feature helps attaching a process with a debugger such as
 before it had the opportunity to actually do anything.
 .Pp
 This value is inherited by the process's children.
-.It Li proc.pid.stopexit ( PROC_PID_STOPEXIT )
+.It Li proc.pid.stopexit ( Dv PROC_PID_STOPEXIT )
 If non zero, the process will be stopped on when it has cause to exit,
 either by way of calling
 .Xr exit 3 ,
@@ -2106,7 +2106,7 @@ before it disappears.
 .Pp
 This value is also inherited by the process's children.
 .El
-.Ss The user.* subtree ( CTL_USER )
+.Ss The user.* subtree ( Dv CTL_USER )
 The string and integer information available for the
 .Li user
 level is detailed below.
@@ -2138,80 +2138,80 @@ privilege may change the value.
 .It user.tzname_max	integer	no
 .El
 .Bl -tag -width "123456"
-.It Li user.atexit_max ( USER_ATEXIT_MAX )
+.It Li user.atexit_max ( Dv USER_ATEXIT_MAX )
 The maximum number of functions that may be registered with
 .Xr atexit 3 .
-.It Li user.bc_base_max ( USER_BC_BASE_MAX )
+.It Li user.bc_base_max ( Dv USER_BC_BASE_MAX )
 The maximum ibase/obase values in the
 .Xr bc 1
 utility.
-.It Li user.bc_dim_max ( USER_BC_DIM_MAX )
+.It Li user.bc_dim_max ( Dv USER_BC_DIM_MAX )
 The maximum array size in the
 .Xr bc 1
 utility.
-.It Li user.bc_scale_max ( USER_BC_SCALE_MAX )
+.It Li user.bc_scale_max ( Dv USER_BC_SCALE_MAX )
 The maximum scale value in the
 .Xr bc 1
 utility.
-.It Li user.bc_string_max ( USER_BC_STRING_MAX )
+.It Li user.bc_string_max ( Dv USER_BC_STRING_MAX )
 The maximum string length in the
 .Xr bc 1
 utility.
-.It Li user.coll_weights_max ( USER_COLL_WEIGHTS_MAX )
+.It Li user.coll_weights_max ( Dv USER_COLL_WEIGHTS_MAX )
 The maximum number of weights that can be assigned to any entry of
 the LC_COLLATE order keyword in the locale definition file.
 .It Li user.cs_path ( USER_CS_PATH )
 Return a value for the
 .Ev PATH
 environment variable that finds all the standard utilities.
-.It Li user.expr_nest_max ( USER_EXPR_NEST_MAX )
+.It Li user.expr_nest_max ( Dv USER_EXPR_NEST_MAX )
 The maximum number of expressions that can be nested within
 parenthesis by the
 .Xr expr 1
 utility.
-.It Li user.line_max ( USER_LINE_MAX )
+.It Li user.line_max ( Dv USER_LINE_MAX )
 The maximum length in bytes of a text-processing utility's input
 line.
-.It Li user.posix2_char_term ( USER_POSIX2_CHAR_TERM )
+.It Li user.posix2_char_term ( Dv USER_POSIX2_CHAR_TERM )
 Return 1 if the system supports at least one terminal type capable of
 all operations described in
 .St -p1003.2 ,
 otherwise\ 0.
-.It Li user.posix2_c_bind ( USER_POSIX2_C_BIND )
+.It Li user.posix2_c_bind ( Dv USER_POSIX2_C_BIND )
 Return 1 if the system's C-language development facilities support the
 C-Language Bindings Option, otherwise\ 0.
-.It Li user.posix2_c_dev ( USER_POSIX2_C_DEV )
+.It Li user.posix2_c_dev ( Dv USER_POSIX2_C_DEV )
 Return 1 if the system supports the C-Language Development Utilities Option,
 otherwise\ 0.
-.It Li user.posix2_fort_dev ( USER_POSIX2_FORT_DEV )
+.It Li user.posix2_fort_dev ( Dv USER_POSIX2_FORT_DEV )
 Return 1 if the system supports the FORTRAN Development Utilities Option,
 otherwise\ 0.
-.It Li user.posix2_fort_run ( USER_POSIX2_FORT_RUN )
+.It Li user.posix2_fort_run ( Dv USER_POSIX2_FORT_RUN )
 Return 1 if the system supports the FORTRAN Runtime Utilities Option,
 otherwise\ 0.
-.It Li user.posix2_localedef ( USER_POSIX2_LOCALEDEF )
+.It Li user.posix2_localedef ( Dv USER_POSIX2_LOCALEDEF )
 Return 1 if the system supports the creation of locales, otherwise\ 0.
-.It Li user.posix2_sw_dev ( USER_POSIX2_SW_DEV )
+.It Li user.posix2_sw_dev ( Dv USER_POSIX2_SW_DEV )
 Return 1 if the system supports the Software Development Utilities Option,
 otherwise\ 0.
-.It Li user.posix2_upe ( USER_POSIX2_UPE )
+.It Li user.posix2_upe ( Dv USER_POSIX2_UPE )
 Return 1 if the system supports the User Portability Utilities Option,
 otherwise\ 0.
-.It Li user.posix2_version ( USER_POSIX2_VERSION )
+.It Li user.posix2_version ( Dv USER_POSIX2_VERSION )
 The version of
 .St -p1003.2
 with which the system attempts to comply.
-.It Li user.re_dup_max ( USER_RE_DUP_MAX )
+.It Li user.re_dup_max ( Dv USER_RE_DUP_MAX )
 The maximum number of repeated occurrences of a regular expression
 permitted when using interval notation.
-.It Li user.stream_max ( USER_STREAM_MAX )
+.It Li user.stream_max ( Dv USER_STREAM_MAX )
 The minimum maximum number of streams that a process may have open
 at any one time.
-.It Li user.tzname_max ( USER_TZNAME_MAX )
+.It Li user.tzname_max ( Dv USER_TZNAME_MAX )
 The minimum maximum number of types supported for the name of a
 timezone.
 .El
-.Ss The vm.* subtree ( CTL_VM )
+.Ss The vm.* subtree ( Dv CTL_VM )
 The string and integer information available for the
 .Li vm
 level is detailed below.
@@ -2238,60 +2238,60 @@ privilege may change the value.
 .It vm.vmmeter	struct vmtotal	no
 .El
 .Bl -tag -width "123456"
-.It Li vm.anonmax ( VM_ANONMAX )
+.It Li vm.anonmax ( Dv VM_ANONMAX )
 The percentage of physical memory which will be reclaimed
 from other types of memory usage to store anonymous application data.
-.It Li vm.anonmin ( VM_ANONMIN )
+.It Li vm.anonmin ( Dv VM_ANONMIN )
 The percentage of physical memory which will be always be available for
 anonymous application data.
-.It Li vm.bufcache ( VM_BUFCACHE )
+.It Li vm.bufcache ( Dv VM_BUFCACHE )
 The percentage of physical memory which will be available
 for the buffer cache.
-.It Li vm.bufmem ( VM_BUFMEM )
+.It Li vm.bufmem ( Dv VM_BUFMEM )
 The amount of kernel memory that is being used by the buffer cache.
-.It Li vm.bufmem_lowater ( VM_BUFMEM_LOWATER )
+.It Li vm.bufmem_lowater ( Dv VM_BUFMEM_LOWATER )
 The minimum amount of kernel memory to reserve for the
 buffer cache.
-.It Li vm.bufmem_hiwater ( VM_BUFMEM_HIWATER )
+.It Li vm.bufmem_hiwater ( Dv VM_BUFMEM_HIWATER )
 The maximum amount of kernel memory to be used for the
 buffer cache.
-.It Li vm.execmax ( VM_EXECMAX )
+.It Li vm.execmax ( Dv VM_EXECMAX )
 The percentage of physical memory which will be reclaimed
 from other types of memory usage to store cached executable data.
-.It Li vm.execmin ( VM_EXECMIN )
+.It Li vm.execmin ( Dv VM_EXECMIN )
 The percentage of physical memory which will be always be available for
 cached executable data.
-.It Li vm.filemax ( VM_FILEMAX )
+.It Li vm.filemax ( Dv VM_FILEMAX )
 The percentage of physical memory which will be reclaimed
 from other types of memory usage to store cached file data.
-.It Li vm.filemin ( VM_FILEMIN )
+.It Li vm.filemin ( Dv VM_FILEMIN )
 The percentage of physical memory which will be always be available for
 cached file data.
-.It Li vm.loadavg ( VM_LOADAVG )
+.It Li vm.loadavg ( Dv VM_LOADAVG )
 Return the load average history.
 The returned data consists of a
 .Vt struct loadavg .
-.It Li vm.maxslp ( VM_MAXSLP )
+.It Li vm.maxslp ( Dv VM_MAXSLP )
 The value of the maxslp kernel global variable.
-.It Li vm.vmmeter ( VM_METER )
+.It Li vm.vmmeter ( Dv VM_METER )
 Return system wide virtual memory statistics.
 The returned data consists of a
 .Vt struct vmtotal .
 .It vm.user_va0_disable
 A flag which controls whether user processes can map virtual address\ 0.
-.It Li vm.uspace ( VM_USPACE )
+.It Li vm.uspace ( Dv VM_USPACE )
 The number of bytes allocated for each kernel stack.
-.It Li vm.uvmexp ( VM_UVMEXP )
+.It Li vm.uvmexp ( Dv VM_UVMEXP )
 Return system wide virtual memory statistics.
 The returned data consists of a
 .Vt struct uvmexp .
-.It Li vm.uvmexp2 ( VM_UVMEXP2 )
+.It Li vm.uvmexp2 ( Dv VM_UVMEXP2 )
 Return system wide virtual memory statistics.
 The returned data consists of a
 .Vt struct uvmexp_sysctl .
 .\" XXX vm.idlezero
 .El
-.Ss The ddb.* subtree ( CTL_DDB )
+.Ss The ddb.* subtree ( Dv CTL_DDB )
 The information available for the
 .Li ddb
 level is detailed below.
@@ -2311,24 +2311,24 @@ privilege may change the value.
 .It ddb.commandonenter	string	yes
 .El
 .Bl -tag -width "123456"
-.It Li ddb.radix ( DDBCTL_RADIX )
+.It Li ddb.radix ( Dv DDBCTL_RADIX )
 The input and output radix.
-.It Li ddb.maxoff ( DDBCTL_MAXOFF )
+.It Li ddb.maxoff ( Dv DDBCTL_MAXOFF )
 The maximum symbol offset.
-.It Li ddb.maxwidth ( DDBCTL_MAXWIDTH )
+.It Li ddb.maxwidth ( Dv DDBCTL_MAXWIDTH )
 The maximum output line width.
-.It Li ddb.lines ( DDBCTL_LINES )
+.It Li ddb.lines ( Dv DDBCTL_LINES )
 Number of display lines.
-.It Li ddb.tabstops ( DDBCTL_TABSTOPS )
+.It Li ddb.tabstops ( Dv DDBCTL_TABSTOPS )
 Tab width.
-.It Li ddb.onpanic ( DDBCTL_ONPANIC )
+.It Li ddb.onpanic ( Dv DDBCTL_ONPANIC )
 If greater than zero, DDB will be entered if the kernel panics.
 A value of 1 causes the system to enter DDB on panic, while a value of 2
 causes the kernel to attempt to print out a stack trace before entering DDB.
 A value of 0 causes the kernel to attempt to print a stack trace, then
 reboot, while a value of \-1 means neither a stack trace will be printed
 nor DDB entered.
-.It Li ddb.fromconsole ( DDBCTL_FROMCONSOLE )
+.It Li ddb.fromconsole ( Dv DDBCTL_FROMCONSOLE )
 If not zero, DDB may be entered by sending a break on a serial
 console or by a special key sequence on a graphics console.
 .It Li ddb.tee_msgbuf
@@ -2347,7 +2347,7 @@ nodes are also available as variables from within the debugger.
 See
 .Xr ddb 4
 for more details.
-.Ss The security.* subtree ( CTL_SECURITY )
+.Ss The security.* subtree ( Dv CTL_SECURITY )
 The
 .Li security
 level contains various security-related settings for
@@ -2487,7 +2487,7 @@ Number of seconds to suspend a user from running a faulting program when the
 limit was exceeded.
 .El
 .El
-.Ss The vendor.* subtree ( CTL_VENDOR )
+.Ss The vendor.* subtree ( Dv CTL_VENDOR )
 The
 .Li vendor
 toplevel name is reserved to be used by vendors who wish to
