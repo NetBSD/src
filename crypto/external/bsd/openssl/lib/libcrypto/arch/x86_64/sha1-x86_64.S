@@ -6,10 +6,10 @@
 .type	sha1_block_data_order,@function
 .align	16
 sha1_block_data_order:
-	movl	OPENSSL_ia32cap_P+0@GOTPCREL(%rip),%r9d
-	movl	OPENSSL_ia32cap_P+4@GOTPCREL(%rip),%r8d
-	testl	$512,%r8d
-	jz	.Lialu
+	movq	OPENSSL_ia32cap_P+0@GOTPCREL(%rip),%r8
+	movl	4(%r8),%r8d
+	btl	$9,%r8d
+	jnc	.Lialu
 	jmp	_ssse3_shortcut
 
 .align	16
