@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.87 2015/05/27 07:52:02 matt Exp $
+.\"	$NetBSD: sysctl.7,v 1.88 2015/07/11 09:21:23 kamil Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2049,6 +2049,12 @@ set by the
 and
 .Dv SO_SNDBUF
 options.
+.It Li proc.pid.rlimit.vmemoryuse ( PROC_PID_LIMIT_AS )
+The maximum size (in bytes) which a process can obtain.
+.It Li proc.pid.rlimit.maxlwp ( PROC_PID_LIMIT_NTHR )
+The maximum number of threads that cen be created and running at one time in
+the process.
+The first thread of each process is not counted against this.
 .El
 .Pp
 The fifth level name is one of
