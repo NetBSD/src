@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.63 2015/05/09 13:07:20 christos Exp $ */
+/* $NetBSD: dksubr.c,v 1.64 2015/07/11 09:45:16 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.63 2015/05/09 13:07:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.64 2015/07/11 09:45:16 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,10 +194,9 @@ dk_close(struct dk_softc *dksc, dev_t dev,
 	if (dk->dk_openmask == 0) {
 		if (dkd->d_lastclose != NULL)
 			(*dkd->d_lastclose)(dksc->sc_dev);
+		if ((dksc->sc_flags & DKF_KLABEL) == 0)
+			dksc->sc_flags &= ~DKF_VLABEL;
 	}
-
-	if ((dksc->sc_flags & DKF_KLABEL) == 0)
-		dksc->sc_flags &= ~DKF_VLABEL;
 
 	mutex_exit(&dk->dk_openlock);
 	return 0;
