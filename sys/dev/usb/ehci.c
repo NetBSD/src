@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.241 2015/07/02 09:05:06 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.242 2015/07/11 03:06:25 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.241 2015/07/02 09:05:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.242 2015/07/11 03:06:25 msaitoh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -421,7 +421,7 @@ ehci_init(ehci_softc_t *sc)
 
 	if (EHCI_HCC_64BIT(cparams)) {
 		/* MUST clear segment register if 64 bit capable. */
-		EWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
+		EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
 	}
 
 	sc->sc_bus.usbrev = USBREV_2_0;
@@ -452,10 +452,10 @@ ehci_init(ehci_softc_t *sc)
 	 * the controller to host mode.
 	 */
 	if (sc->sc_flags & EHCIF_ETTF) {
-		uint32_t usbmode = EREAD4(sc, EHCI_USBMODE);
+		uint32_t usbmode = EOREAD4(sc, EHCI_USBMODE);
 		usbmode &= ~EHCI_USBMODE_CM;
 		usbmode |= EHCI_USBMODE_CM_HOST;
-		EWRITE4(sc, EHCI_USBMODE, usbmode);
+		EOWRITE4(sc, EHCI_USBMODE, usbmode);
 	}
 
 	/* XXX need proper intr scheduling */
