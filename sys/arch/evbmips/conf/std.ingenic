@@ -1,4 +1,4 @@
-# $NetBSD: std.ingenic,v 1.1 2014/11/22 15:17:02 macallan Exp $
+# $NetBSD: std.ingenic,v 1.2 2015/07/11 19:01:17 macallan Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
@@ -12,4 +12,4 @@ makeoptions	BOARDTYPE="ingenic"
 
 include 	"arch/evbmips/conf/files.ingenic"
 include 	"arch/mips/conf/files.ingenic"
-
+include 	"dev/sdmmc/files.sdmmc"			# SD/MMC devices
