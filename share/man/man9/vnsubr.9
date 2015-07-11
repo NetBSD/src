@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.42 2014/02/27 16:51:37 hannken Exp $
+.\"     $NetBSD: vnsubr.9,v 1.43 2015/07/11 15:42:31 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -182,9 +182,9 @@ then perform the I/O.
 The argument
 .Fa rw
 specifies whether the I/O is a read
-.Pq Dv UIO_READ
+.Dv ( UIO_READ )
 or write
-.Pq Dv UIO_WRITE
+.Dv ( UIO_WRITE )
 operation.
 The vnode is specified by
 .Fa vp .
