@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.28 2013/06/29 08:14:31 wiz Exp $
+.\"	$NetBSD: login.conf.5,v 1.29 2015/07/11 09:21:23 kamil Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -269,6 +269,10 @@ Should always have a leading
 to assure octal interpretation.
 See
 .Xr umask 2 .
+.\"
+.sp
+.It Sy vmemoryuse Ta size Ta "" Ta
+Maximum virtual address space size in bytes.
 .\"
 .sp
 .It Sy welcome Ta file Ta Li /etc/motd Ta
