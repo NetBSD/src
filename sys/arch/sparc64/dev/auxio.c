@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.22 2011/06/02 00:24:23 christos Exp $	*/
+/*	$NetBSD: auxio.c,v 1.23 2015/07/11 10:32:46 kamil Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.22 2011/06/02 00:24:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.23 2015/07/11 10:32:46 kamil Exp $");
 
 #include "opt_auxio.h"
 
@@ -65,7 +65,7 @@ struct auxio_softc {
 	/* parent's tag */
 	bus_space_tag_t		sc_tag;
 
-	/* handles to the various auxio regsiter sets */
+	/* handles to the various auxio register sets */
 	bus_space_handle_t	sc_led;
 	bus_space_handle_t	sc_pci;
 	bus_space_handle_t	sc_freq;
