@@ -159,7 +159,7 @@ typedef struct
 
 
      /* RNG REGISTERS - RNG Buffer - RNH REGISTERS */
-     /* 64-bit regsisters in the RNG must be read/written using the Most */
+     /* 64-bit registers in the RNG must be read/written using the Most */
      /* Significant Word first, in order to access the full 64bit value. */
      vuint32_t rng_reserved0;                 /* C000 */
      vuint32_t rng_tod_seconds;               /* C004 */
@@ -256,5 +256,3 @@ typedef struct
 
 
 #endif /* NSP2000_REGS_H */
-
-
