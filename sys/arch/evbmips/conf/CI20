@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.13 2015/04/06 14:12:28 martin Exp $
+#	$NetBSD: CI20,v 1.14 2015/07/11 19:00:04 macallan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.13 $"
+#ident 		"CI20-$Revision: 1.14 $"
 
 maxusers	32
 
@@ -43,7 +43,7 @@ options 	NTP		# network time protocol
 
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
-options 	DEBUG		# extra kernel debugging support
+#options 	DEBUG		# extra kernel debugging support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -134,15 +134,19 @@ options 	NFS_BOOT_DHCP
 
 config		netbsd	root on sd0a type ffs
 #config		netbsd	root on axe0 type nfs
+#config		netbsd	root on dme0 type nfs
 
 mainbus0 	at root
 #options 	MULTIPROCESSOR
+
 cpu0 		at mainbus?
 #wdog0		at mainbus?
-com*		at mainbus?
 apbus0		at mainbus?
 
-# On-board USB
+# On-chip UARTs
+com*		at apbus?
+
+# On-chip USB
 dwctwo* 	at apbus?
 #options 	DWC2_DEBUG
 usb* 		at dwctwo?
@@ -150,17 +154,18 @@ usb* 		at dwctwo?
 ohci*		at apbus?
 usb* 		at ohci?
 
-# this one doesn't work yet
+# this one doesn't work right just yet
 #ehci*		at apbus?
+#options 	INGENIC_EHCI_DEBUG
+#options 	EHCI_DEBUG
+#options 	USBVERBOSE
+#options 	USBHIST
 #usb* 		at ehci?
 
 # onboard ethernet
 dme*		at apbus?
 
 # I2C/SMBus
-# Work in progress - can't do transfers over 15 bytes per direction,
-# no interrupts etc.
-# Good enough for talking to an RTC though, so it's enabled.
 jziic* 		at apbus?
 #options 	JZIIC_DEBUG	# spammy
 iic* 		at jziic?
@@ -181,6 +186,12 @@ pcf8563rtc0	at iic4 addr 0x51
 
 #jzgpio* 	at apbus? addr ?
 #gpio*		at jzgpio?
+
+# MSC / SDMMC - unfinished
+#jzmmc* 		at apbus?
+#options 	JZMMC_DEBUG
+#sdmmc* 		at jzmmc?
+#ld* 		at sdmmc?
 
 # USB stuff
 uhub*		at usb?
