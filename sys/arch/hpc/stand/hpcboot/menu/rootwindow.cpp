@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.22 2008/04/28 20:23:20 martin Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.23 2015/07/11 10:32:45 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -245,7 +245,7 @@ RootWindow::WMCreate(HWND w, LPCREATESTRUCT aux)
 	_progress_bar = new ProgressBar(_app, *this, rect);
 	_progress_bar->create(aux);
 
- 	// regsiter myself to menu
+ 	// register myself to menu
 	HpcMenuInterface::Instance()._root = this;
 
 	rect.top += _button_height;
