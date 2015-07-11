@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2015/06/30 02:39:03 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.9 2015/07/11 19:00:04 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2015/06/30 02:39:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2015/07/11 19:00:04 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,6 +242,7 @@ consinit(void)
 	 * Everything related to console initialization is done
 	 * in mach_init().
 	 */
+	apbus_init();
 	ingenic_com_cnattach();
 }
 
