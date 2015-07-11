@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.19 2015/05/29 18:47:13 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.20 2015/07/11 18:54:03 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -144,7 +144,7 @@ MFC0(uint32_t r, uint32_t s)
 #define CP0_CORE_CTRL	12	/* select 2 */
 	#define CC_SW_RST0	1	/* reset core 0 */
 	#define CC_SW_RST1	2	/* reset core 1 */
-	#define CC_RPC0		0x100	/* dedicater reset entry core 0 */
+	#define CC_RPC0		0x100	/* dedicated reset entry core 0 */
 	#define CC_RPC1		0x200	/* -- || -- core 1 */
 	#define CC_SLEEP0M	0x10000	/* mask sleep core 0 */
 	#define CC_SLEEP1M	0x20000	/* mask sleep core 1 */
@@ -316,14 +316,6 @@ MFC0(uint32_t r, uint32_t s)
 	#define MSCCDR_STOP	0x08000000
 	#define MSCCDR_PHASE	0x00008000	/* 0 - 90deg phase, 1 - 180 */
 	#define MSCCDR_DIV_M	0x000000ff	/* src / ((div + 1) * 2) */
-#define JZ_UHCCDR	0x1000006c	/* UHC Clock Divider Register */
-	#define UHCCDR_SCLK_A	0x00000000
-	#define UHCCDR_MPLL	0x40000000
-	#define UHCCDR_EPLL	0x80000000
-	#define UHCCDR_OTG_PHY	0xc0000000
-	#define UHCCDR_CE	0x20000000
-	#define UHCCDR_BUSY	0x10000000
-	#define UHCCDR_STOP	0x08000000
 	#define UHCCDR_DIV_M	0x000000ff
 #define JZ_MSC1CDR	0x100000a4
 #define JZ_MSC2CDR	0x100000a8
