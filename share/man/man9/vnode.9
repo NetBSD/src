@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.68 2015/04/20 19:36:55 riastradh Exp $
+.\"     $NetBSD: vnode.9,v 1.69 2015/07/12 08:11:27 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 20, 2015
+.Dd July 12, 2015
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -39,8 +39,11 @@
 .Nm vput ,
 .Nm vhold ,
 .Nm holdrele ,
-.Nm getnewvnode ,
-.Nm ungetnewvnode ,
+.Nm vcache_get ,
+.Nm vcache_new ,
+.Nm vcache_rekey_enter ,
+.Nm vcache_rekey_exit ,
+.Nm vcache_remove ,
 .Nm vrecycle ,
 .Nm vgone ,
 .Nm vgonel ,
@@ -75,10 +78,15 @@
 .Ft void
 .Fn holdrele "struct vnode *vp"
 .Ft int
-.Fn getnewvnode "enum vtagtype tag" "struct mount *mp" "int (**vops)(void *)" \
-"kmutex_t *slock" "struct vnode **vpp"
+.Fn vcache_get "struct mount *mp" "const void *key" "size_t key_len" "struct vnode **vpp"
+.Ft int
+.Fn vcache_new "struct mount *mp" "struct vnode *dvp" "struct vattr *vap" "kauth_cred_t cred" "struct vnode **vpp"
+.Ft int
+.Fn vcache_rekey_enter "struct mount *mp" "struct vnode *vp" "const void *old_key" "size_t old_key_len" "const void *new_key" "size_t new_key_len"
 .Ft void
-.Fn ungetnewvnode "struct vnode *vp"
+.Fn vcache_rekey_exit "struct mount *mp" "struct vnode *vp" "const void *old_key" "size_t old_key_len" "const void *new_key" "size_t new_key_len"
+.Ft void
+.Fn vcache_remove "struct mount *mp" "const void *key" "size_t key_len"
 .Ft int
 .Fn vrecycle "struct vnode *vp"
 .Ft void
@@ -358,7 +366,9 @@ must call
 .Fn vget
 to increment the reference count and retrieve it from the freelist.
 When a user wants a new vnode for another file,
-.Fn getnewvnode
+.Fn vcache_get
+or
+.Fn vcache_new
 is invoked to allocate a vnode and initialize it for the new file.
 .Pp
 The type of object the vnode represents is recorded by
@@ -632,51 +642,86 @@ Mark the vnode
 as inactive by decrementing
 .Em vp-\*[Gt]v_holdcnt
 and moving the vnode from the holdlist to the freelist.
-.It Fn getnewvnode "tag" "mp" "vops" "slock" "vpp"
-Retrieve the next vnode from the freelist.
-.Fn getnewvnode
-allocates a new vnode.
-The new vnode is returned in the address specified by
+.It Fn vcache_get "mp" "key" "key_len" "vpp"
+Allocate a new vnode.
+The new vnode is returned referenced in the address specified by
 .Fa vpp .
 .Pp
 The argument
 .Fa mp
-is the mount point for the file system requested the new vnode.
-Before retrieving the new vnode, the file system is checked if it is
-busy (such as currently unmounting).
-An error is returned if the file system is unmounted.
+is the mount point for the file system to lookup the file in.
 .Pp
-The argument
-.Fa tag
-is the vnode tag assigned to
-.Fa *vpp-\*[Gt]v_tag .
-The argument
-.Fa vops
-is the vnode operations vector of the file system requesting the new
-vnode.
+The arguments
+.Fa key
+and
+.Fa key_len
+uniquely identify the file in the file system.
+.Pp
 If a vnode is successfully retrieved zero is returned, otherwise an
 appropriate error code is returned.
-If
-.Fa slock
-is not
-.Dv NULL ,
-it specifies the lock to share for
-.Em v_interlock .
-The reference will be held on the lock and sharing noted.
-Reference will be released and lock unshared when the vnode gets recycled.
-If
-.Dv NULL
-(regular case), vnode will use its own interlock.
-.It Fn ungetnewvnode "vp"
-Undo the operation of
-.Fn getnewvnode .
+.It Fn vcache_new "mp" "dvp" "vap" "cred" "vpp"
+Allocate a new vnode with a new file.
+The new vnode is returned referenced in the address specified by
+.Fa vpp .
+.Pp
 The argument
+.Fa mp
+is the mount point for the file system to create the file in.
+.Pp
+The argument
+.Fa dvp
+points to the directory to create the file in.
+.Pp
+The argument
+.Fa vap
+points to the attributes for the file to create.
+.Pp
+The argument
+.Fa cred
+holds the credentials for the file to create.
+.Pp
+If a vnode is successfully created zero is returned, otherwise an
+appropriate error code is returned.
+.It Fn vcache_rekey_enter "mp" "vp" "old_key" "old_key_len" "new_key" "new_key_len"
+Prepare to change the key of a cached vnode.
+.Pp
+The argument
+.Fa mp
+is the mount point for the file system the vnode
 .Fa vp
-is the vnode to return to the freelist.
-This function is needed for
-.Xr VFS_VGET 9
-which may need to push back a vnode in case of a locking race
-condition.
+resides in.
+.Pp
+The arguments
+.Fa old_key 
+and 
+.Fa old_key_len
+identify the cached vnode.
+.Pp
+The arguments
+.Fa new_key
+and
+.Fa new_key_len
+will identify the vnode after rename.
+.Pp
+If the new key already exists
+.Er EEXIST
+is returned, otherwise zero is returned.
+.It Fn vcache_rekey_exit "mp" "vp" "old_key" "old_key_len" "new_key" "new_key_len"
+Finish rename after calling
+.Fn vcache_rekey_enter .
+.It Fn vcache_remove "mp" "key" "key_len"
+Remove a vnode from the cache.
+Must be called when a file system reclaims a vnode.
+.Pp
+The argument
+.Fa mp
+is the mount point for the file system this file resides in.
+.Pp
+The arguments
+.Fa key 
+and 
+.Fa key_len
+uniquely identify the file in the file system.
 .It Fn vrecycle "vp"
 Recycle the referenced vnode
 .Fa vp
