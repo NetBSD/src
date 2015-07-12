@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.2 2015/06/03 23:15:22 enami Exp $	*/
+/*	$NetBSD: gettext.c,v 1.3 2015/07/12 11:40:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 William Orr <will@worrbase.com>
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.2 2015/06/03 23:15:22 enami Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.3 2015/07/12 11:40:52 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -39,11 +39,19 @@ __RCSID("$NetBSD: gettext.c,v 1.2 2015/06/03 23:15:22 enami Exp $");
 #include <string.h>
 #include <util.h>
 
+static struct option longopts[] = {
+	{ "help",       no_argument,        NULL,   'h' },
+	{ "domain",	required_argument,  NULL,   'd' },
+	{ NULL,         0,                  NULL,   '\0' },
+};
+
 static __dead void
 usage(int exit_status)
 {
 
 	fprintf(stderr, "Usage: %s [-ehn] [[<textdomain>] <msgid>]\n",
+	    getprogname());
+	fprintf(stderr, "Usage: %s [-ehn] -d <textdomain> <msgid>\n",
 	    getprogname());
 	fprintf(stderr, "Usage: %s -s [<msgid>]...\n", getprogname());
 	exit(exit_status);
@@ -140,7 +148,8 @@ main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "d:EehnsV")) != -1) {
+	while ((ch = getopt_long(argc, argv, "d:eEhnsV", longopts, NULL)) != -1)
+	{
 		switch (ch) {
 		case 'd':
 			msgdomain = estrdup(optarg);
@@ -173,7 +182,8 @@ main(int argc, char **argv)
 
 	if (argc == 0) {
 		free(msgdomain);
-		errx(EXIT_FAILURE, "missing msgid");
+		warnx("missing msgid");
+		usage(EXIT_FAILURE);
 	}
 
 	/* msgdomain can be passed as optional arg iff -s is not passed */
@@ -184,8 +194,10 @@ main(int argc, char **argv)
 
 			argc -= 1;
 			argv += 1;
-		} else if (argc > 2)
-			errx(EXIT_FAILURE, "too many arguments");
+		} else if (argc > 2) {
+			warnx("too many arguments");
+			usage(EXIT_FAILURE);
+		}
 	}
 
 	/* msgdomain can be passed as env var */
