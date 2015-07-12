@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.64 2015/07/11 09:45:16 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.65 2015/07/12 05:57:06 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.64 2015/07/11 09:45:16 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.65 2015/07/12 05:57:06 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,6 @@ dk_open(struct dk_softc *dksc, dev_t dev,
 	    dksc->sc_xname, dksc, dev, flags));
 
 	mutex_enter(&dk->dk_openlock);
-	part = DISKPART(dev);
 
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
@@ -126,8 +125,6 @@ dk_open(struct dk_softc *dksc, dev_t dev,
 		ret = EBUSY;
 		goto done;
 	}
-
-	pmask = 1 << part;
 
 	/*
 	 * If we're init'ed and there are no other open partitions then
