@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.44 2015/06/23 10:41:59 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.45 2015/07/12 08:11:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  *	VOP_CREATE(9) and VOP_LOOKUP(9).  The life-cycle of a vnode
  *	starts in one of the following ways:
  *
- *	- Allocation, via getnewvnode(9) and/or vnalloc(9).
+ *	- Allocation, via vcache_get(9) or vcache_new(9).
  *	- Reclamation of inactive vnode, via vget(9).
  *
  *	Recycle from a free list, via getnewvnode(9) -> getcleanvnode(9)
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.44 2015/06/23 10:41:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.45 2015/07/12 08:11:28 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -368,89 +368,6 @@ try_nextlist:
 	fstrans_done(mp);
 
 	return 0;
-}
-
-/*
- * getnewvnode: return a fresh vnode.
- *
- * => Returns referenced vnode, moved into the mount queue.
- * => Shares the interlock specified by 'slock', if it is not NULL.
- */
-int
-getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
-    kmutex_t *slock, vnode_t **vpp)
-{
-	struct uvm_object *uobj __diagused;
-	vnode_t *vp;
-	int error = 0;
-
-	if (mp != NULL) {
-		/*
-		 * Mark filesystem busy while we are creating a vnode.
-		 * If unmount is in progress, this will fail.
-		 */
-		error = vfs_busy(mp, NULL);
-		if (error)
-			return error;
-	}
-
-	vp = NULL;
-
-	/* Allocate a new vnode. */
-	vp = vnalloc(NULL);
-
-	KASSERT(vp->v_freelisthd == NULL);
-	KASSERT(LIST_EMPTY(&vp->v_nclist));
-	KASSERT(LIST_EMPTY(&vp->v_dnclist));
-	KASSERT(vp->v_data == NULL);
-
-	/* Initialize vnode. */
-	vp->v_tag = tag;
-	vp->v_op = vops;
-
-	uobj = &vp->v_uobj;
-	KASSERT(uobj->pgops == &uvm_vnodeops);
-	KASSERT(uobj->uo_npages == 0);
-	KASSERT(TAILQ_FIRST(&uobj->memq) == NULL);
-
-	/* Share the vnode_t::v_interlock, if requested. */
-	if (slock) {
-		/* Set the interlock and mark that it is shared. */
-		KASSERT(vp->v_mount == NULL);
-		mutex_obj_hold(slock);
-		uvm_obj_setlock(&vp->v_uobj, slock);
-		KASSERT(vp->v_interlock == slock);
-	}
-
-	/* Finally, move vnode into the mount queue. */
-	vfs_insmntque(vp, mp);
-
-	if (mp != NULL) {
-		if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
-			vp->v_vflag |= VV_MPSAFE;
-		vfs_unbusy(mp, true, NULL);
-	}
-
-	*vpp = vp;
-	return 0;
-}
-
-/*
- * This is really just the reverse of getnewvnode(). Needed for
- * VFS_VGET functions who may need to push back a vnode in case
- * of a locking race.
- */
-void
-ungetnewvnode(vnode_t *vp)
-{
-
-	KASSERT(vp->v_usecount == 1);
-	KASSERT(vp->v_data == NULL);
-	KASSERT(vp->v_freelisthd == NULL);
-
-	mutex_enter(vp->v_interlock);
-	vp->v_iflag |= VI_CLEAN;
-	vrelel(vp, 0);
 }
 
 /*

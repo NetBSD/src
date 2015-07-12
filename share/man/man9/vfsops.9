@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.46 2012/02/13 13:24:18 wiz Exp $
+.\"     $NetBSD: vfsops.9,v 1.47 2015/07/12 08:11:27 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 13, 2012
+.Dd July 12, 2015
 .Dt VFSOPS 9
 .Os
 .Sh NAME
@@ -40,6 +40,8 @@
 .Nm VFS_STATVFS ,
 .Nm VFS_SYNC ,
 .Nm VFS_VGET ,
+.Nm VFS_LOADVNODE ,
+.Nm VFS_NEWVNODE ,
 .Nm VFS_FHTOVP ,
 .Nm VFS_VPTOFH ,
 .Nm VFS_SNAPSHOT ,
@@ -67,6 +69,10 @@
 .Fn VFS_SYNC "struct mount *mp" "int waitfor" "kauth_cred_t cred"
 .Ft int
 .Fn VFS_VGET "struct mount *mp" "ino_t ino" "struct vnode **vpp"
+.Ft int
+.Fn VFS_LOADVNODE "struct mount *mp" "struct vnode *vp" "const void *key" "size_t key_len" "const void **new_key"
+.Ft int
+.Fn VFS_NEWVNODE "struct mount *mp" "struct vnode *dvp" "struct vnode *vp" "struct vattr *vap" "kauth_cred_t cred" "size_t *key_len" "const void **new_key"
 .Ft int
 .Fn VFS_FHTOVP "struct mount *mp" "struct fid *fhp" "struct vnode **vpp"
 .Ft int
@@ -131,6 +137,14 @@ Ta Flush file system buffers
 .It int (*vfs_vget)() \
 Ta Dv VFS_VGET \
 Ta Get vnode from file id
+.\"
+.It int (*vfs_loadvnode)() \
+Ta Dv VFS_LOADVNODE \
+Ta Initialze vnode with file
+.\"
+.It int (*vfs_loadvnode)() \
+Ta Dv VFS_NEWVNODE \
+Ta Initialze vnode with new file
 .\"
 .It int (*vfs_fhtovp)() \
 Ta Dv VFS_FHTOVP \
@@ -332,6 +346,42 @@ It is used internally by the UFS file system and also by the NFSv3
 server to implement the READDIRPLUS NFS call.
 If the file system does not support this function, it should return
 .Er EOPNOTSUPP .
+.It Fn VFS_LOADVNODE "mp" "vp" "key" "key_len" "new_key"
+Initialise the vnode
+.Fa vp
+with the file identified by the arguments
+.Fa key
+and
+.Fa key_len
+for the file system specified by the mount structure
+.Fa mp .
+.Pp
+The new key is returned in the address specified by
+.Fa new_key .
+.Pp
+Caller of this function assures no other thread will try to load this file.
+.It Fn VFS_NEWVNODE "mp" "dvp" "vp" "vap" "cred" "key_len" "new_key"
+Initialise the vnode
+.Fa vp
+with a new file for the file system specified by the mount structure
+.Fa mp .
+.Pp
+The argument
+.Fa dvp
+points to the directory to create the file in.
+.Pp
+The argument
+.Fa vap
+points to the attributes for the file to create.
+.Pp
+The argument
+.Fa cred
+holds the credentials for the file to create.
+.Pp
+The key for the file is returned in the addresses specified by
+.Fa key_len
+and
+.Fa new_key .
 .It Fn VFS_FHTOVP "mp" "fhp" "vpp"
 Get the vnode for the file handle
 .Fa fhp
