@@ -7,8 +7,7 @@
 .align	16
 aesni_cbc_sha1_enc:
 
-	movl	OPENSSL_ia32cap_P+0@GOTPCREL(%rip),%r10d
-	movl	OPENSSL_ia32cap_P+4@GOTPCREL(%rip),%r11d
+	movq	OPENSSL_ia32cap_P@GOTPCREL(%rip),%r10
 	jmp	aesni_cbc_sha1_enc_ssse3
 	.byte	0xf3,0xc3
 .size	aesni_cbc_sha1_enc,.-aesni_cbc_sha1_enc
