@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1969 2015/06/27 15:47:29 matt Exp $
+#	$NetBSD: mi,v 1.1970 2015/07/12 08:11:27 hannken Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9790,7 +9790,9 @@
 ./usr/share/man/cat9/VATTR_NULL.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/VFS_CHECKEXP.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_FHTOVP.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VFS_LOADVNODE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_MOUNT.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VFS_NEWVNODE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_QUOTACTL.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_ROOT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_SNAPSHOT.0		comp-sys-catman		.cat
@@ -10311,7 +10313,7 @@
 ./usr/share/man/cat9/getmicrouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanotime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanouptime.0		comp-sys-catman		.cat
-./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
+./usr/share/man/cat9/getnewvnode.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/gsignal.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/hardclock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/hash.0			comp-sys-catman		.cat
@@ -11048,7 +11050,7 @@
 ./usr/share/man/cat9/ucas.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ucom.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uiomove.0			comp-sys-catman		.cat
-./usr/share/man/cat9/ungetnewvnode.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ungetnewvnode.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/untimeout.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/usbd_status.0		comp-sys-catman		.cat
@@ -11113,6 +11115,11 @@
 ./usr/share/man/cat9/vaccess.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vattr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vattr_null.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vcache_get.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vcache_new.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vcache_rekey_enter.0	comp-sys-catman		.cat
+./usr/share/man/cat9/vcache_rekey_exit.0	comp-sys-catman		.cat
+./usr/share/man/cat9/vcache_remove.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vcons.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vcount.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vdead_check.0		comp-sys-catman		.cat
@@ -16624,7 +16631,9 @@
 ./usr/share/man/html9/VATTR_NULL.html		comp-obsolete	obsolete
 ./usr/share/man/html9/VFS_CHECKEXP.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_FHTOVP.html		comp-sys-htmlman	html
+./usr/share/man/html9/VFS_LOADVNODE.html	comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_MOUNT.html		comp-sys-htmlman	html
+./usr/share/man/html9/VFS_NEWVNODE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_QUOTACTL.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_ROOT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_SNAPSHOT.html		comp-sys-htmlman	html
@@ -17114,7 +17123,7 @@
 ./usr/share/man/html9/getmicrouptime.html	comp-sys-htmlman	html
 ./usr/share/man/html9/getnanotime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getnanouptime.html	comp-sys-htmlman	html
-./usr/share/man/html9/getnewvnode.html		comp-sys-htmlman	html
+./usr/share/man/html9/getnewvnode.html		comp-obsolete		obsolete
 ./usr/share/man/html9/gsignal.html		comp-obsolete		obsolete
 ./usr/share/man/html9/hardclock.html		comp-sys-htmlman	html
 ./usr/share/man/html9/hash.html			comp-sys-htmlman	html
@@ -17821,7 +17830,7 @@
 ./usr/share/man/html9/ucas.html			comp-sys-htmlman	html
 ./usr/share/man/html9/ucom.html			comp-sys-htmlman	html
 ./usr/share/man/html9/uiomove.html		comp-sys-htmlman	html
-./usr/share/man/html9/ungetnewvnode.html	comp-sys-htmlman	html
+./usr/share/man/html9/ungetnewvnode.html	comp-obsolete		obsolete
 ./usr/share/man/html9/untimeout.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uprintf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/usbd_status.html		comp-sys-htmlman	html
@@ -17873,6 +17882,11 @@
 ./usr/share/man/html9/vaccess.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vattr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vattr_null.html		comp-sys-htmlman	html
+./usr/share/man/html9/vcache_get.html		comp-sys-htmlman	html
+./usr/share/man/html9/vcache_new.html		comp-sys-htmlman	html
+./usr/share/man/html9/vcache_rekey_enter.html	comp-sys-htmlman	html
+./usr/share/man/html9/vcache_rekey_exit.html	comp-sys-htmlman	html
+./usr/share/man/html9/vcache_remove.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vcons.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vcount.html		comp-obsolete	obsolete
 ./usr/share/man/html9/vdead_check.html		comp-sys-htmlman	html
@@ -23549,7 +23563,9 @@
 ./usr/share/man/man9/VATTR_NULL.9		comp-obsolete		obsolete
 ./usr/share/man/man9/VFS_CHECKEXP.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_FHTOVP.9		comp-sys-man		.man
+./usr/share/man/man9/VFS_LOADVNODE.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_MOUNT.9		comp-sys-man		.man
+./usr/share/man/man9/VFS_NEWVNODE.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_QUOTACTL.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_ROOT.9			comp-sys-man		.man
 ./usr/share/man/man9/VFS_SNAPSHOT.9		comp-sys-man		.man
@@ -24070,7 +24086,7 @@
 ./usr/share/man/man9/getmicrouptime.9		comp-sys-man		.man
 ./usr/share/man/man9/getnanotime.9		comp-sys-man		.man
 ./usr/share/man/man9/getnanouptime.9		comp-sys-man		.man
-./usr/share/man/man9/getnewvnode.9		comp-sys-man		.man
+./usr/share/man/man9/getnewvnode.9		comp-obsolete		obsolete
 ./usr/share/man/man9/gsignal.9			comp-obsolete		obsolete
 ./usr/share/man/man9/hardclock.9		comp-sys-man		.man
 ./usr/share/man/man9/hash.9			comp-sys-man		.man
@@ -24807,7 +24823,7 @@
 ./usr/share/man/man9/ucas.9			comp-sys-man		.man
 ./usr/share/man/man9/ucom.9			comp-sys-man		.man
 ./usr/share/man/man9/uiomove.9			comp-sys-man		.man
-./usr/share/man/man9/ungetnewvnode.9		comp-sys-man		.man
+./usr/share/man/man9/ungetnewvnode.9		comp-obsolete		obsolete
 ./usr/share/man/man9/untimeout.9		comp-sys-man		.man
 ./usr/share/man/man9/uprintf.9			comp-sys-man		.man
 ./usr/share/man/man9/usbd_status.9		comp-sys-man		.man
@@ -24872,6 +24888,11 @@
 ./usr/share/man/man9/vaccess.9			comp-sys-man		.man
 ./usr/share/man/man9/vattr.9			comp-sys-man		.man
 ./usr/share/man/man9/vattr_null.9		comp-sys-man		.man
+./usr/share/man/man9/vcache_get.9		comp-sys-man		.man
+./usr/share/man/man9/vcache_new.9		comp-sys-man		.man
+./usr/share/man/man9/vcache_rekey_enter.9	comp-sys-man		.man
+./usr/share/man/man9/vcache_rekey_exit.9	comp-sys-man		.man
+./usr/share/man/man9/vcache_remove.9		comp-sys-man		.man
 ./usr/share/man/man9/vcons.9			comp-sys-man		.man
 ./usr/share/man/man9/vcount.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vdead_check.9		comp-sys-man		.man
