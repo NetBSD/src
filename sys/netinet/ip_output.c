@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.242 2015/07/01 03:39:36 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.243 2015/07/14 08:44:59 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.242 2015/07/01 03:39:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.243 2015/07/14 08:44:59 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -167,6 +167,7 @@ ip_hresolv_needed(const struct ifnet * const ifp)
 	case IFT_HIPPI:
 	case IFT_IEEE1394:
 	case IFT_ISO88025:
+	case IFT_SLIP:
 		return true;
 	default:
 		return false;
