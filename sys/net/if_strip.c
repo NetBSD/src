@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.99 2015/07/14 08:15:41 ozaki-r Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.100 2015/07/14 08:44:59 ozaki-r Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.99 2015/07/14 08:15:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.100 2015/07/14 08:44:59 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -755,9 +755,6 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 #endif
 	switch (dst->sa_family) {
 	case AF_INET:
-		if (rt != NULL && rt->rt_gwroute != NULL)
-			rt = rt->rt_gwroute;
-
 		/* assume rt is never NULL */
 		if (rt == NULL || rt->rt_gateway->sa_family != AF_LINK ||
 		    satocsdl(rt->rt_gateway)->sdl_alen != ifp->if_addrlen) {
