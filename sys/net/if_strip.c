@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.98 2015/07/14 08:06:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.99 2015/07/14 08:15:41 ozaki-r Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.98 2015/07/14 08:06:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.99 2015/07/14 08:15:41 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -368,7 +368,6 @@ strip_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = SLMTU;
 	sc->sc_if.if_flags = 0;
-	sc->sc_if.if_type = IFT_OTHER;
 #if 0
 	sc->sc_if.if_flags |= SC_AUTOCOMP /* | IFF_POINTOPOINT | IFF_MULTICAST*/;
 #endif
