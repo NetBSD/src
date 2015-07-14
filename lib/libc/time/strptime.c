@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.43 2015/07/13 17:45:16 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.44 2015/07/14 18:07:17 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.43 2015/07/13 17:45:16 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.44 2015/07/14 18:07:17 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -363,6 +363,7 @@ literal:
 			bp = conv_num(bp, &i, 1, 7);
 			tm->tm_wday = i % 7;
 			LEGAL_ALT(ALT_O);
+			state |= S_WDAY;
 			continue;
 
 		case 'g':	/* The year corresponding to the ISO week
