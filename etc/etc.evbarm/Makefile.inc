@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.76 2015/05/22 01:18:05 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.77 2015/07/15 11:27:13 martin Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -13,6 +13,7 @@ EVBARM_BOARDS.${i}=
 .endfor
 
 .if !empty(MACHINE_ARCH:M*eb)
+IMAGEENDIAN=	be
 # big endian boards
 KERNEL_SETS.armv4+=		IXM1200
 EVBARM_BOARDS.xscale+=		ADI_BRH
@@ -32,6 +33,7 @@ EVBARM_BOARDS.armv7hf+=		CUBIETRUCK
 EVBARM_BOARDS.armv7+=		HUMMINGBIRD_A31
 EVBARM_BOARDS.armv7hf+=		HUMMINGBIRD_A31
 .else
+IMAGEENDIAN=	le
 # little endian boards
 #EVBARM_BOARDS.armv4+=		ARMADILLO210
 #EVBARM_BOARDS.armv4+=		ARMADILLO9
@@ -136,7 +138,7 @@ __mkimage: .USE
 	TOOL_MTREE=${TOOL_MTREE} \
 	HOST_SH=${HOST_SH} \
 	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
-	    -S ${NETBSDSRCDIR} ${MKI_OPTS.${.TARGET}} \
+	    -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
 ARCHES.arm=		armv4 xscale armv5t armv6 armv7
