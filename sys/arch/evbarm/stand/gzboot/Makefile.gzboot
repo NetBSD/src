@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.30 2014/01/12 15:26:29 tsutsui Exp $
+#	$NetBSD: Makefile.gzboot,v 1.31 2015/07/15 11:21:49 martin Exp $
 
 NOMAN=  # defined
 
@@ -26,6 +26,7 @@ LIBCRTI=
 LIBC=
 LIBCRTBEGIN= 
 LIBCRTEND=      
+STRIPFLAG=
 
 .PATH: ${EVBARM_STAND}/gzboot
 .PATH: ${EVBARM_STAND}/board
