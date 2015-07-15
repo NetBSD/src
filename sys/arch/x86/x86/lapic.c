@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.48 2015/05/18 13:04:21 msaitoh Exp $	*/
+/*	$NetBSD: lapic.c,v 1.49 2015/07/15 04:49:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.48 2015/05/18 13:04:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.49 2015/07/15 04:49:02 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -76,6 +76,8 @@ static void 	lapic_map(paddr_t);
 static void lapic_hwmask(struct pic *, int);
 static void lapic_hwunmask(struct pic *, int);
 static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
+/* Make it public to call via ddb */
+void	lapic_dump(void);
 
 struct pic local_pic = {
 	.pic_name = "lapic",
@@ -194,18 +196,8 @@ lapic_set_lvt(void)
 	}
 
 #ifdef MULTIPROCESSOR
-	if (mp_verbose) {
-		apic_format_redir (device_xname(ci->ci_dev), "timer", 0, 0,
-		    i82489_readreg(LAPIC_LVTT));
-		apic_format_redir (device_xname(ci->ci_dev), "pcint", 0, 0,
-		    i82489_readreg(LAPIC_PCINT));
-		apic_format_redir (device_xname(ci->ci_dev), "lint", 0, 0,
-		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir (device_xname(ci->ci_dev), "lint", 1, 0,
-		    i82489_readreg(LAPIC_LVINT1));
-		apic_format_redir (device_xname(ci->ci_dev), "err", 0, 0,
-		    i82489_readreg(LAPIC_LVERR));
-	}
+	if (mp_verbose)
+		lapic_dump();
 #endif
 }
 
@@ -615,4 +607,21 @@ static void
 lapic_setup(struct pic *pic, struct cpu_info *ci,
     int pin, int idtvec, int type)
 {
+}
+
+void
+lapic_dump(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	apic_format_redir (device_xname(ci->ci_dev), "timer", 0, 0,
+	    i82489_readreg(LAPIC_LVTT));
+	apic_format_redir (device_xname(ci->ci_dev), "pcint", 0, 0,
+	    i82489_readreg(LAPIC_PCINT));
+	apic_format_redir (device_xname(ci->ci_dev), "lint", 0, 0,
+	    i82489_readreg(LAPIC_LVINT0));
+	apic_format_redir (device_xname(ci->ci_dev), "lint", 1, 0,
+	    i82489_readreg(LAPIC_LVINT1));
+	apic_format_redir (device_xname(ci->ci_dev), "err", 0, 0,
+	    i82489_readreg(LAPIC_LVERR));
 }
