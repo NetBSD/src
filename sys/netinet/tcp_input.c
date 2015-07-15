@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.341 2015/05/24 15:43:45 rtr Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.342 2015/07/15 09:20:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.341 2015/05/24 15:43:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.342 2015/07/15 09:20:18 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -264,7 +264,7 @@ nd6_hint(struct tcpcb *tp)
 
 	if (tp != NULL && tp->t_in6pcb != NULL && tp->t_family == AF_INET6 &&
 	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL)
-		nd6_nud_hint(rt, NULL, 0);
+		nd6_nud_hint(rt);
 }
 #else
 static inline void
