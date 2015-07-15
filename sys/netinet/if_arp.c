@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.169 2015/05/22 07:44:46 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.170 2015/07/15 08:49:15 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.169 2015/05/22 07:44:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.170 2015/07/15 08:49:15 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -137,10 +137,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.169 2015/05/22 07:44:46 ozaki-r Exp $")
 #define ETHERTYPE_IPTRAILERS ETHERTYPE_TRAIL
 
 /* timer values */
-int	arpt_prune = (5*60*1);	/* walk list every 5 minutes */
-int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
-int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
-int	arpt_refresh = (5*60);	/* time left before refreshing */
+static int	arpt_prune = (5*60*1);	/* walk list every 5 minutes */
+static int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
+static int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
+static int	arpt_refresh = (5*60);	/* time left before refreshing */
 #define	rt_expire rt_rmx.rmx_expire
 #define	rt_pksent rt_rmx.rmx_pksent
 
@@ -181,10 +181,10 @@ struct	ifqueue arpintrq = {
 	.ifq_maxlen = 50,
 	.ifq_drops = 0,
 };
-int	arp_inuse, arp_allocated;
-int	arp_maxtries = 5;
-int	useloopback = 1;	/* use loopback interface for local traffic */
-int	arpinit_done = 0;
+static int	arp_inuse, arp_allocated;
+static int	arp_maxtries = 5;
+static int	useloopback = 1;	/* use loopback interface for local traffic */
+static int	arpinit_done = 0;
 
 static percpu_t *arpstat_percpu;
 
@@ -197,10 +197,10 @@ static percpu_t *arpstat_percpu;
 struct	callout arptimer_ch;
 
 /* revarp state */
-struct	in_addr myip, srv_ip;
-int	myip_initialized = 0;
-int	revarp_in_progress = 0;
-struct	ifnet *myip_ifp = NULL;
+static struct	in_addr myip, srv_ip;
+static int	myip_initialized = 0;
+static int	revarp_in_progress = 0;
+static struct	ifnet *myip_ifp = NULL;
 
 #ifdef DDB
 static void db_print_sa(const struct sockaddr *);
