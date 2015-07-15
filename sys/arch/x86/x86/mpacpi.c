@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.99 2015/07/15 04:49:02 msaitoh Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.100 2015/07/15 07:29:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.99 2015/07/15 04:49:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.100 2015/07/15 07:29:13 msaitoh Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -452,6 +452,8 @@ mpacpi_scan_apics(device_t self, int *ncpup)
 	mpacpi_ncpu = mpacpi_nintsrc = mpacpi_nioapic = 0;
 	acpi_madt_walk(mpacpi_count, self);
 
+	acpi_madt_walk(mpacpi_config_ioapic, self);
+
 #if NLAPIC > 0
 	lapic_boot_init(mpacpi_lapic_base);
 #endif
@@ -460,8 +462,6 @@ mpacpi_scan_apics(device_t self, int *ncpup)
 
 	if (mpacpi_ncpu == 0)
 		goto done;
-
-	acpi_madt_walk(mpacpi_config_ioapic, self);
 
 #if NPCI > 0
 	/*
