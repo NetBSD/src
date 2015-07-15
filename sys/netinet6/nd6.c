@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.163 2015/06/30 08:31:42 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.164 2015/07/15 09:20:18 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.163 2015/06/30 08:31:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.164 2015/07/15 09:20:18 ozaki-r Exp $");
 
 #include "opt_net_mpsafe.h"
 
@@ -1165,20 +1165,12 @@ nd6_free(struct rtentry *rt, int gc)
  * XXX cost-effective methods?
  */
 void
-nd6_nud_hint(struct rtentry *rt, struct in6_addr *dst6, int force)
+nd6_nud_hint(struct rtentry *rt)
 {
 	struct llinfo_nd6 *ln;
 
-	/*
-	 * If the caller specified "rt", use that.  Otherwise, resolve the
-	 * routing table by supplied "dst6".
-	 */
-	if (rt == NULL) {
-		if (dst6 == NULL)
-			return;
-		if ((rt = nd6_lookup(dst6, 0, NULL)) == NULL)
-			return;
-	}
+	if (rt == NULL)
+		return;
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0 ||
 	    (rt->rt_flags & RTF_LLINFO) == 0 ||
@@ -1196,11 +1188,9 @@ nd6_nud_hint(struct rtentry *rt, struct in6_addr *dst6, int force)
 	 * if we get upper-layer reachability confirmation many times,
 	 * it is possible we have false information.
 	 */
-	if (!force) {
-		ln->ln_byhint++;
-		if (ln->ln_byhint > nd6_maxnudhint)
-			return;
-	}
+	ln->ln_byhint++;
+	if (ln->ln_byhint > nd6_maxnudhint)
+		return;
 
 	ln->ln_state = ND6_LLINFO_REACHABLE;
 	if (!ND6_LLINFO_PERMANENT(ln)) {
