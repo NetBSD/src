@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.336 2015/06/26 06:57:17 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.337 2015/07/15 04:03:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.336 2015/06/26 06:57:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.337 2015/07/15 04:03:16 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1474,8 +1474,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 *  82545: Errata  4 (easy to reproduce device timeout)
 	 *  82546: Errata 26 (easy to reproduce device timeout)
 	 *  82541: Errata  7 (easy to reproduce device timeout)
+	 *
+	 * "Byte Enables 2 and 3 are not set on MSI writes"
+	 *
+	 *  82571 & 82572: Errata 63
 	 */
-	if (sc->sc_type <= WM_T_82541_2)
+	if ((sc->sc_type <= WM_T_82541_2) || (sc->sc_type == WM_T_82571)
+	    || (sc->sc_type == WM_T_82572))
 		pa->pa_flags &= ~PCI_FLAGS_MSI_OKAY;
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
