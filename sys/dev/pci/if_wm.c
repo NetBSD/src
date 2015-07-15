@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.337 2015/07/15 04:03:16 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.338 2015/07/15 07:36:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.337 2015/07/15 04:03:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.338 2015/07/15 07:36:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -155,7 +155,7 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #endif
 
 #ifdef __HAVE_PCI_MSI_MSIX
-#if 0 /* off by default */
+#if 1 /* Enable by default */
 #define WM_MSI_MSIX	1
 #endif
 #endif
