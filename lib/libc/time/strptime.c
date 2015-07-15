@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.44 2015/07/14 18:07:17 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.45 2015/07/15 13:54:38 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.44 2015/07/14 18:07:17 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.45 2015/07/15 13:54:38 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -480,7 +480,6 @@ literal:
 				continue;
 			case '+':
 				neg = 0;
-				state |= S_WDAY | S_MON | S_MDAY | S_YEAR;
 				break;
 			case '-':
 				neg = 1;
