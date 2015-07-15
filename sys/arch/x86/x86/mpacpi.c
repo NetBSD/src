@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.98 2015/06/22 07:26:52 msaitoh Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.99 2015/07/15 04:49:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.98 2015/06/22 07:26:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.99 2015/07/15 04:49:02 msaitoh Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
+#include "opt_ddb.h"
 #include "opt_mpbios.h"
 #include "opt_multiprocessor.h"
 #include "pchb.h"
@@ -122,6 +123,10 @@ static void mpacpi_print_intr(struct mp_intr_map *);
 static void mpacpi_print_isa_intr(int);
 
 static void mpacpi_user_continue(const char *fmt, ...);
+
+#ifdef DDB
+void mpacpi_dump(void);
+#endif
 
 int mpacpi_nioapic;			/* number of ioapics */
 int mpacpi_ncpu;			/* number of cpus */
@@ -1080,3 +1085,13 @@ mpacpi_user_continue(const char *fmt, ...)
 	printf("<press any key to continue>\n>");
 	cngetc();
 }
+
+#ifdef DDB
+void
+mpacpi_dump(void)
+{
+	int i;
+	for (i = 0; i < mp_nintr; i++)
+		mpacpi_print_intr(&mp_intrs[i]);
+}
+#endif
