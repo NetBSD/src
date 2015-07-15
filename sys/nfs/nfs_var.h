@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.93 2015/06/22 10:35:00 mrg Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.94 2015/07/15 03:28:55 manu Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -329,6 +329,7 @@ void nfsrv_init(int);
 void nfsrv_fini(void);
 void nfs_iodinit(void);
 void nfs_iodfini(void);
+int nfs_iodbusy(struct nfsmount *);
 int nfs_set_niothreads(int);
 int nfs_getauth(struct nfsmount *, struct nfsreq *, kauth_cred_t, char **,
 	int *, char *, int *, NFSKERBKEY_T);
