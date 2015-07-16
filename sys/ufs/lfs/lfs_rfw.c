@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.20 2015/05/31 15:48:03 hannken Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.21 2015/07/16 08:31:45 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.20 2015/05/31 15:48:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.21 2015/07/16 08:31:45 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -429,8 +429,8 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 		}
 		nblocks += ninos;
 		/* Create the sum array */
-		datap = dp = (u_long *)malloc(nblocks * sizeof(u_long),
-					      M_SEGMENT, M_WAITOK);
+		datap = dp = malloc(nblocks * sizeof(u_long),
+				    M_SEGMENT, M_WAITOK);
 	}
 
 	/* Handle individual blocks */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.325 2015/06/07 13:39:48 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.326 2015/07/16 08:31:45 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.325 2015/06/07 13:39:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.326 2015/07/16 08:31:45 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1091,12 +1091,12 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	/* Set up segment usage flags for the autocleaner. */
 	fs->lfs_nactive = 0;
-	fs->lfs_suflags = (u_int32_t **)malloc(2 * sizeof(u_int32_t *),
-						M_SEGMENT, M_WAITOK);
-	fs->lfs_suflags[0] = (u_int32_t *)malloc(fs->lfs_nseg * sizeof(u_int32_t),
-						 M_SEGMENT, M_WAITOK);
-	fs->lfs_suflags[1] = (u_int32_t *)malloc(fs->lfs_nseg * sizeof(u_int32_t),
-						 M_SEGMENT, M_WAITOK);
+	fs->lfs_suflags = malloc(2 * sizeof(u_int32_t *),
+				 M_SEGMENT, M_WAITOK);
+	fs->lfs_suflags[0] = malloc(fs->lfs_nseg * sizeof(u_int32_t),
+				    M_SEGMENT, M_WAITOK);
+	fs->lfs_suflags[1] = malloc(fs->lfs_nseg * sizeof(u_int32_t),
+				    M_SEGMENT, M_WAITOK);
 	memset(fs->lfs_suflags[1], 0, fs->lfs_nseg * sizeof(u_int32_t));
 	for (i = 0; i < fs->lfs_nseg; i++) {
 		int changed;

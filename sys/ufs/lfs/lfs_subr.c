@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.80 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.81 2015/07/16 08:31:45 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.80 2013/07/28 01:05:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.81 2015/07/16 08:31:45 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ lfs_setup_resblks(struct lfs *fs)
 	int maxbpp;
 
 	ASSERT_NO_SEGLOCK(fs);
-	fs->lfs_resblk = (res_t *)malloc(LFS_N_TOTAL * sizeof(res_t), M_SEGMENT,
-					  M_WAITOK);
+	fs->lfs_resblk = malloc(LFS_N_TOTAL * sizeof(res_t), M_SEGMENT,
+				M_WAITOK);
 	for (i = 0; i < LFS_N_TOTAL; i++) {
 		fs->lfs_resblk[i].inuse = 0;
 		fs->lfs_resblk[i].p = NULL;
