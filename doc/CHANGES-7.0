@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.339 2015/07/16 18:28:10 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.340 2015/07/16 18:29:32 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32521,8 +32521,7 @@ sys/arch/sparc/include/ansi.h			1.24
 sys/arch/sparc64/include/ansi.h			1.18
 sys/arch/usermode/include/ansi.h		1.5
 
-	Make _BSD_CLOCK_T_ unsigned int so it's the same for IPL32 and LP64
-	environments.  We don't really have a powerpc64 native userland
-	and the mips64 native userland is IPL32 so this shouldn't affect anything.
+	Make clock_t unsigned int everywhere, so it is the same
+	on LP64 and IPL32 architectures.
 	[martin, ticket #846]
 
