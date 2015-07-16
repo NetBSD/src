@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.61 2015/05/05 22:14:24 pgoyette Exp $
+# $NetBSD: XEN3_DOMU,v 1.62 2015/07/16 15:43:10 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -117,7 +117,7 @@ options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
+options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
