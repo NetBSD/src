@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.17 2012/04/21 12:27:30 roy Exp $	*/
+/*	$NetBSD: set.c,v 1.17.10.1 2015/07/16 21:43:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: set.c,v 1.17 2012/04/21 12:27:30 roy Exp $");
+__RCSID("$NetBSD: set.c,v 1.17.10.1 2015/07/16 21:43:07 snj Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -151,18 +151,20 @@ reset_mode(void)
 void
 set_control_chars(int erasechar, int intrchar, int killchar)
 {
+	int bs_char;
+
+	if (key_backspace != NULL && key_backspace[1] == '\0')
+		bs_char = key_backspace[0];
+	else
+		bs_char = 0;
 	
-	if (mode.c_cc[VERASE] == 0 || erasechar != 0) {
-		if (erasechar == 0) {
-			if (over_strike &&
-			    key_backspace != NULL &&
-			    key_backspace[1] == '\0')
-				mode.c_cc[VERASE] = key_backspace[1];
-			else
-				mode.c_cc[VERASE] = CERASE;
-		} else
-			mode.c_cc[VERASE] = erasechar;
-	}
+	if (erasechar == 0 && bs_char != 0 && !over_strike)
+		erasechar = -1;
+	if (erasechar < 0)
+		erasechar = (bs_char != 0) ? bs_char : CTRL('h');
+
+	if (mode.c_cc[VERASE] == 0 || erasechar != 0)
+		 mode.c_cc[VERASE] = erasechar ? erasechar : CERASE;
 
 	if (mode.c_cc[VINTR] == 0 || intrchar != 0)
 		 mode.c_cc[VINTR] = intrchar ? intrchar : CINTR;
