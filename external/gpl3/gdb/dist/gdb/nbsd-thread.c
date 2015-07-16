@@ -146,8 +146,6 @@ nbsd_thread_activate (void)
 static void
 nbsd_thread_deactivate (void)
 {
-  td_close (main_ta);
-
   inferior_ptid = main_ptid;
   main_ptid = minus_one_ptid;
   cached_thread = main_ptid;
@@ -197,6 +195,7 @@ nbsd_thread_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   struct target_ops *beneath = find_target_beneath (ops);
   unpush_target (ops);
+  td_close (main_ta);
   /* Ordinarily, gdb caches solib information, but this means that it
      won't call the new_obfile hook on a reattach. Clear the symbol file
      cache so that attach -> detach -> attach works. */
