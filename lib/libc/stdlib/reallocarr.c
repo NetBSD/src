@@ -1,4 +1,4 @@
-/* $NetBSD: reallocarr.c,v 1.1 2015/02/17 20:29:21 joerg Exp $ */
+/* $NetBSD: reallocarr.c,v 1.2 2015/07/16 00:03:59 kamil Exp $ */
 
 /*-
  * Copyright (c) 2015 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reallocarr.c,v 1.1 2015/02/17 20:29:21 joerg Exp $");
+__RCSID("$NetBSD: reallocarr.c,v 1.2 2015/07/16 00:03:59 kamil Exp $");
 
 #include "namespace.h"
 #include <errno.h>
@@ -55,8 +55,8 @@ reallocarr(void *ptr, size_t num, size_t size)
 	void *optr;
 	void *nptr;
 
-	memcpy(&optr, ptr, sizeof(ptr));
 	saved_errno = errno;
+	memcpy(&optr, ptr, sizeof(ptr));
 	if (num == 0 || size == 0) {
 		free(optr);
 		nptr = NULL;
