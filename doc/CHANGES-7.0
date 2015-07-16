@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.340 2015/07/16 18:29:32 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.341 2015/07/16 21:57:42 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32524,4 +32524,50 @@ sys/arch/usermode/include/ansi.h		1.5
 	Make clock_t unsigned int everywhere, so it is the same
 	on LP64 and IPL32 architectures.
 	[martin, ticket #846]
+
+usr.sbin/installboot/Makefile			1.49, 1.50
+usr.sbin/installboot/arch/amiga.c		1.9
+usr.sbin/installboot/installboot.c		1.37, 1.38
+
+	installboot(8):
+	- Support wedge names.
+	- Fix little endian bootloader checksum computation on amiga
+	[mlelstv, ticket #844]
+
+sys/ufs/ufs/ufs_inode.c				1.93-1.95
+
+	- Release the glock on VOP_GETPAGES failure.
+	- Resolve quota panic with WAPBL.  PR kern/49948.
+	[hannken, ticket #850]
+
+usr.bin/tset/set.c				1.18
+
+	Restore logic for setting the VERASE character.
+	- use terminfo _unless_ the terminal does overstrike.
+	- use terminfo data not only for an unset tty.
+	[mlelstv, ticket #851]
+
+common/lib/libc/arch/m68k/atomic/atomic_cas.S	1.11, 1.12
+
+	atomic_cas_{8,16}:
+	  - Correct the wrong offset in stack.
+	__sync_bool_compare_and_swap_{1,2,4}:
+	  - Correct the wrong offset in stack.
+	  - D3 must be preserved in subroutines.
+	Fixes PR lib/49995.
+	[isaki, ticket #865]
+
+external/cddl/osnet/dist/tools/ctf/cvt/ctfmerge.c 1.12 via patch
+share/mk/sys.mk					1.128
+
+	reapply some fixes to make multi-threaded ctfmerge work
+	that were lost in the overzealous resync with freebsd.
+	remove the hacks which were applied to work around those problems.
+	[chs, ticket #866]
+
+external/gpl3/gdb/dist/gdb/nbsd-thread.c	1.22
+
+	Fix attaching to a running process with gdb again after
+	previously detaching.
+	[chs, ticket #867]
 
