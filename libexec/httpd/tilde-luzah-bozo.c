@@ -1,4 +1,4 @@
-/*	$NetBSD: tilde-luzah-bozo.c,v 1.10 2014/01/02 08:21:38 mrg Exp $	*/
+/*	$NetBSD: tilde-luzah-bozo.c,v 1.11 2015/07/16 12:19:23 shm Exp $	*/
 
 /*	$eterna: tilde-luzah-bozo.c,v 1.16 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <pwd.h>
 #include <stdlib.h>
@@ -58,20 +59,28 @@ int
 bozo_user_transform(bozo_httpreq_t *request, int *isindex)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
-	char	c, *s, *file = NULL;
+	char	c, *s, *file = NULL, *user;
 	struct	passwd *pw;
 
 	*isindex = 0;
 
-	if ((s = strchr(request->hr_file + 2, '/')) != NULL) {
+	/* find username */
+	user = strchr(request->hr_file + 2, '~');
+
+	/* this shouldn't happen, but "better paranoid than sorry" */
+	assert(user != NULL);
+	
+	user++;
+
+	if ((s = strchr(user, '/')) != NULL) {
 		*s++ = '\0';
 		c = s[strlen(s)-1];
 		*isindex = (c == '/' || c == '\0');
 	}
 
 	debug((httpd, DEBUG_OBESE, "looking for user %s",
-		request->hr_file + 2));
-	pw = getpwnam(request->hr_file + 2);
+		user));
+	pw = getpwnam(user);
 	/* fix this up immediately */
 	if (s)
 		s[-1] = '/';
