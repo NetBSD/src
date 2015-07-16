@@ -177,7 +177,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef _NETBSD_SOURCE
+#define _NETBSD_SOURCE /* XXX TBD fix this */
 #include <unistd.h>
+#undef _NETBSD_SOURCE
+#else
+#include <unistd.h>
+#endif
 #include <pthread.h>
 #include <assert.h>
 #if defined(sun)
@@ -674,6 +680,7 @@ wq_init(workqueue_t *wq, int nfiles)
 
 	for (i = 0; i < nslots; i++) {
 		pthread_mutex_init(&wq->wq_wip[i].wip_lock, NULL);
+		pthread_cond_init(&wq->wq_wip[i].wip_cv, NULL);
 		wq->wq_wip[i].wip_batchid = wq->wq_next_batchid++;
 	}
 
@@ -777,7 +784,7 @@ main(int argc, char **argv)
 		debug_level = atoi(getenv("CTFMERGE_DEBUG_LEVEL"));
 
 	err = 0;
-	while ((c = getopt(argc, argv, ":cd:D:fgl:L:o:tvw:sS:")) != EOF) {
+	while ((c = getopt(argc, argv, ":cd:D:fgl:L:o:tvw:s")) != EOF) {
 		switch (c) {
 		case 'c':
 			docopy = 1;
@@ -824,9 +831,6 @@ main(int argc, char **argv)
 		case 's':
 			/* use the dynsym rather than the symtab */
 			dynsym = CTF_USE_DYNSYM;
-			break;
-		case 'S':
-			maxslots = atoi(optarg);
 			break;
 		default:
 			usage();
