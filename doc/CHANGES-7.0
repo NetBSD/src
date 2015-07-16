@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.338 2015/07/11 17:49:38 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.339 2015/07/16 18:28:10 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32509,4 +32509,20 @@ doc/3RDPARTY					patch
 
 	Update OpenSSL to 1.0.1p.
 	[spz, ticket #877]
+
+sys/arch/alpha/include/ansi.h			1.25
+sys/arch/hppa/include/ansi.h			1.14
+sys/arch/i386/include/ansi.h			1.27
+sys/arch/m68k/include/ansi.h			1.24
+sys/arch/mips/include/ansi.h			1.29
+sys/arch/powerpc/include/ansi.h			1.30
+sys/arch/sh3/include/ansi.h			1.16
+sys/arch/sparc/include/ansi.h			1.24
+sys/arch/sparc64/include/ansi.h			1.18
+sys/arch/usermode/include/ansi.h		1.5
+
+	Make _BSD_CLOCK_T_ unsigned int so it's the same for IPL32 and LP64
+	environments.  We don't really have a powerpc64 native userland
+	and the mips64 native userland is IPL32 so this shouldn't affect anything.
+	[martin, ticket #846]
 
