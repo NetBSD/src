@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.34 2014/11/10 18:52:51 maxv Exp $       */
+/*      $NetBSD: if_atm.c,v 1.35 2015/07/17 02:21:08 ozaki-r Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.34 2014/11/10 18:52:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.35 2015/07/17 02:21:08 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -221,10 +221,11 @@ failed:
  */
 
 int
-atmresolve(struct rtentry *rt, struct mbuf *m, const struct sockaddr *dst,
+atmresolve(struct rtentry *rt0, struct mbuf *m, const struct sockaddr *dst,
     struct atm_pseudohdr *desten /* OUT */)
 {
 	const struct sockaddr_dl *sdl;
+	struct rtentry *rt = rt0;
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
 		log(LOG_INFO, "atmresolve: BCAST/MCAST packet detected/dumped\n");
@@ -233,13 +234,14 @@ atmresolve(struct rtentry *rt, struct mbuf *m, const struct sockaddr *dst,
 
 	if (rt == NULL) {
 		rt = RTALLOC1(dst, 0);
-		if (rt == NULL) goto bad; /* failed */
-		rt->rt_refcnt--;	/* don't keep LL references */
+		if (rt == NULL)
+			goto bad; /* failed */
 		if ((rt->rt_flags & RTF_GATEWAY) != 0 ||
-			(rt->rt_flags & RTF_LLINFO) == 0 ||
-			/* XXX: are we using LLINFO? */
-			rt->rt_gateway->sa_family != AF_LINK) {
-				goto bad;
+		    (rt->rt_flags & RTF_LLINFO) == 0 ||
+		    /* XXX: are we using LLINFO? */
+		    rt->rt_gateway->sa_family != AF_LINK) {
+			rtfree(rt);
+			goto bad;
 		}
 	}
 
@@ -257,11 +259,15 @@ atmresolve(struct rtentry *rt, struct mbuf *m, const struct sockaddr *dst,
 	 * is resolved; otherwise, try to resolve.
 	 */
 
-
 	if (sdl->sdl_family == AF_LINK && sdl->sdl_alen == sizeof(*desten)) {
 		memcpy(desten, CLLADDR(sdl), sdl->sdl_alen);
+		if (rt != rt0)
+			rtfree(rt);
 		return (1);	/* ok, go for it! */
 	}
+
+	if (rt != rt0)
+		rtfree(rt);
 
 	/*
 	 * we got an entry, but it doesn't have valid link address
