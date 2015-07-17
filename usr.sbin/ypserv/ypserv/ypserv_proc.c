@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.16 2011/08/30 17:06:22 plunky Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.17 2015/07/17 15:58:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_proc.c,v 1.16 2011/08/30 17:06:22 plunky Exp $");
+__RCSID("$NetBSD: ypserv_proc.c,v 1.17 2015/07/17 15:58:01 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -166,7 +166,7 @@ ypproc_match_2_svc(void *argp, struct svc_req *rqstp)
 	if (secure && securecheck(caller))
 		res.status = YP_YPERR;
 	else
-		res = ypdb_get_record(k->domain, k->map, k->keydat, FALSE);
+		res = ypdb_get_record(k->domain, k->map, k->keydat, secure);
 
 	return ((void *)&res);
 }
