@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.64 2015/07/10 03:01:21 msaitoh Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.65 2015/07/17 06:41:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.64 2015/07/10 03:01:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.65 2015/07/17 06:41:18 msaitoh Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -338,7 +338,8 @@ mpbios_probe(device_t self)
 
  found:
 	if (mp_verbose)
-		aprint_verbose_dev(self, "MP floating pointer found in %s at 0x%jx\n",
+		aprint_verbose_dev(self,
+		    "MP floating pointer found in %s at 0x%jx\n",
 		    loc_where[scan_loc], (uintmax_t)mp_fp_map.pa);
 
 	if (mp_fps->pap == 0) {
@@ -360,7 +361,8 @@ mpbios_probe(device_t self)
 	mp_cth = mpbios_map (cthpa, cthlen, &mp_cfg_table_map);
 
 	if (mp_verbose)
-		aprint_verbose_dev(self, "MP config table at 0x%jx, %d bytes long\n",
+		aprint_verbose_dev(self,
+		    "MP config table at 0x%jx, %d bytes long\n",
 		    (uintmax_t)cthpa, cthlen);
 
 	if (mp_cth->signature != MP_CT_SIG) {
@@ -370,7 +372,8 @@ mpbios_probe(device_t self)
 	}
 
 	if (mpbios_cksum(mp_cth, cthlen)) {
-		aprint_error_dev(self, "MP Configuration Table checksum mismatch\n");
+		aprint_error_dev(self,
+		    "MP Configuration Table checksum mismatch\n");
 		goto err;
 	}
 	return 10;
@@ -425,7 +428,8 @@ mpbios_search(device_t self, paddr_t start, int count,
 	const uint8_t *base = mpbios_map (start, count, &t);
 
 	if (mp_verbose)
-		aprint_verbose_dev(self, "scanning 0x%jx to 0x%jx for MP signature\n",
+		aprint_verbose_dev(self,
+		    "scanning 0x%jx to 0x%jx for MP signature\n",
 		    (uintmax_t)start, (uintmax_t)(start+count-sizeof(*m)));
 
 	for (i = 0; i <= end; i += 4) {
@@ -679,8 +683,7 @@ mpbios_scan(device_t self, int *ncpup)
 			type = *position;
 			if (type >= MPS_MCT_NTYPES) {
 				aprint_error_dev(self, "unknown entry type %x"
-				    " in MP config table\n",
-				    type);
+				    " in MP config table\n", type);
 				break;
 			}
 			mp_conf[type].count++;
@@ -765,8 +768,8 @@ mpbios_scan(device_t self, int *ncpup)
 				cur_intr++;
 				break;
 			default:
-				aprint_error_dev(self, "unknown entry type %x in MP config table\n",
-				    type);
+				aprint_error_dev(self, "unknown entry type %x"
+				    " in MP config table\n", type);
 				/* NOTREACHED */
 				return;
 			}
@@ -774,7 +777,8 @@ mpbios_scan(device_t self, int *ncpup)
 			position += mp_conf[type].length;
 		}
 		if (mp_verbose && mp_cth->ext_len)
-			aprint_verbose_dev(self, "MP WARNING: %d bytes of extended entries not examined\n",
+			aprint_verbose_dev(self, "MP WARNING: %d bytes of"
+			    " extended entries not examined\n",
 			    mp_cth->ext_len);
 	}
 	/* Clean up. */
@@ -910,9 +914,9 @@ mpbios_dflt_conf_int(device_t self, const struct dflt_conf_entry *dflt_conf,
 	mpi.src_bus_id = 0;
 	mpi.dst_apic_id = DFLT_IOAPIC_ID;
 	/*
-	 * Compliant systems must convert active-low, level-triggered interrupts
-	 * to active-high by external inverters before INTINx (table 5-1;
-	 * sec. 5.3.2).
+	 * Compliant systems must convert active-low, level-triggered
+	 * interrupts to active-high by external inverters before INTINx
+	 *(table 5-1; sec. 5.3.2).
 	 */
 	if (dflt_conf->flags & ELCR_INV) {
 #ifdef X86_MPBIOS_SUPPORT_EISA
@@ -924,9 +928,9 @@ mpbios_dflt_conf_int(device_t self, const struct dflt_conf_entry *dflt_conf,
 	} else if (dflt_conf->flags & MCA_INV) {
 		/* MCA systems have fixed inverters. */
 		level_inv = 0xffffU;
-	} else {
+	} else
 		level_inv = 0;
-	}
+
 	for (i = 0; i < __arraycount(dflt_bus_irq_tab[0]); i++) {
 		if (dflt_bus_irq[i] >= 0) {
 			mpi.src_bus_irq = (uint8_t)dflt_bus_irq[i];
@@ -1061,7 +1065,7 @@ mp_cfg_eisa_intr(const struct mpbios_int *entry, uint32_t *redir)
 		mp_cfg_special_intr(entry, redir);
 		return;
 	}
-	*redir |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
+	*redir |= (IOAPIC_REDLO_DEL_FIXED << IOAPIC_REDLO_DEL_SHIFT);
 
 	switch (mpstrig) {
 	case MPS_INTTR_LEVEL:
@@ -1076,7 +1080,7 @@ mp_cfg_eisa_intr(const struct mpbios_int *entry, uint32_t *redir)
 		 * earlier.
 		 */
 		if (mp_busses[entry->src_bus_id].mb_data &
-		    (1<<entry->src_bus_irq)) {
+		    (1 << entry->src_bus_irq)) {
 			*redir |= IOAPIC_REDLO_LEVEL;
 		} else {
 			*redir &= ~IOAPIC_REDLO_LEVEL;
@@ -1112,7 +1116,7 @@ mp_cfg_isa_intr(const struct mpbios_int *entry, uint32_t *redir)
 		mp_cfg_special_intr(entry, redir);
 		return;
 	}
-	*redir |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
+	*redir |= (IOAPIC_REDLO_DEL_FIXED << IOAPIC_REDLO_DEL_SHIFT);
 
 	switch (mpstrig) {
 	case MPS_INTTR_LEVEL:
@@ -1212,10 +1216,9 @@ mpbios_bus(const uint8_t *ent, device_t self)
 			printf("oops: multiple isa busses?\n");
 		else
 			mp_isa_bus = bus_id;
-	} else {
+	} else
 		aprint_error_dev(self, "unsupported bus type %6.6s\n",
 		    entry->bus_type);
-	}
 }
 
 
@@ -1335,9 +1338,8 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 		}
 
 		/*
-		 * XXX workaround for broken BIOSs that put the ACPI
-		 * global interrupt number in the entry, not the pin
-		 * number.
+		 * XXX workaround for broken BIOSs that put the ACPI global
+		 * interrupt number in the entry, not the pin number.
 		 */
 		if (pin >= sc->sc_apic_sz) {
 			sc2 = intr_findpic(pin);
@@ -1362,9 +1364,8 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 				printf("%s: conflicting map entries for pin %d\n",
 				    device_xname(sc->sc_dev), pin);
 			}
-		} else {
+		} else
 			sc->sc_pins[pin].ip_map = mpi;
-		}
 	} else {
 		if (pin >= 2)
 			printf("pin %d of local apic doesn't exist!\n", pin);
@@ -1376,7 +1377,7 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 	}
 
 	mpi->ioapic_ih = APIC_INT_VIA_APIC |
-	    ((id<<APIC_INT_APIC_SHIFT) | ((pin<<APIC_INT_PIN_SHIFT)));
+	    ((id << APIC_INT_APIC_SHIFT) | (pin << APIC_INT_PIN_SHIFT));
 
 	if (mp_verbose) {
 		char buf[256];
@@ -1429,5 +1430,4 @@ mpbios_pci_attach_hook(device_t parent, device_t self,
 	mpb->mb_pci_chipset_tag = pba->pba_pc;
 	return 0;
 }
-
 #endif
