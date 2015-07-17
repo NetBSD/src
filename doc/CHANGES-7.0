@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.341 2015/07/16 21:57:42 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.342 2015/07/17 03:54:36 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32570,4 +32570,52 @@ external/gpl3/gdb/dist/gdb/nbsd-thread.c	1.22
 	Fix attaching to a running process with gdb again after
 	previously detaching.
 	[chs, ticket #867]
+
+sys/arch/powerpc/include/psl.h			1.20
+sys/arch/powerpc/include/userret.h		1.29, 1.30
+sys/arch/powerpc/oea/altivec.c			1.30
+sys/arch/powerpc/oea/oea_machdep.c		1.72
+sys/arch/powerpc/powerpc/fpu.c			1.36
+
+	Fix powerpc FP after the switch to PCU.
+	PR port-powerpc/50037.
+	[matt, ticket #868]
+
+usr.bin/gzip/zgrep				1.9
+
+	zgrep(1): suppress the prefixing of filename on output when
+	only one file is specified, to match grep(1)'s output.
+	[nakayama, ticket #870]
+
+games/tetris/screen.c				1.30
+
+	Fix white on black and black on white when drawing the game
+	board and shapes that are black or white depending on the
+	default terminal forground color.
+	[nat, ticket #873]
+
+usr.sbin/postinstall/postinstall		1.197
+
+	Check for an out of date /etc/fonts/fonts.conf and if so,
+	forcibly update it (it is not intended to be user editable).
+	This is primarily intended so that pkgsrc fonts installed in
+	the new location can be found.
+	[jnemeth, ticket #874]
+
+lib/libm/src/lrint.c				1.5
+lib/libm/src/lrintf.c				1.6
+
+	Return x for >= DBL_FRACBITS in lrint.c.
+	Return x for >= SNG_FRACBITS in lrintf.c
+	Addresses PR lib/49690.
+	[nat, ticket #875]
+
+sys/arch/arm/arm32/arm32_reboot.c		1.7, 1.8
+
+	- print a warning about powerdown not being supported like other
+	  ports do
+	- merge duplicated code
+	- if halt is requested and there is no console, keep looping
+	  instead of rebooting.
+	[christos, ticket #876]
 
