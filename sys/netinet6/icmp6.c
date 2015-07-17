@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.170 2014/11/25 19:51:17 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.171 2015/07/17 02:21:08 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.170 2014/11/25 19:51:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.171 2015/07/17 02:21:08 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2472,8 +2472,10 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		len = sizeof(*nd_opt) + ifp->if_addrlen;
 		len = (len + 7) & ~7;	/* round by 8 */
 		/* safety check */
-		if (len + (p - (u_char *)ip6) > maxlen)
+		if (len + (p - (u_char *)ip6) > maxlen) {
+			rtfree(rt);
 			goto nolladdropt;
+		}
 		if (!(rt_nexthop->rt_flags & RTF_GATEWAY) &&
 		    (rt_nexthop->rt_flags & RTF_LLINFO) &&
 		    (rt_nexthop->rt_gateway->sa_family == AF_LINK) &&
@@ -2486,6 +2488,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 			memcpy(lladdr, CLLADDR(sdl), ifp->if_addrlen);
 			p += len;
 		}
+		rtfree(rt);
 	}
   nolladdropt:;
 

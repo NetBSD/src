@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.91 2015/04/30 09:57:38 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.92 2015/07/17 02:21:08 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -387,6 +387,8 @@ int	rtrequest(int, const struct sockaddr *,
 	    const struct sockaddr *, const struct sockaddr *, int,
 	    struct rtentry **);
 int	rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
+int	rtrequest_newmsg(const int, const struct sockaddr *,
+	    const struct sockaddr *, const struct sockaddr *, const int);
 
 int	rt_ifa_addlocal(struct ifaddr *);
 int	rt_ifa_remlocal(struct ifaddr *, struct ifaddr *);
@@ -400,6 +402,15 @@ const struct sockaddr *
 	rt_settag(struct rtentry *, const struct sockaddr *);
 struct sockaddr *
 	rt_gettag(struct rtentry *);
+
+static inline struct rtentry *
+rt_get_gwroute(struct rtentry *rt)
+{
+	if (rt->rt_gwroute == NULL)
+		return NULL;
+	rt->rt_gwroute->rt_refcnt++;
+	return rt->rt_gwroute;
+}
 
 void	rtcache_copy(struct route *, const struct route *);
 void	rtcache_free(struct route *);
