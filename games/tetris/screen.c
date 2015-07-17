@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.29 2014/07/13 16:23:55 pgoyette Exp $	*/
+/*	$NetBSD: screen.c,v 1.29.2.1 2015/07/17 03:39:35 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -98,12 +98,16 @@ static void
 setcolor(int c)
 {
 	char *buf;
+	char monochrome[] = "\033[0m";
 	if (nocolor == 1)
 		return;
 	if (set_a_foreground == NULL)
 		return;
 
-	buf = tiparm(set_a_foreground, c == 7 ? 0 : c);
+	if (c == 0 || c == 7)
+		buf = monochrome;
+	else
+		buf = tiparm(set_a_foreground, c);
 	if (buf != NULL)
 		putpad(buf);
 }
@@ -303,6 +307,7 @@ scr_update(void)
 			putpad(cursor_home);
 		else
 			moveto(0, 0);
+		setcolor(0);
 		(void) printf("Score: %d", score);
 		curscore = score;
 	}
@@ -359,12 +364,12 @@ scr_update(void)
 			}
 			if (enter_standout_mode) {
 				if (so != cur_so) {
+					setcolor(so);
 					putpad(so ?
 					    enter_standout_mode :
 					    exit_standout_mode);
 					cur_so = so;
 				}
-				setcolor(so);
 #ifdef DEBUG
 				char buf[3];
 				snprintf(buf, sizeof(buf), "%d%d", so, so);
