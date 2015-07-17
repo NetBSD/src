@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.5 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.6 2015/07/17 15:17:07 christos Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -128,6 +128,7 @@ harvest_child_status(
 		if (waitpid(c->pid, NULL, 0) == c->pid)
 			TRACE(4, ("harvested child %d\n", c->pid));
 		else msyslog(LOG_ERR, "error waiting on child %d: %m", c->pid);
+		c->pid = 0;
 	}
 }
 
@@ -164,7 +165,6 @@ cleanup_after_child(
 		close(c->resp_read_pipe);
 		c->resp_read_pipe = -1;
 	}
-	c->pid = 0;
 	c->resp_read_ctx = NULL;
 	DEBUG_INSIST(-1 == c->req_read_pipe);
 	DEBUG_INSIST(-1 == c->resp_write_pipe);
