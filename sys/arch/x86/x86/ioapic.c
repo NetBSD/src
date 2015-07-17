@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.50 2015/04/27 07:03:58 knakahara Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.51 2015/07/17 06:41:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.50 2015/04/27 07:03:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.51 2015/07/17 06:41:18 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -305,7 +305,8 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pic.pic_edge_stubs = ioapic_edge_stubs;
 	sc->sc_pic.pic_level_stubs = ioapic_level_stubs;
 
-	apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
+	apic_id = (ioapic_read(sc, IOAPIC_ID) & IOAPIC_ID_MASK)
+	    >> IOAPIC_ID_SHIFT;
 	ver_sz = ioapic_read(sc, IOAPIC_VER);
 
 	if (ver_sz == 0xffffffff) {
@@ -376,19 +377,19 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 		aprint_debug_dev(sc->sc_dev, "misconfigured as apic %d\n",
 				 apic_id);
 
-		ioapic_write(sc,IOAPIC_ID,
-		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
-		    |(sc->sc_pic.pic_apicid<<IOAPIC_ID_SHIFT));
+		ioapic_write(sc, IOAPIC_ID,
+		    (ioapic_read(sc, IOAPIC_ID) & ~IOAPIC_ID_MASK)
+		    | (sc->sc_pic.pic_apicid << IOAPIC_ID_SHIFT));
 		
-		apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
+		apic_id = (ioapic_read(sc, IOAPIC_ID) & IOAPIC_ID_MASK)
+		    >> IOAPIC_ID_SHIFT;
 		
-		if (apic_id != sc->sc_pic.pic_apicid) {
-			aprint_error_dev(sc->sc_dev, "can't remap to apid %d\n",
-			    sc->sc_pic.pic_apicid);
-		} else {
+		if (apic_id != sc->sc_pic.pic_apicid)
+			aprint_error_dev(sc->sc_dev,
+			    "can't remap to apid %d\n", sc->sc_pic.pic_apicid);
+		else
 			aprint_debug_dev(sc->sc_dev, "remapped to apic %d\n",
 			    sc->sc_pic.pic_apicid);
-		}
 	}
 
  out:
@@ -426,7 +427,8 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 		} else {
 			redhi = (ci->ci_cpuid << IOAPIC_REDHI_DEST_SHIFT);
 			redlo |= (idt_vec & 0xff);
-			redlo |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
+			redlo |= IOAPIC_REDLO_DEL_FIXED
+			    << IOAPIC_REDLO_DEL_SHIFT;
 			redlo &= ~IOAPIC_REDLO_DSTMOD;
 
 			/* XXX derive this bit from BIOS info */
@@ -434,7 +436,8 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 				redlo |= IOAPIC_REDLO_LEVEL;
 			else
 				redlo &= ~IOAPIC_REDLO_LEVEL;
-			if (map != NULL && ((map->flags & 3) == MPS_INTPO_DEF)) {
+			if ((map != NULL)
+			    && ((map->flags & 3) == MPS_INTPO_DEF)) {
 				if (pp->ip_type == IST_LEVEL)
 					redlo |= IOAPIC_REDLO_ACTLO;
 				else
@@ -480,17 +483,17 @@ ioapic_reenable(void)
 	aprint_normal("%s reenabling\n", device_xname(ioapics->sc_dev));
 
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
-		apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
+		apic_id = (ioapic_read(sc, IOAPIC_ID) & IOAPIC_ID_MASK)
+		    >> IOAPIC_ID_SHIFT;
 		if (apic_id != sc->sc_pic.pic_apicid) {
-			ioapic_write(sc,IOAPIC_ID,
-			    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
-			    |(sc->sc_pic.pic_apicid<<IOAPIC_ID_SHIFT));
+			ioapic_write(sc, IOAPIC_ID,
+			    (ioapic_read(sc, IOAPIC_ID) & ~IOAPIC_ID_MASK)
+			    | (sc->sc_pic.pic_apicid << IOAPIC_ID_SHIFT));
 		}
 
-		for (p = 0; p < sc->sc_apic_sz; p++) {
+		for (p = 0; p < sc->sc_apic_sz; p++)
 			apic_set_redir(sc, p, sc->sc_pins[p].ip_vector,
 				    sc->sc_pins[p].ip_cpu);
-		}
 	}
 
 	ioapic_enable();
@@ -554,7 +557,6 @@ ioapic_hwunmask(struct pic *pic, int pin)
 static void
 ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 		int idtvec, int type)
-
 {
 	struct ioapic_softc *sc = pic->pic_ioapic;
 	struct ioapic_pin *pp;
@@ -570,6 +572,7 @@ static void
 ioapic_delroute(struct pic *pic, struct cpu_info *ci, int pin,
     int idtvec, int type)
 {
+
 	ioapic_hwmask(pic, pin);
 }
 
