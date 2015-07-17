@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.100 2015/06/30 06:42:06 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.101 2015/07/17 02:21:08 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.100 2015/06/30 06:42:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.101 2015/07/17 02:21:08 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,23 @@ int nd6_numroutes = 0;
 #define RTPREF_LOW	(-1)
 #define RTPREF_RESERVED	(-2)
 #define RTPREF_INVALID	(-3)	/* internal */
+
+static inline bool
+nd6_is_llinfo_probreach(struct nd_defrouter *dr)
+{
+	struct rtentry *rt = NULL;
+	struct llinfo_nd6 *ln = NULL;
+
+	rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp);
+	if (rt == NULL)
+		return false;
+	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+	rtfree(rt);
+	if (ln == NULL || !ND6_IS_LLINFO_PROBREACH(ln))
+		return false;
+
+	return true;
+}
 
 /*
  * Receive Router Solicitation Message - just for routers.
@@ -427,7 +444,6 @@ defrouter_addreq(struct nd_defrouter *newdr)
 		struct sockaddr_in6 sin6;
 		struct sockaddr sa;
 	} def, mask, gate;
-	struct rtentry *newrt = NULL;
 	int s;
 	int error;
 
@@ -444,15 +460,12 @@ defrouter_addreq(struct nd_defrouter *newdr)
 #endif
 
 	s = splsoftnet();
-	error = rtrequest(RTM_ADD, &def.sa, &gate.sa, &mask.sa,
-	    RTF_GATEWAY, &newrt);
-	if (newrt) {
-		rt_newmsg(RTM_ADD, newrt); /* tell user process */
-		newrt->rt_refcnt--;
+	error = rtrequest_newmsg(RTM_ADD, &def.sa, &gate.sa, &mask.sa,
+	    RTF_GATEWAY);
+	if (error == 0) {
 		nd6_numroutes++;
-	}
-	if (error == 0)
 		newdr->installed = 1;
+	}
 	splx(s);
 	return;
 }
@@ -539,7 +552,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 		struct sockaddr_in6 sin6;
 		struct sockaddr sa;
 	} def, mask, gw;
-	struct rtentry *oldrt = NULL;
+	int error;
 
 #ifdef DIAGNOSTIC
 	if (dr == NULL)
@@ -558,19 +571,10 @@ defrouter_delreq(struct nd_defrouter *dr)
 	gw.sin6.sin6_scope_id = 0;	/* XXX */
 #endif
 
-	rtrequest(RTM_DELETE, &def.sa, &gw.sa, &mask.sa, RTF_GATEWAY, &oldrt);
-	if (oldrt) {
-		rt_newmsg(RTM_DELETE, oldrt);
-		if (oldrt->rt_refcnt <= 0) {
-			/*
-			 * XXX: borrowed from the RTM_DELETE case of
-			 * rtrequest().
-			 */
-			oldrt->rt_refcnt++;
-			rtfree(oldrt);
-		}
+	error = rtrequest_newmsg(RTM_DELETE, &def.sa, &gw.sa, &mask.sa,
+	    RTF_GATEWAY);
+	if (error == 0)
 		nd6_numroutes--;
-	}
 
 	dr->installed = 0;
 }
@@ -620,8 +624,6 @@ defrouter_select(void)
 	struct nd_ifinfo *ndi;
 	int s = splsoftnet();
 	struct nd_defrouter *dr, *selected_dr = NULL, *installed_dr = NULL;
-	struct rtentry *rt = NULL;
-	struct llinfo_nd6 *ln = NULL;
 
 	/*
 	 * This function should be called only when acting as an autoconfigured
@@ -658,11 +660,8 @@ defrouter_select(void)
 			continue;
 
 		if (selected_dr == NULL &&
-		    (rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp)) != NULL &&
-		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) != NULL &&
-		    ND6_IS_LLINFO_PROBREACH(ln)) {
+		    nd6_is_llinfo_probreach(dr))
 			selected_dr = dr;
-		}
 
 		if (dr->installed && !installed_dr)
 			installed_dr = dr;
@@ -686,9 +685,7 @@ defrouter_select(void)
 		else
 			selected_dr = TAILQ_NEXT(installed_dr, dr_entry);
 	} else if (installed_dr &&
-	    (rt = nd6_lookup(&installed_dr->rtaddr, 0, installed_dr->ifp)) &&
-	    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
-	    ND6_IS_LLINFO_PROBREACH(ln) &&
+	    nd6_is_llinfo_probreach(installed_dr) &&
 	    rtpref(selected_dr) <= rtpref(installed_dr)) {
 		selected_dr = installed_dr;
 	}
@@ -1391,17 +1388,12 @@ static struct nd_pfxrouter *
 find_pfxlist_reachable_router(struct nd_prefix *pr)
 {
 	struct nd_pfxrouter *pfxrtr;
-	struct rtentry *rt;
-	struct llinfo_nd6 *ln;
 
 	for (pfxrtr = LIST_FIRST(&pr->ndpr_advrtrs); pfxrtr;
 	     pfxrtr = LIST_NEXT(pfxrtr, pfr_entry)) {
 		if (pfxrtr->router->ifp->if_flags & IFF_UP &&
 		    pfxrtr->router->ifp->if_link_state != LINK_STATE_DOWN &&
-		    (rt = nd6_lookup(&pfxrtr->router->rtaddr, 0,
-		    pfxrtr->router->ifp)) &&
-		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
-		    ND6_IS_LLINFO_PROBREACH(ln))
+		    nd6_is_llinfo_probreach(pfxrtr->router))
 			break;	/* found */
 	}
 
@@ -1611,7 +1603,6 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	struct nd_prefix *opr;
 	u_long rtflags;
 	int error = 0;
-	struct rtentry *rt = NULL;
 
 	/* sanity check */
 	if ((pr->ndpr_stateflags & NDPRF_ONLINK) != 0) {
@@ -1689,13 +1680,10 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 		 */
 		rtflags &= ~RTF_CLONING;
 	}
-	error = rtrequest(RTM_ADD, (struct sockaddr *)&pr->ndpr_prefix,
-	    ifa->ifa_addr, (struct sockaddr *)&mask6, rtflags, &rt);
+	error = rtrequest_newmsg(RTM_ADD, (struct sockaddr *)&pr->ndpr_prefix,
+	    ifa->ifa_addr, (struct sockaddr *)&mask6, rtflags);
 	if (error == 0) {
-		if (rt != NULL) { /* this should be non NULL, though */
-			rt_newmsg(RTM_ADD, rt);
-			nd6_numroutes++;
-		}
+		nd6_numroutes++;
 		pr->ndpr_stateflags |= NDPRF_ONLINK;
 	} else {
 		nd6log((LOG_ERR, "nd6_prefix_onlink: failed to add route for a"
@@ -1707,9 +1695,6 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 		    ip6_sprintf(&mask6.sin6_addr), rtflags, error));
 	}
 
-	if (rt != NULL)
-		rt->rt_refcnt--;
-
 	return (error);
 }
 
@@ -1720,7 +1705,6 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 	struct ifnet *ifp = pr->ndpr_ifp;
 	struct nd_prefix *opr;
 	struct sockaddr_in6 sa6, mask6;
-	struct rtentry *rt = NULL;
 
 	/* sanity check */
 	if ((pr->ndpr_stateflags & NDPRF_ONLINK) == 0) {
@@ -1732,16 +1716,11 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 
 	sockaddr_in6_init(&sa6, &pr->ndpr_prefix.sin6_addr, 0, 0, 0);
 	sockaddr_in6_init(&mask6, &pr->ndpr_mask, 0, 0, 0);
-	error = rtrequest(RTM_DELETE, (struct sockaddr *)&sa6, NULL,
-	    (struct sockaddr *)&mask6, 0, &rt);
+	error = rtrequest_newmsg(RTM_DELETE, (struct sockaddr *)&sa6, NULL,
+	    (struct sockaddr *)&mask6, 0);
 	if (error == 0) {
 		pr->ndpr_stateflags &= ~NDPRF_ONLINK;
-
-		/* report the route deletion to the routing socket. */
-		if (rt != NULL) {
-			rt_newmsg(RTM_DELETE, rt);
-			nd6_numroutes--;
-		}
+		nd6_numroutes--;
 
 		/*
 		 * There might be the same prefix on another interface,
@@ -1789,15 +1768,7 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 		    error));
 	}
 
-	if (rt != NULL) {
-		if (rt->rt_refcnt <= 0) {
-			/* XXX: we should free the entry ourselves. */
-			rt->rt_refcnt++;
-			rtfree(rt);
-		}
-	}
-
-	return (error);
+	return error;
 }
 
 static struct in6_ifaddr *
