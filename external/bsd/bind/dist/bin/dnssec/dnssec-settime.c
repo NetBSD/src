@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-settime.c,v 1.10.2.1 2014/12/22 03:28:33 msaitoh Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.10.2.2 2015/07/17 04:31:20 snj Exp $	*/
 
 /*
- * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -171,7 +171,7 @@ main(int argc, char **argv) {
 	if (result != ISC_R_SUCCESS)
 		fatal("Out of memory");
 
-	setup_logging(verbose, mctx, &log);
+	setup_logging(mctx, &log);
 
 #ifdef PKCS11CRYPTO
 	pk11_result_register();
@@ -345,7 +345,6 @@ main(int argc, char **argv) {
 	isc_entropy_stopcallbacksources(ectx);
 
 	if (predecessor != NULL) {
-		char keystr[DST_KEY_FORMATSIZE];
 		int major, minor;
 
 		if (prepub == -1)

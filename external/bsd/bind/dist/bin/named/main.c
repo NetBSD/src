@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.14.2.2 2015/04/30 06:07:32 riz Exp $	*/
+/*	$NetBSD: main.c,v 1.14.2.3 2015/07/17 04:31:20 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -56,6 +56,10 @@
 
 #include <dlz/dlz_dlopen_driver.h>
 
+#ifdef HAVE_GPERFTOOLS_PROFILER
+#include <gperftools/profiler.h>
+#endif
+
 
 /*
  * Defining NS_MAIN provides storage declarations (rather than extern)
@@ -79,6 +83,7 @@
 
 #ifdef OPENSSL
 #include <openssl/opensslv.h>
+#include <openssl/crypto.h>
 #endif
 #ifdef HAVE_LIBXML2
 #include <libxml/xmlversion.h>
@@ -106,6 +111,9 @@
 #endif
 
 extern int isc_dscp_check_value;
+extern unsigned int dns_zone_mkey_hour;
+extern unsigned int dns_zone_mkey_day;
+extern unsigned int dns_zone_mkey_month;
 
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
@@ -421,8 +429,6 @@ parse_command_line(int argc, char *argv[]) {
 	int ch;
 	int port;
 	const char *p;
-	isc_boolean_t disable6 = ISC_FALSE;
-	isc_boolean_t disable4 = ISC_FALSE;
 
 	save_command_line(argc, argv);
 
@@ -432,20 +438,20 @@ parse_command_line(int argc, char *argv[]) {
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (ch) {
 		case '4':
-			if (disable4)
+			if (ns_g_disable4)
 				ns_main_earlyfatal("cannot specify -4 and -6");
 			if (isc_net_probeipv4() != ISC_R_SUCCESS)
 				ns_main_earlyfatal("IPv4 not supported by OS");
 			isc_net_disableipv6();
-			disable6 = ISC_TRUE;
+			ns_g_disable6 = ISC_TRUE;
 			break;
 		case '6':
-			if (disable6)
+			if (ns_g_disable6)
 				ns_main_earlyfatal("cannot specify -4 and -6");
 			if (isc_net_probeipv6() != ISC_R_SUCCESS)
 				ns_main_earlyfatal("IPv6 not supported by OS");
 			isc_net_disableipv4();
-			disable4 = ISC_TRUE;
+			ns_g_disable4 = ISC_TRUE;
 			break;
 		case 'c':
 			ns_g_conffile = isc_commandline_argument;
@@ -561,6 +567,39 @@ parse_command_line(int argc, char *argv[]) {
 			else if (!strncmp(isc_commandline_argument, "dscp=", 5))
 				isc_dscp_check_value =
 					   atoi(isc_commandline_argument + 5);
+			else if (!strncmp(isc_commandline_argument,
+					  "mkeytimers=", 11))
+			{
+				p = strtok(isc_commandline_argument + 11, "/");
+				if (p == NULL)
+					ns_main_earlyfatal("bad mkeytimer");
+				dns_zone_mkey_hour = atoi(p);
+				if (dns_zone_mkey_hour == 0)
+					ns_main_earlyfatal("bad mkeytimer");
+
+				p = strtok(NULL, "/");
+				if (p == NULL) {
+					dns_zone_mkey_day =
+						(24 * dns_zone_mkey_hour);
+					dns_zone_mkey_month =
+						(30 * dns_zone_mkey_day);
+					break;
+				}
+				dns_zone_mkey_day = atoi(p);
+				if (dns_zone_mkey_day < dns_zone_mkey_hour)
+					ns_main_earlyfatal("bad mkeytimer");
+
+				p = strtok(NULL, "/");
+				if (p == NULL) {
+					dns_zone_mkey_month =
+						(30 * dns_zone_mkey_day);
+					break;
+				}
+				dns_zone_mkey_month = atoi(p);
+				if (dns_zone_mkey_month < dns_zone_mkey_day)
+					ns_main_earlyfatal("bad mkeytimer");
+			} else if (!strcmp(isc_commandline_argument, "notcp"))
+				ns_g_notcp = ISC_TRUE;
 			else
 				fprintf(stderr, "unknown -T flag '%s\n",
 					isc_commandline_argument);
@@ -603,12 +642,20 @@ parse_command_line(int argc, char *argv[]) {
 			printf("compiled by Solaris Studio %x\n", __SUNPRO_C);
 #endif
 #ifdef OPENSSL
-			printf("using OpenSSL version: %s\n",
+			printf("compiled with OpenSSL version: %s\n",
 			       OPENSSL_VERSION_TEXT);
+#ifndef WIN32
+			printf("linked to OpenSSL version: %s\n",
+			       SSLeay_version(SSLEAY_VERSION));
+#endif
 #endif
 #ifdef HAVE_LIBXML2
-			printf("using libxml2 version: %s\n",
+			printf("compiled with libxml2 version: %s\n",
 			       LIBXML_DOTTED_VERSION);
+#ifndef WIN32
+			printf("linked to libxml2 version: %s\n",
+			       xmlParserVersion);
+#endif
 #endif
 			exit(0);
 		case 'F':
@@ -1173,6 +1220,10 @@ main(int argc, char *argv[]) {
 	char *instance = NULL;
 #endif
 
+#ifdef HAVE_GPERFTOOLS_PROFILER
+	(void) ProfilerStart(NULL);
+#endif
+
 	/*
 	 * Record version in core image.
 	 * strings named.core | grep "named version:"
@@ -1293,6 +1344,10 @@ main(int argc, char *argv[]) {
 	ns_os_closedevnull();
 
 	ns_os_shutdown();
+
+#ifdef HAVE_GPERFTOOLS_PROFILER
+	ProfilerStop();
+#endif
 
 	return (0);
 }

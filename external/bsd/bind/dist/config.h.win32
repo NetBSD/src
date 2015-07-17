@@ -185,7 +185,9 @@ char *getpassphrase(const char *);
  * WIN32 specials until some other way of dealing with these is decided.
  */
 
+#if _MSC_VER < 1900
 #define snprintf _snprintf
+#endif
 #if _MSC_VER <= 1400
 #define vsnprintf _vsnprintf
 #endif
@@ -312,6 +314,9 @@ typedef __int64 off_t;
 /* Define to the flags type used by getnameinfo(3). */
 #define IRS_GETNAMEINFO_FLAGS_T int
 
+/* Define to the sockaddr length type used by getnameinfo(3). */
+#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t
+
 /* Define to enable the "filter-aaaa-on-v4" and "filter-aaaa-on-v6" options.
    */
 @ALLOW_FILTER_AAAA@
@@ -351,6 +356,9 @@ typedef __int64 off_t;
 
 /* Define if your OpenSSL version supports AES */
 @HAVE_OPENSSL_AES@
+
+/* HMAC_*() return ints */
+@HMAC_RETURN_INT@
 
 /* Use AES for Source Identity Token generation */
 @AES_SIT@

@@ -1,7 +1,7 @@
-/*	$NetBSD: request.h,v 1.4 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: request.h,v 1.4.4.1 2015/07/17 04:31:33 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -50,6 +50,7 @@
 
 #define DNS_REQUESTOPT_TCP 0x00000001U
 #define DNS_REQUESTOPT_CASE 0x00000002U
+#define DNS_REQUESTOPT_FIXEDID 0x00000004U
 
 typedef struct dns_requestevent {
 	ISC_EVENT_COMMON(struct dns_requestevent);

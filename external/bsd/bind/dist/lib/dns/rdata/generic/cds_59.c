@@ -1,7 +1,7 @@
-/*	$NetBSD: cds_59.c,v 1.1.1.3.2.2 2014/12/22 03:28:45 msaitoh Exp $	*/
+/*	$NetBSD: cds_59.c,v 1.1.1.3.2.3 2015/07/17 04:31:34 snj Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,8 +21,7 @@
 #ifndef RDATA_GENERIC_CDS_59_C
 #define RDATA_GENERIC_CDS_59_C
 
-#define RRTYPE_CDS_ATTRIBUTES \
-	(DNS_RDATATYPEATTR_DNSSEC|DNS_RDATATYPEATTR_ATPARENT)
+#define RRTYPE_CDS_ATTRIBUTES 0
 
 #include <isc/sha1.h>
 #include <isc/sha2.h>

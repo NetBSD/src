@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdbhpt_dynamic.c,v 1.1.1.2 2014/02/28 17:40:09 christos Exp $	*/
+/*	$NetBSD: dlz_bdbhpt_dynamic.c,v 1.1.1.2.6.1 2015/07/17 04:31:27 snj Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -50,8 +50,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*
  * This is simply a merge of Andrew Tridgell's dlz_example.c and the
@@ -737,7 +735,7 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 	if (bdbhptres != 0) {
 		db->log(ISC_LOG_ERROR,
 			"bdbhpt_dynamic: db environment could not be created. "
-			"BerkeleyDB error: %s",jdb_strerror(bdbhptres));
+			"BerkeleyDB error: %s", db_strerror(bdbhptres));
 		result = ISC_R_FAILURE;
 		goto init_cleanup;
 	}

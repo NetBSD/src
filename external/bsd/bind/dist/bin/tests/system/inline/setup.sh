@@ -25,6 +25,7 @@ rm -f ns1/root.db.signed
 touch ns2/trusted.conf
 cp ns2/bits.db.in ns2/bits.db
 cp ns2/bits.db.in ns2/retransfer.db
+cp ns2/bits.db.in ns2/retransfer3.db
 rm -f ns2/bits.db.jnl
 
 cp ns3/master.db.in ns3/master.db

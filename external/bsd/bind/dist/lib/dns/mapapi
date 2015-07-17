@@ -13,4 +13,4 @@
 # Whenever releasing a new major release of BIND9, set this value
 # back to 1.0 when releasing the first alpha.  Fast files are *never*
 # compatible across major releases.
-MAPAPI=1.0
+MAPAPI=1.1

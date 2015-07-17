@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -365,6 +365,7 @@ my @substdefh = ("AES_SIT",
                  "HAVE_PKCS11_ECDSA",
                  "HAVE_PKCS11_GOST",
                  "HAVE_READLINE",
+                 "HMAC_RETURN_INT",
                  "HMAC_SHA1_SIT",
                  "HMAC_SHA256_SIT",
                  "ISC_LIST_CHECKINIT",
@@ -1876,6 +1877,30 @@ if ($enable_openssl_hash eq "yes") {
         die "No OpenSSL for hash functions\n";
     }
     $configdefp{"ISC_PLATFORM_OPENSSLHASH"} = 1;
+    if ($verbose) {
+        print "checking HMAC_Init() return type\n";
+    }
+    open F, ">testhmac.c" || die $!;
+    print F << 'EOF';
+#include <openssl/hmac.h>
+
+int
+main(void)
+{
+        HMAC_CTX ctx;
+        int n = HMAC_Init(&ctx, NULL, 0, NULL);
+        n += HMAC_Update(&ctx, NULL, 0);
+        n += HMAC_Final(&ctx, NULL, NULL);
+        return(n);
+}
+EOF
+    close F;
+    my $include = $configinc{"OPENSSL_INC"};
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD /I "$include" testhmac.c "$library"`;
+    if (grep { -f and -x } ".\\testhmac.exe") {
+        $configdefh{"HMAC_RETURN_INT"} = 1;
+    }
 }
 
 # with-pkcs11
@@ -2930,16 +2955,19 @@ exit 0;
 #  --with-libxml2 supported
 #  --with-libjson not supported on WIN32 (package not available on WIN32)
 #  --with-purify ? (package available on WIN32 but for free?)
+#  --with-gperftools-profiler (package not available on WIN32)
 #  --with-libtool not supported on WIN32 (never)
 #  --with-locktype not supported on WIN32 (not yet available on WIN32)
 #  --with-readline supported
 #  --with-idn support
 #  --with-[lib]iconv (part of IDN)
 #  --with-atf not supported on WIN32 (package not available on WIN32)
+#  --with-tuning supported
 #  --with-dlopen included without a way to disable it
 #  --with-dlz-* ?
 #
 # Notes: MSVC versions
+# MSVC 14.0 _MSC_VER == 1900 (VS 14 (2014))
 # MSVC 12.0 _MSC_VER == 1800 (VS 2013)
 # MSVC 11.0 _MSC_VER == 1700 (VS 2012)
 # MSVC 10.0 _MSC_VER == 1600 (VS 2010)

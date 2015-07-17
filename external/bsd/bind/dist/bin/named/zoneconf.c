@@ -1,7 +1,7 @@
-/*	$NetBSD: zoneconf.c,v 1.6 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.6.4.1 2015/07/17 04:31:20 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -711,6 +711,8 @@ configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
 				    sizeof(*rdata) + region.length);
 		}
 	}
+
+	INSIST(dbversion == NULL);
 
 	return (result);
 }
@@ -1513,7 +1515,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			dns_zone_setoption(mayberaw, DNS_ZONEOPT_CHECKINTEGRITY,
 					   cfg_obj_asboolean(obj));
 		} else {
-			isc_boolean_t check = ISC_FALSE;
+			check = ISC_FALSE;
 			result = ns_config_get(nodefault, "check-integrity",
 					       &obj);
 			if (result == ISC_R_SUCCESS)

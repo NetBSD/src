@@ -121,6 +121,9 @@ txt09			TXT	foo\010bar
 txt10			TXT	foo\ bar
 txt11			TXT	"\"foo\""
 txt12			TXT	\"foo\"
+txt13			TXT	"foo;"
+txt14			TXT	"foo\;"
+txt15			TXT	"bar\\;"
 
 ; type 17
 rp01			RP	mbox-dname txt-dname
@@ -245,6 +248,12 @@ cds01			CDS	30795 1 1 (
 
 ; type 60
 cdnskey01		CDNSKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
+				9UGRuniJDBzC7w0aRyzWZriO6i2odGWWQVucZqKV
+				sENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esg
+				a60zyGW6LFe9r8n6paHrlG5ojqf0BaqHT+8= )
+
+; type 61
+openpgpkey		OPENPGPKEY	( AQMFD5raczCJHViKtLYhWGz8hMY
 				9UGRuniJDBzC7w0aRyzWZriO6i2odGWWQVucZqKV
 				sENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esg
 				a60zyGW6LFe9r8n6paHrlG5ojqf0BaqHT+8= )

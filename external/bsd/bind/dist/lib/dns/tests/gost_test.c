@@ -1,7 +1,7 @@
-/*	$NetBSD: gost_test.c,v 1.1.1.2.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
+/*	$NetBSD: gost_test.c,v 1.1.1.2.2.2 2015/07/17 04:31:34 snj Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -77,10 +77,10 @@ tohexstr(unsigned char *d, unsigned int len, char *out) {
 
 	out[0]='\0';
 	char c_ret[] = "AA";
-	unsigned int i;
+	unsigned int j;
 	strcat(out, "0x");
-	for (i = 0; i < len; i++) {
-		sprintf(c_ret, "%02X", d[i]);
+	for (j = 0; j < len; j++) {
+		sprintf(c_ret, "%02X", d[j]);
 		strcat(out, c_ret);
 	}
 	strcat(out, "\0");
