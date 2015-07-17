@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.171 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.172 2015/07/17 02:21:08 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.171 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.172 2015/07/17 02:21:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -494,16 +494,16 @@ COMPATNAME(route_output)(struct mbuf *m, ...)
 			senderr(EINVAL);
 		}
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
-		if (error == 0 && saved_nrt) {
+		if (error == 0) {
 			rt_setmetrics(rtm->rtm_inits, rtm, saved_nrt);
-			saved_nrt->rt_refcnt--;
+			rtfree(saved_nrt);
 		}
 		break;
 
 	case RTM_DELETE:
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
-			(rt = saved_nrt)->rt_refcnt++;
+			rt = saved_nrt;
 			goto report;
 		}
 		break;
@@ -515,6 +515,7 @@ COMPATNAME(route_output)(struct mbuf *m, ...)
 		 * info.rti_info[RTAX_NETMASK] before
                  * searching.  It did not used to do that.  --dyoung
 		 */
+		rt = NULL;
 		error = rtrequest1(RTM_GET, &info, &rt);
 		if (error != 0)
 			senderr(error);
