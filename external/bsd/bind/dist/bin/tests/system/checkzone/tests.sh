@@ -92,5 +92,29 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking for no 'inherited owner' warning on '\$INCLUDE file' with no new \$ORIGIN ($n)"
+ret=0
+$CHECKZONE example zones/nowarn.inherited.owner.db > test.out1.$n 2>&1 || ret=1
+grep "inherited.owner" test.out1.$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking for 'inherited owner' warning on '\$ORIGIN + \$INCLUDE file' ($n)"
+ret=0
+$CHECKZONE example zones/warn.inherit.origin.db > test.out1.$n 2>&1 || ret=1
+grep "inherited.owner" test.out1.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking for 'inherited owner' warning on '\$INCLUDE file origin' ($n)"
+ret=0
+$CHECKZONE example zones/warn.inherited.owner.db > test.out1.$n 2>&1 || ret=1
+grep "inherited.owner" test.out1.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:exit status: $status"
 exit $status

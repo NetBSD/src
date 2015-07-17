@@ -1,7 +1,7 @@
-/*	$NetBSD: master.c,v 1.12.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
+/*	$NetBSD: master.c,v 1.12.2.2 2015/07/17 04:31:33 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -223,7 +223,7 @@ task_send(dns_loadctx_t *lctx);
 static void
 loadctx_destroy(dns_loadctx_t *lctx);
 
-#define GETTOKEN(lexer, options, token, eol) \
+#define GETTOKENERR(lexer, options, token, eol, err) \
 	do { \
 		result = gettoken(lexer, options, token, eol, callbacks); \
 		switch (result) { \
@@ -236,6 +236,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 				SETRESULT(lctx, result); \
 				LOGIT(result); \
 				read_till_eol = ISC_TRUE; \
+				err \
 				goto next_line; \
 			} else \
 				goto log_and_cleanup; \
@@ -251,6 +252,8 @@ loadctx_destroy(dns_loadctx_t *lctx);
 				goto log_and_cleanup; \
 		} \
 	} while (/*CONSTCOND*/0)
+#define GETTOKEN(lexer, options, token, eol) \
+	GETTOKENERR(lexer, options, token, eol, {} )
 
 #define COMMITALL \
 	do { \
@@ -390,13 +393,19 @@ gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *token,
 	if (eol != ISC_TRUE)
 		if (token->type == isc_tokentype_eol ||
 		    token->type == isc_tokentype_eof) {
+			unsigned long int line;
+			const char *what;
+			const char *file;
+			file = isc_lex_getsourcename(lex);
+			line = isc_lex_getsourceline(lex);
+			if (token->type == isc_tokentype_eol) {
+				line--;
+				what = "line";
+			} else
+				what = "file";
 			(*callbacks->error)(callbacks,
 			    "dns_master_load: %s:%lu: unexpected end of %s",
-					    isc_lex_getsourcename(lex),
-					    isc_lex_getsourceline(lex),
-					    (token->type ==
-					     isc_tokentype_eol) ?
-					    "line" : "file");
+					    file, line, what);
 			return (ISC_R_UNEXPECTEDEND);
 		}
 	return (ISC_R_SUCCESS);
@@ -518,6 +527,7 @@ incctx_create(isc_mem_t *mctx, dns_name_t *origin, dns_incctx_t **ictxp) {
 	ictx->drop = ISC_FALSE;
 	ictx->glue_line = 0;
 	ictx->current_line = 0;
+	ictx->origin_changed = ISC_TRUE;
 
 	*ictxp = ictx;
 	return (ISC_R_SUCCESS);
@@ -810,6 +820,7 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 	isc_textregion_t r;
 	int i, n, start, stop, step = 0;
 	dns_incctx_t *ictx;
+	char dummy;
 
 	ictx = lctx->inc;
 	callbacks = lctx->callbacks;
@@ -826,9 +837,9 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 	}
 	isc_buffer_init(&target, target_mem, target_size);
 
-	n = sscanf(range, "%d-%d/%d", &start, &stop, &step);
-	if ((n < 2) || (start < 0) || (stop < 0) || (step < 0) ||
-	    (stop < start))
+	n = sscanf(range, "%d-%d%[/]%d", &start, &stop, &dummy, &step);
+	if ((n != 2 && n != 4) || (start < 0) || (stop < 0) ||
+	     (n == 4 && step < 1) || (stop < start))
 	{
 	       (*callbacks->error)(callbacks,
 				  "%s: %s:%lu: invalid range '%s'",
@@ -1117,7 +1128,6 @@ load_text(dns_loadctx_t *lctx) {
 				line = isc_lex_getsourceline(lctx->lex);
 				source = isc_lex_getsourcename(lctx->lex);
 				ictx = lctx->inc;
-				EXPECTEOL;
 				continue;
 			}
 			done = ISC_TRUE;
@@ -1153,7 +1163,9 @@ load_text(dns_loadctx_t *lctx) {
 				finish_origin = ISC_TRUE;
 			} else if (strcasecmp(DNS_AS_STR(token),
 					      "$TTL") == 0) {
-				GETTOKEN(lctx->lex, 0, &token, ISC_FALSE);
+				GETTOKENERR(lctx->lex, 0, &token, ISC_FALSE,
+					    lctx->ttl = 0;
+					    lctx->default_ttl_known = ISC_TRUE;);
 				result =
 				   dns_ttl_fromtext(&token.value.as_textregion,
 						    &lctx->ttl);
@@ -1205,7 +1217,6 @@ load_text(dns_loadctx_t *lctx) {
 				    token.type == isc_tokentype_eof) {
 					if (token.type == isc_tokentype_eof)
 						WARNUNEXPECTEDEOF(lctx->lex);
-					isc_lex_ungettoken(lctx->lex, &token);
 					/*
 					 * No origin field.
 					 */
@@ -1424,6 +1435,7 @@ load_text(dns_loadctx_t *lctx) {
 			}
 			if (finish_include) {
 				finish_include = ISC_FALSE;
+				EXPECTEOL;
 				result = pushfile(include_file, new_name, lctx);
 				if (MANYERRS(lctx, result)) {
 					SETRESULT(lctx, result);
@@ -1434,6 +1446,7 @@ load_text(dns_loadctx_t *lctx) {
 					goto insist_and_cleanup;
 				}
 				ictx = lctx->inc;
+				ictx->origin_changed = ISC_TRUE;
 				source = isc_lex_getsourcename(lctx->lex);
 				line = isc_lex_getsourceline(lctx->lex);
 				POST(line);
@@ -2066,6 +2079,11 @@ pushfile(const char *master_file, dns_name_t *origin, dns_loadctx_t *lctx) {
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
+	/*
+	 * Push origin_changed.
+	 */
+	new->origin_changed = ictx->origin_changed;
+
 	/* Set current domain. */
 	if (ictx->glue != NULL || ictx->current != NULL) {
 		for (new_in_use = 0; new_in_use < NBUFS; new_in_use++)
@@ -2093,8 +2111,7 @@ pushfile(const char *master_file, dns_name_t *origin, dns_loadctx_t *lctx) {
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (new != NULL)
-		incctx_destroy(lctx->mctx, new);
+	incctx_destroy(lctx->mctx, new);
 	return (result);
 }
 

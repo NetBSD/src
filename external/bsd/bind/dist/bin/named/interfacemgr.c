@@ -1,7 +1,7 @@
-/*	$NetBSD: interfacemgr.c,v 1.8.2.1 2014/12/22 03:28:34 msaitoh Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.8.2.2 2015/07/17 04:31:20 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -569,7 +569,7 @@ ns_interface_setup(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_interface;
 
-	if (accept_tcp == ISC_TRUE) {
+	if (!ns_g_notcp && accept_tcp == ISC_TRUE) {
 		result = ns_interface_accepttcp(ifp);
 		if (result != ISC_R_SUCCESS) {
 			/*
@@ -816,7 +816,7 @@ do_scan(ns_interfacemgr_t *mgr, ns_listenlist_t *ext_listen,
 	if (isc_net_probeipv6() == ISC_R_SUCCESS)
 		scan_ipv6 = ISC_TRUE;
 #ifdef WANT_IPV6
-	else
+	else if (!ns_g_disable6)
 		isc_log_write(IFMGR_COMMON_LOGARGS,
 			      verbose ? ISC_LOG_INFO : ISC_LOG_DEBUG(1),
 			      "no IPv6 interfaces found");
@@ -824,7 +824,7 @@ do_scan(ns_interfacemgr_t *mgr, ns_listenlist_t *ext_listen,
 
 	if (isc_net_probeipv4() == ISC_R_SUCCESS)
 		scan_ipv4 = ISC_TRUE;
-	else
+	else if (!ns_g_disable4)
 		isc_log_write(IFMGR_COMMON_LOGARGS,
 			      verbose ? ISC_LOG_INFO : ISC_LOG_DEBUG(1),
 			      "no IPv4 interfaces found");
@@ -1041,7 +1041,7 @@ do_scan(ns_interfacemgr_t *mgr, ns_listenlist_t *ext_listen,
 				if (le->dscp != -1 && ifp->dscp == -1)
 					ifp->dscp = le->dscp;
 				else if (le->dscp != ifp->dscp) {
-					isc_sockaddr_format(&listen_addr,
+					isc_sockaddr_format(&listen_sockaddr,
 							    sabuf,
 							    sizeof(sabuf));
 					isc_log_write(IFMGR_COMMON_LOGARGS,

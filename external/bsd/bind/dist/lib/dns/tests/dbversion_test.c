@@ -1,7 +1,7 @@
-/*	$NetBSD: dbversion_test.c,v 1.1.1.2 2014/07/08 04:49:20 spz Exp $	*/
+/*	$NetBSD: dbversion_test.c,v 1.1.1.2.2.1 2015/07/17 04:31:34 snj Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -45,8 +45,8 @@
 static char tempname[11] = "dtXXXXXXXX";
 
 static void
-callback(const char *file, int line, isc_assertiontype_t type,
-	 const char *cond)
+local_callback(const char *file, int line, isc_assertiontype_t type,
+	       const char *cond)
 {
 	UNUSED(file); UNUSED(line); UNUSED(type); UNUSED(cond);
 	if (strcmp(tempname, "dtXXXXXXXX"))
@@ -140,7 +140,7 @@ ATF_TC_BODY(attachversion_bad, tc) {
 
 	UNUSED(tc);
 
-	attachversion(callback);
+	attachversion(local_callback);
 }
 
 static void
@@ -181,7 +181,7 @@ ATF_TC_BODY(closeversion_bad, tc) {
 
 	UNUSED(tc);
 
-	closeversion(callback);
+	closeversion(local_callback);
 }
 
 static void
@@ -229,7 +229,7 @@ ATF_TC_BODY(find_bad, tc) {
 
 	UNUSED(tc);
 
-	find(callback);
+	find(local_callback);
 }
 
 static void
@@ -283,7 +283,7 @@ ATF_TC_BODY(allrdatasets_bad, tc) {
 
 	UNUSED(tc);
 
-	allrdatasets(callback);
+	allrdatasets(local_callback);
 }
 
 static void
@@ -338,7 +338,7 @@ ATF_TC_BODY(findrdataset_bad, tc) {
 
 	UNUSED(tc);
 
-	findrdataset(callback);
+	findrdataset(local_callback);
 }
 
 static void
@@ -393,7 +393,7 @@ ATF_TC_BODY(deleterdataset_bad, tc) {
 
 	UNUSED(tc);
 
-	deleterdataset(callback);
+	deleterdataset(local_callback);
 }
 
 static void
@@ -455,7 +455,7 @@ ATF_TC_BODY(subtractrdataset_bad, tc) {
 
 	UNUSED(tc);
 
-	subtract(callback);
+	subtract(local_callback);
 }
 
 static void
@@ -503,7 +503,7 @@ ATF_TC_BODY(dump_bad, tc) {
 
 	UNUSED(tc);
 
-	dump(callback);
+	dump(local_callback);
 }
 
 static void
@@ -565,7 +565,7 @@ ATF_TC_BODY(addrdataset_bad, tc) {
 
 	UNUSED(tc);
 
-	addrdataset(callback);
+	addrdataset(local_callback);
 }
 
 static void
@@ -614,7 +614,7 @@ ATF_TC_BODY(getnsec3parameters_bad, tc) {
 
 	UNUSED(tc);
 
-	getnsec3parameters(callback);
+	getnsec3parameters(local_callback);
 }
 
 static void
@@ -708,7 +708,7 @@ ATF_TC_BODY(resigned_bad, tc) {
 
 	UNUSED(tc);
 
-	resigned(callback);
+	resigned(local_callback);
 }
 
 /*

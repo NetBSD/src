@@ -1,7 +1,7 @@
-/*	$NetBSD: geoip.c,v 1.1.1.2.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
+/*	$NetBSD: geoip.c,v 1.1.1.2.2.2 2015/07/17 04:31:33 snj Exp $	*/
 
 /*
- * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -168,10 +168,11 @@ set_state(unsigned int family, isc_uint32_t ipnum, const geoipv6_t *ipnum6,
 	  dns_geoip_subtype_t subtype, GeoIPRecord *record,
 	  GeoIPRegion *region, char *name, const char *text, int id)
 {
-	isc_result_t result;
 	geoip_state_t *state = NULL;
 
 #ifdef ISC_PLATFORM_USETHREADS
+	isc_result_t result;
+
 	result = state_key_init();
 	if (result != ISC_R_SUCCESS)
 		return (result);

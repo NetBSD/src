@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrin.c,v 1.9 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.9.4.1 2015/07/17 04:31:33 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1034,7 +1034,6 @@ tuple2msgname(dns_difftuple_t *tuple, dns_message_t *msg, dns_name_t **target)
 	ISC_LIST_APPEND(rdl->rdata, rdata, link);
 
 	CHECK(dns_message_gettemprdataset(msg, &rds));
-	dns_rdataset_init(rds);
 	CHECK(dns_rdatalist_tordataset(rdl, rds));
 
 	CHECK(dns_message_gettempname(msg, &name));
@@ -1087,7 +1086,6 @@ xfrin_send_request(dns_xfrin_ctx_t *xfr) {
 
 	/* Formulate the question and attach it to the question name. */
 	CHECK(dns_message_gettemprdataset(msg, &qrdataset));
-	dns_rdataset_init(qrdataset);
 	dns_rdataset_makequestion(qrdataset, xfr->rdclass, xfr->reqtype);
 	ISC_LIST_APPEND(qname->list, qrdataset, link);
 	qrdataset = NULL;

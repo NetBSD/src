@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2.2.5 2015/04/30 06:07:31 riz Exp $
+# $NetBSD: ad.aarch64,v 1.2.2.6 2015/07/17 04:31:19 snj Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -98,7 +98,8 @@
 ./usr/lib/eabi/libbfd.so.13			base-compat-shlib	compat,pic,binutils
 ./usr/lib/eabi/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/eabi/libbind9.so.8			base-compat-shlib	compat,pic
-./usr/lib/eabi/libbind9.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/libbind9.so.8.1			base-obsolete		obsolete
+./usr/lib/eabi/libbind9.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libblacklist.so.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libblacklist.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/eabi/libbluetooth.so.4			base-compat-shlib	compat,pic
@@ -128,7 +129,8 @@
 ./usr/lib/eabi/libdm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/eabi/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libdns.so.8			base-compat-shlib	compat,pic
-./usr/lib/eabi/libdns.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/libdns.so.8.1			base-obsolete		obsolete
+./usr/lib/eabi/libdns.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/eabi/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/eabi/libdwarf.so.1			base-compat-shlib	compat,pic
@@ -174,13 +176,17 @@
 ./usr/lib/eabi/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libirs.so.8			base-compat-shlib	compat,pic
-./usr/lib/eabi/libirs.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/libirs.so.8.1			base-obsolete		obsolete
+./usr/lib/eabi/libirs.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libisc.so.8			base-compat-shlib	compat,pic
-./usr/lib/eabi/libisc.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/libisc.so.8.1			base-obsolete		obsolete
+./usr/lib/eabi/libisc.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libisccc.so.8			base-compat-shlib	compat,pic
-./usr/lib/eabi/libisccc.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/libisccc.so.8.1			base-obsolete		obsolete
+./usr/lib/eabi/libisccc.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libisccfg.so.8			base-compat-shlib	compat,pic
-./usr/lib/eabi/libisccfg.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/libisccfg.so.8.1			base-obsolete		obsolete
+./usr/lib/eabi/libisccfg.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/eabi/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/eabi/libisns.so.0			base-compat-shlib	compat,pic
@@ -208,7 +214,8 @@
 ./usr/lib/eabi/liblutok.so.2			base-compat-shlib	compat,pic,kyua
 ./usr/lib/eabi/liblutok.so.2.0			base-compat-shlib	compat,pic,kyua
 ./usr/lib/eabi/liblwres.so.8			base-compat-shlib	compat,pic
-./usr/lib/eabi/liblwres.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/liblwres.so.8.1			base-obsolete		obsolete
+./usr/lib/eabi/liblwres.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/eabi/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/eabi/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/liblzma.so.1			base-compat-shlib	compat,pic

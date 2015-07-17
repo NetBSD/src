@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-request.c,v 1.1.1.2 2014/07/08 04:50:07 spz Exp $	*/
+/*	$NetBSD: sample-request.c,v 1.1.1.2.2.1 2015/07/17 04:31:35 snj Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -112,7 +112,6 @@ make_querymessage(dns_message_t *message, const char *namestr,
 
 	dns_name_init(qname, NULL);
 	dns_name_clone(qname0, qname);
-	dns_rdataset_init(qrdataset);
 	dns_rdataset_makequestion(qrdataset, message->rdclass, rdtype);
 	ISC_LIST_APPEND(qname->list, qrdataset, link);
 	dns_message_addname(message, qname, DNS_SECTION_QUESTION);
@@ -220,7 +219,9 @@ main(int argc, char *argv[]) {
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
+#ifdef AI_NUMERICHOST
 	hints.ai_flags = AI_NUMERICHOST;
+#endif
 	gai_error = getaddrinfo(argv[0], "53", &hints, &res);
 	if (gai_error != 0) {
 		fprintf(stderr, "getaddrinfo failed: %s\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.7 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.7.4.1 2015/07/17 04:31:21 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -168,6 +168,10 @@ EXTERN isc_boolean_t		ns_g_nosoa		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_noaa		INIT(ISC_FALSE);
 EXTERN unsigned int		ns_g_delay		INIT(0);
 EXTERN isc_boolean_t		ns_g_nonearest		INIT(ISC_FALSE);
+EXTERN isc_boolean_t		ns_g_notcp		INIT(ISC_FALSE);
+EXTERN isc_boolean_t		ns_g_disable6		INIT(ISC_FALSE);
+EXTERN isc_boolean_t		ns_g_disable4		INIT(ISC_FALSE);
+
 
 #ifdef HAVE_GEOIP
 EXTERN dns_geoip_databases_t	*ns_g_geoip		INIT(NULL);

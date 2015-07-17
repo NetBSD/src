@@ -41,11 +41,13 @@ OBJS =		dnstest.@O@
 SRCS =		db_test.c \
 		dbdiff_test.c \
 		dbiterator_test.c \
+		dh_test.c \
 		dispatch_test.c \
 		dnstest.c \
 		geoip_test.c \
 		gost_test.c \
 		master_test.c \
+		name_test.c \
 		nsec3_test.c \
 		peer_test.c \
 		private_test.c \
@@ -64,10 +66,12 @@ TARGETS =	db_test@EXEEXT@ \
 		dbdiff_test@EXEEXT@ \
 		dbiterator_test@EXEEXT@ \
 		dbversion_test@EXEEXT@ \
+		dh_test@EXEEXT@ \
 		dispatch_test@EXEEXT@ \
 		geoip_test@EXEEXT@ \
 		gost_test@EXEEXT@ \
 		master_test@EXEEXT@ \
+		name_test@EXEEXT@ \
 		nsec3_test@EXEEXT@ \
 		peer_test@EXEEXT@ \
 		private_test@EXEEXT@ \
@@ -142,6 +146,11 @@ zt_test@EXEEXT@: zt_test.@O@ dnstest.@O@ \
 			zt_test.@O@ dnstest.@O@ ${DNSLIBS} \
 				${ISCLIBS} ${LIBS}
 
+name_test@EXEEXT@: name_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			name_test.@O@ dnstest.@O@ ${DNSLIBS} \
+				${ISCLIBS} ${LIBS}
+
 nsec3_test@EXEEXT@: nsec3_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			nsec3_test.@O@ dnstest.@O@ ${DNSLIBS} \
@@ -190,6 +199,11 @@ db_test@EXEEXT@: db_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 gost_test@EXEEXT@: gost_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			gost_test.@O@ dnstest.@O@ ${DNSLIBS} \
+			${ISCLIBS} ${LIBS}
+
+dh_test@EXEEXT@: dh_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			dh_test.@O@ dnstest.@O@ ${DNSLIBS} \
 			${ISCLIBS} ${LIBS}
 
 unit::

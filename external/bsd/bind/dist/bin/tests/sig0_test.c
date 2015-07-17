@@ -1,7 +1,7 @@
-/*	$NetBSD: sig0_test.c,v 1.6 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: sig0_test.c,v 1.6.4.1 2015/07/17 04:31:21 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -150,7 +150,6 @@ buildquery(void) {
 
 	result = dns_message_gettemprdataset(query, &question);
 	CHECK("dns_message_gettemprdataset", result);
-	dns_rdataset_init(question);
 	dns_rdataset_makequestion(question, dns_rdataclass_in,
 				  dns_rdatatype_a);
 	result = dns_message_gettempname(query, &qname);

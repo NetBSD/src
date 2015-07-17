@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,7 @@ digcmd () {
     # Default to +noauth and @$ns3
     # Also default to -bX where X is the @value so that OS X will choose
     #	    the right IP source address.
-    digcmd_args=`echo "+noadd +time=1 +tries=1 -p 5300 $*" |	\
+    digcmd_args=`echo "+noadd +time=2 +tries=1 -p 5300 $*" |	\
 	    sed -e "/@/!s/.*/& @$ns3/"				\
 		-e '/-b/!s/@\([^ ]*\)/@\1 -b\1/'		\
 		-e '/+n?o?auth/!s/.*/+noauth &/'`
@@ -383,7 +383,7 @@ nxdomain a0-1s-cname.tld2s  +dnssec @$ns6  # 19
 drop a3-8.tld2 any @$ns6                   # 20 drop
 
 end_group
-ckstatsrange $ns3 test1 ns3 22 24
+ckstatsrange $ns3 test1 ns3 22 25
 ckstats $ns5 test1 ns5 0
 ckstats $ns6 test1 ns6 0
 
@@ -635,7 +635,7 @@ for i in 1 2 3 4 5; do
     nsd $ns5 delete '*.example.com.policy1.' example.com.policy1.
 done
 
-echo "I:checking checking that going from a empty policy zone works"
+echo "I:checking that going from a empty policy zone works"
 nsd $ns5 add '*.x.servfail.policy2.' x.servfail.policy2.
 sleep 1
 $RNDCCMD $ns7 reload policy2

@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.14.2.1 2014/12/22 03:28:33 msaitoh Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.14.2.2 2015/07/17 04:31:20 snj Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -489,7 +489,7 @@ main(int argc, char **argv) {
 		fatal("could not initialize dst: %s",
 		      isc_result_totext(ret));
 
-	setup_logging(verbose, mctx, &log);
+	setup_logging(mctx, &log);
 
 	if (predecessor == NULL) {
 		if (prepub == -1)
@@ -553,6 +553,9 @@ main(int argc, char **argv) {
 			if (alg == DST_ALG_DH)
 				options |= DST_TYPE_KEY;
 		}
+
+		if (!dst_algorithm_supported(alg))
+			fatal("unsupported algorithm: %d", alg);
 
 		if (use_nsec3 &&
 		    alg != DST_ALG_NSEC3DSA && alg != DST_ALG_NSEC3RSASHA1 &&
@@ -721,8 +724,13 @@ main(int argc, char **argv) {
 			fatal("invalid DSS key size: %d", size);
 		break;
 	case DST_ALG_ECCGOST:
+		size = 256;
+		break;
 	case DST_ALG_ECDSA256:
+		size = 256;
+		break;
 	case DST_ALG_ECDSA384:
+		size = 384;
 		break;
 	case DST_ALG_HMACMD5:
 		options |= DST_TYPE_KEY;

@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt.c,v 1.8.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
+/*	$NetBSD: rbt.c,v 1.8.2.2 2015/07/17 04:31:33 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -2189,6 +2189,7 @@ create_node(isc_mem_t *mctx, dns_name_t *name, dns_rbtnode_t **nodep) {
 	node->right_is_relative = 0;
 	node->parent_is_relative = 0;
 	node->data_is_relative = 0;
+	node->rpz = 0;
 
 #ifdef DNS_RBT_USEHASH
 	HASHNEXT(node) = NULL;

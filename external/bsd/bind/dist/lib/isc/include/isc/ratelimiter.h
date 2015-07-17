@@ -1,7 +1,7 @@
-/*	$NetBSD: ratelimiter.h,v 1.3 2012/06/05 00:42:39 christos Exp $	*/
+/*	$NetBSD: ratelimiter.h,v 1.3.12.1 2015/07/17 04:31:34 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -89,6 +89,16 @@ isc_ratelimiter_enqueue(isc_ratelimiter_t *rl, isc_task_t *task,
  *
  *\li	'task' to be non NULL.
  *\li	'(*eventp)->ev_sender' to be NULL.
+ */
+
+isc_result_t
+isc_ratelimiter_dequeue(isc_ratelimiter_t *rl, isc_event_t *event);
+/*
+ * Dequeue a event off the ratelimiter queue.
+ *
+ * Returns:
+ * \li	ISC_R_NOTFOUND if the event is no longer linked to the rate limiter.
+ * \li	ISC_R_SUCCESS
  */
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.9.4.1 2014/12/22 03:28:33 msaitoh Exp $	*/
+/*	$NetBSD: config.c,v 1.9.4.2 2015/07/17 04:31:20 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -171,7 +171,7 @@ options {\n\
 	clients-per-query 10;\n\
 	max-clients-per-query 100;\n\
 	max-recursion-depth 7;\n\
-	max-recursion-queries 50;\n\
+	max-recursion-queries 75;\n\
 	zero-no-soa-ttl-cache no;\n\
 	nsec3-test-zone no;\n\
 	allow-new-zones no;\n\
@@ -579,6 +579,17 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 	REQUIRE(keysp != NULL && *keysp == NULL);
 	REQUIRE(countp != NULL);
 
+	/*
+	 * Get system defaults.
+	 */
+	result = ns_config_getport(config, &port);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+
+	result = ns_config_getdscp(config, &dscp);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+
  newlist:
 	addrlist = cfg_tuple_get(list, "addresses");
 	portobj = cfg_tuple_get(list, "port");
@@ -593,10 +604,6 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 			goto cleanup;
 		}
 		port = (in_port_t) val;
-	} else {
-		result = ns_config_getport(config, &port);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
 	}
 
 	if (dscpobj != NULL && cfg_obj_isuint32(dscpobj)) {
@@ -607,10 +614,6 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 			return (ISC_R_RANGE);
 		}
 		dscp = (isc_dscp_t)cfg_obj_asuint32(dscpobj);
-	} else {
-		result = ns_config_getdscp(config, &dscp);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
 	}
 
 	result = ISC_R_NOMEMORY;

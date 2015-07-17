@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -16,7 +16,8 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 rm -f */K* */keyset-* */dsset-* */dlvset-* */signedkey-* */*.signed
-rm -f */trusted.conf */managed.conf */tmp* */*.jnl */*.bk */*.jbk
+rm -f */trusted.conf */managed.conf */revoked.conf
+rm -f */tmp* */*.jnl */*.bk */*.jbk
 rm -f ns1/root.db ns2/example.db ns3/secure.example.db
 rm -f ns3/unsecure.example.db ns3/bogus.example.db ns3/keyless.example.db
 rm -f ns3/dynamic.example.db ns3/dynamic.example.db.signed.jnl
@@ -51,7 +52,7 @@ rm -f signer/*.db
 rm -f signer/signer.out.*
 rm -f ns2/algroll.db
 rm -f ns3/kskonly.example.db
-rm -f ns4/named.conf
+rm -f ns4/named.conf ns5/named.conf
 rm -f ns4/managed-keys.bind*
 rm -f ns3/auto-nsec.example.db ns3/auto-nsec3.example.db
 rm -f ns3/secure.below-cname.example.db
@@ -72,3 +73,11 @@ rm -f canonical?.*
 rm -f ns3/siginterval.conf
 rm -f ns4/named_dump.db
 rm -f ns7/split-rrsig.db ns7/split-rrsig.db.unsplit
+rm -f Kexample.*
+rm -f keygen.err
+rm -f ns3/future.example.db ns3/trusted-future.key
+rm -f ns3/dnskey-nsec3-unknown.example.db
+rm -f ns3/dnskey-nsec3-unknown.example.db.tmp
+rm -f ns3/dnskey-unknown.example.db
+rm -f ns3/dnskey-unknown.example.db.tmp
+rm -f named.secroots.test*

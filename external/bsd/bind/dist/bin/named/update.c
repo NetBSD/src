@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.8.4.2 2015/04/30 06:07:32 riz Exp $	*/
+/*	$NetBSD: update.c,v 1.8.4.3 2015/07/17 04:31:20 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -3276,6 +3276,8 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	uev->ev_type = DNS_EVENT_UPDATEDONE;
 	uev->ev_action = updatedone_action;
 	isc_task_send(client->task, &event);
+
+	INSIST(ver == NULL);
 	INSIST(event == NULL);
 }
 

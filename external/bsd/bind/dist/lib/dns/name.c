@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.9.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
+/*	$NetBSD: name.c,v 1.9.2.2 2015/07/17 04:31:33 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -621,6 +621,7 @@ dns_name_fullcompare(const dns_name_t *name1, const dns_name_t *name2,
 
 	if (name1 == name2) {
 		*orderp = 0;
+		*nlabelsp = name1->labels;
 		return (dns_namereln_equal);
 	}
 

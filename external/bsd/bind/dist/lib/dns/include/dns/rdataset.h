@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.7.4.1 2014/12/22 03:28:45 msaitoh Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.7.4.2 2015/07/17 04:31:33 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -116,6 +116,7 @@ typedef struct dns_rdatasetmethods {
 	void			(*settrust)(dns_rdataset_t *rdataset,
 					    dns_trust_t trust);
 	void			(*expire)(dns_rdataset_t *rdataset);
+	void			(*clearprefetch)(dns_rdataset_t *rdataset);
 } dns_rdatasetmethods_t;
 
 #define DNS_RDATASET_MAGIC	       ISC_MAGIC('D','N','S','R')
@@ -654,6 +655,17 @@ void
 dns_rdataset_expire(dns_rdataset_t *rdataset);
 /*%<
  * Mark the rdataset to be expired in the backing database.
+ */
+
+void
+dns_rdataset_clearprefetch(dns_rdataset_t *rdataset);
+/*%<
+ * Clear the PREFETCH attribute for the given rdataset in the
+ * underlying database.
+ *
+ * In the cache database, this signals that the rdataset is not
+ * eligible to be prefetched when the TTL is close to expiring.
+ * It has no function in other databases.
  */
 
 void

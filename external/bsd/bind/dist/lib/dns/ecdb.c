@@ -1,4 +1,4 @@
-/*	$NetBSD: ecdb.c,v 1.7 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.7.2.1 2015/07/17 04:31:33 snj Exp $	*/
 
 /*
  * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -115,7 +115,8 @@ static dns_rdatasetmethods_t rdataset_methods = {
 	NULL,			/* setadditional */
 	NULL,			/* putadditional */
 	rdataset_settrust,	/* settrust */
-	NULL			/* expire */
+	NULL,			/* expire */
+	NULL			/* clearprefetch */
 };
 
 typedef struct ecdb_rdatasetiter {
