@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.100 2015/07/15 07:29:13 msaitoh Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.101 2015/07/17 06:41:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.100 2015/07/15 07:29:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.101 2015/07/17 06:41:18 msaitoh Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -201,7 +201,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		pin = ioapic_nmi->GlobalIrq - pic->pic_vecbase;
 		mpi->ioapic_pin = pin;
 		mpi->bus_pin = -1;
-		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->redir = (IOAPIC_REDLO_DEL_NMI << IOAPIC_REDLO_DEL_SHIFT);
 #if NIOAPIC > 0
 		if (pic->pic_type == PIC_IOAPIC) {
 			pic->pic_ioapic->sc_pins[pin].ip_map = mpi;
@@ -224,7 +224,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		mpi->type = MPS_INTTYPE_NMI;
 		mpi->ioapic_pin = lapic_nmi->Lint;
 		mpi->cpu_id = lapic_nmi->ProcessorId;
-		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->redir = (IOAPIC_REDLO_DEL_NMI << IOAPIC_REDLO_DEL_SHIFT);
 		mpi->global_int = -1;
 		break;
 	case ACPI_MADT_TYPE_INTERRUPT_OVERRIDE:
@@ -233,7 +233,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 			printf("mpacpi: ISA interrupt override %d -> %d (%d/%d)\n",
 			    isa_ovr->SourceIrq, isa_ovr->GlobalIrq,
 			    isa_ovr->IntiFlags & ACPI_MADT_POLARITY_MASK,
-			    (isa_ovr->IntiFlags & ACPI_MADT_TRIGGER_MASK) >> 2);
+			    (isa_ovr->IntiFlags & ACPI_MADT_TRIGGER_MASK) >>2);
 		}
 		if (isa_ovr->SourceIrq > 15 || isa_ovr->SourceIrq == 2 ||
 		    (isa_ovr->SourceIrq == 0 && isa_ovr->GlobalIrq == 2 &&
@@ -315,7 +315,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		mpi->type = MPS_INTTYPE_NMI;
 		mpi->ioapic_pin = x2apic_nmi->Lint;
 		mpi->cpu_id = x2apic_nmi->Uid;
-		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->redir = (IOAPIC_REDLO_DEL_NMI << IOAPIC_REDLO_DEL_SHIFT);
 		mpi->global_int = -1;
 		break;
 
@@ -651,7 +651,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 				continue;
 			/* Defaults for PCI (active low, level triggered) */
 			mpi->redir =
-			    (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT) |
+			    (IOAPIC_REDLO_DEL_FIXED <<IOAPIC_REDLO_DEL_SHIFT) |
 			    IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 			mpi->ioapic = pic;
 			pin = ptrp->SourceIndex - pic->pic_vecbase;
@@ -790,7 +790,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 			    (pic->pic_apicid << APIC_INT_APIC_SHIFT) |
 			    (i << APIC_INT_PIN_SHIFT);
 			mpi->redir =
-			    (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
+			    (IOAPIC_REDLO_DEL_FIXED << IOAPIC_REDLO_DEL_SHIFT);
 			pic->pic_ioapic->sc_pins[i].ip_map = mpi;
 		} else
 #endif
@@ -829,7 +829,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 static void
 mpacpi_print_pci_intr(int intr)
 {
-	printf(" device %d INT_%c", (intr>>2)&0x1f, 'A' + (intr & 0x3));
+	printf(" device %d INT_%c", (intr >> 2) & 0x1f, 'A' + (intr & 0x3));
 }
 #endif
 
@@ -1052,7 +1052,7 @@ mpacpi_findintr_linkdev(struct mp_intr_map *mip)
 
 	if (pic->pic_type == PIC_IOAPIC) {
 #if NIOAPIC > 0
-		mip->redir = (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
+		mip->redir = (IOAPIC_REDLO_DEL_FIXED <<IOAPIC_REDLO_DEL_SHIFT);
 		if (pol ==  MPS_INTPO_ACTLO)
 			mip->redir |= IOAPIC_REDLO_ACTLO;
 		if (trig ==  MPS_INTTR_LEVEL)
