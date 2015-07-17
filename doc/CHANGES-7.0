@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.342 2015/07/17 03:54:36 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.343 2015/07/17 04:48:52 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -32618,4 +32618,782 @@ sys/arch/arm/arm32/arm32_reboot.c		1.7, 1.8
 	- if halt is requested and there is no console, keep looping
 	  instead of rebooting.
 	[christos, ticket #876]
+
+distrib/sets/lists/base/ad.aarch64		patch
+distrib/sets/lists/base/ad.arm			patch
+distrib/sets/lists/base/ad.mips			patch
+distrib/sets/lists/base/ad.powerpc		patch
+distrib/sets/lists/base/md.amd64		patch
+distrib/sets/lists/base/md.sparc64		patch
+distrib/sets/lists/base/shl.mi			patch
+doc/3RDPARTY					patch
+external/bsd/bind/dist/CHANGES                  up to 1.15
+external/bsd/bind/dist/COPYRIGHT                up to 1.1.1.9
+external/bsd/bind/dist/FAQ.xml                  up to 1.1.1.9
+external/bsd/bind/dist/README                   up to 1.3
+external/bsd/bind/dist/bin/check/named-checkconf.c up to 1.11
+external/bsd/bind/dist/bin/delv/delv.c          up to 1.4
+external/bsd/bind/dist/bin/dig/dig.1            up to 1.10
+external/bsd/bind/dist/bin/dig/dig.docbook      up to 1.1.1.11
+external/bsd/bind/dist/bin/dig/dig.html         up to 1.1.1.11
+external/bsd/bind/dist/bin/dig/dighost.c        up to 1.15
+external/bsd/bind/dist/bin/dig/host.c           up to 1.11
+external/bsd/bind/dist/bin/dig/include/dig/dig.h up to 1.11
+external/bsd/bind/dist/bin/dig/nslookup.c       up to 1.11
+external/bsd/bind/dist/bin/dnssec/dnssec-dsfromkey.c up to 1.11
+external/bsd/bind/dist/bin/dnssec/dnssec-importkey.c up to 1.6
+external/bsd/bind/dist/bin/dnssec/dnssec-keyfromlabel.c up to 1.14
+external/bsd/bind/dist/bin/dnssec/dnssec-keygen.8 up to 1.9
+external/bsd/bind/dist/bin/dnssec/dnssec-keygen.c up to 1.16
+external/bsd/bind/dist/bin/dnssec/dnssec-keygen.docbook up to 1.1.1.12
+external/bsd/bind/dist/bin/dnssec/dnssec-keygen.html up to 1.1.1.12
+external/bsd/bind/dist/bin/dnssec/dnssec-settime.8 up to 1.8
+external/bsd/bind/dist/bin/dnssec/dnssec-settime.c up to 1.12
+external/bsd/bind/dist/bin/dnssec/dnssec-settime.docbook up to 1.1.1.11
+external/bsd/bind/dist/bin/dnssec/dnssec-settime.html up to 1.1.1.11
+external/bsd/bind/dist/bin/dnssec/dnssec-signzone.c up to 1.15
+external/bsd/bind/dist/bin/dnssec/dnssec-verify.c up to 1.9
+external/bsd/bind/dist/bin/dnssec/dnssectool.c  up to 1.9
+external/bsd/bind/dist/bin/dnssec/dnssectool.h  up to 1.7
+external/bsd/bind/dist/bin/named/client.c       up to 1.13
+external/bsd/bind/dist/bin/named/config.c       up to 1.11
+external/bsd/bind/dist/bin/named/include/named/globals.h up to 1.9
+external/bsd/bind/dist/bin/named/interfacemgr.c up to 1.10
+external/bsd/bind/dist/bin/named/main.c         up to 1.18
+external/bsd/bind/dist/bin/named/query.c        up to 1.19
+external/bsd/bind/dist/bin/named/server.c       up to 1.19
+external/bsd/bind/dist/bin/named/update.c       up to 1.11
+external/bsd/bind/dist/bin/named/win32/dlz_dlopen_driver.c up to 1.4
+external/bsd/bind/dist/bin/named/win32/os.c     up to 1.8
+external/bsd/bind/dist/bin/named/xfrout.c       up to 1.9
+external/bsd/bind/dist/bin/named/zoneconf.c     up to 1.8
+external/bsd/bind/dist/bin/nsupdate/nsupdate.c  up to 1.13
+external/bsd/bind/dist/bin/pkcs11/openssl-0.9.8za-patch delete
+external/bsd/bind/dist/bin/pkcs11/openssl-0.9.8zc-patch up to 1.1.1.1
+external/bsd/bind/dist/bin/pkcs11/openssl-1.0.0m-patch delete
+external/bsd/bind/dist/bin/pkcs11/openssl-1.0.0o-patch up to 1.1.1.1
+external/bsd/bind/dist/bin/pkcs11/openssl-1.0.1h-patch delete
+external/bsd/bind/dist/bin/pkcs11/openssl-1.0.1j-patch up to 1.1.1.1
+external/bsd/bind/dist/bin/rndc/rndc.c          up to 1.12
+external/bsd/bind/dist/bin/tests/dst/gsstest.c  up to 1.9
+external/bsd/bind/dist/bin/tests/sig0_test.c    up to 1.8
+external/bsd/bind/dist/bin/tests/system/README  up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/ans.pl  up to 1.3
+external/bsd/bind/dist/bin/tests/system/checkconf/altdlz.conf up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-sharedwritable1.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-sharedwritable2.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/good.conf up to 1.1.1.10
+external/bsd/bind/dist/bin/tests/system/checkconf/max-ttl.conf up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/checkconf/tests.sh up to 1.1.1.12
+external/bsd/bind/dist/bin/tests/system/checkzone/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/checkzone/zones/bad3.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkzone/zones/bad4.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkzone/zones/badttl.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkzone/zones/inherit.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkzone/zones/nowarn.inherited.owner.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkzone/zones/warn.inherit.origin.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkzone/zones/warn.inherited.owner.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/conf.sh.in up to 1.1.1.15
+external/bsd/bind/dist/bin/tests/system/delv/clean.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/delv/ns1/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/delv/ns1/root.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/delv/ns2/example.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/delv/ns2/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/delv/ns3/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/delv/tests.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/dnssec/clean.sh up to 1.1.1.15
+external/bsd/bind/dist/bin/tests/system/dnssec/ns2/example.db.in up to 1.1.1.11
+external/bsd/bind/dist/bin/tests/system/dnssec/ns2/sign.sh up to 1.1.1.15
+external/bsd/bind/dist/bin/tests/system/dnssec/ns3/dnskey-nsec3-unknown.example.db.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/dnssec/ns3/dnskey-unknown.example.db.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/dnssec/ns3/future.example.db.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/dnssec/ns3/named.conf up to 1.1.1.12
+external/bsd/bind/dist/bin/tests/system/dnssec/ns3/sign.sh up to 1.1.1.16
+external/bsd/bind/dist/bin/tests/system/dnssec/ns5/named.conf delete
+external/bsd/bind/dist/bin/tests/system/dnssec/ns5/named1.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/dnssec/ns5/named2.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/dnssec/ns5/sign.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/dnssec/setup.sh up to 1.1.1.13
+external/bsd/bind/dist/bin/tests/system/dnssec/tests.sh up to 1.1.1.15
+external/bsd/bind/dist/bin/tests/system/emptyzones/clean.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/emptyzones/ns1/named2.conf up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/emptyzones/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/forward/ns2/named.conf up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/forward/ns4/named.conf up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/forward/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/genzone.sh up to 1.1.1.9
+external/bsd/bind/dist/bin/tests/system/geoip/clean.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/geoip/ns2/named6.conf up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/geoip/setup.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/geoip/tests.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/inline/clean.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/inline/ns2/named.conf up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/inline/setup.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/legacy/build.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/clean.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns1/named1.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns1/named2.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns1/root.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns1/trusted.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns2/dropedns.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns2/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns2/named.dropedns up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns3/dropedns-notcp.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns3/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns3/named.dropedns up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns3/named.notcp up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns4/named.args up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns4/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns4/plain.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns5/named.args up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns5/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns5/named.notcp up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns5/plain-notcp.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns6/edns512.db.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns6/edns512.db.signed up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns6/named.args up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns6/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns6/sign.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns7/edns512-notcp.db.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns7/edns512-notcp.db.signed up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns7/named.args up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns7/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns7/named.notcp up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/ns7/sign.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/setup.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/legacy/tests.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/notify/clean.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/notify/ns2/generic.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/notify/ns2/named.conf up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/notify/ns4/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/notify/ns4/named.port up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/notify/ns5/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/notify/ns5/x21.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/notify/setup.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/notify/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/reclimit/README up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/ans2/ans.pl up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/ans4/ans.pl up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/ans7/ans.pl up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/clean.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/ns1/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/ns1/root.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/ns3/hints.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/ns3/named1.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/ns3/named2.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/ns3/named3.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/ns3/named4.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/setup.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/reclimit/tests.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/redirect/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/resolver/ns4/root.db up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/resolver/ns4/tld1.db up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/resolver/ns4/tld2.db up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/resolver/ns7/all-cnames.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/resolver/ns7/named1.conf up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/resolver/ns7/named2.conf up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/resolver/tests.sh up to 1.1.1.12
+external/bsd/bind/dist/bin/tests/system/rpz/tests.sh up to 1.1.1.11
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/README up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/clean.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns1/db.l0 up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns1/db.l1.l0 up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns1/example.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns1/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns1/root.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns2/db.clientip1 up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns2/db.clientip2 up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns2/named.clientip.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns2/named.conf.header up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns2/named.default.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns2/root.hint up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/prereq.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/setup.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/testgen.pl up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/tests.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rrchecker/typelist.good up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/start.pl up to 1.1.1.12
+external/bsd/bind/dist/bin/tests/system/upforwd/clean.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/upforwd/ns1/named.conf up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/upforwd/ns2/named.conf up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/upforwd/ns3/named.conf up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/upforwd/setup.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/upforwd/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/views/clean.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/views/ns2/external/inline.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/views/ns2/internal/inline.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/views/ns2/named2.conf up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/views/setup.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/views/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/xfer/dig1.good up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/xfer/dig2.good up to 1.1.1.8
+external/bsd/bind/dist/config.h.in              up to 1.11
+external/bsd/bind/dist/config.h.win32           up to 1.1.1.11
+external/bsd/bind/dist/configure                up to 1.4
+external/bsd/bind/dist/configure.in             up to 1.7
+external/bsd/bind/dist/contrib/dlz/example/README up to 1.1.1.4
+external/bsd/bind/dist/contrib/dlz/modules/bdbhpt/README.md up to 1.1.1.2
+external/bsd/bind/dist/contrib/dlz/modules/bdbhpt/dlz_bdbhpt_dynamic.c up to 1.1.1.5
+external/bsd/bind/dist/contrib/dlz/modules/bdbhpt/testing/README up to 1.1.1.1
+external/bsd/bind/dist/contrib/dlz/modules/bdbhpt/testing/dns-data.txt up to 1.1.1.2
+external/bsd/bind/dist/contrib/dlz/modules/bdbhpt/testing/named.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/sdb/ldap/ldapdb.c up to 1.5
+external/bsd/bind/dist/contrib/zkt-1.1.2/CHANGELOG delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/LICENSE delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/Makefile.in delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/README delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/README.logging delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/TODO   delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/config.h.in delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/config_zkt.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/configure delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/configure.ac delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/debug.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/distribute.sh delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/dki.c  delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/dki.h  delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/doc/KeyRollover.ms delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/doc/KeyRollover.ps delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/doc/draft-gudmundsson-life-of-dnskey-00.txt delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/doc/draft-ietf-dnsop-rfc4641bis-01.txt delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/doc/rfc4641.txt delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/doc/rfc5011.txt delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/domaincmp.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/domaincmp.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/dnssec.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dist.sh delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dnssec.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dyn.example.net/Kdyn.example.net.+007+30323.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dyn.example.net/Kdyn.example.net.+007+30323.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dyn.example.net/Kdyn.example.net.+007+52935.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dyn.example.net/Kdyn.example.net.+007+52935.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dyn.example.net/dnskey.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dyn.example.net/dnssec.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dyn.example.net/zktlog-dyn.example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dyn.example.net/zone.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dyn.example.net/zone.db.dsigned delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/dyn.example.net/zone.org delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/Kexample.net.+008+02957.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/Kexample.net.+008+02957.published delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/Kexample.net.+008+21605.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/Kexample.net.+008+21605.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/Kexample.net.+008+52101.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/Kexample.net.+008+52101.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/Kexample.net.+008+56360.depreciated delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/Kexample.net.+008+56360.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/dnskey.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/dnssec.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/z.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/zktlog-example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/zone.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/example.net/zone.db.signed delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/keysets/dlvset-sub.example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/keysets/dsset-dyn.example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/keysets/dsset-example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/keysets/dsset-sub.example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/keysets/keyset-dyn.example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/keysets/keyset-example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/keysets/keyset-sub.example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/named.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+005+24183.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+005+24183.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+005+44660.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+005+44660.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+007+00855.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+007+00855.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+007+34493.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+007+34493.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+007+55983.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+007+55983.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+007+59870.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+007+59870.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+010+07987.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+010+07987.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+010+33176.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/Ksub.example.net.+010+33176.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/dlvset-sub.example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/dnskey.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/dnssec.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/maxhexsalt delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/maxhexsalt+1 delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/zktlog-sub.example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/zone.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/sub.example.net/zone.db.signed delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/zkt.log delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/flat/zone.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/Kexample.de.+005+25598.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/Kexample.de.+005+25598.published delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/Kexample.de.+005+37983.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/Kexample.de.+005+37983.published delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/Kexample.de.+005+47280.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/Kexample.de.+005+47280.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/Kexample.de.+005+60407.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/Kexample.de.+005+60407.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/dnskey.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/dsset-example.de. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/keyset-example.de. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/keyset-sub.example.de. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/Ksub.example.de.+005+27647.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/Ksub.example.de.+005+27647.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/Ksub.example.de.+005+32679.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/Ksub.example.de.+005+32679.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/Ksub.example.de.+005+38331.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/Ksub.example.de.+005+38331.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/Ksub.example.de.+005+51846.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/Ksub.example.de.+005+51846.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/Ksub.example.de.+005+55550.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/Ksub.example.de.+005+55550.published delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/dlvset-sub.example.de. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/dnskey.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/dnssec.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/dsset-sub.example.de. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/keyset-sub.example.de. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/ksub.example.de.+005+08544.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/ksub.example.de.+005+08544.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/ksub.example.de.+005+27861.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/ksub.example.de.+005+27861.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/ksub.example.de.+005+42639.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/ksub.example.de.+005+42639.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/parent-sub.example.de. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/zone.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/sub.example.de/zone.db.signed delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/zone.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/zone.db.signed delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/example.de/zone.soa delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/de/keyset-example.de. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/dnssec.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/log/zktlog-example.de. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/log/zktlog-sub.example.de. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/named.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/hierarchical/zone.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/dnssec-extern.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/dnssec-intern.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/dnssec-signer-extern delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/dnssec-signer-intern delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/dnssec-zkt-extern delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/dnssec-zkt-intern delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/Kexample.net.+005+08885.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/Kexample.net.+005+08885.published delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/Kexample.net.+005+23553.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/Kexample.net.+005+23553.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/Kexample.net.+005+38930.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/Kexample.net.+005+38930.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/dnskey.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/dsset-example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/keyset-example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/zone.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/example.net/zone.db.signed delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/keyset-example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/extern/zkt-ext.log delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/Kexample.net.+005+00126.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/Kexample.net.+005+00126.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/Kexample.net.+005+52235.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/Kexample.net.+005+52235.published delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/Kexample.net.+005+57602.key delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/Kexample.net.+005+57602.private delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/dnskey.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/dsset-example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/keyset-example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/zone.db delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/example.net/zone.db.signed delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/keyset-example.net. delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/intern/zkt-int.log delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/named.conf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/named.log delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/root.hint delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/views/viewtest.sh delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/zkt-ls.sh delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/examples/zkt-signer.sh delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/log.c  delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/log.h  delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/dnssec-zkt.8 delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-conf.8 delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-conf.8.html delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-conf.8.org delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-conf.8.pdf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-keyman.8 delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-keyman.8.html delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-keyman.8.pdf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-ls.8 delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-ls.8.html delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-ls.8.pdf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-signer.8 delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-signer.8.html delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/man/zkt-signer.8.pdf delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/misc.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/misc.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/ncparse.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/ncparse.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/nscomm.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/nscomm.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/rollover.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/rollover.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/soaserial.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/soaserial.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/strlist.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/strlist.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/tcap.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/tcap.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zconf.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zconf.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zfparse.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zfparse.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zkt-conf.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zkt-keyman.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zkt-ls.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zkt-signer.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zkt-soaserial.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zkt.c  delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zkt.h  delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zone.c delete
+external/bsd/bind/dist/contrib/zkt-1.1.2/zone.h delete
+external/bsd/bind/dist/contrib/zkt-1.1.3/CHANGELOG up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/LICENSE up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/Makefile.in up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/README up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/README.logging up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/TODO   up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/config.h.in up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/config_zkt.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/configure up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/configure.ac up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/debug.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/distribute.sh up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/dki.c  up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/dki.h  up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/doc/KeyRollover.ms up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/doc/KeyRollover.ps up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/doc/draft-gudmundsson-life-of-dnskey-00.txt up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/doc/draft-ietf-dnsop-rfc4641bis-01.txt up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/doc/rfc4641.txt up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/doc/rfc5011.txt up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/domaincmp.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/domaincmp.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/clean.sh up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/dist.sh up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/dnssec.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/dyn.example.net/dnssec.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/dyn.example.net/zktlog-dyn.example.net. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/dyn.example.net/zone.db up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/dyn.example.net/zone.db.dsigned up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/dyn.example.net/zone.org up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/example.net/dnskey.db up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/example.net/dnssec.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/example.net/zktlog-example.net. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/example.net/zone.db up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/example.net/zone.db.signed up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/example.net/zone.hosts up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/example.net/zone.localhost up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/keysets/dlvset-sub.example.net. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/keysets/dsset-example.net. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/keysets/dsset-sub.example.net. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/keysets/keyset-example.net. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/keysets/keyset-sub.example.net. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/named.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/sub.example.net/dlvset-sub.example.net. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/sub.example.net/dnskey.db up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/sub.example.net/dnssec.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/sub.example.net/maxhexsalt up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/sub.example.net/maxhexsalt+1 up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/sub.example.net/zktlog-sub.example.net. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/sub.example.net/zone.db up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/sub.example.net/zone.db.signed up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/flat/zone.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/de/example.de/sub.example.de/dlvset-sub.example.de. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/de/example.de/sub.example.de/dnssec.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/de/example.de/sub.example.de/parent-sub.example.de. up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/de/example.de/sub.example.de/zone.db up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/de/example.de/sub.example.de/zone.db.signed up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/de/example.de/zone.db up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/de/example.de/zone.db.signed up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/de/example.de/zone.soa up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/dnssec.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/named.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/hierarchical/zone.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/dnssec-extern.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/dnssec-intern.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/dnssec-signer-extern up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/dnssec-signer-intern up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/dnssec-zkt-extern up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/dnssec-zkt-intern up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/extern/example.net/zone.db up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/extern/example.net/zone.db.signed up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/extern/zkt-ext.log up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/intern/example.net/zone.db up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/intern/example.net/zone.db.signed up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/intern/zkt-int.log up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/named.conf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/named.log up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/root.hint up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/views/viewtest.sh up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/zkt-ls.sh up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/examples/zkt-signer.sh up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/log.c  up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/log.h  up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/dnssec-zkt.8 up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-conf.8 up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-conf.8.html up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-conf.8.org up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-conf.8.pdf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-keyman.8 up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-keyman.8.html up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-keyman.8.pdf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-ls.8 up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-ls.8.html up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-ls.8.pdf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-signer.8 up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-signer.8.html up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/man/zkt-signer.8.pdf up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/misc.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/misc.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/ncparse.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/ncparse.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/nscomm.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/nscomm.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/rollover.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/rollover.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/soaserial.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/soaserial.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/strlist.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/strlist.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/tcap.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/tcap.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zconf.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zconf.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zfparse.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zfparse.h up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zkt-conf.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zkt-keyman.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zkt-ls.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zkt-signer.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zkt-soaserial.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zkt.c  up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zkt.h  up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zone.c up to 1.1.1.1
+external/bsd/bind/dist/contrib/zkt-1.1.3/zone.h up to 1.1.1.1
+external/bsd/bind/dist/doc/arm/Bv9ARM-book.xml  up to 1.1.1.18
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch01.html up to 1.1.1.13
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch02.html up to 1.1.1.10
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch03.html up to 1.1.1.15
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch04.html up to 1.3
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch05.html up to 1.1.1.16
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch06.html up to 1.3
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch07.html up to 1.3
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch08.html up to 1.3
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch09.html up to 1.3
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch10.html up to 1.1.1.12
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch11.html up to 1.1.1.1
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch12.html up to 1.1.1.1
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch13.html up to 1.1.1.1
+external/bsd/bind/dist/doc/arm/Bv9ARM.html      up to 1.3
+external/bsd/bind/dist/doc/arm/Bv9ARM.pdf       up to 1.9
+external/bsd/bind/dist/doc/arm/Makefile.in      up to 1.1.1.7
+external/bsd/bind/dist/doc/arm/dnssec.xml       up to 1.1.1.6
+external/bsd/bind/dist/doc/arm/isc-logo.pdf     up to 1.4
+external/bsd/bind/dist/doc/arm/man.arpaname.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.ddns-confgen.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.delv.html    up to 1.3
+external/bsd/bind/dist/doc/arm/man.dig.html     up to 1.3
+external/bsd/bind/dist/doc/arm/man.dnssec-checkds.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.dnssec-coverage.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.dnssec-dsfromkey.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.dnssec-importkey.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.dnssec-keyfromlabel.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.dnssec-keygen.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.dnssec-revoke.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.dnssec-settime.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.dnssec-signzone.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.dnssec-verify.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.genrandom.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.host.html    up to 1.3
+external/bsd/bind/dist/doc/arm/man.isc-hmac-fixup.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.named-checkconf.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.named-checkzone.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.named-journalprint.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.named-rrchecker.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.named.html   up to 1.3
+external/bsd/bind/dist/doc/arm/man.nsec3hash.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.nsupdate.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.rndc-confgen.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.rndc.conf.html up to 1.3
+external/bsd/bind/dist/doc/arm/man.rndc.html    up to 1.3
+external/bsd/bind/dist/doc/arm/notes-wrapper.xml up to 1.1.1.1
+external/bsd/bind/dist/doc/arm/notes.html       up to 1.1.1.1
+external/bsd/bind/dist/doc/arm/notes.pdf        up to 1.1.1.1
+external/bsd/bind/dist/doc/arm/notes.xml        up to 1.1.1.1
+external/bsd/bind/dist/doc/arm/pkcs11.xml       up to 1.1.1.8
+external/bsd/bind/dist/doc/xsl/Makefile.in      up to 1.1.1.5
+external/bsd/bind/dist/doc/xsl/isc-docbook-chunk.xsl.in up to 1.1.1.5
+external/bsd/bind/dist/doc/xsl/isc-docbook-html.xsl.in up to 1.1.1.5
+external/bsd/bind/dist/doc/xsl/isc-docbook-latex.xsl.in up to 1.1.1.5
+external/bsd/bind/dist/doc/xsl/isc-notes-html.xsl.in up to 1.1.1.1
+external/bsd/bind/dist/doc/xsl/isc-notes-latex.xsl.in up to 1.1.1.1
+external/bsd/bind/dist/lib/bind9/api            up to 1.1.1.16
+external/bsd/bind/dist/lib/bind9/check.c        up to 1.12
+external/bsd/bind/dist/lib/bind9/getaddresses.c up to 1.6
+external/bsd/bind/dist/lib/dns/acache.c         up to 1.7
+external/bsd/bind/dist/lib/dns/adb.c            up to 1.11
+external/bsd/bind/dist/lib/dns/api              up to 1.3
+external/bsd/bind/dist/lib/dns/client.c         up to 1.10
+external/bsd/bind/dist/lib/dns/diff.c           up to 1.9
+external/bsd/bind/dist/lib/dns/dispatch.c       up to 1.10
+external/bsd/bind/dist/lib/dns/dnssec.c         up to 1.11
+external/bsd/bind/dist/lib/dns/ecdb.c           up to 1.9
+external/bsd/bind/dist/lib/dns/gen.c            up to 1.7
+external/bsd/bind/dist/lib/dns/geoip.c          up to 1.1.1.6
+external/bsd/bind/dist/lib/dns/include/dns/dispatch.h up to 1.8
+external/bsd/bind/dist/lib/dns/include/dns/log.h up to 1.8
+external/bsd/bind/dist/lib/dns/include/dns/rbt.h up to 1.11
+external/bsd/bind/dist/lib/dns/include/dns/rdataset.h up to 1.9
+external/bsd/bind/dist/lib/dns/include/dns/request.h up to 1.6
+external/bsd/bind/dist/lib/dns/include/dns/rpz.h up to 1.8
+external/bsd/bind/dist/lib/dns/include/dns/zone.h up to 1.16
+external/bsd/bind/dist/lib/dns/journal.c        up to 1.9
+external/bsd/bind/dist/lib/dns/keytable.c       up to 1.10
+external/bsd/bind/dist/lib/dns/log.c            up to 1.8
+external/bsd/bind/dist/lib/dns/mapapi           up to 1.1.1.2
+external/bsd/bind/dist/lib/dns/master.c         up to 1.14
+external/bsd/bind/dist/lib/dns/masterdump.c     up to 1.11
+external/bsd/bind/dist/lib/dns/message.c        up to 1.15
+external/bsd/bind/dist/lib/dns/name.c           up to 1.11
+external/bsd/bind/dist/lib/dns/ncache.c         up to 1.9
+external/bsd/bind/dist/lib/dns/nsec3.c          up to 1.11
+external/bsd/bind/dist/lib/dns/openssldh_link.c up to 1.8
+external/bsd/bind/dist/lib/dns/opensslecdsa_link.c up to 1.8
+external/bsd/bind/dist/lib/dns/opensslgost_link.c up to 1.10
+external/bsd/bind/dist/lib/dns/pkcs11ecdsa_link.c up to 1.1.1.5
+external/bsd/bind/dist/lib/dns/pkcs11gost_link.c up to 1.1.1.5
+external/bsd/bind/dist/lib/dns/private.c        up to 1.7
+external/bsd/bind/dist/lib/dns/rbt.c            up to 1.10
+external/bsd/bind/dist/lib/dns/rbtdb.c          up to 1.20
+external/bsd/bind/dist/lib/dns/rdata.c          up to 1.11
+external/bsd/bind/dist/lib/dns/rdata/generic/cdnskey_60.c up to 1.1.1.4
+external/bsd/bind/dist/lib/dns/rdata/generic/cds_59.c up to 1.1.1.4
+external/bsd/bind/dist/lib/dns/rdata/generic/keydata_65533.c up to 1.8
+external/bsd/bind/dist/lib/dns/rdata/generic/nsec3_50.c up to 1.8
+external/bsd/bind/dist/lib/dns/rdata/generic/openpgpkey_61.c up to 1.1.1.1
+external/bsd/bind/dist/lib/dns/rdata/generic/openpgpkey_61.h up to 1.1.1.1
+external/bsd/bind/dist/lib/dns/rdata/generic/opt_41.c up to 1.8
+external/bsd/bind/dist/lib/dns/rdata/generic/rrsig_46.c up to 1.7
+external/bsd/bind/dist/lib/dns/rdata/generic/sig_24.c up to 1.6
+external/bsd/bind/dist/lib/dns/rdata/generic/spf_99.h up to 1.5
+external/bsd/bind/dist/lib/dns/rdata/generic/txt_16.c up to 1.7
+external/bsd/bind/dist/lib/dns/rdatalist.c      up to 1.6
+external/bsd/bind/dist/lib/dns/rdataset.c       up to 1.8
+external/bsd/bind/dist/lib/dns/rdataslab.c      up to 1.11
+external/bsd/bind/dist/lib/dns/request.c        up to 1.9
+external/bsd/bind/dist/lib/dns/resolver.c       up to 1.21
+external/bsd/bind/dist/lib/dns/rootns.c         up to 1.9
+external/bsd/bind/dist/lib/dns/rpz.c            up to 1.9
+external/bsd/bind/dist/lib/dns/sdb.c            up to 1.9
+external/bsd/bind/dist/lib/dns/sdlz.c           up to 1.9
+external/bsd/bind/dist/lib/dns/spnego_asn1.c    up to 1.7
+external/bsd/bind/dist/lib/dns/tests/Kdh.+002+18602.key up to 1.1.1.1
+external/bsd/bind/dist/lib/dns/tests/Makefile.in up to 1.7
+external/bsd/bind/dist/lib/dns/tests/db_test.c  up to 1.1.1.4
+external/bsd/bind/dist/lib/dns/tests/dbversion_test.c up to 1.1.1.5
+external/bsd/bind/dist/lib/dns/tests/dh_test.c  up to 1.1.1.1
+external/bsd/bind/dist/lib/dns/tests/gost_test.c up to 1.1.1.6
+external/bsd/bind/dist/lib/dns/tests/master_test.c up to 1.6
+external/bsd/bind/dist/lib/dns/tests/name_test.c up to 1.1.1.1
+external/bsd/bind/dist/lib/dns/tests/rbt_serialize_test.c up to 1.1.1.4
+external/bsd/bind/dist/lib/dns/tests/zonemgr_test.c up to 1.4
+external/bsd/bind/dist/lib/dns/tkey.c           up to 1.8
+external/bsd/bind/dist/lib/dns/tsig.c           up to 1.8
+external/bsd/bind/dist/lib/dns/validator.c      up to 1.13
+external/bsd/bind/dist/lib/dns/win32/libdns.def.in up to 1.1.1.6
+external/bsd/bind/dist/lib/dns/xfrin.c          up to 1.11
+external/bsd/bind/dist/lib/dns/zone.c           up to 1.14
+external/bsd/bind/dist/lib/dns/zt.c             up to 1.8
+external/bsd/bind/dist/lib/irs/getnameinfo.c    up to 1.7
+external/bsd/bind/dist/lib/irs/win32/libirs.def up to 1.1.1.2
+external/bsd/bind/dist/lib/isc/api              up to 1.1.1.18
+external/bsd/bind/dist/lib/isc/hash.c           up to 1.9
+external/bsd/bind/dist/lib/isc/hmacmd5.c        up to 1.8
+external/bsd/bind/dist/lib/isc/hmacsha.c        up to 1.9
+external/bsd/bind/dist/lib/isc/httpd.c          up to 1.8
+external/bsd/bind/dist/lib/isc/include/isc/platform.h.in up to 1.1.1.9
+external/bsd/bind/dist/lib/isc/include/isc/print.h up to 1.5
+external/bsd/bind/dist/lib/isc/include/isc/radix.h up to 1.10
+external/bsd/bind/dist/lib/isc/include/isc/ratelimiter.h up to 1.5
+external/bsd/bind/dist/lib/isc/md5.c            up to 1.7
+external/bsd/bind/dist/lib/isc/mem.c            up to 1.12
+external/bsd/bind/dist/lib/isc/pk11.c           up to 1.1.1.5
+external/bsd/bind/dist/lib/isc/print.c          up to 1.5
+external/bsd/bind/dist/lib/isc/pthreads/mutex.c up to 1.6
+external/bsd/bind/dist/lib/isc/radix.c          up to 1.8
+external/bsd/bind/dist/lib/isc/ratelimiter.c    up to 1.6
+external/bsd/bind/dist/lib/isc/result.c         up to 1.5
+external/bsd/bind/dist/lib/isc/sha1.c           up to 1.8
+external/bsd/bind/dist/lib/isc/sha2.c           up to 1.10
+external/bsd/bind/dist/lib/isc/tests/Makefile.in up to 1.1.1.9
+external/bsd/bind/dist/lib/isc/tests/hash_test.c up to 1.1.1.7
+external/bsd/bind/dist/lib/isc/tests/mem_test.c up to 1.1.1.1
+external/bsd/bind/dist/lib/isc/tests/print_test.c up to 1.1.1.4
+external/bsd/bind/dist/lib/isc/tests/radix_test.c up to 1.1.1.1
+external/bsd/bind/dist/lib/isc/tests/time_test.c up to 1.1.1.4
+external/bsd/bind/dist/lib/isc/unix/app.c       up to 1.13
+external/bsd/bind/dist/lib/isc/unix/include/isc/net.h up to 1.6
+external/bsd/bind/dist/lib/isc/unix/include/isc/time.h up to 1.7
+external/bsd/bind/dist/lib/isc/unix/net.c       up to 1.8
+external/bsd/bind/dist/lib/isc/unix/socket.c    up to 1.17
+external/bsd/bind/dist/lib/isc/unix/stdio.c     up to 1.7
+external/bsd/bind/dist/lib/isc/unix/time.c      up to 1.9
+external/bsd/bind/dist/lib/isc/win32/include/isc/platform.h.in up to 1.1.1.4
+external/bsd/bind/dist/lib/isc/win32/include/isc/time.h up to 1.7
+external/bsd/bind/dist/lib/isc/win32/include/isc/win32os.h up to 1.5
+external/bsd/bind/dist/lib/isc/win32/libisc.def.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/win32/libisc.vcxproj.in up to 1.1.1.5
+external/bsd/bind/dist/lib/isc/win32/socket.c   up to 1.10
+external/bsd/bind/dist/lib/isc/win32/win32os.c  up to 1.6
+external/bsd/bind/dist/lib/isccfg/api           up to 1.1.1.16
+external/bsd/bind/dist/lib/isccfg/namedconf.c   up to 1.11
+external/bsd/bind/dist/lib/isccfg/parser.c      up to 1.9
+external/bsd/bind/dist/lib/isccfg/win32/libisccfg.def up to 1.1.1.7
+external/bsd/bind/dist/lib/lwres/api            up to 1.1.1.13
+external/bsd/bind/dist/lib/lwres/compat.c       up to 1.1.1.4
+external/bsd/bind/dist/lib/lwres/gethost.c      up to 1.7
+external/bsd/bind/dist/lib/lwres/win32/liblwres.def up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/nsprobe.c    up to 1.1.1.5
+external/bsd/bind/dist/lib/samples/sample-request.c up to 1.1.1.5
+external/bsd/bind/dist/lib/samples/sample-update.c up to 1.1.1.5
+external/bsd/bind/dist/srcid                    up to 1.9
+external/bsd/bind/dist/version                  up to 1.13
+external/bsd/bind/dist/win32utils/Configure     up to 1.1.1.4
+external/bsd/bind/dist/win32utils/legacy/BuildSetup.bat.in up to 1.1.1.4
+external/bsd/bind/include/config.h              up to 1.16
+external/bsd/bind/include/dns/code.h            up to 1.11
+external/bsd/bind/include/dns/enumclass.h       up to 1.7
+external/bsd/bind/include/dns/enumtype.h        up to 1.10
+external/bsd/bind/include/dns/rdatastruct.h     up to 1.10
+external/bsd/bind/include/isc/platform.h        up to 1.19
+external/bsd/bind/lib/libbind9/shlib_version    up to 1.14
+external/bsd/bind/lib/libdns/shlib_version      up to 1.16
+external/bsd/bind/lib/libirs/shlib_version      up to 1.3
+external/bsd/bind/lib/libisc/shlib_version      up to 1.16
+external/bsd/bind/lib/libisccc/shlib_version    up to 1.14
+external/bsd/bind/lib/libisccfg/shlib_version   up to 1.14
+external/bsd/bind/lib/liblwres/shlib_version    up to 1.14
+
+	Update BIND to 9.10.2-P2.
+	[he, ticket #878]
+
+sys/compat/netbsd32/netbsd32_time.c		1.43
+
+	Use the right type in sizeof() for copyin() in adjtime
+	[martin, ticket #879]
+
+sys/net/npf/npf_if.c				1.5
+sys/net/npf/npf_mbuf.c				1.14
+usr.sbin/npf/npf.7				1.3
+usr.sbin/npf/npfctl/npf_var.c			1.9
+
+	NPF: handle unregistered interfaces correctly and fix a NULL
+	dereference in npfctl.
+	[rmind, ticket #880]
+
+sys/dev/pci/hdaudio/hdaudio_pci.c		patch
+
+	Deregister pmf hook when attach failed.
+	[nonaka, ticket #881]
 
