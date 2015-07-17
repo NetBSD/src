@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.serverlib,v 1.6 2015/07/17 08:30:33 mrg Exp $
+#	$NetBSD: Makefile.serverlib,v 1.7 2015/07/17 17:57:11 mrg Exp $
 
 NOLINT=         1
 NOPROFILE=      1
@@ -16,9 +16,6 @@ X_BYTE_ORDER=0
 
 CPPFLAGS+=	${X11FLAGS.SERVER}
 CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
-
-# XXX
-CPPFLAGS+=	-DFD_SETSIZE=512
 
 .if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64")
 CPPFLAGS+=	-D__GLX_ALIGN64
