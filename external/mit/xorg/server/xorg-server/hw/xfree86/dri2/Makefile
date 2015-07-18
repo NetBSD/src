@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.7 2014/08/10 14:50:21 jmcneill Exp $
+# $NetBSD: Makefile,v 1.8 2015/07/18 08:56:06 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
+XMODULEDIRANDSTATIC=	# defined
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
