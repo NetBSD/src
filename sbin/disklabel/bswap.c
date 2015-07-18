@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap.c,v 1.3 2015/07/17 20:30:21 tsutsui Exp $	*/
+/*	$NetBSD: bswap.c,v 1.4 2015/07/18 06:00:46 htodd Exp $	*/
 
 /*-
  * Copyright (c) 2009 Izumi Tsutsui.  All rights reserved.
@@ -74,7 +74,7 @@
 static void
 bswaplabel(struct disklabel *nlp, const struct disklabel *olp)
 {
-	int i;
+	u_int i;
 
 	nlp->d_magic          = bswap32(olp->d_magic);
 	nlp->d_type           = bswap16(olp->d_type);
