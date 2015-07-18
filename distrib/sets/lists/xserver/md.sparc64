@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.56 2015/07/18 08:56:06 mrg Exp $	x11
+# $NetBSD: md.sparc64,v 1.57 2015/07/18 21:49:30 mrg Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -394,8 +394,8 @@
 ./usr/X11R7/lib/modules/libfb.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libi2c.a			-unknown-	xorg,obsolete
-./usr/X11R7/lib/modules/libi2c.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg
+./usr/X11R7/lib/modules/libi2c.so			-unknown-	xorg,obsolete
+./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/libi2c_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libpcidata.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so			-unknown-	obsolete

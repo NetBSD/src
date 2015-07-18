@@ -1,4 +1,4 @@
-# $NetBSD: md.zaurus,v 1.15 2015/07/18 08:56:06 mrg Exp $
+# $NetBSD: md.zaurus,v 1.16 2015/07/18 21:49:30 mrg Exp $
 ./etc/X11/xorg.conf.C3x00				-unknown-	xorg
 ./etc/X11/xorg.conf.C7x0				-unknown-	xorg
 ./etc/X11/xorg.conf.sample				-unknown-	obsolete
@@ -56,8 +56,8 @@
 ./usr/X11R7/lib/modules/libfb.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libi2c.a			-unknown-	xorg,obsolete
-./usr/X11R7/lib/modules/libi2c.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg
+./usr/X11R7/lib/modules/libi2c.so			-unknown-	xorg,obsolete
+./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/libi2c_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libshadowfb.a			-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/libshadowfb.so			-unknown-	xorg

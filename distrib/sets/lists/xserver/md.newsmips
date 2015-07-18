@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.14 2015/07/18 08:56:05 mrg Exp $
+# $NetBSD: md.newsmips,v 1.15 2015/07/18 21:49:30 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/Xnewsmips				-unknown-	x11
 ./usr/X11R6/man/cat1/Xnewsmips.0			-unknown-	.cat,x11
@@ -56,8 +56,8 @@
 ./usr/X11R7/lib/modules/libfb.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libi2c.a			-unknown-	xorg,obsolete
-./usr/X11R7/lib/modules/libi2c.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg
+./usr/X11R7/lib/modules/libi2c.so			-unknown-	xorg,obsolete
+./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/libi2c_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libshadowfb.a			-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/libshadowfb.so			-unknown-	xorg
