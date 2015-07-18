@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.48 2015/07/18 08:56:05 mrg Exp $
+# $NetBSD: md.cats,v 1.49 2015/07/18 21:49:30 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -487,8 +487,8 @@
 ./usr/X11R7/lib/modules/libfb.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libi2c.a			-unknown-	xorg,obsolete
-./usr/X11R7/lib/modules/libi2c.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg
+./usr/X11R7/lib/modules/libi2c.so			-unknown-	xorg,obsolete
+./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/libi2c_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libint10.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libint10.so			-unknown-	obsolete
