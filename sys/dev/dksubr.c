@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.65 2015/07/12 05:57:06 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.66 2015/07/19 08:05:24 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.65 2015/07/12 05:57:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.66 2015/07/19 08:05:24 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,15 @@ dk_strategy(struct dk_softc *dksc, struct buf *bp)
 		}
 	}
 
-	blkno = bp->b_blkno;
+	/*      
+	 * Convert the block number to absolute and put it in terms
+	 * of the device's logical block size.
+	 */
+	if (secsize >= DEV_BSIZE)
+		blkno = bp->b_blkno / (secsize / DEV_BSIZE);
+	else
+		blkno = bp->b_blkno * (DEV_BSIZE / secsize);
+
 	if (part != RAW_PART)
 		blkno += lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
 	bp->b_rawblkno = blkno;
