@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.39 2015/05/28 09:51:31 martin Exp $
+# $NetBSD: Makefile.cdrom,v 1.40 2015/07/19 10:16:55 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,10 @@ CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot
 CDINSTKERNEL=	../../instkernel
 CDKERNELS=	netbsd-GENERIC.gz       netbsd
 CDRELEASE_NOISOS=	true
-CD_SETS=	base etc modules
+CD_SETS=	base etc
+.if ${MKKMOD} != "no"
+CD_SETS+=	modules
+.endif
 
 image_md_pre:
 	${RM} -f cdrom/etc/gettytab cdrom/etc/ttys cdrom/etc/rc cdrom/install.sh
