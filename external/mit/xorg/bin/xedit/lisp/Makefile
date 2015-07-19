@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/06/27 17:03:30 matt Exp $
+#	$NetBSD: Makefile,v 1.5 2015/07/19 19:49:18 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -24,6 +24,10 @@ CPPFLAGS+=	-DANSI_SOURCE
 .PATH:		${X11SRCDIR.xedit}/lisp
 
 CWARNFLAGS.clang+=	-Wno-format
+
+# Ugh. writes to const char *
+COPTS.format.c+=	-Wno-error
+COPTS.lisp.c+=		-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
