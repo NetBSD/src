@@ -1,11 +1,15 @@
-#	$NetBSD: Makefile,v 1.9 2015/01/12 19:40:48 snj Exp $
+#	$NetBSD: Makefile,v 1.10 2015/07/19 10:16:55 martin Exp $
+
+.include <bsd.own.mk>
 
 SUBDIR=
 SUBDIR+=	ramdisks
 SUBDIR+=	.WAIT
 SUBDIR+=	instkernel
+.if ${MKKMOD} != "no"
 SUBDIR+=	kmod
 SUBDIR+=	kmod-cgdroot
+.endif
 SUBDIR+=	.WAIT
 SUBDIR+=	cdroms
 SUBDIR+=	liveimage
