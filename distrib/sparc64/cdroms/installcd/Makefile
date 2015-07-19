@@ -1,11 +1,14 @@
-#	$NetBSD: Makefile,v 1.26 2015/05/28 09:51:31 martin Exp $
+#	$NetBSD: Makefile,v 1.27 2015/07/19 10:16:56 martin Exp $
+
+.include <bsd.own.mk>
+
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd
-CD_SETS=	base etc modules
-
-# for PRINTOBJDIR
-.include <bsd.own.mk>
+CD_SETS=	base etc
+.if ${MKKMOD} != "no"
+CD_SETS+=	modules
+.endif
 
 SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
