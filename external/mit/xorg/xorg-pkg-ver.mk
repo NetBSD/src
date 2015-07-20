@@ -1,4 +1,4 @@
-#	$NetBSD: xorg-pkg-ver.mk,v 1.3 2015/07/20 04:10:40 mrg Exp $
+#	$NetBSD: xorg-pkg-ver.mk,v 1.4 2015/07/20 23:50:22 mrg Exp $
 
 # when including this make sure PROG is set so that $X11SRCDIR.$PROG
 # is a valid setting.  set XORG_PKG_VER_PROG if PROG is wrong.
@@ -30,6 +30,17 @@ XORG_PKG_PACKAGE_STRING!= \
 	}' ${X11SRCDIR.${XORG_PKG_VER_PROG}}/configure
 .if !empty(XORG_PKG_PACKAGE_STRING)
 CPPFLAGS+=	-DPACKAGE_STRING=\"${XORG_PKG_PACKAGE_STRING:Q}\"
+.endif
+
+XORG_PKG_PACKAGE_NAME!= \
+	awk -F= '/^PACKAGE_NAME=/ {				\
+	     match($$2, "'"'"'[a-zA-Z-_0-9]+'"'"'");		\
+	     name = substr($$2, RSTART, RLENGTH);		\
+	     print name;					\
+	     exit 0;						\
+	}' ${X11SRCDIR.${XORG_PKG_VER_PROG}}/configure
+.if !empty(XORG_PKG_PACKAGE_NAME)
+CPPFLAGS+=	-DPACKAGE_NAME=\"${XORG_PKG_PACKAGE_NAME:Q}\"
 .endif
 
 .endif
