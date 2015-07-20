@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.3 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.4 2015/07/20 13:13:31 joerg Exp $	*/
 
 /*
  * ntp_timer.c - event timer support routines
@@ -624,7 +624,7 @@ check_leapsec(
 		const char *leapmsg = NULL;
 		if (lsdata.warped < 0) {
 			if (clock_max_back > 0.0 &&
-			    clock_max_back < fabs(lsdata.warped)) {
+			    clock_max_back < abs(lsdata.warped)) {
 				step_systime(lsdata.warped);
 				leapmsg = leapmsg_p_step;
 			} else {
@@ -632,7 +632,7 @@ check_leapsec(
 			}
 		} else 	if (lsdata.warped > 0) {
 			if (clock_max_fwd > 0.0 &&
-			    clock_max_fwd < fabs(lsdata.warped)) {
+			    clock_max_fwd < abs(lsdata.warped)) {
 				step_systime(lsdata.warped);
 				leapmsg = leapmsg_n_step;
 			} else {
