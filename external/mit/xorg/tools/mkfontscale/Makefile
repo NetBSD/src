@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2015/07/17 06:40:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2015/07/20 04:10:40 mrg Exp $
 
 NOMAN=		1
 
@@ -12,9 +12,9 @@ FREETYPE=       ${X11SRCDIR.freetype}
 SRCS.mkfontscale=	mkfontscale.c list.c hash.c ident.c
 
 .PATH:	${FREETYPE}/src/base
-SRCS.freetype+=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
-		ftinit.c ftmm.c ftpfr.c ftstroke.c ftsynth.c ftsystem.c \
-		fttype1.c ftwinfnt.c ftxf86.c ftbitmap.c
+SRCS.freetype+=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftfntfmt.c \
+		ftglyph.c ftinit.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
+		ftsystem.c fttype1.c ftwinfnt.c ftbitmap.c
 
 .PATH: ${FREETYPE}/src/autofit
 SRCS.freetype+=	autofit.c
