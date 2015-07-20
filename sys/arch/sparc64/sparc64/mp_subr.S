@@ -1,4 +1,4 @@
-/*	$NetBSD: mp_subr.S,v 1.6 2014/06/08 17:33:24 palle Exp $	*/
+/*	$NetBSD: mp_subr.S,v 1.6.2.1 2015/07/20 06:12:23 snj Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -214,11 +214,12 @@ ENTRY(sparc64_ipi_flush_pte_sun4v)
 	.text
 	.align 32
 1:	rd	%pc, %l0
-	LDULNG	[%l0 + (4f-1b)], %l1
+	LDULNG	[%l0 + (3f-1b)], %l1	! Load itlb slot count
 	add	%l0, (6f-1b), %l2
 	clr	%l3
-2:	cmp	%l3, %l1
-	be	CCCR, 3f
+.Litlb_loop:
+	cmp	%l3, %l1
+	be	CCCR, .Litlb_done
 	 nop
 	ldx	[%l2 + TTE_VPN], %l4
 	ldx	[%l2 + TTE_DATA], %l5
@@ -232,15 +233,40 @@ ENTRY(sparc64_ipi_flush_pte_sun4v)
 	flush	%l4
 	add	%l2, PTE_SIZE, %l2
 	add	%l3, 1, %l3
-	ba	%xcc, 2b
+	ba	%xcc, .Litlb_loop
 	 nop
-3:	LDULNG	[%l0 + (5f-1b)], %l1
+.Litlb_done:
+	! continue the same loop (with indices and pointers et al),
+	! but load a new upper limit and do not push the entries into
+	! the itlb
+	LDULNG	[%l0 + (4f-1b)], %l1	! Load dtlb slot count
+.Ldtlb_loop:
+	cmp	%l3, %l1
+	be	CCCR, .Ldtlb_done
+	 nop
+	ldx	[%l2 + TTE_VPN], %l4
+	ldx	[%l2 + TTE_DATA], %l5
+	wr	%g0, ASI_DMMU, %asi
+	stxa	%l4, [%g0 + TLB_TAG_ACCESS] %asi
+	stxa	%l5, [%g0] ASI_DMMU_DATA_IN
+	wr	%g0, ASI_IMMU, %asi
+	stxa	%l4, [%g0 + TLB_TAG_ACCESS] %asi
+	stxa	%l5, [%g0] ASI_IMMU_DATA_IN
+	membar	#Sync
+	flush	%l4
+	add	%l2, PTE_SIZE, %l2
+	add	%l3, 1, %l3
+	ba	%xcc, .Ldtlb_loop
+	 nop
+.Ldtlb_done:
+	LDULNG	[%l0 + (5f-1b)], %l1
 	LDULNG	[%l0 + (7f-1b)], %g2	! Load cpu_info address.
 	jmpl	%l1, %g0
 	 nop
 
 	.align PTRSZ
 4:	ULONG	0x0
+3:	ULONG	0x0
 5:	ULONG	0x0
 7:	ULONG	0x0
 	_ALIGN
@@ -256,8 +282,10 @@ DATA(mp_tramp_code)
 	POINTER	1b
 DATA(mp_tramp_code_len)
 	ULONG	6b-1b
-DATA(mp_tramp_tlb_slots)
+DATA(mp_tramp_dtlb_slots)
 	ULONG	4b-1b
+DATA(mp_tramp_itlb_slots)
+	ULONG	3b-1b
 DATA(mp_tramp_func)
 	ULONG	5b-1b
 DATA(mp_tramp_ci)

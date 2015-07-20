@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.289 2014/07/10 06:24:02 jdc Exp $	*/
+/*	$NetBSD: pmap.c,v 1.289.2.1 2015/07/20 06:12:23 snj Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289 2014/07/10 06:24:02 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.1 2015/07/20 06:12:23 snj Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -213,7 +213,7 @@ paddr_t ekdatap;
  * Kernel 4MB pages.
  */
 extern struct tlb_entry *kernel_tlbs;
-extern int kernel_tlb_slots;
+extern int kernel_dtlb_slots, kernel_itlb_slots;
 
 static int npgs;
 
@@ -529,11 +529,12 @@ pmap_mp_init(void)
 	}
 
 	memcpy(v, mp_tramp_code, mp_tramp_code_len);
-	*(u_long *)(v + mp_tramp_tlb_slots) = kernel_tlb_slots;
+	*(u_long *)(v + mp_tramp_dtlb_slots) = kernel_dtlb_slots;
+	*(u_long *)(v + mp_tramp_itlb_slots) = kernel_itlb_slots;
 	*(u_long *)(v + mp_tramp_func) = (u_long)cpu_mp_startup;
 	*(u_long *)(v + mp_tramp_ci) = (u_long)cpu_args;
 	tp = (pte_t *)(v + mp_tramp_code_len);
-	for (i = 0; i < kernel_tlb_slots; i++) {
+	for (i = 0; i < kernel_dtlb_slots; i++) {
 		tp[i].tag  = kernel_tlbs[i].te_va;
 		tp[i].data = TSB_DATA(0,		/* g */
 				PGSZ_4M,		/* sz */
@@ -545,6 +546,8 @@ pmap_mp_init(void)
 				1, /* valid */
 				0 /* ie */);
 		tp[i].data |= TLB_L | TLB_CV;
+		if (i >= kernel_itlb_slots)
+ 			tp[i].data |= TLB_W;
 		DPRINTF(PDB_BOOT1, ("xtlb[%d]: Tag: %" PRIx64 " Data: %"
 				PRIx64 "\n", i, tp[i].tag, tp[i].data));
 	}
@@ -566,7 +569,7 @@ pmap_kextract(vaddr_t va)
 	int i;
 	paddr_t paddr = (paddr_t)-1;
 
-	for (i = 0; i < kernel_tlb_slots; i++) {
+	for (i = 0; i < kernel_dtlb_slots; i++) {
 		if ((va & ~PAGE_MASK_4M) == kernel_tlbs[i].te_va) {
 			paddr = kernel_tlbs[i].te_pa +
 				(paddr_t)(va & PAGE_MASK_4M);
@@ -574,7 +577,7 @@ pmap_kextract(vaddr_t va)
 		}
 	}
 
-	if (i == kernel_tlb_slots) {
+	if (i == kernel_dtlb_slots) {
 		panic("pmap_kextract: Address %p is not from kernel space.\n"
 				"Data segment is too small?\n", (void*)va);
 	}
@@ -2345,7 +2348,7 @@ pmap_dumpsize(void)
 	int	sz;
 
 	sz = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
-	sz += kernel_tlb_slots * sizeof(struct cpu_kcore_4mbseg);
+	sz += kernel_dtlb_slots * sizeof(struct cpu_kcore_4mbseg);
 	sz += phys_installed_size * sizeof(phys_ram_seg_t);
 
 	return btodb(sz + DEV_BSIZE - 1);
@@ -2421,7 +2424,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t blkno)
 
 	/* new version of locked segments description */
 	kcpu->newmagic = SPARC64_KCORE_NEWMAGIC;
-	kcpu->num4mbsegs = kernel_tlb_slots;
+	kcpu->num4mbsegs = kernel_dtlb_slots;
 	kcpu->off4mbsegs = ALIGN(sizeof(cpu_kcore_hdr_t));
 
 	/* description of per-cpu mappings */
@@ -2433,7 +2436,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t blkno)
 	/* Now the memsegs */
 	kcpu->nmemseg = phys_installed_size;
 	kcpu->memsegoffset = kcpu->off4mbsegs
-		+ kernel_tlb_slots * sizeof(struct cpu_kcore_4mbseg);
+		+ kernel_dtlb_slots * sizeof(struct cpu_kcore_4mbseg);
 
 	/* Now we need to point this at our kernel pmap. */
 	kcpu->nsegmap = STSZ;
@@ -2443,7 +2446,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t blkno)
 	bp = (int *)((long)kcpu + ALIGN(sizeof(cpu_kcore_hdr_t)));
 
 	/* write locked kernel 4MB TLBs */
-	for (i = 0; i < kernel_tlb_slots; i++) {
+	for (i = 0; i < kernel_dtlb_slots; i++) {
 		ktlb.va = kernel_tlbs[i].te_va;
 		ktlb.pa = kernel_tlbs[i].te_pa;
 		EXPEDITE(&ktlb, sizeof(ktlb));
