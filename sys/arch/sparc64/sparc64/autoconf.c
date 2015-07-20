@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.198.2.2 2015/03/21 17:32:13 snj Exp $ */
+/*	$NetBSD: autoconf.c,v 1.198.2.3 2015/07/20 06:12:23 snj Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.198.2.2 2015/03/21 17:32:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.198.2.3 2015/07/20 06:12:23 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -158,7 +158,8 @@ static	void get_bootpath_from_prom(void);
  * Kernel 4MB mappings.
  */
 struct tlb_entry *kernel_tlbs;
-int kernel_tlb_slots;
+int kernel_dtlb_slots;
+int kernel_itlb_slots;
 
 /* Global interrupt mappings for all device types.  Match against the OBP
  * 'device_type' property. 
@@ -354,7 +355,11 @@ die_old_boot_loader:
 		boothowto = bi_howto->boothowto;
 
 	LOOKUP_BOOTINFO(bi_count, BTINFO_DTLB_SLOTS);
-	kernel_tlb_slots = bi_count->count;
+	kernel_dtlb_slots = bi_count->count;
+	kernel_itlb_slots = kernel_dtlb_slots-1;
+	bi_count = lookup_bootinfo(BTINFO_ITLB_SLOTS);
+	if (bi_count)
+		kernel_itlb_slots = bi_count->count;
 	LOOKUP_BOOTINFO(bi_tlb, BTINFO_DTLB);
 	kernel_tlbs = &bi_tlb->tlb[0];
 
