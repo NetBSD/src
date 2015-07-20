@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.65 2015/07/20 02:50:42 mrg Exp $
+# $NetBSD: shl.mi,v 1.66 2015/07/20 03:14:12 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -272,7 +272,7 @@
 ./usr/X11R7/lib/libXprintUtil.so.2.0		-obsolete-		obsolete
 ./usr/X11R7/lib/libXrandr.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libXrandr.so.3			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libXrandr.so.3.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libXrandr.so.3.2		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libXrender.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libXrender.so.2			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libXrender.so.2.0		-unknown-		xorg,compatx11file
