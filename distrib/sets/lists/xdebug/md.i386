@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.16 2015/07/18 08:56:06 mrg Exp $
+# $NetBSD: md.i386,v 1.17 2015/07/20 02:50:42 mrg Exp $
 ./usr/X11R6/lib/modules/extensions/libGLcore_g.a	-unknown-	debuglib,x11
 ./usr/X11R6/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,x11
 ./usr/X11R6/lib/modules/extensions/libextmod_g.a	-unknown-	debuglib,x11
@@ -127,7 +127,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/unichrome_dri.so.0.debug	-unknown-		xorg,debug,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7017_drv.so.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2.debug	-unknown-		xorg,debug
