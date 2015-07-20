@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.343 2015/07/17 04:48:52 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.344 2015/07/20 06:13:52 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33396,4 +33396,15 @@ sys/dev/pci/hdaudio/hdaudio_pci.c		patch
 
 	Deregister pmf hook when attach failed.
 	[nonaka, ticket #881]
+
+sys/arch/sparc/stand/ofwboot/loadfile_machdep.c	1.14
+sys/arch/sparc/stand/ofwboot/version		1.21
+sys/arch/sparc64/include/cpu.h			1.115
+sys/arch/sparc64/sparc64/autoconf.c		1.203
+sys/arch/sparc64/sparc64/mp_subr.S		1.9 via patch
+sys/arch/sparc64/sparc64/pmap.c			1.295, 1.295 via patch
+
+	Fix booting of sparc64 kernels with more than 4 MB combined
+	.data and .bss segment.
+	[martin, ticket #842]
 
