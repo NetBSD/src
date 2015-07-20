@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.98 2015/07/18 08:56:05 mrg Exp $
+# $NetBSD: md.i386,v 1.99 2015/07/20 02:50:42 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -430,7 +430,7 @@
 ./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ark_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ast_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/ast_drv.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ast_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ch7017_drv.so		-unknown-	obsolete
