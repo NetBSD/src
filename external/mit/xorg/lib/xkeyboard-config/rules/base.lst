@@ -112,7 +112,7 @@
   mx1998          Memorex MX1998
   mx2500          Memorex MX2500 EZ-Access Keyboard
   mx2750          Memorex MX2750
-  microsoft4000   Microsoft Natural Wireless Ergonomic Keyboard 4000
+  microsoft4000   Microsoft Natural Ergonomic Keyboard 4000
   microsoft7000   Microsoft Natural Wireless Ergonomic Keyboard 7000
   microsoftinet   Microsoft Internet Keyboard
   microsoftpro    Microsoft Natural Keyboard Pro / Microsoft Internet Keyboard Pro
@@ -311,6 +311,7 @@
   qwerty          ara: Arabic (qwerty)
   qwerty_digits   ara: Arabic (qwerty/digits)
   buckwalter      ara: Arabic (Buckwalter)
+  mac             ara: Arabic (Macintosh)
   plisi-d1        al: Albanian (Plisi D1)
   phonetic        am: Armenian (phonetic)
   phonetic-alt    am: Armenian (alternative phonetic)
@@ -500,6 +501,7 @@
   102_qwerty_dot_nodead hu: Hungarian (102/qwerty/dot/eliminate dead keys)
   Sundeadkeys     is: Icelandic (Sun dead keys)
   nodeadkeys      is: Icelandic (eliminate dead keys)
+  mac_legacy      is: Icelandic (Macintosh, legacy)
   mac             is: Icelandic (Macintosh)
   dvorak          is: Icelandic (Dvorak)
   lyx             il: Hebrew (lyx)
@@ -523,6 +525,7 @@
   nodeadkeys      latam: Spanish (Latin American, eliminate dead keys)
   deadtilde       latam: Spanish (Latin American, include dead tilde)
   sundeadkeys     latam: Spanish (Latin American, Sun dead keys)
+  dvorak          latam: Spanish (Latin American, Dvorak)
   std             lt: Lithuanian (standard)
   us              lt: Lithuanian (US keyboard with Lithuanian letters)
   ibm             lt: Lithuanian (IBM LST 1205-92)
@@ -591,6 +594,8 @@
   srp             ru: Serbian (Russia)
   bak             ru: Bashkirian
   chm             ru: Mari
+  phonetic_azerty ru: Russian (phonetic azerty)
+  phonetic_fr     ru: Russian (phonetic French)
   yz              rs: Serbian (Cyrillic, ZE and ZHE swapped)
   latin           rs: Serbian (Latin)
   latinunicode    rs: Serbian (Latin Unicode)
@@ -636,6 +641,7 @@
   legacy          tj: Tajik (legacy)
   tam_unicode     lk: Tamil (Sri Lanka, Unicode)
   tam_TAB         lk: Tamil (Sri Lanka, TAB Typewriter)
+  us              lk: Sinhala (US keyboard with Sinhala letters)
   tis             th: Thai (TIS-820.2538)
   pat             th: Thai (Pattachote)
   f               tr: Turkish (F)
@@ -762,6 +768,7 @@
   ctrl:ctrl_ralt       Right Alt as Right Ctrl
   ctrl:swap_lalt_lctl  Swap Left Alt key with Left Ctrl key
   ctrl:swap_lwin_lctl  Swap Left Win key with Left Ctrl key
+  ctrl:swap_rwin_rctl  Swap Right Win key with Right Ctrl key
   ctrl:swap_lalt_lctl_lwin Left Alt as Ctrl, Left Ctrl as Win, Left Win as Alt
   grp_led              Use keyboard LED to show alternative layout
   grp_led:num          Num Lock
@@ -833,7 +840,7 @@
   compat               Miscellaneous compatibility options
   numpad:pc            Default numeric keypad keys
   numpad:mac           Numeric keypad keys always enter digits (as in Mac OS)
-  numpad:microsoft     Shift with numeric keypad keys works as in MS Windows
+  numpad:microsoft     NumLock on: digits, Shift switches to arrow keys, Numlock off: always arrow keys (as in MS Windows)
   numpad:shift3        Shift does not cancel Num Lock, chooses 3rd level instead
   srvrkeys:none        Special keys (Ctrl+Alt+&lt;key&gt;) handled in a server
   apple:alupckeys      Apple Aluminium Keyboard: emulate PC keys (Print, Scroll Lock, Pause, Num Lock)
@@ -877,6 +884,10 @@
   japan:kana_lock      Kana Lock key is locking
   japan:nicola_f_bs    NICOLA-F style Backspace
   japan:hztg_escape    Make Zenkaku Hankaku an additional ESC
+  korean               Korean Hangul/Hanja keys
+  korean:hw_keys       Hardware Hangul/Hanja keys
+  korean:ralt_rctrl    Right Alt as Hangul, right Ctrl as Hanja
+  korean:rctrl_ralt    Right Ctrl as Hangul, right Alt as Hanja
   esperanto            Adding Esperanto supersigned letters
   esperanto:qwerty     To the corresponding key in a Qwerty layout
   esperanto:dvorak     To the corresponding key in a Dvorak layout
