@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.49 2015/07/18 21:49:30 mrg Exp $
+# $NetBSD: md.cats,v 1.50 2015/07/20 02:50:42 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -357,7 +357,7 @@
 ./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ark_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ast_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/ast_drv.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ast_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg
