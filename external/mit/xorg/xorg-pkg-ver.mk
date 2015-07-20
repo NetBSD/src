@@ -1,9 +1,13 @@
-#	$NetBSD: xorg-pkg-ver.mk,v 1.2 2015/07/20 02:07:36 mrg Exp $
+#	$NetBSD: xorg-pkg-ver.mk,v 1.3 2015/07/20 04:10:40 mrg Exp $
 
 # when including this make sure PROG is set so that $X11SRCDIR.$PROG
 # is a valid setting.  set XORG_PKG_VER_PROG if PROG is wrong.
+# set XORG_PKG_VER_CONFIG_PATH if "configure" at the top-level is wrong.
 
 XORG_PKG_VER_PROG?=	${PROG}
+
+XORG_PKG_VER_CONFIG_PATH?=	configure
+_XORG_PKG_CONFIGURE_PATH=	${X11SRCDIR.${XORG_PKG_VER_PROG}}/${XORG_PKG_VER_CONFIG_PATH}
 
 .if exists(${X11SRCDIR.${XORG_PKG_VER_PROG}}/configure)
 XORG_PKG_PACKAGE_VERSION!= \
