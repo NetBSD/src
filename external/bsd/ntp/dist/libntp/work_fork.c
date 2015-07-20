@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.6 2015/07/17 15:17:07 christos Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.7 2015/07/20 15:35:00 christos Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -127,7 +127,13 @@ harvest_child_status(
 		/* Wait on the child so it can finish terminating */
 		if (waitpid(c->pid, NULL, 0) == c->pid)
 			TRACE(4, ("harvested child %d\n", c->pid));
-		else msyslog(LOG_ERR, "error waiting on child %d: %m", c->pid);
+		else if (errno != ECHILD) {
+			/*
+			 * SIG_IGN on SIGCHLD on some os's means do not wait
+			 * but reap automaticallyi
+			 */
+			msyslog(LOG_ERR, "error waiting on child %d: %m", c->pid);
+		}
 		c->pid = 0;
 	}
 }
