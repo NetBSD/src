@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2015/07/19 09:23:53 martin Exp $
+#	$NetBSD: Makefile,v 1.20 2015/07/21 01:53:44 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,6 +9,8 @@ MAKEFS_FLAGS=	-f 14
 
 WARNS=		1
 DBG=		-Os
+DBG+=		-mthumb -mthumb-interwork
+DBG+=		-DNDEBUG
 
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
