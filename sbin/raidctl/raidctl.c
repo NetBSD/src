@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.61 2015/06/30 17:02:14 sborrill Exp $   */
+/*      $NetBSD: raidctl.c,v 1.62 2015/07/21 05:54:44 mrg Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.61 2015/06/30 17:02:14 sborrill Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.62 2015/07/21 05:54:44 mrg Exp $");
 #endif
 
 
@@ -576,6 +576,14 @@ rf_pm_configure(int fd, int raidID, char *parityconf, int parityparams[])
 	    raidID, dis ? "dis" : "en");
 }
 
+/* convert "component0" into "absent" */
+static const char *rf_output_devname(const char *devname)
+{
+
+	if (strncmp(devname, "component", 9) == 0)
+		return "absent";
+	return devname;
+}
 
 static void
 rf_output_configuration(int fd, const char *name)
@@ -602,7 +610,8 @@ rf_output_configuration(int fd, const char *name)
 
 	printf("START disks\n");
 	for(i=0; i < device_config.ndevs; i++)
-		printf("%s\n", device_config.devs[i].devname);
+		printf("%s\n",
+		    rf_output_devname(device_config.devs[i].devname));
 	printf("\n");
 
 	if (device_config.nspares > 0) {
