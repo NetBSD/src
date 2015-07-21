@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.388 2015/07/12 08:11:27 hannken Exp $
+#       $NetBSD: Makefile,v 1.389 2015/07/21 03:12:50 knakahara Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -578,6 +578,9 @@ MLINKS+=pci.9 pci_conf_read.9 \
 	pci.9 PCI_PRODUCT.9 \
 	pci.9 PCI_REVISION.9
 MLINKS+=pci_msi.9 pci_msix.9 \
+	pci_msi.9 pci_intr_alloc.9 \
+	pci_msi.9 pci_intr_release.9 \
+	pci_msi.9 pci_intr_type.9 \
 	pci_msi.9 pci_intx_alloc.9 \
 	pci_msi.9 pci_intx_release.9 \
 	pci_msi.9 pci_msi_count.9 \
