@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1970 2015/07/12 08:11:27 hannken Exp $
+#	$NetBSD: mi,v 1.1971 2015/07/21 03:12:50 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10618,12 +10618,15 @@
 ./usr/share/man/cat9/pci_get_capability.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_get_powerstate.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pci_intr_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_distribute.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_evcnt.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_map.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pci_intr_release.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_string.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pci_intr_type.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intx_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intx_release.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_make_tag.0		comp-sys-catman		.cat
@@ -17422,12 +17425,15 @@
 ./usr/share/man/html9/pci_get_capability.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_get_powerstate.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr.html		comp-sys-htmlman	html
+./usr/share/man/html9/pci_intr_alloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_distribute.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_establish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_evcnt.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_map.html		comp-sys-htmlman	html
+./usr/share/man/html9/pci_intr_release.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_string.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_intr_type.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intx_alloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intx_release.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_make_tag.html		comp-sys-htmlman	html
@@ -24391,12 +24397,15 @@
 ./usr/share/man/man9/pci_get_capability.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_get_powerstate.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_intr.9			comp-sys-man		.man
+./usr/share/man/man9/pci_intr_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_distribute.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_evcnt.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_map.9		comp-sys-man		.man
+./usr/share/man/man9/pci_intr_release.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_string.9		comp-sys-man		.man
+./usr/share/man/man9/pci_intr_type.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_intx_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_intx_release.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_make_tag.9		comp-sys-man		.man
