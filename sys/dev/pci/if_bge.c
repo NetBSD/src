@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.292 2015/06/14 08:46:33 martin Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.293 2015/07/21 03:15:50 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.292 2015/06/14 08:46:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.293 2015/07/21 03:15:50 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3341,6 +3341,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t	pc;
 #ifndef __HAVE_PCI_MSI_MSIX
 	pci_intr_handle_t	ih;
+#else
+	int counts[PCI_INTR_TYPE_SIZE];
+	pci_intr_type_t intr_type, max_type;
 #endif
 	const char		*intrstr = NULL;
 	uint32_t 		hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5;
@@ -3356,9 +3359,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 	int			capmask;
 	int			mii_flags;
 	int			map_flags;
-#ifdef __HAVE_PCI_MSI_MSIX
-	int			rv;
-#endif
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	bp = bge_lookup(pa);
@@ -3727,27 +3727,19 @@ bge_attach(device_t parent, device_t self, void *aux)
 	}
 
 #ifdef __HAVE_PCI_MSI_MSIX
-	DPRINTFN(5, ("pci_get_capability\n"));
+	counts[PCI_INTR_TYPE_MSI] = 1;
+	counts[PCI_INTR_TYPE_INTX] = 1;
 	/* Check MSI capability */
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI,
-		&sc->bge_msicap, NULL) != 0) {
-		if (bge_can_use_msi(sc) != 0)
-			sc->bge_flags |= BGEF_MSI;
-	}
-	rv = -1;
-	if (((sc->bge_flags & BGEF_MSI) != 0) && (pci_msi_count(pa) > 0)) {
-		DPRINTFN(5, ("pci_msi_alloc\n"));
-		rv = pci_msi_alloc_exact(pa, &sc->bge_pihp, 1);
-		if (rv != 0)
-			sc->bge_flags &= ~BGEF_MSI;
-	}
-	if (rv != 0) {
-		DPRINTFN(5, ("pci_intx_alloc\n"));
-		if (pci_intx_alloc(pa, &sc->bge_pihp)) {
-			aprint_error_dev(self, "can't map interrupt\n");
-			return;
-		}
-		sc->bge_flags &= ~BGEF_MSI;
+	if (bge_can_use_msi(sc) != 0) {
+		max_type = PCI_INTR_TYPE_MSI;
+		sc->bge_flags |= BGEF_MSI;
+	} else
+		max_type = PCI_INTR_TYPE_INTX;
+
+alloc_retry:
+	if (pci_intr_alloc(pa, &sc->bge_pihp, counts, max_type) != 0) {
+		aprint_error_dev(sc->bge_dev, "couldn't alloc interrupt\n");
+		return;
 	}
 #else	/* !__HAVE_PCI_MSI_MSIX */
 	DPRINTFN(5, ("pci_intr_map\n"));
@@ -3757,15 +3749,32 @@ bge_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-#ifdef __HAVE_PCI_MSI_MSIX
 	DPRINTFN(5, ("pci_intr_string\n"));
+#ifdef __HAVE_PCI_MSI_MSIX
 	intrstr = pci_intr_string(pc, sc->bge_pihp[0], intrbuf,
 	    sizeof(intrbuf));
 	DPRINTFN(5, ("pci_intr_establish\n"));
 	sc->bge_intrhand = pci_intr_establish(pc, sc->bge_pihp[0], IPL_NET,
 	    bge_intr, sc);
+	if (sc->bge_intrhand == NULL) {
+		intr_type = pci_intr_type(sc->bge_pihp[0]);
+		aprint_error_dev(sc->bge_dev,"unable to establish %s\n",
+		    (intr_type == PCI_INTR_TYPE_MSI) ? "MSI" : "INTx");
+		pci_intr_release(pc, sc->bge_pihp, 1);
+		switch (intr_type) {
+		case PCI_INTR_TYPE_MSI:
+			/* The next try is for INTx: Disable MSI */
+			max_type = PCI_INTR_TYPE_INTX;
+			counts[PCI_INTR_TYPE_INTX] = 1;
+			sc->bge_flags &= ~BGEF_MSI;
+			goto alloc_retry;
+		case PCI_INTR_TYPE_INTX:
+		default:
+			/* See below */
+			break;
+		}
+	}
 #else	/* !__HAVE_PCI_MSI_MSIX */
-	DPRINTFN(5, ("pci_intr_string\n"));
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	DPRINTFN(5, ("pci_intr_establish\n"));
