@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.339 2015/07/15 07:40:54 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.340 2015/07/21 03:15:50 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.339 2015/07/15 07:40:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.340 2015/07/21 03:15:50 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -155,27 +155,29 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #endif
 
 #ifdef __HAVE_PCI_MSI_MSIX
-#define WM_MSI_MSIX	1 /* Enable by default */
+#if 0 /* off by default */
+#define WM_MSI_MSIX	1
+#endif
 #endif
 
 /*
  * This device driver divides interrupt to TX, RX and link state.
  * Each MSI-X vector indexes are below.
  */
-#define WM_NINTR		3
-#define WM_TX_INTR_INDEX	0
-#define WM_RX_INTR_INDEX	1
-#define WM_LINK_INTR_INDEX	2
-#define WM_MAX_NINTR		WM_NINTR
+#define WM_MSIX_NINTR		3
+#define WM_MSIX_TXINTR_IDX	0
+#define WM_MSIX_RXINTR_IDX	1
+#define WM_MSIX_LINKINTR_IDX	2
+#define WM_MAX_NINTR		WM_MSIX_NINTR
 
 /*
  * This device driver set affinity to each interrupts like below (round-robin).
  * If the number CPUs is less than the number of interrupts, this driver usase
  * the same CPU for multiple interrupts.
  */
-#define WM_TX_INTR_CPUID	0
-#define WM_RX_INTR_CPUID	1
-#define WM_LINK_INTR_CPUID	2
+#define WM_MSIX_TXINTR_CPUID	0
+#define WM_MSIX_RXINTR_CPUID	1
+#define WM_MSIX_LINKINTR_CPUID	2
 
 /*
  * Transmit descriptor list size.  Due to errata, we can only have
@@ -777,6 +779,20 @@ static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 static void	wm_reset_init_script_82575(struct wm_softc *);
 static void	wm_reset_mdicnfg_82580(struct wm_softc *);
 static void	wm_pll_workaround_i210(struct wm_softc *);
+
+#ifdef WM_MSI_MSIX
+struct _msix_matrix {
+	const char *intrname;
+	int(*func)(void *);
+	int intridx;
+	int cpuid;
+} msix_matrix[WM_MSIX_NINTR] = {
+	{ "TX", wm_txintr_msix, WM_MSIX_TXINTR_IDX, WM_MSIX_TXINTR_CPUID },
+	{ "RX", wm_rxintr_msix, WM_MSIX_RXINTR_IDX, WM_MSIX_TXINTR_CPUID },
+	{ "LINK", wm_linkintr_msix, WM_MSIX_LINKINTR_IDX,
+	  WM_MSIX_LINKINTR_CPUID },
+};
+#endif
 
 CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, wm_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -1406,7 +1422,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 #ifndef WM_MSI_MSIX
 	pci_intr_handle_t ih;
 #else
-	bool intr_established = false;
+	int counts[PCI_INTR_TYPE_SIZE];
+	pci_intr_type_t max_type;
 #endif
 	const char *intrstr = NULL;
 	const char *eetype, *xname;
@@ -1597,122 +1614,71 @@ wm_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 	sc->sc_nintrs = 1;
 #else /* WM_MSI_MSIX */
-	if (pci_msix_alloc_exact(pa, &sc->sc_intrs, WM_NINTR) == 0) {
-		/* 1st, try to use MSI-X */
+	/* Allocation settings */
+	max_type = PCI_INTR_TYPE_MSIX;
+	counts[PCI_INTR_TYPE_MSIX] = WM_MAX_NINTR;
+	counts[PCI_INTR_TYPE_MSI] = 1;
+	counts[PCI_INTR_TYPE_INTX] = 1;
+
+alloc_retry:
+	if (pci_intr_alloc(pa, &sc->sc_intrs, counts, max_type) != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to allocate interrupt\n");
+		return;
+	}
+
+	if (pci_intr_type(sc->sc_intrs[0]) == PCI_INTR_TYPE_MSIX) {
 		void *vih;
 		kcpuset_t *affinity;
 
 		kcpuset_create(&affinity, false);
 
-		/*
-		 * for TX
-		 */
-		intrstr = pci_intr_string(pc, sc->sc_intrs[WM_TX_INTR_INDEX],
-		    intrbuf, sizeof(intrbuf));
+		for (i = 0; i < WM_MSIX_NINTR; i++) {
+			intrstr = pci_intr_string(pc,
+			    sc->sc_intrs[msix_matrix[i].intridx], intrbuf,
+			    sizeof(intrbuf));
 #ifdef WM_MPSAFE
-		pci_intr_setattr(pc, &sc->sc_intrs[WM_TX_INTR_INDEX],
-		    PCI_INTR_MPSAFE, true);
+			pci_intr_setattr(pc,
+			    &sc->sc_intrs[msix_matrix[i].intridx],
+			    PCI_INTR_MPSAFE, true);
 #endif
-		vih = pci_intr_establish(pc, sc->sc_intrs[WM_TX_INTR_INDEX],
-		    IPL_NET, wm_txintr_msix, sc);
-		if (vih == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to establish MSI-X(for TX)%s%s\n",
-			    intrstr ? " at " : "", intrstr ? intrstr : "");
-			pci_intr_release(sc->sc_pc, sc->sc_intrs,
-			    WM_NINTR);
-			goto msi;
-		}
-		kcpuset_zero(affinity);
-		/* Round-robin affinity */
-		kcpuset_set(affinity, WM_TX_INTR_CPUID % ncpu);
-		error = pci_intr_distribute(vih, affinity, NULL);
-		if (error == 0) {
-			aprint_normal_dev(sc->sc_dev,
-			    "for TX interrupting at %s affinity to %u\n",
-			    intrstr, WM_TX_INTR_CPUID % ncpu);
-		} else {
-			aprint_normal_dev(sc->sc_dev,
-			    "for TX interrupting at %s\n",
-			    intrstr);
-		}
-		sc->sc_ihs[WM_TX_INTR_INDEX] = vih;
+			vih = pci_intr_establish(pc,
+			    sc->sc_intrs[msix_matrix[i].intridx], IPL_NET,
+			    msix_matrix[i].func, sc);
+			if (vih == NULL) {
+				aprint_error_dev(sc->sc_dev,
+				    "unable to establish MSI-X(for %s)%s%s\n",
+				    msix_matrix[i].intrname,
+				    intrstr ? " at " : "",
+				    intrstr ? intrstr : "");
+				pci_intr_release(sc->sc_pc, sc->sc_intrs,
+				    WM_MSIX_NINTR);
+				kcpuset_destroy(affinity);
 
-		/*
-		 * for RX
-		 */
-		intrstr = pci_intr_string(pc, sc->sc_intrs[WM_RX_INTR_INDEX],
-		    intrbuf, sizeof(intrbuf));
-#ifdef WM_MPSAFE
-		pci_intr_setattr(pc, &sc->sc_intrs[WM_RX_INTR_INDEX],
-		    PCI_INTR_MPSAFE, true);
-#endif
-		vih = pci_intr_establish(pc, sc->sc_intrs[WM_RX_INTR_INDEX],
-		    IPL_NET, wm_rxintr_msix, sc);
-		if (vih == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to establish MSI-X(for RX)%s%s\n",
-			    intrstr ? " at " : "", intrstr ? intrstr : "");
-			pci_intr_release(sc->sc_pc, sc->sc_intrs,
-			    WM_NINTR);
-			goto msi;
+				/* Setup for MSI: Disable MSI-X */
+				max_type = PCI_INTR_TYPE_MSI;
+				counts[PCI_INTR_TYPE_MSI] = 1;
+				counts[PCI_INTR_TYPE_INTX] = 1;
+				goto alloc_retry;
+			}
+			kcpuset_zero(affinity);
+			/* Round-robin affinity */
+			kcpuset_set(affinity, msix_matrix[i].cpuid % ncpu);
+			error = pci_intr_distribute(vih, affinity, NULL);
+			if (error == 0) {
+				aprint_normal_dev(sc->sc_dev,
+				    "for TX interrupting at %s affinity to %u\n",
+				    intrstr, msix_matrix[i].cpuid % ncpu);
+			} else {
+				aprint_normal_dev(sc->sc_dev,
+				    "for TX interrupting at %s\n", intrstr);
+			}
+			sc->sc_ihs[msix_matrix[i].intridx] = vih;
 		}
-		kcpuset_zero(affinity);
-		kcpuset_set(affinity, WM_RX_INTR_CPUID % ncpu);
-		error = pci_intr_distribute(vih, affinity, NULL);
-		if (error == 0) {
-			aprint_normal_dev(sc->sc_dev,
-			    "for RX interrupting at %s affinity to %u\n",
-			    intrstr, WM_RX_INTR_CPUID % ncpu);
-		} else {
-			aprint_normal_dev(sc->sc_dev,
-			    "for RX interrupting at %s\n",
-			    intrstr);
-		}
-		sc->sc_ihs[WM_RX_INTR_INDEX] = vih;
 
-		/*
-		 * for link state changing
-		 */
-		intrstr = pci_intr_string(pc, sc->sc_intrs[WM_LINK_INTR_INDEX],
-		    intrbuf, sizeof(intrbuf));
-#ifdef WM_MPSAFE
-		pci_intr_setattr(pc, &sc->sc_intrs[WM_LINK_INTR_INDEX],
-		    PCI_INTR_MPSAFE, true);
-#endif
-		vih = pci_intr_establish(pc, sc->sc_intrs[WM_LINK_INTR_INDEX],
-		    IPL_NET, wm_linkintr_msix, sc);
-		if (vih == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to establish MSI-X(for LINK)%s%s\n",
-			    intrstr ? " at " : "", intrstr ? intrstr : "");
-			pci_intr_release(sc->sc_pc, sc->sc_intrs,
-			    WM_NINTR);
-			goto msi;
-		}
-		kcpuset_zero(affinity);
-		kcpuset_set(affinity, WM_LINK_INTR_CPUID % ncpu);
-		error = pci_intr_distribute(vih, affinity, NULL);
-		if (error == 0) {
-			aprint_normal_dev(sc->sc_dev,
-			    "for LINK interrupting at %s affinity to %u\n",
-			    intrstr, WM_LINK_INTR_CPUID % ncpu);
-		} else {
-			aprint_normal_dev(sc->sc_dev,
-			    "for LINK interrupting at %s\n",
-			    intrstr);
-		}
-		sc->sc_ihs[WM_LINK_INTR_INDEX] = vih;
-
-		sc->sc_nintrs = WM_NINTR;
+		sc->sc_nintrs = WM_MSIX_NINTR;
 		kcpuset_destroy(affinity);
-		intr_established = true;
-	}
-
-msi:
-	if ((intr_established == false)
-	    && (pci_msi_alloc_exact(pa, &sc->sc_intrs, 1) == 0)) {
-		/* 2nd, try to use MSI */
+	} else {
+		/* MSI or INTx */
 		intrstr = pci_intr_string(pc, sc->sc_intrs[0], intrbuf,
 		    sizeof(intrbuf));
 #ifdef WM_MPSAFE
@@ -1721,43 +1687,26 @@ msi:
 		sc->sc_ihs[0] = pci_intr_establish(pc, sc->sc_intrs[0],
 		    IPL_NET, wm_intr_legacy, sc);
 		if (sc->sc_ihs[0] == NULL) {
-			aprint_error_dev(sc->sc_dev, "unable to establish MSI\n");
-			pci_intr_release(sc->sc_pc, sc->sc_intrs,
-			    1);
-			goto intx;
-		}
-		aprint_normal_dev(sc->sc_dev, "MSI at %s\n", intrstr);
-
-		sc->sc_nintrs = 1;
-		intr_established = true;
-	}
-
-intx:
-	if ((intr_established == false)
-	    && (pci_intx_alloc(pa, &sc->sc_intrs) == 0)) {
-		/* Last, try to use INTx */
-		intrstr = pci_intr_string(pc, sc->sc_intrs[0], intrbuf,
-		    sizeof(intrbuf));
-#ifdef WM_MPSAFE
-		pci_intr_setattr(pc, &sc->sc_intrs[0], PCI_INTR_MPSAFE, true);
-#endif
-		sc->sc_ihs[0] = pci_intr_establish(pc, sc->sc_intrs[0],
-		    IPL_NET, wm_intr_legacy, sc);
-		if (sc->sc_ihs[0] == NULL) {
-			aprint_error_dev(sc->sc_dev, "unable to establish MSI\n");
+			aprint_error_dev(sc->sc_dev,"unable to establish %s\n",
+			    (pci_intr_type(sc->sc_intrs[0])
+				== PCI_INTR_TYPE_MSI) ? "MSI" : "INTx");
 			pci_intr_release(sc->sc_pc, sc->sc_intrs, 1);
-			goto int_failed;
+			switch (pci_intr_type(sc->sc_intrs[0])) {
+			case PCI_INTR_TYPE_MSI:
+				/* The next try is for INTx: Disable MSI */
+				max_type = PCI_INTR_TYPE_INTX;
+				counts[PCI_INTR_TYPE_INTX] = 1;
+				goto alloc_retry;
+			case PCI_INTR_TYPE_INTX:
+			default:
+				return;
+			}
 		}
-		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
+		aprint_normal_dev(sc->sc_dev, "%s at %s\n",
+		    (pci_intr_type(sc->sc_intrs[0]) == PCI_INTR_TYPE_MSI)
+			? "MSI" : "interrupting", intrstr);
 
 		sc->sc_nintrs = 1;
-		intr_established = true;
-	}
-
-int_failed:
-	if (intr_established == false) {
-		aprint_error_dev(sc->sc_dev, "failed to allocate interrput\n");
-		return;
 	}
 #endif /* WM_MSI_MSIX */
 
@@ -4546,13 +4495,13 @@ wm_init_locked(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 
 			/* TX */
-			CSR_WRITE(sc, WMREG_MSIXBM(WM_TX_INTR_INDEX),
+			CSR_WRITE(sc, WMREG_MSIXBM(WM_MSIX_TXINTR_IDX),
 			    EITR_TX_QUEUE0);
 			/* RX */
-			CSR_WRITE(sc, WMREG_MSIXBM(WM_RX_INTR_INDEX),
+			CSR_WRITE(sc, WMREG_MSIXBM(WM_MSIX_RXINTR_IDX),
 			    EITR_RX_QUEUE0);
 			/* Link status */
-			CSR_WRITE(sc, WMREG_MSIXBM(WM_LINK_INTR_INDEX),
+			CSR_WRITE(sc, WMREG_MSIXBM(WM_MSIX_LINKINTR_IDX),
 			    EITR_OTHER);
 		} else if (sc->sc_type == WM_T_82574) {
 			/* Interrupt control */
@@ -4561,11 +4510,12 @@ wm_init_locked(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 
 			/* TX, RX and Link status */
-			ivar = __SHIFTIN((IVAR_VALID_82574 | WM_TX_INTR_INDEX),
+			ivar = __SHIFTIN((IVAR_VALID_82574|WM_MSIX_TXINTR_IDX),
 			    IVAR_TX_MASK_Q_82574(0));
-			ivar |= __SHIFTIN((IVAR_VALID_82574 |WM_RX_INTR_INDEX),
+			ivar |= __SHIFTIN((IVAR_VALID_82574
+				| WM_MSIX_RXINTR_IDX),
 			    IVAR_RX_MASK_Q_82574(0));
-			ivar |=__SHIFTIN((IVAR_VALID_82574|WM_LINK_INTR_INDEX),
+			ivar |=__SHIFTIN((IVAR_VALID_82574|WM_MSIX_LINKINTR_IDX),
 			    IVAR_OTHER_MASK);
 			CSR_WRITE(sc, WMREG_IVAR, ivar | IVAR_INT_ON_ALL_WB);
 		} else {
@@ -4584,7 +4534,7 @@ wm_init_locked(struct ifnet *ifp)
 				ivar = CSR_READ(sc, WMREG_IVAR_Q(0));
 				ivar &= ~IVAR_TX_MASK_Q(0);
 				ivar |= __SHIFTIN(
-					(WM_TX_INTR_INDEX | IVAR_VALID),
+					(WM_MSIX_TXINTR_IDX | IVAR_VALID),
 					IVAR_TX_MASK_Q(0));
 				CSR_WRITE(sc, WMREG_IVAR_Q(0), ivar);
 
@@ -4592,7 +4542,7 @@ wm_init_locked(struct ifnet *ifp)
 				ivar = CSR_READ(sc, WMREG_IVAR_Q(0));
 				ivar &= ~IVAR_RX_MASK_Q(0);
 				ivar |= __SHIFTIN(
-					(WM_RX_INTR_INDEX | IVAR_VALID),
+					(WM_MSIX_RXINTR_IDX | IVAR_VALID),
 					IVAR_RX_MASK_Q(0));
 				CSR_WRITE(sc, WMREG_IVAR_Q(0), ivar);
 				break;
@@ -4601,7 +4551,7 @@ wm_init_locked(struct ifnet *ifp)
 				ivar = CSR_READ(sc, WMREG_IVAR_Q_82576(0));
 				ivar &= ~IVAR_TX_MASK_Q_82576(0);
 				ivar |= __SHIFTIN(
-					(WM_TX_INTR_INDEX | IVAR_VALID),
+					(WM_MSIX_TXINTR_IDX | IVAR_VALID),
 					IVAR_TX_MASK_Q_82576(0));
 				CSR_WRITE(sc, WMREG_IVAR_Q_82576(0), ivar);
 
@@ -4609,7 +4559,7 @@ wm_init_locked(struct ifnet *ifp)
 				ivar = CSR_READ(sc, WMREG_IVAR_Q_82576(0));
 				ivar &= ~IVAR_RX_MASK_Q_82576(0);
 				ivar |= __SHIFTIN(
-					(WM_RX_INTR_INDEX | IVAR_VALID),
+					(WM_MSIX_RXINTR_IDX | IVAR_VALID),
 					IVAR_RX_MASK_Q_82576(0));
 				CSR_WRITE(sc, WMREG_IVAR_Q_82576(0), ivar);
 				break;
@@ -4618,7 +4568,7 @@ wm_init_locked(struct ifnet *ifp)
 			}
 
 			/* Link status */
-			ivar = __SHIFTIN((WM_LINK_INTR_INDEX | IVAR_VALID),
+			ivar = __SHIFTIN((WM_MSIX_LINKINTR_IDX | IVAR_VALID),
 			    IVAR_MISC_OTHER);
 			CSR_WRITE(sc, WMREG_IVAR_MISC, ivar);
 		}
@@ -4642,9 +4592,9 @@ wm_init_locked(struct ifnet *ifp)
 				mask = EITR_RX_QUEUE0 |EITR_TX_QUEUE0
 				    | EITR_OTHER;
 			else
-				mask = (1 << WM_RX_INTR_INDEX)
-				    | (1 << WM_TX_INTR_INDEX)
-				    | (1 << WM_LINK_INTR_INDEX);
+				mask = (1 << WM_MSIX_RXINTR_IDX)
+				    | (1 << WM_MSIX_TXINTR_IDX)
+				    | (1 << WM_MSIX_LINKINTR_IDX);
 			CSR_WRITE(sc, WMREG_EIAC, mask);
 			CSR_WRITE(sc, WMREG_EIAM, mask);
 			CSR_WRITE(sc, WMREG_EIMS, mask);
@@ -6652,7 +6602,7 @@ wm_txintr_msix(void *arg)
 	else if (sc->sc_type == WM_T_82575)
 		CSR_WRITE(sc, WMREG_EIMC, EITR_TX_QUEUE0);
 	else
-		CSR_WRITE(sc, WMREG_EIMC, 1 << WM_TX_INTR_INDEX);
+		CSR_WRITE(sc, WMREG_EIMC, 1 << WM_MSIX_TXINTR_IDX);
 
 	WM_TX_LOCK(sc);
 
@@ -6670,7 +6620,7 @@ out:
 	else if (sc->sc_type == WM_T_82575)
 		CSR_WRITE(sc, WMREG_EIMS, EITR_TX_QUEUE0);
 	else
-		CSR_WRITE(sc, WMREG_EIMS, 1 << WM_TX_INTR_INDEX);
+		CSR_WRITE(sc, WMREG_EIMS, 1 << WM_MSIX_TXINTR_IDX);
 
 	if (handled) {
 		/* Try to get more packets going. */
@@ -6698,7 +6648,7 @@ wm_rxintr_msix(void *arg)
 	else if (sc->sc_type == WM_T_82575)
 		CSR_WRITE(sc, WMREG_EIMC, EITR_RX_QUEUE0);
 	else
-		CSR_WRITE(sc, WMREG_EIMC, 1 << WM_RX_INTR_INDEX);
+		CSR_WRITE(sc, WMREG_EIMC, 1 << WM_MSIX_RXINTR_IDX);
 
 	WM_RX_LOCK(sc);
 
@@ -6716,7 +6666,7 @@ out:
 	else if (sc->sc_type == WM_T_82575)
 		CSR_WRITE(sc, WMREG_EIMS, EITR_RX_QUEUE0);
 	else
-		CSR_WRITE(sc, WMREG_EIMS, 1 << WM_RX_INTR_INDEX);
+		CSR_WRITE(sc, WMREG_EIMS, 1 << WM_MSIX_RXINTR_IDX);
 
 	return 1;
 }
@@ -6739,7 +6689,7 @@ wm_linkintr_msix(void *arg)
 	else if (sc->sc_type == WM_T_82575)
 		CSR_WRITE(sc, WMREG_EIMC, EITR_OTHER);
 	else
-		CSR_WRITE(sc, WMREG_EIMC, 1 << WM_LINK_INTR_INDEX);
+		CSR_WRITE(sc, WMREG_EIMC, 1 << WM_MSIX_LINKINTR_IDX);
 	WM_TX_LOCK(sc);
 	if (sc->sc_stopping)
 		goto out;
@@ -6755,7 +6705,7 @@ out:
 	else if (sc->sc_type == WM_T_82575)
 		CSR_WRITE(sc, WMREG_EIMS, EITR_OTHER);
 	else
-		CSR_WRITE(sc, WMREG_EIMS, 1 << WM_LINK_INTR_INDEX);
+		CSR_WRITE(sc, WMREG_EIMS, 1 << WM_MSIX_LINKINTR_IDX);
 
 	return 1;
 }
