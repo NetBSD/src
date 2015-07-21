@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_msi.9,v 1.4 2015/07/21 03:12:50 knakahara Exp $
+.\" $NetBSD: pci_msi.9,v 1.5 2015/07/21 12:05:02 wiz Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Jul 15, 2015
+.Dd July 15, 2015
 .Dt PCI_MSI 9
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Nm pci_msix_alloc_map ,
 .Nm pci_intx_alloc ,
 .Nm pci_intr_alloc ,
-.Nm pci_intr_release,
+.Nm pci_intr_release ,
 .Nm pci_intr_type
 .Nd PCI MSI{,-X} manipulation functions
 .Sh SYNOPSIS
@@ -206,13 +206,17 @@ The index count of
 must be
 .Dv PCI_INTR_TYPE_SIZE .
 .Fa max_type
-must be PCI_INTR_TYPE_MSIX, PCI_INTR_TYPE_MSI, or PCI_INTR_TYPE_INTX.
+must be
+.Dv PCI_INTR_TYPE_MSIX ,
+.Dv PCI_INTR_TYPE_MSI ,
+or
+.Dv PCI_INTR_TYPE_INTX .
 The parameter does not mean array index counts of
 .Fa counts .
 The parameter means the interrupt type which
 .Fn pci_intr_alloc
 tries to allocate first.
-I.e., if the driver wants to allocate interrupt the following way:
+I.e., if the driver wants to allocate interrupts in the following way:
 .Bd -literal
 	5 MSI-X
 	1 MSI (if MSI-X allocation failed)
@@ -229,7 +233,7 @@ in the following way:
 	error = pci_intr_alloc(pa, ihps, counts,
 			       PCI_INTR_TYPE_MSIX);
 .Ed
-If the driver wants to allocate int the following way:
+If the driver wants to allocate interrupts in the following way:
 .Bd -literal
 	hardware max number MSI-X
 	1 MSI (if MSI-X allocation failed)
@@ -245,7 +249,7 @@ in the following way:
 	error = pci_intr_alloc(pa, ihps, counts,
 			       PCI_INTR_TYPE_MSIX);
 .Ed
-If the driver wants to allocate int the following way:
+If the driver wants to allocate interrupts in the following way:
 .Bd -literal
 	3 MSI
 	INTx (if MSI allocation failed)
@@ -261,7 +265,7 @@ in the following way:
 	error = pci_intr_alloc(pa, ihps, counts,
 			       PCI_INTR_TYPE_MSI);
 .Ed
-If the driver wants to allocate int the following way:
+If the driver wants to allocate interrupts in the following way:
 .Bd -literal
 	1 MSI
 	INTx (if MSI allocation failed)
@@ -275,11 +279,12 @@ in the following way:
 .Fa max_type
 is ignored in this case.
 .Fn pci_intr_alloc
-return zero on any allocation function success, and nonzero on
-all allocation functions failure. On success,
+returns zero on any allocation function success, and non-zero on
+all allocation function failures.
+On success,
 .Fa counts
 is overwritten by a really allocated count.
-I.e, if 5 MSI-X is allocated,
+I.e., if 5 MSI-X is allocated,
 .Fa counts
 is
 .Bd -literal
@@ -290,13 +295,13 @@ is
 on return.
 .Pp
 .Ft pci_intr_type_t
-return the interrupt type of
+returns the interrupt type of
 .Fa ih .
 The return value is
 .Dv PCI_INTR_TYPE_MSIX
 for MSI-X,
 .Dv PCI_INTR_TYPE_MSI
-for MSI
+for MSI, and
 .Dv PCI_INTR_TYPE_INTX
 for others.
 .Sh SEE ALSO
