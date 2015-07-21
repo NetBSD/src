@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.33 2015/05/15 08:36:41 knakahara Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.34 2015/07/21 03:10:42 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.33 2015/05/15 08:36:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.34 2015/07/21 03:10:42 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -350,6 +350,20 @@ pci_intr_distribute(void *cookie, const kcpuset_t *newset, kcpuset_t *oldset)
 }
 
 #if NIOAPIC > 0
+pci_intr_type_t
+pci_intr_type(pci_intr_handle_t ih)
+{
+
+	if (INT_VIA_MSI(ih)) {
+		if (MSI_INT_IS_MSIX(ih))
+			return PCI_INTR_TYPE_MSIX;
+		else
+			return PCI_INTR_TYPE_MSI;
+	} else {
+		return PCI_INTR_TYPE_INTX;
+	}
+}
+
 static void
 x86_pci_intx_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih)
 {
@@ -401,6 +415,112 @@ pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **pih)
 
 error:
 	kmem_free(handle, sizeof(*handle));
+	return error;
+}
+
+/*
+ * Interrupt handler allocation utility. This function calls each allocation
+ * function as specified by arguments.
+ * Currently callee functions are pci_intx_alloc(), pci_msi_alloc_exact(),
+ * and pci_msix_alloc_exact().
+ * pa       : pci_attach_args
+ * ihps     : interrupt handlers
+ * counts   : The array of number of required interrupt handlers.
+ *            It is overwritten by allocated the number of handlers.
+ *            CAUTION: The size of counts[] must be PCI_INTR_TYPE_SIZE.
+ * max_type : "max" type of using interrupts. See below.
+ *     e.g.
+ *         If you want to use 5 MSI-X, 1 MSI, or INTx, you use "counts" as
+ *             int counts[PCI_INTR_TYPE_SIZE];
+ *             counts[PCI_INTR_TYPE_MSIX] = 5;
+ *             counts[PCI_INTR_TYPE_MSI] = 1;
+ *             counts[PCI_INTR_TYPE_INTX] = 1;
+ *             error = pci_intr_alloc(pa, ihps, counts, PCI_INTR_TYPE_MSIX);
+ *
+ *         If you want to use hardware max number MSI-X or 1 MSI,
+ *         and not to use INTx, you use "counts" as
+ *             int counts[PCI_INTR_TYPE_SIZE];
+ *             counts[PCI_INTR_TYPE_MSIX] = -1;
+ *             counts[PCI_INTR_TYPE_MSI] = 1;
+ *             counts[PCI_INTR_TYPE_INTX] = 0;
+ *             error = pci_intr_alloc(pa, ihps, counts, PCI_INTR_TYPE_MSIX);
+ *
+ *         If you want to use 3 MSI or INTx, you can use "counts" as
+ *             int counts[PCI_INTR_TYPE_SIZE];
+ *             counts[PCI_INTR_TYPE_MSI] = 3;
+ *             counts[PCI_INTR_TYPE_INTX] = 1;
+ *             error = pci_intr_alloc(pa, ihps, counts, PCI_INTR_TYPE_MSI);
+ *
+ *         If you want to use 1 MSI or INTx (probably most general usage),
+ *         you can simply use this API like
+ *         below
+ *             error = pci_intr_alloc(pa, ihps, NULL, 0);
+ *                                                    ^ ignored
+ */
+int
+pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *counts, pci_intr_type_t max_type)
+{
+	int error;
+	int intx_count, msi_count, msix_count;
+
+	intx_count = msi_count = msix_count = 0;
+	if (counts == NULL) { /* simple pattern */
+		msi_count = 1;
+		intx_count = 1;
+	} else {
+		switch(max_type) {
+		case PCI_INTR_TYPE_MSIX:
+			msix_count = counts[PCI_INTR_TYPE_MSIX];
+			/* FALLTHROUGH */
+		case PCI_INTR_TYPE_MSI:
+			msi_count = counts[PCI_INTR_TYPE_MSI];
+			/* FALLTHROUGH */
+		case PCI_INTR_TYPE_INTX:
+			intx_count = counts[PCI_INTR_TYPE_INTX];
+			break;
+		default:
+			return EINVAL;
+		}
+	}
+
+	memset(counts, 0, sizeof(counts[0]) * PCI_INTR_TYPE_SIZE);
+	error = EINVAL;
+
+	/* try MSI-X */
+	if (msix_count == -1) /* use hardware max */
+		msix_count = pci_msix_count(pa);
+	if (msix_count > 0) {
+		error = pci_msix_alloc_exact(pa, ihps, msix_count);
+		if (error == 0) {
+			counts[PCI_INTR_TYPE_MSIX] = msix_count;
+			goto out;
+		}
+	}
+
+	/* try MSI */
+	if (msi_count == -1) /* use hardware max */
+		msi_count = pci_msi_count(pa);
+	if (msi_count > 0) {
+		error = pci_msi_alloc_exact(pa, ihps, msi_count);
+		if (error == 0) {
+			if (counts != NULL) {
+				counts[PCI_INTR_TYPE_MSI] = msi_count;
+				goto out;
+			}
+		}
+	}
+
+	/* try INTx */
+	if (intx_count != 0) { /* The number of INTx is always 1. */
+		error = pci_intx_alloc(pa, ihps);
+		if (error == 0) {
+			if (counts != NULL)
+				counts[PCI_INTR_TYPE_INTX] = 1;
+		}
+	}
+
+ out:
 	return error;
 }
 
