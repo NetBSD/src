@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.44 2015/07/17 06:42:48 skrll Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.45 2015/07/22 14:06:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.44 2015/07/17 06:42:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.45 2015/07/22 14:06:26 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -323,7 +323,7 @@ netbsd32___adjtime50(struct lwp *l, const struct netbsd32___adjtime50_args *uap,
 			atv.tv_usec += 1000000;
 			atv.tv_sec--;
 		}
-		(void) copyout(&atv, SCARG_P32(uap, olddelta), sizeof(atv));
+		error = copyout(&atv, SCARG_P32(uap, olddelta), sizeof(atv));
 		if (error)
 			return (error);
 	}
