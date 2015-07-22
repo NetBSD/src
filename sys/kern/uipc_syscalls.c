@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.178 2015/05/09 15:22:47 rtr Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.179 2015/07/22 14:18:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.178 2015/05/09 15:22:47 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.179 2015/07/22 14:18:08 maxv Exp $");
 
 #include "opt_pipe.h"
 
@@ -659,9 +659,16 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	struct socket	*so;
 	file_t		*fp;
 
-	if ((error = fd_getsock1(s, &so, &fp)) != 0)
+	if ((error = fd_getsock1(s, &so, &fp)) != 0) {
+		/* We have to free msg_name and msg_control ourselves */
+		if (mp->msg_flags & MSG_NAMEMBUF)
+			m_freem(mp->msg_name);
+		if (mp->msg_flags & MSG_CONTROLMBUF)
+			m_freem(mp->msg_control);
 		return error;
+	}
 	error = do_sys_sendmsg_so(l, s, so, fp, mp, flags, retsize);
+	/* msg_name and msg_control freed */
 	fd_putfile(s);
 	return error;
 }
