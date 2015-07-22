@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.46 2015/07/20 14:37:11 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.47 2015/07/22 13:33:59 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.46 2015/07/20 14:37:11 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.47 2015/07/22 13:33:59 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -63,19 +63,19 @@ static const u_char *find_string(const u_char *, int *, const char * const *,
  */
 #define ALT_E			0x01
 #define ALT_O			0x02
-#define	LEGAL_ALT(x)		{ if (alt_format & ~(x)) return NULL; }
+#define LEGAL_ALT(x)		{ if (alt_format & ~(x)) return NULL; }
 
-#define	S_YEAR		(1 << 0)
-#define	S_MON		(1 << 1)
-#define	S_YDAY		(1 << 2)
-#define	S_MDAY		(1 << 3)
-#define	S_WDAY		(1 << 4)
+#define S_YEAR			(1 << 0)
+#define S_MON			(1 << 1)
+#define S_YDAY			(1 << 2)
+#define S_MDAY			(1 << 3)
+#define S_WDAY			(1 << 4)
 
-#define HAVE_MDAY(s)	(s & S_MDAY)
-#define HAVE_MON(s)	(s & S_MON)
-#define HAVE_WDAY(s)	(s & S_WDAY)
-#define HAVE_YDAY(s)	(s & S_YDAY)
-#define HAVE_YEAR(s)	(s & S_YEAR)
+#define HAVE_MDAY(s)		(s & S_MDAY)
+#define HAVE_MON(s)		(s & S_MON)
+#define HAVE_WDAY(s)		(s & S_WDAY)
+#define HAVE_YDAY(s)		(s & S_YDAY)
+#define HAVE_YEAR(s)		(s & S_YEAR)
 
 static char gmt[] = { "GMT" };
 static char utc[] = { "UTC" };
