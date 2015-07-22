@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2.2.6 2015/04/30 06:07:32 riz Exp $
+# $NetBSD: ad.aarch64,v 1.2.2.7 2015/07/22 16:51:59 snj Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -62,7 +62,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/eabi/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat
-./usr/libdata/debug/usr/lib/eabi/libbind9.so.8.1.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libbind9.so.8.2.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libblacklist.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
@@ -78,7 +78,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libdns.so.8.1.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libdns.so.8.2.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdwarf.so.1.0.debug	comp-sys-debug	debug,compat
@@ -103,10 +103,10 @@
 ./usr/libdata/debug/usr/lib/eabi/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libipsec.so.3.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libirs.so.8.1.debug		comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libisc.so.8.1.debug		comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libisccc.so.8.1.debug	comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libisccfg.so.8.1.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libirs.so.8.2.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libisc.so.8.2.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libisccc.so.8.2.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libisccfg.so.8.2.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libkadm5clnt.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
@@ -120,7 +120,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libldap_r.so.4.3.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/liblua.so.5.3.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat
-./usr/libdata/debug/usr/lib/eabi/liblwres.so.8.1.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/liblwres.so.8.2.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libm.so.0.11.debug		comp-sys-debug	debug,compat
@@ -230,7 +230,7 @@
 #./usr/libdata/debug/usr/lib/eabihf/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libdns.so.8.1.debug		comp-bind-debug	debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libdns.so.8.2.debug		comp-bind-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libdwarf.so.1.1.debug	comp-sys-debug	debug,compat
@@ -255,10 +255,10 @@
 #./usr/libdata/debug/usr/lib/eabihf/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libipsec.so.3.0.debug	comp-net-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libirs.so.8.1.debug		comp-bind-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libisc.so.8.1.debug		comp-bind-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libisccc.so.8.1.debug	comp-bind-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libisccfg.so.8.1.debug	comp-bind-debug	debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libirs.so.8.2.debug		comp-bind-debug	debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libisc.so.8.2.debug		comp-bind-debug	debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libisccc.so.8.2.debug	comp-bind-debug	debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libisccfg.so.8.2.debug	comp-bind-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libkadm5clnt.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
@@ -367,7 +367,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/oabi/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbfd.so.13.0.debug		comp-sys-debug	binutils,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libbind9.so.8.1.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libbind9.so.8.2.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libblacklist.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
@@ -383,7 +383,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libdns.so.8.1.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libdns.so.8.2.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdns_sd.so.0.0.debug		comp-mdns-debug	mdns,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdtrace.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdwarf.so.1.0.debug		comp-sys-debug	debug,compat
@@ -408,10 +408,10 @@
 ./usr/libdata/debug/usr/lib/oabi/libhx509.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libintl.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libipsec.so.3.0.debug		comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libirs.so.8.1.debug		comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libisc.so.8.1.debug		comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libisccc.so.8.1.debug		comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.1.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libirs.so.8.2.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisc.so.8.2.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisccc.so.8.2.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.2.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libiscsi.so.2.0.debug		comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisns.so.0.0.debug		comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libkadm5clnt.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
@@ -425,7 +425,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libldap_r.so.4.3.debug		comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblua.so.5.3.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.2.0.debug		comp-kyua-debug	kyua,debug,compat
-./usr/libdata/debug/usr/lib/oabi/liblwres.so.8.1.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/liblwres.so.8.2.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblzma.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libm.so.0.11.debug		comp-sys-debug	debug,compat
