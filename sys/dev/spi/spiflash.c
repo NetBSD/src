@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.17 2015/04/26 15:15:20 mlelstv Exp $ */
+/* $NetBSD: spiflash.c,v 1.18 2015/07/22 10:07:59 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.17 2015/04/26 15:15:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.18 2015/07/22 10:07:59 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -681,6 +681,7 @@ spiflash_common_read(spiflash_handle_t sc, size_t start, size_t size,
 			return rv;
 		}
 
+		data += cnt;
 		start += cnt;
 		size -= cnt;
 	}
