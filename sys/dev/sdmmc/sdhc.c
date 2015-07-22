@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.59 2015/05/30 17:52:07 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.60 2015/07/22 09:54:42 skrll Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.59 2015/05/30 17:52:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.60 2015/07/22 09:54:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -189,33 +189,32 @@ static void	sdhc_write_data_pio(struct sdhc_host *, uint8_t *, u_int);
 static void	esdhc_read_data_pio(struct sdhc_host *, uint8_t *, u_int);
 static void	esdhc_write_data_pio(struct sdhc_host *, uint8_t *, u_int);
 
-
 static struct sdmmc_chip_functions sdhc_functions = {
 	/* host controller reset */
-	sdhc_host_reset,
+	.host_reset = sdhc_host_reset,
 
 	/* host controller capabilities */
-	sdhc_host_ocr,
-	sdhc_host_maxblklen,
+	.host_ocr = sdhc_host_ocr,
+	.host_maxblklen = sdhc_host_maxblklen,
 
 	/* card detection */
-	sdhc_card_detect,
+	.card_detect = sdhc_card_detect,
 
 	/* write protect */
-	sdhc_write_protect,
+	.write_protect = sdhc_write_protect,
 
-	/* bus power, clock frequency and width */
-	sdhc_bus_power,
-	sdhc_bus_clock,
-	sdhc_bus_width,
-	sdhc_bus_rod,
+	/* bus power, clock frequency, width and ROD(OpenDrain/PushPull) */
+	.bus_power = sdhc_bus_power,
+	.bus_clock = sdhc_bus_clock,
+	.bus_width = sdhc_bus_width,
+	.bus_rod = sdhc_bus_rod,
 
 	/* command execution */
-	sdhc_exec_command,
+	.exec_command = sdhc_exec_command,
 
 	/* card interrupt */
-	sdhc_card_enable_intr,
-	sdhc_card_intr_ack
+	.card_enable_intr = sdhc_card_enable_intr,
+	.card_intr_ack = sdhc_card_intr_ack
 };
 
 static int
