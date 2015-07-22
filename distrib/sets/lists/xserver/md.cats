@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.50 2015/07/20 02:50:42 mrg Exp $
+# $NetBSD: md.cats,v 1.51 2015/07/22 16:37:33 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -396,8 +396,8 @@
 ./usr/X11R7/lib/modules/drivers/nv_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so.6		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/radeonhd_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/radeonhd_drv.so		-unknown-	xorg,obsolete
+./usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1	-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/drivers/s3_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/s3_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/s3virge_drv.so		-unknown-	xorg
@@ -557,7 +557,7 @@
 ./usr/X11R7/man/cat4/nsc.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/nv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeon.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/radeonhd.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/radeonhd.0				-unknown-	.cat,xorg,obsolete
 ./usr/X11R7/man/cat4/s3.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/s3virge.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/savage.0				-unknown-	.cat,xorg
@@ -595,7 +595,7 @@
 ./usr/X11R7/man/html4/nsc.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/nv.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeon.html			-unknown-	html,xorg
-./usr/X11R7/man/html4/radeonhd.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/radeonhd.html			-unknown-	html,xorg,obsolete
 ./usr/X11R7/man/html4/s3.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/s3virge.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/savage.html			-unknown-	html,xorg
@@ -633,7 +633,7 @@
 ./usr/X11R7/man/man4/nsc.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/nv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeon.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/radeonhd.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/radeonhd.4				-unknown-	.man,xorg,obsolete
 ./usr/X11R7/man/man4/s3.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/s3virge.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/savage.4				-unknown-	.man,xorg

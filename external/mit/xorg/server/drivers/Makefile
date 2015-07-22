@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2015/05/28 14:36:45 rjs Exp $
+#	$NetBSD: Makefile,v 1.68 2015/07/22 16:37:33 mrg Exp $
 
 # xf86-input drivers
 
@@ -52,7 +52,6 @@ SUBDIR+= \
 	xf86-video-r128 \
 	xf86-video-radeon \
 	xf86-video-radeon-kms \
-	xf86-video-radeonhd \
 	xf86-video-s3 \
 	xf86-video-s3virge \
 	xf86-video-savage \
@@ -93,7 +92,6 @@ SUBDIR+= \
 	xf86-video-nv \
 	xf86-video-r128 \
 	xf86-video-radeon \
-	xf86-video-radeonhd \
 	xf86-video-s3 \
 	xf86-video-s3virge \
 	xf86-video-savage \
@@ -133,7 +131,6 @@ SUBDIR+= \
 	xf86-video-neomagic \
 	xf86-video-nv \
 	xf86-video-radeon \
-	xf86-video-radeonhd \
 	xf86-video-s3 \
 	xf86-video-s3virge \
 	xf86-video-savage \
@@ -276,16 +273,5 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-wsfb
 .endif # ${MACHINE} == "zaurus"
-
-# broken with xorg-server 1.6
-# x86
-#	xf86-video-nsc \
-#	xf86-video-vga \
-# alpha
-#	xf86-video-vga \
-# bebox
-#	xf86-video-vga
-# prep
-#	xf86-video-vga
 
 .include <bsd.subdir.mk>
