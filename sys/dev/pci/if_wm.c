@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.341 2015/07/22 08:22:55 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.342 2015/07/22 11:14:13 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.341 2015/07/22 08:22:55 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.342 2015/07/22 11:14:13 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -786,7 +786,7 @@ struct _msix_matrix {
 	int cpuid;
 } msix_matrix[WM_MSIX_NINTR] = {
 	{ "TX", wm_txintr_msix, WM_MSIX_TXINTR_IDX, WM_MSIX_TXINTR_CPUID },
-	{ "RX", wm_rxintr_msix, WM_MSIX_RXINTR_IDX, WM_MSIX_TXINTR_CPUID },
+	{ "RX", wm_rxintr_msix, WM_MSIX_RXINTR_IDX, WM_MSIX_RXINTR_CPUID },
 	{ "LINK", wm_linkintr_msix, WM_MSIX_LINKINTR_IDX,
 	  WM_MSIX_LINKINTR_CPUID },
 };
