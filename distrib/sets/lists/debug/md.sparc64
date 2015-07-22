@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.61.2.7 2015/04/30 06:07:32 riz Exp $
+# $NetBSD: md.sparc64,v 1.61.2.8 2015/07/22 16:51:59 snj Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -196,7 +196,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libatf-c++.so.1.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/sparc/libatf-c.so.0.0.debug			comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/sparc/libbfd.so.13.0.debug			comp-compat-shlib	compat,pic,binutils,debug
-./usr/libdata/debug/usr/lib/sparc/libbind9.so.8.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libbind9.so.8.2.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libblacklist.so.4.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbluetooth.so.4.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbsdmalloc.so.0.0.debug		comp-compat-shlib	compat,pic,debug
@@ -211,7 +211,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libdes.so.8.2.debug			comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libdevmapper.so.1.0.debug			comp-compat-shlib	compat,pic,debug,lvm
 ./usr/libdata/debug/usr/lib/sparc/libdm.so.0.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libdns.so.8.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libdns.so.8.2.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libdns_sd.so.0.0.debug		comp-compat-shlib	compat,pic,debug,mdns
 ./usr/libdata/debug/usr/lib/sparc/libdwarf.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libedit.so.3.1.debug			comp-compat-shlib	compat,pic,debug
@@ -237,13 +237,13 @@
 ./usr/libdata/debug/usr/lib/sparc/libhx509.so.5.0.debug			comp-compat-shlib	compat,pic,debug,kerberos
 ./usr/libdata/debug/usr/lib/sparc/libintl.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libipsec.so.3.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libirs.so.8.1.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libirs.so.8.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libisc.so.6.0.debug			comp-compat-shlib	compat,pic,debug,obsolete
-./usr/libdata/debug/usr/lib/sparc/libisc.so.8.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libisc.so.8.2.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libisccc.so.6.0.debug			comp-compat-shlib	compat,pic,debug,obsolete
-./usr/libdata/debug/usr/lib/sparc/libisccc.so.8.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libisccc.so.8.2.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libisccfg.so.6.0.debug		comp-compat-shlib	compat,pic,debug,obsolete
-./usr/libdata/debug/usr/lib/sparc/libisccfg.so.8.1.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libisccfg.so.8.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libiscsi.so.2.0.debug			comp-compat-shlib	compat,pic,debug,iscsi
 ./usr/libdata/debug/usr/lib/sparc/libisns.so.0.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
@@ -263,7 +263,7 @@
 ./usr/libdata/debug/usr/lib/sparc/liblutok.so.1.0.debug			comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/sparc/liblutok.so.2.0.debug			comp-compat-shlib	compat,pic,debug,kyua
 ./usr/libdata/debug/usr/lib/sparc/liblwres.so.6.0.debug			comp-compat-shlib	compat,pic,debug,obsolete
-./usr/libdata/debug/usr/lib/sparc/liblwres.so.8.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/liblwres.so.8.2.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblzf.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblzma.so.1.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libm.so.0.11.debug			comp-compat-shlib	compat,pic,debug
