@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.7 2015/04/20 10:09:09 jmcneill Exp $
+#	$NetBSD: GENERIC.common,v 1.8 2015/07/22 10:32:16 skrll Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -110,7 +110,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-# Wedge support   
+# Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
