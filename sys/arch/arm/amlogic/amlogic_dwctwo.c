@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_dwctwo.c,v 1.2 2015/02/28 18:50:57 jmcneill Exp $	*/
+/*	$NetBSD: amlogic_dwctwo.c,v 1.3 2015/07/22 10:32:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_dwctwo.c,v 1.2 2015/02/28 18:50:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_dwctwo.c,v 1.3 2015/07/22 10:32:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static struct dwc2_core_params amlogic_dwctwo_params = {
 	.host_rx_fifo_size		= 512,	/* 512 DWORDs */
 	.host_nperio_tx_fifo_size	= 500,	/* 500 DWORDs */
 	.host_perio_tx_fifo_size	= -1,	/* 256 DWORDs */
-	.max_transfer_size		= -1,   /* 2047 to 65,535 */ 
+	.max_transfer_size		= -1,   /* 2047 to 65,535 */
 	.max_packet_count		= -1,   /* 15 to 511 */
 	.host_channels			= -1,	/* 1 to 16 */
 	.phy_type			= 1, 	/* 1- UTMI+ Phy */

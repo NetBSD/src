@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dwctwo.c,v 1.3 2015/06/07 06:07:49 matt Exp $	*/
+/*	$NetBSD: octeon_dwctwo.c,v 1.4 2015/07/22 10:32:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.3 2015/06/07 06:07:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.4 2015/07/22 10:32:16 skrll Exp $");
 
 #include "opt_octeon.h"
 #include "opt_usb.h"
@@ -193,7 +193,7 @@ octeon_dwc2_attach(device_t parent, device_t self, void *aux)
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_CN50XX:
 		/*
-		 * 2. Configure the reference clock, PHY, and HCLK: 
+		 * 2. Configure the reference clock, PHY, and HCLK:
 		 * a. Write USBN_CLK_CTL[POR] = 1 and
 		 *    USBN_CLK_CTL[HRST,PRST,HCLK_RST] = 0
 		 */

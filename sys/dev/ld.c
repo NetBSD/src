@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.83 2015/05/02 08:00:08 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.84 2015/07/22 10:32:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.83 2015/05/02 08:00:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.84 2015/07/22 10:32:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,12 +308,12 @@ static int
 ld_lastclose(device_t self)
 {
 	struct ld_softc *sc = device_private(self);
-		
+
 	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, 0) != 0)
 		aprint_error_dev(self, "unable to flush cache\n");
-	
+
 	return 0;
-}               
+}
 
 /* ARGSUSED */
 static int
@@ -516,7 +516,7 @@ static int
 ld_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 {
 	struct ld_softc *sc = device_private(dev);
-	
+
 	if (sc->sc_dump == NULL)
 		return (ENXIO);
 

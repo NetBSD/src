@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.66 2015/07/19 08:05:24 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.67 2015/07/22 10:32:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.66 2015/07/19 08:05:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.67 2015/07/22 10:32:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,12 +233,12 @@ dk_strategy(struct dk_softc *dksc, struct buf *bp)
 	/*
 	 * The transfer must be a whole number of blocks and the offset must
 	 * not be negative.
-	 */     
+	 */
 	if ((bp->b_bcount % secsize) != 0 || bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
 		biodone(bp);
 		return;
-	}       
+	}
 
 	/* If there is nothing to do, then we are done */
 	if (bp->b_bcount == 0) {
@@ -259,7 +259,7 @@ dk_strategy(struct dk_softc *dksc, struct buf *bp)
 		}
 	}
 
-	/*      
+	/*
 	 * Convert the block number to absolute and put it in terms
 	 * of the device's logical block size.
 	 */
@@ -470,7 +470,7 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 
 		return 0;
 	    }
-	
+
 	case DIOCSSTRATEGY:
 	    {
 		struct disk_strategy *dks = (void *)data;
