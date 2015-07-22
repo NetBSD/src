@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_dwctwo.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $	*/
+/*	$NetBSD: rockchip_dwctwo.c,v 1.3 2015/07/22 10:32:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.3 2015/07/22 10:32:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ static struct dwc2_core_params rkdwc2_params = {
 	.host_rx_fifo_size		= 520,	/* 520 DWORDs */
 	.host_nperio_tx_fifo_size	= 128,	/* 128 DWORDs */
 	.host_perio_tx_fifo_size	= 256,	/* 256 DWORDs */
-	.max_transfer_size		= 65535,/* 2047 to 65,535 */ 
+	.max_transfer_size		= 65535,/* 2047 to 65,535 */
 	.max_packet_count		= 511,  /* 15 to 511 */
 	.host_channels			= 8,	/* 1 to 16 */
 	.phy_type			= 1, 	/* 1- UTMI+ Phy */
@@ -129,7 +129,7 @@ rkdwc2_attach(device_t parent, device_t self, void *aux)
 	   IST_LEVEL, dwc2_intr, &sc->sc_dwc2);
 #if 0
 	   IST_EDGE, dwc2_intr, &sc->sc_dwc2);
-#endif 
+#endif
 
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
