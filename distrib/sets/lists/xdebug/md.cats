@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.5 2015/07/20 02:50:42 mrg Exp $
+# $NetBSD: md.cats,v 1.6 2015/07/22 16:37:33 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,obsolete
@@ -78,7 +78,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/neomagic_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/nv_drv.so.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1.debug	-unknown-		xorg,debug,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3virge_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/savage_drv.so.2.debug	-unknown-		xorg,debug
