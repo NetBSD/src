@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.344 2015/07/20 06:13:52 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.345 2015/07/22 16:56:03 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33407,4 +33407,23 @@ sys/arch/sparc64/sparc64/pmap.c			1.295, 1.295 via patch
 	Fix booting of sparc64 kernels with more than 4 MB combined
 	.data and .bss segment.
 	[martin, ticket #842]
+
+distrib/sets/lists/debug/ad.aarch64		patch
+distrib/sets/lists/debug/ad.arm			patch
+distrib/sets/lists/debug/ad.mips		patch
+distrib/sets/lists/debug/ad.powerpc		patch
+distrib/sets/lists/debug/md.amd64		patch
+distrib/sets/lists/debug/md.sparc64		patch
+distrib/sets/lists/debug/shl.mi			patch
+
+	Fix debug set lists after BIND update.
+	[skrll, ticket #883]
+
+sys/arch/amd64/conf/XEN3_DOM0			1.114
+sys/arch/amd64/conf/XEN3_DOMU			1.62
+sys/arch/i386/conf/XEN3_DOM0			1.96
+sys/arch/i386/conf/XEN3_DOMU			1.68
+
+	Uncoment options IPSEC in Xen kernels.
+	[bouyer, ticket #884]
 
