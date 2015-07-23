@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.859 2015/06/27 16:21:07 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.860 2015/07/23 05:44:26 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1263,7 +1263,7 @@ X11USRLIBDIR?=		${X11ROOTDIR}/lib${MLIBDIR:D/${MLIBDIR}}
 X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
 .for _lib in \
 	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
-	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xpm \
+	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xpresent Xpm \
 	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
 	fontenc xkbfile xkbui Xaw Xfontcache pciaccess xcb \
 	pthread-stubs
