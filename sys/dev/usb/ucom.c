@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.6 2015/06/06 14:40:14 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.7 2015/07/23 07:36:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.6 2015/06/06 14:40:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.7 2015/07/23 07:36:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.6 2015/06/06 14:40:14 skrll Exp $")
 #include <sys/poll.h>
 #include <sys/queue.h>
 #include <sys/kauth.h>
+#include <sys/sysctl.h>
 #include <sys/timepps.h>
 #include <sys/rndsource.h>
 
@@ -59,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.6 2015/06/06 14:40:14 skrll Exp $")
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
+#include <dev/usb/usbhist.h>
 
 #include <dev/usb/ucomvar.h>
 
@@ -68,13 +70,46 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.6 2015/06/06 14:40:14 skrll Exp $")
 
 #if NUCOM > 0
 
-#ifdef UCOM_DEBUG
-#define DPRINTFN(n, x)	if (ucomdebug > (n)) printf x
-int ucomdebug = 0;
+#ifdef USB_DEBUG
+#ifndef UCOM_DEBUG
+#define ucomdebug 0
 #else
-#define DPRINTFN(n, x)
-#endif
-#define DPRINTF(x) DPRINTFN(0, x)
+int ucomdebug = 0;
+
+SYSCTL_SETUP(sysctl_hw_ucom_setup, "sysctl hw.ucom setup")
+{
+        int err;
+        const struct sysctlnode *rnode;
+        const struct sysctlnode *cnode;
+
+        err = sysctl_createv(clog, 0, NULL, &rnode,
+            CTLFLAG_PERMANENT, CTLTYPE_NODE, "ucom",
+            SYSCTL_DESCR("ucom global controls"),
+            NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+
+        if (err)
+                goto fail;
+
+        /* control debugging printfs */
+        err = sysctl_createv(clog, 0, &rnode, &cnode,
+            CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+            "debug", SYSCTL_DESCR("Enable debugging output"),
+            NULL, 0, &ucomdebug, sizeof(ucomdebug), CTL_CREATE, CTL_EOL);
+        if (err)
+                goto fail;
+
+        return;
+fail:
+        aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
+}
+
+#endif /* UCOM_DEBUG */
+#endif /* USB_DEBUG */
+
+#define DPRINTF(FMT,A,B,C,D)    USBHIST_LOGN(ucomdebug,1,FMT,A,B,C,D)
+#define DPRINTFN(N,FMT,A,B,C,D) USBHIST_LOGN(ucomdebug,N,FMT,A,B,C,D)
+#define UCOMHIST_FUNC()         USBHIST_FUNC()
+#define UCOMHIST_CALLED(name)   USBHIST_CALLED(ucomdebug)
 
 #define	UCOMCALLUNIT_MASK	TTCALLUNIT_MASK
 #define	UCOMUNIT_MASK		TTUNIT_MASK
@@ -215,6 +250,8 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	struct ucom_attach_args *uca = aux;
 	struct tty *tp;
 
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
 	if (uca->info != NULL)
 		aprint_normal(": %s", uca->info);
 	aprint_normal("\n");
@@ -249,7 +286,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	tp->t_hwiflow = ucomhwiflow;
 	sc->sc_tty = tp;
 
-	DPRINTF(("ucom_attach: tty_attach %p\n", tp));
+	DPRINTF("tty_attach %p", tp, 0, 0, 0);
 	tty_attach(tp);
 
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
@@ -268,8 +305,10 @@ ucom_detach(device_t self, int flags)
 	int maj, mn;
 	int s, i;
 
-	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p, pipe=%d,%d\n",
-		 sc, flags, tp, sc->sc_bulkin_no, sc->sc_bulkout_no));
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
+	DPRINTF("sc=%p flags=%d tp=%p", sc, flags, tp, 0);
+	DPRINTF("... pipe=%d,%d",sc->sc_bulkin_no, sc->sc_bulkout_no, 0, 0);
 
 	sc->sc_dying = 1;
 	pmf_device_deregister(self);
@@ -301,7 +340,7 @@ ucom_detach(device_t self, int flags)
 
 	/* Nuke the vnodes for any open instances. */
 	mn = device_unit(self);
-	DPRINTF(("ucom_detach: maj=%d mn=%d\n", maj, mn));
+	DPRINTF("maj=%d mn=%d\n", maj, mn, 0, 0);
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | UCOMDIALOUT_MASK, mn | UCOMDIALOUT_MASK, VCHR);
 	vdevgone(maj, mn | UCOMCALLUNIT_MASK, mn | UCOMCALLUNIT_MASK, VCHR);
@@ -334,7 +373,9 @@ ucom_activate(device_t self, enum devact act)
 {
 	struct ucom_softc *sc = device_private(self);
 
-	DPRINTFN(5,("ucom_activate: %d\n", act));
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
+	DPRINTFN(5, "%d", act, 0, 0, 0);
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
@@ -350,7 +391,8 @@ ucom_shutdown(struct ucom_softc *sc)
 {
 	struct tty *tp = sc->sc_tty;
 
-	DPRINTF(("ucom_shutdown\n"));
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
@@ -372,6 +414,8 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s, i;
 	int error;
 
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
 	if (sc == NULL)
 		return ENXIO;
 
@@ -383,7 +427,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 
-	DPRINTF(("ucomopen: unit=%d, tp=%p\n", unit, tp));
+	DPRINTF("unit=%d, tp=%p\n", unit, tp, 0, 0);
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return EBUSY;
@@ -460,25 +504,23 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ucom_dtr(sc, 1);
 		ucom_rts(sc, 1);
 
-		DPRINTF(("ucomopen: open pipes in=%d out=%d\n",
-			 sc->sc_bulkin_no, sc->sc_bulkout_no));
+		DPRINTF("open pipes in=%d out=%d", sc->sc_bulkin_no,
+		    sc->sc_bulkout_no, 0, 0);
 
 		/* Open the bulk pipes */
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no,
 				     USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
 		if (err) {
-			DPRINTF(("%s: open bulk in error (addr %d), err=%s\n",
-				 device_xname(sc->sc_dev), sc->sc_bulkin_no,
-				 usbd_errstr(err)));
+			DPRINTF("open bulk in error (addr %d), err=%d",
+			    sc->sc_bulkin_no, err, 0, 0);
 			error = EIO;
 			goto fail_0;
 		}
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
 				     USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
 		if (err) {
-			DPRINTF(("%s: open bulk out error (addr %d), err=%s\n",
-				 device_xname(sc->sc_dev), sc->sc_bulkout_no,
-				 usbd_errstr(err)));
+			DPRINTF("open bulk out error (addr %d), err=%d",
+			    sc->sc_bulkout_no, err, 0, 0);
 			error = EIO;
 			goto fail_1;
 		}
@@ -599,7 +641,9 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tty *tp;
 	int s;
 
-	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(dev)));
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
+	DPRINTF("unit=%d", UCOMUNIT(dev), 0, 0, 0);
 
 	if (sc == NULL)
 		return 0;
@@ -640,6 +684,8 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
 	struct tty *tp;
 	int error;
+
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
 	if (sc == NULL || sc->sc_dying)
 		return EIO;
@@ -724,7 +770,9 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data,
 	int error;
 	int s;
 
-	DPRINTF(("ucomioctl: cmd=0x%08lx\n", cmd));
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
+	DPRINTF("cmd=0x%08lx", cmd, 0, 0, 0);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -743,7 +791,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data,
 
 	error = 0;
 
-	DPRINTF(("ucomioctl: our cmd=0x%08lx\n", cmd));
+	DPRINTF("our cmd=0x%08lx", cmd, 0, 0, 0);
 	s = spltty();
 
 	switch (cmd) {
@@ -875,7 +923,9 @@ XXX;
 static void
 ucom_break(struct ucom_softc *sc, int onoff)
 {
-	DPRINTF(("ucom_break: onoff=%d\n", onoff));
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
+	DPRINTF("onoff=%d", onoff, 0, 0, 0);
 
 	if (sc->sc_methods->ucom_set != NULL)
 		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
@@ -885,7 +935,9 @@ ucom_break(struct ucom_softc *sc, int onoff)
 static void
 ucom_dtr(struct ucom_softc *sc, int onoff)
 {
-	DPRINTF(("ucom_dtr: onoff=%d\n", onoff));
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
+	DPRINTF("onoff=%d", onoff, 0, 0, 0);
 
 	if (sc->sc_methods->ucom_set != NULL)
 		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
@@ -895,7 +947,9 @@ ucom_dtr(struct ucom_softc *sc, int onoff)
 static void
 ucom_rts(struct ucom_softc *sc, int onoff)
 {
-	DPRINTF(("ucom_rts: onoff=%d\n", onoff));
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
+	DPRINTF("onoff=%d", onoff, 0, 0, 0);
 
 	if (sc->sc_methods->ucom_set != NULL)
 		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
@@ -937,6 +991,8 @@ ucomparam(struct tty *tp, struct termios *t)
 	struct ucom_softc *sc = device_lookup_private(&ucom_cd,
 	    UCOMUNIT(tp->t_dev));
 	int error;
+
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
 	if (sc == NULL || sc->sc_dying)
 		return EIO;
@@ -984,7 +1040,7 @@ ucomparam(struct tty *tp, struct termios *t)
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
 	 * explicit request.
 	 */
-	DPRINTF(("ucomparam: l_modem\n"));
+	DPRINTF("l_modem", 0, 0, 0, 0);
 	(void) (*tp->t_linesw->l_modem)(tp, ISSET(sc->sc_msr, UMSR_DCD));
 
 #if 0
@@ -1261,12 +1317,14 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 	u_char *cp;
 	int s;
 
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
 	ub = SIMPLEQ_FIRST(&sc->sc_ibuff_empty);
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_empty, ub_link);
 
 	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
 	    sc->sc_dying) {
-		DPRINTF(("ucomreadcb: dying\n"));
+		DPRINTF("dying", 0, 0, 0, 0);
 		ub->ub_index = ub->ub_len = 0;
 		/* Send something to wake upper layer */
 		s = spltty();
@@ -1328,7 +1386,9 @@ ucom_cleanup(struct ucom_softc *sc)
 {
 	struct ucom_buffer *ub;
 
-	DPRINTF(("ucom_cleanup: closing pipes\n"));
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
+	DPRINTF("closing pipes", 0, 0, 0, 0);
 
 	ucom_shutdown(sc);
 	if (sc->sc_bulkin_pipe != NULL) {
