@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.99 2015/06/01 06:14:43 matt Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.100 2015/07/23 10:52:34 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.99 2015/06/01 06:14:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.100 2015/07/23 10:52:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1942,9 +1942,10 @@ out:
 
 		if (_bif != NULL) {
 			bridge_release_member(sc, bif);
-			if (_ifp != NULL)
+			if (_ifp != NULL) {
+				m->m_flags &= ~M_PROMISC;
 				ether_input(_ifp, m);
-			else
+			} else
 				m_freem(m);
 			return;
 		}
@@ -1989,10 +1990,10 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 	struct bridge_iflist *bif;
 	struct mbuf *mc;
 	struct ifnet *dst_if;
-	bool used, bmcast;
+	bool bmcast;
 	int s;
 
-	used = bmcast = m->m_flags & (M_BCAST|M_MCAST);
+	bmcast = m->m_flags & (M_BCAST|M_MCAST);
 
 	BRIDGE_PSZ_RENTER(s);
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
@@ -2002,8 +2003,6 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 		BRIDGE_PSZ_REXIT(s);
 
 		dst_if = bif->bif_ifp;
-		if (dst_if == src_if)
-			goto next;
 
 		if (bif->bif_flags & IFBIF_STP) {
 			switch (bif->bif_state) {
@@ -2019,28 +2018,33 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 		if ((dst_if->if_flags & IFF_RUNNING) == 0)
 			goto next;
 
-		if (!used && LIST_NEXT(bif, bif_next) == NULL) {
-			mc = m;
-			used = true;
-		} else {
+		if (dst_if != src_if) {
 			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (mc == NULL) {
 				sc->sc_if.if_oerrors++;
 				goto next;
 			}
+			bridge_enqueue(sc, dst_if, mc, 1);
 		}
 
-		bridge_enqueue(sc, dst_if, mc, 1);
+		if (bmcast) {
+			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+			if (mc == NULL) {
+				sc->sc_if.if_oerrors++;
+				goto next;
+			}
+
+			mc->m_pkthdr.rcvif = dst_if;
+			mc->m_flags &= ~M_PROMISC;
+			ether_input(dst_if, mc);
+		}
 next:
 		bridge_release_member(sc, bif);
 		BRIDGE_PSZ_RENTER(s);
 	}
 	BRIDGE_PSZ_REXIT(s);
 
-	if (bmcast)
-		ether_input(src_if, m);
-	else if (!used)
-		m_freem(m);
+	m_freem(m);
 }
 
 static int
