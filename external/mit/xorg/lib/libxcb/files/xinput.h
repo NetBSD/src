@@ -13,9 +13,6 @@
 #define __XINPUT_H
 
 #include "xcb.h"
-#include "xproto.h"
-#include "render.h"
-#include "shape.h"
 #include "xfixes.h"
 
 #ifdef __cplusplus
@@ -24,7 +21,7 @@ extern "C" {
 
 #define XCB_INPUT_MAJOR_VERSION 2
 #define XCB_INPUT_MINOR_VERSION 3
-  
+
 extern xcb_extension_t xcb_input_id;
 
 typedef uint32_t xcb_input_event_class_t;
@@ -1722,6 +1719,7 @@ typedef struct xcb_input_device_resolution_ctl_t {
     uint16_t len; /**<  */
     uint8_t  first_valuator; /**<  */
     uint8_t  num_valuators; /**<  */
+    uint8_t  pad0[2]; /**<  */
 } xcb_input_device_resolution_ctl_t;
 
 /**
@@ -1904,7 +1902,7 @@ typedef struct xcb_input_list_device_properties_reply_t {
 } xcb_input_list_device_properties_reply_t;
 
 typedef enum xcb_input_property_format_t {
-    XCB_INPUT_PROPERTY_FORMAT_8_BITS =  8,
+    XCB_INPUT_PROPERTY_FORMAT_8_BITS = 8,
     XCB_INPUT_PROPERTY_FORMAT_16_BITS = 16,
     XCB_INPUT_PROPERTY_FORMAT_32_BITS = 32
 } xcb_input_property_format_t;
@@ -2247,6 +2245,7 @@ typedef struct xcb_input_xi_change_hierarchy_request_t {
     uint8_t  minor_opcode; /**<  */
     uint16_t length; /**<  */
     uint8_t  num_changes; /**<  */
+    uint8_t  pad0[3]; /**<  */
 } xcb_input_xi_change_hierarchy_request_t;
 
 /** Opcode for xcb_input_xi_set_client_pointer. */
@@ -3768,16 +3767,6 @@ typedef struct xcb_input_class_error_t {
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_event_class_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_event_class_next
- ** 
- ** @param xcb_input_event_class_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_event_class_next (xcb_input_event_class_iterator_t *i  /**< */);
 
@@ -3790,16 +3779,6 @@ xcb_input_event_class_next (xcb_input_event_class_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_event_class_end
- ** 
- ** @param xcb_input_event_class_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_event_class_end (xcb_input_event_class_iterator_t i  /**< */);
 
@@ -3811,16 +3790,6 @@ xcb_input_event_class_end (xcb_input_event_class_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_key_code_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_key_code_next
- ** 
- ** @param xcb_input_key_code_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_key_code_next (xcb_input_key_code_iterator_t *i  /**< */);
 
@@ -3833,16 +3802,6 @@ xcb_input_key_code_next (xcb_input_key_code_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_key_code_end
- ** 
- ** @param xcb_input_key_code_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_key_code_end (xcb_input_key_code_iterator_t i  /**< */);
 
@@ -3854,16 +3813,6 @@ xcb_input_key_code_end (xcb_input_key_code_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_id_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_id_next
- ** 
- ** @param xcb_input_device_id_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_id_next (xcb_input_device_id_iterator_t *i  /**< */);
 
@@ -3876,16 +3825,6 @@ xcb_input_device_id_next (xcb_input_device_id_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_id_end
- ** 
- ** @param xcb_input_device_id_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_id_end (xcb_input_device_id_iterator_t i  /**< */);
 
@@ -3897,16 +3836,6 @@ xcb_input_device_id_end (xcb_input_device_id_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_fp1616_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_fp1616_next
- ** 
- ** @param xcb_input_fp1616_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_fp1616_next (xcb_input_fp1616_iterator_t *i  /**< */);
 
@@ -3919,16 +3848,6 @@ xcb_input_fp1616_next (xcb_input_fp1616_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_fp1616_end
- ** 
- ** @param xcb_input_fp1616_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_fp1616_end (xcb_input_fp1616_iterator_t i  /**< */);
 
@@ -3940,16 +3859,6 @@ xcb_input_fp1616_end (xcb_input_fp1616_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_fp3232_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_fp3232_next
- ** 
- ** @param xcb_input_fp3232_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_fp3232_next (xcb_input_fp3232_iterator_t *i  /**< */);
 
@@ -3962,16 +3871,6 @@ xcb_input_fp3232_next (xcb_input_fp3232_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_fp3232_end
- ** 
- ** @param xcb_input_fp3232_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_fp3232_end (xcb_input_fp3232_iterator_t i  /**< */);
 
@@ -3984,20 +3883,8 @@ xcb_input_get_extension_version_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_extension_version_cookie_t xcb_input_get_extension_version
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          name_len
- ** @param const char       *name
- ** @returns xcb_input_get_extension_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_extension_version_cookie_t
 xcb_input_get_extension_version (xcb_connection_t *c  /**< */,
                                  uint16_t          name_len  /**< */,
@@ -4009,23 +3896,11 @@ xcb_input_get_extension_version (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_extension_version_cookie_t xcb_input_get_extension_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          name_len
- ** @param const char       *name
- ** @returns xcb_input_get_extension_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_extension_version_cookie_t
 xcb_input_get_extension_version_unchecked (xcb_connection_t *c  /**< */,
                                            uint16_t          name_len  /**< */,
@@ -4038,25 +3913,13 @@ xcb_input_get_extension_version_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_extension_version_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_extension_version_reply_t * xcb_input_get_extension_version_reply
- ** 
- ** @param xcb_connection_t                          *c
- ** @param xcb_input_get_extension_version_cookie_t   cookie
- ** @param xcb_generic_error_t                      **e
- ** @returns xcb_input_get_extension_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_extension_version_reply_t *
 xcb_input_get_extension_version_reply (xcb_connection_t                          *c  /**< */,
                                        xcb_input_get_extension_version_cookie_t   cookie  /**< */,
@@ -4070,16 +3933,6 @@ xcb_input_get_extension_version_reply (xcb_connection_t                         
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_info_next
- ** 
- ** @param xcb_input_device_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_info_next (xcb_input_device_info_iterator_t *i  /**< */);
 
@@ -4092,16 +3945,6 @@ xcb_input_device_info_next (xcb_input_device_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_info_end
- ** 
- ** @param xcb_input_device_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_info_end (xcb_input_device_info_iterator_t i  /**< */);
 
@@ -4113,16 +3956,6 @@ xcb_input_device_info_end (xcb_input_device_info_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_key_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_key_info_next
- ** 
- ** @param xcb_input_key_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_key_info_next (xcb_input_key_info_iterator_t *i  /**< */);
 
@@ -4135,16 +3968,6 @@ xcb_input_key_info_next (xcb_input_key_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_key_info_end
- ** 
- ** @param xcb_input_key_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_key_info_end (xcb_input_key_info_iterator_t i  /**< */);
 
@@ -4156,16 +3979,6 @@ xcb_input_key_info_end (xcb_input_key_info_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_button_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_button_info_next
- ** 
- ** @param xcb_input_button_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_button_info_next (xcb_input_button_info_iterator_t *i  /**< */);
 
@@ -4178,16 +3991,6 @@ xcb_input_button_info_next (xcb_input_button_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_button_info_end
- ** 
- ** @param xcb_input_button_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_button_info_end (xcb_input_button_info_iterator_t i  /**< */);
 
@@ -4199,16 +4002,6 @@ xcb_input_button_info_end (xcb_input_button_info_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_axis_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_axis_info_next
- ** 
- ** @param xcb_input_axis_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_axis_info_next (xcb_input_axis_info_iterator_t *i  /**< */);
 
@@ -4221,58 +4014,18 @@ xcb_input_axis_info_next (xcb_input_axis_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_axis_info_end
- ** 
- ** @param xcb_input_axis_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_axis_info_end (xcb_input_axis_info_iterator_t i  /**< */);
 
 int
 xcb_input_valuator_info_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_axis_info_t * xcb_input_valuator_info_axes
- ** 
- ** @param const xcb_input_valuator_info_t *R
- ** @returns xcb_input_axis_info_t *
- **
- *****************************************************************************/
- 
 xcb_input_axis_info_t *
 xcb_input_valuator_info_axes (const xcb_input_valuator_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_valuator_info_axes_length
- ** 
- ** @param const xcb_input_valuator_info_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_valuator_info_axes_length (const xcb_input_valuator_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_axis_info_iterator_t xcb_input_valuator_info_axes_iterator
- ** 
- ** @param const xcb_input_valuator_info_t *R
- ** @returns xcb_input_axis_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_input_axis_info_iterator_t
 xcb_input_valuator_info_axes_iterator (const xcb_input_valuator_info_t *R  /**< */);
 
@@ -4284,16 +4037,6 @@ xcb_input_valuator_info_axes_iterator (const xcb_input_valuator_info_t *R  /**< 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_valuator_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_valuator_info_next
- ** 
- ** @param xcb_input_valuator_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_valuator_info_next (xcb_input_valuator_info_iterator_t *i  /**< */);
 
@@ -4306,16 +4049,6 @@ xcb_input_valuator_info_next (xcb_input_valuator_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_valuator_info_end
- ** 
- ** @param xcb_input_valuator_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_valuator_info_end (xcb_input_valuator_info_iterator_t i  /**< */);
 
@@ -4327,16 +4060,6 @@ xcb_input_valuator_info_end (xcb_input_valuator_info_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_input_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_input_info_next
- ** 
- ** @param xcb_input_input_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_input_info_next (xcb_input_input_info_iterator_t *i  /**< */);
 
@@ -4349,58 +4072,18 @@ xcb_input_input_info_next (xcb_input_input_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_input_info_end
- ** 
- ** @param xcb_input_input_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_input_info_end (xcb_input_input_info_iterator_t i  /**< */);
 
 int
 xcb_input_device_name_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_input_device_name_string
- ** 
- ** @param const xcb_input_device_name_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_input_device_name_string (const xcb_input_device_name_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_device_name_string_length
- ** 
- ** @param const xcb_input_device_name_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_device_name_string_length (const xcb_input_device_name_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_name_string_end
- ** 
- ** @param const xcb_input_device_name_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_name_string_end (const xcb_input_device_name_t *R  /**< */);
 
@@ -4412,16 +4095,6 @@ xcb_input_device_name_string_end (const xcb_input_device_name_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_name_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_name_next
- ** 
- ** @param xcb_input_device_name_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_name_next (xcb_input_device_name_iterator_t *i  /**< */);
 
@@ -4434,16 +4107,6 @@ xcb_input_device_name_next (xcb_input_device_name_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_name_end
- ** 
- ** @param xcb_input_device_name_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_name_end (xcb_input_device_name_iterator_t i  /**< */);
 
@@ -4456,18 +4119,8 @@ xcb_input_list_input_devices_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_list_input_devices_cookie_t xcb_input_list_input_devices
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_input_list_input_devices_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_list_input_devices_cookie_t
 xcb_input_list_input_devices (xcb_connection_t *c  /**< */);
 
@@ -4477,60 +4130,20 @@ xcb_input_list_input_devices (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_list_input_devices_cookie_t xcb_input_list_input_devices_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_input_list_input_devices_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_list_input_devices_cookie_t
 xcb_input_list_input_devices_unchecked (xcb_connection_t *c  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_device_info_t * xcb_input_list_input_devices_devices
- ** 
- ** @param const xcb_input_list_input_devices_reply_t *R
- ** @returns xcb_input_device_info_t *
- **
- *****************************************************************************/
- 
 xcb_input_device_info_t *
 xcb_input_list_input_devices_devices (const xcb_input_list_input_devices_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_list_input_devices_devices_length
- ** 
- ** @param const xcb_input_list_input_devices_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_list_input_devices_devices_length (const xcb_input_list_input_devices_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_device_info_iterator_t xcb_input_list_input_devices_devices_iterator
- ** 
- ** @param const xcb_input_list_input_devices_reply_t *R
- ** @returns xcb_input_device_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_input_device_info_iterator_t
 xcb_input_list_input_devices_devices_iterator (const xcb_input_list_input_devices_reply_t *R  /**< */);
 
@@ -4541,25 +4154,13 @@ xcb_input_list_input_devices_devices_iterator (const xcb_input_list_input_device
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_list_input_devices_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_list_input_devices_reply_t * xcb_input_list_input_devices_reply
- ** 
- ** @param xcb_connection_t                       *c
- ** @param xcb_input_list_input_devices_cookie_t   cookie
- ** @param xcb_generic_error_t                   **e
- ** @returns xcb_input_list_input_devices_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_list_input_devices_reply_t *
 xcb_input_list_input_devices_reply (xcb_connection_t                       *c  /**< */,
                                     xcb_input_list_input_devices_cookie_t   cookie  /**< */,
@@ -4573,16 +4174,6 @@ xcb_input_list_input_devices_reply (xcb_connection_t                       *c  /
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_input_class_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_input_class_info_next
- ** 
- ** @param xcb_input_input_class_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_input_class_info_next (xcb_input_input_class_info_iterator_t *i  /**< */);
 
@@ -4595,16 +4186,6 @@ xcb_input_input_class_info_next (xcb_input_input_class_info_iterator_t *i  /**< 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_input_class_info_end
- ** 
- ** @param xcb_input_input_class_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_input_class_info_end (xcb_input_input_class_info_iterator_t i  /**< */);
 
@@ -4617,19 +4198,8 @@ xcb_input_open_device_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_open_device_cookie_t xcb_input_open_device
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_open_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_open_device_cookie_t
 xcb_input_open_device (xcb_connection_t *c  /**< */,
                        uint8_t           device_id  /**< */);
@@ -4640,62 +4210,21 @@ xcb_input_open_device (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_open_device_cookie_t xcb_input_open_device_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_open_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_open_device_cookie_t
 xcb_input_open_device_unchecked (xcb_connection_t *c  /**< */,
                                  uint8_t           device_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_input_class_info_t * xcb_input_open_device_class_info
- ** 
- ** @param const xcb_input_open_device_reply_t *R
- ** @returns xcb_input_input_class_info_t *
- **
- *****************************************************************************/
- 
 xcb_input_input_class_info_t *
 xcb_input_open_device_class_info (const xcb_input_open_device_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_open_device_class_info_length
- ** 
- ** @param const xcb_input_open_device_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_open_device_class_info_length (const xcb_input_open_device_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_input_class_info_iterator_t xcb_input_open_device_class_info_iterator
- ** 
- ** @param const xcb_input_open_device_reply_t *R
- ** @returns xcb_input_input_class_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_input_input_class_info_iterator_t
 xcb_input_open_device_class_info_iterator (const xcb_input_open_device_reply_t *R  /**< */);
 
@@ -4706,25 +4235,13 @@ xcb_input_open_device_class_info_iterator (const xcb_input_open_device_reply_t *
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_open_device_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_open_device_reply_t * xcb_input_open_device_reply
- ** 
- ** @param xcb_connection_t                *c
- ** @param xcb_input_open_device_cookie_t   cookie
- ** @param xcb_generic_error_t            **e
- ** @returns xcb_input_open_device_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_open_device_reply_t *
 xcb_input_open_device_reply (xcb_connection_t                *c  /**< */,
                              xcb_input_open_device_cookie_t   cookie  /**< */,
@@ -4736,22 +4253,11 @@ xcb_input_open_device_reply (xcb_connection_t                *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_close_device_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_close_device_checked (xcb_connection_t *c  /**< */,
                                 uint8_t           device_id  /**< */);
@@ -4762,19 +4268,8 @@ xcb_input_close_device_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_close_device
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_close_device (xcb_connection_t *c  /**< */,
                         uint8_t           device_id  /**< */);
@@ -4785,20 +4280,8 @@ xcb_input_close_device (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_mode_cookie_t xcb_input_set_device_mode
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @param uint8_t           mode
- ** @returns xcb_input_set_device_mode_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_set_device_mode_cookie_t
 xcb_input_set_device_mode (xcb_connection_t *c  /**< */,
                            uint8_t           device_id  /**< */,
@@ -4810,23 +4293,11 @@ xcb_input_set_device_mode (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_mode_cookie_t xcb_input_set_device_mode_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @param uint8_t           mode
- ** @returns xcb_input_set_device_mode_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_set_device_mode_cookie_t
 xcb_input_set_device_mode_unchecked (xcb_connection_t *c  /**< */,
                                      uint8_t           device_id  /**< */,
@@ -4839,25 +4310,13 @@ xcb_input_set_device_mode_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_set_device_mode_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_mode_reply_t * xcb_input_set_device_mode_reply
- ** 
- ** @param xcb_connection_t                    *c
- ** @param xcb_input_set_device_mode_cookie_t   cookie
- ** @param xcb_generic_error_t                **e
- ** @returns xcb_input_set_device_mode_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_set_device_mode_reply_t *
 xcb_input_set_device_mode_reply (xcb_connection_t                    *c  /**< */,
                                  xcb_input_set_device_mode_cookie_t   cookie  /**< */,
@@ -4872,24 +4331,11 @@ xcb_input_select_extension_event_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_select_extension_event_checked
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   window
- ** @param uint16_t                       num_classes
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_select_extension_event_checked (xcb_connection_t              *c  /**< */,
                                           xcb_window_t                   window  /**< */,
@@ -4902,21 +4348,8 @@ xcb_input_select_extension_event_checked (xcb_connection_t              *c  /**<
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_select_extension_event
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   window
- ** @param uint16_t                       num_classes
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_select_extension_event (xcb_connection_t              *c  /**< */,
                                   xcb_window_t                   window  /**< */,
@@ -4932,19 +4365,8 @@ xcb_input_get_selected_extension_events_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_selected_extension_events_cookie_t xcb_input_get_selected_extension_events
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_input_get_selected_extension_events_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_selected_extension_events_cookie_t
 xcb_input_get_selected_extension_events (xcb_connection_t *c  /**< */,
                                          xcb_window_t      window  /**< */);
@@ -4955,101 +4377,30 @@ xcb_input_get_selected_extension_events (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_selected_extension_events_cookie_t xcb_input_get_selected_extension_events_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_input_get_selected_extension_events_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_selected_extension_events_cookie_t
 xcb_input_get_selected_extension_events_unchecked (xcb_connection_t *c  /**< */,
                                                    xcb_window_t      window  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_event_class_t * xcb_input_get_selected_extension_events_this_classes
- ** 
- ** @param const xcb_input_get_selected_extension_events_reply_t *R
- ** @returns xcb_input_event_class_t *
- **
- *****************************************************************************/
- 
 xcb_input_event_class_t *
 xcb_input_get_selected_extension_events_this_classes (const xcb_input_get_selected_extension_events_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_get_selected_extension_events_this_classes_length
- ** 
- ** @param const xcb_input_get_selected_extension_events_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_get_selected_extension_events_this_classes_length (const xcb_input_get_selected_extension_events_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_get_selected_extension_events_this_classes_end
- ** 
- ** @param const xcb_input_get_selected_extension_events_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_get_selected_extension_events_this_classes_end (const xcb_input_get_selected_extension_events_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_event_class_t * xcb_input_get_selected_extension_events_all_classes
- ** 
- ** @param const xcb_input_get_selected_extension_events_reply_t *R
- ** @returns xcb_input_event_class_t *
- **
- *****************************************************************************/
- 
 xcb_input_event_class_t *
 xcb_input_get_selected_extension_events_all_classes (const xcb_input_get_selected_extension_events_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_get_selected_extension_events_all_classes_length
- ** 
- ** @param const xcb_input_get_selected_extension_events_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_get_selected_extension_events_all_classes_length (const xcb_input_get_selected_extension_events_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_get_selected_extension_events_all_classes_end
- ** 
- ** @param const xcb_input_get_selected_extension_events_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_get_selected_extension_events_all_classes_end (const xcb_input_get_selected_extension_events_reply_t *R  /**< */);
 
@@ -5060,25 +4411,13 @@ xcb_input_get_selected_extension_events_all_classes_end (const xcb_input_get_sel
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_selected_extension_events_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_selected_extension_events_reply_t * xcb_input_get_selected_extension_events_reply
- ** 
- ** @param xcb_connection_t                                  *c
- ** @param xcb_input_get_selected_extension_events_cookie_t   cookie
- ** @param xcb_generic_error_t                              **e
- ** @returns xcb_input_get_selected_extension_events_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_selected_extension_events_reply_t *
 xcb_input_get_selected_extension_events_reply (xcb_connection_t                                  *c  /**< */,
                                                xcb_input_get_selected_extension_events_cookie_t   cookie  /**< */,
@@ -5093,25 +4432,11 @@ xcb_input_change_device_dont_propagate_list_sizeof (const void  *_buffer  /**< *
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_change_device_dont_propagate_list_checked
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   window
- ** @param uint16_t                       num_classes
- ** @param uint8_t                        mode
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_change_device_dont_propagate_list_checked (xcb_connection_t              *c  /**< */,
                                                      xcb_window_t                   window  /**< */,
@@ -5125,22 +4450,8 @@ xcb_input_change_device_dont_propagate_list_checked (xcb_connection_t           
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_change_device_dont_propagate_list
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   window
- ** @param uint16_t                       num_classes
- ** @param uint8_t                        mode
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_change_device_dont_propagate_list (xcb_connection_t              *c  /**< */,
                                              xcb_window_t                   window  /**< */,
@@ -5157,19 +4468,8 @@ xcb_input_get_device_dont_propagate_list_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_dont_propagate_list_cookie_t xcb_input_get_device_dont_propagate_list
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_input_get_device_dont_propagate_list_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_dont_propagate_list_cookie_t
 xcb_input_get_device_dont_propagate_list (xcb_connection_t *c  /**< */,
                                           xcb_window_t      window  /**< */);
@@ -5180,62 +4480,21 @@ xcb_input_get_device_dont_propagate_list (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_dont_propagate_list_cookie_t xcb_input_get_device_dont_propagate_list_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_input_get_device_dont_propagate_list_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_dont_propagate_list_cookie_t
 xcb_input_get_device_dont_propagate_list_unchecked (xcb_connection_t *c  /**< */,
                                                     xcb_window_t      window  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_event_class_t * xcb_input_get_device_dont_propagate_list_classes
- ** 
- ** @param const xcb_input_get_device_dont_propagate_list_reply_t *R
- ** @returns xcb_input_event_class_t *
- **
- *****************************************************************************/
- 
 xcb_input_event_class_t *
 xcb_input_get_device_dont_propagate_list_classes (const xcb_input_get_device_dont_propagate_list_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_get_device_dont_propagate_list_classes_length
- ** 
- ** @param const xcb_input_get_device_dont_propagate_list_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_get_device_dont_propagate_list_classes_length (const xcb_input_get_device_dont_propagate_list_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_get_device_dont_propagate_list_classes_end
- ** 
- ** @param const xcb_input_get_device_dont_propagate_list_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_get_device_dont_propagate_list_classes_end (const xcb_input_get_device_dont_propagate_list_reply_t *R  /**< */);
 
@@ -5246,25 +4505,13 @@ xcb_input_get_device_dont_propagate_list_classes_end (const xcb_input_get_device
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_device_dont_propagate_list_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_dont_propagate_list_reply_t * xcb_input_get_device_dont_propagate_list_reply
- ** 
- ** @param xcb_connection_t                                   *c
- ** @param xcb_input_get_device_dont_propagate_list_cookie_t   cookie
- ** @param xcb_generic_error_t                               **e
- ** @returns xcb_input_get_device_dont_propagate_list_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_device_dont_propagate_list_reply_t *
 xcb_input_get_device_dont_propagate_list_reply (xcb_connection_t                                   *c  /**< */,
                                                 xcb_input_get_device_dont_propagate_list_cookie_t   cookie  /**< */,
@@ -5278,16 +4525,6 @@ xcb_input_get_device_dont_propagate_list_reply (xcb_connection_t                
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_time_coord_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_time_coord_next
- ** 
- ** @param xcb_input_device_time_coord_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_time_coord_next (xcb_input_device_time_coord_iterator_t *i  /**< */);
 
@@ -5300,16 +4537,6 @@ xcb_input_device_time_coord_next (xcb_input_device_time_coord_iterator_t *i  /**
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_time_coord_end
- ** 
- ** @param xcb_input_device_time_coord_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_time_coord_end (xcb_input_device_time_coord_iterator_t i  /**< */);
 
@@ -5319,21 +4546,8 @@ xcb_input_device_time_coord_end (xcb_input_device_time_coord_iterator_t i  /**< 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_motion_events_cookie_t xcb_input_get_device_motion_events
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_timestamp_t   start
- ** @param xcb_timestamp_t   stop
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_device_motion_events_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_motion_events_cookie_t
 xcb_input_get_device_motion_events (xcb_connection_t *c  /**< */,
                                     xcb_timestamp_t   start  /**< */,
@@ -5346,24 +4560,11 @@ xcb_input_get_device_motion_events (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_motion_events_cookie_t xcb_input_get_device_motion_events_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_timestamp_t   start
- ** @param xcb_timestamp_t   stop
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_device_motion_events_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_motion_events_cookie_t
 xcb_input_get_device_motion_events_unchecked (xcb_connection_t *c  /**< */,
                                               xcb_timestamp_t   start  /**< */,
@@ -5377,25 +4578,13 @@ xcb_input_get_device_motion_events_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_device_motion_events_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_motion_events_reply_t * xcb_input_get_device_motion_events_reply
- ** 
- ** @param xcb_connection_t                             *c
- ** @param xcb_input_get_device_motion_events_cookie_t   cookie
- ** @param xcb_generic_error_t                         **e
- ** @returns xcb_input_get_device_motion_events_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_device_motion_events_reply_t *
 xcb_input_get_device_motion_events_reply (xcb_connection_t                             *c  /**< */,
                                           xcb_input_get_device_motion_events_cookie_t   cookie  /**< */,
@@ -5407,19 +4596,8 @@ xcb_input_get_device_motion_events_reply (xcb_connection_t                      
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_change_keyboard_device_cookie_t xcb_input_change_keyboard_device
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_change_keyboard_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_change_keyboard_device_cookie_t
 xcb_input_change_keyboard_device (xcb_connection_t *c  /**< */,
                                   uint8_t           device_id  /**< */);
@@ -5430,22 +4608,11 @@ xcb_input_change_keyboard_device (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_change_keyboard_device_cookie_t xcb_input_change_keyboard_device_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_change_keyboard_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_change_keyboard_device_cookie_t
 xcb_input_change_keyboard_device_unchecked (xcb_connection_t *c  /**< */,
                                             uint8_t           device_id  /**< */);
@@ -5457,25 +4624,13 @@ xcb_input_change_keyboard_device_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_change_keyboard_device_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_change_keyboard_device_reply_t * xcb_input_change_keyboard_device_reply
- ** 
- ** @param xcb_connection_t                           *c
- ** @param xcb_input_change_keyboard_device_cookie_t   cookie
- ** @param xcb_generic_error_t                       **e
- ** @returns xcb_input_change_keyboard_device_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_change_keyboard_device_reply_t *
 xcb_input_change_keyboard_device_reply (xcb_connection_t                           *c  /**< */,
                                         xcb_input_change_keyboard_device_cookie_t   cookie  /**< */,
@@ -5487,21 +4642,8 @@ xcb_input_change_keyboard_device_reply (xcb_connection_t                        
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_change_pointer_device_cookie_t xcb_input_change_pointer_device
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           x_axis
- ** @param uint8_t           y_axis
- ** @param uint8_t           device_id
- ** @returns xcb_input_change_pointer_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_change_pointer_device_cookie_t
 xcb_input_change_pointer_device (xcb_connection_t *c  /**< */,
                                  uint8_t           x_axis  /**< */,
@@ -5514,24 +4656,11 @@ xcb_input_change_pointer_device (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_change_pointer_device_cookie_t xcb_input_change_pointer_device_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           x_axis
- ** @param uint8_t           y_axis
- ** @param uint8_t           device_id
- ** @returns xcb_input_change_pointer_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_change_pointer_device_cookie_t
 xcb_input_change_pointer_device_unchecked (xcb_connection_t *c  /**< */,
                                            uint8_t           x_axis  /**< */,
@@ -5545,25 +4674,13 @@ xcb_input_change_pointer_device_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_change_pointer_device_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_change_pointer_device_reply_t * xcb_input_change_pointer_device_reply
- ** 
- ** @param xcb_connection_t                          *c
- ** @param xcb_input_change_pointer_device_cookie_t   cookie
- ** @param xcb_generic_error_t                      **e
- ** @returns xcb_input_change_pointer_device_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_change_pointer_device_reply_t *
 xcb_input_change_pointer_device_reply (xcb_connection_t                          *c  /**< */,
                                        xcb_input_change_pointer_device_cookie_t   cookie  /**< */,
@@ -5578,26 +4695,8 @@ xcb_input_grab_device_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_grab_device_cookie_t xcb_input_grab_device
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   grab_window
- ** @param xcb_timestamp_t                time
- ** @param uint16_t                       num_classes
- ** @param uint8_t                        this_device_mode
- ** @param uint8_t                        other_device_mode
- ** @param uint8_t                        owner_events
- ** @param uint8_t                        device_id
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_input_grab_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_grab_device_cookie_t
 xcb_input_grab_device (xcb_connection_t              *c  /**< */,
                        xcb_window_t                   grab_window  /**< */,
@@ -5615,29 +4714,11 @@ xcb_input_grab_device (xcb_connection_t              *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_grab_device_cookie_t xcb_input_grab_device_unchecked
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   grab_window
- ** @param xcb_timestamp_t                time
- ** @param uint16_t                       num_classes
- ** @param uint8_t                        this_device_mode
- ** @param uint8_t                        other_device_mode
- ** @param uint8_t                        owner_events
- ** @param uint8_t                        device_id
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_input_grab_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_grab_device_cookie_t
 xcb_input_grab_device_unchecked (xcb_connection_t              *c  /**< */,
                                  xcb_window_t                   grab_window  /**< */,
@@ -5656,25 +4737,13 @@ xcb_input_grab_device_unchecked (xcb_connection_t              *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_grab_device_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_grab_device_reply_t * xcb_input_grab_device_reply
- ** 
- ** @param xcb_connection_t                *c
- ** @param xcb_input_grab_device_cookie_t   cookie
- ** @param xcb_generic_error_t            **e
- ** @returns xcb_input_grab_device_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_grab_device_reply_t *
 xcb_input_grab_device_reply (xcb_connection_t                *c  /**< */,
                              xcb_input_grab_device_cookie_t   cookie  /**< */,
@@ -5686,23 +4755,11 @@ xcb_input_grab_device_reply (xcb_connection_t                *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_ungrab_device_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_timestamp_t   time
- ** @param uint8_t           device_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_ungrab_device_checked (xcb_connection_t *c  /**< */,
                                  xcb_timestamp_t   time  /**< */,
@@ -5714,20 +4771,8 @@ xcb_input_ungrab_device_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_ungrab_device
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_timestamp_t   time
- ** @param uint8_t           device_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_ungrab_device (xcb_connection_t *c  /**< */,
                          xcb_timestamp_t   time  /**< */,
@@ -5742,31 +4787,11 @@ xcb_input_grab_device_key_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_grab_device_key_checked
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   grab_window
- ** @param uint16_t                       num_classes
- ** @param uint16_t                       modifiers
- ** @param uint8_t                        modifier_device
- ** @param uint8_t                        grabbed_device
- ** @param uint8_t                        key
- ** @param uint8_t                        this_device_mode
- ** @param uint8_t                        other_device_mode
- ** @param uint8_t                        owner_events
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_grab_device_key_checked (xcb_connection_t              *c  /**< */,
                                    xcb_window_t                   grab_window  /**< */,
@@ -5786,28 +4811,8 @@ xcb_input_grab_device_key_checked (xcb_connection_t              *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_grab_device_key
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   grab_window
- ** @param uint16_t                       num_classes
- ** @param uint16_t                       modifiers
- ** @param uint8_t                        modifier_device
- ** @param uint8_t                        grabbed_device
- ** @param uint8_t                        key
- ** @param uint8_t                        this_device_mode
- ** @param uint8_t                        other_device_mode
- ** @param uint8_t                        owner_events
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_grab_device_key (xcb_connection_t              *c  /**< */,
                            xcb_window_t                   grab_window  /**< */,
@@ -5827,26 +4832,11 @@ xcb_input_grab_device_key (xcb_connection_t              *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_ungrab_device_key_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      grabWindow
- ** @param uint16_t          modifiers
- ** @param uint8_t           modifier_device
- ** @param uint8_t           key
- ** @param uint8_t           grabbed_device
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_ungrab_device_key_checked (xcb_connection_t *c  /**< */,
                                      xcb_window_t      grabWindow  /**< */,
@@ -5861,23 +4851,8 @@ xcb_input_ungrab_device_key_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_ungrab_device_key
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      grabWindow
- ** @param uint16_t          modifiers
- ** @param uint8_t           modifier_device
- ** @param uint8_t           key
- ** @param uint8_t           grabbed_device
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_ungrab_device_key (xcb_connection_t *c  /**< */,
                              xcb_window_t      grabWindow  /**< */,
@@ -5895,31 +4870,11 @@ xcb_input_grab_device_button_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_grab_device_button_checked
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   grab_window
- ** @param uint8_t                        grabbed_device
- ** @param uint8_t                        modifier_device
- ** @param uint16_t                       num_classes
- ** @param uint16_t                       modifiers
- ** @param uint8_t                        this_device_mode
- ** @param uint8_t                        other_device_mode
- ** @param uint8_t                        button
- ** @param uint8_t                        owner_events
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_grab_device_button_checked (xcb_connection_t              *c  /**< */,
                                       xcb_window_t                   grab_window  /**< */,
@@ -5939,28 +4894,8 @@ xcb_input_grab_device_button_checked (xcb_connection_t              *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_grab_device_button
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   grab_window
- ** @param uint8_t                        grabbed_device
- ** @param uint8_t                        modifier_device
- ** @param uint16_t                       num_classes
- ** @param uint16_t                       modifiers
- ** @param uint8_t                        this_device_mode
- ** @param uint8_t                        other_device_mode
- ** @param uint8_t                        button
- ** @param uint8_t                        owner_events
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_grab_device_button (xcb_connection_t              *c  /**< */,
                               xcb_window_t                   grab_window  /**< */,
@@ -5980,26 +4915,11 @@ xcb_input_grab_device_button (xcb_connection_t              *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_ungrab_device_button_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      grab_window
- ** @param uint16_t          modifiers
- ** @param uint8_t           modifier_device
- ** @param uint8_t           button
- ** @param uint8_t           grabbed_device
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_ungrab_device_button_checked (xcb_connection_t *c  /**< */,
                                         xcb_window_t      grab_window  /**< */,
@@ -6014,23 +4934,8 @@ xcb_input_ungrab_device_button_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_ungrab_device_button
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      grab_window
- ** @param uint16_t          modifiers
- ** @param uint8_t           modifier_device
- ** @param uint8_t           button
- ** @param uint8_t           grabbed_device
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_ungrab_device_button (xcb_connection_t *c  /**< */,
                                 xcb_window_t      grab_window  /**< */,
@@ -6045,24 +4950,11 @@ xcb_input_ungrab_device_button (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_allow_device_events_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_timestamp_t   time
- ** @param uint8_t           mode
- ** @param uint8_t           device_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_allow_device_events_checked (xcb_connection_t *c  /**< */,
                                        xcb_timestamp_t   time  /**< */,
@@ -6075,21 +4967,8 @@ xcb_input_allow_device_events_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_allow_device_events
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_timestamp_t   time
- ** @param uint8_t           mode
- ** @param uint8_t           device_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_allow_device_events (xcb_connection_t *c  /**< */,
                                xcb_timestamp_t   time  /**< */,
@@ -6102,19 +4981,8 @@ xcb_input_allow_device_events (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_focus_cookie_t xcb_input_get_device_focus
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_device_focus_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_focus_cookie_t
 xcb_input_get_device_focus (xcb_connection_t *c  /**< */,
                             uint8_t           device_id  /**< */);
@@ -6125,22 +4993,11 @@ xcb_input_get_device_focus (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_focus_cookie_t xcb_input_get_device_focus_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_device_focus_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_focus_cookie_t
 xcb_input_get_device_focus_unchecked (xcb_connection_t *c  /**< */,
                                       uint8_t           device_id  /**< */);
@@ -6152,25 +5009,13 @@ xcb_input_get_device_focus_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_device_focus_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_focus_reply_t * xcb_input_get_device_focus_reply
- ** 
- ** @param xcb_connection_t                     *c
- ** @param xcb_input_get_device_focus_cookie_t   cookie
- ** @param xcb_generic_error_t                 **e
- ** @returns xcb_input_get_device_focus_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_device_focus_reply_t *
 xcb_input_get_device_focus_reply (xcb_connection_t                     *c  /**< */,
                                   xcb_input_get_device_focus_cookie_t   cookie  /**< */,
@@ -6182,25 +5027,11 @@ xcb_input_get_device_focus_reply (xcb_connection_t                     *c  /**< 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_set_device_focus_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      focus
- ** @param xcb_timestamp_t   time
- ** @param uint8_t           revert_to
- ** @param uint8_t           device_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_set_device_focus_checked (xcb_connection_t *c  /**< */,
                                     xcb_window_t      focus  /**< */,
@@ -6214,22 +5045,8 @@ xcb_input_set_device_focus_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_set_device_focus
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      focus
- ** @param xcb_timestamp_t   time
- ** @param uint8_t           revert_to
- ** @param uint8_t           device_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_set_device_focus (xcb_connection_t *c  /**< */,
                             xcb_window_t      focus  /**< */,
@@ -6245,16 +5062,6 @@ xcb_input_set_device_focus (xcb_connection_t *c  /**< */,
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_kbd_feedback_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_kbd_feedback_state_next
- ** 
- ** @param xcb_input_kbd_feedback_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_kbd_feedback_state_next (xcb_input_kbd_feedback_state_iterator_t *i  /**< */);
 
@@ -6267,16 +5074,6 @@ xcb_input_kbd_feedback_state_next (xcb_input_kbd_feedback_state_iterator_t *i  /
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_kbd_feedback_state_end
- ** 
- ** @param xcb_input_kbd_feedback_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_kbd_feedback_state_end (xcb_input_kbd_feedback_state_iterator_t i  /**< */);
 
@@ -6288,16 +5085,6 @@ xcb_input_kbd_feedback_state_end (xcb_input_kbd_feedback_state_iterator_t i  /**
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_ptr_feedback_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_ptr_feedback_state_next
- ** 
- ** @param xcb_input_ptr_feedback_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_ptr_feedback_state_next (xcb_input_ptr_feedback_state_iterator_t *i  /**< */);
 
@@ -6310,16 +5097,6 @@ xcb_input_ptr_feedback_state_next (xcb_input_ptr_feedback_state_iterator_t *i  /
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_ptr_feedback_state_end
- ** 
- ** @param xcb_input_ptr_feedback_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_ptr_feedback_state_end (xcb_input_ptr_feedback_state_iterator_t i  /**< */);
 
@@ -6331,16 +5108,6 @@ xcb_input_ptr_feedback_state_end (xcb_input_ptr_feedback_state_iterator_t i  /**
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_integer_feedback_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_integer_feedback_state_next
- ** 
- ** @param xcb_input_integer_feedback_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_integer_feedback_state_next (xcb_input_integer_feedback_state_iterator_t *i  /**< */);
 
@@ -6353,58 +5120,18 @@ xcb_input_integer_feedback_state_next (xcb_input_integer_feedback_state_iterator
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_integer_feedback_state_end
- ** 
- ** @param xcb_input_integer_feedback_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_integer_feedback_state_end (xcb_input_integer_feedback_state_iterator_t i  /**< */);
 
 int
 xcb_input_string_feedback_state_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_keysym_t * xcb_input_string_feedback_state_keysyms
- ** 
- ** @param const xcb_input_string_feedback_state_t *R
- ** @returns xcb_keysym_t *
- **
- *****************************************************************************/
- 
 xcb_keysym_t *
 xcb_input_string_feedback_state_keysyms (const xcb_input_string_feedback_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_string_feedback_state_keysyms_length
- ** 
- ** @param const xcb_input_string_feedback_state_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_string_feedback_state_keysyms_length (const xcb_input_string_feedback_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_string_feedback_state_keysyms_end
- ** 
- ** @param const xcb_input_string_feedback_state_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_string_feedback_state_keysyms_end (const xcb_input_string_feedback_state_t *R  /**< */);
 
@@ -6416,16 +5143,6 @@ xcb_input_string_feedback_state_keysyms_end (const xcb_input_string_feedback_sta
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_string_feedback_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_string_feedback_state_next
- ** 
- ** @param xcb_input_string_feedback_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_string_feedback_state_next (xcb_input_string_feedback_state_iterator_t *i  /**< */);
 
@@ -6438,16 +5155,6 @@ xcb_input_string_feedback_state_next (xcb_input_string_feedback_state_iterator_t
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_string_feedback_state_end
- ** 
- ** @param xcb_input_string_feedback_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_string_feedback_state_end (xcb_input_string_feedback_state_iterator_t i  /**< */);
 
@@ -6459,16 +5166,6 @@ xcb_input_string_feedback_state_end (xcb_input_string_feedback_state_iterator_t 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_bell_feedback_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_bell_feedback_state_next
- ** 
- ** @param xcb_input_bell_feedback_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_bell_feedback_state_next (xcb_input_bell_feedback_state_iterator_t *i  /**< */);
 
@@ -6481,16 +5178,6 @@ xcb_input_bell_feedback_state_next (xcb_input_bell_feedback_state_iterator_t *i 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_bell_feedback_state_end
- ** 
- ** @param xcb_input_bell_feedback_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_bell_feedback_state_end (xcb_input_bell_feedback_state_iterator_t i  /**< */);
 
@@ -6502,16 +5189,6 @@ xcb_input_bell_feedback_state_end (xcb_input_bell_feedback_state_iterator_t i  /
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_led_feedback_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_led_feedback_state_next
- ** 
- ** @param xcb_input_led_feedback_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_led_feedback_state_next (xcb_input_led_feedback_state_iterator_t *i  /**< */);
 
@@ -6524,58 +5201,18 @@ xcb_input_led_feedback_state_next (xcb_input_led_feedback_state_iterator_t *i  /
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_led_feedback_state_end
- ** 
- ** @param xcb_input_led_feedback_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_led_feedback_state_end (xcb_input_led_feedback_state_iterator_t i  /**< */);
 
 int
 xcb_input_feedback_state_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_feedback_state_uninterpreted_data
- ** 
- ** @param const xcb_input_feedback_state_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_feedback_state_uninterpreted_data (const xcb_input_feedback_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_feedback_state_uninterpreted_data_length
- ** 
- ** @param const xcb_input_feedback_state_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_feedback_state_uninterpreted_data_length (const xcb_input_feedback_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_feedback_state_uninterpreted_data_end
- ** 
- ** @param const xcb_input_feedback_state_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_feedback_state_uninterpreted_data_end (const xcb_input_feedback_state_t *R  /**< */);
 
@@ -6587,16 +5224,6 @@ xcb_input_feedback_state_uninterpreted_data_end (const xcb_input_feedback_state_
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_feedback_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_feedback_state_next
- ** 
- ** @param xcb_input_feedback_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_feedback_state_next (xcb_input_feedback_state_iterator_t *i  /**< */);
 
@@ -6609,16 +5236,6 @@ xcb_input_feedback_state_next (xcb_input_feedback_state_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_feedback_state_end
- ** 
- ** @param xcb_input_feedback_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_feedback_state_end (xcb_input_feedback_state_iterator_t i  /**< */);
 
@@ -6631,19 +5248,8 @@ xcb_input_get_feedback_control_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_feedback_control_cookie_t xcb_input_get_feedback_control
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_feedback_control_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_feedback_control_cookie_t
 xcb_input_get_feedback_control (xcb_connection_t *c  /**< */,
                                 uint8_t           device_id  /**< */);
@@ -6654,49 +5260,18 @@ xcb_input_get_feedback_control (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_feedback_control_cookie_t xcb_input_get_feedback_control_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_feedback_control_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_feedback_control_cookie_t
 xcb_input_get_feedback_control_unchecked (xcb_connection_t *c  /**< */,
                                           uint8_t           device_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_get_feedback_control_feedbacks_length
- ** 
- ** @param const xcb_input_get_feedback_control_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_get_feedback_control_feedbacks_length (const xcb_input_get_feedback_control_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_feedback_state_iterator_t xcb_input_get_feedback_control_feedbacks_iterator
- ** 
- ** @param const xcb_input_get_feedback_control_reply_t *R
- ** @returns xcb_input_feedback_state_iterator_t
- **
- *****************************************************************************/
- 
 xcb_input_feedback_state_iterator_t
 xcb_input_get_feedback_control_feedbacks_iterator (const xcb_input_get_feedback_control_reply_t *R  /**< */);
 
@@ -6707,25 +5282,13 @@ xcb_input_get_feedback_control_feedbacks_iterator (const xcb_input_get_feedback_
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_feedback_control_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_feedback_control_reply_t * xcb_input_get_feedback_control_reply
- ** 
- ** @param xcb_connection_t                         *c
- ** @param xcb_input_get_feedback_control_cookie_t   cookie
- ** @param xcb_generic_error_t                     **e
- ** @returns xcb_input_get_feedback_control_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_feedback_control_reply_t *
 xcb_input_get_feedback_control_reply (xcb_connection_t                         *c  /**< */,
                                       xcb_input_get_feedback_control_cookie_t   cookie  /**< */,
@@ -6739,16 +5302,6 @@ xcb_input_get_feedback_control_reply (xcb_connection_t                         *
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_kbd_feedback_ctl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_kbd_feedback_ctl_next
- ** 
- ** @param xcb_input_kbd_feedback_ctl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_kbd_feedback_ctl_next (xcb_input_kbd_feedback_ctl_iterator_t *i  /**< */);
 
@@ -6761,16 +5314,6 @@ xcb_input_kbd_feedback_ctl_next (xcb_input_kbd_feedback_ctl_iterator_t *i  /**< 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_kbd_feedback_ctl_end
- ** 
- ** @param xcb_input_kbd_feedback_ctl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_kbd_feedback_ctl_end (xcb_input_kbd_feedback_ctl_iterator_t i  /**< */);
 
@@ -6782,16 +5325,6 @@ xcb_input_kbd_feedback_ctl_end (xcb_input_kbd_feedback_ctl_iterator_t i  /**< */
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_ptr_feedback_ctl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_ptr_feedback_ctl_next
- ** 
- ** @param xcb_input_ptr_feedback_ctl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_ptr_feedback_ctl_next (xcb_input_ptr_feedback_ctl_iterator_t *i  /**< */);
 
@@ -6804,16 +5337,6 @@ xcb_input_ptr_feedback_ctl_next (xcb_input_ptr_feedback_ctl_iterator_t *i  /**< 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_ptr_feedback_ctl_end
- ** 
- ** @param xcb_input_ptr_feedback_ctl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_ptr_feedback_ctl_end (xcb_input_ptr_feedback_ctl_iterator_t i  /**< */);
 
@@ -6825,16 +5348,6 @@ xcb_input_ptr_feedback_ctl_end (xcb_input_ptr_feedback_ctl_iterator_t i  /**< */
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_integer_feedback_ctl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_integer_feedback_ctl_next
- ** 
- ** @param xcb_input_integer_feedback_ctl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_integer_feedback_ctl_next (xcb_input_integer_feedback_ctl_iterator_t *i  /**< */);
 
@@ -6847,58 +5360,18 @@ xcb_input_integer_feedback_ctl_next (xcb_input_integer_feedback_ctl_iterator_t *
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_integer_feedback_ctl_end
- ** 
- ** @param xcb_input_integer_feedback_ctl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_integer_feedback_ctl_end (xcb_input_integer_feedback_ctl_iterator_t i  /**< */);
 
 int
 xcb_input_string_feedback_ctl_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_keysym_t * xcb_input_string_feedback_ctl_keysyms
- ** 
- ** @param const xcb_input_string_feedback_ctl_t *R
- ** @returns xcb_keysym_t *
- **
- *****************************************************************************/
- 
 xcb_keysym_t *
 xcb_input_string_feedback_ctl_keysyms (const xcb_input_string_feedback_ctl_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_string_feedback_ctl_keysyms_length
- ** 
- ** @param const xcb_input_string_feedback_ctl_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_string_feedback_ctl_keysyms_length (const xcb_input_string_feedback_ctl_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_string_feedback_ctl_keysyms_end
- ** 
- ** @param const xcb_input_string_feedback_ctl_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_string_feedback_ctl_keysyms_end (const xcb_input_string_feedback_ctl_t *R  /**< */);
 
@@ -6910,16 +5383,6 @@ xcb_input_string_feedback_ctl_keysyms_end (const xcb_input_string_feedback_ctl_t
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_string_feedback_ctl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_string_feedback_ctl_next
- ** 
- ** @param xcb_input_string_feedback_ctl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_string_feedback_ctl_next (xcb_input_string_feedback_ctl_iterator_t *i  /**< */);
 
@@ -6932,16 +5395,6 @@ xcb_input_string_feedback_ctl_next (xcb_input_string_feedback_ctl_iterator_t *i 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_string_feedback_ctl_end
- ** 
- ** @param xcb_input_string_feedback_ctl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_string_feedback_ctl_end (xcb_input_string_feedback_ctl_iterator_t i  /**< */);
 
@@ -6953,16 +5406,6 @@ xcb_input_string_feedback_ctl_end (xcb_input_string_feedback_ctl_iterator_t i  /
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_bell_feedback_ctl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_bell_feedback_ctl_next
- ** 
- ** @param xcb_input_bell_feedback_ctl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_bell_feedback_ctl_next (xcb_input_bell_feedback_ctl_iterator_t *i  /**< */);
 
@@ -6975,16 +5418,6 @@ xcb_input_bell_feedback_ctl_next (xcb_input_bell_feedback_ctl_iterator_t *i  /**
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_bell_feedback_ctl_end
- ** 
- ** @param xcb_input_bell_feedback_ctl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_bell_feedback_ctl_end (xcb_input_bell_feedback_ctl_iterator_t i  /**< */);
 
@@ -6996,16 +5429,6 @@ xcb_input_bell_feedback_ctl_end (xcb_input_bell_feedback_ctl_iterator_t i  /**< 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_led_feedback_ctl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_led_feedback_ctl_next
- ** 
- ** @param xcb_input_led_feedback_ctl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_led_feedback_ctl_next (xcb_input_led_feedback_ctl_iterator_t *i  /**< */);
 
@@ -7018,58 +5441,18 @@ xcb_input_led_feedback_ctl_next (xcb_input_led_feedback_ctl_iterator_t *i  /**< 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_led_feedback_ctl_end
- ** 
- ** @param xcb_input_led_feedback_ctl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_led_feedback_ctl_end (xcb_input_led_feedback_ctl_iterator_t i  /**< */);
 
 int
 xcb_input_feedback_ctl_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_feedback_ctl_uninterpreted_data
- ** 
- ** @param const xcb_input_feedback_ctl_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_feedback_ctl_uninterpreted_data (const xcb_input_feedback_ctl_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_feedback_ctl_uninterpreted_data_length
- ** 
- ** @param const xcb_input_feedback_ctl_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_feedback_ctl_uninterpreted_data_length (const xcb_input_feedback_ctl_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_feedback_ctl_uninterpreted_data_end
- ** 
- ** @param const xcb_input_feedback_ctl_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_feedback_ctl_uninterpreted_data_end (const xcb_input_feedback_ctl_t *R  /**< */);
 
@@ -7081,16 +5464,6 @@ xcb_input_feedback_ctl_uninterpreted_data_end (const xcb_input_feedback_ctl_t *R
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_feedback_ctl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_feedback_ctl_next
- ** 
- ** @param xcb_input_feedback_ctl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_feedback_ctl_next (xcb_input_feedback_ctl_iterator_t *i  /**< */);
 
@@ -7103,16 +5476,6 @@ xcb_input_feedback_ctl_next (xcb_input_feedback_ctl_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_feedback_ctl_end
- ** 
- ** @param xcb_input_feedback_ctl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_feedback_ctl_end (xcb_input_feedback_ctl_iterator_t i  /**< */);
 
@@ -7125,25 +5488,11 @@ xcb_input_change_feedback_control_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_change_feedback_control_checked
- ** 
- ** @param xcb_connection_t         *c
- ** @param uint32_t                  mask
- ** @param uint8_t                   device_id
- ** @param uint8_t                   feedback_id
- ** @param xcb_input_feedback_ctl_t *feedback
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_change_feedback_control_checked (xcb_connection_t         *c  /**< */,
                                            uint32_t                  mask  /**< */,
@@ -7157,22 +5506,8 @@ xcb_input_change_feedback_control_checked (xcb_connection_t         *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_change_feedback_control
- ** 
- ** @param xcb_connection_t         *c
- ** @param uint32_t                  mask
- ** @param uint8_t                   device_id
- ** @param uint8_t                   feedback_id
- ** @param xcb_input_feedback_ctl_t *feedback
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_change_feedback_control (xcb_connection_t         *c  /**< */,
                                    uint32_t                  mask  /**< */,
@@ -7189,21 +5524,8 @@ xcb_input_get_device_key_mapping_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_key_mapping_cookie_t xcb_input_get_device_key_mapping
- ** 
- ** @param xcb_connection_t     *c
- ** @param uint8_t               device_id
- ** @param xcb_input_key_code_t  first_keycode
- ** @param uint8_t               count
- ** @returns xcb_input_get_device_key_mapping_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_key_mapping_cookie_t
 xcb_input_get_device_key_mapping (xcb_connection_t     *c  /**< */,
                                   uint8_t               device_id  /**< */,
@@ -7216,66 +5538,23 @@ xcb_input_get_device_key_mapping (xcb_connection_t     *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_key_mapping_cookie_t xcb_input_get_device_key_mapping_unchecked
- ** 
- ** @param xcb_connection_t     *c
- ** @param uint8_t               device_id
- ** @param xcb_input_key_code_t  first_keycode
- ** @param uint8_t               count
- ** @returns xcb_input_get_device_key_mapping_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_key_mapping_cookie_t
 xcb_input_get_device_key_mapping_unchecked (xcb_connection_t     *c  /**< */,
                                             uint8_t               device_id  /**< */,
                                             xcb_input_key_code_t  first_keycode  /**< */,
                                             uint8_t               count  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_keysym_t * xcb_input_get_device_key_mapping_keysyms
- ** 
- ** @param const xcb_input_get_device_key_mapping_reply_t *R
- ** @returns xcb_keysym_t *
- **
- *****************************************************************************/
- 
 xcb_keysym_t *
 xcb_input_get_device_key_mapping_keysyms (const xcb_input_get_device_key_mapping_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_get_device_key_mapping_keysyms_length
- ** 
- ** @param const xcb_input_get_device_key_mapping_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_get_device_key_mapping_keysyms_length (const xcb_input_get_device_key_mapping_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_get_device_key_mapping_keysyms_end
- ** 
- ** @param const xcb_input_get_device_key_mapping_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_get_device_key_mapping_keysyms_end (const xcb_input_get_device_key_mapping_reply_t *R  /**< */);
 
@@ -7286,25 +5565,13 @@ xcb_input_get_device_key_mapping_keysyms_end (const xcb_input_get_device_key_map
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_device_key_mapping_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_key_mapping_reply_t * xcb_input_get_device_key_mapping_reply
- ** 
- ** @param xcb_connection_t                           *c
- ** @param xcb_input_get_device_key_mapping_cookie_t   cookie
- ** @param xcb_generic_error_t                       **e
- ** @returns xcb_input_get_device_key_mapping_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_device_key_mapping_reply_t *
 xcb_input_get_device_key_mapping_reply (xcb_connection_t                           *c  /**< */,
                                         xcb_input_get_device_key_mapping_cookie_t   cookie  /**< */,
@@ -7319,26 +5586,11 @@ xcb_input_change_device_key_mapping_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_change_device_key_mapping_checked
- ** 
- ** @param xcb_connection_t     *c
- ** @param uint8_t               device_id
- ** @param xcb_input_key_code_t  first_keycode
- ** @param uint8_t               keysyms_per_keycode
- ** @param uint8_t               keycode_count
- ** @param const xcb_keysym_t   *keysyms
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_change_device_key_mapping_checked (xcb_connection_t     *c  /**< */,
                                              uint8_t               device_id  /**< */,
@@ -7353,23 +5605,8 @@ xcb_input_change_device_key_mapping_checked (xcb_connection_t     *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_change_device_key_mapping
- ** 
- ** @param xcb_connection_t     *c
- ** @param uint8_t               device_id
- ** @param xcb_input_key_code_t  first_keycode
- ** @param uint8_t               keysyms_per_keycode
- ** @param uint8_t               keycode_count
- ** @param const xcb_keysym_t   *keysyms
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_change_device_key_mapping (xcb_connection_t     *c  /**< */,
                                      uint8_t               device_id  /**< */,
@@ -7387,19 +5624,8 @@ xcb_input_get_device_modifier_mapping_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_modifier_mapping_cookie_t xcb_input_get_device_modifier_mapping
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_device_modifier_mapping_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_modifier_mapping_cookie_t
 xcb_input_get_device_modifier_mapping (xcb_connection_t *c  /**< */,
                                        uint8_t           device_id  /**< */);
@@ -7410,62 +5636,21 @@ xcb_input_get_device_modifier_mapping (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_modifier_mapping_cookie_t xcb_input_get_device_modifier_mapping_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_device_modifier_mapping_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_modifier_mapping_cookie_t
 xcb_input_get_device_modifier_mapping_unchecked (xcb_connection_t *c  /**< */,
                                                  uint8_t           device_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_get_device_modifier_mapping_keymaps
- ** 
- ** @param const xcb_input_get_device_modifier_mapping_reply_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_get_device_modifier_mapping_keymaps (const xcb_input_get_device_modifier_mapping_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_get_device_modifier_mapping_keymaps_length
- ** 
- ** @param const xcb_input_get_device_modifier_mapping_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_get_device_modifier_mapping_keymaps_length (const xcb_input_get_device_modifier_mapping_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_get_device_modifier_mapping_keymaps_end
- ** 
- ** @param const xcb_input_get_device_modifier_mapping_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_get_device_modifier_mapping_keymaps_end (const xcb_input_get_device_modifier_mapping_reply_t *R  /**< */);
 
@@ -7476,25 +5661,13 @@ xcb_input_get_device_modifier_mapping_keymaps_end (const xcb_input_get_device_mo
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_device_modifier_mapping_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_modifier_mapping_reply_t * xcb_input_get_device_modifier_mapping_reply
- ** 
- ** @param xcb_connection_t                                *c
- ** @param xcb_input_get_device_modifier_mapping_cookie_t   cookie
- ** @param xcb_generic_error_t                            **e
- ** @returns xcb_input_get_device_modifier_mapping_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_device_modifier_mapping_reply_t *
 xcb_input_get_device_modifier_mapping_reply (xcb_connection_t                                *c  /**< */,
                                              xcb_input_get_device_modifier_mapping_cookie_t   cookie  /**< */,
@@ -7509,21 +5682,8 @@ xcb_input_set_device_modifier_mapping_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_modifier_mapping_cookie_t xcb_input_set_device_modifier_mapping
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @param uint8_t           keycodes_per_modifier
- ** @param const uint8_t    *keymaps
- ** @returns xcb_input_set_device_modifier_mapping_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_set_device_modifier_mapping_cookie_t
 xcb_input_set_device_modifier_mapping (xcb_connection_t *c  /**< */,
                                        uint8_t           device_id  /**< */,
@@ -7536,24 +5696,11 @@ xcb_input_set_device_modifier_mapping (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_modifier_mapping_cookie_t xcb_input_set_device_modifier_mapping_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @param uint8_t           keycodes_per_modifier
- ** @param const uint8_t    *keymaps
- ** @returns xcb_input_set_device_modifier_mapping_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_set_device_modifier_mapping_cookie_t
 xcb_input_set_device_modifier_mapping_unchecked (xcb_connection_t *c  /**< */,
                                                  uint8_t           device_id  /**< */,
@@ -7567,25 +5714,13 @@ xcb_input_set_device_modifier_mapping_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_set_device_modifier_mapping_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_modifier_mapping_reply_t * xcb_input_set_device_modifier_mapping_reply
- ** 
- ** @param xcb_connection_t                                *c
- ** @param xcb_input_set_device_modifier_mapping_cookie_t   cookie
- ** @param xcb_generic_error_t                            **e
- ** @returns xcb_input_set_device_modifier_mapping_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_set_device_modifier_mapping_reply_t *
 xcb_input_set_device_modifier_mapping_reply (xcb_connection_t                                *c  /**< */,
                                              xcb_input_set_device_modifier_mapping_cookie_t   cookie  /**< */,
@@ -7600,19 +5735,8 @@ xcb_input_get_device_button_mapping_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_button_mapping_cookie_t xcb_input_get_device_button_mapping
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_device_button_mapping_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_button_mapping_cookie_t
 xcb_input_get_device_button_mapping (xcb_connection_t *c  /**< */,
                                      uint8_t           device_id  /**< */);
@@ -7623,62 +5747,21 @@ xcb_input_get_device_button_mapping (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_button_mapping_cookie_t xcb_input_get_device_button_mapping_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_device_button_mapping_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_button_mapping_cookie_t
 xcb_input_get_device_button_mapping_unchecked (xcb_connection_t *c  /**< */,
                                                uint8_t           device_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_get_device_button_mapping_map
- ** 
- ** @param const xcb_input_get_device_button_mapping_reply_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_get_device_button_mapping_map (const xcb_input_get_device_button_mapping_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_get_device_button_mapping_map_length
- ** 
- ** @param const xcb_input_get_device_button_mapping_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_get_device_button_mapping_map_length (const xcb_input_get_device_button_mapping_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_get_device_button_mapping_map_end
- ** 
- ** @param const xcb_input_get_device_button_mapping_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_get_device_button_mapping_map_end (const xcb_input_get_device_button_mapping_reply_t *R  /**< */);
 
@@ -7689,25 +5772,13 @@ xcb_input_get_device_button_mapping_map_end (const xcb_input_get_device_button_m
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_device_button_mapping_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_button_mapping_reply_t * xcb_input_get_device_button_mapping_reply
- ** 
- ** @param xcb_connection_t                              *c
- ** @param xcb_input_get_device_button_mapping_cookie_t   cookie
- ** @param xcb_generic_error_t                          **e
- ** @returns xcb_input_get_device_button_mapping_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_device_button_mapping_reply_t *
 xcb_input_get_device_button_mapping_reply (xcb_connection_t                              *c  /**< */,
                                            xcb_input_get_device_button_mapping_cookie_t   cookie  /**< */,
@@ -7722,21 +5793,8 @@ xcb_input_set_device_button_mapping_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_button_mapping_cookie_t xcb_input_set_device_button_mapping
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @param uint8_t           map_size
- ** @param const uint8_t    *map
- ** @returns xcb_input_set_device_button_mapping_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_set_device_button_mapping_cookie_t
 xcb_input_set_device_button_mapping (xcb_connection_t *c  /**< */,
                                      uint8_t           device_id  /**< */,
@@ -7749,24 +5807,11 @@ xcb_input_set_device_button_mapping (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_button_mapping_cookie_t xcb_input_set_device_button_mapping_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @param uint8_t           map_size
- ** @param const uint8_t    *map
- ** @returns xcb_input_set_device_button_mapping_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_set_device_button_mapping_cookie_t
 xcb_input_set_device_button_mapping_unchecked (xcb_connection_t *c  /**< */,
                                                uint8_t           device_id  /**< */,
@@ -7780,25 +5825,13 @@ xcb_input_set_device_button_mapping_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_set_device_button_mapping_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_button_mapping_reply_t * xcb_input_set_device_button_mapping_reply
- ** 
- ** @param xcb_connection_t                              *c
- ** @param xcb_input_set_device_button_mapping_cookie_t   cookie
- ** @param xcb_generic_error_t                          **e
- ** @returns xcb_input_set_device_button_mapping_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_set_device_button_mapping_reply_t *
 xcb_input_set_device_button_mapping_reply (xcb_connection_t                              *c  /**< */,
                                            xcb_input_set_device_button_mapping_cookie_t   cookie  /**< */,
@@ -7812,16 +5845,6 @@ xcb_input_set_device_button_mapping_reply (xcb_connection_t                     
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_key_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_key_state_next
- ** 
- ** @param xcb_input_key_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_key_state_next (xcb_input_key_state_iterator_t *i  /**< */);
 
@@ -7834,16 +5857,6 @@ xcb_input_key_state_next (xcb_input_key_state_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_key_state_end
- ** 
- ** @param xcb_input_key_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_key_state_end (xcb_input_key_state_iterator_t i  /**< */);
 
@@ -7855,16 +5868,6 @@ xcb_input_key_state_end (xcb_input_key_state_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_button_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_button_state_next
- ** 
- ** @param xcb_input_button_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_button_state_next (xcb_input_button_state_iterator_t *i  /**< */);
 
@@ -7877,58 +5880,18 @@ xcb_input_button_state_next (xcb_input_button_state_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_button_state_end
- ** 
- ** @param xcb_input_button_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_button_state_end (xcb_input_button_state_iterator_t i  /**< */);
 
 int
 xcb_input_valuator_state_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_valuator_state_valuators
- ** 
- ** @param const xcb_input_valuator_state_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_valuator_state_valuators (const xcb_input_valuator_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_valuator_state_valuators_length
- ** 
- ** @param const xcb_input_valuator_state_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_valuator_state_valuators_length (const xcb_input_valuator_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_valuator_state_valuators_end
- ** 
- ** @param const xcb_input_valuator_state_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_valuator_state_valuators_end (const xcb_input_valuator_state_t *R  /**< */);
 
@@ -7940,16 +5903,6 @@ xcb_input_valuator_state_valuators_end (const xcb_input_valuator_state_t *R  /**
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_valuator_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_valuator_state_next
- ** 
- ** @param xcb_input_valuator_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_valuator_state_next (xcb_input_valuator_state_iterator_t *i  /**< */);
 
@@ -7962,58 +5915,18 @@ xcb_input_valuator_state_next (xcb_input_valuator_state_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_valuator_state_end
- ** 
- ** @param xcb_input_valuator_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_valuator_state_end (xcb_input_valuator_state_iterator_t i  /**< */);
 
 int
 xcb_input_input_state_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_input_state_uninterpreted_data
- ** 
- ** @param const xcb_input_input_state_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_input_state_uninterpreted_data (const xcb_input_input_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_input_state_uninterpreted_data_length
- ** 
- ** @param const xcb_input_input_state_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_input_state_uninterpreted_data_length (const xcb_input_input_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_input_state_uninterpreted_data_end
- ** 
- ** @param const xcb_input_input_state_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_input_state_uninterpreted_data_end (const xcb_input_input_state_t *R  /**< */);
 
@@ -8025,16 +5938,6 @@ xcb_input_input_state_uninterpreted_data_end (const xcb_input_input_state_t *R  
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_input_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_input_state_next
- ** 
- ** @param xcb_input_input_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_input_state_next (xcb_input_input_state_iterator_t *i  /**< */);
 
@@ -8047,16 +5950,6 @@ xcb_input_input_state_next (xcb_input_input_state_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_input_state_end
- ** 
- ** @param xcb_input_input_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_input_state_end (xcb_input_input_state_iterator_t i  /**< */);
 
@@ -8069,19 +5962,8 @@ xcb_input_query_device_state_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_query_device_state_cookie_t xcb_input_query_device_state
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_query_device_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_query_device_state_cookie_t
 xcb_input_query_device_state (xcb_connection_t *c  /**< */,
                               uint8_t           device_id  /**< */);
@@ -8092,49 +5974,18 @@ xcb_input_query_device_state (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_query_device_state_cookie_t xcb_input_query_device_state_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_query_device_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_query_device_state_cookie_t
 xcb_input_query_device_state_unchecked (xcb_connection_t *c  /**< */,
                                         uint8_t           device_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_query_device_state_classes_length
- ** 
- ** @param const xcb_input_query_device_state_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_query_device_state_classes_length (const xcb_input_query_device_state_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_input_state_iterator_t xcb_input_query_device_state_classes_iterator
- ** 
- ** @param const xcb_input_query_device_state_reply_t *R
- ** @returns xcb_input_input_state_iterator_t
- **
- *****************************************************************************/
- 
 xcb_input_input_state_iterator_t
 xcb_input_query_device_state_classes_iterator (const xcb_input_query_device_state_reply_t *R  /**< */);
 
@@ -8145,25 +5996,13 @@ xcb_input_query_device_state_classes_iterator (const xcb_input_query_device_stat
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_query_device_state_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_query_device_state_reply_t * xcb_input_query_device_state_reply
- ** 
- ** @param xcb_connection_t                       *c
- ** @param xcb_input_query_device_state_cookie_t   cookie
- ** @param xcb_generic_error_t                   **e
- ** @returns xcb_input_query_device_state_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_query_device_state_reply_t *
 xcb_input_query_device_state_reply (xcb_connection_t                       *c  /**< */,
                                     xcb_input_query_device_state_cookie_t   cookie  /**< */,
@@ -8178,28 +6017,11 @@ xcb_input_send_extension_event_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_send_extension_event_checked
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   destination
- ** @param uint8_t                        device_id
- ** @param uint8_t                        propagate
- ** @param uint16_t                       num_classes
- ** @param uint8_t                        num_events
- ** @param const uint8_t                 *events
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_send_extension_event_checked (xcb_connection_t              *c  /**< */,
                                         xcb_window_t                   destination  /**< */,
@@ -8216,25 +6038,8 @@ xcb_input_send_extension_event_checked (xcb_connection_t              *c  /**< *
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_send_extension_event
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_window_t                   destination
- ** @param uint8_t                        device_id
- ** @param uint8_t                        propagate
- ** @param uint16_t                       num_classes
- ** @param uint8_t                        num_events
- ** @param const uint8_t                 *events
- ** @param const xcb_input_event_class_t *classes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_send_extension_event (xcb_connection_t              *c  /**< */,
                                 xcb_window_t                   destination  /**< */,
@@ -8251,25 +6056,11 @@ xcb_input_send_extension_event (xcb_connection_t              *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_device_bell_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @param uint8_t           feedback_id
- ** @param uint8_t           feedback_class
- ** @param int8_t            percent
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_device_bell_checked (xcb_connection_t *c  /**< */,
                                uint8_t           device_id  /**< */,
@@ -8283,22 +6074,8 @@ xcb_input_device_bell_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_device_bell
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @param uint8_t           feedback_id
- ** @param uint8_t           feedback_class
- ** @param int8_t            percent
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_device_bell (xcb_connection_t *c  /**< */,
                        uint8_t           device_id  /**< */,
@@ -8315,22 +6092,8 @@ xcb_input_set_device_valuators_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_valuators_cookie_t xcb_input_set_device_valuators
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @param uint8_t           first_valuator
- ** @param uint8_t           num_valuators
- ** @param const int32_t    *valuators
- ** @returns xcb_input_set_device_valuators_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_set_device_valuators_cookie_t
 xcb_input_set_device_valuators (xcb_connection_t *c  /**< */,
                                 uint8_t           device_id  /**< */,
@@ -8344,25 +6107,11 @@ xcb_input_set_device_valuators (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_valuators_cookie_t xcb_input_set_device_valuators_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @param uint8_t           first_valuator
- ** @param uint8_t           num_valuators
- ** @param const int32_t    *valuators
- ** @returns xcb_input_set_device_valuators_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_set_device_valuators_cookie_t
 xcb_input_set_device_valuators_unchecked (xcb_connection_t *c  /**< */,
                                           uint8_t           device_id  /**< */,
@@ -8377,25 +6126,13 @@ xcb_input_set_device_valuators_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_set_device_valuators_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_set_device_valuators_reply_t * xcb_input_set_device_valuators_reply
- ** 
- ** @param xcb_connection_t                         *c
- ** @param xcb_input_set_device_valuators_cookie_t   cookie
- ** @param xcb_generic_error_t                     **e
- ** @returns xcb_input_set_device_valuators_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_set_device_valuators_reply_t *
 xcb_input_set_device_valuators_reply (xcb_connection_t                         *c  /**< */,
                                       xcb_input_set_device_valuators_cookie_t   cookie  /**< */,
@@ -8404,120 +6141,30 @@ xcb_input_set_device_valuators_reply (xcb_connection_t                         *
 int
 xcb_input_device_resolution_state_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_device_resolution_state_resolution_values
- ** 
- ** @param const xcb_input_device_resolution_state_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_device_resolution_state_resolution_values (const xcb_input_device_resolution_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_device_resolution_state_resolution_values_length
- ** 
- ** @param const xcb_input_device_resolution_state_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_device_resolution_state_resolution_values_length (const xcb_input_device_resolution_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_resolution_state_resolution_values_end
- ** 
- ** @param const xcb_input_device_resolution_state_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_resolution_state_resolution_values_end (const xcb_input_device_resolution_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_device_resolution_state_resolution_min
- ** 
- ** @param const xcb_input_device_resolution_state_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_device_resolution_state_resolution_min (const xcb_input_device_resolution_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_device_resolution_state_resolution_min_length
- ** 
- ** @param const xcb_input_device_resolution_state_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_device_resolution_state_resolution_min_length (const xcb_input_device_resolution_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_resolution_state_resolution_min_end
- ** 
- ** @param const xcb_input_device_resolution_state_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_resolution_state_resolution_min_end (const xcb_input_device_resolution_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_device_resolution_state_resolution_max
- ** 
- ** @param const xcb_input_device_resolution_state_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_device_resolution_state_resolution_max (const xcb_input_device_resolution_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_device_resolution_state_resolution_max_length
- ** 
- ** @param const xcb_input_device_resolution_state_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_device_resolution_state_resolution_max_length (const xcb_input_device_resolution_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_resolution_state_resolution_max_end
- ** 
- ** @param const xcb_input_device_resolution_state_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_resolution_state_resolution_max_end (const xcb_input_device_resolution_state_t *R  /**< */);
 
@@ -8529,16 +6176,6 @@ xcb_input_device_resolution_state_resolution_max_end (const xcb_input_device_res
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_resolution_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_resolution_state_next
- ** 
- ** @param xcb_input_device_resolution_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_resolution_state_next (xcb_input_device_resolution_state_iterator_t *i  /**< */);
 
@@ -8551,16 +6188,6 @@ xcb_input_device_resolution_state_next (xcb_input_device_resolution_state_iterat
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_resolution_state_end
- ** 
- ** @param xcb_input_device_resolution_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_resolution_state_end (xcb_input_device_resolution_state_iterator_t i  /**< */);
 
@@ -8572,16 +6199,6 @@ xcb_input_device_resolution_state_end (xcb_input_device_resolution_state_iterato
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_abs_calib_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_abs_calib_state_next
- ** 
- ** @param xcb_input_device_abs_calib_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_abs_calib_state_next (xcb_input_device_abs_calib_state_iterator_t *i  /**< */);
 
@@ -8594,16 +6211,6 @@ xcb_input_device_abs_calib_state_next (xcb_input_device_abs_calib_state_iterator
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_abs_calib_state_end
- ** 
- ** @param xcb_input_device_abs_calib_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_abs_calib_state_end (xcb_input_device_abs_calib_state_iterator_t i  /**< */);
 
@@ -8615,16 +6222,6 @@ xcb_input_device_abs_calib_state_end (xcb_input_device_abs_calib_state_iterator_
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_abs_area_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_abs_area_state_next
- ** 
- ** @param xcb_input_device_abs_area_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_abs_area_state_next (xcb_input_device_abs_area_state_iterator_t *i  /**< */);
 
@@ -8637,16 +6234,6 @@ xcb_input_device_abs_area_state_next (xcb_input_device_abs_area_state_iterator_t
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_abs_area_state_end
- ** 
- ** @param xcb_input_device_abs_area_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_abs_area_state_end (xcb_input_device_abs_area_state_iterator_t i  /**< */);
 
@@ -8658,16 +6245,6 @@ xcb_input_device_abs_area_state_end (xcb_input_device_abs_area_state_iterator_t 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_core_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_core_state_next
- ** 
- ** @param xcb_input_device_core_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_core_state_next (xcb_input_device_core_state_iterator_t *i  /**< */);
 
@@ -8680,16 +6257,6 @@ xcb_input_device_core_state_next (xcb_input_device_core_state_iterator_t *i  /**
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_core_state_end
- ** 
- ** @param xcb_input_device_core_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_core_state_end (xcb_input_device_core_state_iterator_t i  /**< */);
 
@@ -8701,16 +6268,6 @@ xcb_input_device_core_state_end (xcb_input_device_core_state_iterator_t i  /**< 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_enable_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_enable_state_next
- ** 
- ** @param xcb_input_device_enable_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_enable_state_next (xcb_input_device_enable_state_iterator_t *i  /**< */);
 
@@ -8723,58 +6280,18 @@ xcb_input_device_enable_state_next (xcb_input_device_enable_state_iterator_t *i 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_enable_state_end
- ** 
- ** @param xcb_input_device_enable_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_enable_state_end (xcb_input_device_enable_state_iterator_t i  /**< */);
 
 int
 xcb_input_device_state_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_device_state_uninterpreted_data
- ** 
- ** @param const xcb_input_device_state_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_device_state_uninterpreted_data (const xcb_input_device_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_device_state_uninterpreted_data_length
- ** 
- ** @param const xcb_input_device_state_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_device_state_uninterpreted_data_length (const xcb_input_device_state_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_state_uninterpreted_data_end
- ** 
- ** @param const xcb_input_device_state_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_state_uninterpreted_data_end (const xcb_input_device_state_t *R  /**< */);
 
@@ -8786,16 +6303,6 @@ xcb_input_device_state_uninterpreted_data_end (const xcb_input_device_state_t *R
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_state_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_state_next
- ** 
- ** @param xcb_input_device_state_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_state_next (xcb_input_device_state_iterator_t *i  /**< */);
 
@@ -8808,16 +6315,6 @@ xcb_input_device_state_next (xcb_input_device_state_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_state_end
- ** 
- ** @param xcb_input_device_state_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_state_end (xcb_input_device_state_iterator_t i  /**< */);
 
@@ -8830,20 +6327,8 @@ xcb_input_get_device_control_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_control_cookie_t xcb_input_get_device_control
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          control_id
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_device_control_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_control_cookie_t
 xcb_input_get_device_control (xcb_connection_t *c  /**< */,
                               uint16_t          control_id  /**< */,
@@ -8855,38 +6340,16 @@ xcb_input_get_device_control (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_control_cookie_t xcb_input_get_device_control_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          control_id
- ** @param uint8_t           device_id
- ** @returns xcb_input_get_device_control_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_control_cookie_t
 xcb_input_get_device_control_unchecked (xcb_connection_t *c  /**< */,
                                         uint16_t          control_id  /**< */,
                                         uint8_t           device_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_device_state_t * xcb_input_get_device_control_control
- ** 
- ** @param const xcb_input_get_device_control_reply_t *R
- ** @returns xcb_input_device_state_t *
- **
- *****************************************************************************/
- 
 xcb_input_device_state_t *
 xcb_input_get_device_control_control (const xcb_input_get_device_control_reply_t *R  /**< */);
 
@@ -8897,25 +6360,13 @@ xcb_input_get_device_control_control (const xcb_input_get_device_control_reply_t
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_device_control_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_control_reply_t * xcb_input_get_device_control_reply
- ** 
- ** @param xcb_connection_t                       *c
- ** @param xcb_input_get_device_control_cookie_t   cookie
- ** @param xcb_generic_error_t                   **e
- ** @returns xcb_input_get_device_control_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_device_control_reply_t *
 xcb_input_get_device_control_reply (xcb_connection_t                       *c  /**< */,
                                     xcb_input_get_device_control_cookie_t   cookie  /**< */,
@@ -8924,42 +6375,12 @@ xcb_input_get_device_control_reply (xcb_connection_t                       *c  /
 int
 xcb_input_device_resolution_ctl_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_device_resolution_ctl_resolution_values
- ** 
- ** @param const xcb_input_device_resolution_ctl_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_device_resolution_ctl_resolution_values (const xcb_input_device_resolution_ctl_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_device_resolution_ctl_resolution_values_length
- ** 
- ** @param const xcb_input_device_resolution_ctl_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_device_resolution_ctl_resolution_values_length (const xcb_input_device_resolution_ctl_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_resolution_ctl_resolution_values_end
- ** 
- ** @param const xcb_input_device_resolution_ctl_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_resolution_ctl_resolution_values_end (const xcb_input_device_resolution_ctl_t *R  /**< */);
 
@@ -8971,16 +6392,6 @@ xcb_input_device_resolution_ctl_resolution_values_end (const xcb_input_device_re
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_resolution_ctl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_resolution_ctl_next
- ** 
- ** @param xcb_input_device_resolution_ctl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_resolution_ctl_next (xcb_input_device_resolution_ctl_iterator_t *i  /**< */);
 
@@ -8993,16 +6404,6 @@ xcb_input_device_resolution_ctl_next (xcb_input_device_resolution_ctl_iterator_t
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_resolution_ctl_end
- ** 
- ** @param xcb_input_device_resolution_ctl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_resolution_ctl_end (xcb_input_device_resolution_ctl_iterator_t i  /**< */);
 
@@ -9014,16 +6415,6 @@ xcb_input_device_resolution_ctl_end (xcb_input_device_resolution_ctl_iterator_t 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_abs_calib_ctl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_abs_calib_ctl_next
- ** 
- ** @param xcb_input_device_abs_calib_ctl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_abs_calib_ctl_next (xcb_input_device_abs_calib_ctl_iterator_t *i  /**< */);
 
@@ -9036,16 +6427,6 @@ xcb_input_device_abs_calib_ctl_next (xcb_input_device_abs_calib_ctl_iterator_t *
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_abs_calib_ctl_end
- ** 
- ** @param xcb_input_device_abs_calib_ctl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_abs_calib_ctl_end (xcb_input_device_abs_calib_ctl_iterator_t i  /**< */);
 
@@ -9057,16 +6438,6 @@ xcb_input_device_abs_calib_ctl_end (xcb_input_device_abs_calib_ctl_iterator_t i 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_abs_area_ctrl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_abs_area_ctrl_next
- ** 
- ** @param xcb_input_device_abs_area_ctrl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_abs_area_ctrl_next (xcb_input_device_abs_area_ctrl_iterator_t *i  /**< */);
 
@@ -9079,16 +6450,6 @@ xcb_input_device_abs_area_ctrl_next (xcb_input_device_abs_area_ctrl_iterator_t *
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_abs_area_ctrl_end
- ** 
- ** @param xcb_input_device_abs_area_ctrl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_abs_area_ctrl_end (xcb_input_device_abs_area_ctrl_iterator_t i  /**< */);
 
@@ -9100,16 +6461,6 @@ xcb_input_device_abs_area_ctrl_end (xcb_input_device_abs_area_ctrl_iterator_t i 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_core_ctrl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_core_ctrl_next
- ** 
- ** @param xcb_input_device_core_ctrl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_core_ctrl_next (xcb_input_device_core_ctrl_iterator_t *i  /**< */);
 
@@ -9122,16 +6473,6 @@ xcb_input_device_core_ctrl_next (xcb_input_device_core_ctrl_iterator_t *i  /**< 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_core_ctrl_end
- ** 
- ** @param xcb_input_device_core_ctrl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_core_ctrl_end (xcb_input_device_core_ctrl_iterator_t i  /**< */);
 
@@ -9143,16 +6484,6 @@ xcb_input_device_core_ctrl_end (xcb_input_device_core_ctrl_iterator_t i  /**< */
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_enable_ctrl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_enable_ctrl_next
- ** 
- ** @param xcb_input_device_enable_ctrl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_enable_ctrl_next (xcb_input_device_enable_ctrl_iterator_t *i  /**< */);
 
@@ -9165,58 +6496,18 @@ xcb_input_device_enable_ctrl_next (xcb_input_device_enable_ctrl_iterator_t *i  /
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_enable_ctrl_end
- ** 
- ** @param xcb_input_device_enable_ctrl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_enable_ctrl_end (xcb_input_device_enable_ctrl_iterator_t i  /**< */);
 
 int
 xcb_input_device_ctl_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_device_ctl_uninterpreted_data
- ** 
- ** @param const xcb_input_device_ctl_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_device_ctl_uninterpreted_data (const xcb_input_device_ctl_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_device_ctl_uninterpreted_data_length
- ** 
- ** @param const xcb_input_device_ctl_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_device_ctl_uninterpreted_data_length (const xcb_input_device_ctl_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_ctl_uninterpreted_data_end
- ** 
- ** @param const xcb_input_device_ctl_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_ctl_uninterpreted_data_end (const xcb_input_device_ctl_t *R  /**< */);
 
@@ -9228,16 +6519,6 @@ xcb_input_device_ctl_uninterpreted_data_end (const xcb_input_device_ctl_t *R  /*
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_ctl_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_ctl_next
- ** 
- ** @param xcb_input_device_ctl_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_ctl_next (xcb_input_device_ctl_iterator_t *i  /**< */);
 
@@ -9250,16 +6531,6 @@ xcb_input_device_ctl_next (xcb_input_device_ctl_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_ctl_end
- ** 
- ** @param xcb_input_device_ctl_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_ctl_end (xcb_input_device_ctl_iterator_t i  /**< */);
 
@@ -9272,21 +6543,8 @@ xcb_input_change_device_control_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_change_device_control_cookie_t xcb_input_change_device_control
- ** 
- ** @param xcb_connection_t       *c
- ** @param uint16_t                control_id
- ** @param uint8_t                 device_id
- ** @param xcb_input_device_ctl_t *control
- ** @returns xcb_input_change_device_control_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_change_device_control_cookie_t
 xcb_input_change_device_control (xcb_connection_t       *c  /**< */,
                                  uint16_t                control_id  /**< */,
@@ -9299,24 +6557,11 @@ xcb_input_change_device_control (xcb_connection_t       *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_change_device_control_cookie_t xcb_input_change_device_control_unchecked
- ** 
- ** @param xcb_connection_t       *c
- ** @param uint16_t                control_id
- ** @param uint8_t                 device_id
- ** @param xcb_input_device_ctl_t *control
- ** @returns xcb_input_change_device_control_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_change_device_control_cookie_t
 xcb_input_change_device_control_unchecked (xcb_connection_t       *c  /**< */,
                                            uint16_t                control_id  /**< */,
@@ -9330,25 +6575,13 @@ xcb_input_change_device_control_unchecked (xcb_connection_t       *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_change_device_control_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_change_device_control_reply_t * xcb_input_change_device_control_reply
- ** 
- ** @param xcb_connection_t                          *c
- ** @param xcb_input_change_device_control_cookie_t   cookie
- ** @param xcb_generic_error_t                      **e
- ** @returns xcb_input_change_device_control_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_change_device_control_reply_t *
 xcb_input_change_device_control_reply (xcb_connection_t                          *c  /**< */,
                                        xcb_input_change_device_control_cookie_t   cookie  /**< */,
@@ -9363,19 +6596,8 @@ xcb_input_list_device_properties_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_list_device_properties_cookie_t xcb_input_list_device_properties
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_list_device_properties_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_list_device_properties_cookie_t
 xcb_input_list_device_properties (xcb_connection_t *c  /**< */,
                                   uint8_t           device_id  /**< */);
@@ -9386,62 +6608,21 @@ xcb_input_list_device_properties (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_list_device_properties_cookie_t xcb_input_list_device_properties_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           device_id
- ** @returns xcb_input_list_device_properties_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_list_device_properties_cookie_t
 xcb_input_list_device_properties_unchecked (xcb_connection_t *c  /**< */,
                                             uint8_t           device_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_input_list_device_properties_atoms
- ** 
- ** @param const xcb_input_list_device_properties_reply_t *R
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_input_list_device_properties_atoms (const xcb_input_list_device_properties_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_list_device_properties_atoms_length
- ** 
- ** @param const xcb_input_list_device_properties_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_list_device_properties_atoms_length (const xcb_input_list_device_properties_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_list_device_properties_atoms_end
- ** 
- ** @param const xcb_input_list_device_properties_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_list_device_properties_atoms_end (const xcb_input_list_device_properties_reply_t *R  /**< */);
 
@@ -9452,149 +6633,47 @@ xcb_input_list_device_properties_atoms_end (const xcb_input_list_device_properti
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_list_device_properties_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_list_device_properties_reply_t * xcb_input_list_device_properties_reply
- ** 
- ** @param xcb_connection_t                           *c
- ** @param xcb_input_list_device_properties_cookie_t   cookie
- ** @param xcb_generic_error_t                       **e
- ** @returns xcb_input_list_device_properties_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_list_device_properties_reply_t *
 xcb_input_list_device_properties_reply (xcb_connection_t                           *c  /**< */,
                                         xcb_input_list_device_properties_cookie_t   cookie  /**< */,
                                         xcb_generic_error_t                       **e  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_change_device_property_items_data_8
- ** 
- ** @param const xcb_input_change_device_property_items_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_change_device_property_items_data_8 (const xcb_input_change_device_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_change_device_property_items_data_8_length
- ** 
- ** @param const xcb_input_change_device_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_change_device_property_items_data_8_length (const xcb_input_change_device_property_request_t *R  /**< */,
                                                       const xcb_input_change_device_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_change_device_property_items_data_8_end
- ** 
- ** @param const xcb_input_change_device_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_change_device_property_items_data_8_end (const xcb_input_change_device_property_request_t *R  /**< */,
                                                    const xcb_input_change_device_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint16_t * xcb_input_change_device_property_items_data_16
- ** 
- ** @param const xcb_input_change_device_property_items_t *S
- ** @returns uint16_t *
- **
- *****************************************************************************/
- 
 uint16_t *
 xcb_input_change_device_property_items_data_16 (const xcb_input_change_device_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_change_device_property_items_data_16_length
- ** 
- ** @param const xcb_input_change_device_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_change_device_property_items_data_16_length (const xcb_input_change_device_property_request_t *R  /**< */,
                                                        const xcb_input_change_device_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_change_device_property_items_data_16_end
- ** 
- ** @param const xcb_input_change_device_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_change_device_property_items_data_16_end (const xcb_input_change_device_property_request_t *R  /**< */,
                                                     const xcb_input_change_device_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_change_device_property_items_data_32
- ** 
- ** @param const xcb_input_change_device_property_items_t *S
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_change_device_property_items_data_32 (const xcb_input_change_device_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_change_device_property_items_data_32_length
- ** 
- ** @param const xcb_input_change_device_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_change_device_property_items_data_32_length (const xcb_input_change_device_property_request_t *R  /**< */,
                                                        const xcb_input_change_device_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_change_device_property_items_data_32_end
- ** 
- ** @param const xcb_input_change_device_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_change_device_property_items_data_32_end (const xcb_input_change_device_property_request_t *R  /**< */,
                                                     const xcb_input_change_device_property_items_t *S /**< */);
@@ -9622,28 +6701,11 @@ xcb_input_change_device_property_items_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_change_device_property_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_atom_t        property
- ** @param xcb_atom_t        type
- ** @param uint8_t           device_id
- ** @param uint8_t           format
- ** @param uint8_t           mode
- ** @param uint32_t          num_items
- ** @param const void       *items
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_change_device_property_checked (xcb_connection_t *c  /**< */,
                                           xcb_atom_t        property  /**< */,
@@ -9660,25 +6722,8 @@ xcb_input_change_device_property_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_change_device_property
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_atom_t        property
- ** @param xcb_atom_t        type
- ** @param uint8_t           device_id
- ** @param uint8_t           format
- ** @param uint8_t           mode
- ** @param uint32_t          num_items
- ** @param const void       *items
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_change_device_property (xcb_connection_t *c  /**< */,
                                   xcb_atom_t        property  /**< */,
@@ -9695,28 +6740,11 @@ xcb_input_change_device_property (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_change_device_property_aux_checked
- ** 
- ** @param xcb_connection_t                               *c
- ** @param xcb_atom_t                                      property
- ** @param xcb_atom_t                                      type
- ** @param uint8_t                                         device_id
- ** @param uint8_t                                         format
- ** @param uint8_t                                         mode
- ** @param uint32_t                                        num_items
- ** @param const xcb_input_change_device_property_items_t *items
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_change_device_property_aux_checked (xcb_connection_t                               *c  /**< */,
                                               xcb_atom_t                                      property  /**< */,
@@ -9733,25 +6761,8 @@ xcb_input_change_device_property_aux_checked (xcb_connection_t                  
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_change_device_property_aux
- ** 
- ** @param xcb_connection_t                               *c
- ** @param xcb_atom_t                                      property
- ** @param xcb_atom_t                                      type
- ** @param uint8_t                                         device_id
- ** @param uint8_t                                         format
- ** @param uint8_t                                         mode
- ** @param uint32_t                                        num_items
- ** @param const xcb_input_change_device_property_items_t *items
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_change_device_property_aux (xcb_connection_t                               *c  /**< */,
                                       xcb_atom_t                                      property  /**< */,
@@ -9768,23 +6779,11 @@ xcb_input_change_device_property_aux (xcb_connection_t                          
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_delete_device_property_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_atom_t        property
- ** @param uint8_t           device_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_delete_device_property_checked (xcb_connection_t *c  /**< */,
                                           xcb_atom_t        property  /**< */,
@@ -9796,144 +6795,42 @@ xcb_input_delete_device_property_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_delete_device_property
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_atom_t        property
- ** @param uint8_t           device_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_delete_device_property (xcb_connection_t *c  /**< */,
                                   xcb_atom_t        property  /**< */,
                                   uint8_t           device_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_get_device_property_items_data_8
- ** 
- ** @param const xcb_input_get_device_property_items_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_get_device_property_items_data_8 (const xcb_input_get_device_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_get_device_property_items_data_8_length
- ** 
- ** @param const xcb_input_get_device_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_get_device_property_items_data_8_length (const xcb_input_get_device_property_reply_t *R  /**< */,
                                                    const xcb_input_get_device_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_get_device_property_items_data_8_end
- ** 
- ** @param const xcb_input_get_device_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_get_device_property_items_data_8_end (const xcb_input_get_device_property_reply_t *R  /**< */,
                                                 const xcb_input_get_device_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint16_t * xcb_input_get_device_property_items_data_16
- ** 
- ** @param const xcb_input_get_device_property_items_t *S
- ** @returns uint16_t *
- **
- *****************************************************************************/
- 
 uint16_t *
 xcb_input_get_device_property_items_data_16 (const xcb_input_get_device_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_get_device_property_items_data_16_length
- ** 
- ** @param const xcb_input_get_device_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_get_device_property_items_data_16_length (const xcb_input_get_device_property_reply_t *R  /**< */,
                                                     const xcb_input_get_device_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_get_device_property_items_data_16_end
- ** 
- ** @param const xcb_input_get_device_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_get_device_property_items_data_16_end (const xcb_input_get_device_property_reply_t *R  /**< */,
                                                  const xcb_input_get_device_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_get_device_property_items_data_32
- ** 
- ** @param const xcb_input_get_device_property_items_t *S
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_get_device_property_items_data_32 (const xcb_input_get_device_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_get_device_property_items_data_32_length
- ** 
- ** @param const xcb_input_get_device_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_get_device_property_items_data_32_length (const xcb_input_get_device_property_reply_t *R  /**< */,
                                                     const xcb_input_get_device_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_get_device_property_items_data_32_end
- ** 
- ** @param const xcb_input_get_device_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_get_device_property_items_data_32_end (const xcb_input_get_device_property_reply_t *R  /**< */,
                                                  const xcb_input_get_device_property_items_t *S /**< */);
@@ -9961,24 +6858,8 @@ xcb_input_get_device_property_items_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_property_cookie_t xcb_input_get_device_property
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_atom_t        property
- ** @param xcb_atom_t        type
- ** @param uint32_t          offset
- ** @param uint32_t          len
- ** @param uint8_t           device_id
- ** @param uint8_t           _delete
- ** @returns xcb_input_get_device_property_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_property_cookie_t
 xcb_input_get_device_property (xcb_connection_t *c  /**< */,
                                xcb_atom_t        property  /**< */,
@@ -9994,27 +6875,11 @@ xcb_input_get_device_property (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_property_cookie_t xcb_input_get_device_property_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_atom_t        property
- ** @param xcb_atom_t        type
- ** @param uint32_t          offset
- ** @param uint32_t          len
- ** @param uint8_t           device_id
- ** @param uint8_t           _delete
- ** @returns xcb_input_get_device_property_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_get_device_property_cookie_t
 xcb_input_get_device_property_unchecked (xcb_connection_t *c  /**< */,
                                          xcb_atom_t        property  /**< */,
@@ -10024,16 +6889,6 @@ xcb_input_get_device_property_unchecked (xcb_connection_t *c  /**< */,
                                          uint8_t           device_id  /**< */,
                                          uint8_t           _delete  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_property_items_t * xcb_input_get_device_property_items
- ** 
- ** @param const xcb_input_get_device_property_reply_t *R
- ** @returns xcb_input_get_device_property_items_t *
- **
- *****************************************************************************/
- 
 void *
 xcb_input_get_device_property_items (const xcb_input_get_device_property_reply_t *R  /**< */);
 
@@ -10044,25 +6899,13 @@ xcb_input_get_device_property_items (const xcb_input_get_device_property_reply_t
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_get_device_property_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_get_device_property_reply_t * xcb_input_get_device_property_reply
- ** 
- ** @param xcb_connection_t                        *c
- ** @param xcb_input_get_device_property_cookie_t   cookie
- ** @param xcb_generic_error_t                    **e
- ** @returns xcb_input_get_device_property_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_get_device_property_reply_t *
 xcb_input_get_device_property_reply (xcb_connection_t                        *c  /**< */,
                                      xcb_input_get_device_property_cookie_t   cookie  /**< */,
@@ -10076,16 +6919,6 @@ xcb_input_get_device_property_reply (xcb_connection_t                        *c 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_group_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_group_info_next
- ** 
- ** @param xcb_input_group_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_group_info_next (xcb_input_group_info_iterator_t *i  /**< */);
 
@@ -10098,16 +6931,6 @@ xcb_input_group_info_next (xcb_input_group_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_group_info_end
- ** 
- ** @param xcb_input_group_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_group_info_end (xcb_input_group_info_iterator_t i  /**< */);
 
@@ -10119,16 +6942,6 @@ xcb_input_group_info_end (xcb_input_group_info_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_modifier_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_modifier_info_next
- ** 
- ** @param xcb_input_modifier_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_modifier_info_next (xcb_input_modifier_info_iterator_t *i  /**< */);
 
@@ -10141,16 +6954,6 @@ xcb_input_modifier_info_next (xcb_input_modifier_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_modifier_info_end
- ** 
- ** @param xcb_input_modifier_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_modifier_info_end (xcb_input_modifier_info_iterator_t i  /**< */);
 
@@ -10163,20 +6966,8 @@ xcb_input_xi_query_pointer_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_query_pointer_cookie_t xcb_input_xi_query_pointer
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           window
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_input_xi_query_pointer_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_query_pointer_cookie_t
 xcb_input_xi_query_pointer (xcb_connection_t      *c  /**< */,
                             xcb_window_t           window  /**< */,
@@ -10188,64 +6979,22 @@ xcb_input_xi_query_pointer (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_query_pointer_cookie_t xcb_input_xi_query_pointer_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           window
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_input_xi_query_pointer_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_query_pointer_cookie_t
 xcb_input_xi_query_pointer_unchecked (xcb_connection_t      *c  /**< */,
                                       xcb_window_t           window  /**< */,
                                       xcb_input_device_id_t  deviceid  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_xi_query_pointer_buttons
- ** 
- ** @param const xcb_input_xi_query_pointer_reply_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_xi_query_pointer_buttons (const xcb_input_xi_query_pointer_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_query_pointer_buttons_length
- ** 
- ** @param const xcb_input_xi_query_pointer_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_query_pointer_buttons_length (const xcb_input_xi_query_pointer_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_xi_query_pointer_buttons_end
- ** 
- ** @param const xcb_input_xi_query_pointer_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_xi_query_pointer_buttons_end (const xcb_input_xi_query_pointer_reply_t *R  /**< */);
 
@@ -10256,25 +7005,13 @@ xcb_input_xi_query_pointer_buttons_end (const xcb_input_xi_query_pointer_reply_t
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_xi_query_pointer_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_query_pointer_reply_t * xcb_input_xi_query_pointer_reply
- ** 
- ** @param xcb_connection_t                     *c
- ** @param xcb_input_xi_query_pointer_cookie_t   cookie
- ** @param xcb_generic_error_t                 **e
- ** @returns xcb_input_xi_query_pointer_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_xi_query_pointer_reply_t *
 xcb_input_xi_query_pointer_reply (xcb_connection_t                     *c  /**< */,
                                   xcb_input_xi_query_pointer_cookie_t   cookie  /**< */,
@@ -10286,30 +7023,11 @@ xcb_input_xi_query_pointer_reply (xcb_connection_t                     *c  /**< 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_warp_pointer_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           src_win
- ** @param xcb_window_t           dst_win
- ** @param xcb_input_fp1616_t     src_x
- ** @param xcb_input_fp1616_t     src_y
- ** @param uint16_t               src_width
- ** @param uint16_t               src_height
- ** @param xcb_input_fp1616_t     dst_x
- ** @param xcb_input_fp1616_t     dst_y
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_warp_pointer_checked (xcb_connection_t      *c  /**< */,
                                    xcb_window_t           src_win  /**< */,
@@ -10328,27 +7046,8 @@ xcb_input_xi_warp_pointer_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_warp_pointer
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           src_win
- ** @param xcb_window_t           dst_win
- ** @param xcb_input_fp1616_t     src_x
- ** @param xcb_input_fp1616_t     src_y
- ** @param uint16_t               src_width
- ** @param uint16_t               src_height
- ** @param xcb_input_fp1616_t     dst_x
- ** @param xcb_input_fp1616_t     dst_y
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_warp_pointer (xcb_connection_t      *c  /**< */,
                            xcb_window_t           src_win  /**< */,
@@ -10367,24 +7066,11 @@ xcb_input_xi_warp_pointer (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_change_cursor_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           window
- ** @param xcb_cursor_t           cursor
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_change_cursor_checked (xcb_connection_t      *c  /**< */,
                                     xcb_window_t           window  /**< */,
@@ -10397,21 +7083,8 @@ xcb_input_xi_change_cursor_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_change_cursor
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           window
- ** @param xcb_cursor_t           cursor
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_change_cursor (xcb_connection_t      *c  /**< */,
                             xcb_window_t           window  /**< */,
@@ -10421,42 +7094,12 @@ xcb_input_xi_change_cursor (xcb_connection_t      *c  /**< */,
 int
 xcb_input_add_master_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_input_add_master_name
- ** 
- ** @param const xcb_input_add_master_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_input_add_master_name (const xcb_input_add_master_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_add_master_name_length
- ** 
- ** @param const xcb_input_add_master_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_add_master_name_length (const xcb_input_add_master_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_add_master_name_end
- ** 
- ** @param const xcb_input_add_master_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_add_master_name_end (const xcb_input_add_master_t *R  /**< */);
 
@@ -10468,16 +7111,6 @@ xcb_input_add_master_name_end (const xcb_input_add_master_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_add_master_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_add_master_next
- ** 
- ** @param xcb_input_add_master_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_add_master_next (xcb_input_add_master_iterator_t *i  /**< */);
 
@@ -10490,16 +7123,6 @@ xcb_input_add_master_next (xcb_input_add_master_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_add_master_end
- ** 
- ** @param xcb_input_add_master_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_add_master_end (xcb_input_add_master_iterator_t i  /**< */);
 
@@ -10511,16 +7134,6 @@ xcb_input_add_master_end (xcb_input_add_master_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_remove_master_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_remove_master_next
- ** 
- ** @param xcb_input_remove_master_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_remove_master_next (xcb_input_remove_master_iterator_t *i  /**< */);
 
@@ -10533,16 +7146,6 @@ xcb_input_remove_master_next (xcb_input_remove_master_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_remove_master_end
- ** 
- ** @param xcb_input_remove_master_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_remove_master_end (xcb_input_remove_master_iterator_t i  /**< */);
 
@@ -10554,16 +7157,6 @@ xcb_input_remove_master_end (xcb_input_remove_master_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_attach_slave_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_attach_slave_next
- ** 
- ** @param xcb_input_attach_slave_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_attach_slave_next (xcb_input_attach_slave_iterator_t *i  /**< */);
 
@@ -10576,16 +7169,6 @@ xcb_input_attach_slave_next (xcb_input_attach_slave_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_attach_slave_end
- ** 
- ** @param xcb_input_attach_slave_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_attach_slave_end (xcb_input_attach_slave_iterator_t i  /**< */);
 
@@ -10597,16 +7180,6 @@ xcb_input_attach_slave_end (xcb_input_attach_slave_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_detach_slave_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_detach_slave_next
- ** 
- ** @param xcb_input_detach_slave_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_detach_slave_next (xcb_input_detach_slave_iterator_t *i  /**< */);
 
@@ -10619,58 +7192,18 @@ xcb_input_detach_slave_next (xcb_input_detach_slave_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_detach_slave_end
- ** 
- ** @param xcb_input_detach_slave_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_detach_slave_end (xcb_input_detach_slave_iterator_t i  /**< */);
 
 int
 xcb_input_hierarchy_change_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_hierarchy_change_uninterpreted_data
- ** 
- ** @param const xcb_input_hierarchy_change_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_hierarchy_change_uninterpreted_data (const xcb_input_hierarchy_change_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_hierarchy_change_uninterpreted_data_length
- ** 
- ** @param const xcb_input_hierarchy_change_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_hierarchy_change_uninterpreted_data_length (const xcb_input_hierarchy_change_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_hierarchy_change_uninterpreted_data_end
- ** 
- ** @param const xcb_input_hierarchy_change_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_hierarchy_change_uninterpreted_data_end (const xcb_input_hierarchy_change_t *R  /**< */);
 
@@ -10682,16 +7215,6 @@ xcb_input_hierarchy_change_uninterpreted_data_end (const xcb_input_hierarchy_cha
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_hierarchy_change_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_hierarchy_change_next
- ** 
- ** @param xcb_input_hierarchy_change_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_hierarchy_change_next (xcb_input_hierarchy_change_iterator_t *i  /**< */);
 
@@ -10704,16 +7227,6 @@ xcb_input_hierarchy_change_next (xcb_input_hierarchy_change_iterator_t *i  /**< 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_hierarchy_change_end
- ** 
- ** @param xcb_input_hierarchy_change_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_hierarchy_change_end (xcb_input_hierarchy_change_iterator_t i  /**< */);
 
@@ -10726,23 +7239,11 @@ xcb_input_xi_change_hierarchy_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_change_hierarchy_checked
- ** 
- ** @param xcb_connection_t                   *c
- ** @param uint8_t                             num_changes
- ** @param const xcb_input_hierarchy_change_t *changes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_change_hierarchy_checked (xcb_connection_t                   *c  /**< */,
                                        uint8_t                             num_changes  /**< */,
@@ -10754,20 +7255,8 @@ xcb_input_xi_change_hierarchy_checked (xcb_connection_t                   *c  /*
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_change_hierarchy
- ** 
- ** @param xcb_connection_t                   *c
- ** @param uint8_t                             num_changes
- ** @param const xcb_input_hierarchy_change_t *changes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_change_hierarchy (xcb_connection_t                   *c  /**< */,
                                uint8_t                             num_changes  /**< */,
@@ -10779,23 +7268,11 @@ xcb_input_xi_change_hierarchy (xcb_connection_t                   *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_set_client_pointer_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           window
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_set_client_pointer_checked (xcb_connection_t      *c  /**< */,
                                          xcb_window_t           window  /**< */,
@@ -10807,20 +7284,8 @@ xcb_input_xi_set_client_pointer_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_set_client_pointer
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           window
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_set_client_pointer (xcb_connection_t      *c  /**< */,
                                  xcb_window_t           window  /**< */,
@@ -10832,19 +7297,8 @@ xcb_input_xi_set_client_pointer (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_client_pointer_cookie_t xcb_input_xi_get_client_pointer
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_input_xi_get_client_pointer_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_client_pointer_cookie_t
 xcb_input_xi_get_client_pointer (xcb_connection_t *c  /**< */,
                                  xcb_window_t      window  /**< */);
@@ -10855,22 +7309,11 @@ xcb_input_xi_get_client_pointer (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_client_pointer_cookie_t xcb_input_xi_get_client_pointer_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_input_xi_get_client_pointer_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_client_pointer_cookie_t
 xcb_input_xi_get_client_pointer_unchecked (xcb_connection_t *c  /**< */,
                                            xcb_window_t      window  /**< */);
@@ -10882,25 +7325,13 @@ xcb_input_xi_get_client_pointer_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_xi_get_client_pointer_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_client_pointer_reply_t * xcb_input_xi_get_client_pointer_reply
- ** 
- ** @param xcb_connection_t                          *c
- ** @param xcb_input_xi_get_client_pointer_cookie_t   cookie
- ** @param xcb_generic_error_t                      **e
- ** @returns xcb_input_xi_get_client_pointer_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_client_pointer_reply_t *
 xcb_input_xi_get_client_pointer_reply (xcb_connection_t                          *c  /**< */,
                                        xcb_input_xi_get_client_pointer_cookie_t   cookie  /**< */,
@@ -10909,42 +7340,12 @@ xcb_input_xi_get_client_pointer_reply (xcb_connection_t                         
 int
 xcb_input_event_mask_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_event_mask_mask
- ** 
- ** @param const xcb_input_event_mask_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_event_mask_mask (const xcb_input_event_mask_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_event_mask_mask_length
- ** 
- ** @param const xcb_input_event_mask_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_event_mask_mask_length (const xcb_input_event_mask_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_event_mask_mask_end
- ** 
- ** @param const xcb_input_event_mask_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_event_mask_mask_end (const xcb_input_event_mask_t *R  /**< */);
 
@@ -10956,16 +7357,6 @@ xcb_input_event_mask_mask_end (const xcb_input_event_mask_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_event_mask_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_event_mask_next
- ** 
- ** @param xcb_input_event_mask_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_event_mask_next (xcb_input_event_mask_iterator_t *i  /**< */);
 
@@ -10978,16 +7369,6 @@ xcb_input_event_mask_next (xcb_input_event_mask_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_event_mask_end
- ** 
- ** @param xcb_input_event_mask_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_event_mask_end (xcb_input_event_mask_iterator_t i  /**< */);
 
@@ -11000,24 +7381,11 @@ xcb_input_xi_select_events_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_select_events_checked
- ** 
- ** @param xcb_connection_t             *c
- ** @param xcb_window_t                  window
- ** @param uint16_t                      num_mask
- ** @param const xcb_input_event_mask_t *masks
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_select_events_checked (xcb_connection_t             *c  /**< */,
                                     xcb_window_t                  window  /**< */,
@@ -11030,21 +7398,8 @@ xcb_input_xi_select_events_checked (xcb_connection_t             *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_select_events
- ** 
- ** @param xcb_connection_t             *c
- ** @param xcb_window_t                  window
- ** @param uint16_t                      num_mask
- ** @param const xcb_input_event_mask_t *masks
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_select_events (xcb_connection_t             *c  /**< */,
                             xcb_window_t                  window  /**< */,
@@ -11057,20 +7412,8 @@ xcb_input_xi_select_events (xcb_connection_t             *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_query_version_cookie_t xcb_input_xi_query_version
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          major_version
- ** @param uint16_t          minor_version
- ** @returns xcb_input_xi_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_query_version_cookie_t
 xcb_input_xi_query_version (xcb_connection_t *c  /**< */,
                             uint16_t          major_version  /**< */,
@@ -11082,23 +7425,11 @@ xcb_input_xi_query_version (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_query_version_cookie_t xcb_input_xi_query_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          major_version
- ** @param uint16_t          minor_version
- ** @returns xcb_input_xi_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_query_version_cookie_t
 xcb_input_xi_query_version_unchecked (xcb_connection_t *c  /**< */,
                                       uint16_t          major_version  /**< */,
@@ -11111,25 +7442,13 @@ xcb_input_xi_query_version_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_xi_query_version_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_query_version_reply_t * xcb_input_xi_query_version_reply
- ** 
- ** @param xcb_connection_t                     *c
- ** @param xcb_input_xi_query_version_cookie_t   cookie
- ** @param xcb_generic_error_t                 **e
- ** @returns xcb_input_xi_query_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_xi_query_version_reply_t *
 xcb_input_xi_query_version_reply (xcb_connection_t                     *c  /**< */,
                                   xcb_input_xi_query_version_cookie_t   cookie  /**< */,
@@ -11138,81 +7457,21 @@ xcb_input_xi_query_version_reply (xcb_connection_t                     *c  /**< 
 int
 xcb_input_button_class_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_button_class_state
- ** 
- ** @param const xcb_input_button_class_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_button_class_state (const xcb_input_button_class_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_button_class_state_length
- ** 
- ** @param const xcb_input_button_class_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_button_class_state_length (const xcb_input_button_class_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_button_class_state_end
- ** 
- ** @param const xcb_input_button_class_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_button_class_state_end (const xcb_input_button_class_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_input_button_class_labels
- ** 
- ** @param const xcb_input_button_class_t *R
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_input_button_class_labels (const xcb_input_button_class_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_button_class_labels_length
- ** 
- ** @param const xcb_input_button_class_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_button_class_labels_length (const xcb_input_button_class_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_button_class_labels_end
- ** 
- ** @param const xcb_input_button_class_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_button_class_labels_end (const xcb_input_button_class_t *R  /**< */);
 
@@ -11224,16 +7483,6 @@ xcb_input_button_class_labels_end (const xcb_input_button_class_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_button_class_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_button_class_next
- ** 
- ** @param xcb_input_button_class_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_button_class_next (xcb_input_button_class_iterator_t *i  /**< */);
 
@@ -11246,58 +7495,18 @@ xcb_input_button_class_next (xcb_input_button_class_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_button_class_end
- ** 
- ** @param xcb_input_button_class_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_button_class_end (xcb_input_button_class_iterator_t i  /**< */);
 
 int
 xcb_input_key_class_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_key_class_keys
- ** 
- ** @param const xcb_input_key_class_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_key_class_keys (const xcb_input_key_class_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_key_class_keys_length
- ** 
- ** @param const xcb_input_key_class_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_key_class_keys_length (const xcb_input_key_class_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_key_class_keys_end
- ** 
- ** @param const xcb_input_key_class_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_key_class_keys_end (const xcb_input_key_class_t *R  /**< */);
 
@@ -11309,16 +7518,6 @@ xcb_input_key_class_keys_end (const xcb_input_key_class_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_key_class_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_key_class_next
- ** 
- ** @param xcb_input_key_class_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_key_class_next (xcb_input_key_class_iterator_t *i  /**< */);
 
@@ -11331,16 +7530,6 @@ xcb_input_key_class_next (xcb_input_key_class_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_key_class_end
- ** 
- ** @param xcb_input_key_class_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_key_class_end (xcb_input_key_class_iterator_t i  /**< */);
 
@@ -11352,16 +7541,6 @@ xcb_input_key_class_end (xcb_input_key_class_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_scroll_class_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_scroll_class_next
- ** 
- ** @param xcb_input_scroll_class_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_scroll_class_next (xcb_input_scroll_class_iterator_t *i  /**< */);
 
@@ -11374,16 +7553,6 @@ xcb_input_scroll_class_next (xcb_input_scroll_class_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_scroll_class_end
- ** 
- ** @param xcb_input_scroll_class_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_scroll_class_end (xcb_input_scroll_class_iterator_t i  /**< */);
 
@@ -11395,16 +7564,6 @@ xcb_input_scroll_class_end (xcb_input_scroll_class_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_touch_class_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_touch_class_next
- ** 
- ** @param xcb_input_touch_class_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_touch_class_next (xcb_input_touch_class_iterator_t *i  /**< */);
 
@@ -11417,16 +7576,6 @@ xcb_input_touch_class_next (xcb_input_touch_class_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_touch_class_end
- ** 
- ** @param xcb_input_touch_class_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_touch_class_end (xcb_input_touch_class_iterator_t i  /**< */);
 
@@ -11438,16 +7587,6 @@ xcb_input_touch_class_end (xcb_input_touch_class_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_valuator_class_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_valuator_class_next
- ** 
- ** @param xcb_input_valuator_class_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_valuator_class_next (xcb_input_valuator_class_iterator_t *i  /**< */);
 
@@ -11460,58 +7599,18 @@ xcb_input_valuator_class_next (xcb_input_valuator_class_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_valuator_class_end
- ** 
- ** @param xcb_input_valuator_class_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_valuator_class_end (xcb_input_valuator_class_iterator_t i  /**< */);
 
 int
 xcb_input_device_class_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_device_class_uninterpreted_data
- ** 
- ** @param const xcb_input_device_class_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_device_class_uninterpreted_data (const xcb_input_device_class_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_device_class_uninterpreted_data_length
- ** 
- ** @param const xcb_input_device_class_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_device_class_uninterpreted_data_length (const xcb_input_device_class_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_class_uninterpreted_data_end
- ** 
- ** @param const xcb_input_device_class_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_class_uninterpreted_data_end (const xcb_input_device_class_t *R  /**< */);
 
@@ -11523,16 +7622,6 @@ xcb_input_device_class_uninterpreted_data_end (const xcb_input_device_class_t *R
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_device_class_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_device_class_next
- ** 
- ** @param xcb_input_device_class_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_device_class_next (xcb_input_device_class_iterator_t *i  /**< */);
 
@@ -11545,84 +7634,24 @@ xcb_input_device_class_next (xcb_input_device_class_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_device_class_end
- ** 
- ** @param xcb_input_device_class_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_device_class_end (xcb_input_device_class_iterator_t i  /**< */);
 
 int
 xcb_input_xi_device_info_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** char * xcb_input_xi_device_info_name
- ** 
- ** @param const xcb_input_xi_device_info_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_input_xi_device_info_name (const xcb_input_xi_device_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_device_info_name_length
- ** 
- ** @param const xcb_input_xi_device_info_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_device_info_name_length (const xcb_input_xi_device_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_xi_device_info_name_end
- ** 
- ** @param const xcb_input_xi_device_info_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_xi_device_info_name_end (const xcb_input_xi_device_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_device_info_classes_length
- ** 
- ** @param const xcb_input_xi_device_info_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_device_info_classes_length (const xcb_input_xi_device_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_device_class_iterator_t xcb_input_xi_device_info_classes_iterator
- ** 
- ** @param const xcb_input_xi_device_info_t *R
- ** @returns xcb_input_device_class_iterator_t
- **
- *****************************************************************************/
- 
 xcb_input_device_class_iterator_t
 xcb_input_xi_device_info_classes_iterator (const xcb_input_xi_device_info_t *R  /**< */);
 
@@ -11634,16 +7663,6 @@ xcb_input_xi_device_info_classes_iterator (const xcb_input_xi_device_info_t *R  
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_xi_device_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_xi_device_info_next
- ** 
- ** @param xcb_input_xi_device_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_xi_device_info_next (xcb_input_xi_device_info_iterator_t *i  /**< */);
 
@@ -11656,16 +7675,6 @@ xcb_input_xi_device_info_next (xcb_input_xi_device_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_xi_device_info_end
- ** 
- ** @param xcb_input_xi_device_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_xi_device_info_end (xcb_input_xi_device_info_iterator_t i  /**< */);
 
@@ -11678,19 +7687,8 @@ xcb_input_xi_query_device_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_query_device_cookie_t xcb_input_xi_query_device
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_input_xi_query_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_query_device_cookie_t
 xcb_input_xi_query_device (xcb_connection_t      *c  /**< */,
                            xcb_input_device_id_t  deviceid  /**< */);
@@ -11701,49 +7699,18 @@ xcb_input_xi_query_device (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_query_device_cookie_t xcb_input_xi_query_device_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_input_xi_query_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_query_device_cookie_t
 xcb_input_xi_query_device_unchecked (xcb_connection_t      *c  /**< */,
                                      xcb_input_device_id_t  deviceid  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_query_device_infos_length
- ** 
- ** @param const xcb_input_xi_query_device_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_query_device_infos_length (const xcb_input_xi_query_device_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_xi_device_info_iterator_t xcb_input_xi_query_device_infos_iterator
- ** 
- ** @param const xcb_input_xi_query_device_reply_t *R
- ** @returns xcb_input_xi_device_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_device_info_iterator_t
 xcb_input_xi_query_device_infos_iterator (const xcb_input_xi_query_device_reply_t *R  /**< */);
 
@@ -11754,25 +7721,13 @@ xcb_input_xi_query_device_infos_iterator (const xcb_input_xi_query_device_reply_
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_xi_query_device_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_query_device_reply_t * xcb_input_xi_query_device_reply
- ** 
- ** @param xcb_connection_t                    *c
- ** @param xcb_input_xi_query_device_cookie_t   cookie
- ** @param xcb_generic_error_t                **e
- ** @returns xcb_input_xi_query_device_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_xi_query_device_reply_t *
 xcb_input_xi_query_device_reply (xcb_connection_t                    *c  /**< */,
                                  xcb_input_xi_query_device_cookie_t   cookie  /**< */,
@@ -11784,24 +7739,11 @@ xcb_input_xi_query_device_reply (xcb_connection_t                    *c  /**< */
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_set_focus_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           window
- ** @param xcb_timestamp_t        time
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_set_focus_checked (xcb_connection_t      *c  /**< */,
                                 xcb_window_t           window  /**< */,
@@ -11814,21 +7756,8 @@ xcb_input_xi_set_focus_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_set_focus
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           window
- ** @param xcb_timestamp_t        time
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_set_focus (xcb_connection_t      *c  /**< */,
                         xcb_window_t           window  /**< */,
@@ -11841,19 +7770,8 @@ xcb_input_xi_set_focus (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_focus_cookie_t xcb_input_xi_get_focus
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_input_xi_get_focus_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_focus_cookie_t
 xcb_input_xi_get_focus (xcb_connection_t      *c  /**< */,
                         xcb_input_device_id_t  deviceid  /**< */);
@@ -11864,22 +7782,11 @@ xcb_input_xi_get_focus (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_focus_cookie_t xcb_input_xi_get_focus_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_input_xi_get_focus_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_focus_cookie_t
 xcb_input_xi_get_focus_unchecked (xcb_connection_t      *c  /**< */,
                                   xcb_input_device_id_t  deviceid  /**< */);
@@ -11891,25 +7798,13 @@ xcb_input_xi_get_focus_unchecked (xcb_connection_t      *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_xi_get_focus_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_focus_reply_t * xcb_input_xi_get_focus_reply
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_input_xi_get_focus_cookie_t   cookie
- ** @param xcb_generic_error_t             **e
- ** @returns xcb_input_xi_get_focus_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_focus_reply_t *
 xcb_input_xi_get_focus_reply (xcb_connection_t                 *c  /**< */,
                               xcb_input_xi_get_focus_cookie_t   cookie  /**< */,
@@ -11924,27 +7819,8 @@ xcb_input_xi_grab_device_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_grab_device_cookie_t xcb_input_xi_grab_device
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           window
- ** @param xcb_timestamp_t        time
- ** @param xcb_cursor_t           cursor
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint8_t                mode
- ** @param uint8_t                paired_device_mode
- ** @param uint8_t                owner_events
- ** @param uint16_t               mask_len
- ** @param const uint32_t        *mask
- ** @returns xcb_input_xi_grab_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_grab_device_cookie_t
 xcb_input_xi_grab_device (xcb_connection_t      *c  /**< */,
                           xcb_window_t           window  /**< */,
@@ -11963,30 +7839,11 @@ xcb_input_xi_grab_device (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_grab_device_cookie_t xcb_input_xi_grab_device_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           window
- ** @param xcb_timestamp_t        time
- ** @param xcb_cursor_t           cursor
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint8_t                mode
- ** @param uint8_t                paired_device_mode
- ** @param uint8_t                owner_events
- ** @param uint16_t               mask_len
- ** @param const uint32_t        *mask
- ** @returns xcb_input_xi_grab_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_grab_device_cookie_t
 xcb_input_xi_grab_device_unchecked (xcb_connection_t      *c  /**< */,
                                     xcb_window_t           window  /**< */,
@@ -12006,25 +7863,13 @@ xcb_input_xi_grab_device_unchecked (xcb_connection_t      *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_xi_grab_device_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_grab_device_reply_t * xcb_input_xi_grab_device_reply
- ** 
- ** @param xcb_connection_t                   *c
- ** @param xcb_input_xi_grab_device_cookie_t   cookie
- ** @param xcb_generic_error_t               **e
- ** @returns xcb_input_xi_grab_device_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_xi_grab_device_reply_t *
 xcb_input_xi_grab_device_reply (xcb_connection_t                   *c  /**< */,
                                 xcb_input_xi_grab_device_cookie_t   cookie  /**< */,
@@ -12036,23 +7881,11 @@ xcb_input_xi_grab_device_reply (xcb_connection_t                   *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_ungrab_device_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_timestamp_t        time
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_ungrab_device_checked (xcb_connection_t      *c  /**< */,
                                     xcb_timestamp_t        time  /**< */,
@@ -12064,20 +7897,8 @@ xcb_input_xi_ungrab_device_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_ungrab_device
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_timestamp_t        time
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_ungrab_device (xcb_connection_t      *c  /**< */,
                             xcb_timestamp_t        time  /**< */,
@@ -12089,26 +7910,11 @@ xcb_input_xi_ungrab_device (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_allow_events_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_timestamp_t        time
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint8_t                event_mode
- ** @param uint32_t               touchid
- ** @param xcb_window_t           grab_window
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_allow_events_checked (xcb_connection_t      *c  /**< */,
                                    xcb_timestamp_t        time  /**< */,
@@ -12123,23 +7929,8 @@ xcb_input_xi_allow_events_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_allow_events
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_timestamp_t        time
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint8_t                event_mode
- ** @param uint32_t               touchid
- ** @param xcb_window_t           grab_window
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_allow_events (xcb_connection_t      *c  /**< */,
                            xcb_timestamp_t        time  /**< */,
@@ -12156,16 +7947,6 @@ xcb_input_xi_allow_events (xcb_connection_t      *c  /**< */,
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_grab_modifier_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_grab_modifier_info_next
- ** 
- ** @param xcb_input_grab_modifier_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_grab_modifier_info_next (xcb_input_grab_modifier_info_iterator_t *i  /**< */);
 
@@ -12178,16 +7959,6 @@ xcb_input_grab_modifier_info_next (xcb_input_grab_modifier_info_iterator_t *i  /
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_grab_modifier_info_end
- ** 
- ** @param xcb_input_grab_modifier_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_grab_modifier_info_end (xcb_input_grab_modifier_info_iterator_t i  /**< */);
 
@@ -12200,31 +7971,8 @@ xcb_input_xi_passive_grab_device_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_passive_grab_device_cookie_t xcb_input_xi_passive_grab_device
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_timestamp_t        time
- ** @param xcb_window_t           grab_window
- ** @param xcb_cursor_t           cursor
- ** @param uint32_t               detail
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint16_t               num_modifiers
- ** @param uint16_t               mask_len
- ** @param uint8_t                grab_type
- ** @param uint8_t                grab_mode
- ** @param uint8_t                paired_device_mode
- ** @param uint8_t                owner_events
- ** @param const uint32_t        *mask
- ** @param const uint32_t        *modifiers
- ** @returns xcb_input_xi_passive_grab_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_passive_grab_device_cookie_t
 xcb_input_xi_passive_grab_device (xcb_connection_t      *c  /**< */,
                                   xcb_timestamp_t        time  /**< */,
@@ -12247,34 +7995,11 @@ xcb_input_xi_passive_grab_device (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_passive_grab_device_cookie_t xcb_input_xi_passive_grab_device_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_timestamp_t        time
- ** @param xcb_window_t           grab_window
- ** @param xcb_cursor_t           cursor
- ** @param uint32_t               detail
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint16_t               num_modifiers
- ** @param uint16_t               mask_len
- ** @param uint8_t                grab_type
- ** @param uint8_t                grab_mode
- ** @param uint8_t                paired_device_mode
- ** @param uint8_t                owner_events
- ** @param const uint32_t        *mask
- ** @param const uint32_t        *modifiers
- ** @returns xcb_input_xi_passive_grab_device_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_passive_grab_device_cookie_t
 xcb_input_xi_passive_grab_device_unchecked (xcb_connection_t      *c  /**< */,
                                             xcb_timestamp_t        time  /**< */,
@@ -12291,42 +8016,12 @@ xcb_input_xi_passive_grab_device_unchecked (xcb_connection_t      *c  /**< */,
                                             const uint32_t        *mask  /**< */,
                                             const uint32_t        *modifiers  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_grab_modifier_info_t * xcb_input_xi_passive_grab_device_modifiers
- ** 
- ** @param const xcb_input_xi_passive_grab_device_reply_t *R
- ** @returns xcb_input_grab_modifier_info_t *
- **
- *****************************************************************************/
- 
 xcb_input_grab_modifier_info_t *
 xcb_input_xi_passive_grab_device_modifiers (const xcb_input_xi_passive_grab_device_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_passive_grab_device_modifiers_length
- ** 
- ** @param const xcb_input_xi_passive_grab_device_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_passive_grab_device_modifiers_length (const xcb_input_xi_passive_grab_device_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_grab_modifier_info_iterator_t xcb_input_xi_passive_grab_device_modifiers_iterator
- ** 
- ** @param const xcb_input_xi_passive_grab_device_reply_t *R
- ** @returns xcb_input_grab_modifier_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_input_grab_modifier_info_iterator_t
 xcb_input_xi_passive_grab_device_modifiers_iterator (const xcb_input_xi_passive_grab_device_reply_t *R  /**< */);
 
@@ -12337,25 +8032,13 @@ xcb_input_xi_passive_grab_device_modifiers_iterator (const xcb_input_xi_passive_
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_xi_passive_grab_device_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_passive_grab_device_reply_t * xcb_input_xi_passive_grab_device_reply
- ** 
- ** @param xcb_connection_t                           *c
- ** @param xcb_input_xi_passive_grab_device_cookie_t   cookie
- ** @param xcb_generic_error_t                       **e
- ** @returns xcb_input_xi_passive_grab_device_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_xi_passive_grab_device_reply_t *
 xcb_input_xi_passive_grab_device_reply (xcb_connection_t                           *c  /**< */,
                                         xcb_input_xi_passive_grab_device_cookie_t   cookie  /**< */,
@@ -12370,27 +8053,11 @@ xcb_input_xi_passive_ungrab_device_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_passive_ungrab_device_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           grab_window
- ** @param uint32_t               detail
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint16_t               num_modifiers
- ** @param uint8_t                grab_type
- ** @param const uint32_t        *modifiers
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_passive_ungrab_device_checked (xcb_connection_t      *c  /**< */,
                                             xcb_window_t           grab_window  /**< */,
@@ -12406,24 +8073,8 @@ xcb_input_xi_passive_ungrab_device_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_passive_ungrab_device
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_window_t           grab_window
- ** @param uint32_t               detail
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint16_t               num_modifiers
- ** @param uint8_t                grab_type
- ** @param const uint32_t        *modifiers
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_passive_ungrab_device (xcb_connection_t      *c  /**< */,
                                     xcb_window_t           grab_window  /**< */,
@@ -12442,19 +8093,8 @@ xcb_input_xi_list_properties_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_list_properties_cookie_t xcb_input_xi_list_properties
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_input_xi_list_properties_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_list_properties_cookie_t
 xcb_input_xi_list_properties (xcb_connection_t      *c  /**< */,
                               xcb_input_device_id_t  deviceid  /**< */);
@@ -12465,62 +8105,21 @@ xcb_input_xi_list_properties (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_list_properties_cookie_t xcb_input_xi_list_properties_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @returns xcb_input_xi_list_properties_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_list_properties_cookie_t
 xcb_input_xi_list_properties_unchecked (xcb_connection_t      *c  /**< */,
                                         xcb_input_device_id_t  deviceid  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_input_xi_list_properties_properties
- ** 
- ** @param const xcb_input_xi_list_properties_reply_t *R
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_input_xi_list_properties_properties (const xcb_input_xi_list_properties_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_list_properties_properties_length
- ** 
- ** @param const xcb_input_xi_list_properties_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_list_properties_properties_length (const xcb_input_xi_list_properties_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_xi_list_properties_properties_end
- ** 
- ** @param const xcb_input_xi_list_properties_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_xi_list_properties_properties_end (const xcb_input_xi_list_properties_reply_t *R  /**< */);
 
@@ -12531,149 +8130,47 @@ xcb_input_xi_list_properties_properties_end (const xcb_input_xi_list_properties_
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_xi_list_properties_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_list_properties_reply_t * xcb_input_xi_list_properties_reply
- ** 
- ** @param xcb_connection_t                       *c
- ** @param xcb_input_xi_list_properties_cookie_t   cookie
- ** @param xcb_generic_error_t                   **e
- ** @returns xcb_input_xi_list_properties_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_xi_list_properties_reply_t *
 xcb_input_xi_list_properties_reply (xcb_connection_t                       *c  /**< */,
                                     xcb_input_xi_list_properties_cookie_t   cookie  /**< */,
                                     xcb_generic_error_t                   **e  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_xi_change_property_items_data_8
- ** 
- ** @param const xcb_input_xi_change_property_items_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_xi_change_property_items_data_8 (const xcb_input_xi_change_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_change_property_items_data_8_length
- ** 
- ** @param const xcb_input_xi_change_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_change_property_items_data_8_length (const xcb_input_xi_change_property_request_t *R  /**< */,
                                                   const xcb_input_xi_change_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_xi_change_property_items_data_8_end
- ** 
- ** @param const xcb_input_xi_change_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_xi_change_property_items_data_8_end (const xcb_input_xi_change_property_request_t *R  /**< */,
                                                const xcb_input_xi_change_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint16_t * xcb_input_xi_change_property_items_data_16
- ** 
- ** @param const xcb_input_xi_change_property_items_t *S
- ** @returns uint16_t *
- **
- *****************************************************************************/
- 
 uint16_t *
 xcb_input_xi_change_property_items_data_16 (const xcb_input_xi_change_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_change_property_items_data_16_length
- ** 
- ** @param const xcb_input_xi_change_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_change_property_items_data_16_length (const xcb_input_xi_change_property_request_t *R  /**< */,
                                                    const xcb_input_xi_change_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_xi_change_property_items_data_16_end
- ** 
- ** @param const xcb_input_xi_change_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_xi_change_property_items_data_16_end (const xcb_input_xi_change_property_request_t *R  /**< */,
                                                 const xcb_input_xi_change_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_xi_change_property_items_data_32
- ** 
- ** @param const xcb_input_xi_change_property_items_t *S
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_xi_change_property_items_data_32 (const xcb_input_xi_change_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_change_property_items_data_32_length
- ** 
- ** @param const xcb_input_xi_change_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_change_property_items_data_32_length (const xcb_input_xi_change_property_request_t *R  /**< */,
                                                    const xcb_input_xi_change_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_xi_change_property_items_data_32_end
- ** 
- ** @param const xcb_input_xi_change_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_xi_change_property_items_data_32_end (const xcb_input_xi_change_property_request_t *R  /**< */,
                                                 const xcb_input_xi_change_property_items_t *S /**< */);
@@ -12701,28 +8198,11 @@ xcb_input_xi_change_property_items_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_change_property_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint8_t                mode
- ** @param uint8_t                format
- ** @param xcb_atom_t             property
- ** @param xcb_atom_t             type
- ** @param uint32_t               num_items
- ** @param const void            *items
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_change_property_checked (xcb_connection_t      *c  /**< */,
                                       xcb_input_device_id_t  deviceid  /**< */,
@@ -12739,25 +8219,8 @@ xcb_input_xi_change_property_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_change_property
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint8_t                mode
- ** @param uint8_t                format
- ** @param xcb_atom_t             property
- ** @param xcb_atom_t             type
- ** @param uint32_t               num_items
- ** @param const void            *items
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_change_property (xcb_connection_t      *c  /**< */,
                               xcb_input_device_id_t  deviceid  /**< */,
@@ -12774,28 +8237,11 @@ xcb_input_xi_change_property (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_change_property_aux_checked
- ** 
- ** @param xcb_connection_t                           *c
- ** @param xcb_input_device_id_t                       deviceid
- ** @param uint8_t                                     mode
- ** @param uint8_t                                     format
- ** @param xcb_atom_t                                  property
- ** @param xcb_atom_t                                  type
- ** @param uint32_t                                    num_items
- ** @param const xcb_input_xi_change_property_items_t *items
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_change_property_aux_checked (xcb_connection_t                           *c  /**< */,
                                           xcb_input_device_id_t                       deviceid  /**< */,
@@ -12812,25 +8258,8 @@ xcb_input_xi_change_property_aux_checked (xcb_connection_t                      
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_change_property_aux
- ** 
- ** @param xcb_connection_t                           *c
- ** @param xcb_input_device_id_t                       deviceid
- ** @param uint8_t                                     mode
- ** @param uint8_t                                     format
- ** @param xcb_atom_t                                  property
- ** @param xcb_atom_t                                  type
- ** @param uint32_t                                    num_items
- ** @param const xcb_input_xi_change_property_items_t *items
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_change_property_aux (xcb_connection_t                           *c  /**< */,
                                   xcb_input_device_id_t                       deviceid  /**< */,
@@ -12847,23 +8276,11 @@ xcb_input_xi_change_property_aux (xcb_connection_t                           *c 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_delete_property_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @param xcb_atom_t             property
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_delete_property_checked (xcb_connection_t      *c  /**< */,
                                       xcb_input_device_id_t  deviceid  /**< */,
@@ -12875,144 +8292,42 @@ xcb_input_xi_delete_property_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_delete_property
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @param xcb_atom_t             property
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_delete_property (xcb_connection_t      *c  /**< */,
                               xcb_input_device_id_t  deviceid  /**< */,
                               xcb_atom_t             property  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_input_xi_get_property_items_data_8
- ** 
- ** @param const xcb_input_xi_get_property_items_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_input_xi_get_property_items_data_8 (const xcb_input_xi_get_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_get_property_items_data_8_length
- ** 
- ** @param const xcb_input_xi_get_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_get_property_items_data_8_length (const xcb_input_xi_get_property_reply_t *R  /**< */,
                                                const xcb_input_xi_get_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_xi_get_property_items_data_8_end
- ** 
- ** @param const xcb_input_xi_get_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_xi_get_property_items_data_8_end (const xcb_input_xi_get_property_reply_t *R  /**< */,
                                             const xcb_input_xi_get_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint16_t * xcb_input_xi_get_property_items_data_16
- ** 
- ** @param const xcb_input_xi_get_property_items_t *S
- ** @returns uint16_t *
- **
- *****************************************************************************/
- 
 uint16_t *
 xcb_input_xi_get_property_items_data_16 (const xcb_input_xi_get_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_get_property_items_data_16_length
- ** 
- ** @param const xcb_input_xi_get_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_get_property_items_data_16_length (const xcb_input_xi_get_property_reply_t *R  /**< */,
                                                 const xcb_input_xi_get_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_xi_get_property_items_data_16_end
- ** 
- ** @param const xcb_input_xi_get_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_xi_get_property_items_data_16_end (const xcb_input_xi_get_property_reply_t *R  /**< */,
                                              const xcb_input_xi_get_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_input_xi_get_property_items_data_32
- ** 
- ** @param const xcb_input_xi_get_property_items_t *S
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_input_xi_get_property_items_data_32 (const xcb_input_xi_get_property_items_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_get_property_items_data_32_length
- ** 
- ** @param const xcb_input_xi_get_property_items_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_get_property_items_data_32_length (const xcb_input_xi_get_property_reply_t *R  /**< */,
                                                 const xcb_input_xi_get_property_items_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_xi_get_property_items_data_32_end
- ** 
- ** @param const xcb_input_xi_get_property_items_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_xi_get_property_items_data_32_end (const xcb_input_xi_get_property_reply_t *R  /**< */,
                                              const xcb_input_xi_get_property_items_t *S /**< */);
@@ -13040,24 +8355,8 @@ xcb_input_xi_get_property_items_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_property_cookie_t xcb_input_xi_get_property
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint8_t                _delete
- ** @param xcb_atom_t             property
- ** @param xcb_atom_t             type
- ** @param uint32_t               offset
- ** @param uint32_t               len
- ** @returns xcb_input_xi_get_property_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_property_cookie_t
 xcb_input_xi_get_property (xcb_connection_t      *c  /**< */,
                            xcb_input_device_id_t  deviceid  /**< */,
@@ -13073,27 +8372,11 @@ xcb_input_xi_get_property (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_property_cookie_t xcb_input_xi_get_property_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_input_device_id_t  deviceid
- ** @param uint8_t                _delete
- ** @param xcb_atom_t             property
- ** @param xcb_atom_t             type
- ** @param uint32_t               offset
- ** @param uint32_t               len
- ** @returns xcb_input_xi_get_property_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_property_cookie_t
 xcb_input_xi_get_property_unchecked (xcb_connection_t      *c  /**< */,
                                      xcb_input_device_id_t  deviceid  /**< */,
@@ -13103,16 +8386,6 @@ xcb_input_xi_get_property_unchecked (xcb_connection_t      *c  /**< */,
                                      uint32_t               offset  /**< */,
                                      uint32_t               len  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_property_items_t * xcb_input_xi_get_property_items
- ** 
- ** @param const xcb_input_xi_get_property_reply_t *R
- ** @returns xcb_input_xi_get_property_items_t *
- **
- *****************************************************************************/
- 
 void *
 xcb_input_xi_get_property_items (const xcb_input_xi_get_property_reply_t *R  /**< */);
 
@@ -13123,25 +8396,13 @@ xcb_input_xi_get_property_items (const xcb_input_xi_get_property_reply_t *R  /**
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_xi_get_property_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_property_reply_t * xcb_input_xi_get_property_reply
- ** 
- ** @param xcb_connection_t                    *c
- ** @param xcb_input_xi_get_property_cookie_t   cookie
- ** @param xcb_generic_error_t                **e
- ** @returns xcb_input_xi_get_property_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_property_reply_t *
 xcb_input_xi_get_property_reply (xcb_connection_t                    *c  /**< */,
                                  xcb_input_xi_get_property_cookie_t   cookie  /**< */,
@@ -13156,19 +8417,8 @@ xcb_input_xi_get_selected_events_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_selected_events_cookie_t xcb_input_xi_get_selected_events
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_input_xi_get_selected_events_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_selected_events_cookie_t
 xcb_input_xi_get_selected_events (xcb_connection_t *c  /**< */,
                                   xcb_window_t      window  /**< */);
@@ -13179,49 +8429,18 @@ xcb_input_xi_get_selected_events (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_selected_events_cookie_t xcb_input_xi_get_selected_events_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_input_xi_get_selected_events_cookie_t
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_selected_events_cookie_t
 xcb_input_xi_get_selected_events_unchecked (xcb_connection_t *c  /**< */,
                                             xcb_window_t      window  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_input_xi_get_selected_events_masks_length
- ** 
- ** @param const xcb_input_xi_get_selected_events_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_input_xi_get_selected_events_masks_length (const xcb_input_xi_get_selected_events_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_input_event_mask_iterator_t xcb_input_xi_get_selected_events_masks_iterator
- ** 
- ** @param const xcb_input_xi_get_selected_events_reply_t *R
- ** @returns xcb_input_event_mask_iterator_t
- **
- *****************************************************************************/
- 
 xcb_input_event_mask_iterator_t
 xcb_input_xi_get_selected_events_masks_iterator (const xcb_input_xi_get_selected_events_reply_t *R  /**< */);
 
@@ -13232,25 +8451,13 @@ xcb_input_xi_get_selected_events_masks_iterator (const xcb_input_xi_get_selected
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_input_xi_get_selected_events_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_input_xi_get_selected_events_reply_t * xcb_input_xi_get_selected_events_reply
- ** 
- ** @param xcb_connection_t                           *c
- ** @param xcb_input_xi_get_selected_events_cookie_t   cookie
- ** @param xcb_generic_error_t                       **e
- ** @returns xcb_input_xi_get_selected_events_reply_t *
- **
- *****************************************************************************/
- 
 xcb_input_xi_get_selected_events_reply_t *
 xcb_input_xi_get_selected_events_reply (xcb_connection_t                           *c  /**< */,
                                         xcb_input_xi_get_selected_events_cookie_t   cookie  /**< */,
@@ -13264,16 +8471,6 @@ xcb_input_xi_get_selected_events_reply (xcb_connection_t                        
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_barrier_release_pointer_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_barrier_release_pointer_info_next
- ** 
- ** @param xcb_input_barrier_release_pointer_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_barrier_release_pointer_info_next (xcb_input_barrier_release_pointer_info_iterator_t *i  /**< */);
 
@@ -13286,16 +8483,6 @@ xcb_input_barrier_release_pointer_info_next (xcb_input_barrier_release_pointer_i
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_barrier_release_pointer_info_end
- ** 
- ** @param xcb_input_barrier_release_pointer_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_barrier_release_pointer_info_end (xcb_input_barrier_release_pointer_info_iterator_t i  /**< */);
 
@@ -13308,23 +8495,11 @@ xcb_input_xi_barrier_release_pointer_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_barrier_release_pointer_checked
- ** 
- ** @param xcb_connection_t                               *c
- ** @param uint32_t                                        num_barriers
- ** @param const xcb_input_barrier_release_pointer_info_t *barriers
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_barrier_release_pointer_checked (xcb_connection_t                               *c  /**< */,
                                               uint32_t                                        num_barriers  /**< */,
@@ -13336,20 +8511,8 @@ xcb_input_xi_barrier_release_pointer_checked (xcb_connection_t                  
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_input_xi_barrier_release_pointer
- ** 
- ** @param xcb_connection_t                               *c
- ** @param uint32_t                                        num_barriers
- ** @param const xcb_input_barrier_release_pointer_info_t *barriers
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_input_xi_barrier_release_pointer (xcb_connection_t                               *c  /**< */,
                                       uint32_t                                        num_barriers  /**< */,
@@ -13393,16 +8556,6 @@ xcb_input_focus_out_sizeof (const void  *_buffer  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_input_hierarchy_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_input_hierarchy_info_next
- ** 
- ** @param xcb_input_hierarchy_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_input_hierarchy_info_next (xcb_input_hierarchy_info_iterator_t *i  /**< */);
 
@@ -13415,16 +8568,6 @@ xcb_input_hierarchy_info_next (xcb_input_hierarchy_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_input_hierarchy_info_end
- ** 
- ** @param xcb_input_hierarchy_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_input_hierarchy_info_end (xcb_input_hierarchy_info_iterator_t i  /**< */);
 
