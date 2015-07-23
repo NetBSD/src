@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.22 2015/07/23 14:30:06 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.23 2015/07/23 18:22:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.22 2015/07/23 14:30:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.23 2015/07/23 18:22:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -374,13 +374,13 @@ tegra_car_periph_sdmmc_rate(u_int port)
 
 	const uint32_t src = bus_space_read_4(bst, bsh, src_reg);
 
-	const u_int div = (__SHIFTOUT(src, CAR_CLKSRC_SDMMC_DIV) / 2) + 1;
+	const u_int div = __SHIFTOUT(src, CAR_CLKSRC_SDMMC_DIV) + 2;
 
-	return tegra_car_pllp0_rate() / div;
+	return (tegra_car_pllp0_rate() * 2) / div;
 }
 
 int
-tegra_car_periph_sdmmc_set_div(u_int port, u_int div)
+tegra_car_periph_sdmmc_set_rate(u_int port, u_int rate)
 {
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
@@ -388,7 +388,7 @@ tegra_car_periph_sdmmc_set_div(u_int port, u_int div)
 	u_int dev_bit;
 	uint32_t src;
 
-	KASSERT(div > 0);
+	KASSERT(rate > 0);
 
 	tegra_car_get_bs(&bst, &bsh);
 
@@ -425,10 +425,12 @@ tegra_car_periph_sdmmc_set_div(u_int port, u_int div)
 	/* enable clk */
 	bus_space_write_4(bst, bsh, enb_reg, dev_bit);
 
+	const u_int div = howmany(tegra_car_pllp0_rate() * 2, rate) - 2;
+
 	/* update clk div */
 	src = __SHIFTIN(CAR_CLKSRC_SDMMC_SRC_PLLP_OUT0,
 			CAR_CLKSRC_SDMMC_SRC);
-	src |= __SHIFTIN((div - 1) * 2, CAR_CLKSRC_SDMMC_DIV);
+	src |= __SHIFTIN(div, CAR_CLKSRC_SDMMC_DIV);
 	bus_space_write_4(bst, bsh, src_reg, src);
 
 	/* leave reset */
