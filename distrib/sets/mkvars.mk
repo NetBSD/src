@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.23 2015/07/08 01:06:01 matt Exp $
+# $NetBSD: mkvars.mk,v 1.24 2015/07/23 08:03:25 mrg Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -23,7 +23,6 @@ MKEXTRAVARS= \
 	MKXORG \
 	MKXORG_SERVER \
 	MKRADEONFIRMWARE \
-	X11FLAVOR \
 	USE_INET6 \
 	USE_KERBEROS \
 	USE_LDAP \
@@ -58,12 +57,10 @@ KMODARCHDIRS:=${ARCHDIR_SUBDIR:T}
 .endif
 
 .if ${MKX11} != "no"
-. if ${X11FLAVOUR} == "Xorg"
 MKXORG:=yes
+# We have to force this off, because "MKX11" is still an option
+# that is in _MKVARS.
 MKX11:=no
-. else
-MKXORG:=no
-. endif
 .endif
 
 .if (!empty(MACHINE_ARCH:Mearm*))

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.181 2015/06/24 22:20:26 matt Exp $
+#	$NetBSD: Makefile,v 1.182 2015/07/23 08:03:26 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -211,7 +211,7 @@ SUBDIR+=	elftosb
 SUBDIR+=	mkubootimage
 .endif
 
-.if ${MKX11} != "no" && ${X11FLAVOUR} == "Xorg"
+.if ${MKX11} != "no"
 SUBDIR+=	makestrs
 SUBDIR+=	makekeys
 .endif

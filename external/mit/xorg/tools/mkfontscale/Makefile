@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2015/07/20 04:10:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2015/07/23 08:03:26 mrg Exp $
 
 NOMAN=		1
 
@@ -88,7 +88,6 @@ HOST_CPPFLAGS=	-DFONTENC_NO_LIBFONT -DXFREE86_FT2 -DFONTENC_NO_LIBFONT \
 HOST_CPPFLAGS+=	-DFT_CONFIG_OPTION_DISABLE_BZIP2
 HOST_CPPFLAGS+=	-I${FREETYPE}/include -I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/freetype2
-#		-I${X11SRCDIR.xc}/include/fonts
 
 .include <bsd.x11.mk>
 .include <bsd.hostprog.mk>

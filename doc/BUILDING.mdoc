@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.113 2015/06/07 05:30:18 pgoyette Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.114 2015/07/23 08:03:25 mrg Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -151,9 +151,9 @@ Sources to the
 .Nx
 userland (non-kernel) programs.
 If any of these directories are missing, they will be skipped during the build.
-.It Pa x11/
+.It Pa external/mit/xorg/
 .Dq Reachover
-build structure for X11R6; the source is in
+build structure for modular Xorg; the source is in
 .Sy X11SRCDIR .
 .It Pa extsrc/
 .Dq Reachover
@@ -768,25 +768,14 @@ outside the
 source tree.
 .
 .It Sy X11SRCDIR
-Directory containing the X11R6 source.
+Directory containing the modular Xorg source.
 If specified, must be an absolute path.
-The main X11R6 source is found in
-.Sy X11SRCDIR Ns Pa /xfree/xc .
+The main modular Xorg source is found in
+.Sy X11SRCDIR Ns Pa /external/mit .
 .DFLT
 .Sy NETBSDRCDIR Ns Pa /../xsrc ,
 if that exists; otherwise
 .Pa /usr/xsrc .
-.
-.It Sy X11FLAVOUR
-The style of X11 cross-built, set to either
-.Dq Xorg
-or
-.Dq XFree86 .
-.DFLT
-.Dq XFree86
-on acorn32, alpha, amiga, mac68k, pmax, and sun3 platforms,
-.Dq Xorg
-on everything else.
 .
 .El
 .

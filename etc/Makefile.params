@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.params,v 1.12 2014/08/03 09:19:34 apb Exp $
+#	$NetBSD: Makefile.params,v 1.13 2015/07/23 08:03:25 mrg Exp $
 #
 # Makefile fragment for printing build parameters.
 #
@@ -61,7 +61,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID BUILDINFO BUILDSEED \
 		USE_HESIOD USE_INET6 USE_JEMALLOC USE_KERBEROS USE_LDAP \
 		USE_PAM USE_SKEY USE_YP \
 		USETOOLS USR_OBJMACHINE \
-		X11SRCDIR X11FLAVOUR
+		X11SRCDIR
 
 
 #

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.422 2014/11/30 15:53:29 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.423 2015/07/23 08:03:25 mrg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -147,11 +147,7 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 .endif	# !INSTALL_DONE
 	${MAKEDIRTARGET} . install-etc-files
 . if ${MKX11} != "no"
-.  if ${X11FLAVOUR} == "Xorg"
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/mit/xorg distribution
-.  else
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/x11 distribution
-.  endif
 . endif
 . if ${MKEXTSRC} != "no"
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/extsrc distribution
