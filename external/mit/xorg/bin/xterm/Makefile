@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2015/07/23 05:45:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2015/07/23 09:37:59 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -31,7 +31,7 @@ BUILDSYMLINKS=	XTerm-col.ad XTerm-color.ad
 
 LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender
 DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXinerama -lXpm -lXext -lX11 -lcurses -lterminfo -lutil
+LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXinerama
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXINERAMA}
 LDADD+=	-lXpm -lXext -lX11 -lcurses -lterminfo -lutil
 DPADD+=	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBCURSES} ${LIBTERMINFO} ${LIBUTIL}
