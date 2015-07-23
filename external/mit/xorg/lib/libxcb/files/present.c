@@ -15,24 +15,12 @@
 
 #define ALIGNOF(type) offsetof(struct { char dummy; type member; }, member)
 #include "xproto.h"
-#include "render.h"
 #include "randr.h"
-#include "shape.h"
 #include "xfixes.h"
 #include "sync.h"
 
 xcb_extension_t xcb_present_id = { "Present", 0 };
 
-
-/*****************************************************************************
- **
- ** void xcb_present_notify_next
- ** 
- ** @param xcb_present_notify_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_present_notify_next (xcb_present_notify_iterator_t *i  /**< */)
 {
@@ -41,16 +29,6 @@ xcb_present_notify_next (xcb_present_notify_iterator_t *i  /**< */)
     i->index += sizeof(xcb_present_notify_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_present_notify_end
- ** 
- ** @param xcb_present_notify_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_present_notify_end (xcb_present_notify_iterator_t i  /**< */)
 {
@@ -61,18 +39,6 @@ xcb_present_notify_end (xcb_present_notify_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_present_query_version_cookie_t xcb_present_query_version
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          major_version
- ** @param uint32_t          minor_version
- ** @returns xcb_present_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_present_query_version_cookie_t
 xcb_present_query_version (xcb_connection_t *c  /**< */,
                            uint32_t          major_version  /**< */,
@@ -84,35 +50,23 @@ xcb_present_query_version (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_PRESENT_QUERY_VERSION,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_present_query_version_cookie_t xcb_ret;
     xcb_present_query_version_request_t xcb_out;
-    
+
     xcb_out.major_version = major_version;
     xcb_out.minor_version = minor_version;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_present_query_version_cookie_t xcb_present_query_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          major_version
- ** @param uint32_t          minor_version
- ** @returns xcb_present_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_present_query_version_cookie_t
 xcb_present_query_version_unchecked (xcb_connection_t *c  /**< */,
                                      uint32_t          major_version  /**< */,
@@ -124,35 +78,23 @@ xcb_present_query_version_unchecked (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_PRESENT_QUERY_VERSION,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_present_query_version_cookie_t xcb_ret;
     xcb_present_query_version_request_t xcb_out;
-    
+
     xcb_out.major_version = major_version;
     xcb_out.minor_version = minor_version;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_present_query_version_reply_t * xcb_present_query_version_reply
- ** 
- ** @param xcb_connection_t                    *c
- ** @param xcb_present_query_version_cookie_t   cookie
- ** @param xcb_generic_error_t                **e
- ** @returns xcb_present_query_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_present_query_version_reply_t *
 xcb_present_query_version_reply (xcb_connection_t                    *c  /**< */,
                                  xcb_present_query_version_cookie_t   cookie  /**< */,
@@ -192,32 +134,6 @@ xcb_present_pixmap_sizeof (const void  *_buffer  /**< */,
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_pixmap_checked
- ** 
- ** @param xcb_connection_t           *c
- ** @param xcb_window_t                window
- ** @param xcb_pixmap_t                pixmap
- ** @param uint32_t                    serial
- ** @param xcb_xfixes_region_t         valid
- ** @param xcb_xfixes_region_t         update
- ** @param int16_t                     x_off
- ** @param int16_t                     y_off
- ** @param xcb_randr_crtc_t            target_crtc
- ** @param xcb_sync_fence_t            wait_fence
- ** @param xcb_sync_fence_t            idle_fence
- ** @param uint32_t                    options
- ** @param uint64_t                    target_msc
- ** @param uint64_t                    divisor
- ** @param uint64_t                    remainder
- ** @param uint32_t                    notifies_len
- ** @param const xcb_present_notify_t *notifies
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_pixmap_checked (xcb_connection_t           *c  /**< */,
                             xcb_window_t                window  /**< */,
@@ -243,11 +159,11 @@ xcb_present_pixmap_checked (xcb_connection_t           *c  /**< */,
         /* opcode */ XCB_PRESENT_PIXMAP,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[6];
     xcb_void_cookie_t xcb_ret;
     xcb_present_pixmap_request_t xcb_out;
-    
+
     xcb_out.window = window;
     xcb_out.pixmap = pixmap;
     xcb_out.serial = serial;
@@ -263,7 +179,7 @@ xcb_present_pixmap_checked (xcb_connection_t           *c  /**< */,
     xcb_out.target_msc = target_msc;
     xcb_out.divisor = divisor;
     xcb_out.remainder = remainder;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -273,37 +189,11 @@ xcb_present_pixmap_checked (xcb_connection_t           *c  /**< */,
     xcb_parts[4].iov_len = notifies_len * sizeof(xcb_present_notify_t);
     xcb_parts[5].iov_base = 0;
     xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_pixmap
- ** 
- ** @param xcb_connection_t           *c
- ** @param xcb_window_t                window
- ** @param xcb_pixmap_t                pixmap
- ** @param uint32_t                    serial
- ** @param xcb_xfixes_region_t         valid
- ** @param xcb_xfixes_region_t         update
- ** @param int16_t                     x_off
- ** @param int16_t                     y_off
- ** @param xcb_randr_crtc_t            target_crtc
- ** @param xcb_sync_fence_t            wait_fence
- ** @param xcb_sync_fence_t            idle_fence
- ** @param uint32_t                    options
- ** @param uint64_t                    target_msc
- ** @param uint64_t                    divisor
- ** @param uint64_t                    remainder
- ** @param uint32_t                    notifies_len
- ** @param const xcb_present_notify_t *notifies
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_pixmap (xcb_connection_t           *c  /**< */,
                     xcb_window_t                window  /**< */,
@@ -329,11 +219,11 @@ xcb_present_pixmap (xcb_connection_t           *c  /**< */,
         /* opcode */ XCB_PRESENT_PIXMAP,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[6];
     xcb_void_cookie_t xcb_ret;
     xcb_present_pixmap_request_t xcb_out;
-    
+
     xcb_out.window = window;
     xcb_out.pixmap = pixmap;
     xcb_out.serial = serial;
@@ -349,7 +239,7 @@ xcb_present_pixmap (xcb_connection_t           *c  /**< */,
     xcb_out.target_msc = target_msc;
     xcb_out.divisor = divisor;
     xcb_out.remainder = remainder;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -359,26 +249,11 @@ xcb_present_pixmap (xcb_connection_t           *c  /**< */,
     xcb_parts[4].iov_len = notifies_len * sizeof(xcb_present_notify_t);
     xcb_parts[5].iov_base = 0;
     xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_notify_msc_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @param uint32_t          serial
- ** @param uint64_t          target_msc
- ** @param uint64_t          divisor
- ** @param uint64_t          remainder
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_notify_msc_checked (xcb_connection_t *c  /**< */,
                                 xcb_window_t      window  /**< */,
@@ -393,42 +268,27 @@ xcb_present_notify_msc_checked (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_PRESENT_NOTIFY_MSC,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_present_notify_msc_request_t xcb_out;
-    
+
     xcb_out.window = window;
     xcb_out.serial = serial;
     memset(xcb_out.pad0, 0, 4);
     xcb_out.target_msc = target_msc;
     xcb_out.divisor = divisor;
     xcb_out.remainder = remainder;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_notify_msc
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @param uint32_t          serial
- ** @param uint64_t          target_msc
- ** @param uint64_t          divisor
- ** @param uint64_t          remainder
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_notify_msc (xcb_connection_t *c  /**< */,
                         xcb_window_t      window  /**< */,
@@ -443,37 +303,27 @@ xcb_present_notify_msc (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_PRESENT_NOTIFY_MSC,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_present_notify_msc_request_t xcb_out;
-    
+
     xcb_out.window = window;
     xcb_out.serial = serial;
     memset(xcb_out.pad0, 0, 4);
     xcb_out.target_msc = target_msc;
     xcb_out.divisor = divisor;
     xcb_out.remainder = remainder;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_present_event_next
- ** 
- ** @param xcb_present_event_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_present_event_next (xcb_present_event_iterator_t *i  /**< */)
 {
@@ -482,16 +332,6 @@ xcb_present_event_next (xcb_present_event_iterator_t *i  /**< */)
     i->index += sizeof(xcb_present_event_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_present_event_end
- ** 
- ** @param xcb_present_event_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_present_event_end (xcb_present_event_iterator_t i  /**< */)
 {
@@ -502,19 +342,6 @@ xcb_present_event_end (xcb_present_event_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_select_input_checked
- ** 
- ** @param xcb_connection_t    *c
- ** @param xcb_present_event_t  eid
- ** @param xcb_window_t         window
- ** @param uint32_t             event_mask
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_select_input_checked (xcb_connection_t    *c  /**< */,
                                   xcb_present_event_t  eid  /**< */,
@@ -527,37 +354,24 @@ xcb_present_select_input_checked (xcb_connection_t    *c  /**< */,
         /* opcode */ XCB_PRESENT_SELECT_INPUT,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_present_select_input_request_t xcb_out;
-    
+
     xcb_out.eid = eid;
     xcb_out.window = window;
     xcb_out.event_mask = event_mask;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_select_input
- ** 
- ** @param xcb_connection_t    *c
- ** @param xcb_present_event_t  eid
- ** @param xcb_window_t         window
- ** @param uint32_t             event_mask
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_select_input (xcb_connection_t    *c  /**< */,
                           xcb_present_event_t  eid  /**< */,
@@ -570,35 +384,24 @@ xcb_present_select_input (xcb_connection_t    *c  /**< */,
         /* opcode */ XCB_PRESENT_SELECT_INPUT,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_present_select_input_request_t xcb_out;
-    
+
     xcb_out.eid = eid;
     xcb_out.window = window;
     xcb_out.event_mask = event_mask;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_present_query_capabilities_cookie_t xcb_present_query_capabilities
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          target
- ** @returns xcb_present_query_capabilities_cookie_t
- **
- *****************************************************************************/
- 
 xcb_present_query_capabilities_cookie_t
 xcb_present_query_capabilities (xcb_connection_t *c  /**< */,
                                 uint32_t          target  /**< */)
@@ -609,33 +412,22 @@ xcb_present_query_capabilities (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_PRESENT_QUERY_CAPABILITIES,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_present_query_capabilities_cookie_t xcb_ret;
     xcb_present_query_capabilities_request_t xcb_out;
-    
+
     xcb_out.target = target;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_present_query_capabilities_cookie_t xcb_present_query_capabilities_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          target
- ** @returns xcb_present_query_capabilities_cookie_t
- **
- *****************************************************************************/
- 
 xcb_present_query_capabilities_cookie_t
 xcb_present_query_capabilities_unchecked (xcb_connection_t *c  /**< */,
                                           uint32_t          target  /**< */)
@@ -646,34 +438,22 @@ xcb_present_query_capabilities_unchecked (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_PRESENT_QUERY_CAPABILITIES,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_present_query_capabilities_cookie_t xcb_ret;
     xcb_present_query_capabilities_request_t xcb_out;
-    
+
     xcb_out.target = target;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_present_query_capabilities_reply_t * xcb_present_query_capabilities_reply
- ** 
- ** @param xcb_connection_t                         *c
- ** @param xcb_present_query_capabilities_cookie_t   cookie
- ** @param xcb_generic_error_t                     **e
- ** @returns xcb_present_query_capabilities_reply_t *
- **
- *****************************************************************************/
- 
 xcb_present_query_capabilities_reply_t *
 xcb_present_query_capabilities_reply (xcb_connection_t                         *c  /**< */,
                                       xcb_present_query_capabilities_cookie_t   cookie  /**< */,
