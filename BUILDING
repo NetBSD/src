@@ -77,8 +77,9 @@ FILES
                     any of these directories are missing, they will be skipped
                     during the build.
 
-     x11/           ``Reachover'' build structure for X11R6; the source is in
-                    X11SRCDIR.
+     external/mit/xorg/
+                    ``Reachover'' build structure for modular Xorg; the source
+                    is in X11SRCDIR.
 
      extsrc/        ``Reachover'' build structure for externally added
                     programs and libraries; the source is in EXTSRCSRCDIR.
@@ -442,18 +443,12 @@ CONFIGURATION
                  USETOOLS is also set to ``no'' when using <bsd.*.mk> outside
                  the NetBSD source tree.
 
-     X11SRCDIR   Directory containing the X11R6 source.  If specified, must be
-                 an absolute path.  The main X11R6 source is found in
-                 X11SRCDIR/xfree/xc.
+     X11SRCDIR   Directory containing the modular Xorg source.  If specified,
+                 must be an absolute path.  The main modular Xorg source is
+                 found in X11SRCDIR/external/mit.
 
                  Default: NETBSDRCDIR/../xsrc, if that exists; otherwise
                  /usr/xsrc.
-
-     X11FLAVOUR  The style of X11 cross-built, set to either ``Xorg'' or
-                 ``XFree86''.
-
-                 Default: ``XFree86'' on acorn32, alpha, amiga, mac68k, pmax,
-                 and sun3 platforms, ``Xorg'' on everything else.
 
    "make" variables for full builds
      These variables only affect the top level ``Makefile'' and do not affect
