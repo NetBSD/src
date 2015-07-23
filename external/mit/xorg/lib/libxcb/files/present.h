@@ -14,9 +14,7 @@
 
 #include "xcb.h"
 #include "xproto.h"
-#include "render.h"
 #include "randr.h"
-#include "shape.h"
 #include "xfixes.h"
 #include "sync.h"
 
@@ -26,7 +24,7 @@ extern "C" {
 
 #define XCB_PRESENT_MAJOR_VERSION 1
 #define XCB_PRESENT_MINOR_VERSION 0
-  
+
 extern xcb_extension_t xcb_present_id;
 
 typedef enum xcb_present_event_enum_t {
@@ -284,7 +282,7 @@ typedef struct xcb_present_complete_notify_event_t {
     uint64_t            ust; /**<  */
     uint32_t            full_sequence; /**<  */
     uint64_t            msc; /**<  */
-} xcb_present_complete_notify_event_t;
+} XCB_PACKED xcb_present_complete_notify_event_t;
 
 /** Opcode for xcb_present_idle_notify. */
 #define XCB_PRESENT_IDLE_NOTIFY 2
@@ -341,7 +339,7 @@ typedef struct xcb_present_redirect_notify_event_t {
     uint64_t            target_msc; /**<  */
     uint64_t            divisor; /**<  */
     uint64_t            remainder; /**<  */
-} xcb_present_redirect_notify_event_t;
+} XCB_PACKED xcb_present_redirect_notify_event_t;
 
 /**
  * Get the next element of the iterator
@@ -351,16 +349,6 @@ typedef struct xcb_present_redirect_notify_event_t {
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_present_notify_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_present_notify_next
- ** 
- ** @param xcb_present_notify_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_present_notify_next (xcb_present_notify_iterator_t *i  /**< */);
 
@@ -373,16 +361,6 @@ xcb_present_notify_next (xcb_present_notify_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_present_notify_end
- ** 
- ** @param xcb_present_notify_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_present_notify_end (xcb_present_notify_iterator_t i  /**< */);
 
@@ -392,20 +370,8 @@ xcb_present_notify_end (xcb_present_notify_iterator_t i  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_present_query_version_cookie_t xcb_present_query_version
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          major_version
- ** @param uint32_t          minor_version
- ** @returns xcb_present_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_present_query_version_cookie_t
 xcb_present_query_version (xcb_connection_t *c  /**< */,
                            uint32_t          major_version  /**< */,
@@ -417,23 +383,11 @@ xcb_present_query_version (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_present_query_version_cookie_t xcb_present_query_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          major_version
- ** @param uint32_t          minor_version
- ** @returns xcb_present_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_present_query_version_cookie_t
 xcb_present_query_version_unchecked (xcb_connection_t *c  /**< */,
                                      uint32_t          major_version  /**< */,
@@ -446,25 +400,13 @@ xcb_present_query_version_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_present_query_version_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_present_query_version_reply_t * xcb_present_query_version_reply
- ** 
- ** @param xcb_connection_t                    *c
- ** @param xcb_present_query_version_cookie_t   cookie
- ** @param xcb_generic_error_t                **e
- ** @returns xcb_present_query_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_present_query_version_reply_t *
 xcb_present_query_version_reply (xcb_connection_t                    *c  /**< */,
                                  xcb_present_query_version_cookie_t   cookie  /**< */,
@@ -480,37 +422,11 @@ xcb_present_pixmap_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_pixmap_checked
- ** 
- ** @param xcb_connection_t           *c
- ** @param xcb_window_t                window
- ** @param xcb_pixmap_t                pixmap
- ** @param uint32_t                    serial
- ** @param xcb_xfixes_region_t         valid
- ** @param xcb_xfixes_region_t         update
- ** @param int16_t                     x_off
- ** @param int16_t                     y_off
- ** @param xcb_randr_crtc_t            target_crtc
- ** @param xcb_sync_fence_t            wait_fence
- ** @param xcb_sync_fence_t            idle_fence
- ** @param uint32_t                    options
- ** @param uint64_t                    target_msc
- ** @param uint64_t                    divisor
- ** @param uint64_t                    remainder
- ** @param uint32_t                    notifies_len
- ** @param const xcb_present_notify_t *notifies
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_pixmap_checked (xcb_connection_t           *c  /**< */,
                             xcb_window_t                window  /**< */,
@@ -536,34 +452,8 @@ xcb_present_pixmap_checked (xcb_connection_t           *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_pixmap
- ** 
- ** @param xcb_connection_t           *c
- ** @param xcb_window_t                window
- ** @param xcb_pixmap_t                pixmap
- ** @param uint32_t                    serial
- ** @param xcb_xfixes_region_t         valid
- ** @param xcb_xfixes_region_t         update
- ** @param int16_t                     x_off
- ** @param int16_t                     y_off
- ** @param xcb_randr_crtc_t            target_crtc
- ** @param xcb_sync_fence_t            wait_fence
- ** @param xcb_sync_fence_t            idle_fence
- ** @param uint32_t                    options
- ** @param uint64_t                    target_msc
- ** @param uint64_t                    divisor
- ** @param uint64_t                    remainder
- ** @param uint32_t                    notifies_len
- ** @param const xcb_present_notify_t *notifies
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_pixmap (xcb_connection_t           *c  /**< */,
                     xcb_window_t                window  /**< */,
@@ -589,26 +479,11 @@ xcb_present_pixmap (xcb_connection_t           *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_notify_msc_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @param uint32_t          serial
- ** @param uint64_t          target_msc
- ** @param uint64_t          divisor
- ** @param uint64_t          remainder
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_notify_msc_checked (xcb_connection_t *c  /**< */,
                                 xcb_window_t      window  /**< */,
@@ -623,23 +498,8 @@ xcb_present_notify_msc_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_notify_msc
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @param uint32_t          serial
- ** @param uint64_t          target_msc
- ** @param uint64_t          divisor
- ** @param uint64_t          remainder
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_notify_msc (xcb_connection_t *c  /**< */,
                         xcb_window_t      window  /**< */,
@@ -656,16 +516,6 @@ xcb_present_notify_msc (xcb_connection_t *c  /**< */,
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_present_event_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_present_event_next
- ** 
- ** @param xcb_present_event_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_present_event_next (xcb_present_event_iterator_t *i  /**< */);
 
@@ -678,16 +528,6 @@ xcb_present_event_next (xcb_present_event_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_present_event_end
- ** 
- ** @param xcb_present_event_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_present_event_end (xcb_present_event_iterator_t i  /**< */);
 
@@ -697,24 +537,11 @@ xcb_present_event_end (xcb_present_event_iterator_t i  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_select_input_checked
- ** 
- ** @param xcb_connection_t    *c
- ** @param xcb_present_event_t  eid
- ** @param xcb_window_t         window
- ** @param uint32_t             event_mask
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_select_input_checked (xcb_connection_t    *c  /**< */,
                                   xcb_present_event_t  eid  /**< */,
@@ -727,21 +554,8 @@ xcb_present_select_input_checked (xcb_connection_t    *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_present_select_input
- ** 
- ** @param xcb_connection_t    *c
- ** @param xcb_present_event_t  eid
- ** @param xcb_window_t         window
- ** @param uint32_t             event_mask
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_present_select_input (xcb_connection_t    *c  /**< */,
                           xcb_present_event_t  eid  /**< */,
@@ -754,19 +568,8 @@ xcb_present_select_input (xcb_connection_t    *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_present_query_capabilities_cookie_t xcb_present_query_capabilities
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          target
- ** @returns xcb_present_query_capabilities_cookie_t
- **
- *****************************************************************************/
- 
 xcb_present_query_capabilities_cookie_t
 xcb_present_query_capabilities (xcb_connection_t *c  /**< */,
                                 uint32_t          target  /**< */);
@@ -777,22 +580,11 @@ xcb_present_query_capabilities (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_present_query_capabilities_cookie_t xcb_present_query_capabilities_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          target
- ** @returns xcb_present_query_capabilities_cookie_t
- **
- *****************************************************************************/
- 
 xcb_present_query_capabilities_cookie_t
 xcb_present_query_capabilities_unchecked (xcb_connection_t *c  /**< */,
                                           uint32_t          target  /**< */);
@@ -804,25 +596,13 @@ xcb_present_query_capabilities_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_present_query_capabilities_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_present_query_capabilities_reply_t * xcb_present_query_capabilities_reply
- ** 
- ** @param xcb_connection_t                         *c
- ** @param xcb_present_query_capabilities_cookie_t   cookie
- ** @param xcb_generic_error_t                     **e
- ** @returns xcb_present_query_capabilities_reply_t *
- **
- *****************************************************************************/
- 
 xcb_present_query_capabilities_reply_t *
 xcb_present_query_capabilities_reply (xcb_connection_t                         *c  /**< */,
                                       xcb_present_query_capabilities_cookie_t   cookie  /**< */,
