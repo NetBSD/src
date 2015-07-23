@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2015/07/19 19:49:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2015/07/23 08:03:25 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -13,8 +13,7 @@ SRCS=		bytecode.c core.c debugger.c format.c hash.c helper.c \
 CPPFLAGS+=	-DLISP  -DLISPDIR=\"${X11LIBDIR}/xedit/lisp\" \
 		-I${X11SRCDIR.xedit}/lisp/mp \
 		-I${X11SRCDIR.xedit}/lisp/re \
-		-I${X11SRCDIR.xedit} \
-		-I${X11SRCDIR.xc}/programs
+		-I${X11SRCDIR.xedit}
 
 .if defined(HAVE_PCC)
 # code uses gcc-specific "label as values" feature

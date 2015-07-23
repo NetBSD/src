@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.345 2015/06/27 16:21:07 matt Exp $
+#	$NetBSD: bsd.README,v 1.346 2015/07/23 08:03:26 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -403,21 +403,18 @@ MKUPDATE 	If not "no", 'make install' only installs targets that are
 		installed counterparts.
 		Default: no
 
-MKX11		If not "no", depending on the value of ${X11FLAVOUR},
-		'make build' also descends into either src/x11 (XFree86) or
-		src/external/mit/xorg (modular Xorg) to cross-build X11 and
-		automatically enables creation of X sets.
+MKX11		If not "no", 'make build' also descends into 
+		src/external/mit/xorg to cross-build X11 and automatically
+		enables creation of X sets.
 		Default: no
 
-MKX11FONTS	If not "no", if ${X11FLAVOUR} is "Xorg", do not build or
-		install the X fonts.  The xfont set is still created but
-		will be empty.
+MKX11FONTS	If not "no", do not build or install the X fonts.  The xfont
+		set is still created but will be empty.
 		Default: yes
 
-MKX11MOTIF:	If "yes" and ${X11FLAVOUR} is "Xorg", build the native X11
-		libGLw with Motif stubs.  If Motif is not installed in the
-		default location /usr/pkg, the location can be specified
-		using the X11MOTIFPATH variable.
+MKX11MOTIF:	If "yes", build the native X11 libGLw with Motif stubs.  If
+		Motif is not installed in the default location /usr/pkg, the
+		location can be specified using the X11MOTIFPATH variable.
 		Default: no
 
 MKRADEONFIRMWARE If "no", install the /libdata/firmware/radeon directory,
@@ -494,11 +491,6 @@ USE_PIGZGZIP	If "no", use the host "gzip" program to compress things.
 		Otherwise, build tools/pigz, set TOOL_GZIP=${TOOL_PIGZ},
 		and use nbpigz to compress things.
 		Default: "no".
-
-X11FLAVOUR	Set to "Xorg" or "XFree86", depending on whether to build
-		XFree86 or modular Xorg.  Only matters if MKX11!=no.
-		Default: "Xorg" on amd64, i386, macppc, shark and sparc64,
-		"XFree86" on everything else.
 
 COPTS.lib<lib>
 OBJCOPTS.lib<lib>
@@ -649,8 +641,6 @@ NLSMODE		Native Language Support files mode.  [${NONBINMODE}]
 
 X11SRCDIR	The path to the xsrc tree.  [${NETBSDSRCDIR}/../xsrc,
 		if that exists; otherwise /usr/xsrc]
-
-X11SRCDIR.xc	The path to the (old) X11 xc src tree.  [${X11SRCDIR}/xfree/xc]
 
 X11SRCDIR.local	The path to the local X11 src tree.  [${X11SRCDIR}/local]
 
@@ -1793,9 +1783,9 @@ SUBDIR		For all of the directories listed in ${SUBDIR}, the
 =-=-=-=-=   bsd.x11.mk   =-=-=-=-=
 
 The include file <bsd.x11.mk> contains parameters and targets for
-cross-building X11 from ${X11SRCDIR.xc} / ${X11MITSRCDIR.*}.
-It should be included after the general Makefile contents but before
-the include files such as <bsd.prog.mk> and <bsd.lib.mk>.
+cross-building X11 from ${X11SRCDIR.<package>}.  It should be included
+after the general Makefile contents but before the include files such as
+<bsd.prog.mk> and <bsd.lib.mk>.
 
 It provides the following targets:
 	.man.1 .man.3 .man.4 .man.5 .man.7:
