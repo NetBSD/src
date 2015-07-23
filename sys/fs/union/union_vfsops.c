@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.74 2015/02/16 10:22:00 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.75 2015/07/23 09:45:21 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.74 2015/02/16 10:22:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.75 2015/07/23 09:45:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,6 +314,15 @@ union_start(struct mount *mp, int flags)
 /*
  * Free reference to union layer
  */
+static bool
+union_unmount_selector(void *cl, struct vnode *vp)
+{
+	int *count = cl;
+
+	*count += 1;
+	return false;
+}
+
 int
 union_unmount(struct mount *mp, int mntflags)
 {
@@ -335,13 +344,14 @@ union_unmount(struct mount *mp, int mntflags)
 	 * in the filesystem.
 	 */
 	for (freeing = 0; (error = vflush(mp, NULL, 0)) != 0;) {
-		struct vnode *vp;
+		struct vnode_iterator *marker;
 		int n;
 
 		/* count #vnodes held on mount list */
 		n = 0;
-		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes)
-			n++;
+		vfs_vnode_iterator_init(mp, &marker);
+		vfs_vnode_iterator_next(marker, union_unmount_selector, &n);
+		vfs_vnode_iterator_destroy(marker);
 
 		/* if this is unchanged then stop */
 		if (n == freeing)
