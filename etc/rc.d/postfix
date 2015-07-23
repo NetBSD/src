@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.16 2009/04/15 22:11:32 perry Exp $
+# $NetBSD: postfix,v 1.17 2015/07/23 17:12:16 riz Exp $
 #
 
 # PROVIDE: mail
@@ -18,7 +18,8 @@ start_precmd="postfix_precmd"
 start_cmd="postfix_op"
 stop_cmd="postfix_op"
 reload_cmd="postfix_op"
-extra_commands="reload"
+status_cmd="postfix_op"
+extra_commands="reload status"
 spooletcdir="/var/spool/${name}/etc"
 postconf="/usr/sbin/postconf"
 required_dirs=$spooletcdir
