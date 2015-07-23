@@ -18,16 +18,6 @@
 
 xcb_extension_t xcb_res_id = { "X-Resource", 0 };
 
-
-/*****************************************************************************
- **
- ** void xcb_res_client_next
- ** 
- ** @param xcb_res_client_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_res_client_next (xcb_res_client_iterator_t *i  /**< */)
 {
@@ -36,16 +26,6 @@ xcb_res_client_next (xcb_res_client_iterator_t *i  /**< */)
     i->index += sizeof(xcb_res_client_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_res_client_end
- ** 
- ** @param xcb_res_client_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_res_client_end (xcb_res_client_iterator_t i  /**< */)
 {
@@ -56,16 +36,6 @@ xcb_res_client_end (xcb_res_client_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_res_type_next
- ** 
- ** @param xcb_res_type_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_res_type_next (xcb_res_type_iterator_t *i  /**< */)
 {
@@ -74,16 +44,6 @@ xcb_res_type_next (xcb_res_type_iterator_t *i  /**< */)
     i->index += sizeof(xcb_res_type_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_res_type_end
- ** 
- ** @param xcb_res_type_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_res_type_end (xcb_res_type_iterator_t i  /**< */)
 {
@@ -94,16 +54,6 @@ xcb_res_type_end (xcb_res_type_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_res_client_id_spec_next
- ** 
- ** @param xcb_res_client_id_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_res_client_id_spec_next (xcb_res_client_id_spec_iterator_t *i  /**< */)
 {
@@ -112,16 +62,6 @@ xcb_res_client_id_spec_next (xcb_res_client_id_spec_iterator_t *i  /**< */)
     i->index += sizeof(xcb_res_client_id_spec_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_res_client_id_spec_end
- ** 
- ** @param xcb_res_client_id_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_res_client_id_spec_end (xcb_res_client_id_spec_iterator_t i  /**< */)
 {
@@ -163,48 +103,18 @@ xcb_res_client_id_value_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_res_client_id_value_value
- ** 
- ** @param const xcb_res_client_id_value_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_res_client_id_value_value (const xcb_res_client_id_value_t *R  /**< */)
 {
     return (uint32_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_res_client_id_value_value_length
- ** 
- ** @param const xcb_res_client_id_value_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_res_client_id_value_value_length (const xcb_res_client_id_value_t *R  /**< */)
 {
     return R->length;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_res_client_id_value_value_end
- ** 
- ** @param const xcb_res_client_id_value_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_res_client_id_value_value_end (const xcb_res_client_id_value_t *R  /**< */)
 {
@@ -215,16 +125,6 @@ xcb_res_client_id_value_value_end (const xcb_res_client_id_value_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_res_client_id_value_next
- ** 
- ** @param xcb_res_client_id_value_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_res_client_id_value_next (xcb_res_client_id_value_iterator_t *i  /**< */)
 {
@@ -236,16 +136,6 @@ xcb_res_client_id_value_next (xcb_res_client_id_value_iterator_t *i  /**< */)
     i->data = (xcb_res_client_id_value_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_res_client_id_value_end
- ** 
- ** @param xcb_res_client_id_value_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_res_client_id_value_end (xcb_res_client_id_value_iterator_t i  /**< */)
 {
@@ -258,16 +148,6 @@ xcb_res_client_id_value_end (xcb_res_client_id_value_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_res_resource_id_spec_next
- ** 
- ** @param xcb_res_resource_id_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_res_resource_id_spec_next (xcb_res_resource_id_spec_iterator_t *i  /**< */)
 {
@@ -276,16 +156,6 @@ xcb_res_resource_id_spec_next (xcb_res_resource_id_spec_iterator_t *i  /**< */)
     i->index += sizeof(xcb_res_resource_id_spec_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_res_resource_id_spec_end
- ** 
- ** @param xcb_res_resource_id_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_res_resource_id_spec_end (xcb_res_resource_id_spec_iterator_t i  /**< */)
 {
@@ -296,16 +166,6 @@ xcb_res_resource_id_spec_end (xcb_res_resource_id_spec_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_res_resource_size_spec_next
- ** 
- ** @param xcb_res_resource_size_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_res_resource_size_spec_next (xcb_res_resource_size_spec_iterator_t *i  /**< */)
 {
@@ -314,16 +174,6 @@ xcb_res_resource_size_spec_next (xcb_res_resource_size_spec_iterator_t *i  /**< 
     i->index += sizeof(xcb_res_resource_size_spec_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_res_resource_size_spec_end
- ** 
- ** @param xcb_res_resource_size_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_res_resource_size_spec_end (xcb_res_resource_size_spec_iterator_t i  /**< */)
 {
@@ -365,48 +215,18 @@ xcb_res_resource_size_value_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_resource_size_spec_t * xcb_res_resource_size_value_cross_references
- ** 
- ** @param const xcb_res_resource_size_value_t *R
- ** @returns xcb_res_resource_size_spec_t *
- **
- *****************************************************************************/
- 
 xcb_res_resource_size_spec_t *
 xcb_res_resource_size_value_cross_references (const xcb_res_resource_size_value_t *R  /**< */)
 {
     return (xcb_res_resource_size_spec_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_res_resource_size_value_cross_references_length
- ** 
- ** @param const xcb_res_resource_size_value_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_res_resource_size_value_cross_references_length (const xcb_res_resource_size_value_t *R  /**< */)
 {
     return R->num_cross_references;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_resource_size_spec_iterator_t xcb_res_resource_size_value_cross_references_iterator
- ** 
- ** @param const xcb_res_resource_size_value_t *R
- ** @returns xcb_res_resource_size_spec_iterator_t
- **
- *****************************************************************************/
- 
 xcb_res_resource_size_spec_iterator_t
 xcb_res_resource_size_value_cross_references_iterator (const xcb_res_resource_size_value_t *R  /**< */)
 {
@@ -417,16 +237,6 @@ xcb_res_resource_size_value_cross_references_iterator (const xcb_res_resource_si
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_res_resource_size_value_next
- ** 
- ** @param xcb_res_resource_size_value_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_res_resource_size_value_next (xcb_res_resource_size_value_iterator_t *i  /**< */)
 {
@@ -438,16 +248,6 @@ xcb_res_resource_size_value_next (xcb_res_resource_size_value_iterator_t *i  /**
     i->data = (xcb_res_resource_size_value_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_res_resource_size_value_end
- ** 
- ** @param xcb_res_resource_size_value_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_res_resource_size_value_end (xcb_res_resource_size_value_iterator_t i  /**< */)
 {
@@ -460,18 +260,6 @@ xcb_res_resource_size_value_end (xcb_res_resource_size_value_iterator_t i  /**< 
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_version_cookie_t xcb_res_query_version
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           client_major
- ** @param uint8_t           client_minor
- ** @returns xcb_res_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_version_cookie_t
 xcb_res_query_version (xcb_connection_t *c  /**< */,
                        uint8_t           client_major  /**< */,
@@ -483,35 +271,23 @@ xcb_res_query_version (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_RES_QUERY_VERSION,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_res_query_version_cookie_t xcb_ret;
     xcb_res_query_version_request_t xcb_out;
-    
+
     xcb_out.client_major = client_major;
     xcb_out.client_minor = client_minor;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_version_cookie_t xcb_res_query_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           client_major
- ** @param uint8_t           client_minor
- ** @returns xcb_res_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_version_cookie_t
 xcb_res_query_version_unchecked (xcb_connection_t *c  /**< */,
                                  uint8_t           client_major  /**< */,
@@ -523,35 +299,23 @@ xcb_res_query_version_unchecked (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_RES_QUERY_VERSION,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_res_query_version_cookie_t xcb_ret;
     xcb_res_query_version_request_t xcb_out;
-    
+
     xcb_out.client_major = client_major;
     xcb_out.client_minor = client_minor;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_version_reply_t * xcb_res_query_version_reply
- ** 
- ** @param xcb_connection_t                *c
- ** @param xcb_res_query_version_cookie_t   cookie
- ** @param xcb_generic_error_t            **e
- ** @returns xcb_res_query_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_res_query_version_reply_t *
 xcb_res_query_version_reply (xcb_connection_t                *c  /**< */,
                              xcb_res_query_version_cookie_t   cookie  /**< */,
@@ -591,16 +355,6 @@ xcb_res_query_clients_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_clients_cookie_t xcb_res_query_clients
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_res_query_clients_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_clients_cookie_t
 xcb_res_query_clients (xcb_connection_t *c  /**< */)
 {
@@ -610,31 +364,21 @@ xcb_res_query_clients (xcb_connection_t *c  /**< */)
         /* opcode */ XCB_RES_QUERY_CLIENTS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_res_query_clients_cookie_t xcb_ret;
     xcb_res_query_clients_request_t xcb_out;
-    
-    
+
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_clients_cookie_t xcb_res_query_clients_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_res_query_clients_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_clients_cookie_t
 xcb_res_query_clients_unchecked (xcb_connection_t *c  /**< */)
 {
@@ -644,63 +388,33 @@ xcb_res_query_clients_unchecked (xcb_connection_t *c  /**< */)
         /* opcode */ XCB_RES_QUERY_CLIENTS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_res_query_clients_cookie_t xcb_ret;
     xcb_res_query_clients_request_t xcb_out;
-    
-    
+
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_client_t * xcb_res_query_clients_clients
- ** 
- ** @param const xcb_res_query_clients_reply_t *R
- ** @returns xcb_res_client_t *
- **
- *****************************************************************************/
- 
 xcb_res_client_t *
 xcb_res_query_clients_clients (const xcb_res_query_clients_reply_t *R  /**< */)
 {
     return (xcb_res_client_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_res_query_clients_clients_length
- ** 
- ** @param const xcb_res_query_clients_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_res_query_clients_clients_length (const xcb_res_query_clients_reply_t *R  /**< */)
 {
     return R->num_clients;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_client_iterator_t xcb_res_query_clients_clients_iterator
- ** 
- ** @param const xcb_res_query_clients_reply_t *R
- ** @returns xcb_res_client_iterator_t
- **
- *****************************************************************************/
- 
 xcb_res_client_iterator_t
 xcb_res_query_clients_clients_iterator (const xcb_res_query_clients_reply_t *R  /**< */)
 {
@@ -711,18 +425,6 @@ xcb_res_query_clients_clients_iterator (const xcb_res_query_clients_reply_t *R  
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_clients_reply_t * xcb_res_query_clients_reply
- ** 
- ** @param xcb_connection_t                *c
- ** @param xcb_res_query_clients_cookie_t   cookie
- ** @param xcb_generic_error_t            **e
- ** @returns xcb_res_query_clients_reply_t *
- **
- *****************************************************************************/
- 
 xcb_res_query_clients_reply_t *
 xcb_res_query_clients_reply (xcb_connection_t                *c  /**< */,
                              xcb_res_query_clients_cookie_t   cookie  /**< */,
@@ -762,17 +464,6 @@ xcb_res_query_client_resources_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_client_resources_cookie_t xcb_res_query_client_resources
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          xid
- ** @returns xcb_res_query_client_resources_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_client_resources_cookie_t
 xcb_res_query_client_resources (xcb_connection_t *c  /**< */,
                                 uint32_t          xid  /**< */)
@@ -783,33 +474,22 @@ xcb_res_query_client_resources (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_RES_QUERY_CLIENT_RESOURCES,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_res_query_client_resources_cookie_t xcb_ret;
     xcb_res_query_client_resources_request_t xcb_out;
-    
+
     xcb_out.xid = xid;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_client_resources_cookie_t xcb_res_query_client_resources_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          xid
- ** @returns xcb_res_query_client_resources_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_client_resources_cookie_t
 xcb_res_query_client_resources_unchecked (xcb_connection_t *c  /**< */,
                                           uint32_t          xid  /**< */)
@@ -820,64 +500,34 @@ xcb_res_query_client_resources_unchecked (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_RES_QUERY_CLIENT_RESOURCES,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_res_query_client_resources_cookie_t xcb_ret;
     xcb_res_query_client_resources_request_t xcb_out;
-    
+
     xcb_out.xid = xid;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_type_t * xcb_res_query_client_resources_types
- ** 
- ** @param const xcb_res_query_client_resources_reply_t *R
- ** @returns xcb_res_type_t *
- **
- *****************************************************************************/
- 
 xcb_res_type_t *
 xcb_res_query_client_resources_types (const xcb_res_query_client_resources_reply_t *R  /**< */)
 {
     return (xcb_res_type_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_res_query_client_resources_types_length
- ** 
- ** @param const xcb_res_query_client_resources_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_res_query_client_resources_types_length (const xcb_res_query_client_resources_reply_t *R  /**< */)
 {
     return R->num_types;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_type_iterator_t xcb_res_query_client_resources_types_iterator
- ** 
- ** @param const xcb_res_query_client_resources_reply_t *R
- ** @returns xcb_res_type_iterator_t
- **
- *****************************************************************************/
- 
 xcb_res_type_iterator_t
 xcb_res_query_client_resources_types_iterator (const xcb_res_query_client_resources_reply_t *R  /**< */)
 {
@@ -888,18 +538,6 @@ xcb_res_query_client_resources_types_iterator (const xcb_res_query_client_resour
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_client_resources_reply_t * xcb_res_query_client_resources_reply
- ** 
- ** @param xcb_connection_t                         *c
- ** @param xcb_res_query_client_resources_cookie_t   cookie
- ** @param xcb_generic_error_t                     **e
- ** @returns xcb_res_query_client_resources_reply_t *
- **
- *****************************************************************************/
- 
 xcb_res_query_client_resources_reply_t *
 xcb_res_query_client_resources_reply (xcb_connection_t                         *c  /**< */,
                                       xcb_res_query_client_resources_cookie_t   cookie  /**< */,
@@ -908,17 +546,6 @@ xcb_res_query_client_resources_reply (xcb_connection_t                         *
     return (xcb_res_query_client_resources_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_client_pixmap_bytes_cookie_t xcb_res_query_client_pixmap_bytes
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          xid
- ** @returns xcb_res_query_client_pixmap_bytes_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_client_pixmap_bytes_cookie_t
 xcb_res_query_client_pixmap_bytes (xcb_connection_t *c  /**< */,
                                    uint32_t          xid  /**< */)
@@ -929,33 +556,22 @@ xcb_res_query_client_pixmap_bytes (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_RES_QUERY_CLIENT_PIXMAP_BYTES,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_res_query_client_pixmap_bytes_cookie_t xcb_ret;
     xcb_res_query_client_pixmap_bytes_request_t xcb_out;
-    
+
     xcb_out.xid = xid;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_client_pixmap_bytes_cookie_t xcb_res_query_client_pixmap_bytes_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          xid
- ** @returns xcb_res_query_client_pixmap_bytes_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_client_pixmap_bytes_cookie_t
 xcb_res_query_client_pixmap_bytes_unchecked (xcb_connection_t *c  /**< */,
                                              uint32_t          xid  /**< */)
@@ -966,34 +582,22 @@ xcb_res_query_client_pixmap_bytes_unchecked (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_RES_QUERY_CLIENT_PIXMAP_BYTES,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_res_query_client_pixmap_bytes_cookie_t xcb_ret;
     xcb_res_query_client_pixmap_bytes_request_t xcb_out;
-    
+
     xcb_out.xid = xid;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_client_pixmap_bytes_reply_t * xcb_res_query_client_pixmap_bytes_reply
- ** 
- ** @param xcb_connection_t                            *c
- ** @param xcb_res_query_client_pixmap_bytes_cookie_t   cookie
- ** @param xcb_generic_error_t                        **e
- ** @returns xcb_res_query_client_pixmap_bytes_reply_t *
- **
- *****************************************************************************/
- 
 xcb_res_query_client_pixmap_bytes_reply_t *
 xcb_res_query_client_pixmap_bytes_reply (xcb_connection_t                            *c  /**< */,
                                          xcb_res_query_client_pixmap_bytes_cookie_t   cookie  /**< */,
@@ -1033,18 +637,6 @@ xcb_res_query_client_ids_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_client_ids_cookie_t xcb_res_query_client_ids
- ** 
- ** @param xcb_connection_t               *c
- ** @param uint32_t                        num_specs
- ** @param const xcb_res_client_id_spec_t *specs
- ** @returns xcb_res_query_client_ids_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_client_ids_cookie_t
 xcb_res_query_client_ids (xcb_connection_t               *c  /**< */,
                           uint32_t                        num_specs  /**< */,
@@ -1056,13 +648,13 @@ xcb_res_query_client_ids (xcb_connection_t               *c  /**< */,
         /* opcode */ XCB_RES_QUERY_CLIENT_IDS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[6];
     xcb_res_query_client_ids_cookie_t xcb_ret;
     xcb_res_query_client_ids_request_t xcb_out;
-    
+
     xcb_out.num_specs = num_specs;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -1072,23 +664,11 @@ xcb_res_query_client_ids (xcb_connection_t               *c  /**< */,
     xcb_parts[4].iov_len = num_specs * sizeof(xcb_res_client_id_spec_t);
     xcb_parts[5].iov_base = 0;
     xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_client_ids_cookie_t xcb_res_query_client_ids_unchecked
- ** 
- ** @param xcb_connection_t               *c
- ** @param uint32_t                        num_specs
- ** @param const xcb_res_client_id_spec_t *specs
- ** @returns xcb_res_query_client_ids_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_client_ids_cookie_t
 xcb_res_query_client_ids_unchecked (xcb_connection_t               *c  /**< */,
                                     uint32_t                        num_specs  /**< */,
@@ -1100,13 +680,13 @@ xcb_res_query_client_ids_unchecked (xcb_connection_t               *c  /**< */,
         /* opcode */ XCB_RES_QUERY_CLIENT_IDS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[6];
     xcb_res_query_client_ids_cookie_t xcb_ret;
     xcb_res_query_client_ids_request_t xcb_out;
-    
+
     xcb_out.num_specs = num_specs;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -1116,37 +696,17 @@ xcb_res_query_client_ids_unchecked (xcb_connection_t               *c  /**< */,
     xcb_parts[4].iov_len = num_specs * sizeof(xcb_res_client_id_spec_t);
     xcb_parts[5].iov_base = 0;
     xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_res_query_client_ids_ids_length
- ** 
- ** @param const xcb_res_query_client_ids_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_res_query_client_ids_ids_length (const xcb_res_query_client_ids_reply_t *R  /**< */)
 {
     return R->num_ids;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_client_id_value_iterator_t xcb_res_query_client_ids_ids_iterator
- ** 
- ** @param const xcb_res_query_client_ids_reply_t *R
- ** @returns xcb_res_client_id_value_iterator_t
- **
- *****************************************************************************/
- 
 xcb_res_client_id_value_iterator_t
 xcb_res_query_client_ids_ids_iterator (const xcb_res_query_client_ids_reply_t *R  /**< */)
 {
@@ -1157,18 +717,6 @@ xcb_res_query_client_ids_ids_iterator (const xcb_res_query_client_ids_reply_t *R
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_client_ids_reply_t * xcb_res_query_client_ids_reply
- ** 
- ** @param xcb_connection_t                   *c
- ** @param xcb_res_query_client_ids_cookie_t   cookie
- ** @param xcb_generic_error_t               **e
- ** @returns xcb_res_query_client_ids_reply_t *
- **
- *****************************************************************************/
- 
 xcb_res_query_client_ids_reply_t *
 xcb_res_query_client_ids_reply (xcb_connection_t                   *c  /**< */,
                                 xcb_res_query_client_ids_cookie_t   cookie  /**< */,
@@ -1208,19 +756,6 @@ xcb_res_query_resource_bytes_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_resource_bytes_cookie_t xcb_res_query_resource_bytes
- ** 
- ** @param xcb_connection_t                 *c
- ** @param uint32_t                          client
- ** @param uint32_t                          num_specs
- ** @param const xcb_res_resource_id_spec_t *specs
- ** @returns xcb_res_query_resource_bytes_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_resource_bytes_cookie_t
 xcb_res_query_resource_bytes (xcb_connection_t                 *c  /**< */,
                               uint32_t                          client  /**< */,
@@ -1233,14 +768,14 @@ xcb_res_query_resource_bytes (xcb_connection_t                 *c  /**< */,
         /* opcode */ XCB_RES_QUERY_RESOURCE_BYTES,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[6];
     xcb_res_query_resource_bytes_cookie_t xcb_ret;
     xcb_res_query_resource_bytes_request_t xcb_out;
-    
+
     xcb_out.client = client;
     xcb_out.num_specs = num_specs;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -1250,24 +785,11 @@ xcb_res_query_resource_bytes (xcb_connection_t                 *c  /**< */,
     xcb_parts[4].iov_len = num_specs * sizeof(xcb_res_resource_id_spec_t);
     xcb_parts[5].iov_base = 0;
     xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_resource_bytes_cookie_t xcb_res_query_resource_bytes_unchecked
- ** 
- ** @param xcb_connection_t                 *c
- ** @param uint32_t                          client
- ** @param uint32_t                          num_specs
- ** @param const xcb_res_resource_id_spec_t *specs
- ** @returns xcb_res_query_resource_bytes_cookie_t
- **
- *****************************************************************************/
- 
 xcb_res_query_resource_bytes_cookie_t
 xcb_res_query_resource_bytes_unchecked (xcb_connection_t                 *c  /**< */,
                                         uint32_t                          client  /**< */,
@@ -1280,14 +802,14 @@ xcb_res_query_resource_bytes_unchecked (xcb_connection_t                 *c  /**
         /* opcode */ XCB_RES_QUERY_RESOURCE_BYTES,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[6];
     xcb_res_query_resource_bytes_cookie_t xcb_ret;
     xcb_res_query_resource_bytes_request_t xcb_out;
-    
+
     xcb_out.client = client;
     xcb_out.num_specs = num_specs;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -1297,37 +819,17 @@ xcb_res_query_resource_bytes_unchecked (xcb_connection_t                 *c  /**
     xcb_parts[4].iov_len = num_specs * sizeof(xcb_res_resource_id_spec_t);
     xcb_parts[5].iov_base = 0;
     xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_res_query_resource_bytes_sizes_length
- ** 
- ** @param const xcb_res_query_resource_bytes_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_res_query_resource_bytes_sizes_length (const xcb_res_query_resource_bytes_reply_t *R  /**< */)
 {
     return R->num_sizes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_resource_size_value_iterator_t xcb_res_query_resource_bytes_sizes_iterator
- ** 
- ** @param const xcb_res_query_resource_bytes_reply_t *R
- ** @returns xcb_res_resource_size_value_iterator_t
- **
- *****************************************************************************/
- 
 xcb_res_resource_size_value_iterator_t
 xcb_res_query_resource_bytes_sizes_iterator (const xcb_res_query_resource_bytes_reply_t *R  /**< */)
 {
@@ -1338,18 +840,6 @@ xcb_res_query_resource_bytes_sizes_iterator (const xcb_res_query_resource_bytes_
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_res_query_resource_bytes_reply_t * xcb_res_query_resource_bytes_reply
- ** 
- ** @param xcb_connection_t                       *c
- ** @param xcb_res_query_resource_bytes_cookie_t   cookie
- ** @param xcb_generic_error_t                   **e
- ** @returns xcb_res_query_resource_bytes_reply_t *
- **
- *****************************************************************************/
- 
 xcb_res_query_resource_bytes_reply_t *
 xcb_res_query_resource_bytes_reply (xcb_connection_t                       *c  /**< */,
                                     xcb_res_query_resource_bytes_cookie_t   cookie  /**< */,

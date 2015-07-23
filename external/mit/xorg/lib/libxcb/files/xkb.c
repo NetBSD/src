@@ -18,16 +18,6 @@
 
 xcb_extension_t xcb_xkb_id = { "XKEYBOARD", 0 };
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_device_spec_next
- ** 
- ** @param xcb_xkb_device_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_device_spec_next (xcb_xkb_device_spec_iterator_t *i  /**< */)
 {
@@ -36,16 +26,6 @@ xcb_xkb_device_spec_next (xcb_xkb_device_spec_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_device_spec_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_device_spec_end
- ** 
- ** @param xcb_xkb_device_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_device_spec_end (xcb_xkb_device_spec_iterator_t i  /**< */)
 {
@@ -56,16 +36,6 @@ xcb_xkb_device_spec_end (xcb_xkb_device_spec_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_led_class_spec_next
- ** 
- ** @param xcb_xkb_led_class_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_led_class_spec_next (xcb_xkb_led_class_spec_iterator_t *i  /**< */)
 {
@@ -74,16 +44,6 @@ xcb_xkb_led_class_spec_next (xcb_xkb_led_class_spec_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_led_class_spec_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_led_class_spec_end
- ** 
- ** @param xcb_xkb_led_class_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_led_class_spec_end (xcb_xkb_led_class_spec_iterator_t i  /**< */)
 {
@@ -94,16 +54,6 @@ xcb_xkb_led_class_spec_end (xcb_xkb_led_class_spec_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_bell_class_spec_next
- ** 
- ** @param xcb_xkb_bell_class_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_bell_class_spec_next (xcb_xkb_bell_class_spec_iterator_t *i  /**< */)
 {
@@ -112,16 +62,6 @@ xcb_xkb_bell_class_spec_next (xcb_xkb_bell_class_spec_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_bell_class_spec_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_bell_class_spec_end
- ** 
- ** @param xcb_xkb_bell_class_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_bell_class_spec_end (xcb_xkb_bell_class_spec_iterator_t i  /**< */)
 {
@@ -132,16 +72,6 @@ xcb_xkb_bell_class_spec_end (xcb_xkb_bell_class_spec_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_id_spec_next
- ** 
- ** @param xcb_xkb_id_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_id_spec_next (xcb_xkb_id_spec_iterator_t *i  /**< */)
 {
@@ -150,16 +80,6 @@ xcb_xkb_id_spec_next (xcb_xkb_id_spec_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_id_spec_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_id_spec_end
- ** 
- ** @param xcb_xkb_id_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_id_spec_end (xcb_xkb_id_spec_iterator_t i  /**< */)
 {
@@ -170,16 +90,6 @@ xcb_xkb_id_spec_end (xcb_xkb_id_spec_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_indicator_map_next
- ** 
- ** @param xcb_xkb_indicator_map_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_indicator_map_next (xcb_xkb_indicator_map_iterator_t *i  /**< */)
 {
@@ -188,16 +98,6 @@ xcb_xkb_indicator_map_next (xcb_xkb_indicator_map_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_indicator_map_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_indicator_map_end
- ** 
- ** @param xcb_xkb_indicator_map_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_indicator_map_end (xcb_xkb_indicator_map_iterator_t i  /**< */)
 {
@@ -208,16 +108,6 @@ xcb_xkb_indicator_map_end (xcb_xkb_indicator_map_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_mod_def_next
- ** 
- ** @param xcb_xkb_mod_def_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_mod_def_next (xcb_xkb_mod_def_iterator_t *i  /**< */)
 {
@@ -226,16 +116,6 @@ xcb_xkb_mod_def_next (xcb_xkb_mod_def_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_mod_def_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_mod_def_end
- ** 
- ** @param xcb_xkb_mod_def_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_mod_def_end (xcb_xkb_mod_def_iterator_t i  /**< */)
 {
@@ -246,16 +126,6 @@ xcb_xkb_mod_def_end (xcb_xkb_mod_def_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_name_next
- ** 
- ** @param xcb_xkb_key_name_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_name_next (xcb_xkb_key_name_iterator_t *i  /**< */)
 {
@@ -264,16 +134,6 @@ xcb_xkb_key_name_next (xcb_xkb_key_name_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_key_name_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_name_end
- ** 
- ** @param xcb_xkb_key_name_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_name_end (xcb_xkb_key_name_iterator_t i  /**< */)
 {
@@ -284,16 +144,6 @@ xcb_xkb_key_name_end (xcb_xkb_key_name_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_alias_next
- ** 
- ** @param xcb_xkb_key_alias_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_alias_next (xcb_xkb_key_alias_iterator_t *i  /**< */)
 {
@@ -302,16 +152,6 @@ xcb_xkb_key_alias_next (xcb_xkb_key_alias_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_key_alias_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_alias_end
- ** 
- ** @param xcb_xkb_key_alias_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_alias_end (xcb_xkb_key_alias_iterator_t i  /**< */)
 {
@@ -365,48 +205,18 @@ xcb_xkb_counted_string_16_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** char * xcb_xkb_counted_string_16_string
- ** 
- ** @param const xcb_xkb_counted_string_16_t *R
- ** @returns char *
- **
- *****************************************************************************/
- 
 char *
 xcb_xkb_counted_string_16_string (const xcb_xkb_counted_string_16_t *R  /**< */)
 {
     return (char *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_counted_string_16_string_length
- ** 
- ** @param const xcb_xkb_counted_string_16_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_counted_string_16_string_length (const xcb_xkb_counted_string_16_t *R  /**< */)
 {
     return R->length;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_counted_string_16_string_end
- ** 
- ** @param const xcb_xkb_counted_string_16_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_counted_string_16_string_end (const xcb_xkb_counted_string_16_t *R  /**< */)
 {
@@ -417,16 +227,6 @@ xcb_xkb_counted_string_16_string_end (const xcb_xkb_counted_string_16_t *R  /**<
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void * xcb_xkb_counted_string_16_alignment_pad
- ** 
- ** @param const xcb_xkb_counted_string_16_t *R
- ** @returns void *
- **
- *****************************************************************************/
- 
 void *
 xcb_xkb_counted_string_16_alignment_pad (const xcb_xkb_counted_string_16_t *R  /**< */)
 {
@@ -434,32 +234,12 @@ xcb_xkb_counted_string_16_alignment_pad (const xcb_xkb_counted_string_16_t *R  /
     return (void *) ((char *) prev.data + XCB_TYPE_PAD(char, prev.index) + 0);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_counted_string_16_alignment_pad_length
- ** 
- ** @param const xcb_xkb_counted_string_16_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_counted_string_16_alignment_pad_length (const xcb_xkb_counted_string_16_t *R  /**< */)
 {
     return (((R->length + 5) & (~3)) - (R->length + 2));
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_counted_string_16_alignment_pad_end
- ** 
- ** @param const xcb_xkb_counted_string_16_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_counted_string_16_alignment_pad_end (const xcb_xkb_counted_string_16_t *R  /**< */)
 {
@@ -471,16 +251,6 @@ xcb_xkb_counted_string_16_alignment_pad_end (const xcb_xkb_counted_string_16_t *
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_counted_string_16_next
- ** 
- ** @param xcb_xkb_counted_string_16_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_counted_string_16_next (xcb_xkb_counted_string_16_iterator_t *i  /**< */)
 {
@@ -492,16 +262,6 @@ xcb_xkb_counted_string_16_next (xcb_xkb_counted_string_16_iterator_t *i  /**< */
     i->data = (xcb_xkb_counted_string_16_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_counted_string_16_end
- ** 
- ** @param xcb_xkb_counted_string_16_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_counted_string_16_end (xcb_xkb_counted_string_16_iterator_t i  /**< */)
 {
@@ -514,16 +274,6 @@ xcb_xkb_counted_string_16_end (xcb_xkb_counted_string_16_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_kt_map_entry_next
- ** 
- ** @param xcb_xkb_kt_map_entry_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_kt_map_entry_next (xcb_xkb_kt_map_entry_iterator_t *i  /**< */)
 {
@@ -532,16 +282,6 @@ xcb_xkb_kt_map_entry_next (xcb_xkb_kt_map_entry_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_kt_map_entry_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_kt_map_entry_end
- ** 
- ** @param xcb_xkb_kt_map_entry_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_kt_map_entry_end (xcb_xkb_kt_map_entry_iterator_t i  /**< */)
 {
@@ -595,48 +335,18 @@ xcb_xkb_key_type_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_map_entry_t * xcb_xkb_key_type_map
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns xcb_xkb_kt_map_entry_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_map_entry_t *
 xcb_xkb_key_type_map (const xcb_xkb_key_type_t *R  /**< */)
 {
     return (xcb_xkb_kt_map_entry_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_key_type_map_length
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_key_type_map_length (const xcb_xkb_key_type_t *R  /**< */)
 {
     return R->nMapEntries;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_map_entry_iterator_t xcb_xkb_key_type_map_iterator
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns xcb_xkb_kt_map_entry_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_map_entry_iterator_t
 xcb_xkb_key_type_map_iterator (const xcb_xkb_key_type_t *R  /**< */)
 {
@@ -647,16 +357,6 @@ xcb_xkb_key_type_map_iterator (const xcb_xkb_key_type_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_t * xcb_xkb_key_type_preserve
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns xcb_xkb_mod_def_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_t *
 xcb_xkb_key_type_preserve (const xcb_xkb_key_type_t *R  /**< */)
 {
@@ -664,32 +364,12 @@ xcb_xkb_key_type_preserve (const xcb_xkb_key_type_t *R  /**< */)
     return (xcb_xkb_mod_def_t *) ((char *) prev.data + XCB_TYPE_PAD(xcb_xkb_mod_def_t, prev.index) + 0);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_key_type_preserve_length
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_key_type_preserve_length (const xcb_xkb_key_type_t *R  /**< */)
 {
     return (R->hasPreserve * R->nMapEntries);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_iterator_t xcb_xkb_key_type_preserve_iterator
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns xcb_xkb_mod_def_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_iterator_t
 xcb_xkb_key_type_preserve_iterator (const xcb_xkb_key_type_t *R  /**< */)
 {
@@ -701,16 +381,6 @@ xcb_xkb_key_type_preserve_iterator (const xcb_xkb_key_type_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_type_next
- ** 
- ** @param xcb_xkb_key_type_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_type_next (xcb_xkb_key_type_iterator_t *i  /**< */)
 {
@@ -722,16 +392,6 @@ xcb_xkb_key_type_next (xcb_xkb_key_type_iterator_t *i  /**< */)
     i->data = (xcb_xkb_key_type_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_type_end
- ** 
- ** @param xcb_xkb_key_type_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_type_end (xcb_xkb_key_type_iterator_t i  /**< */)
 {
@@ -775,48 +435,18 @@ xcb_xkb_key_sym_map_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_keysym_t * xcb_xkb_key_sym_map_syms
- ** 
- ** @param const xcb_xkb_key_sym_map_t *R
- ** @returns xcb_keysym_t *
- **
- *****************************************************************************/
- 
 xcb_keysym_t *
 xcb_xkb_key_sym_map_syms (const xcb_xkb_key_sym_map_t *R  /**< */)
 {
     return (xcb_keysym_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_key_sym_map_syms_length
- ** 
- ** @param const xcb_xkb_key_sym_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_key_sym_map_syms_length (const xcb_xkb_key_sym_map_t *R  /**< */)
 {
     return R->nSyms;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_sym_map_syms_end
- ** 
- ** @param const xcb_xkb_key_sym_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_sym_map_syms_end (const xcb_xkb_key_sym_map_t *R  /**< */)
 {
@@ -827,16 +457,6 @@ xcb_xkb_key_sym_map_syms_end (const xcb_xkb_key_sym_map_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_sym_map_next
- ** 
- ** @param xcb_xkb_key_sym_map_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_sym_map_next (xcb_xkb_key_sym_map_iterator_t *i  /**< */)
 {
@@ -848,16 +468,6 @@ xcb_xkb_key_sym_map_next (xcb_xkb_key_sym_map_iterator_t *i  /**< */)
     i->data = (xcb_xkb_key_sym_map_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_sym_map_end
- ** 
- ** @param xcb_xkb_key_sym_map_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_sym_map_end (xcb_xkb_key_sym_map_iterator_t i  /**< */)
 {
@@ -870,16 +480,6 @@ xcb_xkb_key_sym_map_end (xcb_xkb_key_sym_map_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_common_behavior_next
- ** 
- ** @param xcb_xkb_common_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_common_behavior_next (xcb_xkb_common_behavior_iterator_t *i  /**< */)
 {
@@ -888,16 +488,6 @@ xcb_xkb_common_behavior_next (xcb_xkb_common_behavior_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_common_behavior_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_common_behavior_end
- ** 
- ** @param xcb_xkb_common_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_common_behavior_end (xcb_xkb_common_behavior_iterator_t i  /**< */)
 {
@@ -908,16 +498,6 @@ xcb_xkb_common_behavior_end (xcb_xkb_common_behavior_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_default_behavior_next
- ** 
- ** @param xcb_xkb_default_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_default_behavior_next (xcb_xkb_default_behavior_iterator_t *i  /**< */)
 {
@@ -926,16 +506,6 @@ xcb_xkb_default_behavior_next (xcb_xkb_default_behavior_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_default_behavior_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_default_behavior_end
- ** 
- ** @param xcb_xkb_default_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_default_behavior_end (xcb_xkb_default_behavior_iterator_t i  /**< */)
 {
@@ -946,16 +516,6 @@ xcb_xkb_default_behavior_end (xcb_xkb_default_behavior_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_lock_behavior_next
- ** 
- ** @param xcb_xkb_lock_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_lock_behavior_next (xcb_xkb_lock_behavior_iterator_t *i  /**< */)
 {
@@ -964,16 +524,6 @@ xcb_xkb_lock_behavior_next (xcb_xkb_lock_behavior_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_lock_behavior_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_lock_behavior_end
- ** 
- ** @param xcb_xkb_lock_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_lock_behavior_end (xcb_xkb_lock_behavior_iterator_t i  /**< */)
 {
@@ -984,16 +534,6 @@ xcb_xkb_lock_behavior_end (xcb_xkb_lock_behavior_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_radio_group_behavior_next
- ** 
- ** @param xcb_xkb_radio_group_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_radio_group_behavior_next (xcb_xkb_radio_group_behavior_iterator_t *i  /**< */)
 {
@@ -1002,16 +542,6 @@ xcb_xkb_radio_group_behavior_next (xcb_xkb_radio_group_behavior_iterator_t *i  /
     i->index += sizeof(xcb_xkb_radio_group_behavior_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_radio_group_behavior_end
- ** 
- ** @param xcb_xkb_radio_group_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_radio_group_behavior_end (xcb_xkb_radio_group_behavior_iterator_t i  /**< */)
 {
@@ -1022,16 +552,6 @@ xcb_xkb_radio_group_behavior_end (xcb_xkb_radio_group_behavior_iterator_t i  /**
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_overlay_behavior_next
- ** 
- ** @param xcb_xkb_overlay_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_overlay_behavior_next (xcb_xkb_overlay_behavior_iterator_t *i  /**< */)
 {
@@ -1040,16 +560,6 @@ xcb_xkb_overlay_behavior_next (xcb_xkb_overlay_behavior_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_overlay_behavior_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_overlay_behavior_end
- ** 
- ** @param xcb_xkb_overlay_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_overlay_behavior_end (xcb_xkb_overlay_behavior_iterator_t i  /**< */)
 {
@@ -1060,16 +570,6 @@ xcb_xkb_overlay_behavior_end (xcb_xkb_overlay_behavior_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_permament_lock_behavior_next
- ** 
- ** @param xcb_xkb_permament_lock_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_permament_lock_behavior_next (xcb_xkb_permament_lock_behavior_iterator_t *i  /**< */)
 {
@@ -1078,16 +578,6 @@ xcb_xkb_permament_lock_behavior_next (xcb_xkb_permament_lock_behavior_iterator_t
     i->index += sizeof(xcb_xkb_permament_lock_behavior_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_permament_lock_behavior_end
- ** 
- ** @param xcb_xkb_permament_lock_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_permament_lock_behavior_end (xcb_xkb_permament_lock_behavior_iterator_t i  /**< */)
 {
@@ -1098,16 +588,6 @@ xcb_xkb_permament_lock_behavior_end (xcb_xkb_permament_lock_behavior_iterator_t 
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_permament_radio_group_behavior_next
- ** 
- ** @param xcb_xkb_permament_radio_group_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_permament_radio_group_behavior_next (xcb_xkb_permament_radio_group_behavior_iterator_t *i  /**< */)
 {
@@ -1116,16 +596,6 @@ xcb_xkb_permament_radio_group_behavior_next (xcb_xkb_permament_radio_group_behav
     i->index += sizeof(xcb_xkb_permament_radio_group_behavior_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_permament_radio_group_behavior_end
- ** 
- ** @param xcb_xkb_permament_radio_group_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_permament_radio_group_behavior_end (xcb_xkb_permament_radio_group_behavior_iterator_t i  /**< */)
 {
@@ -1136,16 +606,6 @@ xcb_xkb_permament_radio_group_behavior_end (xcb_xkb_permament_radio_group_behavi
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_permament_overlay_behavior_next
- ** 
- ** @param xcb_xkb_permament_overlay_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_permament_overlay_behavior_next (xcb_xkb_permament_overlay_behavior_iterator_t *i  /**< */)
 {
@@ -1154,16 +614,6 @@ xcb_xkb_permament_overlay_behavior_next (xcb_xkb_permament_overlay_behavior_iter
     i->index += sizeof(xcb_xkb_permament_overlay_behavior_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_permament_overlay_behavior_end
- ** 
- ** @param xcb_xkb_permament_overlay_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_permament_overlay_behavior_end (xcb_xkb_permament_overlay_behavior_iterator_t i  /**< */)
 {
@@ -1174,16 +624,6 @@ xcb_xkb_permament_overlay_behavior_end (xcb_xkb_permament_overlay_behavior_itera
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_behavior_next
- ** 
- ** @param xcb_xkb_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_behavior_next (xcb_xkb_behavior_iterator_t *i  /**< */)
 {
@@ -1192,16 +632,6 @@ xcb_xkb_behavior_next (xcb_xkb_behavior_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_behavior_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_behavior_end
- ** 
- ** @param xcb_xkb_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_behavior_end (xcb_xkb_behavior_iterator_t i  /**< */)
 {
@@ -1212,16 +642,6 @@ xcb_xkb_behavior_end (xcb_xkb_behavior_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_set_behavior_next
- ** 
- ** @param xcb_xkb_set_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_set_behavior_next (xcb_xkb_set_behavior_iterator_t *i  /**< */)
 {
@@ -1230,16 +650,6 @@ xcb_xkb_set_behavior_next (xcb_xkb_set_behavior_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_set_behavior_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_behavior_end
- ** 
- ** @param xcb_xkb_set_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_behavior_end (xcb_xkb_set_behavior_iterator_t i  /**< */)
 {
@@ -1250,16 +660,6 @@ xcb_xkb_set_behavior_end (xcb_xkb_set_behavior_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_set_explicit_next
- ** 
- ** @param xcb_xkb_set_explicit_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_set_explicit_next (xcb_xkb_set_explicit_iterator_t *i  /**< */)
 {
@@ -1268,16 +668,6 @@ xcb_xkb_set_explicit_next (xcb_xkb_set_explicit_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_set_explicit_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_explicit_end
- ** 
- ** @param xcb_xkb_set_explicit_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_explicit_end (xcb_xkb_set_explicit_iterator_t i  /**< */)
 {
@@ -1288,16 +678,6 @@ xcb_xkb_set_explicit_end (xcb_xkb_set_explicit_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_mod_map_next
- ** 
- ** @param xcb_xkb_key_mod_map_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_mod_map_next (xcb_xkb_key_mod_map_iterator_t *i  /**< */)
 {
@@ -1306,16 +686,6 @@ xcb_xkb_key_mod_map_next (xcb_xkb_key_mod_map_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_key_mod_map_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_mod_map_end
- ** 
- ** @param xcb_xkb_key_mod_map_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_mod_map_end (xcb_xkb_key_mod_map_iterator_t i  /**< */)
 {
@@ -1326,16 +696,6 @@ xcb_xkb_key_mod_map_end (xcb_xkb_key_mod_map_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_v_mod_map_next
- ** 
- ** @param xcb_xkb_key_v_mod_map_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_v_mod_map_next (xcb_xkb_key_v_mod_map_iterator_t *i  /**< */)
 {
@@ -1344,16 +704,6 @@ xcb_xkb_key_v_mod_map_next (xcb_xkb_key_v_mod_map_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_key_v_mod_map_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_v_mod_map_end
- ** 
- ** @param xcb_xkb_key_v_mod_map_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_v_mod_map_end (xcb_xkb_key_v_mod_map_iterator_t i  /**< */)
 {
@@ -1364,16 +714,6 @@ xcb_xkb_key_v_mod_map_end (xcb_xkb_key_v_mod_map_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_kt_set_map_entry_next
- ** 
- ** @param xcb_xkb_kt_set_map_entry_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_kt_set_map_entry_next (xcb_xkb_kt_set_map_entry_iterator_t *i  /**< */)
 {
@@ -1382,16 +722,6 @@ xcb_xkb_kt_set_map_entry_next (xcb_xkb_kt_set_map_entry_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_kt_set_map_entry_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_kt_set_map_entry_end
- ** 
- ** @param xcb_xkb_kt_set_map_entry_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_kt_set_map_entry_end (xcb_xkb_kt_set_map_entry_iterator_t i  /**< */)
 {
@@ -1445,48 +775,18 @@ xcb_xkb_set_key_type_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_set_map_entry_t * xcb_xkb_set_key_type_entries
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns xcb_xkb_kt_set_map_entry_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_set_map_entry_t *
 xcb_xkb_set_key_type_entries (const xcb_xkb_set_key_type_t *R  /**< */)
 {
     return (xcb_xkb_kt_set_map_entry_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_key_type_entries_length
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_key_type_entries_length (const xcb_xkb_set_key_type_t *R  /**< */)
 {
     return R->nMapEntries;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_set_map_entry_iterator_t xcb_xkb_set_key_type_entries_iterator
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns xcb_xkb_kt_set_map_entry_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_set_map_entry_iterator_t
 xcb_xkb_set_key_type_entries_iterator (const xcb_xkb_set_key_type_t *R  /**< */)
 {
@@ -1497,16 +797,6 @@ xcb_xkb_set_key_type_entries_iterator (const xcb_xkb_set_key_type_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_set_map_entry_t * xcb_xkb_set_key_type_preserve_entries
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns xcb_xkb_kt_set_map_entry_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_set_map_entry_t *
 xcb_xkb_set_key_type_preserve_entries (const xcb_xkb_set_key_type_t *R  /**< */)
 {
@@ -1514,32 +804,12 @@ xcb_xkb_set_key_type_preserve_entries (const xcb_xkb_set_key_type_t *R  /**< */)
     return (xcb_xkb_kt_set_map_entry_t *) ((char *) prev.data + XCB_TYPE_PAD(xcb_xkb_kt_set_map_entry_t, prev.index) + 0);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_key_type_preserve_entries_length
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_key_type_preserve_entries_length (const xcb_xkb_set_key_type_t *R  /**< */)
 {
     return (R->preserve * R->nMapEntries);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_set_map_entry_iterator_t xcb_xkb_set_key_type_preserve_entries_iterator
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns xcb_xkb_kt_set_map_entry_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_set_map_entry_iterator_t
 xcb_xkb_set_key_type_preserve_entries_iterator (const xcb_xkb_set_key_type_t *R  /**< */)
 {
@@ -1551,16 +821,6 @@ xcb_xkb_set_key_type_preserve_entries_iterator (const xcb_xkb_set_key_type_t *R 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_set_key_type_next
- ** 
- ** @param xcb_xkb_set_key_type_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_set_key_type_next (xcb_xkb_set_key_type_iterator_t *i  /**< */)
 {
@@ -1572,16 +832,6 @@ xcb_xkb_set_key_type_next (xcb_xkb_set_key_type_iterator_t *i  /**< */)
     i->data = (xcb_xkb_set_key_type_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_key_type_end
- ** 
- ** @param xcb_xkb_set_key_type_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_key_type_end (xcb_xkb_set_key_type_iterator_t i  /**< */)
 {
@@ -1594,16 +844,6 @@ xcb_xkb_set_key_type_end (xcb_xkb_set_key_type_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_string8_next
- ** 
- ** @param xcb_xkb_string8_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_string8_next (xcb_xkb_string8_iterator_t *i  /**< */)
 {
@@ -1612,16 +852,6 @@ xcb_xkb_string8_next (xcb_xkb_string8_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_string8_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_string8_end
- ** 
- ** @param xcb_xkb_string8_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_string8_end (xcb_xkb_string8_iterator_t i  /**< */)
 {
@@ -1663,48 +893,18 @@ xcb_xkb_outline_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_point_t * xcb_xkb_outline_points
- ** 
- ** @param const xcb_xkb_outline_t *R
- ** @returns xcb_point_t *
- **
- *****************************************************************************/
- 
 xcb_point_t *
 xcb_xkb_outline_points (const xcb_xkb_outline_t *R  /**< */)
 {
     return (xcb_point_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_outline_points_length
- ** 
- ** @param const xcb_xkb_outline_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_outline_points_length (const xcb_xkb_outline_t *R  /**< */)
 {
     return R->nPoints;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_point_iterator_t xcb_xkb_outline_points_iterator
- ** 
- ** @param const xcb_xkb_outline_t *R
- ** @returns xcb_point_iterator_t
- **
- *****************************************************************************/
- 
 xcb_point_iterator_t
 xcb_xkb_outline_points_iterator (const xcb_xkb_outline_t *R  /**< */)
 {
@@ -1715,16 +915,6 @@ xcb_xkb_outline_points_iterator (const xcb_xkb_outline_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_outline_next
- ** 
- ** @param xcb_xkb_outline_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_outline_next (xcb_xkb_outline_iterator_t *i  /**< */)
 {
@@ -1736,16 +926,6 @@ xcb_xkb_outline_next (xcb_xkb_outline_iterator_t *i  /**< */)
     i->data = (xcb_xkb_outline_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_outline_end
- ** 
- ** @param xcb_xkb_outline_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_outline_end (xcb_xkb_outline_iterator_t i  /**< */)
 {
@@ -1794,32 +974,12 @@ xcb_xkb_shape_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_shape_outlines_length
- ** 
- ** @param const xcb_xkb_shape_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_shape_outlines_length (const xcb_xkb_shape_t *R  /**< */)
 {
     return R->nOutlines;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_outline_iterator_t xcb_xkb_shape_outlines_iterator
- ** 
- ** @param const xcb_xkb_shape_t *R
- ** @returns xcb_xkb_outline_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_outline_iterator_t
 xcb_xkb_shape_outlines_iterator (const xcb_xkb_shape_t *R  /**< */)
 {
@@ -1830,16 +990,6 @@ xcb_xkb_shape_outlines_iterator (const xcb_xkb_shape_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_shape_next
- ** 
- ** @param xcb_xkb_shape_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_shape_next (xcb_xkb_shape_iterator_t *i  /**< */)
 {
@@ -1851,16 +1001,6 @@ xcb_xkb_shape_next (xcb_xkb_shape_iterator_t *i  /**< */)
     i->data = (xcb_xkb_shape_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_shape_end
- ** 
- ** @param xcb_xkb_shape_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_shape_end (xcb_xkb_shape_iterator_t i  /**< */)
 {
@@ -1873,16 +1013,6 @@ xcb_xkb_shape_end (xcb_xkb_shape_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_next
- ** 
- ** @param xcb_xkb_key_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_next (xcb_xkb_key_iterator_t *i  /**< */)
 {
@@ -1891,16 +1021,6 @@ xcb_xkb_key_next (xcb_xkb_key_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_key_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_end
- ** 
- ** @param xcb_xkb_key_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_end (xcb_xkb_key_iterator_t i  /**< */)
 {
@@ -1911,16 +1031,6 @@ xcb_xkb_key_end (xcb_xkb_key_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_overlay_key_next
- ** 
- ** @param xcb_xkb_overlay_key_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_overlay_key_next (xcb_xkb_overlay_key_iterator_t *i  /**< */)
 {
@@ -1929,16 +1039,6 @@ xcb_xkb_overlay_key_next (xcb_xkb_overlay_key_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_overlay_key_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_overlay_key_end
- ** 
- ** @param xcb_xkb_overlay_key_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_overlay_key_end (xcb_xkb_overlay_key_iterator_t i  /**< */)
 {
@@ -1980,48 +1080,18 @@ xcb_xkb_overlay_row_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_overlay_key_t * xcb_xkb_overlay_row_keys
- ** 
- ** @param const xcb_xkb_overlay_row_t *R
- ** @returns xcb_xkb_overlay_key_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_overlay_key_t *
 xcb_xkb_overlay_row_keys (const xcb_xkb_overlay_row_t *R  /**< */)
 {
     return (xcb_xkb_overlay_key_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_overlay_row_keys_length
- ** 
- ** @param const xcb_xkb_overlay_row_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_overlay_row_keys_length (const xcb_xkb_overlay_row_t *R  /**< */)
 {
     return R->nKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_overlay_key_iterator_t xcb_xkb_overlay_row_keys_iterator
- ** 
- ** @param const xcb_xkb_overlay_row_t *R
- ** @returns xcb_xkb_overlay_key_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_overlay_key_iterator_t
 xcb_xkb_overlay_row_keys_iterator (const xcb_xkb_overlay_row_t *R  /**< */)
 {
@@ -2032,16 +1102,6 @@ xcb_xkb_overlay_row_keys_iterator (const xcb_xkb_overlay_row_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_overlay_row_next
- ** 
- ** @param xcb_xkb_overlay_row_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_overlay_row_next (xcb_xkb_overlay_row_iterator_t *i  /**< */)
 {
@@ -2053,16 +1113,6 @@ xcb_xkb_overlay_row_next (xcb_xkb_overlay_row_iterator_t *i  /**< */)
     i->data = (xcb_xkb_overlay_row_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_overlay_row_end
- ** 
- ** @param xcb_xkb_overlay_row_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_overlay_row_end (xcb_xkb_overlay_row_iterator_t i  /**< */)
 {
@@ -2111,32 +1161,12 @@ xcb_xkb_overlay_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_overlay_rows_length
- ** 
- ** @param const xcb_xkb_overlay_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_overlay_rows_length (const xcb_xkb_overlay_t *R  /**< */)
 {
     return R->nRows;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_overlay_row_iterator_t xcb_xkb_overlay_rows_iterator
- ** 
- ** @param const xcb_xkb_overlay_t *R
- ** @returns xcb_xkb_overlay_row_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_overlay_row_iterator_t
 xcb_xkb_overlay_rows_iterator (const xcb_xkb_overlay_t *R  /**< */)
 {
@@ -2147,16 +1177,6 @@ xcb_xkb_overlay_rows_iterator (const xcb_xkb_overlay_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_overlay_next
- ** 
- ** @param xcb_xkb_overlay_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_overlay_next (xcb_xkb_overlay_iterator_t *i  /**< */)
 {
@@ -2168,16 +1188,6 @@ xcb_xkb_overlay_next (xcb_xkb_overlay_iterator_t *i  /**< */)
     i->data = (xcb_xkb_overlay_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_overlay_end
- ** 
- ** @param xcb_xkb_overlay_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_overlay_end (xcb_xkb_overlay_iterator_t i  /**< */)
 {
@@ -2221,48 +1231,18 @@ xcb_xkb_row_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_t * xcb_xkb_row_keys
- ** 
- ** @param const xcb_xkb_row_t *R
- ** @returns xcb_xkb_key_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_t *
 xcb_xkb_row_keys (const xcb_xkb_row_t *R  /**< */)
 {
     return (xcb_xkb_key_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_row_keys_length
- ** 
- ** @param const xcb_xkb_row_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_row_keys_length (const xcb_xkb_row_t *R  /**< */)
 {
     return R->nKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_iterator_t xcb_xkb_row_keys_iterator
- ** 
- ** @param const xcb_xkb_row_t *R
- ** @returns xcb_xkb_key_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_iterator_t
 xcb_xkb_row_keys_iterator (const xcb_xkb_row_t *R  /**< */)
 {
@@ -2273,16 +1253,6 @@ xcb_xkb_row_keys_iterator (const xcb_xkb_row_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_row_next
- ** 
- ** @param xcb_xkb_row_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_row_next (xcb_xkb_row_iterator_t *i  /**< */)
 {
@@ -2294,16 +1264,6 @@ xcb_xkb_row_next (xcb_xkb_row_iterator_t *i  /**< */)
     i->data = (xcb_xkb_row_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_row_end
- ** 
- ** @param xcb_xkb_row_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_row_end (xcb_xkb_row_iterator_t i  /**< */)
 {
@@ -2347,48 +1307,18 @@ xcb_xkb_listing_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_string8_t * xcb_xkb_listing_string
- ** 
- ** @param const xcb_xkb_listing_t *R
- ** @returns xcb_xkb_string8_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_string8_t *
 xcb_xkb_listing_string (const xcb_xkb_listing_t *R  /**< */)
 {
     return (xcb_xkb_string8_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_listing_string_length
- ** 
- ** @param const xcb_xkb_listing_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_listing_string_length (const xcb_xkb_listing_t *R  /**< */)
 {
     return R->length;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_listing_string_end
- ** 
- ** @param const xcb_xkb_listing_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_listing_string_end (const xcb_xkb_listing_t *R  /**< */)
 {
@@ -2399,16 +1329,6 @@ xcb_xkb_listing_string_end (const xcb_xkb_listing_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_listing_next
- ** 
- ** @param xcb_xkb_listing_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_listing_next (xcb_xkb_listing_iterator_t *i  /**< */)
 {
@@ -2420,16 +1340,6 @@ xcb_xkb_listing_next (xcb_xkb_listing_iterator_t *i  /**< */)
     i->data = (xcb_xkb_listing_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_listing_end
- ** 
- ** @param xcb_xkb_listing_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_listing_end (xcb_xkb_listing_iterator_t i  /**< */)
 {
@@ -2485,48 +1395,18 @@ xcb_xkb_device_led_info_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_device_led_info_names
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_device_led_info_names (const xcb_xkb_device_led_info_t *R  /**< */)
 {
     return (xcb_atom_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_device_led_info_names_length
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_device_led_info_names_length (const xcb_xkb_device_led_info_t *R  /**< */)
 {
     return xcb_popcount(R->namesPresent);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_device_led_info_names_end
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_device_led_info_names_end (const xcb_xkb_device_led_info_t *R  /**< */)
 {
@@ -2537,16 +1417,6 @@ xcb_xkb_device_led_info_names_end (const xcb_xkb_device_led_info_t *R  /**< */)
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_t * xcb_xkb_device_led_info_maps
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns xcb_xkb_indicator_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_t *
 xcb_xkb_device_led_info_maps (const xcb_xkb_device_led_info_t *R  /**< */)
 {
@@ -2554,32 +1424,12 @@ xcb_xkb_device_led_info_maps (const xcb_xkb_device_led_info_t *R  /**< */)
     return (xcb_xkb_indicator_map_t *) ((char *) prev.data + XCB_TYPE_PAD(xcb_xkb_indicator_map_t, prev.index) + 0);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_device_led_info_maps_length
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_device_led_info_maps_length (const xcb_xkb_device_led_info_t *R  /**< */)
 {
     return xcb_popcount(R->mapsPresent);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_iterator_t xcb_xkb_device_led_info_maps_iterator
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns xcb_xkb_indicator_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_iterator_t
 xcb_xkb_device_led_info_maps_iterator (const xcb_xkb_device_led_info_t *R  /**< */)
 {
@@ -2591,16 +1441,6 @@ xcb_xkb_device_led_info_maps_iterator (const xcb_xkb_device_led_info_t *R  /**< 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_device_led_info_next
- ** 
- ** @param xcb_xkb_device_led_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_device_led_info_next (xcb_xkb_device_led_info_iterator_t *i  /**< */)
 {
@@ -2612,16 +1452,6 @@ xcb_xkb_device_led_info_next (xcb_xkb_device_led_info_iterator_t *i  /**< */)
     i->data = (xcb_xkb_device_led_info_t *) child.data;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_device_led_info_end
- ** 
- ** @param xcb_xkb_device_led_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_device_led_info_end (xcb_xkb_device_led_info_iterator_t i  /**< */)
 {
@@ -2634,16 +1464,6 @@ xcb_xkb_device_led_info_end (xcb_xkb_device_led_info_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_no_action_next
- ** 
- ** @param xcb_xkb_sa_no_action_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_no_action_next (xcb_xkb_sa_no_action_iterator_t *i  /**< */)
 {
@@ -2652,16 +1472,6 @@ xcb_xkb_sa_no_action_next (xcb_xkb_sa_no_action_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_no_action_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_no_action_end
- ** 
- ** @param xcb_xkb_sa_no_action_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_no_action_end (xcb_xkb_sa_no_action_iterator_t i  /**< */)
 {
@@ -2672,16 +1482,6 @@ xcb_xkb_sa_no_action_end (xcb_xkb_sa_no_action_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_set_mods_next
- ** 
- ** @param xcb_xkb_sa_set_mods_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_set_mods_next (xcb_xkb_sa_set_mods_iterator_t *i  /**< */)
 {
@@ -2690,16 +1490,6 @@ xcb_xkb_sa_set_mods_next (xcb_xkb_sa_set_mods_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_set_mods_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_set_mods_end
- ** 
- ** @param xcb_xkb_sa_set_mods_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_set_mods_end (xcb_xkb_sa_set_mods_iterator_t i  /**< */)
 {
@@ -2710,16 +1500,6 @@ xcb_xkb_sa_set_mods_end (xcb_xkb_sa_set_mods_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_latch_mods_next
- ** 
- ** @param xcb_xkb_sa_latch_mods_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_latch_mods_next (xcb_xkb_sa_latch_mods_iterator_t *i  /**< */)
 {
@@ -2728,16 +1508,6 @@ xcb_xkb_sa_latch_mods_next (xcb_xkb_sa_latch_mods_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_latch_mods_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_latch_mods_end
- ** 
- ** @param xcb_xkb_sa_latch_mods_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_latch_mods_end (xcb_xkb_sa_latch_mods_iterator_t i  /**< */)
 {
@@ -2748,16 +1518,6 @@ xcb_xkb_sa_latch_mods_end (xcb_xkb_sa_latch_mods_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_lock_mods_next
- ** 
- ** @param xcb_xkb_sa_lock_mods_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_lock_mods_next (xcb_xkb_sa_lock_mods_iterator_t *i  /**< */)
 {
@@ -2766,16 +1526,6 @@ xcb_xkb_sa_lock_mods_next (xcb_xkb_sa_lock_mods_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_lock_mods_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_lock_mods_end
- ** 
- ** @param xcb_xkb_sa_lock_mods_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_lock_mods_end (xcb_xkb_sa_lock_mods_iterator_t i  /**< */)
 {
@@ -2786,16 +1536,6 @@ xcb_xkb_sa_lock_mods_end (xcb_xkb_sa_lock_mods_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_set_group_next
- ** 
- ** @param xcb_xkb_sa_set_group_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_set_group_next (xcb_xkb_sa_set_group_iterator_t *i  /**< */)
 {
@@ -2804,16 +1544,6 @@ xcb_xkb_sa_set_group_next (xcb_xkb_sa_set_group_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_set_group_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_set_group_end
- ** 
- ** @param xcb_xkb_sa_set_group_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_set_group_end (xcb_xkb_sa_set_group_iterator_t i  /**< */)
 {
@@ -2824,16 +1554,6 @@ xcb_xkb_sa_set_group_end (xcb_xkb_sa_set_group_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_latch_group_next
- ** 
- ** @param xcb_xkb_sa_latch_group_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_latch_group_next (xcb_xkb_sa_latch_group_iterator_t *i  /**< */)
 {
@@ -2842,16 +1562,6 @@ xcb_xkb_sa_latch_group_next (xcb_xkb_sa_latch_group_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_latch_group_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_latch_group_end
- ** 
- ** @param xcb_xkb_sa_latch_group_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_latch_group_end (xcb_xkb_sa_latch_group_iterator_t i  /**< */)
 {
@@ -2862,16 +1572,6 @@ xcb_xkb_sa_latch_group_end (xcb_xkb_sa_latch_group_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_lock_group_next
- ** 
- ** @param xcb_xkb_sa_lock_group_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_lock_group_next (xcb_xkb_sa_lock_group_iterator_t *i  /**< */)
 {
@@ -2880,16 +1580,6 @@ xcb_xkb_sa_lock_group_next (xcb_xkb_sa_lock_group_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_lock_group_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_lock_group_end
- ** 
- ** @param xcb_xkb_sa_lock_group_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_lock_group_end (xcb_xkb_sa_lock_group_iterator_t i  /**< */)
 {
@@ -2900,16 +1590,6 @@ xcb_xkb_sa_lock_group_end (xcb_xkb_sa_lock_group_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_move_ptr_next
- ** 
- ** @param xcb_xkb_sa_move_ptr_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_move_ptr_next (xcb_xkb_sa_move_ptr_iterator_t *i  /**< */)
 {
@@ -2918,16 +1598,6 @@ xcb_xkb_sa_move_ptr_next (xcb_xkb_sa_move_ptr_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_move_ptr_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_move_ptr_end
- ** 
- ** @param xcb_xkb_sa_move_ptr_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_move_ptr_end (xcb_xkb_sa_move_ptr_iterator_t i  /**< */)
 {
@@ -2938,16 +1608,6 @@ xcb_xkb_sa_move_ptr_end (xcb_xkb_sa_move_ptr_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_ptr_btn_next
- ** 
- ** @param xcb_xkb_sa_ptr_btn_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_ptr_btn_next (xcb_xkb_sa_ptr_btn_iterator_t *i  /**< */)
 {
@@ -2956,16 +1616,6 @@ xcb_xkb_sa_ptr_btn_next (xcb_xkb_sa_ptr_btn_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_ptr_btn_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_ptr_btn_end
- ** 
- ** @param xcb_xkb_sa_ptr_btn_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_ptr_btn_end (xcb_xkb_sa_ptr_btn_iterator_t i  /**< */)
 {
@@ -2976,16 +1626,6 @@ xcb_xkb_sa_ptr_btn_end (xcb_xkb_sa_ptr_btn_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_lock_ptr_btn_next
- ** 
- ** @param xcb_xkb_sa_lock_ptr_btn_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_lock_ptr_btn_next (xcb_xkb_sa_lock_ptr_btn_iterator_t *i  /**< */)
 {
@@ -2994,16 +1634,6 @@ xcb_xkb_sa_lock_ptr_btn_next (xcb_xkb_sa_lock_ptr_btn_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_lock_ptr_btn_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_lock_ptr_btn_end
- ** 
- ** @param xcb_xkb_sa_lock_ptr_btn_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_lock_ptr_btn_end (xcb_xkb_sa_lock_ptr_btn_iterator_t i  /**< */)
 {
@@ -3014,16 +1644,6 @@ xcb_xkb_sa_lock_ptr_btn_end (xcb_xkb_sa_lock_ptr_btn_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_set_ptr_dflt_next
- ** 
- ** @param xcb_xkb_sa_set_ptr_dflt_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_set_ptr_dflt_next (xcb_xkb_sa_set_ptr_dflt_iterator_t *i  /**< */)
 {
@@ -3032,16 +1652,6 @@ xcb_xkb_sa_set_ptr_dflt_next (xcb_xkb_sa_set_ptr_dflt_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_set_ptr_dflt_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_set_ptr_dflt_end
- ** 
- ** @param xcb_xkb_sa_set_ptr_dflt_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_set_ptr_dflt_end (xcb_xkb_sa_set_ptr_dflt_iterator_t i  /**< */)
 {
@@ -3052,16 +1662,6 @@ xcb_xkb_sa_set_ptr_dflt_end (xcb_xkb_sa_set_ptr_dflt_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_iso_lock_next
- ** 
- ** @param xcb_xkb_sa_iso_lock_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_iso_lock_next (xcb_xkb_sa_iso_lock_iterator_t *i  /**< */)
 {
@@ -3070,16 +1670,6 @@ xcb_xkb_sa_iso_lock_next (xcb_xkb_sa_iso_lock_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_iso_lock_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_iso_lock_end
- ** 
- ** @param xcb_xkb_sa_iso_lock_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_iso_lock_end (xcb_xkb_sa_iso_lock_iterator_t i  /**< */)
 {
@@ -3090,16 +1680,6 @@ xcb_xkb_sa_iso_lock_end (xcb_xkb_sa_iso_lock_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_terminate_next
- ** 
- ** @param xcb_xkb_sa_terminate_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_terminate_next (xcb_xkb_sa_terminate_iterator_t *i  /**< */)
 {
@@ -3108,16 +1688,6 @@ xcb_xkb_sa_terminate_next (xcb_xkb_sa_terminate_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_terminate_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_terminate_end
- ** 
- ** @param xcb_xkb_sa_terminate_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_terminate_end (xcb_xkb_sa_terminate_iterator_t i  /**< */)
 {
@@ -3128,16 +1698,6 @@ xcb_xkb_sa_terminate_end (xcb_xkb_sa_terminate_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_switch_screen_next
- ** 
- ** @param xcb_xkb_sa_switch_screen_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_switch_screen_next (xcb_xkb_sa_switch_screen_iterator_t *i  /**< */)
 {
@@ -3146,16 +1706,6 @@ xcb_xkb_sa_switch_screen_next (xcb_xkb_sa_switch_screen_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_switch_screen_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_switch_screen_end
- ** 
- ** @param xcb_xkb_sa_switch_screen_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_switch_screen_end (xcb_xkb_sa_switch_screen_iterator_t i  /**< */)
 {
@@ -3166,16 +1716,6 @@ xcb_xkb_sa_switch_screen_end (xcb_xkb_sa_switch_screen_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_set_controls_next
- ** 
- ** @param xcb_xkb_sa_set_controls_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_set_controls_next (xcb_xkb_sa_set_controls_iterator_t *i  /**< */)
 {
@@ -3184,16 +1724,6 @@ xcb_xkb_sa_set_controls_next (xcb_xkb_sa_set_controls_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_set_controls_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_set_controls_end
- ** 
- ** @param xcb_xkb_sa_set_controls_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_set_controls_end (xcb_xkb_sa_set_controls_iterator_t i  /**< */)
 {
@@ -3204,16 +1734,6 @@ xcb_xkb_sa_set_controls_end (xcb_xkb_sa_set_controls_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_lock_controls_next
- ** 
- ** @param xcb_xkb_sa_lock_controls_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_lock_controls_next (xcb_xkb_sa_lock_controls_iterator_t *i  /**< */)
 {
@@ -3222,16 +1742,6 @@ xcb_xkb_sa_lock_controls_next (xcb_xkb_sa_lock_controls_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_lock_controls_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_lock_controls_end
- ** 
- ** @param xcb_xkb_sa_lock_controls_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_lock_controls_end (xcb_xkb_sa_lock_controls_iterator_t i  /**< */)
 {
@@ -3242,16 +1752,6 @@ xcb_xkb_sa_lock_controls_end (xcb_xkb_sa_lock_controls_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_action_message_next
- ** 
- ** @param xcb_xkb_sa_action_message_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_action_message_next (xcb_xkb_sa_action_message_iterator_t *i  /**< */)
 {
@@ -3260,16 +1760,6 @@ xcb_xkb_sa_action_message_next (xcb_xkb_sa_action_message_iterator_t *i  /**< */
     i->index += sizeof(xcb_xkb_sa_action_message_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_action_message_end
- ** 
- ** @param xcb_xkb_sa_action_message_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_action_message_end (xcb_xkb_sa_action_message_iterator_t i  /**< */)
 {
@@ -3280,16 +1770,6 @@ xcb_xkb_sa_action_message_end (xcb_xkb_sa_action_message_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_redirect_key_next
- ** 
- ** @param xcb_xkb_sa_redirect_key_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_redirect_key_next (xcb_xkb_sa_redirect_key_iterator_t *i  /**< */)
 {
@@ -3298,16 +1778,6 @@ xcb_xkb_sa_redirect_key_next (xcb_xkb_sa_redirect_key_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_redirect_key_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_redirect_key_end
- ** 
- ** @param xcb_xkb_sa_redirect_key_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_redirect_key_end (xcb_xkb_sa_redirect_key_iterator_t i  /**< */)
 {
@@ -3318,16 +1788,6 @@ xcb_xkb_sa_redirect_key_end (xcb_xkb_sa_redirect_key_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_device_btn_next
- ** 
- ** @param xcb_xkb_sa_device_btn_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_device_btn_next (xcb_xkb_sa_device_btn_iterator_t *i  /**< */)
 {
@@ -3336,16 +1796,6 @@ xcb_xkb_sa_device_btn_next (xcb_xkb_sa_device_btn_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sa_device_btn_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_device_btn_end
- ** 
- ** @param xcb_xkb_sa_device_btn_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_device_btn_end (xcb_xkb_sa_device_btn_iterator_t i  /**< */)
 {
@@ -3356,16 +1806,6 @@ xcb_xkb_sa_device_btn_end (xcb_xkb_sa_device_btn_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_lock_device_btn_next
- ** 
- ** @param xcb_xkb_sa_lock_device_btn_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_lock_device_btn_next (xcb_xkb_sa_lock_device_btn_iterator_t *i  /**< */)
 {
@@ -3374,16 +1814,6 @@ xcb_xkb_sa_lock_device_btn_next (xcb_xkb_sa_lock_device_btn_iterator_t *i  /**< 
     i->index += sizeof(xcb_xkb_sa_lock_device_btn_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_lock_device_btn_end
- ** 
- ** @param xcb_xkb_sa_lock_device_btn_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_lock_device_btn_end (xcb_xkb_sa_lock_device_btn_iterator_t i  /**< */)
 {
@@ -3394,16 +1824,6 @@ xcb_xkb_sa_lock_device_btn_end (xcb_xkb_sa_lock_device_btn_iterator_t i  /**< */
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_device_valuator_next
- ** 
- ** @param xcb_xkb_sa_device_valuator_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_device_valuator_next (xcb_xkb_sa_device_valuator_iterator_t *i  /**< */)
 {
@@ -3412,16 +1832,6 @@ xcb_xkb_sa_device_valuator_next (xcb_xkb_sa_device_valuator_iterator_t *i  /**< 
     i->index += sizeof(xcb_xkb_sa_device_valuator_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_device_valuator_end
- ** 
- ** @param xcb_xkb_sa_device_valuator_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_device_valuator_end (xcb_xkb_sa_device_valuator_iterator_t i  /**< */)
 {
@@ -3432,16 +1842,6 @@ xcb_xkb_sa_device_valuator_end (xcb_xkb_sa_device_valuator_iterator_t i  /**< */
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_si_action_next
- ** 
- ** @param xcb_xkb_si_action_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_si_action_next (xcb_xkb_si_action_iterator_t *i  /**< */)
 {
@@ -3450,16 +1850,6 @@ xcb_xkb_si_action_next (xcb_xkb_si_action_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_si_action_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_si_action_end
- ** 
- ** @param xcb_xkb_si_action_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_si_action_end (xcb_xkb_si_action_iterator_t i  /**< */)
 {
@@ -3470,16 +1860,6 @@ xcb_xkb_si_action_end (xcb_xkb_si_action_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sym_interpret_next
- ** 
- ** @param xcb_xkb_sym_interpret_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sym_interpret_next (xcb_xkb_sym_interpret_iterator_t *i  /**< */)
 {
@@ -3488,16 +1868,6 @@ xcb_xkb_sym_interpret_next (xcb_xkb_sym_interpret_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_sym_interpret_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sym_interpret_end
- ** 
- ** @param xcb_xkb_sym_interpret_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sym_interpret_end (xcb_xkb_sym_interpret_iterator_t i  /**< */)
 {
@@ -3508,16 +1878,6 @@ xcb_xkb_sym_interpret_end (xcb_xkb_sym_interpret_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** void xcb_xkb_action_next
- ** 
- ** @param xcb_xkb_action_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_action_next (xcb_xkb_action_iterator_t *i  /**< */)
 {
@@ -3526,16 +1886,6 @@ xcb_xkb_action_next (xcb_xkb_action_iterator_t *i  /**< */)
     i->index += sizeof(xcb_xkb_action_t);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_action_end
- ** 
- ** @param xcb_xkb_action_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_action_end (xcb_xkb_action_iterator_t i  /**< */)
 {
@@ -3546,18 +1896,6 @@ xcb_xkb_action_end (xcb_xkb_action_iterator_t i  /**< */)
     return ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_use_extension_cookie_t xcb_xkb_use_extension
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          wantedMajor
- ** @param uint16_t          wantedMinor
- ** @returns xcb_xkb_use_extension_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_use_extension_cookie_t
 xcb_xkb_use_extension (xcb_connection_t *c  /**< */,
                        uint16_t          wantedMajor  /**< */,
@@ -3569,35 +1907,23 @@ xcb_xkb_use_extension (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_XKB_USE_EXTENSION,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_use_extension_cookie_t xcb_ret;
     xcb_xkb_use_extension_request_t xcb_out;
-    
+
     xcb_out.wantedMajor = wantedMajor;
     xcb_out.wantedMinor = wantedMinor;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_use_extension_cookie_t xcb_xkb_use_extension_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          wantedMajor
- ** @param uint16_t          wantedMinor
- ** @returns xcb_xkb_use_extension_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_use_extension_cookie_t
 xcb_xkb_use_extension_unchecked (xcb_connection_t *c  /**< */,
                                  uint16_t          wantedMajor  /**< */,
@@ -3609,35 +1935,23 @@ xcb_xkb_use_extension_unchecked (xcb_connection_t *c  /**< */,
         /* opcode */ XCB_XKB_USE_EXTENSION,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_use_extension_cookie_t xcb_ret;
     xcb_xkb_use_extension_request_t xcb_out;
-    
+
     xcb_out.wantedMajor = wantedMajor;
     xcb_out.wantedMinor = wantedMinor;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_use_extension_reply_t * xcb_xkb_use_extension_reply
- ** 
- ** @param xcb_connection_t                *c
- ** @param xcb_xkb_use_extension_cookie_t   cookie
- ** @param xcb_generic_error_t            **e
- ** @returns xcb_xkb_use_extension_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_use_extension_reply_t *
 xcb_xkb_use_extension_reply (xcb_connection_t                *c  /**< */,
                              xcb_xkb_use_extension_cookie_t   cookie  /**< */,
@@ -4015,23 +2329,6 @@ xcb_xkb_select_events_details_sizeof (const void  *_buffer  /**< */,
     return xcb_xkb_select_events_details_unpack(_buffer, affectWhich, clear, selectAll, &_aux);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_select_events_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               affectWhich
- ** @param uint16_t               clear
- ** @param uint16_t               selectAll
- ** @param uint16_t               affectMap
- ** @param uint16_t               map
- ** @param const void            *details
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_select_events_checked (xcb_connection_t      *c  /**< */,
                                xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -4048,48 +2345,31 @@ xcb_xkb_select_events_checked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_SELECT_EVENTS,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_select_events_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.affectWhich = affectWhich;
     xcb_out.clear = clear;
     xcb_out.selectAll = selectAll;
     xcb_out.affectMap = affectMap;
     xcb_out.map = map;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_select_events_details_t details */
     xcb_parts[4].iov_base = (char *) details;
-    xcb_parts[4].iov_len = 
+    xcb_parts[4].iov_len =
       xcb_xkb_select_events_details_sizeof (details, affectWhich, clear, selectAll);
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_select_events
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               affectWhich
- ** @param uint16_t               clear
- ** @param uint16_t               selectAll
- ** @param uint16_t               affectMap
- ** @param uint16_t               map
- ** @param const void            *details
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_select_events (xcb_connection_t      *c  /**< */,
                        xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -4106,48 +2386,31 @@ xcb_xkb_select_events (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_SELECT_EVENTS,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_select_events_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.affectWhich = affectWhich;
     xcb_out.clear = clear;
     xcb_out.selectAll = selectAll;
     xcb_out.affectMap = affectMap;
     xcb_out.map = map;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_select_events_details_t details */
     xcb_parts[4].iov_base = (char *) details;
-    xcb_parts[4].iov_len = 
+    xcb_parts[4].iov_len =
       xcb_xkb_select_events_details_sizeof (details, affectWhich, clear, selectAll);
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_select_events_aux_checked
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xkb_device_spec_t                  deviceSpec
- ** @param uint16_t                               affectWhich
- ** @param uint16_t                               clear
- ** @param uint16_t                               selectAll
- ** @param uint16_t                               affectMap
- ** @param uint16_t                               map
- ** @param const xcb_xkb_select_events_details_t *details
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_select_events_aux_checked (xcb_connection_t                      *c  /**< */,
                                    xcb_xkb_device_spec_t                  deviceSpec  /**< */,
@@ -4164,50 +2427,33 @@ xcb_xkb_select_events_aux_checked (xcb_connection_t                      *c  /**
         /* opcode */ XCB_XKB_SELECT_EVENTS,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_select_events_request_t xcb_out;
     void *xcb_aux0 = 0;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.affectWhich = affectWhich;
     xcb_out.clear = clear;
     xcb_out.selectAll = selectAll;
     xcb_out.affectMap = affectMap;
     xcb_out.map = map;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_select_events_details_t details */
-    xcb_parts[4].iov_len = 
+    xcb_parts[4].iov_len =
       xcb_xkb_select_events_details_serialize (&xcb_aux0, affectWhich, clear, selectAll, details);
     xcb_parts[4].iov_base = xcb_aux0;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     free(xcb_aux0);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_select_events_aux
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xkb_device_spec_t                  deviceSpec
- ** @param uint16_t                               affectWhich
- ** @param uint16_t                               clear
- ** @param uint16_t                               selectAll
- ** @param uint16_t                               affectMap
- ** @param uint16_t                               map
- ** @param const xcb_xkb_select_events_details_t *details
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_select_events_aux (xcb_connection_t                      *c  /**< */,
                            xcb_xkb_device_spec_t                  deviceSpec  /**< */,
@@ -4224,53 +2470,33 @@ xcb_xkb_select_events_aux (xcb_connection_t                      *c  /**< */,
         /* opcode */ XCB_XKB_SELECT_EVENTS,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_select_events_request_t xcb_out;
     void *xcb_aux0 = 0;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.affectWhich = affectWhich;
     xcb_out.clear = clear;
     xcb_out.selectAll = selectAll;
     xcb_out.affectMap = affectMap;
     xcb_out.map = map;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_select_events_details_t details */
-    xcb_parts[4].iov_len = 
+    xcb_parts[4].iov_len =
       xcb_xkb_select_events_details_serialize (&xcb_aux0, affectWhich, clear, selectAll, details);
     xcb_parts[4].iov_base = xcb_aux0;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     free(xcb_aux0);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_bell_checked
- ** 
- ** @param xcb_connection_t          *c
- ** @param xcb_xkb_device_spec_t      deviceSpec
- ** @param xcb_xkb_bell_class_spec_t  bellClass
- ** @param xcb_xkb_id_spec_t          bellID
- ** @param int8_t                     percent
- ** @param uint8_t                    forceSound
- ** @param uint8_t                    eventOnly
- ** @param int16_t                    pitch
- ** @param int16_t                    duration
- ** @param xcb_atom_t                 name
- ** @param xcb_window_t               window
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_bell_checked (xcb_connection_t          *c  /**< */,
                       xcb_xkb_device_spec_t      deviceSpec  /**< */,
@@ -4290,11 +2516,11 @@ xcb_xkb_bell_checked (xcb_connection_t          *c  /**< */,
         /* opcode */ XCB_XKB_BELL,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_bell_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.bellClass = bellClass;
     xcb_out.bellID = bellID;
@@ -4307,36 +2533,16 @@ xcb_xkb_bell_checked (xcb_connection_t          *c  /**< */,
     memset(xcb_out.pad1, 0, 2);
     xcb_out.name = name;
     xcb_out.window = window;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_bell
- ** 
- ** @param xcb_connection_t          *c
- ** @param xcb_xkb_device_spec_t      deviceSpec
- ** @param xcb_xkb_bell_class_spec_t  bellClass
- ** @param xcb_xkb_id_spec_t          bellID
- ** @param int8_t                     percent
- ** @param uint8_t                    forceSound
- ** @param uint8_t                    eventOnly
- ** @param int16_t                    pitch
- ** @param int16_t                    duration
- ** @param xcb_atom_t                 name
- ** @param xcb_window_t               window
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_bell (xcb_connection_t          *c  /**< */,
               xcb_xkb_device_spec_t      deviceSpec  /**< */,
@@ -4356,11 +2562,11 @@ xcb_xkb_bell (xcb_connection_t          *c  /**< */,
         /* opcode */ XCB_XKB_BELL,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_bell_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.bellClass = bellClass;
     xcb_out.bellID = bellID;
@@ -4373,27 +2579,16 @@ xcb_xkb_bell (xcb_connection_t          *c  /**< */,
     memset(xcb_out.pad1, 0, 2);
     xcb_out.name = name;
     xcb_out.window = window;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_state_cookie_t xcb_xkb_get_state
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_state_cookie_t
 xcb_xkb_get_state (xcb_connection_t      *c  /**< */,
                    xcb_xkb_device_spec_t  deviceSpec  /**< */)
@@ -4404,34 +2599,23 @@ xcb_xkb_get_state (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_STATE,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_state_cookie_t xcb_ret;
     xcb_xkb_get_state_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_state_cookie_t xcb_xkb_get_state_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_state_cookie_t
 xcb_xkb_get_state_unchecked (xcb_connection_t      *c  /**< */,
                              xcb_xkb_device_spec_t  deviceSpec  /**< */)
@@ -4442,35 +2626,23 @@ xcb_xkb_get_state_unchecked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_STATE,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_state_cookie_t xcb_ret;
     xcb_xkb_get_state_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_state_reply_t * xcb_xkb_get_state_reply
- ** 
- ** @param xcb_connection_t            *c
- ** @param xcb_xkb_get_state_cookie_t   cookie
- ** @param xcb_generic_error_t        **e
- ** @returns xcb_xkb_get_state_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_state_reply_t *
 xcb_xkb_get_state_reply (xcb_connection_t            *c  /**< */,
                          xcb_xkb_get_state_cookie_t   cookie  /**< */,
@@ -4479,24 +2651,6 @@ xcb_xkb_get_state_reply (xcb_connection_t            *c  /**< */,
     return (xcb_xkb_get_state_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_latch_lock_state_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                affectModLocks
- ** @param uint8_t                modLocks
- ** @param uint8_t                lockGroup
- ** @param uint8_t                groupLock
- ** @param uint8_t                affectModLatches
- ** @param uint8_t                latchGroup
- ** @param uint16_t               groupLatch
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_latch_lock_state_checked (xcb_connection_t      *c  /**< */,
                                   xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -4514,11 +2668,11 @@ xcb_xkb_latch_lock_state_checked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_LATCH_LOCK_STATE,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_latch_lock_state_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.affectModLocks = affectModLocks;
     xcb_out.modLocks = modLocks;
@@ -4526,36 +2680,19 @@ xcb_xkb_latch_lock_state_checked (xcb_connection_t      *c  /**< */,
     xcb_out.groupLock = groupLock;
     xcb_out.affectModLatches = affectModLatches;
     xcb_out.pad0 = 0;
+    xcb_out.pad1 = 0;
     xcb_out.latchGroup = latchGroup;
     xcb_out.groupLatch = groupLatch;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_latch_lock_state
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                affectModLocks
- ** @param uint8_t                modLocks
- ** @param uint8_t                lockGroup
- ** @param uint8_t                groupLock
- ** @param uint8_t                affectModLatches
- ** @param uint8_t                latchGroup
- ** @param uint16_t               groupLatch
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_latch_lock_state (xcb_connection_t      *c  /**< */,
                           xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -4573,11 +2710,11 @@ xcb_xkb_latch_lock_state (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_LATCH_LOCK_STATE,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_latch_lock_state_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.affectModLocks = affectModLocks;
     xcb_out.modLocks = modLocks;
@@ -4585,29 +2722,19 @@ xcb_xkb_latch_lock_state (xcb_connection_t      *c  /**< */,
     xcb_out.groupLock = groupLock;
     xcb_out.affectModLatches = affectModLatches;
     xcb_out.pad0 = 0;
+    xcb_out.pad1 = 0;
     xcb_out.latchGroup = latchGroup;
     xcb_out.groupLatch = groupLatch;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_controls_cookie_t xcb_xkb_get_controls
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_controls_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_controls_cookie_t
 xcb_xkb_get_controls (xcb_connection_t      *c  /**< */,
                       xcb_xkb_device_spec_t  deviceSpec  /**< */)
@@ -4618,34 +2745,23 @@ xcb_xkb_get_controls (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_CONTROLS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_controls_cookie_t xcb_ret;
     xcb_xkb_get_controls_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_controls_cookie_t xcb_xkb_get_controls_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_controls_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_controls_cookie_t
 xcb_xkb_get_controls_unchecked (xcb_connection_t      *c  /**< */,
                                 xcb_xkb_device_spec_t  deviceSpec  /**< */)
@@ -4656,35 +2772,23 @@ xcb_xkb_get_controls_unchecked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_CONTROLS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_controls_cookie_t xcb_ret;
     xcb_xkb_get_controls_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_controls_reply_t * xcb_xkb_get_controls_reply
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_xkb_get_controls_cookie_t   cookie
- ** @param xcb_generic_error_t           **e
- ** @returns xcb_xkb_get_controls_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_controls_reply_t *
 xcb_xkb_get_controls_reply (xcb_connection_t               *c  /**< */,
                             xcb_xkb_get_controls_cookie_t   cookie  /**< */,
@@ -4693,46 +2797,6 @@ xcb_xkb_get_controls_reply (xcb_connection_t               *c  /**< */,
     return (xcb_xkb_get_controls_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_controls_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                affectInternalRealMods
- ** @param uint8_t                internalRealMods
- ** @param uint8_t                affectIgnoreLockRealMods
- ** @param uint8_t                ignoreLockRealMods
- ** @param uint16_t               affectInternalVirtualMods
- ** @param uint16_t               internalVirtualMods
- ** @param uint16_t               affectIgnoreLockVirtualMods
- ** @param uint16_t               ignoreLockVirtualMods
- ** @param uint8_t                mouseKeysDfltBtn
- ** @param uint8_t                groupsWrap
- ** @param uint16_t               accessXOptions
- ** @param uint32_t               affectEnabledControls
- ** @param uint32_t               enabledControls
- ** @param uint32_t               changeControls
- ** @param uint16_t               repeatDelay
- ** @param uint16_t               repeatInterval
- ** @param uint16_t               slowKeysDelay
- ** @param uint16_t               debounceDelay
- ** @param uint16_t               mouseKeysDelay
- ** @param uint16_t               mouseKeysInterval
- ** @param uint16_t               mouseKeysTimeToMax
- ** @param uint16_t               mouseKeysMaxSpeed
- ** @param int16_t                mouseKeysCurve
- ** @param uint16_t               accessXTimeout
- ** @param uint32_t               accessXTimeoutMask
- ** @param uint32_t               accessXTimeoutValues
- ** @param uint16_t               accessXTimeoutOptionsMask
- ** @param uint16_t               accessXTimeoutOptionsValues
- ** @param const uint8_t         *perKeyRepeat
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_controls_checked (xcb_connection_t      *c  /**< */,
                               xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -4772,11 +2836,11 @@ xcb_xkb_set_controls_checked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_SET_CONTROLS,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_controls_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.affectInternalRealMods = affectInternalRealMods;
     xcb_out.internalRealMods = internalRealMods;
@@ -4808,56 +2872,16 @@ xcb_xkb_set_controls_checked (xcb_connection_t      *c  /**< */,
     xcb_out.accessXTimeoutOptionsMask = accessXTimeoutOptionsMask;
     xcb_out.accessXTimeoutOptionsValues = accessXTimeoutOptionsValues;
     memcpy(xcb_out.perKeyRepeat, perKeyRepeat, 32);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_controls
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                affectInternalRealMods
- ** @param uint8_t                internalRealMods
- ** @param uint8_t                affectIgnoreLockRealMods
- ** @param uint8_t                ignoreLockRealMods
- ** @param uint16_t               affectInternalVirtualMods
- ** @param uint16_t               internalVirtualMods
- ** @param uint16_t               affectIgnoreLockVirtualMods
- ** @param uint16_t               ignoreLockVirtualMods
- ** @param uint8_t                mouseKeysDfltBtn
- ** @param uint8_t                groupsWrap
- ** @param uint16_t               accessXOptions
- ** @param uint32_t               affectEnabledControls
- ** @param uint32_t               enabledControls
- ** @param uint32_t               changeControls
- ** @param uint16_t               repeatDelay
- ** @param uint16_t               repeatInterval
- ** @param uint16_t               slowKeysDelay
- ** @param uint16_t               debounceDelay
- ** @param uint16_t               mouseKeysDelay
- ** @param uint16_t               mouseKeysInterval
- ** @param uint16_t               mouseKeysTimeToMax
- ** @param uint16_t               mouseKeysMaxSpeed
- ** @param int16_t                mouseKeysCurve
- ** @param uint16_t               accessXTimeout
- ** @param uint32_t               accessXTimeoutMask
- ** @param uint32_t               accessXTimeoutValues
- ** @param uint16_t               accessXTimeoutOptionsMask
- ** @param uint16_t               accessXTimeoutOptionsValues
- ** @param const uint8_t         *perKeyRepeat
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_controls (xcb_connection_t      *c  /**< */,
                       xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -4897,11 +2921,11 @@ xcb_xkb_set_controls (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_SET_CONTROLS,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_controls_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.affectInternalRealMods = affectInternalRealMods;
     xcb_out.internalRealMods = internalRealMods;
@@ -4933,26 +2957,16 @@ xcb_xkb_set_controls (xcb_connection_t      *c  /**< */,
     xcb_out.accessXTimeoutOptionsMask = accessXTimeoutOptionsMask;
     xcb_out.accessXTimeoutOptionsValues = accessXTimeoutOptionsValues;
     memcpy(xcb_out.perKeyRepeat, perKeyRepeat, 32);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_types_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_types_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                        const xcb_xkb_get_map_map_t *S  /**< */)
@@ -4960,16 +2974,6 @@ xcb_xkb_get_map_map_types_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */
     return R->nTypes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_type_iterator_t xcb_xkb_get_map_map_types_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_key_type_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_type_iterator_t
 xcb_xkb_get_map_map_types_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                          const xcb_xkb_get_map_map_t *S  /**< */)
@@ -4981,16 +2985,6 @@ xcb_xkb_get_map_map_types_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_syms_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_syms_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                       const xcb_xkb_get_map_map_t *S  /**< */)
@@ -4998,16 +2992,6 @@ xcb_xkb_get_map_map_syms_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
     return R->nKeySyms;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_sym_map_iterator_t xcb_xkb_get_map_map_syms_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_key_sym_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_sym_map_iterator_t
 xcb_xkb_get_map_map_syms_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                         const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5019,32 +3003,12 @@ xcb_xkb_get_map_map_syms_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< *
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_map_map_acts_rtrn_count
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_map_map_acts_rtrn_count (const xcb_xkb_get_map_map_t *S  /**< */)
 {
     return /* map */ S->acts_rtrn_count;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_acts_rtrn_count_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_acts_rtrn_count_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                             const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5052,16 +3016,6 @@ xcb_xkb_get_map_map_acts_rtrn_count_length (const xcb_xkb_get_map_reply_t *R  /*
     return R->nKeyActions;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_map_map_acts_rtrn_count_end
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_map_map_acts_rtrn_count_end (const xcb_xkb_get_map_reply_t *R  /**< */,
                                          const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5073,86 +3027,12 @@ xcb_xkb_get_map_map_acts_rtrn_count_end (const xcb_xkb_get_map_reply_t *R  /**< 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_map_map_alignment_pad
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
-xcb_xkb_get_map_map_alignment_pad (const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    return /* map */ S->alignment_pad;
-}
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_alignment_pad_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_map_map_alignment_pad_length (const xcb_xkb_get_map_reply_t *R  /**< */,
-                                          const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    return (((R->nKeyActions + 3) & (~3)) - R->nKeyActions);
-}
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_map_map_alignment_pad_end
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_map_map_alignment_pad_end (const xcb_xkb_get_map_reply_t *R  /**< */,
-                                       const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    xcb_generic_iterator_t i;
-    i.data = /* map */ S->alignment_pad + (((R->nKeyActions + 3) & (~3)) - R->nKeyActions);
-    i.rem = 0;
-    i.index = (char *) i.data - (char *) S;
-    return i;
-}
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_t * xcb_xkb_get_map_map_acts_rtrn_acts
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns xcb_xkb_action_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_action_t *
 xcb_xkb_get_map_map_acts_rtrn_acts (const xcb_xkb_get_map_map_t *S  /**< */)
 {
     return /* map */ S->acts_rtrn_acts;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_acts_rtrn_acts_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_acts_rtrn_acts_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                            const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5160,16 +3040,6 @@ xcb_xkb_get_map_map_acts_rtrn_acts_length (const xcb_xkb_get_map_reply_t *R  /**
     return R->totalActions;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_iterator_t xcb_xkb_get_map_map_acts_rtrn_acts_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_action_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_action_iterator_t
 xcb_xkb_get_map_map_acts_rtrn_acts_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                              const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5181,32 +3051,12 @@ xcb_xkb_get_map_map_acts_rtrn_acts_iterator (const xcb_xkb_get_map_reply_t *R  /
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_t * xcb_xkb_get_map_map_behaviors_rtrn
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns xcb_xkb_set_behavior_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_t *
 xcb_xkb_get_map_map_behaviors_rtrn (const xcb_xkb_get_map_map_t *S  /**< */)
 {
     return /* map */ S->behaviors_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_behaviors_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_behaviors_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                            const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5214,16 +3064,6 @@ xcb_xkb_get_map_map_behaviors_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**
     return R->totalKeyBehaviors;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_iterator_t xcb_xkb_get_map_map_behaviors_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_set_behavior_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_iterator_t
 xcb_xkb_get_map_map_behaviors_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                              const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5235,32 +3075,12 @@ xcb_xkb_get_map_map_behaviors_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_map_map_vmods_rtrn
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_map_map_vmods_rtrn (const xcb_xkb_get_map_map_t *S  /**< */)
 {
     return /* map */ S->vmods_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_vmods_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_vmods_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                        const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5268,16 +3088,6 @@ xcb_xkb_get_map_map_vmods_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */
     return xcb_popcount(R->virtualMods);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_map_map_vmods_rtrn_end
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_map_map_vmods_rtrn_end (const xcb_xkb_get_map_reply_t *R  /**< */,
                                     const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5289,86 +3099,12 @@ xcb_xkb_get_map_map_vmods_rtrn_end (const xcb_xkb_get_map_reply_t *R  /**< */,
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_map_map_alignment_pad_2
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
-xcb_xkb_get_map_map_alignment_pad_2 (const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    return /* map */ S->alignment_pad2;
-}
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_alignment_pad_2_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_map_map_alignment_pad_2_length (const xcb_xkb_get_map_reply_t *R  /**< */,
-                                            const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    return (((xcb_popcount(R->virtualMods) + 3) & (~3)) - xcb_popcount(R->virtualMods));
-}
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_map_map_alignment_pad_2_end
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_map_map_alignment_pad_2_end (const xcb_xkb_get_map_reply_t *R  /**< */,
-                                         const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    xcb_generic_iterator_t i;
-    i.data = /* map */ S->alignment_pad2 + (((xcb_popcount(R->virtualMods) + 3) & (~3)) - xcb_popcount(R->virtualMods));
-    i.rem = 0;
-    i.index = (char *) i.data - (char *) S;
-    return i;
-}
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_t * xcb_xkb_get_map_map_explicit_rtrn
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns xcb_xkb_set_explicit_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_t *
 xcb_xkb_get_map_map_explicit_rtrn (const xcb_xkb_get_map_map_t *S  /**< */)
 {
     return /* map */ S->explicit_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_explicit_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_explicit_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                           const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5376,16 +3112,6 @@ xcb_xkb_get_map_map_explicit_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**<
     return R->totalKeyExplicit;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_iterator_t xcb_xkb_get_map_map_explicit_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_set_explicit_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_iterator_t
 xcb_xkb_get_map_map_explicit_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                             const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5397,86 +3123,12 @@ xcb_xkb_get_map_map_explicit_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /*
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint16_t * xcb_xkb_get_map_map_alignment_pad_3
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns uint16_t *
- **
- *****************************************************************************/
- 
-uint16_t *
-xcb_xkb_get_map_map_alignment_pad_3 (const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    return /* map */ S->alignment_pad3;
-}
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_alignment_pad_3_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_map_map_alignment_pad_3_length (const xcb_xkb_get_map_reply_t *R  /**< */,
-                                            const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    return (((R->totalKeyExplicit + 1) & (~1)) - R->totalKeyExplicit);
-}
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_map_map_alignment_pad_3_end
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_map_map_alignment_pad_3_end (const xcb_xkb_get_map_reply_t *R  /**< */,
-                                         const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    xcb_generic_iterator_t i;
-    i.data = /* map */ S->alignment_pad3 + (((R->totalKeyExplicit + 1) & (~1)) - R->totalKeyExplicit);
-    i.rem = 0;
-    i.index = (char *) i.data - (char *) S;
-    return i;
-}
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_t * xcb_xkb_get_map_map_modmap_rtrn
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns xcb_xkb_key_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_t *
 xcb_xkb_get_map_map_modmap_rtrn (const xcb_xkb_get_map_map_t *S  /**< */)
 {
     return /* map */ S->modmap_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_modmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_modmap_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                         const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5484,16 +3136,6 @@ xcb_xkb_get_map_map_modmap_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< *
     return R->totalModMapKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_iterator_t xcb_xkb_get_map_map_modmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_key_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_iterator_t
 xcb_xkb_get_map_map_modmap_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                           const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5505,86 +3147,12 @@ xcb_xkb_get_map_map_modmap_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**<
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint16_t * xcb_xkb_get_map_map_alignment_pad_4
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns uint16_t *
- **
- *****************************************************************************/
- 
-uint16_t *
-xcb_xkb_get_map_map_alignment_pad_4 (const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    return /* map */ S->alignment_pad4;
-}
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_alignment_pad_4_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_map_map_alignment_pad_4_length (const xcb_xkb_get_map_reply_t *R  /**< */,
-                                            const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    return (((R->totalModMapKeys + 1) & (~1)) - R->totalModMapKeys);
-}
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_map_map_alignment_pad_4_end
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_map_map_alignment_pad_4_end (const xcb_xkb_get_map_reply_t *R  /**< */,
-                                         const xcb_xkb_get_map_map_t *S  /**< */)
-{
-    xcb_generic_iterator_t i;
-    i.data = /* map */ S->alignment_pad4 + (((R->totalModMapKeys + 1) & (~1)) - R->totalModMapKeys);
-    i.rem = 0;
-    i.index = (char *) i.data - (char *) S;
-    return i;
-}
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_t * xcb_xkb_get_map_map_vmodmap_rtrn
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns xcb_xkb_key_v_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_t *
 xcb_xkb_get_map_map_vmodmap_rtrn (const xcb_xkb_get_map_map_t *S  /**< */)
 {
     return /* map */ S->vmodmap_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_vmodmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_vmodmap_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                          const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5592,16 +3160,6 @@ xcb_xkb_get_map_map_vmodmap_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< 
     return R->totalVModMapKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_iterator_t xcb_xkb_get_map_map_vmodmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_key_v_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_iterator_t
 xcb_xkb_get_map_map_vmodmap_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                            const xcb_xkb_get_map_map_t *S  /**< */)
@@ -5633,7 +3191,7 @@ xcb_xkb_get_map_map_serialize (void                        **_buffer  /**< */,
 
     unsigned int xcb_pad = 0;
     char xcb_pad0[3] = {0, 0, 0};
-    struct iovec xcb_parts[27];
+    struct iovec xcb_parts[23];
     unsigned int xcb_parts_idx = 0;
     unsigned int xcb_block_len = 0;
     unsigned int i;
@@ -5702,6 +3260,7 @@ xcb_xkb_get_map_map_serialize (void                        **_buffer  /**< */,
         xcb_parts[xcb_parts_idx].iov_len = nKeyActions * sizeof(xcb_keycode_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint8_t);
+        xcb_align_to = 4;
         /* insert padding */
         xcb_pad = -xcb_block_len & (xcb_align_to - 1);
         xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -5712,12 +3271,6 @@ xcb_xkb_get_map_map_serialize (void                        **_buffer  /**< */,
             xcb_pad = 0;
         }
         xcb_block_len = 0;
-        /* alignment_pad */
-        xcb_parts[xcb_parts_idx].iov_base = (char *) _aux->alignment_pad;
-        xcb_block_len += (((nKeyActions + 3) & (~3)) - nKeyActions) * sizeof(xcb_keycode_t);
-        xcb_parts[xcb_parts_idx].iov_len = (((nKeyActions + 3) & (~3)) - nKeyActions) * sizeof(xcb_keycode_t);
-        xcb_parts_idx++;
-        xcb_align_to = ALIGNOF(uint8_t);
         /* insert padding */
         xcb_pad = -xcb_block_len & (xcb_align_to - 1);
         xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -5770,6 +3323,7 @@ xcb_xkb_get_map_map_serialize (void                        **_buffer  /**< */,
         xcb_parts[xcb_parts_idx].iov_len = xcb_popcount(virtualMods) * sizeof(xcb_keycode_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint8_t);
+        xcb_align_to = 4;
         /* insert padding */
         xcb_pad = -xcb_block_len & (xcb_align_to - 1);
         xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -5780,12 +3334,6 @@ xcb_xkb_get_map_map_serialize (void                        **_buffer  /**< */,
             xcb_pad = 0;
         }
         xcb_block_len = 0;
-        /* alignment_pad2 */
-        xcb_parts[xcb_parts_idx].iov_base = (char *) _aux->alignment_pad2;
-        xcb_block_len += (((xcb_popcount(virtualMods) + 3) & (~3)) - xcb_popcount(virtualMods)) * sizeof(xcb_keycode_t);
-        xcb_parts[xcb_parts_idx].iov_len = (((xcb_popcount(virtualMods) + 3) & (~3)) - xcb_popcount(virtualMods)) * sizeof(xcb_keycode_t);
-        xcb_parts_idx++;
-        xcb_align_to = ALIGNOF(uint8_t);
     }
     if(present & XCB_XKB_MAP_PART_EXPLICIT_COMPONENTS) {
         /* insert padding */
@@ -5804,6 +3352,7 @@ xcb_xkb_get_map_map_serialize (void                        **_buffer  /**< */,
         xcb_parts[xcb_parts_idx].iov_len = totalKeyExplicit * sizeof(xcb_xkb_set_explicit_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(xcb_xkb_set_explicit_t);
+        xcb_align_to = 4;
         /* insert padding */
         xcb_pad = -xcb_block_len & (xcb_align_to - 1);
         xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -5814,12 +3363,6 @@ xcb_xkb_get_map_map_serialize (void                        **_buffer  /**< */,
             xcb_pad = 0;
         }
         xcb_block_len = 0;
-        /* alignment_pad3 */
-        xcb_parts[xcb_parts_idx].iov_base = (char *) _aux->alignment_pad3;
-        xcb_block_len += (((totalKeyExplicit + 1) & (~1)) - totalKeyExplicit) * sizeof(uint16_t);
-        xcb_parts[xcb_parts_idx].iov_len = (((totalKeyExplicit + 1) & (~1)) - totalKeyExplicit) * sizeof(uint16_t);
-        xcb_parts_idx++;
-        xcb_align_to = ALIGNOF(uint16_t);
     }
     if(present & XCB_XKB_MAP_PART_MODIFIER_MAP) {
         /* insert padding */
@@ -5838,6 +3381,7 @@ xcb_xkb_get_map_map_serialize (void                        **_buffer  /**< */,
         xcb_parts[xcb_parts_idx].iov_len = totalModMapKeys * sizeof(xcb_xkb_key_mod_map_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(xcb_xkb_key_mod_map_t);
+        xcb_align_to = 4;
         /* insert padding */
         xcb_pad = -xcb_block_len & (xcb_align_to - 1);
         xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -5848,12 +3392,6 @@ xcb_xkb_get_map_map_serialize (void                        **_buffer  /**< */,
             xcb_pad = 0;
         }
         xcb_block_len = 0;
-        /* alignment_pad4 */
-        xcb_parts[xcb_parts_idx].iov_base = (char *) _aux->alignment_pad4;
-        xcb_block_len += (((totalModMapKeys + 1) & (~1)) - totalModMapKeys) * sizeof(uint16_t);
-        xcb_parts[xcb_parts_idx].iov_len = (((totalModMapKeys + 1) & (~1)) - totalModMapKeys) * sizeof(uint16_t);
-        xcb_parts_idx++;
-        xcb_align_to = ALIGNOF(uint16_t);
     }
     if(present & XCB_XKB_MAP_PART_VIRTUAL_MOD_MAP) {
         /* insert padding */
@@ -5974,6 +3512,7 @@ xcb_xkb_get_map_map_unpack (const void             *_buffer  /**< */,
         xcb_block_len += nKeyActions * sizeof(xcb_keycode_t);
         xcb_tmp += xcb_block_len;
         xcb_align_to = ALIGNOF(uint8_t);
+        xcb_align_to = 4;
         /* insert padding */
         xcb_pad = -xcb_block_len & (xcb_align_to - 1);
         xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -5982,11 +3521,6 @@ xcb_xkb_get_map_map_unpack (const void             *_buffer  /**< */,
             xcb_pad = 0;
         }
         xcb_block_len = 0;
-        /* alignment_pad */
-        _aux->alignment_pad = (uint8_t *)xcb_tmp;
-        xcb_block_len += (((nKeyActions + 3) & (~3)) - nKeyActions) * sizeof(xcb_keycode_t);
-        xcb_tmp += xcb_block_len;
-        xcb_align_to = ALIGNOF(uint8_t);
         /* insert padding */
         xcb_pad = -xcb_block_len & (xcb_align_to - 1);
         xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -6030,6 +3564,7 @@ xcb_xkb_get_map_map_unpack (const void             *_buffer  /**< */,
         xcb_block_len += xcb_popcount(virtualMods) * sizeof(xcb_keycode_t);
         xcb_tmp += xcb_block_len;
         xcb_align_to = ALIGNOF(uint8_t);
+        xcb_align_to = 4;
         /* insert padding */
         xcb_pad = -xcb_block_len & (xcb_align_to - 1);
         xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -6038,11 +3573,6 @@ xcb_xkb_get_map_map_unpack (const void             *_buffer  /**< */,
             xcb_pad = 0;
         }
         xcb_block_len = 0;
-        /* alignment_pad2 */
-        _aux->alignment_pad2 = (uint8_t *)xcb_tmp;
-        xcb_block_len += (((xcb_popcount(virtualMods) + 3) & (~3)) - xcb_popcount(virtualMods)) * sizeof(xcb_keycode_t);
-        xcb_tmp += xcb_block_len;
-        xcb_align_to = ALIGNOF(uint8_t);
     }
     if(present & XCB_XKB_MAP_PART_EXPLICIT_COMPONENTS) {
         /* insert padding */
@@ -6058,6 +3588,7 @@ xcb_xkb_get_map_map_unpack (const void             *_buffer  /**< */,
         xcb_block_len += totalKeyExplicit * sizeof(xcb_xkb_set_explicit_t);
         xcb_tmp += xcb_block_len;
         xcb_align_to = ALIGNOF(xcb_xkb_set_explicit_t);
+        xcb_align_to = 4;
         /* insert padding */
         xcb_pad = -xcb_block_len & (xcb_align_to - 1);
         xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -6066,11 +3597,6 @@ xcb_xkb_get_map_map_unpack (const void             *_buffer  /**< */,
             xcb_pad = 0;
         }
         xcb_block_len = 0;
-        /* alignment_pad3 */
-        _aux->alignment_pad3 = (uint16_t *)xcb_tmp;
-        xcb_block_len += (((totalKeyExplicit + 1) & (~1)) - totalKeyExplicit) * sizeof(uint16_t);
-        xcb_tmp += xcb_block_len;
-        xcb_align_to = ALIGNOF(uint16_t);
     }
     if(present & XCB_XKB_MAP_PART_MODIFIER_MAP) {
         /* insert padding */
@@ -6086,6 +3612,7 @@ xcb_xkb_get_map_map_unpack (const void             *_buffer  /**< */,
         xcb_block_len += totalModMapKeys * sizeof(xcb_xkb_key_mod_map_t);
         xcb_tmp += xcb_block_len;
         xcb_align_to = ALIGNOF(xcb_xkb_key_mod_map_t);
+        xcb_align_to = 4;
         /* insert padding */
         xcb_pad = -xcb_block_len & (xcb_align_to - 1);
         xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -6094,11 +3621,6 @@ xcb_xkb_get_map_map_unpack (const void             *_buffer  /**< */,
             xcb_pad = 0;
         }
         xcb_block_len = 0;
-        /* alignment_pad4 */
-        _aux->alignment_pad4 = (uint16_t *)xcb_tmp;
-        xcb_block_len += (((totalModMapKeys + 1) & (~1)) - totalModMapKeys) * sizeof(uint16_t);
-        xcb_tmp += xcb_block_len;
-        xcb_align_to = ALIGNOF(uint16_t);
     }
     if(present & XCB_XKB_MAP_PART_VIRTUAL_MOD_MAP) {
         /* insert padding */
@@ -6144,34 +3666,6 @@ xcb_xkb_get_map_map_sizeof (const void  *_buffer  /**< */,
     return xcb_xkb_get_map_map_unpack(_buffer, nTypes, nKeySyms, nKeyActions, totalActions, totalKeyBehaviors, virtualMods, totalKeyExplicit, totalModMapKeys, totalVModMapKeys, present, &_aux);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_map_cookie_t xcb_xkb_get_map
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               full
- ** @param uint16_t               partial
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param xcb_keycode_t          firstKeySym
- ** @param uint8_t                nKeySyms
- ** @param xcb_keycode_t          firstKeyAction
- ** @param uint8_t                nKeyActions
- ** @param xcb_keycode_t          firstKeyBehavior
- ** @param uint8_t                nKeyBehaviors
- ** @param uint16_t               virtualMods
- ** @param xcb_keycode_t          firstKeyExplicit
- ** @param uint8_t                nKeyExplicit
- ** @param xcb_keycode_t          firstModMapKey
- ** @param uint8_t                nModMapKeys
- ** @param xcb_keycode_t          firstVModMapKey
- ** @param uint8_t                nVModMapKeys
- ** @returns xcb_xkb_get_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_map_cookie_t
 xcb_xkb_get_map (xcb_connection_t      *c  /**< */,
                  xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -6199,11 +3693,11 @@ xcb_xkb_get_map (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_MAP,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_map_cookie_t xcb_ret;
     xcb_xkb_get_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.full = full;
     xcb_out.partial = partial;
@@ -6223,44 +3717,16 @@ xcb_xkb_get_map (xcb_connection_t      *c  /**< */,
     xcb_out.firstVModMapKey = firstVModMapKey;
     xcb_out.nVModMapKeys = nVModMapKeys;
     memset(xcb_out.pad0, 0, 2);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_map_cookie_t xcb_xkb_get_map_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               full
- ** @param uint16_t               partial
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param xcb_keycode_t          firstKeySym
- ** @param uint8_t                nKeySyms
- ** @param xcb_keycode_t          firstKeyAction
- ** @param uint8_t                nKeyActions
- ** @param xcb_keycode_t          firstKeyBehavior
- ** @param uint8_t                nKeyBehaviors
- ** @param uint16_t               virtualMods
- ** @param xcb_keycode_t          firstKeyExplicit
- ** @param uint8_t                nKeyExplicit
- ** @param xcb_keycode_t          firstModMapKey
- ** @param uint8_t                nModMapKeys
- ** @param xcb_keycode_t          firstVModMapKey
- ** @param uint8_t                nVModMapKeys
- ** @returns xcb_xkb_get_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_map_cookie_t
 xcb_xkb_get_map_unchecked (xcb_connection_t      *c  /**< */,
                            xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -6288,11 +3754,11 @@ xcb_xkb_get_map_unchecked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_MAP,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_map_cookie_t xcb_ret;
     xcb_xkb_get_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.full = full;
     xcb_out.partial = partial;
@@ -6312,44 +3778,22 @@ xcb_xkb_get_map_unchecked (xcb_connection_t      *c  /**< */,
     xcb_out.firstVModMapKey = firstVModMapKey;
     xcb_out.nVModMapKeys = nVModMapKeys;
     memset(xcb_out.pad0, 0, 2);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_map_map_t * xcb_xkb_get_map_map
- ** 
- ** @param const xcb_xkb_get_map_reply_t *R
- ** @returns xcb_xkb_get_map_map_t *
- **
- *****************************************************************************/
- 
 void *
 xcb_xkb_get_map_map (const xcb_xkb_get_map_reply_t *R  /**< */)
 {
     return (void *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_map_reply_t * xcb_xkb_get_map_reply
- ** 
- ** @param xcb_connection_t          *c
- ** @param xcb_xkb_get_map_cookie_t   cookie
- ** @param xcb_generic_error_t      **e
- ** @returns xcb_xkb_get_map_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_map_reply_t *
 xcb_xkb_get_map_reply (xcb_connection_t          *c  /**< */,
                        xcb_xkb_get_map_cookie_t   cookie  /**< */,
@@ -6358,16 +3802,6 @@ xcb_xkb_get_map_reply (xcb_connection_t          *c  /**< */,
     return (xcb_xkb_get_map_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_types_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_types_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                      const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6375,16 +3809,6 @@ xcb_xkb_set_map_values_types_length (const xcb_xkb_set_map_request_t *R  /**< */
     return R->nTypes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_key_type_iterator_t xcb_xkb_set_map_values_types_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_set_key_type_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_key_type_iterator_t
 xcb_xkb_set_map_values_types_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                        const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6396,16 +3820,6 @@ xcb_xkb_set_map_values_types_iterator (const xcb_xkb_set_map_request_t *R  /**< 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_syms_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_syms_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                     const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6413,16 +3827,6 @@ xcb_xkb_set_map_values_syms_length (const xcb_xkb_set_map_request_t *R  /**< */,
     return R->nKeySyms;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_sym_map_iterator_t xcb_xkb_set_map_values_syms_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_key_sym_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_sym_map_iterator_t
 xcb_xkb_set_map_values_syms_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                       const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6434,32 +3838,12 @@ xcb_xkb_set_map_values_syms_iterator (const xcb_xkb_set_map_request_t *R  /**< *
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_set_map_values_actions_count
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_set_map_values_actions_count (const xcb_xkb_set_map_values_t *S  /**< */)
 {
     return /* values */ S->actionsCount;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_actions_count_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_actions_count_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                              const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6467,16 +3851,6 @@ xcb_xkb_set_map_values_actions_count_length (const xcb_xkb_set_map_request_t *R 
     return R->nKeyActions;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_map_values_actions_count_end
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_map_values_actions_count_end (const xcb_xkb_set_map_request_t *R  /**< */,
                                           const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6488,32 +3862,12 @@ xcb_xkb_set_map_values_actions_count_end (const xcb_xkb_set_map_request_t *R  /*
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_t * xcb_xkb_set_map_values_actions
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns xcb_xkb_action_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_action_t *
 xcb_xkb_set_map_values_actions (const xcb_xkb_set_map_values_t *S  /**< */)
 {
     return /* values */ S->actions;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_actions_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_actions_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                        const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6521,16 +3875,6 @@ xcb_xkb_set_map_values_actions_length (const xcb_xkb_set_map_request_t *R  /**< 
     return R->totalActions;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_iterator_t xcb_xkb_set_map_values_actions_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_action_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_action_iterator_t
 xcb_xkb_set_map_values_actions_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                          const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6542,32 +3886,12 @@ xcb_xkb_set_map_values_actions_iterator (const xcb_xkb_set_map_request_t *R  /**
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_t * xcb_xkb_set_map_values_behaviors
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns xcb_xkb_set_behavior_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_t *
 xcb_xkb_set_map_values_behaviors (const xcb_xkb_set_map_values_t *S  /**< */)
 {
     return /* values */ S->behaviors;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_behaviors_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_behaviors_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                          const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6575,16 +3899,6 @@ xcb_xkb_set_map_values_behaviors_length (const xcb_xkb_set_map_request_t *R  /**
     return R->totalKeyBehaviors;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_iterator_t xcb_xkb_set_map_values_behaviors_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_set_behavior_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_iterator_t
 xcb_xkb_set_map_values_behaviors_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                            const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6596,32 +3910,12 @@ xcb_xkb_set_map_values_behaviors_iterator (const xcb_xkb_set_map_request_t *R  /
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_set_map_values_vmods
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_set_map_values_vmods (const xcb_xkb_set_map_values_t *S  /**< */)
 {
     return /* values */ S->vmods;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_vmods_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_vmods_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                      const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6629,16 +3923,6 @@ xcb_xkb_set_map_values_vmods_length (const xcb_xkb_set_map_request_t *R  /**< */
     return xcb_popcount(R->virtualMods);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_map_values_vmods_end
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_map_values_vmods_end (const xcb_xkb_set_map_request_t *R  /**< */,
                                   const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6650,32 +3934,12 @@ xcb_xkb_set_map_values_vmods_end (const xcb_xkb_set_map_request_t *R  /**< */,
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_t * xcb_xkb_set_map_values_explicit
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns xcb_xkb_set_explicit_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_t *
 xcb_xkb_set_map_values_explicit (const xcb_xkb_set_map_values_t *S  /**< */)
 {
     return /* values */ S->explicit;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_explicit_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_explicit_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                         const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6683,16 +3947,6 @@ xcb_xkb_set_map_values_explicit_length (const xcb_xkb_set_map_request_t *R  /**<
     return R->totalKeyExplicit;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_iterator_t xcb_xkb_set_map_values_explicit_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_set_explicit_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_iterator_t
 xcb_xkb_set_map_values_explicit_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                           const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6704,32 +3958,12 @@ xcb_xkb_set_map_values_explicit_iterator (const xcb_xkb_set_map_request_t *R  /*
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_t * xcb_xkb_set_map_values_modmap
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns xcb_xkb_key_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_t *
 xcb_xkb_set_map_values_modmap (const xcb_xkb_set_map_values_t *S  /**< */)
 {
     return /* values */ S->modmap;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_modmap_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_modmap_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                       const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6737,16 +3971,6 @@ xcb_xkb_set_map_values_modmap_length (const xcb_xkb_set_map_request_t *R  /**< *
     return R->totalModMapKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_iterator_t xcb_xkb_set_map_values_modmap_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_key_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_iterator_t
 xcb_xkb_set_map_values_modmap_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                         const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6758,32 +3982,12 @@ xcb_xkb_set_map_values_modmap_iterator (const xcb_xkb_set_map_request_t *R  /**<
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_t * xcb_xkb_set_map_values_vmodmap
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns xcb_xkb_key_v_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_t *
 xcb_xkb_set_map_values_vmodmap (const xcb_xkb_set_map_values_t *S  /**< */)
 {
     return /* values */ S->vmodmap;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_vmodmap_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_vmodmap_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                        const xcb_xkb_set_map_values_t *S  /**< */)
@@ -6791,16 +3995,6 @@ xcb_xkb_set_map_values_vmodmap_length (const xcb_xkb_set_map_request_t *R  /**< 
     return R->totalVModMapKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_iterator_t xcb_xkb_set_map_values_vmodmap_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_key_v_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_iterator_t
 xcb_xkb_set_map_values_vmodmap_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                          const xcb_xkb_set_map_values_t *S  /**< */)
@@ -7227,43 +4421,6 @@ xcb_xkb_set_map_values_sizeof (const void  *_buffer  /**< */,
     return xcb_xkb_set_map_values_unpack(_buffer, nTypes, nKeySyms, nKeyActions, totalActions, totalKeyBehaviors, virtualMods, totalKeyExplicit, totalModMapKeys, totalVModMapKeys, present, &_aux);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_map_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               present
- ** @param uint16_t               flags
- ** @param xcb_keycode_t          minKeyCode
- ** @param xcb_keycode_t          maxKeyCode
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param xcb_keycode_t          firstKeySym
- ** @param uint8_t                nKeySyms
- ** @param uint16_t               totalSyms
- ** @param xcb_keycode_t          firstKeyAction
- ** @param uint8_t                nKeyActions
- ** @param uint16_t               totalActions
- ** @param xcb_keycode_t          firstKeyBehavior
- ** @param uint8_t                nKeyBehaviors
- ** @param uint8_t                totalKeyBehaviors
- ** @param xcb_keycode_t          firstKeyExplicit
- ** @param uint8_t                nKeyExplicit
- ** @param uint8_t                totalKeyExplicit
- ** @param xcb_keycode_t          firstModMapKey
- ** @param uint8_t                nModMapKeys
- ** @param uint8_t                totalModMapKeys
- ** @param xcb_keycode_t          firstVModMapKey
- ** @param uint8_t                nVModMapKeys
- ** @param uint8_t                totalVModMapKeys
- ** @param uint16_t               virtualMods
- ** @param const void            *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_map_checked (xcb_connection_t      *c  /**< */,
                          xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -7300,11 +4457,11 @@ xcb_xkb_set_map_checked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_SET_MAP,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.present = present;
     xcb_out.flags = flags;
@@ -7331,57 +4488,20 @@ xcb_xkb_set_map_checked (xcb_connection_t      *c  /**< */,
     xcb_out.nVModMapKeys = nVModMapKeys;
     xcb_out.totalVModMapKeys = totalVModMapKeys;
     xcb_out.virtualMods = virtualMods;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_set_map_values_t values */
     xcb_parts[4].iov_base = (char *) values;
-    xcb_parts[4].iov_len = 
+    xcb_parts[4].iov_len =
       xcb_xkb_set_map_values_sizeof (values, nTypes, nKeySyms, nKeyActions, totalActions, totalKeyBehaviors, virtualMods, totalKeyExplicit, totalModMapKeys, totalVModMapKeys, present);
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_map
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               present
- ** @param uint16_t               flags
- ** @param xcb_keycode_t          minKeyCode
- ** @param xcb_keycode_t          maxKeyCode
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param xcb_keycode_t          firstKeySym
- ** @param uint8_t                nKeySyms
- ** @param uint16_t               totalSyms
- ** @param xcb_keycode_t          firstKeyAction
- ** @param uint8_t                nKeyActions
- ** @param uint16_t               totalActions
- ** @param xcb_keycode_t          firstKeyBehavior
- ** @param uint8_t                nKeyBehaviors
- ** @param uint8_t                totalKeyBehaviors
- ** @param xcb_keycode_t          firstKeyExplicit
- ** @param uint8_t                nKeyExplicit
- ** @param uint8_t                totalKeyExplicit
- ** @param xcb_keycode_t          firstModMapKey
- ** @param uint8_t                nModMapKeys
- ** @param uint8_t                totalModMapKeys
- ** @param xcb_keycode_t          firstVModMapKey
- ** @param uint8_t                nVModMapKeys
- ** @param uint8_t                totalVModMapKeys
- ** @param uint16_t               virtualMods
- ** @param const void            *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_map (xcb_connection_t      *c  /**< */,
                  xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -7418,11 +4538,11 @@ xcb_xkb_set_map (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_SET_MAP,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.present = present;
     xcb_out.flags = flags;
@@ -7449,57 +4569,20 @@ xcb_xkb_set_map (xcb_connection_t      *c  /**< */,
     xcb_out.nVModMapKeys = nVModMapKeys;
     xcb_out.totalVModMapKeys = totalVModMapKeys;
     xcb_out.virtualMods = virtualMods;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_set_map_values_t values */
     xcb_parts[4].iov_base = (char *) values;
-    xcb_parts[4].iov_len = 
+    xcb_parts[4].iov_len =
       xcb_xkb_set_map_values_sizeof (values, nTypes, nKeySyms, nKeyActions, totalActions, totalKeyBehaviors, virtualMods, totalKeyExplicit, totalModMapKeys, totalVModMapKeys, present);
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_map_aux_checked
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_xkb_device_spec_t           deviceSpec
- ** @param uint16_t                        present
- ** @param uint16_t                        flags
- ** @param xcb_keycode_t                   minKeyCode
- ** @param xcb_keycode_t                   maxKeyCode
- ** @param uint8_t                         firstType
- ** @param uint8_t                         nTypes
- ** @param xcb_keycode_t                   firstKeySym
- ** @param uint8_t                         nKeySyms
- ** @param uint16_t                        totalSyms
- ** @param xcb_keycode_t                   firstKeyAction
- ** @param uint8_t                         nKeyActions
- ** @param uint16_t                        totalActions
- ** @param xcb_keycode_t                   firstKeyBehavior
- ** @param uint8_t                         nKeyBehaviors
- ** @param uint8_t                         totalKeyBehaviors
- ** @param xcb_keycode_t                   firstKeyExplicit
- ** @param uint8_t                         nKeyExplicit
- ** @param uint8_t                         totalKeyExplicit
- ** @param xcb_keycode_t                   firstModMapKey
- ** @param uint8_t                         nModMapKeys
- ** @param uint8_t                         totalModMapKeys
- ** @param xcb_keycode_t                   firstVModMapKey
- ** @param uint8_t                         nVModMapKeys
- ** @param uint8_t                         totalVModMapKeys
- ** @param uint16_t                        virtualMods
- ** @param const xcb_xkb_set_map_values_t *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_map_aux_checked (xcb_connection_t               *c  /**< */,
                              xcb_xkb_device_spec_t           deviceSpec  /**< */,
@@ -7536,12 +4619,12 @@ xcb_xkb_set_map_aux_checked (xcb_connection_t               *c  /**< */,
         /* opcode */ XCB_XKB_SET_MAP,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_map_request_t xcb_out;
     void *xcb_aux0 = 0;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.present = present;
     xcb_out.flags = flags;
@@ -7568,58 +4651,21 @@ xcb_xkb_set_map_aux_checked (xcb_connection_t               *c  /**< */,
     xcb_out.nVModMapKeys = nVModMapKeys;
     xcb_out.totalVModMapKeys = totalVModMapKeys;
     xcb_out.virtualMods = virtualMods;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_set_map_values_t values */
-    xcb_parts[4].iov_len = 
+    xcb_parts[4].iov_len =
       xcb_xkb_set_map_values_serialize (&xcb_aux0, nTypes, nKeySyms, nKeyActions, totalActions, totalKeyBehaviors, virtualMods, totalKeyExplicit, totalModMapKeys, totalVModMapKeys, present, values);
     xcb_parts[4].iov_base = xcb_aux0;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     free(xcb_aux0);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_map_aux
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_xkb_device_spec_t           deviceSpec
- ** @param uint16_t                        present
- ** @param uint16_t                        flags
- ** @param xcb_keycode_t                   minKeyCode
- ** @param xcb_keycode_t                   maxKeyCode
- ** @param uint8_t                         firstType
- ** @param uint8_t                         nTypes
- ** @param xcb_keycode_t                   firstKeySym
- ** @param uint8_t                         nKeySyms
- ** @param uint16_t                        totalSyms
- ** @param xcb_keycode_t                   firstKeyAction
- ** @param uint8_t                         nKeyActions
- ** @param uint16_t                        totalActions
- ** @param xcb_keycode_t                   firstKeyBehavior
- ** @param uint8_t                         nKeyBehaviors
- ** @param uint8_t                         totalKeyBehaviors
- ** @param xcb_keycode_t                   firstKeyExplicit
- ** @param uint8_t                         nKeyExplicit
- ** @param uint8_t                         totalKeyExplicit
- ** @param xcb_keycode_t                   firstModMapKey
- ** @param uint8_t                         nModMapKeys
- ** @param uint8_t                         totalModMapKeys
- ** @param xcb_keycode_t                   firstVModMapKey
- ** @param uint8_t                         nVModMapKeys
- ** @param uint8_t                         totalVModMapKeys
- ** @param uint16_t                        virtualMods
- ** @param const xcb_xkb_set_map_values_t *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_map_aux (xcb_connection_t               *c  /**< */,
                      xcb_xkb_device_spec_t           deviceSpec  /**< */,
@@ -7656,12 +4702,12 @@ xcb_xkb_set_map_aux (xcb_connection_t               *c  /**< */,
         /* opcode */ XCB_XKB_SET_MAP,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_map_request_t xcb_out;
     void *xcb_aux0 = 0;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.present = present;
     xcb_out.flags = flags;
@@ -7688,16 +4734,16 @@ xcb_xkb_set_map_aux (xcb_connection_t               *c  /**< */,
     xcb_out.nVModMapKeys = nVModMapKeys;
     xcb_out.totalVModMapKeys = totalVModMapKeys;
     xcb_out.virtualMods = virtualMods;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_set_map_values_t values */
-    xcb_parts[4].iov_len = 
+    xcb_parts[4].iov_len =
       xcb_xkb_set_map_values_serialize (&xcb_aux0, nTypes, nKeySyms, nKeyActions, totalActions, totalKeyBehaviors, virtualMods, totalKeyExplicit, totalModMapKeys, totalVModMapKeys, present, values);
     xcb_parts[4].iov_base = xcb_aux0;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     free(xcb_aux0);
     return xcb_ret;
@@ -7746,21 +4792,6 @@ xcb_xkb_get_compat_map_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_compat_map_cookie_t xcb_xkb_get_compat_map
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                groups
- ** @param uint8_t                getAllSI
- ** @param uint16_t               firstSI
- ** @param uint16_t               nSI
- ** @returns xcb_xkb_get_compat_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_compat_map_cookie_t
 xcb_xkb_get_compat_map (xcb_connection_t      *c  /**< */,
                         xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -7775,41 +4806,26 @@ xcb_xkb_get_compat_map (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_COMPAT_MAP,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_compat_map_cookie_t xcb_ret;
     xcb_xkb_get_compat_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.groups = groups;
     xcb_out.getAllSI = getAllSI;
     xcb_out.firstSI = firstSI;
     xcb_out.nSI = nSI;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_compat_map_cookie_t xcb_xkb_get_compat_map_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                groups
- ** @param uint8_t                getAllSI
- ** @param uint16_t               firstSI
- ** @param uint16_t               nSI
- ** @returns xcb_xkb_get_compat_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_compat_map_cookie_t
 xcb_xkb_get_compat_map_unchecked (xcb_connection_t      *c  /**< */,
                                   xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -7824,68 +4840,38 @@ xcb_xkb_get_compat_map_unchecked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_COMPAT_MAP,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_compat_map_cookie_t xcb_ret;
     xcb_xkb_get_compat_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.groups = groups;
     xcb_out.getAllSI = getAllSI;
     xcb_out.firstSI = firstSI;
     xcb_out.nSI = nSI;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_sym_interpret_t * xcb_xkb_get_compat_map_si_rtrn
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns xcb_xkb_sym_interpret_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_sym_interpret_t *
 xcb_xkb_get_compat_map_si_rtrn (const xcb_xkb_get_compat_map_reply_t *R  /**< */)
 {
     return (xcb_xkb_sym_interpret_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_compat_map_si_rtrn_length
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_compat_map_si_rtrn_length (const xcb_xkb_get_compat_map_reply_t *R  /**< */)
 {
     return R->nSIRtrn;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_sym_interpret_iterator_t xcb_xkb_get_compat_map_si_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns xcb_xkb_sym_interpret_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_sym_interpret_iterator_t
 xcb_xkb_get_compat_map_si_rtrn_iterator (const xcb_xkb_get_compat_map_reply_t *R  /**< */)
 {
@@ -7896,16 +4882,6 @@ xcb_xkb_get_compat_map_si_rtrn_iterator (const xcb_xkb_get_compat_map_reply_t *R
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_t * xcb_xkb_get_compat_map_group_rtrn
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns xcb_xkb_mod_def_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_t *
 xcb_xkb_get_compat_map_group_rtrn (const xcb_xkb_get_compat_map_reply_t *R  /**< */)
 {
@@ -7913,32 +4889,12 @@ xcb_xkb_get_compat_map_group_rtrn (const xcb_xkb_get_compat_map_reply_t *R  /**<
     return (xcb_xkb_mod_def_t *) ((char *) prev.data + XCB_TYPE_PAD(xcb_xkb_mod_def_t, prev.index) + 0);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_compat_map_group_rtrn_length
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_compat_map_group_rtrn_length (const xcb_xkb_get_compat_map_reply_t *R  /**< */)
 {
     return xcb_popcount(R->groupsRtrn);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_iterator_t xcb_xkb_get_compat_map_group_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns xcb_xkb_mod_def_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_iterator_t
 xcb_xkb_get_compat_map_group_rtrn_iterator (const xcb_xkb_get_compat_map_reply_t *R  /**< */)
 {
@@ -7950,18 +4906,6 @@ xcb_xkb_get_compat_map_group_rtrn_iterator (const xcb_xkb_get_compat_map_reply_t
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_compat_map_reply_t * xcb_xkb_get_compat_map_reply
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_xkb_get_compat_map_cookie_t   cookie
- ** @param xcb_generic_error_t             **e
- ** @returns xcb_xkb_get_compat_map_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_compat_map_reply_t *
 xcb_xkb_get_compat_map_reply (xcb_connection_t                 *c  /**< */,
                               xcb_xkb_get_compat_map_cookie_t   cookie  /**< */,
@@ -8013,24 +4957,6 @@ xcb_xkb_set_compat_map_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_compat_map_checked
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_xkb_device_spec_t          deviceSpec
- ** @param uint8_t                        recomputeActions
- ** @param uint8_t                        truncateSI
- ** @param uint8_t                        groups
- ** @param uint16_t                       firstSI
- ** @param uint16_t                       nSI
- ** @param const xcb_xkb_sym_interpret_t *si
- ** @param const xcb_xkb_mod_def_t       *groupMaps
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_compat_map_checked (xcb_connection_t              *c  /**< */,
                                 xcb_xkb_device_spec_t          deviceSpec  /**< */,
@@ -8048,11 +4974,11 @@ xcb_xkb_set_compat_map_checked (xcb_connection_t              *c  /**< */,
         /* opcode */ XCB_XKB_SET_COMPAT_MAP,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[8];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_compat_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.pad0 = 0;
     xcb_out.recomputeActions = recomputeActions;
@@ -8061,7 +4987,7 @@ xcb_xkb_set_compat_map_checked (xcb_connection_t              *c  /**< */,
     xcb_out.firstSI = firstSI;
     xcb_out.nSI = nSI;
     memset(xcb_out.pad1, 0, 2);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -8076,29 +5002,11 @@ xcb_xkb_set_compat_map_checked (xcb_connection_t              *c  /**< */,
     xcb_parts[6].iov_len = xcb_popcount(groups) * sizeof(xcb_xkb_mod_def_t);
     xcb_parts[7].iov_base = 0;
     xcb_parts[7].iov_len = -xcb_parts[6].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_compat_map
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_xkb_device_spec_t          deviceSpec
- ** @param uint8_t                        recomputeActions
- ** @param uint8_t                        truncateSI
- ** @param uint8_t                        groups
- ** @param uint16_t                       firstSI
- ** @param uint16_t                       nSI
- ** @param const xcb_xkb_sym_interpret_t *si
- ** @param const xcb_xkb_mod_def_t       *groupMaps
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_compat_map (xcb_connection_t              *c  /**< */,
                         xcb_xkb_device_spec_t          deviceSpec  /**< */,
@@ -8116,11 +5024,11 @@ xcb_xkb_set_compat_map (xcb_connection_t              *c  /**< */,
         /* opcode */ XCB_XKB_SET_COMPAT_MAP,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[8];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_compat_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.pad0 = 0;
     xcb_out.recomputeActions = recomputeActions;
@@ -8129,7 +5037,7 @@ xcb_xkb_set_compat_map (xcb_connection_t              *c  /**< */,
     xcb_out.firstSI = firstSI;
     xcb_out.nSI = nSI;
     memset(xcb_out.pad1, 0, 2);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -8144,22 +5052,11 @@ xcb_xkb_set_compat_map (xcb_connection_t              *c  /**< */,
     xcb_parts[6].iov_len = xcb_popcount(groups) * sizeof(xcb_xkb_mod_def_t);
     xcb_parts[7].iov_base = 0;
     xcb_parts[7].iov_len = -xcb_parts[6].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_state_cookie_t xcb_xkb_get_indicator_state
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_indicator_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_state_cookie_t
 xcb_xkb_get_indicator_state (xcb_connection_t      *c  /**< */,
                              xcb_xkb_device_spec_t  deviceSpec  /**< */)
@@ -8170,34 +5067,23 @@ xcb_xkb_get_indicator_state (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_INDICATOR_STATE,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_indicator_state_cookie_t xcb_ret;
     xcb_xkb_get_indicator_state_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_state_cookie_t xcb_xkb_get_indicator_state_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_indicator_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_state_cookie_t
 xcb_xkb_get_indicator_state_unchecked (xcb_connection_t      *c  /**< */,
                                        xcb_xkb_device_spec_t  deviceSpec  /**< */)
@@ -8208,35 +5094,23 @@ xcb_xkb_get_indicator_state_unchecked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_INDICATOR_STATE,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_indicator_state_cookie_t xcb_ret;
     xcb_xkb_get_indicator_state_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_state_reply_t * xcb_xkb_get_indicator_state_reply
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xkb_get_indicator_state_cookie_t   cookie
- ** @param xcb_generic_error_t                  **e
- ** @returns xcb_xkb_get_indicator_state_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_state_reply_t *
 xcb_xkb_get_indicator_state_reply (xcb_connection_t                      *c  /**< */,
                                    xcb_xkb_get_indicator_state_cookie_t   cookie  /**< */,
@@ -8276,18 +5150,6 @@ xcb_xkb_get_indicator_map_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_map_cookie_t xcb_xkb_get_indicator_map
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               which
- ** @returns xcb_xkb_get_indicator_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_map_cookie_t
 xcb_xkb_get_indicator_map (xcb_connection_t      *c  /**< */,
                            xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -8299,36 +5161,24 @@ xcb_xkb_get_indicator_map (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_INDICATOR_MAP,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_indicator_map_cookie_t xcb_ret;
     xcb_xkb_get_indicator_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.which = which;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_map_cookie_t xcb_xkb_get_indicator_map_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               which
- ** @returns xcb_xkb_get_indicator_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_map_cookie_t
 xcb_xkb_get_indicator_map_unchecked (xcb_connection_t      *c  /**< */,
                                      xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -8340,66 +5190,36 @@ xcb_xkb_get_indicator_map_unchecked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_INDICATOR_MAP,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_indicator_map_cookie_t xcb_ret;
     xcb_xkb_get_indicator_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.which = which;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_t * xcb_xkb_get_indicator_map_maps
- ** 
- ** @param const xcb_xkb_get_indicator_map_reply_t *R
- ** @returns xcb_xkb_indicator_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_t *
 xcb_xkb_get_indicator_map_maps (const xcb_xkb_get_indicator_map_reply_t *R  /**< */)
 {
     return (xcb_xkb_indicator_map_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_indicator_map_maps_length
- ** 
- ** @param const xcb_xkb_get_indicator_map_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_indicator_map_maps_length (const xcb_xkb_get_indicator_map_reply_t *R  /**< */)
 {
     return xcb_popcount(R->which);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_iterator_t xcb_xkb_get_indicator_map_maps_iterator
- ** 
- ** @param const xcb_xkb_get_indicator_map_reply_t *R
- ** @returns xcb_xkb_indicator_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_iterator_t
 xcb_xkb_get_indicator_map_maps_iterator (const xcb_xkb_get_indicator_map_reply_t *R  /**< */)
 {
@@ -8410,18 +5230,6 @@ xcb_xkb_get_indicator_map_maps_iterator (const xcb_xkb_get_indicator_map_reply_t
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_map_reply_t * xcb_xkb_get_indicator_map_reply
- ** 
- ** @param xcb_connection_t                    *c
- ** @param xcb_xkb_get_indicator_map_cookie_t   cookie
- ** @param xcb_generic_error_t                **e
- ** @returns xcb_xkb_get_indicator_map_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_map_reply_t *
 xcb_xkb_get_indicator_map_reply (xcb_connection_t                    *c  /**< */,
                                  xcb_xkb_get_indicator_map_cookie_t   cookie  /**< */,
@@ -8461,19 +5269,6 @@ xcb_xkb_set_indicator_map_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_indicator_map_checked
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_xkb_device_spec_t          deviceSpec
- ** @param uint32_t                       which
- ** @param const xcb_xkb_indicator_map_t *maps
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_indicator_map_checked (xcb_connection_t              *c  /**< */,
                                    xcb_xkb_device_spec_t          deviceSpec  /**< */,
@@ -8486,15 +5281,15 @@ xcb_xkb_set_indicator_map_checked (xcb_connection_t              *c  /**< */,
         /* opcode */ XCB_XKB_SET_INDICATOR_MAP,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[6];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_indicator_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.which = which;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -8504,24 +5299,11 @@ xcb_xkb_set_indicator_map_checked (xcb_connection_t              *c  /**< */,
     xcb_parts[4].iov_len = xcb_popcount(which) * sizeof(xcb_xkb_indicator_map_t);
     xcb_parts[5].iov_base = 0;
     xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_indicator_map
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_xkb_device_spec_t          deviceSpec
- ** @param uint32_t                       which
- ** @param const xcb_xkb_indicator_map_t *maps
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_indicator_map (xcb_connection_t              *c  /**< */,
                            xcb_xkb_device_spec_t          deviceSpec  /**< */,
@@ -8534,15 +5316,15 @@ xcb_xkb_set_indicator_map (xcb_connection_t              *c  /**< */,
         /* opcode */ XCB_XKB_SET_INDICATOR_MAP,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[6];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_indicator_map_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.which = which;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -8552,25 +5334,11 @@ xcb_xkb_set_indicator_map (xcb_connection_t              *c  /**< */,
     xcb_parts[4].iov_len = xcb_popcount(which) * sizeof(xcb_xkb_indicator_map_t);
     xcb_parts[5].iov_base = 0;
     xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_named_indicator_cookie_t xcb_xkb_get_named_indicator
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @param xcb_atom_t                indicator
- ** @returns xcb_xkb_get_named_indicator_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_named_indicator_cookie_t
 xcb_xkb_get_named_indicator (xcb_connection_t         *c  /**< */,
                              xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -8584,40 +5352,26 @@ xcb_xkb_get_named_indicator (xcb_connection_t         *c  /**< */,
         /* opcode */ XCB_XKB_GET_NAMED_INDICATOR,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_named_indicator_cookie_t xcb_ret;
     xcb_xkb_get_named_indicator_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.ledClass = ledClass;
     xcb_out.ledID = ledID;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.indicator = indicator;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_named_indicator_cookie_t xcb_xkb_get_named_indicator_unchecked
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @param xcb_atom_t                indicator
- ** @returns xcb_xkb_get_named_indicator_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_named_indicator_cookie_t
 xcb_xkb_get_named_indicator_unchecked (xcb_connection_t         *c  /**< */,
                                        xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -8631,38 +5385,26 @@ xcb_xkb_get_named_indicator_unchecked (xcb_connection_t         *c  /**< */,
         /* opcode */ XCB_XKB_GET_NAMED_INDICATOR,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_named_indicator_cookie_t xcb_ret;
     xcb_xkb_get_named_indicator_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.ledClass = ledClass;
     xcb_out.ledID = ledID;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.indicator = indicator;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_named_indicator_reply_t * xcb_xkb_get_named_indicator_reply
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xkb_get_named_indicator_cookie_t   cookie
- ** @param xcb_generic_error_t                  **e
- ** @returns xcb_xkb_get_named_indicator_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_named_indicator_reply_t *
 xcb_xkb_get_named_indicator_reply (xcb_connection_t                      *c  /**< */,
                                    xcb_xkb_get_named_indicator_cookie_t   cookie  /**< */,
@@ -8671,31 +5413,6 @@ xcb_xkb_get_named_indicator_reply (xcb_connection_t                      *c  /**
     return (xcb_xkb_get_named_indicator_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_named_indicator_checked
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @param xcb_atom_t                indicator
- ** @param uint8_t                   setState
- ** @param uint8_t                   on
- ** @param uint8_t                   setMap
- ** @param uint8_t                   createMap
- ** @param uint8_t                   map_flags
- ** @param uint8_t                   map_whichGroups
- ** @param uint8_t                   map_groups
- ** @param uint8_t                   map_whichMods
- ** @param uint8_t                   map_realMods
- ** @param uint16_t                  map_vmods
- ** @param uint32_t                  map_ctrls
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_named_indicator_checked (xcb_connection_t         *c  /**< */,
                                      xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -8720,11 +5437,11 @@ xcb_xkb_set_named_indicator_checked (xcb_connection_t         *c  /**< */,
         /* opcode */ XCB_XKB_SET_NAMED_INDICATOR,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_named_indicator_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.ledClass = ledClass;
     xcb_out.ledID = ledID;
@@ -8742,41 +5459,16 @@ xcb_xkb_set_named_indicator_checked (xcb_connection_t         *c  /**< */,
     xcb_out.map_realMods = map_realMods;
     xcb_out.map_vmods = map_vmods;
     xcb_out.map_ctrls = map_ctrls;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_named_indicator
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @param xcb_atom_t                indicator
- ** @param uint8_t                   setState
- ** @param uint8_t                   on
- ** @param uint8_t                   setMap
- ** @param uint8_t                   createMap
- ** @param uint8_t                   map_flags
- ** @param uint8_t                   map_whichGroups
- ** @param uint8_t                   map_groups
- ** @param uint8_t                   map_whichMods
- ** @param uint8_t                   map_realMods
- ** @param uint16_t                  map_vmods
- ** @param uint32_t                  map_ctrls
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_named_indicator (xcb_connection_t         *c  /**< */,
                              xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -8801,11 +5493,11 @@ xcb_xkb_set_named_indicator (xcb_connection_t         *c  /**< */,
         /* opcode */ XCB_XKB_SET_NAMED_INDICATOR,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_named_indicator_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.ledClass = ledClass;
     xcb_out.ledID = ledID;
@@ -8823,42 +5515,22 @@ xcb_xkb_set_named_indicator (xcb_connection_t         *c  /**< */,
     xcb_out.map_realMods = map_realMods;
     xcb_out.map_vmods = map_vmods;
     xcb_out.map_ctrls = map_ctrls;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_type_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_type_names (const xcb_xkb_get_names_value_list_t *S  /**< */)
 {
     return /* valueList */ S->typeNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_type_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_type_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                 const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -8866,16 +5538,6 @@ xcb_xkb_get_names_value_list_type_names_length (const xcb_xkb_get_names_reply_t 
     return R->nTypes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_type_names_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_type_names_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                              const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -8887,32 +5549,12 @@ xcb_xkb_get_names_value_list_type_names_end (const xcb_xkb_get_names_reply_t *R 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_names_value_list_n_levels_per_type
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_names_value_list_n_levels_per_type (const xcb_xkb_get_names_value_list_t *S  /**< */)
 {
     return /* valueList */ S->nLevelsPerType;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_n_levels_per_type_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_n_levels_per_type_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                        const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -8920,16 +5562,6 @@ xcb_xkb_get_names_value_list_n_levels_per_type_length (const xcb_xkb_get_names_r
     return R->nTypes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_n_levels_per_type_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_n_levels_per_type_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                     const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -8941,32 +5573,12 @@ xcb_xkb_get_names_value_list_n_levels_per_type_end (const xcb_xkb_get_names_repl
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_names_value_list_alignment_pad
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_names_value_list_alignment_pad (const xcb_xkb_get_names_value_list_t *S  /**< */)
 {
     return /* valueList */ S->alignment_pad;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_alignment_pad_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_alignment_pad_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                    const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -8974,16 +5586,6 @@ xcb_xkb_get_names_value_list_alignment_pad_length (const xcb_xkb_get_names_reply
     return (((R->nTypes + 3) & (~3)) - R->nTypes);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_alignment_pad_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_alignment_pad_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                 const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -8995,32 +5597,12 @@ xcb_xkb_get_names_value_list_alignment_pad_end (const xcb_xkb_get_names_reply_t 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_kt_level_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_kt_level_names (const xcb_xkb_get_names_value_list_t *S  /**< */)
 {
     return /* valueList */ S->ktLevelNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_kt_level_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_kt_level_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                     const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9028,16 +5610,6 @@ xcb_xkb_get_names_value_list_kt_level_names_length (const xcb_xkb_get_names_repl
     return xcb_sumof(/* valueList */ S->nLevelsPerType, R->nTypes);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_kt_level_names_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_kt_level_names_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                  const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9049,32 +5621,12 @@ xcb_xkb_get_names_value_list_kt_level_names_end (const xcb_xkb_get_names_reply_t
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_indicator_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_indicator_names (const xcb_xkb_get_names_value_list_t *S  /**< */)
 {
     return /* valueList */ S->indicatorNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_indicator_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_indicator_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                      const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9082,16 +5634,6 @@ xcb_xkb_get_names_value_list_indicator_names_length (const xcb_xkb_get_names_rep
     return xcb_popcount(R->indicators);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_indicator_names_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_indicator_names_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                   const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9103,32 +5645,12 @@ xcb_xkb_get_names_value_list_indicator_names_end (const xcb_xkb_get_names_reply_
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_virtual_mod_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_virtual_mod_names (const xcb_xkb_get_names_value_list_t *S  /**< */)
 {
     return /* valueList */ S->virtualModNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_virtual_mod_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_virtual_mod_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                        const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9136,16 +5658,6 @@ xcb_xkb_get_names_value_list_virtual_mod_names_length (const xcb_xkb_get_names_r
     return xcb_popcount(R->virtualMods);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_virtual_mod_names_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_virtual_mod_names_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                     const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9157,32 +5669,12 @@ xcb_xkb_get_names_value_list_virtual_mod_names_end (const xcb_xkb_get_names_repl
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_groups
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_groups (const xcb_xkb_get_names_value_list_t *S  /**< */)
 {
     return /* valueList */ S->groups;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_groups_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_groups_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                             const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9190,16 +5682,6 @@ xcb_xkb_get_names_value_list_groups_length (const xcb_xkb_get_names_reply_t *R  
     return xcb_popcount(R->groupNames);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_groups_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_groups_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                          const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9211,32 +5693,12 @@ xcb_xkb_get_names_value_list_groups_end (const xcb_xkb_get_names_reply_t *R  /**
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_t * xcb_xkb_get_names_value_list_key_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_xkb_key_name_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_t *
 xcb_xkb_get_names_value_list_key_names (const xcb_xkb_get_names_value_list_t *S  /**< */)
 {
     return /* valueList */ S->keyNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_key_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_key_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9244,16 +5706,6 @@ xcb_xkb_get_names_value_list_key_names_length (const xcb_xkb_get_names_reply_t *
     return R->nKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_iterator_t xcb_xkb_get_names_value_list_key_names_iterator
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_xkb_key_name_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_iterator_t
 xcb_xkb_get_names_value_list_key_names_iterator (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                  const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9265,32 +5717,12 @@ xcb_xkb_get_names_value_list_key_names_iterator (const xcb_xkb_get_names_reply_t
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_t * xcb_xkb_get_names_value_list_key_aliases
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_xkb_key_alias_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_t *
 xcb_xkb_get_names_value_list_key_aliases (const xcb_xkb_get_names_value_list_t *S  /**< */)
 {
     return /* valueList */ S->keyAliases;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_key_aliases_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_key_aliases_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                  const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9298,16 +5730,6 @@ xcb_xkb_get_names_value_list_key_aliases_length (const xcb_xkb_get_names_reply_t
     return R->nKeyAliases;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_iterator_t xcb_xkb_get_names_value_list_key_aliases_iterator
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_xkb_key_alias_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_iterator_t
 xcb_xkb_get_names_value_list_key_aliases_iterator (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                    const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9319,32 +5741,12 @@ xcb_xkb_get_names_value_list_key_aliases_iterator (const xcb_xkb_get_names_reply
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_radio_group_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_radio_group_names (const xcb_xkb_get_names_value_list_t *S  /**< */)
 {
     return /* valueList */ S->radioGroupNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_radio_group_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_radio_group_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                        const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9352,16 +5754,6 @@ xcb_xkb_get_names_value_list_radio_group_names_length (const xcb_xkb_get_names_r
     return R->nRadioGroups;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_radio_group_names_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_radio_group_names_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                     const xcb_xkb_get_names_value_list_t *S  /**< */)
@@ -9883,18 +6275,6 @@ xcb_xkb_get_names_value_list_sizeof (const void  *_buffer  /**< */,
     return xcb_xkb_get_names_value_list_unpack(_buffer, nTypes, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which, &_aux);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_names_cookie_t xcb_xkb_get_names
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               which
- ** @returns xcb_xkb_get_names_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_names_cookie_t
 xcb_xkb_get_names (xcb_connection_t      *c  /**< */,
                    xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -9906,36 +6286,24 @@ xcb_xkb_get_names (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_NAMES,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_names_cookie_t xcb_ret;
     xcb_xkb_get_names_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.which = which;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_names_cookie_t xcb_xkb_get_names_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               which
- ** @returns xcb_xkb_get_names_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_names_cookie_t
 xcb_xkb_get_names_unchecked (xcb_connection_t      *c  /**< */,
                              xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -9947,52 +6315,30 @@ xcb_xkb_get_names_unchecked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_NAMES,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_names_cookie_t xcb_ret;
     xcb_xkb_get_names_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.which = which;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_names_value_list_t * xcb_xkb_get_names_value_list
- ** 
- ** @param const xcb_xkb_get_names_reply_t *R
- ** @returns xcb_xkb_get_names_value_list_t *
- **
- *****************************************************************************/
- 
 void *
 xcb_xkb_get_names_value_list (const xcb_xkb_get_names_reply_t *R  /**< */)
 {
     return (void *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_names_reply_t * xcb_xkb_get_names_reply
- ** 
- ** @param xcb_connection_t            *c
- ** @param xcb_xkb_get_names_cookie_t   cookie
- ** @param xcb_generic_error_t        **e
- ** @returns xcb_xkb_get_names_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_names_reply_t *
 xcb_xkb_get_names_reply (xcb_connection_t            *c  /**< */,
                          xcb_xkb_get_names_cookie_t   cookie  /**< */,
@@ -10001,32 +6347,12 @@ xcb_xkb_get_names_reply (xcb_connection_t            *c  /**< */,
     return (xcb_xkb_get_names_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_type_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_type_names (const xcb_xkb_set_names_values_t *S  /**< */)
 {
     return /* values */ S->typeNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_type_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_type_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                             const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10034,16 +6360,6 @@ xcb_xkb_set_names_values_type_names_length (const xcb_xkb_set_names_request_t *R
     return R->nTypes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_type_names_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_type_names_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                          const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10055,140 +6371,60 @@ xcb_xkb_set_names_values_type_names_end (const xcb_xkb_set_names_request_t *R  /
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_set_names_values_n_levels_per_type
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_set_names_values_n_levels_per_type (const xcb_xkb_set_names_values_t *S  /**< */)
 {
     return /* values */ S->nLevelsPerType;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_n_levels_per_type_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_n_levels_per_type_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                                    const xcb_xkb_set_names_values_t *S  /**< */)
 {
-    return R->nKTLevels;
+    return R->nTypes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_n_levels_per_type_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_n_levels_per_type_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                                 const xcb_xkb_set_names_values_t *S  /**< */)
 {
     xcb_generic_iterator_t i;
-    i.data = /* values */ S->nLevelsPerType + R->nKTLevels;
+    i.data = /* values */ S->nLevelsPerType + R->nTypes;
     i.rem = 0;
     i.index = (char *) i.data - (char *) S;
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_kt_level_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_kt_level_names (const xcb_xkb_set_names_values_t *S  /**< */)
 {
     return /* values */ S->ktLevelNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_kt_level_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_kt_level_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                                 const xcb_xkb_set_names_values_t *S  /**< */)
 {
-    return xcb_sumof(/* values */ S->nLevelsPerType, R->nKTLevels);
+    return xcb_sumof(/* values */ S->nLevelsPerType, R->nTypes);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_kt_level_names_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_kt_level_names_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                              const xcb_xkb_set_names_values_t *S  /**< */)
 {
     xcb_generic_iterator_t i;
-    i.data = /* values */ S->ktLevelNames + xcb_sumof(/* values */ S->nLevelsPerType, R->nKTLevels);
+    i.data = /* values */ S->ktLevelNames + xcb_sumof(/* values */ S->nLevelsPerType, R->nTypes);
     i.rem = 0;
     i.index = (char *) i.data - (char *) S;
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_indicator_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_indicator_names (const xcb_xkb_set_names_values_t *S  /**< */)
 {
     return /* values */ S->indicatorNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_indicator_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_indicator_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                                  const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10196,16 +6432,6 @@ xcb_xkb_set_names_values_indicator_names_length (const xcb_xkb_set_names_request
     return xcb_popcount(R->indicators);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_indicator_names_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_indicator_names_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                               const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10217,32 +6443,12 @@ xcb_xkb_set_names_values_indicator_names_end (const xcb_xkb_set_names_request_t 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_virtual_mod_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_virtual_mod_names (const xcb_xkb_set_names_values_t *S  /**< */)
 {
     return /* values */ S->virtualModNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_virtual_mod_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_virtual_mod_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                                    const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10250,16 +6456,6 @@ xcb_xkb_set_names_values_virtual_mod_names_length (const xcb_xkb_set_names_reque
     return xcb_popcount(R->virtualMods);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_virtual_mod_names_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_virtual_mod_names_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                                 const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10271,32 +6467,12 @@ xcb_xkb_set_names_values_virtual_mod_names_end (const xcb_xkb_set_names_request_
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_groups
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_groups (const xcb_xkb_set_names_values_t *S  /**< */)
 {
     return /* values */ S->groups;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_groups_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_groups_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                         const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10304,16 +6480,6 @@ xcb_xkb_set_names_values_groups_length (const xcb_xkb_set_names_request_t *R  /*
     return xcb_popcount(R->groupNames);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_groups_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_groups_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                      const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10325,32 +6491,12 @@ xcb_xkb_set_names_values_groups_end (const xcb_xkb_set_names_request_t *R  /**< 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_t * xcb_xkb_set_names_values_key_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_xkb_key_name_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_t *
 xcb_xkb_set_names_values_key_names (const xcb_xkb_set_names_values_t *S  /**< */)
 {
     return /* values */ S->keyNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_key_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_key_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                            const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10358,16 +6504,6 @@ xcb_xkb_set_names_values_key_names_length (const xcb_xkb_set_names_request_t *R 
     return R->nKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_iterator_t xcb_xkb_set_names_values_key_names_iterator
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_xkb_key_name_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_iterator_t
 xcb_xkb_set_names_values_key_names_iterator (const xcb_xkb_set_names_request_t *R  /**< */,
                                              const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10379,32 +6515,12 @@ xcb_xkb_set_names_values_key_names_iterator (const xcb_xkb_set_names_request_t *
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_t * xcb_xkb_set_names_values_key_aliases
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_xkb_key_alias_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_t *
 xcb_xkb_set_names_values_key_aliases (const xcb_xkb_set_names_values_t *S  /**< */)
 {
     return /* values */ S->keyAliases;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_key_aliases_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_key_aliases_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                              const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10412,16 +6528,6 @@ xcb_xkb_set_names_values_key_aliases_length (const xcb_xkb_set_names_request_t *
     return R->nKeyAliases;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_iterator_t xcb_xkb_set_names_values_key_aliases_iterator
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_xkb_key_alias_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_iterator_t
 xcb_xkb_set_names_values_key_aliases_iterator (const xcb_xkb_set_names_request_t *R  /**< */,
                                                const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10433,32 +6539,12 @@ xcb_xkb_set_names_values_key_aliases_iterator (const xcb_xkb_set_names_request_t
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_radio_group_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_radio_group_names (const xcb_xkb_set_names_values_t *S  /**< */)
 {
     return /* values */ S->radioGroupNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_radio_group_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_radio_group_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                                    const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10466,16 +6552,6 @@ xcb_xkb_set_names_values_radio_group_names_length (const xcb_xkb_set_names_reque
     return R->nRadioGroups;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_radio_group_names_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_radio_group_names_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                                 const xcb_xkb_set_names_values_t *S  /**< */)
@@ -10490,7 +6566,6 @@ xcb_xkb_set_names_values_radio_group_names_end (const xcb_xkb_set_names_request_
 int
 xcb_xkb_set_names_values_serialize (void                             **_buffer  /**< */,
                                     uint8_t                            nTypes  /**< */,
-                                    uint8_t                            nKTLevels  /**< */,
                                     uint32_t                           indicators  /**< */,
                                     uint16_t                           virtualMods  /**< */,
                                     uint8_t                            groupNames  /**< */,
@@ -10591,8 +6666,8 @@ xcb_xkb_set_names_values_serialize (void                             **_buffer  
         xcb_block_len = 0;
         /* nLevelsPerType */
         xcb_parts[xcb_parts_idx].iov_base = (char *) _aux->nLevelsPerType;
-        xcb_block_len += nKTLevels * sizeof(uint8_t);
-        xcb_parts[xcb_parts_idx].iov_len = nKTLevels * sizeof(uint8_t);
+        xcb_block_len += nTypes * sizeof(uint8_t);
+        xcb_parts[xcb_parts_idx].iov_len = nTypes * sizeof(uint8_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint8_t);
         /* insert padding */
@@ -10607,8 +6682,8 @@ xcb_xkb_set_names_values_serialize (void                             **_buffer  
         xcb_block_len = 0;
         /* ktLevelNames */
         xcb_parts[xcb_parts_idx].iov_base = (char *) _aux->ktLevelNames;
-        xcb_block_len += xcb_sumof(_aux->nLevelsPerType, nKTLevels) * sizeof(xcb_atom_t);
-        xcb_parts[xcb_parts_idx].iov_len = xcb_sumof(_aux->nLevelsPerType, nKTLevels) * sizeof(xcb_atom_t);
+        xcb_block_len += xcb_sumof(_aux->nLevelsPerType, nTypes) * sizeof(xcb_atom_t);
+        xcb_parts[xcb_parts_idx].iov_len = xcb_sumof(_aux->nLevelsPerType, nTypes) * sizeof(xcb_atom_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(xcb_atom_t);
     }
@@ -10751,7 +6826,6 @@ xcb_xkb_set_names_values_serialize (void                             **_buffer  
 int
 xcb_xkb_set_names_values_unpack (const void                  *_buffer  /**< */,
                                  uint8_t                      nTypes  /**< */,
-                                 uint8_t                      nKTLevels  /**< */,
                                  uint32_t                     indicators  /**< */,
                                  uint16_t                     virtualMods  /**< */,
                                  uint8_t                      groupNames  /**< */,
@@ -10836,7 +6910,7 @@ xcb_xkb_set_names_values_unpack (const void                  *_buffer  /**< */,
         xcb_block_len = 0;
         /* nLevelsPerType */
         _aux->nLevelsPerType = (uint8_t *)xcb_tmp;
-        xcb_block_len += nKTLevels * sizeof(uint8_t);
+        xcb_block_len += nTypes * sizeof(uint8_t);
         xcb_tmp += xcb_block_len;
         xcb_align_to = ALIGNOF(uint8_t);
         /* insert padding */
@@ -10849,7 +6923,7 @@ xcb_xkb_set_names_values_unpack (const void                  *_buffer  /**< */,
         xcb_block_len = 0;
         /* ktLevelNames */
         _aux->ktLevelNames = (xcb_atom_t *)xcb_tmp;
-        xcb_block_len += xcb_sumof(_aux->nLevelsPerType, nKTLevels) * sizeof(xcb_atom_t);
+        xcb_block_len += xcb_sumof(_aux->nLevelsPerType, nTypes) * sizeof(xcb_atom_t);
         xcb_tmp += xcb_block_len;
         xcb_align_to = ALIGNOF(xcb_atom_t);
     }
@@ -10958,7 +7032,6 @@ xcb_xkb_set_names_values_unpack (const void                  *_buffer  /**< */,
 int
 xcb_xkb_set_names_values_sizeof (const void  *_buffer  /**< */,
                                  uint8_t      nTypes  /**< */,
-                                 uint8_t      nKTLevels  /**< */,
                                  uint32_t     indicators  /**< */,
                                  uint16_t     virtualMods  /**< */,
                                  uint8_t      groupNames  /**< */,
@@ -10968,34 +7041,9 @@ xcb_xkb_set_names_values_sizeof (const void  *_buffer  /**< */,
                                  uint32_t     which  /**< */)
 {
     xcb_xkb_set_names_values_t _aux;
-    return xcb_xkb_set_names_values_unpack(_buffer, nTypes, nKTLevels, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which, &_aux);
+    return xcb_xkb_set_names_values_unpack(_buffer, nTypes, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which, &_aux);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_names_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               virtualMods
- ** @param uint32_t               which
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param uint8_t                firstKTLevelt
- ** @param uint8_t                nKTLevels
- ** @param uint32_t               indicators
- ** @param uint8_t                groupNames
- ** @param uint8_t                nRadioGroups
- ** @param xcb_keycode_t          firstKey
- ** @param uint8_t                nKeys
- ** @param uint8_t                nKeyAliases
- ** @param uint16_t               totalKTLevelNames
- ** @param const void            *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_names_checked (xcb_connection_t      *c  /**< */,
                            xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -11020,11 +7068,11 @@ xcb_xkb_set_names_checked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_SET_NAMES,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_names_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.virtualMods = virtualMods;
     xcb_out.which = which;
@@ -11040,45 +7088,20 @@ xcb_xkb_set_names_checked (xcb_connection_t      *c  /**< */,
     xcb_out.nKeyAliases = nKeyAliases;
     xcb_out.pad0 = 0;
     xcb_out.totalKTLevelNames = totalKTLevelNames;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_set_names_values_t values */
     xcb_parts[4].iov_base = (char *) values;
-    xcb_parts[4].iov_len = 
-      xcb_xkb_set_names_values_sizeof (values, nTypes, nKTLevels, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which);
-    
+    xcb_parts[4].iov_len =
+      xcb_xkb_set_names_values_sizeof (values, nTypes, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which);
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_names
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               virtualMods
- ** @param uint32_t               which
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param uint8_t                firstKTLevelt
- ** @param uint8_t                nKTLevels
- ** @param uint32_t               indicators
- ** @param uint8_t                groupNames
- ** @param uint8_t                nRadioGroups
- ** @param xcb_keycode_t          firstKey
- ** @param uint8_t                nKeys
- ** @param uint8_t                nKeyAliases
- ** @param uint16_t               totalKTLevelNames
- ** @param const void            *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_names (xcb_connection_t      *c  /**< */,
                    xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -11103,11 +7126,11 @@ xcb_xkb_set_names (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_SET_NAMES,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_names_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.virtualMods = virtualMods;
     xcb_out.which = which;
@@ -11123,45 +7146,20 @@ xcb_xkb_set_names (xcb_connection_t      *c  /**< */,
     xcb_out.nKeyAliases = nKeyAliases;
     xcb_out.pad0 = 0;
     xcb_out.totalKTLevelNames = totalKTLevelNames;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_set_names_values_t values */
     xcb_parts[4].iov_base = (char *) values;
-    xcb_parts[4].iov_len = 
-      xcb_xkb_set_names_values_sizeof (values, nTypes, nKTLevels, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which);
-    
+    xcb_parts[4].iov_len =
+      xcb_xkb_set_names_values_sizeof (values, nTypes, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which);
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_names_aux_checked
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_xkb_device_spec_t             deviceSpec
- ** @param uint16_t                          virtualMods
- ** @param uint32_t                          which
- ** @param uint8_t                           firstType
- ** @param uint8_t                           nTypes
- ** @param uint8_t                           firstKTLevelt
- ** @param uint8_t                           nKTLevels
- ** @param uint32_t                          indicators
- ** @param uint8_t                           groupNames
- ** @param uint8_t                           nRadioGroups
- ** @param xcb_keycode_t                     firstKey
- ** @param uint8_t                           nKeys
- ** @param uint8_t                           nKeyAliases
- ** @param uint16_t                          totalKTLevelNames
- ** @param const xcb_xkb_set_names_values_t *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_names_aux_checked (xcb_connection_t                 *c  /**< */,
                                xcb_xkb_device_spec_t             deviceSpec  /**< */,
@@ -11186,12 +7184,12 @@ xcb_xkb_set_names_aux_checked (xcb_connection_t                 *c  /**< */,
         /* opcode */ XCB_XKB_SET_NAMES,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_names_request_t xcb_out;
     void *xcb_aux0 = 0;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.virtualMods = virtualMods;
     xcb_out.which = which;
@@ -11207,46 +7205,21 @@ xcb_xkb_set_names_aux_checked (xcb_connection_t                 *c  /**< */,
     xcb_out.nKeyAliases = nKeyAliases;
     xcb_out.pad0 = 0;
     xcb_out.totalKTLevelNames = totalKTLevelNames;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_set_names_values_t values */
-    xcb_parts[4].iov_len = 
-      xcb_xkb_set_names_values_serialize (&xcb_aux0, nTypes, nKTLevels, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which, values);
+    xcb_parts[4].iov_len =
+      xcb_xkb_set_names_values_serialize (&xcb_aux0, nTypes, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which, values);
     xcb_parts[4].iov_base = xcb_aux0;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     free(xcb_aux0);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_names_aux
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_xkb_device_spec_t             deviceSpec
- ** @param uint16_t                          virtualMods
- ** @param uint32_t                          which
- ** @param uint8_t                           firstType
- ** @param uint8_t                           nTypes
- ** @param uint8_t                           firstKTLevelt
- ** @param uint8_t                           nKTLevels
- ** @param uint32_t                          indicators
- ** @param uint8_t                           groupNames
- ** @param uint8_t                           nRadioGroups
- ** @param xcb_keycode_t                     firstKey
- ** @param uint8_t                           nKeys
- ** @param uint8_t                           nKeyAliases
- ** @param uint16_t                          totalKTLevelNames
- ** @param const xcb_xkb_set_names_values_t *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_names_aux (xcb_connection_t                 *c  /**< */,
                        xcb_xkb_device_spec_t             deviceSpec  /**< */,
@@ -11271,12 +7244,12 @@ xcb_xkb_set_names_aux (xcb_connection_t                 *c  /**< */,
         /* opcode */ XCB_XKB_SET_NAMES,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[5];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_names_request_t xcb_out;
     void *xcb_aux0 = 0;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.virtualMods = virtualMods;
     xcb_out.which = which;
@@ -11292,37 +7265,21 @@ xcb_xkb_set_names_aux (xcb_connection_t                 *c  /**< */,
     xcb_out.nKeyAliases = nKeyAliases;
     xcb_out.pad0 = 0;
     xcb_out.totalKTLevelNames = totalKTLevelNames;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
     /* xcb_xkb_set_names_values_t values */
-    xcb_parts[4].iov_len = 
-      xcb_xkb_set_names_values_serialize (&xcb_aux0, nTypes, nKTLevels, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which, values);
+    xcb_parts[4].iov_len =
+      xcb_xkb_set_names_values_serialize (&xcb_aux0, nTypes, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which, values);
     xcb_parts[4].iov_base = xcb_aux0;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     free(xcb_aux0);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_per_client_flags_cookie_t xcb_xkb_per_client_flags
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               change
- ** @param uint32_t               value
- ** @param uint32_t               ctrlsToChange
- ** @param uint32_t               autoCtrls
- ** @param uint32_t               autoCtrlsValues
- ** @returns xcb_xkb_per_client_flags_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_per_client_flags_cookie_t
 xcb_xkb_per_client_flags (xcb_connection_t      *c  /**< */,
                           xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -11338,11 +7295,11 @@ xcb_xkb_per_client_flags (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_PER_CLIENT_FLAGS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_per_client_flags_cookie_t xcb_ret;
     xcb_xkb_per_client_flags_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.change = change;
@@ -11350,32 +7307,16 @@ xcb_xkb_per_client_flags (xcb_connection_t      *c  /**< */,
     xcb_out.ctrlsToChange = ctrlsToChange;
     xcb_out.autoCtrls = autoCtrls;
     xcb_out.autoCtrlsValues = autoCtrlsValues;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_per_client_flags_cookie_t xcb_xkb_per_client_flags_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               change
- ** @param uint32_t               value
- ** @param uint32_t               ctrlsToChange
- ** @param uint32_t               autoCtrls
- ** @param uint32_t               autoCtrlsValues
- ** @returns xcb_xkb_per_client_flags_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_per_client_flags_cookie_t
 xcb_xkb_per_client_flags_unchecked (xcb_connection_t      *c  /**< */,
                                     xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -11391,11 +7332,11 @@ xcb_xkb_per_client_flags_unchecked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_PER_CLIENT_FLAGS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_per_client_flags_cookie_t xcb_ret;
     xcb_xkb_per_client_flags_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.change = change;
@@ -11403,28 +7344,16 @@ xcb_xkb_per_client_flags_unchecked (xcb_connection_t      *c  /**< */,
     xcb_out.ctrlsToChange = ctrlsToChange;
     xcb_out.autoCtrls = autoCtrls;
     xcb_out.autoCtrlsValues = autoCtrlsValues;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_per_client_flags_reply_t * xcb_xkb_per_client_flags_reply
- ** 
- ** @param xcb_connection_t                   *c
- ** @param xcb_xkb_per_client_flags_cookie_t   cookie
- ** @param xcb_generic_error_t               **e
- ** @returns xcb_xkb_per_client_flags_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_per_client_flags_reply_t *
 xcb_xkb_per_client_flags_reply (xcb_connection_t                   *c  /**< */,
                                 xcb_xkb_per_client_flags_cookie_t   cookie  /**< */,
@@ -11544,18 +7473,6 @@ xcb_xkb_list_components_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_list_components_cookie_t xcb_xkb_list_components
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               maxNames
- ** @returns xcb_xkb_list_components_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_list_components_cookie_t
 xcb_xkb_list_components (xcb_connection_t      *c  /**< */,
                          xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -11567,35 +7484,23 @@ xcb_xkb_list_components (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_LIST_COMPONENTS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_list_components_cookie_t xcb_ret;
     xcb_xkb_list_components_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.maxNames = maxNames;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_list_components_cookie_t xcb_xkb_list_components_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               maxNames
- ** @returns xcb_xkb_list_components_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_list_components_cookie_t
 xcb_xkb_list_components_unchecked (xcb_connection_t      *c  /**< */,
                                    xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -11607,49 +7512,29 @@ xcb_xkb_list_components_unchecked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_LIST_COMPONENTS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_list_components_cookie_t xcb_ret;
     xcb_xkb_list_components_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.maxNames = maxNames;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_keymaps_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_keymaps_length (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
     return R->nKeymaps;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_keymaps_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_keymaps_iterator (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
@@ -11660,32 +7545,12 @@ xcb_xkb_list_components_keymaps_iterator (const xcb_xkb_list_components_reply_t 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_keycodes_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_keycodes_length (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
     return R->nKeycodes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_keycodes_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_keycodes_iterator (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
@@ -11697,32 +7562,12 @@ xcb_xkb_list_components_keycodes_iterator (const xcb_xkb_list_components_reply_t
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_types_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_types_length (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
     return R->nTypes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_types_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_types_iterator (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
@@ -11734,32 +7579,12 @@ xcb_xkb_list_components_types_iterator (const xcb_xkb_list_components_reply_t *R
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_compat_maps_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_compat_maps_length (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
     return R->nCompatMaps;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_compat_maps_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_compat_maps_iterator (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
@@ -11771,32 +7596,12 @@ xcb_xkb_list_components_compat_maps_iterator (const xcb_xkb_list_components_repl
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_symbols_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_symbols_length (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
     return R->nSymbols;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_symbols_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_symbols_iterator (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
@@ -11808,32 +7613,12 @@ xcb_xkb_list_components_symbols_iterator (const xcb_xkb_list_components_reply_t 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_geometries_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_geometries_length (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
     return R->nGeometries;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_geometries_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_geometries_iterator (const xcb_xkb_list_components_reply_t *R  /**< */)
 {
@@ -11845,18 +7630,6 @@ xcb_xkb_list_components_geometries_iterator (const xcb_xkb_list_components_reply
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_list_components_reply_t * xcb_xkb_list_components_reply
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xkb_list_components_cookie_t   cookie
- ** @param xcb_generic_error_t              **e
- ** @returns xcb_xkb_list_components_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_list_components_reply_t *
 xcb_xkb_list_components_reply (xcb_connection_t                  *c  /**< */,
                                xcb_xkb_list_components_cookie_t   cookie  /**< */,
@@ -11865,16 +7638,6 @@ xcb_xkb_list_components_reply (xcb_connection_t                  *c  /**< */,
     return (xcb_xkb_list_components_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_types_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_types_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                              const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -11882,16 +7645,6 @@ xcb_xkb_get_kbd_by_name_replies_types_map_types_rtrn_length (const xcb_xkb_get_k
     return /* replies */ S->types.nTypes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_type_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_types_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_key_type_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_type_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_types_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -11903,16 +7656,6 @@ xcb_xkb_get_kbd_by_name_replies_types_map_types_rtrn_iterator (const xcb_xkb_get
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_syms_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_syms_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                             const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -11920,16 +7663,6 @@ xcb_xkb_get_kbd_by_name_replies_types_map_syms_rtrn_length (const xcb_xkb_get_kb
     return /* replies */ S->types.nKeySyms;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_sym_map_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_syms_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_key_sym_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_sym_map_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_syms_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                               const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -11941,32 +7674,12 @@ xcb_xkb_get_kbd_by_name_replies_types_map_syms_rtrn_iterator (const xcb_xkb_get_
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->types.map.acts_rtrn_count;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                   const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -11974,16 +7687,6 @@ xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count_length (const xcb_xkb_
     return /* replies */ S->types.nKeyActions;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -11995,32 +7698,12 @@ xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count_end (const xcb_xkb_get
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_t * xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_action_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_action_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->types.map.acts_rtrn_acts;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                  const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12028,16 +7711,6 @@ xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts_length (const xcb_xkb_g
     return /* replies */ S->types.totalActions;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_action_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_action_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                    const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12049,32 +7722,12 @@ xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts_iterator (const xcb_xkb
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_t * xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_set_behavior_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->types.map.behaviors_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                  const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12082,16 +7735,6 @@ xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn_length (const xcb_xkb_g
     return /* replies */ S->types.totalKeyBehaviors;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_set_behavior_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                    const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12103,32 +7746,12 @@ xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn_iterator (const xcb_xkb
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->types.map.vmods_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                              const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12136,16 +7759,6 @@ xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn_length (const xcb_xkb_get_k
     return xcb_popcount(/* replies */ S->types.virtualMods);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                           const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12157,32 +7770,12 @@ xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn_end (const xcb_xkb_get_kbd_
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_t * xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_set_explicit_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->types.map.explicit_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                 const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12190,16 +7783,6 @@ xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn_length (const xcb_xkb_ge
     return /* replies */ S->types.totalKeyExplicit;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_set_explicit_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                   const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12211,32 +7794,12 @@ xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn_iterator (const xcb_xkb_
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_t * xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->types.map.modmap_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                               const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12244,16 +7807,6 @@ xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn_length (const xcb_xkb_get_
     return /* replies */ S->types.totalModMapKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_key_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                 const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12265,32 +7818,12 @@ xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn_iterator (const xcb_xkb_ge
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_t * xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_v_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->types.map.vmodmap_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12298,16 +7831,6 @@ xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn_length (const xcb_xkb_get
     return /* replies */ S->types.totalVModMapKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_key_v_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                  const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12734,32 +8257,12 @@ xcb_xkb_get_kbd_by_name_replies_types_map_sizeof (const void  *_buffer  /**< */,
     return xcb_xkb_get_kbd_by_name_replies_types_map_unpack(_buffer, nTypes, nKeySyms, nKeyActions, totalActions, totalKeyBehaviors, virtualMods, totalKeyExplicit, totalModMapKeys, totalVModMapKeys, present, &_aux);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->key_names.valueList.typeNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                         const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12767,16 +8270,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names_length (const xc
     return /* replies */ S->key_names.nTypes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                      const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12788,140 +8281,60 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names_end (const xcb_x
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->key_names.valueList.nLevelsPerType;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                                const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
-    return /* replies */ S->key_names.nKTLevels;
+    return /* replies */ S->key_names.nTypes;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                             const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     xcb_generic_iterator_t i;
-    i.data = /* replies */ S->key_names.valueList.nLevelsPerType + /* replies */ S->key_names.nKTLevels;
+    i.data = /* replies */ S->key_names.valueList.nLevelsPerType + /* replies */ S->key_names.nTypes;
     i.rem = 0;
     i.index = (char *) i.data - (char *) S;
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->key_names.valueList.ktLevelNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                             const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
-    return xcb_sumof(/* replies */ S->key_names.valueList.nLevelsPerType, /* replies */ S->key_names.nKTLevels);
+    return xcb_sumof(/* replies */ S->key_names.valueList.nLevelsPerType, /* replies */ S->key_names.nTypes);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     xcb_generic_iterator_t i;
-    i.data = /* replies */ S->key_names.valueList.ktLevelNames + xcb_sumof(/* replies */ S->key_names.valueList.nLevelsPerType, /* replies */ S->key_names.nKTLevels);
+    i.data = /* replies */ S->key_names.valueList.ktLevelNames + xcb_sumof(/* replies */ S->key_names.valueList.nLevelsPerType, /* replies */ S->key_names.nTypes);
     i.rem = 0;
     i.index = (char *) i.data - (char *) S;
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->key_names.valueList.indicatorNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                              const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12929,16 +8342,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names_length (con
     return xcb_popcount(/* replies */ S->key_names.indicators);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                           const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12950,32 +8353,12 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names_end (const 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->key_names.valueList.virtualModNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                                const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -12983,16 +8366,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names_length (c
     return xcb_popcount(/* replies */ S->key_names.virtualMods);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                             const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13004,32 +8377,12 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names_end (cons
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->key_names.valueList.groups;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                     const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13037,16 +8390,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups_length (const xcb_xk
     return xcb_popcount(/* replies */ S->key_names.groupNames);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                  const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13058,32 +8401,12 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups_end (const xcb_xkb_g
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_name_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->key_names.valueList.keyNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                        const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13091,16 +8414,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names_length (const xcb
     return /* replies */ S->key_names.nKeys;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_xkb_key_name_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13112,32 +8425,12 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names_iterator (const x
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_alias_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->key_names.valueList.keyAliases;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13145,16 +8438,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases_length (const x
     return /* replies */ S->key_names.nKeyAliases;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_xkb_key_alias_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                            const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13166,32 +8449,12 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases_iterator (const
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->key_names.valueList.radioGroupNames;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                                const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13199,16 +8462,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_length (c
     return /* replies */ S->key_names.nRadioGroups;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                             const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13223,7 +8476,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_end (cons
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_serialize (void                                                         **_buffer  /**< */,
                                                                 uint8_t                                                        nTypes  /**< */,
-                                                                uint16_t                                                       nKTLevels  /**< */,
                                                                 uint32_t                                                       indicators  /**< */,
                                                                 uint16_t                                                       virtualMods  /**< */,
                                                                 uint8_t                                                        groupNames  /**< */,
@@ -13324,8 +8576,8 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_serialize (void            
         xcb_block_len = 0;
         /* nLevelsPerType */
         xcb_parts[xcb_parts_idx].iov_base = (char *) _aux->nLevelsPerType;
-        xcb_block_len += nKTLevels * sizeof(uint8_t);
-        xcb_parts[xcb_parts_idx].iov_len = nKTLevels * sizeof(uint8_t);
+        xcb_block_len += nTypes * sizeof(uint8_t);
+        xcb_parts[xcb_parts_idx].iov_len = nTypes * sizeof(uint8_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint8_t);
         /* insert padding */
@@ -13340,8 +8592,8 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_serialize (void            
         xcb_block_len = 0;
         /* ktLevelNames */
         xcb_parts[xcb_parts_idx].iov_base = (char *) _aux->ktLevelNames;
-        xcb_block_len += xcb_sumof(_aux->nLevelsPerType, nKTLevels) * sizeof(xcb_atom_t);
-        xcb_parts[xcb_parts_idx].iov_len = xcb_sumof(_aux->nLevelsPerType, nKTLevels) * sizeof(xcb_atom_t);
+        xcb_block_len += xcb_sumof(_aux->nLevelsPerType, nTypes) * sizeof(xcb_atom_t);
+        xcb_parts[xcb_parts_idx].iov_len = xcb_sumof(_aux->nLevelsPerType, nTypes) * sizeof(xcb_atom_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(xcb_atom_t);
     }
@@ -13484,7 +8736,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_serialize (void            
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_unpack (const void                                              *_buffer  /**< */,
                                                              uint8_t                                                  nTypes  /**< */,
-                                                             uint16_t                                                 nKTLevels  /**< */,
                                                              uint32_t                                                 indicators  /**< */,
                                                              uint16_t                                                 virtualMods  /**< */,
                                                              uint8_t                                                  groupNames  /**< */,
@@ -13569,7 +8820,7 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_unpack (const void         
         xcb_block_len = 0;
         /* nLevelsPerType */
         _aux->nLevelsPerType = (uint8_t *)xcb_tmp;
-        xcb_block_len += nKTLevels * sizeof(uint8_t);
+        xcb_block_len += nTypes * sizeof(uint8_t);
         xcb_tmp += xcb_block_len;
         xcb_align_to = ALIGNOF(uint8_t);
         /* insert padding */
@@ -13582,7 +8833,7 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_unpack (const void         
         xcb_block_len = 0;
         /* ktLevelNames */
         _aux->ktLevelNames = (xcb_atom_t *)xcb_tmp;
-        xcb_block_len += xcb_sumof(_aux->nLevelsPerType, nKTLevels) * sizeof(xcb_atom_t);
+        xcb_block_len += xcb_sumof(_aux->nLevelsPerType, nTypes) * sizeof(xcb_atom_t);
         xcb_tmp += xcb_block_len;
         xcb_align_to = ALIGNOF(xcb_atom_t);
     }
@@ -13691,7 +8942,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_unpack (const void         
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_sizeof (const void  *_buffer  /**< */,
                                                              uint8_t      nTypes  /**< */,
-                                                             uint16_t     nKTLevels  /**< */,
                                                              uint32_t     indicators  /**< */,
                                                              uint16_t     virtualMods  /**< */,
                                                              uint8_t      groupNames  /**< */,
@@ -13701,51 +8951,21 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_sizeof (const void  *_buffe
                                                              uint32_t     which  /**< */)
 {
     xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t _aux;
-    return xcb_xkb_get_kbd_by_name_replies_key_names_value_list_unpack(_buffer, nTypes, nKTLevels, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which, &_aux);
+    return xcb_xkb_get_kbd_by_name_replies_key_names_value_list_unpack(_buffer, nTypes, indicators, virtualMods, groupNames, nKeys, nKeyAliases, nRadioGroups, which, &_aux);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_replies_types_map_t * xcb_xkb_get_kbd_by_name_replies_types_map
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_get_kbd_by_name_replies_types_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_kbd_by_name_replies_types_map_t *
 xcb_xkb_get_kbd_by_name_replies_types_map (const xcb_xkb_get_kbd_by_name_replies_t *R  /**< */)
 {
     return (xcb_xkb_get_kbd_by_name_replies_types_map_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_sym_interpret_t * xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_sym_interpret_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_sym_interpret_t *
 xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->compat_map.si_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                            const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13753,16 +8973,6 @@ xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_length (const xcb_xkb_get_kbd
     return /* replies */ S->compat_map.nSIRtrn;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_sym_interpret_iterator_t xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_sym_interpret_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_sym_interpret_iterator_t
 xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                              const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13774,32 +8984,12 @@ xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_iterator (const xcb_xkb_get_k
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_t * xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_mod_def_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_t *
 xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->compat_map.group_rtrn;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                               const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13807,16 +8997,6 @@ xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn_length (const xcb_xkb_get_
     return xcb_popcount(/* replies */ S->compat_map.groupsRtrn);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_iterator_t xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_mod_def_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_iterator_t
 xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                 const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13828,32 +9008,12 @@ xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn_iterator (const xcb_xkb_ge
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_t * xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_indicator_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_t *
 xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
 {
     return /* replies */ S->indicator_maps.maps;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                             const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13861,16 +9021,6 @@ xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps_length (const xcb_xkb_get_kb
     return /* replies */ S->indicator_maps.nIndicators;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_iterator_t xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_indicator_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_iterator_t
 xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                               const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */)
@@ -13882,32 +9032,12 @@ xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps_iterator (const xcb_xkb_get_
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list (const xcb_xkb_get_kbd_by_name_replies_t *R  /**< */)
 {
     return (xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_counted_string_16_t * xcb_xkb_get_kbd_by_name_replies_geometry_label_font
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_counted_string_16_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_counted_string_16_t *
 xcb_xkb_get_kbd_by_name_replies_geometry_label_font (const xcb_xkb_get_kbd_by_name_replies_t *R  /**< */)
 {
@@ -13958,7 +9088,7 @@ xcb_xkb_get_kbd_by_name_replies_serialize (void                                 
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint32_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint32_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.types.pad0 */
+        /* xcb_xkb_get_kbd_by_name_replies_t.types.pad1 */
         xcb_parts[xcb_parts_idx].iov_base = xcb_pad0;
         xcb_block_len += sizeof(uint8_t)*2;
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t)*2;
@@ -14108,7 +9238,7 @@ xcb_xkb_get_kbd_by_name_replies_serialize (void                                 
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint8_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.types.pad1 */
+        /* xcb_xkb_get_kbd_by_name_replies_t.types.pad2 */
         xcb_parts[xcb_parts_idx].iov_base = (char *) &xcb_pad;
         xcb_block_len += sizeof(uint8_t);
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t);
@@ -14168,7 +9298,7 @@ xcb_xkb_get_kbd_by_name_replies_serialize (void                                 
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint8_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.compat_map.pad0 */
+        /* xcb_xkb_get_kbd_by_name_replies_t.compat_map.pad3 */
         xcb_parts[xcb_parts_idx].iov_base = (char *) &xcb_pad;
         xcb_block_len += sizeof(uint8_t);
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t);
@@ -14192,7 +9322,7 @@ xcb_xkb_get_kbd_by_name_replies_serialize (void                                 
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint16_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint16_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.compat_map.pad1 */
+        /* xcb_xkb_get_kbd_by_name_replies_t.compat_map.pad4 */
         xcb_parts[xcb_parts_idx].iov_base = xcb_pad0;
         xcb_block_len += sizeof(uint8_t)*16;
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t)*16;
@@ -14274,7 +9404,7 @@ xcb_xkb_get_kbd_by_name_replies_serialize (void                                 
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint8_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.indicator_maps.pad0 */
+        /* xcb_xkb_get_kbd_by_name_replies_t.indicator_maps.pad5 */
         xcb_parts[xcb_parts_idx].iov_base = xcb_pad0;
         xcb_block_len += sizeof(uint8_t)*15;
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t)*15;
@@ -14395,7 +9525,7 @@ xcb_xkb_get_kbd_by_name_replies_serialize (void                                 
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint16_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint16_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.key_names.pad0 */
+        /* xcb_xkb_get_kbd_by_name_replies_t.key_names.pad6 */
         xcb_parts[xcb_parts_idx].iov_base = xcb_pad0;
         xcb_block_len += sizeof(uint8_t)*4;
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t)*4;
@@ -14413,8 +9543,8 @@ xcb_xkb_get_kbd_by_name_replies_serialize (void                                 
         xcb_block_len = 0;
         /* valueList */
         xcb_parts[xcb_parts_idx].iov_base = (char *)0;
-        xcb_block_len += xcb_xkb_get_kbd_by_name_replies_key_names_value_list_serialize(&xcb_parts[xcb_parts_idx].iov_base, _aux->key_names.nTypes, _aux->key_names.nKTLevels, _aux->key_names.indicators, _aux->key_names.virtualMods, _aux->key_names.groupNames, _aux->key_names.nKeys, _aux->key_names.nKeyAliases, _aux->key_names.nRadioGroups, _aux->key_names.which, &_aux->key_names.valueList);
-        xcb_parts[xcb_parts_idx].iov_len = xcb_xkb_get_kbd_by_name_replies_key_names_value_list_serialize(&xcb_parts[xcb_parts_idx].iov_base, _aux->key_names.nTypes, _aux->key_names.nKTLevels, _aux->key_names.indicators, _aux->key_names.virtualMods, _aux->key_names.groupNames, _aux->key_names.nKeys, _aux->key_names.nKeyAliases, _aux->key_names.nRadioGroups, _aux->key_names.which, &_aux->key_names.valueList);
+        xcb_block_len += xcb_xkb_get_kbd_by_name_replies_key_names_value_list_serialize(&xcb_parts[xcb_parts_idx].iov_base, _aux->key_names.nTypes, _aux->key_names.indicators, _aux->key_names.virtualMods, _aux->key_names.groupNames, _aux->key_names.nKeys, _aux->key_names.nKeyAliases, _aux->key_names.nRadioGroups, _aux->key_names.which, &_aux->key_names.valueList);
+        xcb_parts[xcb_parts_idx].iov_len = xcb_xkb_get_kbd_by_name_replies_key_names_value_list_serialize(&xcb_parts[xcb_parts_idx].iov_base, _aux->key_names.nTypes, _aux->key_names.indicators, _aux->key_names.virtualMods, _aux->key_names.groupNames, _aux->key_names.nKeys, _aux->key_names.nKeyAliases, _aux->key_names.nRadioGroups, _aux->key_names.which, &_aux->key_names.valueList);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t);
     }
@@ -14455,7 +9585,7 @@ xcb_xkb_get_kbd_by_name_replies_serialize (void                                 
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t);
         xcb_parts_idx++;
         xcb_align_to = ALIGNOF(uint8_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.geometry.pad0 */
+        /* xcb_xkb_get_kbd_by_name_replies_t.geometry.pad7 */
         xcb_parts[xcb_parts_idx].iov_base = (char *) &xcb_pad;
         xcb_block_len += sizeof(uint8_t);
         xcb_parts[xcb_parts_idx].iov_len = sizeof(uint8_t);
@@ -14601,9 +9731,9 @@ xcb_xkb_get_kbd_by_name_replies_unpack (const void                         *_buf
         xcb_block_len += sizeof(uint32_t);
         xcb_tmp += sizeof(uint32_t);
         xcb_align_to = ALIGNOF(uint32_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.types.pad0 */
-        _aux->types.pad0[0] = *(uint8_t *)xcb_tmp;
-        _aux->types.pad0[1] = *(uint8_t *)xcb_tmp;
+        /* xcb_xkb_get_kbd_by_name_replies_t.types.pad1 */
+        _aux->types.pad1[0] = *(uint8_t *)xcb_tmp;
+        _aux->types.pad1[1] = *(uint8_t *)xcb_tmp;
         xcb_block_len += sizeof(uint8_t) * 2;
         xcb_tmp += sizeof(uint8_t) * 2;
         xcb_align_to = ALIGNOF(uint8_t);
@@ -14727,8 +9857,8 @@ xcb_xkb_get_kbd_by_name_replies_unpack (const void                         *_buf
         xcb_block_len += sizeof(uint8_t);
         xcb_tmp += sizeof(uint8_t);
         xcb_align_to = ALIGNOF(uint8_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.types.pad1 */
-        _aux->types.pad1 = *(uint8_t *)xcb_tmp;
+        /* xcb_xkb_get_kbd_by_name_replies_t.types.pad2 */
+        _aux->types.pad2 = *(uint8_t *)xcb_tmp;
         xcb_block_len += sizeof(uint8_t);
         xcb_tmp += sizeof(uint8_t);
         xcb_align_to = ALIGNOF(uint8_t);
@@ -14776,8 +9906,8 @@ xcb_xkb_get_kbd_by_name_replies_unpack (const void                         *_buf
         xcb_block_len += sizeof(uint8_t);
         xcb_tmp += sizeof(uint8_t);
         xcb_align_to = ALIGNOF(uint8_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.compat_map.pad0 */
-        _aux->compat_map.pad0 = *(uint8_t *)xcb_tmp;
+        /* xcb_xkb_get_kbd_by_name_replies_t.compat_map.pad3 */
+        _aux->compat_map.pad3 = *(uint8_t *)xcb_tmp;
         xcb_block_len += sizeof(uint8_t);
         xcb_tmp += sizeof(uint8_t);
         xcb_align_to = ALIGNOF(uint8_t);
@@ -14796,23 +9926,23 @@ xcb_xkb_get_kbd_by_name_replies_unpack (const void                         *_buf
         xcb_block_len += sizeof(uint16_t);
         xcb_tmp += sizeof(uint16_t);
         xcb_align_to = ALIGNOF(uint16_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.compat_map.pad1 */
-        _aux->compat_map.pad1[0] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[1] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[2] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[3] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[4] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[5] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[6] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[7] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[8] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[9] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[10] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[11] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[12] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[13] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[14] = *(uint8_t *)xcb_tmp;
-        _aux->compat_map.pad1[15] = *(uint8_t *)xcb_tmp;
+        /* xcb_xkb_get_kbd_by_name_replies_t.compat_map.pad4 */
+        _aux->compat_map.pad4[0] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[1] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[2] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[3] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[4] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[5] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[6] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[7] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[8] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[9] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[10] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[11] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[12] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[13] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[14] = *(uint8_t *)xcb_tmp;
+        _aux->compat_map.pad4[15] = *(uint8_t *)xcb_tmp;
         xcb_block_len += sizeof(uint8_t) * 16;
         xcb_tmp += sizeof(uint8_t) * 16;
         xcb_align_to = ALIGNOF(uint8_t);
@@ -14879,22 +10009,22 @@ xcb_xkb_get_kbd_by_name_replies_unpack (const void                         *_buf
         xcb_block_len += sizeof(uint8_t);
         xcb_tmp += sizeof(uint8_t);
         xcb_align_to = ALIGNOF(uint8_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.indicator_maps.pad0 */
-        _aux->indicator_maps.pad0[0] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[1] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[2] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[3] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[4] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[5] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[6] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[7] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[8] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[9] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[10] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[11] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[12] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[13] = *(uint8_t *)xcb_tmp;
-        _aux->indicator_maps.pad0[14] = *(uint8_t *)xcb_tmp;
+        /* xcb_xkb_get_kbd_by_name_replies_t.indicator_maps.pad5 */
+        _aux->indicator_maps.pad5[0] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[1] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[2] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[3] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[4] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[5] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[6] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[7] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[8] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[9] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[10] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[11] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[12] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[13] = *(uint8_t *)xcb_tmp;
+        _aux->indicator_maps.pad5[14] = *(uint8_t *)xcb_tmp;
         xcb_block_len += sizeof(uint8_t) * 15;
         xcb_tmp += sizeof(uint8_t) * 15;
         xcb_align_to = ALIGNOF(uint8_t);
@@ -14994,11 +10124,11 @@ xcb_xkb_get_kbd_by_name_replies_unpack (const void                         *_buf
         xcb_block_len += sizeof(uint16_t);
         xcb_tmp += sizeof(uint16_t);
         xcb_align_to = ALIGNOF(uint16_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.key_names.pad0 */
-        _aux->key_names.pad0[0] = *(uint8_t *)xcb_tmp;
-        _aux->key_names.pad0[1] = *(uint8_t *)xcb_tmp;
-        _aux->key_names.pad0[2] = *(uint8_t *)xcb_tmp;
-        _aux->key_names.pad0[3] = *(uint8_t *)xcb_tmp;
+        /* xcb_xkb_get_kbd_by_name_replies_t.key_names.pad6 */
+        _aux->key_names.pad6[0] = *(uint8_t *)xcb_tmp;
+        _aux->key_names.pad6[1] = *(uint8_t *)xcb_tmp;
+        _aux->key_names.pad6[2] = *(uint8_t *)xcb_tmp;
+        _aux->key_names.pad6[3] = *(uint8_t *)xcb_tmp;
         xcb_block_len += sizeof(uint8_t) * 4;
         xcb_tmp += sizeof(uint8_t) * 4;
         xcb_align_to = ALIGNOF(uint8_t);
@@ -15011,7 +10141,7 @@ xcb_xkb_get_kbd_by_name_replies_unpack (const void                         *_buf
         }
         xcb_block_len = 0;
         /* valueList */
-        xcb_block_len += xcb_xkb_get_kbd_by_name_replies_key_names_value_list_unpack(xcb_tmp, _aux->key_names.nTypes, _aux->key_names.nKTLevels, _aux->key_names.indicators, _aux->key_names.virtualMods, _aux->key_names.groupNames, _aux->key_names.nKeys, _aux->key_names.nKeyAliases, _aux->key_names.nRadioGroups, _aux->key_names.which, &_aux->key_names.valueList);
+        xcb_block_len += xcb_xkb_get_kbd_by_name_replies_key_names_value_list_unpack(xcb_tmp, _aux->key_names.nTypes, _aux->key_names.indicators, _aux->key_names.virtualMods, _aux->key_names.groupNames, _aux->key_names.nKeys, _aux->key_names.nKeyAliases, _aux->key_names.nRadioGroups, _aux->key_names.which, &_aux->key_names.valueList);
         xcb_tmp += xcb_block_len;
         xcb_align_to = ALIGNOF(xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t);
     }
@@ -15046,8 +10176,8 @@ xcb_xkb_get_kbd_by_name_replies_unpack (const void                         *_buf
         xcb_block_len += sizeof(uint8_t);
         xcb_tmp += sizeof(uint8_t);
         xcb_align_to = ALIGNOF(uint8_t);
-        /* xcb_xkb_get_kbd_by_name_replies_t.geometry.pad0 */
-        _aux->geometry.pad0 = *(uint8_t *)xcb_tmp;
+        /* xcb_xkb_get_kbd_by_name_replies_t.geometry.pad7 */
+        _aux->geometry.pad7 = *(uint8_t *)xcb_tmp;
         xcb_block_len += sizeof(uint8_t);
         xcb_tmp += sizeof(uint8_t);
         xcb_align_to = ALIGNOF(uint8_t);
@@ -15135,20 +10265,6 @@ xcb_xkb_get_kbd_by_name_replies_sizeof (const void  *_buffer  /**< */,
     return xcb_xkb_get_kbd_by_name_replies_unpack(_buffer, reported, &_aux);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_cookie_t xcb_xkb_get_kbd_by_name
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               need
- ** @param uint16_t               want
- ** @param uint8_t                load
- ** @returns xcb_xkb_get_kbd_by_name_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_kbd_by_name_cookie_t
 xcb_xkb_get_kbd_by_name (xcb_connection_t      *c  /**< */,
                          xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -15162,40 +10278,26 @@ xcb_xkb_get_kbd_by_name (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_KBD_BY_NAME,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_kbd_by_name_cookie_t xcb_ret;
     xcb_xkb_get_kbd_by_name_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.need = need;
     xcb_out.want = want;
     xcb_out.load = load;
     xcb_out.pad0 = 0;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_cookie_t xcb_xkb_get_kbd_by_name_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               need
- ** @param uint16_t               want
- ** @param uint8_t                load
- ** @returns xcb_xkb_get_kbd_by_name_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_kbd_by_name_cookie_t
 xcb_xkb_get_kbd_by_name_unchecked (xcb_connection_t      *c  /**< */,
                                    xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -15209,54 +10311,32 @@ xcb_xkb_get_kbd_by_name_unchecked (xcb_connection_t      *c  /**< */,
         /* opcode */ XCB_XKB_GET_KBD_BY_NAME,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_kbd_by_name_cookie_t xcb_ret;
     xcb_xkb_get_kbd_by_name_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.need = need;
     xcb_out.want = want;
     xcb_out.load = load;
     xcb_out.pad0 = 0;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_replies_t * xcb_xkb_get_kbd_by_name_replies
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_reply_t *R
- ** @returns xcb_xkb_get_kbd_by_name_replies_t *
- **
- *****************************************************************************/
- 
 void *
 xcb_xkb_get_kbd_by_name_replies (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */)
 {
     return (void *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_reply_t * xcb_xkb_get_kbd_by_name_reply
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xkb_get_kbd_by_name_cookie_t   cookie
- ** @param xcb_generic_error_t              **e
- ** @returns xcb_xkb_get_kbd_by_name_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_kbd_by_name_reply_t *
 xcb_xkb_get_kbd_by_name_reply (xcb_connection_t                  *c  /**< */,
                                xcb_xkb_get_kbd_by_name_cookie_t   cookie  /**< */,
@@ -15325,23 +10405,6 @@ xcb_xkb_get_device_info_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_device_info_cookie_t xcb_xkb_get_device_info
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param uint16_t                  wanted
- ** @param uint8_t                   allButtons
- ** @param uint8_t                   firstButton
- ** @param uint8_t                   nButtons
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @returns xcb_xkb_get_device_info_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_device_info_cookie_t
 xcb_xkb_get_device_info (xcb_connection_t         *c  /**< */,
                          xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -15358,11 +10421,11 @@ xcb_xkb_get_device_info (xcb_connection_t         *c  /**< */,
         /* opcode */ XCB_XKB_GET_DEVICE_INFO,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_device_info_cookie_t xcb_ret;
     xcb_xkb_get_device_info_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.wanted = wanted;
     xcb_out.allButtons = allButtons;
@@ -15371,33 +10434,16 @@ xcb_xkb_get_device_info (xcb_connection_t         *c  /**< */,
     xcb_out.pad0 = 0;
     xcb_out.ledClass = ledClass;
     xcb_out.ledID = ledID;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_device_info_cookie_t xcb_xkb_get_device_info_unchecked
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param uint16_t                  wanted
- ** @param uint8_t                   allButtons
- ** @param uint8_t                   firstButton
- ** @param uint8_t                   nButtons
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @returns xcb_xkb_get_device_info_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_device_info_cookie_t
 xcb_xkb_get_device_info_unchecked (xcb_connection_t         *c  /**< */,
                                    xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -15414,11 +10460,11 @@ xcb_xkb_get_device_info_unchecked (xcb_connection_t         *c  /**< */,
         /* opcode */ XCB_XKB_GET_DEVICE_INFO,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[4];
     xcb_xkb_get_device_info_cookie_t xcb_ret;
     xcb_xkb_get_device_info_request_t xcb_out;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.wanted = wanted;
     xcb_out.allButtons = allButtons;
@@ -15427,58 +10473,28 @@ xcb_xkb_get_device_info_unchecked (xcb_connection_t         *c  /**< */,
     xcb_out.pad0 = 0;
     xcb_out.ledClass = ledClass;
     xcb_out.ledID = ledID;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_string8_t * xcb_xkb_get_device_info_name
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns xcb_xkb_string8_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_string8_t *
 xcb_xkb_get_device_info_name (const xcb_xkb_get_device_info_reply_t *R  /**< */)
 {
     return (xcb_xkb_string8_t *) (R + 1);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_device_info_name_length
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_device_info_name_length (const xcb_xkb_get_device_info_reply_t *R  /**< */)
 {
     return R->nameLen;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_device_info_name_end
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_device_info_name_end (const xcb_xkb_get_device_info_reply_t *R  /**< */)
 {
@@ -15489,16 +10505,6 @@ xcb_xkb_get_device_info_name_end (const xcb_xkb_get_device_info_reply_t *R  /**<
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_t * xcb_xkb_get_device_info_btn_actions
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns xcb_xkb_action_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_action_t *
 xcb_xkb_get_device_info_btn_actions (const xcb_xkb_get_device_info_reply_t *R  /**< */)
 {
@@ -15506,32 +10512,12 @@ xcb_xkb_get_device_info_btn_actions (const xcb_xkb_get_device_info_reply_t *R  /
     return (xcb_xkb_action_t *) ((char *) prev.data + XCB_TYPE_PAD(xcb_xkb_action_t, prev.index) + 0);
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_device_info_btn_actions_length
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_device_info_btn_actions_length (const xcb_xkb_get_device_info_reply_t *R  /**< */)
 {
     return R->nBtnsRtrn;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_iterator_t xcb_xkb_get_device_info_btn_actions_iterator
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns xcb_xkb_action_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_action_iterator_t
 xcb_xkb_get_device_info_btn_actions_iterator (const xcb_xkb_get_device_info_reply_t *R  /**< */)
 {
@@ -15543,32 +10529,12 @@ xcb_xkb_get_device_info_btn_actions_iterator (const xcb_xkb_get_device_info_repl
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_device_info_leds_length
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_device_info_leds_length (const xcb_xkb_get_device_info_reply_t *R  /**< */)
 {
     return R->nDeviceLedFBs;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_device_led_info_iterator_t xcb_xkb_get_device_info_leds_iterator
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns xcb_xkb_device_led_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_device_led_info_iterator_t
 xcb_xkb_get_device_info_leds_iterator (const xcb_xkb_get_device_info_reply_t *R  /**< */)
 {
@@ -15580,18 +10546,6 @@ xcb_xkb_get_device_info_leds_iterator (const xcb_xkb_get_device_info_reply_t *R 
     return i;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_device_info_reply_t * xcb_xkb_get_device_info_reply
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xkb_get_device_info_cookie_t   cookie
- ** @param xcb_generic_error_t              **e
- ** @returns xcb_xkb_get_device_info_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_device_info_reply_t *
 xcb_xkb_get_device_info_reply (xcb_connection_t                  *c  /**< */,
                                xcb_xkb_get_device_info_cookie_t   cookie  /**< */,
@@ -15648,23 +10602,6 @@ xcb_xkb_set_device_info_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_device_info_checked
- ** 
- ** @param xcb_connection_t                *c
- ** @param xcb_xkb_device_spec_t            deviceSpec
- ** @param uint8_t                          firstBtn
- ** @param uint8_t                          nBtns
- ** @param uint16_t                         change
- ** @param uint16_t                         nDeviceLedFBs
- ** @param const xcb_xkb_action_t          *btnActions
- ** @param const xcb_xkb_device_led_info_t *leds
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_device_info_checked (xcb_connection_t                *c  /**< */,
                                  xcb_xkb_device_spec_t            deviceSpec  /**< */,
@@ -15681,20 +10618,20 @@ xcb_xkb_set_device_info_checked (xcb_connection_t                *c  /**< */,
         /* opcode */ XCB_XKB_SET_DEVICE_INFO,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[8];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_device_info_request_t xcb_out;
     unsigned int i;
     unsigned int xcb_tmp_len;
     char *xcb_tmp;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.firstBtn = firstBtn;
     xcb_out.nBtns = nBtns;
     xcb_out.change = change;
     xcb_out.nDeviceLedFBs = nDeviceLedFBs;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -15715,28 +10652,11 @@ xcb_xkb_set_device_info_checked (xcb_connection_t                *c  /**< */,
     }
     xcb_parts[7].iov_base = 0;
     xcb_parts[7].iov_len = -xcb_parts[6].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_device_info
- ** 
- ** @param xcb_connection_t                *c
- ** @param xcb_xkb_device_spec_t            deviceSpec
- ** @param uint8_t                          firstBtn
- ** @param uint8_t                          nBtns
- ** @param uint16_t                         change
- ** @param uint16_t                         nDeviceLedFBs
- ** @param const xcb_xkb_action_t          *btnActions
- ** @param const xcb_xkb_device_led_info_t *leds
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_device_info (xcb_connection_t                *c  /**< */,
                          xcb_xkb_device_spec_t            deviceSpec  /**< */,
@@ -15753,20 +10673,20 @@ xcb_xkb_set_device_info (xcb_connection_t                *c  /**< */,
         /* opcode */ XCB_XKB_SET_DEVICE_INFO,
         /* isvoid */ 1
     };
-    
+
     struct iovec xcb_parts[8];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_device_info_request_t xcb_out;
     unsigned int i;
     unsigned int xcb_tmp_len;
     char *xcb_tmp;
-    
+
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.firstBtn = firstBtn;
     xcb_out.nBtns = nBtns;
     xcb_out.change = change;
     xcb_out.nDeviceLedFBs = nDeviceLedFBs;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -15787,7 +10707,7 @@ xcb_xkb_set_device_info (xcb_connection_t                *c  /**< */,
     }
     xcb_parts[7].iov_base = 0;
     xcb_parts[7].iov_len = -xcb_parts[6].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -15823,22 +10743,6 @@ xcb_xkb_set_debugging_flags_sizeof (const void  *_buffer  /**< */)
     return xcb_buffer_len;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_debugging_flags_cookie_t xcb_xkb_set_debugging_flags
- ** 
- ** @param xcb_connection_t        *c
- ** @param uint16_t                 msgLength
- ** @param uint32_t                 affectFlags
- ** @param uint32_t                 flags
- ** @param uint32_t                 affectCtrls
- ** @param uint32_t                 ctrls
- ** @param const xcb_xkb_string8_t *message
- ** @returns xcb_xkb_set_debugging_flags_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_debugging_flags_cookie_t
 xcb_xkb_set_debugging_flags (xcb_connection_t        *c  /**< */,
                              uint16_t                 msgLength  /**< */,
@@ -15854,18 +10758,18 @@ xcb_xkb_set_debugging_flags (xcb_connection_t        *c  /**< */,
         /* opcode */ XCB_XKB_SET_DEBUGGING_FLAGS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[6];
     xcb_xkb_set_debugging_flags_cookie_t xcb_ret;
     xcb_xkb_set_debugging_flags_request_t xcb_out;
-    
+
     xcb_out.msgLength = msgLength;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.affectFlags = affectFlags;
     xcb_out.flags = flags;
     xcb_out.affectCtrls = affectCtrls;
     xcb_out.ctrls = ctrls;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -15875,27 +10779,11 @@ xcb_xkb_set_debugging_flags (xcb_connection_t        *c  /**< */,
     xcb_parts[4].iov_len = msgLength * sizeof(xcb_xkb_string8_t);
     xcb_parts[5].iov_base = 0;
     xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_debugging_flags_cookie_t xcb_xkb_set_debugging_flags_unchecked
- ** 
- ** @param xcb_connection_t        *c
- ** @param uint16_t                 msgLength
- ** @param uint32_t                 affectFlags
- ** @param uint32_t                 flags
- ** @param uint32_t                 affectCtrls
- ** @param uint32_t                 ctrls
- ** @param const xcb_xkb_string8_t *message
- ** @returns xcb_xkb_set_debugging_flags_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_debugging_flags_cookie_t
 xcb_xkb_set_debugging_flags_unchecked (xcb_connection_t        *c  /**< */,
                                        uint16_t                 msgLength  /**< */,
@@ -15911,18 +10799,18 @@ xcb_xkb_set_debugging_flags_unchecked (xcb_connection_t        *c  /**< */,
         /* opcode */ XCB_XKB_SET_DEBUGGING_FLAGS,
         /* isvoid */ 0
     };
-    
+
     struct iovec xcb_parts[6];
     xcb_xkb_set_debugging_flags_cookie_t xcb_ret;
     xcb_xkb_set_debugging_flags_request_t xcb_out;
-    
+
     xcb_out.msgLength = msgLength;
     memset(xcb_out.pad0, 0, 2);
     xcb_out.affectFlags = affectFlags;
     xcb_out.flags = flags;
     xcb_out.affectCtrls = affectCtrls;
     xcb_out.ctrls = ctrls;
-    
+
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
@@ -15932,23 +10820,11 @@ xcb_xkb_set_debugging_flags_unchecked (xcb_connection_t        *c  /**< */,
     xcb_parts[4].iov_len = msgLength * sizeof(xcb_xkb_string8_t);
     xcb_parts[5].iov_base = 0;
     xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    
+
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_debugging_flags_reply_t * xcb_xkb_set_debugging_flags_reply
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xkb_set_debugging_flags_cookie_t   cookie
- ** @param xcb_generic_error_t                  **e
- ** @returns xcb_xkb_set_debugging_flags_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_debugging_flags_reply_t *
 xcb_xkb_set_debugging_flags_reply (xcb_connection_t                      *c  /**< */,
                                    xcb_xkb_set_debugging_flags_cookie_t   cookie  /**< */,
