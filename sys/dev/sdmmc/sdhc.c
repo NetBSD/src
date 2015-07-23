@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.60 2015/07/22 09:54:42 skrll Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.61 2015/07/23 23:52:54 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.60 2015/07/22 09:54:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.61 2015/07/23 23:52:54 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -55,7 +55,7 @@ void	sdhc_dump_regs(struct sdhc_host *);
 #define SDHC_COMMAND_TIMEOUT	hz
 #define SDHC_BUFFER_TIMEOUT	hz
 #define SDHC_TRANSFER_TIMEOUT	hz
-#define SDHC_DMA_TIMEOUT	hz
+#define SDHC_DMA_TIMEOUT	(hz*3)
 
 struct sdhc_host {
 	struct sdhc_softc *sc;		/* host controller device */
@@ -1119,6 +1119,17 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		mutex_exit(&hp->intr_mtx);
 	}
 
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_TIMEOUT)) {
+		const uint16_t eintr = SDHC_CMD_TIMEOUT_ERROR;
+		if (cmd->c_data != NULL) {
+			HCLR2(hp, SDHC_EINTR_SIGNAL_EN, eintr);
+			HCLR2(hp, SDHC_EINTR_STATUS_EN, eintr);
+		} else {
+			HSET2(hp, SDHC_EINTR_SIGNAL_EN, eintr);
+			HSET2(hp, SDHC_EINTR_STATUS_EN, eintr);
+		}
+	}
+
 	/*
 	 * Start the MMC command, or mark `cmd' as failed and return.
 	 */
@@ -1332,7 +1343,7 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		if (hp->sc->sc_vendor_transfer_data_dma != NULL) {
 			error = hp->sc->sc_vendor_transfer_data_dma(sc, cmd);
 			if (error == 0 && !sdhc_wait_intr(hp,
-			    SDHC_TRANSFER_COMPLETE, SDHC_TRANSFER_TIMEOUT)) {
+			    SDHC_TRANSFER_COMPLETE, SDHC_DMA_TIMEOUT)) {
 				error = ETIMEDOUT;
 			}
 		} else {

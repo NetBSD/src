@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.18 2015/05/03 11:46:25 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.19 2015/07/23 23:52:54 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_EXTDMA_DMAEN	0x00008000 /* ext. dma need SDHC_DMA_ENABLE */
 #define	SDHC_FLAG_NO_CLKBASE	0x00020000 /* ignore clkbase register */
 #define	SDHC_FLAG_SINGLE_POWER_WRITE 0x00040000
+#define	SDHC_FLAG_NO_TIMEOUT	0x00080000 /* ignore timeout interrupts */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
