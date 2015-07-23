@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.345 2015/07/22 16:56:03 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.346 2015/07/23 17:46:39 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33426,4 +33426,11 @@ sys/arch/i386/conf/XEN3_DOMU			1.68
 
 	Uncoment options IPSEC in Xen kernels.
 	[bouyer, ticket #884]
+
+xsrc/external/mit/libX11/dist/src/xkb/XKBMAlloc.c patch
+
+	Bring in the upstream fix that was attempted locally in
+	revision 1.2: Ensure we allocate at least
+	XkbNumRequiredTypes in map.
+	[mrg, ticket #885]
 
