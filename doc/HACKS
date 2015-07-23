@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.160 2015/06/26 10:25:41 pooka Exp $
+# $NetBSD: HACKS,v 1.161 2015/07/23 08:03:25 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -967,7 +967,6 @@ port	x68k
 	who	christos
 	file	src/external/gpl3/gcc/usr.bin/bakend/Makefile: 1.17
 		xsrc/external/mit/xorg/lib/libGLU/Makefile: 1.11
-		src/x11/lib/GLU/Makefile: 1.9
 	descr
 		workaround for:
 		internal compiler error: in cselib_record_set, at cselib.c:1999
