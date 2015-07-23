@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.343 2015/07/23 08:24:07 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.344 2015/07/23 08:29:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.343 2015/07/23 08:24:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.344 2015/07/23 08:29:58 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2120,11 +2120,9 @@ alloc_retry:
 		sc->sc_flags |= WM_F_PLL_WA_I210;
 	if ((sc->sc_type == WM_T_I210) && wm_nvm_get_flash_presence_i210(sc)) {
 		/* NVM image release 3.25 has a workaround */
-		if ((sc->sc_nvm_ver_major > 3)
+		if ((sc->sc_nvm_ver_major < 3)
 		    || ((sc->sc_nvm_ver_major == 3)
-			&& (sc->sc_nvm_ver_minor >= 25)))
-			return;
-		else {
+			&& (sc->sc_nvm_ver_minor < 25))) {
 			aprint_verbose_dev(sc->sc_dev,
 			    "ROM image version %d.%d is older than 3.25\n",
 			    sc->sc_nvm_ver_major, sc->sc_nvm_ver_minor);
