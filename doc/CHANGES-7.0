@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.346 2015/07/23 17:46:39 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.347 2015/07/23 18:45:15 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33433,4 +33433,10 @@ xsrc/external/mit/libX11/dist/src/xkb/XKBMAlloc.c patch
 	revision 1.2: Ensure we allocate at least
 	XkbNumRequiredTypes in map.
 	[mrg, ticket #885]
+
+distrib/notes/common/main			patched by hand
+sys/sys/param.h					patched by hand
+
+	Welcome to 7.0_RC2!
+	[snj]
 
