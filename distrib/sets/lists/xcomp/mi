@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.172 2015/07/20 04:10:41 mrg Exp $
+#	 $NetBSD: mi,v 1.173 2015/07/23 05:46:39 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5494,6 +5494,7 @@
 ./usr/X11R7/include/X11/extensions/Xfixes.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/Xge.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/Xinerama.h		-unknown-	xorg
+./usr/X11R7/include/X11/extensions/Xpresent.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/Xrandr.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/Xrender.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/Xv.h			-unknown-	xorg
@@ -6224,6 +6225,8 @@
 ./usr/X11R7/lib/libXmuu_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXp.a					-obsolete-	obsolete,compatx11file
 ./usr/X11R7/lib/libXp_p.a				-obsolete-	obsolete,compatx11file
+./usr/X11R7/lib/libXpresent.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libXpresent_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXpm.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXpm_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXprintAppUtil.a			-obsolete-	obsolete,compatx11file
@@ -6463,6 +6466,7 @@
 ./usr/X11R7/lib/pkgconfig/xorg-mouse.pc			-unknown-	xorg,xorg_server
 ./usr/X11R7/lib/pkgconfig/xorg-server.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xp.pc				-obsolete-	obsolete
+./usr/X11R7/lib/pkgconfig/xpresent.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xpm.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xprintapputil.pc		-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/xprintutil.pc			-obsolete-	obsolete
@@ -7095,6 +7099,7 @@
 ./usr/X11R7/man/cat3/XpStartDoc.0			-obsolete-	obsolete
 ./usr/X11R7/man/cat3/XpStartJob.0			-obsolete-	obsolete
 ./usr/X11R7/man/cat3/XpStartPage.0			-obsolete-	obsolete
+./usr/X11R7/man/cat3/Xpresent.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xrandr.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XrmEnumerateDatabase.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XrmGetFileDatabase.0		-unknown-	.cat,xorg
@@ -8005,6 +8010,7 @@
 ./usr/X11R7/man/html3/XpStartDoc.html			-obsolete-	obsolete
 ./usr/X11R7/man/html3/XpStartJob.html			-obsolete-	obsolete
 ./usr/X11R7/man/html3/XpStartPage.html			-obsolete-	obsolete
+./usr/X11R7/man/html3/Xpresent.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xrandr.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XrmEnumerateDatabase.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XrmGetFileDatabase.html		-unknown-	html,xorg
@@ -8914,6 +8920,7 @@
 ./usr/X11R7/man/man3/XpStartDoc.3			-obsolete-	obsolete
 ./usr/X11R7/man/man3/XpStartJob.3			-obsolete-	obsolete
 ./usr/X11R7/man/man3/XpStartPage.3			-obsolete-	obsolete
+./usr/X11R7/man/man3/Xpresent.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xrandr.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XrmEnumerateDatabase.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XrmGetFileDatabase.3		-unknown-	.man,xorg
@@ -9291,6 +9298,7 @@
 ./usr/libdata/lint/llib-lXmuu.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXp.ln				-obsolete-	obsolete,xorg
 ./usr/libdata/lint/llib-lXp.ln				-unknown-	lint,x11
+./usr/libdata/lint/llib-lXpresent.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXpm.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lXpm.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXprintAppUtil.ln		-obsolete-	obsolete

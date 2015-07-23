@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.17 2015/06/27 17:07:59 matt Exp $
+# $NetBSD: mi,v 1.18 2015/07/23 05:46:39 mrg Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R6/lib/libFS_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libGLU_g.a				-unknown-	debuglib,x11
@@ -81,6 +81,7 @@
 ./usr/X11R7/lib/libXmuu_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libXp_g.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libXpm_g.a				-unknown-	debuglib,xorg,compatx11file
+./usr/X11R7/lib/libXpresent_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libXprintAppUtil_g.a			-obsolete-	obsolete
 ./usr/X11R7/lib/libXprintUtil_g.a			-obsolete-	obsolete
 ./usr/X11R7/lib/libXrandr_g.a				-unknown-	debuglib,xorg,compatx11file
