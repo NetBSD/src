@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_carreg.h,v 1.18 2015/05/30 13:25:55 jmcneill Exp $ */
+/* $NetBSD: tegra_carreg.h,v 1.19 2015/07/23 15:07:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -87,6 +87,20 @@
 #define CAR_PLLU_BASE_VCO_FREQ		__BIT(20)
 #define CAR_PLLU_BASE_DIVN		__BITS(17,8)
 #define CAR_PLLU_BASE_DIVM		__BITS(4,0)
+
+#define CAR_PLLD_BASE_REG	0xd0
+#define CAR_PLLD_BASE_BYPASS		__BIT(31)
+#define CAR_PLLD_BASE_ENABLE		__BIT(30)
+#define CAR_PLLD_BASE_REF_DIS		__BIT(29)
+#define CAR_PLLD_BASE_LOCK		__BIT(27)
+#define CAR_PLLD_BASE_CLKENABLE_CSI	__BIT(26)
+#define CAR_PLLD_BASE_DSIA_CLK_SRC	__BIT(25)
+#define CAR_PLLD_BASE_CSI_CLK_SRC	__BIT(23)
+#define CAR_PLLD_BASE_DIVP		__BITS(22,20)
+#define CAR_PLLD_BASE_DIVN		__BITS(18,8)
+#define CAR_PLLD_BASE_DIVM		__BITS(4,0)
+
+#define CAR_PLLD_MISC_REG	0xdc
 
 #define CAR_PLLX_BASE_REG	0xe0
 #define CAR_PLLX_BASE_BYPASS		__BIT(31)
