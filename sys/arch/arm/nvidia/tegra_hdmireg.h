@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdmireg.h,v 1.2 2015/07/23 14:31:05 jmcneill Exp $ */
+/* $NetBSD: tegra_hdmireg.h,v 1.3 2015/07/23 15:08:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -216,7 +216,15 @@
 #define HDMI_NV_PDISP_SOR_CRCA_REG				0x170
 #define HDMI_NV_PDISP_SOR_CRCB_REG				0x174
 #define HDMI_NV_PDISP_SOR_BLANK_REG				0x178
+
 #define HDMI_NV_PDISP_SOR_SEQ_CTL_REG				0x17c
+#define HDMI_NV_PDISP_SOR_SEQ_CTL_SWITCH			__BIT(30)
+#define HDMI_NV_PDISP_SOR_SEQ_CTL_STATUS			__BIT(28)
+#define HDMI_NV_PDISP_SOR_SEQ_CTL_PC				__BITS(19,16)
+#define HDMI_NV_PDISP_SOR_SEQ_CTL_PD_PC_ALT			__BITS(15,12)
+#define HDMI_NV_PDISP_SOR_SEQ_CTL_PD_PC				__BITS(11,8)
+#define HDMI_NV_PDISP_SOR_SEQ_CTL_PU_PC_ALT			__BITS(7,4)
+#define HDMI_NV_PDISP_SOR_SEQ_CTL_PU_PC				__BITS(3,0)
 
 #define HDMI_NV_PDISP_SOR_SEQ_INST0_REG				0x180
 #define HDMI_NV_PDISP_SOR_SEQ_INST1_REG				0x184
