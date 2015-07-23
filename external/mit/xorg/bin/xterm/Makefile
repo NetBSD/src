@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/07/11 19:40:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2015/07/23 05:45:09 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -31,9 +31,10 @@ BUILDSYMLINKS=	XTerm-col.ad XTerm-color.ad
 
 LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender
 DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lcurses -lterminfo -lutil
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBCURSES} ${LIBTERMINFO} ${LIBUTIL}
+LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXinerama -lXpm -lXext -lX11 -lcurses -lterminfo -lutil
+DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXINERAMA}
+LDADD+=	-lXpm -lXext -lX11 -lcurses -lterminfo -lutil
+DPADD+=	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBCURSES} ${LIBTERMINFO} ${LIBUTIL}
 
 SUBDIR=	resize uxterm
 
