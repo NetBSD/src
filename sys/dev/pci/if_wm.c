@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.342 2015/07/22 11:14:13 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.343 2015/07/23 08:24:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.342 2015/07/22 11:14:13 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.343 2015/07/23 08:24:07 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2036,7 +2036,7 @@ alloc_retry:
 		} else {
 			sc->sc_nvm_wordsize = INVM_SIZE;
 			sc->sc_flags |= WM_F_EEPROM_INVM;
-			sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_LOCK_SWFW;
+			sc->sc_flags |= WM_F_LOCK_SWFW;
 		}
 		break;
 	default:
