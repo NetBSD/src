@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.861 2015/07/23 07:44:46 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.862 2015/07/23 08:03:26 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1030,26 +1030,10 @@ ${var}?=	${${var}.${MACHINE_ARCH}:Uno}
 .endfor
 
 #
-# Do we default to XFree86 or Xorg for this platform?
-#
-.if \
-    ${MACHINE} == "acorn32"	|| \
-    ${MACHINE} == "alpha"	|| \
-    ${MACHINE} == "amiga"	|| \
-    ${MACHINE} == "mac68k"	|| \
-    ${MACHINE} == "pmax"	|| \
-    ${MACHINE} == "sun3"
-X11FLAVOUR?=	XFree86
-.else
-X11FLAVOUR?=	Xorg
-.endif
-
-#
 # Which platforms build the xorg-server drivers (as opposed
 # to just Xnest and Xvfb.)
 #
-.if ${X11FLAVOUR} == "Xorg"	&& ( \
-    ${MACHINE} == "alpha"	|| \
+.if ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amd64"	|| \
     ${MACHINE} == "bebox"	|| \
     ${MACHINE} == "cats"	|| \
@@ -1073,7 +1057,7 @@ X11FLAVOUR?=	Xorg
     ${MACHINE} == "sparc"	|| \
     ${MACHINE} == "sparc64"	|| \
     ${MACHINE} == "vax"		|| \
-    ${MACHINE} == "zaurus"	)
+    ${MACHINE} == "zaurus"
 MKXORG_SERVER?=yes
 .else
 MKXORG_SERVER?=no
@@ -1241,13 +1225,8 @@ X11SRCDIR=		/usr/xsrc
 .endif
 .endif # !defined(X11SRCDIR)
 
-X11SRCDIR.xc?=		${X11SRCDIR}/xfree/xc
 X11SRCDIR.local?=	${X11SRCDIR}/local
-.if ${X11FLAVOUR} == "Xorg"
 X11ROOTDIR?=		/usr/X11R7
-.else
-X11ROOTDIR?=		/usr/X11R6
-.endif
 X11BINDIR?=		${X11ROOTDIR}/bin
 X11ETCDIR?=		/etc/X11
 X11FONTDIR?=		${X11ROOTDIR}/lib/X11/fonts
@@ -1330,11 +1309,7 @@ MKRADEONFIRMWARE?=		yes
 .endif
 MKRADEONFIRMWARE?=		no
 
-.if ${X11FLAVOUR} == "Xorg"
 X11DRI?=			yes
-.endif
-
-X11DRI?=			no
 X11LOADABLE?=			yes
 
 

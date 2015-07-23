@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/04/03 02:40:45 riastradh Exp $
+#	$NetBSD: Makefile,v 1.7 2015/07/23 08:03:25 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,6 @@ BINMODE=	4711
 SRCS=		xorg.c libxorg.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xorg-server}/fb \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/include \
