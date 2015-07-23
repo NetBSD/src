@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.42 2015/06/27 20:27:03 matt Exp $
+#	$NetBSD: shl.mi,v 1.43 2015/07/23 05:46:39 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -79,6 +79,7 @@
 ./usr/X11R7/lib/libXmuu_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libXp_pic.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libXpm_pic.a				-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libXpresent_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libXprintAppUtil_pic.a			-obsolete-	obsolete
 ./usr/X11R7/lib/libXprintUtil_pic.a			-obsolete-	obsolete
 ./usr/X11R7/lib/libXrandr_pic.a				-unknown-	xorg,picinstall,compatx11file
