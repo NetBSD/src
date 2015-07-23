@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.21 2015/05/30 13:25:55 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.22 2015/07/23 14:30:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.21 2015/05/30 13:25:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.22 2015/07/23 14:30:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,7 +115,7 @@ tegra_car_init(struct tegra_car_softc *sc)
 	tegra_reg_set_clear(bst, bsh, CAR_PLLD2_BASE_REG,
 	    __SHIFTIN(1, CAR_PLLD2_BASE_MDIV) |
 	    __SHIFTIN(99, CAR_PLLD2_BASE_NDIV) |
-	    __SHIFTIN(2, CAR_PLLD2_BASE_PLDIV),
+	    __SHIFTIN(1, CAR_PLLD2_BASE_PLDIV),
 	    CAR_PLLD2_BASE_REF_SRC_SEL |
 	    CAR_PLLD2_BASE_PLDIV | CAR_PLLD2_BASE_NDIV | CAR_PLLD2_BASE_MDIV);
 }
@@ -348,7 +348,7 @@ tegra_car_uart_rate(u_int port)
 	}
 
 	if (__SHIFTOUT(src, CAR_CLKSRC_UART_DIV_ENB)) {
-		const u_int div = __SHIFTOUT(src, CAR_CLKSRC_UART_DIV) + 1;
+		const u_int div = (__SHIFTOUT(src, CAR_CLKSRC_UART_DIV) / 2) + 1;
 		return src_rate / div;
 	} else {
 		return src_rate;
@@ -374,7 +374,7 @@ tegra_car_periph_sdmmc_rate(u_int port)
 
 	const uint32_t src = bus_space_read_4(bst, bsh, src_reg);
 
-	const u_int div = __SHIFTOUT(src, CAR_CLKSRC_SDMMC_DIV) + 1;
+	const u_int div = (__SHIFTOUT(src, CAR_CLKSRC_SDMMC_DIV) / 2) + 1;
 
 	return tegra_car_pllp0_rate() / div;
 }
@@ -428,7 +428,7 @@ tegra_car_periph_sdmmc_set_div(u_int port, u_int div)
 	/* update clk div */
 	src = __SHIFTIN(CAR_CLKSRC_SDMMC_SRC_PLLP_OUT0,
 			CAR_CLKSRC_SDMMC_SRC);
-	src |= __SHIFTIN(div - 1, CAR_CLKSRC_SDMMC_DIV);
+	src |= __SHIFTIN((div - 1) * 2, CAR_CLKSRC_SDMMC_DIV);
 	bus_space_write_4(bst, bsh, src_reg, src);
 
 	/* leave reset */
@@ -576,7 +576,7 @@ tegra_car_periph_sata_enable(void)
 	bus_space_write_4(bst, bsh, CAR_CLKSRC_SATA_OOB_REG,
 	    __SHIFTIN(CAR_CLKSRC_SATA_OOB_SRC_PLLP_OUT0,
 		      CAR_CLKSRC_SATA_OOB_SRC) |
-	    __SHIFTIN(sataoob_div - 1, CAR_CLKSRC_SATA_OOB_DIV));
+	    __SHIFTIN((sataoob_div - 1) * 2, CAR_CLKSRC_SATA_OOB_DIV));
 
 	/* Set SATA clock source to PLLP, 102MHz */
 	const u_int sata_div = 4;
@@ -584,7 +584,7 @@ tegra_car_periph_sata_enable(void)
 	    CAR_CLKSRC_SATA_AUX_CLK_ENB |
 	    __SHIFTIN(CAR_CLKSRC_SATA_SRC_PLLP_OUT0,
 		      CAR_CLKSRC_SATA_SRC) |
-	    __SHIFTIN(sata_div - 1, CAR_CLKSRC_SATA_DIV));
+	    __SHIFTIN((sata_div - 1) * 2, CAR_CLKSRC_SATA_DIV));
 
 	/* Ungate SAX partition in the PMC */
 	tegra_pmc_power(PMC_PARTID_SAX, true);
@@ -715,10 +715,10 @@ tegra_car_hdmi_enable(u_int rate)
 	}
 
 	/* Set clock source to PLLD2 */
-	const u_int div = howmany(tegra_car_plld2_rate(), rate);
+	const u_int div = (tegra_car_plld2_rate() * 2) / rate - 2;
 	bus_space_write_4(bst, bsh, CAR_CLKSRC_HDMI_REG,
 	    __SHIFTIN(CAR_CLKSRC_HDMI_SRC_PLLD2_OUT0, CAR_CLKSRC_HDMI_SRC) |
-	    __SHIFTIN(div - 1, CAR_CLKSRC_HDMI_DIV));
+	    __SHIFTIN(div, CAR_CLKSRC_HDMI_DIV));
 
 	/* Leave reset */
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_H_CLR_REG, CAR_DEV_H_HDMI);
@@ -758,9 +758,9 @@ tegra_car_dc_enable(u_int port)
 	tegra_pmc_power(partid, true);
 	tegra_pmc_remove_clamping(partid);
 
-	/* Select PLLP for clock source */
+	/* Select PLLD2 for clock source */
 	bus_space_write_4(bst, bsh, src_reg,
-	    __SHIFTIN(CAR_CLKSRC_DISP_SRC_PLLP_OUT0,
+	    __SHIFTIN(CAR_CLKSRC_DISP_SRC_PLLD2_OUT0,
 		      CAR_CLKSRC_DISP_SRC));
 
 	/* Leave reset */
