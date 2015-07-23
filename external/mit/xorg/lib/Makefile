@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2015/06/24 22:20:25 matt Exp $
+#	$NetBSD: Makefile,v 1.35 2015/07/23 05:46:39 mrg Exp $
 
 # build libraries for xorg
 
@@ -39,7 +39,7 @@ SUBDIR+=libchromeXvMCPro
 SUBDIR+=libGLU libGLw libXaw6 libXaw libXcursor \
 	libXrandr \
 	.WAIT \
-	libXft libglut \
+	libXpresent libXft libglut \
 	.WAIT \
 	libXdmGreet \
 	xcb-util
