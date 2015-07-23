@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.116 2015/06/24 22:20:26 matt Exp $
+#	$NetBSD: bsd.x11.mk,v 1.117 2015/07/23 08:03:26 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -29,7 +29,6 @@ X11FLAGS.CONNECTION+=	-DIPv6
 .endif
 
 #	 EXT_DEFINES
-.if ${X11FLAVOUR} == "Xorg"
 X11FLAGS.BASE_EXTENSION=	-DMITMISC -DXTEST -DXTRAP -DXSYNC -DXCMISC \
 				-DXRECORD -DMITSHM -DBIGREQS -DXF86VIDMODE \
 				-DXF86MISC -DDPMSExtension -DEVI \
@@ -62,12 +61,6 @@ X11INCS.DIX=		-I${X11INCSDIR}/freetype2  \
 			-I$(X11SRCDIR.xorg-server)/randr \
 			-I$(X11SRCDIR.xorg-server)/fb \
 			-I$(X11SRCDIR.xorg-server)/../include
-.else
-X11FLAGS.EXTENSION=	-DMITMISC -DXTEST -DXTRAP -DXSYNC -DXCMISC -DXRECORD \
-			-DMITSHM -DBIGREQS -DXF86MISC -DDBE -DDPMSExtension \
-			-DEVI -DSCREENSAVER -DXV -DXVMC -DGLXEXT \
-			-DGLX_USE_MESA -DFONTCACHE -DRES
-.endif
 
 X11FLAGS.DRI=		-DGLXEXT -DXF86DRI -DGLX_DIRECT_RENDERING \
 			-DGLX_USE_DLOPEN -DGLX_USE_MESA
@@ -89,7 +82,6 @@ X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
 			-DDDXOSVERRORF -DDDXTIME -DUSB_HID
 
 .if !(${MACHINE} == "acorn32"	|| \
-    (${MACHINE} == "alpha"  && ${X11FLAVOUR} != "Xorg")	|| \
     ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "pmax"	|| \
     ${MACHINE} == "sun3"	|| \
@@ -127,7 +119,6 @@ X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 .endif
   
 # XXX FIX ME
-.if ${X11FLAVOUR} == "Xorg"
 XVENDORNAMESHORT=	'"X.Org"'
 XVENDORNAME=		'"The X.Org Foundation"'
 XORG_RELEASE=		'"Release 1.10.6"'
@@ -137,22 +128,12 @@ XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
 
 # XXX oh yeah, fix me later
 XORG_VERSION_CURRENT="(((1) * 10000000) + ((10) * 100000) + ((6) * 1000) + 0)"
-.endif
 
 PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
 				match($$1, "([0-9]+\\.)+[0-9]+");	\
 				version = substr($$1, RSTART, RLENGTH);	\
 			} END { print version }'
 
-
-# Extract X11VERSION
-PRINTX11VERSION=${TOOL_AWK} ' \
-		     /^\#define XF86_VERSION_MAJOR/ {major = $$3} \
-		     /^\#define XF86_VERSION_MINOR/ {minor = $$3} \
-		     /^\#define XF86_VERSION_PATCH/ {patch = $$3} \
-		     /^\#define XF86_VERSION_SNAP/ {snap = $$3} \
-		     END { print "((("major") * 10000000) + (("minor") * 100000) + (("patch") * 1000) + "snap")"}' \
-		     ${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86Version.h
 
 # Commandline to convert 'XCOMM' comments and 'XHASH' to '#', among other
 # things. Transformed from the "CppSedMagic" macro from "Imake.rules".
@@ -408,12 +389,6 @@ _X11MANTRANSFORM= \
 	${X11EXTRAMANTRANSFORMS}
 
 # Note the escaping trick for _X11MANTRANSFORM using % to replace spaces
-.if ${X11FLAVOUR} != "Xorg"
-X11VERSION=	"XFree86 4.5.0"
-X11MANCPP?=	yes
-_X11MANTRANSFORM+= \
-	__vendorversion__	${X11VERSION:C/ /%/gW}
-.else
 XORGVERSION=	'"X Version 11"'
 X11MANCPP?=	no
 _X11MANTRANSFORM+= \
@@ -424,7 +399,6 @@ _X11MANTRANSFORM+= \
 	__xorgversion__		${XORGVERSION:C/ /%/gW} \
 	__XSERVERNAME__		Xorg \
 	__xservername__		Xorg
-.endif
 
 _X11MANTRANSFORMCMD=	${TOOL_SED} -e 's/\\$$/\\ /' ${.IMPSRC}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/08/10 14:43:03 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.11 2015/07/23 08:03:25 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -53,7 +53,7 @@ CPPFLAGS.io.c=		${X11FLAGS.EXTENSION}
 CPPFLAGS.lbxio.c=	${X11FLAGS.EXTENSION}
 CPPFLAGS.oscolor.c=	-DNDBM
 CPPFLAGS.osinit.c=	-DADMPATH=\"/var/log/X\%smsgs\"
-CPPFLAGS.transport.c=	-DBSD44SOCKETS -I${X11SRCDIR.xc}/lib/xtrans
+CPPFLAGS.transport.c=	-DBSD44SOCKETS
 CPPFLAGS.utils.c=	${XDMCP_DEFINES} ${X11FLAGS.EXTENSION}
 CPPFLAGS.xdmauth.c=	${XDMCP_DEFINES}
 CPPFLAGS.xdmcp.c=	${XDMCP_DEFINES} -DBSD44SOCKETS
