@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdmi.c,v 1.4 2015/07/23 14:31:05 jmcneill Exp $ */
+/* $NetBSD: tegra_hdmi.c,v 1.5 2015/07/23 15:43:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.4 2015/07/23 14:31:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.5 2015/07/23 15:43:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -252,10 +252,14 @@ tegra_hdmi_enable(struct tegra_hdmi_softc *sc, const uint8_t *edid)
 	tegra_car_hdmi_enable(mode->dot_clock * 1000);
 
 	for (n = 0; n < __arraycount(tegra_hdmi_tmds_config); n++) {
-		if (tegra_hdmi_tmds_config[n].dot_clock == mode->dot_clock) {
-			tmds = &tegra_hdmi_tmds_config[n];
+		if (tegra_hdmi_tmds_config[n].dot_clock >= mode->dot_clock) {
 			break;
 		}
+	}
+	if (n < __arraycount(tegra_hdmi_tmds_config)) {
+		tmds = &tegra_hdmi_tmds_config[n];
+	} else {
+		tmds = &tegra_hdmi_tmds_config[__arraycount(tegra_hdmi_tmds_config) - 1];
 	}
 	if (tmds != NULL) {
 		HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_PLL0_REG, tmds->sor_pll0);
