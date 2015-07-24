@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.32 2015/07/24 06:56:41 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.33 2015/07/24 06:59:32 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -252,7 +252,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	if ((ip->i_number != LFS_IFILE_INUM || sp->idp == NULL) &&
 	    sp->ibp == NULL) {
 		/* Allocate a new segment if necessary. */
-		if (sp->seg_bytes_left < fs->lfs_ibsize ||
+		if (sp->seg_bytes_left < lfs_sb_getibsize(fs) ||
 		    sp->sum_bytes_left < sizeof(ulfs_daddr_t))
 			(void) lfs_writeseg(fs, sp);
 
@@ -261,7 +261,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		lfs_sb_addoffset(fs, lfs_btofsb(fs, lfs_sb_getibsize(fs)));
 		sp->ibp = *sp->cbpp++ =
 		    getblk(fs->lfs_devvp, LFS_FSBTODB(fs, daddr),
-		    fs->lfs_ibsize);
+		    lfs_sb_getibsize(fs));
 		sp->ibp->b_flags |= B_GATHERED;
 		gotblk++;
 
@@ -557,7 +557,7 @@ lfs_updatemeta(struct segment * sp)
 	 * that you cannot have fragments.
 	 */
 	sp->fip->fi_lastlength = ((sp->start_bpp[nblocks - 1]->b_bcount - 1) &
-	    fs->lfs_bmask) + 1;
+	    lfs_sb_getbmask(fs)) + 1;
 
 	/*
 	 * Assign disk addresses, and update references to the logical
@@ -576,7 +576,7 @@ lfs_updatemeta(struct segment * sp)
 		 * that the indirect block that actually ends the list
 		 * is of a smaller size!)
 		 */
-		if ((sbp->b_bcount & fs->lfs_bmask) && i != 0)
+		if ((sbp->b_bcount & lfs_sb_getbmask(fs)) && i != 0)
 			errx(EXIT_FAILURE, "%s: fragment is not last block", __func__);
 
 		/*
@@ -635,9 +635,9 @@ lfs_initseg(struct lfs * fs)
 		brelse(bp, 0);
 		/* Segment zero could also contain the labelpad */
 		if (fs->lfs_version > 1 && sp->seg_number == 0 &&
-		    fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD)) {
-			lfs_sb_addoffset(fs, lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_s0addr);
-			sp->seg_bytes_left -= LFS_LABELPAD - lfs_fsbtob(fs, fs->lfs_s0addr);
+		    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD)) {
+			lfs_sb_addoffset(fs, lfs_btofsb(fs, LFS_LABELPAD) - lfs_sb_gets0addr(fs));
+			sp->seg_bytes_left -= LFS_LABELPAD - lfs_fsbtob(fs, lfs_sb_gets0addr(fs));
 		}
 	} else {
 		sp->seg_number = lfs_dtosn(fs, lfs_sb_getcurseg(fs));
@@ -702,13 +702,13 @@ lfs_newseg(struct lfs * fs)
 	LFS_CLEANERINFO(cip, fs, bp);
 	--cip->clean;
 	++cip->dirty;
-	fs->lfs_nclean = cip->clean;
+	lfs_sb_setnclean(fs, cip->clean);
 	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
 	lfs_sb_setlastseg(fs, lfs_sb_getcurseg(fs));
 	lfs_sb_setcurseg(fs, lfs_sb_getnextseg(fs));
 	for (sn = curseg = lfs_dtosn(fs, lfs_sb_getcurseg(fs)) + lfs_sb_getinterleave(fs);;) {
-		sn = (sn + 1) % fs->lfs_nseg;
+		sn = (sn + 1) % lfs_sb_getnseg(fs);
 		if (sn == curseg)
 			errx(EXIT_FAILURE, "%s: no clean segments", __func__);
 		LFS_SEGENTRY(sup, fs, sn, bp);
@@ -776,8 +776,8 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 		sup->su_lastmod = write_time;
 	sup->su_ninos += ninos;
 	++sup->su_nsums;
-	fs->lfs_dmeta += (lfs_btofsb(fs, lfs_sb_getsumsize(fs)) + lfs_btofsb(fs, ninos *
-		fs->lfs_ibsize));
+	lfs_sb_adddmeta(fs, (lfs_btofsb(fs, lfs_sb_getsumsize(fs)) + lfs_btofsb(fs, ninos *
+		lfs_sb_getibsize(fs))));
 	lfs_sb_subavail(fs, lfs_btofsb(fs, lfs_sb_getsumsize(fs)));
 
 	do_again = !(bp->b_flags & B_GATHERED);
@@ -810,7 +810,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 		ssp->ss_create = write_time;
 		lfs_sb_addserial(fs, 1);
 		ssp->ss_serial = lfs_sb_getserial(fs);
-		ssp->ss_ident = fs->lfs_ident;
+		ssp->ss_ident = lfs_sb_getident(fs);
 	}
 	/* Set the summary block busy too */
 	bremfree(*(sp->bpp));
@@ -950,8 +950,8 @@ lfs_segunlock(struct lfs * fs)
 		fs->lfs_nactive = 0;
 
 		/* Since we *know* everything's on disk, write both sbs */
-		lfs_writesuper(fs, fs->lfs_sboffs[0]);
-		lfs_writesuper(fs, fs->lfs_sboffs[1]);
+		lfs_writesuper(fs, lfs_sb_getsboff(fs, 0));
+		lfs_writesuper(fs, lfs_sb_getsboff(fs, 1));
 
 		--fs->lfs_seglock;
 		fs->lfs_lockpid = 0;
@@ -1003,7 +1003,7 @@ lfs_writesuper(struct lfs *fs, ulfs_daddr_t daddr)
 	lfs_sb_settstamp(fs, write_time);
 
 	/* Checksum the superblock and copy it into a buffer. */
-	fs->lfs_cksum = lfs_sb_cksum(&(fs->lfs_dlfs));
+	lfs_sb_setcksum(fs, lfs_sb_cksum(&(fs->lfs_dlfs)));
 	assert(daddr > 0);
 	bp = getblk(fs->lfs_devvp, LFS_FSBTODB(fs, daddr), LFS_SBPAD);
 	memset(bp->b_data + sizeof(struct dlfs), 0,

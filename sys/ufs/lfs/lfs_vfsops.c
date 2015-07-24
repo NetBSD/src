@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.327 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.328 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.327 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.328 2015/07/24 06:59:32 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -605,8 +605,8 @@ lfs_mountroot(void)
 	mountlist_append(mp);
 	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
-	memset(fs->lfs_fsmnt, 0, sizeof(fs->lfs_fsmnt));
-	(void)copystr(mp->mnt_stat.f_mntonname, fs->lfs_fsmnt, MNAMELEN - 1, 0);
+	memset(fs->lfs_dlfs.dlfs_fsmnt, 0, sizeof(fs->lfs_dlfs.dlfs_fsmnt));
+	(void)copystr(mp->mnt_stat.f_mntonname, fs->lfs_dlfs.dlfs_fsmnt, sizeof(fs->lfs_dlfs.dlfs_fsmnt), 0);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
 	setrootfstime((time_t)lfs_sb_gettstamp(VFSTOULFS(mp)->um_lfs));
@@ -795,10 +795,10 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			}
 
 			fs->lfs_ronly = 0;
-			if (fs->lfs_pflags & LFS_PF_CLEAN) {
-				fs->lfs_pflags &= ~LFS_PF_CLEAN;
-				lfs_writesuper(fs, fs->lfs_sboffs[0]);
-				lfs_writesuper(fs, fs->lfs_sboffs[1]);
+			if (lfs_sb_getpflags(fs) & LFS_PF_CLEAN) {
+				lfs_sb_setpflags(fs, lfs_sb_getpflags(fs) & ~LFS_PF_CLEAN);
+				lfs_writesuper(fs, lfs_sb_getsboff(fs, 0));
+				lfs_writesuper(fs, lfs_sb_getsboff(fs, 1));
 			}
 		}
 		if (args->fspec == NULL)
@@ -808,8 +808,9 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (error == 0)
-		(void)strncpy(fs->lfs_fsmnt, mp->mnt_stat.f_mntonname,
-			      sizeof(fs->lfs_fsmnt));
+		(void)strncpy(fs->lfs_dlfs.dlfs_fsmnt,
+			      mp->mnt_stat.f_mntonname,
+			      sizeof(fs->lfs_dlfs.dlfs_fsmnt));
 	return error;
 
 fail:
@@ -952,15 +953,15 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	/* Compatibility */
 	if (fs->lfs_version < 2) {
-		fs->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
+		lfs_sb_setsumsize(fs, LFS_V1_SUMMARY_SIZE);
 		lfs_sb_setibsize(fs, lfs_sb_getbsize(fs));
-		fs->lfs_s0addr = fs->lfs_sboffs[0];
+		lfs_sb_sets0addr(fs, lfs_sb_getsboff(fs, 0));
 		lfs_sb_settstamp(fs, lfs_sb_getotstamp(fs));
 		lfs_sb_setfsbtodb(fs, 0);
 	}
-	if (fs->lfs_resvseg == 0)
-		fs->lfs_resvseg = MIN(fs->lfs_minfreeseg - 1, \
-			MAX(MIN_RESV_SEGS, fs->lfs_minfreeseg / 2 + 1));
+	if (lfs_sb_getresvseg(fs) == 0)
+		lfs_sb_setresvseg(fs, MIN(lfs_sb_getminfreeseg(fs) - 1, \
+			MAX(MIN_RESV_SEGS, lfs_sb_getminfreeseg(fs) / 2 + 1)));
 
 	/*
 	 * If we aren't going to be able to write meaningfully to this
@@ -1028,13 +1029,13 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	/* ulfs-level information */
 	fs->um_flags = 0;
-	fs->um_bptrtodb = fs->lfs_ffshift - DEV_BSHIFT;
+	fs->um_bptrtodb = lfs_sb_getffshift(fs) - DEV_BSHIFT;
 	fs->um_seqinc = lfs_sb_getfrag(fs);
-	fs->um_nindir = fs->lfs_nindir;
-	fs->um_lognindir = ffs(fs->lfs_nindir) - 1;
-	fs->um_maxsymlinklen = fs->lfs_maxsymlinklen;
+	fs->um_nindir = lfs_sb_getnindir(fs);
+	fs->um_lognindir = ffs(lfs_sb_getnindir(fs)) - 1;
+	fs->um_maxsymlinklen = lfs_sb_getmaxsymlinklen(fs);
 	fs->um_dirblksiz = LFS_DIRBLKSIZ;
-	fs->um_maxfilesize = fs->lfs_maxfilesize;
+	fs->um_maxfilesize = lfs_sb_getmaxfilesize(fs);
 
 	/* quota stuff */
 	/* XXX: these need to come from the on-disk superblock to be used */
@@ -1053,7 +1054,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_stat.f_namemax = LFS_MAXNAMLEN;
 	mp->mnt_stat.f_iosize = lfs_sb_getbsize(fs);
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_fs_bshift = fs->lfs_bshift;
+	mp->mnt_fs_bshift = lfs_sb_getbshift(fs);
 	if (fs->um_maxsymlinklen > 0)
 		mp->mnt_iflag |= IMNT_DTYPE;
 
@@ -1093,12 +1094,12 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_nactive = 0;
 	fs->lfs_suflags = malloc(2 * sizeof(u_int32_t *),
 				 M_SEGMENT, M_WAITOK);
-	fs->lfs_suflags[0] = malloc(fs->lfs_nseg * sizeof(u_int32_t),
+	fs->lfs_suflags[0] = malloc(lfs_sb_getnseg(fs) * sizeof(u_int32_t),
 				    M_SEGMENT, M_WAITOK);
-	fs->lfs_suflags[1] = malloc(fs->lfs_nseg * sizeof(u_int32_t),
+	fs->lfs_suflags[1] = malloc(lfs_sb_getnseg(fs) * sizeof(u_int32_t),
 				    M_SEGMENT, M_WAITOK);
-	memset(fs->lfs_suflags[1], 0, fs->lfs_nseg * sizeof(u_int32_t));
-	for (i = 0; i < fs->lfs_nseg; i++) {
+	memset(fs->lfs_suflags[1], 0, lfs_sb_getnseg(fs) * sizeof(u_int32_t));
+	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
 		int changed;
 
 		LFS_SEGENTRY(sup, fs, i, bp);
@@ -1183,9 +1184,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	/* If writing, sb is not clean; record in case of immediate crash */
 	if (!fs->lfs_ronly) {
-		fs->lfs_pflags &= ~LFS_PF_CLEAN;
-		lfs_writesuper(fs, fs->lfs_sboffs[0]);
-		lfs_writesuper(fs, fs->lfs_sboffs[1]);
+		lfs_sb_setpflags(fs, lfs_sb_getpflags(fs) & ~LFS_PF_CLEAN);
+		lfs_writesuper(fs, lfs_sb_getsboff(fs, 0));
+		lfs_writesuper(fs, lfs_sb_getsboff(fs, 1));
 	}
 
 	/* Allow vget now that roll-forward is complete */
@@ -1303,9 +1304,9 @@ lfs_unmount(struct mount *mp, int mntflags)
 	mutex_exit(vp->v_interlock);
 
 	/* Explicitly write the superblock, to update serial and pflags */
-	fs->lfs_pflags |= LFS_PF_CLEAN;
-	lfs_writesuper(fs, fs->lfs_sboffs[0]);
-	lfs_writesuper(fs, fs->lfs_sboffs[1]);
+	lfs_sb_setpflags(fs, lfs_sb_getpflags(fs) | LFS_PF_CLEAN);
+	lfs_writesuper(fs, lfs_sb_getsboff(fs, 0));
+	lfs_writesuper(fs, lfs_sb_getsboff(fs, 1));
 	mutex_enter(&lfs_lock);
 	while (fs->lfs_iocount)
 		mtsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs_umount", 0,
@@ -1581,7 +1582,7 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 	retries = 0;
 again:
 	error = bread(ump->um_devvp, LFS_FSBTODB(fs, daddr),
-		(fs->lfs_version == 1 ? lfs_sb_getbsize(fs) : fs->lfs_ibsize),
+		(fs->lfs_version == 1 ? lfs_sb_getbsize(fs) : lfs_sb_getibsize(fs)),
 		0, &bp);
 	if (error) {
 		lfs_deinit_vnode(ump, vp);
@@ -1767,11 +1768,11 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 		return ESTALE;
 
 	fs = VFSTOULFS(mp)->um_lfs;
-	if (lfh.lfid_ident != fs->lfs_ident)
+	if (lfh.lfid_ident != lfs_sb_getident(fs))
 		return ESTALE;
 
 	if (lfh.lfid_ino >
-	    ((VTOI(fs->lfs_ivnode)->i_ffs1_size >> fs->lfs_bshift) -
+	    ((VTOI(fs->lfs_ivnode)->i_ffs1_size >> lfs_sb_getbshift(fs)) -
 	     lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs)) * lfs_sb_getifpb(fs))
 		return ESTALE;
 
@@ -1798,7 +1799,7 @@ lfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 	lfh.lfid_len = sizeof(struct lfid);
 	lfh.lfid_ino = ip->i_number;
 	lfh.lfid_gen = ip->i_gen;
-	lfh.lfid_ident = ip->i_lfs->lfs_ident;
+	lfh.lfid_ident = lfs_sb_getident(ip->i_lfs);
 	memcpy(fhp, &lfh, sizeof(lfh));
 	return (0);
 }
@@ -1919,7 +1920,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		failreason = "Inode with no_gop_write";
 		goto tryagain;
 	}
-	if ((pgs[0]->offset & fs->lfs_bmask) != 0) {
+	if ((pgs[0]->offset & lfs_sb_getbmask(fs)) != 0) {
 		failreason = "Bad page offset";
 		goto tryagain;
 	}
@@ -1968,12 +1969,12 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	 * We'll check later to make sure we always write entire
 	 * blocks (or fragments).
 	 */
-	if (startoffset & fs->lfs_bmask)
-		printf("%" PRId64 " & %" PRId64 " = %" PRId64 "\n",
-		       startoffset, fs->lfs_bmask,
-		       startoffset & fs->lfs_bmask);
-	KASSERT((startoffset & fs->lfs_bmask) == 0);
-	if (bytes & fs->lfs_ffmask) {
+	if (startoffset & lfs_sb_getbmask(fs))
+		printf("%" PRId64 " & %" PRIu64 " = %" PRId64 "\n",
+		       startoffset, lfs_sb_getbmask(fs),
+		       startoffset & lfs_sb_getbmask(fs));
+	KASSERT((startoffset & lfs_sb_getbmask(fs)) == 0);
+	if (bytes & lfs_sb_getffmask(fs)) {
 		printf("lfs_gop_write: asked to write %ld bytes\n", (long)bytes);
 		panic("lfs_gop_write: non-integer blocks");
 	}
@@ -2043,7 +2044,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		 */
 		/* If no room in the current segment, finish it up */
 		if (sp->sum_bytes_left < sizeof(int32_t) ||
-		    sp->seg_bytes_left < (1 << fs->lfs_bshift)) {
+		    sp->seg_bytes_left < (1 << lfs_sb_getbshift(fs))) {
 			int vers;
 
 			lfs_updatemeta(sp);
@@ -2202,7 +2203,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	memset(ip->i_lfs_fragsize, 0, ULFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
 	if (vp->v_type != VLNK || ip->i_size >= ip->i_lfs->um_maxsymlinklen) {
 #ifdef DEBUG
-		for (i = (ip->i_size + lfs_sb_getbsize(fs) - 1) >> fs->lfs_bshift;
+		for (i = (ip->i_size + lfs_sb_getbsize(fs) - 1) >> lfs_sb_getbshift(fs);
 		    i < ULFS_NDADDR; i++) {
 			if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
 			    i == 0)
@@ -2273,12 +2274,13 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 		return EOPNOTSUPP;
 
 	/* If we're doing nothing, do it fast */
-	oldnsegs = fs->lfs_nseg;
+	oldnsegs = lfs_sb_getnseg(fs);
 	if (newnsegs == oldnsegs)
 		return 0;
 
 	/* We always have to have two superblocks */
-	if (newnsegs <= lfs_dtosn(fs, fs->lfs_sboffs[1]))
+	if (newnsegs <= lfs_dtosn(fs, lfs_sb_getsboff(fs, 1)))
+		/* XXX this error code is rather nonsense */
 		return EFBIG;
 
 	ivp = fs->lfs_ivnode;
@@ -2316,7 +2318,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	/* Note old and new segment table endpoints, and old ifile size */
 	olast = lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs);
 	nlast = howmany(newnsegs, lfs_sb_getsepb(fs)) + lfs_sb_getcleansz(fs);
-	ilast = ivp->v_size >> fs->lfs_bshift;
+	ilast = ivp->v_size >> lfs_sb_getbshift(fs);
 	noff = nlast - olast;
 
 	/*
@@ -2388,8 +2390,8 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 
 	/* Zero out unused superblock offsets */
 	for (i = 2; i < LFS_MAXNUMSB; i++)
-		if (lfs_dtosn(fs, fs->lfs_sboffs[i]) >= newnsegs)
-			fs->lfs_sboffs[i] = 0x0;
+		if (lfs_dtosn(fs, lfs_sb_getsboff(fs, i)) >= newnsegs)
+			lfs_sb_setsboff(fs, i, 0x0);
 
 	/*
 	 * Correct superblock entries that depend on fs size.
@@ -2405,39 +2407,39 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	 * XXX - we should probably adjust minfreeseg as well.
 	 */
 	gain = (newnsegs - oldnsegs);
-	fs->lfs_nseg = newnsegs;
+	lfs_sb_setnseg(fs, newnsegs);
 	lfs_sb_setsegtabsz(fs, nlast - lfs_sb_getcleansz(fs));
 	lfs_sb_addsize(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)));
 	lfs_sb_adddsize(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)) - lfs_btofsb(fs, sbbytes));
 	lfs_sb_addbfree(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)) - lfs_btofsb(fs, sbbytes)
 		       - gain * lfs_btofsb(fs, lfs_sb_getbsize(fs) / 2));
 	if (gain > 0) {
-		fs->lfs_nclean += gain;
+		lfs_sb_addnclean(fs, gain);
 		lfs_sb_addavail(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)));
 	} else {
-		fs->lfs_nclean -= cgain;
+		lfs_sb_subnclean(fs, cgain);
 		lfs_sb_subavail(fs, cgain * lfs_btofsb(fs, lfs_sb_getssize(fs)) -
 				 lfs_btofsb(fs, csbbytes));
 	}
 
 	/* Resize segment flag cache */
 	fs->lfs_suflags[0] = realloc(fs->lfs_suflags[0],
-	    fs->lfs_nseg * sizeof(u_int32_t), M_SEGMENT, M_WAITOK);
+	    lfs_sb_getnseg(fs) * sizeof(u_int32_t), M_SEGMENT, M_WAITOK);
 	fs->lfs_suflags[1] = realloc(fs->lfs_suflags[1],
-	    fs->lfs_nseg * sizeof(u_int32_t), M_SEGMENT, M_WAITOK);
+	    lfs_sb_getnseg(fs) * sizeof(u_int32_t), M_SEGMENT, M_WAITOK);
 	for (i = oldnsegs; i < newnsegs; i++)
 		fs->lfs_suflags[0][i] = fs->lfs_suflags[1][i] = 0x0;
 
 	/* Truncate Ifile if necessary */
 	if (noff < 0)
-		lfs_truncate(ivp, ivp->v_size + (noff << fs->lfs_bshift), 0,
+		lfs_truncate(ivp, ivp->v_size + (noff << lfs_sb_getbshift(fs)), 0,
 		    NOCRED);
 
 	/* Update cleaner info so the cleaner can die */
 	/* XXX what to do if bread fails? */
 	bread(ivp, 0, lfs_sb_getbsize(fs), B_MODIFY, &bp);
-	((CLEANERINFO *)bp->b_data)->clean = fs->lfs_nclean;
-	((CLEANERINFO *)bp->b_data)->dirty = fs->lfs_nseg - fs->lfs_nclean;
+	((CLEANERINFO *)bp->b_data)->clean = lfs_sb_getnclean(fs);
+	((CLEANERINFO *)bp->b_data)->dirty = lfs_sb_getnseg(fs) - lfs_sb_getnclean(fs);
 	VOP_BWRITE(bp->b_vp, bp);
 
 	/* Let Ifile accesses proceed */

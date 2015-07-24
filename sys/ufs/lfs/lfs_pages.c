@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.2 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.3 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.2 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.3 2015/07/24 06:59:32 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -278,7 +278,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			    || (curpg->flags & PG_MARKER) == 0);
 			if (pages_per_block > 1) {
 				while (curpg &&
-				    ((curpg->offset & fs->lfs_bmask) ||
+				    ((curpg->offset & lfs_sb_getbmask(fs)) ||
 				    curpg->offset >= vp->v_size ||
 				    curpg->offset >= endoffset)) {
 					curpg = TAILQ_NEXT(curpg, listq.queue);
@@ -550,9 +550,9 @@ lfs_putpages(void *v)
 	 */
 	origoffset = ap->a_offlo;
 	origendoffset = ap->a_offhi;
-	startoffset = origoffset & ~(fs->lfs_bmask);
-	max_endoffset = (trunc_page(LLONG_MAX) >> fs->lfs_bshift)
-					       << fs->lfs_bshift;
+	startoffset = origoffset & ~(lfs_sb_getbmask(fs));
+	max_endoffset = (trunc_page(LLONG_MAX) >> lfs_sb_getbshift(fs))
+					       << lfs_sb_getbshift(fs);
 
 	if (origendoffset == 0 || ap->a_flags & PGO_ALLPAGES) {
 		endoffset = max_endoffset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.19 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.20 2015/07/24 06:59:32 dholland Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.19 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.20 2015/07/24 06:59:32 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -1563,7 +1563,7 @@ lfs_quota2_mount(struct mount *mp)
 
 	fs->um_flags |= ULFS_QUOTA2;
 	ump->umq2_bsize = lfs_sb_getbsize(fs);
-	ump->umq2_bmask = fs->lfs_bmask;
+	ump->umq2_bmask = lfs_sb_getbmask(fs);
 	if (fs->lfs_quota_magic != Q2_HEAD_MAGIC) {
 		printf("%s: Invalid quota magic number\n",
 		    mp->mnt_stat.f_mntonname);
