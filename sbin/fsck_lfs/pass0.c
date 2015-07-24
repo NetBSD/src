@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.35 2013/06/08 02:16:03 dholland Exp $	 */
+/* $NetBSD: pass0.c,v 1.36 2015/07/24 06:56:41 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -198,11 +198,11 @@ pass0(void)
 		cip->free_head = freehd;
 		writeit = 1;
 	}
-	if (freehd != fs->lfs_freehd) {
-		pwarn("FREE LIST HEAD IN SUPERBLOCK SHOULD BE %d (WAS %d)\n",
-			(int)fs->lfs_freehd, (int)freehd);
+	if (freehd != lfs_sb_getfreehd(fs)) {
+		pwarn("FREE LIST HEAD IN SUPERBLOCK SHOULD BE %u (WAS %ju)\n",
+			lfs_sb_getfreehd(fs), (uintmax_t)freehd);
 		if (preen || reply("FIX")) {
-			fs->lfs_freehd = freehd;
+			lfs_sb_setfreehd(fs, freehd);
 			sbdirty();
 		}
 	}
@@ -221,7 +221,7 @@ pass0(void)
 	else
 		brelse(cbp, 0);
 
-	if (fs->lfs_freehd == 0) {
+	if (lfs_sb_getfreehd(fs) == 0) {
 		pwarn("%sree list head is 0x0\n", preen ? "f" : "F");
 		if (preen || reply("FIX"))
 			extend_ifile(fs);

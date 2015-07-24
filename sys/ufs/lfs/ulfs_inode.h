@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.12 2014/05/17 07:08:35 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.13 2015/07/24 06:56:42 dholland Exp $	*/
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
 /*
@@ -76,10 +76,10 @@ void lfs_unset_dirop(struct lfs *, struct vnode *, const char *);
 #define LFS_INVERSE_MAX_BYTES(n) LFS_INVERSE_MAX_RESOURCE(n, PAGE_SIZE)
 #define LFS_WAIT_BYTES	    LFS_WAIT_RESOURCE(bufmem_lowater, PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
-#define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + LFS_DINODE1_SIZE))
+#define SIZEOF_DIROP(fs)	(2 * (lfs_sb_getbsize(fs) + LFS_DINODE1_SIZE))
 #define LFS_MAX_FSDIROP(fs)						\
 	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
-	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
+	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * lfs_sb_getssize(fs)) / \
           (2 * SIZEOF_DIROP(fs)))
 #define LFS_MAX_PAGES	lfs_max_pages()
 #define LFS_WAIT_PAGES	lfs_wait_pages()
