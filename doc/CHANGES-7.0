@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.347 2015/07/23 18:45:15 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.348 2015/07/24 07:32:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33439,4 +33439,12 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 7.0_RC2!
 	[snj]
+
+sys/netinet/tcp_input.c				1.343
+sys/netinet/tcp_output.c			1.184
+
+	If we are sending a window probe and there's unacked data in the
+	socket, make sure at least the persist timer is running.
+	Make sure that snd_win doesn't go negative.
+	[matt, ticket #886]
 
