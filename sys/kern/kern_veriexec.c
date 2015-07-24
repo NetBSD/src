@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.8 2015/04/27 20:21:19 riastradh Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.9 2015/07/24 13:02:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.8 2015/04/27 20:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.9 2015/07/24 13:02:52 maxv Exp $");
 
 #include "opt_veriexec.h"
 
@@ -555,7 +555,7 @@ veriexec_fp_status(struct lwp *l, struct vnode *vp, int file_lock_state,
 {
 	size_t hash_len = vfe->ops->hash_len;
 	u_char *digest;
-	int error = 0;
+	int error;
 
 	digest = kmem_zalloc(hash_len, KM_SLEEP);
 
