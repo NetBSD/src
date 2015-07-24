@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.20 2015/07/24 06:56:41 dholland Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.21 2015/07/24 06:59:31 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.20 2015/07/24 06:56:41 dholland Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.21 2015/07/24 06:59:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,8 +95,8 @@ fs_read_sblock(char *superblock)
 #endif
 				quit("bad sblock magic number\n");
 		}
-		if (lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[0]) != sboff) {
-			sboff = lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[0]);
+		if (lfs_fsbtob(sblock, (off_t)lfs_sb_getsboff(sblock, 0)) != sboff) {
+			sboff = lfs_fsbtob(sblock, (off_t)lfs_sb_getsboff(sblock, 0));
 			continue;
 		}
 		break;
@@ -105,7 +105,7 @@ fs_read_sblock(char *superblock)
 	/*
 	 * Read the secondary and take the older of the two
 	 */
-	rawread(lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]), u.tbuf,
+	rawread(lfs_fsbtob(sblock, (off_t)lfs_sb_getsboff(sblock, 1)), u.tbuf,
 	    sizeof(u.tbuf));
 #ifdef notyet
 	if (ns)
@@ -113,17 +113,17 @@ fs_read_sblock(char *superblock)
 #endif
 	if (u.lfss.lfs_magic != LFS_MAGIC) {
 		msg("Warning: secondary superblock at 0x%" PRIx64 " bad magic\n",
-			LFS_FSBTODB(sblock, (off_t)sblock->lfs_sboffs[1]));
+			LFS_FSBTODB(sblock, (off_t)lfs_sb_getsboff(sblock, 1)));
 	} else {
 		if (sblock->lfs_version > 1) {
 			if (lfs_sb_getserial(&u.lfss) < lfs_sb_getserial(sblock)) {
 				memcpy(sblock, u.tbuf, sizeof(u.tbuf));
-				sboff = lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
+				sboff = lfs_fsbtob(sblock, (off_t)lfs_sb_getsboff(sblock, 1));
 			}
 		} else {
 			if (lfs_sb_getotstamp(&u.lfss) < lfs_sb_getotstamp(sblock)) {
 				memcpy(sblock, u.tbuf, sizeof(u.tbuf));
-				sboff = lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
+				sboff = lfs_fsbtob(sblock, (off_t)lfs_sb_getsboff(sblock, 1));
 			}
 		}
 	}
@@ -148,23 +148,23 @@ fs_parametrize(void)
 
 	ufsi.ufs_dsize = LFS_FSBTODB(sblock, lfs_sb_getsize(sblock));
 	if (sblock->lfs_version == 1) 
-		ufsi.ufs_dsize = lfs_sb_getsize(sblock) >> sblock->lfs_blktodb;
+		ufsi.ufs_dsize = lfs_sb_getsize(sblock) >> lfs_sb_getblktodb(sblock);
 	ufsi.ufs_bsize = lfs_sb_getbsize(sblock);
-	ufsi.ufs_bshift = sblock->lfs_bshift;
+	ufsi.ufs_bshift = lfs_sb_getbshift(sblock);
 	ufsi.ufs_fsize = lfs_sb_getfsize(sblock);
 	ufsi.ufs_frag = lfs_sb_getfrag(sblock);
-	ufsi.ufs_fsatoda = sblock->lfs_fsbtodb;
+	ufsi.ufs_fsatoda = lfs_sb_getfsbtodb(sblock);
 	if (sblock->lfs_version == 1)
 		ufsi.ufs_fsatoda = 0;
-	ufsi.ufs_nindir = sblock->lfs_nindir;
-	ufsi.ufs_inopb = sblock->lfs_inopb;
-	ufsi.ufs_maxsymlinklen = sblock->lfs_maxsymlinklen;
-	ufsi.ufs_bmask = ~(sblock->lfs_bmask);
-	ufsi.ufs_qbmask = sblock->lfs_bmask;
-	ufsi.ufs_fmask = ~(sblock->lfs_ffmask);
-	ufsi.ufs_qfmask = sblock->lfs_ffmask;
+	ufsi.ufs_nindir = lfs_sb_getnindir(sblock);
+	ufsi.ufs_inopb = lfs_sb_getinopb(sblock);
+	ufsi.ufs_maxsymlinklen = lfs_sb_getmaxsymlinklen(sblock);
+	ufsi.ufs_bmask = ~(lfs_sb_getbmask(sblock));
+	ufsi.ufs_qbmask = lfs_sb_getbmask(sblock);
+	ufsi.ufs_fmask = ~(lfs_sb_getffmask(sblock));
+	ufsi.ufs_qfmask = lfs_sb_getffmask(sblock);
 
-	dev_bsize = lfs_sb_getbsize(sblock) >> sblock->lfs_blktodb;
+	dev_bsize = lfs_sb_getbsize(sblock) >> lfs_sb_getblktodb(sblock);
 
 	return &ufsi;
 }

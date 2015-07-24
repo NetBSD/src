@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.164 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -650,7 +650,7 @@ typedef struct _cleanerinfo {
 } CLEANERINFO;
 
 #define	CLEANSIZE_SU(fs)						\
-	((sizeof(CLEANERINFO) + lfs_sb_getbsize(fs) - 1) >> (fs)->lfs_bshift)
+	((sizeof(CLEANERINFO) + lfs_sb_getbsize(fs) - 1) >> lfs_sb_getbshift(fs))
 
 /* Read in the block with the cleaner info from the ifile. */
 #define LFS_CLEANERINFO(CP, F, BP) do {					\
@@ -842,7 +842,7 @@ struct dlfs {
 	u_int32_t dlfs_sumsize;	  /* 332: size of summary blocks */
 	u_int64_t dlfs_serial;	  /* 336: serial number */
 	u_int32_t dlfs_ibsize;	  /* 344: size of inode blocks */
-	int32_t	  dlfs_start;	  /* 348: start of segment 0 */
+	int32_t	  dlfs_s0addr;	  /* 348: start of segment 0 */
 	u_int64_t dlfs_tstamp;	  /* 352: time stamp */
 #define LFS_44INODEFMT 0
 #define LFS_MAXINODEFMT 0
@@ -1026,73 +1026,41 @@ LFS_DEF_SB_ACCESSOR(int32_t, offset);
 LFS_DEF_SB_ACCESSOR(int32_t, lastpseg);
 LFS_DEF_SB_ACCESSOR(u_int32_t, inopf);
 LFS_DEF_SB_ACCESSOR(u_int32_t, minfree);
-#define lfs_maxfilesize lfs_dlfs.dlfs_maxfilesize
 LFS_DEF_SB_ACCESSOR(uint64_t, maxfilesize);
-#define lfs_fsbpseg lfs_dlfs.dlfs_fsbpseg
 LFS_DEF_SB_ACCESSOR(u_int32_t, fsbpseg);
-#define lfs_inopb lfs_dlfs.dlfs_inopb
 LFS_DEF_SB_ACCESSOR(u_int32_t, inopb);
 LFS_DEF_SB_ACCESSOR(u_int32_t, ifpb);
 LFS_DEF_SB_ACCESSOR(u_int32_t, sepb);
-#define lfs_nindir lfs_dlfs.dlfs_nindir
 LFS_DEF_SB_ACCESSOR(u_int32_t, nindir);
-#define lfs_nseg lfs_dlfs.dlfs_nseg
 LFS_DEF_SB_ACCESSOR(u_int32_t, nseg);
-#define lfs_nspf lfs_dlfs.dlfs_nspf
 LFS_DEF_SB_ACCESSOR(u_int32_t, nspf);
 LFS_DEF_SB_ACCESSOR(u_int32_t, cleansz);
 LFS_DEF_SB_ACCESSOR(u_int32_t, segtabsz);
-#define lfs_segmask lfs_dlfs.dlfs_segmask
 LFS_DEF_SB_ACCESSOR(u_int32_t, segmask);
-#define lfs_segshift lfs_dlfs.dlfs_segshift
 LFS_DEF_SB_ACCESSOR(u_int32_t, segshift);
-#define lfs_bmask lfs_dlfs.dlfs_bmask
 LFS_DEF_SB_ACCESSOR(u_int64_t, bmask);
-#define lfs_bshift lfs_dlfs.dlfs_bshift
 LFS_DEF_SB_ACCESSOR(u_int32_t, bshift);
-#define lfs_ffmask lfs_dlfs.dlfs_ffmask
 LFS_DEF_SB_ACCESSOR(u_int64_t, ffmask);
-#define lfs_ffshift lfs_dlfs.dlfs_ffshift
 LFS_DEF_SB_ACCESSOR(u_int32_t, ffshift);
-#define lfs_fbmask lfs_dlfs.dlfs_fbmask
 LFS_DEF_SB_ACCESSOR(u_int64_t, fbmask);
-#define lfs_fbshift lfs_dlfs.dlfs_fbshift
 LFS_DEF_SB_ACCESSOR(u_int32_t, fbshift);
-#define lfs_blktodb lfs_dlfs.dlfs_blktodb
 LFS_DEF_SB_ACCESSOR(u_int32_t, blktodb);
-#define lfs_fsbtodb lfs_dlfs.dlfs_fsbtodb
 LFS_DEF_SB_ACCESSOR(u_int32_t, fsbtodb);
-#define lfs_sushift lfs_dlfs.dlfs_sushift
 LFS_DEF_SB_ACCESSOR(u_int32_t, sushift);
-#define lfs_maxsymlinklen lfs_dlfs.dlfs_maxsymlinklen
 LFS_DEF_SB_ACCESSOR(int32_t, maxsymlinklen);
-#define lfs_sboffs lfs_dlfs.dlfs_sboffs
-#define lfs_cksum lfs_dlfs.dlfs_cksum
 LFS_DEF_SB_ACCESSOR(u_int32_t, cksum);
-#define lfs_pflags lfs_dlfs.dlfs_pflags
 LFS_DEF_SB_ACCESSOR(u_int16_t, pflags);
-#define lfs_fsmnt lfs_dlfs.dlfs_fsmnt
-#define lfs_nclean lfs_dlfs.dlfs_nclean
 LFS_DEF_SB_ACCESSOR(u_int32_t, nclean);
-#define lfs_dmeta lfs_dlfs.dlfs_dmeta
 LFS_DEF_SB_ACCESSOR(int32_t, dmeta);
-#define lfs_minfreeseg lfs_dlfs.dlfs_minfreeseg
 LFS_DEF_SB_ACCESSOR(u_int32_t, minfreeseg);
-#define lfs_sumsize lfs_dlfs.dlfs_sumsize
 LFS_DEF_SB_ACCESSOR(u_int32_t, sumsize);
 LFS_DEF_SB_ACCESSOR(u_int64_t, serial);
-#define lfs_ibsize lfs_dlfs.dlfs_ibsize
 LFS_DEF_SB_ACCESSOR(u_int32_t, ibsize);
-#define lfs_s0addr lfs_dlfs.dlfs_start
-LFS_DEF_SB_ACCESSOR(int32_t, start);
+LFS_DEF_SB_ACCESSOR(int32_t, s0addr);
 LFS_DEF_SB_ACCESSOR(u_int64_t, tstamp);
-#define lfs_inodefmt lfs_dlfs.dlfs_inodefmt
 LFS_DEF_SB_ACCESSOR(u_int32_t, inodefmt);
-#define lfs_interleave lfs_dlfs.dlfs_interleave
 LFS_DEF_SB_ACCESSOR(u_int32_t, interleave);
-#define lfs_ident lfs_dlfs.dlfs_ident
 LFS_DEF_SB_ACCESSOR(u_int32_t, ident);
-#define lfs_resvseg lfs_dlfs.dlfs_resvseg
 LFS_DEF_SB_ACCESSOR(u_int32_t, resvseg);
 
 /* special-case accessors */
@@ -1103,53 +1071,81 @@ LFS_DEF_SB_ACCESSOR(u_int32_t, resvseg);
 #define lfs_sb_getotstamp(fs) lfs_sb_getinopf(fs)
 #define lfs_sb_setotstamp(fs, val) lfs_sb_setinopf(fs, val)
 
+/*
+ * lfs_sboffs is an array
+ */
+static __unused inline int32_t
+lfs_sb_getsboff(struct lfs *fs, unsigned n)
+{
+#ifdef KASSERT /* ugh */
+	KASSERT(n < LFS_MAXNUMSB);
+#endif
+	return fs->lfs_dlfs.dlfs_sboffs[n];
+}
+static __unused inline void
+lfs_sb_setsboff(struct lfs *fs, unsigned n, int32_t val)
+{
+#ifdef KASSERT /* ugh */
+	KASSERT(n < LFS_MAXNUMSB);
+#endif
+	fs->lfs_dlfs.dlfs_sboffs[n] = val;
+}
+
+/*
+ * lfs_fsmnt is a string
+ */
+static __unused inline const char *
+lfs_sb_getfsmnt(struct lfs *fs)
+{
+	return fs->lfs_dlfs.dlfs_fsmnt;
+}
 
 /* LFS_NINDIR is the number of indirects in a file system block. */
-#define	LFS_NINDIR(fs)	((fs)->lfs_nindir)
+#define	LFS_NINDIR(fs)	(lfs_sb_getnindir(fs))
 
 /* LFS_INOPB is the number of inodes in a secondary storage block. */
-#define	LFS_INOPB(fs)	((fs)->lfs_inopb)
+#define	LFS_INOPB(fs)	(lfs_sb_getinopb(fs))
 /* LFS_INOPF is the number of inodes in a fragment. */
-#define LFS_INOPF(fs)	((fs)->lfs_inopf)
+#define LFS_INOPF(fs)	(lfs_sb_getinopf(fs))
 
 #define	lfs_blksize(fs, ip, lbn) \
-	(((lbn) >= ULFS_NDADDR || (ip)->i_ffs1_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
+	(((lbn) >= ULFS_NDADDR || (ip)->i_ffs1_size >= ((lbn) + 1) << lfs_sb_getbshift(fs)) \
 	    ? lfs_sb_getbsize(fs) \
 	    : (lfs_fragroundup(fs, lfs_blkoff(fs, (ip)->i_ffs1_size))))
-#define	lfs_blkoff(fs, loc)	((int)((loc) & (fs)->lfs_bmask))
+#define	lfs_blkoff(fs, loc)	((int)((loc) & lfs_sb_getbmask(fs)))
 #define lfs_fragoff(fs, loc)    /* calculates (loc % fs->lfs_fsize) */ \
-    ((int)((loc) & (fs)->lfs_ffmask))
+    ((int)((loc) & lfs_sb_getffmask(fs)))
 
 #if defined(_KERNEL)
-#define	LFS_FSBTODB(fs, b)	((b) << ((fs)->lfs_ffshift - DEV_BSHIFT))
-#define	LFS_DBTOFSB(fs, b)	((b) >> ((fs)->lfs_ffshift - DEV_BSHIFT))
+#define	LFS_FSBTODB(fs, b)	((b) << (lfs_sb_getffshift(fs) - DEV_BSHIFT))
+#define	LFS_DBTOFSB(fs, b)	((b) >> (lfs_sb_getffshift(fs) - DEV_BSHIFT))
 #else
-#define	LFS_FSBTODB(fs, b)	((b) << (fs)->lfs_fsbtodb)
-#define	LFS_DBTOFSB(fs, b)	((b) >> (fs)->lfs_fsbtodb)
+#define	LFS_FSBTODB(fs, b)	((b) << lfs_sb_getfsbtodb(fs))
+#define	LFS_DBTOFSB(fs, b)	((b) >> lfs_sb_getfsbtodb(fs))
 #endif
 
-#define	lfs_lblkno(fs, loc)	((loc) >> (fs)->lfs_bshift)
-#define	lfs_lblktosize(fs, blk)	((blk) << (fs)->lfs_bshift)
+#define	lfs_lblkno(fs, loc)	((loc) >> lfs_sb_getbshift(fs))
+#define	lfs_lblktosize(fs, blk)	((blk) << lfs_sb_getbshift(fs))
 
-#define lfs_fsbtob(fs, b)	((b) << (fs)->lfs_ffshift)
-#define lfs_btofsb(fs, b)	((b) >> (fs)->lfs_ffshift)
+#define lfs_fsbtob(fs, b)	((b) << lfs_sb_getffshift(fs))
+#define lfs_btofsb(fs, b)	((b) >> lfs_sb_getffshift(fs))
 
 #define lfs_numfrags(fs, loc)	/* calculates (loc / fs->lfs_fsize) */	\
-	((loc) >> (fs)->lfs_ffshift)
+	((loc) >> lfs_sb_getffshift(fs))
 #define lfs_blkroundup(fs, size)/* calculates roundup(size, lfs_sb_getbsize(fs)) */ \
-	((off_t)(((size) + (fs)->lfs_bmask) & (~(fs)->lfs_bmask)))
+	((off_t)(((size) + lfs_sb_getbmask(fs)) & (~lfs_sb_getbmask(fs))))
 #define lfs_fragroundup(fs, size)/* calculates roundup(size, fs->lfs_fsize) */ \
-	((off_t)(((size) + (fs)->lfs_ffmask) & (~(fs)->lfs_ffmask)))
+	((off_t)(((size) + lfs_sb_getffmask(fs)) & (~lfs_sb_getffmask(fs))))
 #define lfs_fragstoblks(fs, frags)/* calculates (frags / fs->fs_frag) */ \
-	((frags) >> (fs)->lfs_fbshift)
+	((frags) >> lfs_sb_getfbshift(fs))
 #define lfs_blkstofrags(fs, blks)/* calculates (blks * fs->fs_frag) */ \
-	((blks) << (fs)->lfs_fbshift)
+	((blks) << lfs_sb_getfbshift(fs))
 #define lfs_fragnum(fs, fsb)	/* calculates (fsb % fs->lfs_frag) */	\
 	((fsb) & ((fs)->lfs_frag - 1))
 #define lfs_blknum(fs, fsb)	/* calculates rounddown(fsb, fs->lfs_frag) */ \
 	((fsb) &~ ((fs)->lfs_frag - 1))
 #define lfs_dblksize(fs, dp, lbn) \
-	(((lbn) >= ULFS_NDADDR || (dp)->di_size >= ((lbn) + 1) << (fs)->lfs_bshift)\
+	(((lbn) >= ULFS_NDADDR || (dp)->di_size >= ((lbn) + 1) << lfs_sb_getbshift(fs)) \
 	    ? lfs_sb_getbsize(fs) \
 	    : (lfs_fragroundup(fs, lfs_blkoff(fs, (dp)->di_size))))
 
@@ -1157,12 +1153,12 @@ LFS_DEF_SB_ACCESSOR(u_int32_t, resvseg);
 			   lfs_lblktosize((fs), lfs_sb_getssize(fs)) :	\
 			   lfs_sb_getssize(fs))
 #define lfs_segtod(fs, seg) (((fs)->lfs_version == 1     ?	    	\
-			   lfs_sb_getssize(fs) << (fs)->lfs_blktodb :	\
+			   lfs_sb_getssize(fs) << lfs_sb_getblktodb(fs) : \
 			   lfs_btofsb((fs), lfs_sb_getssize(fs))) * (seg))
 #define	lfs_dtosn(fs, daddr)	/* block address to segment number */	\
-	((uint32_t)(((daddr) - (fs)->lfs_s0addr) / lfs_segtod((fs), 1)))
+	((uint32_t)(((daddr) - lfs_sb_gets0addr(fs)) / lfs_segtod((fs), 1)))
 #define lfs_sntod(fs, sn)	/* segment number to disk address */	\
-	((daddr_t)(lfs_segtod((fs), (sn)) + (fs)->lfs_s0addr))
+	((daddr_t)(lfs_segtod((fs), (sn)) + lfs_sb_gets0addr(fs)))
 
 /*
  * Structures used by lfs_bmapv and lfs_markv to communicate information

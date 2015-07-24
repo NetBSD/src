@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.18 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.19 2015/07/24 06:59:32 dholland Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.18 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.19 2015/07/24 06:59:32 dholland Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -337,7 +337,7 @@ WRITE(void *v)
 			goto out;
 		if (flags & B_SYNC) {
 			mutex_enter(vp->v_interlock);
-			VOP_PUTPAGES(vp, trunc_page(osize & fs->fs_bmask),
+			VOP_PUTPAGES(vp, trunc_page(osize & lfs_sb_getbmask(fs)),
 			    round_page(eob),
 			    PGO_CLEANIT | PGO_SYNCIO);
 		}
@@ -443,7 +443,7 @@ WRITE(void *v)
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
 		mutex_enter(vp->v_interlock);
-		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
+		error = VOP_PUTPAGES(vp, trunc_page(origoff & lfs_sb_getbmask(fs)),
 		    round_page(lfs_blkroundup(fs, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO);
 	}
@@ -523,7 +523,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
 #ifdef LFS_READWRITE
 		error = lfs_reserve(fs, vp, NULL,
-		    lfs_btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
+		    lfs_btofsb(fs, (ULFS_NIADDR + 1) << lfs_sb_getbshift(fs)));
 		if (error)
 			break;
 		need_unreserve = true;
@@ -557,7 +557,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #ifdef LFS_READWRITE
 		(void)VOP_BWRITE(bp->b_vp, bp);
 		lfs_reserve(fs, vp, NULL,
-		    -lfs_btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
+		    -lfs_btofsb(fs, (ULFS_NIADDR + 1) << lfs_sb_getbshift(fs)));
 		need_unreserve = false;
 #else
 		if (ioflag & IO_SYNC)
@@ -573,7 +573,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #ifdef LFS_READWRITE
 	if (need_unreserve) {
 		lfs_reserve(fs, vp, NULL,
-		    -lfs_btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
+		    -lfs_btofsb(fs, (ULFS_NIADDR + 1) << lfs_sb_getbshift(fs)));
 	}
 #endif
 
