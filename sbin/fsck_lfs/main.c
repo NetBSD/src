@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.50 2015/07/24 06:56:41 dholland Exp $	 */
+/* $NetBSD: main.c,v 1.51 2015/07/24 06:59:32 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -224,7 +224,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	 * else.
 	 */
 	if (preen == 0) {
-		printf("** Last Mounted on %s\n", fs->lfs_fsmnt);
+		printf("** Last Mounted on %s\n", lfs_sb_getfsmnt(fs));
 		if (hotroot())
 			printf("** Root file system\n");
 		/*

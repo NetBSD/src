@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.35 2015/07/24 06:56:41 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.36 2015/07/24 06:59:32 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -152,15 +152,15 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ulfs_daddr_t ndaddr, int size)
 	}
 
 	/* If block is beyond EOF, update size */
-	if (lbn >= 0 && ip->i_ffs1_size <= (lbn << fs->lfs_bshift)) {
-		ip->i_ffs1_size = (lbn << fs->lfs_bshift) + 1;
+	if (lbn >= 0 && ip->i_ffs1_size <= (lbn << lfs_sb_getbshift(fs))) {
+		ip->i_ffs1_size = (lbn << lfs_sb_getbshift(fs)) + 1;
 	}
 
 	/* If block frag size is too large for old EOF, update size */
 	if (lbn < ULFS_NDADDR) {
 		off_t minsize;
 
-		minsize = (lbn << fs->lfs_bshift);
+		minsize = (lbn << lfs_sb_getbshift(fs));
 		minsize += (size - lfs_sb_getfsize(fs)) + 1;
 		if (ip->i_ffs1_size < minsize)
 			ip->i_ffs1_size = minsize;
@@ -292,7 +292,7 @@ pass6check(struct inodesc * idesc)
 	anyout = anynew = 0;
 	for (i = 0; i < idesc->id_numfrags; i++) {
 		sn = lfs_dtosn(fs, idesc->id_blkno + i);
-		if (sn < 0 || sn >= fs->lfs_nseg ||
+		if (sn < 0 || sn >= lfs_sb_getnseg(fs) ||
 		    (seg_table[sn].su_flags & SEGUSE_DIRTY) == 0) {
 			anyout = 1;
 			break;
@@ -583,7 +583,7 @@ pass6(void)
 	 * changes to any other inode.
 	 */
 
-	ibbuf = emalloc(fs->lfs_ibsize);
+	ibbuf = emalloc(lfs_sb_getibsize(fs));
 	nnewfiles = ndelfiles = nmvfiles = nnewblocks = 0;
 	daddr = lfs_sb_getoffset(fs);
 	hassuper = 0;
@@ -596,22 +596,22 @@ pass6(void)
 
 		/* Could be a superblock */
 		if (lfs_sntod(fs, lfs_dtosn(fs, daddr)) == daddr) {
-			if (daddr == fs->lfs_s0addr) {
+			if (daddr == lfs_sb_gets0addr(fs)) {
 				++hassuper;
 				daddr += lfs_btofsb(fs, LFS_LABELPAD);
 			}
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
-				if (daddr == fs->lfs_sboffs[i]) {
+				if (daddr == lfs_sb_getsboff(fs, i)) {
 					++hassuper;
 					daddr += lfs_btofsb(fs, LFS_SBPAD);	
 				}
-				if (daddr < fs->lfs_sboffs[i])
+				if (daddr < lfs_sb_getsboff(fs, i))
 					break;
 			}
 		}
 		
 		/* Read in summary block */
-		bread(devvp, LFS_FSBTODB(fs, daddr), fs->lfs_sumsize, 0, &bp);
+		bread(devvp, LFS_FSBTODB(fs, daddr), lfs_sb_getsumsize(fs), 0, &bp);
 		sp = (SEGSUM *)bp->b_data;
 		if (debug)
 			pwarn("sum at 0x%x: ninos=%d nfinfo=%d\n",
@@ -622,13 +622,13 @@ pass6(void)
 		LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, daddr), sbp);
 		++sup->su_nsums;
 		VOP_BWRITE(sbp);
-		lfs_sb_subbfree(fs, lfs_btofsb(fs, fs->lfs_sumsize));
-		lfs_sb_adddmeta(fs, lfs_btofsb(fs, fs->lfs_sumsize));
+		lfs_sb_subbfree(fs, lfs_btofsb(fs, lfs_sb_getsumsize(fs)));
+		lfs_sb_adddmeta(fs, lfs_btofsb(fs, lfs_sb_getsumsize(fs)));
 		sbdirty();
 		if (lfs_sntod(fs, lfs_dtosn(fs, daddr)) == daddr +
 		    hassuper * lfs_btofsb(fs, LFS_SBPAD) &&
 		    lfs_dtosn(fs, daddr) != lfs_dtosn(fs, lfs_sb_getoffset(fs))) {
-			--fs->lfs_nclean;
+			lfs_sb_subnclean(fs, 1);
 			sbdirty();
 		}
 
@@ -637,21 +637,21 @@ pass6(void)
 			LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, daddr), sbp);
 			sup->su_ninos += howmany(sp->ss_ninos, LFS_INOPB(fs));
 			VOP_BWRITE(sbp);
-			fs->lfs_dmeta += lfs_btofsb(fs, howmany(sp->ss_ninos,
+			lfs_sb_adddmeta(fs, lfs_btofsb(fs, howmany(sp->ss_ninos,
 							    LFS_INOPB(fs)) *
-						fs->lfs_ibsize);
+						lfs_sb_getibsize(fs)));
 		}
-		idaddrp = ((ulfs_daddr_t *)((char *)bp->b_data + fs->lfs_sumsize));
+		idaddrp = ((ulfs_daddr_t *)((char *)bp->b_data + lfs_sb_getsumsize(fs)));
 		for (i = 0; i < howmany(sp->ss_ninos, LFS_INOPB(fs)); i++) {
 			ino_t *inums;
 			
 			inums = ecalloc(LFS_INOPB(fs) + 1, sizeof(*inums));
 			ibdaddr = *--idaddrp;
-			lfs_sb_subbfree(fs, lfs_btofsb(fs, fs->lfs_ibsize));
+			lfs_sb_subbfree(fs, lfs_btofsb(fs, lfs_sb_getibsize(fs)));
 			sbdirty();
-			bread(devvp, LFS_FSBTODB(fs, ibdaddr), fs->lfs_ibsize,
-			      0, &ibp);
-			memcpy(ibbuf, ibp->b_data, fs->lfs_ibsize);
+			bread(devvp, LFS_FSBTODB(fs, ibdaddr),
+			      lfs_sb_getibsize(fs), 0, &ibp);
+			memcpy(ibbuf, ibp->b_data, lfs_sb_getibsize(fs));
 			brelse(ibp, 0);
 
 			j = 0;
@@ -777,10 +777,10 @@ pass6(void)
 			lastserial = sp->ss_serial;
 		}
 		odaddr = daddr;
-		daddr += lfs_btofsb(fs, fs->lfs_sumsize + bc);
+		daddr += lfs_btofsb(fs, lfs_sb_getsumsize(fs) + bc);
 		if (lfs_dtosn(fs, odaddr) != lfs_dtosn(fs, daddr) ||
 		    lfs_dtosn(fs, daddr) != lfs_dtosn(fs, daddr +
-			lfs_btofsb(fs, fs->lfs_sumsize + lfs_sb_getbsize(fs)) - 1)) {
+			lfs_btofsb(fs, lfs_sb_getsumsize(fs) + lfs_sb_getbsize(fs)) - 1)) {
 			daddr = ((SEGSUM *)bp->b_data)->ss_next;
 		}
 		brelse(bp, 0);
@@ -825,19 +825,19 @@ pass6(void)
 
 		/* Could be a superblock */
 		if (lfs_sntod(fs, lfs_dtosn(fs, daddr)) == daddr) {
-			if (daddr == fs->lfs_s0addr)
+			if (daddr == lfs_sb_gets0addr(fs))
 				daddr += lfs_btofsb(fs, LFS_LABELPAD);
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
-				if (daddr == fs->lfs_sboffs[i]) {
+				if (daddr == lfs_sb_getsboff(fs, i)) {
 					daddr += lfs_btofsb(fs, LFS_SBPAD);	
 				}
-				if (daddr < fs->lfs_sboffs[i])
+				if (daddr < lfs_sb_getsboff(fs, i))
 					break;
 			}
 		}
 		
 		/* Read in summary block */
-		bread(devvp, LFS_FSBTODB(fs, daddr), fs->lfs_sumsize, 0, &bp);
+		bread(devvp, LFS_FSBTODB(fs, daddr), lfs_sb_getsumsize(fs), 0, &bp);
 		sp = (SEGSUM *)bp->b_data;
 		bc = check_summary(fs, sp, daddr, debug, devvp, pass6harvest);
 		if (bc == 0) {
@@ -847,7 +847,7 @@ pass6(void)
 			break;
 		}
 		odaddr = daddr;
-		daddr += lfs_btofsb(fs, fs->lfs_sumsize + bc);
+		daddr += lfs_btofsb(fs, lfs_sb_getsumsize(fs) + bc);
 		lfs_sb_subavail(fs, lfs_btofsb(fs, lfs_sb_getsumsize(fs) + bc));
 		if (lfs_dtosn(fs, odaddr) != lfs_dtosn(fs, daddr) ||
 		    lfs_dtosn(fs, daddr) != lfs_dtosn(fs, daddr +
@@ -863,12 +863,12 @@ pass6(void)
 
 	/* Final address could also be a superblock */
 	if (lfs_sntod(fs, lfs_dtosn(fs, lastgood)) == lastgood) {
-		if (lastgood == fs->lfs_s0addr)
+		if (lastgood == lfs_sb_gets0addr(fs))
 			lastgood += lfs_btofsb(fs, LFS_LABELPAD);
 		for (i = 0; i < LFS_MAXNUMSB; i++) {
-			if (lastgood == fs->lfs_sboffs[i])
+			if (lastgood == lfs_sb_getsboff(fs, i))
 				lastgood += lfs_btofsb(fs, LFS_SBPAD);	
-			if (lastgood < fs->lfs_sboffs[i])
+			if (lastgood < lfs_sb_getsboff(fs, i))
 				break;
 		}
 	}
@@ -877,7 +877,7 @@ pass6(void)
 	lfs_sb_setoffset(fs, lastgood);
 	lfs_sb_setcurseg(fs, lfs_sntod(fs, lfs_dtosn(fs, lastgood)));
 	for (sn = curseg = lfs_dtosn(fs, lfs_sb_getcurseg(fs));;) {
-		sn = (sn + 1) % fs->lfs_nseg;
+		sn = (sn + 1) % lfs_sb_getnseg(fs);
 		if (sn == curseg)
 			errx(1, "no clean segments");
 		LFS_SEGENTRY(sup, fs, sn, bp);

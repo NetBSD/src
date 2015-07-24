@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.82 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.83 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.82 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.83 2015/07/24 06:59:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ lfs_setup_resblks(struct lfs *fs)
 	 * so we can't use the pool subsystem for them.
 	 */
 	for (i = 0, j = 0; j < LFS_N_SUMMARIES; j++, i++)
-		fs->lfs_resblk[i].size = fs->lfs_sumsize;
+		fs->lfs_resblk[i].size = lfs_sb_getsumsize(fs);
 	for (j = 0; j < LFS_N_SBLOCKS; j++, i++)
 		fs->lfs_resblk[i].size = LFS_SBPAD;
 	for (j = 0; j < LFS_N_IBLOCKS; j++, i++)
@@ -144,7 +144,7 @@ lfs_setup_resblks(struct lfs *fs)
 		"lfsclpl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0, 0,
 		"lfssegpool", &pool_allocator_nointr, IPL_NONE);
-	maxbpp = ((fs->lfs_sumsize - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
+	maxbpp = ((lfs_sb_getsumsize(fs) - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
 	maxbpp = MIN(maxbpp, lfs_segsize(fs) / lfs_sb_getfsize(fs) + 2);
 	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0, 0,
 		"lfsbpppl", &pool_allocator_nointr, IPL_NONE);
@@ -396,7 +396,7 @@ lfs_auto_segclean(struct lfs *fs)
 	 * XXX - do we really need to do them all at once?
 	 */
 	waited = 0;
-	for (i = 0; i < fs->lfs_nseg; i++) {
+	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
 		if ((fs->lfs_suflags[0][i] &
 		     (SEGUSE_ACTIVE | SEGUSE_DIRTY | SEGUSE_EMPTY)) ==
 		    (SEGUSE_DIRTY | SEGUSE_EMPTY) &&
@@ -522,8 +522,8 @@ lfs_segunlock(struct lfs *fs)
 			/* If we *know* everything's on disk, write both sbs */
 			/* XXX should wait for this one	 */
 			if (sync)
-				lfs_writesuper(fs, fs->lfs_sboffs[fs->lfs_activesb]);
-			lfs_writesuper(fs, fs->lfs_sboffs[1 - fs->lfs_activesb]);
+				lfs_writesuper(fs, lfs_sb_getsboff(fs, fs->lfs_activesb));
+			lfs_writesuper(fs, lfs_sb_getsboff(fs, 1 - fs->lfs_activesb));
 			if (!(fs->lfs_ivnode->v_mount->mnt_iflag & IMNT_UNMOUNT)) {
 				lfs_auto_segclean(fs);
 				/* If sync, we can clean the remainder too */

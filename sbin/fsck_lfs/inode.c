@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.55 2015/07/24 06:56:41 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.56 2015/07/24 06:59:32 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,8 +137,8 @@ ckinode(struct ulfs1_dinode *dp, struct inodesc *idesc)
 	idesc->id_filesize = dp->di_size;
 	mode = dp->di_mode & LFS_IFMT;
 	if (mode == LFS_IFBLK || mode == LFS_IFCHR ||
-	    (mode == LFS_IFLNK && (dp->di_size < fs->lfs_maxsymlinklen ||
-		    (fs->lfs_maxsymlinklen == 0 &&
+	    (mode == LFS_IFLNK && (dp->di_size < lfs_sb_getmaxsymlinklen(fs) ||
+		    (lfs_sb_getmaxsymlinklen(fs) == 0 &&
 			dp->di_blocks == 0))))
 		return (KEEPON);
 	dino = *dp;
