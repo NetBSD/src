@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.147 2015/07/24 21:09:25 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.148 2015/07/24 21:27:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -316,7 +316,6 @@ typedef struct {
 #define EM_RISCV	243	/* RISC-V */
 
 /* Unofficial machine types follow */
-#define EM_AVR32	6317	/* used by NetBSD/avr32 */
 #define EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
 #define EM_NUM		36903
 
