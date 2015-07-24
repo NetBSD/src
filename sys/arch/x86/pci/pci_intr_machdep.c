@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.34 2015/07/21 03:10:42 knakahara Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.35 2015/07/24 06:49:58 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.34 2015/07/21 03:10:42 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.35 2015/07/24 06:49:58 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -484,7 +484,8 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 		}
 	}
 
-	memset(counts, 0, sizeof(counts[0]) * PCI_INTR_TYPE_SIZE);
+	if (counts != NULL)
+		memset(counts, 0, sizeof(counts[0]) * PCI_INTR_TYPE_SIZE);
 	error = EINVAL;
 
 	/* try MSI-X */
@@ -493,6 +494,8 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 	if (msix_count > 0) {
 		error = pci_msix_alloc_exact(pa, ihps, msix_count);
 		if (error == 0) {
+			KASSERTMSG(counts != NULL,
+			    "If MSI-X is used, counts must not be NULL.");
 			counts[PCI_INTR_TYPE_MSIX] = msix_count;
 			goto out;
 		}
@@ -504,10 +507,9 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 	if (msi_count > 0) {
 		error = pci_msi_alloc_exact(pa, ihps, msi_count);
 		if (error == 0) {
-			if (counts != NULL) {
+			if (counts != NULL)
 				counts[PCI_INTR_TYPE_MSI] = msi_count;
-				goto out;
-			}
+			goto out;
 		}
 	}
 
