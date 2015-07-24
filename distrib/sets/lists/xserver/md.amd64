@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.82 2015/07/24 04:29:27 mrg Exp $
+# $NetBSD: md.amd64,v 1.83 2015/07/24 07:13:34 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -397,10 +397,10 @@
 ./usr/X11R7/lib/modules/drivers/ast_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/ch7017_drv.so		-unknown-	obsolete
-./usr/X11R7/lib/modules/drivers/ch7017_drv.so.2		-unknown-	obsolete
-./usr/X11R7/lib/modules/drivers/ch7xxx_drv.so		-unknown-	obsolete
-./usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/ch7017_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ch7017_drv.so.2		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ch7xxx_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_alpine.so	-unknown-	xorg
@@ -427,8 +427,8 @@
 ./usr/X11R7/lib/modules/drivers/intel_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/intel_drv_old.so	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/intel_drv_old.so.2	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/ivch_drv.so		-unknown-	obsolete
-./usr/X11R7/lib/modules/drivers/ivch_drv.so.2		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/ivch_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ivch_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mach64_drv.so		-unknown-	xorg
@@ -459,16 +459,16 @@
 ./usr/X11R7/lib/modules/drivers/s3virge_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/savage_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/savage_drv.so.2		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/sil164_drv.so		-unknown-	obsolete
-./usr/X11R7/lib/modules/drivers/sil164_drv.so.2		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/sil164_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/sil164_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/siliconmotion_drv.so	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/siliconmotion_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/sis_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/sis_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tdfx_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tdfx_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/tfp410_drv.so		-unknown-	obsolete
-./usr/X11R7/lib/modules/drivers/tfp410_drv.so.2		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/tfp410_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/tfp410_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tga_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tga_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/trident_drv.so		-unknown-	xorg
