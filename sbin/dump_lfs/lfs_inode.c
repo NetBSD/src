@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.19 2013/06/19 06:15:54 dholland Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.20 2015/07/24 06:56:41 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.19 2013/06/19 06:15:54 dholland Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.20 2015/07/24 06:56:41 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,12 +116,12 @@ fs_read_sblock(char *superblock)
 			LFS_FSBTODB(sblock, (off_t)sblock->lfs_sboffs[1]));
 	} else {
 		if (sblock->lfs_version > 1) {
-			if (u.lfss.lfs_serial < sblock->lfs_serial) {
+			if (lfs_sb_getserial(&u.lfss) < lfs_sb_getserial(sblock)) {
 				memcpy(sblock, u.tbuf, sizeof(u.tbuf));
 				sboff = lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
 			}
 		} else {
-			if (u.lfss.lfs_otstamp < sblock->lfs_otstamp) {
+			if (lfs_sb_getotstamp(&u.lfss) < lfs_sb_getotstamp(sblock)) {
 				memcpy(sblock, u.tbuf, sizeof(u.tbuf));
 				sboff = lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
 			}
@@ -146,13 +146,13 @@ fs_parametrize(void)
 
 	spcl.c_flags = iswap32(iswap32(spcl.c_flags) | DR_NEWINODEFMT);
 
-	ufsi.ufs_dsize = LFS_FSBTODB(sblock,sblock->lfs_size);
+	ufsi.ufs_dsize = LFS_FSBTODB(sblock, lfs_sb_getsize(sblock));
 	if (sblock->lfs_version == 1) 
-		ufsi.ufs_dsize = sblock->lfs_size >> sblock->lfs_blktodb;
-	ufsi.ufs_bsize = sblock->lfs_bsize;
+		ufsi.ufs_dsize = lfs_sb_getsize(sblock) >> sblock->lfs_blktodb;
+	ufsi.ufs_bsize = lfs_sb_getbsize(sblock);
 	ufsi.ufs_bshift = sblock->lfs_bshift;
-	ufsi.ufs_fsize = sblock->lfs_fsize;
-	ufsi.ufs_frag = sblock->lfs_frag;
+	ufsi.ufs_fsize = lfs_sb_getfsize(sblock);
+	ufsi.ufs_frag = lfs_sb_getfrag(sblock);
 	ufsi.ufs_fsatoda = sblock->lfs_fsbtodb;
 	if (sblock->lfs_version == 1)
 		ufsi.ufs_fsatoda = 0;
@@ -164,7 +164,7 @@ fs_parametrize(void)
 	ufsi.ufs_fmask = ~(sblock->lfs_ffmask);
 	ufsi.ufs_qfmask = sblock->lfs_ffmask;
 
-	dev_bsize = sblock->lfs_bsize >> sblock->lfs_blktodb;
+	dev_bsize = lfs_sb_getbsize(sblock) >> sblock->lfs_blktodb;
 
 	return &ufsi;
 }
@@ -172,10 +172,10 @@ fs_parametrize(void)
 ino_t
 fs_maxino(void)
 {
-	return ((getino(sblock->lfs_ifile)->dp1.di_size
-		   - (sblock->lfs_cleansz + sblock->lfs_segtabsz)
-		   * sblock->lfs_bsize)
-		  / sblock->lfs_bsize) * sblock->lfs_ifpb - 1;
+	return ((getino(lfs_sb_getifile(sblock))->dp1.di_size
+		   - (lfs_sb_getcleansz(sblock) + lfs_sb_getsegtabsz(sblock))
+		   * lfs_sb_getbsize(sblock))
+		  / lfs_sb_getbsize(sblock)) * lfs_sb_getifpb(sblock) - 1;
 }
 
 void
@@ -240,7 +240,7 @@ lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 			if(up == UNASSIGNED || up == LFS_UNUSED_DADDR)
 				return UNASSIGNED;
 			/* printf("lbn %d: parent is the triple\n", -lbn); */
-			bread(LFS_FSBTODB(sblock, up), bp, sblock->lfs_bsize);
+			bread(LFS_FSBTODB(sblock, up), bp, lfs_sb_getbsize(sblock));
 			/* XXX ondisk32 */
 			return (daddr_t)((int32_t *)bp)[off];
 		} else /* residue == 0 */ {
@@ -273,7 +273,7 @@ lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 	up = lfs_bmap(fs,idinode,up);
 	if(up == UNASSIGNED || up == LFS_UNUSED_DADDR)
 		return UNASSIGNED;
-	bread(LFS_FSBTODB(sblock, up), bp, sblock->lfs_bsize);
+	bread(LFS_FSBTODB(sblock, up), bp, lfs_sb_getbsize(sblock));
 	/* XXX ondisk32 */
 	return (daddr_t)((int32_t *)bp)[off];
 }
@@ -288,15 +288,15 @@ lfs_ientry(ino_t ino)
 	union dinode *dp;
 	struct ulfs1_dinode *ldp;
     
-	lbn = ino/sblock->lfs_ifpb + sblock->lfs_cleansz + sblock->lfs_segtabsz;
-	dp = getino(sblock->lfs_ifile);
+	lbn = ino/lfs_sb_getifpb(sblock) + lfs_sb_getcleansz(sblock) + lfs_sb_getsegtabsz(sblock);
+	dp = getino(lfs_sb_getifile(sblock));
 	/* XXX XXX this is horribly unsafe */
 	ldp = (struct ulfs1_dinode *)dp;
 	blkno = lfs_bmap(sblock, ldp ,lbn);
 	if (blkno != ifblkno)
 		bread(LFS_FSBTODB(sblock, blkno), (char *)ifileblock,
-		    sblock->lfs_bsize);
-	return ifileblock + (ino % sblock->lfs_ifpb);
+		    lfs_sb_getbsize(sblock));
+	return ifileblock + (ino % lfs_sb_getifpb(sblock));
 }
 
 /* Search a block for a specific dinode. */
@@ -321,12 +321,12 @@ getino(ino_t inum)
 	static union dinode empty_dinode; /* Always stays zeroed */
 	struct ulfs1_dinode *dp;
 
-	if(inum == sblock->lfs_ifile) {
+	if(inum == lfs_sb_getifile(sblock)) {
 		/* Load the ifile inode if not already */
 		if(ifile_dinode.dlp1.di_inumber == 0) {
-			blkno = sblock->lfs_idaddr;
+			blkno = lfs_sb_getidaddr(sblock);
 			bread(LFS_FSBTODB(sblock, blkno), (char *)inoblock, 
-				(int)sblock->lfs_bsize);
+				(int)lfs_sb_getbsize(sblock));
 			dp = lfs_ifind(sblock, inum, inoblock);
 			ifile_dinode.dlp1 = *dp; /* Structure copy */
 		}
@@ -340,7 +340,7 @@ getino(ino_t inum)
 
 	if(blkno != inoblkno) {
 		bread(LFS_FSBTODB(sblock, blkno), (char *)inoblock, 
-			(int)sblock->lfs_bsize);
+			(int)lfs_sb_getbsize(sblock));
 #ifdef notyet
 		if (needswap)
 			for (i = 0; i < MAXINOPB; i++)

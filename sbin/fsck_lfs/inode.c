@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.54 2015/06/16 23:18:55 christos Exp $	 */
+/* $NetBSD: inode.c,v 1.55 2015/07/24 06:56:41 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ ckinode(struct ulfs1_dinode *dp, struct inodesc *idesc)
 			dp->di_blocks == 0))))
 		return (KEEPON);
 	dino = *dp;
-	ndb = howmany(dino.di_size, fs->lfs_bsize);
+	ndb = howmany(dino.di_size, lfs_sb_getbsize(fs));
 
 	thisvp = vget(fs, idesc->id_number);
 	for (lbn = 0; lbn < ULFS_NDADDR; lbn++) {
@@ -155,7 +155,7 @@ ckinode(struct ulfs1_dinode *dp, struct inodesc *idesc)
 				idesc->id_numfrags =
 			    	lfs_numfrags(fs, lfs_fragroundup(fs, offset));
 			} else
-				idesc->id_numfrags = fs->lfs_frag;
+				idesc->id_numfrags = lfs_sb_getfrag(fs);
 		}
 		if (*ap == 0) {
 			if (idesc->id_type == DATA && ndb >= 0) {
@@ -168,7 +168,7 @@ ckinode(struct ulfs1_dinode *dp, struct inodesc *idesc)
 					vp = vget(fs, idesc->id_number);
 					dp = VTOD(vp);
 					dp->di_size = (ap - &dino.di_db[0]) *
-					    fs->lfs_bsize;
+					    lfs_sb_getbsize(fs);
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
 					rerun = 1;
@@ -187,9 +187,9 @@ ckinode(struct ulfs1_dinode *dp, struct inodesc *idesc)
 		if (ret & STOP)
 			return (ret);
 	}
-	idesc->id_numfrags = fs->lfs_frag;
-	remsize = dino.di_size - fs->lfs_bsize * ULFS_NDADDR;
-	sizepb = fs->lfs_bsize;
+	idesc->id_numfrags = lfs_sb_getfrag(fs);
+	remsize = dino.di_size - lfs_sb_getbsize(fs) * ULFS_NDADDR;
+	sizepb = lfs_sb_getbsize(fs);
 	for (ap = &dino.di_ib[0], n = 1; n <= ULFS_NIADDR; ap++, n++) {
 		if (*ap) {
 			idesc->id_blkno = *ap;
@@ -245,10 +245,10 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 		return (SKIP);
 
 	devvp = fs->lfs_devvp;
-	bread(devvp, LFS_FSBTODB(fs, idesc->id_blkno), fs->lfs_bsize,
+	bread(devvp, LFS_FSBTODB(fs, idesc->id_blkno), lfs_sb_getbsize(fs),
 	    0, &bp);
 	ilevel--;
-	for (sizepb = fs->lfs_bsize, i = 0; i < ilevel; i++)
+	for (sizepb = lfs_sb_getbsize(fs), i = 0; i < ilevel; i++)
 		sizepb *= LFS_NINDIR(fs);
 	if (isize > sizepb * LFS_NINDIR(fs))
 		nif = LFS_NINDIR(fs);
@@ -356,7 +356,7 @@ cacheino(struct ulfs1_dinode * dp, ino_t inumber)
 	struct inoinfo **inpp, **ninpsort;
 	unsigned int blks;
 
-	blks = howmany(dp->di_size, fs->lfs_bsize);
+	blks = howmany(dp->di_size, lfs_sb_getbsize(fs));
 	if (blks > ULFS_NDADDR)
 		blks = ULFS_NDADDR + ULFS_NIADDR;
 	inp = emalloc(sizeof(*inp) + (blks - 1) * sizeof(ulfs_daddr_t));
@@ -463,8 +463,8 @@ clearinode(ino_t inumber)
 		return;
 	}
 	ifp->if_daddr = LFS_UNUSED_DADDR;
-	ifp->if_nextfree = fs->lfs_freehd;
-	fs->lfs_freehd = inumber;
+	ifp->if_nextfree = lfs_sb_getfreehd(fs);
+	lfs_sb_setfreehd(fs, inumber);
 	sbdirty();
 	VOP_BWRITE(bp);
 
@@ -608,14 +608,14 @@ allocino(ino_t request, int type)
 	if (vp == NULL)
 		return (0);
 	dp = (VTOI(vp)->i_din.ffs1_din);
-	bp = getblk(vp, 0, fs->lfs_fsize);
+	bp = getblk(vp, 0, lfs_sb_getfsize(fs));
 	VOP_BWRITE(bp);
 	dp->di_mode = type;
 	(void) time(&t);
 	dp->di_atime = t;
 	dp->di_mtime = dp->di_ctime = dp->di_atime;
-	dp->di_size = fs->lfs_fsize;
-	dp->di_blocks = lfs_btofsb(fs, fs->lfs_fsize);
+	dp->di_size = lfs_sb_getfsize(fs);
+	dp->di_blocks = lfs_btofsb(fs, lfs_sb_getfsize(fs));
 	n_files++;
 	inodirty(VTOI(vp));
 	typemap[ino] = LFS_IFTODT(type);

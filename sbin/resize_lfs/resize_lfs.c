@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.9 2014/03/23 05:38:14 dholland Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.10 2015/07/24 06:56:41 dholland Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -134,7 +134,7 @@ main(int argc, char **argv)
 	close(devfd);
 
 	/* Calculate new number of segments. */
-	newnsegs = (newsize * secsize) / fs->lfs_ssize;
+	newnsegs = (newsize * secsize) / lfs_sb_getssize(fs);
 	if (newnsegs == fs->lfs_nseg) {
 		errx(0, "the filesystem is unchanged.");
 	}
