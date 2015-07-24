@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.128 2013/11/27 17:24:44 christos Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.129 2015/07/24 06:56:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.128 2013/11/27 17:24:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.129 2015/07/24 06:56:42 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,8 +245,8 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 		if (lfs_fits(fs, fsb + fs->lfs_ravail + fs->lfs_favail))
 			break;
 
-		error = mtsleep(&fs->lfs_avail, PCATCH | PUSER, "lfs_reserve",
-				0, &lfs_lock);
+		error = mtsleep(&fs->lfs_availsleep, PCATCH | PUSER,
+				"lfs_reserve", 0, &lfs_lock);
 		if (error) {
 			mutex_exit(&lfs_lock);
 			return error;
@@ -355,19 +355,20 @@ lfs_bwrite(void *v)
 int
 lfs_fits(struct lfs *fs, int fsb)
 {
-	int needed;
+	int64_t needed;
 
 	ASSERT_NO_SEGLOCK(fs);
-	needed = fsb + lfs_btofsb(fs, fs->lfs_sumsize) +
-		 ((howmany(fs->lfs_uinodes + 1, LFS_INOPB(fs)) + fs->lfs_segtabsz +
+	needed = fsb + lfs_btofsb(fs, lfs_sb_getsumsize(fs)) +
+		 ((howmany(lfs_sb_getuinodes(fs) + 1, LFS_INOPB(fs)) +
+		   lfs_sb_getsegtabsz(fs) +
 		   1) << (fs->lfs_bshift - fs->lfs_ffshift));
 
-	if (needed >= fs->lfs_avail) {
+	if (needed >= lfs_sb_getavail(fs)) {
 #ifdef DEBUG
 		DLOG((DLOG_AVAIL, "lfs_fits: no fit: fsb = %ld, uinodes = %ld, "
-		      "needed = %ld, avail = %ld\n",
-		      (long)fsb, (long)fs->lfs_uinodes, (long)needed,
-		      (long)fs->lfs_avail));
+		      "needed = %jd, avail = %jd\n",
+		      (long)fsb, (long)fs->lfs_uinodes, (intmax_t)needed,
+		      (intmax_t)lfs_sb_getavail(fs)));
 #endif
 		return 0;
 	}
@@ -411,7 +412,8 @@ lfs_availwait(struct lfs *fs, int fsb)
 		if (LFS_SEGLOCK_HELD(fs))
 			panic("lfs_availwait: deadlock");
 #endif
-		error = tsleep(&fs->lfs_avail, PCATCH | PUSER, "cleaner", 0);
+		error = tsleep(&fs->lfs_availsleep, PCATCH | PUSER,
+			       "cleaner", 0);
 		if (error)
 			return (error);
 	}
@@ -480,7 +482,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		}
 		mutex_exit(&lfs_lock);
-		fs->lfs_avail -= fsb;
+		lfs_sb_subavail(fs, fsb);
 
 		mutex_enter(&bufcache_lock);
 		mutex_enter(vp->v_interlock);
@@ -596,8 +598,8 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 	wakeup(&lfs_writing);
 }
 
-#define INOCOUNT(fs) howmany((fs)->lfs_uinodes, LFS_INOPB(fs))
-#define INOBYTES(fs) ((fs)->lfs_uinodes * sizeof (struct ulfs1_dinode))
+#define INOCOUNT(fs) howmany(lfs_sb_getuinodes(fs), LFS_INOPB(fs))
+#define INOBYTES(fs) (lfs_sb_getuinodes(fs) * sizeof (struct ulfs1_dinode))
 
 /*
  * make sure that we don't have too many locked buffers.

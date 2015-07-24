@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.66 2015/07/24 06:53:24 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.67 2015/07/24 06:56:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -70,6 +70,7 @@
 #include <sys/queue.h>
 #include <sys/condvar.h>
 #include <sys/mount.h>			/* XXX for MNAMELEN */
+#define STRUCT_LFS struct salfs
 #include <ufs/lfs/lfs.h>
 #else
 #include <ufs/ffs/fs.h>
@@ -102,34 +103,11 @@
 #ifdef LIBSA_LFS
 /*
  * In-core LFS superblock - just the on-disk one.
+ * XXX: struct salfs is currently in lfs.h
  */
-typedef struct dlfs FS;
-#define fs_magic	dlfs_magic
-#define fs_maxsymlinklen dlfs_maxsymlinklen
-
-/* XXX these will go away in the near future */
-#undef lfs_bmask
-#define lfs_bmask dlfs_bmask
-#undef lfs_ifile
-#define lfs_ifile dlfs_ifile
-#undef lfs_ifpb
-#define lfs_ifpb dlfs_ifpb
-#undef lfs_cleansz
-#define lfs_cleansz dlfs_cleansz
-#undef lfs_segtabsz
-#define lfs_segtabsz dlfs_segtabsz
-#undef lfs_idaddr
-#define lfs_idaddr dlfs_idaddr
-#undef lfs_inopb
-#define lfs_inopb dlfs_inopb
-#undef lfs_bshift
-#define lfs_bshift dlfs_bshift
-#undef lfs_bsize
-#define lfs_bsize dlfs_bsize
-#undef lfs_ffmask
-#define lfs_ffmask dlfs_ffmask
-#undef lfs_fsbtodb
-#define lfs_fsbtodb dlfs_fsbtodb
+typedef struct salfs FS;
+#define fs_magic	lfs_dlfs.dlfs_magic
+#define fs_maxsymlinklen lfs_dlfs.dlfs_maxsymlinklen
 
 #define FS_MAGIC	LFS_MAGIC
 #define SBLOCKSIZE	LFS_SBPAD
@@ -227,14 +205,14 @@ find_inode_sector(ino32_t inumber, struct open_file *f, daddr_t *isp)
 	size_t buf_after_ent;
 	int rc;
 
-	rc = read_inode(fs->lfs_ifile, f);
+	rc = read_inode(lfs_sb_getifile(fs), f);
 	if (rc)
 		return rc;
 
 	ifileent_blkno =
-	    (inumber / fs->lfs_ifpb) + fs->lfs_cleansz + fs->lfs_segtabsz;
-	fp->f_seekp = (off_t)ifileent_blkno * fs->fs_bsize +
-	    (inumber % fs->lfs_ifpb) * sizeof (IFILE_Vx);
+	    (inumber / lfs_sb_getifpb(fs)) + lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs);
+	fp->f_seekp = (off_t)ifileent_blkno * lfs_sb_getbsize(fs) +
+	    (inumber % lfs_sb_getifpb(fs)) * sizeof (IFILE_Vx);
 	rc = buf_read_file(f, &ent_in_buf, &buf_after_ent);
 	if (rc)
 		return rc;
@@ -267,8 +245,8 @@ read_inode(ino32_t inumber, struct open_file *f)
 #endif
 
 #ifdef LIBSA_LFS
-	if (inumber == fs->lfs_ifile)
-		inode_sector = FSBTODB(fs, fs->lfs_idaddr);
+	if (inumber == lfs_sb_getifile(fs))
+		inode_sector = FSBTODB(fs, lfs_sb_getidaddr(fs));
 	else if ((rc = find_inode_sector(inumber, f, &inode_sector)) != 0)
 		return rc;
 #else
