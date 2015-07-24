@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.13 2015/07/24 05:19:13 ryo Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.14 2015/07/24 05:20:01 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.13 2015/07/24 05:19:13 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.14 2015/07/24 05:20:01 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -116,7 +116,7 @@ a9tmr_match(device_t parent, cfdata_t cf, void *aux)
 static void
 a9tmr_attach(device_t parent, device_t self, void *aux)
 {
-        struct a9tmr_softc *sc = &a9tmr_sc;
+	struct a9tmr_softc *sc = &a9tmr_sc;
 	struct mpcore_attach_args * const mpcaa = aux;
 	prop_dictionary_t dict = device_properties(self);
 	char freqbuf[sizeof("XXX SHz")];
@@ -191,7 +191,8 @@ a9tmr_init_cpu_clock(struct cpu_info *ci)
 	 */
 	uint32_t ctl = a9tmr_global_read(sc, TMR_GBL_CTL);
 	if (ctl & TMR_GBL_CTL_CMP_ENABLE) {
-		a9tmr_global_write(sc, TMR_GBL_CTL, ctl & ~TMR_GBL_CTL_CMP_ENABLE);
+		a9tmr_global_write(sc, TMR_GBL_CTL,
+		    ctl & ~TMR_GBL_CTL_CMP_ENABLE);
 	}
 
 	/*
@@ -205,7 +206,8 @@ a9tmr_init_cpu_clock(struct cpu_info *ci)
 	 * Re-enable the comparator and now enable interrupts.
 	 */
 	a9tmr_global_write(sc, TMR_GBL_INT, 1);	/* clear interrupt pending */
-	ctl |= TMR_GBL_CTL_CMP_ENABLE | TMR_GBL_CTL_INT_ENABLE | TMR_GBL_CTL_AUTO_INC | TMR_CTL_ENABLE;
+	ctl |= TMR_GBL_CTL_CMP_ENABLE | TMR_GBL_CTL_INT_ENABLE |
+	    TMR_GBL_CTL_AUTO_INC | TMR_CTL_ENABLE;
 	a9tmr_global_write(sc, TMR_GBL_CTL, ctl);
 #if 0
 	printf("%s: %s: ctl %#x autoinc %u cmp %#x%08x now %#"PRIx64"\n",
@@ -242,7 +244,7 @@ void
 cpu_initclocks(void)
 {
 	struct a9tmr_softc * const sc = &a9tmr_sc;
-	
+
 	KASSERT(sc->sc_dev != NULL);
 	KASSERT(sc->sc_freq != 0);
 
@@ -290,7 +292,8 @@ a9tmr_delay(unsigned int n)
 
 	KASSERT(sc != NULL);
 
-	uint32_t freq = sc->sc_freq ? sc->sc_freq : curcpu()->ci_data.cpu_cc_freq / 2;
+	uint32_t freq = sc->sc_freq ? sc->sc_freq :
+	    curcpu()->ci_data.cpu_cc_freq / 2;
 	KASSERT(freq != 0);
 
 	/*
@@ -319,11 +322,11 @@ clockhandler(void *arg)
 	struct clockframe * const cf = arg;
 	struct a9tmr_softc * const sc = &a9tmr_sc;
 	struct cpu_info * const ci = curcpu();
-	
+
 	const uint64_t now = a9tmr_gettime(sc);
 	uint64_t delta = now - ci->ci_lastintr;
 
-	a9tmr_global_write(sc, TMR_GBL_INT, 1);	// Ack the interrupt
+	a9tmr_global_write(sc, TMR_GBL_INT, 1);	/* Ack the interrupt */
 
 #if 0
 	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n", 
