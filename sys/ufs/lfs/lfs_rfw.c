@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.21 2015/07/16 08:31:45 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.22 2015/07/24 06:56:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.21 2015/07/16 08:31:45 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.22 2015/07/24 06:56:42 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -192,7 +192,8 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	/* No need to write, the block is already on disk */
 	if (bp->b_oflags & BO_DELWRI) {
 		LFS_UNLOCK_BUF(bp);
-		fs->lfs_avail += lfs_btofsb(fs, bp->b_bcount);
+		lfs_sb_addavail(fs, lfs_btofsb(fs, bp->b_bcount));
+		/* XXX should this wake up fs->lfs_availsleep? */
 	}
 	brelse(bp, BC_INVAL);
 
@@ -208,7 +209,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 
 		if (lbn < ULFS_NDADDR)
 			newsize = ip->i_ffs1_size = (lbn << fs->lfs_bshift) +
-				(size - fs->lfs_fsize) + 1;
+				(size - lfs_sb_getfsize(fs)) + 1;
 		else
 			newsize = ip->i_ffs1_size = (lbn << fs->lfs_bshift) + 1;
 
@@ -387,7 +388,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			offset = -1;
 			goto err1;
 		}
-		if (ssp->ss_create < fs->lfs_tstamp) {
+		if (ssp->ss_create < lfs_sb_gettstamp(fs)) {
 			DLOG((DLOG_RF, "Old data at 0x%" PRIx64 "\n", offset));
 			offset = -1;
 			goto err1;
@@ -440,7 +441,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 		if (ninos && *iaddr == offset) {
 			if (flags & CHECK_CKSUM) {
 				/* Read in the head and add to the buffer */
-				error = bread(devvp, LFS_FSBTODB(fs, offset), fs->lfs_bsize,
+				error = bread(devvp, LFS_FSBTODB(fs, offset), lfs_sb_getbsize(fs),
 					      0, &dbp);
 				if (error) {
 					offset = -1;
@@ -462,7 +463,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			--i; /* compensate */
 			continue;
 		}
-		size = fs->lfs_bsize;
+		size = lfs_sb_getbsize(fs);
 		for (j = 0; j < fip->fi_nblocks; ++j) {
 			if (j == fip->fi_nblocks - 1)
 				size = fip->fi_lastlength;
@@ -502,7 +503,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	}
 
 	/* If we're at the end of the segment, move to the next */
-	if (lfs_dtosn(fs, offset + lfs_btofsb(fs, fs->lfs_sumsize + fs->lfs_bsize)) !=
+	if (lfs_dtosn(fs, offset + lfs_btofsb(fs, fs->lfs_sumsize + lfs_sb_getbsize(fs))) !=
 	   lfs_dtosn(fs, offset)) {
 		if (lfs_dtosn(fs, offset) == lfs_dtosn(fs, ssp->ss_next)) {
 			offset = -1;
@@ -514,7 +515,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	}
 
 	if (flags & CHECK_UPDATE) {
-		fs->lfs_avail -= (offset - oldoffset);
+		lfs_sb_subavail(fs, offset - oldoffset);
 		/* Don't clog the buffer queue */
 		mutex_enter(&lfs_lock);
 		if (locked_queue_count > LFS_MAX_BUFS ||
@@ -532,7 +533,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 
 	/* XXX should we update the serial number even for bad psegs? */
 	if ((flags & CHECK_UPDATE) && offset > 0 && fs->lfs_version > 1)
-		fs->lfs_serial = nextserial;
+		lfs_sb_setserial(fs, nextserial);
 	return offset;
 }
 
@@ -570,7 +571,7 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 		 * the segments in question dirty, so they won't be
 		 * reallocated.
 		 */
-		lastgoodpseg = oldoffset = offset = fs->lfs_offset;
+		lastgoodpseg = oldoffset = offset = lfs_sb_getoffset(fs);
 		flags = 0x0;
 		DLOG((DLOG_RF, "LFS roll forward phase 1: start at offset 0x%"
 		      PRIx64 "\n", offset));
@@ -579,7 +580,7 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 			--fs->lfs_nclean;
 		sup->su_flags |= SEGUSE_DIRTY;
 		LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, offset), bp);
-		nextserial = fs->lfs_serial + 1;
+		nextserial = lfs_sb_getserial(fs) + 1;
 		while ((offset = check_segsum(fs, offset, nextserial,
 		    cred, CHECK_CKSUM, &flags, l)) > 0) {
 			nextserial++;
@@ -613,13 +614,13 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 		}
 		DLOG((DLOG_RF, "LFS roll forward phase 1: completed: "
 		      "lastgoodpseg=0x%" PRIx64 "\n", lastgoodpseg));
-		oldoffset = fs->lfs_offset;
-		if (fs->lfs_offset != lastgoodpseg) {
+		oldoffset = lfs_sb_getoffset(fs);
+		if (lfs_sb_getoffset(fs) != lastgoodpseg) {
 			/* Don't overwrite what we're trying to preserve */
-			offset = fs->lfs_offset;
-			fs->lfs_offset = lastgoodpseg;
-			fs->lfs_curseg = lfs_sntod(fs, lfs_dtosn(fs, fs->lfs_offset));
-			for (sn = curseg = lfs_dtosn(fs, fs->lfs_curseg);;) {
+			offset = lfs_sb_getoffset(fs);
+			lfs_sb_setoffset(fs, lastgoodpseg);
+			lfs_sb_setcurseg(fs, lfs_sntod(fs, lfs_dtosn(fs, lfs_sb_getoffset(fs))));
+			for (sn = curseg = lfs_dtosn(fs, lfs_sb_getcurseg(fs));;) {
 				sn = (sn + 1) % fs->lfs_nseg;
 				if (sn == curseg)
 					panic("lfs_mountfs: no clean segments");
@@ -629,7 +630,7 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 				if (!dirty)
 					break;
 			}
-			fs->lfs_nextseg = lfs_sntod(fs, sn);
+			lfs_sb_setnextseg(fs, lfs_sntod(fs, sn));
 
 			/*
 			 * Phase II: Roll forward from the first superblock.
@@ -638,7 +639,7 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 				DLOG((DLOG_RF, "LFS roll forward phase 2: 0x%"
 				      PRIx64 "\n", offset));
 				offset = check_segsum(fs, offset,
-				    fs->lfs_serial + 1, cred, CHECK_UPDATE,
+				    lfs_sb_getserial(fs) + 1, cred, CHECK_UPDATE,
 				    NULL, l);
 			}
 
@@ -647,8 +648,8 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 			 */
 			lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
 			DLOG((DLOG_RF, "lfs_mountfs: roll forward ",
-			      "recovered %lld blocks\n",
-			      (long long)(lastgoodpseg - oldoffset)));
+			      "recovered %jd blocks\n",
+			      (intmax_t)(lastgoodpseg - oldoffset)));
 		}
 		DLOG((DLOG_RF, "LFS roll forward complete\n"));
 	}

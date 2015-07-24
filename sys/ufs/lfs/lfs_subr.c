@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.81 2015/07/16 08:31:45 dholland Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.82 2015/07/24 06:56:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.81 2015/07/16 08:31:45 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.82 2015/07/24 06:56:42 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ lfs_setup_resblks(struct lfs *fs)
 	for (j = 0; j < LFS_N_SBLOCKS; j++, i++)
 		fs->lfs_resblk[i].size = LFS_SBPAD;
 	for (j = 0; j < LFS_N_IBLOCKS; j++, i++)
-		fs->lfs_resblk[i].size = fs->lfs_bsize;
+		fs->lfs_resblk[i].size = lfs_sb_getbsize(fs);
 	for (j = 0; j < LFS_N_CLUSTERS; j++, i++)
 		fs->lfs_resblk[i].size = MAXPHYS;
 	for (j = 0; j < LFS_N_CLEAN; j++, i++)
@@ -145,7 +145,7 @@ lfs_setup_resblks(struct lfs *fs)
 	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0, 0,
 		"lfssegpool", &pool_allocator_nointr, IPL_NONE);
 	maxbpp = ((fs->lfs_sumsize - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
-	maxbpp = MIN(maxbpp, lfs_segsize(fs) / fs->lfs_fsize + 2);
+	maxbpp = MIN(maxbpp, lfs_segsize(fs) / lfs_sb_getfsize(fs) + 2);
 	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0, 0,
 		"lfsbpppl", &pool_allocator_nointr, IPL_NONE);
 }
@@ -336,7 +336,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	 */
 	mutex_enter(&lfs_lock);
 	++fs->lfs_iocount;
-	fs->lfs_startseg = fs->lfs_curseg;
+	fs->lfs_startseg = lfs_sb_getcurseg(fs);
 	mutex_exit(&lfs_lock);
 	return 0;
 }
@@ -450,7 +450,7 @@ lfs_segunlock(struct lfs *fs)
 		KASSERT(sp->cbpp == sp->bpp + 1);
 
 		/* Free allocated segment summary */
-		fs->lfs_offset -= lfs_btofsb(fs, fs->lfs_sumsize);
+		lfs_sb_suboffset(fs, lfs_btofsb(fs, lfs_sb_getsumsize(fs)));
 		bp = *sp->bpp;
 		lfs_freebuf(fs, bp);
 
@@ -633,7 +633,7 @@ lfs_segunlock_relock(struct lfs *fs)
 	lfs_wakeup_cleaner(fs);
 	mutex_enter(&lfs_lock);
 	while (LFS_STARVED_FOR_SEGS(fs))
-		mtsleep(&fs->lfs_avail, PRIBIO, "relock", 0,
+		mtsleep(&fs->lfs_availsleep, PRIBIO, "relock", 0,
 			&lfs_lock);
 	mutex_exit(&lfs_lock);
 
@@ -658,6 +658,6 @@ lfs_wakeup_cleaner(struct lfs *fs)
 	if (fs->lfs_nowrap > 0)
 		return;
 
-	wakeup(&fs->lfs_nextseg);
+	wakeup(&fs->lfs_nextsegsleep);
 	wakeup(&lfs_allclean_wakeup);
 }

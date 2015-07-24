@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.326 2015/07/16 08:31:45 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.327 2015/07/24 06:56:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.326 2015/07/16 08:31:45 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.327 2015/07/24 06:56:42 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -462,9 +462,9 @@ lfs_writerd(void *arg)
 				fsflags = SEGM_SINGLE;
 
  				mutex_enter(&lfs_lock);
-				ooffset = fs->lfs_offset;
+				ooffset = lfs_sb_getoffset(fs);
 
-				if (fs->lfs_nextseg < fs->lfs_curseg && fs->lfs_nowrap) {
+				if (lfs_sb_getnextseg(fs) < lfs_sb_getcurseg(fs) && fs->lfs_nowrap) {
 					/* Don't try to write if we're suspended */
 					mutex_exit(&lfs_lock);
 					vfs_unbusy(mp, false, &nmp);
@@ -497,7 +497,7 @@ lfs_writerd(void *arg)
  					lfs_writer_leave(fs);
 					mutex_enter(&lfs_lock);
 				}
-				if (fs->lfs_offset != ooffset)
+				if (lfs_sb_getoffset(fs) != ooffset)
 					++wrote_something;
 				mutex_exit(&lfs_lock);
  			}
@@ -609,7 +609,7 @@ lfs_mountroot(void)
 	(void)copystr(mp->mnt_stat.f_mntonname, fs->lfs_fsmnt, MNAMELEN - 1, 0);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
-	setrootfstime((time_t)(VFSTOULFS(mp)->um_lfs->lfs_tstamp));
+	setrootfstime((time_t)lfs_sb_gettstamp(VFSTOULFS(mp)->um_lfs));
 	return (0);
 }
 
@@ -953,10 +953,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* Compatibility */
 	if (fs->lfs_version < 2) {
 		fs->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
-		fs->lfs_ibsize = fs->lfs_bsize;
+		lfs_sb_setibsize(fs, lfs_sb_getbsize(fs));
 		fs->lfs_s0addr = fs->lfs_sboffs[0];
-		fs->lfs_tstamp = fs->lfs_otstamp;
-		fs->lfs_fsbtodb = 0;
+		lfs_sb_settstamp(fs, lfs_sb_getotstamp(fs));
+		lfs_sb_setfsbtodb(fs, 0);
 	}
 	if (fs->lfs_resvseg == 0)
 		fs->lfs_resvseg = MIN(fs->lfs_minfreeseg - 1, \
@@ -1003,7 +1003,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_iocount = 0;
 	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
-	fs->lfs_uinodes = 0;
+	lfs_sb_setuinodes(fs, 0);
 	fs->lfs_ravail = 0;
 	fs->lfs_favail = 0;
 	fs->lfs_sbactive = 0;
@@ -1029,7 +1029,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* ulfs-level information */
 	fs->um_flags = 0;
 	fs->um_bptrtodb = fs->lfs_ffshift - DEV_BSHIFT;
-	fs->um_seqinc = fs->lfs_frag;
+	fs->um_seqinc = lfs_sb_getfrag(fs);
 	fs->um_nindir = fs->lfs_nindir;
 	fs->um_lognindir = ffs(fs->lfs_nindir) - 1;
 	fs->um_maxsymlinklen = fs->lfs_maxsymlinklen;
@@ -1051,7 +1051,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_LFS);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = LFS_MAXNAMLEN;
-	mp->mnt_stat.f_iosize = fs->lfs_bsize;
+	mp->mnt_stat.f_iosize = lfs_sb_getbsize(fs);
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_fs_bshift = fs->lfs_bshift;
 	if (fs->um_maxsymlinklen > 0)
@@ -1197,20 +1197,20 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * the superblock.
 	 */
 	LFS_CLEANERINFO(cip, fs, bp);
-	cip->clean = fs->lfs_nclean;
-	cip->dirty = fs->lfs_nseg - fs->lfs_nclean;
-	cip->avail = fs->lfs_avail;
-	cip->bfree = fs->lfs_bfree;
+	cip->clean = lfs_sb_getnclean(fs);
+	cip->dirty = lfs_sb_getnseg(fs) - lfs_sb_getnclean(fs);
+	cip->avail = lfs_sb_getavail(fs);
+	cip->bfree = lfs_sb_getbfree(fs);
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */
 
 	/*
 	 * Mark the current segment as ACTIVE, since we're going to
 	 * be writing to it.
 	 */
-	LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, fs->lfs_offset), bp);
+	LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, lfs_sb_getoffset(fs)), bp);
 	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
 	fs->lfs_nactive++;
-	LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, fs->lfs_offset), bp);  /* Ifile */
+	LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, lfs_sb_getoffset(fs)), bp);  /* Ifile */
 
 	/* Now that roll-forward is done, unlock the Ifile */
 	vput(vp);
@@ -1363,13 +1363,13 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	if (fs->lfs_magic != LFS_MAGIC)
 		panic("lfs_statvfs: magic");
 
-	sbp->f_bsize = fs->lfs_bsize;
-	sbp->f_frsize = fs->lfs_fsize;
-	sbp->f_iosize = fs->lfs_bsize;
+	sbp->f_bsize = lfs_sb_getbsize(fs);
+	sbp->f_frsize = lfs_sb_getfsize(fs);
+	sbp->f_iosize = lfs_sb_getbsize(fs);
 	sbp->f_blocks = LFS_EST_NONMETA(fs) - VTOI(fs->lfs_ivnode)->i_lfs_effnblks;
 
 	sbp->f_bfree = LFS_EST_BFREE(fs);
-	KASSERT(sbp->f_bfree <= fs->lfs_dsize);
+	KASSERT(sbp->f_bfree <= lfs_sb_getdsize(fs));
 #if 0
 	if (sbp->f_bfree < 0)
 		sbp->f_bfree = 0;
@@ -1381,9 +1381,9 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	else
 		sbp->f_bavail = 0;
 
-	sbp->f_files = fs->lfs_bfree / lfs_btofsb(fs, fs->lfs_ibsize)
+	sbp->f_files = lfs_sb_getbfree(fs) / lfs_btofsb(fs, lfs_sb_getibsize(fs))
 	    * LFS_INOPB(fs);
-	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
+	sbp->f_ffree = sbp->f_files - lfs_sb_getnfiles(fs);
 	sbp->f_favail = sbp->f_ffree;
 	sbp->f_fresvd = 0;
 	copy_statvfs_info(sbp, mp);
@@ -1415,7 +1415,7 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	 * XXX the log, we'll likely block.
 	 */
 	mutex_enter(&lfs_lock);
-	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
+	if (fs->lfs_nowrap && lfs_sb_getnextseg(fs) < lfs_sb_getcurseg(fs)) {
 		mutex_exit(&lfs_lock);
 		return 0;
 	}
@@ -1424,7 +1424,8 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	lfs_writer_enter(fs, "lfs_dirops");
 
 	/* All syncs must be checkpoints until roll-forward is implemented. */
-	DLOG((DLOG_FLUSH, "lfs_sync at 0x%x\n", fs->lfs_offset));
+	DLOG((DLOG_FLUSH, "lfs_sync at 0x%jx\n",
+	      (uintmax_t)lfs_sb_getoffset(fs)));
 	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
 	lfs_writer_leave(fs);
 #ifdef LFS_QUOTA
@@ -1543,7 +1544,7 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 
 	/* Translate the inode number to a disk address. */
 	if (ino == LFS_IFILE_INUM)
-		daddr = fs->lfs_idaddr;
+		daddr = lfs_sb_getidaddr(fs);
 	else {
 		/* XXX bounds-check this too */
 		LFS_IENTRY(ifp, fs, ino, bp);
@@ -1580,7 +1581,7 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 	retries = 0;
 again:
 	error = bread(ump->um_devvp, LFS_FSBTODB(fs, daddr),
-		(fs->lfs_version == 1 ? fs->lfs_bsize : fs->lfs_ibsize),
+		(fs->lfs_version == 1 ? lfs_sb_getbsize(fs) : fs->lfs_ibsize),
 		0, &bp);
 	if (error) {
 		lfs_deinit_vnode(ump, vp);
@@ -1771,7 +1772,7 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	if (lfh.lfid_ino >
 	    ((VTOI(fs->lfs_ivnode)->i_ffs1_size >> fs->lfs_bshift) -
-	     fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb)
+	     lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs)) * lfs_sb_getifpb(fs))
 		return ESTALE;
 
 	return (ulfs_fhtovp(mp, &lfh.lfid_ufid, vpp));
@@ -1987,9 +1988,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 				       UVMPAGER_MAPIN_WAITOK : 0))) == 0x0) {
 		DLOG((DLOG_PAGE, "lfs_gop_write: forcing write\n"));
 #if 0
-		      " with nfinfo=%d at offset 0x%x\n",
+		      " with nfinfo=%d at offset 0x%jx\n",
 		      (int)((SEGSUM *)(sp->segsum))->ss_nfinfo,
-		      (unsigned)fs->lfs_offset));
+		      (uintmax_t)lfs_sb_getoffset(fs)));
 #endif
 		lfs_updatemeta(sp);
 		lfs_release_finfo(fs);
@@ -2116,7 +2117,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		mutex_exit(&lfs_lock);
 	}
 
-	if ((sp->seg_flags & SEGM_SINGLE) && fs->lfs_curseg != fs->lfs_startseg)
+	if ((sp->seg_flags & SEGM_SINGLE) && lfs_sb_getcurseg(fs) != fs->lfs_startseg)
 		return EAGAIN;
 
 	return (0);
@@ -2201,7 +2202,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	memset(ip->i_lfs_fragsize, 0, ULFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
 	if (vp->v_type != VLNK || ip->i_size >= ip->i_lfs->um_maxsymlinklen) {
 #ifdef DEBUG
-		for (i = (ip->i_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
+		for (i = (ip->i_size + lfs_sb_getbsize(fs) - 1) >> fs->lfs_bshift;
 		    i < ULFS_NDADDR; i++) {
 			if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
 			    i == 0)
@@ -2247,7 +2248,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	uvm_vnp_setsize(vp, ip->i_size);
 
 	/* Initialize hiblk from file size */
-	ip->i_lfs_hiblk = lfs_lblkno(ip->i_lfs, ip->i_size + ip->i_lfs->lfs_bsize - 1) - 1;
+	ip->i_lfs_hiblk = lfs_lblkno(ip->i_lfs, ip->i_size + lfs_sb_getbsize(ip->i_lfs) - 1) - 1;
 
 	*vpp = vp;
 }
@@ -2313,8 +2314,8 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	}
 
 	/* Note old and new segment table endpoints, and old ifile size */
-	olast = fs->lfs_cleansz + fs->lfs_segtabsz;
-	nlast = howmany(newnsegs, fs->lfs_sepb) + fs->lfs_cleansz;
+	olast = lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs);
+	nlast = howmany(newnsegs, lfs_sb_getsepb(fs)) + lfs_sb_getcleansz(fs);
 	ilast = ivp->v_size >> fs->lfs_bshift;
 	noff = nlast - olast;
 
@@ -2327,21 +2328,21 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	rw_enter(&fs->lfs_iflock, RW_WRITER);
 	for (i = 0; i < ilast; i++) {
 		/* XXX what to do if bread fails? */
-		bread(ivp, i, fs->lfs_bsize, 0, &bp);
+		bread(ivp, i, lfs_sb_getbsize(fs), 0, &bp);
 		brelse(bp, 0);
 	}
 
 	/* Allocate new Ifile blocks */
 	for (i = ilast; i < ilast + noff; i++) {
-		if (lfs_balloc(ivp, i * fs->lfs_bsize, fs->lfs_bsize, NOCRED, 0,
+		if (lfs_balloc(ivp, i * lfs_sb_getbsize(fs), lfs_sb_getbsize(fs), NOCRED, 0,
 			       &bp) != 0)
 			panic("balloc extending ifile");
-		memset(bp->b_data, 0, fs->lfs_bsize);
+		memset(bp->b_data, 0, lfs_sb_getbsize(fs));
 		VOP_BWRITE(bp->b_vp, bp);
 	}
 
 	/* Register new ifile size */
-	ip->i_size += noff * fs->lfs_bsize; 
+	ip->i_size += noff * lfs_sb_getbsize(fs); 
 	ip->i_ffs1_size = ip->i_size;
 	uvm_vnp_setsize(ivp, ip->i_size);
 
@@ -2357,13 +2358,13 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 			inc = -1;
 		}
 		for (i = start; i != end; i += inc) {
-			if (bread(ivp, i, fs->lfs_bsize,
+			if (bread(ivp, i, lfs_sb_getbsize(fs),
 			    B_MODIFY, &bp) != 0)
 				panic("resize: bread dst blk failed");
-			if (bread(ivp, i - noff, fs->lfs_bsize,
+			if (bread(ivp, i - noff, lfs_sb_getbsize(fs),
 			    0, &obp))
 				panic("resize: bread src blk failed");
-			memcpy(bp->b_data, obp->b_data, fs->lfs_bsize);
+			memcpy(bp->b_data, obp->b_data, lfs_sb_getbsize(fs));
 			VOP_BWRITE(bp->b_vp, bp);
 			brelse(obp, 0);
 		}
@@ -2372,12 +2373,12 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	/* If we are expanding, write the new empty SEGUSE entries */
 	if (newnsegs > oldnsegs) {
 		for (i = oldnsegs; i < newnsegs; i++) {
-			if ((error = bread(ivp, i / fs->lfs_sepb +
-					   fs->lfs_cleansz, fs->lfs_bsize,
+			if ((error = bread(ivp, i / lfs_sb_getsepb(fs) +
+					   lfs_sb_getcleansz(fs), lfs_sb_getbsize(fs),
 					   B_MODIFY, &bp)) != 0)
 				panic("lfs: ifile read: %d", error);
-			while ((i + 1) % fs->lfs_sepb && i < newnsegs) {
-				sup = &((SEGUSE *)bp->b_data)[i % fs->lfs_sepb];
+			while ((i + 1) % lfs_sb_getsepb(fs) && i < newnsegs) {
+				sup = &((SEGUSE *)bp->b_data)[i % lfs_sb_getsepb(fs)];
 				memset(sup, 0, sizeof(*sup));
 				i++;
 			}
@@ -2405,18 +2406,18 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	 */
 	gain = (newnsegs - oldnsegs);
 	fs->lfs_nseg = newnsegs;
-	fs->lfs_segtabsz = nlast - fs->lfs_cleansz;
-	fs->lfs_size += gain * lfs_btofsb(fs, fs->lfs_ssize);
-	fs->lfs_dsize += gain * lfs_btofsb(fs, fs->lfs_ssize) - lfs_btofsb(fs, sbbytes);
-	fs->lfs_bfree += gain * lfs_btofsb(fs, fs->lfs_ssize) - lfs_btofsb(fs, sbbytes)
-		       - gain * lfs_btofsb(fs, fs->lfs_bsize / 2);
+	lfs_sb_setsegtabsz(fs, nlast - lfs_sb_getcleansz(fs));
+	lfs_sb_addsize(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)));
+	lfs_sb_adddsize(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)) - lfs_btofsb(fs, sbbytes));
+	lfs_sb_addbfree(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)) - lfs_btofsb(fs, sbbytes)
+		       - gain * lfs_btofsb(fs, lfs_sb_getbsize(fs) / 2));
 	if (gain > 0) {
 		fs->lfs_nclean += gain;
-		fs->lfs_avail += gain * lfs_btofsb(fs, fs->lfs_ssize);
+		lfs_sb_addavail(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)));
 	} else {
 		fs->lfs_nclean -= cgain;
-		fs->lfs_avail -= cgain * lfs_btofsb(fs, fs->lfs_ssize) -
-				 lfs_btofsb(fs, csbbytes);
+		lfs_sb_subavail(fs, cgain * lfs_btofsb(fs, lfs_sb_getssize(fs)) -
+				 lfs_btofsb(fs, csbbytes));
 	}
 
 	/* Resize segment flag cache */
@@ -2434,7 +2435,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 
 	/* Update cleaner info so the cleaner can die */
 	/* XXX what to do if bread fails? */
-	bread(ivp, 0, fs->lfs_bsize, B_MODIFY, &bp);
+	bread(ivp, 0, lfs_sb_getbsize(fs), B_MODIFY, &bp);
 	((CLEANERINFO *)bp->b_data)->clean = fs->lfs_nclean;
 	((CLEANERINFO *)bp->b_data)->dirty = fs->lfs_nseg - fs->lfs_nclean;
 	VOP_BWRITE(bp->b_vp, bp);

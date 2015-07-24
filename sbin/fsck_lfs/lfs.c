@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.45 2015/05/31 15:44:30 hannken Exp $ */
+/* $NetBSD: lfs.c,v 1.46 2015/07/24 06:56:41 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -143,7 +143,7 @@ lfs_vop_bwrite(struct ubuf * bp)
 
 	fs = bp->b_vp->v_fs;
 	if (!(bp->b_flags & B_DELWRI)) {
-		fs->lfs_avail -= lfs_btofsb(fs, bp->b_bcount);
+		lfs_sb_subavail(fs, lfs_btofsb(fs, bp->b_bcount));
 	}
 	bp->b_flags |= B_DELWRI | B_LOCKED;
 	reassignbuf(bp, bp->b_vp);
@@ -204,7 +204,7 @@ ulfs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, s
 			brelse(bp, 0);
 
 		xap->in_exists = 1;
-		bp = getblk(vp, metalbn, fs->lfs_bsize);
+		bp = getblk(vp, metalbn, lfs_sb_getbsize(fs));
 
 		if (!(bp->b_flags & (B_DONE | B_DELWRI))) {
 			bp->b_blkno = LFS_FSBTODB(fs, daddr);
@@ -486,7 +486,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		bp->b_flags |= B_INVAL;
 		brelse(bp, 0);
 
-		dev_bsize = fs->lfs_fsize >> fs->lfs_fsbtodb;
+		dev_bsize = lfs_sb_getfsize(fs) >> fs->lfs_fsbtodb;
 	
 		if (tryalt) {
 			(void)bread(devvp, LFS_FSBTODB(fs, fs->lfs_sboffs[1]),
@@ -497,7 +497,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 			bp->b_flags |= B_INVAL;
 			brelse(bp, 0);
 	
-			if (check_sb(fs) || fs->lfs_idaddr <= 0) {
+			if (check_sb(fs) || lfs_sb_getidaddr(fs) <= 0) {
 				if (debug)
 					printf("Primary superblock is no good, using first alternate\n");
 				free(fs);
@@ -527,9 +527,9 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	/* Compatibility */
 	if (fs->lfs_version < 2) {
 		fs->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
-		fs->lfs_ibsize = fs->lfs_bsize;
+		fs->lfs_ibsize = lfs_sb_getbsize(fs);
 		fs->lfs_s0addr = fs->lfs_sboffs[0];
-		fs->lfs_tstamp = fs->lfs_otstamp;
+		lfs_sb_settstamp(fs, lfs_sb_getotstamp(fs));
 		fs->lfs_fsbtodb = 0;
 	}
 
@@ -540,13 +540,13 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	}
 
 	if (idaddr == 0)
-		idaddr = fs->lfs_idaddr;
+		idaddr = lfs_sb_getidaddr(fs);
 	else
-		fs->lfs_idaddr = idaddr;
+		lfs_sb_setidaddr(fs, idaddr);
 	/* NB: If dummy_read!=0, idaddr==0 here so we get a fake inode. */
 	fs->lfs_ivnode = lfs_raw_vget(fs,
-		(dummy_read ? LFS_IFILE_INUM : fs->lfs_ifile), devvp->v_fd,
-		idaddr);
+		(dummy_read ? LFS_IFILE_INUM : lfs_sb_getifile(fs)),
+		devvp->v_fd, idaddr);
 	if (fs->lfs_ivnode == NULL)
 		return NULL;
 
@@ -578,9 +578,9 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 	bc = 0;
 	hitclean = 0;
 	odaddr = -1;
-	daddr = osb->lfs_offset;
+	daddr = lfs_sb_getoffset(osb);
 	nodirop_daddr = daddr;
-	serial = osb->lfs_serial;
+	serial = lfs_sb_getserial(osb);
 	while (daddr != goal) {
 		/*
 		 * Don't mistakenly read a superblock, if there is one here.
@@ -649,7 +649,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 		daddr += lfs_btofsb(osb, osb->lfs_sumsize + bc);
 		if (lfs_dtosn(osb, odaddr) != lfs_dtosn(osb, daddr) ||
 		    lfs_dtosn(osb, daddr) != lfs_dtosn(osb, daddr +
-			lfs_btofsb(osb, osb->lfs_sumsize + osb->lfs_bsize) - 1)) {
+			lfs_btofsb(osb, osb->lfs_sumsize + lfs_sb_getbsize(osb)) - 1)) {
 			daddr = sp->ss_next;
 		}
 
@@ -689,16 +689,16 @@ lfs_verify(struct lfs *sb0, struct lfs *sb1, struct uvnode *devvp, int debug)
 
 	osb = NULL;
 	if (debug)
-		pwarn("sb0 %lld, sb1 %lld",
-		      (long long) sb0->lfs_serial,
-		      (long long) sb1->lfs_serial);
+		pwarn("sb0 %ju, sb1 %ju",
+		      (uintmax_t) lfs_sb_getserial(sb0),
+		      (uintmax_t) lfs_sb_getserial(sb1));
 
 	if ((sb0->lfs_version == 1 &&
-		sb0->lfs_otstamp != sb1->lfs_otstamp) ||
+		lfs_sb_getotstamp(sb0) != lfs_sb_getotstamp(sb1)) ||
 	    (sb0->lfs_version > 1 &&
-		sb0->lfs_serial != sb1->lfs_serial)) {
+		lfs_sb_getserial(sb0) != lfs_sb_getserial(sb1))) {
 		if (sb0->lfs_version == 1) {
-			if (sb0->lfs_otstamp > sb1->lfs_otstamp) {
+			if (lfs_sb_getotstamp(sb0) > lfs_sb_getotstamp(sb1)) {
 				osb = sb1;
 				nsb = sb0;
 			} else {
@@ -706,7 +706,7 @@ lfs_verify(struct lfs *sb0, struct lfs *sb1, struct uvnode *devvp, int debug)
 				nsb = sb1;
 			}
 		} else {
-			if (sb0->lfs_serial > sb1->lfs_serial) {
+			if (lfs_sb_getserial(sb0) > lfs_sb_getserial(sb1)) {
 				osb = sb1;
 				nsb = sb0;
 			} else {
@@ -718,18 +718,18 @@ lfs_verify(struct lfs *sb0, struct lfs *sb1, struct uvnode *devvp, int debug)
 			printf("Attempting to verify newer checkpoint...");
 			fflush(stdout);
 		}
-		daddr = try_verify(osb, devvp, nsb->lfs_offset, debug);
+		daddr = try_verify(osb, devvp, lfs_sb_getoffset(nsb), debug);
 
 		if (debug)
 			printf("done.\n");
-		if (daddr == nsb->lfs_offset) {
-			pwarn("** Newer checkpoint verified, recovered %lld seconds of data\n",
-			    (long long) nsb->lfs_tstamp - (long long) osb->lfs_tstamp);
+		if (daddr == lfs_sb_getoffset(nsb)) {
+			pwarn("** Newer checkpoint verified; recovered %jd seconds of data\n",
+			    (intmax_t)(lfs_sb_gettstamp(nsb) - lfs_sb_gettstamp(osb)));
 			sbdirty();
 		} else {
-			pwarn("** Newer checkpoint invalid, lost %lld seconds of data\n", (long long) nsb->lfs_tstamp - (long long) osb->lfs_tstamp);
+			pwarn("** Newer checkpoint invalid; lost %jd seconds of data\n", (intmax_t)(lfs_sb_gettstamp(nsb) - lfs_sb_gettstamp(osb)));
 		}
-		return (daddr == nsb->lfs_offset ? nsb : osb);
+		return (daddr == lfs_sb_getoffset(nsb) ? nsb : osb);
 	}
 	/* Nothing to check */
 	return osb;
@@ -804,7 +804,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 			for (k = 0; k < fp->fi_nblocks; k++) {
 				len = (k == fp->fi_nblocks - 1 ?
 				       fp->fi_lastlength
-				       : fs->lfs_bsize);
+				       : lfs_sb_getbsize(fs));
 				bread(devvp, LFS_FSBTODB(fs, daddr), len,
 				    0, &bp);
 				datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
@@ -876,7 +876,7 @@ lfs_valloc(struct lfs *fs, ino_t ino)
 	brelse(bp, 0);
 
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
-	if (fs->lfs_freehd == LFS_UNUSED_INUM) {
+	if (lfs_sb_getfreehd(fs) == LFS_UNUSED_INUM) {
 		if ((error = extend_ifile(fs)) != 0) {
 			LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
 			return NULL;
@@ -885,7 +885,7 @@ lfs_valloc(struct lfs *fs, ino_t ino)
 
 	/* Set superblock modified bit and increment file count. */
         sbdirty();
-	++fs->lfs_nfiles;
+	lfs_sb_addnfiles(fs, 1);
 
         return lfs_raw_vget(fs, ino, fs->lfs_devvp->v_fd, 0x0);
 }
@@ -913,16 +913,16 @@ extend_ifile(struct lfs *fs)
 	ip = VTOI(vp);
 	blkno = lfs_lblkno(fs, ip->i_ffs1_size);
 
-	lfs_balloc(vp, ip->i_ffs1_size, fs->lfs_bsize, &bp);
-	ip->i_ffs1_size += fs->lfs_bsize;
+	lfs_balloc(vp, ip->i_ffs1_size, lfs_sb_getbsize(fs), &bp);
+	ip->i_ffs1_size += lfs_sb_getbsize(fs);
 	ip->i_flag |= IN_MODIFIED;
 	
-	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
-		fs->lfs_ifpb;
+	i = (blkno - lfs_sb_getsegtabsz(fs) - lfs_sb_getcleansz(fs)) *
+		lfs_sb_getifpb(fs);
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
 	LFS_PUT_HEADFREE(fs, cip, cbp, i);
-	max = i + fs->lfs_ifpb;
-	fs->lfs_bfree -= lfs_btofsb(fs, fs->lfs_bsize);
+	max = i + lfs_sb_getifpb(fs);
+	lfs_sb_subbfree(fs, lfs_btofsb(fs, lfs_sb_getbsize(fs)));
 
 	if (fs->lfs_version == 1) {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
@@ -946,8 +946,9 @@ extend_ifile(struct lfs *fs)
 	LFS_BWRITE_LOG(bp);
 
 #ifdef IN_FSCK_LFS
-	reset_maxino(((ip->i_ffs1_size >> fs->lfs_bshift) - fs->lfs_segtabsz -
-		     fs->lfs_cleansz) * fs->lfs_ifpb);
+	reset_maxino(((ip->i_ffs1_size >> fs->lfs_bshift)
+		      - lfs_sb_getsegtabsz(fs)
+		      - lfs_sb_getcleansz(fs)) * lfs_sb_getifpb(fs));
 #endif
 	return 0;
 }
@@ -1006,12 +1007,12 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 	lastblock = lfs_lblkno(fs, ip->i_ffs1_size);
 	if (lastblock < ULFS_NDADDR && lastblock < lbn) {
 		osize = lfs_blksize(fs, ip, lastblock);
-		if (osize < fs->lfs_bsize && osize > 0) {
-			if ((error = lfs_fragextend(vp, osize, fs->lfs_bsize,
+		if (osize < lfs_sb_getbsize(fs) && osize > 0) {
+			if ((error = lfs_fragextend(vp, osize, lfs_sb_getbsize(fs),
 						    lastblock,
 						    (bpp ? &bp : NULL))))
 				return (error);
-			ip->i_ffs1_size = (lastblock + 1) * fs->lfs_bsize;
+			ip->i_ffs1_size = (lastblock + 1) * lfs_sb_getbsize(fs);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (bpp)
 				(void) VOP_BWRITE(bp);
@@ -1037,7 +1038,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 				bp->b_blkno = UNWRITTEN;
 			}
 			ip->i_lfs_effnblks += frags;
-			fs->lfs_bfree -= frags;
+			lfs_sb_subbfree(fs, frags);
 			ip->i_ffs1_db[lbn] = UNWRITTEN;
 		} else {
 			if (nsize <= osize) {
@@ -1078,7 +1079,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 			bcount += frags;
 		}
 	}
-	fs->lfs_bfree -= bcount;
+	lfs_sb_subbfree(fs, bcount);
 	ip->i_lfs_effnblks += bcount;
 
 	if (daddr == UNASSIGNED) {
@@ -1093,7 +1094,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 			idaddr = ip->i_ffs1_ib[indirs[0].in_off];
 			for (i = 1; i < num; ++i) {
 				ibp = getblk(vp, indirs[i].in_lbn,
-				    fs->lfs_bsize);
+				    lfs_sb_getbsize(fs));
 				if (!indirs[i].in_exists) {
 					memset(ibp->b_data, 0, ibp->b_bufsize);
 					ibp->b_blkno = UNWRITTEN;
@@ -1149,7 +1150,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 			break;
 		    default:
 			idp = &indirs[num - 1];
-			if (bread(vp, idp->in_lbn, fs->lfs_bsize, 0, &ibp))
+			if (bread(vp, idp->in_lbn, lfs_sb_getbsize(fs), 0, &ibp))
 				panic("lfs_balloc: bread bno %lld",
 				    (long long)idp->in_lbn);
 			/* XXX ondisk32 */
@@ -1161,7 +1162,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 		 * Not a brand new block, also not in the cache;
 		 * read it in from disk.
 		 */
-		if (iosize == fs->lfs_bsize)
+		if (iosize == lfs_sb_getbsize(fs))
 			/* Optimization: I/O is unnecessary. */
 			bp->b_blkno = daddr;
 		else {
@@ -1204,7 +1205,7 @@ lfs_fragextend(struct uvnode *vp, int osize, int nsize, daddr_t lbn,
 		goto out;
 	}
 
-	fs->lfs_bfree -= frags;
+	lfs_sb_subbfree(fs, frags);
 	ip->i_lfs_effnblks += frags;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.37 2015/06/16 23:58:30 christos Exp $	 */
+/* $NetBSD: utilities.c,v 1.38 2015/07/24 06:56:41 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -118,8 +118,8 @@ static void
 write_superblocks(void)
 {
 	if (debug)
-		pwarn("writing superblocks with lfs_idaddr = 0x%x\n",
-			(int)fs->lfs_idaddr);
+		pwarn("writing superblocks with lfs_idaddr = 0x%jx\n",
+			(uintmax_t)lfs_sb_getidaddr(fs));
 	lfs_writesuper(fs, fs->lfs_sboffs[0]);
 	lfs_writesuper(fs, fs->lfs_sboffs[1]);
 	fsmodified = 1;

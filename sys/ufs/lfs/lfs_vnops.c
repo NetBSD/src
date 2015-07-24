@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.273 2015/06/07 13:39:48 hannken Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.274 2015/07/24 06:56:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.273 2015/06/07 13:39:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.274 2015/07/24 06:56:42 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -420,8 +420,8 @@ lfs_fsync(void *v)
 				     PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));
 		if (error == EAGAIN) {
 			mutex_enter(&lfs_lock);
-			mtsleep(&fs->lfs_avail, PCATCH | PUSER, "lfs_fsync",
-				hz / 100 + 1, &lfs_lock);
+			mtsleep(&fs->lfs_availsleep, PCATCH | PUSER,
+				"lfs_fsync", hz / 100 + 1, &lfs_lock);
 			mutex_exit(&lfs_lock);
 		}
 	} while (error == EAGAIN);
@@ -1234,7 +1234,7 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 		lfs_wakeup_cleaner(fs);
 	}
 	if (waitfor) {
-		mtsleep(&fs->lfs_nextseg, PCATCH | PUSER, "segment",
+		mtsleep(&fs->lfs_nextsegsleep, PCATCH | PUSER, "segment",
 		    0, &lfs_lock);
 	}
 
@@ -1854,7 +1854,7 @@ segwait_common:
 		 * to be immediately reclaimed.
 		 */
 		lfs_writer_enter(fs, "pndirop");
-		off = fs->lfs_offset;
+		off = lfs_sb_getoffset(fs);
 		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
 		lfs_flush_dirops(fs);
 		LFS_CLEANERINFO(cip, fs, bp);

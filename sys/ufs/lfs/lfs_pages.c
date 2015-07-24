@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.1 2014/05/16 09:34:03 dholland Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.2 2015/07/24 06:56:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.1 2014/05/16 09:34:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.2 2015/07/24 06:56:42 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -251,7 +251,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	int any_dirty;	/* number of dirty pages */
 	int dirty;	/* number of dirty pages in a block */
 	int tdirty;
-	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
+	int pages_per_block = lfs_sb_getbsize(fs) >> PAGE_SHIFT;
 	int pagedaemon = (curlwp == uvm.pagedaemon_lwp);
 
 	KASSERT(mutex_owned(vp->v_interlock));
@@ -347,7 +347,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			if (by_list) {
 				curpg = TAILQ_NEXT(curpg, listq.queue);
 			} else {
-				soff += fs->lfs_bsize;
+				soff += lfs_sb_getbsize(fs);
 			}
 			continue;
 		}
@@ -394,7 +394,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		if (by_list) {
 			curpg = TAILQ_NEXT(curpg, listq.queue);
 		} else {
-			soff += MAX(PAGE_SIZE, fs->lfs_bsize);
+			soff += MAX(PAGE_SIZE, lfs_sb_getbsize(fs));
 		}
 	}
 
@@ -524,7 +524,7 @@ lfs_putpages(void *v)
 	if (!sync && !reclaim &&
 	    ap->a_offlo >= ip->i_size && ap->a_offlo < blkeof) {
 		origoffset = ap->a_offlo;
-		for (off = origoffset; off < blkeof; off += fs->lfs_bsize) {
+		for (off = origoffset; off < blkeof; off += lfs_sb_getbsize(fs)) {
 			pg = uvm_pagelookup(&vp->v_uobj, off);
 			KASSERT(pg != NULL);
 			while (pg->flags & PG_BUSY) {
@@ -793,7 +793,7 @@ lfs_putpages(void *v)
 				mutex_exit(vp->v_interlock);
 			} else {
 				if ((sp->seg_flags & SEGM_SINGLE) &&
-				    fs->lfs_curseg != fs->lfs_startseg)
+				    lfs_sb_getcurseg(fs) != fs->lfs_startseg)
 					donewriting = 1;
 			}
 		} else if (error) {

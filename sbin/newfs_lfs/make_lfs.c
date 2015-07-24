@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.31 2015/05/31 15:44:31 hannken Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.32 2015/07/24 06:56:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.31 2015/05/31 15:44:31 hannken Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.32 2015/07/24 06:56:41 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,15 +224,15 @@ make_dinode(ino_t ino, struct ulfs1_dinode *dip, int nfrags, struct lfs *fs)
 	int i;
 	int nblocks, bb, base, factor, lvl;
 
-	nblocks = howmany(nfrags, fs->lfs_frag);
+	nblocks = howmany(nfrags, lfs_sb_getfrag(fs));
 	if (nblocks >= ULFS_NDADDR)
-		nfrags = roundup(nfrags, fs->lfs_frag);
+		nfrags = roundup(nfrags, lfs_sb_getfrag(fs));
 
 	dip->di_nlink = 1;
 	dip->di_blocks = nfrags;
 
 	dip->di_size = (nfrags << fs->lfs_ffshift);
-	dip->di_atime = dip->di_mtime = dip->di_ctime = fs->lfs_tstamp;
+	dip->di_atime = dip->di_mtime = dip->di_ctime = lfs_sb_gettstamp(fs);
 	dip->di_atimensec = dip->di_mtimensec = dip->di_ctimensec = 0;
 	dip->di_inumber = ino;
 	dip->di_gen = 1;
@@ -321,6 +321,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	struct uvnode *vp, *save_devvp;
 	int bb, ubb, dmeta, labelskew;
 	u_int64_t tsepb, tnseg;
+	time_t stamp;
 
 	/*
 	 * Initialize buffer cache.  Use a ballpark guess of the length of
@@ -402,17 +403,17 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		fs->lfs_bshift = lfs_log2(bsize);
 		if (1 << fs->lfs_bshift != bsize)
 			fatal("%d: block size not a power of 2", bsize);
-		fs->lfs_bsize = bsize;
-		fs->lfs_fsize = fsize;
+		lfs_sb_setbsize(fs, bsize);
+		lfs_sb_setfsize(fs, fsize);
 		fs->lfs_bmask = bsize - 1;
 		fs->lfs_ffmask = fsize - 1;
 		fs->lfs_ffshift = lfs_log2(fsize);
 		if (1 << fs->lfs_ffshift != fsize)
 			fatal("%d: frag size not a power of 2", fsize);
-		fs->lfs_frag = lfs_numfrags(fs, bsize);
-		fs->lfs_fbmask = fs->lfs_frag - 1;
-		fs->lfs_fbshift = lfs_log2(fs->lfs_frag);
-		fs->lfs_ifpb = bsize / sizeof(IFILE);
+		lfs_sb_setfrag(fs, lfs_numfrags(fs, bsize));
+		fs->lfs_fbmask = lfs_sb_getfrag(fs) - 1;
+		fs->lfs_fbshift = lfs_log2(lfs_sb_getfrag(fs));
+		lfs_sb_setifpb(fs, bsize / sizeof(IFILE));
 		/* XXX ondisk32 */
 		fs->lfs_nindir = bsize / sizeof(int32_t);
 	}
@@ -423,10 +424,10 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		if (1 << fs->lfs_segshift != ssize)
 			fatal("%d: segment size not power of 2", ssize);
 		fs->lfs_segmask = ssize - 1;
-		fs->lfs_ifpb = fs->lfs_bsize / sizeof(IFILE_V1);
-		fs->lfs_ibsize = fs->lfs_bsize;
-		fs->lfs_sepb = bsize / sizeof(SEGUSE_V1);
-		fs->lfs_ssize = ssize >> fs->lfs_bshift;
+		lfs_sb_setifpb(fs, lfs_sb_getbsize(fs) / sizeof(IFILE_V1));
+		lfs_sb_setibsize(fs, lfs_sb_getbsize(fs));
+		lfs_sb_setsepb(fs, bsize / sizeof(SEGUSE_V1));
+		lfs_sb_setssize(fs, ssize >> fs->lfs_bshift);
 	} else {
 		if (ssize % fsize) {
 			fprintf(stderr, 
@@ -439,15 +440,15 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		fs->lfs_sumsize = fsize;
 		fs->lfs_segshift = 0;
 		fs->lfs_segmask = 0;
-		fs->lfs_sepb = bsize / sizeof(SEGUSE);
-		fs->lfs_ssize = ssize;
-		fs->lfs_ibsize = ibsize;
+		lfs_sb_setsepb(fs, bsize / sizeof(SEGUSE));
+		lfs_sb_setssize(fs, ssize);
+		lfs_sb_setibsize(fs, ibsize);
 	}
 	fs->lfs_inopb = fs->lfs_ibsize / sizeof(struct ulfs1_dinode);
-	fs->lfs_minfree = minfree;
+	lfs_sb_setminfree(fs, minfree);
 
 	if (version > 1) {
-		fs->lfs_inopf = secsize/LFS_DINODE1_SIZE;
+		lfs_sb_setinopf(fs, secsize/LFS_DINODE1_SIZE);
 		fs->lfs_interleave = interleave;
 		if (roll_id == 0)
 			roll_id = arc4random();
@@ -457,22 +458,25 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	/*
 	 * Fill in parts of superblock that can be computed from file system
 	 * size, disk geometry and current time.
+	 *
+	 * XXX: this seems to set dlfs_size wrong for version 1... as in,
+	 * sets it and then overwrites it.
 	 */
 	db_per_blk = bsize/secsize;
 	fs->lfs_blktodb = lfs_log2(db_per_blk);
 	fs->lfs_fsbtodb = lfs_log2(fsize / secsize);
 	if (version == 1) {
-		fs->lfs_sushift = lfs_log2(fs->lfs_sepb);
+		fs->lfs_sushift = lfs_log2(lfs_sb_getsepb(fs));
 		fs->lfs_fsbtodb = 0;
-		fs->lfs_size = dkw->dkw_size >> fs->lfs_blktodb;
+		lfs_sb_setsize(fs, dkw->dkw_size >> fs->lfs_blktodb);
 	}
 	label_fsb = lfs_btofsb(fs, roundup(LFS_LABELPAD, fsize));
 	sb_fsb = lfs_btofsb(fs, roundup(LFS_SBPAD, fsize));
 	fs->lfs_fsbpseg = LFS_DBTOFSB(fs, ssize / secsize);
-	fs->lfs_size = dkw->dkw_size >> fs->lfs_fsbtodb;
-	fs->lfs_dsize = LFS_DBTOFSB(fs, dkw->dkw_size) -
-		MAX(label_fsb, LFS_DBTOFSB(fs, start));
-	fs->lfs_nseg = fs->lfs_dsize / lfs_segtod(fs, 1);
+	lfs_sb_setsize(fs, dkw->dkw_size >> fs->lfs_fsbtodb);
+	lfs_sb_setdsize(fs, LFS_DBTOFSB(fs, dkw->dkw_size) -
+		MAX(label_fsb, LFS_DBTOFSB(fs, start)));
+	fs->lfs_nseg = lfs_sb_getdsize(fs) / lfs_segtod(fs, 1);
 
 	fs->lfs_nclean = fs->lfs_nseg - 1;
 	fs->lfs_maxfilesize = maxfilesize(fs->lfs_bshift);
@@ -511,7 +515,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		}
 		fatal("Could not allocate enough segments with segment "
 			"size %d and block size %d;\nplease decrease the "
-			"segment size.\n", ssize, fs->lfs_bsize);
+			"segment size.\n", ssize, lfs_sb_getbsize(fs));
 	}
 	if(warned_segtoobig)
 		fprintf(stderr,"Using segment size %d, block size %d, frag size %d.\n", ssize, bsize, fsize);
@@ -538,18 +542,19 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 * and segment usage table, and half a block per segment that can't
 	 * be written due to fragmentation.
 	 */
-	fs->lfs_dsize = (fs->lfs_nseg - fs->lfs_minfreeseg) *
-		lfs_segtod(fs, 1);
-	fs->lfs_bfree = fs->lfs_dsize;
-	fs->lfs_bfree -= LFS_DBTOFSB(fs, ((fs->lfs_nseg / 2) << 
-		fs->lfs_blktodb));
+	lfs_sb_setdsize(fs, (fs->lfs_nseg - fs->lfs_minfreeseg) *
+		lfs_segtod(fs, 1));
+	lfs_sb_setbfree(fs, lfs_sb_getdsize(fs));
+	lfs_sb_subbfree(fs, LFS_DBTOFSB(fs, ((lfs_sb_getnseg(fs) / 2) << 
+		lfs_sb_getblktodb(fs))));
 
-	fs->lfs_segtabsz = SEGTABSIZE_SU(fs);
-	fs->lfs_cleansz = CLEANSIZE_SU(fs);
-	if ((fs->lfs_tstamp = time(NULL)) == -1)
+	lfs_sb_setsegtabsz(fs, SEGTABSIZE_SU(fs));
+	lfs_sb_setcleansz(fs, CLEANSIZE_SU(fs));
+	if (time(&stamp) == -1)
 		fatal("time: %s", strerror(errno));
+	lfs_sb_settstamp(fs, stamp);
 	if (version == 1)
-		fs->lfs_otstamp = fs->lfs_tstamp;
+		lfs_sb_setotstamp(fs, stamp);
 
 	if ((sb_interval = fs->lfs_nseg / LFS_MAXNUMSB) < LFS_MIN_SBINTERVAL)
 		sb_interval = LFS_MIN_SBINTERVAL;
@@ -576,7 +581,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		fs->lfs_s0addr = fs->lfs_sboffs[0];
 	else
 		fs->lfs_s0addr = LFS_DBTOFSB(fs, start);
-        fs->lfs_dsize -= sb_fsb;
+        lfs_sb_setdsize(fs, lfs_sb_getdsize(fs) - sb_fsb);
 	for (i = 1; i < LFS_MAXNUMSB; i++) {
 		sb_addr = ((i * sb_interval) * lfs_segtod(fs, 1))
 		    + fs->lfs_sboffs[0];
@@ -587,7 +592,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		    >= LFS_DBTOFSB(fs, dkw->dkw_size))
 			break;
 		fs->lfs_sboffs[i] = sb_addr;
-		fs->lfs_dsize -= sb_fsb;
+		lfs_sb_setdsize(fs, lfs_sb_getdsize(fs) - sb_fsb);
 	}
 
 	/* We need >= 2 superblocks */
@@ -596,10 +601,10 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		      "superblock.\nPlease decrease the segment size.\n");
 	}
 
-	fs->lfs_lastseg = lfs_sntod(fs, fs->lfs_nseg - 2);
-	fs->lfs_curseg = lfs_sntod(fs, fs->lfs_nseg - 1);
-	fs->lfs_offset = lfs_sntod(fs, fs->lfs_nseg);
-	fs->lfs_nextseg = lfs_sntod(fs, 0);
+	lfs_sb_setlastseg(fs, lfs_sntod(fs, lfs_sb_getnseg(fs) - 2));
+	lfs_sb_setcurseg(fs, lfs_sntod(fs, lfs_sb_getnseg(fs) - 1));
+	lfs_sb_setoffset(fs, lfs_sntod(fs, lfs_sb_getnseg(fs)));
+	lfs_sb_setnextseg(fs, lfs_sntod(fs, 0));
 
 	/*
 	 * Initialize the Ifile inode.  Do this before we do anything
@@ -613,10 +618,10 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	dip->di_mode  = LFS_IFREG | 0600;
 	dip->di_flags = SF_IMMUTABLE;
 	make_dinode(LFS_IFILE_INUM, dip,
-		lfs_blkstofrags(fs, fs->lfs_cleansz + fs->lfs_segtabsz + 1), fs);
-	dip->di_size = (fs->lfs_cleansz + fs->lfs_segtabsz + 1) << fs->lfs_bshift;
+		lfs_blkstofrags(fs, lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs) + 1), fs);
+	dip->di_size = (lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs) + 1) << fs->lfs_bshift;
 	for (i = 0; i < ULFS_NDADDR && i < (dip->di_size >> fs->lfs_bshift); i++)
-		VTOI(fs->lfs_ivnode)->i_lfs_fragsize[i] = fs->lfs_bsize;
+		VTOI(fs->lfs_ivnode)->i_lfs_fragsize[i] = lfs_sb_getbsize(fs);
 
 	/*
 	 * Set up in-superblock segment usage cache
@@ -639,7 +644,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	cip->dirty = 0;
 	if (version > 1) {
 		cip->free_head = HIGHEST_USED_INO + 1;
-		cip->free_tail = fs->lfs_ifpb - 1;
+		cip->free_tail = lfs_sb_getifpb(fs) - 1;
 	}
 	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
@@ -652,13 +657,13 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		if (i == 0 &&
 		    fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD + LFS_SBPAD)) {
 			segp->su_flags = SEGUSE_SUPERBLOCK;
-			fs->lfs_bfree -= sb_fsb;
+			lfs_sb_subbfree(fs, sb_fsb);
 			++j;
 		}
 		if (i > 0) { 
 			if ((i % sb_interval) == 0 && j < LFS_MAXNUMSB) {
 				segp->su_flags = SEGUSE_SUPERBLOCK;
-				fs->lfs_bfree -= sb_fsb;
+				lfs_sb_subbfree(fs, sb_fsb);
 				++j;
 			} else
 				segp->su_flags = 0;
@@ -674,7 +679,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	/* Initialize root directory */
 	vp = lfs_raw_vget(fs, ULFS_ROOTINO, devfd, 0x0);
 	dip = VTOI(vp)->i_din.ffs1_din;
-	make_dinode(ULFS_ROOTINO, dip, howmany(LFS_DIRBLKSIZ,fs->lfs_fsize), fs);
+	make_dinode(ULFS_ROOTINO, dip, howmany(LFS_DIRBLKSIZ, lfs_sb_getfsize(fs)), fs);
 	dip->di_mode = LFS_IFDIR | UMASK;
 	VTOI(vp)->i_lfs_osize = dip->di_size = LFS_DIRBLKSIZ;
 #ifdef MAKE_LF_DIR
@@ -683,13 +688,13 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	VTOI(vp)->i_nlink = dip->di_nlink = 2;
 #endif
         VTOI(vp)->i_lfs_effnblks = dip->di_blocks =
-		lfs_btofsb(fs, roundup(LFS_DIRBLKSIZ,fs->lfs_fsize));
-	for (i = 0; i < ULFS_NDADDR && i < howmany(LFS_DIRBLKSIZ, fs->lfs_bsize); i++)
-		VTOI(vp)->i_lfs_fragsize[i] = fs->lfs_bsize;
-	if (LFS_DIRBLKSIZ < fs->lfs_bsize)
+		lfs_btofsb(fs, roundup(LFS_DIRBLKSIZ, lfs_sb_getfsize(fs)));
+	for (i = 0; i < ULFS_NDADDR && i < howmany(LFS_DIRBLKSIZ, lfs_sb_getbsize(fs)); i++)
+		VTOI(vp)->i_lfs_fragsize[i] = lfs_sb_getbsize(fs);
+	if (LFS_DIRBLKSIZ < lfs_sb_getbsize(fs))
 		VTOI(vp)->i_lfs_fragsize[i - 1] =
-			roundup(LFS_DIRBLKSIZ,fs->lfs_fsize);
-	bread(vp, 0, fs->lfs_fsize, 0, &bp);
+			roundup(LFS_DIRBLKSIZ, lfs_sb_getfsize(fs));
+	bread(vp, 0, lfs_sb_getfsize(fs), 0, &bp);
 	make_dir(bp->b_data, lfs_root_dir, 
 		 sizeof(lfs_root_dir) / sizeof(struct lfs_direct));
 	VOP_BWRITE(bp);
@@ -704,9 +709,9 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
         VTOI(vp)->i_nlink = dip->di_nlink = 2;
         VTOI(vp)->i_lfs_effnblks = dip->di_blocks =
 		lfs_btofsb(fs, roundup(DIRBLKSIZ,fs->lfs_fsize));
-	for (i = 0; i < ULFS_NDADDR && i < howmany(DIRBLKSIZ, fs->lfs_bsize); i++)
-		VTOI(vp)->i_lfs_fragsize[i] = fs->lfs_bsize;
-	if (DIRBLKSIZ < fs->lfs_bsize)
+	for (i = 0; i < ULFS_NDADDR && i < howmany(DIRBLKSIZ, lfs_sb_getbsize(fs)); i++)
+		VTOI(vp)->i_lfs_fragsize[i] = lfs_sb_getbsize(fs);
+	if (DIRBLKSIZ < lfs_sb_getbsize(fs))
 		VTOI(vp)->i_lfs_fragsize[i - 1] =
 			roundup(DIRBLKSIZ,fs->lfs_fsize);
 	bread(vp, 0, fs->lfs_fsize, 0, &bp);
@@ -736,7 +741,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	/* Link remaining IFILE entries in free list */
 	if (version == 1) {
 		for (;
-		     i < fs->lfs_ifpb; ++ip_v1) {
+		     i < lfs_sb_getifpb(fs); ++ip_v1) {
 			ip_v1->if_version = 1;
 			ip_v1->if_daddr = LFS_UNUSED_DADDR;
 			ip_v1->if_nextfree = ++i;
@@ -745,7 +750,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		ip_v1->if_nextfree = LFS_UNUSED_INUM;
 	} else {
 		for (;
-		     i < fs->lfs_ifpb; ++ip) {
+		     i < lfs_sb_getifpb(fs); ++ip) {
 			ip->if_version = 1;
 			ip->if_daddr = LFS_UNUSED_DADDR;
 			ip->if_nextfree = ++i;
@@ -763,7 +768,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 * Now that we've written everything, look to see what's available
 	 * for writing.
 	 */
-	fs->lfs_avail = 0;
+	lfs_sb_setavail(fs, 0);
 	bb = ubb = dmeta = 0;
 	for (i = 0; i < fs->lfs_nseg; i++) {
 		LFS_SEGENTRY(segp, fs, i, bp);
@@ -778,31 +783,31 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
                         dmeta += lfs_btofsb(fs,
                             fs->lfs_ibsize * segp->su_ninos);
 		} else {
-                        fs->lfs_avail += lfs_segtod(fs, 1);
+                        lfs_sb_addavail(fs, lfs_segtod(fs, 1));
                         if (segp->su_flags & SEGUSE_SUPERBLOCK)
-                                fs->lfs_avail -= lfs_btofsb(fs, LFS_SBPAD);
+                                lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_SBPAD));
                         if (i == 0 && fs->lfs_version > 1 &&
                             fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD))
-                                fs->lfs_avail -= lfs_btofsb(fs, LFS_LABELPAD) -
-                                    fs->lfs_s0addr;
+                                lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_LABELPAD) -
+                                    fs->lfs_s0addr);
                 }
 		brelse(bp, 0);
         }
         /* Also may be available bytes in current seg */
-        i = lfs_dtosn(fs, fs->lfs_offset);
-        fs->lfs_avail += lfs_sntod(fs, i + 1) - fs->lfs_offset;
+        i = lfs_dtosn(fs, lfs_sb_getoffset(fs));
+        lfs_sb_addavail(fs, lfs_sntod(fs, i + 1) - lfs_sb_getoffset(fs));
         /* But do not count minfreesegs */
-        fs->lfs_avail -= lfs_segtod(fs, (fs->lfs_minfreeseg - (fs->lfs_minfreeseg / 2)));
+        lfs_sb_subavail(fs, lfs_segtod(fs, (fs->lfs_minfreeseg - (fs->lfs_minfreeseg / 2))));
 
         labelskew = 0;
         if (fs->lfs_version > 1 && fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD))
                 labelskew = lfs_btofsb(fs, LFS_LABELPAD);
-        fs->lfs_bfree = fs->lfs_dsize - labelskew - (ubb + bb) / 2;
+        lfs_sb_setbfree(fs, lfs_sb_getdsize(fs) - labelskew - (ubb + bb) / 2);
 
 	/* Put that in the Ifile version too, and write it */
 	LFS_CLEANERINFO(cip, fs, bp);
-	cip->bfree = fs->lfs_bfree;
-	cip->avail = fs->lfs_avail;
+	cip->bfree = lfs_sb_getbfree(fs);
+	cip->avail = lfs_sb_getavail(fs);
 	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 	if (!Nflag)
 		lfs_segwrite(fs, SEGM_CKP);
@@ -831,7 +836,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 
 		/* Leave the time stamp on the alt sb, zero the rest */
 		if (i == 2) {
-			fs->lfs_tstamp = 0;
+			lfs_sb_settstamp(fs, 0);
 			fs->lfs_cksum = lfs_sb_cksum(&(fs->lfs_dlfs));
 		}
 		if (!Nflag)

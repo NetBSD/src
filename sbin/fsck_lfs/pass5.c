@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.29 2015/05/31 15:44:30 hannken Exp $	 */
+/* $NetBSD: pass5.c,v 1.30 2015/07/24 06:56:41 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -131,8 +131,8 @@ pass5(void)
 	}
 
 	/* Also may be available bytes in current seg */
-	i = lfs_dtosn(fs, fs->lfs_offset);
-	avail += lfs_sntod(fs, i + 1) - fs->lfs_offset;
+	i = lfs_dtosn(fs, lfs_sb_getoffset(fs));
+	avail += lfs_sntod(fs, i + 1) - lfs_sb_getoffset(fs);
 	/* But do not count minfreesegs */
 	avail -= lfs_segtod(fs, (fs->lfs_minfreeseg -
 		(fs->lfs_minfreeseg / 2)));
@@ -150,11 +150,11 @@ pass5(void)
 			sbdirty();
 		}
 	}
-	if (avail != fs->lfs_avail) {
-		pwarn("AVAIL GIVEN AS %d, SHOULD BE %ld\n", fs->lfs_avail,
-		    avail);
+	if (avail != lfs_sb_getavail(fs)) {
+		pwarn("AVAIL GIVEN AS %d, SHOULD BE %ld\n",
+		      lfs_sb_getavail(fs), avail);
 		if (preen || reply("FIX")) {
-			fs->lfs_avail = avail;
+			lfs_sb_setavail(fs, avail);
 			sbdirty();
 		}
 	}
@@ -171,15 +171,16 @@ pass5(void)
 	if (fs->lfs_version > 1 &&
 	    fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD))
 		labelskew = lfs_btofsb(fs, LFS_LABELPAD);
-	if (fs->lfs_bfree > fs->lfs_dsize - bb - labelskew ||
-	    fs->lfs_bfree < fs->lfs_dsize - ubb - labelskew) {
-		pwarn("BFREE GIVEN AS %d, SHOULD BE BETWEEN %ld AND %ld\n",
-		    fs->lfs_bfree, (fs->lfs_dsize - ubb - labelskew),
-		    fs->lfs_dsize - bb - labelskew);
+	if (lfs_sb_getbfree(fs) > lfs_sb_getdsize(fs) - bb - labelskew ||
+	    lfs_sb_getbfree(fs) < lfs_sb_getdsize(fs) - ubb - labelskew) {
+		pwarn("BFREE GIVEN AS %jd, SHOULD BE BETWEEN %ld AND %ld\n",
+		    (intmax_t)lfs_sb_getbfree(fs),
+		    lfs_sb_getdsize(fs) - ubb - labelskew,
+		    lfs_sb_getdsize(fs) - bb - labelskew);
 		if (preen || reply("FIX")) {
-			fs->lfs_bfree =
-				((fs->lfs_dsize - labelskew - ubb) +
-				 fs->lfs_dsize - labelskew - bb) / 2;
+			lfs_sb_setbfree(fs,
+				((lfs_sb_getdsize(fs) - labelskew - ubb) +
+				 lfs_sb_getdsize(fs) - labelskew - bb) / 2);
 			sbdirty();
 		}
 	}
