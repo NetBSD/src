@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.33 2015/03/29 19:35:58 chopps Exp $	 */
+/* $NetBSD: dir.c,v 1.34 2015/07/24 06:56:41 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -141,7 +141,7 @@ dirscan(struct inodesc *idesc)
 	if (idesc->id_entryno == 0 &&
 	    (idesc->id_filesize & (LFS_DIRBLKSIZ - 1)) != 0)
 		idesc->id_filesize = roundup(idesc->id_filesize, LFS_DIRBLKSIZ);
-	blksiz = idesc->id_numfrags * fs->lfs_fsize;
+	blksiz = idesc->id_numfrags * lfs_sb_getfsize(fs);
 	if (chkrange(idesc->id_blkno, idesc->id_numfrags)) {
 		idesc->id_filesize -= blksiz;
 		return (SKIP);
@@ -177,7 +177,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 	struct ubuf *bp;
 	long size, blksiz, fix, dploc;
 
-	blksiz = idesc->id_numfrags * fs->lfs_fsize;
+	blksiz = idesc->id_numfrags * lfs_sb_getfsize(fs);
 	bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 	if (idesc->id_loc % LFS_DIRBLKSIZ == 0 && idesc->id_filesize > 0 &&
 	    idesc->id_loc < blksiz) {
@@ -568,21 +568,21 @@ expanddir(struct uvnode *vp, struct ulfs1_dinode *dp, char *name)
 		return (0);
 	dp->di_db[lastbn + 1] = dp->di_db[lastbn];
 	dp->di_db[lastbn] = 0;
-	bp = getblk(vp, lastbn, fs->lfs_bsize);
+	bp = getblk(vp, lastbn, lfs_sb_getbsize(fs));
 	VOP_BWRITE(bp);
-	dp->di_size += fs->lfs_bsize;
-	dp->di_blocks += lfs_btofsb(fs, fs->lfs_bsize);
+	dp->di_size += lfs_sb_getbsize(fs);
+	dp->di_blocks += lfs_btofsb(fs, lfs_sb_getbsize(fs));
 	bread(vp, dp->di_db[lastbn + 1],
 	    (long) lfs_dblksize(fs, dp, lastbn + 1), 0, &bp);
 	if (bp->b_flags & B_ERROR)
 		goto bad;
 	memcpy(firstblk, bp->b_data, LFS_DIRBLKSIZ);
-	bread(vp, lastbn, fs->lfs_bsize, 0, &bp);
+	bread(vp, lastbn, lfs_sb_getbsize(fs), 0, &bp);
 	if (bp->b_flags & B_ERROR)
 		goto bad;
 	memcpy(bp->b_data, firstblk, LFS_DIRBLKSIZ);
 	for (cp = &bp->b_data[LFS_DIRBLKSIZ];
-	    cp < &bp->b_data[fs->lfs_bsize];
+	    cp < &bp->b_data[lfs_sb_getbsize(fs)];
 	    cp += LFS_DIRBLKSIZ)
 		memcpy(cp, &emptydir, sizeof emptydir);
 	VOP_BWRITE(bp);
@@ -602,8 +602,8 @@ expanddir(struct uvnode *vp, struct ulfs1_dinode *dp, char *name)
 bad:
 	dp->di_db[lastbn] = dp->di_db[lastbn + 1];
 	dp->di_db[lastbn + 1] = 0;
-	dp->di_size -= fs->lfs_bsize;
-	dp->di_blocks -= lfs_btofsb(fs, fs->lfs_bsize);
+	dp->di_size -= lfs_sb_getbsize(fs);
+	dp->di_blocks -= lfs_btofsb(fs, lfs_sb_getbsize(fs));
 	return (0);
 }
 
@@ -626,7 +626,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 	dirp->dotdot_ino = parent;
 	vp = vget(fs, ino);
 	dp = VTOD(vp);
-	bread(vp, dp->di_db[0], fs->lfs_fsize, 0, &bp);
+	bread(vp, dp->di_db[0], lfs_sb_getfsize(fs), 0, &bp);
 	if (bp->b_flags & B_ERROR) {
 		brelse(bp, 0);
 		freeino(ino);
@@ -634,7 +634,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 	}
 	memcpy(bp->b_data, dirp, sizeof(struct lfs_dirtemplate));
 	for (cp = &bp->b_data[LFS_DIRBLKSIZ];
-	    cp < &bp->b_data[fs->lfs_fsize];
+	    cp < &bp->b_data[lfs_sb_getfsize(fs)];
 	    cp += LFS_DIRBLKSIZ)
 		memcpy(cp, &emptydir, sizeof emptydir);
 	VOP_BWRITE(bp);

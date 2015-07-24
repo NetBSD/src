@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.160 2015/05/31 15:48:03 hannken Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.161 2015/07/24 06:56:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.160 2015/05/31 15:48:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.161 2015/07/24 06:56:42 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -252,7 +252,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 		return EROFS;
 
 	maxino = (lfs_fragstoblks(fs, VTOI(fs->lfs_ivnode)->i_ffs1_blocks) -
-		      fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
+		      lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs)) * lfs_sb_getifpb(fs);
 
 	cnt = blkcnt;
 
@@ -390,7 +390,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 		if (blkp->bi_lbn >= 0)
 			obsize = lfs_blksize(fs, ip, blkp->bi_lbn);
 		else
-			obsize = fs->lfs_bsize;
+			obsize = lfs_sb_getbsize(fs);
 		/* Check for fragment size change */
 		if (blkp->bi_lbn >= 0 && blkp->bi_lbn < ULFS_NDADDR) {
 			obsize = ip->i_lfs_fragsize[blkp->bi_lbn];
@@ -420,7 +420,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 			bp->b_blkno = LFS_FSBTODB(fs, blkp->bi_daddr);
 		} else {
 			/* Indirect block or ifile */
-			if (blkp->bi_size != fs->lfs_bsize &&
+			if (blkp->bi_size != lfs_sb_getbsize(fs) &&
 			    ip->i_number != LFS_IFILE_INUM)
 				panic("lfs_markv: partial indirect block?"
 				    " size=%d\n", blkp->bi_size);
@@ -702,7 +702,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 */
 			lastino = blkp->bi_inode;
 			if (blkp->bi_inode == LFS_IFILE_INUM)
-				v_daddr = fs->lfs_idaddr;
+				v_daddr = lfs_sb_getidaddr(fs);
 			else {
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
 				v_daddr = ifp->if_daddr;
@@ -763,7 +763,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			if (blkp->bi_lbn >= 0)
 				blkp->bi_size = lfs_blksize(fs, ip, blkp->bi_lbn);
 			else
-				blkp->bi_size = fs->lfs_bsize;
+				blkp->bi_size = lfs_sb_getbsize(fs);
 		}
 	}
 
@@ -844,7 +844,7 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 
-	if (lfs_dtosn(fs, fs->lfs_curseg) == segnum) {
+	if (lfs_dtosn(fs, lfs_sb_getcurseg(fs)) == segnum) {
 		return (EBUSY);
 	}
 
@@ -868,19 +868,19 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 		return (EALREADY);
 	}
 
-	fs->lfs_avail += lfs_segtod(fs, 1);
+	lfs_sb_addavail(fs, lfs_segtod(fs, 1));
 	if (sup->su_flags & SEGUSE_SUPERBLOCK)
-		fs->lfs_avail -= lfs_btofsb(fs, LFS_SBPAD);
+		lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_SBPAD));
 	if (fs->lfs_version > 1 && segnum == 0 &&
 	    fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD))
-		fs->lfs_avail -= lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_s0addr;
+		lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_s0addr);
 	mutex_enter(&lfs_lock);
-	fs->lfs_bfree += sup->su_nsums * lfs_btofsb(fs, fs->lfs_sumsize) +
-		lfs_btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
-	fs->lfs_dmeta -= sup->su_nsums * lfs_btofsb(fs, fs->lfs_sumsize) +
-		lfs_btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
-	if (fs->lfs_dmeta < 0)
-		fs->lfs_dmeta = 0;
+	lfs_sb_addbfree(fs, sup->su_nsums * lfs_btofsb(fs, fs->lfs_sumsize) +
+		lfs_btofsb(fs, sup->su_ninos * lfs_sb_getibsize(fs)));
+	lfs_sb_subdmeta(fs, sup->su_nsums * lfs_btofsb(fs, fs->lfs_sumsize) +
+		lfs_btofsb(fs, sup->su_ninos * lfs_sb_getibsize(fs)));
+	if (lfs_sb_getdmeta(fs) < 0)
+		lfs_sb_setdmeta(fs, 0);
 	mutex_exit(&lfs_lock);
 	sup->su_flags &= ~SEGUSE_DIRTY;
 	LFS_WRITESEGENTRY(sup, fs, segnum, bp);
@@ -889,10 +889,10 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	++cip->clean;
 	--cip->dirty;
 	fs->lfs_nclean = cip->clean;
-	cip->bfree = fs->lfs_bfree;
 	mutex_enter(&lfs_lock);
-	cip->avail = fs->lfs_avail - fs->lfs_ravail - fs->lfs_favail;
-	wakeup(&fs->lfs_avail);
+	cip->bfree = lfs_sb_getbfree(fs);
+	cip->avail = lfs_sb_getavail(fs) - fs->lfs_ravail - fs->lfs_favail;
+	wakeup(&fs->lfs_availsleep);
 	mutex_exit(&lfs_lock);
 	(void) LFS_BWRITE_LOG(bp);
 
@@ -919,7 +919,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	if (fsidp == NULL || (mntp = vfs_getvfs(fsidp)) == NULL)
 		addr = &lfs_allclean_wakeup;
 	else
-		addr = &VFSTOULFS(mntp)->um_lfs->lfs_nextseg;
+		addr = &VFSTOULFS(mntp)->um_lfs->lfs_nextsegsleep;
 	/*
 	 * XXX THIS COULD SLEEP FOREVER IF TIMEOUT IS {0,0}!
 	 * XXX IS THAT WHAT IS INTENDED?
