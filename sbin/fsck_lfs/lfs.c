@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.46 2015/07/24 06:56:41 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.47 2015/07/24 06:59:32 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -249,7 +249,7 @@ ulfs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap,
 		bn = -bn;
 
 	lognindir = -1;
-	for (indir = fs->lfs_nindir; indir; indir >>= 1)
+	for (indir = lfs_sb_getnindir(fs); indir; indir >>= 1)
 		++lognindir;
 
 	/* Determine the number of levels of indirection.  After this loop is
@@ -287,7 +287,7 @@ ulfs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap,
 
 		lbc -= lognindir;
 		blockcnt = (int64_t) 1 << lbc;
-		off = (bn >> lbc) & (fs->lfs_nindir - 1);
+		off = (bn >> lbc) & (lfs_sb_getnindir(fs) - 1);
 
 		++numlevels;
 		ap->in_lbn = metalbn;
@@ -366,7 +366,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ulfs_daddr_t daddr)
 
 	/* Load inode block and find inode */
 	if (daddr > 0) {
-		bread(fs->lfs_devvp, LFS_FSBTODB(fs, daddr), fs->lfs_ibsize,
+		bread(fs->lfs_devvp, LFS_FSBTODB(fs, daddr), lfs_sb_getibsize(fs),
 		    0, &bp);
 		bp->b_flags |= B_AGE;
 		dip = lfs_ifind(fs, ino, bp);
@@ -416,7 +416,7 @@ lfs_vget(void *vfs, ino_t ino)
 	LFS_IENTRY(ifp, fs, ino, bp);
 	daddr = ifp->if_daddr;
 	brelse(bp, 0);
-	if (daddr <= 0 || lfs_dtosn(fs, daddr) >= fs->lfs_nseg)
+	if (daddr <= 0 || lfs_dtosn(fs, daddr) >= lfs_sb_getnseg(fs))
 		return NULL;
 	return lfs_raw_vget(fs, ino, fs->lfs_ivnode->v_fd, daddr);
 }
@@ -435,9 +435,9 @@ check_sb(struct lfs *fs)
 	}
 	/* checksum */
 	checksum = lfs_sb_cksum(&(fs->lfs_dlfs));
-	if (fs->lfs_cksum != checksum) {
+	if (lfs_sb_getcksum(fs) != checksum) {
 		printf("Superblock checksum (%lx) does not match computed checksum (%lx)\n",
-		    (unsigned long) fs->lfs_cksum, (unsigned long) checksum);
+		    (unsigned long) lfs_sb_getcksum(fs), (unsigned long) checksum);
 		return 1;
 	}
 	return 0;
@@ -486,10 +486,10 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		bp->b_flags |= B_INVAL;
 		brelse(bp, 0);
 
-		dev_bsize = lfs_sb_getfsize(fs) >> fs->lfs_fsbtodb;
+		dev_bsize = lfs_sb_getfsize(fs) >> lfs_sb_getfsbtodb(fs);
 	
 		if (tryalt) {
-			(void)bread(devvp, LFS_FSBTODB(fs, fs->lfs_sboffs[1]),
+			(void)bread(devvp, LFS_FSBTODB(fs, lfs_sb_getsboff(fs, 1)),
 		    	LFS_SBPAD, 0, &bp);
 			altfs = ecalloc(1, sizeof(*altfs));
 			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
@@ -526,17 +526,17 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 
 	/* Compatibility */
 	if (fs->lfs_version < 2) {
-		fs->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
-		fs->lfs_ibsize = lfs_sb_getbsize(fs);
-		fs->lfs_s0addr = fs->lfs_sboffs[0];
+		lfs_sb_setsumsize(fs, LFS_V1_SUMMARY_SIZE);
+		lfs_sb_setibsize(fs, lfs_sb_getbsize(fs));
+		lfs_sb_sets0addr(fs, lfs_sb_getsboff(fs, 0));
 		lfs_sb_settstamp(fs, lfs_sb_getotstamp(fs));
-		fs->lfs_fsbtodb = 0;
+		lfs_sb_setfsbtodb(fs, 0);
 	}
 
 	if (!dummy_read) {
 		fs->lfs_suflags = emalloc(2 * sizeof(u_int32_t *));
-		fs->lfs_suflags[0] = emalloc(fs->lfs_nseg * sizeof(u_int32_t));
-		fs->lfs_suflags[1] = emalloc(fs->lfs_nseg * sizeof(u_int32_t));
+		fs->lfs_suflags[0] = emalloc(lfs_sb_getnseg(fs) * sizeof(u_int32_t));
+		fs->lfs_suflags[1] = emalloc(lfs_sb_getnseg(fs) * sizeof(u_int32_t));
 	}
 
 	if (idaddr == 0)
@@ -586,18 +586,18 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 		 * Don't mistakenly read a superblock, if there is one here.
 		 */
 		if (lfs_sntod(osb, lfs_dtosn(osb, daddr)) == daddr) {
-			if (daddr == osb->lfs_s0addr)
+			if (daddr == lfs_sb_gets0addr(osb))
 				daddr += lfs_btofsb(osb, LFS_LABELPAD);
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
-				if (osb->lfs_sboffs[i] < daddr)
+				if (lfs_sb_getsboff(osb, i) < daddr)
 					break;
-				if (osb->lfs_sboffs[i] == daddr)
+				if (lfs_sb_getsboff(osb, i) == daddr)
 					daddr += lfs_btofsb(osb, LFS_SBPAD);
 			}
 		}
 
 		/* Read in summary block */
-		bread(devvp, LFS_FSBTODB(osb, daddr), osb->lfs_sumsize,
+		bread(devvp, LFS_FSBTODB(osb, daddr), lfs_sb_getsumsize(osb),
 		    0, &bp);
 		sp = (SEGSUM *)bp->b_data;
 
@@ -605,30 +605,31 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 		 * Check for a valid segment summary belonging to our fs.
 		 */
 		if (sp->ss_magic != SS_MAGIC ||
-		    sp->ss_ident != osb->lfs_ident ||
+		    sp->ss_ident != lfs_sb_getident(osb) ||
 		    sp->ss_serial < serial ||	/* XXX strengthen this */
-		    sp->ss_sumsum != cksum(&sp->ss_datasum, osb->lfs_sumsize -
+		    sp->ss_sumsum != cksum(&sp->ss_datasum, lfs_sb_getsumsize(osb) -
 			sizeof(sp->ss_sumsum))) {
 			brelse(bp, 0);
 			if (debug) {
 				if (sp->ss_magic != SS_MAGIC)
-					pwarn("pseg at 0x%x: "
+					pwarn("pseg at 0x%jx: "
 					      "wrong magic number\n",
-					      (int)daddr);
-				else if (sp->ss_ident != osb->lfs_ident)
-					pwarn("pseg at 0x%x: "
-					      "expected ident %llx, got %llx\n",
-					      (int)daddr,
-					      (long long)sp->ss_ident,
-					      (long long)osb->lfs_ident);
+					      (uintmax_t)daddr);
+				else if (sp->ss_ident != lfs_sb_getident(osb))
+					pwarn("pseg at 0x%jx: "
+					      "expected ident %jx, got %jx\n",
+					      (uintmax_t)daddr,
+					      (uintmax_t)sp->ss_ident,
+					      (uintmax_t)lfs_sb_getident(osb));
 				else if (sp->ss_serial >= serial)
-					pwarn("pseg at 0x%x: "
-					      "serial %d < %d\n", (int)daddr,
+					pwarn("pseg at 0x%jx: "
+					      "serial %d < %d\n",
+					      (uintmax_t)daddr,
 					      (int)sp->ss_serial, (int)serial);
 				else
-					pwarn("pseg at 0x%x: "
+					pwarn("pseg at 0x%jx: "
 					      "summary checksum wrong\n",
-					      (int)daddr);
+					      (uintmax_t)daddr);
 			}
 			break;
 		}
@@ -646,10 +647,10 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 			      (int)sp->ss_serial);
 		assert (bc > 0);
 		odaddr = daddr;
-		daddr += lfs_btofsb(osb, osb->lfs_sumsize + bc);
+		daddr += lfs_btofsb(osb, lfs_sb_getsumsize(osb) + bc);
 		if (lfs_dtosn(osb, odaddr) != lfs_dtosn(osb, daddr) ||
 		    lfs_dtosn(osb, daddr) != lfs_dtosn(osb, daddr +
-			lfs_btofsb(osb, osb->lfs_sumsize + lfs_sb_getbsize(osb)) - 1)) {
+			lfs_btofsb(osb, lfs_sb_getsumsize(osb) + lfs_sb_getbsize(osb)) - 1)) {
 			daddr = sp->ss_next;
 		}
 
@@ -754,28 +755,28 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 
 	/* Count the blocks. */
 	nblocks = howmany(sp->ss_ninos, LFS_INOPB(fs));
-	bc = nblocks << (fs->lfs_version > 1 ? fs->lfs_ffshift : fs->lfs_bshift);
+	bc = nblocks << (fs->lfs_version > 1 ? lfs_sb_getffshift(fs) : lfs_sb_getbshift(fs));
 	assert(bc >= 0);
 
 	fp = (FINFO *) (sp + 1);
 	for (i = 0; i < sp->ss_nfinfo; i++) {
 		nblocks += fp->fi_nblocks;
 		bc += fp->fi_lastlength + ((fp->fi_nblocks - 1)
-					   << fs->lfs_bshift);
+					   << lfs_sb_getbshift(fs));
 		assert(bc >= 0);
 		fp = (FINFO *) (fp->fi_blocks + fp->fi_nblocks);
-		if (((char *)fp) - (char *)sp > fs->lfs_sumsize)
+		if (((char *)fp) - (char *)sp > lfs_sb_getsumsize(fs))
 			return 0;
 	}
 	datap = emalloc(nblocks * sizeof(*datap));
 	datac = 0;
 
 	dp = (ulfs_daddr_t *) sp;
-	dp += fs->lfs_sumsize / sizeof(ulfs_daddr_t);
+	dp += lfs_sb_getsumsize(fs) / sizeof(ulfs_daddr_t);
 	dp--;
 
 	idp = dp;
-	daddr = pseg_addr + lfs_btofsb(fs, fs->lfs_sumsize);
+	daddr = pseg_addr + lfs_btofsb(fs, lfs_sb_getsumsize(fs));
 	fp = (FINFO *) (sp + 1);
 	for (i = 0, j = 0;
 	     i < sp->ss_nfinfo || j < howmany(sp->ss_ninos, LFS_INOPB(fs)); i++) {
@@ -789,13 +790,13 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 			break;
 		}
 		while (j < howmany(sp->ss_ninos, LFS_INOPB(fs)) && *idp == daddr) {
-			bread(devvp, LFS_FSBTODB(fs, daddr), fs->lfs_ibsize,
+			bread(devvp, LFS_FSBTODB(fs, daddr), lfs_sb_getibsize(fs),
 			    0, &bp);
 			datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
 			brelse(bp, 0);
 
 			++j;
-			daddr += lfs_btofsb(fs, fs->lfs_ibsize);
+			daddr += lfs_btofsb(fs, lfs_sb_getibsize(fs));
 			--idp;
 		}
 		if (i < sp->ss_nfinfo) {
@@ -946,7 +947,7 @@ extend_ifile(struct lfs *fs)
 	LFS_BWRITE_LOG(bp);
 
 #ifdef IN_FSCK_LFS
-	reset_maxino(((ip->i_ffs1_size >> fs->lfs_bshift)
+	reset_maxino(((ip->i_ffs1_size >> lfs_sb_getbshift(fs))
 		      - lfs_sb_getsegtabsz(fs)
 		      - lfs_sb_getcleansz(fs)) * lfs_sb_getifpb(fs));
 #endif

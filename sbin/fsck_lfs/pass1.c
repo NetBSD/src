@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.38 2015/07/24 06:56:41 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.39 2015/07/24 06:59:32 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -227,8 +227,8 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		 * Fake ndb value so direct/indirect block checks below
 		 * will detect any garbage after symlink string.
 		 */
-		if (dp->di_size < fs->lfs_maxsymlinklen ||
-		    (fs->lfs_maxsymlinklen == 0 && dp->di_blocks == 0)) {
+		if (dp->di_size < lfs_sb_getmaxsymlinklen(fs) ||
+		    (lfs_sb_getmaxsymlinklen(fs) == 0 && dp->di_blocks == 0)) {
 			ndb = howmany(dp->di_size, sizeof(ulfs_daddr_t));
 			if (ndb > ULFS_NDADDR) {
 				j = ndb - ULFS_NDADDR;
