@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.171 2015/07/17 02:21:08 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.172 2015/07/24 07:36:29 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.171 2015/07/17 02:21:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.172 2015/07/24 07:36:29 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2473,7 +2473,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		len = (len + 7) & ~7;	/* round by 8 */
 		/* safety check */
 		if (len + (p - (u_char *)ip6) > maxlen) {
-			rtfree(rt);
+			rtfree(rt_nexthop);
 			goto nolladdropt;
 		}
 		if (!(rt_nexthop->rt_flags & RTF_GATEWAY) &&
@@ -2488,7 +2488,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 			memcpy(lladdr, CLLADDR(sdl), ifp->if_addrlen);
 			p += len;
 		}
-		rtfree(rt);
+		rtfree(rt_nexthop);
 	}
   nolladdropt:;
 
