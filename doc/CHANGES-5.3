@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.121 2015/07/01 07:19:25 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.122 2015/07/24 07:43:27 martin Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3935,4 +3935,12 @@ usr.bin/calendar/calendar.c			1.51
 	And finally, don't silently ignore errors changing uid and gid; those
 	are serious if they happen.
 	[dholland, ticket #1971]
+
+sys/netinet/tcp_input.c				1.343
+sys/netinet/tcp_output.c			1.184
+
+	If we are sending a window probe and there's unacked data in the
+	socket, make sure at least the persist timer is running.
+	Make sure that snd_win doesn't go negative.
+	[matt, ticket #1973]
 
