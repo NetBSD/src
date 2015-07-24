@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.171 2015/04/22 16:49:42 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.172 2015/07/24 14:11:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.171 2015/04/22 16:49:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.172 2015/07/24 14:11:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -380,7 +380,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* your wish is my command */
 	if (howto & RB_HALT) {
-		printf("rump kernel halted\n");
+		printf("rump kernel halted (with RB_HALT, not exiting)\n");
 		rump_sysproxy_fini(finiarg);
 		for (;;) {
 			rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, 10, 0);
@@ -389,7 +389,6 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* this function is __dead, we must exit */
  out:
-	printf("halted\n");
 	rump_sysproxy_fini(finiarg);
 	rumpuser_exit(ruhow);
 }
