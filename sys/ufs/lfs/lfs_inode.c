@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.138 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.139 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.138 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.139 2015/07/24 06:59:32 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -285,7 +285,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 				if (ioflag & IO_SYNC) {
 					mutex_enter(ovp->v_interlock);
 					VOP_PUTPAGES(ovp,
-					    trunc_page(osize & fs->lfs_bmask),
+					    trunc_page(osize & lfs_sb_getbmask(fs)),
 					    round_page(eob),
 					    PGO_CLEANIT | PGO_SYNCIO);
 				}
@@ -305,13 +305,13 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			return (lfs_update(ovp, NULL, NULL, 0));
 		} else {
 			error = lfs_reserve(fs, ovp, NULL,
-			    lfs_btofsb(fs, (ULFS_NIADDR + 2) << fs->lfs_bshift));
+			    lfs_btofsb(fs, (ULFS_NIADDR + 2) << lfs_sb_getbshift(fs)));
 			if (error)
 				return (error);
 			error = lfs_balloc(ovp, length - 1, 1, cred,
 					   aflags, &bp);
 			lfs_reserve(fs, ovp, NULL,
-			    -lfs_btofsb(fs, (ULFS_NIADDR + 2) << fs->lfs_bshift));
+			    -lfs_btofsb(fs, (ULFS_NIADDR + 2) << lfs_sb_getbshift(fs)));
 			if (error)
 				return (error);
 			oip->i_ffs1_size = oip->i_size = length;
@@ -324,7 +324,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	}
 
 	if ((error = lfs_reserve(fs, ovp, NULL,
-	    lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift))) != 0)
+	    lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(fs)))) != 0)
 		return (error);
 
 	/*
@@ -351,7 +351,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		error = lfs_balloc(ovp, length - 1, 1, cred, aflags, &bp);
 		if (error) {
 			lfs_reserve(fs, ovp, NULL,
-			    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift));
+			    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(fs)));
 			goto errout;
 		}
 		obufsize = bp->b_bufsize;
@@ -391,7 +391,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		error = ulfs_balloc_range(ovp, length - 1, 1, cred, aflags);
 		if (error) {
 			lfs_reserve(fs, ovp, NULL,
-				    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift));
+				    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(fs)));
 			goto errout;
 		}
 		xlbn = lfs_lblkno(fs, length);
@@ -407,7 +407,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			    ((ioflag & IO_SYNC) ? PGO_SYNCIO : 0));
 			if (error) {
 				lfs_reserve(fs, ovp, NULL,
-					    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift));
+					    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(fs)));
 				goto errout;
 			}
 		}
@@ -593,7 +593,7 @@ done:
 	(void) lfs_chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
 	lfs_reserve(fs, ovp, NULL,
-	    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift));
+	    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(fs)));
 	genfs_node_unlock(ovp);
   errout:
 	oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;

@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.38 2015/07/24 06:56:41 dholland Exp $	 */
+/* $NetBSD: utilities.c,v 1.39 2015/07/24 06:59:32 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -120,8 +120,8 @@ write_superblocks(void)
 	if (debug)
 		pwarn("writing superblocks with lfs_idaddr = 0x%jx\n",
 			(uintmax_t)lfs_sb_getidaddr(fs));
-	lfs_writesuper(fs, fs->lfs_sboffs[0]);
-	lfs_writesuper(fs, fs->lfs_sboffs[1]);
+	lfs_writesuper(fs, lfs_sb_getsboff(fs, 0));
+	lfs_writesuper(fs, lfs_sb_getsboff(fs, 1));
 	fsmodified = 1;
 }
 
@@ -138,8 +138,8 @@ ckfini(int markclean)
 		}
 	}
 
-	if (!nflag && (fs->lfs_pflags & LFS_PF_CLEAN) == 0) {
-		fs->lfs_pflags |= LFS_PF_CLEAN;
+	if (!nflag && (lfs_sb_getpflags(fs) & LFS_PF_CLEAN) == 0) {
+		lfs_sb_setpflags(fs, lfs_sb_getpflags(fs) | LFS_PF_CLEAN);
 		fsmodified = 1;
 	}
 
@@ -156,7 +156,7 @@ ckfini(int markclean)
 		else if (!reply("MARK FILE SYSTEM CLEAN"))
 			markclean = 0;
 		if (markclean) {
-			fs->lfs_pflags |= LFS_PF_CLEAN;
+			lfs_sb_setpflags(fs, lfs_sb_getpflags(fs) | LFS_PF_CLEAN);
 			sbdirty();
 			write_superblocks();
 			if (!preen)
