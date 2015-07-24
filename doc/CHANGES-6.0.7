@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.45 2015/07/12 19:00:48 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.46 2015/07/24 07:38:24 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -6255,4 +6255,12 @@ doc/3RDPARTY					patch
 
 	Update OpenSSL to 1.0.1p.
 	[spz, ticket #1313]
+
+sys/netinet/tcp_input.c				1.343
+sys/netinet/tcp_output.c			1.184
+
+	If we are sending a window probe and there's unacked data in the
+	socket, make sure at least the persist timer is running.
+	Make sure that snd_win doesn't go negative.
+	[matt, ticket #1315]
 
