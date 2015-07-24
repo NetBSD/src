@@ -16,7 +16,7 @@ struct clfs_seguse {
  * The cleaner's view of the superblock data structure.
  */
 struct clfs {
-	struct dlfs lfs_dlfs;	   /* Leverage LFS lfs_* defines here */
+	struct dlfs lfs_dlfs;
 
 	/* Ifile */
 	int clfs_ifilefd;	   /* Ifile file descriptor */
@@ -36,6 +36,47 @@ struct clfs {
 	int clfs_nactive;	   /* How many segments' blocks we have */
 	int clfs_onhold;	   /* If cleaning this fs is on hold */
 };
+
+/* ugh... */
+#define CLFS_DEF_SB_ACCESSOR(type, field) \
+	static __unused inline type				\
+	clfs_sb_get##field(struct clfs *fs)			\
+	{							\
+		return fs->lfs_dlfs.dlfs_##field;		\
+	}							\
+	static __unused inline void				\
+	clfs_sb_set##field(struct clfs *fs, type val)		\
+	{							\
+		fs->lfs_dlfs.dlfs_##field = val;		\
+	}							\
+	static __unused inline void				\
+	clfs_sb_add##field(struct clfs *fs, type val)		\
+	{							\
+		fs->lfs_dlfs.dlfs_##field += val;		\
+	}
+
+/* more ugh... */
+CLFS_DEF_SB_ACCESSOR(u_int32_t, ssize);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, bsize);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, fsize);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, frag);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, ifile);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, ifpb);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, sepb);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, nseg);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, cleansz);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, segtabsz);
+
+/* still more ugh... */
+#define lfs_sb_getssize(fs) clfs_sb_getssize(fs)
+#define lfs_sb_getbsize(fs) clfs_sb_getbsize(fs)
+#define lfs_sb_getfsize(fs) clfs_sb_getfsize(fs)
+#define lfs_sb_getfrag(fs) clfs_sb_getfrag(fs)
+#define lfs_sb_getifpb(fs) clfs_sb_getifpb(fs)
+#define lfs_sb_getsepb(fs) clfs_sb_getsepb(fs)
+#define lfs_sb_getnseg(fs) clfs_sb_getnseg(fs)
+#define lfs_sb_getcleansz(fs) clfs_sb_getcleansz(fs)
+#define lfs_sb_getsegtabsz(fs) clfs_sb_getsegtabsz(fs)
 
 /*
  * Fraction of the could-be-clean segments required to be clean.
