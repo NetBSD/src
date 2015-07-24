@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.25 2015/07/24 06:56:41 dholland Exp $  */
+/*      $NetBSD: coalesce.c,v 1.26 2015/07/24 06:59:31 dholland Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include <util.h>
 #include <errno.h>
 #include <err.h>
+#include <assert.h>
 
 #include <syslog.h>
 
@@ -118,9 +119,9 @@ get_dinode(struct clfs *fs, ino_t ino)
 	if (daddr == 0x0)
 		return NULL;
 
-	bread(fs->clfs_devvp, daddr, fs->lfs_ibsize, 0, &bp);
+	bread(fs->clfs_devvp, daddr, lfs_sb_getibsize(fs), 0, &bp);
 	for (dip = (struct ulfs1_dinode *)bp->b_data;
-	     dip < (struct ulfs1_dinode *)(bp->b_data + fs->lfs_ibsize); dip++)
+	     dip < (struct ulfs1_dinode *)(bp->b_data + lfs_sb_getibsize(fs)); dip++)
 		if (dip->di_inumber == ino) {
 			r = (struct ulfs1_dinode *)malloc(sizeof(*r));
 			if (r == NULL)
@@ -201,7 +202,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	lim.blkcnt = nb;
 	if (kops.ko_fcntl(fs->clfs_ifilefd, LFCNBMAPV, &lim) < 0) { 
 		syslog(LOG_WARNING, "%s: coalesce: LFCNBMAPV: %m",
-		       fs->lfs_fsmnt);
+		       lfs_sb_getfsmnt(fs));
 		retval = COALESCE_BADBMAPV;
 		goto out;
 	}
@@ -218,7 +219,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 		if (bip[i].bi_daddr != bip[i - 1].bi_daddr + clfs_sb_getfrag(fs))
 			++noff;
 		toff += abs(bip[i].bi_daddr - bip[i - 1].bi_daddr
-		    - clfs_sb_getfrag(fs)) >> fs->lfs_fbshift;
+		    - clfs_sb_getfrag(fs)) >> lfs_sb_getfbshift(fs);
 	}
 
 	/*
@@ -339,7 +340,7 @@ int clean_all_inodes(struct clfs *fs)
 	memset(totals, 0, sizeof(totals));
 
 	fstat(fs->clfs_ifilefd, &st);
-	maxino = lfs_sb_getifpb(fs) * (st.st_size >> fs->lfs_bshift) -
+	maxino = lfs_sb_getifpb(fs) * (st.st_size >> lfs_sb_getbshift(fs)) -
 		lfs_sb_getsegtabsz(fs) - lfs_sb_getcleansz(fs);
 
 	for (i = 0; i < maxino; i++) {
@@ -383,14 +384,14 @@ fork_coalesce(struct clfs *fs)
 	 */
 	childpid = fork();
 	if (childpid < 0) {
-		syslog(LOG_ERR, "%s: fork to coaleasce: %m", fs->lfs_fsmnt);
+		syslog(LOG_ERR, "%s: fork to coaleasce: %m", lfs_sb_getfsmnt(fs));
 		return 0;
 	} else if (childpid == 0) {
 		syslog(LOG_NOTICE, "%s: new coalescing process, pid %d",
-		       fs->lfs_fsmnt, getpid());
+		       lfs_sb_getfsmnt(fs), getpid());
 		num = clean_all_inodes(fs);
 		syslog(LOG_NOTICE, "%s: coalesced %d discontiguous inodes",
-		       fs->lfs_fsmnt, num);
+		       lfs_sb_getfsmnt(fs), num);
 		exit(0);
 	}
 

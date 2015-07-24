@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.30 2015/07/24 06:56:41 dholland Exp $	 */
+/* $NetBSD: pass5.c,v 1.31 2015/07/24 06:59:32 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ pass5(void)
 	avail = 0;
 	bb = ubb = 0;
 	dmeta = 0;
-	for (i = 0; i < fs->lfs_nseg; i++) {
+	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
 		diddirty = 0;
 		LFS_SEGENTRY(su, fs, i, bp);
 		if (!preen && !(su->su_flags & SEGUSE_DIRTY) &&
@@ -106,23 +106,23 @@ pass5(void)
 		}
 		if (su->su_flags & SEGUSE_DIRTY) {
 			bb += lfs_btofsb(fs, su->su_nbytes +
-			    su->su_nsums * fs->lfs_sumsize);
+			    su->su_nsums * lfs_sb_getsumsize(fs));
 			ubb += lfs_btofsb(fs, su->su_nbytes +
-			    su->su_nsums * fs->lfs_sumsize +
-			    su->su_ninos * fs->lfs_ibsize);
+			    su->su_nsums * lfs_sb_getsumsize(fs) +
+			    su->su_ninos * lfs_sb_getibsize(fs));
 			dmeta += lfs_btofsb(fs,
-			    fs->lfs_sumsize * su->su_nsums);
+			    lfs_sb_getsumsize(fs) * su->su_nsums);
 			dmeta += lfs_btofsb(fs,
-			    fs->lfs_ibsize * su->su_ninos);
+			    lfs_sb_getibsize(fs) * su->su_ninos);
 		} else {
 			nclean++;
 			avail += lfs_segtod(fs, 1);
 			if (su->su_flags & SEGUSE_SUPERBLOCK)
 				avail -= lfs_btofsb(fs, LFS_SBPAD);
 			if (i == 0 && fs->lfs_version > 1 &&
-			    fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD))
+			    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
 				avail -= lfs_btofsb(fs, LFS_LABELPAD) -
-				    fs->lfs_s0addr;
+				    lfs_sb_gets0addr(fs);
 		}
 		if (diddirty)
 			VOP_BWRITE(bp);
@@ -134,19 +134,19 @@ pass5(void)
 	i = lfs_dtosn(fs, lfs_sb_getoffset(fs));
 	avail += lfs_sntod(fs, i + 1) - lfs_sb_getoffset(fs);
 	/* But do not count minfreesegs */
-	avail -= lfs_segtod(fs, (fs->lfs_minfreeseg -
-		(fs->lfs_minfreeseg / 2)));
+	avail -= lfs_segtod(fs, (lfs_sb_getminfreeseg(fs) -
+		(lfs_sb_getminfreeseg(fs) / 2)));
 	/* Note we may have bytes to write yet */
 	avail -= lfs_btofsb(fs, locked_queue_bytes);
 
 	if (idaddr)
 		pwarn("NOTE: when using -i, expect discrepancies in dmeta,"
 		      " avail, nclean, bfree\n");
-	if (dmeta != fs->lfs_dmeta) {
-		pwarn("DMETA GIVEN AS %d, SHOULD BE %ld\n", fs->lfs_dmeta,
-		    dmeta);
+	if (dmeta != lfs_sb_getdmeta(fs)) {
+		pwarn("DMETA GIVEN AS %d, SHOULD BE %ld\n",
+		    lfs_sb_getdmeta(fs), dmeta);
 		if (preen || reply("FIX")) {
-			fs->lfs_dmeta = dmeta;
+			lfs_sb_setdmeta(fs, dmeta);
 			sbdirty();
 		}
 	}
@@ -158,18 +158,18 @@ pass5(void)
 			sbdirty();
 		}
 	}
-	if (nclean != fs->lfs_nclean) {
-		pwarn("NCLEAN GIVEN AS %d, SHOULD BE %d\n", fs->lfs_nclean,
+	if (nclean != lfs_sb_getnclean(fs)) {
+		pwarn("NCLEAN GIVEN AS %d, SHOULD BE %d\n", lfs_sb_getnclean(fs),
 		    nclean);
 		if (preen || reply("FIX")) {
-			fs->lfs_nclean = nclean;
+			lfs_sb_setnclean(fs, nclean);
 			sbdirty();
 		}
 	}
 
 	labelskew = 0;
 	if (fs->lfs_version > 1 &&
-	    fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD))
+	    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
 		labelskew = lfs_btofsb(fs, LFS_LABELPAD);
 	if (lfs_sb_getbfree(fs) > lfs_sb_getdsize(fs) - bb - labelskew ||
 	    lfs_sb_getbfree(fs) < lfs_sb_getdsize(fs) - ubb - labelskew) {

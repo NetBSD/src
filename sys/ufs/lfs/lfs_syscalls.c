@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.161 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.162 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.161 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.162 2015/07/24 06:59:32 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -872,12 +872,12 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	if (sup->su_flags & SEGUSE_SUPERBLOCK)
 		lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_SBPAD));
 	if (fs->lfs_version > 1 && segnum == 0 &&
-	    fs->lfs_s0addr < lfs_btofsb(fs, LFS_LABELPAD))
-		lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_s0addr);
+	    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
+		lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_LABELPAD) - lfs_sb_gets0addr(fs));
 	mutex_enter(&lfs_lock);
-	lfs_sb_addbfree(fs, sup->su_nsums * lfs_btofsb(fs, fs->lfs_sumsize) +
+	lfs_sb_addbfree(fs, sup->su_nsums * lfs_btofsb(fs, lfs_sb_getsumsize(fs)) +
 		lfs_btofsb(fs, sup->su_ninos * lfs_sb_getibsize(fs)));
-	lfs_sb_subdmeta(fs, sup->su_nsums * lfs_btofsb(fs, fs->lfs_sumsize) +
+	lfs_sb_subdmeta(fs, sup->su_nsums * lfs_btofsb(fs, lfs_sb_getsumsize(fs)) +
 		lfs_btofsb(fs, sup->su_ninos * lfs_sb_getibsize(fs)));
 	if (lfs_sb_getdmeta(fs) < 0)
 		lfs_sb_setdmeta(fs, 0);
@@ -888,7 +888,7 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	LFS_CLEANERINFO(cip, fs, bp);
 	++cip->clean;
 	--cip->dirty;
-	fs->lfs_nclean = cip->clean;
+	lfs_sb_setnclean(fs, cip->clean);
 	mutex_enter(&lfs_lock);
 	cip->bfree = lfs_sb_getbfree(fs);
 	cip->avail = lfs_sb_getavail(fs) - fs->lfs_ravail - fs->lfs_favail;
