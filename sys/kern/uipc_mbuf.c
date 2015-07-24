@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.161 2015/02/08 14:46:30 mlelstv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.162 2015/07/24 12:29:55 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.161 2015/02/08 14:46:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.162 2015/07/24 12:29:55 maxv Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -1689,7 +1689,7 @@ m_getptr(struct mbuf *m, int loc, int *off)
 /*
  * m_ext_free: release a reference to the mbuf external storage.
  *
- * => free the mbuf m itsself as well.
+ * => free the mbuf m itself as well.
  */
 
 void
