@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.49 2015/06/16 23:18:55 christos Exp $	 */
+/* $NetBSD: main.c,v 1.50 2015/07/24 06:56:41 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -308,9 +308,9 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	/*
 	 * print out summary statistics
 	 */
-	pwarn("%llu files, %lld used, %lld free\n",
-	    (unsigned long long)n_files, (long long) n_blks,
-	    (long long) fs->lfs_bfree);
+	pwarn("%ju files, %jd used, %jd free\n",
+	    (uintmax_t) n_files, (intmax_t) n_blks,
+	    (intmax_t) lfs_sb_getbfree(fs));
 
 	ckfini(1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.137 2015/07/16 08:31:45 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.138 2015/07/24 06:56:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.137 2015/07/16 08:31:45 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.138 2015/07/24 06:56:42 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -113,11 +113,11 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 			return (ldip);
 
 	printf("searched %d entries\n", (int)(fin - dip));
-	printf("offset is 0x%x (seg %d)\n", fs->lfs_offset,
-	       lfs_dtosn(fs, fs->lfs_offset));
-	printf("block is 0x%llx (seg %lld)\n",
-	       (unsigned long long)LFS_DBTOFSB(fs, bp->b_blkno),
-	       (long long)lfs_dtosn(fs, LFS_DBTOFSB(fs, bp->b_blkno)));
+	printf("offset is 0x%jx (seg %d)\n", (uintmax_t)lfs_sb_getoffset(fs),
+	       lfs_dtosn(fs, lfs_sb_getoffset(fs)));
+	printf("block is 0x%jx (seg %d)\n",
+	       (uintmax_t)LFS_DBTOFSB(fs, bp->b_blkno),
+	       lfs_dtosn(fs, LFS_DBTOFSB(fs, bp->b_blkno)));
 
 	return NULL;
 }
@@ -301,7 +301,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			uvm_vnp_setsize(ovp, length);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			KASSERT(ovp->v_size == oip->i_size);
-			oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
+			oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 			return (lfs_update(ovp, NULL, NULL, 0));
 		} else {
 			error = lfs_reserve(fs, ovp, NULL,
@@ -318,7 +318,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			uvm_vnp_setsize(ovp, length);
 			(void) VOP_BWRITE(bp->b_vp, bp);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
-			oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
+			oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 			return (lfs_update(ovp, NULL, NULL, 0));
 		}
 	}
@@ -367,8 +367,10 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			locked_queue_bytes -= obufsize - bp->b_bufsize;
 			mutex_exit(&lfs_lock);
 		}
-		if (bp->b_oflags & BO_DELWRI)
-			fs->lfs_avail += odb - lfs_btofsb(fs, size);
+		if (bp->b_oflags & BO_DELWRI) {
+			lfs_sb_addavail(fs, odb - lfs_btofsb(fs, size));
+			/* XXX shouldn't this wake up on lfs_availsleep? */
+		}
 		(void) VOP_BWRITE(bp->b_vp, bp);
 	} else { /* vp->v_type == VREG && length < osize && offset != 0 */
 		/*
@@ -423,14 +425,14 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * the file is truncated to 0.
 	 */
 	/* Avoid sign overflow - XXX assumes that off_t is a quad_t. */
-	if (length > QUAD_MAX - fs->lfs_bsize)
-		lastblock = lfs_lblkno(fs, QUAD_MAX - fs->lfs_bsize);
+	if (length > QUAD_MAX - lfs_sb_getbsize(fs))
+		lastblock = lfs_lblkno(fs, QUAD_MAX - lfs_sb_getbsize(fs));
 	else
-		lastblock = lfs_lblkno(fs, length + fs->lfs_bsize - 1) - 1;
+		lastblock = lfs_lblkno(fs, length + lfs_sb_getbsize(fs) - 1) - 1;
 	lastiblock[SINGLE] = lastblock - ULFS_NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - LFS_NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - LFS_NINDIR(fs) * LFS_NINDIR(fs);
-	nblocks = lfs_btofsb(fs, fs->lfs_bsize);
+	nblocks = lfs_btofsb(fs, lfs_sb_getbsize(fs));
 	/*
 	 * Record changed file and block pointers before we start
 	 * freeing blocks.  lastiblock values are also normalized to -1
@@ -472,7 +474,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 					real_released += nblocks;
 				blocksreleased += nblocks;
 				oip->i_ffs1_ib[level] = 0;
-				lfs_blkfree(fs, oip, bn, fs->lfs_bsize,
+				lfs_blkfree(fs, oip, bn, lfs_sb_getbsize(fs),
 					    &lastseg, &bc);
         			lfs_deregister_block(ovp, bn);
 			}
@@ -565,7 +567,7 @@ done:
 	oip->i_lfs_effnblks -= blocksreleased;
 	oip->i_ffs1_blocks -= real_released;
 	mutex_enter(&lfs_lock);
-	fs->lfs_bfree += blocksreleased;
+	lfs_sb_addbfree(fs, blocksreleased);
 	mutex_exit(&lfs_lock);
 #ifdef DIAGNOSTIC
 	if (oip->i_size == 0 &&
@@ -594,7 +596,7 @@ done:
 	    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift));
 	genfs_node_unlock(ovp);
   errout:
-	oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
+	oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 	if (ovp != fs->lfs_ivnode)
 		lfs_segunlock(fs);
 	return (allerror ? allerror : error);
@@ -723,7 +725,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	last = lastbn;
 	if (lastbn > 0)
 		last /= factor;
-	nblocks = lfs_btofsb(fs, fs->lfs_bsize);
+	nblocks = lfs_btofsb(fs, lfs_sb_getbsize(fs));
 	/*
 	 * Get buffer of block pointers, zero those entries corresponding
 	 * to blocks to be free'd, and update on disk copy first.  Since
@@ -733,12 +735,12 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	 * explicitly instead of letting bread do everything for us.
 	 */
 	vp = ITOV(ip);
-	bp = getblk(vp, lbn, (int)fs->lfs_bsize, 0, 0);
+	bp = getblk(vp, lbn, lfs_sb_getbsize(fs), 0, 0);
 	if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 		/* Braces must be here in case trace evaluates to nothing. */
-		trace(TR_BREADHIT, pack(vp, fs->lfs_bsize), lbn);
+		trace(TR_BREADHIT, pack(vp, lfs_sb_getbsize(fs)), lbn);
 	} else {
-		trace(TR_BREADMISS, pack(vp, fs->lfs_bsize), lbn);
+		trace(TR_BREADMISS, pack(vp, lfs_sb_getbsize(fs)), lbn);
 		curlwp->l_ru.ru_inblock++; /* pay for read */
 		bp->b_flags |= B_READ;
 		if (bp->b_bcount > bp->b_bufsize)
@@ -755,8 +757,8 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 
 	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
-		copy = lfs_malloc(fs, fs->lfs_bsize, LFS_NB_IBLOCK);
-		memcpy((void *)copy, (void *)bap, (u_int)fs->lfs_bsize);
+		copy = lfs_malloc(fs, lfs_sb_getbsize(fs), LFS_NB_IBLOCK);
+		memcpy((void *)copy, (void *)bap, lfs_sb_getbsize(fs));
 		memset((void *)&bap[last + 1], 0,
 		/* XXX ondisk32 */
 		  (u_int)(LFS_NINDIR(fs) - (last + 1)) * sizeof (int32_t));
@@ -784,7 +786,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 			blocksreleased += blkcount;
 			real_released += rblkcount;
 		}
-		lfs_blkfree(fs, ip, nb, fs->lfs_bsize, lastsegp, bcp);
+		lfs_blkfree(fs, ip, nb, lfs_sb_getbsize(fs), lastsegp, bcp);
 		if (bap[i] > 0)
 			real_released += nblocks;
 		blocksreleased += nblocks;
@@ -813,8 +815,8 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		mutex_enter(&bufcache_lock);
 		if (bp->b_oflags & BO_DELWRI) {
 			LFS_UNLOCK_BUF(bp);
-			fs->lfs_avail += lfs_btofsb(fs, bp->b_bcount);
-			wakeup(&fs->lfs_avail);
+			lfs_sb_addavail(fs, lfs_btofsb(fs, bp->b_bcount));
+			wakeup(&fs->lfs_availsleep);
 		}
 		brelsel(bp, BC_INVAL);
 		mutex_exit(&bufcache_lock);
@@ -865,8 +867,8 @@ restart:
 		mutex_enter(bp->b_objlock);
 		if (bp->b_oflags & BO_DELWRI) {
 			bp->b_oflags &= ~BO_DELWRI;
-			fs->lfs_avail += lfs_btofsb(fs, bp->b_bcount);
-			wakeup(&fs->lfs_avail);
+			lfs_sb_addavail(fs, lfs_btofsb(fs, bp->b_bcount));
+			wakeup(&fs->lfs_availsleep);
 		}
 		mutex_exit(bp->b_objlock);
 		LFS_UNLOCK_BUF(bp);
@@ -887,8 +889,8 @@ restart:
 		mutex_enter(bp->b_objlock);
 		if (bp->b_oflags & BO_DELWRI) {
 			bp->b_oflags &= ~BO_DELWRI;
-			fs->lfs_avail += lfs_btofsb(fs, bp->b_bcount);
-			wakeup(&fs->lfs_avail);
+			lfs_sb_addavail(fs, lfs_btofsb(fs, bp->b_bcount));
+			wakeup(&fs->lfs_availsleep);
 		}
 		mutex_exit(bp->b_objlock);
 		LFS_UNLOCK_BUF(bp);
