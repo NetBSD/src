@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.183 2015/05/16 01:15:34 kefren Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.184 2015/07/24 04:33:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.183 2015/05/16 01:15:34 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.184 2015/07/24 04:33:50 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1533,14 +1533,24 @@ send:
 		 * of retransmit time.
 		 */
 timer:
-		if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
-			((sack_rxmit && tp->snd_nxt != tp->snd_max) ||
-		    tp->snd_nxt != tp->snd_una)) {
-			if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST)) {
-				TCP_TIMER_DISARM(tp, TCPT_PERSIST);
+		if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0) {
+			if ((sack_rxmit && tp->snd_nxt != tp->snd_max)
+			    || tp->snd_nxt != tp->snd_una) {
+				if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST)) {
+					TCP_TIMER_DISARM(tp, TCPT_PERSIST);
+					tp->t_rxtshift = 0;
+				}
+				TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
+			} else if (len == 0 && so->so_snd.sb_cc > 0
+			    && TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0) {
+				/*
+				 * If we are sending a window probe and there's
+				 * unacked data in the socket, make sure at
+				 * least the persist timer is running.
+				 */
 				tp->t_rxtshift = 0;
+				tcp_setpersist(tp);
 			}
-			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 		}
 	} else
 		if (SEQ_GT(tp->snd_nxt + len, tp->snd_max))
