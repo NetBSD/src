@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.64 2014/11/05 00:43:55 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.65 2015/07/24 14:11:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.64 2014/11/05 00:43:55 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.65 2015/07/24 14:11:11 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/stat.h>
@@ -232,6 +232,7 @@ __dead void
 rumpuser_exit(int rv)
 {
 
+	fprintf(stderr, "halted\n");
 	if (rv == RUMPUSER_PANIC)
 		abort();
 	else
