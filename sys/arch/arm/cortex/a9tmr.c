@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.12 2015/03/04 23:18:21 jmcneill Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.13 2015/07/24 05:19:13 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.12 2015/03/04 23:18:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.13 2015/07/24 05:19:13 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -329,7 +329,7 @@ clockhandler(void *arg)
 	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n", 
 	     __func__, cf, ci->ci_data.cpu_name, now, delta);
 #endif
-	KASSERTMSG(delta > sc->sc_autoinc / 100,
+	KASSERTMSG(delta > sc->sc_autoinc / 64,
 	    "%s: interrupting too quickly (delta=%"PRIu64")",
 	    ci->ci_data.cpu_name, delta);
 
@@ -337,20 +337,22 @@ clockhandler(void *arg)
 
 	hardclock(cf);
 
+	if (delta > sc->sc_autoinc) {
+		u_int ticks = hz;
+		for (delta -= sc->sc_autoinc;
+		     delta >= sc->sc_autoinc && ticks > 0;
+		     delta -= sc->sc_autoinc, ticks--) {
 #if 0
-	/*
-	 * Try to make up up to a seconds amount of missed clock interrupts
-	 */
-	u_int ticks = hz;
-	for (delta -= sc->sc_autoinc;
-	     ticks > 0 && delta >= sc->sc_autoinc;
-	     delta -= sc->sc_autoinc, ticks--) {
-		hardclock(cf);
-	}
+			/*
+			 * Try to make up up to a seconds amount of
+			 * missed clock interrupts
+			 */
+			hardclock(cf);
 #else
-	if (delta > sc->sc_autoinc)
-		sc->sc_ev_missing_ticks.ev_count += delta / sc->sc_autoinc;
+			sc->sc_ev_missing_ticks.ev_count++;
 #endif
+		}
+	}
 
 	return 1;
 }
