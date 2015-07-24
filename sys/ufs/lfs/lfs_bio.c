@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.129 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.130 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.129 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.130 2015/07/24 06:59:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,7 +361,7 @@ lfs_fits(struct lfs *fs, int fsb)
 	needed = fsb + lfs_btofsb(fs, lfs_sb_getsumsize(fs)) +
 		 ((howmany(lfs_sb_getuinodes(fs) + 1, LFS_INOPB(fs)) +
 		   lfs_sb_getsegtabsz(fs) +
-		   1) << (fs->lfs_bshift - fs->lfs_ffshift));
+		   1) << (lfs_sb_getbshift(fs) - lfs_sb_getffshift(fs)));
 
 	if (needed >= lfs_sb_getavail(fs)) {
 #ifdef DEBUG
@@ -443,7 +443,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 *
 	 * In particular the cleaner can't write blocks either.
 	 */
-	if (fs->lfs_ronly || (fs->lfs_pflags & LFS_PF_CLEAN)) {
+	if (fs->lfs_ronly || (lfs_sb_getpflags(fs) & LFS_PF_CLEAN)) {
 		bp->b_oflags &= ~BO_DELWRI;
 		bp->b_flags |= B_READ; /* XXX is this right? --ks */
 		bp->b_error = 0;

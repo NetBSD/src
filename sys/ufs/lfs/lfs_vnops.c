@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.274 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.275 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.274 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.275 2015/07/24 06:59:32 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1229,7 +1229,8 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 	}
 
 	if (--fs->lfs_nowrap == 0) {
-		log(LOG_NOTICE, "%s: re-enabled log wrap\n", fs->lfs_fsmnt);
+		log(LOG_NOTICE, "%s: re-enabled log wrap\n",
+		    lfs_sb_getfsmnt(fs));
 		wakeup(&fs->lfs_wrappass);
 		lfs_wakeup_cleaner(fs);
 	}
@@ -1363,7 +1364,7 @@ lfs_reclaim(void *v)
 	mutex_enter(&lfs_lock);
 	if (ip->i_flags & IN_PAGING) {
 		log(LOG_WARNING, "%s: reclaimed vnode is IN_PAGING\n",
-		    fs->lfs_fsmnt);
+		    lfs_sb_getfsmnt(fs));
 		ip->i_flags &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 	}
@@ -1935,7 +1936,8 @@ segwait_common:
 			cv_wait(&fs->lfs_stopcv, &lfs_lock);
 		fs->lfs_stoplwp = curlwp;
 		if (fs->lfs_nowrap == 0)
-			log(LOG_NOTICE, "%s: disabled log wrap\n", fs->lfs_fsmnt);
+			log(LOG_NOTICE, "%s: disabled log wrap\n",
+			    lfs_sb_getfsmnt(fs));
 		++fs->lfs_nowrap;
 		if (*(int *)ap->a_data == 1
 		    || ap->a_command == LFCNWRAPSTOP_COMPAT) {

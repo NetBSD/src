@@ -52,7 +52,8 @@ struct clfs {
 	static __unused inline void				\
 	clfs_sb_add##field(struct clfs *fs, type val)		\
 	{							\
-		fs->lfs_dlfs.dlfs_##field += val;		\
+		type *p = &fs->lfs_dlfs.dlfs_##field;		\
+		*p += val;					\
 	}
 
 /* more ugh... */
@@ -61,22 +62,57 @@ CLFS_DEF_SB_ACCESSOR(u_int32_t, bsize);
 CLFS_DEF_SB_ACCESSOR(u_int32_t, fsize);
 CLFS_DEF_SB_ACCESSOR(u_int32_t, frag);
 CLFS_DEF_SB_ACCESSOR(u_int32_t, ifile);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, inopb);
 CLFS_DEF_SB_ACCESSOR(u_int32_t, ifpb);
 CLFS_DEF_SB_ACCESSOR(u_int32_t, sepb);
 CLFS_DEF_SB_ACCESSOR(u_int32_t, nseg);
 CLFS_DEF_SB_ACCESSOR(u_int32_t, cleansz);
 CLFS_DEF_SB_ACCESSOR(u_int32_t, segtabsz);
+CLFS_DEF_SB_ACCESSOR(u_int64_t, bmask);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, bshift);
+CLFS_DEF_SB_ACCESSOR(u_int64_t, ffmask);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, ffshift);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, fbshift);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, blktodb);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, minfreeseg);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, sumsize);
+CLFS_DEF_SB_ACCESSOR(u_int32_t, ibsize);
+CLFS_DEF_SB_ACCESSOR(int32_t, s0addr);
+static __unused inline int32_t
+clfs_sb_getsboff(struct clfs *fs, unsigned n)
+{
+	assert(n < LFS_MAXNUMSB);
+	return fs->lfs_dlfs.dlfs_sboffs[n];
+}
+static __unused inline const char *
+clfs_sb_getfsmnt(struct clfs *fs)
+{
+	return (const char *)fs->lfs_dlfs.dlfs_fsmnt;
+}
 
 /* still more ugh... */
 #define lfs_sb_getssize(fs) clfs_sb_getssize(fs)
 #define lfs_sb_getbsize(fs) clfs_sb_getbsize(fs)
 #define lfs_sb_getfsize(fs) clfs_sb_getfsize(fs)
 #define lfs_sb_getfrag(fs) clfs_sb_getfrag(fs)
+#define lfs_sb_getinopb(fs) clfs_sb_getinopb(fs)
 #define lfs_sb_getifpb(fs) clfs_sb_getifpb(fs)
 #define lfs_sb_getsepb(fs) clfs_sb_getsepb(fs)
 #define lfs_sb_getnseg(fs) clfs_sb_getnseg(fs)
 #define lfs_sb_getcleansz(fs) clfs_sb_getcleansz(fs)
 #define lfs_sb_getsegtabsz(fs) clfs_sb_getsegtabsz(fs)
+#define lfs_sb_getbmask(fs) clfs_sb_getbmask(fs)
+#define lfs_sb_getbshift(fs) clfs_sb_getbshift(fs)
+#define lfs_sb_getffmask(fs) clfs_sb_getffmask(fs)
+#define lfs_sb_getffshift(fs) clfs_sb_getffshift(fs)
+#define lfs_sb_getfbshift(fs) clfs_sb_getfbshift(fs)
+#define lfs_sb_getblktodb(fs) clfs_sb_getblktodb(fs)
+#define lfs_sb_getminfreeseg(fs) clfs_sb_getminfreeseg(fs)
+#define lfs_sb_getsumsize(fs) clfs_sb_getsumsize(fs)
+#define lfs_sb_getibsize(fs) clfs_sb_getibsize(fs)
+#define lfs_sb_gets0addr(fs) clfs_sb_gets0addr(fs)
+#define lfs_sb_getsboff(fs, n) clfs_sb_getsboff(fs, n)
+#define lfs_sb_getfsmnt(fs) clfs_sb_getfsmnt(fs)
 
 /*
  * Fraction of the could-be-clean segments required to be clean.

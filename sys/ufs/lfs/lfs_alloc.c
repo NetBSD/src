@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.122 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.123 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.122 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.123 2015/07/24 06:59:32 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -136,7 +136,7 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 	ip->i_ffs1_size = ip->i_size;
 	uvm_vnp_setsize(vp, ip->i_size);
 
-	maxino = ((ip->i_size >> fs->lfs_bshift) - lfs_sb_getcleansz(fs) -
+	maxino = ((ip->i_size >> lfs_sb_getbshift(fs)) - lfs_sb_getcleansz(fs) -
 		  lfs_sb_getsegtabsz(fs)) * lfs_sb_getifpb(fs);
 	fs->lfs_ino_bitmap = (lfs_bm_t *)
 		realloc(fs->lfs_ino_bitmap, ((maxino + BMMASK) >> BMSHIFT) *
@@ -268,7 +268,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	/* If the Ifile is too short to contain this inum, extend it */
 	while (VTOI(fs->lfs_ivnode)->i_size <= (ino /
 		lfs_sb_getifpb(fs) + lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs))
-		<< fs->lfs_bshift) {
+		<< lfs_sb_getbshift(fs)) {
 		lfs_extend_ifile(fs, NOCRED);
 	}
 
@@ -311,7 +311,7 @@ lfs_last_alloc_ino(struct lfs *fs)
 {
 	ino_t ino, maxino;
 
-	maxino = ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) -
+	maxino = ((fs->lfs_ivnode->v_size >> lfs_sb_getbshift(fs)) -
 		  lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs)) * fs->lfs_ifpb;
 	for (ino = maxino - 1; ino > LFS_UNUSED_INUM; --ino) {
 		if (ISSET_BITMAP_FREE(fs, ino) == 0)
@@ -553,7 +553,7 @@ lfs_order_freelist(struct lfs *fs)
 	ASSERT_NO_SEGLOCK(fs);
 	lfs_seglock(fs, SEGM_PROT);
 
-	maxino = ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) -
+	maxino = ((fs->lfs_ivnode->v_size >> lfs_sb_getbshift(fs)) -
 		  lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs)) * lfs_sb_getifpb(fs);
 	fs->lfs_ino_bitmap =
 		malloc(((maxino + BMMASK) >> BMSHIFT) * sizeof(lfs_bm_t),

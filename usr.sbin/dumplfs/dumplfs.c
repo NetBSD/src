@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.43 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.44 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.43 2015/07/24 06:56:42 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.44 2015/07/24 06:59:32 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,8 +189,8 @@ main(int argc, char **argv)
 
 		/* If that wasn't the real first sb, get the real first sb */
 		if (lfs_sb1.lfs_version > 1 &&
-		    lfs_sb1.lfs_sboffs[0] > lfs_btofsb(&lfs_sb1, LFS_LABELPAD))
-			get(fd, lfs_fsbtob(&lfs_sb1, lfs_sb1.lfs_sboffs[0]),
+		    lfs_sb_getsboff(&lfs_sb1, 0) > lfs_btofsb(&lfs_sb1, LFS_LABELPAD))
+			get(fd, lfs_fsbtob(&lfs_sb1, lfs_sb_getsboff(&lfs_sb1, 0)),
 			    &(lfs_sb1.lfs_dlfs), sizeof(struct dlfs));
 	
 		/*
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 	 	* most up to date.
 	 	*/
 		get(fd,
-		    fsbtobyte(&lfs_sb1, lfs_sb1.lfs_sboffs[1]),
+		    fsbtobyte(&lfs_sb1, lfs_sb_getsboff(&lfs_sb1, 1)),
 		    sbuf, LFS_SBPAD);
 		memcpy(&(lfs_sb2.lfs_dlfs), sbuf, sizeof(struct dlfs));
 	
@@ -206,15 +206,15 @@ main(int argc, char **argv)
 		if (lfs_sb1.lfs_version > 1) {
 			if (lfs_sb_getserial(&lfs_sb1) > lfs_sb_getserial(&lfs_sb2)) {
 				lfs_master = &lfs_sb2;
-				sbdaddr = lfs_sb1.lfs_sboffs[1];
+				sbdaddr = lfs_sb_getsboff(&lfs_sb1, 1);
 			} else
-				sbdaddr = lfs_sb1.lfs_sboffs[0];
+				sbdaddr = lfs_sb_getsboff(&lfs_sb1, 0);
 		} else {
 			if (lfs_sb_getotstamp(&lfs_sb1) > lfs_sb_getotstamp(&lfs_sb2)) {
 				lfs_master = &lfs_sb2;
-				sbdaddr = lfs_sb1.lfs_sboffs[1];
+				sbdaddr = lfs_sb_getsboff(&lfs_sb1, 1);
 			} else
-				sbdaddr = lfs_sb1.lfs_sboffs[0];
+				sbdaddr = lfs_sb_getsboff(&lfs_sb1, 0);
 		}
 	} else {
 		/* Read the first superblock */
@@ -227,11 +227,11 @@ main(int argc, char **argv)
 
 	/* Compatibility */
 	if (lfs_master->lfs_version == 1) {
-		lfs_master->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
-		lfs_master->lfs_ibsize = lfs_sb_getbsize(lfs_master);
-		lfs_master->lfs_s0addr = lfs_master->lfs_sboffs[0];
+		lfs_sb_setsumsize(lfs_master, LFS_V1_SUMMARY_SIZE);
+		lfs_sb_setibsize(lfs_master, lfs_sb_getbsize(lfs_master));
+		lfs_sb_sets0addr(lfs_master, lfs_sb_getsboff(lfs_master, 0));
 		lfs_sb_settstamp(lfs_master, lfs_sb_getotstamp(lfs_master));
-		lfs_master->lfs_fsbtodb = 0;
+		lfs_sb_setfsbtodb(lfs_master, 0);
 	}
 
 	(void)printf("Master Superblock at 0x%llx:\n", (long long)sbdaddr);
@@ -247,7 +247,7 @@ main(int argc, char **argv)
 		}
 	else
 		for (segnum = 0, seg_addr = lfs_sntod(lfs_master, 0);
-		     segnum < lfs_master->lfs_nseg;
+		     segnum < lfs_sb_getnseg(lfs_master);
 		     segnum++, seg_addr = lfs_sntod(lfs_master, segnum))
 			dump_segment(fd, segnum, seg_addr, lfs_master,
 				     do_allsb);
@@ -507,7 +507,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 				     (long long)addr);
 		return -1;
 	}
-	if (lfsp->lfs_version > 1 && sp->ss_ident != lfsp->lfs_ident) {
+	if (lfsp->lfs_version > 1 && sp->ss_ident != lfs_sb_getident(lfsp)) {
 		(void)printf("dumplfs: %s %d address 0x%llx\n",
 	                     "summary from a former life; segment", segnum,
 			     (long long)addr);
@@ -661,12 +661,12 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 	sumblock = malloc(lfs_sb_getsumsize(lfsp));
 
 	if (lfsp->lfs_version > 1 && segnum == 0) {
-		if (lfs_fsbtob(lfsp, lfsp->lfs_s0addr) < LFS_LABELPAD) {
+		if (lfs_fsbtob(lfsp, lfs_sb_gets0addr(lfsp)) < LFS_LABELPAD) {
 			/* First segment eats the disklabel */
 			sum_offset += lfs_fragroundup(lfsp, LFS_LABELPAD) -
-				      lfs_fsbtob(lfsp, lfsp->lfs_s0addr);
+				      lfs_fsbtob(lfsp, lfs_sb_gets0addr(lfsp));
 			addr += lfs_btofsb(lfsp, lfs_fragroundup(lfsp, LFS_LABELPAD)) -
-				lfsp->lfs_s0addr;
+				lfs_sb_gets0addr(lfsp);
 			printf("Disklabel at 0x0\n");
 		}
 	}
@@ -771,13 +771,13 @@ dump_super(struct lfs *lfsp)
  		     "interleave ", lfs_sb_getinterleave(lfsp),
  		     "sumsize  ", lfs_sb_getsumsize(lfsp));
  	(void)printf("    %s%-10d  %s0x%-8jx\n",
-		     "seg0addr ", lfsp->lfs_s0addr,
+		     "seg0addr ", lfs_sb_gets0addr(lfsp),
  		     "maxfilesize  ", (uintmax_t)lfs_sb_getmaxfilesize(lfsp));
  	
  	
  	(void)printf("  Superblock disk addresses:\n    ");
   	for (i = 0; i < LFS_MAXNUMSB; i++) {
- 		(void)printf(" 0x%-8x", lfsp->lfs_sboffs[i]);
+ 		(void)printf(" 0x%-8x", lfs_sb_getsboff(lfsp, i));
  		if (i == (LFS_MAXNUMSB >> 1))
  			(void)printf("\n    ");
   	}

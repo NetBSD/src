@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.82 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.83 2015/07/24 06:59:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.82 2015/07/24 06:56:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.83 2015/07/24 06:59:32 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -501,7 +501,7 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 	ASSERT_NO_SEGLOCK(fs);
 
 	/* If no space, wait for the cleaner */
-	lfs_availwait(fs, lfs_btofsb(fs, 1 << fs->lfs_bshift));
+	lfs_availwait(fs, lfs_btofsb(fs, 1 << lfs_sb_getbshift(fs)));
 
 	lbp = (struct lbnentry *)pool_get(&lfs_lbnentry_pool, PR_WAITOK);
 	lbp->lbn = lbn;
@@ -514,7 +514,7 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 	}
 
 	++ip->i_lfs_nbtree;
-	fs->lfs_favail += lfs_btofsb(fs, (1 << fs->lfs_bshift));
+	fs->lfs_favail += lfs_btofsb(fs, (1 << lfs_sb_getbshift(fs)));
 	fs->lfs_pages += lfs_sb_getbsize(fs) >> PAGE_SHIFT;
 	++locked_fakequeue_count;
 	lfs_subsys_pages += lfs_sb_getbsize(fs) >> PAGE_SHIFT;
@@ -529,8 +529,8 @@ lfs_do_deregister(struct lfs *fs, struct inode *ip, struct lbnentry *lbp)
 	mutex_enter(&lfs_lock);
 	--ip->i_lfs_nbtree;
 	SPLAY_REMOVE(lfs_splay, &ip->i_lfs_lbtree, lbp);
-	if (fs->lfs_favail > lfs_btofsb(fs, (1 << fs->lfs_bshift)))
-		fs->lfs_favail -= lfs_btofsb(fs, (1 << fs->lfs_bshift));
+	if (fs->lfs_favail > lfs_btofsb(fs, (1 << lfs_sb_getbshift(fs))))
+		fs->lfs_favail -= lfs_btofsb(fs, (1 << lfs_sb_getbshift(fs)));
 	fs->lfs_pages -= lfs_sb_getbsize(fs) >> PAGE_SHIFT;
 	if (locked_fakequeue_count > 0)
 		--locked_fakequeue_count;
