@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.499 2015/06/12 19:06:32 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.500 2015/07/24 13:02:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.499 2015/06/12 19:06:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.500 2015/07/24 13:02:52 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1950,7 +1950,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	struct vnode *vp = NULL;
 	kauth_cred_t cred = l->l_cred;
 	file_t *nfp;
-	int indx, error = 0;
+	int indx, error;
 	struct vattr va;
 	fhandle_t *fh;
 	int flags;
