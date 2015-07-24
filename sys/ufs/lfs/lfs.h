@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.162 2015/05/31 15:44:31 hannken Exp $	*/
+/*	$NetBSD: lfs.h,v 1.163 2015/07/24 06:51:46 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -396,7 +396,8 @@ struct ulfs2_dinode {
 	int64_t		di_db[ULFS_NDADDR]; /* 112: Direct disk blocks. */
 	int64_t		di_ib[ULFS_NIADDR]; /* 208: Indirect disk blocks. */
 	u_int64_t	di_modrev;	/* 232: i_modrev for NFSv4 */
-	int64_t		di_spare[2];	/* 240: Reserved; currently unused */
+	u_int32_t	di_inumber;	/* 240: Inode number */
+	u_int32_t	di_spare[3];	/* 244: Reserved; currently unused */
 };
 
 /*
