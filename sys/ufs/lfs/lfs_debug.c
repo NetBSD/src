@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.43 2013/06/18 18:18:58 christos Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.44 2015/07/25 10:40:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.43 2013/06/18 18:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.44 2015/07/25 10:40:35 martin Exp $");
 
 #ifdef DEBUG
 
@@ -129,62 +129,62 @@ lfs_dump_super(struct lfs *lfsp)
 	printf("%s%x\t%s%x\t%s%d\t%s%d\n",
 	       "magic	 ", lfsp->lfs_magic,
 	       "version	 ", lfsp->lfs_version,
-	       "size	 ", lfsp->lfs_size,
-	       "ssize	 ", lfsp->lfs_ssize);
+	       "size	 ", lfs_sb_getsize(lfsp),
+	       "ssize	 ", lfs_sb_getssize(lfsp));
 	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
-	       "dsize	 ", lfsp->lfs_dsize,
-	       "bsize	 ", lfsp->lfs_bsize,
-	       "fsize	 ", lfsp->lfs_fsize,
-	       "frag	 ", lfsp->lfs_frag);
+	       "dsize	 ", lfs_sb_getdsize(lfsp),
+	       "bsize	 ", lfs_sb_getbsize(lfsp),
+	       "fsize	 ", lfs_sb_getfsize(lfsp),
+	       "frag	 ", lfs_sb_getfrag(lfsp));
 
 	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
-	       "minfree	 ", lfsp->lfs_minfree,
-	       "inopb	 ", lfsp->lfs_inopb,
-	       "ifpb	 ", lfsp->lfs_ifpb,
-	       "nindir	 ", lfsp->lfs_nindir);
+	       "minfree	 ", lfs_sb_getminfree(lfsp),
+	       "inopb	 ", lfs_sb_getinopb(lfsp),
+	       "ifpb	 ", lfs_sb_getifpb(lfsp),
+	       "nindir	 ", lfs_sb_getnindir(lfsp));
 
 	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
-	       "nseg	 ", lfsp->lfs_nseg,
-	       "nspf	 ", lfsp->lfs_nspf,
-	       "cleansz	 ", lfsp->lfs_cleansz,
-	       "segtabsz ", lfsp->lfs_segtabsz);
+	       "nseg	 ", lfs_sb_getnseg(lfsp),
+	       "nspf	 ", lfs_sb_getnspf(lfsp),
+	       "cleansz	 ", lfs_sb_getcleansz(lfsp),
+	       "segtabsz ", lfs_sb_getsegtabsz(lfsp));
 
 	printf("%s%x\t%s%d\t%s%lx\t%s%d\n",
-	       "segmask	 ", lfsp->lfs_segmask,
-	       "segshift ", lfsp->lfs_segshift,
-	       "bmask	 ", (unsigned long)lfsp->lfs_bmask,
-	       "bshift	 ", lfsp->lfs_bshift);
+	       "segmask	 ", lfs_sb_getsegmask(lfsp),
+	       "segshift ", lfs_sb_getsegshift(lfsp),
+	       "bmask	 ", (unsigned long)lfs_sb_getbmask(lfsp),
+	       "bshift	 ", lfs_sb_getbshift(lfsp));
 
 	printf("%s%lu\t%s%d\t%s%lx\t%s%u\n",
-	       "ffmask	 ", (unsigned long)lfsp->lfs_ffmask,
-	       "ffshift	 ", lfsp->lfs_ffshift,
-	       "fbmask	 ", (unsigned long)lfsp->lfs_fbmask,
-	       "fbshift	 ", lfsp->lfs_fbshift);
+	       "ffmask	 ", (unsigned long)lfs_sb_getffmask(lfsp),
+	       "ffshift	 ", lfs_sb_getffshift(lfsp),
+	       "fbmask	 ", (unsigned long)lfs_sb_getfbmask(lfsp),
+	       "fbshift	 ", lfs_sb_getfbshift(lfsp));
 
 	printf("%s%d\t%s%d\t%s%x\t%s%qx\n",
-	       "sushift	 ", lfsp->lfs_sushift,
-	       "fsbtodb	 ", lfsp->lfs_fsbtodb,
-	       "cksum	 ", lfsp->lfs_cksum,
-	       "maxfilesize ", (long long)lfsp->lfs_maxfilesize);
+	       "sushift	 ", lfs_sb_getsushift(lfsp),
+	       "fsbtodb	 ", lfs_sb_getfsbtodb(lfsp),
+	       "cksum	 ", lfs_sb_getcksum(lfsp),
+	       "maxfilesize ", (long long)lfs_sb_getmaxfilesize(lfsp));
 
 	printf("Superblock disk addresses:");
 	for (i = 0; i < LFS_MAXNUMSB; i++)
-		printf(" %x", lfsp->lfs_sboffs[i]);
+		printf(" %x", lfs_sb_getsboff(lfsp, i));
 	printf("\n");
 
 	printf("Checkpoint Info\n");
 	printf("%s%d\t%s%x\t%s%d\n",
-	       "freehd	 ", lfsp->lfs_freehd,
-	       "idaddr	 ", lfsp->lfs_idaddr,
-	       "ifile	 ", lfsp->lfs_ifile);
+	       "freehd	 ", lfs_sb_getfreehd(lfsp),
+	       "idaddr	 ", lfs_sb_getidaddr(lfsp),
+	       "ifile	 ", lfs_sb_getifile(lfsp));
 	printf("%s%x\t%s%d\t%s%x\t%s%x\t%s%x\t%s%x\n",
-	       "bfree	 ", lfsp->lfs_bfree,
-	       "nfiles	 ", lfsp->lfs_nfiles,
-	       "lastseg	 ", lfsp->lfs_lastseg,
-	       "nextseg	 ", lfsp->lfs_nextseg,
-	       "curseg	 ", lfsp->lfs_curseg,
-	       "offset	 ", lfsp->lfs_offset);
-	printf("tstamp	 %llx\n", (long long)lfsp->lfs_tstamp);
+	       "bfree	 ", lfs_sb_getbfree(lfsp),
+	       "nfiles	 ", lfs_sb_getnfiles(lfsp),
+	       "lastseg	 ", lfs_sb_getlastseg(lfsp),
+	       "nextseg	 ", lfs_sb_getnextseg(lfsp),
+	       "curseg	 ", lfs_sb_getcurseg(lfsp),
+	       "offset	 ", lfs_sb_getoffset(lfsp));
+	printf("tstamp	 %llx\n", (long long)lfs_sb_gettstamp(lfsp));
 }
 
 void
@@ -232,11 +232,11 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 
 	if (sp->sum_bytes_left > 484) {
 		printf("%s:%d: bad value (%d = -%d) for sum_bytes_left\n",
-		       file, line, sp->sum_bytes_left, fs->lfs_sumsize-sp->sum_bytes_left);
+		       file, line, sp->sum_bytes_left, lfs_sb_getsumsize(fs)-sp->sum_bytes_left);
 		panic("too many bytes");
 	}
 
-	actual = fs->lfs_sumsize
+	actual = lfs_sb_getsumsize(fs)
 		/* amount taken up by FINFOs */
 		- ((char *)&(sp->fip->fi_blocks[sp->fip->fi_nblocks]) - (char *)(sp->segsum))
 			/* amount taken up by inode blocks */
@@ -258,12 +258,12 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 		       actual);
 #endif
 	if (sp->sum_bytes_left > 0
-	   && ((char *)(sp->segsum))[fs->lfs_sumsize
+	   && ((char *)(sp->segsum))[lfs_sb_getsumsize(fs)
 				     - sizeof(int32_t) * ((sp->ninodes+LFS_INOPB(fs)-1) / LFS_INOPB(fs))
 				     - sp->sum_bytes_left] != '\0') {
 		printf("%s:%d: warning: segsum overwrite at %d (-%d => %d)\n",
 		       file, line, sp->sum_bytes_left,
-		       fs->lfs_sumsize-sp->sum_bytes_left,
+		       lfs_sb_getsumsize(fs)-sp->sum_bytes_left,
 		       actual);
 #ifdef DDB
 		Debugger();
