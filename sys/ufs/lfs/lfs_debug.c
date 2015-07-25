@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.44 2015/07/25 10:40:35 martin Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.45 2015/07/25 13:01:06 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.44 2015/07/25 10:40:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.45 2015/07/25 13:01:06 hannken Exp $");
 
 #ifdef DEBUG
 
@@ -254,7 +254,7 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 	if (actual != sp->sum_bytes_left)
 		printf("%s:%d: warning: segsum miscalc at %d (-%d => %d)\n",
 		       file, line, sp->sum_bytes_left,
-		       fs->lfs_sumsize-sp->sum_bytes_left,
+		       lfs_sb_getsumsize(fs)-sp->sum_bytes_left,
 		       actual);
 #endif
 	if (sp->sum_bytes_left > 0
