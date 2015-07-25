@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.130 2015/07/24 06:59:32 dholland Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.131 2015/07/25 10:40:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.130 2015/07/24 06:59:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.131 2015/07/25 10:40:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 			DLOG((DLOG_AVAIL, "lfs_reserve: waiting for %ld (bfree = %d,"
 			      " est_bfree = %d)\n",
 			      fsb + fs->lfs_ravail + fs->lfs_favail,
-			      fs->lfs_bfree, LFS_EST_BFREE(fs)));
+			      lfs_sb_getbfree(fs), LFS_EST_BFREE(fs)));
 		}
 		++slept;
 
@@ -367,7 +367,7 @@ lfs_fits(struct lfs *fs, int fsb)
 #ifdef DEBUG
 		DLOG((DLOG_AVAIL, "lfs_fits: no fit: fsb = %ld, uinodes = %ld, "
 		      "needed = %jd, avail = %jd\n",
-		      (long)fsb, (long)fs->lfs_uinodes, (intmax_t)needed,
+		      (long)fsb, (long)lfs_sb_getuinodes(fs), (intmax_t)needed,
 		      (intmax_t)lfs_sb_getavail(fs)));
 #endif
 		return 0;
