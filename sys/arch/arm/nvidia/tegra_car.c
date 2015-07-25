@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.23 2015/07/23 18:22:05 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.24 2015/07/25 15:50:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.23 2015/07/23 18:22:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.24 2015/07/25 15:50:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -535,24 +535,27 @@ tegra_car_periph_hda_enable(void)
 
 	tegra_car_get_bs(&bst, &bsh);
 
-	/* HDA */
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_SET_REG, CAR_DEV_V_HDA);
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_V_SET_REG, CAR_DEV_V_HDA);
-	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_CLR_REG, CAR_DEV_V_HDA);
-
-	/* HDA2CODEC_2X */
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_SET_REG,
 	    CAR_DEV_V_HDA2CODEC_2X);
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_V_SET_REG,
 	    CAR_DEV_V_HDA2CODEC_2X);
-	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_CLR_REG,
-	    CAR_DEV_V_HDA2CODEC_2X);
-
-	/* HDA2HDMICODEC */
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_W_SET_REG,
 	    CAR_DEV_W_HDA2HDMICODEC);
 	bus_space_write_4(bst, bsh, CAR_CLK_ENB_W_SET_REG,
 	    CAR_DEV_W_HDA2HDMICODEC);
+
+	/* configure HDA2CODEC_2X for 48 MHz */
+	const u_int div = howmany(tegra_car_pllp0_rate() * 2, 48000000) - 2;
+	bus_space_write_4(bst, bsh, CAR_CLKSRC_HDA2CODEC_2X_REG,
+	    __SHIFTIN(CAR_CLKSRC_HDA2CODEC_2X_SRC_PLLP_OUT0,
+		      CAR_CLKSRC_HDA2CODEC_2X_SRC) |
+	    __SHIFTIN(div, CAR_CLKSRC_HDA2CODEC_2X_DIV));
+
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_CLR_REG, CAR_DEV_V_HDA);
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_V_CLR_REG,
+	    CAR_DEV_V_HDA2CODEC_2X);
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_W_CLR_REG,
 	    CAR_DEV_W_HDA2HDMICODEC);
 }
