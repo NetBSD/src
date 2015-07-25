@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.112 2014/10/25 16:47:23 mlelstv Exp $	*/
+/*	$NetBSD: newfs.c,v 1.113 2015/07/25 10:37:22 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.112 2014/10/25 16:47:23 mlelstv Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.113 2015/07/25 10:37:22 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -493,9 +493,11 @@ main(int argc, char *argv[])
 				fso = fsi;
 		}
 	} else {	/* !Fflag && !mfs */
-		special = getfsspecname(specname, sizeof(specname), special);
-		raw = getdiskrawname(rawname, sizeof(rawname), special);
-		if (raw != NULL)
+		raw = getfsspecname(specname, sizeof(specname), special);
+		if (raw == NULL)
+			err(1, "%s: %s", special, specname);
+		special = getdiskrawname(rawname, sizeof(rawname), raw);
+		if (special == NULL)
 			special = raw;
 
 		fsi = opendisk(special, O_RDONLY, device, sizeof(device), 0);
