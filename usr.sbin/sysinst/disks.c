@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.9 2015/05/10 10:14:02 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.10 2015/07/25 07:12:30 isaki Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -308,9 +308,9 @@ get_descr_ata(struct disk_desc *dd, int fd)
 	if (!(inqbuf->atap_config != WDC_CFG_CFA_MAGIC &&
 	      (inqbuf->atap_config & WDC_CFG_ATAPI) &&
 	      ((inqbuf->atap_model[0] == 'N' &&
-		  inqbuf->atap_model[1] == 'E') ||
+	        inqbuf->atap_model[1] == 'E') ||
 	       (inqbuf->atap_model[0] == 'F' &&
-		  inqbuf->atap_model[1] == 'X')))) {
+	        inqbuf->atap_model[1] == 'X')))) {
 		needswap = 1;
 	}
 #endif
@@ -378,7 +378,7 @@ get_default_cdrom(void)
 		return cdrom_devices[0];
 
 	(void)sysctlbyname(mib_name, disknames, &len, NULL, 0);
-        for ((name = strtok_r(disknames, " ", &last)); name;
+	for ((name = strtok_r(disknames, " ", &last)); name;
 	    (name = strtok_r(NULL, " ", &last))) {
 		for (arg = cdrom_devices; *arg; ++arg) {
 			cd_dev = *arg;
@@ -468,9 +468,12 @@ find_disks(const char *doingwhat)
 	/* Kill typeahead, it won't be what the user had in mind */
 	fpurge(stdin);
 
-	/* partman_go: <0 - we want to see menu with extended partitioning
-				  ==0 - we want to see simple select disk menu
-				   >0 - we do not want to see any menus, just detect all disks */
+	/*
+	 * partman_go: <0 - we want to see menu with extended partitioning
+	 *            ==0 - we want to see simple select disk menu
+	 *             >0 - we do not want to see any menus, just detect
+	 *                  all disks
+	 */
 	if (partman_go <= 0) {
 		if (numdisks == 0) {
 			/* No disks found! */
@@ -503,11 +506,11 @@ find_disks(const char *doingwhat)
 		}
 		if (partman_go < 0 && selected_disk == numdisks) {
 			partman_go = 1;
-	    	return -2;
+			return -2;
 		} else
 			partman_go = 0;
 		if (selected_disk < 0 || selected_disk >= numdisks)
-	    	return -1;
+			return -1;
 	}
 
 	/* Fill pm struct with device(s) info */
@@ -519,8 +522,8 @@ find_disks(const char *doingwhat)
 			already_found = 0;
 			SLIST_FOREACH(pm_i, &pm_head, l) {
 				pm_last = pm_i;
-				if (!already_found && 
-						strcmp(pm_i->diskdev, disk->dd_name) == 0) {
+				if (!already_found &&
+				    strcmp(pm_i->diskdev, disk->dd_name) == 0) {
 					pm_i->found = 1;
 					break;
 				}
@@ -784,7 +787,7 @@ make_filesystems(void)
 					    "%s /dev/r%s",
 					    newfs, dev);
 				else {
-			        run_program(RUN_SILENT | RUN_ERROR_OK,
+					run_program(RUN_SILENT | RUN_ERROR_OK,
 					    "umount /mnt2");
 					error = 0;
 				}
@@ -839,7 +842,7 @@ make_fstab(void)
 	if (logfp)
 		(void)fprintf(logfp,
 		    "Making %s/etc/fstab (%s).\n", target_prefix(), pm->diskdev);
-	
+
 	if (f == NULL) {
 		msg_display(MSG_createfstab);
 		if (logfp)
@@ -866,7 +869,7 @@ make_fstab(void)
 			const char *mp = pm_i->bsdlabel[i].pi_mount;
 			const char *fstype = "ffs";
 			int fsck_pass = 0, dump_freq = 0;
-			
+
 			if (dev != NULL)
 				free(dev);
 			if (pm_i->isspecial)
@@ -1201,10 +1204,11 @@ mount_disks(void)
 }
 
 int
-set_swap_if_low_ram(const char *disk, partinfo *pp) {
-        if (get_ramsize() <= 32) 
-                return set_swap(disk, pp);
-        return 0;
+set_swap_if_low_ram(const char *disk, partinfo *pp)
+{
+	if (get_ramsize() <= 32)
+		return set_swap(disk, pp);
+	return 0;
 }
 
 int
