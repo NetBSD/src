@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.243 2015/07/24 06:59:32 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.244 2015/07/25 10:40:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.243 2015/07/24 06:59:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.244 2015/07/25 10:40:35 martin Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -2247,7 +2247,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		    / sizeof(int32_t)) {
 			panic("lfs_writeseg: real bpp overwrite");
 		}
-		if (bpp - sp->bpp > lfs_segsize(fs) / fs->lfs_fsize) {
+		if (bpp - sp->bpp > lfs_segsize(fs) / lfs_sb_getfsize(fs)) {
 			panic("lfs_writeseg: theoretical bpp overwrite");
 		}
 #endif
