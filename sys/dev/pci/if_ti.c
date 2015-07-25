@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.94 2015/04/27 17:41:26 christos Exp $ */
+/* $NetBSD: if_ti.c,v 1.95 2015/07/25 08:36:44 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.94 2015/04/27 17:41:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.95 2015/07/25 08:36:44 maxv Exp $");
 
 #include "opt_inet.h"
 
@@ -800,6 +800,7 @@ ti_newbuf_mini(struct ti_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 				BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 			aprint_error_dev(sc->sc_dev, "can't load recv map, error = %d\n",
 			       error);
+			m_freem(m_new);
 			return (ENOMEM);
 		}
 	} else {
