@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdmi.c,v 1.5 2015/07/23 15:43:06 jmcneill Exp $ */
+/* $NetBSD: tegra_hdmi.c,v 1.6 2015/07/25 15:50:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.5 2015/07/23 15:43:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.6 2015/07/25 15:50:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,6 +87,7 @@ struct tegra_hdmi_softc {
 
 	bool			sc_connected;
 	const struct videomode	*sc_curmode;
+	bool			sc_hdmimode;
 };
 
 static void	tegra_hdmi_hpd(struct tegra_hdmi_softc *);
@@ -94,6 +95,10 @@ static void	tegra_hdmi_connect(struct tegra_hdmi_softc *);
 static void	tegra_hdmi_disconnect(struct tegra_hdmi_softc *);
 static void	tegra_hdmi_enable(struct tegra_hdmi_softc *, const uint8_t *);
 static int	tegra_hdmi_sor_start(struct tegra_hdmi_softc *);
+static bool	tegra_hdmi_is_hdmi(struct tegra_hdmi_softc *,
+				   const struct edid_info *);
+static void	tegra_hdmi_setup_audio_infoframe(struct tegra_hdmi_softc *);
+static uint8_t	tegra_hdmi_infoframe_csum(const uint8_t *, size_t);
 
 CFATTACH_DECL_NEW(tegra_hdmi, sizeof(struct tegra_hdmi_softc),
 	tegra_hdmi_match, tegra_hdmi_attach, NULL, NULL);
@@ -230,6 +235,13 @@ tegra_hdmi_connect(struct tegra_hdmi_softc *sc)
 	}
 
 	sc->sc_curmode = mode;
+	sc->sc_hdmimode = tegra_hdmi_is_hdmi(sc, &ei);
+device_printf(sc->sc_dev, "connected to %s display\n", sc->sc_hdmimode ? "HDMI" : "DVI");
+	if (sc->sc_hdmimode == false) {
+		device_printf(sc->sc_dev, "forcing HDMI mode\n");
+		sc->sc_hdmimode = true;
+	}
+
 	tegra_hdmi_enable(sc, pedid);
 }
 
@@ -244,34 +256,33 @@ tegra_hdmi_enable(struct tegra_hdmi_softc *sc, const uint8_t *edid)
 	const struct tegra_hdmi_tmds_config *tmds = NULL;
 	const struct videomode *mode = sc->sc_curmode;
 	uint32_t input_ctrl;
-	u_int n;
+	u_int i;
 
 	KASSERT(sc->sc_curmode != NULL);
 	tegra_pmc_hdmi_enable();
 
 	tegra_car_hdmi_enable(mode->dot_clock * 1000);
 
-	for (n = 0; n < __arraycount(tegra_hdmi_tmds_config); n++) {
-		if (tegra_hdmi_tmds_config[n].dot_clock >= mode->dot_clock) {
+	for (i = 0; i < __arraycount(tegra_hdmi_tmds_config); i++) {
+		if (tegra_hdmi_tmds_config[i].dot_clock >= mode->dot_clock) {
 			break;
 		}
 	}
-	if (n < __arraycount(tegra_hdmi_tmds_config)) {
-		tmds = &tegra_hdmi_tmds_config[n];
+	if (i < __arraycount(tegra_hdmi_tmds_config)) {
+		tmds = &tegra_hdmi_tmds_config[i];
 	} else {
 		tmds = &tegra_hdmi_tmds_config[__arraycount(tegra_hdmi_tmds_config) - 1];
 	}
-	if (tmds != NULL) {
-		HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_PLL0_REG, tmds->sor_pll0);
-		HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_PLL1_REG, tmds->sor_pll1);
-		HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_LANE_DRIVE_CURRENT_REG,
-		    tmds->sor_lane_drive_current);
-		HDMI_WRITE(sc, HDMI_NV_PDISP_PE_CURRENT_REG, tmds->pe_current);
-		HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_IO_PEAK_CURRENT_REG,
-		    tmds->sor_io_peak_current);
-		HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_PAD_CTLS0_REG,
-		    tmds->sor_pad_ctls0);
-	}
+
+	HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_PLL0_REG, tmds->sor_pll0);
+	HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_PLL1_REG, tmds->sor_pll1);
+	HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_LANE_DRIVE_CURRENT_REG,
+	    tmds->sor_lane_drive_current);
+	HDMI_WRITE(sc, HDMI_NV_PDISP_PE_CURRENT_REG, tmds->pe_current);
+	HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_IO_PEAK_CURRENT_REG,
+	    tmds->sor_io_peak_current);
+	HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_PAD_CTLS0_REG,
+	    tmds->sor_pad_ctls0);
 
 	tegra_dc_enable(sc->sc_displaydev, sc->sc_dev, mode, edid);
 
@@ -314,17 +325,57 @@ tegra_hdmi_enable(struct tegra_hdmi_softc *sc, const uint8_t *edid)
 	uint32_t ctrl =
 	    __SHIFTIN(rekey, HDMI_NV_PDISP_HDMI_CTRL_REKEY) |
 	    __SHIFTIN(max_ac_packet, HDMI_NV_PDISP_HDMI_CTRL_MAX_AC_PACKET);
-#if notyet
-	if (HDMI mode) {
+	if (sc->sc_hdmimode) {
 		ctrl |= HDMI_NV_PDISP_HDMI_CTRL_ENABLE; /* HDMI ENABLE */
 	}
-#endif
 	HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_CTRL_REG, ctrl);
 
-	/* XXX DVI */
-	HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_GENERIC_CTRL_REG, 0);
-	HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL_REG, 0);
-	HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL_REG, 0);
+	if (sc->sc_hdmimode) {
+		const u_int n = 6144;	/* 48 kHz */
+		const u_int cts = ((mode->dot_clock * 10) * (n / 128)) / 480;
+
+		HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_AUDIO_CNTRL0_REG,
+		    __SHIFTIN(HDMI_NV_PDISP_SOR_AUDIO_CNTRL0_SOURCE_SELECT_AUTO,
+			      HDMI_NV_PDISP_SOR_AUDIO_CNTRL0_SOURCE_SELECT) |
+		    HDMI_NV_PDISP_SOR_AUDIO_CNTRL0_INJECT_NULLSMPL);
+		HDMI_WRITE(sc, HDMI_NV_PDISP_AUDIO_N_REG,
+		    HDMI_NV_PDISP_AUDIO_N_RESETF |
+		    HDMI_NV_PDISP_AUDIO_N_GENERATE |
+		    __SHIFTIN(n - 1, HDMI_NV_PDISP_AUDIO_N_VALUE));
+
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_SPARE_REG,
+		    HDMI_NV_PDISP_HDMI_SPARE_HW_CTS |
+		    HDMI_NV_PDISP_HDMI_SPARE_FORCE_SW_CTS |
+		    __SHIFTIN(1, HDMI_NV_PDISP_HDMI_SPARE_CTS_RESET_VAL));
+
+		/*
+		 * When HW_CTS=1 and FORCE_SW_CTS=1, the CTS is programmed by
+		 * software in the 44.1 kHz register regardless of chosen rate.
+		 */
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_ACR_0441_SUBPACK_LOW_REG,
+		    cts << 8);
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_ACR_0441_SUBPACK_HIGH_REG,
+		    0x80000000 | n);
+
+		HDMI_SET_CLEAR(sc, HDMI_NV_PDISP_AUDIO_N_REG, 0,
+		    HDMI_NV_PDISP_AUDIO_N_RESETF);
+
+		HDMI_WRITE(sc, 24000, HDMI_NV_PDISP_SOR_AUDIO_AVAL_0480_REG);
+
+		tegra_hdmi_setup_audio_infoframe(sc);
+
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_GENERIC_CTRL_REG,
+		    HDMI_NV_PDISP_HDMI_GENERIC_CTRL_AUDIO);
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL_REG, 0);
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL_REG,
+		    HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL_ENABLE);
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_ACR_CTRL_REG, 0);
+	} else {
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_GENERIC_CTRL_REG, 0);
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_CTRL_REG, 0);
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_CTRL_REG, 0);
+		HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_ACR_CTRL_REG, 0);
+	}
 
 	/* Start HDMI output */
 	tegra_dc_hdmi_start(sc->sc_displaydev);
@@ -390,4 +441,100 @@ tegra_hdmi_sor_start(struct tegra_hdmi_softc *sc)
 	HDMI_WRITE(sc, HDMI_NV_PDISP_SOR_STATE0_REG, 0);
 
 	return 0;
+}
+
+static bool
+tegra_hdmi_is_hdmi(struct tegra_hdmi_softc *sc, const struct edid_info *ei)
+{
+	char edid[128];
+	bool found_hdmi = false;
+	unsigned int n, p;
+
+	/*
+	 * Scan through extension blocks, looking for a CEA-861-D v3
+	 * block. If an HDMI Vendor-Specific Data Block (HDMI VSDB) is
+	 * found in that, assume HDMI mode.
+	 */
+	for (n = 1; n <= MIN(ei->edid_ext_block_count, 4); n++) {
+		if (ddc_dev_read_edid_block(sc->sc_ddcdev, edid,
+		    sizeof(edid), n)) {
+			break;
+		}
+
+		const uint8_t tag = edid[0];
+		const uint8_t rev = edid[1];
+		const uint8_t off = edid[2];
+
+		/* We are looking for a CEA-861-D tag (02h) with revision 3 */
+		if (tag != 0x02 || rev != 3)
+			continue;
+		/*
+		 * CEA data block collection starts at byte 4, so the
+		 * DTD blocks must start after it.
+		 */
+		if (off <= 4)
+			continue;
+
+		/* Parse the CEA data blocks */
+		for (p = 4; p < off;) {
+			const uint8_t btag = (edid[p] >> 5) & 0x7;
+			const uint8_t blen = edid[p] & 0x1f;
+
+			/* Make sure the length is sane */
+			if (p + blen + 1 > off)
+				break;
+			/* Looking for a VSDB tag */
+			if (btag != 3)
+				goto next_block;
+			/* HDMI VSDB is at least 5 bytes long */
+			if (blen < 5)
+				goto next_block;
+
+			/* HDMI 24-bit IEEE registration ID is 0x000C03 */
+			if (memcmp(&edid[p + 1], "\x03\x0c\x00", 3) == 0)
+				found_hdmi = true;
+
+next_block:
+			p += (1 + blen);
+		}
+	}
+
+	return found_hdmi;
+}
+
+static void
+tegra_hdmi_setup_audio_infoframe(struct tegra_hdmi_softc *sc)
+{
+	uint8_t data[10] = {
+		0x84, 0x01, 0x10,
+		0x00,	/* PB0 (checksum) */
+		0x01,	/* CT=0, CC=2ch */
+		0xc0,	/* SS=0, SF=48kHz */
+		0x00,	/* CA=FR/FL */
+		0x00,	/* LSV=0dB, DM_INH=permitted */
+		0x00, 0x00
+	};
+
+	data[3] = tegra_hdmi_infoframe_csum(data, sizeof(data));
+
+	HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_HEADER_REG,
+	    data[0] | (data[1] << 8) | (data[2] << 16));
+	HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_SUBPACK0_LOW_REG,
+	    data[3] | (data[4] << 8) | (data[5] << 16) | (data[6] << 24));
+	HDMI_WRITE(sc, HDMI_NV_PDISP_HDMI_AUDIO_INFOFRAME_SUBPACK0_HIGH_REG,
+	    data[7] | (data[8] << 8) | (data[9] << 16));
+}
+
+static uint8_t
+tegra_hdmi_infoframe_csum(const uint8_t *data, size_t len)
+{
+	uint8_t csum = 0;
+	u_int n;
+
+	for (n = 0; n < len; n++)
+		csum += data[n];
+	if (csum)
+		csum = 0x100 - csum;
+
+	return csum;
 }
