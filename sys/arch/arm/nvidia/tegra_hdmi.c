@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdmi.c,v 1.6 2015/07/25 15:50:42 jmcneill Exp $ */
+/* $NetBSD: tegra_hdmi.c,v 1.7 2015/07/25 15:55:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.6 2015/07/25 15:50:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.7 2015/07/25 15:55:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -236,11 +236,6 @@ tegra_hdmi_connect(struct tegra_hdmi_softc *sc)
 
 	sc->sc_curmode = mode;
 	sc->sc_hdmimode = tegra_hdmi_is_hdmi(sc, &ei);
-device_printf(sc->sc_dev, "connected to %s display\n", sc->sc_hdmimode ? "HDMI" : "DVI");
-	if (sc->sc_hdmimode == false) {
-		device_printf(sc->sc_dev, "forcing HDMI mode\n");
-		sc->sc_hdmimode = true;
-	}
 
 	tegra_hdmi_enable(sc, pedid);
 }
