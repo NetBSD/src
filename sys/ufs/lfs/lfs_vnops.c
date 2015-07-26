@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.276 2015/07/25 10:40:35 martin Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.277 2015/07/26 08:13:23 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.276 2015/07/25 10:40:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.277 2015/07/26 08:13:23 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1682,31 +1682,34 @@ lfs_flush_pchain(struct lfs *fs)
 	mutex_enter(&lfs_lock);
     top:
 	for (ip = TAILQ_FIRST(&fs->lfs_pchainhd); ip != NULL; ip = nip) {
+		struct mount *mp = ITOV(ip)->v_mount;
+		ino_t ino = ip->i_number;
+
 		nip = TAILQ_NEXT(ip, i_lfs_pchain);
-		vp = ITOV(ip);
 
 		if (!(ip->i_flags & IN_PAGING))
 			goto top;
 
-		mutex_enter(vp->v_interlock);
-		if (vdead_check(vp, VDEAD_NOWAIT) != 0 ||
-		    (vp->v_uflag & VU_DIROP) != 0) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		if (vp->v_type != VREG) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		if (vget(vp, LK_NOWAIT, false /* !wait */))
-			continue;
 		mutex_exit(&lfs_lock);
-
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_RETRY) != 0) {
+		if (vcache_get(mp, &ino, sizeof(ino), &vp) != 0) {
+			mutex_enter(&lfs_lock);
+			continue;
+		};
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0) {
 			vrele(vp);
 			mutex_enter(&lfs_lock);
 			continue;
 		}
+		ip = VTOI(vp);
+		mutex_enter(&lfs_lock);
+		if ((vp->v_uflag & VU_DIROP) != 0 || vp->v_type != VREG ||
+		    !(ip->i_flags & IN_PAGING)) {
+			mutex_exit(&lfs_lock);
+			vput(vp);
+			mutex_enter(&lfs_lock);
+			goto top;
+		}
+		mutex_exit(&lfs_lock);
 
 		error = lfs_writefile(fs, sp, vp);
 		if (!VPISEMPTY(vp) && !WRITEINPROG(vp) &&
