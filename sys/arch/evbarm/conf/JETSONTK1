@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.28 2015/05/31 14:43:59 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.29 2015/07/26 10:09:53 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -16,8 +16,8 @@ options 	MULTIPROCESSOR
 #options 	MEMSIZE=2048
 
 options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
-options 	LOCKDEBUG
+#options 	DEBUG
+#options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
