@@ -1,3 +1,4 @@
+/*	$NetBSD: reallocarray.c,v 1.5 2015/07/26 02:22:33 kamil Exp $	*/
 /*	$OpenBSD: reallocarray.c,v 1.1 2014/05/08 21:43:49 deraadt Exp $	*/
 
 /*-
@@ -28,9 +29,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#define _OPENBSD_SOURCE
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reallocarray.c,v 1.4 2015/03/10 13:05:13 christos Exp $");
+__RCSID("$NetBSD: reallocarray.c,v 1.5 2015/07/26 02:22:33 kamil Exp $");
 
 #define _OPENBSD_SOURCE
 #include <errno.h>
