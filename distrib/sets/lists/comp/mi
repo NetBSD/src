@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1971 2015/07/21 03:12:50 knakahara Exp $
+#	$NetBSD: mi,v 1.1972 2015/07/26 02:20:30 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6422,6 +6422,7 @@
 ./usr/share/man/cat3/erase.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erasechar.0		comp-c-catman		.cat
 ./usr/share/man/cat3/erealloc.0			comp-c-catman		.cat
+./usr/share/man/cat3/ereallocarr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/erf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erfc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erfcf.0			comp-c-catman		.cat
@@ -13358,6 +13359,7 @@
 ./usr/share/man/html3/erase.html		comp-c-htmlman		html
 ./usr/share/man/html3/erasechar.html		comp-c-htmlman		html
 ./usr/share/man/html3/erealloc.html		comp-c-htmlman		html
+./usr/share/man/html3/ereallocarr.html		comp-c-htmlman		html
 ./usr/share/man/html3/erf.html			comp-c-htmlman		html
 ./usr/share/man/html3/erfc.html			comp-c-htmlman		html
 ./usr/share/man/html3/erfcf.html		comp-c-htmlman		html
@@ -20206,6 +20208,7 @@
 ./usr/share/man/man3/erase.3			comp-c-man		.man
 ./usr/share/man/man3/erasechar.3		comp-c-man		.man
 ./usr/share/man/man3/erealloc.3			comp-c-man		.man
+./usr/share/man/man3/ereallocarr.3		comp-c-man		.man
 ./usr/share/man/man3/erf.3			comp-c-man		.man
 ./usr/share/man/man3/erfc.3			comp-c-man		.man
 ./usr/share/man/man3/erfcf.3			comp-c-man		.man

@@ -1,4 +1,4 @@
-/*	$NetBSD: efun.c,v 1.9 2015/01/18 18:09:36 christos Exp $	*/
+/*	$NetBSD: efun.c,v 1.10 2015/07/26 02:20:30 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: efun.c,v 1.9 2015/01/18 18:09:36 christos Exp $");
+__RCSID("$NetBSD: efun.c,v 1.10 2015/07/26 02:20:30 kamil Exp $");
 #endif
 
 #include <err.h>
@@ -126,6 +126,16 @@ erealloc(void *p, size_t n)
 	if (q == NULL && n != 0)
 		(*efunc)(1, "Cannot re-allocate %zu bytes", n);
 	return q;
+}
+
+void
+ereallocarr(void *p, size_t n, size_t s)
+{
+	int rv = reallocarr(p, n, s);
+	if (rv != 0) {
+		errno = rv;
+		(*efunc)(1, "Cannot re-allocate %zu * %zu bytes", n, s);
+	}
 }
 
 FILE *

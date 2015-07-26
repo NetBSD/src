@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.66 2015/01/18 18:10:01 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.67 2015/07/26 02:20:30 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -152,6 +152,7 @@ uintmax_t	estrtou(const char *, int, uintmax_t, uintmax_t);
 void 		*ecalloc(size_t, size_t);
 void 		*emalloc(size_t);
 void 		*erealloc(void *, size_t);
+void 		ereallocarr(void *, size_t, size_t);
 struct __sFILE	*efopen(const char *, const char *);
 int	 	easprintf(char ** __restrict, const char * __restrict, ...)
 			__printflike(2, 3);
