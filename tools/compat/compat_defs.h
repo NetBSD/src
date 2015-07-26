@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.101 2015/01/16 18:44:06 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.102 2015/07/26 14:01:53 kamil Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -467,6 +467,10 @@ ssize_t pwrite(int, const void *, size_t, off_t);
 
 #if !HAVE_RAISE_DEFAULT_SIGNAL
 int raise_default_signal(int);
+#endif
+
+#if !HAVE_REALLOCARR
+int reallocarr(void *, size_t, size_t);
 #endif
 
 #if !HAVE_SETENV
