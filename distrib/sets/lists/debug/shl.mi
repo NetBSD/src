@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.104 2015/07/08 17:29:56 christos Exp $
+# $NetBSD: shl.mi,v 1.105 2015/07/26 15:15:31 kamil Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.197.debug			comp-sys-debug	debug,dynamicroot
@@ -21,7 +21,7 @@
 ./usr/libdata/debug/lib/libradius.so.4.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/librumpclient.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libutil.so.7.21.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libutil.so.7.22.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libz.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
@@ -268,7 +268,7 @@
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug		comp-sys-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libutil.so.7.21.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libutil.so.7.22.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libuutil.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libwind.so.0.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libwrap.so.1.0.debug		comp-net-debug	debug,compatfile
