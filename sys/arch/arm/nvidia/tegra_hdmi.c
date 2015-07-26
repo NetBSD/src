@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdmi.c,v 1.7 2015/07/25 15:55:31 jmcneill Exp $ */
+/* $NetBSD: tegra_hdmi.c,v 1.8 2015/07/26 15:12:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.7 2015/07/25 15:55:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.8 2015/07/26 15:12:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -501,13 +501,14 @@ static void
 tegra_hdmi_setup_audio_infoframe(struct tegra_hdmi_softc *sc)
 {
 	uint8_t data[10] = {
-		0x84, 0x01, 0x10,
+		0x84, 0x01, 0x0a,
 		0x00,	/* PB0 (checksum) */
 		0x01,	/* CT=0, CC=2ch */
-		0xc0,	/* SS=0, SF=48kHz */
+		0x00,	/* SS=0, SF=0 */
+		0x00,
 		0x00,	/* CA=FR/FL */
 		0x00,	/* LSV=0dB, DM_INH=permitted */
-		0x00, 0x00
+		0x00
 	};
 
 	data[3] = tegra_hdmi_infoframe_csum(data, sizeof(data));
