@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.325 2015/06/09 10:44:55 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.326 2015/07/26 00:15:53 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.325 2015/06/09 10:44:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.326 2015/07/26 00:15:53 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -7875,7 +7875,7 @@ pmap_map_poolpage(paddr_t pa)
 {
 	bool ok __diagused;
 	vaddr_t va = pmap_direct_mapped_phys(pa, &ok, 0);
-	KASSERT(ok);
+	KASSERTMSG(ok, "pa %#lx not direct mappable", pa);
 #if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
 	if (arm_cache_prefer_mask != 0) {
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
