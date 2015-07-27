@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.50 2015/07/17 06:41:18 msaitoh Exp $	*/
+/*	$NetBSD: lapic.c,v 1.51 2015/07/27 15:45:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.50 2015/07/17 06:41:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.51 2015/07/27 15:45:20 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -411,7 +411,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		/*
 		 * Compute delay in cycles for likely short delays in usec.
 		 */
-		for (i=0; i<26; i++)
+		for (i = 0; i < 26; i++)
 			lapic_delaytab[i] = (lapic_frac_cycle_per_usec * i) >>
 			    32;
 
