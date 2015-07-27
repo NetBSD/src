@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.24 2015/04/12 12:44:13 joerg Exp $
+#	$NetBSD: files.uvm,v 1.25 2015/07/27 09:24:28 maxv Exp $
 
 #
 # UVM options
@@ -28,7 +28,6 @@ file	uvm/uvm_glue.c			uvm
 file	uvm/uvm_init.c			uvm
 file	uvm/uvm_io.c			uvm
 file	uvm/uvm_km.c			uvm
-file	uvm/uvm_kmguard.c		debug
 file	uvm/uvm_loan.c			uvm
 file	uvm/uvm_map.c			uvm
 file	uvm/uvm_meter.c			uvm
