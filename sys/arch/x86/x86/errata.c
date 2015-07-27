@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.21 2013/03/21 13:22:37 christos Exp $	*/
+/*	$NetBSD: errata.c,v 1.22 2015/07/27 15:45:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.21 2013/03/21 13:22:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.22 2015/07/27 15:45:20 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -375,9 +375,9 @@ x86_errata(void)
 
 	if (upgrade && !again) {
 		again = 1;
-		aprint_normal_dev(ci->ci_dev, "WARNING: errata present, BIOS upgrade "
-		    "may be\n");
-		aprint_normal_dev(ci->ci_dev, "WARNING: necessary to ensure reliable "
-		    "operation\n");
+		aprint_normal_dev(ci->ci_dev, "WARNING: errata present,"
+		    " BIOS upgrade may be\n");
+		aprint_normal_dev(ci->ci_dev, "WARNING: necessary to ensure"
+		    " reliable operation\n");
 	}
 }
