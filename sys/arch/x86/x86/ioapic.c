@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.51 2015/07/17 06:41:18 msaitoh Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.52 2015/07/27 15:45:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.51 2015/07/17 06:41:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.52 2015/07/27 15:45:20 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -149,7 +149,6 @@ ioapic_read_ul(struct ioapic_softc *sc,int regid)
 	val = *sc->sc_data;
 
 	return val;
-	
 }
 
 static inline  void
