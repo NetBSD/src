@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.16 2015/05/20 13:09:34 jmcneill Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.17 2015/07/27 07:53:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.16 2015/05/20 13:09:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.17 2015/07/27 07:53:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.16 2015/05/20 13:09:34 jmcneill Exp $
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/bus.h>
-#include <sys/callout.h>
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
@@ -65,7 +64,6 @@ struct ld_sdmmc_task {
 
 	struct ld_sdmmc_softc *task_sc;
 	struct buf *task_bp;
-	callout_t task_callout;
 };
 
 struct ld_sdmmc_softc {
@@ -85,7 +83,6 @@ static int ld_sdmmc_start(struct ld_softc *, struct buf *);
 
 static void ld_sdmmc_doattach(void *);
 static void ld_sdmmc_dobio(void *);
-static void ld_sdmmc_timeout(void *);
 
 CFATTACH_DECL_NEW(ld_sdmmc, sizeof(struct ld_sdmmc_softc),
     ld_sdmmc_match, ld_sdmmc_attach, ld_sdmmc_detach, NULL);
@@ -117,8 +114,6 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	    sa->sf->cid.mid, sa->sf->cid.oid, sa->sf->cid.pnm,
 	    sa->sf->cid.rev, sa->sf->cid.psn, sa->sf->cid.mdt);
 	aprint_naive("\n");
-
-	callout_init(&sc->sc_task.task_callout, 0);
 
 	sc->sc_hwunit = 0;	/* always 0? */
 	sc->sc_sf = sa->sf;
@@ -185,7 +180,6 @@ ld_sdmmc_start(struct ld_softc *ld, struct buf *bp)
 	task->task_bp = bp;
 	sdmmc_init_task(&task->task, ld_sdmmc_dobio, task);
 
-	callout_reset(&task->task_callout, hz, ld_sdmmc_timeout, task);
 	sdmmc_add_task(sc->sc_sf->sc, &task->task);
 
 	return 0;
@@ -198,8 +192,6 @@ ld_sdmmc_dobio(void *arg)
 	struct ld_sdmmc_softc *sc = task->task_sc;
 	struct buf *bp = task->task_bp;
 	int error, s;
-
-	callout_stop(&task->task_callout);
 
 	/*
 	 * I/O operation
@@ -237,29 +229,6 @@ ld_sdmmc_dobio(void *arg)
 	} else {
 		bp->b_resid = 0;
 	}
-
-	lddone(&sc->sc_ld, bp);
-	splx(s);
-}
-
-static void
-ld_sdmmc_timeout(void *arg)
-{
-	struct ld_sdmmc_task *task = (struct ld_sdmmc_task *)arg;
-	struct ld_sdmmc_softc *sc = task->task_sc;
-	struct buf *bp = task->task_bp;
-	int s;
-
-	s = splbio();
-	if (!sdmmc_task_pending(&task->task)) {
-		splx(s);
-		return;
-	}
-	bp->b_error = EIO;	/* XXXX */
-	bp->b_resid = bp->b_bcount;
-	sdmmc_del_task(&task->task);
-
-	aprint_error_dev(sc->sc_ld.sc_dv, "task timeout");
 
 	lddone(&sc->sc_ld, bp);
 	splx(s);
