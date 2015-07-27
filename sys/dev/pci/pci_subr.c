@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.133 2014/11/24 07:53:43 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.134 2015/07/27 15:46:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.133 2014/11/24 07:53:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.134 2015/07/27 15:46:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -114,6 +114,7 @@ static const struct pci_class pci_interface_sata[] = {
 static const struct pci_class pci_interface_nvm[] = {
 	{ "vendor specific",	PCI_INTERFACE_NVM_VND,		NULL,	},
 	{ "NVMHCI 1.0",		PCI_INTERFACE_NVM_NVMHCI10,	NULL,	},
+	{ "NVMe",		PCI_INTERFACE_NVM_NVME,		NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
