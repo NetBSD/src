@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.245 2015/05/25 21:02:37 prlw1 Exp $	*/
+/*	$NetBSD: vnd.c,v 1.246 2015/07/28 13:12:47 prlw1 Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.245 2015/05/25 21:02:37 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.246 2015/07/28 13:12:47 prlw1 Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -245,8 +245,8 @@ vndattach(int num)
 
 	error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
 	if (error)
-		aprint_error("%s: unable to register cfattach\n",
-		    vnd_cd.cd_name);
+		aprint_error("%s: unable to register cfattach, error = %d\n",
+		    vnd_cd.cd_name, error);
 }
 
 static int
