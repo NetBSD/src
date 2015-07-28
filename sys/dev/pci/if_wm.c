@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.344 2015/07/23 08:29:58 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.345 2015/07/28 07:15:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.344 2015/07/23 08:29:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.345 2015/07/28 07:15:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1664,11 +1664,13 @@ alloc_retry:
 			error = pci_intr_distribute(vih, affinity, NULL);
 			if (error == 0) {
 				aprint_normal_dev(sc->sc_dev,
-				    "for TX interrupting at %s affinity to %u\n",
-				    intrstr, msix_matrix[i].cpuid % ncpu);
+				    "for %s interrupting at %s affinity to %u\n",
+				    msix_matrix[i].intrname, intrstr,
+				    msix_matrix[i].cpuid % ncpu);
 			} else {
 				aprint_normal_dev(sc->sc_dev,
-				    "for TX interrupting at %s\n", intrstr);
+				    "for %s interrupting at %s\n",
+				    msix_matrix[i].intrname, intrstr);
 			}
 			sc->sc_ihs[msix_matrix[i].intridx] = vih;
 		}
