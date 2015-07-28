@@ -37,6 +37,9 @@ struct clfs {
 	int clfs_onhold;	   /* If cleaning this fs is on hold */
 };
 
+// XXX temporary
+#include <ufs/lfs/lfs_accessors.h>
+
 /* ugh... */
 #define CLFS_DEF_SB_ACCESSOR(type, field) \
 	static __unused inline type				\
@@ -113,6 +116,12 @@ clfs_sb_getfsmnt(struct clfs *fs)
 #define lfs_sb_gets0addr(fs) clfs_sb_gets0addr(fs)
 #define lfs_sb_getsboff(fs, n) clfs_sb_getsboff(fs, n)
 #define lfs_sb_getfsmnt(fs) clfs_sb_getfsmnt(fs)
+
+/*
+ * This needs to come after the definition of struct clfs. (XXX blah)
+ */
+//#define STRUCT_LFS struct clfs
+//#include <ufs/lfs/lfs_accessors.h>
 
 /*
  * Fraction of the could-be-clean segments required to be clean.
