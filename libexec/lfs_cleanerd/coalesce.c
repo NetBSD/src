@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.26 2015/07/24 06:59:31 dholland Exp $  */
+/*      $NetBSD: coalesce.c,v 1.27 2015/07/28 05:09:34 dholland Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <sys/mman.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 
 #include <fcntl.h>
 #include <signal.h>

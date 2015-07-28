@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.39 2015/07/24 06:59:32 dholland Exp $	 */
+/* $NetBSD: utilities.c,v 1.40 2015/07/28 05:09:34 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,6 +36,7 @@
 #define buf ubuf
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 
 #include <err.h>
 #include <stdio.h>

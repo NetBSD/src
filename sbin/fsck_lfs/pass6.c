@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.36 2015/07/24 06:59:32 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.37 2015/07/28 05:09:34 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #define VU_DIROP 0x01000000 /* XXX XXX from sys/vnode.h */
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_inode.h>
 #undef vnode
 

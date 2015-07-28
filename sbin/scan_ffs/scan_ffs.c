@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.27 2015/07/24 06:59:32 dholland Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.28 2015/07/28 05:09:35 dholland Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.27 2015/07/24 06:59:32 dholland Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.28 2015/07/28 05:09:35 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.27 2015/07/24 06:59:32 dholland Exp $");
 #include <sys/mount.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <ufs/ufs/dinode.h>

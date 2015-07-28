@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.51 2013/06/15 01:27:19 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.52 2015/07/28 05:09:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,6 +34,7 @@
 #include <machine/bswap.h>
 #ifdef DUMP_LFS
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #endif
 #include <ufs/ufs/dinode.h>
 #include <protocols/dumprestore.h>

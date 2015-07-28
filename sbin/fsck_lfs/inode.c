@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.56 2015/07/24 06:59:32 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.57 2015/07/28 05:09:34 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_inode.h>
 #undef vnode
 

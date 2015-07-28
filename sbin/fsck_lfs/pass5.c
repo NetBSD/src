@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.31 2015/07/24 06:59:32 dholland Exp $	 */
+/* $NetBSD: pass5.c,v 1.32 2015/07/28 05:09:34 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_inode.h>
 #undef vnode
 
