@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.15 2015/07/28 08:59:47 maxv Exp $
+.\"	$NetBSD: kmem.9,v 1.16 2015/07/28 09:51:42 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -211,13 +211,15 @@ Kernels compiled with the
 .Dv KMEM_SIZE
 option ensure the size given in
 .Fn kmem_free
-matches the actual allocated size. On
+matches the actual allocated size.
+On
 .Fn kmem_alloc ,
 the kernel will allocate an additional contiguous kmem page of eight
 bytes in the buffer, will register the allocated size in the first kmem
 page of that buffer, and will return a pointer to the second kmem page
-in that same buffer. When freeing, the kernel reads the first page, and
-compares the size registered with the one given in
+in that same buffer.
+When freeing, the kernel reads the first page, and compares the
+size registered with the one given in
 .Fn kmem_free .
 Any mismatch triggers a panic.
 .Pp
@@ -231,9 +233,10 @@ Kernels compiled with the
 .Dv KMEM_REDZONE
 option add a dynamic pattern of two bytes at the end of each allocated
 buffer, and check this pattern when freeing to ensure the caller hasn't
-written outside the requested area. This option does not introduce a
-significant performance impact, but has two drawbacks: it only catches
-write overflows, and catches them only on
+written outside the requested area.
+This option does not introduce a significant performance impact,
+but has two drawbacks: it only catches write overflows, and catches
+them only on
 .Fn kmem_free .
 .Pp
 .Dv KMEM_REDZONE
@@ -242,8 +245,9 @@ is enabled by default on
 .Ss KMEM_GUARD
 Kernels compiled with the
 .Dv KMEM_GUARD
-option perform CPU intensive sanity checks on kmem operations. It adds
-additional, very high overhead runtime verification to kmem operations.
+option perform CPU intensive sanity checks on kmem operations.
+It adds additional, very high overhead runtime verification to kmem
+operations.
 It must be enabled with
 .Dv KMEM_SIZE .
 .Pp
@@ -251,23 +255,24 @@ It must be enabled with
 tries to catch the following types of bugs:
 .Bl -bullet
 .It
-Overflow at time of occurrence, by means of a guard page. An unmapped
-guard page sits immediately after the requested area; a read/write
-overflow therefore triggers a page fault.
+Overflow at time of occurrence, by means of a guard page.
+An unmapped guard page sits immediately after the requested area;
+a read/write overflow therefore triggers a page fault.
 .It
 Underflow at
 .Fn kmem_free ,
-by using KMEM_SIZE's registered size. If an underflow occurs, the size
-stored by
+by using KMEM_SIZE's registered size.
+If an underflow occurs, the size stored by
 .Dv KMEM_SIZE
 will be overwritten, which means that when freeing, the kernel will
 spot the mismatch.
 .It
-Use-after-free at time of occurrence. When freeing, the memory is
-unmapped, and depending on the value of kmem_guard_depth, the kernel
-will more or less delay the recycling of that memory. Which means that
-any ulterior read/write access to the memory will trigger a page fault,
-given it hasn't been recycled yet.
+Use-after-free at time of occurrence.
+When freeing, the memory is unmapped, and depending on the value
+of kmem_guard_depth, the kernel will more or less delay the recycling
+of that memory.
+Which means that any ulterior read/write access to the memory will
+trigger a page fault, given it hasn't been recycled yet.
 .El
 .Pp
 To enable it, boot the system with the
