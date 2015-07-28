@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.61 2015/07/23 23:52:54 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.62 2015/07/28 07:14:48 skrll Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.61 2015/07/23 23:52:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.62 2015/07/28 07:14:48 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -32,7 +32,6 @@ __KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.61 2015/07/23 23:52:54 jmcneill Exp $");
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
