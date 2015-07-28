@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.16 2015/07/28 09:51:42 wiz Exp $
+.\"	$NetBSD: kmem.9,v 1.17 2015/07/28 09:52:43 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -74,10 +74,10 @@ Specify the size of allocation in bytes.
 .It Fa kmflags
 Either of the following:
 .Bl -tag -width KM_NOSLEEP
-.It KM_SLEEP
+.It Dv KM_SLEEP
 If the allocation cannot be satisfied immediately, sleep until enough
 memory is available.
-.It KM_NOSLEEP
+.It Dv KM_NOSLEEP
 Don't sleep.
 Immediately return
 .Dv NULL
@@ -261,7 +261,9 @@ a read/write overflow therefore triggers a page fault.
 .It
 Underflow at
 .Fn kmem_free ,
-by using KMEM_SIZE's registered size.
+by using
+.Dv KMEM_SIZE Ap s
+registered size.
 If an underflow occurs, the size stored by
 .Dv KMEM_SIZE
 will be overwritten, which means that when freeing, the kernel will
