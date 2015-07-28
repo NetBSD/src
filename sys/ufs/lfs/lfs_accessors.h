@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.1 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.2 2015/07/28 05:14:23 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -483,7 +483,7 @@ LFS_DEF_SB_ACCESSOR(u_int32_t, resvseg);
  * lfs_sboffs is an array
  */
 static __unused inline int32_t
-lfs_sb_getsboff(struct lfs *fs, unsigned n)
+lfs_sb_getsboff(STRUCT_LFS *fs, unsigned n)
 {
 #ifdef KASSERT /* ugh */
 	KASSERT(n < LFS_MAXNUMSB);
@@ -491,7 +491,7 @@ lfs_sb_getsboff(struct lfs *fs, unsigned n)
 	return fs->lfs_dlfs.dlfs_sboffs[n];
 }
 static __unused inline void
-lfs_sb_setsboff(struct lfs *fs, unsigned n, int32_t val)
+lfs_sb_setsboff(STRUCT_LFS *fs, unsigned n, int32_t val)
 {
 #ifdef KASSERT /* ugh */
 	KASSERT(n < LFS_MAXNUMSB);
@@ -503,7 +503,7 @@ lfs_sb_setsboff(struct lfs *fs, unsigned n, int32_t val)
  * lfs_fsmnt is a string
  */
 static __unused inline const char *
-lfs_sb_getfsmnt(struct lfs *fs)
+lfs_sb_getfsmnt(STRUCT_LFS *fs)
 {
 	return fs->lfs_dlfs.dlfs_fsmnt;
 }
