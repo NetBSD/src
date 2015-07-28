@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.33 2015/07/24 06:59:32 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.34 2015/07/28 05:09:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.33 2015/07/24 06:59:32 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.34 2015/07/28 05:09:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ __RCSID("$NetBSD: make_lfs.c,v 1.33 2015/07/24 06:59:32 dholland Exp $");
 # define buf ubuf
 # define panic call_panic
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_inode.h>
 
 #include <err.h>
