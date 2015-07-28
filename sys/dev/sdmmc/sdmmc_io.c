@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.7 2012/02/01 22:34:43 matt Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.8 2015/07/28 06:17:53 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.7 2012/02/01 22:34:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.8 2015/07/28 06:17:53 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -693,12 +693,13 @@ sdmmc_card_intr(device_t dev)
 {
 	struct sdmmc_softc *sc = device_private(dev);
 
-	if (sc->sc_sct->card_enable_intr) {
-		mutex_enter(&sc->sc_intr_task_mtx);
-		if (!sdmmc_task_pending(&sc->sc_intr_task))
-			sdmmc_add_task(sc, &sc->sc_intr_task);
-		mutex_exit(&sc->sc_intr_task_mtx);
-	}
+	if (sc->sc_sct->card_enable_intr == NULL)
+		return;
+
+	mutex_enter(&sc->sc_intr_task_mtx);
+	if (!sdmmc_task_pending(&sc->sc_intr_task))
+		sdmmc_add_task(sc, &sc->sc_intr_task);
+	mutex_exit(&sc->sc_intr_task_mtx);
 }
 
 void
