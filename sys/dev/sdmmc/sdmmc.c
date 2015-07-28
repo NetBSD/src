@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.26 2015/05/21 23:40:02 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.27 2015/07/28 06:19:47 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.26 2015/05/21 23:40:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.27 2015/07/28 06:19:47 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -845,8 +845,11 @@ sdmmc_set_relative_addr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	/* Don't lock */
 
-	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
+	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
+		aprint_error_dev(sc->sc_dev,
+			"sdmmc_set_relative_addr: SMC_CAPS_SPI_MODE set");
 		return EIO;
+	}
 
 	memset(&cmd, 0, sizeof(cmd));
 	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
@@ -875,8 +878,11 @@ sdmmc_select_card(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	/* Don't lock */
 
-	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
+	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
+		aprint_error_dev(sc->sc_dev,
+			"sdmmc_select_card: SMC_CAPS_SPI_MODE set");
 		return EIO;
+	}
 
 	if (sc->sc_card == sf
 	 || (sf && sc->sc_card && sc->sc_card->rca == sf->rca)) {
