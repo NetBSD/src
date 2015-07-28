@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_lfs.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: readufs_lfs.c,v 1.2 2015/07/28 16:50:12 christos Exp $	*/
 /*	from Id: readufs_lfs.c,v 1.8 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -104,7 +104,7 @@ try_lfs(void)
 
 		if (sblk2.dlfs_magic == LFS_MAGIC) {
 			if (fsi_lfs.version == 1) {
-				if (sblk.dlfs_otstamp > sblk2.dlfs_otstamp)
+				if (sblk.dlfs_inopf > sblk2.dlfs_inopf)
 					s = &sblk2;
 			} else {
 				if (sblk.dlfs_serial > sblk2.dlfs_serial)
