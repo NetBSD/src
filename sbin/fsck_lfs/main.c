@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.51 2015/07/24 06:59:32 dholland Exp $	 */
+/* $NetBSD: main.c,v 1.52 2015/07/28 05:09:34 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,9 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
+
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 
 #include <fstab.h>
 #include <stdbool.h>
