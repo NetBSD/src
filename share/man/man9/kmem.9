@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.14 2013/11/26 20:47:26 rmind Exp $
+.\"	$NetBSD: kmem.9,v 1.15 2015/07/28 08:59:47 maxv Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd November 26, 2013
+.Dd July 28, 2015
 .Dt KMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -61,7 +61,9 @@
 "const char *fmt" "..."
 .\" ------------------------------------------------------------
 .Pp
-.Cd "options DEBUG"
+.Cd "options KMEM_SIZE"
+.Cd "options KMEM_REDZONE"
+.Cd "options KMEM_GUARD"
 .Sh DESCRIPTION
 .Fn kmem_alloc
 allocates kernel wired memory.
@@ -204,15 +206,70 @@ For example:
 .Ed
 .\" ------------------------------------------------------------
 .Sh OPTIONS
+.Ss KMEM_SIZE
 Kernels compiled with the
-.Dv DEBUG
-option perform CPU intensive sanity checks on kmem operations,
-and include the
-.Dv kmguard
-facility which can be enabled at runtime.
+.Dv KMEM_SIZE
+option ensure the size given in
+.Fn kmem_free
+matches the actual allocated size. On
+.Fn kmem_alloc ,
+the kernel will allocate an additional contiguous kmem page of eight
+bytes in the buffer, will register the allocated size in the first kmem
+page of that buffer, and will return a pointer to the second kmem page
+in that same buffer. When freeing, the kernel reads the first page, and
+compares the size registered with the one given in
+.Fn kmem_free .
+Any mismatch triggers a panic.
 .Pp
-.Dv kmguard
-adds additional, very high overhead runtime verification to kmem operations.
+.Dv KMEM_SIZE
+is enabled by default on
+.Dv DIAGNOSTIC
+and
+.Dv DEBUG .
+.Ss KMEM_REDZONE
+Kernels compiled with the
+.Dv KMEM_REDZONE
+option add a dynamic pattern of two bytes at the end of each allocated
+buffer, and check this pattern when freeing to ensure the caller hasn't
+written outside the requested area. This option does not introduce a
+significant performance impact, but has two drawbacks: it only catches
+write overflows, and catches them only on
+.Fn kmem_free .
+.Pp
+.Dv KMEM_REDZONE
+is enabled by default on
+.Dv DIAGNOSTIC .
+.Ss KMEM_GUARD
+Kernels compiled with the
+.Dv KMEM_GUARD
+option perform CPU intensive sanity checks on kmem operations. It adds
+additional, very high overhead runtime verification to kmem operations.
+It must be enabled with
+.Dv KMEM_SIZE .
+.Pp
+.Dv KMEM_GUARD
+tries to catch the following types of bugs:
+.Bl -bullet
+.It
+Overflow at time of occurrence, by means of a guard page. An unmapped
+guard page sits immediately after the requested area; a read/write
+overflow therefore triggers a page fault.
+.It
+Underflow at
+.Fn kmem_free ,
+by using KMEM_SIZE's registered size. If an underflow occurs, the size
+stored by
+.Dv KMEM_SIZE
+will be overwritten, which means that when freeing, the kernel will
+spot the mismatch.
+.It
+Use-after-free at time of occurrence. When freeing, the memory is
+unmapped, and depending on the value of kmem_guard_depth, the kernel
+will more or less delay the recycling of that memory. Which means that
+any ulterior read/write access to the memory will trigger a page fault,
+given it hasn't been recycled yet.
+.El
+.Pp
 To enable it, boot the system with the
 .Fl d
 option, which causes the debugger to be entered early during the kernel
@@ -224,7 +281,7 @@ db\*[Gt] c
 .Ed
 .Pp
 This instructs
-.Dv kmguard
+.Dv kmem_guard
 to queue up to 60000 (30000*2) pages of unmapped KVA to catch
 use-after-free type errors.
 When
@@ -239,23 +296,11 @@ Limitations:
 It has a severe impact on performance.
 .It
 It is best used on a 64-bit machine with lots of RAM.
-.It
-Allocations larger than PAGE_SIZE bypass the
-.Dv kmguard
-facility.
 .El
 .Pp
-kmguard tries to catch the following types of bugs:
-.Bl -bullet
-.It
-Overflow at time of occurrence, by means of a guard page.
-.It
-Underflow at
-.Fn kmem_free ,
-by using a canary value.
-.It
-Invalid pointer or size passed, at
-.Fn kmem_free .
+.Dv KMEM_GUARD
+is enabled by default on
+.Dv DEBUG .
 .El
 .Sh RETURN VALUES
 On success,
