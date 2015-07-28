@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.76 2014/07/10 21:13:52 christos Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.77 2015/07/28 19:38:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.76 2014/07/10 21:13:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.77 2015/07/28 19:38:48 christos Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.76 2014/07/10 21:13:52 christos Ex
 #include <uvm/uvm_extern.h>
 
 #elif defined(_EXTENT_TESTING)
+
+#include <stdbool.h>	// XXX: no sys/stdbool.h
 /*
  * user-land definitions, so it can fit into a testing harness.
  */
