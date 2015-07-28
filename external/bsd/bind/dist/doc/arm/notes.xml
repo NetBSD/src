@@ -23,6 +23,10 @@
       This document summarizes changes since BIND 9.10.2:
     </para>
     <para>
+      BIND 9.10.2-P3 addresses a security issue described in
+      CVE-2015-5477.
+    </para>
+    <para>
       BIND 9.10.2-P2 addresses a security issue described in
       CVE-2015-4620.
     </para>
@@ -54,15 +58,25 @@
     <itemizedlist>
       <listitem>
 	<para>
-	  On servers configured to perform DNSSEC validation an
+	  A specially crafted query could trigger an assertion failure
+	  in message.c.
+	</para>
+	<para>
+	  This flaw was discovered by Jonathan Foote, and is disclosed
+	  in CVE-2015-5477. [RT #39795]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  On servers configured to perform DNSSEC validation, an
 	  assertion failure could be triggered on answers from
 	  a specially configured server.
 	</para>
-        <para>
+	<para>
 	  This flaw was discovered by Breno Silveira Soares, and is
 	  disclosed in CVE-2015-4620. [RT #39795]
-        </para>
-      </listitem> 
+	</para>
+      </listitem>
     </itemizedlist>
   </sect2>
   <sect2 id="relnotes_features">
@@ -140,7 +154,7 @@
 	      already in progress. [RT #39649]
 	    </para>
 	  </listitem>
-        </itemizedlist>
+	</itemizedlist>
       </listitem>
     </itemizedlist>
   </sect2>
@@ -150,7 +164,7 @@
       The end of life for BIND 9.10 is yet to be determined but
       will not be before BIND 9.12.0 has been released for 6 months.
       <ulink url="https://www.isc.org/downloads/software-support-policy/"
-        >https://www.isc.org/downloads/software-support-policy/</ulink>
+	>https://www.isc.org/downloads/software-support-policy/</ulink>
     </para>
   </sect2>
   <sect2 id="relnotes_thanks">
