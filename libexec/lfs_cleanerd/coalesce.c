@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.27 2015/07/28 05:09:34 dholland Exp $  */
+/*      $NetBSD: coalesce.c,v 1.28 2015/07/28 05:14:23 dholland Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #include <sys/mman.h>
 
 #include <ufs/lfs/lfs.h>
-#include <ufs/lfs/lfs_accessors.h>
 
 #include <fcntl.h>
 #include <signal.h>
@@ -217,10 +216,10 @@ clean_inode(struct clfs *fs, ino_t ino)
 #endif
 	noff = toff = 0;
 	for (i = 1; i < nb; i++) {
-		if (bip[i].bi_daddr != bip[i - 1].bi_daddr + clfs_sb_getfrag(fs))
+		if (bip[i].bi_daddr != bip[i - 1].bi_daddr + lfs_sb_getfrag(fs))
 			++noff;
 		toff += abs(bip[i].bi_daddr - bip[i - 1].bi_daddr
-		    - clfs_sb_getfrag(fs)) >> lfs_sb_getfbshift(fs);
+		    - lfs_sb_getfrag(fs)) >> lfs_sb_getfbshift(fs);
 	}
 
 	/*
@@ -299,7 +298,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	bps = lfs_segtod(fs, 1);
 	for (tbip = bip; tbip < bip + nb; tbip += bps) {
 		do {
-			bread(fs->lfs_ivnode, 0, clfs_sb_getbsize(fs), 0, &bp);
+			bread(fs->lfs_ivnode, 0, lfs_sb_getbsize(fs), 0, &bp);
 			cip = *(CLEANERINFO *)bp->b_data;
 			brelse(bp, B_INVAL);
 
