@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.68 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.69 2015/07/28 05:13:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -71,8 +71,6 @@
 #include <sys/condvar.h>
 #include <sys/mount.h>			/* XXX for MNAMELEN */
 #include <ufs/lfs/lfs.h>
-#define STRUCT_LFS struct salfs
-#include <ufs/lfs/lfs_accessors.h>
 #else
 #include <ufs/ffs/fs.h>
 #endif
@@ -104,8 +102,14 @@
 #ifdef LIBSA_LFS
 /*
  * In-core LFS superblock - just the on-disk one.
- * XXX: struct salfs is currently in lfs.h
  */
+struct salfs {
+	struct dlfs lfs_dlfs;
+};
+/* Get lfs accessors that use struct salfs. */
+#define STRUCT_LFS struct salfs
+#include <ufs/lfs/lfs_accessors.h>
+
 typedef struct salfs FS;
 #define fs_magic	lfs_dlfs.dlfs_magic
 #define fs_maxsymlinklen lfs_dlfs.dlfs_maxsymlinklen
