@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.77 2014/09/05 05:42:50 matt Exp $	*/
+/*	$NetBSD: pool.h,v 1.78 2015/07/28 12:32:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -189,6 +189,8 @@ struct pool {
 	 */
 	void		*pr_freecheck;
 	void		*pr_qcache;
+	bool		pr_redzone;
+	size_t		pr_reqsize;
 };
 
 /*
@@ -253,7 +255,11 @@ struct pool_cache {
 	unsigned int	pc_nfull;	/* full groups in cache */
 	unsigned int	pc_npart;	/* partial groups in cache */
 	unsigned int	pc_refcnt;	/* ref count for pagedaemon, etc */
+
+	/* Diagnostic aides. */
 	void		*pc_freecheck;
+	bool		pc_redzone;
+	size_t		pc_reqsize;
 
 	/* CPU layer. */
 	pool_cache_cpu_t pc_cpu0 __aligned(CACHE_LINE_SIZE);
