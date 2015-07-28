@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.26 2014/11/20 20:49:06 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.27 2015/07/28 17:55:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.26 2014/11/20 20:49:06 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.27 2015/07/28 17:55:13 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -89,7 +89,7 @@ memberpush(sb)
 {
 	namlist_t *nam = xcalloc(1, sizeof (namlist_t)); 
 	nam->n_name = sb->sb_name;
-	DPRINTF(("%s: %s\n", __func__, nam->n_name));
+	DPRINTF(("%s: %s %p\n", __func__, nam->n_name, nam));
 	if (namedmem == NULL) {
 		nam->n_prev = nam->n_next = nam;
 		namedmem = nam;
@@ -99,28 +99,22 @@ memberpush(sb)
 		nam->n_next = namedmem;
 		namedmem->n_prev = nam;
 	}
-#if 0
-	nam->n_next = namedmem;
-	namedmem = nam;
-#endif
 }
 
 static void
-memberpop()
+memberpop(void)
 {
-	DPRINTF(("%s: %s\n", __func__, namedmem->n_name));
+	DPRINTF(("%s: %s %p\n", __func__, namedmem->n_name, namedmem));
 	if (namedmem->n_next == namedmem) {
 		free(namedmem);
 		namedmem = NULL;
 	} else {
 		namlist_t *nam = namedmem;
 		namedmem = namedmem->n_next;
+		namedmem->n_next = nam->n_next;
+		namedmem->n_prev = nam->n_prev;
 		free(nam);
 	}
-#if 0
-	namedmem = namedmem->n_next;
-	free(nam);
-#endif
 }
 
 
