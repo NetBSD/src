@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.34 2015/07/24 06:56:41 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.35 2015/07/28 05:09:34 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,6 +36,7 @@
 #include <sys/mount.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_inode.h>
 
 #include <err.h>

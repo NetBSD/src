@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.33 2015/07/24 06:59:32 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.34 2015/07/28 05:09:34 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -74,6 +74,7 @@
 #define panic call_panic
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_inode.h>
 
 #include <assert.h>
