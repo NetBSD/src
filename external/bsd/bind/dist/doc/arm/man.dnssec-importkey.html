@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- $Id: man.dnssec-importkey.html,v 1.3 2015/07/08 17:28:58 christos Exp $ -->
+<!-- $Id: man.dnssec-importkey.html,v 1.4 2015/07/28 18:55:16 christos Exp $ -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -51,7 +51,7 @@
 <div class="cmdsynopsis"><p><code class="command">dnssec-importkey</code>  {<code class="option">-f <em class="replaceable"><code>filename</code></em></code>} [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-L <em class="replaceable"><code>ttl</code></em></code>] [<code class="option">-P <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-D <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-h</code>] [<code class="option">-v <em class="replaceable"><code>level</code></em></code>] [<code class="option">-V</code>] [<code class="option">dnsname</code>]</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2619181"></a><h2>DESCRIPTION</h2>
+<a name="id2619262"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">dnssec-importkey</strong></span>
       reads a public DNSKEY record and generates a pair of
       .key/.private files.  The DNSKEY record may be read from an
@@ -71,7 +71,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2619209"></a><h2>OPTIONS</h2>
+<a name="id2619290"></a><h2>OPTIONS</h2>
 <div class="variablelist"><dl>
 <dt><span class="term">-f <em class="replaceable"><code>filename</code></em></span></dt>
 <dd>
@@ -114,7 +114,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2619347"></a><h2>TIMING OPTIONS</h2>
+<a name="id2619428"></a><h2>TIMING OPTIONS</h2>
 <p>
       Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS.
       If the argument begins with a '+' or '-', it is interpreted as
@@ -142,7 +142,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2619462"></a><h2>FILES</h2>
+<a name="id2619543"></a><h2>FILES</h2>
 <p>
       A keyfile can be designed by the key identification
       <code class="filename">Knnnn.+aaa+iiiii</code> or the full file name
@@ -151,7 +151,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2619488"></a><h2>SEE ALSO</h2>
+<a name="id2619569"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">dnssec-keygen</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">dnssec-signzone</span>(8)</span>,
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>,
@@ -159,7 +159,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2619521"></a><h2>AUTHOR</h2>
+<a name="id2619602"></a><h2>AUTHOR</h2>
 <p><span class="corpauthor">Internet Systems Consortium</span>
     </p>
 </div>
@@ -183,6 +183,6 @@
 </tr>
 </table>
 </div>
-<p style="text-align: center;">BIND 9.10.2-P2</p>
+<p style="text-align: center;">BIND 9.10.2-P3</p>
 </body>
 </html>

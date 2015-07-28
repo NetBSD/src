@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- $Id: Bv9ARM.ch09.html,v 1.3 2015/07/08 17:28:58 christos Exp $ -->
+<!-- $Id: Bv9ARM.ch09.html,v 1.4 2015/07/28 18:55:16 christos Exp $ -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -45,7 +45,7 @@
 <div class="toc">
 <p><b>Table of Contents</b></p>
 <dl>
-<dt><span class="sect1"><a href="Bv9ARM.ch09.html#id2610666">Release Notes for BIND Version 9.10.2-P2</a></span></dt>
+<dt><span class="sect1"><a href="Bv9ARM.ch09.html#id2610666">Release Notes for BIND Version 9.10.2-P3</a></span></dt>
 <dd><dl>
 <dt><span class="sect2"><a href="Bv9ARM.ch09.html#relnotes_intro">Introduction</a></span></dt>
 <dt><span class="sect2"><a href="Bv9ARM.ch09.html#relnotes_download">Download</a></span></dt>
@@ -60,12 +60,16 @@
 </div>
 <div class="sect1" lang="en">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2610666"></a>Release Notes for BIND Version 9.10.2-P2</h2></div></div></div>
+<a name="id2610666"></a>Release Notes for BIND Version 9.10.2-P3</h2></div></div></div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_intro"></a>Introduction</h3></div></div></div>
 <p>
       This document summarizes changes since BIND 9.10.2:
+    </p>
+<p>
+      BIND 9.10.2-P3 addresses a security issue described in
+      CVE-2015-5477.
     </p>
 <p>
       BIND 9.10.2-P2 addresses a security issue described in
@@ -97,17 +101,29 @@
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_security"></a>Security Fixes</h3></div></div></div>
-<div class="itemizedlist"><ul type="disc"><li>
+<div class="itemizedlist"><ul type="disc">
+<li>
 <p>
-	  On servers configured to perform DNSSEC validation an
+	  A specially crafted query could trigger an assertion failure
+	  in message.c.
+	</p>
+<p>
+	  This flaw was discovered by Jonathan Foote, and is disclosed
+	  in CVE-2015-5477. [RT #39795]
+	</p>
+</li>
+<li>
+<p>
+	  On servers configured to perform DNSSEC validation, an
 	  assertion failure could be triggered on answers from
 	  a specially configured server.
 	</p>
 <p>
 	  This flaw was discovered by Breno Silveira Soares, and is
 	  disclosed in CVE-2015-4620. [RT #39795]
-        </p>
-</li></ul></div>
+	</p>
+</li>
+</ul></div>
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
@@ -210,6 +226,6 @@
 </tr>
 </table>
 </div>
-<p style="text-align: center;">BIND 9.10.2-P2</p>
+<p style="text-align: center;">BIND 9.10.2-P3</p>
 </body>
 </html>

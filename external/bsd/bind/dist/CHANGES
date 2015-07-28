@@ -1,3 +1,9 @@
+	--- 9.10.2-P3 released ---
+
+4165.	[security]	A failure to reset a value to NULL in tkey.c could
+			result in an assertion failure. (CVE-2015-5477)
+			[RT #40046]
+
 	--- 9.10.2-P2 released ---
 
 4138.	[bug]		An uninitialized value in validator.c could result

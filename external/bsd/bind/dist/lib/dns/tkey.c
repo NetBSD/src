@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.8 2015/07/08 17:28:59 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.9 2015/07/28 18:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -657,6 +657,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 		 * Try the answer section, since that's where Win2000
 		 * puts it.
 		 */
+		name = NULL;
 		if (dns_message_findname(msg, DNS_SECTION_ANSWER, qname,
 					 dns_rdatatype_tkey, 0, &name,
 					 &tkeyset) != ISC_R_SUCCESS) {
