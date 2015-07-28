@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.166 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.167 2015/07/28 05:13:14 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -755,15 +755,6 @@ struct lfs {
 	/* This one replaces &lfs_nextseg... all ditto */
 	int lfs_nextsegsleep;
 #endif
-};
-
-/*
- * Smaller "struct lfs" used by libsa. XXX: this should not need to be
- * exposed here, but currently it must be in order for the superblock
- * accessors to work. Blah.
- */
-struct salfs {
-	struct dlfs lfs_dlfs;
 };
 
 /*
