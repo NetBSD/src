@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1972 2015/07/26 02:20:30 kamil Exp $
+#	$NetBSD: mi,v 1.1973 2015/07/28 05:09:34 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3394,6 +3394,7 @@
 ./usr/include/ufs/ffs/ffs_extern.h		comp-c-include
 ./usr/include/ufs/ffs/fs.h			comp-c-include
 ./usr/include/ufs/lfs/lfs.h			comp-c-include
+./usr/include/ufs/lfs/lfs_accessors.h		comp-c-include
 ./usr/include/ufs/lfs/lfs_extern.h		comp-c-include
 ./usr/include/ufs/lfs/lfs_inode.h		comp-c-include
 ./usr/include/ufs/mfs/mfs_extern.h		comp-c-include

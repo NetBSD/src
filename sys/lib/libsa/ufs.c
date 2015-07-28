@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.67 2015/07/24 06:56:42 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.68 2015/07/28 05:09:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -70,8 +70,9 @@
 #include <sys/queue.h>
 #include <sys/condvar.h>
 #include <sys/mount.h>			/* XXX for MNAMELEN */
-#define STRUCT_LFS struct salfs
 #include <ufs/lfs/lfs.h>
+#define STRUCT_LFS struct salfs
+#include <ufs/lfs/lfs_accessors.h>
 #else
 #include <ufs/ffs/fs.h>
 #endif

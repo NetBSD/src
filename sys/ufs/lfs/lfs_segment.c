@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.244 2015/07/25 10:40:35 martin Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.245 2015/07/28 05:09:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.244 2015/07/25 10:40:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.245 2015/07/28 05:09:35 dholland Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.244 2015/07/25 10:40:35 martin Exp
 #include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
