@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.13 2015/06/24 10:00:37 knakahara Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.14 2015/07/28 01:57:55 knakahara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.13 2015/06/24 10:00:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.14 2015/07/28 01:57:55 knakahara Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -702,6 +702,8 @@ mvpex_intr_disestablish(void *v, void *ih)
 	struct mvpex_intrhand *pexih = ih;
 	uint32_t mask;
 	int s;
+
+	evcnt_detach(&pexih->ih_evcnt);
 
 	intrtab = pexih->ih_intrtab;
 
