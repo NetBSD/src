@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.121 2015/06/27 15:46:09 matt Exp $
+# $NetBSD: mi,v 1.122 2015/07/29 06:07:35 ozaki-r Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1202,6 +1202,7 @@
 ./usr/libdata/debug/usr/sbin/rtadvd.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/rtsold.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/rump.arp.debug	comp-netutil-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump.envstat.debug	comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump.powerd.debug	comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump.traceroute.debug	comp-netutil-debug	debug,rump
