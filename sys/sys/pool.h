@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.78 2015/07/28 12:32:44 maxv Exp $	*/
+/*	$NetBSD: pool.h,v 1.79 2015/07/29 00:10:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 
 #ifndef _SYS_POOL_H_
 #define _SYS_POOL_H_
+
+#include <sys/stdbool.h>
 #include <sys/stdint.h>
 
 struct pool_sysctl {
