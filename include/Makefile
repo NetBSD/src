@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.140 2013/12/11 01:24:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.141 2015/07/29 00:10:26 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -18,7 +18,7 @@ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	ndbm.h netconfig.h netdb.h netgroup.h nlist.h nl_types.h nsswitch.h \
 	paths.h pwd.h quota.h randomid.h ranlib.h re_comp.h regex.h regexp.h \
 	resolv.h res_update.h rmt.h sched.h search.h semaphore.h setjmp.h \
-	string.h sgtty.h signal.h spawn.h stab.h stdbool.h stddef.h stdio.h \
+	string.h sgtty.h signal.h spawn.h stab.h stddef.h stdio.h \
 	stdlib.h strings.h stringlist.h struct.h sysexits.h tar.h time.h \
 	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
 	utmpx.h uuid.h vis.h wchar.h wctype.h wordexp.h
