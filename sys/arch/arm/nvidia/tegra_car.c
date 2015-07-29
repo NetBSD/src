@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.24 2015/07/25 15:50:42 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.25 2015/07/29 14:30:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.24 2015/07/25 15:50:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.25 2015/07/29 14:30:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -483,9 +483,9 @@ void
 tegra_car_utmip_init(void)
 {
 	const u_int enable_dly_count = 0x02;
-	const u_int stable_count = 0x33;
-	const u_int active_dly_count = 0x09;
-	const u_int xtal_freq_count = 0x7f;
+	const u_int stable_count = 0x2f;
+	const u_int active_dly_count = 0x04;
+	const u_int xtal_freq_count = 0x76;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 
