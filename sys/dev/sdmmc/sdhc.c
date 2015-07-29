@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.62 2015/07/28 07:14:48 skrll Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.63 2015/07/29 12:11:13 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.62 2015/07/28 07:14:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.63 2015/07/29 12:11:13 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -86,6 +86,13 @@ struct sdhc_host {
 #define SHF_USE_4BIT_MODE	0x0002
 #define SHF_USE_8BIT_MODE	0x0004
 #define SHF_MODE_DMAEN		0x0008 /* needs SDHC_DMA_ENABLE in mode */
+#define SHF_USE_ADMA2_32	0x0010
+#define SHF_USE_ADMA2_64	0x0020
+#define SHF_USE_ADMA2_MASK	0x0030
+
+	bus_dmamap_t		adma_map;
+	bus_dma_segment_t	adma_segs[1];
+	void			*adma2;
 };
 
 #define HDEVNAME(hp)	(device_xname((hp)->sc->sc_dev))
@@ -246,6 +253,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	struct sdhc_host *hp;
 	uint32_t caps;
 	uint16_t sdhcver;
+	int error;
 
 	/* Allocate one more host structure. */
 	hp = malloc(sizeof(struct sdhc_host), M_DEVBUF, M_WAITOK|M_ZERO);
@@ -321,11 +329,30 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	    (ISSET(sc->sc_flags, SDHC_FLAG_USE_DMA &&
 	     ISSET(caps, SDHC_DMA_SUPPORT)))) {
 		SET(hp->flags, SHF_USE_DMA);
-		if (!ISSET(sc->sc_flags, SDHC_FLAG_EXTERNAL_DMA) ||
-		    ISSET(sc->sc_flags, SDHC_FLAG_EXTDMA_DMAEN))
-			SET(hp->flags, SHF_MODE_DMAEN);
 
-		aprint_normal(", DMA");
+		if (ISSET(sc->sc_flags, SDHC_FLAG_USE_ADMA2) &&
+		    ISSET(caps, SDHC_ADMA2_SUPP)) {
+			SET(hp->flags, SHF_MODE_DMAEN);
+			/*
+			 * 64-bit mode was present in the 2.00 spec, removed
+			 * from 3.00, and re-added in 4.00 with a different
+			 * descriptor layout. We only support 2.00 and 3.00
+			 * descriptors for now.
+			 */
+			if (hp->specver == SDHC_SPEC_VERS_200 &&
+			    ISSET(caps, SDHC_64BIT_SYS_BUS)) {
+				SET(hp->flags, SHF_USE_ADMA2_64);
+				aprint_normal(", 64-bit ADMA2");
+			} else {
+				SET(hp->flags, SHF_USE_ADMA2_32);
+				aprint_normal(", 32-bit ADMA2");
+			}
+		} else {
+			if (!ISSET(sc->sc_flags, SDHC_FLAG_EXTERNAL_DMA) ||
+			    ISSET(sc->sc_flags, SDHC_FLAG_EXTDMA_DMAEN))
+				SET(hp->flags, SHF_MODE_DMAEN);
+			aprint_normal(", SDMA");
+		}
 	} else {
 		aprint_normal(", PIO");
 	}
@@ -417,6 +444,47 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	aprint_normal(", %u byte blocks", hp->maxblklen);
 	aprint_normal("\n");
 
+	if (ISSET(hp->flags, SHF_USE_ADMA2_MASK)) {
+		int rseg;
+
+		/* Allocate ADMA2 descriptor memory */
+		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE,
+		    PAGE_SIZE, hp->adma_segs, 1, &rseg, BUS_DMA_WAITOK);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "ADMA2 dmamem_alloc failed (%d)\n", error);
+			goto adma_done;
+		}
+		error = bus_dmamem_map(sc->sc_dmat, hp->adma_segs, rseg,
+		    PAGE_SIZE, (void **)&hp->adma2, BUS_DMA_WAITOK);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "ADMA2 dmamem_map failed (%d)\n", error);
+			goto adma_done;
+		}
+		error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
+		    0, BUS_DMA_WAITOK, &hp->adma_map);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "ADMA2 dmamap_create failed (%d)\n", error);
+			goto adma_done;
+		}
+		error = bus_dmamap_load(sc->sc_dmat, hp->adma_map,
+		    hp->adma2, PAGE_SIZE, NULL,
+		    BUS_DMA_WAITOK|BUS_DMA_WRITE);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "ADMA2 dmamap_load failed (%d)\n", error);
+			goto adma_done;
+		}
+
+		memset(hp->adma2, 0, PAGE_SIZE);
+
+adma_done:
+		if (error)
+			CLR(hp->flags, SHF_USE_ADMA2_MASK);
+	}
+
 	/*
 	 * Attach the generic SD/MMC bus driver.  (The bus driver must
 	 * not invoke any chipset functions before it is attached.)
@@ -495,6 +563,12 @@ sdhc_detach(struct sdhc_softc *sc, int flags)
 		if (hp->ios > 0) {
 			bus_space_unmap(hp->iot, hp->ioh, hp->ios);
 			hp->ios = 0;
+		}
+		if (ISSET(hp->flags, SHF_USE_ADMA2_MASK)) {
+			bus_dmamap_unload(sc->sc_dmat, hp->adma_map);
+			bus_dmamap_destroy(sc->sc_dmat, hp->adma_map);
+			bus_dmamem_unmap(sc->sc_dmat, hp->adma2, PAGE_SIZE);
+			bus_dmamem_free(sc->sc_dmat, hp->adma_segs, 1);
 		}
 		free(hp, M_DEVBUF);
 		sc->sc_host[n] = NULL;
@@ -1294,9 +1368,57 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	}
 
 	/* Set DMA start address. */
-	if (ISSET(mode, SDHC_DMA_ENABLE) &&
-	    !ISSET(sc->sc_flags, SDHC_FLAG_EXTERNAL_DMA))
+	if (ISSET(hp->flags, SHF_USE_ADMA2_MASK) && cmd->c_datalen > 0) {
+		for (int seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
+			paddr_t paddr =
+			    cmd->c_dmamap->dm_segs[seg].ds_addr;
+			uint16_t len =
+			    cmd->c_dmamap->dm_segs[seg].ds_len == 65536 ?
+			    0 : cmd->c_dmamap->dm_segs[seg].ds_len;
+			uint16_t attr =
+			    SDHC_ADMA2_VALID | SDHC_ADMA2_ACT_TRANS;
+			if (seg == cmd->c_dmamap->dm_nsegs - 1) {
+				attr |= SDHC_ADMA2_END;
+			}
+			if (ISSET(hp->flags, SHF_USE_ADMA2_32)) {
+				struct sdhc_adma2_descriptor32 *desc =
+				    hp->adma2;
+				desc[seg].attribute = htole16(attr);
+				desc[seg].length = htole16(len);
+				desc[seg].address = htole32(paddr);
+			} else {
+				struct sdhc_adma2_descriptor64 *desc =
+				    hp->adma2;
+				desc[seg].attribute = htole16(attr);
+				desc[seg].length = htole16(len);
+				desc[seg].address = htole32(paddr & 0xffffffff);
+				desc[seg].address_hi = htole32(
+				    (uint64_t)paddr >> 32);
+			}
+		}
+		if (ISSET(hp->flags, SHF_USE_ADMA2_32)) {
+			struct sdhc_adma2_descriptor32 *desc = hp->adma2;
+			desc[cmd->c_dmamap->dm_nsegs].attribute = htole16(0);
+		} else {
+			struct sdhc_adma2_descriptor64 *desc = hp->adma2;
+			desc[cmd->c_dmamap->dm_nsegs].attribute = htole16(0);
+		}
+		bus_dmamap_sync(sc->sc_dmat, hp->adma_map, 0, PAGE_SIZE,
+		    BUS_DMASYNC_PREWRITE);
+		HCLR1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT);
+		HSET1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT_ADMA2);
+
+		const paddr_t desc_addr = hp->adma_map->dm_segs[0].ds_addr;
+
+		HWRITE4(hp, SDHC_ADMA_SYSTEM_ADDR, desc_addr & 0xffffffff);
+		if (ISSET(hp->flags, SHF_USE_ADMA2_64)) {
+			HWRITE4(hp, SDHC_ADMA_SYSTEM_ADDR + 4,
+			    (uint64_t)desc_addr >> 32);
+		}
+	} else if (ISSET(mode, SDHC_DMA_ENABLE) &&
+	    !ISSET(sc->sc_flags, SDHC_FLAG_EXTERNAL_DMA)) {
 		HWRITE4(hp, SDHC_DMA_ADDR, cmd->c_dmamap->dm_segs[0].ds_addr);
+	}
 
 	/*
 	 * Start a CPU data transfer.  Writing to the high order byte
@@ -1386,6 +1508,11 @@ sdhc_transfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 			error = ETIMEDOUT;
 			break;
 		}
+
+		if (ISSET(hp->flags, SHF_USE_ADMA2_MASK)) {
+			continue;
+		}
+
 		if ((status & SDHC_DMA_INTERRUPT) == 0) {
 			continue;
 		}
@@ -1408,6 +1535,11 @@ sdhc_transfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 			HWRITE4(hp, SDHC_DMA_ADDR, dm_segs[++seg].ds_addr);
 		mutex_exit(&hp->host_mtx);
 		KASSERT(seg < cmd->c_dmamap->dm_nsegs);
+	}
+
+	if (ISSET(hp->flags, SHF_USE_ADMA2_MASK)) {
+		bus_dmamap_sync(hp->sc->sc_dmat, hp->adma_map, 0,
+		    PAGE_SIZE, BUS_DMASYNC_POSTWRITE);
 	}
 
 	return error;
@@ -1768,6 +1900,12 @@ sdhc_intr(void *arg)
 
 		/* Claim this interrupt. */
 		done = 1;
+
+		if (ISSET(error, SDHC_ADMA_ERROR)) {
+			uint8_t adma_err = HREAD1(hp, SDHC_ADMA_ERROR_STATUS);
+			printf("%s: ADMA error, status %02x\n", HDEVNAME(hp),
+			    adma_err);
+		}
 
 		/*
 		 * Service error interrupts.
