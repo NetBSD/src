@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.79 2015/07/29 18:22:06 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.80 2015/07/29 18:23:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.79 2015/07/29 18:22:06 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.80 2015/07/29 18:23:32 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2534,12 +2534,12 @@ bldcol(tnode_t *ln, tnode_t *rn)
 	} else if (lt == PTR && ln->tn_type->t_subt->t_tspec == VOID) {
 		if (rt != PTR)
 			LERROR("bldcol()");
-		rtp = ln->tn_type;
+		rtp = rn->tn_type;
 		mrgqual(&rtp, ln->tn_type, rn->tn_type);
 	} else if (rt == PTR && rn->tn_type->t_subt->t_tspec == VOID) {
 		if (lt != PTR)
 			LERROR("bldcol()");
-		rtp = rn->tn_type;
+		rtp = ln->tn_type;
 		mrgqual(&rtp, ln->tn_type, rn->tn_type);
 	} else {
 		if (lt != PTR || rt != PTR)
