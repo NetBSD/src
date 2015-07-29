@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.359 2015/07/20 12:20:26 joerg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.360 2015/07/29 14:35:04 tsutsui Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -542,7 +542,7 @@ _INSTRANLIB=${empty(PRESERVE):?-a "${RANLIB} -t":}
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${AR} ${_ARFL} ${.TARGET} ${.ALLSRC:M*o:O}
+	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .endif
 
 .if !target(__archiveinstall)
