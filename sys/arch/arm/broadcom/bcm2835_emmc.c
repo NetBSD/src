@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.22 2015/07/29 10:47:58 skrll Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.23 2015/07/29 14:22:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.22 2015/07/29 10:47:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.23 2015/07/29 14:22:49 skrll Exp $");
 
 #include "bcmdmac.h"
 
@@ -143,7 +143,7 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": SDHC controller\n");
 	aprint_normal(": SDHC controller\n");
 
- 	sc->sc_ih = intr_establish(aaa->aaa_intr, IST_LEVEL, IPL_SDMMC, sdhc_intr,
+ 	sc->sc_ih = intr_establish(aaa->aaa_intr, IPL_SDMMC, IST_LEVEL, sdhc_intr,
  	    &sc->sc);
 
 	if (sc->sc_ih == NULL) {

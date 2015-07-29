@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.10 2015/07/29 10:47:58 skrll Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.11 2015/07/29 14:22:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.10 2015/07/29 10:47:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.11 2015/07/29 14:22:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ bcmmbox_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_intrh = intr_establish(aaa->aaa_intr, IST_LEVEL, IPL_VM,
+	sc->sc_intrh = intr_establish(aaa->aaa_intr, IPL_VM, IST_LEVEL,
 	    bcmmbox_intr, sc);
 	if (sc->sc_intrh == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
