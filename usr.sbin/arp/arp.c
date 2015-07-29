@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.51 2013/06/07 17:18:33 christos Exp $ */
+/*	$NetBSD: arp.c,v 1.52 2015/07/29 06:07:35 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.51 2013/06/07 17:18:33 christos Exp $");
+__RCSID("$NetBSD: arp.c,v 1.52 2015/07/29 06:07:35 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,8 @@ __RCSID("$NetBSD: arp.c,v 1.51 2013/06/07 17:18:33 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <ifaddrs.h>
+
+#include "prog_ops.h"
 
 static int is_llinfo(const struct sockaddr_dl *, int);
 static int delete(const char *, const char *);
@@ -126,8 +128,6 @@ main(int argc, char **argv)
 
 	setprogname(argv[0]);
 
-	pid = getpid();
-
 	while ((ch = getopt(argc, argv, "andsfv")) != -1)
 		switch((char)ch) {
 		case 'a':
@@ -154,6 +154,11 @@ main(int argc, char **argv)
 
 	if (!op && aflag)
 		op = 'a';
+
+	if (prog_init && prog_init() == -1)
+		err(1, "init failed");
+
+	pid = prog_getpid();
 
 	switch((char)op) {
 	case 'a':
@@ -232,7 +237,7 @@ getsocket(void)
 {
 	if (s >= 0)
 		return;
-	s = socket(PF_ROUTE, SOCK_RAW, 0);
+	s = prog_socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0)
 		err(1, "socket");
 }
@@ -464,13 +469,13 @@ dump(uint32_t addr)
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_FLAGS;
 	mib[5] = RTF_LLINFO;
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+	if (prog_sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed == 0)
 		return;
 	if ((buf = malloc(needed)) == NULL)
 		err(1, "malloc");
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+	if (prog_sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
 		err(1, "actual retrieval of routing table");
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
@@ -539,13 +544,13 @@ delete_all(void)
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_FLAGS;
 	mib[5] = RTF_LLINFO;
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+	if (prog_sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed == 0)
 		return;
 	if ((buf = malloc(needed)) == NULL)
 		err(1, "malloc");
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+	if (prog_sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
 		err(1, "actual retrieval of routing table");
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
@@ -676,14 +681,14 @@ doit:
 	l = rtm->rtm_msglen;
 	rtm->rtm_seq = ++seq;
 	rtm->rtm_type = cmd;
-	if (write(s, &m_rtmsg, (size_t)l) < 0) {
+	if (prog_write(s, &m_rtmsg, (size_t)l) < 0) {
 		if (errno != ESRCH || cmd != RTM_DELETE) {
 			warn("writing to routing socket");
 			return (-1);
 		}
 	}
 	do {
-		l = read(s, &m_rtmsg, sizeof(m_rtmsg));
+		l = prog_read(s, &m_rtmsg, sizeof(m_rtmsg));
 	} while (l > 0 && (rtm->rtm_seq != seq || rtm->rtm_pid != pid));
 	if (l < 0)
 		warn("read from routing socket");
