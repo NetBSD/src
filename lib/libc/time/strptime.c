@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.47 2015/07/22 13:33:59 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.48 2015/07/29 20:32:54 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.47 2015/07/22 13:33:59 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.48 2015/07/29 20:32:54 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -70,12 +70,14 @@ static const u_char *find_string(const u_char *, int *, const char * const *,
 #define S_YDAY			(1 << 2)
 #define S_MDAY			(1 << 3)
 #define S_WDAY			(1 << 4)
+#define S_HOUR			(1 << 5)
 
 #define HAVE_MDAY(s)		(s & S_MDAY)
 #define HAVE_MON(s)		(s & S_MON)
 #define HAVE_WDAY(s)		(s & S_WDAY)
 #define HAVE_YDAY(s)		(s & S_YDAY)
 #define HAVE_YEAR(s)		(s & S_YEAR)
+#define HAVE_HOUR(s)		(s & S_HOUR)
 
 static char gmt[] = { "GMT" };
 static char utc[] = { "UTC" };
@@ -262,6 +264,7 @@ literal:
 		case 'H':
 			bp = conv_num(bp, &tm->tm_hour, 0, 23);
 			LEGAL_ALT(ALT_O);
+			state |= S_HOUR;
 			continue;
 
 		case 'l':	/* The hour (12-hour clock representation). */
@@ -272,6 +275,7 @@ literal:
 			if (tm->tm_hour == 12)
 				tm->tm_hour = 0;
 			LEGAL_ALT(ALT_O);
+			state |= S_HOUR;
 			continue;
 
 		case 'j':	/* The day of year. */
@@ -298,7 +302,7 @@ literal:
 		case 'p':	/* The locale's equivalent of AM/PM. */
 			bp = find_string(bp, &i, _TIME_LOCALE(loc)->am_pm,
 			    NULL, 2);
-			if (tm->tm_hour > 11)
+			if (HAVE_HOUR(state) && tm->tm_hour > 11)
 				return NULL;
 			tm->tm_hour += i * 12;
 			LEGAL_ALT(0);
