@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.78 2015/02/09 18:17:34 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.79 2015/07/29 18:22:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.78 2015/02/09 18:17:34 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.79 2015/07/29 18:22:06 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -431,11 +431,14 @@ strmemb(tnode_t *tn, op_t op, sym_t *msym)
 				error(103);
 			}
 		} else {
+			char buf[64];
 			/* left operand of "->" must be pointer to ... */
 			if (tflag && tn->tn_type->t_tspec == PTR) {
-				warning(104);
+				tyname(buf, sizeof(buf), tn->tn_type);
+				warning(104, buf);
 			} else {
-				error(104);
+				tyname(buf, sizeof(buf), tn->tn_type);
+				error(104, buf);
 			}
 		}
 	} else {
