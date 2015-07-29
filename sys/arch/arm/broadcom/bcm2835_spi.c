@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_spi.c,v 1.2 2014/10/07 06:44:38 skrll Exp $	*/
+/*	$NetBSD: bcm2835_spi.c,v 1.3 2015/07/29 10:47:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.2 2014/10/07 06:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.3 2015/07/29 10:47:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,7 +109,7 @@ bcmspi_attach(device_t parent, device_t self, void *aux)
 	for (u_int pin = 7; pin <= 11; pin++)
 		bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT0);
 
-	sc->sc_intrh = bcm2835_intr_establish(aaa->aaa_intr, IPL_VM,
+	sc->sc_intrh = intr_establish(aaa->aaa_intr, IST_LEVEL, IPL_VM,
 	    bcmspi_intr, sc);
 	if (sc->sc_intrh == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
