@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.234 2015/04/22 17:42:22 roy Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.235 2015/07/29 07:42:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.234 2015/04/22 17:42:22 roy Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.235 2015/07/29 07:42:27 ozaki-r Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1261,12 +1261,8 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
 		err(EXIT_FAILURE, "%s: getifinfo", __func__);
 
-	(void)snprintb_m(fbuf, sizeof(fbuf), IFFBITS, flags, MAX_PRINT_LEN);
-	bp = fbuf;
-	while (*bp != '\0') {
-		printf("%s: flags=%s", ifname, &bp[2]);
-		bp += strlen(bp) + 1;
-	}
+	(void)snprintb(fbuf, sizeof(fbuf), IFFBITS, flags);
+	printf("%s: flags=%s", ifname, fbuf);
 
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (prog_ioctl(s, SIOCGIFMETRIC, &ifr) == -1)
