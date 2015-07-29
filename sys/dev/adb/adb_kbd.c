@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.25 2015/07/27 19:27:04 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.26 2015/07/29 08:45:28 christos Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.25 2015/07/27 19:27:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.26 2015/07/29 08:45:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -480,7 +480,11 @@ adbkbd_powerbutton(void *cookie)
 	struct adbkbd_softc *sc = cookie;
 
 	if (sc->sc_power_dbg) {
+#ifdef DDB
 		Debugger();
+#else
+		printf("kernel is not compiled with DDB support\n");
+#endif
 	} else {
 		sysmon_pswitch_event(&sc->sc_sm_pbutton, 
 		    ADBK_PRESS(sc->sc_pe) ? PSWITCH_EVENT_PRESSED :
