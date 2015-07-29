@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.17 2015/04/13 21:18:41 riastradh Exp $ */
+/* $NetBSD: imxuart.c,v 1.18 2015/07/29 08:51:03 ryo Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.17 2015/04/13 21:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.18 2015/07/29 08:51:03 ryo Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -293,7 +293,7 @@ int	imxuart_common_getc(dev_t, struct imxuart_regs *);
 void	imxuart_common_putc(dev_t, struct imxuart_regs *, int);
 
 
-int	imxuart_init(struct imxuart_regs *, int, tcflag_t);
+int	imxuart_init(struct imxuart_regs *, int, tcflag_t, int);
 
 int	imxucngetc(dev_t);
 void	imxucnputc(dev_t, int);
@@ -423,6 +423,9 @@ imxuart_attach_common(device_t parent, device_t self,
 
 	callout_init(&sc->sc_diag_callout, 0);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
+
+	if (regsp->ur_iobase != imxuconsregs.ur_iobase)
+		imxuart_init(&sc->sc_regs, TTYDEF_SPEED, TTYDEF_CFLAG, false);
 
 	bus_space_read_region_4(iot, ioh, IMX_UCR1, sc->sc_ucr, 4);
 	sc->sc_ucr2_d = sc->sc_ucr2;
@@ -2280,15 +2283,16 @@ imxuart_common_putc(dev_t dev, struct imxuart_regs *regsp, int c)
  * Initialize UART for use as console or KGDB line.
  */
 int
-imxuart_init(struct imxuart_regs *regsp, int rate, tcflag_t cflag)
+imxuart_init(struct imxuart_regs *regsp, int rate, tcflag_t cflag, int domap)
 {
 	struct imxuart_baudrate_ratio ratio;
 	int rfdiv = IMX_UFCR_DIVIDER_TO_RFDIV(imxuart_freqdiv);
 	uint32_t ufcr;
+	int error;
 
-	if (bus_space_map(regsp->ur_iot, regsp->ur_iobase, IMX_UART_SIZE, 0,
-		&regsp->ur_ioh))
-		return ENOMEM; /* ??? */
+	if (domap && (error = bus_space_map(regsp->ur_iot, regsp->ur_iobase,
+	     IMX_UART_SIZE, 0, &regsp->ur_ioh)) != 0)
+		return error;
 
 	if (imxuspeed(rate, &ratio) < 0)
 		return EINVAL;
@@ -2355,7 +2359,7 @@ imxuart_cons_attach(bus_space_tag_t iot, paddr_t iobase, u_int rate,
 	regs.ur_iot = iot;
 	regs.ur_iobase = iobase;
 
-	res = imxuart_init(&regs, rate, cflag);
+	res = imxuart_init(&regs, rate, cflag, true);
 	if (res)
 		return (res);
 
@@ -2416,7 +2420,7 @@ imxuart_kgdb_attach(bus_space_tag_t iot, paddr_t iobase, u_int rate,
 		imxu_kgdb_regs.ur_iot = iot;
 		imxu_kgdb_regs.ur_iobase = iobase;
 
-		res = imxuart_init(&imxu_kgdb_regs, rate, cflag);
+		res = imxuart_init(&imxu_kgdb_regs, rate, cflag, true);
 		if (res)
 			return (res);
 
