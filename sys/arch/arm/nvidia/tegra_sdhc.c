@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.8 2015/07/23 23:53:14 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.9 2015/07/29 12:11:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.8 2015/07/23 23:53:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.9 2015/07/29 12:11:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,7 +95,8 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 			  SDHC_FLAG_NO_CLKBASE |
 			  SDHC_FLAG_NO_TIMEOUT |
 			  SDHC_FLAG_SINGLE_POWER_WRITE |
-			  SDHC_FLAG_USE_DMA;
+			  SDHC_FLAG_USE_DMA |
+			  SDHC_FLAG_USE_ADMA2;
 	if (SDMMC_8BIT_P(loc->loc_port)) {
 		sc->sc.sc_flags |= SDHC_FLAG_8BIT_MODE;
 	}
