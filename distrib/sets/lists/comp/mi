@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1973 2015/07/28 05:09:34 dholland Exp $
+#	$NetBSD: mi,v 1.1974 2015/07/29 00:12:27 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3299,6 +3299,7 @@
 ./usr/include/sys/stat.h			comp-c-include
 ./usr/include/sys/statvfs.h			comp-c-include
 ./usr/include/sys/stdarg.h			comp-c-include
+./usr/include/sys/stdbool.h			comp-c-include
 ./usr/include/sys/stdint.h			comp-c-include
 ./usr/include/sys/swap.h			comp-c-include
 ./usr/include/sys/syncobj.h			comp-c-include
