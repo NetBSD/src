@@ -1,4 +1,4 @@
-/*	$NetBSD: stdbool.h,v 1.5 2013/04/26 17:41:34 joerg Exp $	*/
+/*	$NetBSD: stdbool.h,v 1.1 2015/07/29 00:10:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STDBOOL_H_
-#define	_STDBOOL_H_
+#ifndef _SYS_STDBOOL_H_
+#define	_SYS_STDBOOL_H_
 
+#ifndef __bool_true_false_are_defined
 #ifndef __cplusplus
 #define	bool	_Bool
 
@@ -41,5 +42,6 @@
 #endif /* __cplusplus */
 
 #define	__bool_true_false_are_defined	1
+#endif
 
-#endif /* _STDBOOL_H_ */
+#endif /* _SYS_STDBOOL_H_ */
