@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.91 2013/12/12 17:53:03 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.92 2015/07/29 00:10:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -204,10 +204,13 @@ typedef	int		psetid_t;
  * Boolean type definitions for the kernel environment.  User-space
  * boolean definitions are found in <stdbool.h>.
  */
+#ifndef __bool_true_false_are_defined
 #ifndef __cplusplus
 #define bool	_Bool
 #define true	1
 #define false	0
+#endif
+#define __bool_true_false_are_defined 1
 #endif
 
 /*
