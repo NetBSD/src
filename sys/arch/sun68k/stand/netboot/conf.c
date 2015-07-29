@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2009/01/12 07:01:00 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2015/07/29 08:52:22 christos Exp $	*/
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -17,6 +17,11 @@ struct devsw devsw[] = {
 	{ "net",  net_strategy,  net_open,  net_close,  net_ioctl },
 };
 int ndevs = 1;
+
+struct netif_driver *netif_drivers[] = {
+	// XXX: Fixme
+};
+int n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
 
 int
 main(void)
