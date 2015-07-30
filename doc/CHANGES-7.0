@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.350 2015/07/30 16:03:12 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.351 2015/07/30 16:33:38 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33598,4 +33598,10 @@ sys/dev/ic/mpt_netbsd.c				1.32
 
 	Avoid leaking requests.
 	[hannken, ticket #910]
+
+sys/external/bsd/drm2/dist/drm/radeon/radeon_bios.c 1.3
+
+	Avoid a buffer leak and taking an error branch to be on
+	success.
+	[riastradh, ticket #911]
 
