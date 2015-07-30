@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.2 2015/07/30 02:51:05 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.3 2015/07/30 08:41:18 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -186,6 +186,13 @@ command_body()
 	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.13
 	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.14
 	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.15
+
+	# Test arp -a
+	atf_check -s exit:0 -o match:'10.0.1.11' rump.arp -n -a
+	atf_check -s exit:0 -o match:'10.0.1.12' rump.arp -n -a
+	atf_check -s exit:0 -o match:'10.0.1.13' rump.arp -n -a
+	atf_check -s exit:0 -o match:'10.0.1.14' rump.arp -n -a
+	atf_check -s exit:0 -o match:'10.0.1.15' rump.arp -n -a
 
 	# Flush all entries
 	$DEBUG && rump.arp -n -a
