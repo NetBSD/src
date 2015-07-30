@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.43.2.4 2015/03/11 20:22:56 snj Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.43.2.5 2015/07/30 09:37:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.4 2015/03/11 20:22:56 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.5 2015/07/30 09:37:37 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -518,11 +518,6 @@ rpi_bootstrap(void)
 			    __func__, i);
 		}
 	}
-
-	/*
-	 * XXXNH: Disable non-boot CPUs for now
-	 */
-	arm_cpu_hatched = 0;
 #endif
 }
 
