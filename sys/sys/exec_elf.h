@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.148 2015/07/24 21:27:03 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.149 2015/07/30 15:28:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -941,7 +941,7 @@ typedef struct {
 #define ELF_NOTE_PAX_MPROTECT		0x01	/* Force enable Mprotect */
 #define ELF_NOTE_PAX_NOMPROTECT		0x02	/* Force disable Mprotect */
 #define ELF_NOTE_PAX_GUARD		0x04	/* Force enable Segvguard */
-#define ELF_NOTE_PAX_NOGUARD		0x08	/* Force disable Servguard */
+#define ELF_NOTE_PAX_NOGUARD		0x08	/* Force disable Segvguard */
 #define ELF_NOTE_PAX_ASLR		0x10	/* Force enable ASLR */
 #define ELF_NOTE_PAX_NOASLR		0x20	/* Force disable ASLR */
 #define ELF_NOTE_PAX_NAMESZ		4
