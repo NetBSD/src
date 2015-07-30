@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.2 2015/02/25 08:11:49 ryo Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.3 2015/07/30 08:09:37 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.2 2015/02/25 08:11:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.3 2015/07/30 08:09:37 ryo Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -93,6 +93,8 @@ u_int uboot_args[4] = { 0 };
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
+
+void nitrogen6_setup_iomux(void);
 
 static const bus_addr_t comcnaddr = (bus_addr_t)CONADDR;
 static const int comcnspeed = CONSPEED;
@@ -169,6 +171,9 @@ initarm(void *arg)
 	arm_cpu_max = (scu_cfg & SCU_CFG_CPUMAX) + 1;
 	membar_producer();
 #endif /* MULTIPROCESSOR */
+
+	nitrogen6_setup_iomux();
+
 	consinit();
 
 	/*

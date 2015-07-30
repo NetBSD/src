@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.4 2014/10/11 11:55:07 uebayasi Exp $
+# $NetBSD: NITROGEN6X,v 1.5 2015/07/30 08:09:36 ryo Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -11,6 +11,9 @@ include	"arch/evbarm/conf/std.nitrogen6"
 # estimated number of users
 
 maxusers	32
+
+# Board Type
+options 	EVBARM_BOARDTYPE=nitrogen6x
 
 # CPU options
 options 	CPU_CORTEX
