@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.63 2015/07/29 12:11:13 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.64 2015/07/30 15:03:14 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.63 2015/07/29 12:11:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.64 2015/07/30 15:03:14 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -351,7 +351,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 			if (!ISSET(sc->sc_flags, SDHC_FLAG_EXTERNAL_DMA) ||
 			    ISSET(sc->sc_flags, SDHC_FLAG_EXTDMA_DMAEN))
 				SET(hp->flags, SHF_MODE_DMAEN);
-			aprint_normal(", SDMA");
+			if (sc->sc_vendor_transfer_data_dma) {
+				aprint_normal(", platform DMA");
+			} else {
+				aprint_normal(", SDMA");
+			}
 		}
 	} else {
 		aprint_normal(", PIO");
