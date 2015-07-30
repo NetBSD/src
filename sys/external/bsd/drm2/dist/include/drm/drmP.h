@@ -1437,9 +1437,7 @@ extern unsigned int drm_poll(struct file *filp, struct poll_table_struct *wait);
 
 				/* Memory management support (drm_memory.h) */
 #include <drm/drm_memory.h>
-#ifdef __NetBSD__		/* XXX move to drm_memory.h */
-extern void *drm_ioremap(struct drm_device *dev, struct drm_local_map *map);
-extern void drm_iounmap(struct drm_device *dev, struct drm_local_map *map);
+#ifdef __NetBSD__
 extern int drm_limit_dma_space(struct drm_device *, resource_size_t,
     resource_size_t);
 #endif
