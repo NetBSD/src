@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_dwctwo.c,v 1.3 2015/07/22 10:32:16 skrll Exp $	*/
+/*	$NetBSD: rockchip_dwctwo.c,v 1.4 2015/07/30 07:32:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.3 2015/07/22 10:32:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.4 2015/07/30 07:32:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,8 @@ rkdwc2_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": USB controller\n");
 	aprint_normal(": USB controller\n");
 
-	sc->sc_ih = intr_establish(obio->obio_intr, IPL_SCHED,
-	   IST_LEVEL, dwc2_intr, &sc->sc_dwc2);
+	sc->sc_ih = intr_establish(obio->obio_intr, IPL_VM,
+	   IST_LEVEL | IST_MPSAFE, dwc2_intr, &sc->sc_dwc2);
 #if 0
 	   IST_EDGE, dwc2_intr, &sc->sc_dwc2);
 #endif
