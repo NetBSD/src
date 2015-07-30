@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.93 2015/07/30 21:31:15 kamil Exp $	*/
+/*	$NetBSD: types.h,v 1.94 2015/07/30 21:38:53 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -200,10 +200,7 @@ typedef	unsigned long	cpuid_t;
 typedef	int		psetid_t;
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-/*
- * Boolean type definitions for the kernel environment.  User-space
- * boolean definitions are found in <stdbool.h>.
- */
+
 #include <sys/stdbool.h>
 
 /*
