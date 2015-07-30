@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_dwctwo.c,v 1.4 2015/07/29 14:22:49 skrll Exp $	*/
+/*	$NetBSD: bcm2835_dwctwo.c,v 1.5 2015/07/30 07:32:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.4 2015/07/29 14:22:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.5 2015/07/30 07:32:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,8 @@ bcmdwc2_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": USB controller\n");
 	aprint_normal(": USB controller\n");
 
-	sc->sc_ih = intr_establish(aaa->aaa_intr, IPL_SCHED, IST_LEVEL,
-	   dwc2_intr, &sc->sc_dwc2);
+	sc->sc_ih = intr_establish(aaa->aaa_intr, IPL_VM,
+	    IST_LEVEL | IST_MPSAFE, dwc2_intr, &sc->sc_dwc2);
 
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
