@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.348 2015/07/24 07:32:50 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.349 2015/07/30 10:23:24 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33447,4 +33447,78 @@ sys/netinet/tcp_output.c			1.184
 	socket, make sure at least the persist timer is running.
 	Make sure that snd_win doesn't go negative.
 	[matt, ticket #886]
+
+xsrc/external/mit/libXi/dist/ChangeLog			1.1.1.11
+xsrc/external/mit/libXi/dist/configure			1.1.1.11
+xsrc/external/mit/libXi/dist/configure.ac		1.1.1.11
+xsrc/external/mit/libXi/dist/src/XIAllowEvents.c	1.1.1.4
+xsrc/external/mit/libXi/dist/src/XIPassiveGrab.c	1.1.1.7
+
+	Update libXi to 1.7.4.
+	[mrg, ticket #888]
+
+sys/dev/pci/if_bge.c				1.283
+sys/dev/pci/if_pcn.c				1.60
+
+	Fix mbuf leaks in error branches (found by the Brainy code scanner)
+	[maxv, ticket #889]
+
+sys/arch/arm/broadcom/bcm2835_intr.c		1.8-1.10
+sys/arch/arm/broadcom/bcm2835_intr.h		1.2
+sys/arch/arm/broadcom/bcm2835_obio.c		1.25
+sys/arch/arm/broadcom/bcm2835reg.h		1.15
+sys/arch/arm/cortex/gic.c			1.18
+sys/arch/arm/marvell/mvsoc_intr.h		1.5
+sys/arch/arm/omap/omap4430_intr.h		1.3
+sys/arch/arm/omap/omap5430_intr.h		1.3
+sys/arch/arm/pic/pic.c				1.27-1.32
+sys/arch/arm/pic/picvar.h			1.12-1.14
+sys/arch/evbarm/rpi/rpi_machdep.c		1.61
+
+	Add basic support for __HAVE_PREEMPTION.
+
+	Remove the "pending interrupts" code from the kernel if
+	possible, which shrinks the kernel about 4KB.
+
+	Add a pic_cpus to the softc which specifies which cpus the pic can
+	send IPIs to.  For GIC, initialize pic_cpus to kcpuset_running since
+	it can handle all the cpus.
+
+	Adapt pic to deal with the BCM2836 interrupts.
+	Move pic_pending_pics, pic_pending_ipls, and pic_blocked_irqs into a
+	structure and make then per-cpu.
+	There is no global interrupt state anymore.
+
+	RPI2 MP support.
+
+	Use a bit per IPI type in local mailbox 0 registers.
+
+	IPIs should be IPL_HIGH according to rmind@
+
+	Fix bcm2836mp_pic_{un,}block_irqs to handle timer AND mailbox interrupts
+	if they're both passed.  Thanks to nat@ for finding this.
+
+	Sprinkle some KASSERTs
+	[skrll, ticket #890]
+
+sbin/disklabel/bswap.c				1.3-1.4
+
+	Fix botch in "make disklabel a MI tool" changes in rev 1.2.
+
+	After that chanage, "MAXPARTITIONS" constant is not for the target
+	port.
+	If host's MAXPARTITIONS is larger than a value of the target label and
+	target endianness is different from the build host, bswaplabel() could
+	overwrite data beyond the disklabel and primary boot stored after
+	LABELSECTOR in images might be corrupted.
+
+	This fixes boot failure of sun2 liveimage built by
+	"build.sh -U -m sun2 release live-image"
+	on TME.
+	[tsutsui, ticket #891]
+
+sys/arch/macppc/stand/ofwboot/Locore.c		1.26
+
+	Fix rev 1.25, which caused garbage to be written into BAT registers.
+	[tsutsui, ticket #893]
 
