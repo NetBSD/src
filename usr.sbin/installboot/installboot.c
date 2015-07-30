@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.36.18.1 2015/07/16 21:36:59 snj Exp $	*/
+/*	$NetBSD: installboot.c,v 1.36.18.2 2015/07/30 15:36:03 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.36.18.1 2015/07/16 21:36:59 snj Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.36.18.2 2015/07/30 15:36:03 snj Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -240,6 +240,8 @@ main(int argc, char *argv[])
 
 #if !HAVE_NBTOOL_CONFIG_H
 	special = getfsspecname(specname, sizeof(specname), argv[0]);
+	if (special == NULL)
+		err(1, "%s: %s", argv[0], specname);
 	raw = getdiskrawname(rawname, sizeof(rawname), special);
 	if (raw != NULL)
 		special = raw;
