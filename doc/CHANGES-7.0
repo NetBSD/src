@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.349 2015/07/30 10:23:24 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.350 2015/07/30 16:03:12 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33521,4 +33521,81 @@ sys/arch/macppc/stand/ofwboot/Locore.c		1.26
 
 	Fix rev 1.25, which caused garbage to be written into BAT registers.
 	[tsutsui, ticket #893]
+
+sys/dev/pci/oboe.c				1.43
+
+	Pass the device, not the struct softc to config_found().
+	Avoids a crash at attach time, PR port-i386/50076.
+	[martin, ticket #887]
+
+sys/external/bsd/drm2/dist/drm/i915/intel_pm.c	1.7
+
+	Avoid NULL dev_priv->vlv_pctx-> deref in a WARN check.
+	Add an additional check for the NULL dev_priv->vlv_pctx.
+	[abs, ticket #892]
+
+sys/external/bsd/drm2/ttm/ttm_bo_vm.c		1.9, 1.10
+
+	Fix error branch: ttm_bo_unreserve on failure after ttm_bo_reserve.
+
+	ttm_bo_unreserve in case of ttm_bo_uvm_fault_idle restart, avoiding
+	leaking a buffer ww_mutex lock.  PR kern/49862.
+	[riastradh, ticket #894]
+
+sys/external/bsd/drm2/dist/drm/radeon/radeon_connectors.c 1.2, 1.3
+
+	Don't pass along null encoder.
+	[riastradh, ticket #897]
+
+sbin/newfs/newfs.c				1.113
+usr.sbin/installboot/installboot.c		1.39
+
+	Handle getfsspecname errors, avoiding a NULL pointer exception
+	in case of an unknown wedge name.
+	[mlelstv, ticket #900]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.30
+
+	Remove workaround for PR kern/49195.
+	[riastradh, ticket #901]
+
+distrib/common/bootimage/Makefile.bootimage	1.11
+
+	Fix typo: INSTALLBOOTOPTIONS, not INSTALLBOOTOPTOINS.
+	[riastradh, ticket #902]
+
+sys/external/bsd/drm2/ttm/ttm_agp_backend.c	1.4
+
+	kmem_free the container structure, not a substructure.
+	[riastradh, ticket #903]
+
+sys/external/bsd/drm2/dist/drm/drm_bufs.c	1.7
+sys/external/bsd/drm2/dist/include/drm/drmP.h	1.11
+sys/external/bsd/drm2/drm/drm_memory.c		1.7
+sys/external/bsd/drm2/pci/drm_pci.c		1.13
+
+	Replace drm_ioremap by drm_core_ioremap, reducing diff a little.
+	[riastradh, ticket #904]
+
+sys/external/bsd/drm2/dist/drm/radeon/radeon_bios.c 1.4
+sys/external/bsd/drm2/include/linux/pci.h	1.18, 1.19
+
+	Fix reading the video BIOS for radeon devices.
+	[riastradh, ticket #906]
+
+sys/external/bsd/drm2/include/linux/ww_mutex.h	1.11
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.2
+
+	Adapt ww_mutex to use LOCKDEBUG.
+	[riastradh, ticket #907]
+
+sys/dev/usb/uplcom.c				1.75
+
+	Make uplcom(4) suspend/resume.
+	[riastradh, ticket #908]
+
+sys/dev/ic/mpt_netbsd.c				1.32
+
+	Avoid leaking requests.
+	[hannken, ticket #910]
 
