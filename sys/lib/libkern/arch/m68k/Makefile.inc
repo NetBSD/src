@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.36 2015/07/30 07:44:40 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.37 2015/07/30 15:29:52 tsutsui Exp $
 
 SRCS+=	bswap16.S bswap32.S bswap64.S
 SRCS+=	memcmp.S memcpy.S memmove.S memset.S
@@ -12,7 +12,7 @@ SRCS+=	ffs.S
 SRCS+=	mulsi3.S divsi3.S udivsi3.S modsi3.S umodsi3.S
 .endif
 .if defined(MACHINE_ARCH) && ${MACHINE_ARCH} == "m68k"
-SRCS+=	mulsi3.S random.S
+SRCS+=	random.S
 .else
 random.o random.po random.pico random.d: random.c
 .endif
