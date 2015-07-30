@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.2.4.5 2014/11/14 14:22:41 martin Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.2.4.6 2015/07/30 15:29:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.2.4.5 2014/11/14 14:22:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.2.4.6 2015/07/30 15:29:25 snj Exp $");
 
 #include <sys/types.h>
 
@@ -118,7 +118,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	/* drm prime buffers are not mappable.  XXX Catch this earlier?  */
 	if (bo->ttm && ISSET(bo->ttm->page_flags, TTM_PAGE_FLAG_SG)) {
 		ret = -EINVAL;
-		goto out0;
+		goto out1;
 	}
 
 	/* Notify the driver of a fault if it wants.  */
@@ -127,14 +127,15 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		if (ret) {
 			if (ret == -ERESTART)
 				ret = -EIO;
-			goto out0;
+			goto out1;
 		}
 	}
 
 	ret = ttm_bo_uvm_fault_idle(bo, ufi);
 	if (ret) {
-		/* Unlocks if it restarts.  */
 		KASSERT(ret == -ERESTART);
+		/* ttm_bo_uvm_fault_idle calls uvmfault_unlockall for us.  */
+		ttm_bo_unreserve(bo);
 		/* XXX errno Linux->NetBSD */
 		return -ret;
 	}
