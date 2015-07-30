@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dwctwo.c,v 1.4 2015/07/22 10:32:16 skrll Exp $	*/
+/*	$NetBSD: octeon_dwctwo.c,v 1.5 2015/07/30 07:32:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.4 2015/07/22 10:32:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.5 2015/07/30 07:32:40 skrll Exp $");
 
 #include "opt_octeon.h"
 #include "opt_usb.h"
@@ -309,7 +309,7 @@ octeon_dwc2_attach(device_t parent, device_t self, void *aux)
 	    config_found(sc->sc_dwc2.sc_dev, &sc->sc_dwc2.sc_bus, usbctlprint);
 
 	sc->sc_ih = octeon_intr_establish(ffs64(CIU_INTX_SUM0_USB) - 1,
-	    IPL_BIO, dwc2_intr, sc);
+	    IPL_VM, dwc2_intr, sc);
 	if (sc->sc_ih == NULL)
 		panic("can't establish common interrupt\n");
 }
