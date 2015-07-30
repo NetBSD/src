@@ -1,4 +1,4 @@
-/*	$NetBSD: ww_mutex.h,v 1.4.4.3 2015/03/06 21:39:10 snj Exp $	*/
+/*	$NetBSD: ww_mutex.h,v 1.4.4.4 2015/07/30 15:50:15 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -56,7 +56,6 @@ struct ww_acquire_ctx {
 };
 
 struct ww_mutex {
-	kmutex_t		wwm_lock;
 	enum ww_mutex_state {
 		WW_UNLOCKED,	/* nobody owns it */
 		WW_OWNED,	/* owned by a lwp without a context */
@@ -67,9 +66,17 @@ struct ww_mutex {
 		struct lwp		*owner;
 		struct ww_acquire_ctx	*ctx;
 	}			wwm_u;
+	/*
+	 * XXX wwm_lock must *not* be first, so that the ww_mutex has a
+	 * different address from the kmutex for LOCKDEBUG purposes.
+	 */
+	kmutex_t		wwm_lock;
 	struct ww_class		*wwm_class;
 	struct rb_tree		wwm_waiters;
 	kcondvar_t		wwm_cv;
+#ifdef LOCKDEBUG
+	bool			wwm_debug;
+#endif
 };
 
 /* XXX Make the nm output a little more greppable...  */
