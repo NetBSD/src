@@ -2815,21 +2815,10 @@ void i915_vma_move_to_active(struct i915_vma *vma,
 static void
 i915_gem_object_move_to_inactive(struct drm_i915_gem_object *obj)
 {
-	struct drm_device *dev = obj->base.dev;
-	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = obj->base.dev->dev_private;
 	struct i915_address_space *vm;
 	struct i915_vma *vma;
 
-	if ((obj->base.write_domain & I915_GEM_DOMAIN_GTT) != 0) {
-		printk(KERN_ERR "%s: %p 0x%x flushing gtt\n", __func__, obj,
-			obj->base.write_domain);
-		i915_gem_object_flush_gtt_write_domain(obj);
-	}
-	if ((obj->base.write_domain & I915_GEM_DOMAIN_CPU) != 0) {
-		printk(KERN_ERR "%s: %p 0x%x flushing cpu\n", __func__, obj,
-			obj->base.write_domain);
-		i915_gem_object_flush_cpu_write_domain(obj, false);
-	}
 	BUG_ON(obj->base.write_domain & ~I915_GEM_GPU_DOMAINS);
 	BUG_ON(!obj->active);
 
