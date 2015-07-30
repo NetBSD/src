@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap.c,v 1.2 2013/05/03 16:05:12 matt Exp $	*/
+/*	$NetBSD: bswap.c,v 1.2.6.1 2015/07/30 09:45:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 Izumi Tsutsui.  All rights reserved.
@@ -74,7 +74,7 @@
 static void
 bswaplabel(struct disklabel *nlp, const struct disklabel *olp)
 {
-	int i;
+	u_int i;
 
 	nlp->d_magic          = bswap32(olp->d_magic);
 	nlp->d_type           = bswap16(olp->d_type);
@@ -120,7 +120,7 @@ bswaplabel(struct disklabel *nlp, const struct disklabel *olp)
 	nlp->d_bbsize         = bswap32(olp->d_bbsize);
 	nlp->d_sbsize         = bswap32(olp->d_sbsize);
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
+	for (i = 0; i < maxpartitions; i++) {
 		nlp->d_partitions[i].p_size =
 		    bswap32(olp->d_partitions[i].p_size);
 		nlp->d_partitions[i].p_offset =
