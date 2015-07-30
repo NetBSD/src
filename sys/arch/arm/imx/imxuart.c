@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.18 2015/07/29 08:51:03 ryo Exp $ */
+/* $NetBSD: imxuart.c,v 1.19 2015/07/30 04:39:42 ryo Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.18 2015/07/29 08:51:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.19 2015/07/30 04:39:42 ryo Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -2278,9 +2278,10 @@ imxuart_common_putc(dev_t dev, struct imxuart_regs *regsp, int c)
 
 	splx(s);
 }
+#endif /* defined(IMXUARTCONSOLE) || defined(KGDB) */
 
 /*
- * Initialize UART for use as console or KGDB line.
+ * Initialize UART
  */
 int
 imxuart_init(struct imxuart_regs *regsp, int rate, tcflag_t cflag, int domap)
@@ -2334,9 +2335,6 @@ imxuart_init(struct imxuart_regs *regsp, int rate, tcflag_t cflag, int domap)
 
 	return (0);
 }
-
-
-#endif
 
 
 #ifdef	IMXUARTCONSOLE
