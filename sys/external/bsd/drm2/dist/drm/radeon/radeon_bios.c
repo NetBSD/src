@@ -72,7 +72,7 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 	    (size < 256 * 1024) ||
 	    (bus_space_read_1(bst, bsh, 0) != 0x55) ||
 	    (bus_space_read_1(bst, bsh, 1) != 0xaa) ||
-	    ((rdev = kmalloc(size, GFP_KERNEL)) != NULL)) {
+	    ((rdev->bios = kmalloc(size, GFP_KERNEL)) == NULL)) {
 		bus_space_unmap(bst, bsh, size);
 		return false;
 	}
