@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.1 2015/07/29 06:10:10 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.2 2015/07/30 02:51:05 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,6 +39,7 @@ TIMEOUT=1
 atf_test_case cache_expiration_5s cleanup
 atf_test_case cache_expiration_10s cleanup
 atf_test_case command cleanup
+atf_test_case garp cleanup
 
 cache_expiration_5s_head()
 {
@@ -55,6 +56,12 @@ cache_expiration_10s_head()
 command_head()
 {
 	atf_set "descr" "Tests for commands of arp(8)"
+	atf_set "require.progs" "rump_server"
+}
+
+garp_head()
+{
+	atf_set "descr" "Tests for GARP"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -191,24 +198,80 @@ command_body()
 	atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.1
 }
 
+make_pkt_str()
+{
+	local target=$1
+	local sender=$2
+	pkt="> ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42:"
+	pkt="$pkt Request who-has $target tell $sender, length 28"
+	echo $pkt
+}
+
+garp_body()
+{
+	local pkt=
+
+	atf_check -s exit:0 ${inetserver} $SOCKSRC
+	export RUMP_SERVER=$SOCKSRC
+
+	# Setup an interface
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
+	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.1/24
+	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.2/24 alias
+	atf_check -s exit:0 rump.ifconfig shmif0 up
+	$DEBUG && rump.ifconfig shmif0
+
+	atf_check -s exit:0 sleep 1
+	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r - > ./out
+
+	# A GARP packet is sent for the primary address
+	pkt=$(make_pkt_str 10.0.0.1 10.0.0.1)
+	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+	# No GARP packet is sent for the alias address
+	pkt=$(make_pkt_str 10.0.0.2 10.0.0.2)
+	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+
+	atf_check -s exit:0 rump.ifconfig -w 10
+	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.3/24
+	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.4/24 alias
+
+	# No GARP packets are sent during IFF_UP
+	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r - > ./out
+	pkt=$(make_pkt_str 10.0.0.3 10.0.0.3)
+	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+	pkt=$(make_pkt_str 10.0.0.4 10.0.0.4)
+	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+}
+
 cleanup()
 {
 	env RUMP_SERVER=$SOCKSRC rump.halt
 	env RUMP_SERVER=$SOCKDST rump.halt
 }
 
-dump()
+dump_src()
 {
 	export RUMP_SERVER=$SOCKSRC
 	rump.netstat -nr
 	rump.arp -n -a
+	rump.ifconfig
 	$HIJACKING dmesg
+}
 
+dump_dst()
+{
 	export RUMP_SERVER=$SOCKDST
 	rump.netstat -nr
 	rump.arp -n -a
+	rump.ifconfig
 	$HIJACKING dmesg
+}
 
+dump()
+{
+	dump_src
+	dump_dst
 	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
 }
 
@@ -230,9 +293,17 @@ command_cleanup()
 	cleanup
 }
 
+garp_cleanup()
+{
+	$DEBUG && dump_src
+	$DEBUG && shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
+	env RUMP_SERVER=$SOCKSRC rump.halt
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case cache_expiration_5s
 	atf_add_test_case cache_expiration_10s
 	atf_add_test_case command
+	atf_add_test_case garp
 }
