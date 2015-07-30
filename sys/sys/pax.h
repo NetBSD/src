@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.11 2007/12/27 15:21:53 elad Exp $ */
+/* $NetBSD: pax.h,v 1.12 2015/07/30 15:28:18 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -43,9 +43,14 @@ struct vmspace;
 #ifndef PAX_ASLR_DELTA_EXEC_LEN
 #define	PAX_ASLR_DELTA_EXEC_LEN	12
 #endif
+
+#define P_PAX_ASLR	0x01	/* Enable ASLR */
+#define P_PAX_MPROTECT	0x02	/* Enable Mprotect */
+#define P_PAX_GUARD	0x04	/* Enable Segvguard */
 #endif /* PAX_ASLR */
 
 void pax_init(void);
+void pax_setup_elf_flags(struct lwp *, uint32_t);
 void pax_adjust(struct lwp *, uint32_t);
 
 void pax_mprotect(struct lwp *, vm_prot_t *, vm_prot_t *);
