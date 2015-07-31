@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.4 2015/07/31 02:35:09 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.5 2015/07/31 02:39:12 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,6 +40,7 @@ atf_test_case cache_expiration_5s cleanup
 atf_test_case cache_expiration_10s cleanup
 atf_test_case command cleanup
 atf_test_case garp cleanup
+atf_test_case cache_overwriting cleanup
 
 cache_expiration_5s_head()
 {
@@ -62,6 +63,12 @@ command_head()
 garp_head()
 {
 	atf_set "descr" "Tests for GARP"
+	atf_set "require.progs" "rump_server"
+}
+
+cache_overwriting_head()
+{
+	atf_set "descr" "Tests for behavior of overwriting ARP caches"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -262,6 +269,39 @@ garp_body()
 	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
 }
 
+cache_overwriting_body()
+{
+	local arp_prune=1
+	local arp_keep=5
+	local bonus=2
+
+	atf_check -s exit:0 ${inetserver} $SOCKSRC
+	atf_check -s exit:0 ${inetserver} $SOCKDST
+
+	setup_dst_server
+	setup_src_server $arp_prune $arp_keep
+
+	export RUMP_SERVER=$SOCKSRC
+
+	# Cannot overwrite a permanent cache
+	atf_check -s not-exit:0 -e ignore rump.arp -s $IP4SRC b2:a0:20:00:00:ff
+	$DEBUG && rump.arp -n -a
+
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4DST
+	$DEBUG && rump.arp -n -a
+	# Can overwrite a dynamic cache
+	atf_check -s exit:0 -o ignore rump.arp -s $IP4DST b2:a0:20:00:00:00
+	$DEBUG && rump.arp -n -a
+	atf_check -s exit:0 -o match:'permanent' rump.arp -n $IP4DST
+
+	atf_check -s exit:0 -o ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:10 temp
+	$DEBUG && rump.arp -n -a
+	atf_check -s exit:0 -o not-match:'permanent' rump.arp -n 10.0.1.10
+	# Cannot overwrite a temp cache
+	atf_check -s not-exit:0 -e ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:ff
+	$DEBUG && rump.arp -n -a
+}
+
 cleanup()
 {
 	env RUMP_SERVER=$SOCKSRC rump.halt
@@ -318,10 +358,17 @@ garp_cleanup()
 	env RUMP_SERVER=$SOCKSRC rump.halt
 }
 
+cache_overwriting_cleanup()
+{
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case cache_expiration_5s
 	atf_add_test_case cache_expiration_10s
 	atf_add_test_case command
 	atf_add_test_case garp
+	atf_add_test_case cache_overwriting
 }
