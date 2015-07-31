@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.20 2015/07/29 12:11:14 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.21 2015/07/31 15:00:08 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -76,5 +76,6 @@ int	sdhc_detach(struct sdhc_softc *, int);
 bool	sdhc_suspend(device_t, const pmf_qual_t *);
 bool	sdhc_resume(device_t, const pmf_qual_t *);
 bool	sdhc_shutdown(device_t, int);
+kmutex_t *sdhc_host_lock(struct sdhc_host *);
 
 #endif	/* _SDHCVAR_H_ */
