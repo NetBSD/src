@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.29 2015/07/30 15:28:18 maxv Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.30 2015/07/31 07:37:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.29 2015/07/30 15:28:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.30 2015/07/31 07:37:17 maxv Exp $");
 
 #include "opt_pax.h"
 
@@ -143,14 +143,6 @@ struct pax_segvguard_entry {
 static bool pax_segvguard_elf_flags_active(uint32_t);
 static void pax_segvguard_cb(void *);
 #endif /* PAX_SEGVGUARD */
-
-/* PaX internal setspecific flags */
-#define	PAX_MPROTECT_EXPLICIT_ENABLE	(void *)0x01
-#define	PAX_MPROTECT_EXPLICIT_DISABLE	(void *)0x02
-#define	PAX_SEGVGUARD_EXPLICIT_ENABLE	(void *)0x03
-#define	PAX_SEGVGUARD_EXPLICIT_DISABLE	(void *)0x04
-#define	PAX_ASLR_EXPLICIT_ENABLE	(void *)0x05
-#define	PAX_ASLR_EXPLICIT_DISABLE	(void *)0x06
 
 SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 {
@@ -380,7 +372,7 @@ pax_aslr_active(struct lwp *l)
 }
 
 void
-pax_aslr_init(struct lwp *l, struct vmspace *vm)
+pax_aslr_init_vm(struct lwp *l, struct vmspace *vm)
 {
 	if (!pax_aslr_active(l))
 		return;
@@ -413,7 +405,7 @@ void
 pax_aslr_stack(struct lwp *l, struct exec_package *epp, u_long *max_stack_size)
 {
 	if (pax_aslr_active(l)) {
-		u_long d =  PAX_ASLR_DELTA(cprng_fast32(),
+		u_long d = PAX_ASLR_DELTA(cprng_fast32(),
 		    PAX_ASLR_DELTA_STACK_LSB,
 		    PAX_ASLR_DELTA_STACK_LEN);
 		PAX_DPRINTF("stack 0x%lx d=0x%lx 0x%lx",
