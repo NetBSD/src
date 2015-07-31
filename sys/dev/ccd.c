@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.151.2.2 2014/11/11 10:42:22 martin Exp $	*/
+/*	$NetBSD: ccd.c,v 1.151.2.3 2015/07/31 17:29:45 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.151.2.2 2014/11/11 10:42:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.151.2.3 2015/07/31 17:29:45 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -228,6 +228,7 @@ ccdcreate(int unit) {
 	}
 	/* Initialize per-softc structures. */
 	snprintf(sc->sc_xname, sizeof(sc->sc_xname), "ccd%d", unit);
+	sc->sc_unit = unit;
 	mutex_init(&sc->sc_dvlock, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_iolock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_stop, "ccdstop");
