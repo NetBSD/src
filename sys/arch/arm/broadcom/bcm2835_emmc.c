@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.23 2015/07/29 14:22:49 skrll Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.24 2015/07/31 15:00:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.23 2015/07/29 14:22:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.24 2015/07/31 15:00:07 jmcneill Exp $");
 
 #include "bcmdmac.h"
 
@@ -64,7 +64,6 @@ struct bcmemmc_softc {
 	struct sdhc_host	*sc_hosts[1];
 	void			*sc_ih;
 
-	kmutex_t		sc_lock;
 	kcondvar_t		sc_cv;
 
 	enum bcmemmc_dma_state	sc_state;
@@ -165,7 +164,6 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_vendor_transfer_data_dma = bcmemmc_xfer_data_dma;
 
 	sc->sc_state = EMMC_DMA_STATE_IDLE;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SDMMC);
 	cv_init(&sc->sc_cv, "bcmemmcdma");
 
 	int rseg;
@@ -242,8 +240,11 @@ static int
 bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 {
 	struct bcmemmc_softc * const sc = device_private(sdhc_sc->sc_dev);
+	kmutex_t *plock = sdhc_host_lock(sc->sc_hosts[0]);
 	size_t seg;
 	int error;
+
+	KASSERT(mutex_owned(plock));
 
 	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
 		sc->sc_cblk[seg].cb_ti =
@@ -303,14 +304,13 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 
 	error = 0;
 
-	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_state == EMMC_DMA_STATE_IDLE);
 	sc->sc_state = EMMC_DMA_STATE_BUSY;
 	bcm_dmac_set_conblk_addr(sc->sc_dmac,
 	    sc->sc_dmamap->dm_segs[0].ds_addr);
 	bcm_dmac_transfer(sc->sc_dmac);
 	while (sc->sc_state == EMMC_DMA_STATE_BUSY) {
-		error = cv_timedwait(&sc->sc_cv, &sc->sc_lock, hz * 10);
+		error = cv_timedwait(&sc->sc_cv, plock, hz * 10);
 		if (error == EWOULDBLOCK) {
 			device_printf(sc->sc.sc_dev, "transfer timeout!\n");
 			bcm_dmac_halt(sc->sc_dmac);
@@ -319,7 +319,6 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 			break;
 		}
 	}
-	mutex_exit(&sc->sc_lock);
 
 	bus_dmamap_sync(sc->sc.sc_dmat, sc->sc_dmamap, 0,
 	    sc->sc_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -331,12 +330,12 @@ static void
 bcmemmc_dma_done(void *arg)
 {
 	struct bcmemmc_softc * const sc = arg;
+	kmutex_t *plock = sdhc_host_lock(sc->sc_hosts[0]);
 
-	mutex_enter(&sc->sc_lock);
+	mutex_enter(plock);
 	KASSERT(sc->sc_state == EMMC_DMA_STATE_BUSY);
 	sc->sc_state = EMMC_DMA_STATE_IDLE;
 	cv_broadcast(&sc->sc_cv);
-	mutex_exit(&sc->sc_lock);
-
+	mutex_exit(plock);
 }
 #endif
