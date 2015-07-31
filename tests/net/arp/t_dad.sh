@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.2 2015/07/31 00:22:44 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.3 2015/07/31 00:23:54 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -173,8 +173,6 @@ dad_duplicated_body()
 
 cleanup()
 {
-	gdb -ex bt /usr/bin/rump_server rump_server.core
-	gdb -ex bt /usr/sbin/arp arp.core
 	env RUMP_SERVER=$SOCKLOCAL rump.halt
 	env RUMP_SERVER=$SOCKPEER rump.halt
 }
