@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.351 2015/07/30 16:33:38 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.352 2015/07/31 17:55:21 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33604,4 +33604,91 @@ sys/external/bsd/drm2/dist/drm/radeon/radeon_bios.c 1.3
 	Avoid a buffer leak and taking an error branch to be on
 	success.
 	[riastradh, ticket #911]
+
+usr.bin/patch/pch.c				1.28
+
+	Substitution commands might contain a newline in the replacement
+	pattern (escaped with a backslash before it), causing patch's
+	understanding of the state the ed child process is in to diverge
+	from reality. This can lead to patch unwillingly feeding '!'
+	(execute shell command) lines to ed.
+	[christos, ticket #915]
+
+crypto/external/bsd/openssh/dist/auth2-chall.c	1.8
+
+	A remote attacker may effectively bypass MaxAuthTries settings,
+	which would enable them to brute force passwords. [CVE-2015-5600]
+	[christos, ticket #916]
+
+doc/3RDPARTY					patch
+external/bsd/bind/dist/CHANGES			up to 1.16
+external/bsd/bind/dist/README			up to 1.4
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch01.html	up to 1.1.1.14
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch02.html	up to 1.1.1.11
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch03.html	up to 1.1.1.16
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch04.html	up to 1.4
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch05.html	up to 1.1.1.17
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch06.html	up to 1.4
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch07.html	up to 1.4
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch08.html	up to 1.4
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch09.html	up to 1.4
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch10.html	up to 1.1.1.13
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch11.html	up to 1.1.1.2
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch12.html	up to 1.1.1.2
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch13.html	up to 1.1.1.2
+external/bsd/bind/dist/doc/arm/Bv9ARM.html	up to 1.4
+external/bsd/bind/dist/doc/arm/Bv9ARM.pdf	up to 1.10
+external/bsd/bind/dist/doc/arm/man.arpaname.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.ddns-confgen.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.delv.html	up to 1.4
+external/bsd/bind/dist/doc/arm/man.dig.html	up to 1.4
+external/bsd/bind/dist/doc/arm/man.dnssec-checkds.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.dnssec-coverage.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.dnssec-dsfromkey.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.dnssec-importkey.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.dnssec-keyfromlabel.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.dnssec-keygen.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.dnssec-revoke.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.dnssec-settime.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.dnssec-signzone.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.dnssec-verify.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.genrandom.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.host.html	up to 1.4
+external/bsd/bind/dist/doc/arm/man.isc-hmac-fixup.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.named-checkconf.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.named-checkzone.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.named-journalprint.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.named-rrchecker.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.named.html	up to 1.4
+external/bsd/bind/dist/doc/arm/man.nsec3hash.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.nsupdate.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.rndc-confgen.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.rndc.conf.html up to 1.4
+external/bsd/bind/dist/doc/arm/man.rndc.html	up to 1.4
+external/bsd/bind/dist/doc/arm/notes.html	up to 1.1.1.2
+external/bsd/bind/dist/doc/arm/notes.pdf	up to 1.1.1.2
+external/bsd/bind/dist/doc/arm/notes.xml	up to 1.1.1.2
+external/bsd/bind/dist/lib/dns/api		up to 1.4
+external/bsd/bind/dist/lib/dns/tkey.c		up to 1.9
+external/bsd/bind/dist/srcid			up to 1.10
+external/bsd/bind/dist/version			up to 1.14
+
+	Update BIND to 9.10.2-P3, addressing CVE-2015-5477.
+	[christos, ticket #917]
+
+usr.sbin/ypserv/ypserv/ypserv_proc.c		1.17
+
+	When transferring a secure map to a slave server, don't
+	lose the secure flag. PR bin/50057.
+	[christos, ticket #919]
+
+external/bsd/blacklist/bin/blacklistd.8		1.12-1.14
+
+	Spruce up blacklistd's documentation.
+	[christos, ticket #926]
+
+sys/dev/ccd.c					1.163
+
+	Initialize sc_unit.
+	[christos, ticket #924]
 
