@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.52 2015/07/29 06:07:35 ozaki-r Exp $ */
+/*	$NetBSD: arp.c,v 1.53 2015/07/31 04:02:40 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.52 2015/07/29 06:07:35 ozaki-r Exp $");
+__RCSID("$NetBSD: arp.c,v 1.53 2015/07/31 04:02:40 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,15 +88,14 @@ static int atosdl(const char *s, struct sockaddr_dl *sdl);
 static int file(const char *);
 static void get(const char *);
 static int getinetaddr(const char *, struct in_addr *);
-static void getsocket(void);
-static int rtmsg(int);
+static int getsocket(void);
+static struct rt_msghdr *
+	rtmsg(const int, const int, const struct sockaddr_inarp *,
+	    const struct sockaddr_dl *);
 static int set(int, char **);
 static void usage(void) __dead;
 
-static pid_t pid;
 static int aflag, nflag, vflag;
-static int s = -1;
-static struct ifaddrs* ifaddrs = NULL;
 static struct sockaddr_in so_mask = { 
 	.sin_len = 8,
 	.sin_addr = {
@@ -107,18 +106,12 @@ static struct sockaddr_inarp blank_sin = {
 	.sin_len = sizeof(blank_sin),
 	.sin_family = AF_INET
 };
-static struct sockaddr_inarp sin_m;
 static struct sockaddr_dl blank_sdl = {
 	.sdl_len = sizeof(blank_sdl),
 	.sdl_family = AF_LINK
 };
-static struct sockaddr_dl sdl_m;
 
 static int expire_time, flags, export_only, doing_proxy, found_entry;
-static struct {
-	struct	rt_msghdr m_rtm;
-	char	m_space[512];
-} m_rtmsg;
 
 int
 main(int argc, char **argv)
@@ -157,8 +150,6 @@ main(int argc, char **argv)
 
 	if (prog_init && prog_init() == -1)
 		err(1, "init failed");
-
-	pid = prog_getpid();
 
 	switch((char)op) {
 	case 'a':
@@ -232,14 +223,14 @@ file(const char *name)
 	return retval;
 }
 
-static void
+static int
 getsocket(void)
 {
-	if (s >= 0)
-		return;
+	int s;
 	s = prog_socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0)
 		err(1, "socket");
+	return s;
 }
 
 static int
@@ -275,18 +266,17 @@ set(int argc, char **argv)
 	struct sockaddr_dl *sdl;
 	struct rt_msghdr *rtm;
 	char *host = argv[0], *eaddr;
-	int rval;
+	struct sockaddr_inarp sin_m = blank_sin; /* struct copy */
+	struct sockaddr_dl sdl_m = blank_sdl; /* struct copy */
+	int s;
 
-	sina = &sin_m;
-	rtm = &(m_rtmsg.m_rtm);
 	eaddr = argv[1];
 
-	getsocket();
+	s = getsocket();
 	argc -= 2;
 	argv += 2;
-	sdl_m = blank_sdl;		/* struct copy */
-	sin_m = blank_sin;		/* struct copy */
-	if (getinetaddr(host, &sina->sin_addr) == -1)
+
+	if (getinetaddr(host, &sin_m.sin_addr) == -1)
 		return (1);
 	if (atosdl(eaddr, &sdl_m))
 		warnx("invalid link-level address '%s'", eaddr);
@@ -322,7 +312,8 @@ set(int argc, char **argv)
 	if (memcmp(&sdl_m, &blank_sdl, sizeof(blank_sdl)))
 		goto out;
 tryagain:
-	if (rtmsg(RTM_GET) < 0) {
+	rtm = rtmsg(s, RTM_GET, &sin_m, &sdl_m);
+	if (rtm == NULL) {
 		warn("%s", host);
 		return (1);
 	}
@@ -353,10 +344,13 @@ overwrite:
 	sdl_m.sdl_type = sdl->sdl_type;
 	sdl_m.sdl_index = sdl->sdl_index;
 out:
-	rval = rtmsg(RTM_ADD);
+	sin_m.sin_other = 0;
+	if (doing_proxy && export_only)
+		sin_m.sin_other = SIN_PROXY;
+	rtm = rtmsg(s, RTM_ADD, &sin_m, &sdl_m);
 	if (vflag)
 		(void)printf("%s (%s) added\n", host, eaddr);
-	return (rval);
+	return (rtm == NULL) ? 1 : 0;
 }
 
 /*
@@ -365,15 +359,13 @@ out:
 static void
 get(const char *host)
 {
-	struct sockaddr_inarp *sina;
+	struct sockaddr_inarp sin = blank_sin; /* struct copy */
 
-	sina = &sin_m;
-	sin_m = blank_sin;		/* struct copy */
-	if (getinetaddr(host, &sina->sin_addr) == -1)
+	if (getinetaddr(host, &sin.sin_addr) == -1)
 		exit(1);
-	dump(sina->sin_addr.s_addr);
+	dump(sin.sin_addr.s_addr);
 	if (found_entry == 0)
-		errx(1, "%s (%s) -- no entry", host, inet_ntoa(sina->sin_addr));
+		errx(1, "%s (%s) -- no entry", host, inet_ntoa(sin.sin_addr));
 }
 
 
@@ -404,20 +396,20 @@ int
 delete(const char *host, const char *info)
 {
 	struct sockaddr_inarp *sina;
-	struct rt_msghdr *rtm;
 	struct sockaddr_dl *sdl;
+	struct rt_msghdr *rtm;
+	struct sockaddr_inarp sin_m = blank_sin; /* struct copy */
+	struct sockaddr_dl sdl_m = blank_sdl; /* struct copy */
+	int s;
 
-	sina = &sin_m;
-	rtm = &m_rtmsg.m_rtm;
-
-	getsocket();
-	sin_m = blank_sin;		/* struct copy */
+	s = getsocket();
 	if (info && strncmp(info, "pro", 3) == 0)
-		 sina->sin_other = SIN_PROXY;
-	if (getinetaddr(host, &sina->sin_addr) == -1)
+		 sin_m.sin_other = SIN_PROXY;
+	if (getinetaddr(host, &sin_m.sin_addr) == -1)
 		return (1);
 tryagain:
-	if (rtmsg(RTM_GET) < 0) {
+	rtm = rtmsg(s, RTM_GET, &sin_m, &sdl_m);
+	if (rtm == NULL) {
 		warn("%s", host);
 		return (1);
 	}
@@ -439,11 +431,12 @@ delete:
 		(void)warnx("cannot locate %s", host);
 		return (1);
 	}
-	if (rtmsg(RTM_DELETE)) 
+	rtm = rtmsg(s, RTM_DELETE, &sin_m, sdl);
+	if (rtm == NULL)
 		return (1);
 	if (vflag)
 		(void)printf("%s (%s) deleted\n", host,
-		    inet_ntoa(sina->sin_addr));
+		    inet_ntoa(sin_m.sin_addr));
 	return (0);
 }
 
@@ -624,13 +617,19 @@ usage(void)
 	exit(1);
 }
 
-static int
-rtmsg(int cmd)
+static struct rt_msghdr *
+rtmsg(const int s, const int cmd, const struct sockaddr_inarp *sin,
+    const struct sockaddr_dl *sdl)
 {
 	static int seq;
 	struct rt_msghdr *rtm;
 	char *cp;
 	int l;
+	static struct {
+		struct	rt_msghdr m_rtm;
+		char	m_space[512];
+	} m_rtmsg;
+	pid_t pid;
 
 	rtm = &m_rtmsg.m_rtm;
 	cp = m_rtmsg.m_space;
@@ -651,11 +650,8 @@ rtmsg(int cmd)
 		rtm->rtm_rmx.rmx_expire = expire_time;
 		rtm->rtm_inits = RTV_EXPIRE;
 		rtm->rtm_flags |= (RTF_HOST | RTF_STATIC);
-		sin_m.sin_other = 0;
 		if (doing_proxy) {
-			if (export_only)
-				sin_m.sin_other = SIN_PROXY;
-			else {
+			if (!export_only) {
 				rtm->rtm_addrs |= RTA_NETMASK;
 				rtm->rtm_flags &= ~RTF_HOST;
 			}
@@ -668,12 +664,12 @@ rtmsg(int cmd)
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
 		(void)memcpy(cp, &s, \
-		(size_t)((struct sockaddr *)(void *)&s)->sa_len); \
-		RT_ADVANCE(cp, ((struct sockaddr *)(void *)&s)); \
+		    (size_t)((const struct sockaddr *)&s)->sa_len); \
+		RT_ADVANCE(cp, ((const struct sockaddr *)&s)); \
 	}
 
-	NEXTADDR(RTA_DST, sin_m);
-	NEXTADDR(RTA_GATEWAY, sdl_m);
+	NEXTADDR(RTA_DST, *sin);
+	NEXTADDR(RTA_GATEWAY, *sdl);
 	NEXTADDR(RTA_NETMASK, so_mask);
 
 	rtm->rtm_msglen = cp - (char *)(void *)&m_rtmsg;
@@ -684,15 +680,17 @@ doit:
 	if (prog_write(s, &m_rtmsg, (size_t)l) < 0) {
 		if (errno != ESRCH || cmd != RTM_DELETE) {
 			warn("writing to routing socket");
-			return (-1);
+			return NULL;
 		}
 	}
+
+	pid = prog_getpid();
 	do {
 		l = prog_read(s, &m_rtmsg, sizeof(m_rtmsg));
 	} while (l > 0 && (rtm->rtm_seq != seq || rtm->rtm_pid != pid));
 	if (l < 0)
 		warn("read from routing socket");
-	return (0);
+	return rtm;
 }
 
 static int
@@ -716,6 +714,7 @@ getifname(u_int16_t ifindex, char *ifname, size_t l)
 	int i;
 	struct ifaddrs *addr;
 	const struct sockaddr_dl *sdl = NULL;
+	static struct ifaddrs* ifaddrs = NULL;
 
 	if (ifaddrs == NULL) {
 		i = getifaddrs(&ifaddrs);
