@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.12 2015/07/30 15:28:18 maxv Exp $ */
+/* $NetBSD: pax.h,v 1.13 2015/07/31 07:37:17 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -38,7 +38,7 @@ struct vmspace;
 
 #ifdef PAX_ASLR
 /*
- * We stick this here because we need it in kern/exec_elf32.c for now.
+ * We stick this here because we need it in kern/exec_elf.c for now.
  */
 #ifndef PAX_ASLR_DELTA_EXEC_LEN
 #define	PAX_ASLR_DELTA_EXEC_LEN	12
@@ -59,7 +59,7 @@ int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 #define	PAX_ASLR_DELTA(delta, lsb, len)	\
     (((delta) & ((1UL << (len)) - 1)) << (lsb))
 bool pax_aslr_active(struct lwp *);
-void pax_aslr_init(struct lwp *, struct vmspace *);
+void pax_aslr_init_vm(struct lwp *, struct vmspace *);
 void pax_aslr_stack(struct lwp *, struct exec_package *, u_long *);
 void pax_aslr(struct lwp *, vaddr_t *, vaddr_t, int);
 
