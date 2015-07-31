@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: pch.c,v 1.37 2007/09/02 15:19:33 deraadt Exp $
  * $DragonFly: src/usr.bin/patch/pch.c,v 1.6 2008/08/10 23:35:40 joerg Exp $
- * $NetBSD: pch.c,v 1.25.8.1 2014/11/28 09:09:19 martin Exp $
+ * $NetBSD: pch.c,v 1.25.8.2 2015/07/31 16:47:13 snj Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pch.c,v 1.25.8.1 2014/11/28 09:09:19 martin Exp $");
+__RCSID("$NetBSD: pch.c,v 1.25.8.2 2015/07/31 16:47:13 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1407,6 +1407,7 @@ do_ed_script(void)
 	char	*t;
 	long	beginning_of_this_line;
 	FILE	*pipefp = NULL;
+	int	continuation;
 
 	if (!skip_rest_of_patch) {
 		if (copy_file(filearg[0], TMPOUTNAME) < 0) {
@@ -1431,7 +1432,19 @@ do_ed_script(void)
 		    *t == 'd' || *t == 'i' || *t == 's')) {
 			if (pipefp != NULL)
 				fputs(buf, pipefp);
-			if (*t != 'd') {
+			if (*t == 's') {
+				for (;;) {
+					continuation = 0;
+					t = strchr(buf, '\0') - 1;
+					while (--t >= buf && *t == '\\')
+						continuation = !continuation;
+					if (!continuation ||
+					    pgets(buf, sizeof buf, pfp) == NULL)
+						break;
+					if (pipefp != NULL)
+						fputs(buf, pipefp);
+				}
+			} else if (*t != 'd') {
 				while (pgets(buf, buf_len, pfp) != NULL) {
 					p_input_line++;
 					if (pipefp != NULL)
