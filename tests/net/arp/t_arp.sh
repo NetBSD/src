@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.5 2015/07/31 02:39:12 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.6 2015/07/31 10:16:36 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -221,6 +221,8 @@ command_body()
 	atf_check -s exit:0 sleep $(($arp_keep + $arp_prune + $bonus))
 	$DEBUG && rump.arp -n -a
 	#atf_check -s exit:0 -o match:'incomplete' rump.arp -n 10.0.1.10
+
+	return 0
 }
 
 make_pkt_str()
@@ -300,6 +302,8 @@ cache_overwriting_body()
 	# Cannot overwrite a temp cache
 	atf_check -s not-exit:0 -e ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:ff
 	$DEBUG && rump.arp -n -a
+
+	return 0
 }
 
 cleanup()
