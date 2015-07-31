@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.3 2015/07/30 08:41:18 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.4 2015/07/31 02:35:09 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -203,6 +203,17 @@ command_body()
 	atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.14
 	atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.15
 	atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.1
+
+	# Test temp option
+	$DEBUG && rump.arp -n -a
+	atf_check -s exit:0 -o ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:10 temp
+	$DEBUG && rump.arp -n -a
+	atf_check -s exit:0 -o not-match:'permanent' rump.arp -n 10.0.1.10
+
+	# Hm? the cache doesn't expire...
+	atf_check -s exit:0 sleep $(($arp_keep + $arp_prune + $bonus))
+	$DEBUG && rump.arp -n -a
+	#atf_check -s exit:0 -o match:'incomplete' rump.arp -n 10.0.1.10
 }
 
 make_pkt_str()
