@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdmi.c,v 1.8 2015/07/26 15:12:03 jmcneill Exp $ */
+/* $NetBSD: tegra_hdmi.c,v 1.9 2015/07/31 23:07:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.8 2015/07/26 15:12:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.9 2015/07/31 23:07:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_hdmi.c,v 1.8 2015/07/26 15:12:03 jmcneill Exp 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_hdmireg.h>
 #include <arm/nvidia/tegra_var.h>
+
+#define PROP_PHYSICAL_ADDRESS	"physical-address"
 
 static int	tegra_hdmi_match(device_t, cfdata_t, void *);
 static void	tegra_hdmi_attach(device_t, device_t, void *);
@@ -243,6 +245,9 @@ tegra_hdmi_connect(struct tegra_hdmi_softc *sc)
 static void
 tegra_hdmi_disconnect(struct tegra_hdmi_softc *sc)
 {
+	prop_dictionary_t cfg = device_properties(sc->sc_dev);
+
+	prop_dictionary_remove(cfg, PROP_PHYSICAL_ADDRESS);
 }
 
 static void
@@ -441,9 +446,11 @@ tegra_hdmi_sor_start(struct tegra_hdmi_softc *sc)
 static bool
 tegra_hdmi_is_hdmi(struct tegra_hdmi_softc *sc, const struct edid_info *ei)
 {
+	prop_dictionary_t cfg = device_properties(sc->sc_dev);
 	char edid[128];
 	bool found_hdmi = false;
 	unsigned int n, p;
+	uint16_t phys_addr;
 
 	/*
 	 * Scan through extension blocks, looking for a CEA-861-D v3
@@ -486,8 +493,14 @@ tegra_hdmi_is_hdmi(struct tegra_hdmi_softc *sc, const struct edid_info *ei)
 				goto next_block;
 
 			/* HDMI 24-bit IEEE registration ID is 0x000C03 */
-			if (memcmp(&edid[p + 1], "\x03\x0c\x00", 3) == 0)
+			if (memcmp(&edid[p + 1], "\x03\x0c\x00", 3) == 0) {
 				found_hdmi = true;
+
+				phys_addr = (edid[p + 4] << 8) | edid[p + 5];
+
+				prop_dictionary_set_uint16(cfg,
+				    PROP_PHYSICAL_ADDRESS, phys_addr);
+			}
 
 next_block:
 			p += (1 + blen);
