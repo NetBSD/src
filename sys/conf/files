@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1129 2015/03/28 14:09:58 jmcneill Exp $
+#	$NetBSD: files,v 1.1130 2015/08/01 21:19:24 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20141030
@@ -333,6 +333,10 @@ attach	video at videobus
 # DTV subsystem
 #
 include "dev/dtv/files.dtv"
+
+# HDMI CEC
+#
+include "dev/hdmicec/files.hdmicec"
 
 # National Semiconductor LM7[89]
 #
