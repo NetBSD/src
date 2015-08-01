@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.10 2015/07/25 08:43:41 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.11 2015/08/01 14:18:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.10 2015/07/25 08:43:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.11 2015/08/01 14:18:00 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -492,12 +492,16 @@ bcm2836mp_ipi_handler(void *priv)
 		const u_int ipi = bit - 1;
 		switch (ipi) {
 		case IPI_AST:
+			pic_ipi_ast(priv);
+			break;
 		case IPI_NOP:
-#ifdef __HAVE_PREEMPTION
-		case IPI_KPREEMPT:
-#endif
 			pic_ipi_nop(priv);
 			break;
+#ifdef __HAVE_PREEMPTION
+		case IPI_KPREEMPT:
+			pic_ipi_kpreempt(priv);
+			break;
+#endif
 		case IPI_XCALL:
 			pic_ipi_xcall(priv);
 			break;
