@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.17 2015/05/30 23:17:37 matt Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.18 2015/08/01 21:20:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.17 2015/05/30 23:17:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.18 2015/08/01 21:20:47 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -393,6 +393,10 @@ tegra_device_register(device_t self, void *aux)
 #if NUKBD > 0
 		ukbd_cnattach();
 #endif
+	}
+
+	if (device_is_a(self, "tegracec")) {
+		prop_dictionary_set_cstring(dict, "hdmi-device", "tegrahdmi0");
 	}
 
 #ifdef BOARD_JETSONTK1
