@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.14 2015/05/30 13:25:55 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.15 2015/08/01 21:20:11 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -110,6 +110,11 @@ file	arch/arm/nvidia/tegra_genfb.c		tegra_genfb
 device	tegrahdmi: edid, ddc_read_edid, videomode
 attach	tegrahdmi at tegraio with tegra_hdmi
 file	arch/arm/nvidia/tegra_hdmi.c		tegra_hdmi
+
+# HDMI CEC
+device	tegracec: hdmicecbus
+attach	tegracec at tegraio with tegra_cec
+file	arch/arm/nvidia/tegra_cec.c		tegra_cec
 
 # Console parameters
 defparam opt_tegra.h			CONADDR

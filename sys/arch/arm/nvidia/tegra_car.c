@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.25 2015/07/29 14:30:18 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.26 2015/08/01 21:20:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.25 2015/07/29 14:30:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.26 2015/08/01 21:20:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -682,6 +682,18 @@ tegra_car_periph_i2c_enable(u_int port, u_int rate)
 	bus_space_write_4(bst, bsh, rst_reg+4, dev_bit);
 
 	return 0;
+}
+
+void
+tegra_car_periph_cec_enable(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	bus_space_write_4(bst, bsh, CAR_CLK_ENB_W_SET_REG, CAR_DEV_W_CEC);
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_W_CLR_REG, CAR_DEV_W_CEC);
 }
 
 void

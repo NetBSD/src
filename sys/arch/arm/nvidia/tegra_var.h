@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.23 2015/07/23 18:22:05 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.24 2015/08/01 21:20:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -101,6 +101,7 @@ int	tegra_car_periph_usb_enable(u_int);
 void	tegra_car_periph_hda_enable(void);
 void	tegra_car_periph_sata_enable(void);
 int	tegra_car_periph_i2c_enable(u_int, u_int);
+void	tegra_car_periph_cec_enable(void);
 void	tegra_car_utmip_init(void);
 void	tegra_car_utmip_enable(u_int);
 void	tegra_car_hdmi_enable(u_int);
