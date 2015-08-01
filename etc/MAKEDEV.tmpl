@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.173 2014/09/19 09:00:23 matt Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.174 2015/08/01 21:30:09 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -244,6 +244,7 @@
 #	fd	file descriptors
 #	grf*	graphics frame buffer device
 #	hdaudio* High Definition audio control device
+#	hdmicec* HDMI CEC devices
 #	hil	HP300 HIL input devices
 #	icp	ICP-Vortex/Intel RAID control interface
 #	iic*	IIC bus device
@@ -839,6 +840,7 @@ all)
 	makedev altmem
 	makedev zfs
 	makedev lua
+	makedev hdmicec0
 	makedev local # do this last
 	;;
 
@@ -1464,6 +1466,11 @@ audio|audio[0-9]*)
 hdaudio[0-9]*)
 	unit=${i#hdaudio}
 	mkdev hdaudio$unit c %hdaudio_chr% $unit 644
+	;;
+
+hdmicec[0-9]*)
+	uint=${i#hdmicec}
+	mkdev hdmicec$unit c %hdmicec_chr% $unit 644
 	;;
 
 gpio[0-9]*)
