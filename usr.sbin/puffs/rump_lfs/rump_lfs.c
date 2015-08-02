@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.17 2013/01/10 08:35:26 riastradh Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.18 2015/08/02 18:11:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -60,7 +60,7 @@ cleaner(void *arg)
 int
 main(int argc, char *argv[])
 {
-	struct ufs_args args;
+	struct ulfs_args args;
 	char canon_dev[UKFS_DEVICE_MAXPATHLEN], canon_dir[MAXPATHLEN];
 	char rawdev[MAXPATHLEN];
 	struct p2k_mount *p2m;
