@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.352 2015/07/31 17:55:21 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.353 2015/08/02 11:30:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33691,4 +33691,9 @@ sys/dev/ccd.c					1.163
 
 	Initialize sc_unit.
 	[christos, ticket #924]
+
+sys/compat/netbsd32/netbsd32_ioctl.c		1.82
+
+	Fix inverted logic when checking the size of data to copyin().
+	[maxv, ticket #930]
 
