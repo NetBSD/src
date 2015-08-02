@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.169 2015/08/02 18:10:08 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.170 2015/08/02 18:12:59 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -721,7 +721,7 @@ struct lfs {
 	struct pool lfs_segpool;	/* Pool for struct segment */
 #endif /* _KERNEL */
 #define LFS_MAX_CLEANIND 64
-	int32_t  lfs_cleanint[LFS_MAX_CLEANIND]; /* Active cleaning intervals */
+	daddr_t  lfs_cleanint[LFS_MAX_CLEANIND]; /* Active cleaning intervals */
 	int 	 lfs_cleanind;		/* Index into intervals */
 	int lfs_sleepers;		/* # procs sleeping this fs */
 	int lfs_pages;			/* dirty pages blaming this fs */

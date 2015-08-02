@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.279 2015/08/02 18:12:41 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.280 2015/08/02 18:12:59 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.279 2015/08/02 18:12:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.280 2015/08/02 18:12:59 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1466,7 +1466,7 @@ lfs_strategy(void *v)
 			    tbn >= fs->lfs_cleanint[i]) {
 				DLOG((DLOG_CLEAN,
 				      "lfs_strategy: ino %d lbn %" PRId64
-				      " ind %d sn %d fsb %" PRIx32
+				      " ind %d sn %d fsb %" PRIx64
 				      " given sn %d fsb %" PRIx64 "\n",
 				      ip->i_number, bp->b_lblkno, i,
 				      lfs_dtosn(fs, fs->lfs_cleanint[i]),
