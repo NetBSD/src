@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.12 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.13 2015/08/02 18:12:18 dholland Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,6 @@
 #include <sys/mount.h>
 #include <sys/statvfs.h>
 
-#include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_accessors.h>
 
