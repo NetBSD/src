@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.24 2015/07/31 15:00:07 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.25 2015/08/02 22:09:43 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.24 2015/07/31 15:00:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.25 2015/08/02 22:09:43 jmcneill Exp $");
 
 #include "bcmdmac.h"
 
@@ -116,8 +116,10 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_32BIT_ACCESS;
 	sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
 	sc->sc.sc_flags |= SDHC_FLAG_NO_HS_BIT;
-	sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_3V | SDHC_HIGH_SPEED_SUPP |
+	sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_3V | SDHC_VOLTAGE_SUPP_1_8V |
+	    SDHC_HIGH_SPEED_SUPP |
 	    (SDHC_MAX_BLK_LEN_1024 << SDHC_MAX_BLK_LEN_SHIFT);
+	sc->sc.sc_caps2 = SDHC_SDR50_SUPP | SDHC_SDR104_SUPP | SDHC_DDR50_SUPP;
 
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 50000;	/* Default to 50MHz */
