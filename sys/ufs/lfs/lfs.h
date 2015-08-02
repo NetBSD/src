@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.171 2015/08/02 18:18:10 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.172 2015/08/02 18:18:46 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -193,8 +193,6 @@
 
 #define	LFS_V1_SUMMARY_SIZE	512     /* V1 fixed summary size */
 #define	LFS_DFL_SUMMARY_SIZE	512	/* Default summary size */
-
-#define LFS_MAX_DADDR	0x7fffffff	/* Highest addressable fsb */
 
 #define LFS_MAXNAMLEN	255		/* maximum name length in a dir */
 
