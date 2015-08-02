@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.67 2015/07/22 10:32:16 skrll Exp $ */
+/* $NetBSD: dksubr.c,v 1.68 2015/08/02 07:25:40 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.67 2015/07/22 10:32:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.68 2015/08/02 07:25:40 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,9 @@ dk_done(struct dk_softc *dksc, struct buf *bp)
 	struct disk *dk = &dksc->sc_dkdev;
 
 	if (bp->b_error != 0) {
-		diskerr(bp, dksc->sc_xname, "error", LOG_PRINTF, 0,
+		struct cfdriver *cd = device_cfdriver(dksc->sc_dev);
+
+		diskerr(bp, cd->cd_name, "error", LOG_PRINTF, 0,
 			dk->dk_label);
 		printf("\n");
 	}
