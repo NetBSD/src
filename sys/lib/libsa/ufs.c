@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.69 2015/07/28 05:13:14 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.70 2015/08/02 18:18:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -104,15 +104,19 @@
  * In-core LFS superblock - just the on-disk one.
  */
 struct salfs {
-	struct dlfs lfs_dlfs;
+	union {
+		struct dlfs u_32;
+		struct dlfs64 u_64;
+	} lfs_dlfs_u;
+	unsigned lfs_is64 : 1;
 };
 /* Get lfs accessors that use struct salfs. */
 #define STRUCT_LFS struct salfs
 #include <ufs/lfs/lfs_accessors.h>
 
 typedef struct salfs FS;
-#define fs_magic	lfs_dlfs.dlfs_magic
-#define fs_maxsymlinklen lfs_dlfs.dlfs_maxsymlinklen
+#define fs_magic	lfs_dlfs_u.u_32.dlfs_magic
+#define fs_maxsymlinklen lfs_dlfs_u.u_32.dlfs_maxsymlinklen
 
 #define FS_MAGIC	LFS_MAGIC
 #define SBLOCKSIZE	LFS_SBPAD
@@ -585,6 +589,9 @@ ufs_open(const char *path, struct open_file *f)
 	 *	in sys/ufs/lfs/lfs_vfsops.c.
 	 *      This may need a LIBSA_LFS_SMALL check as well.
 	 */
+#endif
+#if defined(LIBSA_LFS)
+	fs->lfs_is64 = 0;
 #endif
 #endif
 

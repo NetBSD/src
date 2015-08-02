@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.332 2015/08/02 18:14:16 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.333 2015/08/02 18:18:10 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.332 2015/08/02 18:14:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.333 2015/08/02 18:18:10 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -606,8 +606,7 @@ lfs_mountroot(void)
 	mountlist_append(mp);
 	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
-	memset(fs->lfs_dlfs.dlfs_fsmnt, 0, sizeof(fs->lfs_dlfs.dlfs_fsmnt));
-	(void)copystr(mp->mnt_stat.f_mntonname, fs->lfs_dlfs.dlfs_fsmnt, sizeof(fs->lfs_dlfs.dlfs_fsmnt), 0);
+	lfs_sb_setfsmnt(fs, mp->mnt_stat.f_mntonname);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
 	setrootfstime((time_t)lfs_sb_gettstamp(VFSTOULFS(mp)->um_lfs));
@@ -809,9 +808,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (error == 0)
-		(void)strncpy(fs->lfs_dlfs.dlfs_fsmnt,
-			      mp->mnt_stat.f_mntonname,
-			      sizeof(fs->lfs_dlfs.dlfs_fsmnt));
+		lfs_sb_setfsmnt(fs, mp->mnt_stat.f_mntonname);
 	return error;
 
 fail:
@@ -950,7 +947,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	/* Allocate the mount structure, copy the superblock into it. */
 	fs = kmem_zalloc(sizeof(struct lfs), KM_SLEEP);
-	memcpy(&fs->lfs_dlfs, tdfs, sizeof(struct dlfs));
+	memcpy(&fs->lfs_dlfs_u.u_32, tdfs, sizeof(struct dlfs));
+	fs->lfs_is64 = false;
 
 	/* Compatibility */
 	if (lfs_sb_getversion(fs) < 2) {
@@ -1362,8 +1360,6 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 
 	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
-	if (fs->lfs_magic != LFS_MAGIC)
-		panic("lfs_statvfs: magic");
 
 	sbp->f_bsize = lfs_sb_getbsize(fs);
 	sbp->f_frsize = lfs_sb_getfsize(fs);
