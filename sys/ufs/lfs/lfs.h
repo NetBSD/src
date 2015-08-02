@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.167 2015/07/28 05:13:14 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.168 2015/08/02 18:08:13 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -516,6 +516,7 @@ struct ifile_v1 {
 typedef struct _cleanerinfo {
 	u_int32_t clean;		/* number of clean segments */
 	u_int32_t dirty;		/* number of dirty segments */
+	/* XXX64 bfree and avail must -> 64 */
 	int32_t   bfree;		/* disk blocks free */
 	int32_t	  avail;		/* disk blocks available */
 	u_int32_t free_head;		/* head of the inode free list */
@@ -587,7 +588,7 @@ struct dlfs {
 
 /* Checkpoint region. */
 	u_int32_t dlfs_freehd;	  /* 32: start of the free list */
-	int32_t   dlfs_bfree;	  /* 36: number of free disk blocks */
+	int32_t   dlfs_bfree;	  /* 36: number of free frags */
 	u_int32_t dlfs_nfiles;	  /* 40: number of allocated inodes */
 	int32_t	  dlfs_avail;	  /* 44: blocks available for writing */
 	int32_t	  dlfs_uinodes;	  /* 48: inodes in cache not yet on disk */
@@ -605,7 +606,7 @@ struct dlfs {
 
 /* These fields can be computed from the others. */
 	u_int64_t dlfs_maxfilesize; /* 88: maximum representable file size */
-	u_int32_t dlfs_fsbpseg;	    /* 96: fsb per segment */
+	u_int32_t dlfs_fsbpseg;	    /* 96: frags (fsb) per segment */
 	u_int32_t dlfs_inopb;	  /* 100: inodes per block */
 	u_int32_t dlfs_ifpb;	  /* 104: IFILE entries per block */
 	u_int32_t dlfs_sepb;	  /* 108: SEGUSE entries per block */
