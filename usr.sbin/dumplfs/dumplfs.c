@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.45 2015/07/28 05:09:35 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.46 2015/08/02 18:08:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.45 2015/07/28 05:09:35 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.46 2015/08/02 18:08:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -726,13 +726,13 @@ dump_super(struct lfs *lfsp)
 	time_t stamp;
 	int i;
 
- 	(void)printf("    %s0x%-8x  %s0x%-8x  %s%-10d\n",
+ 	(void)printf("    %s0x%-8x  %s0x%-8x  %s%-10ju\n",
  		     "magic    ", lfsp->lfs_magic,
  		     "version  ", lfsp->lfs_version,
- 		     "size     ", lfs_sb_getsize(lfsp));
- 	(void)printf("    %s%-10d  %s%-10d  %s%-10d\n",
+ 		     "size     ", (uintmax_t)lfs_sb_getsize(lfsp));
+ 	(void)printf("    %s%-10d  %s%-10ju  %s%-10d\n",
  		     "ssize    ", lfs_sb_getssize(lfsp),
- 		     "dsize    ", lfs_sb_getdsize(lfsp),
+ 		     "dsize    ", (uintmax_t)lfs_sb_getdsize(lfsp),
  		     "bsize    ", lfs_sb_getbsize(lfsp));
  	(void)printf("    %s%-10d  %s%-10d  %s%-10d\n",
  		     "fsize    ", lfs_sb_getfsize(lfsp),
@@ -789,10 +789,10 @@ dump_super(struct lfs *lfsp)
  		     "freehd   ", lfs_sb_getfreehd(lfsp),
  		     "idaddr   ", lfs_sb_getidaddr(lfsp),
  		     "ifile    ", lfs_sb_getifile(lfsp));
- 	(void)printf("    %s%-10d  %s%-10d  %s%-10d\n",
+ 	(void)printf("    %s%-10d  %s%-10jd  %s%-10jd\n",
  		     "uinodes  ", lfs_sb_getuinodes(lfsp),
- 		     "bfree    ", lfs_sb_getbfree(lfsp),
- 		     "avail    ", lfs_sb_getavail(lfsp));
+ 		     "bfree    ", (intmax_t)lfs_sb_getbfree(lfsp),
+ 		     "avail    ", (intmax_t)lfs_sb_getavail(lfsp));
  	(void)printf("    %s%-10d  %s0x%-8x  %s0x%-8x\n",
  		     "nfiles   ", lfs_sb_getnfiles(lfsp),
  		     "lastseg  ", lfs_sb_getlastseg(lfsp),
