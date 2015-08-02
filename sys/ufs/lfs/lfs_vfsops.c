@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.329 2015/07/28 05:09:35 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.330 2015/08/02 18:08:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.329 2015/07/28 05:09:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.330 2015/08/02 18:08:13 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1371,6 +1371,14 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_blocks = LFS_EST_NONMETA(fs) - VTOI(fs->lfs_ivnode)->i_lfs_effnblks;
 
 	sbp->f_bfree = LFS_EST_BFREE(fs);
+	/*
+	 * XXX this should be lfs_sb_getsize (measured in frags)
+	 * rather than dsize (measured in diskblocks). However,
+	 * getsize needs a format version check (for version 1 it
+	 * needs to be blockstofrags'd) so for the moment I'm going to
+	 * leave this...  it won't fire wrongly as frags are at least
+	 * as big as diskblocks.
+	 */
 	KASSERT(sbp->f_bfree <= lfs_sb_getdsize(fs));
 #if 0
 	if (sbp->f_bfree < 0)
@@ -1383,6 +1391,7 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	else
 		sbp->f_bavail = 0;
 
+	/* XXX: huh? - dholland 20150728 */
 	sbp->f_files = lfs_sb_getbfree(fs) / lfs_btofsb(fs, lfs_sb_getibsize(fs))
 	    * LFS_INOPB(fs);
 	sbp->f_ffree = sbp->f_files - lfs_sb_getnfiles(fs);
