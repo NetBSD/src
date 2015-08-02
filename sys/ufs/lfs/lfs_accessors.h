@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.3 2015/08/02 17:57:27 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.4 2015/08/02 18:08:13 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -418,14 +418,14 @@
 #define lfs_version lfs_dlfs.dlfs_version
 LFS_DEF_SB_ACCESSOR_FULL(u_int64_t, u_int32_t, size);
 LFS_DEF_SB_ACCESSOR(u_int32_t, ssize);
-LFS_DEF_SB_ACCESSOR(u_int32_t, dsize);
+LFS_DEF_SB_ACCESSOR_FULL(u_int64_t, u_int32_t, dsize);
 LFS_DEF_SB_ACCESSOR(u_int32_t, bsize);
 LFS_DEF_SB_ACCESSOR(u_int32_t, fsize);
 LFS_DEF_SB_ACCESSOR(u_int32_t, frag);
 LFS_DEF_SB_ACCESSOR(u_int32_t, freehd);
-LFS_DEF_SB_ACCESSOR(int32_t, bfree);
+LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, bfree);
 LFS_DEF_SB_ACCESSOR(u_int32_t, nfiles);
-LFS_DEF_SB_ACCESSOR(int32_t, avail);
+LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, avail);
 LFS_DEF_SB_ACCESSOR(int32_t, uinodes);
 LFS_DEF_SB_ACCESSOR(int32_t, idaddr);
 LFS_DEF_SB_ACCESSOR(u_int32_t, ifile);
@@ -518,27 +518,47 @@ lfs_sb_getfsmnt(STRUCT_LFS *fs)
 /* LFS_INOPF is the number of inodes in a fragment. */
 #define LFS_INOPF(fs)	(lfs_sb_getinopf(fs))
 
-#define	lfs_blksize(fs, ip, lbn) \
-	(((lbn) >= ULFS_NDADDR || (ip)->i_ffs1_size >= ((lbn) + 1) << lfs_sb_getbshift(fs)) \
-	    ? lfs_sb_getbsize(fs) \
-	    : (lfs_fragroundup(fs, lfs_blkoff(fs, (ip)->i_ffs1_size))))
 #define	lfs_blkoff(fs, loc)	((int)((loc) & lfs_sb_getbmask(fs)))
 #define lfs_fragoff(fs, loc)    /* calculates (loc % fs->lfs_fsize) */ \
     ((int)((loc) & lfs_sb_getffmask(fs)))
 
+/* XXX: lowercase these as they're no longer macros */
+/* Frags to diskblocks */
+static __unused inline uint64_t
+LFS_FSBTODB(STRUCT_LFS *fs, uint64_t b)
+{
 #if defined(_KERNEL)
-#define	LFS_FSBTODB(fs, b)	((b) << (lfs_sb_getffshift(fs) - DEV_BSHIFT))
-#define	LFS_DBTOFSB(fs, b)	((b) >> (lfs_sb_getffshift(fs) - DEV_BSHIFT))
+	return b << (lfs_sb_getffshift(fs) - DEV_BSHIFT);
 #else
-#define	LFS_FSBTODB(fs, b)	((b) << lfs_sb_getfsbtodb(fs))
-#define	LFS_DBTOFSB(fs, b)	((b) >> lfs_sb_getfsbtodb(fs))
+	return b << lfs_sb_getfsbtodb(fs);
 #endif
+}
+/* Diskblocks to frags */
+static __unused inline uint64_t
+LFS_DBTOFSB(STRUCT_LFS *fs, uint64_t b)
+{
+#if defined(_KERNEL)
+	return b >> (lfs_sb_getffshift(fs) - DEV_BSHIFT);
+#else
+	return b >> lfs_sb_getfsbtodb(fs);
+#endif
+}
 
 #define	lfs_lblkno(fs, loc)	((loc) >> lfs_sb_getbshift(fs))
 #define	lfs_lblktosize(fs, blk)	((blk) << lfs_sb_getbshift(fs))
 
-#define lfs_fsbtob(fs, b)	((b) << lfs_sb_getffshift(fs))
-#define lfs_btofsb(fs, b)	((b) >> lfs_sb_getffshift(fs))
+/* Frags to bytes */
+static __unused inline uint64_t
+lfs_fsbtob(STRUCT_LFS *fs, uint64_t b)
+{
+	return b << lfs_sb_getffshift(fs);
+}
+/* Bytes to frags */
+static __unused inline uint64_t
+lfs_btofsb(STRUCT_LFS *fs, uint64_t b)
+{
+	return b >> lfs_sb_getffshift(fs);
+}
 
 #define lfs_numfrags(fs, loc)	/* calculates (loc / fs->lfs_fsize) */	\
 	((loc) >> lfs_sb_getffshift(fs))
@@ -562,13 +582,26 @@ lfs_sb_getfsmnt(STRUCT_LFS *fs)
 #define	lfs_segsize(fs)	((fs)->lfs_version == 1 ?	     		\
 			   lfs_lblktosize((fs), lfs_sb_getssize(fs)) :	\
 			   lfs_sb_getssize(fs))
-#define lfs_segtod(fs, seg) (((fs)->lfs_version == 1     ?	    	\
-			   lfs_sb_getssize(fs) << lfs_sb_getblktodb(fs) : \
-			   lfs_btofsb((fs), lfs_sb_getssize(fs))) * (seg))
+/* XXX segtod produces a result in frags despite the 'd' */
+#define lfs_segtod(fs, seg) (lfs_btofsb(fs, lfs_segsize(fs)) * (seg))
 #define	lfs_dtosn(fs, daddr)	/* block address to segment number */	\
 	((uint32_t)(((daddr) - lfs_sb_gets0addr(fs)) / lfs_segtod((fs), 1)))
 #define lfs_sntod(fs, sn)	/* segment number to disk address */	\
 	((daddr_t)(lfs_segtod((fs), (sn)) + lfs_sb_gets0addr(fs)))
+
+/* XXX, blah. make this appear only if struct inode is defined */
+#ifdef _UFS_LFS_LFS_INODE_H_
+static __unused inline uint32_t
+lfs_blksize(STRUCT_LFS *fs, struct inode *ip, uint64_t lbn)
+{
+	if (lbn >= ULFS_NDADDR || ip->i_ffs1_size >= (lbn + 1) << lfs_sb_getbshift(fs)) {
+		return lfs_sb_getbsize(fs);
+	} else {
+		return lfs_fragroundup(fs, lfs_blkoff(fs, ip->i_ffs1_size));
+	}
+}
+#endif
+
 
 /*
  * Macros for determining free space on the disk, with the variable metadata
@@ -607,7 +640,7 @@ lfs_sb_getfsmnt(STRUCT_LFS *fs)
 				   (u_int64_t)lfs_sb_getminfree(F)) /	     \
 				  100)
 
-/* Can credential C write BB blocks */
+/* Can credential C write BB blocks? XXX: kauth_cred_geteuid is abusive */
 #define ISSPACE(F, BB, C)						\
 	((((C) == NOCRED || kauth_cred_geteuid(C) == 0) &&		\
 	  LFS_EST_BFREE(F) >= (BB)) ||					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.46 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.47 2015/08/02 18:08:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.46 2015/07/28 05:09:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.47 2015/08/02 18:08:13 dholland Exp $");
 
 #ifdef DEBUG
 
@@ -127,13 +127,13 @@ lfs_dump_super(struct lfs *lfsp)
 {
 	int i;
 
-	printf("%s%x\t%s%x\t%s%d\t%s%d\n",
+	printf("%s%x\t%s%x\t%s%ju\t%s%d\n",
 	       "magic	 ", lfsp->lfs_magic,
 	       "version	 ", lfsp->lfs_version,
-	       "size	 ", lfs_sb_getsize(lfsp),
+	       "size	 ", (uintmax_t)lfs_sb_getsize(lfsp),
 	       "ssize	 ", lfs_sb_getssize(lfsp));
-	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
-	       "dsize	 ", lfs_sb_getdsize(lfsp),
+	printf("%s%ju\t%s%d\t%s%d\t%s%d\n",
+	       "dsize	 ", (uintmax_t)lfs_sb_getdsize(lfsp),
 	       "bsize	 ", lfs_sb_getbsize(lfsp),
 	       "fsize	 ", lfs_sb_getfsize(lfsp),
 	       "frag	 ", lfs_sb_getfrag(lfsp));
@@ -178,8 +178,8 @@ lfs_dump_super(struct lfs *lfsp)
 	       "freehd	 ", lfs_sb_getfreehd(lfsp),
 	       "idaddr	 ", lfs_sb_getidaddr(lfsp),
 	       "ifile	 ", lfs_sb_getifile(lfsp));
-	printf("%s%x\t%s%d\t%s%x\t%s%x\t%s%x\t%s%x\n",
-	       "bfree	 ", lfs_sb_getbfree(lfsp),
+	printf("%s%jx\t%s%d\t%s%x\t%s%x\t%s%x\t%s%x\n",
+	       "bfree	 ", (intmax_t)lfs_sb_getbfree(lfsp),
 	       "nfiles	 ", lfs_sb_getnfiles(lfsp),
 	       "lastseg	 ", lfs_sb_getlastseg(lfsp),
 	       "nextseg	 ", lfs_sb_getnextseg(lfsp),

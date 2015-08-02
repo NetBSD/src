@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.84 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.85 2015/08/02 18:08:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.84 2015/07/28 05:09:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.85 2015/08/02 18:08:13 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -193,7 +193,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 			}
 			ip->i_lfs_effnblks += frags;
 			mutex_enter(&lfs_lock);
-			lfs_sb_setbfree(fs, lfs_sb_getbfree(fs) - frags);
+			lfs_sb_subbfree(fs, frags);
 			mutex_exit(&lfs_lock);
 			ip->i_ffs1_db[lbn] = UNWRITTEN;
 		} else {
@@ -238,7 +238,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	}
 	if (ISSPACE(fs, bcount, cred)) {
 		mutex_enter(&lfs_lock);
-		lfs_sb_setbfree(fs, lfs_sb_getbfree(fs) - bcount);
+		lfs_sb_subbfree(fs, bcount);
 		mutex_exit(&lfs_lock);
 		ip->i_lfs_effnblks += bcount;
 	} else {
@@ -442,7 +442,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	}
 
 	mutex_enter(&lfs_lock);
-	lfs_sb_setbfree(fs, lfs_sb_getbfree(fs) - frags);
+	lfs_sb_subbfree(fs, frags);
 	mutex_exit(&lfs_lock);
 	ip->i_lfs_effnblks += frags;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;

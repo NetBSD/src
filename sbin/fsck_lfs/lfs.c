@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.48 2015/07/28 05:09:34 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.49 2015/08/02 18:08:12 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -72,8 +72,8 @@
 
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
-#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_inode.h>
+#include <ufs/lfs/lfs_accessors.h>
 #undef vnode
 
 #include <assert.h>

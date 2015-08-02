@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.32 2015/07/28 05:09:34 dholland Exp $	 */
+/* $NetBSD: pass5.c,v 1.33 2015/08/02 18:08:12 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -60,9 +60,9 @@ pass5(void)
 	SEGUSE *su;
 	struct ubuf *bp;
 	int i;
-	unsigned long bb;	/* total number of used blocks (lower bound) */
-	unsigned long ubb;	/* upper bound number of used blocks */
-	unsigned long avail;	/* blocks available for writing */
+	daddr_t bb;		/* total number of used blocks (lower bound) */
+	daddr_t ubb;		/* upper bound number of used blocks */
+	daddr_t avail;		/* blocks available for writing */
 	unsigned long dmeta;	/* blocks in segsums and inodes */
 	int nclean;		/* clean segments */
 	size_t labelskew;
@@ -152,8 +152,8 @@ pass5(void)
 		}
 	}
 	if (avail != lfs_sb_getavail(fs)) {
-		pwarn("AVAIL GIVEN AS %d, SHOULD BE %ld\n",
-		      lfs_sb_getavail(fs), avail);
+		pwarn("AVAIL GIVEN AS %jd, SHOULD BE %ld\n",
+		      (intmax_t)lfs_sb_getavail(fs), avail);
 		if (preen || reply("FIX")) {
 			lfs_sb_setavail(fs, avail);
 			sbdirty();
@@ -174,10 +174,10 @@ pass5(void)
 		labelskew = lfs_btofsb(fs, LFS_LABELPAD);
 	if (lfs_sb_getbfree(fs) > lfs_sb_getdsize(fs) - bb - labelskew ||
 	    lfs_sb_getbfree(fs) < lfs_sb_getdsize(fs) - ubb - labelskew) {
-		pwarn("BFREE GIVEN AS %jd, SHOULD BE BETWEEN %ld AND %ld\n",
+		pwarn("BFREE GIVEN AS %jd, SHOULD BE BETWEEN %jd AND %jd\n",
 		    (intmax_t)lfs_sb_getbfree(fs),
-		    lfs_sb_getdsize(fs) - ubb - labelskew,
-		    lfs_sb_getdsize(fs) - bb - labelskew);
+		    (intmax_t)(lfs_sb_getdsize(fs) - ubb - labelskew),
+		    (intmax_t)(lfs_sb_getdsize(fs) - bb - labelskew));
 		if (preen || reply("FIX")) {
 			lfs_sb_setbfree(fs,
 				((lfs_sb_getdsize(fs) - labelskew - ubb) +

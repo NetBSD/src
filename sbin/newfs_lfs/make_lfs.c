@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.34 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.35 2015/08/02 18:08:12 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.34 2015/07/28 05:09:34 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.35 2015/08/02 18:08:12 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -320,7 +320,8 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	char tbuf[BUFSIZ];
 	struct ubuf *bp;
 	struct uvnode *vp, *save_devvp;
-	int bb, ubb, dmeta, labelskew;
+	daddr_t bb, ubb;
+	int dmeta, labelskew;
 	u_int64_t tsepb, tnseg;
 	time_t stamp;
 
@@ -543,8 +544,8 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 * and segment usage table, and half a block per segment that can't
 	 * be written due to fragmentation.
 	 */
-	lfs_sb_setdsize(fs, (lfs_sb_getnseg(fs) - lfs_sb_getminfreeseg(fs)) *
-		lfs_segtod(fs, 1));
+	lfs_sb_setdsize(fs,
+		lfs_segtod(fs, lfs_sb_getnseg(fs) - lfs_sb_getminfreeseg(fs)));
 	lfs_sb_setbfree(fs, lfs_sb_getdsize(fs));
 	lfs_sb_subbfree(fs, LFS_DBTOFSB(fs, ((lfs_sb_getnseg(fs) / 2) << 
 		lfs_sb_getblktodb(fs))));
@@ -582,7 +583,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		lfs_sb_sets0addr(fs, lfs_sb_getsboff(fs, 0));
 	else
 		lfs_sb_sets0addr(fs, LFS_DBTOFSB(fs, start));
-        lfs_sb_setdsize(fs, lfs_sb_getdsize(fs) - sb_fsb);
+        lfs_sb_subdsize(fs, sb_fsb);
 	for (i = 1; i < LFS_MAXNUMSB; i++) {
 		sb_addr = ((i * sb_interval) * lfs_segtod(fs, 1))
 		    + lfs_sb_getsboff(fs, 0);
@@ -593,7 +594,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		    >= LFS_DBTOFSB(fs, dkw->dkw_size))
 			break;
 		lfs_sb_setsboff(fs, i, sb_addr);
-		lfs_sb_setdsize(fs, lfs_sb_getdsize(fs) - sb_fsb);
+		lfs_sb_subdsize(fs, sb_fsb);
 	}
 
 	/* We need >= 2 superblocks */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.132 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.133 2015/08/02 18:08:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.132 2015/07/28 05:09:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.133 2015/08/02 18:08:13 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,10 +229,11 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 		mutex_exit(&lfs_lock);
 
 		if (!slept) {
-			DLOG((DLOG_AVAIL, "lfs_reserve: waiting for %ld (bfree = %d,"
-			      " est_bfree = %d)\n",
+			DLOG((DLOG_AVAIL, "lfs_reserve: waiting for %ld (bfree = %jd,"
+			      " est_bfree = %jd)\n",
 			      fsb + fs->lfs_ravail + fs->lfs_favail,
-			      lfs_sb_getbfree(fs), LFS_EST_BFREE(fs)));
+			      (intmax_t)lfs_sb_getbfree(fs),
+			      (intmax_t)LFS_EST_BFREE(fs)));
 		}
 		++slept;
 
