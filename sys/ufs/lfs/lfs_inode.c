@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.142 2015/08/02 18:12:41 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.143 2015/08/02 20:23:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.142 2015/08/02 18:12:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.143 2015/08/02 20:23:21 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -207,7 +207,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	struct lfs *fs;
 	struct buf *bp;
 	int offset, size, level;
-	long count, rcount;
+	daddr_t count, rcount;
 	daddr_t blocksreleased = 0, real_released = 0;
 	int i, nblocks;
 	int aflags, error, allerror = 0;
