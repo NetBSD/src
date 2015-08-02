@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.9 2015/07/29 12:11:32 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.10 2015/08/02 21:45:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.9 2015/07/29 12:11:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.10 2015/08/02 21:45:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,7 +124,7 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_pin_wp)
 		sc->sc.sc_vendor_write_protect = tegra_sdhc_write_protect;
 
-	tegra_car_periph_sdmmc_set_rate(sc->sc_port, 50000000);
+	tegra_car_periph_sdmmc_set_rate(sc->sc_port, 204000000);
 	sc->sc.sc_clkbase = tegra_car_periph_sdmmc_rate(sc->sc_port) / 1000;
 
 	aprint_naive("\n");
