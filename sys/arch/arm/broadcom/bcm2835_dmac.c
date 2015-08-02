@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.11 2015/07/29 14:22:49 skrll Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.12 2015/08/02 16:46:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.11 2015/07/29 14:22:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.12 2015/08/02 16:46:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -275,6 +275,9 @@ bcm_dmac_transfer(struct bcm_dmac_channel *ch)
 void
 bcm_dmac_halt(struct bcm_dmac_channel *ch)
 {
+	struct bcm_dmac_softc *sc = ch->ch_sc;
+
+	DMAC_WRITE(sc, DMAC_CS(ch->ch_index), DMAC_CS_RESET|DMAC_CS_ABORT);
 	bcm_dmac_set_conblk_addr(ch, 0);
 }
 
