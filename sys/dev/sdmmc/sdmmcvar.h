@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.16 2015/02/27 16:08:17 nonaka Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.17 2015/08/02 21:44:36 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -216,6 +216,7 @@ struct sdmmc_softc {
 #define SMF_MEM_MODE		0x0008	/* host in memory mode (SD or MMC) */
 #define SMF_CARD_PRESENT	0x4000	/* card presence noticed */
 #define SMF_CARD_ATTACHED	0x8000	/* card driver(s) attached */
+#define SMF_UHS_MODE		0x10000	/* host in UHS mode */
 
 	uint32_t sc_caps;		/* host capability */
 #define SMC_CAPS_AUTO_STOP	0x0001	/* send CMD12 automagically by host */

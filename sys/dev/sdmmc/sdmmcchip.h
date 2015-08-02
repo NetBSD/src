@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcchip.h,v 1.4 2011/05/18 01:07:17 dyoung Exp $	*/
+/*	$NetBSD: sdmmcchip.h,v 1.5 2015/08/02 21:44:36 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcchip.h,v 1.3 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
@@ -57,6 +57,9 @@ struct sdmmc_chip_functions {
 	/* card interrupt */
 	void		(*card_enable_intr)(sdmmc_chipset_handle_t, int);
 	void		(*card_intr_ack)(sdmmc_chipset_handle_t);
+
+	/* UHS functions */
+	int		(*signal_voltage)(sdmmc_chipset_handle_t, int);
 };
 
 /* host controller reset */
@@ -90,10 +93,17 @@ struct sdmmc_chip_functions {
 	((tag)->card_enable_intr((handle), (enable)))
 #define sdmmc_chip_card_intr_ack(tag, handle)				\
 	((tag)->card_intr_ack((handle)))
+/* UHS functions */
+#define sdmmc_chip_signal_voltage(tag, handle, voltage)		\
+	((tag)->signal_voltage((handle), (voltage)))
 
 /* clock frequencies for sdmmc_chip_bus_clock() */
 #define SDMMC_SDCLK_OFF		0
 #define SDMMC_SDCLK_400K	400
+
+/* voltage levels for sdmmc_chip_signal_voltage() */
+#define SDMMC_SIGNAL_VOLTAGE_330	0
+#define SDMMC_SIGNAL_VOLTAGE_180	1
 
 /* SPI mode */
 struct sdmmc_spi_chip_functions {
