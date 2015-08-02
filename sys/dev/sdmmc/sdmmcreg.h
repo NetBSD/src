@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.15 2014/12/07 20:07:25 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.16 2015/08/02 21:44:36 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #define SD_SEND_RELATIVE_ADDR 	  	3	/* R6 */
 #define SD_SEND_SWITCH_FUNC		6	/* R1 */
 #define SD_SEND_IF_COND			8	/* R7 */
+#define SD_VOLTAGE_SWITCH		11	/* R1 */
 
 /* SD application commands */			/* response type */
 #define SD_APP_SET_BUS_WIDTH		6	/* R1 */
@@ -68,6 +69,7 @@
 /* OCR bits */
 #define MMC_OCR_MEM_READY		(1U<<31)/* memory power-up status bit */
 #define MMC_OCR_HCS			(1<<30)
+#define MMC_OCR_S18A			(1<<24)
 #define MMC_OCR_3_5V_3_6V		(1<<23)
 #define MMC_OCR_3_4V_3_5V		(1<<22)
 #define MMC_OCR_3_3V_3_4V		(1<<21)
