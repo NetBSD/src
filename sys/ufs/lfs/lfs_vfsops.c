@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.331 2015/08/02 18:10:08 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.332 2015/08/02 18:14:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.331 2015/08/02 18:10:08 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.332 2015/08/02 18:14:16 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -953,7 +953,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	memcpy(&fs->lfs_dlfs, tdfs, sizeof(struct dlfs));
 
 	/* Compatibility */
-	if (fs->lfs_version < 2) {
+	if (lfs_sb_getversion(fs) < 2) {
 		lfs_sb_setsumsize(fs, LFS_V1_SUMMARY_SIZE);
 		lfs_sb_setibsize(fs, lfs_sb_getbsize(fs));
 		lfs_sb_sets0addr(fs, lfs_sb_getsboff(fs, 0));
@@ -1560,7 +1560,7 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 		/* XXX bounds-check this too */
 		LFS_IENTRY(ifp, fs, ino, bp);
 		daddr = ifp->if_daddr;
-		if (fs->lfs_version > 1) {
+		if (lfs_sb_getversion(fs) > 1) {
 			ts.tv_sec = ifp->if_atime_sec;
 			ts.tv_nsec = ifp->if_atime_nsec;
 		}
@@ -1592,7 +1592,7 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 	retries = 0;
 again:
 	error = bread(ump->um_devvp, LFS_FSBTODB(fs, daddr),
-		(fs->lfs_version == 1 ? lfs_sb_getbsize(fs) : lfs_sb_getibsize(fs)),
+		(lfs_sb_getversion(fs) == 1 ? lfs_sb_getbsize(fs) : lfs_sb_getibsize(fs)),
 		0, &bp);
 	if (error) {
 		lfs_deinit_vnode(ump, vp);
@@ -1651,7 +1651,7 @@ again:
 	brelse(bp, 0);
 
 out:	
-	if (fs->lfs_version > 1) {
+	if (lfs_sb_getversion(fs) > 1) {
 		ip->i_ffs1_atime = ts.tv_sec;
 		ip->i_ffs1_atimensec = ts.tv_nsec;
 	}
@@ -2280,7 +2280,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	int i;
 
 	/* Only support v2 and up */
-	if (fs->lfs_version < 2)
+	if (lfs_sb_getversion(fs) < 2)
 		return EOPNOTSUPP;
 
 	/* If we're doing nothing, do it fast */
