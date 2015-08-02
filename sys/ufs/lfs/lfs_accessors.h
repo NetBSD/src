@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.2 2015/07/28 05:14:23 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.3 2015/08/02 17:57:27 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -388,7 +388,7 @@
 #define STRUCT_LFS struct lfs
 #endif
 
-#define LFS_DEF_SB_ACCESSOR(type, field) \
+#define LFS_DEF_SB_ACCESSOR_FULL(type, type32, field) \
 	static __unused inline type				\
 	lfs_sb_get##field(STRUCT_LFS *fs)			\
 	{							\
@@ -402,19 +402,21 @@
 	static __unused inline void				\
 	lfs_sb_add##field(STRUCT_LFS *fs, type val)		\
 	{							\
-		type *p = &fs->lfs_dlfs.dlfs_##field;		\
+		type32 *p = &fs->lfs_dlfs.dlfs_##field;		\
 		*p += val;					\
 	}							\
 	static __unused inline void				\
 	lfs_sb_sub##field(STRUCT_LFS *fs, type val)		\
 	{							\
-		type *p = &fs->lfs_dlfs.dlfs_##field;		\
+		type32 *p = &fs->lfs_dlfs.dlfs_##field;		\
 		*p -= val;					\
 	}
 
+#define LFS_DEF_SB_ACCESSOR(t, f) LFS_DEF_SB_ACCESSOR_FULL(t, t, f)
+
 #define lfs_magic lfs_dlfs.dlfs_magic
 #define lfs_version lfs_dlfs.dlfs_version
-LFS_DEF_SB_ACCESSOR(u_int32_t, size);
+LFS_DEF_SB_ACCESSOR_FULL(u_int64_t, u_int32_t, size);
 LFS_DEF_SB_ACCESSOR(u_int32_t, ssize);
 LFS_DEF_SB_ACCESSOR(u_int32_t, dsize);
 LFS_DEF_SB_ACCESSOR(u_int32_t, bsize);
