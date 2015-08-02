@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.46 2015/08/02 18:08:13 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.47 2015/08/02 18:10:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.46 2015/08/02 18:08:13 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.47 2015/08/02 18:10:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,8 +284,8 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 			break;
 
 	if (dip < dpage) {
-		warnx("unable to locate ifile inode at disk address 0x%llx",
-		     (long long)addr);
+		warnx("unable to locate ifile inode at disk address 0x%jx",
+		     (uintmax_t)addr);
 		return;
 	}
 
@@ -771,35 +771,35 @@ dump_super(struct lfs *lfsp)
  		     "roll_id  ", lfs_sb_getident(lfsp),
  		     "interleave ", lfs_sb_getinterleave(lfsp),
  		     "sumsize  ", lfs_sb_getsumsize(lfsp));
- 	(void)printf("    %s%-10d  %s0x%-8jx\n",
-		     "seg0addr ", lfs_sb_gets0addr(lfsp),
+ 	(void)printf("    %s%-10jd  %s0x%-8jx\n",
+		     "seg0addr ", (intmax_t)lfs_sb_gets0addr(lfsp),
  		     "maxfilesize  ", (uintmax_t)lfs_sb_getmaxfilesize(lfsp));
  	
  	
  	(void)printf("  Superblock disk addresses:\n    ");
   	for (i = 0; i < LFS_MAXNUMSB; i++) {
- 		(void)printf(" 0x%-8x", lfs_sb_getsboff(lfsp, i));
+ 		(void)printf(" 0x%-8jx", (intmax_t)lfs_sb_getsboff(lfsp, i));
  		if (i == (LFS_MAXNUMSB >> 1))
  			(void)printf("\n    ");
   	}
   	(void)printf("\n");
  	
  	(void)printf("  Checkpoint Info\n");
- 	(void)printf("    %s%-10d  %s0x%-8x  %s%-10d\n",
+ 	(void)printf("    %s%-10d  %s0x%-8jx  %s%-10d\n",
  		     "freehd   ", lfs_sb_getfreehd(lfsp),
- 		     "idaddr   ", lfs_sb_getidaddr(lfsp),
+ 		     "idaddr   ", (intmax_t)lfs_sb_getidaddr(lfsp),
  		     "ifile    ", lfs_sb_getifile(lfsp));
  	(void)printf("    %s%-10d  %s%-10jd  %s%-10jd\n",
  		     "uinodes  ", lfs_sb_getuinodes(lfsp),
  		     "bfree    ", (intmax_t)lfs_sb_getbfree(lfsp),
  		     "avail    ", (intmax_t)lfs_sb_getavail(lfsp));
- 	(void)printf("    %s%-10d  %s0x%-8x  %s0x%-8x\n",
+ 	(void)printf("    %s%-10d  %s0x%-8jx  %s0x%-8jx\n",
  		     "nfiles   ", lfs_sb_getnfiles(lfsp),
- 		     "lastseg  ", lfs_sb_getlastseg(lfsp),
- 		     "nextseg  ", lfs_sb_getnextseg(lfsp));
- 	(void)printf("    %s0x%-8x  %s0x%-8x  %s%-10ju\n",
- 		     "curseg   ", lfs_sb_getcurseg(lfsp),
- 		     "offset   ", lfs_sb_getoffset(lfsp),
+ 		     "lastseg  ", (uintmax_t)lfs_sb_getlastseg(lfsp),
+ 		     "nextseg  ", (uintmax_t)lfs_sb_getnextseg(lfsp));
+ 	(void)printf("    %s0x%-8jx  %s0x%-8jx  %s%-10ju\n",
+ 		     "curseg   ", (uintmax_t)lfs_sb_getcurseg(lfsp),
+ 		     "offset   ", (uintmax_t)lfs_sb_getoffset(lfsp),
 		     "serial   ", (uintmax_t)lfs_sb_getserial(lfsp));
 	stamp = lfs_sb_gettstamp(lfsp);
  	(void)printf("    tstamp   %s", ctime(&stamp));
