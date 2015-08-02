@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.4 2015/08/02 18:08:13 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.5 2015/08/02 18:10:08 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -427,13 +427,13 @@ LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, bfree);
 LFS_DEF_SB_ACCESSOR(u_int32_t, nfiles);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, avail);
 LFS_DEF_SB_ACCESSOR(int32_t, uinodes);
-LFS_DEF_SB_ACCESSOR(int32_t, idaddr);
+LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, idaddr);
 LFS_DEF_SB_ACCESSOR(u_int32_t, ifile);
-LFS_DEF_SB_ACCESSOR(int32_t, lastseg);
-LFS_DEF_SB_ACCESSOR(int32_t, nextseg);
-LFS_DEF_SB_ACCESSOR(int32_t, curseg);
-LFS_DEF_SB_ACCESSOR(int32_t, offset);
-LFS_DEF_SB_ACCESSOR(int32_t, lastpseg);
+LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, lastseg);
+LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, nextseg);
+LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, curseg);
+LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, offset);
+LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, lastpseg);
 LFS_DEF_SB_ACCESSOR(u_int32_t, inopf);
 LFS_DEF_SB_ACCESSOR(u_int32_t, minfree);
 LFS_DEF_SB_ACCESSOR(uint64_t, maxfilesize);
@@ -466,7 +466,7 @@ LFS_DEF_SB_ACCESSOR(u_int32_t, minfreeseg);
 LFS_DEF_SB_ACCESSOR(u_int32_t, sumsize);
 LFS_DEF_SB_ACCESSOR(u_int64_t, serial);
 LFS_DEF_SB_ACCESSOR(u_int32_t, ibsize);
-LFS_DEF_SB_ACCESSOR(int32_t, s0addr);
+LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, s0addr);
 LFS_DEF_SB_ACCESSOR(u_int64_t, tstamp);
 LFS_DEF_SB_ACCESSOR(u_int32_t, inodefmt);
 LFS_DEF_SB_ACCESSOR(u_int32_t, interleave);

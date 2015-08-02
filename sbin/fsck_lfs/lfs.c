@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.49 2015/08/02 18:08:12 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.50 2015/08/02 18:10:08 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -644,7 +644,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 			break;
 		}
 		if (debug)
-			pwarn("summary good: 0x%x/%d\n", (int)daddr,
+			pwarn("summary good: 0x%x/%d\n", (uintmax_t)daddr,
 			      (int)sp->ss_serial);
 		assert (bc > 0);
 		odaddr = daddr;
@@ -818,15 +818,15 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 	}
 
 	if (datac != nblocks) {
-		pwarn("Partial segment at 0x%llx expected %d blocks counted %d\n",
-		    (long long) pseg_addr, nblocks, datac);
+		pwarn("Partial segment at 0x%jx expected %d blocks counted %d\n",
+		    (intmax_t)pseg_addr, nblocks, datac);
 	}
 	ccksum = cksum(datap, nblocks * sizeof(u_int32_t));
 	/* Check the data checksum */
 	if (ccksum != sp->ss_datasum) {
-		pwarn("Partial segment at 0x%" PRIx32 " data checksum"
+		pwarn("Partial segment at 0x%jx data checksum"
 		      " mismatch: given 0x%x, computed 0x%x\n",
-		      pseg_addr, sp->ss_datasum, ccksum);
+		      (uintmax_t)pseg_addr, sp->ss_datasum, ccksum);
 		free(datap);
 		return 0;
 	}

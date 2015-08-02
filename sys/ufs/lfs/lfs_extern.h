@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.105 2015/05/31 15:48:03 hannken Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.106 2015/08/02 18:10:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ int lfs_writeinode(struct lfs *, struct segment *, struct inode *);
 int lfs_gatherblock(struct segment *, struct buf *, kmutex_t *);
 int lfs_gather(struct lfs *, struct segment *, struct vnode *, int (*match )(struct lfs *, struct buf *));
 void lfs_update_single(struct lfs *, struct segment *, struct vnode *,
-    daddr_t, int32_t, int);
+    daddr_t, daddr_t, int);
 void lfs_updatemeta(struct segment *);
 int lfs_rewind(struct lfs *, int);
 void lfs_unset_inval_all(struct lfs *);

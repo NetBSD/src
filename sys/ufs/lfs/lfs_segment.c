@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.245 2015/07/28 05:09:35 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.246 2015/08/02 18:10:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.245 2015/07/28 05:09:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.246 2015/08/02 18:10:08 dholland Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -1128,6 +1128,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		sp->sum_bytes_left -= sizeof(int32_t);
 		ndx = lfs_sb_getsumsize(fs) / sizeof(int32_t) -
 			sp->ninodes / LFS_INOPB(fs) - 1;
+		/* XXX ondisk32 */
 		((int32_t *)(sp->segsum))[ndx] = daddr;
 	}
 
@@ -1454,7 +1455,7 @@ loop:
  */
 void
 lfs_update_single(struct lfs *fs, struct segment *sp,
-    struct vnode *vp, daddr_t lbn, int32_t ndaddr, int size)
+    struct vnode *vp, daddr_t lbn, daddr_t ndaddr, int size)
 {
 	SEGUSE *sup;
 	struct buf *bp;
