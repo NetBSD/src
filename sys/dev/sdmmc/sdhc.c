@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.67 2015/08/02 07:07:02 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.68 2015/08/02 07:14:10 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.67 2015/08/02 07:07:02 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.68 2015/08/02 07:14:10 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -991,6 +991,8 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	 */
 	if (!sdhc_clock_divisor(hp, freq, &div)) {
 		/* Invalid base clock frequency or `freq' value. */
+		aprint_error_dev(hp->sc->sc_dev,
+			"Invalid bus clock %d kHz\n", freq);
 		error = EINVAL;
 		goto out;
 	}
@@ -1163,8 +1165,8 @@ sdhc_wait_state(struct sdhc_host *hp, uint32_t mask, uint32_t value)
 			return 0;
 		sdmmc_delay(10);
 	}
-	DPRINTF(0,("%s: timeout waiting for %x (state=%x)\n", HDEVNAME(hp),
-	    value, state));
+	aprint_error_dev(hp->sc->sc_dev, "timeout waiting for %x (state=%x)\n",
+	    value, state);
 	return ETIMEDOUT;
 }
 
@@ -1344,8 +1346,10 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 
 	/* Wait until command and data inhibit bits are clear. (1.5) */
 	error = sdhc_wait_state(hp, SDHC_CMD_INHIBIT_MASK, 0);
-	if (error)
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "command or data phase inhibited\n");
 		return error;
+	}
 
 	DPRINTF(1,("%s: writing cmd: blksize=%d blkcnt=%d mode=%04x cmd=%04x\n",
 	    HDEVNAME(hp), blksize, blkcount, mode, command));
