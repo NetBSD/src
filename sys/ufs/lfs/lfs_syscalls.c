@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.163 2015/07/28 05:09:35 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.164 2015/08/02 18:14:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.163 2015/07/28 05:09:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.164 2015/08/02 18:14:16 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -872,7 +872,7 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	lfs_sb_addavail(fs, lfs_segtod(fs, 1));
 	if (sup->su_flags & SEGUSE_SUPERBLOCK)
 		lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_SBPAD));
-	if (fs->lfs_version > 1 && segnum == 0 &&
+	if (lfs_sb_getversion(fs) > 1 && segnum == 0 &&
 	    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
 		lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_LABELPAD) - lfs_sb_gets0addr(fs));
 	mutex_enter(&lfs_lock);

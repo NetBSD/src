@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.16 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.17 2015/08/02 18:14:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.16 2015/07/28 05:09:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.17 2015/08/02 18:14:16 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -72,7 +72,7 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 #endif
 		ip->i_ffs1_atime = acc->tv_sec;
 		ip->i_ffs1_atimensec = acc->tv_nsec;
-		if (ip->i_lfs->lfs_version > 1) {
+		if (lfs_sb_getversion(ip->i_lfs) > 1) {
 			struct lfs *fs = ip->i_lfs;
 			struct buf *ibp;
 			IFILE *ifp;

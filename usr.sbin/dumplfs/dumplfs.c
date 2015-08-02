@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.47 2015/08/02 18:10:08 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.48 2015/08/02 18:14:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.47 2015/08/02 18:10:08 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.48 2015/08/02 18:14:16 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ print_suentry(int i, SEGUSE *sp, struct lfs *fs)
 	if (sp->su_flags & SEGUSE_SUPERBLOCK)
 		flags[2] = 'S';
 
-	t = (fs->lfs_version == 1 ? sp->su_olastmod : sp->su_lastmod);
+	t = (lfs_sb_getversion(fs) == 1 ? sp->su_olastmod : sp->su_lastmod);
 
 	printf("%d\t%s\t%d\t%d\t%d\t%s", i, flags,
 		sp->su_nbytes, sp->su_ninos, sp->su_nsums,
@@ -189,7 +189,7 @@ main(int argc, char **argv)
 		memcpy(&(lfs_sb1.lfs_dlfs), sbuf, sizeof(struct dlfs));
 
 		/* If that wasn't the real first sb, get the real first sb */
-		if (lfs_sb1.lfs_version > 1 &&
+		if (lfs_sb_getversion(&lfs_sb1) > 1 &&
 		    lfs_sb_getsboff(&lfs_sb1, 0) > lfs_btofsb(&lfs_sb1, LFS_LABELPAD))
 			get(fd, lfs_fsbtob(&lfs_sb1, lfs_sb_getsboff(&lfs_sb1, 0)),
 			    &(lfs_sb1.lfs_dlfs), sizeof(struct dlfs));
@@ -204,7 +204,7 @@ main(int argc, char **argv)
 		memcpy(&(lfs_sb2.lfs_dlfs), sbuf, sizeof(struct dlfs));
 	
 		lfs_master = &lfs_sb1;
-		if (lfs_sb1.lfs_version > 1) {
+		if (lfs_sb_getversion(&lfs_sb1) > 1) {
 			if (lfs_sb_getserial(&lfs_sb1) > lfs_sb_getserial(&lfs_sb2)) {
 				lfs_master = &lfs_sb2;
 				sbdaddr = lfs_sb_getsboff(&lfs_sb1, 1);
@@ -227,7 +227,7 @@ main(int argc, char **argv)
 	free(sbuf);
 
 	/* Compatibility */
-	if (lfs_master->lfs_version == 1) {
+	if (lfs_sb_getversion(lfs_master) == 1) {
 		lfs_sb_setsumsize(lfs_master, LFS_V1_SUMMARY_SIZE);
 		lfs_sb_setibsize(lfs_master, lfs_sb_getbsize(lfs_master));
 		lfs_sb_sets0addr(lfs_master, lfs_sb_getsboff(lfs_master, 0));
@@ -409,7 +409,7 @@ dump_ipage_ifile(struct lfs *lfsp, int i, char *pp, int tot)
 	char *ip;
 	int cnt, max, entsize;
 
-	if (lfsp->lfs_version == 1) 
+	if (lfs_sb_getversion(lfsp) == 1) 
 		entsize = sizeof(IFILE_V1);
 	else 
 		entsize = sizeof(IFILE);
@@ -439,7 +439,7 @@ dump_ipage_segusage(struct lfs *lfsp, int i, char *pp, int tot)
 					break;
 				}
 		}
-		if (lfsp->lfs_version > 1)
+		if (lfs_sb_getversion(lfsp) > 1)
 			++sp;
 		else
 			sp = (SEGUSE *)((SEGUSE_V1 *)sp + 1);
@@ -508,7 +508,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 				     (long long)addr);
 		return -1;
 	}
-	if (lfsp->lfs_version > 1 && sp->ss_ident != lfs_sb_getident(lfsp)) {
+	if (lfs_sb_getversion(lfsp) > 1 && sp->ss_ident != lfs_sb_getident(lfsp)) {
 		(void)printf("dumplfs: %s %d address 0x%llx\n",
 	                     "summary from a former life; segment", segnum,
 			     (long long)addr);
@@ -526,7 +526,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 			     (sp->ss_flags & SS_RFW)  ? 'R' : '-',
 		"sumsum   ", sp->ss_sumsum,
 		"datasum  ", sp->ss_datasum );
-	if (lfsp->lfs_version == 1) {
+	if (lfs_sb_getversion(lfsp) == 1) {
 		t = sp->ss_ocreate;
 		(void)printf("\tcreate   %s\n", ctime(&t));
 	} else {
@@ -561,7 +561,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 
 	printf("\n");
 
-	if (lfsp->lfs_version == 1)
+	if (lfs_sb_getversion(lfsp) == 1)
 		fp = (FINFO *)((SEGSUM_V1 *)sp + 1);
 	else
 		fp = (FINFO *)(sp + 1);
@@ -596,7 +596,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	idp = (int32_t *)sp;
 	idp += lfs_sb_getsumsize(lfsp) / sizeof(int32_t);
 	--idp;
-	if (lfsp->lfs_version == 1) {
+	if (lfs_sb_getversion(lfsp) == 1) {
 		fp = (FINFO *)((SEGSUM_V1 *)sp + 1);
 		el_size = sizeof(unsigned long);
 	} else {
@@ -661,7 +661,7 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 	sum_offset = fsbtobyte(lfsp, addr);
 	sumblock = malloc(lfs_sb_getsumsize(lfsp));
 
-	if (lfsp->lfs_version > 1 && segnum == 0) {
+	if (lfs_sb_getversion(lfsp) > 1 && segnum == 0) {
 		if (lfs_fsbtob(lfsp, lfs_sb_gets0addr(lfsp)) < LFS_LABELPAD) {
 			/* First segment eats the disklabel */
 			sum_offset += lfs_fragroundup(lfsp, LFS_LABELPAD) -
@@ -677,7 +677,7 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 	do {
 		get(fd, sum_offset, sumblock, lfs_sb_getsumsize(lfsp));
 		sump = (SEGSUM *)sumblock;
-		if ((lfsp->lfs_version > 1 &&
+		if ((lfs_sb_getversion(lfsp) > 1 &&
 		     sump->ss_ident != lfs_sb_getident(lfsp)) ||
 		    sump->ss_sumsum != cksum (&sump->ss_datasum, 
 			      lfs_sb_getsumsize(lfsp) - sizeof(sump->ss_sumsum))) {
@@ -690,7 +690,7 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 					    sizeof(struct dlfs));
 					dump_super(&lfs_sb);
 				}
-				if (lfsp->lfs_version > 1)
+				if (lfs_sb_getversion(lfsp) > 1)
 					sum_offset += lfs_fragroundup(lfsp, LFS_SBPAD);
 				else
 					sum_offset += LFS_SBPAD;
@@ -728,7 +728,7 @@ dump_super(struct lfs *lfsp)
 
  	(void)printf("    %s0x%-8x  %s0x%-8x  %s%-10ju\n",
  		     "magic    ", lfsp->lfs_magic,
- 		     "version  ", lfsp->lfs_version,
+ 		     "version  ", lfs_sb_getversion(lfsp),
  		     "size     ", (uintmax_t)lfs_sb_getsize(lfsp));
  	(void)printf("    %s%-10d  %s%-10ju  %s%-10d\n",
  		     "ssize    ", lfs_sb_getssize(lfsp),
@@ -823,7 +823,7 @@ dump_cleaner_info(struct lfs *lfsp, void *ipage)
 	CLEANERINFO *cip;
 
 	cip = (CLEANERINFO *)ipage;
-	if (lfsp->lfs_version > 1) {
+	if (lfs_sb_getversion(lfsp) > 1) {
 		(void)printf("free_head %d\n", cip->free_head);
 		(void)printf("free_tail %d\n", cip->free_tail);
 	}
