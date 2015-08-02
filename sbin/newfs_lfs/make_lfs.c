@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.37 2015/08/02 18:11:12 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.38 2015/08/02 18:11:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.37 2015/08/02 18:11:12 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.38 2015/08/02 18:11:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -274,7 +274,7 @@ make_dinode(ino_t ino, struct ulfs1_dinode *dip, int nfrags, struct lfs *fs)
 
 /*
  * Construct a set of directory entries in "bufp".  We assume that all the
- * entries in protodir fir in the first DIRBLKSIZ.  
+ * entries in protodir fit in the first DIRBLKSIZ.  
  */
 static void
 make_dir(void *bufp, struct lfs_direct *protodir, int entries)
