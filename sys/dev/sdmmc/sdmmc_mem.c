@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.34 2015/02/27 16:08:17 nonaka Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.35 2015/08/02 21:44:36 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.34 2015/02/27 16:08:17 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.35 2015/08/02 21:44:36 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -104,6 +104,7 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 {
 	uint32_t host_ocr;
 	uint32_t card_ocr;
+	uint32_t new_ocr;
 	uint32_t ocr = 0;
 	int error;
 
@@ -184,18 +185,77 @@ mmc_mode:
 		error = sdmmc_mem_send_if_cond(sc, 0x1aa, &card_ocr);
 		if (error == 0 && card_ocr == 0x1aa)
 			SET(ocr, MMC_OCR_HCS);
+
+		if (sdmmc_chip_host_ocr(sc->sc_sct, sc->sc_sch) & MMC_OCR_S18A)
+			SET(ocr, MMC_OCR_S18A);
 	}
 	host_ocr |= ocr;
 
 	/* Send the new OCR value until all cards are ready. */
-	error = sdmmc_mem_send_op_cond(sc, host_ocr, NULL);
+	error = sdmmc_mem_send_op_cond(sc, host_ocr, &new_ocr);
 	if (error) {
 		DPRINTF(("%s: couldn't send memory OCR\n", SDMMCDEVNAME(sc)));
 		goto out;
 	}
 
+	if (ISSET(new_ocr, MMC_OCR_S18A) && sc->sc_sct->signal_voltage) {
+		/*
+		 * Card and host support low voltage mode, begin switch
+		 * sequence.
+		 */
+		struct sdmmc_command cmd;
+		memset(&cmd, 0, sizeof(cmd));
+		cmd.c_arg = 0;
+		cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
+		cmd.c_opcode = SD_VOLTAGE_SWITCH;
+		error = sdmmc_mmc_command(sc, &cmd);
+		if (error) {
+			DPRINTF(("%s: voltage switch command failed\n",
+			    SDMMCDEVNAME(sc)));
+			goto out;
+		}
+
+		delay(1000);
+
+		/*
+		 * Stop the clock
+		 */
+		error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch,
+		    SDMMC_SDCLK_OFF);
+		if (error)
+			goto out;
+
+		delay(1000);
+
+		/*
+		 * Card switch command was successful, update host controller
+		 * signal voltage setting.
+		 */
+		error = sdmmc_chip_signal_voltage(sc->sc_sct,
+		    sc->sc_sch, SDMMC_SIGNAL_VOLTAGE_180);
+		if (error)
+			goto out;
+
+		delay(5000);
+
+		/*
+		 * Switch to SDR12 timing
+		 */
+		error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, 25000);
+		if (error)
+			goto out;
+
+		delay(1000);
+
+		SET(sc->sc_flags, SMF_UHS_MODE);
+	}
+
 out:
 	SDMMC_UNLOCK(sc);
+
+	if (error)
+		printf("%s: %s failed with error %d\n", SDMMCDEVNAME(sc),
+		    __func__, error);
 
 	return error;
 }
@@ -617,23 +677,26 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	static const struct {
 		int v;
 		int freq;
+		int uhs;
 	} switch_group0_functions[] = {
 		/* Default/SDR12 */
 		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V |
-		  MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V,	 25000 },
+		  MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V,	 25000, 0 },
 
 		/* High-Speed/SDR25 */
 		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V |
-		  MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V,	 50000 },
+		  MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V,	 50000, 0 },
 
 		/* SDR50 */
-		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V,	100000 },
+		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V,	100000, 1 },
 
 		/* SDR104 */
-		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V,	208000 },
+		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V,	208000, 1 },
 
+#if notyet
 		/* DDR50 */
-		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V,	 50000 },
+		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V,	 50000, 1 },
+#endif
 	};
 	int host_ocr, support_func, best_func, bus_clock, error, g, i;
 	sdmmc_bitfield512_t status; /* Switch Function Status */
@@ -684,6 +747,9 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		    i < __arraycount(switch_group0_functions); i++, g <<= 1) {
 			if (!(switch_group0_functions[i].v & host_ocr))
 				continue;
+			if (switch_group0_functions[i].uhs &&
+			    !ISSET(sc->sc_flags, SMF_UHS_MODE))
+				break;
 			if (g & support_func)
 				best_func = i;
 		}
