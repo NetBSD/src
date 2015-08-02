@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.14 2015/07/29 12:11:14 jmcneill Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.15 2015/08/02 21:45:12 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -142,6 +142,15 @@
 #define SDHC_EINTR_SIGNAL_EN		0x3a
 #define  SDHC_EINTR_SIGNAL_MASK		0x03ff	/* excluding vendor signals */
 #define SDHC_CMD12_ERROR_STATUS		0x3c
+#define SDHC_HOST_CTL2			0x3e
+#define  SDHC_1_8V_SIGNAL_EN		(1<<3)
+#define  SDHC_UHS_MODE_SELECT_SHIFT	0
+#define  SDHC_UHS_MODE_SELECT_MASK	0x7
+#define  SDHC_UHS_MODE_SELECT_SDR12	0
+#define  SDHC_UHS_MODE_SELECT_SDR25	1
+#define  SDHC_UHS_MODE_SELECT_SDR50	2
+#define  SDHC_UHS_MODE_SELECT_SDR104	3
+#define  SDHC_UHS_MODE_SELECT_DDR50	4
 #define SDHC_CAPABILITIES		0x40
 #define  SDHC_SHARED_BUS_SLOT		(1<<31)
 #define  SDHC_EMBEDDED_SLOT		(1<<30)
@@ -167,6 +176,20 @@
 #define  SDHC_TIMEOUT_FREQ_UNIT		(1<<7)	/* 0=KHz, 1=MHz */
 #define  SDHC_TIMEOUT_FREQ_SHIFT	0
 #define  SDHC_TIMEOUT_FREQ_MASK		0x1f
+#define SDHC_CAPABILITIES2		0x44
+#define  SDHC_SDR50_SUPP		(1<<0)
+#define  SDHC_SDR104_SUPP		(1<<1)
+#define  SDHC_DDR50_SUPP		(1<<2)
+#define  SDHC_DRIVER_TYPE_A		(1<<4)
+#define  SDHC_DRIVER_TYPE_C		(1<<5)
+#define  SDHC_DRIVER_TYPE_D		(1<<6)
+#define  SDHC_TIMER_COUNT_SHIFT		8
+#define  SDHC_TIMER_COUNT_MASK		0xf
+#define  SDHC_TUNING_SDR50		(1<<13)
+#define  SDHC_RETUNING_MODES_SHIFT	14
+#define  SDHC_RETUNING_MODES_MASK	0x3
+#define  SDHC_CLOCK_MULTIPLIER_SHIFT	16
+#define  SDHC_CLOCK_MULTIPLIER_MASK	0xff
 #define SDHC_ADMA_ERROR_STATUS		0x54
 #define  SDHC_ADMA_LENGTH_MISMATCH	(1<<2)
 #define  SDHC_ADMA_ERROR_STATE		(3<<0)

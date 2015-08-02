@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.70 2015/08/02 11:28:01 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.71 2015/08/02 21:45:12 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.70 2015/08/02 11:28:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.71 2015/08/02 21:45:12 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -181,6 +181,7 @@ static void	sdhc_card_enable_intr(sdmmc_chipset_handle_t, int);
 static void	sdhc_card_intr_ack(sdmmc_chipset_handle_t);
 static void	sdhc_exec_command(sdmmc_chipset_handle_t,
 		    struct sdmmc_command *);
+static int	sdhc_signal_voltage(sdmmc_chipset_handle_t, int);
 static int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
 static int	sdhc_wait_state(struct sdhc_host *, uint32_t, uint32_t);
 static int	sdhc_soft_reset(struct sdhc_host *, int);
@@ -218,7 +219,10 @@ static struct sdmmc_chip_functions sdhc_functions = {
 
 	/* card interrupt */
 	.card_enable_intr = sdhc_card_enable_intr,
-	.card_intr_ack = sdhc_card_intr_ack
+	.card_intr_ack = sdhc_card_intr_ack,
+
+	/* UHS functions */
+	.signal_voltage = sdhc_signal_voltage,
 };
 
 static int
@@ -249,7 +253,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 {
 	struct sdmmcbus_attach_args saa;
 	struct sdhc_host *hp;
-	uint32_t caps;
+	uint32_t caps, caps2;
 	uint16_t sdhcver;
 	int error;
 
@@ -313,6 +317,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		caps = sc->sc_caps;
 	} else {
 		caps = HREAD4(hp, SDHC_CAPABILITIES);
+	}
+	if (hp->specver >= SDHC_SPEC_VERS_300) {
+		caps2 = HREAD4(hp, SDHC_CAPABILITIES2);
+	} else {
+		caps2 = 0;
 	}
 
 	/*
@@ -402,11 +411,21 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	aprint_normal(",");
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP)) {
 		SET(hp->ocr, MMC_OCR_HCS);
-		aprint_normal(" High-Speed");
+		aprint_normal(" HS");
 	}
-	if (ISSET(caps, SDHC_VOLTAGE_SUPP_1_8V) &&
-	    (hp->specver < SDHC_SPEC_VERS_300 ||
-	     ISSET(caps, SDHC_EMBEDDED_SLOT))) {
+	if (ISSET(caps2, SDHC_SDR50_SUPP)) {
+		SET(hp->ocr, MMC_OCR_S18A);
+		aprint_normal(" SDR50");
+	}
+	if (ISSET(caps2, SDHC_SDR104_SUPP)) {
+		SET(hp->ocr, MMC_OCR_S18A);
+		aprint_normal(" SDR104");
+	}
+	if (ISSET(caps2, SDHC_DDR50_SUPP)) {
+		SET(hp->ocr, MMC_OCR_S18A);
+		aprint_normal(" DDR50");
+	}
+	if (ISSET(caps, SDHC_VOLTAGE_SUPP_1_8V)) {
 		SET(hp->ocr, MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V);
 		aprint_normal(" 1.8V");
 	}
@@ -812,7 +831,7 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	 * Select the lowest voltage according to capabilities.
 	 */
 	ocr &= hp->ocr;
-	if (ISSET(ocr, MMC_OCR_1_7V_1_8V|MMC_OCR_1_8V_1_9V)) {
+	if (ISSET(ocr, MMC_OCR_1_7V_1_8V|MMC_OCR_1_8V_1_9V|MMC_OCR_S18A)) {
 		vdd = SDHC_VOLTAGE_1_8V;
 	} else if (ISSET(ocr, MMC_OCR_2_9V_3_0V|MMC_OCR_3_0V_3_1V)) {
 		vdd = SDHC_VOLTAGE_3_0V;
@@ -986,6 +1005,20 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 			goto out;
 	}
 
+	if (hp->specver >= SDHC_SPEC_VERS_300) {
+		/* XXX DDR */
+		HCLR2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_MASK);
+		if (freq > 100000) {
+			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR104);
+		} else if (freq > 50000) {
+			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR50);
+		} else if (freq > 25000) {
+			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR25);
+		} else {
+			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR12);
+		}
+	}
+
 	/*
 	 * Set the minimum base clock frequency divisor.
 	 */
@@ -1152,6 +1185,25 @@ sdhc_card_intr_ack(sdmmc_chipset_handle_t sch)
 		HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
 		mutex_exit(&hp->intr_lock);
 	}
+}
+
+static int
+sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
+{
+	struct sdhc_host *hp = (struct sdhc_host *)sch;
+
+	switch (signal_voltage) {
+	case SDMMC_SIGNAL_VOLTAGE_180:
+		HSET2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
+		break;
+	case SDMMC_SIGNAL_VOLTAGE_330:
+		HCLR2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
 }
 
 static int
