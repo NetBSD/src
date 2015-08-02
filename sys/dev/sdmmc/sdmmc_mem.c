@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.35 2015/08/02 21:44:36 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.36 2015/08/02 22:47:05 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.35 2015/08/02 21:44:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.36 2015/08/02 22:47:05 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -796,6 +796,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	int width, value, hs_timing, bus_clock, error;
 	char ext_csd[512];
 	uint32_t sectors = 0;
+	int host_ocr;
 
 	/* change bus clock */
 	bus_clock = min(sc->sc_busclk, sf->csd.tran_speed);
@@ -804,6 +805,8 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		aprint_error_dev(sc->sc_dev, "can't change bus clock\n");
 		return error;
 	}
+
+	host_ocr = sdmmc_chip_host_ocr(sc->sc_sct, sc->sc_sch);
 
 	if (sf->csd.mmcver >= MMC_CSD_MMCVER_4_0) {
 		error = sdmmc_mem_send_cxd_data(sc,
@@ -821,7 +824,11 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			return ENOTSUP;
 		}
 
-		if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_52M) {
+		if (ISSET(host_ocr, MMC_OCR_1_7V_1_8V|MMC_OCR_1_8V_1_9V) &&
+		    ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_HS200_1_8V) {
+			sf->csd.tran_speed = 200000;	/* 200MHz SDR */
+			hs_timing = 2;
+		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_52M) {
 			sf->csd.tran_speed = 52000;	/* 52MHz */
 			hs_timing = 1;
 		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_26M) {
