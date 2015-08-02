@@ -63,7 +63,6 @@ int invalidate_segment(struct clfs *, int);
 void lfs_ientry(IFILE **, struct clfs *, ino_t, struct ubuf **);
 int load_segment(struct clfs *, int, BLOCK_INFO **, int *);
 int needs_cleaning(struct clfs *, CLEANERINFO *);
-int32_t parse_pseg(struct clfs *, daddr_t, BLOCK_INFO **, int *);
 int reinit_fs(struct clfs *);
 void reload_ifile(struct clfs *);
 void toss_old_blocks(struct clfs *, BLOCK_INFO **, int *, int *);

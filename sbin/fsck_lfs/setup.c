@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.50 2015/08/02 17:56:24 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.51 2015/08/02 18:10:08 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #include "fsutil.h"
 
 extern u_int32_t cksum(void *, size_t);
-static uint64_t calcmaxfilesize(int);
+static uint64_t calcmaxfilesize(unsigned);
 
 ulfs_daddr_t *din_table;
 SEGUSE *seg_table;
@@ -118,11 +118,12 @@ useless(void)
  * calculate the maximum file size allowed with the specified block shift.
  */
 static uint64_t
-calcmaxfilesize(int bshift)
+calcmaxfilesize(unsigned bshift)
 {
 	uint64_t nptr; /* number of block pointers per block */
 	uint64_t maxblock;
 
+	/* XXX ondisk32 */
 	nptr = (1 << bshift) / sizeof(uint32_t);
 	maxblock = ULFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
 
@@ -237,8 +238,8 @@ setup(const char *dev)
 		int bc;
 
 		if (debug)
-			pwarn("adjusting offset, serial for -i 0x%lx\n",
-				(unsigned long)idaddr);
+			pwarn("adjusting offset, serial for -i 0x%jx\n",
+				(uintmax_t)idaddr);
 		tdaddr = lfs_sntod(fs, lfs_dtosn(fs, idaddr));
 		if (lfs_sntod(fs, lfs_dtosn(fs, tdaddr)) == tdaddr) {
 			if (tdaddr == lfs_sb_gets0addr(fs))
@@ -265,8 +266,8 @@ setup(const char *dev)
 						   sizeof(sp->ss_sumsum))) {
 				brelse(bp, 0);
 				if (debug)
-					printf("bad cksum at %x\n",
-					       (unsigned)tdaddr);
+					printf("bad cksum at %jx\n",
+					       (uintmax_t)tdaddr);
 				break;
 			}
 			fp = (FINFO *)(sp + 1);
@@ -311,9 +312,9 @@ setup(const char *dev)
 		++fs->lfs_nactive;
 		lfs_sb_setnextseg(fs, lfs_sntod(fs, sn));
 		if (debug) {
-			pwarn("offset = 0x%" PRIx32 ", serial = %" PRIu64 "\n",
+			pwarn("offset = 0x%" PRIx64 ", serial = %" PRIu64 "\n",
 				lfs_sb_getoffset(fs), lfs_sb_getserial(fs));
-			pwarn("curseg = %" PRIx32 ", nextseg = %" PRIx32 "\n",
+			pwarn("curseg = %" PRIx64 ", nextseg = %" PRIx64 "\n",
 				lfs_sb_getcurseg(fs), lfs_sb_getnextseg(fs));
 		}
 
@@ -381,9 +382,9 @@ setup(const char *dev)
 	}
 	if (lfs_sb_getmaxfilesize(fs) != maxfilesize) {
 		pwarn(
-		    "INCORRECT MAXFILESIZE=%llu IN SUPERBLOCK (SHOULD BE %llu WITH BSHIFT %u)",
-		    (unsigned long long) lfs_sb_getmaxfilesize(fs),
-		    (unsigned long long) maxfilesize, lfs_sb_getbshift(fs));
+		    "INCORRECT MAXFILESIZE=%ju IN SUPERBLOCK (SHOULD BE %ju WITH BSHIFT %u)",
+		    (uintmax_t) lfs_sb_getmaxfilesize(fs),
+		    (uintmax_t) maxfilesize, lfs_sb_getbshift(fs));
 		if (preen)
 			printf(" (FIXED)\n");
 		if (preen || reply("FIX") == 1) {

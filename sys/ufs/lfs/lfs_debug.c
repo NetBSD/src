@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.47 2015/08/02 18:08:13 dholland Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.48 2015/08/02 18:10:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.47 2015/08/02 18:08:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.48 2015/08/02 18:10:08 dholland Exp $");
 
 #ifdef DEBUG
 
@@ -162,29 +162,29 @@ lfs_dump_super(struct lfs *lfsp)
 	       "fbmask	 ", (unsigned long)lfs_sb_getfbmask(lfsp),
 	       "fbshift	 ", lfs_sb_getfbshift(lfsp));
 
-	printf("%s%d\t%s%d\t%s%x\t%s%qx\n",
+	printf("%s%d\t%s%d\t%s%x\t%s%jx\n",
 	       "sushift	 ", lfs_sb_getsushift(lfsp),
 	       "fsbtodb	 ", lfs_sb_getfsbtodb(lfsp),
 	       "cksum	 ", lfs_sb_getcksum(lfsp),
-	       "maxfilesize ", (long long)lfs_sb_getmaxfilesize(lfsp));
+	       "maxfilesize ", (uintmax_t)lfs_sb_getmaxfilesize(lfsp));
 
 	printf("Superblock disk addresses:");
 	for (i = 0; i < LFS_MAXNUMSB; i++)
-		printf(" %x", lfs_sb_getsboff(lfsp, i));
+		printf(" %jx", (intmax_t)lfs_sb_getsboff(lfsp, i));
 	printf("\n");
 
 	printf("Checkpoint Info\n");
-	printf("%s%d\t%s%x\t%s%d\n",
+	printf("%s%d\t%s%jx\t%s%d\n",
 	       "freehd	 ", lfs_sb_getfreehd(lfsp),
-	       "idaddr	 ", lfs_sb_getidaddr(lfsp),
+	       "idaddr	 ", (intmax_t)lfs_sb_getidaddr(lfsp),
 	       "ifile	 ", lfs_sb_getifile(lfsp));
-	printf("%s%jx\t%s%d\t%s%x\t%s%x\t%s%x\t%s%x\n",
+	printf("%s%jx\t%s%d\t%s%jx\t%s%jx\t%s%jx\t%s%jx\n",
 	       "bfree	 ", (intmax_t)lfs_sb_getbfree(lfsp),
 	       "nfiles	 ", lfs_sb_getnfiles(lfsp),
-	       "lastseg	 ", lfs_sb_getlastseg(lfsp),
-	       "nextseg	 ", lfs_sb_getnextseg(lfsp),
-	       "curseg	 ", lfs_sb_getcurseg(lfsp),
-	       "offset	 ", lfs_sb_getoffset(lfsp));
+	       "lastseg	 ", (intmax_t)lfs_sb_getlastseg(lfsp),
+	       "nextseg	 ", (intmax_t)lfs_sb_getnextseg(lfsp),
+	       "curseg	 ", (intmax_t)lfs_sb_getcurseg(lfsp),
+	       "offset	 ", (intmax_t)lfs_sb_getoffset(lfsp));
 	printf("tstamp	 %llx\n", (long long)lfs_sb_gettstamp(lfsp));
 }
 
