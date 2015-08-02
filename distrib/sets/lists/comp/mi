@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1975 2015/07/31 12:51:32 kamil Exp $
+#	$NetBSD: mi,v 1.1976 2015/08/02 11:09:05 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -400,6 +400,7 @@
 ./usr/include/dev/fssvar.h			comp-c-include
 ./usr/include/dev/hdaudio/hdaudioio.h		comp-c-include
 ./usr/include/dev/hdaudio/hdaudioreg.h		comp-c-include
+./usr/include/dev/hdmicec/hdmicecio.h		comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/dev/i2c/i2c_bus.h			comp-obsolete		obsolete
 ./usr/include/dev/i2c/i2c_eeprom.h		comp-obsolete		obsolete
