@@ -16,7 +16,11 @@ struct clfs_seguse {
  * The cleaner's view of the superblock data structure.
  */
 struct clfs {
-	struct dlfs lfs_dlfs;
+	union {
+		struct dlfs u_32;
+		struct dlfs64 u_64;
+	} lfs_dlfs_u;
+	unsigned lfs_is64 : 1;
 
 	/* Ifile */
 	int clfs_ifilefd;	   /* Ifile file descriptor */
