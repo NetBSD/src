@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.250 2015/08/02 18:18:10 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.251 2015/08/02 18:18:46 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.250 2015/08/02 18:18:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.251 2015/08/02 18:18:46 dholland Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -1473,8 +1473,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 	if (error)
 		panic("lfs_updatemeta: ulfs_bmaparray returned %d", error);
 
-	daddr = (daddr_t)((int32_t)daddr); /* XXX ondisk32 */
-	KASSERT(daddr <= LFS_MAX_DADDR);
+	KASSERT(daddr <= LFS_MAX_DADDR(fs));
 	if (daddr > 0)
 		daddr = LFS_DBTOFSB(fs, daddr);
 
