@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.43 2015/08/02 18:14:16 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.44 2015/08/02 18:18:09 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -94,6 +94,11 @@ extern u_int32_t lfs_sb_cksum(struct dlfs *);
 extern u_int32_t lfs_cksum_part(void *, size_t, u_int32_t);
 extern int ulfs_getlbns(struct lfs *, struct uvnode *, daddr_t, struct indir *, int *);
 
+/* Ugh */
+#define FSMNT_SIZE MAX(sizeof(((struct dlfs *)0)->dlfs_fsmnt), \
+			sizeof(((struct dlfs64 *)0)->dlfs_fsmnt))
+
+
 /* Compat */
 void pwarn(const char *unused, ...) { /* Does nothing */ };
 
@@ -133,9 +138,9 @@ handle_error(struct clfs **cfsp, int n)
 int
 reinit_fs(struct clfs *fs)
 {
-	char fsname[sizeof(fs->lfs_dlfs.dlfs_fsmnt)];
+	char fsname[FSMNT_SIZE];
 
-	memcpy(fsname, fs->lfs_dlfs.dlfs_fsmnt, sizeof(fsname));
+	memcpy(fsname, lfs_sb_getfsmnt(fs), sizeof(fsname));
 	fsname[sizeof(fsname) - 1] = '\0';
 
 	kops.ko_close(fs->clfs_ifilefd);
@@ -202,7 +207,7 @@ init_unmounted_fs(struct clfs *fs, char *fsname)
 int
 init_fs(struct clfs *fs, char *fsname)
 {
-	char mnttmp[sizeof(fs->lfs_dlfs.dlfs_fsmnt)];
+	char mnttmp[FSMNT_SIZE];
 	struct statvfs sf;
 	int rootfd;
 	int i;
@@ -254,8 +259,16 @@ init_fs(struct clfs *fs, char *fsname)
 		return -1;
 	}
 
-	memcpy(&(fs->lfs_dlfs), sbuf, sizeof(struct dlfs));
+	__CTASSERT(sizeof(struct dlfs) == sizeof(struct dlfs64));
+	memcpy(&fs->lfs_dlfs_u, sbuf, sizeof(struct dlfs));
 	free(sbuf);
+
+	/* If it is not LFS, complain and exit! */
+	if (fs->lfs_dlfs_u.u_32.dlfs_magic != LFS_MAGIC) {
+		syslog(LOG_ERR, "%s: not LFS", fsname);
+		return -1;
+	}
+	fs->lfs_is64 = 0; /* XXX notyet */
 
 	/* If this is not a version 2 filesystem, complain and exit */
 	if (lfs_sb_getversion(fs) != 2) {
@@ -266,7 +279,7 @@ init_fs(struct clfs *fs, char *fsname)
 	/* Assume fsname is the mounted name */
 	strncpy(mnttmp, fsname, sizeof(mnttmp));
 	mnttmp[sizeof(mnttmp) - 1] = '\0';
-	memcpy(fs->lfs_dlfs.dlfs_fsmnt, mnttmp, sizeof(mnttmp));
+	lfs_sb_setfsmnt(fs, mnttmp);
 
 	/* Set up vnodes for Ifile and raw device */
 	fs->lfs_ivnode = fd_vget(fs->clfs_ifilefd, lfs_sb_getbsize(fs), 0, 0);

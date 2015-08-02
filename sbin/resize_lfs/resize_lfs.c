@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.13 2015/08/02 18:12:18 dholland Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.14 2015/08/02 18:18:09 dholland Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -125,7 +125,8 @@ main(int argc, char **argv)
 	fs = (struct lfs *)malloc(sizeof(*fs));
 	for (sboff = LFS_LABELPAD;;) {
 		pread(devfd, buf, sboff, LFS_SBPAD);
-		memcpy(&fs->lfs_dlfs, buf, sizeof(struct dlfs));
+		__CTASSERT(sizeof(struct dlfs) == sizeof(struct dlfs64));
+		memcpy(&fs->lfs_dlfs_u, buf, sizeof(struct dlfs));
 		if (sboff == LFS_LABELPAD && lfs_fsbtob(fs, 1) > LFS_LABELPAD)
 			sboff = lfs_fsbtob(fs, (off_t)lfs_sb_getsboff(fs, 0));
 		else
