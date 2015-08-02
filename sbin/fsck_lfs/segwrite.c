@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.35 2015/08/02 18:14:16 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.36 2015/08/02 18:18:09 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -103,7 +103,7 @@ int written_inodes = 0;
 time_t write_time;
 
 extern u_int32_t cksum(void *, size_t);
-extern u_int32_t lfs_sb_cksum(struct dlfs *);
+extern u_int32_t lfs_sb_cksum(struct lfs *);
 extern int preen;
 
 /*
@@ -1003,13 +1003,15 @@ lfs_writesuper(struct lfs *fs, ulfs_daddr_t daddr)
 		lfs_sb_setotstamp(fs, write_time);
 	lfs_sb_settstamp(fs, write_time);
 
+	__CTASSERT(sizeof(struct dlfs) == sizeof(struct dlfs64));
+
 	/* Checksum the superblock and copy it into a buffer. */
-	lfs_sb_setcksum(fs, lfs_sb_cksum(&(fs->lfs_dlfs)));
+	lfs_sb_setcksum(fs, lfs_sb_cksum(fs));
 	assert(daddr > 0);
 	bp = getblk(fs->lfs_devvp, LFS_FSBTODB(fs, daddr), LFS_SBPAD);
+	memcpy(bp->b_data, &fs->lfs_dlfs_u, sizeof(struct dlfs));
 	memset(bp->b_data + sizeof(struct dlfs), 0,
 	    LFS_SBPAD - sizeof(struct dlfs));
-	*(struct dlfs *) bp->b_data = fs->lfs_dlfs;
 
 	bwrite(bp);
 }

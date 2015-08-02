@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.49 2015/08/02 18:14:16 dholland Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.50 2015/08/02 18:18:10 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.49 2015/08/02 18:14:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.50 2015/08/02 18:18:10 dholland Exp $");
 
 #ifdef DEBUG
 
@@ -128,7 +128,9 @@ lfs_dump_super(struct lfs *lfsp)
 	int i;
 
 	printf("%s%x\t%s%x\t%s%ju\t%s%d\n",
-	       "magic	 ", lfsp->lfs_magic,
+	       "magic	 ", lfsp->lfs_is64 ?
+			lfsp->lfs_dlfs_u.u_64.dlfs_magic :
+			lfsp->lfs_dlfs_u.u_32.dlfs_magic,
 	       "version	 ", lfs_sb_getversion(lfsp),
 	       "size	 ", (uintmax_t)lfs_sb_getsize(lfsp),
 	       "ssize	 ", lfs_sb_getssize(lfsp));

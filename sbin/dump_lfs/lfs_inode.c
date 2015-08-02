@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.22 2015/08/02 18:14:16 dholland Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.23 2015/08/02 18:18:09 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.22 2015/08/02 18:14:16 dholland Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.23 2015/08/02 18:18:09 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ fs_read_sblock(char *superblock)
 	sblock = (struct lfs *)superblock;
 	while(1) {
 		rawread(sboff, (char *) sblock, LFS_SBPAD);
-		if (sblock->lfs_magic != LFS_MAGIC) {
+		if (sblock->lfs_dlfs_u.u_32.dlfs_magic != LFS_MAGIC) {
 #ifdef notyet
 			if (sblock->lfs_magic == bswap32(LFS_MAGIC)) {
 				lfs_sb_swap(sblock, sblock, 0);
@@ -111,7 +111,7 @@ fs_read_sblock(char *superblock)
 	if (ns)
 		lfs_sb_swap(u.tbuf, u.tbuf, 0);
 #endif
-	if (u.lfss.lfs_magic != LFS_MAGIC) {
+	if (u.lfss.lfs_dlfs_u.u_32.dlfs_magic != LFS_MAGIC) {
 		msg("Warning: secondary superblock at 0x%" PRIx64 " bad magic\n",
 			LFS_FSBTODB(sblock, (off_t)lfs_sb_getsboff(sblock, 1)));
 	} else {

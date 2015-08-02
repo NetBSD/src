@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.6 2015/08/02 18:14:16 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.7 2015/08/02 18:18:10 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -392,27 +392,56 @@
 	static __unused inline type				\
 	lfs_sb_get##field(STRUCT_LFS *fs)			\
 	{							\
-		return fs->lfs_dlfs.dlfs_##field;		\
+		if (fs->lfs_is64) {				\
+			return fs->lfs_dlfs_u.u_64.dlfs_##field; \
+		} else {					\
+			return fs->lfs_dlfs_u.u_32.dlfs_##field; \
+		}						\
 	}							\
 	static __unused inline void				\
 	lfs_sb_set##field(STRUCT_LFS *fs, type val)		\
 	{							\
-		fs->lfs_dlfs.dlfs_##field = val;		\
+		if (fs->lfs_is64) {				\
+			fs->lfs_dlfs_u.u_64.dlfs_##field = val;	\
+		} else {					\
+			fs->lfs_dlfs_u.u_32.dlfs_##field = val;	\
+		}						\
 	}							\
 	static __unused inline void				\
 	lfs_sb_add##field(STRUCT_LFS *fs, type val)		\
 	{							\
-		type32 *p = &fs->lfs_dlfs.dlfs_##field;		\
-		*p += val;					\
+		if (fs->lfs_is64) {				\
+			type *p64 = &fs->lfs_dlfs_u.u_64.dlfs_##field; \
+			*p64 += val;				\
+		} else {					\
+			type32 *p32 = &fs->lfs_dlfs_u.u_32.dlfs_##field; \
+			*p32 += val;				\
+		}						\
 	}							\
 	static __unused inline void				\
 	lfs_sb_sub##field(STRUCT_LFS *fs, type val)		\
 	{							\
-		type32 *p = &fs->lfs_dlfs.dlfs_##field;		\
-		*p -= val;					\
+		if (fs->lfs_is64) {				\
+			type *p64 = &fs->lfs_dlfs_u.u_64.dlfs_##field; \
+			*p64 -= val;				\
+		} else {					\
+			type32 *p32 = &fs->lfs_dlfs_u.u_32.dlfs_##field; \
+			*p32 -= val;				\
+		}						\
 	}
 
 #define LFS_DEF_SB_ACCESSOR(t, f) LFS_DEF_SB_ACCESSOR_FULL(t, t, f)
+
+#define LFS_DEF_SB_ACCESSOR_32ONLY(type, field, val64) \
+	static __unused inline type				\
+	lfs_sb_get##field(STRUCT_LFS *fs)			\
+	{							\
+		if (fs->lfs_is64) {				\
+			return val64;				\
+		} else {					\
+			return fs->lfs_dlfs_u.u_32.dlfs_##field; \
+		}						\
+	}
 
 #define lfs_magic lfs_dlfs.dlfs_magic
 LFS_DEF_SB_ACCESSOR(u_int32_t, version);
@@ -446,8 +475,8 @@ LFS_DEF_SB_ACCESSOR(u_int32_t, nseg);
 LFS_DEF_SB_ACCESSOR(u_int32_t, nspf);
 LFS_DEF_SB_ACCESSOR(u_int32_t, cleansz);
 LFS_DEF_SB_ACCESSOR(u_int32_t, segtabsz);
-LFS_DEF_SB_ACCESSOR(u_int32_t, segmask);
-LFS_DEF_SB_ACCESSOR(u_int32_t, segshift);
+LFS_DEF_SB_ACCESSOR_32ONLY(u_int32_t, segmask, 0);
+LFS_DEF_SB_ACCESSOR_32ONLY(u_int32_t, segshift, 0);
 LFS_DEF_SB_ACCESSOR(u_int64_t, bmask);
 LFS_DEF_SB_ACCESSOR(u_int32_t, bshift);
 LFS_DEF_SB_ACCESSOR(u_int64_t, ffmask);
@@ -490,7 +519,11 @@ lfs_sb_getsboff(STRUCT_LFS *fs, unsigned n)
 #ifdef KASSERT /* ugh */
 	KASSERT(n < LFS_MAXNUMSB);
 #endif
-	return fs->lfs_dlfs.dlfs_sboffs[n];
+	if (fs->lfs_is64) {
+		return fs->lfs_dlfs_u.u_64.dlfs_sboffs[n];
+	} else {
+		return fs->lfs_dlfs_u.u_32.dlfs_sboffs[n];
+	}
 }
 static __unused inline void
 lfs_sb_setsboff(STRUCT_LFS *fs, unsigned n, int32_t val)
@@ -498,7 +531,11 @@ lfs_sb_setsboff(STRUCT_LFS *fs, unsigned n, int32_t val)
 #ifdef KASSERT /* ugh */
 	KASSERT(n < LFS_MAXNUMSB);
 #endif
-	fs->lfs_dlfs.dlfs_sboffs[n] = val;
+	if (fs->lfs_is64) {
+		fs->lfs_dlfs_u.u_64.dlfs_sboffs[n] = val;
+	} else {
+		fs->lfs_dlfs_u.u_32.dlfs_sboffs[n] = val;
+	}
 }
 
 /*
@@ -507,7 +544,23 @@ lfs_sb_setsboff(STRUCT_LFS *fs, unsigned n, int32_t val)
 static __unused inline const char *
 lfs_sb_getfsmnt(STRUCT_LFS *fs)
 {
-	return fs->lfs_dlfs.dlfs_fsmnt;
+	if (fs->lfs_is64) {
+		return fs->lfs_dlfs_u.u_64.dlfs_fsmnt;
+	} else {
+		return fs->lfs_dlfs_u.u_32.dlfs_fsmnt;
+	}
+}
+
+static __unused inline void
+lfs_sb_setfsmnt(STRUCT_LFS *fs, const char *str)
+{
+	if (fs->lfs_is64) {
+		(void)strncpy(fs->lfs_dlfs_u.u_64.dlfs_fsmnt, str,
+			sizeof(fs->lfs_dlfs_u.u_64.dlfs_fsmnt));
+	} else {
+		(void)strncpy(fs->lfs_dlfs_u.u_32.dlfs_fsmnt, str,
+			sizeof(fs->lfs_dlfs_u.u_32.dlfs_fsmnt));
+	}
 }
 
 /* LFS_NINDIR is the number of indirects in a file system block. */

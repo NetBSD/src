@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.51 2015/08/02 18:14:16 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.52 2015/08/02 18:18:09 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -95,7 +95,7 @@
 #define panic call_panic
 
 extern u_int32_t cksum(void *, size_t);
-extern u_int32_t lfs_sb_cksum(struct dlfs *);
+extern u_int32_t lfs_sb_cksum(struct lfs *);
 extern void pwarn(const char *, ...);
 
 extern struct uvnodelst vnodelist;
@@ -427,15 +427,19 @@ static int
 check_sb(struct lfs *fs)
 {
 	u_int32_t checksum;
+	u_int32_t magic;
 
-	if (fs->lfs_magic != LFS_MAGIC) {
+	/* we can read the magic out of either the 32-bit or 64-bit dlfs */
+	magic = fs->lfs_dlfs_u.u_32.dlfs_magic;
+
+	if (magic != LFS_MAGIC) {
 		printf("Superblock magic number (0x%lx) does not match "
-		       "expected 0x%lx\n", (unsigned long) fs->lfs_magic,
+		       "expected 0x%lx\n", (unsigned long) magic,
 		       (unsigned long) LFS_MAGIC);
 		return 1;
 	}
 	/* checksum */
-	checksum = lfs_sb_cksum(&(fs->lfs_dlfs));
+	checksum = lfs_sb_cksum(fs);
 	if (lfs_sb_getcksum(fs) != checksum) {
 		printf("Superblock checksum (%lx) does not match computed checksum (%lx)\n",
 		    (unsigned long) lfs_sb_getcksum(fs), (unsigned long) checksum);
@@ -482,7 +486,8 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 
 		(void)bread(devvp, sblkno, LFS_SBPAD, 0, &bp);
 		fs = ecalloc(1, sizeof(*fs));
-		fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
+		__CTASSERT(sizeof(struct dlfs) == sizeof(struct dlfs64));
+		memcpy(&fs->lfs_dlfs_u, bp->b_data, sizeof(struct dlfs));
 		fs->lfs_devvp = devvp;
 		bp->b_flags |= B_INVAL;
 		brelse(bp, 0);
@@ -493,7 +498,8 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 			(void)bread(devvp, LFS_FSBTODB(fs, lfs_sb_getsboff(fs, 1)),
 		    	LFS_SBPAD, 0, &bp);
 			altfs = ecalloc(1, sizeof(*altfs));
-			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
+			memcpy(&altfs->lfs_dlfs_u, bp->b_data,
+			       sizeof(struct dlfs));
 			altfs->lfs_devvp = devvp;
 			bp->b_flags |= B_INVAL;
 			brelse(bp, 0);

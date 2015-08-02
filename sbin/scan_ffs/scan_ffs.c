@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.30 2015/08/02 18:14:16 dholland Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.31 2015/08/02 18:18:09 dholland Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.30 2015/08/02 18:14:16 dholland Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.31 2015/08/02 18:18:09 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -288,7 +288,7 @@ lfs_scan(struct sblockinfo *sbi, int n)
 	size_t namesize;
 
 	/* Check to see if the sb checksums correctly */
-	if (lfs_sb_cksum(&(sbi->lfs->lfs_dlfs)) != lfs_sb_getcksum(sbi->lfs)) {
+	if (lfs_sb_cksum(sbi->lfs) != lfs_sb_getcksum(sbi->lfs)) {
 		if (flags & VERBOSE)
 			printf("LFS bad superblock at %" PRIu64 "\n",
 				BLK_CNT);
@@ -318,9 +318,10 @@ lfs_scan(struct sblockinfo *sbi, int n)
 		break;
 	case SECOND_SBLOCK_ADDRESS:
 		/* copy the path of last mount */
-		namesize = MIN(sizeof(sbi->lfs_path),
-			       sizeof(sbi->lfs->lfs_dlfs.dlfs_fsmnt));
-		(void)memcpy(sbi->lfs_path, sbi->lfs->lfs_dlfs.dlfs_fsmnt,
+		namesize = MIN(sizeof(sbi->lfs_path), MIN(
+			       sizeof(sbi->lfs->lfs_dlfs_u.u_32.dlfs_fsmnt),
+			       sizeof(sbi->lfs->lfs_dlfs_u.u_64.dlfs_fsmnt)));
+		(void)memcpy(sbi->lfs_path, lfs_sb_getfsmnt(sbi->lfs),
 			     namesize);
 		sbi->lfs_path[namesize - 1] = '\0';
 		/* print now that we have the info */
@@ -381,7 +382,7 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 				break;
 			case FSTYPE_NONE:
 				/* maybe LFS? */
-				if (sbinfo.lfs->lfs_magic == LFS_MAGIC)
+				if (sbinfo.lfs->lfs_dlfs_u.u_32.dlfs_magic == LFS_MAGIC)
 					lfs_scan(&sbinfo, n);
 				break;
 			default:
