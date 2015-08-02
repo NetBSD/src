@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.249 2015/08/02 18:14:16 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.250 2015/08/02 18:18:10 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.249 2015/08/02 18:14:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.250 2015/08/02 18:18:10 dholland Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -2366,7 +2366,11 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 #ifdef DIAGNOSTIC
-	KASSERT(fs->lfs_magic == LFS_MAGIC);
+	if (fs->lfs_is64) {
+		KASSERT(fs->lfs_dlfs_u.u_64.dlfs_magic == LFS64_MAGIC);
+	} else {
+		KASSERT(fs->lfs_dlfs_u.u_32.dlfs_magic == LFS_MAGIC);
+	}
 #endif
 	/*
 	 * If we can write one superblock while another is in
@@ -2388,13 +2392,16 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 		lfs_sb_setotstamp(fs, time_second);
 	lfs_sb_settstamp(fs, time_second);
 
+	/* The next chunk of code relies on this assumption */
+	CTASSERT(sizeof(struct dlfs) == sizeof(struct dlfs64));
+
 	/* Checksum the superblock and copy it into a buffer. */
-	lfs_sb_setcksum(fs, lfs_sb_cksum(&(fs->lfs_dlfs)));
+	lfs_sb_setcksum(fs, lfs_sb_cksum(fs));
 	bp = lfs_newbuf(fs, devvp,
 	    LFS_FSBTODB(fs, daddr), LFS_SBPAD, LFS_NB_SBLOCK);
+	memcpy(bp->b_data, &fs->lfs_dlfs_u, sizeof(struct dlfs));
 	memset((char *)bp->b_data + sizeof(struct dlfs), 0,
 	    LFS_SBPAD - sizeof(struct dlfs));
-	*(struct dlfs *)bp->b_data = fs->lfs_dlfs;
 
 	bp->b_cflags |= BC_BUSY;
 	bp->b_flags = (bp->b_flags & ~B_READ) | B_ASYNC;

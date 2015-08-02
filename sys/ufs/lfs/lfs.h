@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.170 2015/08/02 18:12:59 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.171 2015/08/02 18:18:10 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -570,11 +570,43 @@ struct segsum {
 
 /*
  * On-disk super block.
+ *
+ * We have separate superblock structures for the 32-bit and 64-bit
+ * LFS, and accessor functions to hide the differences.
+ *
+ * For lfs64, the format version is always 2; version 1 lfs is old.
+ * For both, the inode format version is 0; for lfs32 this selects the
+ * same 32-bit inode as always, and for lfs64 this selects the larger
+ * 64-bit inode structure we got from ffsv2.
+ *
+ * In lfs64:
+ *   - inode numbers are still 32 bit
+ *   - segments may not be larger than 4G (counted in bytes)
+ *   - there may not be more than 2^32 (or perhaps 2^31) segments
+ *   - the total volume size is limited to 2^63 frags and/or 2^63
+ *     disk blocks, and probably in practice 2^63 bytes.
  */
+
+#define	       LFS_MAGIC       		0x070162
+#define        LFS_MAGIC_SWAPPED	0x62010700
+
+#define        LFS64_MAGIC     		0x19620701
+#define        LFS64_MAGIC_SWAPPED      0x01076219
+
+#define	       LFS_VERSION     		2
+
+#define LFS_MIN_SBINTERVAL     5	/* min superblock segment spacing */
+#define LFS_MAXNUMSB	       10	/* max number of superblocks */
+
+/* flags for dlfs_pflags */
+#define LFS_PF_CLEAN 0x1
+
+/* Inode format versions */
+#define LFS_44INODEFMT 0
+#define LFS_MAXINODEFMT 0
+
 struct dlfs {
-#define	       LFS_MAGIC       0x070162
 	u_int32_t dlfs_magic;	  /* 0: magic number */
-#define	       LFS_VERSION     2
 	u_int32_t dlfs_version;	  /* 4: version number */
 
 	u_int32_t dlfs_size;	  /* 8: number of blocks in fs (v1) */
@@ -627,13 +659,11 @@ struct dlfs {
 	u_int32_t dlfs_sushift;	  /* 180: fast mult/div for segusage table */
 
 	int32_t	  dlfs_maxsymlinklen; /* 184: max length of an internal symlink */
-#define LFS_MIN_SBINTERVAL     5  /* minimum superblock segment spacing */
-#define LFS_MAXNUMSB	       10 /* 188: superblock disk offsets */
-	int32_t	   dlfs_sboffs[LFS_MAXNUMSB];
+				  /* 188: superblock disk offsets */
+	int32_t	  dlfs_sboffs[LFS_MAXNUMSB];
 
 	u_int32_t dlfs_nclean;	  /* 228: Number of clean segments */
 	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 232: name mounted on */
-#define LFS_PF_CLEAN 0x1
 	u_int16_t dlfs_pflags;	  /* 322: file system persistent flags */
 	int32_t	  dlfs_dmeta;	  /* 324: total number of dirty summaries */
 	u_int32_t dlfs_minfreeseg; /* 328: segments not counted in bfree */
@@ -642,14 +672,85 @@ struct dlfs {
 	u_int32_t dlfs_ibsize;	  /* 344: size of inode blocks */
 	int32_t	  dlfs_s0addr;	  /* 348: start of segment 0 */
 	u_int64_t dlfs_tstamp;	  /* 352: time stamp */
-#define LFS_44INODEFMT 0
-#define LFS_MAXINODEFMT 0
 	u_int32_t dlfs_inodefmt;  /* 360: inode format version */
 	u_int32_t dlfs_interleave; /* 364: segment interleave */
 	u_int32_t dlfs_ident;	  /* 368: per-fs identifier */
 	u_int32_t dlfs_fsbtodb;	  /* 372: fsbtodb and dbtodsb shift constant */
 	u_int32_t dlfs_resvseg;   /* 376: segments reserved for the cleaner */
 	int8_t	  dlfs_pad[128];  /* 380: round to 512 bytes */
+/* Checksum -- last valid disk field. */
+	u_int32_t dlfs_cksum;	  /* 508: checksum for superblock checking */
+};
+
+struct dlfs64 {
+	u_int32_t dlfs_magic;	  /* 0: magic number */
+	u_int32_t dlfs_version;	  /* 4: version number (2) */
+
+	u_int64_t dlfs_size;	  /* 8: number of frags in fs (v2) */
+	u_int64_t dlfs_dsize;	  /* 16: number of disk blocks in fs */
+	u_int32_t dlfs_ssize;	  /* 24: number of bytes per segment (v2) */
+	u_int32_t dlfs_bsize;	  /* 28: file system block size */
+	u_int32_t dlfs_fsize;	  /* 32: size of frag blocks in fs */
+	u_int32_t dlfs_frag;	  /* 36: number of frags in a block in fs */
+
+/* Checkpoint region. */
+	u_int32_t dlfs_freehd;	  /* 40: start of the free inode list */
+	u_int32_t dlfs_nfiles;	  /* 44: number of allocated inodes */
+	int64_t   dlfs_bfree;	  /* 48: number of free frags */
+	int64_t	  dlfs_avail;	  /* 56: blocks available for writing */
+	int64_t	  dlfs_idaddr;	  /* 64: inode file disk address */
+	int32_t	  dlfs_uinodes;	  /* 72: inodes in cache not yet on disk */
+	u_int32_t dlfs_ifile;	  /* 76: inode file inode number */
+	int64_t	  dlfs_lastseg;	  /* 80: address of last segment written */
+	int64_t	  dlfs_nextseg;	  /* 88: address of next segment to write */
+	int64_t	  dlfs_curseg;	  /* 96: current segment being written */
+	int64_t	  dlfs_offset;	  /* 104: offset in curseg for next partial */
+	int64_t	  dlfs_lastpseg;  /* 112: address of last partial written */
+	u_int32_t dlfs_inopf;	  /* 120: inodes per frag */
+
+/* These are configuration parameters. */
+	u_int32_t dlfs_minfree;	  /* 124: minimum percentage of free blocks */
+
+/* These fields can be computed from the others. */
+	u_int64_t dlfs_maxfilesize; /* 128: maximum representable file size */
+	u_int32_t dlfs_fsbpseg;	  /* 136: frags (fsb) per segment */
+	u_int32_t dlfs_inopb;	  /* 140: inodes per block */
+	u_int32_t dlfs_ifpb;	  /* 144: IFILE entries per block */
+	u_int32_t dlfs_sepb;	  /* 148: SEGUSE entries per block */
+	u_int32_t dlfs_nindir;	  /* 152: indirect pointers per block */
+	u_int32_t dlfs_nseg;	  /* 156: number of segments */
+	u_int32_t dlfs_nspf;	  /* 160: number of sectors per fragment */
+	u_int32_t dlfs_cleansz;	  /* 164: cleaner info size in blocks */
+	u_int32_t dlfs_segtabsz;  /* 168: segment table size in blocks */
+	u_int32_t dlfs_bshift;	  /* 172: calc block number from file offset */
+	u_int32_t dlfs_ffshift;	  /* 176: fast mult/div for frag from file */
+	u_int32_t dlfs_fbshift;	  /* 180: fast mult/div for frag from block */
+	u_int64_t dlfs_bmask;	  /* 184: calc block offset from file offset */
+	u_int64_t dlfs_ffmask;	  /* 192: calc frag offset from file offset */
+	u_int64_t dlfs_fbmask;	  /* 200: calc frag offset from block offset */
+	u_int32_t dlfs_blktodb;	  /* 208: blktodb and dbtoblk shift constant */
+	u_int32_t dlfs_sushift;	  /* 212: fast mult/div for segusage table */
+
+				  /* 216: superblock disk offsets */
+	int64_t	   dlfs_sboffs[LFS_MAXNUMSB];
+
+	int32_t	  dlfs_maxsymlinklen; /* 296: max len of an internal symlink */
+	u_int32_t dlfs_nclean;	  /* 300: Number of clean segments */
+	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 304: name mounted on */
+	u_int16_t dlfs_pflags;	  /* 394: file system persistent flags */
+	int32_t	  dlfs_dmeta;	  /* 396: total number of dirty summaries */
+	u_int32_t dlfs_minfreeseg; /* 400: segments not counted in bfree */
+	u_int32_t dlfs_sumsize;	  /* 404: size of summary blocks */
+	u_int32_t dlfs_ibsize;	  /* 408: size of inode blocks */
+	u_int32_t dlfs_inodefmt;  /* 412: inode format version */
+	u_int64_t dlfs_serial;	  /* 416: serial number */
+	int64_t	  dlfs_s0addr;	  /* 424: start of segment 0 */
+	u_int64_t dlfs_tstamp;	  /* 432: time stamp */
+	u_int32_t dlfs_interleave; /* 440: segment interleave */
+	u_int32_t dlfs_ident;	  /* 444: per-fs identifier */
+	u_int32_t dlfs_fsbtodb;	  /* 448: fsbtodb and dbtodsb shift constant */
+	u_int32_t dlfs_resvseg;   /* 452: segments reserved for the cleaner */
+	int8_t	  dlfs_pad[52];   /* 456: round to 512 bytes */
 /* Checksum -- last valid disk field. */
 	u_int32_t dlfs_cksum;	  /* 508: checksum for superblock checking */
 };
@@ -671,9 +772,14 @@ struct segdelta {
  * In-memory super block.
  */
 struct lfs {
-	struct dlfs lfs_dlfs;		/* on-disk parameters */
+	union {				/* on-disk parameters */
+		struct dlfs u_32;
+		struct dlfs64 u_64;
+	} lfs_dlfs_u;
 
 /* These fields are set at mount time and are meaningless on disk. */
+	unsigned lfs_is64 : 1;		/* are we lfs64 or lfs32? */
+
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
 	u_int32_t  lfs_seglock;		/* single-thread the segment writer */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.48 2015/08/02 18:14:16 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.49 2015/08/02 18:18:10 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.48 2015/08/02 18:14:16 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.49 2015/08/02 18:18:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,14 +185,15 @@ main(int argc, char **argv)
 
 	if (sbdaddr == 0x0) {
 		/* Read the proto-superblock */
+		__CTASSERT(sizeof(struct dlfs) == sizeof(struct dlfs64));
 		get(fd, LFS_LABELPAD, sbuf, LFS_SBPAD);
-		memcpy(&(lfs_sb1.lfs_dlfs), sbuf, sizeof(struct dlfs));
+		memcpy(&lfs_sb1.lfs_dlfs_u, sbuf, sizeof(struct dlfs));
 
 		/* If that wasn't the real first sb, get the real first sb */
 		if (lfs_sb_getversion(&lfs_sb1) > 1 &&
 		    lfs_sb_getsboff(&lfs_sb1, 0) > lfs_btofsb(&lfs_sb1, LFS_LABELPAD))
 			get(fd, lfs_fsbtob(&lfs_sb1, lfs_sb_getsboff(&lfs_sb1, 0)),
-			    &(lfs_sb1.lfs_dlfs), sizeof(struct dlfs));
+			    &lfs_sb1.lfs_dlfs_u, sizeof(struct dlfs));
 	
 		/*
 	 	* Read the second superblock and figure out which check point is
@@ -201,7 +202,7 @@ main(int argc, char **argv)
 		get(fd,
 		    fsbtobyte(&lfs_sb1, lfs_sb_getsboff(&lfs_sb1, 1)),
 		    sbuf, LFS_SBPAD);
-		memcpy(&(lfs_sb2.lfs_dlfs), sbuf, sizeof(struct dlfs));
+		memcpy(&lfs_sb2.lfs_dlfs_u, sbuf, sizeof(struct dlfs));
 	
 		lfs_master = &lfs_sb1;
 		if (lfs_sb_getversion(&lfs_sb1) > 1) {
@@ -220,7 +221,7 @@ main(int argc, char **argv)
 	} else {
 		/* Read the first superblock */
 		get(fd, dbtob((off_t)sbdaddr), sbuf, LFS_SBPAD);
-		memcpy(&(lfs_sb1.lfs_dlfs), sbuf, sizeof(struct dlfs));
+		memcpy(&lfs_sb1.lfs_dlfs_u, sbuf, sizeof(struct dlfs));
 		lfs_master = &lfs_sb1;
 	}
 
@@ -682,11 +683,13 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 		    sump->ss_sumsum != cksum (&sump->ss_datasum, 
 			      lfs_sb_getsumsize(lfsp) - sizeof(sump->ss_sumsum))) {
 			sbp = (struct lfs *)sump;
-			if ((sb = (sbp->lfs_magic == LFS_MAGIC))) {
+			if ((sb = (sbp->lfs_dlfs_u.u_32.dlfs_magic == LFS_MAGIC))) {
 				printf("Superblock at 0x%x\n",
 				       (unsigned)lfs_btofsb(lfsp, sum_offset));
 				if (dump_sb)  {
-					get(fd, sum_offset, &(lfs_sb.lfs_dlfs),
+					__CTASSERT(sizeof(struct dlfs) ==
+						   sizeof(struct dlfs64));
+					get(fd, sum_offset, &(lfs_sb.lfs_dlfs_u),
 					    sizeof(struct dlfs));
 					dump_super(&lfs_sb);
 				}
@@ -727,7 +730,7 @@ dump_super(struct lfs *lfsp)
 	int i;
 
  	(void)printf("    %s0x%-8x  %s0x%-8x  %s%-10ju\n",
- 		     "magic    ", lfsp->lfs_magic,
+ 		     "magic    ", lfsp->lfs_dlfs_u.u_32.dlfs_magic,
  		     "version  ", lfs_sb_getversion(lfsp),
  		     "size     ", (uintmax_t)lfs_sb_getsize(lfsp));
  	(void)printf("    %s%-10d  %s%-10ju  %s%-10d\n",
