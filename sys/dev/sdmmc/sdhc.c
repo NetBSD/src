@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.68 2015/08/02 07:14:10 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.69 2015/08/02 11:26:21 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.68 2015/08/02 07:14:10 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.69 2015/08/02 11:26:21 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1367,7 +1367,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	/* Set DMA start address. */
 	if (ISSET(hp->flags, SHF_USE_ADMA2_MASK) && cmd->c_datalen > 0) {
 		for (int seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
-			paddr_t paddr =
+			bus_addr_t paddr =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
 			uint16_t len =
 			    cmd->c_dmamap->dm_segs[seg].ds_len == 65536 ?
