@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.30 2015/08/01 21:20:46 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.31 2015/08/02 00:24:45 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -100,10 +100,10 @@ tegrartc0	at tegraio?		# RTC
 # SDMMC
 sdhc2		at tegraio? port 2	# SDMMC3 (SD card)
 sdmmc2		at sdhc2
-#sdhc3		at tegraio? port 3	# SDMMC4 (eMMC)
-#sdmmc3		at sdhc3
+sdhc3		at tegraio? port 3	# SDMMC4 (eMMC)
+sdmmc3		at sdhc3
 
-#ld0		at sdmmc3		# eMMC
+ld0		at sdmmc3		# eMMC
 ld1		at sdmmc2		# SD card
 
 # SATA
