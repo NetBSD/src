@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.5 2015/08/02 18:10:08 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.6 2015/08/02 18:14:16 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -244,7 +244,7 @@
 	    ((IN) / lfs_sb_getsepb(F)) + lfs_sb_getcleansz(F),		\
 	    lfs_sb_getbsize(F), 0, &(BP))) != 0)			\
 		panic("lfs: ifile read: %d", _e);			\
-	if ((F)->lfs_version == 1)					\
+	if (lfs_sb_getversion(F) == 1)					\
 		(SP) = (SEGUSE *)((SEGUSE_V1 *)(BP)->b_data +		\
 			((IN) & (lfs_sb_getsepb(F) - 1)));		\
 	else								\
@@ -278,7 +278,7 @@
 	(IN) / lfs_sb_getifpb(F) + lfs_sb_getcleansz(F) + lfs_sb_getsegtabsz(F), \
 	lfs_sb_getbsize(F), 0, &(BP))) != 0)				\
 		panic("lfs: ifile ino %d read %d", (int)(IN), _e);	\
-	if ((F)->lfs_version == 1)					\
+	if (lfs_sb_getversion(F) == 1)					\
 		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data +		\
 				 (IN) % lfs_sb_getifpb(F));		\
 	else								\
@@ -332,7 +332,7 @@
  * Always called with the segment lock held.
  */
 #define LFS_GET_HEADFREE(FS, CIP, BP, FREEP) do {			\
-	if ((FS)->lfs_version > 1) {					\
+	if (lfs_sb_getversion(FS) > 1) {				\
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
 		lfs_sb_setfreehd(FS, (CIP)->free_head);			\
 		brelse(BP, 0);						\
@@ -342,7 +342,7 @@
 
 #define LFS_PUT_HEADFREE(FS, CIP, BP, VAL) do {				\
 	lfs_sb_setfreehd(FS, VAL);					\
-	if ((FS)->lfs_version > 1) {					\
+	if (lfs_sb_getversion(FS) > 1) {				\
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
 		(CIP)->free_head = (VAL);				\
 		LFS_BWRITE_LOG(BP);					\
@@ -371,7 +371,7 @@
  * On-disk segment summary information
  */
 
-#define SEGSUM_SIZE(fs) ((fs)->lfs_version == 1 ? sizeof(SEGSUM_V1) : sizeof(SEGSUM))
+#define SEGSUM_SIZE(fs) (lfs_sb_getversion(fs) == 1 ? sizeof(SEGSUM_V1) : sizeof(SEGSUM))
 
 /*
  * Super block.
@@ -415,7 +415,7 @@
 #define LFS_DEF_SB_ACCESSOR(t, f) LFS_DEF_SB_ACCESSOR_FULL(t, t, f)
 
 #define lfs_magic lfs_dlfs.dlfs_magic
-#define lfs_version lfs_dlfs.dlfs_version
+LFS_DEF_SB_ACCESSOR(u_int32_t, version);
 LFS_DEF_SB_ACCESSOR_FULL(u_int64_t, u_int32_t, size);
 LFS_DEF_SB_ACCESSOR(u_int32_t, ssize);
 LFS_DEF_SB_ACCESSOR_FULL(u_int64_t, u_int32_t, dsize);
@@ -579,7 +579,7 @@ lfs_btofsb(STRUCT_LFS *fs, uint64_t b)
 	    ? lfs_sb_getbsize(fs) \
 	    : (lfs_fragroundup(fs, lfs_blkoff(fs, (dp)->di_size))))
 
-#define	lfs_segsize(fs)	((fs)->lfs_version == 1 ?	     		\
+#define	lfs_segsize(fs)	(lfs_sb_getversion(fs) == 1 ?	     		\
 			   lfs_lblktosize((fs), lfs_sb_getssize(fs)) :	\
 			   lfs_sb_getssize(fs))
 /* XXX segtod produces a result in frags despite the 'd' */

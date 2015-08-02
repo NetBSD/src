@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.51 2015/08/02 18:10:08 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.52 2015/08/02 18:14:16 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -272,7 +272,7 @@ setup(const char *dev)
 			}
 			fp = (FINFO *)(sp + 1);
 			bc = howmany(sp->ss_ninos, LFS_INOPB(fs)) <<
-				(fs->lfs_version > 1 ? lfs_sb_getffshift(fs) :
+				(lfs_sb_getversion(fs) > 1 ? lfs_sb_getffshift(fs) :
 						       lfs_sb_getbshift(fs));
 			for (i = 0; i < sp->ss_nfinfo; i++) {
 				bc += fp->fi_lastlength + ((fp->fi_nblocks - 1)
@@ -334,7 +334,7 @@ setup(const char *dev)
 		pwarn("lfs_frag  = %lu\n", (unsigned long) lfs_sb_getfrag(fs));
 		pwarn("lfs_inopb = %lu\n", (unsigned long) lfs_sb_getinopb(fs));
 	}
-	if (fs->lfs_version == 1)
+	if (lfs_sb_getversion(fs) == 1)
 		maxfsblock = lfs_blkstofrags(fs, lfs_sb_getsize(fs));
 	else
 		maxfsblock = lfs_sb_getsize(fs);

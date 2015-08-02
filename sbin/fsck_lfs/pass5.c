@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.33 2015/08/02 18:08:12 dholland Exp $	 */
+/* $NetBSD: pass5.c,v 1.34 2015/08/02 18:14:16 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ pass5(void)
 			avail += lfs_segtod(fs, 1);
 			if (su->su_flags & SEGUSE_SUPERBLOCK)
 				avail -= lfs_btofsb(fs, LFS_SBPAD);
-			if (i == 0 && fs->lfs_version > 1 &&
+			if (i == 0 && lfs_sb_getversion(fs) > 1 &&
 			    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
 				avail -= lfs_btofsb(fs, LFS_LABELPAD) -
 				    lfs_sb_gets0addr(fs);
@@ -169,7 +169,7 @@ pass5(void)
 	}
 
 	labelskew = 0;
-	if (fs->lfs_version > 1 &&
+	if (lfs_sb_getversion(fs) > 1 &&
 	    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
 		labelskew = lfs_btofsb(fs, LFS_LABELPAD);
 	if (lfs_sb_getbfree(fs) > lfs_sb_getdsize(fs) - bb - labelskew ||
