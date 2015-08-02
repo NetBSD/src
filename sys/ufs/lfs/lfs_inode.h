@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.7 2014/05/26 19:12:43 ryoon Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.8 2015/08/02 18:12:41 dholland Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
@@ -221,7 +221,7 @@ struct inode {
  */
 struct lfs_inode_ext {
 	off_t	  lfs_osize;		/* size of file on disk */
-	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
+	u_int64_t lfs_effnblocks;  /* number of blocks when i/o completes */
 	size_t	  lfs_fragsize[ULFS_NDADDR]; /* size of on-disk direct blocks */
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */

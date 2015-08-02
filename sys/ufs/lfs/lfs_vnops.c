@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.278 2015/07/28 05:09:35 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.279 2015/08/02 18:12:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.278 2015/07/28 05:09:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.279 2015/08/02 18:12:41 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1186,7 +1186,7 @@ lfs_getattr(void *v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = lfs_fsbtob(fs, (u_quad_t)ip->i_lfs_effnblks);
+	vap->va_bytes = lfs_fsbtob(fs, ip->i_lfs_effnblks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	fstrans_done(vp->v_mount);
