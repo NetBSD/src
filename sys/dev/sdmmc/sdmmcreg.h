@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.16 2015/08/02 21:44:36 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.17 2015/08/02 22:47:05 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -135,12 +135,14 @@
 #define EXT_CSD_STRUCTURE_VER_1_2	2	/* Version 4.1-4.2-4.3 */
 
 /* EXT_CSD_CARD_TYPE */
-/* The only currently valid values for this field are 0x01, 0x03, 0x07,
- * 0x0B and 0x0F. */
 #define EXT_CSD_CARD_TYPE_F_26M		(1 << 0)
 #define EXT_CSD_CARD_TYPE_F_52M		(1 << 1)
 #define EXT_CSD_CARD_TYPE_F_52M_1_8V	(1 << 2)
 #define EXT_CSD_CARD_TYPE_F_52M_1_2V	(1 << 3)
+#define EXT_CSD_CARD_TYPE_F_HS200_1_8V	(1 << 4)
+#define EXT_CSD_CARD_TYPE_F_HS200_1_2V	(1 << 5)
+#define EXT_CSD_CARD_TYPE_F_HS400_1_8V	(1 << 6)
+#define EXT_CSD_CARD_TYPE_F_HS400_1_2V	(1 << 7)
 #define EXT_CSD_CARD_TYPE_26M		0x01
 #define EXT_CSD_CARD_TYPE_52M		0x03
 #define EXT_CSD_CARD_TYPE_52M_V18	0x07
