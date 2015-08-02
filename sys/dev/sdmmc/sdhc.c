@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.69 2015/08/02 11:26:21 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.70 2015/08/02 11:28:01 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.69 2015/08/02 11:26:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.70 2015/08/02 11:28:01 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1405,7 +1405,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		HCLR1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT);
 		HSET1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT_ADMA2);
 
-		const paddr_t desc_addr = hp->adma_map->dm_segs[0].ds_addr;
+		const bus_addr_t desc_addr = hp->adma_map->dm_segs[0].ds_addr;
 
 		HWRITE4(hp, SDHC_ADMA_SYSTEM_ADDR, desc_addr & 0xffffffff);
 		if (ISSET(hp->flags, SHF_USE_ADMA2_64)) {
