@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.35 2015/05/06 15:57:08 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.36 2015/08/02 03:29:22 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.35 2015/05/06 15:57:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.36 2015/08/02 03:29:22 manu Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -824,7 +824,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if (used_syncer)
 		vfs_syncer_remove_from_worklist(mp);
 	error = 0;
-	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+	if (((mp->mnt_flag & MNT_RDONLY) == 0) && ((flags & MNT_FORCE) == 0)) {
 		error = VFS_SYNC(mp, MNT_WAIT, l->l_cred);
 	}
 	if (error == 0 || (flags & MNT_FORCE)) {
