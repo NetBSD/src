@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.7 2015/08/02 18:18:10 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.8 2015/08/02 18:18:46 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -562,6 +562,10 @@ lfs_sb_setfsmnt(STRUCT_LFS *fs, const char *str)
 			sizeof(fs->lfs_dlfs_u.u_32.dlfs_fsmnt));
 	}
 }
+
+/* Highest addressable fsb */
+#define LFS_MAX_DADDR(fs) \
+	((fs)->lfs_is64 ? 0x7fffffffffffffff : 0x7fffffff)
 
 /* LFS_NINDIR is the number of indirects in a file system block. */
 #define	LFS_NINDIR(fs)	(lfs_sb_getnindir(fs))

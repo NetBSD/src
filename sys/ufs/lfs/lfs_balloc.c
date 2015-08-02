@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.85 2015/08/02 18:08:13 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.86 2015/08/02 18:18:46 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.85 2015/08/02 18:08:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.86 2015/08/02 18:18:46 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -219,8 +219,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	if (error)
 		return (error);
 
-	daddr = (daddr_t)((int32_t)daddr); /* XXX ondisk32 */
-	KASSERT(daddr <= LFS_MAX_DADDR);
+	KASSERT(daddr <= LFS_MAX_DADDR(fs));
 
 	/*
 	 * Do byte accounting all at once, so we can gracefully fail *before*
