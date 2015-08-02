@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.37 2015/07/28 05:09:34 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.38 2015/08/02 18:08:12 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ static int nnewblocks;
  * Account for this change in the segment table.
  */
 static void
-rfw_update_single(struct uvnode *vp, daddr_t lbn, ulfs_daddr_t ndaddr, int size)
+rfw_update_single(struct uvnode *vp, daddr_t lbn, ulfs_daddr_t ndaddr, size_t size)
 {
 	SEGUSE *sup;
 	struct ubuf *bp;
