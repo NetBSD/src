@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.49 2015/07/28 05:09:34 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.50 2015/08/02 17:56:24 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -334,7 +334,7 @@ setup(const char *dev)
 		pwarn("lfs_inopb = %lu\n", (unsigned long) lfs_sb_getinopb(fs));
 	}
 	if (fs->lfs_version == 1)
-		maxfsblock = lfs_sb_getsize(fs) * (lfs_sb_getbsize(fs) / dev_bsize);
+		maxfsblock = lfs_blkstofrags(fs, lfs_sb_getsize(fs));
 	else
 		maxfsblock = lfs_sb_getsize(fs);
 	maxfilesize = calcmaxfilesize(lfs_sb_getbshift(fs));
