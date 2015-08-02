@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.247 2015/08/02 18:10:55 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.248 2015/08/02 18:12:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.247 2015/08/02 18:10:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.248 2015/08/02 18:12:41 dholland Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -1215,8 +1215,8 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		      PRId64 "\n", (int)ip->i_number, ip->i_size, cdp->di_size));
 	}
 	if (ip->i_lfs_effnblks != ip->i_ffs1_blocks) {
-		DLOG((DLOG_SEG, "lfs_writeinode: cleansing ino %d eff %d != nblk %d)"
-		      " at %jx\n", ip->i_number, ip->i_lfs_effnblks,
+		DLOG((DLOG_SEG, "lfs_writeinode: cleansing ino %d eff %jd != nblk %d)"
+		      " at %jx\n", ip->i_number, (intmax_t)ip->i_lfs_effnblks,
 		      ip->i_ffs1_blocks, (uintmax_t)lfs_sb_getoffset(fs)));
 		for (daddrp = cdp->di_db; daddrp < cdp->di_ib + ULFS_NIADDR;
 		     daddrp++) {
@@ -1259,8 +1259,8 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			LFS_CLR_UINO(ip, IN_MODIFIED);
 		else {
 			DLOG((DLOG_VNODE, "lfs_writeinode: ino %d: real "
-			    "blks=%d, eff=%d\n", ip->i_number,
-			    ip->i_ffs1_blocks, ip->i_lfs_effnblks));
+			    "blks=%d, eff=%jd\n", ip->i_number,
+			    ip->i_ffs1_blocks, (intmax_t)ip->i_lfs_effnblks));
 		}
 	}
 
@@ -2108,9 +2108,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		if (bp->b_lblkno < 0 && bp->b_vp != devvp && bp->b_vp &&
 		   VTOI(bp->b_vp)->i_ffs1_blocks !=
 		   VTOI(bp->b_vp)->i_lfs_effnblks) {
-			DLOG((DLOG_VNODE, "lfs_writeseg: cleansing ino %d (%d != %d)\n",
+			DLOG((DLOG_VNODE, "lfs_writeseg: cleansing ino %d (%jd != %d)\n",
 			      VTOI(bp->b_vp)->i_number,
-			      VTOI(bp->b_vp)->i_lfs_effnblks,
+			      (intmax_t)VTOI(bp->b_vp)->i_lfs_effnblks,
 			      VTOI(bp->b_vp)->i_ffs1_blocks));
 			/* Make a copy we'll make changes to */
 			newbp = lfs_newbuf(fs, bp->b_vp, bp->b_lblkno,

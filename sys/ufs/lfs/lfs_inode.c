@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.141 2015/08/02 18:08:13 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.142 2015/08/02 18:12:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.141 2015/08/02 18:08:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.142 2015/08/02 18:12:41 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -575,8 +575,8 @@ done:
 #ifdef DIAGNOSTIC
 	if (oip->i_size == 0 &&
 	    (oip->i_ffs1_blocks != 0 || oip->i_lfs_effnblks != 0)) {
-		printf("lfs_truncate: truncate to 0 but %d blks/%d effblks\n",
-		       oip->i_ffs1_blocks, oip->i_lfs_effnblks);
+		printf("lfs_truncate: truncate to 0 but %d blks/%jd effblks\n",
+		       oip->i_ffs1_blocks, (intmax_t)oip->i_lfs_effnblks);
 		panic("lfs_truncate: persistent blocks");
 	}
 #endif
