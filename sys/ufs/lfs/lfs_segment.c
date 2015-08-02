@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.248 2015/08/02 18:12:41 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.249 2015/08/02 18:14:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.248 2015/08/02 18:12:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.249 2015/08/02 18:14:16 dholland Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -712,7 +712,7 @@ lfs_segwrite(struct mount *mp, int flags)
 				}
 				fs->lfs_suflags[fs->lfs_activesb][sn] =
 					segusep->su_flags;
-				if (fs->lfs_version > 1)
+				if (lfs_sb_getversion(fs) > 1)
 					++segusep;
 				else
 					segusep = (SEGUSE *)
@@ -1780,7 +1780,7 @@ lfs_initseg(struct lfs *fs)
 		}
 		brelse(bp, 0);
 		/* Segment zero could also contain the labelpad */
-		if (fs->lfs_version > 1 && sp->seg_number == 0 &&
+		if (lfs_sb_getversion(fs) > 1 && sp->seg_number == 0 &&
 		    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD)) {
 			lfs_sb_addoffset(fs,
 			    lfs_btofsb(fs, LFS_LABELPAD) - lfs_sb_gets0addr(fs));
@@ -2061,7 +2061,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	      ssp->ss_ninos));
 	sup->su_nbytes += ssp->ss_ninos * sizeof (struct ulfs1_dinode);
 	/* sup->su_nbytes += lfs_sb_getsumsize(fs); */
-	if (fs->lfs_version == 1)
+	if (lfs_sb_getversion(fs) == 1)
 		sup->su_olastmod = time_second;
 	else
 		sup->su_lastmod = time_second;
@@ -2176,7 +2176,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	 * so that it's guaranteed to be later than the inode mod times.
 	 */
 	sum = 0;
-	if (fs->lfs_version == 1)
+	if (lfs_sb_getversion(fs) == 1)
 		el_size = sizeof(u_long);
 	else
 		el_size = sizeof(u_int32_t);
@@ -2203,7 +2203,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			}
 		}
 	}
-	if (fs->lfs_version == 1)
+	if (lfs_sb_getversion(fs) == 1)
 		ssp->ss_ocreate = time_second;
 	else {
 		ssp->ss_create = time_second;
@@ -2384,7 +2384,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	mutex_exit(&lfs_lock);
 
 	/* Set timestamp of this version of the superblock */
-	if (fs->lfs_version == 1)
+	if (lfs_sb_getversion(fs) == 1)
 		lfs_sb_setotstamp(fs, time_second);
 	lfs_sb_settstamp(fs, time_second);
 

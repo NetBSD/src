@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.34 2015/07/28 05:09:34 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.35 2015/08/02 18:14:16 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -635,7 +635,7 @@ lfs_initseg(struct lfs * fs)
 		}
 		brelse(bp, 0);
 		/* Segment zero could also contain the labelpad */
-		if (fs->lfs_version > 1 && sp->seg_number == 0 &&
+		if (lfs_sb_getversion(fs) > 1 && sp->seg_number == 0 &&
 		    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD)) {
 			lfs_sb_addoffset(fs, lfs_btofsb(fs, LFS_LABELPAD) - lfs_sb_gets0addr(fs));
 			sp->seg_bytes_left -= LFS_LABELPAD - lfs_fsbtob(fs, lfs_sb_gets0addr(fs));
@@ -771,7 +771,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	ninos = (ssp->ss_ninos + LFS_INOPB(fs) - 1) / LFS_INOPB(fs);
 	sup->su_nbytes += ssp->ss_ninos * LFS_DINODE1_SIZE;
 
-	if (fs->lfs_version == 1)
+	if (lfs_sb_getversion(fs) == 1)
 		sup->su_olastmod = write_time;
 	else
 		sup->su_lastmod = write_time;
@@ -789,7 +789,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	 * block (the summary block) is skipped.  Set the create time here
 	 * so that it's guaranteed to be later than the inode mod times.
 	 */
-	if (fs->lfs_version == 1)
+	if (lfs_sb_getversion(fs) == 1)
 		el_size = sizeof(u_long);
 	else
 		el_size = sizeof(u_int32_t);
@@ -805,7 +805,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 		bremfree(*bpp);
 		(*bpp)->b_flags |= B_BUSY;
 	}
-	if (fs->lfs_version == 1)
+	if (lfs_sb_getversion(fs) == 1)
 		ssp->ss_ocreate = write_time;
 	else {
 		ssp->ss_create = write_time;
@@ -999,7 +999,7 @@ lfs_writesuper(struct lfs *fs, ulfs_daddr_t daddr)
 	struct ubuf *bp;
 
 	/* Set timestamp of this version of the superblock */
-	if (fs->lfs_version == 1)
+	if (lfs_sb_getversion(fs) == 1)
 		lfs_sb_setotstamp(fs, write_time);
 	lfs_sb_settstamp(fs, write_time);
 

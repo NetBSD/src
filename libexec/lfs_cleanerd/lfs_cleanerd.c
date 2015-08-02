@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.42 2015/08/02 18:10:07 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.43 2015/08/02 18:14:16 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ init_fs(struct clfs *fs, char *fsname)
 	free(sbuf);
 
 	/* If this is not a version 2 filesystem, complain and exit */
-	if (fs->lfs_version != 2) {
+	if (lfs_sb_getversion(fs) != 2) {
 		syslog(LOG_ERR, "%s: not a version 2 LFS", fsname);
 		return -1;
 	}

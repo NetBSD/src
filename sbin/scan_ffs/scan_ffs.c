@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.29 2015/08/02 18:08:12 dholland Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.30 2015/08/02 18:14:16 dholland Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.29 2015/08/02 18:08:12 dholland Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.30 2015/08/02 18:14:16 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -262,10 +262,10 @@ lfs_printpart(struct sblockinfo *sbi, int flag, int n)
 		(void)printf(" 4.4LFS %6d %5d %7d # %s [LFSv%d]\n",
 			lfs_sb_getfsize(sbi->lfs), lfs_sb_getbsize(sbi->lfs),
 			lfs_sb_getnseg(sbi->lfs), sbi->lfs_path, 
-			sbi->lfs->lfs_version);
+			lfs_sb_getversion(sbi->lfs));
 		break;
 	case BLOCKS:
-		(void)printf("LFSv%d", sbi->lfs->lfs_version);
+		(void)printf("LFSv%d", lfs_sb_getversion(sbi->lfs));
 		(void)printf(" sb at %" PRIu64, sbi->lfs_off + btodb(LFS_LABELPAD));
 		(void)printf(" fsid %" PRIx32, lfs_sb_getident(sbi->lfs));
 		(void)printf(" size %" PRIu64 ", last mounted on %s\n",
@@ -273,7 +273,7 @@ lfs_printpart(struct sblockinfo *sbi, int flag, int n)
 			lfs_sb_getfsize(sbi->lfs) / 512), sbi->lfs_path);
 		break;
 	default:
-		(void)printf("LFSv%d ", sbi->lfs->lfs_version);
+		(void)printf("LFSv%d ", lfs_sb_getversion(sbi->lfs));
 		(void)printf("at %" PRIu64, sbi->lfs_off);
 		(void)printf(" size %" PRIu64 ", last mounted on %s\n",
 			(lfs_sb_getsize(sbi->lfs) *

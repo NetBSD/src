@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.38 2015/08/02 18:11:36 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.39 2015/08/02 18:14:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.38 2015/08/02 18:11:36 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.39 2015/08/02 18:14:16 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,7 +346,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 
 
 	/* Set version first of all since it is used to compute other fields */
-	fs->lfs_version = version;
+	lfs_sb_setversion(fs, version);
 
 	/* If partition is not an LFS partition, warn that that is the case */
 	if (strcmp(dkw->dkw_ptype, DKW_PTYPE_LFS) != 0) {
@@ -421,7 +421,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		lfs_sb_setnindir(fs, bsize / sizeof(int32_t));
 	}
 
-	if (fs->lfs_version == 1) {
+	if (lfs_sb_getversion(fs) == 1) {
 		lfs_sb_setsumsize(fs, LFS_V1_SUMMARY_SIZE);
 		lfs_sb_setsegshift(fs, lfs_log2(ssize));
 		if (1 << lfs_sb_getsegshift(fs) != ssize)
@@ -527,8 +527,8 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 * Now that we've determined what we're going to do, announce it
 	 * to the user.
 	 */
-        printf("Creating a version %d LFS", fs->lfs_version);
-        if (fs->lfs_version > 1)
+        printf("Creating a version %d LFS", lfs_sb_getversion(fs));
+        if (lfs_sb_getversion(fs) > 1)
                 printf(" with roll-forward ident 0x%x", lfs_sb_getident(fs));
         printf("\n");   
         fssize = (double)lfs_sb_getnseg(fs);
@@ -589,7 +589,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		sb_addr = ((i * sb_interval) * lfs_segtod(fs, 1))
 		    + lfs_sb_getsboff(fs, 0);
 		/* Segment 0 eats the label, except for version 1 */
-		if (fs->lfs_version > 1 && lfs_sb_gets0addr(fs) < label_fsb)
+		if (lfs_sb_getversion(fs) > 1 && lfs_sb_gets0addr(fs) < label_fsb)
 			sb_addr -= label_fsb - start;
 		if (sb_addr + sizeof(struct dlfs)
 		    >= LFS_DBTOFSB(fs, dkw->dkw_size))
@@ -789,7 +789,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
                         lfs_sb_addavail(fs, lfs_segtod(fs, 1));
                         if (segp->su_flags & SEGUSE_SUPERBLOCK)
                                 lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_SBPAD));
-                        if (i == 0 && fs->lfs_version > 1 &&
+                        if (i == 0 && lfs_sb_getversion(fs) > 1 &&
                             lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
                                 lfs_sb_subavail(fs, lfs_btofsb(fs, LFS_LABELPAD) -
                                     lfs_sb_gets0addr(fs));
@@ -803,7 +803,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
         lfs_sb_subavail(fs, lfs_segtod(fs, (lfs_sb_getminfreeseg(fs) - (lfs_sb_getminfreeseg(fs) / 2))));
 
         labelskew = 0;
-        if (fs->lfs_version > 1 && lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
+        if (lfs_sb_getversion(fs) > 1 && lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
                 labelskew = lfs_btofsb(fs, LFS_LABELPAD);
         lfs_sb_setbfree(fs, lfs_sb_getdsize(fs) - labelskew - (ubb + bb) / 2);
 

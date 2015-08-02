@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.50 2015/08/02 18:10:08 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.51 2015/08/02 18:14:16 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -526,7 +526,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	}
 
 	/* Compatibility */
-	if (fs->lfs_version < 2) {
+	if (lfs_sb_getversion(fs) < 2) {
 		lfs_sb_setsumsize(fs, LFS_V1_SUMMARY_SIZE);
 		lfs_sb_setibsize(fs, lfs_sb_getbsize(fs));
 		lfs_sb_sets0addr(fs, lfs_sb_getsboff(fs, 0));
@@ -695,11 +695,11 @@ lfs_verify(struct lfs *sb0, struct lfs *sb1, struct uvnode *devvp, int debug)
 		      (uintmax_t) lfs_sb_getserial(sb0),
 		      (uintmax_t) lfs_sb_getserial(sb1));
 
-	if ((sb0->lfs_version == 1 &&
+	if ((lfs_sb_getversion(sb0) == 1 &&
 		lfs_sb_getotstamp(sb0) != lfs_sb_getotstamp(sb1)) ||
-	    (sb0->lfs_version > 1 &&
+	    (lfs_sb_getversion(sb0) > 1 &&
 		lfs_sb_getserial(sb0) != lfs_sb_getserial(sb1))) {
-		if (sb0->lfs_version == 1) {
+		if (lfs_sb_getversion(sb0) == 1) {
 			if (lfs_sb_getotstamp(sb0) > lfs_sb_getotstamp(sb1)) {
 				osb = sb1;
 				nsb = sb0;
@@ -756,7 +756,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 
 	/* Count the blocks. */
 	nblocks = howmany(sp->ss_ninos, LFS_INOPB(fs));
-	bc = nblocks << (fs->lfs_version > 1 ? lfs_sb_getffshift(fs) : lfs_sb_getbshift(fs));
+	bc = nblocks << (lfs_sb_getversion(fs) > 1 ? lfs_sb_getffshift(fs) : lfs_sb_getbshift(fs));
 	assert(bc >= 0);
 
 	fp = (FINFO *) (sp + 1);
@@ -926,7 +926,7 @@ extend_ifile(struct lfs *fs)
 	max = i + lfs_sb_getifpb(fs);
 	lfs_sb_subbfree(fs, lfs_btofsb(fs, lfs_sb_getbsize(fs)));
 
-	if (fs->lfs_version == 1) {
+	if (lfs_sb_getversion(fs) == 1) {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
 			ifp_v1->if_version = 1;
 			ifp_v1->if_daddr = LFS_UNUSED_DADDR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.24 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.25 2015/08/02 18:14:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.24 2015/07/28 05:09:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.25 2015/08/02 18:14:16 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -395,7 +395,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			goto err1;
 		}
 	}
-	if (fs->lfs_version > 1) {
+	if (lfs_sb_getversion(fs) > 1) {
 		if (ssp->ss_serial != nextserial) {
 			DLOG((DLOG_RF, "Unexpected serial number at 0x%" PRIx64
 			      "\n", offset));
@@ -533,7 +533,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	brelse(bp, BC_AGE);
 
 	/* XXX should we update the serial number even for bad psegs? */
-	if ((flags & CHECK_UPDATE) && offset > 0 && fs->lfs_version > 1)
+	if ((flags & CHECK_UPDATE) && offset > 0 && lfs_sb_getversion(fs) > 1)
 		lfs_sb_setserial(fs, nextserial);
 	return offset;
 }
@@ -563,7 +563,7 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 	 * monotonically increasing serial number instead of a timestamp.
 	 */
 	do_rollforward = (!(lfs_sb_getpflags(fs) & LFS_PF_CLEAN) &&
-			  lfs_do_rfw && fs->lfs_version > 1 && p != NULL);
+			  lfs_do_rfw && lfs_sb_getversion(fs) > 1 && p != NULL);
 	if (do_rollforward) {
 		u_int64_t nextserial;
 		/*
