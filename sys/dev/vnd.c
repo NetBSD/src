@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.246 2015/07/28 13:12:47 prlw1 Exp $	*/
+/*	$NetBSD: vnd.c,v 1.247 2015/08/02 11:40:41 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.246 2015/07/28 13:12:47 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.247 2015/08/02 11:40:41 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -343,6 +343,8 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if ((error = vndlock(sc)) != 0)
 		return error;
 
+	mutex_enter(&sc->sc_dkdev.dk_openlock);
+
 	if ((sc->sc_flags & VNF_CLEARING) != 0) {
 		error = ENXIO;
 		goto done;
@@ -403,6 +405,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
 
  done:
+	mutex_exit(&sc->sc_dkdev.dk_openlock);
 	vndunlock(sc);
 	return error;
 }
@@ -425,6 +428,8 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	if ((error = vndlock(sc)) != 0)
 		return error;
 
+	mutex_enter(&sc->sc_dkdev.dk_openlock);
+
 	part = DISKPART(dev);
 
 	/* ...that much closer to allowing unconfiguration... */
@@ -445,6 +450,8 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 		if ((sc->sc_flags & VNF_KLABEL) == 0)
 			sc->sc_flags &= ~VNF_VLABEL;
 	}
+
+	mutex_exit(&sc->sc_dkdev.dk_openlock);
 
 	vndunlock(sc);
 
