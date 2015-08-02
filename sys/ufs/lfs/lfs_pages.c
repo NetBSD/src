@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.5 2015/07/28 05:09:34 dholland Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.6 2015/08/02 18:10:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.5 2015/07/28 05:09:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.6 2015/08/02 18:10:08 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -784,8 +784,8 @@ lfs_putpages(void *v)
 	
 		if (error == EDEADLK || error == EAGAIN) {
 			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
-			      " %d ino %d off %x (seg %d)\n", error,
-			      ip->i_number, lfs_sb_getoffset(fs),
+			      " %d ino %d off %jx (seg %d)\n", error,
+			      ip->i_number, (uintmax_t)lfs_sb_getoffset(fs),
 			      lfs_dtosn(fs, lfs_sb_getoffset(fs))));
 
 			if (oreclaim) {
@@ -799,8 +799,8 @@ lfs_putpages(void *v)
 			}
 		} else if (error) {
 			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
-			      " %d ino %d off %x (seg %d)\n", error,
-			      (int)ip->i_number, lfs_sb_getoffset(fs),
+			      " %d ino %d off %jx (seg %d)\n", error,
+			      (int)ip->i_number, (uintmax_t)lfs_sb_getoffset(fs),
 			      lfs_dtosn(fs, lfs_sb_getoffset(fs))));
 		}
 		/* genfs_do_putpages loses the interlock */

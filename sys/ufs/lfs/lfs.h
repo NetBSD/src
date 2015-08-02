@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.168 2015/08/02 18:08:13 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.169 2015/08/02 18:10:08 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -554,7 +554,7 @@ struct segsum {
 	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
 	u_int32_t ss_datasum;		/* 4: check sum of data */
 	u_int32_t ss_magic;		/* 8: segment summary magic number */
-	int32_t	  ss_next;		/* 12: next segment */
+	int32_t	  ss_next;		/* 12: next segment (disk address) */
 	u_int32_t ss_ident;		/* 16: roll-forward fsid */
 #define ss_ocreate ss_ident /* ident is where create was in v1 */
 	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
@@ -587,7 +587,7 @@ struct dlfs {
 	u_int32_t dlfs_frag;	  /* 28: number of frags in a block in fs */
 
 /* Checkpoint region. */
-	u_int32_t dlfs_freehd;	  /* 32: start of the free list */
+	u_int32_t dlfs_freehd;	  /* 32: start of the free inode list */
 	int32_t   dlfs_bfree;	  /* 36: number of free frags */
 	u_int32_t dlfs_nfiles;	  /* 40: number of allocated inodes */
 	int32_t	  dlfs_avail;	  /* 44: blocks available for writing */
@@ -730,7 +730,7 @@ struct lfs {
 	int lfs_wrappass;		/* Allow first log wrap requester to pass */
 	int lfs_wrapstatus;		/* Wrap status */
 	int lfs_reclino;		/* Inode being reclaimed */
-	int lfs_startseg;               /* Segment we started writing at */
+	daddr_t lfs_startseg;           /* Segment we started writing at */
 	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 
 #ifdef _KERNEL

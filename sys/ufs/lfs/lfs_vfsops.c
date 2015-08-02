@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.330 2015/08/02 18:08:13 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.331 2015/08/02 18:10:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.330 2015/08/02 18:08:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.331 2015/08/02 18:10:08 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -459,7 +459,7 @@ lfs_writerd(void *arg)
  			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
 				++lfsc;
  				fs = VFSTOULFS(mp)->um_lfs;
-				int32_t ooffset = 0;
+				daddr_t ooffset = 0;
 				fsflags = SEGM_SINGLE;
 
  				mutex_enter(&lfs_lock);

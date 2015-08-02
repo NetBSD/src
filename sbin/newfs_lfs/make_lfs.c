@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.35 2015/08/02 18:08:12 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.36 2015/08/02 18:10:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.35 2015/08/02 18:08:12 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.36 2015/08/02 18:10:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,6 +209,7 @@ maxfilesize(int bshift)
 	uint64_t nptr; /* number of block pointers per block */
 	uint64_t maxblock;
 
+	/* XXX ondisk32 */
 	nptr = (1 << bshift) / sizeof(uint32_t);
 	maxblock = ULFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
 
