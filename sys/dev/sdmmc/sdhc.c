@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.66 2015/08/02 00:24:24 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.67 2015/08/02 07:07:02 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.66 2015/08/02 00:24:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.67 2015/08/02 07:07:02 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -922,7 +922,7 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, u_int *divp)
 			 << SDHC_SDCLK_XDIV_SHIFT) |
 			(((div >> 0) & SDHC_SDCLK_DIV_MASK)
 			 << SDHC_SDCLK_DIV_SHIFT);
-		//freq = hp->clkbase / div;
+		//freq = hp->clkbase / (div ? div * 2 : 1);
 		return true;
 	} else {
 		for (div = 1; div <= 256; div *= 2) {
