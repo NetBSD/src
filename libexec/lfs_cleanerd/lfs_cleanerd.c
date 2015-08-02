@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.41 2015/07/28 05:14:23 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.42 2015/08/02 18:10:07 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -380,13 +380,14 @@ check_test_pattern(BLOCK_INFO *bip)
  * Parse the partial segment at daddr, adding its information to
  * bip.	 Return the address of the next partial segment to read.
  */
-int32_t
+static daddr_t
 parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 {
 	SEGSUM *ssp;
 	IFILE *ifp;
 	BLOCK_INFO *bip, *nbip;
-	int32_t *iaddrp, idaddr, odaddr;
+	int32_t *iaddrp;
+	daddr_t idaddr, odaddr;
 	FINFO *fip;
 	struct ubuf *ifbp;
 	struct ulfs1_dinode *dip;
@@ -405,6 +406,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	 */
 	cp = fd_ptrget(fs->clfs_devvp, daddr);
 	ssp = (SEGSUM *)cp;
+	/* XXX ondisk32 */
 	iaddrp = ((int32_t *)(cp + lfs_sb_getibsize(fs))) - 1;
 	fip = (FINFO *)(cp + sizeof(SEGSUM));
 
@@ -412,16 +414,16 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	 * Check segment header magic and checksum
 	 */
 	if (ssp->ss_magic != SS_MAGIC) {
-		syslog(LOG_WARNING, "%s: sumsum magic number bad at 0x%x:"
+		syslog(LOG_WARNING, "%s: sumsum magic number bad at 0x%jx:"
 		       " read 0x%x, expected 0x%x", lfs_sb_getfsmnt(fs),
-		       (int32_t)daddr, ssp->ss_magic, SS_MAGIC);
+		       (intmax_t)daddr, ssp->ss_magic, SS_MAGIC);
 		return 0x0;
 	}
 	ck = cksum(&ssp->ss_datasum, lfs_sb_getsumsize(fs) - sizeof(ssp->ss_sumsum));
 	if (ck != ssp->ss_sumsum) {
-		syslog(LOG_WARNING, "%s: sumsum checksum mismatch at 0x%x:"
+		syslog(LOG_WARNING, "%s: sumsum checksum mismatch at 0x%jx:"
 		       " read 0x%x, computed 0x%x", lfs_sb_getfsmnt(fs),
-		       (int32_t)daddr, ssp->ss_sumsum, ck);
+		       (intmax_t)daddr, ssp->ss_sumsum, ck);
 		return 0x0;
 	}
 
@@ -443,8 +445,8 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		 * If we don't have either one, it's an error.
 		 */
 		if (fic >= ssp->ss_nfinfo && *iaddrp != daddr) {
-			syslog(LOG_WARNING, "%s: bad pseg at %x (seg %d)",
-			       lfs_sb_getfsmnt(fs), odaddr, lfs_dtosn(fs, odaddr));
+			syslog(LOG_WARNING, "%s: bad pseg at %jx (seg %d)",
+			       lfs_sb_getfsmnt(fs), (intmax_t)odaddr, lfs_dtosn(fs, odaddr));
 			*bipp = bip;
 			return 0x0;
 		}
@@ -517,8 +519,8 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 			struct ubuf *nbp;
 			SEGSUM *nssp;
 
-			syslog(LOG_WARNING, "fixing short FINFO at %x (seg %d)",
-			       odaddr, lfs_dtosn(fs, odaddr));
+			syslog(LOG_WARNING, "fixing short FINFO at %jx (seg %d)",
+			       (intmax_t)odaddr, lfs_dtosn(fs, odaddr));
 			bread(fs->clfs_devvp, odaddr, lfs_sb_getfsize(fs),
 			    0, &nbp);
 			nssp = (SEGSUM *)nbp->b_data;
@@ -527,8 +529,8 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 				lfs_sb_getsumsize(fs) - sizeof(nssp->ss_sumsum));
 			bwrite(nbp);
 #endif
-			syslog(LOG_WARNING, "zero-length FINFO at %x (seg %d)",
-			       odaddr, lfs_dtosn(fs, odaddr));
+			syslog(LOG_WARNING, "zero-length FINFO at %jx (seg %d)",
+			       (intmax_t)odaddr, lfs_dtosn(fs, odaddr));
 			continue;
 		}
 
@@ -590,8 +592,9 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 
 #ifndef REPAIR_ZERO_FINFO
 	if (ssp->ss_datasum != ck) {
-		syslog(LOG_WARNING, "%s: data checksum bad at 0x%x:"
-		       " read 0x%x, computed 0x%x", lfs_sb_getfsmnt(fs), odaddr,
+		syslog(LOG_WARNING, "%s: data checksum bad at 0x%jx:"
+		       " read 0x%x, computed 0x%x", lfs_sb_getfsmnt(fs),
+		       (intmax_t)odaddr,
 		       ssp->ss_datasum, ck);
 		*bic = obic;
 		return 0x0;
@@ -637,7 +640,7 @@ log_segment_read(struct clfs *fs, int sn)
 int
 load_segment(struct clfs *fs, int sn, BLOCK_INFO **bipp, int *bic)
 {
-	int32_t daddr;
+	daddr_t daddr;
 	int i, npseg;
 
 	daddr = lfs_sntod(fs, sn);
