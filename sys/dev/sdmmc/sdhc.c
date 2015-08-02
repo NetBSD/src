@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.71 2015/08/02 21:45:12 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.72 2015/08/02 22:01:28 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.71 2015/08/02 21:45:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.72 2015/08/02 22:01:28 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -315,13 +315,14 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	/* Determine host capabilities. */
 	if (ISSET(sc->sc_flags, SDHC_FLAG_HOSTCAPS)) {
 		caps = sc->sc_caps;
+		caps2 = sc->sc_caps2;
 	} else {
 		caps = HREAD4(hp, SDHC_CAPABILITIES);
-	}
-	if (hp->specver >= SDHC_SPEC_VERS_300) {
-		caps2 = HREAD4(hp, SDHC_CAPABILITIES2);
-	} else {
-		caps2 = 0;
+		if (hp->specver >= SDHC_SPEC_VERS_300) {
+			caps2 = HREAD4(hp, SDHC_CAPABILITIES2);
+		} else {
+			caps2 = 0;
+		}
 	}
 
 	/*

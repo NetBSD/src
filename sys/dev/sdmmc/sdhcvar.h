@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.21 2015/07/31 15:00:08 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.22 2015/08/02 22:01:28 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ struct sdhc_softc {
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
 	uint32_t		sc_caps;/* attachment provided capabilities */
+	uint32_t		sc_caps2;
 
 	int (*sc_vendor_rod)(struct sdhc_softc *, int);
 	int (*sc_vendor_write_protect)(struct sdhc_softc *);
