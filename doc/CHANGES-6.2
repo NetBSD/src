@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.223 2015/07/24 07:40:57 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.224 2015/08/02 12:51:34 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -11797,4 +11797,9 @@ sys/netinet/tcp_output.c			1.184
 	socket, make sure at least the persist timer is running.
 	Make sure that snd_win doesn't go negative.
 	[matt, ticket #1315]
+
+sys/compat/netbsd32/netbsd32_ioctl.c		1.82
+
+	Fix inverted logic when checking the size of data to copyin().
+	[maxv, ticket #1318]
 
