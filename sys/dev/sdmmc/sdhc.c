@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.73 2015/08/03 00:19:27 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.74 2015/08/03 00:44:52 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.73 2015/08/03 00:19:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.74 2015/08/03 00:44:52 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1015,7 +1015,7 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR50);
 		} else if (freq > 25000) {
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR25);
-		} else {
+		} else if (freq > 400) {
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR12);
 		}
 	}
