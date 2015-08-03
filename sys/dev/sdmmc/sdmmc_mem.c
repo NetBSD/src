@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.37 2015/08/03 05:26:53 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.38 2015/08/03 05:32:50 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.37 2015/08/03 05:26:53 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.38 2015/08/03 05:32:50 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1482,6 +1482,7 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 	int error;
 
 	SDMMC_LOCK(sc);
+	mutex_enter(&sc->sc_mtx);
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SINGLE_ONLY)) {
 		error = sdmmc_mem_single_read_block(sf, blkno, data, datalen);
@@ -1530,6 +1531,7 @@ unload:
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
 
 out:
+	mutex_exit(&sc->sc_mtx);
 	SDMMC_UNLOCK(sc);
 
 	return error;
@@ -1693,6 +1695,7 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 	int error;
 
 	SDMMC_LOCK(sc);
+	mutex_enter(&sc->sc_mtx);
 
 	if (sdmmc_chip_write_protect(sc->sc_sct, sc->sc_sch)) {
 		aprint_normal_dev(sc->sc_dev, "write-protected\n");
@@ -1749,6 +1752,7 @@ unload:
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
 
 out:
+	mutex_exit(&sc->sc_mtx);
 	SDMMC_UNLOCK(sc);
 
 	return error;
