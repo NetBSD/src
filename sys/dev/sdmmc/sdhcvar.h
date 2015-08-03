@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.22 2015/08/02 22:01:28 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.23 2015/08/03 12:11:36 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -56,6 +56,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_SINGLE_POWER_WRITE 0x00040000
 #define	SDHC_FLAG_NO_TIMEOUT	0x00080000 /* ignore timeout interrupts */
 #define	SDHC_FLAG_USE_ADMA2	0x00100000
+#define	SDHC_FLAG_POLL_CARD_DET	0x00200000 /* polling card detect */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
