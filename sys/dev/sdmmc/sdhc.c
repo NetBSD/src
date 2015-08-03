@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.74 2015/08/03 00:44:52 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.75 2015/08/03 05:24:37 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.74 2015/08/03 00:44:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.75 2015/08/03 05:24:37 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1218,8 +1218,8 @@ sdhc_wait_state(struct sdhc_host *hp, uint32_t mask, uint32_t value)
 			return 0;
 		sdmmc_delay(10);
 	}
-	aprint_error_dev(hp->sc->sc_dev, "timeout waiting for %x (state=%x)\n",
-	    value, state);
+	aprint_error_dev(hp->sc->sc_dev, "timeout waiting for mask %#x value %#x (state=%#x)\n",
+	    mask, value, state);
 	return ETIMEDOUT;
 }
 
