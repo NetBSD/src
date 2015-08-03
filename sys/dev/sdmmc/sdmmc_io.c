@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.9 2015/08/03 05:32:50 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.10 2015/08/03 10:08:51 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.9 2015/08/03 05:32:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.10 2015/08/03 10:08:51 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -231,7 +231,8 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		if (sc->sc_busclk > sf->csd.tran_speed)
 			sc->sc_busclk = sf->csd.tran_speed;
 		error =
-		    sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk);
+		    sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk,
+			false);
 		if (error)
 			aprint_error_dev(sc->sc_dev,
 			    "can't change bus clock\n");

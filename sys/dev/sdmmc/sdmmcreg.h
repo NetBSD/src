@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.17 2015/08/02 22:47:05 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.18 2015/08/03 10:08:51 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -333,6 +333,12 @@
 /* Status of Switch Function */
 #define SFUNC_STATUS_GROUP(status, group) \
 	(__bitfield((uint32_t *)(status), 400 + (group - 1) * 16, 16))
+
+#define SD_ACCESS_MODE_SDR12	0
+#define SD_ACCESS_MODE_SDR25	1
+#define SD_ACCESS_MODE_SDR50	2
+#define SD_ACCESS_MODE_SDR104	3
+#define SD_ACCESS_MODE_DDR50	4
 
 /* This assumes the response fields are in host byte order in 32-bit units.  */
 #define MMC_RSP_BITS(resp, start, len)	__bitfield((resp), (start)-8, (len))

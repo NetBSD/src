@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.17 2015/08/02 21:44:36 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.18 2015/08/03 10:08:51 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -229,6 +229,11 @@ struct sdmmc_softc {
 #define SMC_CAPS_MULTI_SEG_DMA	0x0080	/* multiple segment DMA transfer */
 #define SMC_CAPS_SD_HIGHSPEED	0x0100	/* SD high-speed timing */
 #define SMC_CAPS_MMC_HIGHSPEED	0x0200	/* MMC high-speed timing */
+#define SMC_CAPS_UHS_SDR50	0x1000	/* UHS SDR50 timing */
+#define SMC_CAPS_UHS_SDR104	0x2000	/* UHS SDR104 timing */
+#define SMC_CAPS_UHS_DDR50	0x4000	/* UHS DDR50 timing */
+#define SMC_CAPS_UHS_MASK	0x7000
+#define SMC_CAPS_MMC_HS200	0x8000	/* eMMC HS200 timing */
 
 	/* function */
 	int sc_function_count;		/* number of I/O functions (SDIO) */
@@ -254,7 +259,9 @@ struct sdmmc_softc {
 	u_int sc_clkmin;		/* host min bus clock */
 	u_int sc_clkmax;		/* host max bus clock */
 	u_int sc_busclk;		/* host bus clock */
+	bool sc_busddr;			/* host bus clock is in DDR mode */
 	int sc_buswidth;		/* host bus width */
+	const char *sc_transfer_mode;	/* current transfer mode */
 
 	callout_t sc_card_detect_ch;	/* polling card insert/remove */
 };

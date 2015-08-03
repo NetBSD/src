@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.38 2015/08/03 05:32:50 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.39 2015/08/03 10:08:51 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.38 2015/08/03 05:32:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.39 2015/08/03 10:08:51 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -95,6 +95,27 @@ static int sdmmc_mem_read_block_subr(struct sdmmc_function *, bus_dmamap_t,
     uint32_t, u_char *, size_t);
 static int sdmmc_mem_write_block_subr(struct sdmmc_function *, bus_dmamap_t,
     uint32_t, u_char *, size_t);
+
+static const struct {
+	const char *name;
+	int v;
+	int freq;
+} switch_group0_functions[] = {
+	/* Default/SDR12 */
+	{ "Default/SDR12",	 0,			 25000 },
+
+	/* High-Speed/SDR25 */
+	{ "High-Speed/SDR25",	SMC_CAPS_SD_HIGHSPEED,	 50000 },
+
+	/* SDR50 */
+	{ "SDR50",		SMC_CAPS_UHS_SDR50,	100000 },
+
+	/* SDR104 */
+	{ "SDR104",		SMC_CAPS_UHS_SDR104,	208000 },
+
+	/* DDR50 */
+	{ "DDR50",		SMC_CAPS_UHS_DDR50,	 50000 },
+};
 
 /*
  * Initialize SD/MMC memory cards and memory in SDIO "combo" cards.
@@ -221,7 +242,7 @@ mmc_mode:
 		 * Stop the clock
 		 */
 		error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch,
-		    SDMMC_SDCLK_OFF);
+		    SDMMC_SDCLK_OFF, false);
 		if (error)
 			goto out;
 
@@ -241,7 +262,8 @@ mmc_mode:
 		/*
 		 * Switch to SDR12 timing
 		 */
-		error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, 25000);
+		error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, 25000,
+		    false);
 		if (error)
 			goto out;
 
@@ -672,38 +694,39 @@ sdmmc_be512_to_bitfield512(sdmmc_bitfield512_t *buf) {
 }
 
 static int
+sdmmc_mem_select_transfer_mode(struct sdmmc_softc *sc, int support_func)
+{
+	if (ISSET(sc->sc_flags, SMF_UHS_MODE)) {
+		if (ISSET(sc->sc_caps, SMC_CAPS_UHS_SDR104) &&
+		    ISSET(support_func, SD_ACCESS_MODE_SDR104)) {
+			return SD_ACCESS_MODE_SDR104;
+		}
+		if (ISSET(sc->sc_caps, SMC_CAPS_UHS_DDR50) &&
+		    ISSET(support_func, SD_ACCESS_MODE_DDR50)) {
+			return SD_ACCESS_MODE_DDR50;
+		}
+		if (ISSET(sc->sc_caps, SMC_CAPS_UHS_SDR50) &&
+		    ISSET(support_func, SD_ACCESS_MODE_SDR50)) {
+			return SD_ACCESS_MODE_SDR50;
+		}
+	}
+	if (ISSET(sc->sc_caps, SMC_CAPS_SD_HIGHSPEED) &&
+	    ISSET(support_func, SD_ACCESS_MODE_SDR25)) {
+		return SD_ACCESS_MODE_SDR25;
+	}
+	return SD_ACCESS_MODE_SDR12;
+}
+
+static int
 sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
-	static const struct {
-		int v;
-		int freq;
-		int uhs;
-	} switch_group0_functions[] = {
-		/* Default/SDR12 */
-		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V |
-		  MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V,	 25000, 0 },
-
-		/* High-Speed/SDR25 */
-		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V |
-		  MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V,	 50000, 0 },
-
-		/* SDR50 */
-		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V,	100000, 1 },
-
-		/* SDR104 */
-		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V,	208000, 1 },
-
-#if notyet
-		/* DDR50 */
-		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V,	 50000, 1 },
-#endif
-	};
-	int host_ocr, support_func, best_func, bus_clock, error, g, i;
+	int support_func, best_func, bus_clock, error, i;
 	sdmmc_bitfield512_t status; /* Switch Function Status */
+	bool ddr = false;
 
 	/* change bus clock */
 	bus_clock = min(sc->sc_busclk, sf->csd.tran_speed);
-	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, bus_clock);
+	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, bus_clock, false);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "can't change bus clock\n");
 		return error;
@@ -730,6 +753,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		sf->width = 4;
 	}
 
+	best_func = 0;
 	if (sf->scr.sd_spec >= SCR_SD_SPEC_VER_1_10 &&
 	    ISSET(sf->csd.ccc, SD_CSD_CCC_SWITCH)) {
 		DPRINTF(("%s: switch func mode 0\n", SDMMCDEVNAME(sc)));
@@ -740,22 +764,22 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			return error;
 		}
 
-		host_ocr = sdmmc_chip_host_ocr(sc->sc_sct, sc->sc_sch);
 		support_func = SFUNC_STATUS_GROUP(&status, 1);
-		DPRINTF(("%s: support_func %#x\n", SDMMCDEVNAME(sc), support_func));
-		best_func = 0;
-		for (i = 0, g = 1;
-		    i < __arraycount(switch_group0_functions); i++, g <<= 1) {
-			if (!(switch_group0_functions[i].v & host_ocr))
+
+		for (i = 0; i < __arraycount(switch_group0_functions); i++) {
+			if (!(support_func & (1 << i)))
 				continue;
-			if (switch_group0_functions[i].uhs &&
-			    !ISSET(sc->sc_flags, SMF_UHS_MODE))
-				break;
-			if (g & support_func)
-				best_func = i;
+			DPRINTF(("%s: card supports mode %s\n",
+			    SDMMCDEVNAME(sc),
+			    switch_group0_functions[i].name));
 		}
-		if (ISSET(sc->sc_caps, SMC_CAPS_SD_HIGHSPEED) &&
-		    best_func != 0) {
+
+		best_func = sdmmc_mem_select_transfer_mode(sc, support_func);
+
+		DPRINTF(("%s: using mode %s\n", SDMMCDEVNAME(sc),
+		    switch_group0_functions[best_func].name));
+
+		if (best_func != 0) {
 			DPRINTF(("%s: switch func mode 1(func=%d)\n",
 			    SDMMCDEVNAME(sc), best_func));
 			error =
@@ -770,6 +794,9 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sf->csd.tran_speed =
 			    switch_group0_functions[best_func].freq;
 
+			if (best_func == SD_ACCESS_MODE_DDR50)
+				ddr = true;
+
 			/* Wait 400KHz x 8 clock (2.5us * 8 + slop) */
 			delay(25);
 		}
@@ -778,15 +805,19 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	/* update bus clock */
 	if (sc->sc_busclk > sf->csd.tran_speed)
 		sc->sc_busclk = sf->csd.tran_speed;
-	if (sc->sc_busclk == bus_clock)
+	if (sc->sc_busclk == bus_clock && sc->sc_busddr == ddr)
 		return 0;
 
 	/* change bus clock */
-	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk);
+	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk,
+	    ddr);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "can't change bus clock\n");
 		return error;
 	}
+
+	sc->sc_transfer_mode = switch_group0_functions[best_func].name;
+	sc->sc_busddr = ddr;
 
 	return 0;
 }
@@ -797,17 +828,16 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	int width, value, hs_timing, bus_clock, error;
 	char ext_csd[512];
 	uint32_t sectors = 0;
-	int host_ocr;
+
+	sc->sc_transfer_mode = NULL;
 
 	/* change bus clock */
 	bus_clock = min(sc->sc_busclk, sf->csd.tran_speed);
-	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, bus_clock);
+	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, bus_clock, false);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "can't change bus clock\n");
 		return error;
 	}
-
-	host_ocr = sdmmc_chip_host_ocr(sc->sc_sct, sc->sc_sch);
 
 	if (sf->csd.mmcver >= MMC_CSD_MMCVER_4_0) {
 		error = sdmmc_mem_send_cxd_data(sc,
@@ -825,7 +855,8 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			return ENOTSUP;
 		}
 
-		if (ISSET(host_ocr, MMC_OCR_1_7V_1_8V|MMC_OCR_1_8V_1_9V) &&
+		sc->sc_transfer_mode = NULL;
+		if (ISSET(sc->sc_caps, SMC_CAPS_MMC_HS200) &&
 		    ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_HS200_1_8V) {
 			sf->csd.tran_speed = 200000;	/* 200MHz SDR */
 			hs_timing = 2;
@@ -842,7 +873,42 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			return ENOTSUP;
 		}
 
-		if (!ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED)) {
+		if (hs_timing == 2) {
+			error = sdmmc_chip_signal_voltage(sc->sc_sct,
+			    sc->sc_sch, SDMMC_SIGNAL_VOLTAGE_180);
+			if (error)
+				hs_timing = 1;
+		}
+
+		if (ISSET(sc->sc_caps, SMC_CAPS_8BIT_MODE)) {
+			width = 8;
+			value = EXT_CSD_BUS_WIDTH_8;
+		} else if (ISSET(sc->sc_caps, SMC_CAPS_4BIT_MODE)) {
+			width = 4;
+			value = EXT_CSD_BUS_WIDTH_4;
+		} else {
+			width = 1;
+			value = EXT_CSD_BUS_WIDTH_1;
+		}
+
+		if (width != 1) {
+			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
+			    EXT_CSD_BUS_WIDTH, value);
+			if (error == 0)
+				error = sdmmc_chip_bus_width(sc->sc_sct,
+				    sc->sc_sch, width);
+			else {
+				DPRINTF(("%s: can't change bus width"
+				    " (%d bit)\n", SDMMCDEVNAME(sc), width));
+				return error;
+			}
+
+			/* XXXX: need bus test? (using by CMD14 & CMD19) */
+		}
+		sf->width = width;
+
+		if (hs_timing == 1 &&
+		    !ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED)) {
 			hs_timing = 0;
 		}
 		if (hs_timing) {
@@ -859,7 +925,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sc->sc_busclk = sf->csd.tran_speed;
 		if (sc->sc_busclk != bus_clock) {
 			error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch,
-			    sc->sc_busclk);
+			    sc->sc_busclk, false);
 			if (error) {
 				aprint_error_dev(sc->sc_dev,
 				    "can't change bus clock\n");
@@ -891,38 +957,17 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sf->csd.capacity = sectors;
 		}
 
-		if (ISSET(sc->sc_caps, SMC_CAPS_8BIT_MODE)) {
-			width = 8;
-			value = EXT_CSD_BUS_WIDTH_8;
-		} else if (ISSET(sc->sc_caps, SMC_CAPS_4BIT_MODE)) {
-			width = 4;
-			value = EXT_CSD_BUS_WIDTH_4;
+		if (hs_timing == 2) {
+			sc->sc_transfer_mode = "HS200";
 		} else {
-			width = 1;
-			value = EXT_CSD_BUS_WIDTH_1;
+			sc->sc_transfer_mode = NULL;
 		}
-
-		if (width != 1) {
-			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
-			    EXT_CSD_BUS_WIDTH, value);
-			if (error == 0)
-				error = sdmmc_chip_bus_width(sc->sc_sct,
-				    sc->sc_sch, width);
-			else {
-				DPRINTF(("%s: can't change bus width"
-				    " (%d bit)\n", SDMMCDEVNAME(sc), width));
-				return error;
-			}
-
-			/* XXXX: need bus test? (using by CMD14 & CMD19) */
-		}
-		sf->width = width;
 	} else {
 		if (sc->sc_busclk > sf->csd.tran_speed)
 			sc->sc_busclk = sf->csd.tran_speed;
 		if (sc->sc_busclk != bus_clock) {
 			error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch,
-			    sc->sc_busclk);
+			    sc->sc_busclk, false);
 			if (error) {
 				aprint_error_dev(sc->sc_dev,
 				    "can't change bus clock\n");
@@ -1083,11 +1128,11 @@ sdmmc_mem_decode_scr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	sf->scr.sd_spec = SCR_SD_SPEC(resp);
 	sf->scr.bus_width = SCR_SD_BUS_WIDTHS(resp);
 
-	DPRINTF(("%s: sdmmc_mem_decode_scr: %08x%08x spec=%d, bus width=%d\n",
+	DPRINTF(("%s: sdmmc_mem_decode_scr: %08x%08x ver=%d, spec=%d, bus width=%d, spec3=%d\n",
 	    SDMMCDEVNAME(sc), resp[1], resp[0],
-	    sf->scr.sd_spec, sf->scr.bus_width));
+	    ver, sf->scr.sd_spec, sf->scr.bus_width, sf->scr.sd_spec3));
 
-	if (ver != 0) {
+	if (ver != 0 && ver != 1) {
 		DPRINTF(("%s: unknown structure version: %d\n",
 		    SDMMCDEVNAME(sc), ver));
 		return EINVAL;
