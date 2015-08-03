@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.76 2015/08/03 10:08:51 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.77 2015/08/03 12:11:36 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.76 2015/08/03 10:08:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.77 2015/08/03 12:11:36 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -550,6 +550,8 @@ adma_done:
 	}
 	if (ISSET(sc->sc_flags, SDHC_FLAG_SINGLE_ONLY))
 		saa.saa_caps |= SMC_CAPS_SINGLE_ONLY;
+	if (ISSET(sc->sc_flags, SDHC_FLAG_POLL_CARD_DET))
+		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
 	hp->sdmmc = config_found(sc->sc_dev, &saa, sdhc_cfprint);
 
 	return 0;
