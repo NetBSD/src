@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.27 2015/07/28 06:19:47 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.28 2015/08/03 05:32:50 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.27 2015/07/28 06:19:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.28 2015/08/03 05:32:50 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -148,7 +148,7 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 	sdmmc_init_task(&sc->sc_discover_task, sdmmc_discover_task, sc);
 	sdmmc_init_task(&sc->sc_intr_task, sdmmc_intr_task, sc);
 
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_SDMMC);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_tskq_mtx, MUTEX_DEFAULT, IPL_SDMMC);
 	mutex_init(&sc->sc_discover_task_mtx, MUTEX_DEFAULT, IPL_SDMMC);
 	mutex_init(&sc->sc_intr_task_mtx, MUTEX_DEFAULT, IPL_SDMMC);
@@ -336,9 +336,8 @@ sdmmc_polling_card(void *arg)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)arg;
 	int card_detect;
-	int s;
 
-	s = splsdmmc();
+	mutex_enter(&sc->sc_mtx);
 	card_detect = sdmmc_chip_card_detect(sc->sc_sct, sc->sc_sch);
 	if (card_detect) {
 		if (!ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
@@ -349,7 +348,7 @@ sdmmc_polling_card(void *arg)
 			sdmmc_needs_discover(sc->sc_dev);
 		}
 	}
-	splx(s);
+	mutex_exit(&sc->sc_mtx);
 
 	callout_schedule(&sc->sc_card_detect_ch, hz);
 }
