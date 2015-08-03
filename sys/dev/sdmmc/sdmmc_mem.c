@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.41 2015/08/03 12:10:29 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.42 2015/08/03 19:17:35 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.41 2015/08/03 12:10:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.42 2015/08/03 19:17:35 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -269,7 +269,8 @@ mmc_mode:
 			goto out;
 
 		delay(1000);
-
+	}
+	if (ISSET(host_ocr, MMC_OCR_S18A)) {
 		SET(sc->sc_flags, SMF_UHS_MODE);
 	}
 
@@ -699,20 +700,20 @@ sdmmc_mem_select_transfer_mode(struct sdmmc_softc *sc, int support_func)
 {
 	if (ISSET(sc->sc_flags, SMF_UHS_MODE)) {
 		if (ISSET(sc->sc_caps, SMC_CAPS_UHS_SDR104) &&
-		    ISSET(support_func, SD_ACCESS_MODE_SDR104)) {
+		    ISSET(support_func, 1 << SD_ACCESS_MODE_SDR104)) {
 			return SD_ACCESS_MODE_SDR104;
 		}
 		if (ISSET(sc->sc_caps, SMC_CAPS_UHS_DDR50) &&
-		    ISSET(support_func, SD_ACCESS_MODE_DDR50)) {
+		    ISSET(support_func, 1 << SD_ACCESS_MODE_DDR50)) {
 			return SD_ACCESS_MODE_DDR50;
 		}
 		if (ISSET(sc->sc_caps, SMC_CAPS_UHS_SDR50) &&
-		    ISSET(support_func, SD_ACCESS_MODE_SDR50)) {
+		    ISSET(support_func, 1 << SD_ACCESS_MODE_SDR50)) {
 			return SD_ACCESS_MODE_SDR50;
 		}
 	}
 	if (ISSET(sc->sc_caps, SMC_CAPS_SD_HIGHSPEED) &&
-	    ISSET(support_func, SD_ACCESS_MODE_SDR25)) {
+	    ISSET(support_func, 1 << SD_ACCESS_MODE_SDR25)) {
 		return SD_ACCESS_MODE_SDR25;
 	}
 	return SD_ACCESS_MODE_SDR12;
