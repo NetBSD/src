@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 250108 2013-04-30 16:18:29Z luigi $*/
-/*$NetBSD: ixgbe.c,v 1.30 2015/05/09 13:08:26 christos Exp $*/
+/*$NetBSD: ixgbe.c,v 1.31 2015/08/03 05:43:01 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -807,6 +807,7 @@ ixgbe_detach(device_t dev, int flags)
 
 		evcnt_detach(&rxr->rx_packets);
 		evcnt_detach(&rxr->rx_bytes);
+		evcnt_detach(&rxr->rx_copies);
 		evcnt_detach(&rxr->no_jmbuf);
 		evcnt_detach(&rxr->rx_discarded);
 		evcnt_detach(&rxr->rx_irq);
