@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.75 2015/08/03 05:24:37 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.76 2015/08/03 10:08:51 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.75 2015/08/03 05:24:37 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.76 2015/08/03 10:08:51 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -174,7 +174,7 @@ static int	sdhc_host_maxblklen(sdmmc_chipset_handle_t);
 static int	sdhc_card_detect(sdmmc_chipset_handle_t);
 static int	sdhc_write_protect(sdmmc_chipset_handle_t);
 static int	sdhc_bus_power(sdmmc_chipset_handle_t, uint32_t);
-static int	sdhc_bus_clock(sdmmc_chipset_handle_t, int);
+static int	sdhc_bus_clock_ddr(sdmmc_chipset_handle_t, int, bool);
 static int	sdhc_bus_width(sdmmc_chipset_handle_t, int);
 static int	sdhc_bus_rod(sdmmc_chipset_handle_t, int);
 static void	sdhc_card_enable_intr(sdmmc_chipset_handle_t, int);
@@ -210,7 +210,7 @@ static struct sdmmc_chip_functions sdhc_functions = {
 
 	/* bus power, clock frequency, width and ROD(OpenDrain/PushPull) */
 	.bus_power = sdhc_bus_power,
-	.bus_clock = sdhc_bus_clock,
+	.bus_clock = NULL,	/* see sdhc_bus_clock_ddr */
 	.bus_width = sdhc_bus_width,
 	.bus_rod = sdhc_bus_rod,
 
@@ -223,6 +223,7 @@ static struct sdmmc_chip_functions sdhc_functions = {
 
 	/* UHS functions */
 	.signal_voltage = sdhc_signal_voltage,
+	.bus_clock_ddr = sdhc_bus_clock_ddr,
 };
 
 static int
@@ -418,13 +419,13 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		SET(hp->ocr, MMC_OCR_S18A);
 		aprint_normal(" SDR50");
 	}
-	if (ISSET(caps2, SDHC_SDR104_SUPP)) {
-		SET(hp->ocr, MMC_OCR_S18A);
-		aprint_normal(" SDR104");
-	}
 	if (ISSET(caps2, SDHC_DDR50_SUPP)) {
 		SET(hp->ocr, MMC_OCR_S18A);
 		aprint_normal(" DDR50");
+	}
+	if (ISSET(caps2, SDHC_SDR104_SUPP)) {
+		SET(hp->ocr, MMC_OCR_S18A);
+		aprint_normal(" SDR104 HS200");
 	}
 	if (ISSET(caps, SDHC_VOLTAGE_SUPP_1_8V)) {
 		SET(hp->ocr, MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V);
@@ -534,6 +535,14 @@ adma_done:
 		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
 		saa.saa_caps |= SMC_CAPS_SD_HIGHSPEED;
+	if (ISSET(caps2, SDHC_SDR104_SUPP))
+		saa.saa_caps |= SMC_CAPS_UHS_SDR104 |
+				SMC_CAPS_UHS_SDR50 |
+				SMC_CAPS_MMC_HS200;
+	if (ISSET(caps2, SDHC_SDR50_SUPP))
+		saa.saa_caps |= SMC_CAPS_UHS_SDR50;
+	if (ISSET(caps2, SDHC_DDR50_SUPP))
+		saa.saa_caps |= SMC_CAPS_UHS_DDR50;
 	if (ISSET(hp->flags, SHF_USE_DMA)) {
 		saa.saa_caps |= SMC_CAPS_DMA;
 		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED))
@@ -964,7 +973,7 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, u_int *divp)
  * Return zero on success.
  */
 static int
-sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
+sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 {
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	u_int div;
@@ -1007,14 +1016,19 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	}
 
 	if (hp->specver >= SDHC_SPEC_VERS_300) {
-		/* XXX DDR */
 		HCLR2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_MASK);
 		if (freq > 100000) {
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR104);
 		} else if (freq > 50000) {
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR50);
 		} else if (freq > 25000) {
-			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR25);
+			if (ddr) {
+				HSET2(hp, SDHC_HOST_CTL2,
+				    SDHC_UHS_MODE_SELECT_DDR50);
+			} else {
+				HSET2(hp, SDHC_HOST_CTL2,
+				    SDHC_UHS_MODE_SELECT_SDR25);
+			}
 		} else if (freq > 400) {
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR12);
 		}
