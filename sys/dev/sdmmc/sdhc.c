@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.72 2015/08/02 22:01:28 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.73 2015/08/03 00:19:27 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.72 2015/08/02 22:01:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.73 2015/08/03 00:19:27 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -832,7 +832,7 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	 * Select the lowest voltage according to capabilities.
 	 */
 	ocr &= hp->ocr;
-	if (ISSET(ocr, MMC_OCR_1_7V_1_8V|MMC_OCR_1_8V_1_9V|MMC_OCR_S18A)) {
+	if (ISSET(ocr, MMC_OCR_1_7V_1_8V|MMC_OCR_1_8V_1_9V)) {
 		vdd = SDHC_VOLTAGE_1_8V;
 	} else if (ISSET(ocr, MMC_OCR_2_9V_3_0V|MMC_OCR_3_0V_3_1V)) {
 		vdd = SDHC_VOLTAGE_3_0V;
