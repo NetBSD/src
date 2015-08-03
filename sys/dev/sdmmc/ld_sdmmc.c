@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.17 2015/07/27 07:53:46 skrll Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.18 2015/08/03 05:32:50 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.17 2015/07/27 07:53:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.18 2015/08/03 05:32:50 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -191,7 +191,7 @@ ld_sdmmc_dobio(void *arg)
 	struct ld_sdmmc_task *task = (struct ld_sdmmc_task *)arg;
 	struct ld_sdmmc_softc *sc = task->task_sc;
 	struct buf *bp = task->task_bp;
-	int error, s;
+	int error;
 
 	/*
 	 * I/O operation
@@ -208,13 +208,10 @@ ld_sdmmc_dobio(void *arg)
 		    bp->b_rawblkno, sc->sc_sf->csd.capacity);
 		bp->b_error = EINVAL;
 		bp->b_resid = bp->b_bcount;
-		s = splbio();
 		lddone(&sc->sc_ld, bp);
-		splx(s);
 		return;
 	}
 
-	s = splbio();
 	if (bp->b_flags & B_READ)
 		error = sdmmc_mem_read_block(sc->sc_sf, bp->b_rawblkno,
 		    bp->b_data, bp->b_bcount);
@@ -231,7 +228,6 @@ ld_sdmmc_dobio(void *arg)
 	}
 
 	lddone(&sc->sc_ld, bp);
-	splx(s);
 }
 
 static int
