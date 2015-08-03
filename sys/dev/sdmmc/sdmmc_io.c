@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.8 2015/07/28 06:17:53 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.9 2015/08/03 05:32:50 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.8 2015/07/28 06:17:53 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.9 2015/08/03 05:32:50 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -627,7 +627,6 @@ sdmmc_intr_establish(device_t dev, int (*fun)(void *), void *arg,
 {
 	struct sdmmc_softc *sc = device_private(dev);
 	struct sdmmc_intr_handler *ih;
-	int s;
 
 	if (sc->sc_sct->card_enable_intr == NULL)
 		return NULL;
@@ -647,13 +646,13 @@ sdmmc_intr_establish(device_t dev, int (*fun)(void *), void *arg,
 	ih->ih_fun = fun;
 	ih->ih_arg = arg;
 
-	s = splhigh();
+	mutex_enter(&sc->sc_mtx);
 	if (TAILQ_EMPTY(&sc->sc_intrq)) {
 		sdmmc_intr_enable(sc->sc_fn0);
 		sdmmc_chip_card_enable_intr(sc->sc_sct, sc->sc_sch, 1);
 	}
 	TAILQ_INSERT_TAIL(&sc->sc_intrq, ih, entry);
-	splx(s);
+	mutex_exit(&sc->sc_mtx);
 
 	return ih;
 }
@@ -666,18 +665,17 @@ sdmmc_intr_disestablish(void *cookie)
 {
 	struct sdmmc_intr_handler *ih = cookie;
 	struct sdmmc_softc *sc = ih->ih_softc;
-	int s;
 
 	if (sc->sc_sct->card_enable_intr == NULL)
 		return;
 
-	s = splhigh();
+	mutex_enter(&sc->sc_mtx);
 	TAILQ_REMOVE(&sc->sc_intrq, ih, entry);
 	if (TAILQ_EMPTY(&sc->sc_intrq)) {
 		sdmmc_chip_card_enable_intr(sc->sc_sct, sc->sc_sch, 0);
 		sdmmc_intr_disable(sc->sc_fn0);
 	}
-	splx(s);
+	mutex_exit(&sc->sc_mtx);
 
 	free(ih->ih_name, M_DEVBUF);
 	free(ih, M_DEVBUF);
@@ -707,15 +705,14 @@ sdmmc_intr_task(void *arg)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)arg;
 	struct sdmmc_intr_handler *ih;
-	int s;
 
-	s = splsdmmc();
+	mutex_enter(&sc->sc_mtx);
 	TAILQ_FOREACH(ih, &sc->sc_intrq, entry) {
-		splx(s);
+		mutex_exit(&sc->sc_mtx);
 		/* XXX examine return value and do evcount stuff*/
 		(void)(*ih->ih_fun)(ih->ih_arg);
-		s = splsdmmc();
+		mutex_enter(&sc->sc_mtx);
 	}
 	sdmmc_chip_card_intr_ack(sc->sc_sct, sc->sc_sch);
-	splx(s);
+	mutex_exit(&sc->sc_mtx);
 }
