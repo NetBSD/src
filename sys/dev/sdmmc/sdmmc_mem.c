@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.40 2015/08/03 11:24:17 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.41 2015/08/03 12:10:29 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.40 2015/08/03 11:24:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.41 2015/08/03 12:10:29 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -132,6 +132,7 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 	SDMMC_LOCK(sc);
 
 	/* Set host mode to SD "combo" card or SD memory-only. */
+	CLR(sc->sc_flags, SMF_UHS_MODE);
 	SET(sc->sc_flags, SMF_SD_MODE|SMF_MEM_MODE);
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
