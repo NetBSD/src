@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.18 2015/08/03 05:32:50 mlelstv Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.19 2015/08/03 10:09:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.18 2015/08/03 05:32:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.19 2015/08/03 10:09:08 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -145,8 +145,9 @@ ld_sdmmc_doattach(void *arg)
 	struct sdmmc_softc *ssc = device_private(device_parent(ld->sc_dv));
 
 	ldattach(ld);
-	aprint_normal_dev(ld->sc_dv, "%d-bit width, bus clock",
-	    sc->sc_sf->width);
+	aprint_normal_dev(ld->sc_dv, "%d-bit width,", sc->sc_sf->width);
+	if (ssc->sc_transfer_mode != NULL)
+		aprint_normal(" %s,", ssc->sc_transfer_mode);
 	if ((ssc->sc_busclk / 1000) != 0)
 		aprint_normal(" %u.%03u MHz\n",
 		    ssc->sc_busclk / 1000, ssc->sc_busclk % 1000);
