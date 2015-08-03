@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcchip.h,v 1.5 2015/08/02 21:44:36 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcchip.h,v 1.6 2015/08/03 10:08:51 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcchip.h,v 1.3 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ struct sdmmc_chip_functions {
 
 	/* UHS functions */
 	int		(*signal_voltage)(sdmmc_chipset_handle_t, int);
+	int		(*bus_clock_ddr)(sdmmc_chipset_handle_t, int, bool);
 };
 
 /* host controller reset */
@@ -79,8 +80,8 @@ struct sdmmc_chip_functions {
 /* bus power, clock frequency, width and rod */
 #define sdmmc_chip_bus_power(tag, handle, ocr)				\
 	((tag)->bus_power((handle), (ocr)))
-#define sdmmc_chip_bus_clock(tag, handle, freq)				\
-	((tag)->bus_clock((handle), (freq)))
+#define sdmmc_chip_bus_clock(tag, handle, freq, ddr)			\
+	((tag)->bus_clock_ddr ? (tag)->bus_clock_ddr((handle), (freq), (ddr)) : ((ddr) ? EINVAL : ((tag)->bus_clock((handle), (freq)))))
 #define sdmmc_chip_bus_width(tag, handle, width)			\
 	((tag)->bus_width((handle), (width)))
 #define sdmmc_chip_bus_rod(tag, handle, width)				\
