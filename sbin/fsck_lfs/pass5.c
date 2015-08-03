@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.34 2015/08/02 18:14:16 dholland Exp $	 */
+/* $NetBSD: pass5.c,v 1.35 2015/08/03 04:16:10 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -152,8 +152,8 @@ pass5(void)
 		}
 	}
 	if (avail != lfs_sb_getavail(fs)) {
-		pwarn("AVAIL GIVEN AS %jd, SHOULD BE %ld\n",
-		      (intmax_t)lfs_sb_getavail(fs), avail);
+		pwarn("AVAIL GIVEN AS %jd, SHOULD BE %jd\n",
+		      (intmax_t)lfs_sb_getavail(fs), (intmax_t)avail);
 		if (preen || reply("FIX")) {
 			lfs_sb_setavail(fs, avail);
 			sbdirty();
