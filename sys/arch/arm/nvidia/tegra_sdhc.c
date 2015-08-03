@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.10 2015/08/02 21:45:52 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.11 2015/08/03 12:11:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.10 2015/08/02 21:45:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.11 2015/08/03 12:11:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -119,8 +119,10 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	if (prop_dictionary_get_cstring_nocopy(prop, "wp-gpio", &pin))
 		sc->sc_pin_wp = tegra_gpio_acquire(pin, GPIO_PIN_INPUT);
 
-	if (sc->sc_pin_cd)
+	if (sc->sc_pin_cd) {
 		sc->sc.sc_vendor_card_detect = tegra_sdhc_card_detect;
+		sc->sc.sc_flags |= SDHC_FLAG_POLL_CARD_DET;
+	}
 	if (sc->sc_pin_wp)
 		sc->sc.sc_vendor_write_protect = tegra_sdhc_write_protect;
 
