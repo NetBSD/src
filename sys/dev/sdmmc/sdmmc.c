@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.28 2015/08/03 05:32:50 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.29 2015/08/03 10:08:51 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.28 2015/08/03 05:32:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.29 2015/08/03 10:08:51 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -523,7 +523,8 @@ sdmmc_enable(struct sdmmc_softc *sc)
 	/*
 	 * Select the minimum clock frequency.
 	 */
-	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, SDMMC_SDCLK_400K);
+	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, SDMMC_SDCLK_400K,
+	    false);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "couldn't supply clock\n");
 		goto out;
@@ -569,7 +570,8 @@ sdmmc_disable(struct sdmmc_softc *sc)
 
 	/* Turn off bus power and clock. */
 	(void)sdmmc_chip_bus_width(sc->sc_sct, sc->sc_sch, 1);
-	(void)sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, SDMMC_SDCLK_OFF);
+	(void)sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, SDMMC_SDCLK_OFF,
+	    false);
 	(void)sdmmc_chip_bus_power(sc->sc_sct, sc->sc_sch, 0);
 	sc->sc_busclk = sc->sc_clkmax;
 }
