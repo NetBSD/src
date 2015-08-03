@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.39 2015/08/03 10:08:51 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.40 2015/08/03 11:24:17 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.39 2015/08/03 10:08:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.40 2015/08/03 11:24:17 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1128,9 +1128,9 @@ sdmmc_mem_decode_scr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	sf->scr.sd_spec = SCR_SD_SPEC(resp);
 	sf->scr.bus_width = SCR_SD_BUS_WIDTHS(resp);
 
-	DPRINTF(("%s: sdmmc_mem_decode_scr: %08x%08x ver=%d, spec=%d, bus width=%d, spec3=%d\n",
+	DPRINTF(("%s: sdmmc_mem_decode_scr: %08x%08x ver=%d, spec=%d, bus width=%d\n",
 	    SDMMCDEVNAME(sc), resp[1], resp[0],
-	    ver, sf->scr.sd_spec, sf->scr.bus_width, sf->scr.sd_spec3));
+	    ver, sf->scr.sd_spec, sf->scr.bus_width));
 
 	if (ver != 0 && ver != 1) {
 		DPRINTF(("%s: unknown structure version: %d\n",
