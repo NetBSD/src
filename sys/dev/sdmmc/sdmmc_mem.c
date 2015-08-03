@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.36 2015/08/02 22:47:05 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.37 2015/08/03 05:26:53 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.36 2015/08/02 22:47:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.37 2015/08/03 05:26:53 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -742,6 +742,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 		host_ocr = sdmmc_chip_host_ocr(sc->sc_sct, sc->sc_sch);
 		support_func = SFUNC_STATUS_GROUP(&status, 1);
+		DPRINTF(("%s: support_func %#x\n", SDMMCDEVNAME(sc), support_func));
 		best_func = 0;
 		for (i = 0, g = 1;
 		    i < __arraycount(switch_group0_functions); i++, g <<= 1) {
