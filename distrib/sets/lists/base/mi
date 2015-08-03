@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1106 2015/08/02 11:09:05 jmcneill Exp $
+# $NetBSD: mi,v 1.1107 2015/08/03 09:51:40 ozaki-r Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1821,6 +1821,7 @@
 ./usr/sbin/rtquery				base-netutil-bin
 ./usr/sbin/rtsold				base-obsolete		obsolete
 ./usr/sbin/rump.arp				base-netutil-bin	rump
+./usr/sbin/rump.ndp				base-netutil-bin	inet6,rump
 ./usr/sbin/rump.envstat				base-sysutil-bin	rump
 ./usr/sbin/rump.powerd				base-sysutil-bin	rump
 ./usr/sbin/rump.traceroute			base-netutil-bin	rump
