@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.280 2015/08/02 18:12:59 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.281 2015/08/03 17:33:54 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.280 2015/08/02 18:12:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.281 2015/08/03 17:33:54 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -687,12 +687,8 @@ out:
 	UNMARK_VNODE(dvp);
 	/* XXX: is it even possible for the symlink to get MARK'd? */
 	UNMARK_VNODE(*vpp);
-	if (!((*vpp)->v_uflag & VU_DIROP)) {
-		KASSERT(error != 0);
+	if (error) {
 		*vpp = NULL;
-	}
-	else {
-		KASSERT(error == 0);
 	}
 	lfs_unset_dirop(fs, dvp, "symlink");
 
@@ -744,13 +740,6 @@ lfs_mknod(void *v)
 	/* Either way we're done with the dirop at this point */
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
-	if (!((*vpp)->v_uflag & VU_DIROP)) {
-		KASSERT(error != 0);
-		*vpp = NULL;
-	}
-	else {
-		KASSERT(error == 0);
-	}
 	lfs_unset_dirop(fs, dvp, "mknod");
 	/*
 	 * XXX this is where this used to be (though inside some evil
@@ -843,12 +832,8 @@ out:
 
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
-	if (!((*vpp)->v_uflag & VU_DIROP)) {
-		KASSERT(error != 0);
+	if (error) {
 		*vpp = NULL;
-	}
-	else {
-		KASSERT(error == 0);
 	}
 	lfs_unset_dirop(fs, dvp, "create");
 
@@ -1018,12 +1003,8 @@ out:
 
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
-	if (!((*vpp)->v_uflag & VU_DIROP)) {
-		KASSERT(error != 0);
+	if (error) {
 		*vpp = NULL;
-	}
-	else {
-		KASSERT(error == 0);
 	}
 	lfs_unset_dirop(fs, dvp, "mkdir");
 
