@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.42 2015/08/03 19:17:35 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.43 2015/08/04 00:32:05 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.42 2015/08/03 19:17:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.43 2015/08/04 00:32:05 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -137,6 +137,16 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
 		sdmmc_spi_chip_initialize(sc->sc_spi_sct, sc->sc_sch);
+
+	/* Set 3.3V signaling */
+	if (sc->sc_sct->signal_voltage) {
+		error = sdmmc_chip_signal_voltage(sc->sc_sct,
+		    sc->sc_sch, SDMMC_SIGNAL_VOLTAGE_330);
+		if (error)
+			goto out;
+
+		delay(5000);
+	}
 
 	/* Reset memory (*must* do that before CMD55 or CMD1). */
 	sdmmc_go_idle_state(sc);
@@ -230,6 +240,7 @@ mmc_mode:
 		cmd.c_arg = 0;
 		cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
 		cmd.c_opcode = SD_VOLTAGE_SWITCH;
+		DPRINTF(("%s: switching card to 1.8V\n", SDMMCDEVNAME(sc)));
 		error = sdmmc_mmc_command(sc, &cmd);
 		if (error) {
 			DPRINTF(("%s: voltage switch command failed\n",
@@ -253,6 +264,7 @@ mmc_mode:
 		 * Card switch command was successful, update host controller
 		 * signal voltage setting.
 		 */
+		DPRINTF(("%s: switching host to 1.8V\n", SDMMCDEVNAME(sc)));
 		error = sdmmc_chip_signal_voltage(sc->sc_sct,
 		    sc->sc_sch, SDMMC_SIGNAL_VOLTAGE_180);
 		if (error)
@@ -269,8 +281,7 @@ mmc_mode:
 			goto out;
 
 		delay(1000);
-	}
-	if (ISSET(host_ocr, MMC_OCR_S18A)) {
+
 		SET(sc->sc_flags, SMF_UHS_MODE);
 	}
 
