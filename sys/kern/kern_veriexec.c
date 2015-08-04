@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.10 2015/08/04 11:42:08 maxv Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.11 2015/08/04 12:44:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.10 2015/08/04 11:42:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.11 2015/08/04 12:44:04 maxv Exp $");
 
 #include "opt_veriexec.h"
 
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.10 2015/08/04 11:42:08 maxv Exp 
 #include <sys/kmem.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
-#include <sys/exec.h>
 #include <sys/once.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
@@ -50,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.10 2015/08/04 11:42:08 maxv Exp 
 #include <sys/sha2.h>
 #include <sys/rmd160.h>
 #include <sys/md5.h>
-#include <uvm/uvm_extern.h>
 #include <sys/fileassoc.h>
 #include <sys/kauth.h>
 #include <sys/conf.h>
