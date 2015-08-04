@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.353 2015/08/02 11:30:45 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.354 2015/08/04 18:16:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33696,4 +33696,41 @@ sys/compat/netbsd32/netbsd32_ioctl.c		1.82
 
 	Fix inverted logic when checking the size of data to copyin().
 	[maxv, ticket #930]
+
+distrib/sets/join.awk				1.4
+
+	Add an unvis function and use it on file names in mtree specs.
+	Corrects the problem that ./bin/[ was missing from the
+	base.tgz set.  PR bin/50109.
+	[martin, ticket #929]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.32
+
+	Avoid kernel panic on starting X on Intel 855GM machines.
+	PR kern/49875.
+	[tsutsui, ticket #931]
+
+sys/ufs/lfs/lfs_segment.c			1.247 via patch
+
+	Fix catastrophic bug in lfs_rewind() that changed segment
+	numbers (lfs_curseg/lfs_nextseg in the superblock) using the
+	wrong units.  These fields are for whatever reason the start
+	addresses of segments (measured in frags) rather than the
+	segment numbers 0..n.  Only affects dumping from a mounted
+	fs.
+	[dholland, ticket #932]
+
+sys/kern/kern_descrip.c				1.229
+
+	- mask fflags so we don't tack on whateve oflags were passed
+	  from userland
+	- honor O_CLOEXEC, so the children of daemons that use cloning
+	  devices don't end up with the parents descriptors
+	[christos, ticket #933]
+
+sys/arch/xen/x86/cpu.c				1.100
+
+	Fix an uninitalized lock panic when trying to start a Xen
+	kernel with LOCKDEBUG and more than one vcpu.
+	[prlw1, ticket #934]
 
