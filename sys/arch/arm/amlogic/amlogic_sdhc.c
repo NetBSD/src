@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.6 2015/04/19 22:51:04 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.7 2015/08/04 01:23:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.6 2015/04/19 22:51:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.7 2015/08/04 01:23:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,6 +68,9 @@ struct amlogic_sdhc_softc {
 	bus_dmamap_t		sc_dmamap;
 	bus_dma_segment_t	sc_segs[1];
 	void			*sc_bbuf;
+
+	u_int			sc_port;
+	int			sc_signal_voltage;
 };
 
 CFATTACH_DECL_NEW(amlogic_sdhc, sizeof(struct amlogic_sdhc_softc),
@@ -86,6 +89,7 @@ static void	amlogic_sdhc_exec_command(sdmmc_chipset_handle_t,
 				     struct sdmmc_command *);
 static void	amlogic_sdhc_card_enable_intr(sdmmc_chipset_handle_t, int);
 static void	amlogic_sdhc_card_intr_ack(sdmmc_chipset_handle_t);
+static int	amlogic_sdhc_signal_voltage(sdmmc_chipset_handle_t, int);
 
 static int	amlogic_sdhc_set_clock(struct amlogic_sdhc_softc *, u_int);
 static int	amlogic_sdhc_wait_idle(struct amlogic_sdhc_softc *);
@@ -106,6 +110,7 @@ static struct sdmmc_chip_functions amlogic_sdhc_chip_functions = {
 	.exec_command = amlogic_sdhc_exec_command,
 	.card_enable_intr = amlogic_sdhc_card_enable_intr,
 	.card_intr_ack = amlogic_sdhc_card_intr_ack,
+	.signal_voltage = amlogic_sdhc_signal_voltage,
 };
 
 #define SDHC_WRITE(sc, reg, val) \
@@ -139,6 +144,8 @@ amlogic_sdhc_attach(device_t parent, device_t self, void *aux)
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_intr_cv, "sdhcintr");
+	sc->sc_port = loc->loc_port;
+	sc->sc_signal_voltage = SDMMC_SIGNAL_VOLTAGE_330;
 
 	amlogic_sdhc_init();
 	if (amlogic_sdhc_select_port(loc->loc_port) != 0) {
@@ -168,6 +175,9 @@ amlogic_sdhc_attach_i(device_t self)
 {
 	struct amlogic_sdhc_softc *sc = device_private(self);
 	struct sdmmcbus_attach_args saa;
+	u_int pll_freq;
+
+	pll_freq = amlogic_get_rate_fixed() / 1000 / 3;
 
 	amlogic_sdhc_host_reset(sc);
 	amlogic_sdhc_bus_width(sc, 1);
@@ -178,12 +188,14 @@ amlogic_sdhc_attach_i(device_t self)
 	saa.saa_dmat = sc->sc_dmat;
 	saa.saa_sch = sc;
 	saa.saa_clkmin = 400;
-	saa.saa_clkmax = 50000;
+	saa.saa_clkmax = pll_freq;
 	/* Do not advertise DMA capabilities, we handle DMA ourselves */
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|
 		       SMC_CAPS_8BIT_MODE|
 		       SMC_CAPS_SD_HIGHSPEED|
 		       SMC_CAPS_MMC_HIGHSPEED|
+		       SMC_CAPS_UHS_SDR50|
+		       SMC_CAPS_UHS_SDR104|
 		       SMC_CAPS_AUTO_STOP;
 
 	sc->sc_sdmmc_dev = config_found(self, &saa, NULL);
@@ -288,9 +300,16 @@ amlogic_sdhc_set_clock(struct amlogic_sdhc_softc *sc, u_int freq)
 	clk2 &= ~SD_CLK2_RX_CLK_PHASE;
 
 	const u_int act_freq = pll_freq / clk_div;
-	if (act_freq > 45000) {
+	if (act_freq > 90000) {
+		clk2 |= __SHIFTIN(1, SD_CLK2_RX_CLK_PHASE);
+	} else if (act_freq > 45000) {
+		if (sc->sc_signal_voltage == SDMMC_SIGNAL_VOLTAGE_330) {
+			clk2 |= __SHIFTIN(15, SD_CLK2_RX_CLK_PHASE);
+		} else {
+			clk2 |= __SHIFTIN(11, SD_CLK2_RX_CLK_PHASE);
+		}
+	} else if (act_freq >= 25000) {
 		clk2 |= __SHIFTIN(15, SD_CLK2_RX_CLK_PHASE);
-		/* XXX 11 for 1.8V */
 	} else if (act_freq > 5000) {
 		clk2 |= __SHIFTIN(23, SD_CLK2_RX_CLK_PHASE);
 	} else if (act_freq > 1000) {
@@ -401,7 +420,8 @@ amlogic_sdhc_host_reset(sdmmc_chipset_handle_t sch)
 static uint32_t
 amlogic_sdhc_host_ocr(sdmmc_chipset_handle_t sch)
 {
-	return MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V;
+	return MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V |
+	       MMC_OCR_HCS | MMC_OCR_S18A;
 }
 
 static int
@@ -667,4 +687,24 @@ amlogic_sdhc_card_enable_intr(sdmmc_chipset_handle_t sch, int enable)
 static void
 amlogic_sdhc_card_intr_ack(sdmmc_chipset_handle_t sch)
 {
+}
+
+static int
+amlogic_sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
+{
+	struct amlogic_sdhc_softc *sc = sch;
+
+	switch (signal_voltage) {
+	case SDMMC_SIGNAL_VOLTAGE_330:
+		amlogic_sdhc_set_voltage(sc->sc_port, AMLOGIC_SDHC_VOL_330);
+		break;
+	case SDMMC_SIGNAL_VOLTAGE_180:
+		amlogic_sdhc_set_voltage(sc->sc_port, AMLOGIC_SDHC_VOL_180);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	sc->sc_signal_voltage = signal_voltage;
+	return 0;
 }

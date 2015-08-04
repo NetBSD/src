@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.12 2015/04/19 18:54:52 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.13 2015/08/04 01:23:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.12 2015/04/19 18:54:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.13 2015/08/04 01:23:07 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -302,6 +302,33 @@ amlogic_sdhc_is_card_present(int port)
 		return !(CBUS_READ(PREG_PAD_GPIO0_IN_REG) & __BIT(28));
 	default:
 		return true;
+	}
+}
+
+void
+amlogic_sdhc_set_voltage(int port, int voltage)
+{
+	const bus_size_t gpioao_reg = AMLOGIC_GPIOAO_OFFSET;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	bus_space_handle_t bsh = amlogic_core_bsh;
+	uint32_t val;
+	u_int pin;
+
+	switch (port) {
+	case AMLOGIC_SDHC_PORT_B:
+		/* GPIO GPIOAO_3 */
+		pin = 3;
+		val = bus_space_read_4(bst, bsh, gpioao_reg);
+		val &= ~__BIT(pin);	/* OEN */
+		bus_space_write_4(bst, bsh, gpioao_reg, val);
+		if (voltage == AMLOGIC_SDHC_VOL_180) {
+			val |= __BIT(pin + 16);		/* OUT */
+		} else {
+			val &= ~__BIT(pin + 16);	/* OUT */
+		}
+		bus_space_write_4(bst, bsh, gpioao_reg, val);
+		delay(20000);
+		break;
 	}
 }
 
