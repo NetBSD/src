@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.1 2015/08/03 09:54:20 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.2 2015/08/04 07:43:25 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -145,7 +145,7 @@ command_body()
 	atf_check -s exit:0 -o ignore rump.ndp -s fc00::10 b2:a0:20:00:00:10
 	$DEBUG && rump.ndp -n -a
 	atf_check -s exit:0 -o match:'permanent' rump.ndp -n fc00::10
-	atf_check -s exit:0 -o ignore rump.ndp -d fc00::10
+	atf_check -s exit:0 -o match:'deleted' rump.ndp -d fc00::10
 	$DEBUG && rump.ndp -n -a
 	atf_check -s not-exit:0 -o ignore -e ignore rump.ndp -n fc00::10
 
