@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: common.h,v 1.26 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/common.h,v 1.5 2008/08/10 23:50:12 joerg Exp $
- * $NetBSD: common.h,v 1.19.38.1 2014/11/28 09:09:19 martin Exp $
+ * $NetBSD: common.h,v 1.19.38.2 2015/08/04 21:03:33 snj Exp $
  */
 
 /*
@@ -50,8 +50,8 @@
 #define SCCSDIFF "get -p %s | diff - %s >/dev/null"
 
 #define RCSSUFFIX ",v"
-#define CHECKOUT "co -l %s"
-#define RCSDIFF "rcsdiff %s > /dev/null"
+#define CHECKOUT "/usr/bin/co"
+#define RCSDIFF "/usr/bin/rcsdiff"
 
 #define ORIGEXT ".orig"
 #define REJEXT ".rej"
