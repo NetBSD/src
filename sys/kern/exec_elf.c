@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.73 2015/07/30 15:28:18 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.74 2015/08/04 18:28:09 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.73 2015/07/30 15:28:18 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.74 2015/08/04 18:28:09 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -701,7 +701,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	 *
 	 * Probe functions would normally see if the interpreter (if any)
 	 * exists. Emulation packages may possibly replace the interpreter in
-	 * interp[] with a changed path (/emul/xxx/<path>).
+	 * interp with a changed path (/emul/xxx/<path>).
 	 */
 	pos = ELFDEFNNAME(NO_ADDR);
 	if (epp->ep_esch->u.elf_probe_func) {
