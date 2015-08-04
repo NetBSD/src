@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.13 2015/07/31 07:37:17 maxv Exp $ */
+/* $NetBSD: pax.h,v 1.14 2015/08/04 18:28:10 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -32,6 +32,10 @@
 
 #include <uvm/uvm_extern.h>
 
+#define P_PAX_ASLR	0x01	/* Enable ASLR */
+#define P_PAX_MPROTECT	0x02	/* Enable Mprotect */
+#define P_PAX_GUARD	0x04	/* Enable Segvguard */
+
 struct lwp;
 struct exec_package;
 struct vmspace;
@@ -43,10 +47,6 @@ struct vmspace;
 #ifndef PAX_ASLR_DELTA_EXEC_LEN
 #define	PAX_ASLR_DELTA_EXEC_LEN	12
 #endif
-
-#define P_PAX_ASLR	0x01	/* Enable ASLR */
-#define P_PAX_MPROTECT	0x02	/* Enable Mprotect */
-#define P_PAX_GUARD	0x04	/* Enable Segvguard */
 #endif /* PAX_ASLR */
 
 void pax_init(void);
@@ -61,6 +61,6 @@ int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 bool pax_aslr_active(struct lwp *);
 void pax_aslr_init_vm(struct lwp *, struct vmspace *);
 void pax_aslr_stack(struct lwp *, struct exec_package *, u_long *);
-void pax_aslr(struct lwp *, vaddr_t *, vaddr_t, int);
+void pax_aslr_mmap(struct lwp *, vaddr_t *, vaddr_t, int);
 
 #endif /* !_SYS_PAX_H_ */
