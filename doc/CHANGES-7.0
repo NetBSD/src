@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.354 2015/08/04 18:16:00 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.355 2015/08/04 21:33:07 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33733,4 +33733,24 @@ sys/arch/xen/x86/cpu.c				1.100
 	Fix an uninitalized lock panic when trying to start a Xen
 	kernel with LOCKDEBUG and more than one vcpu.
 	[prlw1, ticket #934]
+
+usr.bin/patch/common.h				1.21
+usr.bin/patch/inp.c				1.24
+usr.bin/patch/patch.1				1.18, 1.19
+
+	Use execve(2) instead of system to apply patches that require
+	rcs command execution instead system(3) to avoid malicious
+	filenames in patches causing bad things to happen. In the
+	process, lose SCCS support.
+	[christos, ticket #918]
+
+sys/dev/pci/if_ti.c				1.94, 1.95
+
+	Fix mbuf leaks in error branches.
+	[maxv, ticket #913]
+
+sys/dev/pci/if_et.c				1.9
+
+	Fix mbuf use-after-free.
+	[maxv, ticket #914]
 
