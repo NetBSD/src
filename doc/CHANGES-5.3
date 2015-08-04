@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.122 2015/07/24 07:43:27 martin Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.123 2015/08/04 20:09:02 snj Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3891,6 +3891,11 @@ sys/dev/pci/pcidevs_data.h			regen
 	- Cleanup comments.
 	- Fix debug message.
 	[msaitoh, ticket #1962]
+
+lib/libcurses/curses.h				1.107
+
+	mvgetnstr should have a length argument as the name implies.
+	[joerg, ticket #1970]
 
 sys/arch/xen/xen/xenevt.c			1.42
 
