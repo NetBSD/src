@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.98 2014/02/12 23:24:09 dsl Exp $	*/
+/*	$NetBSD: cpu.c,v 1.98.4.1 2015/08/04 18:12:28 snj Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.98 2014/02/12 23:24:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.98.4.1 2015/08/04 18:12:28 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -425,6 +425,13 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	}
 
 	KASSERT(ci->ci_cpuid == ci->ci_index);
+#ifdef __x86_64__
+	/* No user PGD mapped for this CPU yet */
+	ci->ci_xen_current_user_pgd = 0;
+#endif
+#if defined(__x86_64__) || defined(PAE)
+	mutex_init(&ci->ci_kpm_mtx, MUTEX_DEFAULT, IPL_VM);
+#endif
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
@@ -542,14 +549,6 @@ cpu_init(struct cpu_info *ci)
 		if (cpu_feature[0] & (CPUID_SSE|CPUID_SSE2))
 			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
-
-#ifdef __x86_64__
-	/* No user PGD mapped for this CPU yet */
-	ci->ci_xen_current_user_pgd = 0;
-#endif
-#if defined(__x86_64__) || defined(PAE)
-	mutex_init(&ci->ci_kpm_mtx, MUTEX_DEFAULT, IPL_VM);
-#endif
 
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 }
