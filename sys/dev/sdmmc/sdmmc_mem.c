@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.43 2015/08/04 00:32:05 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.44 2015/08/04 01:21:55 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.43 2015/08/04 00:32:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.44 2015/08/04 01:21:55 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -82,6 +82,7 @@ static int sdmmc_set_bus_width(struct sdmmc_function *, int);
 static int sdmmc_mem_sd_switch(struct sdmmc_function *, int, int, int, sdmmc_bitfield512_t *);
 static int sdmmc_mem_mmc_switch(struct sdmmc_function *, uint8_t, uint8_t,
     uint8_t);
+static int sdmmc_mem_signal_voltage(struct sdmmc_softc *, int);
 static int sdmmc_mem_spi_read_ocr(struct sdmmc_softc *, uint32_t, uint32_t *);
 static int sdmmc_mem_single_read_block(struct sdmmc_function *, uint32_t,
     u_char *, size_t);
@@ -138,18 +139,15 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
 		sdmmc_spi_chip_initialize(sc->sc_spi_sct, sc->sc_sch);
 
-	/* Set 3.3V signaling */
-	if (sc->sc_sct->signal_voltage) {
-		error = sdmmc_chip_signal_voltage(sc->sc_sct,
-		    sc->sc_sch, SDMMC_SIGNAL_VOLTAGE_330);
-		if (error)
-			goto out;
-
-		delay(5000);
-	}
-
 	/* Reset memory (*must* do that before CMD55 or CMD1). */
 	sdmmc_go_idle_state(sc);
+
+	/* Set 3.3V signaling */
+	if (sc->sc_sct->signal_voltage) {
+		error = sdmmc_mem_signal_voltage(sc, SDMMC_SIGNAL_VOLTAGE_330);
+		if (error)
+			goto out;
+	}
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		/* Check SD Ver.2 */
@@ -248,39 +246,9 @@ mmc_mode:
 			goto out;
 		}
 
-		delay(1000);
-
-		/*
-		 * Stop the clock
-		 */
-		error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch,
-		    SDMMC_SDCLK_OFF, false);
+		error = sdmmc_mem_signal_voltage(sc, SDMMC_SIGNAL_VOLTAGE_180);
 		if (error)
 			goto out;
-
-		delay(1000);
-
-		/*
-		 * Card switch command was successful, update host controller
-		 * signal voltage setting.
-		 */
-		DPRINTF(("%s: switching host to 1.8V\n", SDMMCDEVNAME(sc)));
-		error = sdmmc_chip_signal_voltage(sc->sc_sct,
-		    sc->sc_sch, SDMMC_SIGNAL_VOLTAGE_180);
-		if (error)
-			goto out;
-
-		delay(5000);
-
-		/*
-		 * Switch to SDR12 timing
-		 */
-		error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, 25000,
-		    false);
-		if (error)
-			goto out;
-
-		delay(1000);
 
 		SET(sc->sc_flags, SMF_UHS_MODE);
 	}
@@ -292,6 +260,48 @@ out:
 		printf("%s: %s failed with error %d\n", SDMMCDEVNAME(sc),
 		    __func__, error);
 
+	return error;
+}
+
+static int
+sdmmc_mem_signal_voltage(struct sdmmc_softc *sc, int signal_voltage)
+{
+	int error;
+
+	/*
+	 * Stop the clock
+	 */
+	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch,
+	    SDMMC_SDCLK_OFF, false);
+	if (error)
+		goto out;
+
+	delay(1000);
+
+	/*
+	 * Card switch command was successful, update host controller
+	 * signal voltage setting.
+	 */
+	DPRINTF(("%s: switching host to %s\n", SDMMCDEVNAME(sc),
+	    signal_voltage == SDMMC_SIGNAL_VOLTAGE_180 ? "1.8V" : "3.3V"));
+	error = sdmmc_chip_signal_voltage(sc->sc_sct,
+	    sc->sc_sch, signal_voltage);
+	if (error)
+		goto out;
+
+	delay(5000);
+
+	/*
+	 * Switch to SDR12 timing
+	 */
+	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, 25000,
+	    false);
+	if (error)
+		goto out;
+
+	delay(1000);
+
+out:
 	return error;
 }
 
@@ -778,6 +788,18 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		}
 
 		support_func = SFUNC_STATUS_GROUP(&status, 1);
+
+		if (!ISSET(sc->sc_flags, SMF_UHS_MODE) && support_func & 0x1c) {
+			/* XXX UHS-I card started in 1.8V mode, switch now */
+			error = sdmmc_mem_signal_voltage(sc,
+			    SDMMC_SIGNAL_VOLTAGE_180);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "failed to recover UHS card\n");
+				return error;
+			}
+			SET(sc->sc_flags, SMF_UHS_MODE);
+		}
 
 		for (i = 0; i < __arraycount(switch_group0_functions); i++) {
 			if (!(support_func & (1 << i)))
