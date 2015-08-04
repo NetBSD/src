@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.236 2014/03/24 13:42:40 hannken Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.236.4.1 2015/08/04 17:20:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.236 2014/03/24 13:42:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.236.4.1 2015/08/04 17:20:58 snj Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -1702,7 +1702,7 @@ lfs_updatemeta(struct segment *sp)
 }
 
 /*
- * Move lfs_offset to a segment earlier than sn.
+ * Move lfs_offset to a segment earlier than newsn.
  */
 int
 lfs_rewind(struct lfs *fs, int newsn)
@@ -1733,7 +1733,7 @@ lfs_rewind(struct lfs *fs, int newsn)
 		panic("lfs_rewind: no clean segments");
 	if (newsn >= 0 && sn >= newsn)
 		return ENOENT;
-	fs->lfs_nextseg = sn;
+	fs->lfs_nextseg = lfs_sntod(fs, sn);
 	lfs_newseg(fs);
 	fs->lfs_offset = fs->lfs_curseg;
 
