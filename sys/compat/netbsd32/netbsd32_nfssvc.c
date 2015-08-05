@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_nfssvc.c,v 1.2 2015/06/23 06:28:29 dholland Exp $	*/
+/*	$NetBSD: netbsd32_nfssvc.c,v 1.3 2015/08/05 23:17:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 2015 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.2 2015/06/23 06:28:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.3 2015/08/05 23:17:06 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -138,22 +138,24 @@ nfssvc32_nsd_out(void *argp, const struct nfsd_srvargs *nsd)
 static int
 nfssvc32_exp_in(struct export_args *exp, const void *argp, size_t nexports)
 {
-	struct netbsd32_export_args args32;
+	struct netbsd32_export_args exp32;
+	struct netbsd32_export_args const *argp32 = argp;
 	int error = 0;
 
 	for (size_t i = 0; i < nexports; i++) {
-		error = copyin(argp, &args32, sizeof args32);
+		error = copyin(argp32, &exp32, sizeof exp32);
 		if (error)
 			break;
-		exp->ex_flags = args32.ex_flags;
-		exp->ex_root = args32.ex_root;
-		exp->ex_anon = args32.ex_anon;
-		exp->ex_addr = NETBSD32PTR64(args32.ex_addr);
-		exp->ex_addrlen = args32.ex_addrlen;
-		exp->ex_mask = NETBSD32PTR64(args32.ex_mask);
-		exp->ex_masklen = args32.ex_masklen;
-		exp->ex_indexfile = NETBSD32PTR64(args32.ex_indexfile);
+		exp->ex_flags = exp32.ex_flags;
+		exp->ex_root = exp32.ex_root;
+		exp->ex_anon = exp32.ex_anon;
+		exp->ex_addr = NETBSD32PTR64(exp32.ex_addr);
+		exp->ex_addrlen = exp32.ex_addrlen;
+		exp->ex_mask = NETBSD32PTR64(exp32.ex_mask);
+		exp->ex_masklen = exp32.ex_masklen;
+		exp->ex_indexfile = NETBSD32PTR64(exp32.ex_indexfile);
 		exp++;
+		argp32++;
 	}
 
 	return error;
