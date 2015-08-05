@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.70 2015/04/21 12:55:57 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.71 2015/08/05 16:37:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.70 2015/04/21 12:55:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.71 2015/08/05 16:37:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1079,7 +1079,7 @@ rnd_process_events(void)
 		if (source->type == RND_TYPE_RNG) {
 			if (__predict_false(rnd_hwrng_test(sample))) {
 				source->flags |= RND_FLAG_NO_COLLECT;
-				rnd_printf("rnd: disabling source \"%s\".",
+				rnd_printf("rnd: disabling source \"%s\".\n",
 				    source->name);
 				goto skip;
 			}
