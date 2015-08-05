@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.44 2015/08/04 01:21:55 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.45 2015/08/05 10:29:37 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.44 2015/08/04 01:21:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.45 2015/08/05 10:29:37 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -141,13 +141,6 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 
 	/* Reset memory (*must* do that before CMD55 or CMD1). */
 	sdmmc_go_idle_state(sc);
-
-	/* Set 3.3V signaling */
-	if (sc->sc_sct->signal_voltage) {
-		error = sdmmc_mem_signal_voltage(sc, SDMMC_SIGNAL_VOLTAGE_330);
-		if (error)
-			goto out;
-	}
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		/* Check SD Ver.2 */
@@ -741,6 +734,44 @@ sdmmc_mem_select_transfer_mode(struct sdmmc_softc *sc, int support_func)
 }
 
 static int
+sdmmc_mem_execute_tuning(struct sdmmc_softc *sc, struct sdmmc_function *sf)
+{
+	int timing = -1;
+
+	if (!ISSET(sc->sc_flags, SMF_UHS_MODE))
+		return 0;
+
+	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
+		if (!ISSET(sc->sc_flags, SMF_UHS_MODE))
+			return 0;
+
+		switch (sf->csd.tran_speed) {
+		case 100000:
+			timing = SDMMC_TIMING_UHS_SDR50;
+			break;
+		case 208000:
+			timing = SDMMC_TIMING_UHS_SDR104;
+			break; 
+		default:
+			return 0;
+		}
+	} else {
+		switch (sf->csd.tran_speed) {
+		case 200000:
+			timing = SDMMC_TIMING_MMC_HS200;
+			break;
+		default:
+			return 0;
+		}
+	}
+
+	DPRINTF(("%s: execute tuning for timing %d\n", SDMMCDEVNAME(sc),
+	    timing));
+
+	return sdmmc_chip_execute_tuning(sc->sc_sct, sc->sc_sch, timing);
+}
+
+static int
 sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	int support_func, best_func, bus_clock, error, i;
@@ -853,6 +884,13 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	sc->sc_transfer_mode = switch_group0_functions[best_func].name;
 	sc->sc_busddr = ddr;
+
+	/* execute tuning (UHS) */
+	error = sdmmc_mem_execute_tuning(sc, sf);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "can't execute SD tuning\n");
+		return error;
+	}
 
 	return 0;
 }
@@ -994,6 +1032,14 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 		if (hs_timing == 2) {
 			sc->sc_transfer_mode = "HS200";
+
+			/* execute tuning (HS200) */
+			error = sdmmc_mem_execute_tuning(sc, sf);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "can't execute MMC tuning\n");
+				return error;
+			}
 		} else {
 			sc->sc_transfer_mode = NULL;
 		}
