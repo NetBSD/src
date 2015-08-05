@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.35 2015/04/27 07:03:57 knakahara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.36 2015/08/05 07:01:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.35 2015/04/27 07:03:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.36 2015/08/05 07:01:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,11 +126,15 @@ int mp_nintr;
 int mp_isa_bus = -1;
 int mp_eisa_bus = -1;
 
-#ifdef MPVERBOSE
+# ifdef MPVERBOSE
+#  if MPVERBOSE > 0
+int mp_verbose = MPVERBOSE;
+#  else
 int mp_verbose = 1;
-#else
+#  endif
+# else
 int mp_verbose = 0;
-#endif
+# endif
 #endif
 
 
