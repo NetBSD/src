@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.15 2015/08/02 21:45:12 jmcneill Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.16 2015/08/05 10:30:25 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -143,6 +143,8 @@
 #define  SDHC_EINTR_SIGNAL_MASK		0x03ff	/* excluding vendor signals */
 #define SDHC_CMD12_ERROR_STATUS		0x3c
 #define SDHC_HOST_CTL2			0x3e
+#define  SDHC_SAMPLING_CLOCK_SEL	(1<<7)
+#define  SDHC_EXECUTE_TUNING		(1<<6)
 #define  SDHC_1_8V_SIGNAL_EN		(1<<3)
 #define  SDHC_UHS_MODE_SELECT_SHIFT	0
 #define  SDHC_UHS_MODE_SELECT_MASK	0x7
