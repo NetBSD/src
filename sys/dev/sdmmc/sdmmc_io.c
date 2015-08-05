@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.10 2015/08/03 10:08:51 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.11 2015/08/05 07:34:56 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.10 2015/08/03 10:08:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.11 2015/08/05 07:34:56 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -597,9 +597,11 @@ sdmmc_intr_enable(struct sdmmc_function *sf)
 	uint8_t reg;
 
 	SDMMC_LOCK(sc);
+	mutex_enter(&sc->sc_intr_task_mtx);
 	reg = sdmmc_io_read_1(sf0, SD_IO_CCCR_FN_INTEN);
 	reg |= 1 << sf->number;
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_INTEN, reg);
+	mutex_exit(&sc->sc_intr_task_mtx);
 	SDMMC_UNLOCK(sc);
 }
 
@@ -611,9 +613,11 @@ sdmmc_intr_disable(struct sdmmc_function *sf)
 	uint8_t reg;
 
 	SDMMC_LOCK(sc);
+	mutex_enter(&sc->sc_intr_task_mtx);
 	reg = sdmmc_io_read_1(sf0, SD_IO_CCCR_FN_INTEN);
 	reg &= ~(1 << sf->number);
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_INTEN, reg);
+	mutex_exit(&sc->sc_intr_task_mtx);
 	SDMMC_UNLOCK(sc);
 }
 
@@ -709,11 +713,10 @@ sdmmc_intr_task(void *arg)
 
 	mutex_enter(&sc->sc_mtx);
 	TAILQ_FOREACH(ih, &sc->sc_intrq, entry) {
-		mutex_exit(&sc->sc_mtx);
 		/* XXX examine return value and do evcount stuff*/
 		(void)(*ih->ih_fun)(ih->ih_arg);
-		mutex_enter(&sc->sc_mtx);
 	}
-	sdmmc_chip_card_intr_ack(sc->sc_sct, sc->sc_sch);
 	mutex_exit(&sc->sc_mtx);
+
+	sdmmc_chip_card_intr_ack(sc->sc_sct, sc->sc_sch);
 }
