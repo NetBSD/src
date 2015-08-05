@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.78 2015/08/05 07:31:52 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.79 2015/08/05 10:30:25 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.78 2015/08/05 07:31:52 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.79 2015/08/05 10:30:25 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -55,6 +55,7 @@ void	sdhc_dump_regs(struct sdhc_host *);
 #define SDHC_BUFFER_TIMEOUT	hz
 #define SDHC_TRANSFER_TIMEOUT	hz
 #define SDHC_DMA_TIMEOUT	(hz*3)
+#define SDHC_TUNING_TIMEOUT	hz
 
 struct sdhc_host {
 	struct sdhc_softc *sc;		/* host controller device */
@@ -182,6 +183,7 @@ static void	sdhc_card_intr_ack(sdmmc_chipset_handle_t);
 static void	sdhc_exec_command(sdmmc_chipset_handle_t,
 		    struct sdmmc_command *);
 static int	sdhc_signal_voltage(sdmmc_chipset_handle_t, int);
+static int	sdhc_execute_tuning(sdmmc_chipset_handle_t, int);
 static int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
 static int	sdhc_wait_state(struct sdhc_host *, uint32_t, uint32_t);
 static int	sdhc_soft_reset(struct sdhc_host *, int);
@@ -224,6 +226,7 @@ static struct sdmmc_chip_functions sdhc_functions = {
 	/* UHS functions */
 	.signal_voltage = sdhc_signal_voltage,
 	.bus_clock_ddr = sdhc_bus_clock_ddr,
+	.execute_tuning = sdhc_execute_tuning,
 };
 
 static int
@@ -318,11 +321,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		caps = sc->sc_caps;
 		caps2 = sc->sc_caps2;
 	} else {
-		caps = HREAD4(hp, SDHC_CAPABILITIES);
+		caps = sc->sc_caps = HREAD4(hp, SDHC_CAPABILITIES);
 		if (hp->specver >= SDHC_SPEC_VERS_300) {
-			caps2 = HREAD4(hp, SDHC_CAPABILITIES2);
+			caps2 = sc->sc_caps2 = HREAD4(hp, SDHC_CAPABILITIES2);
 		} else {
-			caps2 = 0;
+			caps2 = sc->sc_caps2 = 0;
 		}
 	}
 
@@ -1227,6 +1230,97 @@ sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 	return 0;
 }
 
+/*
+ * Sampling clock tuning procedure (UHS)
+ */
+static int
+sdhc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
+{
+	struct sdhc_host *hp = (struct sdhc_host *)sch;
+	struct sdmmc_command cmd;
+	uint8_t hostctl;
+	int opcode, error, retry = 40;
+
+	switch (timing) {
+	case SDMMC_TIMING_MMC_HS200:
+		opcode = MMC_SEND_TUNING_BLOCK_HS200;
+		break;
+	case SDMMC_TIMING_UHS_SDR50:
+		if (!ISSET(hp->sc->sc_caps2, SDHC_TUNING_SDR50))
+			return 0;
+		/* FALLTHROUGH */
+	case SDMMC_TIMING_UHS_SDR104:
+		opcode = MMC_SEND_TUNING_BLOCK;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	hostctl = HREAD1(hp, SDHC_HOST_CTL);
+
+	/* enable buffer read ready interrupt */
+	HSET2(hp, SDHC_NINTR_SIGNAL_EN, SDHC_BUFFER_READ_READY);
+	HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_BUFFER_READ_READY);
+
+	/* disable DMA */
+	HCLR1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT);
+
+	/* reset tuning circuit */
+	HCLR2(hp, SDHC_HOST_CTL2, SDHC_SAMPLING_CLOCK_SEL);
+
+	/* start of tuning */
+	HWRITE2(hp, SDHC_HOST_CTL2, SDHC_EXECUTE_TUNING);
+
+	mutex_enter(&hp->intr_lock);
+	do {
+		memset(&cmd, 0, sizeof(cmd));
+		cmd.c_opcode = opcode;
+		cmd.c_arg = 0;
+		cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1;
+		if (ISSET(hostctl, SDHC_8BIT_MODE)) {
+			cmd.c_blklen = cmd.c_datalen = 128;
+		} else {
+			cmd.c_blklen = cmd.c_datalen = 64;
+		}
+
+		error = sdhc_start_command(hp, &cmd);
+		if (error)
+			break;
+
+		if (!sdhc_wait_intr(hp, SDHC_BUFFER_READ_READY,
+		    SDHC_TUNING_TIMEOUT)) {
+			break;
+		}
+
+		delay(1000);
+	} while (HREAD2(hp, SDHC_HOST_CTL2) & SDHC_EXECUTE_TUNING && --retry);
+	mutex_exit(&hp->intr_lock);
+
+	/* disable buffer read ready interrupt */
+	HCLR2(hp, SDHC_NINTR_SIGNAL_EN, SDHC_BUFFER_READ_READY);
+	HCLR2(hp, SDHC_NINTR_STATUS_EN, SDHC_BUFFER_READ_READY);
+
+	if (HREAD2(hp, SDHC_HOST_CTL2) & SDHC_EXECUTE_TUNING) {
+		HCLR2(hp, SDHC_HOST_CTL2,
+		    SDHC_SAMPLING_CLOCK_SEL|SDHC_EXECUTE_TUNING);
+		sdhc_soft_reset(hp, SDHC_RESET_DAT|SDHC_RESET_CMD);
+		aprint_error_dev(hp->sc->sc_dev,
+		    "tuning did not complete, using fixed sampling clock\n");
+		return EIO;		/* tuning did not complete */
+	}
+
+	if ((HREAD2(hp, SDHC_HOST_CTL2) & SDHC_SAMPLING_CLOCK_SEL) == 0) {
+		HCLR2(hp, SDHC_HOST_CTL2,
+		    SDHC_SAMPLING_CLOCK_SEL|SDHC_EXECUTE_TUNING);
+		sdhc_soft_reset(hp, SDHC_RESET_DAT|SDHC_RESET_CMD);
+		aprint_error_dev(hp->sc->sc_dev,
+		    "tuning failed, using fixed sampling clock\n");
+		return EIO;		/* tuning failed */
+	}
+
+	return 0;		/* tuning completed */
+}
+
 static int
 sdhc_wait_state(struct sdhc_host *hp, uint32_t mask, uint32_t value)
 {
@@ -1405,7 +1499,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		command |= SDHC_CRC_CHECK_ENABLE;
 	if (ISSET(cmd->c_flags, SCF_RSP_IDX))
 		command |= SDHC_INDEX_CHECK_ENABLE;
-	if (cmd->c_data != NULL)
+	if (cmd->c_datalen > 0)
 		command |= SDHC_DATA_PRESENT_SELECT;
 
 	if (!ISSET(cmd->c_flags, SCF_RSP_PRESENT))
@@ -1438,7 +1532,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	}
 
 	/* Set DMA start address. */
-	if (ISSET(hp->flags, SHF_USE_ADMA2_MASK) && cmd->c_datalen > 0) {
+	if (ISSET(hp->flags, SHF_USE_ADMA2_MASK) && cmd->c_data != NULL) {
 		for (int seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
 			bus_addr_t paddr =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
