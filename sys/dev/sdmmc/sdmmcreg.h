@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.18 2015/08/03 10:08:51 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.19 2015/08/05 10:29:37 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
 #define MMC_SET_BLOCKLEN		16	/* R1 */
 #define MMC_READ_BLOCK_SINGLE		17	/* R1 */
 #define MMC_READ_BLOCK_MULTIPLE		18	/* R1 */
+#define MMC_SEND_TUNING_BLOCK		19	/* R1 */
+#define MMC_SEND_TUNING_BLOCK_HS200	21	/* R1 */
 #define MMC_SET_BLOCK_COUNT		23	/* R1 */
 #define MMC_WRITE_BLOCK_SINGLE		24	/* R1 */
 #define MMC_WRITE_BLOCK_MULTIPLE	25	/* R1 */
