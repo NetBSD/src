@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.53 2013/08/30 20:57:26 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.54 2015/08/05 06:54:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003, 2005, 2010 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.53 2013/08/30 20:57:26 mrg Exp $");
+__RCSID("$NetBSD: record.c,v 1.54 2015/08/05 06:54:39 mrg Exp $");
 #endif
 
 
@@ -65,7 +65,7 @@ static int	gain;
 static int	balance;
 static int	port;
 static char	*encoding_str;
-static struct write_info wi;
+static struct track_info ti;
 static struct timeval record_time;
 static struct timeval start_time;
 
@@ -85,10 +85,10 @@ main(int argc, char *argv[])
 	const char *defdevice = _PATH_SOUND;
 
 	/*
-	 * Initialise the write_info.
+	 * Initialise the track_info.
 	 */
-	wi.format = AUDIO_FORMAT_DEFAULT;
-	wi.total_size = -1;
+	ti.format = AUDIO_FORMAT_DEFAULT;
+	ti.total_size = -1;
 
 	while ((ch = getopt(argc, argv, "ab:B:C:F:c:d:e:fhi:m:P:p:qt:s:Vv:")) != -1) {
 		switch (ch) {
@@ -108,14 +108,14 @@ main(int argc, char *argv[])
 			/* Ignore, compatibility */
 			break;
 		case 'F':
-			wi.format = audio_format_from_str(optarg);
-			if (wi.format < 0)
+			ti.format = audio_format_from_str(optarg);
+			if (ti.format < 0)
 				errx(1, "Unknown audio format; supported "
 				    "formats: \"sun\", \"wav\", and \"none\"");
 			break;
 		case 'c':
-			decode_int(optarg, &wi.channels);
-			if (wi.channels < 0 || wi.channels > 16)
+			decode_int(optarg, &ti.channels);
+			if (ti.channels < 0 || ti.channels > 16)
 				errx(1, "channels must be between 0 and 16");
 			break;
 		case 'd':
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 			fflag++;
 			break;
 		case 'i':
-			wi.header_info = optarg;
+			ti.header_info = optarg;
 			break;
 		case 'm':
 			decode_int(optarg, &monitor_gain);
@@ -136,10 +136,10 @@ main(int argc, char *argv[])
 				errx(1, "monitor volume must be between 0 and 255");
 			break;
 		case 'P':
-			decode_int(optarg, &wi.precision);
-			if (wi.precision != 4 && wi.precision != 8 &&
-			    wi.precision != 16 && wi.precision != 24 &&
-			    wi.precision != 32)
+			decode_int(optarg, &ti.precision);
+			if (ti.precision != 4 && ti.precision != 8 &&
+			    ti.precision != 16 && ti.precision != 24 &&
+			    ti.precision != 32)
 				errx(1, "precision must be between 4, 8, 16, 24 or 32");
 			break;
 		case 'p':
@@ -157,11 +157,11 @@ main(int argc, char *argv[])
 			    "port must be `cd', `internal-cd', `mic', or `line'");
 			break;
 		case 'q':
-			wi.qflag++;
+			ti.qflag++;
 			break;
 		case 's':
-			decode_int(optarg, &wi.sample_rate);
-			if (wi.sample_rate < 0 || wi.sample_rate > 48000 * 2)	/* XXX */
+			decode_int(optarg, &ti.sample_rate);
+			if (ti.sample_rate < 0 || ti.sample_rate > 48000 * 2)	/* XXX */
 				errx(1, "sample rate must be between 0 and 96000");
 			break;
 		case 't':
@@ -192,8 +192,8 @@ main(int argc, char *argv[])
 	 * convert the encoding string into a value.
 	 */
 	if (encoding_str) {
-		wi.encoding = audio_enc_to_val(encoding_str);
-		if (wi.encoding == -1)
+		ti.encoding = audio_enc_to_val(encoding_str);
+		if (ti.encoding == -1)
 			errx(1, "unknown encoding, bailing...");
 	}
 
@@ -202,21 +202,21 @@ main(int argc, char *argv[])
 	 */
 	if (argv[0][0] != '-' || argv[0][1] != '\0') {
 		/* intuit the file type from the name */
-		if (wi.format == AUDIO_FORMAT_DEFAULT)
+		if (ti.format == AUDIO_FORMAT_DEFAULT)
 		{
 			size_t flen = strlen(*argv);
 			const char *arg = *argv;
 
 			if (strcasecmp(arg + flen - 3, ".au") == 0)
-				wi.format = AUDIO_FORMAT_SUN;
+				ti.format = AUDIO_FORMAT_SUN;
 			else if (strcasecmp(arg + flen - 4, ".wav") == 0)
-				wi.format = AUDIO_FORMAT_WAV;
+				ti.format = AUDIO_FORMAT_WAV;
 		}
-		wi.outfd = open(*argv, O_CREAT|(aflag ? O_APPEND : O_TRUNC)|O_WRONLY, 0666);
-		if (wi.outfd < 0)
+		ti.outfd = open(*argv, O_CREAT|(aflag ? O_APPEND : O_TRUNC)|O_WRONLY, 0666);
+		if (ti.outfd < 0)
 			err(1, "could not open %s", *argv);
 	} else
-		wi.outfd = STDOUT_FILENO;
+		ti.outfd = STDOUT_FILENO;
 
 	/*
 	 * open the audio device
@@ -262,7 +262,7 @@ main(int argc, char *argv[])
 				info.record.y = x; \
 			else \
 				info.record.y = x = oinfo.record.y;
-#define SETINFO(x)	SETINFO2(wi.x, x)
+#define SETINFO(x)	SETINFO2(ti.x, x)
 
 	SETINFO (sample_rate)
 	SETINFO (channels)
@@ -285,12 +285,12 @@ main(int argc, char *argv[])
 
 	signal(SIGINT, cleanup);
 
-	wi.total_size = 0;
+	ti.total_size = 0;
 
-	write_header(&wi);
-	if (wi.format == AUDIO_FORMAT_NONE)
+	write_header(&ti);
+	if (ti.format == AUDIO_FORMAT_NONE)
 		errx(1, "unable to determine audio format");
-	conv_func = write_get_conv_func(&wi);
+	conv_func = write_get_conv_func(&ti);
 
 	if (verbose && conv_func) {
 		const char *s = NULL;
@@ -341,9 +341,9 @@ main(int argc, char *argv[])
 			err(1, "read failed");
 		if (conv_func)
 			(*conv_func)(buffer, bufsize);
-		if ((size_t)write(wi.outfd, buffer, bufsize) != bufsize)
+		if ((size_t)write(ti.outfd, buffer, bufsize) != bufsize)
 			err(1, "write failed");
-		wi.total_size += bufsize;
+		ti.total_size += bufsize;
 	}
 	cleanup(0);
 }
@@ -365,7 +365,7 @@ cleanup(int signo)
 {
 
 	rewrite_header();
-	close(wi.outfd);
+	close(ti.outfd);
 	if (omonitor_gain) {
 		AUDIO_INITINFO(&info);
 		info.monitor_gain = omonitor_gain;
@@ -384,12 +384,12 @@ rewrite_header(void)
 {
 
 	/* can't do this here! */
-	if (wi.outfd == STDOUT_FILENO)
+	if (ti.outfd == STDOUT_FILENO)
 		return;
 
-	if (lseek(wi.outfd, (off_t)0, SEEK_SET) == (off_t)-1)
+	if (lseek(ti.outfd, (off_t)0, SEEK_SET) == (off_t)-1)
 		err(1, "could not seek to start of file for header rewrite");
-	write_header(&wi);
+	write_header(&ti);
 }
 
 static void
