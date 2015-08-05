@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.24 2015/06/21 06:06:01 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.25 2015/08/05 06:54:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: audio.c,v 1.24 2015/06/21 06:06:01 mrg Exp $");
+__RCSID("$NetBSD: audio.c,v 1.25 2015/08/05 06:54:39 mrg Exp $");
 #endif
 
 
@@ -178,21 +178,21 @@ audio_errstring(int errval)
 }
 
 void
-write_header(struct write_info *wi)
+write_header(struct track_info *ti)
 {
 	struct iovec iv[3];
 	int veclen, left, tlen;
 	void *hdr;
 	size_t hdrlen;
 
-	switch (wi->format) {
+	switch (ti->format) {
 	case AUDIO_FORMAT_DEFAULT:
 	case AUDIO_FORMAT_SUN:
-		if (sun_prepare_header(wi, &hdr, &hdrlen, &left) != 0)
+		if (sun_prepare_header(ti, &hdr, &hdrlen, &left) != 0)
 			return;
 		break;
 	case AUDIO_FORMAT_WAV:
-		if (wav_prepare_header(wi, &hdr, &hdrlen, &left) != 0)
+		if (wav_prepare_header(ti, &hdr, &hdrlen, &left) != 0)
 			return;
 		break;
 	case AUDIO_FORMAT_NONE:
@@ -209,9 +209,9 @@ write_header(struct write_info *wi)
 		iv[veclen].iov_len = hdrlen;
 		tlen += iv[veclen++].iov_len;
 	}
-	if (wi->header_info) {
-		iv[veclen].iov_base = wi->header_info;
-		iv[veclen].iov_len = (int)strlen(wi->header_info) + 1;
+	if (ti->header_info) {
+		iv[veclen].iov_base = ti->header_info;
+		iv[veclen].iov_len = (int)strlen(ti->header_info) + 1;
 		tlen += iv[veclen++].iov_len;
 	}
 	if (left) {
@@ -223,20 +223,20 @@ write_header(struct write_info *wi)
 	if (tlen == 0)
 		return;
 
-	if (writev(wi->outfd, iv, veclen) != tlen)
+	if (writev(ti->outfd, iv, veclen) != tlen)
 		err(1, "could not write audio header");
 }
 
 write_conv_func
-write_get_conv_func(struct write_info *wi)
+write_get_conv_func(struct track_info *ti)
 {
 
-	switch (wi->format) {
+	switch (ti->format) {
 	case AUDIO_FORMAT_DEFAULT:
 	case AUDIO_FORMAT_SUN:
-		return sun_write_get_conv_func(wi);
+		return sun_write_get_conv_func(ti);
 	case AUDIO_FORMAT_WAV:
-		return wav_write_get_conv_func(wi);
+		return wav_write_get_conv_func(ti);
 	case AUDIO_FORMAT_NONE:
 		return NULL;
 	default:
