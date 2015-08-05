@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.16 2015/08/05 10:30:25 jmcneill Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.17 2015/08/05 12:28:47 jmcneill Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -112,6 +112,7 @@
 #define  SDHC_RESET_ALL			(1<<0)
 #define SDHC_NINTR_STATUS		0x30
 #define  SDHC_ERROR_INTERRUPT		(1<<15)
+#define  SDHC_RETUNING_EVENT		(1<<12)
 #define  SDHC_CARD_INTERRUPT		(1<<8)
 #define  SDHC_CARD_REMOVAL		(1<<7)
 #define  SDHC_CARD_INSERTION		(1<<6)
@@ -121,7 +122,7 @@
 #define  SDHC_BLOCK_GAP_EVENT		(1<<2)
 #define  SDHC_TRANSFER_COMPLETE		(1<<1)
 #define  SDHC_COMMAND_COMPLETE		(1<<0)
-#define  SDHC_NINTR_STATUS_MASK		0x81ff
+#define  SDHC_NINTR_STATUS_MASK		0x91ff
 #define SDHC_EINTR_STATUS		0x32
 #define  SDHC_DMA_ERROR			(1<<12)
 #define  SDHC_ADMA_ERROR		(1<<9)
@@ -190,6 +191,9 @@
 #define  SDHC_TUNING_SDR50		(1<<13)
 #define  SDHC_RETUNING_MODES_SHIFT	14
 #define  SDHC_RETUNING_MODES_MASK	0x3
+#define  SDHC_RETUNING_MODE_1		(0 << SDHC_RETUNING_MODES_SHIFT)
+#define  SDHC_RETUNING_MODE_2		(1 << SDHC_RETUNING_MODES_SHIFT)
+#define  SDHC_RETUNING_MODE_3		(2 << SDHC_RETUNING_MODES_SHIFT)
 #define  SDHC_CLOCK_MULTIPLIER_SHIFT	16
 #define  SDHC_CLOCK_MULTIPLIER_MASK	0xff
 #define SDHC_ADMA_ERROR_STATUS		0x54
