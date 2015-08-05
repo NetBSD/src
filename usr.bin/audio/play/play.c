@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.54 2011/08/28 01:17:48 joerg Exp $	*/
+/*	$NetBSD: play.c,v 1.55 2015/08/05 06:54:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002, 2010 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.54 2011/08/28 01:17:48 joerg Exp $");
+__RCSID("$NetBSD: play.c,v 1.55 2015/08/05 06:54:39 mrg Exp $");
 #endif
 
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: play.c,v 1.54 2011/08/28 01:17:48 joerg Exp $");
 static void usage(void) __dead;
 static void play(char *);
 static void play_fd(const char *, int);
-static ssize_t audioctl_write_fromhdr(void *, size_t, int, size_t *, const char *);
+static ssize_t audioctl_write_fromhdr(void *, size_t, int, off_t *, const char *);
 static void cleanup(int) __dead;
 
 static audio_info_t	info;
@@ -221,7 +221,7 @@ play(char *file)
 	void *addr, *oaddr;
 	off_t	filesize;
 	size_t	sizet_filesize;
-	size_t datasize = 0;
+	off_t datasize = 0;
 	ssize_t	hdrlen;
 	int fd;
 
@@ -276,19 +276,19 @@ play(char *file)
 
 	filesize -= hdrlen;
 	addr = (char *)addr + hdrlen;
-	if ((uint64_t)filesize < datasize || datasize == 0) {
-		if ((uint64_t)filesize < datasize)
+	if (filesize < datasize || datasize == 0) {
+		if (filesize < datasize)
 			warnx("bogus datasize: %ld", (u_long)datasize);
 		datasize = filesize;
 	}
 
-	while (datasize > bufsize) {
+	while ((uint64_t)datasize > bufsize) {
 		if ((size_t)write(audiofd, addr, bufsize) != bufsize)
 			err(1, "write failed");
 		addr = (char *)addr + bufsize;
 		datasize -= bufsize;
 	}
-	if ((size_t)write(audiofd, addr, datasize) != datasize)
+	if ((off_t)write(audiofd, addr, datasize) != datasize)
 		err(1, "final write failed");
 
 	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
@@ -308,8 +308,8 @@ play_fd(const char *file, int fd)
 	char    *buffer = malloc(bufsize);
 	ssize_t hdrlen;
 	int     nr, nw;
-	size_t	datasize = 0;
-	size_t	dataout = 0;
+	off_t	datasize = 0;
+	off_t	dataout = 0;
 
 	if (buffer == NULL)
 		err(1, "malloc of read buffer failed");
@@ -367,7 +367,7 @@ write_error:
  * uses the local "info" variable. blah... fix me!
  */
 static ssize_t
-audioctl_write_fromhdr(void *hdr, size_t fsz, int fd, size_t *datasize, const char *file)
+audioctl_write_fromhdr(void *hdr, size_t fsz, int fd, off_t *datasize, const char *file)
 {
 	sun_audioheader	*sunhdr;
 	ssize_t	hdr_len = 0;
@@ -389,7 +389,7 @@ audioctl_write_fromhdr(void *hdr, size_t fsz, int fd, size_t *datasize, const ch
 		info.play.channels = ntohl(sunhdr->channels);
 		hdr_len = ntohl(sunhdr->hdr_size);
 
-		*datasize = ntohl(sunhdr->data_size);
+		*datasize = (off_t)ntohl(sunhdr->data_size);
 		goto set_audio_mode;
 	}
 
