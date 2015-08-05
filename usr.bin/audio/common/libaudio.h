@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.19 2014/12/30 01:22:09 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.20 2015/08/05 06:54:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2009 Matthew R. Green
@@ -157,7 +157,7 @@ typedef struct {
 } __packed wav_audiohdrextensible;
 
 /* returns size of header, or -ve for failure */
-ssize_t audio_wav_parse_hdr (void *, size_t, u_int *, u_int *, u_int *, u_int *, size_t *);
+ssize_t audio_wav_parse_hdr (void *, size_t, u_int *, u_int *, u_int *, u_int *, off_t *);
 
 extern int verbose;
 
@@ -185,34 +185,34 @@ void	decode_time (const char *, struct timeval *);
 void	decode_encoding (const char *, int *);
 
 /*
- * Write a sun/wav header, shared between record and merge.
+ * Track info, for reading/writing sun/wav header.
  *
  * Note that write_header() may change the values of format,
  * encoding.
  */
 
-struct write_info {
+struct track_info {
 	int	outfd;
 	char	*header_info;
 	int	format;
 	int	encoding;
 	int	precision;
 	int	qflag;
-	ssize_t	total_size;
+	off_t	total_size;
 	int	sample_rate;
 	int	channels;
 };
 
 typedef void (*write_conv_func) (u_char *, int);
 
-void	write_header (struct write_info *);
-write_conv_func write_get_conv_func(struct write_info *);
+void	write_header (struct track_info *);
+write_conv_func write_get_conv_func(struct track_info *);
 
 /* backends for the above */
-int sun_prepare_header(struct write_info *wi, void **hdrp, size_t *lenp, int *leftp);
-int wav_prepare_header(struct write_info *wi, void **hdrp, size_t *lenp, int *leftp);
-write_conv_func sun_write_get_conv_func(struct write_info *wi);
-write_conv_func wav_write_get_conv_func(struct write_info *wi);
+int sun_prepare_header(struct track_info *ti, void **hdrp, size_t *lenp, int *leftp);
+int wav_prepare_header(struct track_info *ti, void **hdrp, size_t *lenp, int *leftp);
+write_conv_func sun_write_get_conv_func(struct track_info *ti);
+write_conv_func wav_write_get_conv_func(struct track_info *ti);
 
 extern char	audio_default_info[8];
 
