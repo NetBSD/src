@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 250108 2013-04-30 16:18:29Z luigi $*/
-/*$NetBSD: ixgbe.c,v 1.31 2015/08/03 05:43:01 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.32 2015/08/05 03:42:11 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -510,6 +510,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	adapter->osdep.pc = pa->pa_pc;
 	adapter->osdep.tag = pa->pa_tag;
 	adapter->osdep.dmat = pa->pa_dmat;
+	adapter->osdep.attached = false;
 
 	ent = ixgbe_lookup(pa);
 
@@ -681,6 +682,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	ixgbe_netmap_attach(adapter);
 #endif /* DEV_NETMAP */
 	INIT_DEBUGOUT("ixgbe_attach: end");
+	adapter->osdep.attached = true;
 	return;
 err_late:
 	ixgbe_free_transmit_structures(adapter);
@@ -716,6 +718,8 @@ ixgbe_detach(device_t dev, int flags)
 	u32	ctrl_ext;
 
 	INIT_DEBUGOUT("ixgbe_detach: begin");
+	if (adapter->osdep.attached == false)
+		return 0;
 
 #if NVLAN > 0
 	/* Make sure VLANs are not using driver */
@@ -2791,7 +2795,8 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 	else
 		(adapter->msix != 0) ? (rid = 1):(rid = 0);
 
-	pci_intr_disestablish(adapter->osdep.pc, adapter->osdep.intr);
+	if (adapter->osdep.intr != NULL)
+		pci_intr_disestablish(adapter->osdep.pc, adapter->osdep.intr);
 	adapter->osdep.intr = NULL;
 
 #if defined(NETBSD_MSI_OR_MSIX)

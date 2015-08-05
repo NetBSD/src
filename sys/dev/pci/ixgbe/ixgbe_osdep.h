@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.7 2015/04/24 07:00:51 msaitoh Exp $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.8 2015/08/05 03:42:11 msaitoh Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -171,6 +171,7 @@ struct ixgbe_osdep
 	device_t           dev;
 	pci_intr_handle_t  ih;
 	void               *intr;
+	bool		   attached;
 };
 
 /* These routines are needed by the shared code */
