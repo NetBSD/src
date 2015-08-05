@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: src/sys/dev/ixgbe/ixv.h,v 1.3 2011/01/07 23:39:41 jfv Exp $*/
-/*$NetBSD: ixv.h,v 1.5 2015/04/02 09:26:55 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixv.h 257176 2013-10-26 17:58:36Z glebius $*/
+/*$NetBSD: ixv.h,v 1.6 2015/08/05 04:08:44 msaitoh Exp $*/
 
 
 #ifndef _IXV_H_
@@ -46,7 +46,9 @@
 #include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/lock.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
 #include <sys/sockio.h>
 
 #include <net/if.h>

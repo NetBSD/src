@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixv.c 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixv.c,v 1.9 2015/05/21 00:45:27 rtr Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
+/*$NetBSD: ixv.c,v 1.10 2015/08/05 04:08:44 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -401,7 +401,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		adapter->num_tx_desc = ixv_txd;
 
 	if (((ixv_rxd * sizeof(union ixgbe_adv_rx_desc)) % DBA_ALIGN) != 0 ||
-	    ixv_rxd < MIN_TXD || ixv_rxd > MAX_TXD) {
+	    ixv_rxd < MIN_RXD || ixv_rxd > MAX_RXD) {
 		aprint_error_dev(dev, "RXD config issue, using default!\n");
 		adapter->num_rx_desc = DEFAULT_RXD;
 	} else
@@ -1630,12 +1630,9 @@ ixv_identify_hardware(struct adapter *adapter)
 	** KVM it may not be and will break things.
 	*/
 	pci_cmd_word = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	if (!((pci_cmd_word & PCI_COMMAND_MASTER_ENABLE) &&
-	    (pci_cmd_word & PCI_COMMAND_MEM_ENABLE))) {
-		INIT_DEBUGOUT("Memory Access and/or Bus Master "
-		    "bits were not set!\n");
-		pci_cmd_word |=
-		    (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
+	if (!(pci_cmd_word & PCI_COMMAND_MASTER_ENABLE)) {
+		INIT_DEBUGOUT("Bus Master bit was not set!\n");
+		pci_cmd_word |= PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, pci_cmd_word);
 	}
 
@@ -1741,7 +1738,7 @@ ixv_allocate_msix(struct adapter *adapter)
 	*/
 	if (adapter->hw.mac.type == ixgbe_mac_82599_vf) {
 		int msix_ctrl;
-		pci_get_capability(pc, tag, PCI_CAP_MSIX, &rid);
+		pci_get_capability(pc, tag, PCI_CAP_MSIX, &rid, NULL);
 		rid += PCI_MSIX_CTL;
 		msix_ctrl = pci_read_config(pc, tag, rid);
 		msix_ctrl |= PCI_MSIX_CTL_ENABLE;
@@ -1763,24 +1760,16 @@ ixv_setup_msix(struct adapter *adapter)
 	return 0;
 #else
 	device_t dev = adapter->dev;
-	int rid, vectors, want = 2;
+	int rid, want;
 
 
 	/* First try MSI/X */
 	rid = PCIR_BAR(3);
 	adapter->msix_mem = bus_alloc_resource_any(dev,
 	    SYS_RES_MEMORY, &rid, RF_ACTIVE);
-       	if (!adapter->msix_mem) {
+       	if (adapter->msix_mem == NULL) {
 		device_printf(adapter->dev,
 		    "Unable to map MSIX table \n");
-		goto out;
-	}
-
-	vectors = pci_msix_count(dev); 
-	if (vectors < 2) {
-		bus_release_resource(dev, SYS_RES_MEMORY,
-		    rid, adapter->msix_mem);
-		adapter->msix_mem = NULL;
 		goto out;
 	}
 
@@ -1788,12 +1777,20 @@ ixv_setup_msix(struct adapter *adapter)
 	** Want two vectors: one for a queue,
 	** plus an additional for mailbox.
 	*/
-	if (pci_alloc_msix(dev, &want) == 0) {
+	want = 2;
+	if ((pci_alloc_msix(dev, &want) == 0) && (want == 2)) {
                	device_printf(adapter->dev,
 		    "Using MSIX interrupts with %d vectors\n", want);
 		return (want);
 	}
+	/* Release in case alloc was insufficient */
+	pci_release_msi(dev);
 out:
+       	if (adapter->msix_mem != NULL) {
+		bus_release_resource(dev, SYS_RES_MEMORY,
+		    rid, adapter->msix_mem);
+		adapter->msix_mem = NULL;
+	}
 	device_printf(adapter->dev,"MSIX config error\n");
 	return (ENXIO);
 #endif
@@ -2080,7 +2077,6 @@ fail_2:
 fail_1:
 	ixgbe_dma_tag_destroy(dma->dma_tag);
 fail_0:
-	dma->dma_map = NULL;
 	dma->dma_tag = NULL;
 	return (r);
 }
@@ -3697,7 +3693,7 @@ ixv_rx_checksum(u32 staterr, struct mbuf * mp, u32 ptype,
 	}
 	if (status & IXGBE_RXD_STAT_L4CS) {
 		stats->l4cs.ev_count++;
-		u16 type = M_CSUM_TCPv4|M_CSUM_TCPv6|M_CSUM_UDPv4|M_CSUM_UDPv6;
+		int type = M_CSUM_TCPv4|M_CSUM_TCPv6|M_CSUM_UDPv4|M_CSUM_UDPv6;
 		if (!(errors & IXGBE_RXD_ERR_TCPE)) {
 			mp->m_pkthdr.csum_flags |= type;
 		} else {
