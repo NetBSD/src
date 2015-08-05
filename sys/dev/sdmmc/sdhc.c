@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.77 2015/08/03 12:11:36 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.78 2015/08/05 07:31:52 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.77 2015/08/03 12:11:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.78 2015/08/05 07:31:52 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -583,12 +583,14 @@ sdhc_detach(struct sdhc_softc *sc, int flags)
 		}
 		/* disable interrupts */
 		if ((flags & DETACH_FORCE) == 0) {
+			mutex_enter(&hp->intr_lock);
 			if (ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)) {
 				HWRITE4(hp, SDHC_NINTR_SIGNAL_EN, 0);
 			} else {
 				HWRITE2(hp, SDHC_NINTR_SIGNAL_EN, 0);
 			}
 			sdhc_soft_reset(hp, SDHC_RESET_ALL);
+			mutex_exit(&hp->intr_lock);
 		}
 		cv_destroy(&hp->intr_cv);
 		mutex_destroy(&hp->intr_lock);
@@ -1209,6 +1211,7 @@ sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 {
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 
+	mutex_enter(&hp->intr_lock);
 	switch (signal_voltage) {
 	case SDMMC_SIGNAL_VOLTAGE_180:
 		HSET2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
@@ -1219,6 +1222,7 @@ sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 	default:
 		return EINVAL;
 	}
+	mutex_exit(&hp->intr_lock);
 
 	return 0;
 }
@@ -1618,6 +1622,8 @@ sdhc_transfer_data_pio(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	u_int pmask;
 	int error = 0;
 
+	KASSERT(mutex_owned(&hp->intr_lock));
+
 	if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 		imask = SDHC_BUFFER_READ_READY;
 		pmask = SDHC_BUFFER_READ_ENABLE;
@@ -1831,6 +1837,8 @@ static int
 sdhc_soft_reset(struct sdhc_host *hp, int mask)
 {
 	int timo;
+
+	KASSERT(mutex_owned(&hp->intr_lock));
 
 	DPRINTF(1,("%s: software reset reg=%08x\n", HDEVNAME(hp), mask));
 
