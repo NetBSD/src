@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.79 2015/08/05 10:30:25 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.80 2015/08/05 12:28:47 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.79 2015/08/05 10:30:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.80 2015/08/05 12:28:47 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.79 2015/08/05 10:30:25 jmcneill Exp $");
 #include <sys/systm.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/atomic.h>
 
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
@@ -77,6 +78,11 @@ struct sdhc_host {
 	uint16_t intr_error_status;	/* soft error status */
 	kmutex_t intr_lock;
 	kcondvar_t intr_cv;
+
+	callout_t tuning_timer;
+	int tuning_timing;
+	u_int tuning_timer_count;
+	u_int tuning_timer_pending;
 
 	int specver;			/* spec. version */
 
@@ -184,6 +190,7 @@ static void	sdhc_exec_command(sdmmc_chipset_handle_t,
 		    struct sdmmc_command *);
 static int	sdhc_signal_voltage(sdmmc_chipset_handle_t, int);
 static int	sdhc_execute_tuning(sdmmc_chipset_handle_t, int);
+static void	sdhc_tuning_timer(void *);
 static int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
 static int	sdhc_wait_state(struct sdhc_host *, uint32_t, uint32_t);
 static int	sdhc_soft_reset(struct sdhc_host *, int);
@@ -279,6 +286,8 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 
 	mutex_init(&hp->intr_lock, MUTEX_DEFAULT, IPL_SDMMC);
 	cv_init(&hp->intr_cv, "sdhcintr");
+	callout_init(&hp->tuning_timer, CALLOUT_MPSAFE);
+	callout_setfunc(&hp->tuning_timer, sdhc_tuning_timer, hp);
 
 	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		sdhcver = HREAD4(hp, SDHC_ESDHC_HOST_CTL_VERSION);
@@ -327,6 +336,18 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		} else {
 			caps2 = sc->sc_caps2 = 0;
 		}
+	}
+
+	const u_int retuning_mode = (caps2 >> SDHC_RETUNING_MODES_SHIFT) &
+	    SDHC_RETUNING_MODES_MASK;
+	if (retuning_mode == SDHC_RETUNING_MODE_1) {
+		hp->tuning_timer_count = (caps2 >> SDHC_TIMER_COUNT_SHIFT) &
+		    SDHC_TIMER_COUNT_MASK;
+		if (hp->tuning_timer_count == 0xf)
+			hp->tuning_timer_count = 0;
+		if (hp->tuning_timer_count)
+			hp->tuning_timer_count =
+			    1 << (hp->tuning_timer_count - 1);
 	}
 
 	/*
@@ -441,6 +462,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	if (ISSET(caps, SDHC_VOLTAGE_SUPP_3_3V)) {
 		SET(hp->ocr, MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V);
 		aprint_normal(" 3.3V");
+	}
+	if (hp->specver >= SDHC_SPEC_VERS_300) {
+		aprint_normal(", re-tuning mode %d", retuning_mode + 1);
+		if (hp->tuning_timer_count)
+			aprint_normal(" (%us timer)", hp->tuning_timer_count);
 	}
 
 	/*
@@ -560,6 +586,7 @@ adma_done:
 	return 0;
 
 err:
+	callout_destroy(&hp->tuning_timer);
 	cv_destroy(&hp->intr_cv);
 	mutex_destroy(&hp->intr_lock);
 	free(hp, M_DEVBUF);
@@ -595,6 +622,8 @@ sdhc_detach(struct sdhc_softc *sc, int flags)
 			sdhc_soft_reset(hp, SDHC_RESET_ALL);
 			mutex_exit(&hp->intr_lock);
 		}
+		callout_halt(&hp->tuning_timer, NULL);
+		callout_destroy(&hp->tuning_timer);
 		cv_destroy(&hp->intr_cv);
 		mutex_destroy(&hp->intr_lock);
 		if (hp->ios > 0) {
@@ -841,6 +870,7 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	/* If power is disabled, reset the host and return now. */
 	if (ocr == 0) {
 		(void)sdhc_host_reset1(hp);
+		callout_halt(&hp->tuning_timer, &hp->intr_lock);
 		goto out;
 	}
 
@@ -1241,6 +1271,8 @@ sdhc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
 	uint8_t hostctl;
 	int opcode, error, retry = 40;
 
+	hp->tuning_timing = timing;
+
 	switch (timing) {
 	case SDMMC_TIMING_MMC_HS200:
 		opcode = MMC_SEND_TUNING_BLOCK_HS200;
@@ -1318,7 +1350,20 @@ sdhc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
 		return EIO;		/* tuning failed */
 	}
 
+	if (hp->tuning_timer_count) {
+		callout_schedule(&hp->tuning_timer,
+		    hz * hp->tuning_timer_count);
+	}
+
 	return 0;		/* tuning completed */
+}
+
+static void
+sdhc_tuning_timer(void *arg)
+{
+	struct sdhc_host *hp = arg;
+
+	atomic_swap_uint(&hp->tuning_timer_pending, 1);
 }
 
 static int
@@ -1344,6 +1389,10 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	int error;
 
 	mutex_enter(&hp->intr_lock);
+
+	if (atomic_cas_uint(&hp->tuning_timer_pending, 1, 0) == 1) {
+		(void)sdhc_execute_tuning(hp, hp->tuning_timing);
+	}
 
 	if (cmd->c_data && ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		const uint16_t ready = SDHC_BUFFER_READ_READY | SDHC_BUFFER_WRITE_READY;
@@ -2094,6 +2143,13 @@ sdhc_intr(void *arg)
 				HCLR4(hp, SDHC_NINTR_SIGNAL_EN,
 				    status & (SDHC_CARD_REMOVAL|SDHC_CARD_INSERTION));
 			}
+		}
+
+		/*
+		 * Schedule re-tuning process (UHS).
+		 */
+		if (ISSET(status, SDHC_RETUNING_EVENT)) {
+			atomic_swap_uint(&hp->tuning_timer_pending, 1);
 		}
 
 		/*
