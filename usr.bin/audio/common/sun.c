@@ -1,4 +1,4 @@
-/*	$NetBSD: sun.c,v 1.8 2013/08/30 20:57:26 mrg Exp $	*/
+/*	$NetBSD: sun.c,v 1.9 2015/08/05 06:54:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: sun.c,v 1.8 2013/08/30 20:57:26 mrg Exp $");
+__RCSID("$NetBSD: sun.c,v 1.9 2015/08/05 06:54:39 mrg Exp $");
 #endif
 
 
@@ -110,76 +110,76 @@ audio_encoding_to_sun(int encoding, int precision, int *sunep)
 }
 
 int
-sun_prepare_header(struct write_info *wi, void **hdrp, size_t *lenp, int *leftp)
+sun_prepare_header(struct track_info *ti, void **hdrp, size_t *lenp, int *leftp)
 {
 	static int warned = 0;
 	static sun_audioheader auh;
-	int sunenc, oencoding = wi->encoding;
+	int sunenc, oencoding = ti->encoding;
 
 	/* only perform conversions if we don't specify the encoding */
-	switch (wi->encoding) {
+	switch (ti->encoding) {
 
 	case AUDIO_ENCODING_ULINEAR_LE:
 #if BYTE_ORDER == LITTLE_ENDIAN
 	case AUDIO_ENCODING_ULINEAR:
 #endif
-		if (wi->precision == 16 || wi->precision == 32)
-			wi->encoding = AUDIO_ENCODING_SLINEAR_BE;
+		if (ti->precision == 16 || ti->precision == 32)
+			ti->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		break;
 
 	case AUDIO_ENCODING_ULINEAR_BE:
 #if BYTE_ORDER == BIG_ENDIAN
 	case AUDIO_ENCODING_ULINEAR:
 #endif
-		if (wi->precision == 16 || wi->precision == 32)
-			wi->encoding = AUDIO_ENCODING_SLINEAR_BE;
+		if (ti->precision == 16 || ti->precision == 32)
+			ti->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		break;
 
 	case AUDIO_ENCODING_SLINEAR_LE:
 #if BYTE_ORDER == LITTLE_ENDIAN
 	case AUDIO_ENCODING_SLINEAR:
 #endif
-		if (wi->precision == 16 || wi->precision == 32)
-			wi->encoding = AUDIO_ENCODING_SLINEAR_BE;
+		if (ti->precision == 16 || ti->precision == 32)
+			ti->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		break;
 
 #if BYTE_ORDER == BIG_ENDIAN
 	case AUDIO_ENCODING_SLINEAR:
-		wi->encoding = AUDIO_ENCODING_SLINEAR_BE;
+		ti->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		break;
 #endif
 	}
 	
 	/* if we can't express this as a Sun header, don't write any */
-	if (audio_encoding_to_sun(wi->encoding, wi->precision, &sunenc) != 0) {
-		if (!wi->qflag && !warned) {
+	if (audio_encoding_to_sun(ti->encoding, ti->precision, &sunenc) != 0) {
+		if (!ti->qflag && !warned) {
 			const char *s = audio_enc_from_val(oencoding);
 
 			if (s == NULL)
 				s = "(unknown)";
 			warnx("failed to convert to sun encoding from %s "
 			      "(precision %d);\nSun audio header not written",
-			      s, wi->precision);
+			      s, ti->precision);
 		}
-		wi->format = AUDIO_FORMAT_NONE;
+		ti->format = AUDIO_FORMAT_NONE;
 		warned = 1;
 		return -1;
 	}
 
 	auh.magic = htonl(AUDIO_FILE_MAGIC);
-	if (wi->outfd == STDOUT_FILENO)
+	if (ti->outfd == STDOUT_FILENO)
 		auh.data_size = htonl(AUDIO_UNKNOWN_SIZE);
-	else if (wi->total_size != -1)
-		auh.data_size = htonl(wi->total_size);
+	else if (ti->total_size != -1)
+		auh.data_size = htonl(ti->total_size);
 	else
 		auh.data_size = 0;
 	auh.encoding = htonl(sunenc);
-	auh.sample_rate = htonl(wi->sample_rate);
-	auh.channels = htonl(wi->channels);
-	if (wi->header_info) {
+	auh.sample_rate = htonl(ti->sample_rate);
+	auh.channels = htonl(ti->channels);
+	if (ti->header_info) {
 		int 	len, infolen;
 
-		infolen = ((len = strlen(wi->header_info)) + 7) & 0xfffffff8;
+		infolen = ((len = strlen(ti->header_info)) + 7) & 0xfffffff8;
 		*leftp = infolen - len;
 		auh.hdr_size = htonl(sizeof(auh) + infolen);
 	} else {
@@ -192,20 +192,20 @@ sun_prepare_header(struct write_info *wi, void **hdrp, size_t *lenp, int *leftp)
 }
 
 write_conv_func
-sun_write_get_conv_func(struct write_info *wi)
+sun_write_get_conv_func(struct track_info *ti)
 {
 	write_conv_func conv_func = NULL;
 
 	/* only perform conversions if we don't specify the encoding */
-	switch (wi->encoding) {
+	switch (ti->encoding) {
 
 	case AUDIO_ENCODING_ULINEAR_LE:
 #if BYTE_ORDER == LITTLE_ENDIAN
 	case AUDIO_ENCODING_ULINEAR:
 #endif
-		if (wi->precision == 16)
+		if (ti->precision == 16)
 			conv_func = change_sign16_swap_bytes_le;
-		else if (wi->precision == 32)
+		else if (ti->precision == 32)
 			conv_func = change_sign32_swap_bytes_le;
 		break;
 
@@ -213,9 +213,9 @@ sun_write_get_conv_func(struct write_info *wi)
 #if BYTE_ORDER == BIG_ENDIAN
 	case AUDIO_ENCODING_ULINEAR:
 #endif
-		if (wi->precision == 16)
+		if (ti->precision == 16)
 			conv_func = change_sign16_be;
-		else if (wi->precision == 32)
+		else if (ti->precision == 32)
 			conv_func = change_sign32_be;
 		break;
 
@@ -223,9 +223,9 @@ sun_write_get_conv_func(struct write_info *wi)
 #if BYTE_ORDER == LITTLE_ENDIAN
 	case AUDIO_ENCODING_SLINEAR:
 #endif
-		if (wi->precision == 16)
+		if (ti->precision == 16)
 			conv_func = swap_bytes;
-		else if (wi->precision == 32)
+		else if (ti->precision == 32)
 			conv_func = swap_bytes32;
 		break;
 	}
