@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.8 2015/08/05 03:42:11 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 251964 2013-06-18 21:28:19Z jfv $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.9 2015/08/05 04:08:44 msaitoh Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -71,6 +71,9 @@
 	#define DEBUGOUT5(S,A,B,C,D,E)  printf(S "\n",A,B,C,D,E)
 	#define DEBUGOUT6(S,A,B,C,D,E,F)  printf(S "\n",A,B,C,D,E,F)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)  printf(S "\n",A,B,C,D,E,F,G)
+	#define ERROR_REPORT1(S,A)      printf(S "\n",A)
+	#define ERROR_REPORT2(S,A,B)    printf(S "\n",A,B)
+	#define ERROR_REPORT3(S,A,B,C)  printf(S "\n",A,B,C)
 #else
 	#define DEBUGOUT(S)		do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT1(S,A)		do { } while (/*CONSTCOND*/false)
@@ -82,6 +85,9 @@
 					do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)	\
 					do { } while (/*CONSTCOND*/false)
+	#define ERROR_REPORT1(S,A)	do { } while (/*CONSTCOND*/false)
+	#define ERROR_REPORT2(S,A,B)	do { } while (/*CONSTCOND*/false)
+	#define ERROR_REPORT3(S,A,B,C)	do { } while (/*CONSTCOND*/false)
 #endif
 
 #define FALSE               0
@@ -112,6 +118,7 @@
 typedef uint8_t		u8;
 typedef int8_t		s8;
 typedef uint16_t	u16;
+typedef int16_t		s16;
 typedef uint32_t	u32;
 typedef int32_t		s32;
 typedef uint64_t	u64;
