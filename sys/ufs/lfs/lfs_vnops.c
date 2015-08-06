@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.269 2014/07/25 08:20:53 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.269.2.1 2015/08/06 21:57:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.269 2014/07/25 08:20:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.269.2.1 2015/08/06 21:57:28 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -712,7 +712,7 @@ out:
 		*vpp = NULL;
 	}
 	else {
-		KASSERT(error == 0);
+		/*KASSERT(error == 0);*/
 	}
 	lfs_unset_dirop(fs, dvp, "symlink");
 
@@ -790,7 +790,7 @@ lfs_mknod(void *v)
 		*vpp = NULL;
 	}
 	else {
-		KASSERT(error == 0);
+		/*KASSERT(error == 0);*/
 	}
 	lfs_unset_dirop(fs, dvp, "mknod");
 	/*
@@ -936,7 +936,7 @@ out:
 		*vpp = NULL;
 	}
 	else {
-		KASSERT(error == 0);
+		/*KASSERT(error == 0);*/
 	}
 	lfs_unset_dirop(fs, dvp, "create");
 
@@ -1140,7 +1140,7 @@ out2:
 		*vpp = NULL;
 	}
 	else {
-		KASSERT(error == 0);
+		/*KASSERT(error == 0);*/
 	}
 	lfs_unset_dirop(fs, dvp, "mkdir");
 
