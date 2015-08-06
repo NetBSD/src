@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2015/06/22 00:05:23 matt Exp $
+# $NetBSD: Makefile,v 1.12 2015/08/06 08:23:14 ozaki-r Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,6 +12,7 @@ TESTS_C+=	t_pktinfo
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_C+=	t_raw
 TESTS_SH=	t_forwarding
+TESTS_SH+=	t_ipv6_lifetime
 .endif
 
 LDADD.t_raw+=	-lrumpnet_local -lrumpnet_netinet -lrumpnet_net
