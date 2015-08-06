@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1239 2015/07/28 18:58:08 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1240 2015/08/06 10:22:34 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -67,6 +67,7 @@ Notes:
 Amd2netbsd script to convert to BSD make system and remove unneeded files.
 Fix symbolic links before import.
 Check external/bsd/am-utils/include/config.h is correct after import.
+Update date of release in external/bsd/am-utils/man/Makefile (two places).
 
 Package:	Automated Testing Framework (ATF)
 Version:	0.20
