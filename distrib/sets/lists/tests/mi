@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.584.2.2 2015/05/16 17:58:46 snj Exp $
+# $NetBSD: mi,v 1.584.2.3 2015/08/06 21:13:43 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3216,6 +3216,7 @@
 ./usr/tests/sbin/resize_ffs			tests-sbin-tests
 ./usr/tests/sbin/resize_ffs/Atffile		tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs/Kyuafile		tests-sbin-tests	atf,kyua
+./usr/tests/sbin/resize_ffs/t_check		tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs/t_grow		tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs/t_grow_swapped	tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs/t_resize_ffs	tests-obsolete		obsolete
