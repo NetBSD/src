@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.355 2015/08/04 21:33:07 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.356 2015/08/06 22:03:14 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33753,4 +33753,83 @@ sys/dev/pci/if_et.c				1.9
 
 	Fix mbuf use-after-free.
 	[maxv, ticket #914]
+
+distrib/sets/lists/etc/mi			1.237
+distrib/sets/lists/tests/mi			1.613
+distrib/utils/embedded/conf/armv7.conf		1.1, 1.2
+distrib/utils/embedded/conf/beagleboard.conf	delete
+distrib/utils/embedded/conf/evbarm.conf		1.21, 1.22
+distrib/utils/embedded/conf/rpi.conf		1.28, 1.29
+distrib/utils/embedded/conf/rpi_inst.conf	1.7, 1.8
+distrib/utils/embedded/conf/usermode.conf	1.5
+distrib/utils/embedded/conf/x86.conf		1.5
+distrib/utils/embedded/files/resize_disklabel	1.1
+distrib/utils/embedded/mkimage			1.49, 1.55-1.59
+etc/defaults/rc.conf				1.133
+etc/etc.evbarm/Makefile.inc			1.72, 1.76
+etc/rc.d/Makefile				1.93 via patch
+etc/rc.d/resize_root				1.1-1.3
+etc/rc.d/root					1.5
+sbin/resize_ffs/Makefile			1.5
+sbin/resize_ffs/resize_ffs.8			1.14-1.16
+sbin/resize_ffs/resize_ffs.c			1.39-1.44
+share/man/man5/rc.conf.5			1.158, 1.159
+tests/sbin/resize_ffs/Makefile			1.4
+tests/sbin/resize_ffs/common.sh			1.14
+tests/sbin/resize_ffs/t_check.sh		1.1
+tests/sbin/resize_ffs/t_grow.sh			1.9
+tests/sbin/resize_ffs/t_grow_swapped.sh		1.3
+tests/sbin/resize_ffs/t_shrink.sh		1.8
+tests/sbin/resize_ffs/t_shrink_swapped.sh	1.2
+
+	- Add resize_root boot operation. If resize_root=YES in
+	  rc.conf then the system attempts to resize the root file
+	  system to fill its partition prior to mounting read-write.
+	- Add support for auto-growing the root partition. Enable it
+	  in rpi.img.
+	- Rename beagleboard.img to armv7.img. The new image includes
+	  the same kernels as beagleboard.img plus support for
+	  Raspberry Pi 2, ODROID-C1, Cubieboard2, Cubietruck,
+	  Hummingbird A31, and Banana Pi.
+	- resize_ffs(8):
+	  + Make get_dev_size work on regular files too.
+	  + Add -c to check to see if grow/shrink is required.
+	  + Divide by DEV_BSIZE when returning size of file.
+	  + Handle case in grow() where last cylinder group is too small
+	    for ufs2.
+	  + Add a -p flag, which displays a progress bar.
+	[skrll, ticket #909]
+
+sys/kern/sys_pset.c				1.19
+
+	Avoid a deadlock.
+	[maxv, ticket #912]
+
+lib/libc/db/hash/hash.c				1.34, 1.35
+
+	Delay moving to the next key until the next iteration. This
+	avoids returning invalid data to the user if the user deletes
+	the current key, but it also fails to iterate over some keys
+	as will be shown by a unit test.
+
+	Fix hash iteration that deletes the current element under the
+	cursor by adjusting the position of the iterator appropriately.
+	[christos, ticket #921]
+
+lib/libperfuse/perfuse.c			1.37
+
+	- Deal with limits properly.
+	- Don't print strerror() 2ice.
+	[christos, ticket #923]
+
+sys/ufs/lfs/lfs_vnops.c				patch
+
+	Comment out some KASSERTs.
+	[dholland, ticket #935]
+
+usr.sbin/mountd/mountd.c			1.127
+
+	Move call to pidfile() after daemon() so that correct
+	(child) pid is written to pidfile.  PR bin/50125.
+	[jnemeth, ticket #936]
 
