@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1107 2015/08/03 09:51:40 ozaki-r Exp $
+# $NetBSD: mi,v 1.1108 2015/08/06 14:45:54 ozaki-r Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -549,6 +549,7 @@
 ./sbin/rump.modstat				base-sysutil-root	rump
 ./sbin/rump.modunload				base-sysutil-root	rump
 ./sbin/rump.ping				base-netutil-root	rump
+./sbin/rump.ping6				base-netutil-root	inet6,rump
 ./sbin/rump.raidctl				base-sysutil-root	rump
 ./sbin/rump.route				base-netutil-root	rump
 ./sbin/rump.sysctl				base-sysutil-root	rump

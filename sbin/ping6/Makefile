@@ -1,16 +1,24 @@
-# $NetBSD: Makefile,v 1.14 2011/08/14 12:09:35 christos Exp $
+# $NetBSD: Makefile,v 1.15 2015/08/06 14:45:54 ozaki-r Exp $
 
-USE_FORT?= yes	# setuid
-PROG=	ping6
-MAN=	ping6.8
+.include <bsd.own.mk>
 
-BINOWN=	root
-BINMODE=4555
+USE_FORT?=	yes	# setuid
+RUMPPRG=	ping6
+MAN=		ping6.8
 
-CPPFLAGS+=-DINET6
-CPPFLAGS+=-DIPSEC
+BINOWN=		root
+BINMODE=	4555
 
-LDADD+=	-lipsec -lm
-DPADD+=	${LIBIPSEC} ${LIBM}
+CPPFLAGS+=	-DINET6
+CPPFLAGS+=	-DIPSEC
+
+LDADD+=		-lipsec -lm
+DPADD+=		${LIBIPSEC} ${LIBM}
+
+.PATH:		${.CURDIR}/../../lib/libc/net
+RUMPSRCS=	getnameinfo.c
+.if (${MKRUMP} != "no")
+CPPFLAGS+= 	-DRUMP_ACTION
+.endif
 
 .include <bsd.prog.mk>

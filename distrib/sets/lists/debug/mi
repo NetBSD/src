@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.123 2015/08/03 09:51:40 ozaki-r Exp $
+# $NetBSD: mi,v 1.124 2015/08/06 14:45:54 ozaki-r Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -396,6 +396,7 @@
 ./usr/libdata/debug/sbin/rump.modstat.debug		comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/sbin/rump.modunload.debug	comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/sbin/rump.ping.debug		comp-netutil-debug	debug,rump
+./usr/libdata/debug/sbin/rump.ping6.debug		comp-netutil-debug	inet6,debug,rump
 ./usr/libdata/debug/sbin/rump.raidctl.debug		comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/sbin/rump.route.debug		comp-netutil-debug	debug,rump
 ./usr/libdata/debug/sbin/rump.sysctl.debug		comp-sysutil-debug	debug,rump
