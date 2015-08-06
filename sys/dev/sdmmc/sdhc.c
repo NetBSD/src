@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.80 2015/08/05 12:28:47 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.81 2015/08/06 09:30:55 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.80 2015/08/05 12:28:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.81 2015/08/06 09:30:55 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1388,11 +1388,11 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	int error;
 
-	mutex_enter(&hp->intr_lock);
-
 	if (atomic_cas_uint(&hp->tuning_timer_pending, 1, 0) == 1) {
 		(void)sdhc_execute_tuning(hp, hp->tuning_timing);
 	}
+
+	mutex_enter(&hp->intr_lock);
 
 	if (cmd->c_data && ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		const uint16_t ready = SDHC_BUFFER_READ_READY | SDHC_BUFFER_WRITE_READY;
