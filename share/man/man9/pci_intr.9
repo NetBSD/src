@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.19 2015/08/05 07:00:34 mrg Exp $
+.\" $NetBSD: pci_intr.9,v 1.20 2015/08/06 06:56:00 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,8 +112,9 @@ when the driver is no longer interested in interrupts from the device.
 .Pp
 The
 .Fn pci_intr_evcnt
-function should return an evcnt structure pointer or NULL if there is
-no evcnt associated with this interrupt.
+function should return an evcnt structure pointer or
+.Dv NULL
+if there is no evcnt associated with this interrupt.
 See
 .Xr evcnt 9
 for more details.
@@ -160,4 +161,4 @@ contains the PCI tag of the device itself, and
 contains the PCI tag of the uppermost bridge device.
 .Sh SEE ALSO
 .Xr evcnt 9 ,
-.Xr pci 9 .
+.Xr pci 9
