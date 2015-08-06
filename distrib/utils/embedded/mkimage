@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.48.4.5 2015/04/06 18:47:54 snj Exp $
+# $NetBSD: mkimage,v 1.48.4.6 2015/08/06 21:13:43 snj Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,6 +32,20 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+#
+# Makes a bootable image for the host architecture given.
+# The host specific functions are pulled in from a /bin/sh script in the
+# "conf" directory, and is expected to provide the following shell
+# functions, which are called in the following order:
+#
+#  - make_fstab: Creates the host's /etc/fstab with / on ${rootdev}.
+#    If -m is given, a number of directories are put on a tmpfs RAM disk
+#  - customize: After unpacking the sets, this gets the system to
+#    a working state, e. g. by setting up /etc/rc.conf and /dev
+#  - populate: Add common goods like kernel and bootloader
+#  - make_label: Prints disklabel to stdout
+#
+
 set -e
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -42,6 +56,7 @@ FDISK=${TOOL_FDISK:-fdisk}
 MAKEFS=${TOOL_MAKEFS:-makefs}
 MTREE=${TOOL_MTREE:-mtree}
 INSTALLBOOT=${TOOL_INSTALLBOOT:-installboot}
+MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE:-mkubootimage}
 GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
 
 src="/usr/src"
@@ -75,7 +90,7 @@ Usage: $PROG -h <host-arch> [-bdmx] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>
 -r	root device kind (sd, wd, ld)
 -d	Add the debug sets
 -m	Optimize the OS installation to mimimize disk writes for SSDs
--x	Load the x sets too, not just the base ones
+-x	Load the X sets too, not just the base ones
 EOF
 	exit 1
 }
@@ -101,6 +116,8 @@ then
 	echo $PROG: ${DIR}/conf/${h}.conf is not present 1>&2
 	exit 1
 fi
+
+resize=false
 
 . "${DIR}/conf/${h}.conf"
 release="/usr/obj/${MACHINE}/release"
@@ -186,6 +203,13 @@ if [ "${size}" = 0 ]; then
 	size="$(getsize "${image}")"
 fi
 newsize=$((${size} / 2 / 1024))
+compare=$((${newsize} * 2 * 1024))
+while [ "${compare}" != "${size}" ]
+do    
+	size="$((size + size - compare))"  
+	newsize="$((${size} / 2 / 1024))"
+	compare="$((${newsize} * 2 * 1024))"
+done                      
 
 echo ${bar} Adding label ${bar}
 make_label > ${tmp}/label
@@ -198,7 +222,7 @@ if [ -n "${msdosid}" ]; then
 elif [ -n "${netbsdid}" ]; then
 	echo ${bar} Running fdisk ${bar}
 	${FDISK} -f -i ${image}
-	${FDISK} -f -a -u -0 -s 169 ${image}
+	${FDISK} -f -a -u -0 -s 169/${init} ${image}
 	${INSTALLBOOT} -f -v ${image} ${release}/usr/mdec/bootxx_ffsv1
 fi
 

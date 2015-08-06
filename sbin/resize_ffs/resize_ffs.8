@@ -1,4 +1,4 @@
-.\"     $NetBSD: resize_ffs.8,v 1.13 2011/08/28 21:25:11 wiz Exp $
+.\"     $NetBSD: resize_ffs.8,v 1.13.20.1 2015/08/06 21:13:44 snj Exp $
 .\"
 .\" As its sole author, I explicitly place this man page in the public
 .\" domain.  Anyone may use it in any way for any purpose (though I would
@@ -9,7 +9,7 @@
 .\"  X  Against HTML               mouse@rodents.montreal.qc.ca
 .\" / \ Email!           7D C8 61 52 5D E7 2D 39  4E F1 31 3E E8 B3 27 4B
 .\"
-.Dd January 4, 2011
+.Dd April 6, 2015
 .Dt RESIZE_FFS 8
 .Os
 .Sh NAME
@@ -17,7 +17,7 @@
 .Nd resize a file system on disk or in a file
 .Sh SYNOPSIS
 .Nm
-.Op Fl y
+.Op Fl cpvy
 .Op Fl s Ar size
 .Ar special
 .Sh DESCRIPTION
@@ -55,6 +55,11 @@ determined from
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl c
+Check to see if the new size would change the file system.
+No changes will be made to the file system.
+.It Fl p
+Display a progress meter during the resize process.
 .It Fl s
 Specify the file system size to which the file system should be
 resized.
@@ -63,6 +68,8 @@ It will not work correctly for file systems with other sector sizes.
 To see the
 exact value, have a look at the disk specification or the disklabel.
 Mostly used to shrink file systems.
+.It Fl v
+Be more verbose.
 .It Fl y
 Disable sanity questions made by
 .Nm .

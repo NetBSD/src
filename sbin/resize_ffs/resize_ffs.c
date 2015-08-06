@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.38 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.38.6.1 2015/08/06 21:13:44 snj Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.38 2013/06/23 22:03:34 dholland Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.38.6.1 2015/08/06 21:13:44 snj Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -59,11 +59,16 @@ __RCSID("$NetBSD: resize_ffs.c,v 1.38 2013/06/23 22:03:34 dholland Exp $");
 #include <strings.h>
 #include <unistd.h>
 
+#include "progress.h"
+
 /* new size of file system, in sectors */
 static int64_t newsize;
 
 /* fd open onto disk device or file */
 static int fd;
+
+/* disk device or file path */
+char *special;
 
 /* must we break up big I/O operations - see checksmallio() */
 static int smallio;
@@ -152,6 +157,8 @@ static unsigned char *iflags;
 /* global flags */
 int is_ufs2 = 0;
 int needswap = 0;
+int verbose = 0;
+int progress = 0;
 
 static void usage(void) __dead;
 
@@ -913,35 +920,17 @@ timestamp(void)
 	time(&t);
 	return (t);
 }
-/*
- * Grow the file system.
- */
-static void
-grow(void)
-{
-	int i;
 
-	/* Update the timestamp. */
-	newsb->fs_time = timestamp();
-	/* Allocate and clear the new-inode area, in case we add any cgs. */
-	zinodes = alloconce(newsb->fs_ipg * sizeof(*zinodes), "zeroed inodes");
-	memset(zinodes, 0, newsb->fs_ipg * sizeof(*zinodes));
+/*
+ * Calculate new filesystem geometry
+ *  return 0 if geometry actually changed
+ */
+static int
+makegeometry(int chatter)
+{
+
 	/* Update the size. */
 	newsb->fs_size = FFS_DBTOFSB(newsb, newsize);
-	/* Did we actually not grow?  (This can happen if newsize is less than
-	 * a frag larger than the old size - unlikely, but no excuse to
-	 * misbehave if it happens.) */
-	if (newsb->fs_size == oldsb->fs_size) {
-		printf("New fs size %"PRIu64" = old fs size %"PRIu64
-		    ", not growing.\n", newsb->fs_size, oldsb->fs_size);
-		return;
-	}
-	/* Check that the new last sector (frag, actually) is writable.  Since
-	 * it's at least one frag larger than it used to be, we know we aren't
-	 * overwriting anything important by this.  (The choice of sbbuf as
-	 * what to write is irrelevant; it's just something handy that's known
-	 * to be at least one frag in size.) */
-	writeat(FFS_FSBTODB(newsb,newsb->fs_size - 1), &sbbuf, newsb->fs_fsize);
 	if (is_ufs2)
 		newsb->fs_ncg = howmany(newsb->fs_size, newsb->fs_fpg);
 	else {
@@ -958,13 +947,62 @@ grow(void)
 	 * minimal, at most the pre-sb data area. */
 	if (cgdmin(newsb, newsb->fs_ncg - 1) > newsb->fs_size) {
 		newsb->fs_ncg--;
-		newsb->fs_old_ncyl = newsb->fs_ncg * newsb->fs_old_cpg;
-		newsb->fs_size = (newsb->fs_old_ncyl * newsb->fs_old_spc)
-		    / NSPF(newsb);
-		printf("Warning: last cylinder group is too small;\n");
-		printf("    dropping it.  New size = %lu.\n",
-		    (unsigned long int) FFS_FSBTODB(newsb, newsb->fs_size));
+		if (is_ufs2)
+			newsb->fs_size = newsb->fs_ncg * newsb->fs_fpg;
+		else {
+			newsb->fs_old_ncyl = newsb->fs_ncg * newsb->fs_old_cpg;
+			newsb->fs_size = (newsb->fs_old_ncyl *
+				newsb->fs_old_spc) / NSPF(newsb);
+		}
+		if (chatter || verbose) {
+			printf("Warning: last cylinder group is too small;\n");
+			printf("    dropping it.  New size = %lu.\n",
+			(unsigned long int) FFS_FSBTODB(newsb, newsb->fs_size));
+		}
 	}
+
+	/* Did we actually not grow?  (This can happen if newsize is less than
+	 * a frag larger than the old size - unlikely, but no excuse to
+	 * misbehave if it happens.) */
+	if (newsb->fs_size == oldsb->fs_size)
+		return 1;
+
+	return 0;
+}
+
+
+/*
+ * Grow the file system.
+ */
+static void
+grow(void)
+{
+	int i;
+
+	if (makegeometry(1)) {
+		printf("New fs size %"PRIu64" = old fs size %"PRIu64
+		    ", not growing.\n", newsb->fs_size, oldsb->fs_size);
+		return;
+	}
+
+	if (verbose) {
+		printf("Growing fs from %"PRIu64" blocks to %"PRIu64
+		    " blocks.\n", oldsb->fs_size, newsb->fs_size);
+	}
+
+	/* Update the timestamp. */
+	newsb->fs_time = timestamp();
+	/* Allocate and clear the new-inode area, in case we add any cgs. */
+	zinodes = alloconce(newsb->fs_ipg * sizeof(*zinodes), "zeroed inodes");
+	memset(zinodes, 0, newsb->fs_ipg * sizeof(*zinodes));
+	
+	/* Check that the new last sector (frag, actually) is writable.  Since
+	 * it's at least one frag larger than it used to be, we know we aren't
+	 * overwriting anything important by this.  (The choice of sbbuf as
+	 * what to write is irrelevant; it's just something handy that's known
+	 * to be at least one frag in size.) */
+	writeat(FFS_FSBTODB(newsb,newsb->fs_size - 1), &sbbuf, newsb->fs_fsize);
+
 	/* Find out how big the csum area is, and realloc csums if bigger. */
 	newsb->fs_cssize = ffs_fragroundup(newsb,
 	    newsb->fs_ncg * sizeof(struct csum));
@@ -983,6 +1021,8 @@ grow(void)
                                 "cgs");
 		for (i = oldsb->fs_ncg; i < newsb->fs_ncg; i++) {
 			cgs[i] = (struct cg *) cgp;
+			progress_bar(special, "grow cg",
+			    i - oldsb->fs_ncg, newsb->fs_ncg - oldsb->fs_ncg);
 			initcg(i);
 			cgp += cgblksz;
 		}
@@ -1011,6 +1051,8 @@ grow(void)
 	csum_fixup();
 	/* Make fs_dsize match the new reality. */
 	recompute_fs_dsize();
+
+	progress_done();
 }
 /*
  * Call (*fn)() for each inode, passing the inode and its inumber.  The
@@ -1685,38 +1727,28 @@ shrink(void)
 {
 	int i;
 
-	/* Load the inodes off disk - we'll need 'em. */
-	loadinodes();
-	/* Update the timestamp. */
-	newsb->fs_time = timestamp();
-	/* Update the size figures. */
-	newsb->fs_size = FFS_DBTOFSB(newsb, newsize);
-	if (is_ufs2)
-		newsb->fs_ncg = howmany(newsb->fs_size, newsb->fs_fpg);
-	else {
-		newsb->fs_old_ncyl = howmany(newsb->fs_size * NSPF(newsb),
-		    newsb->fs_old_spc);
-		newsb->fs_ncg = howmany(newsb->fs_old_ncyl, newsb->fs_old_cpg);
+	if (makegeometry(1)) {
+		printf("New fs size %"PRIu64" = old fs size %"PRIu64
+		    ", not shrinking.\n", newsb->fs_size, oldsb->fs_size);
+		return;
 	}
-	/* Does the (new) last cg end before the end of its inode area?  See
-	 * the similar code in grow() for more on this. */
-	if (cgdmin(newsb, newsb->fs_ncg - 1) > newsb->fs_size) {
-		newsb->fs_ncg--;
-		if (is_ufs2 == 0) {
-			newsb->fs_old_ncyl = newsb->fs_ncg * newsb->fs_old_cpg;
-			newsb->fs_size = (newsb->fs_old_ncyl *
-			    newsb->fs_old_spc) / NSPF(newsb);
-		} else
-			newsb->fs_size = newsb->fs_ncg * newsb->fs_fpg;
 
-		printf("Warning: last cylinder group is too small;\n");
-		printf("    dropping it.  New size = %lu.\n",
-		    (unsigned long int) FFS_FSBTODB(newsb, newsb->fs_size));
-	}
 	/* Let's make sure we're not being shrunk into oblivion. */
 	if (newsb->fs_ncg < 1)
 		errx(EXIT_FAILURE, "Size too small - file system would "
 		    "have no cylinders");
+
+	if (verbose) {
+		printf("Shrinking fs from %"PRIu64" blocks to %"PRIu64
+		    " blocks.\n", oldsb->fs_size, newsb->fs_size);
+	}
+
+	/* Load the inodes off disk - we'll need 'em. */
+	loadinodes();
+
+	/* Update the timestamp. */
+	newsb->fs_time = timestamp();
+
 	/* Initialize for block motion. */
 	blkmove_init();
 	/* Update csum size, then fix up for the new size */
@@ -1968,6 +2000,8 @@ flush_cgs(void)
 	int i;
 
 	for (i = 0; i < newsb->fs_ncg; i++) {
+		progress_bar(special, "flush cg",
+		    i, newsb->fs_ncg - 1);
 		if (cgflags[i] & CGF_BLKMAPS) {
 			rescan_blkmaps(i);
 		}
@@ -1987,6 +2021,8 @@ flush_cgs(void)
 	if (needswap)
 		ffs_csum_swap(csums,csums,newsb->fs_cssize);
 	writeat(FFS_FSBTODB(newsb, newsb->fs_csaddr), csums, newsb->fs_cssize);
+
+	progress_done();
 }
 /*
  * Write the superblock, both to the main superblock and to each cg's
@@ -2016,8 +2052,36 @@ write_sbs(void)
 		ffs_sb_swap(newsb,newsb);
 	writeat(where /  DEV_BSIZE, newsb, SBLOCKSIZE);
 	for (i = 0; i < oldsb->fs_ncg; i++) {
+		progress_bar(special, "write sb",
+		    i, oldsb->fs_ncg - 1);
 		writeat(FFS_FSBTODB(oldsb, cgsblock(oldsb, i)), newsb, SBLOCKSIZE);
 	}
+
+	progress_done();
+}
+
+/*
+ * Check to see wether new size changes the filesystem
+ *  return exit code
+ */
+static int
+checkonly(void)
+{
+	if (makegeometry(0)) {
+		if (verbose) {
+			printf("Wouldn't change: already %" PRId64
+			    " blocks\n", (int64_t)oldsb->fs_size);
+		}
+		return 1;
+	}
+
+	if (verbose) {
+		printf("Would change: newsize: %" PRId64 " oldsize: %"
+		    PRId64 " fsdb: %" PRId64 "\n", FFS_DBTOFSB(oldsb, newsize),
+		    (int64_t)oldsb->fs_size,
+		    (int64_t)oldsb->fs_fsbtodb);
+	}
+	return 0;
 }
 
 static off_t
@@ -2026,22 +2090,23 @@ get_dev_size(char *dev_name)
 	struct dkwedge_info dkw;
 	struct partition *pp;
 	struct disklabel lp;
+	struct stat st;
 	size_t ptn;
 
 	/* Get info about partition/wedge */
-	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1) {
-		if (ioctl(fd, DIOCGDINFO, &lp) == -1)
-			return 0;
-
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) != -1)
+		return dkw.dkw_size;
+	if (ioctl(fd, DIOCGDINFO, &lp) != -1) {
 		ptn = strchr(dev_name, '\0')[-1] - 'a';
 		if (ptn >= lp.d_npartitions)
 			return 0;
-
 		pp = &lp.d_partitions[ptn];
 		return pp->p_size;
 	}
+	if (fstat(fd, &st) != -1 && S_ISREG(st.st_mode))
+		return st.st_size / DEV_BSIZE;
 
-	return dkw.dkw_size;
+	return 0;
 }
 
 /*
@@ -2051,25 +2116,35 @@ int
 main(int argc, char **argv)
 {
 	int ch;
+	int CheckOnlyFlag;
 	int ExpertFlag;
 	int SFlag;
 	size_t i;
 
-	char *special;
 	char reply[5];
 
 	newsize = 0;
 	ExpertFlag = 0;
 	SFlag = 0;
+        CheckOnlyFlag = 0;
 
-	while ((ch = getopt(argc, argv, "s:y")) != -1) {
+	while ((ch = getopt(argc, argv, "cps:vy")) != -1) {
 		switch (ch) {
+                case 'c':
+			CheckOnlyFlag = 1;
+			break;
+		case 'p':
+			progress = 1;
+			break;
 		case 's':
 			SFlag = 1;
 			newsize = strtoll(optarg, NULL, 10);
 			if(newsize < 1) {
 				usage();
 			}
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case 'y':
 			ExpertFlag = 1;
@@ -2089,7 +2164,7 @@ main(int argc, char **argv)
 
 	special = *argv;
 
-	if (ExpertFlag == 0) {
+	if (ExpertFlag == 0 && CheckOnlyFlag == 0) {
 		printf("It's required to manually run fsck on file system "
 		    "before you can resize it\n\n"
 		    " Did you run fsck on your disk (Yes/No) ? ");
@@ -2163,14 +2238,37 @@ main(int argc, char **argv)
 	 * thing.  SBLOCKSIZE may be an over-estimate, but we do this
 	 * just once, so being generous is cheap. */
 	memcpy(newsb, oldsb, SBLOCKSIZE);
+
+	if (progress) {
+		progress_ttywidth(0);
+		signal(SIGWINCH, progress_ttywidth);
+	}
+
 	loadcgs();
+
+	if (progress && !CheckOnlyFlag) {
+		progress_switch(progress);
+		progress_init();
+	}
+
 	if (newsize > FFS_FSBTODB(oldsb, oldsb->fs_size)) {
+		if (CheckOnlyFlag)
+			exit(checkonly());
 		grow();
 	} else if (newsize < FFS_FSBTODB(oldsb, oldsb->fs_size)) {
 		if (is_ufs2)
 			errx(EXIT_FAILURE,"shrinking not supported for ufs2");
+		if (CheckOnlyFlag)
+			exit(checkonly());
 		shrink();
+	} else {
+		if (CheckOnlyFlag)
+			exit(checkonly());
+		if (verbose)
+			printf("No change requested: already %" PRId64
+			    " blocks\n", (int64_t)oldsb->fs_size);
 	}
+
 	flush_cgs();
 	write_sbs();
 	if (isplainfile())
@@ -2182,7 +2280,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-y] [-s size] special\n",
+	(void)fprintf(stderr, "usage: %s [-cvy] [-s size] special\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
