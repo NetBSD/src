@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.14 2015/07/11 19:00:04 macallan Exp $
+#	$NetBSD: CI20,v 1.15 2015/08/07 17:41:43 macallan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.14 $"
+#ident 		"CI20-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -219,6 +219,9 @@ cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # Ethernet
 axe*	at uhub? port ?
+
+# Random number generator
+jzrng0	at apbus0
 
 # MII/PHY support
 #acphy*		at mii? phy ?		# DAltima AC101 and AMD Am79c874 PHYs
