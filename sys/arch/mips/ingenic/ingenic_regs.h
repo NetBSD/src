@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.20 2015/07/11 18:54:03 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.21 2015/08/07 17:37:54 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -118,7 +118,7 @@
 static inline void
 writereg(uint32_t reg, uint32_t val)
 {
-	*(int32_t *)MIPS_PHYS_TO_KSEG1(reg) = val;
+	*(volatile int32_t *)MIPS_PHYS_TO_KSEG1(reg) = val;
 	wbflush();
 }
 
@@ -126,7 +126,7 @@ static inline uint32_t
 readreg(uint32_t reg)
 {
 	wbflush();
-	return *(int32_t *)MIPS_PHYS_TO_KSEG1(reg);
+	return *(volatile int32_t *)MIPS_PHYS_TO_KSEG1(reg);
 }
 
 /* extra CP0 registers */
@@ -223,8 +223,8 @@ MFC0(uint32_t r, uint32_t s)
 	#define OPCR_L2CM_ON	0x00000000	/* L2 stays on in sleep */
 	#define OPCR_L2CM_RET	0x04000000	/* L2 retention mode in sleep */
 	#define OPCR_L2CM_OFF	0x08000000	/* L2 powers down in sleep */
-	#define OPCR_SPENDN0	0x00000080	/* OTG port forced down */
-	#define OPCR_SPENDN1	0x00000040	/* UHC port forced down */
+	#define OPCR_SPENDN0	0x00000080	/* 0 - OTG port forced down */
+	#define OPCR_SPENDN1	0x00000040	/* 0 - UHC port forced down */
 	#define OPCR_BUS_MODE	0x00000020	/* 1 - bursts */
 	#define OPCR_O1SE	0x00000010	/* EXTCLK on in sleep */
 	#define OPCR_PD		0x00000008	/* P0 down in sleep */
@@ -319,6 +319,15 @@ MFC0(uint32_t r, uint32_t s)
 	#define UHCCDR_DIV_M	0x000000ff
 #define JZ_MSC1CDR	0x100000a4
 #define JZ_MSC2CDR	0x100000a8
+
+/*
+ * random number generator
+ *
+ * Its function currently isn't documented by Ingenic.
+ * However, testing suggests that it works as expected.
+ */
+#define JZ_ERNG	0x100000d8
+#define JZ_RNG	0x100000dc
 
 /* interrupt controller */
 #define JZ_ICSR0	0x10001000	/* raw IRQ line status */
