@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.107 2014/05/17 21:26:20 rmind Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.108 2015/08/07 08:11:33 ozaki-r Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.107 2014/05/17 21:26:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.108 2015/08/07 08:11:33 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1070,8 +1070,8 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 	 */
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
 		IP6_STATINC(IP6_STAT_CANTFORWARD);
-		if (ip6_log_time + ip6_log_interval < time_second) {
-			ip6_log_time = time_second;
+		if (ip6_log_time + ip6_log_interval < time_uptime) {
+			ip6_log_time = time_uptime;
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "from %s to %s nxt %d received on %s\n",
