@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.16 2015/07/11 19:00:04 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.17 2015/08/07 17:39:58 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.16 2015/07/11 19:00:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.17 2015/08/07 17:39:58 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -96,6 +96,7 @@ static const apbus_dev_t apbus_devs[] = {
 	{ "jzmmc",	JZ_MSC1_BASE,   36, CLK_MSC1, 0, JZ_MSC1CDR},
 	{ "jzmmc",	JZ_MSC2_BASE,   35, CLK_MSC2, 0, JZ_MSC2CDR},
 	{ "jzfb",	JZ_LCDC0_BASE,  31, CLK_LCD, CLK_HDMI, 0},
+	{ "jzrng",	JZ_RNG,		-1, 0, 0, 0},
 	{ NULL,		-1,             -1, 0, 0, 0}
 };
 
@@ -159,6 +160,9 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	reg = readreg(JZ_CLKGR1);
 	reg &= ~CLK_AHB_MON;	/* AHB_MON clock */
 	writereg(JZ_CLKGR1, reg);
+
+	/* enable RNG */
+	writereg(JZ_ERNG, 1);
 
 	/* wake up the USB part */
 	reg = readreg(JZ_OPCR);
@@ -232,6 +236,8 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	printf("JZ_SRBC   %08x\n", readreg(JZ_SRBC));
 	printf("JZ_OPCR   %08x\n", readreg(JZ_OPCR));
 	printf("JZ_UHCCDR %08x\n", readreg(JZ_UHCCDR));
+	printf("JZ_ERNG   %08x\n", readreg(JZ_ERNG));
+	printf("JZ_RNG    %08x\n", readreg(JZ_RNG));
 #endif
 
 	for (const apbus_dev_t *adv = apbus_devs; adv->name != NULL; adv++) {
