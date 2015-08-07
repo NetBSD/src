@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.10 2015/07/23 11:05:34 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.11 2015/08/07 00:50:12 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -108,9 +108,7 @@ test_endpoint()
 	export RUMP_SERVER=${sock}
 	atf_check -s exit:0 -o match:shmif0 rump.ifconfig
 	if [ $mode = "ipv6" ]; then
-		export LD_PRELOAD=/usr/lib/librumphijack.so
-		atf_check -s exit:0 -o ignore ping6 -n -c 1 -X $TIMEOUT ${addr}
-		unset LD_PRELOAD
+		atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT ${addr}
 	else
 		atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 ${addr}
 	fi
@@ -288,28 +286,22 @@ test_ping_success()
 
 test_ping6_failure()
 {
-	export LD_PRELOAD=/usr/lib/librumphijack.so
 	export RUMP_SERVER=$SOCK1
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP62
+	atf_check -s not-exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP62
 	export RUMP_SERVER=$SOCK3
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP61
-	unset LD_PRELOAD
+	atf_check -s not-exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP61
 }
 
 test_ping6_success()
 {
 	export RUMP_SERVER=$SOCK1
 	rump.ifconfig -v shmif0
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP62
-	unset LD_PRELOAD
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP62
 	rump.ifconfig -v shmif0
 
 	export RUMP_SERVER=$SOCK3
 	rump.ifconfig -v shmif0
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP61
-	unset LD_PRELOAD
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP61
 	rump.ifconfig -v shmif0
 }
 
@@ -334,25 +326,21 @@ test_ping_member()
 
 test_ping6_member()
 {
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-
 	export RUMP_SERVER=$SOCK1
 	rump.ifconfig -v shmif0
-	atf_check -s exit:0 -o ignore ping6 -q -n -X $TIMEOUT -c 1 $IP6BR1
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -X $TIMEOUT -c 1 $IP6BR1
 	rump.ifconfig -v shmif0
 	# Test for PR#48104
-	atf_check -s exit:0 -o ignore ping6 -q -n -X $TIMEOUT -c 1 $IP6BR2
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -X $TIMEOUT -c 1 $IP6BR2
 	rump.ifconfig -v shmif0
 
 	export RUMP_SERVER=$SOCK3
 	rump.ifconfig -v shmif0
 	# Test for PR#48104
-	atf_check -s exit:0 -o ignore ping6 -q -n -X $TIMEOUT -c 1 $IP6BR1
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -X $TIMEOUT -c 1 $IP6BR1
 	rump.ifconfig -v shmif0
-	atf_check -s exit:0 -o ignore ping6 -q -n -X $TIMEOUT -c 1 $IP6BR2
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -X $TIMEOUT -c 1 $IP6BR2
 	rump.ifconfig -v shmif0
-
-	unset LD_PRELOAD
 }
 
 get_number_of_caches()

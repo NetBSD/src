@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.5 2015/06/02 07:32:50 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.6 2015/08/07 00:50:12 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -94,9 +94,7 @@ test_endpoint()
 	export RUMP_SERVER=${sock}
 	atf_check -s exit:0 -o match:shmif0 rump.ifconfig
 	if [ $mode = "ipv6" ]; then
-		export LD_PRELOAD=/usr/lib/librumphijack.so
-		atf_check -s exit:0 -o ignore ping6 -n -c 1 -X $TIMEOUT ${addr}
-		unset LD_PRELOAD
+		atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT ${addr}
 	else
 		atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 ${addr}
 	fi
@@ -178,10 +176,8 @@ test_setup6()
 	atf_check -s exit:0 -o match:shmif0 rump.ifconfig
 	atf_check -s exit:0 -o match:shmif1 rump.ifconfig
 
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -n -c 1 -X $TIMEOUT ${IP6SRCGW}
-	atf_check -s exit:0 -o ignore ping6 -n -c 1 -X $TIMEOUT ${IP6DSTGW}
-	unset LD_PRELOAD
+	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT ${IP6SRCGW}
+	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT ${IP6DSTGW}
 }
 
 setup_forwarding()
@@ -287,30 +283,24 @@ test_ttl()
 
 test_ping6_failure()
 {
-	export LD_PRELOAD=/usr/lib/librumphijack.so
 	export RUMP_SERVER=$SOCKSRC
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6DST
+	atf_check -s not-exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP6DST
 	export RUMP_SERVER=$SOCKDST
-	atf_check -s not-exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6SRC
-	unset LD_PRELOAD
+	atf_check -s not-exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP6SRC
 }
 
 test_ping6_success()
 {
 	export RUMP_SERVER=$SOCKSRC
 	$DEBUG && rump.ifconfig -v shmif0
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6SRCGW
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6DST
-	unset LD_PRELOAD
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP6SRCGW
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP6DST
 	$DEBUG && rump.ifconfig -v shmif0
 
 	export RUMP_SERVER=$SOCKDST
 	$DEBUG && rump.ifconfig -v shmif0
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6DSTGW
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -X $TIMEOUT $IP6SRC
-	unset LD_PRELOAD
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP6DSTGW
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 1 -X $TIMEOUT $IP6SRC
 	$DEBUG && rump.ifconfig -v shmif0
 }
 
@@ -318,12 +308,10 @@ test_hoplimit()
 {
 	export RUMP_SERVER=$SOCKSRC
 	$DEBUG && rump.ifconfig -v shmif0
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -h 1 -X $TIMEOUT $IP6SRCGW
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 1 -h 1 -X $TIMEOUT $IP6SRCGW
 	atf_check -s not-exit:0 -o match:'Time to live exceeded' \
-	    ping6 -v -n -c 1 -h 1 -X $TIMEOUT $IP6DST
-	atf_check -s exit:0 -o ignore ping6 -q -n -c 1 -h 2 -X $TIMEOUT $IP6DST
-	unset LD_PRELOAD
+	    rump.ping6 -v -n -c 1 -h 1 -X $TIMEOUT $IP6DST
+	atf_check -s exit:0 -o ignore rump.ping6 -q -n -c 1 -h 2 -X $TIMEOUT $IP6DST
 	$DEBUG && rump.ifconfig -v shmif0
 }
 

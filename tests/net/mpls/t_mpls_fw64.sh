@@ -1,4 +1,4 @@
-# $NetBSD: t_mpls_fw64.sh,v 1.1 2015/05/27 18:13:14 kefren Exp $
+# $NetBSD: t_mpls_fw64.sh,v 1.2 2015/08/07 00:50:12 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -132,16 +132,14 @@ configservers()
 doping()
 {
 
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	export RUMPHIJACK="socket=inet6:inet"
 	export RUMP_SERVER=${RUMP_SERVER1}
 	atf_check -s exit:0 \
 	    -o match:" bytes from fd00:1234::2, icmp_seq=" \
-	    ping6 -n -o -X 2 fd00:1234::2
+	    rump.ping6 -n -o -X 2 fd00:1234::2
 	export RUMP_SERVER=${RUMP_SERVER2}
 	atf_check -s exit:0 \
 	    -o match:" bytes from fd00:1234:0:1::2, icmp_seq=" \
-	    ping6 -n -o -X 2 fd00:1234:0:1::2
+	    rump.ping6 -n -o -X 2 fd00:1234:0:1::2
 	export RUMP_SERVER=${RUMP_SERVER3}
 	atf_check -s exit:0 \
 	    -o match:" bytes from 10.0.3.2: icmp_seq" \
@@ -149,9 +147,7 @@ doping()
 	export RUMP_SERVER=${RUMP_SERVER1}
 	atf_check -s exit:0 \
 	    -o match:" bytes from fd00:1234:0:3::1, icmp_seq=" \
-	    ping6 -n -o -X 2 fd00:1234:0:3::1
-	unset LD_PRELOAD
-	unset RUMPHIJACK
+	    rump.ping6 -n -o -X 2 fd00:1234:0:3::1
 	unset RUMP_SERVER
 }
 

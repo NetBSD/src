@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.2 2015/08/04 07:43:25 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.3 2015/08/07 00:50:12 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -110,10 +110,7 @@ cache_expiration_body()
 	# Check if a cache is expired expectedly
 	#
 	export RUMP_SERVER=$SOCKSRC
-	#atf_check -s exit:0 -o ignore $HIJACKING ping6 -n -X $TIMEOUT -c 1 $IP6DST
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -n -X $TIMEOUT -c 1 $IP6DST
-	unset LD_PRELOAD
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6DST
 
 	$DEBUG && rump.ndp -n -a
 	atf_check -s exit:0 -o match:'permanent' rump.ndp -n $IP6SRC
@@ -161,9 +158,7 @@ command_body()
 	#atf_check -s exit:0 -o ignore rump.ndp -f ./list
 	#$DEBUG && rump.ndp -n -a
 
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -n -X $TIMEOUT -c 1 $IP6DST
-	unset LD_PRELOAD
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6DST
 	atf_check -s exit:0 -o ignore rump.ndp -s fc00::11 b2:a0:20:00:00:11
 	atf_check -s exit:0 -o ignore rump.ndp -s fc00::12 b2:a0:20:00:00:12
 
@@ -207,9 +202,7 @@ cache_overwriting_body()
 	atf_check -s not-exit:0 -e ignore rump.ndp -s $IP6SRC b2:a0:20:00:00:ff
 	$DEBUG && rump.ndp -n -a
 
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 -o ignore ping6 -n -X $TIMEOUT -c 1 $IP6DST
-	unset LD_PRELOAD
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6DST
 	$DEBUG && rump.ndp -n -a
 	# Can overwrite a dynamic cache
 	atf_check -s exit:0 -o ignore rump.ndp -s $IP6DST b2:a0:20:00:00:00
