@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.356 2015/08/06 22:03:14 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.357 2015/08/07 04:13:55 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33832,4 +33832,20 @@ usr.sbin/mountd/mountd.c			1.127
 	Move call to pidfile() after daemon() so that correct
 	(child) pid is written to pidfile.  PR bin/50125.
 	[jnemeth, ticket #936]
+
+external/bsd/blacklist/bin/blacklistctl.c	1.18
+external/bsd/blacklist/bin/blacklistd.c		1.33
+external/bsd/blacklist/bin/conf.c		1.21-1.23
+external/bsd/blacklist/bin/run.c		1.13
+external/bsd/blacklist/bin/state.c		1.16, 1.17
+external/bsd/blacklist/bin/support.c		1.7
+external/bsd/blacklist/bin/support.h		1.6
+external/bsd/blacklist/etc/blacklistd.conf	1.5, 1.6
+external/bsd/blacklist/libexec/blacklistd-helper 1.5
+
+	blacklistd(8):
+	- make proto and port optional
+	- various cleanup
+	- minor bugfixes
+	[christos, ticket #922]
 
