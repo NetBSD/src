@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.175.2.7 2015/07/17 03:41:52 snj Exp $
+# $NetBSD: postinstall,v 1.175.2.8 2015/08/07 06:22:10 msaitoh Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1356,8 +1356,8 @@ do_rc()
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
-		rbootd rndctl root route6d routed rtadvd rtclocaltime \
-		rtsold rwho \
+		rbootd resize_root rndctl root route6d routed rtadvd \
+		rtclocaltime rtsold rwho \
 		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
