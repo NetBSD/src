@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.12.2.2 2015/04/30 06:07:33 riz Exp $	*/
+/*	$NetBSD: run.c,v 1.12.2.3 2015/08/07 04:10:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.12.2.2 2015/04/30 06:07:33 riz Exp $");
+__RCSID("$NetBSD: run.c,v 1.12.2.3 2015/08/07 04:10:23 snj Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_UTIL_H
@@ -116,6 +116,9 @@ run_change(const char *how, const struct conf *c, char *id, size_t len)
 	size_t off;
 
 	switch (c->c_proto) {
+	case -1:
+		prname = "";
+		break;
 	case IPPROTO_TCP:
 		prname = "tcp";
 		break;
@@ -127,7 +130,11 @@ run_change(const char *how, const struct conf *c, char *id, size_t len)
 		return -1;
 	}
 
-	snprintf(poname, sizeof(poname), "%d", c->c_port);
+	if (c->c_port != -1)
+		snprintf(poname, sizeof(poname), "%d", c->c_port);
+	else
+		poname[0] = '\0';
+
 	snprintf(maskname, sizeof(maskname), "%d", c->c_lmask);
 	sockaddr_snprintf(adname, sizeof(adname), "%a", (const void *)&c->c_ss);
 

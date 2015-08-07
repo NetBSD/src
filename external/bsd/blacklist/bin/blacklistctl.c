@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistctl.c,v 1.17.2.2 2015/04/30 06:07:33 riz Exp $	*/
+/*	$NetBSD: blacklistctl.c,v 1.17.2.3 2015/08/07 04:10:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistctl.c,v 1.17.2.2 2015/04/30 06:07:33 riz Exp $");
+__RCSID("$NetBSD: blacklistctl.c,v 1.17.2.3 2015/08/07 04:10:23 snj Exp $");
 
 #include <stdio.h>
 #include <time.h>
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((o = getopt(argc, argv, "abdrw")) != -1)
+	while ((o = getopt(argc, argv, "abD:drw")) != -1)
 		switch (o) {
 		case 'a':
 			all = 1;
@@ -93,6 +93,9 @@ main(int argc, char *argv[])
 			break;
 		case 'b':
 			blocked = 1;
+		case 'D':
+			dbname = optarg;
+			break;
 			break;
 		case 'd':
 			debug++;
