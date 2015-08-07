@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.80 2014/08/23 20:26:56 dholland Exp $
+#	$NetBSD: PICA,v 1.81 2015/08/07 13:53:28 maxv Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -30,7 +30,6 @@ options 	USERCONF	# userconf(4) support
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# cheap kernel consistency checks
 #options 	DEBUG			# expensive debugging checks/support
-#options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	KGDB			# remote gdb

@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.52 2015/05/23 17:05:03 maxv Exp $
+.\"	$NetBSD: malloc.9,v 1.53 2015/08/07 13:56:48 maxv Exp $
 .\"
 .\" Copyright (c) 1996, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 23, 2015
+.Dd August 7, 2015
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -249,19 +249,6 @@ Misc temporary data buffers.
 Other malloc types are defined by the corresponding subsystem; see the
 documentation for that subsystem for information its available malloc
 types.
-.Pp
-Statistics based on the
-.Fa type
-argument are maintained only if the kernel option
-.Dv KMEMSTATS
-is used when compiling the kernel
-.Po
-the default in current
-.Nx
-kernels
-.Pc
-and can be examined by using
-.Sq vmstat -m .
 .Sh RETURN VALUES
 .Fn malloc
 returns a kernel virtual address that is suitably aligned for storage of
