@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18.2.3 2015/06/02 20:32:44 snj Exp $	*/
+/*	$NetBSD: conf.c,v 1.18.2.4 2015/08/07 04:10:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.18.2.3 2015/06/02 20:32:44 snj Exp $");
+__RCSID("$NetBSD: conf.c,v 1.18.2.4 2015/08/07 04:10:23 snj Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: conf.c,v 1.18.2.3 2015/06/02 20:32:44 snj Exp $");
 
 #include "bl.h"
 #include "internal.h"
+#include "support.h"
 #include "conf.h"
 
 
@@ -70,6 +71,9 @@ struct sockaddr_if {
     ((const struct sockaddr_if *)(const void *)(a))->sif_name
 
 static int conf_is_interface(const char *);
+
+#define FSTAR	-1
+#define FEQUAL	-2
 
 static void
 advance(char **p)
@@ -91,13 +95,13 @@ getnum(const char *f, size_t l, bool local, void *rp, const char *name,
 	int *r = rp;
 
 	if (strcmp(p, "*") == 0) {
-		*r = -1;
+		*r = FSTAR;
 		return 0;
 	}
 	if (strcmp(p, "=") == 0) {
 		if (local)
 			goto out;
-		*r = -2;
+		*r = FEQUAL;
 		return 0;
 	}
 
@@ -134,13 +138,13 @@ getsecs(const char *f, size_t l, bool local, struct conf *c, const char *p)
 
 	tot = 0;
 	if (strcmp(p, "*") == 0) {
-		c->c_duration = -1;
+		c->c_duration = FSTAR;
 		return 0;
 	}
 	if (strcmp(p, "=") == 0) {
 		if (local)
 			goto out;
-		c->c_duration = -2;
+		c->c_duration = FEQUAL;
 		return 0;
 	}
 again:
@@ -204,39 +208,22 @@ getport(const char *f, size_t l, bool local, void *r, const char *p)
 }
 
 static int
-getmask(const char *f, size_t l, bool local __unused, const char **p, int def)
+getmask(const char *f, size_t l, bool local, const char **p, int *mask)
 {
 	char *d;
-	int e;
-	intmax_t im;
 	const char *s = *p; 
 
 	if ((d = strchr(s, ':')) != NULL) {
 		*d++ = '\0';
 		*p = d;
 	}
-	if ((d = strchr(s, '/')) == NULL)
-		return def;
+	if ((d = strchr(s, '/')) == NULL) {
+		*mask = FSTAR;
+		return 0;
+	}
 
 	*d++ = '\0';
-	if (strcmp(d, "=") == 0) {
-		if (local)
-			goto out;
-		return -2;
-	}
-	if (strcmp(d, "*") == 0)
-		return def;
-
-	im = strtoi(d, NULL, 0, 0, def, &e);
-	if (e == 0)
-		return (int)im;
-
-	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad mask [%s]", __func__, f, l, d);
-	return -1;
-out:
-	(*lfun)(LOG_ERR, "%s: %s, %zu: `=' name not allowed in local"
-	    " config", __func__, f, l);
-	return -1;
+	return getnum(f, l, local, mask, "mask", d);
 }
 
 static int
@@ -247,8 +234,8 @@ gethostport(const char *f, size_t l, bool local, struct conf *c, const char *p)
 	const char *pstr;
 
 	if (strcmp(p, "*") == 0) {
-		c->c_port = -1;
-		c->c_lmask = -1;
+		c->c_port = FSTAR;
+		c->c_lmask = FSTAR;
 		return 0;
 	}
 
@@ -259,11 +246,8 @@ gethostport(const char *f, size_t l, bool local, struct conf *c, const char *p)
 	} else
 		pstr = p;
 
-	if ((c->c_lmask = getmask(f, l, local, &pstr, 256)) == -1)
+	if (getmask(f, l, local, &pstr, &c->c_lmask) == -1)
 		goto out;
-
-	if (c->c_lmask == 256)
-		c->c_lmask = -1;
 
 	if (d) {
 		struct sockaddr_in6 *sin6 = (void *)&c->c_ss;
@@ -287,10 +271,12 @@ gethostport(const char *f, size_t l, bool local, struct conf *c, const char *p)
 			(*lfun)(LOG_DEBUG, "%s: host4 %s", __func__, p);
 		if (strcmp(p, "*") != 0) {
 			if (conf_is_interface(p)) {
+				if (!local)
+					goto out2;
 				if (debug)
 					(*lfun)(LOG_DEBUG, "%s: interface %s",
 					    __func__, p);
-				if (c->c_lmask != -1)
+				if (c->c_lmask != FSTAR)
 					goto out1;
 				sif->sif_family = AF_MAX;
 				strlcpy(sif->sif_name, p,
@@ -311,12 +297,10 @@ gethostport(const char *f, size_t l, bool local, struct conf *c, const char *p)
 		}
 	}
 
-	if (strcmp(pstr, "*") == 0)
-		c->c_port = -1;
-	else if (getport(f, l, local, &c->c_port, pstr) == -1)
+	if (getport(f, l, local, &c->c_port, pstr) == -1)
 		return -1;
 
-	if (port && c->c_port != -1)
+	if (port && c->c_port != FSTAR && c->c_port != FEQUAL)
 		*port = htons((in_port_t)c->c_port);
 	return 0;
 out:
@@ -325,6 +309,10 @@ out:
 out1:
 	(*lfun)(LOG_ERR, "%s: %s, %zu: Can't specify mask %d with "
 	    "interface [%s]", __func__, f, l, c->c_lmask, p);
+	return -1;
+out2:
+	(*lfun)(LOG_ERR, "%s: %s, %zu: Interface spec does not make sense "
+	    "with remote config [%s]", __func__, f, l, p);
 	return -1;
 }
 
@@ -373,10 +361,8 @@ static int
 getname(const char *f, size_t l, bool local, struct conf *c,
     const char *p)
 {
-	if ((c->c_rmask = getmask(f, l, local, &p, 256)) == -1)
+	if (getmask(f, l, local, &p, &c->c_rmask) == -1)
 		return -1;
-	if (c->c_rmask == 256)
-		c->c_rmask = local ? -1 : -2;
 		
 	if (strcmp(p, "*") == 0) {
 		strlcpy(c->c_name, rulename, CONFNAMESZ);
@@ -475,12 +461,15 @@ conf_amask_eq(const void *v1, const void *v2, size_t len, int mask)
 	const uint32_t *a1 = v1;
 	const uint32_t *a2 = v2;
 	uint32_t m;
+	int omask = mask;
 
 	len >>= 2;
 	switch (mask) {
-	case -1:
-		return memcmp(v1, v2, len) == 0;
-	case -2:
+	case FSTAR:
+		if (memcmp(v1, v2, len) == 0)
+			return 1;
+		goto out;
+	case FEQUAL:
 		
 		(*lfun)(LOG_CRIT, "%s: Internal error: bad mask %d", __func__,
 		    mask);
@@ -499,9 +488,19 @@ conf_amask_eq(const void *v1, const void *v2, size_t len, int mask)
 		} else
 			return 1;
 		if ((a1[i] & m) != (a2[i] & m))
-			return 0;
+			goto out;
 	}
 	return 1;
+out:
+	if (debug > 1) {
+		char b1[256], b2[256];
+		len <<= 2;
+		hexdump(b1, sizeof(b1), "a1", v1, len);
+		hexdump(b2, sizeof(b2), "a2", v2, len);
+		(*lfun)(LOG_DEBUG, "%s: %s != %s [0x%x]", __func__,
+		    b1, b2, omask);
+	}
+	return 0;
 }
 
 /*
@@ -514,9 +513,9 @@ conf_apply_mask(void *v, size_t len, int mask)
 	uint32_t m;
 
 	switch (mask) {
-	case -1:
+	case FSTAR:
 		return;
-	case -2:
+	case FEQUAL:
 		(*lfun)(LOG_CRIT, "%s: Internal error: bad mask %d", __func__,
 		    mask);
 		abort();
@@ -580,7 +579,7 @@ conf_addr_set(struct conf *c, const struct sockaddr_storage *ss)
 
 	*port = htons((in_port_t)c->c_port);
 	conf_apply_mask(addr, alen, c->c_lmask);
-	if (c->c_lmask == -1)
+	if (c->c_lmask == FSTAR)
 		c->c_lmask = (int)(alen * 8);
 	if (debug) {
 		char buf[128];
@@ -690,7 +689,7 @@ conf_eq(const struct conf *c1, const struct conf *c2)
 		return 0;
 
 #define CMP(a, b, f) \
-	if ((a)->f != (b)->f && (b)->f != -1 && (b)->f != -2) { \
+	if ((a)->f != (b)->f && (b)->f != FSTAR && (b)->f != FEQUAL) { \
 		if (debug > 1) \
 			(*lfun)(LOG_DEBUG, "%s: %s fail %d != %d", __func__, \
 			    __STRING(f), (a)->f, (b)->f); \
@@ -708,9 +707,9 @@ static const char *
 conf_num(char *b, size_t l, int n)
 {
 	switch (n) {
-	case -1:
+	case FSTAR:
 		return "*";
-	case -2:
+	case FEQUAL:
 		return "=";
 	default:
 		snprintf(b, l, "%d", n);
@@ -739,7 +738,7 @@ fmtport(char *b, size_t l, int port)
 {
 	char buf[128];
 
-	if (port == -1)
+	if (port == FSTAR)
 		return;
 
 	if (b[0] == '\0' || strcmp(b, "*") == 0) 
@@ -756,9 +755,9 @@ fmtmask(char *b, size_t l, int fam, int mask)
 	char buf[128];
 
 	switch (mask) {
-	case -1:
+	case FSTAR:
 		return "";
-	case -2:
+	case FEQUAL:
 		if (strcmp(b, "=") == 0)
 			return "";
 		else {
@@ -829,8 +828,8 @@ conf_print(char *buf, size_t len, const char *pref, const char *delim,
 		    conf_namemask(hb, sizeof(hb), c), delim,
 		    N(3, c->c_nfail), delim, N(4, c->c_duration));
 	else
-		snprintf(buf, len, "%starget=%s, proto=%s, family=%s, "
-		    "uid=%s, name=%s, nfail=%s, duration=%s", pref,
+		snprintf(buf, len, "%starget:%s, proto:%s, family:%s, "
+		    "uid:%s, name:%s, nfail:%s, duration:%s", pref,
 		    ha, N(0, c->c_proto), N(1, c->c_family), N(2, c->c_uid),
 		    conf_namemask(hb, sizeof(hb), c),
 		    N(3, c->c_nfail), N(4, c->c_duration));
@@ -879,13 +878,13 @@ conf_merge(struct conf *c, const struct conf *sc)
 	
 	if (sc->c_name[0])
 		memcpy(c->c_name, sc->c_name, CONFNAMESZ);
-	if (sc->c_uid != -2)
+	if (sc->c_uid != FEQUAL)
 		c->c_uid = sc->c_uid;
-	if (sc->c_rmask != -2)
+	if (sc->c_rmask != FEQUAL)
 		c->c_lmask = c->c_rmask = sc->c_rmask;
-	if (sc->c_nfail != -2)
+	if (sc->c_nfail != FEQUAL)
 		c->c_nfail = sc->c_nfail;
-	if (sc->c_duration != -2)
+	if (sc->c_duration != FEQUAL)
 		c->c_duration = sc->c_duration;
 	if (debug)
 		(*lfun)(LOG_DEBUG, "%s: %s", __func__,
@@ -1050,13 +1049,13 @@ conf_find(int fd, uid_t uid, const struct sockaddr_storage *rss,
 	}
 
 	cr->c_ss = lss;
-	cr->c_lmask = -1;
+	cr->c_lmask = FSTAR;
 	cr->c_uid = (int)uid;
 	cr->c_family = lss.ss_family;
 	cr->c_name[0] = '\0';
-	cr->c_rmask = -1;
-	cr->c_nfail = -1;
-	cr->c_duration = -1;
+	cr->c_rmask = FSTAR;
+	cr->c_nfail = FSTAR;
+	cr->c_duration = FSTAR;
 
 	if (debug)
 		(*lfun)(LOG_DEBUG, "%s", conf_print(buf, sizeof(buf),

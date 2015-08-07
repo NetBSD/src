@@ -11,7 +11,13 @@
 
 case "$1" in
 add)
-	exec /sbin/npfctl rule $2 add block in final proto $3 from $4/$5 to any port $6
+	if [ -n "$3" ]; then
+		proto="proto $3"
+	fi
+	if [ -n "$6" ]; then
+		port="port $6"
+	fi
+	exec /sbin/npfctl rule $2 add block in final $proto from $4/$5 to any $port
 	;;
 rem)
 	exec /sbin/npfctl rule $2 rem-id $7

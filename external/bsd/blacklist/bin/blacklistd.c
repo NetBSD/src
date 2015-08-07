@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.32.2.2 2015/04/30 06:07:33 riz Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.32.2.3 2015/08/07 04:10:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.32.2.2 2015/04/30 06:07:33 riz Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.32.2.3 2015/08/07 04:10:23 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -284,6 +284,7 @@ update(void)
 		return;
 	}
 
+again:
 	for (n = 0, f = 1; state_iterate(state, &c, &dbi, f) == 1;
 	    f = 0, n++)
 	{
@@ -305,6 +306,7 @@ update(void)
 			    buf, c.c_lmask, c.c_port, c.c_duration);
 		}
 		state_del(state, &c);
+		goto again;
 	}
 }
 

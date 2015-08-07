@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.6.2.2 2015/04/30 06:07:33 riz Exp $	*/
+/*	$NetBSD: support.c,v 1.6.2.3 2015/08/07 04:10:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: support.c,v 1.6.2.2 2015/04/30 06:07:33 riz Exp $");
+__RCSID("$NetBSD: support.c,v 1.6.2.3 2015/08/07 04:10:23 snj Exp $");
 
 #include <time.h>
 #include <string.h>
@@ -130,4 +130,28 @@ fmtydhms(char *b, size_t l, time_t t)
 	APPEND(m)
 	APPEND(s)
 	return b;
+}
+
+ssize_t
+hexdump(char *buf, size_t len, const char *str, const void *b, size_t l)
+{
+	size_t z, cz;
+	int r;
+	const unsigned char *p = b;
+	const unsigned char *e = p + l;
+
+	r = snprintf(buf, len, "%s: ", str);
+	if (r == -1)
+		return -1;
+	if ((cz = z = (size_t)r) >= len)
+		cz = len;
+
+	while (p < e) {
+		r = snprintf(buf + cz, len - cz, "%.2x", *p++);
+		if (r == -1)
+			return -1;
+		if ((cz = (z += (size_t)r)) >= len)
+			cz = len;
+	}
+	return (ssize_t)z;
 }
