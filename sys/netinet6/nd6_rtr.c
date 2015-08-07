@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.101 2015/07/17 02:21:08 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.102 2015/08/07 08:11:33 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.101 2015/07/17 02:21:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.102 2015/08/07 08:11:33 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	drtr.rtaddr = saddr6;
 	drtr.flags  = nd_ra->nd_ra_flags_reserved;
 	drtr.rtlifetime = ntohs(nd_ra->nd_ra_router_lifetime);
-	drtr.expire = time_second + drtr.rtlifetime;
+	drtr.expire = time_uptime + drtr.rtlifetime;
 	drtr.ifp = ifp;
 	/* unspecified or not? (RFC 2461 6.3.4) */
 	if (advreachable) {
@@ -950,7 +950,7 @@ nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr,
 		free(newpr, M_IP6NDP);
 		return(error);
 	}
-	newpr->ndpr_lastupdate = time_second;
+	newpr->ndpr_lastupdate = time_uptime;
 	if (newp != NULL)
 		*newp = newpr;
 
@@ -1090,7 +1090,7 @@ prelist_update(struct nd_prefixctl *newprc,
 			pr->ndpr_vltime = newprc->ndprc_vltime;
 			pr->ndpr_pltime = newprc->ndprc_pltime;
 			(void)in6_init_prefix_ltimes(pr); /* XXX error case? */
-			pr->ndpr_lastupdate = time_second;
+			pr->ndpr_lastupdate = time_uptime;
 		}
 
 		if (newprc->ndprc_raf_onlink &&
@@ -1228,7 +1228,7 @@ prelist_update(struct nd_prefixctl *newprc,
 		lt6_tmp = ifa6->ia6_lifetime;
 		if (lt6_tmp.ia6t_vltime == ND6_INFINITE_LIFETIME)
 			remaininglifetime = ND6_INFINITE_LIFETIME;
-		else if (time_second - ifa6->ia6_updatetime >
+		else if (time_uptime - ifa6->ia6_updatetime >
 			 lt6_tmp.ia6t_vltime) {
 			/*
 			 * The case of "invalid" address.  We should usually
@@ -1237,7 +1237,7 @@ prelist_update(struct nd_prefixctl *newprc,
 			remaininglifetime = 0;
 		} else
 			remaininglifetime = lt6_tmp.ia6t_vltime -
-			    (time_second - ifa6->ia6_updatetime);
+			    (time_uptime - ifa6->ia6_updatetime);
 
 		/* when not updating, keep the current stored lifetime. */
 		lt6_tmp.ia6t_vltime = remaininglifetime;
@@ -1272,18 +1272,18 @@ prelist_update(struct nd_prefixctl *newprc,
 			u_int32_t maxvltime, maxpltime;
 
 			if (ip6_temp_valid_lifetime >
-			    (u_int32_t)((time_second - ifa6->ia6_createtime) +
+			    (u_int32_t)((time_uptime - ifa6->ia6_createtime) +
 			    ip6_desync_factor)) {
 				maxvltime = ip6_temp_valid_lifetime -
-				    (time_second - ifa6->ia6_createtime) -
+				    (time_uptime - ifa6->ia6_createtime) -
 				    ip6_desync_factor;
 			} else
 				maxvltime = 0;
 			if (ip6_temp_preferred_lifetime >
-			    (u_int32_t)((time_second - ifa6->ia6_createtime) +
+			    (u_int32_t)((time_uptime - ifa6->ia6_createtime) +
 			    ip6_desync_factor)) {
 				maxpltime = ip6_temp_preferred_lifetime -
-				    (time_second - ifa6->ia6_createtime) -
+				    (time_uptime - ifa6->ia6_createtime) -
 				    ip6_desync_factor;
 			} else
 				maxpltime = 0;
@@ -1299,7 +1299,7 @@ prelist_update(struct nd_prefixctl *newprc,
 		}
 
 		ifa6->ia6_lifetime = lt6_tmp;
-		ifa6->ia6_updatetime = time_second;
+		ifa6->ia6_updatetime = time_uptime;
 	}
 	if (ia6_match == NULL && newprc->ndprc_vltime) {
 		int ifidlen;
@@ -1969,7 +1969,7 @@ in6_tmpifadd(
 	if (ia0->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
 		vltime0 = IFA6_IS_INVALID(ia0) ? 0 :
 		    (ia0->ia6_lifetime.ia6t_vltime -
-		    (time_second - ia0->ia6_updatetime));
+		    (time_uptime - ia0->ia6_updatetime));
 		if (vltime0 > ip6_temp_valid_lifetime)
 			vltime0 = ip6_temp_valid_lifetime;
 	} else
@@ -1977,7 +1977,7 @@ in6_tmpifadd(
 	if (ia0->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME) {
 		pltime0 = IFA6_IS_DEPRECATED(ia0) ? 0 :
 		    (ia0->ia6_lifetime.ia6t_pltime -
-		    (time_second - ia0->ia6_updatetime));
+		    (time_uptime - ia0->ia6_updatetime));
 		if (pltime0 > ip6_temp_preferred_lifetime - ip6_desync_factor){
 			pltime0 = ip6_temp_preferred_lifetime -
 			    ip6_desync_factor;
@@ -2042,11 +2042,11 @@ in6_init_prefix_ltimes(struct nd_prefix *ndpr)
 	if (ndpr->ndpr_pltime == ND6_INFINITE_LIFETIME)
 		ndpr->ndpr_preferred = 0;
 	else
-		ndpr->ndpr_preferred = time_second + ndpr->ndpr_pltime;
+		ndpr->ndpr_preferred = time_uptime + ndpr->ndpr_pltime;
 	if (ndpr->ndpr_vltime == ND6_INFINITE_LIFETIME)
 		ndpr->ndpr_expire = 0;
 	else
-		ndpr->ndpr_expire = time_second + ndpr->ndpr_vltime;
+		ndpr->ndpr_expire = time_uptime + ndpr->ndpr_vltime;
 
 	return 0;
 }
@@ -2061,7 +2061,7 @@ in6_init_address_ltimes(struct nd_prefix *newpr,
 	if (lt6->ia6t_vltime == ND6_INFINITE_LIFETIME)
 		lt6->ia6t_expire = 0;
 	else {
-		lt6->ia6t_expire = time_second;
+		lt6->ia6t_expire = time_uptime;
 		lt6->ia6t_expire += lt6->ia6t_vltime;
 	}
 
@@ -2069,7 +2069,7 @@ in6_init_address_ltimes(struct nd_prefix *newpr,
 	if (lt6->ia6t_pltime == ND6_INFINITE_LIFETIME)
 		lt6->ia6t_preferred = 0;
 	else {
-		lt6->ia6t_preferred = time_second;
+		lt6->ia6t_preferred = time_uptime;
 		lt6->ia6t_preferred += lt6->ia6t_pltime;
 	}
 }

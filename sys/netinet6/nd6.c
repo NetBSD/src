@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.165 2015/07/17 02:21:08 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.166 2015/08/07 08:11:33 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.165 2015/07/17 02:21:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.166 2015/08/07 08:11:33 ozaki-r Exp $");
 
 #include "opt_net_mpsafe.h"
 
@@ -413,7 +413,7 @@ nd6_llinfo_settimer(struct llinfo_nd6 *ln, long xtick)
 		ln->ln_ntick = 0;
 		callout_stop(&ln->ln_timer_ch);
 	} else {
-		ln->ln_expire = time_second + xtick / hz;
+		ln->ln_expire = time_uptime + xtick / hz;
 		if (xtick > INT_MAX) {
 			ln->ln_ntick = xtick - INT_MAX;
 			callout_reset(&ln->ln_timer_ch, INT_MAX,
@@ -555,7 +555,7 @@ nd6_timer(void *ignored_arg)
 	/* expire default router list */
 	
 	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, next_dr) {
-		if (dr->expire && dr->expire < time_second) {
+		if (dr->expire && dr->expire < time_uptime) {
 			defrtrlist_del(dr, NULL);
 		}
 	}
@@ -647,7 +647,7 @@ nd6_timer(void *ignored_arg)
 		 * prefix is not necessary.
 		 */
 		if (pr->ndpr_vltime != ND6_INFINITE_LIFETIME &&
-		    time_second - pr->ndpr_lastupdate > pr->ndpr_vltime) {
+		    time_uptime - pr->ndpr_lastupdate > pr->ndpr_vltime) {
 
 			/*
 			 * address expiration and prefix expiration are
@@ -1086,9 +1086,9 @@ nd6_free(struct rtentry *rt, int gc)
 			 * XXX: the check for ln_state would be redundant,
 			 *      but we intentionally keep it just in case.
 			 */
-			if (dr->expire > time_second)
+			if (dr->expire > time_uptime)
 				nd6_llinfo_settimer(ln,
-				    (dr->expire - time_second) * hz);
+				    (dr->expire - time_uptime) * hz);
 			else
 				nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 			splx(s);
@@ -1566,7 +1566,8 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 
 			drl->defrouter[i].flags = dr->flags;
 			drl->defrouter[i].rtlifetime = dr->rtlifetime;
-			drl->defrouter[i].expire = dr->expire;
+			drl->defrouter[i].expire = dr->expire ?
+			    time_mono_to_wall(dr->expire) : 0;
 			drl->defrouter[i].if_index = dr->ifp->if_index;
 			i++;
 		}
@@ -1610,9 +1611,11 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 				    ((sizeof(maxexpire) * 8) - 1));
 				if (pr->ndpr_vltime <
 				    maxexpire - pr->ndpr_lastupdate) {
-					oprl->prefix[i].expire =
-						 pr->ndpr_lastupdate +
-						pr->ndpr_vltime;
+					time_t expire;
+					expire = pr->ndpr_lastupdate +
+					    pr->ndpr_vltime;
+					oprl->prefix[i].expire = expire ?
+					    time_mono_to_wall(expire) : 0;
 				} else
 					oprl->prefix[i].expire = maxexpire;
 			}
@@ -1839,7 +1842,8 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		nbi->state = ln->ln_state;
 		nbi->asked = ln->ln_asked;
 		nbi->isrouter = ln->ln_router;
-		nbi->expire = ln->ln_expire;
+		nbi->expire = ln->ln_expire ?
+		    time_mono_to_wall(ln->ln_expire) : 0;
 		splx(s);
 
 		break;
@@ -2557,7 +2561,8 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 			}
 			d->flags = dr->flags;
 			d->rtlifetime = dr->rtlifetime;
-			d->expire = dr->expire;
+			d->expire = dr->expire ?
+			    time_mono_to_wall(dr->expire) : 0;
 			d->if_index = dr->ifp->if_index;
 		}
 
