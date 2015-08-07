@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.445 2015/05/16 17:13:55 snj Exp $
+.\"	$NetBSD: options.4,v 1.446 2015/08/07 07:14:43 maxv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd May 16, 2015
+.Dd August 7, 2015
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -665,17 +665,6 @@ Note that not all systems are capable of obtaining a variable sized message
 buffer.
 There are also some systems on which memory contents are not preserved
 across reboots.
-.It Cd options MALLOCLOG
-Enables an event log for
-.Xr malloc 9 .
-Useful for tracking down
-.Dq Data modified on freelist
-and
-.Dq multiple free
-problems.
-.It Cd options MALLOCLOGSIZE=integer
-Defines the number of entries in the malloc log.
-Default is 100000 entries.
 .It Cd options KERNHIST
 Enables the kernel history logs, which create in-memory traces of
 various kernel activities.
@@ -1279,19 +1268,6 @@ and
 .Em MEMORY_DISK_IS_ROOT .
 It is incompatible with
 .Em MEMORY_DISK_ROOT_SIZE .
-.It Cd options MALLOC_NOINLINE
-Time critical fixed size memory allocation is performed with
-.Fn MALLOC
-and
-.Fn FREE .
-Normally these expand to inline code, but with
-.Em MALLOC_NOINLINE
-these call the normal
-.Fn malloc
-and
-.Fn free
-functions.
-Useful for install media kernels, small memory systems and embedded systems.
 .It Cd options HZ=integer
 On ports that support it, set the system clock frequency (see
 .Xr hz 9 )
