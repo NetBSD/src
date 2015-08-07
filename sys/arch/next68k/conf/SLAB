@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.53 2014/08/23 20:26:59 dholland Exp $
+# $NetBSD: SLAB,v 1.54 2015/08/07 07:29:33 maxv Exp $
 #
 # deberg's development machine
 #
@@ -36,7 +36,6 @@ makeoptions	DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB_DEVRATE=9600	# baud rate
 
 # Other debugging options
-options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 options 	SCSIDEBUG
 options 	SCSIVERBOSE		# Verbose SCSI errors

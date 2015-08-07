@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_DFC,v 1.26 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: VIRTEX_DFC,v 1.27 2015/08/07 07:29:33 maxv Exp $
 #
 # VIRTEX_DFC
 #
@@ -53,7 +53,6 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
 makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 options 	MBUFTRACE 	# track mbuf leaks
-options 	KMEMSTATS
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 
