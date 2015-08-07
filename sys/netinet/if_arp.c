@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.170 2015/07/15 08:49:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.171 2015/08/07 08:11:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.170 2015/07/15 08:49:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.171 2015/08/07 08:11:33 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -429,8 +429,8 @@ arptimer(void *arg)
 
 		if (rt->rt_expire == 0)
 			continue;
-		if ((rt->rt_expire - time_second) < arpt_refresh &&
-		    rt->rt_pksent > (time_second - arpt_keep)) {
+		if ((rt->rt_expire - time_uptime) < arpt_refresh &&
+		    rt->rt_pksent > (time_uptime - arpt_keep)) {
 			/*
 			 * If the entry has been used during since last
 			 * refresh, try to renew it before deleting.
@@ -439,7 +439,7 @@ arptimer(void *arg)
 			    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
 			    &satocsin(rt_getkey(rt))->sin_addr,
 			    CLLADDR(rt->rt_ifp->if_sadl));
-		} else if (rt->rt_expire <= time_second)
+		} else if (rt->rt_expire <= time_uptime)
 			arptfree(la); /* timer has expired; clear */
 	}
 
@@ -506,16 +506,6 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 
 	if (!arpinit_done) {
 		arpinit_done = 1;
-		/*
-		 * We generate expiration times from time_second
-		 * so avoid accidentally creating permanent routes.
-		 */
-		if (time_second == 0) {
-			struct timespec ts;
-			ts.tv_sec = 1;
-			ts.tv_nsec = 0;
-			tc_setclock(&ts);
-		}
 		callout_init(&arptimer_ch, CALLOUT_MPSAFE);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);
 	}
@@ -589,7 +579,8 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			 * it's a "permanent" route, so that routes cloned
 			 * from it do not need their expiration time set.
 			 */
-			rt->rt_expire = time_second;
+			KASSERT(time_uptime != 0);
+			rt->rt_expire = time_uptime;
 			/*
 			 * linklayers with particular link MTU limitation.
 			 */
@@ -844,11 +835,11 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	 * Check the address family and length is valid, the address
 	 * is resolved; otherwise, try to resolve.
 	 */
-	if ((rt->rt_expire == 0 || rt->rt_expire > time_second) &&
+	if ((rt->rt_expire == 0 || rt->rt_expire > time_uptime) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		memcpy(desten, CLLADDR(sdl),
 		    min(sdl->sdl_alen, ifp->if_addrlen));
-		rt->rt_pksent = time_second; /* Time for last pkt sent */
+		rt->rt_pksent = time_uptime; /* Time for last pkt sent */
 		return 1;
 	}
 	/*
@@ -876,13 +867,13 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 		/* This should never happen. (Should it? -gwr) */
 		printf("arpresolve: unresolved and rt_expire == 0\n");
 		/* Set expiration time to now (expired). */
-		rt->rt_expire = time_second;
+		rt->rt_expire = time_uptime;
 	}
 #endif
 	if (rt->rt_expire) {
 		rt->rt_flags &= ~RTF_REJECT;
-		if (la->la_asked == 0 || rt->rt_expire != time_second) {
-			rt->rt_expire = time_second;
+		if (la->la_asked == 0 || rt->rt_expire != time_uptime) {
+			rt->rt_expire = time_uptime;
 			if (la->la_asked++ < arp_maxtries) {
 				arprequest(ifp,
 				    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
@@ -1234,7 +1225,7 @@ in_arpinput(struct mbuf *m)
 		(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, ar_sha(ah),
 		    ah->ar_hln);
 		if (rt->rt_expire)
-			rt->rt_expire = time_second + arpt_keep;
+			rt->rt_expire = time_uptime + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
 
