@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.446 2015/08/07 07:14:43 maxv Exp $
+.\"	$NetBSD: options.4,v 1.447 2015/08/07 07:34:56 maxv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1424,24 +1424,6 @@ would necessitate changing
 .Em RTC_OFFSET
 twice a year.
 As such, this solution is imperfect.
-.It Cd options KMEMSTATS
-The kernel memory allocator,
-.Xr malloc 9 ,
-will keep statistics on its performance if this option is enabled.
-Unfortunately, this option therefore essentially disables the
-.Fn MALLOC
-and
-.Fn FREE
-forms of the memory allocator, which are used to enhance the performance
-of certain critical sections of code in the kernel.
-This option therefore can lead to a significant decrease in the
-performance of certain code in the kernel if enabled.
-Examples of such code include the
-.Fn namei
-routine, the
-.Xr ccd 4
-driver,
-and much of the networking code.
 .It Cd options MAXUPRC=integer
 Sets the soft
 .Dv RLIMIT_NPROC
