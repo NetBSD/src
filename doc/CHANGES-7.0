@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.357 2015/08/07 04:13:55 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.358 2015/08/07 06:23:58 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33849,3 +33849,7 @@ external/bsd/blacklist/libexec/blacklistd-helper 1.5
 	- minor bugfixes
 	[christos, ticket #922]
 
+usr.sbin/postinstall/postinstall		1.191 via patch
+
+	Add resize_root
+	[snj, ticket #937]
