@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.244 2015/07/17 02:21:08 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.245 2015/08/07 08:11:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.244 2015/07/17 02:21:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.245 2015/08/07 08:11:33 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -274,7 +274,7 @@ retry:
 	}
 	if ((rt->rt_flags & RTF_REJECT) != 0) {
 		if (rt->rt_rmx.rmx_expire == 0 ||
-		    time_second < rt->rt_rmx.rmx_expire) {
+		    time_uptime < rt->rt_rmx.rmx_expire) {
 			error = (rt == rt0) ? EHOSTDOWN : EHOSTUNREACH;
 			goto bad;
 		}
