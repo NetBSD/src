@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.358 2015/08/07 06:23:58 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.359 2015/08/07 13:45:33 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33853,3 +33853,9 @@ usr.sbin/postinstall/postinstall		1.191 via patch
 
 	Add resize_root
 	[snj, ticket #937]
+
+distrib/utils/embedded/conf/armv7.conf		1.5
+
+	Turn resize on
+	[skrll, ticket #938]
+
