@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.69 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: ADI_BRH,v 1.70 2015/08/07 13:53:28 maxv Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -113,7 +113,6 @@ options 	SYSVSHM		# System V-like memory sharing
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
