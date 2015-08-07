@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.18 2014/03/31 11:25:49 martin Exp $
+# 	$NetBSD: DEBUG,v 1.19 2015/08/07 07:29:33 maxv Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -27,7 +27,6 @@ options 	NFSSERVER	# Network File System server
 # Standard system options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	DEBUG			# extra kernel debugging support
-options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB			# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	KTRACE			# system call tracing support
