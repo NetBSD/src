@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.6 2015/07/31 10:16:36 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.7 2015/08/07 05:32:12 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -172,6 +172,7 @@ command_body()
 	$DEBUG && rump.arp -n -a
 	atf_check -s exit:0 -o ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:10
 	$DEBUG && rump.arp -n -a
+	atf_check -s exit:0 -o match:'b2:a0:20:00:00:10' rump.arp -n 10.0.1.10
 	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.10
 	atf_check -s exit:0 -o ignore rump.arp -d 10.0.1.10
 	$DEBUG && rump.arp -n -a
@@ -188,10 +189,15 @@ command_body()
 	$DEBUG && rump.arp -n -a
 	atf_check -s exit:0 -o ignore rump.arp -f ./list
 	$DEBUG && rump.arp -n -a
+	atf_check -s exit:0 -o match:'b2:a0:20:00:00:11' rump.arp -n 10.0.1.11
 	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.11
+	atf_check -s exit:0 -o match:'b2:a0:20:00:00:12' rump.arp -n 10.0.1.12
 	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.12
+	atf_check -s exit:0 -o match:'b2:a0:20:00:00:13' rump.arp -n 10.0.1.13
 	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.13
+	atf_check -s exit:0 -o match:'b2:a0:20:00:00:14' rump.arp -n 10.0.1.14
 	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.14
+	atf_check -s exit:0 -o match:'b2:a0:20:00:00:15' rump.arp -n 10.0.1.15
 	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.15
 
 	# Test arp -a
@@ -215,6 +221,7 @@ command_body()
 	$DEBUG && rump.arp -n -a
 	atf_check -s exit:0 -o ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:10 temp
 	$DEBUG && rump.arp -n -a
+	atf_check -s exit:0 -o match:'b2:a0:20:00:00:10' rump.arp -n 10.0.1.10
 	atf_check -s exit:0 -o not-match:'permanent' rump.arp -n 10.0.1.10
 
 	# Hm? the cache doesn't expire...
@@ -294,10 +301,12 @@ cache_overwriting_body()
 	# Can overwrite a dynamic cache
 	atf_check -s exit:0 -o ignore rump.arp -s $IP4DST b2:a0:20:00:00:00
 	$DEBUG && rump.arp -n -a
+	atf_check -s exit:0 -o match:'b2:a0:20:00:00:00' rump.arp -n $IP4DST
 	atf_check -s exit:0 -o match:'permanent' rump.arp -n $IP4DST
 
 	atf_check -s exit:0 -o ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:10 temp
 	$DEBUG && rump.arp -n -a
+	atf_check -s exit:0 -o match:'b2:a0:20:00:00:10' rump.arp -n 10.0.1.10
 	atf_check -s exit:0 -o not-match:'permanent' rump.arp -n 10.0.1.10
 	# Cannot overwrite a temp cache
 	atf_check -s not-exit:0 -e ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:ff
