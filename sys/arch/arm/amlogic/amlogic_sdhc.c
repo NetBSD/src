@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.9 2015/08/08 14:01:44 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.10 2015/08/08 14:48:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.9 2015/08/08 14:01:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.10 2015/08/08 14:48:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -443,7 +443,9 @@ amlogic_sdhc_host_maxblklen(sdmmc_chipset_handle_t sch)
 static int
 amlogic_sdhc_card_detect(sdmmc_chipset_handle_t sch)
 {
-	return 1;
+	struct amlogic_sdhc_softc *sc = sch;
+
+	return amlogic_sdhc_is_card_present(sc->sc_port);
 }
 
 static int
