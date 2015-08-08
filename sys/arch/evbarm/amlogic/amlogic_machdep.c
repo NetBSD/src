@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.20 2015/04/03 18:03:05 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.21 2015/08/08 13:54:05 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.20 2015/04/03 18:03:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.21 2015/08/08 13:54:05 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -495,6 +495,16 @@ amlogic_reset(void)
 	}
 }
 
+static uint32_t
+amlogic_get_boot_device(void)
+{
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	bus_space_handle_t bsh = amlogic_core_bsh;
+	bus_size_t off = AMLOGIC_BOOTINFO_OFFSET;
+
+	return bus_space_read_4(bst, bsh, off + 4);
+}
+
 void
 amlogic_device_register(device_t self, void *aux)
 {
@@ -540,6 +550,12 @@ amlogic_device_register(device_t self, void *aux)
 			prop_dictionary_set(dict, "mac-address", pd);
 			prop_object_release(pd);
 		}
+	}
+
+	if (device_is_a(self, "amlogicsdhc") ||
+	    device_is_a(self, "amlogicsdio")) {
+		prop_dictionary_set_uint32(dict, "boot_id",
+		    amlogic_get_boot_device());
 	}
 
 #if NGENFB > 0
