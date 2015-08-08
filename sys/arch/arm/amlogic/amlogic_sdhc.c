@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.8 2015/08/08 10:51:50 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.9 2015/08/08 14:01:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.8 2015/08/08 10:51:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.9 2015/08/08 14:01:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,7 +69,7 @@ struct amlogic_sdhc_softc {
 	bus_dma_segment_t	sc_segs[1];
 	void			*sc_bbuf;
 
-	u_int			sc_port;
+	int			sc_port;
 	int			sc_signal_voltage;
 };
 
@@ -121,12 +121,6 @@ static struct sdmmc_chip_functions amlogic_sdhc_chip_functions = {
 static int
 amlogic_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct amlogicio_attach_args * const aio = aux;
-	const struct amlogic_locators * const loc = &aio->aio_loc;
-
-	if (loc->loc_port == AMLOGICIOCF_PORT_DEFAULT)
-		return 0;
-
 	return 1;
 }
 
@@ -136,6 +130,8 @@ amlogic_sdhc_attach(device_t parent, device_t self, void *aux)
 	struct amlogic_sdhc_softc * const sc = device_private(self);
 	struct amlogicio_attach_args * const aio = aux;
 	const struct amlogic_locators * const loc = &aio->aio_loc;
+	prop_dictionary_t cfg = device_properties(self);
+	uint32_t boot_id;
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
@@ -147,14 +143,27 @@ amlogic_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_port = loc->loc_port;
 	sc->sc_signal_voltage = SDMMC_SIGNAL_VOLTAGE_330;
 
+	if (sc->sc_port == AMLOGICIOCF_PORT_DEFAULT) {
+		if (!prop_dictionary_get_uint32(cfg, "boot_id", &boot_id)) {
+			aprint_error(": no port selected\n");
+			return;
+		}
+		/* Booted device goes on SDHC controller */
+		if (boot_id == 0) {
+			sc->sc_port = AMLOGIC_SDHC_PORT_C;	/* eMMC */
+		} else {
+			sc->sc_port = AMLOGIC_SDHC_PORT_B;	/* SD card */
+		}
+	}
+
 	amlogic_sdhc_init();
-	if (amlogic_sdhc_select_port(loc->loc_port) != 0) {
-		aprint_error(": couldn't select port %d\n", loc->loc_port);
+	if (amlogic_sdhc_select_port(sc->sc_port) != 0) {
+		aprint_error(": couldn't select port %d\n", sc->sc_port);
 		return;
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": SDHC controller\n");
+	aprint_normal(": SDHC controller (port %c)\n", sc->sc_port + 'A');
 
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_BIO, IST_EDGE,
 	    amlogic_sdhc_intr, sc);
