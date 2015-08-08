@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.45 2015/08/05 10:29:37 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.46 2015/08/08 10:50:55 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.45 2015/08/05 10:29:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.46 2015/08/08 10:50:55 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -204,13 +204,17 @@ mmc_mode:
 
 	host_ocr &= card_ocr; /* only allow the common voltages */
 	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
-		/* Check SD Ver.2 */
-		error = sdmmc_mem_send_if_cond(sc, 0x1aa, &card_ocr);
-		if (error == 0 && card_ocr == 0x1aa)
-			SET(ocr, MMC_OCR_HCS);
+		if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
+			/* Check SD Ver.2 */
+			error = sdmmc_mem_send_if_cond(sc, 0x1aa, &card_ocr);
+			if (error == 0 && card_ocr == 0x1aa)
+				SET(ocr, MMC_OCR_HCS);
 
-		if (sdmmc_chip_host_ocr(sc->sc_sct, sc->sc_sch) & MMC_OCR_S18A)
-			SET(ocr, MMC_OCR_S18A);
+			if (sdmmc_chip_host_ocr(sc->sc_sct, sc->sc_sch) & MMC_OCR_S18A)
+				SET(ocr, MMC_OCR_S18A);
+		} else {
+			SET(ocr, MMC_OCR_ACCESS_MODE_SECTOR);
+		}
 	}
 	host_ocr |= ocr;
 
@@ -221,7 +225,7 @@ mmc_mode:
 		goto out;
 	}
 
-	if (ISSET(new_ocr, MMC_OCR_S18A) && sc->sc_sct->signal_voltage) {
+	if (ISSET(sc->sc_flags, SMF_SD_MODE) && ISSET(new_ocr, MMC_OCR_S18A)) {
 		/*
 		 * Card and host support low voltage mode, begin switch
 		 * sequence.
@@ -946,13 +950,6 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			return ENOTSUP;
 		}
 
-		if (hs_timing == 2) {
-			error = sdmmc_chip_signal_voltage(sc->sc_sct,
-			    sc->sc_sch, SDMMC_SIGNAL_VOLTAGE_180);
-			if (error)
-				hs_timing = 1;
-		}
-
 		if (ISSET(sc->sc_caps, SMC_CAPS_8BIT_MODE)) {
 			width = 8;
 			value = EXT_CSD_BUS_WIDTH_8;
@@ -977,6 +974,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			}
 
 			/* XXXX: need bus test? (using by CMD14 & CMD19) */
+			delay(10000);
 		}
 		sf->width = width;
 
@@ -989,7 +987,8 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			    EXT_CSD_HS_TIMING, hs_timing);
 			if (error) {
 				aprint_error_dev(sc->sc_dev,
-				    "can't change high speed\n");
+				    "can't change high speed %d, error %d\n",
+				    hs_timing, error);
 				return error;
 			}
 		}

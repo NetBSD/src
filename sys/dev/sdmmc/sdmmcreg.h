@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.19 2015/08/05 10:29:37 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.20 2015/08/08 10:50:55 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -70,7 +70,10 @@
 
 /* OCR bits */
 #define MMC_OCR_MEM_READY		(1U<<31)/* memory power-up status bit */
-#define MMC_OCR_HCS			(1<<30)
+#define MMC_OCR_HCS			(1<<30)	/* SD only */
+#define MMC_OCR_ACCESS_MODE_MASK	(3<<29)	/* MMC only */
+#define MMC_OCR_ACCESS_MODE_BYTE	(0<<29)	/* MMC only */
+#define MMC_OCR_ACCESS_MODE_SECTOR	(2<<29)	/* MMC only */
 #define MMC_OCR_S18A			(1<<24)
 #define MMC_OCR_3_5V_3_6V		(1<<23)
 #define MMC_OCR_3_4V_3_5V		(1<<22)
