@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.359 2015/08/07 13:45:33 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.360 2015/08/08 10:11:52 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33858,4 +33858,11 @@ distrib/utils/embedded/conf/armv7.conf		1.5
 
 	Turn resize on
 	[skrll, ticket #938]
+
+sys/external/bsd/ipf/netinet/ip_nat.c		1.14
+sys/external/bsd/ipf/netinet/ip_nat.h		1.7
+sys/external/bsd/ipf/netinet/ip_nat6.c		1.8
+
+	Avoid panic in SIOCGNATL dereferencing a NULL softc.
+	[prlw1, ticket #939]
 
