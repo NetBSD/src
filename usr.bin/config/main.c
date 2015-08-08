@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.75 2015/06/16 21:12:19 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.76 2015/08/08 15:52:41 shm Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.75 2015/06/16 21:12:19 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.76 2015/08/08 15:52:41 shm Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -1582,6 +1582,7 @@ static int
 extract_config(const char *kname, const char *cname, int cfd)
 {
 	char *ptr;
+	void *base;
 	int found, kfd;
 	struct stat st;
 	off_t i;
@@ -1594,10 +1595,11 @@ extract_config(const char *kname, const char *cname, int cfd)
 		err(EXIT_FAILURE, "cannot open %s", kname);
 	if (fstat(kfd, &st) == -1)
 		err(EXIT_FAILURE, "cannot stat %s", kname);
-	ptr = mmap(0, (size_t)st.st_size, PROT_READ, MAP_FILE | MAP_SHARED,
+	base = mmap(0, (size_t)st.st_size, PROT_READ, MAP_FILE | MAP_SHARED,
 	    kfd, 0);
-	if (ptr == MAP_FAILED)
+	if (base == MAP_FAILED)
 		err(EXIT_FAILURE, "cannot mmap %s", kname);
+	ptr = base;
 
 	/* Scan mmap(2)'ed region, extracting kernel configuration */
 	for (i = 0; i < st.st_size; i++) {
@@ -1629,7 +1631,8 @@ extract_config(const char *kname, const char *cname, int cfd)
 	}
 
 	(void)close(kfd);
-
+	(void)munmap(base, (size_t)st.st_size);
+		
 	return found;
 }
 
