@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.360 2015/08/08 10:11:52 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.361 2015/08/08 15:43:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33865,4 +33865,9 @@ sys/external/bsd/ipf/netinet/ip_nat6.c		1.8
 
 	Avoid panic in SIOCGNATL dereferencing a NULL softc.
 	[prlw1, ticket #939]
+
+sys/compat/netbsd32/netbsd32_socket.c		1.42
+
+	Memory leak, triggerable from an unprivileged user.
+	[maxv, ticket #941]
 
