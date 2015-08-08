@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.20 2014/12/07 20:10:59 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.21 2015/08/08 17:21:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.20 2014/12/07 20:10:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.21 2015/08/08 17:21:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -976,7 +976,14 @@ done:
 #ifdef AWIN_MMC_DEBUG
 		aprint_error_dev(sc->sc_dev, "i/o error %d\n", cmd->c_error);
 #endif
-		awin_mmc_host_reset(sc);
+		MMC_WRITE(sc, AWIN_MMC_GCTRL,
+		    MMC_READ(sc, AWIN_MMC_GCTRL) |
+		      AWIN_MMC_GCTRL_DMARESET | AWIN_MMC_GCTRL_FIFORESET);
+		for (int retry = 0; retry < 1000; retry++) {
+			if (!(MMC_READ(sc, AWIN_MMC_GCTRL) & AWIN_MMC_GCTRL_RESET))
+				break;
+			delay(10);
+		}
 		awin_mmc_update_clock(sc);
 	}
 
