@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.7 2015/08/04 01:23:07 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.8 2015/08/08 10:51:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.7 2015/08/04 01:23:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.8 2015/08/08 10:51:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -196,6 +196,7 @@ amlogic_sdhc_attach_i(device_t self)
 		       SMC_CAPS_MMC_HIGHSPEED|
 		       SMC_CAPS_UHS_SDR50|
 		       SMC_CAPS_UHS_SDR104|
+		       SMC_CAPS_MMC_HS200|
 		       SMC_CAPS_AUTO_STOP;
 
 	sc->sc_sdmmc_dev = config_found(self, &saa, NULL);
