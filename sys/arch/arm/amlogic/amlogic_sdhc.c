@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.10 2015/08/08 14:48:41 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.11 2015/08/08 15:36:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.10 2015/08/08 14:48:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.11 2015/08/08 15:36:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,7 +90,9 @@ static void	amlogic_sdhc_exec_command(sdmmc_chipset_handle_t,
 static void	amlogic_sdhc_card_enable_intr(sdmmc_chipset_handle_t, int);
 static void	amlogic_sdhc_card_intr_ack(sdmmc_chipset_handle_t);
 static int	amlogic_sdhc_signal_voltage(sdmmc_chipset_handle_t, int);
+static int	amlogic_sdhc_execute_tuning(sdmmc_chipset_handle_t, int);
 
+static int	amlogic_sdhc_default_rx_phase(struct amlogic_sdhc_softc *);
 static int	amlogic_sdhc_set_clock(struct amlogic_sdhc_softc *, u_int);
 static int	amlogic_sdhc_wait_idle(struct amlogic_sdhc_softc *);
 static int	amlogic_sdhc_wait_ista(struct amlogic_sdhc_softc *, uint32_t, int);
@@ -111,12 +113,15 @@ static struct sdmmc_chip_functions amlogic_sdhc_chip_functions = {
 	.card_enable_intr = amlogic_sdhc_card_enable_intr,
 	.card_intr_ack = amlogic_sdhc_card_intr_ack,
 	.signal_voltage = amlogic_sdhc_signal_voltage,
+	.execute_tuning = amlogic_sdhc_execute_tuning,
 };
 
 #define SDHC_WRITE(sc, reg, val) \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 #define SDHC_READ(sc, reg) \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+#define SDHC_SET_CLEAR(sc, reg, set, clr) \
+	amlogic_reg_set_clear((sc)->sc_bst, (sc)->sc_bsh, (reg), (set), (clr))
 
 static int
 amlogic_sdhc_match(device_t parent, cfdata_t cf, void *aux)
@@ -265,6 +270,33 @@ amlogic_sdhc_dmainit(struct amlogic_sdhc_softc *sc)
 }
 
 static int
+amlogic_sdhc_default_rx_phase(struct amlogic_sdhc_softc *sc)
+{
+	const u_int pll_freq = amlogic_get_rate_fixed() / 1000 / 3;
+	const u_int clkc = SDHC_READ(sc, SD_CLKC_REG);
+	const u_int clk_div = __SHIFTOUT(clkc, SD_CLKC_CLK_DIV);
+	const u_int act_freq = pll_freq / clk_div;
+
+	if (act_freq > 90000) {
+		return 1;
+	} else if (act_freq > 45000) {
+		if (sc->sc_signal_voltage == SDMMC_SIGNAL_VOLTAGE_330) {
+			return 15;
+		} else {
+			return 11;
+		}
+	} else if (act_freq >= 25000) {
+		return 15;
+	} else if (act_freq > 5000) {
+		return 23;
+	} else if (act_freq > 1000) {
+		return 55;
+	} else {
+		return 1061;
+	}
+}
+
+static int
 amlogic_sdhc_set_clock(struct amlogic_sdhc_softc *sc, u_int freq)
 {
 	uint32_t clkc;
@@ -308,25 +340,8 @@ amlogic_sdhc_set_clock(struct amlogic_sdhc_softc *sc, u_int freq)
 	clk2 &= ~SD_CLK2_SD_CLK_PHASE;
 	clk2 |= __SHIFTIN(1, SD_CLK2_SD_CLK_PHASE);
 	clk2 &= ~SD_CLK2_RX_CLK_PHASE;
-
-	const u_int act_freq = pll_freq / clk_div;
-	if (act_freq > 90000) {
-		clk2 |= __SHIFTIN(1, SD_CLK2_RX_CLK_PHASE);
-	} else if (act_freq > 45000) {
-		if (sc->sc_signal_voltage == SDMMC_SIGNAL_VOLTAGE_330) {
-			clk2 |= __SHIFTIN(15, SD_CLK2_RX_CLK_PHASE);
-		} else {
-			clk2 |= __SHIFTIN(11, SD_CLK2_RX_CLK_PHASE);
-		}
-	} else if (act_freq >= 25000) {
-		clk2 |= __SHIFTIN(15, SD_CLK2_RX_CLK_PHASE);
-	} else if (act_freq > 5000) {
-		clk2 |= __SHIFTIN(23, SD_CLK2_RX_CLK_PHASE);
-	} else if (act_freq > 1000) {
-		clk2 |= __SHIFTIN(55, SD_CLK2_RX_CLK_PHASE);
-	} else {
-		clk2 |= __SHIFTIN(1061, SD_CLK2_RX_CLK_PHASE);
-	}
+	clk2 |= __SHIFTIN(amlogic_sdhc_default_rx_phase(sc),
+			  SD_CLK2_RX_CLK_PHASE);
 	SDHC_WRITE(sc, SD_CLK2_REG, clk2);
 
 	return 0;
@@ -718,5 +733,129 @@ amlogic_sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 	}
 
 	sc->sc_signal_voltage = signal_voltage;
+	return 0;
+}
+
+static int
+amlogic_sdhc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
+{
+	static const uint8_t tuning_blk_8bit[] = {
+		0xff, 0xff, 0x00, 0xff, 0xff, 0xff, 0x00, 0x00,
+		0xff, 0xff, 0xcc, 0xcc, 0xcc, 0x33, 0xcc, 0xcc,
+		0xcc, 0x33, 0x33, 0xcc, 0xcc, 0xcc, 0xff, 0xff,
+		0xff, 0xee, 0xff, 0xff, 0xff, 0xee, 0xee, 0xff,
+		0xff, 0xff, 0xdd, 0xff, 0xff, 0xff, 0xdd, 0xdd,  
+		0xff, 0xff, 0xff, 0xbb, 0xff, 0xff, 0xff, 0xbb,
+		0xbb, 0xff, 0xff, 0xff, 0x77, 0xff, 0xff, 0xff,
+		0x77, 0x77, 0xff, 0x77, 0xbb, 0xdd, 0xee, 0xff,
+		0xff, 0xff, 0xff, 0x00, 0xff, 0xff, 0xff, 0x00,
+		0x00, 0xff, 0xff, 0xcc, 0xcc, 0xcc, 0x33, 0xcc,
+		0xcc, 0xcc, 0x33, 0x33, 0xcc, 0xcc, 0xcc, 0xff,
+		0xff, 0xff, 0xee, 0xff, 0xff, 0xff, 0xee, 0xee,
+		0xff, 0xff, 0xff, 0xdd, 0xff, 0xff, 0xff, 0xdd,
+		0xdd, 0xff, 0xff, 0xff, 0xbb, 0xff, 0xff, 0xff,
+		0xbb, 0xbb, 0xff, 0xff, 0xff, 0x77, 0xff, 0xff,
+		0xff, 0x77, 0x77, 0xff, 0x77, 0xbb, 0xdd, 0xee,
+	};
+	static const uint8_t tuning_blk_4bit[] = {
+		0xff, 0x0f, 0xff, 0x00, 0xff, 0xcc, 0xc3, 0xcc,
+		0xc3, 0x3c, 0xcc, 0xff, 0xfe, 0xff, 0xfe, 0xef,
+		0xff, 0xdf, 0xff, 0xdd, 0xff, 0xfb, 0xff, 0xfb,
+		0xbf, 0xff, 0x7f, 0xff, 0x77, 0xf7, 0xbd, 0xef,
+		0xff, 0xf0, 0xff, 0xf0, 0x0f, 0xfc, 0xcc, 0x3c,
+		0xcc, 0x33, 0xcc, 0xcf, 0xff, 0xef, 0xff, 0xee,
+		0xff, 0xfd, 0xff, 0xfd, 0xdf, 0xff, 0xbf, 0xff,
+		0xbb, 0xff, 0xf7, 0xff, 0xf7, 0x7f, 0x7b, 0xde,
+	};
+
+	struct amlogic_sdhc_softc *sc = sch;
+	struct sdmmc_command cmd;
+	uint8_t data[sizeof(tuning_blk_8bit)];
+	const uint8_t *tblk;
+	size_t tsize;
+	struct window_s {
+		int start;
+		u_int size;
+	} best = { .start = -1, .size = 0 },
+	  curr = { .start = -1, .size = 0 },
+	  wrap = { .start =  0, .size = 0 };
+	u_int ph, rx_phase, clk_div;
+	int opcode;
+
+	switch (timing) {
+	case SDMMC_TIMING_MMC_HS200:
+		tblk = tuning_blk_8bit;
+		tsize = sizeof(tuning_blk_8bit);
+		opcode = MMC_SEND_TUNING_BLOCK_HS200;
+		break;
+	case SDMMC_TIMING_UHS_SDR50:
+	case SDMMC_TIMING_UHS_SDR104:
+		tblk = tuning_blk_4bit;
+		tsize = sizeof(tuning_blk_4bit);
+		opcode = MMC_SEND_TUNING_BLOCK;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	const uint32_t clkc = SDHC_READ(sc, SD_CLKC_REG);
+	clk_div = __SHIFTOUT(clkc, SD_CLKC_CLK_DIV);
+
+	for (ph = 0; ph <= clk_div; ph++) {
+		SDHC_SET_CLEAR(sc, SD_CLK2_REG,
+		    __SHIFTIN(ph, SD_CLK2_RX_CLK_PHASE), SD_CLK2_RX_CLK_PHASE);
+		delay(10);
+
+		u_int nmatch = 0;
+#define NUMTRIES 10
+		for (u_int i = 0; i < NUMTRIES; i++) {
+			memset(data, 0, tsize);
+			memset(&cmd, 0, sizeof(cmd));
+			cmd.c_data = data;
+			cmd.c_datalen = cmd.c_blklen = tsize;
+			cmd.c_opcode = opcode;
+			cmd.c_arg = 0;
+			cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1;
+			amlogic_sdhc_exec_command(sc, &cmd);
+			if (cmd.c_error == 0 && memcmp(data, tblk, tsize) == 0)
+				nmatch++;
+		}
+		if (nmatch == NUMTRIES) {	/* good phase value */
+			if (wrap.start == 0)
+				wrap.size++;
+			if (curr.start == -1)
+				curr.start = ph;
+			curr.size++;
+		} else {
+			wrap.start = -1;
+			if (curr.start != -1) {	/* end of current window */
+				if (best.start == -1 || best.size < curr.size)
+					best = curr;
+				curr = (struct window_s)
+				    { .start = -1, .size = 0 };
+			}
+		}
+#undef NUMTRIES
+	}
+
+	if (curr.start != -1) {	/* the current window wraps around */
+		curr.size += wrap.size;
+		if (curr.size > ph)
+			curr.size = ph;
+		if (best.start == -1 || best.size < curr.size)
+			best = curr;
+	}
+
+	if (best.start == -1) {	/* no window - use default rx_phase */
+		rx_phase = amlogic_sdhc_default_rx_phase(sc);
+	} else {
+		rx_phase = best.start + best.size / 2;
+		if (rx_phase >= ph)
+			rx_phase -= ph;
+	}
+
+	SDHC_SET_CLEAR(sc, SD_CLK2_REG,
+	    __SHIFTIN(rx_phase, SD_CLK2_RX_CLK_PHASE), SD_CLK2_RX_CLK_PHASE);
+
 	return 0;
 }
