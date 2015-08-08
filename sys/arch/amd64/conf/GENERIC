@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.413 2015/05/03 02:52:50 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.414 2015/08/08 06:36:24 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.413 $"
+#ident 		"GENERIC-$Revision: 1.414 $"
 
 maxusers	64		# estimated number of users
 
@@ -91,7 +91,6 @@ options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 
 #
 # Because gcc omits the frame pointer for any -O level, the line below

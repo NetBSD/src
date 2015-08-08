@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.19 2014/11/16 16:01:43 manu Exp $
+# $NetBSD: VAX780,v 1.20 2015/08/08 06:36:26 maxv Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -38,7 +38,6 @@ options 	DDB
 options 	KTRACE
 #options 	DIAGNOSTIC
 #options 	DEBUG
-#options 	KMEMSTATS
 #options 	PMAPDEBUG
 #options 	TRAPDEBUG
 #options 	LOCKDEBUG
