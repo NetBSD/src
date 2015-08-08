@@ -1,4 +1,4 @@
-#	$NetBSD: xorg-pkg-ver.mk,v 1.5 2015/07/22 07:58:00 mrg Exp $
+#	$NetBSD: xorg-pkg-ver.mk,v 1.6 2015/08/08 22:26:59 aymeric Exp $
 
 # when including this make sure PROG is set so that $X11SRCDIR.$PROG
 # is a valid setting.  set XORG_PKG_VER_PROG if PROG is wrong.
@@ -24,7 +24,7 @@ CPPFLAGS+=	-DVERSION=\"${XORG_PKG_PACKAGE_VERSION:Q}\"
 
 XORG_PKG_PACKAGE_STRING!= \
 	awk -F= '/^PACKAGE_STRING=/ {				\
-	     match($$2, "[a-zA-Z-_]+[ 	]+([0-9]+\\.)+[0-9]+");	\
+	     match($$2, "[a-zA-Z_-]+[ 	]+([0-9]+\\.)+[0-9]+");	\
 	     string = substr($$2, RSTART, RLENGTH);		\
 	     print string;					\
 	     exit 0;						\
@@ -35,7 +35,7 @@ CPPFLAGS+=	-DPACKAGE_STRING=\"${XORG_PKG_PACKAGE_STRING:Q}\"
 
 XORG_PKG_PACKAGE_NAME!= \
 	awk -F= '/^PACKAGE_NAME=/ {				\
-	     match($$2, "'"'"'[a-zA-Z-_0-9]+'"'"'");		\
+	     match($$2, "'"'"'[a-zA-Z0-9_-]+'"'"'");		\
 	     name = substr($$2, RSTART, RLENGTH);		\
 	     print name;					\
 	     exit 0;						\
