@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdio.c,v 1.2 2015/04/19 23:12:21 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdio.c,v 1.3 2015/08/08 10:55:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdio.c,v 1.2 2015/04/19 23:12:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdio.c,v 1.3 2015/08/08 10:55:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -186,7 +186,7 @@ amlogic_sdio_attach_i(device_t self)
 	saa.saa_dmat = sc->sc_dmat;
 	saa.saa_sch = sc;
 	saa.saa_clkmin = 400;
-	saa.saa_clkmax = 50000;
+	saa.saa_clkmax = sc->sc_bus_freq;
 	/* Do not advertise DMA capabilities, we handle DMA ourselves */
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|
 		       SMC_CAPS_SD_HIGHSPEED|
