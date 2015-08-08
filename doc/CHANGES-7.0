@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.361 2015/08/08 15:43:00 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.362 2015/08/08 15:46:48 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33870,4 +33870,9 @@ sys/compat/netbsd32/netbsd32_socket.c		1.42
 
 	Memory leak, triggerable from an unprivileged user.
 	[maxv, ticket #941]
+
+sys/kern/uipc_syscalls.c			1.179
+
+	Memory leak. Triggerable from an unprivileged user via COMPAT_43.
+	[maxv, ticket #942]
 
