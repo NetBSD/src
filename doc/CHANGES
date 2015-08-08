@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2088 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2089 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -176,3 +176,9 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	bind: Import version 9.10.2-P3. [christos 20150728]
 	kernel: Several bug fixes and improvements in the PaX subsystem.
 		[maxv 20150804]
+	sdmmc(4): Add support for UHS-I and MMC HS200 transfer modes.
+		[jmcneill 20150808]
+	sdhc(4): Add support for UHS-I and MMC HS200 transfer modes.
+		[jmcneill 20150808]
+	amlogicsdhc(4): Add support for UHS-I and MMC HS200 transfer modes.
+		[jmcneill 20150808]
