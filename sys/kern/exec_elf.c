@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.75 2015/08/05 15:58:01 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.76 2015/08/08 06:24:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.75 2015/08/05 15:58:01 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.76 2015/08/08 06:24:40 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -646,7 +646,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		return error;
 
 	if (eh->e_type == ET_DYN)
-		/* PIE */
+		/* PIE, and some libs have an entry point */
 		is_dyn = true;
 	else if (eh->e_type != ET_EXEC)
 		return ENOEXEC;
@@ -690,12 +690,6 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			}
 			break;
 		}
-	}
-
-	if (is_dyn && (interp == NULL)) {
-		/* PIEs must have an interpreter */
-		error = ENOEXEC;
-		goto bad;
 	}
 
 	/*
