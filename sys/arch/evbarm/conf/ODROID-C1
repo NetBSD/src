@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.18 2015/04/25 14:41:33 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.19 2015/08/08 10:56:55 jmcneill Exp $
 #
 #	Hardkernel ODROID-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -65,6 +65,8 @@ amlogicrtc0	at amlogicio0
 # SDHC controller
 amlogicsdhc0	at amlogicio0 port 1
 sdmmc*		at amlogicsdhc?
+amlogicsdio0	at amlogicio0 port 2
+sdmmc*		at amlogicsdio?
 ld*		at sdmmc?
 
 # Gigabit ethernet
