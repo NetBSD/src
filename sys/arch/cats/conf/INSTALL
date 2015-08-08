@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.94 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: INSTALL,v 1.95 2015/08/08 06:36:25 maxv Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -105,7 +105,6 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	PCIVERBOSE	# Verbose PCI descriptions
 #options 	MIIVERBOSE	# verbose PHY autoconfig messages
