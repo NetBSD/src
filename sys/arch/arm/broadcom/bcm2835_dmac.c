@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.13 2015/08/09 13:06:44 mlelstv Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.14 2015/08/09 13:07:47 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.13 2015/08/09 13:06:44 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.14 2015/08/09 13:07:47 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -237,9 +237,9 @@ bcm_dmac_free(struct bcm_dmac_channel *ch)
 
 	bcm_dmac_halt(ch);
 
+	/* reset chip */
 	val = DMAC_READ(sc, DMAC_CS(ch->ch_index));
 	val |= DMAC_CS_RESET;
-	val |= DMAC_CS_ABORT;
 	val &= ~DMAC_CS_ACTIVE;
 	DMAC_WRITE(sc, DMAC_CS(ch->ch_index), val);
 
@@ -279,9 +279,21 @@ void
 bcm_dmac_halt(struct bcm_dmac_channel *ch)
 {
 	struct bcm_dmac_softc *sc = ch->ch_sc;
+	uint32_t val;
 
-	DMAC_WRITE(sc, DMAC_CS(ch->ch_index), DMAC_CS_RESET|DMAC_CS_ABORT);
-	bcm_dmac_set_conblk_addr(ch, 0);
+	/* pause DMA */
+	val = DMAC_READ(sc, DMAC_CS(ch->ch_index));
+	val &= ~DMAC_CS_ACTIVE;
+	DMAC_WRITE(sc, DMAC_CS(ch->ch_index), val);
+
+	/* wait for paused state ? */
+
+	/* end descriptor chain */
+	DMAC_WRITE(sc, DMAC_NEXTCONBK(ch->ch_index), 0);
+
+	/* resume DMA that then stops */
+	val |= DMAC_CS_ACTIVE | DMAC_CS_ABORT;
+	DMAC_WRITE(sc, DMAC_CS(ch->ch_index), val);
 }
 
 #if defined(DDB)
