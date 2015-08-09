@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.15 2009/08/13 05:53:58 dholland Exp $	*/
+/*	$NetBSD: filter.c,v 1.16 2015/08/09 09:49:25 shm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.15 2009/08/13 05:53:58 dholland Exp $");
+__RCSID("$NetBSD: filter.c,v 1.16 2015/08/09 09:49:25 shm Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -108,7 +108,6 @@ getignored(const char *auxname)
 	     fgets(inbuffer, sizeof(inbuffer)-1, fyle) != NULL; nignored++)
 		continue;
 	names_ignored = Calloc(nignored+1, sizeof (char *));
-	fclose(fyle);
 	if (freopen(filename, "r", fyle) == NULL) {
 #ifdef FULLDEBUG
 		fprintf(stderr, "%s: Failure to open \"%s\" for second read.\n",
