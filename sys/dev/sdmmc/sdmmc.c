@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.29 2015/08/03 10:08:51 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.30 2015/08/09 13:14:11 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.29 2015/08/03 10:08:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.30 2015/08/09 13:14:11 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -315,19 +315,28 @@ static void
 sdmmc_discover_task(void *arg)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)arg;
+	int card_detect, card_present;
 
-	if (sdmmc_chip_card_detect(sc->sc_sct, sc->sc_sch)) {
-		if (!ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
-			SET(sc->sc_flags, SMF_CARD_PRESENT);
+	mutex_enter(&sc->sc_discover_task_mtx);
+	card_detect = sdmmc_chip_card_detect(sc->sc_sct, sc->sc_sch);
+	card_present = ISSET(sc->sc_flags, SMF_CARD_PRESENT);
+	if (card_detect)
+		SET(sc->sc_flags, SMF_CARD_PRESENT);
+	else
+		CLR(sc->sc_flags, SMF_CARD_PRESENT);
+	mutex_exit(&sc->sc_discover_task_mtx);
+
+	if (card_detect) {
+		if (!card_present) {
 			sdmmc_card_attach(sc);
+			mutex_enter(&sc->sc_discover_task_mtx);
 			if (!ISSET(sc->sc_flags, SMF_CARD_ATTACHED))
 				CLR(sc->sc_flags, SMF_CARD_PRESENT);
+			mutex_exit(&sc->sc_discover_task_mtx);
 		}
 	} else {
-		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
-			CLR(sc->sc_flags, SMF_CARD_PRESENT);
+		if (card_present)
 			sdmmc_card_detach(sc, DETACH_FORCE);
-		}
 	}
 }
 
@@ -335,20 +344,15 @@ static void
 sdmmc_polling_card(void *arg)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)arg;
-	int card_detect;
+	int card_detect, card_present;
 
-	mutex_enter(&sc->sc_mtx);
+	mutex_enter(&sc->sc_discover_task_mtx);
 	card_detect = sdmmc_chip_card_detect(sc->sc_sct, sc->sc_sch);
-	if (card_detect) {
-		if (!ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
-			sdmmc_needs_discover(sc->sc_dev);
-		}
-	} else {
-		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
-			sdmmc_needs_discover(sc->sc_dev);
-		}
-	}
-	mutex_exit(&sc->sc_mtx);
+	card_present = ISSET(sc->sc_flags, SMF_CARD_PRESENT);
+	mutex_exit(&sc->sc_discover_task_mtx);
+
+	if (card_detect != card_present)
+		sdmmc_needs_discover(sc->sc_dev);
 
 	callout_schedule(&sc->sc_card_detect_ch, hz);
 }
