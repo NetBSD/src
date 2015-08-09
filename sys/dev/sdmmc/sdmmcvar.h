@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.18 2015/08/03 10:08:51 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.19 2015/08/09 13:18:46 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -306,6 +306,7 @@ int	sdmmc_set_bus_power(struct sdmmc_softc *, uint32_t, uint32_t);
 int	sdmmc_mmc_command(struct sdmmc_softc *, struct sdmmc_command *);
 int	sdmmc_app_command(struct sdmmc_softc *, struct sdmmc_function *,
 	    struct sdmmc_command *);
+void	sdmmc_stop_transmission(struct sdmmc_softc *);
 void	sdmmc_go_idle_state(struct sdmmc_softc *);
 int	sdmmc_select_card(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_set_relative_addr(struct sdmmc_softc *, struct sdmmc_function *);
