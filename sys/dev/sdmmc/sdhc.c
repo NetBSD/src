@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.82 2015/08/09 13:24:39 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.83 2015/08/09 13:39:18 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.82 2015/08/09 13:24:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.83 2015/08/09 13:39:18 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -189,6 +189,7 @@ static void	sdhc_card_intr_ack(sdmmc_chipset_handle_t);
 static void	sdhc_exec_command(sdmmc_chipset_handle_t,
 		    struct sdmmc_command *);
 static int	sdhc_signal_voltage(sdmmc_chipset_handle_t, int);
+static int	sdhc_execute_tuning1(struct sdhc_host *, int);
 static int	sdhc_execute_tuning(sdmmc_chipset_handle_t, int);
 static void	sdhc_tuning_timer(void *);
 static int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
@@ -1273,12 +1274,13 @@ sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
  * Sampling clock tuning procedure (UHS)
  */
 static int
-sdhc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
+sdhc_execute_tuning1(struct sdhc_host *hp, int timing)
 {
-	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	struct sdmmc_command cmd;
 	uint8_t hostctl;
 	int opcode, error, retry = 40;
+
+	KASSERT(mutex_owned(&hp->intr_lock));
 
 	hp->tuning_timing = timing;
 
@@ -1312,7 +1314,6 @@ sdhc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
 	/* start of tuning */
 	HWRITE2(hp, SDHC_HOST_CTL2, SDHC_EXECUTE_TUNING);
 
-	mutex_enter(&hp->intr_lock);
 	do {
 		memset(&cmd, 0, sizeof(cmd));
 		cmd.c_opcode = opcode;
@@ -1335,7 +1336,6 @@ sdhc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
 
 		delay(1000);
 	} while (HREAD2(hp, SDHC_HOST_CTL2) & SDHC_EXECUTE_TUNING && --retry);
-	mutex_exit(&hp->intr_lock);
 
 	/* disable buffer read ready interrupt */
 	HCLR2(hp, SDHC_NINTR_SIGNAL_EN, SDHC_BUFFER_READ_READY);
@@ -1365,6 +1365,18 @@ sdhc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
 	}
 
 	return 0;		/* tuning completed */
+}
+
+static int
+sdhc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
+{
+	struct sdhc_host *hp = (struct sdhc_host *)sch;
+	int error;
+
+	mutex_enter(&hp->intr_lock);
+	error = sdhc_execute_tuning1(hp, timing);
+	mutex_exit(&hp->intr_lock);
+	return error;
 }
 
 static void
@@ -1397,11 +1409,11 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	int error;
 
-	if (atomic_cas_uint(&hp->tuning_timer_pending, 1, 0) == 1) {
-		(void)sdhc_execute_tuning(hp, hp->tuning_timing);
-	}
-
 	mutex_enter(&hp->intr_lock);
+
+	if (atomic_cas_uint(&hp->tuning_timer_pending, 1, 0) == 1) {
+		(void)sdhc_execute_tuning1(hp, hp->tuning_timing);
+	}
 
 	if (cmd->c_data && ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		const uint16_t ready = SDHC_BUFFER_READ_READY | SDHC_BUFFER_WRITE_READY;
