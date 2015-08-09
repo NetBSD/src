@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.19 2015/08/03 10:09:08 jmcneill Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.20 2015/08/09 13:49:18 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.19 2015/08/03 10:09:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.20 2015/08/09 13:49:18 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -71,7 +71,9 @@ struct ld_sdmmc_softc {
 	int sc_hwunit;
 
 	struct sdmmc_function *sc_sf;
-	struct ld_sdmmc_task sc_task;
+#define LD_SDMMC_MAXQUEUECNT 4
+	struct ld_sdmmc_task sc_task[LD_SDMMC_MAXQUEUECNT];
+	int sc_nexttask;
 };
 
 static int ld_sdmmc_match(device_t, cfdata_t, void *);
@@ -115,6 +117,8 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	    sa->sf->cid.rev, sa->sf->cid.psn, sa->sf->cid.mdt);
 	aprint_naive("\n");
 
+	sc->sc_nexttask = 0;
+
 	sc->sc_hwunit = 0;	/* always 0? */
 	sc->sc_sf = sa->sf;
 
@@ -122,7 +126,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	ld->sc_secperunit = sc->sc_sf->csd.capacity;
 	ld->sc_secsize = SDMMC_SECTOR_SIZE;
 	ld->sc_maxxfer = MAXPHYS;
-	ld->sc_maxqueuecnt = 1;
+	ld->sc_maxqueuecnt = LD_SDMMC_MAXQUEUECNT;
 	ld->sc_dump = ld_sdmmc_dump;
 	ld->sc_start = ld_sdmmc_start;
 
@@ -175,7 +179,9 @@ static int
 ld_sdmmc_start(struct ld_softc *ld, struct buf *bp)
 {
 	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
-	struct ld_sdmmc_task *task = &sc->sc_task;
+	struct ld_sdmmc_task *task = &sc->sc_task[sc->sc_nexttask];
+
+	sc->sc_nexttask = (sc->sc_nexttask + 1) % LD_SDMMC_MAXQUEUECNT;
 
 	task->task_sc = sc;
 	task->task_bp = bp;
