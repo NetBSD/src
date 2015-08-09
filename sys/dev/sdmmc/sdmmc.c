@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.30 2015/08/09 13:14:11 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.31 2015/08/09 13:18:46 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.30 2015/08/09 13:14:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.31 2015/08/09 13:18:46 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -817,7 +817,32 @@ sdmmc_mmc_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 
 	DPRINTF(1,("sdmmc_mmc_command: error=%d\n", error));
 
+	if (error &&
+	   (cmd->c_opcode == MMC_READ_BLOCK_MULTIPLE ||
+	    cmd->c_opcode == MMC_WRITE_BLOCK_MULTIPLE)) {
+		sdmmc_stop_transmission(sc);
+	}
+
 	return error;
+}
+
+/*
+ * Send the "STOP TRANSMISSION" command
+ */
+void
+sdmmc_stop_transmission(struct sdmmc_softc *sc)
+{
+	struct sdmmc_command cmd;
+
+	DPRINTF(1,("sdmmc_stop_transmission\n"));
+
+	/* Don't lock */
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_opcode = MMC_STOP_TRANSMISSION;
+	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1B | SCF_RSP_SPI_R1B;
+
+	(void)sdmmc_mmc_command(sc, &cmd);
 }
 
 /*
