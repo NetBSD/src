@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.81 2015/08/06 09:30:55 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.82 2015/08/09 13:24:39 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.81 2015/08/06 09:30:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.82 2015/08/09 13:24:39 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1069,6 +1069,15 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 		} else if (freq > 400) {
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR12);
 		}
+	}
+
+	/*
+	 * Slow down Ricoh 5U823 controller that isn't reliable
+	 * at 100MHz bus clock.
+	 */
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_SLOW_SDR50)) {
+		if (freq == 100000)
+			--freq;
 	}
 
 	/*
