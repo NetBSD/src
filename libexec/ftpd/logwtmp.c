@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.25 2006/09/23 16:03:50 xtraeme Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.26 2015/08/09 12:17:30 shm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.25 2006/09/23 16:03:50 xtraeme Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.26 2015/08/09 12:17:30 shm Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,6 +124,7 @@ ftpd_logwtmpx(const char *line, const char *name, const char *host,
 	if (fdx < 0) 
 		return;
 	if (fstat(fdx, &buf) == 0) {
+		(void)memset(&ut, 0, sizeof(ut));
 		(void)strncpy(ut.ut_line, line, sizeof(ut.ut_line));
 		(void)strncpy(ut.ut_name, name, sizeof(ut.ut_name));
 		(void)strncpy(ut.ut_host, host, sizeof(ut.ut_host));
