@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.26 2015/08/03 10:27:32 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.27 2015/08/09 13:03:10 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.26 2015/08/03 10:27:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.27 2015/08/09 13:03:10 mlelstv Exp $");
 
 #include "bcmdmac.h"
 
@@ -309,7 +309,10 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 	sc->sc_state = EMMC_DMA_STATE_BUSY;
 	bcm_dmac_set_conblk_addr(sc->sc_dmac,
 	    sc->sc_dmamap->dm_segs[0].ds_addr);
-	bcm_dmac_transfer(sc->sc_dmac);
+	error = bcm_dmac_transfer(sc->sc_dmac);
+	if (error)
+		return error;
+
 	while (sc->sc_state == EMMC_DMA_STATE_BUSY) {
 		error = cv_timedwait(&sc->sc_cv, plock, hz * 10);
 		if (error == EWOULDBLOCK) {
