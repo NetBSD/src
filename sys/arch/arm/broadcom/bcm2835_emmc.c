@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.27 2015/08/09 13:03:10 mlelstv Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.28 2015/08/09 13:06:44 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.27 2015/08/09 13:03:10 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.28 2015/08/09 13:06:44 mlelstv Exp $");
 
 #include "bcmdmac.h"
 
@@ -82,7 +82,7 @@ static void bcmemmc_attach(device_t, device_t, void *);
 static void bcmemmc_attach_i(device_t);
 #if NBCMDMAC > 0
 static int bcmemmc_xfer_data_dma(struct sdhc_softc *, struct sdmmc_command *);
-static void bcmemmc_dma_done(void *);
+static void bcmemmc_dma_done(uint32_t, uint32_t, void *);
 #endif
 
 CFATTACH_DECL_NEW(bcmemmc, sizeof(struct bcmemmc_softc),
@@ -331,14 +331,19 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 }
 
 static void
-bcmemmc_dma_done(void *arg)
+bcmemmc_dma_done(uint32_t status, uint32_t error, void *arg)
 {
 	struct bcmemmc_softc * const sc = arg;
 	kmutex_t *plock = sdhc_host_lock(sc->sc_hosts[0]);
 
+	if (status != (DMAC_CS_INT|DMAC_CS_END))
+		device_printf(sc->sc.sc_dev, "status %#x error %#x\n",
+			status,error);
+
 	mutex_enter(plock);
 	KASSERT(sc->sc_state == EMMC_DMA_STATE_BUSY);
-	sc->sc_state = EMMC_DMA_STATE_IDLE;
+	if (status & DMAC_CS_END)
+		sc->sc_state = EMMC_DMA_STATE_IDLE;
 	cv_broadcast(&sc->sc_cv);
 	mutex_exit(plock);
 }
