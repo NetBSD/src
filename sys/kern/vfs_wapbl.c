@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.59 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.59.4.1 2015/08/09 10:15:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.59 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.59.4.1 2015/08/09 10:15:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -2602,6 +2602,32 @@ wapbl_replay_isopen1(struct wapbl_replay *wr)
 }
 #endif
 
+/*
+ * calculate the disk address for the i'th block in the wc_blockblist
+ * offset by j blocks of size blen.
+ *
+ * wc_daddr is always a kernel disk address in DEV_BSIZE units that
+ * was written to the journal.
+ *
+ * The kernel needs that address plus the offset in DEV_BSIZE units.
+ *
+ * Userland needs that address plus the offset in blen units.
+ *
+ */
+static daddr_t
+wapbl_block_daddr(struct wapbl_wc_blocklist *wc, int i, int j, int blen)
+{
+	daddr_t pbn;
+
+#ifdef _KERNEL
+	pbn = wc->wc_blocks[i].wc_daddr + btodb(j * blen);
+#else
+	pbn = dbtob(wc->wc_blocks[i].wc_daddr) / blen + j;
+#endif
+
+	return pbn;
+}
+
 static void
 wapbl_replay_process_blocks(struct wapbl_replay *wr, off_t *offp)
 {
@@ -2616,7 +2642,7 @@ wapbl_replay_process_blocks(struct wapbl_replay *wr, off_t *offp)
 		 */
 		n = wc->wc_blocks[i].wc_dlen >> wr->wr_fs_dev_bshift;
 		for (j = 0; j < n; j++) {
-			wapbl_blkhash_ins(wr, wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen),
+			wapbl_blkhash_ins(wr, wapbl_block_daddr(wc, i, j, fsblklen),
 			    *offp);
 			wapbl_circ_advance(wr, fsblklen, offp);
 		}
@@ -2637,7 +2663,7 @@ wapbl_replay_process_revocations(struct wapbl_replay *wr)
 		 */
 		n = wc->wc_blocks[i].wc_dlen >> wr->wr_fs_dev_bshift;
 		for (j = 0; j < n; j++)
-			wapbl_blkhash_rem(wr, wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen));
+			wapbl_blkhash_rem(wr, wapbl_block_daddr(wc, i, j, fsblklen));
 	}
 }
 
@@ -2773,7 +2799,7 @@ wapbl_replay_verify(struct wapbl_replay *wr, struct vnode *fsdevvp)
 					for (j = 0; j < n; j++) {
 						struct wapbl_blk *wb =
 						   wapbl_blkhash_get(wr,
-						   wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen));
+						   wapbl_block_daddr(wc, i, j, fsblklen));
 						if (wb && (wb->wb_off == off)) {
 							foundcnt++;
 							error =
@@ -2817,7 +2843,7 @@ wapbl_replay_verify(struct wapbl_replay *wr, struct vnode *fsdevvp)
 						for (j = 0; j < n; j++) {
 							struct wapbl_blk *wb =
 							   wapbl_blkhash_get(wr,
-							   wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen));
+							   wapbl_block_daddr(wc, i, j, fsblklen));
 							if (wb &&
 							  (wb->wb_off == off)) {
 								wapbl_blkhash_rem(wr, wb->wb_blk);
