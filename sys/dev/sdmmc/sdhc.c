@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.83 2015/08/09 13:39:18 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.84 2015/08/09 13:46:50 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.83 2015/08/09 13:39:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.84 2015/08/09 13:46:50 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1117,6 +1117,7 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 		}
 		if (timo == 0) {
 			error = ETIMEDOUT;
+			DPRINTF(1,("%s: timeout\n", __func__));
 			goto out;
 		}
 	}
@@ -1451,6 +1452,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	 * is marked done for any other reason.
 	 */
 	if (!sdhc_wait_intr(hp, SDHC_COMMAND_COMPLETE, SDHC_COMMAND_TIMEOUT)) {
+		DPRINTF(1,("%s: timeout for command\n", __func__));
 		cmd->c_error = ETIMEDOUT;
 		goto out;
 	}
@@ -1487,6 +1489,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		sdhc_transfer_data(hp, cmd);
 	else if (ISSET(cmd->c_flags, SCF_RSP_BSY)) {
 		if (!sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE, hz * 10)) {
+			DPRINTF(1,(hp->sc->sc_dev,"sdhc_exec_command: RSP_BSY\n"));
 			cmd->c_error = ETIMEDOUT;
 			goto out;
 		}
@@ -1515,6 +1518,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	uint16_t blkcount = 0;
 	uint16_t mode;
 	uint16_t command;
+	uint32_t pmask;
 	int error;
 
 	KASSERT(mutex_owned(&hp->intr_lock));
@@ -1581,10 +1585,14 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	else
 		command |= SDHC_RESP_LEN_48;
 
-	/* Wait until command and data inhibit bits are clear. (1.5) */
-	error = sdhc_wait_state(hp, SDHC_CMD_INHIBIT_MASK, 0);
+	/* Wait until command and optionally data inhibit bits are clear. (1.5) */
+	pmask = SDHC_CMD_INHIBIT_CMD;
+	if (cmd->c_flags & SCF_CMD_ADTC)
+		pmask |= SDHC_CMD_INHIBIT_DAT;
+	error = sdhc_wait_state(hp, pmask, 0);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "command or data phase inhibited\n");
+		(void) sdhc_soft_reset(hp, SDHC_RESET_DAT|SDHC_RESET_CMD);
+		device_printf(sc->sc_dev, "command or data phase inhibited\n");
 		return error;
 	}
 
@@ -1699,6 +1707,7 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 			error = hp->sc->sc_vendor_transfer_data_dma(sc, cmd);
 			if (error == 0 && !sdhc_wait_intr(hp,
 			    SDHC_TRANSFER_COMPLETE, SDHC_DMA_TIMEOUT)) {
+				DPRINTF(1,("%s: timeout\n", __func__));
 				error = ETIMEDOUT;
 			}
 		} else {
@@ -1740,6 +1749,7 @@ sdhc_transfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 			break;
 		}
 		if (!status) {
+			DPRINTF(1,("%s: timeout\n", __func__));
 			error = ETIMEDOUT;
 			break;
 		}
@@ -1820,6 +1830,7 @@ sdhc_transfer_data_pio(struct sdhc_host *hp, struct sdmmc_command *cmd)
 				HSET2(hp, SDHC_NINTR_SIGNAL_EN, imask);
 			}
 			if (!sdhc_wait_intr(hp, imask, SDHC_BUFFER_TIMEOUT)) {
+				DPRINTF(1,("%s: timeout\n", __func__));
 				error = ETIMEDOUT;
 				break;
 			}
@@ -1839,8 +1850,10 @@ sdhc_transfer_data_pio(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	}
 
 	if (error == 0 && !sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE,
-	    SDHC_TRANSFER_TIMEOUT))
+	    SDHC_TRANSFER_TIMEOUT)) {
+		DPRINTF(1,("%s: timeout for transfer\n", __func__));
 		error = ETIMEDOUT;
+	}
 
 	return error;
 }
@@ -2022,6 +2035,7 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 			sdmmc_delay(1);
 		}
 		if (timo == 0)
+			DPRINTF(1,("%s: timeout for reset on\n", __func__));
 			return ETIMEDOUT;
 	}
 
@@ -2050,33 +2064,73 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 static int
 sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo)
 {
-	int status;
+	int status, error, nointr;
 
 	KASSERT(mutex_owned(&hp->intr_lock));
 
 	mask |= SDHC_ERROR_INTERRUPT;
 
+	nointr = 0;
 	status = hp->intr_status & mask;
 	while (status == 0) {
 		if (cv_timedwait(&hp->intr_cv, &hp->intr_lock, timo)
 		    == EWOULDBLOCK) {
-			status |= SDHC_ERROR_INTERRUPT;
+			nointr = 1;
 			break;
 		}
 		status = hp->intr_status & mask;
 	}
-	hp->intr_status &= ~status;
+	error = hp->intr_error_status;
 
 	DPRINTF(2,("%s: intr status %#x error %#x\n", HDEVNAME(hp), status,
-	    hp->intr_error_status));
+	    error));
 
-	/* Command timeout has higher priority than command complete. */
-	if (ISSET(status, SDHC_ERROR_INTERRUPT) || hp->intr_error_status) {
+	hp->intr_status &= ~status;
+	hp->intr_error_status &= ~error;
+
+	if (ISSET(status, SDHC_ERROR_INTERRUPT)) {
+		if (ISSET(error, SDHC_DMA_ERROR))
+			device_printf(hp->sc->sc_dev,"dma error\n");
+		if (ISSET(error, SDHC_ADMA_ERROR))
+			device_printf(hp->sc->sc_dev,"adma error\n");
+		if (ISSET(error, SDHC_AUTO_CMD12_ERROR))
+			device_printf(hp->sc->sc_dev,"auto_cmd12 error\n");
+		if (ISSET(error, SDHC_CURRENT_LIMIT_ERROR))
+			device_printf(hp->sc->sc_dev,"current limit error\n");
+		if (ISSET(error, SDHC_DATA_END_BIT_ERROR))
+			device_printf(hp->sc->sc_dev,"data end bit error\n");
+		if (ISSET(error, SDHC_DATA_CRC_ERROR))
+			device_printf(hp->sc->sc_dev,"data crc error\n");
+		if (ISSET(error, SDHC_DATA_TIMEOUT_ERROR))
+			device_printf(hp->sc->sc_dev,"data timeout error\n");
+		if (ISSET(error, SDHC_CMD_INDEX_ERROR))
+			device_printf(hp->sc->sc_dev,"cmd index error\n");
+		if (ISSET(error, SDHC_CMD_END_BIT_ERROR))
+			device_printf(hp->sc->sc_dev,"cmd end bit error\n");
+		if (ISSET(error, SDHC_CMD_CRC_ERROR))
+			device_printf(hp->sc->sc_dev,"cmd crc error\n");
+		if (ISSET(error, SDHC_CMD_TIMEOUT_ERROR))
+			device_printf(hp->sc->sc_dev,"cmd timeout error\n");
+		if ((error & ~SDHC_EINTR_STATUS_MASK) != 0)
+			device_printf(hp->sc->sc_dev,"vendor error %#x\n",
+				(error & ~SDHC_EINTR_STATUS_MASK));
+		if (error == 0)
+			device_printf(hp->sc->sc_dev,"no error\n");
+
+		/* Command timeout has higher priority than command complete. */
+		if (ISSET(error, SDHC_CMD_TIMEOUT_ERROR))
+			CLR(status, SDHC_COMMAND_COMPLETE);
+
+		/* Transfer complete has higher priority than data timeout. */
+		if (ISSET(status, SDHC_TRANSFER_COMPLETE))
+			CLR(error, SDHC_DATA_TIMEOUT_ERROR);
+	}
+
+	if (nointr ||
+	    (ISSET(status, SDHC_ERROR_INTERRUPT) && error)) {
+		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED))
+			(void)sdhc_soft_reset(hp, SDHC_RESET_CMD|SDHC_RESET_DAT);
 		hp->intr_error_status = 0;
-		hp->intr_status &= ~SDHC_ERROR_INTERRUPT;
-		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
-		    (void)sdhc_soft_reset(hp, SDHC_RESET_DAT|SDHC_RESET_CMD);
-		}
 		status = 0;
 	}
 
@@ -2135,20 +2189,11 @@ sdhc_intr(void *arg)
 		/* Claim this interrupt. */
 		done = 1;
 
-		if (ISSET(error, SDHC_ADMA_ERROR)) {
+		if (ISSET(status, SDHC_ERROR_INTERRUPT) &&
+		    ISSET(error, SDHC_ADMA_ERROR)) {
 			uint8_t adma_err = HREAD1(hp, SDHC_ADMA_ERROR_STATUS);
 			printf("%s: ADMA error, status %02x\n", HDEVNAME(hp),
 			    adma_err);
-		}
-
-		/*
-		 * Service error interrupts.
-		 */
-		if (ISSET(error, SDHC_CMD_TIMEOUT_ERROR|
-		    SDHC_DATA_TIMEOUT_ERROR)) {
-			hp->intr_error_status |= error;
-			hp->intr_status |= status;
-			cv_broadcast(&hp->intr_cv);
 		}
 
 		/*
@@ -2178,8 +2223,10 @@ sdhc_intr(void *arg)
 		 * related interrupt(s).
 		 */
 		if (ISSET(status, SDHC_COMMAND_COMPLETE|
+		    SDHC_CMD_TIMEOUT_ERROR|SDHC_DATA_TIMEOUT_ERROR|
 		    SDHC_BUFFER_READ_READY|SDHC_BUFFER_WRITE_READY|
 		    SDHC_TRANSFER_COMPLETE|SDHC_DMA_INTERRUPT)) {
+			hp->intr_error_status |= error;
 			hp->intr_status |= status;
 			if (ISSET(sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 				HCLR4(hp, SDHC_NINTR_SIGNAL_EN,
