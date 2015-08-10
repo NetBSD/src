@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.276 2015/08/10 02:44:37 mrg Exp $
+# $NetBSD: shl.mi,v 1.277 2015/08/10 03:21:44 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7,7 +7,7 @@
 ./usr/lib/crtendS.o				comp-c-lib		compatfile
 ./usr/lib/libamu_pic.a				comp-obsolete		obsolete
 ./usr/lib/libarchive_pic.a			comp-c-piclib		compatfile,picinstall
-./usr/lib/libasan_pic.a				comp-c-piclib		compatfile,picinstall,gcc=48
+./usr/lib/libasan_pic.a				comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/libasn1_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libatf-c++_pic.a			comp-atf-piclib		compatfile,picinstall,atf
 ./usr/lib/libatf-c_pic.a			comp-atf-piclib		compatfile,picinstall,atf
@@ -55,7 +55,7 @@
 ./usr/lib/libgmp.so.10.2			comp-c-shlib		obsolete
 ./usr/lib/libgmp_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib		compatfile,picinstall
-./usr/lib/libgomp_pic.a				comp-c-piclib		compatfile,picinstall,gcc=48
+./usr/lib/libgomp_pic.a				comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libhdb_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libheimbase_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
@@ -99,14 +99,14 @@
 ./usr/lib/libmpfr.so.4				comp-c-shlib		obsolete
 ./usr/lib/libmpfr.so.4.1			comp-c-shlib		obsolete
 ./usr/lib/libmpfr_pic.a				comp-c-piclib		obsolete
-./usr/lib/libmudflap.so				comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflap.so.0			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflap.so.0.0			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflap_pic.a			comp-c-piclib		compatfile,picinstall,gcc=48
-./usr/lib/libmudflapth.so			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflapth.so.0			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflapth.so.0.0			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflapth_pic.a			comp-c-piclib		compatfile,picinstall,gcc=48
+./usr/lib/libmudflap.so				comp-c-shlib		compatfile,gcc
+./usr/lib/libmudflap.so.0			comp-c-shlib		compatfile,gcc
+./usr/lib/libmudflap.so.0.0			comp-c-shlib		compatfile,gcc
+./usr/lib/libmudflap_pic.a			comp-c-piclib		compatfile,picinstall,gcc
+./usr/lib/libmudflapth.so			comp-c-shlib		compatfile,gcc
+./usr/lib/libmudflapth.so.0			comp-c-shlib		compatfile,gcc
+./usr/lib/libmudflapth.so.0.0			comp-c-shlib		compatfile,gcc
+./usr/lib/libmudflapth_pic.a			comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		compatfile,picinstall,crypto
 ./usr/lib/libnetpgpverify_pic.a			comp-c-piclib		compatfile,picinstall,crypto
 ./usr/lib/libnpf_pic.a				comp-npf-piclib		compatfile,picinstall,npf
@@ -254,6 +254,6 @@
 ./usr/lib/libz_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libzfs_pic.a				comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libzpool_pic.a			comp-zfs-piclib		compatfile,zfs,picinstall
-./usr/libexec/liblto_plugin.so			comp-c-bin              gcc=48
-./usr/libexec/liblto_plugin.so.0		comp-c-bin              gcc=48
-./usr/libexec/liblto_plugin.so.0.0		comp-c-bin              gcc=48
+./usr/libexec/liblto_plugin.so			comp-c-bin              gcc
+./usr/libexec/liblto_plugin.so.0		comp-c-bin              gcc
+./usr/libexec/liblto_plugin.so.0.0		comp-c-bin              gcc
