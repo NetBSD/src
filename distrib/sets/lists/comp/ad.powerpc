@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.79 2015/06/23 01:03:35 matt Exp $
+# $NetBSD: ad.powerpc,v 1.80 2015/08/10 02:44:37 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -9,18 +9,16 @@
 ./usr/include/g++/bits/powerpc/c++config.h	comp-c-include		compat,gcc=48
 ./usr/include/g++/bits/powerpc64		comp-c-include		compat
 ./usr/include/g++/bits/powerpc64/c++config.h	comp-c-include		compat,gcc=48
-./usr/include/gcc-4.1/altivec.h			comp-c-include		gcccmds,gcc=4
-./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=45,obsolete
-./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=48,obsolete
-./usr/include/gcc-4.5/altivec.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/paired.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/ppc-asm.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/ppu_intrinsics.h		comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/si2vmx.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/spe.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/spu2vmx.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/vec_types.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.1/altivec.h			comp-obsolete		obsolete
+./usr/include/gcc-4.5/altivec.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/paired.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/ppc-asm.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/ppu_intrinsics.h		comp-c-include		obsolete
+./usr/include/gcc-4.5/si2vmx.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/spe.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/spu2vmx.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/vec_types.h		comp-c-include		obsolete
 ./usr/include/gcc-4.8/altivec.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/htmintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/htmxlintrin.h		comp-c-include		gcccmds,gcc=48
