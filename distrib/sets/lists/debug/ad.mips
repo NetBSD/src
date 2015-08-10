@@ -1,10 +1,7 @@
-# $NetBSD: ad.mips,v 1.59 2015/06/22 06:02:02 matt Exp $
--./usr/libdata/debug/usr/lib/64/libgomp.so.1.1.debug
--./usr/lib/64/libgomp_g.a
+# $NetBSD: ad.mips,v 1.60 2015/08/10 04:13:19 mrg Exp $
 ./usr/libdata/debug/libexec/ld.elf_so-64.debug		comp-sys-debug		debug,compat,arch64,dynamicroot
 ./usr/libdata/debug/libexec/ld.elf_so-o32.debug		comp-sys-debug		debug,compat,arch64,dynamicroot
 ./usr/libdata/debug/usr/bin/elf2aout.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/elf2ecoff.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so-64.debug	comp-sys-debug		debug,compat,arch64
 ./usr/libdata/debug/usr/libexec/ld.elf_so-o32.debug	comp-sys-debug		debug,compat,arch64
-

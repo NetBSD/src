@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.57 2015/08/10 03:21:44 mrg Exp $
+# $NetBSD: ad.mips,v 1.58 2015/08/10 04:13:18 mrg Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/g++/bits/mips32			comp-c-include		arch64
@@ -69,12 +69,6 @@
 ./usr/include/mips/varargs.h			comp-obsolete		obsolete
 ./usr/include/mips/vmparam.h			comp-c-include
 ./usr/include/mips/wchar_limits.h		comp-c-include
--./usr/lib/64/libgomp.a
--./usr/lib/64/libgomp.so
--./usr/lib/64/libgomp.so.1
--./usr/lib/64/libgomp.so.1.1
--./usr/lib/64/libgomp_p.a
--./usr/lib/64/libgomp_pic.a
 ./usr/libdata/ldscripts/elf32btsmip.x		comp-util-bin		arch64
 ./usr/libdata/ldscripts/elf32btsmip.xbn		comp-util-bin		arch64
 ./usr/libdata/ldscripts/elf32btsmip.xc		comp-util-bin		arch64
