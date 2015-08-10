@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.745 2015/08/10 02:44:36 mrg Exp $
+# $NetBSD: shl.mi,v 1.746 2015/08/10 03:21:44 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -172,9 +172,9 @@
 ./usr/lib/libarchive.so				base-sys-shlib		compatfile
 ./usr/lib/libarchive.so.3			base-sys-shlib		compatfile
 ./usr/lib/libarchive.so.3.1			base-sys-shlib		compatfile
-./usr/lib/libasan.so				base-sys-shlib		compatfile,gcc=48
-./usr/lib/libasan.so.0				base-sys-shlib		compatfile,gcc=48
-./usr/lib/libasan.so.0.0			base-sys-shlib		compatfile,gcc=48
+./usr/lib/libasan.so				base-sys-shlib		compatfile,gcc
+./usr/lib/libasan.so.0				base-sys-shlib		compatfile,gcc
+./usr/lib/libasan.so.0.0			base-sys-shlib		compatfile,gcc
 ./usr/lib/libasn1.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.9				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.9.0			base-krb5-shlib		compatfile,kerberos
@@ -287,9 +287,9 @@
 ./usr/lib/libgnumalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libgnumalloc.so.1			base-sys-shlib		compatfile
 ./usr/lib/libgnumalloc.so.1.0			base-sys-shlib		compatfile
-./usr/lib/libgomp.so				base-sys-shlib		compatfile,gcc=48
-./usr/lib/libgomp.so.1				base-sys-shlib		compatfile,gcc=48
-./usr/lib/libgomp.so.1.1			base-sys-shlib		compatfile,gcc=48
+./usr/lib/libgomp.so				base-sys-shlib		compatfile,gcc
+./usr/lib/libgomp.so.1				base-sys-shlib		compatfile,gcc
+./usr/lib/libgomp.so.1.1			base-sys-shlib		compatfile,gcc
 ./usr/lib/libgssapi.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libgssapi.so.10			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libgssapi.so.10.0			base-krb5-shlib		compatfile,kerberos
@@ -402,8 +402,8 @@
 ./usr/lib/libnvpair.so.0			base-zfs-shlib		compatfile,zfs
 ./usr/lib/libnvpair.so.0.0			base-zfs-shlib		compatfile,zfs
 ./usr/lib/libobjc.so				base-sys-shlib		gcc,compatfile
-./usr/lib/libobjc.so.4				base-sys-shlib		gcc=48,compatfile
-./usr/lib/libobjc.so.4.0			base-sys-shlib		gcc=48,compatfile
+./usr/lib/libobjc.so.4				base-sys-shlib		gcc,compatfile
+./usr/lib/libobjc.so.4.0			base-sys-shlib		gcc,compatfile
 ./usr/lib/libopenpgpsdk.so			base-obsolete		obsolete
 ./usr/lib/libopenpgpsdk.so.0			base-obsolete		obsolete
 ./usr/lib/libopenpgpsdk.so.0.9			base-obsolete		obsolete
@@ -752,8 +752,8 @@
 ./usr/lib/libssl.so.10				base-crypto-shlib	compatfile,crypto
 ./usr/lib/libssl.so.10.5			base-crypto-shlib	compatfile,crypto
 ./usr/lib/libstdc++.so				base-sys-shlib		compatfile,gcc,cxx,libstdcxx
-./usr/lib/libstdc++.so.7			base-sys-shlib		compatfile,gcc=48,cxx,libstdcxx
-./usr/lib/libstdc++.so.7.3			base-sys-shlib		compatfile,gcc=48,cxx,libstdcxx
+./usr/lib/libstdc++.so.7			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
+./usr/lib/libstdc++.so.7.3			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib		compatfile
 ./usr/lib/libtermcap.so.0			base-sys-shlib		compatfile
