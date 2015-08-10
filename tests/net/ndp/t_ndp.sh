@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.3 2015/08/07 00:50:12 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.4 2015/08/10 09:32:01 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@ atf_test_case cache_expiration cleanup
 atf_test_case command cleanup
 atf_test_case cache_overwriting cleanup
 
-cache_expiration()
+cache_expiration_head()
 {
 	atf_set "descr" "Tests for NDP cache expiration"
 	atf_set "require.progs" "rump_server"
@@ -253,7 +253,7 @@ dump()
 	$DEBUG && gdb -ex bt /usr/sbin/rump.ndp rump.ndp.core
 }
 
-cache_expiration()
+cache_expiration_cleanup()
 {
 	$DEBUG && dump
 	cleanup
