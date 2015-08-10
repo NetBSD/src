@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.275 2015/06/22 06:02:02 matt Exp $
+# $NetBSD: shl.mi,v 1.276 2015/08/10 02:44:37 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -45,20 +45,16 @@
 ./usr/lib/libfetch_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libform_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libg++_pic.a				comp-obsolete		obsolete
-./usr/lib/libg2c_pic.a				comp-fortran-piclib	compatfile,picinstall,gcc=3
 ./usr/lib/libg2c_pic.a				comp-obsolete		obsolete
 ./usr/lib/libgcc_eh.a				comp-c-lib		compatfile,gcccmds
 ./usr/lib/libgcc_eh_p.a				comp-c-proflib		obsolete
 ./usr/lib/libgcc_eh_pic.a			comp-c-piclib		obsolete
-./usr/lib/libgcc_pic.a				comp-c-piclib		compatfile,picinstall,gcc=4
-./usr/lib/libgcc_pic.a				comp-c-lib		obsolete,gcc=45
-./usr/lib/libgcc_pic.a				comp-c-lib		obsolete,gcc=48
+./usr/lib/libgcc_pic.a				comp-c-lib		obsolete
 ./usr/lib/libgmp.so				comp-c-shlib		obsolete
 ./usr/lib/libgmp.so.10				comp-c-shlib		obsolete
 ./usr/lib/libgmp.so.10.2			comp-c-shlib		obsolete
 ./usr/lib/libgmp_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib		compatfile,picinstall
-./usr/lib/libgomp_pic.a				comp-c-piclib		compatfile,picinstall,gcc=45
 ./usr/lib/libgomp_pic.a				comp-c-piclib		compatfile,picinstall,gcc=48
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libhdb_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
@@ -103,21 +99,13 @@
 ./usr/lib/libmpfr.so.4				comp-c-shlib		obsolete
 ./usr/lib/libmpfr.so.4.1			comp-c-shlib		obsolete
 ./usr/lib/libmpfr_pic.a				comp-c-piclib		obsolete
-./usr/lib/libmudflap.so				comp-c-shlib		compatfile,gcc=45
 ./usr/lib/libmudflap.so				comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflap.so.0			comp-c-shlib		compatfile,gcc=45
 ./usr/lib/libmudflap.so.0			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflap.so.0.0			comp-c-shlib		compatfile,gcc=45
 ./usr/lib/libmudflap.so.0.0			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflap_pic.a			comp-c-piclib		compatfile,picinstall,gcc=45
 ./usr/lib/libmudflap_pic.a			comp-c-piclib		compatfile,picinstall,gcc=48
-./usr/lib/libmudflapth.so			comp-c-shlib		compatfile,gcc=45
 ./usr/lib/libmudflapth.so			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflapth.so.0			comp-c-shlib		compatfile,gcc=45
 ./usr/lib/libmudflapth.so.0			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflapth.so.0.0			comp-c-shlib		compatfile,gcc=45
 ./usr/lib/libmudflapth.so.0.0			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflapth_pic.a			comp-c-piclib		compatfile,picinstall,gcc=45
 ./usr/lib/libmudflapth_pic.a			comp-c-piclib		compatfile,picinstall,gcc=48
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		compatfile,picinstall,crypto
 ./usr/lib/libnetpgpverify_pic.a			comp-c-piclib		compatfile,picinstall,crypto

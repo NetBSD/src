@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.639 2015/08/06 08:23:14 ozaki-r Exp $
+# $NetBSD: mi,v 1.640 2015/08/10 02:44:37 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2897,7 +2897,6 @@
 ./usr/tests/lib/libobjc				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libobjc/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libobjc/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
-./usr/tests/lib/libobjc/t_threads		tests-lib-tests		compattestfile,atf,gcc=45
 ./usr/tests/lib/libobjc/t_threads		tests-lib-tests		compattestfile,atf,gcc=48
 ./usr/tests/lib/libposix			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libposix/Atffile		tests-lib-tests		compattestfile,atf

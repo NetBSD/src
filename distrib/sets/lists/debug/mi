@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.124 2015/08/06 14:45:54 ozaki-r Exp $
+# $NetBSD: mi,v 1.125 2015/08/10 02:44:37 mrg Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -70,7 +70,6 @@
 ./usr/lib/libgcc_s_g.a				comp-c-debuglib		debuglib,compatfile,gcccmds
 ./usr/lib/libgcov_g.a				comp-c-debuglib		debuglib,compatfile,gcccmds
 ./usr/lib/libgnumalloc_g.a			comp-c-debuglib		debuglib,compatfile
-./usr/lib/libgomp_g.a				comp-c-debuglib		debuglib,compatfile,gcc=45
 ./usr/lib/libgomp_g.a				comp-c-debuglib		debuglib,compatfile,gcc=48
 ./usr/lib/libgssapi_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libhdb_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
@@ -104,9 +103,7 @@
 ./usr/lib/libmagic_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libmenu_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libmj_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libmudflap_g.a			comp-c-debuglib		debuglib,compatfile,gcc=45
 ./usr/lib/libmudflap_g.a			comp-c-debuglib		debuglib,compatfile,gcc=48
-./usr/lib/libmudflapth_g.a			comp-c-debuglib		debuglib,compatfile,gcc=45
 ./usr/lib/libmudflapth_g.a			comp-c-debuglib		debuglib,compatfile,gcc=48
 ./usr/lib/libnetpgp_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnetpgpverify_g.a			comp-c-debuglib		debuglib,compatfile
@@ -504,7 +501,7 @@
 ./usr/libdata/debug/usr/bin/eqn.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/error.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/expand.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/f77.debug		comp-fortran-debug	gcc=3,gcccmds,debug
+./usr/libdata/debug/usr/bin/f77.debug		comp-fortran-debug	obsolete
 ./usr/libdata/debug/usr/bin/fgen.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/file.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fincore.debug	comp-util-debug		debug
@@ -513,14 +510,14 @@
 ./usr/libdata/debug/usr/bin/flock.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fmt.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fold.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/fort77.debug	comp-fortran-debug	gcc=3,gcccmds,debug
+./usr/libdata/debug/usr/bin/fort77.debug	comp-fortran-debug	obsolete
 ./usr/libdata/debug/usr/bin/fpr.debug		comp-fortran-debug	debug
 ./usr/libdata/debug/usr/bin/from.debug		comp-mail-debug		debug
 ./usr/libdata/debug/usr/bin/fsplit.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fstat.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ftp.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/g++.debug		comp-cxx-debug		gcccmds,debug
-./usr/libdata/debug/usr/bin/g77.debug		comp-fortran-debug	gcc=3,gcccmds,debug
+./usr/libdata/debug/usr/bin/g77.debug		comp-fortran-debug	obsolete
 ./usr/libdata/debug/usr/bin/gcc.debug		comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcore.debug		comp-debug-debug	debug
 ./usr/libdata/debug/usr/bin/gcov.debug		comp-debug-debug	gcccmds,debug
@@ -692,8 +689,7 @@
 ./usr/libdata/debug/usr/bin/printenv.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/printf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/progress.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/protoize.debug	comp-c-debug		gcc=4,gcccmds,debug
-./usr/libdata/debug/usr/bin/protoize.debug      comp-obsolete		!gcc=4,obsolete
+./usr/libdata/debug/usr/bin/protoize.debug      comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/pwait.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pwhash.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/qsafe.debug		comp-util-debug		crypto,debug
@@ -796,8 +792,7 @@
 ./usr/libdata/debug/usr/bin/unifdef.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/uniq.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/units.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/unprotoize.debug	comp-c-debug		gcc=4,gcccmds,debug
-./usr/libdata/debug/usr/bin/unprotoize.debug    comp-obsolete		!gcc=4,obsolete
+./usr/libdata/debug/usr/bin/unprotoize.debug    comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/unvis.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/unzip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/usbhidaction.debug	comp-util-debug		debug
@@ -909,8 +904,7 @@
 ./usr/libdata/debug/usr/libexec/cpp.debug	comp-obsolete		pcc,obsolete
 ./usr/libdata/debug/usr/libexec/cxxcom.debug	comp-cxx-debug		pcc,debug
 ./usr/libdata/debug/usr/libexec/digest-service.debug	comp-krb5-debug		kerberos,debug
-./usr/libdata/debug/usr/libexec/f771.debug	comp-fortran-debug	gcc=3,gcccmds,debug
-./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		gcc=4,obsolete
+./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/ftp-proxy.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/ftpd.debug	comp-netutil-debug	debug
@@ -2095,7 +2089,6 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_sqrt.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_tan.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_tanh.debug			tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libobjc/t_threads.debug		tests-lib-debug		debug,atf,gcc=45,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libobjc/t_threads.debug		tests-lib-debug		debug,atf,gcc=48,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd/t_rename.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1/t_rename.debug	tests-lib-debug		debug,atf,compattestfile

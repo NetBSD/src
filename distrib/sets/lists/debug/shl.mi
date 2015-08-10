@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.105 2015/07/26 15:15:31 kamil Exp $
+# $NetBSD: shl.mi,v 1.106 2015/08/10 02:44:37 mrg Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.197.debug			comp-sys-debug	debug,dynamicroot
@@ -91,11 +91,10 @@
 ./usr/libdata/debug/usr/lib/libexpat.so.2.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libfetch.so.3.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libform.so.6.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libg2c.so.2.0.debug			comp-sys-debug	debug,compatfile,gcc=3
+./usr/libdata/debug/usr/lib/libg2c.so.2.0.debug			comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug		comp-sys-debug	debug,compatfile,gcc
-./usr/libdata/debug/usr/lib/libgmp.so.10.2.debug		comp-c-shlib	debug,compatfile,obsolete
+./usr/libdata/debug/usr/lib/libgmp.so.10.2.debug		comp-c-shlib	obsolete
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libgomp.so.1.0.debug		comp-sys-debug	debug,compatfile,gcc=45
 ./usr/libdata/debug/usr/lib/libgomp.so.1.1.debug		comp-sys-debug	debug,compatfile,gcc=48
 ./usr/libdata/debug/usr/lib/libgssapi.so.10.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libhdb.so.14.0.debug		comp-krb5-debug	debug,compatfile,kerberos
@@ -135,16 +134,12 @@
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug			comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmpc.so.2.0.debug			comp-c-shlib	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libmpfr.so.4.1.debug		comp-c-shlib	debug,compatfile,obsolete
-./usr/libdata/debug/usr/lib/libmudflap.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=45
 ./usr/libdata/debug/usr/lib/libmudflap.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=48
-./usr/libdata/debug/usr/lib/libmudflapth.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=45
 ./usr/libdata/debug/usr/lib/libmudflapth.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=48
 ./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug		comp-crypto-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libnetpgpverify.so.4.0.debug	comp-crypto-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libnpf.so.0.0.debug			comp-npf-debug	debug,compatfile,npf
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
-./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug		comp-sys-debug	debug,compatfile,gcc=4
-./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug		comp-sys-debug	debug,compatfile,gcc=45
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug		comp-sys-debug	debug,compatfile,gcc=48
 ./usr/libdata/debug/usr/lib/libopcodes.so.6.0.debug		comp-c-debug	debug,compatfile,binutils
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.1.debug		comp-sys-debug	debug,compatfile
@@ -257,9 +252,6 @@
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssh.so.25.0.debug		comp-secsh-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libssl.so.10.5.debug		comp-crypto-debug	debug,compatfile,crypto
-./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug		comp-sys-debug	debug,compatfile,gcc=3,cxx,libstdcxx
-./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug		comp-sys-debug	debug,compatfile,gcc=4,cxx,libstdcxx
-./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug		comp-sys-debug	debug,compatfile,gcc=45,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.3.debug		comp-sys-debug	debug,compatfile,gcc=48,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug		comp-tpm-debug	debug,compatfile,tpm
