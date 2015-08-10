@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.1 2015/08/03 09:54:20 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.2 2015/08/10 09:31:13 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -217,7 +217,7 @@ dad_basic_cleanup()
 dad_duplicated_cleanup()
 {
 	$DEBUG && dump
-	env RUMP_SERVER=$SOCKLOCAL rump.halt
+	cleanup
 }
 
 atf_init_test_cases()
