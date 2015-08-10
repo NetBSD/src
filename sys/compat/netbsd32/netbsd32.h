@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.107 2015/06/22 10:35:00 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.108 2015/08/10 04:48:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -155,9 +155,6 @@ typedef netbsd32_pointer_t netbsd32_lwpidp;
 typedef netbsd32_pointer_t netbsd32_ucontextp;
 typedef netbsd32_pointer_t netbsd32_caddr_t;
 typedef netbsd32_pointer_t netbsd32_lwpctlp;
-typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actionsp;
-typedef netbsd32_pointer_t netbsd32_posix_spawnattrp;
-typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actions_entryp;
 typedef netbsd32_pointer_t netbsd32_pid_tp;
 typedef netbsd32_pointer_t netbsd32_psetidp_t;
 
@@ -172,6 +169,11 @@ typedef netbsd32_pointer_t netbsd32_semidp_t;
 typedef netbsd32_uint64 netbsd32_dev_t;
 typedef netbsd32_int64 netbsd32_off_t;
 typedef netbsd32_uint64 netbsd32_ino_t;
+
+/* from <sys/spawn.h> */
+typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actionsp;
+typedef netbsd32_pointer_t netbsd32_posix_spawnattrp;
+typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actions_entryp;
 
 /* from <sys/uio.h> */
 typedef netbsd32_pointer_t netbsd32_iovecp_t;
