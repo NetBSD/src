@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.10 2015/07/08 01:06:40 matt Exp $
+# $NetBSD: ad.aarch64,v 1.11 2015/08/10 03:21:44 mrg Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -116,10 +116,10 @@
 ./usr/include/evbarm64				comp-c-include
 ./usr/include/evbarm64/disklabel.h		comp-c-include
 ./usr/include/evbarm64/intr.h			comp-c-include
-./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		gcccmds,gcc=48,eabi
+./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		gcccmds,gcc,eabi
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/eabi/libarm.a				comp-c-lib		compat
 ./usr/lib/eabi/libarm.so			base-sys-shlib		compat,pic

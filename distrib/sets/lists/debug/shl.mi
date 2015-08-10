@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.106 2015/08/10 02:44:37 mrg Exp $
+# $NetBSD: shl.mi,v 1.107 2015/08/10 03:21:44 mrg Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.197.debug			comp-sys-debug	debug,dynamicroot
@@ -53,7 +53,7 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libamu.so.5.0.debug			comp-amd-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libasan.so.0.0.debug		comp-krb5-debug	debug,compatfile,gcc=48
+./usr/libdata/debug/usr/lib/libasan.so.0.0.debug		comp-krb5-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libatf-c++.so.0.0.debug		comp-atf-debug	debug,compatfile,atf,obsolete
 ./usr/libdata/debug/usr/lib/libatf-c++.so.1.0.debug		comp-atf-debug	debug,compatfile,atf
@@ -95,7 +95,7 @@
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug		comp-sys-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libgmp.so.10.2.debug		comp-c-shlib	obsolete
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libgomp.so.1.1.debug		comp-sys-debug	debug,compatfile,gcc=48
+./usr/libdata/debug/usr/lib/libgomp.so.1.1.debug		comp-sys-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libgssapi.so.10.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libhdb.so.14.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libheimbase.so.1.0.debug		comp-krb5-debug	debug,compatfile,kerberos
@@ -134,13 +134,13 @@
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug			comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmpc.so.2.0.debug			comp-c-shlib	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libmpfr.so.4.1.debug		comp-c-shlib	debug,compatfile,obsolete
-./usr/libdata/debug/usr/lib/libmudflap.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=48
-./usr/libdata/debug/usr/lib/libmudflapth.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=48
+./usr/libdata/debug/usr/lib/libmudflap.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc
+./usr/libdata/debug/usr/lib/libmudflapth.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug		comp-crypto-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libnetpgpverify.so.4.0.debug	comp-crypto-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libnpf.so.0.0.debug			comp-npf-debug	debug,compatfile,npf
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
-./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug		comp-sys-debug	debug,compatfile,gcc=48
+./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug		comp-sys-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libopcodes.so.6.0.debug		comp-c-debug	debug,compatfile,binutils
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug			comp-puffs-debug	debug,compatfile,rump
@@ -252,7 +252,7 @@
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssh.so.25.0.debug		comp-secsh-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libssl.so.10.5.debug		comp-crypto-debug	debug,compatfile,crypto
-./usr/libdata/debug/usr/lib/libstdc++.so.7.3.debug		comp-sys-debug	debug,compatfile,gcc=48,cxx,libstdcxx
+./usr/libdata/debug/usr/lib/libstdc++.so.7.3.debug		comp-sys-debug	debug,compatfile,gcc,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug		comp-tpm-debug	debug,compatfile,tpm
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug			comp-sys-debug	debug,compatfile
@@ -274,7 +274,7 @@
 ./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/libexec/ld.elf_so.debug			comp-sys-debug	debug
-./usr/libdata/debug/usr/libexec/liblto_plugin.so.0.0.debug	comp-sys-debug	debug,gcc=48
+./usr/libdata/debug/usr/libexec/liblto_plugin.so.0.0.debug	comp-sys-debug	debug,gcc
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3_dso.so.1.debug	tests-lib-debug		debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-obsolete		debug,compattestfile,atf,obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/tls/h_tls_dlopen.so.1.debug	tests-lib-debug		debug,compattestfile,atf

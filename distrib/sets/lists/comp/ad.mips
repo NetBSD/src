@@ -1,14 +1,14 @@
-# $NetBSD: ad.mips,v 1.56 2015/08/10 02:44:37 mrg Exp $
+# $NetBSD: ad.mips,v 1.57 2015/08/10 03:21:44 mrg Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/g++/bits/mips32			comp-c-include		arch64
-./usr/include/g++/bits/mips32/c++config.h	comp-c-include		arch64,gcc=48
+./usr/include/g++/bits/mips32/c++config.h	comp-c-include		arch64,gcc
 ./usr/include/g++/bits/mips64			comp-c-include		arch64
-./usr/include/g++/bits/mips64/c++config.h	comp-c-include		arch64,gcc=48
+./usr/include/g++/bits/mips64/c++config.h	comp-c-include		arch64,gcc
 ./usr/include/g++/bits/mipso32			comp-c-include		arch64
-./usr/include/g++/bits/mipso32/c++config.h	comp-c-include		arch64,gcc=48
-./usr/include/gcc-4.8/loongson.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
+./usr/include/g++/bits/mipso32/c++config.h	comp-c-include		arch64,gcc
+./usr/include/gcc-4.8/loongson.h		comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc
 ./usr/include/mips				comp-c-include
 ./usr/include/mips/ansi.h			comp-c-include
 ./usr/include/mips/aout_machdep.h		comp-obsolete		obsolete
