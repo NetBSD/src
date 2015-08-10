@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.68 2015/07/03 15:11:04 matt Exp $
+# $NetBSD: ad.arm,v 1.69 2015/08/10 02:44:37 mrg Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -391,9 +391,6 @@
 ./usr/include/evbarm/varargs.h			comp-obsolete		obsolete
 ./usr/include/evbarm/vmparam.h			comp-obsolete		obsolete
 ./usr/include/evbarm/wchar_limits.h		comp-obsolete		obsolete
-./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
