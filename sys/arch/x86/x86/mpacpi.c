@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.97.10.1 2015/08/11 05:07:16 snj Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.97.10.2 2015/08/11 05:15:25 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.97.10.1 2015/08/11 05:07:16 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.97.10.2 2015/08/11 05:15:25 snj Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -500,6 +500,12 @@ mpacpi_pci_foundbus(struct acpi_devnode *ad)
 	}
 
 	mpr = kmem_zalloc(sizeof(struct mpacpi_pcibus), KM_SLEEP);
+	mpr->mpr_handle = ad->ad_handle;
+	mpr->mpr_buf = buf;
+	mpr->mpr_seg = ad->ad_pciinfo->ap_segment;
+	mpr->mpr_bus = ad->ad_pciinfo->ap_downbus;
+	TAILQ_INSERT_TAIL(&mpacpi_pcibusses, mpr, mpr_list);
+
 	if ((ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) != 0) {
 		if (mp_verbose)
 			printf("mpacpi: found root PCI bus %d\n",
@@ -510,12 +516,6 @@ mpacpi_pci_foundbus(struct acpi_devnode *ad)
 			printf("mpacpi: found subordinate bus %d\n",
 			    mpr->mpr_bus);
 	}
-
-	mpr->mpr_handle = ad->ad_handle;
-	mpr->mpr_buf = buf;
-	mpr->mpr_seg = ad->ad_pciinfo->ap_segment;
-	mpr->mpr_bus = ad->ad_pciinfo->ap_downbus;
-	TAILQ_INSERT_TAIL(&mpacpi_pcibusses, mpr, mpr_list);
 
 	/*
 	 * XXX this wrongly assumes that bus numbers are unique
