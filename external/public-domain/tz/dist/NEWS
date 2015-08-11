@@ -1,5 +1,71 @@
 News for the tz database
 
+Release 2015f - 2015-08-10 18:06:56 -0700
+
+  Changes affecting future time stamps
+
+    North Korea switches to +0830 on 2015-08-15.  (Thanks to Steffen Thorsen.)
+    The abbreviation remains "KST".  (Thanks to Robert Elz.)
+
+    Uruguay no longer observes DST.  (Thanks to Steffen Thorsen
+    and Pablo Camargo.)
+
+  Changes affecting past and future time stamps
+
+    Moldova starts and ends DST at 00:00 UTC, not at 01:00 UTC.
+    (Thanks to Roman Tudos.)
+
+  Changes affecting data format and code
+
+    zic's '-y YEARISTYPE' option is no longer documented.  The TYPE
+    field of a Rule line should now be '-'; the old values 'even',
+    'odd', 'uspres', 'nonpres', 'nonuspres' were already undocumented.
+    Although the implementation has not changed, these features do not
+    work in the default installation, they are not used in the data,
+    and they are now considered obsolescent.
+
+    zic now checks that two rules don't take effect at the same time.
+    (Thanks to Jon Skeet and Arthur David Olson.)  Constraints on
+    simultaneity are now documented.
+
+    The two characters '%z' in a zone format now stand for the UTC
+    offset, e.g., '-07' for seven hours behind UTC and '+0530' for
+    five hours and thirty minutes ahead.  This better supports time
+    zone abbreviations conforming to POSIX.1-2001 and later.
+
+  Changes affecting installed data files
+
+    Comments for America/Halifax and America/Glace_Bay have been improved.
+    (Thanks to Brian Inglis.)
+
+    Data entries have been simplified for Atlantic/Canary, Europe/Simferopol,
+    Europe/Sofia, and Europe/Tallinn.  This yields slightly smaller
+    installed data files for Europe/Simferopol and Europe/Tallinn.
+    It does not affect timestamps.  (Thanks to Howard Hinnant.)
+
+  Changes affecting code
+
+    zdump and zic no longer warn about valid time zone abbreviations
+    like '-05'.
+
+    Some Visual Studio 2013 warnings have been suppressed.
+    (Thanks to Kees Dekker.)
+
+    'date' no longer sets the time of day and its -a, -d, -n and -t
+    options have been removed.  Long obsolescent, the implementation
+    of these features had porting problems.  Builders no longer need
+    to configure HAVE_ADJTIME, HAVE_SETTIMEOFDAY, or HAVE_UTMPX_H.
+    (Thanks to Kees Dekker for pointing out the problem.)
+
+  Changes affecting documentation
+
+    The Theory file mentions naming issues earlier, as these seem to be
+    poorly publicized (thanks to Gilmore Davidson for reporting the problem).
+
+    tz-link.htm mentions Time Zone Database Parser (thanks to Howard Hinnant).
+
+    Mention that Herbert Samuel introduced the term "Summer Time".
+
 
 Release 2015e - 2015-06-13 10:56:02 -0700
 
