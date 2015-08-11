@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.364 2015/08/11 05:18:15 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.365 2015/08/11 05:37:41 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33906,4 +33906,10 @@ sys/arch/x86/x86/mpacpi.c			1.98
 	Fix wrong output in mpacpi_pci_foundbus() with MPVERBOSE.
 	Assign vaues before printing them.
 	[msaitoh, ticket #947]
+
+distrib/notes/common/main			patched by hand
+sys/sys/param.h					patched by hand
+
+	Welcome to 7.0_RC3!
+	[snj]
 
