@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.97 2013/03/25 01:30:37 chs Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.97.10.1 2015/08/11 05:07:16 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.97 2013/03/25 01:30:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.97.10.1 2015/08/11 05:07:16 snj Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
+#include "opt_ddb.h"
 #include "opt_mpbios.h"
 #include "opt_multiprocessor.h"
 #include "pchb.h"
@@ -122,6 +123,10 @@ static void mpacpi_print_intr(struct mp_intr_map *);
 static void mpacpi_print_isa_intr(int);
 
 static void mpacpi_user_continue(const char *fmt, ...);
+
+#ifdef DDB
+void mpacpi_dump(void);
+#endif
 
 int mpacpi_nioapic;			/* number of ioapics */
 int mpacpi_ncpu;			/* number of cpus */
@@ -447,6 +452,8 @@ mpacpi_scan_apics(device_t self, int *ncpup)
 	mpacpi_ncpu = mpacpi_nintsrc = mpacpi_nioapic = 0;
 	acpi_madt_walk(mpacpi_count, self);
 
+	acpi_madt_walk(mpacpi_config_ioapic, self);
+
 #if NLAPIC > 0
 	lapic_boot_init(mpacpi_lapic_base);
 #endif
@@ -455,8 +462,6 @@ mpacpi_scan_apics(device_t self, int *ncpup)
 
 	if (mpacpi_ncpu == 0)
 		goto done;
-
-	acpi_madt_walk(mpacpi_config_ioapic, self);
 
 #if NPCI > 0
 	/*
@@ -1080,3 +1085,13 @@ mpacpi_user_continue(const char *fmt, ...)
 	printf("<press any key to continue>\n>");
 	cngetc();
 }
+
+#ifdef DDB
+void
+mpacpi_dump(void)
+{
+	int i;
+	for (i = 0; i < mp_nintr; i++)
+		mpacpi_print_intr(&mp_intrs[i]);
+}
+#endif
