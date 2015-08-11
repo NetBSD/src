@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.3 2012/07/22 14:27:51 darrenr Exp $
+.\"	$NetBSD: ipnat.5,v 1.4 2015/08/11 16:06:52 prlw1 Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -149,8 +149,8 @@ map le0 10.0.0.0/8 -> 192.168.55.2/32 gre
 For TCP connections exiting a connection such as PPPoE where the MTU is
 slightly smaller than normal ethernet, it can be useful to reduce the
 Maximum Segment Size (MSS) offered by the internal machines to match,
-reducing the liklihood that the either end will attempt to send packets
-that are too big and result in fragmentation.  This is acheived using the
+reducing the likelihood that either end will attempt to send packets
+that are too big and result in fragmentation.  This is achieved using the
 .B mssclamp
 option with TCP
 .B map
@@ -356,7 +356,7 @@ rdr le0 from 1.1.0.0/16 to any -> 192.168.1.3
 rdr le0 ! from 1.1.0.0/16 to any -> 192.168.1.4
 .fi
 .PP
-If there is a consective set of addresses you wish to spread the packets
+If there is a consecutive set of addresses you wish to spread the packets
 over, then this can be done in one of two ways, the word "range" optional
 to preserve:
 .nf
@@ -402,7 +402,7 @@ feature can only be combined with
 .B round-robin
 and the use of comma.
 .PP
-For TCP and UDP packets, it is possible to both match on the destiantion
+For TCP and UDP packets, it is possible to both match on the destination
 port number and to modify it.  For example, to change the destination port
 from 80 to 3128, we would use a rule like this:
 .nf
