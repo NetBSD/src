@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.167 2015/08/11 08:27:08 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.168 2015/08/11 09:30:32 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.167 2015/08/11 08:27:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.168 2015/08/11 09:30:32 ozaki-r Exp $");
 
 #include "opt_net_mpsafe.h"
 
@@ -2248,9 +2248,6 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		 * it is tolerable, because this should be a rare case.
 		 */
 		if (nd6_is_addr_neighbor(dst, ifp)) {
-			if (rt != NULL && rt != rt00)
-				rtfree(rt);
-
 			RTFREE_IF_NEEDED(rt);
 			rt = nd6_lookup(&dst->sin6_addr, 1, ifp);
 			if (rt != NULL)
