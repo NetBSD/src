@@ -1,20 +1,20 @@
-# $NetBSD: tzdata2netbsd,v 1.6 2015/03/21 16:42:17 apb Exp $
+# $NetBSD: tzdata2netbsd,v 1.7 2015/08/11 18:10:13 apb Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
 # 0. Be in an up-to-date checkout of src/external/public-domain/tz
 #    from NetBSD-current.
 # 1. Edit OLDVER and NEWVER below.
-# 3. Run this script.  You will be prompted for confirmation before
+# 2. Run this script.  You will be prompted for confirmation before
 #    anything major (such as a cvs operation).
-# 4. If something fails, abort the script and fix it.
-# 5. Re-run this script until you are happy.  It's designed to
+# 3. If something fails, abort the script and fix it.
+# 4. Re-run this script until you are happy.  It's designed to
 #    be re-run over and over, and later runs will try not to
 #    redo non-trivial work done by earlier runs.
 #
 
-OLDVER=2015a
-NEWVER=2015b
+OLDVER=2015e
+NEWVER=2015f
 
 # Uppercase variants of OLDVER and NEWVER
 OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
@@ -232,7 +232,7 @@ EOF
 		/^$/ { blankline = 1; havesentence = 0; }
 		/^  Changes affecting/ { goodsection = 0; }
 		/^  Changes affecting.*time/ { goodsection = 1; }
-		/^  Changes affecting.*data format/ { goodsection = 1; }
+		/^  Changes affecting.*data/ { goodsection = 1; }
 		/^  Changes affecting.*documentation/ || \
 		/^  Changes affecting.*commentary/ {
 			t = gensub("^ *", "", 1, $0);
