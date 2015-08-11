@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.5.4.1 2015/01/09 10:33:07 martin Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.5.4.2 2015/08/11 05:13:44 snj Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5.4.1 2015/01/09 10:33:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5.4.2 2015/08/11 05:13:44 snj Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -111,40 +111,54 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 	uint32_t ucodetarget, oucodeversion, nucodeversion;
 	int platformid;
 	struct intel1_ucode_header *uh;
+	size_t newbufsize = 0;
+	int rv = 0;
 
 	if (sc->loader_version != CPU_UCODE_LOADER_INTEL1
 	    || cpuno != CPU_UCODE_CURRENT_CPU)
 		return EINVAL;
-
-	/* XXX relies on malloc alignment */
-	if ((uintptr_t)(sc->sc_blob) & 15) {
-		printf("ucode alignment bad\n");
-		return EINVAL;
-	}
 
 	uh = (struct intel1_ucode_header *)(sc->sc_blob);
 	if (uh->uh_header_ver != 1 || uh->uh_loader_rev != 1)
 		return EINVAL;
 	ucodetarget = uh->uh_rev;
 
+	if ((uintptr_t)(sc->sc_blob) & 15) {
+		/* Make the buffer 16 byte aligned */
+		newbufsize = sc->sc_blobsize + 15;
+		uh = kmem_alloc(newbufsize, KM_SLEEP);
+		if (uh == NULL) {
+			printf("%s: memory allocation failed\n", __func__);
+			return EINVAL;
+		}
+		uh = (struct intel1_ucode_header *)roundup2((uintptr_t)uh, 16);
+		/* Copy to the new area */
+		memcpy(uh, sc->sc_blob, sc->sc_blobsize);
+	}
+
 	kpreempt_disable();
 
 	intel_getcurrentucode(&oucodeversion, &platformid);
 	if (oucodeversion >= ucodetarget) {
 		kpreempt_enable();
-		return EEXIST; /* ??? */
+		rv = EEXIST; /* ??? */
+		goto out;
 	}
 	wrmsr(MSR_BIOS_UPDT_TRIG, (uintptr_t)(sc->sc_blob) + 48);
 	intel_getcurrentucode(&nucodeversion, &platformid);
 
 	kpreempt_enable();
 
-	if (nucodeversion != ucodetarget)
-		return EIO;
+	if (nucodeversion != ucodetarget) {
+		rv = EIO;
+		goto out;
+	}
 
 	printf("cpu %d: ucode 0x%x->0x%x\n", curcpu()->ci_index,
 	       oucodeversion, nucodeversion);
-
-	return 0;
+out:
+	if (newbufsize != 0)
+		kmem_free(uh, newbufsize);
+	return rv;
 }
 #endif /* ! XEN */
