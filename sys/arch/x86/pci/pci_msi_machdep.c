@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.6 2015/06/22 03:57:01 msaitoh Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.7 2015/08/11 04:04:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.6 2015/06/22 03:57:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.7 2015/08/11 04:04:36 msaitoh Exp $");
+
+#include "opt_intrdebug.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
