@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.166 2015/08/07 08:11:33 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.167 2015/08/11 08:27:08 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.166 2015/08/07 08:11:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.167 2015/08/11 08:27:08 ozaki-r Exp $");
 
 #include "opt_net_mpsafe.h"
 
@@ -959,6 +959,7 @@ nd6_lookup1(const struct in6_addr *addr6, int create, struct ifnet *ifp,
 			    ip6_sprintf(addr6),
 			    ifp ? if_name(ifp) : "unspec"));
 		}
+		rtfree(rt);
 		return NULL;
 	}
 	return rt;
