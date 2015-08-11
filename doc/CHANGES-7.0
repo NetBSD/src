@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.363 2015/08/09 10:16:35 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.364 2015/08/11 05:18:15 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33883,4 +33883,27 @@ sys/kern/vfs_wapbl.c				1.62
 	sector sizes != DEV_BSIZE when compiled outside the kernel (i.e.
 	fsck_ffs).
 	[mlelstv, ticket #943]
+
+sys/arch/x86/x86/lapic.c			1.49
+sys/arch/x86/x86/mpacpi.c			1.99, 1.100
+
+	Avoid hang on some machines after attaching ehci.
+	[msaitoh, ticket #948]
+
+sys/arch/x86/x86/coretemp.c			1.34
+
+	Fix case where coretemp(4) doesn't attach on some newer CPUs.
+	[msaitoh, ticket #946]
+
+sys/arch/x86/x86/cpu_ucode_intel.c		1.7, 1.8
+
+	Re-allocale buffer if a buffer for microcode is not 16byte
+	aligned.
+	[msaitoh, ticket #945]
+
+sys/arch/x86/x86/mpacpi.c			1.98
+
+	Fix wrong output in mpacpi_pci_foundbus() with MPVERBOSE.
+	Assign vaues before printing them.
+	[msaitoh, ticket #947]
 
