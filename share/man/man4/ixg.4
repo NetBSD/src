@@ -1,4 +1,4 @@
-.\" $NetBSD: ixg.4,v 1.6 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: ixg.4,v 1.7 2015/08/11 04:25:13 msaitoh Exp $
 .\"
 .\" Copyright (c) 2001-2008, Intel Corporation
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/ixgbe.4,v 1.3 2010/12/19 23:54:31 yongari Exp $
 .\"
-.Dd July 25, 2011
+.Dd August 11, 2015
 .Dt IXG 4
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 The
 .Nm
 driver provides support for PCI 10Gb Ethernet adapters based on
-the Intel(R) 82598EB and 82599 10 GbE Controllers.
+the Intel(R) 82598EB, 82599 and X540 Ethernet Controllers.
 The driver supports Jumbo Frames, TCP Segmentation Offload (TSO).
 .Pp
 For questions related to hardware requirements,
@@ -64,21 +64,6 @@ the maximum MTU size for Jumbo Frames is 9000 bytes.
 This driver version supports VLANs.
 For information on enabling VLANs, see
 .Xr ifconfig 8 .
-.Sh HARDWARE
-The
-.Nm
-driver supports the following cards:
-.Pp
-.Bl -bullet -compact
-.It
-Intel(R) 10 Gigabit XF SR/AF Dual Port Server Adapter
-.It
-Intel(R) 10 Gigabit XF SR/LR Server Adapter
-.It
-Intel(R) 82598EB 10 Gigabit AF Network Connection
-.It
-Intel(R) 82598EB 10 Gigabit AT CX4 Network Connection
-.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ixg%d: Unable to allocate bus resource: memory"
