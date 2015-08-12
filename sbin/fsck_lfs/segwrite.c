@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.37 2015/08/12 18:25:03 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.38 2015/08/12 18:25:52 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -216,7 +216,7 @@ lfs_writefile(struct lfs * fs, struct segment * sp, struct uvnode * vp)
 	fip->fi_nblocks = 0;
 	fip->fi_ino = ip->i_number;
 	LFS_IENTRY(ifp, fs, fip->fi_ino, bp);
-	fip->fi_version = ifp->if_version;
+	fip->fi_version = lfs_if_getversion(fs, ifp);
 	brelse(bp, 0);
 
 	lfs_gather(fs, sp, vp, lfs_match_data);
@@ -323,7 +323,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 
 	/*
 	 * If updating the ifile, update the super-block.  Update the disk
-	 * address and access times for this inode in the ifile.
+	 * address for this inode in the ifile.
 	 */
 	ino = ip->i_number;
 	if (ino == LFS_IFILE_INUM) {
@@ -332,8 +332,8 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		sbdirty();
 	} else {
 		LFS_IENTRY(ifp, fs, ino, ibp);
-		daddr = ifp->if_daddr;
-		ifp->if_daddr = LFS_DBTOFSB(fs, bp->b_blkno) + fsb;
+		daddr = lfs_if_getdaddr(fs, ifp);
+		lfs_if_setdaddr(fs, ifp, LFS_DBTOFSB(fs, bp->b_blkno) + fsb);
 		(void)LFS_BWRITE_LOG(ibp);	/* Ifile */
 	}
 
