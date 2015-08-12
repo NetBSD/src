@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.26 2015/08/12 18:25:52 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.27 2015/08/12 18:26:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.26 2015/08/12 18:25:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.27 2015/08/12 18:26:27 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -355,6 +355,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	FINFO *fip;
 	SEGUSE *sup;
 	size_t size;
+	uint32_t datasum, foundsum;
 
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 	/*
@@ -377,57 +378,60 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	/* Check summary checksum */
 	ssp = (SEGSUM *)bp->b_data;
 	if (flags & CHECK_CKSUM) {
-		if (ssp->ss_sumsum != cksum(&ssp->ss_datasum,
-					   lfs_sb_getsumsize(fs) -
-					   sizeof(ssp->ss_sumsum))) {
+		size_t sumstart;
+
+		sumstart = lfs_ss_getsumstart(fs);
+		if (lfs_ss_getsumsum(fs, ssp) !=
+		    cksum((char *)ssp + sumstart,
+			  lfs_sb_getsumsize(fs) - sumstart)) {
 			DLOG((DLOG_RF, "Sumsum error at 0x%" PRIx64 "\n", offset));
 			offset = -1;
 			goto err1;
 		}
-		if (ssp->ss_nfinfo == 0 && ssp->ss_ninos == 0) {
+		if (lfs_ss_getnfinfo(fs, ssp) == 0 &&
+		    lfs_ss_getninos(fs, ssp) == 0) {
 			DLOG((DLOG_RF, "Empty pseg at 0x%" PRIx64 "\n", offset));
 			offset = -1;
 			goto err1;
 		}
-		if (ssp->ss_create < lfs_sb_gettstamp(fs)) {
+		if (lfs_ss_getcreate(fs, ssp) < lfs_sb_gettstamp(fs)) {
 			DLOG((DLOG_RF, "Old data at 0x%" PRIx64 "\n", offset));
 			offset = -1;
 			goto err1;
 		}
 	}
 	if (lfs_sb_getversion(fs) > 1) {
-		if (ssp->ss_serial != nextserial) {
+		if (lfs_ss_getserial(fs, ssp) != nextserial) {
 			DLOG((DLOG_RF, "Unexpected serial number at 0x%" PRIx64
 			      "\n", offset));
 			offset = -1;
 			goto err1;
 		}
-		if (ssp->ss_ident != lfs_sb_getident(fs)) {
+		if (lfs_ss_getident(fs, ssp) != lfs_sb_getident(fs)) {
 			DLOG((DLOG_RF, "Incorrect fsid (0x%x vs 0x%x) at 0x%"
-			      PRIx64 "\n", ssp->ss_ident, lfs_sb_getident(fs), offset));
+			      PRIx64 "\n", lfs_ss_getident(fs, ssp),
+			      lfs_sb_getident(fs), offset));
 			offset = -1;
 			goto err1;
 		}
 	}
 	if (pseg_flags)
-		*pseg_flags = ssp->ss_flags;
+		*pseg_flags = lfs_ss_getflags(fs, ssp);
 	oldoffset = offset;
 	offset += lfs_btofsb(fs, lfs_sb_getsumsize(fs));
 
-	ninos = howmany(ssp->ss_ninos, LFS_INOPB(fs));
+	ninos = howmany(lfs_ss_getninos(fs, ssp), LFS_INOPB(fs));
 	/* XXX ondisk32 */
 	iaddr = (int32_t *)((char*)bp->b_data + lfs_sb_getsumsize(fs) - sizeof(int32_t));
 	if (flags & CHECK_CKSUM) {
 		/* Count blocks */
 		nblocks = 0;
-		fip = (FINFO *)((char*)bp->b_data + SEGSUM_SIZE(fs));
-		for (i = 0; i < ssp->ss_nfinfo; ++i) {
+		fip = SEGSUM_FINFOBASE(fs, (SEGSUM *)bp->b_data);
+		for (i = 0; i < lfs_ss_getnfinfo(fs, ssp); ++i) {
 			nblocks += fip->fi_nblocks;
 			if (fip->fi_nblocks <= 0)
 				break;
-			/* XXX ondisk32 */
-			fip = (FINFO *)(((char *)fip) + FINFOSIZE +
-					(fip->fi_nblocks * sizeof(int32_t)));
+			fip = NEXT_FINFO(fs, fip);
 		}
 		nblocks += ninos;
 		/* Create the sum array */
@@ -436,8 +440,8 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	}
 
 	/* Handle individual blocks */
-	fip = (FINFO *)((char*)bp->b_data + SEGSUM_SIZE(fs));
-	for (i = 0; i < ssp->ss_nfinfo || ninos; ++i) {
+	fip = SEGSUM_FINFOBASE(fs, (SEGSUM *)bp->b_data);
+	for (i = 0; i < lfs_ss_getnfinfo(fs, ssp) || ninos; ++i) {
 		/* Inode block? */
 		if (ninos && *iaddr == offset) {
 			if (flags & CHECK_CKSUM) {
@@ -487,18 +491,15 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			}
 			offset += lfs_btofsb(fs, size);
 		}
-		/* XXX ondisk32 */
-		fip = (FINFO *)(((char *)fip) + FINFOSIZE
-				+ fip->fi_nblocks * sizeof(int32_t));
+		fip = NEXT_FINFO(fs, fip);
 	}
 	/* Checksum the array, compare */
-	if ((flags & CHECK_CKSUM) &&
-	   ssp->ss_datasum != cksum(datap, nblocks * sizeof(u_long)))
-	{
+	datasum = lfs_ss_getdatasum(fs, ssp);
+	foundsum = cksum(datap, nblocks * sizeof(u_long));
+	if ((flags & CHECK_CKSUM) && datasum != foundsum) {
 		DLOG((DLOG_RF, "Datasum error at 0x%" PRIx64
 		      " (wanted %x got %x)\n",
-		      offset, ssp->ss_datasum, cksum(datap, nblocks *
-						     sizeof(u_long))));
+		      offset, datasum, foundsum));
 		offset = -1;
 		goto err2;
 	}
@@ -506,11 +507,11 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	/* If we're at the end of the segment, move to the next */
 	if (lfs_dtosn(fs, offset + lfs_btofsb(fs, lfs_sb_getsumsize(fs) + lfs_sb_getbsize(fs))) !=
 	   lfs_dtosn(fs, offset)) {
-		if (lfs_dtosn(fs, offset) == lfs_dtosn(fs, ssp->ss_next)) {
+		if (lfs_dtosn(fs, offset) == lfs_dtosn(fs, lfs_ss_getnext(fs, ssp))) {
 			offset = -1;
 			goto err2;
 		}
-		offset = ssp->ss_next;
+		offset = lfs_ss_getnext(fs, ssp);
 		DLOG((DLOG_RF, "LFS roll forward: moving to offset 0x%" PRIx64
 		       " -> segment %d\n", offset, lfs_dtosn(fs,offset)));
 	}

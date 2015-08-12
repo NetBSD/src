@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.51 2015/08/12 18:25:52 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.52 2015/08/12 18:26:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.51 2015/08/12 18:25:52 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.52 2015/08/12 18:26:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -505,12 +505,15 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	struct ulfs1_dinode *inop;
 	size_t el_size;
 	u_int32_t datasum;
+	u_int32_t ssflags;
 	time_t t;
 	char *buf;
+	size_t sumstart;
 
-	if (sp->ss_magic != SS_MAGIC || 
-	    sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
-	    lfs_sb_getsumsize(lfsp) - sizeof(sp->ss_sumsum)))) {
+	sumstart = lfs_ss_getsumstart(lfsp);
+	if (lfs_ss_getmagic(lfsp, sp) != SS_MAGIC || 
+	    lfs_ss_getsumsum(lfsp, sp) != (ck = cksum((char *)sp + sumstart,
+	    lfs_sb_getsumsize(lfsp) - sumstart))) {
 		/* Don't print "corrupt" if we're just too close to the edge */
 		if (lfs_dtosn(lfsp, addr + LFS_FSBTODB(lfsp, 1)) ==
 		    lfs_dtosn(lfsp, addr))
@@ -519,7 +522,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 				     (long long)addr);
 		return -1;
 	}
-	if (lfs_sb_getversion(lfsp) > 1 && sp->ss_ident != lfs_sb_getident(lfsp)) {
+	if (lfs_sb_getversion(lfsp) > 1 && lfs_ss_getident(lfsp, sp) != lfs_sb_getident(lfsp)) {
 		(void)printf("dumplfs: %s %d address 0x%llx\n",
 	                     "summary from a former life; segment", segnum,
 			     (long long)addr);
@@ -527,39 +530,42 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	}
 
 	(void)printf("Segment Summary Info at 0x%llx\n", (long long)addr);
-	(void)printf("    %s0x%x\t%s%d\t%s%d\t%s%c%c%c%c\n    %s0x%x\t%s0x%x",
-		"next     ", sp->ss_next,
-		"nfinfo   ", sp->ss_nfinfo,
-		"ninos    ", sp->ss_ninos,
-		"flags    ", (sp->ss_flags & SS_DIROP) ? 'D' : '-',
-			     (sp->ss_flags & SS_CONT)  ? 'C' : '-',
-			     (sp->ss_flags & SS_CLEAN)  ? 'L' : '-',
-			     (sp->ss_flags & SS_RFW)  ? 'R' : '-',
-		"sumsum   ", sp->ss_sumsum,
-		"datasum  ", sp->ss_datasum );
+	ssflags = lfs_ss_getflags(lfsp, sp);
+	(void)printf("    %s0x%jx\t%s%d\t%s%d\t%s%c%c%c%c\n    %s0x%x\t%s0x%x",
+		"next     ", (intmax_t)lfs_ss_getnext(lfsp, sp),
+		"nfinfo   ", lfs_ss_getnfinfo(lfsp, sp),
+		"ninos    ", lfs_ss_getninos(lfsp, sp),
+		"flags    ", (ssflags & SS_DIROP) ? 'D' : '-',
+			     (ssflags & SS_CONT)  ? 'C' : '-',
+			     (ssflags & SS_CLEAN)  ? 'L' : '-',
+			     (ssflags & SS_RFW)  ? 'R' : '-',
+		"sumsum   ", lfs_ss_getsumsum(lfsp, sp),
+		"datasum  ", lfs_ss_getdatasum(lfsp, sp));
 	if (lfs_sb_getversion(lfsp) == 1) {
-		t = sp->ss_ocreate;
+		t = lfs_ss_getocreate(lfsp, sp);
 		(void)printf("\tcreate   %s\n", ctime(&t));
 	} else {
-		t = sp->ss_create;
+		t = lfs_ss_getcreate(lfsp, sp);
 		(void)printf("\tcreate   %s", ctime(&t));
-		(void)printf("    roll_id  %-8x", sp->ss_ident);
-		(void)printf("   serial   %lld\n", (long long)sp->ss_serial);
+		(void)printf("    roll_id  %-8x", lfs_ss_getident(lfsp, sp));
+		(void)printf("   serial   %lld\n",
+			     (long long)lfs_ss_getserial(lfsp, sp));
 	}
 
 	/* Dump out inode disk addresses */
+	/* XXX ondisk32 */
 	dp = (int32_t *)sp;
 	dp += lfs_sb_getsumsize(lfsp) / sizeof(int32_t);
 	inop = malloc(lfs_sb_getbsize(lfsp));
 	printf("    Inode addresses:");
 	numbytes = 0;
 	numblocks = 0;
-	for (dp--, i = 0; i < sp->ss_ninos; dp--) {
+	for (dp--, i = 0; i < lfs_ss_getninos(lfsp, sp); dp--) {
 		++numblocks;
 		numbytes += lfs_sb_getibsize(lfsp);	/* add bytes for inode block */
 		printf("\t0x%x {", *dp);
 		get(fd, fsbtobyte(lfsp, *dp), inop, lfs_sb_getibsize(lfsp));
-		for (j = 0; i < sp->ss_ninos && j < LFS_INOPB(lfsp); j++, i++) {
+		for (j = 0; i < lfs_ss_getninos(lfsp, sp) && j < LFS_INOPB(lfsp); j++, i++) {
 			if (j > 0) 
 				(void)printf(", ");
 			(void)printf("%dv%d", inop[j].di_inumber, inop[j].di_gen);
@@ -572,11 +578,8 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 
 	printf("\n");
 
-	if (lfs_sb_getversion(lfsp) == 1)
-		fp = (FINFO *)((SEGSUM_V1 *)sp + 1);
-	else
-		fp = (FINFO *)(sp + 1);
-	for (i = 0; i < sp->ss_nfinfo; i++) {
+	fp = SEGSUM_FINFOBASE(lfsp, sp);
+	for (i = 0; i < lfs_ss_getnfinfo(lfsp, sp); i++) {
 		(void)printf("    FINFO for inode: %d version %d nblocks %d lastlength %d\n",
 		    fp->fi_ino, fp->fi_version, fp->fi_nblocks,
 		    fp->fi_lastlength);
@@ -619,7 +622,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	acc = 0;
 	addr += lfs_btofsb(lfsp, lfs_sb_getsumsize(lfsp));
 	buf = malloc(lfs_sb_getbsize(lfsp));
-	for (i = 0; i < sp->ss_nfinfo; i++) {
+	for (i = 0; i < lfs_ss_getnfinfo(lfsp, sp); i++) {
 		while (addr == *idp) {
 			get(fd, fsbtobyte(lfsp, addr), buf, lfs_sb_getibsize(lfsp));
 			memcpy(datap + acc * el_size, buf, el_size);
@@ -650,8 +653,8 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 		printf("** counted %d blocks but should have been %d\n",
 		     acc, numblocks);
 	datasum = cksum(datap, numblocks * el_size);
-	if (datasum != sp->ss_datasum)
-		printf("** computed datasum 0x%lx does not match given datasum 0x%lx\n", (unsigned long)datasum, (unsigned long)sp->ss_datasum);
+	if (datasum != lfs_ss_getdatasum(lfsp, sp))
+		printf("** computed datasum 0x%lx does not match given datasum 0x%lx\n", (unsigned long)datasum, (unsigned long)lfs_ss_getdatasum(lfsp, sp));
 	free(datap);
 
 	return (numbytes);
@@ -662,6 +665,7 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 {
 	struct lfs lfs_sb, *sbp;
 	SEGSUM *sump;
+	size_t sumstart;
 	char *sumblock;
 	int did_one, nbytes, sb;
 	off_t sum_offset;
@@ -688,10 +692,12 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 	do {
 		get(fd, sum_offset, sumblock, lfs_sb_getsumsize(lfsp));
 		sump = (SEGSUM *)sumblock;
+		sumstart = lfs_ss_getsumstart(lfsp);
 		if ((lfs_sb_getversion(lfsp) > 1 &&
-		     sump->ss_ident != lfs_sb_getident(lfsp)) ||
-		    sump->ss_sumsum != cksum (&sump->ss_datasum, 
-			      lfs_sb_getsumsize(lfsp) - sizeof(sump->ss_sumsum))) {
+		     lfs_ss_getident(lfsp, sump) != lfs_sb_getident(lfsp)) ||
+		    lfs_ss_getsumsum(lfsp, sump) !=
+		      cksum((char *)sump + sumstart,
+			    lfs_sb_getsumsize(lfsp) - sumstart)) {
 			sbp = (struct lfs *)sump;
 			if ((sb = (sbp->lfs_dlfs_u.u_32.dlfs_magic == LFS_MAGIC))) {
 				printf("Superblock at 0x%x\n",
