@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.52 2015/08/02 18:14:16 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.53 2015/08/12 18:26:27 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ setup(const char *dev)
 	int i, isdirty;
 	long sn, curseg;
 	SEGUSE *sup;
+	size_t sumstart;
 
 	havesb = 0;
 	doskipclean = skipclean;
@@ -261,28 +262,29 @@ setup(const char *dev)
 			      lfs_sb_getsumsize(fs),
 			      0, &bp);
 			sp = (SEGSUM *)bp->b_data;
-			if (sp->ss_sumsum != cksum(&sp->ss_datasum,
-						   lfs_sb_getsumsize(fs) -
-						   sizeof(sp->ss_sumsum))) {
+			sumstart = lfs_ss_getsumstart(fs);
+			if (lfs_ss_getsumsum(fs, sp) !=
+			    cksum((char *)sp + sumstart,
+				  lfs_sb_getsumsize(fs) - sumstart)) {
 				brelse(bp, 0);
 				if (debug)
 					printf("bad cksum at %jx\n",
 					       (uintmax_t)tdaddr);
 				break;
 			}
-			fp = (FINFO *)(sp + 1);
-			bc = howmany(sp->ss_ninos, LFS_INOPB(fs)) <<
+			fp = SEGSUM_FINFOBASE(fs, sp);
+			bc = howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)) <<
 				(lfs_sb_getversion(fs) > 1 ? lfs_sb_getffshift(fs) :
 						       lfs_sb_getbshift(fs));
-			for (i = 0; i < sp->ss_nfinfo; i++) {
+			for (i = 0; i < lfs_ss_getnfinfo(fs, sp); i++) {
 				bc += fp->fi_lastlength + ((fp->fi_nblocks - 1)
 					<< lfs_sb_getbshift(fs));
-				fp = (FINFO *)(fp->fi_blocks + fp->fi_nblocks);
+				fp = NEXT_FINFO(fs, fp);
 			}
 
 			tdaddr += lfs_btofsb(fs, bc) + 1;
 			lfs_sb_setoffset(fs, tdaddr);
-			lfs_sb_setserial(fs, sp->ss_serial + 1);
+			lfs_sb_setserial(fs, lfs_ss_getserial(fs, sp) + 1);
 			brelse(bp, 0);
 		}
 
