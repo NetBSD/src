@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.165 2015/08/12 18:23:16 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.166 2015/08/12 18:23:47 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.165 2015/08/12 18:23:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.166 2015/08/12 18:23:47 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -119,11 +119,6 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 	struct lfs *fs;
 	struct mount *mntp;
 
-	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
-	    KAUTH_REQ_SYSTEM_LFS_MARKV, NULL, NULL, NULL);
-	if (error)
-		return (error);
-
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 
@@ -165,11 +160,6 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 	struct lfs *fs;
 	struct mount *mntp;
 
-	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
-	    KAUTH_REQ_SYSTEM_LFS_MARKV, NULL, NULL, NULL);
-	if (error)
-		return (error);
-
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 
@@ -198,7 +188,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
-	if ((error = lfs_markv(l->l_proc, &fsid, blkiov, blkcnt)) == 0) {
+	if ((error = lfs_markv(l, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
 			blkiov15[i].bi_inode	 = blkiov[i].bi_inode;
 			blkiov15[i].bi_lbn	 = blkiov[i].bi_lbn;
@@ -222,7 +212,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 #define	LFS_MARKV_MAX_BLOCKS	(LFS_MAX_BUFS)
 
 int
-lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
+lfs_markv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov,
     int blkcnt)
 {
 	BLOCK_INFO *blkp;
@@ -243,6 +233,11 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	/* number of blocks/inodes that we have already bwrite'ed */
 	int nblkwritten, ninowritten;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	    KAUTH_REQ_SYSTEM_LFS_MARKV, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);
@@ -548,11 +543,6 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	struct lfs *fs;
 	struct mount *mntp;
 
-	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
-	    KAUTH_REQ_SYSTEM_LFS_BMAPV, NULL, NULL, NULL);
-	if (error)
-		return (error);
-
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 
@@ -593,11 +583,6 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	struct lfs *fs;
 	struct mount *mntp;
 
-	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
-	    KAUTH_REQ_SYSTEM_LFS_BMAPV, NULL, NULL, NULL);
-	if (error)
-		return (error);
-
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 
@@ -625,7 +610,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
-	if ((error = lfs_bmapv(l->l_proc, &fsid, blkiov, blkcnt)) == 0) {
+	if ((error = lfs_bmapv(l, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
 			blkiov15[i].bi_inode	 = blkiov[i].bi_inode;
 			blkiov15[i].bi_lbn	 = blkiov[i].bi_lbn;
@@ -647,7 +632,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 #endif
 
 int
-lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
+lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 {
 	BLOCK_INFO *blkp;
 	IFILE *ifp;
@@ -661,6 +646,11 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	daddr_t v_daddr;
 	int cnt, error;
 	int numrefed = 0;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	    KAUTH_REQ_SYSTEM_LFS_BMAPV, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);
