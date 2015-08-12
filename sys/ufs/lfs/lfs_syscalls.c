@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.164 2015/08/02 18:14:16 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.165 2015/08/12 18:23:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.164 2015/08/02 18:14:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.165 2015/08/12 18:23:16 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -88,7 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.164 2015/08/02 18:14:16 dholland 
 
 static int lfs_fastvget(struct mount *, ino_t, BLOCK_INFO *, int,
     struct vnode **);
-struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
+static struct buf *lfs_fakebuf(struct lfs *, struct vnode *, daddr_t,
+    size_t, void *);
 
 /*
  * sys_lfs_markv:
@@ -376,8 +377,8 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 			if (lfs_dtosn(fs, LFS_DBTOFSB(fs, b_daddr)) ==
 			    lfs_dtosn(fs, blkp->bi_daddr))
 			{
-				DLOG((DLOG_CLEAN, "lfs_markv: wrong da same seg: %llx vs %llx\n",
-				      (long long)blkp->bi_daddr, (long long)LFS_DBTOFSB(fs, b_daddr)));
+				DLOG((DLOG_CLEAN, "lfs_markv: wrong da same seg: %jx vs %jx\n",
+				      (intmax_t)blkp->bi_daddr, (intmax_t)LFS_DBTOFSB(fs, b_daddr)));
 			}
 			do_again++;
 			continue;
@@ -397,9 +398,9 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 			obsize = ip->i_lfs_fragsize[blkp->bi_lbn];
 		}
 		if (obsize != blkp->bi_size) {
-			DLOG((DLOG_CLEAN, "lfs_markv: ino %d lbn %lld wrong"
+			DLOG((DLOG_CLEAN, "lfs_markv: ino %d lbn %jd wrong"
 			      " size (%ld != %d), try again\n",
-			      blkp->bi_inode, (long long)blkp->bi_lbn,
+			      blkp->bi_inode, (intmax_t)blkp->bi_lbn,
 			      (long) obsize, blkp->bi_size));
 			do_again++;
 			continue;
@@ -751,7 +752,6 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		} else {
 			daddr_t bi_daddr;
 
-			/* XXX ondisk32 */
 			error = VOP_BMAP(vp, blkp->bi_lbn, NULL,
 					 &bi_daddr, NULL);
 			if (error)
@@ -1007,8 +1007,8 @@ lfs_fastvget(struct mount *mp, ino_t ino, BLOCK_INFO *blkp, int lk_flags,
 /*
  * Make up a "fake" cleaner buffer, copy the data from userland into it.
  */
-struct buf *
-lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, void *uaddr)
+static struct buf *
+lfs_fakebuf(struct lfs *fs, struct vnode *vp, daddr_t lbn, size_t size, void *uaddr)
 {
 	struct buf *bp;
 	int error;
