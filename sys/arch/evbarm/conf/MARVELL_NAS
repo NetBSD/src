@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.22 2015/07/16 13:10:37 reinoud Exp $
+#	$NetBSD: MARVELL_NAS,v 1.23 2015/08/12 07:53:57 maxv Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -128,7 +128,6 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	USBVERBOSE	# verbose USB device autoconfig messages

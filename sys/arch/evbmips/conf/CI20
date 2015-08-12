@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.15 2015/08/07 17:41:43 macallan Exp $
+#	$NetBSD: CI20,v 1.16 2015/08/12 07:53:57 maxv Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.15 $"
+#ident 		"CI20-$Revision: 1.16 $"
 
 maxusers	32
 
@@ -44,7 +44,6 @@ options 	NTP		# network time protocol
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger
