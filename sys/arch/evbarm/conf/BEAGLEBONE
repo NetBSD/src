@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.32 2015/06/06 14:00:52 jmcneill Exp $
+#	$NetBSD: BEAGLEBONE,v 1.33 2015/08/12 07:53:57 maxv Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -122,7 +122,6 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40
