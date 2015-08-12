@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.172 2015/08/02 18:18:46 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.173 2015/08/12 18:23:16 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -941,7 +941,7 @@ struct lfs_stats {	/* Must match sysctl list in lfs_vfsops.h ! */
 /* Fcntls to take the place of the lfs syscalls */
 struct lfs_fcntl_markv {
 	BLOCK_INFO *blkiov;	/* blocks to relocate */
-	int blkcnt;		/* number of blocks */
+	int blkcnt;		/* number of blocks (limited to 65536) */
 };
 
 #define LFCNSEGWAITALL	_FCNR_FSPRIV('L', 14, struct timeval)

@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.44 2015/08/02 18:18:09 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.45 2015/08/12 18:23:16 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -791,7 +791,7 @@ bi_comparator(const void *va, const void *vb)
 		return -1;
 	if (b->bi_lbn == LFS_UNUSED_LBN)
 		return 1;
-	if ((u_int32_t)a->bi_lbn > (u_int32_t)b->bi_lbn)
+	if ((u_int64_t)a->bi_lbn > (u_int64_t)b->bi_lbn)
 		return 1;
 	else
 		return -1;
@@ -813,9 +813,10 @@ cb_comparator(const void *va, const void *vb)
 }
 
 void
-toss_old_blocks(struct clfs *fs, BLOCK_INFO **bipp, int *bic, int *sizep)
+toss_old_blocks(struct clfs *fs, BLOCK_INFO **bipp, blkcnt_t *bic, int *sizep)
 {
-	int i, r;
+	blkcnt_t i;
+	int r;
 	BLOCK_INFO *bip = *bipp;
 	struct lfs_fcntl_markv /* {
 		BLOCK_INFO *blkiov;
@@ -832,6 +833,13 @@ toss_old_blocks(struct clfs *fs, BLOCK_INFO **bipp, int *bic, int *sizep)
 	for (i = 0; i < *bic; i++)
 		bip[i].bi_segcreate = bip[i].bi_daddr;
 
+	/*
+	 * XXX: blkcnt_t is 64 bits, so *bic might overflow size_t
+	 * (the argument type of heapsort's number argument) on a
+	 * 32-bit platform. However, if so we won't have got this far
+	 * because we'll have failed trying to allocate the array. So
+	 * while *bic here might cause a 64->32 truncation, it's safe.
+	 */
 	/* Sort the blocks */
 	heapsort(bip, *bic, sizeof(BLOCK_INFO), bi_comparator);
 
@@ -870,6 +878,7 @@ invalidate_segment(struct clfs *fs, int sn)
 {
 	BLOCK_INFO *bip;
 	int i, r, bic;
+	blkcnt_t widebic;
 	off_t nb;
 	double util;
 	struct lfs_fcntl_markv /* {
@@ -884,7 +893,9 @@ invalidate_segment(struct clfs *fs, int sn)
 	fs->clfs_nactive = 0;
 	if (load_segment(fs, sn, &bip, &bic) <= 0)
 		return -1;
-	toss_old_blocks(fs, &bip, &bic, NULL);
+	widebic = bic;
+	toss_old_blocks(fs, &bip, &widebic, NULL);
+	bic = widebic;
 
 	/* Record statistics */
 	for (i = nb = 0; i < bic; i++)
@@ -925,7 +936,7 @@ invalidate_segment(struct clfs *fs, int sn)
  * if the block needs to be added, 0 if it is already represented.
  */
 static int
-check_or_add(ino_t ino, int32_t lbn, BLOCK_INFO *bip, int bic, BLOCK_INFO **ebipp, int *ebicp)
+check_or_add(ino_t ino, daddr_t lbn, BLOCK_INFO *bip, int bic, BLOCK_INFO **ebipp, int *ebicp)
 {
 	BLOCK_INFO *t, *ebip = *ebipp;
 	int ebic = *ebicp;
@@ -975,7 +986,7 @@ check_hidden_cost(struct clfs *fs, BLOCK_INFO *bip, int bic, off_t *ifc)
 	int num;
 	int i, j, ebic;
 	BLOCK_INFO *ebip;
-	int32_t lbn;
+	daddr_t lbn;
 
 	start = 0;
 	ebip = NULL;
@@ -998,6 +1009,7 @@ check_hidden_cost(struct clfs *fs, BLOCK_INFO *bip, int bic, off_t *ifc)
 		if (bip[i].bi_lbn < ULFS_NDADDR)
 			continue;
 
+		/* XXX the struct lfs cast is completely wrong/unsafe */
 		ulfs_getlbns((struct lfs *)fs, NULL, (daddr_t)bip[i].bi_lbn, in, &num);
 		for (j = 0; j < num; j++) {
 			check_or_add(bip[i].bi_inode, in[j].in_lbn,
@@ -1016,6 +1028,7 @@ int
 clean_fs(struct clfs *fs, CLEANERINFO *cip)
 {
 	int i, j, ngood, sn, bic, r, npos;
+	blkcnt_t widebic;
 	int bytes, totbytes;
 	struct ubuf *bp;
 	SEGUSE *sup;
@@ -1096,7 +1109,9 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 			     fs->clfs_segtabp[i]->nbytes);
 			if ((r = load_segment(fs, sn, &bip, &bic)) > 0) {
 				++ngood;
-				toss_old_blocks(fs, &bip, &bic, &bytes);
+				widebic = bic;
+				toss_old_blocks(fs, &bip, &widebic, &bytes);
+				bic = widebic;
 				totbytes += bytes;
 			} else if (r == 0)
 				fd_release(fs->clfs_devvp);
@@ -1124,7 +1139,9 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 			else
 				break;
 		}
-		toss_old_blocks(fs, &bip, &bic, NULL);
+		widebic = bic;
+		toss_old_blocks(fs, &bip, &widebic, NULL);
+		bic = widebic;
 	}
 
 	/* If there is nothing to do, try again later. */
