@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.84 2015/07/28 05:09:35 dholland Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.85 2015/08/12 18:25:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.84 2015/07/28 05:09:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.85 2015/08/12 18:25:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,8 @@ lfs_segunlock_relock(struct lfs *fs)
 
 	/* Tell cleaner */
 	LFS_CLEANERINFO(cip, fs, bp);
-	cip->flags |= LFS_CLEANER_MUST_CLEAN;
+	lfs_ci_setflags(fs, cip,
+			lfs_ci_getflags(fs, cip) | LFS_CLEANER_MUST_CLEAN);
 	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
 	/* Save segment flags for later */
@@ -644,7 +645,8 @@ lfs_segunlock_relock(struct lfs *fs)
 
 	/* Cleaner can relax now */
 	LFS_CLEANERINFO(cip, fs, bp);
-	cip->flags &= ~LFS_CLEANER_MUST_CLEAN;
+	lfs_ci_setflags(fs, cip,
+			lfs_ci_getflags(fs, cip) & ~LFS_CLEANER_MUST_CLEAN);
 	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
 	return;

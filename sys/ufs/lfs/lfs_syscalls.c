@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.166 2015/08/12 18:23:47 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.167 2015/08/12 18:25:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.166 2015/08/12 18:23:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.167 2015/08/12 18:25:04 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -877,12 +877,12 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	LFS_WRITESEGENTRY(sup, fs, segnum, bp);
 
 	LFS_CLEANERINFO(cip, fs, bp);
-	++cip->clean;
-	--cip->dirty;
-	lfs_sb_setnclean(fs, cip->clean);
+	lfs_ci_shiftdirtytoclean(fs, cip, 1);
+	lfs_sb_setnclean(fs, lfs_ci_getclean(fs, cip));
 	mutex_enter(&lfs_lock);
-	cip->bfree = lfs_sb_getbfree(fs);
-	cip->avail = lfs_sb_getavail(fs) - fs->lfs_ravail - fs->lfs_favail;
+	lfs_ci_setbfree(fs, cip, lfs_sb_getbfree(fs));
+	lfs_ci_setavail(fs, cip, lfs_sb_getavail(fs)
+			- fs->lfs_ravail - fs->lfs_favail);
 	wakeup(&fs->lfs_availsleep);
 	mutex_exit(&lfs_lock);
 	(void) LFS_BWRITE_LOG(bp);
