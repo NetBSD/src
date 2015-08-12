@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.173 2015/08/12 18:23:16 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.174 2015/08/12 18:24:14 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -867,6 +867,17 @@ struct lfs {
  * about inodes and data blocks.
  */
 typedef struct block_info {
+	u_int64_t bi_inode;		/* inode # */
+	int64_t	bi_lbn;			/* logical block w/in file */
+	int64_t	bi_daddr;		/* disk address of block */
+	u_int64_t bi_segcreate;		/* origin segment create time */
+	int	bi_version;		/* file version number */
+	int	bi_size;		/* size of the block (if fragment) */
+	void	*bi_bp;			/* data buffer */
+} BLOCK_INFO;
+
+/* Compatibility for 7.0 binaries */
+typedef struct block_info_70 {
 	u_int32_t bi_inode;		/* inode # */
 	int32_t	bi_lbn;			/* logical block w/in file */
 	int32_t	bi_daddr;		/* disk address of block */
@@ -874,7 +885,7 @@ typedef struct block_info {
 	int	bi_version;		/* file version number */
 	void	*bi_bp;			/* data buffer */
 	int	bi_size;		/* size of the block (if fragment) */
-} BLOCK_INFO;
+} BLOCK_INFO_70;
 
 /* Compatibility for 1.5 binaries */
 typedef struct block_info_15 {
@@ -946,8 +957,8 @@ struct lfs_fcntl_markv {
 
 #define LFCNSEGWAITALL	_FCNR_FSPRIV('L', 14, struct timeval)
 #define LFCNSEGWAIT	_FCNR_FSPRIV('L', 15, struct timeval)
-#define LFCNBMAPV	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv)
-#define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
+#define LFCNBMAPV	_FCNRW_FSPRIV('L', 16, struct lfs_fcntl_markv)
+#define LFCNMARKV	_FCNRW_FSPRIV('L', 17, struct lfs_fcntl_markv)
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
 
 struct lfs_fhandle {
