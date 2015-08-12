@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.29 2015/08/12 18:23:16 dholland Exp $  */
+/*      $NetBSD: coalesce.c,v 1.30 2015/08/12 18:25:03 dholland Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -344,10 +344,10 @@ clean_inode(struct clfs *fs, ino_t ino)
 			cip = *(CLEANERINFO *)bp->b_data;
 			brelse(bp, B_INVAL);
 
-			if (cip.clean < 4) /* XXX magic number 4 */
+			if (lfs_ci_getclean(fs, &cip) < 4) /* XXX magic number 4 */
 				kops.ko_fcntl(fs->clfs_ifilefd,
 				    LFCNSEGWAIT, NULL);
-		} while(cip.clean < 4);
+		} while (lfs_ci_getclean(fs, &cip) < 4);
 
 		/*
 		 * Note that although lim.blkcnt is 32 bits wide, bps

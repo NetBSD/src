@@ -59,14 +59,12 @@ __BEGIN_DECLS
 /* lfs_cleanerd.c */
 void pwarn(const char *, ...);
 void calc_cb(struct clfs *, int, struct clfs_seguse *);
-int clean_fs(struct clfs *, CLEANERINFO *);
 void dlog(const char *, ...);
 void handle_error(struct clfs **, int);
 int init_fs(struct clfs *, char *);
 int invalidate_segment(struct clfs *, int);
 void lfs_ientry(IFILE **, struct clfs *, ino_t, struct ubuf **);
 int load_segment(struct clfs *, int, BLOCK_INFO **, int *);
-int needs_cleaning(struct clfs *, CLEANERINFO *);
 int reinit_fs(struct clfs *);
 void reload_ifile(struct clfs *);
 void toss_old_blocks(struct clfs *, BLOCK_INFO **, blkcnt_t *, int *);
