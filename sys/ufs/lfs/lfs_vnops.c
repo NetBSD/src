@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.281 2015/08/03 17:33:54 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.282 2015/08/12 18:23:47 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.281 2015/08/03 17:33:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.282 2015/08/12 18:23:47 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1821,9 +1821,9 @@ segwait_common:
 		++fs->lfs_sleepers;
 		mutex_exit(&lfs_lock);
 		if (ap->a_command == LFCNBMAPV)
-			error = lfs_bmapv(l->l_proc, fsidp, blkiov, blkcnt);
+			error = lfs_bmapv(l, fsidp, blkiov, blkcnt);
 		else /* LFCNMARKV */
-			error = lfs_markv(l->l_proc, fsidp, blkiov, blkcnt);
+			error = lfs_markv(l, fsidp, blkiov, blkcnt);
 		if (error == 0)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
