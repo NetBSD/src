@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.49 2015/08/02 18:18:10 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.50 2015/08/12 18:25:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.49 2015/08/02 18:18:10 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.50 2015/08/12 18:25:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -827,13 +827,16 @@ dump_cleaner_info(struct lfs *lfsp, void *ipage)
 
 	cip = (CLEANERINFO *)ipage;
 	if (lfs_sb_getversion(lfsp) > 1) {
-		(void)printf("free_head %d\n", cip->free_head);
-		(void)printf("free_tail %d\n", cip->free_tail);
+		(void)printf("free_head %ju\n",
+			     (uintmax_t)lfs_ci_getfree_head(lfsp, cip));
+		(void)printf("free_tail %ju\n",
+			     (uintmax_t)lfs_ci_getfree_tail(lfsp, cip));
 	}
-	(void)printf("clean\t%d\tdirty\t%d\n",
-		     cip->clean, cip->dirty);
-	(void)printf("bfree\t%d\tavail\t%d\n\n",
-		     cip->bfree, cip->avail);
+	(void)printf("clean\t%u\tdirty\t%u\n",
+		     lfs_ci_getclean(lfsp, cip), lfs_ci_getdirty(lfsp, cip));
+	(void)printf("bfree\t%jd\tavail\t%jd\n\n",
+		     (intmax_t)lfs_ci_getbfree(lfsp, cip),
+		     (intmax_t)lfs_ci_getavail(lfsp, cip));
 }
 
 static void

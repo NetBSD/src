@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.335 2015/08/12 18:23:59 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.336 2015/08/12 18:25:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.335 2015/08/12 18:23:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.336 2015/08/12 18:25:04 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1198,10 +1198,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * the superblock.
 	 */
 	LFS_CLEANERINFO(cip, fs, bp);
-	cip->clean = lfs_sb_getnclean(fs);
-	cip->dirty = lfs_sb_getnseg(fs) - lfs_sb_getnclean(fs);
-	cip->avail = lfs_sb_getavail(fs);
-	cip->bfree = lfs_sb_getbfree(fs);
+	lfs_ci_setclean(fs, cip, lfs_sb_getnclean(fs));
+	lfs_ci_setdirty(fs, cip, lfs_sb_getnseg(fs) - lfs_sb_getnclean(fs));
+	lfs_ci_setavail(fs, cip, lfs_sb_getavail(fs));
+	lfs_ci_setbfree(fs, cip, lfs_sb_getbfree(fs));
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */
 
 	/*
@@ -2268,6 +2268,7 @@ int
 lfs_resize_fs(struct lfs *fs, int newnsegs)
 {
 	SEGUSE *sup;
+	CLEANERINFO *cip;
 	struct buf *bp, *obp;
 	daddr_t olast, nlast, ilast, noff, start, end;
 	struct vnode *ivp;
@@ -2445,8 +2446,9 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	/* Update cleaner info so the cleaner can die */
 	/* XXX what to do if bread fails? */
 	bread(ivp, 0, lfs_sb_getbsize(fs), B_MODIFY, &bp);
-	((CLEANERINFO *)bp->b_data)->clean = lfs_sb_getnclean(fs);
-	((CLEANERINFO *)bp->b_data)->dirty = lfs_sb_getnseg(fs) - lfs_sb_getnclean(fs);
+	cip = bp->b_data;
+	lfs_ci_setclean(fs, cip, lfs_sb_getnclean(fs));
+	lfs_ci_setdirty(fs, cip, lfs_sb_getnseg(fs) - lfs_sb_getnclean(fs));
 	VOP_BWRITE(bp->b_vp, bp);
 
 	/* Let Ifile accesses proceed */
