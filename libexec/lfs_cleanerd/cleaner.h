@@ -69,14 +69,13 @@ int load_segment(struct clfs *, int, BLOCK_INFO **, int *);
 int needs_cleaning(struct clfs *, CLEANERINFO *);
 int reinit_fs(struct clfs *);
 void reload_ifile(struct clfs *);
-void toss_old_blocks(struct clfs *, BLOCK_INFO **, int *, int *);
+void toss_old_blocks(struct clfs *, BLOCK_INFO **, blkcnt_t *, int *);
 
 /* cleansrv.c */
 void check_control_socket(void);
 void try_to_become_master(int, char **);
 
 /* coalesce.c */
-int log2int(int);
 int clean_all_inodes(struct clfs *);
 int fork_coalesce(struct clfs *);
 
