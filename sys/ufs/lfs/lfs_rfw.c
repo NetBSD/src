@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.28 2015/08/12 18:27:01 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.29 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.28 2015/08/12 18:27:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.29 2015/08/12 18:28:01 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -256,12 +256,13 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 {
 	struct vnode *devvp, *vp;
 	struct inode *ip;
-	struct ulfs1_dinode *dip;
+	union lfs_dinode *dip;
 	struct buf *dbp, *ibp;
 	int error;
 	daddr_t daddr;
 	IFILE *ifp;
 	SEGUSE *sup;
+	unsigned i, num;
 
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
@@ -275,10 +276,12 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 		DLOG((DLOG_RF, "update_inoblk: bread returned %d\n", error));
 		return error;
 	}
-	dip = ((struct ulfs1_dinode *)(dbp->b_data)) + LFS_INOPB(fs);
-	while (--dip >= (struct ulfs1_dinode *)dbp->b_data) {
-		if (dip->di_inumber > LFS_IFILE_INUM) {
-			error = lfs_rf_valloc(fs, dip->di_inumber, dip->di_gen,
+	num = LFS_INOPB(fs);
+	for (i = num; i-- > 0; ) {
+		dip = (union lfs_dinode *)((char *)dbp->b_data + i * DINOSIZE(fs));
+		if (lfs_dino_getinumber(fs, dip) > LFS_IFILE_INUM) {
+			error = lfs_rf_valloc(fs, lfs_dino_getinumber(fs, dip),
+					      lfs_dino_getgen(fs, dip),
 					      l, &vp);
 			if (error) {
 				DLOG((DLOG_RF, "update_inoblk: lfs_rf_valloc"
@@ -286,21 +289,42 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 				continue;
 			}
 			ip = VTOI(vp);
-			if (dip->di_size != ip->i_size)
-				lfs_truncate(vp, dip->di_size, 0, NOCRED);
+			if (lfs_dino_getsize(fs, dip) != ip->i_size)
+				lfs_truncate(vp, lfs_dino_getsize(fs, dip), 0,
+					     NOCRED);
 			/* Get mode, link count, size, and times */
-			memcpy(ip->i_din.ffs1_din, dip,
-			       offsetof(struct ulfs1_dinode, di_db[0]));
+			/* XXX: ugly, simplify */
+			if (fs->lfs_is64) {
+				/*
+				 * XXX what about di_extb?
+				 */
+				memcpy(ip->i_din.ffs2_din, dip,
+				       offsetof(struct lfs64_dinode, di_db[0]));
+				/* Then the rest, except di_blocks */
+				ip->i_ffs2_modrev = dip->u_64.di_modrev;
+				ip->i_ffs2_inumber = dip->u_64.di_inumber;
+				memset(ip->i_din.ffs2_din->di_spare, 0,
+				       sizeof(ip->i_din.ffs2_din->di_spare));
+			} else {
+				memcpy(ip->i_din.ffs1_din, dip,
+				       offsetof(struct lfs32_dinode, di_db[0]));
+				/* Then the rest, except di_blocks */
+				ip->i_ffs1_flags = dip->u_32.di_flags;
+				ip->i_ffs1_gen = dip->u_32.di_gen;
+				ip->i_ffs1_uid = dip->u_32.di_uid;
+				ip->i_ffs1_gid = dip->u_32.di_gid;
+				ip->i_ffs1_modrev = dip->u_32.di_modrev;
+			}
 
 			/* Then the rest, except di_blocks */
-			ip->i_flags = ip->i_ffs1_flags = dip->di_flags;
-			ip->i_gen = ip->i_ffs1_gen = dip->di_gen;
-			ip->i_uid = ip->i_ffs1_uid = dip->di_uid;
-			ip->i_gid = ip->i_ffs1_gid = dip->di_gid;
+			ip->i_flags = lfs_dino_getflags(fs, dip);
+			ip->i_gen = lfs_dino_getgen(fs, dip);
+			ip->i_uid = lfs_dino_getuid(fs, dip);
+			ip->i_gid = lfs_dino_getgid(fs, dip);
 
-			ip->i_mode = ip->i_ffs1_mode;
-			ip->i_nlink = ip->i_ffs1_nlink;
-			ip->i_size = ip->i_ffs1_size;
+			ip->i_mode = lfs_dino_getmode(fs, dip);
+			ip->i_nlink = lfs_dino_getnlink(fs, dip);
+			ip->i_size = lfs_dino_getsize(fs, dip);
 
 			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 
@@ -310,7 +334,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 			vput(vp);
 
 			/* Record change in location */
-			LFS_IENTRY(ifp, fs, dip->di_inumber, ibp);
+			LFS_IENTRY(ifp, fs, lfs_dino_getinumber(fs, dip), ibp);
 			daddr = lfs_if_getdaddr(fs, ifp);
 			lfs_if_setdaddr(fs, ifp, LFS_DBTOFSB(fs, dbp->b_blkno));
 			error = LFS_BWRITE_LOG(ibp); /* Ifile */
@@ -319,14 +343,14 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 				if (daddr > 0) {
 					LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, daddr),
 						     ibp);
-					sup->su_nbytes -= sizeof (struct ulfs1_dinode);
+					sup->su_nbytes -= DINOSIZE(fs);
 					LFS_WRITESEGENTRY(sup, fs,
 							  lfs_dtosn(fs, daddr),
 							  ibp);
 				}
 				LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, LFS_DBTOFSB(fs, dbp->b_blkno)),
 					     ibp);
-				sup->su_nbytes += sizeof (struct ulfs1_dinode);
+				sup->su_nbytes += DINOSIZE(fs);
 				LFS_WRITESEGENTRY(sup, fs,
 						  lfs_dtosn(fs, LFS_DBTOFSB(fs, dbp->b_blkno)),
 						  ibp);

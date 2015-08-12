@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv2.c,v 1.13 2015/08/12 18:25:52 dholland Exp $ */
+/* $NetBSD: lfsv2.c,v 1.14 2015/08/12 18:28:01 dholland Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	2
@@ -13,7 +13,7 @@
 #define	ufs_ls			lfsv2_ls
 #endif
 
-#define ufs_dinode		ulfs1_dinode
+#define ufs_dinode		lfs32_dinode
 
 #define	fs_bsize		lfs_dlfs_u.u_32.dlfs_bsize
 

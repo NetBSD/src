@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.41 2015/08/12 18:25:52 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.42 2015/08/12 18:28:00 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -90,7 +90,7 @@ pass1(void)
 	ino_t inumber;
 	int i;
 	struct inodesc idesc;
-	struct ulfs1_dinode *tinode;
+	union lfs_dinode *tinode;
 	IFILE *ifp;
 	struct ubuf *bp;
 	struct ino_daddr **dins;
@@ -131,7 +131,7 @@ pass1(void)
 		if (inumber == 0 || dins[i]->daddr == 0)
 			continue;
 		tinode = ginode(inumber);
-		if (tinode && (tinode->di_mode & LFS_IFMT) == LFS_IFDIR)
+		if (tinode && (lfs_dino_getmode(fs, tinode) & LFS_IFMT) == LFS_IFDIR)
 			numdirs++;
 	}
 
@@ -159,15 +159,41 @@ pass1(void)
 	free(dins);
 }
 
+static int
+nonzero_db(union lfs_dinode *dip)
+{
+	unsigned i;
+
+	for (i=0; i<ULFS_NDADDR; i++) {
+		if (lfs_dino_getdb(fs, dip, i) != 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int
+nonzero_ib(union lfs_dinode *dip)
+{
+	unsigned i;
+
+	for (i=0; i<ULFS_NIADDR; i++) {
+		if (lfs_dino_getib(fs, dip, i) != 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void
 checkinode(ino_t inumber, struct inodesc * idesc)
 {
-	struct ulfs1_dinode *dp;
+	union lfs_dinode *dp;
 	struct uvnode  *vp;
 	struct zlncnt *zlnp;
 	struct ubuf *bp;
 	IFILE *ifp;
-	int ndb, j;
+	int64_t ndb, j;
 	mode_t mode;
 
 	vp = vget(fs, inumber);
@@ -180,14 +206,13 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		statemap[inumber] = USTATE;
 		return;
 	}
-	mode = dp->di_mode & LFS_IFMT;
+	mode = lfs_dino_getmode(fs, dp) & LFS_IFMT;
 
 	/* XXX - LFS doesn't have this particular problem (?) */
 	if (mode == 0) {
-		if (memcmp(dp->di_db, zino.di_db, ULFS_NDADDR * sizeof(ulfs_daddr_t)) ||
-		    memcmp(dp->di_ib, zino.di_ib, ULFS_NIADDR * sizeof(ulfs_daddr_t)) ||
-		    dp->di_mode || dp->di_size) {
-			pwarn("mode=o%o, ifmt=o%o\n", dp->di_mode, mode);
+		if (nonzero_db(dp) || nonzero_ib(dp) ||
+		    lfs_dino_getmode(fs, dp) || lfs_dino_getsize(fs, dp)) {
+			pwarn("mode=o%o, ifmt=o%o\n", lfs_dino_getmode(fs, dp), mode);
 			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
 			    (unsigned long long)inumber);
 			if (reply("CLEAR") == 1) {
@@ -200,25 +225,25 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		return;
 	}
 	lastino = inumber;
-	if (/* dp->di_size < 0 || */
-	    dp->di_size + lfs_sb_getbsize(fs) - 1 < dp->di_size) {
+	if (/* lfs_dino_getsize(fs, dp) < 0 || */
+	    lfs_dino_getsize(fs, dp) + lfs_sb_getbsize(fs) - 1 < lfs_dino_getsize(fs, dp)) {
 		if (debug)
-			printf("bad size %llu:",
-			    (unsigned long long) dp->di_size);
+			printf("bad size %ju:",
+			    (uintmax_t)lfs_dino_getsize(fs, dp));
 		goto unknown;
 	}
 	if (!preen && mode == LFS_IFMT && reply("HOLD BAD BLOCK") == 1) {
 		vp = vget(fs, inumber);
 		dp = VTOD(vp);
-		dp->di_size = lfs_sb_getfsize(fs);
-		dp->di_mode = LFS_IFREG | 0600;
+		lfs_dino_setsize(fs, dp, lfs_sb_getfsize(fs));
+		lfs_dino_setmode(fs, dp, LFS_IFREG | 0600);
 		inodirty(VTOI(vp));
 	}
-	ndb = howmany(dp->di_size, lfs_sb_getbsize(fs));
+	ndb = howmany(lfs_dino_getsize(fs, dp), lfs_sb_getbsize(fs));
 	if (ndb < 0) {
 		if (debug)
-			printf("bad size %llu ndb %d:",
-			    (unsigned long long) dp->di_size, ndb);
+			printf("bad size %ju ndb %jd:",
+			    (uintmax_t)lfs_dino_getsize(fs, dp), (intmax_t)ndb);
 		goto unknown;
 	}
 	if (mode == LFS_IFBLK || mode == LFS_IFCHR)
@@ -228,9 +253,9 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		 * Fake ndb value so direct/indirect block checks below
 		 * will detect any garbage after symlink string.
 		 */
-		if (dp->di_size < lfs_sb_getmaxsymlinklen(fs) ||
-		    (lfs_sb_getmaxsymlinklen(fs) == 0 && dp->di_blocks == 0)) {
-			ndb = howmany(dp->di_size, sizeof(ulfs_daddr_t));
+		if (lfs_dino_getsize(fs, dp) < lfs_sb_getmaxsymlinklen(fs) ||
+		    (lfs_sb_getmaxsymlinklen(fs) == 0 && lfs_dino_getblocks(fs, dp) == 0)) {
+			ndb = howmany(lfs_dino_getsize(fs, dp), sizeof(ulfs_daddr_t));
 			if (ndb > ULFS_NDADDR) {
 				j = ndb - ULFS_NDADDR;
 				for (ndb = 1; j > 1; j--)
@@ -240,33 +265,37 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		}
 	}
 	for (j = ndb; j < ULFS_NDADDR; j++)
-		if (dp->di_db[j] != 0) {
+		if (lfs_dino_getdb(fs, dp, j) != 0) {
 			if (debug)
-				printf("bad direct addr for size %lld lbn %d: 0x%x\n",
-					(long long)dp->di_size, j, (unsigned)dp->di_db[j]);
+				printf("bad direct addr for size %ju lbn %jd: 0x%jx\n",
+					(uintmax_t)lfs_dino_getsize(fs, dp),
+					(intmax_t)j,
+					(intmax_t)lfs_dino_getdb(fs, dp, j));
 			goto unknown;
 		}
 	for (j = 0, ndb -= ULFS_NDADDR; ndb > 0; j++)
 		ndb /= LFS_NINDIR(fs);
 	for (; j < ULFS_NIADDR; j++)
-		if (dp->di_ib[j] != 0) {
+		if (lfs_dino_getib(fs, dp, j) != 0) {
 			if (debug)
-				printf("bad indirect addr for size %lld # %d: 0x%x\n",
-					(long long)dp->di_size, j, (unsigned)dp->di_ib[j]);
+				printf("bad indirect addr for size %ju # %jd: 0x%jx\n",
+					(uintmax_t)lfs_dino_getsize(fs, dp),
+					(intmax_t)j,
+					(intmax_t)lfs_dino_getib(fs, dp, j));
 			goto unknown;
 		}
 	if (ftypeok(dp) == 0)
 		goto unknown;
 	n_files++;
-	lncntp[inumber] = dp->di_nlink;
-	if (dp->di_nlink <= 0) {
+	lncntp[inumber] = lfs_dino_getnlink(fs, dp);
+	if (lfs_dino_getnlink(fs, dp) <= 0) {
 		zlnp = emalloc(sizeof *zlnp);
 		zlnp->zlncnt = inumber;
 		zlnp->next = zlnhead;
 		zlnhead = zlnp;
 	}
 	if (mode == LFS_IFDIR) {
-		if (dp->di_size == 0)
+		if (lfs_dino_getsize(fs, dp) == 0)
 			statemap[inumber] = DCLEAR;
 		else
 			statemap[inumber] = DSTATE;
@@ -279,7 +308,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	 * to rewrite blocks from a file whose directory operation (removal)
 	 * is in progress.
 	 */
-	if (dp->di_nlink <= 0) {
+	if (lfs_dino_getnlink(fs, dp) <= 0) {
 		LFS_IENTRY(ifp, fs, inumber, bp);
 		if (lfs_if_getnextfree(fs, ifp) == LFS_ORPHAN_NEXTFREE) {
 			statemap[inumber] = (mode == LFS_IFDIR ? DCLEAR : FCLEAR);
@@ -292,19 +321,21 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		brelse(bp, 0);
 	}
 
+	/* XXX: why VTOD(vp) instead of dp here? */
+
 	typemap[inumber] = LFS_IFTODT(mode);
 	badblk = dupblk = 0;
 	idesc->id_number = inumber;
 	(void) ckinode(VTOD(vp), idesc);
-	if (dp->di_blocks != idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%llu (%d SHOULD BE %d)",
-		    (unsigned long long)inumber, dp->di_blocks,
+	if (lfs_dino_getblocks(fs, dp) != idesc->id_entryno) {
+		pwarn("INCORRECT BLOCK COUNT I=%llu (%ju SHOULD BE %d)",
+		    (unsigned long long)inumber, lfs_dino_getblocks(fs, dp),
 		    idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0)
 			return;
-		VTOI(vp)->i_ffs1_blocks = idesc->id_entryno;
+		lfs_dino_setblocks(fs, VTOD(vp), idesc->id_entryno);
 		inodirty(VTOI(vp));
 	}
 	return;
