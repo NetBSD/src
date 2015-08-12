@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.252 2015/08/12 18:25:04 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.253 2015/08/12 18:25:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.252 2015/08/12 18:25:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.253 2015/08/12 18:25:52 dholland Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -953,8 +953,8 @@ lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t n
 		lfs_sb_setidaddr(fs, LFS_DBTOFSB(fs, ndaddr));
 	} else {
 		LFS_IENTRY(ifp, fs, ino, bp);
-		daddr = ifp->if_daddr;
-		ifp->if_daddr = LFS_DBTOFSB(fs, ndaddr);
+		daddr = lfs_if_getdaddr(fs, ifp);
+		lfs_if_setdaddr(fs, ifp, LFS_DBTOFSB(fs, ndaddr));
 		(void)LFS_BWRITE_LOG(bp); /* Ifile */
 	}
 

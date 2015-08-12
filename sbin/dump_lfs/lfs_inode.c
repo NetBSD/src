@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.23 2015/08/02 18:18:09 dholland Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.24 2015/08/12 18:25:52 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.23 2015/08/02 18:18:09 dholland Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.24 2015/08/12 18:25:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,6 @@ __RCSID("$NetBSD: lfs_inode.c,v 1.23 2015/08/02 18:18:09 dholland Exp $");
 
 #include "dump.h"
 #undef di_inumber
-
-#define MAXIFPB        (MAXBSIZE / sizeof(IFILE))
 
 #define	HASDUMPEDFILE	0x1
 #define	HASSUBDIRS	0x2
@@ -278,15 +276,16 @@ lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 	return (daddr_t)((int32_t *)bp)[off];
 }
 
-static struct ifile *
+static IFILE *
 lfs_ientry(ino_t ino)
 {
-	static struct ifile ifileblock[MAXIFPB];
+	static char ifileblock[MAXBSIZE];
 	static daddr_t ifblkno;
 	daddr_t lbn;
 	daddr_t blkno;
 	union dinode *dp;
 	struct ulfs1_dinode *ldp;
+	unsigned index;
     
 	lbn = ino/lfs_sb_getifpb(sblock) + lfs_sb_getcleansz(sblock) + lfs_sb_getsegtabsz(sblock);
 	dp = getino(lfs_sb_getifile(sblock));
@@ -294,9 +293,16 @@ lfs_ientry(ino_t ino)
 	ldp = (struct ulfs1_dinode *)dp;
 	blkno = lfs_bmap(sblock, ldp ,lbn);
 	if (blkno != ifblkno)
-		bread(LFS_FSBTODB(sblock, blkno), (char *)ifileblock,
+		bread(LFS_FSBTODB(sblock, blkno), ifileblock,
 		    lfs_sb_getbsize(sblock));
-	return ifileblock + (ino % lfs_sb_getifpb(sblock));
+	index = ino % lfs_sb_getifpb(sblock);
+	if (sblock->lfs_is64) {
+		return (IFILE *) &((IFILE64 *)ifileblock)[index];
+	} else if (lfs_sb_getversion(sblock) > 1) {
+		return (IFILE *) &((IFILE32 *)ifileblock)[index];
+	} else {
+		return (IFILE *) &((IFILE_V1 *)ifileblock)[index];
+	}
 }
 
 /* Search a block for a specific dinode. */
@@ -334,7 +340,7 @@ getino(ino_t inum)
 	}
 
 	curino = inum;
-	blkno = lfs_ientry(inum)->if_daddr;
+	blkno = lfs_if_getdaddr(sblock, lfs_ientry(inum));
 	if(blkno == LFS_UNUSED_DADDR)
 		return &empty_dinode;
 
