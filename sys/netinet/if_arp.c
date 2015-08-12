@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.171 2015/08/07 08:11:33 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.172 2015/08/12 07:13:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.171 2015/08/07 08:11:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.172 2015/08/12 07:13:14 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1243,9 +1243,7 @@ reply:
 	if (op != ARPOP_REQUEST) {
 		if (op == ARPOP_REPLY)
 			ARP_STATINC(ARP_STAT_RCVREPLY);
-	out:
-		m_freem(m);
-		return;
+		goto out;
 	}
 	ARP_STATINC(ARP_STAT_RCVREQUEST);
 	if (in_hosteq(itaddr, myaddr)) {
@@ -1300,6 +1298,8 @@ reply:
 	ARP_STAT_PUTREF();
 	(*ifp->if_output)(ifp, m, &sa, NULL);
 	return;
+out:
+	m_freem(m);
 }
 
 /*
