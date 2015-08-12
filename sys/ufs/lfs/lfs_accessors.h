@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.11 2015/08/12 18:26:27 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.12 2015/08/12 18:27:01 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -285,12 +285,76 @@
 /* XXX: move to a more suitable location in this file */
 #define LFS_BLKPTRSIZE(fs) ((fs)->lfs_is64 ? sizeof(int64_t) : sizeof(int32_t))
 
+/* Size of an on-disk inode number. */
+/* XXX: move to a more suitable location in this file */
+#define LFS_INUMSIZE(fs) ((fs)->lfs_is64 ? sizeof(int64_t) : sizeof(int32_t))
+
+/* size of a FINFO, without the block pointers */
+#define	FINFOSIZE(fs)	((fs)->lfs_is64 ? sizeof(FINFO64) : sizeof(FINFO32))
+
 /* Full size of the provided FINFO record, including its block pointers. */
 #define FINFO_FULLSIZE(fs, fip) \
-	(FINFOSIZE + (fip)->fi_nblocks * LFS_BLKPTRSIZE(fs))
+	(FINFOSIZE(fs) + lfs_fi_getnblocks(fs, fip) * LFS_BLKPTRSIZE(fs))
 
 #define NEXT_FINFO(fs, fip) \
 	((FINFO *)((char *)(fip) + FINFO_FULLSIZE(fs, fip)))
+
+#define LFS_DEF_FI_ACCESSOR(type, type32, field) \
+	static __unused inline type				\
+	lfs_fi_get##field(STRUCT_LFS *fs, FINFO *fip)		\
+	{							\
+		if (fs->lfs_is64) {				\
+			return fip->u_64.fi_##field; 		\
+		} else {					\
+			return fip->u_32.fi_##field; 		\
+		}						\
+	}							\
+	static __unused inline void				\
+	lfs_fi_set##field(STRUCT_LFS *fs, FINFO *fip, type val) \
+	{							\
+		if (fs->lfs_is64) {				\
+			type *p = &fip->u_64.fi_##field;	\
+			(void)p;				\
+			fip->u_64.fi_##field = val;		\
+		} else {					\
+			type32 *p = &fip->u_32.fi_##field;	\
+			(void)p;				\
+			fip->u_32.fi_##field = val;		\
+		}						\
+	}							\
+
+LFS_DEF_FI_ACCESSOR(uint32_t, uint32_t, nblocks);
+LFS_DEF_FI_ACCESSOR(uint32_t, uint32_t, version);
+LFS_DEF_FI_ACCESSOR(uint64_t, uint32_t, ino);
+LFS_DEF_FI_ACCESSOR(uint32_t, uint32_t, lastlength);
+
+static __unused inline daddr_t
+lfs_fi_getblock(STRUCT_LFS *fs, FINFO *fip, unsigned index)
+{
+	void *firstblock;
+
+	firstblock = (char *)fip + FINFOSIZE(fs);
+	KASSERT(index < lfs_fi_getnblocks(fs, fip));
+	if (fs->lfs_is64) {
+		return ((int64_t *)firstblock)[index];
+	} else {
+		return ((int32_t *)firstblock)[index];
+	}
+}
+
+static __unused inline void
+lfs_fi_setblock(STRUCT_LFS *fs, FINFO *fip, unsigned index, daddr_t blk)
+{
+	void *firstblock;
+
+	firstblock = (char *)fip + FINFOSIZE(fs);
+	KASSERT(index < lfs_fi_getnblocks(fs, fip));
+	if (fs->lfs_is64) {
+		((int64_t *)firstblock)[index] = blk;
+	} else {
+		((int32_t *)firstblock)[index] = blk;
+	}
+}
 
 /*
  * Index file inode entries.
@@ -498,11 +562,11 @@ lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
 static __unused inline FINFO *
 segsum_finfobase(STRUCT_LFS *fs, SEGSUM *ssp)
 {
-	return (FINFO *)((char *)ssp) + SEGSUM_SIZE(fs);
+	return (FINFO *)((char *)ssp + SEGSUM_SIZE(fs));
 }
 #else
 #define SEGSUM_FINFOBASE(fs, ssp) \
-	((FINFO *)((char *)(ssp)) + SEGSUM_SIZE(fs));
+	((FINFO *)((char *)(ssp) + SEGSUM_SIZE(fs)));
 #endif
 
 #define LFS_DEF_SS_ACCESSOR(type, type32, field) \
@@ -857,6 +921,88 @@ lfs_blksize(STRUCT_LFS *fs, struct inode *ip, uint64_t lbn)
 	}
 }
 #endif
+
+/*
+ * union lfs_blocks
+ */
+
+static __unused inline void
+lfs_blocks_fromvoid(STRUCT_LFS *fs, union lfs_blocks *bp, void *p)
+{
+	if (fs->lfs_is64) {
+		bp->b64 = p;
+	} else {
+		bp->b32 = p;
+	}
+}
+
+static __unused inline void
+lfs_blocks_fromfinfo(STRUCT_LFS *fs, union lfs_blocks *bp, FINFO *fip)
+{
+	void *firstblock;
+
+	firstblock = (char *)fip + FINFOSIZE(fs);
+	if (fs->lfs_is64) {
+		bp->b64 = (int64_t *)firstblock;
+	}  else {
+		bp->b32 = (int32_t *)firstblock;
+	}
+}
+
+static __unused inline daddr_t
+lfs_blocks_get(STRUCT_LFS *fs, union lfs_blocks *bp, unsigned index)
+{
+	if (fs->lfs_is64) {
+		return bp->b64[index];
+	} else {
+		return bp->b32[index];
+	}
+}
+
+static __unused inline void
+lfs_blocks_set(STRUCT_LFS *fs, union lfs_blocks *bp, unsigned index, daddr_t val)
+{
+	if (fs->lfs_is64) {
+		bp->b64[index] = val;
+	} else {
+		bp->b32[index] = val;
+	}
+}
+
+static __unused inline void
+lfs_blocks_inc(STRUCT_LFS *fs, union lfs_blocks *bp)
+{
+	if (fs->lfs_is64) {
+		bp->b64++;
+	} else {
+		bp->b32++;
+	}
+}
+
+static __unused inline int
+lfs_blocks_eq(STRUCT_LFS *fs, union lfs_blocks *bp1, union lfs_blocks *bp2)
+{
+	if (fs->lfs_is64) {
+		return bp1->b64 == bp2->b64;
+	} else {
+		return bp1->b32 == bp2->b32;
+	}
+}
+
+static __unused inline int
+lfs_blocks_sub(STRUCT_LFS *fs, union lfs_blocks *bp1, union lfs_blocks *bp2)
+{
+	/* (remember that the pointers are typed) */
+	if (fs->lfs_is64) {
+		return bp1->b64 - bp2->b64;
+	} else {
+		return bp1->b32 - bp2->b32;
+	}
+}
+
+/*
+ * struct segment
+ */
 
 
 /*

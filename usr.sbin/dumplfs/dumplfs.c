@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.52 2015/08/12 18:26:27 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.53 2015/08/12 18:27:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.52 2015/08/12 18:26:27 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.53 2015/08/12 18:27:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -498,6 +498,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 {
 	FINFO *fp;
 	int32_t *dp, *idp;
+	union lfs_blocks fipblocks;
 	int i, j, acc;
 	int ck;
 	int numbytes, numblocks;
@@ -580,23 +581,26 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 
 	fp = SEGSUM_FINFOBASE(lfsp, sp);
 	for (i = 0; i < lfs_ss_getnfinfo(lfsp, sp); i++) {
-		(void)printf("    FINFO for inode: %d version %d nblocks %d lastlength %d\n",
-		    fp->fi_ino, fp->fi_version, fp->fi_nblocks,
-		    fp->fi_lastlength);
-		dp = &(fp->fi_blocks[0]);
-		numblocks += fp->fi_nblocks;
-		for (j = 0; j < fp->fi_nblocks; j++, dp++) {
-			(void)printf("\t%d", *dp);
+		(void)printf("    FINFO for inode: %ju version %u nblocks %u lastlength %u\n",
+		    (uintmax_t)lfs_fi_getino(lfsp, fp),
+		    lfs_fi_getversion(lfsp, fp),
+		    lfs_fi_getnblocks(lfsp, fp),
+		    lfs_fi_getlastlength(lfsp, fp));
+		lfs_blocks_fromfinfo(lfsp, &fipblocks, fp);
+		numblocks += lfs_fi_getnblocks(lfsp, fp);
+		for (j = 0; j < lfs_fi_getnblocks(lfsp, fp); j++) {
+			(void)printf("\t%jd",
+			    (intmax_t)lfs_blocks_get(lfsp, &fipblocks, j));
 			if ((j % 8) == 7)
 				(void)printf("\n");
-			if (j == fp->fi_nblocks - 1)
-				numbytes += fp->fi_lastlength;
+			if (j == lfs_fi_getnblocks(lfsp, fp) - 1)
+				numbytes += lfs_fi_getlastlength(lfsp, fp);
 			else
 				numbytes += lfs_sb_getbsize(lfsp);
 		}
 		if ((j % 8) != 0)
 			(void)printf("\n");
-		fp = (FINFO *)dp;
+		fp = NEXT_FINFO(lfsp, fp);
 	}
 
 	if (datasum_check == 0)
@@ -630,16 +634,16 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 			--idp;
 			++acc;
 		}
-		for (j = 0; j < fp->fi_nblocks; j++) {
+		for (j = 0; j < lfs_fi_getnblocks(lfsp, fp); j++) {
 			get(fd, fsbtobyte(lfsp, addr), buf, lfs_sb_getfsize(lfsp));
 			memcpy(datap + acc * el_size, buf, el_size);
-			if (j == fp->fi_nblocks - 1)
-				addr += lfs_btofsb(lfsp, fp->fi_lastlength);
+			if (j == lfs_fi_getnblocks(lfsp, fp) - 1)
+				addr += lfs_btofsb(lfsp, lfs_fi_getlastlength(lfsp, fp));
 			else
 				addr += lfs_btofsb(lfsp, lfs_sb_getbsize(lfsp));
 			++acc;
 		}
-		fp = (FINFO *)&(fp->fi_blocks[fp->fi_nblocks]);
+		fp = NEXT_FINFO(lfsp, fp);
 	}
 	while (addr == *idp) {
 		get(fd, fsbtobyte(lfsp, addr), buf, lfs_sb_getibsize(lfsp));

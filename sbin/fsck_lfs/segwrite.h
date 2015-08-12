@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.h,v 1.5 2015/07/24 06:56:41 dholland Exp $ */
+/* $NetBSD: segwrite.h,v 1.6 2015/08/12 18:27:01 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,8 +56,6 @@ int lfs_match_data(struct lfs *, struct ubuf *);
 int lfs_match_indir(struct lfs *, struct ubuf *);
 int lfs_match_dindir(struct lfs *, struct ubuf *);
 int lfs_match_tindir(struct lfs *, struct ubuf *);
-
-void lfs_shellsort(struct ubuf **, int32_t *, int, int);
 
 int ulfs_getlbns(struct lfs *, struct uvnode *, daddr_t, struct indir *, int *);
 int ulfs_bmaparray(struct lfs *, struct uvnode *, daddr_t, daddr_t *, struct indir *, int *);

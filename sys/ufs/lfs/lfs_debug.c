@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.50 2015/08/02 18:18:10 dholland Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.51 2015/08/12 18:27:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.50 2015/08/02 18:18:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.51 2015/08/12 18:27:01 dholland Exp $");
 
 #ifdef DEBUG
 
@@ -225,9 +225,10 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 	if ((actual = 1) == 1)
 		return; /* XXXX not checking this anymore, really */
 
-	if (sp->sum_bytes_left >= FINFOSIZE
-	   && sp->fip->fi_nblocks > 512) {
-		printf("%s:%d: fi_nblocks = %d\n",file,line,sp->fip->fi_nblocks);
+	if (sp->sum_bytes_left >= FINFOSIZE(fs)
+	   && lfs_fi_getnblocks(fs, sp->fip) > 512) {
+		printf("%s:%d: fi_nblocks = %d\n", file, line,
+		       lfs_fi_getnblocks(fs, sp->fip));
 #ifdef DDB
 		Debugger();
 #endif
@@ -241,9 +242,10 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 
 	actual = lfs_sb_getsumsize(fs)
 		/* amount taken up by FINFOs */
-		- ((char *)&(sp->fip->fi_blocks[sp->fip->fi_nblocks]) - (char *)(sp->segsum))
+		- ((char *)NEXT_FINFO(fs, sp->fip) - (char *)(sp->segsum))
 			/* amount taken up by inode blocks */
-			- sizeof(int32_t)*((sp->ninodes+LFS_INOPB(fs)-1) / LFS_INOPB(fs));
+			/* XXX should this be INUMSIZE or BLKPTRSIZE? */
+			- LFS_INUMSIZE(fs)*((sp->ninodes+LFS_INOPB(fs)-1) / LFS_INOPB(fs));
 #if 0
 	if (actual - sp->sum_bytes_left < offset)
 	{

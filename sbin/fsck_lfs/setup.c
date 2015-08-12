@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.53 2015/08/12 18:26:27 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.54 2015/08/12 18:27:01 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ setup(const char *dev)
 				(lfs_sb_getversion(fs) > 1 ? lfs_sb_getffshift(fs) :
 						       lfs_sb_getbshift(fs));
 			for (i = 0; i < lfs_ss_getnfinfo(fs, sp); i++) {
-				bc += fp->fi_lastlength + ((fp->fi_nblocks - 1)
+				bc += lfs_fi_getlastlength(fs, fp) + ((lfs_fi_getnblocks(fs, fp) - 1)
 					<< lfs_sb_getbshift(fs));
 				fp = NEXT_FINFO(fs, fp);
 			}

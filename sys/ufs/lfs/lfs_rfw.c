@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.27 2015/08/12 18:26:27 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.28 2015/08/12 18:27:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.27 2015/08/12 18:26:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.28 2015/08/12 18:27:01 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -428,8 +428,8 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 		nblocks = 0;
 		fip = SEGSUM_FINFOBASE(fs, (SEGSUM *)bp->b_data);
 		for (i = 0; i < lfs_ss_getnfinfo(fs, ssp); ++i) {
-			nblocks += fip->fi_nblocks;
-			if (fip->fi_nblocks <= 0)
+			nblocks += lfs_fi_getnblocks(fs, fip);
+			if (lfs_fi_getnblocks(fs, fip) <= 0)
 				break;
 			fip = NEXT_FINFO(fs, fip);
 		}
@@ -452,6 +452,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 					offset = -1;
 					goto err2;
 				}
+				/* XXX this can't be right, on-disk u_long? */
 				(*dp++) = ((u_long *)(dbp->b_data))[0];
 				brelse(dbp, BC_AGE);
 			}
@@ -469,9 +470,9 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			continue;
 		}
 		size = lfs_sb_getbsize(fs);
-		for (j = 0; j < fip->fi_nblocks; ++j) {
-			if (j == fip->fi_nblocks - 1)
-				size = fip->fi_lastlength;
+		for (j = 0; j < lfs_fi_getnblocks(fs, fip); ++j) {
+			if (j == lfs_fi_getnblocks(fs, fip) - 1)
+				size = lfs_fi_getlastlength(fs, fip);
 			if (flags & CHECK_CKSUM) {
 				error = bread(devvp, LFS_FSBTODB(fs, offset), size,
 				    0, &dbp);
@@ -484,10 +485,12 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			}
 			/* Account for and update any direct blocks */
 			if ((flags & CHECK_UPDATE) &&
-			   fip->fi_ino > LFS_IFILE_INUM &&
-			   fip->fi_blocks[j] >= 0) {
-				update_meta(fs, fip->fi_ino, fip->fi_version,
-					    fip->fi_blocks[j], offset, size, l);
+			   lfs_fi_getino(fs, fip) > LFS_IFILE_INUM &&
+			   lfs_fi_getblock(fs, fip, j) >= 0) {
+				update_meta(fs, lfs_fi_getino(fs, fip),
+					    lfs_fi_getversion(fs, fip),
+					    lfs_fi_getblock(fs, fip, j),
+					    offset, size, l);
 			}
 			offset += lfs_btofsb(fs, size);
 		}

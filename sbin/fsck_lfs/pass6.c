@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.40 2015/08/12 18:26:26 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.41 2015/08/12 18:27:01 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -262,18 +262,18 @@ pass6harvest(ulfs_daddr_t daddr, FINFO *fip)
 	int i;
 	size_t size;
 
-	vp = vget(fs, fip->fi_ino);
+	vp = vget(fs, lfs_fi_getino(fs, fip));
 	if (vp && vp != fs->lfs_ivnode &&
-	    VTOI(vp)->i_ffs1_gen == fip->fi_version) {
-		for (i = 0; i < fip->fi_nblocks; i++) {
-			size = (i == fip->fi_nblocks - 1 ?
-				fip->fi_lastlength : lfs_sb_getbsize(fs));
+	    VTOI(vp)->i_ffs1_gen == lfs_fi_getversion(fs, fip)) {
+		for (i = 0; i < lfs_fi_getnblocks(fs, fip); i++) {
+			size = (i == lfs_fi_getnblocks(fs, fip) - 1 ?
+				lfs_fi_getlastlength(fs, fip) : lfs_sb_getbsize(fs));
 			if (debug)
-				pwarn("ino %lld lbn %lld -> 0x%lx\n",
-					(long long)fip->fi_ino,
-					(long long)fip->fi_blocks[i],
-					(long)daddr);
-			rfw_update_single(vp, fip->fi_blocks[i], daddr, size);
+				pwarn("ino %ju lbn %jd -> 0x%jx\n",
+					(uintmax_t)lfs_fi_getino(fs, fip),
+					(intmax_t)lfs_fi_getblock(fs, fip, i),
+					(intmax_t)daddr);
+			rfw_update_single(vp, lfs_fi_getblock(fs, fip, i), daddr, size);
 			daddr += lfs_btofsb(fs, size);
 		}
 	}

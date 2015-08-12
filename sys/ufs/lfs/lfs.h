@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.177 2015/08/12 18:26:27 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.178 2015/08/12 18:27:01 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -475,17 +475,33 @@ struct segusage_v1 {
 
 /*
  * On-disk file information.  One per file with data blocks in the segment.
+ *
+ * The FINFO structure is a header; it is followed by fi_nblocks block
+ * pointers, which are logical block numbers of the file. (These are the
+ * blocks of the file present in this segment.)
  */
-typedef struct finfo FINFO;
-struct finfo {
+
+typedef struct finfo64 FINFO64;
+struct finfo64 {
+	u_int32_t fi_nblocks;		/* number of blocks */
+	u_int32_t fi_version;		/* version number */
+	u_int64_t fi_ino;		/* inode number */
+	u_int32_t fi_lastlength;	/* length of last block in array */
+	u_int32_t fi_pad;		/* unused */
+};
+
+typedef struct finfo32 FINFO32;
+struct finfo32 {
 	u_int32_t fi_nblocks;		/* number of blocks */
 	u_int32_t fi_version;		/* version number */
 	u_int32_t fi_ino;		/* inode number */
 	u_int32_t fi_lastlength;	/* length of last block in array */
-	int32_t	  fi_blocks[1];		/* array of logical block numbers */
 };
-/* sizeof FINFO except fi_blocks */
-#define	FINFOSIZE	(sizeof(FINFO) - sizeof(int32_t))
+
+typedef union finfo {
+	struct finfo64 u_64;
+	struct finfo32 u_32;
+} FINFO;
 
 /*
  * Index file inode entries.
@@ -974,6 +990,16 @@ typedef struct block_info_15 {
 	int	bi_size;		/* size of the block (if fragment) */
 } BLOCK_INFO_15;
 
+/*
+ * 32/64-bit-clean pointer to block pointers. This points into
+ * already-existing storage; it is mostly used to access the block
+ * pointers following a FINFO.
+ */
+union lfs_blocks {
+	int64_t *b64;
+	int32_t *b32;
+};
+
 /* In-memory description of a segment about to be written. */
 struct segment {
 	struct lfs	 *fs;		/* file system pointer */
@@ -982,14 +1008,14 @@ struct segment {
 	struct buf	**start_bpp;	/* pointer to first bp in this set */
 	struct buf	 *ibp;		/* buffer pointer to inode page */
 	struct ulfs1_dinode    *idp;          /* pointer to ifile dinode */
-	struct finfo	 *fip;		/* current fileinfo pointer */
+	FINFO *fip;			/* current fileinfo pointer */
 	struct vnode	 *vp;		/* vnode being gathered */
 	void	 *segsum;		/* segment summary info */
 	u_int32_t ninodes;		/* number of inodes in this segment */
 	int32_t seg_bytes_left;		/* bytes left in segment */
 	int32_t sum_bytes_left;		/* bytes left in summary block */
 	u_int32_t seg_number;		/* number of this segment */
-	int32_t *start_lbp;		/* beginning lbn for this set */
+	union lfs_blocks start_lbp;	/* beginning lbn for this set */
 
 #define SEGM_CKP	0x0001		/* doing a checkpoint */
 #define SEGM_CLEAN	0x0002		/* cleaner call; don't sort */
