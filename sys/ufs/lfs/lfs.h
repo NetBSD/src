@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.174 2015/08/12 18:24:14 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.175 2015/08/12 18:25:04 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -511,16 +511,35 @@ struct ifile_v1 {
  * Cleaner information structure.  This resides in the ifile and is used
  * to pass information from the kernel to the cleaner.
  */
-typedef struct _cleanerinfo {
-	u_int32_t clean;		/* number of clean segments */
-	u_int32_t dirty;		/* number of dirty segments */
-	/* XXX64 bfree and avail must -> 64 */
-	int32_t   bfree;		/* disk blocks free */
-	int32_t	  avail;		/* disk blocks available */
-	u_int32_t free_head;		/* head of the inode free list */
-	u_int32_t free_tail;		/* tail of the inode free list */
+
+/* flags for ->flags */
 #define LFS_CLEANER_MUST_CLEAN	0x01
-	u_int32_t flags;		/* status word from the kernel */
+
+typedef struct _cleanerinfo32 {
+	u_int32_t clean;		/* 0: number of clean segments */
+	u_int32_t dirty;		/* 4: number of dirty segments */
+	int32_t   bfree;		/* 8: disk blocks free */
+	int32_t	  avail;		/* 12: disk blocks available */
+	u_int32_t free_head;		/* 16: head of the inode free list */
+	u_int32_t free_tail;		/* 20: tail of the inode free list */
+	u_int32_t flags;		/* 24: status word from the kernel */
+} CLEANERINFO32;
+
+typedef struct _cleanerinfo64 {
+	u_int32_t clean;		/* 0: number of clean segments */
+	u_int32_t dirty;		/* 4: number of dirty segments */
+	int64_t   bfree;		/* 8: disk blocks free */
+	int64_t	  avail;		/* 16: disk blocks available */
+	u_int64_t free_head;		/* 24: head of the inode free list */
+	u_int64_t free_tail;		/* 32: tail of the inode free list */
+	u_int32_t flags;		/* 40: status word from the kernel */
+	u_int32_t pad;			/* 44: must be 64-bit aligned */
+} CLEANERINFO64;
+
+/* this must not go to disk directly of course */
+typedef union _cleanerinfo {
+	CLEANERINFO32 u_32;
+	CLEANERINFO64 u_64;
 } CLEANERINFO;
 
 /*

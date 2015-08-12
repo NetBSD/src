@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.45 2015/08/12 18:23:16 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.46 2015/08/12 18:25:03 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1024,8 +1024,8 @@ check_hidden_cost(struct clfs *fs, BLOCK_INFO *bip, int bic, off_t *ifc)
  * list, and send this list through lfs_markv() to move them to new
  * locations on disk.
  */
-int
-clean_fs(struct clfs *fs, CLEANERINFO *cip)
+static int
+clean_fs(struct clfs *fs, const CLEANERINFO64 *cip)
 {
 	int i, j, ngood, sn, bic, r, npos;
 	blkcnt_t widebic;
@@ -1236,9 +1236,10 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
  * the given filesystem needs to be cleaned.  Returns 1 if it does, 0 if it
  * does not, or -1 on error.
  */
-int
-needs_cleaning(struct clfs *fs, CLEANERINFO *cip)
+static int
+needs_cleaning(struct clfs *fs, CLEANERINFO64 *cip)
 {
+	CLEANERINFO *cipu;
 	struct ubuf *bp;
 	struct stat st;
 	daddr_t fsb_per_seg, max_free_segs;
@@ -1258,7 +1259,20 @@ needs_cleaning(struct clfs *fs, CLEANERINFO *cip)
 		syslog(LOG_ERR, "%s: can't read inode", lfs_sb_getfsmnt(fs));
 		return -1;
 	}
-	*cip = *(CLEANERINFO *)bp->b_data; /* Structure copy */
+	cipu = (CLEANERINFO *)bp->b_data;
+	if (fs->lfs_is64) {
+		/* Structure copy */
+		*cip = cipu->u_64;
+	} else {
+		/* Copy the fields and promote to 64 bit */
+		cip->clean = cipu->u_32.clean;
+		cip->dirty = cipu->u_32.dirty;
+		cip->bfree = cipu->u_32.bfree;
+		cip->avail = cipu->u_32.avail;
+		cip->free_head = cipu->u_32.free_head;
+		cip->free_tail = cipu->u_32.free_tail;
+		cip->flags = cipu->u_32.flags;
+	}
 	brelse(bp, B_INVAL);
 	cleaner_stats.bytes_read += lfs_sb_getbsize(fs);
 
@@ -1397,9 +1411,25 @@ lfs_cleaner_main(int argc, char **argv)
 #ifdef LFS_CLEANER_AS_LIB
 	sem_t *semaddr = NULL;
 #endif
-	CLEANERINFO ci;
+	CLEANERINFO64 ci;
 #ifndef USE_CLIENT_SERVER
 	char *cp, *pidname;
+#endif
+
+#ifdef RESCUEDIR
+	/*
+	 * XXX: Work around apparent bug with gcc 4.8 and -Os: it
+	 * claims that ci.clean is uninitialized in clean_fs (at one
+	 * of the several uses of it, which is neither the first nor
+	 * last use) -- this is conditionalized on RESCUEDIR because
+	 * it comes up for building the cleaner for /rescue. It
+	 * doesn't happen with plain -O2, and the value is clearly
+	 * always initialized.
+	 *
+	 * Hopefully in the future further rearrangements will allow
+	 * removing this hack.
+	 */
+	ci.clean = 0;
 #endif
 
 	/*

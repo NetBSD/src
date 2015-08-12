@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.40 2015/08/02 18:18:09 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.41 2015/08/12 18:25:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.40 2015/08/02 18:18:09 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.41 2015/08/12 18:25:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -722,11 +722,11 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 * Initialize the cleanerinfo block
 	 */
 	LFS_CLEANERINFO(cip, fs, bp);
-	cip->clean = lfs_sb_getnseg(fs);
-	cip->dirty = 0;
+	lfs_ci_setclean(fs, cip, lfs_sb_getnseg(fs));
+	lfs_ci_setdirty(fs, cip, 0);
 	if (version > 1) {
-		cip->free_head = HIGHEST_USED_INO + 1;
-		cip->free_tail = lfs_sb_getifpb(fs) - 1;
+		lfs_ci_setfree_head(fs, cip, HIGHEST_USED_INO + 1);
+		lfs_ci_setfree_tail(fs, cip, lfs_sb_getifpb(fs) - 1);
 	}
 	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
@@ -888,8 +888,8 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 
 	/* Put that in the Ifile version too, and write it */
 	LFS_CLEANERINFO(cip, fs, bp);
-	cip->bfree = lfs_sb_getbfree(fs);
-	cip->avail = lfs_sb_getavail(fs);
+	lfs_ci_setbfree(fs, cip, lfs_sb_getbfree(fs));
+	lfs_ci_setavail(fs, cip, lfs_sb_getavail(fs));
 	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 	if (!Nflag)
 		lfs_segwrite(fs, SEGM_CKP);
