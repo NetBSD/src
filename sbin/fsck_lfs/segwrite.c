@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.36 2015/08/02 18:18:09 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.37 2015/08/12 18:25:03 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -701,9 +701,8 @@ lfs_newseg(struct lfs * fs)
 	LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, lfs_sb_getnextseg(fs)), bp);
 
 	LFS_CLEANERINFO(cip, fs, bp);
-	--cip->clean;
-	++cip->dirty;
-	lfs_sb_setnclean(fs, cip->clean);
+	lfs_ci_shiftcleantodirty(fs, cip, 1);
+	lfs_sb_setnclean(fs, lfs_ci_getclean(fs, cip));
 	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
 	lfs_sb_setlastseg(fs, lfs_sb_getcurseg(fs));
