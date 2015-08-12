@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.8 2015/08/02 18:18:46 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.9 2015/08/12 18:25:04 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -144,6 +144,17 @@
 
 #ifndef _UFS_LFS_LFS_ACCESSORS_H_
 #define _UFS_LFS_LFS_ACCESSORS_H_
+
+/*
+ * STRUCT_LFS is used by the libsa code to get accessors that work
+ * with struct salfs instead of struct lfs, and by the cleaner to
+ * get accessors that work with struct clfs.
+ */
+
+#ifndef STRUCT_LFS
+#define STRUCT_LFS struct lfs
+#endif
+
 
 /*
  * Maximum length of a symlink that can be stored within the inode.
@@ -292,7 +303,54 @@
  */
 
 #define	CLEANSIZE_SU(fs)						\
-	((sizeof(CLEANERINFO) + lfs_sb_getbsize(fs) - 1) >> lfs_sb_getbshift(fs))
+	((((fs)->lfs_is64 ? sizeof(CLEANERINFO64) : sizeof(CLEANERINFO32)) + \
+		lfs_sb_getbsize(fs) - 1) >> lfs_sb_getbshift(fs))
+
+#define LFS_DEF_CI_ACCESSOR(type, type32, field) \
+	static __unused inline type				\
+	lfs_ci_get##field(STRUCT_LFS *fs, CLEANERINFO *cip)	\
+	{							\
+		if (fs->lfs_is64) {				\
+			return cip->u_64.field; 		\
+		} else {					\
+			return cip->u_32.field; 		\
+		}						\
+	}							\
+	static __unused inline void				\
+	lfs_ci_set##field(STRUCT_LFS *fs, CLEANERINFO *cip, type val) \
+	{							\
+		if (fs->lfs_is64) {				\
+			type *p = &cip->u_64.field;		\
+			(void)p;				\
+			cip->u_64.field = val;			\
+		} else {					\
+			type32 *p = &cip->u_32.field;		\
+			(void)p;				\
+			cip->u_32.field = val;			\
+		}						\
+	}							\
+
+LFS_DEF_CI_ACCESSOR(u_int32_t, u_int32_t, clean);
+LFS_DEF_CI_ACCESSOR(u_int32_t, u_int32_t, dirty);
+LFS_DEF_CI_ACCESSOR(int64_t, int32_t, bfree);
+LFS_DEF_CI_ACCESSOR(int64_t, int32_t, avail);
+LFS_DEF_CI_ACCESSOR(u_int64_t, u_int32_t, free_head);
+LFS_DEF_CI_ACCESSOR(u_int64_t, u_int32_t, free_tail);
+LFS_DEF_CI_ACCESSOR(u_int32_t, u_int32_t, flags);
+
+static __unused inline void
+lfs_ci_shiftcleantodirty(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
+{
+	lfs_ci_setclean(fs, cip, lfs_ci_getclean(fs, cip) - num);
+	lfs_ci_setdirty(fs, cip, lfs_ci_getdirty(fs, cip) + num);
+}
+
+static __unused inline void
+lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
+{
+	lfs_ci_setdirty(fs, cip, lfs_ci_getdirty(fs, cip) - num);
+	lfs_ci_setclean(fs, cip, lfs_ci_getclean(fs, cip) + num);
+}
 
 /* Read in the block with the cleaner info from the ifile. */
 #define LFS_CLEANERINFO(CP, F, BP) do {					\
@@ -310,12 +368,12 @@
  */
 #define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {		 	\
     mutex_enter(&lfs_lock);						\
-    if ((w) || (cip)->bfree != lfs_sb_getbfree(fs) ||		 	\
-	(cip)->avail != lfs_sb_getavail(fs) - fs->lfs_ravail -	 	\
+    if ((w) || lfs_ci_getbfree(fs, cip) != lfs_sb_getbfree(fs) ||	\
+	lfs_ci_getavail(fs, cip) != lfs_sb_getavail(fs) - fs->lfs_ravail - \
 	fs->lfs_favail) {	 					\
-	(cip)->bfree = lfs_sb_getbfree(fs);			 	\
-	(cip)->avail = lfs_sb_getavail(fs) - fs->lfs_ravail -		\
-		fs->lfs_favail;					 	\
+	lfs_ci_setbfree(fs, cip, lfs_sb_getbfree(fs));		 	\
+	lfs_ci_setavail(fs, cip, lfs_sb_getavail(fs) - fs->lfs_ravail -	\
+		fs->lfs_favail);				 	\
 	if (((bp)->b_flags & B_GATHERED) == 0) {		 	\
 		fs->lfs_flags |= LFS_IFDIRTY;				\
 	}								\
@@ -334,7 +392,7 @@
 #define LFS_GET_HEADFREE(FS, CIP, BP, FREEP) do {			\
 	if (lfs_sb_getversion(FS) > 1) {				\
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
-		lfs_sb_setfreehd(FS, (CIP)->free_head);			\
+		lfs_sb_setfreehd(FS, lfs_ci_getfree_head(FS, CIP));	\
 		brelse(BP, 0);						\
 	}								\
 	*(FREEP) = lfs_sb_getfreehd(FS);				\
@@ -344,7 +402,7 @@
 	lfs_sb_setfreehd(FS, VAL);					\
 	if (lfs_sb_getversion(FS) > 1) {				\
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
-		(CIP)->free_head = (VAL);				\
+		lfs_ci_setfree_head(FS, CIP, VAL);			\
 		LFS_BWRITE_LOG(BP);					\
 		mutex_enter(&lfs_lock);					\
 		(FS)->lfs_flags |= LFS_IFDIRTY;				\
@@ -354,13 +412,13 @@
 
 #define LFS_GET_TAILFREE(FS, CIP, BP, FREEP) do {			\
 	LFS_CLEANERINFO((CIP), (FS), (BP));				\
-	*(FREEP) = (CIP)->free_tail;					\
+	*(FREEP) = lfs_ci_getfree_tail(FS, CIP);			\
 	brelse(BP, 0);							\
 } while (0)
 
 #define LFS_PUT_TAILFREE(FS, CIP, BP, VAL) do {				\
 	LFS_CLEANERINFO((CIP), (FS), (BP));				\
-	(CIP)->free_tail = (VAL);					\
+	lfs_ci_setfree_tail(FS, CIP, VAL);				\
 	LFS_BWRITE_LOG(BP);						\
 	mutex_enter(&lfs_lock);						\
 	(FS)->lfs_flags |= LFS_IFDIRTY;					\
@@ -379,14 +437,7 @@
 
 /*
  * Generate accessors for the on-disk superblock fields with cpp.
- *
- * STRUCT_LFS is used by the libsa code to get accessors that work
- * with struct salfs instead of struct lfs.
  */
-
-#ifndef STRUCT_LFS
-#define STRUCT_LFS struct lfs
-#endif
 
 #define LFS_DEF_SB_ACCESSOR_FULL(type, type32, field) \
 	static __unused inline type				\
