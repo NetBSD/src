@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.48 2015/08/12 18:26:26 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.49 2015/08/12 18:27:01 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -546,7 +546,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		 * Kernels with this problem always wrote this zero-sized
 		 * finfo last, so just ignore it.
 		 */
-		if (fip->fi_nblocks == 0) {
+		if (lfs_fi_getnblocks(fs, fip) == 0) {
 #ifdef REPAIR_ZERO_FINFO
 			struct ubuf *nbp;
 			SEGSUM *nssp;
@@ -572,27 +572,27 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 #ifdef REPAIR_ZERO_FINFO
 		vers = -1;
 #else
-		lfs_ientry(&ifp, fs, fip->fi_ino, &ifbp);
+		lfs_ientry(&ifp, fs, lfs_fi_getino(fs, fip), &ifbp);
 		vers = lfs_if_getversion(fs, ifp);
 		brelse(ifbp, 0);
 #endif
-		if (vers != fip->fi_version) {
+		if (vers != lfs_fi_getversion(fs, fip)) {
 			size_t size;
 
 			/* Read all the blocks from the data summary */
-			for (i = 0; i < fip->fi_nblocks; i++) {
-				size = (i == fip->fi_nblocks - 1) ?
-					fip->fi_lastlength : lfs_sb_getbsize(fs);
+			for (i = 0; i < lfs_fi_getnblocks(fs, fip); i++) {
+				size = (i == lfs_fi_getnblocks(fs, fip) - 1) ?
+					lfs_fi_getlastlength(fs, fip) : lfs_sb_getbsize(fs);
 				cp = fd_ptrget(fs->clfs_devvp, daddr);
 				ck = lfs_cksum_part(cp, sizeof(u_int32_t), ck);
 				daddr += lfs_btofsb(fs, size);
 			}
-			fip = (FINFO *)(fip->fi_blocks + fip->fi_nblocks);
+			fip = NEXT_FINFO(fs, fip);
 			continue;
 		}
 
 		/* Add all the blocks from the finfos (current or not) */
-		nbip = (BLOCK_INFO *)realloc(bip, (*bic + fip->fi_nblocks) *
+		nbip = (BLOCK_INFO *)realloc(bip, (*bic + lfs_fi_getnblocks(fs, fip)) *
 					     sizeof(*bip));
 		if (nbip)
 			bip = nbip;
@@ -601,14 +601,14 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 			return 0x0;
 		}
 
-		for (i = 0; i < fip->fi_nblocks; i++) {
-			bip[*bic + i].bi_inode = fip->fi_ino;
-			bip[*bic + i].bi_lbn = fip->fi_blocks[i];
+		for (i = 0; i < lfs_fi_getnblocks(fs, fip); i++) {
+			bip[*bic + i].bi_inode = lfs_fi_getino(fs, fip);
+			bip[*bic + i].bi_lbn = lfs_fi_getblock(fs, fip, i);
 			bip[*bic + i].bi_daddr = daddr;
 			bip[*bic + i].bi_segcreate = lfs_ss_getcreate(fs, ssp);
-			bip[*bic + i].bi_version = fip->fi_version;
-			bip[*bic + i].bi_size = (i == fip->fi_nblocks - 1) ?
-				fip->fi_lastlength : lfs_sb_getbsize(fs);
+			bip[*bic + i].bi_version = lfs_fi_getversion(fs, fip);
+			bip[*bic + i].bi_size = (i == lfs_fi_getnblocks(fs, fip) - 1) ?
+				lfs_fi_getlastlength(fs, fip) : lfs_sb_getbsize(fs);
 			cp = fd_ptrget(fs->clfs_devvp, daddr);
 			ck = lfs_cksum_part(cp, sizeof(u_int32_t), ck);
 			bip[*bic + i].bi_bp = cp;
@@ -618,7 +618,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 			check_test_pattern(bip + *bic + i); /* XXXDEBUG */
 #endif
 		}
-		*bic += fip->fi_nblocks;
+		*bic += lfs_fi_getnblocks(fs, fip);
 		fip = NEXT_FINFO(fs, fip);
 	}
 
