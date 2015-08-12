@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.5 2015/07/30 08:09:36 ryo Exp $
+# $NetBSD: NITROGEN6X,v 1.6 2015/08/12 07:53:57 maxv Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -52,7 +52,6 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	LOCKDEBUG	# expensive locking checks/support
-options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	NO_POWERSAVE	# uncomment this to run under ICE
 

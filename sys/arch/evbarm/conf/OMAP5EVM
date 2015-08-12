@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OMAP5EVM,v 1.8 2015/03/31 17:37:47 riz Exp $
+#	$NetBSD: OMAP5EVM,v 1.9 2015/08/12 07:53:57 maxv Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -120,7 +120,6 @@ options 	SYSVSHM		# System V-like memory sharing
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40
