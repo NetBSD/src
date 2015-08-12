@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.38 2015/08/12 18:25:52 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.39 2015/08/12 18:26:27 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -152,6 +152,7 @@ lfs_segwrite(struct lfs * fs, int flags)
 	struct inode *ip;
 	struct segment *sp;
 	struct uvnode *vp;
+	SEGSUM *ssp;
 	int redo;
 
 	lfs_seglock(fs, flags | SEGM_CKP);
@@ -159,7 +160,8 @@ lfs_segwrite(struct lfs * fs, int flags)
 
 	lfs_writevnodes(fs, sp, VN_REG);
 	lfs_writevnodes(fs, sp, VN_DIROP);
-	((SEGSUM *) (sp->segsum))->ss_flags &= ~(SS_CONT);
+	ssp = (SEGSUM *)sp->segsum;
+	lfs_ss_setflags(fs, ssp, lfs_ss_getflags(fs, ssp) & ~(SS_CONT));
 
 	do {
 		vp = fs->lfs_ivnode;
@@ -199,6 +201,7 @@ lfs_writefile(struct lfs * fs, struct segment * sp, struct uvnode * vp)
 	struct finfo *fip;
 	struct inode *ip;
 	IFILE *ifp;
+	SEGSUM *ssp;
 
 	ip = VTOI(vp);
 
@@ -207,10 +210,13 @@ lfs_writefile(struct lfs * fs, struct segment * sp, struct uvnode * vp)
 		(void) lfs_writeseg(fs, sp);
 
 	sp->sum_bytes_left -= FINFOSIZE;
-	++((SEGSUM *) (sp->segsum))->ss_nfinfo;
+	ssp = (SEGSUM *)sp->segsum;
+	lfs_ss_setnfinfo(fs, ssp, lfs_ss_getnfinfo(fs, ssp) + 1);
 
-	if (vp->v_uflag & VU_DIROP)
-		((SEGSUM *) (sp->segsum))->ss_flags |= (SS_DIROP | SS_CONT);
+	if (vp->v_uflag & VU_DIROP) {
+		lfs_ss_setflags(fs, ssp,
+				lfs_ss_getflags(fs, ssp) | (SS_DIROP | SS_CONT));
+	}
 
 	fip = sp->fip;
 	fip->fi_nblocks = 0;
@@ -226,12 +232,11 @@ lfs_writefile(struct lfs * fs, struct segment * sp, struct uvnode * vp)
 
 	fip = sp->fip;
 	if (fip->fi_nblocks != 0) {
-		sp->fip = (FINFO *) ((caddr_t) fip + FINFOSIZE +
-		    sizeof(ulfs_daddr_t) * (fip->fi_nblocks));
+		sp->fip = NEXT_FINFO(fs, fip);
 		sp->start_lbp = &sp->fip->fi_blocks[0];
 	} else {
 		sp->sum_bytes_left += FINFOSIZE;
-		--((SEGSUM *) (sp->segsum))->ss_nfinfo;
+		lfs_ss_setnfinfo(fs, ssp, lfs_ss_getnfinfo(fs, ssp) - 1);
 	}
 }
 
@@ -242,6 +247,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	struct ulfs1_dinode *cdp;
 	IFILE *ifp;
 	SEGUSE *sup;
+	SEGSUM *ssp;
 	daddr_t daddr;
 	ino_t ino;
 	int i, ndx, fsb = 0;
@@ -315,7 +321,8 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		brelse(bp, 0);
 	}
 	/* Increment inode count in segment summary block. */
-	++((SEGSUM *) (sp->segsum))->ss_ninos;
+	ssp = (SEGSUM *)sp->segsum;
+	lfs_ss_setninos(fs, ssp, lfs_ss_getninos(fs, ssp) + 1);
 
 	/* If this page is full, set flag to allocate a new page. */
 	if (++sp->ninodes % LFS_INOPB(fs) == 0)
@@ -359,6 +366,7 @@ int
 lfs_gatherblock(struct segment * sp, struct ubuf * bp)
 {
 	struct lfs *fs;
+	SEGSUM *ssp;
 	int version;
 	int j, blksinblk;
 
@@ -378,7 +386,8 @@ lfs_gatherblock(struct segment * sp, struct ubuf * bp)
 		sp->fip->fi_version = version;
 		sp->fip->fi_ino = VTOI(sp->vp)->i_number;
 		/* Add the current file to the segment summary. */
-		++((SEGSUM *) (sp->segsum))->ss_nfinfo;
+		ssp = (SEGSUM *)sp->segsum;
+		lfs_ss_setnfinfo(fs, ssp, lfs_ss_getnfinfo(fs, ssp) + 1);
 		sp->sum_bytes_left -= FINFOSIZE;
 
 		return 1;
@@ -664,12 +673,13 @@ lfs_initseg(struct lfs * fs)
 
 	/* Set point to SEGSUM, initialize it. */
 	ssp = sp->segsum;
-	ssp->ss_next = lfs_sb_getnextseg(fs);
-	ssp->ss_nfinfo = ssp->ss_ninos = 0;
-	ssp->ss_magic = SS_MAGIC;
+	lfs_ss_setnext(fs, ssp, lfs_sb_getnextseg(fs));
+	lfs_ss_setnfinfo(fs, ssp, 0);
+	lfs_ss_setninos(fs, ssp, 0);
+	lfs_ss_setmagic(fs, ssp, SS_MAGIC);
 
 	/* Set pointer to first FINFO, initialize it. */
-	sp->fip = (struct finfo *) ((caddr_t) sp->segsum + SEGSUM_SIZE(fs));
+	sp->fip = SEGSUM_FINFOBASE(fs, ssp);
 	sp->fip->fi_nblocks = 0;
 	sp->start_lbp = &sp->fip->fi_blocks[0];
 	sp->fip->fi_lastlength = 0;
@@ -735,6 +745,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	int do_again, nblocks, byteoffset;
 	size_t el_size;
 	u_short ninos;
+	size_t sumstart;
 	struct uvnode *devvp;
 
 	/*
@@ -765,10 +776,10 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	}
 
 	ssp = (SEGSUM *) sp->segsum;
-	ssp->ss_flags |= SS_RFW;
+	lfs_ss_setflags(fs, ssp, lfs_ss_getflags(fs, ssp) | SS_RFW);
 
-	ninos = (ssp->ss_ninos + LFS_INOPB(fs) - 1) / LFS_INOPB(fs);
-	sup->su_nbytes += ssp->ss_ninos * LFS_DINODE1_SIZE;
+	ninos = (lfs_ss_getninos(fs, ssp) + LFS_INOPB(fs) - 1) / LFS_INOPB(fs);
+	sup->su_nbytes += lfs_ss_getninos(fs, ssp) * LFS_DINODE1_SIZE;
 
 	if (lfs_sb_getversion(fs) == 1)
 		sup->su_olastmod = write_time;
@@ -805,20 +816,21 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 		(*bpp)->b_flags |= B_BUSY;
 	}
 	if (lfs_sb_getversion(fs) == 1)
-		ssp->ss_ocreate = write_time;
+		lfs_ss_setocreate(fs, ssp, write_time);
 	else {
-		ssp->ss_create = write_time;
+		lfs_ss_setcreate(fs, ssp, write_time);
 		lfs_sb_addserial(fs, 1);
-		ssp->ss_serial = lfs_sb_getserial(fs);
-		ssp->ss_ident = lfs_sb_getident(fs);
+		lfs_ss_setserial(fs, ssp, lfs_sb_getserial(fs));
+		lfs_ss_setident(fs, ssp, lfs_sb_getident(fs));
 	}
 	/* Set the summary block busy too */
 	bremfree(*(sp->bpp));
 	(*(sp->bpp))->b_flags |= B_BUSY;
 
-	ssp->ss_datasum = cksum(datap, (nblocks - 1) * el_size);
-	ssp->ss_sumsum =
-	    cksum(&ssp->ss_datasum, lfs_sb_getsumsize(fs) - sizeof(ssp->ss_sumsum));
+	lfs_ss_setdatasum(fs, ssp, cksum(datap, (nblocks - 1) * el_size));
+	sumstart = lfs_ss_getsumstart(fs);
+	lfs_ss_setsumsum(fs, ssp,
+	    cksum((char *)ssp + sumstart, lfs_sb_getsumsize(fs) - sumstart));
 	free(datap);
 	datap = dp = NULL;
 	lfs_sb_subbfree(fs, (lfs_btofsb(fs, ninos * lfs_sb_getibsize(fs)) +
