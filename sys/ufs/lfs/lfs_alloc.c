@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.125 2015/08/02 18:14:16 dholland Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.126 2015/08/12 18:25:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.125 2015/08/02 18:14:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.126 2015/08/12 18:25:52 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -116,7 +116,8 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 {
 	struct vnode *vp;
 	struct inode *ip;
-	IFILE *ifp;
+	IFILE64 *ifp64;
+	IFILE32 *ifp32;
 	IFILE_V1 *ifp_v1;
 	struct buf *bp, *cbp;
 	int error;
@@ -161,7 +162,25 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 #endif /* DIAGNOSTIC */
 	xmax = i + lfs_sb_getifpb(fs);
 
-	if (lfs_sb_getversion(fs) == 1) {
+	if (fs->lfs_is64) {
+		for (ifp64 = (IFILE64 *)bp->b_data; i < xmax; ++ifp64) {
+			SET_BITMAP_FREE(fs, i);
+			ifp64->if_version = 1;
+			ifp64->if_daddr = LFS_UNUSED_DADDR;
+			ifp64->if_nextfree = ++i;
+		}
+		ifp64--;
+		ifp64->if_nextfree = oldlast;
+	} else if (lfs_sb_getversion(fs) > 1) {
+		for (ifp32 = (IFILE32 *)bp->b_data; i < xmax; ++ifp32) {
+			SET_BITMAP_FREE(fs, i);
+			ifp32->if_version = 1;
+			ifp32->if_daddr = LFS_UNUSED_DADDR;
+			ifp32->if_nextfree = ++i;
+		}
+		ifp32--;
+		ifp32->if_nextfree = oldlast;
+	} else {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < xmax; ++ifp_v1) {
 			SET_BITMAP_FREE(fs, i);
 			ifp_v1->if_version = 1;
@@ -170,15 +189,6 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 		}
 		ifp_v1--;
 		ifp_v1->if_nextfree = oldlast;
-	} else {
-		for (ifp = (IFILE *)bp->b_data; i < xmax; ++ifp) {
-			SET_BITMAP_FREE(fs, i);
-			ifp->if_version = 1;
-			ifp->if_daddr = LFS_UNUSED_DADDR;
-			ifp->if_nextfree = ++i;
-		}
-		ifp--;
-		ifp->if_nextfree = oldlast;
 	}
 	LFS_PUT_TAILFREE(fs, cip, cbp, xmax - 1);
 
@@ -196,7 +206,7 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 {
 	struct lfs *fs;
 	struct buf *bp, *cbp;
-	struct ifile *ifp;
+	IFILE *ifp;
 	int error;
 	CLEANERINFO *cip;
 
@@ -221,14 +231,15 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	 */
 	CLR_BITMAP_FREE(fs, *ino);
 	LFS_IENTRY(ifp, fs, *ino, bp);
-	if (ifp->if_daddr != LFS_UNUSED_DADDR)
+	if (lfs_if_getdaddr(fs, ifp) != LFS_UNUSED_DADDR)
 		panic("lfs_valloc: inuse inode %" PRId64 " on the free list",
 		    *ino);
-	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
-	DLOG((DLOG_ALLOC, "lfs_valloc: headfree %" PRId64 " -> %u\n",
-	     *ino, ifp->if_nextfree));
+	LFS_PUT_HEADFREE(fs, cip, cbp, lfs_if_getnextfree(fs, ifp));
+	DLOG((DLOG_ALLOC, "lfs_valloc: headfree %" PRId64 " -> %ju\n",
+	     *ino, (uintmax_t)lfs_if_getnextfree(fs, ifp)));
 
-	*gen = ifp->if_version; /* version was updated by vfree */
+	/* version was updated by vfree */
+	*gen = lfs_if_getversion(fs, ifp);
 	brelse(bp, 0);
 
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
@@ -274,28 +285,31 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	}
 
 	LFS_IENTRY(ifp, fs, ino, bp);
-	oldnext = ifp->if_nextfree;
-	ifp->if_version = vers;
+	oldnext = lfs_if_getnextfree(fs, ifp);
+	lfs_if_setversion(fs, ifp, vers);
 	brelse(bp, 0);
 
 	LFS_GET_HEADFREE(fs, cip, cbp, &ino);
 	if (ino) {
 		LFS_PUT_HEADFREE(fs, cip, cbp, oldnext);
 	} else {
+		ino_t nextfree;
+
 		tino = ino;
 		while (1) {
 			LFS_IENTRY(ifp, fs, tino, bp);
-			if (ifp->if_nextfree == ino ||
-			    ifp->if_nextfree == LFS_UNUSED_INUM)
+			nextfree = lfs_if_getnextfree(fs, ifp);
+			if (nextfree == ino ||
+			    nextfree == LFS_UNUSED_INUM)
 				break;
-			tino = ifp->if_nextfree;
+			tino = nextfree;
 			brelse(bp, 0);
 		}
-		if (ifp->if_nextfree == LFS_UNUSED_INUM) {
+		if (nextfree == LFS_UNUSED_INUM) {
 			brelse(bp, 0);
 			return ENOENT;
 		}
-		ifp->if_nextfree = oldnext;
+		lfs_if_setnextfree(fs, ifp, oldnext);
 		LFS_BWRITE_LOG(bp);
 	}
 
@@ -375,7 +389,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	SEGUSE *sup;
 	CLEANERINFO *cip;
 	struct buf *cbp, *bp;
-	struct ifile *ifp;
+	IFILE *ifp;
 	struct inode *ip;
 	struct lfs *fs;
 	daddr_t old_iaddr;
@@ -444,27 +458,33 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	 */
 	SET_BITMAP_FREE(fs, ino);
 	LFS_IENTRY(ifp, fs, ino, bp);
-	old_iaddr = ifp->if_daddr;
-	ifp->if_daddr = LFS_UNUSED_DADDR;
-	++ifp->if_version;
+	old_iaddr = lfs_if_getdaddr(fs, ifp);
+	lfs_if_setdaddr(fs, ifp, LFS_UNUSED_DADDR);
+	lfs_if_setversion(fs, ifp, lfs_if_getversion(fs, ifp) + 1);
 	if (lfs_sb_getversion(fs) == 1) {
-		LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
+		ino_t nextfree;
+
+		LFS_GET_HEADFREE(fs, cip, cbp, &nextfree);
+		lfs_if_setnextfree(fs, ifp, nextfree);
 		LFS_PUT_HEADFREE(fs, cip, cbp, ino);
 		(void) LFS_BWRITE_LOG(bp); /* Ifile */
 	} else {
 		ino_t tino, onf;
 
-		ifp->if_nextfree = LFS_UNUSED_INUM;
+		lfs_if_setnextfree(fs, ifp, LFS_UNUSED_INUM);
 		(void) LFS_BWRITE_LOG(bp); /* Ifile */
 
 		tino = lfs_freelist_prev(fs, ino);
 		if (tino == LFS_UNUSED_INUM) {
+			ino_t nextfree;
+
 			/* Nothing free below us, put us on the head */
 			LFS_IENTRY(ifp, fs, ino, bp);
-			LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
+			LFS_GET_HEADFREE(fs, cip, cbp, &nextfree);
+			lfs_if_setnextfree(fs, ifp, nextfree);
 			LFS_PUT_HEADFREE(fs, cip, cbp, ino);
 			DLOG((DLOG_ALLOC, "lfs_vfree: headfree %lld -> %lld\n",
-			     (long long)ifp->if_nextfree, (long long)ino));
+			     (long long)nextfree, (long long)ino));
 			LFS_BWRITE_LOG(bp); /* Ifile */
 
 			/* If the list was empty, set tail too */
@@ -485,12 +505,12 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 			      " after %lld\n", ino, tino));
 
 			LFS_IENTRY(ifp, fs, tino, bp);
-			onf = ifp->if_nextfree;
-			ifp->if_nextfree = ino;
+			onf = lfs_if_getnextfree(fs, ifp);
+			lfs_if_setnextfree(fs, ifp, ino);
 			LFS_BWRITE_LOG(bp);	/* Ifile */
 
 			LFS_IENTRY(ifp, fs, ino, bp);
-			ifp->if_nextfree = onf;
+			lfs_if_setnextfree(fs, ifp, onf);
 			LFS_BWRITE_LOG(bp);	/* Ifile */
 
 			/* If we're last, put us on the tail */
@@ -574,30 +594,33 @@ lfs_order_freelist(struct lfs *fs)
 
 #ifdef notyet
 		/* Address orphaned files */
-		if (ifp->if_nextfree == LFS_ORPHAN_NEXTFREE &&
+		if (lfs_if_getnextfree(fs, ifp) == LFS_ORPHAN_NEXTFREE &&
 		    VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp) == 0) {
+			unsigned segno;
+
+			segno = lfs_dtosn(fs, lfs_if_getdaddr(fs, ifp));
 			lfs_truncate(vp, 0, 0, NOCRED);
 			vput(vp);
-			LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, ifp->if_daddr), bp);
-			KASSERT(sup->su_nbytes >= DINODE1_SIZE);
-			sup->su_nbytes -= DINODE1_SIZE;
-			LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, ifp->if_daddr), bp);
+			LFS_SEGENTRY(sup, fs, segno, bp);
+			KASSERT(sup->su_nbytes >= LFS_DINODE1_SIZE);
+			sup->su_nbytes -= LFS_DINODE1_SIZE;
+			LFS_WRITESEGENTRY(sup, fs, segno, bp);
 
 			/* Set up to fall through to next section */
-			ifp->if_daddr = LFS_UNUSED_DADDR;
+			lfs_if_setdaddr(fs, ifp, LFS_UNUSED_DADDR);
 			LFS_BWRITE_LOG(bp);
 			LFS_IENTRY(ifp, fs, ino, bp);
 		}
 #endif
 
-		if (ifp->if_daddr == LFS_UNUSED_DADDR) {
+		if (lfs_if_getdaddr(fs, ifp) == LFS_UNUSED_DADDR) {
 			if (firstino == LFS_UNUSED_INUM)
 				firstino = ino;
 			else {
 				brelse(bp, 0);
 
 				LFS_IENTRY(ifp, fs, lastino, bp);
-				ifp->if_nextfree = ino;
+				lfs_if_setnextfree(fs, ifp, ino);
 				LFS_BWRITE_LOG(bp);
 				
 				LFS_IENTRY(ifp, fs, ino, bp);
@@ -624,6 +647,6 @@ lfs_orphan(struct lfs *fs, ino_t ino)
 	struct buf *bp;
 
 	LFS_IENTRY(ifp, fs, ino, bp);
-	ifp->if_nextfree = LFS_ORPHAN_NEXTFREE;
+	lfs_if_setnextfree(fs, ifp, LFS_ORPHAN_NEXTFREE);
 	LFS_BWRITE_LOG(bp);
 }

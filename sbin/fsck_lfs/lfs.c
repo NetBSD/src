@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.52 2015/08/02 18:18:09 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.53 2015/08/12 18:25:52 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -415,7 +415,7 @@ lfs_vget(void *vfs, ino_t ino)
 	IFILE *ifp;
 
 	LFS_IENTRY(ifp, fs, ino, bp);
-	daddr = ifp->if_daddr;
+	daddr = lfs_if_getdaddr(fs, ifp);
 	brelse(bp, 0);
 	if (daddr <= 0 || lfs_dtosn(fs, daddr) >= lfs_sb_getnseg(fs))
 		return NULL;
@@ -864,7 +864,7 @@ struct uvnode *
 lfs_valloc(struct lfs *fs, ino_t ino)
 {
 	struct ubuf *bp, *cbp;
-	struct ifile *ifp;
+	IFILE *ifp;
 	ino_t new_ino;
 	int error;
 	CLEANERINFO *cip;
@@ -877,9 +877,9 @@ lfs_valloc(struct lfs *fs, ino_t ino)
 	 * of the free list into the superblock.
 	 */
 	LFS_IENTRY(ifp, fs, new_ino, bp);
-	if (ifp->if_daddr != LFS_UNUSED_DADDR)
+	if (lfs_if_getdaddr(fs, ifp) != LFS_UNUSED_DADDR)
 		panic("lfs_valloc: inuse inode %d on the free list", new_ino);
-	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
+	LFS_PUT_HEADFREE(fs, cip, cbp, lfs_if_getnextfree(fs, ifp));
 
 	brelse(bp, 0);
 
@@ -910,7 +910,8 @@ extend_ifile(struct lfs *fs)
 {
 	struct uvnode *vp;
 	struct inode *ip;
-	IFILE *ifp;
+	IFILE64 *ifp64;
+	IFILE32 *ifp32;
 	IFILE_V1 *ifp_v1;
 	struct ubuf *bp, *cbp;
 	daddr_t i, blkno, max;
@@ -932,7 +933,23 @@ extend_ifile(struct lfs *fs)
 	max = i + lfs_sb_getifpb(fs);
 	lfs_sb_subbfree(fs, lfs_btofsb(fs, lfs_sb_getbsize(fs)));
 
-	if (lfs_sb_getversion(fs) == 1) {
+	if (fs->lfs_is64) {
+		for (ifp64 = (IFILE64 *)bp->b_data; i < max; ++ifp64) {
+			ifp64->if_version = 1;
+			ifp64->if_daddr = LFS_UNUSED_DADDR;
+			ifp64->if_nextfree = ++i;
+		}
+		ifp64--;
+		ifp64->if_nextfree = oldlast;
+	} else if (lfs_sb_getversion(fs) > 1) {
+		for (ifp32 = (IFILE32 *)bp->b_data; i < max; ++ifp32) {
+			ifp32->if_version = 1;
+			ifp32->if_daddr = LFS_UNUSED_DADDR;
+			ifp32->if_nextfree = ++i;
+		}
+		ifp32--;
+		ifp32->if_nextfree = oldlast;
+	} else {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
 			ifp_v1->if_version = 1;
 			ifp_v1->if_daddr = LFS_UNUSED_DADDR;
@@ -940,14 +957,6 @@ extend_ifile(struct lfs *fs)
 		}
 		ifp_v1--;
 		ifp_v1->if_nextfree = oldlast;
-	} else {
-		for (ifp = (IFILE *)bp->b_data; i < max; ++ifp) {
-			ifp->if_version = 1;
-			ifp->if_daddr = LFS_UNUSED_DADDR;
-			ifp->if_nextfree = ++i;
-		}
-		ifp--;
-		ifp->if_nextfree = oldlast;
 	}
 	LFS_PUT_TAILFREE(fs, cip, cbp, max - 1);
 

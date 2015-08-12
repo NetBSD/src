@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.70 2015/08/02 18:18:09 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.71 2015/08/12 18:25:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -212,24 +212,27 @@ find_inode_sector(ino32_t inumber, struct open_file *f, daddr_t *isp)
 	daddr_t ifileent_blkno;
 	char *ent_in_buf;
 	size_t buf_after_ent;
+	size_t entsize;
 	int rc;
 
 	rc = read_inode(lfs_sb_getifile(fs), f);
 	if (rc)
 		return rc;
 
+	entsize = fs->lfs_is64 ? sizeof(IFILE64) :
+		(lfs_sb_getversion(fs) > 1 ? sizeof(IFILE32) : sizeof(IFILE_V1));
 	ifileent_blkno =
 	    (inumber / lfs_sb_getifpb(fs)) + lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs);
 	fp->f_seekp = (off_t)ifileent_blkno * lfs_sb_getbsize(fs) +
-	    (inumber % lfs_sb_getifpb(fs)) * sizeof (IFILE_Vx);
+	    (inumber % lfs_sb_getifpb(fs)) * entsize;
 	rc = buf_read_file(f, &ent_in_buf, &buf_after_ent);
 	if (rc)
 		return rc;
 	/* make sure something's not badly wrong, but don't panic. */
-	if (buf_after_ent < sizeof (IFILE_Vx))
+	if (buf_after_ent < entsize)
 		return EINVAL;
 
-	*isp = FSBTODB(fs, ((IFILE_Vx *)ent_in_buf)->if_daddr);
+	*isp = FSBTODB(fs, lfs_if_getdaddr(fs, (IFILE *)ent_in_buf));
 	if (*isp == LFS_UNUSED_DADDR)	/* again, something badly wrong */
 		return EINVAL;
 	return 0;

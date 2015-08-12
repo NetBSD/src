@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv1.c,v 1.12 2015/08/02 18:18:09 dholland Exp $ */
+/* $NetBSD: lfsv1.c,v 1.13 2015/08/12 18:25:52 dholland Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	1
@@ -16,7 +16,6 @@
 #define ufs_dinode		ulfs1_dinode
 
 #define	fs_bsize		lfs_dlfs_u.u_32.dlfs_ibsize
-#define	IFILE_Vx		IFILE_V1
 
 #define	INOPBx(fs) LFS_INOPB(fs)
 

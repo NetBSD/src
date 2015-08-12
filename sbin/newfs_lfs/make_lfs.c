@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.41 2015/08/12 18:25:03 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.42 2015/08/12 18:25:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.41 2015/08/12 18:25:03 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.42 2015/08/12 18:25:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ static const struct dlfs dlfs32_default = {
 		.dlfs_maxfilesize =	0,
 		.dlfs_fsbpseg =		0,
 		.dlfs_inopb =		DFL_LFSBLOCK/sizeof(struct ulfs1_dinode),
-		.dlfs_ifpb =		DFL_LFSBLOCK/sizeof(IFILE),
+		.dlfs_ifpb =		DFL_LFSBLOCK/sizeof(IFILE32),
 		.dlfs_sepb =		DFL_LFSBLOCK/sizeof(SEGUSE),
 		/* XXX ondisk32 */
 		.dlfs_nindir =		DFL_LFSBLOCK/sizeof(int32_t),
@@ -201,7 +201,7 @@ static const struct dlfs64 dlfs64_default = {
 		.dlfs_maxfilesize =	0,
 		.dlfs_fsbpseg =		0,
 		.dlfs_inopb =		DFL_LFSBLOCK/sizeof(struct ulfs1_dinode),
-		.dlfs_ifpb =		DFL_LFSBLOCK/sizeof(IFILE),
+		.dlfs_ifpb =		DFL_LFSBLOCK/sizeof(IFILE64),
 		.dlfs_sepb =		DFL_LFSBLOCK/sizeof(SEGUSE),
 		.dlfs_nindir =		DFL_LFSBLOCK/sizeof(int64_t),
 		.dlfs_nseg =		0,
@@ -365,7 +365,9 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 {
 	struct ulfs1_dinode *dip;	/* Pointer to a disk inode */
 	CLEANERINFO *cip;	/* Segment cleaner information table */
-	IFILE *ip;		/* Pointer to array of ifile structures */
+	IFILE *ipall;		/* Pointer to array of ifile structures */
+	IFILE64 *ip64 = NULL;
+	IFILE32 *ip32 = NULL;
 	IFILE_V1 *ip_v1 = NULL;
 	struct lfs *fs;		/* Superblock */
 	SEGUSE *segp;		/* Segment usage table */
@@ -803,25 +805,52 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 #endif /* MAKE_LF_DIR */
 
 	/* Set their IFILE entry version numbers to 1 */
-	LFS_IENTRY(ip, fs, 1, bp);
-	if (version == 1) {
-		ip_v1 = (IFILE_V1 *)ip;
+	LFS_IENTRY(ipall, fs, 1, bp);
+	if (is64) {
+		ip64 = &ipall->u_64;
+		for (i = LFS_IFILE_INUM; i <= HIGHEST_USED_INO; i++) {
+			ip64->if_version = 1;
+			ip64->if_daddr = 0x0;
+			ip64->if_nextfree = 0;
+			++ip64;
+		}
+	} else if (version > 1) {
+		ip32 = &ipall->u_32;
+		for (i = LFS_IFILE_INUM; i <= HIGHEST_USED_INO; i++) {
+			ip32->if_version = 1;
+			ip32->if_daddr = 0x0;
+			ip32->if_nextfree = 0;
+			++ip32;
+		}
+	} else {
+		ip_v1 = &ipall->u_v1;
 		for (i = LFS_IFILE_INUM; i <= HIGHEST_USED_INO; i++) {
 			ip_v1->if_version = 1;
 			ip_v1->if_daddr = 0x0;
 			ip_v1->if_nextfree = 0;
 			++ip_v1;
 		}
-	} else {
-		for (i = LFS_IFILE_INUM; i <= HIGHEST_USED_INO; i++) {
-			ip->if_version = 1;
-			ip->if_daddr = 0x0;
-			ip->if_nextfree = 0;
-			++ip;
-		}
 	}
 	/* Link remaining IFILE entries in free list */
-	if (version == 1) {
+	if (is64) {
+		for (;
+		     i < lfs_sb_getifpb(fs); ++ip64) {
+			ip64->if_version = 1;
+			ip64->if_daddr = LFS_UNUSED_DADDR;
+			ip64->if_nextfree = ++i;
+		}
+		--ip64;
+		ip64->if_nextfree = LFS_UNUSED_INUM;
+	} else if (version > 1) {
+		for (;
+		     i < lfs_sb_getifpb(fs); ++ip32) {
+			ip32->if_version = 1;
+			ip32->if_daddr = LFS_UNUSED_DADDR;
+			ip32->if_nextfree = ++i;
+		}
+		--ip32;
+		ip32->if_nextfree = LFS_UNUSED_INUM;
+	} else {
 		for (;
 		     i < lfs_sb_getifpb(fs); ++ip_v1) {
 			ip_v1->if_version = 1;
@@ -830,15 +859,6 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		}
 		--ip_v1;
 		ip_v1->if_nextfree = LFS_UNUSED_INUM;
-	} else {
-		for (;
-		     i < lfs_sb_getifpb(fs); ++ip) {
-			ip->if_version = 1;
-			ip->if_daddr = LFS_UNUSED_DADDR;
-			ip->if_nextfree = ++i;
-		}
-		--ip;
-		ip->if_nextfree = LFS_UNUSED_INUM;
 	}
 	VOP_BWRITE(bp);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.38 2015/08/12 18:25:03 dholland Exp $	 */
+/* $NetBSD: pass0.c,v 1.39 2015/08/12 18:25:52 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -133,15 +133,15 @@ pass0(void)
 			if (preen || reply("FIX") == 1) {
 				/* plastino can't be zero */
 				LFS_IENTRY(ifp, fs, plastino, bp);
-				ifp->if_nextfree = 0;
+				lfs_if_setnextfree(fs, ifp, 0);
 				VOP_BWRITE(bp);
 			}
 			break;
 		}
 		visited[ino] = 1;
 		LFS_IENTRY(ifp, fs, ino, bp);
-		nextino = ifp->if_nextfree;
-		daddr = ifp->if_daddr;
+		nextino = lfs_if_getnextfree(fs, ifp);
+		daddr = lfs_if_getdaddr(fs, ifp);
 		brelse(bp, 0);
 		if (daddr) {
 			pwarn("INO %llu WITH DADDR 0x%llx ON FREE LIST\n",
@@ -152,7 +152,7 @@ pass0(void)
 					sbdirty();
 				} else {
 					LFS_IENTRY(ifp, fs, plastino, bp);
-					ifp->if_nextfree = nextino;
+					lfs_if_setnextfree(fs, ifp, nextino);
 					VOP_BWRITE(bp);
 				}
 				ino = nextino;
@@ -172,7 +172,7 @@ pass0(void)
 			continue;
 
 		LFS_IENTRY(ifp, fs, ino, bp);
-		if (ifp->if_daddr) {
+		if (lfs_if_getdaddr(fs, ifp)) {
 			brelse(bp, 0);
 			continue;
 		}
@@ -180,7 +180,7 @@ pass0(void)
 		    (unsigned long long)ino);
 		if (preen || reply("FIX") == 1) {
 			assert(ino != freehd);
-			ifp->if_nextfree = freehd;
+			lfs_if_setnextfree(fs, ifp, freehd);
 			VOP_BWRITE(bp);
 
 			freehd = ino;

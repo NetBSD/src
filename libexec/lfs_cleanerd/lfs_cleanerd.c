@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.46 2015/08/12 18:25:03 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.47 2015/08/12 18:25:51 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -342,10 +342,15 @@ reload_ifile(struct clfs *fs)
  * Get IFILE entry for the given inode, store in ifpp.	The buffer
  * which contains that data is returned in bpp, and must be brelse()d
  * by the caller.
+ *
+ * XXX this is cutpaste of LFS_IENTRY from lfs.h; unify the two.
  */
 void
 lfs_ientry(IFILE **ifpp, struct clfs *fs, ino_t ino, struct ubuf **bpp)
 {
+	IFILE64 *ifp64;
+	IFILE32 *ifp32;
+	IFILE_V1 *ifp_v1;
 	int error;
 
 	error = bread(fs->lfs_ivnode,
@@ -354,7 +359,19 @@ lfs_ientry(IFILE **ifpp, struct clfs *fs, ino_t ino, struct ubuf **bpp)
 	if (error)
 		syslog(LOG_ERR, "%s: ientry failed for ino %d",
 			lfs_sb_getfsmnt(fs), (int)ino);
-	*ifpp = (IFILE *)(*bpp)->b_data + ino % lfs_sb_getifpb(fs);
+	if (fs->lfs_is64) {
+		ifp64 = (IFILE64 *)(*bpp)->b_data;
+		ifp64 += ino % lfs_sb_getifpb(fs);
+		*ifpp = (IFILE *)ifp64;
+	} else if (lfs_sb_getversion(fs) > 1) {
+		ifp32 = (IFILE32 *)(*bpp)->b_data;
+		ifp32 += ino % lfs_sb_getifpb(fs);
+		*ifpp = (IFILE *)ifp32;
+	} else {
+		ifp_v1 = (IFILE_V1 *)(*bpp)->b_data;
+		ifp_v1 += ino % lfs_sb_getifpb(fs);
+		*ifpp = (IFILE *)ifp_v1;
+	}
 	return;
 }
 
@@ -480,7 +497,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 				 */
 #ifndef REPAIR_ZERO_FINFO
 				lfs_ientry(&ifp, fs, dip[i].di_inumber, &ifbp);
-				idaddr = ifp->if_daddr;
+				idaddr = lfs_if_getdaddr(fs, ifp);
 				brelse(ifbp, 0);
 				if (idaddr != daddr)
 #endif
@@ -554,7 +571,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		vers = -1;
 #else
 		lfs_ientry(&ifp, fs, fip->fi_ino, &ifbp);
-		vers = ifp->if_version;
+		vers = lfs_if_getversion(fs, ifp);
 		brelse(ifbp, 0);
 #endif
 		if (vers != fip->fi_version) {
@@ -1416,15 +1433,13 @@ lfs_cleaner_main(int argc, char **argv)
 	char *cp, *pidname;
 #endif
 
-#ifdef RESCUEDIR
+#if defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ == 8 && \
+    defined(__OPTIMIZE_SIZE__)
 	/*
 	 * XXX: Work around apparent bug with gcc 4.8 and -Os: it
 	 * claims that ci.clean is uninitialized in clean_fs (at one
 	 * of the several uses of it, which is neither the first nor
-	 * last use) -- this is conditionalized on RESCUEDIR because
-	 * it comes up for building the cleaner for /rescue. It
-	 * doesn't happen with plain -O2, and the value is clearly
-	 * always initialized.
+	 * last use) -- this doesn't happen with plain -O2.
 	 *
 	 * Hopefully in the future further rearrangements will allow
 	 * removing this hack.

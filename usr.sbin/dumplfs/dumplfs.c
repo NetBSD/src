@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.50 2015/08/12 18:25:04 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.51 2015/08/12 18:25:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.50 2015/08/12 18:25:04 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.51 2015/08/12 18:25:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,15 +115,23 @@ print_suentry(int i, SEGUSE *sp, struct lfs *fs)
 	(void)printf("inum\tstatus\tversion\tdaddr\t\tfreeptr\n")
 
 static inline void
-print_ientry(int i, IFILE *ip)
+print_ientry(int i, struct lfs *lfsp, IFILE *ip)
 {
-	if (ip->if_daddr == LFS_UNUSED_DADDR)
-		printf("%d\tFREE\t%d\t \t\t%llu\n", i, ip->if_version,
-		    (unsigned long long)ip->if_nextfree);
+	uint32_t version;
+	daddr_t daddr;
+	ino_t nextfree;
+
+	version = lfs_if_getversion(lfsp, ip);
+	daddr = lfs_if_getdaddr(lfsp, ip);
+	nextfree = lfs_if_getnextfree(lfsp, ip);
+
+	if (daddr == LFS_UNUSED_DADDR)
+		printf("%d\tFREE\t%u\t \t\t%ju\n", i, version,
+		    (uintmax_t)nextfree);
 	else
-		printf("%d\tINUSE\t%d\t%8X\t%s\n",
-		    i, ip->if_version, ip->if_daddr,
-		    (ip->if_nextfree == LFS_ORPHAN_NEXTFREE ? "FFFFFFFF" : "-"));
+		printf("%d\tINUSE\t%u\t%8jX\t%s\n",
+		    i, version, (intmax_t)daddr,
+		    nextfree == LFS_ORPHAN_NEXTFREE ? "FFFFFFFF" : "-");
 }
 
 #define fsbtobyte(fs, b)	lfs_fsbtob((fs), (off_t)((b)))
@@ -410,14 +418,16 @@ dump_ipage_ifile(struct lfs *lfsp, int i, char *pp, int tot)
 	char *ip;
 	int cnt, max, entsize;
 
-	if (lfs_sb_getversion(lfsp) == 1) 
-		entsize = sizeof(IFILE_V1);
+	if (lfsp->lfs_is64)
+		entsize = sizeof(IFILE64);
+	if (lfs_sb_getversion(lfsp) > 1) 
+		entsize = sizeof(IFILE32);
 	else 
-		entsize = sizeof(IFILE);
+		entsize = sizeof(IFILE_V1);
 	max = i + tot;
 
 	for (ip = pp, cnt = i; cnt < max; cnt++, ip += entsize)
-		print_ientry(cnt, (IFILE *)ip);
+		print_ientry(cnt, lfsp, (IFILE *)ip);
 	return (max);
 }
 

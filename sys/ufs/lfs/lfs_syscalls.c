@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.167 2015/08/12 18:25:04 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.168 2015/08/12 18:25:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.167 2015/08/12 18:25:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.168 2015/08/12 18:25:52 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -355,7 +355,7 @@ lfs_markv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov,
 			/* XXX but only write the inode if it's the right one */
 			if (blkp->bi_inode != LFS_IFILE_INUM) {
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
-				if (ifp->if_daddr == blkp->bi_daddr) {
+				if (lfs_if_getdaddr(fs, ifp) == blkp->bi_daddr) {
 					mutex_enter(&lfs_lock);
 					LFS_SET_UINO(ip, IN_CLEANING);
 					mutex_exit(&lfs_lock);
@@ -697,7 +697,7 @@ lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				v_daddr = lfs_sb_getidaddr(fs);
 			else {
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
-				v_daddr = ifp->if_daddr;
+				v_daddr = lfs_if_getdaddr(fs, ifp);
 				brelse(bp, 0);
 			}
 			if (v_daddr == LFS_UNUSED_DADDR) {

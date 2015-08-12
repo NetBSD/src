@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.9 2015/08/12 18:25:04 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.10 2015/08/12 18:25:52 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -289,13 +289,48 @@
 	(IN) / lfs_sb_getifpb(F) + lfs_sb_getcleansz(F) + lfs_sb_getsegtabsz(F), \
 	lfs_sb_getbsize(F), 0, &(BP))) != 0)				\
 		panic("lfs: ifile ino %d read %d", (int)(IN), _e);	\
-	if (lfs_sb_getversion(F) == 1)					\
+	if ((F)->lfs_is64) {						\
+		(IP) = (IFILE *)((IFILE64 *)(BP)->b_data +		\
+				 (IN) % lfs_sb_getifpb(F));		\
+	} else if (lfs_sb_getversion(F) > 1) {				\
+		(IP) = (IFILE *)((IFILE32 *)(BP)->b_data +		\
+				(IN) % lfs_sb_getifpb(F)); 		\
+	} else {							\
 		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data +		\
 				 (IN) % lfs_sb_getifpb(F));		\
-	else								\
-		(IP) = (IFILE *)(BP)->b_data + (IN) % lfs_sb_getifpb(F); \
+	}								\
 	UNSHARE_IFLOCK(F);						\
 } while (0)
+
+#define LFS_DEF_IF_ACCESSOR(type, type32, field) \
+	static __unused inline type				\
+	lfs_if_get##field(STRUCT_LFS *fs, IFILE *ifp)		\
+	{							\
+		if (fs->lfs_is64) {				\
+			return ifp->u_64.if_##field; 		\
+		} else {					\
+			return ifp->u_32.if_##field; 		\
+		}						\
+	}							\
+	static __unused inline void				\
+	lfs_if_set##field(STRUCT_LFS *fs, IFILE *ifp, type val) \
+	{							\
+		if (fs->lfs_is64) {				\
+			type *p = &ifp->u_64.if_##field;	\
+			(void)p;				\
+			ifp->u_64.if_##field = val;		\
+		} else {					\
+			type32 *p = &ifp->u_32.if_##field;	\
+			(void)p;				\
+			ifp->u_32.if_##field = val;		\
+		}						\
+	}							\
+
+LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, version);
+LFS_DEF_IF_ACCESSOR(int64_t, int32_t, daddr);
+LFS_DEF_IF_ACCESSOR(u_int64_t, u_int32_t, nextfree);
+LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, atime_sec);
+LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, atime_nsec);
 
 /*
  * Cleaner information structure.  This resides in the ifile and is used

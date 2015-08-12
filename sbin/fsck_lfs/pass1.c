@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.40 2015/07/28 05:09:34 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.41 2015/08/12 18:25:52 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -91,7 +91,7 @@ pass1(void)
 	int i;
 	struct inodesc idesc;
 	struct ulfs1_dinode *tinode;
-	struct ifile *ifp;
+	IFILE *ifp;
 	struct ubuf *bp;
 	struct ino_daddr **dins;
 
@@ -116,7 +116,7 @@ pass1(void)
 			dins[i]->daddr = lfs_sb_getidaddr(fs);
 		else {
 			LFS_IENTRY(ifp, fs, i, bp);
-			dins[i]->daddr = ifp->if_daddr;
+			dins[i]->daddr = lfs_if_getdaddr(fs, ifp);
 			brelse(bp, 0);
 		}
 	}
@@ -281,7 +281,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	 */
 	if (dp->di_nlink <= 0) {
 		LFS_IENTRY(ifp, fs, inumber, bp);
-		if (ifp->if_nextfree == LFS_ORPHAN_NEXTFREE) {
+		if (lfs_if_getnextfree(fs, ifp) == LFS_ORPHAN_NEXTFREE) {
 			statemap[inumber] = (mode == LFS_IFDIR ? DCLEAR : FCLEAR);
 			/* Add this to our list of orphans */
 			zlnp = emalloc(sizeof *zlnp);
