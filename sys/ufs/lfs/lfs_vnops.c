@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.282 2015/08/12 18:23:47 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.283 2015/08/12 18:24:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.282 2015/08/12 18:23:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.283 2015/08/12 18:24:14 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1721,6 +1721,33 @@ lfs_flush_pchain(struct lfs *fs)
 }
 
 /*
+ * Conversion for compat.
+ */
+static void
+block_info_from_70(BLOCK_INFO *bi, const BLOCK_INFO_70 *bi70)
+{
+	bi->bi_inode = bi70->bi_inode;
+	bi->bi_lbn = bi70->bi_lbn;
+	bi->bi_daddr = bi70->bi_daddr;
+	bi->bi_segcreate = bi70->bi_segcreate;
+	bi->bi_version = bi70->bi_version;
+	bi->bi_bp = bi70->bi_bp;
+	bi->bi_size = bi70->bi_size;
+}
+
+static void
+block_info_to_70(BLOCK_INFO_70 *bi70, const BLOCK_INFO *bi)
+{
+	bi70->bi_inode = bi->bi_inode;
+	bi70->bi_lbn = bi->bi_lbn;
+	bi70->bi_daddr = bi->bi_daddr;
+	bi70->bi_segcreate = bi->bi_segcreate;
+	bi70->bi_version = bi->bi_version;
+	bi70->bi_bp = bi->bi_bp;
+	bi70->bi_size = bi->bi_size;
+}
+
+/*
  * Provide a fcntl interface to sys_lfs_{segwait,bmapv,markv}.
  */
 int
@@ -1736,11 +1763,13 @@ lfs_fcntl(void *v)
 	struct timeval tv;
 	struct timeval *tvp;
 	BLOCK_INFO *blkiov;
+	BLOCK_INFO_70 *blkiov70;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
-	int blkcnt, error;
+	int blkcnt, i, error;
 	size_t fh_size;
 	struct lfs_fcntl_markv blkvp;
+	struct lfs_fcntl_markv_70 blkvp70;
 	struct lwp *l;
 	fsid_t *fsidp;
 	struct lfs *fs;
@@ -1775,7 +1804,7 @@ lfs_fcntl(void *v)
 	    case LFCNSEGWAITALL_COMPAT_50:
 	    case LFCNSEGWAITALL_COMPAT:
 		fsidp = NULL;
-		/* FALLSTHROUGH */
+		/* FALLTHROUGH */
 	    case LFCNSEGWAIT_COMPAT_50:
 	    case LFCNSEGWAIT_COMPAT:
 		{
@@ -1787,7 +1816,7 @@ lfs_fcntl(void *v)
 		goto segwait_common;
 	    case LFCNSEGWAITALL:
 		fsidp = NULL;
-		/* FALLSTHROUGH */
+		/* FALLTHROUGH */
 	    case LFCNSEGWAIT:
 		tvp = (struct timeval *)ap->a_data;
 segwait_common:
@@ -1801,6 +1830,50 @@ segwait_common:
 		if (--fs->lfs_sleepers == 0)
 			wakeup(&fs->lfs_sleepers);
 		mutex_exit(&lfs_lock);
+		return error;
+
+	    case LFCNBMAPV_COMPAT_70:
+	    case LFCNMARKV_COMPAT_70:
+		blkvp70 = *(struct lfs_fcntl_markv_70 *)ap->a_data;
+
+		blkcnt = blkvp70.blkcnt;
+		if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
+			return (EINVAL);
+		blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
+		blkiov70 = lfs_malloc(fs, sizeof(BLOCK_INFO_70), LFS_NB_BLKIOV);
+		for (i = 0; i < blkcnt; i++) {
+			error = copyin(&blkvp70.blkiov[i], blkiov70,
+				       sizeof(*blkiov70));
+			if (error) {
+				lfs_free(fs, blkiov70, LFS_NB_BLKIOV);
+				lfs_free(fs, blkiov, LFS_NB_BLKIOV);
+				return error;
+			}
+			block_info_from_70(&blkiov[i], blkiov70);
+		}
+
+		mutex_enter(&lfs_lock);
+		++fs->lfs_sleepers;
+		mutex_exit(&lfs_lock);
+		if (ap->a_command == LFCNBMAPV)
+			error = lfs_bmapv(l, fsidp, blkiov, blkcnt);
+		else /* LFCNMARKV */
+			error = lfs_markv(l, fsidp, blkiov, blkcnt);
+		if (error == 0) {
+			for (i = 0; i < blkcnt; i++) {
+				block_info_to_70(blkiov70, &blkiov[i]);
+				error = copyout(blkiov70, &blkvp70.blkiov[i],
+						sizeof(*blkiov70));
+				if (error) {
+					break;
+				}
+			}
+		}
+		mutex_enter(&lfs_lock);
+		if (--fs->lfs_sleepers == 0)
+			wakeup(&fs->lfs_sleepers);
+		mutex_exit(&lfs_lock);
+		lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 		return error;
 
 	    case LFCNBMAPV:
