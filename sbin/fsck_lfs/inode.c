@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.57 2015/07/28 05:09:34 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.58 2015/08/12 18:25:52 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@ ginode(ino_t ino)
 	struct uvnode *vp;
 	struct ubuf *bp;
 	IFILE *ifp;
+	daddr_t daddr;
+	unsigned segno;
 
 	vp = vget(fs, ino);
 	if (vp == NULL)
@@ -111,8 +113,10 @@ ginode(ino_t ino)
 
 	if (din_table[ino] == 0x0) {
 		LFS_IENTRY(ifp, fs, ino, bp);
-		din_table[ino] = ifp->if_daddr;
-		seg_table[lfs_dtosn(fs, ifp->if_daddr)].su_nbytes += LFS_DINODE1_SIZE;
+		daddr = lfs_if_getdaddr(fs, ifp);
+		segno = lfs_dtosn(fs, daddr);
+		din_table[ino] = daddr;
+		seg_table[segno].su_nbytes += LFS_DINODE1_SIZE;
 		brelse(bp, 0);
 	}
 	return (VTOI(vp)->i_din.ffs1_din);
@@ -458,13 +462,13 @@ clearinode(ino_t inumber)
 	/* Send cleared inode to the free list */
 
 	LFS_IENTRY(ifp, fs, inumber, bp);
-	daddr = ifp->if_daddr;
+	daddr = lfs_if_getdaddr(fs, ifp);
 	if (daddr == LFS_UNUSED_DADDR) {
 		brelse(bp, 0);
 		return;
 	}
-	ifp->if_daddr = LFS_UNUSED_DADDR;
-	ifp->if_nextfree = lfs_sb_getfreehd(fs);
+	lfs_if_setdaddr(fs, ifp, LFS_UNUSED_DADDR);
+	lfs_if_setnextfree(fs, ifp, lfs_sb_getfreehd(fs));
 	lfs_sb_setfreehd(fs, inumber);
 	sbdirty();
 	VOP_BWRITE(bp);
