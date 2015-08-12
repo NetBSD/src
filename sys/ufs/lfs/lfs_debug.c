@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.51 2015/08/12 18:27:01 dholland Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.52 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.51 2015/08/12 18:27:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.52 2015/08/12 18:28:01 dholland Exp $");
 
 #ifdef DEBUG
 
@@ -191,26 +191,26 @@ lfs_dump_super(struct lfs *lfsp)
 }
 
 void
-lfs_dump_dinode(struct ulfs1_dinode *dip)
+lfs_dump_dinode(struct lfs *fs, union lfs_dinode *dip)
 {
 	int i;
 
-	printf("%s%u\t%s%d\t%s%u\t%s%u\t%s%qu\t%s%d\n",
-	       "mode   ", dip->di_mode,
-	       "nlink  ", dip->di_nlink,
-	       "uid    ", dip->di_uid,
-	       "gid    ", dip->di_gid,
-	       "size   ", (long long)dip->di_size,
-	       "blocks ", dip->di_blocks);
-	printf("inum  %d\n", dip->di_inumber);
+	printf("%s%u\t%s%d\t%s%u\t%s%u\t%s%ju\t%s%ju\n",
+	       "mode   ", lfs_dino_getmode(fs, dip),
+	       "nlink  ", lfs_dino_getnlink(fs, dip),
+	       "uid    ", lfs_dino_getuid(fs, dip),
+	       "gid    ", lfs_dino_getgid(fs, dip),
+	       "size   ", (uintmax_t)lfs_dino_getsize(fs, dip),
+	       "blocks ", (uintmax_t)lfs_dino_getblocks(fs, dip));
+	printf("inum  %ju\n", (uintmax_t)lfs_dino_getinumber(fs, dip));
 	printf("Direct Addresses\n");
 	for (i = 0; i < ULFS_NDADDR; i++) {
-		printf("\t%x", dip->di_db[i]);
+		printf("\t%jx", (intmax_t)lfs_dino_getdb(fs, dip, i));
 		if ((i % 6) == 5)
 			printf("\n");
 	}
 	for (i = 0; i < ULFS_NIADDR; i++)
-		printf("\t%x", dip->di_ib[i]);
+		printf("\t%jx", (intmax_t)lfs_dino_getib(fs, dip, i));
 	printf("\n");
 }
 

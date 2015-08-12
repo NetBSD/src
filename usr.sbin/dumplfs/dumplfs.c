@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.53 2015/08/12 18:27:01 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.54 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.53 2015/08/12 18:27:01 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.54 2015/08/12 18:28:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: dumplfs.c,v 1.53 2015/08/12 18:27:01 dholland Exp $");
 
 static void	addseg(char *);
 static void	dump_cleaner_info(struct lfs *, void *);
-static void	dump_dinode(struct ulfs1_dinode *);
+static void	dump_dinode(struct lfs *, union lfs_dinode *);
 static void	dump_ifile(int, struct lfs *, int, int, daddr_t);
 static int	dump_ipage_ifile(struct lfs *, int, char *, int);
 static int	dump_ipage_segusage(struct lfs *, int, char *, int);
@@ -275,9 +275,11 @@ static void
 dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t addr)
 {
 	char *ipage;
-	struct ulfs1_dinode *dip, *dpage;
+	char *dpage;
+	union lfs_dinode *dip = NULL;
 	/* XXX ondisk32 */
 	int32_t *addrp, *dindir, *iaddrp, *indir;
+	daddr_t pdb;
 	int block_limit, i, inum, j, nblocks, psize;
 
 	psize = lfs_sb_getbsize(lfsp);
@@ -288,29 +290,31 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 		err(1, "malloc");
 	get(fd, fsbtobyte(lfsp, addr), dpage, psize);
 
-	for (dip = dpage + LFS_INOPB(lfsp) - 1; dip >= dpage; --dip)
-		if (dip->di_inumber == LFS_IFILE_INUM)
+	for (i = LFS_INOPB(lfsp); i-- > 0; ) {
+		dip = DINO_IN_BLOCK(lfsp, dpage, i);
+		if (lfs_dino_getinumber(lfsp, dip) == LFS_IFILE_INUM)
 			break;
+	}
 
-	if (dip < dpage) {
+	if (lfs_dino_getinumber(lfsp, dip) != LFS_IFILE_INUM) {
 		warnx("unable to locate ifile inode at disk address 0x%jx",
 		     (uintmax_t)addr);
 		return;
 	}
 
 	(void)printf("\nIFILE inode\n");
-	dump_dinode(dip);
+	dump_dinode(lfsp, dip);
 
 	(void)printf("\nIFILE contents\n");
-	nblocks = dip->di_size >> lfs_sb_getbshift(lfsp);
+	nblocks = lfs_dino_getsize(lfsp, dip) >> lfs_sb_getbshift(lfsp);
 	block_limit = MIN(nblocks, ULFS_NDADDR);
 
 	/* Get the direct block */
 	if ((ipage = malloc(psize)) == NULL)
 		err(1, "malloc");
-	for (inum = 0, addrp = dip->di_db, i = 0; i < block_limit;
-	    i++, addrp++) {
-		get(fd, fsbtobyte(lfsp, *addrp), ipage, psize);
+	for (inum = 0, i = 0; i < block_limit; i++) {
+		pdb = lfs_dino_getdb(lfsp, dip, i);
+		get(fd, fsbtobyte(lfsp, pdb), ipage, psize);
 		if (i < lfs_sb_getcleansz(lfsp)) {
 			dump_cleaner_info(lfsp, ipage);
 			if (do_segentries)
@@ -340,7 +344,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 	/* Dump out blocks off of single indirect block */
 	if (!(indir = malloc(psize)))
 		err(1, "malloc");
-	get(fd, fsbtobyte(lfsp, dip->di_ib[0]), indir, psize);
+	get(fd, fsbtobyte(lfsp, lfs_dino_getib(lfsp, dip, 0)), indir, psize);
 	block_limit = MIN(i + lfs_sb_getnindir(lfsp), nblocks);
 	for (addrp = indir; i < block_limit; i++, addrp++) {
 		if (*addrp == LFS_UNUSED_DADDR)
@@ -373,7 +377,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 	/* Get the double indirect block */
 	if (!(dindir = malloc(psize)))
 		err(1, "malloc");
-	get(fd, fsbtobyte(lfsp, dip->di_ib[1]), dindir, psize);
+	get(fd, fsbtobyte(lfsp, lfs_dino_getib(lfsp, dip, 1)), dindir, psize);
 	for (iaddrp = dindir, j = 0; j < lfs_sb_getnindir(lfsp); j++, iaddrp++) {
 		if (*iaddrp == LFS_UNUSED_DADDR)
 			break;
@@ -462,34 +466,35 @@ dump_ipage_segusage(struct lfs *lfsp, int i, char *pp, int tot)
 }
 
 static void
-dump_dinode(struct ulfs1_dinode *dip)
+dump_dinode(struct lfs *fs, union lfs_dinode *dip)
 {
 	int i;
 	time_t at, mt, ct;
 
-	at = dip->di_atime;
-	mt = dip->di_mtime;
-	ct = dip->di_ctime;
+	at = lfs_dino_getatime(fs, dip);
+	mt = lfs_dino_getmtime(fs, dip);
+	ct = lfs_dino_getctime(fs, dip);
 
-	(void)printf("    %so%o\t%s%d\t%s%d\t%s%d\t%s%llu\n",
-		"mode  ", dip->di_mode,
-		"nlink ", dip->di_nlink,
-		"uid   ", dip->di_uid,
-		"gid   ", dip->di_gid,
-		"size  ", (long long)dip->di_size);
-	(void)printf("    %s%s    %s%s    %s%s",
-		"atime ", ctime(&at),
-		"mtime ", ctime(&mt),
-		"ctime ", ctime(&ct));
-	(void)printf("    inum  %d\n", dip->di_inumber);
+	(void)printf("    %so%o\t%s%d\t%s%d\t%s%d\t%s%ju\n",
+		"mode  ", lfs_dino_getmode(fs, dip),
+		"nlink ", lfs_dino_getnlink(fs, dip),
+		"uid   ", lfs_dino_getuid(fs, dip),
+		"gid   ", lfs_dino_getgid(fs, dip),
+		"size  ", (uintmax_t)lfs_dino_getsize(fs, dip));
+	(void)printf("    %s%s", "atime ", ctime(&at));
+	(void)printf("    %s%s", "mtime ", ctime(&mt));
+	(void)printf("    %s%s", "ctime ", ctime(&ct));
+	(void)printf("    inum  %ju\n",
+		(uintmax_t)lfs_dino_getinumber(fs, dip));
 	(void)printf("    Direct Addresses\n");
 	for (i = 0; i < ULFS_NDADDR; i++) {
-		(void)printf("\t0x%x", dip->di_db[i]);
+		(void)printf("\t0x%jx", (intmax_t)lfs_dino_getdb(fs, dip, i));
 		if ((i % 6) == 5)
 			(void)printf("\n");
 	}
+	(void)printf("    Indirect Addresses\n");
 	for (i = 0; i < ULFS_NIADDR; i++)
-		(void)printf("\t0x%x", dip->di_ib[i]);
+		(void)printf("\t0x%jx", (intmax_t)lfs_dino_getib(fs, dip, i));
 	(void)printf("\n");
 }
 
@@ -503,7 +508,8 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	int ck;
 	int numbytes, numblocks;
 	char *datap;
-	struct ulfs1_dinode *inop;
+	char *diblock;
+	union lfs_dinode *dip;
 	size_t el_size;
 	u_int32_t datasum;
 	u_int32_t ssflags;
@@ -557,7 +563,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	/* XXX ondisk32 */
 	dp = (int32_t *)sp;
 	dp += lfs_sb_getsumsize(lfsp) / sizeof(int32_t);
-	inop = malloc(lfs_sb_getbsize(lfsp));
+	diblock = malloc(lfs_sb_getbsize(lfsp));
 	printf("    Inode addresses:");
 	numbytes = 0;
 	numblocks = 0;
@@ -565,17 +571,19 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 		++numblocks;
 		numbytes += lfs_sb_getibsize(lfsp);	/* add bytes for inode block */
 		printf("\t0x%x {", *dp);
-		get(fd, fsbtobyte(lfsp, *dp), inop, lfs_sb_getibsize(lfsp));
+		get(fd, fsbtobyte(lfsp, *dp), diblock, lfs_sb_getibsize(lfsp));
 		for (j = 0; i < lfs_ss_getninos(lfsp, sp) && j < LFS_INOPB(lfsp); j++, i++) {
 			if (j > 0) 
 				(void)printf(", ");
-			(void)printf("%dv%d", inop[j].di_inumber, inop[j].di_gen);
+			dip = DINO_IN_BLOCK(lfsp, diblock, j);
+			(void)printf("%juv%d", lfs_dino_getinumber(lfsp, dip),
+				     lfs_dino_getgen(lfsp, dip));
 		}
 		(void)printf("}");
 		if (((i/LFS_INOPB(lfsp)) % 4) == 3)
 			(void)printf("\n");
 	}
-	free(inop);
+	free(diblock);
 
 	printf("\n");
 

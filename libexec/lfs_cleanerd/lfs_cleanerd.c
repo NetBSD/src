@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.49 2015/08/12 18:27:01 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.50 2015/08/12 18:28:00 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -420,7 +420,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	daddr_t idaddr, odaddr;
 	FINFO *fip;
 	struct ubuf *ifbp;
-	struct ulfs1_dinode *dip;
+	union lfs_dinode *dip;
 	u_int32_t ck, vers;
 	int fic, inoc, obic;
 	size_t sumstart;
@@ -489,16 +489,16 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		if (inoc < lfs_ss_getninos(fs, ssp) && *iaddrp == daddr) {
 			cp = fd_ptrget(fs->clfs_devvp, daddr);
 			ck = lfs_cksum_part(cp, sizeof(u_int32_t), ck);
-			dip = (struct ulfs1_dinode *)cp;
 			for (i = 0; i < lfs_sb_getinopb(fs); i++) {
-				if (dip[i].di_inumber == 0)
+				dip = DINO_IN_BLOCK(fs, cp, i);
+				if (lfs_dino_getinumber(fs, dip) == 0)
 					break;
 
 				/*
 				 * Check currency before adding it
 				 */
 #ifndef REPAIR_ZERO_FINFO
-				lfs_ientry(&ifp, fs, dip[i].di_inumber, &ifbp);
+				lfs_ientry(&ifp, fs, lfs_dino_getinumber(fs, dip), &ifbp);
 				idaddr = lfs_if_getdaddr(fs, ifp);
 				brelse(ifbp, 0);
 				if (idaddr != daddr)
@@ -518,13 +518,13 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 					*bipp = bip;
 					return 0x0;
 				}
-				bip[*bic - 1].bi_inode = dip[i].di_inumber;
+				bip[*bic - 1].bi_inode = lfs_dino_getinumber(fs, dip);
 				bip[*bic - 1].bi_lbn = LFS_UNUSED_LBN;
 				bip[*bic - 1].bi_daddr = daddr;
 				bip[*bic - 1].bi_segcreate = lfs_ss_getcreate(fs, ssp);
-				bip[*bic - 1].bi_version = dip[i].di_gen;
-				bip[*bic - 1].bi_bp = &(dip[i]);
-				bip[*bic - 1].bi_size = LFS_DINODE1_SIZE;
+				bip[*bic - 1].bi_version = lfs_dino_getgen(fs, dip);
+				bip[*bic - 1].bi_bp = dip;
+				bip[*bic - 1].bi_size = DINOSIZE(fs);
 			}
 			inoc += i;
 			daddr += lfs_btofsb(fs, lfs_sb_getibsize(fs));

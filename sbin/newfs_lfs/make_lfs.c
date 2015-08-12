@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.42 2015/08/12 18:25:52 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.43 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.42 2015/08/12 18:25:52 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.43 2015/08/12 18:28:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,10 +134,9 @@ static const struct dlfs dlfs32_default = {
 		.dlfs_minfree =		MINFREE,
 		.dlfs_maxfilesize =	0,
 		.dlfs_fsbpseg =		0,
-		.dlfs_inopb =		DFL_LFSBLOCK/sizeof(struct ulfs1_dinode),
+		.dlfs_inopb =		DFL_LFSBLOCK/sizeof(struct lfs32_dinode),
 		.dlfs_ifpb =		DFL_LFSBLOCK/sizeof(IFILE32),
 		.dlfs_sepb =		DFL_LFSBLOCK/sizeof(SEGUSE),
-		/* XXX ondisk32 */
 		.dlfs_nindir =		DFL_LFSBLOCK/sizeof(int32_t),
 		.dlfs_nseg =		0,
 		.dlfs_nspf =		0,
@@ -200,7 +199,7 @@ static const struct dlfs64 dlfs64_default = {
 		.dlfs_minfree =		MINFREE,
 		.dlfs_maxfilesize =	0,
 		.dlfs_fsbpseg =		0,
-		.dlfs_inopb =		DFL_LFSBLOCK/sizeof(struct ulfs1_dinode),
+		.dlfs_inopb =		DFL_LFSBLOCK/sizeof(struct lfs64_dinode),
 		.dlfs_ifpb =		DFL_LFSBLOCK/sizeof(IFILE64),
 		.dlfs_sepb =		DFL_LFSBLOCK/sizeof(SEGUSE),
 		.dlfs_nindir =		DFL_LFSBLOCK/sizeof(int64_t),
@@ -217,7 +216,7 @@ static const struct dlfs64 dlfs64_default = {
 		.dlfs_blktodb =		0,
 		.dlfs_sushift =		0,
 		.dlfs_sboffs =		{ 0 },
-		.dlfs_maxsymlinklen =	ULFS1_MAXSYMLINKLEN,
+		.dlfs_maxsymlinklen =	ULFS2_MAXSYMLINKLEN,
 		.dlfs_nclean =  	0,
 		.dlfs_fsmnt =   	{ 0 },
 		.dlfs_pflags =  	LFS_PF_CLEAN,
@@ -259,7 +258,7 @@ struct lfs_direct lfs_lf_dir[] = {
 #endif
 
 void pwarn(const char *, ...);
-static void make_dinode(ino_t, struct ulfs1_dinode *, int, struct lfs *);
+static void make_dinode(ino_t, union lfs_dinode *, int, struct lfs *);
 static void make_dir( void *, struct lfs_direct *, int);
 static uint64_t maxfilesize(int);
 
@@ -284,23 +283,29 @@ maxfilesize(int bshift)
  * directory.
  */
 static void
-make_dinode(ino_t ino, struct ulfs1_dinode *dip, int nfrags, struct lfs *fs)
+make_dinode(ino_t ino, union lfs_dinode *dip, int nfrags, struct lfs *fs)
 {
 	int i;
 	int nblocks, bb, base, factor, lvl;
+	time_t t;
 
 	nblocks = howmany(nfrags, lfs_sb_getfrag(fs));
 	if (nblocks >= ULFS_NDADDR)
 		nfrags = roundup(nfrags, lfs_sb_getfrag(fs));
 
-	dip->di_nlink = 1;
-	dip->di_blocks = nfrags;
+	lfs_dino_setnlink(fs, dip, 1);
+	lfs_dino_setblocks(fs, dip, nfrags);
 
-	dip->di_size = (nfrags << lfs_sb_getffshift(fs));
-	dip->di_atime = dip->di_mtime = dip->di_ctime = lfs_sb_gettstamp(fs);
-	dip->di_atimensec = dip->di_mtimensec = dip->di_ctimensec = 0;
-	dip->di_inumber = ino;
-	dip->di_gen = 1;
+	lfs_dino_setsize(fs, dip, nfrags << lfs_sb_getffshift(fs));
+	t = lfs_sb_gettstamp(fs);
+	lfs_dino_setatime(fs, dip, t);
+	lfs_dino_setmtime(fs, dip, t);
+	lfs_dino_setctime(fs, dip, t);
+	lfs_dino_setatimensec(fs, dip, 0);
+	lfs_dino_setmtimensec(fs, dip, 0);
+	lfs_dino_setctimensec(fs, dip, 0);
+	lfs_dino_setinumber(fs, dip, ino);
+	lfs_dino_setgen(fs, dip, 1);
 
 	if (ULFS_NDADDR < nblocks) {
 		/* Count up how many indirect blocks we need, recursively */
@@ -311,21 +316,22 @@ make_dinode(ino_t ino, struct ulfs1_dinode *dip, int nfrags, struct lfs *fs)
 			ifibc += bb;
 			--bb;
 		}
-		dip->di_blocks += lfs_blkstofrags(fs, ifibc);
+		lfs_dino_setblocks(fs, dip,
+		    lfs_dino_getblocks(fs, dip) + lfs_blkstofrags(fs, ifibc));
 	}
 
 	/* Assign the block addresses for the ifile */
 	for (i = 0; i < MIN(nblocks,ULFS_NDADDR); i++) {
-		dip->di_db[i] = 0x0;
+		lfs_dino_setdb(fs, dip, i, 0x0);
 	}
 	if (nblocks > ULFS_NDADDR) {
-		dip->di_ib[0] = 0x0;
+		lfs_dino_setib(fs, dip, 0, 0x0);
 		bb = howmany(nblocks - ULFS_NDADDR, LFS_NINDIR(fs)) - 1;
 		factor = LFS_NINDIR(fs);
 		base = -ULFS_NDADDR - factor;
 		lvl = 1;
 		while (bb > 0) {
-			dip->di_ib[lvl] = 0x0;
+			lfs_dino_setib(fs, dip, lvl, 0x0);
 			bb = howmany(bb, LFS_NINDIR(fs));
 			--bb;
 			factor *= LFS_NINDIR(fs);
@@ -363,7 +369,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 int resvseg, int version, daddr_t start, int ibsize, int interleave,
 	 u_int32_t roll_id)
 {
-	struct ulfs1_dinode *dip;	/* Pointer to a disk inode */
+	union lfs_dinode *dip;	/* Pointer to a disk inode */
 	CLEANERINFO *cip;	/* Segment cleaner information table */
 	IFILE *ipall;		/* Pointer to array of ifile structures */
 	IFILE64 *ip64 = NULL;
@@ -413,6 +419,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	} else {
 		fs->lfs_dlfs_u.u_32 = dlfs32_default;
 	}
+	fs->lfs_is64 = is64;
 	fs->lfs_ivnode = vp;
 	fs->lfs_devvp = save_devvp;
 
@@ -528,11 +535,11 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		lfs_sb_setssize(fs, ssize);
 		lfs_sb_setibsize(fs, ibsize);
 	}
-	lfs_sb_setinopb(fs, lfs_sb_getibsize(fs) / sizeof(struct ulfs1_dinode));
+	lfs_sb_setinopb(fs, lfs_sb_getibsize(fs) / DINOSIZE(fs));
 	lfs_sb_setminfree(fs, minfree);
 
 	if (version > 1) {
-		lfs_sb_setinopf(fs, secsize/LFS_DINODE1_SIZE);
+		lfs_sb_setinopf(fs, secsize/DINOSIZE(fs));
 		lfs_sb_setinterleave(fs, interleave);
 		if (roll_id == 0)
 			roll_id = arc4random();
@@ -694,17 +701,23 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 * Initialize the Ifile inode.  Do this before we do anything
 	 * with the Ifile or segment tables.
 	 */
-	dip = VTOI(fs->lfs_ivnode)->i_din.ffs1_din = (struct ulfs1_dinode *)
-		malloc(sizeof(*dip));
+	dip = malloc(sizeof(*dip));
 	if (dip == NULL)
 		err(1, NULL);
+	// XXX lame
+	if (fs->lfs_is64) {
+		VTOI(fs->lfs_ivnode)->i_din.ffs2_din = &dip->u_64;
+	} else {
+		VTOI(fs->lfs_ivnode)->i_din.ffs1_din = &dip->u_32;
+	}
+		
 	memset(dip, 0, sizeof(*dip));
-	dip->di_mode  = LFS_IFREG | 0600;
-	dip->di_flags = SF_IMMUTABLE;
+	lfs_dino_setmode(fs, dip, LFS_IFREG | 0600);
+	lfs_dino_setflags(fs, dip, SF_IMMUTABLE);
 	make_dinode(LFS_IFILE_INUM, dip,
 		lfs_blkstofrags(fs, lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs) + 1), fs);
-	dip->di_size = (lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs) + 1) << lfs_sb_getbshift(fs);
-	for (i = 0; i < ULFS_NDADDR && i < (dip->di_size >> lfs_sb_getbshift(fs)); i++)
+	lfs_dino_setsize(fs, dip, (lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs) + 1) << lfs_sb_getbshift(fs));
+	for (i = 0; i < ULFS_NDADDR && i < (lfs_dino_getsize(fs, dip) >> lfs_sb_getbshift(fs)); i++)
 		VTOI(fs->lfs_ivnode)->i_lfs_fragsize[i] = lfs_sb_getbsize(fs);
 
 	/*
@@ -762,17 +775,21 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 
 	/* Initialize root directory */
 	vp = lfs_raw_vget(fs, ULFS_ROOTINO, devfd, 0x0);
-	dip = VTOI(vp)->i_din.ffs1_din;
+	// XXX bogus cast
+	dip = (union lfs_dinode *)VTOI(vp)->i_din.ffs1_din;
 	make_dinode(ULFS_ROOTINO, dip, howmany(LFS_DIRBLKSIZ, lfs_sb_getfsize(fs)), fs);
-	dip->di_mode = LFS_IFDIR | UMASK;
-	VTOI(vp)->i_lfs_osize = dip->di_size = LFS_DIRBLKSIZ;
+	lfs_dino_setmode(fs, dip, LFS_IFDIR | UMASK);
+	VTOI(vp)->i_lfs_osize = LFS_DIRBLKSIZ;
 #ifdef MAKE_LF_DIR
-	VTOI(vp)->i_nlink = dip->di_nlink = 3;
+	VTOI(vp)->i_nlink = 3;
 #else
-	VTOI(vp)->i_nlink = dip->di_nlink = 2;
+	VTOI(vp)->i_nlink = 2;
 #endif
-        VTOI(vp)->i_lfs_effnblks = dip->di_blocks =
+        VTOI(vp)->i_lfs_effnblks =
 		lfs_btofsb(fs, roundup(LFS_DIRBLKSIZ, lfs_sb_getfsize(fs)));
+	lfs_dino_setsize(fs, dip, VTOI(vp)->i_lfs_osize);
+	lfs_dino_setnlink(fs, dip, VTOI(vp)->i_nlink);
+	lfs_dino_setblocks(fs, dip, VTOI(vp)->i_lfs_effnblks);
 	for (i = 0; i < ULFS_NDADDR && i < howmany(LFS_DIRBLKSIZ, lfs_sb_getbsize(fs)); i++)
 		VTOI(vp)->i_lfs_fragsize[i] = lfs_sb_getbsize(fs);
 	if (LFS_DIRBLKSIZ < lfs_sb_getbsize(fs))

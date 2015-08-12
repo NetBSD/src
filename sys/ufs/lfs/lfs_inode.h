@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.8 2015/08/02 18:12:41 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.9 2015/08/12 18:28:01 dholland Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
@@ -153,8 +153,8 @@ struct inode {
 	 * The on-disk dinode itself.
 	 */
 	union {
-		struct	ulfs1_dinode *ffs1_din;	/* 128 bytes of the on-disk dinode. */
-		struct	ulfs2_dinode *ffs2_din;
+		struct	lfs32_dinode *ffs1_din;	/* 128 bytes of the on-disk dinode. */
+		struct	lfs64_dinode *ffs2_din;
 	} i_din;
 };
 
@@ -175,6 +175,7 @@ struct inode {
 #define	i_ffs1_rdev		i_din.ffs1_din->di_rdev
 #define	i_ffs1_size		i_din.ffs1_din->di_size
 #define	i_ffs1_uid		i_din.ffs1_din->di_uid
+#define	i_ffs1_modrev		i_din.ffs1_din->di_modrev
 
 #define	i_ffs2_atime		i_din.ffs2_din->di_atime
 #define	i_ffs2_atimensec	i_din.ffs2_din->di_atimensec
@@ -199,6 +200,8 @@ struct inode {
 #define	i_ffs2_kernflags	i_din.ffs2_din->di_kernflags
 #define	i_ffs2_extsize		i_din.ffs2_din->di_extsize
 #define	i_ffs2_extb		i_din.ffs2_din->di_extb
+#define	i_ffs2_inumber		i_din.ffs2_din->di_inumber
+#define	i_ffs2_modrev		i_din.ffs2_din->di_modrev
 
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.133 2015/08/02 18:08:13 dholland Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.134 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.133 2015/08/02 18:08:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.134 2015/08/12 18:28:01 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,7 +601,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 }
 
 #define INOCOUNT(fs) howmany(lfs_sb_getuinodes(fs), LFS_INOPB(fs))
-#define INOBYTES(fs) (lfs_sb_getuinodes(fs) * sizeof (struct ulfs1_dinode))
+#define INOBYTES(fs) (lfs_sb_getuinodes(fs) * DINOSIZE(fs))
 
 /*
  * make sure that we don't have too many locked buffers.

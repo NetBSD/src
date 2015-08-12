@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.24 2015/08/12 18:25:52 dholland Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.25 2015/08/12 18:28:00 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.24 2015/08/12 18:25:52 dholland Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.25 2015/08/12 18:28:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ fs_mapinodes(ino_t maxino, u_int64_t *tapesz, int *anydirskipped)
 #define T_UNITS (LFS_NINDIR(fs)*LFS_NINDIR(fs))
 
 static daddr_t
-lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
+lfs_bmap(struct lfs *fs, union lfs_dinode *idinode, daddr_t lbn)
 {
 	daddr_t residue, up;
 	int off=0;
@@ -204,7 +204,7 @@ lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 
 	up = UNASSIGNED;	/* XXXGCC -Wunitialized [sh3] */
 	
-	if(lbn > 0 && lbn > lfs_lblkno(fs, idinode->di_size)) {
+	if(lbn > 0 && lbn > lfs_lblkno(fs, lfs_dino_getsize(fs, idinode))) {
 		return UNASSIGNED;
 	}
 	/*
@@ -217,13 +217,13 @@ lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 		lbn *= -1;
 		if (lbn == ULFS_NDADDR) {
 			/* printf("lbn %d: single indir base\n", -lbn); */
-			return idinode->di_ib[0]; /* single indirect */
+			return lfs_dino_getib(fs, idinode, 0); /* single indirect */
 		} else if(lbn == BASE_DINDIR+1) {
 			/* printf("lbn %d: double indir base\n", -lbn); */
-			return idinode->di_ib[1]; /* double indirect */
+			return lfs_dino_getib(fs, idinode, 1); /* double indirect */
 		} else if(lbn == BASE_TINDIR+2) {
 			/* printf("lbn %d: triple indir base\n", -lbn); */
-			return idinode->di_ib[2]; /* triple indirect */
+			return lfs_dino_getib(fs, idinode, 2); /* triple indirect */
 		}
 
 		/*
@@ -233,7 +233,7 @@ lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 		residue = (lbn-ULFS_NDADDR) % LFS_NINDIR(fs);
 		if(residue == 1) {
 			/* Double indirect.  Parent is the triple. */
-			up = idinode->di_ib[2];
+			up = lfs_dino_getib(fs, idinode, 2);
 			off = (lbn-2-BASE_TINDIR)/(LFS_NINDIR(fs)*LFS_NINDIR(fs));
 			if(up == UNASSIGNED || up == LFS_UNUSED_DADDR)
 				return UNASSIGNED;
@@ -260,7 +260,7 @@ lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 	} else {
 		/* Direct block.  Its parent must be a single indirect. */
 		if (lbn < ULFS_NDADDR)
-			return idinode->di_db[lbn];
+			return lfs_dino_getdb(fs, idinode, lbn);
 		else {
 			/* Parent is an indirect block. */
 			up = -(((lbn-ULFS_NDADDR) / D_UNITS) * D_UNITS + ULFS_NDADDR);
@@ -284,14 +284,18 @@ lfs_ientry(ino_t ino)
 	daddr_t lbn;
 	daddr_t blkno;
 	union dinode *dp;
-	struct ulfs1_dinode *ldp;
+	union lfs_dinode *ldp;
 	unsigned index;
     
 	lbn = ino/lfs_sb_getifpb(sblock) + lfs_sb_getcleansz(sblock) + lfs_sb_getsegtabsz(sblock);
 	dp = getino(lfs_sb_getifile(sblock));
-	/* XXX XXX this is horribly unsafe */
-	ldp = (struct ulfs1_dinode *)dp;
-	blkno = lfs_bmap(sblock, ldp ,lbn);
+	/* XXX this is foolish */
+	if (sblock->lfs_is64) {
+		ldp = (union lfs_dinode *)&dp->dlp64;
+	} else {
+		ldp = (union lfs_dinode *)&dp->dlp32;
+	}
+	blkno = lfs_bmap(sblock, ldp, lbn);
 	if (blkno != ifblkno)
 		bread(LFS_FSBTODB(sblock, blkno), ifileblock,
 		    lfs_sb_getbsize(sblock));
@@ -306,14 +310,18 @@ lfs_ientry(ino_t ino)
 }
 
 /* Search a block for a specific dinode. */
-static struct ulfs1_dinode *
-lfs_ifind(struct lfs *fs, ino_t ino, struct ulfs1_dinode *dip)
+static union lfs_dinode *
+lfs_ifind(struct lfs *fs, ino_t ino, void *block)
 {
-	int cnt;
+	union lfs_dinode *dip;
+	unsigned i, num;
 
-	for (cnt = 0; cnt < LFS_INOPB(fs); cnt++)
-		if(dip[cnt].di_inumber == ino)
-			return &(dip[cnt]);
+	num = LFS_INOPB(fs);
+	for (i = num; i-- > 0; ) {
+		dip = DINO_IN_BLOCK(fs, block, i);
+		if (lfs_dino_getinumber(fs, dip) == ino)
+			return dip;
+	}
 	return NULL;
 }
 
@@ -322,19 +330,32 @@ getino(ino_t inum)
 {
 	static daddr_t inoblkno;
 	daddr_t blkno;
-	static struct ulfs1_dinode inoblock[MAXBSIZE / sizeof (struct ulfs1_dinode)];
+	static union {
+		char space[MAXBSIZE];
+		struct lfs64_dinode u_64[MAXBSIZE/sizeof(struct lfs64_dinode)];
+		struct lfs32_dinode u_32[MAXBSIZE/sizeof(struct lfs32_dinode)];
+	} inoblock;
 	static union dinode ifile_dinode; /* XXX fill this in */
 	static union dinode empty_dinode; /* Always stays zeroed */
-	struct ulfs1_dinode *dp;
+	union lfs_dinode *dp;
+	ino_t inum2;
 
 	if(inum == lfs_sb_getifile(sblock)) {
 		/* Load the ifile inode if not already */
-		if(ifile_dinode.dlp1.di_inumber == 0) {
+		inum2 = sblock->lfs_is64 ?
+			ifile_dinode.dlp64.di_inumber :
+			ifile_dinode.dlp32.di_inumber;
+		if (inum2 == 0) {
 			blkno = lfs_sb_getidaddr(sblock);
-			bread(LFS_FSBTODB(sblock, blkno), (char *)inoblock, 
+			bread(LFS_FSBTODB(sblock, blkno), inoblock.space,
 				(int)lfs_sb_getbsize(sblock));
-			dp = lfs_ifind(sblock, inum, inoblock);
-			ifile_dinode.dlp1 = *dp; /* Structure copy */
+			dp = lfs_ifind(sblock, inum, inoblock.space);
+			/* Structure copy */
+			if (sblock->lfs_is64) {
+				ifile_dinode.dlp64 = dp->u_64;
+			} else {
+				ifile_dinode.dlp32 = dp->u_32;
+			}
 		}
 		return &ifile_dinode;
 	}
@@ -345,15 +366,10 @@ getino(ino_t inum)
 		return &empty_dinode;
 
 	if(blkno != inoblkno) {
-		bread(LFS_FSBTODB(sblock, blkno), (char *)inoblock, 
+		bread(LFS_FSBTODB(sblock, blkno), inoblock.space,
 			(int)lfs_sb_getbsize(sblock));
-#ifdef notyet
-		if (needswap)
-			for (i = 0; i < MAXINOPB; i++)
-				ffs_dinode_swap(&inoblock[i], &inoblock[i]);
-#endif
 	}
-	return (void *)lfs_ifind(sblock, inum, inoblock);
+	return (void *)lfs_ifind(sblock, inum, inoblock.space);
 }
 
 /*

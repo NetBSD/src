@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.25 2015/06/16 23:58:30 christos Exp $	 */
+/* $NetBSD: pass2.c,v 1.26 2015/08/12 18:28:00 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,6 +36,7 @@
 #include <sys/buf.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_inode.h>
 
 #include <err.h>
@@ -59,13 +60,15 @@ static int blksort(const void *, const void *);
 void
 pass2(void)
 {
-	struct ulfs1_dinode *dp;
+	union lfs_dinode *dp;
 	struct uvnode *vp;
 	struct inoinfo **inpp, *inp;
 	struct inoinfo **inpend;
 	struct inodesc curino;
-	struct ulfs1_dinode dino;
+	union lfs_dinode dino;
 	char pathbuf[MAXPATHLEN + 1];
+	uint16_t mode;
+	unsigned ii;
 
 	switch (statemap[ULFS_ROOTINO]) {
 
@@ -102,8 +105,10 @@ pass2(void)
 			errx(EEXIT, "%s", "");
 		vp = vget(fs, ULFS_ROOTINO);
 		dp = VTOD(vp);
-		dp->di_mode &= ~LFS_IFMT;
-		dp->di_mode |= LFS_IFDIR;
+		mode = lfs_dino_getmode(fs, dp);
+		mode &= ~LFS_IFMT;
+		mode |= LFS_IFDIR;
+		lfs_dino_setmode(fs, dp, mode);
 		inodirty(VTOI(vp));
 		break;
 
@@ -136,7 +141,7 @@ pass2(void)
 			if (reply("FIX") == 1) {
 				vp = vget(fs, inp->i_number);
 				dp = VTOD(vp);
-				dp->di_size = inp->i_isize;
+				lfs_dino_setsize(fs, dp, inp->i_isize);
 				inodirty(VTOI(vp));
 			}
 		} else if ((inp->i_isize & (LFS_DIRBLKSIZ - 1)) != 0) {
@@ -150,14 +155,21 @@ pass2(void)
 			if (preen || reply("ADJUST") == 1) {
 				vp = vget(fs, inp->i_number);
 				dp = VTOD(vp);
-				dp->di_size = inp->i_isize;
+				lfs_dino_setsize(fs, dp, inp->i_isize);
 				inodirty(VTOI(vp));
 			}
 		}
-		memset(&dino, 0, sizeof(struct ulfs1_dinode));
-		dino.di_mode = LFS_IFDIR;
-		dino.di_size = inp->i_isize;
-		memcpy(&dino.di_db[0], &inp->i_blks[0], (size_t) inp->i_numblks);
+		memset(&dino, 0, sizeof(dino));
+		lfs_dino_setmode(fs, &dino, LFS_IFDIR);
+		lfs_dino_setsize(fs, &dino, inp->i_isize);
+		for (ii = 0; ii < inp->i_numblks / sizeof(inp->i_blks[0]) &&
+			     ii < ULFS_NDADDR; ii++) {
+			lfs_dino_setdb(fs, &dino, ii, inp->i_blks[ii]);
+		}
+		for (; ii < inp->i_numblks / sizeof(inp->i_blks[0]); ii++) {
+			lfs_dino_setib(fs, &dino, ii - ULFS_NDADDR,
+				       inp->i_blks[ii]);
+		}
 		curino.id_number = inp->i_number;
 		curino.id_parent = inp->i_parent;
 		(void) ckinode(&dino, &curino);
@@ -203,7 +215,7 @@ pass2check(struct inodesc * idesc)
 	struct lfs_direct *dirp = idesc->id_dirp;
 	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
-	struct ulfs1_dinode *dp;
+	union lfs_dinode *dp;
 	const char *errmsg;
 	struct lfs_direct proto;
 	char namebuf[MAXPATHLEN + 1];
@@ -381,8 +393,8 @@ again:
 				break;
 			dp = ginode(dirp->d_ino);
 			statemap[dirp->d_ino] =
-			    (dp->di_mode & LFS_IFMT) == LFS_IFDIR ? DSTATE : FSTATE;
-			lncntp[dirp->d_ino] = dp->di_nlink;
+			    (lfs_dino_getmode(fs, dp) & LFS_IFMT) == LFS_IFDIR ? DSTATE : FSTATE;
+			lncntp[dirp->d_ino] = lfs_dino_getnlink(fs, dp);
 			goto again;
 
 		case DSTATE:

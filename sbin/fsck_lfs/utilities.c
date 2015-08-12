@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.40 2015/07/28 05:09:34 dholland Exp $	 */
+/* $NetBSD: utilities.c,v 1.41 2015/08/12 18:28:00 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,9 +63,9 @@ long diskreads, totalreads;	/* Disk cache statistics */
 extern off_t locked_queue_bytes;
 
 int
-ftypeok(struct ulfs1_dinode * dp)
+ftypeok(union lfs_dinode * dp)
 {
-	switch (dp->di_mode & LFS_IFMT) {
+	switch (lfs_dino_getmode(fs, dp) & LFS_IFMT) {
 
 	case LFS_IFDIR:
 	case LFS_IFREG:
@@ -78,7 +78,7 @@ ftypeok(struct ulfs1_dinode * dp)
 
 	default:
 		if (debug)
-			pwarn("bad file type 0%o\n", dp->di_mode);
+			pwarn("bad file type 0%o\n", lfs_dino_getmode(fs, dp));
 		return (0);
 	}
 }

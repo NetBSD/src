@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.285 2015/08/12 18:26:27 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.286 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.285 2015/08/12 18:26:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.286 2015/08/12 18:28:01 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2102,10 +2102,14 @@ lfs_dump_vop(void *v)
 		int a_flags;
 	} */ *ap = v;
 
+	struct inode *ip = VTOI(ap->a_vp);
+	struct lfs *fs = ip->i_lfs;
+
 #ifdef DDB
 	vfs_vnode_print(ap->a_vp, 0, printf);
 #endif
-	lfs_dump_dinode(VTOI(ap->a_vp)->i_din.ffs1_din);
+	// XXX bogus cast
+	lfs_dump_dinode(fs, (union lfs_dinode *)ip->i_din.ffs1_din);
 }
 #endif
 

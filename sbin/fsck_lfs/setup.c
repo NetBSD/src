@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.54 2015/08/12 18:27:01 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.55 2015/08/12 18:28:00 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -439,7 +439,7 @@ setup(const char *dev)
 
 	/* Initialize Ifile entry */
 	din_table[lfs_sb_getifile(fs)] = lfs_sb_getidaddr(fs);
-	seg_table[lfs_dtosn(fs, lfs_sb_getidaddr(fs))].su_nbytes += LFS_DINODE1_SIZE;
+	seg_table[lfs_dtosn(fs, lfs_sb_getidaddr(fs))].su_nbytes += DINOSIZE(fs);
 
 #ifndef VERBOSE_BLOCKMAP
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));

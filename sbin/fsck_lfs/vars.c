@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.17 2013/06/08 02:16:03 dholland Exp $	 */
+/* $NetBSD: vars.c,v 1.18 2015/08/12 18:28:00 dholland Exp $	 */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -76,7 +76,5 @@ int lfmode;			/* lost & found directory creation mode */
 
 daddr_t n_blks;			/* number of blocks in use */
 ino_t n_files;			/* number of files in use */
-
-struct ulfs1_dinode zino;
 
 int no_roll_forward = 0;	/* don't roll forward */

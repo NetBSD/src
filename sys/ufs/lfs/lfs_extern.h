@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.109 2015/08/12 18:23:47 dholland Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.110 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -85,18 +85,21 @@ MALLOC_DECLARE(M_SEGMENT);
 #define LFS_IGNORE_LAZY_SYNC	9
 #define LFS_MAXID	 10
 
+/* not ours */
 struct fid;
 struct mount;
 struct nameidata;
 struct proc;
 struct statvfs;
 struct timeval;
-struct inode;
 struct uio;
 struct mbuf;
-struct ulfs1_dinode;
 struct buf;
 struct vnode;
+
+/* ours */
+struct inode;
+union lfs_dinode;
 struct dlfs;
 struct lfs;
 struct segment;
@@ -152,7 +155,7 @@ int lfs_reserve(struct lfs *, struct vnode *, struct vnode *, int);
 int lfs_bwrite_log(struct buf *, const char *, int);
 void lfs_dumplog(void);
 void lfs_dump_super(struct lfs *);
-void lfs_dump_dinode(struct ulfs1_dinode *);
+void lfs_dump_dinode(struct lfs *, union lfs_dinode *);
 void lfs_check_bpp(struct lfs *, struct segment *, char *, int);
 void lfs_check_segsum(struct lfs *, struct segment *, char *, int);
 void lfs_debug_log(int, const char *, ...);
@@ -162,7 +165,7 @@ void lfs_debug_log(int, const char *, ...);
 int lfs_update(struct vnode *, const struct timespec *, const struct timespec *,
     int);
 int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t);
-struct ulfs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
+union lfs_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
 void lfs_finalize_fs_seguse(struct lfs *);
 

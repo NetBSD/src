@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.168 2015/08/12 18:25:52 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.169 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.168 2015/08/12 18:25:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.169 2015/08/12 18:28:01 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -447,7 +447,7 @@ lfs_markv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov,
 		/*
 		 * XXX should account indirect blocks and ifile pages as well
 		 */
-		if (nblkwritten + lfs_lblkno(fs, ninowritten * sizeof (struct ulfs1_dinode))
+		if (nblkwritten + lfs_lblkno(fs, ninowritten * DINOSIZE(fs))
 		    > LFS_MARKV_MAX_BLOCKS) {
 			DLOG((DLOG_CLEAN, "lfs_markv: writing %d blks %d inos\n",
 			      nblkwritten, ninowritten));
