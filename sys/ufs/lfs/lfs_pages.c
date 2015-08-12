@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.6 2015/08/02 18:10:08 dholland Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.7 2015/08/12 18:26:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.6 2015/08/02 18:10:08 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.7 2015/08/12 18:26:27 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -743,8 +743,12 @@ lfs_putpages(void *v)
 	 * Ensure that the partial segment is marked SS_DIROP if this
 	 * vnode is a DIROP.
 	 */
-	if (!seglocked && vp->v_uflag & VU_DIROP)
-		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
+	if (!seglocked && vp->v_uflag & VU_DIROP) {
+		SEGSUM *ssp = sp->segsum;
+
+		lfs_ss_setflags(fs, ssp,
+				lfs_ss_getflags(fs, ssp) | (SS_DIROP|SS_CONT));
+	}
 
 	/*
 	 * Loop over genfs_putpages until all pages are gathered.

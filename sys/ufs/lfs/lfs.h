@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.176 2015/08/12 18:25:52 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.177 2015/08/12 18:26:27 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -147,6 +147,10 @@
 
 #ifndef _UFS_LFS_LFS_H_
 #define _UFS_LFS_LFS_H_
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <stddef.h> /* for offsetof */
+#endif
 
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
@@ -571,35 +575,38 @@ typedef union _cleanerinfo {
 /*
  * On-disk segment summary information
  */
-typedef struct segsum_v1 SEGSUM_V1;
-struct segsum_v1 {
-	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
-	u_int32_t ss_datasum;		/* 4: check sum of data */
-	u_int32_t ss_magic;		/* 8: segment summary magic number */
-#define SS_MAGIC	0x061561
-	int32_t	  ss_next;		/* 12: next segment */
-	u_int32_t ss_create;		/* 16: creation time stamp */
-	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
-	u_int16_t ss_ninos;		/* 22: number of inodes in summary */
 
+/* magic value for ss_magic */
+#define SS_MAGIC	0x061561
+
+/* flags for ss_flags */
 #define	SS_DIROP	0x01		/* segment begins a dirop */
 #define	SS_CONT		0x02		/* more partials to finish this write*/
 #define	SS_CLEAN	0x04		/* written by the cleaner */
 #define	SS_RFW		0x08		/* written by the roll-forward agent */
 #define	SS_RECLAIM	0x10		/* written by the roll-forward agent */
+
+typedef struct segsum_v1 SEGSUM_V1;
+struct segsum_v1 {
+	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
+	u_int32_t ss_datasum;		/* 4: check sum of data */
+	u_int32_t ss_magic;		/* 8: segment summary magic number */
+	int32_t	  ss_next;		/* 12: next segment */
+	u_int32_t ss_create;		/* 16: creation time stamp */
+	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
+	u_int16_t ss_ninos;		/* 22: number of inodes in summary */
 	u_int16_t ss_flags;		/* 24: used for directory operations */
 	u_int16_t ss_pad;		/* 26: extra space */
 	/* FINFO's and inode daddr's... */
 };
 
-typedef struct segsum SEGSUM;
-struct segsum {
+typedef struct segsum32 SEGSUM32;
+struct segsum32 {
 	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
 	u_int32_t ss_datasum;		/* 4: check sum of data */
 	u_int32_t ss_magic;		/* 8: segment summary magic number */
 	int32_t	  ss_next;		/* 12: next segment (disk address) */
 	u_int32_t ss_ident;		/* 16: roll-forward fsid */
-#define ss_ocreate ss_ident /* ident is where create was in v1 */
 	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
 	u_int16_t ss_ninos;		/* 22: number of inodes in summary */
 	u_int16_t ss_flags;		/* 24: used for directory operations */
@@ -608,6 +615,30 @@ struct segsum {
 	u_int64_t ss_serial;		/* 32: serial number */
 	u_int64_t ss_create;		/* 40: time stamp */
 	/* FINFO's and inode daddr's... */
+};
+
+typedef struct segsum64 SEGSUM64;
+struct segsum64 {
+	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
+	u_int32_t ss_datasum;		/* 4: check sum of data */
+	u_int32_t ss_magic;		/* 8: segment summary magic number */
+	u_int32_t ss_ident;		/* 12: roll-forward fsid */
+	int64_t	  ss_next;		/* 16: next segment (disk address) */
+	u_int16_t ss_nfinfo;		/* 24: number of file info structures */
+	u_int16_t ss_ninos;		/* 26: number of inodes in summary */
+	u_int16_t ss_flags;		/* 28: used for directory operations */
+	u_int8_t  ss_pad[2];		/* 30: extra space */
+	u_int64_t ss_reclino;           /* 32: inode being reclaimed */
+	u_int64_t ss_serial;		/* 40: serial number */
+	u_int64_t ss_create;		/* 48: time stamp */
+	/* FINFO's and inode daddr's... */
+};
+
+typedef union segsum SEGSUM;
+union segsum {
+	struct segsum64 u_64;
+	struct segsum32 u_32;
+	struct segsum_v1 u_v1;
 };
 
 

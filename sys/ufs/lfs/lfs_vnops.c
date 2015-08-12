@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.284 2015/08/12 18:25:04 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.285 2015/08/12 18:26:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.284 2015/08/12 18:25:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.285 2015/08/12 18:26:27 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1504,8 +1504,9 @@ lfs_flush_dirops(struct lfs *fs)
 {
 	struct inode *ip, *nip;
 	struct vnode *vp;
-	extern int lfs_dostats;
+	extern int lfs_dostats; /* XXX this does not belong here */
 	struct segment *sp;
+	SEGSUM *ssp;
 	int flags = 0;
 	int error = 0;
 
@@ -1605,7 +1606,8 @@ lfs_flush_dirops(struct lfs *fs)
 	}
 	mutex_exit(&lfs_lock);
 	/* We've written all the dirops there are */
-	((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+	ssp = (SEGSUM *)sp->segsum;
+	lfs_ss_setflags(fs, ssp, lfs_ss_getflags(fs, ssp) & ~(SS_CONT));
 	lfs_finalize_fs_seguse(fs);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
