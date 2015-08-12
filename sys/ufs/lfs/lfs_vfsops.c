@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.337 2015/08/12 18:25:52 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.338 2015/08/12 18:26:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.337 2015/08/12 18:25:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.338 2015/08/12 18:26:27 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1878,6 +1878,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 	struct segment *sp = fs->lfs_sp;
+	SEGSUM *ssp;
 	UVMHIST_FUNC("lfs_gop_write"); UVMHIST_CALLED(ubchist);
 	const char * failreason = NULL;
 
@@ -1991,13 +1992,14 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	 * If we would, write what we have and try again.  If we don't
 	 * have anything to write, we'll have to sleep.
 	 */
+	ssp = (SEGSUM *)sp->segsum;
 	if ((kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
-				      (((SEGSUM *)(sp->segsum))->ss_nfinfo < 1 ?
+				      (lfs_ss_getnfinfo(fs, ssp) < 1 ?
 				       UVMPAGER_MAPIN_WAITOK : 0))) == 0x0) {
 		DLOG((DLOG_PAGE, "lfs_gop_write: forcing write\n"));
 #if 0
 		      " with nfinfo=%d at offset 0x%jx\n",
-		      (int)((SEGSUM *)(sp->segsum))->ss_nfinfo,
+		      (int)lfs_ss_getnfinfo(fs, ssp),
 		      (uintmax_t)lfs_sb_getoffset(fs)));
 #endif
 		lfs_updatemeta(sp);
