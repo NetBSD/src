@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.334 2015/08/02 18:18:46 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.335 2015/08/12 18:23:59 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.334 2015/08/02 18:18:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.335 2015/08/12 18:23:59 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -333,7 +333,8 @@ lfs_sysctl_setup(struct sysctllog **clog)
 static const struct syscall_package lfs_syscalls[] = {
 	{ SYS_lfs_bmapv,	0, (sy_call_t *)sys_lfs_bmapv		},
 	{ SYS_lfs_markv,	0, (sy_call_t *)sys_lfs_markv		},
-	{ SYS_lfs_segclean,	0, (sy_call_t *)sys___lfs_segwait50	},
+	{ SYS___lfs_segwait50,	0, (sy_call_t *)sys___lfs_segwait50	},
+	{ SYS_lfs_segclean,	0, (sy_call_t *)sys_lfs_segclean	},
 	{ 0, 0, NULL },
 };
 
