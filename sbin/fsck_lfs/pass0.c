@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.37 2015/07/28 05:09:34 dholland Exp $	 */
+/* $NetBSD: pass0.c,v 1.38 2015/08/12 18:25:03 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ pass0(void)
 	plastino = 0;
 	lowfreeino = maxino;
 	LFS_CLEANERINFO(cip, fs, cbp);
-	freehd = ino = cip->free_head;
+	freehd = ino = lfs_ci_getfree_head(fs, cip);
 	brelse(cbp, 0);
 
 	while (ino) {
@@ -194,9 +194,9 @@ pass0(void)
 	}
 
 	LFS_CLEANERINFO(cip, fs, cbp);
-	if (cip->free_head != freehd) {
+	if (lfs_ci_getfree_head(fs, cip) != freehd) {
 		/* They've already given us permission for this change */
-		cip->free_head = freehd;
+		lfs_ci_setfree_head(fs, cip, freehd);
 		writeit = 1;
 	}
 	if (freehd != lfs_sb_getfreehd(fs)) {
@@ -207,12 +207,12 @@ pass0(void)
 			sbdirty();
 		}
 	}
-	if (cip->free_tail != plastino) {
+	if (lfs_ci_getfree_tail(fs, cip) != plastino) {
 		pwarn("FREE LIST TAIL SHOULD BE %llu (WAS %llu)\n",
 		    (unsigned long long)plastino,
-		    (unsigned long long)cip->free_tail);
+		    (unsigned long long)lfs_ci_getfree_tail(fs, cip));
 		if (preen || reply("FIX")) {
-			cip->free_tail = plastino;
+			lfs_ci_setfree_tail(fs, cip, plastino);
 			writeit = 1;
 		}
 	}
