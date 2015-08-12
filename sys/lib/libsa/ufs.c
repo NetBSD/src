@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.71 2015/08/12 18:25:52 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.72 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -113,6 +113,9 @@ struct salfs {
 /* Get lfs accessors that use struct salfs. */
 #define STRUCT_LFS struct salfs
 #include <ufs/lfs/lfs_accessors.h>
+
+/* override this to avoid a mess with the dinode accessors */
+#define lfs_dino_getsize(fs, dp) ((dp)->di_size)
 
 typedef struct salfs FS;
 #define fs_magic	lfs_dlfs_u.u_32.dlfs_magic

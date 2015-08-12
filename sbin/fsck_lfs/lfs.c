@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.55 2015/08/12 18:27:01 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.56 2015/08/12 18:28:00 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -310,22 +310,24 @@ lfs_vop_bmap(struct uvnode * vp, daddr_t lbn, daddr_t * daddrp)
 }
 
 /* Search a block for a specific dinode. */
-struct ulfs1_dinode *
-lfs_ifind(struct lfs * fs, ino_t ino, struct ubuf * bp)
+union lfs_dinode *
+lfs_ifind(struct lfs *fs, ino_t ino, struct ubuf *bp)
 {
-	struct ulfs1_dinode *dip = (struct ulfs1_dinode *) bp->b_data;
-	struct ulfs1_dinode *ldip, *fin;
+	union lfs_dinode *ldip;
+	unsigned i, num;
 
-	fin = dip + LFS_INOPB(fs);
+	num = LFS_INOPB(fs);
 
 	/*
 	 * Read the inode block backwards, since later versions of the
 	 * inode will supercede earlier ones.  Though it is unlikely, it is
 	 * possible that the same inode will appear in the same inode block.
 	 */
-	for (ldip = fin - 1; ldip >= dip; --ldip)
-		if (ldip->di_inumber == ino)
+	for (i = num; i-- > 0; ) {
+		ldip = DINO_IN_BLOCK(fs, bp->b_data, i);
+		if (lfs_dino_getinumber(fs, ldip) == ino)
 			return (ldip);
+	}
 	return NULL;
 }
 
@@ -338,7 +340,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ulfs_daddr_t daddr)
 {
 	struct uvnode *vp;
 	struct inode *ip;
-	struct ulfs1_dinode *dip;
+	union lfs_dinode *dip;
 	struct ubuf *bp;
 	int i, hash;
 
@@ -354,7 +356,9 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ulfs_daddr_t daddr)
 
 	ip = ecalloc(1, sizeof(*ip));
 
-	ip->i_din.ffs1_din = ecalloc(1, sizeof(*ip->i_din.ffs1_din));
+	dip = ecalloc(1, sizeof(*dip));
+	// XXX bogus cast
+	ip->i_din.ffs1_din = (struct lfs32_dinode *)dip;
 
 	/* Initialize the inode -- from lfs_vcreate. */
 	ip->inode_ext.lfs = ecalloc(1, sizeof(*ip->inode_ext.lfs));
@@ -377,7 +381,12 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ulfs_daddr_t daddr)
 			free(vp);
 			return NULL;
 		}
-		memcpy(ip->i_din.ffs1_din, dip, sizeof(*dip));
+		// XXX this should go away
+		if (fs->lfs_is64) {
+			memcpy(ip->i_din.ffs2_din, &dip->u_64, sizeof(dip->u_64));
+		} else {
+			memcpy(ip->i_din.ffs1_din, &dip->u_32, sizeof(dip->u_32));
+		}
 		brelse(bp, 0);
 	}
 	ip->i_number = ino;

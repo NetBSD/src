@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.179 2015/08/12 18:27:18 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.180 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -353,7 +353,7 @@ struct lfs_odirtemplate {
  * are defined by types with precise widths.
  */
 
-struct ulfs1_dinode {
+struct lfs32_dinode {
 	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
 	int16_t		di_nlink;	/*   2: File link count. */
 	u_int32_t	di_inumber;	/*   4: Inode number. */
@@ -374,7 +374,7 @@ struct ulfs1_dinode {
 	u_int64_t	di_modrev;	/* 120: i_modrev for NFSv4 */
 };
 
-struct ulfs2_dinode {
+struct lfs64_dinode {
 	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
 	int16_t		di_nlink;	/*   2: File link count. */
 	u_int32_t	di_uid;		/*   4: File owner. */
@@ -402,6 +402,11 @@ struct ulfs2_dinode {
 	u_int64_t	di_spare[1];	/* 244: Reserved; currently unused */
 };
 
+union lfs_dinode {
+	struct lfs64_dinode u_64;
+	struct lfs32_dinode u_32;
+};
+
 /*
  * The di_db fields may be overlaid with other information for
  * file types that do not have associated disk storage. Block
@@ -412,8 +417,8 @@ struct ulfs2_dinode {
 #define	di_rdev		di_db[0]
 
 /* Size of the on-disk inode. */
-#define	LFS_DINODE1_SIZE	(sizeof(struct ulfs1_dinode))	/* 128 */
-#define	LFS_DINODE2_SIZE	(sizeof(struct ulfs2_dinode))
+//#define	LFS_DINODE1_SIZE	(sizeof(struct ulfs1_dinode))	/* 128 */
+//#define	LFS_DINODE2_SIZE	(sizeof(struct ulfs2_dinode))
 
 /* File types, found in the upper bits of di_mode. */
 #define	LFS_IFMT	0170000		/* Mask of file type. */
@@ -1007,7 +1012,7 @@ struct segment {
 	struct buf	**cbpp;		/* pointer to next available bp */
 	struct buf	**start_bpp;	/* pointer to first bp in this set */
 	struct buf	 *ibp;		/* buffer pointer to inode page */
-	struct ulfs1_dinode    *idp;          /* pointer to ifile dinode */
+	union lfs_dinode *idp;          /* pointer to ifile dinode */
 	FINFO *fip;			/* current fileinfo pointer */
 	struct vnode	 *vp;		/* vnode being gathered */
 	void	 *segsum;		/* segment summary info */

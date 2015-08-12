@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.31 2015/08/12 18:25:51 dholland Exp $  */
+/*      $NetBSD: coalesce.c,v 1.32 2015/08/12 18:28:00 dholland Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -109,13 +109,14 @@ const char *coalesce_return[] = {
 	"No such error"
 };
 
-static struct ulfs1_dinode *
+static union lfs_dinode *
 get_dinode(struct clfs *fs, ino_t ino)
 {
 	IFILE *ifp;
 	daddr_t daddr;
 	struct ubuf *bp;
-	struct ulfs1_dinode *dip, *r;
+	union lfs_dinode *dip, *r;
+	unsigned i;
 
 	lfs_ientry(&ifp, fs, ino, &bp);
 	daddr = lfs_if_getdaddr(fs, ifp);
@@ -125,16 +126,26 @@ get_dinode(struct clfs *fs, ino_t ino)
 		return NULL;
 
 	bread(fs->clfs_devvp, daddr, lfs_sb_getibsize(fs), 0, &bp);
-	for (dip = (struct ulfs1_dinode *)bp->b_data;
-	     dip < (struct ulfs1_dinode *)(bp->b_data + lfs_sb_getibsize(fs)); dip++)
-		if (dip->di_inumber == ino) {
-			r = (struct ulfs1_dinode *)malloc(sizeof(*r));
+	for (i = 0; i < LFS_INOPB(fs); i++) {
+		dip = DINO_IN_BLOCK(fs, bp->b_data, i);
+		if (lfs_dino_getinumber(fs, dip) == ino) {
+			r = malloc(sizeof(*r));
 			if (r == NULL)
 				break;
-			memcpy(r, dip, sizeof(*r));
+			/*
+			 * Don't just assign the union, as if we're
+			 * 32-bit and it's the last inode in the block
+			 * that will run off the end of the buffer.
+			 */
+			if (fs->lfs_is64) {
+				r->u_64 = dip->u_64;
+			} else {
+				r->u_32 = dip->u_32;
+			}
 			brelse(bp, 0);
 			return r;
 		}
+	}
 	brelse(bp, 0);
 	return NULL;
 }
@@ -149,7 +160,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	BLOCK_INFO *bip = NULL, *tbip;
 	CLEANERINFO cip;
 	struct ubuf *bp;
-	struct ulfs1_dinode *dip;
+	union lfs_dinode *dip;
 	struct clfs_seguse *sup;
 	struct lfs_fcntl_markv /* {
 		BLOCK_INFO *blkiov;
@@ -166,7 +177,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 		return COALESCE_NOINODE;
 
 	/* Compute file block size, set up for bmapv */
-	onb = nb = lfs_lblkno(fs, dip->di_size);
+	onb = nb = lfs_lblkno(fs, lfs_dino_getsize(fs, dip));
 
 	/* XXX for now, don't do any file small enough to have fragments */
 	if (nb < ULFS_NDADDR) {
@@ -176,16 +187,17 @@ clean_inode(struct clfs *fs, ino_t ino)
 
 	/* Sanity checks */
 #if 0	/* di_size is uint64_t -- this is a noop */
-	if (dip->di_size < 0) {
-		dlog("ino %d, negative size (%" PRId64 ")", ino, dip->di_size);
+	if (lfs_dino_getsize(fs, dip) < 0) {
+		dlog("ino %d, negative size (%" PRId64 ")", ino,
+		     lfs_dino_getsize(fs, dip));
 		free(dip);
 		return COALESCE_BADSIZE;
 	}
 #endif
-	if (nb > dip->di_blocks) {
+	if (nb > lfs_dino_getblocks(fs, dip)) {
 		dlog("ino %ju, computed blocks %jd > held blocks %ju",
 		     (uintmax_t)ino, (intmax_t)nb,
-		     (uintmax_t)dip->di_blocks);
+		     (uintmax_t)lfs_dino_getblocks(fs, dip));
 		free(dip);
 		return COALESCE_BADBLOCKSIZE;
 	}
@@ -220,7 +232,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 		memset(bip + i, 0, sizeof(BLOCK_INFO));
 		bip[i].bi_inode = ino;
 		bip[i].bi_lbn = i;
-		bip[i].bi_version = dip->di_gen;
+		bip[i].bi_version = lfs_dino_getgen(fs, dip);
 		/* Don't set the size, but let lfs_bmap fill it in */
 	}
 	/*
