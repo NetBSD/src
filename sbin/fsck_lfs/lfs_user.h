@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_user.h,v 1.8 2015/08/12 18:26:26 dholland Exp $ */
+/* $NetBSD: lfs_user.h,v 1.9 2015/08/12 18:27:01 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 struct lfs;
 /* XXX do these really need to be here? */
 union segsum;
-struct finfo;
+union finfo;
 
 /*
  * In the fsck code we don't need lfs_unlockvp, but we don't have a mount
@@ -86,7 +86,7 @@ int lfs_vop_bmap(struct uvnode *, daddr_t, daddr_t *);
 struct uvnode *lfs_raw_vget(struct lfs *, ino_t, int, ulfs_daddr_t);
 struct lfs *lfs_init(int, daddr_t, daddr_t, int, int);
 struct lfs *lfs_verify(struct lfs *, struct lfs *, struct uvnode *, int);
-int check_summary(struct lfs *, union segsum *, ulfs_daddr_t, int, struct uvnode *, void (*)(ulfs_daddr_t, struct finfo *));
+int check_summary(struct lfs *, union segsum *, ulfs_daddr_t, int, struct uvnode *, void (*)(ulfs_daddr_t, union finfo *));
 ulfs_daddr_t try_verify(struct lfs *, struct uvnode *, ulfs_daddr_t, int);
 struct ulfs1_dinode *lfs_ifind(struct lfs *, ino_t, struct ubuf *);
 void call_panic(const char *, ...);

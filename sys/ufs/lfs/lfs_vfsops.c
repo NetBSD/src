@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.338 2015/08/12 18:26:27 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.339 2015/08/12 18:27:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.338 2015/08/12 18:26:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.339 2015/08/12 18:27:01 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2057,7 +2057,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			int vers;
 
 			lfs_updatemeta(sp);
-			vers = sp->fip->fi_version;
+			vers = lfs_fi_getversion(fs, sp->fip);
 			lfs_release_finfo(fs);
 			(void) lfs_writeseg(fs, sp);
 
