@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.126 2015/08/12 18:25:52 dholland Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.127 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.126 2015/08/12 18:25:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.127 2015/08/12 18:28:01 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -531,17 +531,17 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	if (old_iaddr != LFS_UNUSED_DADDR) {
 		LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, old_iaddr), bp);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes < sizeof (struct ulfs1_dinode)) {
+		if (sup->su_nbytes < DINOSIZE(fs)) {
 			printf("lfs_vfree: negative byte count"
 			       " (segment %" PRIu32 " short by %d)\n",
 			       lfs_dtosn(fs, old_iaddr),
-			       (int)sizeof (struct ulfs1_dinode) -
+			       (int)DINOSIZE(fs) -
 				    sup->su_nbytes);
 			panic("lfs_vfree: negative byte count");
-			sup->su_nbytes = sizeof (struct ulfs1_dinode);
+			sup->su_nbytes = DINOSIZE(fs);
 		}
 #endif
-		sup->su_nbytes -= sizeof (struct ulfs1_dinode);
+		sup->su_nbytes -= DINOSIZE(fs);
 		LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, old_iaddr), bp); /* Ifile */
 	}
 

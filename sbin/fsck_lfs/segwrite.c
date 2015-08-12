@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.40 2015/08/12 18:27:01 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.41 2015/08/12 18:28:00 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -248,7 +248,7 @@ int
 lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 {
 	struct ubuf *bp, *ibp;
-	struct ulfs1_dinode *cdp;
+	union lfs_dinode *cdp;
 	IFILE *ifp;
 	SEGUSE *sup;
 	SEGSUM *ssp;
@@ -277,8 +277,12 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		gotblk++;
 
 		/* Zero out inode numbers */
-		for (i = 0; i < LFS_INOPB(fs); ++i)
-			((struct ulfs1_dinode *) sp->ibp->b_data)[i].di_inumber = 0;
+		for (i = 0; i < LFS_INOPB(fs); ++i) {
+			union lfs_dinode *tmpdip;
+
+			tmpdip = DINO_IN_BLOCK(fs, sp->ibp->b_data, i);
+			lfs_dino_setinumber(fs, tmpdip, 0);
+		}
 
 		++sp->start_bpp;
 		lfs_sb_subavail(fs, lfs_btofsb(fs, lfs_sb_getibsize(fs)));
@@ -305,20 +309,29 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	 * already been gathered.
 	 */
 	if (ip->i_number == LFS_IFILE_INUM && sp->idp) {
-		*(sp->idp) = *ip->i_din.ffs1_din;
+		// XXX weak
+		if (fs->lfs_is64) {
+			sp->idp->u_64 = *ip->i_din.ffs2_din;
+		} else {
+			sp->idp->u_32 = *ip->i_din.ffs1_din;
+		}
 		ip->i_lfs_osize = ip->i_ffs1_size;
 		return 0;
 	}
 	bp = sp->ibp;
-	cdp = ((struct ulfs1_dinode *) bp->b_data) + (sp->ninodes % LFS_INOPB(fs));
-	*cdp = *ip->i_din.ffs1_din;
+	cdp = DINO_IN_BLOCK(fs, bp->b_data, sp->ninodes % LFS_INOPB(fs));
+	// XXX weak
+	if (fs->lfs_is64) {
+		cdp->u_64 = *ip->i_din.ffs2_din;
+	} else {
+		cdp->u_32 = *ip->i_din.ffs1_din;
+	}
 
 	/* If all blocks are goig to disk, update the "size on disk" */
 	ip->i_lfs_osize = ip->i_ffs1_size;
 
 	if (ip->i_number == LFS_IFILE_INUM)	/* We know sp->idp == NULL */
-		sp->idp = ((struct ulfs1_dinode *) bp->b_data) +
-		    (sp->ninodes % LFS_INOPB(fs));
+		sp->idp = DINO_IN_BLOCK(fs, bp->b_data, sp->ninodes % LFS_INOPB(fs));
 	if (gotblk) {
 		LFS_LOCK_BUF(bp);
 		assert(!(bp->b_flags & B_INVAL));
@@ -356,7 +369,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	if (daddr != LFS_UNUSED_DADDR) {
 		u_int32_t oldsn = lfs_dtosn(fs, daddr);
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
-		sup->su_nbytes -= LFS_DINODE1_SIZE;
+		sup->su_nbytes -= DINOSIZE(fs);
 		redo_ifile =
 		    (ino == LFS_IFILE_INUM && !(bp->b_flags & B_GATHERED));
 		if (redo_ifile)
@@ -801,7 +814,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	lfs_ss_setflags(fs, ssp, lfs_ss_getflags(fs, ssp) | SS_RFW);
 
 	ninos = (lfs_ss_getninos(fs, ssp) + LFS_INOPB(fs) - 1) / LFS_INOPB(fs);
-	sup->su_nbytes += lfs_ss_getninos(fs, ssp) * LFS_DINODE1_SIZE;
+	sup->su_nbytes += lfs_ss_getninos(fs, ssp) * DINOSIZE(fs);
 
 	if (lfs_sb_getversion(fs) == 1)
 		sup->su_olastmod = write_time;

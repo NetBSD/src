@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.255 2015/08/12 18:27:01 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.256 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.255 2015/08/12 18:27:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.256 2015/08/12 18:28:01 dholland Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -1011,27 +1011,25 @@ lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t n
 #endif
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes +
-		    sizeof (struct ulfs1_dinode) * ndupino
-		      < sizeof (struct ulfs1_dinode)) {
+		if (sup->su_nbytes + DINOSIZE(fs) * ndupino < DINOSIZE(fs)) {
 			printf("lfs_writeinode: negative bytes "
 			       "(segment %" PRIu32 " short by %d, "
 			       "oldsn=%" PRIu32 ", cursn=%" PRIu32
 			       ", daddr=%" PRId64 ", su_nbytes=%u, "
 			       "ndupino=%d)\n",
 			       lfs_dtosn(fs, daddr),
-			       (int)sizeof (struct ulfs1_dinode) *
+			       (int)DINOSIZE(fs) *
 				   (1 - sp->ndupino) - sup->su_nbytes,
 			       oldsn, sp->seg_number, daddr,
 			       (unsigned int)sup->su_nbytes,
 			       sp->ndupino);
 			panic("lfs_writeinode: negative bytes");
-			sup->su_nbytes = sizeof (struct ulfs1_dinode);
+			sup->su_nbytes = DINOSIZE(fs);
 		}
 #endif
 		DLOG((DLOG_SU, "seg %d -= %d for ino %d inode\n",
-		      lfs_dtosn(fs, daddr), sizeof (struct ulfs1_dinode), ino));
-		sup->su_nbytes -= sizeof (struct ulfs1_dinode);
+		      lfs_dtosn(fs, daddr), DINOSIZE(fs), ino));
+		sup->su_nbytes -= DINOSIZE(fs);
 		redo_ifile |=
 			(ino == LFS_IFILE_INUM && !(bp->b_flags & B_GATHERED));
 		if (redo_ifile) {
@@ -1051,10 +1049,9 @@ int
 lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 {
 	struct buf *bp;
-	struct ulfs1_dinode *cdp;
+	union lfs_dinode *cdp;
 	struct vnode *vp = ITOV(ip);
 	daddr_t daddr;
-	int32_t *daddrp;	/* XXX ondisk32 */
 	int i, ndx;
 	int redo_ifile = 0;
 	int gotblk = 0;
@@ -1100,7 +1097,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			break;
 
 		if (sp->idp) {
-			sp->idp->di_inumber = 0;
+			lfs_dino_setinumber(fs, sp->idp, 0);
 			sp->idp = NULL;
 		}
 		++count;
@@ -1126,9 +1123,13 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		gotblk++;
 
 		/* Zero out inode numbers */
-		for (i = 0; i < LFS_INOPB(fs); ++i)
-			((struct ulfs1_dinode *)sp->ibp->b_data)[i].di_inumber =
-			    0;
+		for (i = 0; i < LFS_INOPB(fs); ++i) {
+			union lfs_dinode *tmpdi;
+
+			tmpdi = (union lfs_dinode *)((char *)sp->ibp->b_data +
+						     DINOSIZE(fs) * i);
+			lfs_dino_setinumber(fs, tmpdi, 0);
+		}
 
 		++sp->start_bpp;
 		lfs_sb_subavail(fs, lfs_btofsb(fs, lfs_sb_getibsize(fs)));
@@ -1162,14 +1163,22 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 * already been gathered.
 	 */
 	if (ip->i_number == LFS_IFILE_INUM && sp->idp) {
-		*(sp->idp) = *ip->i_din.ffs1_din;
+		if (fs->lfs_is64) {
+			sp->idp->u_64 = *ip->i_din.ffs2_din;
+		} else {
+			sp->idp->u_32 = *ip->i_din.ffs1_din;
+		}
 		ip->i_lfs_osize = ip->i_size;
 		return 0;
 	}
 
 	bp = sp->ibp;
-	cdp = ((struct ulfs1_dinode *)bp->b_data) + (sp->ninodes % LFS_INOPB(fs));
-	*cdp = *ip->i_din.ffs1_din;
+	cdp = (union lfs_dinode *)((char *)bp->b_data + DINOSIZE(fs) * (sp->ninodes % LFS_INOPB(fs)));
+	if (fs->lfs_is64) {
+		cdp->u_64 = *ip->i_din.ffs2_din;
+	} else {
+		cdp->u_32 = *ip->i_din.ffs1_din;
+	}
 
 	/*
 	 * This inode is on its way to disk; clear its VU_DIROP status when
@@ -1192,12 +1201,12 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 */
 	if (sp->seg_flags & SEGM_CLEAN) {
 		if (vp->v_uflag & VU_DIROP) {
-			cdp->di_nlink = ip->i_lfs_odnlink;
+			lfs_dino_setnlink(fs, cdp, ip->i_lfs_odnlink);
 			/* if (vp->v_type == VDIR) */
-			cdp->di_size = ip->i_lfs_osize;
+			lfs_dino_setsize(fs, cdp, ip->i_lfs_osize);
 		}
 	} else {
-		ip->i_lfs_odnlink = cdp->di_nlink;
+		ip->i_lfs_odnlink = lfs_dino_getnlink(fs, cdp);
 		ip->i_lfs_osize = ip->i_size;
 	}
 		
@@ -1222,19 +1231,24 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	if (((ip->i_ffs1_mode & LFS_IFMT) == LFS_IFREG ||
 	     (ip->i_ffs1_mode & LFS_IFMT) == LFS_IFDIR) &&
 	    ip->i_size > ((ip->i_lfs_hiblk + 1) << lfs_sb_getbshift(fs))) {
-		cdp->di_size = (ip->i_lfs_hiblk + 1) << lfs_sb_getbshift(fs);
+		lfs_dino_setsize(fs, cdp, (ip->i_lfs_hiblk + 1) << lfs_sb_getbshift(fs));
 		DLOG((DLOG_SEG, "lfs_writeinode: ino %d size %" PRId64 " -> %"
-		      PRId64 "\n", (int)ip->i_number, ip->i_size, cdp->di_size));
+		      PRId64 "\n", (int)ip->i_number, ip->i_size, lfs_dino_getsize(fs, cdp)));
 	}
 	if (ip->i_lfs_effnblks != ip->i_ffs1_blocks) {
 		DLOG((DLOG_SEG, "lfs_writeinode: cleansing ino %d eff %jd != nblk %d)"
 		      " at %jx\n", ip->i_number, (intmax_t)ip->i_lfs_effnblks,
 		      ip->i_ffs1_blocks, (uintmax_t)lfs_sb_getoffset(fs)));
-		for (daddrp = cdp->di_db; daddrp < cdp->di_ib + ULFS_NIADDR;
-		     daddrp++) {
-			if (*daddrp == UNWRITTEN) {
+		for (i=0; i<ULFS_NDADDR; i++) {
+			if (lfs_dino_getdb(fs, cdp, i) == UNWRITTEN) {
 				DLOG((DLOG_SEG, "lfs_writeinode: wiping UNWRITTEN\n"));
-				*daddrp = 0;
+				lfs_dino_setdb(fs, cdp, i, 0);
+			}
+		}
+		for (i=0; i<ULFS_NIADDR; i++) {
+			if (lfs_dino_getib(fs, cdp, i) == UNWRITTEN) {
+				DLOG((DLOG_SEG, "lfs_writeinode: wiping UNWRITTEN\n"));
+				lfs_dino_setib(fs, cdp, i, 0);
 			}
 		}
 	}
@@ -1244,17 +1258,17 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 * Check dinode held blocks against dinode size.
 	 * This should be identical to the check in lfs_vget().
 	 */
-	for (i = (cdp->di_size + lfs_sb_getbsize(fs) - 1) >> lfs_sb_getbshift(fs);
+	for (i = (lfs_dino_getsize(fs, cdp) + lfs_sb_getbsize(fs) - 1) >> lfs_sb_getbshift(fs);
 	     i < ULFS_NDADDR; i++) {
 		KASSERT(i >= 0);
-		if ((cdp->di_mode & LFS_IFMT) == LFS_IFLNK)
+		if ((lfs_dino_getmode(fs, cdp) & LFS_IFMT) == LFS_IFLNK)
 			continue;
-		if (((cdp->di_mode & LFS_IFMT) == LFS_IFBLK ||
-		     (cdp->di_mode & LFS_IFMT) == LFS_IFCHR) && i == 0)
+		if (((lfs_dino_getmode(fs, cdp) & LFS_IFMT) == LFS_IFBLK ||
+		     (lfs_dino_getmode(fs, cdp) & LFS_IFMT) == LFS_IFCHR) && i == 0)
 			continue;
-		if (cdp->di_db[i] != 0) {
+		if (lfs_dino_getdb(fs, cdp, i) != 0) {
 # ifdef DEBUG
-			lfs_dump_dinode(cdp);
+			lfs_dump_dinode(fs, cdp);
 # endif
 			panic("writing inconsistent inode");
 		}
@@ -1278,8 +1292,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 	if (ip->i_number == LFS_IFILE_INUM) {
 		/* We know sp->idp == NULL */
-		sp->idp = ((struct ulfs1_dinode *)bp->b_data) +
-			(sp->ninodes % LFS_INOPB(fs));
+		sp->idp = DINO_IN_BLOCK(fs, bp, sp->ninodes % LFS_INOPB(fs));
 
 		/* Not dirty any more */
 		mutex_enter(&lfs_lock);
@@ -1567,21 +1580,19 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 			osize = lfs_sb_getbsize(fs);
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes + sizeof (struct ulfs1_dinode) * ndupino
-		    < osize) {
+		if (sup->su_nbytes + DINOSIZE(fs) * ndupino < osize) {
 			printf("lfs_updatemeta: negative bytes "
 			       "(segment %" PRIu32 " short by %" PRId64
 			       ")\n", lfs_dtosn(fs, daddr),
 			       (int64_t)osize -
-			       (sizeof (struct ulfs1_dinode) * ndupino +
-				sup->su_nbytes));
+			       (DINOSIZE(fs) * ndupino + sup->su_nbytes));
 			printf("lfs_updatemeta: ino %llu, lbn %" PRId64
 			       ", addr = 0x%" PRIx64 "\n",
 			       (unsigned long long)ip->i_number, lbn, daddr);
 			printf("lfs_updatemeta: ndupino=%d\n", ndupino);
 			panic("lfs_updatemeta: negative bytes");
 			sup->su_nbytes = osize -
-			    sizeof (struct ulfs1_dinode) * ndupino;
+			    DINOSIZE(fs) * ndupino;
 		}
 #endif
 		DLOG((DLOG_SU, "seg %" PRIu32 " -= %d for ino %d lbn %" PRId64
@@ -1616,7 +1627,8 @@ lfs_updatemeta(struct segment *sp)
 	struct lfs *fs;
 	struct vnode *vp;
 	daddr_t lbn;
-	int i, nblocks, nblocks_orig, num;
+	int i, nblocks, num;
+	int __diagused nblocks_orig;
 	int bb;
 	int bytesleft, size;
 	unsigned lastlength;
@@ -2112,9 +2124,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	ninos = (lfs_ss_getninos(fs, ssp) + LFS_INOPB(fs) - 1) / LFS_INOPB(fs);
 	DLOG((DLOG_SU, "seg %d += %d for %d inodes\n",
 	      sp->seg_number,
-	      lfs_ss_getninos(fs, ssp) * sizeof (struct ulfs1_dinode),
+	      lfs_ss_getninos(fs, ssp) * DINOSIZE(fs),
 	      lfs_ss_getninos(fs, ssp)));
-	sup->su_nbytes += lfs_ss_getninos(fs, ssp) * sizeof (struct ulfs1_dinode);
+	sup->su_nbytes += lfs_ss_getninos(fs, ssp) * DINOSIZE(fs);
 	/* sup->su_nbytes += lfs_sb_getsumsize(fs); */
 	if (lfs_sb_getversion(fs) == 1)
 		sup->su_olastmod = time_second;

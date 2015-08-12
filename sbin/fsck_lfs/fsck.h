@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.20 2013/06/08 02:12:56 dholland Exp $	 */
+/* $NetBSD: fsck.h,v 1.21 2015/08/12 18:28:00 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -101,7 +101,8 @@ struct ubufarea {
 		int32_t *b_indir;	/* indirect block */
 		struct lfs *b_fs;	/* super block */
 		struct cg *b_cg;/* cylinder group */
-		struct ulfs1_dinode *b_dinode;	/* inode block */
+		struct lfs32_dinode *b_dinode32;	/* inode block */
+		struct lfs64_dinode *b_dinode64;	/* inode block */
 	}     b_un;
 	char b_dirty;
 };
@@ -128,7 +129,7 @@ struct inodesc {
 	daddr_t id_blkno;	/* current block number being examined */
 	daddr_t id_lblkno;	/* current logical block number */
 	int id_numfrags;	/* number of frags contained in block */
-	quad_t id_filesize;	/* for DATA nodes, the size of the directory */
+	off_t id_filesize;	/* for DATA nodes, the size of the directory */
 	int id_loc;		/* for DATA nodes, current location in dir */
 	int id_entryno;		/* for DATA nodes, current entry number */
 	struct lfs_direct *id_dirp;	/* for DATA nodes, ptr to current entry */
@@ -206,7 +207,7 @@ int	Uflag;			/* resolve user names */
 
 ino_t allocino(ino_t, int);
 int ino_to_fsba(struct lfs *, ino_t);
-struct ulfs1_dinode *ginode(ino_t);
+union lfs_dinode *ginode(ino_t);
 struct inoinfo *getinoinfo(ino_t);
 daddr_t lfs_ino_daddr(ino_t);
 void clearinode(ino_t);
