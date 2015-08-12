@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.54 2015/08/12 18:26:26 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.55 2015/08/12 18:27:01 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -768,8 +768,8 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 
 	fp = SEGSUM_FINFOBASE(fs, sp);
 	for (i = 0; i < lfs_ss_getnfinfo(fs, sp); i++) {
-		nblocks += fp->fi_nblocks;
-		bc += fp->fi_lastlength + ((fp->fi_nblocks - 1)
+		nblocks += lfs_fi_getnblocks(fs, fp);
+		bc += lfs_fi_getlastlength(fs, fp) + ((lfs_fi_getnblocks(fs, fp) - 1)
 					   << lfs_sb_getbshift(fs));
 		assert(bc >= 0);
 		fp = NEXT_FINFO(fs, fp);
@@ -811,9 +811,9 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 		if (i < lfs_ss_getnfinfo(fs, sp)) {
 			if (func)
 				func(daddr, fp);
-			for (k = 0; k < fp->fi_nblocks; k++) {
-				len = (k == fp->fi_nblocks - 1 ?
-				       fp->fi_lastlength
+			for (k = 0; k < lfs_fi_getnblocks(fs, fp); k++) {
+				len = (k == lfs_fi_getnblocks(fs, fp) - 1 ?
+				       lfs_fi_getlastlength(fs, fp)
 				       : lfs_sb_getbsize(fs));
 				bread(devvp, LFS_FSBTODB(fs, daddr), len,
 				    0, &bp);
