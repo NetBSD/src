@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.25 2015/08/02 18:14:16 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.26 2015/08/12 18:25:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.25 2015/08/02 18:14:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.26 2015/08/12 18:25:52 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -311,8 +311,8 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 
 			/* Record change in location */
 			LFS_IENTRY(ifp, fs, dip->di_inumber, ibp);
-			daddr = ifp->if_daddr;
-			ifp->if_daddr = LFS_DBTOFSB(fs, dbp->b_blkno);
+			daddr = lfs_if_getdaddr(fs, ifp);
+			lfs_if_setdaddr(fs, ifp, LFS_DBTOFSB(fs, dbp->b_blkno));
 			error = LFS_BWRITE_LOG(ibp); /* Ifile */
 			/* And do segment accounting */
 			if (lfs_dtosn(fs, daddr) != lfs_dtosn(fs, LFS_DBTOFSB(fs, dbp->b_blkno))) {
