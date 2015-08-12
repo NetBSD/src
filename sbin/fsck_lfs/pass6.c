@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.39 2015/08/12 18:25:52 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.40 2015/08/12 18:26:26 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -618,8 +618,8 @@ pass6(void)
 		sp = (SEGSUM *)bp->b_data;
 		if (debug)
 			pwarn("sum at 0x%x: ninos=%d nfinfo=%d\n",
-				(unsigned)daddr, (int)sp->ss_ninos,
-				(int)sp->ss_nfinfo);
+				(unsigned)daddr, (int)lfs_ss_getninos(fs, sp),
+				(int)lfs_ss_getnfinfo(fs, sp));
 
 		/* We have verified that this is a good summary. */
 		LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, daddr), sbp);
@@ -636,16 +636,16 @@ pass6(void)
 		}
 
 		/* Find inodes, look at generation number. */
-		if (sp->ss_ninos) {
+		if (lfs_ss_getninos(fs, sp)) {
 			LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, daddr), sbp);
-			sup->su_ninos += howmany(sp->ss_ninos, LFS_INOPB(fs));
+			sup->su_ninos += howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs));
 			VOP_BWRITE(sbp);
-			lfs_sb_adddmeta(fs, lfs_btofsb(fs, howmany(sp->ss_ninos,
+			lfs_sb_adddmeta(fs, lfs_btofsb(fs, howmany(lfs_ss_getninos(fs, sp),
 							    LFS_INOPB(fs)) *
 						lfs_sb_getibsize(fs)));
 		}
 		idaddrp = ((ulfs_daddr_t *)((char *)bp->b_data + lfs_sb_getsumsize(fs)));
-		for (i = 0; i < howmany(sp->ss_ninos, LFS_INOPB(fs)); i++) {
+		for (i = 0; i < howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)); i++) {
 			ino_t *inums;
 			
 			inums = ecalloc(LFS_INOPB(fs) + 1, sizeof(*inums));
@@ -697,7 +697,7 @@ pass6(void)
 				 *     loop.
 				 */
 				if (vp == NULL) {
-					if (!(sp->ss_flags & SS_DIROP))
+					if (!(lfs_ss_getflags(fs, sp) & SS_DIROP))
 						pfatal("NEW FILE IN NON-DIROP PARTIAL SEGMENT");
 					else {
 						inums[j++] = dp->di_inumber;
@@ -712,7 +712,7 @@ pass6(void)
 				 */
 				if (vp && VTOI(vp)->i_ffs1_gen < dp->di_gen) {
 					remove_ino(vp, dp->di_inumber);
-					if (!(sp->ss_flags & SS_DIROP))
+					if (!(lfs_ss_getflags(fs, sp) & SS_DIROP))
 						pfatal("NEW FILE VERSION IN NON-DIROP PARTIAL SEGMENT");
 					else {
 						inums[j++] = dp->di_inumber;
@@ -770,21 +770,21 @@ pass6(void)
 		bc = check_summary(fs, sp, daddr, debug, devvp, NULL);
 		if (bc == 0) {
 			pwarn("unexpected bad seg ptr at 0x%x with serial=%d\n",
-				(int)daddr, (int)sp->ss_serial);
+				(int)daddr, (int)lfs_ss_getserial(fs, sp));
 			brelse(bp, 0);
 			break;
 		} else {
 			if (debug)
 				pwarn("good seg ptr at 0x%x with serial=%d\n",
-					(int)daddr, (int)sp->ss_serial);
-			lastserial = sp->ss_serial;
+					(int)daddr, (int)lfs_ss_getserial(fs, sp));
+			lastserial = lfs_ss_getserial(fs, sp);
 		}
 		odaddr = daddr;
 		daddr += lfs_btofsb(fs, lfs_sb_getsumsize(fs) + bc);
 		if (lfs_dtosn(fs, odaddr) != lfs_dtosn(fs, daddr) ||
 		    lfs_dtosn(fs, daddr) != lfs_dtosn(fs, daddr +
 			lfs_btofsb(fs, lfs_sb_getsumsize(fs) + lfs_sb_getbsize(fs)) - 1)) {
-			daddr = ((SEGSUM *)bp->b_data)->ss_next;
+			daddr = lfs_ss_getnext(fs, sp);
 		}
 		brelse(bp, 0);
 	}
@@ -845,7 +845,7 @@ pass6(void)
 		bc = check_summary(fs, sp, daddr, debug, devvp, pass6harvest);
 		if (bc == 0) {
 			pwarn("unexpected bad seg ptr [2] at 0x%x with serial=%d\n",
-				(int)daddr, (int)sp->ss_serial);
+				(int)daddr, (int)lfs_ss_getserial(fs, sp));
 			brelse(bp, 0);
 			break;
 		}
@@ -856,7 +856,7 @@ pass6(void)
 		    lfs_dtosn(fs, daddr) != lfs_dtosn(fs, daddr +
 			lfs_btofsb(fs, lfs_sb_getsumsize(fs) + lfs_sb_getbsize(fs)) - 1)) {
 			lfs_sb_subavail(fs, lfs_sntod(fs, lfs_dtosn(fs, daddr) + 1) - daddr);
-			daddr = ((SEGSUM *)bp->b_data)->ss_next;
+			daddr = lfs_ss_getnext(fs, sp);
 		}
 		LFS_CLEANERINFO(cip, fs, cbp);
 		LFS_SYNC_CLEANERINFO(cip, fs, cbp, 0);

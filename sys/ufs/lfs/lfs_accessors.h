@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.10 2015/08/12 18:25:52 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.11 2015/08/12 18:26:27 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -145,6 +145,11 @@
 #ifndef _UFS_LFS_LFS_ACCESSORS_H_
 #define _UFS_LFS_LFS_ACCESSORS_H_
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <assert.h>
+#define KASSERT assert
+#endif
+
 /*
  * STRUCT_LFS is used by the libsa code to get accessors that work
  * with struct salfs instead of struct lfs, and by the cleaner to
@@ -271,6 +276,21 @@
 	(F)->lfs_suflags[(F)->lfs_activesb][(IN)] = (SP)->su_flags;	\
 	LFS_BWRITE_LOG(BP);						\
 } while (0)
+
+/*
+ * FINFO (file info) entries.
+ */
+
+/* Size of an on-disk block pointer, e.g. in an indirect block. */
+/* XXX: move to a more suitable location in this file */
+#define LFS_BLKPTRSIZE(fs) ((fs)->lfs_is64 ? sizeof(int64_t) : sizeof(int32_t))
+
+/* Full size of the provided FINFO record, including its block pointers. */
+#define FINFO_FULLSIZE(fs, fip) \
+	(FINFOSIZE + (fip)->fi_nblocks * LFS_BLKPTRSIZE(fs))
+
+#define NEXT_FINFO(fs, fip) \
+	((FINFO *)((char *)(fip) + FINFO_FULLSIZE(fs, fip)))
 
 /*
  * Index file inode entries.
@@ -464,7 +484,100 @@ lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
  * On-disk segment summary information
  */
 
-#define SEGSUM_SIZE(fs) (lfs_sb_getversion(fs) == 1 ? sizeof(SEGSUM_V1) : sizeof(SEGSUM))
+#define SEGSUM_SIZE(fs) \
+	(fs->lfs_is64 ? sizeof(SEGSUM64) : \
+	 lfs_sb_getversion(fs) > 1 ? sizeof(SEGSUM32) : sizeof(SEGSUM_V1))
+
+/*
+ * The SEGSUM structure is followed by FINFO structures. Get the pointer
+ * to the first FINFO.
+ *
+ * XXX this can't be a macro yet; this file needs to be resorted.
+ */
+#if 0
+static __unused inline FINFO *
+segsum_finfobase(STRUCT_LFS *fs, SEGSUM *ssp)
+{
+	return (FINFO *)((char *)ssp) + SEGSUM_SIZE(fs);
+}
+#else
+#define SEGSUM_FINFOBASE(fs, ssp) \
+	((FINFO *)((char *)(ssp)) + SEGSUM_SIZE(fs));
+#endif
+
+#define LFS_DEF_SS_ACCESSOR(type, type32, field) \
+	static __unused inline type				\
+	lfs_ss_get##field(STRUCT_LFS *fs, SEGSUM *ssp)		\
+	{							\
+		if (fs->lfs_is64) {				\
+			return ssp->u_64.ss_##field; 		\
+		} else {					\
+			return ssp->u_32.ss_##field; 		\
+		}						\
+	}							\
+	static __unused inline void				\
+	lfs_ss_set##field(STRUCT_LFS *fs, SEGSUM *ssp, type val) \
+	{							\
+		if (fs->lfs_is64) {				\
+			type *p = &ssp->u_64.ss_##field;	\
+			(void)p;				\
+			ssp->u_64.ss_##field = val;		\
+		} else {					\
+			type32 *p = &ssp->u_32.ss_##field;	\
+			(void)p;				\
+			ssp->u_32.ss_##field = val;		\
+		}						\
+	}							\
+
+LFS_DEF_SS_ACCESSOR(uint32_t, uint32_t, sumsum);
+LFS_DEF_SS_ACCESSOR(uint32_t, uint32_t, datasum);
+LFS_DEF_SS_ACCESSOR(uint32_t, uint32_t, magic);
+LFS_DEF_SS_ACCESSOR(uint32_t, uint32_t, ident);
+LFS_DEF_SS_ACCESSOR(int64_t, int32_t, next);
+LFS_DEF_SS_ACCESSOR(uint16_t, uint16_t, nfinfo);
+LFS_DEF_SS_ACCESSOR(uint16_t, uint16_t, ninos);
+LFS_DEF_SS_ACCESSOR(uint16_t, uint16_t, flags);
+LFS_DEF_SS_ACCESSOR(uint64_t, uint32_t, reclino);
+LFS_DEF_SS_ACCESSOR(uint64_t, uint64_t, serial);
+LFS_DEF_SS_ACCESSOR(uint64_t, uint64_t, create);
+
+static __unused inline size_t
+lfs_ss_getsumstart(STRUCT_LFS *fs)
+{
+	/* These are actually all the same. */
+	if (fs->lfs_is64) {
+		return offsetof(SEGSUM64, ss_datasum);
+	} else /* if (lfs_sb_getversion(fs) > 1) */ {
+		return offsetof(SEGSUM32, ss_datasum);
+	} /* else {
+		return offsetof(SEGSUM_V1, ss_datasum);
+	} */
+	/*
+	 * XXX ^^^ until this file is resorted lfs_sb_getversion isn't
+	 * defined yet.
+	 */
+}
+
+static __unused inline uint32_t
+lfs_ss_getocreate(STRUCT_LFS *fs, SEGSUM *ssp)
+{
+	KASSERT(fs->lfs_is64 == 0);
+	/* XXX need to resort this file before we can do this */
+	//KASSERT(lfs_sb_getversion(fs) == 1);
+	
+	return ssp->u_v1.ss_create;
+}
+
+static __unused inline void
+lfs_ss_setocreate(STRUCT_LFS *fs, SEGSUM *ssp, uint32_t val)
+{
+	KASSERT(fs->lfs_is64 == 0);
+	/* XXX need to resort this file before we can do this */
+	//KASSERT(lfs_sb_getversion(fs) == 1);
+	
+	ssp->u_v1.ss_create = val;
+}
+
 
 /*
  * Super block.

@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.47 2015/08/12 18:25:51 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.48 2015/08/12 18:26:26 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -423,6 +423,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	struct ulfs1_dinode *dip;
 	u_int32_t ck, vers;
 	int fic, inoc, obic;
+	size_t sumstart;
 	int i;
 	char *cp;
 
@@ -438,22 +439,23 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	ssp = (SEGSUM *)cp;
 	/* XXX ondisk32 */
 	iaddrp = ((int32_t *)(cp + lfs_sb_getibsize(fs))) - 1;
-	fip = (FINFO *)(cp + sizeof(SEGSUM));
+	fip = SEGSUM_FINFOBASE(fs, cp);
 
 	/*
 	 * Check segment header magic and checksum
 	 */
-	if (ssp->ss_magic != SS_MAGIC) {
+	if (lfs_ss_getmagic(fs, ssp) != SS_MAGIC) {
 		syslog(LOG_WARNING, "%s: sumsum magic number bad at 0x%jx:"
 		       " read 0x%x, expected 0x%x", lfs_sb_getfsmnt(fs),
-		       (intmax_t)daddr, ssp->ss_magic, SS_MAGIC);
+		       (intmax_t)daddr, lfs_ss_getmagic(fs, ssp), SS_MAGIC);
 		return 0x0;
 	}
-	ck = cksum(&ssp->ss_datasum, lfs_sb_getsumsize(fs) - sizeof(ssp->ss_sumsum));
-	if (ck != ssp->ss_sumsum) {
+	sumstart = lfs_ss_getsumstart(fs);
+	ck = cksum((char *)ssp + sumstart, lfs_sb_getsumsize(fs) - sumstart);
+	if (ck != lfs_ss_getsumsum(fs, ssp)) {
 		syslog(LOG_WARNING, "%s: sumsum checksum mismatch at 0x%jx:"
 		       " read 0x%x, computed 0x%x", lfs_sb_getfsmnt(fs),
-		       (intmax_t)daddr, ssp->ss_sumsum, ck);
+		       (intmax_t)daddr, lfs_ss_getsumsum(fs, ssp), ck);
 		return 0x0;
 	}
 
@@ -469,12 +471,12 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	 * as we go.
 	 */
 	fic = inoc = 0;
-	while (fic < ssp->ss_nfinfo || inoc < ssp->ss_ninos) {
+	while (fic < lfs_ss_getnfinfo(fs, ssp) || inoc < lfs_ss_getninos(fs, ssp)) {
 		/*
 		 * We must have either a file block or an inode block.
 		 * If we don't have either one, it's an error.
 		 */
-		if (fic >= ssp->ss_nfinfo && *iaddrp != daddr) {
+		if (fic >= lfs_ss_getnfinfo(fs, ssp) && *iaddrp != daddr) {
 			syslog(LOG_WARNING, "%s: bad pseg at %jx (seg %d)",
 			       lfs_sb_getfsmnt(fs), (intmax_t)odaddr, lfs_dtosn(fs, odaddr));
 			*bipp = bip;
@@ -484,7 +486,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		/*
 		 * Note each inode from the inode blocks
 		 */
-		if (inoc < ssp->ss_ninos && *iaddrp == daddr) {
+		if (inoc < lfs_ss_getninos(fs, ssp) && *iaddrp == daddr) {
 			cp = fd_ptrget(fs->clfs_devvp, daddr);
 			ck = lfs_cksum_part(cp, sizeof(u_int32_t), ck);
 			dip = (struct ulfs1_dinode *)cp;
@@ -519,7 +521,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 				bip[*bic - 1].bi_inode = dip[i].di_inumber;
 				bip[*bic - 1].bi_lbn = LFS_UNUSED_LBN;
 				bip[*bic - 1].bi_daddr = daddr;
-				bip[*bic - 1].bi_segcreate = ssp->ss_create;
+				bip[*bic - 1].bi_segcreate = lfs_ss_getcreate(fs, ssp);
 				bip[*bic - 1].bi_version = dip[i].di_gen;
 				bip[*bic - 1].bi_bp = &(dip[i]);
 				bip[*bic - 1].bi_size = LFS_DINODE1_SIZE;
@@ -533,7 +535,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		/*
 		 * Note each file block from the finfo blocks
 		 */
-		if (fic >= ssp->ss_nfinfo)
+		if (fic >= lfs_ss_getnfinfo(fs, ssp))
 			continue;
 
 		/* Count this finfo, whether or not we use it */
@@ -603,7 +605,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 			bip[*bic + i].bi_inode = fip->fi_ino;
 			bip[*bic + i].bi_lbn = fip->fi_blocks[i];
 			bip[*bic + i].bi_daddr = daddr;
-			bip[*bic + i].bi_segcreate = ssp->ss_create;
+			bip[*bic + i].bi_segcreate = lfs_ss_getcreate(fs, ssp);
 			bip[*bic + i].bi_version = fip->fi_version;
 			bip[*bic + i].bi_size = (i == fip->fi_nblocks - 1) ?
 				fip->fi_lastlength : lfs_sb_getbsize(fs);
@@ -617,15 +619,15 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 #endif
 		}
 		*bic += fip->fi_nblocks;
-		fip = (FINFO *)(fip->fi_blocks + fip->fi_nblocks);
+		fip = NEXT_FINFO(fs, fip);
 	}
 
 #ifndef REPAIR_ZERO_FINFO
-	if (ssp->ss_datasum != ck) {
+	if (lfs_ss_getdatasum(fs, ssp) != ck) {
 		syslog(LOG_WARNING, "%s: data checksum bad at 0x%jx:"
 		       " read 0x%x, computed 0x%x", lfs_sb_getfsmnt(fs),
 		       (intmax_t)odaddr,
-		       ssp->ss_datasum, ck);
+		       lfs_ss_getdatasum(fs, ssp), ck);
 		*bic = obic;
 		return 0x0;
 	}
