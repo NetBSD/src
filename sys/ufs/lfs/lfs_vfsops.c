@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.336 2015/08/12 18:25:04 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.337 2015/08/12 18:25:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.336 2015/08/12 18:25:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.337 2015/08/12 18:25:52 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1525,7 +1525,7 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 	struct ulfs1_dinode *dip;
 	struct inode *ip;
 	struct buf *bp;
-	struct ifile *ifp;
+	IFILE *ifp;
 	struct ulfsmount *ump;
 	ino_t ino;
 	daddr_t daddr;
@@ -1556,10 +1556,10 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 	else {
 		/* XXX bounds-check this too */
 		LFS_IENTRY(ifp, fs, ino, bp);
-		daddr = ifp->if_daddr;
+		daddr = lfs_if_getdaddr(fs, ifp);
 		if (lfs_sb_getversion(fs) > 1) {
-			ts.tv_sec = ifp->if_atime_sec;
-			ts.tv_nsec = ifp->if_atime_nsec;
+			ts.tv_sec = lfs_if_getatime_sec(fs, ifp);
+			ts.tv_nsec = lfs_if_getatime_nsec(fs, ifp);
 		}
 
 		brelse(bp, 0);

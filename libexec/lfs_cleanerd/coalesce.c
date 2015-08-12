@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.30 2015/08/12 18:25:03 dholland Exp $  */
+/*      $NetBSD: coalesce.c,v 1.31 2015/08/12 18:25:51 dholland Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ get_dinode(struct clfs *fs, ino_t ino)
 	struct ulfs1_dinode *dip, *r;
 
 	lfs_ientry(&ifp, fs, ino, &bp);
-	daddr = ifp->if_daddr;
+	daddr = lfs_if_getdaddr(fs, ifp);
 	brelse(bp, 0);
 
 	if (daddr == 0x0)

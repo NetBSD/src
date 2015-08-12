@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.175 2015/08/12 18:25:04 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.176 2015/08/12 18:25:52 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -486,12 +486,26 @@ struct finfo {
 /*
  * Index file inode entries.
  */
-typedef struct ifile IFILE;
-struct ifile {
-	u_int32_t if_version;		/* inode version number */
+
+/* magic value for daddrs */
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
-	int32_t	  if_daddr;		/* inode disk address */
+/* magic value for if_nextfree */
 #define LFS_ORPHAN_NEXTFREE	(~(u_int32_t)0) /* indicate orphaned file */
+
+typedef struct ifile64 IFILE64;
+struct ifile64 {
+	u_int32_t if_version;		/* inode version number */
+	u_int32_t if_pad;		/* 64-bit alignment padding */
+	int64_t	  if_daddr;		/* inode disk address */
+	u_int64_t if_nextfree;		/* next-unallocated inode */
+	u_int32_t if_atime_sec;		/* Last access time, seconds */
+	u_int32_t if_atime_nsec;	/* and nanoseconds */
+};
+
+typedef struct ifile32 IFILE32;
+struct ifile32 {
+	u_int32_t if_version;		/* inode version number */
+	int32_t	  if_daddr;		/* inode disk address */
 	u_int32_t if_nextfree;		/* next-unallocated inode */
 	u_int32_t if_atime_sec;		/* Last access time, seconds */
 	u_int32_t if_atime_nsec;	/* and nanoseconds */
@@ -503,9 +517,21 @@ struct ifile_v1 {
 	int32_t	  if_daddr;		/* inode disk address */
 	u_int32_t if_nextfree;		/* next-unallocated inode */
 #if LFS_ATIME_IFILE
+#error "this cannot work"
 	struct timespec if_atime;	/* Last access time */
 #endif
 };
+
+/*
+ * Note: struct ifile_v1 is often handled by accessing the first three
+ * fields of struct ifile32. (XXX: Blah.  This should be cleaned up as
+ * it may in some cases violate the strict-aliasing rules.)
+ */
+typedef union ifile {
+	struct ifile64 u_64;
+	struct ifile32 u_32;
+	struct ifile_v1 u_v1;
+} IFILE;
 
 /*
  * Cleaner information structure.  This resides in the ifile and is used

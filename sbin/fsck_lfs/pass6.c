@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.38 2015/08/02 18:08:12 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.39 2015/08/12 18:25:52 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -210,6 +210,7 @@ static void
 remove_ino(struct uvnode *vp, ino_t ino)
 {
 	IFILE *ifp;
+	ino_t nextfree;
 	SEGUSE *sup;
 	CLEANERINFO *cip;
 	struct ubuf *bp, *sbp, *cbp;
@@ -220,11 +221,12 @@ remove_ino(struct uvnode *vp, ino_t ino)
 		pwarn("remove ino %d\n", (int)ino);
 
 	LFS_IENTRY(ifp, fs, ino, bp);
-	daddr = ifp->if_daddr;
+	daddr = lfs_if_getdaddr(fs, ifp);
 	if (daddr > 0) {
-		ifp->if_daddr = 0x0;
+		lfs_if_setdaddr(fs, ifp, 0);
 
-		LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
+		LFS_GET_HEADFREE(fs, cip, cbp, &nextfree);
+		lfs_if_setnextfree(fs, ifp, nextfree);
 		VOP_BWRITE(bp);
 		LFS_PUT_HEADFREE(fs, cip, cbp, ino);
 		sbdirty();
@@ -431,9 +433,9 @@ readdress_inode(struct ulfs1_dinode *dp, ulfs_daddr_t daddr)
 
 	/* Move ifile pointer to this location */
 	LFS_IENTRY(ifp, fs, thisino, bp);
-	odaddr = ifp->if_daddr;
+	odaddr = lfs_if_getdaddr(fs, ifp);
 	assert(odaddr != 0);
-	ifp->if_daddr = daddr;
+	lfs_if_setdaddr(fs, ifp, daddr);
 	VOP_BWRITE(bp);
 
 	if (debug)
@@ -481,13 +483,13 @@ alloc_inode(ino_t thisino, ulfs_daddr_t daddr)
 	}
 
 	LFS_IENTRY(ifp, fs, thisino, bp);
-	if (ifp->if_daddr != 0) {
+	if (lfs_if_getdaddr(fs, ifp) != 0) {
 		pwarn("allocated inode %lld already allocated\n",
 			(long long)thisino);
 	}
-	nextfree = ifp->if_nextfree;
-	ifp->if_nextfree = 0;
-	ifp->if_daddr = daddr;
+	nextfree = lfs_if_getnextfree(fs, ifp);
+	lfs_if_setnextfree(fs, ifp, 0);
+	lfs_if_setdaddr(fs, ifp, daddr);
 	VOP_BWRITE(bp);
 
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldhead);
@@ -502,15 +504,15 @@ alloc_inode(ino_t thisino, ulfs_daddr_t daddr)
 		ino = oldhead;
 		while (ino) {
 			LFS_IENTRY(ifp, fs, ino, bp);
-			assert(ifp->if_nextfree != ino);
-			if (ifp->if_nextfree == thisino) {
-				ifp->if_nextfree = nextfree;
+			assert(lfs_if_getnextfree(fs, ifp) != ino);
+			if (lfs_if_getnextfree(fs, ifp) == thisino) {
+				lfs_if_setnextfree(fs, ifp, nextfree);
 				VOP_BWRITE(bp);
 				if (nextfree == 0)
 					LFS_PUT_TAILFREE(fs, cip, cbp, ino);
 				break;
 			} else
-				ino = ifp->if_nextfree;
+				ino = lfs_if_getnextfree(fs, ifp);
 			brelse(bp, 0);
 		}
 	}
