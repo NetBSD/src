@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.339 2015/08/12 18:27:01 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.340 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.339 2015/08/12 18:27:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.340 2015/08/12 18:28:01 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -538,10 +538,14 @@ void
 lfs_init(void)
 {
 
+	/*
+	 * XXX: should we use separate pools for 32-bit and 64-bit
+	 * dinodes?
+	 */
 	malloc_type_attach(M_SEGMENT);
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "lfsinopl", &pool_allocator_nointr, IPL_NONE);
-	pool_init(&lfs_dinode_pool, sizeof(struct ulfs1_dinode), 0, 0, 0,
+	pool_init(&lfs_dinode_pool, sizeof(union lfs_dinode), 0, 0, 0,
 	    "lfsdinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&lfs_inoext_pool, sizeof(struct lfs_inode_ext), 8, 0, 0,
 	    "lfsinoextpl", &pool_allocator_nointr, IPL_NONE);
@@ -1471,8 +1475,9 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 static void
 lfs_init_vnode(struct ulfsmount *ump, ino_t ino, struct vnode *vp)
 {
+	struct lfs *fs = ump->um_lfs;
 	struct inode *ip;
-	struct ulfs1_dinode *dp;
+	union lfs_dinode *dp;
 
 	ASSERT_NO_SEGLOCK(ump->um_lfs);
 
@@ -1483,11 +1488,17 @@ lfs_init_vnode(struct ulfsmount *ump, ino_t ino, struct vnode *vp)
 	memset(dp, 0, sizeof(*dp));
 	ip->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
 	memset(ip->inode_ext.lfs, 0, sizeof(*ip->inode_ext.lfs));
-	ip->i_din.ffs1_din = dp;
+	// XXX this should go away
+	if (fs->lfs_is64) {
+		ip->i_din.ffs2_din = &dp->u_64;
+	} else {
+		ip->i_din.ffs1_din = &dp->u_32;
+	}
 	ip->i_ump = ump;
 	ip->i_vnode = vp;
 	ip->i_dev = ump->um_dev;
-	ip->i_number = dp->di_inumber = ino;
+	lfs_dino_setinumber(fs, dp, ino);
+	ip->i_number = ino;
 	ip->i_lfs = ump->um_lfs;
 	ip->i_lfs_effnblks = 0;
 	SPLAY_INIT(&ip->i_lfs_lbtree);
@@ -1508,7 +1519,8 @@ lfs_deinit_vnode(struct ulfsmount *ump, struct vnode *vp)
 	struct inode *ip = VTOI(vp);
 
 	pool_put(&lfs_inoext_pool, ip->inode_ext.lfs);
-	pool_put(&lfs_dinode_pool, ip->i_din.ffs1_din);
+	// XXX bogus cast
+	pool_put(&lfs_dinode_pool, (union lfs_dinode *)ip->i_din.ffs1_din);
 	pool_put(&lfs_inode_pool, ip);
 	vp->v_data = NULL;
 }
@@ -1522,7 +1534,7 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
     const void *key, size_t key_len, const void **new_key)
 {
 	struct lfs *fs;
-	struct ulfs1_dinode *dip;
+	union lfs_dinode *dip;
 	struct inode *ip;
 	struct buf *bp;
 	IFILE *ifp;
@@ -1575,8 +1587,13 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 	if (curlwp == ump->um_cleaner_thread && ump->um_cleaner_hint != NULL &&
 	    ump->um_cleaner_hint->bi_lbn == LFS_UNUSED_LBN) {
 		dip = ump->um_cleaner_hint->bi_bp;
-		error = copyin(dip, ip->i_din.ffs1_din,
-		    sizeof(struct ulfs1_dinode));
+		if (fs->lfs_is64) {
+			error = copyin(dip, ip->i_din.ffs2_din,
+				       sizeof(struct lfs64_dinode));
+		} else {
+			error = copyin(dip, ip->i_din.ffs1_din,
+				       sizeof(struct lfs32_dinode));
+		}
 		if (error) {
 			lfs_deinit_vnode(ump, vp);
 			return error;
@@ -1620,7 +1637,7 @@ again:
 		mutex_enter(&lfs_lock);
 		if (fs->lfs_seglock > 0) {
 			struct buf **bpp;
-			struct ulfs1_dinode *dp;
+			union lfs_dinode *dp;
 			int i;
 
 			for (bpp = fs->lfs_sp->bpp;
@@ -1630,12 +1647,13 @@ again:
 					/* Inode block */
 					printf("%s: block 0x%" PRIx64 ": ",
 					       __func__, (*bpp)->b_blkno);
-					dp = (struct ulfs1_dinode *)
-					    (*bpp)->b_data;
-					for (i = 0; i < LFS_INOPB(fs); i++)
-						if (dp[i].di_inumber)
-							printf("%d ",
-							    dp[i].di_inumber);
+					for (i = 0; i < LFS_INOPB(fs); i++) {
+						dp = DINO_IN_BLOCK(fs,
+						    (*bpp)->b_data, i);
+						if (lfs_dino_getinumber(fs, dp))
+							printf("%ju ",
+							    (uintmax_t)lfs_dino_getinumber(fs, dp));
+					}
 					printf("\n");
 				}
 			}
@@ -1644,7 +1662,11 @@ again:
 #endif /* DEBUG */
 		panic("lfs_loadvnode: dinode not found");
 	}
-	*ip->i_din.ffs1_din = *dip;
+	if (fs->lfs_is64) {
+		*ip->i_din.ffs2_din = dip->u_64;
+	} else {
+		*ip->i_din.ffs1_din = dip->u_32;
+	}
 	brelse(bp, 0);
 
 out:	
@@ -2218,13 +2240,15 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 			    i == 0)
 				continue;
 			if (ip->i_ffs1_db[i] != 0) {
-				lfs_dump_dinode(ip->i_din.ffs1_din);
+				// XXX bogus cast
+				lfs_dump_dinode(fs, (union lfs_dinode *)ip->i_din.ffs1_din);
 				panic("inconsistent inode (direct)");
 			}
 		}
 		for ( ; i < ULFS_NDADDR + ULFS_NIADDR; i++) {
 			if (ip->i_ffs1_ib[i - ULFS_NDADDR] != 0) {
-				lfs_dump_dinode(ip->i_din.ffs1_din);
+				// XXX bogus cast
+				lfs_dump_dinode(fs, (union lfs_dinode *)ip->i_din.ffs1_din);
 				panic("inconsistent inode (indirect)");
 			}
 		}
@@ -2237,7 +2261,8 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 #ifdef DIAGNOSTIC
 	if (vp->v_type == VNON) {
 # ifdef DEBUG
-		lfs_dump_dinode(ip->i_din.ffs1_din);
+		// XXX bogus cast
+		lfs_dump_dinode(fs, (union lfs_dinode *)ip->i_din.ffs1_din);
 # endif
 		panic("lfs_vinit: ino %llu is type VNON! (ifmt=%o)\n",
 		      (unsigned long long)ip->i_number,

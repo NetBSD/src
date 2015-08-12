@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.12 2015/08/12 18:27:01 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.13 2015/08/12 18:28:01 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -160,6 +160,9 @@
 #define STRUCT_LFS struct lfs
 #endif
 
+/*
+ * dinodes
+ */
 
 /*
  * Maximum length of a symlink that can be stored within the inode.
@@ -170,6 +173,95 @@
 #define ULFS_MAXSYMLINKLEN(ip) \
 	((ip)->i_ump->um_fstype == ULFS1) ? \
 	ULFS1_MAXSYMLINKLEN : ULFS2_MAXSYMLINKLEN
+
+#define DINOSIZE(fs) ((fs)->lfs_is64 ? sizeof(struct lfs64_dinode) : sizeof(struct lfs32_dinode))
+
+#define DINO_IN_BLOCK(fs, base, ix) \
+	((union lfs_dinode *)((char *)(base) + DINOSIZE(fs) * (ix)))
+
+#define LFS_DEF_DINO_ACCESSOR(type, type32, field) \
+	static __unused inline type				\
+	lfs_dino_get##field(STRUCT_LFS *fs, union lfs_dinode *dip) \
+	{							\
+		if (fs->lfs_is64) {				\
+			return dip->u_64.di_##field; 		\
+		} else {					\
+			return dip->u_32.di_##field; 		\
+		}						\
+	}							\
+	static __unused inline void				\
+	lfs_dino_set##field(STRUCT_LFS *fs, union lfs_dinode *dip, type val) \
+	{							\
+		if (fs->lfs_is64) {				\
+			type *p = &dip->u_64.di_##field;	\
+			(void)p;				\
+			dip->u_64.di_##field = val;		\
+		} else {					\
+			type32 *p = &dip->u_32.di_##field;	\
+			(void)p;				\
+			dip->u_32.di_##field = val;		\
+		}						\
+	}							\
+
+LFS_DEF_DINO_ACCESSOR(uint16_t, uint16_t, mode);
+LFS_DEF_DINO_ACCESSOR(int16_t, int16_t, nlink);
+LFS_DEF_DINO_ACCESSOR(uint64_t, uint32_t, inumber);
+LFS_DEF_DINO_ACCESSOR(uint64_t, uint64_t, size);
+LFS_DEF_DINO_ACCESSOR(int64_t, int32_t, atime);
+LFS_DEF_DINO_ACCESSOR(int32_t, int32_t, atimensec);
+LFS_DEF_DINO_ACCESSOR(int64_t, int32_t, mtime);
+LFS_DEF_DINO_ACCESSOR(int32_t, int32_t, mtimensec);
+LFS_DEF_DINO_ACCESSOR(int64_t, int32_t, ctime);
+LFS_DEF_DINO_ACCESSOR(int32_t, int32_t, ctimensec);
+LFS_DEF_DINO_ACCESSOR(uint32_t, uint32_t, flags);
+LFS_DEF_DINO_ACCESSOR(uint64_t, uint32_t, blocks);
+LFS_DEF_DINO_ACCESSOR(int32_t, int32_t, gen);
+LFS_DEF_DINO_ACCESSOR(uint32_t, uint32_t, uid);
+LFS_DEF_DINO_ACCESSOR(uint32_t, uint32_t, gid);
+
+static __unused inline daddr_t
+lfs_dino_getdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
+{
+	KASSERT(ix < ULFS_NDADDR);
+	if (fs->lfs_is64) {
+		return dip->u_64.di_db[ix];
+	} else {
+		return dip->u_32.di_db[ix];
+	}
+}
+
+static __unused inline daddr_t
+lfs_dino_getib(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
+{
+	KASSERT(ix < ULFS_NIADDR);
+	if (fs->lfs_is64) {
+		return dip->u_64.di_ib[ix];
+	} else {
+		return dip->u_32.di_ib[ix];
+	}
+}
+
+static __unused inline void
+lfs_dino_setdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix, daddr_t val)
+{
+	KASSERT(ix < ULFS_NDADDR);
+	if (fs->lfs_is64) {
+		dip->u_64.di_db[ix] = val;
+	} else {
+		dip->u_32.di_db[ix] = val;
+	}
+}
+
+static __unused inline void
+lfs_dino_setib(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix, daddr_t val)
+{
+	KASSERT(ix < ULFS_NIADDR);
+	if (fs->lfs_is64) {
+		dip->u_64.di_ib[ix] = val;
+	} else {
+		dip->u_32.di_ib[ix] = val;
+	}
+}
 
 /*
  * "struct buf" associated definitions
@@ -895,9 +987,9 @@ lfs_btofsb(STRUCT_LFS *fs, uint64_t b)
 #define lfs_blknum(fs, fsb)	/* calculates rounddown(fsb, fs->lfs_frag) */ \
 	((fsb) &~ ((fs)->lfs_frag - 1))
 #define lfs_dblksize(fs, dp, lbn) \
-	(((lbn) >= ULFS_NDADDR || (dp)->di_size >= ((lbn) + 1) << lfs_sb_getbshift(fs)) \
+	(((lbn) >= ULFS_NDADDR || lfs_dino_getsize(fs, dp) >= ((lbn) + 1) << lfs_sb_getbshift(fs)) \
 	    ? lfs_sb_getbsize(fs) \
-	    : (lfs_fragroundup(fs, lfs_blkoff(fs, (dp)->di_size))))
+	    : (lfs_fragroundup(fs, lfs_blkoff(fs, lfs_dino_getsize(fs, dp)))))
 
 #define	lfs_segsize(fs)	(lfs_sb_getversion(fs) == 1 ?	     		\
 			   lfs_lblktosize((fs), lfs_sb_getssize(fs)) :	\

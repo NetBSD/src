@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.25 2015/07/28 05:09:34 dholland Exp $	 */
+/* $NetBSD: pass4.c,v 1.26 2015/08/12 18:28:00 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -82,7 +82,7 @@ pass4(void)
 {
 	ino_t inumber;
 	struct zlncnt *zlnp;
-	struct ulfs1_dinode *dp;
+	union lfs_dinode *dp;
 	struct inodesc idesc;
 	int n;
 
@@ -119,7 +119,7 @@ pass4(void)
 			if (check_orphan(&idesc))
 				break;
 			dp = ginode(inumber);
-			if (dp->di_size == 0) {
+			if (lfs_dino_getsize(fs, dp) == 0) {
 				const char * msg = (lncntp[inumber] ?
 					"ZERO LENGTH" : "UNREF ZERO LENGTH");
 				clri(&idesc, msg, 1);
