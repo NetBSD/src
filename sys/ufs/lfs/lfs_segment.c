@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.254 2015/08/12 18:26:27 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.255 2015/08/12 18:27:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.254 2015/08/12 18:26:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.255 2015/08/12 18:27:01 dholland Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -138,13 +138,14 @@ static void lfs_cluster_callback(struct buf *);
 
 int	 lfs_match_fake(struct lfs *, struct buf *);
 void	 lfs_newseg(struct lfs *);
-/* XXX ondisk32 */
-void	 lfs_shellsort(struct buf **, int32_t *, int, int);
 void	 lfs_supercallback(struct buf *);
 void	 lfs_updatemeta(struct segment *);
 void	 lfs_writesuper(struct lfs *, daddr_t);
 int	 lfs_writevnodes(struct lfs *fs, struct mount *mp,
 	    struct segment *sp, int dirops);
+
+static void lfs_shellsort(struct lfs *, struct buf **, union lfs_blocks *,
+			  int, int);
 
 int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
 int	lfs_writeindir = 1;		/* whether to flush indir on non-ckp */
@@ -1332,7 +1333,7 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, kmutex_t *mptr)
 			mutex_exit(mptr);
 		lfs_updatemeta(sp);
 
-		vers = sp->fip->fi_version;
+		vers = lfs_fi_getversion(fs, sp->fip);
 		(void) lfs_writeseg(fs, sp);
 
 		/* Add the current file to the segment summary. */
@@ -1344,9 +1345,9 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, kmutex_t *mptr)
 	}
 
 	if (bp->b_flags & B_GATHERED) {
-		DLOG((DLOG_SEG, "lfs_gatherblock: already gathered! Ino %d,"
+		DLOG((DLOG_SEG, "lfs_gatherblock: already gathered! Ino %ju,"
 		      " lbn %" PRId64 "\n",
-		      sp->fip->fi_ino, bp->b_lblkno));
+		      (uintmax_t)lfs_fi_getino(fs, sp->fip), bp->b_lblkno));
 		return (0);
 	}
 
@@ -1355,7 +1356,11 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, kmutex_t *mptr)
 
 	*sp->cbpp++ = bp;
 	for (j = 0; j < blksinblk; j++) {
-		sp->fip->fi_blocks[sp->fip->fi_nblocks++] = bp->b_lblkno + j;
+		unsigned bn;
+
+		bn = lfs_fi_getnblocks(fs, sp->fip);
+		lfs_fi_setnblocks(fs, sp->fip, bn+1);
+		lfs_fi_setblock(fs, sp->fip, bn, bp->b_lblkno + j);
 		/* This block's accounting moves from lfs_favail to lfs_avail */
 		lfs_deregister_block(sp->vp, bp->b_lblkno + j);
 	}
@@ -1611,13 +1616,44 @@ lfs_updatemeta(struct segment *sp)
 	struct lfs *fs;
 	struct vnode *vp;
 	daddr_t lbn;
-	int i, nblocks, num;
+	int i, nblocks, nblocks_orig, num;
 	int bb;
 	int bytesleft, size;
+	unsigned lastlength;
+	union lfs_blocks tmpptr;
 
-	ASSERT_SEGLOCK(sp->fs);
+	fs = sp->fs;
 	vp = sp->vp;
-	nblocks = &sp->fip->fi_blocks[sp->fip->fi_nblocks] - sp->start_lbp;
+	ASSERT_SEGLOCK(fs);
+
+	/*
+	 * This used to be:
+	 *
+	 *  nblocks = &sp->fip->fi_blocks[sp->fip->fi_nblocks] - sp->start_lbp;
+	 *
+	 * that is, it allowed for the possibility that start_lbp did
+	 * not point to the beginning of the finfo block pointer area.
+	 * This particular formulation is six kinds of painful in the
+	 * lfs64 world where we have two sizes of block pointer, so
+	 * unless/until everything can be cleaned up to not move
+	 * start_lbp around but instead use an offset, we do the
+	 * following:
+	 *    1. Get NEXT_FINFO(sp->fip). This is the same pointer as
+	 * &sp->fip->fi_blocks[sp->fip->fi_nblocks], just the wrong
+	 * type. (Ugh.)
+	 *    2. Cast it to void *, then assign it to a temporary
+	 * union lfs_blocks.
+	 *    3. Subtract start_lbp from that.
+	 *    4. Save the value of nblocks in blocks_orig so we can
+	 * assert below that it hasn't changed without repeating this
+	 * rubbish.
+	 *
+	 * XXX.
+	 */
+	lfs_blocks_fromvoid(fs, &tmpptr, (void *)NEXT_FINFO(fs, sp->fip));
+	nblocks = lfs_blocks_sub(fs, &tmpptr, &sp->start_lbp);
+	nblocks_orig = nblocks;
+
 	KASSERT(nblocks >= 0);
 	KASSERT(vp != NULL);
 	if (nblocks == 0)
@@ -1627,7 +1663,6 @@ lfs_updatemeta(struct segment *sp)
 	 * This count may be high due to oversize blocks from lfs_gop_write.
 	 * Correct for this. (XXX we should be able to keep track of these.)
 	 */
-	fs = sp->fs;
 	for (i = 0; i < nblocks; i++) {
 		if (sp->start_bpp[i] == NULL) {
 			DLOG((DLOG_SEG, "lfs_updatemeta: nblocks = %d, not %d\n", i, nblocks));
@@ -1639,8 +1674,13 @@ lfs_updatemeta(struct segment *sp)
 		nblocks -= num - 1;
 	}
 
+#if 0
+	/* pre-lfs64 assertion */
 	KASSERT(vp->v_type == VREG ||
 	   nblocks == &sp->fip->fi_blocks[sp->fip->fi_nblocks] - sp->start_lbp);
+#else
+	KASSERT(vp->v_type == VREG || nblocks == nblocks_orig);
+#endif
 	KASSERT(nblocks == sp->cbpp - sp->start_bpp);
 
 	/*
@@ -1651,7 +1691,7 @@ lfs_updatemeta(struct segment *sp)
 	 * same inode...and if we don't sort, and there are fragments
 	 * present, blocks may be written in the wrong place.
 	 */
-	lfs_shellsort(sp->start_bpp, sp->start_lbp, nblocks, lfs_sb_getbsize(fs));
+	lfs_shellsort(fs, sp->start_bpp, &sp->start_lbp, nblocks, lfs_sb_getbsize(fs));
 
 	/*
 	 * Record the length of the last block in case it's a fragment.
@@ -1664,8 +1704,9 @@ lfs_updatemeta(struct segment *sp)
 	 * XXX true until lfs_markv is fixed to do everything with
 	 * XXX fake blocks (including fake inodes and fake indirect blocks).
 	 */
-	sp->fip->fi_lastlength = ((sp->start_bpp[nblocks - 1]->b_bcount - 1) &
+	lastlength = ((sp->start_bpp[nblocks - 1]->b_bcount - 1) &
 		lfs_sb_getbmask(fs)) + 1;
+	lfs_fi_setlastlength(fs, sp->fip, lastlength);
 
 	/*
 	 * Assign disk addresses, and update references to the logical
@@ -1673,7 +1714,7 @@ lfs_updatemeta(struct segment *sp)
 	 */
 	for (i = nblocks; i--; ++sp->start_bpp) {
 		sbp = *sp->start_bpp;
-		lbn = *sp->start_lbp;
+		lbn = lfs_blocks_get(fs, &sp->start_lbp, 0);
 		KASSERT(sbp->b_lblkno == lbn);
 
 		sbp->b_blkno = LFS_FSBTODB(fs, lfs_sb_getoffset(fs));
@@ -1698,7 +1739,8 @@ lfs_updatemeta(struct segment *sp)
 		     bytesleft -= lfs_sb_getbsize(fs)) {
 			size = MIN(bytesleft, lfs_sb_getbsize(fs));
 			bb = lfs_numfrags(fs, size);
-			lbn = *sp->start_lbp++;
+			lbn = lfs_blocks_get(fs, &sp->start_lbp, 0);
+			lfs_blocks_inc(fs, &sp->start_lbp);
 			lfs_update_single(fs, sp, sp->vp, lbn, lfs_sb_getoffset(fs),
 			    size);
 			lfs_sb_addoffset(fs, bb);
@@ -1850,9 +1892,9 @@ lfs_initseg(struct lfs *fs)
 
 	/* Set pointer to first FINFO, initialize it. */
 	sp->fip = SEGSUM_FINFOBASE(fs, sp->segsum);
-	sp->fip->fi_nblocks = 0;
-	sp->start_lbp = &sp->fip->fi_blocks[0];
-	sp->fip->fi_lastlength = 0;
+	lfs_fi_setnblocks(fs, sp->fip, 0);
+	lfs_fi_setlastlength(fs, sp->fip, 0);
+	lfs_blocks_fromfinfo(fs, &sp->start_lbp, sp->fip);
 
 	sp->seg_bytes_left -= lfs_sb_getsumsize(fs);
 	sp->sum_bytes_left = lfs_sb_getsumsize(fs) - SEGSUM_SIZE(fs);
@@ -2061,8 +2103,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	/* Check for zero-length and zero-version FINFO entries. */
 	fip = SEGSUM_FINFOBASE(fs, ssp);
 	for (findex = 0; findex < lfs_ss_getnfinfo(fs, ssp); findex++) {
-		KDASSERT(fip->fi_nblocks > 0);
-		KDASSERT(fip->fi_version > 0);
+		KDASSERT(lfs_fi_getnblocks(fs, fip) > 0);
+		KDASSERT(lfs_fi_getversion(fs, fip) > 0);
 		fip = NEXT_FINFO(fs, fip);
 	}
 #endif /* DEBUG */
@@ -2716,8 +2758,10 @@ lfs_callback(struct buf *bp)
  * negative block numbers (meta data blocks) sort AFTER the data blocks.
  */
 
-void
-lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
+static void
+lfs_shellsort(struct lfs *fs,
+	      struct buf **bp_array, union lfs_blocks *lb_array,
+	      int nmemb, int size)
 {
 	static int __rsshell_increments[] = { 4, 1, 0 };
 	int incr, *incrp, t1, t2;
@@ -2727,7 +2771,7 @@ lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 	incr = 0;
 	for (t1 = 0; t1 < nmemb; t1++) {
 		for (t2 = 0; t2 * size < bp_array[t1]->b_bcount; t2++) {
-			if (lb_array[incr++] != bp_array[t1]->b_lblkno + t2) {
+			if (lfs_blocks_get(fs, lb_array, incr++) != bp_array[t1]->b_lblkno + t2) {
 				/* dump before panic */
 				printf("lfs_shellsort: nmemb=%d, size=%d\n",
 				    nmemb, size);
@@ -2742,8 +2786,8 @@ lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 					printf("lbns:");
 					for (t2 = 0; t2 * size < bp->b_bcount;
 					    t2++) {
-						printf(" %" PRId32,
-						    lb_array[incr++]);
+						printf(" %jd",
+						    (intmax_t)lfs_blocks_get(fs, lb_array, incr++));
 					}
 					printf("\n");
 				}
@@ -2756,8 +2800,8 @@ lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 	for (incrp = __rsshell_increments; (incr = *incrp++) != 0;)
 		for (t1 = incr; t1 < nmemb; ++t1)
 			for (t2 = t1 - incr; t2 >= 0;)
-				if ((u_int32_t)bp_array[t2]->b_lblkno >
-				    (u_int32_t)bp_array[t2 + incr]->b_lblkno) {
+				if ((u_int64_t)bp_array[t2]->b_lblkno >
+				    (u_int64_t)bp_array[t2 + incr]->b_lblkno) {
 					bp_temp = bp_array[t2];
 					bp_array[t2] = bp_array[t2 + incr];
 					bp_array[t2 + incr] = bp_temp;
@@ -2769,7 +2813,8 @@ lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 	incr = 0;
 	for (t1 = 0; t1 < nmemb; t1++) {
 		for (t2 = 0; t2 * size < bp_array[t1]->b_bcount; t2++) {
-			lb_array[incr++] = bp_array[t1]->b_lblkno + t2;
+			lfs_blocks_set(fs, lb_array, incr++, 
+				       bp_array[t1]->b_lblkno + t2);
 		}
 	}
 }
@@ -2787,15 +2832,15 @@ lfs_acquire_finfo(struct lfs *fs, ino_t ino, int vers)
 	KASSERT(vers > 0);
 
 	if (sp->seg_bytes_left < lfs_sb_getbsize(fs) ||
-	    sp->sum_bytes_left < sizeof(struct finfo))
+	    sp->sum_bytes_left < FINFOSIZE(fs) + LFS_BLKPTRSIZE(fs))
 		(void) lfs_writeseg(fs, fs->lfs_sp);
 	
-	sp->sum_bytes_left -= FINFOSIZE;
+	sp->sum_bytes_left -= FINFOSIZE(fs);
 	ssp = (SEGSUM *)sp->segsum;
 	lfs_ss_setnfinfo(fs, ssp, lfs_ss_getnfinfo(fs, ssp) + 1);
-	sp->fip->fi_nblocks = 0;
-	sp->fip->fi_ino = ino;
-	sp->fip->fi_version = vers;
+	lfs_fi_setnblocks(fs, sp->fip, 0);
+	lfs_fi_setino(fs, sp->fip, ino);
+	lfs_fi_setversion(fs, sp->fip, vers);
 }
 
 /*
@@ -2808,11 +2853,12 @@ lfs_release_finfo(struct lfs *fs)
 	struct segment *sp = fs->lfs_sp;
 	SEGSUM *ssp;
 
-	if (sp->fip->fi_nblocks != 0) {
+	if (lfs_fi_getnblocks(fs, sp->fip) != 0) {
 		sp->fip = NEXT_FINFO(fs, sp->fip);
-		sp->start_lbp = &sp->fip->fi_blocks[0];
+		lfs_blocks_fromfinfo(fs, &sp->start_lbp, sp->fip);
 	} else {
-		sp->sum_bytes_left += FINFOSIZE;
+		/* XXX shouldn't this update sp->fip? */
+		sp->sum_bytes_left += FINFOSIZE(fs);
 		ssp = (SEGSUM *)sp->segsum;
 		lfs_ss_setnfinfo(fs, ssp, lfs_ss_getnfinfo(fs, ssp) - 1);
 	}
