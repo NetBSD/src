@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.523 2015/07/08 08:48:19 kamil Exp $
+.\"	$NetBSD: main,v 1.524 2015/08/13 13:21:04 leot Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1397,6 +1397,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Gr\('egoire Sutre Ta Mt gsutre@NetBSD.org
 .It Ta Sergey Svishchev Ta Mt shattered@NetBSD.org
 .It Ta Robert Swindells Ta Mt rjs@NetBSD.org
+.It Ta Leonardo Taccari Ta Mt leot@NetBSD.org
 .It Ta Shin Takemura Ta Mt takemura@NetBSD.org
 .It Ta TAMURA Kent Ta Mt kent@NetBSD.org
 .It Ta Shin'ichiro TAYA Ta Mt taya@NetBSD.org
