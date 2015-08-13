@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.19 2015/07/21 03:10:42 knakahara Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.20 2015/08/13 04:39:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -145,14 +145,12 @@ int		pci_intr_alloc(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int *, pci_intr_type_t);
 
 /* experimental MSI support */
-int		pci_msi_count(const struct pci_attach_args *);
 int		pci_msi_alloc(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int *);
 int		pci_msi_alloc_exact(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int);
 
 /* experimental MSI-X support */
-int		pci_msix_count(const struct pci_attach_args *);
 int		pci_msix_alloc(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int *);
 int		pci_msix_alloc_exact(const struct pci_attach_args *,
