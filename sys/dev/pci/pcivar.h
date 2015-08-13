@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.102 2015/04/27 07:03:58 knakahara Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.103 2015/08/13 04:39:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -280,6 +280,8 @@ int pci_find_rom(const struct pci_attach_args *, bus_space_tag_t,
 
 int pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
 int pci_get_ht_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
+int	pci_msi_count(pci_chipset_tag_t, pcitag_t);
+int	pci_msix_count(pci_chipset_tag_t, pcitag_t);
 
 /*
  * Helper functions for autoconfiguration.
