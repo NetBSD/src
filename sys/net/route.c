@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.147 2015/08/13 07:59:05 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.148 2015/08/13 10:14:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.147 2015/08/13 07:59:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.148 2015/08/13 10:14:26 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -379,7 +379,6 @@ rtalloc1(const struct sockaddr *dst, int report)
 			}
 			KASSERT(newrt != NULL);
 			rt = newrt;
-			rt->rt_refcnt++;
 			if (rt->rt_flags & RTF_XRESOLVE) {
 				msgtype = RTM_RESOLVE;
 				goto miss;
