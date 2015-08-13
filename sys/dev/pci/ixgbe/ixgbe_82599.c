@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_82599.c,v 1.10 2015/08/05 04:08:44 msaitoh Exp $*/
+/*$NetBSD: ixgbe_82599.c,v 1.11 2015/08/13 04:56:43 msaitoh Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -793,8 +793,8 @@ s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
 			msec_delay(100);
 
 			/* If we have link, just jump out */
-			status = ixgbe_check_link(hw, &link_speed,
-						  &link_up, FALSE);
+			status = ixgbe_check_link(hw, &link_speed, &link_up,
+			    FALSE);
 			if (status != IXGBE_SUCCESS)
 				return status;
 
