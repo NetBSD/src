@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.12 2015/07/03 01:00:00 christos Exp $	*/
-/* $OpenBSD: servconf.h,v 1.119 2015/05/22 03:50:02 djm Exp $ */
+/*	$NetBSD: servconf.h,v 1.13 2015/08/13 10:33:21 christos Exp $	*/
+/* $OpenBSD: servconf.h,v 1.120 2015/07/10 06:21:53 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -110,6 +110,7 @@ typedef struct {
 	int     hostbased_authentication;	/* If true, permit ssh2 hostbased auth */
 	int     hostbased_uses_name_from_packet_only; /* experimental */
 	char   *hostbased_key_types;	/* Key types allowed for hostbased */
+	char   *hostkeyalgorithms;	/* SSH2 server key types */
 	int     rsa_authentication;	/* If true, permit RSA authentication. */
 	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
 	char   *pubkey_key_types;	/* Key types allowed for public key */
