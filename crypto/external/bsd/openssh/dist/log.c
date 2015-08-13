@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.12 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: log.c,v 1.45 2013/05/16 09:08:41 dtucker Exp $ */
+/*	$NetBSD: log.c,v 1.13 2015/08/13 10:33:21 christos Exp $	*/
+/* $OpenBSD: log.c,v 1.46 2015/07/08 19:04:21 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.12 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.13 2015/08/13 10:33:21 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: log.c,v 1.12 2015/04/03 23:58:19 christos Exp $");
 #include <errno.h>
 #include <vis.h>
 
-#include "xmalloc.h"
 #include "log.h"
 
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
