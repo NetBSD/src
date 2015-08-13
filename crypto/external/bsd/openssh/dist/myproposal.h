@@ -1,5 +1,5 @@
-/*	$NetBSD: myproposal.h,v 1.11 2015/07/03 01:00:00 christos Exp $	*/
-/* $OpenBSD: myproposal.h,v 1.44 2015/05/27 23:51:10 dtucker Exp $ */
+/*	$NetBSD: myproposal.h,v 1.12 2015/08/13 10:33:21 christos Exp $	*/
+/* $OpenBSD: myproposal.h,v 1.47 2015/07/10 06:21:53 markus Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -39,8 +39,7 @@
 
 #define KEX_CLIENT_KEX KEX_COMMON_KEX "," \
 	"diffie-hellman-group-exchange-sha1," \
-	"diffie-hellman-group14-sha1," \
-	"diffie-hellman-group1-sha1"
+	"diffie-hellman-group14-sha1"
 
 #define	KEX_DEFAULT_PK_ALG	\
 	"ecdsa-sha2-nistp256-cert-v01@openssh.com," \
@@ -48,15 +47,11 @@
 	"ecdsa-sha2-nistp521-cert-v01@openssh.com," \
 	"ssh-ed25519-cert-v01@openssh.com," \
 	"ssh-rsa-cert-v01@openssh.com," \
-	"ssh-dss-cert-v01@openssh.com," \
-	"ssh-rsa-cert-v00@openssh.com," \
-	"ssh-dss-cert-v00@openssh.com," \
 	"ecdsa-sha2-nistp256," \
 	"ecdsa-sha2-nistp384," \
 	"ecdsa-sha2-nistp521," \
 	"ssh-ed25519," \
-	"ssh-rsa," \
-	"ssh-dss"
+	"ssh-rsa"
 
 #define	KEX_SERVER_ENCRYPT \
 	"chacha20-poly1305@openssh.com," \

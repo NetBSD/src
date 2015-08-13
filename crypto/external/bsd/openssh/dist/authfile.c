@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.11 2015/07/03 00:59:59 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.114 2015/04/17 13:32:09 djm Exp $ */
+/*	$NetBSD: authfile.c,v 1.12 2015/08/13 10:33:21 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.116 2015/07/09 09:49:46 markus Exp $ */
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.11 2015/07/03 00:59:59 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.12 2015/08/13 10:33:21 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -39,13 +39,13 @@ __RCSID("$NetBSD: authfile.c,v 1.11 2015/07/03 00:59:59 christos Exp $");
 #include <limits.h>
 
 #include "cipher.h"
-#include "key.h"
 #include "ssh.h"
 #include "log.h"
 #include "authfile.h"
 #include "rsa.h"
 #include "misc.h"
 #include "atomicio.h"
+#include "sshkey.h"
 #include "sshbuf.h"
 #include "ssherr.h"
 #include "krl.h"
@@ -445,8 +445,8 @@ sshkey_load_private_cert(int type, const char *filename, const char *passphrase,
 	case KEY_RSA:
 	case KEY_DSA:
 	case KEY_ECDSA:
-	case KEY_ED25519:
 #endif /* WITH_OPENSSL */
+	case KEY_ED25519:
 	case KEY_UNSPEC:
 		break;
 	default:
@@ -464,7 +464,7 @@ sshkey_load_private_cert(int type, const char *filename, const char *passphrase,
 		goto out;
 	}
 
-	if ((r = sshkey_to_certified(key, sshkey_cert_is_legacy(cert))) != 0 ||
+	if ((r = sshkey_to_certified(key)) != 0 ||
 	    (r = sshkey_cert_copy(cert, key)) != 0)
 		goto out;
 	r = 0;
