@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.95 2015/06/21 16:06:51 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.96 2015/08/13 11:21:18 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.95 2015/06/21 16:06:51 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.96 2015/08/13 11:21:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -143,17 +143,19 @@ struct state {
 	int		defaulttype; /* for early times or if no transitions */
 };
 
+enum r_type {
+  JULIAN_DAY,		/* Jn = Julian day */
+  DAY_OF_YEAR,		/* n = day of year */
+  MONTH_NTH_DAY_OF_WEEK	/* Mm.n.d = month, week, day of week */
+};
+
 struct rule {
-	int		r_type;		/* type of rule; see below */
+	enum r_type	r_type;		/* type of rule */
 	int		r_day;		/* day number of rule */
 	int		r_week;		/* week number of rule */
 	int		r_mon;		/* month number of rule */
 	int_fast32_t	r_time;		/* transition time of rule */
 };
-
-#define JULIAN_DAY		0	/* Jn = Julian day */
-#define DAY_OF_YEAR		1	/* n = day of year */
-#define MONTH_NTH_DAY_OF_WEEK	2	/* Mm.n.d = month, week, day of week */
 
 static struct tm *gmtsub(struct state const *, time_t const *, int_fast32_t,
 			 struct tm *);
@@ -695,7 +697,7 @@ tzload(char const *name, struct state *sp, bool doextend)
 }
 
 static bool
-typesequiv(struct state const *sp, int a, int b)
+typesequiv(const struct state *sp, int a, int b)
 {
 	bool result;
 
@@ -1011,13 +1013,13 @@ transtime(const int year, const struct rule *const rulep,
 */
 
 static bool
-tzparse(const char *name, timezone_t sp,
-	bool lastditch)
+tzparse(const char *name, struct state *sp, bool lastditch)
 {
 	const char *	stdname;
 	const char *	dstname;
 	size_t		stdlen;
 	size_t		dstlen;
+	size_t		charcnt;
 	int_fast32_t	stdoffset;
 	int_fast32_t	dstoffset;
 	char *		cp;
@@ -1026,10 +1028,8 @@ tzparse(const char *name, timezone_t sp,
 	dstname = NULL; /* XXX gcc */
 	stdname = name;
 	if (lastditch) {
-		stdlen = strlen(name);	/* length of standard zone name */
+		stdlen = sizeof gmt - 1;
 		name += stdlen;
-		if (stdlen >= sizeof sp->chars)
-			stdlen = (sizeof sp->chars) - 1;
 		stdoffset = 0;
 	} else {
 		if (*name == '<') {
@@ -1044,12 +1044,15 @@ tzparse(const char *name, timezone_t sp,
 			name = getzname(name);
 			stdlen = name - stdname;
 		}
-		if (*name == '\0')
+		if (!stdlen)
 			return false;
 		name = getoffset(name, &stdoffset);
 		if (name == NULL)
 			return false;
 	}
+	charcnt = stdlen + 1;
+	if (sizeof sp->chars < charcnt)
+		return false;
 	load_ok = tzload(TZDEFRULES, sp, false) == 0;
 	if (!load_ok)
 		sp->leapcnt = 0;		/* so, we're off a little */
@@ -1066,6 +1069,11 @@ tzparse(const char *name, timezone_t sp,
 			name = getzname(name);
 			dstlen = name - dstname; /* length of DST zone name */
 		}
+		if (!dstlen)
+		  return false;
+		charcnt += dstlen + 1;
+		if (sizeof sp->chars < charcnt)
+		  return false;
 		if (*name != '\0' && *name != ',' && *name != ';') {
 			name = getoffset(name, &dstoffset);
 			if (name == NULL)
@@ -1229,11 +1237,7 @@ tzparse(const char *name, timezone_t sp,
 		init_ttinfo(&sp->ttis[1], 0, false, 0);
 		sp->defaulttype = 0;
 	}
-	sp->charcnt = (int)(stdlen + 1);
-	if (dstlen != 0)
-		sp->charcnt += (int)(dstlen + 1);
-	if ((size_t) sp->charcnt > sizeof sp->chars)
-		return false;
+	sp->charcnt = charcnt;
 	cp = sp->chars;
 	(void) memcpy(cp, stdname, stdlen);
 	cp += stdlen;
@@ -1493,7 +1497,7 @@ localtime_tzset(time_t const *timep, struct tm *tmp, bool setname)
 }
 
 struct tm *
-localtime(const time_t *const timep)
+localtime(const time_t *timep)
 {
 	return localtime_tzset(timep, &tm, true);
 }
@@ -1528,27 +1532,27 @@ gmtsub(struct state const *sp, const time_t *timep, int_fast32_t offset,
 	return result;
 }
 
-struct tm *
-gmtime(const time_t *const timep)
-{
-	return gmtime_r(timep, &tm);
-}
 
 /*
 ** Re-entrant version of gmtime.
 */
 
 struct tm *
-gmtime_r(const time_t * const timep, struct tm *tmp)
+gmtime_r(const time_t *timep, struct tm *tmp)
 {
 	gmtcheck();
 	return gmtsub(NULL, timep, 0, tmp);
 }
 
+struct tm *
+gmtime(const time_t *timep)
+{
+	return gmtime_r(timep, &tm);
+}
 #ifdef STD_INSPIRED
 
 struct tm *
-offtime(const time_t *const timep, long offset)
+offtime(const time_t *timep, long offset)
 {
 	gmtcheck();
 	return gmtsub(gmtptr, timep, (int_fast32_t)offset, &tm);
@@ -1576,8 +1580,8 @@ leaps_thru_end_of(const int y)
 }
 
 static struct tm *
-timesub(time_t const *timep, int_fast32_t offset, struct state const *sp,
-	struct tm *tmp)
+timesub(const time_t *timep, int_fast32_t offset,
+    const struct state const *sp, struct tm *tmp)
 {
 	const struct lsinfo *	lp;
 	time_t			tdays;
@@ -1614,7 +1618,7 @@ timesub(time_t const *timep, int_fast32_t offset, struct state const *sp,
 	}
 	y = EPOCH_YEAR;
 	tdays = (time_t)(*timep / SECSPERDAY);
-	rem = (int_fast64_t) (*timep - tdays * SECSPERDAY);
+	rem = *timep % SECSPERDAY;
 	while (tdays < 0 || tdays >= year_lengths[isleap(y)]) {
 		int		newy;
 		time_t	tdelta;
@@ -1637,13 +1641,6 @@ timesub(time_t const *timep, int_fast32_t offset, struct state const *sp,
 		tdays -= ((time_t) newy - y) * DAYSPERNYEAR;
 		tdays -= leapdays;
 		y = newy;
-	}
-	{
-		int_fast32_t seconds;
-
-		seconds = (int_fast32_t)(tdays * SECSPERDAY);
-		tdays = (time_t)(seconds / SECSPERDAY);
-		rem += (int_fast64_t)(seconds - tdays * SECSPERDAY);
 	}
 	/*
 	** Given the range, we can now fearlessly cast...
@@ -1707,7 +1704,7 @@ out_of_range:
 }
 
 char *
-ctime(const time_t *const timep)
+ctime(const time_t *timep)
 {
 /*
 ** Section 4.12.3.2 of X3.159-1989 requires that
@@ -1720,7 +1717,7 @@ ctime(const time_t *const timep)
 }
 
 char *
-ctime_r(const time_t *const timep, char *buf)
+ctime_r(const time_t *timep, char *buf)
 {
 	struct tm mytm;
 	struct tm *tmp = localtime_r(timep, &mytm);
@@ -1756,7 +1753,7 @@ ctime_rz(const timezone_t sp, const time_t * timep, char *buf)
 */
 
 static bool
-increment_overflow(int *const ip, int j)
+increment_overflow(int *ip, int j)
 {
 	int const	i = *ip;
 
@@ -1812,8 +1809,7 @@ normalize_overflow(int *const tensptr, int *const unitsptr, const int base)
 }
 
 static bool
-normalize_overflow32(int_fast32_t *const tensptr, int *const unitsptr,
-		     const int base)
+normalize_overflow32(int_fast32_t *tensptr, int *unitsptr, int base)
 {
 	int	tensdelta;
 
@@ -2194,7 +2190,7 @@ mktime_z(timezone_t sp, struct tm *const tmp)
 #endif
 
 time_t
-mktime(struct tm *const tmp)
+mktime(struct tm *tmp)
 {
 	time_t t;
 
@@ -2216,7 +2212,7 @@ timelocal_z(const timezone_t sp, struct tm *const tmp)
 }
 
 time_t
-timelocal(struct tm *const tmp)
+timelocal(struct tm *tmp)
 {
 	if (tmp != NULL)
 		tmp->tm_isdst = -1;	/* in case it wasn't initialized */
@@ -2224,14 +2220,14 @@ timelocal(struct tm *const tmp)
 }
 
 time_t
-timegm(struct tm *const tmp)
+timegm(struct tm *tmp)
 {
 
 	return timeoff(tmp, 0);
 }
 
 time_t
-timeoff(struct tm *const tmp, long offset)
+timeoff(struct tm *tmp, long offset)
 {
 	if (tmp)
 		tmp->tm_isdst = 0;
