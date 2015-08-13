@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
-/*$NetBSD: ixv.c,v 1.10 2015/08/05 04:08:44 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.11 2015/08/13 04:56:43 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -96,7 +96,8 @@ static int      ixv_media_change(struct ifnet *);
 static void     ixv_identify_hardware(struct adapter *);
 static int      ixv_allocate_pci_resources(struct adapter *,
 		    const struct pci_attach_args *);
-static int      ixv_allocate_msix(struct adapter *);
+static int      ixv_allocate_msix(struct adapter *,
+		    const struct pci_attach_args *);
 static int	ixv_allocate_queues(struct adapter *);
 static int	ixv_setup_msix(struct adapter *);
 static void	ixv_free_pci_resources(struct adapter *);
@@ -157,8 +158,8 @@ static __inline void ixv_rx_input(struct rx_ring *, struct ifnet *,
 		    struct mbuf *, u32);
 
 /* The MSI/X Interrupt handlers */
-static void	ixv_msix_que(void *);
-static void	ixv_msix_mbx(void *);
+static int	ixv_msix_que(void *);
+static int	ixv_msix_mbx(void *);
 
 /* Deferred interrupt tasklets */
 static void	ixv_handle_que(void *);
@@ -443,7 +444,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		goto err_late;
 	}
 	
-	error = ixv_allocate_msix(adapter); 
+	error = ixv_allocate_msix(adapter, pa); 
 	if (error) 
 		goto err_late;
 
@@ -589,7 +590,7 @@ ixv_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 		if (m_head == NULL)
 			break;
 
-		if (ixv_xmit(txr, m_head) == EAGAIN) {
+		if ((rc = ixv_xmit(txr, m_head)) == EAGAIN) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -1063,7 +1064,7 @@ ixv_handle_que(void *context)
  *  MSI Queue Interrupt Service routine
  *
  **********************************************************************/
-void
+int
 ixv_msix_que(void *arg)
 {
 	struct ix_queue	*que = arg;
@@ -1148,10 +1149,10 @@ no_calc:
 		softint_schedule(que->que_si);
 	else /* Reenable this interrupt */
 		ixv_enable_queue(adapter, que->msix);
-	return;
+	return 1;
 }
 
-static void
+static int
 ixv_msix_mbx(void *arg)
 {
 	struct adapter	*adapter = arg;
@@ -1170,7 +1171,7 @@ ixv_msix_mbx(void *arg)
 		softint_schedule(adapter->mbx_si);
 
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, IXGBE_EIMS_OTHER);
-	return;
+	return 1;
 }
 
 /*********************************************************************
@@ -1260,7 +1261,7 @@ ixv_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	struct ethercom *ec = &adapter->osdep.ec;
 	u32		olinfo_status = 0, cmd_type_len;
 	u32		paylen = 0;
-	int             i, j, error, nsegs;
+	int             i, j, error;
 	int		first, last = 0;
 	bus_dmamap_t	map;
 	struct ixv_tx_buf *txbuf;
@@ -1309,7 +1310,7 @@ ixv_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	}
 
 	/* Make certain there are enough descriptors */
-	if (nsegs > txr->tx_avail - 2) {
+	if (map->dm_nsegs > txr->tx_avail - 2) {
 		txr->no_desc_avail.ev_count++;
 		/* XXX s/ixgbe/ixv/ */
 		ixgbe_dmamap_unload(txr->txtag, txbuf->map);
@@ -1655,76 +1656,97 @@ ixv_identify_hardware(struct adapter *adapter)
  *
  **********************************************************************/
 static int
-ixv_allocate_msix(struct adapter *adapter)
+ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 {
 #if !defined(NETBSD_MSI_OR_MSIX)
 	return 0;
 #else
 	device_t        dev = adapter->dev;
-	struct 		ix_queue *que = adapter->queues;
+	struct ix_queue *que = adapter->queues;
 	int 		error, rid, vector = 0;
-	pcitag_t tag;
 	pci_chipset_tag_t pc;
+	pcitag_t	tag;
+	char intrbuf[PCI_INTRSTR_LEN];
+	const char	*intrstr = NULL;
+	kcpuset_t	*affinity;
+	int		cpu_id = 0;
 
 	pc = adapter->osdep.pc;
 	tag = adapter->osdep.tag;
 
+	if (pci_msix_alloc_exact(pa,
+		&adapter->osdep.intrs, IXG_MSIX_NINTR) != 0)
+		return (ENXIO);
+
+	kcpuset_create(&affinity, false);
 	for (int i = 0; i < adapter->num_queues; i++, vector++, que++) {
-		rid = vector + 1;
-		que->res = bus_alloc_resource_any(dev, SYS_RES_IRQ, &rid,
-		    RF_SHAREABLE | RF_ACTIVE);
-		if (que->res == NULL) {
-			aprint_error_dev(dev,"Unable to allocate"
-		    	    " bus resource: que interrupt [%d]\n", vector);
-			return (ENXIO);
-		}
+		intrstr = pci_intr_string(pc, adapter->osdep.intrs[i], intrbuf,
+		    sizeof(intrbuf));
+#ifdef IXV_MPSAFE
+		pci_intr_setattr(pc, adapter->osdep.intrs[i], PCI_INTR_MPSAFE,
+		    true);
+#endif
 		/* Set the handler function */
-		error = bus_setup_intr(dev, que->res,
-		    INTR_TYPE_NET | INTR_MPSAFE, NULL,
-		    ixv_msix_que, que, &que->tag);
-		if (error) {
+		adapter->osdep.ihs[i] = pci_intr_establish(pc,
+		    adapter->osdep.intrs[i], IPL_NET, ixv_msix_que, que);
+		if (adapter->osdep.ihs[i] == NULL) {
 			que->res = NULL;
 			aprint_error_dev(dev,
 			    "Failed to register QUE handler");
-			return (error);
+			kcpuset_destroy(affinity);
+			return (ENXIO);
 		}
-#if __FreeBSD_version >= 800504
-		bus_describe_intr(dev, que->res, que->tag, "que %d", i);
-#endif
 		que->msix = vector;
         	adapter->que_mask |= (u64)(1 << que->msix);
-		/*
-		** Bind the msix vector, and thus the
-		** ring to the corresponding cpu.
-		*/
-		if (adapter->num_queues > 1)
-			bus_bind_intr(dev, que->res, i);
 
+		cpu_id = i;
+		/* Round-robin affinity */
+		kcpuset_zero(affinity);
+		kcpuset_set(affinity, cpu_id % ncpu);
+		error = pci_intr_distribute(adapter->osdep.ihs[i], affinity,
+		    NULL);
+		aprint_normal_dev(dev, "for TX/RX, interrupting at %s",
+		    intrstr);
+		if (error == 0)
+			aprint_normal(", bound queue %d to cpu %d\n",
+			    i, cpu_id);
+		else
+			aprint_normal("\n");
+		
 		que->que_si = softint_establish(SOFTINT_NET, ixv_handle_que,
 		    que);
+		if (que->que_si == NULL) {
+			aprint_error_dev(dev,
+			    "could not establish software interrupt\n"); 
+		}
 	}
 
 	/* and Mailbox */
-	rid = vector + 1;
-	adapter->res = bus_alloc_resource_any(dev,
-    	    SYS_RES_IRQ, &rid, RF_SHAREABLE | RF_ACTIVE);
-	if (!adapter->res) {
-		aprint_error_dev(dev,"Unable to allocate"
-    	    " bus resource: MBX interrupt [%d]\n", rid);
+	cpu_id++;
+	intrstr = pci_intr_string(pc, adapter->osdep.intrs[vector], intrbuf,
+	    sizeof(intrbuf));
+#ifdef IXG_MPSAFE
+	pci_intr_setattr(pc, &adapter->osdep.intrs[vector], PCI_INTR_MPSAFE, true);
+#endif
+	/* Set the mbx handler function */
+	adapter->osdep.ihs[vector] = pci_intr_establish(pc,
+	    adapter->osdep.intrs[vector], IPL_NET, ixv_msix_mbx, adapter);
+	if (adapter->osdep.ihs[vector] == NULL) {
+		adapter->res = NULL;
+		aprint_error_dev(dev, "Failed to register LINK handler\n");
+		kcpuset_destroy(affinity);
 		return (ENXIO);
 	}
-	/* Set the mbx handler function */
-	error = bus_setup_intr(dev, adapter->res,
-	    INTR_TYPE_NET | INTR_MPSAFE, NULL,
-	    ixv_msix_mbx, adapter, &adapter->tag);
-	if (error) {
-		adapter->res = NULL;
-		aprint_error_dev(dev, "Failed to register LINK handler");
-		return (error);
+	/* Round-robin affinity */
+	kcpuset_zero(affinity);
+	kcpuset_set(affinity, cpu_id % ncpu);
+	error = pci_intr_distribute(adapter->osdep.ihs[vector], affinity,NULL);
+
+	aprint_normal_dev(dev,
+	    "for link, interrupting at %s, ", intrstr);
+	if (error == 0) {
+		aprint_normal("affinity to cpu %d\n", cpu_id);
 	}
-#if __FreeBSD_version >= 800504
-	bus_describe_intr(dev, adapter->res, adapter->tag, "mbx");
-#endif
 	adapter->mbxvec = vector;
 	/* Tasklets for Mailbox */
 	adapter->mbx_si = softint_establish(SOFTINT_NET, ixv_handle_mbx,
@@ -1740,9 +1762,9 @@ ixv_allocate_msix(struct adapter *adapter)
 		int msix_ctrl;
 		pci_get_capability(pc, tag, PCI_CAP_MSIX, &rid, NULL);
 		rid += PCI_MSIX_CTL;
-		msix_ctrl = pci_read_config(pc, tag, rid);
+		msix_ctrl = pci_conf_read(pc, tag, rid);
 		msix_ctrl |= PCI_MSIX_CTL_ENABLE;
-		pci_conf_write(pc, tag, msix_ctrl);
+		pci_conf_write(pc, tag, rid, msix_ctrl);
 	}
 
 	return (0);
@@ -1760,39 +1782,23 @@ ixv_setup_msix(struct adapter *adapter)
 	return 0;
 #else
 	device_t dev = adapter->dev;
-	int rid, want;
+	int want, msgs;
 
-
-	/* First try MSI/X */
-	rid = PCIR_BAR(3);
-	adapter->msix_mem = bus_alloc_resource_any(dev,
-	    SYS_RES_MEMORY, &rid, RF_ACTIVE);
-       	if (adapter->msix_mem == NULL) {
-		device_printf(adapter->dev,
-		    "Unable to map MSIX table \n");
-		goto out;
-	}
 
 	/*
 	** Want two vectors: one for a queue,
 	** plus an additional for mailbox.
 	*/
-	want = 2;
-	if ((pci_alloc_msix(dev, &want) == 0) && (want == 2)) {
-               	device_printf(adapter->dev,
-		    "Using MSIX interrupts with %d vectors\n", want);
-		return (want);
+	msgs = pci_msix_count(adapter->osdep.pc, adapter->osdep.tag);
+	if (msgs < IXG_MSIX_NINTR) {
+		aprint_error_dev(dev,"MSIX config error\n");
+		return (ENXIO);
 	}
-	/* Release in case alloc was insufficient */
-	pci_release_msi(dev);
-out:
-       	if (adapter->msix_mem != NULL) {
-		bus_release_resource(dev, SYS_RES_MEMORY,
-		    rid, adapter->msix_mem);
-		adapter->msix_mem = NULL;
-	}
-	device_printf(adapter->dev,"MSIX config error\n");
-	return (ENXIO);
+
+	adapter->msix_mem = (void *)1; /* XXX */
+	aprint_normal_dev(dev,
+	    "Using MSIX interrupts with %d vectors\n", msgs);
+	return (want);
 #endif
 }
 
@@ -1851,37 +1857,20 @@ map_err:
 static void
 ixv_free_pci_resources(struct adapter * adapter)
 {
-#if defined(NETBSD_MSI_OR_MSIX)
+#if !defined(NETBSD_MSI_OR_MSIX)
+#else
 	struct 		ix_queue *que = adapter->queues;
-	device_t	dev = adapter->dev;
-	int		rid, memrid;
-
-	memrid = PCI_BAR(MSIX_BAR);
-
-	/*
-	** There is a slight possibility of a failure mode
-	** in attach that will result in entering this function
-	** before interrupt resources have been initialized, and
-	** in that case we do not want to execute the loops below
-	** We can detect this reliably by the state of the adapter
-	** res pointer.
-	*/
-	if (adapter->res == NULL)
-		goto mem;
+	int		rid;
 
 	/*
 	**  Release all msix queue resources:
 	*/
 	for (int i = 0; i < adapter->num_queues; i++, que++) {
 		rid = que->msix + 1;
-		if (que->tag != NULL) {
-			bus_teardown_intr(dev, que->res, que->tag);
-			que->tag = NULL;
-		}
 		if (que->res != NULL)
-			bus_release_resource(dev, SYS_RES_IRQ, rid, que->res);
+			pci_intr_disestablish(adapter->osdep.pc,
+			    adapter->osdep.ihs[i]);
 	}
-
 
 	/* Clean the Legacy or Link interrupt last */
 	if (adapter->mbxvec) /* we are doing MSIX */
@@ -1889,24 +1878,21 @@ ixv_free_pci_resources(struct adapter * adapter)
 	else
 		(adapter->msix != 0) ? (rid = 1):(rid = 0);
 
-	if (adapter->tag != NULL) {
-		bus_teardown_intr(dev, adapter->res, adapter->tag);
-		adapter->tag = NULL;
+	if (adapter->osdep.ihs[rid] != NULL)
+		pci_intr_disestablish(adapter->osdep.pc,
+		    adapter->osdep.ihs[rid]);
+	adapter->osdep.ihs[rid] = NULL;
+
+#if defined(NETBSD_MSI_OR_MSIX)
+	pci_intr_release(adapter->osdep.pc, adapter->osdep.intrs,
+	    adapter->osdep.nintrs);
+#endif
+
+	if (adapter->osdep.mem_size != 0) {
+		bus_space_unmap(adapter->osdep.mem_bus_space_tag,
+		    adapter->osdep.mem_bus_space_handle,
+		    adapter->osdep.mem_size);
 	}
-	if (adapter->res != NULL)
-		bus_release_resource(dev, SYS_RES_IRQ, rid, adapter->res);
-
-mem:
-	if (adapter->msix)
-		pci_release_msi(dev);
-
-	if (adapter->msix_mem != NULL)
-		bus_release_resource(dev, SYS_RES_MEMORY,
-		    memrid, adapter->msix_mem);
-
-	if (adapter->pci_mem != NULL)
-		bus_release_resource(dev, SYS_RES_MEMORY,
-		    PCIR_BAR(0), adapter->pci_mem);
 
 #endif
 	return;
@@ -4004,18 +3990,18 @@ ixv_print_hw_stats(struct adapter * adapter)
 {
         device_t dev = adapter->dev;
 
-        device_printf(dev,"Std Mbuf Failed = %lu\n",
+        device_printf(dev,"Std Mbuf Failed = %"PRIu64"\n",
                adapter->mbuf_defrag_failed.ev_count);
-        device_printf(dev,"Driver dropped packets = %lu\n",
+        device_printf(dev,"Driver dropped packets = %"PRIu64"\n",
                adapter->dropped_pkts.ev_count);
-        device_printf(dev, "watchdog timeouts = %ld\n",
+        device_printf(dev, "watchdog timeouts = %"PRIu64"\n",
                adapter->watchdog_events.ev_count);
 
-        device_printf(dev,"Good Packets Rcvd = %llu\n",
+        device_printf(dev,"Good Packets Rcvd = %lld\n",
                (long long)adapter->stats.vfgprc);
-        device_printf(dev,"Good Packets Xmtd = %llu\n",
+        device_printf(dev,"Good Packets Xmtd = %lld\n",
                (long long)adapter->stats.vfgptc);
-        device_printf(dev,"TSO Transmissions = %lu\n",
+        device_printf(dev,"TSO Transmissions = %"PRIu64"\n",
                adapter->tso_tx.ev_count);
 
 }
