@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 279805 2015-03-09 10:29:15Z araujo $*/
-/*$NetBSD: ixgbe.c,v 1.34 2015/08/13 04:56:43 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.35 2015/08/13 10:03:37 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -136,15 +136,15 @@ static int      ixgbe_detach(device_t, int);
 #if 0
 static int      ixgbe_shutdown(device_t);
 #endif
-#if IXGBE_LEGACY_TX
+#ifdef IXGBE_LEGACY_TX
 static void     ixgbe_start(struct ifnet *);
 static void     ixgbe_start_locked(struct tx_ring *, struct ifnet *);
-#else
+#else /* ! IXGBE_LEGACY_TX */
 static int	ixgbe_mq_start(struct ifnet *, struct mbuf *);
 static int	ixgbe_mq_start_locked(struct ifnet *, struct tx_ring *);
 static void	ixgbe_qflush(struct ifnet *);
-static void	ixgbe_deferred_mq_start(void *);
-#endif
+static void	ixgbe_deferred_mq_start(void *, int);
+#endif /* IXGBE_LEGACY_TX */
 static int      ixgbe_ioctl(struct ifnet *, u_long, void *);
 static void	ixgbe_ifstop(struct ifnet *, int);
 static int	ixgbe_init(struct ifnet *);
@@ -338,7 +338,7 @@ SYSCTL_INT("hw.ixgbe.rxd", &ixgbe_rxd);
 ** of unsupported SFP+ modules, note that
 ** doing so you are on your own :)
 */
-static int allow_unsupported_sfp = true;
+static int allow_unsupported_sfp = false;
 SYSCTL_INT("hw.ix.unsupported_sfp", &allow_unsupported_sfp);
 
 /*
@@ -608,8 +608,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		*/
 		adapter->sfp_probe = TRUE;
 		error = 0;
-	} else if ((error == IXGBE_ERR_SFP_NOT_SUPPORTED)
-	    && (hw->allow_unsupported_sfp == false)) {
+	} else if (error == IXGBE_ERR_SFP_NOT_SUPPORTED) {
 		aprint_error_dev(dev,"Unsupported SFP+ module detected!\n");
 		error = EIO;
 		goto err_late;
@@ -1094,7 +1093,7 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
  * Called from a taskqueue to drain queued transmit packets.
  */
 static void
-ixgbe_deferred_mq_start(void *arg)
+ixgbe_deferred_mq_start(void *arg, int pending)
 {
 	struct tx_ring *txr = arg;
 	struct adapter *adapter = txr->adapter;
@@ -1341,7 +1340,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	/* Enable Fan Failure Interrupt */
 	gpie |= IXGBE_SDP1_GPIEN;
 
-	/* Add for Thermal detection */
+	/* Add for Module detection */
 	if (hw->mac.type == ixgbe_mac_82599EB)
 		gpie |= IXGBE_SDP2_GPIEN;
 
@@ -1633,10 +1632,11 @@ ixgbe_legacy_irq(void *arg)
 	struct ix_queue *que = arg;
 	struct adapter	*adapter = que->adapter;
 	struct ixgbe_hw	*hw = &adapter->hw;
-	struct ifnet   *ifp = adapter->ifp;
+	struct ifnet    *ifp = adapter->ifp;
 	struct 		tx_ring *txr = adapter->tx_rings;
 	bool		more = false;
 	u32       	reg_eicr;
+
 
 	reg_eicr = IXGBE_READ_REG(hw, IXGBE_EICR);
 
@@ -2669,6 +2669,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		que->msix = vector;
         	adapter->que_mask |= (u64)(1 << que->msix);
 #ifdef	RSS
+		/*
 		 * The queue ID is used as the RSS layer bucket ID.
 		 * We look up the queue ID -> RSS CPU ID and select
 		 * that.
@@ -2677,7 +2678,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 #else
 		/*
 		 * Bind the msix vector, and thus the
-		 * ring to the corresponding cpu.
+		 * rings to the corresponding cpu.
 		 *
 		 * This just happens to match the default RSS round-robin
 		 * bucket -> queue -> CPU allocation.
@@ -4112,6 +4113,7 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 			mp = rxbuf->buf;
 
 		mp->m_pkthdr.len = mp->m_len = rxr->mbuf_sz;
+
 		/* If we're dealing with an mbuf that was copied rather
 		 * than replaced, there's no need to go through busdma.
 		 */
@@ -4823,6 +4825,7 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 
 	rbuf = &rxr->rx_buffers[i];
 
+
 	/*
 	** With advanced descriptors the writeback
 	** clobbers the buffer addrs, so its easier
@@ -4830,16 +4833,17 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 	** the normal refresh path to get new buffers
 	** and mapping.
 	*/
+
 	if (rbuf->buf != NULL) {/* Partial chain ? */
 		rbuf->fmp->m_flags |= M_PKTHDR;
 		m_freem(rbuf->fmp);
 		rbuf->fmp = NULL;
 		rbuf->buf = NULL; /* rbuf->buf is part of fmp's chain */
 	} else if (rbuf->buf) {
- 		m_free(rbuf->buf);
- 		rbuf->buf = NULL;
+		m_free(rbuf->buf);
+		rbuf->buf = NULL;
 	}
- 
+
 	rbuf->flags = 0;
 
 	return;
@@ -4973,7 +4977,6 @@ ixgbe_rxeof(struct ix_queue *que)
 		** that determines what we are
 		*/
 		sendmp = rbuf->fmp;
-
 		if (sendmp != NULL) {  /* secondary frag */
 			rbuf->buf = rbuf->fmp = NULL;
 			mp->m_flags &= ~M_PKTHDR;
@@ -5007,6 +5010,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			sendmp->m_pkthdr.len = mp->m_len;
 		}
 		++processed;
+
 		/* Pass the head pointer on */
 		if (eop == 0) {
 			nbuf->fmp = sendmp;
@@ -5234,6 +5238,7 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	struct rx_ring	*rxr;
 	u32		ctrl;
 
+
 	/*
 	** We get here thru init_locked, meaning
 	** a soft reset, this has already cleared
@@ -5258,7 +5263,6 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 
 	if ((ec->ec_capenable & ETHERCAP_VLAN_HWFILTER) == 0)
 		return;
-
 	/*
 	** A soft reset zero's out the VFTA, so
 	** we need to repopulate it now.
@@ -6390,7 +6394,7 @@ ixgbe_set_advertise(SYSCTLFN_ARGS)
 	else if (adapter->advertise == 3)
                 speed = IXGBE_LINK_SPEED_1GB_FULL |
 			IXGBE_LINK_SPEED_10GB_FULL;
-	else {/* bogus value */
+	else {	/* bogus value */
 		adapter->advertise = last;
 		return (EINVAL);
 	}

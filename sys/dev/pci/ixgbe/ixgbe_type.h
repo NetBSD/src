@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_type.h,v 1.12 2015/08/13 04:56:43 msaitoh Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.13 2015/08/13 10:03:38 msaitoh Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -135,7 +135,6 @@
 #define IXGBE_DEV_ID_X540_VF			0x1515
 #define IXGBE_DEV_ID_X540_VF_HV			0x1530
 #define IXGBE_DEV_ID_X540_BYPASS		0x155C
-
 
 /* General Registers */
 #define IXGBE_CTRL		0x00000
@@ -341,7 +340,6 @@
 #define IXGBE_VMD_CTL		0x0581C
 #define IXGBE_RETA(_i)		(0x05C00 + ((_i) * 4))  /* 32 of these (0-31) */
 #define IXGBE_RSSRK(_i)		(0x05C80 + ((_i) * 4))  /* 10 of these (0-9) */
-
 
 
 /* Flow Director registers */
@@ -643,7 +641,6 @@
 #define IXGBE_RTFRTIMER	0x08B14
 #define IXGBE_RTTBCNRTT	0x05150
 #define IXGBE_RTTBCNRD	0x0498C
-
 
 
 /* FCoE DMA Context Registers */
@@ -1818,7 +1815,7 @@ enum {
 #define IXGBE_GSSR_MAC_CSR_SM	0x0008
 #define IXGBE_GSSR_FLASH_SM	0x0010
 #define IXGBE_GSSR_SW_MNG_SM	0x0400
- 
+
 /* FW Status register bitmask */
 #define IXGBE_FWSTS_FWRI	0x00000200 /* Firmware Reset Indication */
 
@@ -2482,7 +2479,7 @@ struct ixgbe_hic_drv_info {
 
 /* Transmit Descriptor - Legacy */
 struct ixgbe_legacy_tx_desc {
-	u64 buffer_addr;       /* Address of the descriptor's data buffer */
+	u64 buffer_addr; /* Address of the descriptor's data buffer */
 	union {
 		__le32 data;
 		struct {
@@ -2661,7 +2658,7 @@ typedef u32 ixgbe_physical_layer;
 /* BitTimes (BT) conversion */
 #define IXGBE_BT2KB(BT)		((BT + (8 * 1024 - 1)) / (8 * 1024))
 #define IXGBE_B2BT(BT)		(BT * 8)
- 
+
 /* Calculate Delay to respond to PFC */
 #define IXGBE_PFC_D	672
 
@@ -3315,6 +3312,7 @@ struct ixgbe_hw {
 #define IXGBE_ERR_OUT_OF_MEM			-34
 #define IXGBE_ERR_FEATURE_NOT_SUPPORTED		-36
 #define IXGBE_ERR_EEPROM_PROTECTED_REGION	-37
+
 #define IXGBE_NOT_IMPLEMENTED			0x7FFFFFFF
 
 #endif /* _IXGBE_TYPE_H_ */

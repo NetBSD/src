@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.h 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_api.h,v 1.5 2015/08/05 04:08:44 msaitoh Exp $*/
+/*$NetBSD: ixgbe_api.h,v 1.6 2015/08/13 10:03:38 msaitoh Exp $*/
 
 #ifndef _IXGBE_API_H_
 #define _IXGBE_API_H_
@@ -39,6 +39,7 @@
 #include "ixgbe_type.h"
 
 void ixgbe_dcb_get_rtrup2tc(struct ixgbe_hw *hw, u8 *map);
+
 s32 ixgbe_init_shared_code(struct ixgbe_hw *hw);
 
 extern s32 ixgbe_init_ops_82598(struct ixgbe_hw *hw);

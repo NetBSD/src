@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
-/*$NetBSD: ixv.c,v 1.11 2015/08/13 04:56:43 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.12 2015/08/13 10:03:38 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -461,7 +461,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	ixv_init_stats(adapter);
 
 	/* Register for VLAN events */
-#if 0 /* XXX msaitoh delete after write? */
+#if 0 /* XXX delete after write? */
 	adapter->vlan_attach = EVENTHANDLER_REGISTER(vlan_config,
 	    ixv_register_vlan, adapter, EVENTHANDLER_PRI_FIRST);
 	adapter->vlan_detach = EVENTHANDLER_REGISTER(vlan_unconfig,
@@ -690,10 +690,10 @@ ixv_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr, struct mbuf *m)
 		ixv_txeof(txr);
 
 	enqueued = 0;
-	if (m == NULL) {
+	if (m != NULL) {
 		err = drbr_dequeue(ifp, txr->br, m);
 		if (err) {
- 			return (err);
+			return (err);
 		}
 	}
 	/* Process the queue */
@@ -1872,6 +1872,7 @@ ixv_free_pci_resources(struct adapter * adapter)
 			    adapter->osdep.ihs[i]);
 	}
 
+
 	/* Clean the Legacy or Link interrupt last */
 	if (adapter->mbxvec) /* we are doing MSIX */
 		rid = adapter->mbxvec + 1;
@@ -2468,7 +2469,7 @@ ixv_free_transmit_buffers(struct tx_ring *txr)
 
 /*********************************************************************
  *
- *  Advanced Context Descriptor setup for VLAN or L4 CSUM
+ *  Advanced Context Descriptor setup for VLAN or CSUM
  *
  **********************************************************************/
 
@@ -3662,6 +3663,7 @@ ixv_rx_checksum(u32 staterr, struct mbuf * mp, u32 ptype,
 	u8	errors = (u8) (staterr >> 24);
 #if 0
 	bool	sctp = FALSE;
+
 	if ((ptype & IXGBE_RXDADV_PKTTYPE_ETQF) == 0 &&
 	    (ptype & IXGBE_RXDADV_PKTTYPE_SCTP) != 0)
 		sctp = TRUE;

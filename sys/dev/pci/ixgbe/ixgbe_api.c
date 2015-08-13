@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_api.c,v 1.8 2015/08/05 04:08:44 msaitoh Exp $*/
+/*$NetBSD: ixgbe_api.c,v 1.9 2015/08/13 10:03:38 msaitoh Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -163,7 +163,7 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 			     "Unsupported device id: %x",
 			     hw->device_id);
 		break;
- 	}
+	}
 
 	DEBUGOUT2("ixgbe_set_mac_type found mac: %d, returns: %d\n",
 		  hw->mac.type, ret_val);
