@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.5 2015/08/11 04:04:36 msaitoh Exp $	*/
+/*	$NetBSD: msipic.c,v 1.6 2015/08/13 04:39:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.5 2015/08/11 04:04:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.6 2015/08/13 04:39:33 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -622,7 +622,7 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 	int bir, bar, err, off, table_nentry;
 	char pic_name_buf[MSIPICNAMEBUF];
 
-	table_nentry = pci_msix_count(pa);
+	table_nentry = pci_msix_count(pa->pa_pc, pa->pa_tag);
 	if (table_nentry == 0) {
 		DPRINTF(("MSI-X table entry is 0.\n"));
 		return NULL;
