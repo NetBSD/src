@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.22.2.3 2014/03/24 07:37:39 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.22.2.4 2015/08/13 00:07:15 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.22.2.3 2014/03/24 07:37:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.22.2.4 2015/08/13 00:07:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -772,6 +772,14 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 			cur_pv.pv_cache = PTE_CACHE;
 		}
 	}
+
+	// The amount we can direct is limited by the start of the
+	// virtual part of the kernel address space.  Don't overrun
+	// into it.         
+	if (mapallmem_p && cur_pv.pv_va + cur_pv.pv_size > kernel_vm_base) {
+		cur_pv.pv_size = kernel_vm_base - cur_pv.pv_va;
+	}
+                            
 
 	/*
 	 * Now we map the final chunk.
