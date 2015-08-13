@@ -1,11 +1,11 @@
-/*	$NetBSD: key.c,v 1.16 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: key.c,v 1.127 2015/01/28 22:36:00 djm Exp $ */
+/*	$NetBSD: key.c,v 1.17 2015/08/13 10:33:21 christos Exp $	*/
+/* $OpenBSD: key.c,v 1.128 2015/07/03 03:43:18 djm Exp $ */
 /*
  * placed in the public domain
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: key.c,v 1.16 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.17 2015/08/13 10:33:21 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <errno.h>
@@ -186,11 +186,11 @@ key_demote(const Key *k)
 }
 
 int
-key_to_certified(Key *k, int legacy)
+key_to_certified(Key *k)
 {
 	int r;
 
-	if ((r = sshkey_to_certified(k, legacy)) != 0) {
+	if ((r = sshkey_to_certified(k)) != 0) {
 		fatal_on_fatal_errors(r, __func__, 0);
 		error("%s: %s", __func__, ssh_err(r));
 		return -1;

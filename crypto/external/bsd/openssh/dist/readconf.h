@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.12 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.109 2015/02/16 22:13:32 djm Exp $ */
+/*	$NetBSD: readconf.h,v 1.13 2015/08/13 10:33:21 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.110 2015/07/10 06:21:53 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -168,7 +168,8 @@ typedef struct {
 
 	int	 update_hostkeys; /* one of SSH_UPDATE_HOSTKEYS_* */
 
-	char	*hostbased_key_types;
+	char   *hostbased_key_types;
+	char   *pubkey_key_types;
 
 	char	*ignored_unknown; /* Pattern list of unknown tokens to ignore */
 }       Options;

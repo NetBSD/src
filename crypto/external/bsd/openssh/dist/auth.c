@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.c,v 1.13 2015/07/03 00:59:59 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.111 2015/05/01 04:17:51 djm Exp $ */
+/*	$NetBSD: auth.c,v 1.14 2015/08/13 10:33:21 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.112 2015/08/06 14:53:21 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.13 2015/07/03 00:59:59 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.14 2015/08/13 10:33:21 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -390,7 +390,9 @@ auth_root_allowed(const char *method)
 	case PERMIT_YES:
 		return 1;
 	case PERMIT_NO_PASSWD:
-		if (strcmp(method, "password") != 0)
+		if (strcmp(method, "publickey") == 0 ||
+		    strcmp(method, "hostbased") == 0 ||
+		    strcmp(method, "gssapi-with-mic"))
 			return 1;
 		break;
 	case PERMIT_FORCED_ONLY:

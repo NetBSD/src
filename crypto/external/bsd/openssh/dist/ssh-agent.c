@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.15 2015/07/03 01:00:00 christos Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.203 2015/05/15 05:44:21 dtucker Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.16 2015/08/13 10:33:21 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.204 2015/07/08 20:24:02 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.15 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.16 2015/08/13 10:33:21 christos Exp $");
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/time.h>
@@ -61,9 +61,6 @@ __RCSID("$NetBSD: ssh-agent.c,v 1.15 2015/07/03 01:00:00 christos Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
-
-#include "key.h"	/* XXX for typedef */
-#include "buffer.h"	/* XXX for typedef */
 
 #include "xmalloc.h"
 #include "ssh.h"

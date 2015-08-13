@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.15 2015/07/03 01:00:00 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.16 2015/08/13 10:33:21 christos Exp $	*/
 /* $OpenBSD: monitor.c,v 1.150 2015/06/22 23:42:16 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.15 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.16 2015/08/13 10:33:21 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -1061,9 +1061,7 @@ extern KbdintDevice sshpam_device;
 int
 mm_answer_pam_init_ctx(int sock, Buffer *m)
 {
-
 	debug3("%s", __func__);
-	authctxt->user = buffer_get_string(m, NULL);
 	sshpam_ctxt = (sshpam_device.init_ctx)(authctxt);
 	sshpam_authok = NULL;
 	buffer_clear(m);
@@ -1145,13 +1143,15 @@ mm_answer_pam_respond(int sock, Buffer *m)
 int
 mm_answer_pam_free_ctx(int sock, Buffer *m)
 {
+	int r = sshpam_authok != NULL && sshpam_authok == sshpam_ctxt;
 
 	debug3("%s", __func__);
 	(sshpam_device.free_ctx)(sshpam_ctxt);
+	sshpam_ctxt = sshpam_authok = NULL;
 	buffer_clear(m);
 	mm_request_send(sock, MONITOR_ANS_PAM_FREE_CTX, m);
 	auth_method = "keyboard-interactive/pam";
-	return (sshpam_authok == sshpam_ctxt);
+	return r;
 }
 #endif
 
