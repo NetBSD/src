@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_type.h,v 1.11 2015/08/05 04:08:44 msaitoh Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.12 2015/08/13 04:56:43 msaitoh Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -79,6 +79,13 @@
  * invalid argument, but for when something has occurred that is unsupported
  * (Ex: Flow control autonegotiation or an unsupported SFP+ module.)
  */
+
+#define IXGBE_ERROR_INVALID_STATE "invalid state: "
+#define IXGBE_ERROR_POLLING	"polling: "
+#define IXGBE_ERROR_CAUTION	"caution: "
+#define IXGBE_ERROR_SOFTWARE	"software: "
+#define IXGBE_ERROR_ARGUMENT	"arg: "
+#define IXGBE_ERROR_UNSUPPORTED	"unsupported: "
 
 #include "ixgbe_osdep.h"
 

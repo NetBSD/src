@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 279805 2015-03-09 10:29:15Z araujo $*/
-/*$NetBSD: ixgbe.c,v 1.33 2015/08/05 04:08:44 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.34 2015/08/13 04:56:43 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -232,8 +232,8 @@ static int	ixgbe_legacy_irq(void *);
 
 #if defined(NETBSD_MSI_OR_MSIX)
 /* The MSI/X Interrupt handlers */
-static void	ixgbe_msix_que(void *);
-static void	ixgbe_msix_link(void *);
+static int	ixgbe_msix_que(void *);
+static int	ixgbe_msix_link(void *);
 #endif
 
 /* Software interrupts for deferred work */
@@ -317,7 +317,7 @@ SYSCTL_INT("hw.ixgbe.enable_msix", &ixgbe_enable_msix);
  * number of cpus with a max of 8. This
  * can be overriden manually here.
  */
-static int ixgbe_num_queues = 0;
+static int ixgbe_num_queues = 1;
 SYSCTL_INT("hw.ixgbe.num_queues", &ixgbe_num_queues);
 #endif
 
@@ -508,7 +508,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 {
 	struct adapter *adapter;
 	struct ixgbe_hw *hw;
-	int             error = 0;
+	int             error = -1;
 	u16		csum;
 	u32		ctrl_ext;
 	ixgbe_vendor_info_t *ent;
@@ -608,7 +608,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		*/
 		adapter->sfp_probe = TRUE;
 		error = 0;
-	} else if (error == IXGBE_ERR_SFP_NOT_SUPPORTED) {
+	} else if ((error == IXGBE_ERR_SFP_NOT_SUPPORTED)
+	    && (hw->allow_unsupported_sfp == false)) {
 		aprint_error_dev(dev,"Unsupported SFP+ module detected!\n");
 		error = EIO;
 		goto err_late;
@@ -649,10 +650,11 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	/* Detect and set physical type */
 	ixgbe_setup_optics(adapter);
 
+	error = -1;
 	if ((adapter->msix > 1) && (ixgbe_enable_msix))
-		error = ixgbe_allocate_msix(adapter, pa); 
-	else
-		error = ixgbe_allocate_legacy(adapter, pa); 
+		error = ixgbe_allocate_msix(adapter, pa);
+	if (error != 0)
+		error = ixgbe_allocate_legacy(adapter, pa);
 	if (error) 
 		goto err_late;
 
@@ -1692,7 +1694,7 @@ ixgbe_legacy_irq(void *arg)
  *  MSIX Queue Interrupt Service routine
  *
  **********************************************************************/
-void
+static int
 ixgbe_msix_que(void *arg)
 {
 	struct ix_queue	*que = arg;
@@ -1705,7 +1707,7 @@ ixgbe_msix_que(void *arg)
 
 	/* Protect against spurious interrupts */
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return;
+		return 0;
 
 	ixgbe_disable_queue(adapter, que->msix);
 	++que->irqs;
@@ -1716,6 +1718,7 @@ ixgbe_msix_que(void *arg)
 	ixgbe_txeof(txr);
 #ifdef IXGBE_LEGACY_TX
 	if (!IFQ_IS_EMPTY(&adapter->ifp->if_snd))
+		ixgbe_start_locked(txr, ifp);
 #else
 	if (!drbr_empty(ifp, txr->br))
 		ixgbe_mq_start_locked(ifp, txr);
@@ -1777,11 +1780,11 @@ no_calc:
 		softint_schedule(que->que_si);
 	else
 		ixgbe_enable_queue(adapter, que->msix);
-	return;
+	return 1;
 }
 
 
-static void
+static int
 ixgbe_msix_link(void *arg)
 {
 	struct adapter	*adapter = arg;
@@ -1806,7 +1809,7 @@ ixgbe_msix_link(void *arg)
 		if (reg_eicr & IXGBE_EICR_FLOW_DIR) {
 			/* This is probably overkill :) */
 			if (!atomic_cmpset_int(&adapter->fdir_reinit, 0, 1))
-				return;
+				return 1;
                 	/* Disable the interrupt */
 			IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EICR_FLOW_DIR);
 			softint_schedule(adapter->fdir_si);
@@ -1847,7 +1850,7 @@ ixgbe_msix_link(void *arg)
 	}
 
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
-	return;
+	return 1;
 }
 #endif
 
@@ -2477,32 +2480,79 @@ ixgbe_setup_optics(struct adapter *adapter)
  *
  **********************************************************************/
 static int
-ixgbe_allocate_legacy(struct adapter *adapter, const struct pci_attach_args *pa)
+ixgbe_allocate_legacy(struct adapter *adapter,
+    const struct pci_attach_args *pa)
 {
 	device_t	dev = adapter->dev;
 	struct		ix_queue *que = adapter->queues;
 #ifndef IXGBE_LEGACY_TX
 	struct tx_ring		*txr = adapter->tx_rings;
 #endif
-	char intrbuf[PCI_INTRSTR_LEN];
-#if 0
-	int		rid = 0;
-
-	/* MSI RID at 1 */
-	if (adapter->msix == 1)
-		rid = 1;
+#ifndef NETBSD_MSI_OR_MSIX
+	pci_intr_handle_t	ih;
+#else
+	int		counts[PCI_INTR_TYPE_SIZE];
+	pci_intr_type_t intr_type, max_type;
 #endif
+	char intrbuf[PCI_INTRSTR_LEN];
+	const char	*intrstr = NULL;
  
+#ifndef NETBSD_MSI_OR_MSIX
 	/* We allocate a single interrupt resource */
- 	if (pci_intr_map(pa, &adapter->osdep.ih) != 0) {
+ 	if (pci_intr_map(pa, &ih) != 0) {
 		aprint_error_dev(dev, "unable to map interrupt\n");
 		return ENXIO;
 	} else {
-		aprint_normal_dev(dev, "interrupting at %s\n",
-		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih,
-			intrbuf, sizeof(intrbuf)));
+		intrstr = pci_intr_string(adapter->osdep.pc, ih, intrbuf,
+		    sizeof(intrbuf));
 	}
+	adapter->osdep.ihs[0] = pci_intr_establish(adapter->osdep.pc, ih,
+	    IPL_NET, ixgbe_legacy_irq, que);
+#else
+	/* Allocation settings */
+	max_type = PCI_INTR_TYPE_MSI;
+	counts[PCI_INTR_TYPE_MSIX] = 0;
+	counts[PCI_INTR_TYPE_MSI] = 1;
+	counts[PCI_INTR_TYPE_INTX] = 1;
 
+alloc_retry:
+	if (pci_intr_alloc(pa, &adapter->osdep.intrs, counts, max_type) != 0) {
+		aprint_error_dev(dev, "couldn't alloc interrupt\n");
+		return ENXIO;
+	}
+	adapter->osdep.nintrs = 1;
+	intrstr = pci_intr_string(adapter->osdep.pc, adapter->osdep.intrs[0],
+	    intrbuf, sizeof(intrbuf));
+	adapter->osdep.ihs[0] = pci_intr_establish(adapter->osdep.pc,
+	    adapter->osdep.intrs[0], IPL_NET, ixgbe_legacy_irq, que);
+	if (adapter->osdep.ihs[0] == NULL) {
+		intr_type = pci_intr_type(adapter->osdep.intrs[0]);
+		aprint_error_dev(dev,"unable to establish %s\n",
+		    (intr_type == PCI_INTR_TYPE_MSI) ? "MSI" : "INTx");
+		pci_intr_release(adapter->osdep.pc, adapter->osdep.intrs, 1);
+		switch (intr_type) {
+		case PCI_INTR_TYPE_MSI:
+			/* The next try is for INTx: Disable MSI */
+			max_type = PCI_INTR_TYPE_INTX;
+			counts[PCI_INTR_TYPE_INTX] = 1;
+			goto alloc_retry;
+		case PCI_INTR_TYPE_INTX:
+		default:
+			/* See below */
+			break;
+		}
+	}
+#endif
+	if (adapter->osdep.ihs[0] == NULL) {
+		aprint_error_dev(dev,
+		    "couldn't establish interrupt%s%s\n",
+		    intrstr ? " at " : "", intrstr ? intrstr : "");
+#ifdef NETBSD_MSI_OR_MSIX
+		pci_intr_release(adapter->osdep.pc, adapter->osdep.intrs, 1);
+#endif
+		return ENXIO;
+	}
+	aprint_normal_dev(dev, "interrupting at %s\n", intrstr);
 	/*
 	 * Try allocating a fast interrupt and the associated deferred
 	 * processing contexts.
@@ -2537,19 +2587,6 @@ ixgbe_allocate_legacy(struct adapter *adapter, const struct pci_attach_args *pa)
 		return ENXIO;
 	}
 
-	adapter->osdep.intr = pci_intr_establish(adapter->osdep.pc,
-	    adapter->osdep.ih, IPL_NET, ixgbe_legacy_irq, que);
-	if (adapter->osdep.intr == NULL) {
-		aprint_error_dev(dev, "failed to register interrupt handler\n");
-		softint_disestablish(que->que_si);
-		softint_disestablish(adapter->link_si);
-		softint_disestablish(adapter->mod_si);
-		softint_disestablish(adapter->msf_si);
-#ifdef IXGBE_FDIR
-		softint_disestablish(adapter->fdir_si);
-#endif
-		return ENXIO;
-	}
 	/* For simplicity in the handlers */
 	adapter->que_mask = IXGBE_EIMS_ENABLE_MASK;
 
@@ -2571,13 +2608,16 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	device_t        dev = adapter->dev;
 	struct 		ix_queue *que = adapter->queues;
 	struct  	tx_ring *txr = adapter->tx_rings;
-	int 		error, rid, vector = 0;
+	pci_chipset_tag_t pc;
+	char		intrbuf[PCI_INTRSTR_LEN];
+	const char	*intrstr = NULL;
+	int 		error, vector = 0;
 	int		cpu_id = 0;
+	kcpuset_t	*affinity;
+
+	pc = adapter->osdep.pc;
 #ifdef	RSS
 	cpuset_t cpu_mask;
-#endif
-
-#ifdef	RSS
 	/*
 	 * If we're doing RSS, the number of queues needs to
 	 * match the number of RSS buckets that are configured.
@@ -2599,28 +2639,33 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	}
 #endif
 
+	adapter->osdep.nintrs = adapter->num_queues + 1;
+	if (pci_msix_alloc_exact(pa, &adapter->osdep.intrs,
+	    adapter->osdep.nintrs) != 0) {
+		aprint_error_dev(dev,
+		    "failed to allocate MSI-X interrupt\n");
+		return (ENXIO);
+	}
+
+	kcpuset_create(&affinity, false);
 	for (int i = 0; i < adapter->num_queues; i++, vector++, que++, txr++) {
-		rid = vector + 1;
-		que->res = bus_alloc_resource_any(dev, SYS_RES_IRQ, &rid,
-		    RF_SHAREABLE | RF_ACTIVE);
-		if (que->res == NULL) {
-			aprint_error_dev(dev,"Unable to allocate"
-		    	    " bus resource: que interrupt [%d]\n", vector);
-			return (ENXIO);
-		}
+		intrstr = pci_intr_string(pc, adapter->osdep.intrs[i], intrbuf,
+		    sizeof(intrbuf));
+#ifdef IXG_MPSAFE
+		pci_intr_setattr(pc, adapter->osdep.intrs[i], PCI_INTR_MPSAFE,
+		    true);
+#endif
 		/* Set the handler function */
-		error = bus_setup_intr(dev, que->res,
-		    INTR_TYPE_NET | INTR_MPSAFE, NULL,
-		    ixgbe_msix_que, que, &que->tag);
-		if (error) {
-			que->res = NULL;
+		que->res = adapter->osdep.ihs[i] = pci_intr_establish(pc,
+		    adapter->osdep.intrs[i], IPL_NET, ixgbe_msix_que, que);
+		if (que->res == NULL) {
+			pci_intr_release(pc, adapter->osdep.intrs,
+			    adapter->osdep.nintrs);
 			aprint_error_dev(dev,
 			    "Failed to register QUE handler\n");
-			return error;
+			kcpuset_destroy(affinity);
+			return ENXIO;
 		}
-#if __FreeBSD_version >= 800504
-		bus_describe_intr(dev, que->res, que->tag, "que %d", i);
-#endif
 		que->msix = vector;
         	adapter->que_mask |= (u64)(1 << que->msix);
 #ifdef	RSS
@@ -2640,18 +2685,23 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		if (adapter->num_queues > 1)
 			cpu_id = i;
 #endif
-		if (adapter->num_queues > 1)
-			bus_bind_intr(dev, que->res, cpu_id);
-
+		/* Round-robin affinity */
+		kcpuset_zero(affinity);
+		kcpuset_set(affinity, cpu_id % ncpu);
+		error = pci_intr_distribute(adapter->osdep.ihs[i], affinity,
+		    NULL);
+		aprint_normal_dev(dev, "for TX/RX, interrupting at %s",
+		    intrstr);
+		if (error == 0) {
 #ifdef	RSS
-		device_printf(dev,
-		    "Bound RSS bucket %d to CPU %d\n",
-		    i, cpu_id);
+			aprintf_normal(", bound RSS bucket %d to CPU %d\n",
+			    i, cpu_id);
 #else
-		device_printf(dev,
-		    "Bound queue %d to cpu %d\n",
-		    i, cpu_id);
+			aprint_normal(", bound queue %d to cpu %d\n",
+			    i, cpu_id);
 #endif
+		} else
+			aprint_normal("\n");
 
 #ifndef IXGBE_LEGACY_TX
 		txr->txq_si = softint_establish(SOFTINT_NET,
@@ -2666,26 +2716,34 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	}
 
 	/* and Link */
-	rid = vector + 1;
-	adapter->res = bus_alloc_resource_any(dev,
-    	    SYS_RES_IRQ, &rid, RF_SHAREABLE | RF_ACTIVE);
-	if (!adapter->res) {
-		aprint_error_dev(dev,"Unable to allocate bus resource: "
-		    "Link interrupt [%d]\n", rid);
-		return (ENXIO);
-	}
+	cpu_id++;
+	intrstr = pci_intr_string(pc, adapter->osdep.intrs[vector], intrbuf,
+	    sizeof(intrbuf));
+#ifdef IXG_MPSAFE
+	pci_intr_setattr(pc, &adapter->osdep.intrs[vector], PCI_INTR_MPSAFE,
+	    true);
+#endif
 	/* Set the link handler function */
-	error = bus_setup_intr(dev, adapter->res,
-	    INTR_TYPE_NET | INTR_MPSAFE, NULL,
-	    ixgbe_msix_link, adapter, &adapter->tag);
-	if (error) {
+	adapter->osdep.ihs[vector] = pci_intr_establish(pc,
+	    adapter->osdep.intrs[vector], IPL_NET, ixgbe_msix_link, adapter);
+	if (adapter->osdep.ihs[vector] == NULL) {
 		adapter->res = NULL;
 		aprint_error_dev(dev, "Failed to register LINK handler\n");
-		return (error);
+		kcpuset_destroy(affinity);
+		return (ENXIO);
 	}
-#if __FreeBSD_version >= 800504
-	bus_describe_intr(dev, adapter->res, adapter->tag, "link");
-#endif
+	/* Round-robin affinity */
+	kcpuset_zero(affinity);
+	kcpuset_set(affinity, cpu_id % ncpu);
+	error = pci_intr_distribute(adapter->osdep.ihs[vector], affinity,NULL);
+
+	aprint_normal_dev(dev,
+	    "for link, interrupting at %s", intrstr);
+	if (error == 0)
+		aprint_normal(", affinity to cpu %d\n", cpu_id);
+	else
+		aprint_normal("\n");
+
 	adapter->linkvec = vector;
 	/* Tasklets for Link, SFP and Multispeed Fiber */
 	adapter->link_si =
@@ -2699,6 +2757,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    softint_establish(SOFTINT_NET, ixgbe_reinit_fdir, adapter);
 #endif
 
+	kcpuset_destroy(affinity);
 	return (0);
 #endif
 }
@@ -2713,33 +2772,21 @@ ixgbe_setup_msix(struct adapter *adapter)
 	return 0;
 #else
 	device_t dev = adapter->dev;
-	int rid, want, queues, msgs;
+	int want, queues, msgs;
 
 	/* Override by tuneable */
 	if (ixgbe_enable_msix == 0)
 		goto msi;
 
 	/* First try MSI/X */
-	msgs = pci_msix_count(dev); 
-	if (msgs == 0)
+	msgs = pci_msix_count(adapter->osdep.pc, adapter->osdep.tag);
+	if (msgs < IXG_MSIX_NINTR)
 		goto msi;
-	rid = PCI_BAR(MSIX_82598_BAR);
-	adapter->msix_mem = bus_alloc_resource_any(dev,
-	    SYS_RES_MEMORY, &rid, RF_ACTIVE);
-       	if (adapter->msix_mem == NULL) {
-		rid += 4;	/* 82599 maps in higher BAR */
-		adapter->msix_mem = bus_alloc_resource_any(dev,
-		    SYS_RES_MEMORY, &rid, RF_ACTIVE);
-	}
-       	if (adapter->msix_mem == NULL) {
-		/* May not be enabled */
-		device_printf(adapter->dev,
-		    "Unable to map MSIX table \n");
-		goto msi;
-	}
+
+	adapter->msix_mem = (void *)1; /* XXX */
 
 	/* Figure out a reasonable auto config value */
-	queues = (mp_ncpus > (msgs-1)) ? (msgs-1) : mp_ncpus;
+	queues = (ncpu > (msgs-1)) ? (msgs-1) : ncpu;
 
 	/* Override based on tuneable */
 	if (ixgbe_num_queues != 0)
@@ -2762,44 +2809,34 @@ ixgbe_setup_msix(struct adapter *adapter)
 	if (msgs >= want)
 		msgs = want;
 	else {
-               	device_printf(adapter->dev,
+               	aprint_error_dev(dev,
 		    "MSIX Configuration Problem, "
 		    "%d vectors but %d queues wanted!\n",
 		    msgs, want);
 		goto msi;
 	}
-	if ((pci_alloc_msix(dev, &msgs) == 0) && (msgs == want)) {
-               	device_printf(adapter->dev,
-		    "Using MSIX interrupts with %d vectors\n", msgs);
-		adapter->num_queues = queues;
-		return (msgs);
-	}
+	device_printf(dev,
+	    "Using MSIX interrupts with %d vectors\n", msgs);
+	adapter->num_queues = queues;
+	return (msgs);
+
 	/*
 	** If MSIX alloc failed or provided us with
 	** less than needed, free and fall through to MSI
 	*/
-	pci_release_msi(dev);
-
 msi:
-       	msgs = pci_msi_count(dev);
-       	if (adapter->msix_mem != NULL) {
-		bus_release_resource(dev, SYS_RES_MEMORY,
-		    rid, adapter->msix_mem);
-		adapter->msix_mem = NULL;
-	}
+       	msgs = pci_msi_count(adapter->osdep.pc, adapter->osdep.tag);
+	adapter->msix_mem = NULL; /* XXX */
        	msgs = 1;
-       	if (pci_alloc_msi(dev, &msgs) == 0) {
-               	device_printf(adapter->dev,"Using an MSI interrupt\n");
-		return (msgs);
-	}
-	device_printf(adapter->dev,"Using a Legacy interrupt\n");
-	return (0);
+	aprint_normal_dev(dev,"Using an MSI interrupt\n");
+	return (msgs);
 #endif
 }
 
 
 static int
-ixgbe_allocate_pci_resources(struct adapter *adapter, const struct pci_attach_args *pa)
+ixgbe_allocate_pci_resources(struct adapter *adapter,
+    const struct pci_attach_args *pa)
 {
 	pcireg_t	memtype;
 	device_t        dev = adapter->dev;
@@ -2850,60 +2887,35 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 {
 #if defined(NETBSD_MSI_OR_MSIX)
 	struct 		ix_queue *que = adapter->queues;
-	device_t	dev = adapter->dev;
 #endif
 	int		rid;
 
 #if defined(NETBSD_MSI_OR_MSIX)
-	int		 memrid;
-	if (adapter->hw.mac.type == ixgbe_mac_82598EB)
-		memrid = PCI_BAR(MSIX_82598_BAR);
-	else
-		memrid = PCI_BAR(MSIX_82599_BAR);
-
-	/*
-	** There is a slight possibility of a failure mode
-	** in attach that will result in entering this function
-	** before interrupt resources have been initialized, and
-	** in that case we do not want to execute the loops below
-	** We can detect this reliably by the state of the adapter
-	** res pointer.
-	*/
-	if (adapter->res == NULL)
-		goto mem;
-
 	/*
 	**  Release all msix queue resources:
 	*/
 	for (int i = 0; i < adapter->num_queues; i++, que++) {
-		rid = que->msix + 1;
-		if (que->tag != NULL) {
-			bus_teardown_intr(dev, que->res, que->tag);
-			que->tag = NULL;
-		}
 		if (que->res != NULL)
-			bus_release_resource(dev, SYS_RES_IRQ, rid, que->res);
+			pci_intr_disestablish(adapter->osdep.pc,
+			    adapter->osdep.ihs[i]);
 	}
 #endif
 
 	/* Clean the Legacy or Link interrupt last */
 	if (adapter->linkvec) /* we are doing MSIX */
-		rid = adapter->linkvec + 1;
+		rid = adapter->linkvec;
 	else
-		(adapter->msix != 0) ? (rid = 1):(rid = 0);
+		rid = 0;
 
-	if (adapter->osdep.intr != NULL)
-		pci_intr_disestablish(adapter->osdep.pc, adapter->osdep.intr);
-	adapter->osdep.intr = NULL;
+	if (adapter->osdep.ihs[rid] != NULL) {
+		pci_intr_disestablish(adapter->osdep.pc,
+		    adapter->osdep.ihs[rid]);
+		adapter->osdep.ihs[rid] = NULL;
+	}
 
 #if defined(NETBSD_MSI_OR_MSIX)
-mem:
-	if (adapter->msix)
-		pci_release_msi(dev);
-
-	if (adapter->msix_mem != NULL)
-		bus_release_resource(dev, SYS_RES_MEMORY,
-		    memrid, adapter->msix_mem);
+	pci_intr_release(adapter->osdep.pc, adapter->osdep.intrs,
+	    adapter->osdep.nintrs);
 #endif
 
 	if (adapter->osdep.mem_size != 0) {
