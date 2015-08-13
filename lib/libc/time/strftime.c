@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.33 2014/10/07 21:51:03 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.34 2015/08/13 11:21:18 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,7 +6,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.33 2014/10/07 21:51:03 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.34 2015/08/13 11:21:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -152,8 +152,8 @@ strftime_lz(const timezone_t sp, char *const s, const size_t maxsize,
 }
 
 static char *
-_fmt(const timezone_t sp, const char *format, const struct tm *const t,
-	char *pt, const char *const ptlim, int *warnp, locale_t loc)
+_fmt(const timezone_t sp, const char *format, const struct tm *t, char *pt,
+     const char *ptlim, int *warnp, locale_t loc)
 {
 	for ( ; *format; ++format) {
 		if (*format == '%') {
@@ -610,8 +610,7 @@ label:
 }
 
 size_t
-strftime(char * const s, const size_t maxsize,
-    const char * const format, const struct tm * const	t)
+strftime(char *s, size_t maxsize, const char *format, const struct tm *t)
 {
 	tzset();
 	return strftime_z(NULL, s, maxsize, format, t);
@@ -626,8 +625,7 @@ strftime_l(char * __restrict s, size_t maxsize, const char * __restrict format,
 }
 
 static char *
-_conv(const int	n, const char *const format, char *const pt,
-    const char *const ptlim)
+_conv(int n, const char *format, char *pt, const char *ptlim)
 {
 	char	buf[INT_STRLEN_MAXIMUM(int) + 1];
 
@@ -636,7 +634,7 @@ _conv(const int	n, const char *const format, char *const pt,
 }
 
 static char *
-_add(const char *str, char *pt, const char *const ptlim)
+_add(const char *str, char *pt, const char *ptlim)
 {
 	while (pt < ptlim && (*pt = *str++) != '\0')
 		++pt;
@@ -653,7 +651,7 @@ _add(const char *str, char *pt, const char *const ptlim)
 
 static char *
 _yconv(int a, int b, bool convert_top, bool convert_yy,
-    char *pt, const char *const ptlim)
+    char *pt, const char * ptlim)
 {
 	int	lead;
 	int	trail;
