@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.2 2015/05/20 09:17:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.3 2015/08/13 14:51:35 rjs Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.2 2015/05/20 09:17:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.3 2015/08/13 14:51:35 rjs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -689,7 +689,11 @@ cemac_tick(void *arg)
 	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
 	int s;
 
-	ifp->if_collisions += CEMAC_READ(ETH_SCOL) + CEMAC_READ(ETH_MCOL);
+	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))
+		ifp->if_collisions += CEMAC_READ(GEM_SCOL) + CEMAC_READ(GEM_MCOL);
+	else
+		ifp->if_collisions += CEMAC_READ(ETH_SCOL) + CEMAC_READ(ETH_MCOL);
+
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
 	if (!ISSET(sc->cemac_flags, CEMAC_FLAG_GEM)) {
 		uint32_t misses = CEMAC_READ(ETH_DRFC);
