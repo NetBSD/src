@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.c,v 1.9 2015/07/03 00:59:59 christos Exp $	*/
-/* $OpenBSD: authfd.c,v 1.97 2015/03/26 19:32:19 markus Exp $ */
+/*	$NetBSD: authfd.c,v 1.10 2015/08/13 10:33:21 christos Exp $	*/
+/* $OpenBSD: authfd.c,v 1.98 2015/07/03 03:43:18 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfd.c,v 1.9 2015/07/03 00:59:59 christos Exp $");
+__RCSID("$NetBSD: authfd.c,v 1.10 2015/08/13 10:33:21 christos Exp $");
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -560,10 +560,8 @@ ssh_add_identity_constrained(int sock, struct sshkey *key, const char *comment,
 #ifdef WITH_OPENSSL
 	case KEY_RSA:
 	case KEY_RSA_CERT:
-	case KEY_RSA_CERT_V00:
 	case KEY_DSA:
 	case KEY_DSA_CERT:
-	case KEY_DSA_CERT_V00:
 	case KEY_ECDSA:
 	case KEY_ECDSA_CERT:
 #endif

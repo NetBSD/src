@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.c,v 1.19 2015/07/03 01:00:00 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.212 2015/05/01 07:10:01 djm Exp $ */
+/*	$NetBSD: packet.c,v 1.20 2015/08/13 10:33:21 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.213 2015/07/29 04:43:06 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.19 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.20 2015/08/13 10:33:21 christos Exp $");
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -1930,6 +1930,17 @@ sshpkt_fatal(struct ssh *ssh, const char *tag, int r)
 			logit("Connection reset by %.200s",
 			    ssh_remote_ipaddr(ssh));
 			cleanup_exit(255);
+		}
+		/* FALLTHROUGH */
+	case SSH_ERR_NO_CIPHER_ALG_MATCH:
+	case SSH_ERR_NO_MAC_ALG_MATCH:
+	case SSH_ERR_NO_COMPRESS_ALG_MATCH:
+	case SSH_ERR_NO_KEX_ALG_MATCH:
+	case SSH_ERR_NO_HOSTKEY_ALG_MATCH:
+		if (ssh && ssh->kex && ssh->kex->failed_choice) {
+			fatal("Unable to negotiate with %.200s: %s. "
+			    "Their offer: %s", ssh_remote_ipaddr(ssh),
+			    ssh_err(r), ssh->kex->failed_choice);
 		}
 		/* FALLTHROUGH */
 	default:
