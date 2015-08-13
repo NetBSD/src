@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.146 2015/07/17 02:21:08 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.147 2015/08/13 07:59:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.146 2015/07/17 02:21:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.147 2015/08/13 07:59:05 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1041,7 +1041,6 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 	switch (cmd) {
 	case RTM_DELETE:
 		rt_newmsg(cmd, rt);
-		rtfree(rt);
 		break;
 	case RTM_LLINFO_UPD:
 		RT_DPRINTF("%s: updating%s\n", __func__,
@@ -1061,7 +1060,6 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		if (cmd == RTM_LLINFO_UPD && ifa->ifa_rtrequest != NULL)
 			ifa->ifa_rtrequest(RTM_LLINFO_UPD, rt, &info);
 		rt_newmsg(RTM_CHANGE, rt);
-		rtfree(rt);
 		break;
 	case RTM_ADD:
 		if (rt->rt_ifa != ifa) {
@@ -1077,9 +1075,9 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 				ifa->ifa_rtrequest(RTM_ADD, rt, &info);
 		}
 		rt_newmsg(cmd, rt);
-		rtfree(rt);
 		break;
 	}
+	rtfree(rt);
 	return error;
 }
 
