@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.35 2015/07/24 06:49:58 knakahara Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.36 2015/08/13 04:39:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.35 2015/07/24 06:49:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.36 2015/08/13 04:39:33 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -490,7 +490,7 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 
 	/* try MSI-X */
 	if (msix_count == -1) /* use hardware max */
-		msix_count = pci_msix_count(pa);
+		msix_count = pci_msix_count(pa->pa_pc, pa->pa_tag);
 	if (msix_count > 0) {
 		error = pci_msix_alloc_exact(pa, ihps, msix_count);
 		if (error == 0) {
@@ -503,7 +503,7 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 
 	/* try MSI */
 	if (msi_count == -1) /* use hardware max */
-		msi_count = pci_msi_count(pa);
+		msi_count = pci_msi_count(pa->pa_pc, pa->pa_tag);
 	if (msi_count > 0) {
 		error = pci_msi_alloc_exact(pa, ihps, msi_count);
 		if (error == 0) {
