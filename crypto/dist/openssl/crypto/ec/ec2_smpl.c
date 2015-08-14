@@ -723,7 +723,7 @@ int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 		if (!EC_POINT_set_affine_coordinates_GF2m(group, point, x, y, ctx)) goto err;
 		}
 	
-	if (!EC_POINT_is_on_curve(group, point, ctx)) /* test required by X9.62 */
+	if (EC_POINT_is_on_curve(group, point, ctx) <= 0) /* test required by X9.62 */
 		{
 		ECerr(EC_F_EC_GF2M_SIMPLE_OCT2POINT, EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
@@ -887,7 +887,7 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_
 	field_sqr = group->meth->field_sqr;	
 
 	/* only support affine coordinates */
-	if (!point->Z_is_one) goto err;
+	if (!point->Z_is_one) return -1;
 
 	if (ctx == NULL)
 		{
