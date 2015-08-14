@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.146 2014/07/25 08:24:31 dholland Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.146.2.1 2015/08/14 05:29:14 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.146 2014/07/25 08:24:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.146.2.1 2015/08/14 05:29:14 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1604,12 +1604,21 @@ struct discarddata {
 static void
 ffs_blkfree_td(struct fs *fs, struct discardopdata *td)
 {
+	struct mount *mp = spec_node_getmountedfs(td->devvp);
 	long todo;
+	int error;
 
 	while (td->size) {
 		todo = min(td->size,
 		  ffs_lfragtosize(fs, (fs->fs_frag - ffs_fragnum(fs, td->bno))));
+		error = UFS_WAPBL_BEGIN(mp);
+		if (error) {
+			printf("ffs: failed to begin wapbl transaction"
+			    " for discard: %d\n", error);
+			break;
+		}
 		ffs_blkfree_cg(fs, td->devvp, td->bno, todo);
+		UFS_WAPBL_END(mp);
 		td->bno += ffs_numfrags(fs, todo);
 		td->size -= todo;
 	}
