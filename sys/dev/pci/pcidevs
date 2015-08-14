@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1230 2015/08/14 01:11:49 knakahara Exp $
+$NetBSD: pcidevs,v 1.1231 2015/08/14 16:49:43 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1165,7 +1165,8 @@ product ASMEDIA ASM1061_01	0x0601	ASM1061 AHCI SATA III Controller
 product ASMEDIA ASM1061_02	0x0602	ASM1061 AHCI SATA III Controller
 product ASMEDIA ASM1061_11	0x0611	ASM1061 AHCI SATA III Controller
 product ASMEDIA ASM1061_12	0x0612	ASM1061 AHCI SATA III Controller
-product	ASMEDIA	ASM1042		0x1042	ASM1042 xHCI USB 3.0
+product	ASMEDIA	ASM1042		0x1042	ASM1042 USB 3.0 Host Controller
+product	ASMEDIA	ASM1042A	0x1142	ASM1042A USB 3.0 Host Controller
 
 /* Asustek products */
 product ASUSTEK HFCPCI		0x0675	ISDN
