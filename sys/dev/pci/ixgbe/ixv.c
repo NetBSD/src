@@ -31,12 +31,13 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
-/*$NetBSD: ixv.c,v 1.12 2015/08/13 10:03:38 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.13 2015/08/14 06:05:40 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
 
 #include "ixv.h"
+#include "vlan.h"
 
 /*********************************************************************
  *  Driver version
@@ -366,6 +367,10 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	adapter = device_private(dev);
 	adapter->dev = adapter->osdep.dev = dev;
 	hw = &adapter->hw;
+	adapter->osdep.pc = pa->pa_pc;
+	adapter->osdep.tag = pa->pa_tag;
+	adapter->osdep.dmat = pa->pa_dmat;
+	adapter->osdep.attached = false;
 
 	ent = ixv_lookup(pa);
 
@@ -469,6 +474,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 #endif
 
 	INIT_DEBUGOUT("ixv_attach: end");
+	adapter->osdep.attached = true;
 	return;
 
 err_late:
@@ -497,7 +503,10 @@ ixv_detach(device_t dev, int flags)
 	struct ix_queue *que = adapter->queues;
 
 	INIT_DEBUGOUT("ixv_detach: begin");
+	if (adapter->osdep.attached == false)
+		return 0;
 
+#if NVLAN > 0
 	/* Make sure VLANS are not using driver */
 	if (!VLAN_ATTACHED(&adapter->osdep.ec))
 		;	/* nothing to do: no VLANs */ 
@@ -507,6 +516,7 @@ ixv_detach(device_t dev, int flags)
 		aprint_error_dev(dev, "VLANs in use\n");
 		return EBUSY;
 	}
+#endif
 
 	IXV_CORE_LOCK(adapter);
 	ixv_stop(adapter);
@@ -1784,7 +1794,6 @@ ixv_setup_msix(struct adapter *adapter)
 	device_t dev = adapter->dev;
 	int want, msgs;
 
-
 	/*
 	** Want two vectors: one for a queue,
 	** plus an additional for mailbox.
@@ -1794,6 +1803,7 @@ ixv_setup_msix(struct adapter *adapter)
 		aprint_error_dev(dev,"MSIX config error\n");
 		return (ENXIO);
 	}
+	want = MIN(msgs, IXG_MSIX_NINTR);
 
 	adapter->msix_mem = (void *)1; /* XXX */
 	aprint_normal_dev(dev,
