@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.39 2015/08/14 02:04:16 knakahara Exp $
+.\"     $NetBSD: pci.9,v 1.40 2015/08/14 06:48:11 knakahara Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,7 +102,7 @@
 "int capid" "int *offsetp" "pcireg_t *valuep"
 .Ft int
 .Fn pci_get_ht_capability "pci_chipset_tag_t pc" "pcitag_t tag" \
-"int *offsetp" "pcireg_t *valuep"
+"int capid" "int *offsetp" "pcireg_t *valuep"
 .Ft pcireg_t
 .Fn pci_mapreg_type "pci_chipset_tag_t pc" "pcitag_t tag" "int reg"
 .Ft int
@@ -466,10 +466,28 @@ If the capability was not found, it returns zero, and
 and
 .Fa valuep
 remain unchanged.
-.It Fn pci_get_ht_capability "pc" "tag" "offsetp" "valuep"
-This function is about the same as
-.Fn pci_get_capability .
-This function specializes in HyperTransport capability.
+.It Fn pci_get_ht_capability "pc" "tag" "capid" "offsetp" "valuep"
+Parse the device capability list in HyperTransport configuration
+space looking for capability
+.Fa capid .
+If
+.Fa offsetp
+is not NULL, the register offset in configuration space is returned in
+.Fa offsetp .
+If
+.Fa valuep
+is not NULL, the value of the capability is returned in
+.Fa valuep .
+The argument
+.Fa tag
+is the PCI tag for the current device attached to PCI chipset
+.Fa pc .
+This function returns 1 if the capability was found.
+If the capability was not found, it returns zero, and
+.Fa offsetp
+and
+.Fa valuep
+remain unchanged.
 .It Fn pci_mapreg_type "pc" "tag" "reg"
 Interrogates the Base Address Register (BAR) in configuration space
 specified by
