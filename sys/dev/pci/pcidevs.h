@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1223 2015/08/13 04:27:36 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1224 2015/08/14 01:15:38 knakahara Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1229 2015/08/13 04:27:16 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1230 2015/08/14 01:11:49 knakahara Exp
  */
 
 /*
@@ -2361,6 +2361,9 @@
 #define	PCI_PRODUCT_MARVELL_MV78230	0x7823		/* MV78230 SoC Armada XP */
 #define	PCI_PRODUCT_MARVELL_MV78260	0x7826		/* MV78260 SoC Armada XP */
 #define	PCI_PRODUCT_MARVELL_MV78460	0x7846		/* MV78460 SoC Armada XP */
+#define	PCI_PRODUCT_MARVELL_88F6810	0x6810		/* 88F6810 SoC Armada 38x */
+#define	PCI_PRODUCT_MARVELL_88F6820	0x6820		/* 88F6820 SoC Armada 38x */
+#define	PCI_PRODUCT_MARVELL_88F6828	0x6828		/* 88F6828 SoC Armada 38x */
 #define	PCI_PRODUCT_MARVELL_88W8660	0x8660		/* 88W8660 SoC Orion1 */
 
 #define	PCI_PRODUCT_MARVELL2_88SE9120	0x9120		/* 88SE9120 SATA */
