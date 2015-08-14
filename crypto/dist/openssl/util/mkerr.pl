@@ -463,9 +463,17 @@ EOF
 	# First, read any existing reason string definitions:
 	my %err_reason_strings;
 	if (open(IN,"<$cfile")) {
+		my $line = "";
 		while (<IN>) {
-			if (/\b(${lib}_R_\w*)\b.*\"(.*)\"/) {
-				$err_reason_strings{$1} = $2;
+			chomp;
+			$_ = $line . $_;
+			$line = "";
+			if (/{ERR_REASON\(/) {
+				if (/\b(${lib}_R_\w*)\b.*\"(.*)\"/) {
+					$err_reason_strings{$1} = $2;
+				} else {
+					$line = $_;
+				}
 			}
 			if (/\b${lib}_F_(\w*)\b.*\"(.*)\"/) {
 				if (!exists $ftrans{$1} && ($1 ne $2)) {
