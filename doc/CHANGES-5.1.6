@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.6,v 1.1.2.33 2015/07/24 07:47:34 martin Exp $
+# $NetBSD: CHANGES-5.1.6,v 1.1.2.34 2015/08/14 06:00:50 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.1.5 release to the NetBSD 5.1.6
 release:
@@ -2655,3 +2655,44 @@ sys/netinet/tcp_output.c			1.184
 	Make sure that snd_win doesn't go negative.
 	[matt, ticket #1973]
 
+crypto/dist/openssl/e_os2.h			patch
+crypto/dist/openssl/crypto/asn1/a_int.c		patch
+crypto/dist/openssl/crypto/asn1/tasn_new.c	patch
+crypto/dist/openssl/crypto/bn/bn.h		patch
+crypto/dist/openssl/crypto/bn/bn_err.c		patch
+crypto/dist/openssl/crypto/bn/bn_print.c	patch
+crypto/dist/openssl/crypto/bn/bn_rand.c		patch
+crypto/dist/openssl/crypto/bn/bn_shift.c	patch
+crypto/dist/openssl/crypto/cms/cms_smime.c	patch
+crypto/dist/openssl/crypto/ec/ec2_smpl.c	patch
+crypto/dist/openssl/crypto/ec/ec_check.c	patch
+crypto/dist/openssl/crypto/ec/ec_key.c		patch
+crypto/dist/openssl/crypto/ec/ec_lib.c		patch
+crypto/dist/openssl/crypto/ec/ecp_smpl.c	patch
+crypto/dist/openssl/crypto/ec/ectest.c		patch
+crypto/dist/openssl/crypto/ecdsa/ecdsatest.c	patch
+crypto/dist/openssl/crypto/ecdsa/ecs_ossl.c	patch
+crypto/dist/openssl/crypto/objects/obj_dat.c	patch
+crypto/dist/openssl/crypto/ocsp/ocsp_vfy.c	patch
+crypto/dist/openssl/crypto/pem/pem_pk8.c	patch
+crypto/dist/openssl/crypto/pkcs7/pk7_doit.c	patch
+crypto/dist/openssl/crypto/x509/x509_lu.c	patch
+crypto/dist/openssl/crypto/x509/x509_vfy.c	patch
+crypto/dist/openssl/doc/crypto/BN_rand.pod	patch
+crypto/dist/openssl/doc/crypto/BN_set_bit.pod	patch
+crypto/dist/openssl/doc/crypto/pem.pod		patch
+crypto/dist/openssl/ssl/d1_lib.c		patch
+crypto/dist/openssl/ssl/s3_clnt.c		patch
+crypto/dist/openssl/ssl/s3_srvr.c		patch
+crypto/dist/openssl/ssl/ssl.h			patch
+crypto/dist/openssl/ssl/ssl_err.c		patch
+crypto/dist/openssl/ssl/ssl_lib.c		patch
+crypto/dist/openssl/ssl/ssl_locl.h		patch
+crypto/dist/openssl/ssl/ssl_sess.c		patch
+crypto/dist/openssl/util/mkerr.pl		patch
+
+	This change covers the vulnerabilities relevant to netbsd-5 from the
+	June OpenSSL advisory, and also fixes a regression introduced with the
+	POODLE fix in October last year that caused the SSL server side	to
+	fail to handshake.
+	[spz, ticket#1976]
