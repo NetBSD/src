@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
-/*$NetBSD: ixv.c,v 1.13 2015/08/14 06:05:40 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.14 2015/08/14 15:27:28 martin Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2497,7 +2497,7 @@ ixv_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	struct ip6_hdr ip6;
 	int  ehdrlen, ip_hlen = 0;
 	u16	etype;
-	u8	ipproto = 0;
+	u8	ipproto __diagused = 0;
 	bool	offload;
 	int ctxd = txr->next_avail_desc;
 	u16 vtag = 0;
