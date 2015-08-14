@@ -105,6 +105,12 @@ extern "C" {
 #   undef OPENSSL_SYS_UNIX
 #   define OPENSSL_SYS_WIN32
 #  endif
+#   if defined(_WIN64) || defined(OPENSSL_SYSNAME_WIN64)
+#    undef OPENSSL_SYS_UNIX
+#    if !defined(OPENSSL_SYS_WIN64)
+#     define OPENSSL_SYS_WIN64
+#    endif
+#   endif
 #  if defined(OPENSSL_SYSNAME_WINNT)
 #   undef OPENSSL_SYS_UNIX
 #   define OPENSSL_SYS_WINNT
@@ -117,7 +123,7 @@ extern "C" {
 #endif
 
 /* Anything that tries to look like Microsoft is "Windows" */
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINNT) || defined(OPENSSL_SYS_WINCE)
+# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN64) || defined(OPENSSL_SYS_WINNT) || defined(OPENSSL_SYS_WINCE)
 # undef OPENSSL_SYS_UNIX
 # define OPENSSL_SYS_WINDOWS
 # ifndef OPENSSL_SYS_MSDOS
