@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.366 2015/08/11 08:29:03 sborrill Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.367 2015/08/14 05:33:34 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33913,3 +33913,12 @@ sys/sys/param.h					patched by hand
 	Welcome to 7.0_RC3!
 	[snj]
 
+sys/ufs/ffs/ffs_alloc.c				1.151
+
+	Need wapbl transaction around ffs_blkfree_cg.  Fixes wapbl+discard.
+	[riastradh, ticket #949]
+
+crypto/external/bsd/openssh/dist/monitor.c	patch
+
+	OpenSSH PAM fix (BFS-SA-2015-002).
+	[christos, ticket #950]
