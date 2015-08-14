@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1978 2015/08/10 03:21:44 mrg Exp $
+#	$NetBSD: mi,v 1.1979 2015/08/14 02:35:32 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10187,6 +10187,7 @@
 ./usr/share/man/cat9/pci_find_device.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_findvendor.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_get_capability.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pci_get_ht_capability.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_get_powerstate.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_alloc.0		comp-sys-catman		.cat
@@ -16995,6 +16996,7 @@
 ./usr/share/man/html9/pci_find_device.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_findvendor.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_get_capability.html	comp-sys-htmlman	html
+./usr/share/man/html9/pci_get_ht_capability.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_get_powerstate.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_alloc.html	comp-sys-htmlman	html
@@ -23965,6 +23967,7 @@
 ./usr/share/man/man9/pci_find_device.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_findvendor.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_get_capability.9	comp-sys-man		.man
+./usr/share/man/man9/pci_get_ht_capability.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_get_powerstate.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_intr.9			comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_alloc.9		comp-sys-man		.man
