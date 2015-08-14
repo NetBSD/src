@@ -239,7 +239,8 @@ SubjectPublicKeyInfo structure and an error occurs if the public
 key is not DSA.
 
 The B<DSAparams> functions process DSA parameters using a DSA
-structure. The parameters are encoded using a foobar structure.
+structure. The parameters are encoded using a Dss-Parms structure
+as defined in RFC2459.
 
 The B<DHparams> functions process DH parameters using a DH
 structure. The parameters are encoded using a PKCS#3 DHparameter

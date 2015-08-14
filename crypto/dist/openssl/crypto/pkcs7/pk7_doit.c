@@ -462,12 +462,20 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	switch (i)
 		{
 	case NID_pkcs7_signed:
+        /*
+         * p7->d.sign->contents is a PKCS7 structure consisting of a contentType
+         * field and optional content.
+         * data_body is NULL if that structure has no (=detached) content
+         * or if the contentType is wrong (i.e., not "data").
+         */
+
 		data_body=PKCS7_get_octet_string(p7->d.sign->contents);
 		md_sk=p7->d.sign->md_algs;
 		break;
 	case NID_pkcs7_signedAndEnveloped:
 		rsk=p7->d.signed_and_enveloped->recipientinfo;
 		md_sk=p7->d.signed_and_enveloped->md_algs;
+	/* data_body is NULL if the optional EncryptedContent is missing. */
 		data_body=p7->d.signed_and_enveloped->enc_data->enc_data;
 		enc_alg=p7->d.signed_and_enveloped->enc_data->algorithm;
 		evp_cipher=EVP_get_cipherbyobj(enc_alg->algorithm);
@@ -481,6 +489,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	case NID_pkcs7_enveloped:
 		rsk=p7->d.enveloped->recipientinfo;
 		enc_alg=p7->d.enveloped->enc_data->algorithm;
+	/* data_body is NULL if the optional EncryptedContent is missing. */
 		data_body=p7->d.enveloped->enc_data->enc_data;
 		evp_cipher=EVP_get_cipherbyobj(enc_alg->algorithm);
 		if (evp_cipher == NULL)
@@ -494,6 +503,12 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
 	        goto err;
 		}
+
+	/* Detached content must be supplied via in_bio instead. */
+	if (data_body == NULL && in_bio == NULL) {
+		PKCS7err(PKCS7_F_PKCS7_DATADECODE, PKCS7_R_NO_CONTENT);
+		goto err;
+	}
 
 	/* We will be checking the signature */
 	if (md_sk != NULL)
@@ -629,7 +644,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		}
 
 #if 1
-	if (PKCS7_is_detached(p7) || (in_bio != NULL))
+	if (in_bio != NULL)
 		{
 		bio=in_bio;
 		}
