@@ -207,6 +207,8 @@ X509_STORE *X509_STORE_new(void)
 
 static void cleanup(X509_OBJECT *a)
 	{
+	if (!a)
+		return;
 	if (a->type == X509_LU_X509)
 		{
 		X509_free(a->data.x509);
