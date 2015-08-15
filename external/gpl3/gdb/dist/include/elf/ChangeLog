@@ -1,3 +1,115 @@
+2015-01-09  Anthony Green  <green@moxielogic.com>
+
+	* common.h (EM_MOXIE): Redefine to official number.
+	(EM_MOXIE_OLD): Define (from old number).
+
+2015-01-01  Alan Modra  <amodra@gmail.com>
+
+	Update year range in copyright notice of all files.
+
+2014-12-25  Thomas Preud'homme  <thomas.preudhomme@arm.com>
+
+	* arm.h: New AEABI_FP_number_model_* and AEABI_VFP_args_* enum values.
+
+2014-12-06  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* common.h (EM_VISIUM): Define.
+	* visium.h: New file.
+
+2014-11-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* x86-64.h (R_X86_64_GOTPLT64): Mark it obsolete.
+
+2014-10-17  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* sparc.h (ELF_SPARC_HWCAP2_VIS3B): Documentation improved.
+
+2014-10-09  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* sparc.h (Tag_GNU_Sparc_HWCAPS2): New object attribute.
+	(ELF_SPARC_HWCAP2_FJATHPLUS): New HWCAP2 bitmask value.
+	(ELF_SPARC_HWCAP2_VIS3B): Likewise.
+	(ELF_SPARC_HWCAP2_ADP): Likewise.
+	(ELF_SPARC_HWCAP2_SPARC5): Likewise.
+	(ELF_SPARC_HWCAP2_MWAIT): Likewise.
+	(ELF_SPARC_HWCAP2_XMPMUL): Likewise.
+	(ELF_SPARC_HWCAP2_XMONT): Likewise.
+	(ELF_SPARC_HWCAP2_NSEC): Likewise.
+	(ELF_SPARC_HWCAP2_FJATHHPC): Likewise.
+	(ELF_SPARC_HWCAP2_FJDES): Likewise.
+	(ELF_SPARC_HWCAP2_FJAES): Likewise.
+
+2014-10-08  Will Newton  <will.newton@linaro.org>
+
+	* aarch64.h: Sync up relocations with ABI release 1.0.
+
+2014-09-16  Kuan-Lin Chen  <kuanlinchentw@gmail.com>
+
+	* nds32.h: Declare new relocations.
+
+2014-09-15  Andrew Bennett  <andrew.bennett@imgtec.com>
+	    Matthew Fortune  <matthew.fortune@imgtec.com>
+
+	* mips.h: Add relocs: R_MIPS_PC21_S2, R_MIPS_PC26_S2, R_MIPS_PC18_S3,
+	R_MIPS_PC19_S2, R_MIPS_PCHI16 and R_MIPS_PCLO16.
+	(E_MIPS_ARCH_32R6): New define.
+	(E_MIPS_ARCH_64R6): New define.
+
+2014-08-26  DJ Delorie  <dj@redhat.com>
+
+	* rl78.h (RL78_RELAXA_MASK): New.  Relax types are enums, not bits
+
+2014-07-07  Barney Stratford  <barney_stratford@fastmail.fm>
+
+	* avr.h: Add R_AVR_PORT5 and R_AVR_PORT6.
+
+2014-07-01  Barney Stratford   <barney_stratford@fastmail.fm>
+            Senthil Kumar Selvaraj  <senthil_kumar.selvaraj@atmel.com>
+            Pitchumani Sivanupandi  <pitchumani.s@atmel.com>
+            Soundararajan  <Sounderarajan.D@atmel.com>
+
+	* avr.h (E_AVR_MACH_AVRTINY): Define avrtiny machine number.
+	(R_AVR_LDS_STS_16): Define 16 bit lds/sts reloc number.
+	* include/opcode/avr.h (AVR_ISA_TINY): Define avrtiny specific ISA.
+	(AVR_ISA_2xxxa): Define ISA without LPM.
+	(AVR_ISA_AVRTINY): Define avrtiny arch ISA.
+	Add doc for contraint used in 16 bit lds/sts.
+	Adjust ISA group for icall, ijmp, pop and push.
+	Add 16 bit lds/sts encoding and update 32 bit lds/sts constraints.
+
+2014-04-22  Christian Svensson  <blue@cmd.nu>
+
+	* common.h: Remove openrisc and or32 support.  Add support for or1k.
+	* or1k.h: New file.
+	* openrisc.h: Delete.
+	* or32.h: Delete.
+
+2014-03-05  Alan Modra  <amodra@gmail.com>
+
+	Update copyright years.
+
+2014-03-05  Alan Modra  <amodra@gmail.com>
+
+	* ppc64.h (R_PPC64_REL24_NOTOC, R_PPC64_ADDR64_LOCAL): Define.
+
+2014-02-06  Andrew Pinski  <apinski@cavium.com>
+
+	* mips.h (E_MIPS_MACH_OCTEON3): New machine flag.
+
+2014-02-03  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* nios2.h (R_NIOS2_GOT_LO, R_NIOS2_GOT_HA): New.
+	(R_NIOS2_CALL_LO, R_NIOS2_CALL_HA): New.
+	(R_NIOS2_ILLEGAL): Adjust.
+
+2014-01-30  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* nios2.h (elf_nios2_reloc_type): Add R_NIOS2_CALL26_NOAT.
+
+2014-01-30  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* common.h (AT_HWCAP2): Define.
+
 2013-12-13  Kuan-Lin Chen  <kuanlinchentw@gmail.com>
 	    Wei-Cheng Wang  <cole945@gmail.com>
 
@@ -1922,7 +2034,7 @@
 
 For older changes see ChangeLog-9103
 
-Copyright (C) 2004-2012 Free Software Foundation, Inc.
+Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
