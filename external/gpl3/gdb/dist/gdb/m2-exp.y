@@ -1,5 +1,5 @@
 /* YACC grammar for Modula-2 expressions, for GDB.
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
    Generated from expread.y (now c-exp.y) and contributed by the Department
    of Computer Science at the State University of New York at Buffalo, 1991.
 
@@ -38,7 +38,6 @@
 %{
 
 #include "defs.h"
-#include <string.h>
 #include "expression.h"
 #include "language.h"
 #include "value.h"
@@ -49,8 +48,8 @@
 #include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
 #include "block.h"
 
-#define parse_type builtin_type (parse_gdbarch)
-#define parse_m2_type builtin_m2_type (parse_gdbarch)
+#define parse_type(ps) builtin_type (parse_gdbarch (ps))
+#define parse_m2_type(ps) builtin_m2_type (parse_gdbarch (ps))
 
 /* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
    as well as gratuitiously global symbol names, so we can have multiple
@@ -60,7 +59,7 @@
    generators need to be fixed instead of adding those names to this list.  */
 
 #define	yymaxdepth m2_maxdepth
-#define	yyparse	m2_parse
+#define	yyparse	m2_parse_internal
 #define	yylex	m2_lex
 #define	yyerror	m2_error
 #define	yylval	m2_lval
@@ -112,6 +111,11 @@
 
 #define YYFPRINTF parser_fprintf
 
+/* The state of the parser, used internally when we are parsing the
+   expression.  */
+
+static struct parser_state *pstate = NULL;
+
 int yyparse (void);
 
 static int yylex (void);
@@ -138,7 +142,7 @@ static int number_sign = 1;
     struct type *tval;
     struct stoken sval;
     int voidval;
-    struct block *bval;
+    const struct block *bval;
     enum exp_opcode opcode;
     struct internalvar *ivar;
 
@@ -204,31 +208,31 @@ start   :	exp
 	;
 
 type_exp:	type
-		{ write_exp_elt_opcode(OP_TYPE);
-		  write_exp_elt_type($1);
-		  write_exp_elt_opcode(OP_TYPE);
+		{ write_exp_elt_opcode (pstate, OP_TYPE);
+		  write_exp_elt_type (pstate, $1);
+		  write_exp_elt_opcode (pstate, OP_TYPE);
 		}
 	;
 
 /* Expressions */
 
 exp     :       exp '^'   %prec UNARY
-                        { write_exp_elt_opcode (UNOP_IND); }
+                        { write_exp_elt_opcode (pstate, UNOP_IND); }
 	;
 
 exp	:	'-'
 			{ number_sign = -1; }
 		exp    %prec UNARY
 			{ number_sign = 1;
-			  write_exp_elt_opcode (UNOP_NEG); }
+			  write_exp_elt_opcode (pstate, UNOP_NEG); }
 	;
 
 exp	:	'+' exp    %prec UNARY
-		{ write_exp_elt_opcode(UNOP_PLUS); }
+		{ write_exp_elt_opcode (pstate, UNOP_PLUS); }
 	;
 
 exp	:	not_exp exp %prec UNARY
-			{ write_exp_elt_opcode (UNOP_LOGICAL_NOT); }
+			{ write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT); }
 	;
 
 not_exp	:	NOT
@@ -236,88 +240,90 @@ not_exp	:	NOT
 	;
 
 exp	:	CAP '(' exp ')'
-			{ write_exp_elt_opcode (UNOP_CAP); }
+			{ write_exp_elt_opcode (pstate, UNOP_CAP); }
 	;
 
 exp	:	ORD '(' exp ')'
-			{ write_exp_elt_opcode (UNOP_ORD); }
+			{ write_exp_elt_opcode (pstate, UNOP_ORD); }
 	;
 
 exp	:	ABS '(' exp ')'
-			{ write_exp_elt_opcode (UNOP_ABS); }
+			{ write_exp_elt_opcode (pstate, UNOP_ABS); }
 	;
 
 exp	: 	HIGH '(' exp ')'
-			{ write_exp_elt_opcode (UNOP_HIGH); }
+			{ write_exp_elt_opcode (pstate, UNOP_HIGH); }
 	;
 
 exp 	:	MIN_FUNC '(' type ')'
-			{ write_exp_elt_opcode (UNOP_MIN);
-			  write_exp_elt_type ($3);
-			  write_exp_elt_opcode (UNOP_MIN); }
+			{ write_exp_elt_opcode (pstate, UNOP_MIN);
+			  write_exp_elt_type (pstate, $3);
+			  write_exp_elt_opcode (pstate, UNOP_MIN); }
 	;
 
 exp	: 	MAX_FUNC '(' type ')'
-			{ write_exp_elt_opcode (UNOP_MAX);
-			  write_exp_elt_type ($3);
-			  write_exp_elt_opcode (UNOP_MAX); }
+			{ write_exp_elt_opcode (pstate, UNOP_MAX);
+			  write_exp_elt_type (pstate, $3);
+			  write_exp_elt_opcode (pstate, UNOP_MAX); }
 	;
 
 exp	:	FLOAT_FUNC '(' exp ')'
-			{ write_exp_elt_opcode (UNOP_FLOAT); }
+			{ write_exp_elt_opcode (pstate, UNOP_FLOAT); }
 	;
 
 exp	:	VAL '(' type ',' exp ')'
-			{ write_exp_elt_opcode (BINOP_VAL);
-			  write_exp_elt_type ($3);
-			  write_exp_elt_opcode (BINOP_VAL); }
+			{ write_exp_elt_opcode (pstate, BINOP_VAL);
+			  write_exp_elt_type (pstate, $3);
+			  write_exp_elt_opcode (pstate, BINOP_VAL); }
 	;
 
 exp	:	CHR '(' exp ')'
-			{ write_exp_elt_opcode (UNOP_CHR); }
+			{ write_exp_elt_opcode (pstate, UNOP_CHR); }
 	;
 
 exp	:	ODD '(' exp ')'
-			{ write_exp_elt_opcode (UNOP_ODD); }
+			{ write_exp_elt_opcode (pstate, UNOP_ODD); }
 	;
 
 exp	:	TRUNC '(' exp ')'
-			{ write_exp_elt_opcode (UNOP_TRUNC); }
+			{ write_exp_elt_opcode (pstate, UNOP_TRUNC); }
 	;
 
 exp	:	TSIZE '(' exp ')'
-			{ write_exp_elt_opcode (UNOP_SIZEOF); }
+			{ write_exp_elt_opcode (pstate, UNOP_SIZEOF); }
 	;
 
 exp	:	SIZE exp       %prec UNARY
-			{ write_exp_elt_opcode (UNOP_SIZEOF); }
+			{ write_exp_elt_opcode (pstate, UNOP_SIZEOF); }
 	;
 
 
 exp	:	INC '(' exp ')'
-			{ write_exp_elt_opcode(UNOP_PREINCREMENT); }
+			{ write_exp_elt_opcode (pstate, UNOP_PREINCREMENT); }
 	;
 
 exp	:	INC '(' exp ',' exp ')'
-			{ write_exp_elt_opcode(BINOP_ASSIGN_MODIFY);
-			  write_exp_elt_opcode(BINOP_ADD);
-			  write_exp_elt_opcode(BINOP_ASSIGN_MODIFY); }
+			{ write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY);
+			  write_exp_elt_opcode (pstate, BINOP_ADD);
+			  write_exp_elt_opcode (pstate,
+						BINOP_ASSIGN_MODIFY); }
 	;
 
 exp	:	DEC '(' exp ')'
-			{ write_exp_elt_opcode(UNOP_PREDECREMENT);}
+			{ write_exp_elt_opcode (pstate, UNOP_PREDECREMENT);}
 	;
 
 exp	:	DEC '(' exp ',' exp ')'
-			{ write_exp_elt_opcode(BINOP_ASSIGN_MODIFY);
-			  write_exp_elt_opcode(BINOP_SUB);
-			  write_exp_elt_opcode(BINOP_ASSIGN_MODIFY); }
+			{ write_exp_elt_opcode (pstate, BINOP_ASSIGN_MODIFY);
+			  write_exp_elt_opcode (pstate, BINOP_SUB);
+			  write_exp_elt_opcode (pstate,
+						BINOP_ASSIGN_MODIFY); }
 	;
 
 exp	:	exp DOT NAME
-			{ write_exp_elt_opcode (STRUCTOP_STRUCT);
-			  write_exp_string ($3);
-			  write_exp_elt_opcode (STRUCTOP_STRUCT); }
+			{ write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
+			  write_exp_string (pstate, $3);
+			  write_exp_elt_opcode (pstate, STRUCTOP_STRUCT); }
 	;
 
 exp	:	set
@@ -349,13 +355,14 @@ exp     :       exp '['
 			   function types */
                         { start_arglist(); }
                 non_empty_arglist ']'  %prec DOT
-                        { write_exp_elt_opcode (MULTI_SUBSCRIPT);
-			  write_exp_elt_longcst ((LONGEST) end_arglist());
-			  write_exp_elt_opcode (MULTI_SUBSCRIPT); }
+                        { write_exp_elt_opcode (pstate, MULTI_SUBSCRIPT);
+			  write_exp_elt_longcst (pstate,
+						 (LONGEST) end_arglist());
+			  write_exp_elt_opcode (pstate, MULTI_SUBSCRIPT); }
         ;
 
 exp	:	exp '[' exp ']'
-			{ write_exp_elt_opcode (BINOP_SUBSCRIPT); }
+			{ write_exp_elt_opcode (pstate, BINOP_SUBSCRIPT); }
 	;
 
 exp	:	exp '('
@@ -363,9 +370,10 @@ exp	:	exp '('
 			   being accumulated by an outer function call.  */
 			{ start_arglist (); }
 		arglist ')'	%prec DOT
-			{ write_exp_elt_opcode (OP_FUNCALL);
-			  write_exp_elt_longcst ((LONGEST) end_arglist ());
-			  write_exp_elt_opcode (OP_FUNCALL); }
+			{ write_exp_elt_opcode (pstate, OP_FUNCALL);
+			  write_exp_elt_longcst (pstate,
+						 (LONGEST) end_arglist ());
+			  write_exp_elt_opcode (pstate, OP_FUNCALL); }
 	;
 
 arglist	:
@@ -391,15 +399,15 @@ non_empty_arglist
 
 /* GDB construct */
 exp	:	'{' type '}' exp  %prec UNARY
-			{ write_exp_elt_opcode (UNOP_MEMVAL);
-			  write_exp_elt_type ($2);
-			  write_exp_elt_opcode (UNOP_MEMVAL); }
+			{ write_exp_elt_opcode (pstate, UNOP_MEMVAL);
+			  write_exp_elt_type (pstate, $2);
+			  write_exp_elt_opcode (pstate, UNOP_MEMVAL); }
 	;
 
 exp     :       type '(' exp ')' %prec UNARY
-                        { write_exp_elt_opcode (UNOP_CAST);
-			  write_exp_elt_type ($1);
-			  write_exp_elt_opcode (UNOP_CAST); }
+                        { write_exp_elt_opcode (pstate, UNOP_CAST);
+			  write_exp_elt_type (pstate, $1);
+			  write_exp_elt_opcode (pstate, UNOP_CAST); }
 	;
 
 exp	:	'(' exp ')'
@@ -411,131 +419,140 @@ exp	:	'(' exp ')'
 
 /* GDB construct */
 exp	:	exp '@' exp
-			{ write_exp_elt_opcode (BINOP_REPEAT); }
+			{ write_exp_elt_opcode (pstate, BINOP_REPEAT); }
 	;
 
 exp	:	exp '*' exp
-			{ write_exp_elt_opcode (BINOP_MUL); }
+			{ write_exp_elt_opcode (pstate, BINOP_MUL); }
 	;
 
 exp	:	exp '/' exp
-			{ write_exp_elt_opcode (BINOP_DIV); }
+			{ write_exp_elt_opcode (pstate, BINOP_DIV); }
 	;
 
 exp     :       exp DIV exp
-                        { write_exp_elt_opcode (BINOP_INTDIV); }
+                        { write_exp_elt_opcode (pstate, BINOP_INTDIV); }
         ;
 
 exp	:	exp MOD exp
-			{ write_exp_elt_opcode (BINOP_REM); }
+			{ write_exp_elt_opcode (pstate, BINOP_REM); }
 	;
 
 exp	:	exp '+' exp
-			{ write_exp_elt_opcode (BINOP_ADD); }
+			{ write_exp_elt_opcode (pstate, BINOP_ADD); }
 	;
 
 exp	:	exp '-' exp
-			{ write_exp_elt_opcode (BINOP_SUB); }
+			{ write_exp_elt_opcode (pstate, BINOP_SUB); }
 	;
 
 exp	:	exp '=' exp
-			{ write_exp_elt_opcode (BINOP_EQUAL); }
+			{ write_exp_elt_opcode (pstate, BINOP_EQUAL); }
 	;
 
 exp	:	exp NOTEQUAL exp
-			{ write_exp_elt_opcode (BINOP_NOTEQUAL); }
+			{ write_exp_elt_opcode (pstate, BINOP_NOTEQUAL); }
         |       exp '#' exp
-                        { write_exp_elt_opcode (BINOP_NOTEQUAL); }
+                        { write_exp_elt_opcode (pstate, BINOP_NOTEQUAL); }
 	;
 
 exp	:	exp LEQ exp
-			{ write_exp_elt_opcode (BINOP_LEQ); }
+			{ write_exp_elt_opcode (pstate, BINOP_LEQ); }
 	;
 
 exp	:	exp GEQ exp
-			{ write_exp_elt_opcode (BINOP_GEQ); }
+			{ write_exp_elt_opcode (pstate, BINOP_GEQ); }
 	;
 
 exp	:	exp '<' exp
-			{ write_exp_elt_opcode (BINOP_LESS); }
+			{ write_exp_elt_opcode (pstate, BINOP_LESS); }
 	;
 
 exp	:	exp '>' exp
-			{ write_exp_elt_opcode (BINOP_GTR); }
+			{ write_exp_elt_opcode (pstate, BINOP_GTR); }
 	;
 
 exp	:	exp LOGICAL_AND exp
-			{ write_exp_elt_opcode (BINOP_LOGICAL_AND); }
+			{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_AND); }
 	;
 
 exp	:	exp OROR exp
-			{ write_exp_elt_opcode (BINOP_LOGICAL_OR); }
+			{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_OR); }
 	;
 
 exp	:	exp ASSIGN exp
-			{ write_exp_elt_opcode (BINOP_ASSIGN); }
+			{ write_exp_elt_opcode (pstate, BINOP_ASSIGN); }
 	;
 
 
 /* Constants */
 
 exp	:	M2_TRUE
-			{ write_exp_elt_opcode (OP_BOOL);
-			  write_exp_elt_longcst ((LONGEST) $1);
-			  write_exp_elt_opcode (OP_BOOL); }
+			{ write_exp_elt_opcode (pstate, OP_BOOL);
+			  write_exp_elt_longcst (pstate, (LONGEST) $1);
+			  write_exp_elt_opcode (pstate, OP_BOOL); }
 	;
 
 exp	:	M2_FALSE
-			{ write_exp_elt_opcode (OP_BOOL);
-			  write_exp_elt_longcst ((LONGEST) $1);
-			  write_exp_elt_opcode (OP_BOOL); }
+			{ write_exp_elt_opcode (pstate, OP_BOOL);
+			  write_exp_elt_longcst (pstate, (LONGEST) $1);
+			  write_exp_elt_opcode (pstate, OP_BOOL); }
 	;
 
 exp	:	INT
-			{ write_exp_elt_opcode (OP_LONG);
-			  write_exp_elt_type (parse_m2_type->builtin_int);
-			  write_exp_elt_longcst ((LONGEST) $1);
-			  write_exp_elt_opcode (OP_LONG); }
+			{ write_exp_elt_opcode (pstate, OP_LONG);
+			  write_exp_elt_type (pstate,
+					parse_m2_type (pstate)->builtin_int);
+			  write_exp_elt_longcst (pstate, (LONGEST) $1);
+			  write_exp_elt_opcode (pstate, OP_LONG); }
 	;
 
 exp	:	UINT
 			{
-			  write_exp_elt_opcode (OP_LONG);
-			  write_exp_elt_type (parse_m2_type->builtin_card);
-			  write_exp_elt_longcst ((LONGEST) $1);
-			  write_exp_elt_opcode (OP_LONG);
+			  write_exp_elt_opcode (pstate, OP_LONG);
+			  write_exp_elt_type (pstate,
+					      parse_m2_type (pstate)
+					      ->builtin_card);
+			  write_exp_elt_longcst (pstate, (LONGEST) $1);
+			  write_exp_elt_opcode (pstate, OP_LONG);
 			}
 	;
 
 exp	:	CHAR
-			{ write_exp_elt_opcode (OP_LONG);
-			  write_exp_elt_type (parse_m2_type->builtin_char);
-			  write_exp_elt_longcst ((LONGEST) $1);
-			  write_exp_elt_opcode (OP_LONG); }
+			{ write_exp_elt_opcode (pstate, OP_LONG);
+			  write_exp_elt_type (pstate,
+					      parse_m2_type (pstate)
+					      ->builtin_char);
+			  write_exp_elt_longcst (pstate, (LONGEST) $1);
+			  write_exp_elt_opcode (pstate, OP_LONG); }
 	;
 
 
 exp	:	FLOAT
-			{ write_exp_elt_opcode (OP_DOUBLE);
-			  write_exp_elt_type (parse_m2_type->builtin_real);
-			  write_exp_elt_dblcst ($1);
-			  write_exp_elt_opcode (OP_DOUBLE); }
+			{ write_exp_elt_opcode (pstate, OP_DOUBLE);
+			  write_exp_elt_type (pstate,
+					      parse_m2_type (pstate)
+					      ->builtin_real);
+			  write_exp_elt_dblcst (pstate, $1);
+			  write_exp_elt_opcode (pstate, OP_DOUBLE); }
 	;
 
 exp	:	variable
 	;
 
 exp	:	SIZE '(' type ')'	%prec UNARY
-			{ write_exp_elt_opcode (OP_LONG);
-			  write_exp_elt_type (parse_type->builtin_int);
-			  write_exp_elt_longcst ((LONGEST) TYPE_LENGTH ($3));
-			  write_exp_elt_opcode (OP_LONG); }
+			{ write_exp_elt_opcode (pstate, OP_LONG);
+			  write_exp_elt_type (pstate,
+					    parse_type (pstate)->builtin_int);
+			  write_exp_elt_longcst (pstate,
+						 (LONGEST) TYPE_LENGTH ($3));
+			  write_exp_elt_opcode (pstate, OP_LONG); }
 	;
 
 exp	:	STRING
-			{ write_exp_elt_opcode (OP_M2_STRING);
-			  write_exp_string ($1);
-			  write_exp_elt_opcode (OP_M2_STRING); }
+			{ write_exp_elt_opcode (pstate, OP_M2_STRING);
+			  write_exp_string (pstate, $1);
+			  write_exp_elt_opcode (pstate, OP_M2_STRING); }
 	;
 
 /* This will be used for extensions later.  Like adding modules.  */
@@ -545,7 +562,8 @@ block	:	fblock
 
 fblock	:	BLOCKNAME
 			{ struct symbol *sym
-			    = lookup_symbol (copy_name ($1), expression_context_block,
+			    = lookup_symbol (copy_name ($1),
+					     expression_context_block,
 					     VAR_DOMAIN, 0);
 			  $$ = sym;}
 	;
@@ -565,10 +583,10 @@ fblock	:	block COLONCOLON BLOCKNAME
 
 /* Useful for assigning to PROCEDURE variables */
 variable:	fblock
-			{ write_exp_elt_opcode(OP_VAR_VALUE);
-			  write_exp_elt_block (NULL);
-			  write_exp_elt_sym ($1);
-			  write_exp_elt_opcode (OP_VAR_VALUE); }
+			{ write_exp_elt_opcode (pstate, OP_VAR_VALUE);
+			  write_exp_elt_block (pstate, NULL);
+			  write_exp_elt_sym (pstate, $1);
+			  write_exp_elt_opcode (pstate, OP_VAR_VALUE); }
 	;
 
 /* GDB internal ($foo) variable */
@@ -591,11 +609,11 @@ variable:	block COLONCOLON NAME
 				innermost_block = block_found;
 			    }
 
-			  write_exp_elt_opcode (OP_VAR_VALUE);
+			  write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			  /* block_found is set by lookup_symbol.  */
-			  write_exp_elt_block (block_found);
-			  write_exp_elt_sym (sym);
-			  write_exp_elt_opcode (OP_VAR_VALUE); }
+			  write_exp_elt_block (pstate, block_found);
+			  write_exp_elt_sym (pstate, sym);
+			  write_exp_elt_opcode (pstate, OP_VAR_VALUE); }
 	;
 
 /* Base case for variables.  */
@@ -617,13 +635,13 @@ variable:	NAME
 				    innermost_block = block_found;
 				}
 
-			      write_exp_elt_opcode (OP_VAR_VALUE);
+			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			      /* We want to use the selected frame, not
 				 another more inner frame which happens to
 				 be in the same block.  */
-			      write_exp_elt_block (NULL);
-			      write_exp_elt_sym (sym);
-			      write_exp_elt_opcode (OP_VAR_VALUE);
+			      write_exp_elt_block (pstate, NULL);
+			      write_exp_elt_sym (pstate, sym);
+			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			    }
 			  else
 			    {
@@ -633,7 +651,7 @@ variable:	NAME
 			      msymbol =
 				lookup_bound_minimal_symbol (arg);
 			      if (msymbol.minsym != NULL)
-				write_exp_msymbol (msymbol);
+				write_exp_msymbol (pstate, msymbol);
 			      else if (!have_full_symbols () && !have_partial_symbols ())
 				error (_("No symbol table is loaded.  Use the \"symbol-file\" command."));
 			      else
@@ -645,7 +663,8 @@ variable:	NAME
 
 type
 	:	TYPENAME
-			{ $$ = lookup_typename (parse_language, parse_gdbarch,
+			{ $$ = lookup_typename (parse_language (pstate),
+						parse_gdbarch (pstate),
 						copy_name ($1),
 						expression_context_block, 0); }
 
@@ -805,8 +824,8 @@ static struct keyword keytab[] =
 
 /* Read one token, getting characters through lexptr.  */
 
-/* This is where we will check to make sure that the language and the operators used are
-   compatible  */
+/* This is where we will check to make sure that the language and the
+   operators used are compatible  */
 
 static int
 yylex (void)
@@ -992,7 +1011,7 @@ yylex (void)
 
   if (*tokstart == '$')
     {
-      write_dollar_variable (yylval.sval);
+      write_dollar_variable (pstate, yylval.sval);
       return INTERNAL_VAR;
     }
 
@@ -1012,8 +1031,9 @@ yylex (void)
     sym = lookup_symbol (tmp, expression_context_block, VAR_DOMAIN, 0);
     if (sym && SYMBOL_CLASS (sym) == LOC_BLOCK)
       return BLOCKNAME;
-    if (lookup_typename (parse_language, parse_gdbarch,
-			 copy_name (yylval.sval), expression_context_block, 1))
+    if (lookup_typename (parse_language (pstate), parse_gdbarch (pstate),
+			 copy_name (yylval.sval),
+			 expression_context_block, 1))
       return TYPENAME;
 
     if(sym)
@@ -1068,6 +1088,22 @@ yylex (void)
     /* Must be another type of name...  */
     return NAME;
  }
+}
+
+int
+m2_parse (struct parser_state *par_state)
+{
+  int result;
+  struct cleanup *c = make_cleanup_clear_parser_state (&pstate);
+
+  /* Setting up the parser state.  */
+  gdb_assert (par_state != NULL);
+  pstate = par_state;
+
+  result = yyparse ();
+  do_cleanups (c);
+
+  return result;
 }
 
 void

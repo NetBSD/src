@@ -1,5 +1,5 @@
 /* OpenCL language support for GDB, the GNU debugger.
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
    Contributed by Ken Werner <ken.werner@de.ibm.com>.
 
@@ -19,7 +19,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <string.h>
 #include "gdbtypes.h"
 #include "symtab.h"
 #include "expression.h"
@@ -27,7 +26,6 @@
 #include "language.h"
 #include "varobj.h"
 #include "c-lang.h"
-#include "gdb_assert.h"
 
 extern void _initialize_opencl_language (void);
 
@@ -156,11 +154,11 @@ struct lval_closure
 static struct lval_closure *
 allocate_lval_closure (int *indices, int n, struct value *val)
 {
-  struct lval_closure *c = XZALLOC (struct lval_closure);
+  struct lval_closure *c = XCNEW (struct lval_closure);
 
   c->refc = 1;
   c->n = n;
-  c->indices = XCALLOC (n, int);
+  c->indices = XCNEWVEC (int, n);
   memcpy (c->indices, indices, n * sizeof (int));
   value_incref (val); /* Increment the reference counter of the value.  */
   c->val = val;
@@ -240,58 +238,6 @@ lval_func_write (struct value *v, struct value *fromval)
   value_free_to_mark (mark);
 }
 
-/* Return nonzero if all bits in V within OFFSET and LENGTH are valid.  */
-
-static int
-lval_func_check_validity (const struct value *v, int offset, int length)
-{
-  struct lval_closure *c = (struct lval_closure *) value_computed_closure (v);
-  /* Size of the target type in bits.  */
-  int elsize =
-      TYPE_LENGTH (TYPE_TARGET_TYPE (check_typedef (value_type (c->val)))) * 8;
-  int startrest = offset % elsize;
-  int start = offset / elsize;
-  int endrest = (offset + length) % elsize;
-  int end = (offset + length) / elsize;
-  int i;
-
-  if (endrest)
-    end++;
-
-  if (end > c->n)
-    return 0;
-
-  for (i = start; i < end; i++)
-    {
-      int comp_offset = (i == start) ? startrest : 0;
-      int comp_length = (i == end) ? endrest : elsize;
-
-      if (!value_bits_valid (c->val, c->indices[i] * elsize + comp_offset,
-			     comp_length))
-	return 0;
-    }
-
-  return 1;
-}
-
-/* Return nonzero if any bit in V is valid.  */
-
-static int
-lval_func_check_any_valid (const struct value *v)
-{
-  struct lval_closure *c = (struct lval_closure *) value_computed_closure (v);
-  /* Size of the target type in bits.  */
-  int elsize =
-      TYPE_LENGTH (TYPE_TARGET_TYPE (check_typedef (value_type (c->val)))) * 8;
-  int i;
-
-  for (i = 0; i < c->n; i++)
-    if (value_bits_valid (c->val, c->indices[i] * elsize, elsize))
-      return 1;
-
-  return 0;
-}
-
 /* Return nonzero if bits in V from OFFSET and LENGTH represent a
    synthetic pointer.  */
 
@@ -358,8 +304,6 @@ static const struct lval_funcs opencl_value_funcs =
   {
     lval_func_read,
     lval_func_write,
-    lval_func_check_validity,
-    lval_func_check_any_valid,
     NULL,	/* indirect */
     NULL,	/* coerce_ref */
     lval_func_check_synthetic_pointer,
@@ -1139,6 +1083,8 @@ const struct language_defn opencl_language_defn =
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
   &default_varobj_ops,
+  NULL,
+  NULL,
   LANG_MAGIC
 };
 

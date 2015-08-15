@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Free Software Foundation, Inc.
+# Copyright 2011-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,9 +41,23 @@ if {[build_executable_from_specs $testfile.exp $testfile \
 
 clean_restart $testfile
 
-# Single hex digit
-set xd {[0-9a-f]}
+proc set_breakpoint_on_gcd_function {} {
+    # Single hex digit
+    set xd {[0-9a-f]}
 
-# This accepts e.g. "Breakpoint 1 at 0x40968a" (fixed GDB)
-# but rejects e.g. "Breakpoint 1 at 0x4" (broken GDB).
-gdb_test "b [gdb_get_line_number "gdb break here"]" "Breakpoint \[0-9\] at 0x${xd}${xd}+: .*"
+    # This accepts e.g. "Breakpoint 1 at 0x40968a" (fixed GDB)
+    # but rejects e.g. "Breakpoint 1 at 0x4" (broken GDB).
+    gdb_test "b [gdb_get_line_number "gdb break here"]" \
+	"Breakpoint \[0-9\] at 0x${xd}${xd}+: .*"
+}
+
+set_breakpoint_on_gcd_function
+
+set saved_gdbflags $GDBFLAGS
+set GDBFLAGS "$GDBFLAGS --readnow"
+clean_restart ${testfile}
+set GDBFLAGS $saved_gdbflags
+
+with_test_prefix "readnow" {
+    set_breakpoint_on_gcd_function
+}

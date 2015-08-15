@@ -1,6 +1,6 @@
 /* DWARF 2 Expression Evaluator.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    Contributed by Daniel Berlin <dan@dberlin.org>.
 
@@ -84,12 +84,8 @@ struct dwarf_expr_context_funcs
      This can throw an exception if the index is out of range.  */
   CORE_ADDR (*get_addr_index) (void *baton, unsigned int index);
 
-#if 0
-  /* Not yet implemented.  */
-
   /* Return the `object address' for DW_OP_push_object_address.  */
   CORE_ADDR (*get_object_address) (void *baton);
-#endif
 };
 
 /* The location of a value.  */

@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,150 +21,9 @@
 #define EXCEPTIONS_H
 
 #include "ui-out.h"
-#include <setjmp.h>
-
-/* Reasons for calling throw_exceptions().  NOTE: all reason values
-   must be less than zero.  enum value 0 is reserved for internal use
-   as the return value from an initial setjmp().  The function
-   catch_exceptions() reserves values >= 0 as legal results from its
-   wrapped function.  */
-
-enum return_reason
-  {
-    /* User interrupt.  */
-    RETURN_QUIT = -2,
-    /* Any other error.  */
-    RETURN_ERROR
-  };
-
-#define RETURN_MASK(reason)	(1 << (int)(-reason))
-
-typedef enum
-{
-  RETURN_MASK_QUIT = RETURN_MASK (RETURN_QUIT),
-  RETURN_MASK_ERROR = RETURN_MASK (RETURN_ERROR),
-  RETURN_MASK_ALL = (RETURN_MASK_QUIT | RETURN_MASK_ERROR)
-} return_mask;
-
-/* Describe all exceptions.  */
-
-enum errors {
-  GDB_NO_ERROR,
-
-  /* Any generic error, the corresponding text is in
-     exception.message.  */
-  GENERIC_ERROR,
-
-  /* Something requested was not found.  */
-  NOT_FOUND_ERROR,
-
-  /* Thread library lacks support necessary for finding thread local
-     storage.  */
-  TLS_NO_LIBRARY_SUPPORT_ERROR,
-
-  /* Load module not found while attempting to find thread local storage.  */
-  TLS_LOAD_MODULE_NOT_FOUND_ERROR,
-
-  /* Thread local storage has not been allocated yet.  */
-  TLS_NOT_ALLOCATED_YET_ERROR,
-
-  /* Something else went wrong while attempting to find thread local
-     storage.  The ``struct gdb_exception'' message field provides
-     more detail.  */
-  TLS_GENERIC_ERROR,
-
-  /* Problem parsing an XML document.  */
-  XML_PARSE_ERROR,
-
-  /* Error accessing memory.  */
-  MEMORY_ERROR,
-
-  /* Value not available.  E.g., a register was not collected in a
-     traceframe.  */
-  NOT_AVAILABLE_ERROR,
-
-  /* Value was optimized out.  Note: if the value was a register, this
-     means the register was not saved in the frame.  */
-  OPTIMIZED_OUT_ERROR,
-
-  /* DW_OP_GNU_entry_value resolving failed.  */
-  NO_ENTRY_VALUE_ERROR,
-
-  /* Target throwing an error has been closed.  Current command should be
-     aborted as the inferior state is no longer valid.  */
-  TARGET_CLOSE_ERROR,
-
-  /* An undefined command was executed.  */
-  UNDEFINED_COMMAND_ERROR,
-
-  /* Add more errors here.  */
-  NR_ERRORS
-};
-
-struct gdb_exception
-{
-  enum return_reason reason;
-  enum errors error;
-  const char *message;
-};
 
 /* A pre-defined non-exception.  */
 extern const struct gdb_exception exception_none;
-
-/* Wrap set/long jmp so that it's more portable (internal to
-   exceptions).  */
-
-#if defined(HAVE_SIGSETJMP)
-#define EXCEPTIONS_SIGJMP_BUF		sigjmp_buf
-#define EXCEPTIONS_SIGSETJMP(buf)	sigsetjmp((buf), 1)
-#define EXCEPTIONS_SIGLONGJMP(buf,val)	siglongjmp((buf), (val))
-#else
-#define EXCEPTIONS_SIGJMP_BUF		jmp_buf
-#define EXCEPTIONS_SIGSETJMP(buf)	setjmp(buf)
-#define EXCEPTIONS_SIGLONGJMP(buf,val)	longjmp((buf), (val))
-#endif
-
-/* Functions to drive the exceptions state m/c (internal to
-   exceptions).  */
-EXCEPTIONS_SIGJMP_BUF *exceptions_state_mc_init (volatile struct
-						 gdb_exception *exception,
-						 return_mask mask);
-int exceptions_state_mc_action_iter (void);
-int exceptions_state_mc_action_iter_1 (void);
-
-/* Macro to wrap up standard try/catch behavior.
-
-   The double loop lets us correctly handle code "break"ing out of the
-   try catch block.  (It works as the "break" only exits the inner
-   "while" loop, the outer for loop detects this handling it
-   correctly.)  Of course "return" and "goto" are not so lucky.
-
-   For instance:
-
-   *INDENT-OFF*
-
-   volatile struct gdb_exception e;
-   TRY_CATCH (e, RETURN_MASK_ERROR)
-     {
-     }
-   switch (e.reason)
-     {
-     case RETURN_ERROR: ...
-     }
-
-  */
-
-#define TRY_CATCH(EXCEPTION,MASK) \
-     { \
-       EXCEPTIONS_SIGJMP_BUF *buf = \
-	 exceptions_state_mc_init (&(EXCEPTION), (MASK)); \
-       EXCEPTIONS_SIGSETJMP (*buf); \
-     } \
-     while (exceptions_state_mc_action_iter ()) \
-       while (exceptions_state_mc_action_iter_1 ())
-
-/* *INDENT-ON* */
-
 
 /* If E is an exception, print it's error message on the specified
    stream.  For _fprintf, prefix the message with PREFIX...  */
@@ -172,26 +31,6 @@ extern void exception_print (struct ui_file *file, struct gdb_exception e);
 extern void exception_fprintf (struct ui_file *file, struct gdb_exception e,
 			       const char *prefix,
 			       ...) ATTRIBUTE_PRINTF (3, 4);
-
-/* Throw an exception (as described by "struct gdb_exception").  Will
-   execute a LONG JUMP to the inner most containing exception handler
-   established using catch_exceptions() (or similar).
-
-   Code normally throws an exception using error() et.al.  For various
-   reaons, GDB also contains code that throws an exception directly.
-   For instance, the remote*.c targets contain CNTRL-C signal handlers
-   that propogate the QUIT event up the exception chain.  ``This could
-   be a good thing or a dangerous thing.'' -- the Existential
-   Wombat.  */
-
-extern void throw_exception (struct gdb_exception exception)
-     ATTRIBUTE_NORETURN;
-extern void throw_verror (enum errors, const char *fmt, va_list ap)
-     ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 0);
-extern void throw_vfatal (const char *fmt, va_list ap)
-     ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (1, 0);
-extern void throw_error (enum errors error, const char *fmt, ...)
-     ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 3);
 
 /* Call FUNC(UIOUT, FUNC_ARGS) but wrapped within an exception
    handler.  If an exception (enum return_reason) is thrown using
@@ -251,18 +90,5 @@ extern int catch_exceptions_with_msg (struct ui_out *uiout,
 
 typedef int (catch_errors_ftype) (void *);
 extern int catch_errors (catch_errors_ftype *, void *, char *, return_mask);
-
-/* Template to catch_errors() that wraps calls to command
-   functions.  */
-
-typedef void (catch_command_errors_ftype) (char *, int);
-extern int catch_command_errors (catch_command_errors_ftype *func,
-				 char *arg, int from_tty, return_mask);
-
-/* Like catch_command_errors, but works with const command and args.  */
-
-typedef void (catch_command_errors_const_ftype) (const char *, int);
-extern int catch_command_errors_const (catch_command_errors_const_ftype *func,
-				       const char *arg, int from_tty, return_mask);
 
 #endif

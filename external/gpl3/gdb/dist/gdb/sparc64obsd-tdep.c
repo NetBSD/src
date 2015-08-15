@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc64.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,22 +28,36 @@
 #include "objfiles.h"
 #include "trad-frame.h"
 
-#include "gdb_assert.h"
-
 #include "obsd-tdep.h"
 #include "sparc64-tdep.h"
 #include "solib-svr4.h"
 #include "bsd-uthread.h"
 
-/* OpenBSD uses the traditional NetBSD core file format, even for
-   ports that use ELF.  The core files don't use multiple register
-   sets.  Instead, the general-purpose and floating-point registers
-   are lumped together in a single section.  Unlike on NetBSD, OpenBSD
-   uses a different layout for its general-purpose registers than the
-   layout used for ptrace(2).  */
+/* Older OpenBSD versions used the traditional NetBSD core file
+   format, even for ports that use ELF.  These core files don't use
+   multiple register sets.  Instead, the general-purpose and
+   floating-point registers are lumped together in a single section.
+   Unlike on NetBSD, OpenBSD uses a different layout for its
+   general-purpose registers than the layout used for ptrace(2).
+
+   Newer OpenBSD versions use ELF core files.  Here the register sets
+   match the ptrace(2) layout.  */
 
 /* From <machine/reg.h>.  */
-const struct sparc_gregset sparc64obsd_core_gregset =
+const struct sparc_gregmap sparc64obsd_gregmap =
+{
+  0 * 8,			/* "tstate" */
+  1 * 8,			/* %pc */
+  2 * 8,			/* %npc */
+  3 * 8,			/* %y */
+  -1,				/* %fprs */
+  -1,
+  5 * 8,			/* %g1 */
+  20 * 8,			/* %l0 */
+  4				/* sizeof (%y) */
+};
+
+const struct sparc_gregmap sparc64obsd_core_gregmap =
 {
   0 * 8,			/* "tstate" */
   1 * 8,			/* %pc */
@@ -61,10 +75,24 @@ sparc64obsd_supply_gregset (const struct regset *regset,
 			    struct regcache *regcache,
 			    int regnum, const void *gregs, size_t len)
 {
-  const char *regs = gregs;
+  const void *fpregs = (char *)gregs + 288;
 
-  sparc64_supply_gregset (&sparc64obsd_core_gregset, regcache, regnum, regs);
-  sparc64_supply_fpregset (&sparc64_bsd_fpregset, regcache, regnum, regs + 288);
+  if (len < 832)
+    {
+      sparc64_supply_gregset (&sparc64obsd_gregmap, regcache, regnum, gregs);
+      return;
+    }
+
+  sparc64_supply_gregset (&sparc64obsd_core_gregmap, regcache, regnum, gregs);
+  sparc64_supply_fpregset (&sparc64_bsd_fpregmap, regcache, regnum, fpregs);
+}
+
+static void
+sparc64obsd_supply_fpregset (const struct regset *regset,
+			     struct regcache *regcache,
+			     int regnum, const void *fpregs, size_t len)
+{
+  sparc64_supply_fpregset (&sparc64_bsd_fpregmap, regcache, regnum, fpregs);
 }
 
 
@@ -373,13 +401,25 @@ sparc64obsd_collect_uthread(const struct regcache *regcache,
 }
 
 
+static const struct regset sparc64obsd_gregset =
+  {
+    NULL, sparc64obsd_supply_gregset, NULL
+  };
+
+static const struct regset sparc64obsd_fpregset =
+  {
+    NULL, sparc64obsd_supply_fpregset, NULL
+  };
+
 static void
 sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  tdep->gregset = regset_alloc (gdbarch, sparc64obsd_supply_gregset, NULL);
-  tdep->sizeof_gregset = 832;
+  tdep->gregset = &sparc64obsd_gregset;
+  tdep->sizeof_gregset = 288;
+  tdep->fpregset = &sparc64obsd_fpregset;
+  tdep->sizeof_fpregset = 272;
 
   /* Make sure we can single-step "new" syscalls.  */
   tdep->step_trap = sparcnbsd_step_trap;
@@ -388,6 +428,7 @@ sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   frame_unwind_append_unwinder (gdbarch, &sparc64obsd_trapframe_unwind);
 
   sparc64_init_abi (info, gdbarch);
+  obsd_init_abi (info, gdbarch);
 
   /* OpenBSD/sparc64 has SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets

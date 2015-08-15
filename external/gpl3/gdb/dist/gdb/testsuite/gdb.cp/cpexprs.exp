@@ -1,6 +1,6 @@
 # cpexprs.exp - C++ expressions tests
 #
-# Copyright 2008-2014 Free Software Foundation, Inc.
+# Copyright 2008-2015 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -54,7 +54,7 @@ proc test_breakpoint {func} {
 # Usage:
 # add NAME TYPE PRINT LST
 # add NAME TYPE PRINT -
-proc add {func type print lst} {
+proc add_type_regexp {func type print lst} {
     global all_functions CONVAR ADDR
 
     set all_functions($func,type) $type
@@ -67,11 +67,15 @@ proc add {func type print lst} {
     regsub {\(void\)} $print {()} print
 
     set all_functions($func,print) \
-	"$CONVAR = {[string_to_regexp $type]} $ADDR <[string_to_regexp $print].*>"
+	"$CONVAR = {$type} $ADDR <[string_to_regexp $print].*>"
     if {$lst == "-"} {
 	set lst "$func"
     }
     set all_functions($func,list) ".*// [string_to_regexp $lst]"
+}
+
+proc add {func type print lst} {
+    add_type_regexp $func [string_to_regexp $type] $print $lst
 }
 
 proc get {func cmd} {
@@ -139,32 +143,40 @@ add {base2::a_function} \
 
 # On targets using the ARM EABI, the constructor is expected to return
 # "this".
-proc ctor { type arglist } {
+proc ctor_ret { type } {
     if { [istarget arm*-*eabi*] } {
-	set ret "$type *"
+	return "$type *"
     } else {
-	set ret "void "
+	return "void "
     }
+}
+
+proc ctor_prefix { type } {
+    set ret [ctor_ret $type]
+    return "${ret}($type * const"
+}
+
+proc ctor { type arglist } {
     if { $arglist != "" } {
 	set arglist ", $arglist"
     }
-    return "${ret}($type * const$arglist)"
+    return "[ctor_prefix $type]$arglist)"
 }
 
 add {derived::derived} \
     [ctor derived ""] \
     - \
     -
-add {base1::base1(void)} \
-    [ctor base1 "const void ** const"] \
+add_type_regexp {base1::base1(void)} \
+    "[string_to_regexp [ctor_prefix base1]], (const )?void \\*\\*( const)?\\)" \
     - \
     -
 add {base1::base1(int)} \
     [ctor base1 "int"] \
     - \
     -
-add {base2::base2} \
-    [ctor base2 "const void ** const"] \
+add_type_regexp {base2::base2} \
+    "[string_to_regexp [ctor_prefix base2]], (const )?void \\*\\*( const)?\\)" \
     - \
     -
 add {base::base(void)} \

@@ -1,4 +1,4 @@
-# Copyright 1988-2014 Free Software Foundation, Inc.
+# Copyright 1988-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -222,7 +222,13 @@ proc do_steps_and_nexts {} {
 		set command "next"
 	    }
 	    -re ".*$gdb_prompt $" {
-		fail "unknown source line after $description"
+		# If $description hasn't been set yet, it's likely the file
+		# has been edited but gdb hasn't been recompiled.
+		if [info exists description] {
+		    fail "unknown source line (after $description)"
+		} else {
+		    fail "unknown source line"
+		}
 		return
 	    }
 	    default {
@@ -294,12 +300,8 @@ proc test_with_self { executable } {
 
     # We'll need this when we send a ^C to GDB.  Need to do it before we
     # run the program and gdb starts saving and restoring tty states.
-    # On Ultrix, we don't need it and it is really slow (because shell_escape
-    # doesn't use vfork).
-    if ![istarget "*-*-ultrix*"] then {
-	gdb_test "shell stty intr '^C'" ".*" \
-	    "set interrupt character in test_with_self"
-    }
+    gdb_test "shell stty intr '^C'" ".*" \
+	"set interrupt character in test_with_self"
 
     # FIXME: If we put this after the run to main, the first list
     # command doesn't print the same line as the current line where
@@ -452,15 +454,6 @@ proc test_with_self { executable } {
     gdb_test_multiple "backtrace" "$description" {
 	-re "#0.*(read|poll).*in main \\(.*\\) at .*gdb\\.c.*$gdb_prompt $" {
 	    pass "$description"
-	}
-	-re ".*$gdb_prompt $" {
-	    # On the alpha, we hit the infamous problem about gdb
-	    # being unable to get the frame pointer (mentioned in
-	    # gdb/README).  As it is intermittent, there is no way to
-	    # XFAIL it which will give us an XPASS if the problem goes
-	    # away.
-	    setup_xfail "alpha*-*-osf*"
-	    fail "$description"
 	}
     }
 

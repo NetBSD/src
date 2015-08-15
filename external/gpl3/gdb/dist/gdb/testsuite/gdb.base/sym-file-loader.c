@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Free Software Foundation, Inc.
+/* Copyright 2013-2015 Free Software Foundation, Inc.
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3 of the License, or
@@ -15,12 +15,67 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 
 #include "sym-file-loader.h"
+
+#include <inttypes.h>
+#include <ansidecl.h>
+#include <elf/common.h>
+#include <elf/external.h>
+
+#ifdef TARGET_LP64
+
+typedef Elf64_External_Phdr Elf_External_Phdr;
+typedef Elf64_External_Ehdr Elf_External_Ehdr;
+typedef Elf64_External_Shdr Elf_External_Shdr;
+typedef Elf64_External_Sym Elf_External_Sym;
+typedef uint64_t Elf_Addr;
+
+#elif defined TARGET_ILP32
+
+typedef Elf32_External_Phdr Elf_External_Phdr;
+typedef Elf32_External_Ehdr Elf_External_Ehdr;
+typedef Elf32_External_Shdr Elf_External_Shdr;
+typedef Elf32_External_Sym Elf_External_Sym;
+typedef uint32_t Elf_Addr;
+
+#endif
+
+#define GET(hdr, field) (\
+sizeof ((hdr)->field) == 1 ? (uint64_t) (hdr)->field[0] : \
+sizeof ((hdr)->field) == 2 ? (uint64_t) *(uint16_t *) (hdr)->field : \
+sizeof ((hdr)->field) == 4 ? (uint64_t) *(uint32_t *) (hdr)->field : \
+sizeof ((hdr)->field) == 8 ? *(uint64_t *) (hdr)->field : \
+*(uint64_t *) NULL)
+
+#define GETADDR(hdr, field) (\
+sizeof ((hdr)->field) == sizeof (Elf_Addr) ? *(Elf_Addr *) (hdr)->field : \
+*(Elf_Addr *) NULL)
+
+struct segment
+{
+  uint8_t *mapped_addr;
+  size_t mapped_size;
+  Elf_External_Phdr *phdr;
+  struct segment *next;
+};
+
+struct library
+{
+  int fd;
+  Elf_External_Ehdr *ehdr;
+  struct segment *segments;
+};
+
+static Elf_External_Shdr *find_shdr (Elf_External_Ehdr *ehdr,
+				     const char *section);
+static int translate_offset (uint64_t file_offset, struct segment *seg,
+			     void **addr);
 
 #ifdef TARGET_LP64
 
@@ -47,6 +102,7 @@ load (uint8_t *addr, Elf_External_Phdr *phdr, struct segment *tail_seg)
 {
   struct segment *seg = NULL;
   uint8_t *mapped_addr = NULL;
+  size_t mapped_size = 0;
   void *from = NULL;
   void *to = NULL;
 
@@ -56,6 +112,7 @@ load (uint8_t *addr, Elf_External_Phdr *phdr, struct segment *tail_seg)
   mapped_addr = (uint8_t *) mmap ((void *) GETADDR (phdr, p_vaddr),
 				  GET (phdr, p_memsz), perm,
 				  MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+  mapped_size = GET (phdr, p_memsz);
 
   from = (void *) (addr + GET (phdr, p_offset));
   to = (void *) mapped_addr;
@@ -68,6 +125,7 @@ load (uint8_t *addr, Elf_External_Phdr *phdr, struct segment *tail_seg)
     return 0;
 
   seg->mapped_addr = mapped_addr;
+  seg->mapped_size = mapped_size;
   seg->phdr = phdr;
   seg->next = 0;
 
@@ -77,28 +135,115 @@ load (uint8_t *addr, Elf_External_Phdr *phdr, struct segment *tail_seg)
   return seg;
 }
 
+#ifdef __linux__
+# define SELF_LINK "/proc/self/exe"
+#elif defined NETBSD
+# define SELF_LINK "/proc/curproc/exe"
+#elif defined __OpenBSD__ || defined __FreeBSD__ || defined __DragonFly__
+# define SELF_LINK "/proc/curproc/file"
+#elif defined SunOS
+# define SELF_LINK "/proc/self/path/a.out"
+#endif
+
+/* Like RPATH=$ORIGIN, return the dirname of the current
+   executable.  */
+
+static const char *
+get_origin (void)
+{
+  static char self_path[PATH_MAX];
+  static ssize_t self_path_len;
+
+  if (self_path_len == 0)
+    {
+#ifdef SELF_LINK
+      self_path_len = readlink (SELF_LINK, self_path, PATH_MAX - 1);
+      if (self_path_len != -1)
+	{
+	  char *dirsep;
+
+	  self_path[self_path_len] = '\0';
+	  dirsep = strrchr (self_path, '/');
+	  *dirsep = '\0';
+	}
+#else
+      self_path_len = -1;
+#endif
+    }
+
+  if (self_path_len == -1)
+    return NULL;
+  else
+    return self_path;
+}
+
+/* Unload/unmap a segment.  */
+
+static void
+unload (struct segment *seg)
+{
+  munmap (seg->mapped_addr, seg->mapped_size);
+  free (seg);
+}
+
+void
+unload_shlib (struct library *lib)
+{
+  struct segment *seg, *next_seg;
+
+  for (seg = lib->segments; seg != NULL; seg = next_seg)
+    {
+      next_seg = seg->next;
+      unload (seg);
+    }
+
+  close (lib->fd);
+  free (lib);
+}
+
 /* Mini shared library loader.  No reallocation
    is performed for the sake of simplicity.  */
 
-int
-load_shlib (const char *file, Elf_External_Ehdr **ehdr_out,
-	    struct segment **seg_out)
+struct library *
+load_shlib (const char *file)
 {
+  struct library *lib;
   uint64_t i;
-  int fd;
+  int fd = -1;
   off_t fsize;
   uint8_t *addr;
   Elf_External_Ehdr *ehdr;
   Elf_External_Phdr *phdr;
   struct segment *head_seg = NULL;
   struct segment *tail_seg = NULL;
+  const char *origin;
+  char *path;
 
-  /* Map the lib in memory for reading.  */
-  fd = open (file, O_RDONLY);
+  /* Map the lib in memory for reading.
+
+     If the file name is relative, try looking it up relative to the
+     main executable's path.  I.e., emulate RPATH=$ORIGIN.  */
+  if (file[0] != '/')
+    {
+      origin = get_origin ();
+      if (origin == NULL)
+	{
+	  fprintf (stderr, "get_origin not implemented.");
+	  return NULL;
+	}
+
+      path = alloca (strlen (origin) + 1 + strlen (file) + 1);
+      sprintf (path, "%s/%s", origin, file);
+      fd = open (path, O_RDONLY);
+    }
+
+  if (fd < 0)
+    fd = open (file, O_RDONLY);
+
   if (fd < 0)
     {
       perror ("fopen failed.");
-      return -1;
+      return NULL;
     }
 
   fsize = lseek (fd, 0, SEEK_END);
@@ -106,14 +251,14 @@ load_shlib (const char *file, Elf_External_Ehdr **ehdr_out,
   if (fsize < 0)
     {
       perror ("lseek failed.");
-      return -1;
+      return NULL;
     }
 
   addr = (uint8_t *) mmap (NULL, fsize, PROT_READ, MAP_PRIVATE, fd, 0);
   if (addr == (uint8_t *) -1)
     {
       perror ("mmap failed.");
-      return -1;
+      return NULL;
     }
 
   /* Check if the lib is an ELF file.  */
@@ -124,7 +269,7 @@ load_shlib (const char *file, Elf_External_Ehdr **ehdr_out,
       || ehdr->e_ident[EI_MAG3] != ELFMAG3)
     {
       printf ("Not an ELF file: %x\n", ehdr->e_ident[EI_MAG0]);
-      return -1;
+      return NULL;
     }
 
   if (ehdr->e_ident[EI_CLASS] == ELFCLASS32)
@@ -132,7 +277,7 @@ load_shlib (const char *file, Elf_External_Ehdr **ehdr_out,
       if (sizeof (void *) != 4)
 	{
 	  printf ("Architecture mismatch.");
-	  return -1;
+	  return NULL;
 	}
     }
   else if (ehdr->e_ident[EI_CLASS] == ELFCLASS64)
@@ -140,9 +285,18 @@ load_shlib (const char *file, Elf_External_Ehdr **ehdr_out,
       if (sizeof (void *) != 8)
 	{
 	  printf ("Architecture mismatch.");
-	  return -1;
+	  return NULL;
 	}
     }
+
+  lib = malloc (sizeof (struct library));
+  if (lib == NULL)
+    {
+      printf ("malloc failed.");
+      return NULL;
+    }
+
+  lib->fd = fd;
 
   /* Load the program segments.  For the sake of simplicity
      assume that no reallocation is needed.  */
@@ -159,8 +313,25 @@ load_shlib (const char *file, Elf_External_Ehdr **ehdr_out,
 	    head_seg = next_seg;
 	}
     }
-  *ehdr_out = ehdr;
-  *seg_out = head_seg;
+  lib->ehdr = ehdr;
+  lib->segments = head_seg;
+  return lib;
+}
+
+int
+get_text_addr (struct library *lib, void **text_addr)
+{
+  Elf_External_Shdr *text;
+
+  /* Get the text section.  */
+  text = find_shdr (lib->ehdr, ".text");
+  if (text == NULL)
+    return -1;
+
+  if (translate_offset (GET (text, sh_offset), lib->segments, text_addr)
+      != 0)
+    return -1;
+
   return 0;
 }
 
@@ -225,7 +396,7 @@ find_strtab (Elf_External_Ehdr *ehdr,
 
 /* Return the section header named SECTION.  */
 
-Elf_External_Shdr *
+static Elf_External_Shdr *
 find_shdr (Elf_External_Ehdr *ehdr, const char *section)
 {
   uint64_t shstrtab_size = 0;
@@ -253,7 +424,7 @@ find_shdr (Elf_External_Ehdr *ehdr, const char *section)
 
 /* Return the symbol table.  */
 
-Elf_External_Sym *
+static Elf_External_Sym *
 find_symtab (Elf_External_Ehdr *ehdr, uint64_t *symtab_size)
 {
   uint64_t i;
@@ -273,7 +444,7 @@ find_symtab (Elf_External_Ehdr *ehdr, uint64_t *symtab_size)
 
 /* Translate a file offset to an address in a loaded segment.   */
 
-int
+static int
 translate_offset (uint64_t file_offset, struct segment *seg, void **addr)
 {
   while (seg)
@@ -305,14 +476,15 @@ translate_offset (uint64_t file_offset, struct segment *seg, void **addr)
 /* Lookup the address of FUNC.  */
 
 int
-lookup_function (const char *func,
-		 Elf_External_Ehdr *ehdr, struct segment *seg, void **addr)
+lookup_function (struct library *lib, const char *func, void **addr)
 {
   const char *strtab;
   uint64_t strtab_size = 0;
   Elf_External_Sym *symtab;
   uint64_t symtab_size = 0;
   uint64_t i;
+  Elf_External_Ehdr *ehdr = lib->ehdr;
+  struct segment *seg = lib->segments;
 
   /* Get the string table for the symbols.  */
   strtab = find_strtab (ehdr, ".strtab", &strtab_size);

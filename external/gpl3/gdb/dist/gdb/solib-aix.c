@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -115,7 +115,7 @@ get_solib_aix_inferior_data (struct inferior *inf)
   data = inferior_data (inf, solib_aix_inferior_data_handle);
   if (data == NULL)
     {
-      data = XZALLOC (struct solib_aix_inferior_data);
+      data = XCNEW (struct solib_aix_inferior_data);
       set_inferior_data (inf, solib_aix_inferior_data_handle, data);
     }
 
@@ -161,7 +161,7 @@ library_list_start_library (struct gdb_xml_parser *parser,
 			    VEC (gdb_xml_value_s) *attributes)
 {
   VEC (lm_info_p) **list = user_data;
-  struct lm_info *item = XZALLOC (struct lm_info);
+  struct lm_info *item = XCNEW (struct lm_info);
   struct gdb_xml_value *attr;
 
   attr = xml_find_attribute (attributes, "name");
@@ -470,7 +470,7 @@ solib_aix_get_section_offsets (struct objfile *objfile,
   bfd *abfd = objfile->obfd;
   int i;
 
-  offsets = XCALLOC (objfile->num_sections, struct section_offsets);
+  offsets = XCNEWVEC (struct section_offsets, objfile->num_sections);
 
   /* .text */
 
@@ -575,7 +575,7 @@ solib_aix_current_sos (void)
      to the main executable, not a shared library.  */
   for (ix = 1; VEC_iterate (lm_info_p, library_list, ix, info); ix++)
     {
-      struct so_list *new_solib = XZALLOC (struct so_list);
+      struct so_list *new_solib = XCNEW (struct so_list);
       char *so_name;
 
       if (info->member_name == NULL)

@@ -1,4 +1,4 @@
-# Copyright 2000-2014 Free Software Foundation, Inc.
+# Copyright 2000-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -189,7 +189,15 @@ proc gdbserver_download_current_prog { } {
 # Default routine to compute the argument to "target remote".
 
 proc gdbserver_default_get_remote_address { host port } {
+    # Historically HOST included the trailing ":".
+    # To avoid breaking any board files out there we leave things alone.
     return "$host$port"
+}
+
+# Default routine to compute the "comm" argument for gdbserver.
+
+proc gdbserver_default_get_comm_port { port } {
+    return ":$port"
 }
 
 # Start a gdbserver process with initial OPTIONS and trailing ARGUMENTS.
@@ -223,6 +231,11 @@ proc gdbserver_start { options arguments } {
     } else {
 	set get_remote_address gdbserver_default_get_remote_address
     }
+    if [target_info exists gdbserver,get_comm_port] {
+	set get_comm_port [target_info gdbserver,get_comm_port]
+    } else {
+	set get_comm_port gdbserver_default_get_comm_port
+    }
 
     # Extract the protocol
     if [target_info exists gdb_protocol] {
@@ -251,7 +264,7 @@ proc gdbserver_start { options arguments } {
 	    append gdbserver_command " $options"
 	}
 	if { $portnum != "" } {
-	    append gdbserver_command " :$portnum"
+	    append gdbserver_command " [$get_comm_port $portnum]"
 	}
 	if { $arguments != "" } {
 	    append gdbserver_command " $arguments"
@@ -262,6 +275,7 @@ proc gdbserver_start { options arguments } {
 	# Wait for the server to open its TCP socket, so that GDB can connect.
 	expect {
 	    -i $server_spawn_id
+	    -timeout 120
 	    -notransfer
 	    -re "Listening on" { }
 	    -re "Can't bind address: Address already in use\\.\r\n" {
@@ -272,6 +286,9 @@ proc gdbserver_start { options arguments } {
 		    incr portnum
 		    continue
 		}
+	    }
+	    timeout {
+		error "Timeout waiting for gdbserver response."
 	    }
 	}
 	break
@@ -312,7 +329,8 @@ proc gdbserver_spawn { child_args } {
 }
 
 # Start a gdbserver process running HOST_EXEC and pass CHILD_ARGS
-# to it.  Return 0 on success, or non-zero on failure.
+# to it.  Return 0 on success, or non-zero on failure: 2 if gdbserver
+# failed to start or 1 if we couldn't connect to it.
 
 proc gdbserver_run { child_args } {
     global gdbserver_protocol
@@ -333,7 +351,10 @@ proc gdbserver_run { child_args } {
 	}
     }
 
-    set res [gdbserver_spawn $child_args]
+    if { [catch { gdbserver_spawn $child_args } res] == 1 } {
+	perror $res
+	return 2
+    }
     set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 
@@ -363,7 +384,10 @@ proc gdbserver_start_extended { } {
     global gdbserver_gdbport
     global use_gdb_stub
 
-    set res [gdbserver_start "--multi" ""]
+    if { [catch { gdbserver_start "--multi" "" } res] == 1 } {
+	perror $res
+	return 2
+    }
     set gdbserver_protocol [lindex $res 0]
     if { [string first "extended-" $gdbserver_protocol] != 0} {
 	set gdbserver_protocol "extended-$gdbserver_protocol"
@@ -385,7 +409,10 @@ proc gdbserver_start_multi { } {
     global gdbserver_protocol
     global gdbserver_gdbport
 
-    set res [gdbserver_start "--multi" ""]
+    if { [catch { gdbserver_start "--multi" "" } res] == 1 } {
+	perror $res
+	return 2
+    }
     set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 
@@ -400,7 +427,10 @@ proc mi_gdbserver_start_multi { } {
     global gdbserver_protocol
     global gdbserver_gdbport
 
-    set res [gdbserver_start "--multi" ""]
+    if { [catch { gdbserver_start "--multi" "" } res] == 1 } {
+	perror $res
+	return 2
+    }
     set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 

@@ -1,4 +1,4 @@
-#   Copyright 2009-2014 Free Software Foundation, Inc.
+#   Copyright 2009-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,17 +62,6 @@ proc test_one_sig {nextsig} {
 		xfail $testmsg
 		set need_another_continue 0
 	    }
-	}
-    }
-    if [ istarget "alpha-dec-osf3*" ] then {
-	# OSF/1-3.x is unable to continue with a job control stop signal.
-	# The inferior remains stopped without an event of interest
-	# and GDB waits forever for the inferior to stop on an event
-	# of interest. Work around the kernel bug.
-	if { $thissig == "TSTP" || $thissig == "TTIN" || $thissig == "TTOU" } {
-	    setup_xfail "alpha-dec-osf3*"
-	    fail "cannot continue from signal $thissig"
-	    set need_another_continue 0
 	}
     }
 
@@ -262,9 +251,18 @@ gdb_test "continue" \
     "get signal TERM"
 gdb_test "continue" "Breakpoint.*handle_TERM.*" "send signal TERM"
 
-gdb_test "continue" "\[process \[0-9\]+ .*" "continue to sigal exit" \
+set savedtimeout $timeout
+if { [target_info exists gdb,timeout]
+     && $timeout < [target_info gdb,timeout] } {
+    set oldtimeout [target_info gdb,timeout]
+} else {
+    set oldtimeout $timeout
+}
+set timeout [expr $oldtimeout * 2]
+gdb_test "continue" "\[process \[0-9\]+ .*" "continue to signal exit" \
     "The next instruction is syscall exit_group.* program...y. or n. " \
     "yes"
+set timeout $savedtimeout
 
 foreach sig [lreverse $signals] {
     test_one_sig_reverse $sig

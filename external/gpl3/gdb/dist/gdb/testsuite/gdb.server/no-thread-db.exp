@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2012-2014 Free Software Foundation, Inc.
+# Copyright 2012-2015 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corporation.
 #
@@ -47,7 +47,7 @@ gdb_test "monitor set libthread-db-search-path ${unresolvable_thread_db_path}" \
     "libthread-db is now unresolvable"
 
 # Continue past tls assignment to make sure tls storage is allocated.
-gdb_breakpoint [gdb_get_line_number "after tls assignment"]
+gdb_breakpoint ${srcfile}:[gdb_get_line_number "after tls assignment"]
 gdb_continue_to_breakpoint "after tls assignment"
 
 # Printing a tls variable should fail gracefully without a libthread_db.

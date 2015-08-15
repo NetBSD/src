@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -27,9 +27,6 @@
 #include "trad-frame.h"
 #include "tramp-frame.h"
 
-#include "gdb_assert.h"
-#include <string.h>
-
 #include "ppc-tdep.h"
 #include "ppcnbsd-tdep.h"
 #include "solib-svr4.h"
@@ -42,32 +39,28 @@ struct ppc_reg_offsets ppcnbsd_reg_offsets;
 
 /* NetBSD/powerpc register sets.  */
 
-struct regset ppcnbsd_gregset =
+const struct regset ppcnbsd_gregset =
 {
   &ppcnbsd_reg_offsets,
   ppc_supply_gregset
 };
 
-struct regset ppcnbsd_fpregset =
+const struct regset ppcnbsd_fpregset =
 {
   &ppcnbsd_reg_offsets,
   ppc_supply_fpregset
 };
 
-/* Return the appropriate register set for the core section identified
-   by SECT_NAME and SECT_SIZE.  */
+/* Iterate over core file register note sections.  */
 
-static const struct regset *
-ppcnbsd_regset_from_core_section (struct gdbarch *gdbarch,
-				  const char *sect_name, size_t sect_size)
+static void
+ppcnbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
+				      iterate_over_regset_sections_cb *cb,
+				      void *cb_data,
+				      const struct regcache *regcache)
 {
-  if (strcmp (sect_name, ".reg") == 0 && sect_size >= 148)
-    return &ppcnbsd_gregset;
-
-  if (strcmp (sect_name, ".reg2") == 0 && sect_size >= 264)
-    return &ppcnbsd_fpregset;
-
-  return NULL;
+  cb (".reg", 148, &ppcnbsd_gregset, NULL, cb_data);
+  cb (".reg2", 264, &ppcnbsd_fpregset, NULL, cb_data);
 }
 
 
@@ -188,8 +181,8 @@ ppcnbsd_init_abi (struct gdbarch_info info,
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 
-  set_gdbarch_regset_from_core_section
-    (gdbarch, ppcnbsd_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, ppcnbsd_iterate_over_regset_sections);
 
   tramp_frame_prepend_unwinder (gdbarch, &ppcnbsd_sigtramp);
   tramp_frame_prepend_unwinder (gdbarch, &ppcnbsd2_sigtramp);

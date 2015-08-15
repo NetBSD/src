@@ -1,5 +1,5 @@
 /* Definitions used by the GDB event loop.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
    This file is part of GDB.
@@ -77,7 +77,6 @@ typedef void (timer_handler_func) (gdb_client_data);
 
 /* Exported functions from event-loop.c */
 
-extern void initialize_event_loop (void);
 extern void start_event_loop (void);
 extern int gdb_do_one_event (void);
 extern void delete_file_handler (int fd);
@@ -131,3 +130,7 @@ extern void
 /* Call the handler from HANDLER the next time through the event
    loop.  */
 extern void mark_async_event_handler (struct async_event_handler *handler);
+
+/* Mark the handler (ASYNC_HANDLER_PTR) as NOT ready.  */
+
+extern void clear_async_event_handler (struct async_event_handler *handler);

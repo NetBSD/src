@@ -1,4 +1,4 @@
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -293,6 +293,8 @@ gdb_test "c" \
 gdb_test "print fint" \
    "\\$\[0-9\]* = \\{x = 0, t = 0\\}"
 
+# Prevent symbol on address 0x0 being printed.
+gdb_test_no_output "set print symbol off"
 gdb_test "print fvpchar" \
     "\\$\[0-9\]* = \\{x = 0, t = 0x0\\}"
 

@@ -1,6 +1,6 @@
 /* Standard language operator definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -87,21 +87,14 @@ OP (BINOP_VAL)
    the second operand with itself that many times.  */
 OP (BINOP_CONCAT)
 
-/* For (the deleted) Chill and Pascal.  */
-OP (BINOP_IN)			/* Returns 1 iff ARG1 IN ARG2.  */
-
-/* This is the "colon operator" used various places in (the
-   deleted) Chill.  */
-OP (BINOP_RANGE)
-
 /* This must be the highest BINOP_ value, for expprint.c.  */
 OP (BINOP_END)
 
 /* Operates on three values computed by following subexpressions.  */
 OP (TERNOP_COND)		/* ?: */
 
-/* A sub-string/sub-array.  (the deleted) Chill syntax:
-   OP1(OP2:OP3).  Return elements OP2 through OP3 of OP1.  */
+/* A sub-string/sub-array.  Ada syntax: OP1(OP2..OP3).  Return
+   elements OP2 through OP3 of OP1.  */
 OP (TERNOP_SLICE)
 
 /* Multidimensional subscript operator, such as Modula-2 x[a,b,...].
