@@ -1,5 +1,5 @@
 /* Remote target system call support.
-   Copyright 1997-2014 Free Software Foundation, Inc.
+   Copyright 1997-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -76,12 +76,8 @@ char *simulator_sysroot = "";
    The result is 0 for success or a host errno value.  */
 
 int
-cb_get_string (cb, sc, buf, buflen, addr)
-     host_callback *cb;
-     CB_SYSCALL *sc;
-     char *buf;
-     int buflen;
-     TADDR addr;
+cb_get_string (host_callback *cb, CB_SYSCALL *sc, char *buf, int buflen,
+	       TADDR addr)
 {
   char *p, *pend;
 
@@ -110,11 +106,7 @@ cb_get_string (cb, sc, buf, buflen, addr)
    If an error occurs, no buffer is left malloc'd.  */
 
 static int
-get_path (cb, sc, addr, bufp)
-     host_callback *cb;
-     CB_SYSCALL *sc;
-     TADDR addr;
-     char **bufp;
+get_path (host_callback *cb, CB_SYSCALL *sc, TADDR addr, char **bufp)
 {
   char *buf = xmalloc (MAX_PATH_LEN);
   int result;
@@ -147,9 +139,7 @@ get_path (cb, sc, addr, bufp)
 /* Perform a system call on behalf of the target.  */
 
 CB_RC
-cb_syscall (cb, sc)
-     host_callback *cb;
-     CB_SYSCALL *sc;
+cb_syscall (host_callback *cb, CB_SYSCALL *sc)
 {
   TWORD result = 0, errcode = 0;
 
@@ -465,7 +455,7 @@ cb_syscall (cb, sc)
 	    result = -1;
 	    goto FinishSyscall;
 	  }
-	result = (*cb->stat) (cb, path, &statbuf);
+	result = (*cb->to_stat) (cb, path, &statbuf);
 	free (path);
 	if (result < 0)
 	  goto ErrorFinish;
@@ -498,7 +488,7 @@ cb_syscall (cb, sc)
 	struct stat statbuf;
 	TADDR addr = sc->arg2;
 
-	result = (*cb->fstat) (cb, sc->arg1, &statbuf);
+	result = (*cb->to_fstat) (cb, sc->arg1, &statbuf);
 	if (result < 0)
 	  goto ErrorFinish;
 	buflen = cb_host_to_target_stat (cb, NULL, NULL);
@@ -536,7 +526,7 @@ cb_syscall (cb, sc)
 	    result = -1;
 	    goto FinishSyscall;
 	  }
-	result = (*cb->lstat) (cb, path, &statbuf);
+	result = (*cb->to_lstat) (cb, path, &statbuf);
 	free (path);
 	if (result < 0)
 	  goto ErrorFinish;
