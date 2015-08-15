@@ -1,3 +1,33 @@
+2014-07-20  Stefan Kristiansson  <stefan.kristiansson@saunalahti.fi>
+
+	* or1korbis.cpu (l-msync, l-psync, l-csync): New instructions.
+
+2014-06-12  Alan Modra  <amodra@gmail.com>
+
+	* or1k.opc: Whitespace fixes.
+
+2014-05-08  Stefan Kristiansson  <stefan.kristiansson@saunalahti.fi>
+
+	* or1korbis.cpu (h-atomic-reserve): New hardware.
+	(h-atomic-address): Likewise.
+	(insn-opcode): Add opcodes for LWA and SWA.
+	(atomic-reserve): New operand.
+	(atomic-address): Likewise.
+	(l-lwa, l-swa): New instructions.
+	(l-lbs): Fix typo in comment.
+	(store-insn): Clear atomic reserve on store to atomic-address.
+	Fix register names in fmt field.
+
+2014-04-22  Christian Svensson  <blue@cmd.nu>
+
+	* openrisc.cpu: Delete.
+	* openrisc.opc: Delete.
+	* or1k.cpu: New file.
+	* or1k.opc: New file.
+	* or1kcommon.cpu: New file.
+	* or1korbis.cpu: New file.
+	* or1korfpx.cpu: New file.
+
 2013-12-07  Mike Frysinger  <vapier@gentoo.org>
 
 	* epiphany.opc: Remove +x file mode.
