@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.14 2015/08/04 18:28:10 maxv Exp $ */
+/* $NetBSD: pax.h,v 1.15 2015/08/15 10:24:29 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -51,8 +51,6 @@ struct vmspace;
 
 void pax_init(void);
 void pax_setup_elf_flags(struct lwp *, uint32_t);
-void pax_adjust(struct lwp *, uint32_t);
-
 void pax_mprotect(struct lwp *, vm_prot_t *, vm_prot_t *);
 int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 
