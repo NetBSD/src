@@ -1,4 +1,4 @@
-# Copyright 2008-2014 Free Software Foundation, Inc.
+# Copyright 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,3 +50,19 @@ gdb_test "up" "#1  .*func1.*" "up from bar (3)"
 gdb_test "info frame" ".*inlined into frame.*" "func1 inlined (3)"
 gdb_test "up" "#2  .*func2.*" "up from func1 (3)"
 gdb_test "info frame" ".*inlined into frame.*" "func2 inlined (3)"
+
+# A regression test for having a backtrace limit that forces unwinding
+# to stop after an inline frame.  GDB needs to compute the frame_id of
+# the inline frame, which requires unwinding past all the inline
+# frames to the real stack frame, even if that means bypassing the
+# user visible backtrace limit.  See PR backtrace/15558.
+#
+# Set a backtrace limit that forces an unwind stop after an inline
+# function.
+gdb_test_no_output "set backtrace limit 2"
+# Force flushing the frame cache.
+gdb_test "flushregs" "Register cache flushed."
+gdb_test "up" "#1  .*func1.*" "up from bar (4)"
+gdb_test "info frame" ".*in func1.*" "info frame still works"
+# Verify the user visible limit works as expected.
+gdb_test "up" "Initial frame selected; you cannot go up." "up hits limit"

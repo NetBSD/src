@@ -1,6 +1,6 @@
 /* Private partial symbol table definitions.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -192,10 +192,10 @@ struct partial_symtab
 
   ENUM_BITFIELD (psymtab_search_status) searched_flag : 2;
 
-  /* Pointer to symtab eventually allocated for this source file, 0 if
+  /* Pointer to compunit eventually allocated for this source file, 0 if
      !readin or if we haven't looked for the symtab after it was readin.  */
 
-  struct symtab *symtab;
+  struct compunit_symtab *compunit_symtab;
 
   /* Pointer to function which will read in the symtab corresponding to
      this psymtab.  */

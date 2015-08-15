@@ -1,6 +1,6 @@
 /* Machine-independent support for SVR4 /proc (process file system)
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -34,7 +34,6 @@
 #define _STRUCTURED_PROC 1
 #endif
 
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/procfs.h>
 #ifdef HAVE_SYS_SYSCALL_H
@@ -1396,28 +1395,34 @@ proc_prettyprint_syscalls (sysset_t *sysset, int verbose)
 
 /* Prettyprint signals.  */
 
-/* Signal translation table.  */
+/* Signal translation table, ordered ANSI-standard signals first,
+   other signals second, with signals in each block ordered by their
+   numerical values on a typical POSIX platform.  */
 
 static struct trans signal_table[] = 
 {
   { 0,      "<no signal>", "no signal" }, 
+
+  /* SIGINT, SIGILL, SIGABRT, SIGFPE, SIGSEGV and SIGTERM
+     are ANSI-standard signals and are always available.  */
+
+  { SIGINT, "SIGINT", "Interrupt (rubout)" },
+  { SIGILL, "SIGILL", "Illegal instruction" },	/* not reset when caught */
+  { SIGABRT, "SIGABRT", "used by abort()" },	/* replaces SIGIOT */
+  { SIGFPE, "SIGFPE", "Floating point exception" },
+  { SIGSEGV, "SIGSEGV", "Segmentation violation" },
+  { SIGTERM, "SIGTERM", "Software termination signal from kill" },
+
+  /* All other signals need preprocessor conditionals.  */
+
 #ifdef SIGHUP
   { SIGHUP, "SIGHUP", "Hangup" },
-#endif
-#ifdef SIGINT
-  { SIGINT, "SIGINT", "Interrupt (rubout)" },
 #endif
 #ifdef SIGQUIT
   { SIGQUIT, "SIGQUIT", "Quit (ASCII FS)" },
 #endif
-#ifdef SIGILL
-  { SIGILL, "SIGILL", "Illegal instruction" },	/* not reset when caught */
-#endif
 #ifdef SIGTRAP
   { SIGTRAP, "SIGTRAP", "Trace trap" },		/* not reset when caught */
-#endif
-#ifdef SIGABRT
-  { SIGABRT, "SIGABRT", "used by abort()" },	/* replaces SIGIOT */
 #endif
 #ifdef SIGIOT
   { SIGIOT, "SIGIOT", "IOT instruction" },
@@ -1425,17 +1430,11 @@ static struct trans signal_table[] =
 #ifdef SIGEMT
   { SIGEMT, "SIGEMT", "EMT instruction" },
 #endif
-#ifdef SIGFPE
-  { SIGFPE, "SIGFPE", "Floating point exception" },
-#endif
 #ifdef SIGKILL
   { SIGKILL, "SIGKILL", "Kill" },	/* Solaris: cannot be caught/ignored */
 #endif
 #ifdef SIGBUS
   { SIGBUS, "SIGBUS", "Bus error" },
-#endif
-#ifdef SIGSEGV
-  { SIGSEGV, "SIGSEGV", "Segmentation violation" },
 #endif
 #ifdef SIGSYS
   { SIGSYS, "SIGSYS", "Bad argument to system call" },
@@ -1445,9 +1444,6 @@ static struct trans signal_table[] =
 #endif
 #ifdef SIGALRM
   { SIGALRM, "SIGALRM", "Alarm clock" },
-#endif
-#ifdef SIGTERM
-  { SIGTERM, "SIGTERM", "Software termination signal from kill" },
 #endif
 #ifdef SIGUSR1
   { SIGUSR1, "SIGUSR1", "User defined signal 1" },

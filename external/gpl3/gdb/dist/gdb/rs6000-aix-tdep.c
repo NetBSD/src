@@ -1,6 +1,6 @@
 /* Native support code for PPC AIX, for GDB the GNU debugger.
 
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    Free Software Foundation, Inc.
 
@@ -20,8 +20,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <string.h>
-#include "gdb_assert.h"
 #include "osabi.h"
 #include "regcache.h"
 #include "regset.h"
@@ -35,7 +33,6 @@
 #include "rs6000-tdep.h"
 #include "ppc-tdep.h"
 #include "rs6000-aix-tdep.h"
-#include "exceptions.h"
 #include "xcoffread.h"
 #include "solib.h"
 #include "solib-aix.h"
@@ -135,39 +132,32 @@ rs6000_aix_collect_regset (const struct regset *regset,
 
 /* AIX register set.  */
 
-static struct regset rs6000_aix32_regset =
+static const struct regset rs6000_aix32_regset =
 {
   &rs6000_aix32_reg_offsets,
   rs6000_aix_supply_regset,
   rs6000_aix_collect_regset,
 };
 
-static struct regset rs6000_aix64_regset =
+static const struct regset rs6000_aix64_regset =
 {
   &rs6000_aix64_reg_offsets,
   rs6000_aix_supply_regset,
   rs6000_aix_collect_regset,
 };
 
-/* Return the appropriate register set for the core section identified
-   by SECT_NAME and SECT_SIZE.  */
+/* Iterate over core file register note sections.  */
 
-static const struct regset *
-rs6000_aix_regset_from_core_section (struct gdbarch *gdbarch,
-				     const char *sect_name, size_t sect_size)
+static void
+rs6000_aix_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					 iterate_over_regset_sections_cb *cb,
+					 void *cb_data,
+					 const struct regcache *regcache)
 {
   if (gdbarch_tdep (gdbarch)->wordsize == 4)
-    {
-      if (strcmp (sect_name, ".reg") == 0 && sect_size >= 592)
-        return &rs6000_aix32_regset;
-    }
+    cb (".reg", 592, &rs6000_aix32_regset, NULL, cb_data);
   else
-    {
-      if (strcmp (sect_name, ".reg") == 0 && sect_size >= 576)
-        return &rs6000_aix64_regset;
-    }
-
-  return NULL;
+    cb (".reg", 576, &rs6000_aix64_regset, NULL, cb_data);
 }
 
 
@@ -965,14 +955,14 @@ rs6000_aix_shared_library_to_xml (struct ld_info *ldi,
    as the consumer of the XML library list might live in a different
    process.  */
 
-LONGEST
+ULONGEST
 rs6000_aix_ld_info_to_xml (struct gdbarch *gdbarch, const gdb_byte *ldi_buf,
-			   gdb_byte *readbuf, ULONGEST offset, LONGEST len,
+			   gdb_byte *readbuf, ULONGEST offset, ULONGEST len,
 			   int close_ldinfo_fd)
 {
   struct obstack obstack;
   const char *buf;
-  LONGEST len_avail;
+  ULONGEST len_avail;
 
   obstack_init (&obstack);
   obstack_grow_str (&obstack, "<library-list-aix version=\"1.0\">\n");
@@ -1009,11 +999,11 @@ rs6000_aix_ld_info_to_xml (struct gdbarch *gdbarch, const gdb_byte *ldi_buf,
 
 /* Implement the core_xfer_shared_libraries_aix gdbarch method.  */
 
-static LONGEST
+static ULONGEST
 rs6000_aix_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch,
 					   gdb_byte *readbuf,
 					   ULONGEST offset,
-					   LONGEST len)
+					   ULONGEST len)
 {
   struct bfd_section *ldinfo_sec;
   int ldinfo_size;
@@ -1067,8 +1057,8 @@ rs6000_aix_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, rs6000_convert_from_func_ptr_addr);
 
   /* Core file support.  */
-  set_gdbarch_regset_from_core_section
-    (gdbarch, rs6000_aix_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, rs6000_aix_iterate_over_regset_sections);
   set_gdbarch_core_xfer_shared_libraries_aix
     (gdbarch, rs6000_aix_core_xfer_shared_libraries_aix);
 

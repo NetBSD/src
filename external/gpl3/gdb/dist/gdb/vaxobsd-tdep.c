@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/vax.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,8 +26,6 @@
 #include "trad-frame.h"
 
 #include "vax-tdep.h"
-
-#include <string.h>
 
 /* Signal trampolines.  */
 

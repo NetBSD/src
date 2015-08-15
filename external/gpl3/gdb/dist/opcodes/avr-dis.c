@@ -1,6 +1,5 @@
 /* Disassemble AVR instructions.
-   Copyright 1999, 2000, 2002, 2004, 2005, 2006, 2007, 2008, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    Contributed by Denis Chertykov <denisc@overta.ru>
 
@@ -187,6 +186,17 @@ avr_operand (unsigned int insn, unsigned int insn2, unsigned int pc, int constra
     case 'i':
       sprintf (buf, "0x%04X", insn2);
       break;
+
+    case 'j':
+      {
+        unsigned int val = ((insn & 0xf) | ((insn & 0x600) >> 5)
+                                         | ((insn & 0x100) >> 2));
+        if (val > 0 && !(insn & 0x100))
+          val |= 0x80;
+        sprintf (buf, "0x%02x", val);
+        sprintf (buf, "%d", val);
+      }
+      break;
       
     case 'M':
       sprintf (buf, "0x%02X", ((insn & 0xf00) >> 4) | (insn & 0xf));
@@ -330,8 +340,12 @@ print_insn_avr (bfd_vma addr, disassemble_info *info)
   for (opcode = avr_opcodes, maskptr = avr_bin_masks;
        opcode->name;
        opcode++, maskptr++)
-    if ((insn & *maskptr) == opcode->bin_opcode)
-      break;
+    {
+      if ((opcode->isa == AVR_ISA_TINY) && (info->mach != bfd_mach_avrtiny))
+        continue;
+      if ((insn & *maskptr) == opcode->bin_opcode)
+        break;
+    }
   
   /* Special case: disassemble `ldd r,b+0' as `ld r,b', and
      `std b+0,r' as `st b,r' (next entry in the table).  */

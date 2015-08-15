@@ -127,6 +127,16 @@ main (void)
   volatile float          * volatile vitality = &vacuity;
   volatile double         * volatile voracity = &vertigo;
 
+  /* volatile arrays */
+  volatile char violent[2] = {vox, vox};
+  volatile unsigned char violet[2] = {victuals, victuals};
+  volatile short vips[2] = {vixen, vixen};
+  volatile unsigned short virgen[2] = {vitriol, vitriol};
+  volatile long vulgar[2] = {vellum, vellum};
+  volatile unsigned long vulture[2] = {valve, valve};
+  volatile float vilify[2] = {vacuity, vacuity};
+  volatile double villar[2] = {vertigo, vertigo};
+
   /* const volatile vars */
 
   const volatile char           victor = 'Y';
@@ -177,6 +187,10 @@ main (void)
   const volatile char              * const volatile vagary = &victor;
   const volatile unsigned char     * const volatile vendor = &vicar;
   
+  /* const volatile arrays */
+  const volatile char vindictive[2] = {victor, victor};
+  const volatile unsigned char vegetation[2] = {vicar, vicar};
+
   /* various structs with const members */
 
   struct crass { char * const ptr; } crass = { lamprey };

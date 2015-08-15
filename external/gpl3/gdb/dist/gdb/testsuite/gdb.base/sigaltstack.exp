@@ -1,4 +1,4 @@
-# Copyright 2004-2014 Free Software Foundation, Inc.
+# Copyright 2004-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -74,8 +74,8 @@ proc finish_test { pattern msg } {
 	    # Some platforms use a special read-only page for signal
 	    # trampolines.  We can't set a breakpoint there, and we
 	    # don't gracefully fall back to single-stepping.
-	    setup_kfail gdb/1736 "i?86-*-linux*"
-	    setup_kfail gdb/1736 "*-*-openbsd*"
+	    setup_kfail gdb/8841 "i?86-*-linux*"
+	    setup_kfail gdb/8841 "*-*-openbsd*"
 	    fail "$msg (could not set breakpoint)"
 	}
 	-re "$pattern.*${gdb_prompt} $" {

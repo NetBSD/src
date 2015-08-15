@@ -591,6 +591,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+EXTRA_RULES
 EGREP
 GREP
 CPP
@@ -3448,7 +3449,16 @@ done
 
 
 
-ac_config_files="$ac_config_files Makefile gdb.ada/Makefile gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile gdb.btrace/Makefile gdb.cell/Makefile gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile gdb.fortran/Makefile gdb.go/Makefile gdb.server/Makefile gdb.java/Makefile gdb.hp/Makefile gdb.hp/gdb.objdbg/Makefile gdb.hp/gdb.base-hp/Makefile gdb.hp/gdb.aCC/Makefile gdb.hp/gdb.compat/Makefile gdb.hp/gdb.defects/Makefile gdb.linespec/Makefile gdb.mi/Makefile gdb.modula2/Makefile gdb.multi/Makefile gdb.objc/Makefile gdb.opencl/Makefile gdb.opt/Makefile gdb.pascal/Makefile gdb.perf/Makefile gdb.python/Makefile gdb.reverse/Makefile gdb.stabs/Makefile gdb.threads/Makefile gdb.trace/Makefile gdb.xml/Makefile"
+if test "${build}" = "${host}" -a "${host}" = "${target}"; then
+   case "${host}" in
+     *gnu*)
+       EXTRA_RULES=read1
+       ;;
+   esac
+fi
+
+
+ac_config_files="$ac_config_files Makefile gdb.ada/Makefile gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile gdb.btrace/Makefile gdb.cell/Makefile gdb.compile/Makefile gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile gdb.dlang/Makefile gdb.fortran/Makefile gdb.gdb/Makefile gdb.go/Makefile gdb.server/Makefile gdb.java/Makefile gdb.hp/Makefile gdb.hp/gdb.objdbg/Makefile gdb.hp/gdb.base-hp/Makefile gdb.hp/gdb.aCC/Makefile gdb.hp/gdb.compat/Makefile gdb.hp/gdb.defects/Makefile gdb.guile/Makefile gdb.linespec/Makefile gdb.mi/Makefile gdb.modula2/Makefile gdb.multi/Makefile gdb.objc/Makefile gdb.opencl/Makefile gdb.opt/Makefile gdb.pascal/Makefile gdb.perf/Makefile gdb.python/Makefile gdb.reverse/Makefile gdb.stabs/Makefile gdb.threads/Makefile gdb.trace/Makefile gdb.xml/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4155,10 +4165,13 @@ do
     "gdb.base/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.base/Makefile" ;;
     "gdb.btrace/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.btrace/Makefile" ;;
     "gdb.cell/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.cell/Makefile" ;;
+    "gdb.compile/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.compile/Makefile" ;;
     "gdb.cp/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.cp/Makefile" ;;
     "gdb.disasm/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.disasm/Makefile" ;;
     "gdb.dwarf2/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.dwarf2/Makefile" ;;
+    "gdb.dlang/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.dlang/Makefile" ;;
     "gdb.fortran/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.fortran/Makefile" ;;
+    "gdb.gdb/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.gdb/Makefile" ;;
     "gdb.go/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.go/Makefile" ;;
     "gdb.server/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.server/Makefile" ;;
     "gdb.java/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.java/Makefile" ;;
@@ -4168,6 +4181,7 @@ do
     "gdb.hp/gdb.aCC/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.hp/gdb.aCC/Makefile" ;;
     "gdb.hp/gdb.compat/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.hp/gdb.compat/Makefile" ;;
     "gdb.hp/gdb.defects/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.hp/gdb.defects/Makefile" ;;
+    "gdb.guile/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.guile/Makefile" ;;
     "gdb.linespec/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.linespec/Makefile" ;;
     "gdb.mi/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.mi/Makefile" ;;
     "gdb.modula2/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.modula2/Makefile" ;;

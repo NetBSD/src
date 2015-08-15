@@ -1,6 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,13 +23,30 @@
 #include "regcache.h"
 #include "frame.h"
 #include "inferior.h"
-#include "gdb_assert.h"
 #include "frame-unwind.h"
 #include "command.h"
 #include "gdbcmd.h"
-#include <string.h>
 #include "observer.h"
 #include "gdbthread.h"
+
+struct dummy_frame_id
+{
+  /* This frame's ID.  Must match the value returned by
+     gdbarch_dummy_id.  */
+  struct frame_id id;
+
+  /* The thread this dummy_frame relates to.  */
+  ptid_t ptid;
+};
+
+/* Return whether dummy_frame_id *ID1 and *ID2 are equal.  */
+
+static int
+dummy_frame_id_eq (struct dummy_frame_id *id1,
+		   struct dummy_frame_id *id2)
+{
+  return frame_id_eq (id1->id, id2->id) && ptid_equal (id1->ptid, id2->ptid);
+}
 
 /* Dummy frame.  This saves the processor state just prior to setting
    up the inferior function call.  Older targets save the registers
@@ -38,11 +55,19 @@
 struct dummy_frame
 {
   struct dummy_frame *next;
-  /* This frame's ID.  Must match the value returned by
-     gdbarch_dummy_id.  */
-  struct frame_id id;
+
+  /* An id represents a dummy frame.  */
+  struct dummy_frame_id id;
+
   /* The caller's state prior to the call.  */
   struct infcall_suspend_state *caller_state;
+
+  /* If non-NULL, a destructor that is run when this dummy frame is
+     popped.  */
+  void (*dtor) (void *data);
+
+  /* Arbitrary data that is passed to DTOR.  */
+  void *dtor_data;
 };
 
 static struct dummy_frame *dummy_frame_stack = NULL;
@@ -52,13 +77,14 @@ static struct dummy_frame *dummy_frame_stack = NULL;
 
 void
 dummy_frame_push (struct infcall_suspend_state *caller_state,
-		  const struct frame_id *dummy_id)
+		  const struct frame_id *dummy_id, ptid_t ptid)
 {
   struct dummy_frame *dummy_frame;
 
-  dummy_frame = XZALLOC (struct dummy_frame);
+  dummy_frame = XCNEW (struct dummy_frame);
   dummy_frame->caller_state = caller_state;
-  dummy_frame->id = (*dummy_id);
+  dummy_frame->id.id = (*dummy_id);
+  dummy_frame->id.ptid = ptid;
   dummy_frame->next = dummy_frame_stack;
   dummy_frame_stack = dummy_frame;
 }
@@ -83,8 +109,8 @@ pop_dummy_frame_bpt (struct breakpoint *b, void *dummy_voidp)
 {
   struct dummy_frame *dummy = dummy_voidp;
 
-  if (b->thread == pid_to_thread_id (inferior_ptid)
-      && b->disposition == disp_del && frame_id_eq (b->frame_id, dummy->id))
+  if (b->thread == pid_to_thread_id (dummy->id.ptid)
+      && b->disposition == disp_del && frame_id_eq (b->frame_id, dummy->id.id))
     {
       while (b->related_breakpoint != b)
 	delete_breakpoint (b->related_breakpoint);
@@ -107,6 +133,11 @@ pop_dummy_frame (struct dummy_frame **dummy_ptr)
 {
   struct dummy_frame *dummy = *dummy_ptr;
 
+  gdb_assert (ptid_equal (dummy->id.ptid, inferior_ptid));
+
+  if (dummy->dtor != NULL)
+    dummy->dtor (dummy->dtor_data);
+
   restore_infcall_suspend_state (dummy->caller_state);
 
   iterate_over_breakpoints (pop_dummy_frame_bpt, dummy);
@@ -125,50 +156,79 @@ pop_dummy_frame (struct dummy_frame **dummy_ptr)
    Return NULL if not found.  */
 
 static struct dummy_frame **
-lookup_dummy_frame (struct frame_id dummy_id)
+lookup_dummy_frame (struct dummy_frame_id *dummy_id)
 {
   struct dummy_frame **dp;
 
   for (dp = &dummy_frame_stack; *dp != NULL; dp = &(*dp)->next)
     {
-      if (frame_id_eq ((*dp)->id, dummy_id))
+      if (dummy_frame_id_eq (&(*dp)->id, dummy_id))
 	return dp;
     }
 
   return NULL;
 }
 
-/* Pop the dummy frame DUMMY_ID, restoring program state to that before the
-   frame was created.
+/* Find the dummy frame by DUMMY_ID and PTID, and pop it, restoring
+   program state to that before the frame was created.
    On return reinit_frame_cache has been called.
-   If the frame isn't found, flag an internal error.
-
-   NOTE: This can only pop the one frame, even if it is in the middle of the
-   stack, because the other frames may be for different threads, and there's
-   currently no way to tell which stack frame is for which thread.  */
+   If the frame isn't found, flag an internal error.  */
 
 void
-dummy_frame_pop (struct frame_id dummy_id)
+dummy_frame_pop (struct frame_id dummy_id, ptid_t ptid)
 {
   struct dummy_frame **dp;
+  struct dummy_frame_id id = { dummy_id, ptid };
 
-  dp = lookup_dummy_frame (dummy_id);
+  dp = lookup_dummy_frame (&id);
   gdb_assert (dp != NULL);
 
   pop_dummy_frame (dp);
 }
 
-/* Drop dummy frame DUMMY_ID.  Do nothing if it is not found.  Do not restore
-   its state into inferior, just free its memory.  */
+/* Find the dummy frame by DUMMY_ID and PTID and drop it.  Do nothing
+   if it is not found.  Do not restore its state into inferior, just
+   free its memory.  */
 
 void
-dummy_frame_discard (struct frame_id dummy_id)
+dummy_frame_discard (struct frame_id dummy_id, ptid_t ptid)
 {
   struct dummy_frame **dp;
+  struct dummy_frame_id id = { dummy_id, ptid };
 
-  dp = lookup_dummy_frame (dummy_id);
+  dp = lookup_dummy_frame (&id);
   if (dp)
     remove_dummy_frame (dp);
+}
+
+/* See dummy-frame.h.  */
+
+void
+register_dummy_frame_dtor (struct frame_id dummy_id, ptid_t ptid,
+			   dummy_frame_dtor_ftype *dtor, void *dtor_data)
+{
+  struct dummy_frame_id id = { dummy_id, ptid };
+  struct dummy_frame **dp, *d;
+
+  dp = lookup_dummy_frame (&id);
+  gdb_assert (dp != NULL);
+  d = *dp;
+  gdb_assert (d->dtor == NULL);
+  d->dtor = dtor;
+  d->dtor_data = dtor_data;
+}
+
+/* See dummy-frame.h.  */
+
+int
+find_dummy_frame_dtor (dummy_frame_dtor_ftype *dtor, void *dtor_data)
+{
+  struct dummy_frame *d;
+
+  for (d = dummy_frame_stack; d != NULL; d = d->next)
+    if (d->dtor == dtor && d->dtor_data == dtor_data)
+      return 1;
+  return 0;
 }
 
 /* There may be stale dummy frames, perhaps left over from when an uncaught
@@ -195,9 +255,6 @@ dummy_frame_sniffer (const struct frame_unwind *self,
 		     struct frame_info *this_frame,
 		     void **this_prologue_cache)
 {
-  struct dummy_frame *dummyframe;
-  struct frame_id this_id;
-
   /* When unwinding a normal frame, the stack structure is determined
      by analyzing the frame's function's code (be it using brute force
      prologue analysis, or the dwarf2 CFI).  In the case of a dummy
@@ -209,16 +266,19 @@ dummy_frame_sniffer (const struct frame_unwind *self,
   /* Don't bother unless there is at least one dummy frame.  */
   if (dummy_frame_stack != NULL)
     {
+      struct dummy_frame *dummyframe;
       /* Use an architecture specific method to extract this frame's
 	 dummy ID, assuming it is a dummy frame.  */
-      this_id = gdbarch_dummy_id (get_frame_arch (this_frame), this_frame);
+      struct frame_id this_id
+	= gdbarch_dummy_id (get_frame_arch (this_frame), this_frame);
+      struct dummy_frame_id dummy_id = { this_id, inferior_ptid };
 
       /* Use that ID to find the corresponding cache entry.  */
       for (dummyframe = dummy_frame_stack;
 	   dummyframe != NULL;
 	   dummyframe = dummyframe->next)
 	{
-	  if (frame_id_eq (dummyframe->id, this_id))
+	  if (dummy_frame_id_eq (&dummyframe->id, &dummy_id))
 	    {
 	      struct dummy_frame_cache *cache;
 
@@ -298,7 +358,9 @@ fprint_dummy_frames (struct ui_file *file)
       gdb_print_host_address (s, file);
       fprintf_unfiltered (file, ":");
       fprintf_unfiltered (file, " id=");
-      fprint_frame_id (file, s->id);
+      fprint_frame_id (file, s->id.id);
+      fprintf_unfiltered (file, ", ptid=%s",
+			  target_pid_to_str (s->id.ptid));
       fprintf_unfiltered (file, "\n");
     }
 }

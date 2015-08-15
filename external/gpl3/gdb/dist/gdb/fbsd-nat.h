@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,17 +23,13 @@
 /* Return the name of a file that can be opened to get the symbols for
    the child process identified by PID.  */
 
-extern char *fbsd_pid_to_exec_file (int pid);
+extern char *fbsd_pid_to_exec_file (struct target_ops *self, int pid);
 
 /* Iterate over all the memory regions in the current inferior,
    calling FUNC for each memory region.  OBFD is passed as the last
    argument to FUNC.  */
 
-extern int fbsd_find_memory_regions (find_memory_region_ftype func, void *obfd);
-
-/* Create appropriate note sections for a corefile, returning them in
-   allocated memory.  */
-
-extern char *fbsd_make_corefile_notes (bfd *obfd, int *note_size);
+extern int fbsd_find_memory_regions (struct target_ops *self,
+				     find_memory_region_ftype func, void *obfd);
 
 #endif /* fbsd-nat.h */

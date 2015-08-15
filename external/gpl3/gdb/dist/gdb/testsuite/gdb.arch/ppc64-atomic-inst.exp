@@ -1,4 +1,4 @@
-# Copyright 2008-2014 Free Software Foundation, Inc.
+# Copyright 2008-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,35 +26,33 @@ if {![istarget "powerpc*"] || ![is_lp64_target]} {
     return
 }
 
-set testfile "ppc64-atomic-inst"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-set compile_flags {debug quiet}
+standard_testfile .S
 
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $compile_flags] != "" } {
-    unsupported "Testcase compile failed."
+if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug quiet}] } {
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
-
 if ![runto_main] then {
-    perror "Couldn't run to breakpoint"
-    continue
+    untested "could not run to main"
+    return -1
 }
 
 set bp1 [gdb_get_line_number "lwarx"]
 gdb_breakpoint "$bp1" "Breakpoint $decimal at $hex" \
-  "Set the breakpoint at the start of the sequence"
+  "Set the breakpoint at the start of the lwarx/stwcx sequence"
+
+set bp2 [gdb_get_line_number "ldarx"]
+gdb_breakpoint "$bp2" "Breakpoint $decimal at $hex" \
+  "Set the breakpoint at the start of the ldarx/stdcx sequence"
 
 gdb_test continue "Continuing.*Breakpoint $decimal.*" \
-  "Continue until breakpoint"
+  "Continue until lwarx/stwcx start breakpoint"
 
-gdb_test next ".*__asm __volatile.*" \
+gdb_test nexti "bne.*1b" \
   "Step through the lwarx/stwcx sequence"
 
-gdb_test next ".*return 0.*" \
+gdb_test continue "Continuing.*Breakpoint $decimal.*" \
+  "Continue until ldarx/stdcx start breakpoint"
+
+gdb_test nexti "bne.*1b" \
   "Step through the ldarx/stdcx sequence"

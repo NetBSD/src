@@ -2,7 +2,7 @@
 
 @c This file is part of the GDB manual.
 @c
-@c Copyright (C) 2003-2014 Free Software Foundation, Inc.
+@c Copyright (C) 2003-2015 Free Software Foundation, Inc.
 @c
 @c See the file gdbint.texinfo for copying conditions.
 @c
@@ -92,6 +92,34 @@ The inferior has stopped for real.  The  @var{bs} argument describes
 the breakpoints were are stopped at, if any.  Second argument
 @var{print_frame} non-zero means display the location where the
 inferior has stopped.
+@end deftypefun
+
+@deftypefun void signal_received (enum gdb_signal @var{siggnal})
+The inferior was stopped by a signal.
+@end deftypefun
+
+@deftypefun void end_stepping_range (void)
+We are done with a step/next/si/ni command.
+@end deftypefun
+
+@deftypefun void signal_exited (enum gdb_signal @var{siggnal})
+The inferior was terminated by a signal.
+@end deftypefun
+
+@deftypefun void exited (int @var{exitstatus})
+The inferior program is finished.
+@end deftypefun
+
+@deftypefun void no_history (void)
+Reverse execution: target ran out of history info.
+@end deftypefun
+
+@deftypefun void sync_execution_done (void)
+A synchronous command finished.
+@end deftypefun
+
+@deftypefun void command_error (void)
+An error was caught while executing a command.
 @end deftypefun
 
 @deftypefun void target_changed (struct target_ops *@var{target})
@@ -251,6 +279,22 @@ The trace state variable @var{tsv} is deleted.  If @var{tsv} is
 
 @deftypefun void tsv_modified (const struct trace_state_variable *@var{tsv})
 The trace state value @var{tsv} is modified.
+@end deftypefun
+
+@deftypefun void inferior_call_pre (ptid_t @var{thread}, CORE_ADDR @var{address})
+An inferior function at @var{address} is about to be called in thread
+@var{thread}.
+@end deftypefun
+
+@deftypefun void inferior_call_post (ptid_t @var{thread}, CORE_ADDR @var{address})
+The inferior function at @var{address} has just been called.  This observer
+is called even if the inferior exits during the call.  @var{thread} is the
+thread in which the function was called, which may be different from the
+current thread.
+@end deftypefun
+
+@deftypefun void register_changed (struct frame_info *@var{frame}, int @var{regnum})
+A register in the inferior has been modified by the @value{GDBN} user.
 @end deftypefun
 
 @deftypefun void test_notification (int @var{somearg})

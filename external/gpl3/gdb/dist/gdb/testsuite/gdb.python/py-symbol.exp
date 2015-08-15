@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -117,7 +117,12 @@ gdb_test "python print (t\[0\].addr_class == gdb.SYMBOL_LOC_CONST)" "True" "Test
 gdb_test "python print (t\[0\].type)" "enum tag" "Get type"
 
 # Test symtab attribute.
-gdb_test "python print (t\[0\].symtab)" "gdb.python/py-symbol.c.*" "Get symtab"
+if { [is_remote host] } {
+    set py_symbol_c [string_to_regexp $srcfile]
+} else {
+    set py_symbol_c [string_to_regexp ${srcdir}/${subdir}/${srcfile}]
+}
+gdb_test "python print (t\[0\].symtab)" "${py_symbol_c}" "Get symtab"
 
 # C++ tests
 # Recompile binary.
