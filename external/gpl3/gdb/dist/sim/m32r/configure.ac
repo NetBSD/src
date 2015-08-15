@@ -27,8 +27,6 @@ SIM_AC_OPTION_CGEN_MAINT
 AC_SUBST(traps_obj)
 AC_SUBST(sim_extra_cflags)
 
-SIM_AC_OPTION_HARDWARE(yes,"","")
-m32r_extra_objs="$SIM_DV_SOCKSER_O"
-AC_SUBST(m32r_extra_objs)
+SIM_AC_OPTION_HARDWARE(no,"","")
 
 SIM_AC_OUTPUT

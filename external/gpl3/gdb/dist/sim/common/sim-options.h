@@ -1,5 +1,5 @@
 /* Header file for simulator argument handling.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -143,6 +143,6 @@ void sim_print_help (SIM_DESC sd, int is_command);
 
 /* Try to parse the command as if it is an option, Only fail when
    totally unsuccessful */
-SIM_RC sim_args_command (SIM_DESC sd, char *cmd);
+SIM_RC sim_args_command (SIM_DESC sd, const char *cmd);
 
 #endif /* SIM_OPTIONS_H */

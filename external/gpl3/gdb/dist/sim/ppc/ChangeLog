@@ -1,3 +1,32 @@
+2014-11-23  Joel Sherrill <joel.sherrill@oarcorp.com>
+
+	* ChangeLog, ChangeLog.00, hw_com.c, ld-cache.h, ppc-instructions:
+	Change immediatly to immediately.
+
+2014-08-27  Joel Sherrill <joel.sherrill@oarcorp.com>
+
+	* basics.h, device.c, device.h, hw_htab.c, hw_memory.c:
+	Correct spelling in comments.
+
+2014-08-19  Alan Modra  <amodra@gmail.com>
+
+	* configure.ac: Invoke AC_PLUGINS.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2014-03-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim_calls.c (sim_do_command): Add const to cmd.
+
+2014-03-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim_calls.c (sim_load): Add const to prog.
+
+2014-02-17  Aaro Koskinen  <aaro.koskinen@iki.fi>
+
+	PR gdb/12202
+	* Makefile.in (psim): Delete $(LIBS) from dependency.
+
 2013-10-15  Hans-Peter Nilsson  <hp@axis.com>
 
 	* Makefile.in (srcsim): New variable.
@@ -35,8 +64,7 @@
 2012-05-24  Pedro Alves  <palves@redhat.com>
 
 	PR gdb/7205
-
-        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+	* Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
 
 2012-03-14  Michael Haubenwallner  <michael.haubenwallner@salomon.at>
 
@@ -3960,7 +3988,7 @@ Wed Jan 17 19:46:07 1996  Andrew Cagney  <cagney@highland.com.au>
         device tree load from file code.
 
 	* psim.c (psim_create): Dump device tree if enabled. If nump
-        selected, exit psim immediatly.
+        selected, exit psim immediately.
 
 Wed Jan 17 19:36:52 1996  Andrew Cagney  <cagney@highland.com.au>
 
