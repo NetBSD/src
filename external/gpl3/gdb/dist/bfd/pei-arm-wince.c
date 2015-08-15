@@ -1,5 +1,5 @@
 /* BFD back-end for ARM WINCE PE IMAGE COFF files.
-   Copyright 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -21,9 +21,9 @@
 #define TARGET_UNDERSCORE    0
 #define USER_LABEL_PREFIX    ""
 
-#define TARGET_LITTLE_SYM    arm_wince_pei_little_vec
+#define TARGET_LITTLE_SYM    arm_pei_wince_le_vec
 #define TARGET_LITTLE_NAME   "pei-arm-wince-little"
-#define TARGET_BIG_SYM       arm_wince_pei_big_vec
+#define TARGET_BIG_SYM       arm_pei_wince_be_vec
 #define TARGET_BIG_NAME      "pei-arm-wince-big"
 
 #define LOCAL_LABEL_PREFIX "."

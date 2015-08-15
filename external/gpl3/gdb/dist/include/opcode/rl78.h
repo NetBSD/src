@@ -1,6 +1,5 @@
 /* Opcode decoder for the Renesas RL78
-   Copyright 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@redhat.com>
 
    This file is part of GDB, the GNU Debugger and GAS, the GNU Assembler.

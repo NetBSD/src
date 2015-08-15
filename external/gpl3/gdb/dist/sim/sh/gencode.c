@@ -429,8 +429,14 @@ op tab[] =
 
   /* sh2e */
   { "", "", "fabs <FREG_N>", "1111nnnn01011101",
-    "FP_UNARY (n, fabs);",
-    "/* FIXME: FR (n) &= 0x7fffffff; */",
+    "  union",
+    "  {",
+    "    unsigned int i;",
+    "    float f;",
+    "  } u;",
+    "  u.f = FR (n);",
+    "  u.i &= 0x7fffffff;",
+    "  SET_FR (n, u.f);",
   },
 
   /* sh2e */
@@ -662,7 +668,14 @@ op tab[] =
 
   /* sh2e */
   { "", "", "fneg <FREG_N>", "1111nnnn01001101",
-    "FP_UNARY (n, -);",
+    "  union",
+    "  {",
+    "    unsigned int i;",
+    "    float f;",
+    "  } u;",
+    "  u.f = FR (n);",
+    "  u.i ^= 0x80000000;",
+    "  SET_FR (n, u.f);",
   },
 
   /* sh4a */

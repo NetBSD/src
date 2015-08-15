@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,9 @@
 #include "dll.h"
 
 #define get_dll(inf) ((struct dll_info *)(inf))
+
+/* An "unspecified" CORE_ADDR, for match_dll.  */
+#define UNSPECIFIED_CORE_ADDR (~(CORE_ADDR) 0)
 
 struct inferior_list all_dlls;
 int dlls_changed;
@@ -41,7 +44,7 @@ match_dll (struct inferior_list_entry *inf, void *arg)
   struct dll_info *iter = (void *) inf;
   struct dll_info *key = arg;
 
-  if (key->base_addr != ~(CORE_ADDR) 0
+  if (key->base_addr != UNSPECIFIED_CORE_ADDR
       && iter->base_addr == key->base_addr)
     return 1;
   else if (key->name != NULL
@@ -107,5 +110,5 @@ void
 clear_dlls (void)
 {
   for_each_inferior (&all_dlls, free_one_dll);
-  all_dlls.head = all_dlls.tail = NULL;
+  clear_inferior_list (&all_dlls);
 }

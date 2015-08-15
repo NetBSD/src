@@ -1,0 +1,421 @@
+/* OpenRISC 1000 opcode support.  -*- C -*-
+   Copyright 2000-2014 Free Software Foundation, Inc.
+
+   Originally ontributed for OR32 by Red Hat Inc;
+
+   This file is part of the GNU Binutils.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, see <http://www.gnu.org/licenses/>. */
+
+/* This file is an addendum to or1k.cpu.  Heavy use of C code isn't
+   appropriate in .cpu files, so it resides here.  This especially applies
+   to assembly/disassembly where parsing/printing can be quite involved.
+   Such things aren't really part of the specification of the cpu, per se,
+   so .cpu files provide the general framework and .opc files handle the
+   nitty-gritty details as necessary.
+
+   Each section is delimited with start and end markers.
+
+   <arch>-opc.h additions use: "-- opc.h"
+   <arch>-opc.c additions use: "-- opc.c"
+   <arch>-asm.c additions use: "-- asm.c"
+   <arch>-dis.c additions use: "-- dis.c"
+   <arch>-ibd.h additions use: "-- ibd.h"  */
+
+/* -- opc.h */
+
+#undef  CGEN_DIS_HASH_SIZE
+#define CGEN_DIS_HASH_SIZE 256
+#undef  CGEN_DIS_HASH
+#define CGEN_DIS_HASH(buffer, value) (((unsigned char *) (buffer))[0] >> 2)
+
+/* -- */
+
+/* -- opc.c */
+/* -- */
+
+/* -- asm.c */
+
+static const char * MISSING_CLOSING_PARENTHESIS = N_("missing `)'");
+
+#define CGEN_VERBOSE_ASSEMBLER_ERRORS
+
+static const char *
+parse_disp26 (CGEN_CPU_DESC cd,
+	      const char ** strp,
+	      int opindex,
+	      int opinfo,
+	      enum cgen_parse_operand_result * resultp,
+	      bfd_vma * valuep)
+{
+  const char *errmsg = NULL;
+  enum cgen_parse_operand_result result_type;
+
+  if (strncasecmp (*strp, "plt(", 4) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 4;
+      errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_OR1K_PLT26,
+				   & result_type, & value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value = (value >> 2) & 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  return cgen_parse_address (cd, strp, opindex, opinfo, resultp, valuep);
+}
+
+static const char *
+parse_simm16 (CGEN_CPU_DESC cd, const char ** strp, int opindex, long * valuep)
+{
+  const char *errmsg;
+  enum cgen_parse_operand_result result_type;
+  long ret;
+
+  if (**strp == '#')
+    ++*strp;
+
+  if (strncasecmp (*strp, "hi(", 3) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 3;
+      errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_HI16,
+				   & result_type, & value);
+      if (**strp != ')')
+	errmsg = MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+
+      ret = value;
+
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	{
+	  ret >>= 16;
+	  ret &= 0xffff;
+	  ret = (ret ^ 0x8000) - 0x8000;
+	}
+    }
+  else if (strncasecmp (*strp, "lo(", 3) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 3;
+      errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_LO16,
+				   & result_type, & value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+
+      ret = value;
+
+      if (result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	{
+	  ret &= 0xffff;
+	  ret = (ret ^ 0x8000) - 0x8000;
+	}
+    }
+  else if (strncasecmp (*strp, "got(", 4) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 4;
+      errmsg = cgen_parse_address (cd, strp, opindex, BFD_RELOC_OR1K_GOT16,
+				   & result_type, & value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value &= 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "gotpchi(", 8) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 8;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_GOTPC_HI16,
+				   & result_type, & value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value = (value >> 16) & 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "gotpclo(", 8) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 8;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_GOTPC_LO16,
+				   &result_type, &value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value &= 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "gotoffhi(", 9) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 9;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_GOTOFF_HI16,
+				   & result_type, & value);
+
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value = (value >> 16) & 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "gotofflo(", 9) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 9;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_GOTOFF_LO16,
+				   &result_type, &value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value &= 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "tlsgdhi(", 8) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 8;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_TLS_GD_HI16,
+				   & result_type, & value);
+
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value = (value >> 16) & 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "tlsgdlo(", 8) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 8;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_TLS_GD_LO16,
+				   &result_type, &value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value &= 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "tlsldmhi(", 9) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 9;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_TLS_LDM_HI16,
+				   & result_type, & value);
+
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value = (value >> 16) & 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "tlsldmlo(", 9) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 9;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_TLS_LDM_LO16,
+				   &result_type, &value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value &= 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "dtpoffhi(", 9) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 9;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_TLS_LDO_HI16,
+				   & result_type, & value);
+
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value = (value >> 16) & 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "dtpofflo(", 9) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 9;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_TLS_LDO_LO16,
+				   &result_type, &value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value &= 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "gottpoffhi(", 11) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 11;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_TLS_IE_HI16,
+				   & result_type, & value);
+
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value = (value >> 16) & 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "gottpofflo(", 11) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 11;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_TLS_IE_LO16,
+				   &result_type, &value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value &= 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "tpoffhi(", 8) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 8;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_TLS_LE_HI16,
+				   & result_type, & value);
+
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value = (value >> 16) & 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else if (strncasecmp (*strp, "tpofflo(", 8) == 0)
+    {
+      bfd_vma value;
+
+      *strp += 8;
+      errmsg = cgen_parse_address (cd, strp, opindex,
+				   BFD_RELOC_OR1K_TLS_LE_LO16,
+				   &result_type, &value);
+      if (**strp != ')')
+	return MISSING_CLOSING_PARENTHESIS;
+      ++*strp;
+      if (errmsg == NULL
+	  && result_type == CGEN_PARSE_OPERAND_RESULT_NUMBER)
+	value &= 0xffff;
+      *valuep = value;
+      return errmsg;
+    }
+  else
+    {
+      long value;
+      errmsg = cgen_parse_signed_integer (cd, strp, opindex, &value);
+      ret = value;
+    }
+
+  if (errmsg == NULL)
+    *valuep = ret;
+
+  return errmsg;
+}
+
+static const char *
+parse_uimm16 (CGEN_CPU_DESC cd, const char ** strp, int opindex, unsigned long * valuep)
+{
+  const char *errmsg = parse_simm16(cd, strp, opindex, (long *) valuep);
+
+  if (errmsg == NULL)
+    *valuep &= 0xffff;
+  return errmsg;
+}
+
+/* -- */
+
+/* -- ibd.h */
+
+/* -- */

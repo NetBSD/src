@@ -1,6 +1,5 @@
 /* Matsushita 10300 specific support for 32-bit ELF
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2680,7 +2679,7 @@ mn10300_elf_relax_section (bfd *abfd,
       /* Iterate over all the input bfds.  */
       for (input_bfd = link_info->input_bfds;
 	   input_bfd != NULL;
-	   input_bfd = input_bfd->link_next)
+	   input_bfd = input_bfd->link.next)
 	{
 	  /* We're going to need all the symbols for each bfd.  */
 	  symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
@@ -3023,7 +3022,7 @@ mn10300_elf_relax_section (bfd *abfd,
 	 a "call" instruction.  */
       for (input_bfd = link_info->input_bfds;
 	   input_bfd != NULL;
-	   input_bfd = input_bfd->link_next)
+	   input_bfd = input_bfd->link.next)
 	{
 	  /* We're going to need all the local symbols for each bfd.  */
 	  symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
@@ -4599,6 +4598,21 @@ _bfd_mn10300_copy_indirect_symbol (struct bfd_link_info *        info,
   _bfd_elf_link_hash_copy_indirect (info, dir, ind);
 }
 
+/* Destroy an mn10300 ELF linker hash table.  */
+
+static void
+elf32_mn10300_link_hash_table_free (bfd *obfd)
+{
+  struct elf32_mn10300_link_hash_table *ret
+    = (struct elf32_mn10300_link_hash_table *) obfd->link.hash;
+
+  obfd->link.hash = &ret->static_hash_table->root.root;
+  _bfd_elf_link_hash_table_free (obfd);
+  obfd->is_linker_output = TRUE;
+  obfd->link.hash = &ret->root.root;
+  _bfd_elf_link_hash_table_free (obfd);
+}
+
 /* Create an mn10300 ELF linker hash table.  */
 
 static struct bfd_link_hash_table *
@@ -4610,17 +4624,6 @@ elf32_mn10300_link_hash_table_create (bfd *abfd)
   ret = bfd_zmalloc (amt);
   if (ret == NULL)
     return NULL;
-
-  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
-				      elf32_mn10300_link_hash_newfunc,
-				      sizeof (struct elf32_mn10300_link_hash_entry),
-				      MN10300_ELF_DATA))
-    {
-      free (ret);
-      return NULL;
-    }
-
-  ret->tls_ldm_got.offset = -1;
 
   amt = sizeof (struct elf_link_hash_table);
   ret->static_hash_table = bfd_zmalloc (amt);
@@ -4639,21 +4642,25 @@ elf32_mn10300_link_hash_table_create (bfd *abfd)
       free (ret);
       return NULL;
     }
+
+  abfd->is_linker_output = FALSE;
+  abfd->link.hash = NULL;
+  if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
+				      elf32_mn10300_link_hash_newfunc,
+				      sizeof (struct elf32_mn10300_link_hash_entry),
+				      MN10300_ELF_DATA))
+    {
+      abfd->is_linker_output = TRUE;
+      abfd->link.hash = &ret->static_hash_table->root.root;
+      _bfd_elf_link_hash_table_free (abfd);
+      free (ret);
+      return NULL;
+    }
+  ret->root.root.hash_table_free = elf32_mn10300_link_hash_table_free;
+
+  ret->tls_ldm_got.offset = -1;
+
   return & ret->root.root;
-}
-
-/* Free an mn10300 ELF linker hash table.  */
-
-static void
-elf32_mn10300_link_hash_table_free (struct bfd_link_hash_table *hash)
-{
-  struct elf32_mn10300_link_hash_table *ret
-    = (struct elf32_mn10300_link_hash_table *) hash;
-
-  _bfd_elf_link_hash_table_free
-    ((struct bfd_link_hash_table *) ret->static_hash_table);
-  _bfd_elf_link_hash_table_free
-    ((struct bfd_link_hash_table *) ret);
 }
 
 static unsigned long
@@ -5017,7 +5024,7 @@ _bfd_mn10300_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (h, s);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
 /* Set the sizes of the dynamic sections.  */
@@ -5561,7 +5568,7 @@ mn10300_elf_mkobject (bfd *abfd)
 #define bfd_elf32_mkobject	mn10300_elf_mkobject
 
 #ifndef ELF_ARCH
-#define TARGET_LITTLE_SYM	bfd_elf32_mn10300_vec
+#define TARGET_LITTLE_SYM	mn10300_elf32_vec
 #define TARGET_LITTLE_NAME	"elf32-mn10300"
 #define ELF_ARCH		bfd_arch_mn10300
 #define ELF_TARGET_ID		MN10300_ELF_DATA
@@ -5582,8 +5589,6 @@ mn10300_elf_mkobject (bfd *abfd)
 				mn10300_elf_get_relocated_section_contents
 #define bfd_elf32_bfd_link_hash_table_create \
 				elf32_mn10300_link_hash_table_create
-#define bfd_elf32_bfd_link_hash_table_free \
-				elf32_mn10300_link_hash_table_free
 
 #ifndef elf_symbol_leading_char
 #define elf_symbol_leading_char '_'
